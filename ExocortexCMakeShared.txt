@@ -1,0 +1,317 @@
+function(setup_os_name)
+	if( UNIX )
+		set(OS_NAME "linux" PARENT_SCOPE )
+	elseif( WIN32 )
+		set(OS_NAME "windows" PARENT_SCOPE )
+	else()
+		message(FATAL_ERROR "Can not determine OS_NAME")
+	endif()
+endfunction()
+
+function(setup_cpu_name)
+	if( CMAKE_SIZEOF_VOID_P MATCHES "8" )
+		set(CPU_NAME "x64" PARENT_SCOPE )
+	elseif( CMAKE_SIZEOF_VOID_P MATCHES "4" )
+		set(CPU_NAME "x86" PARENT_SCOPE )
+	else()
+		message(FATAL_ERROR "Can not determine CPU_NAME, CMAKE_SIZEOF_VOID_P is: ${CMAKE_SIZEOF_VOID_P}")
+	endif()
+endfunction()
+
+function(setup_exocortex_output_postfix)
+	SET( EXOCORTEX_OUTPUT_POSTFIX "" )
+
+	if( CMAKE_SIZEOF_VOID_P MATCHES "8" )
+		SET( EXOCORTEX_OUTPUT_POSTFIX ${EXOCORTEX_OUTPUT_POSTFIX}/x64 )
+	endif( CMAKE_SIZEOF_VOID_P MATCHES "8" )
+
+	if( CMAKE_SIZEOF_VOID_P MATCHES "4" )
+		SET( EXOCORTEX_OUTPUT_POSTFIX ${EXOCORTEX_OUTPUT_POSTFIX}/x86 )
+	endif( CMAKE_SIZEOF_VOID_P MATCHES "4" )
+
+	if( UNIX )
+		SET( EXOCORTEX_OUTPUT_POSTFIX ${EXOCORTEX_OUTPUT_POSTFIX}/linux )
+	endif( UNIX )
+
+	if( WIN32 )
+		SET( EXOCORTEX_OUTPUT_POSTFIX ${EXOCORTEX_OUTPUT_POSTFIX}/windows )
+	endif( WIN32 )
+	
+	SET( EXOCORTEX_OUTPUT_POSTFIX ${EXOCORTEX_OUTPUT_POSTFIX} PARENT_SCOPE )
+
+#	MESSAGE( ${EXOCORTEX_OUTPUT_POSTFIX} )
+endfunction(setup_exocortex_output_postfix)
+
+function(setup_softimage_output_postfix)
+	if( WIN32 )
+		if( CMAKE_SIZEOF_VOID_P MATCHES "8" )
+			SET( SOFTIMAGE_OUTPUT_POSTFIX "/nt-x86-64" )
+		endif( CMAKE_SIZEOF_VOID_P MATCHES "8" )
+
+		if( CMAKE_SIZEOF_VOID_P MATCHES "4" )
+			SET( SOFTIMAGE_OUTPUT_POSTFIX "/nt-x86" )
+		endif( CMAKE_SIZEOF_VOID_P MATCHES "4" )
+	endif( WIN32 )
+
+	if( UNIX )
+		if( CMAKE_SIZEOF_VOID_P MATCHES "8" )
+			SET( SOFTIMAGE_OUTPUT_POSTFIX "/linux-x86-64" )
+		endif( CMAKE_SIZEOF_VOID_P MATCHES "8" )
+	endif( UNIX )
+
+	SET( SOFTIMAGE_OUTPUT_POSTFIX ${SOFTIMAGE_OUTPUT_POSTFIX} PARENT_SCOPE )
+
+#	MESSAGE( ${SOFTIMAGE_OUTPUT_POSTFIX} )
+endfunction(setup_softimage_output_postfix)
+
+
+function(setup_boost)
+	set(Boost_USE_STATIC_LIBS ON)
+	set(Boost_USE_MULTITHREADED ON)
+	#set(Boost_DEBUG ON )
+	#set(Boost_DETAILED_FAILURE_MSG ON )
+	set(Boost_USE_STATIC_RUNTIME OFF)
+	SET( Boost_NO_SYSTEM_PATHS true )
+	find_package( Boost 1.43.0 COMPONENTS date_time filesystem system program_options regex thread iostreams zlib REQUIRED )
+	include_directories( ${Boost_INCLUDE_DIRS} )
+	link_directories( ${Boost_LIBRARY_DIRS} )
+	#MESSAGE( ${Boost_INCLUDE_DIRS} )
+endfunction(setup_boost)
+
+function(setup_compiler_settings)
+	SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /MP")
+endfunction(setup_compiler_settings)
+
+function(create_source_group sourceGroupName relativeSourcePath )
+	FOREACH(currentSourceFile ${ARGN})
+		FILE(RELATIVE_PATH folder ${relativeSourcePath} ${currentSourceFile})
+		get_filename_component(filename ${folder} NAME)
+		string(REPLACE ${filename} "" folder ${folder})
+		if(NOT folder STREQUAL "")
+			string(REGEX REPLACE "/+$" "" folderlast ${folder})
+			string(REPLACE "/" "\\" folderlast ${folderlast})
+			SOURCE_GROUP("${sourceGroupName}\\${folderlast}" FILES ${currentSourceFile})
+		endif(NOT folder STREQUAL "")
+	ENDFOREACH(currentSourceFile)
+endfunction(create_source_group)
+
+
+function(setup_project_sources_only Sources )
+	create_source_group("Source Files" "${CMAKE_CURRENT_SOURCE_DIR}/src" ${Sources}) 
+endfunction(setup_project_sources_only)
+
+
+function(setup_project Sources Includes)
+	create_source_group("Source Files" "${CMAKE_CURRENT_SOURCE_DIR}/src" ${Sources}) 
+	create_source_group("Header Files" "${CMAKE_CURRENT_SOURCE_DIR}/include" ${Includes})
+endfunction(setup_project)
+
+function(setup_precompiled_header )
+	if (MSVC)
+		list( REMOVE_ITEM ARGN "${CMAKE_CURRENT_SOURCE_DIR}/src/stdafx.cpp" )
+		list( REMOVE_ITEM ARGN "${CMAKE_CURRENT_SOURCE_DIR}/src/stdafx.h" )
+		foreach( src_file ${ARGN} )
+			#MESSAGE( ${src_file} )
+			set_source_files_properties(
+				${src_file}
+				PROPERTIES
+				COMPILE_FLAGS "/Yustdafx.h"
+			)
+		endforeach( src_file )
+		set_source_files_properties(src/stdafx.cpp
+			PROPERTIES
+			COMPILE_FLAGS "/Ycstdafx.h"
+			)
+	endif (MSVC)
+endfunction(setup_precompiled_header)	
+
+function(setup_tbb)
+	if( WIN32 )
+		if( CMAKE_SIZEOF_VOID_P MATCHES "8" )
+			SET( TBB_PLATFORM_POSTFIX "em64t/vc9" )
+		endif( CMAKE_SIZEOF_VOID_P MATCHES "8" )
+
+		if( CMAKE_SIZEOF_VOID_P MATCHES "4" )
+			SET( TBB_PLATFORM_POSTFIX "ia32/vc9" )
+		endif( CMAKE_SIZEOF_VOID_P MATCHES "4" )
+	endif( WIN32 )
+
+	if( UNIX )
+		if( CMAKE_SIZEOF_VOID_P MATCHES "8" )
+			SET( TBB_PLATFORM_POSTFIX "linux-x86-64" )
+		endif( CMAKE_SIZEOF_VOID_P MATCHES "8" )
+	endif( UNIX )
+	
+	SET( TBB_INCLUDE_DIR ${TBB_BASE_DIR}/include PARENT_SCOPE )
+	
+	SET( TBB_LIBRARY_DIR ${TBB_BASE_DIR}/${TBB_PLATFORM_POSTFIX}/lib )
+	SET( TBB_LIBRARIES "${TBB_LIBRARY_DIR}/tbb.lib" "${TBB_LIBRARY_DIR}/tbb_debug.lib" "${TBB_LIBRARY_DIR}/tbbmalloc.lib" "${TBB_LIBRARY_DIR}/tbbmalloc_debug.lib" PARENT_SCOPE )	
+	
+	SET( TBB_DEPENDENCIES_DIR ${TBB_BASE_DIR}/${TBB_PLATFORM_POSTFIX}/bin )
+	SET( TBB_DEPENDENCIES "${TBB_DEPENDENCIES_DIR}/tbb.dll" "${TBB_DEPENDENCIES_DIR}/tbb_debug.dll" "${TBB_DEPENDENCIES_DIR}/tbbmalloc.dll""${TBB_DEPENDENCIES_DIR}/tbbmalloc_debug.dll" PARENT_SCOPE )	
+	
+endfunction(setup_tbb)
+
+
+function(setup_softimage)
+	if( WIN32 )
+		if( CMAKE_SIZEOF_VOID_P MATCHES "8" )
+			SET( SOFTIMAGE_OUTPUT_POSTFIX "nt-x86-64" )
+		endif( CMAKE_SIZEOF_VOID_P MATCHES "8" )
+
+		if( CMAKE_SIZEOF_VOID_P MATCHES "4" )
+			SET( SOFTIMAGE_OUTPUT_POSTFIX "nt-x86" )
+		endif( CMAKE_SIZEOF_VOID_P MATCHES "4" )
+	endif( WIN32 )
+
+	if( UNIX )
+		if( CMAKE_SIZEOF_VOID_P MATCHES "8" )
+			SET( SOFTIMAGE_OUTPUT_POSTFIX "linux-x86-64" )
+		endif( CMAKE_SIZEOF_VOID_P MATCHES "8" )
+	endif( UNIX )
+	
+	
+	SET( Softimage_INCLUDE_DIR ${Softimage_BASE_DIR}/include PARENT_SCOPE )
+	
+	SET( Softimage_LIBRARY_DIR ${Softimage_BASE_DIR}/lib/${SOFTIMAGE_OUTPUT_POSTFIX} )
+	SET( Softimage_LIBRARIES "${Softimage_LIBRARY_DIR}/sicoresdk.lib" "${Softimage_LIBRARY_DIR}/sicppsdk.lib" PARENT_SCOPE )		
+endfunction(setup_softimage)
+
+
+function(setup_maya)
+	if( WIN32 )
+		if( CMAKE_SIZEOF_VOID_P MATCHES "8" )
+			SET( Maya_OUTPUT_POSTFIX "nt-x86-64" )
+		endif( CMAKE_SIZEOF_VOID_P MATCHES "8" )
+
+		if( CMAKE_SIZEOF_VOID_P MATCHES "4" )
+			SET( Maya_OUTPUT_POSTFIX "nt-x86" )
+		endif( CMAKE_SIZEOF_VOID_P MATCHES "4" )
+	endif( WIN32 )
+
+	if( UNIX )
+		if( CMAKE_SIZEOF_VOID_P MATCHES "8" )
+			SET( Maya_OUTPUT_POSTFIX "linux-x86-64" )
+		endif( CMAKE_SIZEOF_VOID_P MATCHES "8" )
+	endif( UNIX )
+	
+	
+	SET( Maya_INCLUDE_DIR ${Maya_BASE_DIR}/include PARENT_SCOPE )
+	
+#	SET( Maya_LIBRARY_DIR ${Maya_BASE_DIR}/lib/${Maya_OUTPUT_POSTFIX} )
+#	SET( Maya_LIBRARIES "${Maya_LIBRARY_DIR}/sicoresdk.lib" "${Maya_LIBRARY_DIR}/sicppsdk.lib" PARENT_SCOPE )
+	SET( Maya_LIBRARY_DIR ${Maya_BASE_DIR}/lib/${Maya_OUTPUT_POSTFIX} )
+	SET( Maya_LIBRARIES "${Maya_LIBRARY_DIR}/Foundation.lib" "${Maya_LIBRARY_DIR}/OpenMaya.lib" "${Maya_LIBRARY_DIR}/OpenMayaAnim.lib" "${Maya_LIBRARY_DIR}/OpenMayaRender.lib" "${Maya_LIBRARY_DIR}/OpenMayaFX.lib" "${Maya_LIBRARY_DIR}/OpenMayaUI.lib" PARENT_SCOPE )
+	
+endfunction(setup_maya)
+
+function(deploy_maya OutputName WorkgroupName )
+
+	SET( Maya_PLUGINS_DIR "C:/Program Files/Autodesk/Maya2011/bin/plug-ins" )
+	SET( Maya_BIN_DIR "C:/Program Files/Autodesk/Maya2011/bin/plug-ins" )
+
+	GET_TARGET_PROPERTY( OUTPUT_LOCATION ${OutputName} LOCATION )
+	
+	ADD_CUSTOM_COMMAND(TARGET ${PROJECT_NAME} POST_BUILD
+		COMMAND ${CMAKE_COMMAND} -E copy ${OUTPUT_LOCATION} ${Maya_PLUGINS_DIR}
+	)
+			
+endfunction(deploy_maya)
+
+function(get_softimage_workgroup WorkgroupName)
+	if( WIN32 )
+		if( CMAKE_SIZEOF_VOID_P MATCHES "8" )
+			set( SOFTIMAGE_OUTPUT_POSTFIX "/nt-x86-64" )
+		endif( CMAKE_SIZEOF_VOID_P MATCHES "8" )
+
+		if( CMAKE_SIZEOF_VOID_P MATCHES "4" )
+			set( SOFTIMAGE_OUTPUT_POSTFIX "/nt-x86" )
+		endif( CMAKE_SIZEOF_VOID_P MATCHES "4" )
+	endif( WIN32 )
+
+	if( UNIX )
+		if( CMAKE_SIZEOF_VOID_P MATCHES "8" )
+			set( SOFTIMAGE_OUTPUT_POSTFIX "/linux-x86-64" )
+		endif( CMAKE_SIZEOF_VOID_P MATCHES "8" )
+	endif( UNIX )
+
+	set( Softimage_WORKGROUP_DIR ${CMAKE_CURRENT_SOURCE_DIR}/Workgroup/Addons/${WorkgroupName}/Application/Plugins/bin${SOFTIMAGE_OUTPUT_POSTFIX} PARENT_SCOPE )
+endfunction(get_softimage_workgroup)
+
+function(deploy_softimage OutputName WorkgroupName )
+	get_softimage_workgroup( ${WorkgroupName} )
+
+	get_target_property( OUTPUT_LOCATION ${OutputName} LOCATION )
+	
+	add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+		COMMAND ${CMAKE_COMMAND} -E make_directory ${Softimage_WORKGROUP_DIR}
+		COMMAND ${CMAKE_COMMAND} -E copy ${OUTPUT_LOCATION} ${Softimage_WORKGROUP_DIR}
+	)
+	
+	#message( "ARGN: ${ARGN}" )
+	get_filename_component( OUTPUT_DIR "${OUTPUT_LOCATION}" PATH )
+	#message( "OUTPUT_DIR: ${OUTPUT_DIR}" )
+	foreach(dependencyLocation ${ARGN})
+		add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+			COMMAND ${CMAKE_COMMAND} -E copy ${dependencyLocation} ${Softimage_WORKGROUP_DIR}
+			)
+	endforeach(dependencyLocation)
+	add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+			COMMAND ${CMAKE_COMMAND} -E remove -f "${Softimage_WORKGROUP_DIR}/${WorkgroupName}.dll" )
+	add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+			COMMAND ${CMAKE_COMMAND} -E remove -f "${Softimage_WORKGROUP_DIR}/${WorkgroupName}.so" )
+	
+endfunction(deploy_softimage)
+function(remove_obsolete_softimage OutputName WorkgroupName )
+	get_softimage_workgroup( ${WorkgroupName} )
+
+	GET_TARGET_PROPERTY( OUTPUT_LOCATION ${OutputName} LOCATION )
+	
+	GET_FILENAME_COMPONENT( OUTPUT_DIR "${OUTPUT_LOCATION}" PATH )
+	#MESSAGE( "OUTPUT_DIR: ${OUTPUT_DIR}" )
+	FOREACH(dependencyLocation ${ARGN})
+		ADD_CUSTOM_COMMAND(TARGET ${PROJECT_NAME} POST_BUILD
+			COMMAND ${CMAKE_COMMAND} -E remove -f ${dependencyLocation} ${Softimage_WORKGROUP_DIR}
+			)
+	ENDFOREACH(dependencyLocation)
+	
+endfunction(remove_obsolete_softimage)
+
+function(deploy_standard OutputName )
+	GET_TARGET_PROPERTY( OUTPUT_LOCATION ${OutputName} LOCATION )
+	
+	GET_FILENAME_COMPONENT( OUTPUT_DIR "${OUTPUT_LOCATION}" PATH )
+	
+	#MESSAGE( "ARGN: ${ARGN}" )
+
+	FOREACH(dependencyLocation ${ARGN})
+		ADD_CUSTOM_COMMAND(TARGET ${PROJECT_NAME} POST_BUILD
+			COMMAND ${CMAKE_COMMAND} -E copy ${dependencyLocation} ${OUTPUT_DIR}
+			)
+	ENDFOREACH(dependencyLocation)
+	
+endfunction(deploy_standard)
+
+function(copy_files GLOBPAT OutputName)
+	GET_TARGET_PROPERTY( OUTPUT_LOCATION ${OutputName} LOCATION )
+	
+	GET_FILENAME_COMPONENT( OUTPUT_DIR "${OUTPUT_LOCATION}" PATH )
+	GET_FILENAME_COMPONENT( OUTPUT_DIR "${OUTPUT_DIR}" PATH )
+	
+	file(GLOB COPY_FILES
+    RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ${GLOBPAT} )
+  #add_custom_target(copy ALL
+  #  COMMENT "Copying files: ${GLOBPAT}")
+
+  foreach(FILENAME ${COPY_FILES})
+	if(NOT IS_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/${FILENAME}" )
+		set(SRC "${CMAKE_CURRENT_SOURCE_DIR}/${FILENAME}")
+		set(DST "${OUTPUT_DIR}/${FILENAME}")
+
+		add_custom_command(
+		  TARGET ${PROJECT_NAME} POST_BUILD
+		  COMMAND ${CMAKE_COMMAND} -E copy ${SRC} ${DST}
+		  )
+	endif()
+  endforeach(FILENAME)
+endfunction(copy_files)
