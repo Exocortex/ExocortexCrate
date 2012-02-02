@@ -1,3 +1,7 @@
 # Build requirements
 
-Please refer to the file ExocortexAlembicShared/README.md for instructions on project organization
+Please read this file for instructions on project organization:
+
+https://github.com/Exocortex/ExocortexAlembicShared/blob/master/README.md
+
+
