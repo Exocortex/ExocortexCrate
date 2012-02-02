@@ -30,6 +30,9 @@ endif()
 
 
 ADD_LIBRARY( _ExocortexAlembicPython SHARED ${Sources} ${Includes} )
+
+set_property(TARGET "_ExocortexAlembicPython" PROPERTY FOLDER "${PythonFolder}")
+
 ADD_DEPENDENCIES( _ExocortexAlembicPython AlembicAbcGeom )
 
 SET_TARGET_PROPERTIES(_ExocortexAlembicPython
