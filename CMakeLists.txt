@@ -10,9 +10,9 @@ SOURCE_GROUP("Header Files" FILES ${Includes})
 
 SET( Arnold_VERSION "4.0.1.0" )
 IF( "${CMAKE_SYSTEM_NAME}" MATCHES "Windows" )
-  SET( Arnold_BASE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../arnold/${Arnold_VERSION}/windows" )
+  SET( Arnold_BASE_DIR "${LIBRARY_ROOT}/arnold/${Arnold_VERSION}/windows" )
 ELSE()
-  SET( Arnold_BASE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../arnold/${Arnold_VERSION}/linux" )
+  SET( Arnold_BASE_DIR "${LIBRARY_ROOT}/arnold/${Arnold_VERSION}/linux" )
 ENDIF()
 
 include_directories( "${Arnold_BASE_DIR}/include" )
