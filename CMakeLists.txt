@@ -1,5 +1,7 @@
 cmake_minimum_required(VERSION 2.6)
 
+project( ExocortexAlembic )
+
 INCLUDE(./ExocortexCMakeShared.txt)
 
 SET(DIR_SOFTIMAGEALEBMIC ${CMAKE_CURRENT_SOURCE_DIR})
@@ -232,3 +234,34 @@ UNSET(CMAKE_ARCHIVE_OUTPUT_DIRECTORY CACHE)
 include_directories( "alembic-1.0.4" )
 ADD_SUBDIRECTORY ( alembic-1.0.4 )
 SET( ALEMBIC_CORE_LIBS AlembicAbcGeom AlembicAbc AlembicAbcCoreHDF5 AlembicAbcCoreAbstract AlembicUtil )
+
+# Python extension
+IF(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../ExocortexAlembicPython/CMakeLists.txt")
+	ADD_SUBDIRECTORY ( "${CMAKE_CURRENT_SOURCE_DIR}/../ExocortexAlembicPython" "${CMAKE_CURRENT_BINARY_DIR}/ExocortexAlembicPython" )
+ENDIF()
+
+# Arnold dso
+IF(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../ExocortexAlembicArnold/CMakeLists.txt")
+	ADD_SUBDIRECTORY ( "${CMAKE_CURRENT_SOURCE_DIR}/../ExocortexAlembicArnold" "${CMAKE_CURRENT_BINARY_DIR}/ExocortexAlembicArnold" )
+ENDIF()
+
+# softimage plugin
+IF(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../ExocortexAlembicSoftimage/CMakeLists.txt")
+	ADD_SUBDIRECTORY ( "${CMAKE_CURRENT_SOURCE_DIR}/../ExocortexAlembicSoftimage" "${CMAKE_CURRENT_BINARY_DIR}/ExocortexAlembicSoftimage" )
+ENDIF()
+
+# maya plugin
+IF(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../ExocortexAlembicMaya/CMakeLists.txt")
+	ADD_SUBDIRECTORY ( "${CMAKE_CURRENT_SOURCE_DIR}/../ExocortexAlembicMaya" "${CMAKE_CURRENT_BINARY_DIR}/ExocortexAlembicMaya" )
+ENDIF()
+
+# houdini plugin
+IF(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../ExocortexAlembicHoudini/CMakeLists.txt")
+	ADD_SUBDIRECTORY ( "${CMAKE_CURRENT_SOURCE_DIR}/../ExocortexAlembicHoudini" "${CMAKE_CURRENT_BINARY_DIR}/ExocortexAlembicHoudini" )
+ENDIF()
+
+# 3dsmax plugin
+IF(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../ExocortexAlembic3DSMax/CMakeLists.txt")
+	ADD_SUBDIRECTORY ( "${CMAKE_CURRENT_SOURCE_DIR}/../ExocortexAlembic3DSMax" "${CMAKE_CURRENT_BINARY_DIR}/ExocortexAlembic3DSMax" )
+ENDIF()
+
