@@ -103,6 +103,9 @@ SET( SOURCE_FILES ${CXX_FILES} ${H_FILES} )
 
 ADD_LIBRARY( AlembicAbcCoreHDF5 ${SOURCE_FILES} )
 
+set_property(TARGET "AlembicAbcCoreHDF5" PROPERTY FOLDER "${AlembicFolder}")
+
+
 INSTALL( TARGETS AlembicAbcCoreHDF5
          LIBRARY DESTINATION lib
          ARCHIVE DESTINATION lib/static )

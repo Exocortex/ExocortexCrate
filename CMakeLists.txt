@@ -4,6 +4,12 @@ project( ExocortexAlembic )
 
 INCLUDE(./ExocortexCMakeShared.txt)
 
+set_property(GLOBAL PROPERTY USE_FOLDERS ON)
+set( HDF5Folder "Externals" )
+set( ZlibFolder "Externals" )
+set( IlmBaseFolder "Externals" )
+set( AlembicFolder "Externals" )
+
 SET(DIR_SOFTIMAGEALEBMIC ${CMAKE_CURRENT_SOURCE_DIR})
 
 get_filename_component( LIBRARY_ROOT "${CMAKE_CURRENT_SOURCE_DIR}" PATH )

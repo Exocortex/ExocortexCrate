@@ -128,6 +128,9 @@ SET( SOURCE_FILES ${CXX_FILES} ${H_FILES} )
 
 ADD_LIBRARY( AlembicAbcGeom ${SOURCE_FILES} )
 
+set_property(TARGET "AlembicAbcGeom" PROPERTY FOLDER "${AlembicFolder}")
+
+
 INSTALL( TARGETS AlembicAbcGeom
          LIBRARY DESTINATION lib
          ARCHIVE DESTINATION lib/static )

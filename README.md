@@ -13,7 +13,7 @@ folder structure:
        |-------- ExocortexAlembicHoudini (optional)
        |-------- ExocortexAlembic3DSMax (optional)
        |-------- Libraries
-   
+
 Then, use cmake to build the solution. For that cd into ExocortexAlembicShared/build
 and run the corresponding batch file, for example
 
@@ -23,4 +23,3 @@ and run the corresponding batch file, for example
 This will merge all build files into the build folder below ExocortexAlembicShared,
 which allows to debug all the way down to the python libs or the hdf5 source.
 
-  

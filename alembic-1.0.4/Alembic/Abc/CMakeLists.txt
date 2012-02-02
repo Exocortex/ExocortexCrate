@@ -91,6 +91,9 @@ SET( SOURCE_FILES ${CXX_FILES} ${H_FILES} )
 
 ADD_LIBRARY( AlembicAbc ${SOURCE_FILES} )
 
+set_property(TARGET "AlembicAbc" PROPERTY FOLDER "${AlembicFolder}")
+
+
 INSTALL( TARGETS AlembicAbc
          LIBRARY DESTINATION lib
          ARCHIVE DESTINATION lib/static )

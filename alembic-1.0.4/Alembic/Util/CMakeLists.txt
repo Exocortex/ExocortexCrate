@@ -55,6 +55,8 @@ SET( SOURCE_FILES ${CXX_FILES} ${H_FILES} )
 
 ADD_LIBRARY( AlembicUtil ${SOURCE_FILES} )
 
+set_property(TARGET "AlembicUtil" PROPERTY FOLDER "${AlembicFolder}")
+
 INSTALL( TARGETS AlembicUtil
          LIBRARY DESTINATION lib
          ARCHIVE DESTINATION lib/static )

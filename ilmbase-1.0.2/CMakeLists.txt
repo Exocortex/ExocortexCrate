@@ -37,6 +37,10 @@ ENDIF()
 # ilmbase
 ADD_EXECUTABLE(ilmbase_toFloat ${CMAKE_CURRENT_SOURCE_DIR}/Half/toFloat/toFloat.cpp)
 ADD_EXECUTABLE(ilmbase_eLut ${CMAKE_CURRENT_SOURCE_DIR}/Half/eLut/eLut.cpp)
+
+set_property(TARGET "ilmbase_toFloat" PROPERTY FOLDER "${IlmBaseFolder}")
+set_property(TARGET "ilmbase_eLut" PROPERTY FOLDER "${IlmBaseFolder}")
+
 GET_TARGET_PROPERTY(ilmbase_toFloat_EXE ilmbase_toFloat LOCATION)
 GET_TARGET_PROPERTY(ilmbase_eLut_EXE ilmbase_eLut LOCATION)
 ADD_CUSTOM_COMMAND(
@@ -54,5 +58,8 @@ ADD_LIBRARY(ilmbase STATIC
 	${CMAKE_CURRENT_SOURCE_DIR}/Half/toFloat.h
 	${CMAKE_CURRENT_SOURCE_DIR}/Half/eLut.h
 )
+set_property(TARGET "ilmbase" PROPERTY FOLDER "${IlmBaseFolder}")
+
+
 ADD_DEPENDENCIES(ilmbase ilmbase_toFloat)
 ADD_DEPENDENCIES(ilmbase ilmbase_eLut)
