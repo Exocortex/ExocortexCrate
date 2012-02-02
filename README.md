@@ -16,6 +16,7 @@ folder structure:
    
 Then, use cmake to build the solution. For that cd into ExocortexAlembicShared/build
 and run the corresponding batch file, for example
+
      build_vs2008_x64.bat
 
 This will merge all build files into the build folder below ExocortexAlembicShared,
