@@ -25,54 +25,8 @@ int GetLicense()
 		// default license status, could be overriden below.
 		gLicenseToken = EC_LICENSE_RESULT_DEMO_LICENSE;
 
-		#pragma message( "Exocortex Licensing mode: Fixed expiry date" )
-		time_t now = time(NULL);
-		if( now <= 1329264000 ) {  //http://unixtime-converter.com/
-			static string pluginName(XSI::CString(PLUGIN_NAME).GetAsciiString());
-			ESS_LOG_WARNING( "Expiry date licensing is being used for " << pluginName );
-			gLicenseToken = EC_LICENSE_RESULT_FULL_LICENSE;
-			return gLicenseToken;
-		}		
-
-		// if running on render farm, give license.
-		/*	
-
-		NO FREE NETWORK LICENSES
-
-		if( ! XSI::Application().IsInteractive() ) {
-			gLicenseToken = EC_LICENSE_RESULT_FULL_LICENSE;
-			return gLicenseToken;
-		}
-
-		*/
-
-		// check the license file
-#if defined( EXOCORTEX_SERVICES )
-	#pragma message( "Exocortex Licensing mode: Exocortex Services" )
-
-		static string pluginName(XSI::CString(PLUGIN_NAME).GetAsciiString());
-		static string pluginModuleName(XSI::CString(PLUGIN_MODULE_NAME).GetAsciiString());
-		static string productUrl(XSI::CString(PLUGIN_PRODUCT_URL).GetAsciiString());
-		static string purchaseUrl(XSI::CString(PLUGIN_PURCHASE_URL).GetAsciiString());
-		static string licenseName(XSI::CString(PLUGIN_LICENSE_NAME).GetAsciiString());
-
-		char const productPublicKeyArray[] = PLUGIN_LICENSE_PUBLIC_KEY;
-
-		gLicenseToken = essLicenseCheck(
-			pluginName.c_str(),
-			productUrl.c_str(),
-			purchaseUrl.c_str(),
-			productPublicKeyArray,
-			licenseName.c_str(),
-			PLUGIN_LICENSE_VERSION,
-			PLUGIN_DEMO_STYLE_LICENSING );
-
-		if( gLicenseToken == EC_LICENSE_RESULT_FULL_LICENSE ) {
-			return gLicenseToken;
-		}
-
-#else	// EXOCORTEX_SERVICES
-	#if defined( EXOCORTEX_RLM_ONLY )
+		// check RLM license first, so that users see that RLM is either used or not prior to expiry.	
+#if defined( EXOCORTEX_RLM_ONLY )
 		{
 			#pragma message( "Exocortex Licensing mode: RLM only" )
 			static string pluginName(XSI::CString(PLUGIN_NAME).GetAsciiString());
@@ -90,8 +44,21 @@ int GetLicense()
 				return gLicenseToken;
 			}
 		}
-	#endif // EXOCORTEX_RLM_ONLY*/
-#endif // EXOCORTEX_SERVICES
+#endif // EXOCORTEX_RLM_ONLY
+
+#if defined( EXOCORTEX_BETA_EXPIRY_DATE )
+		{
+			#pragma message( "Exocortex Licensing mode: Fixed expiry date" )
+			time_t now = time(NULL);
+			if( now <= EXOCORTEX_BETA_EXPIRY_DATE ) {  //http://unixtime-converter.com/
+				static string pluginName(XSI::CString(PLUGIN_NAME).GetAsciiString());
+				ESS_LOG_WARNING( "Expiry date licensing is being used for " << pluginName );
+				gLicenseToken = EC_LICENSE_RESULT_FULL_LICENSE;
+				return gLicenseToken;
+			}
+		}
+#endif // EXOCORTEX_BETA_EXPIRY_DATE
+
 	}
 
 	return gLicenseToken;

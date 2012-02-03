@@ -38,6 +38,10 @@ MESSAGE( "Softimage_DIR_LIBRARY: ${Softimage_DIR_LIBRARY}" )
 
 MESSAGE( "Softimage_LIBRARIES: ${Softimage_LIBRARIES}" )
 
+if( Exocortex_SERVICES )
+	add_definitions( "-DEXOCORTEX_SERVICES" )
+	add_definitions( -DNOMINMAX )	 # disable min/max macros from <windows.h>.
+endif()
 
 include_directories( ${Softimage_DIR_INCLUDE} )
 link_directories( ${Softimage_DIR_LIBRARY} )

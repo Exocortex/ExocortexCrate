@@ -28,16 +28,22 @@
 	#define ESS_LOG_INFO(a) do { std::stringstream s; s << a; XSI::Application().LogMessage( s.str().c_str(), XSI::siInfoMsg ); } while(0)
 
 	#define ESS_CALLBACK_START( NodeName_CallbackName, ParamType )	XSIPLUGINCALLBACK CStatus NodeName_CallbackName( ParamType in_ctxt ) {
-	#define ESS_CALLBACK_END										}
-
-	#define EC_LOG_ERROR(a)		ESS_LOG_ERROR(a)
-	#define EC_LOG_WARNING(a)	ESS_LOG_WARNING(a)
-	#define EC_LOG_INFO(a)		ESS_LOG_INFO(a)
-	#define EC_ASSERT(a)		
-
+	#define ESS_CALLBACK_END
 
 #endif	// EXOCORTEX_SERVICES
 
+#ifndef EC_LOG_ERROR
+	#define EC_LOG_ERROR(a)		ESS_LOG_ERROR(a)
+#endif
+#ifndef EC_LOG_WARNING
+	#define EC_LOG_WARNING(a)	ESS_LOG_WARNING(a)
+#endif
+#ifndef EC_LOG_INFO
+	#define EC_LOG_INFO(a)		ESS_LOG_INFO(a)
+#endif
+#ifndef EC_ASSERT
+	#define EC_ASSERT(a)		
+#endif
 
 #if defined( EXOCORTEX_RLM_ONLY )
 
@@ -48,7 +54,9 @@
 		#error "PLUGIN_LICENSE_VERSION not defined, required for EXOCORTEX_RLM_ONLY-style licensing"
 	#endif
 
-	#define PLUGIN_LICENSE_IDS	{ RlmProductID( PLUGIN_LICENSE_NAME, PLUGIN_LICENSE_VERSION ) }
+	#ifndef PLUGIN_LICENSE_IDS
+		#define PLUGIN_LICENSE_IDS	{ RlmProductID( PLUGIN_LICENSE_NAME, PLUGIN_LICENSE_VERSION ) }
+	#endif
 
 	#include <xsi_application.h>
 

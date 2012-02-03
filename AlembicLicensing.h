@@ -19,11 +19,10 @@
 #define PLUGIN_MODULE_NAME				PLUGIN_NAME L".dll"
 #define PLUGIN_MAJOR_VERSION			alembic_MAJOR_VERSION
 #define PLUGIN_MINOR_VERSION			alembic_MINOR_VERSION
-#define PLUGIN_LICENSE_NAME				"alembic"
+#define PLUGIN_LICENSE_NAME				"alembic_softimage"
 #define PLUGIN_LICENSE_VERSION			(alembic_MAJOR_VERSION*10)
-#define PLUGIN_PRODUCT_URL				L"http://www.exocortex.com/simulation/alembic"
-#define PLUGIN_PURCHASE_URL				L"http://www.exocortex.com/simulation/alembic"
-#define PLUGIN_DEMO_STYLE_LICENSING		true
+#define PLUGIN_PRODUCT_URL				L"http://www.exocortex.com/alembic"
+#define PLUGIN_PURCHASE_URL				L"http://www.exocortex.com/alembic"
 
 #include "ExocortexServicesProxy.h"
 
