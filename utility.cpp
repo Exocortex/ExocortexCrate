@@ -206,6 +206,8 @@ bool isRefAnimated(const CRef & in_Ref)
          if(isRefAnimated(ops[i]))
             return returnIsRefAnimated(in_Ref,true);
       }
+      if(prim.IsAnimated())
+         return returnIsRefAnimated(in_Ref,true);
    }
    else if(kineState.IsValid())
    {
