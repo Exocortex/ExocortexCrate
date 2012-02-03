@@ -1,6 +1,14 @@
 #ifndef _FOUNDATION_H_
 #define _FOUNDATION_H_
 
+#ifdef NOMINMAX
+    #undef NOMINMAX
+    #include "Max.h"
+    #define NOMINMAX
+#else
+    #include "Max.h"
+#endif
+
 #include <boost/smart_ptr.hpp>
 #include <boost/format.hpp>
 #include <boost/variant.hpp>
@@ -29,9 +37,6 @@
 #include <Alembic/Abc/All.h>
 #include <Alembic/AbcGeom/All.h>
 #include <Alembic/AbcCoreHDF5/All.h>
-
-//#include "AlembicArchiveStorage.h"
-//#include "Utility.h"
 
 typedef std::map<std::string,std::string> stringMap;
 typedef std::map<std::string,std::string>::iterator stringMapIt;

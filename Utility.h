@@ -2,7 +2,8 @@
 #define _UTILITY_H_
 
 #include "Foundation.h"
-#include <xsi_ref.h>
+
+class SceneEntry;
 
 struct SampleInfo
 {
@@ -12,6 +13,7 @@ struct SampleInfo
 };
 
 SampleInfo getSampleInfo(double iFrame,Alembic::AbcCoreAbstract::TimeSamplingPtr iTime, size_t numSamps);
+std::string getIdentifierFromRef(const SceneEntry &in_Ref);
 
 
 

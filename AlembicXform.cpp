@@ -1,10 +1,10 @@
-#include "alembic.h"
-#include "AlembicXform.h"
-#include "SceneEntry.h"
+#include "Foundation.h"
 #include <inode.h>
+#include "SceneEntry.h"
+#include "AlembicXform.h"
 
-namespace AbcA = ::Alembic::AbcCoreAbstract::ALEMBIC_VERSION_NS;
-using namespace AbcA;
+// namespace AbcA = ::Alembic::AbcCoreAbstract::ALEMBIC_VERSION_NS;
+// using namespace AbcA;
 
 void SaveXformSample(const SceneEntry &in_Ref, Alembic::AbcGeom::OXformSchema &schema, Alembic::AbcGeom::XformSample &sample, double time)
 {

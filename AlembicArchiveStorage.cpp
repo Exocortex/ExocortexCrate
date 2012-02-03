@@ -1,5 +1,6 @@
+
+#include "Foundation.h"
 #include "AlembicArchiveStorage.h"
-#include <map>
 #include <boost/algorithm/string.hpp>
 
 struct AlembicArchiveInfo
@@ -88,7 +89,10 @@ Alembic::Abc::IObject getObjectFromArchive(std::string path, std::string identif
       Alembic::Abc::IObject child(obj,parts[i]);
       obj = child;
       if(!obj)
+      {
+         obj = Alembic::Abc::IObject();
          break;
+      }
    }
 
    return obj;

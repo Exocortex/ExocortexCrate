@@ -10,11 +10,14 @@
 
  *>	Copyright (c) 2000 Autodesk, All Rights Reserved.
  **********************************************************************/
-#include "alembic.h"
+#include "Foundation.h"
+#include "AlembicDefinitions.h"
 #include "AlembicPolyMeshModifier.h"
 #include "AlembicArchiveStorage.h"
+#include "utility.h"
+#include "iparamb2.h"
 
-void AlembicImport_FillInPolyMesh(Alembic::AbcGeom::IObject &iObj, TriObject *triobj);
+void AlembicImport_FillInPolyMesh(Alembic::AbcGeom::IObject &iObj, TriObject *triobj, double iFrame, AlembicDataFillFlags flags);
 
 static GenSubObjType SOT_Vertex(1);
 static GenSubObjType SOT_Edge(2);
@@ -165,7 +168,7 @@ void AlembicPolyMeshModifier::ModifyObject (TimeValue t, ModContext &mc, ObjectS
    if(!iObj.valid())
       return;
 
-   AlembicImport_FillInPolyMesh(iObj, (TriObject*)os->obj);
+   AlembicImport_FillInPolyMesh(iObj, (TriObject*)os->obj, 0, ALEMBIC_DATAFILL_POLYMESH_UPDATE);
 }
 
 void AlembicPolyMeshModifier::BeginEditParams (IObjParam  *ip, ULONG flags, Animatable *prev) {
@@ -211,10 +214,11 @@ void AlembicPolyMeshModifier::SetAlembicId(const std::string &file, const std::s
 	m_AlembicIdentifier = identifier;
 }
 
-void AlembicImport_FillInPolyMesh(Alembic::AbcGeom::IObject &iObj, TriObject *triobj)
+void AlembicImport_FillInPolyMesh(Alembic::AbcGeom::IObject &iObj, TriObject *triobj, double iFrame, AlembicDataFillFlags flags)
 {
    Alembic::AbcGeom::IPolyMesh objMesh;
    Alembic::AbcGeom::ISubD objSubD;
+
    if(Alembic::AbcGeom::IPolyMesh::matches(iObj.getMetaData()))
       objMesh = Alembic::AbcGeom::IPolyMesh(iObj,Alembic::Abc::kWrapExisting);
    else
@@ -225,66 +229,127 @@ void AlembicImport_FillInPolyMesh(Alembic::AbcGeom::IObject &iObj, TriObject *tr
    SampleInfo sampleInfo;
    if(objMesh.valid())
       sampleInfo = getSampleInfo(
-         0,
+         iFrame,
          objMesh.getSchema().getTimeSampling(),
          objMesh.getSchema().getNumSamples()
       );
    else
       sampleInfo = getSampleInfo(
-         0,
+         iFrame,
          objSubD.getSchema().getTimeSampling(),
          objSubD.getSchema().getNumSamples()
       );
 
-   Alembic::Abc::P3fArraySamplePtr meshPos;
-   if(objMesh.valid())
-   {
-      Alembic::AbcGeom::IPolyMeshSchema::Sample sample;
-      objMesh.getSchema().get(sample,sampleInfo.floorIndex);
-      meshPos = sample.getPositions();
-   }
-   else
-   {
-      Alembic::AbcGeom::ISubDSchema::Sample sample;
-      objSubD.getSchema().get(sample,sampleInfo.floorIndex);
-      meshPos = sample.getPositions();
-   }
-
    Mesh &mesh = triobj->GetMesh();
+   Alembic::AbcGeom::IPolyMeshSchema::Sample polyMeshSample;
+   Alembic::AbcGeom::ISubDSchema::Sample subDSample;
 
-   if(mesh.getNumVerts() != meshPos->size())
-      return;
+   if(objMesh.valid())
+       objMesh.getSchema().get(polyMeshSample,sampleInfo.floorIndex);
+   else
+       objSubD.getSchema().get(subDSample,sampleInfo.floorIndex);
 
-   std::vector<Point3> vArray;
-   vArray.reserve(meshPos->size());
-   for(size_t i=0;i<meshPos->size();i++)
-      vArray.push_back(Point3(meshPos->get()[i].x,meshPos->get()[i].y,meshPos->get()[i].z));
-
-   // blend
-   if(sampleInfo.alpha != 0.0)
+   if ( flags & ALEMBIC_DATAFILL_VERTEX_IMPORT || flags & ALEMBIC_DATAFILL_VERTEX_UPDATE )
    {
-      if(objMesh.valid())
-      {
-         Alembic::AbcGeom::IPolyMeshSchema::Sample sample;
-         objMesh.getSchema().get(sample,sampleInfo.ceilIndex);
-         meshPos = sample.getPositions();
-      }
-      else
-      {
-         Alembic::AbcGeom::ISubDSchema::Sample sample;
-         objSubD.getSchema().get(sample,sampleInfo.ceilIndex);
-         meshPos = sample.getPositions();
-      }
-      for(size_t i=0;i<meshPos->size();i++)
-	  {	
-		  vArray[i].x += (meshPos->get()[i].x - vArray[i].x) * (float)sampleInfo.alpha; 
-		  vArray[i].x += (meshPos->get()[i].y - vArray[i].y) * (float)sampleInfo.alpha; 
-		  vArray[i].x += (meshPos->get()[i].z - vArray[i].z) * (float)sampleInfo.alpha;
-	  }
+	   Alembic::Abc::P3fArraySamplePtr meshPos;
+
+       if(objMesh.valid())
+           meshPos = polyMeshSample.getPositions();
+       else
+           meshPos = subDSample.getPositions();
+
+       if (flags & ALEMBIC_DATAFILL_VERTEX_IMPORT)
+       {
+           mesh.setNumVerts((int)meshPos->size());
+       }
+       else if ( flags & ALEMBIC_DATAFILL_VERTEX_UPDATE)
+       {
+           if(mesh.getNumVerts() != meshPos->size())
+               return;
+       }
+
+	   std::vector<Point3> vArray;
+	   vArray.reserve(meshPos->size());
+	   for(size_t i=0;i<meshPos->size();i++)
+		  vArray.push_back(Point3(meshPos->get()[i].x,meshPos->get()[i].y,meshPos->get()[i].z));
+
+	   // blend
+	   if(sampleInfo.alpha != 0.0)
+	   {
+		  if(objMesh.valid())
+		  {
+			 Alembic::AbcGeom::IPolyMeshSchema::Sample polyMeshSample2;
+			 objMesh.getSchema().get(polyMeshSample2,sampleInfo.ceilIndex);
+			 meshPos = polyMeshSample2.getPositions();
+		  }
+		  else
+		  {
+			 Alembic::AbcGeom::ISubDSchema::Sample subDSample2;
+			 objSubD.getSchema().get(subDSample2,sampleInfo.ceilIndex);
+			 meshPos = subDSample2.getPositions();
+		  }
+
+		  for(size_t i=0;i<meshPos->size();i++)
+		  {	
+			  vArray[i].x += (meshPos->get()[i].x - vArray[i].x) * (float)sampleInfo.alpha; 
+			  vArray[i].x += (meshPos->get()[i].y - vArray[i].y) * (float)sampleInfo.alpha; 
+			  vArray[i].x += (meshPos->get()[i].z - vArray[i].z) * (float)sampleInfo.alpha;
+		  }
+	   }
+
+	   for(int i=0;i<meshPos->size();i++)
+		  mesh.setVert(i, vArray[i].x, vArray[i].y, vArray[i].z);
    }
 
-   for(int i=0;i<meshPos->size();i++)
-      mesh.setVert(i, vArray[i].x, vArray[i].y, vArray[i].z);
+   if ( flags & ALEMBIC_DATAFILL_FACELIST )
+   {
+		Alembic::Abc::Int32ArraySamplePtr meshFaceCount;
+		Alembic::Abc::Int32ArraySamplePtr meshFaceIndices;
+
+		if(objMesh.valid())
+		{
+            meshFaceCount = polyMeshSample.getFaceCounts();
+            meshFaceIndices = polyMeshSample.getFaceIndices();
+		}
+		else
+		{
+            meshFaceCount = subDSample.getFaceCounts();
+            meshFaceIndices = subDSample.getFaceIndices();
+		}
+
+        // Count the number of triangles
+        // Right now, we're only dealing with faces that are triangles, but we may have to account for higher primitives later
+        int numTriangles = 0;
+        for (size_t i = 0; i < meshFaceCount->size(); i += 1)
+        {
+            if( meshFaceCount->get()[i] != 3)
+                continue;
+
+            numTriangles += 1;
+        }
+
+        // Set up the index buffer
+        mesh.setNumFaces(numTriangles);
+        for (size_t i = 0; i < meshFaceCount->size(); i += 1)
+        {
+            if( meshFaceCount->get()[i] != 3)
+                continue;
+
+            // three vertex indices of a triangle
+            int v0 = meshFaceIndices->get()[i*3];
+            int v1 =  meshFaceIndices->get()[i*3+1];
+            int v2 =  meshFaceIndices->get()[i*3+2];
+
+            // vertex positions
+            Face &face = mesh.faces[i];
+            face.setMatID(1);
+            face.setEdgeVisFlags(1, 1, 1);
+            face.setVerts(v0, v1, v2);
+        }
+
+        mesh.InvalidateGeomCache();
+        mesh.InvalidateTopologyCache();
+   }
 }
 
 int AlembicImport_PolyMesh(const std::string &file, const std::string &identifier, alembic_importoptions options)
@@ -300,10 +365,10 @@ int AlembicImport_PolyMesh(const std::string &file, const std::string &identifie
         return alembic_failure;
 
 	// Fill in the mesh
-	AlembicImport_FillInPolyMesh(iObj, triobj);
+	AlembicImport_FillInPolyMesh(iObj, triobj, 0, ALEMBIC_DATAFILL_POLYMESH_IMPORT);
 
 	// Create the object node
-	INode *node = GetCOREInterface12()->CreateObjectNode(triobj, identifier.c_str());
+	INode *node = GetCOREInterface12()->CreateObjectNode(triobj, iObj.getName().c_str());
 	if (!node)
 		return alembic_failure;
 

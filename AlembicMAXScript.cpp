@@ -1,5 +1,5 @@
+
 #include "Foundation.h"
-#include "alembic.h"
 #include "AlembicArchiveStorage.h"
 #include "AlembicPolyMeshModifier.h"
 
@@ -176,7 +176,7 @@ int ExocortexAlembicStaticInterface::ExocortexAlembicImport(MCHAR* strFileName)
 		// PolyMesh
 		else if (Alembic::AbcGeom::IPolyMesh::matches(objects[i].getMetaData()))
 		{
-			int ret = AlembicImport_PolyMesh(file, objects[i].getName(), importOptions); 
+			int ret = AlembicImport_PolyMesh(file, objects[i].getFullName(), importOptions); 
 		}	
 	}
 

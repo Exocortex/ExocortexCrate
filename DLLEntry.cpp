@@ -3,7 +3,8 @@
    DESCRIPTION: Contains the Dll Entry needed for 3DSMax Plugins
    CREATED BY:  Jean-Sylvain Sormany
  **********************************************************************/
-#include "alembic.h"
+#include "Foundation.h"
+#include "AlembicDefinitions.h"
 #include "iparamm2.h"
 
 extern ClassDesc2* GetAlembicExporterDesc();

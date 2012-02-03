@@ -21,14 +21,14 @@ endif()
 file(GLOB Sources ${CMAKE_CURRENT_SOURCE_DIR}/*.cpp)
 file(GLOB Includes ${CMAKE_CURRENT_SOURCE_DIR}/*.h)
 
-SOURCE_GROUP("Source Files" FILES ${Sources})  
+SOURCE_GROUP("Source Files" FILES ${Sources})   
 SOURCE_GROUP("Header Files" FILES ${Includes})
 
 IF( WIN32 )
 	IF( ${ALEMBIC64} )
 		SET( 3DSMAX_DIR_LIBRARY ${3DSMAX_DIR_ROOT}/x64/lib )
 	ELSE()
-		SET( 3DSMAX_DIR_LIBRARY ${3DSMAX_DIR_ROOT}/lib )
+		SET( 3DSMAX_DIR_LIBRARY ${3DSMAX_DIR_ROOT}/lib ) 
 	ENDIF()	
 ELSEIF( UNIX )
 	SET( 3DSMAX_DIR_LIBRARY ${3DSMAX_DIR_ROOT}/x64/lib )
@@ -44,6 +44,7 @@ MESSAGE( "3DSMAX_LIBRARIES: ${3DSMAX_LIBRARIES}" )
 
 
 set( Sources ${Sources} Alembic.rc )
+remove_definitions( -DNOMINMAX )
 
 include_directories( ${3DSMAX_DIR_INCLUDE} )
 link_directories( ${3DSMAX_DIR_LIBRARY} )

@@ -1,61 +1,7 @@
 #ifndef _ALEMBIC_H_
 #define _ALEMBIC_H_
 
-#ifdef NOMINMAX
-	#undef NOMINMAX
-#endif
-
-#include "Max.h"
 #include "Foundation.h"
-
-// Alembic Data Fill Bit Flags
-typedef unsigned int AlembicDataFillFlags;
-const unsigned int ALEMBIC_DATAFILL_VERTEX = 1;
-const unsigned int ALEMBIC_DATAFILL_FACELIST = 2; 
-
-enum MeshTopologyType
-{
-    NORMAL,
-    SURFACE,
-    NORMAL_SURFACE
-};
-
-enum alembic_return_code
-{
-	alembic_success = 0,
-	alembic_invalidarg,
-	alembic_failure,
-};
-
-typedef struct _alembic_importoptions
-{
-   bool importNormals;
-   bool importUVs;
-   bool importClusters;
-   bool importVisibility;
-   bool importStandins;
-   bool importBboxes;
-   bool attachToExisting;
-
-   _alembic_importoptions() : importNormals(false)
-	, importUVs(false)
-	, importClusters(false)
-	, importVisibility(false)
-	, importStandins(false)
-	, importBboxes(false)
-	, attachToExisting(false)
-   {
-   }
-} alembic_importoptions;
-
-struct SampleInfo
-{
-   Alembic::AbcCoreAbstract::index_t floorIndex;
-   Alembic::AbcCoreAbstract::index_t ceilIndex;
-   double alpha;
-};
-
-SampleInfo getSampleInfo(double iFrame,Alembic::AbcCoreAbstract::TimeSamplingPtr iTime, size_t numSamps);
 
 class AlembicExporter : public SceneExport 
 {

@@ -2,7 +2,6 @@
 #define _ALEMBIC_ARCHIVE_STORAGE_H_
 
 #include "Foundation.h"
-
 #include <map>
 #include <string>
 

@@ -1,7 +1,8 @@
-#include "alembic.h"
-#include "AlembicObject.h"
 #include "ObjectEntry.h"
+#include "Foundation.h"
+#include "AlembicObject.h"
 #include <boost/algorithm/string.hpp>
+#include "utility.h"
 
 namespace AbcA = ::Alembic::AbcCoreAbstract::ALEMBIC_VERSION_NS;
 using namespace AbcA;
@@ -12,31 +13,25 @@ AlembicObject::AlembicObject (const SceneEntry & in_Ref, AlembicWriteJob * in_Jo
     mJob = in_Job;
     mOParent = mJob->GetArchive().getTop();
 
-    // find the parent
-    /*std::string identifier = in_Ref.obj->GetObjectName();
-    std::vector<std::string> parts;
-    boost::split(parts, identifier, boost::is_any_of("/"));*/
+   // find the parent
+   std::string identifier = getIdentifierFromRef(GetRef());
+   std::vector<std::string> parts;
+   boost::split(parts, identifier, boost::is_any_of("/"));
 
-	INode *parentNode = in_Ref.node->GetParentNode();
-	if (!parentNode)
-		return;
+   for(size_t i=1;i<parts.size();i++)
+   {
+      for(size_t j=0;j<mOParent.getNumChildren();j++)
+      {
+         Alembic::Abc::OObject child = mOParent.getChild(j);
+         if(child.getName() == parts[i])
+         {
+            mOParent = child;
+            break;
+         }
+      }
+   }
 
-	std::string parentName = parentNode->GetName();
-
-    // for(size_t i=1;i<parts.size();i++)
-    // {
-        for(size_t j=0;j<mOParent.getNumChildren();j++)
-        {
-            Alembic::Abc::OObject child = mOParent.getChild(j);
-            if(child.getName() == parentName)
-            {
-                mOParent = child;
-                break;
-            }
-        }
-    // }
-
-    mNumSamples = 0;
+   mNumSamples = 0;
 }
 
 AlembicObject::~AlembicObject()

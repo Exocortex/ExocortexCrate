@@ -10,11 +10,11 @@
 
  *>	Copyright (c) 2000 Autodesk, All Rights Reserved.
  **********************************************************************/
-#include "alembic.h"
-#include "AlembicXFormModifier.h"
-#include "MeshNormalSpec.h"
+#include "Foundation.h"
 #include "iparamm2.h"
 #include "simpmod.h"
+#include "AlembicXFormModifier.h"
+#include "MeshNormalSpec.h"
 
 static GenSubObjType SOT_Vertex(1);
 static GenSubObjType SOT_Edge(2);

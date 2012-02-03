@@ -1,4 +1,5 @@
-#include "alembic.h"
+#include "AlembicPolyMsh.h"
+#include "Foundation.h"
 #include "AlembicPolyMsh.h"
 #include "AlembicXForm.h"
 #include "SceneEntry.h"

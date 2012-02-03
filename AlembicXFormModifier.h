@@ -14,7 +14,7 @@
 #ifndef __ALEMBIC_XFORM_MODIFIER__H
 #define __ALEMBIC_XFORM_MODIFIER__H
 
-#include "Max.h"
+#include "Foundation.h"
 #include "MNMath.h"
 #include "PolyObj.h"
 #include "iparamm2.h"
