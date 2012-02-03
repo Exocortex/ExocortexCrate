@@ -1,6 +1,6 @@
 cmake_minimum_required (VERSION 2.6) 
 
-project ( ExocortexAlembic3dsmax${alembic_VERSION} ) 
+project ( ExocortexAlembic3DSMax${alembic_VERSION} ) 
 
 INCLUDE(../ExocortexAlembicShared/ExocortexCMakeShared.txt)
 
