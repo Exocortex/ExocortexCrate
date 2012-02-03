@@ -6,12 +6,21 @@ file(GLOB Includes ${CMAKE_CURRENT_SOURCE_DIR}/*.h)
 SOURCE_GROUP("Source Files" FILES ${Sources})
 SOURCE_GROUP("Header Files" FILES ${Includes})
 
+if( Exocortex_SERVICES OR Exocortex_RLM_ONLY )
+	include_directories( ${Rlm_INCLUDE_DIR} )
+	include_directories( ${Exocortex_INCLUDE_DIR} )
+endif()
+ 
+if( Exocortex_SERVICES OR Exocortex_RLM_ONLY )
+	link_directories( ${Rlm_LIBRARYDIR} )
+endif()
+
 LINK_LIBRARIES( ${ALEMBIC_CORE_LIBS}
 			  ${ALEMBIC_HDF5_LIBS}
 			  ${PYTHON_LIBS}
 			  ${Boost_LIBRARIES}
 			  ${ALEMBIC_ILMBASE_LIBS}
-			  ${ZLIB_LIBRARIES})
+			  ${ZLIB_LIBRARIES} ${Rlm_LIBRARIES} )
 
 INCLUDE_DIRECTORIES( ${LIBRARY_ROOT}/python/2.6.7/Include )
 if(WIN32)
