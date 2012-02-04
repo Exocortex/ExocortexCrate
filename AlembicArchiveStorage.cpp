@@ -33,9 +33,9 @@ Alembic::Abc::IArchive * getArchiveFromID(XSI::CString path)
       // check if we can open more archives
       if(GetLicense() == EC_LICENSE_RESULT_DEMO_LICENSE)
       {
-         if(gArchives.size() == 1)
+         if(gArchives.size() == 2)
          {
-            EC_LOG_WARNING("[ExocortexAlembic] Demo Mode: Only one open archive at a time allowed!");
+            EC_LOG_WARNING("[ExocortexAlembic] Demo Mode: Only two open archives at a time allowed!");
             return NULL;
          }
       }
