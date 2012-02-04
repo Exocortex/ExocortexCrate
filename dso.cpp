@@ -210,10 +210,10 @@ static int Init(AtNode *mynode, void **user_ptr)
       // check if we already know this path
       if(!HasFullLicense())
       {
-         if(gUsedArchives.size() > 0 && 
+         if(gUsedArchives.size() > 1 && 
             gUsedArchives.find(paths[pathIndex]) == gUsedArchives.end())
          {
-            AiMsgError("[ExocortexAlembic] Demo Mode: Only one alembic archive at a time.");
+            AiMsgError("[ExocortexAlembic] Demo Mode: Only two alembic archives at a time.");
             return NULL;
          }
          gUsedArchives.insert(std::pair<std::string,std::string>(paths[pathIndex],paths[pathIndex]));
