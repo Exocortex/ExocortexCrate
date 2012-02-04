@@ -58,41 +58,36 @@ SICALLBACK XSILoadPlugin( PluginRegistrar& in_reg )
 	in_reg.PutName(L"ExocortexAlembicSoftimage");
 	in_reg.PutVersion(1,0);
 
-   if( GetLicense() != EC_LICENSE_RESULT_NO_LICENSE ) {
+	in_reg.RegisterCommand(L"alembic_export",L"alembic_export");
+	in_reg.RegisterCommand(L"alembic_import",L"alembic_import");
+	in_reg.RegisterCommand(L"alembic_attach_metadata",L"alembic_attach_metadata");
+	in_reg.RegisterCommand(L"alembic_create_item",L"alembic_create_item");
+   in_reg.RegisterCommand(L"alembic_path_manager",L"alembic_path_manager");
+	in_reg.RegisterOperator(L"alembic_xform");
+	in_reg.RegisterOperator(L"alembic_camera");
+	in_reg.RegisterOperator(L"alembic_polymesh");
+	in_reg.RegisterOperator(L"alembic_polymesh_topo");
+	in_reg.RegisterOperator(L"alembic_nurbs");
+	in_reg.RegisterOperator(L"alembic_bbox");
+	in_reg.RegisterOperator(L"alembic_normals");
+	in_reg.RegisterOperator(L"alembic_uvs");
+	in_reg.RegisterOperator(L"alembic_crvlist");
+	in_reg.RegisterOperator(L"alembic_crvlist_topo");
+	in_reg.RegisterOperator(L"alembic_visibility");
+	in_reg.RegisterOperator(L"alembic_geomapprox");
+	in_reg.RegisterOperator(L"alembic_standinop");
+	in_reg.RegisterMenu(siMenuMainFileExportID,L"alembic_MenuExport",false,false);
+	in_reg.RegisterMenu(siMenuMainFileImportID,L"alembic_MenuImport",false,false);
+   in_reg.RegisterMenu(siMenuMainFileProjectID,L"alembic_MenuPathManager",false,false);
+	in_reg.RegisterMenu(siMenuTbGetPropertyID,L"alembic_MenuMetaData",false,false);
+   in_reg.RegisterProperty(L"alembic_export_settings");
+   in_reg.RegisterProperty(L"alembic_import_settings");
+   in_reg.RegisterProperty(L"alembic_timecontrol");
+   in_reg.RegisterProperty(L"alembic_metadata");
 
-		in_reg.RegisterCommand(L"alembic_export",L"alembic_export");
-		in_reg.RegisterCommand(L"alembic_import",L"alembic_import");
-		in_reg.RegisterCommand(L"alembic_attach_metadata",L"alembic_attach_metadata");
-		in_reg.RegisterCommand(L"alembic_create_item",L"alembic_create_item");
-      if(HasFullLicense())
-		   in_reg.RegisterCommand(L"alembic_path_manager",L"alembic_path_manager");
-		in_reg.RegisterOperator(L"alembic_xform");
-		in_reg.RegisterOperator(L"alembic_camera");
-		in_reg.RegisterOperator(L"alembic_polymesh");
-		in_reg.RegisterOperator(L"alembic_polymesh_topo");
-		in_reg.RegisterOperator(L"alembic_nurbs");
-		in_reg.RegisterOperator(L"alembic_bbox");
-		in_reg.RegisterOperator(L"alembic_normals");
-		in_reg.RegisterOperator(L"alembic_uvs");
-		in_reg.RegisterOperator(L"alembic_crvlist");
-		in_reg.RegisterOperator(L"alembic_crvlist_topo");
-		in_reg.RegisterOperator(L"alembic_visibility");
-		in_reg.RegisterOperator(L"alembic_geomapprox");
-		in_reg.RegisterOperator(L"alembic_standinop");
-		in_reg.RegisterMenu(siMenuMainFileExportID,L"alembic_MenuExport",false,false);
-		in_reg.RegisterMenu(siMenuMainFileImportID,L"alembic_MenuImport",false,false);
-      if(HasFullLicense())
-   	   in_reg.RegisterMenu(siMenuMainFileProjectID,L"alembic_MenuPathManager",false,false);
-		in_reg.RegisterMenu(siMenuTbGetPropertyID,L"alembic_MenuMetaData",false,false);
-	   in_reg.RegisterProperty(L"alembic_export_settings");
-	   in_reg.RegisterProperty(L"alembic_import_settings");
-	   in_reg.RegisterProperty(L"alembic_timecontrol");
-	   in_reg.RegisterProperty(L"alembic_metadata");
-
-	   // register ICE nodes
-	   Register_alembic_curves(in_reg);
-	   Register_alembic_points(in_reg);
-	}
+   // register ICE nodes
+   Register_alembic_curves(in_reg);
+   Register_alembic_points(in_reg);
 
 	return CStatus::OK;
 }
