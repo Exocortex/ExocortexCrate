@@ -1,3 +1,4 @@
+#include "AlembicLicensing.h"
 #include "AlembicWriteJob.h"
 #include "AlembicObject.h"
 #include "AlembicXform.h"
