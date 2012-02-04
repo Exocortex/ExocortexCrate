@@ -19,6 +19,7 @@
 #include <xsi_shapekey.h>
 #include <xsi_plugin.h>
 #include <xsi_utils.h>
+#include "AlembicLicensing.h"
 
 using namespace XSI;
 
@@ -38,6 +39,18 @@ SampleInfo getSampleInfo
 
    result.floorIndex = floorIndex.first;
    result.ceilIndex = result.floorIndex;
+
+   // check if we have a full license
+   if(!HasFullLicense())
+   {
+      if(result.floorIndex > 75)
+      {
+         EC_LOG_WARNING("[ExocortexAlembic] Demo Mode: Cannot open sample indices higher than 75.");
+         result.floorIndex = 75;
+         result.ceilIndex = 75;
+         result.alpha = 0.0;
+      }
+   }
 
    if (fabs(iFrame - floorIndex.second) < 0.0001) {
       result.alpha = 0.0f;
@@ -62,6 +75,7 @@ SampleInfo getSampleInfo
    result.ceilIndex = ceilIndex.first;
 
    result.alpha = (iFrame - floorIndex.second) / (ceilIndex.second - floorIndex.second);
+
    return result;
 }
 

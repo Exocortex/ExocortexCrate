@@ -3,6 +3,7 @@
 #include <boost/algorithm/string.hpp>
 #include <xsi_utils.h>
 #include <xsi_time.h>
+#include "AlembicLicensing.h"
 
 struct AlembicArchiveInfo
 {
@@ -29,6 +30,16 @@ Alembic::Abc::IArchive * getArchiveFromID(XSI::CString path)
    it = gArchives.find(resolvedPath.GetAsciiString());
    if(it == gArchives.end())
    {
+      // check if we can open more archives
+      if(GetLicense() == EC_LICENSE_RESULT_DEMO_LICENSE)
+      {
+         if(gArchives.size() == 1)
+         {
+            EC_LOG_WARNING("[ExocortexAlembic] Demo Mode: Only one open archive at a time allowed!");
+            return NULL;
+         }
+      }
+
       // check if the file exists
       FILE * file = fopen(resolvedPath.GetAsciiString(),"rb");
       if(file != NULL)
