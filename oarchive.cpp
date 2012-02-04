@@ -332,9 +332,9 @@ PyObject * oArchive_new(PyObject * self, PyObject * args)
 
    if(!HasFullLicense())
    {
-      if(getNbOArchives() > 0)
+      if(getNbOArchives() > 1)
       {
-         PyErr_SetString(getError(), "[ExocortexAlembic] Demo Mode: Only one output archive at a time allowed!");
+         PyErr_SetString(getError(), "[ExocortexAlembic] Demo Mode: Only two output archives at a time allowed!");
          return NULL;
       }
    }

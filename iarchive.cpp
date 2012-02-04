@@ -157,9 +157,9 @@ PyObject * iArchive_new(PyObject * self, PyObject * args)
 
    if(!HasFullLicense())
    {
-      if(getNbIArchives() > 0)
+      if(getNbIArchives() > 1)
       {
-         PyErr_SetString(getError(), "[ExocortexAlembic] Demo Mode: Only one open archive at a time allowed!");
+         PyErr_SetString(getError(), "[ExocortexAlembic] Demo Mode: Only two open archives at a time allowed!");
          return NULL;
       }
    }
