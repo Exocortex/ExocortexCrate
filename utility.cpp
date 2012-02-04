@@ -49,6 +49,7 @@ SampleInfo getSampleInfo
          result.floorIndex = 75;
          result.ceilIndex = 75;
          result.alpha = 0.0;
+         return result;
       }
    }
 
