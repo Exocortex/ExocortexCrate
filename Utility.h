@@ -13,7 +13,11 @@ struct SampleInfo
 };
 
 SampleInfo getSampleInfo(double iFrame,Alembic::AbcCoreAbstract::TimeSamplingPtr iTime, size_t numSamps);
+std::string buildIdentifierFromRef(const SceneEntry &in_Ref);
+std::string buildModelIdFromXFormId(const std::string &xformId);
 std::string getIdentifierFromRef(const SceneEntry &in_Ref);
+std::string getModelName( const std::string &identifier );
+std::string getModelFullName( const std::string &identifier );
 
 
 

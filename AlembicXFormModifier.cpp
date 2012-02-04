@@ -15,24 +15,27 @@
 #include "simpmod.h"
 #include "AlembicXFormModifier.h"
 #include "MeshNormalSpec.h"
+#include "AlembicDefinitions.h"
+#include "AlembicArchiveStorage.h"
+#include "Utility.h"
 
 static GenSubObjType SOT_Vertex(1);
 static GenSubObjType SOT_Edge(2);
 static GenSubObjType SOT_Face(4);
 
-class AlembicXForm : public Modifier {
+class AlembicXFormModifier : public Modifier {
 public:
 	IParamBlock2 *pblock;
 
 	static IObjParam *ip;
-	static AlembicXForm *editMod;
+	static AlembicXFormModifier *editMod;
 
-	AlembicXForm();
+	AlembicXFormModifier();
 
 	// From Animatable
 	void DeleteThis() { delete this; }
 	void GetClassName(TSTR& s) { s = _T("Exocortex Alembic Xform"); }  
-	virtual Class_ID ClassID() { return EXOCORTEX_ALEMBIC_POLYMESH_MODIFIER_ID; }		
+	virtual Class_ID ClassID() { return EXOCORTEX_ALEMBIC_XFORM_MODIFIER_ID; }		
 	RefTargetHandle Clone(RemapDir& remap);
 	TCHAR *GetObjectName() { return _T("Exocortex Alembic Xform"); }
 
@@ -72,27 +75,31 @@ public:
 	void Convert (PatchObject *obj, TimeValue t, Mesh & m, Interval & ivalid);
 
 	int UI2SelLevel(int selLevel);
+private:
+    alembic_nodeprops m_AlembicNodeProps;
+public:
+	void SetAlembicId(const std::string &file, const std::string &identifier);
 };
 
 //--- ClassDescriptor and class vars ---------------------------------
 
-IObjParam *AlembicXForm::ip              = NULL;
-AlembicXForm *AlembicXForm::editMod         = NULL;
+IObjParam *AlembicXFormModifier::ip                 = NULL;
+AlembicXFormModifier *AlembicXFormModifier::editMod         = NULL;
 
-class AlembicXFormClassDesc : public ClassDesc2 {
+class AlembicXFormModifierClassDesc : public ClassDesc2 {
 	public:
 	int 			IsPublic() { return 1; }
-	void *			Create(BOOL loading = FALSE) { return new AlembicXForm; }
+	void *			Create(BOOL loading = FALSE) { return new AlembicXFormModifier; }
 	const TCHAR *	ClassName() { return _T("ExoCortex Alembic XForm"); }
 	SClass_ID		SuperClassID() { return OSM_CLASS_ID; }
-	Class_ID		ClassID() { return EXOCORTEX_ALEMBIC_POLYMESH_MODIFIER_ID; }
+	Class_ID		ClassID() { return EXOCORTEX_ALEMBIC_XFORM_MODIFIER_ID; }
 	const TCHAR* 	Category() { return _T("MAX STANDARD"); }
-	const TCHAR*	InternalName() { return _T("AlembicXForm"); }	// returns fixed parsable name (scripter-visible name)
+	const TCHAR*	InternalName() { return _T("AlembicXFormModifier"); }	// returns fixed parsable name (scripter-visible name)
 	HINSTANCE		HInstance() { return hInstance; }			// returns owning module handle
 };
 
-static AlembicXFormClassDesc convertToMeshDesc;
-ClassDesc* GetAlembicXFormDesc() {return &convertToMeshDesc;}
+static AlembicXFormModifierClassDesc convertToMeshDesc;
+ClassDesc* GetAlembicXFormModifierDesc() {return &convertToMeshDesc;}
 
 // Parameter block IDs:
 // Blocks themselves:
@@ -100,7 +107,7 @@ enum { turn_params };
 // Parameters in first block:
 enum { turn_use_invis, turn_sel_type, turn_softsel, turn_sel_level };
 
-static ParamBlockDesc2 turn_param_desc ( turn_params, _T("ExoCortexAlembicXForm"),
+static ParamBlockDesc2 turn_param_desc ( turn_params, _T("ExoCortexAlembicXFormModifier"),
 									IDS_PARAMETERS, &convertToMeshDesc,
 									P_AUTO_CONSTRUCT | P_AUTO_UI, REF_PBLOCK,
 	//rollout description
@@ -131,41 +138,74 @@ static ParamBlockDesc2 turn_param_desc ( turn_params, _T("ExoCortexAlembicXForm"
 
 //--- Modifier methods -------------------------------
 
-AlembicXForm::AlembicXForm() {
+AlembicXFormModifier::AlembicXFormModifier() {
 	pblock = NULL;
-	GetAlembicXFormDesc()->MakeAutoParamBlocks(this);
+	GetAlembicXFormModifierDesc()->MakeAutoParamBlocks(this);
 }
 
-RefTargetHandle AlembicXForm::Clone(RemapDir& remap) {
-	AlembicXForm *mod = new AlembicXForm();
+RefTargetHandle AlembicXFormModifier::Clone(RemapDir& remap) {
+	AlembicXFormModifier *mod = new AlembicXFormModifier();
 	mod->ReplaceReference (0, remap.CloneRef(pblock));
 	BaseClone(this, mod, remap);
 	return mod;
 }
 
-IParamBlock2 *AlembicXForm::GetParamBlockByID (short id) {
+IParamBlock2 *AlembicXFormModifier::GetParamBlockByID (short id) {
 	return (pblock->ID() == id) ? pblock : NULL; 
 }
 
-Interval AlembicXForm::GetValidity (TimeValue t) {
+Interval AlembicXFormModifier::GetValidity (TimeValue t) {
 	Interval ret = FOREVER;
 	pblock->GetValidity (t, ret);
 	return ret;
 }
 
-void AlembicXForm::ModifyObject (TimeValue t, ModContext &mc, ObjectState *os, INode *node) {
+void AlembicXFormModifier::ModifyObject (TimeValue t, ModContext &mc, ObjectState *os, INode *node) 
+{
 	Interval ivalid=os->obj->ObjectValidity (t);
 
-	// set matrix explicitly (this should be done only in the Alembic XForm)
-	// os->SetTM( /* my matrix */, ivalid );
+    Alembic::AbcGeom::IObject iObj = getObjectFromArchive(m_AlembicNodeProps.m_File, m_AlembicNodeProps.m_Identifier);
+    
+    if(!iObj.valid())
+        return;
 
-	// set mesh explicitly (this should actually be done in the Àlembic PolyMesh`modifier, not the Alembic XForm one)
-	TriObject *tobj = CreateNewTriObject ();
-	Mesh & m = tobj->GetMesh();
-	os->obj = (Object *) tobj;
+    Alembic::AbcGeom::IXform obj(iObj,Alembic::Abc::kWrapExisting);
+
+    if(!obj.valid())
+        return;
+
+    SampleInfo sampleInfo = getSampleInfo(
+        0,
+        obj.getSchema().getTimeSampling(),
+        obj.getSchema().getNumSamples()
+        );
+
+    Alembic::AbcGeom::XformSample sample;
+    obj.getSchema().get(sample,sampleInfo.floorIndex);
+    Alembic::Abc::M44d matrix = sample.getMatrix();
+
+    // blend - need to reconfigure this, doesn't make sense to lerp a matrix
+    /*if(sampleInfo.alpha != 0.0)
+    {
+        obj.getSchema().get(sample,sampleInfo.ceilIndex);
+        Alembic::Abc::M44d ceilMatrix = sample.getMatrix();
+        matrix = (1.0 - sampleInfo.alpha) * matrix + sampleInfo.alpha * ceilMatrix;
+    }
+    */
+
+    // matrix.transpose();
+    Matrix3 objMatrix(
+        Point3(matrix.getValue()[0], matrix.getValue()[1], matrix.getValue()[2]),
+        Point3(matrix.getValue()[4], matrix.getValue()[5], matrix.getValue()[6]),
+        Point3(matrix.getValue()[8], matrix.getValue()[9], matrix.getValue()[10]),
+        Point3(matrix.getValue()[12], matrix.getValue()[13], matrix.getValue()[14]));
+
+
+	// set matrix explicitly 
+	os->SetTM( &objMatrix, ivalid );
 }
 
-void AlembicXForm::BeginEditParams (IObjParam  *ip, ULONG flags, Animatable *prev) {
+void AlembicXFormModifier::BeginEditParams (IObjParam  *ip, ULONG flags, Animatable *prev) {
 	this->ip = ip;	
 	editMod  = this;
 
@@ -176,13 +216,13 @@ void AlembicXForm::BeginEditParams (IObjParam  *ip, ULONG flags, Animatable *pre
 	NotifyDependents(FOREVER, PART_ALL, REFMSG_CHANGE);
 }
 
-void AlembicXForm::EndEditParams (IObjParam *ip,ULONG flags,Animatable *next) {
+void AlembicXFormModifier::EndEditParams (IObjParam *ip,ULONG flags,Animatable *next) {
 	convertToMeshDesc.EndEditParams(ip, this, flags, next);
 	this->ip = NULL;
 	editMod  = NULL;
 }
 
-RefResult AlembicXForm::NotifyRefChanged (Interval changeInt, RefTargetHandle hTarget,
+RefResult AlembicXFormModifier::NotifyRefChanged (Interval changeInt, RefTargetHandle hTarget,
 										   PartID& partID, RefMessage message) {
 	switch (message) {
 	case REFMSG_CHANGE:
@@ -202,7 +242,13 @@ RefResult AlembicXForm::NotifyRefChanged (Interval changeInt, RefTargetHandle hT
 	return REF_SUCCEED;
 }
 
-/*bool AlembicXForm::ChangesSelType()
+void AlembicXFormModifier::SetAlembicId(const std::string &file, const std::string &identifier)
+{
+    m_AlembicNodeProps.m_File = file;
+    m_AlembicNodeProps.m_Identifier = identifier;
+}
+
+/*bool AlembicXFormModifier::ChangesSelType()
 {
 	int selLevel;
 	Interval ivalid = FOREVER;
@@ -215,3 +261,32 @@ RefResult AlembicXForm::NotifyRefChanged (Interval changeInt, RefTargetHandle hT
 }
 
 */
+
+int AlembicImport_XForm(const std::string &file, const std::string &identifier, alembic_importoptions &options)
+{
+    // Find the object in the archive
+	Alembic::AbcGeom::IObject iObj = getObjectFromArchive(file,identifier);
+	if(!iObj.valid())
+		return alembic_failure;
+
+    // Find the scene node that this transform belongs too
+    std::string modelid = getModelName(std::string(iObj.getName()));
+    INode *pNode = options.currentSceneList.FindNodeWithName(modelid);
+    if (!pNode)
+        return alembic_failure;
+
+	// Create the xform modifier
+	AlembicXFormModifier *pModifier = static_cast<AlembicXFormModifier*>
+		(GetCOREInterface()->CreateInstance(OSM_CLASS_ID, EXOCORTEX_ALEMBIC_XFORM_MODIFIER_ID));
+
+	// Set the alembic id
+	pModifier->SetAlembicId(file, identifier);
+
+	// Add the modifier to the node
+	GetCOREInterface12()->AddModifier(*pNode, *pModifier);
+
+	return alembic_success;
+}
+
+
+

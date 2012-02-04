@@ -49,7 +49,8 @@ SET( 3DSMAX_LIBRARIES core geom gfx maxutil mesh paramblk2 mnmath poly )
 		
 MESSAGE( "3DSMAX_DIR_LIBRARY: ${3DSMAX_DIR_LIBRARY}" )
 
-MESSAGE( "3DSMAX_LIBRARIES: ${3DSMAX_LIBRARIES}" )  
+MESSAGE( "3DSMAX_LIBRARIES: ${3DSMAX_LIBRARIES}" )
+remove_definitions( -DNOMINMAX ) 
 
 set( Sources ${Sources} Alembic.rc )
 

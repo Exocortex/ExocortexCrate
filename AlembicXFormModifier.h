@@ -22,7 +22,7 @@
 #include "surf_api.h"
 
 // can be generated via gencid.exe in the help folder of the 3DS Max.
-#define EXOCORTEX_ALEMBIC_POLYMESH_MODIFIER_ID	Class_ID(0x591c09b2, 0x46912cd)
+#define EXOCORTEX_ALEMBIC_XFORM_MODIFIER_ID	Class_ID(0x591c09b2, 0x46912cd)
 
 #define REF_PBLOCK 0
 
@@ -31,7 +31,8 @@ TCHAR *GetString(int id);
 extern ClassDesc *GetAlembicXFormDesc();
 
 // Alembic functions
-extern void AlembicAddtoScene_PolyMesh();
+typedef struct _alembic_importoptions alembic_importoptions;
+extern int AlembicImport_XForm(const std::string &file, const std::string &identifier, alembic_importoptions &options);
 
 extern HINSTANCE hInstance;
 

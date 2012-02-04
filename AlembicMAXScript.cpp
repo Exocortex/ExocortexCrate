@@ -2,6 +2,10 @@
 #include "Foundation.h"
 #include "AlembicArchiveStorage.h"
 #include "AlembicPolyMeshModifier.h"
+#include "AlembicXFormModifier.h"
+#include "MeshMtlList.h"
+#include "SceneEnumProc.h"
+#include "AlembicDefinitions.h"
 
 class ExocortexAlembicStaticInterface : public FPInterfaceDesc
 {
@@ -165,12 +169,21 @@ int ExocortexAlembicStaticInterface::ExocortexAlembicImport(MCHAR* strFileName)
          objects.push_back(objects[i].getChild(j));
    }
 
-   // Create the max objects as needed
-   for(size_t i=0;i<objects.size();i++)
+   // Get a list of the current objects in the scene
+   MeshMtlList allMtls;
+   Interface7 *i = GetCOREInterface7();
+   importOptions.sceneEnumProc.Init(i->GetScene(), i->GetTime(), i, &allMtls);
+   importOptions.currentSceneList.FillList(importOptions.sceneEnumProc);
+   Object *currentObject = NULL;
+
+   // Create the max objects as needed, we loop through the list in reverse to create
+   // the children node first and then hook them up to their parents
+   for(int i=(int)objects.size()-1; i>=0 ; i -= 1)
    {
 		// XForm
 		if(Alembic::AbcGeom::IXform::matches(objects[i].getMetaData()))
 		{
+            int ret = AlembicImport_XForm(file, objects[i].getFullName(), importOptions);
 		}
 
 		// PolyMesh

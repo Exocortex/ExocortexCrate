@@ -399,3 +399,20 @@ void AlembicExporter::SetTopologyType(MeshTopologyType val)
 {
     topologyType = val;
 }
+
+void AlembicImport_SetupChildLinks( Alembic::Abc::IObject &obj, alembic_importoptions &options )
+{
+    INode *pParentNode = options.currentSceneList.FindNodeWithName(std::string(obj.getName()));
+
+    if (pParentNode)
+    {
+        for (size_t i = 0; i < obj.getNumChildren(); i += 1)
+        {
+            Alembic::Abc::IObject childObj = obj.getChild(i);
+            INode *pChildNode = options.currentSceneList.FindNodeWithName(std::string(childObj.getName()));
+
+            if (pChildNode)
+                pParentNode->AttachChild(pChildNode);
+        }
+    }
+}

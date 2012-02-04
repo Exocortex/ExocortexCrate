@@ -6,15 +6,19 @@
 #include "SceneEntry.h"
 #include "MeshMtlList.h"
 
-SceneEnumProc::SceneEnumProc(IScene *scene, TimeValue t, Interface *i, MeshMtlList *ml) 
+SceneEnumProc::SceneEnumProc()
 {
-	time = t;
-	theScene = scene;
+    time = 0;
+	theScene = 0;
 	count = 0;
 	head = tail = NULL;
-	this->i = i;
-	mtlList = ml;
-	theScene->EnumTree(this);
+	i = 0;
+	mtlList = 0;
+}
+
+SceneEnumProc::SceneEnumProc(IScene *scene, TimeValue t, Interface *i, MeshMtlList *ml) 
+{
+	Init(scene, t, i, ml);
 }
 
 SceneEnumProc::~SceneEnumProc() 
@@ -35,7 +39,7 @@ int SceneEnumProc::callback(INode *node)
 	Object *obj = node->EvalWorldState(time).obj;
 	if (obj->CanConvertToType(triObjectClassID)) 
     {
-		Append(node, obj, OBTYPE_MESH);
+		Append(node, obj, OBTYPE_MESH, 0);
 		mtlList->AddMtl(node->GetMtl());
 		return TREE_CONTINUE;
 	}
@@ -48,8 +52,8 @@ int SceneEnumProc::callback(INode *node)
 			Object *lobj = ln->EvalWorldState(time).obj;
 			switch(lobj->SuperClassID()) 
             {
-				case LIGHT_CLASS_ID:  Append(node, obj, OBTYPE_LTARGET); break;
-				case CAMERA_CLASS_ID: Append(node, obj, OBTYPE_CTARGET); break;
+				case LIGHT_CLASS_ID:  Append(node, obj, OBTYPE_LTARGET, 0); break;
+				case CAMERA_CLASS_ID: Append(node, obj, OBTYPE_CTARGET, 0); break;
 			}
 		}
 		return TREE_CONTINUE;
@@ -60,7 +64,7 @@ int SceneEnumProc::callback(INode *node)
 		case HELPER_CLASS_ID:
 			if ( obj->ClassID()==Class_ID(DUMMY_CLASS_ID,0)) 
             {
-				Append(node, obj, OBTYPE_DUMMY);
+				Append(node, obj, OBTYPE_DUMMY, 0);
             }
 			break;
 		case LIGHT_CLASS_ID: 
@@ -71,7 +75,7 @@ int SceneEnumProc::callback(INode *node)
 		case CAMERA_CLASS_ID:
 			if (obj->ClassID()==Class_ID(LOOKAT_CAM_CLASS_ID,0))
             {
-				Append(node, obj, OBTYPE_CAMERA);
+				Append(node, obj, OBTYPE_CAMERA, 0);
             }
 			break;
 	}
@@ -80,9 +84,9 @@ int SceneEnumProc::callback(INode *node)
 }
 
 
-void SceneEnumProc::Append(INode *node, Object *obj, int type) 
+SceneEntry *SceneEnumProc::Append(INode *node, Object *obj, int type, std::string *providedfullname) 
 {
-	SceneEntry *entry = new SceneEntry(node, obj, type);
+	SceneEntry *entry = new SceneEntry(node, obj, type, providedfullname);
 
 	if(tail)
     {
@@ -93,7 +97,9 @@ void SceneEnumProc::Append(INode *node, Object *obj, int type)
     {
 		head = entry;
     }
-	count++;	
+	count++;
+
+    return entry;
 }
 
 Box3 SceneEnumProc::Bound() 
@@ -125,4 +131,15 @@ SceneEntry *SceneEnumProc::Find(INode *node)
 	}
 
 	return NULL;
+}
+
+void SceneEnumProc::Init(IScene *scene, TimeValue t, Interface *i, MeshMtlList *ml)
+{
+    time = t;
+	theScene = scene;
+	count = 0;
+	head = tail = NULL;
+	this->i = i;
+	mtlList = ml;
+	theScene->EnumTree(this);
 }

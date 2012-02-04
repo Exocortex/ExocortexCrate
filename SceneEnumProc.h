@@ -25,14 +25,16 @@ public:
 	int			count;
 	MeshMtlList *mtlList;
 	TimeValue	time;
-				SceneEnumProc(IScene *scene, TimeValue t, Interface *i, MeshMtlList *ml);
-				~SceneEnumProc();
+public:
+                SceneEnumProc();
+	            SceneEnumProc(IScene *scene, TimeValue t, Interface *i, MeshMtlList *ml);
+                ~SceneEnumProc();
 	int			Count() { return count; }
-	void		Append(INode *node, Object *obj, int type);
+    SceneEntry*	Append(INode *node, Object *obj, int type, std::string *providedfullname);
 	int			callback( INode *node );
 	Box3		Bound();
 	SceneEntry *Find(INode *node);
-	void BuildNames();
+    void        Init(IScene *scene, TimeValue t, Interface *i, MeshMtlList *ml);
 };
 
 #endif //_SCENEENUMPROC_H_

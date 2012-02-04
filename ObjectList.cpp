@@ -4,6 +4,7 @@
 #include "ObjectEntry.h"
 #include "SceneEntry.h"
 #include "SceneEnumProc.h"
+#include "Utility.h"
 
 ObjectList::ObjectList() 
 {
@@ -13,31 +14,15 @@ ObjectList::ObjectList()
 
 ObjectList::ObjectList(SceneEnumProc &scene) 
 {
-	head = tail = NULL;
+    head = tail = NULL;
 	count = 0;
-	int scount = scene.Count();
-	for(SceneEntry *se = scene.head; se!=NULL; se = se->next) 
-    {
-		if ( (se->type!=OBTYPE_MESH)|| !Contains(se->obj))
-        {
-			Append(se);
-        }
-	}
+
+    FillList(scene);
 }
 
 ObjectList::~ObjectList() 
 {
-    /* JSS - This lead to crash on exporter end, will debug later
-	while(head) 
-    {
-		ObjectEntry *next = head->next;
-		delete head;
-		head = next;
-	}
-    */
-
-	head = tail = NULL;
-	count = 0;	
+    // ClearList();
 }
 
 ObjectEntry *ObjectList::Contains(Object *obj) 
@@ -55,15 +40,78 @@ ObjectEntry *ObjectList::Contains(Object *obj)
 
 void ObjectList::Append(SceneEntry *e) 
 {
-	ObjectEntry *entry = new ObjectEntry(e);
-	if(tail)
+    if (e->type == OBTYPE_MESH && Contains(e->obj))
+        return;
+
+    ObjectEntry *entry = new ObjectEntry(e);
+    if(tail)
     {
-		tail->next = entry;
+        tail->next = entry;
     }
-	tail = entry;
-	if(!head)
+    tail = entry;
+    if(!head)
     {
-		head = entry;
+        head = entry;
     }
-	count++;	
+    count++;	
+}
+
+void ObjectList::FillList(SceneEnumProc &scene)
+{
+    ClearList();
+	int scount = scene.Count();
+	for(SceneEntry *se = scene.head; se!=NULL; se = se->next) 
+			Append(se);
+}
+
+void ObjectList::ClearList()
+{
+    // JSS - This lead to crash on exporter end, will debug later
+	while(head) 
+    {
+		ObjectEntry *next = head->next;
+		delete head;
+		head = next;
+	}
+
+	head = tail = NULL;
+	count = 0;	
+}
+
+INode* ObjectList::FindNodeWithFullName(std::string &identifier)
+{
+    // Max Scene nodes are also identified by their transform nodes since an INode contains
+    // both the transform and the shape.  So if we find an "xfo" at the end of the identifier
+    // then we extract the model name from the identifier
+    std::string modelName = getModelFullName(identifier);
+
+    ObjectEntry *e;
+	for (e=head; e!=NULL; e = e->next) 
+    {
+		if(e->entry->fullname == identifier)
+        {
+			return e->entry->node;
+        }
+	}
+
+    return 0;
+}
+
+INode* ObjectList::FindNodeWithName(std::string &identifier)
+{
+    // Max Scene nodes are also identified by their transform nodes since an INode contains
+    // both the transform and the shape.  So if we find an "xfo" at the end of the identifier
+    // then we extract the model name from the identifier
+    std::string modelName = getModelName(identifier);
+    
+    ObjectEntry *e;
+	for (e=head; e!=NULL; e = e->next) 
+    {
+		if(e->entry->node->GetName() == modelName)
+        {
+			return e->entry->node;
+        }
+	}
+
+    return 0;
 }

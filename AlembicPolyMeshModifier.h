@@ -37,7 +37,7 @@ const unsigned int ALEMBIC_DATAFILL_POLYMESH_UPDATE = ALEMBIC_DATAFILL_VERTEX_UP
 
 // Alembic Functions
 typedef struct _alembic_importoptions alembic_importoptions;
-extern int AlembicImport_PolyMesh(const std::string &file, const std::string &identifier, alembic_importoptions options);
+extern int AlembicImport_PolyMesh(const std::string &file, const std::string &identifier, alembic_importoptions &options);
 
 extern HINSTANCE hInstance;
 

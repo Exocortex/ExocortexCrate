@@ -8,7 +8,7 @@
 #include "iparamm2.h"
 
 extern ClassDesc2* GetAlembicExporterDesc();
-extern ClassDesc* GetAlembicXFormDesc();
+extern ClassDesc* GetAlembicXFormModifierDesc();
 extern ClassDesc* GetAlembicPolyMeshModifierDesc();
 
 HINSTANCE hInstance;
@@ -41,7 +41,7 @@ MAX_DLL_EXPORT ClassDesc* LibClassDesc(int i)
 {
    switch(i) {
       case 0: return GetAlembicExporterDesc();
-	  case 1: return GetAlembicXFormDesc();
+	  case 1: return GetAlembicXFormModifierDesc();
 	  case 2: return GetAlembicPolyMeshModifierDesc();
 
       default: return 0;

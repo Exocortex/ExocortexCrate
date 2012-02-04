@@ -54,4 +54,7 @@ private:
     MeshTopologyType topologyType;
 };
 
+// Helper function to set up the node hierarchy
+void AlembicImport_SetupChildLinks( Alembic::Abc::IObject &obj, alembic_importoptions &options );
+
 #endif

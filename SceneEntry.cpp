@@ -1,8 +1,9 @@
 #include "Foundation.h"
 #include "SceneEntry.h"
 #include <inode.h>
+#include "Utility.h"
 
-SceneEntry::SceneEntry(INode *n, Object *o, int t) 
+SceneEntry::SceneEntry(INode *n, Object *o, int t, std::string *providedfullname) 
 { 
 	node = n; 
     obj = o; 
@@ -10,16 +11,10 @@ SceneEntry::SceneEntry(INode *n, Object *o, int t)
     next = NULL; 
 	tnode = n->GetTarget();
 
-    // Build an 'Alembic' like name
-    /*name = node->GetName();
-    INode *pWalkNode = node->GetParentNode();;
-    while (pWalkNode)
-    {
-        name.insert(0, '//');
-        name.insert(0, pWalkNode->GetName());
-        pWalkNode = node->GetParentNode();
-    }
-    */
+    if (providedfullname == 0)
+        fullname = buildIdentifierFromRef(*this);
+    else
+        fullname = *providedfullname;
 }
 
 void SceneEntry::SetID(int id) 

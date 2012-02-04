@@ -1,6 +1,9 @@
 #ifndef __ALEMBICDEFINITIONS_H__
 #define __ALEMBICDEFINITIONS_H__
 
+#include "SceneEnumProc.h"
+#include "ObjectList.h"
+
 // Alembic Data Fill Bit Flags
 typedef unsigned int AlembicDataFillFlags;
 const unsigned int ALEMBIC_DATAFILL_VERTEX_IMPORT = 1;
@@ -32,7 +35,10 @@ typedef struct _alembic_importoptions
    bool importStandins;
    bool importBboxes;
    bool attachToExisting;
+   SceneEnumProc sceneEnumProc;
+   ObjectList currentSceneList;
 
+public:
    _alembic_importoptions() : importNormals(false)
 	, importUVs(false)
 	, importClusters(false)
@@ -43,5 +49,17 @@ typedef struct _alembic_importoptions
    {
    }
 } alembic_importoptions;
+
+typedef struct _alembic_nodeprops
+{
+    std::string m_File;
+	std::string m_Identifier;
+public:
+    _alembic_nodeprops()
+    {
+        m_File = "";
+        m_Identifier = "";
+    }
+} alembic_nodeprops;
 
 #endif 

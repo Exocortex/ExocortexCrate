@@ -45,7 +45,7 @@ SampleInfo getSampleInfo
    return result;
 }
 
-std::string getIdentifierFromRef(const SceneEntry &in_Ref)
+std::string buildIdentifierFromRef(const SceneEntry &in_Ref)
 {
    std::string result;
    INode *pNode = in_Ref.node;
@@ -60,4 +60,57 @@ std::string getIdentifierFromRef(const SceneEntry &in_Ref)
    }
 
    return result;
+}
+
+std::string buildModelIdFromXFormId(const std::string &xformId)
+{
+    size_t start = xformId.rfind("/");
+    start += 1;
+    size_t end = xformId.rfind("Xfo");
+    end -=1;
+    std::string modelName = xformId.substr(start, end-start+1);
+    modelName = xformId + std::string("/") + modelName;
+    return modelName;
+}
+
+std::string getIdentifierFromRef(const SceneEntry &in_Ref)
+{
+    return in_Ref.fullname;
+}
+
+std::string getModelFullName( const std::string &identifier )
+{
+    // Max Scene nodes are also identified by their transform nodes since an INode contains
+    // both the transform and the shape.  So if we find an "xfo" at the end of the identifier
+    // then we extract the model name from the identifier
+    std::string modelName;
+    size_t pos = identifier.rfind("Xfo", identifier.length()-3, 3);
+    if (pos == identifier.npos)
+    {
+        modelName = identifier;
+    }
+    else
+    {
+        size_t start = identifier.rfind("/");
+        start += 1;
+        modelName = identifier.substr(start, identifier.length()-3);
+        modelName = identifier + std::string("/") + modelName;
+    }
+
+    return modelName;
+}
+
+std::string getModelName( const std::string &identifier )
+{
+    // Max Scene nodes are also identified by their transform nodes since an INode contains
+    // both the transform and the shape.  So if we find an "xfo" at the end of the identifier
+    // then we extract the model name from the identifier
+    std::string modelName;
+    size_t pos = identifier.rfind("Xfo", identifier.length()-3, 3);
+    if (pos == identifier.npos)
+        modelName = identifier;
+    else
+        modelName = identifier.substr(0, identifier.length()-3);
+
+    return modelName;
 }

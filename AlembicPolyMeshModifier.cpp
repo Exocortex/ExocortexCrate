@@ -16,6 +16,7 @@
 #include "AlembicArchiveStorage.h"
 #include "utility.h"
 #include "iparamb2.h"
+#include "alembic.h"
 
 void AlembicImport_FillInPolyMesh(Alembic::AbcGeom::IObject &iObj, TriObject *triobj, double iFrame, AlembicDataFillFlags flags);
 
@@ -76,8 +77,7 @@ public:
 
 	int UI2SelLevel(int selLevel);
 private:
-	std::string m_AlembicArchiveFile;
-	std::string m_AlembicIdentifier;
+    alembic_nodeprops m_AlembicNodeProps;
 public:
 	void SetAlembicId(const std::string &file, const std::string &identifier);
 };
@@ -164,7 +164,7 @@ void AlembicPolyMeshModifier::ModifyObject (TimeValue t, ModContext &mc, ObjectS
 {
    Interval ivalid=os->obj->ObjectValidity(t);
 
-   Alembic::AbcGeom::IObject iObj = getObjectFromArchive(m_AlembicArchiveFile,m_AlembicIdentifier);
+   Alembic::AbcGeom::IObject iObj = getObjectFromArchive(m_AlembicNodeProps.m_File, m_AlembicNodeProps.m_Identifier);
    if(!iObj.valid())
       return;
 
@@ -210,8 +210,8 @@ RefResult AlembicPolyMeshModifier::NotifyRefChanged (Interval changeInt, RefTarg
 
 void AlembicPolyMeshModifier::SetAlembicId(const std::string &file, const std::string &identifier)
 {
-	m_AlembicArchiveFile = file;
-	m_AlembicIdentifier = identifier;
+    m_AlembicNodeProps.m_File = file;
+    m_AlembicNodeProps.m_Identifier = identifier;
 }
 
 void AlembicImport_FillInPolyMesh(Alembic::AbcGeom::IObject &iObj, TriObject *triobj, double iFrame, AlembicDataFillFlags flags)
@@ -352,7 +352,7 @@ void AlembicImport_FillInPolyMesh(Alembic::AbcGeom::IObject &iObj, TriObject *tr
    }
 }
 
-int AlembicImport_PolyMesh(const std::string &file, const std::string &identifier, alembic_importoptions options)
+int AlembicImport_PolyMesh(const std::string &file, const std::string &identifier, alembic_importoptions &options)
 {
 	// Find the object in the archive
 	Alembic::AbcGeom::IObject iObj = getObjectFromArchive(file,identifier);
@@ -381,6 +381,13 @@ int AlembicImport_PolyMesh(const std::string &file, const std::string &identifie
 
 	// Add the modifier to the node
 	GetCOREInterface12()->AddModifier(*node, *pModifier);
+
+    // Add the new inode to our current scene list
+    SceneEntry *pEntry = options.sceneEnumProc.Append(node, triobj, OBTYPE_MESH, &std::string(iObj.getFullName())); 
+    options.currentSceneList.Append(pEntry);
+
+    // Set up any child links for this node
+    AlembicImport_SetupChildLinks(iObj, options);
 
 	return 0;
 }
