@@ -4,6 +4,7 @@
 #include "oproperty.h"
 #include "oxformproperty.h"
 #include "foundation.h"
+#include "AlembicLicensing.h"
 
 #include <boost/algorithm/string.hpp>
 
@@ -327,6 +328,15 @@ PyObject * oArchive_new(PyObject * self, PyObject * args)
    {
       PyErr_SetString(getError(), "No filename specified!");
       return NULL;
+   }
+
+   if(!HasFullLicense())
+   {
+      if(getNbOArchives() > 0)
+      {
+         PyErr_SetString(getError(), "[ExocortexAlembic] Demo Mode: Only one output archive at a time allowed!");
+         return NULL;
+      }
    }
 
    oArchive * object = PyObject_NEW(oArchive, &oArchive_Type);

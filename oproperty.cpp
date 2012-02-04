@@ -3,6 +3,7 @@
 #include "oobject.h"
 #include "oarchive.h"
 #include <boost/lexical_cast.hpp>
+#include "AlembicLicensing.h"
 
 static std::string oProperty_getName_func(PyObject * self)
 {
@@ -139,6 +140,15 @@ static PyObject * oProperty_setValues(PyObject * self, PyObject * args)
       if(numSamples >= prop->mBaseScalarProperty->getTimeSampling()->getNumStoredTimes())
       {
          PyErr_SetString(getError(), "Already stored the maximum number of samples!");
+         return NULL;
+      }
+   }
+
+   if(!HasFullLicense())
+   {
+      if(numSamples >= 75)
+      {
+         PyErr_SetString(getError(), "[ExocortexAlembic] Demo Mode: Max samplecount is 75!");
          return NULL;
       }
    }

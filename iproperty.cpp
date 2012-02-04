@@ -2,6 +2,7 @@
 #include "iproperty.h"
 #include "iobject.h"
 #include <boost/lexical_cast.hpp>
+#include "AlembicLicensing.h"
 
 static std::string iProperty_getName_func(PyObject * self)
 {
@@ -549,6 +550,15 @@ static PyObject * iProperty_getValues(PyObject * self, PyObject * args)
       msg.append("' is out of bounds!");
       PyErr_SetString(getError(), msg.c_str());
       return NULL;
+   }
+
+   if(!HasFullLicense())
+   {
+      if(sampleIndex > 75)
+      {
+         PyErr_SetString(getError(), "[ExocortexAlembic] Demo Mode: Max sampleindex is 75!");
+         return NULL;
+      }
    }
 
    PyObject * tuple = NULL;

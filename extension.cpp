@@ -30,19 +30,7 @@ static PyMethodDef unlicensed_extension_methods[] = {
 
 EXTENSION_CALLBACK init_ExocortexAlembicPython(void)
 {
-   PyObject * m;
-   
-   // check license
-	time_t now = time(NULL);
-   if (now > 1329264000) {  // http://unixtime-converter.com/
-      printf("[_ExocortexAlembicPython] Licensing Error. Please contact ben@exocortex.com\n");
-      m = Py_InitModule3("_ExocortexAlembicPython", unlicensed_extension_methods, "Exocortex Alembic Python Extension");
-   }
-   else
-   {
-      // properly licensed
-      m = Py_InitModule3("_ExocortexAlembicPython", extension_methods, "Exocortex Alembic Python Extension");
-   }
+   PyObject * m = Py_InitModule3("_ExocortexAlembicPython", extension_methods, "Exocortex Alembic Python Extension");
    PyObject * d = PyModule_GetDict(m);
 
    extension_error = PyErr_NewException("ExocortexAlembicPython.error", NULL, NULL);

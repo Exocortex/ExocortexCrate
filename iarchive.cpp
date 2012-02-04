@@ -3,6 +3,7 @@
 #include "oarchive.h"
 #include "iobject.h"
 #include "foundation.h"
+#include "AlembicLicensing.h"
 
 #include <boost/algorithm/string.hpp>
 
@@ -152,6 +153,15 @@ PyObject * iArchive_new(PyObject * self, PyObject * args)
    {
       PyErr_SetString(getError(), "Can only create iArchives if all oArchives are closed!");
       return NULL;
+   }
+
+   if(!HasFullLicense())
+   {
+      if(getNbIArchives() > 0)
+      {
+         PyErr_SetString(getError(), "[ExocortexAlembic] Demo Mode: Only one open archive at a time allowed!");
+         return NULL;
+      }
    }
 
    // parse the args
