@@ -2,6 +2,7 @@
 #define _ARNOLD_ALEMBIC_UTILITY_H_
 
 #include "foundation.h"
+#include "AlembicLicensing.h"
 
 struct SampleInfo
 {

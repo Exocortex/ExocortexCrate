@@ -2,6 +2,7 @@
 #include "utility.h"
 #include <time.h>
 #include <boost/lexical_cast.hpp>
+#include <map>
 
 struct instanceGroupInfo{
    std::vector<std::string> identifiers;
@@ -98,15 +99,10 @@ std::string getNameFromIdentifier(const std::string & identifier, long id = -1, 
    return result;
 }
 
+std::map<std::string,std::string> gUsedArchives;
+
 static int Init(AtNode *mynode, void **user_ptr)
 {
-   // check license
-	time_t now = time(NULL);
-   if (now > 1329264000) {  // http://unixtime-converter.com/
-      AiMsgError("[ExocortexAlembicArnold] Licensing Error. Please contact ben@exocortex.com");
-      return TRUE;
-   }
-
    userData * ud = new userData();
    *user_ptr = ud;
    ud->gProcShaders = NULL;
@@ -211,6 +207,18 @@ static int Init(AtNode *mynode, void **user_ptr)
    // fix all paths
    for(size_t pathIndex = 0; pathIndex < paths.size(); pathIndex ++)
    {
+      // check if we already know this path
+      if(!HasFullLicense())
+      {
+         if(gUsedArchives.size() > 0 && 
+            gUsedArchives.find(paths[pathIndex]) == gUsedArchives.end())
+         {
+            AiMsgError("[ExocortexAlembic] Demo Mode: Only one alembic archive at a time.");
+            return NULL;
+         }
+         gUsedArchives.insert(std::pair<std::string,std::string>(paths[pathIndex],paths[pathIndex]));
+      }
+
 #ifdef _WIN32
       // #54: UNC paths don't work
       // add another backslash if we start with a backslash
