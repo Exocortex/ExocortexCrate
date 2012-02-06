@@ -2,6 +2,7 @@
 #define _ALEMBIC_H_
 
 #include "Foundation.h"
+#include "AlembicDefinitions.h"
 
 class AlembicExporter : public SceneExport 
 {

@@ -1,7 +1,6 @@
 // alembicPlugin
-#include "Foundation.h"
-#include "AlembicDefinitions.h"
 #include "Alembic.h"
+#include "AlembicDefinitions.h"
 #include "AlembicWriteJob.h"
 #include "iparamm2.h"
 #include "MeshMtlList.h"

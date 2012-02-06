@@ -1,16 +1,4 @@
-/**********************************************************************
- *<
-	FILE: ToMesh.cpp
-
-	DESCRIPTION:  Convert to Mesh Modifier
-
-	CREATED BY: Steve Anderson
-
-	HISTORY: Created February 2000
-
- *>	Copyright (c) 2000 Autodesk, All Rights Reserved.
- **********************************************************************/
-#include "Foundation.h"
+#include "Alembic.h"
 #include "iparamm2.h"
 #include "simpmod.h"
 #include "AlembicXFormModifier.h"
