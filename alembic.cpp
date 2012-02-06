@@ -10,6 +10,7 @@
 #include "ObjectList.h"
 #include "ObjectEntry.h"
 #include "resource.h"
+#include "utility.h"
 
 // Dummy function for progress bar
 DWORD WINAPI fn(LPVOID arg)
@@ -283,7 +284,8 @@ int	AlembicExporter::DoExport(const TCHAR *filename, ExpInterface *ei, Interface
     for(double frame = minFrame; frame<=maxFrame; frame += maxSteps / maxSubsteps)
     {
         i->ProgressUpdate(static_cast<int>(frame/maxFrame*100.0f));
-        i->SetTime(static_cast<TimeValue>(frame));
+        int ticks = GetTimeValueFromFrame(frame);
+        i->SetTime(ticks);
         job->Process(frame);
     }
 
@@ -412,7 +414,7 @@ void AlembicImport_SetupChildLinks( Alembic::Abc::IObject &obj, alembic_importop
             INode *pChildNode = options.currentSceneList.FindNodeWithName(std::string(childObj.getName()));
 
             if (pChildNode)
-                pParentNode->AttachChild(pChildNode);
+                pParentNode->AttachChild(pChildNode, 0);
         }
     }
 }

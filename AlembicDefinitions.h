@@ -11,6 +11,7 @@ const unsigned int ALEMBIC_DATAFILL_VERTEX_UPDATE = 2;
 const unsigned int ALEMBIC_DATAFILL_FACELIST = 4; 
 const unsigned int ALEMBIC_DATAFILL_NORMALS = 8;
 const unsigned int ALEMBIC_DATAFILL_UVS = 16;
+const unsigned int ALEMBIC_DATAFILL_BOUNDINGBOX = 32;
 
 enum MeshTopologyType
 {
@@ -35,6 +36,7 @@ typedef struct _alembic_importoptions
    bool importStandins;
    bool importBboxes;
    bool attachToExisting;
+   double playbackSpeedInFPS;
    SceneEnumProc sceneEnumProc;
    ObjectList currentSceneList;
 
@@ -46,6 +48,7 @@ public:
 	, importStandins(false)
 	, importBboxes(false)
 	, attachToExisting(false)
+    , playbackSpeedInFPS(25)
    {
    }
 } alembic_importoptions;
@@ -54,11 +57,12 @@ typedef struct _alembic_nodeprops
 {
     std::string m_File;
 	std::string m_Identifier;
+    double m_PlaybackSpeedInFPS;
 public:
-    _alembic_nodeprops()
+    _alembic_nodeprops() : m_File("")
+        , m_Identifier("")
+        , m_PlaybackSpeedInFPS(25)
     {
-        m_File = "";
-        m_Identifier = "";
     }
 } alembic_nodeprops;
 

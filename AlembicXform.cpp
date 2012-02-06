@@ -2,6 +2,9 @@
 #include <inode.h>
 #include "SceneEntry.h"
 #include "AlembicXform.h"
+#include "Dummy.h"
+#include "ImathVec.h"
+#include "Utility.h"
 
 // namespace AbcA = ::Alembic::AbcCoreAbstract::ALEMBIC_VERSION_NS;
 // using namespace AbcA;
@@ -19,10 +22,16 @@ void SaveXformSample(const SceneEntry &in_Ref, Alembic::AbcGeom::OXformSchema &s
     }
 
     // Is there a global transform?
+    if (time == 50)
+    {
+        int l = 0;
+    }
 
     // JSS : To validate, I am currently assuming that the ObjectTM is what we are seeking. This may be wrong. 
     // Model transform
-    Matrix3 transformation = in_Ref.node->GetObjectTM(static_cast<TimeValue>(time));
+    TimeValue ticks = GetTimeValueFromFrame(time);
+    // Matrix3 transformation = in_Ref.node->GetNodeTM(ticks) * Inverse(in_Ref.node->GetParentTM(ticks));
+    Matrix3 transformation = in_Ref.node->GetObjectTM(ticks);
 
     // store the transform
     sample.setTranslation(Imath::V3d(transformation.GetTrans().x,transformation.GetTrans().y,transformation.GetTrans().z));
@@ -40,6 +49,39 @@ void SaveXformSample(const SceneEntry &in_Ref, Alembic::AbcGeom::OXformSchema &s
 
     // save the sample
     schema.set(sample);
+}
+
+AlembicXForm::AlembicXForm(const SceneEntry &in_Ref, AlembicWriteJob *in_Job) : AlembicObject(in_Ref, in_Job)
+{
+    std::string xformName = std::string(in_Ref.node->GetName()) + "Xfo";
+
+    Alembic::AbcGeom::OXform xform(GetOParent(), xformName.c_str(), GetCurrentJob()->GetAnimatedTs());
+
+    mXformSchema = xform.getSchema();
+}
+
+AlembicXForm::~AlembicXForm()
+{
+}
+
+bool AlembicXForm::Save(double time)
+{
+    // Set the bounding box to be used to draw the dummy object on import
+    DummyObject *pDummyObject = static_cast<DummyObject*>(GetRef().obj);
+    Box3 maxBox = pDummyObject->GetBox();
+    Alembic::Abc::V3d minpoint(maxBox.pmin.x, maxBox.pmin.y, maxBox.pmin.z);
+    Alembic::Abc::V3d maxpoint(maxBox.pmax.x, maxBox.pmax.y, maxBox.pmax.z);
+    mXformSample.setChildBounds(Alembic::Abc::Box3d(minpoint, maxpoint));
+
+    // Store the transformation
+    SaveXformSample(GetRef(), mXformSchema, mXformSample, time);
+
+    return true;
+}
+
+Alembic::Abc::OCompoundProperty AlembicXForm::GetCompound()
+{
+    return mXformSchema;
 }
 
 /*

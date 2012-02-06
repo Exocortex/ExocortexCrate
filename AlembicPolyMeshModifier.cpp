@@ -43,7 +43,7 @@ public:
 	// From modifier
 	ChannelMask ChannelsUsed()  { return OBJ_CHANNELS; }
 	ChannelMask ChannelsChanged() { return OBJ_CHANNELS; }
-	Class_ID InputType() { return mapObjectClassID; }
+	Class_ID InputType() { return triObjectClassID; }
 	void ModifyObject (TimeValue t, ModContext &mc, ObjectState *os, INode *node);
 	Interval LocalValidity(TimeValue t) { return GetValidity(t); }
 	Interval GetValidity (TimeValue t);
@@ -168,7 +168,10 @@ void AlembicPolyMeshModifier::ModifyObject (TimeValue t, ModContext &mc, ObjectS
    if(!iObj.valid())
       return;
 
-   AlembicImport_FillInPolyMesh(iObj, (TriObject*)os->obj, 0, ALEMBIC_DATAFILL_POLYMESH_UPDATE);
+   // Calculate the sample time in seconds
+   double sampleTime = double(t) / ALEMBIC_3DSMAX_TICK_VALUE;
+
+   AlembicImport_FillInPolyMesh(iObj, (TriObject*)os->obj, sampleTime, ALEMBIC_DATAFILL_POLYMESH_UPDATE);
 }
 
 void AlembicPolyMeshModifier::BeginEditParams (IObjParam  *ip, ULONG flags, Animatable *prev) {

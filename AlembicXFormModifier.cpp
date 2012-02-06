@@ -18,6 +18,8 @@
 #include "AlembicDefinitions.h"
 #include "AlembicArchiveStorage.h"
 #include "Utility.h"
+#include "alembic.h"
+#include "dummy.h"
 
 static GenSubObjType SOT_Vertex(1);
 static GenSubObjType SOT_Edge(2);
@@ -40,9 +42,9 @@ public:
 	TCHAR *GetObjectName() { return _T("Exocortex Alembic Xform"); }
 
 	// From modifier
-	ChannelMask ChannelsUsed()  { return OBJ_CHANNELS; }
-	ChannelMask ChannelsChanged() { return OBJ_CHANNELS; }
-	Class_ID InputType() { return mapObjectClassID; }
+	ChannelMask ChannelsUsed()  { return TM_CHANNEL; }
+	ChannelMask ChannelsChanged() { return TM_CHANNEL; }
+	Class_ID InputType() { return defObjectClassID; }
 	void ModifyObject (TimeValue t, ModContext &mc, ObjectState *os, INode *node);
 	Interval LocalValidity(TimeValue t) { return GetValidity(t); }
 	Interval GetValidity (TimeValue t);
@@ -77,6 +79,7 @@ public:
 	int UI2SelLevel(int selLevel);
 private:
     alembic_nodeprops m_AlembicNodeProps;
+    Interval m_CurrentAlembicInterval;
 public:
 	void SetAlembicId(const std::string &file, const std::string &identifier);
 };
@@ -154,9 +157,11 @@ IParamBlock2 *AlembicXFormModifier::GetParamBlockByID (short id) {
 	return (pblock->ID() == id) ? pblock : NULL; 
 }
 
-Interval AlembicXFormModifier::GetValidity (TimeValue t) {
+Interval AlembicXFormModifier::GetValidity (TimeValue t) 
+{
 	Interval ret = FOREVER;
 	pblock->GetValidity (t, ret);
+
 	return ret;
 }
 
@@ -174,8 +179,11 @@ void AlembicXFormModifier::ModifyObject (TimeValue t, ModContext &mc, ObjectStat
     if(!obj.valid())
         return;
 
+    // Calculate the sample time
+    double sampleTime = GetSecondsFromTimeValue(t);
+
     SampleInfo sampleInfo = getSampleInfo(
-        0,
+        sampleTime,
         obj.getSchema().getTimeSampling(),
         obj.getSchema().getNumSamples()
         );
@@ -184,7 +192,7 @@ void AlembicXFormModifier::ModifyObject (TimeValue t, ModContext &mc, ObjectStat
     obj.getSchema().get(sample,sampleInfo.floorIndex);
     Alembic::Abc::M44d matrix = sample.getMatrix();
 
-    // blend - need to reconfigure this, doesn't make sense to lerp a matrix
+    // blend - need to reconfigure this possibly, doesn't seem to make sense to lerp a matrix
     /*if(sampleInfo.alpha != 0.0)
     {
         obj.getSchema().get(sample,sampleInfo.ceilIndex);
@@ -193,16 +201,18 @@ void AlembicXFormModifier::ModifyObject (TimeValue t, ModContext &mc, ObjectStat
     }
     */
 
-    // matrix.transpose();
     Matrix3 objMatrix(
         Point3(matrix.getValue()[0], matrix.getValue()[1], matrix.getValue()[2]),
         Point3(matrix.getValue()[4], matrix.getValue()[5], matrix.getValue()[6]),
         Point3(matrix.getValue()[8], matrix.getValue()[9], matrix.getValue()[10]),
         Point3(matrix.getValue()[12], matrix.getValue()[13], matrix.getValue()[14]));
 
-
-	// set matrix explicitly 
-	os->SetTM( &objMatrix, ivalid );
+    Interval alembicValid(t, t); 
+    ivalid &= alembicValid;
+    
+    // set matrix explicitly 
+    os->obj->UpdateValidity(TM_CHANNEL, ivalid);
+    os->ApplyTM( &objMatrix, ivalid );
 }
 
 void AlembicXFormModifier::BeginEditParams (IObjParam  *ip, ULONG flags, Animatable *prev) {
@@ -270,10 +280,55 @@ int AlembicImport_XForm(const std::string &file, const std::string &identifier, 
 		return alembic_failure;
 
     // Find the scene node that this transform belongs too
+    // If the node does not exist, then this is just a transform, so we create
+    // a dummy helper object to attach the modifier
     std::string modelid = getModelName(std::string(iObj.getName()));
     INode *pNode = options.currentSceneList.FindNodeWithName(modelid);
     if (!pNode)
-        return alembic_failure;
+    {
+        Object* obj = static_cast<Object*>(CreateInstance(HELPER_CLASS_ID, Class_ID(DUMMY_CLASS_ID,0)));
+
+        if (!obj)
+            return alembic_failure;
+
+        DummyObject *pDummy = static_cast<DummyObject*>(obj);
+
+        Alembic::AbcGeom::IXform objxForm(iObj,Alembic::Abc::kWrapExisting);
+
+        if(!objxForm.valid())
+            return alembic_failure;
+
+        SampleInfo sampleInfo = getSampleInfo(
+            0,
+            objxForm.getSchema().getTimeSampling(),
+            objxForm.getSchema().getNumSamples()
+            );
+
+        Alembic::AbcGeom::XformSample sample;
+        objxForm.getSchema().get(sample,sampleInfo.floorIndex);
+        const Alembic::Abc::Box3d &box3d = sample.getChildBounds();
+
+        // Hard code these values for now
+        pDummy->SetColor(Point3(0.6f, 0.8f, 1.0f));
+
+        Box3 box(Point3(box3d.min.x, box3d.min.y, box3d.min.z), 
+            Point3(box3d.max.x, box3d.max.y, box3d.max.z));
+        pDummy->SetBox(box);
+
+        pDummy->EnableDisplay();
+
+        pNode = GetCOREInterface12()->CreateObjectNode(obj, modelid.c_str());
+
+        if (!pNode)
+            return alembic_failure;
+
+        // Add it to our current scene list
+        SceneEntry *pEntry = options.sceneEnumProc.Append(pNode, obj, OBTYPE_DUMMY, &std::string(iObj.getFullName())); 
+        options.currentSceneList.Append(pEntry);
+
+        // Set up any child links for this node
+        AlembicImport_SetupChildLinks(iObj, options);
+    }
 
 	// Create the xform modifier
 	AlembicXFormModifier *pModifier = static_cast<AlembicXFormModifier*>

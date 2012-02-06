@@ -6,6 +6,7 @@
 #include "ObjectEntry.h"
 #include "SceneEnumProc.h"
 #include "AlembicPolyMsh.h"
+#include "AlembicXForm.h"
 
 //#include "AlembicXform.h"
 //#include "AlembicCamera.h"
@@ -100,7 +101,7 @@ bool AlembicWriteJob::PreProcess()
     }
 
     // get the frame rate
-    mFrameRate = static_cast<float>(mApplication->GetPlaybackSpeed());
+    mFrameRate = GetFrameRate();
     if(mFrameRate == 0.0)
     {
         mFrameRate = 25.0;
@@ -138,12 +139,13 @@ bool AlembicWriteJob::PreProcess()
             AlembicObjectPtr ptr;
             ptr.reset(new AlembicPolyMesh(*object->entry,this));            
             AddObject(ptr);
-
-			/*currentObject = object->entry->obj;
-			object->tri = (TriObject *)currentObject->ConvertToType(currentScene.i->GetTime(), triObjectClassID);
-			Mesh &mesh = object->tri->GetMesh();*/
 		}
-        
+        else if (type == OBTYPE_DUMMY)
+        {
+            AlembicObjectPtr ptr;
+            ptr.reset(new AlembicXForm(*object->entry,this));            
+            AddObject(ptr);
+        }
 
         // push all models up the hierarchy
         /*

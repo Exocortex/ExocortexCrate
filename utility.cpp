@@ -114,3 +114,20 @@ std::string getModelName( const std::string &identifier )
 
     return modelName;
 }
+
+double GetSecondsFromTimeValue(TimeValue t)
+{ 
+    return double(t)/double(GetTicksPerFrame())/double(GetFrameRate()); 
+}
+
+int GetTimeValueFromSeconds( double seconds )
+{
+    double ticks = seconds/(GetFrameRate() * GetTicksPerFrame());
+    return (int)floor(ticks + 0.5);
+}
+
+int GetTimeValueFromFrame( double frame )
+{
+    double ticks = frame * GetTicksPerFrame();
+    return (int)floor(ticks + 0.5f);
+}
