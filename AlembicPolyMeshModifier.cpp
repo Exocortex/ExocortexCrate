@@ -49,8 +49,8 @@ public:
 	TCHAR *GetObjectName() { return _T("Exocortex Alembic PolyMesh"); }
 
 	// From modifier
-	ChannelMask ChannelsUsed()  { return OBJ_CHANNELS; }
-	ChannelMask ChannelsChanged() { return OBJ_CHANNELS; }
+	ChannelMask ChannelsUsed()  { return TOPO_CHANNEL|GEOM_CHANNEL; }
+	ChannelMask ChannelsChanged() { return TOPO_CHANNEL|GEOM_CHANNEL; }
 	Class_ID InputType() { return triObjectClassID; }
 	void ModifyObject (TimeValue t, ModContext &mc, ObjectState *os, INode *node);
 	Interval LocalValidity(TimeValue t) { return GetValidity(t); }
@@ -79,9 +79,9 @@ public:
 	RefResult NotifyRefChanged( Interval changeInt,RefTargetHandle hTarget, 
 		PartID& partID, RefMessage message);
 
-	void Convert (PolyObject *obj, TimeValue t, Mesh & m, Interval & ivalid);
-	void Convert (TriObject *obj, TimeValue t, Mesh & m, Interval & ivalid);
-	void Convert (PatchObject *obj, TimeValue t, Mesh & m, Interval & ivalid);
+	// void Convert (PolyObject *obj, TimeValue t, Mesh & m, Interval & ivalid);
+	// void Convert (TriObject *obj, TimeValue t, Mesh & m, Interval & ivalid);
+	// void Convert (PatchObject *obj, TimeValue t, Mesh & m, Interval & ivalid);
 
 	int UI2SelLevel(int selLevel);
 private:
@@ -177,7 +177,7 @@ void AlembicPolyMeshModifier::ModifyObject (TimeValue t, ModContext &mc, ObjectS
       return;
 
    // Calculate the sample time in seconds
-   double sampleTime = double(t) / ALEMBIC_3DSMAX_TICK_VALUE;
+   double sampleTime = GetSecondsFromTimeValue(t);
 
    alembic_fillmesh_options options;
    options.pIObj = &iObj;
@@ -191,7 +191,8 @@ void AlembicPolyMeshModifier::ModifyObject (TimeValue t, ModContext &mc, ObjectS
    ivalid &= alembicValid;
     
     // update the validity channel
-    os->obj->UpdateValidity(OBJ_CHANNELS, ivalid);
+    os->obj->UpdateValidity(TOPO_CHANNEL, ivalid);
+    os->obj->UpdateValidity(GEOM_CHANNEL, ivalid);
 }
 
 void AlembicPolyMeshModifier::BeginEditParams (IObjParam  *ip, ULONG flags, Animatable *prev) {
@@ -409,8 +410,8 @@ void AlembicImport_FillInPolyMesh(alembic_fillmesh_options &options)
             face.setVerts(v0, v1, v2);
         }
 
-        mesh.InvalidateGeomCache();
-        mesh.InvalidateTopologyCache();
+        // mesh.InvalidateGeomCache();
+        // mesh.InvalidateTopologyCache();
    }
 }
 

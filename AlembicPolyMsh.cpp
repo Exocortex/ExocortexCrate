@@ -78,7 +78,7 @@ bool AlembicPolyMesh::Save(double time)
 
     // Return a pointer to a TriObject given an INode or return NULL
     // if the node cannot be converted to a TriObject
-    TimeValue ticks = GetTimeValueFromSeconds(time);
+    TimeValue ticks = GetTimeValueFromFrame(time);
     Object *obj = GetRef().node->EvalWorldState(ticks).obj;
     TriObject *triObj = 0;
 
@@ -109,13 +109,24 @@ bool AlembicPolyMesh::Save(double time)
 
     // allocate the points and normals
     posVec.resize(vertCount);
+    char debugMsg[256];
     for(LONG i=0;i<vertCount;i++)
     {        
         posVec[i].x = static_cast<float>(objectMesh.getVert(i).x);
         posVec[i].y = static_cast<float>(objectMesh.getVert(i).y);
         posVec[i].z = static_cast<float>(objectMesh.getVert(i).z);
         bbox.extendBy(posVec[i]);
+
+        // if (time == 1.0f)
+        // {
+            sprintf_s(debugMsg, "Vector %d is (%5.2f, %5.2f, %5.2f) at Sample Time %5.2f\n", i, posVec[i].x, posVec[i].y, posVec[i].z, time);
+            OutputDebugString(debugMsg);
+        // }
     }
+
+    strcpy(debugMsg, "\n");
+    OutputDebugString(debugMsg);
+
 
     // allocate the sample for the points
     if(posVec.size() == 0)
