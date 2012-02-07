@@ -6,6 +6,7 @@
 #include <Object.h>
 #include <triobj.h>
 #include <IMetaData.h>
+#include "Utility.h"
 
 namespace AbcA = ::Alembic::AbcCoreAbstract::ALEMBIC_VERSION_NS;
 namespace AbcB = ::Alembic::Abc::ALEMBIC_VERSION_NS;
@@ -75,9 +76,31 @@ bool AlembicPolyMesh::Save(double time)
     std::vector<Alembic::Abc::N3f> normalVec;
     std::vector<uint32_t> normalIndexVec;
 
-    // access the mesh
-    Object *currentObject = GetRef().obj;
-	TriObject *triObj = (TriObject *)currentObject->ConvertToType(GetCurrentJob()->GetAnimatedTs(), triObjectClassID);
+    // Return a pointer to a TriObject given an INode or return NULL
+    // if the node cannot be converted to a TriObject
+    TimeValue ticks = GetTimeValueFromSeconds(time);
+    Object *obj = GetRef().node->EvalWorldState(ticks).obj;
+    TriObject *triObj = 0;
+
+    if (obj->CanConvertToType(Class_ID(TRIOBJ_CLASS_ID, 0)))
+    {
+        triObj = (TriObject *) obj->ConvertToType(ticks, Class_ID(TRIOBJ_CLASS_ID, 0));
+
+        // Note that the TriObject should only be deleted
+        // if the pointer to it is not equal to the object
+        // pointer that called ConvertToType()
+        if (obj != triObj && triObj)
+        {
+            delete triObj;
+            triObj = 0;
+            return false;
+        }
+    }
+    else
+    {
+        return false;
+    }
+
 	Mesh &objectMesh = triObj->GetMesh();
     LONG vertCount = objectMesh.getNumVerts();
 
@@ -432,8 +455,7 @@ bool AlembicPolyMesh::Save(double time)
    }
 
    // check if we should export the velocities
-   /*
-   if(dynamicTopology)
+   /*if(dynamicTopology)
    {
       ICEAttribute velocitiesAttr = mesh.GetICEAttributeFromName(L"PointVelocity");
       if(velocitiesAttr.IsDefined() && velocitiesAttr.IsValid())

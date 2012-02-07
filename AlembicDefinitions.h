@@ -6,12 +6,21 @@
 
 // Alembic Data Fill Bit Flags
 typedef unsigned int AlembicDataFillFlags;
-const unsigned int ALEMBIC_DATAFILL_VERTEX_IMPORT = 1;
-const unsigned int ALEMBIC_DATAFILL_VERTEX_UPDATE = 2;
-const unsigned int ALEMBIC_DATAFILL_FACELIST = 4; 
-const unsigned int ALEMBIC_DATAFILL_NORMALS = 8;
-const unsigned int ALEMBIC_DATAFILL_UVS = 16;
-const unsigned int ALEMBIC_DATAFILL_BOUNDINGBOX = 32;
+const unsigned int ALEMBIC_DATAFILL_VERTEX = 1;
+const unsigned int ALEMBIC_DATAFILL_FACELIST = 2; 
+const unsigned int ALEMBIC_DATAFILL_NORMALS = 4;
+const unsigned int ALEMBIC_DATAFILL_UVS = 8;
+const unsigned int ALEMBIC_DATAFILL_BOUNDINGBOX = 16;
+const unsigned int ALEMBIC_DATAFILL_FACESETS = 32;
+const unsigned int ALEMBIC_DATAFILL_BINDPOSE = 64;
+const unsigned int ALEMBIC_DATAFILL_POINT_VELOCITY = 128;
+
+enum AlembicFillContext
+{
+    ALEMBIC_FILLCONTEXT_IMPORT,
+    ALEMBIC_FILLCONTEXT_UPDATE,
+    ALEMBIC_FILLCONTEXT_NONE
+};
 
 enum MeshTopologyType
 {

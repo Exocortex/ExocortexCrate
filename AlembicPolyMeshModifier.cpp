@@ -18,7 +18,27 @@
 #include "iparamb2.h"
 #include "alembic.h"
 
-void AlembicImport_FillInPolyMesh(Alembic::AbcGeom::IObject &iObj, TriObject *triobj, double iFrame, AlembicDataFillFlags flags);
+typedef struct _alembic_fillmesh_options
+{
+    Alembic::AbcGeom::IObject *pIObj;
+    TriObject *pTriObj;
+    double iFrame;
+    AlembicDataFillFlags nDataFillFlags;
+    AlembicFillContext nDataFillContext;
+    unsigned int nValidityFlags;
+
+    _alembic_fillmesh_options()
+    {
+        pIObj = 0;
+        pTriObj = 0;
+        iFrame = 0;
+        nDataFillFlags = 0;
+        nValidityFlags = 0;
+        nDataFillContext = ALEMBIC_FILLCONTEXT_NONE;
+    }
+} alembic_fillmesh_options;
+
+void AlembicImport_FillInPolyMesh(alembic_fillmesh_options &options);
 
 static GenSubObjType SOT_Vertex(1);
 static GenSubObjType SOT_Edge(2);
@@ -171,7 +191,19 @@ void AlembicPolyMeshModifier::ModifyObject (TimeValue t, ModContext &mc, ObjectS
    // Calculate the sample time in seconds
    double sampleTime = double(t) / ALEMBIC_3DSMAX_TICK_VALUE;
 
-   AlembicImport_FillInPolyMesh(iObj, (TriObject*)os->obj, sampleTime, ALEMBIC_DATAFILL_POLYMESH_UPDATE);
+   alembic_fillmesh_options options;
+   options.pIObj = &iObj;
+   options.pTriObj = (TriObject*)os->obj;
+   options.iFrame = sampleTime;
+   options.nDataFillFlags = ALEMBIC_DATAFILL_POLYMESH_STATIC_UPDATE;
+   options.nDataFillContext = ALEMBIC_FILLCONTEXT_UPDATE;
+   AlembicImport_FillInPolyMesh(options);
+
+   Interval alembicValid(t, t); 
+   ivalid &= alembicValid;
+    
+    // update the validity channel
+    os->obj->UpdateValidity(OBJ_CHANNELS, ivalid);
 }
 
 void AlembicPolyMeshModifier::BeginEditParams (IObjParam  *ip, ULONG flags, Animatable *prev) {
@@ -217,33 +249,34 @@ void AlembicPolyMeshModifier::SetAlembicId(const std::string &file, const std::s
     m_AlembicNodeProps.m_Identifier = identifier;
 }
 
-void AlembicImport_FillInPolyMesh(Alembic::AbcGeom::IObject &iObj, TriObject *triobj, double iFrame, AlembicDataFillFlags flags)
+void AlembicImport_FillInPolyMesh(alembic_fillmesh_options &options)
 {
    Alembic::AbcGeom::IPolyMesh objMesh;
    Alembic::AbcGeom::ISubD objSubD;
 
-   if(Alembic::AbcGeom::IPolyMesh::matches(iObj.getMetaData()))
-      objMesh = Alembic::AbcGeom::IPolyMesh(iObj,Alembic::Abc::kWrapExisting);
+   if(Alembic::AbcGeom::IPolyMesh::matches((*options.pIObj).getMetaData()))
+       objMesh = Alembic::AbcGeom::IPolyMesh(*options.pIObj,Alembic::Abc::kWrapExisting);
    else
-      objSubD = Alembic::AbcGeom::ISubD(iObj,Alembic::Abc::kWrapExisting);
-   if(!objMesh.valid() && !objSubD.valid())
-      return;
+       objSubD = Alembic::AbcGeom::ISubD(*options.pIObj,Alembic::Abc::kWrapExisting);
 
-   SampleInfo sampleInfo;
+   if(!objMesh.valid() && !objSubD.valid())
+       return;
+
+  SampleInfo sampleInfo;
    if(objMesh.valid())
       sampleInfo = getSampleInfo(
-         iFrame,
+         options.iFrame,
          objMesh.getSchema().getTimeSampling(),
          objMesh.getSchema().getNumSamples()
       );
    else
       sampleInfo = getSampleInfo(
-         iFrame,
+         options.iFrame,
          objSubD.getSchema().getTimeSampling(),
          objSubD.getSchema().getNumSamples()
       );
 
-   Mesh &mesh = triobj->GetMesh();
+   Mesh &mesh = options.pTriObj->GetMesh();
    Alembic::AbcGeom::IPolyMeshSchema::Sample polyMeshSample;
    Alembic::AbcGeom::ISubDSchema::Sample subDSample;
 
@@ -252,23 +285,40 @@ void AlembicImport_FillInPolyMesh(Alembic::AbcGeom::IObject &iObj, TriObject *tr
    else
        objSubD.getSchema().get(subDSample,sampleInfo.floorIndex);
 
-   if ( flags & ALEMBIC_DATAFILL_VERTEX_IMPORT || flags & ALEMBIC_DATAFILL_VERTEX_UPDATE )
+   if ( options.nDataFillFlags & ALEMBIC_DATAFILL_VERTEX )
    {
 	   Alembic::Abc::P3fArraySamplePtr meshPos;
+       Alembic::Abc::V3fArraySamplePtr meshVel;
 
        if(objMesh.valid())
            meshPos = polyMeshSample.getPositions();
        else
            meshPos = subDSample.getPositions();
 
-       if (flags & ALEMBIC_DATAFILL_VERTEX_IMPORT)
+       // Check for morph targets
+       if (options.nDataFillFlags & ALEMBIC_DATAFILL_POINT_VELOCITY)
+       {
+           if(objMesh.valid())
+               meshVel = polyMeshSample.getVelocities();
+           else
+               meshVel = subDSample.getVelocities();
+       }
+
+       if (options.nDataFillContext == ALEMBIC_FILLCONTEXT_IMPORT)
        {
            mesh.setNumVerts((int)meshPos->size());
        }
-       else if ( flags & ALEMBIC_DATAFILL_VERTEX_UPDATE)
+       else if (options.nDataFillContext == ALEMBIC_FILLCONTEXT_UPDATE)
        {
-           if(mesh.getNumVerts() != meshPos->size())
+           // Static or topo mesh
+           if(!meshVel && mesh.getNumVerts() != meshPos->size())
+           {
                return;
+           }
+           else if (meshVel && mesh.getNumVerts() != meshPos->size())
+           {
+               mesh.setNumVerts((int)meshPos->size());
+           }
        }
 
 	   std::vector<Point3> vArray;
@@ -276,35 +326,56 @@ void AlembicImport_FillInPolyMesh(Alembic::AbcGeom::IObject &iObj, TriObject *tr
 	   for(size_t i=0;i<meshPos->size();i++)
 		  vArray.push_back(Point3(meshPos->get()[i].x,meshPos->get()[i].y,meshPos->get()[i].z));
 
-	   // blend
+	   // blend - either between samples or using point velocities
 	   if(sampleInfo.alpha != 0.0)
 	   {
+           bool bSampleInterpolate = false;
+           bool bVelInterpolate = false;
+
 		  if(objMesh.valid())
 		  {
-			 Alembic::AbcGeom::IPolyMeshSchema::Sample polyMeshSample2;
-			 objMesh.getSchema().get(polyMeshSample2,sampleInfo.ceilIndex);
-			 meshPos = polyMeshSample2.getPositions();
-		  }
+              Alembic::AbcGeom::IPolyMeshSchema::Sample polyMeshSample2;
+              objMesh.getSchema().get(polyMeshSample2,sampleInfo.ceilIndex);
+              meshPos = polyMeshSample2.getPositions();
+             
+              if(meshPos->size() == vArray.size())
+                  bSampleInterpolate = true;
+              else if(meshVel && meshVel->size() == meshPos->size())
+                  bVelInterpolate = true;
+          }
 		  else
 		  {
-			 Alembic::AbcGeom::ISubDSchema::Sample subDSample2;
-			 objSubD.getSchema().get(subDSample2,sampleInfo.ceilIndex);
-			 meshPos = subDSample2.getPositions();
+              Alembic::AbcGeom::ISubDSchema::Sample subDSample2;
+              objSubD.getSchema().get(subDSample2,sampleInfo.ceilIndex);
+              meshPos = subDSample2.getPositions();
+              bSampleInterpolate = true;
 		  }
 
-		  for(size_t i=0;i<meshPos->size();i++)
-		  {	
-			  vArray[i].x += (meshPos->get()[i].x - vArray[i].x) * (float)sampleInfo.alpha; 
-			  vArray[i].x += (meshPos->get()[i].y - vArray[i].y) * (float)sampleInfo.alpha; 
-			  vArray[i].x += (meshPos->get()[i].z - vArray[i].z) * (float)sampleInfo.alpha;
-		  }
+          if (bSampleInterpolate)
+          {
+              for(size_t i=0;i<meshPos->size();i++)
+              {	
+                  vArray[i].x += (meshPos->get()[i].x - vArray[i].x) * (float)sampleInfo.alpha; 
+                  vArray[i].y += (meshPos->get()[i].y - vArray[i].y) * (float)sampleInfo.alpha; 
+                  vArray[i].z += (meshPos->get()[i].z - vArray[i].z) * (float)sampleInfo.alpha;
+              }
+          }
+          else if (bVelInterpolate)
+          {
+              for(size_t i=0;i<meshVel->size();i++)
+              {
+                  vArray[i].x += meshVel->get()[i].x * (float)sampleInfo.alpha;
+                  vArray[i].y += meshVel->get()[i].y * (float)sampleInfo.alpha;
+                  vArray[i].z += meshVel->get()[i].z * (float)sampleInfo.alpha;
+              }
+          }
 	   }
 
 	   for(int i=0;i<meshPos->size();i++)
 		  mesh.setVert(i, vArray[i].x, vArray[i].y, vArray[i].z);
    }
 
-   if ( flags & ALEMBIC_DATAFILL_FACELIST )
+   if ( options.nDataFillFlags & ALEMBIC_DATAFILL_FACELIST )
    {
 		Alembic::Abc::Int32ArraySamplePtr meshFaceCount;
 		Alembic::Abc::Int32ArraySamplePtr meshFaceIndices;
@@ -339,7 +410,7 @@ void AlembicImport_FillInPolyMesh(Alembic::AbcGeom::IObject &iObj, TriObject *tr
                 continue;
 
             // three vertex indices of a triangle
-            int v0 = meshFaceIndices->get()[i*3];
+            int v0 =  meshFaceIndices->get()[i*3];
             int v1 =  meshFaceIndices->get()[i*3+1];
             int v2 =  meshFaceIndices->get()[i*3+2];
 
@@ -368,7 +439,13 @@ int AlembicImport_PolyMesh(const std::string &file, const std::string &identifie
         return alembic_failure;
 
 	// Fill in the mesh
-	AlembicImport_FillInPolyMesh(iObj, triobj, 0, ALEMBIC_DATAFILL_POLYMESH_IMPORT);
+    alembic_fillmesh_options dataFillOptions;
+    dataFillOptions.pIObj = &iObj;
+    dataFillOptions.pTriObj = triobj;
+    dataFillOptions.iFrame = 0;
+    dataFillOptions.nDataFillFlags = ALEMBIC_DATAFILL_POLYMESH_STATIC_IMPORT;
+    dataFillOptions.nDataFillContext = ALEMBIC_FILLCONTEXT_IMPORT;
+	AlembicImport_FillInPolyMesh(dataFillOptions);
 
 	// Create the object node
 	INode *node = GetCOREInterface12()->CreateObjectNode(triobj, iObj.getName().c_str());

@@ -1,4 +1,5 @@
 #include <time.h>
+#include "Foundation.h"
 #include "AlembicLicensing.h"
 
 #include <string>
