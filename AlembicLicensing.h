@@ -11,13 +11,11 @@
 
 
 // IMPORTANT, we are not using wide characters here.
-#define PLUGIN_NAME						"ExocortexAlembicPython" EC_QUOTE( alembic_MAJOR_VERSION ) "." EC_QUOTE( alembic_MINOR_VERSION )
+#define PLUGIN_NAME						"ExocortexAlembic3DSMax" EC_QUOTE( alembic_MAJOR_VERSION ) "." EC_QUOTE( alembic_MINOR_VERSION )
 #define PLUGIN_MAJOR_VERSION			alembic_MAJOR_VERSION
 #define PLUGIN_MINOR_VERSION			alembic_MINOR_VERSION
-#define PLUGIN_LICENSE_NAME				"alembic_python"
+#define PLUGIN_LICENSE_NAME				"alembic_3dsmax"
 #define PLUGIN_LICENSE_VERSION			(alembic_MAJOR_VERSION*10)
-
-#define PLUGIN_LICENSE_IDS	{ RlmProductID( PLUGIN_LICENSE_NAME, PLUGIN_LICENSE_VERSION ), RlmProductID( "alembic_softimage", PLUGIN_LICENSE_VERSION ), RlmProductID( "alembic_maya", PLUGIN_LICENSE_VERSION ), RlmProductID( "alembic_houdini", PLUGIN_LICENSE_VERSION ), RlmProductID( "alembic_3dsmax", PLUGIN_LICENSE_VERSION ) }
 
 
 #include "ExocortexServicesProxy.h"

@@ -1,9 +1,4 @@
-/**********************************************************************
-   FILE: DllEntry.cpp
-   DESCRIPTION: Contains the Dll Entry needed for 3DSMax Plugins
-   CREATED BY:  Jean-Sylvain Sormany
- **********************************************************************/
-#include "Foundation.h"
+#include "Alembic.h"
 #include "AlembicDefinitions.h"
 #include "iparamm2.h"
 

@@ -9,7 +9,10 @@ if( Exocortex_SERVICES OR Exocortex_RLM_ONLY )
 	include_directories( ${Exocortex_INCLUDE_DIR} )
 endif()
 
-SET( 3DSMAX_DIR_ROOT ${LIBRARY_ROOT}/Max )
+SET( 3DSMAX_DIR_ROOT ${LIBRARY_ROOT}/Max/2011 )
+if( NOT EXISTS ${3DSMAX_DIR_ROOT} )
+	SET( 3DSMAX_DIR_ROOT ${LIBRARY_ROOT}/Max )
+endif()
 if( NOT EXISTS ${3DSMAX_DIR_ROOT} )
 	message(FATAL_ERROR "Can't find 3DSMAX_DIR_ROOT: ${3DSMAX_DIR_ROOT}" )
 endif()
@@ -46,9 +49,7 @@ ENDIF()
 
 SET( 3DSMAX_LIBRARIES core geom gfx maxutil mesh paramblk2 mnmath poly ) 
 
-		
 MESSAGE( "3DSMAX_DIR_LIBRARY: ${3DSMAX_DIR_LIBRARY}" )
-
 MESSAGE( "3DSMAX_LIBRARIES: ${3DSMAX_LIBRARIES}" )
 
 set( Sources ${Sources} Alembic.rc )
@@ -61,7 +62,6 @@ if( Exocortex_RLM_ONLY )
 endif()
 
 add_library( ${PROJECT_NAME} SHARED ${Sources} ${Includes})
-remove_definitions( -D_NOMINMAX )
 
 TARGET_LINK_LIBRARIES( ${PROJECT_NAME} ${ALEMBIC_ILMBASE_LIBS}
 	${ALEMBIC_ZLIB_LIBS} ${ALEMBIC_HDF5_LIBS} ${ALEMBIC_CORE_LIBS}

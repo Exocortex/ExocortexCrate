@@ -1,9 +1,9 @@
 #include <time.h>
-#include "Foundation.h"
-#include "AlembicLicensing.h"
-
 #include <string>
 #include <sstream>
+#include "Foundation.h"
+#include "AlembicLicensing.h"
+#include "Alembic.h"
 
 using namespace std;
 
