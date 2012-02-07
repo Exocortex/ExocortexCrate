@@ -1,0 +1,79 @@
+cmake_minimum_required (VERSION 2.6) 
+
+project ( ExocortexAlembicMaya${alembic_VERSION} ) 
+
+INCLUDE(../ExocortexAlembicShared/ExocortexCMakeShared.txt)
+
+if( Exocortex_SERVICES OR Exocortex_RLM_ONLY )
+	include_directories( ${Rlm_INCLUDE_DIR} )
+	include_directories( ${Exocortex_INCLUDE_DIR} )
+endif()
+
+SET( EXOCORTEX_MAYA_VERSION 2012 CACHE INT "Expiry Date Licensing")
+SET( Maya_DIR_ROOT ${LIBRARY_ROOT}/Maya/${EXOCORTEX_MAYA_VERSION} )
+SET( Maya_DIR_INCLUDE ${Maya_DIR_ROOT}/include )
+
+file(GLOB Sources ${CMAKE_CURRENT_SOURCE_DIR}/*.cpp)
+file(GLOB Includes ${CMAKE_CURRENT_SOURCE_DIR}/*.h)
+
+SOURCE_GROUP("Source Files" FILES ${Sources})
+SOURCE_GROUP("Header Files" FILES ${Includes})
+
+IF( WIN32 )
+	IF( ${ALEMBIC64} )
+		SET( Maya_DIR_LIBRARY ${Maya_DIR_ROOT}/lib/nt-x86-64 )
+	ELSE()
+		SET( Maya_DIR_LIBRARY ${Maya_DIR_ROOT}/lib/nt-x86 )
+	ENDIF()	
+ELSEIF( UNIX )
+	SET( Maya_DIR_LIBRARY ${Maya_DIR_ROOT}/lib/linux-x86-64 )
+
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wl,--version-script=${CMAKE_CURRENT_SOURCE_DIR}/MayaAlembic.versionScript")
+ENDIF()
+
+SET( Maya_LIBRARIES Foundation OpenMaya OpenMayaAnim OpenMayaFX OpenMayaRender OpenMayaUI )		
+
+MESSAGE( "Maya_DIR_LIBRARY: ${Maya_DIR_LIBRARY}" )
+
+MESSAGE( "Maya_LIBRARIES: ${Maya_LIBRARIES}" )
+
+if( Exocortex_SERVICES )
+	add_definitions( "-DEXOCORTEX_SERVICES" )
+	add_definitions( -DNOMINMAX )	 # disable min/max macros from <windows.h>.
+endif()
+
+include_directories( ${Maya_DIR_INCLUDE} )
+link_directories( ${Maya_DIR_LIBRARY} )
+
+if( Exocortex_SERVICES OR Exocortex_RLM_ONLY )
+	link_directories( ${Rlm_LIBRARYDIR} )
+endif()
+if( Exocortex_SERVICES )
+	#link_directories( ${Exocortex_LIBRARYDIR} )
+	link_directories( ${TBB_LIBRARYDIR} )
+endif()
+
+set( MAYA_EXTENSION ".mll" )
+set( MAYA_COMPILE_FLAGS "/MT /D \"NT_PLUGIN\" /D \"REQUIRE_IOSTREAM\" /D \"_BOOL\"" )
+set( MAYA_LINK_FLAGS " /export:initializePlugin /export:uninitializePlugin " )
+
+add_library( ${PROJECT_NAME} SHARED ${Sources} ${Includes})
+
+SET_TARGET_PROPERTIES( ${PROJECT_NAME}
+  PROPERTIES
+  COMPILE_FLAGS ${MAYA_COMPILE_FLAGS}
+  LINK_FLAGS ${MAYA_LINK_FLAGS}
+  PREFIX ""
+  SUFFIX ${MAYA_EXTENSION} )
+SET_TARGET_PROPERTIES( ${PROJECT_NAME}
+  PROPERTIES
+  COMPILE_FLAGS ${MAYA_COMPILE_FLAGS}
+  LINK_FLAGS ${MAYA_LINK_FLAGS}
+  PREFIX ""
+  SUFFIX ${MAYA_EXTENSION} )
+
+TARGET_LINK_LIBRARIES( ${PROJECT_NAME} ${ALEMBIC_ILMBASE_LIBS} ${ALEMBIC_ZLIB_LIBS} ${ALEMBIC_HDF5_LIBS} ${ALEMBIC_CORE_LIBS} ${BOOST_LIBS} ${Maya_LIBRARIES} ${Exocortex_LIBRARIES} ${Rlm_LIBRARIES} )
+ADD_DEPENDENCIES(${PROJECT_NAME} AlembicAbcGeom)
+
+#deploy_softimage( ${PROJECT_NAME} ExocortexAlembic${alembic_VERSION} ${TBB_DEPENDENCIES} ${RER_DEPENDENCIES} ${EAH_DEPENDENCIES} )
+
