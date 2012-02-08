@@ -1727,7 +1727,66 @@ static AtNode *GetNode(void *user_ptr, int i)
             pos = AiArrayAllocate((AtInt)(totalNumPositions * 3),(AtInt)minNumSamples,AI_TYPE_FLOAT);
 
          // if we have to interpolate
-         if(sampleInfo.alpha <= sampleTolerance)
+         bool done = false;
+         if(sampleInfo.alpha > sampleTolerance)
+         {
+            Alembic::AbcGeom::ICurvesSchema::Sample sample2;
+            typedObject.getSchema().get(sample2,sampleInfo.ceilIndex);
+            Alembic::Abc::P3fArraySamplePtr abcPos2 = sample2.getPositions();
+            float alpha = (float)sampleInfo.alpha;
+            float ialpha = 1.0f - alpha;
+            size_t offset = 0;
+            if(abcPos2->size() == abcPos->size())
+            {
+               for(size_t i=0;i<abcNumPoints->size();i++)
+               {
+                  // add the first and last point manually (catmull clark)
+                  for(size_t j=0;j<abcNumPoints->get()[i];j++)
+                  {
+                     AiArraySetFlt(pos,posOffset++,abcPos->get()[offset].x * ialpha + abcPos2->get()[offset].x * alpha);
+                     AiArraySetFlt(pos,posOffset++,abcPos->get()[offset].y * ialpha + abcPos2->get()[offset].y * alpha);
+                     AiArraySetFlt(pos,posOffset++,abcPos->get()[offset].z * ialpha + abcPos2->get()[offset].z * alpha);
+                     if(j==0 || j == abcNumPoints->get()[i]-1)
+                     {
+                        AiArraySetFlt(pos,posOffset++,abcPos->get()[offset].x * ialpha + abcPos2->get()[offset].x * alpha);
+                        AiArraySetFlt(pos,posOffset++,abcPos->get()[offset].y * ialpha + abcPos2->get()[offset].y * alpha);
+                        AiArraySetFlt(pos,posOffset++,abcPos->get()[offset].z * ialpha + abcPos2->get()[offset].z * alpha);
+                     }
+                     offset++;
+                  }
+               }
+               done = true;
+            }
+            else
+            {
+               Alembic::Abc::P3fArraySamplePtr abcVel = sample.getPositions();
+               if(abcVel)
+               {
+                  if(abcVel->size() == abcPos->size())
+                  {
+                     for(size_t i=0;i<abcNumPoints->size();i++)
+                     {
+                        // add the first and last point manually (catmull clark)
+                        for(size_t j=0;j<abcNumPoints->get()[i];j++)
+                        {
+                           AiArraySetFlt(pos,posOffset++,abcPos->get()[offset].x + abcVel->get()[offset].x * alpha);
+                           AiArraySetFlt(pos,posOffset++,abcPos->get()[offset].y + abcVel->get()[offset].y * alpha);
+                           AiArraySetFlt(pos,posOffset++,abcPos->get()[offset].z + abcVel->get()[offset].z * alpha);
+                           if(j==0 || j == abcNumPoints->get()[i]-1)
+                           {
+                              AiArraySetFlt(pos,posOffset++,abcPos->get()[offset].x + abcVel->get()[offset].x * alpha);
+                              AiArraySetFlt(pos,posOffset++,abcPos->get()[offset].y + abcVel->get()[offset].y * alpha);
+                              AiArraySetFlt(pos,posOffset++,abcPos->get()[offset].z + abcVel->get()[offset].z * alpha);
+                           }
+                           offset++;
+                        }
+                     }
+                     done = true;
+                  }
+               }
+            }
+         }
+         if(!done)
          {
             size_t offset = 0;
             for(size_t i=0;i<abcNumPoints->size();i++)
@@ -1743,32 +1802,6 @@ static AtNode *GetNode(void *user_ptr, int i)
                      AiArraySetFlt(pos,posOffset++,abcPos->get()[offset].x);
                      AiArraySetFlt(pos,posOffset++,abcPos->get()[offset].y);
                      AiArraySetFlt(pos,posOffset++,abcPos->get()[offset].z);
-                  }
-                  offset++;
-               }
-            }
-         }
-         else
-         {
-            Alembic::AbcGeom::ICurvesSchema::Sample sample2;
-            typedObject.getSchema().get(sample2,sampleInfo.ceilIndex);
-            Alembic::Abc::P3fArraySamplePtr abcPos2 = sample2.getPositions();
-            float alpha = (float)sampleInfo.alpha;
-            float ialpha = 1.0f - alpha;
-            size_t offset = 0;
-            for(size_t i=0;i<abcNumPoints->size();i++)
-            {
-               // add the first and last point manually (catmull clark)
-               for(size_t j=0;j<abcNumPoints->get()[i];j++)
-               {
-                  AiArraySetFlt(pos,posOffset++,abcPos->get()[offset].x * ialpha + abcPos2->get()[offset].x * alpha);
-                  AiArraySetFlt(pos,posOffset++,abcPos->get()[offset].y * ialpha + abcPos2->get()[offset].y * alpha);
-                  AiArraySetFlt(pos,posOffset++,abcPos->get()[offset].z * ialpha + abcPos2->get()[offset].z * alpha);
-                  if(j==0 || j == abcNumPoints->get()[i]-1)
-                  {
-                     AiArraySetFlt(pos,posOffset++,abcPos->get()[offset].x * ialpha + abcPos2->get()[offset].x * alpha);
-                     AiArraySetFlt(pos,posOffset++,abcPos->get()[offset].y * ialpha + abcPos2->get()[offset].y * alpha);
-                     AiArraySetFlt(pos,posOffset++,abcPos->get()[offset].z * ialpha + abcPos2->get()[offset].z * alpha);
                   }
                   offset++;
                }
