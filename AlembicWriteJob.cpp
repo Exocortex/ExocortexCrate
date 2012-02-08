@@ -1,7 +1,7 @@
 #include "AlembicLicensing.h"
 #include "AlembicWriteJob.h"
 #include "AlembicObject.h"
-//#include "AlembicXform.h"
+#include "AlembicXform.h"
 //#include "AlembicCamera.h"
 //#include "AlembicPolyMsh.h"
 //#include "AlembicCurves.h"
@@ -178,15 +178,16 @@ MStatus AlembicWriteJob::PreProcess()
 
       // take care of all other types
       MString mType = mObj.apiTypeStr();
-      MGlobal::displayInfo("current type: "+mType);
-      /*
-      if(mType == "camera")
+      if(mType == "kTransform")
       {
          AlembicObjectPtr ptr;
-         ptr.reset(new AlembicCamera(xObj.GetActivePrimitive().GetRef(),this));
+         ptr.reset(new AlembicXform(mObj,this));
          AddObject(ptr);
       }
-      */
+      else
+      {
+         MGlobal::displayInfo("unsupported type: "+mType);
+      }
    }
 
    return MStatus::kSuccess;

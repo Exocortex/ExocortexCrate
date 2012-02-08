@@ -43,7 +43,12 @@
 #include <maya/MTime.h>
 #include <maya/MDagPath.h>
 #include <maya/MFnDagNode.h>
+#include <maya/MFnDependencyNode.h>
 #include <maya/MSelectionList.h>
+#include <maya/MVector.h>
+#include <maya/MQuaternion.h>
+#include <maya/MMatrix.h>
+#include <maya/MTransformationMatrix.h>
 
 #include "Utility.h"
 #include "AlembicArchiveStorage.h"
