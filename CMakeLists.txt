@@ -17,11 +17,12 @@ if( Exocortex_SERVICES OR Exocortex_RLM_ONLY )
 	link_directories( ${Rlm_LIBRARYDIR} )
 endif()
 
-SET( Arnold_VERSION "4.0.1.0" )
+SET( EXOCORTEX_ARNOLD_VERSION "4.0.1.0" CACHE STRING "Arnold Version to link against")
+
 IF( "${CMAKE_SYSTEM_NAME}" MATCHES "Windows" )
-  SET( Arnold_BASE_DIR "${LIBRARY_ROOT}/arnold/${Arnold_VERSION}/windows" )
+  SET( Arnold_BASE_DIR "${LIBRARY_ROOT}/arnold/${EXOCORTEX_ARNOLD_VERSION}/windows" )
 ELSE() 
-  SET( Arnold_BASE_DIR "${LIBRARY_ROOT}/arnold/${Arnold_VERSION}/linux" )
+  SET( Arnold_BASE_DIR "${LIBRARY_ROOT}/arnold/${EXOCORTEX_ARNOLD_VERSION}/linux" )
 ENDIF()
 
 include_directories( "${Arnold_BASE_DIR}/include" )
