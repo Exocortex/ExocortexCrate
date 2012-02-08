@@ -17,13 +17,14 @@ if( Exocortex_SERVICES OR Exocortex_RLM_ONLY )
 	link_directories( ${Rlm_LIBRARYDIR} )
 endif()
 
-SET( Arnold_VERSION "4.0.1.0" )
+SET( EXOCORTEX_ARNOLD_VERSION "4.0.1.0" CACHE STRING "Arnold Version to link against")
+
 if( WIN32 )
-  set( Arnold_BASE_DIR "${LIBRARY_ROOT}/arnold/${Arnold_VERSION}/windows" )
-  set( Arnold_LIBRARIES ai )
+	set( Arnold_BASE_DIR "${LIBRARY_ROOT}/arnold/${EXOCORTEX_ARNOLD_VERSION}/windows" )
+	set( Arnold_LIBRARIES ai )
 elseif( UNIX ) 
-  set( Arnold_BASE_DIR "${LIBRARY_ROOT}/arnold/${Arnold_VERSION}/linux" )
-  #set( Arnold_LIBRARIES ai )  There are no static linkable libraries for Arnold on linux.
+	set( Arnold_BASE_DIR "${LIBRARY_ROOT}/arnold/${EXOCORTEX_ARNOLD_VERSION}/linux" )
+	#set( Arnold_LIBRARIES ai )  There are no static linkable libraries for Arnold on linux.
 else()
 	message(FATAL_ERROR "Should not get here")
 endif()
