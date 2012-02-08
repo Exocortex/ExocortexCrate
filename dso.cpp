@@ -6,10 +6,10 @@
 
 struct instanceGroupInfo{
    std::vector<std::string> identifiers;
-   std::vector<std::map<float,AtNode*>> nodes;
+   std::vector<std::map<float,AtNode*> > nodes;
    std::vector<Alembic::Abc::IObject> objects;
    std::vector<Alembic::Abc::IObject> parents;
-   std::vector<std::map<float,std::vector<Alembic::Abc::M44f>>> matrices;
+   std::vector<std::map<float,std::vector<Alembic::Abc::M44f> > > matrices;
 };
 
 struct instanceCloudInfo{
@@ -520,7 +520,7 @@ static int Init(AtNode *mynode, void **user_ptr)
                                  // we also store the parent
                                  // this will enforce to compute actual offset matrices for each given time
                                  groupInfo.parents.push_back(parent);
-                                 groupInfo.matrices.push_back(std::map<float,std::vector<Alembic::Abc::M44f>>());
+                                 groupInfo.matrices.push_back(std::map<float,std::vector<Alembic::Abc::M44f> >());
                               }
                            }
                         }
@@ -1026,7 +1026,7 @@ static AtNode *GetNode(void *user_ptr, int i)
             {
                // we have a matrix map and a parent.
                // now we need to check if we already exported the matrices
-               std::map<float,std::vector<Alembic::Abc::M44f>>::iterator it;
+               std::map<float,std::vector<Alembic::Abc::M44f> >::iterator it;
                std::vector<Alembic::Abc::M44f> offsets;
                it = group->matrices[groupID].find(centroidTime);
                if(it == group->matrices[groupID].end())
@@ -1086,7 +1086,7 @@ static AtNode *GetNode(void *user_ptr, int i)
                      // go upwards
                      xform = xform.getParent();
                   }
-                  group->matrices[groupID].insert(std::pair<float,std::vector<Alembic::Abc::M44f>>(centroidTime,offsets));
+                  group->matrices[groupID].insert(std::pair<float,std::vector<Alembic::Abc::M44f> >(centroidTime,offsets));
                }
                else
                   offsets = it->second;

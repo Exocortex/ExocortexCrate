@@ -1,10 +1,10 @@
 #ifndef __EXOCORTEX_SERVICES_PROXY_H
 #define __EXOCORTEX_SERVICES_PROXY_H
 
+#include "foundation.h"
 #include <string>
 #include <sstream>
 #include <vector>
-#include <ai.h>
 
 #define EC_LICENSE_RESULT_NO_LICENSE	(0)
 #define EC_LICENSE_RESULT_DEMO_LICENSE	(1)
