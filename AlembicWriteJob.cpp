@@ -105,28 +105,28 @@ CStatus AlembicWriteJob::PreProcess()
    // check filenames
    if(mFileName.IsEmpty())
    {
-      Application().LogMessage(L"[alembic] No filename specified.",siErrorMsg);
+      Application().LogMessage(L"[ExocortexAlembic] No filename specified.",siErrorMsg);
       return CStatus::InvalidArgument;
    }
 
    // check objects
    if(mSelection.GetCount() == 0)
    {
-      Application().LogMessage(L"[alembic] No objects specified.",siErrorMsg);
+      Application().LogMessage(L"[ExocortexAlembic] No objects specified.",siErrorMsg);
       return CStatus::InvalidArgument;
    }
 
    // check frames
    if(mFrames.size() == 0)
    {
-      Application().LogMessage(L"[alembic] No frames specified.",siErrorMsg);
+      Application().LogMessage(L"[ExocortexAlembic] No frames specified.",siErrorMsg);
       return CStatus::InvalidArgument;
    }
 
    // check if the file is currently in use
    if(getRefArchive(mFileName) > 0)
    {
-      Application().LogMessage(L"[alembic] Error writing to file '"+mFileName+L"'. File currently in use.",siErrorMsg);
+      Application().LogMessage(L"[ExocortexAlembic] Error writing to file '"+mFileName+L"'. File currently in use.",siErrorMsg);
       return CStatus::InvalidArgument;
    }
 
@@ -144,7 +144,7 @@ CStatus AlembicWriteJob::PreProcess()
    catch(Alembic::Util::Exception& e)
    {
       CString exc(e.what());
-      Application().LogMessage(L"[alembic] Error writing to file '"+mFileName+L"' ("+exc+L"). Do you still have it opened?",siErrorMsg);
+      Application().LogMessage(L"[ExocortexAlembic] Error writing to file '"+mFileName+L"' ("+exc+L"). Do you still have it opened?",siErrorMsg);
       return CStatus::InvalidArgument;
    }
 

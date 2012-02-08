@@ -940,7 +940,7 @@ XSIPLUGINCALLBACK CStatus alembic_crvlist_topo_Update( CRef& in_ctxt )
    if(curveSample.getType() != Alembic::AbcGeom::ALEMBIC_VERSION_NS::kLinear &&
       curveSample.getType() != Alembic::AbcGeom::ALEMBIC_VERSION_NS::kCubic)
    {
-      Application().LogMessage(L"[alembic] Skipping curve '"+identifier+L"', invalid curve type.",siWarningMsg);
+      Application().LogMessage(L"[ExocortexAlembic] Skipping curve '"+identifier+L"', invalid curve type.",siWarningMsg);
       return CStatus::Fail;
    }
 

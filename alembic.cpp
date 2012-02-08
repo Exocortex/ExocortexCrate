@@ -137,7 +137,7 @@ ESS_CALLBACK_START(alembic_export_Execute,CRef&)
          objects = Application().GetSelection().GetArray();
          if(objects.GetCount() == 0)
          {
-            Application().LogMessage(L"[alembic] No objects specified.",siErrorMsg);
+            Application().LogMessage(L"[ExocortexAlembic] No objects specified.",siErrorMsg);
             return CStatus::InvalidArgument;
          }
       }
@@ -228,7 +228,7 @@ ESS_CALLBACK_START(alembic_export_Execute,CRef&)
          CStringArray valuePair = tokens[j].Split(L"=");
          if(valuePair.GetCount()!=2)
          {
-            Application().LogMessage(L"[alembic] Skipping invalid token: ",siWarningMsg);
+            Application().LogMessage(L"[ExocortexAlembic] Skipping invalid token: "+tokens[j],siWarningMsg);
             continue;
          }
 
@@ -264,7 +264,7 @@ ESS_CALLBACK_START(alembic_export_Execute,CRef&)
                objRef.Set(objectStrings[k]);
                if(!objRef.IsValid())
                {
-                  Application().LogMessage(L"[alembic] Skipping object 'L"+objectStrings[k]+"', not found.",siWarningMsg);
+                  Application().LogMessage(L"[ExocortexAlembic] Skipping object 'L"+objectStrings[k]+"', not found.",siWarningMsg);
                   continue;
                }
                objects.Add(objRef);
@@ -289,7 +289,7 @@ ESS_CALLBACK_START(alembic_export_Execute,CRef&)
          }
          else
          {
-            Application().LogMessage(L"[alembic] Skipping invalid token: ",siWarningMsg);
+            Application().LogMessage(L"[ExocortexAlembic] Skipping invalid token: "+tokens[j],siWarningMsg);
             continue;
          }
       }
@@ -302,7 +302,7 @@ ESS_CALLBACK_START(alembic_export_Execute,CRef&)
             double part = maxSubsteps / frameSubSteps;
             if(abs(part - floor(part)) > 0.001)
             {
-               Application().LogMessage(L"[alembic] You cannot combine substeps "+CString(frameSubSteps)+L" and "+CString(maxSubsteps)+L" in one export. Aborting.",siErrorMsg);
+               Application().LogMessage(L"[ExocortexAlembic] You cannot combine substeps "+CString(frameSubSteps)+L" and "+CString(maxSubsteps)+L" in one export. Aborting.",siErrorMsg);
                return CStatus::InvalidArgument;
             }
          }
@@ -311,7 +311,7 @@ ESS_CALLBACK_START(alembic_export_Execute,CRef&)
             double part = frameSubSteps / maxSubsteps;
             if(abs(part - floor(part)) > 0.001)
             {
-               Application().LogMessage(L"[alembic] You cannot combine substeps "+CString(maxSubsteps)+L" and "+CString(frameSubSteps)+L" in one export. Aborting.",siErrorMsg);
+               Application().LogMessage(L"[ExocortexAlembic] You cannot combine substeps "+CString(maxSubsteps)+L" and "+CString(frameSubSteps)+L" in one export. Aborting.",siErrorMsg);
                return CStatus::InvalidArgument;
             }
          }
@@ -347,7 +347,7 @@ ESS_CALLBACK_START(alembic_export_Execute,CRef&)
          }
          else
          {
-            Application().LogMessage(L"[alembic] No filename specified.",siErrorMsg);
+            Application().LogMessage(L"[ExocortexAlembic] No filename specified.",siErrorMsg);
             for(size_t k=0;k<jobPtrs.size();k++)
                delete(jobPtrs[k]);
             return CStatus::InvalidArgument;
@@ -372,13 +372,13 @@ ESS_CALLBACK_START(alembic_export_Execute,CRef&)
       // check if the job is satifsied
       if(job->PreProcess() != CStatus::OK)
       {
-         Application().LogMessage(L"[alembic] Job skipped. Not satisfied.",siErrorMsg);
+         Application().LogMessage(L"[ExocortexAlembic] Job skipped. Not satisfied.",siErrorMsg);
          delete(job);
          continue;
       }
 
       // push the job to our registry
-      Application().LogMessage(L"[alembic] Using WriteJob:"+jobs[i]);
+      Application().LogMessage(L"[ExocortexAlembic] Using WriteJob:"+jobs[i]);
       jobPtrs.push_back(job);
    }
 
@@ -575,7 +575,7 @@ CStatus alembic_create_item_Invoke
                realTarget = target;
             else
             {
-               Application().LogMessage(L"[alembic] Invalid target '"+target.GetAsText()+L"' for "+type+L".",siErrorMsg);
+               Application().LogMessage(L"[ExocortexAlembic] Invalid target '"+target.GetAsText()+L"' for "+type+L".",siErrorMsg);
                return CStatus::InvalidArgument;
             }
          }
@@ -597,7 +597,7 @@ CStatus alembic_create_item_Invoke
          }
          else
          {
-            Application().LogMessage(L"[alembic] Invalid target '"+target.GetAsText()+L"' for "+type+L".",siErrorMsg);
+            Application().LogMessage(L"[ExocortexAlembic] Invalid target '"+target.GetAsText()+L"' for "+type+L".",siErrorMsg);
             return CStatus::InvalidArgument;
          }
          break;
@@ -610,12 +610,12 @@ CStatus alembic_create_item_Invoke
             realTarget = prim.GetRef();
          else
          {
-            Application().LogMessage(L"[alembic] Invalid target '"+target.GetAsText()+L"' for "+type+L".",siErrorMsg);
+            Application().LogMessage(L"[ExocortexAlembic] Invalid target '"+target.GetAsText()+L"' for "+type+L".",siErrorMsg);
             return CStatus::InvalidArgument;
          }
          if(!Primitive(realTarget).GetType().IsEqualNoCase(L"camera"))
          {
-            Application().LogMessage(L"[alembic] Invalid target '"+target.GetAsText()+L"' for "+type+L".",siErrorMsg);
+            Application().LogMessage(L"[ExocortexAlembic] Invalid target '"+target.GetAsText()+L"' for "+type+L".",siErrorMsg);
             return CStatus::InvalidArgument;
          }
          break;
@@ -635,7 +635,7 @@ CStatus alembic_create_item_Invoke
             realTarget = prim.GetRef();
          else
          {
-            Application().LogMessage(L"[alembic] Invalid target '"+target.GetAsText()+L"' for "+type+L".",siErrorMsg);
+            Application().LogMessage(L"[ExocortexAlembic] Invalid target '"+target.GetAsText()+L"' for "+type+L".",siErrorMsg);
             return CStatus::InvalidArgument;
          }
          // now check the type as well
@@ -643,7 +643,7 @@ CStatus alembic_create_item_Invoke
          {
             if(!Primitive(realTarget).GetType().IsEqualNoCase(L"polymsh"))
             {
-               Application().LogMessage(L"[alembic] Invalid target '"+target.GetAsText()+L"' for "+type+L".",siErrorMsg);
+               Application().LogMessage(L"[ExocortexAlembic] Invalid target '"+target.GetAsText()+L"' for "+type+L".",siErrorMsg);
                return CStatus::InvalidArgument;
             }
          }
@@ -651,7 +651,7 @@ CStatus alembic_create_item_Invoke
          {
             if(!Primitive(realTarget).GetType().IsEqualNoCase(L"crvlist") && !Primitive(realTarget).GetType().IsEqualNoCase(L"pointcloud"))
             {
-               Application().LogMessage(L"[alembic] Invalid target '"+target.GetAsText()+L"' for "+type+L".",siErrorMsg);
+               Application().LogMessage(L"[ExocortexAlembic] Invalid target '"+target.GetAsText()+L"' for "+type+L".",siErrorMsg);
                return CStatus::InvalidArgument;
             }
          }
@@ -659,7 +659,7 @@ CStatus alembic_create_item_Invoke
          {
             if(!Primitive(realTarget).GetType().IsEqualNoCase(L"pointcloud"))
             {
-               Application().LogMessage(L"[alembic] Invalid target '"+target.GetAsText()+L"' for "+type+L".",siErrorMsg);
+               Application().LogMessage(L"[ExocortexAlembic] Invalid target '"+target.GetAsText()+L"' for "+type+L".",siErrorMsg);
                return CStatus::InvalidArgument;
             }
          }
@@ -667,7 +667,7 @@ CStatus alembic_create_item_Invoke
          {
             if(!Primitive(realTarget).GetType().IsEqualNoCase(L"surfmsh"))
             {
-               Application().LogMessage(L"[alembic] Invalid target '"+target.GetAsText()+L"' for "+type+L".",siErrorMsg);
+               Application().LogMessage(L"[ExocortexAlembic] Invalid target '"+target.GetAsText()+L"' for "+type+L".",siErrorMsg);
                return CStatus::InvalidArgument;
             }
          }
@@ -680,7 +680,7 @@ CStatus alembic_create_item_Invoke
             realTarget = x3d.GetRef();
          else
          {
-            Application().LogMessage(L"[alembic] Invalid target '"+target.GetAsText()+L"' for "+type+L".",siErrorMsg);
+            Application().LogMessage(L"[ExocortexAlembic] Invalid target '"+target.GetAsText()+L"' for "+type+L".",siErrorMsg);
             return CStatus::InvalidArgument;
          }
          break;
@@ -691,12 +691,12 @@ CStatus alembic_create_item_Invoke
          ICETree alembicTree(target);
          if(!alembicOp.IsValid() && !alembicTree.IsValid())
          {
-            Application().LogMessage(L"[alembic] Invalid target '"+target.GetAsText()+L"' for "+type+L".",siErrorMsg);
+            Application().LogMessage(L"[ExocortexAlembic] Invalid target '"+target.GetAsText()+L"' for "+type+L".",siErrorMsg);
             return CStatus::InvalidArgument;
          }
          if(!alembicOp.GetType().GetSubString(0,8).IsEqualNoCase(L"alembic_") && !alembicTree.GetName().GetSubString(0,4).IsEqualNoCase(L"abc_"))
          {
-            Application().LogMessage(L"[alembic] Invalid target '"+target.GetAsText()+L"' for "+type+L".",siErrorMsg);
+            Application().LogMessage(L"[ExocortexAlembic] Invalid target '"+target.GetAsText()+L"' for "+type+L".",siErrorMsg);
             return CStatus::InvalidArgument;
          }
          if(alembicOp.IsValid())
@@ -725,7 +725,7 @@ CStatus alembic_create_item_Invoke
 
             if(!realTarget.IsValid())
             {
-               Application().LogMessage(L"[alembic] Could not find custom abc node on icetree '"+target.GetAsText()+L".",siErrorMsg);
+               Application().LogMessage(L"[ExocortexAlembic] Could not find custom abc node on icetree '"+target.GetAsText()+L".",siErrorMsg);
                return CStatus::InvalidArgument;
             }
          }
@@ -733,7 +733,7 @@ CStatus alembic_create_item_Invoke
       }
       default:
       {
-         Application().LogMessage(L"[alembic] Unknown item type '"+type+L"'.",siErrorMsg);
+         Application().LogMessage(L"[ExocortexAlembic] Unknown item type '"+type+L"'.",siErrorMsg);
          return CStatus::InvalidArgument;
       }
    }
@@ -759,7 +759,7 @@ CStatus alembic_create_item_Invoke
          abcObject = getObjectFromArchive(file,identifier);
          if(!abcObject.valid())
          {
-            Application().LogMessage(L"[alembic] Identifier '"+identifier+L"' is not valid for given filename.",siErrorMsg);
+            Application().LogMessage(L"[ExocortexAlembic] Identifier '"+identifier+L"' is not valid for given filename.",siErrorMsg);
             return CStatus::InvalidArgument;
          }
          isAnimated = (itemType == alembicItemType_bbox) || (hasMultipleSamples(abcObject) && itemType != alembicItemType_geomapprox);
@@ -770,7 +770,7 @@ CStatus alembic_create_item_Invoke
          abcObject = getObjectFromArchive(file,identifier);
          if(!abcObject.valid())
          {
-            Application().LogMessage(L"[alembic] Identifier '"+identifier+L"' is not valid for given filename.",siErrorMsg);
+            Application().LogMessage(L"[ExocortexAlembic] Identifier '"+identifier+L"' is not valid for given filename.",siErrorMsg);
             return CStatus::InvalidArgument;
          }
          Alembic::AbcGeom::IVisibilityProperty visibilityProperty = 
@@ -1310,7 +1310,7 @@ CStatus alembic_create_item_Invoke
          // create an arnold property on the x3d if we don't have it yet!
          if(!hasStandinSupport())
          {
-            Application().LogMessage(L"[alembic] There is no standin support. Please use a renderer supported standins.",siErrorMsg);
+            Application().LogMessage(L"[ExocortexAlembic] There is no standin support. Please use a renderer supported standins.",siErrorMsg);
             return CStatus::InvalidArgument;
          }
 
@@ -1437,11 +1437,11 @@ ESS_CALLBACK_START(alembic_import_Execute, CRef&)
       }
       else
       {
-         Application().LogMessage(L"[alembic] No filename specified.",siErrorMsg);
+         Application().LogMessage(L"[ExocortexAlembic] No filename specified.",siErrorMsg);
          return CStatus::InvalidArgument;
       }
    }
-   Application().LogMessage(L"[alembic] filename used: "+filename);
+   Application().LogMessage(L"[ExocortexAlembic] filename used: "+filename);
 
    // check if we have arguments
    if(args[1].GetAsText().IsEmpty())
@@ -1623,7 +1623,7 @@ ESS_CALLBACK_START(alembic_import_Execute, CRef&)
                parentModel = getRefFromIdentifier(objects[i].getParent().getFullName().c_str());
                if(!parentModel.IsValid())
                {
-                  Application().LogMessage(L"[alembic] Didn't find model for "+CString(objects[i].getParent().getFullName().c_str())+L"', using Scene_Root..",siWarningMsg);
+                  Application().LogMessage(L"[ExocortexAlembic] Didn't find model for "+CString(objects[i].getParent().getFullName().c_str())+L"', using Scene_Root..",siWarningMsg);
                   parentModel = Application().GetActiveSceneRoot();
                }
             }
@@ -1837,7 +1837,7 @@ ESS_CALLBACK_START(alembic_import_Execute, CRef&)
          if(!nurbsObj.IsValid())
          {
             // warn
-            Application().LogMessage(L"[alembic] Skipping nurbs '"+name+L"', nurbs object not found in scene.",siWarningMsg);
+            Application().LogMessage(L"[ExocortexAlembic] Skipping nurbs '"+name+L"', nurbs object not found in scene.",siWarningMsg);
          }
          else
          {
@@ -1862,7 +1862,7 @@ ESS_CALLBACK_START(alembic_import_Execute, CRef&)
          if(curveSample.getType() != Alembic::AbcGeom::ALEMBIC_VERSION_NS::kLinear &&
             curveSample.getType() != Alembic::AbcGeom::ALEMBIC_VERSION_NS::kCubic)
          {
-            Application().LogMessage(L"[alembic] Skipping curve '"+name+L"', invalid curve type.",siWarningMsg);
+            Application().LogMessage(L"[ExocortexAlembic] Skipping curve '"+name+L"', invalid curve type.",siWarningMsg);
             continue;
          }
 
@@ -2516,7 +2516,7 @@ ESS_CALLBACK_START(alembic_path_manager_Execute, CRef&)
 
    if(pathMap.size() == 0 && identifierMap.size() == 0)
    {
-      Application().LogMessage(L"[alembic] No alembic operators / icetrees found!",siWarningMsg);
+      Application().LogMessage(L"[ExocortexAlembic] No alembic operators / icetrees found!",siWarningMsg);
       return CStatus::OK;
    }
 
@@ -2575,7 +2575,7 @@ ESS_CALLBACK_START(alembic_path_manager_Execute, CRef&)
    logic += L"  var search = prop.parameters('path_search').value;\n";
    logic += L"  var replace = prop.parameters('path_replace').value;\n";
    logic += L"  if(!search){\n";
-   logic += L"    LogMessage('[alembic] No search string specified!',siWarningMsg);\n";
+   logic += L"    LogMessage('[ExocortexAlembic] No search string specified!',siWarningMsg);\n";
    logic += L"    return;\n";
    logic += L"  }\n";
    logic += L"  for(var i=0;i<prop.parameters.count;i++){\n";
@@ -2591,7 +2591,7 @@ ESS_CALLBACK_START(alembic_path_manager_Execute, CRef&)
    logic += L"  var search = prop.parameters('identifier_search').value;\n";
    logic += L"  var replace = prop.parameters('identifier_replace').value;\n";
    logic += L"  if(!search){\n";
-   logic += L"    LogMessage('[alembic] No search string specified!',siWarningMsg);\n";
+   logic += L"    LogMessage('[ExocortexAlembic] No search string specified!',siWarningMsg);\n";
    logic += L"    return;\n";
    logic += L"  }\n";
    logic += L"  for(var i=0;i<prop.parameters.count;i++){\n";
