@@ -35,16 +35,10 @@ MStatus AlembicXform::Save(double time)
    Alembic::AbcGeom::XformSample sample;
 
    MTransformationMatrix xf = node.transformation();
-   double scale[3];
-   xf.getScale(scale,MSpace::kTransform);
-   MQuaternion rot = xf.rotation();
-   MVector axis;
-   double angle;
-   rot.getAxisAngle(axis,angle);
-   MVector trans = xf.getTranslation(MSpace::kTransform);
-   sample.setScale(Alembic::Abc::V3d(scale[0],scale[1],scale[2]));
-   sample.setRotation(Alembic::Abc::V3d(axis.x,axis.y,axis.z),angle);
-   sample.setTranslation(Alembic::Abc::V3d(trans.x,trans.y,trans.z));
+   MMatrix matrix = xf.asMatrix();
+   Alembic::Abc::M44d abcMatrix;
+   matrix.get(abcMatrix.x);
+   sample.setMatrix(abcMatrix);
 
    // save the sample
    mXformSchema.set(sample);
