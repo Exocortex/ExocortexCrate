@@ -86,15 +86,11 @@ bool AlembicPolyMesh::Save(double time)
     {
         triObj = (TriObject *) obj->ConvertToType(ticks, Class_ID(TRIOBJ_CLASS_ID, 0));
 
-        // Note that the TriObject should only be deleted
-        // if the pointer to it is not equal to the object
-        // pointer that called ConvertToType()
-        if (obj != triObj && triObj)
-        {
-            delete triObj;
-            triObj = 0;
+        // Make sure we have a tri object
+        if (!triObj)
             return false;
-        }
+
+        
     }
     else
     {
@@ -116,12 +112,6 @@ bool AlembicPolyMesh::Save(double time)
         posVec[i].y = static_cast<float>(objectMesh.getVert(i).y);
         posVec[i].z = static_cast<float>(objectMesh.getVert(i).z);
         bbox.extendBy(posVec[i]);
-
-        // if (time == 1.0f)
-        // {
-            sprintf_s(debugMsg, "Vector %d is (%5.2f, %5.2f, %5.2f) at Sample Time %5.2f\n", i, posVec[i].x, posVec[i].y, posVec[i].z, time);
-            OutputDebugString(debugMsg);
-        // }
     }
 
     strcpy(debugMsg, "\n");
@@ -495,12 +485,16 @@ bool AlembicPolyMesh::Save(double time)
 
    mNumSamples++;
 
-
-
+   // Note that the TriObject should only be deleted
+   // if the pointer to it is not equal to the object
+   // pointer that called ConvertToType()
+   if (obj != triObj)
+   {
+       delete triObj;
+       triObj = 0;
+   }
 
 	///////////////////////////////////////////////////////////////////////////////////////////////
-
-    
 
     return true;
 }

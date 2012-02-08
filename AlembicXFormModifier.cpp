@@ -147,9 +147,9 @@ IParamBlock2 *AlembicXFormModifier::GetParamBlockByID (short id) {
 
 Interval AlembicXFormModifier::GetValidity (TimeValue t) 
 {
-	Interval ret = FOREVER;
-	pblock->GetValidity (t, ret);
-
+	// Interval ret = FOREVER;
+	// pblock->GetValidity (t, ret);
+    Interval ret(t, t);
 	return ret;
 }
 
@@ -196,7 +196,7 @@ void AlembicXFormModifier::ModifyObject (TimeValue t, ModContext &mc, ObjectStat
         Point3(matrix.getValue()[12], matrix.getValue()[13], matrix.getValue()[14]));
 
     Interval alembicValid(t, t); 
-    ivalid &= alembicValid;
+    ivalid = alembicValid;
     
     // set matrix explicitly 
     os->obj->UpdateValidity(TM_CHANNEL, ivalid);

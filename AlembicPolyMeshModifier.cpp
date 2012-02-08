@@ -49,8 +49,8 @@ public:
 	TCHAR *GetObjectName() { return _T("Exocortex Alembic PolyMesh"); }
 
 	// From modifier
-	ChannelMask ChannelsUsed()  { return TOPO_CHANNEL|GEOM_CHANNEL; }
-	ChannelMask ChannelsChanged() { return TOPO_CHANNEL|GEOM_CHANNEL; }
+	ChannelMask ChannelsUsed()  { return TOPO_CHANNEL|GEOM_CHANNEL|TEXMAP_CHANNEL; }
+	ChannelMask ChannelsChanged() { return TOPO_CHANNEL|GEOM_CHANNEL|TEXMAP_CHANNEL; }
 	Class_ID InputType() { return triObjectClassID; }
 	void ModifyObject (TimeValue t, ModContext &mc, ObjectState *os, INode *node);
 	Interval LocalValidity(TimeValue t) { return GetValidity(t); }
@@ -163,8 +163,11 @@ IParamBlock2 *AlembicPolyMeshModifier::GetParamBlockByID (short id) {
 }
 
 Interval AlembicPolyMeshModifier::GetValidity (TimeValue t) {
-	Interval ret = FOREVER;
-	pblock->GetValidity (t, ret);
+	// Interval ret = FOREVER;
+	// pblock->GetValidity (t, ret);
+
+    // PeterM this will need to be rethought out
+    Interval ret(t,t);
 	return ret;
 }
 
@@ -183,12 +186,12 @@ void AlembicPolyMeshModifier::ModifyObject (TimeValue t, ModContext &mc, ObjectS
    options.pIObj = &iObj;
    options.pTriObj = (TriObject*)os->obj;
    options.iFrame = sampleTime;
-   options.nDataFillFlags = ALEMBIC_DATAFILL_POLYMESH_STATIC_UPDATE;
+   options.nDataFillFlags = ALEMBIC_DATAFILL_POLYMESH_TOPO_UPDATE;
    options.nDataFillContext = ALEMBIC_FILLCONTEXT_UPDATE;
    AlembicImport_FillInPolyMesh(options);
 
    Interval alembicValid(t, t); 
-   ivalid &= alembicValid;
+   ivalid = alembicValid;
     
     // update the validity channel
     os->obj->UpdateValidity(TOPO_CHANNEL, ivalid);
