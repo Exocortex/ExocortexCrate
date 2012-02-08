@@ -64,10 +64,8 @@ AlembicCurves::AlembicCurves(const XSI::CRef & in_Ref, AlembicWriteJob * in_Job)
    mCurvesSchema = curves.getSchema();
 
    // create all properties
-   mVelocityProperty = OV3fArrayProperty(mCurvesSchema, ".velocity", mCurvesSchema.getMetaData(), GetJob()->GetAnimatedTs() );
    mRadiusProperty = OFloatArrayProperty(mCurvesSchema, ".radius", mCurvesSchema.getMetaData(), GetJob()->GetAnimatedTs() );
    mColorProperty = OC4fArrayProperty(mCurvesSchema, ".color", mCurvesSchema.getMetaData(), GetJob()->GetAnimatedTs() );
-   mNumRadiusSamples = 0;
 }
 
 AlembicCurves::~AlembicCurves()
@@ -269,30 +267,19 @@ XSI::CStatus AlembicCurves::Save(double time)
          attr.GetDataArray2D(data);
 
          CICEAttributeDataArrayVector3f sub;
-         if(mNumSamples == 0)
+         mNbVertices.resize(data.GetCount());
+         for(ULONG i=0;i<data.GetCount();i++)
          {
-            mNbVertices.resize(data.GetCount());
-            for(ULONG i=0;i<data.GetCount();i++)
-            {
-               data.GetSubArray(i,sub);
-               vertexCount += sub.GetCount();
-               mNbVertices[i] = (int32_t)sub.GetCount();
-            }
-            mCurvesSample.setCurvesNumVertices(Alembic::Abc::Int32ArraySample(&mNbVertices.front(),mNbVertices.size()));
+            data.GetSubArray(i,sub);
+            vertexCount += sub.GetCount();
+            mNbVertices[i] = (int32_t)sub.GetCount();
+         }
+         mCurvesSample.setCurvesNumVertices(Alembic::Abc::Int32ArraySample(&mNbVertices.front(),mNbVertices.size()));
 
-            // set wrap parameters
-            mCurvesSample.setType(kLinear);
-            mCurvesSample.setWrap(kNonPeriodic);
-            mCurvesSample.setBasis(kNoBasis);
-         }
-         else
-         {
-            for(ULONG i=0;i<data.GetCount();i++)
-            {
-               data.GetSubArray(i,sub);
-               vertexCount += sub.GetCount();
-            }
-         }
+         // set wrap parameters
+         mCurvesSample.setType(kLinear);
+         mCurvesSample.setWrap(kNonPeriodic);
+         mCurvesSample.setBasis(kNoBasis);
 
          posVec.resize(vertexCount);
          size_t offset = 0;
@@ -318,7 +305,7 @@ XSI::CStatus AlembicCurves::Save(double time)
       // store the bbox
       mCurvesSample.setSelfBounds(bbox);
 
-      if(mNumRadiusSamples == 0 && vertexCount > 0)
+      if(vertexCount > 0)
       {
          ICEAttribute attr = geo.GetICEAttributeFromName(L"StrandSize");
          if(attr.IsDefined() && attr.IsValid())
@@ -436,11 +423,54 @@ XSI::CStatus AlembicCurves::Save(double time)
                mCurvesSample.setUVs(Alembic::AbcGeom::OV2fGeomParam::Sample(Alembic::Abc::V2fArraySample(&mUvVec.front(),mUvVec.size()),Alembic::AbcGeom::kVertexScope));
             }
          }
+
+         attr = geo.GetICEAttributeFromName(L"StrandVelocity");
+         if(attr.IsDefined() && attr.IsValid())
+         {
+            float fps = (float)CTime().GetFrameRate();
+            CICEAttributeDataArray2DVector3f data;
+            attr.GetDataArray2D(data);
+
+            CICEAttributeDataArrayVector3f sub;
+
+            mVelVec.resize(vertexCount);
+            size_t offset = 0;
+            for(ULONG i=0;i<data.GetCount();i++)
+            {
+               data.GetSubArray(data.IsConstant() ? 0 : i,sub);
+               for(ULONG j=0;j<sub.GetCount();j++)
+               {
+                  mVelVec[offset].x = sub[j].GetX() / fps;
+                  mVelVec[offset].y = sub[j].GetY() / fps;
+                  mVelVec[offset].z = sub[j].GetZ() / fps;
+                  offset++;
+               }
+            }
+            mCurvesSample.setVelocities(Alembic::Abc::V3fArraySample(&mVelVec.front(),mVelVec.size()));
+         }
+         else
+         {
+            attr = geo.GetICEAttributeFromName(L"PointVelocity");
+            if(attr.IsDefined() && attr.IsValid())
+            {
+               float fps = (float)CTime().GetFrameRate();
+               CICEAttributeDataArrayVector3f data;
+               attr.GetDataArray(data);
+
+               mVelVec.resize(data.GetCount());
+               for(ULONG i=0;i<data.GetCount();i++)
+               {
+                  mVelVec[i].x = data[i].GetX() / fps;
+                  mVelVec[i].y = data[i].GetY() / fps;
+                  mVelVec[i].z = data[i].GetZ() / fps;
+               }
+               mCurvesSample.setVelocities(Alembic::Abc::V3fArraySample(&mVelVec.front(),mVelVec.size()));
+            }
+         }
       }
       if(vertexCount > 0)
       {
          mCurvesSchema.set(mCurvesSample);
-         mNumRadiusSamples++;
       }
    }
    mNumSamples++;
@@ -701,21 +731,42 @@ XSIPLUGINCALLBACK CStatus alembic_curves_Evaluate(ICENodeContext& in_ctxt)
          else
          {
             acc = outData.Resize(0,(ULONG)ptr->size());
+            bool done = false;
 
             if(sampleInfo.alpha != 0.0)
             {
                Alembic::Abc::P3fArraySamplePtr ptr2 = obj.getSchema().getValue(sampleInfo.ceilIndex).getPositions();
                float alpha = (float)sampleInfo.alpha;
                float ialpha = 1.0f - alpha;
-               for(ULONG i=0;i<acc.GetCount();i++)
+               if(ptr2->size() == ptr->size())
                {
-                  acc[i].Set(
-                     ialpha * ptr->get()[i].x + alpha * ptr2->get()[i].x,
-                     ialpha * ptr->get()[i].y + alpha * ptr2->get()[i].y,
-                     ialpha * ptr->get()[i].z + alpha * ptr2->get()[i].z);
+                  for(ULONG i=0;i<acc.GetCount();i++)
+                  {
+                     acc[i].Set(
+                        ialpha * ptr->get()[i].x + alpha * ptr2->get()[i].x,
+                        ialpha * ptr->get()[i].y + alpha * ptr2->get()[i].y,
+                        ialpha * ptr->get()[i].z + alpha * ptr2->get()[i].z);
+                  }
+                  done = true;
+               }
+               else
+               {
+                  Alembic::Abc::V3fArraySamplePtr vel = sample.getVelocities();
+                  if(vel->size() == ptr->size())
+                  {
+                     for(ULONG i=0;i<acc.GetCount();i++)
+                     {
+                        acc[i].Set(
+                           ptr->get()[i].x + alpha * vel->get()[i].x,
+                           ptr->get()[i].y + alpha * vel->get()[i].y,
+                           ptr->get()[i].z + alpha * vel->get()[i].z);
+                     }
+                     done = true;
+                  }
                }
             }
-            else
+
+            if(!done)
             {
                for(ULONG i=0;i<acc.GetCount();i++)
                   acc[i].Set(ptr->get()[i].x,ptr->get()[i].y,ptr->get()[i].z);
