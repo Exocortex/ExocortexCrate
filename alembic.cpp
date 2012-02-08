@@ -304,7 +304,7 @@ AlembicExporter::AlembicExporter()
     frameOut = 100;
     frameSteps = 1;
     frameSubSteps = 1;
-    topologyType = SURFACE;
+    topologyType = NORMAL_SURFACE;
 }
 
 AlembicExporter::~AlembicExporter()

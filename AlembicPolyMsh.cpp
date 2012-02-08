@@ -105,7 +105,6 @@ bool AlembicPolyMesh::Save(double time)
 
     // allocate the points and normals
     posVec.resize(vertCount);
-    char debugMsg[256];
     for(LONG i=0;i<vertCount;i++)
     {        
         posVec[i].x = static_cast<float>(objectMesh.getVert(i).x);
@@ -113,10 +112,6 @@ bool AlembicPolyMesh::Save(double time)
         posVec[i].z = static_cast<float>(objectMesh.getVert(i).z);
         bbox.extendBy(posVec[i]);
     }
-
-    strcpy(debugMsg, "\n");
-    OutputDebugString(debugMsg);
-
 
     // allocate the sample for the points
     if(posVec.size() == 0)
@@ -157,97 +152,90 @@ bool AlembicPolyMesh::Save(double time)
 	LONG sampleCount = faceCount * 3;
 	
 	// create an index lookup table
-	LONG offset = 0;
 	std::vector<uint32_t> sampleLookup;
 	sampleLookup.reserve(sampleCount);
 	for(int f = 0; f < objectMesh.numFaces; f += 1)
-	{
+    {
 		for (int i = 0; i < 3; i += 1)
 		{
 			sampleLookup.push_back(objectMesh.faces[f].v[i]);
-			offset += 1;
 		}
 	}
 
-   // let's check if we have user normals
-   size_t normalCount = 0;
-   size_t normalIndexCount = 0;
-   /*if((bool)GetJob()->GetOption(L"exportNormals"))
-   {
-      CVector3Array normals = mesh.GetVertices().GetNormalArray();
+    // let's check if we have user normals
+    size_t normalCount = 0;
+    size_t normalIndexCount = 0;
+    if((bool)GetCurrentJob()->GetOption("exportNormals"))
+    {
+        objectMesh.buildNormals();
+        std::vector<Point3> faceNormalsArray;
+        faceNormalsArray.reserve(sampleCount);
 
-      CGeometryAccessor accessor = mesh.GetGeometryAccessor(siConstructionModeSecondaryShape);
-      CRefArray userNormalProps = accessor.GetUserNormals();
-      CFloatArray shadingNormals;
-      accessor.GetNodeNormals(shadingNormals);
-      if(userNormalProps.GetCount() > 0)
-      {
-         ClusterProperty userNormalProp(userNormalProps[0]);
-         Cluster cluster(userNormalProp.GetParent());
-         CLongArray elements = cluster.GetElements().GetArray();
-         CDoubleArray userNormals = userNormalProp.GetElements().GetArray();
-         for(LONG i=0;i<elements.GetCount();i++)
-         {
-            LONG sampleIndex = elements[i] * 3;
-            if(sampleIndex >= shadingNormals.GetCount())
-               continue;
-            shadingNormals[sampleIndex++] = (float)userNormals[i*3+0];
-            shadingNormals[sampleIndex++] = (float)userNormals[i*3+1];
-            shadingNormals[sampleIndex++] = (float)userNormals[i*3+2];
-         }
-      }
-      normalVec.resize(shadingNormals.GetCount() / 3);
-      normalCount = normalVec.size();
+        // Face and vertex normals.
+        // In MAX a vertex can have more than one normal (but doesn't always have it).
+        for (int i=0; i<objectMesh.getNumFaces(); i++) 
+        {
+            Face *f = &objectMesh.faces[i];
 
-      for(LONG i=0;i<sampleCount;i++)
-      {
-         LONG lookedup = sampleLookup[i];
-         normalVec[i].x = shadingNormals[lookedup * 3 + 0];
-         normalVec[i].y = shadingNormals[lookedup * 3 + 1];
-         normalVec[i].z = shadingNormals[lookedup * 3 + 2];
-      }
+            for (int j = 0; j < 3; j += 1)
+            {
+                int vertexId = f->getVert(j);
+                Point3 vertexNormal = GetVertexNormal(&objectMesh, i, objectMesh.getRVertPtr(vertexId));
+                faceNormalsArray.push_back(vertexNormal);
+            }
+        }
 
-      // now let's sort the normals 
-      if((bool)GetJob()->GetOption(L"indexedNormals")) {
-         std::map<SortableV3f,size_t> normalMap;
-         std::map<SortableV3f,size_t>::const_iterator it;
-         size_t sortedNormalCount = 0;
-         std::vector<Alembic::Abc::V3f> sortedNormalVec;
-         normalIndexVec.resize(normalVec.size());
-         sortedNormalVec.resize(normalVec.size());
+        normalVec.resize(sampleCount);
+        normalCount = normalVec.size();
 
-         // loop over all normals
-         for(size_t i=0;i<normalVec.size();i++)
-         {
-            it = normalMap.find(normalVec[i]);
-            if(it != normalMap.end())
-               normalIndexVec[normalIndexCount++] = (uint32_t)it->second;
+        for(LONG i=0;i<sampleCount;i++)
+        {
+            LONG lookedup = sampleLookup[i];
+            normalVec[i].x = faceNormalsArray[i].x;
+            normalVec[i].y = faceNormalsArray[i].y;
+            normalVec[i].z = faceNormalsArray[i].z;
+        }
+
+        // now let's sort the normals 
+        if((bool)GetCurrentJob()->GetOption("indexedNormals")) {
+            std::map<SortableV3f,size_t> normalMap;
+            std::map<SortableV3f,size_t>::const_iterator it;
+            size_t sortedNormalCount = 0;
+            std::vector<Alembic::Abc::V3f> sortedNormalVec;
+            normalIndexVec.resize(normalVec.size());
+            sortedNormalVec.resize(normalVec.size());
+
+            // loop over all normals
+            for(size_t i=0;i<normalVec.size();i++)
+            {
+                it = normalMap.find(normalVec[i]);
+                if(it != normalMap.end())
+                    normalIndexVec[normalIndexCount++] = (uint32_t)it->second;
+                else
+                {
+                    normalIndexVec[normalIndexCount++] = (uint32_t)sortedNormalCount;
+                    normalMap.insert(std::pair<Alembic::Abc::V3f,size_t>(normalVec[i],(uint32_t)sortedNormalCount));
+                    sortedNormalVec[sortedNormalCount++] = normalVec[i];
+                }
+            }
+
+            // use indexed normals if they use less space
+            if(sortedNormalCount * sizeof(Alembic::Abc::V3f) + 
+                normalIndexCount * sizeof(uint32_t) < 
+                sizeof(Alembic::Abc::V3f) * normalVec.size())
+            {
+                normalVec = sortedNormalVec;
+                normalCount = sortedNormalCount;
+            }
             else
             {
-               normalIndexVec[normalIndexCount++] = (uint32_t)sortedNormalCount;
-               normalMap.insert(std::pair<Alembic::Abc::V3f,size_t>(normalVec[i],(uint32_t)sortedNormalCount));
-               sortedNormalVec[sortedNormalCount++] = normalVec[i];
+                normalIndexCount = 0;
+                normalIndexVec.clear();
             }
-         }
-
-         // use indexed normals if they use less space
-         if(sortedNormalCount * sizeof(Alembic::Abc::V3f) + 
-            normalIndexCount * sizeof(uint32_t) < 
-            sizeof(Alembic::Abc::V3f) * normalVec.size())
-         {
-            normalVec = sortedNormalVec;
-            normalCount = sortedNormalCount;
-         }
-         else
-         {
-            normalIndexCount = 0;
-            normalIndexVec.clear();
-         }
-         sortedNormalCount = 0;
-         sortedNormalVec.clear();
-      }
-   }
-   */
+            sortedNormalCount = 0;
+            sortedNormalVec.clear();
+        }
+    }
 
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	 // if we are the first frame!
@@ -259,7 +247,7 @@ bool AlembicPolyMesh::Save(double time)
          mFaceCountVec.resize(faceCount);
          mFaceIndicesVec.resize(sampleCount);
 
-         offset = 0;
+         int offset = 0;
          for(LONG f=0;f<faceCount;f++)
          {
             mFaceCountVec[f] = 3;
@@ -497,4 +485,42 @@ bool AlembicPolyMesh::Save(double time)
 	///////////////////////////////////////////////////////////////////////////////////////////////
 
     return true;
+}
+
+Point3 AlembicPolyMesh::GetVertexNormal(Mesh* mesh, int faceNo, RVertex* rv)
+{
+	Face* f = &mesh->faces[faceNo];
+	DWORD smGroup = f->smGroup;
+	int numNormals = 0;
+	Point3 vertexNormal;
+	
+	// Is normal specified
+	// SPCIFIED is not currently used, but may be used in future versions.
+	if (rv->rFlags & SPECIFIED_NORMAL) {
+		vertexNormal = rv->rn.getNormal();
+	}
+	// If normal is not specified it's only available if the face belongs
+	// to a smoothing group
+	else if ((numNormals = rv->rFlags & NORCT_MASK) != 0 && smGroup) {
+		// If there is only one vertex is found in the rn member.
+		if (numNormals == 1) {
+			vertexNormal = rv->rn.getNormal();
+		}
+		else {
+			// If two or more vertices are there you need to step through them
+			// and find the vertex with the same smoothing group as the current face.
+			// You will find multiple normals in the ern member.
+			for (int i = 0; i < numNormals; i++) {
+				if (rv->ern[i].getSmGroup() & smGroup) {
+					vertexNormal = rv->ern[i].getNormal();
+				}
+			}
+		}
+	}
+	else {
+		// Get the normal from the Face if no smoothing groups are there
+		vertexNormal = mesh->getFaceNormal(faceNo);
+	}
+	
+	return vertexNormal;
 }

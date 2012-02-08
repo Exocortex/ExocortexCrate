@@ -5,6 +5,7 @@
 #include "utility.h"
 #include "iparamb2.h"
 #include "alembic.h"
+#include "MeshNormalSpec.h"
 
 typedef struct _alembic_fillmesh_options
 {
@@ -415,6 +416,61 @@ void AlembicImport_FillInPolyMesh(alembic_fillmesh_options &options)
 
         // mesh.InvalidateGeomCache();
         // mesh.InvalidateTopologyCache();
+   }
+
+   if ( options.nDataFillFlags & ALEMBIC_DATAFILL_NORMALS && objMesh.valid() )
+   {
+       Alembic::AbcGeom::IN3fGeomParam meshNormalsParam = objMesh.getSchema().getNormalsParam();
+
+       if(meshNormalsParam.valid())
+       {
+           Alembic::Abc::N3fArraySamplePtr meshNormals = meshNormalsParam.getExpandedValue(sampleInfo.floorIndex).getVals();
+           std::vector<Point3> normalsToSet;
+           normalsToSet.reserve(meshNormals->size());
+
+           for (int i = 0; i < meshNormals->size(); i += 1)
+           {
+               normalsToSet.push_back(Point3(meshNormals->get()[i].x, meshNormals->get()[i].y, meshNormals->get()[i].z));
+
+               // blend
+               if(sampleInfo.alpha != 0.0)
+               {
+                   meshNormals = meshNormalsParam.getExpandedValue(sampleInfo.ceilIndex).getVals();
+                   if(meshNormals->size() == normalsToSet.size())
+                   {
+                       Point3 ceilNormal(meshNormals->get()[i].x, meshNormals->get()[i].y, meshNormals->get()[i].z);
+                       Point3 delta = (ceilNormal - normalsToSet[i]) * float(sampleInfo.alpha);
+                       normalsToSet[i] += delta; 
+                       normalsToSet[i].Normalize();
+                   }
+               }
+           }
+
+           // Set up the specify normals
+           mesh.SpecifyNormals();
+           MeshNormalSpec *normalSpec = mesh.GetSpecifiedNormals();
+           normalSpec->ClearNormals();
+           normalSpec->SetNumNormals((int)normalsToSet.size());
+           for (int i = 0; i < normalsToSet.size(); i++)
+           {
+               normalSpec->Normal(i) = normalsToSet[i];
+               normalSpec->SetNormalExplicit(i, true);
+           }
+
+           // Set up the normal faces
+           normalSpec->SetNumFaces(mesh.numFaces);
+           for (int i =0; i < mesh.numFaces; i += 1)
+           {
+               Face &face = mesh.faces[i];
+
+               MeshNormalFace &normalFace = normalSpec->Face(i);
+               normalFace.SpecifyAll();
+               normalFace.SetNormalID(0, i);
+               normalFace.SetNormalID(1, i+2);
+               normalFace.SetNormalID(2, i+3);
+               normalFace.MyDebugPrint(true);
+           }
+       }
    }
 }
 
