@@ -216,7 +216,7 @@ static PyObject * oObject_getProperty(PyObject * self, PyObject * args)
    if(Alembic::AbcGeom::OXform::matches(object->mObject->getMetaData()))
    {
       std::string propNameStr(propName);
-      if(propNameStr == ".xform")
+      if(propNameStr == ".xform" || propNameStr == ".vals")
       {
          return oXformProperty_new(object->mCasted,object->mArchive);
       }

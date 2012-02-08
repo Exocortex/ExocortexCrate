@@ -169,7 +169,7 @@ static PyObject * iObject_getProperty(PyObject * self, PyObject * args)
    if(Alembic::AbcGeom::IXform::matches(object->mObject->getMetaData()))
    {
       std::string propNameStr(propName);
-      if(propNameStr == ".xform")
+      if(propNameStr == ".xform" || propNameStr == ".vals")
       {
          return iXformProperty_new(*object->mObject);
       }
