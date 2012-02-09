@@ -17,4 +17,25 @@ public:
    virtual MStatus Save(double time);
 };
 
+class AlembicXformNode : public MPxNode
+{
+public:
+   AlembicXformNode() {}
+   virtual ~AlembicXformNode() {}
+
+   // override virtual methods from MPxNode
+   virtual MStatus compute(const MPlug & plug, MDataBlock & dataBlock);
+   static void* creator() { return (new AlembicXformNode()); }
+   static MStatus initialize();
+
+private:
+   // input attributes
+   static MObject mTimeAttr;
+   static MObject mFileNameAttr;
+   static MObject mIdentifierAttr;
+
+   // output attributes
+    static MObject mOutTransformAttr;
+};
+
 #endif

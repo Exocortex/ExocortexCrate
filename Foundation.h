@@ -49,6 +49,15 @@
 #include <maya/MQuaternion.h>
 #include <maya/MMatrix.h>
 #include <maya/MTransformationMatrix.h>
+#include <maya/MPxNode.h>
+#include <maya/MDataHandle.h>
+#include <maya/MDGContext.h>
+#include <maya/MFnUnitAttribute.h>
+#include <maya/MFnTypedAttribute.h>
+#include <maya/MFnNumericAttribute.h>
+#include <maya/MFnGenericAttribute.h>
+#include <maya/MFnStringData.h>
+#include <maya/MFnMatrixData.h>
 
 #include "Utility.h"
 #include "AlembicArchiveStorage.h"
