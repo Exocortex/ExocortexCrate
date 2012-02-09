@@ -1,5 +1,6 @@
 #include "Foundation.h"
 #include "AlembicWriteJob.h"
+#include "AlembicTimeControl.h"
 #include "AlembicXform.h"
 
 #include <maya/MFnPlugin.h>
@@ -20,12 +21,10 @@ MStatus initializePlugin(MObject obj)
       AlembicExportCommand::createSyntax);
 
    // nodes
-   /*
    status = plugin.registerNode("ExocortexAlembicTimeControl",
       mTimeControlNodeId,
       &AlembicTimeControlNode::creator,
       &AlembicTimeControlNode::initialize);
-   */
    status = plugin.registerNode("ExocortexAlembicXform",
       mXformNodeId,
       &AlembicXformNode::creator,
@@ -41,7 +40,7 @@ MStatus uninitializePlugin(MObject obj)
 
    status = plugin.deregisterCommand("exocortexalembic_export");
 
-   //status = plugin.deregisterNode(mTimeControlNodeId);
+   status = plugin.deregisterNode(mTimeControlNodeId);
    status = plugin.deregisterNode(mXformNodeId);
 
    return status;
