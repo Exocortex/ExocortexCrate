@@ -131,7 +131,8 @@ XSIPLUGINCALLBACK CStatus alembic_camera_Update( CRef& in_ctxt )
    // values
    double lensSqueezeRatio = sample.getLensSqueezeRatio();
    double focalLength = sample.getFocalLength();
-   double aperture = sample.getVerticalAperture() / 2.54f;
+   double xaperture = sample.getHorizontalAperture() / 2.54f;
+   double yaperture = sample.getVerticalAperture() / 2.54f;
    double nearClipping = sample.getNearClippingPlane();
    double farClipping = sample.getFarClippingPlane();
 
@@ -141,7 +142,8 @@ XSIPLUGINCALLBACK CStatus alembic_camera_Update( CRef& in_ctxt )
       obj.getSchema().get(sample,sampleInfo.ceilIndex);
       lensSqueezeRatio = (1.0 - sampleInfo.alpha) * lensSqueezeRatio + sampleInfo.alpha * sample.getLensSqueezeRatio();
       focalLength = (1.0 - sampleInfo.alpha) * focalLength + sampleInfo.alpha * sample.getFocalLength();
-      aperture = (1.0 - sampleInfo.alpha) * aperture + sampleInfo.alpha * sample.getVerticalAperture() / 2.54f;
+      xaperture = (1.0 - sampleInfo.alpha) * xaperture + sampleInfo.alpha * sample.getHorizontalAperture() / 2.54f;
+      yaperture = (1.0 - sampleInfo.alpha) * yaperture + sampleInfo.alpha * sample.getVerticalAperture() / 2.54f;
       nearClipping = (1.0 - sampleInfo.alpha) * nearClipping + sampleInfo.alpha * sample.getNearClippingPlane();
       farClipping = (1.0 - sampleInfo.alpha) * farClipping + sampleInfo.alpha * sample.getFarClippingPlane();
    }
@@ -152,8 +154,10 @@ XSIPLUGINCALLBACK CStatus alembic_camera_Update( CRef& in_ctxt )
    prim.PutParameterValue(L"aspect",lensSqueezeRatio);
    prim.PutParameterValue(L"pixelratio",1.0);
    prim.PutParameterValue(L"projplane",true);
+   prim.PutParameterValue(L"projplanelockaspect",false);
    prim.PutParameterValue(L"projplanedist",focalLength);
-   prim.PutParameterValue(L"projplaneheight",aperture);
+   prim.PutParameterValue(L"projplanewidth",xaperture);
+   prim.PutParameterValue(L"projplaneheight",yaperture);
    prim.PutParameterValue(L"near",nearClipping);
    prim.PutParameterValue(L"far",farClipping);
 
