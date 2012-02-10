@@ -150,6 +150,7 @@ XSIPLUGINCALLBACK CStatus alembic_camera_Update( CRef& in_ctxt )
    Primitive prim(ctxt.GetOutputTarget());
    prim.PutParameterValue(L"std",(LONG)0l);
    prim.PutParameterValue(L"aspect",lensSqueezeRatio);
+   prim.PutParameterValue(L"pixelratio",1.0);
    prim.PutParameterValue(L"projplane",true);
    prim.PutParameterValue(L"projplanedist",focalLength);
    prim.PutParameterValue(L"projplaneheight",aperture);
