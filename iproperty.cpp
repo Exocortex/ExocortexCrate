@@ -373,7 +373,7 @@ static PyObject * iProperty_getType(PyObject * self, PyObject * args)
    }
 
    if(prop->mIsArray)
-      type.append(" array");
+      type.append("array");
    return Py_BuildValue("s",type.c_str());
    ALEMBIC_PYOBJECT_CATCH_STATEMENT
 }

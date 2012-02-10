@@ -1397,9 +1397,14 @@ PyObject * oProperty_new(oObjectPtr in_casted, char * in_propName, char * in_pro
 
       // check if this is an array
       std::string propType = in_propType;
-      prop->mIsArray = propType.substr(propType.length()-5,5) == "array";
-      if(prop->mIsArray)
-         propType = propType.substr(0,propType.length()-5);
+      if(propType.length() > 5)
+      {
+         prop->mIsArray = propType.substr(propType.length()-5,5) == "array";
+         if(prop->mIsArray)
+            propType = propType.substr(0,propType.length()-5);
+      }
+      else
+         prop->mIsArray = false;
 
 #ifdef PYTHON_DEBUG
       printf("Creating new property '%s' of type '%s'\n",in_propName,propType.c_str());
