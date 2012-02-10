@@ -5,8 +5,10 @@
 
 #include <maya/MFnPlugin.h>
 
-const MTypeId mTimeControlNodeId(0x01084680);
-const MTypeId mXformNodeId(0x01084681);
+// IDs issues for this plugin are:
+// 0x0011A100 - 0x0011A1FF
+const MTypeId mTimeControlNodeId(0x0011A100);
+const MTypeId mXformNodeId(0x0011A101);
 
 MStatus initializePlugin(MObject obj)
 {
