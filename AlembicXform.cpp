@@ -46,66 +46,246 @@ MStatus AlembicXform::Save(double time)
    return MStatus::kSuccess;
 }
 
+AlembicXformNode::~AlembicXformNode()
+{
+   mSchema.reset();
+   delRefArchive(mFileName);
+}
+
 MObject AlembicXformNode::mTimeAttr;
 MObject AlembicXformNode::mFileNameAttr;
 MObject AlembicXformNode::mIdentifierAttr;
 MObject AlembicXformNode::mOutTransformAttr;
+MObject AlembicXformNode::mOutTranslateXAttr;
+MObject AlembicXformNode::mOutTranslateYAttr;
+MObject AlembicXformNode::mOutTranslateZAttr;
+MObject AlembicXformNode::mOutRotateXAttr;
+MObject AlembicXformNode::mOutRotateYAttr;
+MObject AlembicXformNode::mOutRotateZAttr;
+MObject AlembicXformNode::mOutScaleXAttr;
+MObject AlembicXformNode::mOutScaleYAttr;
+MObject AlembicXformNode::mOutScaleZAttr;
 
 MStatus AlembicXformNode::initialize()
 {
-    MStatus status;
+   MStatus status;
 
-    MFnUnitAttribute uAttr;
-    MFnTypedAttribute tAttr;
-    MFnNumericAttribute nAttr;
-    MFnGenericAttribute gAttr;
-    MFnStringData emptyStringData;
-    MObject emptyStringObject = emptyStringData.create("");
-    MFnMatrixData identityMatrixData;
-    MTransformationMatrix identityMatrix;
-    MObject identityMatrixObject = identityMatrixData.create(MTransformationMatrix::identity);
+   MFnUnitAttribute uAttr;
+   MFnTypedAttribute tAttr;
+   MFnNumericAttribute nAttr;
+   MFnGenericAttribute gAttr;
+   MFnStringData emptyStringData;
+   MObject emptyStringObject = emptyStringData.create("");
+   MFnMatrixData identityMatrixData;
+   MTransformationMatrix identityMatrix;
+   MObject identityMatrixObject = identityMatrixData.create(MTransformationMatrix::identity);
 
-    // input time
-    mTimeAttr = uAttr.create("time", "tm", MFnUnitAttribute::kTime, 0.0);
-    status = uAttr.setStorable(true);
-    status = addAttribute(mTimeAttr);
+   // input time
+   mTimeAttr = uAttr.create("time", "tm", MFnUnitAttribute::kTime, 0.0);
+   status = uAttr.setStorable(true);
+   status = addAttribute(mTimeAttr);
 
-    // input file name
-    mFileNameAttr = tAttr.create("fileName", "fn", MFnData::kString, emptyStringObject);
-    status = tAttr.setStorable(true);
-    status = tAttr.setUsedAsFilename(true);
-    status = addAttribute(mFileNameAttr);
+   // input file name
+   mFileNameAttr = tAttr.create("fileName", "fn", MFnData::kString, emptyStringObject);
+   status = tAttr.setStorable(true);
+   status = tAttr.setUsedAsFilename(true);
+   status = tAttr.setKeyable(false);
+   status = addAttribute(mFileNameAttr);
 
-    // input identifier
-    mIdentifierAttr = tAttr.create("identifier", "it", MFnData::kString, emptyStringObject);
-    status = tAttr.setStorable(true);
-    status = addAttribute(mIdentifierAttr);
+   // input identifier
+   mIdentifierAttr = tAttr.create("identifier", "it", MFnData::kString, emptyStringObject);
+   status = tAttr.setStorable(true);
+   status = tAttr.setKeyable(false);
+   status = addAttribute(mIdentifierAttr);
 
-    // output transform
-    mOutTransformAttr = tAttr.create("transform", "xf", MFnData::kMatrix, identityMatrixObject);
-    status = tAttr.setStorable(false);
-    status = tAttr.setWritable(false);
-    status = tAttr.setKeyable(false);
-    status = addAttribute(mOutTransformAttr);
+   // output transform
+   mOutTransformAttr = tAttr.create("transform", "xf", MFnData::kMatrix, identityMatrixObject);
+   status = tAttr.setStorable(false);
+   status = tAttr.setWritable(false);
+   status = tAttr.setKeyable(false);
+   status = addAttribute(mOutTransformAttr);
 
-    // create a mapping
-    status = attributeAffects(mTimeAttr, mOutTransformAttr);
-    status = attributeAffects(mFileNameAttr, mOutTransformAttr);
-    status = attributeAffects(mIdentifierAttr, mOutTransformAttr);
+   // output translateX
+   mOutTranslateXAttr = nAttr.create("translateX", "tx", MFnNumericData::kDouble, 0.0);
+   status = nAttr.setStorable(false);
+   status = nAttr.setWritable(false);
+   status = nAttr.setKeyable(false);
+   status = addAttribute(mOutTranslateXAttr);
 
-    return status;
+   // output translateY
+   mOutTranslateYAttr = nAttr.create("translateY", "ty", MFnNumericData::kDouble, 0.0);
+   status = nAttr.setStorable(false);
+   status = nAttr.setWritable(false);
+   status = nAttr.setKeyable(false);
+   status = addAttribute(mOutTranslateYAttr);
+
+   // output translateY
+   mOutTranslateZAttr = nAttr.create("translateZ", "tz", MFnNumericData::kDouble, 0.0);
+   status = nAttr.setStorable(false);
+   status = nAttr.setWritable(false);
+   status = nAttr.setKeyable(false);
+   status = addAttribute(mOutTranslateZAttr);
+
+   // output rotatex
+   mOutRotateXAttr = nAttr.create("rotateX", "rx", MFnNumericData::kDouble, 0.0);
+   status = nAttr.setStorable(false);
+   status = nAttr.setWritable(false);
+   status = nAttr.setKeyable(false);
+   status = addAttribute(mOutRotateXAttr);
+
+   // output rotatexy
+   mOutRotateYAttr = nAttr.create("rotateY", "ry", MFnNumericData::kDouble, 0.0);
+   status = nAttr.setStorable(false);
+   status = nAttr.setWritable(false);
+   status = nAttr.setKeyable(false);
+   status = addAttribute(mOutRotateYAttr);
+
+   // output rotatez
+   mOutRotateZAttr = nAttr.create("rotateZ", "rz", MFnNumericData::kDouble, 0.0);
+   status = nAttr.setStorable(false);
+   status = nAttr.setWritable(false);
+   status = nAttr.setKeyable(false);
+   status = addAttribute(mOutRotateZAttr);
+
+   // output scalex
+   mOutScaleXAttr = nAttr.create("scaleX", "sx", MFnNumericData::kDouble, 1.0);
+   status = nAttr.setStorable(false);
+   status = nAttr.setWritable(false);
+   status = nAttr.setKeyable(false);
+   status = addAttribute(mOutScaleXAttr);
+
+   // output scaley
+   mOutScaleYAttr = nAttr.create("scaleY", "sy", MFnNumericData::kDouble, 1.0);
+   status = nAttr.setStorable(false);
+   status = nAttr.setWritable(false);
+   status = nAttr.setKeyable(false);
+   status = addAttribute(mOutScaleYAttr);
+
+   // output scalez
+   mOutScaleZAttr = nAttr.create("scaleZ", "sz", MFnNumericData::kDouble, 1.0);
+   status = nAttr.setStorable(false);
+   status = nAttr.setWritable(false);
+   status = nAttr.setKeyable(false);
+   status = addAttribute(mOutScaleZAttr);
+
+   // create a mapping
+   status = attributeAffects(mTimeAttr, mOutTransformAttr);
+   status = attributeAffects(mFileNameAttr, mOutTransformAttr);
+   status = attributeAffects(mIdentifierAttr, mOutTransformAttr);
+   status = attributeAffects(mTimeAttr, mOutTranslateXAttr);
+   status = attributeAffects(mFileNameAttr, mOutTranslateXAttr);
+   status = attributeAffects(mIdentifierAttr, mOutTranslateXAttr);
+   status = attributeAffects(mTimeAttr, mOutTranslateYAttr);
+   status = attributeAffects(mFileNameAttr, mOutTranslateYAttr);
+   status = attributeAffects(mIdentifierAttr, mOutTranslateYAttr);
+   status = attributeAffects(mTimeAttr, mOutTranslateZAttr);
+   status = attributeAffects(mFileNameAttr, mOutTranslateZAttr);
+   status = attributeAffects(mIdentifierAttr, mOutTranslateZAttr);
+   status = attributeAffects(mTimeAttr, mOutRotateXAttr);
+   status = attributeAffects(mFileNameAttr, mOutRotateXAttr);
+   status = attributeAffects(mIdentifierAttr, mOutRotateXAttr);
+   status = attributeAffects(mTimeAttr, mOutRotateYAttr);
+   status = attributeAffects(mFileNameAttr, mOutRotateYAttr);
+   status = attributeAffects(mIdentifierAttr, mOutRotateYAttr);
+   status = attributeAffects(mTimeAttr, mOutRotateZAttr);
+   status = attributeAffects(mFileNameAttr, mOutRotateZAttr);
+   status = attributeAffects(mIdentifierAttr, mOutRotateZAttr);
+   status = attributeAffects(mTimeAttr, mOutScaleXAttr);
+   status = attributeAffects(mFileNameAttr, mOutScaleXAttr);
+   status = attributeAffects(mIdentifierAttr, mOutScaleXAttr);
+   status = attributeAffects(mTimeAttr, mOutScaleYAttr);
+   status = attributeAffects(mFileNameAttr, mOutScaleYAttr);
+   status = attributeAffects(mIdentifierAttr, mOutScaleYAttr);
+   status = attributeAffects(mTimeAttr, mOutScaleZAttr);
+   status = attributeAffects(mFileNameAttr, mOutScaleZAttr);
+   status = attributeAffects(mIdentifierAttr, mOutScaleZAttr);
+
+   return status;
 }
 
 MStatus AlembicXformNode::compute(const MPlug & plug, MDataBlock & dataBlock)
 {
-    MStatus status;
+   MStatus status;
 
-    // update the frame number to be imported
-    MDataHandle timeHandle = dataBlock.inputValue(mTimeAttr, &status);
-    MTime t = timeHandle.asTime();
-    double inputTime = t.as(MTime::kSeconds);
+   // update the frame number to be imported
+   double inputTime = dataBlock.inputValue(mTimeAttr).asTime().as(MTime::kSeconds);
+   MString & fileName = dataBlock.inputValue(mFileNameAttr).asString();
+   MString & identifier = dataBlock.inputValue(mIdentifierAttr).asString();
 
-    // TODO: implement the actual alembic pull
+   // check if we have the file
+   if(fileName != mFileName || identifier != mIdentifier)
+   {
+      mSchema.reset();
+      if(fileName != mFileName)
+      {
+         delRefArchive(mFileName);
+         mFileName = fileName;
+         addRefArchive(mFileName);
+      }
+      mIdentifier = identifier;
 
-    return status;
+      // get the object from the archive
+      Alembic::Abc::IObject iObj = getObjectFromArchive(mFileName,identifier);
+      if(!iObj.valid())
+      {
+         MGlobal::displayWarning("[ExocortexAlembic] Identifier '"+identifier+"' not found in archive '"+mFileName+"'.");
+         return MStatus::kFailure;
+      }
+      Alembic::AbcGeom::IXform obj(iObj,Alembic::Abc::kWrapExisting);
+      if(!obj.valid())
+      {
+         MGlobal::displayWarning("[ExocortexAlembic] Identifier '"+identifier+"' in archive '"+mFileName+"' is not a Xform.");
+         return MStatus::kFailure;
+      }
+      mSchema = obj.getSchema();
+   }
+
+   if(!mSchema.valid())
+      return MStatus::kFailure;
+
+   // get the sample
+   SampleInfo sampleInfo = getSampleInfo(
+      inputTime,
+      mSchema.getTimeSampling(),
+      mSchema.getNumSamples()
+   );
+
+   // access the matrix
+   Alembic::AbcGeom::XformSample sample;
+   mSchema.get(sample,sampleInfo.floorIndex);
+   Alembic::Abc::M44d matrix = sample.getMatrix();
+
+   // blend the matrix if we are between frames
+   if(sampleInfo.alpha != 0.0)
+   {
+      mSchema.get(sample,sampleInfo.ceilIndex);
+      Alembic::Abc::M44d ceilMatrix = sample.getMatrix();
+      matrix = (1.0 - sampleInfo.alpha) * matrix + sampleInfo.alpha * ceilMatrix;
+   }
+
+   // get the maya matrix
+   MMatrix m(matrix.x);
+   MTransformationMatrix transform(m);
+
+   // decompose it
+   MVector translation = transform.translation(MSpace::kTransform);
+   double rotation[3];
+   MTransformationMatrix::RotationOrder order;
+   transform.getRotation(rotation,order);
+   double scale[3];
+   transform.getScale(scale,MSpace::kTransform);
+
+   // output all channels
+   dataBlock.outputValue(mOutTransformAttr).set(m);
+   dataBlock.outputValue(mOutTranslateXAttr).setDouble(translation.x);
+   dataBlock.outputValue(mOutTranslateYAttr).setDouble(translation.y);
+   dataBlock.outputValue(mOutTranslateZAttr).setDouble(translation.z);
+   dataBlock.outputValue(mOutRotateXAttr).setDouble(MAngle(rotation[0],MAngle::kRadians).asDegrees());
+   dataBlock.outputValue(mOutRotateYAttr).setDouble(MAngle(rotation[1],MAngle::kRadians).asDegrees());
+   dataBlock.outputValue(mOutRotateZAttr).setDouble(MAngle(rotation[2],MAngle::kRadians).asDegrees());
+   dataBlock.outputValue(mOutScaleXAttr).setDouble(scale[0]);
+   dataBlock.outputValue(mOutScaleYAttr).setDouble(scale[1]);
+   dataBlock.outputValue(mOutScaleZAttr).setDouble(scale[2]);
+
+   return status;
 }

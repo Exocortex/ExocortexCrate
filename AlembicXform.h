@@ -21,7 +21,7 @@ class AlembicXformNode : public MPxNode
 {
 public:
    AlembicXformNode() {}
-   virtual ~AlembicXformNode() {}
+   virtual ~AlembicXformNode();
 
    // override virtual methods from MPxNode
    virtual MStatus compute(const MPlug & plug, MDataBlock & dataBlock);
@@ -33,9 +33,21 @@ private:
    static MObject mTimeAttr;
    static MObject mFileNameAttr;
    static MObject mIdentifierAttr;
+   MString mFileName;
+   MString mIdentifier;
+   Alembic::AbcGeom::IXformSchema mSchema;
 
    // output attributes
-    static MObject mOutTransformAttr;
+   static MObject mOutTransformAttr;
+   static MObject mOutTranslateXAttr;
+   static MObject mOutTranslateYAttr;
+   static MObject mOutTranslateZAttr;
+   static MObject mOutRotateXAttr;
+   static MObject mOutRotateYAttr;
+   static MObject mOutRotateZAttr;
+   static MObject mOutScaleXAttr;
+   static MObject mOutScaleYAttr;
+   static MObject mOutScaleZAttr;
 };
 
 #endif

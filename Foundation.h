@@ -58,6 +58,7 @@
 #include <maya/MFnGenericAttribute.h>
 #include <maya/MFnStringData.h>
 #include <maya/MFnMatrixData.h>
+#include <maya/MAngle.h>
 
 #include "Utility.h"
 #include "AlembicArchiveStorage.h"
