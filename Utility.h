@@ -24,4 +24,8 @@ double GetSecondsFromTimeValue(TimeValue t);
 int GetTimeValueFromSeconds( double seconds );
 int GetTimeValueFromFrame( double frame );
 
+// Debug functions
+void ALEMBIC_DEBUG( char *debugmsg, ...);
+void AlembicDebug_PrintMeshData( Mesh &mesh );
+
 #endif  // _FOUNDATION_H_

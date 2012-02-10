@@ -441,37 +441,98 @@ void AlembicImport_FillInPolyMesh(alembic_fillmesh_options &options)
                        Point3 ceilNormal(meshNormals->get()[i].x, meshNormals->get()[i].y, meshNormals->get()[i].z);
                        Point3 delta = (ceilNormal - normalsToSet[i]) * float(sampleInfo.alpha);
                        normalsToSet[i] += delta; 
-                       normalsToSet[i].Normalize();
                    }
                }
+
+               normalsToSet[i] = normalsToSet[i].Normalize();
            }
 
            // Set up the specify normals
            mesh.SpecifyNormals();
            MeshNormalSpec *normalSpec = mesh.GetSpecifiedNormals();
            normalSpec->ClearNormals();
+           normalSpec->SetFlag(MESH_NORMAL_MODIFIER_SUPPORT, true);
            normalSpec->SetNumNormals((int)normalsToSet.size());
-           for (int i = 0; i < normalsToSet.size(); i++)
+           normalSpec->SetNumFaces(mesh.getNumFaces());
+
+           for (int i = 0; i < normalsToSet.size(); i += 1)
            {
                normalSpec->Normal(i) = normalsToSet[i];
                normalSpec->SetNormalExplicit(i, true);
            }
 
            // Set up the normal faces
-           normalSpec->SetNumFaces(mesh.numFaces);
            for (int i =0; i < mesh.numFaces; i += 1)
            {
-               Face &face = mesh.faces[i];
-
                MeshNormalFace &normalFace = normalSpec->Face(i);
                normalFace.SpecifyAll();
-               normalFace.SetNormalID(0, i);
-               normalFace.SetNormalID(1, i+2);
-               normalFace.SetNormalID(2, i+3);
-               normalFace.MyDebugPrint(true);
+               normalFace.SetNormalID(0, i*3);
+               normalFace.SetNormalID(1, i*3+1);
+               normalFace.SetNormalID(2, i*3+2);
            }
+           
+           // Fill in any normals we may have not gotten specified.  Also allocates space for the RVert array
+           // which we need for doing any normal vector queries
+           normalSpec->CheckNormals();
+           mesh.checkNormals(TRUE);
        }
    }
+
+   if ( options.nDataFillFlags & ALEMBIC_DATAFILL_UVS )
+   {
+       Alembic::AbcGeom::IV2fGeomParam meshUvParam;
+       if(objMesh.valid())
+           meshUvParam = objMesh.getSchema().getUVsParam();
+       else
+           meshUvParam = objSubD.getSchema().getUVsParam();
+
+       if(meshUvParam.valid())
+       {
+           SampleInfo sampleInfo = getSampleInfo(
+               options.iFrame,
+               meshUvParam.getTimeSampling(),
+               meshUvParam.getNumSamples()
+               );
+
+           Alembic::Abc::V2fArraySamplePtr meshUVs = meshUvParam.getExpandedValue(sampleInfo.floorIndex).getVals();
+           std::vector<Point3> uvsToSet;
+           uvsToSet.reserve(meshUVs->size());
+
+           for (int i = 0; i < meshUVs->size(); i += 1)
+           {
+               uvsToSet.push_back(Point3(meshUVs->get()[i].x, meshUVs->get()[i].y, 0.0f));
+
+               // blend
+               if(sampleInfo.alpha != 0.0)
+               {
+                   meshUVs = meshUvParam.getExpandedValue(sampleInfo.ceilIndex).getVals();
+                   if(meshUVs->size() == uvsToSet.size())
+                   {
+                       Point3 ceilUV(meshUVs->get()[i].x, meshUVs->get()[i].y, 0.0f);
+                       Point3 delta = (ceilUV - uvsToSet[i]) * float(sampleInfo.alpha);
+                       uvsToSet[i] += delta; 
+                   }
+               }
+           }
+
+           // Set up the default texture map channel
+           mesh.setNumMaps(2);
+           mesh.setMapSupport(1, TRUE);
+           MeshMap &map = mesh.Map(1);
+           map.setNumVerts((int)uvsToSet.size());
+           map.setNumFaces(mesh.getNumFaces());
+
+           // Set the map texture vertices
+           for (int i = 0; i < uvsToSet.size(); i += 1)
+                map.tv[i] = uvsToSet[i];
+
+           // Set up the map texture faces
+           for (int i =0; i < mesh.numFaces; i += 1)
+               map.tf[i].setTVerts(i*3, i*3+1, i*3+2);
+       }
+   }
+
+   // AlembicDebug_PrintMeshData(mesh);
 }
 
 int AlembicImport_PolyMesh(const std::string &file, const std::string &identifier, alembic_importoptions &options)

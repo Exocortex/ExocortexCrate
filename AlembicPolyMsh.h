@@ -19,8 +19,10 @@ private:
    std::vector<std::vector<Alembic::AbcCoreAbstract::ALEMBIC_VERSION_NS::int32_t> > mFaceSetsVec;
    Alembic::Abc::ALEMBIC_VERSION_NS::OV3fArrayProperty mBindPoseProperty;
    Alembic::Abc::ALEMBIC_VERSION_NS::OV3fArrayProperty mVelocityProperty;
-private:
-    Point3 GetVertexNormal(Mesh* mesh, int faceNo, RVertex* rv);
+public:
+    static Point3 GetVertexNormal(Mesh* mesh, int faceNo, RVertex* rv);
+    static void make_face_uv(Face *f, Point3 *tv);
+    static BOOL CheckForFaceMap(Mtl* mtl, Mesh* mesh);
 public:
 
    AlembicPolyMesh(const SceneEntry &in_Ref, AlembicWriteJob *in_Job);

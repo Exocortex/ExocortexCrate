@@ -1,6 +1,7 @@
 #include "Alembic.h"
 #include "Utility.h"
 #include "SceneEntry.h"
+#include "AlembicPolyMsh.h"
 
 SampleInfo getSampleInfo
 (
@@ -130,4 +131,40 @@ int GetTimeValueFromFrame( double frame )
 {
     double ticks = frame * GetTicksPerFrame();
     return (int)floor(ticks + 0.5f);
+}
+
+void ALEMBIC_DEBUG( char *debugmsg, ...)
+{
+    char strOutputMessage[1024] = "\0";
+    
+    va_list argptr;
+    va_start(argptr,debugmsg);
+    _vsntprintf_s(strOutputMessage, 1023, debugmsg, argptr);
+    va_end(argptr);
+
+    OutputDebugString(strOutputMessage);
+}
+
+void AlembicDebug_PrintMeshData( Mesh &mesh )
+{
+    for (int i=0; i<mesh.getNumFaces(); i++) 
+    {
+        Face *f = &mesh.faces[i];
+        
+        ALEMBIC_DEBUG("Mesh Face %d\n", i);
+        ALEMBIC_DEBUG("============\n");
+
+        for (int j = 0; j < 3; j += 1)
+        {
+            int vertexId = f->getVert(j);
+            Point3 vertexPos = mesh.getVert(vertexId);
+            Point3 vertexNormal = AlembicPolyMesh::GetVertexNormal(&mesh, i, mesh.getRVertPtr(vertexId));
+            ALEMBIC_DEBUG("Vertex %d, Position (%.f, %.f, %.f), Normal (%.f, %.f, %.f)\n", 
+                vertexId, 
+                vertexPos.x, vertexPos.y, vertexPos.z,
+                vertexNormal.x, vertexNormal.y, vertexNormal.z);
+        }
+
+        ALEMBIC_DEBUG("\n");
+    }
 }

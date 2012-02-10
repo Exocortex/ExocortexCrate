@@ -13,6 +13,17 @@ namespace AbcB = ::Alembic::Abc::ALEMBIC_VERSION_NS;
 using namespace AbcA;
 using namespace AbcB;
 
+// From the SDK
+// How to calculate UV's for face mapped materials.
+static Point3 basic_tva[3] = { 
+	Point3(0.0,0.0,0.0),Point3(1.0,0.0,0.0),Point3(1.0,1.0,0.0)
+};
+static Point3 basic_tvb[3] = { 
+	Point3(1.0,1.0,0.0),Point3(0.0,1.0,0.0),Point3(0.0,0.0,0.0)
+};
+static int nextpt[3] = {1,2,0};
+static int prevpt[3] = {2,0,1};
+
 AlembicPolyMesh::AlembicPolyMesh(const SceneEntry &in_Ref, AlembicWriteJob *in_Job)
 : AlembicObject(in_Ref, in_Job)
 {
@@ -185,12 +196,13 @@ bool AlembicPolyMesh::Save(double time)
             }
         }
 
+        // AlembicPrintFaceData(objectMesh);
+
         normalVec.resize(sampleCount);
         normalCount = normalVec.size();
 
         for(LONG i=0;i<sampleCount;i++)
         {
-            LONG lookedup = sampleLookup[i];
             normalVec[i].x = faceNormalsArray[i].x;
             normalVec[i].y = faceNormalsArray[i].y;
             normalVec[i].z = faceNormalsArray[i].z;
@@ -278,98 +290,93 @@ bool AlembicPolyMesh::Save(double time)
       }
 
       // also check if we need to store UV
-      /*CRefArray clusters = mesh.GetClusters();
-      if((bool)GetJob()->GetOption(L"exportUVs"))
+      if((bool)GetCurrentJob()->GetOption("exportUVs"))
       {
-         CRef uvPropRef;
-         if(GetRefCount() < 3)
-         {
-            for(LONG i=0;i<clusters.GetCount();i++)
-            {
-               Cluster cluster(clusters[i]);
-               if(!cluster.GetType().IsEqualNoCase(L"sample"))
-                  continue;
-               CRefArray props(cluster.GetLocalProperties());
-               for(LONG k=0;k<props.GetCount();k++)
-               {
-                  ClusterProperty prop(props[k]);
-                  if(prop.GetType().IsEqualNoCase(L"uvspace"))
+          if (CheckForFaceMap(GetRef().node->GetMtl(), &objectMesh)) 
+          {
+              mUvIndexVec.resize(sampleCount);
+              for (int i=0; i<objectMesh.getNumFaces(); i++) 
+              {
+                  Point3 tv[3];
+                  Face* f = &objectMesh.faces[i];
+                  make_face_uv(f, tv);
+
+                  for (int j=0; j < 3; j += 1)
                   {
-                     uvPropRef = props[k];
-                     break;
+                    mUvVec[i*3+j].x = tv[j].x;
+                    mUvVec[i*3+j].y = tv[j].y;
                   }
-               }
-               if(uvPropRef.IsValid())
-                  break;
-            }
-            AddRef(uvPropRef);
-         }
-         else
-            uvPropRef = GetRef(2);
+              }
+          }
+          else if (objectMesh.mapSupport(1))
+          {
+              mUvIndexVec.resize(sampleCount);
+              MeshMap &map = objectMesh.Map(1);
 
-         // if we now finally found a valid uvprop
-         if(uvPropRef.IsValid())
-         {
-            // ok, great, we found UVs, let's set them up
-            mUvVec.resize(sampleCount);
-            CDoubleArray uvValues = ClusterProperty(uvPropRef).GetElements().GetArray();
+              for (int findex =0; findex < map.fnum; findex += 1)
+              {
+                  TVFace &texFace = map.tf[findex];
+                  for (int vindex = 0; vindex < 3; vindex += 1)
+                  {
+                      int vertexid = texFace.t[vindex];
+                      UVVert uvVert = map.tv[vertexid];
+                      mUvVec[findex * 3 + vindex].x = uvVert.x;
+                      mUvVec[findex * 3 + vindex].y = uvVert.y;
+                  }
+              }
+          }
 
-            for(LONG i=0;i<sampleCount;i++)
-            {
-               mUvVec[i].x = (float)uvValues[sampleLookup[i] * 3 + 0];
-               mUvVec[i].y = (float)uvValues[sampleLookup[i] * 3 + 1];
-            }
+          if (mUvVec.size() == sampleCount)
+          {
+              // now let's sort the uvs 
+              size_t uvCount = mUvVec.size();
+              size_t uvIndexCount = 0;
+              if((bool)GetCurrentJob()->GetOption("indexedUVs")) 
+              {
+                  std::map<SortableV2f,size_t> uvMap;
+                  std::map<SortableV2f,size_t>::const_iterator it;
+                  size_t sortedUVCount = 0;
+                  std::vector<Alembic::Abc::V2f> sortedUVVec;
+                  mUvIndexVec.resize(mUvVec.size());
+                  sortedUVVec.resize(mUvVec.size());
 
-            // now let's sort the normals 
-            size_t uvCount = mUvVec.size();
-            size_t uvIndexCount = 0;
-            if((bool)GetJob()->GetOption(L"indexedUVs")) {
-               std::map<SortableV2f,size_t> uvMap;
-               std::map<SortableV2f,size_t>::const_iterator it;
-               size_t sortedUVCount = 0;
-               std::vector<Alembic::Abc::V2f> sortedUVVec;
-               mUvIndexVec.resize(mUvVec.size());
-               sortedUVVec.resize(mUvVec.size());
+                  // loop over all uvs
+                  for(size_t i=0;i<mUvVec.size();i++)
+                  {
+                      it = uvMap.find(mUvVec[i]);
+                      if(it != uvMap.end())
+                          mUvIndexVec[uvIndexCount++] = (uint32_t)it->second;
+                      else
+                      {
+                          mUvIndexVec[uvIndexCount++] = (uint32_t)sortedUVCount;
+                          uvMap.insert(std::pair<Alembic::Abc::V2f,size_t>(mUvVec[i],(uint32_t)sortedUVCount));
+                          sortedUVVec[sortedUVCount++] = mUvVec[i];
+                      }
+                  }
 
-               // loop over all uvs
-               for(size_t i=0;i<mUvVec.size();i++)
-               {
-                  it = uvMap.find(mUvVec[i]);
-                  if(it != uvMap.end())
-                     mUvIndexVec[uvIndexCount++] = (uint32_t)it->second;
+                  // use indexed uvs if they use less space
+                  if(sortedUVCount * sizeof(Alembic::Abc::V2f) + 
+                      uvIndexCount * sizeof(uint32_t) < 
+                      sizeof(Alembic::Abc::V2f) * mUvVec.size())
+                  {
+                      mUvVec = sortedUVVec;
+                      uvCount = sortedUVCount;
+                  }
                   else
                   {
-                     mUvIndexVec[uvIndexCount++] = (uint32_t)sortedUVCount;
-                     uvMap.insert(std::pair<Alembic::Abc::V2f,size_t>(mUvVec[i],(uint32_t)sortedUVCount));
-                     sortedUVVec[sortedUVCount++] = mUvVec[i];
+                      uvIndexCount = 0;
+                      mUvIndexVec.clear();
                   }
-               }
+                  sortedUVCount = 0;
+                  sortedUVVec.clear();
+              }
 
-               // use indexed uvs if they use less space
-               if(sortedUVCount * sizeof(Alembic::Abc::V2f) + 
-                  uvIndexCount * sizeof(uint32_t) < 
-                  sizeof(Alembic::Abc::V2f) * mUvVec.size())
-               {
-                  mUvVec = sortedUVVec;
-                  uvCount = sortedUVCount;
-               }
-               else
-               {
-                  uvIndexCount = 0;
-                  mUvIndexVec.clear();
-               }
-               sortedUVCount = 0;
-               sortedUVVec.clear();
-            }
-
-
-            Alembic::AbcGeom::OV2fGeomParam::Sample uvSample(Alembic::Abc::V2fArraySample(&mUvVec.front(),uvCount),Alembic::AbcGeom::kFacevaryingScope);
-            if(mUvIndexVec.size() > 0 && uvIndexCount > 0)
-               uvSample.setIndices(Alembic::Abc::UInt32ArraySample(&mUvIndexVec.front(),uvIndexCount));
-            mMeshSample.setUVs(uvSample);
-         }
+              Alembic::AbcGeom::OV2fGeomParam::Sample uvSample(Alembic::Abc::V2fArraySample(&mUvVec.front(),uvCount),Alembic::AbcGeom::kFacevaryingScope);
+              if(mUvIndexVec.size() > 0 && uvIndexCount > 0)
+                  uvSample.setIndices(Alembic::Abc::UInt32ArraySample(&mUvIndexVec.front(),uvIndexCount));
+              mMeshSample.setUVs(uvSample);
+          }
       }
-	  */
 
       // sweet, now let's have a look at face sets (really only for first sample)
       /*
@@ -524,3 +531,37 @@ Point3 AlembicPolyMesh::GetVertexNormal(Mesh* mesh, int faceNo, RVertex* rv)
 	
 	return vertexNormal;
 }
+
+void AlembicPolyMesh::make_face_uv(Face *f, Point3 *tv)
+{
+	int na,nhid,i;
+	Point3 *basetv;
+	/* make the invisible edge be 2->0 */
+	nhid = 2;
+	if (!(f->flags&EDGE_A))  nhid=0;
+	else if (!(f->flags&EDGE_B)) nhid = 1;
+	else if (!(f->flags&EDGE_C)) nhid = 2;
+	na = 2-nhid;
+	basetv = (f->v[prevpt[nhid]]<f->v[nhid]) ? basic_tva : basic_tvb; 
+	for (i=0; i<3; i++) {  
+		tv[i] = basetv[na];
+		na = nextpt[na];
+	}
+}
+
+BOOL AlembicPolyMesh::CheckForFaceMap(Mtl* mtl, Mesh* mesh)
+{
+    if (!mtl || !mesh) {
+        return FALSE;
+    }
+
+    ULONG matreq = mtl->Requirements(-1);
+
+    // Are we using face mapping?
+    if (!(matreq & MTLREQ_FACEMAP)) {
+        return FALSE;
+    }
+
+    return TRUE;
+}
+
