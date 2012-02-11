@@ -39,6 +39,7 @@ MStatus AlembicXform::Save(double time)
    Alembic::Abc::M44d abcMatrix;
    matrix.get(abcMatrix.x);
    sample.setMatrix(abcMatrix);
+   sample.setInheritsXforms(true);
 
    // save the sample
    mXformSchema.set(sample);
