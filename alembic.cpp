@@ -22,7 +22,7 @@ MStatus initializePlugin(MObject obj)
    MStatus status;
 
    // commands
-   status = plugin.registerCommand("exocortexalembic_export",
+   status = plugin.registerCommand("ExocortexAlembic_export",
       AlembicExportCommand::creator,
       AlembicExportCommand::createSyntax);
 
@@ -52,7 +52,7 @@ MStatus uninitializePlugin(MObject obj)
 
    MStatus status;
 
-   status = plugin.deregisterCommand("exocortexalembic_export");
+   status = plugin.deregisterCommand("ExocortexAlembic_export");
 
    status = plugin.deregisterNode(mTimeControlNodeId);
    status = plugin.deregisterNode(mFileNodeId);
