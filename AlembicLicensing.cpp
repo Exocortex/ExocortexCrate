@@ -29,7 +29,7 @@ int GetLicense()
 		{
 			#pragma message( "Exocortex Licensing mode: RLM only" )
 			static string pluginName(PLUGIN_NAME);
-			ESS_LOG_INFO( "Looking for RLM license for " << pluginName << "..." );
+			ESS_LOG_INFO( "Looking for RLM license for " << pluginName << "...\n" );
 			Exocortex::RlmSingleton& rlmSingleton = Exocortex::RlmSingleton::getSingleton();
 
 			RlmProductID pluginLicenseIds2[] = PLUGIN_LICENSE_IDS;
@@ -51,7 +51,7 @@ int GetLicense()
 			time_t now = time(NULL);
 			if( now <= EXOCORTEX_BETA_EXPIRY_DATE ) {  //http://unixtime-converter.com/
 				static string pluginName(PLUGIN_NAME);
-				ESS_LOG_WARNING( "Expiry date licensing is being used for " << pluginName );
+				ESS_LOG_WARNING( "Expiry date licensing is being used for " << pluginName << "\n" );
 				gLicenseToken = EC_LICENSE_RESULT_FULL_LICENSE;
 				return gLicenseToken;
 			}
