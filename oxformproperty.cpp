@@ -39,7 +39,7 @@ static PyObject * oXformProperty_setValues(PyObject * self, PyObject * args)
       return NULL;
    }
 
-   if(prop->mXformSchema->getNumSamples() >= prop->mXformSchema->getTimeSampling()->getNumStoredTimes())
+   if(prop->mXformSchema->getNumSamples() >= prop->mMaxNbSamples)
    {
       PyErr_SetString(getError(), "Already stored the maximum number of samples!");
       return NULL;
@@ -76,6 +76,7 @@ static PyObject * oXformProperty_setValues(PyObject * self, PyObject * args)
                       values[8],values[9],values[10],values[11],values[12],values[13],values[14],values[15]);
    Alembic::AbcGeom::XformSample sample;
    sample.setMatrix(matrix);
+   sample.setInheritsXforms(true);
    prop->mXformSchema->set(sample);
 
    return Py_BuildValue("I",prop->mXformSchema->getNumSamples());
@@ -100,6 +101,7 @@ void oXformProperty_deletePointers(oXformProperty * prop)
    ALEMBIC_TRY_STATEMENT
    if(prop->mXformSchema == NULL)
       return;
+   prop->mXformSchema->reset();
    delete(prop->mXformSchema);
    prop->mXformSchema = NULL;
    ALEMBIC_VOID_CATCH_STATEMENT
@@ -128,7 +130,7 @@ static PyTypeObject oXformProperty_Type = {
   0,                                // tp_compare
 };
 
-PyObject * oXformProperty_new(oObjectPtr in_casted, void * in_Archive)
+PyObject * oXformProperty_new(oObjectPtr in_casted, void * in_Archive, boost::uint32_t tsIndex)
 {
    ALEMBIC_TRY_STATEMENT
 
@@ -141,6 +143,7 @@ PyObject * oXformProperty_new(oObjectPtr in_casted, void * in_Archive)
 
    // if we don't have it yet, create a new one and insert it into our map
    oXformProperty * prop = PyObject_NEW(oXformProperty, &oXformProperty_Type);
+   prop->mMaxNbSamples = archive->mArchive->getTimeSampling(tsIndex)->getNumStoredTimes();
    prop->mXformSchema = new Alembic::AbcGeom::OXformSchema(in_casted.mXform->getSchema().getPtr(),Alembic::Abc::kWrapExisting);
    prop->mArchive = in_Archive;
    Py_INCREF((PyObject *)prop);

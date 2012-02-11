@@ -218,7 +218,7 @@ static PyObject * oObject_getProperty(PyObject * self, PyObject * args)
       std::string propNameStr(propName);
       if(propNameStr == ".xform" || propNameStr == ".vals")
       {
-         return oXformProperty_new(object->mCasted,object->mArchive);
+         return oXformProperty_new(object->mCasted,object->mArchive,(boost::uint32_t)tsIndex);
       }
    }
 
