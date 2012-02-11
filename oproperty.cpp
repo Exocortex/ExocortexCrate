@@ -1221,17 +1221,16 @@ PyObject * oProperty_new(oObjectPtr in_casted, char * in_propName, char * in_pro
    identifier.append("/");
    identifier.append(in_propName);
    oArchive * archive = (oArchive*)in_Archive;
-   oArchivePropertyIt it = archive->mProperties->find(identifier);
-   if(it != archive->mProperties->end())
-      return (PyObject*)it->second;
+   oProperty * prop = oArchive_getPropElement(archive,identifier);
+   if(prop)
+      return (PyObject*)prop;
 
    // if we don't have it yet, create a new one and insert it into our map
-   oProperty * prop = PyObject_NEW(oProperty, &oProperty_Type);
+   prop = PyObject_NEW(oProperty, &oProperty_Type);
    prop->mBaseScalarProperty = NULL;
    prop->mBoolProperty = NULL;
    prop->mArchive = in_Archive;
-   Py_INCREF((PyObject *)prop);
-   archive->mProperties->insert(oArchivePropertyPair(identifier,prop));
+   oArchive_registerPropElement(archive,identifier,prop);
 
    // get the compound property writer
    Alembic::Abc::CompoundPropertyWriterPtr compoundWriter = GetCompoundPropertyWriterPtr(compound);

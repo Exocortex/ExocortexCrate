@@ -6,23 +6,27 @@
 #include "oproperty.h"
 #include "oxformproperty.h"
 
-typedef std::map<std::string,oObject*> oArchiveObjectMap;
-typedef oArchiveObjectMap::iterator oArchiveObjectIt;
-typedef std::pair<std::string,oObject*> oArchiveObjectPair;
-typedef std::map<std::string,oProperty*> oArchivePropertyMap;
-typedef oArchivePropertyMap::iterator oArchivePropertyIt;
-typedef std::pair<std::string,oProperty*> oArchivePropertyPair;
-typedef std::map<std::string,oXformProperty*> oArchiveXformPropertyMap;
-typedef oArchiveXformPropertyMap::iterator oArchiveXformPropertyIt;
-typedef std::pair<std::string,oXformProperty*> oArchiveXformPropertyPair;
+struct oArchiveElement {
+   std::string identifier;
+   oObject * object;
+   oProperty * prop;
+   oXformProperty * xform;
+};
+
+typedef std::vector<oArchiveElement> oArchiveElementVec;
 
 typedef struct {
   PyObject_HEAD
   Alembic::Abc::OArchive * mArchive;
-  oArchiveObjectMap * mObjects;
-  oArchivePropertyMap * mProperties;
-  oArchiveXformPropertyMap * mXformProperties;
+  oArchiveElementVec * mElements;
 } oArchive;
+
+void oArchive_registerObjectElement(oArchive * archive, std::string identifier, oObject * object);
+void oArchive_registerPropElement(oArchive * archive, std::string identifier, oProperty * prop);
+void oArchive_registerXformElement(oArchive * archive, std::string identifier, oXformProperty * xform);
+oObject * oArchive_getObjectElement(oArchive * archive, std::string identifier);
+oProperty * oArchive_getPropElement(oArchive * archive, std::string identifier);
+oXformProperty * oArchive_getXformElement(oArchive * archive, std::string identifier);
 
 PyObject * oArchive_new(PyObject * self, PyObject * args);
 size_t getNbOArchives();

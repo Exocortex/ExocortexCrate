@@ -39,7 +39,7 @@ static PyObject * oXformProperty_setValues(PyObject * self, PyObject * args)
       return NULL;
    }
 
-   if(prop->mXformSchema->getNumSamples() >= prop->mMaxNbSamples)
+   if(prop->mMembers->mXformSchema.getNumSamples() >= prop->mMaxNbSamples)
    {
       PyErr_SetString(getError(), "Already stored the maximum number of samples!");
       return NULL;
@@ -74,12 +74,11 @@ static PyObject * oXformProperty_setValues(PyObject * self, PyObject * args)
 
    Imath::M44d matrix(values[0],values[1],values[2],values[3],values[4],values[5],values[6],values[7],
                       values[8],values[9],values[10],values[11],values[12],values[13],values[14],values[15]);
-   Alembic::AbcGeom::XformSample sample;
-   sample.setMatrix(matrix);
-   sample.setInheritsXforms(true);
-   prop->mXformSchema->set(sample);
+   prop->mMembers->mSample.setInheritsXforms(true);
+   prop->mMembers->mSample.setMatrix(matrix);
+   prop->mMembers->mXformSchema.set(prop->mMembers->mSample);
 
-   return Py_BuildValue("I",prop->mXformSchema->getNumSamples());
+   return Py_BuildValue("I",prop->mMembers->mXformSchema.getNumSamples());
    ALEMBIC_PYOBJECT_CATCH_STATEMENT
 }
 
@@ -99,11 +98,11 @@ static PyObject * oXformProperty_getAttr(PyObject * self, char * attrName)
 void oXformProperty_deletePointers(oXformProperty * prop)
 {
    ALEMBIC_TRY_STATEMENT
-   if(prop->mXformSchema == NULL)
+   if(prop->mMembers == NULL)
       return;
-   prop->mXformSchema->reset();
-   delete(prop->mXformSchema);
-   prop->mXformSchema = NULL;
+   prop->mMembers->mXformSchema.reset();
+   delete(prop->mMembers);
+   prop->mMembers = NULL;
    ALEMBIC_VOID_CATCH_STATEMENT
 }
 
@@ -135,19 +134,21 @@ PyObject * oXformProperty_new(oObjectPtr in_casted, void * in_Archive, boost::ui
    ALEMBIC_TRY_STATEMENT
 
    // check if we already have this property somewhere
-   std::string identifier = in_casted.mXform->getFullName();
+   std::string identifier = in_casted.mXform->getFullName() + "/.vals";
    oArchive * archive = (oArchive*)in_Archive;
-   oArchiveXformPropertyIt it = archive->mXformProperties->find(identifier);
-   if(it != archive->mXformProperties->end())
-      return (PyObject*)it->second;
+   oXformProperty * prop = oArchive_getXformElement(archive,identifier);
+   if(prop)
+      return (PyObject*)prop;
 
    // if we don't have it yet, create a new one and insert it into our map
-   oXformProperty * prop = PyObject_NEW(oXformProperty, &oXformProperty_Type);
+   prop = PyObject_NEW(oXformProperty, &oXformProperty_Type);
    prop->mMaxNbSamples = archive->mArchive->getTimeSampling(tsIndex)->getNumStoredTimes();
-   prop->mXformSchema = new Alembic::AbcGeom::OXformSchema(in_casted.mXform->getSchema().getPtr(),Alembic::Abc::kWrapExisting);
+   prop->mMembers = new oXformMembers();
+   prop->mMembers->mXformSchema = in_casted.mXform->getSchema();
+   //prop->mXformSchema = new Alembic::AbcGeom::OXformSchema(in_casted.mXform->getSchema().getPtr(),Alembic::Abc::kWrapExisting);
+   //prop->mSample = new Alembic::AbcGeom::XformSample();
    prop->mArchive = in_Archive;
-   Py_INCREF((PyObject *)prop);
-   archive->mXformProperties->insert(oArchiveXformPropertyPair(identifier,prop));
+   oArchive_registerXformElement(archive,identifier,prop);
 
    return (PyObject *)prop;
    ALEMBIC_PYOBJECT_CATCH_STATEMENT

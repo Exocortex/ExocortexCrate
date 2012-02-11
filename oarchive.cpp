@@ -129,8 +129,8 @@ static PyObject * oArchive_createObject(PyObject * self, PyObject * args)
       return NULL;
    }
 
-   oArchiveObjectIt it = archive->mObjects->find(identifier);
-   if(it != archive->mObjects->end())
+   oObject * objectPtr = oArchive_getObjectElement(archive,identifier);
+   if(objectPtr)
    {
       PyErr_SetString(getError(), "Object already exists!");
       return NULL;
@@ -144,13 +144,13 @@ static PyObject * oArchive_createObject(PyObject * self, PyObject * args)
       std::string parentIdentifier = "/";
       for(size_t i=1;i<parts.size()-1;i++)
          parentIdentifier += parts[i];
-      it = archive->mObjects->find(parentIdentifier);
-      if(it == archive->mObjects->end())
+      oObject * parentPtr = oArchive_getObjectElement(archive,parentIdentifier);
+      if(!parentPtr)
       {
          PyErr_SetString(getError(), "Invalid identifier!");
          return NULL;
       }
-      parent = *it->second->mObject;
+      parent = *parentPtr->mObject;
    }
 
    // now validate the type
@@ -230,8 +230,7 @@ static PyObject * oArchive_createObject(PyObject * self, PyObject * args)
    printf("inserting object into map: '%s'\n",identifier);
 #endif
    // manually increase the reference count
-   Py_INCREF(newObj);
-   archive->mObjects->insert(oArchiveObjectPair(identifier,(oObject*)newObj));
+   oArchive_registerObjectElement(archive,identifier,(oObject*)newObj);
    return newObj;
    ALEMBIC_PYOBJECT_CATCH_STATEMENT
 }
@@ -253,48 +252,44 @@ static void oArchive_delete(PyObject * self)
    ALEMBIC_TRY_STATEMENT
    // delete the archive
    oArchive * archive = (oArchive *)self;
-   if(archive->mObjects != NULL)
+   if(archive->mElements != NULL)
    {
 #ifdef PYTHON_DEBUG
       printf("closing archive....\n");
 #endif
-      for(oArchivePropertyIt it=archive->mProperties->begin(); it != archive->mProperties->end(); it++)
+      //for(int i=(int)archive->mElements->size()-1;i>=0;i--)
+      for(int i=0;i<(int)archive->mElements->size();i++)
       {
-         it->second->mArchive = NULL;
-         oProperty_deletePointers(it->second);
-         Py_DECREF(it->second);
-#ifdef PYTHON_DEBUG
-         printf("cleared archive pointer of property '%s'\n",it->first.c_str());
-#endif
+         oArchiveElement & element = (*archive->mElements)[i];
+         if(element.object)
+         {
+            element.object->mArchive = NULL;
+            element.identifier.empty();
+            oObject_deletePointers(element.object);
+            Py_DECREF(element.object);
+            element.object = NULL;
+         }
+         else if(element.prop)
+         {
+            element.prop->mArchive = NULL;
+            element.identifier.empty();
+            oProperty_deletePointers(element.prop);
+            Py_DECREF(element.prop);
+            element.prop = NULL;
+         }
+         else if(element.xform)
+         {
+            element.xform->mArchive = NULL;
+            element.identifier.empty();
+            oXformProperty_deletePointers(element.xform);
+            Py_DECREF(element.xform);
+            element.xform = NULL;
+         }
       }
-      for(oArchiveXformPropertyIt it=archive->mXformProperties->begin(); it != archive->mXformProperties->end(); it++)
-      {
-         it->second->mArchive = NULL;
-         oXformProperty_deletePointers(it->second);
-         Py_DECREF(it->second);
-#ifdef PYTHON_DEBUG
-         printf("cleared archive pointer of xform property '%s'\n",it->first.c_str());
-#endif
-      }
-      for(oArchiveObjectIt it=archive->mObjects->begin(); it != archive->mObjects->end(); it++)
-      {
-         it->second->mArchive = NULL;
-         oObject_deletePointers(it->second);
-         Py_DECREF(it->second);
 
-#ifdef PYTHON_DEBUG
-         printf("cleared archive pointer of object '%s'\n",it->first.c_str());
-#endif
-      }
-      archive->mObjects->clear();
-      delete(archive->mObjects);
-      archive->mObjects = NULL;
-      archive->mProperties->clear();
-      delete(archive->mProperties);
-      archive->mProperties = NULL;
-      archive->mXformProperties->clear();
-      delete(archive->mXformProperties);
-      archive->mXformProperties = NULL;
+      archive->mElements->clear();
+      delete(archive->mElements);
+      archive->mElements = NULL;
       delete(archive->mArchive);
       archive->mArchive = NULL;
 #ifdef PYTHON_DEBUG
@@ -351,11 +346,81 @@ PyObject * oArchive_new(PyObject * self, PyObject * args)
          Alembic::Abc::ErrorHandler::kThrowPolicy);
       Alembic::AbcGeom::CreateOArchiveBounds(*object->mArchive,0);
 
-      object->mObjects = new oArchiveObjectMap();
-      object->mProperties = new oArchivePropertyMap();
-      object->mXformProperties = new oArchiveXformPropertyMap();
+      object->mElements = new oArchiveElementVec();
       gNbOArchives++;
    }
    return (PyObject *)object;
    ALEMBIC_PYOBJECT_CATCH_STATEMENT
+}
+
+void oArchive_registerObjectElement(oArchive * archive, std::string identifier, oObject * object)
+{
+   if(oArchive_getObjectElement(archive,identifier))
+      return;
+   oArchiveElement element;
+   element.identifier = identifier;
+   element.object = object;
+   element.prop = NULL;
+   element.xform = NULL;
+   archive->mElements->push_back(element);
+   Py_INCREF(object);
+}
+
+void oArchive_registerPropElement(oArchive * archive, std::string identifier, oProperty * prop)
+{
+   if(oArchive_getPropElement(archive,identifier))
+      return;
+   oArchiveElement element;
+   element.identifier = identifier;
+   element.object = NULL;
+   element.prop = prop;
+   element.xform = NULL;
+   archive->mElements->push_back(element);
+   Py_INCREF(prop);
+}
+
+void oArchive_registerXformElement(oArchive * archive, std::string identifier, oXformProperty * xform)
+{
+   if(oArchive_getXformElement(archive,identifier))
+      return;
+   oArchiveElement element;
+   element.identifier = identifier;
+   element.object = NULL;
+   element.prop = NULL;
+   element.xform = xform;
+   archive->mElements->push_back(element);
+   Py_INCREF(xform);
+}
+
+oObject * oArchive_getObjectElement(oArchive * archive, std::string identifier)
+{
+   for(size_t i=0;i<archive->mElements->size();i++)
+   {
+      oArchiveElement element = (*archive->mElements)[i];
+      if(element.identifier == identifier)
+         return element.object;
+   }
+   return NULL;
+}
+
+oProperty * oArchive_getPropElement(oArchive * archive, std::string identifier)
+{
+   for(size_t i=0;i<archive->mElements->size();i++)
+   {
+      oArchiveElement element = (*archive->mElements)[i];
+      if(element.identifier == identifier)
+         return element.prop;
+   }
+   return NULL;
+}
+
+oXformProperty * oArchive_getXformElement(oArchive * archive, std::string identifier)
+{
+   for(size_t i=0;i<archive->mElements->size();i++)
+   {
+      oArchiveElement element = (*archive->mElements)[i];
+      if(element.identifier == identifier)
+         return element.xform;
+   }
+   return NULL;
 }

@@ -240,54 +240,61 @@ static PyObject * oObject_getAttr(PyObject * self, char * attrName)
 
 void oObject_deletePointers(oObject * object)
 {
-   if(object->mObject != NULL)
-   {
-      delete(object->mObject);
-      object->mObject = NULL;
-   }
    if(object->mCasted.mXform != NULL)
    {
       switch(object->mCasted.mType)
       {
          case oObjectType_Xform:
          {
+            object->mCasted.mXform->reset();
             delete(object->mCasted.mXform);
             object->mCasted.mXform = NULL;
             break;
          }
          case oObjectType_Camera:
          {
+            object->mCasted.mCamera->reset();
             delete(object->mCasted.mCamera);
             object->mCasted.mCamera = NULL;
             break;
          }
          case oObjectType_PolyMesh:
          {
+            object->mCasted.mPolyMesh->reset();
             delete(object->mCasted.mPolyMesh);
             object->mCasted.mPolyMesh = NULL;
             break;
          }
          case oObjectType_Curves:
          {
+            object->mCasted.mCurves->reset();
             delete(object->mCasted.mCurves);
             object->mCasted.mCurves = NULL;
             break;
          }
          case oObjectType_Points:
          {
+            object->mCasted.mPoints->reset();
             delete(object->mCasted.mPoints);
             object->mCasted.mPoints = NULL;
             break;
          }
          case oObjectType_SubD:
          {
+            object->mCasted.mSubD->reset();
             delete(object->mCasted.mSubD);
             object->mCasted.mSubD = NULL;
             break;
          }
       }
    }
-}
+   if(object->mObject != NULL)
+   {
+      object->mObject->reset();
+      delete(object->mObject);
+      object->mObject = NULL;
+   }
+ }
 
 static void oObject_delete(PyObject * self)
 {
