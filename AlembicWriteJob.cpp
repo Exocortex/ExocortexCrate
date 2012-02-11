@@ -2,7 +2,7 @@
 #include "AlembicWriteJob.h"
 #include "AlembicObject.h"
 #include "AlembicXform.h"
-//#include "AlembicCamera.h"
+#include "AlembicCamera.h"
 //#include "AlembicPolyMsh.h"
 //#include "AlembicCurves.h"
 //#include "AlembicPoints.h"
@@ -184,6 +184,12 @@ MStatus AlembicWriteJob::PreProcess()
          ptr.reset(new AlembicXform(mObj,this));
          AddObject(ptr);
       }
+      else if(mType == "kCamera")
+      {
+         AlembicObjectPtr ptr;
+         ptr.reset(new AlembicCamera(mObj,this));
+         AddObject(ptr);
+      }
       else
       {
          MGlobal::displayInfo("unsupported type: "+mType);
@@ -346,6 +352,12 @@ MStatus AlembicExportCommand::doIt(const MArgList & args)
                   continue;
                }
                objects.append(objRef);
+
+
+               // check all of the shapes below
+               MFnDagNode dag(objRef);
+               for(unsigned int l=0;l<dag.childCount();l++)
+                  objects.append(dag.child(l));
 
                // TODO: if this is similar to a model
                // then we should add all elements below

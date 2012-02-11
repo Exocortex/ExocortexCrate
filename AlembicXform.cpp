@@ -9,19 +9,16 @@ AlembicXform::AlembicXform(const MObject & in_Ref, AlembicWriteJob * in_Job)
 : AlembicObject(in_Ref, in_Job)
 {
    MFnDependencyNode node(in_Ref);
-   MString xformName = node.name()+"Xfo";
-   Alembic::AbcGeom::OXform xform(GetOParent(),xformName.asChar(),GetJob()->GetAnimatedTs());
+   MString name = node.name()+"Xfo";
+   mObject = Alembic::AbcGeom::OXform(GetParentObject(),name.asChar(),GetJob()->GetAnimatedTs());
 
-   mXformSchema = xform.getSchema();
+   mSchema = mObject.getSchema();
 }
 
 AlembicXform::~AlembicXform()
 {
-}
-
-Alembic::Abc::OCompoundProperty AlembicXform::GetCompound()
-{
-   return mXformSchema;
+   mObject.reset();
+   mSchema.reset();
 }
 
 MStatus AlembicXform::Save(double time)
@@ -32,17 +29,15 @@ MStatus AlembicXform::Save(double time)
    // TODO: implement storage of metadata
    // SaveMetaData(prim.GetParent3DObject().GetRef(),this);
 
-   Alembic::AbcGeom::XformSample sample;
-
    MTransformationMatrix xf = node.transformation();
    MMatrix matrix = xf.asMatrix();
    Alembic::Abc::M44d abcMatrix;
    matrix.get(abcMatrix.x);
-   sample.setMatrix(abcMatrix);
-   sample.setInheritsXforms(true);
+   mSample.setMatrix(abcMatrix);
+   mSample.setInheritsXforms(true);
 
    // save the sample
-   mXformSchema.set(sample);
+   mSchema.set(mSample);
 
    return MStatus::kSuccess;
 }

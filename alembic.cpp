@@ -2,6 +2,7 @@
 #include "AlembicWriteJob.h"
 #include "AlembicTimeControl.h"
 #include "AlembicXform.h"
+#include "AlembicCamera.h"
 
 #include <maya/MFnPlugin.h>
 
@@ -9,6 +10,7 @@
 // 0x0011A100 - 0x0011A1FF
 const MTypeId mTimeControlNodeId(0x0011A100);
 const MTypeId mXformNodeId(0x0011A101);
+const MTypeId mCameraNodeId(0x0011A102);
 
 MStatus initializePlugin(MObject obj)
 {
@@ -31,6 +33,10 @@ MStatus initializePlugin(MObject obj)
       mXformNodeId,
       &AlembicXformNode::creator,
       &AlembicXformNode::initialize);
+   status = plugin.registerNode("ExocortexAlembicCamera",
+      mCameraNodeId,
+      &AlembicCameraNode::creator,
+      &AlembicCameraNode::initialize);
    return status;
 }
 
@@ -44,6 +50,7 @@ MStatus uninitializePlugin(MObject obj)
 
    status = plugin.deregisterNode(mTimeControlNodeId);
    status = plugin.deregisterNode(mXformNodeId);
+   status = plugin.deregisterNode(mCameraNodeId);
 
    return status;
 }

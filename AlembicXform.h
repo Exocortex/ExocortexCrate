@@ -6,14 +6,16 @@
 class AlembicXform: public AlembicObject
 {
 private:
-   Alembic::AbcGeom::OXformSchema mXformSchema;
-   Alembic::AbcGeom::XformSample mXformSample;
+   Alembic::AbcGeom::OXform mObject;
+   Alembic::AbcGeom::OXformSchema mSchema;
+   Alembic::AbcGeom::XformSample mSample;
 public:
 
    AlembicXform(const MObject & in_Ref, AlembicWriteJob * in_Job);
    ~AlembicXform();
 
-   virtual Alembic::Abc::OCompoundProperty GetCompound();
+   virtual Alembic::Abc::OObject GetObject() { return mObject; }
+   virtual Alembic::Abc::OCompoundProperty GetCompound() { return mSchema; }
    virtual MStatus Save(double time);
 };
 

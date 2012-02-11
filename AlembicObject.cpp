@@ -12,22 +12,19 @@ AlembicObject::AlembicObject
 {
    AddRef(in_Ref);
    mJob = in_Job;
-   mOParent = mJob->GetArchive().getTop();
 
    // find the parent
-   std::string identifier = getIdentifierFromRef(GetRef());
-   std::vector<std::string> parts;
-   boost::split(parts, identifier, boost::is_any_of("/"));
-
-   for(size_t i=1;i<parts.size();i++)
+   if(mParent == NULL)
    {
-      for(size_t j=0;j<mOParent.getNumChildren();j++)
+      MFnDagNode dag(in_Ref);
+      for(unsigned int i=0;i<dag.parentCount();i++)
       {
-         Alembic::Abc::OObject child = mOParent.getChild(j);
-         if(child.getName() == parts[i])
+         MObject parentRef = dag.parent(i);
+         if(!parentRef.isNull())
          {
-            mOParent = child;
-            break;
+            mParent = mJob->GetObject(parentRef);
+            if(mParent)
+               break;
          }
       }
    }
@@ -38,3 +35,11 @@ AlembicObject::AlembicObject
 AlembicObject::~AlembicObject()
 {
 }
+
+Alembic::Abc::OObject AlembicObject::GetParentObject()
+{
+   if(mParent)
+      return mParent->GetObject();
+   return mJob->GetArchive().getTop();
+}
+

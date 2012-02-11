@@ -61,33 +61,14 @@ SampleInfo getSampleInfo
 std::string getIdentifierFromRef(const MObject & in_Ref)
 {
    std::string result;
-   MObject ref = in_Ref;
-   /*
-   while(!ref.isNull())
+   MString fullName = getFullNameFromRef(in_Ref);
+   MStringArray parts;
+   fullName.split('|',parts);
+   for(unsigned int i=0;i<parts.length();i++)
    {
-      ref.
-      Model model(ref);
-      X3DObject obj(ref);
-      ProjectItem item(ref);
-      if(model.IsValid())
-      {
-         if(model.GetFullName() == Application().GetActiveSceneRoot().GetFullName())
-            break;
-         result = std::string("/")+ std::string(model.GetName().asChar()) + std::string("Xfo") + result;
-         ref = model.GetModel().GetRef();
-      }
-      else if(obj.IsValid())
-      {
-         result = std::string("/")+ std::string(obj.GetName().asChar()) + result;
-         result = std::string("/")+ std::string(obj.GetName().asChar()) + std::string("Xfo") + result;
-         ref = obj.GetModel().GetRef();
-      }
-      else if(item.IsValid())
-      {
-         ref = item.GetParent3DObject().GetRef();
-      }
+      result.append("/");
+      result.append(parts[i].asChar());
    }
-   */
    return result;
 }
 
