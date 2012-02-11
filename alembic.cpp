@@ -1,6 +1,7 @@
 #include "Foundation.h"
 #include "AlembicWriteJob.h"
 #include "AlembicTimeControl.h"
+#include "AlembicFileNode.h"
 #include "AlembicXform.h"
 #include "AlembicCamera.h"
 
@@ -9,8 +10,9 @@
 // IDs issues for this plugin are:
 // 0x0011A100 - 0x0011A1FF
 const MTypeId mTimeControlNodeId(0x0011A100);
-const MTypeId mXformNodeId(0x0011A101);
-const MTypeId mCameraNodeId(0x0011A102);
+const MTypeId mFileNodeId(0x0011A101);
+const MTypeId mXformNodeId(0x0011A102);
+const MTypeId mCameraNodeId(0x0011A103);
 
 MStatus initializePlugin(MObject obj)
 {
@@ -29,6 +31,10 @@ MStatus initializePlugin(MObject obj)
       mTimeControlNodeId,
       &AlembicTimeControlNode::creator,
       &AlembicTimeControlNode::initialize);
+   status = plugin.registerNode("ExocortexAlembicFile",
+      mFileNodeId,
+      &AlembicFileNode::creator,
+      &AlembicFileNode::initialize);
    status = plugin.registerNode("ExocortexAlembicXform",
       mXformNodeId,
       &AlembicXformNode::creator,
@@ -49,6 +55,7 @@ MStatus uninitializePlugin(MObject obj)
    status = plugin.deregisterCommand("exocortexalembic_export");
 
    status = plugin.deregisterNode(mTimeControlNodeId);
+   status = plugin.deregisterNode(mFileNodeId);
    status = plugin.deregisterNode(mXformNodeId);
    status = plugin.deregisterNode(mCameraNodeId);
 

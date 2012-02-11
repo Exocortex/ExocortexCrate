@@ -307,7 +307,7 @@ MStatus AlembicCameraNode::compute(const MPlug & plug, MDataBlock & dataBlock)
    dataBlock.outputValue(mOutAspectRatioAttr).set(aspectRatio);
    dataBlock.outputValue(mOutHorizontalApertureAttr).set(horizontalAperture / 2.54);
    dataBlock.outputValue(mOutVerticalApertureAttr).set(verticalAperture / 2.54);
-   dataBlock.outputValue(mOutHorizontalApertureAttr).set(horizontalOffset / 2.54);
+   dataBlock.outputValue(mOutHorizontalOffsetAttr).set(horizontalOffset / 2.54);
    dataBlock.outputValue(mOutHorizontalOffsetAttr).set(verticalOffset / 2.54);
    dataBlock.outputValue(mOutNearClippingAttr).set(nearClipping);
    dataBlock.outputValue(mOutFarClippingAttr).set(farClipping);
