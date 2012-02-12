@@ -46,6 +46,7 @@ MStatus AlembicCamera::Save(double time)
 
    // save the sample
    mSchema.set(mSample);
+   mNumSamples++;
 
    return MStatus::kSuccess;
 }

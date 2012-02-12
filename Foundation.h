@@ -59,6 +59,9 @@
 #include <maya/MFnStringData.h>
 #include <maya/MFnMatrixData.h>
 #include <maya/MAngle.h>
+#include <maya/MFloatPointArray.h>
+#include <maya/MFloatVectorArray.h>
+#include <maya/MIntArray.h>
 
 #include "Utility.h"
 #include "AlembicArchiveStorage.h"

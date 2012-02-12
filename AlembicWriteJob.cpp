@@ -3,7 +3,7 @@
 #include "AlembicObject.h"
 #include "AlembicXform.h"
 #include "AlembicCamera.h"
-//#include "AlembicPolyMsh.h"
+#include "AlembicPolyMesh.h"
 //#include "AlembicCurves.h"
 //#include "AlembicPoints.h"
 //#include "AlembicModel.h"
@@ -188,6 +188,12 @@ MStatus AlembicWriteJob::PreProcess()
       {
          AlembicObjectPtr ptr;
          ptr.reset(new AlembicCamera(mObj,this));
+         AddObject(ptr);
+      }
+      else if(mType == "kMesh")
+      {
+         AlembicObjectPtr ptr;
+         ptr.reset(new AlembicPolyMesh(mObj,this));
          AddObject(ptr);
       }
       else

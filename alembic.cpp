@@ -5,6 +5,7 @@
 #include "AlembicFileNode.h"
 #include "AlembicXform.h"
 #include "AlembicCamera.h"
+#include "AlembicPolyMesh.h"
 
 #include <maya/MFnPlugin.h>
 
@@ -14,6 +15,7 @@ const MTypeId mTimeControlNodeId(0x0011A100);
 const MTypeId mFileNodeId(0x0011A101);
 const MTypeId mXformNodeId(0x0011A102);
 const MTypeId mCameraNodeId(0x0011A103);
+const MTypeId mPolyMeshNodeId(0x0011A104);
 
 MStatus initializePlugin(MObject obj)
 {
@@ -47,6 +49,10 @@ MStatus initializePlugin(MObject obj)
       mCameraNodeId,
       &AlembicCameraNode::creator,
       &AlembicCameraNode::initialize);
+   status = plugin.registerNode("ExocortexAlembicPolyMesh",
+      mPolyMeshNodeId,
+      &AlembicPolyMeshNode::creator,
+      &AlembicPolyMeshNode::initialize);
    return status;
 }
 
@@ -63,6 +69,7 @@ MStatus uninitializePlugin(MObject obj)
    status = plugin.deregisterNode(mFileNodeId);
    status = plugin.deregisterNode(mXformNodeId);
    status = plugin.deregisterNode(mCameraNodeId);
+   status = plugin.deregisterNode(mPolyMeshNodeId);
 
    return status;
 }
