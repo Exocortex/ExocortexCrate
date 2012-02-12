@@ -170,6 +170,27 @@ void nameMapClear()
    gNameMap.clear();
 }
 
+MString getTypeFromObject(Alembic::Abc::IObject object)
+{
+   const Alembic::Abc::MetaData &md = object.getMetaData();
+   if(Alembic::AbcGeom::IXform::matches(md)) {
+      return "Xform";
+   } else if(Alembic::AbcGeom::IPolyMesh::matches(md)) {
+      return "PolyMesh";
+   } else if(Alembic::AbcGeom::ICurves::matches(md)) {
+      return "Curves";
+   } else if(Alembic::AbcGeom::INuPatch::matches(md)) {
+      return "NuPatch";
+   } else if(Alembic::AbcGeom::IPoints::matches(md)) {
+      return "Points";
+   } else if(Alembic::AbcGeom::ISubD::matches(md)) {
+      return "SubD";
+   } else if(Alembic::AbcGeom::ICamera::matches(md)) {
+      return "Camera";
+   }
+   return "";
+}
+
 Alembic::Abc::ICompoundProperty getCompoundFromObject(Alembic::Abc::IObject object)
 {
    const Alembic::Abc::MetaData &md = object.getMetaData();

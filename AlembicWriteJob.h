@@ -42,6 +42,8 @@ class AlembicExportCommand : public MPxCommand
   public:
     AlembicExportCommand();
     virtual ~AlembicExportCommand();
+
+    virtual bool isUndoable() const { return false; }
     MStatus doIt(const MArgList& args);
 
     static MSyntax createSyntax();

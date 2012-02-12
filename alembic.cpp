@@ -1,5 +1,6 @@
 #include "Foundation.h"
 #include "AlembicWriteJob.h"
+#include "AlembicGetInfo.h"
 #include "AlembicTimeControl.h"
 #include "AlembicFileNode.h"
 #include "AlembicXform.h"
@@ -25,6 +26,9 @@ MStatus initializePlugin(MObject obj)
    status = plugin.registerCommand("ExocortexAlembic_export",
       AlembicExportCommand::creator,
       AlembicExportCommand::createSyntax);
+   status = plugin.registerCommand("ExocortexAlembic_getInfo",
+      AlembicGetInfoCommand::creator,
+      AlembicGetInfoCommand::createSyntax);
 
    // nodes
    status = plugin.registerNode("ExocortexAlembicTimeControl",
@@ -53,6 +57,7 @@ MStatus uninitializePlugin(MObject obj)
    MStatus status;
 
    status = plugin.deregisterCommand("ExocortexAlembic_export");
+   status = plugin.deregisterCommand("ExocortexAlembic_getInfo");
 
    status = plugin.deregisterNode(mTimeControlNodeId);
    status = plugin.deregisterNode(mFileNodeId);

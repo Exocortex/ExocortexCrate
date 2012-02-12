@@ -33,6 +33,7 @@ MString nameMapGet(MString identifier);
 void nameMapClear();
 
 // utility mappings
+MString getTypeFromObject(Alembic::Abc::IObject object);
 Alembic::Abc::ICompoundProperty getCompoundFromObject(Alembic::Abc::IObject object);
 Alembic::Abc::TimeSamplingPtr getTimeSamplingFromObject(Alembic::Abc::IObject object);
 size_t getNumSamplesFromObject(Alembic::Abc::IObject object);

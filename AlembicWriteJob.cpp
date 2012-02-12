@@ -233,9 +233,10 @@ AlembicExportCommand::~AlembicExportCommand()
 MSyntax AlembicExportCommand::createSyntax()
 {
    MSyntax syntax;
+   syntax.addFlag("-h", "-help");
    syntax.addFlag("-j", "-jobArg", MSyntax::kString);
    syntax.makeFlagMultiUse("-j");
-   syntax.enableQuery(true);
+   syntax.enableQuery(false);
    syntax.enableEdit(false);
 
    return syntax;
