@@ -354,14 +354,15 @@ MStatus AlembicPolyMeshNode::compute(const MPlug & plug, MDataBlock & dataBlock)
          offset += counts[i];
       }
 
+      // TODO: SET UVS
       mMesh.create(points.length(),counts.length(),points,counts,indices,mMeshData);
       mMesh.updateSurface();
    }
    else if(mMesh.numVertices() == points.length())
    {
       mMesh.setPoints(points);
-      mMesh.updateSurface();
-      //mMesh.setNormals()
+      // TODO:
+      // mMesh.setNormals
    }
 
    // output all channels
