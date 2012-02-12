@@ -2,6 +2,7 @@
 #define _ALEMBIC_POLYMESH_H_
 
 #include "AlembicObject.h"
+#include <maya/MFnMesh.h>
 
 class AlembicPolyMesh: public AlembicObject
 {
@@ -46,6 +47,11 @@ private:
 
    // output attributes
    static MObject mOutGeometryAttr;
+
+   // members
+   SampleInfo mLastSampleInfo;
+   MObject mMeshData;
+   MFnMesh mMesh;
 };
 
 #endif

@@ -1,6 +1,5 @@
 #include "AlembicPolyMesh.h"
-
-#include <maya/MFnMesh.h>
+#include <maya/MFnMeshData.h>
 
 namespace AbcA = ::Alembic::AbcCoreAbstract::ALEMBIC_VERSION_NS;
 using namespace AbcA;
@@ -208,19 +207,16 @@ MStatus AlembicPolyMeshNode::initialize()
    status = addAttribute(mIdentifierAttr);
 
    // output mesh
-   /*
-   mOutGeometryAttr = nAttr.create("focalLength", "fl", MFnNumericData::kDouble, 30.0);
-   status = nAttr.setStorable(false);
-   status = nAttr.setWritable(false);
-   status = nAttr.setKeyable(false);
+   mOutGeometryAttr = tAttr.create("outMesh", "om", MFnData::kMesh);
+   status = tAttr.setStorable(false);
+   status = tAttr.setWritable(false);
+   status = tAttr.setKeyable(false);
    status = addAttribute(mOutGeometryAttr);
-   */
-
 
    // create a mapping
-   //status = attributeAffects(mTimeAttr, mOutGeometryAttr);
-   //status = attributeAffects(mFileNameAttr, mOutGeometryAttr);
-   //status = attributeAffects(mIdentifierAttr, mOutGeometryAttr);
+   status = attributeAffects(mTimeAttr, mOutGeometryAttr);
+   status = attributeAffects(mFileNameAttr, mOutGeometryAttr);
+   status = attributeAffects(mIdentifierAttr, mOutGeometryAttr);
 
    return status;
 }
@@ -260,6 +256,7 @@ MStatus AlembicPolyMeshNode::compute(const MPlug & plug, MDataBlock & dataBlock)
          return MStatus::kFailure;
       }
       mSchema = obj.getSchema();
+      mMeshData = MObject::kNullObj;
    }
 
    if(!mSchema.valid())
@@ -272,18 +269,103 @@ MStatus AlembicPolyMeshNode::compute(const MPlug & plug, MDataBlock & dataBlock)
       mSchema.getNumSamples()
    );
 
+   // check if we have to do this at all
+   if(!mMeshData.isNull() && mLastSampleInfo.floorIndex == sampleInfo.floorIndex && mLastSampleInfo.ceilIndex == sampleInfo.ceilIndex)
+   {
+      // we still have the same mesh
+      //dataBlock.outputValue(mOutGeometryAttr).set(mMeshData);
+      return MStatus::kSuccess;
+   }
+   mLastSampleInfo = sampleInfo;
+
    // access the camera values
    Alembic::AbcGeom::IPolyMeshSchema::Sample sample;
+   Alembic::AbcGeom::IPolyMeshSchema::Sample sample2;
    mSchema.get(sample,sampleInfo.floorIndex);
-
-   // blend the sample if we are between frames
    if(sampleInfo.alpha != 0.0)
+      mSchema.get(sample2,sampleInfo.ceilIndex);
+
+   // create the output mesh
+   if(mMeshData.isNull())
    {
-      mSchema.get(sample,sampleInfo.ceilIndex);
+      MFnMeshData meshDataFn;
+      mMeshData = meshDataFn.create();
+   }
+
+   Alembic::Abc::P3fArraySamplePtr samplePos = sample.getPositions();
+   Alembic::Abc::Int32ArraySamplePtr sampleCounts = sample.getFaceCounts();
+   Alembic::Abc::Int32ArraySamplePtr sampleIndices = sample.getFaceIndices();
+
+   MFloatPointArray points;
+   if(samplePos->size() > 0)
+   {
+      points.setLength((unsigned int)samplePos->size());
+      bool done = false;
+      if(sampleInfo.alpha != 0.0)
+      {
+         Alembic::Abc::P3fArraySamplePtr samplePos2 = sample2.getPositions();
+         if(points.length() == (unsigned int)samplePos2->size())
+         {
+            float blend = (float)sampleInfo.alpha;
+            float iblend = 1.0f - blend;
+            for(unsigned int i=0;i<points.length();i++)
+            {
+               points[i].x = samplePos->get()[i].x * iblend + samplePos2->get()[i].x * blend;
+               points[i].y = samplePos->get()[i].y * iblend + samplePos2->get()[i].y * blend;
+               points[i].z = samplePos->get()[i].z * iblend + samplePos2->get()[i].z * blend;
+            }
+            done = true;
+         }
+      }
+
+      if(!done)
+      {
+         for(unsigned int i=0;i<points.length();i++)
+         {
+            points[i].x = samplePos->get()[i].x;
+            points[i].y = samplePos->get()[i].y;
+            points[i].z = samplePos->get()[i].z;
+         }
+      }
+   }
+
+   // check if we already have the right polygons
+   if(mMesh.numVertices() != points.length() || 
+      mMesh.numPolygons() != (unsigned int)sampleCounts->size() || 
+      mMesh.numFaceVertices() != (unsigned int)sampleIndices->size())
+   {
+      MIntArray counts;
+      MIntArray indices;
+      counts.setLength((unsigned int)sampleCounts->size());
+      indices.setLength((unsigned int)sampleIndices->size());
+
+      unsigned int offset = 0;
+      for(unsigned int i=0;i<counts.length();i++)
+      {
+         counts[i] = sampleCounts->get()[i];
+         for(int j=0;j<counts[i];j++)
+         {
+            MString count,index;
+            count.set((double)counts[i]);
+            index.set((double)sampleIndices->get()[offset+j]);
+            MGlobal::displayInfo(count+" : "+index);
+            indices[offset+j] = sampleIndices->get()[offset+counts[i]-j-1];
+         }
+         offset += counts[i];
+      }
+
+      mMesh.create(points.length(),counts.length(),points,counts,indices,mMeshData);
+      mMesh.updateSurface();
+   }
+   else if(mMesh.numVertices() == points.length())
+   {
+      mMesh.setPoints(points);
+      mMesh.updateSurface();
+      //mMesh.setNormals()
    }
 
    // output all channels
-   //dataBlock.outputValue(mOutGeometryAttr);
+   dataBlock.outputValue(mOutGeometryAttr).set(mMeshData);
 
-   return status;
+   return MStatus::kSuccess;
 }
