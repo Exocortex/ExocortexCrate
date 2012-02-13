@@ -76,12 +76,16 @@ MStatus AlembicPolyMesh::Save(double time)
 
       mFaceCountVec.resize(counts.length());
       mFaceIndicesVec.resize(indices.length());
+      mSampleLookup.resize(indices.length());
       unsigned int offset = 0;
       for(unsigned int i=0;i<counts.length();i++)
       {
          mFaceCountVec[i] = counts[i];
          for(unsigned int j=0;j<(unsigned int)counts[i];j++)
+         {
+            mSampleLookup[offset+counts[i]-j-1] = offset+j;
             mFaceIndicesVec[offset+counts[i]-j-1] = indices[offset+j];
+         }
          offset += counts[i];
       }
 
@@ -104,9 +108,21 @@ MStatus AlembicPolyMesh::Save(double time)
    {
       MFloatVectorArray normals;
       node.getNormals(normals);
-      normalCount = normals.length();
-      mNormalVec.resize(normalCount);
-      memcpy(&mNormalVec[0],&normals[0],sizeof(float) * normalCount * 3);
+      mNormalVec.resize(mSampleLookup.size());
+      normalCount = (unsigned int)mSampleLookup.size();
+      MIntArray normalIDs;
+      unsigned int offset = 0;
+      for(unsigned int i=0;i<(unsigned int)node.numPolygons();i++)
+      {
+         node.getFaceNormalIds(i,normalIDs);
+         for(unsigned int j=0;j<normalIDs.length();j++)
+         {
+            mNormalVec[mSampleLookup[offset]].x = normals[normalIDs[j]].x;
+            mNormalVec[mSampleLookup[offset]].y = normals[normalIDs[j]].y;
+            mNormalVec[mSampleLookup[offset]].z = normals[normalIDs[j]].z;
+            offset++;
+         }
+      }
 
       // now let's sort the normals 
       if(GetJob()->GetOption(L"indexedNormals").asInt() > 0) {
@@ -175,6 +191,8 @@ AlembicPolyMeshNode::~AlembicPolyMeshNode()
 MObject AlembicPolyMeshNode::mTimeAttr;
 MObject AlembicPolyMeshNode::mFileNameAttr;
 MObject AlembicPolyMeshNode::mIdentifierAttr;
+MObject AlembicPolyMeshNode::mNormalsAttr;
+MObject AlembicPolyMeshNode::mUvsAttr;
 MObject AlembicPolyMeshNode::mOutGeometryAttr;
 
 MStatus AlembicPolyMeshNode::initialize()
@@ -191,6 +209,7 @@ MStatus AlembicPolyMeshNode::initialize()
    // input time
    mTimeAttr = uAttr.create("time", "tm", MFnUnitAttribute::kTime, 0.0);
    status = uAttr.setStorable(true);
+   status = uAttr.setKeyable(true);
    status = addAttribute(mTimeAttr);
 
    // input file name
@@ -206,6 +225,18 @@ MStatus AlembicPolyMeshNode::initialize()
    status = tAttr.setKeyable(false);
    status = addAttribute(mIdentifierAttr);
 
+   // input normals
+   mNormalsAttr = nAttr.create("normals", "nm", MFnNumericData::kBoolean, 1.0);
+   status = tAttr.setStorable(true);
+   status = tAttr.setKeyable(false);
+   status = addAttribute(mNormalsAttr);
+
+   // input normals
+   mUvsAttr = nAttr.create("uvs", "uv", MFnNumericData::kBoolean, 1.0);
+   status = tAttr.setStorable(true);
+   status = tAttr.setKeyable(false);
+   status = addAttribute(mUvsAttr);
+
    // output mesh
    mOutGeometryAttr = tAttr.create("outMesh", "om", MFnData::kMesh);
    status = tAttr.setStorable(false);
@@ -217,6 +248,8 @@ MStatus AlembicPolyMeshNode::initialize()
    status = attributeAffects(mTimeAttr, mOutGeometryAttr);
    status = attributeAffects(mFileNameAttr, mOutGeometryAttr);
    status = attributeAffects(mIdentifierAttr, mOutGeometryAttr);
+   status = attributeAffects(mNormalsAttr, mOutGeometryAttr);
+   status = attributeAffects(mUvsAttr, mOutGeometryAttr);
 
    return status;
 }
@@ -229,6 +262,8 @@ MStatus AlembicPolyMeshNode::compute(const MPlug & plug, MDataBlock & dataBlock)
    double inputTime = dataBlock.inputValue(mTimeAttr).asTime().as(MTime::kSeconds);
    MString & fileName = dataBlock.inputValue(mFileNameAttr).asString();
    MString & identifier = dataBlock.inputValue(mIdentifierAttr).asString();
+   bool importNormals = dataBlock.inputValue(mNormalsAttr).asBool();
+   bool importUvs = dataBlock.inputValue(mUvsAttr).asBool();
 
    // check if we have the file
    if(fileName != mFileName || identifier != mIdentifier)
@@ -338,6 +373,9 @@ MStatus AlembicPolyMeshNode::compute(const MPlug & plug, MDataBlock & dataBlock)
       MIntArray indices;
       counts.setLength((unsigned int)sampleCounts->size());
       indices.setLength((unsigned int)sampleIndices->size());
+      mSampleLookup.resize(indices.length());
+      mNormalFaces.setLength(indices.length());
+      mNormalVertices.setLength(indices.length());
 
       unsigned int offset = 0;
       for(unsigned int i=0;i<counts.length();i++)
@@ -348,21 +386,123 @@ MStatus AlembicPolyMeshNode::compute(const MPlug & plug, MDataBlock & dataBlock)
             MString count,index;
             count.set((double)counts[i]);
             index.set((double)sampleIndices->get()[offset+j]);
-            MGlobal::displayInfo(count+" : "+index);
+            mSampleLookup[offset+counts[i]-j-1] = offset+j;
             indices[offset+j] = sampleIndices->get()[offset+counts[i]-j-1];
+
+            mNormalFaces[offset+j] = i;
+            mNormalVertices[offset+j] = indices[offset+j];
          }
          offset += counts[i];
       }
 
-      // TODO: SET UVS
+      // create a mesh either with or without uvs
       mMesh.create(points.length(),counts.length(),points,counts,indices,mMeshData);
       mMesh.updateSurface();
+
+      // check if we need to import uvs
+      if(importUvs)
+      {
+         Alembic::AbcGeom::IV2fGeomParam uvsParam = mSchema.getUVsParam();
+         if(uvsParam.valid())
+         {
+            if(uvsParam.getNumSamples() > 0)
+            {
+               sampleInfo = getSampleInfo(
+                  inputTime,
+                  uvsParam.getTimeSampling(),
+                  uvsParam.getNumSamples()
+               );
+
+               Alembic::Abc::V2fArraySamplePtr sampleUvs = uvsParam.getExpandedValue(sampleInfo.floorIndex).getVals();
+               if(sampleUvs->size() == (size_t)indices.length())
+               {
+                  // create a uv set if necessary
+                  MString uvSetName("uvset1");
+                  status = mMesh.getCurrentUVSetName(uvSetName);
+                  if ( status != MS::kSuccess )
+                  {
+                     uvSetName = MString("uvset1");
+                     status = mMesh.createUVSet(uvSetName);
+                     status = mMesh.setCurrentUVSetName(uvSetName);
+                  }
+
+                  MFloatArray uValues,vValues;
+                  uValues.setLength((unsigned int)sampleUvs->size());
+                  vValues.setLength((unsigned int)sampleUvs->size());
+
+                  MIntArray uvIndices;
+                  uvIndices.setLength(uValues.length());
+
+                  for(unsigned int i=0;i<uValues.length();i++)
+                  {
+                     uValues[mSampleLookup[i]] = sampleUvs->get()[i].x;
+                     vValues[mSampleLookup[i]] = sampleUvs->get()[i].y;
+                     uvIndices[i] = i;
+                  }
+
+                  status = mMesh.clearUVs();
+                  status = mMesh.setUVs(uValues, vValues, &uvSetName);
+                  status = mMesh.assignUVs(counts, uvIndices);
+               }
+            }
+         }
+      }
    }
    else if(mMesh.numVertices() == points.length())
-   {
       mMesh.setPoints(points);
-      // TODO:
-      // mMesh.setNormals
+
+   // import the normals
+   if(importNormals)
+   {
+      Alembic::AbcGeom::IN3fGeomParam normalsParam = mSchema.getNormalsParam();
+      if(normalsParam.valid())
+      {
+         if(normalsParam.getNumSamples() > 0)
+         {
+            sampleInfo = getSampleInfo(
+               inputTime,
+               normalsParam.getTimeSampling(),
+               normalsParam.getNumSamples()
+            );
+
+            Alembic::Abc::N3fArraySamplePtr sampleNormals = normalsParam.getExpandedValue(sampleInfo.floorIndex).getVals();
+            if(sampleNormals->size() == mSampleLookup.size())
+            {
+               MVectorArray normals;
+               normals.setLength((unsigned int)sampleNormals->size());
+
+               bool done = false;
+               if(sampleInfo.alpha != 0.0)
+               {
+                  Alembic::Abc::N3fArraySamplePtr sampleNormals2 = normalsParam.getExpandedValue(sampleInfo.ceilIndex).getVals();
+                  if(sampleNormals->size() == sampleNormals2->size())
+                  {
+                     float blend = (float)sampleInfo.alpha;
+                     float iblend = 1.0f - blend;
+                     MVector normal;
+                     for(unsigned int i=0;i<normals.length();i++)
+                     {
+                        normal.x = sampleNormals->get()[i].x * iblend + sampleNormals2->get()[i].x * blend;
+                        normal.y = sampleNormals->get()[i].y * iblend + sampleNormals2->get()[i].y * blend;
+                        normal.z = sampleNormals->get()[i].z * iblend + sampleNormals2->get()[i].z * blend;
+                        normals[mSampleLookup[i]] = normal.normal();
+                     }
+                     done = true;
+                  }
+               }
+               if(!done)
+               {
+                  for(unsigned int i=0;i<normals.length();i++)
+                  {
+                     normals[mSampleLookup[i]].x = sampleNormals->get()[i].x;
+                     normals[mSampleLookup[i]].y = sampleNormals->get()[i].y;
+                     normals[mSampleLookup[i]].z = sampleNormals->get()[i].z;
+                  }
+               }
+               mMesh.setFaceVertexNormals(normals,mNormalFaces,mNormalVertices);             
+            }
+         }
+      }
    }
 
    // output all channels

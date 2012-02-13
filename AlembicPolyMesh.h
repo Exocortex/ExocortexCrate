@@ -15,6 +15,7 @@ private:
    std::vector<Alembic::Abc::uint32_t> mNormalIndexVec;
    std::vector<Alembic::Abc::int32_t> mFaceCountVec;
    std::vector<Alembic::Abc::int32_t> mFaceIndicesVec;
+   std::vector<unsigned int> mSampleLookup;
 
 public:
    AlembicPolyMesh(const MObject & in_Ref, AlembicWriteJob * in_Job);
@@ -44,6 +45,8 @@ private:
    MString mFileName;
    MString mIdentifier;
    Alembic::AbcGeom::IPolyMeshSchema mSchema;
+   static MObject mNormalsAttr;
+   static MObject mUvsAttr;
 
    // output attributes
    static MObject mOutGeometryAttr;
@@ -52,6 +55,9 @@ private:
    SampleInfo mLastSampleInfo;
    MObject mMeshData;
    MFnMesh mMesh;
+   std::vector<unsigned int> mSampleLookup;
+   MIntArray mNormalFaces;
+   MIntArray mNormalVertices;
 };
 
 #endif
