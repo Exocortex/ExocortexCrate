@@ -94,8 +94,80 @@ MStatus AlembicPolyMesh::Save(double time)
       mSample.setFaceCounts(faceCountSample);
       mSample.setFaceIndices(faceIndicesSample);
 
+      // check if we need to export uvs
+      if(GetJob()->GetOption(L"exportUVs").asInt() > 0)
+      {
+         MStatus status;
+         MString uvSetName = node.currentUVSetName(&status);
+         if (status == MS::kSuccess && uvSetName != MString(""))
+         {
+            MFloatArray uValues, vValues;
+            status = node.getUVs(uValues, vValues, &uvSetName);
+            if ( uValues.length() == vValues.length() )
+            {
+               MIntArray uvCounts, uvIds;
+               status = node.getAssignedUVs(uvCounts, uvIds, &uvSetName);
+               unsigned int uvCount = (unsigned int)mSampleLookup.size();
+               if(uvIds.length() == uvCount)
+               {
+                  mUvVec.resize(uvCount);
+                  unsigned int offset = 0;
+                  for (unsigned int i=0;i<uvIds.length();i++)
+                  {
+                     mUvVec[mSampleLookup[offset]].x = uValues[uvIds[i]];
+                     mUvVec[mSampleLookup[offset]].y = vValues[uvIds[i]];
+                     offset++;
+                  }
 
-      // TODO: UVS
+                  // now let's sort the normals 
+                  unsigned int uvIndexCount = 0;
+                  if(GetJob()->GetOption(L"indexedUVs").asInt() > 0) {
+                     std::map<SortableV2f,size_t> uvMap;
+                     std::map<SortableV2f,size_t>::const_iterator it;
+                     unsigned int sortedUVCount = 0;
+                     std::vector<Alembic::Abc::V2f> sortedUVVec;
+                     mUvIndexVec.resize(mUvVec.size());
+                     sortedUVVec.resize(mUvVec.size());
+
+                     // loop over all uvs
+                     for(size_t i=0;i<mUvVec.size();i++)
+                     {
+                        it = uvMap.find(mUvVec[i]);
+                        if(it != uvMap.end())
+                           mUvIndexVec[uvIndexCount++] = (uint32_t)it->second;
+                        else
+                        {
+                           mUvIndexVec[uvIndexCount++] = (uint32_t)sortedUVCount;
+                           uvMap.insert(std::pair<Alembic::Abc::V2f,size_t>(mUvVec[i],(uint32_t)sortedUVCount));
+                           sortedUVVec[sortedUVCount++] = mUvVec[i];
+                        }
+                     }
+
+                     // use indexed uvs if they use less space
+                     if(sortedUVCount * sizeof(Alembic::Abc::V2f) + 
+                        uvIndexCount * sizeof(uint32_t) < 
+                        sizeof(Alembic::Abc::V2f) * mUvVec.size())
+                     {
+                        mUvVec = sortedUVVec;
+                        uvCount = sortedUVCount;
+                     }
+                     else
+                     {
+                        uvIndexCount = 0;
+                        mUvIndexVec.clear();
+                     }
+                     sortedUVCount = 0;
+                     sortedUVVec.clear();
+                  }
+
+                  Alembic::AbcGeom::OV2fGeomParam::Sample uvSample(Alembic::Abc::V2fArraySample(&mUvVec.front(),uvCount),Alembic::AbcGeom::kFacevaryingScope);
+                  if(mUvIndexVec.size() > 0 && uvIndexCount > 0)
+                     uvSample.setIndices(Alembic::Abc::UInt32ArraySample(&mUvIndexVec.front(),uvIndexCount));
+                  mSample.setUVs(uvSample);
+               }
+            }
+         }
+      }
 
       // TODO: check for facesets
    }
