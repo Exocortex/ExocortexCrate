@@ -1747,10 +1747,19 @@ ESS_CALLBACK_START(alembic_import_Execute, CRef&)
          else
          {
             // only add the point position operator if we don't have dynamic topology
-            Alembic::AbcGeom::IPolyMesh abcMesh = Alembic::AbcGeom::IPolyMesh(objects[i],Alembic::Abc::kWrapExisting);
-            CValue returnedOpVal;
-            alembic_create_item_Invoke(L"alembic_polymesh",meshObj.GetRef(),filename,objects[i].getFullName().c_str(),attachToExisting,createItemArgs,returnedOpVal);
-            returnOpRef = (CRef)returnedOpVal;
+            bool receivesExpression = false;
+            Alembic::Abc::ICompoundProperty abcCompound = getCompoundFromObject(objects[i]);
+            Alembic::Abc::IInt32ArrayProperty faceCountProp = Alembic::Abc::IInt32ArrayProperty(abcCompound,".faceCounts");
+            if(faceCountProp.valid())
+               receivesExpression = !faceCountProp.isConstant();
+
+            if(!receivesExpression)
+            {
+               Alembic::AbcGeom::IPolyMesh abcMesh = Alembic::AbcGeom::IPolyMesh(objects[i],Alembic::Abc::kWrapExisting);
+               CValue returnedOpVal;
+               alembic_create_item_Invoke(L"alembic_polymesh",meshObj.GetRef(),filename,objects[i].getFullName().c_str(),attachToExisting,createItemArgs,returnedOpVal);
+               returnOpRef = (CRef)returnedOpVal;
+            }
          }
 
          // load standin property
