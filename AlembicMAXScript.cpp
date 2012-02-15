@@ -5,6 +5,14 @@
 #include "MeshMtlList.h"
 #include "SceneEnumProc.h"
 #include "AlembicDefinitions.h"
+#include "AlembicWriteJob.h"
+#include "Utility.h"
+
+// Dummy function for progress bar
+DWORD WINAPI DummyProgressFunction(LPVOID arg)
+{
+	return 0;
+}
 
 class ExocortexAlembicStaticInterface : public FPInterfaceDesc
 {
@@ -199,5 +207,67 @@ int ExocortexAlembicStaticInterface::ExocortexAlembicImport(MCHAR* strFileName)
 
 int ExocortexAlembicStaticInterface::ExocortexAlembicExport(MCHAR * strFileName)
 {
+    Interface7 *i = GetCOREInterface7();
+
+    MeshMtlList allMtls;
+    SceneEnumProc currentScene(i->GetScene(), i->GetTime(), i, &allMtls);
+    ObjectList allSceneObjects(currentScene);
+    Object *currentObject = NULL;
+
+	i->ProgressStart("Exporting Alembic File", TRUE, DummyProgressFunction, NULL);
+
+    // TODO: Get these values from the settings
+    bool exportUV = false;
+    bool exportClusters = false;
+    bool exportEnvelopeBindPose = true;
+    bool exportDynamicTopology = false;
+    double frameIn = 1;
+    double frameOut = 100;
+    double frameSteps = 1;
+    MeshTopologyType topologyType = NORMAL_SURFACE;
+
+    if (strlen(strFileName) <= 0)
+    {
+        MessageBox(GetActiveWindow(), "[alembic] No filename specified.", "Error", MB_OK);
+        return 1;
+    }
+
+    std::vector<double> frames;
+    for (double frame = frameIn; frame <= frameOut; frame += frameSteps)
+    {
+        // Adding frames
+        frames.push_back(frame);
+    }
+
+    AlembicWriteJob *job = new AlembicWriteJob(strFileName, allSceneObjects, frames, i);
+    job->SetOption("exportNormals", topologyType != SURFACE);
+    job->SetOption("exportUVs", exportUV);
+    job->SetOption("exportFaceSets", topologyType != NORMAL);
+    job->SetOption("exportBindPose", exportEnvelopeBindPose);
+    job->SetOption("exportPurePointCache", exportClusters);
+    job->SetOption("exportDynamicTopology", exportDynamicTopology);
+    job->SetOption("indexedNormals", true);
+    job->SetOption("indexedUVs", true);
+
+    // check if the job is satifsied
+    if (job->PreProcess() != true)
+    {
+        MessageBox(GetActiveWindow(), "[alembic] Job skipped. Not satisfied.", "Error", MB_OK);
+        delete(job);
+        return 1;
+    }
+
+    // now, let's run through all frames, and process the jobs
+    for (double frame = frameIn; frame <= frameOut; frame += frameSteps)
+    {
+        i->ProgressUpdate(static_cast<int>(frame/frameOut*100.0f));
+        int ticks = GetTimeValueFromFrame(frame);
+        i->SetTime(ticks);
+        job->Process(frame);
+    }
+
+    delete(job);
+    i->ProgressEnd();
+
 	return 0;
 }
