@@ -43,23 +43,48 @@ public:
 
 		 AppendFunction(
             exocortexAlembicExport,	//* function ID * /
-            _M("export"),   //* internal name * /
-            0,              //* function name string resource name * / 
-            TYPE_INT,       //* Return type * /
-            0,              //* Flags  * /
-            1,              //* Number  of arguments * /
-                _M("fileName"),    //* argument internal name * /
-                0,          //* argument localizable name string resource id * /
-                TYPE_FILENAME,   //* arg type * /
+            _M("export"),           //* internal name * /
+            0,                      //* function name string resource name * / 
+            TYPE_INT,               //* Return type * /
+            0,                      //* Flags  * /
+            9,                      //* Number  of arguments * /
+                _M("fileName"),     //* argument internal name * /
+                0,                  //* argument localizable name string resource id * /
+                TYPE_FILENAME,      //* arg type * /
+                _M("frameIn"),      //* argument internal name * /
+                0,                  //* argument localizable name string resource id * /
+                TYPE_INT,           //* arg type * /
+                _M("frameOut"),     //* argument internal name * /
+                0,                  //* argument localizable name string resource id * /
+                TYPE_INT,           //* arg type * /
+                _M("frameSteps"),   //* argument internal name * /
+                0,                  //* argument localizable name string resource id * /
+                TYPE_INT,           //* arg type * /
+                _M("topologyType"), //* argument internal name * /
+                0,                  //* argument localizable name string resource id * /
+                TYPE_INT,           //* arg type * /
+                _M("exportUV"),     //* argument internal name * /
+                0,                  //* argument localizable name string resource id * /
+                TYPE_BOOL,          //* arg type * /
+                _M("exportClusters"), //* argument internal name * /
+                0,                  //* argument localizable name string resource id * /
+                TYPE_BOOL,          //* arg type * /
+                _M("exportEnvelopeBindPose"), //* argument internal name * /
+                0,                  //* argument localizable name string resource id * /
+                TYPE_BOOL,          //* arg type * /
+                _M("exportDynamicTopology"), //* argument internal name * /
+                0,                  //* argument localizable name string resource id * /
+                TYPE_BOOL,          //* arg type * /
             end); 
     }
 
     static int ExocortexAlembicImport(MCHAR * strFileName);
-	static int ExocortexAlembicExport(MCHAR * strFileName);
+	static int ExocortexAlembicExport(MCHAR * strFileName, int frameIn, int frameOut, int frameSteps, int type,
+                                      bool exportUV, bool exportClusters, bool exportEnvelopeBindPose, bool exportDynamicTopology);
 
     BEGIN_FUNCTION_MAP
         FN_1(exocortexAlembicImport, TYPE_INT, ExocortexAlembicImport, TYPE_FILENAME)
-		FN_1(exocortexAlembicExport, TYPE_INT, ExocortexAlembicExport, TYPE_FILENAME)
+		FN_9(exocortexAlembicExport, TYPE_INT, ExocortexAlembicExport, TYPE_FILENAME, TYPE_INT, TYPE_INT, TYPE_INT, TYPE_INT, TYPE_BOOL, TYPE_BOOL, TYPE_BOOL, TYPE_BOOL)
     END_FUNCTION_MAP
 };
 
@@ -205,9 +230,11 @@ int ExocortexAlembicStaticInterface::ExocortexAlembicImport(MCHAR* strFileName)
    return 0;
 }
 
-int ExocortexAlembicStaticInterface::ExocortexAlembicExport(MCHAR * strFileName)
+int ExocortexAlembicStaticInterface::ExocortexAlembicExport(MCHAR * strFileName, int frameIn, int frameOut, int frameSteps, int type,
+                                                            bool exportUV, bool exportClusters, bool exportEnvelopeBindPose, bool exportDynamicTopology)
 {
     Interface7 *i = GetCOREInterface7();
+    MeshTopologyType topologyType = static_cast<MeshTopologyType>(type);
 
     MeshMtlList allMtls;
     SceneEnumProc currentScene(i->GetScene(), i->GetTime(), i, &allMtls);
@@ -216,16 +243,6 @@ int ExocortexAlembicStaticInterface::ExocortexAlembicExport(MCHAR * strFileName)
 
 	i->ProgressStart("Exporting Alembic File", TRUE, DummyProgressFunction, NULL);
 
-    // TODO: Get these values from the settings
-    bool exportUV = false;
-    bool exportClusters = false;
-    bool exportEnvelopeBindPose = true;
-    bool exportDynamicTopology = false;
-    double frameIn = 1;
-    double frameOut = 100;
-    double frameSteps = 1;
-    MeshTopologyType topologyType = NORMAL_SURFACE;
-
     if (strlen(strFileName) <= 0)
     {
         MessageBox(GetActiveWindow(), "[alembic] No filename specified.", "Error", MB_OK);
@@ -233,7 +250,7 @@ int ExocortexAlembicStaticInterface::ExocortexAlembicExport(MCHAR * strFileName)
     }
 
     std::vector<double> frames;
-    for (double frame = frameIn; frame <= frameOut; frame += frameSteps)
+    for (int frame = frameIn; frame <= frameOut; frame += frameSteps)
     {
         // Adding frames
         frames.push_back(frame);
@@ -258,9 +275,10 @@ int ExocortexAlembicStaticInterface::ExocortexAlembicExport(MCHAR * strFileName)
     }
 
     // now, let's run through all frames, and process the jobs
-    for (double frame = frameIn; frame <= frameOut; frame += frameSteps)
+    for (int frame = frameIn; frame <= frameOut; frame += frameSteps)
     {
-        i->ProgressUpdate(static_cast<int>(frame/frameOut*100.0f));
+        float progress = (100.0f * (frame - frameIn)) / (frameOut - frameIn);
+        i->ProgressUpdate(static_cast<int>(progress));
         int ticks = GetTimeValueFromFrame(frame);
         i->SetTime(ticks);
         job->Process(frame);

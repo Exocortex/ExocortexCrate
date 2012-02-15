@@ -24,9 +24,9 @@ enum AlembicFillContext
 
 enum MeshTopologyType
 {
-    NORMAL,
-    SURFACE,
-    NORMAL_SURFACE
+    SURFACE = 1,
+    NORMAL = 2,
+    NORMAL_SURFACE = 3
 };
 
 enum alembic_return_code
