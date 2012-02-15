@@ -28,13 +28,13 @@ add_definitions( "-Dalembic_MINOR_VERSION=${alembic_MINOR_VERSION}" )
 
 if( WIN32 )
 	set( Exocortex_SERVICES ON )
-	set( Exocortex_RLM_ONLY OFF )
 elseif( UNIX )
 	set( Exocortex_SERVICES OFF )
-	set( Exocortex_RLM_ONLY ON )
 else()
 	message(FATAL_ERROR "Should not get here")
 endif()
+set( Exocortex_BETA_EXPIRY_DATE 1330560000 )	# when beta is over, undefine this and it will not be enabled.
+set( Exocortex_RLM_ONLY ON )					# use only RLM licensing.
 
 setup_os_name()
 setup_cpu_name()
@@ -60,12 +60,16 @@ if( Exocortex_SERVICES OR Exocortex_RLM_ONLY )
 endif()
 
 # Exocortex Services
-if( Exocortex_SERVICES AND Exocortex_RLM_ONLY )
-	message(FATAL_ERROR "Should not get here")
+if( Exocortex_BETA_EXPIRY_DATE )
+	add_definitions( "-DEXOCORTEX_BETA_EXPIRY_DATE=${Exocortex_BETA_EXPIRY_DATE}" )
 endif()
+
+if( Exocortex_RLM_ONLY )
+	add_definitions( "-DEXOCORTEX_RLM_ONLY" )
+endif()
+
+
 if( Exocortex_SERVICES )
-	add_definitions( "-DEXOCORTEX_SERVICES" )
-	add_definitions( -DNOMINMAX )	 # disable min/max macros from <windows.h>.
 	set( Exocortex_INCLUDE_DIR "${LIBRARY_ROOT}/Exocortex/include" )
 	set( Exocortex_DEBUG_LIBRARYDIR "${LIBRARY_ROOT}/Exocortex/lib/${CPU_NAME}/debug/${OS_NAME}/" )
 	set( Exocortex_RELEASED_LIBRARYDIR "${LIBRARY_ROOT}/Exocortex/lib/${CPU_NAME}/release/${OS_NAME}/" )
