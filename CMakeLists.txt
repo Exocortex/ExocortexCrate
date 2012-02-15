@@ -9,7 +9,7 @@ if( Exocortex_SERVICES OR Exocortex_RLM_ONLY )
 	include_directories( ${Exocortex_INCLUDE_DIR} )
 endif()
 
-SET( EXOCORTEX_MAYA_VERSION 2012 CACHE INT "Expiry Date Licensing")
+SET( EXOCORTEX_MAYA_VERSION 2012 CACHE INT "Maya Version")
 SET( Maya_DIR_ROOT ${LIBRARY_ROOT}/Maya/${EXOCORTEX_MAYA_VERSION} )
 SET( Maya_DIR_INCLUDE ${Maya_DIR_ROOT}/include )
 
@@ -34,7 +34,6 @@ ENDIF()
 SET( Maya_LIBRARIES Foundation OpenMaya OpenMayaAnim OpenMayaFX OpenMayaRender OpenMayaUI )		
 
 MESSAGE( "Maya_DIR_LIBRARY: ${Maya_DIR_LIBRARY}" )
-
 MESSAGE( "Maya_LIBRARIES: ${Maya_LIBRARIES}" )
 
 if( Exocortex_SERVICES )
@@ -48,16 +47,12 @@ link_directories( ${Maya_DIR_LIBRARY} )
 if( Exocortex_SERVICES OR Exocortex_RLM_ONLY )
 	link_directories( ${Rlm_LIBRARYDIR} )
 endif()
-if( Exocortex_SERVICES )
-	#link_directories( ${Exocortex_LIBRARYDIR} )
-	link_directories( ${TBB_LIBRARYDIR} )
-endif()
 
 set( MAYA_EXTENSION ".mll" )
-set( MAYA_COMPILE_FLAGS "/MT /D \"NT_PLUGIN\" /D \"REQUIRE_IOSTREAM\" /D \"_BOOL\"" )
+set( MAYA_COMPILE_FLAGS "/D \"NT_PLUGIN\" /D \"REQUIRE_IOSTREAM\" /D \"_BOOL\"" )
 set( MAYA_LINK_FLAGS " /export:initializePlugin /export:uninitializePlugin " )
 
-add_library( ${PROJECT_NAME} SHARED ${Sources} ${Includes})
+add_library( ${PROJECT_NAME} SHARED ${Sources} ${Includes} )
 
 SET_TARGET_PROPERTIES( ${PROJECT_NAME}
   PROPERTIES
@@ -65,15 +60,8 @@ SET_TARGET_PROPERTIES( ${PROJECT_NAME}
   LINK_FLAGS ${MAYA_LINK_FLAGS}
   PREFIX ""
   SUFFIX ${MAYA_EXTENSION} )
-SET_TARGET_PROPERTIES( ${PROJECT_NAME}
-  PROPERTIES
-  COMPILE_FLAGS ${MAYA_COMPILE_FLAGS}
-  LINK_FLAGS ${MAYA_LINK_FLAGS}
-  PREFIX ""
-  SUFFIX ${MAYA_EXTENSION} )
 
-TARGET_LINK_LIBRARIES( ${PROJECT_NAME} ${ALEMBIC_ILMBASE_LIBS} ${ALEMBIC_ZLIB_LIBS} ${ALEMBIC_HDF5_LIBS} ${ALEMBIC_CORE_LIBS} ${BOOST_LIBS} ${Maya_LIBRARIES} ${Exocortex_LIBRARIES} ${Rlm_LIBRARIES} )
+TARGET_LINK_LIBRARIES( ${PROJECT_NAME} ${ALEMBIC_ILMBASE_LIBS} ${ALEMBIC_ZLIB_LIBS} ${ALEMBIC_HDF5_LIBS} ${ALEMBIC_CORE_LIBS} ${BOOST_LIBS} ${Maya_LIBRARIES} ${Rlm_LIBRARIES} )
 ADD_DEPENDENCIES(${PROJECT_NAME} AlembicAbcGeom)
 
-#deploy_softimage( ${PROJECT_NAME} ExocortexAlembic${alembic_VERSION} ${TBB_DEPENDENCIES} ${RER_DEPENDENCIES} ${EAH_DEPENDENCIES} )
 
