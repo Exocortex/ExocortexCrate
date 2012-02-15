@@ -21,20 +21,24 @@ void SaveXformSample(const SceneEntry &in_Ref, Alembic::AbcGeom::OXformSchema &s
         }
     }
 
-    // Is there a global transform?
-    if (time == 50)
-    {
-        int l = 0;
-    }
-
     // JSS : To validate, I am currently assuming that the ObjectTM is what we are seeking. This may be wrong. 
     // Model transform
     TimeValue ticks = GetTimeValueFromFrame(time);
     // Matrix3 transformation = in_Ref.node->GetNodeTM(ticks) * Inverse(in_Ref.node->GetParentTM(ticks));
     Matrix3 transformation = in_Ref.node->GetObjectTM(ticks);
 
+    // Convert the max transform to alembic
+    Matrix3 alembicMatrix;
+    AlembicDebug_PrintTransform(transformation);
+    ConvertMaxMatrixToAlembicMatrix(transformation, alembicMatrix);
+    AlembicDebug_PrintTransform(alembicMatrix);
+    Alembic::Abc::M44d iMatrix( alembicMatrix.GetRow(0).x,  alembicMatrix.GetRow(0).y,  alembicMatrix.GetRow(0).z,  0,
+                                alembicMatrix.GetRow(1).x,  alembicMatrix.GetRow(1).y,  alembicMatrix.GetRow(1).z,  0,
+                                alembicMatrix.GetRow(2).x,  alembicMatrix.GetRow(2).y,  alembicMatrix.GetRow(2).z,  0,
+                                alembicMatrix.GetRow(3).x,  alembicMatrix.GetRow(3).y,  alembicMatrix.GetRow(3).z,  1);
+
     // store the transform
-    sample.setTranslation(Imath::V3d(transformation.GetTrans().x,transformation.GetTrans().y,transformation.GetTrans().z));
+    /*sample.setTranslation(Imath::V3d(transformation.GetTrans().x,transformation.GetTrans().y,transformation.GetTrans().z));
 
     float rotX = 0.0f;
     float rotY = 0.0f;
@@ -46,8 +50,10 @@ void SaveXformSample(const SceneEntry &in_Ref, Alembic::AbcGeom::OXformSchema &s
 
     // JSS: TODO Get Rotation and Scale
     sample.setScale(Imath::V3d(1,1,1));
+    */
 
     // save the sample
+    sample.setMatrix(iMatrix);
     schema.set(sample);
 }
 

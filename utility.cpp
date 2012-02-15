@@ -168,3 +168,84 @@ void AlembicDebug_PrintMeshData( Mesh &mesh )
         ALEMBIC_DEBUG("\n");
     }
 }
+
+void AlembicDebug_PrintTransform(Matrix3 &m)
+{
+    ALEMBIC_DEBUG("Matrix\n");
+    ALEMBIC_DEBUG("======\n");
+
+    for (int i=0; i < 4; i += 1)
+    {
+        ALEMBIC_DEBUG("Row %d (%f, %f, %f)\n", i, m.GetRow(i).x, m.GetRow(i).y, m.GetRow(i).z);
+    }
+}
+
+Point3 ScalePointFromInchesToMeters( const Point3 &inches )
+{
+    float flIMetersPerInch = (float)GetMasterScale(UNITS_METERS);
+    Point3 meters = inches * flIMetersPerInch;
+    return meters;
+}
+
+
+Point3 ScalePointFromMetersToInches( const Point3 &meters )
+{
+    float flIMetersPerInch = (float)GetMasterScale(UNITS_METERS);
+    Point3 inches = meters / flIMetersPerInch;
+    return inches;
+}
+
+void ConvertMaxMatrixToAlembicMatrix( const Matrix3 &maxMatrix, Matrix3 &result)
+{
+    // Rotate the max matrix into an alembic reference frame, a right handed co-ordinate system
+    // We set up an alembic reference frame relative to Max's coordinate system
+    Matrix3 AlembicRefFrame(Point3(1,0,0), Point3(0,0,1), Point3(0,-1,0), Point3(0,0,0));
+    Matrix3 AlembicRefFrameInverse = AlembicRefFrame;
+    AlembicRefFrameInverse.Invert();
+    result = AlembicRefFrame * maxMatrix * AlembicRefFrameInverse;
+
+    // Scale the translation
+    Point3 meterTrans = ScalePointFromInchesToMeters( result.GetTrans());
+    result.SetTrans(meterTrans);
+}
+   
+void ConvertAlembicMatrixToMaxMatrix( const Matrix3 &alembicMatrix, Matrix3 &result)
+{
+    // Rotate the max matrix into an alembic reference frame, a right handed co-ordinate system
+    // We set up an alembic reference frame relative to Max's coordinate system
+    Matrix3 AlembicRefFrame(Point3(1,0,0), Point3(0,0,1), Point3(0,-1,0), Point3(0,0,0));
+    Matrix3 AlembicRefFrameInverse = AlembicRefFrame;
+    AlembicRefFrameInverse.Invert();
+    result = AlembicRefFrameInverse * alembicMatrix * AlembicRefFrame;
+
+    // Scale the translation
+    Point3 inchesTrans = ScalePointFromMetersToInches( result.GetTrans() );
+    result.SetTrans(inchesTrans);
+}
+
+
+void ConvertMaxPointToAlembicPoint( const Point3 &maxPoint, Point3 &result)
+{
+     result = Point3(maxPoint.x, maxPoint.z, -maxPoint.y);
+     result = ScalePointFromInchesToMeters(result);
+}
+
+void ConvertAlembicPointToMaxPoint( const Point3 &alembicPoint, Point3 &result)
+{
+    result = Point3(alembicPoint.x, -alembicPoint.z, alembicPoint.y);
+    result = ScalePointFromMetersToInches(result);
+}
+
+void ConvertMaxNormalToAlembicNormal( const Point3 &maxPoint, Point3 &result)
+{
+     result = Point3(maxPoint.x, maxPoint.z, -maxPoint.y);
+     result = result * -1.0f;
+     result = result.Normalize();
+}
+
+void ConvertAlembicNormalToMaxNormal( const Point3 &alembicPoint, Point3 &result)
+{
+    result = Point3(alembicPoint.x, -alembicPoint.z, alembicPoint.y);
+    result = result * -1.0f;
+    result = result.Normalize();
+}

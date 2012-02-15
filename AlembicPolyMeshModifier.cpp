@@ -6,6 +6,7 @@
 #include "iparamb2.h"
 #include "alembic.h"
 #include "MeshNormalSpec.h"
+#include "AlembicXForm.h"
 
 typedef struct _alembic_fillmesh_options
 {
@@ -365,7 +366,11 @@ void AlembicImport_FillInPolyMesh(alembic_fillmesh_options &options)
 	   }
 
 	   for(int i=0;i<meshPos->size();i++)
-		  mesh.setVert(i, vArray[i].x, vArray[i].y, vArray[i].z);
+       {
+          Point3 maxPoint;
+          ConvertAlembicPointToMaxPoint(vArray[i], maxPoint);
+		  mesh.setVert(i, maxPoint.x, maxPoint.y, maxPoint.z);
+       }
    }
 
    if ( options.nDataFillFlags & ALEMBIC_DATAFILL_FACELIST )
@@ -389,7 +394,8 @@ void AlembicImport_FillInPolyMesh(alembic_fillmesh_options &options)
         int numTriangles = 0;
         for (size_t i = 0; i < meshFaceCount->size(); i += 1)
         {
-            if( meshFaceCount->get()[i] != 3)
+            int facecount = meshFaceCount->get()[i];
+            if( facecount != 3)
                 continue;
 
             numTriangles += 1;
@@ -444,7 +450,9 @@ void AlembicImport_FillInPolyMesh(alembic_fillmesh_options &options)
                    }
                }
 
-               normalsToSet[i] = normalsToSet[i].Normalize();
+               Point3 maxNormal;
+               ConvertAlembicNormalToMaxNormal(normalsToSet[i], maxNormal);
+               normalsToSet[i] = maxNormal.Normalize();
            }
 
            // Set up the specify normals
@@ -532,7 +540,7 @@ void AlembicImport_FillInPolyMesh(alembic_fillmesh_options &options)
        }
    }
 
-   // AlembicDebug_PrintMeshData(mesh);
+   AlembicDebug_PrintMeshData(mesh);
 }
 
 int AlembicImport_PolyMesh(const std::string &file, const std::string &identifier, alembic_importoptions &options)

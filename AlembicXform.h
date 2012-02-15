@@ -2,6 +2,7 @@
 #define _ALEMBIC_XFORM_H_
 
 #include "AlembicObject.h"
+// #include "Point3.h"
 
 void SaveXformSample(const SceneEntry &in_Ref, Alembic::AbcGeom::OXformSchema &schema, Alembic::AbcGeom::XformSample &sample, double time);
 

@@ -117,10 +117,12 @@ bool AlembicPolyMesh::Save(double time)
     // allocate the points and normals
     posVec.resize(vertCount);
     for(LONG i=0;i<vertCount;i++)
-    {        
-        posVec[i].x = static_cast<float>(objectMesh.getVert(i).x);
-        posVec[i].y = static_cast<float>(objectMesh.getVert(i).y);
-        posVec[i].z = static_cast<float>(objectMesh.getVert(i).z);
+    {     
+        Point3 alembicPoint; 
+        ConvertMaxPointToAlembicPoint(objectMesh.getVert(i), alembicPoint);
+        posVec[i].x = static_cast<float>(alembicPoint.x);
+        posVec[i].y = static_cast<float>(alembicPoint.y);
+        posVec[i].z = static_cast<float>(alembicPoint.z);
         bbox.extendBy(posVec[i]);
     }
 
@@ -130,6 +132,7 @@ bool AlembicPolyMesh::Save(double time)
         bbox.extendBy(Alembic::Abc::V3f(0,0,0));
         posVec.push_back(Alembic::Abc::V3f(FLT_MAX,FLT_MAX,FLT_MAX));
     }
+
     Alembic::Abc::P3fArraySample posSample(&posVec.front(),posVec.size());
 
     // store the positions && bbox
@@ -192,7 +195,9 @@ bool AlembicPolyMesh::Save(double time)
             {
                 int vertexId = f->getVert(j);
                 Point3 vertexNormal = GetVertexNormal(&objectMesh, i, objectMesh.getRVertPtr(vertexId));
-                faceNormalsArray.push_back(vertexNormal);
+                Point3 vertexAlembicNormal;
+                ConvertMaxNormalToAlembicNormal(vertexNormal, vertexAlembicNormal);
+                faceNormalsArray.push_back(vertexAlembicNormal);
             }
         }
 
@@ -264,8 +269,18 @@ bool AlembicPolyMesh::Save(double time)
          {
             mFaceCountVec[f] = 3;
 			for (int i = 0; i < 3; i += 1)
+            {
 				mFaceIndicesVec[offset++] = objectMesh.faces[f].v[i];
+            }
          }
+
+         /*mFaceIndicesVec[0] = 2;
+         mFaceIndicesVec[1] = 3;
+         mFaceIndicesVec[2] = 0;
+         mFaceIndicesVec[3] = 0;
+         mFaceIndicesVec[4] = 3;
+         mFaceIndicesVec[5] = 1;
+         */
 
          if(mFaceIndicesVec.size() == 0)
          {
@@ -310,7 +325,7 @@ bool AlembicPolyMesh::Save(double time)
           }
           else if (objectMesh.mapSupport(1))
           {
-              mUvIndexVec.resize(sampleCount);
+              mUvVec.resize(sampleCount);
               MeshMap &map = objectMesh.Map(1);
 
               for (int findex =0; findex < map.fnum; findex += 1)

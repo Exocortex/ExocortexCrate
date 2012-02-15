@@ -8,6 +8,7 @@
 #include "Utility.h"
 #include "alembic.h"
 #include "dummy.h"
+#include "AlembicXform.h"
 
 static GenSubObjType SOT_Vertex(1);
 static GenSubObjType SOT_Edge(2);
@@ -194,13 +195,18 @@ void AlembicXFormModifier::ModifyObject (TimeValue t, ModContext &mc, ObjectStat
         Point3(matrix.getValue()[4], matrix.getValue()[5], matrix.getValue()[6]),
         Point3(matrix.getValue()[8], matrix.getValue()[9], matrix.getValue()[10]),
         Point3(matrix.getValue()[12], matrix.getValue()[13], matrix.getValue()[14]));
+    
+    AlembicDebug_PrintTransform(objMatrix);
+    Matrix3 maxMatrix;
+    ConvertAlembicMatrixToMaxMatrix(objMatrix, maxMatrix);
+    AlembicDebug_PrintTransform(maxMatrix);
 
     Interval alembicValid(t, t); 
     ivalid = alembicValid;
     
     // set matrix explicitly 
     os->obj->UpdateValidity(TM_CHANNEL, ivalid);
-    os->ApplyTM( &objMatrix, ivalid );
+    os->ApplyTM( &maxMatrix, ivalid );
 }
 
 void AlembicXFormModifier::BeginEditParams (IObjParam  *ip, ULONG flags, Animatable *prev) {
@@ -330,6 +336,5 @@ int AlembicImport_XForm(const std::string &file, const std::string &identifier, 
 
 	return alembic_success;
 }
-
 
 

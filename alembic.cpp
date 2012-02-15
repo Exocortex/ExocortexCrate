@@ -296,9 +296,9 @@ int	AlembicExporter::DoExport(const TCHAR *filename, ExpInterface *ei, Interface
 
 AlembicExporter::AlembicExporter()
 {
-    exportUV = true;
+    exportUV = false;
     exportClusters = false;
-    exportEnvelopeBindPose = true;
+    exportEnvelopeBindPose = false;
     exportDynamicTopology = false;
     frameIn = 1;
     frameOut = 100;
