@@ -220,7 +220,7 @@ int ExocortexAlembicStaticInterface::ExocortexAlembicImport(MCHAR* strFileName, 
 
    // Get a list of the current objects in the scene
    MeshMtlList allMtls;
-   Interface7 *i = GetCOREInterface7();
+   Interface12 *i = GetCOREInterface12();
    importOptions.sceneEnumProc.Init(i->GetScene(), i->GetTime(), i, &allMtls);
    importOptions.currentSceneList.FillList(importOptions.sceneEnumProc);
    Object *currentObject = NULL;
@@ -250,7 +250,7 @@ int ExocortexAlembicStaticInterface::ExocortexAlembicImport(MCHAR* strFileName, 
 int ExocortexAlembicStaticInterface::ExocortexAlembicExport(MCHAR * strFileName, int iFrameIn, int iFrameOut, int iFrameSteps, int iFrameSubSteps, int iType,
                                                             BOOL bExportUV, BOOL bExportClusters, BOOL bExportEnvelopeBindPose, BOOL bExportDynamicTopology)
 {
-    Interface7 *i = GetCOREInterface7();
+    Interface12 *i = GetCOREInterface12();
     i->ProgressStart("Exporting Alembic File", TRUE, DummyProgressFunction, NULL);
 
     MeshTopologyType eTopologyType = static_cast<MeshTopologyType>(iType);
@@ -265,6 +265,9 @@ int ExocortexAlembicStaticInterface::ExocortexAlembicExport(MCHAR * strFileName,
         MessageBox(GetActiveWindow(), "[alembic] No filename specified.", "Error", MB_OK);
         return 1;
     }
+
+    // Delete this archive if we have already imported it and are currently using it
+    deleteArchive(strFileName);
 
     // Keep track of the min/max values when processing multiple jobs
     double dbFrameMinIn = 1000000.0;
@@ -317,7 +320,7 @@ int ExocortexAlembicStaticInterface::ExocortexAlembicExport(MCHAR * strFileName,
     job->SetOption("indexedNormals", true);
     job->SetOption("indexedUVs", true);
 
-    // check if the job is satifsied
+    // check if the job is satisfied
     if (job->PreProcess() != true)
     {
         MessageBox(GetActiveWindow(), "[alembic] Job skipped. Not satisfied.", "Error", MB_OK);
@@ -335,8 +338,6 @@ int ExocortexAlembicStaticInterface::ExocortexAlembicExport(MCHAR * strFileName,
     {
         double dbProgress = (100.0 * dbFrame - dbFrameMinIn) / (dbFrameMaxOut - dbFrameMinIn);
         i->ProgressUpdate(static_cast<int>(dbProgress));
-        int iTicks = GetTimeValueFromFrame(dbFrame);
-        i->SetTime(iTicks);
         job->Process(dbFrame);
     }
 
