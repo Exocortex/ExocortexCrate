@@ -59,7 +59,7 @@ public:
             0,                      //* function name string resource name * / 
             TYPE_INT,               //* Return type * /
             0,                      //* Flags  * /
-            9,                      //* Number  of arguments * /
+            10,                     //* Number  of arguments * /
                 _M("fileName"),     //* argument internal name * /
                 0,                  //* argument localizable name string resource id * /
                 TYPE_FILENAME,      //* arg type * /
@@ -70,6 +70,9 @@ public:
                 0,                  //* argument localizable name string resource id * /
                 TYPE_INT,           //* arg type * /
                 _M("frameSteps"),   //* argument internal name * /
+                0,                  //* argument localizable name string resource id * /
+                TYPE_INT,           //* arg type * /
+                _M("frameSubSteps"),//* argument internal name * /
                 0,                  //* argument localizable name string resource id * /
                 TYPE_INT,           //* arg type * /
                 _M("topologyType"), //* argument internal name * /
@@ -90,13 +93,13 @@ public:
             end); 
     }
 
-    static int ExocortexAlembicImport(MCHAR * strFileName, bool importNormals, bool importUVs, bool importClusters, bool attachToExisting);
-	static int ExocortexAlembicExport(MCHAR * strFileName, int frameIn, int frameOut, int frameSteps, int type,
-                                      bool exportUV, bool exportClusters, bool exportEnvelopeBindPose, bool exportDynamicTopology);
+    static int ExocortexAlembicImport(MCHAR * strFileName, BOOL bImportNormals, BOOL bImportUVs, BOOL bImportClusters, BOOL bAttachToExisting);
+	static int ExocortexAlembicExport(MCHAR * strFileName, int iFrameIn, int iFrameOut, int iFrameSteps, int iFrameSubSteps, int iType,
+                                      BOOL bExportUV, BOOL bExportClusters, BOOL bExportEnvelopeBindPose, BOOL bExportDynamicTopology);
 
     BEGIN_FUNCTION_MAP
         FN_5(exocortexAlembicImport, TYPE_INT, ExocortexAlembicImport, TYPE_FILENAME, TYPE_BOOL, TYPE_BOOL, TYPE_BOOL, TYPE_BOOL)
-		FN_9(exocortexAlembicExport, TYPE_INT, ExocortexAlembicExport, TYPE_FILENAME, TYPE_INT, TYPE_INT, TYPE_INT, TYPE_INT, TYPE_BOOL, TYPE_BOOL, TYPE_BOOL, TYPE_BOOL)
+		FN_10(exocortexAlembicExport, TYPE_INT, ExocortexAlembicExport, TYPE_FILENAME, TYPE_INT, TYPE_INT, TYPE_INT, TYPE_INT, TYPE_INT, TYPE_BOOL, TYPE_BOOL, TYPE_BOOL, TYPE_BOOL)
     END_FUNCTION_MAP
 };
 
@@ -186,13 +189,13 @@ static ExocortexAlembicStaticInterface exocortexAlembic;
 }
 */
 
-int ExocortexAlembicStaticInterface::ExocortexAlembicImport(MCHAR* strFileName, bool importNormals, bool importUVs, bool importClusters, bool attachToExisting)
+int ExocortexAlembicStaticInterface::ExocortexAlembicImport(MCHAR* strFileName, BOOL bImportNormals, BOOL bImportUVs, BOOL bImportClusters, BOOL bAttachToExisting)
 {
 	alembic_importoptions importOptions;
-    importOptions.importNormals = importNormals;
-    importOptions.importUVs = importUVs;
-    importOptions.importClusters = importClusters;
-    importOptions.attachToExisting = attachToExisting;
+    importOptions.importNormals = (bImportNormals != FALSE);
+    importOptions.importUVs = (bImportUVs != FALSE);
+    importOptions.importClusters = (bImportClusters != FALSE);
+    importOptions.attachToExisting = (bAttachToExisting != FALSE);
 
 	// If no filename, then return an error code
 	if(strFileName[0] == 0)
@@ -244,18 +247,18 @@ int ExocortexAlembicStaticInterface::ExocortexAlembicImport(MCHAR* strFileName, 
    return 0;
 }
 
-int ExocortexAlembicStaticInterface::ExocortexAlembicExport(MCHAR * strFileName, int frameIn, int frameOut, int frameSteps, int type,
-                                                            bool exportUV, bool exportClusters, bool exportEnvelopeBindPose, bool exportDynamicTopology)
+int ExocortexAlembicStaticInterface::ExocortexAlembicExport(MCHAR * strFileName, int iFrameIn, int iFrameOut, int iFrameSteps, int iFrameSubSteps, int iType,
+                                                            BOOL bExportUV, BOOL bExportClusters, BOOL bExportEnvelopeBindPose, BOOL bExportDynamicTopology)
 {
     Interface7 *i = GetCOREInterface7();
-    MeshTopologyType topologyType = static_cast<MeshTopologyType>(type);
+    i->ProgressStart("Exporting Alembic File", TRUE, DummyProgressFunction, NULL);
+
+    MeshTopologyType eTopologyType = static_cast<MeshTopologyType>(iType);
 
     MeshMtlList allMtls;
     SceneEnumProc currentScene(i->GetScene(), i->GetTime(), i, &allMtls);
     ObjectList allSceneObjects(currentScene);
     Object *currentObject = NULL;
-
-	i->ProgressStart("Exporting Alembic File", TRUE, DummyProgressFunction, NULL);
 
     if (strlen(strFileName) <= 0)
     {
@@ -263,20 +266,54 @@ int ExocortexAlembicStaticInterface::ExocortexAlembicExport(MCHAR * strFileName,
         return 1;
     }
 
+    // Keep track of the min/max values when processing multiple jobs
+    double dbFrameMinIn = 1000000.0;
+    double dbFrameMaxOut = -1000000.0;
+    double dbFrameMaxSteps = 1.0;
+    double dbFrameMaxSubSteps = 1.0;
+
+    double dbFrameIn = static_cast<double>(iFrameIn);
+    double dbFrameOut = static_cast<double>(iFrameOut);
+    double dbFrameSteps = static_cast<double>(iFrameSteps);
+    double dbFrameSubSteps = (iFrameSteps > 1) ? 1.0 : static_cast<double>(iFrameSubSteps);
+
+    // check if we have incompatible subframes
+    if (dbFrameMaxSubSteps > 1.0 && dbFrameSubSteps > 1.0)
+    {
+        if (dbFrameMaxSubSteps > dbFrameSubSteps)
+        {
+            double part = dbFrameMaxSubSteps / dbFrameSubSteps;
+            if (abs(part - floor(part)) > 0.001)
+            {
+                MessageBox(GetActiveWindow(), "[ExocortexAlembic] Invalid combination of substeps in the same export. Aborting.", "Error", MB_OK);
+                return 1;
+            }
+        }
+        else if (dbFrameSubSteps > dbFrameMaxSubSteps)
+        {
+            double part = dbFrameSubSteps / dbFrameMaxSubSteps;
+            if (abs(part - floor(part)) > 0.001)
+            {
+                MessageBox(GetActiveWindow(), "[ExocortexAlembic] Invalid combination of substeps in the same export. Aborting.", "Error", MB_OK);
+                return 1;
+            }
+        }
+    }
+
     std::vector<double> frames;
-    for (int frame = frameIn; frame <= frameOut; frame += frameSteps)
+    for (double dbFrame = dbFrameIn; dbFrame <= dbFrameOut; dbFrame += dbFrameSteps / dbFrameSubSteps)
     {
         // Adding frames
-        frames.push_back(frame);
+        frames.push_back(dbFrame);
     }
 
     AlembicWriteJob *job = new AlembicWriteJob(strFileName, allSceneObjects, frames, i);
-    job->SetOption("exportNormals", topologyType != SURFACE);
-    job->SetOption("exportUVs", exportUV);
-    job->SetOption("exportFaceSets", topologyType != NORMAL);
-    job->SetOption("exportBindPose", exportEnvelopeBindPose);
-    job->SetOption("exportPurePointCache", exportClusters);
-    job->SetOption("exportDynamicTopology", exportDynamicTopology);
+    job->SetOption("exportNormals", eTopologyType != SURFACE);
+    job->SetOption("exportUVs", (bExportUV != FALSE));
+    job->SetOption("exportFaceSets", eTopologyType != NORMAL);
+    job->SetOption("exportBindPose", (bExportEnvelopeBindPose != FALSE));
+    job->SetOption("exportPurePointCache", (bExportClusters != FALSE));
+    job->SetOption("exportDynamicTopology", (bExportDynamicTopology != FALSE));
     job->SetOption("indexedNormals", true);
     job->SetOption("indexedUVs", true);
 
@@ -288,14 +325,19 @@ int ExocortexAlembicStaticInterface::ExocortexAlembicExport(MCHAR * strFileName,
         return 1;
     }
 
+    dbFrameMinIn = min(dbFrameMinIn, dbFrameIn);
+    dbFrameMaxOut = max(dbFrameMaxOut, dbFrameOut);
+    dbFrameMaxSteps = max(dbFrameMaxSteps, dbFrameSteps);   // TODO: Shouldn't this be a min?
+    dbFrameMaxSubSteps = max(dbFrameMaxSubSteps, dbFrameSubSteps);
+
     // now, let's run through all frames, and process the jobs
-    for (int frame = frameIn; frame <= frameOut; frame += frameSteps)
+    for (double dbFrame = dbFrameMinIn; dbFrame <= dbFrameMaxOut; dbFrame += dbFrameMaxSteps / dbFrameMaxSubSteps)
     {
-        float progress = (100.0f * (frame - frameIn)) / (frameOut - frameIn);
-        i->ProgressUpdate(static_cast<int>(progress));
-        int ticks = GetTimeValueFromFrame(frame);
-        i->SetTime(ticks);
-        job->Process(frame);
+        double dbProgress = (100.0 * dbFrame - dbFrameMinIn) / (dbFrameMaxOut - dbFrameMinIn);
+        i->ProgressUpdate(static_cast<int>(dbProgress));
+        int iTicks = GetTimeValueFromFrame(dbFrame);
+        i->SetTime(iTicks);
+        job->Process(dbFrame);
     }
 
     delete(job);
