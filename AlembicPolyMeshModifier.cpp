@@ -10,6 +10,7 @@
 #include "assetmanagement\AssetType.h"
 
 using namespace MaxSDK::AssetManagement;
+const int POLYMESHMOD_MAX_PARAM_BLOCKS = 2;
 
 
 typedef struct _alembic_fillmesh_options
@@ -40,7 +41,7 @@ static GenSubObjType SOT_Face(4);
 
 class AlembicPolyMeshModifier : public Modifier {
 public:
-	IParamBlock2 *pblock;
+	IParamBlock2 *pblock[POLYMESHMOD_MAX_PARAM_BLOCKS];
 
 	static IObjParam *ip;
 	static AlembicPolyMeshModifier *editMod;
@@ -68,19 +69,19 @@ public:
 	void BeginEditParams(IObjParam  *ip, ULONG flags,Animatable *prev);
 	void EndEditParams(IObjParam *ip,ULONG flags,Animatable *next);		
 
-	int NumParamBlocks () { return 1; }
-	IParamBlock2 *GetParamBlock (int i) { return pblock; }
+	int NumParamBlocks () { return POLYMESHMOD_MAX_PARAM_BLOCKS; }
+	IParamBlock2 *GetParamBlock (int i) { return pblock[i]; }
 	IParamBlock2 *GetParamBlockByID (short id);
 
-	int NumRefs() { return 1; }
-	RefTargetHandle GetReference(int i) { return pblock; }
+	int NumRefs() { return POLYMESHMOD_MAX_PARAM_BLOCKS; }
+	RefTargetHandle GetReference(int i) { return pblock[i]; }
 private:
-	virtual void SetReference(int i, RefTargetHandle rtarg) { pblock = (IParamBlock2 *) rtarg; }
+	virtual void SetReference(int i, RefTargetHandle rtarg) { pblock[i] = (IParamBlock2 *) rtarg; }
 public:
 
-	int NumSubs() {return 1;}
+	int NumSubs() {return POLYMESHMOD_MAX_PARAM_BLOCKS;}
 	Animatable* SubAnim(int i) { return GetReference(i); }
-	TSTR SubAnimName(int i) {return _T("IDS_PARAMETERS");}
+	TSTR SubAnimName(int i);
 
 	RefResult NotifyRefChanged( Interval changeInt,RefTargetHandle hTarget, 
 		PartID& partID, RefMessage message);
@@ -94,6 +95,8 @@ private:
     alembic_nodeprops m_AlembicNodeProps;
 public:
 	void SetAlembicId(const std::string &file, const std::string &identifier);
+    const std::string &GetAlembicArchive() { return m_AlembicNodeProps.m_File; }
+    const std::string &GetAlembicObjectId() { return m_AlembicNodeProps.m_Identifier; }
 };
 //--- ClassDescriptor and class vars ---------------------------------
 
@@ -119,7 +122,7 @@ ClassDesc* GetAlembicPolyMeshModifierDesc() {return &AlembicPolyMeshModifierDesc
 
 // Parameter block IDs:
 // Blocks themselves:
-enum { polymesh_props };
+enum { polymesh_props = 0 };
 
 // Parameters in first block:
 enum 
@@ -152,7 +155,7 @@ static ParamBlockDesc2 polymesh_props_desc ( polymesh_props, _T("ExoCortexAlembi
 
 // Parameter block IDs:
 // Blocks themselves:
-enum { polymesh_preview };
+enum { polymesh_preview = 1 };
 
 // Parameters in first block:
 enum 
@@ -166,20 +169,23 @@ class PBPolyMesh_Preview_Accessor : public PBAccessor
 {
 	void Set(PB2Value& v, ReferenceMaker* owner, ParamID id, int tabIndex, TimeValue t)
 	{
-		// CubeMap *map = (CubeMap*) owner;
+		AlembicPolyMeshModifier *polymeshMod = (AlembicPolyMeshModifier*) owner;
 		switch(id)
 		{
-		case polymesh_preview_abc_archive: 
-			{
-				/*IAssetManager* assetMgr = IAssetManager::GetInstance();
-				if(assetMgr)
-				{
-					map->SetCubeMapFile(assetMgr->GetAsset(v.s,kBitmapAsset)); break;
-				}
-                */
-                break;
-			}
-		default: break;
+        case polymesh_preview_abc_archive:
+            {
+                const char *strArchive = polymeshMod->GetAlembicArchive().c_str();
+                polymeshMod->GetParamBlock(polymesh_preview)->SetValue(polymesh_preview_abc_archive, t, strArchive);
+            }
+            break;
+        case polymesh_preview_abc_id:
+            {
+                const char *strObjectId = polymeshMod->GetAlembicObjectId().c_str();
+                polymeshMod->GetParamBlock(polymesh_preview)->SetValue(polymesh_preview_abc_archive, t, strObjectId);
+            }
+            break;
+		default: 
+            break;
 		}
 		GetCOREInterface()->RedrawViews(GetCOREInterface()->GetTime());
 
@@ -190,7 +196,7 @@ static PBPolyMesh_Preview_Accessor polymesh_preview_accessor;
 
 static ParamBlockDesc2 polymesh_preview_desc ( polymesh_preview, _T("ExoCortexAlembicPolyMeshModifier"),
 									IDS_PREVIEW, &AlembicPolyMeshModifierDesc,
-									P_AUTO_CONSTRUCT | P_AUTO_UI, REF_PBLOCK,
+									P_AUTO_CONSTRUCT | P_AUTO_UI, REF_PBLOCK1,
 	//rollout description
 	IDD_ALEMBIC_ID_PARAMS, IDS_PREVIEW, 0, 0, NULL,
 
@@ -203,12 +209,14 @@ static ParamBlockDesc2 polymesh_preview_desc ( polymesh_preview, _T("ExoCortexAl
 		end,
         */
 
-    polymesh_preview_abc_archive, _T("previewAbcArchive"), TYPE_STRING, P_RESET_DEFAULT, IDS_ABC_ARCHIVE,
+    polymesh_preview_abc_archive, _T("previewAbcArchive"), TYPE_STRING, P_RESET_DEFAULT|P_ANIMATABLE, IDS_ABC_ARCHIVE,
         p_ui, TYPE_EDITBOX, IDC_ABC_ARCHIVE,
+        p_accessor,		&polymesh_preview_accessor,
         end,
 
-	polymesh_preview_abc_id, _T("previewAbcId"), TYPE_STRING, P_RESET_DEFAULT, IDS_ABC_ID,
+	polymesh_preview_abc_id, _T("previewAbcId"), TYPE_STRING, P_RESET_DEFAULT|P_ANIMATABLE, IDS_ABC_ID,
 		p_ui, TYPE_EDITBOX, IDC_ABC_OBJECTID,
+        p_accessor,		&polymesh_preview_accessor,
 		end,
 	end
 );
@@ -217,83 +225,97 @@ static ParamBlockDesc2 polymesh_preview_desc ( polymesh_preview, _T("ExoCortexAl
 
 // Parameter block IDs:
 // Blocks themselves:
-enum { polymesh_render };
-
-// Parameters in first block:
-enum 
-{ 
-    polymesh_render_abc_archive,
-    polymesh_render_abc_id,
-};
-
-
-class PBPolyMesh_Render_Accessor : public PBAccessor
-{
-	void Set(PB2Value& v, ReferenceMaker* owner, ParamID id, int tabIndex, TimeValue t)
-	{
-		// CubeMap *map = (CubeMap*) owner;
-		switch(id)
-		{
-		case polymesh_render_abc_archive: 
-			{
-				/*IAssetManager* assetMgr = IAssetManager::GetInstance();
-				if(assetMgr)
-				{
-					map->SetCubeMapFile(assetMgr->GetAsset(v.s,kBitmapAsset)); break;
-				}
-                */
-                break;
-			}
-		default: break;
-		}
-		GetCOREInterface()->RedrawViews(GetCOREInterface()->GetTime());
-
-	}
-};
-
-static PBPolyMesh_Render_Accessor polymesh_render_accessor;
-
-static ParamBlockDesc2 polymesh_render_desc ( polymesh_render, _T("ExoCortexAlembicPolyMeshModifier"),
-									IDS_RENDER, &AlembicPolyMeshModifierDesc,
-									P_AUTO_CONSTRUCT | P_AUTO_UI, REF_PBLOCK,
-	// rollout description
-	IDD_ALEMBIC_ID_PARAMS, IDS_RENDER, 0, 0, NULL,
-
-    // params
-	/*polymesh_preview_abc_archive, _T("previewAbcArchive"), TYPE_FILENAME, 0, IDS_ABC_ARCHIVE,
-		p_ui, TYPE_FILEOPENBUTTON, IDC_ABC_ARCHIVE,
-        p_caption, IDS_OPEN_ABC_CAPTION,
-        p_file_types, IDS_ABC_FILE_TYPE,
-        p_accessor,		&polymesh_preview_accessor,
-		end,
-        */
-
-    polymesh_preview_abc_archive, _T("renderAbcArchive"), TYPE_STRING, P_RESET_DEFAULT, IDS_ABC_ARCHIVE,
-        p_ui, TYPE_EDITBOX, IDC_ABC_ARCHIVE,
-        end,
-
-	polymesh_preview_abc_id, _T("renderAbcId"), TYPE_STRING, P_RESET_DEFAULT, IDS_ABC_ID,
-		p_ui, TYPE_EDITBOX, IDC_ABC_OBJECTID,
-		end,
-	end
-);
+//enum { polymesh_render = 2 };
+//
+//// Parameters in first block:
+//enum 
+//{ 
+//    polymesh_render_abc_archive,
+//    polymesh_render_abc_id,
+//};
+//
+//
+//class PBPolyMesh_Render_Accessor : public PBAccessor
+//{
+//	void Set(PB2Value& v, ReferenceMaker* owner, ParamID id, int tabIndex, TimeValue t)
+//	{
+//		// CubeMap *map = (CubeMap*) owner;
+//		switch(id)
+//		{
+//		case polymesh_render_abc_archive: 
+//			{
+//				/*IAssetManager* assetMgr = IAssetManager::GetInstance();
+//				if(assetMgr)
+//				{
+//					map->SetCubeMapFile(assetMgr->GetAsset(v.s,kBitmapAsset)); break;
+//				}
+//                */
+//                break;
+//			}
+//		default: break;
+//		}
+//		GetCOREInterface()->RedrawViews(GetCOREInterface()->GetTime());
+//
+//	}
+//};
+//
+//static PBPolyMesh_Render_Accessor polymesh_render_accessor;
+//
+//static ParamBlockDesc2 polymesh_render_desc ( polymesh_render, _T("ExoCortexAlembicPolyMeshModifier"),
+//									IDS_RENDER, &AlembicPolyMeshModifierDesc,
+//									P_AUTO_CONSTRUCT | P_AUTO_UI, REF_PBLOCK2,
+//	// rollout description
+//	IDD_ALEMBIC_ID_PARAMS, IDS_RENDER, 0, 0, NULL,
+//
+//    // params
+//	/*polymesh_preview_abc_archive, _T("previewAbcArchive"), TYPE_FILENAME, 0, IDS_ABC_ARCHIVE,
+//		p_ui, TYPE_FILEOPENBUTTON, IDC_ABC_ARCHIVE,
+//        p_caption, IDS_OPEN_ABC_CAPTION,
+//        p_file_types, IDS_ABC_FILE_TYPE,
+//        p_accessor,		&polymesh_preview_accessor,
+//		end,
+//        */
+//
+//    polymesh_preview_abc_archive, _T("renderAbcArchive"), TYPE_STRING, P_RESET_DEFAULT, IDS_ABC_ARCHIVE,
+//        p_ui, TYPE_EDITBOX, IDC_ABC_ARCHIVE,
+//        end,
+//
+//	polymesh_preview_abc_id, _T("renderAbcId"), TYPE_STRING, P_RESET_DEFAULT, IDS_ABC_ID,
+//		p_ui, TYPE_EDITBOX, IDC_ABC_OBJECTID,
+//		end,
+//	end
+//);
 
 //--- Modifier methods -------------------------------
 
-AlembicPolyMeshModifier::AlembicPolyMeshModifier() {
-	pblock = NULL;
+AlembicPolyMeshModifier::AlembicPolyMeshModifier() 
+{
+    for (int i = 0; i < POLYMESHMOD_MAX_PARAM_BLOCKS; i += 1)
+	    pblock[i] = NULL;
+
 	GetAlembicPolyMeshModifierDesc()->MakeAutoParamBlocks(this);
 }
 
-RefTargetHandle AlembicPolyMeshModifier::Clone(RemapDir& remap) {
+RefTargetHandle AlembicPolyMeshModifier::Clone(RemapDir& remap) 
+{
 	AlembicPolyMeshModifier *mod = new AlembicPolyMeshModifier();
-	mod->ReplaceReference (0, remap.CloneRef(pblock));
-	BaseClone(this, mod, remap);
+
+    for (int i = 0; i < POLYMESHMOD_MAX_PARAM_BLOCKS; i += 1)
+	    mod->ReplaceReference (i, remap.CloneRef(pblock[i]));
+	
+    BaseClone(this, mod, remap);
 	return mod;
 }
 
-IParamBlock2 *AlembicPolyMeshModifier::GetParamBlockByID (short id) {
-	return (pblock->ID() == id) ? pblock : NULL; 
+IParamBlock2 *AlembicPolyMeshModifier::GetParamBlockByID (short id) 
+{
+    for (int i = 0; i < POLYMESHMOD_MAX_PARAM_BLOCKS; i += 1)
+    {
+        if (pblock[i] && pblock[i]->ID() == id)
+            return pblock[i];
+    }
+
+    return NULL;
 }
 
 Interval AlembicPolyMeshModifier::GetValidity (TimeValue t) {
@@ -339,11 +361,20 @@ void AlembicPolyMeshModifier::BeginEditParams (IObjParam  *ip, ULONG flags, Anim
 	// throw up all the appropriate auto-rollouts
 	AlembicPolyMeshModifierDesc.BeginEditParams(ip, this, flags, prev);
 
+    /*TimeValue t = GetCOREInterface()->GetTime();
+    const char *strArchive = GetAlembicArchive().c_str();
+    GetParamBlock(polymesh_preview)->SetValue(polymesh_preview_abc_archive, t, strArchive);
+
+    const char *strObjectId = GetAlembicObjectId().c_str();
+    GetParamBlock(polymesh_preview)->SetValue(polymesh_preview_abc_archive, t, strObjectId);
+    */
+
 	// Necessary?
 	NotifyDependents(FOREVER, PART_ALL, REFMSG_CHANGE);
 }
 
-void AlembicPolyMeshModifier::EndEditParams (IObjParam *ip,ULONG flags,Animatable *next) {
+void AlembicPolyMeshModifier::EndEditParams (IObjParam *ip,ULONG flags,Animatable *next) 
+{
 	AlembicPolyMeshModifierDesc.EndEditParams(ip, this, flags, next);
 	this->ip = NULL;
 	editMod  = NULL;
@@ -351,7 +382,8 @@ void AlembicPolyMeshModifier::EndEditParams (IObjParam *ip,ULONG flags,Animatabl
 
 RefResult AlembicPolyMeshModifier::NotifyRefChanged (Interval changeInt, RefTargetHandle hTarget,
 										   PartID& partID, RefMessage message) {
-	switch (message) {
+	switch (message) 
+    {
 	case REFMSG_CHANGE:
 		if (editMod!=this) break;
 		// if this was caused by a NotifyDependents from pblock, LastNotifyParamID()
@@ -362,9 +394,18 @@ RefResult AlembicPolyMeshModifier::NotifyRefChanged (Interval changeInt, RefTarg
 			NotifyDependents(FOREVER, 0, REFMSG_NUM_SUBOBJECTTYPES_CHANGED);
 			return REF_STOP;
 		}
-		turn_param_desc.InvalidateUI(pblock->LastNotifyParamID());
         */
+        for (int i = 0; i < POLYMESHMOD_MAX_PARAM_BLOCKS; i += 1)
+        {
+		    polymesh_props_desc.InvalidateUI(pblock[i]->LastNotifyParamID());
+            polymesh_preview_desc.InvalidateUI(pblock[i]->LastNotifyParamID());
+            // polymesh_render_desc.InvalidateUI(pblock[i]->LastNotifyParamID());
+        }
 		break;
+
+    case REFMSG_WANT_SHOWPARAMLEVEL:
+
+        break;
 	}
 
 	return REF_SUCCEED;
@@ -374,6 +415,18 @@ void AlembicPolyMeshModifier::SetAlembicId(const std::string &file, const std::s
 {
     m_AlembicNodeProps.m_File = file;
     m_AlembicNodeProps.m_Identifier = identifier;
+}
+
+TSTR AlembicPolyMeshModifier::SubAnimName(int i)
+{
+    if ( i == 0)
+        return _T("IDS_PROPS");
+    else if (i == 1)
+        return _T("IDS_PREVIEW");
+    else if (i == 2)
+        return _T("IDS_RENDER");
+    else
+        return "";
 }
 
 void AlembicImport_FillInPolyMesh(alembic_fillmesh_options &options)

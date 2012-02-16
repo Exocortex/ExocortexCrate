@@ -26,6 +26,8 @@
 #define EXOCORTEX_ALEMBIC_POLYMESH_MODIFIER_ID	Class_ID(0x45365012, 0x60984267)
 
 #define REF_PBLOCK 0
+#define REF_PBLOCK1 1
+#define REF_PBLOCK2 2
 
 TCHAR *GetString(int id);
 
