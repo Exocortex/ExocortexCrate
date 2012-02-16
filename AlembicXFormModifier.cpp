@@ -14,9 +14,10 @@ static GenSubObjType SOT_Vertex(1);
 static GenSubObjType SOT_Edge(2);
 static GenSubObjType SOT_Face(4);
 
-class AlembicXFormModifier : public Modifier {
+class AlembicXFormModifier : public Modifier 
+{
 public:
-	IParamBlock2 *pblock;
+	IParamBlock2 *pblock[XFORMMOD_MAX_PARAM_BLOCKS];
 
 	static IObjParam *ip;
 	static AlembicXFormModifier *editMod;
@@ -44,19 +45,19 @@ public:
 	void BeginEditParams(IObjParam  *ip, ULONG flags,Animatable *prev);
 	void EndEditParams(IObjParam *ip,ULONG flags,Animatable *next);		
 
-	int NumParamBlocks () { return 1; }
-	IParamBlock2 *GetParamBlock (int i) { return pblock; }
-	IParamBlock2 *GetParamBlockByID (short id);
+	int NumParamBlocks () { return XFORMMOD_MAX_PARAM_BLOCKS; }
+	IParamBlock2 *GetParamBlock (int i) { return pblock[i]; }
+	IParamBlock2 *GetParamBlockByID(short id);
 
-	int NumRefs() { return 1; }
-	RefTargetHandle GetReference(int i) { return pblock; }
+	int NumRefs() { return XFORMMOD_MAX_PARAM_BLOCKS; }
+	RefTargetHandle GetReference(int i) { return pblock[i]; }
 private:
-	virtual void SetReference(int i, RefTargetHandle rtarg) { pblock = (IParamBlock2 *) rtarg; }
+	virtual void SetReference(int i, RefTargetHandle rtarg) { pblock[i] = (IParamBlock2 *) rtarg; }
 public:
 
-	int NumSubs() {return 1;}
+	int NumSubs() {return XFORMMOD_MAX_PARAM_BLOCKS;}
 	Animatable* SubAnim(int i) { return GetReference(i); }
-	TSTR SubAnimName(int i) {return _T("IDS_PARAMETERS");}
+	TSTR SubAnimName(int i);
 
 	RefResult NotifyRefChanged( Interval changeInt,RefTargetHandle hTarget, 
 		PartID& partID, RefMessage message);
@@ -71,6 +72,8 @@ private:
     Interval m_CurrentAlembicInterval;
 public:
 	void SetAlembicId(const std::string &file, const std::string &identifier);
+    const std::string &GetAlembicArchive() { return m_AlembicNodeProps.m_File; }
+    const std::string &GetAlembicObjectId() { return m_AlembicNodeProps.m_Identifier; }
 };
 
 //--- ClassDescriptor and class vars ---------------------------------
@@ -90,60 +93,207 @@ class AlembicXFormModifierClassDesc : public ClassDesc2 {
 	HINSTANCE		HInstance() { return hInstance; }			// returns owning module handle
 };
 
-static AlembicXFormModifierClassDesc convertToMeshDesc;
-ClassDesc* GetAlembicXFormModifierDesc() {return &convertToMeshDesc;}
+static AlembicXFormModifierClassDesc alembicXFormModifierDesc;
+ClassDesc* GetAlembicXFormModifierDesc() {return &alembicXFormModifierDesc;}
+
+//--- Properties block -------------------------------
 
 // Parameter block IDs:
 // Blocks themselves:
-enum { turn_params };
+enum { xform_props = 0 };
+
 // Parameters in first block:
-enum { turn_use_invis, turn_sel_type, turn_softsel, turn_sel_level };
+enum 
+{ 
+    xform_props_muted,
+    xform_props_time,
+};
 
-static ParamBlockDesc2 turn_param_desc ( turn_params, _T("ExoCortexAlembicXFormModifier"),
-									IDS_PARAMETERS, &convertToMeshDesc,
-									P_AUTO_CONSTRUCT | P_AUTO_UI, REF_PBLOCK,
+static ParamBlockDesc2 xform_props_desc ( xform_props, _T("ExoCortexAlembicXFormModifier"),
+									IDS_PROPS, &alembicXFormModifierDesc,
+									P_AUTO_CONSTRUCT | P_AUTO_UI, XFORM_REF_PBLOCK,
+	// rollout description
+	IDD_ALEMBIC_PROPS, IDS_PROPS, 0, 0, NULL,
+
+    // params
+	xform_props_muted, _T("propsMuted"), TYPE_BOOL, P_RESET_DEFAULT, IDS_MUTED,
+		p_ui, TYPE_CHECKBUTTON, IDC_CHECK_MUTED,
+		end,
+        
+	xform_props_time, _T("propsTime"), TYPE_INT, P_RESET_DEFAULT, IDS_TIME,
+		p_default, 1,
+		p_range, 0, 1000000,
+		p_ui, TYPE_SPINNER, EDITTYPE_INT, IDC_EDIT_TIME, IDC_SPIN_TIME, 1,
+		end,
+        	
+    end
+);
+
+//--- Preview Param block -------------------------------
+
+// Parameter block IDs:
+// Blocks themselves:
+enum { xform_preview = 1 };
+
+// Parameters in first block:
+enum 
+{ 
+    xform_preview_abc_archive,
+    xform_preview_abc_id,
+};
+
+
+class PBxform_Preview_Accessor : public PBAccessor
+{
+	void Set(PB2Value& v, ReferenceMaker* owner, ParamID id, int tabIndex, TimeValue t)
+	{
+		AlembicXFormModifier *xformMod = (AlembicXFormModifier*) owner;
+		switch(id)
+		{
+        case xform_preview_abc_archive:
+            {
+                const char *strArchive = xformMod->GetAlembicArchive().c_str();
+                xformMod->GetParamBlock(xform_preview)->SetValue(xform_preview_abc_archive, t, strArchive);
+            }
+            break;
+        case xform_preview_abc_id:
+            {
+                const char *strObjectId = xformMod->GetAlembicObjectId().c_str();
+                xformMod->GetParamBlock(xform_preview)->SetValue(xform_preview_abc_archive, t, strObjectId);
+            }
+            break;
+		default: 
+            break;
+		}
+		GetCOREInterface()->RedrawViews(GetCOREInterface()->GetTime());
+
+	}
+};
+
+static PBxform_Preview_Accessor xform_preview_accessor;
+
+static ParamBlockDesc2 xform_preview_desc ( xform_preview, _T("ExoCortexAlembicXFormModifier"),
+									IDS_PREVIEW, &alembicXFormModifierDesc,
+									P_AUTO_CONSTRUCT | P_AUTO_UI, XFORM_REF_PBLOCK1,
 	//rollout description
-	IDD_TO_MESH, IDS_PARAMETERS, 0, 0, NULL,
+	IDD_ALEMBIC_ID_PARAMS, IDS_PREVIEW, 0, 0, NULL,
 
-	// params
-	turn_use_invis, _T("useInvisibleEdges"), TYPE_BOOL, P_RESET_DEFAULT|P_ANIMATABLE, IDS_USE_INVIS,
-		p_default, TRUE,
-		p_ui, TYPE_SINGLECHEKBOX, IDC_USE_INVIS,
+    // params
+	/*xform_preview_abc_archive, _T("previewAbcArchive"), TYPE_FILENAME, 0, IDS_ABC_ARCHIVE,
+		p_ui, TYPE_FILEOPENBUTTON, IDC_ABC_ARCHIVE,
+        p_caption, IDS_OPEN_ABC_CAPTION,
+        p_file_types, IDS_ABC_FILE_TYPE,
+        p_accessor,		&xform_preview_accessor,
 		end,
+        */
 
-	turn_sel_type, _T("selectionConversion"), TYPE_INT, P_RESET_DEFAULT, IDS_SEL_TYPE,
-		p_default, 0, // Preserve selection
-		p_ui, TYPE_RADIO, 3, IDC_SEL_PRESERVE, IDC_SEL_CLEAR, IDC_SEL_INVERT,
-		end,
+    xform_preview_abc_archive, _T("previewAbcArchive"), TYPE_STRING, P_RESET_DEFAULT|P_ANIMATABLE, IDS_ABC_ARCHIVE,
+        p_ui, TYPE_EDITBOX, IDC_ABC_ARCHIVE,
+        p_accessor,		&xform_preview_accessor,
+        end,
 
-	turn_softsel, _T("useSoftSelection"), TYPE_BOOL, P_RESET_DEFAULT, IDS_USE_SOFTSEL,
-		p_default, TRUE,
-		p_ui, TYPE_SINGLECHEKBOX, IDC_USE_SOFTSEL,
-		end,
-
-	turn_sel_level, _T("selectionLevel"), TYPE_INT, P_RESET_DEFAULT, IDS_SEL_LEVEL,
-		p_default, 0, // Object level.
-		p_ui, TYPE_RADIO, 5, IDC_SEL_PIPELINE, IDC_SEL_OBJ, IDC_SEL_VERT, IDC_SEL_EDGE, IDC_SEL_FACE,
+	xform_preview_abc_id, _T("previewAbcId"), TYPE_STRING, P_RESET_DEFAULT|P_ANIMATABLE, IDS_ABC_ID,
+		p_ui, TYPE_EDITBOX, IDC_ABC_OBJECTID,
+        p_accessor,		&xform_preview_accessor,
 		end,
 	end
 );
 
+//--- Render Param block -------------------------------
+
+// Parameter block IDs:
+// Blocks themselves:
+//enum { xform_render = 2 };
+//
+//// Parameters in first block:
+//enum 
+//{ 
+//    xform_render_abc_archive,
+//    xform_render_abc_id,
+//};
+//
+//
+//class PBxform_Render_Accessor : public PBAccessor
+//{
+//	void Set(PB2Value& v, ReferenceMaker* owner, ParamID id, int tabIndex, TimeValue t)
+//	{
+//		// CubeMap *map = (CubeMap*) owner;
+//		switch(id)
+//		{
+//		case xform_render_abc_archive: 
+//			{
+//				/*IAssetManager* assetMgr = IAssetManager::GetInstance();
+//				if(assetMgr)
+//				{
+//					map->SetCubeMapFile(assetMgr->GetAsset(v.s,kBitmapAsset)); break;
+//				}
+//                */
+//                break;
+//			}
+//		default: break;
+//		}
+//		GetCOREInterface()->RedrawViews(GetCOREInterface()->GetTime());
+//
+//	}
+//};
+//
+//static PBxform_Render_Accessor xform_render_accessor;
+//
+//static ParamBlockDesc2 xform_render_desc ( xform_render, _T("ExoCortexAlembicPolyMeshModifier"),
+//									IDS_RENDER, &AlembicPolyMeshModifierDesc,
+//									P_AUTO_CONSTRUCT | P_AUTO_UI, REF_PBLOCK2,
+//	// rollout description
+//	IDD_ALEMBIC_ID_PARAMS, IDS_RENDER, 0, 0, NULL,
+//
+//    // params
+//	/*xform_preview_abc_archive, _T("previewAbcArchive"), TYPE_FILENAME, 0, IDS_ABC_ARCHIVE,
+//		p_ui, TYPE_FILEOPENBUTTON, IDC_ABC_ARCHIVE,
+//        p_caption, IDS_OPEN_ABC_CAPTION,
+//        p_file_types, IDS_ABC_FILE_TYPE,
+//        p_accessor,		&xform_preview_accessor,
+//		end,
+//        */
+//
+//    xform_preview_abc_archive, _T("renderAbcArchive"), TYPE_STRING, P_RESET_DEFAULT, IDS_ABC_ARCHIVE,
+//        p_ui, TYPE_EDITBOX, IDC_ABC_ARCHIVE,
+//        end,
+//
+//	xform_preview_abc_id, _T("renderAbcId"), TYPE_STRING, P_RESET_DEFAULT, IDS_ABC_ID,
+//		p_ui, TYPE_EDITBOX, IDC_ABC_OBJECTID,
+//		end,
+//	end
+//);
+
 //--- Modifier methods -------------------------------
 
-AlembicXFormModifier::AlembicXFormModifier() {
-	pblock = NULL;
+AlembicXFormModifier::AlembicXFormModifier() 
+{
+    for (int i = 0; i < XFORMMOD_MAX_PARAM_BLOCKS; i += 1)
+        pblock[i] = NULL;
+
 	GetAlembicXFormModifierDesc()->MakeAutoParamBlocks(this);
 }
 
-RefTargetHandle AlembicXFormModifier::Clone(RemapDir& remap) {
+RefTargetHandle AlembicXFormModifier::Clone(RemapDir& remap) 
+{
 	AlembicXFormModifier *mod = new AlembicXFormModifier();
-	mod->ReplaceReference (0, remap.CloneRef(pblock));
+
+    for (int i = 0; i < XFORMMOD_MAX_PARAM_BLOCKS; i += 1)
+        mod->ReplaceReference (i, remap.CloneRef(pblock[i]));
+
 	BaseClone(this, mod, remap);
 	return mod;
 }
 
-IParamBlock2 *AlembicXFormModifier::GetParamBlockByID (short id) {
-	return (pblock->ID() == id) ? pblock : NULL; 
+IParamBlock2 *AlembicXFormModifier::GetParamBlockByID (short id) 
+{
+    for (int i = 0; i < XFORMMOD_MAX_PARAM_BLOCKS; i += 1)
+    {
+        if (pblock[i] && pblock[i]->ID() == id)
+            return pblock[i];
+    }
+
+    return NULL;
 }
 
 Interval AlembicXFormModifier::GetValidity (TimeValue t) 
@@ -214,14 +364,14 @@ void AlembicXFormModifier::BeginEditParams (IObjParam  *ip, ULONG flags, Animata
 	editMod  = this;
 
 	// throw up all the appropriate auto-rollouts
-	convertToMeshDesc.BeginEditParams(ip, this, flags, prev);
+	alembicXFormModifierDesc.BeginEditParams(ip, this, flags, prev);
 
 	// Necessary?
 	NotifyDependents(FOREVER, PART_ALL, REFMSG_CHANGE);
 }
 
 void AlembicXFormModifier::EndEditParams (IObjParam *ip,ULONG flags,Animatable *next) {
-	convertToMeshDesc.EndEditParams(ip, this, flags, next);
+	alembicXFormModifierDesc.EndEditParams(ip, this, flags, next);
 	this->ip = NULL;
 	editMod  = NULL;
 }
@@ -233,13 +383,19 @@ RefResult AlembicXFormModifier::NotifyRefChanged (Interval changeInt, RefTargetH
 		if (editMod!=this) break;
 		// if this was caused by a NotifyDependents from pblock, LastNotifyParamID()
 		// will contain ID to update, else it will be -1 => inval whole rollout
-		if (pblock->LastNotifyParamID() == turn_sel_level) {
+		/*if (pblock->LastNotifyParamID() == turn_sel_level) {
 			// Notify stack that subobject info has changed:
 			NotifyDependents(changeInt, partID, message);
 			NotifyDependents(FOREVER, 0, REFMSG_NUM_SUBOBJECTTYPES_CHANGED);
 			return REF_STOP;
 		}
-		turn_param_desc.InvalidateUI(pblock->LastNotifyParamID());
+        */
+        for (int i = 0; i < XFORMMOD_MAX_PARAM_BLOCKS; i += 1)
+        {
+            xform_props_desc.InvalidateUI(pblock[i]->LastNotifyParamID());
+            xform_preview_desc.InvalidateUI(pblock[i]->LastNotifyParamID());
+            // polymesh_render_desc.InvalidateUI(pblock[i]->LastNotifyParamID());
+        }
 		break;
 	}
 
@@ -250,6 +406,18 @@ void AlembicXFormModifier::SetAlembicId(const std::string &file, const std::stri
 {
     m_AlembicNodeProps.m_File = file;
     m_AlembicNodeProps.m_Identifier = identifier;
+}
+
+TSTR AlembicXFormModifier::SubAnimName(int i)
+{
+    if ( i == 0)
+        return _T("IDS_PROPS");
+    else if (i == 1)
+        return _T("IDS_PREVIEW");
+    else if (i == 2)
+        return _T("IDS_RENDER");
+    else
+        return "";
 }
 
 /*bool AlembicXFormModifier::ChangesSelType()

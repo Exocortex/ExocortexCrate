@@ -24,7 +24,10 @@
 // can be generated via gencid.exe in the help folder of the 3DS Max.
 #define EXOCORTEX_ALEMBIC_XFORM_MODIFIER_ID	Class_ID(0x591c09b2, 0x46912cd)
 
-#define REF_PBLOCK 0
+#define XFORM_REF_PBLOCK 0
+#define XFORM_REF_PBLOCK1 1
+#define XFORM_REF_PBLOCK2 2
+#define XFORMMOD_MAX_PARAM_BLOCKS 2
 
 TCHAR *GetString(int id);
 
