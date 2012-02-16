@@ -31,14 +31,26 @@ public:
     {
         AppendFunction(
             exocortexAlembicImport,	//* function ID * /
-            _M("import"),     //* internal name * /
-            0,              //* function name string resource name * / 
-            TYPE_INT,       //* Return type * /
-            0,              //* Flags  * /
-            1,              //* Number  of arguments * /
-                _M("fileName"),    //* argument internal name * /
-                0,          //* argument localizable name string resource id * /
-                TYPE_FILENAME,   //* arg type * /
+            _M("import"),           //* internal name * /
+            0,                      //* function name string resource name * / 
+            TYPE_INT,               //* Return type * /
+            0,                      //* Flags  * /
+            5,                      //* Number  of arguments * /
+                _M("fileName"),     //* argument internal name * /
+                0,                  //* argument localizable name string resource id * /
+                TYPE_FILENAME,      //* arg type * /
+                _M("importNormals"),//* argument internal name * /
+                0,                  //* argument localizable name string resource id * /
+                TYPE_BOOL,          //* arg type * /
+                _M("importUVs"),    //* argument internal name * /
+                0,                  //* argument localizable name string resource id * /
+                TYPE_BOOL,          //* arg type * /
+                _M("importClusters"), //* argument internal name * /
+                0,                  //* argument localizable name string resource id * /
+                TYPE_BOOL,          //* arg type * /
+                _M("attachToExisting"), //* argument internal name * /
+                0,                  //* argument localizable name string resource id * /
+                TYPE_BOOL,          //* arg type * /
             end); 
 
 		 AppendFunction(
@@ -78,12 +90,12 @@ public:
             end); 
     }
 
-    static int ExocortexAlembicImport(MCHAR * strFileName);
+    static int ExocortexAlembicImport(MCHAR * strFileName, bool importNormals, bool importUVs, bool importClusters, bool attachToExisting);
 	static int ExocortexAlembicExport(MCHAR * strFileName, int frameIn, int frameOut, int frameSteps, int type,
                                       bool exportUV, bool exportClusters, bool exportEnvelopeBindPose, bool exportDynamicTopology);
 
     BEGIN_FUNCTION_MAP
-        FN_1(exocortexAlembicImport, TYPE_INT, ExocortexAlembicImport, TYPE_FILENAME)
+        FN_5(exocortexAlembicImport, TYPE_INT, ExocortexAlembicImport, TYPE_FILENAME, TYPE_BOOL, TYPE_BOOL, TYPE_BOOL, TYPE_BOOL)
 		FN_9(exocortexAlembicExport, TYPE_INT, ExocortexAlembicExport, TYPE_FILENAME, TYPE_INT, TYPE_INT, TYPE_INT, TYPE_INT, TYPE_BOOL, TYPE_BOOL, TYPE_BOOL, TYPE_BOOL)
     END_FUNCTION_MAP
 };
@@ -174,11 +186,13 @@ static ExocortexAlembicStaticInterface exocortexAlembic;
 }
 */
 
-
-
-int ExocortexAlembicStaticInterface::ExocortexAlembicImport(MCHAR* strFileName)
+int ExocortexAlembicStaticInterface::ExocortexAlembicImport(MCHAR* strFileName, bool importNormals, bool importUVs, bool importClusters, bool attachToExisting)
 {
 	alembic_importoptions importOptions;
+    importOptions.importNormals = importNormals;
+    importOptions.importUVs = importUVs;
+    importOptions.importClusters = importClusters;
+    importOptions.attachToExisting = attachToExisting;
 
 	// If no filename, then return an error code
 	if(strFileName[0] == 0)

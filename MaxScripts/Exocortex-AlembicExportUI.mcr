@@ -1,29 +1,9 @@
-
 ---------------------------------------------------------------------------------------------------------
 -- Custom import/export dialog with settings
-rollout AlembicImportSettings "Alembic Import Settings" width:180 height:180
-(
-    local filename
-
-    label animLabel "Settings (none at this time)" pos:[10,7] width:160 height:21
-    button importButton "Import" pos:[20,144] width:64 height:24
-    button cancelButton "Cancel" pos:[100,144] width:64 height:24
-
-    on importButton pressed do
-    (
-        ExocortexAlembic.import filename
-        destroyDialog AlembicImportSettings
-    )
-
-    on cancelButton pressed do
-    (
-        destroyDialog AlembicImportSettings
-    )
-)
 
 rollout AlembicExportSettings "Alembic Export Settings" width:288 height:288
 (
-    GroupBox animGroup "Animation" pos:[5,8] width:272 height:80
+    GroupBox animGroup "Animation" pos:[8,8] width:272 height:80
     label inLabel "Frame In" pos:[16,32] width:128 height:21
     label outLabel "Frame Out" pos:[16,48] width:128 height:21
     label stepsLabel "Frame Steps" pos:[16,64] width:128 height:21
@@ -56,40 +36,19 @@ rollout AlembicExportSettings "Alembic Export Settings" width:288 height:288
     )
 )
 
-
 ---------------------------------------------------------------------------------------------------------
 -- MAXScript functions to bring up the options dialogs
-fn alembicImportDialog =
-(
-    filename = getOpenFileName caption:"Import from Alembic File:" types:"Alembic(*.abc)|*.abc|All(*.*)|*.*" historyCategory:"Alembic"
-    if (filename != undefined) do
-    (
-        createDialog AlembicImportSettings
-        AlembicImportSettings.filename = filename
-    )
-)
 
 fn alembicExportDialog =
 (
     createDialog AlembicExportSettings
 )
 
-
 ---------------------------------------------------------------------------------------------------------
--- MacroScripts the link the menu items to MAXScript functions
-macroScript AlembicImportUI
-    category:"Alembic UI" 
-    buttonText:"Alembic Import..."
-    tooltip:"Alembic Import..."
-(
-    on execute do  
-    (
-        alembicImportDialog()
-    )
-)
+-- MacroScript to link the menu items to MAXScript functions
 
 macroScript AlembicExportUI
-    category:"Alembic UI" 
+    category:"Exocortex" 
     buttonText:"Alembic Export..."
     tooltip:"Alembic Export..."
 (
@@ -98,45 +57,3 @@ macroScript AlembicExportUI
         alembicExportDialog()
     )
 )
-
-
----------------------------------------------------------------------------------------------------------
--- Function to create the menu items in the main menu bar
-fn initializeAlembicMenus =
-(
-    -- Get the main menu bar
-    mainMenuBar = menuMan.getMainMenuBar()
-        
-    -- Create a new menu
-    alembicMenu = menuMan.findMenu "Alembic"
-    if (alembicMenu != undefined) do 
-    (
-        menuMan.unRegisterMenu alembicMenu
-    )
-    alembicMenu = menuMan.createMenu "Alembic"
-
-    -- Create a menu items that brings up the import dialog
-    alembicImportItem = menuMan.createActionItem "AlembicImportUI" "Alembic UI"
-
-    -- Create a menu item that brings up the export dialog
-    alembicExportItem = menuMan.createActionItem "AlembicExportUI" "Alembic UI"
-
-    -- Add the items to the menu
-    alembicMenu.addItem alembicImportItem 1
-    alembicMenu.addItem alembicExportItem 2
-
-    -- Create a new menu item with the menu as it's sub-menu
-    alembicMainMenuItem = menuMan.createSubMenuItem "Alembic" alembicMenu
-
-    -- compute the index of the next-to-last menu item in the main menu bar
-    alembicMenuItemIndex = mainMenuBar.numItems()
-
-    -- Add the sub-menu just at the second to last slot
-    mainMenuBar.addItem alembicMainMenuItem alembicMenuItemIndex
-
-    -- redraw the menu bar with the new item
-    menuMan.updateMenuBar()
-)
-
-
-initializeAlembicMenus()
