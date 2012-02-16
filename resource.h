@@ -1,52 +1,69 @@
 //{{NO_DEPENDENCIES}}
 // Microsoft Visual C++ generated include file.
-// Used by AlembicExport.rc
+// Used by Alembic.rc
 //
-#define IDD_FORMVIEW                    101
-#define IDD_ALEMBIC_EXPORT_DLG          101
-#define IDC_BUTTON1                     1001
-#define IDC_OK                          1001
-#define IDC_BUTTON2                     1002
-#define IDC_CANCEL                      1002
-#define IDC_COMBO1                      1003
-#define IDC_COMBO_MESH                  1003
-#define IDC_CHECK1                      1004
-#define IDC_CHECK_BINDPOSE              1004
-#define IDC_CHECK2                      1005
-#define IDC_CHECK_UV                    1005
-#define IDC_CHECK3                      1006
-#define IDC_CHECK_CLUSTER               1006
-#define IDC_CHECK4                      1007
-#define IDC_CHECK_TOPO                  1007
-#define IDC_EDIT1                       1008
-#define IDC_EDIT_IN                     1008
-#define IDC_EDIT2                       1009
-#define IDC_EDIT_OUT                    1009
-#define IDC_EDIT3                       1010
-#define IDC_EDIT_FRAME_STEP             1010
-#define IDC_EDIT4                       1011
-#define IDC_EDIT_SUB_STEP               1011
-
 #define IDC_TETRA                       0
 #define IDC_OCTA                        1
 #define IDC_ICOSA                       2
+#define IDD_FORMVIEW                    101
+#define IDD_ALEMBIC_EXPORT_DLG          101
 #define IDD_TO_POLY                     102
 #define IDD_TO_MESH                     103
 #define IDC_MAX_SIZESPIN                103
 #define IDD_TO_PATCH                    104
 #define IDC_MAX_SIZE                    104
 #define IDC_THRESHSPIN                  105
+#define IDD_ALEMBIC_ID_PARAMS           105
 #define IDC_THRESH                      106
+#define IDS_ABC_FILE_TYPE               106
+#define IDD_ALEMBIC_PROPS               106
+#define IDS_OPEN_ABC_CAPTION            107
+#define IDS_ABC_ID                      108
+#define IDS_PREVIEW                     109
+#define IDS_RENDER                      110
+#define IDS_PROPS                       111
+#define IDS_MUTED                       112
+#define IDS_TIME                        113
 #define IDD_GSPHERE1                    179
 #define IDD_GSPHERE2                    180
 #define IDD_GSPHERE3                    181
 #define IDC_RADIUS                      1000
+#define IDC_BUTTON1                     1001
+#define IDC_OK                          1001
 #define IDC_SEGMENTS                    1001
+#define IDC_BUTTON2                     1002
+#define IDC_CANCEL                      1002
 #define IDC_CREATEDIAMETER              1002
+#define IDC_COMBO1                      1003
+#define IDC_COMBO_MESH                  1003
 #define IDC_CREATERADIUS                1003
+#define IDC_CHECK1                      1004
+#define IDC_CHECK_BINDPOSE              1004
 #define IDC_SEGSPINNER                  1004
+#define IDC_CHECK_VISIBILITY            1004
+#define IDC_CHECK_MUTED                 1004
+#define IDC_CHECK2                      1005
+#define IDC_CHECK_UV                    1005
 #define IDC_RADSPINNER                  1005
+#define IDC_CHECK3                      1006
+#define IDC_CHECK_CLUSTER               1006
 #define IDC_OBSMOOTH                    1006
+#define IDC_CHECK4                      1007
+#define IDC_CHECK_TOPO                  1007
+#define IDC_EDIT1                       1008
+#define IDC_EDIT_IN                     1008
+#define IDC_ABC_OBJECTID                1008
+#define IDC_EDIT2                       1009
+#define IDC_EDIT_OUT                    1009
+#define IDC_ABC_ARCHIVE                 1009
+#define IDC_EDIT3                       1010
+#define IDC_EDIT_FRAME_STEP             1010
+#define IDC_EDIT4                       1011
+#define IDC_EDIT_SUB_STEP               1011
+#define IDC_CUSTOM3                     1015
+#define IDC_EDIT_TIME                   1015
+#define IDC_CUSTOM4                     1016
+#define IDC_SPIN_TIME                   1016
 #define IDC_LIMIT_SIZE                  1276
 #define IDC_KEEP_CONVEX                 1277
 #define IDC_TI_POSX                     3019
@@ -86,6 +103,7 @@
 #define IDS_LIBDESCRIPTION              30269
 #define IDS_PARAMETERS                  30270
 #define IDS_HEMI                        30271
+#define IDS_ABC_ARCHIVE                 30271
 #define IDS_BASEPIVOT                   30272
 #define IDS_MAPPING                     30273
 #define IDS_SM_NURBS_SURFACE            30274
@@ -115,7 +133,6 @@
 #define IDS_BORDER                      30298
 #define IDS_ELEMENT                     30299
 #define IDS_PATCH                       30300
-#define IDC_STATIC                      -1
 #define IDC_THRESH_LABEL                65535
 #define IDC_MAX_SIZE_LABEL              65535
 
@@ -123,9 +140,9 @@
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        102
+#define _APS_NEXT_RESOURCE_VALUE        107
 #define _APS_NEXT_COMMAND_VALUE         40001
-#define _APS_NEXT_CONTROL_VALUE         1012
+#define _APS_NEXT_CONTROL_VALUE         1017
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

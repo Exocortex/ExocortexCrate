@@ -7,6 +7,10 @@
 #include "alembic.h"
 #include "MeshNormalSpec.h"
 #include "AlembicXForm.h"
+#include "assetmanagement\AssetType.h"
+
+using namespace MaxSDK::AssetManagement;
+
 
 typedef struct _alembic_fillmesh_options
 {
@@ -111,37 +115,165 @@ class AlembicPolyMeshModifierClassDesc : public ClassDesc2 {
 static AlembicPolyMeshModifierClassDesc AlembicPolyMeshModifierDesc;
 ClassDesc* GetAlembicPolyMeshModifierDesc() {return &AlembicPolyMeshModifierDesc;}
 
+//--- Properties block -------------------------------
+
 // Parameter block IDs:
 // Blocks themselves:
-enum { turn_params };
-// Parameters in first block:
-enum { turn_use_invis, turn_sel_type, turn_softsel, turn_sel_level };
+enum { polymesh_props };
 
-static ParamBlockDesc2 turn_param_desc ( turn_params, _T("ExoCortexAlembicPolyMeshModifier"),
-									IDS_PARAMETERS, &AlembicPolyMeshModifierDesc,
+// Parameters in first block:
+enum 
+{ 
+    polymesh_props_muted,
+    polymesh_props_time,
+};
+
+static ParamBlockDesc2 polymesh_props_desc ( polymesh_props, _T("ExoCortexAlembicPolyMeshModifier"),
+									IDS_PROPS, &AlembicPolyMeshModifierDesc,
+									P_AUTO_CONSTRUCT | P_AUTO_UI, REF_PBLOCK,
+	// rollout description
+	IDD_ALEMBIC_PROPS, IDS_PROPS, 0, 0, NULL,
+
+    // params
+	polymesh_props_muted, _T("propsMuted"), TYPE_BOOL, P_RESET_DEFAULT, IDS_MUTED,
+		p_ui, TYPE_CHECKBUTTON, IDC_CHECK_MUTED,
+		end,
+        
+	polymesh_props_time, _T("propsTime"), TYPE_INT, P_RESET_DEFAULT, IDS_TIME,
+		p_default, 1,
+		p_range, 0, 1000000,
+		p_ui, TYPE_SPINNER, EDITTYPE_INT, IDC_EDIT_TIME, IDC_SPIN_TIME, 1,
+		end,
+        	
+    end
+);
+
+//--- Preview Param block -------------------------------
+
+// Parameter block IDs:
+// Blocks themselves:
+enum { polymesh_preview };
+
+// Parameters in first block:
+enum 
+{ 
+    polymesh_preview_abc_archive,
+    polymesh_preview_abc_id,
+};
+
+
+class PBPolyMesh_Preview_Accessor : public PBAccessor
+{
+	void Set(PB2Value& v, ReferenceMaker* owner, ParamID id, int tabIndex, TimeValue t)
+	{
+		// CubeMap *map = (CubeMap*) owner;
+		switch(id)
+		{
+		case polymesh_preview_abc_archive: 
+			{
+				/*IAssetManager* assetMgr = IAssetManager::GetInstance();
+				if(assetMgr)
+				{
+					map->SetCubeMapFile(assetMgr->GetAsset(v.s,kBitmapAsset)); break;
+				}
+                */
+                break;
+			}
+		default: break;
+		}
+		GetCOREInterface()->RedrawViews(GetCOREInterface()->GetTime());
+
+	}
+};
+
+static PBPolyMesh_Preview_Accessor polymesh_preview_accessor;
+
+static ParamBlockDesc2 polymesh_preview_desc ( polymesh_preview, _T("ExoCortexAlembicPolyMeshModifier"),
+									IDS_PREVIEW, &AlembicPolyMeshModifierDesc,
 									P_AUTO_CONSTRUCT | P_AUTO_UI, REF_PBLOCK,
 	//rollout description
-	IDD_TO_MESH, IDS_PARAMETERS, 0, 0, NULL,
+	IDD_ALEMBIC_ID_PARAMS, IDS_PREVIEW, 0, 0, NULL,
 
-	// params
-	turn_use_invis, _T("useInvisibleEdges"), TYPE_BOOL, P_RESET_DEFAULT|P_ANIMATABLE, IDS_USE_INVIS,
-		p_default, TRUE,
-		p_ui, TYPE_SINGLECHEKBOX, IDC_USE_INVIS,
+    // params
+	/*polymesh_preview_abc_archive, _T("previewAbcArchive"), TYPE_FILENAME, 0, IDS_ABC_ARCHIVE,
+		p_ui, TYPE_FILEOPENBUTTON, IDC_ABC_ARCHIVE,
+        p_caption, IDS_OPEN_ABC_CAPTION,
+        p_file_types, IDS_ABC_FILE_TYPE,
+        p_accessor,		&polymesh_preview_accessor,
 		end,
+        */
 
-	turn_sel_type, _T("selectionConversion"), TYPE_INT, P_RESET_DEFAULT, IDS_SEL_TYPE,
-		p_default, 0, // Preserve selection
-		p_ui, TYPE_RADIO, 3, IDC_SEL_PRESERVE, IDC_SEL_CLEAR, IDC_SEL_INVERT,
+    polymesh_preview_abc_archive, _T("previewAbcArchive"), TYPE_STRING, P_RESET_DEFAULT, IDS_ABC_ARCHIVE,
+        p_ui, TYPE_EDITBOX, IDC_ABC_ARCHIVE,
+        end,
+
+	polymesh_preview_abc_id, _T("previewAbcId"), TYPE_STRING, P_RESET_DEFAULT, IDS_ABC_ID,
+		p_ui, TYPE_EDITBOX, IDC_ABC_OBJECTID,
 		end,
+	end
+);
 
-	turn_softsel, _T("useSoftSelection"), TYPE_BOOL, P_RESET_DEFAULT, IDS_USE_SOFTSEL,
-		p_default, TRUE,
-		p_ui, TYPE_SINGLECHEKBOX, IDC_USE_SOFTSEL,
+//--- Render Param block -------------------------------
+
+// Parameter block IDs:
+// Blocks themselves:
+enum { polymesh_render };
+
+// Parameters in first block:
+enum 
+{ 
+    polymesh_render_abc_archive,
+    polymesh_render_abc_id,
+};
+
+
+class PBPolyMesh_Render_Accessor : public PBAccessor
+{
+	void Set(PB2Value& v, ReferenceMaker* owner, ParamID id, int tabIndex, TimeValue t)
+	{
+		// CubeMap *map = (CubeMap*) owner;
+		switch(id)
+		{
+		case polymesh_render_abc_archive: 
+			{
+				/*IAssetManager* assetMgr = IAssetManager::GetInstance();
+				if(assetMgr)
+				{
+					map->SetCubeMapFile(assetMgr->GetAsset(v.s,kBitmapAsset)); break;
+				}
+                */
+                break;
+			}
+		default: break;
+		}
+		GetCOREInterface()->RedrawViews(GetCOREInterface()->GetTime());
+
+	}
+};
+
+static PBPolyMesh_Render_Accessor polymesh_render_accessor;
+
+static ParamBlockDesc2 polymesh_render_desc ( polymesh_render, _T("ExoCortexAlembicPolyMeshModifier"),
+									IDS_RENDER, &AlembicPolyMeshModifierDesc,
+									P_AUTO_CONSTRUCT | P_AUTO_UI, REF_PBLOCK,
+	// rollout description
+	IDD_ALEMBIC_ID_PARAMS, IDS_RENDER, 0, 0, NULL,
+
+    // params
+	/*polymesh_preview_abc_archive, _T("previewAbcArchive"), TYPE_FILENAME, 0, IDS_ABC_ARCHIVE,
+		p_ui, TYPE_FILEOPENBUTTON, IDC_ABC_ARCHIVE,
+        p_caption, IDS_OPEN_ABC_CAPTION,
+        p_file_types, IDS_ABC_FILE_TYPE,
+        p_accessor,		&polymesh_preview_accessor,
 		end,
+        */
 
-	turn_sel_level, _T("selectionLevel"), TYPE_INT, P_RESET_DEFAULT, IDS_SEL_LEVEL,
-		p_default, 0, // Object level.
-		p_ui, TYPE_RADIO, 5, IDC_SEL_PIPELINE, IDC_SEL_OBJ, IDC_SEL_VERT, IDC_SEL_EDGE, IDC_SEL_FACE,
+    polymesh_preview_abc_archive, _T("renderAbcArchive"), TYPE_STRING, P_RESET_DEFAULT, IDS_ABC_ARCHIVE,
+        p_ui, TYPE_EDITBOX, IDC_ABC_ARCHIVE,
+        end,
+
+	polymesh_preview_abc_id, _T("renderAbcId"), TYPE_STRING, P_RESET_DEFAULT, IDS_ABC_ID,
+		p_ui, TYPE_EDITBOX, IDC_ABC_OBJECTID,
 		end,
 	end
 );
@@ -224,13 +356,14 @@ RefResult AlembicPolyMeshModifier::NotifyRefChanged (Interval changeInt, RefTarg
 		if (editMod!=this) break;
 		// if this was caused by a NotifyDependents from pblock, LastNotifyParamID()
 		// will contain ID to update, else it will be -1 => inval whole rollout
-		if (pblock->LastNotifyParamID() == turn_sel_level) {
+		/*if (pblock->LastNotifyParamID() == turn_sel_level) {
 			// Notify stack that subobject info has changed:
 			NotifyDependents(changeInt, partID, message);
 			NotifyDependents(FOREVER, 0, REFMSG_NUM_SUBOBJECTTYPES_CHANGED);
 			return REF_STOP;
 		}
 		turn_param_desc.InvalidateUI(pblock->LastNotifyParamID());
+        */
 		break;
 	}
 
