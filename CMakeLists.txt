@@ -269,9 +269,11 @@ IF(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../ExocortexAlembicMaya/CMakeLists.txt")
 ENDIF()
 
 # houdini plugin
+IF(INCLUDE_ALEMBIC_HOUDINI)
 IF(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../ExocortexAlembicHoudini/CMakeLists.txt")
 	ADD_SUBDIRECTORY ( "${CMAKE_CURRENT_SOURCE_DIR}/../ExocortexAlembicHoudini" "${CMAKE_CURRENT_BINARY_DIR}/ExocortexAlembicHoudini" )
 ENDIF()
+ENDIF(INCLUDE_ALEMBIC_HOUDINI)
 
 # 3dsmax plugin
 IF(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../ExocortexAlembic3DSMax/CMakeLists.txt")
