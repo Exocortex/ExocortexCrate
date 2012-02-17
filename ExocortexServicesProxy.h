@@ -28,7 +28,7 @@
 	#define ESS_LOG_INFO(a) do { std::stringstream s; s << a; XSI::Application().LogMessage( s.str().c_str(), XSI::siInfoMsg ); } while(0)
 
 	#define ESS_CALLBACK_START( NodeName_CallbackName, ParamType )	XSIPLUGINCALLBACK CStatus NodeName_CallbackName( ParamType in_ctxt ) {
-	#define ESS_CALLBACK_END
+	#define ESS_CALLBACK_END }
 
 #endif	// EXOCORTEX_SERVICES
 
