@@ -273,32 +273,29 @@ XSI::CStatus AlembicPolyMesh::Save(double time)
    if(mNumSamples == 0 || (dynamicTopology))
    {
       // we also need to store the face counts as well as face indices
-      if(mFaceIndicesVec.size() != sampleCount || sampleCount == 0)
+      mFaceCountVec.resize(faceCount);
+      mFaceIndicesVec.resize(sampleCount);
+
+      offset = 0;
+      for(LONG i=0;i<faceCount;i++)
       {
-         mFaceCountVec.resize(faceCount);
-         mFaceIndicesVec.resize(sampleCount);
-
-         offset = 0;
-         for(LONG i=0;i<faceCount;i++)
-         {
-            PolygonFace face(faces[i]);
-            CLongArray indices = face.GetVertices().GetIndexArray();
-            mFaceCountVec[i] = indices.GetCount();
-            for(LONG j=indices.GetCount()-1;j>=0;j--)
-               mFaceIndicesVec[offset++] = indices[j];
-         }
-
-         if(mFaceIndicesVec.size() == 0)
-         {
-            mFaceCountVec.push_back(0);
-            mFaceIndicesVec.push_back(0);
-         }
-         Alembic::Abc::Int32ArraySample faceCountSample(&mFaceCountVec.front(),mFaceCountVec.size());
-         Alembic::Abc::Int32ArraySample faceIndicesSample(&mFaceIndicesVec.front(),mFaceIndicesVec.size());
-
-         mMeshSample.setFaceCounts(faceCountSample);
-         mMeshSample.setFaceIndices(faceIndicesSample);
+         PolygonFace face(faces[i]);
+         CLongArray indices = face.GetVertices().GetIndexArray();
+         mFaceCountVec[i] = indices.GetCount();
+         for(LONG j=indices.GetCount()-1;j>=0;j--)
+            mFaceIndicesVec[offset++] = indices[j];
       }
+
+      if(mFaceIndicesVec.size() == 0)
+      {
+         mFaceCountVec.push_back(0);
+         mFaceIndicesVec.push_back(0);
+      }
+      Alembic::Abc::Int32ArraySample faceCountSample(&mFaceCountVec.front(),mFaceCountVec.size());
+      Alembic::Abc::Int32ArraySample faceIndicesSample(&mFaceIndicesVec.front(),mFaceIndicesVec.size());
+
+      mMeshSample.setFaceCounts(faceCountSample);
+      mMeshSample.setFaceIndices(faceIndicesSample);
 
       Alembic::AbcGeom::ON3fGeomParam::Sample normalSample;
       if(normalVec.size() > 0 && normalCount > 0)
@@ -817,6 +814,7 @@ XSIPLUGINCALLBACK CStatus alembic_polymesh_topo_Update( CRef& in_ctxt )
    Alembic::Abc::Int32ArraySamplePtr meshFaceCount;
    Alembic::Abc::Int32ArraySamplePtr meshFaceIndices;
 
+   bool hasDynamicTopo = false;
    if(objMesh.valid())
    {
       Alembic::AbcGeom::IPolyMeshSchema::Sample sample;
@@ -825,6 +823,10 @@ XSIPLUGINCALLBACK CStatus alembic_polymesh_topo_Update( CRef& in_ctxt )
       meshVel = sample.getVelocities();
       meshFaceCount = sample.getFaceCounts();
       meshFaceIndices = sample.getFaceIndices();
+
+      Alembic::Abc::IInt32ArrayProperty faceCountProp = Alembic::Abc::IInt32ArrayProperty(objMesh.getSchema(),".faceCounts");
+      if(faceCountProp.valid())
+         hasDynamicTopo = !faceCountProp.isConstant();
    }
    else
    {
@@ -834,6 +836,10 @@ XSIPLUGINCALLBACK CStatus alembic_polymesh_topo_Update( CRef& in_ctxt )
       meshVel = sample.getVelocities();
       meshFaceCount = sample.getFaceCounts();
       meshFaceIndices = sample.getFaceIndices();
+
+      Alembic::Abc::IInt32ArrayProperty faceCountProp = Alembic::Abc::IInt32ArrayProperty(objSubD.getSchema(),".faceCounts");
+      if(faceCountProp.valid())
+         hasDynamicTopo = !faceCountProp.isConstant();
    }
 
    CVector3Array pos((LONG)meshPos->size());
@@ -877,7 +883,7 @@ XSIPLUGINCALLBACK CStatus alembic_polymesh_topo_Update( CRef& in_ctxt )
    }
 
    // do the positional interpolation if necessary
-   if(objMesh.valid() && sampleInfo.alpha != 0.0)
+   if(sampleInfo.alpha != 0.0)
    {
       double alpha = sampleInfo.alpha;
       double ialpha = 1.0 - alpha;
@@ -889,8 +895,14 @@ XSIPLUGINCALLBACK CStatus alembic_polymesh_topo_Update( CRef& in_ctxt )
          objMesh.getSchema().get(sample,sampleInfo.ceilIndex);
          meshPos = sample.getPositions();
       }
+      else
+      {
+         Alembic::AbcGeom::ISubDSchema::Sample sample;
+         objSubD.getSchema().get(sample,sampleInfo.floorIndex);
+         meshPos = sample.getPositions();
+      }
 
-      if(meshPos->size() == (size_t)pos.GetCount())
+      if(meshPos->size() == (size_t)pos.GetCount() && !hasDynamicTopo)
       {
          for(LONG i=0;i<(LONG)meshPos->size();i++)
          {
@@ -901,7 +913,7 @@ XSIPLUGINCALLBACK CStatus alembic_polymesh_topo_Update( CRef& in_ctxt )
       }
       else if(meshVel)
       {
-         if(meshVel->size() == meshPos->size())
+         if(meshVel->size() == (size_t)pos.GetCount())
          {
             for(LONG i=0;i<(LONG)meshVel->size();i++)
             {

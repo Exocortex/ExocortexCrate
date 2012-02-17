@@ -133,7 +133,7 @@ SICALLBACK alembic_attach_metadata_Execute( CRef& in_ctxt )
    }
    if(objects.GetCount() == 0)
    {
-      Application().LogMessage(L"[alembic] No objects passed / selected.",siErrorMsg);
+      Application().LogMessage(L"[ExocortexAlembic] No objects passed / selected.",siErrorMsg);
       return CStatus::InvalidArgument;
    }
 
@@ -157,7 +157,7 @@ SICALLBACK alembic_attach_metadata_Execute( CRef& in_ctxt )
       }
       if(hasMetaData)
       {
-         Application().LogMessage(L"[alembic] Skipping 'L"+object.GetFullName()+"', already has metadata attached.",siWarningMsg);
+         Application().LogMessage(L"[ExocortexAlembic] Skipping 'L"+object.GetFullName()+"', already has metadata attached.",siWarningMsg);
          continue;
       }
       object.AddProperty(L"alembic_metadata");

@@ -19,7 +19,7 @@ private:
    std::vector<float> mRadiusVec;
    std::vector<Alembic::Abc::V2f> mUvVec;
    std::vector<Alembic::Abc::C4f> mColorVec;
-   size_t mNumRadiusSamples;
+   std::vector<Alembic::Abc::V3f> mVelVec;
 
 public:
 
