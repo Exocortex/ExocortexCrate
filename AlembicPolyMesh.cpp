@@ -254,10 +254,16 @@ MStatus AlembicPolyMesh::Save(double time)
    return MStatus::kSuccess;
 }
 
-AlembicPolyMeshNode::~AlembicPolyMeshNode()
+void AlembicPolyMeshNode::PreDestruction()
 {
    mSchema.reset();
    delRefArchive(mFileName);
+   mFileName.clear();
+}
+
+AlembicPolyMeshNode::~AlembicPolyMeshNode()
+{
+   PreDestruction();
 }
 
 MObject AlembicPolyMeshNode::mTimeAttr;

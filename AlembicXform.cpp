@@ -43,16 +43,21 @@ MStatus AlembicXform::Save(double time)
    return MStatus::kSuccess;
 }
 
-AlembicXformNode::~AlembicXformNode()
+void AlembicXformNode::PreDestruction()
 {
    mSchema.reset();
    delRefArchive(mFileName);
+   mFileName.clear();
+}
+
+AlembicXformNode::~AlembicXformNode()
+{
+   PreDestruction();
 }
 
 MObject AlembicXformNode::mTimeAttr;
 MObject AlembicXformNode::mFileNameAttr;
 MObject AlembicXformNode::mIdentifierAttr;
-MObject AlembicXformNode::mOutTransformAttr;
 MObject AlembicXformNode::mOutTranslateXAttr;
 MObject AlembicXformNode::mOutTranslateYAttr;
 MObject AlembicXformNode::mOutTranslateZAttr;
@@ -73,9 +78,6 @@ MStatus AlembicXformNode::initialize()
    MFnGenericAttribute gAttr;
    MFnStringData emptyStringData;
    MObject emptyStringObject = emptyStringData.create("");
-   MFnMatrixData identityMatrixData;
-   MTransformationMatrix identityMatrix;
-   MObject identityMatrixObject = identityMatrixData.create(MTransformationMatrix::identity);
 
    // input time
    mTimeAttr = uAttr.create("time", "tm", MFnUnitAttribute::kTime, 0.0);
@@ -95,13 +97,6 @@ MStatus AlembicXformNode::initialize()
    status = tAttr.setStorable(true);
    status = tAttr.setKeyable(false);
    status = addAttribute(mIdentifierAttr);
-
-   // output transform
-   mOutTransformAttr = tAttr.create("transform", "xf", MFnData::kMatrix, identityMatrixObject);
-   status = tAttr.setStorable(false);
-   status = tAttr.setWritable(false);
-   status = tAttr.setKeyable(false);
-   status = addAttribute(mOutTransformAttr);
 
    // output translateX
    mOutTranslateXAttr = nAttr.create("translateX", "tx", MFnNumericData::kDouble, 0.0);
@@ -167,9 +162,6 @@ MStatus AlembicXformNode::initialize()
    status = addAttribute(mOutScaleZAttr);
 
    // create a mapping
-   status = attributeAffects(mTimeAttr, mOutTransformAttr);
-   status = attributeAffects(mFileNameAttr, mOutTransformAttr);
-   status = attributeAffects(mIdentifierAttr, mOutTransformAttr);
    status = attributeAffects(mTimeAttr, mOutTranslateXAttr);
    status = attributeAffects(mFileNameAttr, mOutTranslateXAttr);
    status = attributeAffects(mIdentifierAttr, mOutTranslateXAttr);
@@ -274,7 +266,6 @@ MStatus AlembicXformNode::compute(const MPlug & plug, MDataBlock & dataBlock)
    transform.getScale(scale,MSpace::kTransform);
 
    // output all channels
-   dataBlock.outputValue(mOutTransformAttr).set(m);
    dataBlock.outputValue(mOutTranslateXAttr).setDouble(translation.x);
    dataBlock.outputValue(mOutTranslateYAttr).setDouble(translation.y);
    dataBlock.outputValue(mOutTranslateZAttr).setDouble(translation.z);

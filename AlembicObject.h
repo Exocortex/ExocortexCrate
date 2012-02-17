@@ -34,6 +34,18 @@ public:
    virtual MStatus Save(double time) = 0;
 };
 
+class AlembicObjectNode : public MPxNode
+{
+public:
+   AlembicObjectNode();
+   virtual ~AlembicObjectNode();
+   virtual void PreDestruction() = 0;
+protected:
+   unsigned int mRefId;
+};
+
+void preDestructAllNodes();
+
 #include "AlembicWriteJob.h"
 
 #endif

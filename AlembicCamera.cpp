@@ -51,10 +51,16 @@ MStatus AlembicCamera::Save(double time)
    return MStatus::kSuccess;
 }
 
-AlembicCameraNode::~AlembicCameraNode()
+void AlembicCameraNode::PreDestruction()
 {
    mSchema.reset();
    delRefArchive(mFileName);
+   mFileName.clear();
+}
+
+AlembicCameraNode::~AlembicCameraNode()
+{
+   PreDestruction();
 }
 
 MObject AlembicCameraNode::mTimeAttr;

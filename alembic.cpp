@@ -8,6 +8,7 @@
 #include "AlembicPolyMesh.h"
 
 #include <maya/MFnPlugin.h>
+#include <maya/MSceneMessage.h>
 
 // IDs issues for this plugin are:
 // 0x0011A100 - 0x0011A1FF
@@ -17,12 +18,29 @@ const MTypeId mXformNodeId(0x0011A102);
 const MTypeId mCameraNodeId(0x0011A103);
 const MTypeId mPolyMeshNodeId(0x0011A104);
 
+static MCallbackId deleteAllArchivesCallbackOnNewId = 0;
+static MCallbackId deleteAllArchivesCallbackOnOpenId = 0;
+static MCallbackId deleteAllArchivesCallbackOnExitId = 0;
+static void deleteAllArchivesCallback( void* clientData )
+{
+   preDestructAllNodes();
+   deleteAllArchives();
+}
+
 MStatus initializePlugin(MObject obj)
 {
    const char * pluginVersion = "1.0";
    MFnPlugin plugin(obj, "ExocortexAlembicMaya", pluginVersion, "Any");
 
    MStatus status;
+
+   // callbacks
+   if (deleteAllArchivesCallbackOnNewId == 0)
+      deleteAllArchivesCallbackOnNewId = MSceneMessage::addCallback( MSceneMessage::kBeforeNew, deleteAllArchivesCallback );     
+   if (deleteAllArchivesCallbackOnOpenId == 0)
+      deleteAllArchivesCallbackOnOpenId = MSceneMessage::addCallback( MSceneMessage::kBeforeOpen, deleteAllArchivesCallback );     
+   if (deleteAllArchivesCallbackOnExitId == 0)
+      deleteAllArchivesCallbackOnExitId = MSceneMessage::addCallback( MSceneMessage::kMayaExiting, deleteAllArchivesCallback );     
 
    // commands
    status = plugin.registerCommand("ExocortexAlembic_export",
@@ -61,6 +79,22 @@ MStatus uninitializePlugin(MObject obj)
    MFnPlugin plugin(obj);
 
    MStatus status;
+
+   if (deleteAllArchivesCallbackOnNewId)
+   {
+      MMessage::removeCallback( deleteAllArchivesCallbackOnNewId );
+      deleteAllArchivesCallbackOnNewId = 0;
+   }
+   if (deleteAllArchivesCallbackOnOpenId)
+   {
+      MMessage::removeCallback( deleteAllArchivesCallbackOnOpenId );
+      deleteAllArchivesCallbackOnOpenId = 0;
+   }
+   if (deleteAllArchivesCallbackOnExitId)
+   {
+      MMessage::removeCallback( deleteAllArchivesCallbackOnExitId );
+      deleteAllArchivesCallbackOnExitId = 0;
+   }
 
    status = plugin.deregisterCommand("ExocortexAlembic_export");
    status = plugin.deregisterCommand("ExocortexAlembic_getInfo");

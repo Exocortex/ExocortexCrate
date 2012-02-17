@@ -28,13 +28,14 @@ public:
    virtual MStatus Save(double time);
 };
 
-class AlembicPolyMeshNode : public MPxNode
+class AlembicPolyMeshNode : public AlembicObjectNode
 {
 public:
    AlembicPolyMeshNode() {}
    virtual ~AlembicPolyMeshNode();
 
    // override virtual methods from MPxNode
+   virtual void PreDestruction();
    virtual MStatus compute(const MPlug & plug, MDataBlock & dataBlock);
    static void* creator() { return (new AlembicPolyMeshNode()); }
    static MStatus initialize();
