@@ -90,7 +90,7 @@ SICALLBACK XSILoadPlugin( PluginRegistrar& in_reg )
    Register_alembic_points(in_reg);
 
    // register events
-   in_reg.RegisterEvent(L"alembicOnCloseScene",siOnCloseScene);
+   in_reg.RegisterEvent(L"alembic_OnCloseScene_OnEvent",siOnCloseScene);
 
 	return CStatus::OK;
 }
@@ -2696,7 +2696,7 @@ ESS_CALLBACK_START(alembic_path_manager_Execute, CRef&)
    return CStatus::OK;
 ESS_CALLBACK_END
 
-ESS_CALLBACK_START(alembicOnCloseScene_OnEvent,CRef&)
+ESS_CALLBACK_START(alembic_OnCloseScene_OnEvent,CRef&)
    deleteAllArchives();
 	return CStatus::OK;
 ESS_CALLBACK_END

@@ -1,18 +1,10 @@
-SoftimageAlembic.so
+ExocortexAlembicSoftimage.so
 {
     global:
         extern "C" {
 			XSIUnloadPlugin;
 			XSILoadPlugin;
 			alembic_*;
-			apply_alembic_*;
-			extract_alembic_;
-			inspect_alembic_*;
-			plot_alembic_;
-			remove_alembic_*;
-			retime_alembic_*;
-			timewarp_alembic_*;
-			unplot_alembic_;
         };
     local:
 	*;
