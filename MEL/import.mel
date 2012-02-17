@@ -1,2 +1,194 @@
-ntalFilmAperture");        
-            connectAttr ($reader+".verticalFilmAperture") ($shape+".vertical
+proc exocortexAlembicImport(string $filename)
+{
+    // check if the filename is valid
+    if($filename == "")
+    {
+        $files = `fileDialog2 -ds 1 -cap "Choose the Alembic File To Import" -ff "Alembic Files (*.abc)" -fm 1`;
+        print $files;
+        if(size($files) == 0)
+        {
+            error "Import aborted by user.";
+            return;
+        }
+        $filename = $files[0];
+    }
+    
+    // check if the file exists
+    if(!`filetest -r $filename`)
+    {
+        error ("File "+$filename+" does not exist!");
+        return;
+    }
+    
+    // query the content of the file
+    string $infos[] = `ExocortexAlembic_getInfo -f $filename`;
+    string $identifiers[];
+    string $types[];
+    int $nbSamples[];
+    for($i=0; $i<size($infos); $i=$i+1)
+    {
+        // tokenize the basic arguments
+        string $tokens[];
+        tokenize $infos[$i] "|" $tokens;
+        if(size($tokens) != 3)
+        {
+            print ("Skipping invalid info "+$infos[$i]+".");
+            continue;
+        }
+
+        // extract the information
+        string $identifier = $tokens[0];
+        string $type = $tokens[1];
+        
+        // try to find the identifier in the map
+        int $skip = 0;
+        for($j=0;$j<size($identifiers);$j=$j+1)
+        {
+            if($identifiers[$j] == $identifier)
+            {
+                print("Skipping duplicate identifier "+$identifier+".");
+                $skip = 1;
+                break;
+            }
+        }
+        if($skip)
+            break;
+
+        // push the identifier to our map            
+        $identifiers[size($identifiers)] = $identifier;
+        $types[size($types)] = $type;
+        $nbSamples[size($nbSamples)] = $tokens[2];
+    }
+    
+    // now we need to determine the group types
+    // group are alembic are xforms which have xforms
+    // below them. for that we can loop on all identifiers
+    // and find any identifier below it of type xform
+    for($i=0; $i<size($identifiers); $i=$i+1)
+    {
+        if($types[$i] != "Xform")
+            continue;
+        for($j=$i+1;$j<size($identifiers); $j=$j+1)
+        {
+            if($types[$j] != "Xform")
+                continue;
+            if(size($identifiers[$i]) >= size($identifiers[$j]))
+                continue;
+            string $substring = `substring $identifiers[$j] 1 (size($identifiers[$i])+1)`;
+            if($substring == ($identifiers[$i]+"/"))
+            {
+                $types[$i] = "Group";
+                break;
+            }
+        }
+    }
+    
+    // let's create the time node and file node
+    $timeControl = createNode("ExocortexAlembicTimeControl");
+    connectAttr "time1.outTime" ($timeControl+".time");        
+    $fileNode = createNode("ExocortexAlembicFile");
+    setAttr -type "string" ($fileNode+".fileName ") $filename;
+    
+    // now let's create all items
+    string $objects[];
+    for($i=0;$i<size($identifiers);$i=$i+1)
+        $objects[$i] = "";
+    for($i=(size($identifiers)-1);$i>=0;$i=$i-1)
+    {
+        string $parts[];
+        tokenize $identifiers[$i] "/" $parts;
+        string $name = $parts[size($parts)-1];
+        string $reader;
+        string $shape;
+        if($types[$i] == "PolyMesh")
+        {
+            $shape = `createNode -name $name "mesh"`;
+            $reader = `createNode "ExocortexAlembicPolyMesh"`;
+            connectAttr ($reader+".outMesh") ($shape+".inMesh");        
+        }
+        else if($types[$i] == "Camera")
+        {
+            $shape = `createNode -name $name "camera"`;
+            $reader = `createNode "ExocortexAlembicCamera"`;
+            connectAttr ($reader+".focalLength") ($shape+".focalLength");        
+            connectAttr ($reader+".focusDistance") ($shape+".focusDistance");        
+            connectAttr ($reader+".lensSqueezeRatio") ($shape+".lensSqueezeRatio");        
+            connectAttr ($reader+".horizontalFilmAperture") ($shape+".horizontalFilmAperture");        
+            connectAttr ($reader+".verticalFilmAperture") ($shape+".verticalFilmAperture");        
+            connectAttr ($reader+".horizontalFilmOffset") ($shape+".horizontalFilmOffset");        
+            connectAttr ($reader+".verticalFilmOffset") ($shape+".verticalFilmOffset");        
+            //connectAttr ($reader+".nearClippingPlane") ($shape+".nearClippingPlane");        
+            //connectAttr ($reader+".farClippingPlane") ($shape+".farClippingPlane");        
+            connectAttr ($reader+".fStop") ($shape+".fStop");        
+            connectAttr ($reader+".shutterAngle") ($shape+".shutterAngle");        
+        }
+        else if($types[$i] == "Xform")
+        {
+            // let's look for the next element in the list
+            // and access its parent
+            $reader = "";
+            for($j=$i+1;$j<size($identifiers);$j=$j+1)
+            {
+                string $substring = `substring $identifiers[$j] 1 (size($identifiers[$i])+1)`;
+                if($substring == ($identifiers[$i]+"/"))
+                {
+                    $shape = $objects[$j];
+                    $xform = `listRelatives -p $shape`;
+                    $shape = `rename -ignoreShape $xform[0] $name`;
+                    $reader = createNode("ExocortexAlembicXform");
+                    connectAttr ($reader+".translateX") ($shape+".translateX");
+                    connectAttr ($reader+".translateY") ($shape+".translateY");
+                    connectAttr ($reader+".translateZ") ($shape+".translateZ");
+                    connectAttr ($reader+".rotateX") ($shape+".rotateX");
+                    connectAttr ($reader+".rotateY") ($shape+".rotateY");
+                    connectAttr ($reader+".rotateZ") ($shape+".rotateZ");
+                    connectAttr ($reader+".scaleX") ($shape+".scaleX");
+                    connectAttr ($reader+".scaleY") ($shape+".scaleY");
+                    connectAttr ($reader+".scaleZ") ($shape+".scaleZ");
+                    break;
+                }
+            }
+            if($reader == "")
+                continue;
+        }
+        else if($types[$i] == "Group")
+        {
+            // find all xforms below this
+            $shape = `createNode -name $name "transform"`;
+            $reader = createNode("ExocortexAlembicXform");
+            connectAttr ($reader+".translateX") ($shape+".translateX");
+            connectAttr ($reader+".translateY") ($shape+".translateY");
+            connectAttr ($reader+".translateZ") ($shape+".translateZ");
+            connectAttr ($reader+".rotateX") ($shape+".rotateX");
+            connectAttr ($reader+".rotateY") ($shape+".rotateY");
+            connectAttr ($reader+".rotateZ") ($shape+".rotateZ");
+            connectAttr ($reader+".scaleX") ($shape+".scaleX");
+            connectAttr ($reader+".scaleY") ($shape+".scaleY");
+            connectAttr ($reader+".scaleZ") ($shape+".scaleZ");
+
+            for($j=$i+1;$j<size($identifiers);$j=$j+1)
+            {
+                if(($types[$j] != "Xform") && ($types[$j] != "Group"))
+                    continue;
+                string $childParts[];
+                tokenize $identifiers[$j] "/" $childParts;
+                if(size($childParts) != (size($parts)+1))
+                    continue;
+                parent $objects[$j] $shape;
+            }
+        }
+        else
+        {
+            print("Invalid object type "+$types[$i]+"\n");
+            continue;
+        }
+        
+        // connect the standard ports
+        connectAttr ($timeControl+".outTime") ($reader+".time");        
+        connectAttr ($fileNode+".outFileName") ($reader+".fileName");        
+        setAttr -type "string" ($reader+".identifier") $identifiers[$i];
+        $objects[$i] = $shape;
+    }
+}
+
+exocortexAlembicImport("");
