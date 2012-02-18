@@ -14,7 +14,7 @@ proc exocortexAlembicImport(string $filename)
     }
     
     // check if the file exists
-    $resolvedPath = `ExocortexAlembic_resolvePath -f $filename`;
+    string $resolvedPath = `ExocortexAlembic_resolvePath -f $filename`;
     if(!`filetest -r $resolvedPath`)
     {
         error ("File "+$filename+" does not exist!");
