@@ -18,7 +18,9 @@ struct ArchiveInfo
 
 SampleInfo getSampleInfo(double iFrame,Alembic::AbcCoreAbstract::TimeSamplingPtr iTime, size_t numSamps);
 std::string getIdentifierFromRef(const MObject & in_Ref);
+MString removeTrailFromName(MString & name);
 MString truncateName(const MString & in_Name);
+MString injectShapeToName(const MString & in_Name);
 MString getFullNameFromRef(const MObject & in_Ref);
 MString getFullNameFromIdentifier(std::string in_Identifier);
 MObject getRefFromFullName(const MString & in_Path);

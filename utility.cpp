@@ -72,13 +72,40 @@ std::string getIdentifierFromRef(const MObject & in_Ref)
    return result;
 }
 
+MString removeTrailFromName(MString & name)
+{
+   MString trail;
+   while(name.length() > 0)
+   {
+      MString end = name.substring(name.length()-1,name.length()-1);
+      if(end.asChar()[0] >= '0' && end.asChar()[0] <= '9')
+      {
+         trail = end + trail;
+         name = name.substring(0,name.length()-2);
+      }
+      else
+         break;
+   }
+   return trail;
+}
+
 MString truncateName(const MString & in_Name)
 {
    MString name = in_Name;
-   // TODO: debug if this is right
+   MString trail = removeTrailFromName(name);
    if(name.substring(name.length()-3,name.length()-1).toLowerCase() == "xfo")
-      name = name.substring(0,name.length()-3);
-   return name;
+      name = name.substring(0,name.length()-4);
+   else if(name.substring(name.length()-5,name.length()-1).toLowerCase() == "shape")
+      name = name.substring(0,name.length()-6);
+
+   return name + trail;
+}
+
+MString injectShapeToName(const MString & in_Name)
+{
+   MString name = in_Name;
+   MString trail = removeTrailFromName(name);
+   return name + "Shape" + trail;
 }
 
 MString getFullNameFromRef(const MObject & in_Ref)

@@ -68,6 +68,10 @@ MStatus AlembicGetInfoCommand::doIt(const MArgList & args)
          if(type.length() == 0)
             continue;
          identifier += "|"+type;
+         MString name = truncateName(child.getName().c_str());
+         if(type != "Xform")
+            name = injectShapeToName(name);
+         identifier += "|"+name;
          MString numSamples;
          numSamples.set((double)getNumSamplesFromObject(child));
          identifier += "|"+numSamples;

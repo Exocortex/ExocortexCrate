@@ -9,7 +9,7 @@ AlembicCamera::AlembicCamera(const MObject & in_Ref, AlembicWriteJob * in_Job)
 : AlembicObject(in_Ref, in_Job)
 {
    MFnDependencyNode node(in_Ref);
-   MString name = node.name();
+   MString name = truncateName(node.name());
    mObject = Alembic::AbcGeom::OCamera(GetParentObject(),name.asChar(),GetJob()->GetAnimatedTs());
 
    mSchema = mObject.getSchema();
