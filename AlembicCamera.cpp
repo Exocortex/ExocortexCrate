@@ -26,8 +26,8 @@ MStatus AlembicCamera::Save(double time)
    // access the camera
    MFnCamera node(GetRef());
 
-   // TODO: implement storage of metadata
-   // SaveMetaData(prim.GetParent3DObject().GetRef(),this);
+   // save the metadata
+   SaveMetaData(this);
 
    mSample.setFocalLength(node.focalLength());
    mSample.setFocusDistance(node.focusDistance());

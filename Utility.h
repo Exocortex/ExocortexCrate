@@ -40,6 +40,11 @@ Alembic::Abc::ICompoundProperty getCompoundFromObject(Alembic::Abc::IObject obje
 Alembic::Abc::TimeSamplingPtr getTimeSamplingFromObject(Alembic::Abc::IObject object);
 size_t getNumSamplesFromObject(Alembic::Abc::IObject object);
 
+// metadata related
+class AlembicObject;
+bool SaveMetaData(AlembicObject * obj);
+
+// sortable math objects
 class SortableV3f : public Alembic::Abc::V3f
 {
 public:  

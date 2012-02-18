@@ -26,8 +26,8 @@ MStatus AlembicXform::Save(double time)
    // access the xform
    MFnTransform node(GetRef());
 
-   // TODO: implement storage of metadata
-   // SaveMetaData(prim.GetParent3DObject().GetRef(),this);
+   // save the metadata
+   SaveMetaData(this);
 
    MTransformationMatrix xf = node.transformation();
    MMatrix matrix = xf.asMatrix();

@@ -25,8 +25,8 @@ MStatus AlembicPolyMesh::Save(double time)
    // access the geometry
    MFnMesh node(GetRef());
 
-   // TODO: implement storage of metadata
-   // SaveMetaData(prim.GetParent3DObject().GetRef(),this);
+   // save the metadata
+   SaveMetaData(this);
 
    // prepare the bounding box
    Alembic::Abc::Box3d bbox;
