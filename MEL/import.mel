@@ -85,7 +85,7 @@ proc exocortexAlembicImport(string $filename)
     
     // let's create the time node and file node
     $timeControl = createNode("ExocortexAlembicTimeControl");
-    connectAttr "time1.outTime" ($timeControl+".time");        
+    connectAttr "time1.outTime" ($timeControl+".inTime");        
     $fileNode = createNode("ExocortexAlembicFile");
     setAttr -type "string" ($fileNode+".fileName ") $filename;
     

@@ -16,7 +16,7 @@ MStatus AlembicTimeControlNode::initialize()
    MFnStringData emptyStringData;
 
    // input time
-   mTimeAttr = nAttr.create("time", "tm", MFnNumericData::kDouble, 0.0, &status);
+   mTimeAttr = uAttr.create("inTime", "tm", MFnUnitAttribute::kTime, 0.0, &status);
    status = nAttr.setStorable(true);
    status = addAttribute(mTimeAttr);
 
@@ -31,7 +31,7 @@ MStatus AlembicTimeControlNode::initialize()
    status = addAttribute(mOffsetAttr);
 
    // output transform
-   mOutTimeAttr = uAttr.create("outTime", "ot", MFnUnitAttribute::kTime, 0.0);
+   mOutTimeAttr = uAttr.create("outTime", "ot", MFnUnitAttribute::kTime, 0.0, &status);
    status = tAttr.setStorable(false);
    status = tAttr.setWritable(false);
    status = tAttr.setKeyable(false);
@@ -49,13 +49,14 @@ MStatus AlembicTimeControlNode::compute(const MPlug & plug, MDataBlock & dataBlo
 {
    MStatus status;
 
-   MDataHandle timeHandle = dataBlock.inputValue(mTimeAttr, &status);
+   double inputTime = dataBlock.inputValue(mTimeAttr).asTime().as(MTime::kSeconds);
    MDataHandle factorHandle = dataBlock.inputValue(mFactorAttr);
    MDataHandle offsetHandle = dataBlock.inputValue(mOffsetAttr);
 
+
    MTime t;
    t.setUnit(MTime::kSeconds);
-   t.setValue(timeHandle.asDouble() * factorHandle.asDouble() + offsetHandle.asDouble());
+   t.setValue(inputTime * factorHandle.asDouble() + offsetHandle.asDouble());
 
    dataBlock.outputValue(mOutTimeAttr).setMTime(t);
 
