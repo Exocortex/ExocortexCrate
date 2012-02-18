@@ -136,8 +136,6 @@ proc exocortexAlembicImport(string $filename)
                 {
                     $shape = $objects[$j];
                     $xform = `listRelatives -p $shape`;
-                    if(endsWith($name,"Xfo"))
-                      $name = startString($name,size($name)-3);
                     $shape = `rename -ignoreShape $xform[0] $name`;
                     $reader = createNode("ExocortexAlembicXform");
                     connectAttr ($reader+".translateX") ($shape+".translateX");
@@ -158,8 +156,6 @@ proc exocortexAlembicImport(string $filename)
         else if($types[$i] == "Group")
         {
             // find all xforms below this
-            if(endsWith($name,"Xfo"))
-              $name = startString($name,size($name)-3);
             $shape = `createNode -name $name "transform"`;
             $reader = createNode("ExocortexAlembicXform");
             connectAttr ($reader+".translateX") ($shape+".translateX");
