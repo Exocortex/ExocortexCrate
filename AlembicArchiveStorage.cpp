@@ -2,6 +2,7 @@
 #include <map>
 #include <boost/algorithm/string.hpp>
 #include "AlembicLicensing.h"
+#include <maya/MFileIO.h>
 
 struct AlembicArchiveInfo
 {
@@ -18,7 +19,61 @@ std::map<std::string,AlembicArchiveInfo> gArchives;
 
 MString resolvePath(MString path)
 {
-   // TODO: does maya support tokens?
+   // for each token
+   int openPos = path.index('[');
+   while(openPos > -1)
+   {
+      int closePos = path.index(']');
+      if(closePos < openPos || closePos == openPos + 1)
+      {
+         MGlobal::displayError("[ExocortexAlembic] Invalid token bracketing in path: "+path);
+         return path;
+      }
+      MString prefix = openPos > 0 ? path.substring(0,openPos-1) : "";
+      MString suffix = closePos < path.length() - 1 ? path.substring(closePos+1,path.length()-1) : "";
+      MString token = path.substring(openPos+1,closePos-1);
+      MStringArray tokens;
+      token.split(' ',tokens);
+      if(tokens.length() != 2)
+      {
+         MGlobal::displayError("[ExocortexAlembic] Invalid token '"+token+"' in path: "+path);
+         return path;
+      }
+      if(tokens[0].toLowerCase() == "env")
+      {
+         MString value = getenv(tokens[1].asChar());
+         if(value.length() == 0)
+         {
+            MGlobal::displayError("[ExocortexAlembic] Environment variable '"+tokens[1]+"' not found!");
+            return path;
+         }
+         path = prefix + value + suffix;
+      }
+      else if(tokens[0].toLowerCase() == "scene" && tokens[1].toLowerCase() == "folder")
+      {
+         MFileIO io;
+         std::string value = io.currentFile().asChar();
+         for(size_t i=0;i<value.length();i++)
+         {
+            if(value[i] == '\\')
+               value[i] = '/';
+         }
+         if(value.rfind('/') > 0)
+            value = value.substr(0,value.rfind('/'));
+         path = prefix + value.c_str() + suffix;
+      }
+      else
+      {
+         MGlobal::displayError("[ExocortexAlembic] Invalid token '"+token+"' in path: "+path);
+         return path;
+      }
+      openPos = path.index('[');
+   }
+
+   MFileObject file;
+   file.setRawFullName(path);
+   path = file.resolvedFullName();
+
    return path;
 }
 

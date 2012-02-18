@@ -10,6 +10,7 @@ MString addArchive(Alembic::Abc::IArchive * archive);
 void deleteArchive(MString path);
 void deleteAllArchives();
 Alembic::Abc::IObject getObjectFromArchive(MString path, MString identifier);
+MString resolvePath(MString path);
 
 // ref counting
 int addRefArchive(MString path);

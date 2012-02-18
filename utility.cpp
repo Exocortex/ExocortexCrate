@@ -1,5 +1,6 @@
 #include "Utility.h"
 #include "AlembicLicensing.h"
+#include "AlembicArchiveStorage.h"
 
 SampleInfo getSampleInfo
 (
@@ -279,4 +280,43 @@ size_t getNumSamplesFromObject(Alembic::Abc::IObject object)
       return Alembic::AbcGeom::ICamera(object,Alembic::Abc::kWrapExisting).getSchema().getNumSamples();
    }
    return 0;
+}
+
+
+MSyntax AlembicResolvePathCommand::createSyntax()
+{
+   MSyntax syntax;
+   syntax.addFlag("-h", "-help");
+   syntax.addFlag("-f", "-fileNameArg", MSyntax::kString);
+   syntax.enableQuery(false);
+   syntax.enableEdit(false);
+
+   return syntax;
+}
+
+MStatus AlembicResolvePathCommand::doIt(const MArgList & args)
+{
+   MStatus status = MS::kSuccess;
+   MArgParser argData(syntax(), args, &status);
+
+   if (argData.isFlagSet("help"))
+   {
+      MGlobal::displayInfo("[ExocortexAlembic]: ExocortexAlembic_resolvePath command:");
+      MGlobal::displayInfo("                    -f : provide an unresolved fileName (string)");
+      return MS::kSuccess;
+   }
+
+   if(!argData.isFlagSet("fileNameArg"))
+   {
+      // TODO: display dialog
+      MGlobal::displayError("[ExocortexAlembic] No fileName specified.");
+      return status;
+   }
+
+   // get the filename arg
+   MString fileName = argData.flagArgumentString("fileNameArg",0);
+
+   setResult(resolvePath(fileName));
+
+   return status;
 }

@@ -35,6 +35,6 @@ MStatus AlembicFileNode::initialize()
 
 MStatus AlembicFileNode::compute(const MPlug & plug, MDataBlock & dataBlock)
 {
-   dataBlock.outputValue(mOutFileNameAttr).set(dataBlock.inputValue(mFileNameAttr).asString());
+   dataBlock.outputValue(mOutFileNameAttr).set(resolvePath(dataBlock.inputValue(mFileNameAttr).asString()));
    return MStatus::kSuccess;
 }

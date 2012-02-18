@@ -113,4 +113,17 @@ public:
    }
 };
 
+class AlembicResolvePathCommand : public MPxCommand
+{
+  public:
+    AlembicResolvePathCommand() {}
+    virtual ~AlembicResolvePathCommand()  {}
+
+    virtual bool isUndoable() const { return false; }
+    MStatus doIt(const MArgList& args);
+
+    static MSyntax createSyntax();
+    static void* creator() { return new AlembicResolvePathCommand(); }
+};
+
 #endif  // _FOUNDATION_H_
