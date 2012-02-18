@@ -26,13 +26,14 @@ proc exocortexAlembicImport(string $filename)
     string $identifiers[];
     string $types[];
     string $names[];
+    string $metadatas[];
     int $nbSamples[];
     for($i=0; $i<size($infos); $i=$i+1)
     {
         // tokenize the basic arguments
         string $tokens[];
         tokenize $infos[$i] "|" $tokens;
-        if(size($tokens) != 4)
+        if(size($tokens) < 4)
         {
             print ("Skipping invalid info "+$infos[$i]+".");
             continue;
@@ -41,6 +42,12 @@ proc exocortexAlembicImport(string $filename)
         // extract the information
         string $identifier = $tokens[0];
         string $type = $tokens[1];
+        string $name = $tokens[2];
+        string $metadata;
+        if(size($tokens)>4)
+          $metadata = $tokens[4];
+        else
+          $metadata = "";
         
         // try to find the identifier in the map
         int $skip = 0;
@@ -61,6 +68,7 @@ proc exocortexAlembicImport(string $filename)
         $types[size($types)] = $type;
         $names[size($names)] = $tokens[2];
         $nbSamples[size($nbSamples)] = $tokens[3];
+        $metadatas[size($metadatas)] = $metadata;
     }
     
     // now we need to determine the group types
@@ -191,6 +199,20 @@ proc exocortexAlembicImport(string $filename)
         connectAttr ($fileNode+".outFileName") ($reader+".fileName");        
         setAttr -type "string" ($reader+".identifier") $identifiers[$i];
         $objects[$i] = $shape;
+        
+        // setup metadata if we have it
+        if(size($metadatas[$i]))
+        {
+            string $metadata[];
+            tokenize $metadatas[$i] ";" $metadata;
+            for($j=0;$j<10;$j++)
+            {
+                addAttr -ln ("md_label"+$j)  -dt "string" $shape;
+                addAttr -ln ("md_value"+$j)  -dt "string" $shape;
+                setAttr -type "string" ($shape+".md_label"+$j) $metadata[$j*2+0];
+                setAttr -type "string" ($shape+".md_value"+$j) $metadata[$j*2+1];
+            }
+        }
     }
 }
 

@@ -75,6 +75,22 @@ MStatus AlembicGetInfoCommand::doIt(const MArgList & args)
          MString numSamples;
          numSamples.set((double)getNumSamplesFromObject(child));
          identifier += "|"+numSamples;
+
+         // check the metadata
+         if(getCompoundFromObject(child).getPropertyHeader(".metadata") != NULL)
+         {
+            Alembic::Abc::IStringArrayProperty metaDataProp = Alembic::Abc::IStringArrayProperty( getCompoundFromObject(child), ".metadata" );
+            Alembic::Abc::StringArraySamplePtr metaDataPtr = metaDataProp.getValue(0);
+            MString metadata;
+            for(size_t i=0;i<metaDataPtr->size();i++)
+            {
+               metadata += metaDataPtr->get()[i].c_str();
+               if(i != metaDataPtr->size()-1)
+                  metadata += ";";
+            }
+            identifier += "|"+metadata;
+         }
+
          identifiers.append(identifier);
       }
    }
