@@ -120,21 +120,21 @@ MStatus AlembicXformNode::initialize()
    status = addAttribute(mOutTranslateZAttr);
 
    // output rotatex
-   mOutRotateXAttr = nAttr.create("rotateX", "rx", MFnNumericData::kDouble, 0.0);
+   mOutRotateXAttr = uAttr.create("rotateX", "rx", MFnUnitAttribute::kAngle, 0.0);
    status = nAttr.setStorable(false);
    status = nAttr.setWritable(false);
    status = nAttr.setKeyable(false);
    status = addAttribute(mOutRotateXAttr);
 
    // output rotatexy
-   mOutRotateYAttr = nAttr.create("rotateY", "ry", MFnNumericData::kDouble, 0.0);
+   mOutRotateYAttr = uAttr.create("rotateY", "ry", MFnUnitAttribute::kAngle, 0.0);
    status = nAttr.setStorable(false);
    status = nAttr.setWritable(false);
    status = nAttr.setKeyable(false);
    status = addAttribute(mOutRotateYAttr);
 
    // output rotatez
-   mOutRotateZAttr = nAttr.create("rotateZ", "rz", MFnNumericData::kDouble, 0.0);
+   mOutRotateZAttr = uAttr.create("rotateZ", "rz", MFnUnitAttribute::kAngle, 0.0);
    status = nAttr.setStorable(false);
    status = nAttr.setWritable(false);
    status = nAttr.setKeyable(false);
@@ -269,9 +269,9 @@ MStatus AlembicXformNode::compute(const MPlug & plug, MDataBlock & dataBlock)
    dataBlock.outputValue(mOutTranslateXAttr).setDouble(translation.x);
    dataBlock.outputValue(mOutTranslateYAttr).setDouble(translation.y);
    dataBlock.outputValue(mOutTranslateZAttr).setDouble(translation.z);
-   dataBlock.outputValue(mOutRotateXAttr).setDouble(MAngle(rotation[0],MAngle::kRadians).asDegrees());
-   dataBlock.outputValue(mOutRotateYAttr).setDouble(MAngle(rotation[1],MAngle::kRadians).asDegrees());
-   dataBlock.outputValue(mOutRotateZAttr).setDouble(MAngle(rotation[2],MAngle::kRadians).asDegrees());
+   dataBlock.outputValue(mOutRotateXAttr).setMAngle(MAngle(rotation[0],MAngle::kRadians));
+   dataBlock.outputValue(mOutRotateYAttr).setMAngle(MAngle(rotation[1],MAngle::kRadians));
+   dataBlock.outputValue(mOutRotateZAttr).setMAngle(MAngle(rotation[2],MAngle::kRadians));
    dataBlock.outputValue(mOutScaleXAttr).setDouble(scale[0]);
    dataBlock.outputValue(mOutScaleYAttr).setDouble(scale[1]);
    dataBlock.outputValue(mOutScaleZAttr).setDouble(scale[2]);
