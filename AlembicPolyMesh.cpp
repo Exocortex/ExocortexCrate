@@ -621,3 +621,128 @@ MStatus AlembicPolyMeshNode::compute(const MPlug & plug, MDataBlock & dataBlock)
 
    return MStatus::kSuccess;
 }
+
+MSyntax AlembicCreateFaceSetsCommand::createSyntax()
+{
+   MSyntax syntax;
+   syntax.addFlag("-h", "-help");
+   syntax.addFlag("-f", "-fileNameArg", MSyntax::kString);
+   syntax.addFlag("-i", "-identifierArg", MSyntax::kString);
+   syntax.addFlag("-o", "-objectArg", MSyntax::kString);
+   syntax.enableQuery(false);
+   syntax.enableEdit(false);
+
+   return syntax;
+}
+
+MStatus AlembicCreateFaceSetsCommand::doIt(const MArgList & args)
+{
+   MStatus status = MS::kSuccess;
+   MArgParser argData(syntax(), args, &status);
+
+   if (argData.isFlagSet("help"))
+   {
+      MGlobal::displayInfo("[ExocortexAlembic]: ExocortexAlembic_createFaceSets command:");
+      MGlobal::displayInfo("                    -f : provide an unresolved fileName (string)");
+      MGlobal::displayInfo("                    -i : provide an identifier inside the file");
+      MGlobal::displayInfo("                    -o : provide an object to create the meta data on");
+      return MS::kSuccess;
+   }
+
+   if(!argData.isFlagSet("objectArg"))
+   {
+      MGlobal::displayError("[ExocortexAlembic] No objectArg specified.");
+      return MStatus::kFailure;
+   }
+   if(!argData.isFlagSet("fileNameArg"))
+   {
+      MGlobal::displayError("[ExocortexAlembic] No fileNameArg specified.");
+      return MStatus::kFailure;
+   }
+   if(!argData.isFlagSet("identifierArg"))
+   {
+      MGlobal::displayError("[ExocortexAlembic] No identifierArg specified.");
+      return MStatus::kFailure;
+   }
+   MString objectPath = argData.flagArgumentString("objectArg",0);
+   MObject nodeObject = getRefFromFullName(objectPath);
+   if(nodeObject.isNull())
+   {
+      MGlobal::displayError("[ExocortexAlembic] Invalid objectArg specified.");
+      return MStatus::kFailure;
+   }
+   MFnDagNode node(nodeObject);
+
+   MString fileName = argData.flagArgumentString("fileNameArg",0);
+   if(fileName.length() == 0)
+   {
+      MGlobal::displayError("[ExocortexAlembic] No valid fileNameArg specified.");
+      return MStatus::kFailure;
+   }
+   fileName = resolvePath(fileName);
+   MString identifier = argData.flagArgumentString("identifierArg",0);
+   if(identifier.length() == 0)
+   {
+      MGlobal::displayError("[ExocortexAlembic] No valid identifierArg specified.");
+      return MStatus::kFailure;
+   }
+
+   addRefArchive(fileName);
+
+   Alembic::Abc::IObject object = getObjectFromArchive(fileName,identifier);
+   if(!object.valid())
+   {
+      MGlobal::displayError("[ExocortexAlembic] No valid fileNameArg or identifierArg specified.");
+      return MStatus::kFailure;
+   }
+
+   // check the type of object
+   if(!Alembic::AbcGeom::IPolyMesh::matches(object.getMetaData()))
+   {
+      MGlobal::displayError("[ExocortexAlembic] Specified identifer doesn't refer to a PolyMesh object.");
+      return MStatus::kFailure;
+   }
+
+   Alembic::AbcGeom::IPolyMesh mesh(object,Alembic::Abc::kWrapExisting);
+
+   std::vector<std::string> faceSetNames;
+   mesh.getSchema().getFaceSetNames(faceSetNames);
+
+   MFnTypedAttribute tAttr;
+
+   for(size_t i=0;i<faceSetNames.size();i++)
+   {
+      // access the face set
+      Alembic::AbcGeom::IFaceSetSchema faceSet = mesh.getSchema().getFaceSet(faceSetNames[i]).getSchema();
+      Alembic::AbcGeom::IFaceSetSchema::Sample faceSetSample = faceSet.getValue();
+
+      // create the int data
+      MFnIntArrayData fnData;
+      MIntArray arr((int *)faceSetSample.getFaces()->getData(),
+                    static_cast<unsigned int>(faceSetSample.getFaces()->size()));
+      MObject attrObj = fnData.create(arr);
+
+      // check if we need to create the attribute
+      MString attributeName = "FACESET_";
+      attributeName += faceSetNames[i].c_str();
+      MObject attribute = node.attribute(attributeName);
+      if(attribute.isNull())
+      {
+         attribute = tAttr.create(attributeName, attributeName, MFnData::kIntArray, attrObj);
+         tAttr.setStorable(true);
+         tAttr.setKeyable(false);
+         node.addAttribute(attribute);
+      }
+      else
+      {
+         MPlug attributePlug(nodeObject, attribute);
+         attributePlug.setMObject(attrObj);
+      }
+   }
+
+   object.reset();
+   mesh.reset();
+   delRefArchive(fileName);
+
+   return status;
+}

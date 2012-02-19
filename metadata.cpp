@@ -132,7 +132,7 @@ MStatus AlembicCreateMetaDataCommand::doIt(const MArgList & args)
          labelAttribute = tAttr.create("md_label"+index, "MetaData Label "+index, MFnData::kString);
          tAttr.setStorable(true);
          tAttr.setKeyable(false);
-         node.addAttribute(labelAttribute);
+         node.addAttribute(labelAttribute,MFnDependencyNode::kLocalDynamicAttr);
       }
       MPlug labelPlug(nodeObject, labelAttribute);
       MObject valueAttribute = node.attribute("md_value"+index);
@@ -141,7 +141,7 @@ MStatus AlembicCreateMetaDataCommand::doIt(const MArgList & args)
          valueAttribute = tAttr.create("md_value"+index, "MetaData Value "+index, MFnData::kString);
          tAttr.setStorable(true);
          tAttr.setKeyable(false);
-         node.addAttribute(valueAttribute);
+         node.addAttribute(valueAttribute,MFnDependencyNode::kLocalDynamicAttr);
       }
       MPlug valuePlug(nodeObject, valueAttribute);
 

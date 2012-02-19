@@ -63,4 +63,17 @@ private:
    MIntArray mNormalVertices;
 };
 
+class AlembicCreateFaceSetsCommand : public MPxCommand
+{
+  public:
+    AlembicCreateFaceSetsCommand() {}
+    virtual ~AlembicCreateFaceSetsCommand()  {}
+
+    virtual bool isUndoable() const { return false; }
+    MStatus doIt(const MArgList& args);
+
+    static MSyntax createSyntax();
+    static void* creator() { return new AlembicCreateFaceSetsCommand(); }
+};
+
 #endif

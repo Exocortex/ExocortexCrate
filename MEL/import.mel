@@ -109,7 +109,7 @@ proc exocortexAlembicImport(string $filename)
             $shape = `createNode -name $name "mesh"`;
             $reader = `createNode "ExocortexAlembicPolyMesh"`;
             connectAttr ($reader+".outMesh") ($shape+".inMesh");        
-            //ExcortexAlembic_createFaceSets -f $filename -i $identifiers[$i] -o $shape;
+            ExocortexAlembic_createFaceSets -f $filename -i $identifiers[$i] -o $shape;
         }
         else if($types[$i] == "Camera")
         {

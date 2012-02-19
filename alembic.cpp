@@ -56,6 +56,9 @@ MStatus initializePlugin(MObject obj)
    status = plugin.registerCommand("ExocortexAlembic_createMetaData",
       AlembicCreateMetaDataCommand::creator,
       AlembicCreateMetaDataCommand::createSyntax);
+   status = plugin.registerCommand("ExocortexAlembic_createFaceSets",
+      AlembicCreateFaceSetsCommand::creator,
+      AlembicCreateFaceSetsCommand::createSyntax);
 
    // nodes
    status = plugin.registerNode("ExocortexAlembicTimeControl",
@@ -107,6 +110,7 @@ MStatus uninitializePlugin(MObject obj)
    status = plugin.deregisterCommand("ExocortexAlembic_getInfo");
    status = plugin.deregisterCommand("ExocortexAlembic_resolvePath");
    status = plugin.deregisterCommand("ExocortexAlembic_createMetaData");
+   status = plugin.deregisterCommand("ExocortexAlembic_createFaceSets");
 
    status = plugin.deregisterNode(mTimeControlNodeId);
    status = plugin.deregisterNode(mFileNodeId);
