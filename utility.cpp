@@ -283,44 +283,6 @@ size_t getNumSamplesFromObject(Alembic::Abc::IObject object)
    return 0;
 }
 
-bool SaveMetaData(AlembicObject * obj)
-{
-   if(obj->GetNumSamples() > 0)
-      return false;
-
-   MFnDependencyNode node(obj->GetRef());
-   
-   std::vector<std::string> metaData;
-   for(int i=0;i<10;i++)
-   {
-      MString index;
-      index.set((double)i,0);
-      MObject labelAttribute = node.attribute("md_label"+index);
-      if(labelAttribute.isNull())
-         return false;
-      MPlug labelPlug(obj->GetRef(), labelAttribute);
-      MString labelString;
-      labelPlug.getValue(labelString);
-      metaData.push_back(labelString.asChar());
-      MObject valueAttribute = node.attribute("md_value"+index);
-      if(valueAttribute.isNull())
-         return false;
-      MPlug valuePlug(obj->GetRef(), valueAttribute);
-      MString valueString;
-      valuePlug.getValue(valueString);
-      metaData.push_back(valueString.asChar());
-   }
-
-   // let's create the metadata property
-   Alembic::Abc::OStringArrayProperty metaDataProperty = Alembic::Abc::OStringArrayProperty(
-      obj->GetCompound(), ".metadata", obj->GetCompound().getMetaData(), obj->GetJob()->GetAnimatedTs() );
-
-   Alembic::Abc::StringArraySample metaDataSample(&metaData.front(),metaData.size());
-   metaDataProperty.set(metaDataSample);
-
-   return true;
-}
-
 MSyntax AlembicResolvePathCommand::createSyntax()
 {
    MSyntax syntax;

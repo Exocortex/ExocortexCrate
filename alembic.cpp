@@ -6,6 +6,7 @@
 #include "AlembicXform.h"
 #include "AlembicCamera.h"
 #include "AlembicPolyMesh.h"
+#include "MetaData.h"
 
 #include <maya/MFnPlugin.h>
 #include <maya/MSceneMessage.h>
@@ -52,6 +53,9 @@ MStatus initializePlugin(MObject obj)
    status = plugin.registerCommand("ExocortexAlembic_resolvePath",
       AlembicResolvePathCommand::creator,
       AlembicResolvePathCommand::createSyntax);
+   status = plugin.registerCommand("ExocortexAlembic_createMetaData",
+      AlembicCreateMetaDataCommand::creator,
+      AlembicCreateMetaDataCommand::createSyntax);
 
    // nodes
    status = plugin.registerNode("ExocortexAlembicTimeControl",
@@ -102,6 +106,7 @@ MStatus uninitializePlugin(MObject obj)
    status = plugin.deregisterCommand("ExocortexAlembic_export");
    status = plugin.deregisterCommand("ExocortexAlembic_getInfo");
    status = plugin.deregisterCommand("ExocortexAlembic_resolvePath");
+   status = plugin.deregisterCommand("ExocortexAlembic_createMetaData");
 
    status = plugin.deregisterNode(mTimeControlNodeId);
    status = plugin.deregisterNode(mFileNodeId);

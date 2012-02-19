@@ -1,5 +1,6 @@
 #include "AlembicPolyMesh.h"
 #include <maya/MFnMeshData.h>
+#include "MetaData.h"
 
 namespace AbcA = ::Alembic::AbcCoreAbstract::ALEMBIC_VERSION_NS;
 using namespace AbcA;
@@ -169,7 +170,39 @@ MStatus AlembicPolyMesh::Save(double time)
          }
       }
 
-      // TODO: check for facesets
+      // loop for facesets
+      std::size_t attrCount = node.attributeCount();
+      for (unsigned int i = 0; i < attrCount; ++i)
+      {
+         MObject attr = node.attribute(i);
+         MFnAttribute mfnAttr(attr);
+         MPlug plug = node.findPlug(attr, true);
+
+         // if it is not readable, then bail without any more checking
+         if (!mfnAttr.isReadable() || plug.isNull())
+            continue;
+
+         MString propName = plug.partialName(0, 0, 0, 0, 0, 1);
+         std::string propStr = propName.asChar();
+         if (propStr.substr(0, 8) == "FACESET_")
+         {
+            MStatus status;
+            MFnIntArrayData arr(plug.asMObject(), &status);
+            if (status != MS::kSuccess)
+                continue;
+
+            std::string faceSetName = propStr.substr(8);
+            std::size_t numData = arr.length();
+            std::vector<Alembic::Util::int32_t> faceVals(numData);
+            for (unsigned int j = 0; j < numData; ++j)
+                faceVals[j] = arr[j];
+
+            Alembic::AbcGeom::OFaceSet faceSet = mSchema.createFaceSet(faceSetName);
+            Alembic::AbcGeom::OFaceSetSchema::Sample faceSetSample;
+            faceSetSample.setFaces(Alembic::Abc::Int32ArraySample(faceVals));
+            faceSet.getSchema().set(faceSetSample);
+         }
+      }
    }
 
    // now do the normals

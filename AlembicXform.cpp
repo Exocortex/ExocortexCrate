@@ -1,4 +1,5 @@
 #include "AlembicXform.h"
+#include "MetaData.h"
 
 #include <maya/MFnTransform.h>
 

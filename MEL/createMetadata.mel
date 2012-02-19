@@ -1,5 +1,0 @@
-for($j=0;$j<10;$j++)
-{
-    addAttr -ln ("md_label"+$j)  -dt "string";
-    addAttr -ln ("md_value"+$j)  -dt "string";
-}
