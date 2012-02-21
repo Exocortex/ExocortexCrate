@@ -31,7 +31,7 @@ void AlembicDebug_PrintTransform(Matrix3 &m);
 
 // Conversion functions to Alembic Standards
 Point3 ScalePointFromInchesToDecimeters( const Point3 &inches );
-Point3 ScalePointFromDecimetersToInches( const Point3 &meters );
+Point3 ScalePointFromDecimetersToInches( const Point3 &decimeters );
 void ConvertMaxMatrixToAlembicMatrix( const Matrix3 &maxMatrix, Matrix3 &alembicMatrix);
 void ConvertAlembicMatrixToMaxMatrix( const Matrix3 &alembicMatrix, Matrix3 &maxMatrix);
 void ConvertMaxPointToAlembicPoint( const Point3 &maxPoint, Point3 &result);
