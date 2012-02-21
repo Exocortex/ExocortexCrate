@@ -182,35 +182,28 @@ bool AlembicPolyMesh::Save(double time)
     if((bool)GetCurrentJob()->GetOption("exportNormals"))
     {
         objectMesh.buildNormals();
-        std::vector<Point3> faceNormalsArray;
-        faceNormalsArray.reserve(sampleCount);
-
+        normalVec.resize(sampleCount);
+      
         // Face and vertex normals.
         // In MAX a vertex can have more than one normal (but doesn't always have it).
-        for (int i=0; i<objectMesh.getNumFaces(); i++) 
+        int normalOffset = 0;
+        for (int i=0; i< objectMesh.getNumFaces(); i++) 
         {
             Face *f = &objectMesh.faces[i];
-            for (int i = 2; i >= 0; i -= 1)
+            for (int j = 2; j >= 0; j -= 1)
             {
-                int vertexId = f->getVert(i);
+                int vertexId = f->getVert(j);
                 Point3 vertexNormal = GetVertexNormal(&objectMesh, i, objectMesh.getRVertPtr(vertexId));
                 Point3 vertexAlembicNormal;
                 ConvertMaxNormalToAlembicNormal(vertexNormal, vertexAlembicNormal);
-                faceNormalsArray.push_back(vertexAlembicNormal);
+                normalVec[normalOffset].x = vertexAlembicNormal.x;
+                normalVec[normalOffset].y = vertexAlembicNormal.y;
+                normalVec[normalOffset].z = vertexAlembicNormal.z;
+                normalOffset += 1;
             }
         }
 
         // AlembicPrintFaceData(objectMesh);
-
-        normalVec.resize(sampleCount);
-        normalCount = normalVec.size();
-
-        for(LONG i=0;i<sampleCount;i++)
-        {
-            normalVec[i].x = faceNormalsArray[i].x;
-            normalVec[i].y = faceNormalsArray[i].y;
-            normalVec[i].z = faceNormalsArray[i].z;
-        }
 
         // now let's sort the normals 
         if((bool)GetCurrentJob()->GetOption("indexedNormals")) {

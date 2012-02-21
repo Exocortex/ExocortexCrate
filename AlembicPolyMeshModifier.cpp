@@ -605,9 +605,6 @@ void AlembicImport_FillInPolyMesh(alembic_fillmesh_options &options)
             face.setEdgeVisFlags(1, 1, 1);
             face.setVerts(v0, v1, v2);
         }
-
-        // mesh.InvalidateGeomCache();
-        // mesh.InvalidateTopologyCache();
    }
 
    if ( options.nDataFillFlags & ALEMBIC_DATAFILL_NORMALS && objMesh.valid() )
@@ -616,28 +613,54 @@ void AlembicImport_FillInPolyMesh(alembic_fillmesh_options &options)
 
        if(meshNormalsParam.valid())
        {
-           Alembic::Abc::N3fArraySamplePtr meshNormals = meshNormalsParam.getExpandedValue(sampleInfo.floorIndex).getVals();
+           Alembic::Abc::N3fArraySamplePtr meshNormalsFloor = meshNormalsParam.getExpandedValue(sampleInfo.floorIndex).getVals();
            std::vector<Point3> normalsToSet;
-           normalsToSet.reserve(meshNormals->size());
+           normalsToSet.reserve(meshNormalsFloor->size());
+           Alembic::Abc::N3fArraySamplePtr meshNormalsCeil = meshNormalsParam.getExpandedValue(sampleInfo.ceilIndex).getVals();
 
-           for (int i = 0; i < meshNormals->size(); i += 1)
+           // Blend
+           if (sampleInfo.alpha != 0.0f && meshNormalsFloor->size() == meshNormalsCeil->size())
            {
-               normalsToSet.push_back(Point3(meshNormals->get()[i].x, meshNormals->get()[i].y, meshNormals->get()[i].z));
-
-               // blend
-               if(sampleInfo.alpha != 0.0)
+               int offset = 0;
+               for (int i = 0; i < mesh.numFaces; i += 1)
                {
-                   meshNormals = meshNormalsParam.getExpandedValue(sampleInfo.ceilIndex).getVals();
-                   if(meshNormals->size() == normalsToSet.size())
+                   Face *pFace = &mesh.faces[i];
+                   int vertexCount = 3;
+                   int first = offset + vertexCount - 1;
+                   int last = offset;
+                   for (int j = first; j >= last; j -= 1)
                    {
-                       Point3 ceilNormal(meshNormals->get()[i].x, meshNormals->get()[i].y, meshNormals->get()[i].z);
-                       Point3 delta = (ceilNormal - normalsToSet[i]) * float(sampleInfo.alpha);
-                       normalsToSet[i] += delta; 
+                       Point3 alembicNormal(meshNormalsFloor->get()[j].x, meshNormalsFloor->get()[j].y, meshNormalsFloor->get()[j].z);
+                       Point3 ceilNormal(meshNormalsCeil->get()[i].x, meshNormalsCeil->get()[i].y, meshNormalsCeil->get()[i].z);
+                       Point3 delta = (ceilNormal - alembicNormal) * float(sampleInfo.alpha);
+                       alembicNormal += delta;
+                       Point3 maxNormal;
+                       ConvertAlembicNormalToMaxNormal(alembicNormal, maxNormal);
+                       normalsToSet.push_back(maxNormal);
                    }
-               }
 
-               Point3 maxNormal;
-               ConvertAlembicNormalToMaxNormal(normalsToSet[i], maxNormal);
+                   offset += vertexCount;
+               }
+           }
+           else
+           {
+               int offset = 0;
+               for (int i = 0; i < mesh.numFaces; i += 1)
+               {
+                   Face *pFace = &mesh.faces[i];
+                   int vertexCount = 3;
+                   int first = offset + vertexCount - 1;
+                   int last = offset;
+                   for (int j = first; j >= last; j -=1)
+                   {
+                       Point3 alembicNormal(meshNormalsFloor->get()[j].x, meshNormalsFloor->get()[j].y, meshNormalsFloor->get()[j].z);
+                       Point3 maxNormal;
+                       ConvertAlembicNormalToMaxNormal(alembicNormal, maxNormal);
+                       normalsToSet.push_back(maxNormal);
+                   }
+
+                   offset += vertexCount;
+               }
            }
 
            // Set up the specify normals
@@ -662,9 +685,9 @@ void AlembicImport_FillInPolyMesh(alembic_fillmesh_options &options)
                Face *pFace = &mesh.faces[i];
                MeshNormalFace &normalFace = normalSpec->Face(i);
                normalFace.SpecifyAll();
-               normalFace.SetNormalID(3, i*3);
-               normalFace.SetNormalID(2, i*3+1);
-               normalFace.SetNormalID(1, i*3+2);
+               normalFace.SetNormalID(0, i*3);
+               normalFace.SetNormalID(1, i*3+1);
+               normalFace.SetNormalID(2, i*3+2);
            }
            
            // Fill in any normals we may have not gotten specified.  Also allocates space for the RVert array
@@ -727,6 +750,9 @@ void AlembicImport_FillInPolyMesh(alembic_fillmesh_options &options)
                map.tf[i].setTVerts(i*3, i*3+1, i*3+2);
        }
    }
+   
+   // mesh.InvalidateGeomCache();
+   // mesh.InvalidateTopologyCache();
 
    AlembicDebug_PrintMeshData(mesh);
 }
