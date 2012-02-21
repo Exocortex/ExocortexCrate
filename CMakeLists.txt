@@ -2,14 +2,14 @@ cmake_minimum_required (VERSION 2.6)
 
 project ( ExocortexAlembic3DSMax${alembic_VERSION} ) 
 
-INCLUDE(../ExocortexAlembicShared/ExocortexCMakeShared.txt)
+INCLUDE(../ExocortexAlembicShared/ExocortexCMakeShared.txt) 
 
 if( Exocortex_SERVICES OR Exocortex_RLM_ONLY )
 	include_directories( ${Rlm_INCLUDE_DIR} )
 	include_directories( ${Exocortex_INCLUDE_DIR} )
 endif()
 
-SET( 3DSMAX_DIR_ROOT ${LIBRARY_ROOT}/Max/2011 )
+SET( 3DSMAX_DIR_ROOT ${LIBRARY_ROOT}/Max/2012 )
 if( NOT EXISTS ${3DSMAX_DIR_ROOT} )
 	SET( 3DSMAX_DIR_ROOT ${LIBRARY_ROOT}/Max )
 endif()
