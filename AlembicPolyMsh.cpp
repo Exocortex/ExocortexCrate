@@ -190,10 +190,9 @@ bool AlembicPolyMesh::Save(double time)
         for (int i=0; i<objectMesh.getNumFaces(); i++) 
         {
             Face *f = &objectMesh.faces[i];
-
-            for (int j = 0; j < 3; j += 1)
+            for (int i = 2; i >= 0; i -= 1)
             {
-                int vertexId = f->getVert(j);
+                int vertexId = f->getVert(i);
                 Point3 vertexNormal = GetVertexNormal(&objectMesh, i, objectMesh.getRVertPtr(vertexId));
                 Point3 vertexAlembicNormal;
                 ConvertMaxNormalToAlembicNormal(vertexNormal, vertexAlembicNormal);
@@ -268,19 +267,11 @@ bool AlembicPolyMesh::Save(double time)
          for(LONG f=0;f<faceCount;f++)
          {
             mFaceCountVec[f] = 3;
-			for (int i = 0; i < 3; i += 1)
+			for (int i = 2; i >= 0; i -= 1)
             {
 				mFaceIndicesVec[offset++] = objectMesh.faces[f].v[i];
             }
          }
-
-         /*mFaceIndicesVec[0] = 2;
-         mFaceIndicesVec[1] = 3;
-         mFaceIndicesVec[2] = 0;
-         mFaceIndicesVec[3] = 0;
-         mFaceIndicesVec[4] = 3;
-         mFaceIndicesVec[5] = 1;
-         */
 
          if(mFaceIndicesVec.size() == 0)
          {

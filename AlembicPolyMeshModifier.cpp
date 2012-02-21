@@ -595,9 +595,9 @@ void AlembicImport_FillInPolyMesh(alembic_fillmesh_options &options)
                 continue;
 
             // three vertex indices of a triangle
-            int v0 =  meshFaceIndices->get()[i*3];
+            int v2 =  meshFaceIndices->get()[i*3];
             int v1 =  meshFaceIndices->get()[i*3+1];
-            int v2 =  meshFaceIndices->get()[i*3+2];
+            int v0 =  meshFaceIndices->get()[i*3+2];
 
             // vertex positions
             Face &face = mesh.faces[i];
@@ -638,13 +638,14 @@ void AlembicImport_FillInPolyMesh(alembic_fillmesh_options &options)
 
                Point3 maxNormal;
                ConvertAlembicNormalToMaxNormal(normalsToSet[i], maxNormal);
-               normalsToSet[i] = maxNormal.Normalize();
            }
 
            // Set up the specify normals
            mesh.SpecifyNormals();
            MeshNormalSpec *normalSpec = mesh.GetSpecifiedNormals();
            normalSpec->ClearNormals();
+           normalSpec->SetNumFaces(mesh.getNumFaces());
+           normalSpec->CheckNormals();
            normalSpec->SetFlag(MESH_NORMAL_MODIFIER_SUPPORT, true);
            normalSpec->SetNumNormals((int)normalsToSet.size());
            normalSpec->SetNumFaces(mesh.getNumFaces());
@@ -658,11 +659,12 @@ void AlembicImport_FillInPolyMesh(alembic_fillmesh_options &options)
            // Set up the normal faces
            for (int i =0; i < mesh.numFaces; i += 1)
            {
+               Face *pFace = &mesh.faces[i];
                MeshNormalFace &normalFace = normalSpec->Face(i);
                normalFace.SpecifyAll();
-               normalFace.SetNormalID(0, i*3);
-               normalFace.SetNormalID(1, i*3+1);
-               normalFace.SetNormalID(2, i*3+2);
+               normalFace.SetNormalID(3, i*3);
+               normalFace.SetNormalID(2, i*3+1);
+               normalFace.SetNormalID(1, i*3+2);
            }
            
            // Fill in any normals we may have not gotten specified.  Also allocates space for the RVert array
