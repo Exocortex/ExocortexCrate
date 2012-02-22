@@ -186,7 +186,6 @@ bool AlembicPolyMesh::Save(double time)
       
         // Face and vertex normals.
         // In MAX a vertex can have more than one normal (but doesn't always have it).
-        int normalOffset = 0;
         for (int i=0; i< objectMesh.getNumFaces(); i++) 
         {
             Face *f = &objectMesh.faces[i];
@@ -196,17 +195,18 @@ bool AlembicPolyMesh::Save(double time)
                 Point3 vertexNormal = GetVertexNormal(&objectMesh, i, objectMesh.getRVertPtr(vertexId));
                 Point3 vertexAlembicNormal;
                 ConvertMaxNormalToAlembicNormal(vertexNormal, vertexAlembicNormal);
-                normalVec[normalOffset].x = vertexAlembicNormal.x;
-                normalVec[normalOffset].y = vertexAlembicNormal.y;
-                normalVec[normalOffset].z = vertexAlembicNormal.z;
-                normalOffset += 1;
+                normalVec[normalCount].x = vertexAlembicNormal.x;
+                normalVec[normalCount].y = vertexAlembicNormal.y;
+                normalVec[normalCount].z = vertexAlembicNormal.z;
+                normalCount += 1;
             }
         }
 
         // AlembicPrintFaceData(objectMesh);
 
         // now let's sort the normals 
-        if((bool)GetCurrentJob()->GetOption("indexedNormals")) {
+        if((bool)GetCurrentJob()->GetOption("indexedNormals")) 
+        {
             std::map<SortableV3f,size_t> normalMap;
             std::map<SortableV3f,size_t>::const_iterator it;
             size_t sortedNormalCount = 0;
@@ -293,34 +293,34 @@ bool AlembicPolyMesh::Save(double time)
       {
           if (CheckForFaceMap(GetRef().node->GetMtl(), &objectMesh)) 
           {
-              mUvIndexVec.resize(sampleCount);
+              mUvIndexVec.reserve(sampleCount);
               for (int i=0; i<objectMesh.getNumFaces(); i++) 
               {
                   Point3 tv[3];
                   Face* f = &objectMesh.faces[i];
                   make_face_uv(f, tv);
 
-                  for (int j=0; j < 3; j += 1)
+                  for (int j=2; j>=0; j-=1)
                   {
-                    mUvVec[i*3+j].x = tv[j].x;
-                    mUvVec[i*3+j].y = tv[j].y;
+                      Alembic::Abc::V2f alembicUV(tv[j].x, tv[j].y);
+                      mUvVec.push_back(alembicUV);
                   }
               }
           }
           else if (objectMesh.mapSupport(1))
           {
-              mUvVec.resize(sampleCount);
+              mUvVec.reserve(sampleCount);
               MeshMap &map = objectMesh.Map(1);
 
               for (int findex =0; findex < map.fnum; findex += 1)
               {
                   TVFace &texFace = map.tf[findex];
-                  for (int vindex = 0; vindex < 3; vindex += 1)
+                  for (int vindex = 2; vindex >= 0; vindex -= 1)
                   {
                       int vertexid = texFace.t[vindex];
                       UVVert uvVert = map.tv[vertexid];
-                      mUvVec[findex * 3 + vindex].x = uvVert.x;
-                      mUvVec[findex * 3 + vindex].y = uvVert.y;
+                      Alembic::Abc::V2f alembicUV(uvVert.x, uvVert.y);
+                      mUvVec.push_back(alembicUV);
                   }
               }
           }

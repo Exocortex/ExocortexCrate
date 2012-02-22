@@ -45,7 +45,6 @@ typedef struct _alembic_importoptions
    bool importStandins;
    bool importBboxes;
    bool attachToExisting;
-   double playbackSpeedInFPS;
    SceneEnumProc sceneEnumProc;
    ObjectList currentSceneList;
 
@@ -57,7 +56,6 @@ public:
 	, importStandins(false)
 	, importBboxes(false)
 	, attachToExisting(false)
-    , playbackSpeedInFPS(25)
    {
    }
 } alembic_importoptions;
@@ -66,11 +64,11 @@ typedef struct _alembic_nodeprops
 {
     std::string m_File;
 	std::string m_Identifier;
-    double m_PlaybackSpeedInFPS;
+    unsigned int m_UpdateDataFillFlags;
 public:
     _alembic_nodeprops() : m_File("")
         , m_Identifier("")
-        , m_PlaybackSpeedInFPS(25)
+        , m_UpdateDataFillFlags(0)
     {
     }
 } alembic_nodeprops;

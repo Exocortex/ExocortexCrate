@@ -95,6 +95,7 @@ private:
     alembic_nodeprops m_AlembicNodeProps;
 public:
 	void SetAlembicId(const std::string &file, const std::string &identifier);
+    void SetAlembicUpdateDataFillFlags(unsigned int nFlags) { m_AlembicNodeProps.m_UpdateDataFillFlags = nFlags; }
     const std::string &GetAlembicArchive() { return m_AlembicNodeProps.m_File; }
     const std::string &GetAlembicObjectId() { return m_AlembicNodeProps.m_Identifier; }
 };
@@ -342,7 +343,7 @@ void AlembicPolyMeshModifier::ModifyObject (TimeValue t, ModContext &mc, ObjectS
    options.pIObj = &iObj;
    options.pTriObj = (TriObject*)os->obj;
    options.iFrame = sampleTime;
-   options.nDataFillFlags = ALEMBIC_DATAFILL_POLYMESH_TOPO_UPDATE;
+   options.nDataFillFlags = m_AlembicNodeProps.m_UpdateDataFillFlags;
    options.nDataFillContext = ALEMBIC_FILLCONTEXT_UPDATE;
    AlembicImport_FillInPolyMesh(options);
 
@@ -668,7 +669,6 @@ void AlembicImport_FillInPolyMesh(alembic_fillmesh_options &options)
            MeshNormalSpec *normalSpec = mesh.GetSpecifiedNormals();
            normalSpec->ClearNormals();
            normalSpec->SetNumFaces(mesh.getNumFaces());
-           normalSpec->CheckNormals();
            normalSpec->SetFlag(MESH_NORMAL_MODIFIER_SUPPORT, true);
            normalSpec->SetNumNormals((int)normalsToSet.size());
            normalSpec->SetNumFaces(mesh.getNumFaces());
@@ -713,24 +713,49 @@ void AlembicImport_FillInPolyMesh(alembic_fillmesh_options &options)
                meshUvParam.getNumSamples()
                );
 
-           Alembic::Abc::V2fArraySamplePtr meshUVs = meshUvParam.getExpandedValue(sampleInfo.floorIndex).getVals();
+           Alembic::Abc::V2fArraySamplePtr meshUVsFloor = meshUvParam.getExpandedValue(sampleInfo.floorIndex).getVals();
+           Alembic::Abc::V2fArraySamplePtr meshUVsCeil = meshUvParam.getExpandedValue(sampleInfo.ceilIndex).getVals();
            std::vector<Point3> uvsToSet;
-           uvsToSet.reserve(meshUVs->size());
+           uvsToSet.reserve(meshUVsFloor->size());
 
-           for (int i = 0; i < meshUVs->size(); i += 1)
+           // Blend
+           if (sampleInfo.alpha != 0.0f && meshUVsFloor->size() == meshUVsCeil->size())
            {
-               uvsToSet.push_back(Point3(meshUVs->get()[i].x, meshUVs->get()[i].y, 0.0f));
-
-               // blend
-               if(sampleInfo.alpha != 0.0)
+               int offset = 0;
+               for (int i = 0; i < mesh.numFaces; i += 1)
                {
-                   meshUVs = meshUvParam.getExpandedValue(sampleInfo.ceilIndex).getVals();
-                   if(meshUVs->size() == uvsToSet.size())
+                   Face *pFace = &mesh.faces[i];
+                   int vertexCount = 3;
+                   int first = offset + vertexCount - 1;
+                   int last = offset;
+                   for (int j = first; j >= last; j -= 1)
                    {
-                       Point3 ceilUV(meshUVs->get()[i].x, meshUVs->get()[i].y, 0.0f);
-                       Point3 delta = (ceilUV - uvsToSet[i]) * float(sampleInfo.alpha);
-                       uvsToSet[i] += delta; 
+                       Point3 floorUV(meshUVsFloor->get()[j].x, meshUVsFloor->get()[j].y, 0.0f);
+                       Point3 ceilUV(meshUVsCeil->get()[j].x, meshUVsCeil->get()[j].y, 0.0f);
+                       Point3 delta = (ceilUV - floorUV) * float(sampleInfo.alpha);
+                       Point3 maxUV = floorUV + delta;
+                       uvsToSet.push_back(maxUV);
                    }
+
+                   offset += vertexCount;
+               }
+           }
+           else
+           {
+               int offset = 0;
+               for (int i = 0; i < mesh.numFaces; i += 1)
+               {
+                   Face *pFace = &mesh.faces[i];
+                   int vertexCount = 3;
+                   int first = offset + vertexCount - 1;
+                   int last = offset;
+                   for (int j = first; j >= last; j -=1)
+                   {
+                       Point3 maxUV(meshUVsFloor->get()[j].x, meshUVsFloor->get()[j].y, 0.0f);
+                       uvsToSet.push_back(maxUV);
+                   }
+
+                   offset += vertexCount;
                }
            }
 
@@ -765,6 +790,7 @@ int AlembicImport_PolyMesh(const std::string &file, const std::string &identifie
 		return alembic_failure;
 
 	// Create the tri object and place it in the scene
+    // Need to use the attach to existing import flag here 
 	TriObject *triobj = CreateNewTriObject();
     if (!triobj)
         return alembic_failure;
@@ -774,8 +800,15 @@ int AlembicImport_PolyMesh(const std::string &file, const std::string &identifie
     dataFillOptions.pIObj = &iObj;
     dataFillOptions.pTriObj = triobj;
     dataFillOptions.iFrame = 0;
-    dataFillOptions.nDataFillFlags = ALEMBIC_DATAFILL_POLYMESH_STATIC_IMPORT;
+
+    dataFillOptions.nDataFillFlags = ALEMBIC_DATAFILL_VERTEX|ALEMBIC_DATAFILL_FACELIST;
+    dataFillOptions.nDataFillFlags |= options.importNormals ? ALEMBIC_DATAFILL_NORMALS : 0;
+    dataFillOptions.nDataFillFlags |= options.importUVs ? ALEMBIC_DATAFILL_UVS : 0;
+    dataFillOptions.nDataFillFlags |= options.importBboxes ? ALEMBIC_DATAFILL_BOUNDINGBOX : 0;
+    dataFillOptions.nDataFillFlags |= options.importClusters ? ALEMBIC_DATAFILL_FACESETS : 0;
+
     dataFillOptions.nDataFillContext = ALEMBIC_FILLCONTEXT_IMPORT;
+
 	AlembicImport_FillInPolyMesh(dataFillOptions);
 
 	// Create the object node
@@ -789,6 +822,12 @@ int AlembicImport_PolyMesh(const std::string &file, const std::string &identifie
 
 	// Set the alembic id
 	pModifier->SetAlembicId(file, identifier);
+
+    // Set the update data fill flags
+    // PeterM TO DO:  We'll need to fix this after we determine if we have a dynamic topology mesh or not
+    // For now, we'll just use the import flags
+    unsigned int nUpdateDataFillFlags = dataFillOptions.nDataFillFlags;
+    pModifier->SetAlembicUpdateDataFillFlags(nUpdateDataFillFlags);
 
 	// Add the modifier to the node
 	GetCOREInterface12()->AddModifier(*node, *pModifier);
