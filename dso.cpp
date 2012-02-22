@@ -569,7 +569,8 @@ static int Init(AtNode *mynode, void **user_ptr)
                   }
                }
 
-               Alembic::AbcGeom::IPointsSchema::Sample sample;
+               Alembic::AbcGeom::IPointsSchema::Sample sampleFloor;
+               Alembic::AbcGeom::IPointsSchema::Sample sampleCeil;
 
                // now let's get all of the positions etc
                for(size_t j=0;j<minNumSamples;j++)
@@ -579,11 +580,15 @@ static int Init(AtNode *mynode, void **user_ptr)
                      typedObject.getSchema().getTimeSampling(),
                      typedObject.getSchema().getNumSamples()
                   );
-                  typedObject.getSchema().get(sample,sampleInfo.floorIndex);
+                  typedObject.getSchema().get(sampleFloor,sampleInfo.floorIndex);
+                  typedObject.getSchema().get(sampleCeil,sampleInfo.ceilIndex);
                   
-                  cloudInfo.pos.push_back(sample.getPositions());
-                  cloudInfo.vel.push_back(sample.getVelocities());
-                  cloudInfo.id.push_back(sample.getIds());
+                  cloudInfo.pos.push_back(sampleFloor.getPositions());
+                  cloudInfo.vel.push_back(sampleFloor.getVelocities());
+                  cloudInfo.id.push_back(sampleFloor.getIds());
+                  cloudInfo.pos.push_back(sampleCeil.getPositions());
+                  cloudInfo.vel.push_back(sampleCeil.getVelocities());
+                  cloudInfo.id.push_back(sampleCeil.getIds());
                }
 
                // store the widths
@@ -969,8 +974,8 @@ static AtNode *GetNode(void *user_ptr, int i)
       }
 
       // now let's take care of the transform
-      AtArray * matrices = AiArrayAllocate(1,(AtInt)info->pos.size(),AI_TYPE_MATRIX);
-      for(size_t j=0;j<info->pos.size();j++)
+      AtArray * matrices = AiArrayAllocate(1,(AtInt)ud->gMbKeys.size(),AI_TYPE_MATRIX);
+      for(size_t j=0;j<ud->gMbKeys.size();j++)
       {
          SampleInfo sampleInfo = getSampleInfo(
             ud->gMbKeys[j],
@@ -980,10 +985,20 @@ static AtNode *GetNode(void *user_ptr, int i)
 
          Alembic::Abc::M44f matrixAbc;
          matrixAbc.makeIdentity();
+         size_t floorIndex = j * 2 + 0;
+         size_t ceilIndex = j * 2 + 1;
 
          // apply translation
-         matrixAbc.setTranslation(info->pos[j]->get()[id < info->pos[j]->size() ? id : info->pos[j]->size() - 1] + 
-                                  info->vel[j]->get()[id < info->vel[j]->size() ? id : info->vel[j]->size() - 1] * (float)sampleInfo.alpha);
+         if(info->pos[floorIndex]->size() == info->pos[ceilIndex]->size())
+         {
+            matrixAbc.setTranslation(float(1.0 - sampleInfo.alpha) * info->pos[floorIndex]->get()[id < info->pos[floorIndex]->size() ? id : info->pos[floorIndex]->size() - 1] + 
+                                     float(sampleInfo.alpha) * info->pos[ceilIndex]->get()[id < info->pos[ceilIndex]->size() ? id : info->pos[ceilIndex]->size() - 1]);
+         }
+         else
+         {
+            matrixAbc.setTranslation(info->pos[floorIndex]->get()[id < info->pos[floorIndex]->size() ? id : info->pos[floorIndex]->size() - 1] + 
+                                     info->vel[floorIndex]->get()[id < info->vel[floorIndex]->size() ? id : info->vel[floorIndex]->size() - 1] * (float)sampleInfo.alpha);
+         }
 
          // now take care of rotation
          if(info->rot.size() == ud->gMbKeys.size())
@@ -1006,16 +1021,16 @@ static AtNode *GetNode(void *user_ptr, int i)
          // and finally scaling
          if(info->scale.size() == ud->gMbKeys.size() * 2)
          {
-            Alembic::Abc::V3f scalingAbc = info->scale[j*2+0]->get()[id < info->scale[j*2+0]->size() ? id : info->scale[j*2+0]->size() - 1] * 
-                                           info->width[j*2+0]->get()[id < info->width[j*2+0]->size() ? id : info->width[j*2+0]->size() - 1] * float(1.0 - sampleInfo.alpha) + 
-                                           info->scale[j*2+1]->get()[id < info->scale[j*2+1]->size() ? id : info->scale[j*2+1]->size() - 1] * 
-                                           info->width[j*2+1]->get()[id < info->width[j*2+1]->size() ? id : info->width[j*2+1]->size() - 1] * float(sampleInfo.alpha);
+            Alembic::Abc::V3f scalingAbc = info->scale[floorIndex]->get()[id < info->scale[floorIndex]->size() ? id : info->scale[floorIndex]->size() - 1] * 
+                                           info->width[floorIndex]->get()[id < info->width[floorIndex]->size() ? id : info->width[floorIndex]->size() - 1] * float(1.0 - sampleInfo.alpha) + 
+                                           info->scale[ceilIndex]->get()[id < info->scale[ceilIndex]->size() ? id : info->scale[ceilIndex]->size() - 1] * 
+                                           info->width[ceilIndex]->get()[id < info->width[ceilIndex]->size() ? id : info->width[ceilIndex]->size() - 1] * float(sampleInfo.alpha);
             matrixAbc.scale(scalingAbc);
          }
          else
          {
-            float width = info->width[j*2+0]->get()[id < info->width[j*2+0]->size() ? id : info->width[j*2+0]->size() - 1] * float(1.0 - sampleInfo.alpha) + 
-                          info->width[j*2+1]->get()[id < info->width[j*2+1]->size() ? id : info->width[j*2+1]->size() - 1] * float(sampleInfo.alpha);
+            float width = info->width[floorIndex]->get()[id < info->width[floorIndex]->size() ? id : info->width[floorIndex]->size() - 1] * float(1.0 - sampleInfo.alpha) + 
+                          info->width[ceilIndex]->get()[id < info->width[ceilIndex]->size() ? id : info->width[ceilIndex]->size() - 1] * float(sampleInfo.alpha);
             matrixAbc.scale(Alembic::Abc::V3f(width,width,width));
          }
 
