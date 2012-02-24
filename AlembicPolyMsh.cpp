@@ -6,6 +6,7 @@
 #include <Object.h>
 #include <triobj.h>
 #include <IMetaData.h>
+#include <MeshNormalSpec.h>
 #include "Utility.h"
 
 namespace AbcA = ::Alembic::AbcCoreAbstract::ALEMBIC_VERSION_NS;
@@ -91,25 +92,26 @@ bool AlembicPolyMesh::Save(double time)
     // if the node cannot be converted to a TriObject
     TimeValue ticks = GetTimeValueFromFrame(time);
     Object *obj = GetRef().node->EvalWorldState(ticks).obj;
-    TriObject *triObj = 0;
+    PolyObject *polyObj = NULL;
+    TriObject *triObj = NULL;
 
-    if (obj->CanConvertToType(Class_ID(TRIOBJ_CLASS_ID, 0)))
+    if (obj->CanConvertToType(Class_ID(POLYOBJ_CLASS_ID, 0)))
     {
-        triObj = (TriObject *) obj->ConvertToType(ticks, Class_ID(TRIOBJ_CLASS_ID, 0));
-
-        // Make sure we have a tri object
-        if (!triObj)
-            return false;
-
-        
+        polyObj = reinterpret_cast<PolyObject *>(obj->ConvertToType(ticks, Class_ID(POLYOBJ_CLASS_ID, 0)));
     }
-    else
+    else if (obj->CanConvertToType(Class_ID(TRIOBJ_CLASS_ID, 0)))
+    {
+        triObj = reinterpret_cast<TriObject *>(obj->ConvertToType(ticks, Class_ID(TRIOBJ_CLASS_ID, 0)));
+    }
+
+    // Make sure we have a poly or a tri object
+    if (polyObj == NULL && triObj == NULL)
     {
         return false;
     }
 
-	Mesh &objectMesh = triObj->GetMesh();
-    LONG vertCount = objectMesh.getNumVerts();
+    LONG vertCount = (polyObj != NULL) ? polyObj->GetMesh().VNum()
+                                       : triObj->GetMesh().getNumVerts();
 
     // prepare the bounding box
     Alembic::Abc::Box3d bbox;
@@ -117,9 +119,11 @@ bool AlembicPolyMesh::Save(double time)
     // allocate the points and normals
     posVec.resize(vertCount);
     for(LONG i=0;i<vertCount;i++)
-    {     
-        Point3 alembicPoint; 
-        ConvertMaxPointToAlembicPoint(objectMesh.getVert(i), alembicPoint);
+    {
+        Point3 &maxPoint = (polyObj != NULL) ? polyObj->GetMesh().V(i)->p
+                                             : triObj->GetMesh().getVert(i);
+        Point3 alembicPoint;
+        ConvertMaxPointToAlembicPoint(maxPoint, alembicPoint);
         posVec[i].x = static_cast<float>(alembicPoint.x);
         posVec[i].y = static_cast<float>(alembicPoint.y);
         posVec[i].z = static_cast<float>(alembicPoint.z);
@@ -162,18 +166,15 @@ bool AlembicPolyMesh::Save(double time)
 	bool dynamicTopology = static_cast<bool>(GetCurrentJob()->GetOption("exportDynamicTopology"));
 
 	// Get the entire face count and index Count for the mesh
-    LONG faceCount = objectMesh.getNumFaces();
-	LONG sampleCount = faceCount * 3;
-	
+    LONG faceCount = (polyObj != NULL) ? polyObj->GetMesh().FNum()
+                                       : triObj->GetMesh().getNumFaces();
+
 	// create an index lookup table
-	std::vector<uint32_t> sampleLookup;
-	sampleLookup.reserve(sampleCount);
-	for(int f = 0; f < objectMesh.numFaces; f += 1)
+    LONG sampleCount = 0;
+    for(int f = 0; f < faceCount; f += 1)
     {
-		for (int i = 0; i < 3; i += 1)
-		{
-			sampleLookup.push_back(objectMesh.faces[f].v[i]);
-		}
+        int degree = (polyObj != NULL) ? polyObj->GetMesh().F(f)->deg : 3;
+        sampleCount += degree;
 	}
 
     // let's check if we have user normals
@@ -181,18 +182,50 @@ bool AlembicPolyMesh::Save(double time)
     size_t normalIndexCount = 0;
     if((bool)GetCurrentJob()->GetOption("exportNormals"))
     {
-        objectMesh.buildNormals();
+        if (polyObj != NULL)
+        {
+            polyObj->GetMesh().buildNormals();
+        }
+        if (triObj != NULL)
+        {
+            triObj->GetMesh().buildNormals();
+        }
+
         normalVec.resize(sampleCount);
-      
+
         // Face and vertex normals.
         // In MAX a vertex can have more than one normal (but doesn't always have it).
-        for (int i=0; i< objectMesh.getNumFaces(); i++) 
+        for (int i = 0; i < faceCount; i++) 
         {
-            Face *f = &objectMesh.faces[i];
-            for (int j = 2; j >= 0; j -= 1)
+            int degree = (polyObj != NULL) ? polyObj->GetMesh().F(i)->deg : 3;
+            for (int j = degree-1; j >= 0; j--)
             {
-                int vertexId = f->getVert(j);
-                Point3 vertexNormal = GetVertexNormal(&objectMesh, i, objectMesh.getRVertPtr(vertexId));
+                Point3 vertexNormal;
+                if (polyObj != NULL)
+                {
+                    MNNormalSpec *normalSpec = polyObj->GetMesh().GetSpecifiedNormals();
+                    if (normalSpec != NULL)
+                    {
+                        vertexNormal = normalSpec->GetNormal(i, j);
+                    }
+                    else
+                    {
+                        vertexNormal = polyObj->GetMesh().GetFaceNormal(i);
+                    }
+                }
+                else
+                {
+                    MeshNormalSpec *normalSpec = triObj->GetMesh().GetSpecifiedNormals();
+                    if (normalSpec != NULL)
+                    {
+                        vertexNormal = normalSpec->GetNormal(i, j);
+                    }
+                    else
+                    {
+                        vertexNormal = triObj->GetMesh().getFaceNormal(i);
+                    }
+                }
+
                 Point3 vertexAlembicNormal;
                 ConvertMaxNormalToAlembicNormal(vertexNormal, vertexAlembicNormal);
                 normalVec[normalCount].x = vertexAlembicNormal.x;
@@ -259,10 +292,13 @@ bool AlembicPolyMesh::Save(double time)
          int offset = 0;
          for(LONG f=0;f<faceCount;f++)
          {
-            mFaceCountVec[f] = 3;
-			for (int i = 2; i >= 0; i -= 1)
+            int degree = (polyObj != NULL) ? polyObj->GetMesh().F(f)->deg : 3;
+            mFaceCountVec[f] = degree;
+			for (int i = degree-1; i >= 0; i -= 1)
             {
-				mFaceIndicesVec[offset++] = objectMesh.faces[f].v[i];
+                int vertIndex = (polyObj != NULL) ? polyObj->GetMesh().F(f)->vtx[i]
+                                                  : triObj->GetMesh().faces[f].v[i];
+				mFaceIndicesVec[offset++] = vertIndex;
             }
          }
 
@@ -291,36 +327,63 @@ bool AlembicPolyMesh::Save(double time)
       // also check if we need to store UV
       if((bool)GetCurrentJob()->GetOption("exportUVs"))
       {
-          if (CheckForFaceMap(GetRef().node->GetMtl(), &objectMesh)) 
-          {
-              mUvIndexVec.reserve(sampleCount);
-              for (int i=0; i<objectMesh.getNumFaces(); i++) 
-              {
-                  Point3 tv[3];
-                  Face* f = &objectMesh.faces[i];
-                  make_face_uv(f, tv);
+          mUvVec.reserve(sampleCount);
 
-                  for (int j=2; j>=0; j-=1)
+          if (polyObj != NULL)
+          {
+              MNMap *map = polyObj->GetMesh().M(1);
+
+              for (int i=0; i<faceCount; i++) 
+              {
+                  int degree = polyObj->GetMesh().F(i)->deg;
+                  for (int j = degree-1; j >= 0; j -= 1)
                   {
-                      Alembic::Abc::V2f alembicUV(tv[j].x, tv[j].y);
-                      mUvVec.push_back(alembicUV);
+                      if (map != NULL)
+                      {
+                          int vertIndex = map->F(i)->tv[j];
+                          UVVert texCoord = map->V(vertIndex);
+                          Alembic::Abc::V2f alembicUV(texCoord.x, texCoord.y);
+                          mUvVec.push_back(alembicUV);
+                      }
+                      else
+                      {
+                          Alembic::Abc::V2f alembicUV(0.0f, 0.0f);
+                          mUvVec.push_back(alembicUV);
+                      }
                   }
               }
           }
-          else if (objectMesh.mapSupport(1))
+          else if (triObj != NULL)
           {
-              mUvVec.reserve(sampleCount);
-              MeshMap &map = objectMesh.Map(1);
-
-              for (int findex =0; findex < map.fnum; findex += 1)
+              if (CheckForFaceMap(GetRef().node->GetMtl(), &triObj->GetMesh())) 
               {
-                  TVFace &texFace = map.tf[findex];
-                  for (int vindex = 2; vindex >= 0; vindex -= 1)
+                  for (int i=0; i<faceCount; i++) 
                   {
-                      int vertexid = texFace.t[vindex];
-                      UVVert uvVert = map.tv[vertexid];
-                      Alembic::Abc::V2f alembicUV(uvVert.x, uvVert.y);
-                      mUvVec.push_back(alembicUV);
+                      Point3 tv[3];
+                      Face* f = &triObj->GetMesh().faces[i];
+                      make_face_uv(f, tv);
+
+                      for (int j=2; j>=0; j-=1)
+                      {
+                          Alembic::Abc::V2f alembicUV(tv[j].x, tv[j].y);
+                          mUvVec.push_back(alembicUV);
+                      }
+                  }
+              }
+              else if (triObj->GetMesh().mapSupport(1))
+              {
+                  MeshMap &map = triObj->GetMesh().Map(1);
+
+                  for (int findex =0; findex < map.fnum; findex += 1)
+                  {
+                      TVFace &texFace = map.tf[findex];
+                      for (int vindex = 2; vindex >= 0; vindex -= 1)
+                      {
+                          int vertexid = texFace.t[vindex];
+                          UVVert uvVert = map.tv[vertexid];
+                          Alembic::Abc::V2f alembicUV(uvVert.x, uvVert.y);
+                          mUvVec.push_back(alembicUV);
+                      }
                   }
               }
           }
@@ -482,10 +545,16 @@ bool AlembicPolyMesh::Save(double time)
    // Note that the TriObject should only be deleted
    // if the pointer to it is not equal to the object
    // pointer that called ConvertToType()
-   if (obj != triObj)
+   if (polyObj != NULL && polyObj != obj)
+   {
+       delete polyObj;
+       polyObj = NULL;
+   }
+
+   if (triObj != NULL && triObj != obj)
    {
        delete triObj;
-       triObj = 0;
+       triObj = NULL;
    }
 
 	///////////////////////////////////////////////////////////////////////////////////////////////

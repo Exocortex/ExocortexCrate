@@ -17,6 +17,7 @@ typedef struct _alembic_fillmesh_options
 {
     Alembic::AbcGeom::IObject *pIObj;
     TriObject *pTriObj;
+    PolyObject *pPolyObj;
     double iFrame;
     AlembicDataFillFlags nDataFillFlags;
     AlembicFillContext nDataFillContext;
@@ -26,6 +27,7 @@ typedef struct _alembic_fillmesh_options
     {
         pIObj = 0;
         pTriObj = 0;
+        pPolyObj = 0;
         iFrame = 0;
         nDataFillFlags = 0;
         nValidityFlags = 0;
@@ -341,10 +343,22 @@ void AlembicPolyMeshModifier::ModifyObject (TimeValue t, ModContext &mc, ObjectS
 
    alembic_fillmesh_options options;
    options.pIObj = &iObj;
-   options.pTriObj = (TriObject*)os->obj;
+   options.pTriObj = NULL;
+   options.pPolyObj = NULL;
    options.iFrame = sampleTime;
    options.nDataFillFlags = m_AlembicNodeProps.m_UpdateDataFillFlags;
    options.nDataFillContext = ALEMBIC_FILLCONTEXT_UPDATE;
+
+   // Find out if we are modifying a poly object or a tri object
+   if (os->obj->CanConvertToType(Class_ID(POLYOBJ_CLASS_ID, 0)))
+   {
+      options.pPolyObj = reinterpret_cast<PolyObject *>(os->obj->ConvertToType(t, Class_ID(POLYOBJ_CLASS_ID, 0)));
+   }
+   else if (os->obj->CanConvertToType(Class_ID(TRIOBJ_CLASS_ID, 0)))
+   {
+      options.pTriObj = reinterpret_cast<TriObject *>(os->obj->ConvertToType(t, Class_ID(TRIOBJ_CLASS_ID, 0)));
+   }
+
    AlembicImport_FillInPolyMesh(options);
 
    Interval alembicValid(t, t); 
@@ -457,7 +471,6 @@ void AlembicImport_FillInPolyMesh(alembic_fillmesh_options &options)
          objSubD.getSchema().getNumSamples()
       );
 
-   Mesh &mesh = options.pTriObj->GetMesh();
    Alembic::AbcGeom::IPolyMeshSchema::Sample polyMeshSample;
    Alembic::AbcGeom::ISubDSchema::Sample subDSample;
 
@@ -487,18 +500,37 @@ void AlembicImport_FillInPolyMesh(alembic_fillmesh_options &options)
 
        if (options.nDataFillContext == ALEMBIC_FILLCONTEXT_IMPORT)
        {
-           mesh.setNumVerts((int)meshPos->size());
+           int numVerts = static_cast<int>(meshPos->size());
+           if (options.pPolyObj != NULL)
+           {
+               options.pPolyObj->GetMesh().setNumVerts(numVerts);
+           }
+           if (options.pTriObj != NULL)
+           {
+               options.pTriObj->GetMesh().setNumVerts(numVerts);
+           }
        }
        else if (options.nDataFillContext == ALEMBIC_FILLCONTEXT_UPDATE)
        {
+           int currentNumVerts = (options.pPolyObj != NULL) ? options.pPolyObj->GetMesh().numv :
+                                 (options.pTriObj != NULL) ? options.pTriObj->GetMesh().getNumVerts() : 0;
+
            // Static or topo mesh
-           if(!meshVel && mesh.getNumVerts() != meshPos->size())
+           if(!meshVel && currentNumVerts != meshPos->size())
            {
                return;
            }
-           else if (meshVel && mesh.getNumVerts() != meshPos->size())
+           else if (meshVel && currentNumVerts != meshPos->size())
            {
-               mesh.setNumVerts((int)meshPos->size());
+               int numVerts = static_cast<int>(meshPos->size());
+               if (options.pPolyObj != NULL)
+               {
+                   options.pPolyObj->GetMesh().setNumVerts(numVerts);
+               }
+               if (options.pTriObj != NULL)
+               {
+                   options.pTriObj->GetMesh().setNumVerts(numVerts);
+               }
            }
        }
 
@@ -556,55 +588,75 @@ void AlembicImport_FillInPolyMesh(alembic_fillmesh_options &options)
        {
           Point3 maxPoint;
           ConvertAlembicPointToMaxPoint(vArray[i], maxPoint);
-		  mesh.setVert(i, maxPoint.x, maxPoint.y, maxPoint.z);
+
+          int numVerts = static_cast<int>(meshPos->size());
+          if (options.pPolyObj != NULL)
+          {
+             options.pPolyObj->GetMesh().V(i)->p.Set(maxPoint.x, maxPoint.y, maxPoint.z);
+          }
+          if (options.pTriObj != NULL)
+          {
+             options.pTriObj->GetMesh().setVert(i, maxPoint.x, maxPoint.y, maxPoint.z);
+          }
        }
    }
 
+   Alembic::Abc::Int32ArraySamplePtr meshFaceCount;
+   Alembic::Abc::Int32ArraySamplePtr meshFaceIndices;
+
+   if (objMesh.valid())
+   {
+       meshFaceCount = polyMeshSample.getFaceCounts();
+       meshFaceIndices = polyMeshSample.getFaceIndices();
+   }
+   else
+   {
+       meshFaceCount = subDSample.getFaceCounts();
+       meshFaceIndices = subDSample.getFaceIndices();
+   }
+   int numFaces = static_cast<int>(meshFaceCount->size());
+
    if ( options.nDataFillFlags & ALEMBIC_DATAFILL_FACELIST )
    {
-		Alembic::Abc::Int32ArraySamplePtr meshFaceCount;
-		Alembic::Abc::Int32ArraySamplePtr meshFaceIndices;
-
-		if(objMesh.valid())
-		{
-            meshFaceCount = polyMeshSample.getFaceCounts();
-            meshFaceIndices = polyMeshSample.getFaceIndices();
-		}
-		else
-		{
-            meshFaceCount = subDSample.getFaceCounts();
-            meshFaceIndices = subDSample.getFaceIndices();
-		}
-
-        // Count the number of triangles
-        // Right now, we're only dealing with faces that are triangles, but we may have to account for higher primitives later
-        int numTriangles = 0;
-        for (size_t i = 0; i < meshFaceCount->size(); i += 1)
+        // Set up the index buffer
+        if (options.pPolyObj != NULL)
         {
-            int facecount = meshFaceCount->get()[i];
-            if( facecount != 3)
-                continue;
-
-            numTriangles += 1;
+            options.pPolyObj->GetMesh().setNumFaces(numFaces);
+        }
+        if (options.pTriObj != NULL)
+        {
+            options.pTriObj->GetMesh().setNumFaces(numFaces);
         }
 
-        // Set up the index buffer
-        mesh.setNumFaces(numTriangles);
-        for (size_t i = 0; i < meshFaceCount->size(); i += 1)
+        int offset = 0;
+        for (int i = 0; i < numFaces; ++i)
         {
-            if( meshFaceCount->get()[i] != 3)
-                continue;
+            int degree = meshFaceCount->get()[i];
+            if (options.pPolyObj != NULL)
+            {
+                MNFace *pFace = options.pPolyObj->GetMesh().F(i);
+                pFace->SetDeg(degree);
+                pFace->material = 1;
 
-            // three vertex indices of a triangle
-            int v2 =  meshFaceIndices->get()[i*3];
-            int v1 =  meshFaceIndices->get()[i*3+1];
-            int v0 =  meshFaceIndices->get()[i*3+2];
+                for (int j = degree - 1; j >= 0; --j)
+                {
+                    pFace->vtx[j] = meshFaceIndices->get()[offset];
+                    ++offset;
+                }
+            }
+            if (options.pTriObj != NULL && degree == 3)
+            {
+                // three vertex indices of a triangle
+                int v2 =  meshFaceIndices->get()[i*3];
+                int v1 =  meshFaceIndices->get()[i*3+1];
+                int v0 =  meshFaceIndices->get()[i*3+2];
 
-            // vertex positions
-            Face &face = mesh.faces[i];
-            face.setMatID(1);
-            face.setEdgeVisFlags(1, 1, 1);
-            face.setVerts(v0, v1, v2);
+                // vertex positions
+                Face &face = options.pTriObj->GetMesh().faces[i];
+                face.setMatID(1);
+                face.setEdgeVisFlags(1, 1, 1);
+                face.setVerts(v0, v1, v2);
+            }
         }
    }
 
@@ -623,11 +675,10 @@ void AlembicImport_FillInPolyMesh(alembic_fillmesh_options &options)
            if (sampleInfo.alpha != 0.0f && meshNormalsFloor->size() == meshNormalsCeil->size())
            {
                int offset = 0;
-               for (int i = 0; i < mesh.numFaces; i += 1)
+               for (int i = 0; i < numFaces; i += 1)
                {
-                   Face *pFace = &mesh.faces[i];
-                   int vertexCount = 3;
-                   int first = offset + vertexCount - 1;
+                   int degree = meshFaceCount->get()[i];
+                   int first = offset + degree - 1;
                    int last = offset;
                    for (int j = first; j >= last; j -= 1)
                    {
@@ -640,17 +691,16 @@ void AlembicImport_FillInPolyMesh(alembic_fillmesh_options &options)
                        normalsToSet.push_back(maxNormal);
                    }
 
-                   offset += vertexCount;
+                   offset += degree;
                }
            }
            else
            {
                int offset = 0;
-               for (int i = 0; i < mesh.numFaces; i += 1)
+               for (int i = 0; i < numFaces; i += 1)
                {
-                   Face *pFace = &mesh.faces[i];
-                   int vertexCount = 3;
-                   int first = offset + vertexCount - 1;
+                   int degree = meshFaceCount->get()[i];
+                   int first = offset + degree - 1;
                    int last = offset;
                    for (int j = first; j >= last; j -=1)
                    {
@@ -660,40 +710,79 @@ void AlembicImport_FillInPolyMesh(alembic_fillmesh_options &options)
                        normalsToSet.push_back(maxNormal);
                    }
 
-                   offset += vertexCount;
+                   offset += degree;
                }
            }
 
            // Set up the specify normals
-           mesh.SpecifyNormals();
-           MeshNormalSpec *normalSpec = mesh.GetSpecifiedNormals();
-           normalSpec->ClearNormals();
-           normalSpec->SetNumFaces(mesh.getNumFaces());
-           normalSpec->SetFlag(MESH_NORMAL_MODIFIER_SUPPORT, true);
-           normalSpec->SetNumNormals((int)normalsToSet.size());
-           normalSpec->SetNumFaces(mesh.getNumFaces());
-
-           for (int i = 0; i < normalsToSet.size(); i += 1)
+           if (options.pPolyObj != NULL)
            {
-               normalSpec->Normal(i) = normalsToSet[i];
-               normalSpec->SetNormalExplicit(i, true);
+               options.pPolyObj->GetMesh().SpecifyNormals();
+               MNNormalSpec *normalSpec = options.pPolyObj->GetMesh().GetSpecifiedNormals();
+               normalSpec->ClearNormals();
+               normalSpec->SetNumFaces(numFaces);
+               normalSpec->SetFlag(MESH_NORMAL_MODIFIER_SUPPORT, true);
+               normalSpec->SetNumNormals((int)normalsToSet.size());
+
+               for (int i = 0; i < normalsToSet.size(); i += 1)
+               {
+                   normalSpec->Normal(i) = normalsToSet[i];
+                   normalSpec->SetNormalExplicit(i, true);
+               }
+
+               // Set up the normal faces
+               int offset = 0;
+               for (int i =0; i < numFaces; i += 1)
+               {
+                   int degree = meshFaceCount->get()[i];
+
+                   MNNormalFace &normalFace = normalSpec->Face(i);
+                   normalFace.SetDegree(degree);
+                   normalFace.SpecifyAll();
+
+                   for (int j = 0; j < degree; ++j)
+                   {
+                       normalFace.SetNormalID(j, offset);
+                       ++offset;
+                   }
+               }
+
+               // Fill in any normals we may have not gotten specified.  Also allocates space for the RVert array
+               // which we need for doing any normal vector queries
+               normalSpec->CheckNormals();
+               options.pPolyObj->GetMesh().checkNormals(TRUE);
            }
 
-           // Set up the normal faces
-           for (int i =0; i < mesh.numFaces; i += 1)
+           if (options.pTriObj != NULL)
            {
-               Face *pFace = &mesh.faces[i];
-               MeshNormalFace &normalFace = normalSpec->Face(i);
-               normalFace.SpecifyAll();
-               normalFace.SetNormalID(0, i*3);
-               normalFace.SetNormalID(1, i*3+1);
-               normalFace.SetNormalID(2, i*3+2);
+               options.pTriObj->GetMesh().SpecifyNormals();
+               MeshNormalSpec *normalSpec = options.pTriObj->GetMesh().GetSpecifiedNormals();
+               normalSpec->ClearNormals();
+               normalSpec->SetNumFaces(numFaces);
+               normalSpec->SetFlag(MESH_NORMAL_MODIFIER_SUPPORT, true);
+               normalSpec->SetNumNormals((int)normalsToSet.size());
+
+               for (int i = 0; i < normalsToSet.size(); i += 1)
+               {
+                   normalSpec->Normal(i) = normalsToSet[i];
+                   normalSpec->SetNormalExplicit(i, true);
+               }
+
+               // Set up the normal faces
+               for (int i =0; i < numFaces; i += 1)
+               {
+                   MeshNormalFace &normalFace = normalSpec->Face(i);
+                   normalFace.SpecifyAll();
+                   normalFace.SetNormalID(0, i*3);
+                   normalFace.SetNormalID(1, i*3+1);
+                   normalFace.SetNormalID(2, i*3+2);
+               }
+
+               // Fill in any normals we may have not gotten specified.  Also allocates space for the RVert array
+               // which we need for doing any normal vector queries
+               normalSpec->CheckNormals();
+               options.pTriObj->GetMesh().checkNormals(TRUE);
            }
-           
-           // Fill in any normals we may have not gotten specified.  Also allocates space for the RVert array
-           // which we need for doing any normal vector queries
-           normalSpec->CheckNormals();
-           mesh.checkNormals(TRUE);
        }
    }
 
@@ -722,11 +811,10 @@ void AlembicImport_FillInPolyMesh(alembic_fillmesh_options &options)
            if (sampleInfo.alpha != 0.0f && meshUVsFloor->size() == meshUVsCeil->size())
            {
                int offset = 0;
-               for (int i = 0; i < mesh.numFaces; i += 1)
+               for (int i = 0; i < numFaces; i += 1)
                {
-                   Face *pFace = &mesh.faces[i];
-                   int vertexCount = 3;
-                   int first = offset + vertexCount - 1;
+                   int degree = meshFaceCount->get()[i];
+                   int first = offset + degree - 1;
                    int last = offset;
                    for (int j = first; j >= last; j -= 1)
                    {
@@ -737,17 +825,16 @@ void AlembicImport_FillInPolyMesh(alembic_fillmesh_options &options)
                        uvsToSet.push_back(maxUV);
                    }
 
-                   offset += vertexCount;
+                   offset += degree;
                }
            }
            else
            {
                int offset = 0;
-               for (int i = 0; i < mesh.numFaces; i += 1)
+               for (int i = 0; i < numFaces; i += 1)
                {
-                   Face *pFace = &mesh.faces[i];
-                   int vertexCount = 3;
-                   int first = offset + vertexCount - 1;
+                   int degree = meshFaceCount->get()[i];
+                   int first = offset + degree - 1;
                    int last = offset;
                    for (int j = first; j >= last; j -=1)
                    {
@@ -755,31 +842,93 @@ void AlembicImport_FillInPolyMesh(alembic_fillmesh_options &options)
                        uvsToSet.push_back(maxUV);
                    }
 
-                   offset += vertexCount;
+                   offset += degree;
                }
            }
 
+
            // Set up the default texture map channel
-           mesh.setNumMaps(2);
-           mesh.setMapSupport(1, TRUE);
-           MeshMap &map = mesh.Map(1);
-           map.setNumVerts((int)uvsToSet.size());
-           map.setNumFaces(mesh.getNumFaces());
+           if (options.pPolyObj != NULL)
+           {
+               int numVertices = static_cast<int>(uvsToSet.size());
 
-           // Set the map texture vertices
-           for (int i = 0; i < uvsToSet.size(); i += 1)
-                map.tv[i] = uvsToSet[i];
+               options.pPolyObj->GetMesh().SetMapNum(2);
+               options.pPolyObj->GetMesh().InitMap(0);
+               options.pPolyObj->GetMesh().InitMap(1);
+               MNMap *map = options.pPolyObj->GetMesh().M(1);
+               map->setNumVerts(numVertices);
+               map->setNumFaces(numFaces);
 
-           // Set up the map texture faces
-           for (int i =0; i < mesh.numFaces; i += 1)
-               map.tf[i].setTVerts(i*3, i*3+1, i*3+2);
+               for (int i = 0; i < numVertices; i += 1)
+               {
+                   map->v[i] = uvsToSet[i];
+               }
+
+               int offset = 0;
+               for (int i =0; i < numFaces; i += 1)
+               {
+                   int degree = options.pPolyObj->GetMesh().F(i)->deg;
+                   map->f[i].SetSize(degree);
+
+                   for (int j = degree-1; j >= 0; j -= 1)
+                   {
+                       map->f[i].tv[j] = offset;
+                       ++offset;
+                   }
+               }
+           }
+           
+           if (options.pTriObj != NULL)
+           {
+               options.pTriObj->GetMesh().setNumMaps(2);
+               options.pTriObj->GetMesh().setMapSupport(1, TRUE);
+               MeshMap &map = options.pTriObj->GetMesh().Map(1);
+               map.setNumVerts((int)uvsToSet.size());
+               map.setNumFaces(numFaces);
+
+               // Set the map texture vertices
+               for (int i = 0; i < uvsToSet.size(); i += 1)
+                    map.tv[i] = uvsToSet[i];
+
+               // Set up the map texture faces
+               for (int i =0; i < numFaces; i += 1)
+                   map.tf[i].setTVerts(i*3, i*3+1, i*3+2);
+           }
        }
    }
-   
-   // mesh.InvalidateGeomCache();
-   // mesh.InvalidateTopologyCache();
 
-   AlembicDebug_PrintMeshData(mesh);
+   if (options.nDataFillContext == ALEMBIC_FILLCONTEXT_IMPORT)
+   {
+       if (options.pPolyObj != NULL)
+       {
+           options.pPolyObj->GetMesh().InvalidateGeomCache();
+           options.pPolyObj->GetMesh().InvalidateTopoCache();
+       }
+
+       if (options.pTriObj != NULL)
+       {
+           options.pTriObj->GetMesh().InvalidateGeomCache();
+           options.pTriObj->GetMesh().InvalidateTopologyCache();
+       }
+   }
+}
+
+bool AlembicImport_IsPolyObject(Alembic::AbcGeom::IPolyMeshSchema::Sample &polyMeshSample)
+{
+    Alembic::Abc::Int32ArraySamplePtr meshFaceCount = polyMeshSample.getFaceCounts();
+
+    // Go through each face and check the number of vertices.  If a face does not have 3 vertices,
+    // we consider it to be a polymesh, otherwise it is a triangle mesh
+    for (size_t i = 0; i < meshFaceCount->size(); ++i)
+    {
+        int vertexCount = meshFaceCount->get()[i];
+        if (vertexCount != 3)
+        {
+            return true;
+        }
+    }
+
+    return false;
 }
 
 int AlembicImport_PolyMesh(const std::string &file, const std::string &identifier, alembic_importoptions &options)
@@ -789,16 +938,11 @@ int AlembicImport_PolyMesh(const std::string &file, const std::string &identifie
 	if(!iObj.valid())
 		return alembic_failure;
 
-	// Create the tri object and place it in the scene
-    // Need to use the attach to existing import flag here 
-	TriObject *triobj = CreateNewTriObject();
-    if (!triobj)
-        return alembic_failure;
-
 	// Fill in the mesh
     alembic_fillmesh_options dataFillOptions;
     dataFillOptions.pIObj = &iObj;
-    dataFillOptions.pTriObj = triobj;
+    dataFillOptions.pTriObj = NULL;
+    dataFillOptions.pPolyObj = NULL;
     dataFillOptions.iFrame = 0;
 
     dataFillOptions.nDataFillFlags = ALEMBIC_DATAFILL_VERTEX|ALEMBIC_DATAFILL_FACELIST;
@@ -808,17 +952,51 @@ int AlembicImport_PolyMesh(const std::string &file, const std::string &identifie
     dataFillOptions.nDataFillFlags |= options.importClusters ? ALEMBIC_DATAFILL_FACESETS : 0;
 
     dataFillOptions.nDataFillContext = ALEMBIC_FILLCONTEXT_IMPORT;
+    // Create the poly or tri object and place it in the scene
+    // Need to use the attach to existing import flag here 
+    Object *newObject = NULL;
+
+    if (!Alembic::AbcGeom::IPolyMesh::matches(iObj.getMetaData()))
+    {
+        return alembic_failure;
+    }
+
+    Alembic::AbcGeom::IPolyMesh objMesh = Alembic::AbcGeom::IPolyMesh(iObj, Alembic::Abc::kWrapExisting);
+    if (!objMesh.valid())
+    {
+        return alembic_failure;
+    }
+
+    // TODO: Do we need to check more than the first sample?
+    Alembic::AbcGeom::IPolyMeshSchema::Sample polyMeshSample;
+    objMesh.getSchema().get(polyMeshSample, 0);
+
+    if (AlembicImport_IsPolyObject(polyMeshSample))
+    {
+        dataFillOptions.pPolyObj = CreateEditablePolyObject();
+	    newObject = dataFillOptions.pPolyObj;
+    }
+    else
+    {
+        dataFillOptions.pTriObj = CreateNewTriObject();
+	    newObject = dataFillOptions.pTriObj;
+    }
+
+    if (newObject == NULL)
+    {
+        return alembic_failure;
+    }
 
 	AlembicImport_FillInPolyMesh(dataFillOptions);
 
 	// Create the object node
-	INode *node = GetCOREInterface12()->CreateObjectNode(triobj, iObj.getName().c_str());
+	INode *node = GetCOREInterface12()->CreateObjectNode(newObject, iObj.getName().c_str());
 	if (!node)
 		return alembic_failure;
 
 	// Create the polymesh modifier
 	AlembicPolyMeshModifier *pModifier = static_cast<AlembicPolyMeshModifier*>
-		(GetCOREInterface()->CreateInstance(OSM_CLASS_ID, EXOCORTEX_ALEMBIC_POLYMESH_MODIFIER_ID));
+		(GetCOREInterface12()->CreateInstance(OSM_CLASS_ID, EXOCORTEX_ALEMBIC_POLYMESH_MODIFIER_ID));
 
 	// Set the alembic id
 	pModifier->SetAlembicId(file, identifier);
@@ -833,7 +1011,7 @@ int AlembicImport_PolyMesh(const std::string &file, const std::string &identifie
 	GetCOREInterface12()->AddModifier(*node, *pModifier);
 
     // Add the new inode to our current scene list
-    SceneEntry *pEntry = options.sceneEnumProc.Append(node, triobj, OBTYPE_MESH, &std::string(iObj.getFullName())); 
+    SceneEntry *pEntry = options.sceneEnumProc.Append(node, newObject, OBTYPE_MESH, &std::string(iObj.getFullName())); 
     options.currentSceneList.Append(pEntry);
 
     // Set up any child links for this node
