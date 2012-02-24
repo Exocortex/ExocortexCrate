@@ -133,6 +133,10 @@ bool AlembicWriteJob::PreProcess()
     // create object for each
     for (ObjectEntry *object = mSelection.head; object != NULL; object = object->next) 
     {
+        // Only export selected objects if told
+        if (GetOption("exportSelected") && !object->entry->node->Selected())
+            continue;
+
         int type = object->entry->type;
 		if (type == OBTYPE_MESH) 
         {

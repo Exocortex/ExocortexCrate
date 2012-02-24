@@ -37,7 +37,9 @@ SceneEnumProc::~SceneEnumProc()
 int SceneEnumProc::callback(INode *node) 
 {
 	Object *obj = node->EvalWorldState(time).obj;
-	if (obj->CanConvertToType(triObjectClassID)) 
+
+	if (obj->CanConvertToType(polyObjectClassID) || 
+        obj->CanConvertToType(triObjectClassID)) 
     {
 		Append(node, obj, OBTYPE_MESH, 0);
 		mtlList->AddMtl(node->GetMtl());
