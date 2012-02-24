@@ -50,14 +50,19 @@ std::string buildIdentifierFromRef(const SceneEntry &in_Ref)
 {
    std::string result;
    INode *pNode = in_Ref.node;
-   while(pNode)
-   {
-       result = std::string("/")+ std::string(pNode->GetName()) + result;
-       result = std::string("/")+ std::string(pNode->GetName()) + std::string("Xfo") + result;
-       pNode = pNode->GetParentNode();
 
-       if (pNode->IsRootNode())
-           break;
+   // Build the base string
+   result = std::string("/")+ std::string(pNode->GetName()) + result;
+   result = std::string("/")+ std::string(pNode->GetName()) + std::string("Xfo") + result;
+
+   // Look for any nodes that we might add to the alembic hiearchy
+   pNode = pNode->GetParentNode();
+   while(pNode && !pNode->IsRootNode())
+   {
+       if (IsModelTransformNode(pNode))
+           result = std::string("/")+ std::string(pNode->GetName()) + std::string("Xfo") + result;
+       
+       pNode = pNode->GetParentNode();
    }
 
    return result;
@@ -248,4 +253,67 @@ void ConvertAlembicNormalToMaxNormal( const Point3 &alembicPoint, Point3 &result
 {
     result = Point3(alembicPoint.x, -alembicPoint.z, alembicPoint.y);
     result = result.Normalize();
+}
+
+bool CheckIfNodeIsAnimated( INode *pNode )
+{
+    INode *pAnimatedNode = pNode;
+    while (pAnimatedNode)
+    {
+        if (pAnimatedNode->IsRootNode())
+            return false;
+
+        if (pAnimatedNode->IsAnimated())
+            return true;
+
+        pAnimatedNode = pAnimatedNode->GetParentNode();
+    }
+
+    return false;
+}
+
+bool IsModelTransformNode( INode *pNode )
+{
+    return false;
+}
+
+INode *GetParentModelTransformNode( INode *pNode )
+{
+    INode *pModelTransformNode = pNode;
+
+    while (pModelTransformNode)
+    {
+        pModelTransformNode = pModelTransformNode->GetParentNode();
+
+        if (pModelTransformNode->IsRootNode())
+            return 0;
+
+        if (IsModelTransformNode(pModelTransformNode))
+            return pModelTransformNode;
+    }
+
+    return 0;
+}
+
+void LockNodeTransform(INode *pNode, bool bLock)
+{
+    if (pNode)
+    {
+        BOOL bBigBoolLock = bLock ? TRUE:FALSE;
+
+        // Position
+        pNode->SetTransformLock(INODE_LOCKPOS, INODE_LOCK_X, bBigBoolLock);
+        pNode->SetTransformLock(INODE_LOCKPOS, INODE_LOCK_Y, bBigBoolLock);
+        pNode->SetTransformLock(INODE_LOCKPOS, INODE_LOCK_Z, bBigBoolLock);
+
+         // Rotation
+        pNode->SetTransformLock(INODE_LOCKROT, INODE_LOCK_X, bBigBoolLock);
+        pNode->SetTransformLock(INODE_LOCKROT, INODE_LOCK_Y, bBigBoolLock);
+        pNode->SetTransformLock(INODE_LOCKROT, INODE_LOCK_Z, bBigBoolLock);
+
+         // Scale
+        pNode->SetTransformLock(INODE_LOCKSCL, INODE_LOCK_X, bBigBoolLock);
+        pNode->SetTransformLock(INODE_LOCKSCL, INODE_LOCK_Y, bBigBoolLock);
+        pNode->SetTransformLock(INODE_LOCKSCL, INODE_LOCK_Z, bBigBoolLock);
+    }
 }

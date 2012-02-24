@@ -39,5 +39,11 @@ void ConvertAlembicPointToMaxPoint( const Point3 &alembicPoint, Point3 &result);
 void ConvertMaxNormalToAlembicNormal( const Point3 &maxPoint, Point3 &result);
 void ConvertAlembicNormalToMaxNormal( const Point3 &alembicPoint, Point3 &result);
 
+// Utility functions for working on INodes
+bool CheckIfNodeIsAnimated( INode *pNode );
+bool IsModelTransformNode( INode *pNode );
+INode *GetParentModelTransformNode( INode *pNode );
+void LockNodeTransform(INode *pNode, bool bLock);
+
 
 #endif  // _FOUNDATION_H_

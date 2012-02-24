@@ -306,7 +306,7 @@ Interval AlembicXFormModifier::GetValidity (TimeValue t)
 
 void AlembicXFormModifier::ModifyObject (TimeValue t, ModContext &mc, ObjectState *os, INode *node) 
 {
-	Interval ivalid=os->obj->ObjectValidity (t);
+	Interval ivalid=os->obj->ObjectValidity (t);    
 
     Alembic::AbcGeom::IObject iObj = getObjectFromArchive(m_AlembicNodeProps.m_File, m_AlembicNodeProps.m_Identifier);
     
@@ -332,13 +332,12 @@ void AlembicXFormModifier::ModifyObject (TimeValue t, ModContext &mc, ObjectStat
     Alembic::Abc::M44d matrix = sample.getMatrix();
 
     // blend - need to reconfigure this possibly, doesn't seem to make sense to lerp a matrix
-    /*if(sampleInfo.alpha != 0.0)
+    if(sampleInfo.alpha != 0.0)
     {
         obj.getSchema().get(sample,sampleInfo.ceilIndex);
         Alembic::Abc::M44d ceilMatrix = sample.getMatrix();
         matrix = (1.0 - sampleInfo.alpha) * matrix + sampleInfo.alpha * ceilMatrix;
     }
-    */
 
     Matrix3 objMatrix(
         Point3(matrix.getValue()[0], matrix.getValue()[1], matrix.getValue()[2]),
@@ -346,10 +345,8 @@ void AlembicXFormModifier::ModifyObject (TimeValue t, ModContext &mc, ObjectStat
         Point3(matrix.getValue()[8], matrix.getValue()[9], matrix.getValue()[10]),
         Point3(matrix.getValue()[12], matrix.getValue()[13], matrix.getValue()[14]));
     
-    AlembicDebug_PrintTransform(objMatrix);
     Matrix3 maxMatrix;
     ConvertAlembicMatrixToMaxMatrix(objMatrix, maxMatrix);
-    AlembicDebug_PrintTransform(maxMatrix);
 
     Interval alembicValid(t, t); 
     ivalid = alembicValid;
@@ -501,6 +498,9 @@ int AlembicImport_XForm(const std::string &file, const std::string &identifier, 
 
 	// Add the modifier to the node
 	GetCOREInterface12()->AddModifier(*pNode, *pModifier);
+
+    // Lock the transform
+    LockNodeTransform(pNode, true);
 
 	return alembic_success;
 }

@@ -412,6 +412,7 @@ void AlembicImport_SetupChildLinks( Alembic::Abc::IObject &obj, alembic_importop
             Alembic::Abc::IObject childObj = obj.getChild(i);
             INode *pChildNode = options.currentSceneList.FindNodeWithName(std::string(childObj.getName()));
 
+            // PeterM: This will need to be rethought out on how this works
             if (pChildNode)
                 pParentNode->AttachChild(pChildNode, 0);
         }

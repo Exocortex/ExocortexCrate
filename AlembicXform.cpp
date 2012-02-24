@@ -14,7 +14,7 @@ void SaveXformSample(const SceneEntry &in_Ref, Alembic::AbcGeom::OXformSchema &s
     // check if the transform is animated
     if(schema.getNumSamples() > 0)
     {
-        if (!in_Ref.node->IsAnimated())
+        if (!CheckIfNodeIsAnimated(in_Ref.node))
         {
             // No need to save transform after first frame for non-animated objects. 
             return;
@@ -24,33 +24,23 @@ void SaveXformSample(const SceneEntry &in_Ref, Alembic::AbcGeom::OXformSchema &s
     // JSS : To validate, I am currently assuming that the ObjectTM is what we are seeking. This may be wrong. 
     // Model transform
     TimeValue ticks = GetTimeValueFromFrame(time);
-    // Matrix3 transformation = in_Ref.node->GetNodeTM(ticks) * Inverse(in_Ref.node->GetParentTM(ticks));
-    Matrix3 transformation = in_Ref.node->GetObjectTM(ticks);
+    
+    Matrix3 transformation = in_Ref.node->GetObjTMAfterWSM(ticks);
+    INode *pModelTransformParent = GetParentModelTransformNode(in_Ref.node);
+
+    if (pModelTransformParent)
+    {
+        Matrix3 ModelParentTM = pModelTransformParent->GetObjTMAfterWSM(ticks);
+        transformation = transformation * Inverse(ModelParentTM);
+    }
 
     // Convert the max transform to alembic
     Matrix3 alembicMatrix;
-    AlembicDebug_PrintTransform(transformation);
     ConvertMaxMatrixToAlembicMatrix(transformation, alembicMatrix);
-    AlembicDebug_PrintTransform(alembicMatrix);
     Alembic::Abc::M44d iMatrix( alembicMatrix.GetRow(0).x,  alembicMatrix.GetRow(0).y,  alembicMatrix.GetRow(0).z,  0,
                                 alembicMatrix.GetRow(1).x,  alembicMatrix.GetRow(1).y,  alembicMatrix.GetRow(1).z,  0,
                                 alembicMatrix.GetRow(2).x,  alembicMatrix.GetRow(2).y,  alembicMatrix.GetRow(2).z,  0,
                                 alembicMatrix.GetRow(3).x,  alembicMatrix.GetRow(3).y,  alembicMatrix.GetRow(3).z,  1);
-
-    // store the transform
-    /*sample.setTranslation(Imath::V3d(transformation.GetTrans().x,transformation.GetTrans().y,transformation.GetTrans().z));
-
-    float rotX = 0.0f;
-    float rotY = 0.0f;
-    float rotZ = 0.0f;
-    transformation.GetYawPitchRoll(&rotY, &rotX, &rotZ);
-    sample.setRotation(Imath::V3d(1,0,0), rotX * 180.0 / M_PI);
-    sample.setRotation(Imath::V3d(0,1,0), rotY * 180.0 / M_PI);
-    sample.setRotation(Imath::V3d(0,0,1), rotZ * 180.0 / M_PI);
-
-    // JSS: TODO Get Rotation and Scale
-    sample.setScale(Imath::V3d(1,1,1));
-    */
 
     // save the sample
     sample.setMatrix(iMatrix);
