@@ -141,15 +141,9 @@ proc exocortexAlembicImport(string $filename)
                     $xform = `listRelatives -p $shape`;
                     $shape = `rename -ignoreShape $xform[0] $name`;
                     $reader = createNode("ExocortexAlembicXform");
-                    connectAttr ($reader+".translateX") ($shape+".translateX");
-                    connectAttr ($reader+".translateY") ($shape+".translateY");
-                    connectAttr ($reader+".translateZ") ($shape+".translateZ");
-                    connectAttr ($reader+".rotateX") ($shape+".rotateX");
-                    connectAttr ($reader+".rotateY") ($shape+".rotateY");
-                    connectAttr ($reader+".rotateZ") ($shape+".rotateZ");
-                    connectAttr ($reader+".scaleX") ($shape+".scaleX");
-                    connectAttr ($reader+".scaleY") ($shape+".scaleY");
-                    connectAttr ($reader+".scaleZ") ($shape+".scaleZ");
+                    connectAttr ($reader+".translate") ($shape+".translate");
+                    connectAttr ($reader+".rotate") ($shape+".rotate");
+                    connectAttr ($reader+".scale") ($shape+".scale");
                     break;
                 }
             }
@@ -161,15 +155,9 @@ proc exocortexAlembicImport(string $filename)
             // find all xforms below this
             $shape = `createNode -name $name "transform"`;
             $reader = createNode("ExocortexAlembicXform");
-            connectAttr ($reader+".translateX") ($shape+".translateX");
-            connectAttr ($reader+".translateY") ($shape+".translateY");
-            connectAttr ($reader+".translateZ") ($shape+".translateZ");
-            connectAttr ($reader+".rotateX") ($shape+".rotateX");
-            connectAttr ($reader+".rotateY") ($shape+".rotateY");
-            connectAttr ($reader+".rotateZ") ($shape+".rotateZ");
-            connectAttr ($reader+".scaleX") ($shape+".scaleX");
-            connectAttr ($reader+".scaleY") ($shape+".scaleY");
-            connectAttr ($reader+".scaleZ") ($shape+".scaleZ");
+            connectAttr ($reader+".translate") ($shape+".translate");
+            connectAttr ($reader+".rotate") ($shape+".rotate");
+            connectAttr ($reader+".scale") ($shape+".scale");
 
             for($j=$i+1;$j<size($identifiers);$j=$j+1)
             {

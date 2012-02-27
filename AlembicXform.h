@@ -44,12 +44,15 @@ private:
    static MObject mOutTranslateXAttr;
    static MObject mOutTranslateYAttr;
    static MObject mOutTranslateZAttr;
+   static MObject mOutTranslateAttr;
    static MObject mOutRotateXAttr;
    static MObject mOutRotateYAttr;
    static MObject mOutRotateZAttr;
+   static MObject mOutRotateAttr;
    static MObject mOutScaleXAttr;
    static MObject mOutScaleYAttr;
    static MObject mOutScaleZAttr;
+   static MObject mOutScaleAttr;
 };
 
 #endif
