@@ -81,7 +81,7 @@ MStatus AlembicXformNode::initialize()
    MObject emptyStringObject = emptyStringData.create("");
 
    // input time
-   mTimeAttr = uAttr.create("time", "tm", MFnUnitAttribute::kTime, 0.0);
+   mTimeAttr = uAttr.create("inTime", "tm", MFnUnitAttribute::kTime, 0.0);
    status = uAttr.setStorable(true);
    status = uAttr.setKeyable(true);
    status = addAttribute(mTimeAttr);
