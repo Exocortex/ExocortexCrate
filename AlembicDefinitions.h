@@ -13,14 +13,14 @@ const unsigned int ALEMBIC_DATAFILL_UVS = 8;
 const unsigned int ALEMBIC_DATAFILL_BOUNDINGBOX = 16;
 const unsigned int ALEMBIC_DATAFILL_FACESETS = 32;
 const unsigned int ALEMBIC_DATAFILL_BINDPOSE = 64;
-const unsigned int ALEMBIC_DATAFILL_POINT_VELOCITY = 128;
 
-enum AlembicFillContext
+/*enum AlembicFillContext
 {
     ALEMBIC_FILLCONTEXT_IMPORT,
     ALEMBIC_FILLCONTEXT_UPDATE,
     ALEMBIC_FILLCONTEXT_NONE
 };
+*/
 
 enum MeshTopologyType
 {

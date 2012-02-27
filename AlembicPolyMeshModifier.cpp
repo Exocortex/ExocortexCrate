@@ -20,7 +20,6 @@ typedef struct _alembic_fillmesh_options
     PolyObject *pPolyObj;
     double iFrame;
     AlembicDataFillFlags nDataFillFlags;
-    AlembicFillContext nDataFillContext;
     unsigned int nValidityFlags;
 
     _alembic_fillmesh_options()
@@ -31,15 +30,10 @@ typedef struct _alembic_fillmesh_options
         iFrame = 0;
         nDataFillFlags = 0;
         nValidityFlags = 0;
-        nDataFillContext = ALEMBIC_FILLCONTEXT_NONE;
     }
 } alembic_fillmesh_options;
 
 void AlembicImport_FillInPolyMesh(alembic_fillmesh_options &options);
-
-static GenSubObjType SOT_Vertex(1);
-static GenSubObjType SOT_Edge(2);
-static GenSubObjType SOT_Face(4);
 
 class AlembicPolyMeshModifier : public Modifier {
 public:
@@ -60,11 +54,11 @@ public:
 	// From modifier
 	ChannelMask ChannelsUsed()  { return TOPO_CHANNEL|GEOM_CHANNEL|TEXMAP_CHANNEL; }
 	ChannelMask ChannelsChanged() { return TOPO_CHANNEL|GEOM_CHANNEL|TEXMAP_CHANNEL; }
-	Class_ID InputType() { return triObjectClassID; }
+	Class_ID InputType() { return polyObjectClassID; }
 	void ModifyObject (TimeValue t, ModContext &mc, ObjectState *os, INode *node);
 	Interval LocalValidity(TimeValue t) { return GetValidity(t); }
 	Interval GetValidity (TimeValue t);
-	BOOL DependOnTopology(ModContext &mc) { return FALSE; }
+	BOOL DependOnTopology(ModContext &mc) { return TRUE; }
 
 	// From BaseObject
 	CreateMouseCallBack* GetCreateMouseCallBack() {return NULL;} 
@@ -87,12 +81,6 @@ public:
 
 	RefResult NotifyRefChanged( Interval changeInt,RefTargetHandle hTarget, 
 		PartID& partID, RefMessage message);
-
-	// void Convert (PolyObject *obj, TimeValue t, Mesh & m, Interval & ivalid);
-	// void Convert (TriObject *obj, TimeValue t, Mesh & m, Interval & ivalid);
-	// void Convert (PatchObject *obj, TimeValue t, Mesh & m, Interval & ivalid);
-
-	int UI2SelLevel(int selLevel);
 private:
     alembic_nodeprops m_AlembicNodeProps;
 public:
@@ -347,26 +335,33 @@ void AlembicPolyMeshModifier::ModifyObject (TimeValue t, ModContext &mc, ObjectS
    options.pPolyObj = NULL;
    options.iFrame = sampleTime;
    options.nDataFillFlags = m_AlembicNodeProps.m_UpdateDataFillFlags;
-   options.nDataFillContext = ALEMBIC_FILLCONTEXT_UPDATE;
 
    // Find out if we are modifying a poly object or a tri object
    if (os->obj->CanConvertToType(Class_ID(POLYOBJ_CLASS_ID, 0)))
    {
       options.pPolyObj = reinterpret_cast<PolyObject *>(os->obj->ConvertToType(t, Class_ID(POLYOBJ_CLASS_ID, 0)));
+    
+      if (os->obj != options.pPolyObj)
+          os->obj = options.pPolyObj;
+
    }
    else if (os->obj->CanConvertToType(Class_ID(TRIOBJ_CLASS_ID, 0)))
    {
       options.pTriObj = reinterpret_cast<TriObject *>(os->obj->ConvertToType(t, Class_ID(TRIOBJ_CLASS_ID, 0)));
+
+       if (os->obj != options.pTriObj)
+          os->obj = options.pTriObj;
    }
 
    AlembicImport_FillInPolyMesh(options);
 
    Interval alembicValid(t, t); 
    ivalid = alembicValid;
-    
-    // update the validity channel
-    os->obj->UpdateValidity(TOPO_CHANNEL, ivalid);
-    os->obj->UpdateValidity(GEOM_CHANNEL, ivalid);
+
+   // update the validity channel
+   os->obj->UpdateValidity(TOPO_CHAN_NUM, ivalid);
+   os->obj->UpdateValidity(GEOM_CHAN_NUM, ivalid);
+   os->obj->UpdateValidity(TEXMAP_CHAN_NUM, ivalid);
 }
 
 void AlembicPolyMeshModifier::BeginEditParams (IObjParam  *ip, ULONG flags, Animatable *prev) {
@@ -484,21 +479,30 @@ void AlembicImport_FillInPolyMesh(alembic_fillmesh_options &options)
 	   Alembic::Abc::P3fArraySamplePtr meshPos;
        Alembic::Abc::V3fArraySamplePtr meshVel;
 
+       bool hasDynamicTopo = false;
        if(objMesh.valid())
-           meshPos = polyMeshSample.getPositions();
-       else
-           meshPos = subDSample.getPositions();
-
-       // Check for morph targets
-       if (options.nDataFillFlags & ALEMBIC_DATAFILL_POINT_VELOCITY)
        {
-           if(objMesh.valid())
-               meshVel = polyMeshSample.getVelocities();
-           else
-               meshVel = subDSample.getVelocities();
+           meshPos = polyMeshSample.getPositions();
+           meshVel = polyMeshSample.getVelocities();
+
+           Alembic::Abc::IInt32ArrayProperty faceCountProp = Alembic::Abc::IInt32ArrayProperty(objMesh.getSchema(),".faceCounts");
+           if(faceCountProp.valid())
+               hasDynamicTopo = !faceCountProp.isConstant();
+       }
+       else
+       {
+           meshPos = subDSample.getPositions();
+           meshVel = subDSample.getVelocities();
+
+           Alembic::Abc::IInt32ArrayProperty faceCountProp = Alembic::Abc::IInt32ArrayProperty(objSubD.getSchema(),".faceCounts");
+           if(faceCountProp.valid())
+               hasDynamicTopo = !faceCountProp.isConstant();
        }
 
-       if (options.nDataFillContext == ALEMBIC_FILLCONTEXT_IMPORT)
+       int currentNumVerts = (options.pPolyObj != NULL) ? options.pPolyObj->GetMesh().numv :
+           (options.pTriObj != NULL) ? options.pTriObj->GetMesh().getNumVerts() : 0;
+
+       if (currentNumVerts != meshPos->size())
        {
            int numVerts = static_cast<int>(meshPos->size());
            if (options.pPolyObj != NULL)
@@ -509,32 +513,9 @@ void AlembicImport_FillInPolyMesh(alembic_fillmesh_options &options)
            {
                options.pTriObj->GetMesh().setNumVerts(numVerts);
            }
-       }
-       else if (options.nDataFillContext == ALEMBIC_FILLCONTEXT_UPDATE)
-       {
-           int currentNumVerts = (options.pPolyObj != NULL) ? options.pPolyObj->GetMesh().numv :
-                                 (options.pTriObj != NULL) ? options.pTriObj->GetMesh().getNumVerts() : 0;
+       } 
 
-           // Static or topo mesh
-           if(!meshVel && currentNumVerts != meshPos->size())
-           {
-               return;
-           }
-           else if (meshVel && currentNumVerts != meshPos->size())
-           {
-               int numVerts = static_cast<int>(meshPos->size());
-               if (options.pPolyObj != NULL)
-               {
-                   options.pPolyObj->GetMesh().setNumVerts(numVerts);
-               }
-               if (options.pTriObj != NULL)
-               {
-                   options.pTriObj->GetMesh().setNumVerts(numVerts);
-               }
-           }
-       }
-
-	   std::vector<Point3> vArray;
+       std::vector<Point3> vArray;
 	   vArray.reserve(meshPos->size());
 	   for(size_t i=0;i<meshPos->size();i++)
 		  vArray.push_back(Point3(meshPos->get()[i].x,meshPos->get()[i].y,meshPos->get()[i].z));
@@ -551,7 +532,7 @@ void AlembicImport_FillInPolyMesh(alembic_fillmesh_options &options)
               objMesh.getSchema().get(polyMeshSample2,sampleInfo.ceilIndex);
               meshPos = polyMeshSample2.getPositions();
              
-              if(meshPos->size() == vArray.size())
+              if(meshPos->size() == vArray.size() && !hasDynamicTopo)
                   bSampleInterpolate = true;
               else if(meshVel && meshVel->size() == meshPos->size())
                   bVelInterpolate = true;
@@ -584,7 +565,7 @@ void AlembicImport_FillInPolyMesh(alembic_fillmesh_options &options)
           }
 	   }
 
-	   for(int i=0;i<meshPos->size();i++)
+	   for(int i=0;i<vArray.size();i++)
        {
           Point3 maxPoint;
           ConvertAlembicPointToMaxPoint(vArray[i], maxPoint);
@@ -683,7 +664,7 @@ void AlembicImport_FillInPolyMesh(alembic_fillmesh_options &options)
                    for (int j = first; j >= last; j -= 1)
                    {
                        Point3 alembicNormal(meshNormalsFloor->get()[j].x, meshNormalsFloor->get()[j].y, meshNormalsFloor->get()[j].z);
-                       Point3 ceilNormal(meshNormalsCeil->get()[i].x, meshNormalsCeil->get()[i].y, meshNormalsCeil->get()[i].z);
+                       Point3 ceilNormal(meshNormalsCeil->get()[j].x, meshNormalsCeil->get()[j].y, meshNormalsCeil->get()[j].z);
                        Point3 delta = (ceilNormal - alembicNormal) * float(sampleInfo.alpha);
                        alembicNormal += delta;
                        Point3 maxNormal;
@@ -897,19 +878,19 @@ void AlembicImport_FillInPolyMesh(alembic_fillmesh_options &options)
        }
    }
 
-   if (options.nDataFillContext == ALEMBIC_FILLCONTEXT_IMPORT)
+   if (options.pPolyObj != NULL)
    {
-       if (options.pPolyObj != NULL)
-       {
-           options.pPolyObj->GetMesh().InvalidateGeomCache();
-           options.pPolyObj->GetMesh().InvalidateTopoCache();
-       }
+       options.pPolyObj->GetMesh().InvalidateGeomCache();
+       options.pPolyObj->GetMesh().InvalidateTopoCache();
 
-       if (options.pTriObj != NULL)
-       {
-           options.pTriObj->GetMesh().InvalidateGeomCache();
-           options.pTriObj->GetMesh().InvalidateTopologyCache();
-       }
+       if (!options.pPolyObj->GetMesh().GetFlag(MN_MESH_FILLED_IN ))
+           options.pPolyObj->GetMesh().FillInMesh();
+   }
+
+   if (options.pTriObj != NULL)
+   {
+       options.pTriObj->GetMesh().InvalidateGeomCache();
+       options.pTriObj->GetMesh().InvalidateTopologyCache();
    }
 }
 
@@ -951,7 +932,6 @@ int AlembicImport_PolyMesh(const std::string &file, const std::string &identifie
     dataFillOptions.nDataFillFlags |= options.importBboxes ? ALEMBIC_DATAFILL_BOUNDINGBOX : 0;
     dataFillOptions.nDataFillFlags |= options.importClusters ? ALEMBIC_DATAFILL_FACESETS : 0;
 
-    dataFillOptions.nDataFillContext = ALEMBIC_FILLCONTEXT_IMPORT;
     // Create the poly or tri object and place it in the scene
     // Need to use the attach to existing import flag here 
     Object *newObject = NULL;
