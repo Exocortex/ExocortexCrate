@@ -353,7 +353,7 @@ MStatus AlembicPolyMeshNode::initialize()
    status = tAttr.setStorable(false);
    status = tAttr.setWritable(false);
    status = tAttr.setKeyable(false);
-   status = tAttr.setHidden(true);
+   status = tAttr.setHidden(false);
    status = addAttribute(mOutGeometryAttr);
 
    // create a mapping
@@ -418,11 +418,8 @@ MStatus AlembicPolyMeshNode::compute(const MPlug & plug, MDataBlock & dataBlock)
 
    // check if we have to do this at all
    if(!mMeshData.isNull() && mLastSampleInfo.floorIndex == sampleInfo.floorIndex && mLastSampleInfo.ceilIndex == sampleInfo.ceilIndex)
-   {
-      // we still have the same mesh
-      //dataBlock.outputValue(mOutGeometryAttr).set(mMeshData);
       return MStatus::kSuccess;
-   }
+
    mLastSampleInfo = sampleInfo;
 
    // access the camera values
@@ -698,23 +695,34 @@ MStatus AlembicCreateFaceSetsCommand::doIt(const MArgList & args)
    }
 
    // check the type of object
-   if(!Alembic::AbcGeom::IPolyMesh::matches(object.getMetaData()))
+   Alembic::AbcGeom::IPolyMesh mesh;
+   Alembic::AbcGeom::ISubD subd;
+   if(Alembic::AbcGeom::IPolyMesh::matches(object.getMetaData()))
+      mesh = Alembic::AbcGeom::IPolyMesh(object,Alembic::Abc::kWrapExisting);
+   else if(Alembic::AbcGeom::ISubD::matches(object.getMetaData()))
+      subd = Alembic::AbcGeom::ISubD(object,Alembic::Abc::kWrapExisting);
+   else
    {
-      MGlobal::displayError("[ExocortexAlembic] Specified identifer doesn't refer to a PolyMesh object.");
+      MGlobal::displayError("[ExocortexAlembic] Specified identifer doesn't refer to a PolyMesh or a SubD object.");
       return MStatus::kFailure;
    }
 
-   Alembic::AbcGeom::IPolyMesh mesh(object,Alembic::Abc::kWrapExisting);
-
    std::vector<std::string> faceSetNames;
-   mesh.getSchema().getFaceSetNames(faceSetNames);
+   if(mesh.valid())
+      mesh.getSchema().getFaceSetNames(faceSetNames);
+   else
+      subd.getSchema().getFaceSetNames(faceSetNames);
 
    MFnTypedAttribute tAttr;
 
    for(size_t i=0;i<faceSetNames.size();i++)
    {
       // access the face set
-      Alembic::AbcGeom::IFaceSetSchema faceSet = mesh.getSchema().getFaceSet(faceSetNames[i]).getSchema();
+      Alembic::AbcGeom::IFaceSetSchema faceSet;
+      if(mesh.valid())
+         faceSet = mesh.getSchema().getFaceSet(faceSetNames[i]).getSchema();
+      else
+         faceSet = subd.getSchema().getFaceSet(faceSetNames[i]).getSchema();
       Alembic::AbcGeom::IFaceSetSchema::Sample faceSetSample = faceSet.getValue();
 
       // create the int data

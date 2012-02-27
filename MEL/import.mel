@@ -111,6 +111,14 @@ proc exocortexAlembicImport(string $filename)
             connectAttr ($reader+".outMesh") ($shape+".inMesh");        
             ExocortexAlembic_createFaceSets -f $filename -i $identifiers[$i] -o $shape;
         }
+        else if($types[$i] == "SubD")
+        {
+            $shape = `createNode -name $name "subdiv"`;
+            $reader = `createNode "ExocortexAlembicSubD"`;
+            connectAttr ($reader+".outSubdiv") ($shape+".create");        
+            connectAttr ($reader+".dispResolution") ($shape+".dispResolution");        
+            ExocortexAlembic_createFaceSets -f $filename -i $identifiers[$i] -o $shape;
+        }
         else if($types[$i] == "Camera")
         {
             $shape = `createNode -name $name "camera"`;

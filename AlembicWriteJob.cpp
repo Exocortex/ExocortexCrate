@@ -4,10 +4,10 @@
 #include "AlembicXform.h"
 #include "AlembicCamera.h"
 #include "AlembicPolyMesh.h"
+#include "AlembicSubD.h"
 //#include "AlembicCurves.h"
 //#include "AlembicPoints.h"
 //#include "AlembicModel.h"
-//#include "AlembicSubD.h"
 //#include "AlembicNurbs.h"
 
 #include <maya/MAnimControl.h>
@@ -194,6 +194,12 @@ MStatus AlembicWriteJob::PreProcess()
       {
          AlembicObjectPtr ptr;
          ptr.reset(new AlembicPolyMesh(mObj,this));
+         AddObject(ptr);
+      }
+      else if(mType == "kSubdiv")
+      {
+         AlembicObjectPtr ptr;
+         ptr.reset(new AlembicSubD(mObj,this));
          AddObject(ptr);
       }
       else

@@ -35,7 +35,7 @@ MStatus AlembicTimeControlNode::initialize()
    status = uAttr.setStorable(false);
    status = uAttr.setWritable(false);
    status = uAttr.setKeyable(false);
-   status = uAttr.setHidden(true);
+   status = uAttr.setHidden(false);
    status = addAttribute(mOutTimeAttr);
 
    // create a mapping
