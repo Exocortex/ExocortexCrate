@@ -117,6 +117,7 @@ MStatus AlembicCameraNode::initialize()
    status = nAttr.setStorable(false);
    status = nAttr.setWritable(false);
    status = nAttr.setKeyable(false);
+   status = nAttr.setHidden(true);
    status = addAttribute(mOutFocalLengthAttr);
 
    // output focusDistance
@@ -124,6 +125,7 @@ MStatus AlembicCameraNode::initialize()
    status = nAttr.setStorable(false);
    status = nAttr.setWritable(false);
    status = nAttr.setKeyable(false);
+   status = nAttr.setHidden(true);
    status = addAttribute(mOutFocusDistanceAttr);
 
    // output focalLength
@@ -131,6 +133,7 @@ MStatus AlembicCameraNode::initialize()
    status = nAttr.setStorable(false);
    status = nAttr.setWritable(false);
    status = nAttr.setKeyable(false);
+   status = nAttr.setHidden(true);
    status = addAttribute(mOutAspectRatioAttr);
 
    // horizonal aperture
@@ -138,6 +141,7 @@ MStatus AlembicCameraNode::initialize()
    status = nAttr.setStorable(false);
    status = nAttr.setWritable(false);
    status = nAttr.setKeyable(false);
+   status = nAttr.setHidden(true);
    status = addAttribute(mOutHorizontalApertureAttr);
 
    // vertical aperture
@@ -145,6 +149,7 @@ MStatus AlembicCameraNode::initialize()
    status = nAttr.setStorable(false);
    status = nAttr.setWritable(false);
    status = nAttr.setKeyable(false);
+   status = nAttr.setHidden(true);
    status = addAttribute(mOutVerticalApertureAttr);
 
    // horizonal offset
@@ -152,6 +157,7 @@ MStatus AlembicCameraNode::initialize()
    status = nAttr.setStorable(false);
    status = nAttr.setWritable(false);
    status = nAttr.setKeyable(false);
+   status = nAttr.setHidden(true);
    status = addAttribute(mOutHorizontalOffsetAttr);
 
    // output vertical offset
@@ -159,6 +165,7 @@ MStatus AlembicCameraNode::initialize()
    status = nAttr.setStorable(false);
    status = nAttr.setWritable(false);
    status = nAttr.setKeyable(false);
+   status = nAttr.setHidden(true);
    status = addAttribute(mOutVerticalOffsetAttr);
 
    // output near clipping
@@ -166,6 +173,7 @@ MStatus AlembicCameraNode::initialize()
    status = nAttr.setStorable(false);
    status = nAttr.setWritable(false);
    status = nAttr.setKeyable(false);
+   status = nAttr.setHidden(true);
    status = addAttribute(mOutNearClippingAttr);
 
    // output far clipping
@@ -173,6 +181,7 @@ MStatus AlembicCameraNode::initialize()
    status = nAttr.setStorable(false);
    status = nAttr.setWritable(false);
    status = nAttr.setKeyable(false);
+   status = nAttr.setHidden(true);
    status = addAttribute(mOutFarClippingAttr);
 
    // output fstop
@@ -180,6 +189,7 @@ MStatus AlembicCameraNode::initialize()
    status = nAttr.setStorable(false);
    status = nAttr.setWritable(false);
    status = nAttr.setKeyable(false);
+   status = nAttr.setHidden(true);
    status = addAttribute(mOutFStopAttr);
 
    // output far clipping
@@ -187,6 +197,7 @@ MStatus AlembicCameraNode::initialize()
    status = nAttr.setStorable(false);
    status = nAttr.setWritable(false);
    status = nAttr.setKeyable(false);
+   status = nAttr.setHidden(true);
    status = addAttribute(mOutShutterAngleAttr);
 
    // create a mapping

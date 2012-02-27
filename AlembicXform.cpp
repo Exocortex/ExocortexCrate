@@ -104,6 +104,7 @@ MStatus AlembicXformNode::initialize()
    status = nAttr.setStorable(false);
    status = nAttr.setWritable(false);
    status = nAttr.setKeyable(false);
+   status = nAttr.setHidden(true);
    status = addAttribute(mOutTranslateXAttr);
 
    // output translateY
@@ -111,6 +112,7 @@ MStatus AlembicXformNode::initialize()
    status = nAttr.setStorable(false);
    status = nAttr.setWritable(false);
    status = nAttr.setKeyable(false);
+   status = nAttr.setHidden(true);
    status = addAttribute(mOutTranslateYAttr);
 
    // output translateY
@@ -118,27 +120,31 @@ MStatus AlembicXformNode::initialize()
    status = nAttr.setStorable(false);
    status = nAttr.setWritable(false);
    status = nAttr.setKeyable(false);
+   status = nAttr.setHidden(true);
    status = addAttribute(mOutTranslateZAttr);
 
    // output rotatex
    mOutRotateXAttr = uAttr.create("rotateX", "rx", MFnUnitAttribute::kAngle, 0.0);
-   status = nAttr.setStorable(false);
-   status = nAttr.setWritable(false);
-   status = nAttr.setKeyable(false);
+   status = uAttr.setStorable(false);
+   status = uAttr.setWritable(false);
+   status = uAttr.setKeyable(false);
+   status = uAttr.setHidden(true);
    status = addAttribute(mOutRotateXAttr);
 
    // output rotatexy
    mOutRotateYAttr = uAttr.create("rotateY", "ry", MFnUnitAttribute::kAngle, 0.0);
-   status = nAttr.setStorable(false);
-   status = nAttr.setWritable(false);
-   status = nAttr.setKeyable(false);
+   status = uAttr.setStorable(false);
+   status = uAttr.setWritable(false);
+   status = uAttr.setKeyable(false);
+   status = uAttr.setHidden(true);
    status = addAttribute(mOutRotateYAttr);
 
    // output rotatez
    mOutRotateZAttr = uAttr.create("rotateZ", "rz", MFnUnitAttribute::kAngle, 0.0);
-   status = nAttr.setStorable(false);
-   status = nAttr.setWritable(false);
-   status = nAttr.setKeyable(false);
+   status = uAttr.setStorable(false);
+   status = uAttr.setWritable(false);
+   status = uAttr.setKeyable(false);
+   status = uAttr.setHidden(true);
    status = addAttribute(mOutRotateZAttr);
 
    // output scalex
@@ -146,6 +152,7 @@ MStatus AlembicXformNode::initialize()
    status = nAttr.setStorable(false);
    status = nAttr.setWritable(false);
    status = nAttr.setKeyable(false);
+   status = nAttr.setHidden(true);
    status = addAttribute(mOutScaleXAttr);
 
    // output scaley
@@ -153,6 +160,7 @@ MStatus AlembicXformNode::initialize()
    status = nAttr.setStorable(false);
    status = nAttr.setWritable(false);
    status = nAttr.setKeyable(false);
+   status = nAttr.setHidden(true);
    status = addAttribute(mOutScaleYAttr);
 
    // output scalez
@@ -160,6 +168,7 @@ MStatus AlembicXformNode::initialize()
    status = nAttr.setStorable(false);
    status = nAttr.setWritable(false);
    status = nAttr.setKeyable(false);
+   status = nAttr.setHidden(true);
    status = addAttribute(mOutScaleZAttr);
 
    // create a mapping

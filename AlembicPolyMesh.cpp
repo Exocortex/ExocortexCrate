@@ -353,6 +353,7 @@ MStatus AlembicPolyMeshNode::initialize()
    status = tAttr.setStorable(false);
    status = tAttr.setWritable(false);
    status = tAttr.setKeyable(false);
+   status = tAttr.setHidden(true);
    status = addAttribute(mOutGeometryAttr);
 
    // create a mapping

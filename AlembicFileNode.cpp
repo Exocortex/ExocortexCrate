@@ -22,9 +22,10 @@ MStatus AlembicFileNode::initialize()
    status = addAttribute(mFileNameAttr);
 
    mOutFileNameAttr = tAttr.create("outFileName", "of", MFnData::kString);
-   status = nAttr.setStorable(false);
-   status = nAttr.setWritable(false);
-   status = nAttr.setKeyable(false);
+   status = tAttr.setStorable(false);
+   status = tAttr.setWritable(false);
+   status = tAttr.setKeyable(false);
+   status = tAttr.setHidden(true);
    status = addAttribute(mOutFileNameAttr);
 
    // create a mapping
