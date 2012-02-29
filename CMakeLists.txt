@@ -78,7 +78,6 @@ if( Exocortex_SERVICES )
 	set( Exocortex_RELEASED_LIBRARYDIR "${LIBRARY_ROOT}/Exocortex/lib/${CPU_NAME}/release/${OS_NAME}/" )
 	
 	set( Exocortex_LIBRARIES
-		debug "${Exocortex_DEBUG_LIBRARYDIR}/LibSoftimageServices.lib" optimized "${Exocortex_RELEASED_LIBRARYDIR}/LibSoftimageServices.lib"
 		debug "${Exocortex_DEBUG_LIBRARYDIR}/LibSoftimageCore.lib"  optimized "${Exocortex_RELEASED_LIBRARYDIR}/LibSoftimageCore.lib"
 		debug "${Exocortex_DEBUG_LIBRARYDIR}/LibCopyProtection.lib"  optimized "${Exocortex_RELEASED_LIBRARYDIR}/LibCopyProtection.lib"
 		debug "${Exocortex_DEBUG_LIBRARYDIR}/LibFluid.lib"  optimized "${Exocortex_RELEASED_LIBRARYDIR}/LibFluid.lib"
