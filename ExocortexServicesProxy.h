@@ -15,7 +15,7 @@
 	#define FORCE_CRASH_STD_EXCEPTION	{	throw std::exception( "forced exception" );	}
 
 	#include "ExocortexSoftimageServicesAPI.h"
-	using namespace ExocortexSoftimageServices;
+	using namespace Exocortex;
 
 #else // EXOCORTEX_SERVICES
 

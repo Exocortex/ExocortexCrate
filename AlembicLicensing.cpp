@@ -67,12 +67,12 @@ int GetLicense()
 
 #ifdef EXOCORTEX_SERVICES
 
-namespace ExocortexSoftimageServices {
+namespace Exocortex {
 	void essOnDemandInitialization() {
 		static string pluginName(XSI::CString(PLUGIN_NAME).GetAsciiString());
 		static string pluginModuleName(XSI::CString(PLUGIN_MODULE_NAME).GetAsciiString());
 
-		essInitialize( pluginName.c_str(), PLUGIN_MAJOR_VERSION, PLUGIN_MINOR_VERSION );
+		essInitializeSoftimage( pluginName.c_str(), PLUGIN_MAJOR_VERSION, PLUGIN_MINOR_VERSION );
 	}
 }
 

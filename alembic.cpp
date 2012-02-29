@@ -46,6 +46,8 @@
 using namespace XSI; 
 using namespace MATH; 
 
+#include <boost/exception/all.hpp>
+
 #include "AlembicLicensing.h"
 
 #include "AlembicWriteJob.h"
