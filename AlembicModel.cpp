@@ -67,6 +67,7 @@ XSI::CStatus AlembicModel::Save(double time)
 
    // store the metadata
    SaveMetaData(prim.GetParent3DObject().GetRef(),this);
+   mNumSamples++;
 
    return CStatus::OK;
 }

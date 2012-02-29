@@ -92,7 +92,7 @@ SICALLBACK XSILoadPlugin( PluginRegistrar& in_reg )
    Register_alembic_points(in_reg);
 
    // register events
-   in_reg.RegisterEvent(L"alembic_OnCloseScene_OnEvent",siOnCloseScene);
+   in_reg.RegisterEvent(L"alembic_OnCloseScene",siOnCloseScene);
 
 	return CStatus::OK;
 }
