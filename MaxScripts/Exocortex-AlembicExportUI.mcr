@@ -8,7 +8,7 @@ rollout AlembicExportSettings "Alembic Export Settings" width:288 height:368
 	label outLabel "Frame Out" pos:[16,104] width:128 height:21
 	label stepsLabel "Frame Steps" pos:[16,120] width:128 height:21
 	label subStepsLabel "Frame Sub-Steps" pos:[16,136] width:128 height:21
-	spinner inSpinner "" pos:[112,88] width:160 height:16 range:[1,1e+006,1] type:#integer
+	spinner inSpinner "" pos:[112,88] width:160 height:16 range:[0,1e+006,0] type:#integer
 	spinner outSpinner "" pos:[112,104] width:160 height:16 range:[1,1e+006,100] type:#integer
 	spinner stepsSpinner "" pos:[112,120] width:160 height:16 range:[1,1e+006,1] type:#integer
 	spinner subStepsSpinner "" pos:[112,136] width:160 height:16 range:[1,1e+006,1] type:#integer

@@ -2,6 +2,7 @@
 #include "AlembicArchiveStorage.h"
 #include "AlembicPolyMeshModifier.h"
 #include "AlembicXFormModifier.h"
+#include "AlembicCameraModifier.h"
 #include "MeshMtlList.h"
 #include "SceneEnumProc.h"
 #include "AlembicDefinitions.h"
@@ -242,7 +243,13 @@ int ExocortexAlembicStaticInterface::ExocortexAlembicImport(MCHAR* strFileName, 
 		else if (Alembic::AbcGeom::IPolyMesh::matches(objects[i].getMetaData()))
 		{
 			int ret = AlembicImport_PolyMesh(file, objects[i].getFullName(), importOptions); 
-		}	
+        }
+
+        // Camera
+        else if (Alembic::AbcGeom::OCamera::matches(objects[i].getMetaData()))
+        {
+            int ret = AlembicImport_Camera(file, objects[i].getFullName(), importOptions);
+        }
 	}
 
    delRefArchive(file);

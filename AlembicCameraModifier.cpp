@@ -6,50 +6,57 @@
 #include "iparamb2.h"
 #include "alembic.h"
 
-/*
+extern HINSTANCE hInstance;
+
+//////////////////////////////////////////////////////////////////////////////////////////
+// Import options struct containing the information necessary to fill the camera object
 typedef struct _alembic_fillcamera_options
 {
-    Alembic::AbcGeom::OCamera *pIObj;
-    CameraObject *pCameraObj;
-    double iFrame;
-    AlembicDataFillFlags nDataFillFlags;
-    AlembicFillContext nDataFillContext;
-    unsigned int nValidityFlags;
+public:
+    _alembic_fillcamera_options();
 
-    _alembic_fillcamera_options()
-    {
-        pIObj = 0;
-        pCameraObj = 0;
-        iFrame = 0;
-        nDataFillFlags = 0;
-        nValidityFlags = 0;
-        nDataFillContext = ALEMBIC_FILLCONTEXT_NONE;
-    }
-} alembic_fillcamera_options;
+    Alembic::AbcGeom::IObject  *pIObj;
+    GenCamera                  *pCameraObj;
+    double                      dbFrame;
+    unsigned int                nValidityFlags;
+}
+alembic_fillcamera_options;
 
+_alembic_fillcamera_options::_alembic_fillcamera_options()
+{
+    pIObj = NULL;
+    pCameraObj = NULL;
+    dbFrame = 0.0;
+    nValidityFlags = 0;
+}
+
+
+//////////////////////////////////////////////////////////////////////////////////////////
+// Function Prototypes
 void AlembicImport_FillInCamera(alembic_fillcamera_options &options);
 
+
+//////////////////////////////////////////////////////////////////////////////////////////
+// Camera Modifier object
 class AlembicCameraModifier : public Modifier 
 {
 public:
-	IParamBlock2 *pblock;
-
 	static IObjParam *ip;
 	static AlembicCameraModifier *editMod;
 
 	AlembicCameraModifier();
 
 	// From Animatable
+	RefTargetHandle Clone(RemapDir& remap);
 	void DeleteThis() { delete this; }
 	void GetClassName(TSTR& s) { s = _T("Exocortex Alembic Camera"); }  
 	virtual Class_ID ClassID() { return EXOCORTEX_ALEMBIC_CAMERA_MODIFIER_ID; }		
-	RefTargetHandle Clone(RemapDir& remap);
 	TCHAR *GetObjectName() { return _T("Exocortex Alembic Camera"); }
 
 	// From modifier
-	ChannelMask ChannelsUsed()  { return OBJ_CHANNELS; }
-	ChannelMask ChannelsChanged() { return OBJ_CHANNELS; }
-	Class_ID InputType() { return triObjectClassID; }
+	ChannelMask ChannelsUsed() { return DISP_ATTRIB_CHANNEL; }		// TODO: What channels do we actually need?
+	ChannelMask ChannelsChanged() { return DISP_ATTRIB_CHANNEL; }
+	Class_ID InputType() { return defObjectClassID; }
 	void ModifyObject (TimeValue t, ModContext &mc, ObjectState *os, INode *node);
 	Interval LocalValidity(TimeValue t) { return GetValidity(t); }
 	Interval GetValidity (TimeValue t);
@@ -57,8 +64,8 @@ public:
 
 	// From BaseObject
 	CreateMouseCallBack* GetCreateMouseCallBack() {return NULL;} 
-	void BeginEditParams(IObjParam  *ip, ULONG flags,Animatable *prev);
-	void EndEditParams(IObjParam *ip,ULONG flags,Animatable *next);		
+	void BeginEditParams(IObjParam *ip, ULONG flags, Animatable *prev);
+	void EndEditParams(IObjParam *ip, ULONG flags, Animatable *next);		
 
 	int NumParamBlocks () { return 1; }
 	IParamBlock2 *GetParamBlock (int i) { return pblock; }
@@ -66,47 +73,45 @@ public:
 
 	int NumRefs() { return 1; }
 	RefTargetHandle GetReference(int i) { return pblock; }
+
+	int NumSubs() { return 1; }
+	Animatable* SubAnim(int i) { return GetReference(i); }
+	TSTR SubAnimName(int i) { return _T("IDS_PARAMETERS"); }
+
+	RefResult NotifyRefChanged(Interval changeInt, RefTargetHandle hTarget, 
+		                       PartID& partID, RefMessage message);
+
+	void SetAlembicId(const std::string &file, const std::string &identifier);
+    void SetCamera(GenCamera *pCam);
+
 private:
 	virtual void SetReference(int i, RefTargetHandle rtarg) { pblock = (IParamBlock2 *) rtarg; }
-public:
 
-	int NumSubs() {return 1;}
-	Animatable* SubAnim(int i) { return GetReference(i); }
-	TSTR SubAnimName(int i) {return _T("IDS_PARAMETERS");}
-
-	RefResult NotifyRefChanged( Interval changeInt,RefTargetHandle hTarget, 
-		PartID& partID, RefMessage message);
-
-	void Convert (PolyObject *obj, TimeValue t, Mesh & m, Interval & ivalid);
-	void Convert (TriObject *obj, TimeValue t, Mesh & m, Interval & ivalid);
-	void Convert (PatchObject *obj, TimeValue t, Mesh & m, Interval & ivalid);
-
-	int UI2SelLevel(int selLevel);
-private:
     alembic_nodeprops m_AlembicNodeProps;
-public:
-	void SetAlembicId(const std::string &file, const std::string &identifier);
+	IParamBlock2     *pblock;
+    GenCamera        *m_pCamera;
 };
+
 //--- ClassDescriptor and class vars ---------------------------------
 
-IObjParam *AlembicCameraModifier::ip              = NULL;
-AlembicCameraModifier *AlembicCameraModifier::editMod         = NULL;
+IObjParam *AlembicCameraModifier::ip                    = NULL;
+AlembicCameraModifier *AlembicCameraModifier::editMod   = NULL;
 
 class AlembicCameraModifierClassDesc : public ClassDesc2 
 {
-	public:
+public:
 	int 			IsPublic() { return 1; }
 	void *			Create(BOOL loading = FALSE) { return new AlembicCameraModifier; }
-	const TCHAR *	ClassName() { return _T("ExoCortex Alembic Camera"); }
+	const TCHAR *	ClassName() { return _T("Exocortex Alembic Camera"); }
 	SClass_ID		SuperClassID() { return OSM_CLASS_ID; }
 	Class_ID		ClassID() { return EXOCORTEX_ALEMBIC_CAMERA_MODIFIER_ID; }
 	const TCHAR* 	Category() { return _T("MAX STANDARD"); }
-	const TCHAR*	InternalName() { return _T("AlembicCameraModifier"); }	// returns fixed parsable name (scripter-visible name)
-	HINSTANCE		HInstance() { return hInstance; }			// returns owning module handle
+	const TCHAR*	InternalName() { return _T("AlembicCameraModifier"); }  // returns fixed parsable name (scripter-visible name)
+	HINSTANCE		HInstance() { return hInstance; }                       // returns owning module handle
 };
 
-static AlembicCameraModifierClassDesc AlembicCameraModifierDesc;
-ClassDesc* GetAlembicCameraModifierDesc() {return &AlembicCameraModifierDesc;}
+static AlembicCameraModifierClassDesc s_AlembicCameraModifierDesc;
+ClassDesc* GetAlembicCameraModifierDesc() { return &s_AlembicCameraModifierDesc; }
 
 // Parameter block IDs:
 // Blocks themselves:
@@ -114,9 +119,12 @@ enum { turn_params };
 // Parameters in first block:
 enum { turn_use_invis, turn_sel_type, turn_softsel, turn_sel_level };
 
-static ParamBlockDesc2 turn_param_desc ( turn_params, _T("ExoCortexAlembicCameraModifier"),
-									IDS_PARAMETERS, &AlembicCameraModifierDesc,
-									P_AUTO_CONSTRUCT | P_AUTO_UI, REF_PBLOCK,
+static ParamBlockDesc2 turn_param_desc
+(
+    turn_params, _T("ExocortexAlembicCameraModifier"),
+    IDS_PARAMETERS, &s_AlembicCameraModifierDesc,
+    P_AUTO_CONSTRUCT | P_AUTO_UI, REF_PBLOCK,
+
 	//rollout description
 	IDD_TO_MESH, IDS_PARAMETERS, 0, 0, NULL,
 
@@ -145,89 +153,110 @@ static ParamBlockDesc2 turn_param_desc ( turn_params, _T("ExoCortexAlembicCamera
 
 //--- Modifier methods -------------------------------
 
-AlembicCameraModifier::AlembicCameraModifier() {
+AlembicCameraModifier::AlembicCameraModifier()
+{
 	pblock = NULL;
+    m_pCamera = NULL;
 	GetAlembicCameraModifierDesc()->MakeAutoParamBlocks(this);
 }
 
-RefTargetHandle AlembicCameraModifier::Clone(RemapDir& remap) {
+RefTargetHandle AlembicCameraModifier::Clone(RemapDir& remap)
+{
 	AlembicCameraModifier *mod = new AlembicCameraModifier();
 	mod->ReplaceReference (0, remap.CloneRef(pblock));
 	BaseClone(this, mod, remap);
 	return mod;
 }
 
-IParamBlock2 *AlembicCameraModifier::GetParamBlockByID (short id) {
+IParamBlock2 *AlembicCameraModifier::GetParamBlockByID (short id)
+{
 	return (pblock->ID() == id) ? pblock : NULL; 
 }
 
-Interval AlembicCameraModifier::GetValidity (TimeValue t) {
+Interval AlembicCameraModifier::GetValidity (TimeValue t)
+{
 	Interval ret = FOREVER;
 	pblock->GetValidity (t, ret);
 	return ret;
 }
 
-void AlembicCameraModifier::ModifyObject (TimeValue t, ModContext &mc, ObjectState *os, INode *node) 
+void AlembicCameraModifier::ModifyObject(TimeValue t, ModContext &mc, ObjectState *os, INode *node) 
 {
-   Interval ivalid=os->obj->ObjectValidity(t);
+    Alembic::AbcGeom::IObject iObj = getObjectFromArchive(m_AlembicNodeProps.m_File, m_AlembicNodeProps.m_Identifier);
+    if (!iObj.valid())
+    {
+        return;
+    }
 
-   Alembic::AbcGeom::IObject iObj = getObjectFromArchive(m_AlembicNodeProps.m_File, m_AlembicNodeProps.m_Identifier);
-   if(!iObj.valid())
-      return;
+    if (m_pCamera == NULL)
+    {
+        return;
+    }
 
-   // Calculate the sample time in seconds
-   double sampleTime = double(t) / ALEMBIC_3DSMAX_TICK_VALUE;
+    alembic_fillcamera_options dataFillOptions;
+    dataFillOptions.pIObj = &iObj;
+    dataFillOptions.pCameraObj = m_pCamera;
+    dataFillOptions.dbFrame = GetSecondsFromTimeValue(t);
+    dataFillOptions.nValidityFlags = 0;
+    AlembicImport_FillInCamera(dataFillOptions);
 
-   alembic_fillcamera_options options;
-   options.pIObj = &iObj;
-   options.pTriObj = (TriObject*)os->obj;
-   options.iFrame = sampleTime;
-   options.nDataFillFlags = ALEMBIC_DATAFILL_CAMERA_STATIC_UPDATE;
-   options.nDataFillContext = ALEMBIC_FILLCONTEXT_UPDATE;
-   AlembicImport_FillInCamera(options);
-
-   Interval alembicValid(t, t); 
-   ivalid &= alembicValid;
-    
-    // update the validity channel
-    os->obj->UpdateValidity(OBJ_CHANNELS, ivalid);
+    // Determine the validity interval
+    Interval ivalid = os->obj->ObjectValidity(t);
+    Interval alembicValid(t, t); 
+    ivalid &= alembicValid;
+    os->obj->UpdateValidity(DISP_ATTRIB_CHAN_NUM, ivalid);
 }
 
-void AlembicCameraModifier::BeginEditParams (IObjParam  *ip, ULONG flags, Animatable *prev) {
+void AlembicCameraModifier::BeginEditParams(IObjParam *ip, ULONG flags, Animatable *prev)
+{
 	this->ip = ip;	
 	editMod  = this;
 
 	// throw up all the appropriate auto-rollouts
-	AlembicCameraModifierDesc.BeginEditParams(ip, this, flags, prev);
+	s_AlembicCameraModifierDesc.BeginEditParams(ip, this, flags, prev);
 
 	// Necessary?
 	NotifyDependents(FOREVER, PART_ALL, REFMSG_CHANGE);
 }
 
-void AlembicCameraModifier::EndEditParams (IObjParam *ip,ULONG flags,Animatable *next) {
-	AlembicCameraModifierDesc.EndEditParams(ip, this, flags, next);
+void AlembicCameraModifier::EndEditParams(IObjParam *ip, ULONG flags, Animatable *next)
+{
+	s_AlembicCameraModifierDesc.EndEditParams(ip, this, flags, next);
 	this->ip = NULL;
 	editMod  = NULL;
 }
 
-RefResult AlembicCameraModifier::NotifyRefChanged (Interval changeInt, RefTargetHandle hTarget,
-										   PartID& partID, RefMessage message) {
-	switch (message) {
+RefResult AlembicCameraModifier::NotifyRefChanged(Interval changeInt, RefTargetHandle hTarget,
+										   PartID& partID, RefMessage message)
+{
+	switch (message)
+    {
 	case REFMSG_CHANGE:
-		if (editMod!=this) break;
-		// if this was caused by a NotifyDependents from pblock, LastNotifyParamID()
+		if (editMod != this)
+        {
+            break;
+        }
+
+        // if this was caused by a NotifyDependents from pblock, LastNotifyParamID()
 		// will contain ID to update, else it will be -1 => inval whole rollout
-		if (pblock->LastNotifyParamID() == turn_sel_level) {
+		if (pblock->LastNotifyParamID() == turn_sel_level)
+        {
 			// Notify stack that subobject info has changed:
 			NotifyDependents(changeInt, partID, message);
 			NotifyDependents(FOREVER, 0, REFMSG_NUM_SUBOBJECTTYPES_CHANGED);
 			return REF_STOP;
 		}
-		turn_param_desc.InvalidateUI(pblock->LastNotifyParamID());
+
+        turn_param_desc.InvalidateUI(pblock->LastNotifyParamID());
 		break;
 	}
 
 	return REF_SUCCEED;
+}
+
+void AlembicCameraModifier::SetCamera(GenCamera *pCam)
+{
+    m_pCamera = pCam;
 }
 
 void AlembicCameraModifier::SetAlembicId(const std::string &file, const std::string &identifier)
@@ -236,83 +265,99 @@ void AlembicCameraModifier::SetAlembicId(const std::string &file, const std::str
     m_AlembicNodeProps.m_Identifier = identifier;
 }
 
+
 void AlembicImport_FillInCamera(alembic_fillcamera_options &options)
 {
-   Alembic::AbcGeom::OCamera objCamera;
-   Alembic::AbcGeom::ISubD objSubD;
+    if (options.pCameraObj == NULL ||
+        !Alembic::AbcGeom::OCamera::matches((*options.pIObj).getMetaData()))
+    {
+        return;
+    }
 
-   if(Alembic::AbcGeom::OCamera::matches((*options.pIObj).getMetaData()))
-       objMesh = Alembic::AbcGeom::ICamera(*options.pIObj,Alembic::Abc::kWrapExisting);
-   else
-       objSubD = Alembic::AbcGeom::ISubD(*options.pIObj,Alembic::Abc::kWrapExisting);
+    Alembic::AbcGeom::ICamera objCamera = Alembic::AbcGeom::ICamera(*options.pIObj, Alembic::Abc::kWrapExisting);
+    if (!objCamera.valid())
+    {
+        return;
+    }
 
-   if(!objMesh.valid() && !objSubD.valid())
-       return;
+    SampleInfo sampleInfo = getSampleInfo(options.dbFrame,
+                                          objCamera.getSchema().getTimeSampling(),
+                                          objCamera.getSchema().getNumSamples());
+    Alembic::AbcGeom::CameraSample sample;
+    objCamera.getSchema().get(sample, sampleInfo.floorIndex);
 
-  SampleInfo sampleInfo;
-   if(objMesh.valid())
-      sampleInfo = getSampleInfo(
-         options.iFrame,
-         objMesh.getSchema().getTimeSampling(),
-         objMesh.getSchema().getNumSamples()
-      );
-   else
-      sampleInfo = getSampleInfo(
-         options.iFrame,
-         objSubD.getSchema().getTimeSampling(),
-         objSubD.getSchema().getNumSamples()
-      );
+    TimeValue ticks = GetTimeValueFromFrame(options.dbFrame);
 
-   Mesh &mesh = options.pTriObj->GetMesh();
-   Alembic::AbcGeom::ICameraSchema::Sample CameraSample;
-   Alembic::AbcGeom::ISubDSchema::Sample subDSample;
+    // Extract the camera values from the sample
+    double focalLength = sample.getFocalLength();
+    double fov = sample.getHorizontalAperture();
+    double nearClipping = sample.getNearClippingPlane();
+    double farClipping = sample.getFarClippingPlane();
 
-   if(objMesh.valid())
-       objMesh.getSchema().get(CameraSample,sampleInfo.floorIndex);
-   else
-       objSubD.getSchema().get(subDSample,sampleInfo.floorIndex);   
+    // Blend the camera values, if necessary
+    if (sampleInfo.alpha != 0.0)
+    {
+        objCamera.getSchema().get(sample, sampleInfo.ceilIndex);
+        focalLength = (1.0 - sampleInfo.alpha) * focalLength + sampleInfo.alpha * sample.getFocalLength();
+        fov = (1.0 - sampleInfo.alpha) * fov + sampleInfo.alpha * sample.getHorizontalAperture();
+        nearClipping = (1.0 - sampleInfo.alpha) * nearClipping + sampleInfo.alpha * sample.getNearClippingPlane();
+        farClipping = (1.0 - sampleInfo.alpha) * farClipping + sampleInfo.alpha * sample.getFarClippingPlane();
+    }
 
-   
+    options.pCameraObj->SetTDist(ticks, static_cast<float>(focalLength));
+    options.pCameraObj->SetFOVType(0);  // Width FoV = 0
+    options.pCameraObj->SetFOV(ticks, static_cast<float>(fov));
+    options.pCameraObj->SetClipDist(ticks, CAM_HITHER_CLIP, static_cast<float>(nearClipping));
+    options.pCameraObj->SetClipDist(ticks, CAM_YON_CLIP, static_cast<float>(farClipping));
+    options.pCameraObj->SetManualClip(TRUE);
 }
 
 int AlembicImport_Camera(const std::string &file, const std::string &identifier, alembic_importoptions &options)
 {
-	// Find the object in the archive
-    Alembic::AbcGeom::OCamera iObj = getObjectFromArchive(file,identifier);
-	if(!iObj.valid())
+    // Find the object in the archive
+    Alembic::AbcGeom::IObject iObj = getObjectFromArchive(file, identifier);
+	if (!iObj.valid())
+    {
 		return alembic_failure;
+    }
 
-	// Create the tri object and place it in the scene
-    CameraObject *cameraobj = GenCamera::NewCamera();
-    if (!triobj)
+	// Create the camera object and place it in the scene
+    GenCamera *pCameraObj = GetCOREInterface12()->CreateCameraObject(FREE_CAMERA);
+    if (pCameraObj == NULL)
+    {
         return alembic_failure;
+    }
+    pCameraObj->Enable(TRUE);
+    pCameraObj->SetConeState(TRUE);
 
-	// Fill in the mesh
+    // Fill in the mesh
     alembic_fillcamera_options dataFillOptions;
     dataFillOptions.pIObj = &iObj;
-    dataFillOptions.pTriObj = triobj;
-    dataFillOptions.iFrame = 0;
-    dataFillOptions.nDataFillFlags = ALEMBIC_DATAFILL_CAMERA_STATIC_IMPORT;
-    dataFillOptions.nDataFillContext = ALEMBIC_FILLCONTEXT_IMPORT;
+    dataFillOptions.pCameraObj = pCameraObj;
+    dataFillOptions.dbFrame = 0.0;
+    dataFillOptions.nValidityFlags = 0;
 	AlembicImport_FillInCamera(dataFillOptions);
 
-	// Create the object node
-	INode *node = GetCOREInterface12()->CreateObjectNode(triobj, iObj.getName().c_str());
-	if (!node)
+    // Create the object node
+	INode *pNode = GetCOREInterface12()->CreateObjectNode(pCameraObj, iObj.getName().c_str());
+	if (pNode == NULL)
+    {
 		return alembic_failure;
+    }
 
 	// Create the Camera modifier
 	AlembicCameraModifier *pModifier = static_cast<AlembicCameraModifier*>
-		(GetCOREInterface()->CreateInstance(OSM_CLASS_ID, EXOCORTEX_ALEMBIC_CAMERA_MODIFIER_ID));
+		(GetCOREInterface12()->CreateInstance(OSM_CLASS_ID, EXOCORTEX_ALEMBIC_CAMERA_MODIFIER_ID));
 
 	// Set the alembic id
 	pModifier->SetAlembicId(file, identifier);
+    pModifier->SetCamera(pCameraObj);
 
 	// Add the modifier to the node
-	GetCOREInterface12()->AddModifier(*node, *pModifier);
+	GetCOREInterface12()->AddModifier(*pNode, *pModifier);
 
     // Add the new inode to our current scene list
-    SceneEntry *pEntry = options.sceneEnumProc.Append(node, triobj, OBTYPE_MESH, &std::string(iObj.getFullName())); 
+    SceneEntry *pEntry = options.sceneEnumProc.Append(pNode, pCameraObj, OBTYPE_CAMERA, &std::string(iObj.getFullName())); 
     options.currentSceneList.Append(pEntry);
 
     // Set up any child links for this node
@@ -320,4 +365,3 @@ int AlembicImport_Camera(const std::string &file, const std::string &identifier,
 
 	return 0;
 }
-*/

@@ -5,6 +5,7 @@
 // #include "Point3.h"
 
 void SaveXformSample(const SceneEntry &in_Ref, Alembic::AbcGeom::OXformSchema &schema, Alembic::AbcGeom::XformSample &sample, double time);
+void SaveCameraXformSample(const SceneEntry &in_Ref, Alembic::AbcGeom::OXformSchema &schema, Alembic::AbcGeom::XformSample &sample, double time);
 
 class AlembicXForm : public AlembicObject
 {

@@ -64,7 +64,7 @@ int SceneEnumProc::callback(INode *node)
 	switch (obj->SuperClassID()) 
     { 
 		case HELPER_CLASS_ID:
-			if ( obj->ClassID()==Class_ID(DUMMY_CLASS_ID,0)) 
+			if (obj->ClassID() == Class_ID(DUMMY_CLASS_ID, 0))
             {
 				Append(node, obj, OBTYPE_DUMMY, 0);
             }
@@ -75,7 +75,8 @@ int SceneEnumProc::callback(INode *node)
                 break;
             }
 		case CAMERA_CLASS_ID:
-			if (obj->ClassID()==Class_ID(LOOKAT_CAM_CLASS_ID,0))
+			if (obj->ClassID() == Class_ID(LOOKAT_CAM_CLASS_ID, 0) ||
+                obj->ClassID() == Class_ID(SIMPLE_CAM_CLASS_ID, 0))
             {
 				Append(node, obj, OBTYPE_CAMERA, 0);
             }

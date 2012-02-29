@@ -7,9 +7,8 @@
 #include "SceneEnumProc.h"
 #include "AlembicPolyMsh.h"
 #include "AlembicXForm.h"
+#include "AlembicCamera.h"
 
-//#include "AlembicXform.h"
-//#include "AlembicCamera.h"
 //#include "AlembicCurves.h"
 //#include "AlembicPoints.h"
 //#include "AlembicModel.h"
@@ -101,10 +100,10 @@ bool AlembicWriteJob::PreProcess()
     }
 
     // get the frame rate
-    mFrameRate = GetFrameRate();
-    if(mFrameRate == 0.0)
+    mFrameRate = static_cast<float>(GetFrameRate());
+    if(mFrameRate == 0.0f)
     {
-        mFrameRate = 25.0;
+        mFrameRate = 25.0f;
     }
 
     std::vector<Alembic::AbcCoreAbstract::chrono_t> frames;
@@ -144,6 +143,12 @@ bool AlembicWriteJob::PreProcess()
             ptr.reset(new AlembicPolyMesh(*object->entry,this));            
             AddObject(ptr);
 		}
+        else if (type == OBTYPE_CAMERA)
+        {
+            AlembicObjectPtr ptr;
+            ptr.reset(new AlembicCamera(*object->entry,this));
+            AddObject(ptr);
+        }
         else if (type == OBTYPE_DUMMY)
         {
             AlembicObjectPtr ptr;
@@ -175,12 +180,6 @@ bool AlembicWriteJob::PreProcess()
 
         /*
         // take care of all other types
-        if(xObj.GetType().IsEqualNoCase(L"camera"))
-        {
-            AlembicObjectPtr ptr;
-            ptr.reset(new AlembicCamera(xObj.GetActivePrimitive().GetRef(),this));
-            AddObject(ptr);
-        }
         else if(xObj.GetType().IsEqualNoCase(L"polymsh"))
         {
             Property geomProp;

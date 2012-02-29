@@ -41,7 +41,7 @@ Alembic::Abc::OCompoundProperty AlembicCamera::GetCompound()
 bool AlembicCamera::Save(double time)
 {
     // Store the transformation
-    SaveXformSample(GetRef(), mXformSchema, mXformSample, time);
+    SaveCameraXformSample(GetRef(), mXformSchema, mXformSample, time);
 
     // store the metadata
     // IMetaDataManager mng;
@@ -55,7 +55,6 @@ bool AlembicCamera::Save(double time)
     }
 
     // check if the camera is animated
-    // check if the mesh is animated (Otherwise, no need to export)
     if(mNumSamples > 0) 
     {
         if(!GetRef().node->IsAnimated())
@@ -65,24 +64,18 @@ bool AlembicCamera::Save(double time)
     }
 
 
-    // Return a pointer to a TriObject given an INode or return NULL if the node cannot be converted to a TriObject
-    TimeValue ticks = GetTimeValueFromSeconds(time);
+    // Return a pointer to a Camera given an INode or return false if the node cannot be converted to a Camera
+    TimeValue ticks = GetTimeValueFromFrame(time);
     Object *obj = GetRef().node->EvalWorldState(ticks).obj;
     CameraObject *cam = NULL;
 
-    if (obj->CanConvertToType(Class_ID(CAMERA_CLASS_ID, 0)))
+    if (obj->CanConvertToType(Class_ID(SIMPLE_CAM_CLASS_ID, 0)))
     {
-        cam = (CameraObject *) obj->ConvertToType(ticks, Class_ID(CAMERA_CLASS_ID, 0));
-
-        // Note that the TriObject should only be deleted
-        // if the pointer to it is not equal to the object
-        // pointer that called ConvertToType()
-        if (obj != cam && cam)
-        {
-            delete cam;
-            cam = NULL;
-            return false;
-        }
+        cam = reinterpret_cast<CameraObject *>(obj->ConvertToType(ticks, Class_ID(SIMPLE_CAM_CLASS_ID, 0)));
+    }
+    else if (obj->CanConvertToType(Class_ID(LOOKAT_CAM_CLASS_ID, 0)))
+    {
+        cam = reinterpret_cast<CameraObject *>(obj->ConvertToType(ticks, Class_ID(LOOKAT_CAM_CLASS_ID, 0)));
     }
     else
     {
@@ -92,24 +85,30 @@ bool AlembicCamera::Save(double time)
     CameraState cs;     
     Interval valid = FOREVER; 
     cam->EvalCameraState(ticks, valid, &cs); 
+    float tDist = cam->GetTDist(ticks);
+    float ratio = GetCOREInterface()->GetRendImageAspect();
 
     // store the camera data    
-    mCameraSample.setNearClippingPlane(cs.hither);
-    mCameraSample.setFarClippingPlane(cs.yon);
-    
-    Matrix3 camMatrix = GetRef().node->GetObjTMAfterWSM(ticks);
-    ViewExp *_pViewport = GetCOREInterface()->GetActiveViewport(); 
-    GraphicsWindow *_pGraphicWindow = _pViewport->getGW(); 
-   
-    // JSS : TODO Validate I am not sure that it is the correct way of getting Aspect Ratio and next parameters
-    float ratio = static_cast<float>(_pGraphicWindow->getWinSizeX()) / static_cast<float>(_pGraphicWindow->getWinSizeY());
+    mCameraSample.setNearClippingPlane(cs.nearRange);
+    mCameraSample.setFarClippingPlane(cs.farRange);
     mCameraSample.setLensSqueezeRatio(ratio);
-    mCameraSample.setFocalLength(_pViewport->GetFocalDist());
+    mCameraSample.setFocalLength(tDist);
     mCameraSample.setHorizontalAperture(cs.fov);
     mCameraSample.setVerticalAperture(cs.fov / ratio);
 
     // save the samples
     mCameraSchema.set(mCameraSample);
+
+    mNumSamples++;
+
+    // Note that the CamObject should only be deleted if the pointer to it is not
+    // equal to the object pointer that called ConvertToType()
+    if (cam != NULL && obj != cam)
+    {
+        delete cam;
+        cam = NULL;
+        return false;
+    }
 
     return true;
 }

@@ -9,6 +9,18 @@
 // namespace AbcA = ::Alembic::AbcCoreAbstract::ALEMBIC_VERSION_NS;
 // using namespace AbcA;
 
+void GetObjectMatrix(TimeValue ticks, INode *node, Matrix3 &out)
+{
+    out = node->GetObjTMAfterWSM(ticks);
+    INode *pModelTransformParent = GetParentModelTransformNode(node);
+
+    if (pModelTransformParent)
+    {
+        Matrix3 modelParentTM = pModelTransformParent->GetObjTMAfterWSM(ticks);
+        out = out * Inverse(modelParentTM);
+    }
+}
+
 void SaveXformSample(const SceneEntry &in_Ref, Alembic::AbcGeom::OXformSchema &schema, Alembic::AbcGeom::XformSample &sample, double time)
 {
     // check if the transform is animated
@@ -24,15 +36,46 @@ void SaveXformSample(const SceneEntry &in_Ref, Alembic::AbcGeom::OXformSchema &s
     // JSS : To validate, I am currently assuming that the ObjectTM is what we are seeking. This may be wrong. 
     // Model transform
     TimeValue ticks = GetTimeValueFromFrame(time);
-    
-    Matrix3 transformation = in_Ref.node->GetObjTMAfterWSM(ticks);
-    INode *pModelTransformParent = GetParentModelTransformNode(in_Ref.node);
 
-    if (pModelTransformParent)
+    Matrix3 transformation;
+    GetObjectMatrix(ticks, in_Ref.node, transformation);
+
+    // Convert the max transform to alembic
+    Matrix3 alembicMatrix;
+    ConvertMaxMatrixToAlembicMatrix(transformation, alembicMatrix);
+    Alembic::Abc::M44d iMatrix( alembicMatrix.GetRow(0).x,  alembicMatrix.GetRow(0).y,  alembicMatrix.GetRow(0).z,  0,
+                                alembicMatrix.GetRow(1).x,  alembicMatrix.GetRow(1).y,  alembicMatrix.GetRow(1).z,  0,
+                                alembicMatrix.GetRow(2).x,  alembicMatrix.GetRow(2).y,  alembicMatrix.GetRow(2).z,  0,
+                                alembicMatrix.GetRow(3).x,  alembicMatrix.GetRow(3).y,  alembicMatrix.GetRow(3).z,  1);
+
+    // save the sample
+    sample.setMatrix(iMatrix);
+    schema.set(sample);
+}
+
+void SaveCameraXformSample(const SceneEntry &in_Ref, Alembic::AbcGeom::OXformSchema &schema, Alembic::AbcGeom::XformSample &sample, double time)
+{
+    // check if the transform is animated
+    if(schema.getNumSamples() > 0)
     {
-        Matrix3 ModelParentTM = pModelTransformParent->GetObjTMAfterWSM(ticks);
-        transformation = transformation * Inverse(ModelParentTM);
+        if (!CheckIfNodeIsAnimated(in_Ref.node))
+        {
+            // No need to save transform after first frame for non-animated objects. 
+            return;
+        }
     }
+
+    // Model transform
+    TimeValue ticks = GetTimeValueFromFrame(time);
+    
+    Matrix3 transformation;
+    GetObjectMatrix(ticks, in_Ref.node, transformation);
+
+    // Cameras in Max are already pointing down the negative z-axis (as is expected from Alembic).
+    // So we rotate it by 90 degrees so that it is pointing down the positive y-axis.
+    Matrix3 rotation(TRUE);
+    rotation.RotateX(-HALFPI);
+    transformation = rotation * transformation;
 
     // Convert the max transform to alembic
     Matrix3 alembicMatrix;
