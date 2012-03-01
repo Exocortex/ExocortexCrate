@@ -4,7 +4,6 @@
 #include "AlembicArchiveStorage.h"
 #include "utility.h"
 #include "iparamb2.h"
-#include "alembic.h"
 
 extern HINSTANCE hInstance;
 
@@ -17,8 +16,7 @@ public:
 
     Alembic::AbcGeom::IObject  *pIObj;
     GenCamera                  *pCameraObj;
-    double                      dbFrame;
-    unsigned int                nValidityFlags;
+    TimeValue                   dTicks;
 }
 alembic_fillcamera_options;
 
@@ -26,8 +24,7 @@ _alembic_fillcamera_options::_alembic_fillcamera_options()
 {
     pIObj = NULL;
     pCameraObj = NULL;
-    dbFrame = 0.0;
-    nValidityFlags = 0;
+    dTicks = 0;
 }
 
 
@@ -49,9 +46,9 @@ public:
 	// From Animatable
 	RefTargetHandle Clone(RemapDir& remap);
 	void DeleteThis() { delete this; }
-	void GetClassName(TSTR& s) { s = _T("Exocortex Alembic Camera"); }  
+	void GetClassName(TSTR& s) { s = _T("Alembic Camera"); }  
 	virtual Class_ID ClassID() { return EXOCORTEX_ALEMBIC_CAMERA_MODIFIER_ID; }		
-	TCHAR *GetObjectName() { return _T("Exocortex Alembic Camera"); }
+	TCHAR *GetObjectName() { return _T("Alembic Camera"); }
 
 	// From modifier
 	ChannelMask ChannelsUsed() { return DISP_ATTRIB_CHANNEL; }		// TODO: What channels do we actually need?
@@ -102,7 +99,7 @@ class AlembicCameraModifierClassDesc : public ClassDesc2
 public:
 	int 			IsPublic() { return 1; }
 	void *			Create(BOOL loading = FALSE) { return new AlembicCameraModifier; }
-	const TCHAR *	ClassName() { return _T("Exocortex Alembic Camera"); }
+	const TCHAR *	ClassName() { return _T("Alembic Camera"); }
 	SClass_ID		SuperClassID() { return OSM_CLASS_ID; }
 	Class_ID		ClassID() { return EXOCORTEX_ALEMBIC_CAMERA_MODIFIER_ID; }
 	const TCHAR* 	Category() { return _T("MAX STANDARD"); }
@@ -121,7 +118,7 @@ enum { turn_use_invis, turn_sel_type, turn_softsel, turn_sel_level };
 
 static ParamBlockDesc2 turn_param_desc
 (
-    turn_params, _T("ExocortexAlembicCameraModifier"),
+    turn_params, _T("AlembicCameraModifier"),
     IDS_PARAMETERS, &s_AlembicCameraModifierDesc,
     P_AUTO_CONSTRUCT | P_AUTO_UI, REF_PBLOCK,
 
@@ -196,8 +193,7 @@ void AlembicCameraModifier::ModifyObject(TimeValue t, ModContext &mc, ObjectStat
     alembic_fillcamera_options dataFillOptions;
     dataFillOptions.pIObj = &iObj;
     dataFillOptions.pCameraObj = m_pCamera;
-    dataFillOptions.dbFrame = GetSecondsFromTimeValue(t);
-    dataFillOptions.nValidityFlags = 0;
+    dataFillOptions.dTicks = t;
     AlembicImport_FillInCamera(dataFillOptions);
 
     // Determine the validity interval
@@ -280,13 +276,12 @@ void AlembicImport_FillInCamera(alembic_fillcamera_options &options)
         return;
     }
 
-    SampleInfo sampleInfo = getSampleInfo(options.dbFrame,
+    double sampleTime = GetSecondsFromTimeValue(options.dTicks);
+    SampleInfo sampleInfo = getSampleInfo(sampleTime,
                                           objCamera.getSchema().getTimeSampling(),
                                           objCamera.getSchema().getNumSamples());
     Alembic::AbcGeom::CameraSample sample;
     objCamera.getSchema().get(sample, sampleInfo.floorIndex);
-
-    TimeValue ticks = GetTimeValueFromFrame(options.dbFrame);
 
     // Extract the camera values from the sample
     double focalLength = sample.getFocalLength();
@@ -304,11 +299,11 @@ void AlembicImport_FillInCamera(alembic_fillcamera_options &options)
         farClipping = (1.0 - sampleInfo.alpha) * farClipping + sampleInfo.alpha * sample.getFarClippingPlane();
     }
 
-    options.pCameraObj->SetTDist(ticks, static_cast<float>(focalLength));
+    options.pCameraObj->SetTDist(options.dTicks, static_cast<float>(focalLength));
     options.pCameraObj->SetFOVType(0);  // Width FoV = 0
-    options.pCameraObj->SetFOV(ticks, static_cast<float>(fov));
-    options.pCameraObj->SetClipDist(ticks, CAM_HITHER_CLIP, static_cast<float>(nearClipping));
-    options.pCameraObj->SetClipDist(ticks, CAM_YON_CLIP, static_cast<float>(farClipping));
+    options.pCameraObj->SetFOV(options.dTicks, static_cast<float>(fov));
+    options.pCameraObj->SetClipDist(options.dTicks, CAM_HITHER_CLIP, static_cast<float>(nearClipping));
+    options.pCameraObj->SetClipDist(options.dTicks, CAM_YON_CLIP, static_cast<float>(farClipping));
     options.pCameraObj->SetManualClip(TRUE);
 }
 
@@ -334,8 +329,7 @@ int AlembicImport_Camera(const std::string &file, const std::string &identifier,
     alembic_fillcamera_options dataFillOptions;
     dataFillOptions.pIObj = &iObj;
     dataFillOptions.pCameraObj = pCameraObj;
-    dataFillOptions.dbFrame = 0.0;
-    dataFillOptions.nValidityFlags = 0;
+    dataFillOptions.dTicks =  GetCOREInterface12()->GetTime();
 	AlembicImport_FillInCamera(dataFillOptions);
 
     // Create the object node

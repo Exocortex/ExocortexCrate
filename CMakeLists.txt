@@ -6,7 +6,7 @@ INCLUDE(../ExocortexAlembicShared/ExocortexCMakeShared.txt)
 
 if( Exocortex_SERVICES OR Exocortex_RLM_ONLY )
 	include_directories( ${Rlm_INCLUDE_DIR} )
-	include_directories( ${Exocortex_INCLUDE_DIR} )
+	include_directories( ${Exocortex_INCLUDE_DIR} ) 
 endif()
 
 SET( 3DSMAX_DIR_ROOT ${LIBRARY_ROOT}/Max/2012 )
@@ -21,7 +21,7 @@ if( NOT EXISTS ${3DSMAX_DIR_INCLUDE} )
 	message(FATAL_ERROR "Can't find 3DSMAX_DIR_INCLUDE: ${3DSMAX_DIR_INCLUDE}" )
 endif()
  
-file(GLOB Sources ${CMAKE_CURRENT_SOURCE_DIR}/*.cpp)
+file(GLOB Sources ${CMAKE_CURRENT_SOURCE_DIR}/*.cpp) 
 file(GLOB Includes ${CMAKE_CURRENT_SOURCE_DIR}/*.h)
 
 SOURCE_GROUP("Source Files" FILES ${Sources})   

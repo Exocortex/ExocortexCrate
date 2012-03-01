@@ -99,7 +99,7 @@ std::string getModelFullName( const std::string &identifier )
     {
         size_t start = identifier.rfind("/");
         start += 1;
-        modelName = identifier.substr(start, identifier.length()-3);
+        modelName = identifier.substr(start, identifier.length()-4);
         modelName = identifier + std::string("/") + modelName;
     }
 
