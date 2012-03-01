@@ -21,6 +21,7 @@ private:
    Alembic::Abc::ALEMBIC_VERSION_NS::OV3fArrayProperty mVelocityProperty;
 public:
     static Point3 GetVertexNormal(Mesh* mesh, int faceNo, RVertex* rv);
+    static Point3 GetVertexNormal(MNMesh *mesh, int faceNo, int faceVertNo);
     static void make_face_uv(Face *f, Point3 *tv);
     static BOOL CheckForFaceMap(Mtl* mtl, Mesh* mesh);
 public:

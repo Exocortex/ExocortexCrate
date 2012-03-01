@@ -210,7 +210,7 @@ bool AlembicPolyMesh::Save(double time)
                     }
                     else
                     {
-                        vertexNormal = polyObj->GetMesh().GetFaceNormal(i);
+                        vertexNormal = GetVertexNormal(&polyObj->GetMesh(), i, j);
                     }
                 }
                 else
@@ -222,7 +222,7 @@ bool AlembicPolyMesh::Save(double time)
                     }
                     else
                     {
-                        vertexNormal = triObj->GetMesh().getFaceNormal(i);
+                        vertexNormal = GetVertexNormal(&triObj->GetMesh(), i, triObj->GetMesh().getRVertPtr(i));
                     }
                 }
 
@@ -598,6 +598,49 @@ Point3 AlembicPolyMesh::GetVertexNormal(Mesh* mesh, int faceNo, RVertex* rv)
 	}
 	
 	return vertexNormal;
+}
+
+Point3 AlembicPolyMesh::GetVertexNormal(MNMesh *mesh, int faceNo, int faceVertNo)
+{
+    // If we do not a smoothing group, we can't base ourselves on anything else,
+    // so we can just return the face normal.
+    MNFace *face = mesh->F(faceNo);
+    if (face == NULL || face->smGroup == 0)
+    {
+        return mesh->GetFaceNormal(faceNo);
+    }
+
+    // Find any other faces that share this vertex and smoothing group.
+    // Combine all the normals of these neighbouring faces and re-normalize.
+    int vertIndex = face->vtx[faceVertNo];
+    int numFaces = mesh->FNum();
+    Point3 normal(0.0f, 0.0f, 0.0f);
+
+    for (int i = 0; i < numFaces; ++i)
+    {
+        const MNFace *testFace = mesh->F(i);
+        if (testFace != NULL && (testFace->smGroup & face->smGroup))
+        {
+            int degree = testFace->deg;
+            for (int j = 0; j < degree; ++j)
+            {
+                if (testFace->vtx[j] == vertIndex)
+                {
+                    normal += mesh->GetFaceNormal(i);
+                    break;
+                }
+            }
+        }
+    }
+
+    if (normal.LengthSquared() > 0.0f)
+    {
+        return normal.Normalize();
+    }
+
+    // If we did not find any normals or the normals offset each other for some
+    // reason, let's just let max tell us what it thinks the normal should be.
+    return mesh->GetVertexNormal(vertIndex);
 }
 
 void AlembicPolyMesh::make_face_uv(Face *f, Point3 *tv)
