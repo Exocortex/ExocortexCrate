@@ -2,8 +2,7 @@
 #include "AlembicDefinitions.h"
 #include "iparamm2.h"
 
-extern ClassDesc2* GetAlembicExporterDesc();
-extern ClassDesc* GetAlembicXFormModifierDesc();
+extern ClassDesc* GetAlembicXFormCtrlClassDesc();
 extern ClassDesc* GetAlembicPolyMeshModifierDesc();
 extern ClassDesc* GetAlembicCameraModifierDesc();
 
@@ -30,19 +29,19 @@ MAX_DLL_EXPORT const TCHAR* LibDescription()
 //TODO: Must change this number when adding a new class
 MAX_DLL_EXPORT int LibNumberClasses()
 {
-   return 4;
+   return 3;
 }
 
 MAX_DLL_EXPORT ClassDesc* LibClassDesc(int i)
 {
-   switch(i) {
-      case 0: return GetAlembicExporterDesc();
-	  case 1: return GetAlembicXFormModifierDesc();
-	  case 2: return GetAlembicPolyMeshModifierDesc();
-      case 3: return GetAlembicCameraModifierDesc();
+    switch(i) 
+    {
+    case 0: return GetAlembicXFormCtrlClassDesc();
+    case 1: return GetAlembicPolyMeshModifierDesc();
+    case 2: return GetAlembicCameraModifierDesc();
 
-      default: return 0;
-   }
+    default: return 0;
+    }
 }
 
 MAX_DLL_EXPORT ULONG LibVersion()

@@ -18,18 +18,16 @@ typedef struct _alembic_fillmesh_options
     Alembic::AbcGeom::IObject *pIObj;
     TriObject *pTriObj;
     PolyObject *pPolyObj;
-    double iFrame;
+    TimeValue dTicks;
     AlembicDataFillFlags nDataFillFlags;
-    unsigned int nValidityFlags;
 
     _alembic_fillmesh_options()
     {
         pIObj = 0;
         pTriObj = 0;
         pPolyObj = 0;
-        iFrame = 0;
+        dTicks = 0;
         nDataFillFlags = 0;
-        nValidityFlags = 0;
     }
 } alembic_fillmesh_options;
 
@@ -46,10 +44,10 @@ public:
 
 	// From Animatable
 	void DeleteThis() { delete this; }
-	void GetClassName(TSTR& s) { s = _T("Exocortex Alembic PolyMesh"); }  
+	void GetClassName(TSTR& s) { s = _T("Alembic PolyMesh"); }  
 	virtual Class_ID ClassID() { return EXOCORTEX_ALEMBIC_POLYMESH_MODIFIER_ID; }		
 	RefTargetHandle Clone(RemapDir& remap);
-	TCHAR *GetObjectName() { return _T("Exocortex Alembic PolyMesh"); }
+	TCHAR *GetObjectName() { return _T("Alembic PolyMesh"); }
 
 	// From modifier
 	ChannelMask ChannelsUsed()  { return TOPO_CHANNEL|GEOM_CHANNEL|TEXMAP_CHANNEL; }
@@ -98,10 +96,10 @@ class AlembicPolyMeshModifierClassDesc : public ClassDesc2 {
 	public:
 	int 			IsPublic() { return 1; }
 	void *			Create(BOOL loading = FALSE) { return new AlembicPolyMeshModifier; }
-	const TCHAR *	ClassName() { return _T("ExoCortex Alembic PolyMesh"); }
+	const TCHAR *	ClassName() { return _T("Alembic PolyMesh"); }
 	SClass_ID		SuperClassID() { return OSM_CLASS_ID; }
 	Class_ID		ClassID() { return EXOCORTEX_ALEMBIC_POLYMESH_MODIFIER_ID; }
-	const TCHAR* 	Category() { return _T("MAX STANDARD"); }
+	const TCHAR* 	Category() { return _T("Exocortex Alembic for 3DS Max"); }
 	const TCHAR*	InternalName() { return _T("AlembicPolyMeshModifier"); }	// returns fixed parsable name (scripter-visible name)
 	HINSTANCE		HInstance() { return hInstance; }			// returns owning module handle
 };
@@ -122,7 +120,7 @@ enum
     polymesh_props_time,
 };
 
-static ParamBlockDesc2 polymesh_props_desc ( polymesh_props, _T("ExoCortexAlembicPolyMeshModifier"),
+static ParamBlockDesc2 polymesh_props_desc ( polymesh_props, _T("AlembicPolyMeshModifier"),
 									IDS_PROPS, &AlembicPolyMeshModifierDesc,
 									P_AUTO_CONSTRUCT | P_AUTO_UI, REF_PBLOCK,
 	// rollout description
@@ -185,7 +183,7 @@ class PBPolyMesh_Preview_Accessor : public PBAccessor
 
 static PBPolyMesh_Preview_Accessor polymesh_preview_accessor;
 
-static ParamBlockDesc2 polymesh_preview_desc ( polymesh_preview, _T("ExoCortexAlembicPolyMeshModifier"),
+static ParamBlockDesc2 polymesh_preview_desc ( polymesh_preview, _T("AlembicPolyMeshModifier"),
 									IDS_PREVIEW, &AlembicPolyMeshModifierDesc,
 									P_AUTO_CONSTRUCT | P_AUTO_UI, REF_PBLOCK1,
 	//rollout description
@@ -326,14 +324,11 @@ void AlembicPolyMeshModifier::ModifyObject (TimeValue t, ModContext &mc, ObjectS
    if(!iObj.valid())
       return;
 
-   // Calculate the sample time in seconds
-   double sampleTime = GetSecondsFromTimeValue(t);
-
    alembic_fillmesh_options options;
    options.pIObj = &iObj;
    options.pTriObj = NULL;
    options.pPolyObj = NULL;
-   options.iFrame = sampleTime;
+   options.dTicks = t;
    options.nDataFillFlags = m_AlembicNodeProps.m_UpdateDataFillFlags;
 
    // Find out if we are modifying a poly object or a tri object
@@ -452,16 +447,18 @@ void AlembicImport_FillInPolyMesh(alembic_fillmesh_options &options)
    if(!objMesh.valid() && !objSubD.valid())
        return;
 
+  double sampleTime = GetSecondsFromTimeValue(options.dTicks);
+
   SampleInfo sampleInfo;
    if(objMesh.valid())
       sampleInfo = getSampleInfo(
-         options.iFrame,
+         sampleTime,
          objMesh.getSchema().getTimeSampling(),
          objMesh.getSchema().getNumSamples()
       );
    else
       sampleInfo = getSampleInfo(
-         options.iFrame,
+         sampleTime,
          objSubD.getSchema().getTimeSampling(),
          objSubD.getSchema().getNumSamples()
       );
@@ -778,7 +775,7 @@ void AlembicImport_FillInPolyMesh(alembic_fillmesh_options &options)
        if(meshUvParam.valid())
        {
            SampleInfo sampleInfo = getSampleInfo(
-               options.iFrame,
+               sampleTime,
                meshUvParam.getTimeSampling(),
                meshUvParam.getNumSamples()
                );
@@ -924,7 +921,7 @@ int AlembicImport_PolyMesh(const std::string &file, const std::string &identifie
     dataFillOptions.pIObj = &iObj;
     dataFillOptions.pTriObj = NULL;
     dataFillOptions.pPolyObj = NULL;
-    dataFillOptions.iFrame = 0;
+    dataFillOptions.dTicks = GetCOREInterface12()->GetTime();
 
     dataFillOptions.nDataFillFlags = ALEMBIC_DATAFILL_VERTEX|ALEMBIC_DATAFILL_FACELIST;
     dataFillOptions.nDataFillFlags |= options.importNormals ? ALEMBIC_DATAFILL_NORMALS : 0;
