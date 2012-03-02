@@ -30,6 +30,7 @@ void AlembicDebug_PrintMeshData( Mesh &mesh );
 void AlembicDebug_PrintTransform(Matrix3 &m);
 
 // Conversion functions to Alembic Standards
+float ScaleFloatFromInchesToDecimeters(float inches);
 Point3 ScalePointFromInchesToDecimeters( const Point3 &inches );
 Point3 ScalePointFromDecimetersToInches( const Point3 &decimeters );
 void ConvertMaxMatrixToAlembicMatrix( const Matrix3 &maxMatrix, Matrix3 &alembicMatrix);

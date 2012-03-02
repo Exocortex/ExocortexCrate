@@ -3,6 +3,7 @@
 #include <sceneapi.h>
 #include <object.h>
 #include <triobj.h>
+#include <ParticleFlow/PFClassIDs.h>
 #include "SceneEntry.h"
 #include "MeshMtlList.h"
 
@@ -81,6 +82,13 @@ int SceneEnumProc::callback(INode *node)
 				Append(node, obj, OBTYPE_CAMERA, 0);
             }
 			break;
+        case GEOMOBJECT_CLASS_ID:
+            if (obj->IsParticleSystem() == TRUE &&
+                obj->ClassID() == ParticleGroup_Class_ID)
+            {
+                Append(node, obj, OBTYPE_POINTS, 0);
+            }
+            break;
 	}
 
 	return TREE_CONTINUE;

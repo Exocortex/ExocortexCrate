@@ -8,9 +8,9 @@
 #include "AlembicPolyMsh.h"
 #include "AlembicXForm.h"
 #include "AlembicCamera.h"
+#include "AlembicPoints.h"
 
 //#include "AlembicCurves.h"
-//#include "AlembicPoints.h"
 //#include "AlembicModel.h"
 //#include "AlembicSubD.h"
 
@@ -153,6 +153,12 @@ bool AlembicWriteJob::PreProcess()
         {
             AlembicObjectPtr ptr;
             ptr.reset(new AlembicXForm(*object->entry,this));            
+            AddObject(ptr);
+        }
+        else if (type == OBTYPE_POINTS)
+        {
+            AlembicObjectPtr ptr;
+            ptr.reset(new AlembicPoints(*object->entry,this));
             AddObject(ptr);
         }
 

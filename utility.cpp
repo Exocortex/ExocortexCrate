@@ -185,6 +185,14 @@ void AlembicDebug_PrintTransform(Matrix3 &m)
     }
 }
 
+float ScaleFloatFromInchesToDecimeters(float inches)
+{
+    float flDecimetersPerInch = (float)GetMasterScale(UNITS_METERS);
+    flDecimetersPerInch *= 10.0f;
+    float decimeters = inches * flDecimetersPerInch;
+    return decimeters;
+}
+
 Point3 ScalePointFromInchesToDecimeters( const Point3 &inches )
 {
     float flDecimetersPerInch = (float)GetMasterScale(UNITS_METERS);
