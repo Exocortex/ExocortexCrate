@@ -57,9 +57,11 @@ Alembic::Abc::OCompoundProperty AlembicPolyMesh::GetCompound()
 
 bool AlembicPolyMesh::Save(double time)
 {
+    TimeValue ticks = GetTimeValueFromFrame(time);
+
     // Store the transformation
     SaveXformSample(GetRef(), mXformSchema, mXformSample, time);
-    
+
     // store the metadata
     // IMetaDataManager mng;
     // mng.GetMetaData(GetRef().node, 0);
@@ -68,7 +70,8 @@ bool AlembicPolyMesh::Save(double time)
     // set the visibility
     if(GetRef().node->IsAnimated() || mNumSamples == 0)
     {
-        mOVisibility.set(GetRef().node->GetPrimaryVisibility() ? Alembic::AbcGeom::kVisibilityVisible : Alembic::AbcGeom::kVisibilityHidden);
+        float flVisibility = GetRef().node->GetLocalVisibility(ticks);
+        mOVisibility.set(flVisibility > 0 ? Alembic::AbcGeom::kVisibilityVisible : Alembic::AbcGeom::kVisibilityHidden);
     }
 
     // check if the mesh is animated (Otherwise, no need to export)
@@ -90,7 +93,6 @@ bool AlembicPolyMesh::Save(double time)
 
     // Return a pointer to a TriObject given an INode or return NULL
     // if the node cannot be converted to a TriObject
-    TimeValue ticks = GetTimeValueFromFrame(time);
     Object *obj = GetRef().node->EvalWorldState(ticks).obj;
     PolyObject *polyObj = NULL;
     TriObject *triObj = NULL;

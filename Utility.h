@@ -15,6 +15,7 @@ struct SampleInfo
 };
 
 SampleInfo getSampleInfo(double iFrame,Alembic::AbcCoreAbstract::TimeSamplingPtr iTime, size_t numSamps);
+Alembic::Abc::TimeSamplingPtr getTimeSamplingFromObject(Alembic::Abc::IObject object);
 std::string buildIdentifierFromRef(const SceneEntry &in_Ref);
 std::string buildModelIdFromXFormId(const std::string &xformId);
 std::string getIdentifierFromRef(const SceneEntry &in_Ref);

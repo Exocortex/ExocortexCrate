@@ -8,6 +8,7 @@
 #include "MeshNormalSpec.h"
 #include "AlembicXForm.h"
 #include "assetmanagement\AssetType.h"
+#include "AlembicVisCtrl.h"
 
 using namespace MaxSDK::AssetManagement;
 const int POLYMESHMOD_MAX_PARAM_BLOCKS = 2;
@@ -991,8 +992,8 @@ int AlembicImport_PolyMesh(const std::string &file, const std::string &identifie
     SceneEntry *pEntry = options.sceneEnumProc.Append(node, newObject, OBTYPE_MESH, &std::string(iObj.getFullName())); 
     options.currentSceneList.Append(pEntry);
 
-    // Set up any child links for this node
-    AlembicImport_SetupChildLinks(iObj, options);
+    // Set the visibility controller
+    AlembicImport_SetupVisControl(iObj, node, options);
 
 	return 0;
 }

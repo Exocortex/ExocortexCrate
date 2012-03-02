@@ -36,7 +36,7 @@ public:
             0,                      //* function name string resource name * / 
             TYPE_INT,               //* Return type * /
             0,                      //* Flags  * /
-            5,                      //* Number  of arguments * /
+            6,                      //* Number  of arguments * /
                 _M("fileName"),     //* argument internal name * /
                 0,                  //* argument localizable name string resource id * /
                 TYPE_FILENAME,      //* arg type * /
@@ -52,6 +52,9 @@ public:
                 _M("attachToExisting"), //* argument internal name * /
                 0,                  //* argument localizable name string resource id * /
                 TYPE_BOOL,          //* arg type * /
+                _M("visibilityOption"), //* argument internal name * /
+                0,                  //* argument localizable name string resource id * /
+                TYPE_INT,           //* arg type * /
             end); 
 
 		 AppendFunction(
@@ -97,12 +100,12 @@ public:
             end); 
     }
 
-    static int ExocortexAlembicImport(MCHAR * strFileName, BOOL bImportNormals, BOOL bImportUVs, BOOL bImportClusters, BOOL bAttachToExisting);
+    static int ExocortexAlembicImport(MCHAR * strFileName, BOOL bImportNormals, BOOL bImportUVs, BOOL bImportClusters, BOOL bAttachToExisting, int iVisOption);
 	static int ExocortexAlembicExport(MCHAR * strFileName, int iFrameIn, int iFrameOut, int iFrameSteps, int iFrameSubSteps, int iType,
                                       BOOL bExportUV, BOOL bExportClusters, BOOL bExportEnvelopeBindPose, BOOL bExportDynamicTopology, BOOL bExportSelected);
 
     BEGIN_FUNCTION_MAP
-        FN_5(exocortexAlembicImport, TYPE_INT, ExocortexAlembicImport, TYPE_FILENAME, TYPE_BOOL, TYPE_BOOL, TYPE_BOOL, TYPE_BOOL)
+        FN_6(exocortexAlembicImport, TYPE_INT, ExocortexAlembicImport, TYPE_FILENAME, TYPE_BOOL, TYPE_BOOL, TYPE_BOOL, TYPE_BOOL, TYPE_INT)
 		FN_11(exocortexAlembicExport, TYPE_INT, ExocortexAlembicExport, TYPE_FILENAME, TYPE_INT, TYPE_INT, TYPE_INT, TYPE_INT, TYPE_INT, TYPE_BOOL, TYPE_BOOL, TYPE_BOOL, TYPE_BOOL, TYPE_BOOL)
     END_FUNCTION_MAP
 };
@@ -193,13 +196,14 @@ static ExocortexAlembicStaticInterface exocortexAlembic;
 }
 */
 
-int ExocortexAlembicStaticInterface::ExocortexAlembicImport(MCHAR* strFileName, BOOL bImportNormals, BOOL bImportUVs, BOOL bImportClusters, BOOL bAttachToExisting)
+int ExocortexAlembicStaticInterface::ExocortexAlembicImport(MCHAR* strFileName, BOOL bImportNormals, BOOL bImportUVs, BOOL bImportClusters, BOOL bAttachToExisting, int iVisOption)
 {
 	alembic_importoptions importOptions;
     importOptions.importNormals = (bImportNormals != FALSE);
     importOptions.importUVs = (bImportUVs != FALSE);
     importOptions.importClusters = (bImportClusters != FALSE);
     importOptions.attachToExisting = (bAttachToExisting != FALSE);
+    importOptions.importVisibility = static_cast<VisImportOption>(iVisOption);
 
 	// If no filename, then return an error code
 	if(strFileName[0] == 0)

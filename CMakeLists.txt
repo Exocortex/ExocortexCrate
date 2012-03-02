@@ -9,7 +9,7 @@ if( Exocortex_SERVICES OR Exocortex_RLM_ONLY )
 	include_directories( ${Exocortex_INCLUDE_DIR} ) 
 endif()
 
-SET( 3DSMAX_DIR_ROOT ${LIBRARY_ROOT}/Max/2012 )
+SET( 3DSMAX_DIR_ROOT ${LIBRARY_ROOT}/Max/2012 ) 
 if( NOT EXISTS ${3DSMAX_DIR_ROOT} )
 	SET( 3DSMAX_DIR_ROOT ${LIBRARY_ROOT}/Max )
 endif()
@@ -29,10 +29,10 @@ SOURCE_GROUP("Header Files" FILES ${Includes})
 
 if( Exocortex_SERVICES OR Exocortex_RLM_ONLY )
 	include_directories( ${Rlm_INCLUDE_DIR} )
-	include_directories( ${Exocortex_INCLUDE_DIR} )
+	include_directories( ${Exocortex_INCLUDE_DIR} ) 
 endif()
  
-if( Exocortex_SERVICES OR Exocortex_RLM_ONLY )
+if( Exocortex_SERVICES OR Exocortex_RLM_ONLY ) 
 	link_directories( ${Rlm_LIBRARYDIR} )
 endif()
 

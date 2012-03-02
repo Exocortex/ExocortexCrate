@@ -40,6 +40,8 @@ Alembic::Abc::OCompoundProperty AlembicCamera::GetCompound()
 
 bool AlembicCamera::Save(double time)
 {
+    TimeValue ticks = GetTimeValueFromFrame(time);
+
     // Store the transformation
     SaveCameraXformSample(GetRef(), mXformSchema, mXformSample, time);
 
@@ -51,7 +53,7 @@ bool AlembicCamera::Save(double time)
     // set the visibility
     if(GetRef().node->IsAnimated() || mNumSamples == 0)
     {
-        mOVisibility.set(GetRef().node->GetPrimaryVisibility() ? Alembic::AbcGeom::kVisibilityVisible : Alembic::AbcGeom::kVisibilityHidden);
+        mOVisibility.set(GetRef().node->GetLocalVisibility(ticks) > 0 ? Alembic::AbcGeom::kVisibilityVisible : Alembic::AbcGeom::kVisibilityHidden);
     }
 
     // check if the camera is animated
@@ -65,7 +67,6 @@ bool AlembicCamera::Save(double time)
 
 
     // Return a pointer to a Camera given an INode or return false if the node cannot be converted to a Camera
-    TimeValue ticks = GetTimeValueFromFrame(time);
     Object *obj = GetRef().node->EvalWorldState(ticks).obj;
     CameraObject *cam = NULL;
 

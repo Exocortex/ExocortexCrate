@@ -5,6 +5,7 @@
 extern ClassDesc* GetAlembicXFormCtrlClassDesc();
 extern ClassDesc* GetAlembicPolyMeshModifierDesc();
 extern ClassDesc* GetAlembicCameraModifierDesc();
+extern ClassDesc* GetAlembicVisCtrlClassDesc();
 
 HINSTANCE hInstance;
 
@@ -29,7 +30,7 @@ MAX_DLL_EXPORT const TCHAR* LibDescription()
 //TODO: Must change this number when adding a new class
 MAX_DLL_EXPORT int LibNumberClasses()
 {
-   return 3;
+   return 4;
 }
 
 MAX_DLL_EXPORT ClassDesc* LibClassDesc(int i)
@@ -39,6 +40,7 @@ MAX_DLL_EXPORT ClassDesc* LibClassDesc(int i)
     case 0: return GetAlembicXFormCtrlClassDesc();
     case 1: return GetAlembicPolyMeshModifierDesc();
     case 2: return GetAlembicCameraModifierDesc();
+    case 3: return GetAlembicVisCtrlClassDesc();
 
     default: return 0;
     }

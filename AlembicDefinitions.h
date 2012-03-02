@@ -14,19 +14,17 @@ const unsigned int ALEMBIC_DATAFILL_BOUNDINGBOX = 16;
 const unsigned int ALEMBIC_DATAFILL_FACESETS = 32;
 const unsigned int ALEMBIC_DATAFILL_BINDPOSE = 64;
 
-/*enum AlembicFillContext
-{
-    ALEMBIC_FILLCONTEXT_IMPORT,
-    ALEMBIC_FILLCONTEXT_UPDATE,
-    ALEMBIC_FILLCONTEXT_NONE
-};
-*/
-
 enum MeshTopologyType
 {
     SURFACE = 1,
     NORMAL = 2,
     NORMAL_SURFACE = 3
+};
+
+enum VisImportOption
+{
+    VisImport_JustImportValue = 1,
+    VisImport_ConnectedControllers = 2 
 };
 
 enum alembic_return_code
@@ -41,10 +39,10 @@ typedef struct _alembic_importoptions
    bool importNormals;
    bool importUVs;
    bool importClusters;
-   bool importVisibility;
    bool importStandins;
    bool importBboxes;
    bool attachToExisting;
+   VisImportOption importVisibility;
    SceneEnumProc sceneEnumProc;
    ObjectList currentSceneList;
 
@@ -52,10 +50,10 @@ public:
    _alembic_importoptions() : importNormals(false)
 	, importUVs(false)
 	, importClusters(false)
-	, importVisibility(false)
 	, importStandins(false)
 	, importBboxes(false)
 	, attachToExisting(false)
+    , importVisibility(VisImport_JustImportValue)
    {
    }
 } alembic_importoptions;

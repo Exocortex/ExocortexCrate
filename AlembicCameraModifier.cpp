@@ -4,6 +4,7 @@
 #include "AlembicArchiveStorage.h"
 #include "utility.h"
 #include "iparamb2.h"
+#include "AlembicVisCtrl.h"
 
 extern HINSTANCE hInstance;
 
@@ -354,8 +355,8 @@ int AlembicImport_Camera(const std::string &file, const std::string &identifier,
     SceneEntry *pEntry = options.sceneEnumProc.Append(pNode, pCameraObj, OBTYPE_CAMERA, &std::string(iObj.getFullName())); 
     options.currentSceneList.Append(pEntry);
 
-    // Set up any child links for this node
-    AlembicImport_SetupChildLinks(iObj, options);
+    // Set the visibility controller
+    AlembicImport_SetupVisControl(iObj, pNode, options);
 
 	return 0;
 }
