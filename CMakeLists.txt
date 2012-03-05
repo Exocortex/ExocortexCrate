@@ -1,4 +1,8 @@
-SET( PYTHON_LIBS python26)
+if(WIN32) 
+  SET( PYTHON_LIBS python26)
+else()
+  SET( PYTHON_LIBS python2.6)
+endif()
 
 file(GLOB Sources ${CMAKE_CURRENT_SOURCE_DIR}/*.cpp)
 file(GLOB Includes ${CMAKE_CURRENT_SOURCE_DIR}/*.h)
@@ -33,8 +37,8 @@ if(WIN32)
   ADD_DEFINITIONS( /DBOOST_ALL_NO_LIB )
   SET( MODSUFFIX ".pyd" )
 else()
-  MESSAGE("WE NEED TO IMPLEMENT LINUX FOR THE PYTHON EXTENSION!")
-  SET( MODSUFFIX ".so" )
+  INCLUDE_DIRECTORIES( ${LIBRARY_ROOT}/python/2.6.7/Fedora )
+  LINK_DIRECTORIES( ${LIBRARY_ROOT}/python/2.6.7/libsFedora )
 endif()
 
 
