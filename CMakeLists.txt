@@ -39,6 +39,7 @@ if(WIN32)
 else()
   INCLUDE_DIRECTORIES( ${LIBRARY_ROOT}/python/2.6.7/Fedora )
   LINK_DIRECTORIES( ${LIBRARY_ROOT}/python/2.6.7/libsFedora )
+  SET( MODSUFFIX ".so" )
 endif()
 
 
