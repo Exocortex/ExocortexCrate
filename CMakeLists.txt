@@ -34,7 +34,7 @@ else()
 	message(FATAL_ERROR "Should not get here")
 endif()
 
-set( Exocortex_BETA_EXPIRY_DATE 1330560000 )	# when beta is over, undefine this and it will not be enabled.
+#set( Exocortex_BETA_EXPIRY_DATE 1330560000 )	# when beta is over, undefine this and it will not be enabled.
 set( Exocortex_RLM_ONLY ON )					# use only RLM licensing.
 
 # Exocortex Services
