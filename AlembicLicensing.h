@@ -17,7 +17,7 @@
 #define PLUGIN_LICENSE_NAME				"alembic_arnold"
 #define PLUGIN_LICENSE_VERSION			(alembic_MAJOR_VERSION*10)
 
-#define PLUGIN_LICENSE_IDS	{ RlmProductID( PLUGIN_LICENSE_NAME, PLUGIN_LICENSE_VERSION ), RlmProductID( "alembic_softimage", PLUGIN_LICENSE_VERSION ), RlmProductID( "alembic_maya", PLUGIN_LICENSE_VERSION ) }
+#define PLUGIN_LICENSE_IDS	{ RlmProductID( PLUGIN_LICENSE_NAME, PLUGIN_LICENSE_VERSION ), RlmProductID( "alembic_reader", PLUGIN_LICENSE_VERSION ), RlmProductID( "alembic_softimage", PLUGIN_LICENSE_VERSION ), RlmProductID( "alembic_maya", PLUGIN_LICENSE_VERSION ), RlmProductID( "alembic", PLUGIN_LICENSE_VERSION ) }
 
 #include "ExocortexServicesProxy.h"
 
