@@ -7,61 +7,61 @@
 
 using namespace std;
 
-int gLicenseToken = EC_LICENSE_RESULT_NO_LICENSE;
-
 #if defined( EXOCORTEX_RLM_ONLY )
 	#include "RlmSingletonDeclarations.h"
 #endif // EXOCORTEX_RLM_ONLY
 
-bool HasFullLicense()
-{
-	return ( GetLicense() == EC_LICENSE_RESULT_FULL_LICENSE );
-}
+int s_alembicLicense = -1;
 
-int GetLicense()
-{
-	if( gLicenseToken == EC_LICENSE_RESULT_NO_LICENSE )
-	{
-		// default license status, could be overriden below.
-		gLicenseToken = EC_LICENSE_RESULT_DEMO_LICENSE;
+int GetAlembicLicense() {
+	static string pluginName(XSI::CString(PLUGIN_NAME).GetAsciiString());
 
-		// check RLM license first, so that users see that RLM is either used or not prior to expiry.	
-#if defined( EXOCORTEX_RLM_ONLY )
-		{
-			#pragma message( "Exocortex Licensing mode: RLM only" )
-			static string pluginName(XSI::CString(PLUGIN_NAME).GetAsciiString());
-			ESS_LOG_INFO( "Looking for RLM license for " << pluginName << "..." );
-			Exocortex::RlmSingleton& rlmSingleton = Exocortex::RlmSingleton::getSingleton();
-
-			RlmProductID pluginLicenseIds2[] = PLUGIN_LICENSE_IDS;
-			vector<RlmProductID> rlmProductIds;
-			for( int i = 0; i < sizeof( pluginLicenseIds2 ) / sizeof( RlmProductID ); i ++ ) {
-				rlmProductIds.push_back( pluginLicenseIds2[i] );
-			}
-
-			if( rlmSingleton.checkoutLicense( "", pluginName, rlmProductIds ) ) {
-				gLicenseToken = EC_LICENSE_RESULT_FULL_LICENSE;
-				return gLicenseToken;
-			}
-		}
-#endif // EXOCORTEX_RLM_ONLY
-
-#if defined( EXOCORTEX_BETA_EXPIRY_DATE )
-		{
-			#pragma message( "Exocortex Licensing mode: Fixed expiry date" )
-			time_t now = time(NULL);
-			if( now <= EXOCORTEX_BETA_EXPIRY_DATE ) {  //http://unixtime-converter.com/
-				static string pluginName(XSI::CString(PLUGIN_NAME).GetAsciiString());
-				ESS_LOG_WARNING( "Expiry date licensing is being used for " << pluginName );
-				gLicenseToken = EC_LICENSE_RESULT_FULL_LICENSE;
-				return gLicenseToken;
-			}
-		}
-#endif // EXOCORTEX_BETA_EXPIRY_DATE
-
+	if( s_alembicLicense != ALEMBIC_NO_LICENSE ) {
+		return s_alembicLicense;
 	}
 
-	return gLicenseToken;
+	bool isInteractive = XSI::Application().IsInteractive();
+	if( isInteractive ) {
+		if( getenv("EXOCORTEX_ALEMBIC_READER_ONLY") != NULL ) {
+			isInteractive = false;
+		}
+	}
+
+	vector<RlmProductID> rlmProductIds;
+	int pluginLicenseResult;
+
+	if( isInteractive ) {
+		RlmProductID pluginLicenseIds[] = ALEMBIC_WRITER_LICENSE_IDS;
+		for( int i = 0; i < sizeof( pluginLicenseIds ) / sizeof( RlmProductID ); i ++ ) {
+			rlmProductIds.push_back( pluginLicenseIds[i] );
+		}
+		pluginLicenseResult = ALEMBIC_WRITER_LICENSE;
+	}
+	else {
+		RlmProductID pluginLicenseIds[] = ALEMBIC_READER_LICENSE_IDS;
+		for( int i = 0; i < sizeof( pluginLicenseIds ) / sizeof( RlmProductID ); i ++ ) {
+			rlmProductIds.push_back( pluginLicenseIds[i] );
+		}
+		pluginLicenseResult = ALEMBIC_READER_LICENSE;
+	}
+				
+	Exocortex::RlmSingleton& rlmSingleton = Exocortex::RlmSingleton::getSingleton();
+	if( rlmSingleton.checkoutLicense( "", pluginName, rlmProductIds ) ) {
+		s_alembicLicense = pluginLicenseResult;
+	}
+	else {
+		s_alembicLicense = ALEMBIC_DEMO_LICENSE;
+	}
+
+	return s_alembicLicense;
+}
+
+bool HasAlembicWriterLicense() {
+	return ( GetAlembicLicense() == ALEMBIC_WRITER_LICENSE );
+}
+
+bool HasAlembicReaderLicense() {
+	return ( GetAlembicLicense() == ALEMBIC_WRITER_LICENSE )||( GetAlembicLicense() == ALEMBIC_READER_LICENSE );
 }
 
 

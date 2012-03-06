@@ -26,10 +26,19 @@
 
 #include "ExocortexServicesProxy.h"
 
+#define ALEMBIC_WRITER_LICENSE_IDS	{ RlmProductID( "alembic", 10 ), RlmProductID( "alembic_softimage", 10 ) }
+#define ALEMBIC_READER_LICENSE_IDS	{ RlmProductID( "alembic_reader", 10 ), RlmProductID( "alembic_softimage", 10 ), RlmProductID( "alembic", 10 ) }
 
-extern int gLicenseToken;
-int GetLicense();
-bool HasFullLicense();
+#define ALEMBIC_NO_LICENSE -1
+#define ALEMBIC_DEMO_LICENSE 0
+#define ALEMBIC_WRITER_LICENSE 1
+#define ALEMBIC_READER_LICENSE 2
+
+int GetAlembicLicense();
+bool HasAlembicWriterLicense();
+bool HasAlembicReaderLicense();
+
+
 
 
 #endif // __ALEMBIC_LICENSING_H
