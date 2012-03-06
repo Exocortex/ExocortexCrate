@@ -15,6 +15,7 @@ class MeshMtlList;
 #define OBTYPE_CTARGET 6
 #define OBTYPE_LTARGET 7
 #define OBTYPE_POINTS 8
+#define OBTYPE_CURVES 9
 
 class SceneEnumProc : public ITreeEnumProc 
 {

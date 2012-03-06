@@ -39,8 +39,9 @@ int SceneEnumProc::callback(INode *node)
 {
 	Object *obj = node->EvalWorldState(time).obj;
 
-	if (obj->CanConvertToType(polyObjectClassID) || 
-        obj->CanConvertToType(triObjectClassID)) 
+	if (obj->IsShapeObject() == FALSE &&
+        (obj->CanConvertToType(polyObjectClassID) || 
+         obj->CanConvertToType(triObjectClassID))) 
     {
 		Append(node, obj, OBTYPE_MESH, 0);
 		mtlList->AddMtl(node->GetMtl());
@@ -87,6 +88,12 @@ int SceneEnumProc::callback(INode *node)
                 obj->ClassID() == ParticleGroup_Class_ID)
             {
                 Append(node, obj, OBTYPE_POINTS, 0);
+            }
+            break;
+        case SHAPE_CLASS_ID:
+            if (obj->IsShapeObject() == TRUE)
+            {
+                Append(node, obj, OBTYPE_CURVES, 0);
             }
             break;
 	}

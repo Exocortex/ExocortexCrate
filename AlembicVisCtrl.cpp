@@ -520,7 +520,8 @@ void AlembicImport_SetupVisControl( Alembic::AbcGeom::IObject &obj, INode *pNode
         visFillOptions.bOldVisibility = true;
         AlembicImport_FillInVis(visFillOptions);
         BOOL bVis = visFillOptions.bVisibility?TRUE:FALSE;
-        pNode->SetVisibility(bVis, 0);
+        float fBool = bVis ? 1.0f : 0.0f;
+        pNode->SetVisibility(0, fBool);
     }
     else if (options.importVisibility == VisImport_ConnectedControllers)
     {
