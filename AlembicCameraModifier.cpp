@@ -266,7 +266,7 @@ void AlembicCameraModifier::SetAlembicId(const std::string &file, const std::str
 void AlembicImport_FillInCamera(alembic_fillcamera_options &options)
 {
     if (options.pCameraObj == NULL ||
-        !Alembic::AbcGeom::OCamera::matches((*options.pIObj).getMetaData()))
+        !Alembic::AbcGeom::ICamera::matches((*options.pIObj).getMetaData()))
     {
         return;
     }

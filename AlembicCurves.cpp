@@ -95,7 +95,7 @@ bool AlembicCurves::Save(double time)
     }
     else
     {
-        return;
+        return false;
     }
 
     // Determine if we are a bezier shape
