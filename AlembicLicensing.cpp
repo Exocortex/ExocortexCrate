@@ -65,3 +65,14 @@ int GetLicense()
 }
 
 
+#ifdef EXOCORTEX_SERVICES
+
+namespace Exocortex {
+	void essOnDemandInitialization() {
+		static string pluginName(PLUGIN_NAME);
+	
+		essInitializeSoftimage( pluginName.c_str(), PLUGIN_MAJOR_VERSION, PLUGIN_MINOR_VERSION );
+	}
+}
+
+#endif // EXOCORTEX_SERVICES
