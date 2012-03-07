@@ -24,5 +24,12 @@ extern int gLicenseToken;
 int GetLicense();
 bool HasFullLicense();
 
+#if defined( EXOCORTEX_SERVICES )
+
+	#include "ExocortexCoreServicesAPI.h"
+
+	// insert 3DS MAX function wrappers here.  TODO
+
+#endif 
 
 #endif // __ALEMBIC_LICENSING_H
