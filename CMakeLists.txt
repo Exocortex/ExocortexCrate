@@ -6,7 +6,7 @@ INCLUDE(../../ExocortexAlembicShared/ExocortexCMakeShared.txt)
 
 if( Exocortex_SERVICES OR Exocortex_RLM_ONLY )
 	include_directories( ${Rlm_INCLUDE_DIR} )
-	include_directories( ${Exocortex_INCLUDE_DIR} ) 
+	include_directories( ${Exocortex_INCLUDE_DIR} )
 endif()
 
 if( Exocortex_SERVICES )
@@ -49,11 +49,11 @@ IF( WIN32 )
 	IF( ${ALEMBIC64} )
 		SET( 3DSMAX_DIR_LIBRARY ${3DSMAX_DIR_ROOT}/x64/lib )
 	ELSE()
-		SET( 3DSMAX_DIR_LIBRARY ${3DSMAX_DIR_ROOT}/lib ) 
+		SET( 3DSMAX_DIR_LIBRARY ${3DSMAX_DIR_ROOT}/lib )
 	ENDIF()	
 ENDIF()
 
-SET( 3DSMAX_LIBRARIES core geom gfx maxutil mesh paramblk2 mnmath poly maxscrpt ) 
+SET( 3DSMAX_LIBRARIES core geom gfx maxutil mesh paramblk2 mnmath poly ParticleFlow particle maxscrpt ) 
 
 MESSAGE( "3DSMAX_DIR_LIBRARY: ${3DSMAX_DIR_LIBRARY}" )
 MESSAGE( "3DSMAX_LIBRARIES: ${3DSMAX_LIBRARIES}" )

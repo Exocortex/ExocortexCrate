@@ -4,6 +4,7 @@
 #include <object.h>
 #include <triobj.h>
 #include <ParticleFlow/PFClassIDs.h>
+#include <ParticleFlow/IPFSystem.h>
 #include "SceneEntry.h"
 #include "MeshMtlList.h"
 
@@ -40,6 +41,14 @@ int SceneEnumProc::callback(INode *node)
 	ESS_CPP_EXCEPTION_REPORTING_START
 
 	Object *obj = node->EvalWorldState(time).obj;
+    SClass_ID superClassID = obj->SuperClassID();
+    Class_ID classID = obj->ClassID();
+
+    if (PFSystemInterface(obj) != NULL)
+    {
+        Append(node, obj, OBTYPE_POINTS, 0);
+        return TREE_CONTINUE;
+    }
 
 	if (obj->IsShapeObject() == FALSE &&
         (obj->CanConvertToType(polyObjectClassID) || 
@@ -65,10 +74,10 @@ int SceneEnumProc::callback(INode *node)
 		return TREE_CONTINUE;
 	}
 
-	switch (obj->SuperClassID()) 
+	switch (superClassID) 
     { 
 		case HELPER_CLASS_ID:
-			if (obj->ClassID() == Class_ID(DUMMY_CLASS_ID, 0))
+			if (classID == Class_ID(DUMMY_CLASS_ID, 0))
             {
 				Append(node, obj, OBTYPE_DUMMY, 0);
             }
@@ -79,19 +88,12 @@ int SceneEnumProc::callback(INode *node)
                 break;
             }
 		case CAMERA_CLASS_ID:
-			if (obj->ClassID() == Class_ID(LOOKAT_CAM_CLASS_ID, 0) ||
-                obj->ClassID() == Class_ID(SIMPLE_CAM_CLASS_ID, 0))
+			if (classID == Class_ID(LOOKAT_CAM_CLASS_ID, 0) ||
+                classID == Class_ID(SIMPLE_CAM_CLASS_ID, 0))
             {
 				Append(node, obj, OBTYPE_CAMERA, 0);
             }
 			break;
-        case GEOMOBJECT_CLASS_ID:
-            if (obj->IsParticleSystem() == TRUE &&
-                obj->ClassID() == ParticleGroup_Class_ID)
-            {
-                Append(node, obj, OBTYPE_POINTS, 0);
-            }
-            break;
         case SHAPE_CLASS_ID:
             if (obj->IsShapeObject() == TRUE)
             {
