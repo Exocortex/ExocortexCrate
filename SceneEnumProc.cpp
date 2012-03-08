@@ -48,8 +48,9 @@ int SceneEnumProc::callback(INode *node)
         return TREE_CONTINUE;
     }
 
-    if (obj->CanConvertToType(polyObjectClassID) || 
-        obj->CanConvertToType(triObjectClassID)) 
+	if (obj->IsShapeObject() == FALSE &&
+        (obj->CanConvertToType(polyObjectClassID) || 
+         obj->CanConvertToType(triObjectClassID))) 
     {
 		Append(node, obj, OBTYPE_MESH, 0);
 		mtlList->AddMtl(node->GetMtl());
@@ -91,6 +92,12 @@ int SceneEnumProc::callback(INode *node)
 				Append(node, obj, OBTYPE_CAMERA, 0);
             }
 			break;
+        case SHAPE_CLASS_ID:
+            if (obj->IsShapeObject() == TRUE)
+            {
+                Append(node, obj, OBTYPE_CURVES, 0);
+            }
+            break;
 	}
 
 	return TREE_CONTINUE;

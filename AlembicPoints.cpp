@@ -85,7 +85,8 @@ bool AlembicPoints::Save(double time)
     int numParticles = 0;
 
     // Set the visibility
-    mOVisibility.set(GetRef().node->GetPrimaryVisibility() ? Alembic::AbcGeom::kVisibilityVisible : Alembic::AbcGeom::kVisibilityHidden);
+    float flVisibility = GetRef().node->GetLocalVisibility(ticks);
+    mOVisibility.set(flVisibility > 0 ? Alembic::AbcGeom::kVisibilityVisible : Alembic::AbcGeom::kVisibilityHidden);
 
     // Store positions, velocity, width/size, scale, id, bounding box
     std::vector<Alembic::Abc::V3f> positionVec;

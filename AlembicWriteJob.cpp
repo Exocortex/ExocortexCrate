@@ -9,10 +9,9 @@
 #include "AlembicXForm.h"
 #include "AlembicCamera.h"
 #include "AlembicPoints.h"
+#include "AlembicCurves.h"
 
-//#include "AlembicCurves.h"
-//#include "AlembicModel.h"
-//#include "AlembicSubD.h"
+
 
 namespace AbcA = ::Alembic::AbcCoreAbstract::ALEMBIC_VERSION_NS;
 using namespace AbcA;
@@ -159,6 +158,12 @@ bool AlembicWriteJob::PreProcess()
         {
             AlembicObjectPtr ptr;
             ptr.reset(new AlembicPoints(*object->entry,this));
+            AddObject(ptr);
+        }
+        else if (type == OBTYPE_CURVES)
+        {
+            AlembicObjectPtr ptr;
+            ptr.reset(new AlembicCurves(*object->entry,this));
             AddObject(ptr);
         }
 
