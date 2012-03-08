@@ -54,13 +54,13 @@ inline void ConvertAlembicPointToMaxPoint( const Point3 &alembicPoint, Point3 &r
 inline void ConvertMaxNormalToAlembicNormal( const Point3 &maxPoint, Point3 &result)
 {
      result = Point3(maxPoint.x, maxPoint.z, -maxPoint.y);
-     //result = result.Normalize();
+     result = result.Normalize();
 }
 
 inline void ConvertAlembicNormalToMaxNormal( const Point3 &alembicPoint, Point3 &result)
 {
     result = Point3(alembicPoint.x, -alembicPoint.z, alembicPoint.y);
-    //result = result.Normalize();
+    result = result.Normalize();
 }
 
 
