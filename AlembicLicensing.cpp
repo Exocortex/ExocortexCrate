@@ -86,7 +86,20 @@ int GetLicense()
 #ifdef EXOCORTEX_SERVICES
 
 void MaxLogSink(const char* szLogMessage, Exocortex::ecLogLevel::Value level ) {
-	mprintf( "Exocortex Alembic: %s\n", szLogMessage );
+	if( level != Exocortex::ecLogLevel::Info ) {
+		mprintf( "Exocortex Alembic: %s\n", szLogMessage );
+	}
+	switch( level ) {
+	case Exocortex::ecLogLevel::Info:
+		//mprintf( "Exocortex Alembic: %s\n", szLogMessage );
+		break;
+	case Exocortex::ecLogLevel::Warning:
+		mprintf( "Exocortex Alembic Warning: %s\n", szLogMessage );
+		break;
+	case Exocortex::ecLogLevel::Error:
+		mprintf( "Exocortex Alembic Error: %s\n", szLogMessage );
+		break;
+	}
 }
 
 namespace Exocortex {
