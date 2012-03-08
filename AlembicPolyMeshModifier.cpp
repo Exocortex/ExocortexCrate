@@ -437,7 +437,9 @@ TSTR AlembicPolyMeshModifier::SubAnimName(int i)
 
 void AlembicImport_FillInPolyMesh(alembic_fillmesh_options &options)
 {
-   Alembic::AbcGeom::IPolyMesh objMesh;
+	ESS_CPP_EXCEPTION_REPORTING_START
+
+	Alembic::AbcGeom::IPolyMesh objMesh;
    Alembic::AbcGeom::ISubD objSubD;
 
    if(Alembic::AbcGeom::IPolyMesh::matches((*options.pIObj).getMetaData()))
@@ -513,10 +515,15 @@ void AlembicImport_FillInPolyMesh(alembic_fillmesh_options &options)
            }
        } 
 
-       std::vector<Point3> vArray;
+	   Alembic::Abc::P3fArraySample::value_type const* pPositionArray = meshPos->get();
+	   Alembic::Abc::V3fArraySample::value_type const* pVelocityArray = meshVel->get();
+	  
+
+	   std::vector<Point3> vArray;
 	   vArray.reserve(meshPos->size());
+	   //P3fArraySample* pPositionArray = meshPos->get();
 	   for(size_t i=0;i<meshPos->size();i++)
-		  vArray.push_back(Point3(meshPos->get()[i].x,meshPos->get()[i].y,meshPos->get()[i].z));
+		  vArray.push_back(Point3(pPositionArray[i].x,pPositionArray[i].y,pPositionArray[i].z));
 
 	   // blend - either between samples or using point velocities
 	   if(sampleInfo.alpha != 0.0)
@@ -543,27 +550,55 @@ void AlembicImport_FillInPolyMesh(alembic_fillmesh_options &options)
               bSampleInterpolate = true;
 		  }
 
+		  float sampleInfoAlpha = (float)sampleInfo.alpha; 
           if (bSampleInterpolate)
           {
               for(size_t i=0;i<meshPos->size();i++)
               {	
-                  vArray[i].x += (meshPos->get()[i].x - vArray[i].x) * (float)sampleInfo.alpha; 
-                  vArray[i].y += (meshPos->get()[i].y - vArray[i].y) * (float)sampleInfo.alpha; 
-                  vArray[i].z += (meshPos->get()[i].z - vArray[i].z) * (float)sampleInfo.alpha;
+                  vArray[i].x += (pPositionArray[i].x - vArray[i].x) * sampleInfoAlpha; 
+                  vArray[i].y += (pPositionArray[i].y - vArray[i].y) * sampleInfoAlpha; 
+                  vArray[i].z += (pPositionArray[i].z - vArray[i].z) * sampleInfoAlpha;
               }
           }
           else if (bVelInterpolate)
           {
               for(size_t i=0;i<meshVel->size();i++)
               {
-                  vArray[i].x += meshVel->get()[i].x * (float)sampleInfo.alpha;
-                  vArray[i].y += meshVel->get()[i].y * (float)sampleInfo.alpha;
-                  vArray[i].z += meshVel->get()[i].z * (float)sampleInfo.alpha;
+                  vArray[i].x += pVelocityArray[i].x * sampleInfoAlpha;
+                  vArray[i].y += pVelocityArray[i].y * sampleInfoAlpha;
+                  vArray[i].z += pVelocityArray[i].z * sampleInfoAlpha;
               }
           }
 	   }
 
-	   for(int i=0;i<vArray.size();i++)
+	 
+	   if (options.pPolyObj != NULL)
+	   {
+		   MNVert* pMeshVerties = options.pPolyObj->GetMesh().V(0);
+
+		   for(int i=0;i<vArray.size();i++)
+		   {
+			   Point3 maxPoint;
+			   ConvertAlembicPointToMaxPoint(vArray[i], maxPoint);			  
+			   pMeshVerties[i].p = maxPoint;
+		   }
+	   }
+	   else if (options.pTriObj != NULL)
+	   {
+		   Point3 *pVerts = options.pTriObj->GetMesh().verts;
+		   for(int i=0;i<vArray.size();i++)
+		   {
+			   Point3 maxPoint;
+			   ConvertAlembicPointToMaxPoint(vArray[i], maxPoint);			  
+			   pVerts[i] = maxPoint;
+		   }
+	   }
+	   else {
+		   ESS_LOG_WARNING("Should not get here." );
+	   }
+
+
+	  /* for(int i=0;i<vArray.size();i++)
        {
           Point3 maxPoint;
           ConvertAlembicPointToMaxPoint(vArray[i], maxPoint);
@@ -577,7 +612,7 @@ void AlembicImport_FillInPolyMesh(alembic_fillmesh_options &options)
           {
              options.pTriObj->GetMesh().setVert(i, maxPoint.x, maxPoint.y, maxPoint.z);
           }
-       }
+       }*/
    }
 
    Alembic::Abc::Int32ArraySamplePtr meshFaceCount;
@@ -593,6 +628,10 @@ void AlembicImport_FillInPolyMesh(alembic_fillmesh_options &options)
        meshFaceCount = subDSample.getFaceCounts();
        meshFaceIndices = subDSample.getFaceIndices();
    }
+
+   Alembic::Abc::Int32ArraySample::value_type const* pMeshFaceCount = meshFaceCount->get();
+   Alembic::Abc::Int32ArraySample::value_type const* pMeshFaceIndices = meshFaceIndices->get();
+
    int numFaces = static_cast<int>(meshFaceCount->size());
 
    if ( options.nDataFillFlags & ALEMBIC_DATAFILL_FACELIST )
@@ -608,7 +647,52 @@ void AlembicImport_FillInPolyMesh(alembic_fillmesh_options &options)
         }
 
         int offset = 0;
-        for (int i = 0; i < numFaces; ++i)
+		if (options.pPolyObj != NULL)
+		{
+			MNFace *pFaces = options.pPolyObj->GetMesh().F(0);
+			for (int i = 0; i < numFaces; ++i)
+			{
+				int degree = pMeshFaceCount[i];
+
+				MNFace *pFace = &(pFaces[i]);
+				pFace->SetDeg(degree);
+				pFace->material = 1;
+
+				for (int j = degree - 1; j >= 0; --j)
+				{
+					pFace->vtx[j] = pMeshFaceIndices[offset];
+					++offset;
+				}
+			}
+		}
+		else if (options.pTriObj != NULL )
+		{
+			Face *pFaces = options.pTriObj->GetMesh().faces;
+			for (int i = 0; i < numFaces; ++i)
+			{
+				int degree = pMeshFaceCount[i];
+				if ( degree == 3)
+				{
+					// three vertex indices of a triangle
+					int v2 = pMeshFaceIndices[offset];
+					int v1 = pMeshFaceIndices[offset+1];
+					int v0 = pMeshFaceIndices[offset+2];
+
+					offset += 3;
+
+					// vertex positions
+					Face *pFace = &(pFaces[i]);
+					pFace->setMatID(1);
+					pFace->setEdgeVisFlags(1, 1, 1);
+					pFace->setVerts(v0, v1, v2);
+				}
+			}
+		}
+		else {
+			ESS_LOG_WARNING("Should not get here." );
+		}
+
+		/*for (int i = 0; i < numFaces; ++i)
         {
             int degree = meshFaceCount->get()[i];
             if (options.pPolyObj != NULL)
@@ -636,7 +720,7 @@ void AlembicImport_FillInPolyMesh(alembic_fillmesh_options &options)
                 face.setEdgeVisFlags(1, 1, 1);
                 face.setVerts(v0, v1, v2);
             }
-        }
+        }*/
    }
 
    if ( options.nDataFillFlags & ALEMBIC_DATAFILL_NORMALS && objMesh.valid() )
@@ -890,6 +974,9 @@ void AlembicImport_FillInPolyMesh(alembic_fillmesh_options &options)
        options.pTriObj->GetMesh().InvalidateGeomCache();
        options.pTriObj->GetMesh().InvalidateTopologyCache();
    }
+
+   	ESS_CPP_EXCEPTION_REPORTING_END
+
 }
 
 bool AlembicImport_IsPolyObject(Alembic::AbcGeom::IPolyMeshSchema::Sample &polyMeshSample)

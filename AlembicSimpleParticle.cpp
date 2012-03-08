@@ -36,7 +36,9 @@ void AlembicSimpleParticle::SetAlembicId(const std::string &file, const std::str
 
 void AlembicSimpleParticle::UpdateParticles(TimeValue t, INode *node)
 {
-    Alembic::AbcGeom::IPoints iPoints;
+	ESS_CPP_EXCEPTION_REPORTING_START
+
+	Alembic::AbcGeom::IPoints iPoints;
     if (!GetAlembicIPoints(iPoints))
     {
         return;
@@ -60,6 +62,8 @@ void AlembicSimpleParticle::UpdateParticles(TimeValue t, INode *node)
 
     tvalid = t;
     valid = TRUE;
+
+	ESS_CPP_EXCEPTION_REPORTING_END
 }
 
 void AlembicSimpleParticle::BuildEmitter(TimeValue t, Mesh &mesh)

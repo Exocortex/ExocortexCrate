@@ -33,12 +33,36 @@ void AlembicDebug_PrintTransform(Matrix3 &m);
 float ScaleFloatFromInchesToDecimeters(float inches);
 Point3 ScalePointFromInchesToDecimeters( const Point3 &inches );
 Point3 ScalePointFromDecimetersToInches( const Point3 &decimeters );
+
+
 void ConvertMaxMatrixToAlembicMatrix( const Matrix3 &maxMatrix, Matrix3 &alembicMatrix);
 void ConvertAlembicMatrixToMaxMatrix( const Matrix3 &alembicMatrix, Matrix3 &maxMatrix);
-void ConvertMaxPointToAlembicPoint( const Point3 &maxPoint, Point3 &result);
-void ConvertAlembicPointToMaxPoint( const Point3 &alembicPoint, Point3 &result);
-void ConvertMaxNormalToAlembicNormal( const Point3 &maxPoint, Point3 &result);
-void ConvertAlembicNormalToMaxNormal( const Point3 &alembicPoint, Point3 &result);
+
+
+inline void ConvertMaxPointToAlembicPoint( const Point3 &maxPoint, Point3 &result)
+{
+     result = Point3(maxPoint.x, maxPoint.z, -maxPoint.y);
+     result = ScalePointFromInchesToDecimeters(result);
+}
+
+inline void ConvertAlembicPointToMaxPoint( const Point3 &alembicPoint, Point3 &result)
+{
+    result = Point3(alembicPoint.x, -alembicPoint.z, alembicPoint.y);
+    result = ScalePointFromDecimetersToInches(result);
+}
+
+inline void ConvertMaxNormalToAlembicNormal( const Point3 &maxPoint, Point3 &result)
+{
+     result = Point3(maxPoint.x, maxPoint.z, -maxPoint.y);
+     //result = result.Normalize();
+}
+
+inline void ConvertAlembicNormalToMaxNormal( const Point3 &alembicPoint, Point3 &result)
+{
+    result = Point3(alembicPoint.x, -alembicPoint.z, alembicPoint.y);
+    //result = result.Normalize();
+}
+
 
 // Utility functions for working on INodes
 bool CheckIfNodeIsAnimated( INode *pNode );

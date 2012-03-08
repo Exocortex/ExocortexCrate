@@ -225,29 +225,6 @@ void ConvertAlembicMatrixToMaxMatrix( const Matrix3 &alembicMatrix, Matrix3 &res
 }
 
 
-void ConvertMaxPointToAlembicPoint( const Point3 &maxPoint, Point3 &result)
-{
-     result = Point3(maxPoint.x, maxPoint.z, -maxPoint.y);
-     result = ScalePointFromInchesToDecimeters(result);
-}
-
-void ConvertAlembicPointToMaxPoint( const Point3 &alembicPoint, Point3 &result)
-{
-    result = Point3(alembicPoint.x, -alembicPoint.z, alembicPoint.y);
-    result = ScalePointFromDecimetersToInches(result);
-}
-
-void ConvertMaxNormalToAlembicNormal( const Point3 &maxPoint, Point3 &result)
-{
-     result = Point3(maxPoint.x, maxPoint.z, -maxPoint.y);
-     result = result.Normalize();
-}
-
-void ConvertAlembicNormalToMaxNormal( const Point3 &alembicPoint, Point3 &result)
-{
-    result = Point3(alembicPoint.x, -alembicPoint.z, alembicPoint.y);
-    result = result.Normalize();
-}
 
 bool CheckIfNodeIsAnimated( INode *pNode )
 {
