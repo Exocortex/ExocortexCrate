@@ -957,7 +957,7 @@ int AlembicImport_PolyMesh(const std::string &file, const std::string &identifie
     }
     else
     {
-        dataFillOptions.pTriObj = CreateNewTriObject();
+        dataFillOptions.pTriObj = (TriObject *) GetTriObjDescriptor()->Create();//CreateNewTriObject();
 	    newObject = dataFillOptions.pTriObj;
     }
 
