@@ -4,6 +4,8 @@
 #include "SceneEntry.h"
 #include "SimpObj.h"
 #include "Utility.h"
+#include <IParticleObjectExt.h>
+#include <ParticleFlow/IPFSystem.h>
 
 namespace AbcA = ::Alembic::AbcCoreAbstract::ALEMBIC_VERSION_NS;
 namespace AbcB = ::Alembic::Abc::ALEMBIC_VERSION_NS;
@@ -54,24 +56,31 @@ Alembic::Abc::OCompoundProperty AlembicPoints::GetCompound()
 
 bool AlembicPoints::Save(double time)
 {
-    // Store the transformation
-    SaveXformSample(GetRef(), mXformSchema, mXformSample, time);
-
-    // Note: Should particles always be considered as animated?
-    // If the points are not animated and this is not the first sample, we can just skip it
-    if (mNumSamples > 0 && !GetRef().node->IsAnimated())
-    {
-        return true;
-    }
+    // Note: Particles are always considered to be animated even though
+    //       the node does not have the IsAnimated() flag.
 
     // Extract our particle emitter at the given time
     TimeValue ticks = GetTimeValueFromFrame(time);
     Object *obj = GetRef().node->EvalWorldState(ticks).obj;
-    ParticleObject* particles = GetParticleInterface(obj);
+    IPFSystem *particleSystem = PFSystemInterface(obj);
+    if (particleSystem == NULL)
+    {
+        return false;
+    }
+
+    ParticleObject *particles = GetParticleInterface(obj);
     if (particles == NULL)
     {
         return false;
     }
+    
+    IParticleObjectExt *particlesExt = GetParticleObjectExtInterface(obj);
+    if (particlesExt == NULL)
+    {
+        return false;
+    }
+
+    particlesExt->UpdateParticles(GetRef().node, ticks);
 
     int numParticles = 0;
 
