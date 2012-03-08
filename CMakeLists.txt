@@ -271,18 +271,20 @@ ENDIF()
 
 # maya plugin
 IF(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../ExocortexAlembicMaya/CMakeLists.txt")
-	ADD_SUBDIRECTORY ( "${CMAKE_CURRENT_SOURCE_DIR}/../ExocortexAlembicMaya" "${CMAKE_CURRENT_BINARY_DIR}/ExocortexAlembicMaya" )
+	ADD_SUBDIRECTORY ( "${CMAKE_CURRENT_SOURCE_DIR}/../ExocortexAlembicMaya/2011" "${CMAKE_CURRENT_BINARY_DIR}/ExocortexAlembicMaya/2011" )
+	ADD_SUBDIRECTORY ( "${CMAKE_CURRENT_SOURCE_DIR}/../ExocortexAlembicMaya/2012" "${CMAKE_CURRENT_BINARY_DIR}/ExocortexAlembicMaya/2012" )
 ENDIF()
 
 # houdini plugin
-IF(INCLUDE_ALEMBIC_HOUDINI)
-IF(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../ExocortexAlembicHoudini/CMakeLists.txt")
-	ADD_SUBDIRECTORY ( "${CMAKE_CURRENT_SOURCE_DIR}/../ExocortexAlembicHoudini" "${CMAKE_CURRENT_BINARY_DIR}/ExocortexAlembicHoudini" )
-ENDIF()
-ENDIF(INCLUDE_ALEMBIC_HOUDINI)
+#IF(INCLUDE_ALEMBIC_HOUDINI)
+#IF(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../ExocortexAlembicHoudini/CMakeLists.txt")
+#	ADD_SUBDIRECTORY ( "${CMAKE_CURRENT_SOURCE_DIR}/../ExocortexAlembicHoudini" "${CMAKE_CURRENT_BINARY_DIR}/ExocortexAlembicHoudini" )
+#ENDIF()
+#ENDIF(INCLUDE_ALEMBIC_HOUDINI)
 
 # 3dsmax plugin
 IF(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../ExocortexAlembic3DSMax/CMakeLists.txt")
-	ADD_SUBDIRECTORY ( "${CMAKE_CURRENT_SOURCE_DIR}/../ExocortexAlembic3DSMax" "${CMAKE_CURRENT_BINARY_DIR}/ExocortexAlembic3DSMax" )
+	ADD_SUBDIRECTORY ( "${CMAKE_CURRENT_SOURCE_DIR}/../ExocortexAlembic3DSMax/2011" "${CMAKE_CURRENT_BINARY_DIR}/ExocortexAlembic3DSMax/2011" )
+	ADD_SUBDIRECTORY ( "${CMAKE_CURRENT_SOURCE_DIR}/../ExocortexAlembic3DSMax/2012" "${CMAKE_CURRENT_BINARY_DIR}/ExocortexAlembic3DSMax/2012" )
 ENDIF()
 
