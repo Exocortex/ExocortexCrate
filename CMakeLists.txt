@@ -1,23 +1,27 @@
-cmake_minimum_required (VERSION 2.6) 
+#cmake_minimum_required (VERSION 2.6) 
 
-project ( ExocortexAlembicMaya${alembic_VERSION} ) 
+project ( Maya${Maya_VERSION}ExocortexAlembic${alembic_VERSION} ) 
 
-INCLUDE(../ExocortexAlembicShared/ExocortexCMakeShared.txt)
+INCLUDE(../../ExocortexAlembicShared/ExocortexCMakeShared.txt)
 
 if( Exocortex_SERVICES OR Exocortex_RLM_ONLY )
 	include_directories( ${Rlm_INCLUDE_DIR} )
 	include_directories( ${Exocortex_INCLUDE_DIR} )
 endif()
 
-SET( EXOCORTEX_MAYA_VERSION 2012 CACHE INT "Maya Version")
-SET( Maya_DIR_ROOT ${LIBRARY_ROOT}/Maya/${EXOCORTEX_MAYA_VERSION} )
+SET( Maya_DIR_ROOT ${LIBRARY_ROOT}/Maya/${Maya_VERSION} )
 SET( Maya_DIR_INCLUDE ${Maya_DIR_ROOT}/include )
 
-file(GLOB Sources ${CMAKE_CURRENT_SOURCE_DIR}/*.cpp)
-file(GLOB Includes ${CMAKE_CURRENT_SOURCE_DIR}/*.h)
+get_filename_component( BASE_DIR "${CMAKE_CURRENT_SOURCE_DIR}" PATH )
+include_directories( ${BASE_DIR}/include )
+include_directories( ${BASE_DIR}/src )
 
-SOURCE_GROUP("Source Files" FILES ${Sources})
+file(GLOB_RECURSE Sources ${BASE_DIR}/*.cpp)
+file(GLOB_RECURSE Includes ${BASE_DIR}/*.h)
+
+SOURCE_GROUP("Source Files" FILES ${Sources})   
 SOURCE_GROUP("Header Files" FILES ${Includes})
+
 
 IF( WIN32 )
 	IF( ${ALEMBIC64} )
