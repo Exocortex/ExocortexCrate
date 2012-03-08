@@ -26,7 +26,6 @@ int GetTimeValueFromSeconds( double seconds );
 int GetTimeValueFromFrame( double frame );
 
 // Debug functions
-void ALEMBIC_DEBUG( char *debugmsg, ...);
 void AlembicDebug_PrintMeshData( Mesh &mesh );
 void AlembicDebug_PrintTransform(Matrix3 &m);
 

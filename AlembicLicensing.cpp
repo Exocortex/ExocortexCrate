@@ -70,8 +70,8 @@ int GetLicense()
 namespace Exocortex {
 	void essOnDemandInitialization() {
 		static string pluginName(PLUGIN_NAME);
-	
-		essInitializeSoftimage( pluginName.c_str(), PLUGIN_MAJOR_VERSION, PLUGIN_MINOR_VERSION );
+		
+		essInitialize( pluginName.c_str(), PLUGIN_MAJOR_VERSION, PLUGIN_MINOR_VERSION,  );
 	}
 }
 

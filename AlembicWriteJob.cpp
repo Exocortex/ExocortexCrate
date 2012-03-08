@@ -66,21 +66,21 @@ bool AlembicWriteJob::PreProcess()
     // check filenames
     if(mFileName.empty())
     {
-        OutputDebugString("[alembic] No filename specified.");
+        ESS_LOG_WARNING("[alembic] No filename specified.");
         return false;
     }
 
     // check objects
     if(mSelection.Count() == 0)
     {
-        OutputDebugString("[alembic] No objects specified.");
+        ESS_LOG_WARNING("[alembic] No objects specified.");
         return false;
     }
 
     // check frames
     if(mFrames.size() == 0)
     {
-        OutputDebugString("[alembic] No frames specified.");
+        ESS_LOG_WARNING("[alembic] No frames specified.");
         return false;
     }
 
@@ -94,7 +94,7 @@ bool AlembicWriteJob::PreProcess()
     catch(Alembic::Util::Exception& e)
     {
         std::string exc(e.what());
-        OutputDebugString("[alembic] Error writing to file. Do you still have it opened?");
+        ESS_LOG_ERROR("[alembic] Error writing to file. Do you still have it opened?");
         return false;
     }
 

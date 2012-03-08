@@ -9,6 +9,10 @@ if( Exocortex_SERVICES OR Exocortex_RLM_ONLY )
 	include_directories( ${Exocortex_INCLUDE_DIR} ) 
 endif()
 
+if( Exocortex_SERVICES )
+	add_definitions( "-DEXOCORTEX_SERVICES" )
+endif()
+
 SET( 3DSMAX_DIR_ROOT ${LIBRARY_ROOT}/Max/2012 ) 
 if( NOT EXISTS ${3DSMAX_DIR_ROOT} )
 	SET( 3DSMAX_DIR_ROOT ${LIBRARY_ROOT}/Max )
@@ -26,6 +30,7 @@ file(GLOB Includes ${CMAKE_CURRENT_SOURCE_DIR}/*.h)
 
 SOURCE_GROUP("Source Files" FILES ${Sources})   
 SOURCE_GROUP("Header Files" FILES ${Includes})
+
 
 if( Exocortex_SERVICES OR Exocortex_RLM_ONLY )
 	include_directories( ${Rlm_INCLUDE_DIR} )
