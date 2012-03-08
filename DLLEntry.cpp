@@ -31,7 +31,7 @@ MAX_DLL_EXPORT const TCHAR* LibDescription()
 //TODO: Must change this number when adding a new class
 MAX_DLL_EXPORT int LibNumberClasses()
 {
-   return 5;
+	return 5;
 }
 
 MAX_DLL_EXPORT ClassDesc* LibClassDesc(int i)

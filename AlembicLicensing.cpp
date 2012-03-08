@@ -94,8 +94,7 @@ namespace Exocortex {
 		static string pluginName(PLUGIN_NAME);
 		
 		essInitialize( pluginName.c_str(), PLUGIN_MAJOR_VERSION, PLUGIN_MINOR_VERSION, "C:\\ExocortexLogs", MaxLogSink );
-
-		ESS_LOG_INFO( "Exocortex Alembic for 3DS Max initialized." );
+		//ESS_LOG_INFO( "Exocortex Alembic for 3DS Max initialized." );
 	}
 }
 

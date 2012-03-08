@@ -4,6 +4,7 @@
 #include "Foundation.h"
 #include "ExocortexCoreServicesAPI.h"
 #include "AlembicDefinitions.h"
+#include "AlembicLicensing.h"
 
 class AlembicExporter : public SceneExport 
 {

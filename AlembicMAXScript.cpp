@@ -202,6 +202,11 @@ int ExocortexAlembicStaticInterface::ExocortexAlembicImport(MCHAR* strFileName, 
 {
 	ESS_CPP_EXCEPTION_REPORTING_START
 
+	if( ! HasFullLicense() ) {
+		ESS_LOG_ERROR( "No valid license found for Exocortex Alembic." );
+		return alembic_failure;
+	}
+
 	alembic_importoptions importOptions;
     importOptions.importNormals = (bImportNormals != FALSE);
     importOptions.importUVs = (bImportUVs != FALSE);
@@ -278,6 +283,11 @@ int ExocortexAlembicStaticInterface::ExocortexAlembicExport(MCHAR * strFileName,
                                                             BOOL bExportSelected)
 {
 	ESS_CPP_EXCEPTION_REPORTING_START
+
+	if( ! HasFullLicense() ) {
+		ESS_LOG_ERROR( "No valid license found for Exocortex Alembic." );
+		return alembic_failure;
+	}
 
 	Interface12 *i = GetCOREInterface12();
     i->ProgressStart("Exporting Alembic File", TRUE, DummyProgressFunction, NULL);
