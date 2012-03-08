@@ -8,6 +8,7 @@
 
 using namespace std;
 
+#pragma warning( disable : 4996 )
 
 #ifndef EC_LOG_ERROR
 	#define EC_LOG_ERROR(a)		ESS_LOG_ERROR(a)
