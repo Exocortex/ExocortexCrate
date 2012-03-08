@@ -1,6 +1,6 @@
 cmake_minimum_required (VERSION 2.6) 
 
-project ( ExocortexAlembicSoftimage${alembic_VERSION} ) 
+project ( SoftimageExocortexAlembic${alembic_VERSION} ) 
 
 INCLUDE(../ExocortexAlembicShared/ExocortexCMakeShared.txt)
 
