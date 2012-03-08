@@ -13,6 +13,8 @@ SET( Maya_DIR_ROOT ${LIBRARY_ROOT}/Maya/${Maya_VERSION} )
 SET( Maya_DIR_INCLUDE ${Maya_DIR_ROOT}/include )
 
 get_filename_component( BASE_DIR "${CMAKE_CURRENT_SOURCE_DIR}" PATH )
+set( LOCAL_CMAKE_FILE_NAME "${BASE_DIR}/CMakeLists.txt" )
+
 include_directories( ${BASE_DIR}/include )
 include_directories( ${BASE_DIR}/src )
 
@@ -21,7 +23,6 @@ file(GLOB_RECURSE Includes ${BASE_DIR}/*.h)
 
 SOURCE_GROUP("Source Files" FILES ${Sources})   
 SOURCE_GROUP("Header Files" FILES ${Includes})
-
 
 IF( WIN32 )
 	IF( ${ALEMBIC64} )
@@ -56,7 +57,7 @@ set( MAYA_EXTENSION ".mll" )
 set( MAYA_COMPILE_FLAGS "/D \"NT_PLUGIN\" /D \"REQUIRE_IOSTREAM\" /D \"_BOOL\"" )
 set( MAYA_LINK_FLAGS " /export:initializePlugin /export:uninitializePlugin " )
 
-add_library( ${PROJECT_NAME} SHARED ${Sources} ${Includes} )
+add_library( ${PROJECT_NAME} SHARED ${Sources} ${Includes} ${LOCAL_CMAKE_FILE_NAME} )
 
 SET_TARGET_PROPERTIES( ${PROJECT_NAME}
   PROPERTIES
