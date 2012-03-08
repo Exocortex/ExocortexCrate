@@ -62,6 +62,7 @@
 #include <maya/MFloatPointArray.h>
 #include <maya/MFloatVectorArray.h>
 #include <maya/MIntArray.h>
+#include <maya/MFnIntArrayData.h>
 #include <maya/MFloatArray.h>
 
 #include "Utility.h"

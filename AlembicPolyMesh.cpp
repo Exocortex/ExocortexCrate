@@ -1,5 +1,6 @@
 #include "AlembicPolyMesh.h"
 #include <maya/MFnMeshData.h>
+#include "MetaData.h"
 
 namespace AbcA = ::Alembic::AbcCoreAbstract::ALEMBIC_VERSION_NS;
 using namespace AbcA;
@@ -8,7 +9,7 @@ AlembicPolyMesh::AlembicPolyMesh(const MObject & in_Ref, AlembicWriteJob * in_Jo
 : AlembicObject(in_Ref, in_Job)
 {
    MFnDependencyNode node(in_Ref);
-   MString name = node.name();
+   MString name = truncateName(node.name());
    mObject = Alembic::AbcGeom::OPolyMesh(GetParentObject(),name.asChar(),GetJob()->GetAnimatedTs());
 
    mSchema = mObject.getSchema();
@@ -25,8 +26,8 @@ MStatus AlembicPolyMesh::Save(double time)
    // access the geometry
    MFnMesh node(GetRef());
 
-   // TODO: implement storage of metadata
-   // SaveMetaData(prim.GetParent3DObject().GetRef(),this);
+   // save the metadata
+   SaveMetaData(this);
 
    // prepare the bounding box
    Alembic::Abc::Box3d bbox;
@@ -169,7 +170,39 @@ MStatus AlembicPolyMesh::Save(double time)
          }
       }
 
-      // TODO: check for facesets
+      // loop for facesets
+      std::size_t attrCount = node.attributeCount();
+      for (unsigned int i = 0; i < attrCount; ++i)
+      {
+         MObject attr = node.attribute(i);
+         MFnAttribute mfnAttr(attr);
+         MPlug plug = node.findPlug(attr, true);
+
+         // if it is not readable, then bail without any more checking
+         if (!mfnAttr.isReadable() || plug.isNull())
+            continue;
+
+         MString propName = plug.partialName(0, 0, 0, 0, 0, 1);
+         std::string propStr = propName.asChar();
+         if (propStr.substr(0, 8) == "FACESET_")
+         {
+            MStatus status;
+            MFnIntArrayData arr(plug.asMObject(), &status);
+            if (status != MS::kSuccess)
+                continue;
+
+            std::string faceSetName = propStr.substr(8);
+            std::size_t numData = arr.length();
+            std::vector<Alembic::Util::int32_t> faceVals(numData);
+            for (unsigned int j = 0; j < numData; ++j)
+                faceVals[j] = arr[j];
+
+            Alembic::AbcGeom::OFaceSet faceSet = mSchema.createFaceSet(faceSetName);
+            Alembic::AbcGeom::OFaceSetSchema::Sample faceSetSample;
+            faceSetSample.setFaces(Alembic::Abc::Int32ArraySample(faceVals));
+            faceSet.getSchema().set(faceSetSample);
+         }
+      }
    }
 
    // now do the normals
@@ -254,10 +287,16 @@ MStatus AlembicPolyMesh::Save(double time)
    return MStatus::kSuccess;
 }
 
-AlembicPolyMeshNode::~AlembicPolyMeshNode()
+void AlembicPolyMeshNode::PreDestruction()
 {
    mSchema.reset();
    delRefArchive(mFileName);
+   mFileName.clear();
+}
+
+AlembicPolyMeshNode::~AlembicPolyMeshNode()
+{
+   PreDestruction();
 }
 
 MObject AlembicPolyMeshNode::mTimeAttr;
@@ -279,7 +318,7 @@ MStatus AlembicPolyMeshNode::initialize()
    MObject emptyStringObject = emptyStringData.create("");
 
    // input time
-   mTimeAttr = uAttr.create("time", "tm", MFnUnitAttribute::kTime, 0.0);
+   mTimeAttr = uAttr.create("inTime", "tm", MFnUnitAttribute::kTime, 0.0);
    status = uAttr.setStorable(true);
    status = uAttr.setKeyable(true);
    status = addAttribute(mTimeAttr);
@@ -314,6 +353,7 @@ MStatus AlembicPolyMeshNode::initialize()
    status = tAttr.setStorable(false);
    status = tAttr.setWritable(false);
    status = tAttr.setKeyable(false);
+   status = tAttr.setHidden(false);
    status = addAttribute(mOutGeometryAttr);
 
    // create a mapping
@@ -378,11 +418,8 @@ MStatus AlembicPolyMeshNode::compute(const MPlug & plug, MDataBlock & dataBlock)
 
    // check if we have to do this at all
    if(!mMeshData.isNull() && mLastSampleInfo.floorIndex == sampleInfo.floorIndex && mLastSampleInfo.ceilIndex == sampleInfo.ceilIndex)
-   {
-      // we still have the same mesh
-      //dataBlock.outputValue(mOutGeometryAttr).set(mMeshData);
       return MStatus::kSuccess;
-   }
+
    mLastSampleInfo = sampleInfo;
 
    // access the camera values
@@ -581,4 +618,140 @@ MStatus AlembicPolyMeshNode::compute(const MPlug & plug, MDataBlock & dataBlock)
    dataBlock.outputValue(mOutGeometryAttr).set(mMeshData);
 
    return MStatus::kSuccess;
+}
+
+MSyntax AlembicCreateFaceSetsCommand::createSyntax()
+{
+   MSyntax syntax;
+   syntax.addFlag("-h", "-help");
+   syntax.addFlag("-f", "-fileNameArg", MSyntax::kString);
+   syntax.addFlag("-i", "-identifierArg", MSyntax::kString);
+   syntax.addFlag("-o", "-objectArg", MSyntax::kString);
+   syntax.enableQuery(false);
+   syntax.enableEdit(false);
+
+   return syntax;
+}
+
+MStatus AlembicCreateFaceSetsCommand::doIt(const MArgList & args)
+{
+   MStatus status = MS::kSuccess;
+   MArgParser argData(syntax(), args, &status);
+
+   if (argData.isFlagSet("help"))
+   {
+      MGlobal::displayInfo("[ExocortexAlembic]: ExocortexAlembic_createFaceSets command:");
+      MGlobal::displayInfo("                    -f : provide an unresolved fileName (string)");
+      MGlobal::displayInfo("                    -i : provide an identifier inside the file");
+      MGlobal::displayInfo("                    -o : provide an object to create the meta data on");
+      return MS::kSuccess;
+   }
+
+   if(!argData.isFlagSet("objectArg"))
+   {
+      MGlobal::displayError("[ExocortexAlembic] No objectArg specified.");
+      return MStatus::kFailure;
+   }
+   if(!argData.isFlagSet("fileNameArg"))
+   {
+      MGlobal::displayError("[ExocortexAlembic] No fileNameArg specified.");
+      return MStatus::kFailure;
+   }
+   if(!argData.isFlagSet("identifierArg"))
+   {
+      MGlobal::displayError("[ExocortexAlembic] No identifierArg specified.");
+      return MStatus::kFailure;
+   }
+   MString objectPath = argData.flagArgumentString("objectArg",0);
+   MObject nodeObject = getRefFromFullName(objectPath);
+   if(nodeObject.isNull())
+   {
+      MGlobal::displayError("[ExocortexAlembic] Invalid objectArg specified.");
+      return MStatus::kFailure;
+   }
+   MFnDagNode node(nodeObject);
+
+   MString fileName = argData.flagArgumentString("fileNameArg",0);
+   if(fileName.length() == 0)
+   {
+      MGlobal::displayError("[ExocortexAlembic] No valid fileNameArg specified.");
+      return MStatus::kFailure;
+   }
+   fileName = resolvePath(fileName);
+   MString identifier = argData.flagArgumentString("identifierArg",0);
+   if(identifier.length() == 0)
+   {
+      MGlobal::displayError("[ExocortexAlembic] No valid identifierArg specified.");
+      return MStatus::kFailure;
+   }
+
+   addRefArchive(fileName);
+
+   Alembic::Abc::IObject object = getObjectFromArchive(fileName,identifier);
+   if(!object.valid())
+   {
+      MGlobal::displayError("[ExocortexAlembic] No valid fileNameArg or identifierArg specified.");
+      return MStatus::kFailure;
+   }
+
+   // check the type of object
+   Alembic::AbcGeom::IPolyMesh mesh;
+   Alembic::AbcGeom::ISubD subd;
+   if(Alembic::AbcGeom::IPolyMesh::matches(object.getMetaData()))
+      mesh = Alembic::AbcGeom::IPolyMesh(object,Alembic::Abc::kWrapExisting);
+   else if(Alembic::AbcGeom::ISubD::matches(object.getMetaData()))
+      subd = Alembic::AbcGeom::ISubD(object,Alembic::Abc::kWrapExisting);
+   else
+   {
+      MGlobal::displayError("[ExocortexAlembic] Specified identifer doesn't refer to a PolyMesh or a SubD object.");
+      return MStatus::kFailure;
+   }
+
+   std::vector<std::string> faceSetNames;
+   if(mesh.valid())
+      mesh.getSchema().getFaceSetNames(faceSetNames);
+   else
+      subd.getSchema().getFaceSetNames(faceSetNames);
+
+   MFnTypedAttribute tAttr;
+
+   for(size_t i=0;i<faceSetNames.size();i++)
+   {
+      // access the face set
+      Alembic::AbcGeom::IFaceSetSchema faceSet;
+      if(mesh.valid())
+         faceSet = mesh.getSchema().getFaceSet(faceSetNames[i]).getSchema();
+      else
+         faceSet = subd.getSchema().getFaceSet(faceSetNames[i]).getSchema();
+      Alembic::AbcGeom::IFaceSetSchema::Sample faceSetSample = faceSet.getValue();
+
+      // create the int data
+      MFnIntArrayData fnData;
+      MIntArray arr((int *)faceSetSample.getFaces()->getData(),
+                    static_cast<unsigned int>(faceSetSample.getFaces()->size()));
+      MObject attrObj = fnData.create(arr);
+
+      // check if we need to create the attribute
+      MString attributeName = "FACESET_";
+      attributeName += faceSetNames[i].c_str();
+      MObject attribute = node.attribute(attributeName);
+      if(attribute.isNull())
+      {
+         attribute = tAttr.create(attributeName, attributeName, MFnData::kIntArray, attrObj);
+         tAttr.setStorable(true);
+         tAttr.setKeyable(false);
+         node.addAttribute(attribute);
+      }
+      else
+      {
+         MPlug attributePlug(nodeObject, attribute);
+         attributePlug.setMObject(attrObj);
+      }
+   }
+
+   object.reset();
+   mesh.reset();
+   delRefArchive(fileName);
+
+   return status;
 }

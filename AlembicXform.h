@@ -19,13 +19,14 @@ public:
    virtual MStatus Save(double time);
 };
 
-class AlembicXformNode : public MPxNode
+class AlembicXformNode : public AlembicObjectNode
 {
 public:
    AlembicXformNode() {}
    virtual ~AlembicXformNode();
 
    // override virtual methods from MPxNode
+   virtual void PreDestruction();
    virtual MStatus compute(const MPlug & plug, MDataBlock & dataBlock);
    static void* creator() { return (new AlembicXformNode()); }
    static MStatus initialize();
@@ -40,16 +41,18 @@ private:
    Alembic::AbcGeom::IXformSchema mSchema;
 
    // output attributes
-   static MObject mOutTransformAttr;
    static MObject mOutTranslateXAttr;
    static MObject mOutTranslateYAttr;
    static MObject mOutTranslateZAttr;
+   static MObject mOutTranslateAttr;
    static MObject mOutRotateXAttr;
    static MObject mOutRotateYAttr;
    static MObject mOutRotateZAttr;
+   static MObject mOutRotateAttr;
    static MObject mOutScaleXAttr;
    static MObject mOutScaleYAttr;
    static MObject mOutScaleZAttr;
+   static MObject mOutScaleAttr;
 };
 
 #endif

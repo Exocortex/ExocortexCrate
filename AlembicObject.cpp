@@ -43,3 +43,25 @@ Alembic::Abc::OObject AlembicObject::GetParentObject()
    return mJob->GetArchive().getTop();
 }
 
+
+unsigned int gRefIdMax = 0;
+std::map<unsigned int,AlembicObjectNode*> gNodes;
+
+AlembicObjectNode::AlembicObjectNode()
+{
+   mRefId = gRefIdMax;
+   gRefIdMax++;
+   gNodes.insert(std::pair<unsigned int,AlembicObjectNode*>(mRefId,this));
+}
+
+AlembicObjectNode::~AlembicObjectNode()
+{
+   gNodes.erase(gNodes.find(mRefId));
+}
+
+void preDestructAllNodes()
+{
+   std::map<unsigned int,AlembicObjectNode*>::iterator it;
+   for(it = gNodes.begin(); it != gNodes.end(); it++)
+      it->second->PreDestruction();
+}

@@ -1,4 +1,5 @@
 #include "AlembicXform.h"
+#include "MetaData.h"
 
 #include <maya/MFnTransform.h>
 
@@ -9,7 +10,7 @@ AlembicXform::AlembicXform(const MObject & in_Ref, AlembicWriteJob * in_Job)
 : AlembicObject(in_Ref, in_Job)
 {
    MFnDependencyNode node(in_Ref);
-   MString name = node.name()+"Xfo";
+   MString name = truncateName(node.name())+"Xfo";
    mObject = Alembic::AbcGeom::OXform(GetParentObject(),name.asChar(),GetJob()->GetAnimatedTs());
 
    mSchema = mObject.getSchema();
@@ -26,8 +27,8 @@ MStatus AlembicXform::Save(double time)
    // access the xform
    MFnTransform node(GetRef());
 
-   // TODO: implement storage of metadata
-   // SaveMetaData(prim.GetParent3DObject().GetRef(),this);
+   // save the metadata
+   SaveMetaData(this);
 
    MTransformationMatrix xf = node.transformation();
    MMatrix matrix = xf.asMatrix();
@@ -43,25 +44,33 @@ MStatus AlembicXform::Save(double time)
    return MStatus::kSuccess;
 }
 
-AlembicXformNode::~AlembicXformNode()
+void AlembicXformNode::PreDestruction()
 {
    mSchema.reset();
    delRefArchive(mFileName);
+   mFileName.clear();
+}
+
+AlembicXformNode::~AlembicXformNode()
+{
+   PreDestruction();
 }
 
 MObject AlembicXformNode::mTimeAttr;
 MObject AlembicXformNode::mFileNameAttr;
 MObject AlembicXformNode::mIdentifierAttr;
-MObject AlembicXformNode::mOutTransformAttr;
 MObject AlembicXformNode::mOutTranslateXAttr;
 MObject AlembicXformNode::mOutTranslateYAttr;
 MObject AlembicXformNode::mOutTranslateZAttr;
+MObject AlembicXformNode::mOutTranslateAttr;
 MObject AlembicXformNode::mOutRotateXAttr;
 MObject AlembicXformNode::mOutRotateYAttr;
 MObject AlembicXformNode::mOutRotateZAttr;
+MObject AlembicXformNode::mOutRotateAttr;
 MObject AlembicXformNode::mOutScaleXAttr;
 MObject AlembicXformNode::mOutScaleYAttr;
 MObject AlembicXformNode::mOutScaleZAttr;
+MObject AlembicXformNode::mOutScaleAttr;
 
 MStatus AlembicXformNode::initialize()
 {
@@ -73,12 +82,9 @@ MStatus AlembicXformNode::initialize()
    MFnGenericAttribute gAttr;
    MFnStringData emptyStringData;
    MObject emptyStringObject = emptyStringData.create("");
-   MFnMatrixData identityMatrixData;
-   MTransformationMatrix identityMatrix;
-   MObject identityMatrixObject = identityMatrixData.create(MTransformationMatrix::identity);
 
    // input time
-   mTimeAttr = uAttr.create("time", "tm", MFnUnitAttribute::kTime, 0.0);
+   mTimeAttr = uAttr.create("inTime", "tm", MFnUnitAttribute::kTime, 0.0);
    status = uAttr.setStorable(true);
    status = uAttr.setKeyable(true);
    status = addAttribute(mTimeAttr);
@@ -96,80 +102,94 @@ MStatus AlembicXformNode::initialize()
    status = tAttr.setKeyable(false);
    status = addAttribute(mIdentifierAttr);
 
-   // output transform
-   mOutTransformAttr = tAttr.create("transform", "xf", MFnData::kMatrix, identityMatrixObject);
-   status = tAttr.setStorable(false);
-   status = tAttr.setWritable(false);
-   status = tAttr.setKeyable(false);
-   status = addAttribute(mOutTransformAttr);
-
    // output translateX
    mOutTranslateXAttr = nAttr.create("translateX", "tx", MFnNumericData::kDouble, 0.0);
    status = nAttr.setStorable(false);
    status = nAttr.setWritable(false);
    status = nAttr.setKeyable(false);
-   status = addAttribute(mOutTranslateXAttr);
+   status = nAttr.setHidden(false);
 
    // output translateY
    mOutTranslateYAttr = nAttr.create("translateY", "ty", MFnNumericData::kDouble, 0.0);
    status = nAttr.setStorable(false);
    status = nAttr.setWritable(false);
    status = nAttr.setKeyable(false);
-   status = addAttribute(mOutTranslateYAttr);
+   status = nAttr.setHidden(false);
 
    // output translateY
    mOutTranslateZAttr = nAttr.create("translateZ", "tz", MFnNumericData::kDouble, 0.0);
    status = nAttr.setStorable(false);
    status = nAttr.setWritable(false);
    status = nAttr.setKeyable(false);
-   status = addAttribute(mOutTranslateZAttr);
+   status = nAttr.setHidden(false);
+
+   // output translate compound
+   mOutTranslateAttr = nAttr.create( "translate", "t", mOutTranslateXAttr, mOutTranslateYAttr, mOutTranslateZAttr);
+   status = nAttr.setStorable(false);
+   status = nAttr.setWritable(false);
+   status = nAttr.setKeyable(false);
+   status = nAttr.setHidden(false);
+   status = addAttribute(mOutTranslateAttr);
 
    // output rotatex
-   mOutRotateXAttr = nAttr.create("rotateX", "rx", MFnNumericData::kDouble, 0.0);
-   status = nAttr.setStorable(false);
-   status = nAttr.setWritable(false);
-   status = nAttr.setKeyable(false);
-   status = addAttribute(mOutRotateXAttr);
+   mOutRotateXAttr = uAttr.create("rotateX", "rx", MFnUnitAttribute::kAngle, 0.0);
+   status = uAttr.setStorable(false);
+   status = uAttr.setWritable(false);
+   status = uAttr.setKeyable(false);
+   status = uAttr.setHidden(false);
 
    // output rotatexy
-   mOutRotateYAttr = nAttr.create("rotateY", "ry", MFnNumericData::kDouble, 0.0);
-   status = nAttr.setStorable(false);
-   status = nAttr.setWritable(false);
-   status = nAttr.setKeyable(false);
-   status = addAttribute(mOutRotateYAttr);
+   mOutRotateYAttr = uAttr.create("rotateY", "ry", MFnUnitAttribute::kAngle, 0.0);
+   status = uAttr.setStorable(false);
+   status = uAttr.setWritable(false);
+   status = uAttr.setKeyable(false);
+   status = uAttr.setHidden(false);
 
    // output rotatez
-   mOutRotateZAttr = nAttr.create("rotateZ", "rz", MFnNumericData::kDouble, 0.0);
+   mOutRotateZAttr = uAttr.create("rotateZ", "rz", MFnUnitAttribute::kAngle, 0.0);
+   status = uAttr.setStorable(false);
+   status = uAttr.setWritable(false);
+   status = uAttr.setKeyable(false);
+   status = uAttr.setHidden(false);
+
+   // output translate compound
+   mOutRotateAttr = nAttr.create( "rotate", "r", mOutRotateXAttr, mOutRotateYAttr, mOutRotateZAttr);
    status = nAttr.setStorable(false);
    status = nAttr.setWritable(false);
    status = nAttr.setKeyable(false);
-   status = addAttribute(mOutRotateZAttr);
+   status = nAttr.setHidden(false);
+   status = addAttribute(mOutRotateAttr);
 
    // output scalex
    mOutScaleXAttr = nAttr.create("scaleX", "sx", MFnNumericData::kDouble, 1.0);
    status = nAttr.setStorable(false);
    status = nAttr.setWritable(false);
    status = nAttr.setKeyable(false);
-   status = addAttribute(mOutScaleXAttr);
+   status = nAttr.setHidden(false);
 
    // output scaley
    mOutScaleYAttr = nAttr.create("scaleY", "sy", MFnNumericData::kDouble, 1.0);
    status = nAttr.setStorable(false);
    status = nAttr.setWritable(false);
    status = nAttr.setKeyable(false);
-   status = addAttribute(mOutScaleYAttr);
+   status = nAttr.setHidden(false);
 
    // output scalez
    mOutScaleZAttr = nAttr.create("scaleZ", "sz", MFnNumericData::kDouble, 1.0);
    status = nAttr.setStorable(false);
    status = nAttr.setWritable(false);
    status = nAttr.setKeyable(false);
-   status = addAttribute(mOutScaleZAttr);
+   status = nAttr.setHidden(false);
+
+   // output translate compound
+   mOutScaleAttr = nAttr.create( "scale", "s", mOutScaleXAttr, mOutScaleYAttr, mOutScaleZAttr);
+   status = nAttr.setStorable(false);
+   status = nAttr.setWritable(false);
+   status = nAttr.setKeyable(false);
+   status = nAttr.setHidden(false);
+   status = addAttribute(mOutScaleAttr);
 
    // create a mapping
-   status = attributeAffects(mTimeAttr, mOutTransformAttr);
-   status = attributeAffects(mFileNameAttr, mOutTransformAttr);
-   status = attributeAffects(mIdentifierAttr, mOutTransformAttr);
    status = attributeAffects(mTimeAttr, mOutTranslateXAttr);
    status = attributeAffects(mFileNameAttr, mOutTranslateXAttr);
    status = attributeAffects(mIdentifierAttr, mOutTranslateXAttr);
@@ -274,13 +294,12 @@ MStatus AlembicXformNode::compute(const MPlug & plug, MDataBlock & dataBlock)
    transform.getScale(scale,MSpace::kTransform);
 
    // output all channels
-   dataBlock.outputValue(mOutTransformAttr).set(m);
    dataBlock.outputValue(mOutTranslateXAttr).setDouble(translation.x);
    dataBlock.outputValue(mOutTranslateYAttr).setDouble(translation.y);
    dataBlock.outputValue(mOutTranslateZAttr).setDouble(translation.z);
-   dataBlock.outputValue(mOutRotateXAttr).setDouble(MAngle(rotation[0],MAngle::kRadians).asDegrees());
-   dataBlock.outputValue(mOutRotateYAttr).setDouble(MAngle(rotation[1],MAngle::kRadians).asDegrees());
-   dataBlock.outputValue(mOutRotateZAttr).setDouble(MAngle(rotation[2],MAngle::kRadians).asDegrees());
+   dataBlock.outputValue(mOutRotateXAttr).setMAngle(MAngle(rotation[0],MAngle::kRadians));
+   dataBlock.outputValue(mOutRotateYAttr).setMAngle(MAngle(rotation[1],MAngle::kRadians));
+   dataBlock.outputValue(mOutRotateZAttr).setMAngle(MAngle(rotation[2],MAngle::kRadians));
    dataBlock.outputValue(mOutScaleXAttr).setDouble(scale[0]);
    dataBlock.outputValue(mOutScaleYAttr).setDouble(scale[1]);
    dataBlock.outputValue(mOutScaleZAttr).setDouble(scale[2]);

@@ -2,14 +2,16 @@
 #define _ALEMBIC_TIMECONTROL_H_
 
 #include "Foundation.h"
+#include "AlembicObject.h"
 
-class AlembicTimeControlNode: public MPxNode
+class AlembicTimeControlNode: public AlembicObjectNode
 {
 public:
    AlembicTimeControlNode() {}
    virtual ~AlembicTimeControlNode() {}
 
    // override virtual methods from MPxNode
+   virtual void PreDestruction() {};
    virtual MStatus compute(const MPlug & plug, MDataBlock & dataBlock);
    static void* creator() { return (new AlembicTimeControlNode()); }
    static MStatus initialize();

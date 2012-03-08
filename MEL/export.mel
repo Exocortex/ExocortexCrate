@@ -1,0 +1,41 @@
+proc exocortexAlembicExport(string $filename)
+{
+    $minTime = `playbackOptions -q -min`;
+    $maxTime = `playbackOptions -q -max`;
+
+    // check selection
+    string $selection[] = `ls -sl`;
+    if(size($selection) == 0)
+    {
+        error("Nothing selected!");
+        return;
+    }
+    
+    // check filename
+    if($filename == "")
+    {
+        $files = `fileDialog2 -ds 1 -cap "Choose the Alembic File To Export" -ff "Alembic Files (*.abc)" -fm 0`;
+        print $files;
+        if(size($files) == 0)
+        {
+            error "Export aborted by user.";
+            return;
+        }
+        $filename = $files[0];
+    }
+    $filename = `ExocortexAlembic_resolvePath -f $filename`;
+    
+    // TODO: check options
+
+    // construct the job string
+    string $job = ("in="+$minTime+";out="+$maxTime+";filename="+$filename+";objects=");
+    for($i=0;$i<size($selection);$i++)
+    {
+      if($i>0)
+        $job += ",";
+      $job += $selection[$i];
+    }
+    ExocortexAlembic_export -j $job;
+}
+
+exocortexAlembicExport("");

@@ -1,5 +1,7 @@
 #include "Utility.h"
+#include "AlembicObject.h"
 #include "AlembicLicensing.h"
+#include "AlembicArchiveStorage.h"
 
 SampleInfo getSampleInfo
 (
@@ -72,13 +74,40 @@ std::string getIdentifierFromRef(const MObject & in_Ref)
    return result;
 }
 
+MString removeTrailFromName(MString & name)
+{
+   MString trail;
+   while(name.length() > 0)
+   {
+      MString end = name.substring(name.length()-1,name.length()-1);
+      if(end.asChar()[0] >= '0' && end.asChar()[0] <= '9')
+      {
+         trail = end + trail;
+         name = name.substring(0,name.length()-2);
+      }
+      else
+         break;
+   }
+   return trail;
+}
+
 MString truncateName(const MString & in_Name)
 {
    MString name = in_Name;
-   // TODO: debug if this is right
+   MString trail = removeTrailFromName(name);
    if(name.substring(name.length()-3,name.length()-1).toLowerCase() == "xfo")
-      name = name.substring(0,name.length()-3);
-   return name;
+      name = name.substring(0,name.length()-4);
+   else if(name.substring(name.length()-5,name.length()-1).toLowerCase() == "shape")
+      name = name.substring(0,name.length()-6);
+
+   return name + trail;
+}
+
+MString injectShapeToName(const MString & in_Name)
+{
+   MString name = in_Name;
+   MString trail = removeTrailFromName(name);
+   return name + "Shape" + trail;
 }
 
 MString getFullNameFromRef(const MObject & in_Ref)
@@ -252,4 +281,42 @@ size_t getNumSamplesFromObject(Alembic::Abc::IObject object)
       return Alembic::AbcGeom::ICamera(object,Alembic::Abc::kWrapExisting).getSchema().getNumSamples();
    }
    return 0;
+}
+
+MSyntax AlembicResolvePathCommand::createSyntax()
+{
+   MSyntax syntax;
+   syntax.addFlag("-h", "-help");
+   syntax.addFlag("-f", "-fileNameArg", MSyntax::kString);
+   syntax.enableQuery(false);
+   syntax.enableEdit(false);
+
+   return syntax;
+}
+
+MStatus AlembicResolvePathCommand::doIt(const MArgList & args)
+{
+   MStatus status = MS::kSuccess;
+   MArgParser argData(syntax(), args, &status);
+
+   if (argData.isFlagSet("help"))
+   {
+      MGlobal::displayInfo("[ExocortexAlembic]: ExocortexAlembic_resolvePath command:");
+      MGlobal::displayInfo("                    -f : provide an unresolved fileName (string)");
+      return MS::kSuccess;
+   }
+
+   if(!argData.isFlagSet("fileNameArg"))
+   {
+      // TODO: display dialog
+      MGlobal::displayError("[ExocortexAlembic] No fileName specified.");
+      return status;
+   }
+
+   // get the filename arg
+   MString fileName = argData.flagArgumentString("fileNameArg",0);
+
+   setResult(resolvePath(fileName));
+
+   return status;
 }

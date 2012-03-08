@@ -18,7 +18,9 @@ struct ArchiveInfo
 
 SampleInfo getSampleInfo(double iFrame,Alembic::AbcCoreAbstract::TimeSamplingPtr iTime, size_t numSamps);
 std::string getIdentifierFromRef(const MObject & in_Ref);
+MString removeTrailFromName(MString & name);
 MString truncateName(const MString & in_Name);
+MString injectShapeToName(const MString & in_Name);
 MString getFullNameFromRef(const MObject & in_Ref);
 MString getFullNameFromIdentifier(std::string in_Identifier);
 MObject getRefFromFullName(const MString & in_Path);
@@ -38,6 +40,10 @@ Alembic::Abc::ICompoundProperty getCompoundFromObject(Alembic::Abc::IObject obje
 Alembic::Abc::TimeSamplingPtr getTimeSamplingFromObject(Alembic::Abc::IObject object);
 size_t getNumSamplesFromObject(Alembic::Abc::IObject object);
 
+// metadata related
+class AlembicObject;
+
+// sortable math objects
 class SortableV3f : public Alembic::Abc::V3f
 {
 public:  
@@ -109,6 +115,19 @@ public:
          return false;
       return other.y == y;
    }
+};
+
+class AlembicResolvePathCommand : public MPxCommand
+{
+  public:
+    AlembicResolvePathCommand() {}
+    virtual ~AlembicResolvePathCommand()  {}
+
+    virtual bool isUndoable() const { return false; }
+    MStatus doIt(const MArgList& args);
+
+    static MSyntax createSyntax();
+    static void* creator() { return new AlembicResolvePathCommand(); }
 };
 
 #endif  // _FOUNDATION_H_

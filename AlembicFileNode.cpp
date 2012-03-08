@@ -22,9 +22,10 @@ MStatus AlembicFileNode::initialize()
    status = addAttribute(mFileNameAttr);
 
    mOutFileNameAttr = tAttr.create("outFileName", "of", MFnData::kString);
-   status = nAttr.setStorable(false);
-   status = nAttr.setWritable(false);
-   status = nAttr.setKeyable(false);
+   status = tAttr.setStorable(false);
+   status = tAttr.setWritable(false);
+   status = tAttr.setKeyable(false);
+   status = tAttr.setHidden(false);
    status = addAttribute(mOutFileNameAttr);
 
    // create a mapping
@@ -35,6 +36,6 @@ MStatus AlembicFileNode::initialize()
 
 MStatus AlembicFileNode::compute(const MPlug & plug, MDataBlock & dataBlock)
 {
-   dataBlock.outputValue(mOutFileNameAttr).set(dataBlock.inputValue(mFileNameAttr).asString());
+   dataBlock.outputValue(mOutFileNameAttr).set(resolvePath(dataBlock.inputValue(mFileNameAttr).asString()));
    return MStatus::kSuccess;
 }
