@@ -207,6 +207,11 @@ int ExocortexAlembicStaticInterface::ExocortexAlembicImport(MCHAR* strFileName, 
 		return alembic_failure;
 	}
 
+	ESS_LOG_INFO( "ExocortexAlembicImport( strFileName=" << strFileName <<
+		", bImportNormals=" << bImportNormals << ", bImportUVs=" << bImportUVs <<
+		", bImportClusters=" << bImportClusters << ", bAttachToExisting=" << bAttachToExisting <<
+		", iVisOption=" << iVisOption << " )" );
+
 	alembic_importoptions importOptions;
     importOptions.importNormals = (bImportNormals != FALSE);
     importOptions.importUVs = (bImportUVs != FALSE);
@@ -289,6 +294,14 @@ int ExocortexAlembicStaticInterface::ExocortexAlembicExport(MCHAR * strFileName,
 		return alembic_failure;
 	}
 
+	ESS_LOG_INFO( "ExocortexAlembicExport( strFileName=" << strFileName <<
+		", iFrameIn=" << iFrameIn << ", iFrameOut=" << iFrameOut <<
+		", iFrameSteps=" << iFrameSteps << ", iFrameSubSteps=" << iFrameSubSteps <<
+		", iType=" << iType  << ", bExportUV=" << bExportUV <<
+		", bExportClusters=" << bExportClusters << ", bExportEnvelopeBindPose=" << bExportEnvelopeBindPose <<
+		", bExportDynamicTopology=" << bExportDynamicTopology << ", bExportSelected=" << bExportSelected <<
+		" )" );
+
 	Interface12 *i = GetCOREInterface12();
     i->ProgressStart("Exporting Alembic File", TRUE, DummyProgressFunction, NULL);
 
@@ -301,7 +314,8 @@ int ExocortexAlembicStaticInterface::ExocortexAlembicExport(MCHAR * strFileName,
 
     if (strlen(strFileName) <= 0)
     {
-        MessageBox(GetActiveWindow(), "[alembic] No filename specified.", "Error", MB_OK);
+        ESS_LOG_ERROR( "No filename specified." );
+		i->ProgressEnd();
         return 1;
     }
 
@@ -327,8 +341,9 @@ int ExocortexAlembicStaticInterface::ExocortexAlembicExport(MCHAR * strFileName,
             double part = dbFrameMaxSubSteps / dbFrameSubSteps;
             if (abs(part - floor(part)) > 0.001)
             {
-                MessageBox(GetActiveWindow(), "[ExocortexAlembic] Invalid combination of substeps in the same export. Aborting.", "Error", MB_OK);
-                return 1;
+                ESS_LOG_ERROR( "Invalid combination of substeps in the same export. Aborting." );
+            	i->ProgressEnd();
+			   return 1;
             }
         }
         else if (dbFrameSubSteps > dbFrameMaxSubSteps)
@@ -336,8 +351,9 @@ int ExocortexAlembicStaticInterface::ExocortexAlembicExport(MCHAR * strFileName,
             double part = dbFrameSubSteps / dbFrameMaxSubSteps;
             if (abs(part - floor(part)) > 0.001)
             {
-                MessageBox(GetActiveWindow(), "[ExocortexAlembic] Invalid combination of substeps in the same export. Aborting.", "Error", MB_OK);
-                return 1;
+                ESS_LOG_ERROR( "Invalid combination of substeps in the same export. Aborting." );
+            	i->ProgressEnd();
+			    return 1;
             }
         }
     }
@@ -363,9 +379,10 @@ int ExocortexAlembicStaticInterface::ExocortexAlembicExport(MCHAR * strFileName,
     // check if the job is satisfied
     if (job->PreProcess() != true)
     {
-        MessageBox(GetActiveWindow(), "[alembic] Job skipped. Not satisfied.", "Error", MB_OK);
+        ESS_LOG_ERROR( "Job skipped. Not satisfied.");
         delete(job);
-        return 1;
+       	i->ProgressEnd();
+		return 1;
     }
 
     dbFrameMinIn = min(dbFrameMinIn, dbFrameIn);
@@ -382,6 +399,7 @@ int ExocortexAlembicStaticInterface::ExocortexAlembicExport(MCHAR * strFileName,
     }
 
     delete(job);
+
     i->ProgressEnd();
 
 	ESS_CPP_EXCEPTION_REPORTING_END
