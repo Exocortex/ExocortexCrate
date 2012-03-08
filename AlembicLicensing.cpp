@@ -70,8 +70,7 @@ bool HasAlembicReaderLicense() {
 namespace Exocortex {
 	void essOnDemandInitialization() {
 		static string pluginName(XSI::CString(PLUGIN_NAME).GetAsciiString());
-		static string pluginModuleName(XSI::CString(PLUGIN_MODULE_NAME).GetAsciiString());
-
+	
 		essInitializeSoftimage( pluginName.c_str(), PLUGIN_MAJOR_VERSION, PLUGIN_MINOR_VERSION );
 	}
 }
