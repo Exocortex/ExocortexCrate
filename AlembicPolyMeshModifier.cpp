@@ -951,7 +951,8 @@ int AlembicImport_PolyMesh(const std::string &file, const std::string &identifie
 
     if (AlembicImport_IsPolyObject(polyMeshSample))
     {
-        dataFillOptions.pPolyObj = CreateEditablePolyObject();
+		
+        dataFillOptions.pPolyObj = (PolyObject *) GetPolyObjDescriptor()->Create();//CreateEditablePolyObject();
 	    newObject = dataFillOptions.pPolyObj;
     }
     else
@@ -965,7 +966,8 @@ int AlembicImport_PolyMesh(const std::string &file, const std::string &identifie
         return alembic_failure;
     }
 
-	AlembicImport_FillInPolyMesh(dataFillOptions);
+	// we will not be filling in the initial polymesh data.
+	//AlembicImport_FillInPolyMesh(dataFillOptions);
 
 	// Create the object node
 	INode *node = GetCOREInterface12()->CreateObjectNode(newObject, iObj.getName().c_str());
