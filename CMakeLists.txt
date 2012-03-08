@@ -81,3 +81,5 @@ set( PluginDirectory "${CMAKE_CURRENT_SOURCE_DIR}/Plugin" )
 copy_directory( "${BASE_DIR}/MaxScripts" ${PluginDirectory} )
 get_target_property( OutputFilePath ${PROJECT_NAME} LOCATION )
 copy_file( ${OutputFilePath} ${PluginDirectory} )
+
+copy_file( ${RER_DEPENDENCIES} ${PluginDirectory} )
