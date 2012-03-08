@@ -26,9 +26,10 @@ if( NOT EXISTS ${3DSMAX_DIR_INCLUDE} )
 endif()
  
 get_filename_component( BASE_DIR "${CMAKE_CURRENT_SOURCE_DIR}" PATH )
+set( LOCAL_CMAKE_FILE_NAME "${BASE_DIR}/CMakeLists.txt" )
+
 include_directories( ${BASE_DIR}/include )
 include_directories( ${BASE_DIR}/src )
-
 
 file(GLOB_RECURSE Sources ${BASE_DIR}/*.cpp)
 file(GLOB_RECURSE Includes ${BASE_DIR}/*.h)
@@ -67,7 +68,7 @@ if( Exocortex_RLM_ONLY )
 	link_directories( ${Rlm_LIBRARYDIR} )
 endif()
 
-add_library( ${PROJECT_NAME} SHARED ${Sources} ${Includes})
+add_library( ${PROJECT_NAME} SHARED ${Sources} ${Includes}  ${LOCAL_CMAKE_FILE_NAME} )
 
 TARGET_LINK_LIBRARIES( ${PROJECT_NAME} ${ALEMBIC_ILMBASE_LIBS}
 	${ALEMBIC_ZLIB_LIBS} ${ALEMBIC_HDF5_LIBS} ${ALEMBIC_CORE_LIBS}
@@ -75,3 +76,8 @@ TARGET_LINK_LIBRARIES( ${PROJECT_NAME} ${ALEMBIC_ILMBASE_LIBS}
 ADD_DEPENDENCIES(${PROJECT_NAME} AlembicAbcGeom) 
 
 SET_TARGET_PROPERTIES( ${PROJECT_NAME} PROPERTIES SUFFIX ".dlu" ) 
+
+set( PluginDirectory "${CMAKE_CURRENT_SOURCE_DIR}/Plugin" )
+copy_directory( "${BASE_DIR}/MaxScripts" ${PluginDirectory} )
+get_target_property( OutputFilePath ${PROJECT_NAME} LOCATION )
+copy_file( ${OutputFilePath} ${PluginDirectory} )
