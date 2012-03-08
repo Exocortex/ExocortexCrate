@@ -220,15 +220,19 @@ int ExocortexAlembicStaticInterface::ExocortexAlembicImport(MCHAR* strFileName, 
     importOptions.importVisibility = static_cast<VisImportOption>(iVisOption);
 
 	// If no filename, then return an error code
-	if(strFileName[0] == 0)
+	if(strFileName[0] == 0) {
+	   ESS_LOG_ERROR( "No filename specified." );
 	   return alembic_invalidarg;
+	}
 
 	std::string file(strFileName);
 
    // Try opening up the archive
    Alembic::Abc::IArchive *pArchive = getArchiveFromID(file);
-   if (!pArchive)
-	   return alembic_failure;
+   if (!pArchive) {
+	   ESS_LOG_ERROR( "Unable to open Alembic file: " << file  );
+		return alembic_failure;
+   }
 
    // let's figure out which objects we have
    std::vector<Alembic::Abc::IObject> objects;
@@ -280,7 +284,7 @@ int ExocortexAlembicStaticInterface::ExocortexAlembicImport(MCHAR* strFileName, 
 
    ESS_CPP_EXCEPTION_REPORTING_END
 
-   return 0;
+   return alembic_success;
 }
 
 int ExocortexAlembicStaticInterface::ExocortexAlembicExport(MCHAR * strFileName, int iFrameIn, int iFrameOut, int iFrameSteps, int iFrameSubSteps, int iType,
@@ -316,7 +320,7 @@ int ExocortexAlembicStaticInterface::ExocortexAlembicExport(MCHAR * strFileName,
     {
         ESS_LOG_ERROR( "No filename specified." );
 		i->ProgressEnd();
-        return 1;
+       return alembic_invalidarg;
     }
 
     // Delete this archive if we have already imported it and are currently using it
@@ -343,7 +347,7 @@ int ExocortexAlembicStaticInterface::ExocortexAlembicExport(MCHAR * strFileName,
             {
                 ESS_LOG_ERROR( "Invalid combination of substeps in the same export. Aborting." );
             	i->ProgressEnd();
-			   return 1;
+			  return alembic_invalidarg;
             }
         }
         else if (dbFrameSubSteps > dbFrameMaxSubSteps)
@@ -353,7 +357,7 @@ int ExocortexAlembicStaticInterface::ExocortexAlembicExport(MCHAR * strFileName,
             {
                 ESS_LOG_ERROR( "Invalid combination of substeps in the same export. Aborting." );
             	i->ProgressEnd();
-			    return 1;
+			    return alembic_invalidarg;
             }
         }
     }
@@ -382,7 +386,7 @@ int ExocortexAlembicStaticInterface::ExocortexAlembicExport(MCHAR * strFileName,
         ESS_LOG_ERROR( "Job skipped. Not satisfied.");
         delete(job);
        	i->ProgressEnd();
-		return 1;
+		return alembic_failure;
     }
 
     dbFrameMinIn = min(dbFrameMinIn, dbFrameIn);
@@ -404,5 +408,5 @@ int ExocortexAlembicStaticInterface::ExocortexAlembicExport(MCHAR * strFileName,
 
 	ESS_CPP_EXCEPTION_REPORTING_END
 
-	return 0;
+	return alembic_success;
 }

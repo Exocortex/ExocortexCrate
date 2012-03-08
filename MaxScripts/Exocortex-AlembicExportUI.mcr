@@ -30,7 +30,11 @@ rollout AlembicExportSettings "Alembic Export Settings" width:288 height:368
 	    filename = getSaveFileName caption:"Export to Alembic File:" types:"Alembic(*.abc)|*.abc|All(*.*)|*.*" historyCategory:"Alembic"
 	    if (filename != undefined) do
 	    (
-	        ExocortexAlembic.export filename inSpinner.value outSpinner.value stepsSpinner.value subStepsSpinner.value meshTopologyDropDown.selection uvCheckbox.checked false envelopeCheckbox.checked dynamicTopologyCheckbox.checked exportSelectedCheckbox.checked
+	        result = ExocortexAlembic.export filename inSpinner.value outSpinner.value stepsSpinner.value subStepsSpinner.value meshTopologyDropDown.selection uvCheckbox.checked false envelopeCheckbox.checked dynamicTopologyCheckbox.checked exportSelectedCheckbox.checked
+	        if( result != 0 ) do
+	        (
+	            	messageBox "Failure - See Maxscript Listener for details." title:"Exocortex Alembic Export"
+		    )
 	        destroyDialog AlembicExportSettings
 	    )
 	)

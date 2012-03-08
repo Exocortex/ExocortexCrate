@@ -18,8 +18,12 @@ rollout AlembicImportSettings "Alembic Import Settings" width:288 height:236
 
 	on importButton pressed do
 	(
-	    ExocortexAlembic.import filename normalCheckbox.checked uvCheckbox.checked false attachCheckbox.checked dropDownVis.selection
-	    destroyDialog AlembicImportSettings
+	    result = ExocortexAlembic.import filename normalCheckbox.checked uvCheckbox.checked false attachCheckbox.checked dropDownVis.selection
+        if( result != 0 ) do
+        (
+        	messageBox "See Maxscript Listener for Details of Failure" title:"Exocortex Alembic Export Failed"
+        )
+		destroyDialog AlembicImportSettings
 	)
 	on cancelButton pressed do
 	(
