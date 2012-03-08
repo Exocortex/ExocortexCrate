@@ -1,3 +1,4 @@
+
 #include "Alembic.h"
 #include "AlembicArchiveStorage.h"
 #include "AlembicPolyMeshModifier.h"
@@ -198,6 +199,8 @@ static ExocortexAlembicStaticInterface exocortexAlembic;
 
 int ExocortexAlembicStaticInterface::ExocortexAlembicImport(MCHAR* strFileName, BOOL bImportNormals, BOOL bImportUVs, BOOL bImportClusters, BOOL bAttachToExisting, int iVisOption)
 {
+	ESS_CPP_EXCEPTION_REPORTING_START
+
 	alembic_importoptions importOptions;
     importOptions.importNormals = (bImportNormals != FALSE);
     importOptions.importUVs = (bImportUVs != FALSE);
@@ -258,6 +261,8 @@ int ExocortexAlembicStaticInterface::ExocortexAlembicImport(MCHAR* strFileName, 
 
    delRefArchive(file);
 
+   ESS_CPP_EXCEPTION_REPORTING_END
+
    return 0;
 }
 
@@ -265,7 +270,9 @@ int ExocortexAlembicStaticInterface::ExocortexAlembicExport(MCHAR * strFileName,
                                                             BOOL bExportUV, BOOL bExportClusters, BOOL bExportEnvelopeBindPose, BOOL bExportDynamicTopology,
                                                             BOOL bExportSelected)
 {
-    Interface12 *i = GetCOREInterface12();
+	ESS_CPP_EXCEPTION_REPORTING_START
+
+	Interface12 *i = GetCOREInterface12();
     i->ProgressStart("Exporting Alembic File", TRUE, DummyProgressFunction, NULL);
 
     MeshTopologyType eTopologyType = static_cast<MeshTopologyType>(iType);
@@ -359,6 +366,8 @@ int ExocortexAlembicStaticInterface::ExocortexAlembicExport(MCHAR * strFileName,
 
     delete(job);
     i->ProgressEnd();
+
+	ESS_CPP_EXCEPTION_REPORTING_END
 
 	return 0;
 }

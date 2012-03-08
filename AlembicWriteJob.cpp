@@ -258,6 +258,7 @@ bool AlembicWriteJob::Process(double frame)
             continue;
         }
 
+
         // run the export for all objects
         for(size_t j=0; j < mObjects.size(); j++)
         {

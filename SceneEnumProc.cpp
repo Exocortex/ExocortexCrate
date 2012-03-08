@@ -37,6 +37,8 @@ SceneEnumProc::~SceneEnumProc()
 
 int SceneEnumProc::callback(INode *node) 
 {
+	ESS_CPP_EXCEPTION_REPORTING_START
+
 	Object *obj = node->EvalWorldState(time).obj;
 
 	if (obj->IsShapeObject() == FALSE &&
@@ -97,6 +99,9 @@ int SceneEnumProc::callback(INode *node)
             }
             break;
 	}
+
+	ESS_CPP_EXCEPTION_REPORTING_END
+
 
 	return TREE_CONTINUE;
 }

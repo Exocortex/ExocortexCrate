@@ -79,6 +79,7 @@ bool AlembicPolyMesh::Save(double time)
     {
         if(!GetRef().node->IsAnimated())
         {
+			ESS_LOG_INFO( "Node is not animated, not saving topology on subsequent frames." );
             return true;
         }
     }

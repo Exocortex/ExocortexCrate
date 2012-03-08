@@ -53,7 +53,7 @@ IF( WIN32 )
 	ENDIF()	
 ENDIF()
 
-SET( 3DSMAX_LIBRARIES core geom gfx maxutil mesh paramblk2 mnmath poly ) 
+SET( 3DSMAX_LIBRARIES core geom gfx maxutil mesh paramblk2 mnmath poly maxscrpt ) 
 
 MESSAGE( "3DSMAX_DIR_LIBRARY: ${3DSMAX_DIR_LIBRARY}" )
 MESSAGE( "3DSMAX_LIBRARIES: ${3DSMAX_LIBRARIES}" )

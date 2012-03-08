@@ -200,7 +200,9 @@ void AlembicExporter::ShowAbout(HWND hWnd)
 
 int	AlembicExporter::DoExport(const TCHAR *filename, ExpInterface *ei, Interface *i, BOOL suppressPrompts, DWORD options)
 {
-    // Prompt the user with our dialogbox, and get all the options.
+    ESS_CPP_EXCEPTION_REPORTING_START
+		
+	// Prompt the user with our dialogbox, and get all the options.
     /*
     if (!DialogBoxParam(GetAlembicExporterDesc()->HInstance(), MAKEINTRESOURCE(IDD_ALEMBIC_EXPORT_DLG), i->GetMAXHWnd(), ExportDlgProc, (LPARAM)this)) 
     {
@@ -292,6 +294,8 @@ int	AlembicExporter::DoExport(const TCHAR *filename, ExpInterface *ei, Interface
     i->ProgressEnd();
 
     return TRUE;
+
+	ESS_CPP_EXCEPTION_REPORTING_END
 }
 
 AlembicExporter::AlembicExporter()
