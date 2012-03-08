@@ -7,6 +7,23 @@
 
 using namespace std;
 
+
+#ifndef EC_LOG_ERROR
+	#define EC_LOG_ERROR(a)		ESS_LOG_ERROR(a)
+#endif
+#ifndef EC_LOG_WARNING
+	#define EC_LOG_WARNING(a)	ESS_LOG_WARNING(a)
+#endif
+#ifndef EC_LOG_INFO
+	#define EC_LOG_INFO(a)		ESS_LOG_INFO(a)
+#endif
+#ifndef EC_ASSERT
+	#define EC_ASSERT(a)		
+#endif
+
+
+#include "RlmSingleton.h"
+
 int gLicenseToken = EC_LICENSE_RESULT_NO_LICENSE;
 
 #if defined( EXOCORTEX_RLM_ONLY )
@@ -33,7 +50,7 @@ int GetLicense()
 			ESS_LOG_INFO( "Looking for RLM license for " << pluginName << "..." );
 			Exocortex::RlmSingleton& rlmSingleton = Exocortex::RlmSingleton::getSingleton();
 
-			RlmProductID pluginLicenseIds2[] = PLUGIN_LICENSE_IDS;
+			RlmProductID pluginLicenseIds2[] = ALEMBIC_WRITER_LICENSE_IDS;
 			vector<RlmProductID> rlmProductIds;
 			for( int i = 0; i < sizeof( pluginLicenseIds2 ) / sizeof( RlmProductID ); i ++ ) {
 				rlmProductIds.push_back( pluginLicenseIds2[i] );
@@ -67,11 +84,15 @@ int GetLicense()
 
 #ifdef EXOCORTEX_SERVICES
 
+void MaxLogSink(const char* szLogMessage, Exocortex::ecLogLevel::Value level ) {
+	DebugPrint( szLogMessage );
+}
+
 namespace Exocortex {
 	void essOnDemandInitialization() {
 		static string pluginName(PLUGIN_NAME);
 		
-		essInitialize( pluginName.c_str(), PLUGIN_MAJOR_VERSION, PLUGIN_MINOR_VERSION,  );
+		essInitialize( pluginName.c_str(), PLUGIN_MAJOR_VERSION, PLUGIN_MINOR_VERSION, "C:\\ExocortexLogs", MaxLogSink );
 	}
 }
 

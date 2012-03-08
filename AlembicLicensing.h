@@ -17,8 +17,10 @@
 #define PLUGIN_LICENSE_NAME				"alembic_3dsmax"
 #define PLUGIN_LICENSE_VERSION			(alembic_MAJOR_VERSION*10)
 
+#define ALEMBIC_WRITER_LICENSE_IDS	{ RlmProductID( "alembic", 10 ), RlmProductID( "alembic_3dsmax", 10 ) }
+#define ALEMBIC_READER_LICENSE_IDS	{ RlmProductID( "alembic_reader", 10 ), RlmProductID( "alembic_3dsmax", 10 ), RlmProductID( "alembic", 10 ) }
 
-#include "ExocortexServicesProxy.h"
+//#include "ExocortexServicesProxy.h"
 
 extern int gLicenseToken;
 int GetLicense();

@@ -1,6 +1,6 @@
 #ifndef __EXOCORTEX_SERVICES_PROXY_H
 #define __EXOCORTEX_SERVICES_PROXY_H
-
+/*
 #include <string>
 #include <sstream>
 #include <vector>
@@ -51,10 +51,10 @@
  		#define vsprintf_s(buffer, buffer_size, stringbuffer, ...) ( vsprintf(buffer, stringbuffer, __VA_ARGS__) )
 	#endif
  
-	#include "RlmSingleton.h"
+	
 
 #endif	// EXOCORTEX_RLM_ONLY
 
 
-
+*/
 #endif // __EXOCORTEX_SERVICES_PROXY_H
