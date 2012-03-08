@@ -4,6 +4,7 @@
 #include "Foundation.h"
 #include "AlembicDefinitions.h"
 #include "Utility.h"
+#include <iparamb2.h>
 #include <simpobj.h>
 
 // can be generated via gencid.exe in the help folder of the 3DS Max.
@@ -53,5 +54,20 @@ private:
 
     alembic_nodeprops m_AlembicNodeProps;
 };
+
+
+class AlembicSimpleParticleClassDesc : public ClassDesc2 
+{
+public:
+	int 			IsPublic() { return 1; }
+	void *			Create(BOOL loading = FALSE) { return new AlembicSimpleParticle(); }
+	const TCHAR *	ClassName() { return _T("Alembic Simple Particle"); }
+	SClass_ID		SuperClassID() { return GEOMOBJECT_CLASS_ID; }
+	Class_ID		ClassID() { return EXOCORTEX_ALEMBIC_SIMPLE_PARTICLE_CLASS_ID; }
+	const TCHAR* 	Category() { return _T("MAX STANDARD"); }
+	const TCHAR*	InternalName() { return _T("AlembicSimpleParticle"); }  // returns fixed parsable name (scripter-visible name)
+	HINSTANCE		HInstance() { return hInstance; }                       // returns owning module handle
+};
+
 
 #endif	// __ALEMBIC_SIMPLE_PARTICLE__H
