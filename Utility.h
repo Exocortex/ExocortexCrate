@@ -26,22 +26,58 @@ int GetTimeValueFromSeconds( double seconds );
 int GetTimeValueFromFrame( double frame );
 
 // Debug functions
-void ALEMBIC_DEBUG( char *debugmsg, ...);
 void AlembicDebug_PrintMeshData( Mesh &mesh );
-void AlembicDebug_PrintTransform(Matrix3 &m);
+void AlembicDebug_PrintTransform( Matrix3 &m );
 
 // Conversion functions to Alembic Standards
-float ScaleFloatFromInchesToDecimeters(float inches);
-Point3 ScalePointFromInchesToDecimeters( const Point3 &inches );
-Point3 ScalePointFromDecimetersToInches( const Point3 &decimeters );
-void ConvertMaxMatrixToAlembicMatrix( const Matrix3 &maxMatrix, Matrix3 &alembicMatrix);
-void ConvertAlembicMatrixToMaxMatrix( const Matrix3 &alembicMatrix, Matrix3 &maxMatrix);
-void ConvertMaxPointToAlembicPoint( const Point3 &maxPoint, Point3 &result);
-void ConvertAlembicPointToMaxPoint( const Point3 &alembicPoint, Point3 &result);
-void ConvertMaxVectorToAlembicVector( const Point3 &maxVector, Point3 &result, bool scale);
-void ConvertAlembicVectorToMaxVector( const Point3 &alembicVector, Point3 &result, bool scale);
-void ConvertMaxNormalToAlembicNormal( const Point3 &maxPoint, Point3 &result);
-void ConvertAlembicNormalToMaxNormal( const Point3 &alembicPoint, Point3 &result);
+inline float GetInchesToDecimetersRatio( const float& masterScaleUnitMeters )
+{
+    float flDecimetersPerInch = masterScaleUnitMeters;
+    flDecimetersPerInch *= 10.0f;
+    return flDecimetersPerInch;
+}
+
+inline float GetDecimetersToInchesRatio( const float& masterScaleUnitMeters )
+{
+    float flDecimetersPerInch = masterScaleUnitMeters;
+    flDecimetersPerInch *= 10.0f;
+    return 1.0f / flDecimetersPerInch;
+}
+
+void ConvertMaxMatrixToAlembicMatrix( const Matrix3 &maxMatrix, const float& masterScaleUnitMeters, Matrix3 &alembicMatrix );
+void ConvertAlembicMatrixToMaxMatrix( const Matrix3 &alembicMatrix, const float& masterScaleUnitMeters, Matrix3 &maxMatrix );
+
+inline Imath::V3f ConvertMaxPointToAlembicPoint( const Point3 &maxPoint, const float &masterScaleUnitMeters)
+{
+	return Imath::V3f(maxPoint.x, maxPoint.z, -maxPoint.y) * GetInchesToDecimetersRatio( masterScaleUnitMeters );
+}
+
+inline Point3 ConvertAlembicPointToMaxPoint( const Imath::V3f &alembicPoint, const float &masterScaleUnitMeters )
+{
+	return Point3(alembicPoint.x, -alembicPoint.z, alembicPoint.y) * GetDecimetersToInchesRatio( masterScaleUnitMeters );
+}
+
+inline Imath::V3f ConvertMaxVectorToAlembicVector( const Point3 &maxPoint, const float &masterScaleUnitMeters, bool scale )
+{
+	return Imath::V3f(maxPoint.x, maxPoint.z, -maxPoint.y) * (scale ? GetInchesToDecimetersRatio( masterScaleUnitMeters ) : 1.0f);
+}
+
+inline Point3 ConvertAlembicPointToMaxPoint( const Imath::V3f &alembicPoint, const float &masterScaleUnitMeters, bool scale )
+{
+	return Point3(alembicPoint.x, -alembicPoint.z, alembicPoint.y) * (scale ? GetDecimetersToInchesRatio( masterScaleUnitMeters ) : 1.0f);
+}
+
+inline Imath::V3f ConvertMaxNormalToAlembicNormal( const Point3 &maxPoint )
+{
+     Point3 maxPointNormalized = maxPoint.Normalize();
+	 return Imath::V3f( maxPoint.x, maxPoint.z, -maxPoint.y);
+}
+
+inline Point3 ConvertAlembicNormalToMaxNormal( const Imath::V3f &alembicPoint )
+{
+	return Point3(alembicPoint.x, -alembicPoint.z, alembicPoint.y).Normalize();
+}
+
 
 // Utility functions for working on INodes
 bool CheckIfNodeIsAnimated( INode *pNode );

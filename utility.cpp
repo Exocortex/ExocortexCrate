@@ -128,7 +128,7 @@ double GetSecondsFromTimeValue(TimeValue t)
 
 int GetTimeValueFromSeconds( double seconds )
 {
-    double ticks = seconds/(GetFrameRate() * GetTicksPerFrame());
+    double ticks = ( seconds * GetFrameRate() * GetTicksPerFrame() );
     return (int)floor(ticks + 0.5);
 }
 
@@ -138,79 +138,41 @@ int GetTimeValueFromFrame( double frame )
     return (int)floor(ticks + 0.5f);
 }
 
-void ALEMBIC_DEBUG( char *debugmsg, ...)
-{
-    char strOutputMessage[1024] = "\0";
-    
-    va_list argptr;
-    va_start(argptr,debugmsg);
-    _vsntprintf_s(strOutputMessage, 1023, debugmsg, argptr);
-    va_end(argptr);
-
-    OutputDebugString(strOutputMessage);
-}
-
 void AlembicDebug_PrintMeshData( Mesh &mesh )
 {
     for (int i=0; i<mesh.getNumFaces(); i++) 
     {
         Face *f = &mesh.faces[i];
         
-        ALEMBIC_DEBUG("Mesh Face %d\n", i);
-        ALEMBIC_DEBUG("============\n");
+		ESS_LOG_INFO("Mesh Face: " << i);
+        ESS_LOG_INFO("============");
 
         for (int j = 0; j < 3; j += 1)
         {
             int vertexId = f->getVert(j);
             Point3 vertexPos = mesh.getVert(vertexId);
             Point3 vertexNormal = AlembicPolyMesh::GetVertexNormal(&mesh, i, mesh.getRVertPtr(vertexId));
-            ALEMBIC_DEBUG("Vertex %d, Position (%.f, %.f, %.f), Normal (%.f, %.f, %.f)\n", 
-                vertexId, 
-                vertexPos.x, vertexPos.y, vertexPos.z,
-                vertexNormal.x, vertexNormal.y, vertexNormal.z);
+			ESS_LOG_INFO("Vertex " << vertexId <<
+				", Position (" << vertexPos.x << ", " << vertexPos.y << ", " << vertexPos.z <<
+				"), Normal (" << vertexNormal.x << ", " << vertexNormal.y << ", " << vertexNormal.z << ")" );
         }
-
-        ALEMBIC_DEBUG("\n");
+        ESS_LOG_INFO("");
     }
 }
 
 void AlembicDebug_PrintTransform(Matrix3 &m)
 {
-    ALEMBIC_DEBUG("Matrix\n");
-    ALEMBIC_DEBUG("======\n");
+    ESS_LOG_INFO("Matrix");
+    ESS_LOG_INFO("======");
 
     for (int i=0; i < 4; i += 1)
     {
-        ALEMBIC_DEBUG("Row %d (%f, %f, %f)\n", i, m.GetRow(i).x, m.GetRow(i).y, m.GetRow(i).z);
+        ESS_LOG_INFO("Row " << i << " (" << m.GetRow(i).x << ", " << m.GetRow(i).y << ", " << m.GetRow(i).z << " )" );
     }
 }
 
-float ScaleFloatFromInchesToDecimeters(float inches)
-{
-    float flDecimetersPerInch = (float)GetMasterScale(UNITS_METERS);
-    flDecimetersPerInch *= 10.0f;
-    float decimeters = inches * flDecimetersPerInch;
-    return decimeters;
-}
 
-Point3 ScalePointFromInchesToDecimeters( const Point3 &inches )
-{
-    float flDecimetersPerInch = (float)GetMasterScale(UNITS_METERS);
-    flDecimetersPerInch *= 10.0f;
-    Point3 decimeters = inches * flDecimetersPerInch;
-    return decimeters;
-}
-
-
-Point3 ScalePointFromDecimetersToInches( const Point3 &decimeters )
-{
-    float flDecimetersPerInch = (float)GetMasterScale(UNITS_METERS);
-    flDecimetersPerInch *= 10.0f;
-    Point3 inches = decimeters / flDecimetersPerInch;
-    return inches;
-}
-
-void ConvertMaxMatrixToAlembicMatrix( const Matrix3 &maxMatrix, Matrix3 &result)
+void ConvertMaxMatrixToAlembicMatrix( const Matrix3 &maxMatrix, const float& masterScaleUnitMeters, Matrix3 &result)
 {
     // Rotate the max matrix into an alembic reference frame, a right handed co-ordinate system
     // We set up an alembic reference frame relative to Max's coordinate system
@@ -220,11 +182,11 @@ void ConvertMaxMatrixToAlembicMatrix( const Matrix3 &maxMatrix, Matrix3 &result)
     result = AlembicRefFrame * maxMatrix * AlembicRefFrameInverse;
 
     // Scale the translation
-    Point3 meterTrans = ScalePointFromInchesToDecimeters( result.GetTrans());
+    Point3 meterTrans = result.GetTrans() * GetInchesToDecimetersRatio( masterScaleUnitMeters );
     result.SetTrans(meterTrans);
 }
    
-void ConvertAlembicMatrixToMaxMatrix( const Matrix3 &alembicMatrix, Matrix3 &result)
+void ConvertAlembicMatrixToMaxMatrix( const Matrix3 &alembicMatrix, const float& masterScaleUnitMeters, Matrix3 &result)
 {
     // Rotate the max matrix into an alembic reference frame, a right handed co-ordinate system
     // We set up an alembic reference frame relative to Max's coordinate system
@@ -234,52 +196,11 @@ void ConvertAlembicMatrixToMaxMatrix( const Matrix3 &alembicMatrix, Matrix3 &res
     result = AlembicRefFrameInverse * alembicMatrix * AlembicRefFrame;
 
     // Scale the translation
-    Point3 inchesTrans = ScalePointFromDecimetersToInches( result.GetTrans() );
+    Point3 inchesTrans = result.GetTrans() * GetDecimetersToInchesRatio( masterScaleUnitMeters );
     result.SetTrans(inchesTrans);
 }
 
 
-void ConvertMaxPointToAlembicPoint( const Point3 &maxPoint, Point3 &result)
-{
-    // The point conversion is just a vector conversion ensuring that we apply the scale
-    ConvertMaxVectorToAlembicVector(maxPoint, result, true);
-}
-
-void ConvertAlembicPointToMaxPoint( const Point3 &alembicPoint, Point3 &result)
-{
-    // The point conversion is just a vector conversion ensuring that we apply the scale
-    ConvertMaxVectorToAlembicVector(alembicPoint, result, true);
-}
-
-void ConvertMaxVectorToAlembicVector( const Point3 &maxVector, Point3 &result, bool scale)
-{
-     result = Point3(maxVector.x, maxVector.z, -maxVector.y);
-     if (scale)
-     {
-         result = ScalePointFromInchesToDecimeters(result);
-     }
-}
-
-void ConvertAlembicVectorToMaxVector( const Point3 &alembicVector, Point3 &result, bool scale)
-{
-    result = Point3(alembicVector.x, -alembicVector.z, alembicVector.y);
-    if (scale)
-    {
-        result = ScalePointFromDecimetersToInches(result);
-    }
-}
-
-void ConvertMaxNormalToAlembicNormal( const Point3 &maxPoint, Point3 &result)
-{
-     result = Point3(maxPoint.x, maxPoint.z, -maxPoint.y);
-     result = result.Normalize();
-}
-
-void ConvertAlembicNormalToMaxNormal( const Point3 &alembicPoint, Point3 &result)
-{
-    result = Point3(alembicPoint.x, -alembicPoint.z, alembicPoint.y);
-    result = result.Normalize();
-}
 
 bool CheckIfNodeIsAnimated( INode *pNode )
 {

@@ -4,8 +4,27 @@
 #include "Foundation.h"
 #include "AlembicLicensing.h"
 #include "Alembic.h"
+#include <maxscript/maxscript.h>
 
 using namespace std;
+
+#pragma warning( disable : 4996 )
+
+#ifndef EC_LOG_ERROR
+	#define EC_LOG_ERROR(a)		ESS_LOG_ERROR(a)
+#endif
+#ifndef EC_LOG_WARNING
+	#define EC_LOG_WARNING(a)	ESS_LOG_WARNING(a)
+#endif
+#ifndef EC_LOG_INFO
+	#define EC_LOG_INFO(a)		ESS_LOG_INFO(a)
+#endif
+#ifndef EC_ASSERT
+	#define EC_ASSERT(a)		
+#endif
+
+
+#include "RlmSingleton.h"
 
 int gLicenseToken = EC_LICENSE_RESULT_NO_LICENSE;
 
@@ -33,7 +52,7 @@ int GetLicense()
 			ESS_LOG_INFO( "Looking for RLM license for " << pluginName << "..." );
 			Exocortex::RlmSingleton& rlmSingleton = Exocortex::RlmSingleton::getSingleton();
 
-			RlmProductID pluginLicenseIds2[] = PLUGIN_LICENSE_IDS;
+			RlmProductID pluginLicenseIds2[] = ALEMBIC_WRITER_LICENSE_IDS;
 			vector<RlmProductID> rlmProductIds;
 			for( int i = 0; i < sizeof( pluginLicenseIds2 ) / sizeof( RlmProductID ); i ++ ) {
 				rlmProductIds.push_back( pluginLicenseIds2[i] );
@@ -65,3 +84,32 @@ int GetLicense()
 }
 
 
+#ifdef EXOCORTEX_SERVICES
+
+void MaxLogSink(const char* szLogMessage, Exocortex::ecLogLevel::Value level ) {
+	if( level != Exocortex::ecLogLevel::Info ) {
+		mprintf( "Exocortex Alembic: %s\n", szLogMessage );
+	}
+	switch( level ) {
+	case Exocortex::ecLogLevel::Info:
+		//mprintf( "Exocortex Alembic: %s\n", szLogMessage );
+		break;
+	case Exocortex::ecLogLevel::Warning:
+		mprintf( "Exocortex Alembic Warning: %s\n", szLogMessage );
+		break;
+	case Exocortex::ecLogLevel::Error:
+		mprintf( "Exocortex Alembic Error: %s\n", szLogMessage );
+		break;
+	}
+}
+
+namespace Exocortex {
+	void essOnDemandInitialization() {
+		static string pluginName(PLUGIN_NAME);
+		
+		essInitialize( pluginName.c_str(), PLUGIN_MAJOR_VERSION, PLUGIN_MINOR_VERSION, "C:\\ExocortexLogs", MaxLogSink );
+		ESS_LOG_INFO( "Build Date: " << __DATE__ << " " << __TIME__ );
+	}
+}
+
+#endif // EXOCORTEX_SERVICES

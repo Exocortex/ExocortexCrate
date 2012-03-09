@@ -4,7 +4,7 @@
 
 	DESCRIPTION: Convert To type modifiers
 
-	CREATED BY: Steve Anderson
+	CREATED BY: Steve Anderson 
 
 	HISTORY:
 
@@ -14,7 +14,7 @@
 #ifndef __ALEMBIC_POLYMESH_MODIFIER__H
 #define __ALEMBIC_POLYMESH_MODIFIER__H
 
-#include "Foundation.h"
+#include "Foundation.h"  
 #include "MNMath.h"
 #include "PolyObj.h"
 #include "resource.h"
@@ -40,7 +40,31 @@ const unsigned int ALEMBIC_DATAFILL_POLYMESH_TOPO_IMPORT = ALEMBIC_DATAFILL_VERT
 const unsigned int ALEMBIC_DATAFILL_POLYMESH_TOPO_UPDATE = ALEMBIC_DATAFILL_VERTEX|ALEMBIC_DATAFILL_FACELIST|ALEMBIC_DATAFILL_NORMALS;
 
 // Alembic Functions
-typedef struct _alembic_importoptions alembic_importoptions;
+
+typedef struct _alembic_fillmesh_options
+{
+    Alembic::AbcGeom::IObject *pIObj;
+    //TriObject *pTriObj;
+	Mesh *pMesh;
+
+    //PolyObject *pPolyObj;
+	MNMesh *pMNMesh;
+    TimeValue dTicks;
+    AlembicDataFillFlags nDataFillFlags;
+
+    _alembic_fillmesh_options()
+    {
+        pIObj = NULL;
+        pMesh = NULL;
+        pMNMesh = NULL;
+        dTicks = 0;
+        nDataFillFlags = 0;
+    }
+} alembic_fillmesh_options;
+
+void AlembicImport_FillInPolyMesh(alembic_fillmesh_options &options);
+
+
 extern int AlembicImport_PolyMesh(const std::string &file, const std::string &identifier, alembic_importoptions &options);
 
 extern HINSTANCE hInstance;

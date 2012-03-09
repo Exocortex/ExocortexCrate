@@ -186,15 +186,13 @@ bool AlembicCurves::Save(double time)
     // prepare the bounding box
     Alembic::Abc::Box3d bbox;
 
+	float masterScaleUnitMeters = (float)GetMasterScale(UNITS_METERS);
+
     // allocate the points and normals
     std::vector<Alembic::Abc::V3f> posVec(vertCount);
     for(int i=0;i<vertCount;i++)
     {
-        Point3 alembicPoint;
-        ConvertMaxPointToAlembicPoint(controlPoints[i], alembicPoint);
-        posVec[i].x = alembicPoint.x;
-        posVec[i].y = alembicPoint.y;
-        posVec[i].z = alembicPoint.z;
+        posVec[i] = ConvertMaxPointToAlembicPoint(controlPoints[i], masterScaleUnitMeters );
         bbox.extendBy(posVec[i]);
     }
 

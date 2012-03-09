@@ -8,7 +8,7 @@
 #include <boost/smart_ptr.hpp>
 #include <boost/format.hpp>
 #include <boost/variant.hpp>
-
+#include <boost/exception/all.hpp>
 #include <utility>
 #include <limits>
 
@@ -22,6 +22,8 @@
 
 #include <string>
 
+#include <boost/cstdint.hpp>
+
 #include <math.h>
 #include <float.h>
 #include <stdio.h>
@@ -34,7 +36,8 @@
 #include <Alembic/AbcGeom/All.h>
 #include <Alembic/AbcCoreHDF5/All.h>
 
-#include "Max.h"
+#include <Max.h>
+#include <MeshNormalSpec.h>
 
 typedef std::map<std::string,std::string> stringMap;
 typedef std::map<std::string,std::string>::iterator stringMapIt;

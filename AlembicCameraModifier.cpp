@@ -265,7 +265,9 @@ void AlembicCameraModifier::SetAlembicId(const std::string &file, const std::str
 
 void AlembicImport_FillInCamera(alembic_fillcamera_options &options)
 {
-    if (options.pCameraObj == NULL ||
+   	ESS_CPP_EXCEPTION_REPORTING_START
+
+	if (options.pCameraObj == NULL ||
         !Alembic::AbcGeom::ICamera::matches((*options.pIObj).getMetaData()))
     {
         return;
@@ -306,6 +308,8 @@ void AlembicImport_FillInCamera(alembic_fillcamera_options &options)
     options.pCameraObj->SetClipDist(options.dTicks, CAM_HITHER_CLIP, static_cast<float>(nearClipping));
     options.pCameraObj->SetClipDist(options.dTicks, CAM_YON_CLIP, static_cast<float>(farClipping));
     options.pCameraObj->SetManualClip(TRUE);
+
+	ESS_CPP_EXCEPTION_REPORTING_END
 }
 
 int AlembicImport_Camera(const std::string &file, const std::string &identifier, alembic_importoptions &options)
@@ -359,4 +363,6 @@ int AlembicImport_Camera(const std::string &file, const std::string &identifier,
     AlembicImport_SetupVisControl(iObj, pNode, options);
 
 	return 0;
+
+
 }

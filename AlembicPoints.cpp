@@ -85,6 +85,8 @@ bool AlembicPoints::Save(double time)
     float flVisibility = GetRef().node->GetLocalVisibility(ticks);
     mOVisibility.set(flVisibility > 0 ? Alembic::AbcGeom::kVisibilityVisible : Alembic::AbcGeom::kVisibilityHidden);
 
+    float masterScaleUnitMeters = (float)GetMasterScale(UNITS_METERS);
+
     // Store positions, velocity, width/size, scale, id, bounding box
     std::vector<Alembic::Abc::V3f> positionVec(numParticles);
     std::vector<Alembic::Abc::V3f> velocityVec(numParticles);
@@ -100,15 +102,9 @@ bool AlembicPoints::Save(double time)
     std::vector<Alembic::Abc::Quatf> angularVelocityVec(numParticles);
     std::vector<Alembic::Abc::C4f> colorVec;
     std::vector<std::string> instanceNamesVec;
-    Alembic::Abc::Box3d bbox;
-    Point3 pos;
-    Point3 vel;
-    Point3 scale;
     Alembic::Abc::Quatf orientation;
     Alembic::Abc::Quatf spin;
-    TimeValue age;
-    uint64_t id;
-    float width;
+    Alembic::Abc::Box3d bbox;
     bool constantPos = true;
     bool constantVel = true;
     bool constantScale = true;
@@ -119,14 +115,14 @@ bool AlembicPoints::Save(double time)
 
     for (int i = 0; i < numParticles; ++i)
     {
-        ConvertMaxPointToAlembicPoint(*particlesExt->GetParticlePositionByIndex(i), pos);
-        ConvertMaxVectorToAlembicVector(*particlesExt->GetParticleSpeedByIndex(i), vel, true);
-        ConvertMaxVectorToAlembicVector(*particlesExt->GetParticleScaleXYZByIndex(i), scale, false);
-        width = ScaleFloatFromInchesToDecimeters(particlesExt->GetParticleScaleByIndex(i));
-        age = particlesExt->GetParticleAgeByIndex(i);
-        id = particlesExt->GetParticleBornIndex(i);
-        ConvertMaxEulerXYZToAlembicQuat(*particlesExt->GetParticleOrientationByIndex(i), orientation);
-        ConvertMaxAngAxisToAlembicQuat(*particlesExt->GetParticleSpinByIndex(i), spin);
+        Imath::V3f pos = ConvertMaxPointToAlembicPoint(*particlesExt->GetParticlePositionByIndex(i), masterScaleUnitMeters);
+        Imath::V3f vel = ConvertMaxVectorToAlembicVector(*particlesExt->GetParticleSpeedByIndex(i), masterScaleUnitMeters, true);
+        Imath::V3f scale = ConvertMaxVectorToAlembicVector(*particlesExt->GetParticleScaleXYZByIndex(i), masterScaleUnitMeters, false);
+        float width = particlesExt->GetParticleScaleByIndex(i) * GetInchesToDecimetersRatio( masterScaleUnitMeters );
+        TimeValue age = particlesExt->GetParticleAgeByIndex(i);
+        uint64_t id = particlesExt->GetParticleBornIndex(i);
+        ConvertMaxEulerXYZToAlembicQuat(*particlesExt->GetParticleOrientationByIndex(i), &orientation);
+        ConvertMaxAngAxisToAlembicQuat(*particlesExt->GetParticleSpinByIndex(i), &spin);
 
         /*
         Mesh *mesh = particlesExt->GetParticleShapeByIndex(i);
