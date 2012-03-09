@@ -319,6 +319,8 @@ Interval AlembicPolyMeshModifier::GetValidity (TimeValue t) {
 
 void AlembicPolyMeshModifier::ModifyObject (TimeValue t, ModContext &mc, ObjectState *os, INode *node) 
 {
+	ESS_CPP_EXCEPTION_REPORTING_START
+
    Interval ivalid=os->obj->ObjectValidity(t);
 
    Alembic::AbcGeom::IObject iObj = getObjectFromArchive(m_AlembicNodeProps.m_File, m_AlembicNodeProps.m_Identifier);
@@ -358,9 +360,13 @@ void AlembicPolyMeshModifier::ModifyObject (TimeValue t, ModContext &mc, ObjectS
    os->obj->UpdateValidity(TOPO_CHAN_NUM, ivalid);
    os->obj->UpdateValidity(GEOM_CHAN_NUM, ivalid);
    os->obj->UpdateValidity(TEXMAP_CHAN_NUM, ivalid);
+
+   	ESS_CPP_EXCEPTION_REPORTING_END
 }
 
 void AlembicPolyMeshModifier::BeginEditParams (IObjParam  *ip, ULONG flags, Animatable *prev) {
+	ESS_CPP_EXCEPTION_REPORTING_START
+
 	this->ip = ip;	
 	editMod  = this;
 
@@ -377,17 +383,25 @@ void AlembicPolyMeshModifier::BeginEditParams (IObjParam  *ip, ULONG flags, Anim
 
 	// Necessary?
 	NotifyDependents(FOREVER, PART_ALL, REFMSG_CHANGE);
+
+	ESS_CPP_EXCEPTION_REPORTING_END
 }
 
 void AlembicPolyMeshModifier::EndEditParams (IObjParam *ip,ULONG flags,Animatable *next) 
 {
+	ESS_CPP_EXCEPTION_REPORTING_START
+
 	AlembicPolyMeshModifierDesc.EndEditParams(ip, this, flags, next);
 	this->ip = NULL;
 	editMod  = NULL;
+
+	ESS_CPP_EXCEPTION_REPORTING_END
 }
 
 RefResult AlembicPolyMeshModifier::NotifyRefChanged (Interval changeInt, RefTargetHandle hTarget,
 										   PartID& partID, RefMessage message) {
+	ESS_CPP_EXCEPTION_REPORTING_START
+
 	switch (message) 
     {
 	case REFMSG_CHANGE:
@@ -413,6 +427,8 @@ RefResult AlembicPolyMeshModifier::NotifyRefChanged (Interval changeInt, RefTarg
 
         break;
 	}
+
+	ESS_CPP_EXCEPTION_REPORTING_END
 
 	return REF_SUCCEED;
 }

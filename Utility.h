@@ -27,7 +27,7 @@ int GetTimeValueFromFrame( double frame );
 
 // Debug functions
 void AlembicDebug_PrintMeshData( Mesh &mesh );
-void AlembicDebug_PrintTransform(Matrix3 &m);
+void AlembicDebug_PrintTransform( Matrix3 &m );
 
 // Conversion functions to Alembic Standards
 inline float GetInchesToDecimetersRatio( const float& masterScaleUnitMeters )
