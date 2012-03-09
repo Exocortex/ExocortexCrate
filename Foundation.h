@@ -36,7 +36,8 @@
 #include <Alembic/AbcGeom/All.h>
 #include <Alembic/AbcCoreHDF5/All.h>
 
-#include "Max.h"
+#include <Max.h>
+#include <MeshNormalSpec.h>
 
 typedef std::map<std::string,std::string> stringMap;
 typedef std::map<std::string,std::string>::iterator stringMapIt;
