@@ -128,11 +128,11 @@ static ParamBlockDesc2 polymesh_props_desc ( polymesh_props, _T("AlembicPolyMesh
 	IDD_ALEMBIC_PROPS, IDS_PROPS, 0, 0, NULL,
 
     // params
-	polymesh_props_muted, _T("propsMuted"), TYPE_BOOL, P_RESET_DEFAULT, IDS_MUTED,
+	polymesh_props_muted, _T("propsMuted"), TYPE_BOOL, 0, IDS_MUTED,
 		p_ui, TYPE_CHECKBUTTON, IDC_CHECK_MUTED,
 		end,
         
-	polymesh_props_time, _T("propsTime"), TYPE_INT, P_RESET_DEFAULT, IDS_TIME,
+	polymesh_props_time, _T("propsTime"), TYPE_INT, 0, IDS_TIME,
 		p_default, 1,
 		p_range, 0, 1000000,
 		p_ui, TYPE_SPINNER, EDITTYPE_INT, IDC_EDIT_TIME, IDC_SPIN_TIME, 1,
@@ -199,12 +199,12 @@ static ParamBlockDesc2 polymesh_preview_desc ( polymesh_preview, _T("AlembicPoly
 		end,
         */
 
-    polymesh_preview_abc_archive, _T("previewAbcArchive"), TYPE_STRING, P_RESET_DEFAULT|P_ANIMATABLE, IDS_ABC_ARCHIVE,
+    polymesh_preview_abc_archive, _T("previewAbcArchive"), TYPE_STRING, 0, IDS_ABC_ARCHIVE,
         p_ui, TYPE_EDITBOX, IDC_ABC_ARCHIVE,
         p_accessor,		&polymesh_preview_accessor,
         end,
 
-	polymesh_preview_abc_id, _T("previewAbcId"), TYPE_STRING, P_RESET_DEFAULT|P_ANIMATABLE, IDS_ABC_ID,
+	polymesh_preview_abc_id, _T("previewAbcId"), TYPE_STRING, 0, IDS_ABC_ID,
 		p_ui, TYPE_EDITBOX, IDC_ABC_OBJECTID,
         p_accessor,		&polymesh_preview_accessor,
 		end,
@@ -515,8 +515,8 @@ void AlembicImport_FillInPolyMesh(alembic_fillmesh_options &options)
            }
        } 
 
-	   Alembic::Abc::P3fArraySample::value_type const* pPositionArray = meshPos->get();
-	   Alembic::Abc::V3fArraySample::value_type const* pVelocityArray = meshVel->get();
+	   Alembic::Abc::P3fArraySample::value_type const* pPositionArray = ( meshPos.get() != NULL ) ? meshPos->get() : NULL;
+	   Alembic::Abc::V3fArraySample::value_type const* pVelocityArray = ( meshVel.get() != NULL ) ? meshVel->get() : NULL;
 	  
 
 	   std::vector<Point3> vArray;
@@ -629,8 +629,8 @@ void AlembicImport_FillInPolyMesh(alembic_fillmesh_options &options)
        meshFaceIndices = subDSample.getFaceIndices();
    }
 
-   Alembic::Abc::Int32ArraySample::value_type const* pMeshFaceCount = meshFaceCount->get();
-   Alembic::Abc::Int32ArraySample::value_type const* pMeshFaceIndices = meshFaceIndices->get();
+   Alembic::Abc::Int32ArraySample::value_type const* pMeshFaceCount = ( meshFaceCount.get() != NULL ) ? meshFaceCount->get() : NULL;
+   Alembic::Abc::Int32ArraySample::value_type const* pMeshFaceIndices = ( meshFaceIndices.get() != NULL ) ? meshFaceIndices->get() : NULL;
 
    int numFaces = static_cast<int>(meshFaceCount->size());
 

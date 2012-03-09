@@ -7,6 +7,9 @@
 namespace AbcA = ::Alembic::AbcCoreAbstract::ALEMBIC_VERSION_NS;
 using namespace AbcA;
 
+#pragma warning( disable: 4996 )
+
+
 AlembicObject::AlembicObject (const SceneEntry & in_Ref, AlembicWriteJob * in_Job )
 {    
     AddRef(in_Ref);
