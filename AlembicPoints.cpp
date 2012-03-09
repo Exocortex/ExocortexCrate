@@ -121,8 +121,8 @@ bool AlembicPoints::Save(double time)
         float width = particlesExt->GetParticleScaleByIndex(i) * GetInchesToDecimetersRatio( masterScaleUnitMeters );
         TimeValue age = particlesExt->GetParticleAgeByIndex(i);
         uint64_t id = particlesExt->GetParticleBornIndex(i);
-        ConvertMaxEulerXYZToAlembicQuat(*particlesExt->GetParticleOrientationByIndex(i), &orientation);
-        ConvertMaxAngAxisToAlembicQuat(*particlesExt->GetParticleSpinByIndex(i), &spin);
+        ConvertMaxEulerXYZToAlembicQuat(*particlesExt->GetParticleOrientationByIndex(i), orientation);
+        ConvertMaxAngAxisToAlembicQuat(*particlesExt->GetParticleSpinByIndex(i), spin);
 
         /*
         Mesh *mesh = particlesExt->GetParticleShapeByIndex(i);
@@ -251,8 +251,7 @@ void AlembicPoints::ConvertMaxEulerXYZToAlembicQuat(const Point3 &degrees, Alemb
 // static
 void AlembicPoints::ConvertMaxAngAxisToAlembicQuat(const AngAxis &angAxis, Alembic::Abc::Quatf &quat)
 {
-    Point3 alembicAxis;
-    ConvertMaxNormalToAlembicNormal(angAxis.axis, alembicAxis);
+    Imath::V3f alembicAxis = ConvertMaxNormalToAlembicNormal(angAxis.axis);
 
     quat.v.x = alembicAxis.x;
     quat.v.y = alembicAxis.y;
