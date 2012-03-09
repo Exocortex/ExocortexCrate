@@ -30,37 +30,42 @@ void AlembicDebug_PrintMeshData( Mesh &mesh );
 void AlembicDebug_PrintTransform(Matrix3 &m);
 
 // Conversion functions to Alembic Standards
-float ScaleFloatFromInchesToDecimeters(float inches);
-Point3 ScalePointFromInchesToDecimeters( const Point3 &inches );
-Point3 ScalePointFromDecimetersToInches( const Point3 &decimeters );
-
-
-void ConvertMaxMatrixToAlembicMatrix( const Matrix3 &maxMatrix, Matrix3 &alembicMatrix);
-void ConvertAlembicMatrixToMaxMatrix( const Matrix3 &alembicMatrix, Matrix3 &maxMatrix);
-
-
-inline void ConvertMaxPointToAlembicPoint( const Point3 &maxPoint, Point3 &result)
+inline float GetInchesToDecimetersRatio( const float& masterScaleUnitMeters )
 {
-     result = Point3(maxPoint.x, maxPoint.z, -maxPoint.y);
-     result = ScalePointFromInchesToDecimeters(result);
+    float flDecimetersPerInch = masterScaleUnitMeters;
+    flDecimetersPerInch *= 10.0f;
+    return flDecimetersPerInch;
 }
 
-inline void ConvertAlembicPointToMaxPoint( const Point3 &alembicPoint, Point3 &result)
+inline float GetDecimetersToInchesRatio( const float& masterScaleUnitMeters )
 {
-    result = Point3(alembicPoint.x, -alembicPoint.z, alembicPoint.y);
-    result = ScalePointFromDecimetersToInches(result);
+    float flDecimetersPerInch = masterScaleUnitMeters;
+    flDecimetersPerInch *= 10.0f;
+    return 1.0f / flDecimetersPerInch;
 }
 
-inline void ConvertMaxNormalToAlembicNormal( const Point3 &maxPoint, Point3 &result)
+void ConvertMaxMatrixToAlembicMatrix( const Matrix3 &maxMatrix, const float& masterScaleUnitMeters, Matrix3 &alembicMatrix );
+void ConvertAlembicMatrixToMaxMatrix( const Matrix3 &alembicMatrix, const float& masterScaleUnitMeters, Matrix3 &maxMatrix );
+
+inline Imath::V3f ConvertMaxPointToAlembicPoint( const Point3 &maxPoint, const float &masterScaleUnitMeters)
 {
-     result = Point3(maxPoint.x, maxPoint.z, -maxPoint.y);
-     result = result.Normalize();
+	return Imath::V3f(maxPoint.x, maxPoint.z, -maxPoint.y) * GetInchesToDecimetersRatio( masterScaleUnitMeters );
 }
 
-inline void ConvertAlembicNormalToMaxNormal( const Point3 &alembicPoint, Point3 &result)
+inline Point3 ConvertAlembicPointToMaxPoint( const Imath::V3f &alembicPoint, const float &masterScaleUnitMeters )
 {
-    result = Point3(alembicPoint.x, -alembicPoint.z, alembicPoint.y);
-    result = result.Normalize();
+	return Point3(alembicPoint.x, -alembicPoint.z, alembicPoint.y) * GetDecimetersToInchesRatio( masterScaleUnitMeters );
+}
+
+inline Imath::V3f ConvertMaxNormalToAlembicNormal( const Point3 &maxPoint )
+{
+     Point3 maxPointNormalized = maxPoint.Normalize();
+	 return Imath::V3f( maxPoint.x, maxPoint.z, -maxPoint.y);
+}
+
+inline Point3 ConvertAlembicNormalToMaxNormal( const Imath::V3f &alembicPoint )
+{
+	return Point3(alembicPoint.x, -alembicPoint.z, alembicPoint.y).Normalize();
 }
 
 

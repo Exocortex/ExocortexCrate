@@ -470,7 +470,9 @@ void AlembicImport_FillInXForm(alembic_fillxform_options &options)
     if(!obj.valid())
         return;
 
-    double SampleTime = GetSecondsFromTimeValue(options.dTicks);
+   float masterScaleUnitMeters = (float)GetMasterScale(UNITS_METERS);
+
+   double SampleTime = GetSecondsFromTimeValue(options.dTicks);
 
     SampleInfo sampleInfo = getSampleInfo(
         SampleTime,
@@ -501,7 +503,7 @@ void AlembicImport_FillInXForm(alembic_fillxform_options &options)
         Point3(matrix.getValue()[8], matrix.getValue()[9], matrix.getValue()[10]),
         Point3(matrix.getValue()[12], matrix.getValue()[13], matrix.getValue()[14]));
 
-    ConvertAlembicMatrixToMaxMatrix(objMatrix, options.maxMatrix);
+    ConvertAlembicMatrixToMaxMatrix(objMatrix, masterScaleUnitMeters, options.maxMatrix);
 
     if (options.bIsCameraTransform)
     {

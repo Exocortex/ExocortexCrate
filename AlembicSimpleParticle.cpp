@@ -187,13 +187,12 @@ int AlembicSimpleParticle::GetNumParticles(const Alembic::AbcGeom::IPointsSchema
 
 Point3 AlembicSimpleParticle::GetParticlePosition(const Alembic::AbcGeom::IPointsSchema::Sample &floorSample, const Alembic::AbcGeom::IPointsSchema::Sample &ceilSample, const SampleInfo &sampleInfo, int index) const
 {
-    const Alembic::Abc::TypedArraySample<Alembic::Abc::P3fTPTraits>::value_type &alembicP3f = floorSample.getPositions()->get()[index];
-    Point3 alembicPos(alembicP3f.x, alembicP3f.y, alembicP3f.z);
-    Point3 pos;
-    ConvertAlembicPointToMaxPoint(alembicPos, pos);
+    float masterScaleUnitMeters = (float)GetMasterScale(UNITS_METERS);
 
-    // TODO: Interpolate the position (using the velocity) if there is an alpha.
-    return pos;
+	const Imath::V3f & alembicP3f = floorSample.getPositions()->get()[index];
+
+	// TODO: Interpolate the position (using the velocity) if there is an alpha.
+	return ConvertAlembicPointToMaxPoint(alembicP3f, masterScaleUnitMeters );
 }
 
 Point3 AlembicSimpleParticle::GetParticleVelocity(const Alembic::AbcGeom::IPointsSchema::Sample &floorSample, const Alembic::AbcGeom::IPointsSchema::Sample &ceilSample, const SampleInfo &sampleInfo, int index) const
@@ -204,23 +203,20 @@ Point3 AlembicSimpleParticle::GetParticleVelocity(const Alembic::AbcGeom::IPoint
         return Point3(0.0f, 0.0f, 0.0f);
     }
 
-    Alembic::Abc::TypedArraySample<Alembic::Abc::P3fTPTraits>::value_type alembicP3f = velocitiesArray->get()[(velocitiesArray->size() > index) ? index : 0];
+	Imath::V3f alembicP3f = velocitiesArray->get()[(velocitiesArray->size() > index) ? index : 0];
 
     if (sampleInfo.alpha != 0.0)
     {
         velocitiesArray = ceilSample.getVelocities();
         if (velocitiesArray != NULL && velocitiesArray->size() > 0)
         {
-            const Alembic::Abc::TypedArraySample<Alembic::Abc::P3fTPTraits>::value_type &alembicCeilP3f = velocitiesArray->get()[(velocitiesArray->size() > index) ? index : 0];
+            const Imath::V3f &alembicCeilP3f = velocitiesArray->get()[(velocitiesArray->size() > index) ? index : 0];
             alembicP3f = static_cast<float>(1.0 - sampleInfo.alpha) * alembicP3f + static_cast<float>(sampleInfo.alpha) * alembicCeilP3f;
         }
     }
 
-    Point3 alembicVel(alembicP3f.x, alembicP3f.y, alembicP3f.z);
-    Point3 vel;
-    ConvertAlembicPointToMaxPoint(alembicVel, vel);
-
-    return vel;
+    float masterScaleUnitMeters = (float)GetMasterScale(UNITS_METERS);
+    return ConvertAlembicPointToMaxPoint(alembicP3f, masterScaleUnitMeters );
 }
 
 float AlembicSimpleParticle::GetParticleRadius(Alembic::AbcGeom::IPoints &iPoints, const SampleInfo &sampleInfo, int index) const

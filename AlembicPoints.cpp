@@ -88,7 +88,9 @@ bool AlembicPoints::Save(double time)
     float flVisibility = GetRef().node->GetLocalVisibility(ticks);
     mOVisibility.set(flVisibility > 0 ? Alembic::AbcGeom::kVisibilityVisible : Alembic::AbcGeom::kVisibilityHidden);
 
-    // Store positions, velocity, width/size, scale, id, bounding box
+     float masterScaleUnitMeters = (float)GetMasterScale(UNITS_METERS);
+
+	 // Store positions, velocity, width/size, scale, id, bounding box
     std::vector<Alembic::Abc::V3f> positionVec;
     std::vector<Alembic::Abc::V3f> velocityVec;
     std::vector<Alembic::Abc::V3f> scaleVec;
@@ -104,8 +106,6 @@ bool AlembicPoints::Save(double time)
     std::vector<Alembic::Abc::C4f> colorVec;
     std::vector<std::string> instanceNamesVec;
     Alembic::Abc::Box3d bbox;
-    Point3 pos;
-    Point3 vel;
     Point3 scale;
     TimeValue age;
     TimeValue life;
@@ -121,13 +121,13 @@ bool AlembicPoints::Save(double time)
         life = particles->ParticleLife(ticks, index);
         if (age >= 0 && life > 0 && age < life)
         {
-            ConvertMaxPointToAlembicPoint(particles->ParticlePosition(ticks, index), pos);
-            ConvertMaxPointToAlembicPoint(particles->ParticleVelocity(ticks, index), vel);
-            float width = ScaleFloatFromInchesToDecimeters(particles->ParticleSize(ticks, index));
+			Imath::V3f pos = ConvertMaxPointToAlembicPoint(particles->ParticlePosition(ticks, index), masterScaleUnitMeters );
+            Imath::V3f vel = ConvertMaxPointToAlembicPoint(particles->ParticleVelocity(ticks, index), masterScaleUnitMeters );
+            float width = particles->ParticleSize(ticks, index) * GetInchesToDecimetersRatio( masterScaleUnitMeters );
             uint64_t id = index;    // This is not quite right
 
-            positionVec.push_back(Alembic::Abc::V3f(pos.x, pos.y, pos.z));
-            velocityVec.push_back(Alembic::Abc::V3f(vel.x, vel.y, vel.z));
+            positionVec.push_back(pos);
+            velocityVec.push_back(vel);
             widthVec.push_back(width);
             ageVec.push_back(static_cast<float>(GetSecondsFromTimeValue(age)));
             idVec.push_back(id);

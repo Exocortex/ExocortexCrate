@@ -57,7 +57,9 @@ Alembic::Abc::OCompoundProperty AlembicPolyMesh::GetCompound()
 
 bool AlembicPolyMesh::Save(double time)
 {
-    TimeValue ticks = GetTimeValueFromFrame(time);
+    float masterScaleUnitMeters = (float)GetMasterScale(UNITS_METERS);
+
+	TimeValue ticks = GetTimeValueFromFrame(time);
 
     // Store the transformation
     SaveXformSample(GetRef(), mXformSchema, mXformSample, time);
@@ -125,11 +127,7 @@ bool AlembicPolyMesh::Save(double time)
     {
         Point3 &maxPoint = (polyObj != NULL) ? polyObj->GetMesh().V(i)->p
                                              : triObj->GetMesh().getVert(i);
-        Point3 alembicPoint;
-        ConvertMaxPointToAlembicPoint(maxPoint, alembicPoint);
-        posVec[i].x = static_cast<float>(alembicPoint.x);
-        posVec[i].y = static_cast<float>(alembicPoint.y);
-        posVec[i].z = static_cast<float>(alembicPoint.z);
+        posVec[i] = ConvertMaxPointToAlembicPoint(maxPoint, masterScaleUnitMeters );
         bbox.extendBy(posVec[i]);
     }
 
@@ -229,11 +227,7 @@ bool AlembicPolyMesh::Save(double time)
                     }
                 }
 
-                Point3 vertexAlembicNormal;
-                ConvertMaxNormalToAlembicNormal(vertexNormal, vertexAlembicNormal);
-                normalVec[normalCount].x = vertexAlembicNormal.x;
-                normalVec[normalCount].y = vertexAlembicNormal.y;
-                normalVec[normalCount].z = vertexAlembicNormal.z;
+                normalVec[normalCount] = ConvertMaxNormalToAlembicNormal(vertexNormal );
                 normalCount += 1;
             }
         }
