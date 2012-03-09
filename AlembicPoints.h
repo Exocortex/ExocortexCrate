@@ -6,6 +6,9 @@
 class AlembicPoints: public AlembicObject
 {
 private:
+    static void AlembicPoints::ConvertMaxEulerXYZToAlembicQuat(const Point3 &degrees, Alembic::Abc::Quatf &quat);
+    static void AlembicPoints::ConvertMaxAngAxisToAlembicQuat(const AngAxis &angAxis, Alembic::Abc::Quatf &quat);
+
     Alembic::AbcGeom::OXformSchema mXformSchema;
     Alembic::AbcGeom::OPointsSchema mPointsSchema;
     Alembic::AbcGeom::XformSample mXformSample;

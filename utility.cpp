@@ -241,14 +241,32 @@ void ConvertAlembicMatrixToMaxMatrix( const Matrix3 &alembicMatrix, Matrix3 &res
 
 void ConvertMaxPointToAlembicPoint( const Point3 &maxPoint, Point3 &result)
 {
-     result = Point3(maxPoint.x, maxPoint.z, -maxPoint.y);
-     result = ScalePointFromInchesToDecimeters(result);
+    // The point conversion is just a vector conversion ensuring that we apply the scale
+    ConvertMaxVectorToAlembicVector(maxPoint, result, true);
 }
 
 void ConvertAlembicPointToMaxPoint( const Point3 &alembicPoint, Point3 &result)
 {
-    result = Point3(alembicPoint.x, -alembicPoint.z, alembicPoint.y);
-    result = ScalePointFromDecimetersToInches(result);
+    // The point conversion is just a vector conversion ensuring that we apply the scale
+    ConvertMaxVectorToAlembicVector(alembicPoint, result, true);
+}
+
+void ConvertMaxVectorToAlembicVector( const Point3 &maxVector, Point3 &result, bool scale)
+{
+     result = Point3(maxVector.x, maxVector.z, -maxVector.y);
+     if (scale)
+     {
+         result = ScalePointFromInchesToDecimeters(result);
+     }
+}
+
+void ConvertAlembicVectorToMaxVector( const Point3 &alembicVector, Point3 &result, bool scale)
+{
+    result = Point3(alembicVector.x, -alembicVector.z, alembicVector.y);
+    if (scale)
+    {
+        result = ScalePointFromDecimetersToInches(result);
+    }
 }
 
 void ConvertMaxNormalToAlembicNormal( const Point3 &maxPoint, Point3 &result)

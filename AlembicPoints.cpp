@@ -5,6 +5,10 @@
 #include "SimpObj.h"
 #include "Utility.h"
 #include <IParticleObjectExt.h>
+#include <ParticleFlow/IParticleChannelID.h>
+#include <ParticleFlow/IParticleChannelShape.h>
+#include <ParticleFlow/IParticleContainer.h>
+#include <ParticleFlow/IParticleGroup.h>
 #include <ParticleFlow/IPFSystem.h>
 
 namespace AbcA = ::Alembic::AbcCoreAbstract::ALEMBIC_VERSION_NS;
@@ -68,12 +72,6 @@ bool AlembicPoints::Save(double time)
         return false;
     }
 
-    ParticleObject *particles = GetParticleInterface(obj);
-    if (particles == NULL)
-    {
-        return false;
-    }
-    
     IParticleObjectExt *particlesExt = GetParticleObjectExtInterface(obj);
     if (particlesExt == NULL)
     {
@@ -81,78 +79,98 @@ bool AlembicPoints::Save(double time)
     }
 
     particlesExt->UpdateParticles(GetRef().node, ticks);
-
-    int numParticles = 0;
+    int numParticles = particlesExt->NumParticles();
 
     // Set the visibility
     float flVisibility = GetRef().node->GetLocalVisibility(ticks);
     mOVisibility.set(flVisibility > 0 ? Alembic::AbcGeom::kVisibilityVisible : Alembic::AbcGeom::kVisibilityHidden);
 
     // Store positions, velocity, width/size, scale, id, bounding box
-    std::vector<Alembic::Abc::V3f> positionVec;
-    std::vector<Alembic::Abc::V3f> velocityVec;
-    std::vector<Alembic::Abc::V3f> scaleVec;
-    std::vector<float> widthVec;
-    std::vector<float> ageVec;
+    std::vector<Alembic::Abc::V3f> positionVec(numParticles);
+    std::vector<Alembic::Abc::V3f> velocityVec(numParticles);
+    std::vector<Alembic::Abc::V3f> scaleVec(numParticles);
+    std::vector<float> widthVec(numParticles);
+    std::vector<float> ageVec(numParticles);
     std::vector<float> massVec;
     std::vector<float> shapeTimeVec;
-    std::vector<uint64_t> idVec;
+    std::vector<uint64_t> idVec(numParticles);
     std::vector<uint16_t> shapeTypeVec;
     std::vector<uint16_t> shapeInstanceIDVec;
-    std::vector<Alembic::Abc::Quatf> orientationVec;
-    std::vector<Alembic::Abc::Quatf> angularVelocityVec;
+    std::vector<Alembic::Abc::Quatf> orientationVec(numParticles);
+    std::vector<Alembic::Abc::Quatf> angularVelocityVec(numParticles);
     std::vector<Alembic::Abc::C4f> colorVec;
     std::vector<std::string> instanceNamesVec;
     Alembic::Abc::Box3d bbox;
     Point3 pos;
     Point3 vel;
     Point3 scale;
+    Alembic::Abc::Quatf orientation;
+    Alembic::Abc::Quatf spin;
     TimeValue age;
-    TimeValue life;
+    uint64_t id;
+    float width;
     bool constantPos = true;
     bool constantVel = true;
+    bool constantScale = true;
     bool constantWidth = true;
     bool constantAge = true;
-    int index = 0;
+    bool constantOrientation = true;
+    bool constantAngularVel = true;
 
-    do
+    for (int i = 0; i < numParticles; ++i)
     {
-        age = particles->ParticleAge(ticks, index);
-        life = particles->ParticleLife(ticks, index);
-        if (age >= 0 && life > 0 && age < life)
+        ConvertMaxPointToAlembicPoint(*particlesExt->GetParticlePositionByIndex(i), pos);
+        ConvertMaxVectorToAlembicVector(*particlesExt->GetParticleSpeedByIndex(i), vel, true);
+        ConvertMaxVectorToAlembicVector(*particlesExt->GetParticleScaleXYZByIndex(i), scale, false);
+        width = ScaleFloatFromInchesToDecimeters(particlesExt->GetParticleScaleByIndex(i));
+        age = particlesExt->GetParticleAgeByIndex(i);
+        id = particlesExt->GetParticleBornIndex(i);
+        ConvertMaxEulerXYZToAlembicQuat(*particlesExt->GetParticleOrientationByIndex(i), orientation);
+        ConvertMaxAngAxisToAlembicQuat(*particlesExt->GetParticleSpinByIndex(i), spin);
+
+        /*
+        Mesh *mesh = particlesExt->GetParticleShapeByIndex(i);
+        INode *particleGroupNode = particlesExt->GetParticleGroup(i);
+        Object *particleGroupObj = (particleGroupNode != NULL) ? particleGroupNode->EvalWorldState(ticks).obj : NULL;
+        IParticleGroup *particleGroup = GetParticleGroupInterface(particleGroupObj);
+        ::IObject *particleContainerObject = (particleGroup != NULL) ? particleGroup->GetParticleContainer() : NULL;
+        IParticleChannelIDR *chID = GetParticleChannelIDRInterface(particleContainerObject);
+        if (chID != NULL)
         {
-            ConvertMaxPointToAlembicPoint(particles->ParticlePosition(ticks, index), pos);
-            ConvertMaxPointToAlembicPoint(particles->ParticleVelocity(ticks, index), vel);
-            float width = ScaleFloatFromInchesToDecimeters(particles->ParticleSize(ticks, index));
-            uint64_t id = index;    // This is not quite right
-
-            positionVec.push_back(Alembic::Abc::V3f(pos.x, pos.y, pos.z));
-            velocityVec.push_back(Alembic::Abc::V3f(vel.x, vel.y, vel.z));
-            widthVec.push_back(width);
-            ageVec.push_back(static_cast<float>(GetSecondsFromTimeValue(age)));
-            idVec.push_back(id);
-            bbox.extendBy(positionVec[numParticles]);
-
-            constantPos &= (positionVec[numParticles] == positionVec[0]);
-            constantVel &= (velocityVec[numParticles] == velocityVec[0]);
-            constantWidth &= (widthVec[numParticles] == widthVec[0]);
-            constantAge &= (ageVec[numParticles] == ageVec[0]);
-
-            ++numParticles;
+            id = chID->GetParticleIndex(i);
         }
+        IParticleChannelMeshR *channelMesh = GetParticleChannelShapeRInterface(particleContainerObject);
+        if (channelMesh != NULL)
+        {
+            bool isShared = channelMesh->IsShared();
+            const Mesh *mesh = channelMesh->GetValue(i);
+        }
+        */
 
-        ++index;
+        positionVec[i].setValue(pos.x, pos.y, pos.z);
+        velocityVec[i].setValue(vel.x, vel.y, vel.z);
+        scaleVec[i].setValue(scale.x, scale.y, scale.z);
+        widthVec[i] = width;
+        ageVec[i] = static_cast<float>(GetSecondsFromTimeValue(age));
+        idVec[i] = id;
+        orientationVec[i] = orientation;
+        angularVelocityVec[i] = spin;
+        bbox.extendBy(positionVec[i]);
+
+        constantPos &= (positionVec[i] == positionVec[0]);
+        constantVel &= (velocityVec[i] == velocityVec[0]);
+        constantScale &= (scaleVec[i] == scaleVec[0]);
+        constantWidth &= (widthVec[i] == widthVec[0]);
+        constantAge &= (ageVec[i] == ageVec[0]);
+        constantOrientation &= (orientationVec[i] == orientationVec[0]);
+        constantAngularVel &= (angularVelocityVec[i] == angularVelocityVec[0]);
     }
-    while (life > 0);
 
     // Set constant properties that are not currently supported by Max
-    scaleVec.push_back(Alembic::Abc::V3f(1.0f, 1.0f, 1.0f));
     massVec.push_back(1.0f);
     shapeTimeVec.push_back(1.0f);
     shapeTypeVec.push_back(ShapeType_Point);
     shapeInstanceIDVec.push_back(0);
-    orientationVec.push_back(Alembic::Abc::Quatf(0.0f, 1.0f, 0.0f, 0.0f));
-    angularVelocityVec.push_back(Alembic::Abc::Quatf(0.0f, 1.0f, 0.0f, 0.0f));
     colorVec.push_back(Alembic::Abc::C4f(0.0f, 0.0f, 0.0f, 1.0f));
     instanceNamesVec.push_back("");
 
@@ -160,16 +178,22 @@ bool AlembicPoints::Save(double time)
     {
         positionVec.push_back(Alembic::Abc::V3f(FLT_MAX, FLT_MAX, FLT_MAX));
         velocityVec.push_back(Alembic::Abc::V3f(0.0f, 0.0f, 0.0f));
+        scaleVec.push_back(Alembic::Abc::V3f(1.0f, 1.0f, 1.0f));
         widthVec.push_back(0.0f);
         ageVec.push_back(0.0f);
         idVec.push_back(static_cast<uint64_t>(-1));
+        orientationVec.push_back(Alembic::Abc::Quatf(0.0f, 1.0f, 0.0f, 0.0f));
+        angularVelocityVec.push_back(Alembic::Abc::Quatf(0.0f, 1.0f, 0.0f, 0.0f));
     }
     else
     {
         if (constantPos)        { positionVec.resize(1); }
         if (constantVel)        { velocityVec.resize(1); }
+        if (constantScale)      { scaleVec.resize(1); }
         if (constantWidth)      { widthVec.resize(1); }
         if (constantAge)        { ageVec.resize(1); }
+        if (constantOrientation){ orientationVec.resize(1); }
+        if (constantAngularVel) { angularVelocityVec.resize(1); }
     }
 
     // Store the information into our properties and points schema
@@ -210,4 +234,32 @@ bool AlembicPoints::Save(double time)
     mNumSamples++;
 
     return true;
+}
+
+// static
+void AlembicPoints::ConvertMaxEulerXYZToAlembicQuat(const Point3 &degrees, Alembic::Abc::Quatf &quat)
+{
+    // Get the angles as a float vector of radians
+    float angles[] = { DEG_TO_RAD * degrees.x, DEG_TO_RAD * degrees.y, DEG_TO_RAD * degrees.z };
+
+    // Convert the angles to a quaternion
+    Quat maxQuat;
+    EulerToQuat(angles, maxQuat, EULERTYPE_XYZ);
+
+    // Convert the quaternion to an angle and axis
+    AngAxis maxAngAxis(maxQuat);
+
+    ConvertMaxAngAxisToAlembicQuat(maxAngAxis, quat);
+}
+
+// static
+void AlembicPoints::ConvertMaxAngAxisToAlembicQuat(const AngAxis &angAxis, Alembic::Abc::Quatf &quat)
+{
+    Point3 alembicAxis;
+    ConvertMaxNormalToAlembicNormal(angAxis.axis, alembicAxis);
+
+    quat.v.x = alembicAxis.x;
+    quat.v.y = alembicAxis.y;
+    quat.v.z = alembicAxis.z;
+    quat.r = angAxis.angle;
 }

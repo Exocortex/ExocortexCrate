@@ -38,6 +38,8 @@ void ConvertMaxMatrixToAlembicMatrix( const Matrix3 &maxMatrix, Matrix3 &alembic
 void ConvertAlembicMatrixToMaxMatrix( const Matrix3 &alembicMatrix, Matrix3 &maxMatrix);
 void ConvertMaxPointToAlembicPoint( const Point3 &maxPoint, Point3 &result);
 void ConvertAlembicPointToMaxPoint( const Point3 &alembicPoint, Point3 &result);
+void ConvertMaxVectorToAlembicVector( const Point3 &maxVector, Point3 &result, bool scale);
+void ConvertAlembicVectorToMaxVector( const Point3 &alembicVector, Point3 &result, bool scale);
 void ConvertMaxNormalToAlembicNormal( const Point3 &maxPoint, Point3 &result);
 void ConvertAlembicNormalToMaxNormal( const Point3 &alembicPoint, Point3 &result);
 
