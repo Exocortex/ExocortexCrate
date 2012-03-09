@@ -321,7 +321,9 @@ int ExocortexAlembicStaticInterface::ExocortexAlembicImport(MCHAR* strFileName, 
 
 Mesh* ExocortexAlembicStaticInterface::ExocortexAlembicImportMesh(MCHAR* strFileName, MCHAR* strPath, float time, BOOL bImportNormals, BOOL bImportUVs, BOOL bImportClusters )
 {
-	Mesh *pMesh = NULL;
+	Mesh *pMesh = CreateNewMesh();
+
+	ESS_CPP_EXCEPTION_REPORTING_START
 
 	if( ! HasFullLicense() ) {
 		ESS_LOG_ERROR( "No valid license found for Exocortex Alembic." );
@@ -333,6 +335,30 @@ Mesh* ExocortexAlembicStaticInterface::ExocortexAlembicImportMesh(MCHAR* strFile
 		", bImportNormals=" << bImportNormals << ", bImportUVs=" << bImportUVs <<
 		", bImportClusters=" << bImportClusters << " )" );
 
+
+	Alembic::AbcGeom::IObject iObj = getObjectFromArchive(strFileName, strPath);
+	if(!iObj.valid()) {
+		return pMesh;
+	}
+
+   alembic_fillmesh_options options;
+   options.pIObj = &iObj;
+   options.dTicks = GetTimeValueFromSeconds( time );
+   options.nDataFillFlags = ALEMBIC_DATAFILL_VERTEX | ALEMBIC_DATAFILL_FACELIST;
+   if( bImportNormals ) {
+	   options.nDataFillFlags |= ALEMBIC_DATAFILL_NORMALS;
+   }
+   if( bImportUVs ) {
+	options.nDataFillFlags |= ALEMBIC_DATAFILL_UVS;
+   }
+   options.pMesh = pMesh;
+
+   AlembicImport_FillInPolyMesh(options);
+
+   pMesh = options.pMesh;
+
+   ESS_LOG_INFO( "NumFaces: " << pMesh->getNumFaces() << "  NumVerts: " << pMesh->getNumVerts() );
+   /*
 	std::vector<Point3> points;
 	points.push_back( Point3( 0, 0, 0 ) );
 	points.push_back( Point3( 10, 0, 0 ) );
@@ -424,7 +450,7 @@ Mesh* ExocortexAlembicStaticInterface::ExocortexAlembicImportMesh(MCHAR* strFile
     }
  
     mesh.InvalidateGeomCache();
-    mesh.InvalidateTopologyCache();
+    mesh.InvalidateTopologyCache();*/
  
    ESS_CPP_EXCEPTION_REPORTING_END
 

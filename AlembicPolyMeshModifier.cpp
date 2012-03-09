@@ -14,28 +14,6 @@ using namespace MaxSDK::AssetManagement;
 const int POLYMESHMOD_MAX_PARAM_BLOCKS = 2;
 
 
-typedef struct _alembic_fillmesh_options
-{
-    Alembic::AbcGeom::IObject *pIObj;
-    //TriObject *pTriObj;
-	Mesh *pMesh;
-
-    //PolyObject *pPolyObj;
-	MNMesh *pMNMesh;
-    TimeValue dTicks;
-    AlembicDataFillFlags nDataFillFlags;
-
-    _alembic_fillmesh_options()
-    {
-        pIObj = NULL;
-        pMesh = NULL;
-        pMNMesh = NULL;
-        dTicks = 0;
-        nDataFillFlags = 0;
-    }
-} alembic_fillmesh_options;
-
-void AlembicImport_FillInPolyMesh(alembic_fillmesh_options &options);
 
 class AlembicPolyMeshModifier : public Modifier {
 public:
@@ -496,7 +474,7 @@ void AlembicImport_FillInPolyMesh(alembic_fillmesh_options &options)
    else
        objSubD.getSchema().get(subDSample,sampleInfo.floorIndex);
 
-   if ( options.nDataFillFlags & ALEMBIC_DATAFILL_VERTEX )
+   if ( options.nDataFillFlags & ALEMBIC_DATAFILL_VERTEX ) 
    {
 	   Alembic::Abc::P3fArraySamplePtr meshPos;
        Alembic::Abc::V3fArraySamplePtr meshVel;
@@ -975,7 +953,7 @@ void AlembicImport_FillInPolyMesh(alembic_fillmesh_options &options)
    }
 
    if (options.pMesh != NULL)
-   {
+   {	
        options.pMesh->InvalidateGeomCache();
        options.pMesh->InvalidateTopologyCache();
    }

@@ -128,7 +128,7 @@ double GetSecondsFromTimeValue(TimeValue t)
 
 int GetTimeValueFromSeconds( double seconds )
 {
-    double ticks = seconds/(GetFrameRate() * GetTicksPerFrame());
+    double ticks = ( seconds * GetFrameRate() * GetTicksPerFrame() );
     return (int)floor(ticks + 0.5);
 }
 

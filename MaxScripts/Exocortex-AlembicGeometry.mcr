@@ -8,6 +8,7 @@ plugin simpleObject AlembicMesh
 	(
 		fileName type:#string ui:fileName default:"filename"
 		dataPath type:#string ui:dataPath default:"path"
+		dataTime type:#float ui:dataTime default:0
 		normals type:#boolean ui:normals default:true
 		uvs type:#boolean ui:uvs default:true
 		clusters type:#boolean ui:clusters default:true
@@ -17,6 +18,7 @@ plugin simpleObject AlembicMesh
 	(
 		edittext fileName "File Name"
 		edittext dataPath "Data Path"
+		spinner dataTime "Time" range:[-1000,1000,0]
 		checkbox normals "Normals"
 		checkbox uvs "UVs"
 		checkbox clusters "Clusters"
@@ -25,7 +27,7 @@ plugin simpleObject AlembicMesh
 	on buildMesh do
 	(
 		print "This is only a test, this is not meant to be functional at this point."
-		mesh = ExocortexAlembic.importMesh fileName dataPath 0 normals uvs clusters		
+		mesh = ExocortexAlembic.importMesh fileName dataPath dataTime normals uvs clusters		
 	)
 
 	tool create
