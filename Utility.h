@@ -59,6 +59,16 @@ inline Point3 ConvertAlembicPointToMaxPoint( const Imath::V3f &alembicPoint, con
 	return Point3(alembicPoint.x, -alembicPoint.z, alembicPoint.y) * GetDecimetersToInchesRatio( masterScaleUnitMeters );
 }
 
+inline Imath::V3f ConvertMaxVectorToAlembicVector( const Point3 &maxPoint, const float &masterScaleUnitMeters, bool scale )
+{
+	return Imath::V3f(maxPoint.x, maxPoint.z, -maxPoint.y) * (scale ? GetInchesToDecimetersRatio( masterScaleUnitMeters ) : 1.0f);
+}
+
+inline Point3 ConvertAlembicPointToMaxPoint( const Imath::V3f &alembicPoint, const float &masterScaleUnitMeters, bool scale )
+{
+	return Point3(alembicPoint.x, -alembicPoint.z, alembicPoint.y) * (scale ? GetDecimetersToInchesRatio( masterScaleUnitMeters ) : 1.0f);
+}
+
 inline Imath::V3f ConvertMaxNormalToAlembicNormal( const Point3 &maxPoint )
 {
      Point3 maxPointNormalized = maxPoint.Normalize();
