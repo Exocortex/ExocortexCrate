@@ -141,6 +141,45 @@ BEGIN
     CONTROL         "Patch",IDC_SEL_PATCH,"Button",BS_AUTORADIOBUTTON,57,97,35,10
 END
 
+IDD_CIRCLEPARAM3 DIALOG  0, 0, 108, 73
+STYLE DS_SETFONT | WS_CHILD | WS_VISIBLE
+FONT 8, "MS Sans Serif"
+BEGIN
+    CONTROL         "",IDC_TI_POSX,"CustEdit",WS_TABSTOP,48,3,36,10
+    CONTROL         "",IDC_TI_POSY,"CustEdit",WS_TABSTOP,48,16,36,10
+    CONTROL         "",IDC_TI_POSZ,"CustEdit",WS_TABSTOP,48,29,36,10
+    CONTROL         "",IDC_RADIUS,"CustEdit",WS_TABSTOP,48,45,36,10
+    CONTROL         "Create",IDC_TI_CREATE,"CustButton",WS_TABSTOP,48,58,44,
+                    12
+    CONTROL         "",IDC_TI_POSXSPIN,"SpinnerControl",0x0,85,3,7,10
+    CONTROL         "",IDC_TI_POSYSPIN,"SpinnerControl",0x0,85,16,7,10
+    CONTROL         "",IDC_TI_POSZSPIN,"SpinnerControl",0x0,85,29,7,10
+    CONTROL         "",IDC_RADSPINNER,"SpinnerControl",0x0,85,45,7,10
+    RTEXT           "X:",-1,22,4,25,8
+    RTEXT           "Y:",-1,22,17,25,8
+    RTEXT           "Radius:",-1,14,45,32,8
+    RTEXT           "Z:",-1,22,30,25,8
+END
+
+IDD_CIRCLEPARAM2 DIALOG  0, 0, 108, 18
+STYLE DS_SETFONT | WS_CHILD | WS_VISIBLE
+FONT 8, "MS Sans Serif"
+BEGIN
+    CONTROL         "",IDC_RADSPINNER,"SpinnerControl",0x0,87,4,7,10
+    RTEXT           "Radius:",-1,14,6,32,8
+    CONTROL         "",IDC_RADIUS,"CustEdit",WS_TABSTOP,50,4,36,10
+END
+
+IDD_CIRCLEPARAM1 DIALOG  0, 0, 108, 16
+STYLE DS_SETFONT | WS_CHILD | WS_VISIBLE
+FONT 8, "MS Sans Serif"
+BEGIN
+    CONTROL         "Edge",IDC_CREATEDIAMETER,"Button",BS_AUTORADIOBUTTON | 
+                    WS_TABSTOP,8,3,43,10
+    CONTROL         "Center",IDC_CREATERADIUS,"Button",BS_AUTORADIOBUTTON | 
+                    WS_TABSTOP,68,3,35,10
+END
+
 
 /////////////////////////////////////////////////////////////////////////////
 //

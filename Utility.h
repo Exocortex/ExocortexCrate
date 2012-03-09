@@ -5,6 +5,8 @@
 
 const double ALEMBIC_3DSMAX_TICK_VALUE = 4800;
 
+#define ALEMBIC_SAFE_DELETE(p)  if(p) delete p; p = 0;
+
 class SceneEntry;
 
 struct SampleInfo

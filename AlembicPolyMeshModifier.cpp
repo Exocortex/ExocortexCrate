@@ -334,6 +334,10 @@ void AlembicPolyMeshModifier::ModifyObject (TimeValue t, ModContext &mc, ObjectS
           os->obj = pTriObj;
 		}
    }
+   else
+   {
+       return;
+   }
 
    AlembicImport_FillInPolyMesh(options);
 
@@ -439,7 +443,7 @@ void AlembicImport_FillInPolyMesh(alembic_fillmesh_options &options)
 {
 	float masterScaleUnitMeters = (float)GetMasterScale(UNITS_METERS);
 
-	Alembic::AbcGeom::IPolyMesh objMesh;
+   Alembic::AbcGeom::IPolyMesh objMesh;
    Alembic::AbcGeom::ISubD objSubD;
 
    if(Alembic::AbcGeom::IPolyMesh::matches((*options.pIObj).getMetaData()))

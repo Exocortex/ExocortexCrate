@@ -133,6 +133,9 @@
 #define IDS_BORDER                      30298
 #define IDS_ELEMENT                     30299
 #define IDS_PATCH                       30300
+#define IDD_CIRCLEPARAM1                30301
+#define IDD_CIRCLEPARAM2                30302
+#define IDD_CIRCLEPARAM3                30303
 #define IDC_THRESH_LABEL                65535
 #define IDC_MAX_SIZE_LABEL              65535
 

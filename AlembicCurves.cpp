@@ -120,44 +120,27 @@ bool AlembicCurves::Save(double time)
         {
             Spline3D *pSpline = beziershape.GetSpline(i);
             int knots = pSpline->KnotCount();
-            for(int ix = 0; ix <= knots; ++ix) 
+            for(int ix = 0; ix < knots; ++ix) 
             {
-                if(ix == 0) 
+                Point3 in = pSpline->GetInVec(ix);
+                Point3 p = pSpline->GetKnotPoint(ix);
+                Point3 out = pSpline->GetOutVec(ix);
+
+                if (ix == 0 && !pSpline->Closed())
                 {
-                    Point3 p = pSpline->GetKnotPoint(ix);
                     controlPoints.push_back(p);
-                } 
-                else if (ix == knots && pSpline->Closed())
-                {
-                    Point3 lp = pSpline->GetKnotPoint(knots-1);
-                    Point3 lout = pSpline->GetOutVec(knots-1);
-                    Point3 p = pSpline->GetKnotPoint(0);
-                    Point3 in = pSpline->GetInVec(0);
-
-                    if (lout != lp || in != p)
-                    {
-                        controlPoints.push_back(lout);
-                        controlPoints.push_back(in);
-                    }
+                    controlPoints.push_back(out);
                 }
-                else if ( ix < knots )
+                else if ( ix == knots-1 && !pSpline->Closed())
                 {
-                    Point3 lp = pSpline->GetKnotPoint(ix-1);
-                    Point3 lout = pSpline->GetOutVec(ix-1);
-                    Point3 p = pSpline->GetKnotPoint(ix);
-                    Point3 in = pSpline->GetInVec(ix);
-
-                    // Determine whether this is a sharp corner or a bezier point
-                    if(lout == lp && in == p) 
-                    {
-                        controlPoints.push_back(p);
-                    }
-                    else 
-                    {
-                        controlPoints.push_back(lout);
-                        controlPoints.push_back(in);
-                        controlPoints.push_back(p);
-                    }
+                    controlPoints.push_back(in);
+                    controlPoints.push_back(p);
+                }
+                else
+                {
+                    controlPoints.push_back(in);
+                    controlPoints.push_back(p);
+                    controlPoints.push_back(out);
                 }
             }
 

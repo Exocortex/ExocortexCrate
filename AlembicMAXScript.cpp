@@ -11,6 +11,7 @@
 #include "AlembicDefinitions.h"
 #include "AlembicWriteJob.h"
 #include "Utility.h"
+#include "AlembicSimpleSpline.h"
 
 // Dummy function for progress bar
 DWORD WINAPI DummyProgressFunction(LPVOID arg)
@@ -146,89 +147,6 @@ public:
 const Interface_ID ExocortexAlembicStaticInterface::id = Interface_ID(0x4bd4297f, 0x4e8403d7);
 static ExocortexAlembicStaticInterface exocortexAlembic;
 
-/*TriObject *createTriangleMesh(const std::vector<Point3> &points,
-                              const std::vector<Point3> &normals,
-                              const std::vector<Point2> &uvs,
-                              const std::vector<int> &triangleVertIndices)
-{
-    TriObject *triobj = CreateNewTriObject();
-    if (triobj == NULL)
-        return NULL;
- 
-    assert(points.size() == normals.size() && normals.size() == uvs.size());
-    assert(triangleVertIndices.size() % 3 == 0);
- 
-    int numVertices = (int) points.size();
-    int numTriangles = (int) triangleVertIndices.size() / 3;
-    Mesh &mesh = triobj->GetMesh();
- 
-    // set vertex positions
-    mesh.setNumVerts(numVertices);
-    for (int i = 0; i < numVertices; i++)
-        mesh.setVert(i, points[i]);
-    
-    // set vertex normals
-    mesh.SpecifyNormals();
-    MeshNormalSpec *normalSpec = mesh.GetSpecifiedNormals();
-    normalSpec->ClearNormals();
-    normalSpec->SetNumNormals(numVertices);
-    for (int i = 0; i < numVertices; i++)
-    {
-        normalSpec->Normal(i) = normals[i].Normalize();
-        normalSpec->SetNormalExplicit(i, true);
-    }
- 
-    // set UVs
-    // TODO: multiple map channels?
-    // channel 0 is reserved for vertex color, channel 1 is the default texture mapping
-    mesh.setNumMaps(2);
-    mesh.setMapSupport(1, TRUE);  // enable map channel
-    MeshMap &map = mesh.Map(1);
-    map.setNumVerts(numVertices);
-    for (int i = 0; i < numVertices; i++)
-    {
-        UVVert &texVert = map.tv[i];
-        texVert.x = uvs[i].x;
-        texVert.y = uvs[i].y;
-        texVert.z = 0.0f;
-    }
- 
-    // set triangles
-    mesh.setNumFaces(numTriangles);
-    normalSpec->SetNumFaces(numTriangles);
-    map.setNumFaces(numTriangles);
-    for (int i = 0, j = 0; i < numTriangles; i++, j += 3)
-    {
-        // three vertex indices of a triangle
-        int v0 = triangleVertIndices[j];
-        int v1 = triangleVertIndices[j+1];
-        int v2 = triangleVertIndices[j+2];
- 
-        // vertex positions
-        Face &face = mesh.faces[i];
-        face.setMatID(1);
-        face.setEdgeVisFlags(1, 1, 1);
-        face.setVerts(v0, v1, v2);
- 
-        // vertex normals
-        MeshNormalFace &normalFace = normalSpec->Face(i);
-        normalFace.SpecifyAll();
-        normalFace.SetNormalID(0, v0);
-        normalFace.SetNormalID(1, v1);
-        normalFace.SetNormalID(2, v2);
- 
-        // vertex UVs
-        TVFace &texFace = map.tf[i];
-        texFace.setTVerts(v0, v1, v2);
-    }
- 
-    mesh.InvalidateGeomCache();
-    mesh.InvalidateTopologyCache();
- 
-    return triobj;
-}
-*/
-
 int ExocortexAlembicStaticInterface::ExocortexAlembicImport(MCHAR* strFileName, BOOL bImportNormals, BOOL bImportUVs, BOOL bImportClusters, BOOL bAttachToExisting, int iVisOption)
 {
 	ESS_CPP_EXCEPTION_REPORTING_START
@@ -286,30 +204,36 @@ int ExocortexAlembicStaticInterface::ExocortexAlembicImport(MCHAR* strFileName, 
    // the children node first and then hook them up to their parents
    for(int i=(int)objects.size()-1; i>=0 ; i -= 1)
    {
-		// XForm
-		if(Alembic::AbcGeom::IXform::matches(objects[i].getMetaData()))
-		{
-            int ret = AlembicImport_XForm(file, objects[i].getFullName(), importOptions);
-		}
+       // XForm
+       if(Alembic::AbcGeom::IXform::matches(objects[i].getMetaData()))
+       {
+           int ret = AlembicImport_XForm(file, objects[i].getFullName(), importOptions);
+       }
 
-		// PolyMesh
-		else if (Alembic::AbcGeom::IPolyMesh::matches(objects[i].getMetaData()))
-		{
-			int ret = AlembicImport_PolyMesh(file, objects[i].getFullName(), importOptions); 
-        }
+       // PolyMesh
+       else if (Alembic::AbcGeom::IPolyMesh::matches(objects[i].getMetaData()))
+       {
+           int ret = AlembicImport_PolyMesh(file, objects[i].getFullName(), importOptions); 
+       }
 
-        // Camera
-        else if (Alembic::AbcGeom::OCamera::matches(objects[i].getMetaData()))
-        {
-            int ret = AlembicImport_Camera(file, objects[i].getFullName(), importOptions);
-        }
+       // Camera
+       else if (Alembic::AbcGeom::ICamera::matches(objects[i].getMetaData()))
+       {
+           int ret = AlembicImport_Camera(file, objects[i].getFullName(), importOptions);
+       }
 
-        // Points
-        else if (Alembic::AbcGeom::OPoints::matches(objects[i].getMetaData()))
-        {
-            int ret = AlembicImport_Points(file, objects[i].getFullName(), importOptions);
-        }
-	}
+       // Points
+       else if (Alembic::AbcGeom::IPoints::matches(objects[i].getMetaData()))
+       {
+           int ret = AlembicImport_Points(file, objects[i].getFullName(), importOptions);
+       }
+
+       // Curves
+       else if (Alembic::AbcGeom::ICurves::matches(objects[i].getMetaData()))
+       {
+           int ret = AlembicImport_Shape(file, objects[i].getFullName(), importOptions);
+       }
+   }
 
    delRefArchive(file);
 
