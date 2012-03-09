@@ -26,7 +26,6 @@ plugin simpleObject AlembicMesh
 
 	on buildMesh do
 	(
-		print "This is only a test, this is not meant to be functional at this point."
 		mesh = ExocortexAlembic.importMesh fileName dataPath dataTime normals uvs clusters		
 	)
 
