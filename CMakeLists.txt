@@ -30,17 +30,18 @@ endif()
 get_filename_component( BASE_DIR "${CMAKE_CURRENT_SOURCE_DIR}" PATH )
 set( LOCAL_CMAKE_FILE_NAME "${BASE_DIR}/CMakeLists.txt" )
 
-include_directories( ${BASE_DIR}/include )
-include_directories( ${BASE_DIR}/src )
+include_directories( ${BASE_DIR}/Shared )
 
-file(GLOB_RECURSE Sources ${BASE_DIR}/*.cpp)
-file(GLOB_RECURSE Includes ${BASE_DIR}/*.h)
+file(GLOB_RECURSE Shared ${BASE_DIR}/Shared/*.*)
+file(GLOB Sources ${BASE_DIR}/*.cpp)
+file(GLOB Includes ${BASE_DIR}/*.h)
 
-file(GLOB_RECURSE MaxScripts ${BASE_DIR}/MaxScripts/*.*)
+file(GLOB_RECURSE Scripts ${BASE_DIR}/MaxScripts/*.*)
 
 SOURCE_GROUP("Source Files" FILES ${Sources})   
 SOURCE_GROUP("Header Files" FILES ${Includes})
-SOURCE_GROUP("MaxScripts" FILES ${MaxScripts})
+SOURCE_GROUP("_Shared" FILES ${Shared})
+SOURCE_GROUP("Maxscripts" FILES ${Scripts})
 
 if( Exocortex_SERVICES OR Exocortex_RLM_ONLY )
 	include_directories( ${Rlm_INCLUDE_DIR} )
@@ -73,7 +74,7 @@ if( Exocortex_RLM_ONLY )
 	link_directories( ${Rlm_LIBRARYDIR} )
 endif()
 
-add_library( ${PROJECT_NAME} SHARED ${Sources} ${Includes}  ${LOCAL_CMAKE_FILE_NAME}  ${MaxScripts} )
+add_library( ${PROJECT_NAME} SHARED ${Sources} ${Includes}  ${LOCAL_CMAKE_FILE_NAME}  ${Scripts} ${Shared} )
 
 TARGET_LINK_LIBRARIES( ${PROJECT_NAME} ${ALEMBIC_ILMBASE_LIBS}
 	${ALEMBIC_ZLIB_LIBS} ${ALEMBIC_HDF5_LIBS} ${ALEMBIC_CORE_LIBS}
