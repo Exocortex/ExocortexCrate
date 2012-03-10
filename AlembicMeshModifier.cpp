@@ -202,15 +202,61 @@ void AlembicMeshModifier::ModifyObject (TimeValue t, ModContext &mc, ObjectState
 
    Interval ivalid=os->obj->ObjectValidity(t);
 
-   Alembic::AbcGeom::IObject iObj = getObjectFromArchive(m_AlembicNodeProps.m_File, m_AlembicNodeProps.m_Identifier);
-   if(!iObj.valid())
-      return;
+	TimeValue now =  GetCOREInterface12()->GetTime();
+
+    MCHAR const* strFileName = NULL;
+	this->pblock[0]->GetValue( AlembicMeshModifier::ID_FILENAME, now, strFileName, FOREVER);
+
+	MCHAR const* strDataPath = NULL;
+	this->pblock[0]->GetValue( AlembicMeshModifier::ID_DATAPATH, now, strDataPath, FOREVER);
+
+	float fCurrentTimeHidden;
+	this->pblock[0]->GetValue( AlembicMeshModifier::ID_CURRENTTIMEHIDDEN, now, fCurrentTimeHidden, FOREVER);
+
+	float fTimeOffset;
+	this->pblock[0]->GetValue( AlembicMeshModifier::ID_TIMEOFFSET, now, fTimeOffset, FOREVER);
+
+	float fTimeScale;
+	this->pblock[0]->GetValue( AlembicMeshModifier::ID_TIMESCALE, now, fTimeScale, FOREVER);
+
+	BOOL bFaceSet;
+	this->pblock[0]->GetValue( AlembicMeshModifier::ID_FACESET, now, bFaceSet, FOREVER);
+
+	BOOL bVertices;
+	this->pblock[0]->GetValue( AlembicMeshModifier::ID_VERTICES, now, bVertices, FOREVER);
+
+	BOOL bNormals;
+	this->pblock[0]->GetValue( AlembicMeshModifier::ID_NORMALS, now, bNormals, FOREVER);
+
+	BOOL bUVs;
+	this->pblock[0]->GetValue( AlembicMeshModifier::ID_UVS, now, bUVs, FOREVER);
+
+	ESS_LOG_INFO( "strFileName: " << strFileName << " strDataPath: " << strDataPath << " fCurrentTimeHidden: " << fCurrentTimeHidden <<
+		" bFaceSet: " << bFaceSet << " bVertices: " << bVertices << " bNormals: " << bNormals << " bUVs: " << bUVs );
+
+	Alembic::AbcGeom::IObject iObj = getObjectFromArchive(strFileName, strDataPath);
+	if(!iObj.valid()) {
+		ESS_LOG_WARNING( "Can't load Alembic stream, fileName: " << strFileName << " path: " << strDataPath );
+		return;
+	}
 
    alembic_fillmesh_options options;
    options.pIObj = &iObj;
-   options.dTicks = t;
-   options.nDataFillFlags = m_AlembicNodeProps.m_UpdateDataFillFlags;
-
+   options.dTicks = GetTimeValueFromSeconds( fCurrentTimeHidden );
+   options.nDataFillFlags = 0;
+    if( bFaceSet ) {
+	   options.nDataFillFlags |= ALEMBIC_DATAFILL_FACELIST;
+   }
+   if( bVertices ) {
+	   options.nDataFillFlags |= ALEMBIC_DATAFILL_VERTEX;
+   }
+   if( bNormals ) {
+	   options.nDataFillFlags |= ALEMBIC_DATAFILL_NORMALS;
+   }
+   if( bUVs ) {
+		options.nDataFillFlags |= ALEMBIC_DATAFILL_UVS;
+   }
+  
    // Find out if we are modifying a poly object or a tri object
    if (os->obj->CanConvertToType(Class_ID(POLYOBJ_CLASS_ID, 0)))
    {
@@ -231,7 +277,7 @@ void AlembicMeshModifier::ModifyObject (TimeValue t, ModContext &mc, ObjectState
 		if (os->obj != pTriObj) {
           os->obj = pTriObj;
 		}
-   }
+   } 
    else
    {
        return;

@@ -24,7 +24,7 @@ plugin modifier AlembicMeshPointCacheModifier
 		
 		on fileName set val do delegate.fileName = val
 		on dataPath set val do delegate.dataPath = val
-		--on currentTimeHidden set val do delegate.currentTimeHidden = val
+		on currentTimeHidden set val do delegate.currentTimeHidden = val
 		on timeOffset set val do delegate.timeOffset = val
 		on timeScale set val do delegate.timeScale = val
 		on faceSet set val do delegate.faceSet = val

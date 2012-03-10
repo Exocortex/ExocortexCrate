@@ -13,7 +13,7 @@
 using namespace MaxSDK::AssetManagement;
 const int POLYMESHMOD_MAX_PARAM_BLOCKS = 2;
 
-
+ 
 
 class AlembicPolyMeshModifier : public Modifier {
 public:
