@@ -9,9 +9,14 @@
 #include <boost/format.hpp>
 #include <boost/variant.hpp>
 #include <boost/exception/all.hpp>
+#include <boost/filesystem.hpp>
+#include <boost/filesystem/operations.hpp>
+#include <boost/filesystem/path.hpp>
+
+namespace fs = boost::filesystem;
+
 #include <utility>
 #include <limits>
-
 #include <set>
 #include <vector>
 #include <map>

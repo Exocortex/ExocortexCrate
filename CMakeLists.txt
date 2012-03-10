@@ -36,8 +36,11 @@ include_directories( ${BASE_DIR}/src )
 file(GLOB_RECURSE Sources ${BASE_DIR}/*.cpp)
 file(GLOB_RECURSE Includes ${BASE_DIR}/*.h)
 
+file(GLOB_RECURSE MaxScripts ${BASE_DIR}/MaxScripts/*.*)
+
 SOURCE_GROUP("Source Files" FILES ${Sources})   
 SOURCE_GROUP("Header Files" FILES ${Includes})
+SOURCE_GROUP("MaxScripts" FILES ${MaxScripts})
 
 if( Exocortex_SERVICES OR Exocortex_RLM_ONLY )
 	include_directories( ${Rlm_INCLUDE_DIR} )
@@ -70,7 +73,7 @@ if( Exocortex_RLM_ONLY )
 	link_directories( ${Rlm_LIBRARYDIR} )
 endif()
 
-add_library( ${PROJECT_NAME} SHARED ${Sources} ${Includes}  ${LOCAL_CMAKE_FILE_NAME} )
+add_library( ${PROJECT_NAME} SHARED ${Sources} ${Includes}  ${LOCAL_CMAKE_FILE_NAME}  ${MaxScripts} )
 
 TARGET_LINK_LIBRARIES( ${PROJECT_NAME} ${ALEMBIC_ILMBASE_LIBS}
 	${ALEMBIC_ZLIB_LIBS} ${ALEMBIC_HDF5_LIBS} ${ALEMBIC_CORE_LIBS}

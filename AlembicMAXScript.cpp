@@ -68,7 +68,10 @@ public:
             0,                      //* function name string resource name * / 
             TYPE_MESH,               //* Return type * /
             0,                      //* Flags  * /
-            6,                     //* Number  of arguments * /
+            9,                     //* Number  of arguments * /
+                _M("mesh"),     //* argument internal name * /
+                0,                  //* argument localizable name string resource id * /
+                TYPE_MESH,      //* arg type * /
                 _M("fileName"),     //* argument internal name * /
                 0,                  //* argument localizable name string resource id * /
                 TYPE_FILENAME,      //* arg type * /
@@ -77,8 +80,14 @@ public:
                 TYPE_STRING,      //* arg type * /
                 _M("time"),     //* argument internal name * /
                 0,                  //* argument localizable name string resource id * /
-                TYPE_FLOAT,      //* arg type * /
-                _M("importNormals"),//* argument internal name * /
+                TYPE_FLOAT,      //* arg type * /        	  
+			    _M("importFaceList"),//* argument internal name * /
+                0,                  //* argument localizable name string resource id * /
+                TYPE_BOOL,          //* arg type * /
+			    _M("importVerticse"),//* argument internal name * /
+                0,                  //* argument localizable name string resource id * /
+                TYPE_BOOL,          //* arg type * /
+			    _M("importNormals"),//* argument internal name * /
                 0,                  //* argument localizable name string resource id * /
                 TYPE_BOOL,          //* arg type * /
                 _M("importUVs"),    //* argument internal name * /
@@ -133,13 +142,18 @@ public:
     }
 
     static int ExocortexAlembicImport(MCHAR * strFileName, BOOL bImportNormals, BOOL bImportUVs, BOOL bImportClusters, BOOL bAttachToExisting, int iVisOption);
-    static Mesh* ExocortexAlembicImportMesh(MCHAR * strFileName, MCHAR * strPath, float time, BOOL bImportNormals, BOOL bImportUVs, BOOL bImportClusters );
+    static Mesh* ExocortexAlembicImportMesh(
+		Mesh* pMesh,
+		MCHAR * strFileName, MCHAR * strPath,
+		float time, 
+		BOOL bImportFaceList, BOOL bImportVertices, BOOL bImportNormals, BOOL bImportUVs, BOOL bImportClusters
+		);
 	static int ExocortexAlembicExport(MCHAR * strFileName, int iFrameIn, int iFrameOut, int iFrameSteps, int iFrameSubSteps, int iType,
                                       BOOL bExportUV, BOOL bExportClusters, BOOL bExportEnvelopeBindPose, BOOL bExportDynamicTopology, BOOL bExportSelected);
 
     BEGIN_FUNCTION_MAP
         FN_6(exocortexAlembicImport, TYPE_INT, ExocortexAlembicImport, TYPE_FILENAME, TYPE_BOOL, TYPE_BOOL, TYPE_BOOL, TYPE_BOOL, TYPE_INT)
-        FN_6(exocortexAlembicImportMesh, TYPE_MESH, ExocortexAlembicImportMesh, TYPE_FILENAME, TYPE_STRING, TYPE_FLOAT, TYPE_BOOL, TYPE_BOOL, TYPE_BOOL)
+        FN_9(exocortexAlembicImportMesh, TYPE_MESH, ExocortexAlembicImportMesh, TYPE_MESH, TYPE_FILENAME, TYPE_STRING, TYPE_FLOAT, TYPE_BOOL, TYPE_BOOL, TYPE_BOOL, TYPE_BOOL, TYPE_BOOL)
 		FN_11(exocortexAlembicExport, TYPE_INT, ExocortexAlembicExport, TYPE_FILENAME, TYPE_INT, TYPE_INT, TYPE_INT, TYPE_INT, TYPE_INT, TYPE_BOOL, TYPE_BOOL, TYPE_BOOL, TYPE_BOOL, TYPE_BOOL)
     END_FUNCTION_MAP
 };
@@ -172,6 +186,11 @@ int ExocortexAlembicStaticInterface::ExocortexAlembicImport(MCHAR* strFileName, 
 	if(strFileName[0] == 0) {
 	   ESS_LOG_ERROR( "No filename specified." );
 	   return alembic_invalidarg;
+	}
+
+	if( ! fs::exists( strFileName ) ) {
+		ESS_LOG_ERROR( "Can't file Alembic file.  FileName: " << strFileName );
+		return alembic_invalidarg;
 	}
 
 	std::string file(strFileName);
@@ -243,9 +262,11 @@ int ExocortexAlembicStaticInterface::ExocortexAlembicImport(MCHAR* strFileName, 
 }
 
 
-Mesh* ExocortexAlembicStaticInterface::ExocortexAlembicImportMesh(MCHAR* strFileName, MCHAR* strPath, float time, BOOL bImportNormals, BOOL bImportUVs, BOOL bImportClusters )
+Mesh* ExocortexAlembicStaticInterface::ExocortexAlembicImportMesh(Mesh* pMesh, MCHAR* strFileName, MCHAR* strPath, float time, BOOL bImportFaceList, BOOL bImportVertices, BOOL bImportNormals, BOOL bImportUVs, BOOL bImportClusters )
 {
-	Mesh *pMesh = CreateNewMesh();
+	if( pMesh == NULL ) {
+		pMesh = CreateNewMesh();
+	}
 
 	ESS_CPP_EXCEPTION_REPORTING_START
 
@@ -256,30 +277,58 @@ Mesh* ExocortexAlembicStaticInterface::ExocortexAlembicImportMesh(MCHAR* strFile
 
 	ESS_LOG_INFO( "ExocortexAlembicImportMesh( strFileName=" << strFileName <<
 		", strPath=" << strPath << 
+		", bImportFaceList=" << bImportFaceList << ", bImportVertices=" << bImportVertices <<
 		", bImportNormals=" << bImportNormals << ", bImportUVs=" << bImportUVs <<
 		", bImportClusters=" << bImportClusters << " )" );
 
+	if( strlen( strFileName ) == 0 ) {
+	   ESS_LOG_ERROR( "No filename specified." );
+	   return pMesh;
+	}
+	if( ! fs::exists( strFileName ) ) {
+		ESS_LOG_ERROR( "Can't file Alembic file.  FileName: " << strFileName );
+		return pMesh;
+	}
 
-	Alembic::AbcGeom::IObject iObj = getObjectFromArchive(strFileName, strPath);
+	Alembic::AbcGeom::IObject iObj;
+	try {
+		iObj = getObjectFromArchive(strFileName, strPath);
+	} catch( std::exception exp ) {
+		ESS_LOG_ERROR( "Can not open Alembic data stream.  FileName: " << strFileName << " path: " << strPath << " reason: " << exp.what() );
+		return pMesh;
+	}
+
 	if(!iObj.valid()) {
+		ESS_LOG_ERROR( "Not a valid Alembic data stream.  FileName: " << strFileName << " path: " << strPath );
 		return pMesh;
 	}
 
    alembic_fillmesh_options options;
    options.pIObj = &iObj;
    options.dTicks = GetTimeValueFromSeconds( time );
-   options.nDataFillFlags = ALEMBIC_DATAFILL_VERTEX | ALEMBIC_DATAFILL_FACELIST;
+   options.nDataFillFlags = 0;
+   if( bImportFaceList ) {
+	   options.nDataFillFlags |= ALEMBIC_DATAFILL_FACELIST;
+   }
+   if( bImportVertices ) {
+	   options.nDataFillFlags |= ALEMBIC_DATAFILL_VERTEX;
+   }
    if( bImportNormals ) {
 	   options.nDataFillFlags |= ALEMBIC_DATAFILL_NORMALS;
    }
    if( bImportUVs ) {
-	options.nDataFillFlags |= ALEMBIC_DATAFILL_UVS;
+		options.nDataFillFlags |= ALEMBIC_DATAFILL_UVS;
    }
    options.pMesh = pMesh;
 
-   AlembicImport_FillInPolyMesh(options);
-
-   pMesh = options.pMesh;
+   try {
+	   AlembicImport_FillInPolyMesh(options);
+		pMesh = options.pMesh;
+   }
+   catch(std::exception exp ) {
+		ESS_LOG_ERROR( "Error creating mesh from Alembic data stream.  FileName: " << strFileName << " path: " << strPath << " reason: " << exp.what() );
+		return pMesh;
+   }
 
    ESS_LOG_INFO( "NumFaces: " << pMesh->getNumFaces() << "  NumVerts: " << pMesh->getNumVerts() );
    /*
