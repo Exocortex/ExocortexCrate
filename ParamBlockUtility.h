@@ -25,7 +25,7 @@
  * if using this for a controller.
  */
 class ParamBlockDescUtil
-    : protected ParamBlockDesc2 
+    : public ParamBlockDesc2 
 {
 private:
 

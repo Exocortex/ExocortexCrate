@@ -217,6 +217,21 @@ END
 
 STRINGTABLE 
 BEGIN
+	IDS_PARAMS	"Parameters"
+	IDS_FILENAME "Filename"
+	IDS_DATAPATH "Path"
+	IDS_CURRENTTIMEHIDDEN "CurrentTimeHidden"
+	IDS_TIMEOFFSET "Time Offset"
+	IDS_TIMESCALE "Time Scale"
+	IDS_FACESET "Faceset"
+	IDS_VERTICES "Vertices"
+	IDS_NORMALS "Normals"
+	IDS_UVS "UVs"
+	IDS_CLUSTERS "Clusters"
+END
+
+STRINGTABLE 
+BEGIN
     IDS_CONVERT_TO_PATCH    "Turn to Patch"
     IDS_PATCH_QUADS         "Quads to Quad Patches"
     IDS_CONVERT_TO_MESH     "Turn to Mesh"
@@ -283,6 +298,13 @@ BEGIN
     CONTROL         "",IDC_SPIN_TIME,"SpinnerControl",WS_TABSTOP,86,20,7,10
     LTEXT           "Time:",IDC_STATIC,15,20,19,10
 END
+
+IDD_EMPTY DIALOGEX 0, 0, 108, 42
+STYLE DS_SETFONT | WS_CHILD
+FONT 8, "Microsoft Sans Serif", 400, 0, 0x0
+BEGIN
+END
+
 
 IDD_ALEMBIC_ID_PARAMS DIALOGEX 0, 0, 108, 103
 STYLE DS_SETFONT | WS_CHILD

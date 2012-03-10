@@ -21,6 +21,7 @@
 #include "surf_api.h"
 #include <string>
 #include "AlembicDefinitions.h"
+#include "AlembicMeshUtilities.h"
 
 // can be generated via gencid.exe in the help folder of the 3DS Max.
 #define EXOCORTEX_ALEMBIC_POLYMESH_MODIFIER_ID	Class_ID(0x45365012, 0x60984267)
@@ -33,33 +34,6 @@ TCHAR *GetString(int id);
 
 extern ClassDesc *GetAlembicPolyMeshModifierDesc();
 
-// Alembic Functions
-
-typedef struct _alembic_fillmesh_options
-{
-    Alembic::AbcGeom::IObject *pIObj;
-    //TriObject *pTriObj;
-	Mesh *pMesh;
-
-    //PolyObject *pPolyObj;
-	MNMesh *pMNMesh;
-    TimeValue dTicks;
-    AlembicDataFillFlags nDataFillFlags;
-
-    _alembic_fillmesh_options()
-    {
-        pIObj = NULL;
-        pMesh = NULL;
-        pMNMesh = NULL;
-        dTicks = 0;
-        nDataFillFlags = 0;
-    }
-} alembic_fillmesh_options;
-
-void AlembicImport_FillInPolyMesh(alembic_fillmesh_options &options);
-
-
-extern int AlembicImport_PolyMesh(const std::string &file, const std::string &identifier, alembic_importoptions &options);
 
 extern HINSTANCE hInstance;
 

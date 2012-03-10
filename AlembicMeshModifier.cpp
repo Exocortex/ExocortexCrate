@@ -9,12 +9,14 @@
 #include "alembic.h"
 #include "AlembicXForm.h"
 #include "AlembicVisCtrl.h"
+#include "ParamBlockUtility.h"
 
 using namespace MaxSDK::AssetManagement;
 const int POLYMESHMOD_MAX_PARAM_BLOCKS = 1;
 
 class AlembicMeshModifier : public Modifier {
 public:
+	IParamBlock2 *pblock[POLYMESHMOD_MAX_PARAM_BLOCKS];
 	static const BlockID PBLOCK_ID = 0;
 	
 	// Parameters in first block:
@@ -25,12 +27,12 @@ public:
 		ID_CURRENTTIMEHIDDEN,
 		ID_TIMEOFFSET,
 		ID_TIMESCALE,
-		ID_FACSET,
+		ID_FACESET,
 		ID_VERTICES,
 		ID_NORMALS,
 		ID_UVS,
 		ID_CLUSTERS,
-		ID_MUTE
+		ID_MUTED
 	};
 
 	static IObjParam *ip;
@@ -41,7 +43,7 @@ public:
 	// From Animatable
 	void DeleteThis() { delete this; }
 	void GetClassName(TSTR& s) { s = _T("Alembic Mesh Modifier"); }  
-	virtual Class_ID ClassID() { return EXOCORTEX_ALEMBIC_POLYMESH_MODIFIER_ID; }		
+	virtual Class_ID ClassID() { return EXOCORTEX_ALEMBIC_MESH_MODIFIER_ID; }		
 	RefTargetHandle Clone(RemapDir& remap);
 	TCHAR *GetObjectName() { return _T("Alembic Mesh Modifier"); }
 
@@ -88,63 +90,70 @@ public:
 IObjParam *AlembicMeshModifier::ip              = NULL;
 AlembicMeshModifier *AlembicMeshModifier::editMod         = NULL;
 
-class AlembicPolyMeshModifierClassDesc : public ClassDesc2 {
+class AlembicMeshModifierClassDesc : public ClassDesc2 {
 	public:
 	int 			IsPublic() { return 1; }
 	void *			Create(BOOL loading = FALSE) { return new AlembicMeshModifier; }
 	const TCHAR *	ClassName() { return _T("Alembic Mesh Modifier"); }
 	SClass_ID		SuperClassID() { return OSM_CLASS_ID; }
-	Class_ID		ClassID() { return EXOCORTEX_ALEMBIC_POLYMESH_MODIFIER_ID; }
+	Class_ID		ClassID() { return EXOCORTEX_ALEMBIC_MESH_MODIFIER_ID; }
 	const TCHAR* 	Category() { return _T("Alembic"); }
 	const TCHAR*	InternalName() { return _T("AlembicMeshModifier"); }	// returns fixed parsable name (scripter-visible name)
 	HINSTANCE		HInstance() { return hInstance; }			// returns owning module handle
 };
 
-static AlembicPolyMeshModifierClassDesc AlembicPolyMeshModifierDesc;
-ClassDesc* GetAlembicPolyMeshModifierDesc() {return &AlembicPolyMeshModifierDesc;}
+static AlembicMeshModifierClassDesc AlembicMeshModifierDesc;
+ClassDesc2* GetAlembicMeshModifierClassDesc() {return &AlembicMeshModifierDesc;}
 
 //--- Properties block -------------------------------
 
-class AlembicMeshModifierParams
-    : public ParamBlockDescUtil
-{
-public:        
-    
-    AlembicMeshModifierParams()
-		: ParamBlockDescUtil(
-			AlembicMeshModifier::PBLOCK_ID,
-			_T("AlembicMeshModifierParams"), 
-			IDS_PARAMS, 
-			AlembicPolyMeshModifierClassDesc::GetInstance(),
-			BEGIN_EDIT_MOTION, 
-			// ----------------------
-			0, // Reference System Index
-			IDD_EMPTY,
-			IDS_PARAMS, 
-			NULL
-			)
-    {
-		AddFilenameParam(AlembicMeshModifier::ID_FILENAME, _T("filename"), IDS_FILENAME );
-		AddStringParam(AlembicMeshModifier::ID_DATAPATH, _T("dataPath"), IDS_DATAPATH );
-		AddFloatParam(AlembicMeshModifier::ID_CURRENTTIMEHIDDEN, _T("currentTimeHidden"), ID_CURRENTTIMEHIDDEN, 0);
-        AddFloatParam(AlembicMeshModifier::ID_TIMEOFFSET, _T("timeOffset"), IDS_TIMEOFFSET, P_ANIMATABLE);
-        AddFloatParam(AlembicMeshModifier::ID_TIMESCALE, _T("timeScale"), IDS_TIMESCALE, P_ANIMATABLE);
-        AddBooleanParam(AlembicMeshModifier::ID_FACESET, _T("faceSet"), IDS_FACESET, 0);
-        AddBooleanParam(AlembicMeshModifier::ID_VERTICES, _T("vertices"), IDS_VERTICES, 0);
-        AddBooleanParam(AlembicMeshModifier::ID_NORMALS, _T("normals"), IDS_NORMALS, 0);
-        AddBooleanParam(AlembicMeshModifier::ID_UVS, _T("uvs"), IDS_UVS, 0);
-        AddBooleanParam(AlembicMeshModifier::ID_CLUSTERS, _T("clusters"), IDS_CLUSTERS, 0);
-        AddBooleanParam(AlembicMeshModifier::ID_MUTE, _T("mute"), IDS_MUTE, P_ANIMATABLE);
-    }
+static ParamBlockDesc2 AlembicMeshModifierParams(
+	AlembicMeshModifier::PBLOCK_ID,
+	_T("AlembicPolyMeshModifier"),
+	IDS_PROPS,
+	GetAlembicMeshModifierClassDesc(),
+	P_AUTO_CONSTRUCT | P_AUTO_UI,
+	REF_PBLOCK,
 
-    // Creates a static instance of the ControllerTutorialParams
-    static AlembicMeshModifierParams* GetInstance()
-    {
-        static AlembicMeshModifierParams params;
-        return &params;
-    }
-};
+	// rollout description
+	IDD_EMPTY, IDS_PARAMS, 0, 0, NULL,
 
+    // params
+	AlembicMeshModifier::ID_FILENAME, _T("fileName"), TYPE_FILENAME, 0, IDS_FILENAME,
+		end,
+        
+	AlembicMeshModifier::ID_DATAPATH, _T("dataPath"), TYPE_STRING, 0, IDS_DATAPATH,
+		end,
+
+	AlembicMeshModifier::ID_CURRENTTIMEHIDDEN, _T("currentTimeHidden"), TYPE_FLOAT, 0, IDS_CURRENTTIMEHIDDEN,
+		end,
+
+	AlembicMeshModifier::ID_TIMEOFFSET, _T("timeOffset"), TYPE_FLOAT, 0, IDS_TIMEOFFSET,
+		end,
+
+	AlembicMeshModifier::ID_TIMESCALE, _T("timeScale"), TYPE_FLOAT, 0, IDS_TIMESCALE,
+		end,
+
+	AlembicMeshModifier::ID_FACESET, _T("faceSet"), TYPE_BOOL, 0, IDS_FACESET,
+		end,
+
+	AlembicMeshModifier::ID_VERTICES, _T("vertices"), TYPE_BOOL, 0, IDS_VERTICES,
+		end,
+
+	AlembicMeshModifier::ID_NORMALS, _T("normals"), TYPE_BOOL, 0, IDS_NORMALS,
+		end,
+
+	AlembicMeshModifier::ID_UVS, _T("uvs"), TYPE_BOOL, 0, IDS_UVS,
+		end,
+
+	AlembicMeshModifier::ID_CLUSTERS, _T("clusters"), TYPE_BOOL, 0, IDS_CLUSTERS,
+		end,
+
+	AlembicMeshModifier::ID_MUTED, _T("muted"), TYPE_BOOL, 0, IDS_MUTED,
+		end,
+
+	end
+);
 
 //--- Modifier methods -------------------------------
 
@@ -153,7 +162,7 @@ AlembicMeshModifier::AlembicMeshModifier()
     for (int i = 0; i < POLYMESHMOD_MAX_PARAM_BLOCKS; i += 1)
 	    pblock[i] = NULL;
 
-	AlembicPolyMeshModifierClassDesc::GetInstance()->MakeAutoParamBlocks(this);
+	GetAlembicMeshModifierClassDesc()->MakeAutoParamBlocks(this);
 }
 
 RefTargetHandle AlembicMeshModifier::Clone(RemapDir& remap) 
@@ -248,7 +257,7 @@ void AlembicMeshModifier::BeginEditParams (IObjParam  *ip, ULONG flags, Animatab
 	editMod  = this;
 
 	// throw up all the appropriate auto-rollouts
-	AlembicPolyMeshModifierDesc.BeginEditParams(ip, this, flags, prev);
+	AlembicMeshModifierDesc.BeginEditParams(ip, this, flags, prev);
 
     /*TimeValue t = GetCOREInterface()->GetTime();
     const char *strArchive = GetAlembicArchive().c_str();
@@ -268,7 +277,7 @@ void AlembicMeshModifier::EndEditParams (IObjParam *ip,ULONG flags,Animatable *n
 {
 	ESS_CPP_EXCEPTION_REPORTING_START
 
-	AlembicPolyMeshModifierDesc.EndEditParams(ip, this, flags, next);
+	AlembicMeshModifierDesc.EndEditParams(ip, this, flags, next);
 	this->ip = NULL;
 	editMod  = NULL;
 
@@ -294,12 +303,10 @@ RefResult AlembicMeshModifier::NotifyRefChanged (Interval changeInt, RefTargetHa
         */
         for (int i = 0; i < POLYMESHMOD_MAX_PARAM_BLOCKS; i += 1)
         {
-		    polymesh_props_desc.InvalidateUI(pblock[i]->LastNotifyParamID());
-            polymesh_preview_desc.InvalidateUI(pblock[i]->LastNotifyParamID());
-            // polymesh_render_desc.InvalidateUI(pblock[i]->LastNotifyParamID());
+			AlembicMeshModifierParams.InvalidateUI(pblock[i]->LastNotifyParamID());
         }
 		break;
-
+ 
     case REFMSG_WANT_SHOWPARAMLEVEL:
 
         break;

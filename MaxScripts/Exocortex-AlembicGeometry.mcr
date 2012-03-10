@@ -10,7 +10,7 @@ plugin simpleObject AlembicMesh
 		dataPath type:#string ui:dataPath default:"path"
 		currentTimeHidden type:#float default:0
 		timeOffset type:#float ui:timeOffset animatable:true default:0
-		timeScale type:#float ui:timeScale animatable:true default:0
+		timeScale type:#float ui:timeScale animatable:true default:1
 		faceSet type:#boolean ui:faceSet default:true
 		vertices type:#boolean ui:vertices default:true
 		normals type:#boolean ui:normals default:true

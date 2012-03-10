@@ -40,8 +40,7 @@ file(GLOB_RECURSE Scripts ${BASE_DIR}/MaxScripts/*.*)
 
 SOURCE_GROUP("Source Files" FILES ${Sources})   
 SOURCE_GROUP("Header Files" FILES ${Includes})
-SOURCE_GROUP("_Shared" FILES ${Shared})
-SOURCE_GROUP("Maxscripts" FILES ${Scripts})
+SOURCE_GROUP("_Maxscripts" FILES ${Scripts})
 
 if( Exocortex_SERVICES OR Exocortex_RLM_ONLY )
 	include_directories( ${Rlm_INCLUDE_DIR} )
@@ -74,7 +73,7 @@ if( Exocortex_RLM_ONLY )
 	link_directories( ${Rlm_LIBRARYDIR} )
 endif()
 
-add_library( ${PROJECT_NAME} SHARED ${Sources} ${Includes}  ${LOCAL_CMAKE_FILE_NAME}  ${Scripts} ${Shared} )
+add_library( ${PROJECT_NAME} SHARED ${Sources} ${Includes}  ${LOCAL_CMAKE_FILE_NAME} ${Scripts} )
 
 TARGET_LINK_LIBRARIES( ${PROJECT_NAME} ${ALEMBIC_ILMBASE_LIBS}
 	${ALEMBIC_ZLIB_LIBS} ${ALEMBIC_HDF5_LIBS} ${ALEMBIC_CORE_LIBS}

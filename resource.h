@@ -138,6 +138,19 @@
 #define IDD_CIRCLEPARAM3                30303
 #define IDC_THRESH_LABEL                65535
 #define IDC_MAX_SIZE_LABEL              65535
+#define	IDS_PARAMS	4000
+#define	IDS_FILENAME	4001
+#define	IDS_DATAPATH	4002
+#define	IDS_CURRENTTIMEHIDDEN	4003
+#define	IDS_TIMEOFFSET	4004
+#define	IDS_TIMESCALE	4005
+#define	IDS_FACESET	4006
+#define	IDS_VERTICES	4007
+#define	IDS_NORMALS	4008
+#define	IDS_UVS	4009
+#define	IDS_CLUSTERS	4010
+#define IDD_EMPTY 4011
+
 
 // Next default values for new objects
 // 

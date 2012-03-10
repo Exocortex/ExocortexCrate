@@ -2,7 +2,7 @@
 
 #include "Alembic.h"
 #include "AlembicArchiveStorage.h"
-#include "AlembicPolyMeshModifier.h"
+#include "AlembicMeshUtilities.h"
 #include "AlembicXFormCtrl.h"
 #include "AlembicCameraModifier.h"
 #include "AlembicSimpleParticle.h"
