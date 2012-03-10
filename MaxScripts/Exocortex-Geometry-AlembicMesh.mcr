@@ -16,7 +16,7 @@ plugin simpleObject AlembicMesh
 		normals type:#boolean ui:normals default:true
 		uvs type:#boolean ui:uvs default:true
 		clusters type:#boolean ui:clusters default:true
-		mute type:#boolean ui:mute animatable:true default:false
+		muted type:#boolean ui:muted animatable:true default:false
 	)
 
 	rollout params "Alembic"
@@ -30,7 +30,7 @@ plugin simpleObject AlembicMesh
 		checkbox normals "Normals"
 		checkbox uvs "UVs"
 		checkbox clusters "Clusters"
-		checkbox mute "Mute"
+		checkbox muted "Muted"
 	)
 
 	local update_currentTimeHidden_registered = false
@@ -51,7 +51,7 @@ plugin simpleObject AlembicMesh
 		
 		dataTime = timeOffset + currentTimeHidden  * timeScale
 		tempMesh = TriMesh()
-		if( not mute ) do
+		if( not muted ) do
 		(
 			tempMesh = ExocortexAlembic.importMesh tempMesh fileName dataPath dataTime faceSet vertices normals uvs clusters
 		)

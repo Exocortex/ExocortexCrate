@@ -1,5 +1,7 @@
-include "Exocortex-AlembicImportUI.mcr"
-include "Exocortex-AlembicExportUI.mcr"
+include "Exocortex-Dialog-AlembicImport.mcr"
+include "Exocortex-Dialog-AlembicExport.mcr"
+include "Exocortex-Geometry-AlembicMesh.mcr"
+include "Exocortex-Modifier-AlembicPointCache.mcr"
 
 ---------------------------------------------------------------------------------------------------------
 -- Function to create the menu items in the main menu bar
