@@ -13,11 +13,12 @@
 #include "AlembicNames.h"
 
 using namespace MaxSDK::AssetManagement;
-const int POLYMESHMOD_MAX_PARAM_BLOCKS = 1;
+
+#define MAX_PARAM_BLOCKS 1 // file local
 
 class AlembicMeshModifier : public Modifier {
 public:
-	IParamBlock2 *pblock[POLYMESHMOD_MAX_PARAM_BLOCKS];
+	IParamBlock2 *pblock[MAX_PARAM_BLOCKS];
 	static const BlockID PBLOCK_ID = 0;
 	
 	// Parameters in first block:
@@ -60,20 +61,17 @@ public:
 	// From BaseObject
 	CreateMouseCallBack* GetCreateMouseCallBack() {return NULL;} 
 
-	
-	int NumParamBlocks () { return POLYMESHMOD_MAX_PARAM_BLOCKS; }
+	int NumParamBlocks () { return MAX_PARAM_BLOCKS; }
 	IParamBlock2 *GetParamBlock (int i) { return pblock[i]; }
 	IParamBlock2 *GetParamBlockByID (short id);
 
-	int NumRefs() { return POLYMESHMOD_MAX_PARAM_BLOCKS; }
+	int NumRefs() { return MAX_PARAM_BLOCKS; }
 	RefTargetHandle GetReference(int i) { return pblock[i]; }
-
-
 private:
 	virtual void SetReference(int i, RefTargetHandle rtarg) { pblock[i] = (IParamBlock2 *) rtarg; }
 public:
 
-	int NumSubs() {return POLYMESHMOD_MAX_PARAM_BLOCKS;}
+	int NumSubs() {return MAX_PARAM_BLOCKS;}
 	Animatable* SubAnim(int i) { return GetReference(i); }
 	TSTR SubAnimName(int i);
 
@@ -105,7 +103,7 @@ ClassDesc2* GetAlembicMeshModifierClassDesc() {return &AlembicMeshModifierDesc;}
 
 static ParamBlockDesc2 AlembicMeshModifierParams(
 	AlembicMeshModifier::PBLOCK_ID,
-	_T("AlembicPolyMeshModifier"),
+	_T("AlembicMeshModifier"),
 	IDS_PROPS,
 	GetAlembicMeshModifierClassDesc(),
 	P_AUTO_CONSTRUCT | P_AUTO_UI,
@@ -155,7 +153,7 @@ static ParamBlockDesc2 AlembicMeshModifierParams(
 
 AlembicMeshModifier::AlembicMeshModifier() 
 {
-    for (int i = 0; i < POLYMESHMOD_MAX_PARAM_BLOCKS; i += 1)
+    for (int i = 0; i < MAX_PARAM_BLOCKS; i += 1)
 	    pblock[i] = NULL;
 
 	GetAlembicMeshModifierClassDesc()->MakeAutoParamBlocks(this);
@@ -165,7 +163,7 @@ RefTargetHandle AlembicMeshModifier::Clone(RemapDir& remap)
 {
 	AlembicMeshModifier *mod = new AlembicMeshModifier();
 
-    for (int i = 0; i < POLYMESHMOD_MAX_PARAM_BLOCKS; i += 1)
+    for (int i = 0; i < MAX_PARAM_BLOCKS; i += 1)
 	    mod->ReplaceReference (i, remap.CloneRef(pblock[i]));
 	
     BaseClone(this, mod, remap);
@@ -174,7 +172,7 @@ RefTargetHandle AlembicMeshModifier::Clone(RemapDir& remap)
 
 IParamBlock2 *AlembicMeshModifier::GetParamBlockByID (short id) 
 {
-    for (int i = 0; i < POLYMESHMOD_MAX_PARAM_BLOCKS; i += 1)
+    for (int i = 0; i < MAX_PARAM_BLOCKS; i += 1)
     {
         if (pblock[i] && pblock[i]->ID() == id)
             return pblock[i];
@@ -347,7 +345,7 @@ RefResult AlembicMeshModifier::NotifyRefChanged (Interval changeInt, RefTargetHa
 			return REF_STOP;
 		}
         */
-        for (int i = 0; i < POLYMESHMOD_MAX_PARAM_BLOCKS; i += 1)
+        for (int i = 0; i < MAX_PARAM_BLOCKS; i += 1)
         {
 			AlembicMeshModifierParams.InvalidateUI(pblock[i]->LastNotifyParamID());
         }
