@@ -1,5 +1,5 @@
 plugin modifier AlembicMeshModifier
-	name:"Alembic Mesh"
+	name:"Alembic Mesh Modifier"
 	classID:#(0x20730623, 0x5d650bdb)	-- keep in sync with AlembicNames.h
 	category:"Alembic" 
 	version:1

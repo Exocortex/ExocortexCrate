@@ -1,5 +1,5 @@
-plugin modifier AlembicCameraBaseModifier
-	name:"Alembic Camera"
+plugin modifier AlembicCameraModifier
+	name:"Alembic Camera Modifier"
 	classID:#(0x20730624, 0x3d650bdb)	-- keep in sync with AlembicNames.h
 	category:"Alembic" 
 	version:1

@@ -38,7 +38,7 @@ void AlembicImport_FillInCamera(alembic_fillcamera_options &options);
 //////////////////////////////////////////////////////////////////////////////////////////
 // Camera Modifier object
 class AlembicCameraBaseModifier : public Modifier 
-{
+{  
 public:
 	IParamBlock2 *pblock;
 	
@@ -66,9 +66,9 @@ public:
 	// From Animatable
 	RefTargetHandle Clone(RemapDir& remap);
 	void DeleteThis() { delete this; }
-	void GetClassName(TSTR& s) { s = _T("Alembic Camera Base"); }  
+	void GetClassName(TSTR& s) { s = _T("Alembic Camera Base Modifier"); }  
 	virtual Class_ID ClassID() { return ALEMBIC_CAMERA_BASE_MODIFIER_CLASSID; }		
-	TCHAR *GetObjectName() { return _T("Alembic Camera Base"); }
+	TCHAR *GetObjectName() { return _T("Alembic Camera Base Modifier"); }
 
 	// From modifier
 	ChannelMask ChannelsUsed() { return DISP_ATTRIB_CHANNEL; }		// TODO: What channels do we actually need?
@@ -115,7 +115,7 @@ class AlembicCameraBaseModifierClassDesc : public ClassDesc2
 public:
 	int 			IsPublic() { return 1; }
 	void *			Create(BOOL loading = FALSE) { return new AlembicCameraBaseModifier; }
-	const TCHAR *	ClassName() { return _T("Alembic Camera Base"); }
+	const TCHAR *	ClassName() { return _T("Alembic Camera Base Modifier"); }
 	SClass_ID		SuperClassID() { return OSM_CLASS_ID; }
 	Class_ID		ClassID() { return ALEMBIC_CAMERA_BASE_MODIFIER_CLASSID; }
 	const TCHAR* 	Category() { return EXOCORTEX_ALEMBIC_CATEGORY; }
@@ -168,7 +168,6 @@ static ParamBlockDesc2 AlembicCameraBaseModifierParams(
 AlembicCameraBaseModifier::AlembicCameraBaseModifier()
 {
 	pblock = NULL;
-
 	GetAlembicCameraBaseModifierClassDesc()->MakeAutoParamBlocks(this);
 }
 
