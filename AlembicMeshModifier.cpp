@@ -23,8 +23,8 @@ public:
 	// Parameters in first block:
 	enum 
 	{ 
-		ID_FILENAME,
-		ID_DATAPATH,
+		ID_PATH,
+		ID_IDENTIFIER,
 		ID_CURRENTTIMEHIDDEN,
 		ID_TIMEOFFSET,
 		ID_TIMESCALE,
@@ -48,7 +48,7 @@ public:
 	RefTargetHandle Clone(RemapDir& remap);
 	TCHAR *GetObjectName() { return _T("Alembic Mesh Modifier"); }
 
-	// From modifier
+	// From Modifier
 	ChannelMask ChannelsUsed()  { return TOPO_CHANNEL|GEOM_CHANNEL|TEXMAP_CHANNEL; }
 	ChannelMask ChannelsChanged() { return TOPO_CHANNEL|GEOM_CHANNEL|TEXMAP_CHANNEL; }
 	Class_ID InputType() { return polyObjectClassID; }
@@ -59,15 +59,16 @@ public:
 
 	// From BaseObject
 	CreateMouseCallBack* GetCreateMouseCallBack() {return NULL;} 
-	void BeginEditParams(IObjParam  *ip, ULONG flags,Animatable *prev);
-	void EndEditParams(IObjParam *ip,ULONG flags,Animatable *next);		
 
+	
 	int NumParamBlocks () { return POLYMESHMOD_MAX_PARAM_BLOCKS; }
 	IParamBlock2 *GetParamBlock (int i) { return pblock[i]; }
 	IParamBlock2 *GetParamBlockByID (short id);
 
 	int NumRefs() { return POLYMESHMOD_MAX_PARAM_BLOCKS; }
 	RefTargetHandle GetReference(int i) { return pblock[i]; }
+
+
 private:
 	virtual void SetReference(int i, RefTargetHandle rtarg) { pblock[i] = (IParamBlock2 *) rtarg; }
 public:
@@ -78,13 +79,7 @@ public:
 
 	RefResult NotifyRefChanged( Interval changeInt,RefTargetHandle hTarget, 
 		PartID& partID, RefMessage message);
-private:
-    alembic_nodeprops m_AlembicNodeProps;
-public:
-	void SetAlembicId(const std::string &file, const std::string &identifier);
-    void SetAlembicUpdateDataFillFlags(unsigned int nFlags) { m_AlembicNodeProps.m_UpdateDataFillFlags = nFlags; }
-    const std::string &GetAlembicArchive() { return m_AlembicNodeProps.m_File; }
-    const std::string &GetAlembicObjectId() { return m_AlembicNodeProps.m_Identifier; }
+
 };
 //--- ClassDescriptor and class vars ---------------------------------
 
@@ -120,10 +115,10 @@ static ParamBlockDesc2 AlembicMeshModifierParams(
 	IDD_EMPTY, IDS_PARAMS, 0, 0, NULL,
 
     // params
-	AlembicMeshModifier::ID_FILENAME, _T("fileName"), TYPE_FILENAME, 0, IDS_FILENAME,
+	AlembicMeshModifier::ID_PATH, _T("path"), TYPE_FILENAME, 0, IDS_PATH,
 		end,
         
-	AlembicMeshModifier::ID_DATAPATH, _T("dataPath"), TYPE_STRING, 0, IDS_DATAPATH,
+	AlembicMeshModifier::ID_IDENTIFIER, _T("identifier"), TYPE_STRING, 0, IDS_IDENTIFIER,
 		end,
 
 	AlembicMeshModifier::ID_CURRENTTIMEHIDDEN, _T("currentTimeHidden"), TYPE_FLOAT, 0, IDS_CURRENTTIMEHIDDEN,
@@ -205,11 +200,11 @@ void AlembicMeshModifier::ModifyObject (TimeValue t, ModContext &mc, ObjectState
 
 	TimeValue now =  GetCOREInterface12()->GetTime();
 
-    MCHAR const* strFileName = NULL;
-	this->pblock[0]->GetValue( AlembicMeshModifier::ID_FILENAME, now, strFileName, FOREVER);
+    MCHAR const* strPath = NULL;
+	this->pblock[0]->GetValue( AlembicMeshModifier::ID_PATH, now, strPath, FOREVER);
 
-	MCHAR const* strPath = NULL;
-	this->pblock[0]->GetValue( AlembicMeshModifier::ID_DATAPATH, now, strPath, FOREVER);
+	MCHAR const* strIdentifier = NULL;
+	this->pblock[0]->GetValue( AlembicMeshModifier::ID_IDENTIFIER, now, strIdentifier, FOREVER);
  
 	float fCurrentTimeHidden;
 	this->pblock[0]->GetValue( AlembicMeshModifier::ID_CURRENTTIMEHIDDEN, now, fCurrentTimeHidden, FOREVER);
@@ -237,37 +232,37 @@ void AlembicMeshModifier::ModifyObject (TimeValue t, ModContext &mc, ObjectState
 
 	float dataTime = fTimeOffset + fCurrentTimeHidden * fTimeScale;
 	
-	ESS_LOG_INFO( "strFileName: " << strFileName << " strPath: " << strPath << " fCurrentTimeHidden: " << fCurrentTimeHidden << " fTimeOffset: " << fTimeOffset << " fTimeScale: " << fTimeScale << 
+	ESS_LOG_INFO( "strPath: " << strPath << " strIdentifier: " << strIdentifier << " fCurrentTimeHidden: " << fCurrentTimeHidden << " fTimeOffset: " << fTimeOffset << " fTimeScale: " << fTimeScale << 
 		" bFaceSet: " << bFaceSet << " bVertices: " << bVertices << " bNormals: " << bNormals << " bUVs: " << bUVs << " bMuted: " << bMuted );
 
 	if( bMuted ) {
 		return;
 	}
 
-	if( strlen( strFileName ) == 0 ) {
+	if( strlen( strPath ) == 0 ) {
 	   ESS_LOG_ERROR( "No filename specified." );
 	   return;
 	}
-	if( strlen( strPath ) == 0 ) {
+	if( strlen( strIdentifier ) == 0 ) {
 	   ESS_LOG_ERROR( "No path specified." );
 	   return;
 	}
 
-	if( ! fs::exists( strFileName ) ) {
-		ESS_LOG_ERROR( "Can't file Alembic file.  FileName: " << strFileName );
+	if( ! fs::exists( strPath ) ) {
+		ESS_LOG_ERROR( "Can't file Alembic file.  Path: " << strPath );
 		return;
 	}
 
 	Alembic::AbcGeom::IObject iObj;
 	try {
-		iObj = getObjectFromArchive(strFileName, strPath);
+		iObj = getObjectFromArchive(strPath, strIdentifier);
 	} catch( std::exception exp ) {
-		ESS_LOG_ERROR( "Can not open Alembic data stream.  FileName: " << strFileName << " path: " << strPath << " reason: " << exp.what() );
+		ESS_LOG_ERROR( "Can not open Alembic data stream.  Path: " << strPath << " identifier: " << strIdentifier << " reason: " << exp.what() );
 		return;
 	}
 
 	if(!iObj.valid()) {
-		ESS_LOG_ERROR( "Not a valid Alembic data stream.  FileName: " << strFileName << " path: " << strPath );
+		ESS_LOG_ERROR( "Not a valid Alembic data stream.  Path: " << strPath << " identifier: " << strIdentifier );
 		return;
 	}
 
@@ -318,7 +313,7 @@ void AlembicMeshModifier::ModifyObject (TimeValue t, ModContext &mc, ObjectState
 	   AlembicImport_FillInPolyMesh(options);
    }
    catch(std::exception exp ) {
-		ESS_LOG_ERROR( "Error creating mesh from Alembic data stream.  FileName: " << strFileName << " path: " << strPath << " reason: " << exp.what() );
+		ESS_LOG_ERROR( "Error creating mesh from Alembic data stream.  Path: " << strPath << " identifier: " << strIdentifier << " reason: " << exp.what() );
 		return;
    }
 
@@ -333,40 +328,6 @@ void AlembicMeshModifier::ModifyObject (TimeValue t, ModContext &mc, ObjectState
    os->obj->UpdateValidity(TEXMAP_CHAN_NUM, ivalid);
 
    	ESS_CPP_EXCEPTION_REPORTING_END
-}
-
-void AlembicMeshModifier::BeginEditParams (IObjParam  *ip, ULONG flags, Animatable *prev) {
-	ESS_CPP_EXCEPTION_REPORTING_START
-
-	this->ip = ip;	
-	editMod  = this;
-
-	// throw up all the appropriate auto-rollouts
-	AlembicMeshModifierDesc.BeginEditParams(ip, this, flags, prev);
-
-    /*TimeValue t = GetCOREInterface()->GetTime();
-    const char *strArchive = GetAlembicArchive().c_str();
-    GetParamBlock(polymesh_preview)->SetValue(polymesh_preview_abc_archive, t, strArchive);
-
-    const char *strObjectId = GetAlembicObjectId().c_str();
-    GetParamBlock(polymesh_preview)->SetValue(polymesh_preview_abc_archive, t, strObjectId);
-    */
-
-	// Necessary?
-	NotifyDependents(FOREVER, PART_ALL, REFMSG_CHANGE);
-
-	ESS_CPP_EXCEPTION_REPORTING_END
-}
-
-void AlembicMeshModifier::EndEditParams (IObjParam *ip,ULONG flags,Animatable *next) 
-{
-	ESS_CPP_EXCEPTION_REPORTING_START
-
-	AlembicMeshModifierDesc.EndEditParams(ip, this, flags, next);
-	this->ip = NULL;
-	editMod  = NULL;
-
-	ESS_CPP_EXCEPTION_REPORTING_END
 }
 
 RefResult AlembicMeshModifier::NotifyRefChanged (Interval changeInt, RefTargetHandle hTarget,
@@ -400,12 +361,6 @@ RefResult AlembicMeshModifier::NotifyRefChanged (Interval changeInt, RefTargetHa
 	ESS_CPP_EXCEPTION_REPORTING_END
 
 	return REF_SUCCEED;
-}
-
-void AlembicMeshModifier::SetAlembicId(const std::string &file, const std::string &identifier)
-{
-    m_AlembicNodeProps.m_File = file;
-    m_AlembicNodeProps.m_Identifier = identifier;
 }
 
 TSTR AlembicMeshModifier::SubAnimName(int i)

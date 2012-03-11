@@ -9,8 +9,8 @@ plugin modifier AlembicMeshPointCacheModifier
 (
 	parameters pblock rollout:params
 	(
-		fileName type:#filename ui:fileName default:"filename"
-		dataPath type:#string ui:dataPath default:"path"
+		path type:#filename ui:path default:""
+		identifier type:#string ui:identifier default:""
 		currentTimeHidden type:#float default:0
 		timeOffset type:#float ui:timeOffset animatable:true default:0
 		timeScale type:#float ui:timeScale animatable:true default:1
@@ -21,8 +21,8 @@ plugin modifier AlembicMeshPointCacheModifier
 		clusters type:#boolean ui:clusters default:true
 		muted type:#boolean ui:muted animatable:true default:false
 		
-		on fileName set val do delegate.fileName = val
-		on dataPath set val do delegate.dataPath = val
+		on path set val do delegate.path = val
+		on identifier set val do delegate.identifier = val
 		on currentTimeHidden set val do delegate.currentTimeHidden = val
 		on timeOffset set val do delegate.timeOffset = val
 		on timeScale set val do delegate.timeScale = val
@@ -36,8 +36,8 @@ plugin modifier AlembicMeshPointCacheModifier
 
 	rollout params "Alembic"
 	(
-		edittext fileName "File Name"
-		edittext dataPath "Data Path"
+		edittext path "Path"
+		edittext identifier "Identifier"
 		spinner timeOffset "Time Offset" range:[-1000,1000,0]
 		spinner timeScale "Time Scale" range:[-1000,1000,0]
 		checkbox faceSet "Topology"

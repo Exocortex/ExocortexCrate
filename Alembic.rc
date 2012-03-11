@@ -218,8 +218,8 @@ END
 STRINGTABLE 
 BEGIN
 	IDS_PARAMS	"Parameters"
-	IDS_FILENAME "Filename"
-	IDS_DATAPATH "Path"
+	IDS_PATH "Path"
+	IDS_IDENTIFIER "Identifier"
 	IDS_CURRENTTIMEHIDDEN "CurrentTimeHidden"
 	IDS_TIMEOFFSET "Time Offset"
 	IDS_TIMESCALE "Time Scale"

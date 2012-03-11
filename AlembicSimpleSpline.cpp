@@ -300,7 +300,7 @@ void AlembicSimpleSpline::BeginEditParams( IObjParam *ip, ULONG flags,Animatable
 				APPENDROLL_CLOSED);
 			}
 
-		pmapParam = CreateCPParamMap(
+		pmapParam = CreateCPParamMap( 
 			descParam,PARAMDESC_LENGTH,
 			pblock,
 			ip,

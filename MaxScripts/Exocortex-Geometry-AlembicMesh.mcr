@@ -6,8 +6,8 @@ plugin simpleObject AlembicMesh
 	
 	parameters main rollout:params
 	(
-		fileName type:#string ui:fileName default:"filename"
-		dataPath type:#string ui:dataPath default:"path"
+		path type:#string ui:path default:""
+		identifier type:#string ui:identifier default:""
 		currentTimeHidden type:#float default:0
 		timeOffset type:#float ui:timeOffset animatable:true default:0
 		timeScale type:#float ui:timeScale animatable:true default:1
@@ -21,8 +21,8 @@ plugin simpleObject AlembicMesh
 
 	rollout params "Alembic"
 	(
-		edittext fileName "File Name"
-		edittext dataPath "Data Path"
+		edittext path "Path"
+		edittext identifier "Identifier"
 		spinner timeOffset "Time Offset" range:[-1000,1000,0]
 		spinner timeScale "Time Scale" range:[-1000,1000,0]
 		checkbox faceSet "Topology"
@@ -53,7 +53,7 @@ plugin simpleObject AlembicMesh
 		tempMesh = TriMesh()
 		if( not muted ) do
 		(
-			tempMesh = ExocortexAlembic.importMesh tempMesh fileName dataPath dataTime faceSet vertices normals uvs clusters
+			tempMesh = ExocortexAlembic.importMesh tempMesh path identifier dataTime faceSet vertices normals uvs clusters
 		)
 		mesh = tempMesh;
 	)

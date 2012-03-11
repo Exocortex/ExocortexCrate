@@ -42,7 +42,7 @@ public:
             TYPE_INT,               //* Return type * /
             0,                      //* Flags  * /
             6,                      //* Number  of arguments * /
-                _M("fileName"),     //* argument internal name * /
+                _M("path"),     //* argument internal name * /
                 0,                  //* argument localizable name string resource id * /
                 TYPE_FILENAME,      //* arg type * /
                 _M("importNormals"),//* argument internal name * /
@@ -72,10 +72,10 @@ public:
                 _M("mesh"),     //* argument internal name * /
                 0,                  //* argument localizable name string resource id * /
                 TYPE_MESH,      //* arg type * /
-                _M("fileName"),     //* argument internal name * /
+                _M("path"),     //* argument internal name * /
                 0,                  //* argument localizable name string resource id * /
                 TYPE_FILENAME,      //* arg type * /
-                _M("path"),     //* argument internal name * /
+                _M("identifier"),     //* argument internal name * /
                 0,                  //* argument localizable name string resource id * /
                 TYPE_STRING,      //* arg type * /
                 _M("time"),     //* argument internal name * /
@@ -105,7 +105,7 @@ public:
             TYPE_INT,               //* Return type * /
             0,                      //* Flags  * /
             11,                     //* Number  of arguments * /
-                _M("fileName"),     //* argument internal name * /
+                _M("path"),     //* argument internal name * /
                 0,                  //* argument localizable name string resource id * /
                 TYPE_FILENAME,      //* arg type * /
                 _M("frameIn"),      //* argument internal name * /
@@ -141,14 +141,14 @@ public:
             end); 	
     }
 
-    static int ExocortexAlembicImport(MCHAR * strFileName, BOOL bImportNormals, BOOL bImportUVs, BOOL bImportClusters, BOOL bAttachToExisting, int iVisOption);
+    static int ExocortexAlembicImport(MCHAR * strPath, BOOL bImportNormals, BOOL bImportUVs, BOOL bImportClusters, BOOL bAttachToExisting, int iVisOption);
     static Mesh* ExocortexAlembicImportMesh(
 		Mesh* pMesh,
-		MCHAR * strFileName, MCHAR * strPath,
+		MCHAR * strPath, MCHAR * strIdentifier,
 		float time, 
 		BOOL bImportFaceList, BOOL bImportVertices, BOOL bImportNormals, BOOL bImportUVs, BOOL bImportClusters
 		);
-	static int ExocortexAlembicExport(MCHAR * strFileName, int iFrameIn, int iFrameOut, int iFrameSteps, int iFrameSubSteps, int iType,
+	static int ExocortexAlembicExport(MCHAR * strPath, int iFrameIn, int iFrameOut, int iFrameSteps, int iFrameSubSteps, int iType,
                                       BOOL bExportUV, BOOL bExportClusters, BOOL bExportEnvelopeBindPose, BOOL bExportDynamicTopology, BOOL bExportSelected);
 
     BEGIN_FUNCTION_MAP
@@ -161,7 +161,7 @@ public:
 const Interface_ID ExocortexAlembicStaticInterface::id = Interface_ID(0x4bd4297f, 0x4e8403d7);
 static ExocortexAlembicStaticInterface exocortexAlembic;
 
-int ExocortexAlembicStaticInterface::ExocortexAlembicImport(MCHAR* strFileName, BOOL bImportNormals, BOOL bImportUVs, BOOL bImportClusters, BOOL bAttachToExisting, int iVisOption)
+int ExocortexAlembicStaticInterface::ExocortexAlembicImport(MCHAR* strPath, BOOL bImportNormals, BOOL bImportUVs, BOOL bImportClusters, BOOL bAttachToExisting, int iVisOption)
 {
 	ESS_CPP_EXCEPTION_REPORTING_START
 
@@ -170,7 +170,7 @@ int ExocortexAlembicStaticInterface::ExocortexAlembicImport(MCHAR* strFileName, 
 		return alembic_failure;
 	}
 
-	ESS_LOG_INFO( "ExocortexAlembicImport( strFileName=" << strFileName <<
+	ESS_LOG_INFO( "ExocortexAlembicImport( strPath=" << strPath <<
 		", bImportNormals=" << bImportNormals << ", bImportUVs=" << bImportUVs <<
 		", bImportClusters=" << bImportClusters << ", bAttachToExisting=" << bAttachToExisting <<
 		", iVisOption=" << iVisOption << " )" );
@@ -183,17 +183,17 @@ int ExocortexAlembicStaticInterface::ExocortexAlembicImport(MCHAR* strFileName, 
     importOptions.importVisibility = static_cast<VisImportOption>(iVisOption);
 
 	// If no filename, then return an error code
-	if(strFileName[0] == 0) {
+	if(strPath[0] == 0) {
 	   ESS_LOG_ERROR( "No filename specified." );
 	   return alembic_invalidarg;
 	}
 
-	if( ! fs::exists( strFileName ) ) {
-		ESS_LOG_ERROR( "Can't file Alembic file.  FileName: " << strFileName );
+	if( ! fs::exists( strPath ) ) {
+		ESS_LOG_ERROR( "Can't file Alembic file.  Path: " << strPath );
 		return alembic_invalidarg;
 	}
 
-	std::string file(strFileName);
+	std::string file(strPath);
 
    // Try opening up the archive
    Alembic::Abc::IArchive *pArchive = getArchiveFromID(file);
@@ -262,7 +262,7 @@ int ExocortexAlembicStaticInterface::ExocortexAlembicImport(MCHAR* strFileName, 
 }
 
 
-Mesh* ExocortexAlembicStaticInterface::ExocortexAlembicImportMesh(Mesh* pMesh, MCHAR* strFileName, MCHAR* strPath, float time, BOOL bImportFaceList, BOOL bImportVertices, BOOL bImportNormals, BOOL bImportUVs, BOOL bImportClusters )
+Mesh* ExocortexAlembicStaticInterface::ExocortexAlembicImportMesh(Mesh* pMesh, MCHAR* strPath, MCHAR* strIdentifier, float time, BOOL bImportFaceList, BOOL bImportVertices, BOOL bImportNormals, BOOL bImportUVs, BOOL bImportClusters )
 {
 	if( pMesh == NULL ) {
 		pMesh = CreateNewMesh();
@@ -275,35 +275,35 @@ Mesh* ExocortexAlembicStaticInterface::ExocortexAlembicImportMesh(Mesh* pMesh, M
 		return pMesh;
 	}
 
-	ESS_LOG_INFO( "ExocortexAlembicImportMesh( strFileName=" << strFileName <<
-		", strPath=" << strPath << 
+	ESS_LOG_INFO( "ExocortexAlembicImportMesh( strPath=" << strPath <<
+		", strIdentifier=" << strIdentifier << 
 		", bImportFaceList=" << bImportFaceList << ", bImportVertices=" << bImportVertices <<
 		", bImportNormals=" << bImportNormals << ", bImportUVs=" << bImportUVs <<
 		", bImportClusters=" << bImportClusters << " )" );
 
-	if( strlen( strFileName ) == 0 ) {
+	if( strlen( strPath ) == 0 ) {
 	   ESS_LOG_ERROR( "No filename specified." );
 	   return pMesh;
 	}
-	if( strlen( strPath ) == 0 ) {
+	if( strlen( strIdentifier ) == 0 ) {
 	   ESS_LOG_ERROR( "No path specified." );
 		return pMesh;
 	}
-	if( ! fs::exists( strFileName ) ) {
-		ESS_LOG_ERROR( "Can't file Alembic file.  FileName: " << strFileName );
+	if( ! fs::exists( strPath ) ) {
+		ESS_LOG_ERROR( "Can't file Alembic file.  Path: " << strPath );
 		return pMesh;
 	}
 
 	Alembic::AbcGeom::IObject iObj;
 	try {
-		iObj = getObjectFromArchive(strFileName, strPath);
+		iObj = getObjectFromArchive(strPath, strIdentifier);
 	} catch( std::exception exp ) {
-		ESS_LOG_ERROR( "Can not open Alembic data stream.  FileName: " << strFileName << " path: " << strPath << " reason: " << exp.what() );
+		ESS_LOG_ERROR( "Can not open Alembic data stream.  Path: " << strPath << " identifier: " << strIdentifier << " reason: " << exp.what() );
 		return pMesh;
 	}
 
 	if(!iObj.valid()) {
-		ESS_LOG_ERROR( "Not a valid Alembic data stream.  FileName: " << strFileName << " path: " << strPath );
+		ESS_LOG_ERROR( "Not a valid Alembic data stream.  Path: " << strPath << " identifier: " << strIdentifier );
 		return pMesh;
 	}
 
@@ -330,7 +330,7 @@ Mesh* ExocortexAlembicStaticInterface::ExocortexAlembicImportMesh(Mesh* pMesh, M
 		pMesh = options.pMesh;
    }
    catch(std::exception exp ) {
-		ESS_LOG_ERROR( "Error creating mesh from Alembic data stream.  FileName: " << strFileName << " path: " << strPath << " reason: " << exp.what() );
+		ESS_LOG_ERROR( "Error creating mesh from Alembic data stream.  Path: " << strPath << " identifier: " << strIdentifier << " reason: " << exp.what() );
 		return pMesh;
    }
 
@@ -434,7 +434,7 @@ Mesh* ExocortexAlembicStaticInterface::ExocortexAlembicImportMesh(Mesh* pMesh, M
 	return pMesh;
 }
 
-int ExocortexAlembicStaticInterface::ExocortexAlembicExport(MCHAR * strFileName, int iFrameIn, int iFrameOut, int iFrameSteps, int iFrameSubSteps, int iType,
+int ExocortexAlembicStaticInterface::ExocortexAlembicExport(MCHAR * strPath, int iFrameIn, int iFrameOut, int iFrameSteps, int iFrameSubSteps, int iType,
                                                             BOOL bExportUV, BOOL bExportClusters, BOOL bExportEnvelopeBindPose, BOOL bExportDynamicTopology,
                                                             BOOL bExportSelected)
 {
@@ -445,7 +445,7 @@ int ExocortexAlembicStaticInterface::ExocortexAlembicExport(MCHAR * strFileName,
 		return alembic_failure;
 	}
 
-	ESS_LOG_INFO( "ExocortexAlembicExport( strFileName=" << strFileName <<
+	ESS_LOG_INFO( "ExocortexAlembicExport( strPath=" << strPath <<
 		", iFrameIn=" << iFrameIn << ", iFrameOut=" << iFrameOut <<
 		", iFrameSteps=" << iFrameSteps << ", iFrameSubSteps=" << iFrameSubSteps <<
 		", iType=" << iType  << ", bExportUV=" << bExportUV <<
@@ -463,7 +463,7 @@ int ExocortexAlembicStaticInterface::ExocortexAlembicExport(MCHAR * strFileName,
     ObjectList allSceneObjects(currentScene);
     Object *currentObject = NULL;
 
-    if (strlen(strFileName) <= 0)
+    if (strlen(strPath) <= 0)
     {
         ESS_LOG_ERROR( "No filename specified." );
 		i->ProgressEnd();
@@ -471,7 +471,7 @@ int ExocortexAlembicStaticInterface::ExocortexAlembicExport(MCHAR * strFileName,
     }
 
     // Delete this archive if we have already imported it and are currently using it
-    deleteArchive(strFileName);
+    deleteArchive(strPath);
 
     // Keep track of the min/max values when processing multiple jobs
     double dbFrameMinIn = 1000000.0;
@@ -516,7 +516,7 @@ int ExocortexAlembicStaticInterface::ExocortexAlembicExport(MCHAR * strFileName,
         frames.push_back(dbFrame);
     }
 
-    AlembicWriteJob *job = new AlembicWriteJob(strFileName, allSceneObjects, frames, i);
+    AlembicWriteJob *job = new AlembicWriteJob(strPath, allSceneObjects, frames, i);
     job->SetOption("exportNormals", eTopologyType != SURFACE);
     job->SetOption("exportUVs", (bExportUV != FALSE));
     job->SetOption("exportFaceSets", eTopologyType != NORMAL);
