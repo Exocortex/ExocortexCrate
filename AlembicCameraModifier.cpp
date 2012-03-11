@@ -5,6 +5,7 @@
 #include "utility.h"
 #include "iparamb2.h"
 #include "AlembicVisCtrl.h"
+#include "AlembicNames.h"
 
 extern HINSTANCE hInstance;
 
@@ -103,7 +104,7 @@ public:
 	const TCHAR *	ClassName() { return _T("Alembic Camera"); }
 	SClass_ID		SuperClassID() { return OSM_CLASS_ID; }
 	Class_ID		ClassID() { return EXOCORTEX_ALEMBIC_CAMERA_MODIFIER_ID; }
-	const TCHAR* 	Category() { return _T("MAX STANDARD"); }
+	const TCHAR* 	Category() { return EXOCORTEX_ALEMBIC_CATEGORY; }
 	const TCHAR*	InternalName() { return _T("AlembicCameraModifier"); }  // returns fixed parsable name (scripter-visible name)
 	HINSTANCE		HInstance() { return hInstance; }                       // returns owning module handle
 };

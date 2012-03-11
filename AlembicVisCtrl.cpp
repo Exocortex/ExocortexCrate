@@ -6,6 +6,7 @@
 #include "dummy.h"
 #include <ILockedTracks.h>
 #include "iparamb2.h"
+#include "AlembicNames.h"
 
 #define EXOCORTEX_ALEMBIC_VIS_CTRL_ID Class_ID(0x27e512c0, 0x389b3971)
 
@@ -128,7 +129,7 @@ public:
 
 	// If the plugin is an Object or Texture, this function returns
 	// the category it can be assigned to.
-	const MCHAR* Category()			{ static const MSTR str("Exocortex Alembic for 3DS Max"); return str; }
+	const MCHAR* Category()			{ return EXOCORTEX_ALEMBIC_CATEGORY; }
 
 	// Return an instance of this plug-in.  Max will call this function
 	// when it wants to start using our plug-in

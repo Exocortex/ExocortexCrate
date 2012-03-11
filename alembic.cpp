@@ -10,6 +10,7 @@
 #include "ObjectEntry.h"
 #include "resource.h"
 #include "utility.h"
+#include "AlembicNames.h"
 
 // Dummy function for progress bar
 DWORD WINAPI fn(LPVOID arg)
@@ -138,8 +139,7 @@ public:
     const TCHAR *	ClassName() { return _T("AlembicExporter"); }
     SClass_ID		SuperClassID() { return SCENE_EXPORT_CLASS_ID; }
     Class_ID		ClassID() { return ALEMBICEXPORTER_CLASS_ID; }
-    const TCHAR* 	Category() { return _T("Sparks"); }
-
+    const TCHAR* 	Category() { return EXOCORTEX_ALEMBIC_CATEGORY; }
     const TCHAR*	InternalName() { return _T("AlembicExporter"); }	// returns fixed parsable name (scripter-visible name)
     HINSTANCE		HInstance() { return hInstance; }				// returns owning module handle
 };

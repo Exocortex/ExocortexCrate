@@ -9,6 +9,7 @@
 #include "alembic.h"
 #include "AlembicXForm.h"
 #include "AlembicVisCtrl.h"
+#include "AlembicNames.h"
 
 using namespace MaxSDK::AssetManagement;
 const int POLYMESHMOD_MAX_PARAM_BLOCKS = 2;
@@ -81,7 +82,7 @@ class AlembicPolyMeshModifierClassDesc : public ClassDesc2 {
 	const TCHAR *	ClassName() { return _T("Alembic PolyMesh"); }
 	SClass_ID		SuperClassID() { return OSM_CLASS_ID; }
 	Class_ID		ClassID() { return EXOCORTEX_ALEMBIC_POLYMESH_MODIFIER_ID; }
-	const TCHAR* 	Category() { return _T("Exocortex Alembic for 3DS Max"); }
+	const TCHAR* 	Category() { return EXOCORTEX_ALEMBIC_CATEGORY; }
 	const TCHAR*	InternalName() { return _T("AlembicPolyMeshModifier"); }	// returns fixed parsable name (scripter-visible name)
 	HINSTANCE		HInstance() { return hInstance; }			// returns owning module handle
 };

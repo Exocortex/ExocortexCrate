@@ -47,7 +47,7 @@ fn alembicImportDialog =
 -- MacroScript to link the menu items to MAXScript functions
 
 macroScript AlembicImportUI
-    category:"Exocortex" 
+    category:"Alembic" 
     buttonText:"Alembic Import..."
     tooltip:"Alembic Import..."
 (

@@ -1,6 +1,6 @@
 plugin simpleObject AlembicMesh
 	name:"Alembic Mesh"
-	category:"Alembic Objects"
+	category:"Alembic"
 	classID:#(0xe855567c, 0xbcd73b8b)
 (
 	

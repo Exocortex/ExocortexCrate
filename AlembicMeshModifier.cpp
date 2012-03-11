@@ -10,6 +10,7 @@
 #include "AlembicXForm.h"
 #include "AlembicVisCtrl.h"
 #include "ParamBlockUtility.h"
+#include "AlembicNames.h"
 
 using namespace MaxSDK::AssetManagement;
 const int POLYMESHMOD_MAX_PARAM_BLOCKS = 1;
@@ -97,7 +98,7 @@ class AlembicMeshModifierClassDesc : public ClassDesc2 {
 	const TCHAR *	ClassName() { return _T("Alembic Mesh Modifier"); }
 	SClass_ID		SuperClassID() { return OSM_CLASS_ID; }
 	Class_ID		ClassID() { return EXOCORTEX_ALEMBIC_MESH_MODIFIER_ID; }
-	const TCHAR* 	Category() { return _T("Alembic"); }
+	const TCHAR* 	Category() { return EXOCORTEX_ALEMBIC_CATEGORY; }
 	const TCHAR*	InternalName() { return _T("AlembicMeshModifier"); }	// returns fixed parsable name (scripter-visible name)
 	HINSTANCE		HInstance() { return hInstance; }			// returns owning module handle
 };
@@ -209,7 +210,7 @@ void AlembicMeshModifier::ModifyObject (TimeValue t, ModContext &mc, ObjectState
 
 	MCHAR const* strPath = NULL;
 	this->pblock[0]->GetValue( AlembicMeshModifier::ID_DATAPATH, now, strPath, FOREVER);
-
+ 
 	float fCurrentTimeHidden;
 	this->pblock[0]->GetValue( AlembicMeshModifier::ID_CURRENTTIMEHIDDEN, now, fCurrentTimeHidden, FOREVER);
 
@@ -234,10 +235,11 @@ void AlembicMeshModifier::ModifyObject (TimeValue t, ModContext &mc, ObjectState
 	BOOL bMuted;
 	this->pblock[0]->GetValue( AlembicMeshModifier::ID_MUTED, now, bMuted, FOREVER);
 
-	ESS_LOG_INFO( "strFileName: " << strFileName << " strPath: " << strPath << " fCurrentTimeHidden: " << fCurrentTimeHidden <<
+	float dataTime = fTimeOffset + fCurrentTimeHidden * fTimeScale;
+	
+	ESS_LOG_INFO( "strFileName: " << strFileName << " strPath: " << strPath << " fCurrentTimeHidden: " << fCurrentTimeHidden << " fTimeOffset: " << fTimeOffset << " fTimeScale: " << fTimeScale << 
 		" bFaceSet: " << bFaceSet << " bVertices: " << bVertices << " bNormals: " << bNormals << " bUVs: " << bUVs << " bMuted: " << bMuted );
 
-	float dataTime = fTimeOffset + fCurrentTimeHidden * fTimeScale;
 	if( bMuted ) {
 		return;
 	}

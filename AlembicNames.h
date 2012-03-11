@@ -1,0 +1,10 @@
+#ifndef __ALEMBIC_NAMES_H__
+#define __ALEMBIC_NAMES_H__
+
+#define EXOCORTEX_ALEMBIC_CATEGORY _T("Alembic")
+
+//#define EXOCORTEX_ALEMBIC_MESH_GEOMETRY _T("EA Mesh")
+//#define EXOCORTEX_ALEMBIC_SIMPLE_PARTICLES _T("EA Particles")
+//#define EXOCORTEX_ALEMBIC_POINT_CACHE_MODIFIER _T("EA Point Cache")
+
+#endif //__ALEMBIC_NAMES_H__

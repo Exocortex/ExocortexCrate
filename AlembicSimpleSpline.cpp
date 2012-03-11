@@ -10,6 +10,8 @@
 #include <linshape.h>
 #include <splshape.h>
 
+#include "AlembicNames.h"
+
 class AlembicSimpleSpline;
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -110,7 +112,7 @@ class AlembicSimpleSplineClassDesc:public ClassDesc {
 	const TCHAR *	ClassName() { return _T("Spline"); }
 	SClass_ID		SuperClassID() { return SHAPE_CLASS_ID; }
    	Class_ID		ClassID() { return EXOCORTEX_ALEMBIC_SIMPLE_SPLINE_ID; }
-    const TCHAR* 	Category() { return _T("Alembic Curves");  }
+    const TCHAR* 	Category() { return EXOCORTEX_ALEMBIC_CATEGORY;  }
 	void			ResetClassParams(BOOL fileReset);
 	};
 
