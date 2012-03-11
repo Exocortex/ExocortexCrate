@@ -463,7 +463,7 @@ CreateMouseCallBack* AlembicSimpleSpline::GetCreateMouseCallBack()
 RefTargetHandle AlembicSimpleSpline::Clone(RemapDir& remap) 
 {
     AlembicSimpleSpline* newob = new AlembicSimpleSpline();
-    newob->SimpleSplineClone(this, remap);
+    newob->SimpleSplineClone(this, remap); 
     newob->ReplaceReference(USERPBLOCK,remap.CloneRef(pblock));	
     newob->ivalid.SetEmpty();	
     BaseClone(this, newob, remap);

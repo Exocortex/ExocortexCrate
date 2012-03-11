@@ -285,6 +285,10 @@ Mesh* ExocortexAlembicStaticInterface::ExocortexAlembicImportMesh(Mesh* pMesh, M
 	   ESS_LOG_ERROR( "No filename specified." );
 	   return pMesh;
 	}
+	if( strlen( strPath ) == 0 ) {
+	   ESS_LOG_ERROR( "No path specified." );
+		return pMesh;
+	}
 	if( ! fs::exists( strFileName ) ) {
 		ESS_LOG_ERROR( "Can't file Alembic file.  FileName: " << strFileName );
 		return pMesh;

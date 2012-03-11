@@ -439,7 +439,17 @@ TSTR AlembicPolyMeshModifier::SubAnimName(int i)
         return "";
 }
 
+
+void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options);
+
 void AlembicImport_FillInPolyMesh(alembic_fillmesh_options &options)
+{
+	ESS_STRUCTURED_EXCEPTION_REPORTING_START
+		AlembicImport_FillInPolyMesh_Internal( options );
+	ESS_STRUCTURED_EXCEPTION_REPORTING_END
+}
+
+void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
 {
 	float masterScaleUnitMeters = (float)GetMasterScale(UNITS_METERS);
 
@@ -952,6 +962,7 @@ void AlembicImport_FillInPolyMesh(alembic_fillmesh_options &options)
        options.pMNMesh->InvalidateGeomCache();
        options.pMNMesh->InvalidateTopoCache();
 
+	   // this can fail if the mesh isn't correctly filled in.
        if (!options.pMNMesh->GetFlag(MN_MESH_FILLED_IN ))
            options.pMNMesh->FillInMesh();
    }

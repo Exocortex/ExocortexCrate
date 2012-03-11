@@ -21,7 +21,6 @@ plugin modifier AlembicMeshPointCacheModifier
 		clusters type:#boolean ui:clusters default:true
 		muted type:#boolean ui:muted animatable:true default:false
 		
-		
 		on fileName set val do delegate.fileName = val
 		on dataPath set val do delegate.dataPath = val
 		on currentTimeHidden set val do delegate.currentTimeHidden = val
@@ -53,17 +52,62 @@ plugin modifier AlembicMeshPointCacheModifier
 	
 	fn update_currentTimeHidden =
 	(
+		if( not update_currentTimeHidden_registered ) do
+		(
+			print "currentTimeHidden registered"
+			registerTimeCallback update_currentTimeHidden
+			update_currentTimeHidden_registered = true
+		)
 		currentTimeHidden = currentTime / frameRate
+		delegate.currentTimeHidden = currentTimeHidden
 	)
 		
 	on create do
 	(
-		if( not update_currentTimeHidden_registered ) do
-		(
-			currentTimeHidden = currentTime / frameRate
-			registerTimeCallback update_currentTimeHidden
-			update_currentTimeHidden_registered = true
-		)
+		format "on create : % \n" this
+		format "current obj: %\n" $
+		update_currentTimeHidden()
 	)
-
+	on postCreate do 
+	(
+		format "on postCreate : %\n" this
+		format "  current obj: %\n" $
+	)
+	on load do
+	(
+		format "on load : %\n" this
+		format "current obj: %\n" $
+		update_currentTimeHidden()
+	)
+	on postLoad do 
+	(
+		format "on postLoad : %\n" this
+		format "current obj: %\n" $
+	)
+	on clone orig do 
+	(
+		format "on clone: % : % : % : %\n" this orig
+		format "current obj: %\n" $
+	)
+	on update do 
+	(
+		format "on update : %\n" this
+		format "current obj: %\n" $
+		update_currentTimeHidden()
+	)
+	on attachedToNode node do
+	(
+		format "on attachedToNode: % %\n" this node
+		format "current obj: %\n" $
+	)
+	on detachedFromNode node do
+	(
+		format "on detachedFromNode : % %\n" this node
+		format "current obj: %\n" $
+	)
+	on deleted do 
+	(
+		format "on deleted : % \n" this
+		format "current obj: %\n" $
+	)
 )

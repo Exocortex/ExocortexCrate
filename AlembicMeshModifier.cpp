@@ -207,8 +207,8 @@ void AlembicMeshModifier::ModifyObject (TimeValue t, ModContext &mc, ObjectState
     MCHAR const* strFileName = NULL;
 	this->pblock[0]->GetValue( AlembicMeshModifier::ID_FILENAME, now, strFileName, FOREVER);
 
-	MCHAR const* strDataPath = NULL;
-	this->pblock[0]->GetValue( AlembicMeshModifier::ID_DATAPATH, now, strDataPath, FOREVER);
+	MCHAR const* strPath = NULL;
+	this->pblock[0]->GetValue( AlembicMeshModifier::ID_DATAPATH, now, strPath, FOREVER);
 
 	float fCurrentTimeHidden;
 	this->pblock[0]->GetValue( AlembicMeshModifier::ID_CURRENTTIMEHIDDEN, now, fCurrentTimeHidden, FOREVER);
@@ -217,7 +217,7 @@ void AlembicMeshModifier::ModifyObject (TimeValue t, ModContext &mc, ObjectState
 	this->pblock[0]->GetValue( AlembicMeshModifier::ID_TIMEOFFSET, now, fTimeOffset, FOREVER);
 
 	float fTimeScale;
-	this->pblock[0]->GetValue( AlembicMeshModifier::ID_TIMESCALE, now, fTimeScale, FOREVER);
+	this->pblock[0]->GetValue( AlembicMeshModifier::ID_TIMESCALE, now, fTimeScale, FOREVER); 
 
 	BOOL bFaceSet;
 	this->pblock[0]->GetValue( AlembicMeshModifier::ID_FACESET, now, bFaceSet, FOREVER);
@@ -231,18 +231,47 @@ void AlembicMeshModifier::ModifyObject (TimeValue t, ModContext &mc, ObjectState
 	BOOL bUVs;
 	this->pblock[0]->GetValue( AlembicMeshModifier::ID_UVS, now, bUVs, FOREVER);
 
-	ESS_LOG_INFO( "strFileName: " << strFileName << " strDataPath: " << strDataPath << " fCurrentTimeHidden: " << fCurrentTimeHidden <<
-		" bFaceSet: " << bFaceSet << " bVertices: " << bVertices << " bNormals: " << bNormals << " bUVs: " << bUVs );
+	BOOL bMuted;
+	this->pblock[0]->GetValue( AlembicMeshModifier::ID_MUTED, now, bMuted, FOREVER);
 
-	Alembic::AbcGeom::IObject iObj = getObjectFromArchive(strFileName, strDataPath);
+	ESS_LOG_INFO( "strFileName: " << strFileName << " strPath: " << strPath << " fCurrentTimeHidden: " << fCurrentTimeHidden <<
+		" bFaceSet: " << bFaceSet << " bVertices: " << bVertices << " bNormals: " << bNormals << " bUVs: " << bUVs << " bMuted: " << bMuted );
+
+	float dataTime = fTimeOffset + fCurrentTimeHidden * fTimeScale;
+	if( bMuted ) {
+		return;
+	}
+
+	if( strlen( strFileName ) == 0 ) {
+	   ESS_LOG_ERROR( "No filename specified." );
+	   return;
+	}
+	if( strlen( strPath ) == 0 ) {
+	   ESS_LOG_ERROR( "No path specified." );
+	   return;
+	}
+
+	if( ! fs::exists( strFileName ) ) {
+		ESS_LOG_ERROR( "Can't file Alembic file.  FileName: " << strFileName );
+		return;
+	}
+
+	Alembic::AbcGeom::IObject iObj;
+	try {
+		iObj = getObjectFromArchive(strFileName, strPath);
+	} catch( std::exception exp ) {
+		ESS_LOG_ERROR( "Can not open Alembic data stream.  FileName: " << strFileName << " path: " << strPath << " reason: " << exp.what() );
+		return;
+	}
+
 	if(!iObj.valid()) {
-		ESS_LOG_WARNING( "Can't load Alembic stream, fileName: " << strFileName << " path: " << strDataPath );
+		ESS_LOG_ERROR( "Not a valid Alembic data stream.  FileName: " << strFileName << " path: " << strPath );
 		return;
 	}
 
    alembic_fillmesh_options options;
    options.pIObj = &iObj;
-   options.dTicks = GetTimeValueFromSeconds( fCurrentTimeHidden );
+   options.dTicks = GetTimeValueFromSeconds( dataTime );
    options.nDataFillFlags = 0;
     if( bFaceSet ) {
 	   options.nDataFillFlags |= ALEMBIC_DATAFILL_FACELIST;
@@ -283,7 +312,15 @@ void AlembicMeshModifier::ModifyObject (TimeValue t, ModContext &mc, ObjectState
        return;
    }
 
-   AlembicImport_FillInPolyMesh(options);
+   try {
+	   AlembicImport_FillInPolyMesh(options);
+   }
+   catch(std::exception exp ) {
+		ESS_LOG_ERROR( "Error creating mesh from Alembic data stream.  FileName: " << strFileName << " path: " << strPath << " reason: " << exp.what() );
+		return;
+   }
+
+   //ESS_LOG_INFO( "NumFaces: " << options.->getNumFaces() << "  NumVerts: " << pMesh->getNumVerts() );
 
    Interval alembicValid(t, t); 
    ivalid = alembicValid;
