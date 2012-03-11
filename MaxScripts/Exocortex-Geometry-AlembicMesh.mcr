@@ -1,7 +1,7 @@
 plugin simpleObject AlembicMesh
 	name:"Alembic Mesh"
 	category:"Alembic"
-	classID:#(0xe855567c, 0xbcd73b8b)
+	classID:#(0xe855567c, 0xbcd73b8b)	-- keep in sync with AlembicNames.h
 (
 	
 	parameters main rollout:params

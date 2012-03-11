@@ -2,6 +2,8 @@
 #include "Utility.h"
 #include "SceneEntry.h"
 #include "AlembicPolyMsh.h"
+#include <object.h>
+#include <iparamb2.h>
 
 SampleInfo getSampleInfo
 (
@@ -284,4 +286,16 @@ Alembic::Abc::TimeSamplingPtr getTimeSamplingFromObject(Alembic::Abc::IObject ob
       return Alembic::AbcGeom::ICamera(object,Alembic::Abc::kWrapExisting).getSchema().getTimeSampling();
    }
    return Alembic::Abc::TimeSamplingPtr();
+}
+
+
+int GetParamIdByName( BaseObject *pBaseObject, int pblockIndex, char const* pParamName ) {
+	IParamBlock2 * pParamBlock2 = pBaseObject->GetParamBlockByID( pblockIndex );
+	for( int iParamID = 0; iParamID < pParamBlock2->NumParams(); iParamID ++ ) {
+		ParamDef &paramDef = pParamBlock2->GetParamDef( iParamID );
+		if( strcmp( paramDef.int_name, pParamName ) == 0 ) {
+			return iParamID;
+		}
+	}
+	return -1;
 }

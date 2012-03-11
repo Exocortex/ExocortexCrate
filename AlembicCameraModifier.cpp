@@ -49,7 +49,7 @@ public:
 	RefTargetHandle Clone(RemapDir& remap);
 	void DeleteThis() { delete this; }
 	void GetClassName(TSTR& s) { s = _T("Alembic Camera"); }  
-	virtual Class_ID ClassID() { return EXOCORTEX_ALEMBIC_CAMERA_MODIFIER_ID; }		
+	virtual Class_ID ClassID() { return ALEMBIC_CAMERA_MODIFIER_CLASSID; }		
 	TCHAR *GetObjectName() { return _T("Alembic Camera"); }
 
 	// From modifier
@@ -103,14 +103,14 @@ public:
 	void *			Create(BOOL loading = FALSE) { return new AlembicCameraModifier; }
 	const TCHAR *	ClassName() { return _T("Alembic Camera"); }
 	SClass_ID		SuperClassID() { return OSM_CLASS_ID; }
-	Class_ID		ClassID() { return EXOCORTEX_ALEMBIC_CAMERA_MODIFIER_ID; }
+	Class_ID		ClassID() { return ALEMBIC_CAMERA_MODIFIER_CLASSID; }
 	const TCHAR* 	Category() { return EXOCORTEX_ALEMBIC_CATEGORY; }
 	const TCHAR*	InternalName() { return _T("AlembicCameraModifier"); }  // returns fixed parsable name (scripter-visible name)
 	HINSTANCE		HInstance() { return hInstance; }                       // returns owning module handle
 };
 
 static AlembicCameraModifierClassDesc s_AlembicCameraModifierDesc;
-ClassDesc* GetAlembicCameraModifierDesc() { return &s_AlembicCameraModifierDesc; }
+ClassDesc* GetAlembicCameraModifierClassDesc() { return &s_AlembicCameraModifierDesc; }
 
 // Parameter block IDs:
 // Blocks themselves:
@@ -156,7 +156,7 @@ AlembicCameraModifier::AlembicCameraModifier()
 {
 	pblock = NULL;
     m_pCamera = NULL;
-	GetAlembicCameraModifierDesc()->MakeAutoParamBlocks(this);
+	GetAlembicCameraModifierClassDesc()->MakeAutoParamBlocks(this);
 }
 
 RefTargetHandle AlembicCameraModifier::Clone(RemapDir& remap)
@@ -347,7 +347,7 @@ int AlembicImport_Camera(const std::string &file, const std::string &identifier,
 
 	// Create the Camera modifier
 	AlembicCameraModifier *pModifier = static_cast<AlembicCameraModifier*>
-		(GetCOREInterface12()->CreateInstance(OSM_CLASS_ID, EXOCORTEX_ALEMBIC_CAMERA_MODIFIER_ID));
+		(GetCOREInterface12()->CreateInstance(OSM_CLASS_ID, ALEMBIC_CAMERA_MODIFIER_CLASSID));
 
 	// Set the alembic id
 	pModifier->SetAlembicId(file, identifier);

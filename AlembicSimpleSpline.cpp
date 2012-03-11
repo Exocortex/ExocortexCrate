@@ -76,7 +76,7 @@ class AlembicSimpleSpline: public SimpleSpline, public IParamArray {
 		void EndEditParams( IObjParam *ip, ULONG flags,Animatable *next);
 		TCHAR *GetObjectName() { return _T("Alembic Spline"); }
 		void InitNodeName(TSTR& s) { s = _T("Alembic Spline"); }		
-		Class_ID ClassID() { return EXOCORTEX_ALEMBIC_SIMPLE_SPLINE_ID; }  
+		Class_ID ClassID() { return ALEMBIC_SIMPLE_SPLINE_CLASSID; }  
 		void GetClassName(TSTR& s) { s = _T("AlembicSpline"); }
 		RefTargetHandle Clone(RemapDir& remap);
 		BOOL ValidForDisplay(TimeValue t);
@@ -111,14 +111,14 @@ class AlembicSimpleSplineClassDesc:public ClassDesc {
 	void *			Create(BOOL loading = FALSE) { return new AlembicSimpleSpline; }
 	const TCHAR *	ClassName() { return _T("Spline"); }
 	SClass_ID		SuperClassID() { return SHAPE_CLASS_ID; }
-   	Class_ID		ClassID() { return EXOCORTEX_ALEMBIC_SIMPLE_SPLINE_ID; }
+   	Class_ID		ClassID() { return ALEMBIC_SIMPLE_SPLINE_CLASSID; }
     const TCHAR* 	Category() { return EXOCORTEX_ALEMBIC_CATEGORY;  }
 	void			ResetClassParams(BOOL fileReset);
 	};
 
 static AlembicSimpleSplineClassDesc sAlembicSimpleSplineDesc;
 
-ClassDesc* GetAlembicSimpleSplineDesc() { return &sAlembicSimpleSplineDesc; }
+ClassDesc* GetAlembicSimpleSplineClassDesc() { return &sAlembicSimpleSplineDesc; }
 
 // in prim.cpp  - The dll instance handle
 extern HINSTANCE hInstance;
@@ -778,7 +778,7 @@ int AlembicImport_Shape(const std::string &file, const std::string &identifier, 
 
     if (curveSample.getType() == Alembic::AbcGeom::ALEMBIC_VERSION_NS::kCubic)
     {
-        pAlembicSpline = static_cast<AlembicSimpleSpline*>(GetCOREInterface12()->CreateInstance(SHAPE_CLASS_ID, EXOCORTEX_ALEMBIC_SIMPLE_SPLINE_ID));
+        pAlembicSpline = static_cast<AlembicSimpleSpline*>(GetCOREInterface12()->CreateInstance(SHAPE_CLASS_ID, ALEMBIC_SIMPLE_SPLINE_CLASSID));
 	    newObject = pAlembicSpline;
     }
     else

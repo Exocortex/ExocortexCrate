@@ -8,7 +8,6 @@
 #include "iparamb2.h"
 #include "AlembicNames.h"
 
-#define EXOCORTEX_ALEMBIC_XFORM_CTRL_ID Class_ID(0x9bf4cdb, 0xe29448e)
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // alembic_fillxform_options
@@ -49,7 +48,7 @@ public:
 
     void DeleteThis() { delete this; }
 	void GetClassName(TSTR& s) { s = _T("Alembic Xform"); }  
-	virtual Class_ID ClassID() { return EXOCORTEX_ALEMBIC_XFORM_CTRL_ID; }		
+	virtual Class_ID ClassID() { return ALEMBIC_XFORM_CTRL_CLASSID; }		
 	RefTargetHandle Clone(RemapDir& remap);
 	TCHAR *GetObjectName() { return _T("Alembic Xform"); }
 
@@ -130,7 +129,7 @@ public:
 	//
 	// You can generate random ClassID's using the gencid program
 	// supplied with the Max SDK
-	Class_ID	ClassID()			{ return EXOCORTEX_ALEMBIC_XFORM_CTRL_ID; }
+	Class_ID	ClassID()			{ return ALEMBIC_XFORM_CTRL_CLASSID; }
 
 	// If the plugin is an Object or Texture, this function returns
 	// the category it can be assigned to.
@@ -573,7 +572,7 @@ int AlembicImport_XForm(const std::string &file, const std::string &identifier, 
 
 	// Create the xform modifier
 	AlembicXFormCtrl *pCtrl = static_cast<AlembicXFormCtrl*>
-		(GetCOREInterface()->CreateInstance(CTRL_MATRIX3_CLASS_ID, EXOCORTEX_ALEMBIC_XFORM_CTRL_ID));
+		(GetCOREInterface()->CreateInstance(CTRL_MATRIX3_CLASS_ID, ALEMBIC_XFORM_CTRL_CLASSID));
 
 	// Set the alembic id
 	pCtrl->SetAlembicId(file, identifier, xformOptions.dTicks);

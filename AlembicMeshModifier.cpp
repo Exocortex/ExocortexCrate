@@ -10,91 +10,12 @@
 #include "AlembicXForm.h"
 #include "AlembicVisCtrl.h"
 #include "ParamBlockUtility.h"
-#include "AlembicNames.h"
+
 
 using namespace MaxSDK::AssetManagement;
 
-#define MAX_PARAM_BLOCKS 1 // file local
-
-class AlembicMeshModifier : public Modifier {
-public:
-	IParamBlock2 *pblock[MAX_PARAM_BLOCKS];
-	static const BlockID PBLOCK_ID = 0;
-	
-	// Parameters in first block:
-	enum 
-	{ 
-		ID_PATH,
-		ID_IDENTIFIER,
-		ID_CURRENTTIMEHIDDEN,
-		ID_TIMEOFFSET,
-		ID_TIMESCALE,
-		ID_FACESET,
-		ID_VERTICES,
-		ID_NORMALS,
-		ID_UVS,
-		ID_CLUSTERS,
-		ID_MUTED
-	};
-
-	static IObjParam *ip;
-	static AlembicMeshModifier *editMod;
-
-	AlembicMeshModifier();
-
-	// From Animatable
-	void DeleteThis() { delete this; }
-	void GetClassName(TSTR& s) { s = _T("Alembic Mesh Modifier"); }  
-	virtual Class_ID ClassID() { return EXOCORTEX_ALEMBIC_MESH_MODIFIER_ID; }		
-	RefTargetHandle Clone(RemapDir& remap);
-	TCHAR *GetObjectName() { return _T("Alembic Mesh Modifier"); }
-
-	// From Modifier
-	ChannelMask ChannelsUsed()  { return TOPO_CHANNEL|GEOM_CHANNEL|TEXMAP_CHANNEL; }
-	ChannelMask ChannelsChanged() { return TOPO_CHANNEL|GEOM_CHANNEL|TEXMAP_CHANNEL; }
-	Class_ID InputType() { return polyObjectClassID; }
-	void ModifyObject (TimeValue t, ModContext &mc, ObjectState *os, INode *node);
-	Interval LocalValidity(TimeValue t) { return GetValidity(t); }
-	Interval GetValidity (TimeValue t);
-	BOOL DependOnTopology(ModContext &mc) { return TRUE; }
-
-	// From BaseObject
-	CreateMouseCallBack* GetCreateMouseCallBack() {return NULL;} 
-
-	int NumParamBlocks () { return MAX_PARAM_BLOCKS; }
-	IParamBlock2 *GetParamBlock (int i) { return pblock[i]; }
-	IParamBlock2 *GetParamBlockByID (short id);
-
-	int NumRefs() { return MAX_PARAM_BLOCKS; }
-	RefTargetHandle GetReference(int i) { return pblock[i]; }
-private:
-	virtual void SetReference(int i, RefTargetHandle rtarg) { pblock[i] = (IParamBlock2 *) rtarg; }
-public:
-
-	int NumSubs() {return MAX_PARAM_BLOCKS;}
-	Animatable* SubAnim(int i) { return GetReference(i); }
-	TSTR SubAnimName(int i);
-
-	RefResult NotifyRefChanged( Interval changeInt,RefTargetHandle hTarget, 
-		PartID& partID, RefMessage message);
-
-};
-//--- ClassDescriptor and class vars ---------------------------------
-
 IObjParam *AlembicMeshModifier::ip              = NULL;
 AlembicMeshModifier *AlembicMeshModifier::editMod         = NULL;
-
-class AlembicMeshModifierClassDesc : public ClassDesc2 {
-	public:
-	int 			IsPublic() { return 1; }
-	void *			Create(BOOL loading = FALSE) { return new AlembicMeshModifier; }
-	const TCHAR *	ClassName() { return _T("Alembic Mesh Modifier"); }
-	SClass_ID		SuperClassID() { return OSM_CLASS_ID; }
-	Class_ID		ClassID() { return EXOCORTEX_ALEMBIC_MESH_MODIFIER_ID; }
-	const TCHAR* 	Category() { return EXOCORTEX_ALEMBIC_CATEGORY; }
-	const TCHAR*	InternalName() { return _T("AlembicMeshModifier"); }	// returns fixed parsable name (scripter-visible name)
-	HINSTANCE		HInstance() { return hInstance; }			// returns owning module handle
-};
 
 static AlembicMeshModifierClassDesc AlembicMeshModifierDesc;
 ClassDesc2* GetAlembicMeshModifierClassDesc() {return &AlembicMeshModifierDesc;}
@@ -107,7 +28,7 @@ static ParamBlockDesc2 AlembicMeshModifierParams(
 	IDS_PROPS,
 	GetAlembicMeshModifierClassDesc(),
 	P_AUTO_CONSTRUCT | P_AUTO_UI,
-	REF_PBLOCK,
+	0,
 
 	// rollout description
 	IDD_EMPTY, IDS_PARAMS, 0, 0, NULL,

@@ -8,8 +8,6 @@
 #include <simpobj.h>
 #include "AlembicNames.h"
 
-// can be generated via gencid.exe in the help folder of the 3DS Max.
-#define EXOCORTEX_ALEMBIC_SIMPLE_PARTICLE_CLASS_ID  Class_ID(0x246b1c1e, 0x3b2f032f)
 
 // Alembic functions to create the simple particle object
 typedef struct _alembic_importoptions alembic_importoptions;
@@ -35,7 +33,7 @@ public:
 
     // --- Derived class implementation of the virtual functions in Animatable ---
     void DeleteThis() { delete this; }
-    Class_ID ClassID() { return EXOCORTEX_ALEMBIC_SIMPLE_PARTICLE_CLASS_ID; } 
+    Class_ID ClassID() { return ALEMBIC_SIMPLE_PARTICLE_CLASSID; } 
 
     // --- Derived class implementation of the virtual functions in GeomObject ---
     //Mesh* GetRenderMesh(TimeValue t, INode *inode, View& view, BOOL& needDelete);
@@ -64,7 +62,7 @@ public:
 	void *			Create(BOOL loading = FALSE) { return new AlembicSimpleParticle(); }
 	const TCHAR *	ClassName() { return _T("Alembic Particles"); }
 	SClass_ID		SuperClassID() { return GEOMOBJECT_CLASS_ID; }
-	Class_ID		ClassID() { return EXOCORTEX_ALEMBIC_SIMPLE_PARTICLE_CLASS_ID; }
+	Class_ID		ClassID() { return ALEMBIC_SIMPLE_PARTICLE_CLASSID; }
 	const TCHAR* 	Category() { return EXOCORTEX_ALEMBIC_CATEGORY; }
 	const TCHAR*	InternalName() { return _T("AlembicSimpleParticle"); }  // returns fixed parsable name (scripter-visible name)
 	HINSTANCE		HInstance() { return hInstance; }                       // returns owning module handle

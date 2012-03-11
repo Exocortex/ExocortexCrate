@@ -129,7 +129,6 @@ static INT_PTR CALLBACK ExportDlgProc(HWND hWnd, UINT msg,	WPARAM wParam, LPARAM
     return TRUE;
 }       
 
-#define ALEMBICEXPORTER_CLASS_ID	Class_ID(0x79d613a4, 0x4f21c3ad)
 
 class AlembicExporterClassDesc:public ClassDesc2 
 {
@@ -138,7 +137,7 @@ public:
     void *			Create(BOOL loading = FALSE) { return new AlembicExporter(); }
     const TCHAR *	ClassName() { return _T("AlembicExporter"); }
     SClass_ID		SuperClassID() { return SCENE_EXPORT_CLASS_ID; }
-    Class_ID		ClassID() { return ALEMBICEXPORTER_CLASS_ID; }
+    Class_ID		ClassID() { return ALEMBIC_EXPORTER_CLASSID; }
     const TCHAR* 	Category() { return EXOCORTEX_ALEMBIC_CATEGORY; }
     const TCHAR*	InternalName() { return _T("AlembicExporter"); }	// returns fixed parsable name (scripter-visible name)
     HINSTANCE		HInstance() { return hInstance; }				// returns owning module handle

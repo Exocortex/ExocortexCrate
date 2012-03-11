@@ -8,7 +8,6 @@
 #include "iparamb2.h"
 #include "AlembicNames.h"
 
-#define EXOCORTEX_ALEMBIC_VIS_CTRL_ID Class_ID(0x27e512c0, 0x389b3971)
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // alembic_fillvis_options
@@ -48,7 +47,7 @@ public:
 
     void DeleteThis() { delete this; }
 	void GetClassName(TSTR& s) { s = _T("Alembic Visibility"); }  
-	virtual Class_ID ClassID() { return EXOCORTEX_ALEMBIC_VIS_CTRL_ID; }		
+	virtual Class_ID ClassID() { return ALEMBIC_VIS_CTRL_CLASSID; }		
 	RefTargetHandle Clone(RemapDir& remap);
 	TCHAR *GetObjectName() { return _T("Alembic Visibility"); }
 
@@ -125,7 +124,7 @@ public:
 	//
 	// You can generate random ClassID's using the gencid program
 	// supplied with the Max SDK
-	Class_ID	ClassID()			{ return EXOCORTEX_ALEMBIC_VIS_CTRL_ID; }
+	Class_ID	ClassID()			{ return ALEMBIC_VIS_CTRL_CLASSID; }
 
 	// If the plugin is an Object or Texture, this function returns
 	// the category it can be assigned to.
@@ -528,7 +527,7 @@ void AlembicImport_SetupVisControl( Alembic::AbcGeom::IObject &obj, INode *pNode
     {
         // Create the xform modifier
         AlembicVisCtrl *pCtrl = static_cast<AlembicVisCtrl*>
-            (GetCOREInterface()->CreateInstance(CTRL_FLOAT_CLASS_ID, EXOCORTEX_ALEMBIC_VIS_CTRL_ID));
+            (GetCOREInterface()->CreateInstance(CTRL_FLOAT_CLASS_ID, ALEMBIC_VIS_CTRL_CLASSID));
 
         // Set the alembic id
         TimeValue t = GetCOREInterface12()->GetTime();

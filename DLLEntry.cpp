@@ -3,11 +3,10 @@
 #include "iparamm2.h"
 
 extern ClassDesc* GetAlembicXFormCtrlClassDesc();
-extern ClassDesc* GetAlembicPolyMeshModifierDesc();
-extern ClassDesc* GetAlembicCameraModifierDesc();
+extern ClassDesc* GetAlembicCameraModifierClassDesc();
 extern ClassDesc* GetAlembicVisCtrlClassDesc();
 extern ClassDesc* GetAlembicSimpleParticleClassDesc();
-extern ClassDesc *GetAlembicSimpleSplineDesc();
+extern ClassDesc *GetAlembicSimpleSplineClassDesc();
 extern ClassDesc2 *GetAlembicMeshModifierClassDesc();
 
 HINSTANCE hInstance;
@@ -33,7 +32,7 @@ MAX_DLL_EXPORT const TCHAR* LibDescription()
 //TODO: Must change this number when adding a new class
 MAX_DLL_EXPORT int LibNumberClasses()
 {
-   return 7;
+   return 6;
 }
 
 MAX_DLL_EXPORT ClassDesc* LibClassDesc(int i)
@@ -41,12 +40,11 @@ MAX_DLL_EXPORT ClassDesc* LibClassDesc(int i)
     switch(i) 
     {
     case 0: return GetAlembicXFormCtrlClassDesc();
-    case 1: return GetAlembicPolyMeshModifierDesc();
-    case 2: return GetAlembicCameraModifierDesc();
+    case 1: return GetAlembicMeshModifierClassDesc();
+    case 2: return GetAlembicCameraModifierClassDesc();
     case 3: return GetAlembicVisCtrlClassDesc();
     case 4: return GetAlembicSimpleParticleClassDesc();
-    case 5: return GetAlembicSimpleSplineDesc();
-	case 6: return GetAlembicMeshModifierClassDesc();
+    case 5: return GetAlembicSimpleSplineClassDesc();
 
     default: return 0;
     }

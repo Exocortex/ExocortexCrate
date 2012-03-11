@@ -141,15 +141,23 @@ public:
             end); 	
     }
 
-    static int ExocortexAlembicImport(MCHAR * strPath, BOOL bImportNormals, BOOL bImportUVs, BOOL bImportClusters, BOOL bAttachToExisting, int iVisOption);
+    static int ExocortexAlembicImport(
+		MCHAR * strPath, 
+		BOOL bImportNormals, BOOL bImportUVs, BOOL bImportClusters,
+		BOOL bAttachToExisting,
+		int iVisOption);
+
     static Mesh* ExocortexAlembicImportMesh(
 		Mesh* pMesh,
 		MCHAR * strPath, MCHAR * strIdentifier,
 		float time, 
 		BOOL bImportFaceList, BOOL bImportVertices, BOOL bImportNormals, BOOL bImportUVs, BOOL bImportClusters
 		);
-	static int ExocortexAlembicExport(MCHAR * strPath, int iFrameIn, int iFrameOut, int iFrameSteps, int iFrameSubSteps, int iType,
-                                      BOOL bExportUV, BOOL bExportClusters, BOOL bExportEnvelopeBindPose, BOOL bExportDynamicTopology, BOOL bExportSelected);
+	static int ExocortexAlembicExport(
+		MCHAR * strPath,
+		int iFrameIn, int iFrameOut, int iFrameSteps, int iFrameSubSteps,
+		int iType,
+        BOOL bExportUV, BOOL bExportClusters, BOOL bExportEnvelopeBindPose, BOOL bExportDynamicTopology, BOOL bExportSelected );
 
     BEGIN_FUNCTION_MAP
         FN_6(exocortexAlembicImport, TYPE_INT, ExocortexAlembicImport, TYPE_FILENAME, TYPE_BOOL, TYPE_BOOL, TYPE_BOOL, TYPE_BOOL, TYPE_INT)

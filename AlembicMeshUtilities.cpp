@@ -1,6 +1,6 @@
 #include "Alembic.h"
 #include "AlembicDefinitions.h"
-#include "AlembicPolyMeshModifier.h"
+#include "AlembicMeshModifier.h"
 #include "AlembicArchiveStorage.h"
 #include "utility.h"
 #include <iparamb2.h>
@@ -564,10 +564,10 @@ bool AlembicImport_IsPolyObject(Alembic::AbcGeom::IPolyMeshSchema::Sample &polyM
     return false;
 }
 
-int AlembicImport_PolyMesh(const std::string &file, const std::string &identifier, alembic_importoptions &options)
+int AlembicImport_PolyMesh(const std::string &path, const std::string &identifier, alembic_importoptions &options)
 {
 	// Find the object in the archive
-	Alembic::AbcGeom::IObject iObj = getObjectFromArchive(file,identifier);
+	Alembic::AbcGeom::IObject iObj = getObjectFromArchive(path,identifier);
 	if(!iObj.valid())
 		return alembic_failure;
 
@@ -631,17 +631,20 @@ int AlembicImport_PolyMesh(const std::string &file, const std::string &identifie
 		return alembic_failure;
 
 	// Create the polymesh modifier
-	AlembicPolyMeshModifier *pModifier = static_cast<AlembicPolyMeshModifier*>
-		(GetCOREInterface12()->CreateInstance(OSM_CLASS_ID, EXOCORTEX_ALEMBIC_POLYMESH_MODIFIER_ID));
+	Modifier *pModifier = static_cast<Modifier*>
+		(GetCOREInterface12()->CreateInstance(OSM_CLASS_ID, ALEMBIC_POINT_CACHE_MODIFIER_CLASSID));
+
+	TimeValue now =  GetCOREInterface12()->GetTime();
 
 	// Set the alembic id
-	pModifier->SetAlembicId(file, identifier);
-
+	pModifier->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pModifier, 0, "path" ), now, path.c_str());
+	pModifier->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pModifier, 0, "identifier" ), now , identifier.c_str() );
+	
     // Set the update data fill flags
     // PeterM TO DO:  We'll need to fix this after we determine if we have a dynamic topology mesh or not
     // For now, we'll just use the import flags
-    unsigned int nUpdateDataFillFlags = dataFillOptions.nDataFillFlags;
-    pModifier->SetAlembicUpdateDataFillFlags(nUpdateDataFillFlags);
+    //unsigned int nUpdateDataFillFlags = dataFillOptions.nDataFillFlags;
+    //pModifier->SetAlembicUpdateDataFillFlags(nUpdateDataFillFlags);
 
 	// Add the modifier to the node
 	GetCOREInterface12()->AddModifier(*node, *pModifier);
