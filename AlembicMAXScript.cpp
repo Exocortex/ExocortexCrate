@@ -4,7 +4,7 @@
 #include "AlembicArchiveStorage.h"
 #include "AlembicMeshUtilities.h"
 #include "AlembicXFormCtrl.h"
-#include "AlembicCameraModifier.h"
+#include "AlembicCameraBaseModifier.h"
 #include "AlembicSimpleParticle.h"
 #include "MeshMtlList.h"
 #include "SceneEnumProc.h"

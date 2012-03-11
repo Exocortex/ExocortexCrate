@@ -1,9 +1,9 @@
-plugin modifier AlembicMeshPointCacheModifier
-	name:"Alembic Mesh Point Cache"
+plugin modifier AlembicMeshModifier
+	name:"Alembic Mesh"
 	classID:#(0x20730623, 0x5d650bdb)	-- keep in sync with AlembicNames.h
 	category:"Alembic" 
 	version:1
-	extends:AlembicMeshModifier
+	extends:AlembicMeshBaseModifier
 	replaceUI:true
 	invisible:false
 (
@@ -38,8 +38,8 @@ plugin modifier AlembicMeshPointCacheModifier
 	(
 		edittext path "Path"
 		edittext identifier "Identifier"
-		spinner timeOffset "Time Offset" range:[-1000,1000,0]
-		spinner timeScale "Time Scale" range:[-1000,1000,0]
+		spinner timeOffset "Time Offset" range:[-10000,10000,0]
+		spinner timeScale "Time Scale" range:[-10000,10000,0]		
 		checkbox faceSet "Topology"
 		checkbox vertices "Vertices"
 		checkbox normals "Normals"
@@ -64,50 +64,15 @@ plugin modifier AlembicMeshPointCacheModifier
 		
 	on create do
 	(
-		format "on create : % \n" this
-		format "current obj: %\n" $
 		update_currentTimeHidden()
-	)
-	on postCreate do 
-	(
-		format "on postCreate : %\n" this
-		format "  current obj: %\n" $
 	)
 	on load do
 	(
-		format "on load : %\n" this
-		format "current obj: %\n" $
 		update_currentTimeHidden()
-	)
-	on postLoad do 
-	(
-		format "on postLoad : %\n" this
-		format "current obj: %\n" $
-	)
-	on clone orig do 
-	(
-		format "on clone: % : % : % : %\n" this orig
-		format "current obj: %\n" $
 	)
 	on update do 
 	(
-		format "on update : %\n" this
-		format "current obj: %\n" $
 		update_currentTimeHidden()
 	)
-	on attachedToNode node do
-	(
-		format "on attachedToNode: % %\n" this node
-		format "current obj: %\n" $
-	)
-	on detachedFromNode node do
-	(
-		format "on detachedFromNode : % %\n" this node
-		format "current obj: %\n" $
-	)
-	on deleted do 
-	(
-		format "on deleted : % \n" this
-		format "current obj: %\n" $
-	)
+
 )

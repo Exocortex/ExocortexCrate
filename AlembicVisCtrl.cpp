@@ -66,7 +66,7 @@ public:
     int NumSubs()  {return 1;} //because it uses the paramblock
     Animatable* SubAnim(int i) {return GetReference(i);}
     TSTR SubAnimName(int i) { return _T("Parameters"); }
-    int SubNumToRefNum(int subNum) {if (subNum==0) return ALEMBICVISCTRL_REF_PBLOCK; else return -1;}
+    int SubNumToRefNum(int subNum) {if (subNum==0) return 0; else return -1;}
 
     void Copy(Control* pFrom){}
     virtual int IsKeyable() { return 0; }
@@ -145,7 +145,7 @@ public:
 // This is the function that informs max that our plug-in exists and is 
 // available to use
 static AlembicVisCtrlClassDesc sAlembicVisCtrlClassDesc;
-ClassDesc* GetAlembicVisCtrlClassDesc()
+ClassDesc2* GetAlembicVisCtrlClassDesc()
 {
 	return &sAlembicVisCtrlClassDesc;
 }
@@ -220,7 +220,7 @@ static PBVis_Accessor sVis_PBAccessor;
 
 static ParamBlockDesc2 vis_params_desc ( AlembicVisCtrl_params, _T("ExoCortexAlembicvisController"),
 									IDS_PREVIEW, &sAlembicVisCtrlClassDesc,
-									P_AUTO_CONSTRUCT | P_AUTO_UI, ALEMBICVISCTRL_REF_PBLOCK,
+									P_AUTO_CONSTRUCT | P_AUTO_UI, 0,
 	//rollout description
 	IDD_ALEMBIC_ID_PARAMS, IDS_PREVIEW, 0, 0, NULL,
 
@@ -389,7 +389,7 @@ RefTargetHandle AlembicVisCtrl::GetReference(int i)
 {
     switch (i)
     {
-    case ALEMBICVISCTRL_REF_PBLOCK:
+    case 0:
         return pblock;
     }
 
@@ -400,7 +400,7 @@ void AlembicVisCtrl::SetReference(int i, RefTargetHandle rtarg)
 {
     switch (i)
     {
-    case ALEMBICVISCTRL_REF_PBLOCK:
+    case 0:
         pblock = (IParamBlock2*)rtarg; 
         break;
     }

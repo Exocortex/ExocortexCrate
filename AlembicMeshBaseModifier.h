@@ -26,16 +26,9 @@
 #include "AlembicNames.h"
 
 
-class AlembicMeshModifier : public Modifier {
+class AlembicMeshBaseModifier : public Modifier {
 public:
-	// Parameters in first block:
-	enum 
-	{ 
-		MAX_PARAM_BLOCKS = 1
-	};
-
-	IParamBlock2 *pblock[MAX_PARAM_BLOCKS];
-	static const BlockID PBLOCK_ID = 0;
+	IParamBlock2 *pblock;
 	
 	// Parameters in first block:
 	enum 
@@ -54,16 +47,16 @@ public:
 	};
 
 	static IObjParam *ip;
-	static AlembicMeshModifier *editMod;
+	static AlembicMeshBaseModifier *editMod;
 
-	AlembicMeshModifier();
+	AlembicMeshBaseModifier();
 
 	// From Animatable
 	void DeleteThis() { delete this; }
-	void GetClassName(TSTR& s) { s = _T("Alembic Mesh Modifier"); }  
-	virtual Class_ID ClassID() { return ALEMBIC_MESH_MODIFIER_CLASSID; }		
+	void GetClassName(TSTR& s) { s = _T("Alembic Mesh Base Modifier"); }  
+	virtual Class_ID ClassID() { return ALEMBIC_MESH_BASE_MODIFIER_CLASSID; }		
 	RefTargetHandle Clone(RemapDir& remap);
-	TCHAR *GetObjectName() { return _T("Alembic Mesh Modifier"); }
+	TCHAR *GetObjectName() { return _T("Alembic Mesh Base Modifier"); }
 
 	// From Modifier
 	ChannelMask ChannelsUsed()  { return TOPO_CHANNEL|GEOM_CHANNEL|TEXMAP_CHANNEL; }
@@ -77,42 +70,40 @@ public:
 	// From BaseObject
 	CreateMouseCallBack* GetCreateMouseCallBack() {return NULL;} 
 
-	int NumParamBlocks () { return MAX_PARAM_BLOCKS; }
-	IParamBlock2 *GetParamBlock (int i) { return pblock[i]; }
-	IParamBlock2 *GetParamBlockByID (short id);
+	int NumParamBlocks () { return 1; }
+	IParamBlock2 *GetParamBlock (int i) { return pblock; }
+	IParamBlock2 *GetParamBlockByID (short id) { return (pblock->ID() == id) ? pblock : NULL; }
 
-	int NumRefs() { return MAX_PARAM_BLOCKS; }
-	RefTargetHandle GetReference(int i) { return pblock[i]; }
+	int NumRefs() { return 1; }
+	RefTargetHandle GetReference(int i) { return pblock; }
 
-private:
-	virtual void SetReference(int i, RefTargetHandle rtarg) { pblock[i] = (IParamBlock2 *) rtarg; }
-
-public:
-	int NumSubs() {return MAX_PARAM_BLOCKS;}
+	int NumSubs() { return 1; }
 	Animatable* SubAnim(int i) { return GetReference(i); }
-	TSTR SubAnimName(int i);
+	TSTR SubAnimName(int i) { return _T("IDS_PROPS"); }
 
 	RefResult NotifyRefChanged( Interval changeInt,RefTargetHandle hTarget, 
 		PartID& partID, RefMessage message);
 
+private:
+	virtual void SetReference(int i, RefTargetHandle rtarg) { pblock = (IParamBlock2 *) rtarg; }
 };
 
 
 
-class AlembicMeshModifierClassDesc : public ClassDesc2 {
+class AlembicMeshBaseModifierClassDesc : public ClassDesc2 {
 	public:
 	int 			IsPublic() { return 1; }
-	void *			Create(BOOL loading = FALSE) { return new AlembicMeshModifier; }
-	const TCHAR *	ClassName() { return _T("Alembic Mesh Modifier"); }
+	void *			Create(BOOL loading = FALSE) { return new AlembicMeshBaseModifier; }
+	const TCHAR *	ClassName() { return _T("Alembic Mesh Base Modifier"); }
 	SClass_ID		SuperClassID() { return OSM_CLASS_ID; }
-	Class_ID		ClassID() { return ALEMBIC_MESH_MODIFIER_CLASSID; }
+	Class_ID		ClassID() { return ALEMBIC_MESH_BASE_MODIFIER_CLASSID; }
 	const TCHAR* 	Category() { return EXOCORTEX_ALEMBIC_CATEGORY; }
-	const TCHAR*	InternalName() { return _T("AlembicMeshModifier"); }	// returns fixed parsable name (scripter-visible name)
+	const TCHAR*	InternalName() { return _T("AlembicMeshBaseModifier"); }	// returns fixed parsable name (scripter-visible name)
 	HINSTANCE		HInstance() { return hInstance; }			// returns owning module handle
 };
 
 
-ClassDesc2 *GetAlembicMeshModifierClassDesc();
+ClassDesc2 *GetAlembicMeshBaseModifierClassDesc();
 
 
 #endif	// __ALEMBIC_POLYMESH_MODIFIER__H

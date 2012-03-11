@@ -1,6 +1,6 @@
 #include "Alembic.h"
 #include "AlembicDefinitions.h"
-#include "AlembicMeshModifier.h"
+#include "AlembicMeshBaseModifier.h"
 #include "AlembicArchiveStorage.h"
 #include "utility.h"
 #include <iparamb2.h>
@@ -632,7 +632,7 @@ int AlembicImport_PolyMesh(const std::string &path, const std::string &identifie
 
 	// Create the polymesh modifier
 	Modifier *pModifier = static_cast<Modifier*>
-		(GetCOREInterface12()->CreateInstance(OSM_CLASS_ID, ALEMBIC_POINT_CACHE_MODIFIER_CLASSID));
+		(GetCOREInterface12()->CreateInstance(OSM_CLASS_ID, ALEMBIC_MESH_MODIFIER_CLASSID));
 
 	TimeValue now =  GetCOREInterface12()->GetTime();
 

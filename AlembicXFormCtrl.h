@@ -16,10 +16,10 @@
 
 #include "Max.h"
 #include "resource.h"
+#include "iparamb2.h"
 
-#define ALEMBICXFORMCTRL_REF_PBLOCK 0
 
-extern ClassDesc* GetAlembicXFormCtrlClassDesc();
+ClassDesc2* GetAlembicXFormCtrlClassDesc();
 
 TCHAR *GetString(int id);
 extern HINSTANCE hInstance;

@@ -12,7 +12,7 @@ using namespace AbcA;
 using namespace AbcB;
 
 static AlembicSimpleParticleClassDesc s_AlembicSimpleParticleClassDesc;
-ClassDesc *GetAlembicSimpleParticleClassDesc() { return &s_AlembicSimpleParticleClassDesc; }
+ClassDesc2 *GetAlembicSimpleParticleClassDesc() { return &s_AlembicSimpleParticleClassDesc; }
 
 // static member variables
 AlembicSimpleParticle *AlembicSimpleParticle::s_EditObject = NULL;

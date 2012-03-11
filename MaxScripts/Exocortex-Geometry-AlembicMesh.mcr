@@ -23,8 +23,8 @@ plugin simpleObject AlembicMesh
 	(
 		edittext path "Path"
 		edittext identifier "Identifier"
-		spinner timeOffset "Time Offset" range:[-1000,1000,0]
-		spinner timeScale "Time Scale" range:[-1000,1000,0]
+		spinner timeOffset "Time Offset" range:[-10000,10000,0]
+		spinner timeScale "Time Scale" range:[-10000,10000,0]		
 		checkbox faceSet "Topology"
 		checkbox vertices "Vertices"
 		checkbox normals "Normals"

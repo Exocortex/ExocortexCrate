@@ -9,6 +9,7 @@
 #include "AlembicVisCtrl.h"
 #include <linshape.h>
 #include <splshape.h>
+#include <iparamb2.h>
 
 #include "AlembicNames.h"
 
@@ -105,7 +106,7 @@ private:
 
 //------------------------------------------------------
 
-class AlembicSimpleSplineClassDesc:public ClassDesc {
+class AlembicSimpleSplineClassDesc:public ClassDesc2 {
 	public:
 	int 			IsPublic() { return 1; }
 	void *			Create(BOOL loading = FALSE) { return new AlembicSimpleSpline; }
@@ -118,7 +119,7 @@ class AlembicSimpleSplineClassDesc:public ClassDesc {
 
 static AlembicSimpleSplineClassDesc sAlembicSimpleSplineDesc;
 
-ClassDesc* GetAlembicSimpleSplineClassDesc() { return &sAlembicSimpleSplineDesc; }
+ClassDesc2* GetAlembicSimpleSplineClassDesc() { return &sAlembicSimpleSplineDesc; }
 
 // in prim.cpp  - The dll instance handle
 extern HINSTANCE hInstance;

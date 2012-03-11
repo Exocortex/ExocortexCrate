@@ -2,12 +2,12 @@
 #include "AlembicDefinitions.h"
 #include "iparamm2.h"
 
-extern ClassDesc* GetAlembicXFormCtrlClassDesc();
-extern ClassDesc* GetAlembicCameraModifierClassDesc();
-extern ClassDesc* GetAlembicVisCtrlClassDesc();
-extern ClassDesc* GetAlembicSimpleParticleClassDesc();
-extern ClassDesc *GetAlembicSimpleSplineClassDesc();
-extern ClassDesc2 *GetAlembicMeshModifierClassDesc();
+extern ClassDesc2* GetAlembicXFormCtrlClassDesc();
+extern ClassDesc2* GetAlembicCameraBaseModifierClassDesc();
+extern ClassDesc2* GetAlembicVisCtrlClassDesc();
+extern ClassDesc2* GetAlembicSimpleParticleClassDesc();
+extern ClassDesc2* GetAlembicSimpleSplineClassDesc();
+extern ClassDesc2* GetAlembicMeshBaseModifierClassDesc();
 
 HINSTANCE hInstance;
 
@@ -40,8 +40,8 @@ MAX_DLL_EXPORT ClassDesc* LibClassDesc(int i)
     switch(i) 
     {
     case 0: return GetAlembicXFormCtrlClassDesc();
-    case 1: return GetAlembicMeshModifierClassDesc();
-    case 2: return GetAlembicCameraModifierClassDesc();
+    case 1: return GetAlembicMeshBaseModifierClassDesc();
+    case 2: return GetAlembicCameraBaseModifierClassDesc();
     case 3: return GetAlembicVisCtrlClassDesc();
     case 4: return GetAlembicSimpleParticleClassDesc();
     case 5: return GetAlembicSimpleSplineClassDesc();

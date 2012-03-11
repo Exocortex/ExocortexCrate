@@ -16,10 +16,9 @@
 
 #include "Max.h"
 #include "resource.h"
+#include <iparamb2.h>
 
-#define ALEMBICVISCTRL_REF_PBLOCK 0
-
-extern ClassDesc* GetAlembicVisCtrlClassDesc();
+ClassDesc2* GetAlembicVisCtrlClassDesc();
 
 TCHAR *GetString(int id);
 extern HINSTANCE hInstance;
