@@ -234,30 +234,35 @@ int ExocortexAlembicStaticInterface::ExocortexAlembicImport(MCHAR* strPath, BOOL
        // XForm
        if(Alembic::AbcGeom::IXform::matches(objects[i].getMetaData()))
        {
+		   ESS_LOG_INFO( "AlembicImport_XForm: " << objects[i].getFullName() );
            int ret = AlembicImport_XForm(file, objects[i].getFullName(), importOptions);
        }
 
        // PolyMesh
        else if (Alembic::AbcGeom::IPolyMesh::matches(objects[i].getMetaData()))
        {
+		   ESS_LOG_INFO( "AlembicImport_PolyMesh: " << objects[i].getFullName() );
            int ret = AlembicImport_PolyMesh(file, objects[i].getFullName(), importOptions); 
        }
 
        // Camera
        else if (Alembic::AbcGeom::ICamera::matches(objects[i].getMetaData()))
        {
+		   ESS_LOG_INFO( "AlembicImport_Camera: " << objects[i].getFullName() );
            int ret = AlembicImport_Camera(file, objects[i].getFullName(), importOptions);
        }
 
        // Points
        else if (Alembic::AbcGeom::IPoints::matches(objects[i].getMetaData()))
        {
+		   ESS_LOG_INFO( "AlembicImport_Points: " << objects[i].getFullName() );
            int ret = AlembicImport_Points(file, objects[i].getFullName(), importOptions);
        }
 
        // Curves
        else if (Alembic::AbcGeom::ICurves::matches(objects[i].getMetaData()))
        {
+		   ESS_LOG_INFO( "AlembicImport_Shape: " << objects[i].getFullName() );
            int ret = AlembicImport_Shape(file, objects[i].getFullName(), importOptions);
        }
    }

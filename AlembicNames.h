@@ -22,3 +22,4 @@
 #define ALEMBIC_EXPORTER_CLASSID	Class_ID(0x79d613a4, 0x4f21c3ad)
 
 #endif //__ALEMBIC_NAMES_H__
+

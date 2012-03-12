@@ -7,6 +7,7 @@
 #include "AlembicVisCtrl.h"
 #include "AlembicNames.h"
 
+
 extern HINSTANCE hInstance;
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -17,7 +18,7 @@ public:
     _alembic_fillcamera_options();
 
     Alembic::AbcGeom::IObject  *pIObj;
-    CameraObject		*pCameraObj;
+    GenCamera				*pCameraObj;
     TimeValue                   dTicks;
 }
 alembic_fillcamera_options;
@@ -246,12 +247,19 @@ void AlembicCameraBaseModifier::ModifyObject(TimeValue t, ModContext &mc, Object
     options.dTicks = t;
 
 	// Find out if we are modifying a poly object or a tri object
-   if (os->obj->CanConvertToType(Class_ID(CAMERA_CLASS_ID, 0)))
-   {
-	   CameraObject *pCameraObj = reinterpret_cast<CameraObject *>(os->obj->ConvertToType(t, Class_ID(CAMERA_CLASS_ID, 0)));
+	ESS_LOG_INFO( "SuperclassID: " << os->obj->SuperClassID() );
+	MSTR szName;
+	
+	ESS_LOG_INFO( "os->obj->CanConvertToType(Class_ID(SIMPLE_CAM_CLASS_ID,0)): " << os->obj->CanConvertToType(Class_ID(SIMPLE_CAM_CLASS_ID,0)) );
+	ESS_LOG_INFO( "os->obj->CanConvertToType(Class_ID(CAMERA_CLASS_ID,0)): " << os->obj->CanConvertToType(Class_ID(CAMERA_CLASS_ID,0)) );
+	ESS_LOG_INFO( "os->obj->CanConvertToType(Class_ID(LOOKAT_CAM_CLASS_ID,0)): " << os->obj->CanConvertToType(Class_ID(LOOKAT_CAM_CLASS_ID,0)) );
+	
 
+	if( os->obj->CanConvertToType(Class_ID(SIMPLE_CAM_CLASS_ID,0)) ) {
+	   GenCamera *pCameraObj = reinterpret_cast<GenCamera *>(os->obj->ConvertToType(now, Class_ID (SIMPLE_CAM_CLASS_ID, 0)));
 	   options.pCameraObj = pCameraObj;
-   }
+	}
+    
    if( options.pCameraObj == NULL ) {
 		ESS_LOG_ERROR( "Error converting target into a CameraObject." );
 		return;
@@ -295,6 +303,8 @@ RefResult AlembicCameraBaseModifier::NotifyRefChanged(Interval changeInt, RefTar
 void AlembicImport_FillInCamera(alembic_fillcamera_options &options)
 {
    	ESS_CPP_EXCEPTION_REPORTING_START
+
+	ESS_LOG_INFO( "AlembicImport_FillInCamera" );
 
 	if (options.pCameraObj == NULL ||
         !Alembic::AbcGeom::ICamera::matches((*options.pIObj).getMetaData()))

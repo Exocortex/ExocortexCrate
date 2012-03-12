@@ -39,7 +39,6 @@ _alembic_fillshape_options::_alembic_fillshape_options()
     dTicks = 0;
 }
 
-
 //////////////////////////////////////////////////////////////////////////////////////////
 // Function Prototypes
 void AlembicImport_FillInShape(alembic_fillshape_options &options);

@@ -569,7 +569,9 @@ int AlembicImport_PolyMesh(const std::string &path, const std::string &identifie
 	// Find the object in the archive
 	Alembic::AbcGeom::IObject iObj = getObjectFromArchive(path,identifier);
 	if(!iObj.valid())
+	{
 		return alembic_failure;
+	}
 
 	// Fill in the mesh
     alembic_fillmesh_options dataFillOptions;
@@ -586,8 +588,6 @@ int AlembicImport_PolyMesh(const std::string &path, const std::string &identifie
 
     // Create the poly or tri object and place it in the scene
     // Need to use the attach to existing import flag here 
-    Object *newObject = NULL;
-
     if (!Alembic::AbcGeom::IPolyMesh::matches(iObj.getMetaData()))
     {
         return alembic_failure;
@@ -603,6 +603,7 @@ int AlembicImport_PolyMesh(const std::string &path, const std::string &identifie
     Alembic::AbcGeom::IPolyMeshSchema::Sample polyMeshSample;
     objMesh.getSchema().get(polyMeshSample, 0);
 
+    Object *newObject = NULL;
     if (AlembicImport_IsPolyObject(polyMeshSample))
     {
 		
@@ -627,9 +628,10 @@ int AlembicImport_PolyMesh(const std::string &path, const std::string &identifie
 
 	// Create the object node
 	INode *node = GetCOREInterface12()->CreateObjectNode(newObject, iObj.getName().c_str());
-	if (!node)
+	if (node == NULL)
+    {
 		return alembic_failure;
-
+    }
 	// Create the polymesh modifier
 	Modifier *pModifier = static_cast<Modifier*>
 		(GetCOREInterface12()->CreateInstance(OSM_CLASS_ID, ALEMBIC_MESH_MODIFIER_CLASSID));
