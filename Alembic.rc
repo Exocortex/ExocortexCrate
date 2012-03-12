@@ -269,6 +269,7 @@ STRINGTABLE
 BEGIN
     IDS_MUTED               "Muted"
     IDS_TIME                "Time"
+	IDS_CAMERATRANSFORM		"Camera Transform"
 END
 
 #endif    // English (U.S.) resources

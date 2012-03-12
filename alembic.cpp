@@ -14,7 +14,7 @@
 
 // Dummy function for progress bar
 DWORD WINAPI fn(LPVOID arg)
-{
+{ 
 	return(0);
 }
 

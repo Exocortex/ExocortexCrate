@@ -1,11 +1,9 @@
 include "Exocortex-Dialog-AlembicImport.mcr"
 include "Exocortex-Dialog-AlembicExport.mcr"
-print "Alembic Mesh"
 include "Exocortex-Geometry-AlembicMesh.mcr"
-print "Alembic Camera Modifier"
 include "Exocortex-Modifier-AlembicCamera.mcr"
-print "Alembic Mesh Modifier"
 include "Exocortex-Modifier-AlembicMesh.mcr"
+include "Exocortex-Modifier-AlembicTransform.mcr"
 
 ---------------------------------------------------------------------------------------------------------
 -- Function to create the menu items in the main menu bar

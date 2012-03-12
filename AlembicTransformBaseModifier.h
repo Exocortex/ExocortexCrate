@@ -26,7 +26,7 @@
 #include "AlembicNames.h"
 
 
-class AlembicMeshBaseModifier : public Modifier {
+class AlembicTransformBaseModifier : public Modifier {
 public:
 	IParamBlock2 *pblock;
 	
@@ -38,25 +38,21 @@ public:
 		ID_CURRENTTIMEHIDDEN,
 		ID_TIMEOFFSET,
 		ID_TIMESCALE,
-		ID_FACESET,
-		ID_VERTICES,
-		ID_NORMALS,
-		ID_UVS,
-		ID_CLUSTERS,
+		ID_CAMERATRANSFORM,
 		ID_MUTED
 	};
 
 	static IObjParam *ip;
-	static AlembicMeshBaseModifier *editMod;
+	static AlembicTransformBaseModifier *editMod;
 
-	AlembicMeshBaseModifier();
-
+	AlembicTransformBaseModifier();
+ 
 	// From Animatable
 	void DeleteThis() { delete this; }
-	void GetClassName(TSTR& s) { s = _T("Alembic Mesh Base Modifier"); }  
-	virtual Class_ID ClassID() { return ALEMBIC_MESH_BASE_MODIFIER_CLASSID; }		
+	void GetClassName(TSTR& s) { s = _T("Alembic Transform Base Modifier"); }  
+	virtual Class_ID ClassID() { return ALEMBIC_TRANSFORM_BASE_MODIFIER_CLASSID; }		
 	RefTargetHandle Clone(RemapDir& remap);
-	TCHAR *GetObjectName() { return _T("Alembic Mesh Base Modifier"); }
+	TCHAR *GetObjectName() { return _T("Alembic Transform Base Modifier"); }
 
 	// From Modifier
 	ChannelMask ChannelsUsed()  { return TOPO_CHANNEL|GEOM_CHANNEL|TEXMAP_CHANNEL; }
@@ -90,20 +86,20 @@ private:
 
 
 
-class AlembicMeshBaseModifierClassDesc : public ClassDesc2 {
+class AlembicTransformBaseModifierClassDesc : public ClassDesc2 {
 	public:
 	int 			IsPublic() { return 0; }
-	void *			Create(BOOL loading = FALSE) { return new AlembicMeshBaseModifier; }
-	const TCHAR *	ClassName() { return _T("Alembic Mesh Base Modifier"); }
+	void *			Create(BOOL loading = FALSE) { return new AlembicTransformBaseModifier; }
+	const TCHAR *	ClassName() { return _T("Alembic Transform Base Modifier"); }
 	SClass_ID		SuperClassID() { return OSM_CLASS_ID; }
-	Class_ID		ClassID() { return ALEMBIC_MESH_BASE_MODIFIER_CLASSID; }
+	Class_ID		ClassID() { return ALEMBIC_TRANSFORM_BASE_MODIFIER_CLASSID; }
 	const TCHAR* 	Category() { return EXOCORTEX_ALEMBIC_CATEGORY; }
-	const TCHAR*	InternalName() { return _T("AlembicMeshBaseModifier"); }	// returns fixed parsable name (scripter-visible name)
+	const TCHAR*	InternalName() { return _T("AlembicTransformBaseModifier"); }	// returns fixed parsable name (scripter-visible name)
 	HINSTANCE		HInstance() { return hInstance; }			// returns owning module handle
 };
 
 
-ClassDesc2 *GetAlembicMeshBaseModifierClassDesc();
+ClassDesc2 *GetAlembicTransformBaseModifierClassDesc();
 
 
 #endif	// __ALEMBIC_POLYMESH_MODIFIER__H

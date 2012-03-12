@@ -150,7 +150,7 @@
 #define	IDS_UVS	4009
 #define	IDS_CLUSTERS	4010
 #define IDD_EMPTY 4011
-
+#define IDS_CAMERATRANSFORM 4012
 
 // Next default values for new objects
 // 

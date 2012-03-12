@@ -12,6 +12,7 @@
 #include "AlembicWriteJob.h"
 #include "Utility.h"
 #include "AlembicSimpleSpline.h"
+#include "AlembicTransformUtilities.h"
 
 // Dummy function for progress bar
 DWORD WINAPI DummyProgressFunction(LPVOID arg)

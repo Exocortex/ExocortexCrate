@@ -36,93 +36,10 @@ _alembic_fillcamera_options::_alembic_fillcamera_options()
 void AlembicImport_FillInCamera(alembic_fillcamera_options &options);
 
 
-//////////////////////////////////////////////////////////////////////////////////////////
-// Camera Modifier object
-class AlembicCameraBaseModifier : public Modifier 
-{  
-public:
-	IParamBlock2 *pblock;
-	
-	// Parameters in first block:
-	enum 
-	{ 
-		ID_PATH,
-		ID_IDENTIFIER,
-		ID_CURRENTTIMEHIDDEN,
-		ID_TIMEOFFSET,
-		ID_TIMESCALE,
-		ID_FACESET,
-		ID_VERTICES,
-		ID_NORMALS,
-		ID_UVS,
-		ID_CLUSTERS,
-		ID_MUTED
-	};
-
-	static IObjParam *ip;
-	static AlembicCameraBaseModifier *editMod;
-
-	AlembicCameraBaseModifier();
-
-	// From Animatable
-	RefTargetHandle Clone(RemapDir& remap);
-	void DeleteThis() { delete this; }
-	void GetClassName(TSTR& s) { s = _T("Alembic Camera Base Modifier"); }  
-	virtual Class_ID ClassID() { return ALEMBIC_CAMERA_BASE_MODIFIER_CLASSID; }		
-	TCHAR *GetObjectName() { return _T("Alembic Camera Base Modifier"); }
-
-	// From modifier
-	ChannelMask ChannelsUsed() { return DISP_ATTRIB_CHANNEL; }		// TODO: What channels do we actually need?
-	ChannelMask ChannelsChanged() { return DISP_ATTRIB_CHANNEL; }
-	Class_ID InputType() { return defObjectClassID; }
-	void ModifyObject (TimeValue t, ModContext &mc, ObjectState *os, INode *node);
-	Interval LocalValidity(TimeValue t) { return GetValidity(t); }
-	Interval GetValidity (TimeValue t);
-	BOOL DependOnTopology(ModContext &mc) { return FALSE; }
-
-	// From BaseObject
-	CreateMouseCallBack* GetCreateMouseCallBack() {return NULL;} 
-
-	int NumParamBlocks () { return 1; }
-	IParamBlock2 *GetParamBlock (int i) { return pblock; }
-	IParamBlock2 *GetParamBlockByID (short id) { return (pblock->ID() == id) ? pblock : NULL; }
-
-	int NumRefs() { return 1; }
-	RefTargetHandle GetReference(int i) { return pblock; }
-
-	int NumSubs() { return 1; }
-	Animatable* SubAnim(int i) { return GetReference(i); }
-	TSTR SubAnimName(int i) { return _T("IDS_PROPS"); }
-
-	RefResult NotifyRefChanged(Interval changeInt, RefTargetHandle hTarget, 
-		                       PartID& partID, RefMessage message);
-
-    //void SetCamera(GenCamera *pCam);
-
-private:
-	virtual void SetReference(int i, RefTargetHandle rtarg) { pblock = (IParamBlock2 *) rtarg; }
-
-
-    //GenCamera        *m_pCamera;
-};
-
 //--- ClassDescriptor and class vars ---------------------------------
 
 IObjParam *AlembicCameraBaseModifier::ip                    = NULL;
 AlembicCameraBaseModifier *AlembicCameraBaseModifier::editMod   = NULL;
-
-class AlembicCameraBaseModifierClassDesc : public ClassDesc2 
-{
-public:
-	int 			IsPublic() { return 1; }
-	void *			Create(BOOL loading = FALSE) { return new AlembicCameraBaseModifier; }
-	const TCHAR *	ClassName() { return _T("Alembic Camera Base Modifier"); }
-	SClass_ID		SuperClassID() { return OSM_CLASS_ID; }
-	Class_ID		ClassID() { return ALEMBIC_CAMERA_BASE_MODIFIER_CLASSID; }
-	const TCHAR* 	Category() { return EXOCORTEX_ALEMBIC_CATEGORY; }
-	const TCHAR*	InternalName() { return _T("AlembicCameraBaseModifier"); }  // returns fixed parsable name (scripter-visible name)
-	HINSTANCE		HInstance() { return hInstance; }                       // returns owning module handle
-};
 
 static AlembicCameraBaseModifierClassDesc s_AlembicCameraBaseModifierDesc;
 ClassDesc2* GetAlembicCameraBaseModifierClassDesc() { return &s_AlembicCameraBaseModifierDesc; }

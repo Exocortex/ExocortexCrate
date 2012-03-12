@@ -8,6 +8,7 @@ extern ClassDesc2* GetAlembicVisCtrlClassDesc();
 extern ClassDesc2* GetAlembicSimpleParticleClassDesc();
 extern ClassDesc2* GetAlembicSimpleSplineClassDesc();
 extern ClassDesc2* GetAlembicMeshBaseModifierClassDesc();
+extern ClassDesc2 *GetAlembicTransformBaseModifierClassDesc();
 
 HINSTANCE hInstance;
 
@@ -32,7 +33,7 @@ MAX_DLL_EXPORT const TCHAR* LibDescription()
 //TODO: Must change this number when adding a new class
 MAX_DLL_EXPORT int LibNumberClasses()
 {
-   return 6;
+   return 7;
 }
 
 MAX_DLL_EXPORT ClassDesc* LibClassDesc(int i)
@@ -45,6 +46,7 @@ MAX_DLL_EXPORT ClassDesc* LibClassDesc(int i)
     case 3: return GetAlembicVisCtrlClassDesc();
     case 4: return GetAlembicSimpleParticleClassDesc();
     case 5: return GetAlembicSimpleSplineClassDesc();
+	case 6: return GetAlembicTransformBaseModifierClassDesc();
 
     default: return 0;
     }
