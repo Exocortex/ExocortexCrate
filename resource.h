@@ -64,6 +64,11 @@
 #define IDC_EDIT_TIME                   1015
 #define IDC_CUSTOM4                     1016
 #define IDC_SPIN_TIME                   1016
+#define IDC_EDIT_TIME_OFFSET            1017
+#define IDC_SPIN_TIME_OFFSET            1018
+#define IDC_EDIT_SCALE                  1019
+#define IDC_EDIT_TIME_SCALE             1019
+#define IDC_SPIN_TIME_SCALE             1020
 #define IDC_LIMIT_SIZE                  1276
 #define IDC_KEEP_CONVEX                 1277
 #define IDC_TI_POSX                     3019
@@ -91,6 +96,19 @@
 #define IDC_SEL_PIPELINE                3088
 #define IDC_ELIMINATE_COLLINEAR         3089
 #define IDC_PLANAR                      3147
+#define IDS_PARAMS                      4000
+#define IDS_PATH                        4001
+#define IDS_IDENTIFIER                  4002
+#define IDS_CURRENTTIMEHIDDEN           4003
+#define IDS_TIMEOFFSET                  4004
+#define IDS_TIMESCALE                   4005
+#define IDS_FACESET                     4006
+#define IDS_VERTICES                    4007
+#define IDS_NORMALS                     4008
+#define IDS_UVS                         4009
+#define IDS_CLUSTERS                    4010
+#define IDD_EMPTY                       4011
+#define IDS_CAMERATRANSFORM             4012
 #define IDS_RB_RADIUS                   30045
 #define IDS_RB_SEGS                     30046
 #define IDS_RB_POS                      30047
@@ -138,19 +156,6 @@
 #define IDD_CIRCLEPARAM3                30303
 #define IDC_THRESH_LABEL                65535
 #define IDC_MAX_SIZE_LABEL              65535
-#define	IDS_PARAMS	4000
-#define	IDS_PATH	4001
-#define	IDS_IDENTIFIER	4002
-#define	IDS_CURRENTTIMEHIDDEN	4003
-#define	IDS_TIMEOFFSET	4004
-#define	IDS_TIMESCALE	4005
-#define	IDS_FACESET	4006
-#define	IDS_VERTICES	4007
-#define	IDS_NORMALS	4008
-#define	IDS_UVS	4009
-#define	IDS_CLUSTERS	4010
-#define IDD_EMPTY 4011
-#define IDS_CAMERATRANSFORM 4012
 
 // Next default values for new objects
 // 
@@ -158,7 +163,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        107
 #define _APS_NEXT_COMMAND_VALUE         40001
-#define _APS_NEXT_CONTROL_VALUE         1017
+#define _APS_NEXT_CONTROL_VALUE         1019
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

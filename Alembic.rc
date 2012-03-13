@@ -149,8 +149,7 @@ BEGIN
     CONTROL         "",IDC_TI_POSY,"CustEdit",WS_TABSTOP,48,16,36,10
     CONTROL         "",IDC_TI_POSZ,"CustEdit",WS_TABSTOP,48,29,36,10
     CONTROL         "",IDC_RADIUS,"CustEdit",WS_TABSTOP,48,45,36,10
-    CONTROL         "Create",IDC_TI_CREATE,"CustButton",WS_TABSTOP,48,58,44,
-                    12
+    CONTROL         "Create",IDC_TI_CREATE,"CustButton",WS_TABSTOP,48,58,44,12
     CONTROL         "",IDC_TI_POSXSPIN,"SpinnerControl",0x0,85,3,7,10
     CONTROL         "",IDC_TI_POSYSPIN,"SpinnerControl",0x0,85,16,7,10
     CONTROL         "",IDC_TI_POSZSPIN,"SpinnerControl",0x0,85,29,7,10
@@ -174,10 +173,8 @@ IDD_CIRCLEPARAM1 DIALOG  0, 0, 108, 16
 STYLE DS_SETFONT | WS_CHILD | WS_VISIBLE
 FONT 8, "MS Sans Serif"
 BEGIN
-    CONTROL         "Edge",IDC_CREATEDIAMETER,"Button",BS_AUTORADIOBUTTON | 
-                    WS_TABSTOP,8,3,43,10
-    CONTROL         "Center",IDC_CREATERADIUS,"Button",BS_AUTORADIOBUTTON | 
-                    WS_TABSTOP,68,3,35,10
+    CONTROL         "Edge",IDC_CREATEDIAMETER,"Button",BS_AUTORADIOBUTTON | WS_TABSTOP,8,3,43,10
+    CONTROL         "Center",IDC_CREATERADIUS,"Button",BS_AUTORADIOBUTTON | WS_TABSTOP,68,3,35,10
 END
 
 
@@ -217,17 +214,18 @@ END
 
 STRINGTABLE 
 BEGIN
-	IDS_PARAMS	"Parameters"
-	IDS_PATH "Path"
-	IDS_IDENTIFIER "Identifier"
-	IDS_CURRENTTIMEHIDDEN "CurrentTimeHidden"
-	IDS_TIMEOFFSET "Time Offset"
-	IDS_TIMESCALE "Time Scale"
-	IDS_FACESET "Faceset"
-	IDS_VERTICES "Vertices"
-	IDS_NORMALS "Normals"
-	IDS_UVS "UVs"
-	IDS_CLUSTERS "Clusters"
+    IDS_PARAMS              "Parameters"
+    IDS_PATH                "Path"
+    IDS_IDENTIFIER          "Identifier"
+    IDS_CURRENTTIMEHIDDEN   "CurrentTimeHidden"
+    IDS_TIMEOFFSET          "Time Offset"
+    IDS_TIMESCALE           "Time Scale"
+    IDS_FACESET             "Faceset"
+    IDS_VERTICES            "Vertices"
+    IDS_NORMALS             "Normals"
+    IDS_UVS                 "UVs"
+    IDS_CLUSTERS            "Clusters"
+    IDS_CAMERATRANSFORM     "Camera Transform"
 END
 
 STRINGTABLE 
@@ -269,7 +267,6 @@ STRINGTABLE
 BEGIN
     IDS_MUTED               "Muted"
     IDS_TIME                "Time"
-	IDS_CAMERATRANSFORM		"Camera Transform"
 END
 
 #endif    // English (U.S.) resources
@@ -306,16 +303,23 @@ FONT 8, "Microsoft Sans Serif", 400, 0, 0x0
 BEGIN
 END
 
-
-IDD_ALEMBIC_ID_PARAMS DIALOGEX 0, 0, 108, 103
+IDD_ALEMBIC_ID_PARAMS DIALOGEX 0, 0, 108, 165
 STYLE DS_SETFONT | WS_CHILD
 FONT 8, "Microsoft Sans Serif", 400, 0, 0x0
 BEGIN
     GROUPBOX        "Alembic Identifier:",IDC_STATIC,7,7,94,81
-    LTEXT           "Archive:",IDC_STATIC,14,17,54,14
-    LTEXT           "Object Identifer:",IDC_STATIC,14,49,55,14
-    EDITTEXT        IDC_ABC_OBJECTID,14,62,80,13,ES_AUTOHSCROLL | ES_READONLY
-    EDITTEXT        IDC_ABC_ARCHIVE,14,27,80,13,ES_AUTOHSCROLL | ES_READONLY
+    LTEXT           "Path:",IDC_STATIC,14,17,54,14
+    LTEXT           "Identifer:",IDC_STATIC,14,49,55,14
+    EDITTEXT        IDC_ABC_OBJECTID,14,62,80,13,ES_AUTOHSCROLL
+    EDITTEXT        IDC_ABC_ARCHIVE,14,27,80,13,ES_AUTOHSCROLL
+    GROUPBOX        "Time:",IDC_STATIC,8,92,94,49
+    CONTROL         "Custom1",IDC_EDIT_TIME_OFFSET,"CustEdit",WS_TABSTOP,39,105,41,11
+    CONTROL         "Custom2",IDC_SPIN_TIME_OFFSET,"SpinnerControl",WS_TABSTOP,82,105,10,11
+    CONTROL         "Custom1",IDC_EDIT_TIME_SCALE,"CustEdit",WS_TABSTOP,39,122,41,11
+    CONTROL         "Custom2",IDC_SPIN_TIME_SCALE,"SpinnerControl",WS_TABSTOP,82,122,10,11
+    LTEXT           "Offset:",IDC_STATIC,14,105,23,10
+    LTEXT           "Scale:",IDC_STATIC,14,124,22,8
+    CONTROL         "Muted ",IDC_CHECK_MUTED,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,148,38,10
 END
 
 
@@ -330,6 +334,11 @@ BEGIN
     IDD_ALEMBIC_PROPS, DIALOG
     BEGIN
         BOTTOMMARGIN, 37
+    END
+
+    IDD_ALEMBIC_ID_PARAMS, DIALOG
+    BEGIN
+        BOTTOMMARGIN, 164
     END
 END
 #endif    // APSTUDIO_INVOKED

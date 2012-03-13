@@ -119,8 +119,9 @@ int AlembicImport_XForm(const std::string &file, const std::string &identifier, 
 		(GetCOREInterface()->CreateInstance(CTRL_MATRIX3_CLASS_ID, ALEMBIC_XFORM_CTRL_CLASSID));
 
 	// Set the alembic id
-	pCtrl->SetAlembicId(file, identifier, xformOptions.dTicks);
-    pCtrl->SetIsCameraTransform(xformOptions.bIsCameraTransform);
+    pCtrl->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pCtrl, 0, "path" ), xformOptions.dTicks, file.c_str());
+	pCtrl->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pCtrl, 0, "identifier" ), xformOptions.dTicks , identifier.c_str() );
+    pCtrl->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pCtrl, 0, "isCameraTransform" ), xformOptions.dTicks , xformOptions.bIsCameraTransform );
 
 	// Add the modifier to the node
     pNode->SetTMController(pCtrl);

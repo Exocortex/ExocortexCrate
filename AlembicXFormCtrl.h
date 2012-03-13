@@ -74,6 +74,10 @@ public:
     IOResult Save(ISave *isave);
     IOResult Load(ILoad *iload);
 
+    void MainPanelInitDialog( HWND hWnd );
+    void MainPanelDestroy( HWND hWnd );
+    void MainPanelUpdateUI();
+
     void SetAlembicId(const std::string &file, const std::string &identifier, TimeValue t);
     const std::string &GetAlembicArchive() { return m_AlembicNodeProps.m_File; }
     const std::string &GetAlembicObjectId() { return m_AlembicNodeProps.m_Identifier; }
@@ -85,6 +89,8 @@ private:
     alembic_nodeprops m_AlembicNodeProps;
     Interval m_CurrentAlembicInterval;
     bool m_bIsCameraTransform;
+    HWND mhPanel;
+    bool mbSuspendPanelUpdate;
 };
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////

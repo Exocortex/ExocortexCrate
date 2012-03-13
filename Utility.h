@@ -88,6 +88,6 @@ INode *GetParentModelTransformNode( INode *pNode );
 void LockNodeTransform(INode *pNode, bool bLock);
 
 
-int GetParamIdByName( BaseObject *pBaseObject, int pblockIndex, char const* pParamName );
+int GetParamIdByName( Animatable *pBaseObject, int pblockIndex, char const* pParamName );
 
 #endif  // _FOUNDATION_H_

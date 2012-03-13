@@ -289,13 +289,17 @@ Alembic::Abc::TimeSamplingPtr getTimeSamplingFromObject(Alembic::Abc::IObject ob
 }
 
 
-int GetParamIdByName( BaseObject *pBaseObject, int pblockIndex, char const* pParamName ) {
+int GetParamIdByName( Animatable *pBaseObject, int pblockIndex, char const* pParamName ) 
+{
 	IParamBlock2 * pParamBlock2 = pBaseObject->GetParamBlockByID( pblockIndex );
-	for( int iParamID = 0; iParamID < pParamBlock2->NumParams(); iParamID ++ ) {
+	for( int iParamID = 0; iParamID < pParamBlock2->NumParams(); iParamID ++ ) 
+    {
 		ParamDef &paramDef = pParamBlock2->GetParamDef( iParamID );
-		if( strcmp( paramDef.int_name, pParamName ) == 0 ) {
+		if( strcmp( paramDef.int_name, pParamName ) == 0 ) 
+        {
 			return iParamID;
 		}
 	}
+
 	return -1;
 }
