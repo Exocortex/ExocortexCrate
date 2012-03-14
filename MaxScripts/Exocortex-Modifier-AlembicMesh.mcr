@@ -4,7 +4,7 @@ plugin modifier AlembicMeshModifier
 	category:"Alembic" 
 	version:1
 	extends:AlembicMeshBaseModifier
-	replaceUI:true
+	replaceUI:false
 	invisible:false
 (
 		parameters main rollout:params
