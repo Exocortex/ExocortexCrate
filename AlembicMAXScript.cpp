@@ -52,7 +52,7 @@ public:
                 _M("importUVs"),    //* argument internal name * /
                 0,                  //* argument localizable name string resource id * /
                 TYPE_BOOL,          //* arg type * /
-                _M("importClusters"), //* argument internal name * /
+                _M("importMaterialIds"), //* argument internal name * /
                 0,                  //* argument localizable name string resource id * /
                 TYPE_BOOL,          //* arg type * /
                 _M("attachToExisting"), //* argument internal name * /
@@ -94,7 +94,7 @@ public:
                 _M("importUVs"),    //* argument internal name * /
                 0,                  //* argument localizable name string resource id * /
                 TYPE_BOOL,          //* arg type * /
-                _M("importClusters"), //* argument internal name * /
+                _M("importMaterialIds"), //* argument internal name * /
                 0,                  //* argument localizable name string resource id * /
                 TYPE_BOOL,          //* arg type * /                
             end); 
@@ -127,7 +127,7 @@ public:
                 _M("exportUV"),     //* argument internal name * /
                 0,                  //* argument localizable name string resource id * /
                 TYPE_BOOL,          //* arg type * /
-                _M("exportClusters"), //* argument internal name * /
+                _M("exportMaterialIds"), //* argument internal name * /
                 0,                  //* argument localizable name string resource id * /
                 TYPE_BOOL,          //* arg type * /
                 _M("exportEnvelopeBindPose"), //* argument internal name * /
@@ -137,14 +137,14 @@ public:
                 0,                  //* argument localizable name string resource id * /
                 TYPE_BOOL,          //* arg type * /
                 _M("exportSelected"), //* argument internal name * /
-                0,                  //* argument localizable name string resource id * /
+                0,                    //* argument localizable name string resource id * /
                 TYPE_BOOL,          //* arg type * /
             end); 	
     }
 
     static int ExocortexAlembicImport(
 		MCHAR * strPath, 
-		BOOL bImportNormals, BOOL bImportUVs, BOOL bImportClusters,
+		BOOL bImportNormals, BOOL bImportUVs, BOOL bImportMaterialIds,
 		BOOL bAttachToExisting,
 		int iVisOption);
 
@@ -152,13 +152,13 @@ public:
 		Mesh* pMesh,
 		MCHAR * strPath, MCHAR * strIdentifier,
 		float time, 
-		BOOL bImportFaceList, BOOL bImportVertices, BOOL bImportNormals, BOOL bImportUVs, BOOL bImportClusters
+		BOOL bImportFaceList, BOOL bImportVertices, BOOL bImportNormals, BOOL bImportUVs, BOOL bImportMaterialIds
 		);
 	static int ExocortexAlembicExport(
 		MCHAR * strPath,
 		int iFrameIn, int iFrameOut, int iFrameSteps, int iFrameSubSteps,
 		int iType,
-        BOOL bExportUV, BOOL bExportClusters, BOOL bExportEnvelopeBindPose, BOOL bExportDynamicTopology, BOOL bExportSelected );
+        BOOL bExportUV, BOOL bExportMaterialIds, BOOL bExportEnvelopeBindPose, BOOL bExportDynamicTopology, BOOL bExportSelected );
 
     BEGIN_FUNCTION_MAP
         FN_6(exocortexAlembicImport, TYPE_INT, ExocortexAlembicImport, TYPE_FILENAME, TYPE_BOOL, TYPE_BOOL, TYPE_BOOL, TYPE_BOOL, TYPE_INT)
@@ -170,7 +170,7 @@ public:
 const Interface_ID ExocortexAlembicStaticInterface::id = Interface_ID(0x4bd4297f, 0x4e8403d7);
 static ExocortexAlembicStaticInterface exocortexAlembic;
 
-int ExocortexAlembicStaticInterface::ExocortexAlembicImport(MCHAR* strPath, BOOL bImportNormals, BOOL bImportUVs, BOOL bImportClusters, BOOL bAttachToExisting, int iVisOption)
+int ExocortexAlembicStaticInterface::ExocortexAlembicImport(MCHAR* strPath, BOOL bImportNormals, BOOL bImportUVs, BOOL bImportMaterialIds, BOOL bAttachToExisting, int iVisOption)
 {
 	ESS_CPP_EXCEPTION_REPORTING_START
 
@@ -181,13 +181,13 @@ int ExocortexAlembicStaticInterface::ExocortexAlembicImport(MCHAR* strPath, BOOL
 
 	ESS_LOG_INFO( "ExocortexAlembicImport( strPath=" << strPath <<
 		", bImportNormals=" << bImportNormals << ", bImportUVs=" << bImportUVs <<
-		", bImportClusters=" << bImportClusters << ", bAttachToExisting=" << bAttachToExisting <<
+		", bImportMaterialIds=" << bImportMaterialIds << ", bAttachToExisting=" << bAttachToExisting <<
 		", iVisOption=" << iVisOption << " )" );
 
 	alembic_importoptions importOptions;
     importOptions.importNormals = (bImportNormals != FALSE);
     importOptions.importUVs = (bImportUVs != FALSE);
-    importOptions.importClusters = (bImportClusters != FALSE);
+    importOptions.importMaterialIds = (bImportMaterialIds != FALSE);
     importOptions.attachToExisting = (bAttachToExisting != FALSE);
     importOptions.importVisibility = static_cast<VisImportOption>(iVisOption);
 
@@ -276,7 +276,7 @@ int ExocortexAlembicStaticInterface::ExocortexAlembicImport(MCHAR* strPath, BOOL
 }
 
 
-Mesh* ExocortexAlembicStaticInterface::ExocortexAlembicImportMesh(Mesh* pMesh, MCHAR* strPath, MCHAR* strIdentifier, float time, BOOL bImportFaceList, BOOL bImportVertices, BOOL bImportNormals, BOOL bImportUVs, BOOL bImportClusters )
+Mesh* ExocortexAlembicStaticInterface::ExocortexAlembicImportMesh(Mesh* pMesh, MCHAR* strPath, MCHAR* strIdentifier, float time, BOOL bImportFaceList, BOOL bImportVertices, BOOL bImportNormals, BOOL bImportUVs, BOOL bImportMaterialIds )
 {
 	if( pMesh == NULL ) {
 		pMesh = CreateNewMesh();
@@ -293,7 +293,7 @@ Mesh* ExocortexAlembicStaticInterface::ExocortexAlembicImportMesh(Mesh* pMesh, M
 		", strIdentifier=" << strIdentifier << 
 		", bImportFaceList=" << bImportFaceList << ", bImportVertices=" << bImportVertices <<
 		", bImportNormals=" << bImportNormals << ", bImportUVs=" << bImportUVs <<
-		", bImportClusters=" << bImportClusters << " )" );
+		", bImportMaterialIds=" << bImportMaterialIds << " )" );
 
 	if( strlen( strPath ) == 0 ) {
 	   ESS_LOG_ERROR( "No filename specified." );
@@ -336,6 +336,9 @@ Mesh* ExocortexAlembicStaticInterface::ExocortexAlembicImportMesh(Mesh* pMesh, M
    }
    if( bImportUVs ) {
 		options.nDataFillFlags |= ALEMBIC_DATAFILL_UVS;
+   }
+   if( bImportMaterialIds ) {
+		options.nDataFillFlags |= ALEMBIC_DATAFILL_FACESETS;
    }
    options.pMesh = pMesh;
 
@@ -449,7 +452,7 @@ Mesh* ExocortexAlembicStaticInterface::ExocortexAlembicImportMesh(Mesh* pMesh, M
 }
 
 int ExocortexAlembicStaticInterface::ExocortexAlembicExport(MCHAR * strPath, int iFrameIn, int iFrameOut, int iFrameSteps, int iFrameSubSteps, int iType,
-                                                            BOOL bExportUV, BOOL bExportClusters, BOOL bExportEnvelopeBindPose, BOOL bExportDynamicTopology,
+                                                            BOOL bExportUV, BOOL bExportMaterialIds, BOOL bExportEnvelopeBindPose, BOOL bExportDynamicTopology,
                                                             BOOL bExportSelected)
 {
 	ESS_CPP_EXCEPTION_REPORTING_START
@@ -463,7 +466,7 @@ int ExocortexAlembicStaticInterface::ExocortexAlembicExport(MCHAR * strPath, int
 		", iFrameIn=" << iFrameIn << ", iFrameOut=" << iFrameOut <<
 		", iFrameSteps=" << iFrameSteps << ", iFrameSubSteps=" << iFrameSubSteps <<
 		", iType=" << iType  << ", bExportUV=" << bExportUV <<
-		", bExportClusters=" << bExportClusters << ", bExportEnvelopeBindPose=" << bExportEnvelopeBindPose <<
+		", bExportMaterialIds=" << bExportMaterialIds << ", bExportEnvelopeBindPose=" << bExportEnvelopeBindPose <<
 		", bExportDynamicTopology=" << bExportDynamicTopology << ", bExportSelected=" << bExportSelected <<
 		" )" );
 
@@ -531,11 +534,11 @@ int ExocortexAlembicStaticInterface::ExocortexAlembicExport(MCHAR * strPath, int
     }
 
     AlembicWriteJob *job = new AlembicWriteJob(strPath, allSceneObjects, frames, i);
-    job->SetOption("exportNormals", eTopologyType != SURFACE);
+    job->SetOption("exportNormals", eTopologyType == SURFACE_NORMAL);
     job->SetOption("exportUVs", (bExportUV != FALSE));
-    job->SetOption("exportFaceSets", eTopologyType != NORMAL);
+    job->SetOption("exportPurePointCache", eTopologyType == POINTCACHE);
     job->SetOption("exportBindPose", (bExportEnvelopeBindPose != FALSE));
-    job->SetOption("exportPurePointCache", (bExportClusters != FALSE));
+    job->SetOption("exportMaterialIds", (bExportMaterialIds != FALSE));
     job->SetOption("exportDynamicTopology", (bExportDynamicTopology != FALSE));
     job->SetOption("indexedNormals", true);
     job->SetOption("indexedUVs", true);

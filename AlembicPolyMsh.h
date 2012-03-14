@@ -3,6 +3,11 @@
 
 #include "AlembicObject.h"
 
+typedef std::map<int, std::vector<Alembic::AbcCoreAbstract::ALEMBIC_VERSION_NS::int32_t> > facesetmap;
+typedef std::map<int, std::vector<Alembic::AbcCoreAbstract::ALEMBIC_VERSION_NS::int32_t> >::iterator facesetmap_it;
+typedef std::pair<int, std::vector<Alembic::AbcCoreAbstract::ALEMBIC_VERSION_NS::int32_t> > facesetmap_insert_pair;
+typedef std::pair<facesetmap_it, bool> facesetmap_ret_pair;
+
 class AlembicPolyMesh: public AlembicObject
 {
 private:
@@ -16,7 +21,7 @@ private:
    std::vector<Alembic::Abc::V3f> mVelocitiesVec;
    std::vector<Alembic::Abc::V2f> mUvVec;
    std::vector<Alembic::Abc::uint32_t> mUvIndexVec;
-   std::vector<std::vector<Alembic::AbcCoreAbstract::ALEMBIC_VERSION_NS::int32_t> > mFaceSetsVec;
+   facesetmap mFaceSetsMap;
    Alembic::Abc::ALEMBIC_VERSION_NS::OV3fArrayProperty mBindPoseProperty;
    Alembic::Abc::ALEMBIC_VERSION_NS::OV3fArrayProperty mVelocityProperty;
 public:

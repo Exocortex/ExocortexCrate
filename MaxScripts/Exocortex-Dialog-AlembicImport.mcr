@@ -13,16 +13,17 @@ rollout AlembicImportSettings "Alembic Import Settings" width:288 height:236
 
 	button importButton "Import" pos:[16,200] width:64 height:24
 	button cancelButton "Cancel" pos:[208,200] width:64 height:24
-	groupBox grpVisibility "Visibility" pos:[9,121] width:272 height:46
-	dropDownList dropDownVis "" pos:[20,140] width:252 height:21 items:#("Just Import Value", "Connected Controllers") selection:1
+	GroupBox grpVisibility "Visibility" pos:[9,121] width:272 height:46
+	dropdownList dropDownVis "" pos:[20,140] width:252 height:21 items:#("Just Import Value", "Connected Controllers") selection:1
+	checkbox materialIdsCheckbox "Material Ids" pos:[48,82] width:145 height:16 checked:true
 
 	on importButton pressed do
 	(
-	    result = ExocortexAlembic.import filename normalCheckbox.checked uvCheckbox.checked false attachCheckbox.checked dropDownVis.selection
-        if( result != 0 ) do
-        (
-        	messageBox "Failure - See Maxscript Listener for details." title:"Exocortex Alembic Import"
-        )
+	    result = ExocortexAlembic.import filename normalCheckbox.checked uvCheckbox.checked materialIdsCheckbox.checked attachCheckbox.checked dropDownVis.selection
+	    if( result != 0 ) do
+	    (
+	    	messageBox "Failure - See Maxscript Listener for details." title:"Exocortex Alembic Import"
+	    )
 		destroyDialog AlembicImportSettings
 	)
 	on cancelButton pressed do
