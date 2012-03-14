@@ -11,7 +11,7 @@ plugin modifier AlembicMeshModifier
 	(
 		path type:#string ui:path default:""
 		identifier type:#string ui:identifier default:""
-		time type:#float animatable:true default:0
+		time type:#float ui:time animatable:true default:0
 		topology type:#boolean ui:topology default:true
 		geometry type:#boolean ui:geometry default:true
 		normals type:#boolean ui:normals default:true

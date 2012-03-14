@@ -107,7 +107,7 @@ private:
 
 class AlembicSimpleSplineClassDesc:public ClassDesc2 {
 	public:
-	int 			IsPublic() { return 1; }
+	int 			IsPublic() { return TRUE; }
 	void *			Create(BOOL loading = FALSE) { return new AlembicSimpleSpline; }
 	const TCHAR *	ClassName() { return _T("Spline"); }
 	SClass_ID		SuperClassID() { return SHAPE_CLASS_ID; }

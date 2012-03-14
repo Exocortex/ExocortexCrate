@@ -75,7 +75,7 @@ private:
 
 class AlembicTransformBaseModifierClassDesc : public ClassDesc2 {
 	public:
-	int 			IsPublic() { return 0; }
+	int 			IsPublic() { return FALSE; }
 	void *			Create(BOOL loading = FALSE) { return new AlembicTransformBaseModifier; }
 	const TCHAR *	ClassName() { return _T("Alembic Transform Base Modifier"); }
 	SClass_ID		SuperClassID() { return OSM_CLASS_ID; }

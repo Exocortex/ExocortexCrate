@@ -8,7 +8,7 @@ plugin simpleObject AlembicMesh
 	(
 		path type:#string ui:path default:""
 		identifier type:#string ui:identifier default:""
-		time type:#float default:0
+		time type:#float ui:time default:0
 		topology type:#boolean ui:topology default:true
 		geometry type:#boolean ui:geometry default:true
 		normals type:#boolean ui:normals default:true

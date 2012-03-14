@@ -302,7 +302,7 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
         }*/
    }
 
-   if ( options.nDataFillFlags & ALEMBIC_DATAFILL_NORMALS && objMesh.valid() )
+   if ( ( options.nDataFillFlags & ALEMBIC_DATAFILL_NORMALS ) && objMesh.valid() )
    {
        Alembic::AbcGeom::IN3fGeomParam meshNormalsParam = objMesh.getSchema().getNormalsParam();
 

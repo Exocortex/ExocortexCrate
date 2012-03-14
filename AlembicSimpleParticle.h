@@ -58,7 +58,7 @@ private:
 class AlembicSimpleParticleClassDesc : public ClassDesc2 
 {
 public:
-	int 			IsPublic() { return 1; }
+	int 			IsPublic() { return TRUE; }
 	void *			Create(BOOL loading = FALSE) { return new AlembicSimpleParticle(); }
 	const TCHAR *	ClassName() { return _T("Alembic Particles"); }
 	SClass_ID		SuperClassID() { return GEOMOBJECT_CLASS_ID; }

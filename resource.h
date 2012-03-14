@@ -24,6 +24,7 @@
 #define IDS_PROPS                       111
 #define IDS_MUTED                       112
 #define IDS_TIME                        113
+#define IDS_ALEMBIC                     114
 #define IDD_GSPHERE1                    179
 #define IDD_GSPHERE2                    180
 #define IDD_GSPHERE3                    181
@@ -48,6 +49,7 @@
 #define IDC_CHECK3                      1006
 #define IDC_CHECK_CLUSTER               1006
 #define IDC_OBSMOOTH                    1006
+#define IDC_UVS_CHECKBOX                1006
 #define IDC_CHECK4                      1007
 #define IDC_CHECK_TOPO                  1007
 #define IDC_EDIT1                       1008
@@ -68,7 +70,15 @@
 #define IDC_SPIN_TIME_OFFSET            1018
 #define IDC_EDIT_SCALE                  1019
 #define IDC_EDIT_TIME_SCALE             1019
+#define IDC_TIME_EDIT                   1019
 #define IDC_SPIN_TIME_SCALE             1020
+#define IDC_TIME_SPINNER                1020
+#define IDC_TIME_SPIN                   1020
+#define IDC_MUTED_CHECKBOX              1021
+#define IDC_TOPOLOGY_CHECKBOX           1022
+#define IDC_GEOMETRY_CHECKBOX           1023
+#define IDC_NORMALS_CHECKBOX2           1024
+#define IDC_NORMALS_CHECKBOX            1024
 #define IDC_LIMIT_SIZE                  1276
 #define IDC_KEEP_CONVEX                 1277
 #define IDC_TI_POSX                     3019
@@ -105,9 +115,9 @@
 #define IDS_UVS                         4009
 #define IDD_EMPTY                       4011
 #define IDS_CAMERATRANSFORM             4012
-#define IDS_TIMEOFFSET					4013
-#define IDS_TIMESCALE					4014
-#define IDS_CURRENTTIMEHIDDEN			4015
+#define IDS_TIMEOFFSET                  4013
+#define IDS_TIMESCALE                   4014
+#define IDS_CURRENTTIMEHIDDEN           4015
 #define IDS_RB_RADIUS                   30045
 #define IDS_RB_SEGS                     30046
 #define IDS_RB_POS                      30047
@@ -153,8 +163,13 @@
 #define IDD_CIRCLEPARAM1                30301
 #define IDD_CIRCLEPARAM2                30302
 #define IDD_CIRCLEPARAM3                30303
+#define IDD_ALEMBIC_MESH_BASE_PARAMS    30304
+#define IDC_TEXTUREPATH                 40000
+#define IDC_PATH_EDIT                   40000
+#define IDC_IDENTIFIER_EDIT             40001
 #define IDC_THRESH_LABEL                65535
 #define IDC_MAX_SIZE_LABEL              65535
+#define IDC_TIME_LABEL                  65535
 
 // Next default values for new objects
 // 
@@ -162,7 +177,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        107
 #define _APS_NEXT_COMMAND_VALUE         40001
-#define _APS_NEXT_CONTROL_VALUE         1019
+#define _APS_NEXT_CONTROL_VALUE         1022
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

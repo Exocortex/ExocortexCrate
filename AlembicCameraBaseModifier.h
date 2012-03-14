@@ -82,7 +82,7 @@ private:
 class AlembicCameraBaseModifierClassDesc : public ClassDesc2 
 {
 public:
-	int 			IsPublic() { return 0; }
+	int 			IsPublic() { return FALSE; }
 	void *			Create(BOOL loading = FALSE) { return new AlembicCameraBaseModifier; }
 	const TCHAR *	ClassName() { return _T("Alembic Camera Base Modifier"); }
 	SClass_ID		SuperClassID() { return OSM_CLASS_ID; }

@@ -76,7 +76,7 @@ private:
 
 class AlembicMeshBaseModifierClassDesc : public ClassDesc2 {
 	public:
-	int 			IsPublic() { return 0; }
+	int 			IsPublic() { return TRUE; }
 	void *			Create(BOOL loading = FALSE) { return new AlembicMeshBaseModifier; }
 	const TCHAR *	ClassName() { return _T("Alembic Mesh Base Modifier"); }
 	SClass_ID		SuperClassID() { return OSM_CLASS_ID; }

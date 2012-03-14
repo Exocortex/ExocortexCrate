@@ -25,37 +25,54 @@ ClassDesc2* GetAlembicMeshBaseModifierClassDesc() {return &AlembicMeshBaseModifi
 static ParamBlockDesc2 AlembicMeshBaseModifierParams(
 	0,
 	_T("AlembicMeshBaseModifier"),
-	IDS_PROPS,
+	0,
 	GetAlembicMeshBaseModifierClassDesc(),
 	P_AUTO_CONSTRUCT | P_AUTO_UI,
 	0,
 
-	// rollout description
-	IDD_EMPTY, IDS_PARAMS, 0, 0, NULL,
+	// rollout description 
+	IDD_ALEMBIC_MESH_BASE_PARAMS, IDS_ALEMBIC, 0, 0, NULL,
 
     // params
-	AlembicMeshBaseModifier::ID_PATH, _T("path"), TYPE_FILENAME, 0, IDS_PATH,
-		end,
+	AlembicMeshBaseModifier::ID_PATH, _T("path"), TYPE_FILENAME, P_RESET_DEFAULT, IDS_PATH,
+	    p_default, "",
+	    p_ui,        TYPE_EDITBOX,		IDC_PATH_EDIT,
+	 	end,
         
-	AlembicMeshBaseModifier::ID_IDENTIFIER, _T("identifier"), TYPE_STRING, 0, IDS_IDENTIFIER,
-		end,
+	AlembicMeshBaseModifier::ID_IDENTIFIER, _T("identifier"), TYPE_STRING, P_RESET_DEFAULT, IDS_IDENTIFIER,
+	    p_default, "",
+	    p_ui,        TYPE_EDITBOX,		IDC_IDENTIFIER_EDIT,
+	 	end,
 
-	AlembicMeshBaseModifier::ID_TIME, _T("time"), TYPE_FLOAT, 0, IDS_TIME,
+	AlembicMeshBaseModifier::ID_TIME, _T("time"), TYPE_FLOAT, P_ANIMATABLE, IDS_TIME,
+		p_default,       0.0f,
+		p_range,         0.0f, 1000.0f,
+		p_ui,            TYPE_SPINNER,       EDITTYPE_FLOAT, IDC_TIME_EDIT,    IDC_TIME_SPIN, 0.5f,
 		end,
 
 	AlembicMeshBaseModifier::ID_TOPOLOGY, _T("topology"), TYPE_BOOL, 0, IDS_TOPOLOGY,
+		p_default,       TRUE,
+		p_ui,            TYPE_SINGLECHEKBOX,  IDC_TOPOLOGY_CHECKBOX,
 		end,
 
 	AlembicMeshBaseModifier::ID_GEOMETRY, _T("geometry"), TYPE_BOOL, 0, IDS_GEOMETRY,
+		p_default,       TRUE,
+		p_ui,            TYPE_SINGLECHEKBOX,  IDC_GEOMETRY_CHECKBOX,
 		end,
 
 	AlembicMeshBaseModifier::ID_UVS, _T("uvs"), TYPE_BOOL, 0, IDS_UVS,
+		p_default,       TRUE,
+		p_ui,            TYPE_SINGLECHEKBOX,  IDC_UVS_CHECKBOX,
 		end,
 
 	AlembicMeshBaseModifier::ID_NORMALS, _T("normals"), TYPE_BOOL, 0, IDS_NORMALS,
+		p_default,       TRUE,
+		p_ui,            TYPE_SINGLECHEKBOX,  IDC_NORMALS_CHECKBOX,
 		end,
 
-	AlembicMeshBaseModifier::ID_MUTED, _T("muted"), TYPE_BOOL, 0, IDS_MUTED,
+	AlembicMeshBaseModifier::ID_MUTED, _T("muted"), TYPE_BOOL, P_ANIMATABLE, IDS_MUTED,
+		p_default,       TRUE,
+		p_ui,            TYPE_SINGLECHEKBOX,  IDC_MUTED_CHECKBOX,
 		end,
 
 	end
@@ -84,7 +101,8 @@ void AlembicMeshBaseModifier::ModifyObject (TimeValue t, ModContext &mc, ObjectS
 {
 	ESS_CPP_EXCEPTION_REPORTING_START
 
-	Interval interval = os->obj->ObjectValidity(t);
+	Interval interval = FOREVER;//os->obj->ObjectValidity(t);
+	ESS_LOG_INFO( "Interval Start: " << interval.Start() << " End: " << interval.End() );
 
     MCHAR const* strPath = NULL;
 	this->pblock->GetValue( AlembicMeshBaseModifier::ID_PATH, t, strPath, interval);
@@ -110,6 +128,8 @@ void AlembicMeshBaseModifier::ModifyObject (TimeValue t, ModContext &mc, ObjectS
 	BOOL bMuted;
 	this->pblock->GetValue( AlembicMeshBaseModifier::ID_MUTED, t, bMuted, interval);
 	
+	ESS_LOG_INFO( "a Interval Start: " << interval.Start() << " End: " << interval.End() );
+
 	ESS_LOG_INFO( "AlembicMeshBaseModifier::ModifyObject strPath: " << strPath << " strIdentifier: " << strIdentifier << " fTime: " << fTime << 
 		" bTopology: " << bTopology << " bGeometry: " << bGeometry << " bNormals: " << bNormals << " bUVs: " << bUVs << " bMuted: " << bMuted );
 
@@ -196,20 +216,23 @@ void AlembicMeshBaseModifier::ModifyObject (TimeValue t, ModContext &mc, ObjectS
 		ESS_LOG_ERROR( "Error reading mesh from Alembic data stream.  Path: " << strPath << " identifier: " << strIdentifier << " reason: " << exp.what() );
 		return;
    }
+	ESS_LOG_INFO( "b Interval Start: " << interval.Start() << " End: " << interval.End() );
 
    // update the validity channel
     if( bTopology ) {
 		os->obj->UpdateValidity(TOPO_CHAN_NUM, interval);
 		os->obj->UpdateValidity(GEOM_CHAN_NUM, interval);
 	}
+	ESS_LOG_INFO( "c Interval Start: " << interval.Start() << " End: " << interval.End() );
     if( bGeometry ) {
 		os->obj->UpdateValidity(GEOM_CHAN_NUM, interval);
 	}
+	ESS_LOG_INFO( "d Interval Start: " << interval.Start() << " End: " << interval.End() );
     if( bUVs ) {
 		os->obj->UpdateValidity(TEXMAP_CHAN_NUM, interval);
    }
 
-	ESS_LOG_INFO( "Interval Start: " << interval.Start() << " End: " << interval.End() );
+	ESS_LOG_INFO( "e Interval Start: " << interval.Start() << " End: " << interval.End() );
 
    	ESS_CPP_EXCEPTION_REPORTING_END
 }
