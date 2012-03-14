@@ -1,18 +1,5 @@
-/**********************************************************************
- *<
-	FILE: Convert.h
-
-	DESCRIPTION: Convert To type modifiers
-
-	CREATED BY: Steve Anderson 
-
-	HISTORY:
-
- *>	Copyright (c) 2000, All Rights Reserved.
- **********************************************************************/
-
-#ifndef __ALEMBIC_POLYMESH_MODIFIER__H
-#define __ALEMBIC_POLYMESH_MODIFIER__H
+#ifndef __ALEMBIC_TRANSFORM_BASE_MODIFIER__H
+#define __ALEMBIC_TRANSFORM_BASE_MODIFIER__H
 
 #include "Foundation.h"  
 #include <MNMath.h>

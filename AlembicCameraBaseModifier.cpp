@@ -110,22 +110,24 @@ void AlembicCameraBaseModifier::ModifyObject(TimeValue t, ModContext &mc, Object
 {
 	ESS_CPP_EXCEPTION_REPORTING_START
 
+	Interval interval = os->obj->ObjectValidity(t);
+
 	TimeValue now =  GetCOREInterface12()->GetTime();
 
 	MCHAR const* strPath = NULL;
-	this->pblock->GetValue( AlembicCameraBaseModifier::ID_PATH, now, strPath, FOREVER);
+	this->pblock->GetValue( AlembicCameraBaseModifier::ID_PATH, t, strPath, interval);
 
 	MCHAR const* strIdentifier = NULL;
-	this->pblock->GetValue( AlembicCameraBaseModifier::ID_IDENTIFIER, now, strIdentifier, FOREVER);
+	this->pblock->GetValue( AlembicCameraBaseModifier::ID_IDENTIFIER, t, strIdentifier, interval);
  
 	float fCurrentTimeHidden;
-	this->pblock->GetValue( AlembicCameraBaseModifier::ID_CURRENTTIMEHIDDEN, now, fCurrentTimeHidden, FOREVER);
+	this->pblock->GetValue( AlembicCameraBaseModifier::ID_CURRENTTIMEHIDDEN, t, fCurrentTimeHidden, interval);
 
 	float fTimeOffset;
-	this->pblock->GetValue( AlembicCameraBaseModifier::ID_TIMEOFFSET, now, fTimeOffset, FOREVER);
+	this->pblock->GetValue( AlembicCameraBaseModifier::ID_TIMEOFFSET, t, fTimeOffset, interval);
 
 	float fTimeScale;
-	this->pblock->GetValue( AlembicCameraBaseModifier::ID_TIMESCALE, now, fTimeScale, FOREVER); 
+	this->pblock->GetValue( AlembicCameraBaseModifier::ID_TIMESCALE, t, fTimeScale, interval); 
 
 	float dataTime = fTimeOffset + fCurrentTimeHidden * fTimeScale;
 	
@@ -190,10 +192,7 @@ void AlembicCameraBaseModifier::ModifyObject(TimeValue t, ModContext &mc, Object
 		return;
    }
     // Determine the validity interval
-    Interval ivalid = os->obj->ObjectValidity(t);
-    Interval alembicValid(t, t); 
-    ivalid &= alembicValid;
-    os->obj->UpdateValidity(DISP_ATTRIB_CHAN_NUM, ivalid);
+    os->obj->UpdateValidity(DISP_ATTRIB_CHAN_NUM, interval);
 
 	ESS_CPP_EXCEPTION_REPORTING_END
 }

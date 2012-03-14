@@ -217,15 +217,16 @@ BEGIN
     IDS_PARAMS              "Parameters"
     IDS_PATH                "Path"
     IDS_IDENTIFIER          "Identifier"
-    IDS_CURRENTTIMEHIDDEN   "CurrentTimeHidden"
-    IDS_TIMEOFFSET          "Time Offset"
-    IDS_TIMESCALE           "Time Scale"
-    IDS_FACESET             "Faceset"
-    IDS_VERTICES            "Vertices"
+    IDS_TIME				"Time"
+    IDS_TOPOLOGY			"Topology"
+    IDS_GEOMETRY			"Geometry"
     IDS_NORMALS             "Normals"
     IDS_UVS                 "UVs"
-    IDS_CLUSTERS            "Clusters"
     IDS_CAMERATRANSFORM     "Camera Transform"
+	IDS_MUTED               "Muted"
+	IDS_TIMEOFFSET			"Time Offset"
+	IDS_TIMESCALE			"Time Scale"
+	IDS_CURRENTTIMEHIDDEN	"Current Hidden Time"
 END
 
 STRINGTABLE 
@@ -263,11 +264,6 @@ BEGIN
     IDS_ABC_ARCHIVE         "Alembic Archive"
 END
 
-STRINGTABLE 
-BEGIN
-    IDS_MUTED               "Muted"
-    IDS_TIME                "Time"
-END
 
 #endif    // English (U.S.) resources
 /////////////////////////////////////////////////////////////////////////////

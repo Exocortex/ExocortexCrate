@@ -460,9 +460,9 @@ bool AlembicPolyMesh::Save(double time)
 
             if(faceSetVec.size() > 0)
             {
-               Alembic::AbcGeom::OFaceSet faceSet = mMeshSchema.createFaceSet(name);
+               Alembic::AbcGeom::OFaceSet faces = mMeshSchema.createFaceSet(name);
                Alembic::AbcGeom::OFaceSetSchema::Sample faceSetSample(Alembic::Abc::Int32ArraySample(&faceSetVec.front(),faceSetVec.size()));
-               faceSet.getSchema().set(faceSetSample);
+               faces.getSchema().set(faceSetSample);
             }
          }
       }

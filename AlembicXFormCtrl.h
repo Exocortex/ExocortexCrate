@@ -1,18 +1,5 @@
-/**********************************************************************
- *<
-	FILE: AlembicXFormCtrl.h
-
-	DESCRIPTION:
-
-	CREATED BY: Tom Hudson
-
-	HISTORY:
-
- *>	Copyright (c) 1996, All Rights Reserved.
- **********************************************************************/
-
-#ifndef __AlembicXFormCtrl__H
-#define __AlembicXFormCtrl__H
+#ifndef __ALEMBIC_TRANSFORM_CONTROLLER__H
+#define __ALEMBIC_TRANSFORM_CONTROLLER__H
 
 #include "Max.h"
 #include "resource.h"

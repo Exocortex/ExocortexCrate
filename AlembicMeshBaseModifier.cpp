@@ -40,28 +40,19 @@ static ParamBlockDesc2 AlembicMeshBaseModifierParams(
 	AlembicMeshBaseModifier::ID_IDENTIFIER, _T("identifier"), TYPE_STRING, 0, IDS_IDENTIFIER,
 		end,
 
-	AlembicMeshBaseModifier::ID_CURRENTTIMEHIDDEN, _T("currentTimeHidden"), TYPE_FLOAT, 0, IDS_CURRENTTIMEHIDDEN,
+	AlembicMeshBaseModifier::ID_TIME, _T("time"), TYPE_FLOAT, 0, IDS_TIME,
 		end,
 
-	AlembicMeshBaseModifier::ID_TIMEOFFSET, _T("timeOffset"), TYPE_FLOAT, 0, IDS_TIMEOFFSET,
+	AlembicMeshBaseModifier::ID_TOPOLOGY, _T("topology"), TYPE_BOOL, 0, IDS_TOPOLOGY,
 		end,
 
-	AlembicMeshBaseModifier::ID_TIMESCALE, _T("timeScale"), TYPE_FLOAT, 0, IDS_TIMESCALE,
-		end,
-
-	AlembicMeshBaseModifier::ID_FACESET, _T("faceSet"), TYPE_BOOL, 0, IDS_FACESET,
-		end,
-
-	AlembicMeshBaseModifier::ID_VERTICES, _T("vertices"), TYPE_BOOL, 0, IDS_VERTICES,
-		end,
-
-	AlembicMeshBaseModifier::ID_NORMALS, _T("normals"), TYPE_BOOL, 0, IDS_NORMALS,
+	AlembicMeshBaseModifier::ID_GEOMETRY, _T("geometry"), TYPE_BOOL, 0, IDS_GEOMETRY,
 		end,
 
 	AlembicMeshBaseModifier::ID_UVS, _T("uvs"), TYPE_BOOL, 0, IDS_UVS,
 		end,
 
-	AlembicMeshBaseModifier::ID_CLUSTERS, _T("clusters"), TYPE_BOOL, 0, IDS_CLUSTERS,
+	AlembicMeshBaseModifier::ID_NORMALS, _T("normals"), TYPE_BOOL, 0, IDS_NORMALS,
 		end,
 
 	AlembicMeshBaseModifier::ID_MUTED, _T("muted"), TYPE_BOOL, 0, IDS_MUTED,
@@ -89,57 +80,38 @@ RefTargetHandle AlembicMeshBaseModifier::Clone(RemapDir& remap)
 	return mod;
 }
 
-Interval AlembicMeshBaseModifier::GetValidity (TimeValue t) {
-	// Interval ret = FOREVER;
-	// pblock->GetValidity (t, ret);
-
-    // PeterM this will need to be rethought out
-    Interval ret(t,t);
-	return ret;
-}
-
 void AlembicMeshBaseModifier::ModifyObject (TimeValue t, ModContext &mc, ObjectState *os, INode *node) 
 {
 	ESS_CPP_EXCEPTION_REPORTING_START
 
-   Interval ivalid=os->obj->ObjectValidity(t);
-
-	TimeValue now =  GetCOREInterface12()->GetTime();
+	Interval interval = os->obj->ObjectValidity(t);
 
     MCHAR const* strPath = NULL;
-	this->pblock->GetValue( AlembicMeshBaseModifier::ID_PATH, now, strPath, FOREVER);
+	this->pblock->GetValue( AlembicMeshBaseModifier::ID_PATH, t, strPath, interval);
 
 	MCHAR const* strIdentifier = NULL;
-	this->pblock->GetValue( AlembicMeshBaseModifier::ID_IDENTIFIER, now, strIdentifier, FOREVER);
+	this->pblock->GetValue( AlembicMeshBaseModifier::ID_IDENTIFIER, t, strIdentifier, interval);
  
-	float fCurrentTimeHidden;
-	this->pblock->GetValue( AlembicMeshBaseModifier::ID_CURRENTTIMEHIDDEN, now, fCurrentTimeHidden, FOREVER);
+	float fTime;
+	this->pblock->GetValue( AlembicMeshBaseModifier::ID_TIME, t, fTime, interval);
 
-	float fTimeOffset;
-	this->pblock->GetValue( AlembicMeshBaseModifier::ID_TIMEOFFSET, now, fTimeOffset, FOREVER);
+	BOOL bTopology;
+	this->pblock->GetValue( AlembicMeshBaseModifier::ID_TOPOLOGY, t, bTopology, interval);
 
-	float fTimeScale;
-	this->pblock->GetValue( AlembicMeshBaseModifier::ID_TIMESCALE, now, fTimeScale, FOREVER); 
-
-	BOOL bFaceSet;
-	this->pblock->GetValue( AlembicMeshBaseModifier::ID_FACESET, now, bFaceSet, FOREVER);
-
-	BOOL bVertices;
-	this->pblock->GetValue( AlembicMeshBaseModifier::ID_VERTICES, now, bVertices, FOREVER);
+	BOOL bGeometry;
+	this->pblock->GetValue( AlembicMeshBaseModifier::ID_GEOMETRY, t, bGeometry, interval);
 
 	BOOL bNormals;
-	this->pblock->GetValue( AlembicMeshBaseModifier::ID_NORMALS, now, bNormals, FOREVER);
+	this->pblock->GetValue( AlembicMeshBaseModifier::ID_NORMALS, t, bNormals, interval);
 
 	BOOL bUVs;
-	this->pblock->GetValue( AlembicMeshBaseModifier::ID_UVS, now, bUVs, FOREVER);
+	this->pblock->GetValue( AlembicMeshBaseModifier::ID_UVS, t, bUVs, interval);
 
 	BOOL bMuted;
-	this->pblock->GetValue( AlembicMeshBaseModifier::ID_MUTED, now, bMuted, FOREVER);
-
-	float dataTime = fTimeOffset + fCurrentTimeHidden * fTimeScale;
+	this->pblock->GetValue( AlembicMeshBaseModifier::ID_MUTED, t, bMuted, interval);
 	
-	ESS_LOG_INFO( "AlembicMeshBaseModifier::ModifyObject strPath: " << strPath << " strIdentifier: " << strIdentifier << " fCurrentTimeHidden: " << fCurrentTimeHidden << " fTimeOffset: " << fTimeOffset << " fTimeScale: " << fTimeScale << 
-		" bFaceSet: " << bFaceSet << " bVertices: " << bVertices << " bNormals: " << bNormals << " bUVs: " << bUVs << " bMuted: " << bMuted );
+	ESS_LOG_INFO( "AlembicMeshBaseModifier::ModifyObject strPath: " << strPath << " strIdentifier: " << strIdentifier << " fTime: " << fTime << 
+		" bTopology: " << bTopology << " bGeometry: " << bGeometry << " bNormals: " << bNormals << " bUVs: " << bUVs << " bMuted: " << bMuted );
 
 	if( bMuted ) {
 		return;
@@ -174,12 +146,13 @@ void AlembicMeshBaseModifier::ModifyObject (TimeValue t, ModContext &mc, ObjectS
 
    alembic_fillmesh_options options;
    options.pIObj = &iObj;
-   options.dTicks = GetTimeValueFromSeconds( dataTime );
+   options.dTicks = GetTimeValueFromSeconds( fTime );
    options.nDataFillFlags = 0;
-    if( bFaceSet ) {
+    if( bTopology ) {
 	   options.nDataFillFlags |= ALEMBIC_DATAFILL_FACELIST;
+		options.nDataFillFlags |= ALEMBIC_DATAFILL_FACESETS;
    }
-   if( bVertices ) {
+   if( bGeometry ) {
 	   options.nDataFillFlags |= ALEMBIC_DATAFILL_VERTEX;
    }
    if( bNormals ) {
@@ -212,7 +185,8 @@ void AlembicMeshBaseModifier::ModifyObject (TimeValue t, ModContext &mc, ObjectS
    } 
    else
    {
-       return;
+  		ESS_LOG_ERROR( "Can not convert internal mesh data into a TriObject or PolyObject, confused." );
+	     return;
    }
 
    try {
@@ -223,15 +197,19 @@ void AlembicMeshBaseModifier::ModifyObject (TimeValue t, ModContext &mc, ObjectS
 		return;
    }
 
-   //ESS_LOG_INFO( "NumFaces: " << options.->getNumFaces() << "  NumVerts: " << pMesh->getNumVerts() );
-
-   Interval alembicValid(t, t); 
-   ivalid = alembicValid;
-
    // update the validity channel
-   os->obj->UpdateValidity(TOPO_CHAN_NUM, ivalid);
-   os->obj->UpdateValidity(GEOM_CHAN_NUM, ivalid);
-   os->obj->UpdateValidity(TEXMAP_CHAN_NUM, ivalid);
+    if( bTopology ) {
+		os->obj->UpdateValidity(TOPO_CHAN_NUM, interval);
+		os->obj->UpdateValidity(GEOM_CHAN_NUM, interval);
+	}
+    if( bGeometry ) {
+		os->obj->UpdateValidity(GEOM_CHAN_NUM, interval);
+	}
+    if( bUVs ) {
+		os->obj->UpdateValidity(TEXMAP_CHAN_NUM, interval);
+   }
+
+	ESS_LOG_INFO( "Interval Start: " << interval.Start() << " End: " << interval.End() );
 
    	ESS_CPP_EXCEPTION_REPORTING_END
 }

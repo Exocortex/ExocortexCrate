@@ -1,16 +1,3 @@
-/**********************************************************************
- *<
-	FILE: Convert.h
-
-	DESCRIPTION: Convert To type modifiers
-
-	CREATED BY: Steve Anderson 
-
-	HISTORY:
-
- *>	Copyright (c) 2000, All Rights Reserved.
- **********************************************************************/
-
 #ifndef __ALEMBIC_MESH_UTILITY__H
 #define __ALEMBIC_MESH_UTILITY__H
 

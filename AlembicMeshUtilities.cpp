@@ -60,12 +60,13 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
    else
        objSubD.getSchema().get(subDSample,sampleInfo.floorIndex);
 
-   if ( options.nDataFillFlags & ALEMBIC_DATAFILL_VERTEX ) 
-   {
-	   Alembic::Abc::P3fArraySamplePtr meshPos;
+   int currentNumVerts = (options.pMNMesh != NULL) ? options.pMNMesh->numv :
+	   (options.pMesh != NULL) ? options.pMesh->getNumVerts() : 0;
+
+  	   Alembic::Abc::P3fArraySamplePtr meshPos;
        Alembic::Abc::V3fArraySamplePtr meshVel;
 
-       bool hasDynamicTopo = false;
+	   bool hasDynamicTopo = false;
        if(objMesh.valid())
        {
            meshPos = polyMeshSample.getPositions();
@@ -83,24 +84,29 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
            Alembic::Abc::IInt32ArrayProperty faceCountProp = Alembic::Abc::IInt32ArrayProperty(objSubD.getSchema(),".faceCounts");
            if(faceCountProp.valid())
                hasDynamicTopo = !faceCountProp.isConstant();
-       }
+       }   
 
-       int currentNumVerts = (options.pMNMesh != NULL) ? options.pMNMesh->numv :
-           (options.pMesh != NULL) ? options.pMesh->getNumVerts() : 0;
 
-       if (currentNumVerts != meshPos->size())
-       {
-           int numVerts = static_cast<int>(meshPos->size());
-           if (options.pMNMesh != NULL)
-           {
-               options.pMNMesh->setNumVerts(numVerts);
-           }
-           if (options.pMesh != NULL)
-           {
-               options.pMesh->setNumVerts(numVerts);
-           }
-       } 
+   if(  ( options.nDataFillFlags & ALEMBIC_DATAFILL_FACELIST ) ||
+	   ( options.nDataFillFlags & ALEMBIC_DATAFILL_VERTEX ) || hasDynamicTopo  ) {
+		   if (currentNumVerts != meshPos->size())
+		   {
+			   int numVerts = static_cast<int>(meshPos->size());
+			   if (options.pMNMesh != NULL)
+			   {
+				   options.pMNMesh->setNumVerts(numVerts);
+			   }
+			   if (options.pMesh != NULL)
+			   {
+				   options.pMesh->setNumVerts(numVerts);
+			   }
+		   } 
+   }
 
+   if ( ( options.nDataFillFlags & ALEMBIC_DATAFILL_VERTEX ) || ( ( options.nDataFillFlags & ALEMBIC_DATAFILL_FACELIST ) && hasDynamicTopo ) )
+   {
+
+ 
 	   Imath::V3f const* pPositionArray = ( meshPos.get() != NULL ) ? meshPos->get() : NULL;
 	   Imath::V3f const* pVelocityArray = ( meshVel.get() != NULL ) ? meshVel->get() : NULL;
 	  
@@ -531,18 +537,30 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
 
    if (options.pMNMesh != NULL)
    {
-       options.pMNMesh->InvalidateGeomCache();
-       options.pMNMesh->InvalidateTopoCache();
+	   if ( options.nDataFillFlags & ALEMBIC_DATAFILL_FACELIST ) {
+		   options.pMNMesh->InvalidateTopoCache();
+	   }
+	   else {
+		   if( options.nDataFillFlags & ALEMBIC_DATAFILL_VERTEX ) {
+			options.pMNMesh->InvalidateGeomCache();
+		   }
+	   }
 
 	   // this can fail if the mesh isn't correctly filled in.
-       if (!options.pMNMesh->GetFlag(MN_MESH_FILLED_IN ))
-           options.pMNMesh->FillInMesh();
+	   //if (!options.pMNMesh->GetFlag(MN_MESH_FILLED_IN ))
+	   //    options.pMNMesh->FillInMesh(); 
    }
 
    if (options.pMesh != NULL)
    {	
-       options.pMesh->InvalidateGeomCache();
-       options.pMesh->InvalidateTopologyCache();
+	   if ( options.nDataFillFlags & ALEMBIC_DATAFILL_FACELIST ) {
+		   options.pMesh->InvalidateTopologyCache();
+	   }
+	   else {
+		   if( options.nDataFillFlags & ALEMBIC_DATAFILL_VERTEX ) {
+			   options.pMesh->InvalidateGeomCache();
+		   }
+	   }
    }
 }
 
@@ -632,25 +650,73 @@ int AlembicImport_PolyMesh(const std::string &path, const std::string &identifie
     {
 		return alembic_failure;
     }
-	// Create the polymesh modifier
-	Modifier *pModifier = static_cast<Modifier*>
-		(GetCOREInterface12()->CreateInstance(OSM_CLASS_ID, ALEMBIC_MESH_MODIFIER_CLASSID));
 
 	TimeValue now =  GetCOREInterface12()->GetTime();
 
-	// Set the alembic id
-	pModifier->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pModifier, 0, "path" ), now, path.c_str());
-	pModifier->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pModifier, 0, "identifier" ), now , identifier.c_str() );
-	
-    // Set the update data fill flags
-    // PeterM TO DO:  We'll need to fix this after we determine if we have a dynamic topology mesh or not
-    // For now, we'll just use the import flags
-    //unsigned int nUpdateDataFillFlags = dataFillOptions.nDataFillFlags;
-    //pModifier->SetAlembicUpdateDataFillFlags(nUpdateDataFillFlags);
+	{
+		// Create the polymesh modifier
+		Modifier *pTopoModifier = static_cast<Modifier*>
+			(GetCOREInterface12()->CreateInstance(OSM_CLASS_ID, ALEMBIC_MESH_MODIFIER_CLASSID));
 
-	// Add the modifier to the node
-	GetCOREInterface12()->AddModifier(*node, *pModifier);
+		// Set the alembic id
+		pTopoModifier->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pTopoModifier, 0, "path" ), now, path.c_str());
+		pTopoModifier->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pTopoModifier, 0, "identifier" ), now , identifier.c_str() );
+		pTopoModifier->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pTopoModifier, 0, "topology" ), now, (BOOL) 1 );
+		pTopoModifier->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pTopoModifier, 0, "geometry" ), now, (BOOL) 1 );
+		pTopoModifier->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pTopoModifier, 0, "normals" ), now, (BOOL) 1 );
+		pTopoModifier->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pTopoModifier, 0, "uvs" ), now, (BOOL) 1 );
+		
+		// Add the modifier to the node
+		GetCOREInterface12()->AddModifier(*node, *pTopoModifier);
+	}
+	/*{
+		// Create the polymesh modifier
+		Modifier *pGeomModifier = static_cast<Modifier*>
+			(GetCOREInterface12()->CreateInstance(OSM_CLASS_ID, ALEMBIC_MESH_MODIFIER_CLASSID));
 
+		// Set the alembic id
+		pGeomModifier->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pGeomModifier, 0, "path" ), now, path.c_str());
+		pGeomModifier->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pGeomModifier, 0, "identifier" ), now , identifier.c_str() );
+		pGeomModifier->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pGeomModifier, 0, "topology" ), now, (BOOL) 0 );
+		pGeomModifier->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pGeomModifier, 0, "geometry" ), now, (BOOL) 1 );
+		pGeomModifier->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pGeomModifier, 0, "normals" ), now, (BOOL) 0 );
+		pGeomModifier->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pGeomModifier, 0, "uvs" ), now, (BOOL) 0 );
+		
+		// Add the modifier to the node
+		GetCOREInterface12()->AddModifier(*node, *pGeomModifier);
+	}
+	{
+		// Create the polymesh modifier
+		Modifier *pNormalsModifier = static_cast<Modifier*>
+			(GetCOREInterface12()->CreateInstance(OSM_CLASS_ID, ALEMBIC_MESH_MODIFIER_CLASSID));
+
+		// Set the alembic id
+		pNormalsModifier->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pNormalsModifier, 0, "path" ), now, path.c_str());
+		pNormalsModifier->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pNormalsModifier, 0, "identifier" ), now , identifier.c_str() );
+		pNormalsModifier->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pNormalsModifier, 0, "topology" ), now, (BOOL) 0 );
+		pNormalsModifier->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pNormalsModifier, 0, "geometry" ), now, (BOOL) 0 );
+		pNormalsModifier->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pNormalsModifier, 0, "normals" ), now, (BOOL) 1 );
+		pNormalsModifier->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pNormalsModifier, 0, "uvs" ), now, (BOOL) 0 );
+		
+		// Add the modifier to the node
+		GetCOREInterface12()->AddModifier(*node, *pNormalsModifier);
+	}
+	{
+		// Create the polymesh modifier
+		Modifier *pUvsModifier = static_cast<Modifier*>
+			(GetCOREInterface12()->CreateInstance(OSM_CLASS_ID, ALEMBIC_MESH_MODIFIER_CLASSID));
+
+		// Set the alembic id
+		pUvsModifier->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pUvsModifier, 0, "path" ), now, path.c_str());
+		pUvsModifier->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pUvsModifier, 0, "identifier" ), now , identifier.c_str() );
+		pUvsModifier->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pUvsModifier, 0, "topology" ), now, (BOOL) 0 );
+		pUvsModifier->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pUvsModifier, 0, "geometry" ), now, (BOOL) 0 );
+		pUvsModifier->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pUvsModifier, 0, "normals" ), now, (BOOL) 0 );
+		pUvsModifier->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pUvsModifier, 0, "uvs" ), now, (BOOL) 1 );
+		
+		// Add the modifier to the node
+		GetCOREInterface12()->AddModifier(*node, *pUvsModifier);
+	}*/
     // Add the new inode to our current scene list
     SceneEntry *pEntry = options.sceneEnumProc.Append(node, newObject, OBTYPE_MESH, &std::string(iObj.getFullName())); 
     options.currentSceneList.Append(pEntry);

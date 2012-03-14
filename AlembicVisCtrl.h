@@ -1,18 +1,5 @@
-/**********************************************************************
- *<
-	FILE: AlembicVisCtrl.h
-
-	DESCRIPTION:
-
-	CREATED BY: Tom Hudson
-
-	HISTORY:
-
- *>	Copyright (c) 1996, All Rights Reserved.
- **********************************************************************/
-
-#ifndef __AlembicVisCtrl__H
-#define __AlembicVisCtrl__H
+#ifndef __ALEMBIC_VISIBILITY_CONTROLLER__H
+#define __ALEMBIC_VISIBILITY_CONTROLLER__H
 
 #include "Max.h"
 #include "resource.h"

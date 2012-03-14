@@ -1,18 +1,5 @@
-/**********************************************************************
- *<
-	FILE: Convert.h
-
-	DESCRIPTION: Convert To type modifiers
-
-	CREATED BY: Steve Anderson 
-
-	HISTORY:
-
- *>	Copyright (c) 2000, All Rights Reserved.
- **********************************************************************/
-
-#ifndef __ALEMBIC_POLYMESH_MODIFIER__H
-#define __ALEMBIC_POLYMESH_MODIFIER__H
+#ifndef __ALEMBIC_MESH_BASE_MODIFIER__H
+#define __ALEMBIC_MESH_BASE_MODIFIER__H
 
 #include "Foundation.h"  
 #include <MNMath.h>
@@ -35,14 +22,11 @@ public:
 	{ 
 		ID_PATH,
 		ID_IDENTIFIER,
-		ID_CURRENTTIMEHIDDEN,
-		ID_TIMEOFFSET,
-		ID_TIMESCALE,
-		ID_FACESET,
-		ID_VERTICES,
+		ID_TIME,
+		ID_TOPOLOGY,
+		ID_GEOMETRY,
 		ID_NORMALS,
 		ID_UVS,
-		ID_CLUSTERS,
 		ID_MUTED
 	};
 
@@ -63,8 +47,8 @@ public:
 	ChannelMask ChannelsChanged() { return TOPO_CHANNEL|GEOM_CHANNEL|TEXMAP_CHANNEL; }
 	Class_ID InputType() { return polyObjectClassID; }
 	void ModifyObject (TimeValue t, ModContext &mc, ObjectState *os, INode *node);
-	Interval LocalValidity(TimeValue t) { return GetValidity(t); }
-	Interval GetValidity (TimeValue t);
+	//Interval LocalValidity(TimeValue t) { return GetValidity(t); }
+	//Interval GetValidity (TimeValue t);
 	BOOL DependOnTopology(ModContext &mc) { return TRUE; }
 
 	// From BaseObject

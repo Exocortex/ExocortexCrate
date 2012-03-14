@@ -7,30 +7,24 @@ plugin modifier AlembicMeshModifier
 	replaceUI:true
 	invisible:false
 (
-	parameters pblock rollout:params
+		parameters main rollout:params
 	(
-		path type:#filename ui:path default:""
+		path type:#string ui:path default:""
 		identifier type:#string ui:identifier default:""
-		currentTimeHidden type:#float default:0
-		timeOffset type:#float ui:timeOffset animatable:true default:0
-		timeScale type:#float ui:timeScale animatable:true default:1
-		faceSet type:#boolean ui:faceSet default:true
-		vertices type:#boolean ui:vertices default:true
+		time type:#float animatable:true default:0
+		topology type:#boolean ui:topology default:true
+		geometry type:#boolean ui:geometry default:true
 		normals type:#boolean ui:normals default:true
 		uvs type:#boolean ui:uvs default:true
-		clusters type:#boolean ui:clusters default:true
 		muted type:#boolean ui:muted animatable:true default:false
-		
+	
 		on path set val do delegate.path = val
 		on identifier set val do delegate.identifier = val
-		on currentTimeHidden set val do delegate.currentTimeHidden = val
-		on timeOffset set val do delegate.timeOffset = val
-		on timeScale set val do delegate.timeScale = val
-		on faceSet set val do delegate.faceSet = val
-		on vertices set val do delegate.vertices = val
+		on time set val do delegate.time = val
+		on topology set val do delegate.topology = val
+		on geometry set val do delegate.geometry = val
 		on normals set val do delegate.normals = val
 		on uvs set val do delegate.uvs = val
-		on clusters set val do delegate.clusters = val
 		on muted set val do delegate.muted = val
 	)
 
@@ -38,41 +32,11 @@ plugin modifier AlembicMeshModifier
 	(
 		edittext path "Path"
 		edittext identifier "Identifier"
-		spinner timeOffset "Time Offset" range:[-10000,10000,0]
-		spinner timeScale "Time Scale" range:[-10000,10000,0]		
-		checkbox faceSet "Topology"
-		checkbox vertices "Vertices"
+		spinner time "Time" range:[-10000,10000,0]
+		checkbox topology "Topology"
+		checkbox geometry "Geometry"
 		checkbox normals "Normals"
 		checkbox uvs "UVs"
-		checkbox clusters "Clusters"
 		checkbox muted "Muted"
 	)
-	
-	local update_currentTimeHidden_registered = false
-	
-	fn update_currentTimeHidden =
-	(
-		if( not update_currentTimeHidden_registered ) do
-		(
-			print "currentTimeHidden registered"
-			registerTimeCallback update_currentTimeHidden
-			update_currentTimeHidden_registered = true
-		)
-		currentTimeHidden = currentTime / frameRate
-		delegate.currentTimeHidden = currentTimeHidden
-	)
-		
-	on create do
-	(
-		update_currentTimeHidden()
-	)
-	on load do
-	(
-		update_currentTimeHidden()
-	)
-	on update do 
-	(
-		update_currentTimeHidden()
-	)
-
 )

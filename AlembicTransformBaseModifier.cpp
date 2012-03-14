@@ -90,30 +90,28 @@ void AlembicTransformBaseModifier::ModifyObject (TimeValue t, ModContext &mc, Ob
 {
 	ESS_CPP_EXCEPTION_REPORTING_START
 
-   Interval ivalid=os->obj->ObjectValidity(t);
-
-	TimeValue now =  GetCOREInterface12()->GetTime();
+   Interval interval =os->obj->ObjectValidity(t);
 
     MCHAR const* strPath = NULL;
-	this->pblock->GetValue( AlembicTransformBaseModifier::ID_PATH, now, strPath, FOREVER);
+	this->pblock->GetValue( AlembicTransformBaseModifier::ID_PATH, t, strPath, interval);
 
 	MCHAR const* strIdentifier = NULL;
-	this->pblock->GetValue( AlembicTransformBaseModifier::ID_IDENTIFIER, now, strIdentifier, FOREVER);
+	this->pblock->GetValue( AlembicTransformBaseModifier::ID_IDENTIFIER, t, strIdentifier, interval);
  
 	float fCurrentTimeHidden;
-	this->pblock->GetValue( AlembicTransformBaseModifier::ID_CURRENTTIMEHIDDEN, now, fCurrentTimeHidden, FOREVER);
+	this->pblock->GetValue( AlembicTransformBaseModifier::ID_CURRENTTIMEHIDDEN, t, fCurrentTimeHidden, interval);
 
 	float fTimeOffset;
-	this->pblock->GetValue( AlembicTransformBaseModifier::ID_TIMEOFFSET, now, fTimeOffset, FOREVER);
+	this->pblock->GetValue( AlembicTransformBaseModifier::ID_TIMEOFFSET, t, fTimeOffset, interval);
 
 	float fTimeScale;
-	this->pblock->GetValue( AlembicTransformBaseModifier::ID_TIMESCALE, now, fTimeScale, FOREVER); 
+	this->pblock->GetValue( AlembicTransformBaseModifier::ID_TIMESCALE, t, fTimeScale, interval); 
 
 	BOOL bCameraTransform;
-	this->pblock->GetValue( AlembicTransformBaseModifier::ID_CAMERATRANSFORM, now, bCameraTransform, FOREVER);
+	this->pblock->GetValue( AlembicTransformBaseModifier::ID_CAMERATRANSFORM, t, bCameraTransform, interval);
 
 	BOOL bMuted;
-	this->pblock->GetValue( AlembicTransformBaseModifier::ID_MUTED, now, bMuted, FOREVER);
+	this->pblock->GetValue( AlembicTransformBaseModifier::ID_MUTED, t, bMuted, interval);
 
 	float dataTime = fTimeOffset + fCurrentTimeHidden * fTimeScale;
 	
@@ -163,14 +161,8 @@ void AlembicTransformBaseModifier::ModifyObject (TimeValue t, ModContext &mc, Ob
 		ESS_LOG_ERROR( "Error reading transform from Alembic data stream.  Path: " << strPath << " identifier: " << strIdentifier << " reason: " << exp.what() );
 		return;
    }
-
-   //ESS_LOG_INFO( "NumFaces: " << options.->getNumFaces() << "  NumVerts: " << pMesh->getNumVerts() );
-
-   Interval alembicValid(t, t); 
-   ivalid = alembicValid;
-
    // update the validity channel
-   os->ApplyTM( &( options.maxMatrix ), ivalid );
+   os->ApplyTM( &( options.maxMatrix ), interval );
 
    	ESS_CPP_EXCEPTION_REPORTING_END
 }
