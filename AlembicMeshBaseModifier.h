@@ -36,11 +36,12 @@ public:
 	AlembicMeshBaseModifier();
 
 	// From Animatable
-	void DeleteThis() { delete this; }
-	void GetClassName(TSTR& s) { s = _T("Alembic Mesh Base Modifier"); }  
 	virtual Class_ID ClassID() { return ALEMBIC_MESH_BASE_MODIFIER_CLASSID; }		
-	RefTargetHandle Clone(RemapDir& remap);
+	void GetClassName(TSTR& s) { s = _T("Alembic Mesh Base Modifier"); }  
 	TCHAR *GetObjectName() { return _T("Alembic Mesh Base Modifier"); }
+
+	void DeleteThis() { delete this; }
+	RefTargetHandle Clone(RemapDir& remap);
 
 	// From Modifier
 	ChannelMask ChannelsUsed()  { return TOPO_CHANNEL|GEOM_CHANNEL|TEXMAP_CHANNEL; }
@@ -53,6 +54,9 @@ public:
 
 	// From BaseObject
 	CreateMouseCallBack* GetCreateMouseCallBack() {return NULL;} 
+
+	void BeginEditParams( IObjParam  *ip, ULONG flags,Animatable *prev);
+    void EndEditParams( IObjParam *ip, ULONG flags,Animatable *next);
 
 	int NumParamBlocks () { return 1; }
 	IParamBlock2 *GetParamBlock (int i) { return pblock; }
@@ -74,20 +78,22 @@ private:
 
 
 
-class AlembicMeshBaseModifierClassDesc : public ClassDesc2 {
-	public:
-	int 			IsPublic() { return TRUE; }
-	void *			Create(BOOL loading = FALSE) { return new AlembicMeshBaseModifier; }
-	const TCHAR *	ClassName() { return _T("Alembic Mesh Base Modifier"); }
-	SClass_ID		SuperClassID() { return OSM_CLASS_ID; }
-	Class_ID		ClassID() { return ALEMBIC_MESH_BASE_MODIFIER_CLASSID; }
-	const TCHAR* 	Category() { return EXOCORTEX_ALEMBIC_CATEGORY; }
-	const TCHAR*	InternalName() { return _T("AlembicMeshBaseModifier"); }	// returns fixed parsable name (scripter-visible name)
-	HINSTANCE		HInstance() { return hInstance; }			// returns owning module handle
-};
+class AlembicMeshBaseModifierClassDesc : public ClassDesc2
+{
+public:
+	AlembicMeshBaseModifierClassDesc() {}
+	~AlembicMeshBaseModifierClassDesc() {}
 
+	int 			IsPublic()		{ return TRUE; }
+	const TCHAR *	ClassName()		{ return _T("Alembic Mesh Base Modifier"); }
+	SClass_ID		SuperClassID()	{ return OSM_CLASS_ID; }
+	void *			Create(BOOL loading = FALSE) { return new AlembicMeshBaseModifier; }
+	Class_ID		ClassID()		{ return ALEMBIC_MESH_BASE_MODIFIER_CLASSID; }
+	const TCHAR* 	Category()		{ return EXOCORTEX_ALEMBIC_CATEGORY; }
+	const TCHAR*	InternalName()	{ return _T("AlembicMeshBaseModifier"); }	// returns fixed parsable name (scripter-visible name)
+	HINSTANCE		HInstance()		{ return hInstance; }			// returns owning module handle
+};
 
 ClassDesc2 *GetAlembicMeshBaseModifierClassDesc();
 
-
-#endif	// __ALEMBIC_POLYMESH_MODIFIER__H
+#endif

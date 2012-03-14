@@ -84,7 +84,7 @@ static ParamBlockDesc2 xform_params_desc ( AlembicXFormCtrl_params, _T("ExoCorte
         end,
 	end
 );
-
+/*
 class AlembicXFormCtrlDlgProc : public ParamMap2UserDlgProc {
   public:
 	AlembicXFormCtrl* mpParent;
@@ -152,6 +152,7 @@ class AlembicXFormCtrlDlgProc : public ParamMap2UserDlgProc {
 	  return TRUE;
 	}
 };
+*/
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // AlembicXFormCtrl Methods
@@ -278,6 +279,7 @@ void AlembicXFormCtrl::SetAlembicId(const std::string &file, const std::string &
     m_AlembicNodeProps.m_Identifier = identifier;
 }
 
+/*
 #define LOCK_CHUNK		0x2535  //the lock value
 IOResult AlembicXFormCtrl::Save(ISave *isave)
 {
@@ -324,7 +326,7 @@ IOResult AlembicXFormCtrl::Load(ILoad *iload)
 		res = Control::Load(iload);  // handle improper Renoir Save order
 	return res;	
 }
-
+*/
 RefTargetHandle AlembicXFormCtrl::GetReference(int i)
 {
     switch (i)
@@ -383,9 +385,9 @@ void AlembicXFormCtrl::BeginEditParams(IObjParam *ip,ULONG flags,Animatable *pre
     LockableStdControl::BeginEditParams(ip, flags, prev);
 	sAlembicXFormCtrlClassDesc.BeginEditParams(ip, this, flags, prev);
     
-    AlembicXFormCtrlDlgProc* dlgProc;
-	dlgProc = new AlembicXFormCtrlDlgProc(this);
-	xform_params_desc.SetUserDlgProc( AlembicXFormCtrl_params, dlgProc );
+//    AlembicXFormCtrlDlgProc* dlgProc;
+//	dlgProc = new AlembicXFormCtrlDlgProc(this);
+//	xform_params_desc.SetUserDlgProc( AlembicXFormCtrl_params, dlgProc );
 
     // Necessary?
 	// NotifyDependents(FOREVER, PART_ALL, REFMSG_CHANGE);
@@ -399,7 +401,7 @@ void AlembicXFormCtrl::EndEditParams( IObjParam *ip, ULONG flags, Animatable *ne
 	this->ip = NULL;
     editMod  = NULL;
 }
-
+/*
 void AlembicXFormCtrl::MainPanelInitDialog( HWND hWnd ) 
 {
 	mhPanel = hWnd;
@@ -433,4 +435,4 @@ void AlembicXFormCtrl::MainPanelUpdateUI()
 
 	mbSuspendPanelUpdate = false;
 }
-
+*/

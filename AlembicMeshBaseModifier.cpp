@@ -258,3 +258,27 @@ RefResult AlembicMeshBaseModifier::NotifyRefChanged (Interval changeInt, RefTarg
 
 	return REF_SUCCEED;
 }
+
+
+void AlembicMeshBaseModifier::BeginEditParams(IObjParam *ip,ULONG flags,Animatable *prev)
+{
+	this->ip = ip;
+    editMod  = this;
+
+	AlembicMeshBaseModifierDesc.BeginEditParams(ip, this, flags, prev);
+    
+//    AlembicXFormCtrlDlgProc* dlgProc;
+//	dlgProc = new AlembicXFormCtrlDlgProc(this);
+//	xform_params_desc.SetUserDlgProc( AlembicXFormCtrl_params, dlgProc );
+
+    // Necessary?
+	// NotifyDependents(FOREVER, PART_ALL, REFMSG_CHANGE);
+}
+
+void AlembicMeshBaseModifier::EndEditParams( IObjParam *ip, ULONG flags, Animatable *next )
+{
+	AlembicMeshBaseModifierDesc.EndEditParams(ip, this, flags, next);
+
+	this->ip = NULL;
+    editMod  = NULL;
+}
