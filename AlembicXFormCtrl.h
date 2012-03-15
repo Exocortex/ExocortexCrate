@@ -13,14 +13,14 @@ public:
     IParamBlock2* pblock;
     static IObjParam *ip;
     static AlembicXFormCtrl *editMod;
-public:
+
 	AlembicXFormCtrl();
 	~AlembicXFormCtrl();
 
 	SClass_ID SuperClassID() { return CTRL_MATRIX3_CLASS_ID; }
 	virtual Class_ID ClassID() { return ALEMBIC_XFORM_CTRL_CLASSID; }		
-	void GetClassName(TSTR& s) { s = _T("Alembic Xform"); }  
-	TCHAR *GetObjectName() { return _T("Alembic Xform"); }
+	void GetClassName(TSTR& s) { s = _T(ALEMBIC_XFORM_CONTROLLER_NAME); }  
+	TCHAR *GetObjectName() { return _T(ALEMBIC_XFORM_CONTROLLER_NAME); }
 
     void DeleteThis() { delete this; }
 	RefTargetHandle Clone(RemapDir& remap);
@@ -55,26 +55,13 @@ public:
     virtual void  ApplyValue(void *val, void *delta);
     virtual void  MultiplyValue(void *val, float m); 
 
-    //IOResult Save(ISave *isave);
-    //IOResult Load(ILoad *iload);
-
-    //void MainPanelInitDialog( HWND hWnd );
-    //void MainPanelDestroy( HWND hWnd );
-    //void MainPanelUpdateUI();
-
-    void SetAlembicId(const std::string &file, const std::string &identifier, TimeValue t);
-    const std::string &GetAlembicArchive() { return m_AlembicNodeProps.m_File; }
-    const std::string &GetAlembicObjectId() { return m_AlembicNodeProps.m_Identifier; }
-    void SetIsCameraTransform( bool camera) { m_bIsCameraTransform = camera; }
-    bool GetIsCameraTransform() { return m_bIsCameraTransform; }
-
+    IOResult Save(ISave *isave);
+    IOResult Load(ILoad *iload);
 
 private:
-    alembic_nodeprops m_AlembicNodeProps;
     Interval m_CurrentAlembicInterval;
-    bool m_bIsCameraTransform;
-    HWND mhPanel;
-    bool mbSuspendPanelUpdate;
+    //HWND mhPanel;
+   // bool mbSuspendPanelUpdate;
 };
 
 class AlembicXFormCtrlClassDesc : public ClassDesc2
@@ -84,12 +71,12 @@ public:
 	~AlembicXFormCtrlClassDesc() {}
 
 	int				IsPublic()			{ return TRUE; }	// We do want the user to see this plug-in
-	const MCHAR*	ClassName()			{ static const MSTR str("Alembic Xform"); return str; }
+	const MCHAR*	ClassName()			{ static const MSTR str(ALEMBIC_XFORM_CONTROLLER_NAME); return str; }
 	SClass_ID		SuperClassID()		{ return CTRL_MATRIX3_CLASS_ID; }
 	Class_ID		ClassID()			{ return ALEMBIC_XFORM_CTRL_CLASSID; }
 	const MCHAR*	Category()			{ return EXOCORTEX_ALEMBIC_CATEGORY; }
 	void*			Create(BOOL loading=FALSE) { return new AlembicXFormCtrl; }
-    const TCHAR*	InternalName()		{ return _T("AlembicXformController"); }	// returns fixed parsable name (scripter-visible name)
+    const TCHAR*	InternalName()		{ return _T(ALEMBIC_XFORM_CONTROLLER_SCRIPTNAME); }	// returns fixed parsable name (scripter-visible name)
     HINSTANCE		HInstance()			{ return hInstance; }			// returns owning module handle
 };
 
