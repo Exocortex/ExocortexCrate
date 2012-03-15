@@ -45,13 +45,13 @@ public:
 	RefTargetHandle Clone(RemapDir& remap);
 
 	// From Modifier
-	ChannelMask ChannelsUsed()  { return TOPO_CHANNEL|GEOM_CHANNEL|TEXMAP_CHANNEL; }
-	ChannelMask ChannelsChanged() { return TOPO_CHANNEL|GEOM_CHANNEL|TEXMAP_CHANNEL; }
+	ChannelMask ChannelsUsed()  { return GEOM_CHANNEL; }
+	ChannelMask ChannelsChanged() { return GEOM_CHANNEL; }
 	Class_ID InputType() { return polyObjectClassID; }
 	void ModifyObject (TimeValue t, ModContext &mc, ObjectState *os, INode *node);
 	//Interval LocalValidity(TimeValue t) { return GetValidity(t); }
 	//Interval GetValidity (TimeValue t);
-	BOOL DependOnTopology(ModContext &mc) { return TRUE; }
+	BOOL DependOnTopology(ModContext &mc) { return FALSE; }
 
 	// From BaseObject
 	CreateMouseCallBack* GetCreateMouseCallBack() {return NULL;} 

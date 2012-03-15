@@ -1,7 +1,7 @@
 #ifndef __ALEMBIC_MESH_UTILITY__H
 #define __ALEMBIC_MESH_UTILITY__H
 
-#include "Foundation.h"  
+#include "Foundation.h"   
 #include "MNMath.h"
 #include "PolyObj.h"
 #include "resource.h"

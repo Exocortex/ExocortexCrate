@@ -354,7 +354,7 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
 		}
    }
 
-   if ( ( options.nDataFillFlags & ALEMBIC_DATAFILL_NORMALS ) && objMesh.valid() )
+   if ( objMesh.valid() && ( ( options.nDataFillFlags & ALEMBIC_DATAFILL_NORMALS ) || ( ( options.nDataFillFlags & ALEMBIC_DATAFILL_FACELIST ) && hasDynamicTopo ) ) )
    {
        Alembic::AbcGeom::IN3fGeomParam meshNormalsParam = objMesh.getSchema().getNormalsParam();
 
@@ -476,7 +476,7 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
        }
    }
 
-   if ( options.nDataFillFlags & ALEMBIC_DATAFILL_UVS )
+   if ( ( options.nDataFillFlags & ALEMBIC_DATAFILL_UVS ) || ( ( options.nDataFillFlags & ALEMBIC_DATAFILL_FACELIST ) && hasDynamicTopo ))
    {
        Alembic::AbcGeom::IV2fGeomParam meshUvParam;
        if(objMesh.valid())
@@ -587,7 +587,7 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
        }
    }
 
-   if ( options.nDataFillFlags & ALEMBIC_DATAFILL_FACESETS )
+   if ( ( options.nDataFillFlags & ALEMBIC_DATAFILL_FACESETS ) || ( ( options.nDataFillFlags & ALEMBIC_DATAFILL_FACELIST ) && hasDynamicTopo ))
    {
        std::vector<std::string> faceSetNames;
        if(objMesh.valid())
@@ -747,6 +747,9 @@ int AlembicImport_PolyMesh(const std::string &path, const std::string &identifie
 	//TimeValue now =  GetCOREInterface12()->GetTime();
 
 	TimeValue zero( 0 );
+
+	bool isDynamicTopo = isAlembicMeshTopoDynamic( &iObj );
+
 	{
 		// Create the polymesh modifier
 		Modifier *pModifier = static_cast<Modifier*>
@@ -760,7 +763,7 @@ int AlembicImport_PolyMesh(const std::string &path, const std::string &identifie
 		// Add the modifier to the node
 		GetCOREInterface12()->AddModifier(*node, *pModifier);
 	}
-	{
+	if( ! isDynamicTopo ) {
 		// Create the polymesh modifier
 		Modifier *pModifier = static_cast<Modifier*>
 			(GetCOREInterface12()->CreateInstance(OSM_CLASS_ID, ALEMBIC_MESH_GEOM_MODIFIER_CLASSID));
@@ -774,7 +777,7 @@ int AlembicImport_PolyMesh(const std::string &path, const std::string &identifie
 		// Add the modifier to the node
 		GetCOREInterface12()->AddModifier(*node, *pModifier);
 	}
-	if( isAlembicMeshUVWs( &iObj ) ) {
+	if( ( ! isDynamicTopo ) && isAlembicMeshUVWs( &iObj ) ) {
 		// Create the polymesh modifier
 		Modifier *pModifier = static_cast<Modifier*>
 			(GetCOREInterface12()->CreateInstance(OSM_CLASS_ID, ALEMBIC_MESH_UVW_MODIFIER_CLASSID));
@@ -787,7 +790,7 @@ int AlembicImport_PolyMesh(const std::string &path, const std::string &identifie
 		// Add the modifier to the node
 		GetCOREInterface12()->AddModifier(*node, *pModifier);
 	}
-	if( isAlembicMeshNormals( &iObj ) ) {
+	if( ( ! isDynamicTopo ) && isAlembicMeshNormals( &iObj ) ) {
 		// Create the polymesh modifier
 		Modifier *pModifier = static_cast<Modifier*>
 			(GetCOREInterface12()->CreateInstance(OSM_CLASS_ID, ALEMBIC_MESH_NORMALS_MODIFIER_CLASSID));
