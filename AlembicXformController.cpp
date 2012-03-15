@@ -1,14 +1,14 @@
 #include "Alembic.h"
 #include "AlembicArchiveStorage.h"
 #include "AlembicDefinitions.h"
-#include "AlembicXFormCtrl.h"
+#include "AlembicXformController.h"
 #include "Utility.h"
 #include "dummy.h"
 #include <ILockedTracks.h>
 #include "iparamb2.h"
 #include <iparamm2.h>
 
-#include "AlembicTransformUtilities.h"
+#include "AlembicXformUtilities.h"
 
 // This function returns a pointer to a class descriptor for our Utility
 // This is the function that informs max that our plug-in exists and is 
@@ -39,11 +39,15 @@ enum
     alembicxform_cameratransform,
 };
 
-static ParamBlockDesc2 xform_params_desc ( AlembicXFormCtrl_params, _T("ExoCortexAlembicXFormController"),
-									IDS_PREVIEW, &sAlembicXFormCtrlClassDesc,
-									P_AUTO_CONSTRUCT | P_AUTO_UI, 0,
+static ParamBlockDesc2 xform_params_desc (
+	AlembicXFormCtrl_params,
+	_T(ALEMBIC_XFORM_CONTROLLER_SCRIPTNAME),
+	0,
+	&sAlembicXFormCtrlClassDesc,
+	P_AUTO_CONSTRUCT | P_AUTO_UI, 0,
+
 	//rollout description
-	IDD_ALEMBIC_ID_PARAMS, IDS_PREVIEW, 0, 0, NULL,
+	IDD_ALEMBIC_ID_PARAMS, IDS_ALEMBIC, 0, 0, NULL,
 
     // params
 	/*alembicxform_abc_archive, _T("path"), TYPE_FILENAME, 0, IDS_ABC_ARCHIVE,
@@ -87,10 +91,10 @@ static ParamBlockDesc2 xform_params_desc ( AlembicXFormCtrl_params, _T("ExoCorte
 /*
 class AlembicXFormCtrlDlgProc : public ParamMap2UserDlgProc {
   public:
-	AlembicXFormCtrl* mpParent;
+	AlembicXformController* mpParent;
     char *m_Buffer;
 	BOOL initialized; //set to true after an init dialog message
-	AlembicXFormCtrlDlgProc( AlembicXFormCtrl* parent ) { this->mpParent=parent; initialized=FALSE; m_Buffer = 0; }
+	AlembicXFormCtrlDlgProc( AlembicXformController* parent ) { this->mpParent=parent; initialized=FALSE; m_Buffer = 0; }
     ~AlembicXFormCtrlDlgProc() { if (m_Buffer) free(m_Buffer); }
 	void DeleteThis() { delete this; }
 
@@ -155,12 +159,12 @@ class AlembicXFormCtrlDlgProc : public ParamMap2UserDlgProc {
 */
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
-// AlembicXFormCtrl Methods
+// AlembicXformController Methods
 ///////////////////////////////////////////////////////////////////////////////////////////////////
-IObjParam *AlembicXFormCtrl::ip = NULL;
-AlembicXFormCtrl *AlembicXFormCtrl::editMod = NULL;
+IObjParam *AlembicXformController::ip = NULL;
+AlembicXformController *AlembicXformController::editMod = NULL;
 
-void AlembicXFormCtrl::GetValueLocalTime(TimeValue t, void *ptr, Interval &valid, GetSetMethod method)
+void AlembicXformController::GetValueLocalTime(TimeValue t, void *ptr, Interval &valid, GetSetMethod method)
 {
     MCHAR const* strPath = NULL;
 	pblock->GetValue( alembicxform_abc_archive, t, strPath, valid);
@@ -219,59 +223,59 @@ void AlembicXFormCtrl::GetValueLocalTime(TimeValue t, void *ptr, Interval &valid
 	}
 }
 
-AlembicXFormCtrl::AlembicXFormCtrl()
+AlembicXformController::AlembicXformController()
 {
     pblock = NULL;
     sAlembicXFormCtrlClassDesc.MakeAutoParamBlocks(this);
 }
 
-AlembicXFormCtrl::~AlembicXFormCtrl()
+AlembicXformController::~AlembicXformController()
 {
 }
 
-RefTargetHandle AlembicXFormCtrl::Clone(RemapDir& remap) 
+RefTargetHandle AlembicXformController::Clone(RemapDir& remap) 
 {
-	AlembicXFormCtrl *ctrl = new AlembicXFormCtrl();
+	AlembicXformController *ctrl = new AlembicXformController();
     ctrl->ReplaceReference (0, remap.CloneRef(pblock));
 	
     BaseClone(this, ctrl, remap);
 	return ctrl;
 }
 
-void AlembicXFormCtrl::SetValueLocalTime(TimeValue t, void *ptr, int commit, GetSetMethod method)
+void AlembicXformController::SetValueLocalTime(TimeValue t, void *ptr, int commit, GetSetMethod method)
 {
 
 }
 
-void* AlembicXFormCtrl::CreateTempValue()
+void* AlembicXformController::CreateTempValue()
 {
     return new Matrix3(1);
 }
 
-void AlembicXFormCtrl::DeleteTempValue(void *val)
+void AlembicXformController::DeleteTempValue(void *val)
 {
     delete (Matrix3*)val;
 }
 
-void AlembicXFormCtrl::ApplyValue(void *val, void *delta)
+void AlembicXformController::ApplyValue(void *val, void *delta)
 {
     Matrix3 &deltatm = *((Matrix3*)delta);
     Matrix3 &valtm = *((Matrix3*)val);
     valtm = deltatm * valtm;
 }
 
-void AlembicXFormCtrl::MultiplyValue(void *val, float m)
+void AlembicXformController::MultiplyValue(void *val, float m)
 {
      Matrix3 *valtm = (Matrix3*)val;
      valtm->PreScale(Point3(m,m,m));
 }
 
-void AlembicXFormCtrl::Extrapolate(Interval range, TimeValue t, void *val, Interval &valid, int type)
+void AlembicXformController::Extrapolate(Interval range, TimeValue t, void *val, Interval &valid, int type)
 {
 }
 
 /*
-void AlembicXFormCtrl::SetAlembicId(const std::string &file, const std::string &identifier, TimeValue t)
+void AlembicXformController::SetAlembicId(const std::string &file, const std::string &identifier, TimeValue t)
 {
     m_AlembicNodeProps.m_File = file;
     m_AlembicNodeProps.m_Identifier = identifier;
@@ -279,7 +283,7 @@ void AlembicXFormCtrl::SetAlembicId(const std::string &file, const std::string &
 
 
 #define LOCK_CHUNK		0x2535  //the lock value
-IOResult AlembicXFormCtrl::Save(ISave *isave)
+IOResult AlembicXformController::Save(ISave *isave)
 {
 	Control::Save(isave);
 
@@ -294,7 +298,7 @@ IOResult AlembicXFormCtrl::Save(ISave *isave)
 	return IO_OK;
 }
 
-IOResult AlembicXFormCtrl::Load(ILoad *iload)
+IOResult AlembicXformController::Load(ILoad *iload)
 {
 	ULONG nb;
 	IOResult res;
@@ -325,7 +329,7 @@ IOResult AlembicXFormCtrl::Load(ILoad *iload)
 	return res;	
 }
 
-RefTargetHandle AlembicXFormCtrl::GetReference(int i)
+RefTargetHandle AlembicXformController::GetReference(int i)
 {
     switch (i)
     {
@@ -336,7 +340,7 @@ RefTargetHandle AlembicXFormCtrl::GetReference(int i)
     return NULL;
 }
 
-void AlembicXFormCtrl::SetReference(int i, RefTargetHandle rtarg)
+void AlembicXformController::SetReference(int i, RefTargetHandle rtarg)
 {
     switch (i)
     {
@@ -346,7 +350,7 @@ void AlembicXFormCtrl::SetReference(int i, RefTargetHandle rtarg)
     }
 }
 
-RefResult AlembicXFormCtrl::NotifyRefChanged(
+RefResult AlembicXformController::NotifyRefChanged(
     Interval iv, 
     RefTargetHandle hTarg, 
     PartID& partID, 
@@ -375,7 +379,7 @@ RefResult AlembicXFormCtrl::NotifyRefChanged(
     return REF_SUCCEED;
 }
 
-void AlembicXFormCtrl::BeginEditParams(IObjParam *ip,ULONG flags,Animatable *prev)
+void AlembicXformController::BeginEditParams(IObjParam *ip,ULONG flags,Animatable *prev)
 {
 	this->ip = ip;
     editMod  = this;
@@ -391,7 +395,7 @@ void AlembicXFormCtrl::BeginEditParams(IObjParam *ip,ULONG flags,Animatable *pre
 	// NotifyDependents(FOREVER, PART_ALL, REFMSG_CHANGE);
 }
 
-void AlembicXFormCtrl::EndEditParams( IObjParam *ip, ULONG flags, Animatable *next )
+void AlembicXformController::EndEditParams( IObjParam *ip, ULONG flags, Animatable *next )
 {
     LockableStdControl::EndEditParams(ip, flags, next);
 	sAlembicXFormCtrlClassDesc.EndEditParams(ip, this, flags, next);
@@ -400,18 +404,18 @@ void AlembicXFormCtrl::EndEditParams( IObjParam *ip, ULONG flags, Animatable *ne
     editMod  = NULL;
 }
 /*
-void AlembicXFormCtrl::MainPanelInitDialog( HWND hWnd ) 
+void AlembicXformController::MainPanelInitDialog( HWND hWnd ) 
 {
 	mhPanel = hWnd;
 	MainPanelUpdateUI();
 }
 
-void AlembicXFormCtrl::MainPanelDestroy( HWND hWnd ) 
+void AlembicXformController::MainPanelDestroy( HWND hWnd ) 
 {
 	mhPanel = NULL;
 }
 
-void AlembicXFormCtrl::MainPanelUpdateUI()
+void AlembicXformController::MainPanelUpdateUI()
 {
 	if( (mhPanel == NULL) || mbSuspendPanelUpdate) 
 		return;

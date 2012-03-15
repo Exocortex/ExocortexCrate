@@ -1,4 +1,4 @@
 cmake_minimum_required (VERSION 2.6)  
 
-set( Max_VERSION "2012" )   
-include( ../CMakeLists.txt )    
+set( Max_VERSION "2012" )
+include( ../CMakeLists.txt )

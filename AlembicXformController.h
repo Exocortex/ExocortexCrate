@@ -7,18 +7,18 @@
 #include "ILockedTracks.h"
 #include "AlembicNames.h"
 
-class AlembicXFormCtrl : public LockableStdControl
+class AlembicXformController : public LockableStdControl
 {
 public:
     IParamBlock2* pblock;
     static IObjParam *ip;
-    static AlembicXFormCtrl *editMod;
+    static AlembicXformController *editMod;
 
-	AlembicXFormCtrl();
-	~AlembicXFormCtrl();
+	AlembicXformController();
+	~AlembicXformController();
 
 	SClass_ID SuperClassID() { return CTRL_MATRIX3_CLASS_ID; }
-	virtual Class_ID ClassID() { return ALEMBIC_XFORM_CTRL_CLASSID; }		
+	virtual Class_ID ClassID() { return ALEMBIC_XFORM_CONTROLLER_CLASSID; }		
 	void GetClassName(TSTR& s) { s = _T(ALEMBIC_XFORM_CONTROLLER_NAME); }  
 	TCHAR *GetObjectName() { return _T(ALEMBIC_XFORM_CONTROLLER_NAME); }
 
@@ -60,8 +60,6 @@ public:
 
 private:
     Interval m_CurrentAlembicInterval;
-    //HWND mhPanel;
-   // bool mbSuspendPanelUpdate;
 };
 
 class AlembicXFormCtrlClassDesc : public ClassDesc2
@@ -73,9 +71,9 @@ public:
 	int				IsPublic()			{ return TRUE; }	// We do want the user to see this plug-in
 	const MCHAR*	ClassName()			{ static const MSTR str(ALEMBIC_XFORM_CONTROLLER_NAME); return str; }
 	SClass_ID		SuperClassID()		{ return CTRL_MATRIX3_CLASS_ID; }
-	Class_ID		ClassID()			{ return ALEMBIC_XFORM_CTRL_CLASSID; }
+	Class_ID		ClassID()			{ return ALEMBIC_XFORM_CONTROLLER_CLASSID; }
 	const MCHAR*	Category()			{ return EXOCORTEX_ALEMBIC_CATEGORY; }
-	void*			Create(BOOL loading=FALSE) { return new AlembicXFormCtrl; }
+	void*			Create(BOOL loading=FALSE) { return new AlembicXformController; }
     const TCHAR*	InternalName()		{ return _T(ALEMBIC_XFORM_CONTROLLER_SCRIPTNAME); }	// returns fixed parsable name (scripter-visible name)
     HINSTANCE		HInstance()			{ return hInstance; }			// returns owning module handle
 };

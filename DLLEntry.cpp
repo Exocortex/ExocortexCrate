@@ -37,7 +37,7 @@ ClassDesc2** getClassDescs( int& numClassDescs ) {
 		GetAlembicMeshGeomModifierClassDesc(),
 		GetAlembicMeshNormalsModifierClassDesc(),
 		GetAlembicMeshUVWModifierClassDesc(),
-		GetAlembicTransformBaseModifierClassDesc()
+		GetAlembicXformBaseModifierClassDesc()
 	};
 	numClassDescs = sizeof( s_classDescs ) / sizeof( ClassDescPtr );
 	return s_classDescs;
@@ -68,7 +68,7 @@ MAX_DLL_EXPORT ClassDesc* LibClassDesc(int i)
     case 3: return GetAlembicVisCtrlClassDesc();
     case 4: return GetAlembicSimpleParticleClassDesc();
     case 5: return GetAlembicSimpleSplineClassDesc();
-	case 6: return GetAlembicTransformBaseModifierClassDesc();
+	case 6: return GetAlembicXformBaseModifierClassDesc();
 
     default: return 0;
     }*/
