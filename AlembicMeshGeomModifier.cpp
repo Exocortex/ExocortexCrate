@@ -47,7 +47,7 @@ static ParamBlockDesc2 AlembicMeshGeomModifierParams(
 	AlembicMeshGeomModifier::ID_TIME, _T("time"), TYPE_FLOAT, P_ANIMATABLE, IDS_TIME,
 		p_default,       0.0f,
 		p_range,         0.0f, 1000.0f,
-		p_ui,            TYPE_SPINNER,       EDITTYPE_FLOAT, IDC_TIME_EDIT,    IDC_TIME_SPIN, 0.5f,
+		p_ui,            TYPE_SPINNER,       EDITTYPE_FLOAT, IDC_TIME_EDIT,    IDC_TIME_SPIN,  0.01f,
 		end,
 
 	AlembicMeshGeomModifier::ID_GEOALPHA, _T("geoAlpha"), TYPE_FLOAT, P_ANIMATABLE, IDS_GEOALPHA,

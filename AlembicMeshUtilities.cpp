@@ -404,6 +404,13 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
                }
            }
 
+		   if( options.fVertexAlpha != 1.0f ) {
+			   for( int i = 0; i < normalsToSet.size(); i ++ ) {
+				normalsToSet[i] *= options.fVertexAlpha;
+			   }
+		   }
+
+
            // Set up the specify normals
            if (options.pMNMesh != NULL)
            {

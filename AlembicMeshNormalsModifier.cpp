@@ -1,6 +1,6 @@
 #include "Alembic.h"
 #include "AlembicDefinitions.h"
-#include "AlembicMeshNormalsModifier.h"
+#include "AlembicMeshNormalsModifier.h" 
 #include "AlembicArchiveStorage.h"
 #include "utility.h"
 #include <iparamb2.h>
@@ -47,9 +47,14 @@ static ParamBlockDesc2 AlembicMeshNormalsModifierParams(
 	AlembicMeshNormalsModifier::ID_TIME, _T("time"), TYPE_FLOAT, P_ANIMATABLE, IDS_TIME,
 		p_default,       0.0f,
 		p_range,         0.0f, 1000.0f,
-		p_ui,            TYPE_SPINNER,       EDITTYPE_FLOAT, IDC_TIME_EDIT,    IDC_TIME_SPIN, 0.5f,
+		p_ui,            TYPE_SPINNER,       EDITTYPE_FLOAT, IDC_TIME_EDIT,    IDC_TIME_SPIN,  0.01f,
 		end,
 
+	AlembicMeshNormalsModifier::ID_GEOALPHA, _T("geoAlpha"), TYPE_FLOAT, P_ANIMATABLE, IDS_GEOALPHA,
+		p_default,       1.0f,
+		p_range,         0.0f, 1.0f,
+		p_ui,            TYPE_SPINNER,       EDITTYPE_FLOAT, IDC_GEOALPHA_EDIT,    IDC_GEOALPHA_SPIN, 0.1f,
+		end,
 
 	AlembicMeshNormalsModifier::ID_MUTED, _T("muted"), TYPE_BOOL, P_ANIMATABLE, IDS_MUTED,
 		p_default,       TRUE,
@@ -96,7 +101,10 @@ void AlembicMeshNormalsModifier::ModifyObject (TimeValue t, ModContext &mc, Obje
 
 	BOOL bTopology = false;
 	BOOL bGeometry = false;
-	float fGeoAlpha = 1.0f;
+
+	float fGeoAlpha;
+	this->pblock->GetValue( AlembicMeshNormalsModifier::ID_GEOALPHA, t, fGeoAlpha, interval);
+
 	BOOL bNormals = true;
 	BOOL bUVs = false;
 
