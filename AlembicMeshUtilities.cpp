@@ -11,6 +11,10 @@
 #include "AlembicVisCtrl.h"
 #include "AlembicNames.h"
 #include "AlembicMeshUtilities.h"
+#include <exprlib.h>
+#include <ifnpub.h> 
+#include <maxscript\maxwrapper\scriptcontroller.h>
+#include <maxscript\maxscript.h>
 
 bool isAlembicMeshValid( Alembic::AbcGeom::IObject *pIObj ) {
 	Alembic::AbcGeom::IPolyMesh objMesh;
@@ -88,6 +92,7 @@ bool isAlembicMeshTopoDynamic( Alembic::AbcGeom::IObject *pIObj ) {
 	}  
 	return hasDynamicTopo;
 }
+
 
 void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options);
 
@@ -755,6 +760,8 @@ int AlembicImport_PolyMesh(const std::string &path, const std::string &identifie
 
 	TimeValue zero( 0 );
 
+	int modifierIndex = 1;
+
 	bool isDynamicTopo = isAlembicMeshTopoDynamic( &iObj );
 
 	{
@@ -769,6 +776,14 @@ int AlembicImport_PolyMesh(const std::string &path, const std::string &identifie
 		
 		// Add the modifier to the node
 		GetCOREInterface12()->AddModifier(*node, *pModifier);
+
+		if( isDynamicTopo ) {
+			char szBuffer[10000];
+			sprintf_s( szBuffer, 10000, "select $%s\n$.modifiers[%i].time.controller = float_expression()\n$.modifiers[%i].time.controller.setExpression \"S\"", node->GetName(), modifierIndex, modifierIndex );
+			ExecuteMAXScriptScript( szBuffer );
+		}
+	 
+		modifierIndex ++;
 	}
 	if( ( ! isDynamicTopo ) && isAlembicMeshUVWs( &iObj ) ) {
 		// Create the polymesh modifier
@@ -782,6 +797,8 @@ int AlembicImport_PolyMesh(const std::string &path, const std::string &identifie
 	  
 		// Add the modifier to the node
 		GetCOREInterface12()->AddModifier(*node, *pModifier);
+
+		modifierIndex ++;
 	}
 	if( ! isDynamicTopo ) {
 		// Create the polymesh modifier
@@ -796,6 +813,14 @@ int AlembicImport_PolyMesh(const std::string &path, const std::string &identifie
 	
 		// Add the modifier to the node
 		GetCOREInterface12()->AddModifier(*node, *pModifier);
+
+		/*if( isDynamicTopo ) {
+			char szBuffer[10000];
+			sprintf_s( szBuffer, 10000, "select $%s\n$.modifiers[%i].time.controller = float_expression()\n$.modifiers[%i].time.controller.setExpression \"S\"", node->GetName(), modifierIndex, , modifierIndex );
+			ExecuteMAXScriptScript( szBuffer );
+		}*/
+
+		modifierIndex ++;
 	}
 	if( ( ! isDynamicTopo ) && isAlembicMeshNormals( &iObj ) ) {
 		// Create the polymesh modifier
@@ -809,6 +834,8 @@ int AlembicImport_PolyMesh(const std::string &path, const std::string &identifie
 	
 		// Add the modifier to the node
 		GetCOREInterface12()->AddModifier(*node, *pModifier);
+
+		modifierIndex ++;
 	}
 
     // Add the new inode to our current scene list
