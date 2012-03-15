@@ -1,14 +1,7 @@
 #include "Alembic.h"
 #include "AlembicDefinitions.h"
 #include "iparamm2.h"
-
-extern ClassDesc2* GetAlembicXFormCtrlClassDesc();
-extern ClassDesc2* GetAlembicCameraBaseModifierClassDesc();
-extern ClassDesc2* GetAlembicVisCtrlClassDesc();
-extern ClassDesc2* GetAlembicSimpleParticleClassDesc();
-extern ClassDesc2* GetAlembicSimpleSplineClassDesc();
-extern ClassDesc2* GetAlembicMeshBaseModifierClassDesc();
-extern ClassDesc2 *GetAlembicTransformBaseModifierClassDesc();
+#include "AlembicNames.h"
 
 HINSTANCE hInstance;
 
@@ -30,15 +23,44 @@ MAX_DLL_EXPORT const TCHAR* LibDescription()
    return "Exocortex Alembic for 3DS Max";
 }
 
+typedef ClassDesc2* ClassDescPtr;
+
+ClassDesc2** getClassDescs( int& numClassDescs ) {
+	static ClassDescPtr s_classDescs[] = {
+		GetAlembicXFormCtrlClassDesc(),
+		GetAlembicCameraBaseModifierClassDesc(),
+		GetAlembicVisCtrlClassDesc(),
+		GetAlembicSimpleParticleClassDesc(),
+		GetAlembicSimpleSplineClassDesc(),
+		GetAlembicMeshBaseModifierClassDesc(),
+		GetAlembicMeshTopoModifierClassDesc(),
+		GetAlembicMeshGeomModifierClassDesc(),
+		GetAlembicMeshNormalsModifierClassDesc(),
+		GetAlembicMeshUVWModifierClassDesc(),
+		GetAlembicTransformBaseModifierClassDesc()
+	};
+	numClassDescs = sizeof( s_classDescs ) / sizeof( ClassDescPtr );
+	return s_classDescs;
+};
+
+
 //TODO: Must change this number when adding a new class
 MAX_DLL_EXPORT int LibNumberClasses()
 {
-   return 7;
+	int numClassDescs;
+	getClassDescs( numClassDescs );
+	return numClassDescs;
 }
 
 MAX_DLL_EXPORT ClassDesc* LibClassDesc(int i)
 {
-    switch(i) 
+	int numClassDescs;
+	ClassDesc2** ppClassDescs = getClassDescs( numClassDescs );
+	if( i < numClassDescs ) {
+		return ppClassDescs[i];
+	}
+	return NULL;
+    /*switch(i) 
     {
     case 0: return GetAlembicXFormCtrlClassDesc();
     case 1: return GetAlembicMeshBaseModifierClassDesc();
@@ -49,7 +71,7 @@ MAX_DLL_EXPORT ClassDesc* LibClassDesc(int i)
 	case 6: return GetAlembicTransformBaseModifierClassDesc();
 
     default: return 0;
-    }
+    }*/
 }
 
 

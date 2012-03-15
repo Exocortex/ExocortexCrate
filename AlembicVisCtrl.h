@@ -8,8 +8,6 @@
 
 ClassDesc2* GetAlembicVisCtrlClassDesc();
 
-extern HINSTANCE hInstance;
-
 void AlembicImport_SetupVisControl( Alembic::AbcGeom::IObject &obj, INode *pNode, alembic_importoptions &options );
 
 #endif

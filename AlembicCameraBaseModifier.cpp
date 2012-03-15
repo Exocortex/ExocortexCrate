@@ -8,8 +8,6 @@
 #include "AlembicNames.h"
 
 
-extern HINSTANCE hInstance;
-
 //////////////////////////////////////////////////////////////////////////////////////////
 // Import options struct containing the information necessary to fill the camera object
 typedef struct _alembic_fillcamera_options

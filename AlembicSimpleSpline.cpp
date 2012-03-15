@@ -120,9 +120,6 @@ static AlembicSimpleSplineClassDesc sAlembicSimpleSplineDesc;
 
 ClassDesc2* GetAlembicSimpleSplineClassDesc() { return &sAlembicSimpleSplineDesc; }
 
-// in prim.cpp  - The dll instance handle
-extern HINSTANCE hInstance;
-
 // class variable for circle class.
 IParamMap *AlembicSimpleSpline::pmapCreate = NULL;
 IParamMap *AlembicSimpleSpline::pmapParam  = NULL;
