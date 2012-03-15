@@ -25,6 +25,68 @@ static Point3 basic_tvb[3] = {
 static int nextpt[3] = {1,2,0};
 static int prevpt[3] = {2,0,1};
 
+// Add a normal to the list if the smoothing group bits overlap,
+// otherwise create a new vertex normal in the list
+void VNormal::AddNormal(Point3 &n,DWORD s) 
+{   
+    if (!(s&smooth) && init) 
+    {     
+        if (next)
+        {
+            next->AddNormal(n,s);     
+        }
+        else 
+        {      
+            next = new VNormal(n,s);     
+        }   
+    }   
+    else 
+    {     
+        norm += n;     
+        smooth |= s;     
+        init = TRUE;   
+    }
+} 
+
+// Retrieves a normal if the smoothing groups overlap or there is// only one in the list
+Point3 &VNormal::GetNormal( DWORD s )
+{   
+    if (smooth&s || !next) 
+    {
+        return norm;   
+    }
+    else
+    {
+        return next->GetNormal(s); 
+    }
+} 
+
+// Normalize each normal in the list
+void VNormal::Normalize() 
+{   
+    VNormal *ptr = next, *prev = this;   
+    while (ptr)   
+    {     
+        if (ptr->smooth&smooth) 
+        {      
+            norm += ptr->norm;      
+            prev->next = ptr->next;       
+            delete ptr;      
+            ptr = prev->next;     
+        }     
+        else 
+        {      
+            prev = ptr;      
+            ptr = ptr->next;     
+        }   
+    }   
+    norm = ::Normalize(norm);   
+    if (next) 
+    {
+        next->Normalize();
+    }
+}
+
 AlembicPolyMesh::AlembicPolyMesh(const SceneEntry &in_Ref, AlembicWriteJob *in_Job)
 : AlembicObject(in_Ref, in_Job)
 {
@@ -63,6 +125,15 @@ bool AlembicPolyMesh::Save(double time)
 
     // Store the transformation
     SaveXformSample(GetRef(), mXformSchema, mXformSample, time);
+
+    // Clear our data
+    mFaceCountVec.clear();
+    mFaceIndicesVec.clear();
+    mBindPoseVec.clear();
+    mVelocitiesVec.clear();
+    mUvVec.clear();
+    mUvIndexVec.clear();
+    mFaceSetsMap.clear();
 
     // store the metadata
     // IMetaDataManager mng;
@@ -186,6 +257,7 @@ bool AlembicPolyMesh::Save(double time)
         if (polyObj != NULL)
         {
             polyObj->GetMesh().buildNormals();
+            BuildMNMeshSmoothingGroupNormals(polyObj->GetMesh());
         }
         if (triObj != NULL)
         {
@@ -211,7 +283,7 @@ bool AlembicPolyMesh::Save(double time)
                     }
                     else
                     {
-                        vertexNormal = GetVertexNormal(&polyObj->GetMesh(), i, j);
+                        vertexNormal = GetVertexNormal(&polyObj->GetMesh(), i, j, m_MNMeshSmoothGroupNormals);
                     }
                 }
                 else
@@ -273,6 +345,11 @@ bool AlembicPolyMesh::Save(double time)
             }
             sortedNormalCount = 0;
             sortedNormalVec.clear();
+        }
+
+        if (polyObj != NULL)
+        {
+            ClearMNMeshSmoothingGroupNormals();
         }
     }
 
@@ -504,8 +581,8 @@ bool AlembicPolyMesh::Save(double time)
          if(mBindPoseVec.size() > 0)
             sample = Alembic::Abc::V3fArraySample(&mBindPoseVec.front(),mBindPoseVec.size());
          mBindPoseProperty.set(sample);
-      }   
-	  */
+      }
+      */
    }
    else
    {
@@ -609,7 +686,7 @@ Point3 AlembicPolyMesh::GetVertexNormal(Mesh* mesh, int faceNo, RVertex* rv)
 	return vertexNormal;
 }
 
-Point3 AlembicPolyMesh::GetVertexNormal(MNMesh *mesh, int faceNo, int faceVertNo)
+Point3 AlembicPolyMesh::GetVertexNormal(MNMesh *mesh, int faceNo, int faceVertNo, std::vector<VNormal> &sgVertexNormals)
 {
     // If we do not a smoothing group, we can't base ourselves on anything else,
     // so we can just return the face normal.
@@ -619,28 +696,9 @@ Point3 AlembicPolyMesh::GetVertexNormal(MNMesh *mesh, int faceNo, int faceVertNo
         return mesh->GetFaceNormal(faceNo);
     }
 
-    // Find any other faces that share this vertex and smoothing group.
-    // Combine all the normals of these neighbouring faces and re-normalize.
+    // Check to see if there is a smoothing group normal
     int vertIndex = face->vtx[faceVertNo];
-    int numFaces = mesh->FNum();
-    Point3 normal(0.0f, 0.0f, 0.0f);
-
-    for (int i = 0; i < numFaces; ++i)
-    {
-        const MNFace *testFace = mesh->F(i);
-        if (testFace != NULL && (testFace->smGroup & face->smGroup))
-        {
-            int degree = testFace->deg;
-            for (int j = 0; j < degree; ++j)
-            {
-                if (testFace->vtx[j] == vertIndex)
-                {
-                    normal += mesh->GetFaceNormal(i);
-                    break;
-                }
-            }
-        }
-    }
+    Point3 normal = sgVertexNormals[vertIndex].GetNormal(face->smGroup);
 
     if (normal.LengthSquared() > 0.0f)
     {
@@ -683,5 +741,41 @@ BOOL AlembicPolyMesh::CheckForFaceMap(Mtl* mtl, Mesh* mesh)
     }
 
     return TRUE;
+}
+
+void AlembicPolyMesh::BuildMNMeshSmoothingGroupNormals(MNMesh &mesh)
+{
+    m_MNMeshSmoothGroupNormals.resize(mesh.numv);
+    
+    for (int i = 0; i < mesh.numf; i++) 
+    {     
+        MNFace *face = &mesh.f[i];
+        Point3 faceNormal = mesh.GetFaceNormal(i);
+        for (int j=0; j<face->deg; j++) 
+        {       
+            m_MNMeshSmoothGroupNormals[face->vtx[j]].AddNormal(faceNormal, face->smGroup);     
+        }     
+    }   
+    
+    for (int i=0; i < mesh.numv; i++) 
+    {     
+        m_MNMeshSmoothGroupNormals[i].Normalize();   
+    }
+}
+
+void AlembicPolyMesh::ClearMNMeshSmoothingGroupNormals()
+{
+    for (int i=0; i < m_MNMeshSmoothGroupNormals.size(); i++) 
+    {   
+        VNormal *ptr = m_MNMeshSmoothGroupNormals[i].next;
+        while (ptr)
+        {
+            VNormal *tmp = ptr;
+            ptr = ptr->next;
+            delete tmp;
+        }
+    }
+
+    m_MNMeshSmoothGroupNormals.clear();  
 }
 

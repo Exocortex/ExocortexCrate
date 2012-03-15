@@ -88,7 +88,10 @@ int AlembicImport_XForm(const std::string &file, const std::string &identifier, 
     INode *pNode = options.currentSceneList.FindNodeWithName(modelid);
     if (!pNode)
     {
-        Object* obj = static_cast<Object*>(CreateInstance(HELPER_CLASS_ID, Class_ID(DUMMY_CLASS_ID,0)));
+        // TO DO:  I think this code works but I want to review it more when we get around to supportin
+        // transform tracks.  For now, I'm disabling it.
+        // - PeterM 
+        /*Object* obj = static_cast<Object*>(CreateInstance(HELPER_CLASS_ID, Class_ID(DUMMY_CLASS_ID,0)));
 
         if (!obj)
             return alembic_failure;
@@ -112,6 +115,7 @@ int AlembicImport_XForm(const std::string &file, const std::string &identifier, 
 
         // Set up any child links for this node
         AlembicImport_SetupChildLinks(iObj, options);
+        */
     }
 
 	// Create the xform modifier

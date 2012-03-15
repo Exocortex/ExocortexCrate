@@ -80,13 +80,11 @@ inline Point3 ConvertAlembicNormalToMaxNormal( const Imath::V3f &alembicPoint )
 	return Point3(alembicPoint.x, -alembicPoint.z, alembicPoint.y).Normalize();
 }
 
-
 // Utility functions for working on INodes
 bool CheckIfNodeIsAnimated( INode *pNode );
 bool IsModelTransformNode( INode *pNode );
 INode *GetParentModelTransformNode( INode *pNode );
 void LockNodeTransform(INode *pNode, bool bLock);
-
 
 int GetParamIdByName( Animatable *pBaseObject, int pblockIndex, char const* pParamName );
 

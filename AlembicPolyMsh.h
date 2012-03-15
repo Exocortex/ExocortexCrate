@@ -8,6 +8,21 @@ typedef std::map<int, std::vector<Alembic::AbcCoreAbstract::ALEMBIC_VERSION_NS::
 typedef std::pair<int, std::vector<Alembic::AbcCoreAbstract::ALEMBIC_VERSION_NS::int32_t> > facesetmap_insert_pair;
 typedef std::pair<facesetmap_it, bool> facesetmap_ret_pair;
 
+class VNormal
+{   
+public:     
+    Point3 norm;     
+    DWORD smooth;     
+    VNormal *next;     
+    BOOL init;      
+    VNormal() {smooth=0;next=NULL;init=FALSE;norm=Point3(0,0,0);}     
+    VNormal(Point3 &n,DWORD s) {next=NULL;init=TRUE;norm=n;smooth=s;}     
+    ~VNormal() {smooth=0;next=NULL;init=FALSE;norm=Point3(0,0,0);}     
+    void AddNormal(Point3 &n,DWORD s);     
+    Point3 &GetNormal(DWORD s);     
+    void Normalize();
+};
+
 class AlembicPolyMesh: public AlembicObject
 {
 private:
@@ -24,9 +39,13 @@ private:
    facesetmap mFaceSetsMap;
    Alembic::Abc::ALEMBIC_VERSION_NS::OV3fArrayProperty mBindPoseProperty;
    Alembic::Abc::ALEMBIC_VERSION_NS::OV3fArrayProperty mVelocityProperty;
+   std::vector<VNormal> m_MNMeshSmoothGroupNormals;
+private:
+    void BuildMNMeshSmoothingGroupNormals(MNMesh &mesh);
+    void ClearMNMeshSmoothingGroupNormals();
 public:
     static Point3 GetVertexNormal(Mesh* mesh, int faceNo, RVertex* rv);
-    static Point3 GetVertexNormal(MNMesh *mesh, int faceNo, int faceVertNo);
+    static Point3 GetVertexNormal(MNMesh *mesh, int faceNo, int faceVertNo, std::vector<VNormal> &sgVertexNormals);
     static void make_face_uv(Face *f, Point3 *tv);
     static BOOL CheckForFaceMap(Mtl* mtl, Mesh* mesh);
 public:
