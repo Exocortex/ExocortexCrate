@@ -18,8 +18,8 @@ const unsigned int ALEMBIC_DATAFILL_SPLINE_KNOTS = 128;
 enum MeshTopologyType
 {
     SURFACE = 1,
-    NORMAL = 2,
-    NORMAL_SURFACE = 3
+    POINTCACHE = 2,
+    SURFACE_NORMAL = 3
 };
 
 enum VisImportOption
@@ -39,7 +39,7 @@ typedef struct _alembic_importoptions
 {
    bool importNormals;
    bool importUVs;
-   bool importClusters;
+   bool importMaterialIds;
    bool importStandins;
    bool importBboxes;
    bool attachToExisting;
@@ -50,7 +50,7 @@ typedef struct _alembic_importoptions
 public:
    _alembic_importoptions() : importNormals(false)
 	, importUVs(false)
-	, importClusters(false)
+	, importMaterialIds(false)
 	, importStandins(false)
 	, importBboxes(false)
 	, attachToExisting(false)

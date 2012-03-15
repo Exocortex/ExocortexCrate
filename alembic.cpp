@@ -263,11 +263,11 @@ int	AlembicExporter::DoExport(const TCHAR *filename, ExpInterface *ei, Interface
     }
 
     AlembicWriteJob *job = new AlembicWriteJob(filename, allSceneObjects, frames, i);
-    job->SetOption("exportNormals",topologyType != SURFACE);
+    job->SetOption("exportNormals",topologyType == SURFACE_NORMAL);
     job->SetOption("exportUVs", exportUV);
-    job->SetOption("exportFaceSets",topologyType != NORMAL);
+    job->SetOption("exportFaceSets",exportClusters);
     job->SetOption("exportBindPose",exportEnvelopeBindPose);
-    job->SetOption("exportPurePointCache",exportClusters);
+    job->SetOption("exportPurePointCache",topologyType == POINTCACHE);
     job->SetOption("exportDynamicTopology",exportDynamicTopology);
     job->SetOption("indexedNormals",true);
     job->SetOption("indexedUVs",true);
@@ -307,7 +307,7 @@ AlembicExporter::AlembicExporter()
     frameOut = 100;
     frameSteps = 1;
     frameSubSteps = 1;
-    topologyType = NORMAL_SURFACE;
+    topologyType = SURFACE_NORMAL;
 }
 
 AlembicExporter::~AlembicExporter()

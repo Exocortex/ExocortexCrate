@@ -23,7 +23,7 @@ void AlembicImport_FillInPolyMesh(alembic_fillmesh_options &options)
 
 void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
 {
-	float masterScaleUnitMeters = (float)GetMasterScale(UNITS_METERS);
+   float masterScaleUnitMeters = (float)GetMasterScale(UNITS_METERS);
 
    Alembic::AbcGeom::IPolyMesh objMesh;
    Alembic::AbcGeom::ISubD objSubD;
@@ -275,36 +275,6 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
 		else {
 			ESS_LOG_WARNING("Should not get here." );
 		}
-
-		/*for (int i = 0; i < numFaces; ++i)
-        {
-            int degree = meshFaceCount->get()[i];
-            if (options.pPolyObj != NULL)
-            {
-                MNFace *pFace = options.pPolyObj->GetMesh().F(i);
-                pFace->SetDeg(degree);
-                pFace->material = 1;
-
-                for (int j = degree - 1; j >= 0; --j)
-                {
-                    pFace->vtx[j] = meshFaceIndices->get()[offset];
-                    ++offset;
-                }
-            }
-            if (options.pTriObj != NULL && degree == 3)
-            {
-                // three vertex indices of a triangle
-                int v2 =  meshFaceIndices->get()[i*3];
-                int v1 =  meshFaceIndices->get()[i*3+1];
-                int v0 =  meshFaceIndices->get()[i*3+2];
-
-                // vertex positions
-                Face &face = options.pMesh->faces[i];
-                face.setMatID(1);
-                face.setEdgeVisFlags(1, 1, 1);
-                face.setVerts(v0, v1, v2);
-            }
-        }*/
    }
 
    if ( ( options.nDataFillFlags & ALEMBIC_DATAFILL_NORMALS ) && objMesh.valid() )
@@ -540,6 +510,47 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
        }
    }
 
+   if ( options.nDataFillFlags & ALEMBIC_DATAFILL_FACESETS )
+   {
+       std::vector<std::string> faceSetNames;
+       if(objMesh.valid())
+           objMesh.getSchema().getFaceSetNames(faceSetNames);
+       else
+           objSubD.getSchema().getFaceSetNames(faceSetNames);
+
+       for(size_t j=0;j<faceSetNames.size();j++)
+       {
+           Alembic::AbcGeom::IFaceSetSchema faceSet;
+           if(objMesh.valid())
+               faceSet = objMesh.getSchema().getFaceSet(faceSetNames[j]).getSchema();
+           else
+               faceSet = objSubD.getSchema().getFaceSet(faceSetNames[j]).getSchema();
+
+           // Material Ids:
+           if (faceSetNames[j].find("MaterialId ", 0, 11) != faceSetNames[j].npos)
+           {
+               std::string strMatId = faceSetNames[j].substr(11);
+               int nMatId = atoi(strMatId.c_str());
+
+               Alembic::AbcGeom::IFaceSetSchema::Sample faceSetSample = faceSet.getValue();
+               Alembic::Abc::Int32ArraySamplePtr faces = faceSetSample.getFaces();
+        
+               for(size_t k=0;k<faces->size();k++)
+               {
+                   int faceId = faces->get()[k];
+                   if (options.pMNMesh != NULL && faceId < options.pMNMesh->numf)
+                   {
+                       options.pMNMesh->f[faceId].material = nMatId;
+                   }
+                   else if (options.pMesh != NULL && faceId < options.pMesh->getNumFaces())
+                   {
+                       options.pMesh->faces[faceId].setMatID(nMatId);
+                   }
+               }
+           }
+       }
+   }
+
    if (options.pMNMesh != NULL)
    {
 	   if ( options.nDataFillFlags & ALEMBIC_DATAFILL_FACELIST ) {
@@ -607,8 +618,8 @@ int AlembicImport_PolyMesh(const std::string &path, const std::string &identifie
     dataFillOptions.nDataFillFlags |= options.importNormals ? ALEMBIC_DATAFILL_NORMALS : 0;
     dataFillOptions.nDataFillFlags |= options.importUVs ? ALEMBIC_DATAFILL_UVS : 0;
     dataFillOptions.nDataFillFlags |= options.importBboxes ? ALEMBIC_DATAFILL_BOUNDINGBOX : 0;
-    dataFillOptions.nDataFillFlags |= options.importClusters ? ALEMBIC_DATAFILL_FACESETS : 0;
-
+    dataFillOptions.nDataFillFlags |= options.importMaterialIds ? ALEMBIC_DATAFILL_FACESETS : 0;
+    
     // Create the poly or tri object and place it in the scene
     // Need to use the attach to existing import flag here 
     if (!Alembic::AbcGeom::IPolyMesh::matches(iObj.getMetaData()))

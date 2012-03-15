@@ -438,35 +438,47 @@ bool AlembicPolyMesh::Save(double time)
       }
 
       // sweet, now let's have a look at face sets (really only for first sample)
-      /*
-	  if(GetJob()->GetOption(L"exportFaceSets") && mNumSamples == 0)
+      // for 3DS Max, we are mapping this to the material ids
+	  if(GetCurrentJob()->GetOption("exportMaterialIds") && mNumSamples == 0)
       {
-         for(LONG i=0;i<clusters.GetCount();i++)
-         {
-            Cluster cluster(clusters[i]);
-            if(!cluster.GetType().IsEqualNoCase(L"poly"))
-               continue;
+          if (polyObj != NULL || triObj != NULL)
+          {
+              MNMesh &mesh = polyObj->GetMesh();
+              facesetmap_it it;
+              int numFaces = polyObj ? polyObj->GetMesh().numf : triObj->GetMesh().getNumFaces();
 
-            CLongArray elements = cluster.GetElements().GetArray();
-            if(elements.GetCount() == 0)
-               continue;
+              // Find the material faceset.  If we find it, we add it to the face, otherwise
+              // we create a new faceset list
+              for (int i = 0; i < numFaces; i += 1)
+              {
+                  int matId = polyObj ? polyObj->GetMesh().f[i].material : triObj->GetMesh().faces[i].getMatID();
+                  it = mFaceSetsMap.find(matId);
 
-            std::string name(cluster.GetName().GetAsciiString());
+                  if (it == mFaceSetsMap.end())
+                  {
+                      facesetmap_ret_pair ret = mFaceSetsMap.insert(facesetmap_insert_pair(matId, std::vector<int32_t>()));
+                      it = ret.first;
+                  }
 
-            mFaceSetsVec.push_back(std::vector<int32_t>());
-            std::vector<int32_t> & faceSetVec = mFaceSetsVec.back();
-            for(LONG j=0;j<elements.GetCount();j++)
-               faceSetVec.push_back(elements[j]);
+                  it->second.push_back(i);
+              }
 
-            if(faceSetVec.size() > 0)
-            {
-               Alembic::AbcGeom::OFaceSet faces = mMeshSchema.createFaceSet(name);
-               Alembic::AbcGeom::OFaceSetSchema::Sample faceSetSample(Alembic::Abc::Int32ArraySample(&faceSetVec.front(),faceSetVec.size()));
-               faces.getSchema().set(faceSetSample);
-            }
-         }
+
+              for ( it=mFaceSetsMap.begin(); it != mFaceSetsMap.end(); it++ )
+              {
+                  std::string name;
+                  std::stringstream convert;
+                  convert << it->first;
+                  name = "MaterialId " + convert.str();
+                  std::vector<int32_t> & faceSetVec = it->second;
+
+                  Alembic::AbcGeom::OFaceSet faceSet = mMeshSchema.createFaceSet(name);
+                  Alembic::AbcGeom::OFaceSetSchema::Sample faceSetSample(Alembic::Abc::Int32ArraySample(&faceSetVec.front(),faceSetVec.size()));
+                  faceSet.getSchema().set(faceSetSample);
+
+              }
+          }
       }
-	  */
 
       // save the sample
       mMeshSchema.set(mMeshSample);
