@@ -17,7 +17,7 @@ enum SplineExportType
     SplineExport_Hair,
     SplineExport_PointCloud,
     SplineExport_None
-};
+}; 
 
 AlembicCurves::AlembicCurves(const SceneEntry &in_Ref, AlembicWriteJob * in_Job)
 : AlembicObject(in_Ref, in_Job)

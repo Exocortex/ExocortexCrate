@@ -33,32 +33,65 @@ bool isAlembicMeshValid( Alembic::AbcGeom::IObject *pIObj ) {
 	return true;
 }
 
-bool isAlembicMeshNormals( Alembic::AbcGeom::IObject *pIObj ) {
+bool isAlembicMeshNormals( Alembic::AbcGeom::IObject *pIObj, bool& isConstant ) {
 	Alembic::AbcGeom::IPolyMesh objMesh;
 	Alembic::AbcGeom::ISubD objSubD;
 
 	if(Alembic::AbcGeom::IPolyMesh::matches((*pIObj).getMetaData())) {
 		objMesh = Alembic::AbcGeom::IPolyMesh(*pIObj,Alembic::Abc::kWrapExisting);
-       return objMesh.getSchema().getNormalsParam().valid();
+       if( objMesh.getSchema().getNormalsParam().valid() ) {
+			isConstant = objMesh.getSchema().getNormalsParam().isConstant();
+			return true;
+		}
 	}
 	else {
 		objSubD = Alembic::AbcGeom::ISubD(*pIObj,Alembic::Abc::kWrapExisting);
-		return false;
 	}
+
+	isConstant = true;
+	return false;
 }
 
-bool isAlembicMeshUVWs( Alembic::AbcGeom::IObject *pIObj ) {
+
+bool isAlembicMeshPositions( Alembic::AbcGeom::IObject *pIObj, bool& isConstant ) {
 	Alembic::AbcGeom::IPolyMesh objMesh;
 	Alembic::AbcGeom::ISubD objSubD;
 
 	if(Alembic::AbcGeom::IPolyMesh::matches((*pIObj).getMetaData())) {
 		objMesh = Alembic::AbcGeom::IPolyMesh(*pIObj,Alembic::Abc::kWrapExisting);
-		return  objMesh.getSchema().getUVsParam().valid();
+		isConstant = objMesh.getSchema().getPositionsProperty().isConstant();
+		return true;
 	}
 	else {
 		objSubD = Alembic::AbcGeom::ISubD(*pIObj,Alembic::Abc::kWrapExisting);
-		return  objSubD.getSchema().getUVsParam().valid();
+		isConstant = objSubD.getSchema().getPositionsProperty().isConstant();
+		return true;
 	}
+	isConstant = true;
+	return false;
+}
+
+bool isAlembicMeshUVWs( Alembic::AbcGeom::IObject *pIObj, bool& isConstant ) {
+	Alembic::AbcGeom::IPolyMesh objMesh;
+	Alembic::AbcGeom::ISubD objSubD;
+
+	if(Alembic::AbcGeom::IPolyMesh::matches((*pIObj).getMetaData())) {
+		objMesh = Alembic::AbcGeom::IPolyMesh(*pIObj,Alembic::Abc::kWrapExisting);
+		if( objMesh.getSchema().getUVsParam().valid() ) {
+			isConstant = objMesh.getSchema().getUVsParam().isConstant();
+			return true;
+		}
+	}
+	else {
+		objSubD = Alembic::AbcGeom::ISubD(*pIObj,Alembic::Abc::kWrapExisting);
+		if( objSubD.getSchema().getUVsParam().valid() ) {
+			isConstant = objSubD.getSchema().getUVsParam().isConstant();
+			return true;
+		}
+	}
+	isConstant = true;
+
+	return false;
 }
 
 bool isAlembicMeshTopoDynamic( Alembic::AbcGeom::IObject *pIObj ) {
@@ -365,7 +398,7 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
 
        if(meshNormalsParam.valid())
        {
-           Alembic::Abc::N3fArraySamplePtr meshNormalsFloor = meshNormalsParam.getExpandedValue(sampleInfo.floorIndex).getVals();
+		   Alembic::Abc::N3fArraySamplePtr meshNormalsFloor = meshNormalsParam.getExpandedValue(sampleInfo.floorIndex).getVals();
            std::vector<Point3> normalsToSet;
            normalsToSet.reserve(meshNormalsFloor->size());
            Alembic::Abc::N3fArraySamplePtr meshNormalsCeil = meshNormalsParam.getExpandedValue(sampleInfo.ceilIndex).getVals();
@@ -764,6 +797,8 @@ int AlembicImport_PolyMesh(const std::string &path, const std::string &identifie
 
 	bool isDynamicTopo = isAlembicMeshTopoDynamic( &iObj );
 
+	ESS_LOG_INFO( "Node: " << node->GetName() );
+	ESS_LOG_INFO( "isDynamicTopo: " << isDynamicTopo );
 	{
 		// Create the polymesh modifier
 		Modifier *pModifier = static_cast<Modifier*>
@@ -779,14 +814,17 @@ int AlembicImport_PolyMesh(const std::string &path, const std::string &identifie
 
 		if( isDynamicTopo ) {
 			char szBuffer[10000];
-			sprintf_s( szBuffer, 10000, "select $%s\n$.modifiers[%i].time.controller = float_expression()\n$.modifiers[%i].time.controller.setExpression \"S\"", node->GetName(), modifierIndex, modifierIndex );
+			sprintf_s( szBuffer, 10000, "select $%s\n$.modifiers[#Alembic_Mesh_Topology].time.controller = float_expression()\n$.modifiers[#Alembic_Mesh_Topology].time.controller.setExpression \"S\"", node->GetName() );
+			ESS_LOG_INFO( "MaxScript: " << szBuffer );
 			ExecuteMAXScriptScript( szBuffer );
 		}
 	 
 		modifierIndex ++;
 	}
-	if( ( ! isDynamicTopo ) && isAlembicMeshUVWs( &iObj ) ) {
-		// Create the polymesh modifier
+	bool isUVWContant = true;
+	if( ( ! isDynamicTopo ) && isAlembicMeshUVWs( &iObj, isUVWContant ) ) {
+		ESS_LOG_INFO( "isUVWContant: " << isUVWContant );
+	// Create the polymesh modifier
 		Modifier *pModifier = static_cast<Modifier*>
 			(GetCOREInterface12()->CreateInstance(OSM_CLASS_ID, ALEMBIC_MESH_UVW_MODIFIER_CLASSID));
 
@@ -797,10 +835,18 @@ int AlembicImport_PolyMesh(const std::string &path, const std::string &identifie
 	  
 		// Add the modifier to the node
 		GetCOREInterface12()->AddModifier(*node, *pModifier);
+		if( ! isUVWContant ) {
+			char szBuffer[10000];
+			sprintf_s( szBuffer, 10000, "select $%s\n$.modifiers[#Alembic_Mesh_UVW].time.controller = float_expression()\n$.modifiers[#Alembic_Mesh_UVW].time.controller.setExpression \"S\"", node->GetName() );
+			ESS_LOG_INFO( "MaxScript: " << szBuffer );
+			ExecuteMAXScriptScript( szBuffer );
+		}
 
 		modifierIndex ++;
 	}
-	if( ! isDynamicTopo ) {
+	bool isGeomContant = true;
+	if( ( ! isDynamicTopo ) && isAlembicMeshPositions( &iObj, isGeomContant ) ) {
+		ESS_LOG_INFO( "isGeomContant: " << isGeomContant );
 		// Create the polymesh modifier
 		Modifier *pModifier = static_cast<Modifier*>
 			(GetCOREInterface12()->CreateInstance(OSM_CLASS_ID, ALEMBIC_MESH_GEOM_MODIFIER_CLASSID));
@@ -814,15 +860,18 @@ int AlembicImport_PolyMesh(const std::string &path, const std::string &identifie
 		// Add the modifier to the node
 		GetCOREInterface12()->AddModifier(*node, *pModifier);
 
-		/*if( isDynamicTopo ) {
+		if( ! isGeomContant ) {
 			char szBuffer[10000];
-			sprintf_s( szBuffer, 10000, "select $%s\n$.modifiers[%i].time.controller = float_expression()\n$.modifiers[%i].time.controller.setExpression \"S\"", node->GetName(), modifierIndex, , modifierIndex );
+			sprintf_s( szBuffer, 10000, "select $%s\n$.modifiers[#Alembic_Mesh_Geometry].time.controller = float_expression()\n$.modifiers[#Alembic_Mesh_Geometry].time.controller.setExpression \"S\"", node->GetName() );
+			ESS_LOG_INFO( "MaxScript: " << szBuffer );
 			ExecuteMAXScriptScript( szBuffer );
-		}*/
+		}
 
 		modifierIndex ++;
 	}
-	if( ( ! isDynamicTopo ) && isAlembicMeshNormals( &iObj ) ) {
+	bool isNormalsContant = true;
+	if( ( ! isDynamicTopo ) && isAlembicMeshNormals( &iObj, isNormalsContant ) ) {
+		ESS_LOG_INFO( "isNormalsContant: " << isNormalsContant );
 		// Create the polymesh modifier
 		Modifier *pModifier = static_cast<Modifier*>
 			(GetCOREInterface12()->CreateInstance(OSM_CLASS_ID, ALEMBIC_MESH_NORMALS_MODIFIER_CLASSID));
@@ -834,6 +883,13 @@ int AlembicImport_PolyMesh(const std::string &path, const std::string &identifie
 	
 		// Add the modifier to the node
 		GetCOREInterface12()->AddModifier(*node, *pModifier);
+
+		if( ! isNormalsContant ) {
+			char szBuffer[10000];
+			sprintf_s( szBuffer, 10000, "select $%s\n$.modifiers[#Alembic_Mesh_Normals].time.controller = float_expression()\n$.modifiers[#Alembic_Mesh_Normals].time.controller.setExpression \"S\"", node->GetName() );
+			ESS_LOG_INFO( "MaxScript: " << szBuffer );
+			ExecuteMAXScriptScript( szBuffer );
+		}
 
 		modifierIndex ++;
 	}
