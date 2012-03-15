@@ -763,6 +763,19 @@ int AlembicImport_PolyMesh(const std::string &path, const std::string &identifie
 		// Add the modifier to the node
 		GetCOREInterface12()->AddModifier(*node, *pModifier);
 	}
+	if( ( ! isDynamicTopo ) && isAlembicMeshUVWs( &iObj ) ) {
+		// Create the polymesh modifier
+		Modifier *pModifier = static_cast<Modifier*>
+			(GetCOREInterface12()->CreateInstance(OSM_CLASS_ID, ALEMBIC_MESH_UVW_MODIFIER_CLASSID));
+
+		// Set the alembic id
+		pModifier->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pModifier, 0, "path" ), zero, path.c_str());
+		pModifier->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pModifier, 0, "identifier" ), zero, identifier.c_str() );
+		pModifier->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pModifier, 0, "muted" ), zero, (BOOL) 0 );
+	  
+		// Add the modifier to the node
+		GetCOREInterface12()->AddModifier(*node, *pModifier);
+	}
 	if( ! isDynamicTopo ) {
 		// Create the polymesh modifier
 		Modifier *pModifier = static_cast<Modifier*>
@@ -774,19 +787,6 @@ int AlembicImport_PolyMesh(const std::string &path, const std::string &identifie
 		pModifier->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pModifier, 0, "geoAlpha" ), zero, 1.0f );
 		pModifier->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pModifier, 0, "muted" ), zero, (BOOL) 0 );
 	
-		// Add the modifier to the node
-		GetCOREInterface12()->AddModifier(*node, *pModifier);
-	}
-	if( ( ! isDynamicTopo ) && isAlembicMeshUVWs( &iObj ) ) {
-		// Create the polymesh modifier
-		Modifier *pModifier = static_cast<Modifier*>
-			(GetCOREInterface12()->CreateInstance(OSM_CLASS_ID, ALEMBIC_MESH_UVW_MODIFIER_CLASSID));
-
-		// Set the alembic id
-		pModifier->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pModifier, 0, "path" ), zero, path.c_str());
-		pModifier->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pModifier, 0, "identifier" ), zero, identifier.c_str() );
-		pModifier->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pModifier, 0, "muted" ), zero, (BOOL) 0 );
-	  
 		// Add the modifier to the node
 		GetCOREInterface12()->AddModifier(*node, *pModifier);
 	}
