@@ -160,6 +160,11 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
           }
 	   }
 
+	   if( options.fVertexAlpha != 1.0f ) {
+		   for( int i = 0; i < vArray.size(); i ++ ) {
+			   vArray[i] *= options.fVertexAlpha;
+		   }
+	   }
 	 
 	   if (options.pMNMesh != NULL)
 	   {
@@ -651,36 +656,38 @@ int AlembicImport_PolyMesh(const std::string &path, const std::string &identifie
 		return alembic_failure;
     }
 
-	TimeValue now =  GetCOREInterface12()->GetTime();
+	//TimeValue now =  GetCOREInterface12()->GetTime();
 
+	TimeValue zero( 0 );
 	{
 		// Create the polymesh modifier
 		Modifier *pTopoModifier = static_cast<Modifier*>
 			(GetCOREInterface12()->CreateInstance(OSM_CLASS_ID, ALEMBIC_MESH_MODIFIER_CLASSID));
 
 		// Set the alembic id
-		pTopoModifier->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pTopoModifier, 0, "path" ), now, path.c_str());
-		pTopoModifier->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pTopoModifier, 0, "identifier" ), now , identifier.c_str() );
-		pTopoModifier->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pTopoModifier, 0, "topology" ), now, (BOOL) 1 );
-		pTopoModifier->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pTopoModifier, 0, "geometry" ), now, (BOOL) 1 );
-		pTopoModifier->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pTopoModifier, 0, "normals" ), now, (BOOL) 1 );
-		pTopoModifier->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pTopoModifier, 0, "uvs" ), now, (BOOL) 1 );
+		pTopoModifier->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pTopoModifier, 0, "path" ), zero, path.c_str());
+		pTopoModifier->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pTopoModifier, 0, "identifier" ), zero, identifier.c_str() );
+		pTopoModifier->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pTopoModifier, 0, "topology" ), zero, (BOOL) 1 );
+		pTopoModifier->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pTopoModifier, 0, "geometry" ), zero, (BOOL) 0 );
+		pTopoModifier->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pTopoModifier, 0, "normals" ), zero, (BOOL) 0 );
+		pTopoModifier->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pTopoModifier, 0, "uvs" ), zero, (BOOL) 0 );
 		
 		// Add the modifier to the node
 		GetCOREInterface12()->AddModifier(*node, *pTopoModifier);
 	}
-	/*{
+	{
 		// Create the polymesh modifier
 		Modifier *pGeomModifier = static_cast<Modifier*>
 			(GetCOREInterface12()->CreateInstance(OSM_CLASS_ID, ALEMBIC_MESH_MODIFIER_CLASSID));
 
 		// Set the alembic id
-		pGeomModifier->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pGeomModifier, 0, "path" ), now, path.c_str());
-		pGeomModifier->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pGeomModifier, 0, "identifier" ), now , identifier.c_str() );
-		pGeomModifier->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pGeomModifier, 0, "topology" ), now, (BOOL) 0 );
-		pGeomModifier->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pGeomModifier, 0, "geometry" ), now, (BOOL) 1 );
-		pGeomModifier->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pGeomModifier, 0, "normals" ), now, (BOOL) 0 );
-		pGeomModifier->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pGeomModifier, 0, "uvs" ), now, (BOOL) 0 );
+		pGeomModifier->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pGeomModifier, 0, "path" ), zero, path.c_str());
+		pGeomModifier->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pGeomModifier, 0, "identifier" ), zero, identifier.c_str() );
+		pGeomModifier->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pGeomModifier, 0, "topology" ), zero, (BOOL) 0 );
+		pGeomModifier->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pGeomModifier, 0, "geometry" ), zero, (BOOL) 1 );
+		pGeomModifier->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pGeomModifier, 0, "geoAlpha" ), zero, 1.0f );
+		pGeomModifier->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pGeomModifier, 0, "normals" ), zero, (BOOL) 0 );
+		pGeomModifier->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pGeomModifier, 0, "uvs" ), zero, (BOOL) 0 );
 		
 		// Add the modifier to the node
 		GetCOREInterface12()->AddModifier(*node, *pGeomModifier);
@@ -691,13 +698,13 @@ int AlembicImport_PolyMesh(const std::string &path, const std::string &identifie
 			(GetCOREInterface12()->CreateInstance(OSM_CLASS_ID, ALEMBIC_MESH_MODIFIER_CLASSID));
 
 		// Set the alembic id
-		pNormalsModifier->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pNormalsModifier, 0, "path" ), now, path.c_str());
-		pNormalsModifier->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pNormalsModifier, 0, "identifier" ), now , identifier.c_str() );
-		pNormalsModifier->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pNormalsModifier, 0, "topology" ), now, (BOOL) 0 );
-		pNormalsModifier->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pNormalsModifier, 0, "geometry" ), now, (BOOL) 0 );
-		pNormalsModifier->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pNormalsModifier, 0, "normals" ), now, (BOOL) 1 );
-		pNormalsModifier->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pNormalsModifier, 0, "uvs" ), now, (BOOL) 0 );
-		
+		pNormalsModifier->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pNormalsModifier, 0, "path" ), zero, path.c_str());
+		pNormalsModifier->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pNormalsModifier, 0, "identifier" ), zero, identifier.c_str() );
+		pNormalsModifier->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pNormalsModifier, 0, "topology" ), zero, (BOOL) 0 );
+		pNormalsModifier->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pNormalsModifier, 0, "geometry" ), zero, (BOOL) 0 );
+		pNormalsModifier->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pNormalsModifier, 0, "normals" ), zero, (BOOL) 1 );
+		pNormalsModifier->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pNormalsModifier, 0, "uvs" ), zero, (BOOL) 0 );
+		  
 		// Add the modifier to the node
 		GetCOREInterface12()->AddModifier(*node, *pNormalsModifier);
 	}
@@ -707,16 +714,16 @@ int AlembicImport_PolyMesh(const std::string &path, const std::string &identifie
 			(GetCOREInterface12()->CreateInstance(OSM_CLASS_ID, ALEMBIC_MESH_MODIFIER_CLASSID));
 
 		// Set the alembic id
-		pUvsModifier->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pUvsModifier, 0, "path" ), now, path.c_str());
-		pUvsModifier->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pUvsModifier, 0, "identifier" ), now , identifier.c_str() );
-		pUvsModifier->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pUvsModifier, 0, "topology" ), now, (BOOL) 0 );
-		pUvsModifier->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pUvsModifier, 0, "geometry" ), now, (BOOL) 0 );
-		pUvsModifier->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pUvsModifier, 0, "normals" ), now, (BOOL) 0 );
-		pUvsModifier->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pUvsModifier, 0, "uvs" ), now, (BOOL) 1 );
+		pUvsModifier->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pUvsModifier, 0, "path" ), zero, path.c_str());
+		pUvsModifier->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pUvsModifier, 0, "identifier" ), zero, identifier.c_str() );
+		pUvsModifier->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pUvsModifier, 0, "topology" ), zero, (BOOL) 0 );
+		pUvsModifier->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pUvsModifier, 0, "geometry" ), zero, (BOOL) 0 );
+		pUvsModifier->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pUvsModifier, 0, "normals" ), zero, (BOOL) 0 );
+		pUvsModifier->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pUvsModifier, 0, "uvs" ), zero, (BOOL) 1 );
 		
 		// Add the modifier to the node
 		GetCOREInterface12()->AddModifier(*node, *pUvsModifier);
-	}*/
+	}
     // Add the new inode to our current scene list
     SceneEntry *pEntry = options.sceneEnumProc.Append(node, newObject, OBTYPE_MESH, &std::string(iObj.getFullName())); 
     options.currentSceneList.Append(pEntry);

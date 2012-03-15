@@ -60,6 +60,12 @@ static ParamBlockDesc2 AlembicMeshBaseModifierParams(
 		p_ui,            TYPE_SINGLECHEKBOX,  IDC_GEOMETRY_CHECKBOX,
 		end,
 
+	AlembicMeshBaseModifier::ID_GEOALPHA, _T("geoAlpha"), TYPE_FLOAT, P_ANIMATABLE, IDS_GEOALPHA,
+		p_default,       1.0f,
+		p_range,         0.0f, 1.0f,
+		p_ui,            TYPE_SPINNER,       EDITTYPE_FLOAT, IDC_GEOALPHA_EDIT,    IDC_GEOALPHA_SPIN, 0.1f,
+		end,
+
 	AlembicMeshBaseModifier::ID_UVS, _T("uvs"), TYPE_BOOL, 0, IDS_UVS,
 		p_default,       TRUE,
 		p_ui,            TYPE_SINGLECHEKBOX,  IDC_UVS_CHECKBOX,
@@ -119,6 +125,9 @@ void AlembicMeshBaseModifier::ModifyObject (TimeValue t, ModContext &mc, ObjectS
 	BOOL bGeometry;
 	this->pblock->GetValue( AlembicMeshBaseModifier::ID_GEOMETRY, t, bGeometry, interval);
 
+	float fGeoAlpha;
+	this->pblock->GetValue( AlembicMeshBaseModifier::ID_GEOALPHA, t, fGeoAlpha, interval);
+
 	BOOL bNormals;
 	this->pblock->GetValue( AlembicMeshBaseModifier::ID_NORMALS, t, bNormals, interval);
 
@@ -128,8 +137,6 @@ void AlembicMeshBaseModifier::ModifyObject (TimeValue t, ModContext &mc, ObjectS
 	BOOL bMuted;
 	this->pblock->GetValue( AlembicMeshBaseModifier::ID_MUTED, t, bMuted, interval);
 	
-	ESS_LOG_INFO( "a Interval Start: " << interval.Start() << " End: " << interval.End() );
-
 	ESS_LOG_INFO( "AlembicMeshBaseModifier::ModifyObject strPath: " << strPath << " strIdentifier: " << strIdentifier << " fTime: " << fTime << 
 		" bTopology: " << bTopology << " bGeometry: " << bGeometry << " bNormals: " << bNormals << " bUVs: " << bUVs << " bMuted: " << bMuted );
 
@@ -168,6 +175,7 @@ void AlembicMeshBaseModifier::ModifyObject (TimeValue t, ModContext &mc, ObjectS
    options.pIObj = &iObj;
    options.dTicks = GetTimeValueFromSeconds( fTime );
    options.nDataFillFlags = 0;
+   options.fVertexAlpha = fGeoAlpha;
     if( bTopology ) {
 	   options.nDataFillFlags |= ALEMBIC_DATAFILL_FACELIST;
 		options.nDataFillFlags |= ALEMBIC_DATAFILL_FACESETS;
@@ -216,23 +224,18 @@ void AlembicMeshBaseModifier::ModifyObject (TimeValue t, ModContext &mc, ObjectS
 		ESS_LOG_ERROR( "Error reading mesh from Alembic data stream.  Path: " << strPath << " identifier: " << strIdentifier << " reason: " << exp.what() );
 		return;
    }
-	ESS_LOG_INFO( "b Interval Start: " << interval.Start() << " End: " << interval.End() );
 
    // update the validity channel
     if( bTopology ) {
 		os->obj->UpdateValidity(TOPO_CHAN_NUM, interval);
 		os->obj->UpdateValidity(GEOM_CHAN_NUM, interval);
 	}
-	ESS_LOG_INFO( "c Interval Start: " << interval.Start() << " End: " << interval.End() );
     if( bGeometry ) {
 		os->obj->UpdateValidity(GEOM_CHAN_NUM, interval);
 	}
-	ESS_LOG_INFO( "d Interval Start: " << interval.Start() << " End: " << interval.End() );
     if( bUVs ) {
 		os->obj->UpdateValidity(TEXMAP_CHAN_NUM, interval);
    }
-
-	ESS_LOG_INFO( "e Interval Start: " << interval.Start() << " End: " << interval.End() );
 
    	ESS_CPP_EXCEPTION_REPORTING_END
 }

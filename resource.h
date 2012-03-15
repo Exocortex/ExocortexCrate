@@ -25,6 +25,7 @@
 #define IDS_MUTED                       112
 #define IDS_TIME                        113
 #define IDS_ALEMBIC                     114
+#define IDS_GEOALPHA                    115
 #define IDD_GSPHERE1                    179
 #define IDD_GSPHERE2                    180
 #define IDD_GSPHERE3                    181
@@ -79,6 +80,8 @@
 #define IDC_GEOMETRY_CHECKBOX           1023
 #define IDC_NORMALS_CHECKBOX2           1024
 #define IDC_NORMALS_CHECKBOX            1024
+#define IDC_GEOALPHA_SPIN               1027
+#define IDC_GEOALPHA_EDIT               1028
 #define IDC_LIMIT_SIZE                  1276
 #define IDC_KEEP_CONVEX                 1277
 #define IDC_TI_POSX                     3019
