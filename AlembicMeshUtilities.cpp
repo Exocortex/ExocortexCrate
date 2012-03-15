@@ -210,10 +210,20 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
 			   if (options.pMNMesh != NULL)
 			   {
 				   options.pMNMesh->setNumVerts(numVerts);
+					MNVert* pMeshVerties = options.pMNMesh->V(0);
+				   for(int i=0;i<numVerts;i++)
+				   {
+					   pMeshVerties[i].p = Point3(0,0,0);
+				   }
 			   }
 			   if (options.pMesh != NULL)
 			   {
 				   options.pMesh->setNumVerts(numVerts);
+				   Point3 *pVerts = options.pMesh->verts;
+				   for(int i=0;i<numVerts;i++)
+				   {
+					   pVerts[i] = Point3(0,0,0);
+				   }
 			   }
 		   } 
    }
@@ -287,7 +297,7 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
 
 		   for(int i=0;i<vArray.size();i++)
 		   {
-			   pMeshVerties[i].p = ConvertAlembicPointToMaxPoint(vArray[i], masterScaleUnitMeters );
+			   pMeshVerties[i].p += ConvertAlembicPointToMaxPoint(vArray[i], masterScaleUnitMeters );
 		   }
 	   }
 	   else if (options.pMesh != NULL)
@@ -295,7 +305,7 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
 		   Point3 *pVerts = options.pMesh->verts;
 		   for(int i=0;i<vArray.size();i++)
 		   {
-			   pVerts[i] = ConvertAlembicPointToMaxPoint(vArray[i], masterScaleUnitMeters );
+			   pVerts[i] += ConvertAlembicPointToMaxPoint(vArray[i], masterScaleUnitMeters );
 		   }
 	   }
 	   else {

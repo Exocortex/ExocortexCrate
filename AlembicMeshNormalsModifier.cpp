@@ -50,11 +50,11 @@ static ParamBlockDesc2 AlembicMeshNormalsModifierParams(
 		p_ui,            TYPE_SPINNER,       EDITTYPE_FLOAT, IDC_TIME_EDIT,    IDC_TIME_SPIN,  0.01f,
 		end,
 
-	AlembicMeshNormalsModifier::ID_GEOALPHA, _T("geoAlpha"), TYPE_FLOAT, P_ANIMATABLE, IDS_GEOALPHA,
+	/*AlembicMeshNormalsModifier::ID_GEOALPHA, _T("geoAlpha"), TYPE_FLOAT, P_ANIMATABLE, IDS_GEOALPHA,
 		p_default,       1.0f,
 		p_range,         0.0f, 1.0f,
 		p_ui,            TYPE_SPINNER,       EDITTYPE_FLOAT, IDC_GEOALPHA_EDIT,    IDC_GEOALPHA_SPIN, 0.1f,
-		end,
+		end,*/
 
 	AlembicMeshNormalsModifier::ID_MUTED, _T("muted"), TYPE_BOOL, P_ANIMATABLE, IDS_MUTED,
 		p_default,       TRUE,
@@ -102,8 +102,8 @@ void AlembicMeshNormalsModifier::ModifyObject (TimeValue t, ModContext &mc, Obje
 	BOOL bTopology = false;
 	BOOL bGeometry = false;
 
-	float fGeoAlpha;
-	this->pblock->GetValue( AlembicMeshNormalsModifier::ID_GEOALPHA, t, fGeoAlpha, interval);
+	float fGeoAlpha = 1.0f;
+	//this->pblock->GetValue( AlembicMeshNormalsModifier::ID_GEOALPHA, t, fGeoAlpha, interval);
 
 	BOOL bNormals = true;
 	BOOL bUVs = false;
