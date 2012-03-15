@@ -222,9 +222,6 @@ void AlembicXFormCtrl::GetValueLocalTime(TimeValue t, void *ptr, Interval &valid
 AlembicXFormCtrl::AlembicXFormCtrl()
 {
     pblock = NULL;
-    mhPanel = NULL;
-    m_bIsCameraTransform = false;
-    mbSuspendPanelUpdate = false;
     sAlembicXFormCtrlClassDesc.MakeAutoParamBlocks(this);
 }
 
@@ -273,13 +270,14 @@ void AlembicXFormCtrl::Extrapolate(Interval range, TimeValue t, void *val, Inter
 {
 }
 
+/*
 void AlembicXFormCtrl::SetAlembicId(const std::string &file, const std::string &identifier, TimeValue t)
 {
     m_AlembicNodeProps.m_File = file;
     m_AlembicNodeProps.m_Identifier = identifier;
-}
+}*/
 
-/*
+
 #define LOCK_CHUNK		0x2535  //the lock value
 IOResult AlembicXFormCtrl::Save(ISave *isave)
 {
@@ -326,7 +324,7 @@ IOResult AlembicXFormCtrl::Load(ILoad *iload)
 		res = Control::Load(iload);  // handle improper Renoir Save order
 	return res;	
 }
-*/
+
 RefTargetHandle AlembicXFormCtrl::GetReference(int i)
 {
     switch (i)
