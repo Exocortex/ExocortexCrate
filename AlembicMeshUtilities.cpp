@@ -815,7 +815,7 @@ int AlembicImport_PolyMesh(const std::string &path, const std::string &identifie
 		if( isDynamicTopo ) {
 			char szBuffer[10000];
 			sprintf_s( szBuffer, 10000, "select $%s\n$.modifiers[#Alembic_Mesh_Topology].time.controller = float_expression()\n$.modifiers[#Alembic_Mesh_Topology].time.controller.setExpression \"S\"", node->GetName() );
-			ESS_LOG_INFO( "MaxScript: " << szBuffer );
+			//ESS_LOG_INFO( "MaxScript: " << szBuffer );
 			ExecuteMAXScriptScript( szBuffer );
 		}
 	 
@@ -838,7 +838,6 @@ int AlembicImport_PolyMesh(const std::string &path, const std::string &identifie
 		if( ! isUVWContant ) {
 			char szBuffer[10000];
 			sprintf_s( szBuffer, 10000, "select $%s\n$.modifiers[#Alembic_Mesh_UVW].time.controller = float_expression()\n$.modifiers[#Alembic_Mesh_UVW].time.controller.setExpression \"S\"", node->GetName() );
-			ESS_LOG_INFO( "MaxScript: " << szBuffer );
 			ExecuteMAXScriptScript( szBuffer );
 		}
 
@@ -863,7 +862,7 @@ int AlembicImport_PolyMesh(const std::string &path, const std::string &identifie
 		if( ! isGeomContant ) {
 			char szBuffer[10000];
 			sprintf_s( szBuffer, 10000, "select $%s\n$.modifiers[#Alembic_Mesh_Geometry].time.controller = float_expression()\n$.modifiers[#Alembic_Mesh_Geometry].time.controller.setExpression \"S\"", node->GetName() );
-			ESS_LOG_INFO( "MaxScript: " << szBuffer );
+			//ESS_LOG_INFO( "MaxScript: " << szBuffer );
 			ExecuteMAXScriptScript( szBuffer );
 		}
 
@@ -887,7 +886,7 @@ int AlembicImport_PolyMesh(const std::string &path, const std::string &identifie
 		if( ! isNormalsContant ) {
 			char szBuffer[10000];
 			sprintf_s( szBuffer, 10000, "select $%s\n$.modifiers[#Alembic_Mesh_Normals].time.controller = float_expression()\n$.modifiers[#Alembic_Mesh_Normals].time.controller.setExpression \"S\"", node->GetName() );
-			ESS_LOG_INFO( "MaxScript: " << szBuffer );
+			//ESS_LOG_INFO( "MaxScript: " << szBuffer );
 			ExecuteMAXScriptScript( szBuffer );
 		}
 

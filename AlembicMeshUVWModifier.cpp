@@ -82,7 +82,7 @@ void AlembicMeshUVWModifier::ModifyObject (TimeValue t, ModContext &mc, ObjectSt
 	ESS_CPP_EXCEPTION_REPORTING_START
 
 	Interval interval = FOREVER;//os->obj->ObjectValidity(t);
-	ESS_LOG_INFO( "Interval Start: " << interval.Start() << " End: " << interval.End() );
+	//ESS_LOG_INFO( "Interval Start: " << interval.Start() << " End: " << interval.End() );
 
     MCHAR const* strPath = NULL;
 	this->pblock->GetValue( AlembicMeshUVWModifier::ID_PATH, t, strPath, interval);
@@ -102,8 +102,8 @@ void AlembicMeshUVWModifier::ModifyObject (TimeValue t, ModContext &mc, ObjectSt
 	BOOL bMuted;
 	this->pblock->GetValue( AlembicMeshUVWModifier::ID_MUTED, t, bMuted, interval);
 	
-	ESS_LOG_INFO( "AlembicMeshUVWModifier::ModifyObject strPath: " << strPath << " strIdentifier: " << strIdentifier << " fTime: " << fTime << 
-		" bTopology: " << bTopology << " bGeometry: " << bGeometry << " bNormals: " << bNormals << " bUVs: " << bUVs << " bMuted: " << bMuted );
+	//ESS_LOG_INFO( "AlembicMeshUVWModifier::ModifyObject strPath: " << strPath << " strIdentifier: " << strIdentifier << " fTime: " << fTime << 
+	//	" bTopology: " << bTopology << " bGeometry: " << bGeometry << " bNormals: " << bNormals << " bUVs: " << bUVs << " bMuted: " << bMuted );
 
 	if( bMuted ) {
 		return;
