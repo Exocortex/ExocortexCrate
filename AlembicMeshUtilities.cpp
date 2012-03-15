@@ -12,6 +12,83 @@
 #include "AlembicNames.h"
 #include "AlembicMeshUtilities.h"
 
+bool isAlembicMeshValid( Alembic::AbcGeom::IObject *pIObj ) {
+	Alembic::AbcGeom::IPolyMesh objMesh;
+	Alembic::AbcGeom::ISubD objSubD;
+
+	if(Alembic::AbcGeom::IPolyMesh::matches((*pIObj).getMetaData())) {
+		objMesh = Alembic::AbcGeom::IPolyMesh(*pIObj,Alembic::Abc::kWrapExisting);
+	}
+	else {
+		objSubD = Alembic::AbcGeom::ISubD(*pIObj,Alembic::Abc::kWrapExisting);
+	}
+
+	if(!objMesh.valid() && !objSubD.valid()) {
+		return false;
+	}
+	return true;
+}
+
+bool isAlembicMeshNormals( Alembic::AbcGeom::IObject *pIObj ) {
+	Alembic::AbcGeom::IPolyMesh objMesh;
+	Alembic::AbcGeom::ISubD objSubD;
+
+	if(Alembic::AbcGeom::IPolyMesh::matches((*pIObj).getMetaData())) {
+		objMesh = Alembic::AbcGeom::IPolyMesh(*pIObj,Alembic::Abc::kWrapExisting);
+       return objMesh.getSchema().getNormalsParam().valid();
+	}
+	else {
+		objSubD = Alembic::AbcGeom::ISubD(*pIObj,Alembic::Abc::kWrapExisting);
+		return false;
+	}
+}
+
+bool isAlembicMeshUVWs( Alembic::AbcGeom::IObject *pIObj ) {
+	Alembic::AbcGeom::IPolyMesh objMesh;
+	Alembic::AbcGeom::ISubD objSubD;
+
+	if(Alembic::AbcGeom::IPolyMesh::matches((*pIObj).getMetaData())) {
+		objMesh = Alembic::AbcGeom::IPolyMesh(*pIObj,Alembic::Abc::kWrapExisting);
+		return  objMesh.getSchema().getUVsParam().valid();
+	}
+	else {
+		objSubD = Alembic::AbcGeom::ISubD(*pIObj,Alembic::Abc::kWrapExisting);
+		return  objSubD.getSchema().getUVsParam().valid();
+	}
+}
+
+bool isAlembicMeshTopoDynamic( Alembic::AbcGeom::IObject *pIObj ) {
+	Alembic::AbcGeom::IPolyMesh objMesh;
+	Alembic::AbcGeom::ISubD objSubD;
+
+	if(Alembic::AbcGeom::IPolyMesh::matches((*pIObj).getMetaData())) {
+		objMesh = Alembic::AbcGeom::IPolyMesh(*pIObj,Alembic::Abc::kWrapExisting);
+	}
+	else {
+		objSubD = Alembic::AbcGeom::ISubD(*pIObj,Alembic::Abc::kWrapExisting);
+	}
+
+	Alembic::AbcGeom::IPolyMeshSchema::Sample polyMeshSample;
+	Alembic::AbcGeom::ISubDSchema::Sample subDSample;
+
+	bool hasDynamicTopo = false;
+	if(objMesh.valid())
+	{
+		Alembic::Abc::IInt32ArrayProperty faceCountProp = Alembic::Abc::IInt32ArrayProperty(objMesh.getSchema(),".faceCounts");
+		if(faceCountProp.valid()) {
+			hasDynamicTopo = !faceCountProp.isConstant();
+		}
+	}
+	else
+	{
+		Alembic::Abc::IInt32ArrayProperty faceCountProp = Alembic::Abc::IInt32ArrayProperty(objSubD.getSchema(),".faceCounts");
+		if(faceCountProp.valid()) {
+			hasDynamicTopo = !faceCountProp.isConstant();
+		}
+	}  
+	return hasDynamicTopo;
+}
+
 void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options);
 
 void AlembicImport_FillInPolyMesh(alembic_fillmesh_options &options)
@@ -697,7 +774,7 @@ int AlembicImport_PolyMesh(const std::string &path, const std::string &identifie
 		// Add the modifier to the node
 		GetCOREInterface12()->AddModifier(*node, *pModifier);
 	}
-	{
+	if( isAlembicMeshUVWs( &iObj ) ) {
 		// Create the polymesh modifier
 		Modifier *pModifier = static_cast<Modifier*>
 			(GetCOREInterface12()->CreateInstance(OSM_CLASS_ID, ALEMBIC_MESH_UVW_MODIFIER_CLASSID));
@@ -710,7 +787,7 @@ int AlembicImport_PolyMesh(const std::string &path, const std::string &identifie
 		// Add the modifier to the node
 		GetCOREInterface12()->AddModifier(*node, *pModifier);
 	}
-	/*{
+	if( isAlembicMeshNormals( &iObj ) ) {
 		// Create the polymesh modifier
 		Modifier *pModifier = static_cast<Modifier*>
 			(GetCOREInterface12()->CreateInstance(OSM_CLASS_ID, ALEMBIC_MESH_NORMALS_MODIFIER_CLASSID));
@@ -722,7 +799,7 @@ int AlembicImport_PolyMesh(const std::string &path, const std::string &identifie
 	
 		// Add the modifier to the node
 		GetCOREInterface12()->AddModifier(*node, *pModifier);
-	}*/
+	}
 
     // Add the new inode to our current scene list
     SceneEntry *pEntry = options.sceneEnumProc.Append(node, newObject, OBTYPE_MESH, &std::string(iObj.getFullName())); 
