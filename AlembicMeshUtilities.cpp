@@ -615,7 +615,7 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
                    int degree = options.pMNMesh->F(i)->deg;
                    map->f[i].SetSize(degree);
 
-                   for (int j = degree-1; j >= 0; j -= 1)
+                   for (int j = 0; j < degree; j ++)
                    {
                        map->f[i].tv[j] = offset;
                        ++offset;
