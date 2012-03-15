@@ -1,4 +1,4 @@
-#include "AlembicTransformUtilities.h"
+#include "AlembicXformUtilities.h"
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // AlembicImport_FillInXForm
@@ -115,8 +115,8 @@ int AlembicImport_XForm(const std::string &file, const std::string &identifier, 
     }
 
 	// Create the xform modifier
-	AlembicXFormCtrl *pCtrl = static_cast<AlembicXFormCtrl*>
-		(GetCOREInterface()->CreateInstance(CTRL_MATRIX3_CLASS_ID, ALEMBIC_XFORM_CTRL_CLASSID));
+	AlembicXformController *pCtrl = static_cast<AlembicXformController*>
+		(GetCOREInterface()->CreateInstance(CTRL_MATRIX3_CLASS_ID, ALEMBIC_XFORM_CONTROLLER_CLASSID));
 
 	// Set the alembic id
     pCtrl->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pCtrl, 0, "path" ), xformOptions.dTicks, file.c_str());

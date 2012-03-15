@@ -1,6 +1,6 @@
 #include "Alembic.h"
 #include "AlembicDefinitions.h"
-#include "AlembicTransformBaseModifier.h"
+#include "AlembicXformBaseModifier.h"
 #include "AlembicArchiveStorage.h"
 #include "utility.h"
 #include <iparamb2.h>
@@ -10,23 +10,23 @@
 #include "AlembicXForm.h"
 #include "AlembicVisCtrl.h"
 #include "ParamBlockUtility.h"
-#include "AlembicTransformUtilities.h"
+#include "AlembicXformUtilities.h"
 
 using namespace MaxSDK::AssetManagement;
 
-IObjParam *AlembicTransformBaseModifier::ip              = NULL;
-AlembicTransformBaseModifier *AlembicTransformBaseModifier::editMod         = NULL;
+IObjParam *AlembicXformBaseModifier::ip              = NULL;
+AlembicXformBaseModifier *AlembicXformBaseModifier::editMod         = NULL;
 
-static AlembicTransformBaseModifierClassDesc AlembicTransformBaseModifierDesc;
-ClassDesc2* GetAlembicTransformBaseModifierClassDesc() {return &AlembicTransformBaseModifierDesc;}
+static AlembicXformBaseModifierClassDesc AlembicXformBaseModifierDesc;
+ClassDesc2* GetAlembicXformBaseModifierClassDesc() {return &AlembicXformBaseModifierDesc;}
 
 //--- Properties block -------------------------------
 
-static ParamBlockDesc2 AlembicTransformBaseModifierParams(
+static ParamBlockDesc2 AlembicXformBaseModifierParams(
 	0,
-	_T("AlembicTransformBaseModifier"),
+	_T("AlembicXformBaseModifier"),
 	IDS_PROPS,
-	GetAlembicTransformBaseModifierClassDesc(),
+	GetAlembicXformBaseModifierClassDesc(),
 	P_AUTO_CONSTRUCT | P_AUTO_UI,
 	0,
 
@@ -34,25 +34,25 @@ static ParamBlockDesc2 AlembicTransformBaseModifierParams(
 	IDD_EMPTY, IDS_PARAMS, 0, 0, NULL,
 
     // params
-	AlembicTransformBaseModifier::ID_PATH, _T("path"), TYPE_FILENAME, 0, IDS_PATH,
+	AlembicXformBaseModifier::ID_PATH, _T("path"), TYPE_FILENAME, 0, IDS_PATH,
 		end,
         
-	AlembicTransformBaseModifier::ID_IDENTIFIER, _T("identifier"), TYPE_STRING, 0, IDS_IDENTIFIER,
+	AlembicXformBaseModifier::ID_IDENTIFIER, _T("identifier"), TYPE_STRING, 0, IDS_IDENTIFIER,
 		end,
 
-	AlembicTransformBaseModifier::ID_CURRENTTIMEHIDDEN, _T("currentTimeHidden"), TYPE_FLOAT, 0, IDS_CURRENTTIMEHIDDEN,
+	AlembicXformBaseModifier::ID_CURRENTTIMEHIDDEN, _T("currentTimeHidden"), TYPE_FLOAT, 0, IDS_CURRENTTIMEHIDDEN,
 		end,
 
-	AlembicTransformBaseModifier::ID_TIMEOFFSET, _T("timeOffset"), TYPE_FLOAT, 0, IDS_TIMEOFFSET,
+	AlembicXformBaseModifier::ID_TIMEOFFSET, _T("timeOffset"), TYPE_FLOAT, 0, IDS_TIMEOFFSET,
 		end,
 
-	AlembicTransformBaseModifier::ID_TIMESCALE, _T("timeScale"), TYPE_FLOAT, 0, IDS_TIMESCALE,
+	AlembicXformBaseModifier::ID_TIMESCALE, _T("timeScale"), TYPE_FLOAT, 0, IDS_TIMESCALE,
 		end,
 
-	AlembicTransformBaseModifier::ID_CAMERATRANSFORM, _T("cameraTransform"), TYPE_BOOL, 0, IDS_CAMERATRANSFORM,
+	AlembicXformBaseModifier::ID_CAMERATRANSFORM, _T("cameraTransform"), TYPE_BOOL, 0, IDS_CAMERATRANSFORM,
 		end,
 
-	AlembicTransformBaseModifier::ID_MUTED, _T("muted"), TYPE_BOOL, 0, IDS_MUTED,
+	AlembicXformBaseModifier::ID_MUTED, _T("muted"), TYPE_BOOL, 0, IDS_MUTED,
 		end,
 
 	end
@@ -60,16 +60,16 @@ static ParamBlockDesc2 AlembicTransformBaseModifierParams(
 
 //--- Modifier methods -------------------------------
 
-AlembicTransformBaseModifier::AlembicTransformBaseModifier() 
+AlembicXformBaseModifier::AlembicXformBaseModifier() 
 {
     pblock = NULL;
 
-	GetAlembicTransformBaseModifierClassDesc()->MakeAutoParamBlocks(this);
+	GetAlembicXformBaseModifierClassDesc()->MakeAutoParamBlocks(this);
 }
 
-RefTargetHandle AlembicTransformBaseModifier::Clone(RemapDir& remap) 
+RefTargetHandle AlembicXformBaseModifier::Clone(RemapDir& remap) 
 {
-	AlembicTransformBaseModifier *mod = new AlembicTransformBaseModifier();
+	AlembicXformBaseModifier *mod = new AlembicXformBaseModifier();
 
     mod->ReplaceReference (0, remap.CloneRef(pblock));
 	
@@ -77,7 +77,7 @@ RefTargetHandle AlembicTransformBaseModifier::Clone(RemapDir& remap)
 	return mod;
 }
 
-Interval AlembicTransformBaseModifier::GetValidity (TimeValue t) {
+Interval AlembicXformBaseModifier::GetValidity (TimeValue t) {
 	// Interval ret = FOREVER;
 	// pblock->GetValidity (t, ret);
 
@@ -86,36 +86,36 @@ Interval AlembicTransformBaseModifier::GetValidity (TimeValue t) {
 	return ret;
 }
 
-void AlembicTransformBaseModifier::ModifyObject (TimeValue t, ModContext &mc, ObjectState *os, INode *node) 
+void AlembicXformBaseModifier::ModifyObject (TimeValue t, ModContext &mc, ObjectState *os, INode *node) 
 {
 	ESS_CPP_EXCEPTION_REPORTING_START
 
    Interval interval =os->obj->ObjectValidity(t);
 
     MCHAR const* strPath = NULL;
-	this->pblock->GetValue( AlembicTransformBaseModifier::ID_PATH, t, strPath, interval);
+	this->pblock->GetValue( AlembicXformBaseModifier::ID_PATH, t, strPath, interval);
 
 	MCHAR const* strIdentifier = NULL;
-	this->pblock->GetValue( AlembicTransformBaseModifier::ID_IDENTIFIER, t, strIdentifier, interval);
+	this->pblock->GetValue( AlembicXformBaseModifier::ID_IDENTIFIER, t, strIdentifier, interval);
  
 	float fCurrentTimeHidden;
-	this->pblock->GetValue( AlembicTransformBaseModifier::ID_CURRENTTIMEHIDDEN, t, fCurrentTimeHidden, interval);
+	this->pblock->GetValue( AlembicXformBaseModifier::ID_CURRENTTIMEHIDDEN, t, fCurrentTimeHidden, interval);
 
 	float fTimeOffset;
-	this->pblock->GetValue( AlembicTransformBaseModifier::ID_TIMEOFFSET, t, fTimeOffset, interval);
+	this->pblock->GetValue( AlembicXformBaseModifier::ID_TIMEOFFSET, t, fTimeOffset, interval);
 
 	float fTimeScale;
-	this->pblock->GetValue( AlembicTransformBaseModifier::ID_TIMESCALE, t, fTimeScale, interval); 
+	this->pblock->GetValue( AlembicXformBaseModifier::ID_TIMESCALE, t, fTimeScale, interval); 
 
 	BOOL bCameraTransform;
-	this->pblock->GetValue( AlembicTransformBaseModifier::ID_CAMERATRANSFORM, t, bCameraTransform, interval);
+	this->pblock->GetValue( AlembicXformBaseModifier::ID_CAMERATRANSFORM, t, bCameraTransform, interval);
 
 	BOOL bMuted;
-	this->pblock->GetValue( AlembicTransformBaseModifier::ID_MUTED, t, bMuted, interval);
+	this->pblock->GetValue( AlembicXformBaseModifier::ID_MUTED, t, bMuted, interval);
 
 	float dataTime = fTimeOffset + fCurrentTimeHidden * fTimeScale;
 	
-	ESS_LOG_INFO( "AlembicTransformBaseModifier::ModifyObject strPath: " << strPath << " strIdentifier: " << strIdentifier << " fCurrentTimeHidden: " << fCurrentTimeHidden << " fTimeOffset: " << fTimeOffset << " fTimeScale: " << fTimeScale << 
+	ESS_LOG_INFO( "AlembicXformBaseModifier::ModifyObject strPath: " << strPath << " strIdentifier: " << strIdentifier << " fCurrentTimeHidden: " << fCurrentTimeHidden << " fTimeOffset: " << fTimeOffset << " fTimeScale: " << fTimeScale << 
 		" bCameraTransform: " << bCameraTransform << " bMuted: " << bMuted );
 
 	if( bMuted ) {
@@ -167,7 +167,7 @@ void AlembicTransformBaseModifier::ModifyObject (TimeValue t, ModContext &mc, Ob
    	ESS_CPP_EXCEPTION_REPORTING_END
 }
 
-RefResult AlembicTransformBaseModifier::NotifyRefChanged (Interval changeInt, RefTargetHandle hTarget,
+RefResult AlembicXformBaseModifier::NotifyRefChanged (Interval changeInt, RefTargetHandle hTarget,
 										   PartID& partID, RefMessage message) {
 	ESS_CPP_EXCEPTION_REPORTING_START
 
@@ -176,7 +176,7 @@ RefResult AlembicTransformBaseModifier::NotifyRefChanged (Interval changeInt, Re
 	case REFMSG_CHANGE:
 		if (editMod!=this) break;
 		
-        AlembicTransformBaseModifierParams.InvalidateUI(pblock->LastNotifyParamID());
+        AlembicXformBaseModifierParams.InvalidateUI(pblock->LastNotifyParamID());
 		break;
  
     case REFMSG_WANT_SHOWPARAMLEVEL:

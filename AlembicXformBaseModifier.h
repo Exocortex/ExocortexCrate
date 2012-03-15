@@ -13,7 +13,7 @@
 #include "AlembicNames.h"
 
 
-class AlembicTransformBaseModifier : public Modifier {
+class AlembicXformBaseModifier : public Modifier {
 public:
 	IParamBlock2 *pblock;
 	
@@ -30,16 +30,16 @@ public:
 	};
 
 	static IObjParam *ip;
-	static AlembicTransformBaseModifier *editMod;
+	static AlembicXformBaseModifier *editMod;
 
-	AlembicTransformBaseModifier();
+	AlembicXformBaseModifier();
  
 	// From Animatable
 	void DeleteThis() { delete this; }
-	void GetClassName(TSTR& s) { s = _T("Alembic Transform Base Modifier"); }  
-	virtual Class_ID ClassID() { return ALEMBIC_TRANSFORM_BASE_MODIFIER_CLASSID; }		
+	void GetClassName(TSTR& s) { s = _T("Alembic Xform Base Modifier"); }  
+	virtual Class_ID ClassID() { return ALEMBIC_XFORM_BASE_MODIFIER_CLASSID; }		
 	RefTargetHandle Clone(RemapDir& remap);
-	TCHAR *GetObjectName() { return _T("Alembic Transform Base Modifier"); }
+	TCHAR *GetObjectName() { return _T("Alembic Xform Base Modifier"); }
 
 	// From Modifier
 	ChannelMask ChannelsUsed()  { return TOPO_CHANNEL|GEOM_CHANNEL|TEXMAP_CHANNEL; }
@@ -73,20 +73,20 @@ private:
 
 
 
-class AlembicTransformBaseModifierClassDesc : public ClassDesc2 {
+class AlembicXformBaseModifierClassDesc : public ClassDesc2 {
 	public:
 	int 			IsPublic() { return FALSE; }
-	void *			Create(BOOL loading = FALSE) { return new AlembicTransformBaseModifier; }
-	const TCHAR *	ClassName() { return _T("Alembic Transform Base Modifier"); }
+	void *			Create(BOOL loading = FALSE) { return new AlembicXformBaseModifier; }
+	const TCHAR *	ClassName() { return _T("Alembic Xform Base Modifier"); }
 	SClass_ID		SuperClassID() { return OSM_CLASS_ID; }
-	Class_ID		ClassID() { return ALEMBIC_TRANSFORM_BASE_MODIFIER_CLASSID; }
+	Class_ID		ClassID() { return ALEMBIC_XFORM_BASE_MODIFIER_CLASSID; }
 	const TCHAR* 	Category() { return EXOCORTEX_ALEMBIC_CATEGORY; }
-	const TCHAR*	InternalName() { return _T("AlembicTransformBaseModifier"); }	// returns fixed parsable name (scripter-visible name)
+	const TCHAR*	InternalName() { return _T("AlembicXformBaseModifier"); }	// returns fixed parsable name (scripter-visible name)
 	HINSTANCE		HInstance() { return hInstance; }			// returns owning module handle
 };
 
 
-ClassDesc2 *GetAlembicTransformBaseModifierClassDesc();
+ClassDesc2 *GetAlembicXformBaseModifierClassDesc();
 
 
 #endif	// __ALEMBIC_POLYMESH_MODIFIER__H

@@ -4,7 +4,7 @@
 #include "Alembic.h"
 #include "AlembicArchiveStorage.h"
 #include "AlembicDefinitions.h"
-#include "AlembicXFormCtrl.h"
+#include "AlembicXformController.h"
 #include "Utility.h"
 #include "dummy.h"
 #include <ILockedTracks.h>

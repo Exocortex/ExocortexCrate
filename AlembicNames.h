@@ -10,15 +10,15 @@
 // MAX SCRIPT
 #define ALEMBIC_MESH_GEOMETRY_CLASSID		Class_ID(0xe855567c, 0xbcd73b8b)
 #define ALEMBIC_MESH_MODIFIER_CLASSID	Class_ID(0x20730623, 0x5d650bdb)
+#define ALEMBIC_MESH_BASE_MODIFIER_CLASSID			Class_ID(0x45365062, 0x60984267)
 
 #define ALEMBIC_CAMERA_BASE_MODIFIER_CLASSID		Class_ID(0x115150b9, 0x5b6d187a)
 #define ALEMBIC_CAMERA_MODIFIER_CLASSID				Class_ID(0x20730624, 0x3d650bdb)
 
-#define ALEMBIC_TRANSFORM_BASE_MODIFIER_CLASSID		Class_ID(0x45365062, 0x69989267)
+#define ALEMBIC_XFORM_BASE_MODIFIER_CLASSID		Class_ID(0x45365062, 0x69989267)
 #define ALEMBIC_TRANSFORM_MODIFIER_CLASSID			Class_ID(0x20730666, 0x5d650666)
 
 #define ALEMBIC_SIMPLE_SPLINE_CLASSID				Class_ID(0xa720ab9, 0x7efc73de)
-#define ALEMBIC_MESH_BASE_MODIFIER_CLASSID			Class_ID(0x45365062, 0x60984267)
 #define ALEMBIC_VIS_CTRL_CLASSID					Class_ID(0x27e512c0, 0x389b3971)
 #define ALEMBIC_SIMPLE_PARTICLE_CLASSID				Class_ID(0x246b1c1e, 0x3b2f032f)
 #define ALEMBIC_EXPORTER_CLASSID					Class_ID(0x79d613a4, 0x4f21c3ad)
@@ -40,9 +40,9 @@
 #define ALEMBIC_MESH_UVW_MODIFIER_NAME				"Alembic Mesh UVW"
 #define ALEMBIC_MESH_UVW_MODIFIER_SCRIPTNAME		"AlembicMeshUVW"
 
-#define ALEMBIC_XFORM_CTRL_CLASSID					Class_ID(0x9bf4cdb, 0xe29448e)
+#define ALEMBIC_XFORM_CONTROLLER_CLASSID					Class_ID(0x9bf4cdb, 0xe29448e)
 #define ALEMBIC_XFORM_CONTROLLER_NAME				"Alembic Xform"
-#define ALEMBIC_XFORM_CONTROLLER_SCRIPTNAME			"AlembicXformController"
+#define ALEMBIC_XFORM_CONTROLLER_SCRIPTNAME			"AlembicXform"
 
 
 #define ALEMBIC_UNUSED_05_CLASSID					Class_ID(0x4eb65d6, 0x7c454597)
@@ -79,7 +79,7 @@ ClassDesc2* GetAlembicMeshTopoModifierClassDesc();
 ClassDesc2* GetAlembicMeshGeomModifierClassDesc();
 ClassDesc2* GetAlembicMeshNormalsModifierClassDesc();
 ClassDesc2* GetAlembicMeshUVWModifierClassDesc();
-ClassDesc2 *GetAlembicTransformBaseModifierClassDesc();
+ClassDesc2 *GetAlembicXformBaseModifierClassDesc();
 
 extern HINSTANCE hInstance;
 

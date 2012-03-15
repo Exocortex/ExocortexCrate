@@ -3,7 +3,7 @@
 #include "Alembic.h"
 #include "AlembicArchiveStorage.h"
 #include "AlembicMeshUtilities.h"
-#include "AlembicXFormCtrl.h"
+#include "AlembicXformController.h"
 #include "AlembicCameraBaseModifier.h"
 #include "AlembicSimpleParticle.h"
 #include "MeshMtlList.h"
@@ -12,7 +12,7 @@
 #include "AlembicWriteJob.h"
 #include "Utility.h"
 #include "AlembicSimpleSpline.h"
-#include "AlembicTransformUtilities.h"
+#include "AlembicXformUtilities.h"
 
 // Dummy function for progress bar
 DWORD WINAPI DummyProgressFunction(LPVOID arg)

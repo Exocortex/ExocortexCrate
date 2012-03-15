@@ -3,7 +3,7 @@ plugin modifier AlembicTransformModifier
 	classID:#(0x20730666, 0x5d650666)	-- keep in sync with AlembicNames.h
 	category:"Alembic" 
 	version:1
-	extends:AlembicTransformBaseModifier
+	extends:AlembicXformBaseModifier
 	replaceUI:true
 	invisible:false
 (
