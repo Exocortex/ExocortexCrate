@@ -92,7 +92,6 @@ public:
 	HINSTANCE		HInstance() { return hInstance; }                       // returns owning module handle
 };
 
-
 // can be generated via gencid.exe in the help folder of the 3DS Max.
 
 ClassDesc2 *GetAlembicCameraBaseModifierClassDesc();

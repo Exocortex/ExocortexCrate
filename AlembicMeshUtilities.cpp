@@ -271,6 +271,8 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
 		  float sampleInfoAlpha = (float)sampleInfo.alpha; 
           if (bSampleInterpolate)
           {
+			  pPositionArray = meshPos->get();
+
               for(size_t i=0;i<meshPos->size();i++)
               {	
                   vArray[i] += (pPositionArray[i] - vArray[i]) * sampleInfoAlpha; 
@@ -278,6 +280,8 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
           }
           else if (bVelInterpolate)
           {
+			  pVelocityArray = meshVel->get();
+
               for(size_t i=0;i<meshVel->size();i++)
               {
                   vArray[i] += pVelocityArray[i] * sampleInfoAlpha;                  
