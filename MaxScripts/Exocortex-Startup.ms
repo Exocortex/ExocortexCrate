@@ -1,9 +1,6 @@
 include "Exocortex-Dialog-AlembicImport.mcr"
 include "Exocortex-Dialog-AlembicExport.mcr"
-include "Exocortex-Geometry-AlembicMesh.mcr"
 include "Exocortex-Modifier-AlembicCamera.mcr"
-include "Exocortex-Modifier-AlembicMesh.mcr"
-include "Exocortex-Modifier-AlembicTransform.mcr"
 include "Exocortex-Helper-AlembicTimeControl.mcr"
 
 ---------------------------------------------------------------------------------------------------------

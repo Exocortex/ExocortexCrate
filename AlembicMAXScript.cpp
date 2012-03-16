@@ -181,9 +181,9 @@ void AlembicImport_TimeControl( alembic_importoptions &options ) {
 	pHelper->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pHelper, 0, "current" ), zero, 0.0f );
 	pHelper->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pHelper, 0, "offset" ), zero, 0.0f );
 	pHelper->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pHelper, 0, "factor" ), zero, 1.0f );
-	
+		
 	// Create the object node
-	INode *node = GetCOREInterface12()->CreateObjectNode(pHelper, _T("Alembic Time Control") );
+	INode *node = GetCOREInterface12()->CreateObjectNode(pHelper, pHelper->GetObjectName() );
 
     // Add the new inode to our current scene list
 	SceneEntry *pEntry = options.sceneEnumProc.Append(node, pHelper, OBTYPE_CURVES, &std::string( node->GetName() ) ); 
@@ -195,7 +195,7 @@ void AlembicImport_TimeControl( alembic_importoptions &options ) {
 		"$.current.controller.setExpression \"S\"\n"
 		"$.offset.controller = bezier_float()\n"
 		"$.factor.controller = bezier_float()\n"
-		, pHelper->GetObjectName() );
+		, node->GetName() );
 	ExecuteMAXScriptScript( szBuffer );
    
 	options.pTimeControl = pHelper;

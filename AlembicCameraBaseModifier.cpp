@@ -47,7 +47,7 @@ ClassDesc2* GetAlembicCameraBaseModifierClassDesc() { return &s_AlembicCameraBas
 static ParamBlockDesc2 AlembicCameraBaseModifierParams(
 	0,
 	_T("AlembicCameraBaseModifier"),
-	IDS_PROPS,
+	IDS_PROPS, 
 	GetAlembicCameraBaseModifierClassDesc(),
 	P_AUTO_CONSTRUCT | P_AUTO_UI,
 	0,
