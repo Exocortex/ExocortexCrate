@@ -26,6 +26,7 @@
 #define IDS_TIME                        113
 #define IDS_ALEMBIC                     114
 #define IDS_GEOALPHA                    115
+#define IDS_CAMERA                      116
 #define IDD_GSPHERE1                    179
 #define IDD_GSPHERE2                    180
 #define IDD_GSPHERE3                    181
@@ -77,6 +78,7 @@
 #define IDC_TIME_SPIN                   1020
 #define IDC_MUTED_CHECKBOX              1021
 #define IDC_TOPOLOGY_CHECKBOX           1022
+#define IDC_CAMERA_CHECKBOX             1022
 #define IDC_GEOMETRY_CHECKBOX           1023
 #define IDC_NORMALS_CHECKBOX2           1024
 #define IDC_NORMALS_CHECKBOX            1024
@@ -172,6 +174,7 @@
 #define IDD_ALEMBIC_MESH_BASE_PARAMS3   30307
 #define IDD_ALEMBIC_MESH_NORMALS_PARAMS 30307
 #define IDD_ALEMBIC_MESH_UVW_PARAMS     30308
+#define IDD_ALEMBIC_XFORM_PARAMS        30309
 #define IDC_TEXTUREPATH                 40000
 #define IDC_PATH_EDIT                   40000
 #define IDC_IDENTIFIER_EDIT             40001

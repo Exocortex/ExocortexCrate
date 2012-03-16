@@ -69,7 +69,7 @@
 #define ALEMBIC_UNUSED_26_CLASSID					Class_ID(0x6f941105, 0x377862fd)
 
 
-ClassDesc2* GetAlembicXFormCtrlClassDesc();
+ClassDesc2* GetAlembicXformControllerClassDesc();
 ClassDesc2* GetAlembicCameraBaseModifierClassDesc();
 ClassDesc2* GetAlembicVisCtrlClassDesc();
 ClassDesc2* GetAlembicSimpleParticleClassDesc();

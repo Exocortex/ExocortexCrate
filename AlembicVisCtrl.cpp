@@ -454,10 +454,18 @@ void AlembicVisCtrl::EndEditParams( IObjParam *ip, ULONG flags, Animatable *next
     editMod  = NULL;
 }
 
-///////////////////////////////////////////////////////////////////////////////////////////////////
-// AlembicImport_FillInvis
-///////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+void AlembicImport_FillInVis_Internal(alembic_fillvis_options &options);
+
 void AlembicImport_FillInVis(alembic_fillvis_options &options)
+{
+	ESS_STRUCTURED_EXCEPTION_REPORTING_START
+		AlembicImport_FillInVis_Internal( options );
+	ESS_STRUCTURED_EXCEPTION_REPORTING_END
+}
+
+void AlembicImport_FillInVis_Internal(alembic_fillvis_options &options)
 {
     if(!options.pIObj->valid())
     {

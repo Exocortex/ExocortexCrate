@@ -244,9 +244,9 @@ void AlembicMeshGeomModifier::BeginEditParams(IObjParam *ip,ULONG flags,Animatab
 
 	AlembicMeshGeomModifierDesc.BeginEditParams(ip, this, flags, prev);
     
-//    AlembicXFormCtrlDlgProc* dlgProc;
-//	dlgProc = new AlembicXFormCtrlDlgProc(this);
-//	xform_params_desc.SetUserDlgProc( AlembicXFormCtrl_params, dlgProc );
+//    AlembicXformControllerDlgProc* dlgProc;
+//	dlgProc = new AlembicXformControllerDlgProc(this);
+//	xform_params_desc.SetUserDlgProc( AlembicXformController_params, dlgProc );
 
     // Necessary?
 	// NotifyDependents(FOREVER, PART_ALL, REFMSG_CHANGE);

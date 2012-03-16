@@ -13,7 +13,6 @@
 #include "AlembicMeshUtilities.h"
 #include <exprlib.h>
 #include <ifnpub.h> 
-#include <maxscript\maxwrapper\scriptcontroller.h>
 #include <maxscript\maxscript.h>
 
 bool isAlembicMeshValid( Alembic::AbcGeom::IObject *pIObj ) {
@@ -792,9 +791,9 @@ int AlembicImport_PolyMesh(const std::string &path, const std::string &identifie
 	// we will not be filling in the initial polymesh data.
 	//AlembicImport_FillInPolyMesh(dataFillOptions);
 
-	// Create the object node
-	INode *node = GetCOREInterface12()->CreateObjectNode(newObject, iObj.getName().c_str());
-	if (node == NULL)
+	// Create the object pNode
+	INode *pNode = GetCOREInterface12()->CreateObjectNode(newObject, iObj.getName().c_str());
+	if (pNode == NULL)
     {
 		return alembic_failure;
     }
@@ -803,11 +802,9 @@ int AlembicImport_PolyMesh(const std::string &path, const std::string &identifie
 
 	TimeValue zero( 0 );
 
-	int modifierIndex = 1;
-
 	bool isDynamicTopo = isAlembicMeshTopoDynamic( &iObj );
 
-	ESS_LOG_INFO( "Node: " << node->GetName() );
+	ESS_LOG_INFO( "Node: " << pNode->GetName() );
 	ESS_LOG_INFO( "isDynamicTopo: " << isDynamicTopo );
 	{
 		// Create the polymesh modifier
@@ -817,19 +814,18 @@ int AlembicImport_PolyMesh(const std::string &path, const std::string &identifie
 		// Set the alembic id
 		pModifier->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pModifier, 0, "path" ), zero, path.c_str());
 		pModifier->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pModifier, 0, "identifier" ), zero, identifier.c_str() );
-		pModifier->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pModifier, 0, "muted" ), zero, (BOOL) 0 );
-		
-		// Add the modifier to the node
-		GetCOREInterface12()->AddModifier(*node, *pModifier);
+		pModifier->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pModifier, 0, "time" ), zero, 0.0f );
+		pModifier->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pModifier, 0, "muted" ), zero, FALSE );
+	
+		// Add the modifier to the pNode
+		GetCOREInterface12()->AddModifier(*pNode, *pModifier);
 
 		if( isDynamicTopo ) {
 			char szBuffer[10000];
-			sprintf_s( szBuffer, 10000, "select $%s\n$.modifiers[#Alembic_Mesh_Topology].time.controller = float_expression()\n$.modifiers[#Alembic_Mesh_Topology].time.controller.setExpression \"S\"", node->GetName() );
+			sprintf_s( szBuffer, 10000, "select $%s\n$.modifiers[#Alembic_Mesh_Topology].time.controller = float_expression()\n$.modifiers[#Alembic_Mesh_Topology].time.controller.setExpression \"S\"", pNode->GetName() );
 			//ESS_LOG_INFO( "MaxScript: " << szBuffer );
 			ExecuteMAXScriptScript( szBuffer );
 		}
-	 
-		modifierIndex ++;
 	}
 	bool isUVWContant = true;
 	if( ( ! isDynamicTopo ) && isAlembicMeshUVWs( &iObj, isUVWContant ) ) {
@@ -841,17 +837,16 @@ int AlembicImport_PolyMesh(const std::string &path, const std::string &identifie
 		// Set the alembic id
 		pModifier->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pModifier, 0, "path" ), zero, path.c_str());
 		pModifier->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pModifier, 0, "identifier" ), zero, identifier.c_str() );
-		pModifier->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pModifier, 0, "muted" ), zero, (BOOL) 0 );
-	  
-		// Add the modifier to the node
-		GetCOREInterface12()->AddModifier(*node, *pModifier);
+		pModifier->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pModifier, 0, "time" ), zero, 0.0f );
+		pModifier->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pModifier, 0, "muted" ), zero, FALSE );
+
+		// Add the modifier to the pNode
+		GetCOREInterface12()->AddModifier(*pNode, *pModifier);
 		if( ! isUVWContant ) {
 			char szBuffer[10000];
-			sprintf_s( szBuffer, 10000, "select $%s\n$.modifiers[#Alembic_Mesh_UVW].time.controller = float_expression()\n$.modifiers[#Alembic_Mesh_UVW].time.controller.setExpression \"S\"", node->GetName() );
+			sprintf_s( szBuffer, 10000, "select $%s\n$.modifiers[#Alembic_Mesh_UVW].time.controller = float_expression()\n$.modifiers[#Alembic_Mesh_UVW].time.controller.setExpression \"S\"", pNode->GetName() );
 			ExecuteMAXScriptScript( szBuffer );
 		}
-
-		modifierIndex ++;
 	}
 	bool isGeomContant = true;
 	if( ( ! isDynamicTopo ) && isAlembicMeshPositions( &iObj, isGeomContant ) ) {
@@ -864,19 +859,18 @@ int AlembicImport_PolyMesh(const std::string &path, const std::string &identifie
 		pModifier->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pModifier, 0, "path" ), zero, path.c_str());
 		pModifier->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pModifier, 0, "identifier" ), zero, identifier.c_str() );
 		pModifier->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pModifier, 0, "geoAlpha" ), zero, 1.0f );
-		pModifier->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pModifier, 0, "muted" ), zero, (BOOL) 0 );
-	
-		// Add the modifier to the node
-		GetCOREInterface12()->AddModifier(*node, *pModifier);
+		pModifier->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pModifier, 0, "time" ), zero, 0.0f );
+		pModifier->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pModifier, 0, "muted" ), zero, FALSE );
+
+		// Add the modifier to the pNode
+		GetCOREInterface12()->AddModifier(*pNode, *pModifier);
 
 		if( ! isGeomContant ) {
 			char szBuffer[10000];
-			sprintf_s( szBuffer, 10000, "select $%s\n$.modifiers[#Alembic_Mesh_Geometry].time.controller = float_expression()\n$.modifiers[#Alembic_Mesh_Geometry].time.controller.setExpression \"S\"", node->GetName() );
+			sprintf_s( szBuffer, 10000, "select $%s\n$.modifiers[#Alembic_Mesh_Geometry].time.controller = float_expression()\n$.modifiers[#Alembic_Mesh_Geometry].time.controller.setExpression \"S\"", pNode->GetName() );
 			//ESS_LOG_INFO( "MaxScript: " << szBuffer );
 			ExecuteMAXScriptScript( szBuffer );
 		}
-
-		modifierIndex ++;
 	}
 	bool isNormalsContant = true;
 	if( ( ! isDynamicTopo ) && isAlembicMeshNormals( &iObj, isNormalsContant ) ) {
@@ -888,27 +882,26 @@ int AlembicImport_PolyMesh(const std::string &path, const std::string &identifie
 		// Set the alembic id
 		pModifier->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pModifier, 0, "path" ), zero, path.c_str());
 		pModifier->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pModifier, 0, "identifier" ), zero, identifier.c_str() );
-		pModifier->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pModifier, 0, "muted" ), zero, (BOOL) 0 );
-	
-		// Add the modifier to the node
-		GetCOREInterface12()->AddModifier(*node, *pModifier);
+		pModifier->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pModifier, 0, "time" ), zero, 0.0f );
+		pModifier->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pModifier, 0, "muted" ), zero, FALSE );
+
+		// Add the modifier to the pNode
+		GetCOREInterface12()->AddModifier(*pNode, *pModifier);
 
 		if( ! isNormalsContant ) {
 			char szBuffer[10000];
-			sprintf_s( szBuffer, 10000, "select $%s\n$.modifiers[#Alembic_Mesh_Normals].time.controller = float_expression()\n$.modifiers[#Alembic_Mesh_Normals].time.controller.setExpression \"S\"", node->GetName() );
+			sprintf_s( szBuffer, 10000, "select $%s\n$.modifiers[#Alembic_Mesh_Normals].time.controller = float_expression()\n$.modifiers[#Alembic_Mesh_Normals].time.controller.setExpression \"S\"", pNode->GetName() );
 			//ESS_LOG_INFO( "MaxScript: " << szBuffer );
 			ExecuteMAXScriptScript( szBuffer );
 		}
-
-		modifierIndex ++;
 	}
 
     // Add the new inode to our current scene list
-    SceneEntry *pEntry = options.sceneEnumProc.Append(node, newObject, OBTYPE_MESH, &std::string(iObj.getFullName())); 
+    SceneEntry *pEntry = options.sceneEnumProc.Append(pNode, newObject, OBTYPE_MESH, &std::string(iObj.getFullName())); 
     options.currentSceneList.Append(pEntry);
 
     // Set the visibility controller
-    AlembicImport_SetupVisControl(iObj, node, options);
+    AlembicImport_SetupVisControl(iObj, pNode, options);
 
 	return 0;
 }

@@ -10,7 +10,7 @@
 #include <linshape.h>
 #include <splshape.h>
 #include <iparamb2.h>
-
+#include "AlembicLicensing.h"
 #include "AlembicNames.h"
 
 class AlembicSimpleSpline;
@@ -567,7 +567,17 @@ void AlembicSimpleSpline::SetAlembicId(const std::string &file, const std::strin
     m_AlembicNodeProps.m_Identifier = identifier;
 }
 
+
+void AlembicImport_FillInShape_Internal(alembic_fillshape_options &options);
+
 void AlembicImport_FillInShape(alembic_fillshape_options &options)
+{
+	ESS_STRUCTURED_EXCEPTION_REPORTING_START
+		AlembicImport_FillInShape_Internal( options );
+	ESS_STRUCTURED_EXCEPTION_REPORTING_END
+}
+
+void AlembicImport_FillInShape_Internal(alembic_fillshape_options &options)
 {
    float masterScaleUnitMeters = (float)GetMasterScale(UNITS_METERS);
 

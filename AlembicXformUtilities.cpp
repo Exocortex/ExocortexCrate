@@ -1,9 +1,32 @@
 #include "AlembicXformUtilities.h"
+#include <maxscript\maxscript.h>
 
-///////////////////////////////////////////////////////////////////////////////////////////////////
-// AlembicImport_FillInXForm
-///////////////////////////////////////////////////////////////////////////////////////////////////
+bool isAlembicXform( Alembic::AbcGeom::IObject *pIObj, bool& isConstant ) {
+	Alembic::AbcGeom::IXform objXfrm;
+
+	isConstant = true;
+
+	if(Alembic::AbcGeom::IXform::matches((*pIObj).getMetaData())) {
+		objXfrm = Alembic::AbcGeom::IXform(*pIObj,Alembic::Abc::kWrapExisting);
+		if( objXfrm.valid() ) {
+			isConstant = objXfrm.getSchema().isConstant();
+		}
+	}
+
+	return objXfrm.valid();
+}
+
+
+void AlembicImport_FillInXForm_Internal(alembic_fillxform_options &options);
+
 void AlembicImport_FillInXForm(alembic_fillxform_options &options)
+{
+	ESS_STRUCTURED_EXCEPTION_REPORTING_START
+		AlembicImport_FillInXForm_Internal( options );
+	ESS_STRUCTURED_EXCEPTION_REPORTING_END
+}
+
+void AlembicImport_FillInXForm_Internal(alembic_fillxform_options &options)
 {
     if(!options.pIObj->valid())
         return;
@@ -66,8 +89,11 @@ int AlembicImport_XForm(const std::string &file, const std::string &identifier, 
 {
     // Find the object in the archive
 	Alembic::AbcGeom::IObject iObj = getObjectFromArchive(file,identifier);
-	if(!iObj.valid())
+
+	bool isConstant = false;
+	if( ! isAlembicXform( &iObj, isConstant ) ) {
 		return alembic_failure;
+	}
 
     // Find out if we're dealing with a camera
     std::string modelfullid = getModelFullName(std::string(iObj.getFullName()));
@@ -117,18 +143,28 @@ int AlembicImport_XForm(const std::string &file, const std::string &identifier, 
         AlembicImport_SetupChildLinks(iObj, options);
         */
     }
-
+ 
 	// Create the xform modifier
-	AlembicXformController *pCtrl = static_cast<AlembicXformController*>
+	AlembicXformController *pControl = static_cast<AlembicXformController*>
 		(GetCOREInterface()->CreateInstance(CTRL_MATRIX3_CLASS_ID, ALEMBIC_XFORM_CONTROLLER_CLASSID));
 
-	// Set the alembic id
-    pCtrl->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pCtrl, 0, "path" ), xformOptions.dTicks, file.c_str());
-	pCtrl->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pCtrl, 0, "identifier" ), xformOptions.dTicks , identifier.c_str() );
-    pCtrl->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pCtrl, 0, "isCameraTransform" ), xformOptions.dTicks , xformOptions.bIsCameraTransform );
+	TimeValue zero( 0 );
 
+	// Set the alembic id
+    pControl->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pControl, 0, "path" ), zero, file.c_str());
+	pControl->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pControl, 0, "identifier" ), zero, identifier.c_str() );
+	pControl->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pControl, 0, "time" ), zero, 0.0f );
+	pControl->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pControl, 0, "camera" ), zero, ( xformOptions.bIsCameraTransform ? TRUE : FALSE ) );
+    pControl->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pControl, 0, "muted" ), zero, FALSE );
+	
 	// Add the modifier to the node
-    pNode->SetTMController(pCtrl);
+    pNode->SetTMController(pControl);
+
+	if( ! isConstant ) {
+		char szBuffer[10000];	
+		sprintf_s( szBuffer, 10000, "select $%s\n$.transform.controller.time.controller = float_expression()\n$.transform.controller.time.controller.setExpression \"S\"", pNode->GetName() );
+		ExecuteMAXScriptScript( szBuffer );
+	}
     pNode->InvalidateTreeTM();
 
     // Lock the transform
@@ -136,4 +172,5 @@ int AlembicImport_XForm(const std::string &file, const std::string &identifier, 
 
 	return alembic_success;
 }
+
 

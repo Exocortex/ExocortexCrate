@@ -11,6 +11,22 @@ class AlembicXformController : public LockableStdControl
 {
 public:
     IParamBlock2* pblock;
+
+	// Parameters in first block:
+	enum 
+	{ 
+		ID_PATH,
+		ID_IDENTIFIER,
+		ID_TIME,
+/*		ID_TOPOLOGY,
+		ID_GEOMETRY,
+		ID_GEOALPHA,
+		ID_NORMALS,
+		ID_UVS,*/
+		ID_CAMERA,
+		ID_MUTED,
+	};
+
     static IObjParam *ip;
     static AlembicXformController *editMod;
 
@@ -62,11 +78,11 @@ private:
     Interval m_CurrentAlembicInterval;
 };
 
-class AlembicXFormCtrlClassDesc : public ClassDesc2
+class AlembicXformControllerClassDesc : public ClassDesc2
 {
 public:
-	AlembicXFormCtrlClassDesc() {}
-	~AlembicXFormCtrlClassDesc() {}
+	AlembicXformControllerClassDesc() {}
+	~AlembicXformControllerClassDesc() {}
 
 	int				IsPublic()			{ return TRUE; }	// We do want the user to see this plug-in
 	const MCHAR*	ClassName()			{ static const MSTR str(ALEMBIC_XFORM_CONTROLLER_NAME); return str; }
@@ -78,6 +94,6 @@ public:
     HINSTANCE		HInstance()			{ return hInstance; }			// returns owning module handle
 };
 
-ClassDesc2* GetAlembicXFormCtrlClassDesc();
+ClassDesc2* GetAlembicXformControllerClassDesc();
 
 #endif

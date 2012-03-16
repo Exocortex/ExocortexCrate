@@ -235,9 +235,9 @@ void AlembicMeshUVWModifier::BeginEditParams(IObjParam *ip,ULONG flags,Animatabl
 
 	AlembicMeshUVWModifierDesc.BeginEditParams(ip, this, flags, prev);
     
-//    AlembicXFormCtrlDlgProc* dlgProc;
-//	dlgProc = new AlembicXFormCtrlDlgProc(this);
-//	xform_params_desc.SetUserDlgProc( AlembicXFormCtrl_params, dlgProc );
+//    AlembicXformControllerDlgProc* dlgProc;
+//	dlgProc = new AlembicXformControllerDlgProc(this);
+//	xform_params_desc.SetUserDlgProc( AlembicXformController_params, dlgProc );
 
     // Necessary?
 	// NotifyDependents(FOREVER, PART_ALL, REFMSG_CHANGE);

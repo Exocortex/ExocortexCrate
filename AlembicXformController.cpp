@@ -13,199 +13,124 @@
 // This function returns a pointer to a class descriptor for our Utility
 // This is the function that informs max that our plug-in exists and is 
 // available to use
-static AlembicXFormCtrlClassDesc sAlembicXFormCtrlClassDesc;
-ClassDesc2* GetAlembicXFormCtrlClassDesc()
+static AlembicXformControllerClassDesc sAlembicXformControllerClassDesc;
+ClassDesc2* GetAlembicXformControllerClassDesc()
 {
-	return &sAlembicXFormCtrlClassDesc;
+	return &sAlembicXformControllerClassDesc;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // Alembic_XForm_Ctrl_Param_Blk
 ///////////////////////////////////////////////////////////////////////////////////////////////////
-enum 
-{ 
-    AlembicXFormCtrl_params 
-};
 
-// Alembic xform params
-enum 
-{ 
-	alembicxform_abc_archive,
-    alembicxform_abc_id,
-    alembicxform_timeoffset,
-    alembicxform_timescale,
-    alembicxform_timehidden,
-    alembicxform_muted,
-    alembicxform_cameratransform,
-};
 
-static ParamBlockDesc2 xform_params_desc (
-	AlembicXFormCtrl_params,
+static ParamBlockDesc2 AlembicXformControllerParams(
+	0,
 	_T(ALEMBIC_XFORM_CONTROLLER_SCRIPTNAME),
 	0,
-	&sAlembicXFormCtrlClassDesc,
-	P_AUTO_CONSTRUCT | P_AUTO_UI, 0,
+	GetAlembicXformControllerClassDesc(),
+	P_AUTO_CONSTRUCT | P_AUTO_UI,
+	0,
 
-	//rollout description
-	IDD_ALEMBIC_ID_PARAMS, IDS_ALEMBIC, 0, 0, NULL,
+	// rollout description 
+	IDD_ALEMBIC_XFORM_PARAMS, IDS_ALEMBIC, 0, 0, NULL,
 
     // params
-	/*alembicxform_abc_archive, _T("path"), TYPE_FILENAME, 0, IDS_ABC_ARCHIVE,
-		p_ui, TYPE_FILEOPENBUTTON, IDC_ABC_ARCHIVE,
-        p_caption, IDS_OPEN_ABC_CAPTION,
-        p_file_types, IDS_ABC_FILE_TYPE,
-        p_accessor,		&sXForm_PBAccessor,
-		end,
-        */
+	AlembicXformController::ID_PATH, _T("path"), TYPE_FILENAME, P_RESET_DEFAULT, IDS_PATH,
+	    p_default, "",
+	    p_ui,        TYPE_EDITBOX,		IDC_PATH_EDIT,
+	 	end,
+        
+	AlembicXformController::ID_IDENTIFIER, _T("identifier"), TYPE_STRING, P_RESET_DEFAULT, IDS_IDENTIFIER,
+	    p_default, "",
+	    p_ui,        TYPE_EDITBOX,		IDC_IDENTIFIER_EDIT,
+	 	end,
 
-    alembicxform_abc_archive, _T("path"), TYPE_STRING, P_RESET_DEFAULT, IDS_ABC_ARCHIVE,
-        p_ui, TYPE_EDITBOX, IDC_ABC_ARCHIVE,
-        end,
-
-	alembicxform_abc_id, _T("identifier"), TYPE_STRING, P_RESET_DEFAULT, IDS_ABC_ID,
-		p_ui, TYPE_EDITBOX, IDC_ABC_OBJECTID,
-		end,
-
-    alembicxform_timeoffset, _T("timeOffset"), TYPE_FLOAT, P_ANIMATABLE, IDS_TIMEOFFSET,
-        p_default,	0.0f,
-		p_ui,		TYPE_SPINNER, EDITTYPE_FLOAT, IDC_EDIT_TIME_OFFSET, IDC_SPIN_TIME_OFFSET, 0.1f,
-        end,
-
-    alembicxform_timescale, _T("timeScale"), TYPE_FLOAT, P_ANIMATABLE, IDS_TIMESCALE,
-        p_default,	1.0f,
-		p_ui,		TYPE_SPINNER, EDITTYPE_FLOAT, IDC_EDIT_TIME_SCALE, IDC_SPIN_TIME_SCALE, 0.1f,
-        end,
-
-    alembicxform_muted, _T("muted"), TYPE_BOOL, P_ANIMATABLE, IDS_MUTED,
-        p_default, FALSE,
-		p_ui, TYPE_SINGLECHEKBOX, IDC_CHECK_MUTED,
+	AlembicXformController::ID_TIME, _T("time"), TYPE_FLOAT, P_ANIMATABLE, IDS_TIME,
+		p_default,       0.0f,
+		p_range,         0.0f, 1000.0f,
+		p_ui,            TYPE_SPINNER,       EDITTYPE_FLOAT, IDC_TIME_EDIT,    IDC_TIME_SPIN, 0.01f,
 		end,
 
-    alembicxform_timehidden, _T("currentTimeHidden"), TYPE_FLOAT, 0, IDS_CURRENTTIMEHIDDEN,
-        end,
+	AlembicXformController::ID_CAMERA, _T("camera"), TYPE_BOOL, P_ANIMATABLE, IDS_CAMERA,
+		p_default,       TRUE,
+		p_ui,            TYPE_SINGLECHEKBOX,  IDC_CAMERA_CHECKBOX,
+		end,
 
-    alembicxform_cameratransform, _T("isCameraTransform"), TYPE_BOOL, 0,  IDS_CAMERATRANSFORM, 
-        end,
+	AlembicXformController::ID_MUTED, _T("muted"), TYPE_BOOL, P_ANIMATABLE, IDS_MUTED,
+		p_default,       FALSE,
+		p_ui,            TYPE_SINGLECHEKBOX,  IDC_MUTED_CHECKBOX,
+		end,
+
 	end
 );
-/*
-class AlembicXFormCtrlDlgProc : public ParamMap2UserDlgProc {
-  public:
-	AlembicXformController* mpParent;
-    char *m_Buffer;
-	BOOL initialized; //set to true after an init dialog message
-	AlembicXFormCtrlDlgProc( AlembicXformController* parent ) { this->mpParent=parent; initialized=FALSE; m_Buffer = 0; }
-    ~AlembicXFormCtrlDlgProc() { if (m_Buffer) free(m_Buffer); }
-	void DeleteThis() { delete this; }
-
-	INT_PTR DlgProc(TimeValue t, IParamMap2 *map, HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
-	{
-		switch (msg) 
-        {
-		case WM_INITDIALOG: //called after BeginEditParams whenever rollout is displayed
-			mpParent->MainPanelInitDialog(hWnd);
-            mpParent->MainPanelUpdateUI();
-			initialized = TRUE;
-			break;
-		case WM_DESTROY: //called from EndEditParams
-			mpParent->MainPanelDestroy(hWnd);
-			initialized = FALSE;
-			break;
-        case WM_COMMAND:
-            {
-                switch( LOWORD(wParam) ) 
-                {
-                case IDC_ABC_ARCHIVE:
-                case IDC_ABC_OBJECTID:
-                    {
-                        switch(HIWORD(wParam)) 
-                        {
-                        case EN_SETFOCUS:
-                            DisableAccelerators();					
-                            break;
-                        case EN_KILLFOCUS:
-                            EnableAccelerators();
-                            break;
-                        case EN_CHANGE:
-                            {
-                                int nDlgItem = LOWORD(wParam);
-                                HWND hDlgWnd = GetDlgItem(hWnd, nDlgItem);
-                                char text[MAX_PATH] = "\0";
-                                int nLength = Edit_GetTextLength(hDlgWnd);
-                                nLength += 1;
-                                if (m_Buffer == 0 || strlen(m_Buffer) < nLength)
-                                    m_Buffer = (char*)realloc(m_Buffer, nLength);
-
-                                Edit_GetText(hDlgWnd, m_Buffer, nLength);
-                                int nParamId = nDlgItem == IDC_ABC_ARCHIVE ? alembicxform_abc_archive : alembicxform_abc_id;
-                                TimeValue t = GetCOREInterface12()->GetTime();
-                                mpParent->pblock->SetValue(nParamId, t, m_Buffer);
-                            }
-                            break;
-                        }
-                    }
-                    break;
-                default:
-                    break;
-                }
-            }
-            break;
-		default:
-            return FALSE;
-	  }
-	  return TRUE;
-	}
-};
-*/
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // AlembicXformController Methods
 ///////////////////////////////////////////////////////////////////////////////////////////////////
+
 IObjParam *AlembicXformController::ip = NULL;
 AlembicXformController *AlembicXformController::editMod = NULL;
 
 void AlembicXformController::GetValueLocalTime(TimeValue t, void *ptr, Interval &valid, GetSetMethod method)
 {
+	ESS_CPP_EXCEPTION_REPORTING_START
+
+	Interval interval = FOREVER;//os->obj->ObjectValidity(t);
+	//ESS_LOG_INFO( "Interval Start: " << interval.Start() << " End: " << interval.End() );
+
     MCHAR const* strPath = NULL;
-	pblock->GetValue( alembicxform_abc_archive, t, strPath, valid);
+	this->pblock->GetValue( AlembicXformController::ID_PATH, t, strPath, interval);
 
-    MCHAR const* strIdentifier = NULL;
-	pblock->GetValue( alembicxform_abc_id, t, strIdentifier, valid);
+	MCHAR const* strIdentifier = NULL;
+	this->pblock->GetValue( AlembicXformController::ID_IDENTIFIER, t, strIdentifier, interval);
+ 
+	float fTime;
+	this->pblock->GetValue( AlembicXformController::ID_TIME, t, fTime, interval);
 
-    BOOL bIsCameraTransform;
-    pblock->GetValue( alembicxform_cameratransform, t, bIsCameraTransform, valid);
+	BOOL bCamera;
+	this->pblock->GetValue( AlembicXformController::ID_CAMERA, t, bCamera, interval);
 
-    float fCurrentTimeHidden;
-	pblock->GetValue( alembicxform_timehidden, t, fCurrentTimeHidden, valid);
-
-	float fTimeOffset;
-	pblock->GetValue( alembicxform_timeoffset, t, fTimeOffset, valid);
-
-	float fTimeScale;
-	pblock->GetValue( alembicxform_timescale, t, fTimeScale, valid); 
-
-    BOOL bMuted;
-	pblock->GetValue( alembicxform_muted, t, bMuted, valid);
+	BOOL bMuted;
+	this->pblock->GetValue( AlembicXformController::ID_MUTED, t, bMuted, interval);
 
     if (bMuted)
     {
         return;
     }
 
-    Alembic::AbcGeom::IObject iObj = getObjectFromArchive(strPath, strIdentifier);
+    if( strlen( strPath ) == 0 ) {
+	   ESS_LOG_ERROR( "No filename specified." );
+	   return; 
+	}
+	if( strlen( strIdentifier ) == 0 ) {
+	   ESS_LOG_ERROR( "No path specified." );
+	   return;
+	}
 
-    if(!iObj.valid())
-    {
-        return;
-    }
+	if( ! fs::exists( strPath ) ) {
+		ESS_LOG_ERROR( "Can't file Alembic file.  Path: " << strPath );
+		return;
+	}
 
-    double dataTime = GetSecondsFromTimeValue(t);
-    dataTime = fTimeOffset + dataTime * fTimeScale;
+	Alembic::AbcGeom::IObject iObj;
+	try {
+		iObj = getObjectFromArchive(strPath, strIdentifier);
+	} catch( std::exception exp ) {
+		ESS_LOG_ERROR( "Can not open Alembic data stream.  Path: " << strPath << " identifier: " << strIdentifier << " reason: " << exp.what() );
+		return;
+	}
+
+	if(!iObj.valid()) {
+		ESS_LOG_ERROR( "Not a valid Alembic data stream.  Path: " << strPath << " identifier: " << strIdentifier );
+		return;
+	}
 
     alembic_fillxform_options xformOptions;
     xformOptions.pIObj = &iObj;
-    xformOptions.dTicks = GetTimeValueFromSeconds(dataTime);
-    xformOptions.bIsCameraTransform = bIsCameraTransform?true:false;
+    xformOptions.dTicks = GetTimeValueFromSeconds( fTime );
+	xformOptions.bIsCameraTransform = ( bCamera ? true : false );
+
     AlembicImport_FillInXForm(xformOptions);
 
     Interval alembicInterval(t,t);
@@ -221,12 +146,14 @@ void AlembicXformController::GetValueLocalTime(TimeValue t, void *ptr, Interval 
 		Matrix3* m3InVal = (Matrix3*)ptr;
 		*m3InVal = xformOptions.maxMatrix * (*m3InVal);
 	}
+
+	ESS_CPP_EXCEPTION_REPORTING_END
 }
 
 AlembicXformController::AlembicXformController()
 {
     pblock = NULL;
-    sAlembicXFormCtrlClassDesc.MakeAutoParamBlocks(this);
+    sAlembicXformControllerClassDesc.MakeAutoParamBlocks(this);
 }
 
 AlembicXformController::~AlembicXformController()
@@ -367,7 +294,7 @@ RefResult AlembicXformController::NotifyRefChanged(
             if (hTarg == pblock) 
             {
                 ParamID changing_param = pblock->LastNotifyParamID();
-                xform_params_desc.InvalidateUI(changing_param);
+                AlembicXformControllerParams.InvalidateUI(changing_param);
             }
             break;
 
@@ -385,11 +312,11 @@ void AlembicXformController::BeginEditParams(IObjParam *ip,ULONG flags,Animatabl
     editMod  = this;
 
     LockableStdControl::BeginEditParams(ip, flags, prev);
-	sAlembicXFormCtrlClassDesc.BeginEditParams(ip, this, flags, prev);
+	sAlembicXformControllerClassDesc.BeginEditParams(ip, this, flags, prev);
     
-//    AlembicXFormCtrlDlgProc* dlgProc;
-//	dlgProc = new AlembicXFormCtrlDlgProc(this);
-//	xform_params_desc.SetUserDlgProc( AlembicXFormCtrl_params, dlgProc );
+//    AlembicXformControllerDlgProc* dlgProc;
+//	dlgProc = new AlembicXformControllerDlgProc(this);
+//	xform_params_desc.SetUserDlgProc( AlembicXformController_params, dlgProc );
 
     // Necessary?
 	// NotifyDependents(FOREVER, PART_ALL, REFMSG_CHANGE);
@@ -398,7 +325,7 @@ void AlembicXformController::BeginEditParams(IObjParam *ip,ULONG flags,Animatabl
 void AlembicXformController::EndEditParams( IObjParam *ip, ULONG flags, Animatable *next )
 {
     LockableStdControl::EndEditParams(ip, flags, next);
-	sAlembicXFormCtrlClassDesc.EndEditParams(ip, this, flags, next);
+	sAlembicXformControllerClassDesc.EndEditParams(ip, this, flags, next);
 
 	this->ip = NULL;
     editMod  = NULL;

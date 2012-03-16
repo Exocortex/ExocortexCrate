@@ -27,7 +27,7 @@ typedef ClassDesc2* ClassDescPtr;
 
 ClassDesc2** getClassDescs( int& numClassDescs ) {
 	static ClassDescPtr s_classDescs[] = {
-		GetAlembicXFormCtrlClassDesc(),
+		GetAlembicXformControllerClassDesc(),
 		GetAlembicCameraBaseModifierClassDesc(),
 		GetAlembicVisCtrlClassDesc(),
 		GetAlembicSimpleParticleClassDesc(),
@@ -62,7 +62,7 @@ MAX_DLL_EXPORT ClassDesc* LibClassDesc(int i)
 	return NULL;
     /*switch(i) 
     {
-    case 0: return GetAlembicXFormCtrlClassDesc();
+    case 0: return GetAlembicXformControllerClassDesc();
     case 1: return GetAlembicMeshBaseModifierClassDesc();
     case 2: return GetAlembicCameraBaseModifierClassDesc();
     case 3: return GetAlembicVisCtrlClassDesc();
