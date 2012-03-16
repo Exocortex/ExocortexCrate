@@ -7,7 +7,7 @@
 #include "AlembicVisCtrl.h"
 #include "AlembicNames.h"
 
-
+ 
 //////////////////////////////////////////////////////////////////////////////////////////
 // Import options struct containing the information necessary to fill the camera object
 typedef struct _alembic_fillcamera_options
@@ -28,7 +28,7 @@ _alembic_fillcamera_options::_alembic_fillcamera_options()
     dTicks = 0;
 }
 
-
+ 
 //////////////////////////////////////////////////////////////////////////////////////////
 // Function Prototypes
 void AlembicImport_FillInCamera(alembic_fillcamera_options &options);

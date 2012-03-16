@@ -14,6 +14,7 @@
 #include <exprlib.h>
 #include <ifnpub.h> 
 #include <maxscript\maxscript.h>
+#include "AlembicMAXScript.h"
 
 bool isAlembicMeshValid( Alembic::AbcGeom::IObject *pIObj ) {
 	Alembic::AbcGeom::IPolyMesh objMesh;
@@ -821,10 +822,9 @@ int AlembicImport_PolyMesh(const std::string &path, const std::string &identifie
 		GetCOREInterface12()->AddModifier(*pNode, *pModifier);
 
 		if( isDynamicTopo ) {
-			char szBuffer[10000];
-			sprintf_s( szBuffer, 10000, "select $%s\n$.modifiers[#Alembic_Mesh_Topology].time.controller = float_expression()\n$.modifiers[#Alembic_Mesh_Topology].time.controller.setExpression \"S\"", pNode->GetName() );
-			//ESS_LOG_INFO( "MaxScript: " << szBuffer );
-			ExecuteMAXScriptScript( szBuffer );
+			char szControllerName[10000];
+			sprintf_s( szControllerName, 10000, "$'%s'.modifiers[#Alembic_Mesh_Topology].time", pNode->GetName() );
+			AlembicImport_ConnectTimeControl( szControllerName, options );
 		}
 	}
 	bool isUVWContant = true;
@@ -843,9 +843,9 @@ int AlembicImport_PolyMesh(const std::string &path, const std::string &identifie
 		// Add the modifier to the pNode
 		GetCOREInterface12()->AddModifier(*pNode, *pModifier);
 		if( ! isUVWContant ) {
-			char szBuffer[10000];
-			sprintf_s( szBuffer, 10000, "select $%s\n$.modifiers[#Alembic_Mesh_UVW].time.controller = float_expression()\n$.modifiers[#Alembic_Mesh_UVW].time.controller.setExpression \"S\"", pNode->GetName() );
-			ExecuteMAXScriptScript( szBuffer );
+			char szControllerName[10000];
+			sprintf_s( szControllerName, 10000, "$'%s'.modifiers[#Alembic_Mesh_UVW].time", pNode->GetName() );
+			AlembicImport_ConnectTimeControl( szControllerName, options );
 		}
 	}
 	bool isGeomContant = true;
@@ -866,10 +866,9 @@ int AlembicImport_PolyMesh(const std::string &path, const std::string &identifie
 		GetCOREInterface12()->AddModifier(*pNode, *pModifier);
 
 		if( ! isGeomContant ) {
-			char szBuffer[10000];
-			sprintf_s( szBuffer, 10000, "select $%s\n$.modifiers[#Alembic_Mesh_Geometry].time.controller = float_expression()\n$.modifiers[#Alembic_Mesh_Geometry].time.controller.setExpression \"S\"", pNode->GetName() );
-			//ESS_LOG_INFO( "MaxScript: " << szBuffer );
-			ExecuteMAXScriptScript( szBuffer );
+			char szControllerName[10000];
+			sprintf_s( szControllerName, 10000, "$'%s'.modifiers[#Alembic_Mesh_Geometry].time", pNode->GetName() );
+			AlembicImport_ConnectTimeControl( szControllerName, options );
 		}
 	}
 	bool isNormalsContant = true;
@@ -889,10 +888,9 @@ int AlembicImport_PolyMesh(const std::string &path, const std::string &identifie
 		GetCOREInterface12()->AddModifier(*pNode, *pModifier);
 
 		if( ! isNormalsContant ) {
-			char szBuffer[10000];
-			sprintf_s( szBuffer, 10000, "select $%s\n$.modifiers[#Alembic_Mesh_Normals].time.controller = float_expression()\n$.modifiers[#Alembic_Mesh_Normals].time.controller.setExpression \"S\"", pNode->GetName() );
-			//ESS_LOG_INFO( "MaxScript: " << szBuffer );
-			ExecuteMAXScriptScript( szBuffer );
+			char szControllerName[10000];
+			sprintf_s( szControllerName, 10000, "$'%s'.modifiers[#Alembic_Mesh_Normals].time", pNode->GetName() );
+			AlembicImport_ConnectTimeControl( szControllerName, options );
 		}
 	}
 

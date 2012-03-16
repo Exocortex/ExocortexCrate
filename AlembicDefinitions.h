@@ -46,6 +46,7 @@ typedef struct _alembic_importoptions
    VisImportOption importVisibility;
    SceneEnumProc sceneEnumProc;
    ObjectList currentSceneList;
+   HelperObject *pTimeControl;
 
 public:
    _alembic_importoptions() : importNormals(false)
@@ -55,6 +56,7 @@ public:
 	, importBboxes(false)
 	, attachToExisting(false)
     , importVisibility(VisImport_JustImportValue)
+	, pTimeControl(NULL)
    {
    }
 } alembic_importoptions;

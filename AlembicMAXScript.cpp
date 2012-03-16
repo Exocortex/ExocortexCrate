@@ -1,5 +1,3 @@
-
-
 #include "Alembic.h"
 #include "AlembicArchiveStorage.h"
 #include "AlembicMeshUtilities.h"
@@ -13,6 +11,7 @@
 #include "Utility.h"
 #include "AlembicSimpleSpline.h"
 #include "AlembicXformUtilities.h"
+#include <maxscript\maxscript.h>
 
 // Dummy function for progress bar
 DWORD WINAPI DummyProgressFunction(LPVOID arg)
@@ -170,6 +169,56 @@ public:
 const Interface_ID ExocortexAlembicStaticInterface::id = Interface_ID(0x4bd4297f, 0x4e8403d7);
 static ExocortexAlembicStaticInterface exocortexAlembic;
 
+void AlembicImport_TimeControl( alembic_importoptions &options ) {
+
+	// Create the xform modifier
+	HelperObject *pHelper = static_cast<HelperObject*>
+		(GetCOREInterface()->CreateInstance(HELPER_CLASS_ID, ALEMBIC_TIME_CONTROL_HELPER_CLASSID));
+
+	TimeValue zero( 0 );
+
+	// Set the alembic id
+	pHelper->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pHelper, 0, "current" ), zero, 0.0f );
+	pHelper->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pHelper, 0, "offset" ), zero, 0.0f );
+	pHelper->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pHelper, 0, "factor" ), zero, 1.0f );
+	
+	// Create the object node
+	INode *node = GetCOREInterface12()->CreateObjectNode(pHelper, _T("Alembic Time Control") );
+
+    // Add the new inode to our current scene list
+	SceneEntry *pEntry = options.sceneEnumProc.Append(node, pHelper, OBTYPE_CURVES, &std::string( node->GetName() ) ); 
+    options.currentSceneList.Append(pEntry);
+
+	char szBuffer[10000];	
+	sprintf_s( szBuffer, 10000,
+		"select $'%s'\n$.current.controller = float_expression()\n"
+		"$.current.controller.setExpression \"S\"\n"
+		"$.offset.controller = bezier_float()\n"
+		"$.factor.controller = bezier_float()\n"
+		, pHelper->GetObjectName() );
+	ExecuteMAXScriptScript( szBuffer );
+   
+	options.pTimeControl = pHelper;
+}
+
+void AlembicImport_ConnectTimeControl( char* szControllerName, alembic_importoptions &options ) {
+
+	char szBuffer[10000];	
+	sprintf_s( szBuffer, 10000, 
+		"%s.controller = float_expression()\n"
+		"%s.controller.AddScalarTarget \"current\" $'%s'.current.controller\n"
+		"%s.controller.AddScalarTarget \"offset\" $'%s'.offset.controller\n"
+		"%s.controller.AddScalarTarget \"factor\" $'%s'.factor.controller\n"
+		"%s.controller.setExpression \"current * factor + offset\"\n",
+		szControllerName,
+		szControllerName, options.pTimeControl->GetObjectName(),
+		szControllerName, options.pTimeControl->GetObjectName(),
+		szControllerName, options.pTimeControl->GetObjectName(),
+		szControllerName );
+
+	ExecuteMAXScriptScript( szBuffer );
+}
+
 int ExocortexAlembicStaticInterface::ExocortexAlembicImport(MCHAR* strPath, BOOL bImportNormals, BOOL bImportUVs, BOOL bImportMaterialIds, BOOL bAttachToExisting, int iVisOption)
 {
 	ESS_CPP_EXCEPTION_REPORTING_START
@@ -184,12 +233,12 @@ int ExocortexAlembicStaticInterface::ExocortexAlembicImport(MCHAR* strPath, BOOL
 		", bImportMaterialIds=" << bImportMaterialIds << ", bAttachToExisting=" << bAttachToExisting <<
 		", iVisOption=" << iVisOption << " )" );
 
-	alembic_importoptions importOptions;
-    importOptions.importNormals = (bImportNormals != FALSE);
-    importOptions.importUVs = (bImportUVs != FALSE);
-    importOptions.importMaterialIds = (bImportMaterialIds != FALSE);
-    importOptions.attachToExisting = (bAttachToExisting != FALSE);
-    importOptions.importVisibility = static_cast<VisImportOption>(iVisOption);
+	alembic_importoptions options;
+    options.importNormals = (bImportNormals != FALSE);
+    options.importUVs = (bImportUVs != FALSE);
+    options.importMaterialIds = (bImportMaterialIds != FALSE);
+    options.attachToExisting = (bAttachToExisting != FALSE);
+    options.importVisibility = static_cast<VisImportOption>(iVisOption);
 
 	// If no filename, then return an error code
 	if(strPath[0] == 0) {
@@ -224,9 +273,12 @@ int ExocortexAlembicStaticInterface::ExocortexAlembicImport(MCHAR* strPath, BOOL
    // Get a list of the current objects in the scene
    MeshMtlList allMtls;
    Interface12 *i = GetCOREInterface12();
-   importOptions.sceneEnumProc.Init(i->GetScene(), i->GetTime(), i, &allMtls);
-   importOptions.currentSceneList.FillList(importOptions.sceneEnumProc);
+   
+   options.sceneEnumProc.Init(i->GetScene(), i->GetTime(), i, &allMtls);
+   options.currentSceneList.FillList(options.sceneEnumProc);
    Object *currentObject = NULL;
+
+   AlembicImport_TimeControl( options );
 
    // Create the max objects as needed, we loop through the list in reverse to create
    // the children node first and then hook them up to their parents
@@ -236,35 +288,35 @@ int ExocortexAlembicStaticInterface::ExocortexAlembicImport(MCHAR* strPath, BOOL
        if(Alembic::AbcGeom::IXform::matches(objects[i].getMetaData()))
        {
 		   ESS_LOG_INFO( "AlembicImport_XForm: " << objects[i].getFullName() );
-           int ret = AlembicImport_XForm(file, objects[i].getFullName(), importOptions);
+           int ret = AlembicImport_XForm(file, objects[i].getFullName(), options);
        }
 
        // PolyMesh
        else if (Alembic::AbcGeom::IPolyMesh::matches(objects[i].getMetaData()))
        {
 		   ESS_LOG_INFO( "AlembicImport_PolyMesh: " << objects[i].getFullName() );
-           int ret = AlembicImport_PolyMesh(file, objects[i].getFullName(), importOptions); 
+           int ret = AlembicImport_PolyMesh(file, objects[i].getFullName(), options); 
        }
 
        // Camera
        else if (Alembic::AbcGeom::ICamera::matches(objects[i].getMetaData()))
        {
 		   ESS_LOG_INFO( "AlembicImport_Camera: " << objects[i].getFullName() );
-           int ret = AlembicImport_Camera(file, objects[i].getFullName(), importOptions);
+           int ret = AlembicImport_Camera(file, objects[i].getFullName(), options);
        }
 
        // Points
        else if (Alembic::AbcGeom::IPoints::matches(objects[i].getMetaData()))
        {
 		   ESS_LOG_INFO( "AlembicImport_Points: " << objects[i].getFullName() );
-           int ret = AlembicImport_Points(file, objects[i].getFullName(), importOptions);
+           int ret = AlembicImport_Points(file, objects[i].getFullName(), options);
        }
 
        // Curves
        else if (Alembic::AbcGeom::ICurves::matches(objects[i].getMetaData()))
        {
 		   ESS_LOG_INFO( "AlembicImport_Shape: " << objects[i].getFullName() );
-           int ret = AlembicImport_Shape(file, objects[i].getFullName(), importOptions);
+           int ret = AlembicImport_Shape(file, objects[i].getFullName(), options);
        }
    }
 

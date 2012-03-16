@@ -1,10 +1,11 @@
 #include "AlembicXformUtilities.h"
 #include <maxscript\maxscript.h>
+#include "AlembicMAXScript.h"
 
 bool isAlembicXform( Alembic::AbcGeom::IObject *pIObj, bool& isConstant ) {
 	Alembic::AbcGeom::IXform objXfrm;
 
-	isConstant = true;
+	isConstant = true; 
 
 	if(Alembic::AbcGeom::IXform::matches((*pIObj).getMetaData())) {
 		objXfrm = Alembic::AbcGeom::IXform(*pIObj,Alembic::Abc::kWrapExisting);
@@ -161,9 +162,9 @@ int AlembicImport_XForm(const std::string &file, const std::string &identifier, 
     pNode->SetTMController(pControl);
 
 	if( ! isConstant ) {
-		char szBuffer[10000];	
-		sprintf_s( szBuffer, 10000, "select $%s\n$.transform.controller.time.controller = float_expression()\n$.transform.controller.time.controller.setExpression \"S\"", pNode->GetName() );
-		ExecuteMAXScriptScript( szBuffer );
+		char szControllerName[10000];	
+		sprintf_s( szControllerName, 10000, "$'%s'.transform.controller.time", pNode->GetName() );
+		AlembicImport_ConnectTimeControl( szControllerName, options );
 	}
     pNode->InvalidateTreeTM();
 

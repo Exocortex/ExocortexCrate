@@ -4,6 +4,7 @@ include "Exocortex-Geometry-AlembicMesh.mcr"
 include "Exocortex-Modifier-AlembicCamera.mcr"
 include "Exocortex-Modifier-AlembicMesh.mcr"
 include "Exocortex-Modifier-AlembicTransform.mcr"
+include "Exocortex-Helper-AlembicTimeControl.mcr"
 
 ---------------------------------------------------------------------------------------------------------
 -- Function to create the menu items in the main menu bar

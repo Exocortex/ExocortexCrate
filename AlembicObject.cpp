@@ -11,7 +11,7 @@ using namespace AbcA;
 
 
 AlembicObject::AlembicObject (const SceneEntry & in_Ref, AlembicWriteJob * in_Job )
-{    
+{     
     AddRef(in_Ref);
     mJob = in_Job;
     mOParent = mJob->GetArchive().getTop();
