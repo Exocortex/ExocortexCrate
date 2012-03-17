@@ -811,8 +811,8 @@ int AlembicImport_PolyMesh(const std::string &path, const std::string &identifie
 
 	bool isDynamicTopo = isAlembicMeshTopoDynamic( &iObj );
 
-	ESS_LOG_INFO( "Node: " << pNode->GetName() );
-	ESS_LOG_INFO( "isDynamicTopo: " << isDynamicTopo );
+	//ESS_LOG_INFO( "Node: " << pNode->GetName() );
+	//ESS_LOG_INFO( "isDynamicTopo: " << isDynamicTopo );
 	{
 		// Create the polymesh modifier
 		Modifier *pModifier = static_cast<Modifier*>
@@ -850,7 +850,7 @@ int AlembicImport_PolyMesh(const std::string &path, const std::string &identifie
 	}
 	bool isUVWContant = true;
 	if( ( ! isDynamicTopo ) && isAlembicMeshUVWs( &iObj, isUVWContant ) ) {
-		ESS_LOG_INFO( "isUVWContant: " << isUVWContant );
+		//ESS_LOG_INFO( "isUVWContant: " << isUVWContant );
 	// Create the polymesh modifier
 		Modifier *pModifier = static_cast<Modifier*>
 			(GetCOREInterface12()->CreateInstance(OSM_CLASS_ID, ALEMBIC_MESH_UVW_MODIFIER_CLASSID));
@@ -878,7 +878,7 @@ int AlembicImport_PolyMesh(const std::string &path, const std::string &identifie
 	}
 	bool isGeomContant = true;
 	if( ( ! isDynamicTopo ) && isAlembicMeshPositions( &iObj, isGeomContant ) ) {
-		ESS_LOG_INFO( "isGeomContant: " << isGeomContant );
+		//ESS_LOG_INFO( "isGeomContant: " << isGeomContant );
 		// Create the polymesh modifier
 		Modifier *pModifier = static_cast<Modifier*>
 			(GetCOREInterface12()->CreateInstance(OSM_CLASS_ID, ALEMBIC_MESH_GEOM_MODIFIER_CLASSID));
@@ -905,7 +905,7 @@ int AlembicImport_PolyMesh(const std::string &path, const std::string &identifie
 	}
 	bool isNormalsContant = true;
 	if( ( ! isDynamicTopo ) && isAlembicMeshNormals( &iObj, isNormalsContant ) ) {
-		ESS_LOG_INFO( "isNormalsContant: " << isNormalsContant );
+		//ESS_LOG_INFO( "isNormalsContant: " << isNormalsContant );
 		// Create the polymesh modifier
 		Modifier *pModifier = static_cast<Modifier*>
 			(GetCOREInterface12()->CreateInstance(OSM_CLASS_ID, ALEMBIC_MESH_NORMALS_MODIFIER_CLASSID));
