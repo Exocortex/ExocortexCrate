@@ -272,8 +272,7 @@ int ExocortexAlembicStaticInterface::ExocortexAlembicImport(MCHAR* strPath, BOOL
 
    // Get a list of the current objects in the scene
 	Interface12 *i = GetCOREInterface12();
-    i->ProgressStart("Importing Alembic File", TRUE, DummyProgressFunction, NULL);
-
+ 
    MeshMtlList allMtls;
   
    options.sceneEnumProc.Init(i->GetScene(), i->GetTime(), i, &allMtls);
@@ -285,13 +284,50 @@ int ExocortexAlembicStaticInterface::ExocortexAlembicImport(MCHAR* strPath, BOOL
       
    // Create the max objects as needed, we loop through the list in reverse to create
    // the children node first and then hook them up to their parents
+   int totalAlemicItems = 0;
+	for(int j=(int)objects.size()-1; j>=0 ; j -= 1)
+   {
+		// XForm
+       if(Alembic::AbcGeom::IXform::matches(objects[j].getMetaData()))
+       {
+		   totalAlemicItems++;
+       }
+
+       // PolyMesh
+       else if (Alembic::AbcGeom::IPolyMesh::matches(objects[j].getMetaData()))
+       {
+		   totalAlemicItems++;
+       }
+
+       // Camera
+       else if (Alembic::AbcGeom::ICamera::matches(objects[j].getMetaData()))
+       {
+		   totalAlemicItems++;
+       }
+
+       // Points
+       else if (Alembic::AbcGeom::IPoints::matches(objects[j].getMetaData()))
+       {
+		   totalAlemicItems++;
+       }
+
+       // Curves
+       else if (Alembic::AbcGeom::ICurves::matches(objects[j].getMetaData()))
+       {
+		   totalAlemicItems++;
+       }
+   }
+	char szBuffer[1000];
+	sprintf_s( szBuffer, 1000, "Importing %i Alembic Streams", totalAlemicItems );
+   i->ProgressStart(szBuffer, TRUE, DummyProgressFunction, NULL);
+
    int progressUpdateInterval = 0;
    for(int j=(int)objects.size()-1; j>=0 ; j -= 1)
    {
-	   progressUpdateInterval ++;
-	   if( ( progressUpdateInterval % 10 ) == 0 ) {
-			double dbProgress = ((double)objects.size() - 1 - j) / objects.size();
+		if( ( progressUpdateInterval % 10 ) == 0 ) {
+			double dbProgress = ((double)progressUpdateInterval) / totalAlemicItems;
 	        i->ProgressUpdate(static_cast<int>(100 * dbProgress));
+			progressUpdateInterval ++;
 	   }
 
 		// XForm
@@ -299,6 +335,7 @@ int ExocortexAlembicStaticInterface::ExocortexAlembicImport(MCHAR* strPath, BOOL
        {
 		   //ESS_LOG_INFO( "AlembicImport_XForm: " << objects[j].getFullName() );
            int ret = AlembicImport_XForm(file, objects[j].getFullName(), options);
+			progressUpdateInterval ++;
        }
 
        // PolyMesh
@@ -306,6 +343,7 @@ int ExocortexAlembicStaticInterface::ExocortexAlembicImport(MCHAR* strPath, BOOL
        {
 		   //ESS_LOG_INFO( "AlembicImport_PolyMesh: " << objects[j].getFullName() );
            int ret = AlembicImport_PolyMesh(file, objects[j].getFullName(), options); 
+			progressUpdateInterval ++;
        }
 
        // Camera
@@ -313,6 +351,7 @@ int ExocortexAlembicStaticInterface::ExocortexAlembicImport(MCHAR* strPath, BOOL
        {
 		  // ESS_LOG_INFO( "AlembicImport_Camera: " << objects[j].getFullName() );
            int ret = AlembicImport_Camera(file, objects[j].getFullName(), options);
+			progressUpdateInterval ++;
        }
 
        // Points
@@ -320,14 +359,16 @@ int ExocortexAlembicStaticInterface::ExocortexAlembicImport(MCHAR* strPath, BOOL
        {
 		   //ESS_LOG_INFO( "AlembicImport_Points: " << objects[j].getFullName() );
            int ret = AlembicImport_Points(file, objects[j].getFullName(), options);
-       }
+ 			progressUpdateInterval ++;
+      }
 
        // Curves
        else if (Alembic::AbcGeom::ICurves::matches(objects[j].getMetaData()))
        {
 		   //ESS_LOG_INFO( "AlembicImport_Shape: " << objects[j].getFullName() );
            int ret = AlembicImport_Shape(file, objects[j].getFullName(), options);
-       }
+ 			progressUpdateInterval ++;
+      }
    }
 
    i->ProgressEnd();

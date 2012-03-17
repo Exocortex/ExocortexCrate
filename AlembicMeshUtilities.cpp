@@ -807,6 +807,8 @@ int AlembicImport_PolyMesh(const std::string &path, const std::string &identifie
 
 	TimeValue zero( 0 );
 
+	std::vector<Modifier*> modifiersToEnable;
+
 	bool isDynamicTopo = isAlembicMeshTopoDynamic( &iObj );
 
 	ESS_LOG_INFO( "Node: " << pNode->GetName() );
@@ -815,6 +817,8 @@ int AlembicImport_PolyMesh(const std::string &path, const std::string &identifie
 		// Create the polymesh modifier
 		Modifier *pModifier = static_cast<Modifier*>
 			(GetCOREInterface12()->CreateInstance(OSM_CLASS_ID, ALEMBIC_MESH_TOPO_MODIFIER_CLASSID));
+
+		pModifier->DisableMod();
 
 		// Set the alembic id
 		pModifier->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pModifier, 0, "path" ), zero, path.c_str());
@@ -841,6 +845,8 @@ int AlembicImport_PolyMesh(const std::string &path, const std::string &identifie
 			sprintf_s( szControllerName, 10000, "$'%s'.modifiers[#Alembic_Mesh_Topology].time", pNode->GetName() );
 			AlembicImport_ConnectTimeControl( szControllerName, options );
 		}
+
+		modifiersToEnable.push_back( pModifier );
 	}
 	bool isUVWContant = true;
 	if( ( ! isDynamicTopo ) && isAlembicMeshUVWs( &iObj, isUVWContant ) ) {
@@ -849,22 +855,25 @@ int AlembicImport_PolyMesh(const std::string &path, const std::string &identifie
 		Modifier *pModifier = static_cast<Modifier*>
 			(GetCOREInterface12()->CreateInstance(OSM_CLASS_ID, ALEMBIC_MESH_UVW_MODIFIER_CLASSID));
 
+		pModifier->DisableMod();
+
 		// Set the alembic id
 		pModifier->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pModifier, 0, "path" ), zero, path.c_str());
 		pModifier->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pModifier, 0, "identifier" ), zero, identifier.c_str() );
 		pModifier->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pModifier, 0, "time" ), zero, 0.0f );
 		pModifier->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pModifier, 0, "muted" ), zero, FALSE );
 
-		if( ! options.importUVs ) {
-			pModifier->DisableMod();
-		}
-
+	
 		// Add the modifier to the pNode
 		GetCOREInterface12()->AddModifier(*pNode, *pModifier);
 		if( ! isUVWContant ) {
 			char szControllerName[10000];
 			sprintf_s( szControllerName, 10000, "$'%s'.modifiers[#Alembic_Mesh_UVW].time", pNode->GetName() );
 			AlembicImport_ConnectTimeControl( szControllerName, options );
+		}
+
+		if( options.importUVs ) {
+			modifiersToEnable.push_back( pModifier );
 		}
 	}
 	bool isGeomContant = true;
@@ -874,13 +883,15 @@ int AlembicImport_PolyMesh(const std::string &path, const std::string &identifie
 		Modifier *pModifier = static_cast<Modifier*>
 			(GetCOREInterface12()->CreateInstance(OSM_CLASS_ID, ALEMBIC_MESH_GEOM_MODIFIER_CLASSID));
 
+		pModifier->DisableMod();
+
 		// Set the alembic id
 		pModifier->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pModifier, 0, "path" ), zero, path.c_str());
 		pModifier->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pModifier, 0, "identifier" ), zero, identifier.c_str() );
 		pModifier->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pModifier, 0, "geoAlpha" ), zero, 1.0f );
 		pModifier->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pModifier, 0, "time" ), zero, 0.0f );
 		pModifier->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pModifier, 0, "muted" ), zero, FALSE );
-
+	
 		// Add the modifier to the pNode
 		GetCOREInterface12()->AddModifier(*pNode, *pModifier);
 
@@ -889,6 +900,8 @@ int AlembicImport_PolyMesh(const std::string &path, const std::string &identifie
 			sprintf_s( szControllerName, 10000, "$'%s'.modifiers[#Alembic_Mesh_Geometry].time", pNode->GetName() );
 			AlembicImport_ConnectTimeControl( szControllerName, options );
 		}
+
+		modifiersToEnable.push_back( pModifier );
 	}
 	bool isNormalsContant = true;
 	if( ( ! isDynamicTopo ) && isAlembicMeshNormals( &iObj, isNormalsContant ) ) {
@@ -897,14 +910,12 @@ int AlembicImport_PolyMesh(const std::string &path, const std::string &identifie
 		Modifier *pModifier = static_cast<Modifier*>
 			(GetCOREInterface12()->CreateInstance(OSM_CLASS_ID, ALEMBIC_MESH_NORMALS_MODIFIER_CLASSID));
 
+		pModifier->DisableMod();
+
 		// Set the alembic id
 		pModifier->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pModifier, 0, "path" ), zero, path.c_str());
 		pModifier->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pModifier, 0, "identifier" ), zero, identifier.c_str() );
 		pModifier->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pModifier, 0, "time" ), zero, 0.0f );
-
-		if( ! options.importNormals ) {
-			pModifier->DisableMod();
-		}
 
 		// Add the modifier to the pNode
 		GetCOREInterface12()->AddModifier(*pNode, *pModifier);
@@ -914,6 +925,10 @@ int AlembicImport_PolyMesh(const std::string &path, const std::string &identifie
 			sprintf_s( szControllerName, 10000, "$'%s'.modifiers[#Alembic_Mesh_Normals].time", pNode->GetName() );
 			AlembicImport_ConnectTimeControl( szControllerName, options );
 		}
+	
+		if( options.importNormals ) {
+			modifiersToEnable.push_back( pModifier );
+		}
 	}
 
     // Add the new inode to our current scene list
@@ -922,6 +937,10 @@ int AlembicImport_PolyMesh(const std::string &path, const std::string &identifie
 
     // Set the visibility controller
     AlembicImport_SetupVisControl(iObj, pNode, options);
+
+	for( int i = 0; i < modifiersToEnable.size(); i ++ ) {
+		modifiersToEnable[i]->EnableMod();
+	}
 
 	return 0;
 }
