@@ -6,7 +6,7 @@
 #include "AlembicArchiveStorage.h"
 #include "utility.h"
 #include "iparamb2.h"
-#include "AlembicVisCtrl.h"
+#include "AlembicVisibilityController.h"
 #include <linshape.h>
 #include <splshape.h>
 #include <iparamb2.h>
@@ -829,7 +829,7 @@ int AlembicImport_Shape(const std::string &file, const std::string &identifier, 
     options.currentSceneList.Append(pEntry);
 
     // Set the visibility controller
-    AlembicImport_SetupVisControl(iObj, node, options);
+    AlembicImport_SetupVisControl(file.c_str(), identifier.c_str(), iObj, node, options);
 
 	return 0;
 }

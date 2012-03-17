@@ -260,6 +260,8 @@ BEGIN
     LTEXT           "Identifier:",-1,0,21,32,8
 END
 
+
+
 IDD_ALEMBIC_XFORM_PARAMS DIALOGEX 0, 0, 108, 83
 STYLE DS_SETFONT | WS_CHILD | WS_VISIBLE
 FONT 8, "MS Sans Serif", 0, 0, 0x1
@@ -273,6 +275,21 @@ BEGIN
     CONTROL         "Custom1",IDC_IDENTIFIER_EDIT,"CustEdit",WS_TABSTOP,0,29,107,12
     LTEXT           "Identifier:",-1,0,21,32,8
     CONTROL         "Camera",IDC_CAMERA_CHECKBOX,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,39,57,40,10
+END
+
+
+IDD_ALEMBIC_VISIBILITY_PARAMS DIALOGEX 0, 0, 108, 83
+STYLE DS_SETFONT | WS_CHILD | WS_VISIBLE
+FONT 8, "MS Sans Serif", 0, 0, 0x1
+BEGIN
+    CONTROL         "Custom1",IDC_PATH_EDIT,"CustEdit",WS_TABSTOP,0,8,107,13
+    CONTROL         "",IDC_TIME_SPIN,"SpinnerControl",0x0,91,44,7,10
+    RTEXT           "Time:",-1,19,44,32,8
+    CONTROL         "",IDC_TIME_EDIT,"CustEdit",WS_TABSTOP,53,44,36,10
+    CONTROL         "Muted ",IDC_MUTED_CHECKBOX,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,40,68,38,10
+    LTEXT           "Path:",-1,0,0,32,8
+    CONTROL         "Custom1",IDC_IDENTIFIER_EDIT,"CustEdit",WS_TABSTOP,0,29,107,12
+    LTEXT           "Identifier:",-1,0,21,32,8
 END
 
 

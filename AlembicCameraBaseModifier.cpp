@@ -4,7 +4,7 @@
 #include "AlembicArchiveStorage.h"
 #include "utility.h"
 #include "iparamb2.h"
-#include "AlembicVisCtrl.h"
+#include "AlembicVisibilityController.h"
 #include "AlembicNames.h"
 
  
@@ -305,7 +305,7 @@ int AlembicImport_Camera(const std::string &path, const std::string &identifier,
 
 	// Set the alembic id
 	pModifier->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pModifier, 0, "path" ), now, path.c_str());
-	pModifier->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pModifier, 0, "identifier" ), now , identifier.c_str() );
+	pModifier->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pModifier, 0, "identifier" ), now, identifier.c_str() );
 	
 	// Set the alembic id
 	//pModifier->SetCamera(pCameraObj);
@@ -318,7 +318,7 @@ int AlembicImport_Camera(const std::string &path, const std::string &identifier,
     options.currentSceneList.Append(pEntry);
 
     // Set the visibility controller
-    AlembicImport_SetupVisControl(iObj, pNode, options);
+    AlembicImport_SetupVisControl( path, identifier, iObj, pNode, options);
 
 	return 0;
 

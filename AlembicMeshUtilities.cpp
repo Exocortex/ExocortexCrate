@@ -7,7 +7,7 @@
 #include <Assetmanagement\AssetType.h>
 #include "alembic.h"
 #include "AlembicXForm.h"
-#include "AlembicVisCtrl.h"
+#include "AlembicVisibilityController.h"
 #include "AlembicNames.h"
 #include "AlembicMeshUtilities.h"
 #include <exprlib.h>
@@ -936,7 +936,7 @@ int AlembicImport_PolyMesh(const std::string &path, const std::string &identifie
     options.currentSceneList.Append(pEntry);
 
     // Set the visibility controller
-    AlembicImport_SetupVisControl(iObj, pNode, options);
+    AlembicImport_SetupVisControl( path.c_str(), identifier.c_str(), iObj, pNode, options);
 
 	for( int i = 0; i < modifiersToEnable.size(); i ++ ) {
 		modifiersToEnable[i]->EnableMod();

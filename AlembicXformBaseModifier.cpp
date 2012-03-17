@@ -8,7 +8,7 @@
 #include <Assetmanagement\AssetType.h>
 #include "alembic.h"
 #include "AlembicXForm.h"
-#include "AlembicVisCtrl.h"
+#include "AlembicVisibilityController.h"
 #include "ParamBlockUtility.h"
 #include "AlembicXformUtilities.h"
 

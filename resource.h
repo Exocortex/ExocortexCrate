@@ -123,6 +123,7 @@
 #define IDS_TIMEOFFSET                  4013
 #define IDS_TIMESCALE                   4014
 #define IDS_CURRENTTIMEHIDDEN           4015
+#define IDD_ALEMBIC_VISIBILITY_PARAMS   4016
 #define IDS_RB_RADIUS                   30045
 #define IDS_RB_SEGS                     30046
 #define IDS_RB_POS                      30047

@@ -2,7 +2,7 @@
 #include "AlembicDefinitions.h"
 #include "AlembicSimpleParticle.h"
 #include "AlembicArchiveStorage.h"
-#include "AlembicVisCtrl.h"
+#include "AlembicVisibilityController.h"
 #include "utility.h"
 #include "iparamb2.h"
 
@@ -314,7 +314,7 @@ int AlembicImport_Points(const std::string &file, const std::string &identifier,
     options.currentSceneList.Append(pEntry);
 
     // Set the visibility controller
-    AlembicImport_SetupVisControl(iObj, pNode, options);
+    AlembicImport_SetupVisControl( file.c_str(), identifier.c_str(), iObj, pNode, options);
 
     return 0;
 }

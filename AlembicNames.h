@@ -19,10 +19,8 @@
 #define ALEMBIC_TRANSFORM_MODIFIER_CLASSID			Class_ID(0x20730666, 0x5d650666)
 
 #define ALEMBIC_SIMPLE_SPLINE_CLASSID				Class_ID(0xa720ab9, 0x7efc73de)
-#define ALEMBIC_VIS_CTRL_CLASSID					Class_ID(0x27e512c0, 0x389b3971)
 #define ALEMBIC_SIMPLE_PARTICLE_CLASSID				Class_ID(0x246b1c1e, 0x3b2f032f)
 #define ALEMBIC_EXPORTER_CLASSID					Class_ID(0x79d613a4, 0x4f21c3ad)
-
 
 #define ALEMBIC_MESH_NORMALS_MODIFIER_CLASSID		Class_ID(0x4a9c3800, 0x7f1d67d8)
 #define ALEMBIC_MESH_NORMALS_MODIFIER_NAME			"Alembic Mesh Normals"
@@ -43,6 +41,10 @@
 #define ALEMBIC_XFORM_CONTROLLER_CLASSID			Class_ID(0x9bf4cdb, 0xe29448e)
 #define ALEMBIC_XFORM_CONTROLLER_NAME				"Alembic Xform"
 #define ALEMBIC_XFORM_CONTROLLER_SCRIPTNAME			"AlembicXform"
+
+#define ALEMBIC_VISIBILITY_CONTROLLER_CLASSID		Class_ID(0x27e512c0, 0x389b3971)
+#define ALEMBIC_VISIBILITY_CONTROLLER_NAME			"Alembic Visibility"
+#define ALEMBIC_VISIBILITY_CONTROLLER_SCRIPTNAME	"AlembicVisibility"
 
 #define ALEMBIC_TIME_CONTROL_HELPER_CLASSID			Class_ID(0x4eb65d6, 0x7c454597)
 #define ALEMBIC_TIME_CONTROL_HELPER_NAME			"Alembic Time Control"
@@ -74,7 +76,7 @@
 
 ClassDesc2* GetAlembicXformControllerClassDesc();
 ClassDesc2* GetAlembicCameraBaseModifierClassDesc();
-ClassDesc2* GetAlembicVisCtrlClassDesc();
+ClassDesc2* GetAlembicVisibilityControllerClassDesc();
 ClassDesc2* GetAlembicSimpleParticleClassDesc();
 ClassDesc2* GetAlembicSimpleSplineClassDesc();
 ClassDesc2* GetAlembicMeshTopoModifierClassDesc();
