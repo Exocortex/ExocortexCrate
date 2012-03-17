@@ -50,6 +50,18 @@ static ParamBlockDesc2 AlembicMeshTopoModifierParams(
 		p_ui,            TYPE_SPINNER,       EDITTYPE_FLOAT, IDC_TIME_EDIT,    IDC_TIME_SPIN, 0.01f,
 		end,
 
+	AlembicMeshTopoModifier::ID_GEOMETRY, _T("geometry"), TYPE_BOOL, P_ANIMATABLE, IDS_GEOMETRY,
+		p_default,       FALSE,
+		end,
+
+	AlembicMeshTopoModifier::ID_NORMALS, _T("normals"), TYPE_BOOL, P_ANIMATABLE, IDS_NORMALS,
+		p_default,       FALSE,
+		end,
+
+	AlembicMeshTopoModifier::ID_UVS, _T("uvs"), TYPE_BOOL, P_ANIMATABLE, IDS_UVS,
+		p_default,       FALSE,
+		end,
+		
 	AlembicMeshTopoModifier::ID_MUTED, _T("muted"), TYPE_BOOL, P_ANIMATABLE, IDS_MUTED,
 		p_default,       TRUE,
 		p_ui,            TYPE_SINGLECHEKBOX,  IDC_MUTED_CHECKBOX,
@@ -94,10 +106,16 @@ void AlembicMeshTopoModifier::ModifyObject (TimeValue t, ModContext &mc, ObjectS
 	this->pblock->GetValue( AlembicMeshTopoModifier::ID_TIME, t, fTime, interval);
 
 	BOOL bTopology = true;
-	BOOL bGeometry = false;
 	float fGeoAlpha = 1.0f;
-	BOOL bNormals = false;
-	BOOL bUVs = false;
+
+	BOOL bGeometry;
+	this->pblock->GetValue( AlembicMeshTopoModifier::ID_GEOMETRY, t, bGeometry, interval);
+
+	BOOL bNormals;
+	this->pblock->GetValue( AlembicMeshTopoModifier::ID_NORMALS, t, bNormals, interval);
+
+	BOOL bUVs;
+	this->pblock->GetValue( AlembicMeshTopoModifier::ID_UVS, t, bUVs, interval);
 
 	BOOL bMuted;
 	this->pblock->GetValue( AlembicMeshTopoModifier::ID_MUTED, t, bMuted, interval);
@@ -137,12 +155,12 @@ void AlembicMeshTopoModifier::ModifyObject (TimeValue t, ModContext &mc, ObjectS
 	}
 
    alembic_fillmesh_options options;
-   options.pIObj = &iObj;
+   options.pIObj = &iObj; 
    options.dTicks = GetTimeValueFromSeconds( fTime );
    options.nDataFillFlags = 0;
    options.fVertexAlpha = fGeoAlpha;
     if( bTopology ) {
-	   options.nDataFillFlags |= ALEMBIC_DATAFILL_FACELIST;
+		options.nDataFillFlags |= ALEMBIC_DATAFILL_FACELIST;
 		options.nDataFillFlags |= ALEMBIC_DATAFILL_FACESETS;
    }
    if( bGeometry ) {

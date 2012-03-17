@@ -23,12 +23,12 @@ public:
 		ID_PATH,
 		ID_IDENTIFIER,
 		ID_TIME,
-/*		ID_TOPOLOGY,
+/*		ID_TOPOLOGY,*/
 		ID_GEOMETRY,
-		ID_GEOALPHA,
+		//ID_GEOALPHA,
 		ID_NORMALS,
-		ID_UVS,*/
-		ID_MUTED
+		ID_UVS,
+		ID_MUTED,
 	};
 
 	static IObjParam *ip;

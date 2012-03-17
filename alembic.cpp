@@ -11,7 +11,7 @@
 #include "resource.h"
 #include "utility.h"
 #include "AlembicNames.h"
-
+ 
 // Dummy function for progress bar
 DWORD WINAPI fn(LPVOID arg)
 { 

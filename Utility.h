@@ -77,8 +77,15 @@ inline Imath::V3f ConvertMaxNormalToAlembicNormal( const Point3 &maxPoint )
 
 inline Point3 ConvertAlembicNormalToMaxNormal( const Imath::V3f &alembicPoint )
 {
-	return Point3(alembicPoint.x, -alembicPoint.z, alembicPoint.y).Normalize();
+	return Point3(alembicPoint.x, -alembicPoint.z, alembicPoint.y);
 }
+
+inline Point3 ConvertAlembicNormalToMaxNormal_Normalized( const Imath::V3f &alembicPoint )
+{
+	return ConvertAlembicNormalToMaxNormal(alembicPoint).Normalize();
+}
+
+
 
 // Utility functions for working on INodes
 bool CheckIfNodeIsAnimated( INode *pNode );

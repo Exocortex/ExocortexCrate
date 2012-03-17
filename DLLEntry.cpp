@@ -1,7 +1,7 @@
 #include "Alembic.h"
 #include "AlembicDefinitions.h"
 #include "iparamm2.h"
-#include "AlembicNames.h"
+#include "AlembicNames.h" 
 
 HINSTANCE hInstance;
 
@@ -32,7 +32,6 @@ ClassDesc2** getClassDescs( int& numClassDescs ) {
 		GetAlembicVisCtrlClassDesc(),
 		GetAlembicSimpleParticleClassDesc(),
 		GetAlembicSimpleSplineClassDesc(),
-		GetAlembicMeshBaseModifierClassDesc(),
 		GetAlembicMeshTopoModifierClassDesc(),
 		GetAlembicMeshGeomModifierClassDesc(),
 		GetAlembicMeshNormalsModifierClassDesc(),
@@ -60,18 +59,6 @@ MAX_DLL_EXPORT ClassDesc* LibClassDesc(int i)
 		return ppClassDescs[i];
 	}
 	return NULL;
-    /*switch(i) 
-    {
-    case 0: return GetAlembicXformControllerClassDesc();
-    case 1: return GetAlembicMeshBaseModifierClassDesc();
-    case 2: return GetAlembicCameraBaseModifierClassDesc();
-    case 3: return GetAlembicVisCtrlClassDesc();
-    case 4: return GetAlembicSimpleParticleClassDesc();
-    case 5: return GetAlembicSimpleSplineClassDesc();
-	case 6: return GetAlembicXformBaseModifierClassDesc();
-
-    default: return 0;
-    }*/
 }
 
 

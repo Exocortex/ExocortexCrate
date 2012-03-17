@@ -1,6 +1,5 @@
 #include "Alembic.h"
 #include "AlembicDefinitions.h"
-#include "AlembicMeshBaseModifier.h"
 #include "AlembicArchiveStorage.h"
 #include "utility.h"
 #include <iparamb2.h>
@@ -203,7 +202,7 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
 
 
    if(  ( options.nDataFillFlags & ALEMBIC_DATAFILL_FACELIST ) ||
-	   ( options.nDataFillFlags & ALEMBIC_DATAFILL_VERTEX ) || hasDynamicTopo  ) {
+	   ( options.nDataFillFlags & ALEMBIC_DATAFILL_VERTEX ) ) {
 		   if (currentNumVerts != meshPos->size())
 		   {
 			   int numVerts = static_cast<int>(meshPos->size());
@@ -228,7 +227,7 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
 		   } 
    }
 
-   if ( ( options.nDataFillFlags & ALEMBIC_DATAFILL_VERTEX ) || ( ( options.nDataFillFlags & ALEMBIC_DATAFILL_FACELIST ) && hasDynamicTopo ) )
+   if ( options.nDataFillFlags & ALEMBIC_DATAFILL_VERTEX )
    {
 
  
@@ -406,7 +405,7 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
 		}
    }
 
-   if ( objMesh.valid() && ( ( options.nDataFillFlags & ALEMBIC_DATAFILL_NORMALS ) || ( ( options.nDataFillFlags & ALEMBIC_DATAFILL_FACELIST ) && hasDynamicTopo ) ) )
+   if ( objMesh.valid() && ( options.nDataFillFlags & ALEMBIC_DATAFILL_NORMALS ) )
    {
        Alembic::AbcGeom::IN3fGeomParam meshNormalsParam = objMesh.getSchema().getNormalsParam();
 
@@ -420,7 +419,7 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
 		   Imath::V3f const* pMeshNormalsFloor = ( meshNormalsFloor.get() != NULL ) ? meshNormalsFloor->get() : NULL;
 		   Imath::V3f const* pMeshNormalsCeil = ( meshNormalsCeil.get() != NULL ) ? meshNormalsCeil->get() : NULL;
 
-           // Blend
+           // Blend 
            if (sampleInfo.alpha != 0.0f && meshNormalsFloor->size() == meshNormalsCeil->size())
            {
                int offset = 0;
@@ -432,7 +431,7 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
                    for (int j = first; j >= last; j -= 1)
                    {
 					   Imath::V3f interpolatedNormal = pMeshNormalsFloor[j] + (pMeshNormalsCeil[j] - pMeshNormalsFloor[j]) * float(sampleInfo.alpha);
-                       normalsToSet.push_back( ConvertAlembicNormalToMaxNormal( interpolatedNormal ) );
+                       normalsToSet.push_back( ConvertAlembicNormalToMaxNormal_Normalized( interpolatedNormal ) );
                    }
 
                    offset += degree;
@@ -448,7 +447,6 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
                    int last = offset;
                    for (int j = first; j >= last; j -=1)
                    {
-                       Point3 alembicNormal(pMeshNormalsFloor[j].x, pMeshNormalsFloor[j].y, pMeshNormalsFloor[j].z);
                        normalsToSet.push_back( ConvertAlembicNormalToMaxNormal( pMeshNormalsFloor[j] ) );
                    }
 
@@ -535,7 +533,7 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
        }
    }
 
-   if ( ( options.nDataFillFlags & ALEMBIC_DATAFILL_UVS ) || ( ( options.nDataFillFlags & ALEMBIC_DATAFILL_FACELIST ) && hasDynamicTopo ))
+   if ( options.nDataFillFlags & ALEMBIC_DATAFILL_UVS )
    {
        Alembic::AbcGeom::IV2fGeomParam meshUvParam;
        if(objMesh.valid())
@@ -608,20 +606,22 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
                map->setNumVerts(numVertices);
                map->setNumFaces(numFaces);
 
+			   Point3* mapV = map->v;
                for (int i = 0; i < numVertices; i += 1)
                {
-                   map->v[i] = uvsToSet[i];
+                   mapV[i] = uvsToSet[i];
                }
 
                int offset = 0;
+               MNMapFace* mapF = map->f;
                for (int i =0; i < numFaces; i += 1)
                {
                    int degree = options.pMNMesh->F(i)->deg;
-                   map->f[i].SetSize(degree);
+                   mapF[i].SetSize(degree);
 
                    for (int j = 0; j < degree; j ++)
                    {
-                       map->f[i].tv[j] = offset;
+                       mapF[i].tv[j] = offset;
                        ++offset;
                    }
                }
@@ -646,7 +646,7 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
        }
    }
 
-   if ( ( options.nDataFillFlags & ALEMBIC_DATAFILL_FACESETS ) || ( ( options.nDataFillFlags & ALEMBIC_DATAFILL_FACELIST ) && hasDynamicTopo ))
+   if ( options.nDataFillFlags & ALEMBIC_DATAFILL_FACESETS )
    {
        std::vector<std::string> faceSetNames;
        if(objMesh.valid())
@@ -683,24 +683,24 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
                        options.pMesh->faces[faceId].setMatID(nMatId);
                    }
                }
-           }
+           } 
        }
    }
 
-   if (options.pMNMesh != NULL)
+  
+
+  // This isn't required if we notify 3DS Max properly via the channel flags for vertex changes.
+
+  if (options.pMNMesh != NULL)
    {
 	   if ( options.nDataFillFlags & ALEMBIC_DATAFILL_FACELIST ) {
 		   options.pMNMesh->InvalidateTopoCache();
 	   }
-	   else {
+	   /*else {
 		   if( options.nDataFillFlags & ALEMBIC_DATAFILL_VERTEX ) {
 			options.pMNMesh->InvalidateGeomCache();
 		   }
-	   }
-
-	   // this can fail if the mesh isn't correctly filled in.
-	   //if (!options.pMNMesh->GetFlag(MN_MESH_FILLED_IN ))
-	   //    options.pMNMesh->FillInMesh(); 
+	   }*/
    }
 
    if (options.pMesh != NULL)
@@ -708,11 +708,11 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
 	   if ( options.nDataFillFlags & ALEMBIC_DATAFILL_FACELIST ) {
 		   options.pMesh->InvalidateTopologyCache();
 	   }
-	   else {
+	  /* else {
 		   if( options.nDataFillFlags & ALEMBIC_DATAFILL_VERTEX ) {
 			   options.pMesh->InvalidateGeomCache();
 		   }
-	   }
+	   }*/
    }
 }
 
@@ -820,6 +820,17 @@ int AlembicImport_PolyMesh(const std::string &path, const std::string &identifie
 		pModifier->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pModifier, 0, "path" ), zero, path.c_str());
 		pModifier->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pModifier, 0, "identifier" ), zero, identifier.c_str() );
 		pModifier->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pModifier, 0, "time" ), zero, 0.0f );
+		if( isDynamicTopo ) {
+			pModifier->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pModifier, 0, "geometry" ), zero, TRUE );
+			pModifier->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pModifier, 0, "normals" ), zero, ( options.importNormals ? TRUE : FALSE ) );
+			pModifier->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pModifier, 0, "uvs" ), zero, ( options.importMaterialIds ? TRUE : FALSE ) );
+		}
+		else {
+			pModifier->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pModifier, 0, "geometry" ), zero, FALSE );
+			pModifier->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pModifier, 0, "normals" ), zero, FALSE );
+			pModifier->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pModifier, 0, "uvs" ), zero, FALSE );
+		}
+
 		pModifier->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pModifier, 0, "muted" ), zero, FALSE );
 	
 		// Add the modifier to the pNode
@@ -843,6 +854,10 @@ int AlembicImport_PolyMesh(const std::string &path, const std::string &identifie
 		pModifier->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pModifier, 0, "identifier" ), zero, identifier.c_str() );
 		pModifier->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pModifier, 0, "time" ), zero, 0.0f );
 		pModifier->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pModifier, 0, "muted" ), zero, FALSE );
+
+		if( ! options.importUVs ) {
+			pModifier->DisableMod();
+		}
 
 		// Add the modifier to the pNode
 		GetCOREInterface12()->AddModifier(*pNode, *pModifier);
@@ -886,7 +901,10 @@ int AlembicImport_PolyMesh(const std::string &path, const std::string &identifie
 		pModifier->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pModifier, 0, "path" ), zero, path.c_str());
 		pModifier->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pModifier, 0, "identifier" ), zero, identifier.c_str() );
 		pModifier->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pModifier, 0, "time" ), zero, 0.0f );
-		pModifier->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pModifier, 0, "muted" ), zero, FALSE );
+
+		if( ! options.importNormals ) {
+			pModifier->DisableMod();
+		}
 
 		// Add the modifier to the pNode
 		GetCOREInterface12()->AddModifier(*pNode, *pModifier);

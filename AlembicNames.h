@@ -77,7 +77,6 @@ ClassDesc2* GetAlembicCameraBaseModifierClassDesc();
 ClassDesc2* GetAlembicVisCtrlClassDesc();
 ClassDesc2* GetAlembicSimpleParticleClassDesc();
 ClassDesc2* GetAlembicSimpleSplineClassDesc();
-ClassDesc2* GetAlembicMeshBaseModifierClassDesc();
 ClassDesc2* GetAlembicMeshTopoModifierClassDesc();
 ClassDesc2* GetAlembicMeshGeomModifierClassDesc();
 ClassDesc2* GetAlembicMeshNormalsModifierClassDesc();

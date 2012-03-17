@@ -191,11 +191,11 @@ void AlembicImport_TimeControl( alembic_importoptions &options ) {
 
 	char szBuffer[10000];	
 	sprintf_s( szBuffer, 10000,
-		"select $'%s'\n$.current.controller = float_expression()\n"
-		"$.current.controller.setExpression \"S\"\n"
-		"$.offset.controller = bezier_float()\n"
-		"$.factor.controller = bezier_float()\n"
-		, node->GetName() );
+		"$'%s'.current.controller = float_expression()\n"
+		"$'%s'.current.controller.setExpression \"S\"\n"
+		"$'%s'.offset.controller = bezier_float()\n"
+		"$'%s'.factor.controller = bezier_float()\n"
+		, node->GetName(), node->GetName(), node->GetName(), node->GetName() );
 	ExecuteMAXScriptScript( szBuffer );
    
 	options.pTimeControl = pHelper;
