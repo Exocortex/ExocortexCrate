@@ -271,55 +271,66 @@ int ExocortexAlembicStaticInterface::ExocortexAlembicImport(MCHAR* strPath, BOOL
    }
 
    // Get a list of the current objects in the scene
+	Interface12 *i = GetCOREInterface12();
+    i->ProgressStart("Importing Alembic File", TRUE, DummyProgressFunction, NULL);
+
    MeshMtlList allMtls;
-   Interface12 *i = GetCOREInterface12();
-   
+  
    options.sceneEnumProc.Init(i->GetScene(), i->GetTime(), i, &allMtls);
    options.currentSceneList.FillList(options.sceneEnumProc);
    Object *currentObject = NULL;
 
    AlembicImport_TimeControl( options );
 
+      
    // Create the max objects as needed, we loop through the list in reverse to create
    // the children node first and then hook them up to their parents
-   for(int i=(int)objects.size()-1; i>=0 ; i -= 1)
+   int progressUpdateInterval = 0;
+   for(int j=(int)objects.size()-1; j>=0 ; j -= 1)
    {
-       // XForm
-       if(Alembic::AbcGeom::IXform::matches(objects[i].getMetaData()))
+	   progressUpdateInterval ++;
+	   if( ( progressUpdateInterval % 10 ) == 0 ) {
+			double dbProgress = ((double)objects.size() - 1 - j) / objects.size();
+	        i->ProgressUpdate(static_cast<int>(100 * dbProgress));
+	   }
+
+		// XForm
+       if(Alembic::AbcGeom::IXform::matches(objects[j].getMetaData()))
        {
-		   ESS_LOG_INFO( "AlembicImport_XForm: " << objects[i].getFullName() );
-           int ret = AlembicImport_XForm(file, objects[i].getFullName(), options);
+		   //ESS_LOG_INFO( "AlembicImport_XForm: " << objects[j].getFullName() );
+           int ret = AlembicImport_XForm(file, objects[j].getFullName(), options);
        }
 
        // PolyMesh
-       else if (Alembic::AbcGeom::IPolyMesh::matches(objects[i].getMetaData()))
+       else if (Alembic::AbcGeom::IPolyMesh::matches(objects[j].getMetaData()))
        {
-		   ESS_LOG_INFO( "AlembicImport_PolyMesh: " << objects[i].getFullName() );
-           int ret = AlembicImport_PolyMesh(file, objects[i].getFullName(), options); 
+		   //ESS_LOG_INFO( "AlembicImport_PolyMesh: " << objects[j].getFullName() );
+           int ret = AlembicImport_PolyMesh(file, objects[j].getFullName(), options); 
        }
 
        // Camera
-       else if (Alembic::AbcGeom::ICamera::matches(objects[i].getMetaData()))
+       else if (Alembic::AbcGeom::ICamera::matches(objects[j].getMetaData()))
        {
-		   ESS_LOG_INFO( "AlembicImport_Camera: " << objects[i].getFullName() );
-           int ret = AlembicImport_Camera(file, objects[i].getFullName(), options);
+		  // ESS_LOG_INFO( "AlembicImport_Camera: " << objects[j].getFullName() );
+           int ret = AlembicImport_Camera(file, objects[j].getFullName(), options);
        }
 
        // Points
-       else if (Alembic::AbcGeom::IPoints::matches(objects[i].getMetaData()))
+       else if (Alembic::AbcGeom::IPoints::matches(objects[j].getMetaData()))
        {
-		   ESS_LOG_INFO( "AlembicImport_Points: " << objects[i].getFullName() );
-           int ret = AlembicImport_Points(file, objects[i].getFullName(), options);
+		   //ESS_LOG_INFO( "AlembicImport_Points: " << objects[j].getFullName() );
+           int ret = AlembicImport_Points(file, objects[j].getFullName(), options);
        }
 
        // Curves
-       else if (Alembic::AbcGeom::ICurves::matches(objects[i].getMetaData()))
+       else if (Alembic::AbcGeom::ICurves::matches(objects[j].getMetaData()))
        {
-		   ESS_LOG_INFO( "AlembicImport_Shape: " << objects[i].getFullName() );
-           int ret = AlembicImport_Shape(file, objects[i].getFullName(), options);
+		   //ESS_LOG_INFO( "AlembicImport_Shape: " << objects[j].getFullName() );
+           int ret = AlembicImport_Shape(file, objects[j].getFullName(), options);
        }
    }
 
+   i->ProgressEnd();
    delRefArchive(file);
 
    ESS_CPP_EXCEPTION_REPORTING_END
