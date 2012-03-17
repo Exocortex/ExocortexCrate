@@ -916,7 +916,8 @@ int AlembicImport_PolyMesh(const std::string &path, const std::string &identifie
 		pModifier->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pModifier, 0, "path" ), zero, path.c_str());
 		pModifier->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pModifier, 0, "identifier" ), zero, identifier.c_str() );
 		pModifier->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pModifier, 0, "time" ), zero, 0.0f );
-
+		pModifier->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pModifier, 0, "muted" ), zero, FALSE );
+	
 		// Add the modifier to the pNode
 		GetCOREInterface12()->AddModifier(*pNode, *pModifier);
 
