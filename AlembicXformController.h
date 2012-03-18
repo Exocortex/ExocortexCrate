@@ -49,8 +49,8 @@ public:
     IParamBlock2* GetParamBlockByID(BlockID id) { return (pblock->ID() == id) ? pblock : NULL; } // return id'd ParamBlock
 
 	int NumRefs() { return 1; }
-	void SetReference(int i, ReferenceTarget* pTarget);
-	ReferenceTarget* GetReference(int i);
+	void SetReference(int i, ReferenceTarget* pTarget) { if( i == 0 ) { pblock = (IParamBlock2*)pTarget; } }
+	RefTargetHandle GetReference(int i) { return pblock; }
 	RefResult NotifyRefChanged(Interval, RefTargetHandle, PartID&, RefMessage);
 
     int NumSubs()  {return 1;} //because it uses the paramblock

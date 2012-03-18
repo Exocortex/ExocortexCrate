@@ -219,27 +219,6 @@ IOResult AlembicVisibilityController::Load(ILoad *iload)
 	return res;	
 }
 
-RefTargetHandle AlembicVisibilityController::GetReference(int i)
-{
-    switch (i)
-    {
-    case 0:
-        return pblock;
-    }
-
-    return NULL;
-}
-
-void AlembicVisibilityController::SetReference(int i, RefTargetHandle rtarg)
-{
-    switch (i)
-    {
-    case 0:
-        pblock = (IParamBlock2*)rtarg; 
-        break;
-    }
-}
-
 RefResult AlembicVisibilityController::NotifyRefChanged(
     Interval iv, 
     RefTargetHandle hTarg, 
