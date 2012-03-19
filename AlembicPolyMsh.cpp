@@ -507,10 +507,14 @@ bool AlembicPolyMesh::Save(double time)
                   sortedUVVec.clear();
               }
 
-              Alembic::AbcGeom::OV2fGeomParam::Sample uvSample(Alembic::Abc::V2fArraySample(&mUvVec.front(),uvCount),Alembic::AbcGeom::kFacevaryingScope);
-              if(mUvIndexVec.size() > 0 && uvIndexCount > 0)
-                  uvSample.setIndices(Alembic::Abc::UInt32ArraySample(&mUvIndexVec.front(),uvIndexCount));
-              mMeshSample.setUVs(uvSample);
+              if (mUvVec.size() > 0 && uvCount > 0)
+              {
+                  Alembic::AbcGeom::OV2fGeomParam::Sample uvSample(Alembic::Abc::V2fArraySample(&mUvVec.front(),uvCount),Alembic::AbcGeom::kFacevaryingScope);
+
+                  if(mUvIndexVec.size() > 0 && uvIndexCount > 0)
+                      uvSample.setIndices(Alembic::Abc::UInt32ArraySample(&mUvIndexVec.front(),uvIndexCount));
+                  mMeshSample.setUVs(uvSample);
+              }
           }
       }
 
