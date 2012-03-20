@@ -229,8 +229,6 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
 
    if ( options.nDataFillFlags & ALEMBIC_DATAFILL_VERTEX )
    {
-
- 
 	   Imath::V3f const* pPositionArray = ( meshPos.get() != NULL ) ? meshPos->get() : NULL;
 	   Imath::V3f const* pVelocityArray = ( meshVel.get() != NULL ) ? meshVel->get() : NULL;
 	  
@@ -314,23 +312,6 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
 	   else {
 		   ESS_LOG_WARNING("Should not get here." );
 	   }
-
-
-	  /* for(int i=0;i<vArray.size();i++)
-       {
-          Point3 maxPoint;
-          ConvertAlembicPointToMaxPoint(vArray[i], maxPoint);
-
-          int numVerts = static_cast<int>(meshPos->size());
-          if (options.pPolyObj != NULL)
-          {
-             options.pPolyObj->GetMesh().V(i)->p.Set(maxPoint.x, maxPoint.y, maxPoint.z);
-          }
-          if (options.pTriObj != NULL)
-          {
-             options.pMesh->setVert(i, maxPoint.x, maxPoint.y, maxPoint.z);
-          }
-       }*/
    }
 
    Alembic::Abc::Int32ArraySamplePtr meshFaceCount;
@@ -355,7 +336,6 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
    if ( options.nDataFillFlags & ALEMBIC_DATAFILL_FACELIST )
    {
         // Set up the index buffer
-        
         int offset = 0;
 		if (options.pMNMesh != NULL)
 		{
@@ -416,7 +396,7 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
            normalsToSet.reserve(meshNormalsFloor->size());
            Alembic::Abc::N3fArraySamplePtr meshNormalsCeil = meshNormalsParam.getExpandedValue(sampleInfo.ceilIndex).getVals();
 
-		   Imath::V3f const* pMeshNormalsFloor = ( meshNormalsFloor.get() != NULL ) ? meshNormalsFloor->get() : NULL;
+           Imath::V3f const* pMeshNormalsFloor = ( meshNormalsFloor.get() != NULL ) ? meshNormalsFloor->get() : NULL;
 		   Imath::V3f const* pMeshNormalsCeil = ( meshNormalsCeil.get() != NULL ) ? meshNormalsCeil->get() : NULL;
 
            // Blend 
@@ -447,6 +427,13 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
                    int last = offset;
                    for (int j = first; j >= last; j -=1)
                    {
+                       if (j > meshNormalsFloor->size())
+                       {
+                           ESS_LOG_ERROR("Normal at Face " << i << ", Vertex " << j << "does not exist at sample time " << sampleTime);
+                           normalsToSet.push_back( Point3(0,0,0) );
+                           continue;
+                       }
+                                            
                        normalsToSet.push_back( ConvertAlembicNormalToMaxNormal( pMeshNormalsFloor[j] ) );
                    }
 
@@ -454,12 +441,13 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
                }
            }
 
-		   if( options.fVertexAlpha != 1.0f ) {
-			   for( int i = 0; i < normalsToSet.size(); i ++ ) {
+		   if( options.fVertexAlpha != 1.0f ) 
+           {
+			   for( int i = 0; i < normalsToSet.size(); i ++) 
+               {
 				normalsToSet[i] *= options.fVertexAlpha;
 			   }
 		   }
-
 
            // Set up the specify normals
            if (options.pMNMesh != NULL)
@@ -646,51 +634,36 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
        }
    }
 
-   if ( options.nDataFillFlags & ALEMBIC_DATAFILL_FACESETS )
+   if ( options.nDataFillFlags & ALEMBIC_DATAFILL_MATERIALIDS )
    {
-       std::vector<std::string> faceSetNames;
+       Alembic::Abc::IUInt32ArrayProperty materialIds;
        if(objMesh.valid())
-           objMesh.getSchema().getFaceSetNames(faceSetNames);
+           materialIds = Alembic::Abc::IUInt32ArrayProperty(objMesh.getSchema(), ".materialids");
        else
-           objSubD.getSchema().getFaceSetNames(faceSetNames);
+           materialIds = Alembic::Abc::IUInt32ArrayProperty(objSubD.getSchema(), ".materialids");
 
-       for(size_t j=0;j<faceSetNames.size();j++)
+       if (materialIds.valid() && materialIds.getNumSamples() > 0)
        {
-           Alembic::AbcGeom::IFaceSetSchema faceSet;
-           if(objMesh.valid())
-               faceSet = objMesh.getSchema().getFaceSet(faceSetNames[j]).getSchema();
-           else
-               faceSet = objSubD.getSchema().getFaceSet(faceSetNames[j]).getSchema();
-
-           // Material Ids:
-           if (faceSetNames[j].find("MaterialId ", 0, 11) != faceSetNames[j].npos)
-           {
-               std::string strMatId = faceSetNames[j].substr(11);
-               int nMatId = atoi(strMatId.c_str());
-
-               Alembic::AbcGeom::IFaceSetSchema::Sample faceSetSample = faceSet.getValue();
-               Alembic::Abc::Int32ArraySamplePtr faces = faceSetSample.getFaces();
-        
-               for(size_t k=0;k<faces->size();k++)
-               {
-                   int faceId = faces->get()[k];
-                   if (options.pMNMesh != NULL && faceId < options.pMNMesh->numf)
-                   {
-                       options.pMNMesh->f[faceId].material = nMatId;
-                   }
-                   else if (options.pMesh != NULL && faceId < options.pMesh->getNumFaces())
-                   {
-                       options.pMesh->faces[faceId].setMatID(nMatId);
-                   }
-               }
-           } 
+            Alembic::Abc::UInt32ArraySamplePtr materialIdsPtr = materialIds.getValue(sampleInfo.floorIndex);
+            if (materialIdsPtr->size() == numFaces)
+            {
+                for (int i = 0; i < materialIdsPtr->size(); i += 1)
+                {
+                    int nMatId = materialIdsPtr->get()[i];
+                    if (options.pMNMesh != NULL && i < options.pMNMesh->numf)
+                    {
+                        options.pMNMesh->f[i].material = nMatId;
+                    }
+                    else if (options.pMesh != NULL && i < options.pMesh->getNumFaces())
+                    {
+                        options.pMesh->faces[i].setMatID(nMatId);
+                    }
+                }
+            }
        }
    }
 
-  
-
   // This isn't required if we notify 3DS Max properly via the channel flags for vertex changes.
-
   if (options.pMNMesh != NULL)
    {
 	   if ( options.nDataFillFlags & ALEMBIC_DATAFILL_FACELIST ) {
@@ -754,7 +727,7 @@ int AlembicImport_PolyMesh(const std::string &path, const std::string &identifie
     dataFillOptions.nDataFillFlags |= options.importNormals ? ALEMBIC_DATAFILL_NORMALS : 0;
     dataFillOptions.nDataFillFlags |= options.importUVs ? ALEMBIC_DATAFILL_UVS : 0;
     dataFillOptions.nDataFillFlags |= options.importBboxes ? ALEMBIC_DATAFILL_BOUNDINGBOX : 0;
-    dataFillOptions.nDataFillFlags |= options.importMaterialIds ? ALEMBIC_DATAFILL_FACESETS : 0;
+    dataFillOptions.nDataFillFlags |= options.importMaterialIds ? ALEMBIC_DATAFILL_MATERIALIDS : 0;
     
     // Create the poly or tri object and place it in the scene
     // Need to use the attach to existing import flag here 

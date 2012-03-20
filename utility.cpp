@@ -140,7 +140,7 @@ int GetTimeValueFromFrame( double frame )
     return (int)floor(ticks + 0.5f);
 }
 
-void AlembicDebug_PrintMeshData( Mesh &mesh )
+void AlembicDebug_PrintMeshData( Mesh &mesh, std::vector<VNormal> &sgVertexNormals )
 {
     for (int i=0; i<mesh.getNumFaces(); i++) 
     {
@@ -153,10 +153,12 @@ void AlembicDebug_PrintMeshData( Mesh &mesh )
         {
             int vertexId = f->getVert(j);
             Point3 vertexPos = mesh.getVert(vertexId);
-            Point3 vertexNormal = AlembicPolyMesh::GetVertexNormal(&mesh, i, mesh.getRVertPtr(vertexId));
+            Point3 vertexNormal = AlembicPolyMesh::GetVertexNormal(&mesh, i, vertexId, sgVertexNormals);
+            int matId = f->getMatID();
 			ESS_LOG_INFO("Vertex " << vertexId <<
 				", Position (" << vertexPos.x << ", " << vertexPos.y << ", " << vertexPos.z <<
-				"), Normal (" << vertexNormal.x << ", " << vertexNormal.y << ", " << vertexNormal.z << ")" );
+				"), Normal (" << vertexNormal.x << ", " << vertexNormal.y << ", " << vertexNormal.z << 
+                "), MaterialId (" << matId << ")" );
         }
         ESS_LOG_INFO("");
     }
