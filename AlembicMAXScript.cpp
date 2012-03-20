@@ -219,7 +219,21 @@ void AlembicImport_ConnectTimeControl( char* szControllerName, alembic_importopt
 	ExecuteMAXScriptScript( szBuffer );
 }
 
+int ExocortexAlembicImport_Internal(MCHAR* strPath, BOOL bImportNormals, BOOL bImportUVs, BOOL bImportMaterialIds, BOOL bAttachToExisting, int iVisOption);
+
 int ExocortexAlembicStaticInterface::ExocortexAlembicImport(MCHAR* strPath, BOOL bImportNormals, BOOL bImportUVs, BOOL bImportMaterialIds, BOOL bAttachToExisting, int iVisOption)
+{
+	ESS_STRUCTURED_EXCEPTION_REPORTING_START
+
+		return ExocortexAlembicImport_Internal( strPath, bImportNormals, bImportUVs, bImportMaterialIds, bAttachToExisting, iVisOption);
+
+	ESS_STRUCTURED_EXCEPTION_REPORTING_END
+
+	return alembic_failure;
+}
+
+
+int ExocortexAlembicImport_Internal(MCHAR* strPath, BOOL bImportNormals, BOOL bImportUVs, BOOL bImportMaterialIds, BOOL bAttachToExisting, int iVisOption)
 {
 	ESS_CPP_EXCEPTION_REPORTING_START
 

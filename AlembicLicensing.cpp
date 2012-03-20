@@ -106,9 +106,16 @@ void MaxLogSink(const char* szLogMessage, Exocortex::ecLogLevel::Value level ) {
 namespace Exocortex {
 	void essOnDemandInitialization() {
 		static string pluginName(PLUGIN_NAME);
-		
-		essInitialize( pluginName.c_str(), PLUGIN_MAJOR_VERSION, PLUGIN_MINOR_VERSION, "C:\\ExocortexLogs", MaxLogSink );
-		ESS_LOG_INFO( "Build Date: " << __DATE__ << " " << __TIME__ );
+
+		char szTempPath[4096];
+		GetTempPath( 4096, szTempPath );
+
+		char szLogPath[4096];
+		sprintf_s( szLogPath, 4096, "%s\\ExocortexAlembic", szTempPath );
+
+		essInitialize( pluginName.c_str(), PLUGIN_MAJOR_VERSION, PLUGIN_MINOR_VERSION, szLogPath, MaxLogSink );
+		ESS_LOG_WARNING( "Exocortex Alembic logs location: " << szLogPath );
+		ESS_LOG_WARNING( "Build date: " << __DATE__ << " " << __TIME__ );
 	}
 }
 

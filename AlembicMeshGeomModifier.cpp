@@ -9,7 +9,6 @@
 #include "alembic.h"
 #include "AlembicXForm.h"
 #include "AlembicVisibilityController.h"
-#include "ParamBlockUtility.h"
 
 
 using namespace MaxSDK::AssetManagement;

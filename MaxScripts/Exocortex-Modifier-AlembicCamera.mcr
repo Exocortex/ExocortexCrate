@@ -39,7 +39,6 @@ plugin modifier AlembicCameraModifier
 	(
 		if( not update_currentTimeHidden_registered ) do
 		(
-			print "currentTimeHidden registered"
 			registerTimeCallback update_currentTimeHidden
 			update_currentTimeHidden_registered = true
 		)

@@ -19,11 +19,11 @@ fn initializeAlembicMenus =
     alembicMenu = menuMan.createMenu "Alembic"
 
     -- Create a menu items that brings up the import dialog
-    alembicImportItem = menuMan.createActionItem "AlembicImportUI" "Exocortex"
+    alembicImportItem = menuMan.createActionItem "AlembicImportUI" "Alembic"
 
     -- Create a menu item that brings up the export dialog
-    alembicExportItem = menuMan.createActionItem "AlembicExportUI" "Exocortex"
-
+    alembicExportItem = menuMan.createActionItem "AlembicExportUI" "Alembic"
+	
     -- Add the items to the menu
     alembicMenu.addItem alembicImportItem 1
     alembicMenu.addItem alembicExportItem 2
