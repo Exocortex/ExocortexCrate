@@ -56,7 +56,7 @@ bool AlembicCurves::Save(double time)
     // Store the transformation
     SaveXformSample(GetRef(), mXformSchema, mXformSample, time);
 
-    TimeValue ticks = GetCOREInterface12()->GetTime();
+    TimeValue ticks = GET_MAX_INTERFACE()->GetTime();
 
     // store the metadata
     // IMetaDataManager mng;

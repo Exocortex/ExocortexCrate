@@ -328,7 +328,7 @@ void AlembicXformController::MainPanelUpdateUI()
 
 	mbSuspendPanelUpdate = true;
 
-    TimeValue t = GetCOREInterface12()->GetTime();
+    TimeValue t = GET_MAX_INTERFACE()->GetTime();
     Interval valid = FOREVER;
 
     // Update the abc archive and identifier

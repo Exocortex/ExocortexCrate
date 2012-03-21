@@ -785,7 +785,7 @@ int AlembicImport_Shape(const std::string &file, const std::string &identifier, 
 
     if (curveSample.getType() == Alembic::AbcGeom::ALEMBIC_VERSION_NS::kCubic)
     {
-        pAlembicSpline = static_cast<AlembicSimpleSpline*>(GetCOREInterface12()->CreateInstance(SHAPE_CLASS_ID, ALEMBIC_SIMPLE_SPLINE_CLASSID));
+        pAlembicSpline = static_cast<AlembicSimpleSpline*>(GET_MAX_INTERFACE()->CreateInstance(SHAPE_CLASS_ID, ALEMBIC_SIMPLE_SPLINE_CLASSID));
 	    newObject = pAlembicSpline;
     }
     else
@@ -815,7 +815,7 @@ int AlembicImport_Shape(const std::string &file, const std::string &identifier, 
     }
 
 	// Create the object node
-	INode *node = GetCOREInterface12()->CreateObjectNode(newObject, iObj.getName().c_str());
+	INode *node = GET_MAX_INTERFACE()->CreateObjectNode(newObject, iObj.getName().c_str());
 
 	if (!node)
     {

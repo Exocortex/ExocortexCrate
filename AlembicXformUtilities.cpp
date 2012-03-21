@@ -104,7 +104,7 @@ int AlembicImport_XForm(const std::string &file, const std::string &identifier, 
     // Get the matrix for the current time 
     alembic_fillxform_options xformOptions;
     xformOptions.pIObj = &iObj;
-    xformOptions.dTicks = GetCOREInterface12()->GetTime();
+    xformOptions.dTicks = GET_MAX_INTERFACE()->GetTime();
     xformOptions.bIsCameraTransform = bIsCamera;
     AlembicImport_FillInXForm(xformOptions);
 
@@ -131,7 +131,7 @@ int AlembicImport_XForm(const std::string &file, const std::string &identifier, 
 
         pDummy->EnableDisplay();
 
-        pNode = GetCOREInterface12()->CreateObjectNode(obj, modelid.c_str());
+        pNode = GET_MAX_INTERFACE()->CreateObjectNode(obj, modelid.c_str());
 
         if (!pNode)
             return alembic_failure;

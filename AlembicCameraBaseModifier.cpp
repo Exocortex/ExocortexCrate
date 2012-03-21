@@ -110,7 +110,7 @@ void AlembicCameraBaseModifier::ModifyObject(TimeValue t, ModContext &mc, Object
 
 	Interval interval = os->obj->ObjectValidity(t);
 
-	TimeValue now =  GetCOREInterface12()->GetTime();
+	TimeValue now = GET_MAX_INTERFACE()->GetTime();
 
 	MCHAR const* strPath = NULL;
 	this->pblock->GetValue( AlembicCameraBaseModifier::ID_PATH, t, strPath, interval);
@@ -275,7 +275,7 @@ int AlembicImport_Camera(const std::string &path, const std::string &identifier,
     }
 
 	// Create the camera object and place it in the scene
-    GenCamera *pCameraObj = GetCOREInterface12()->CreateCameraObject(FREE_CAMERA);
+    GenCamera *pCameraObj = GET_MAX_INTERFACE()->CreateCameraObject(FREE_CAMERA);
     if (pCameraObj == NULL)
     {
         return alembic_failure;
@@ -287,11 +287,11 @@ int AlembicImport_Camera(const std::string &path, const std::string &identifier,
     alembic_fillcamera_options dataFillOptions;
     dataFillOptions.pIObj = &iObj;
     dataFillOptions.pCameraObj = pCameraObj;
-    dataFillOptions.dTicks =  GetCOREInterface12()->GetTime();
+    dataFillOptions.dTicks =  GET_MAX_INTERFACE()->GetTime();
 	AlembicImport_FillInCamera(dataFillOptions);
 
     // Create the object node
-	INode *pNode = GetCOREInterface12()->CreateObjectNode(pCameraObj, iObj.getName().c_str());
+	INode *pNode = GET_MAX_INTERFACE()->CreateObjectNode(pCameraObj, iObj.getName().c_str());
 	if (pNode == NULL)
     {
 		return alembic_failure;
@@ -299,9 +299,9 @@ int AlembicImport_Camera(const std::string &path, const std::string &identifier,
 
 	// Create the Camera modifier
 	Modifier *pModifier = static_cast<Modifier*>
-		(GetCOREInterface12()->CreateInstance(OSM_CLASS_ID, ALEMBIC_CAMERA_MODIFIER_CLASSID));
+		(GET_MAX_INTERFACE()->CreateInstance(OSM_CLASS_ID, ALEMBIC_CAMERA_MODIFIER_CLASSID));
 
-	TimeValue now =  GetCOREInterface12()->GetTime();
+	TimeValue now =  GET_MAX_INTERFACE()->GetTime();
 
 	// Set the alembic id
 	pModifier->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pModifier, 0, "path" ), now, path.c_str());
@@ -311,7 +311,7 @@ int AlembicImport_Camera(const std::string &path, const std::string &identifier,
 	//pModifier->SetCamera(pCameraObj);
 
 	// Add the modifier to the node
-	GetCOREInterface12()->AddModifier(*pNode, *pModifier);
+	GET_MAX_INTERFACE()->AddModifier(*pNode, *pModifier);
 
     // Add the new inode to our current scene list
     SceneEntry *pEntry = options.sceneEnumProc.Append(pNode, pCameraObj, OBTYPE_CAMERA, &std::string(iObj.getFullName())); 

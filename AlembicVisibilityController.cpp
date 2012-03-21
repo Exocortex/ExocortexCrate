@@ -358,7 +358,7 @@ void AlembicImport_SetupVisControl( std::string const& file, std::string const& 
             (GetCOREInterface()->CreateInstance(CTRL_FLOAT_CLASS_ID, ALEMBIC_VISIBILITY_CONTROLLER_CLASSID));
 
         // Set the alembic id
-        TimeValue t = GetCOREInterface12()->GetTime();
+        TimeValue t = GET_MAX_INTERFACE()->GetTime();
 
 		TimeValue zero( 0 );
 

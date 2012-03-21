@@ -44,6 +44,11 @@ namespace fs = boost::filesystem;
 #include <Max.h>
 #include <MeshNormalSpec.h>
 
+//MAXInterface *i = GET_MAX_INTERFACE();
+
+typedef Interface12 MAXInterface;
+#define GET_MAX_INTERFACE()	GetCOREInterface12()
+
 typedef std::map<std::string,std::string> stringMap;
 typedef std::map<std::string,std::string>::iterator stringMapIt;
 typedef std::pair<std::string,std::string> stringPair;

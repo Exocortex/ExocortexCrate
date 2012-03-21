@@ -183,7 +183,7 @@ void AlembicImport_TimeControl( alembic_importoptions &options ) {
 	pHelper->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pHelper, 0, "factor" ), zero, 1.0f );
 
 	// Create the object node
-	INode *node = GetCOREInterface12()->CreateObjectNode(pHelper, pHelper->GetObjectName() );
+	INode *node = GET_MAX_INTERFACE()->CreateObjectNode(pHelper, pHelper->GetObjectName() );
 
 	// Add the new inode to our current scene list
 	SceneEntry *pEntry = options.sceneEnumProc.Append(node, pHelper, OBTYPE_CURVES, &std::string( node->GetName() ) ); 
@@ -285,7 +285,7 @@ int ExocortexAlembicImport_Internal(MCHAR* strPath, BOOL bImportNormals, BOOL bI
 		}
 
 		// Get a list of the current objects in the scene
-		Interface12 *i = GetCOREInterface12();
+		MAXInterface *i = GET_MAX_INTERFACE();
 
 		MeshMtlList allMtls;
 
@@ -301,8 +301,10 @@ int ExocortexAlembicImport_Internal(MCHAR* strPath, BOOL bImportNormals, BOOL bI
 		// Create the max objects as needed, we loop through the list in reverse to create
 		// the children node first and then hook them up to their parents
 		int totalAlemicItems = 0;
+		ESS_LOG_INFO( "Alembic file contents:" );
 		for(int j=(int)objects.size()-1; j>=0 ; j -= 1)
 		{
+			ESS_LOG_INFO( objects[j].getFullName() );
 			// XForm
 			if(Alembic::AbcGeom::IXform::matches(objects[j].getMetaData()))
 			{
@@ -500,7 +502,7 @@ int ExocortexAlembicStaticInterface::ExocortexAlembicExport(MCHAR * strPath, int
 			", bExportDynamicTopology=" << bExportDynamicTopology << ", bExportSelected=" << bExportSelected <<
 			" )" );
 
-		Interface12 *i = GetCOREInterface12();
+		MAXInterface *i = GET_MAX_INTERFACE();
 		i->ProgressStart("Exporting Alembic File", TRUE, DummyProgressFunction, NULL);
 
 		MeshTopologyType eTopologyType = static_cast<MeshTopologyType>(iType);

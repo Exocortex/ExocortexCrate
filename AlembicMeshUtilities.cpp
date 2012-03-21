@@ -227,14 +227,24 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
 		   } 
    }
 
+    if (options.pMNMesh != NULL)
+	{
+		if( ! options.pMNMesh->CheckAllData() ) {
+
+			ESS_LOG_WARNING( "options.pMNMesh->CheckAllData() failed after ALEMBIC_DATAFILL_FACELIST." );
+			options.pMNMesh->MNDebugPrint();
+		}
+	}
+
    if ( options.nDataFillFlags & ALEMBIC_DATAFILL_VERTEX )
    {
 
  
 	   Imath::V3f const* pPositionArray = ( meshPos.get() != NULL ) ? meshPos->get() : NULL;
 	   Imath::V3f const* pVelocityArray = ( meshVel.get() != NULL ) ? meshVel->get() : NULL;
-	  
 
+	  assert( pPositionArray != NULL );
+	
 	   std::vector<Imath::V3f> vArray;
 	   vArray.reserve(meshPos->size());
 	   //P3fArraySample* pPositionArray = meshPos->get();
@@ -279,6 +289,7 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
           }
           else if (bVelInterpolate)
           {
+			  assert( pVelocityArray != NULL );
 			  pVelocityArray = meshVel->get();
 
               for(size_t i=0;i<meshVel->size();i++)
@@ -332,6 +343,15 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
           }
        }*/
    }
+
+     if (options.pMNMesh != NULL)
+	{
+		if( ! options.pMNMesh->CheckAllData() ) {
+
+			ESS_LOG_WARNING( "options.pMNMesh->CheckAllData() failed after ALEMBIC_DATAFILL_VERTEX." );
+			options.pMNMesh->MNDebugPrint();
+		}
+	}
 
    Alembic::Abc::Int32ArraySamplePtr meshFaceCount;
    Alembic::Abc::Int32ArraySamplePtr meshFaceIndices;
@@ -405,6 +425,16 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
 		}
    }
 
+    if (options.pMNMesh != NULL)
+	{
+		if( ! options.pMNMesh->CheckAllData() ) {
+
+			ESS_LOG_WARNING( "options.pMNMesh->CheckAllData() failed after ALEMBIC_DATAFILL_FACELIST." );
+			options.pMNMesh->MNDebugPrint();
+		}
+	}
+
+
    if ( objMesh.valid() && ( options.nDataFillFlags & ALEMBIC_DATAFILL_NORMALS ) )
    {
        Alembic::AbcGeom::IN3fGeomParam meshNormalsParam = objMesh.getSchema().getNormalsParam();
@@ -418,6 +448,9 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
 
 		   Imath::V3f const* pMeshNormalsFloor = ( meshNormalsFloor.get() != NULL ) ? meshNormalsFloor->get() : NULL;
 		   Imath::V3f const* pMeshNormalsCeil = ( meshNormalsCeil.get() != NULL ) ? meshNormalsCeil->get() : NULL;
+
+		   assert( pMeshNormalsFloor != NULL );
+		   assert( pMeshNormalsCeil != NULL );
 
            // Blend 
            if (sampleInfo.alpha != 0.0f && meshNormalsFloor->size() == meshNormalsCeil->size())
@@ -533,6 +566,16 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
        }
    }
 
+       if (options.pMNMesh != NULL)
+	{
+		if( ! options.pMNMesh->CheckAllData() ) {
+
+			ESS_LOG_WARNING( "options.pMNMesh->CheckAllData() failed after ALEMBIC_DATAFILL_NORMALS." );
+			options.pMNMesh->MNDebugPrint();
+		}
+	}
+
+
    if ( options.nDataFillFlags & ALEMBIC_DATAFILL_UVS )
    {
        Alembic::AbcGeom::IV2fGeomParam meshUvParam;
@@ -646,6 +689,16 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
        }
    }
 
+   
+    if (options.pMNMesh != NULL)
+	{
+		if( ! options.pMNMesh->CheckAllData() ) {
+
+			ESS_LOG_WARNING( "options.pMNMesh->CheckAllData() failed after ALEMBIC_DATAFILL_UVS." );
+			options.pMNMesh->MNDebugPrint();
+		}
+	}
+
    if ( options.nDataFillFlags & ALEMBIC_DATAFILL_FACESETS )
    {
        std::vector<std::string> faceSetNames;
@@ -687,7 +740,14 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
        }
    }
 
-  
+    if (options.pMNMesh != NULL)
+	{
+		if( ! options.pMNMesh->CheckAllData() ) {
+
+			ESS_LOG_WARNING( "options.pMNMesh->CheckAllData() failed after ALEMBIC_DATAFILL_FACESETS." );
+			options.pMNMesh->MNDebugPrint();
+		}
+	}
 
   // This isn't required if we notify 3DS Max properly via the channel flags for vertex changes.
 
@@ -748,7 +808,7 @@ int AlembicImport_PolyMesh(const std::string &path, const std::string &identifie
     dataFillOptions.pIObj = &iObj;
     dataFillOptions.pMesh = NULL;
     dataFillOptions.pMNMesh = NULL;
-    dataFillOptions.dTicks = GetCOREInterface12()->GetTime();
+    dataFillOptions.dTicks = GET_MAX_INTERFACE()->GetTime();
 
     dataFillOptions.nDataFillFlags = ALEMBIC_DATAFILL_VERTEX|ALEMBIC_DATAFILL_FACELIST;
     dataFillOptions.nDataFillFlags |= options.importNormals ? ALEMBIC_DATAFILL_NORMALS : 0;
@@ -797,13 +857,13 @@ int AlembicImport_PolyMesh(const std::string &path, const std::string &identifie
 	//AlembicImport_FillInPolyMesh(dataFillOptions);
 
 	// Create the object pNode
-	INode *pNode = GetCOREInterface12()->CreateObjectNode(newObject, iObj.getName().c_str());
+	INode *pNode = GET_MAX_INTERFACE()->CreateObjectNode(newObject, iObj.getName().c_str());
 	if (pNode == NULL)
     {
 		return alembic_failure;
     }
 
-	//TimeValue now =  GetCOREInterface12()->GetTime();
+	//TimeValue now =  GET_MAX_INTERFACE()->GetTime();
 
 	TimeValue zero( 0 );
 
@@ -816,7 +876,7 @@ int AlembicImport_PolyMesh(const std::string &path, const std::string &identifie
 	{
 		// Create the polymesh modifier
 		Modifier *pModifier = static_cast<Modifier*>
-			(GetCOREInterface12()->CreateInstance(OSM_CLASS_ID, ALEMBIC_MESH_TOPO_MODIFIER_CLASSID));
+			(GET_MAX_INTERFACE()->CreateInstance(OSM_CLASS_ID, ALEMBIC_MESH_TOPO_MODIFIER_CLASSID));
 
 		pModifier->DisableMod();
 
@@ -838,7 +898,7 @@ int AlembicImport_PolyMesh(const std::string &path, const std::string &identifie
 		pModifier->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pModifier, 0, "muted" ), zero, FALSE );
 	
 		// Add the modifier to the pNode
-		GetCOREInterface12()->AddModifier(*pNode, *pModifier);
+		GET_MAX_INTERFACE()->AddModifier(*pNode, *pModifier);
 
 		if( isDynamicTopo ) {
 			char szControllerName[10000];
@@ -853,7 +913,7 @@ int AlembicImport_PolyMesh(const std::string &path, const std::string &identifie
 		//ESS_LOG_INFO( "isUVWContant: " << isUVWContant );
 	// Create the polymesh modifier
 		Modifier *pModifier = static_cast<Modifier*>
-			(GetCOREInterface12()->CreateInstance(OSM_CLASS_ID, ALEMBIC_MESH_UVW_MODIFIER_CLASSID));
+			(GET_MAX_INTERFACE()->CreateInstance(OSM_CLASS_ID, ALEMBIC_MESH_UVW_MODIFIER_CLASSID));
 
 		pModifier->DisableMod();
 
@@ -865,7 +925,7 @@ int AlembicImport_PolyMesh(const std::string &path, const std::string &identifie
 
 	
 		// Add the modifier to the pNode
-		GetCOREInterface12()->AddModifier(*pNode, *pModifier);
+		GET_MAX_INTERFACE()->AddModifier(*pNode, *pModifier);
 		if( ! isUVWContant ) {
 			char szControllerName[10000];
 			sprintf_s( szControllerName, 10000, "$'%s'.modifiers[#Alembic_Mesh_UVW].time", pNode->GetName() );
@@ -881,7 +941,7 @@ int AlembicImport_PolyMesh(const std::string &path, const std::string &identifie
 		//ESS_LOG_INFO( "isGeomContant: " << isGeomContant );
 		// Create the polymesh modifier
 		Modifier *pModifier = static_cast<Modifier*>
-			(GetCOREInterface12()->CreateInstance(OSM_CLASS_ID, ALEMBIC_MESH_GEOM_MODIFIER_CLASSID));
+			(GET_MAX_INTERFACE()->CreateInstance(OSM_CLASS_ID, ALEMBIC_MESH_GEOM_MODIFIER_CLASSID));
 
 		pModifier->DisableMod();
 
@@ -893,7 +953,7 @@ int AlembicImport_PolyMesh(const std::string &path, const std::string &identifie
 		pModifier->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pModifier, 0, "muted" ), zero, FALSE );
 	
 		// Add the modifier to the pNode
-		GetCOREInterface12()->AddModifier(*pNode, *pModifier);
+		GET_MAX_INTERFACE()->AddModifier(*pNode, *pModifier);
 
 		if( ! isGeomContant ) {
 			char szControllerName[10000];
@@ -908,7 +968,7 @@ int AlembicImport_PolyMesh(const std::string &path, const std::string &identifie
 		//ESS_LOG_INFO( "isNormalsContant: " << isNormalsContant );
 		// Create the polymesh modifier
 		Modifier *pModifier = static_cast<Modifier*>
-			(GetCOREInterface12()->CreateInstance(OSM_CLASS_ID, ALEMBIC_MESH_NORMALS_MODIFIER_CLASSID));
+			(GET_MAX_INTERFACE()->CreateInstance(OSM_CLASS_ID, ALEMBIC_MESH_NORMALS_MODIFIER_CLASSID));
 
 		pModifier->DisableMod();
 
@@ -919,7 +979,7 @@ int AlembicImport_PolyMesh(const std::string &path, const std::string &identifie
 		pModifier->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pModifier, 0, "muted" ), zero, FALSE );
 	
 		// Add the modifier to the pNode
-		GetCOREInterface12()->AddModifier(*pNode, *pModifier);
+		GET_MAX_INTERFACE()->AddModifier(*pNode, *pModifier);
 
 		if( ! isNormalsContant ) {
 			char szControllerName[10000];

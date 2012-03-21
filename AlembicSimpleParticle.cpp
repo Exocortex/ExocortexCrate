@@ -303,7 +303,7 @@ int AlembicImport_Points(const std::string &file, const std::string &identifier,
     pParticleObj->SetAlembicId(file, identifier);
 
     // Create the object node
-	INode *pNode = GetCOREInterface12()->CreateObjectNode(pParticleObj, iObj.getName().c_str());
+	INode *pNode = GET_MAX_INTERFACE()->CreateObjectNode(pParticleObj, iObj.getName().c_str());
 	if (pNode == NULL)
     {
 		return alembic_failure;

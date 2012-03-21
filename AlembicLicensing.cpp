@@ -116,7 +116,16 @@ namespace Exocortex {
 		essInitialize( pluginName.c_str(), PLUGIN_MAJOR_VERSION, PLUGIN_MINOR_VERSION, szLogPath, MaxLogSink );
 		ESS_LOG_WARNING( "Exocortex Alembic logs location: " << szLogPath );
 		ESS_LOG_WARNING( "Build date: " << __DATE__ << " " << __TIME__ );
+		OSVERSIONINFOEXA ver;
+		ZeroMemory(&ver, sizeof(OSVERSIONINFOEXA));
+		ver.dwOSVersionInfoSize = sizeof(ver);
+		if (GetVersionExA( (OSVERSIONINFOA*) &ver) != FALSE) {
+			char szOsVersion[4096];
+			sprintf_s(szOsVersion, 4096, "OS version: %d.%d.%d (%s) 0x%x-0x%x", 
+				ver.dwMajorVersion, ver.dwMinorVersion, ver.dwBuildNumber,
+				ver.szCSDVersion, ver.wSuiteMask, ver.wProductType);
+			ESS_LOG_WARNING( szOsVersion );		
+		}
 	}
 }
-
 #endif // EXOCORTEX_SERVICES
