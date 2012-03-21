@@ -63,6 +63,29 @@ private:
    MIntArray mNormalVertices;
 };
 
+class AlembicPolyMeshDeformNode : public AlembicObjectDeformNode
+{
+public:
+   virtual ~AlembicPolyMeshDeformNode();
+   // override virtual methods from MPxDeformerNode
+   virtual void PreDestruction();
+   virtual MStatus deform(MDataBlock & dataBlock, MItGeometry & iter, const MMatrix & localToWorld, unsigned int geomIndex);
+   static void* creator() { return (new AlembicPolyMeshDeformNode()); }
+   static MStatus initialize();
+
+private:
+   // input attributes
+   static MObject mTimeAttr;
+   static MObject mFileNameAttr;
+   static MObject mIdentifierAttr;
+   MString mFileName;
+   MString mIdentifier;
+   Alembic::AbcGeom::IPolyMeshSchema mSchema;
+
+   // members
+   SampleInfo mLastSampleInfo;
+};
+
 class AlembicCreateFaceSetsCommand : public MPxCommand
 {
   public:

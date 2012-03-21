@@ -46,6 +46,7 @@ Alembic::Abc::OObject AlembicObject::GetParentObject()
 
 unsigned int gRefIdMax = 0;
 std::map<unsigned int,AlembicObjectNode*> gNodes;
+std::map<unsigned int,AlembicObjectDeformNode*> gDeformNodes;
 
 AlembicObjectNode::AlembicObjectNode()
 {
@@ -59,9 +60,24 @@ AlembicObjectNode::~AlembicObjectNode()
    gNodes.erase(gNodes.find(mRefId));
 }
 
+AlembicObjectDeformNode::AlembicObjectDeformNode()
+{
+   mRefId = gRefIdMax;
+   gRefIdMax++;
+   gDeformNodes.insert(std::pair<unsigned int,AlembicObjectDeformNode*>(mRefId,this));
+}
+
+AlembicObjectDeformNode::~AlembicObjectDeformNode()
+{
+   gDeformNodes.erase(gDeformNodes.find(mRefId));
+}
+
 void preDestructAllNodes()
 {
    std::map<unsigned int,AlembicObjectNode*>::iterator it;
    for(it = gNodes.begin(); it != gNodes.end(); it++)
       it->second->PreDestruction();
+   std::map<unsigned int,AlembicObjectDeformNode*>::iterator itDeform;
+   for(itDeform = gDeformNodes.begin(); itDeform != gDeformNodes.end(); itDeform++)
+      itDeform->second->PreDestruction();
 }

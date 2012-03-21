@@ -44,6 +44,16 @@ protected:
    unsigned int mRefId;
 };
 
+class AlembicObjectDeformNode : public MPxDeformerNode
+{
+public:
+   AlembicObjectDeformNode();
+   virtual ~AlembicObjectDeformNode();
+   virtual void PreDestruction() = 0;
+protected:
+   unsigned int mRefId;
+};
+
 void preDestructAllNodes();
 
 #include "AlembicWriteJob.h"

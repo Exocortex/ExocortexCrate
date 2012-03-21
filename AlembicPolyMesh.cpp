@@ -620,6 +620,168 @@ MStatus AlembicPolyMeshNode::compute(const MPlug & plug, MDataBlock & dataBlock)
    return MStatus::kSuccess;
 }
 
+void AlembicPolyMeshDeformNode::PreDestruction()
+{
+   mSchema.reset();
+   delRefArchive(mFileName);
+   mFileName.clear();
+}
+
+AlembicPolyMeshDeformNode::~AlembicPolyMeshDeformNode()
+{
+   PreDestruction();
+}
+
+MObject AlembicPolyMeshDeformNode::mTimeAttr;
+MObject AlembicPolyMeshDeformNode::mFileNameAttr;
+MObject AlembicPolyMeshDeformNode::mIdentifierAttr;
+
+MStatus AlembicPolyMeshDeformNode::initialize()
+{
+   MStatus status;
+
+   MFnUnitAttribute uAttr;
+   MFnTypedAttribute tAttr;
+   MFnNumericAttribute nAttr;
+   MFnGenericAttribute gAttr;
+   MFnStringData emptyStringData;
+   MObject emptyStringObject = emptyStringData.create("");
+
+   // input time
+   mTimeAttr = uAttr.create("inTime", "tm", MFnUnitAttribute::kTime, 0.0);
+   status = uAttr.setStorable(true);
+   status = uAttr.setKeyable(true);
+   status = addAttribute(mTimeAttr);
+
+   // input file name
+   mFileNameAttr = tAttr.create("fileName", "fn", MFnData::kString, emptyStringObject);
+   status = tAttr.setStorable(true);
+   status = tAttr.setUsedAsFilename(true);
+   status = tAttr.setKeyable(false);
+   status = addAttribute(mFileNameAttr);
+
+   // input identifier
+   mIdentifierAttr = tAttr.create("identifier", "it", MFnData::kString, emptyStringObject);
+   status = tAttr.setStorable(true);
+   status = tAttr.setKeyable(false);
+   status = addAttribute(mIdentifierAttr);
+
+   // create a mapping
+   status = attributeAffects(mTimeAttr, outputGeom);
+   status = attributeAffects(mFileNameAttr, outputGeom);
+   status = attributeAffects(mIdentifierAttr, outputGeom);
+
+   return status;
+}
+
+MStatus AlembicPolyMeshDeformNode::deform(MDataBlock & dataBlock, MItGeometry & iter, const MMatrix & localToWorld, unsigned int geomIndex)
+{
+   MStatus status;
+
+   // get the envelope data
+   float env = dataBlock.inputValue( envelope ).asFloat();
+   if(env == 0.0f) // deformer turned off
+      return MStatus::kSuccess;
+
+   // update the frame number to be imported
+   double inputTime = dataBlock.inputValue(mTimeAttr).asTime().as(MTime::kSeconds);
+   MString & fileName = dataBlock.inputValue(mFileNameAttr).asString();
+   MString & identifier = dataBlock.inputValue(mIdentifierAttr).asString();
+
+   // check if we have the file
+   if(fileName != mFileName || identifier != mIdentifier)
+   {
+      mSchema.reset();
+      if(fileName != mFileName)
+      {
+         delRefArchive(mFileName);
+         mFileName = fileName;
+         addRefArchive(mFileName);
+      }
+      mIdentifier = identifier;
+
+      // get the object from the archive
+      Alembic::Abc::IObject iObj = getObjectFromArchive(mFileName,identifier);
+      if(!iObj.valid())
+      {
+         MGlobal::displayWarning("[ExocortexAlembic] Identifier '"+identifier+"' not found in archive '"+mFileName+"'.");
+         return MStatus::kFailure;
+      }
+      Alembic::AbcGeom::IPolyMesh obj(iObj,Alembic::Abc::kWrapExisting);
+      if(!obj.valid())
+      {
+         MGlobal::displayWarning("[ExocortexAlembic] Identifier '"+identifier+"' in archive '"+mFileName+"' is not a Camera.");
+         return MStatus::kFailure;
+      }
+      mSchema = obj.getSchema();
+   }
+
+   if(!mSchema.valid())
+      return MStatus::kFailure;
+
+   // get the sample
+   SampleInfo sampleInfo = getSampleInfo(
+      inputTime,
+      mSchema.getTimeSampling(),
+      mSchema.getNumSamples()
+   );
+
+   // check if we have to do this at all
+   if(mLastSampleInfo.floorIndex == sampleInfo.floorIndex && mLastSampleInfo.ceilIndex == sampleInfo.ceilIndex)
+      return MStatus::kSuccess;
+
+   mLastSampleInfo = sampleInfo;
+
+   // access the camera values
+   Alembic::AbcGeom::IPolyMeshSchema::Sample sample;
+   Alembic::AbcGeom::IPolyMeshSchema::Sample sample2;
+   mSchema.get(sample,sampleInfo.floorIndex);
+   if(sampleInfo.alpha != 0.0)
+      mSchema.get(sample2,sampleInfo.ceilIndex);
+
+   Alembic::Abc::P3fArraySamplePtr samplePos = sample.getPositions();
+   Alembic::Abc::P3fArraySamplePtr samplePos2;
+   if(sampleInfo.alpha != 0.0)
+      samplePos2 = sample2.getPositions();
+
+   // iteration should not be necessary. the iteration is only 
+   // required if the same mesh is attached to the same deformer
+   // several times
+   float blend = (float)sampleInfo.alpha;
+   float iblend = 1.0f - blend;
+   for(iter.reset(); !iter.isDone(); iter.next())
+   {
+      float weight = weightValue(dataBlock,geomIndex,iter.index());
+      if(weight == 0.0f)
+         continue;
+      float iweight = 1.0f - weight;
+      if(iter.index() >= samplePos->size())
+         continue;
+      bool done = false;
+      MFloatPoint pt = iter.position();
+      MFloatPoint abcPt;
+      if(sampleInfo.alpha != 0.0)
+      {
+         if(samplePos2->size() == samplePos->size())
+         {
+            pt.x = iweight * pt.x + weight * (samplePos->get()[iter.index()].x * iblend + samplePos2->get()[iter.index()].x * blend);
+            pt.y = iweight * pt.y + weight * (samplePos->get()[iter.index()].y * iblend + samplePos2->get()[iter.index()].y * blend);
+            pt.z = iweight * pt.z + weight * (samplePos->get()[iter.index()].z * iblend + samplePos2->get()[iter.index()].z * blend);
+            done = true;
+         }
+      }
+      if(!done)
+      {
+         pt.x = iweight * pt.x + weight * samplePos->get()[iter.index()].x;
+         pt.y = iweight * pt.y + weight * samplePos->get()[iter.index()].y;
+         pt.z = iweight * pt.z + weight * samplePos->get()[iter.index()].z;
+      }
+      iter.setPosition(pt);
+   }
+
+   return MStatus::kSuccess;
+}
+
 MSyntax AlembicCreateFaceSetsCommand::createSyntax()
 {
    MSyntax syntax;

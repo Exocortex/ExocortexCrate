@@ -103,13 +103,18 @@ proc exocortexAlembicImport(string $filename)
         tokenize $identifiers[$i] "/" $parts;
         string $name = $names[$i];
         string $reader;
+        string $topoReader;
         string $shape;
         if($types[$i] == "PolyMesh")
         {
             $shape = `createNode -name $name "mesh"`;
-            $reader = `createNode "ExocortexAlembicPolyMesh"`;
-            connectAttr ($reader+".outMesh") ($shape+".inMesh");        
+            $topoReader = `createNode "ExocortexAlembicPolyMesh"`;
+            connectAttr ($topoReader+".outMesh") ($shape+".inMesh");
+            connectAttr ($fileNode+".outFileName") ($topoReader+".fileName");        
+            setAttr -type "string" ($topoReader+".identifier") $identifiers[$i];
             ExocortexAlembic_createFaceSets -f $filename -i $identifiers[$i] -o $shape;
+            string $readers[] = `deformer -type "ExocortexAlembicPolyMeshDeform" $shape`;
+            $reader = $readers[0];
         }
         else if($types[$i] == "SubD")
         {
@@ -185,7 +190,10 @@ proc exocortexAlembicImport(string $filename)
         }
         
         // connect the standard ports
-        connectAttr ($timeControl+".outTime") ($reader+".inTime");        
+        if($nbSamples[$i] > 1)
+        {
+            connectAttr ($timeControl+".outTime") ($reader+".inTime");        
+        }
         connectAttr ($fileNode+".outFileName") ($reader+".fileName");        
         setAttr -type "string" ($reader+".identifier") $identifiers[$i];
         $objects[$i] = $shape;
