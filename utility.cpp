@@ -80,10 +80,11 @@ SampleInfo getSampleInfo
    return result;
 }
 
-std::string getIdentifierFromRef(CRef in_Ref)
+std::string getIdentifierFromRef(CRef in_Ref, bool includeHierarchy)
 {
    std::string result;
    CRef ref = in_Ref;
+   bool has3DObj = false;
    while(ref.IsValid())
    {
       Model model(ref);
@@ -98,9 +99,16 @@ std::string getIdentifierFromRef(CRef in_Ref)
       }
       else if(obj.IsValid())
       {
-         result = std::string("/")+ std::string(obj.GetName().GetAsciiString()) + result;
+         if(!has3DObj)
+         {
+            result = std::string("/")+ std::string(obj.GetName().GetAsciiString()) + result;
+            has3DObj = true;
+         }
          result = std::string("/")+ std::string(obj.GetName().GetAsciiString()) + std::string("Xfo") + result;
-         ref = obj.GetModel().GetRef();
+         if(includeHierarchy)
+            ref = obj.GetParent3DObject().GetRef();
+         else
+            ref = obj.GetModel().GetRef();
       }
       else if(item.IsValid())
       {
@@ -166,7 +174,7 @@ CRefArray getOperators( CRef in_Ref)
 }
 
 std::map<std::string,bool> gIsRefAnimatedMap;
-bool isRefAnimated(const CRef & in_Ref)
+bool isRefAnimated(const CRef & in_Ref, bool xformCache)
 {
    // check the cache
    std::map<std::string,bool>::iterator it = gIsRefAnimatedMap.find(in_Ref.GetAsText().GetAsciiString());
@@ -199,7 +207,7 @@ bool isRefAnimated(const CRef & in_Ref)
             return returnIsRefAnimated(in_Ref,true);
       }
       // check the parent
-      if(isRefAnimated(x3d.GetParent()))
+      if(isRefAnimated(x3d.GetParent()) && !xformCache)
          return returnIsRefAnimated(in_Ref,true);
    }
    else if(shapeKey.IsValid())
@@ -228,6 +236,10 @@ bool isRefAnimated(const CRef & in_Ref)
    {
       // myself is animated?
       if(kineState.IsAnimated())
+         return returnIsRefAnimated(in_Ref,true);
+      CRef retargetOpRef;
+      retargetOpRef.Set(kineState.GetFullName()+L".RetargetGlobalOp");
+      if(retargetOpRef.IsValid())
          return returnIsRefAnimated(in_Ref,true);
    }
    else if(op.IsValid())

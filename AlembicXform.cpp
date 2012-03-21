@@ -19,7 +19,7 @@ using namespace MATH;
 namespace AbcA = ::Alembic::AbcCoreAbstract::ALEMBIC_VERSION_NS;
 using namespace AbcA;
 
-void SaveXformSample(XSI::CRef kinestateRef, Alembic::AbcGeom::OXformSchema & schema, Alembic::AbcGeom::XformSample & sample, double time)
+void SaveXformSample(XSI::CRef kinestateRef, Alembic::AbcGeom::OXformSchema & schema, Alembic::AbcGeom::XformSample & sample, double time, bool xformCache)
 {
    KinematicState kineState(kinestateRef);
 
@@ -27,13 +27,17 @@ void SaveXformSample(XSI::CRef kinestateRef, Alembic::AbcGeom::OXformSchema & sc
    if(schema.getNumSamples() > 0)
    {
       X3DObject parent(kineState.GetParent3DObject());
-      if(!isRefAnimated(kineState.GetParent3DObject().GetRef()))
+      if(!isRefAnimated(kineState.GetParent3DObject().GetRef(),xformCache))
          return;
    }
 
    CTransformation global = kineState.GetTransform(time);
-   CTransformation model = kineState.GetParent3DObject().GetModel().GetKinematics().GetGlobal().GetTransform(time);
-   global = MapWorldPoseToObjectSpace(model,global);
+   if(!xformCache)
+   {
+      CTransformation model;
+      kineState.GetParent3DObject().GetModel().GetKinematics().GetGlobal().GetTransform(time);
+      global = MapWorldPoseToObjectSpace(model,global);
+   }
 
    // store the transform
    CVector3 trans = global.GetTranslation();

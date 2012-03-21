@@ -17,6 +17,7 @@
 #include <xsi_project.h>
 #include <xsi_selection.h>
 #include <xsi_model.h>
+#include <xsi_null.h>
 #include <xsi_camera.h>
 #include <xsi_customoperator.h>
 #include <xsi_kinematics.h>
@@ -189,8 +190,17 @@ ESS_CALLBACK_START(alembic_export_Execute,CRef&)
       jobString += L";step="+settings.GetParameterValue(L"frame_step").GetAsText();
       jobString += L";substep="+settings.GetParameterValue(L"frame_substep").GetAsText();
       LONG normalMode = settings.GetParameterValue(L"normals");
+      bool transformCache = settings.GetParameterValue(L"transformcache");
       jobString += L";normals="+CValue(normalMode == 2l).GetAsText();
-      if(normalMode == 0)
+      if(transformCache)
+      {
+         jobString += L";transformcache=true";
+         jobString += L";uvs=false";
+         jobString += L";facesets=false";
+         jobString += L";bindpose=false";
+         jobString += L";dynamictopology=false";
+      }
+      else if(normalMode == 0)
       {
          jobString += L";purepointcache=true";
          jobString += L";uvs=false";
@@ -225,6 +235,7 @@ ESS_CALLBACK_START(alembic_export_Execute,CRef&)
       double frameSteps = 1.0;
       double frameSubSteps = 1.0;
       CString filename;
+      bool transformCache = false;
       bool purepointcache = false;
       bool normals = true;
       bool uvs = true;
@@ -260,6 +271,8 @@ ESS_CALLBACK_START(alembic_export_Execute,CRef&)
             facesets = (bool)CValue(valuePair[1]);
 		   else if(valuePair[0].IsEqualNoCase(L"bindpose"))
             bindpose = (bool)CValue(valuePair[1]);
+		   else if(valuePair[0].IsEqualNoCase(L"transformcache"))
+            transformCache = (bool)CValue(valuePair[1]);
 		   else if(valuePair[0].IsEqualNoCase(L"purepointcache"))
             purepointcache = (bool)CValue(valuePair[1]);
 		   else if(valuePair[0].IsEqualNoCase(L"dynamictopology"))
@@ -372,6 +385,7 @@ ESS_CALLBACK_START(alembic_export_Execute,CRef&)
          frames.Add(frame);
 
       AlembicWriteJob * job = new AlembicWriteJob(filename,objects,frames);
+      job->SetOption(L"transformCache",transformCache);
       job->SetOption(L"exportNormals",normals);
       job->SetOption(L"exportUVs",uvs);
       job->SetOption(L"exportFaceSets",facesets);
@@ -1580,11 +1594,16 @@ ESS_CALLBACK_START(alembic_import_Execute, CRef&)
    // let's figure out which objects we have
    std::vector<Alembic::Abc::IObject> objects;
    objects.push_back(archive->getTop());
+   size_t nbTransforms = 1;
    for(size_t i=0;i<objects.size();i++)
    {
       // first, let's recurse
       for(size_t j=0;j<objects[i].getNumChildren();j++)
+      {
          objects.push_back(objects[i].getChild(j));
+         if(Alembic::AbcGeom::IXform::matches(objects[objects.size()-1].getMetaData()))
+            nbTransforms++;
+      }
    }
 
    ProgressBar prog;
@@ -1597,8 +1616,10 @@ ESS_CALLBACK_START(alembic_import_Execute, CRef&)
 
    // clear the imported names!
    nameMapClear();
+   CString transformCacheModelName;
+   Model transformCacheModel;
 
-   for(size_t i=0;i<objects.size();i++)
+   for(size_t i=1;i<objects.size();i++)
    {
       if(identifierMap.size() > 0)
       {
@@ -1608,9 +1629,84 @@ ESS_CALLBACK_START(alembic_import_Execute, CRef&)
 
       prog.PutCaption(L"Importing "+CString(objects[i].getFullName().c_str())+L" ...");
 
-      // access the model to create content in!
-      Alembic::Abc::IObject parent = objects[i].getParent();
+      // get the parent and the object's name
       CString name = truncateName(objects[i].getName().c_str());
+      Alembic::Abc::IObject parent = objects[i].getParent();
+
+      // check if we are looking at a transformcache file
+      if(nbTransforms == objects.size())
+      {
+         // determine if we are a top level object
+         if(!Alembic::AbcGeom::IXform::matches(parent.getMetaData()))
+         {
+            // this is a model
+            transformCacheModelName = name;
+            Model model;
+            if(attachToExisting)
+            {
+               CRef modelRef;
+               modelRef.Set(transformCacheModelName);
+               model = modelRef;
+            }
+            if(!model.IsValid())
+            {
+               CRefArray children;
+               Application().GetActiveSceneRoot().AddModel(children,transformCacheModelName,model);
+               nameMapAdd(objects[i].getFullName().c_str(),model.GetFullName());
+            }
+            transformCacheModel = model;
+
+            // load metadata
+            alembic_create_item_Invoke(L"alembic_metadata",model.GetRef(),filename,objects[i].getFullName().c_str(),attachToExisting,createItemArgs);
+
+            // load xform
+            alembic_create_item_Invoke(L"alembic_xform",model.GetRef(),filename,objects[i].getFullName().c_str(),attachToExisting,createItemArgs);
+
+            // load visibility
+            alembic_create_item_Invoke(L"alembic_visibility",model.GetRef(),filename,objects[i].getFullName().c_str(),attachToExisting,createItemArgs);
+         }
+         else
+         {
+            Null null;
+            if(attachToExisting)
+            {
+               CRef nullRef;
+               nullRef.Set(transformCacheModelName+L"."+name);
+               null = nullRef;
+            }
+            if(!null.IsValid())
+            {
+               // try to get the parent
+               CString parentName = truncateName(parent.getName().c_str());
+               if(parentName == transformCacheModelName)
+                  transformCacheModel.AddNull(name,null);
+               else
+               {
+                  CRef parentRef;
+                  parentRef.Set(transformCacheModelName+L"."+parentName);
+                  Application().LogMessage(name+L" -> "+transformCacheModelName+L"."+parentName);
+                  X3DObject parentObj = parentRef;
+                  if(parentObj.IsValid())
+                     parentObj.AddNull(name,null);
+                  else
+                     transformCacheModel.AddNull(name,null);
+               }
+               nameMapAdd(objects[i].getFullName().c_str(),null.GetFullName());
+            }
+
+            // load metadata
+            alembic_create_item_Invoke(L"alembic_metadata",null.GetRef(),filename,objects[i].getFullName().c_str(),attachToExisting,createItemArgs);
+
+            // load xform
+            alembic_create_item_Invoke(L"alembic_xform",null.GetRef(),filename,objects[i].getFullName().c_str(),attachToExisting,createItemArgs);
+
+            // load visibility
+            alembic_create_item_Invoke(L"alembic_visibility",null.GetRef(),filename,objects[i].getFullName().c_str(),attachToExisting,createItemArgs);
+         }
+         continue;
+      }
+
+      // access the model to create content in!
       Model parentModel = Application().GetActiveSceneRoot();
 
       // now let's see what we have here
@@ -2120,6 +2216,7 @@ ESS_CALLBACK_START(alembic_export_settings_Define,CRef&)
    oCustomProperty.AddParameter(L"facesets",CValue::siBool,siPersistable,L"",L"",1,0,1,0,1,oParam);
    oCustomProperty.AddParameter(L"bindpose",CValue::siBool,siPersistable,L"",L"",1,0,1,0,1,oParam);
    oCustomProperty.AddParameter(L"dtopology",CValue::siBool,siPersistable,L"",L"",0,0,1,0,1,oParam);
+   oCustomProperty.AddParameter(L"transformcache",CValue::siBool,siPersistable,L"",L"",0,0,1,0,1,oParam);
  
 	return CStatus::OK;
 ESS_CALLBACK_END
@@ -2151,6 +2248,7 @@ ESS_CALLBACK_START(alembic_export_settings_DefineLayout,CRef&)
    oLayout.AddItem(L"facesets",L"Clusters");
    oLayout.AddItem(L"bindpose",L"Envelope BindPose");
    oLayout.AddItem(L"dtopology",L"Dynamic Topology");
+   oLayout.AddItem(L"transformcache",L"Transform Cache");
    oLayout.EndGroup();
 
 	return CStatus::OK;

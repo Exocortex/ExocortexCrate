@@ -28,7 +28,10 @@ AlembicModel::AlembicModel(const XSI::CRef & in_Ref, AlembicWriteJob * in_Job)
    CString modelName(prim.GetParent3DObject().GetName());
    CString xformName(modelName+L"Xfo");
    Alembic::AbcGeom::OXform xform(GetOParent(),xformName.GetAsciiString(),GetJob()->GetAnimatedTs());
-   AddRef(prim.GetParent3DObject().GetKinematics().GetGlobal().GetRef());
+   if((bool)in_Job->GetOption(L"transformCache"))
+      AddRef(prim.GetParent3DObject().GetKinematics().GetLocal().GetRef());
+   else
+      AddRef(prim.GetParent3DObject().GetKinematics().GetGlobal().GetRef());
 
    // create the generic properties
    mOVisibility = CreateVisibilityProperty(xform,GetJob()->GetAnimatedTs());
@@ -54,7 +57,7 @@ XSI::CStatus AlembicModel::Save(double time)
    Primitive prim(GetRef());
 
    // store the transform
-   SaveXformSample(GetRef(1),mXformSchema,mXformSample,time);
+   SaveXformSample(GetRef(1),mXformSchema,mXformSample,time,GetJob()->GetOption("transformCache"));
 
    // set the visibility
    Property visProp;
