@@ -604,7 +604,12 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
                MNMapFace* mapF = map->f;
                for (int i =0; i < numFaces; i += 1)
                {
-                   int degree = options.pMNMesh->F(i)->deg;
+                   int degree;
+                   if (i < options.pMNMesh->numf)
+                       degree = options.pMNMesh->F(i)->deg;
+                   else
+                       degree = 0;
+
                    mapF[i].SetSize(degree);
 
                    for (int j = 0; j < degree; j ++)
