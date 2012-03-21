@@ -293,6 +293,8 @@ int ExocortexAlembicImport_Internal(MCHAR* strPath, BOOL bImportNormals, BOOL bI
 		options.currentSceneList.FillList(options.sceneEnumProc);
 		Object *currentObject = NULL;
 
+		ESS_LOG_INFO( "AlembicImport_TimeControl." );
+				
 		AlembicImport_TimeControl( options );
 
 
@@ -346,11 +348,11 @@ int ExocortexAlembicImport_Internal(MCHAR* strPath, BOOL bImportNormals, BOOL bI
 					lastUpdateProcess = progressUpdateInterval;
 				}
 			}
-
+			
 			// XForm
 			if(Alembic::AbcGeom::IXform::matches(objects[j].getMetaData()))
 			{
-				//ESS_LOG_INFO( "AlembicImport_XForm: " << objects[j].getFullName() );
+				ESS_LOG_INFO( "AlembicImport_XForm: " << objects[j].getFullName() );
 				int ret = AlembicImport_XForm(file, objects[j].getFullName(), options);
 				progressUpdateInterval ++;
 			}
@@ -358,7 +360,7 @@ int ExocortexAlembicImport_Internal(MCHAR* strPath, BOOL bImportNormals, BOOL bI
 			// PolyMesh
 			else if (Alembic::AbcGeom::IPolyMesh::matches(objects[j].getMetaData()))
 			{
-				//ESS_LOG_INFO( "AlembicImport_PolyMesh: " << objects[j].getFullName() );
+				ESS_LOG_INFO( "AlembicImport_PolyMesh: " << objects[j].getFullName() );
 				int ret = AlembicImport_PolyMesh(file, objects[j].getFullName(), options); 
 				progressUpdateInterval ++;
 			}
@@ -366,7 +368,7 @@ int ExocortexAlembicImport_Internal(MCHAR* strPath, BOOL bImportNormals, BOOL bI
 			// Camera
 			else if (Alembic::AbcGeom::ICamera::matches(objects[j].getMetaData()))
 			{
-				// ESS_LOG_INFO( "AlembicImport_Camera: " << objects[j].getFullName() );
+				ESS_LOG_INFO( "AlembicImport_Camera: " << objects[j].getFullName() );
 				int ret = AlembicImport_Camera(file, objects[j].getFullName(), options);
 				progressUpdateInterval ++;
 			}
@@ -374,7 +376,7 @@ int ExocortexAlembicImport_Internal(MCHAR* strPath, BOOL bImportNormals, BOOL bI
 			// Points
 			else if (Alembic::AbcGeom::IPoints::matches(objects[j].getMetaData()))
 			{
-				//ESS_LOG_INFO( "AlembicImport_Points: " << objects[j].getFullName() );
+				ESS_LOG_INFO( "AlembicImport_Points: " << objects[j].getFullName() );
 				int ret = AlembicImport_Points(file, objects[j].getFullName(), options);
 				progressUpdateInterval ++;
 			}
@@ -382,7 +384,7 @@ int ExocortexAlembicImport_Internal(MCHAR* strPath, BOOL bImportNormals, BOOL bI
 			// Curves
 			else if (Alembic::AbcGeom::ICurves::matches(objects[j].getMetaData()))
 			{
-				//ESS_LOG_INFO( "AlembicImport_Shape: " << objects[j].getFullName() );
+				ESS_LOG_INFO( "AlembicImport_Shape: " << objects[j].getFullName() );
 				int ret = AlembicImport_Shape(file, objects[j].getFullName(), options);
 				progressUpdateInterval ++;
 			}

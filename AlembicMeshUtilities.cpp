@@ -696,11 +696,11 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
 	   if ( options.nDataFillFlags & ALEMBIC_DATAFILL_FACELIST ) {
 		   options.pMNMesh->InvalidateTopoCache();
 	   }
-	   /*else {
+	   else {
 		   if( options.nDataFillFlags & ALEMBIC_DATAFILL_VERTEX ) {
 			options.pMNMesh->InvalidateGeomCache();
 		   }
-	   }*/
+	   }
    }
 
    if (options.pMesh != NULL)
@@ -708,11 +708,11 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
 	   if ( options.nDataFillFlags & ALEMBIC_DATAFILL_FACELIST ) {
 		   options.pMesh->InvalidateTopologyCache();
 	   }
-	  /* else {
+	   else {
 		   if( options.nDataFillFlags & ALEMBIC_DATAFILL_VERTEX ) {
 			   options.pMesh->InvalidateGeomCache();
 		   }
-	   }*/
+	   }
    }
 }
 
