@@ -42,6 +42,7 @@ private:
    Alembic::Abc::ALEMBIC_VERSION_NS::OUInt32ArrayProperty mMatIdProperty;
    std::vector<float> mRadiusVec;
    std::vector<VNormal> m_MeshSmoothGroupNormals;
+   facesetmap mFaceSetsMap;
 private:
     void BuildMeshSmoothingGroupNormals(Mesh &mesh);
     void BuildMeshSmoothingGroupNormals(MNMesh &mesh);

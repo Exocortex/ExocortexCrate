@@ -637,14 +637,17 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
    if ( options.nDataFillFlags & ALEMBIC_DATAFILL_MATERIALIDS )
    {
        Alembic::Abc::IUInt32ArrayProperty materialIds;
-       if(objMesh.valid())
+       if(objMesh.valid() && objMesh.getSchema().getPropertyHeader( ".materialids" )) 
            materialIds = Alembic::Abc::IUInt32ArrayProperty(objMesh.getSchema(), ".materialids");
-       else
+       else if (objSubD.valid() && objSubD.getSchema().getPropertyHeader( ".materialids" ))
            materialIds = Alembic::Abc::IUInt32ArrayProperty(objSubD.getSchema(), ".materialids");
 
+       // If we don't detect a material id property then we try the facesets.  The order in the face set array is assumed
+       // to be the material id
        if (materialIds.valid() && materialIds.getNumSamples() > 0)
        {
             Alembic::Abc::UInt32ArraySamplePtr materialIdsPtr = materialIds.getValue(sampleInfo.floorIndex);
+
             if (materialIdsPtr->size() == numFaces)
             {
                 for (int i = 0; i < materialIdsPtr->size(); i += 1)
@@ -660,6 +663,40 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
                     }
                 }
             }
+       }
+       else
+       {
+           std::vector<std::string> faceSetNames;
+           if(objMesh.valid())
+               objMesh.getSchema().getFaceSetNames(faceSetNames);
+           else
+               objSubD.getSchema().getFaceSetNames(faceSetNames);
+
+           for(size_t j=0;j<faceSetNames.size();j++)
+           {
+               Alembic::AbcGeom::IFaceSetSchema faceSet;
+               if(objMesh.valid())
+                   faceSet = objMesh.getSchema().getFaceSet(faceSetNames[j]).getSchema();
+               else
+                   faceSet = objSubD.getSchema().getFaceSet(faceSetNames[j]).getSchema();
+
+               Alembic::AbcGeom::IFaceSetSchema::Sample faceSetSample = faceSet.getValue();
+               Alembic::Abc::Int32ArraySamplePtr faces = faceSetSample.getFaces();
+
+               int nMatId = j;
+               for(size_t k=0;k<faces->size();k++)
+               {
+                   int faceId = faces->get()[k];
+                   if (options.pMNMesh != NULL && faceId < options.pMNMesh->numf)
+                   {
+                       options.pMNMesh->f[faceId].material = nMatId;
+                   }
+                   else if (options.pMesh != NULL && faceId < options.pMesh->getNumFaces())
+                   {
+                       options.pMesh->faces[faceId].setMatID(nMatId);
+                   }
+               }
+           }
        }
    }
 

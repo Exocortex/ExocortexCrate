@@ -134,6 +134,7 @@ bool AlembicPolyMesh::Save(double time)
     mUvVec.clear();
     mUvIndexVec.clear();
     mMatIdIndexVec.clear();
+    mFaceSetsMap.clear();
 
     // store the metadata
     // IMetaDataManager mng;
@@ -560,12 +561,47 @@ bool AlembicPolyMesh::Save(double time)
               {
                   int matId = polyObj ? polyObj->GetMesh().f[i].material : triObj->GetMesh().faces[i].getMatID();
                   mMatIdIndexVec[i] = matId;
+
+                  // Record the face set map if sample zero
+                  if (mNumSamples == 0)
+                  {
+                      facesetmap_it it;
+                      it = mFaceSetsMap.find(matId);
+
+                      if (it == mFaceSetsMap.end())
+                      {
+                          facesetmap_ret_pair ret = mFaceSetsMap.insert(facesetmap_insert_pair(matId, std::vector<int32_t>()));
+                          it = ret.first;
+                      }
+
+                      it->second.push_back(i);
+                  }
               }
 
-              if(mMatIdIndexVec.size() == 0)
+              size_t nMatIndexSize = mMatIdIndexVec.size();
+              if(nMatIndexSize == 0)
                   mMatIdIndexVec.push_back(0);
-              Alembic::Abc::UInt32ArraySample sample = Alembic::Abc::UInt32ArraySample(&mMatIdIndexVec.front(),mMatIdIndexVec.size());
+              Alembic::Abc::UInt32ArraySample sample = Alembic::Abc::UInt32ArraySample(&mMatIdIndexVec.front(), nMatIndexSize);
               mMatIdProperty.set(sample);
+
+              // For sample zero, export the material ids as face sets
+              if (mNumSamples == 0)
+              {
+                  for ( facesetmap_it it=mFaceSetsMap.begin(); it != mFaceSetsMap.end(); it++ )
+                  {
+                      std::string name;
+                      std::stringstream convert;
+                      int nMaterialId = it->first + 1;
+                      convert << nMaterialId;
+                      name = "Material" + convert.str();
+                      std::vector<int32_t> & faceSetVec = it->second;
+
+                      Alembic::AbcGeom::OFaceSet faceSet = mMeshSchema.createFaceSet(name);
+                      Alembic::AbcGeom::OFaceSetSchema::Sample faceSetSample(Alembic::Abc::Int32ArraySample(&faceSetVec.front(),faceSetVec.size()));
+                      faceSet.getSchema().set(faceSetSample);
+
+                  }
+              }
           }
       }
 
