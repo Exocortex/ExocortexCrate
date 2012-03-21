@@ -463,7 +463,7 @@ Mesh* ExocortexAlembicStaticInterface::ExocortexAlembicImportMesh(Mesh* pMesh, M
 			options.nDataFillFlags |= ALEMBIC_DATAFILL_UVS;
 		}
 		if( bImportMaterialIds ) {
-			options.nDataFillFlags |= ALEMBIC_DATAFILL_FACESETS;
+			options.nDataFillFlags |= ALEMBIC_DATAFILL_MATERIALIDS;
 		}
 		options.pMesh = pMesh;
 

@@ -159,7 +159,7 @@ void AlembicMeshTopoModifier::ModifyObject (TimeValue t, ModContext &mc, ObjectS
    options.fVertexAlpha = fGeoAlpha;
     if( bTopology ) {
 		options.nDataFillFlags |= ALEMBIC_DATAFILL_FACELIST;
-		options.nDataFillFlags |= ALEMBIC_DATAFILL_FACESETS;
+		options.nDataFillFlags |= ALEMBIC_DATAFILL_MATERIALIDS;
    }
    if( bGeometry ) {
 	   options.nDataFillFlags |= ALEMBIC_DATAFILL_VERTEX;

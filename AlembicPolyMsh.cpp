@@ -125,7 +125,7 @@ bool AlembicPolyMesh::Save(double time)
 
     // Store the transformation
     SaveXformSample(GetRef(), mXformSchema, mXformSample, time);
-
+   
     // Clear our data
     mFaceCountVec.clear();
     mFaceIndicesVec.clear();
@@ -133,6 +133,7 @@ bool AlembicPolyMesh::Save(double time)
     mVelocitiesVec.clear();
     mUvVec.clear();
     mUvIndexVec.clear();
+    mMatIdIndexVec.clear();
     mFaceSetsMap.clear();
 
     // store the metadata
@@ -257,11 +258,12 @@ bool AlembicPolyMesh::Save(double time)
         if (polyObj != NULL)
         {
             polyObj->GetMesh().buildNormals();
-            BuildMNMeshSmoothingGroupNormals(polyObj->GetMesh());
+            BuildMeshSmoothingGroupNormals(polyObj->GetMesh());
         }
         if (triObj != NULL)
         {
             triObj->GetMesh().buildNormals();
+            BuildMeshSmoothingGroupNormals(triObj->GetMesh());
         }
 
         normalVec.resize(sampleCount);
@@ -283,7 +285,7 @@ bool AlembicPolyMesh::Save(double time)
                     }
                     else
                     {
-                        vertexNormal = GetVertexNormal(&polyObj->GetMesh(), i, j, m_MNMeshSmoothGroupNormals);
+                        vertexNormal = GetVertexNormal(&polyObj->GetMesh(), i, j, m_MeshSmoothGroupNormals);
                     }
                 }
                 else
@@ -295,7 +297,7 @@ bool AlembicPolyMesh::Save(double time)
                     }
                     else
                     {
-                        vertexNormal = GetVertexNormal(&triObj->GetMesh(), i, triObj->GetMesh().getRVertPtr(i));
+                        vertexNormal = GetVertexNormal(&triObj->GetMesh(), i, j, m_MeshSmoothGroupNormals);
                     }
                 }
 
@@ -347,12 +349,8 @@ bool AlembicPolyMesh::Save(double time)
             sortedNormalVec.clear();
         }
 
-        if (polyObj != NULL)
-        {
-            ClearMNMeshSmoothingGroupNormals();
-        }
+        ClearMeshSmoothingGroupNormals();
     }
-
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	 // if we are the first frame!
    if(mNumSamples == 0 || (dynamicTopology))
@@ -395,6 +393,20 @@ bool AlembicPolyMesh::Save(double time)
          normalSample.setVals(Alembic::Abc::N3fArraySample(&normalVec.front(),normalCount));
          if(normalIndexCount > 0)
             normalSample.setIndices(Alembic::Abc::UInt32ArraySample(&normalIndexVec.front(),normalIndexCount));
+         mMeshSample.setNormals(normalSample);
+      }
+      else if (mNumSamples == 0 && dynamicTopology)
+      {
+         // If we are exporting dynamic topology, then we may have normals that show up later in our scene.  The problem is that Alembic wants
+         // your parameter to be defined at sample zero if you plan to use it even later on, so we create a dummy normal parameter here if the case
+         // requires it
+         normalVec.push_back(Imath::V3f(0,0,0));
+         normalCount = 0;
+         normalIndexVec.push_back(0);
+         normalIndexCount = 0;
+         normalSample.setScope(Alembic::AbcGeom::kFacevaryingScope);
+         normalSample.setVals(Alembic::Abc::N3fArraySample(&normalVec.front(),normalCount));
+         normalSample.setIndices(Alembic::Abc::UInt32ArraySample(&normalIndexVec.front(),normalIndexCount));
          mMeshSample.setNormals(normalSample);
       }
 
@@ -515,48 +527,80 @@ bool AlembicPolyMesh::Save(double time)
                       uvSample.setIndices(Alembic::Abc::UInt32ArraySample(&mUvIndexVec.front(),uvIndexCount));
                   mMeshSample.setUVs(uvSample);
               }
+              else if (mNumSamples == 0 && dynamicTopology)
+              {
+                  // If we are exporting dynamic topology, then we may have uvs that show up later in our scene.  The problem is that Alembic wants
+                  // your parameter to be defined at sample zero if you plan to use it even later on, so we create a dummy uv parameter here if the case
+                  // requires it
+                  mUvVec.push_back(Imath::V2f(0,0));
+                  uvCount = 0;
+                  mUvIndexVec.push_back(0);
+                  uvIndexCount = 0;
+                  Alembic::AbcGeom::OV2fGeomParam::Sample uvSample(Alembic::Abc::V2fArraySample(&mUvVec.front(),uvCount),Alembic::AbcGeom::kFacevaryingScope);
+                  uvSample.setIndices(Alembic::Abc::UInt32ArraySample(&mUvIndexVec.front(),uvIndexCount));
+                  mMeshSample.setUVs(uvSample);
+              }
           }
       }
 
       // sweet, now let's have a look at face sets (really only for first sample)
       // for 3DS Max, we are mapping this to the material ids
-	  if(GetCurrentJob()->GetOption("exportMaterialIds") && mNumSamples == 0)
+      std::vector<boost::int32_t> zeroFaceVector;
+	  if(GetCurrentJob()->GetOption("exportMaterialIds") && (mNumSamples == 0 || dynamicTopology))
       {
           if (polyObj != NULL || triObj != NULL)
           {
-              MNMesh &mesh = polyObj->GetMesh();
-              facesetmap_it it;
-              int numFaces = polyObj ? polyObj->GetMesh().numf : triObj->GetMesh().getNumFaces();
+              if(!mMatIdProperty.valid())
+              {
+                  mMatIdProperty = OUInt32ArrayProperty(mMeshSchema, ".materialids", mMeshSchema.getMetaData(), GetCurrentJob()->GetAnimatedTs());
+              }
 
-              // Find the material faceset.  If we find it, we add it to the face, otherwise
-              // we create a new faceset list
+              int numFaces = polyObj ? polyObj->GetMesh().numf : triObj->GetMesh().getNumFaces();
+              mMatIdIndexVec.resize(numFaces);
               for (int i = 0; i < numFaces; i += 1)
               {
                   int matId = polyObj ? polyObj->GetMesh().f[i].material : triObj->GetMesh().faces[i].getMatID();
-                  it = mFaceSetsMap.find(matId);
+                  mMatIdIndexVec[i] = matId;
 
-                  if (it == mFaceSetsMap.end())
+                  // Record the face set map if sample zero
+                  if (mNumSamples == 0)
                   {
-                      facesetmap_ret_pair ret = mFaceSetsMap.insert(facesetmap_insert_pair(matId, std::vector<int32_t>()));
-                      it = ret.first;
-                  }
+                      facesetmap_it it;
+                      it = mFaceSetsMap.find(matId);
 
-                  it->second.push_back(i);
+                      if (it == mFaceSetsMap.end())
+                      {
+                          facesetmap_ret_pair ret = mFaceSetsMap.insert(facesetmap_insert_pair(matId, std::vector<int32_t>()));
+                          it = ret.first;
+                      }
+
+                      it->second.push_back(i);
+                  }
               }
 
+              size_t nMatIndexSize = mMatIdIndexVec.size();
+              if(nMatIndexSize == 0)
+                  mMatIdIndexVec.push_back(0);
+              Alembic::Abc::UInt32ArraySample sample = Alembic::Abc::UInt32ArraySample(&mMatIdIndexVec.front(), nMatIndexSize);
+              mMatIdProperty.set(sample);
 
-              for ( it=mFaceSetsMap.begin(); it != mFaceSetsMap.end(); it++ )
+              // For sample zero, export the material ids as face sets
+              if (mNumSamples == 0)
               {
-                  std::string name;
-                  std::stringstream convert;
-                  convert << it->first;
-                  name = "MaterialId " + convert.str();
-                  std::vector<int32_t> & faceSetVec = it->second;
+                  for ( facesetmap_it it=mFaceSetsMap.begin(); it != mFaceSetsMap.end(); it++ )
+                  {
+                      std::string name;
+                      std::stringstream convert;
+                      int nMaterialId = it->first + 1;
+                      convert << nMaterialId;
+                      name = "Material" + convert.str();
+                      std::vector<int32_t> & faceSetVec = it->second;
 
-                  Alembic::AbcGeom::OFaceSet faceSet = mMeshSchema.createFaceSet(name);
-                  Alembic::AbcGeom::OFaceSetSchema::Sample faceSetSample(Alembic::Abc::Int32ArraySample(&faceSetVec.front(),faceSetVec.size()));
-                  faceSet.getSchema().set(faceSetSample);
+                      Alembic::AbcGeom::OFaceSet faceSet = mMeshSchema.createFaceSet(name);
+                      Alembic::AbcGeom::OFaceSetSchema::Sample faceSetSample(Alembic::Abc::Int32ArraySample(&faceSetVec.front(),faceSetVec.size()));
+                      faceSet.getSchema().set(faceSetSample);
 
+                  }
               }
           }
       }
@@ -652,42 +696,28 @@ bool AlembicPolyMesh::Save(double time)
     return true;
 }
 
-Point3 AlembicPolyMesh::GetVertexNormal(Mesh* mesh, int faceNo, RVertex* rv)
+Point3 AlembicPolyMesh::GetVertexNormal(Mesh *mesh, int faceNo, int faceVertNo, std::vector<VNormal> &sgVertexNormals)
 {
-	Face* f = &mesh->faces[faceNo];
-	DWORD smGroup = f->smGroup;
-	int numNormals = 0;
-	Point3 vertexNormal;
-	
-	// Is normal specified
-	// SPCIFIED is not currently used, but may be used in future versions.
-	if (rv->rFlags & SPECIFIED_NORMAL) {
-		vertexNormal = rv->rn.getNormal();
-	}
-	// If normal is not specified it's only available if the face belongs
-	// to a smoothing group
-	else if ((numNormals = rv->rFlags & NORCT_MASK) != 0 && smGroup) {
-		// If there is only one vertex is found in the rn member.
-		if (numNormals == 1) {
-			vertexNormal = rv->rn.getNormal();
-		}
-		else {
-			// If two or more vertices are there you need to step through them
-			// and find the vertex with the same smoothing group as the current face.
-			// You will find multiple normals in the ern member.
-			for (int i = 0; i < numNormals; i++) {
-				if (rv->ern[i].getSmGroup() & smGroup) {
-					vertexNormal = rv->ern[i].getNormal();
-				}
-			}
-		}
-	}
-	else {
-		// Get the normal from the Face if no smoothing groups are there
-		vertexNormal = mesh->getFaceNormal(faceNo);
-	}
-	
-	return vertexNormal;
+	// If we do not a smoothing group, we can't base ourselves on anything else,
+    // so we can just return the face normal.
+    Face *face = &mesh->faces[faceNo];
+    if (face == NULL || face->smGroup == 0)
+    {
+        return mesh->getFaceNormal(faceNo);
+    }
+
+    // Check to see if there is a smoothing group normal
+    int vertIndex = face->v[faceVertNo];
+    Point3 normal = sgVertexNormals[vertIndex].GetNormal(face->smGroup);
+
+    if (normal.LengthSquared() > 0.0f)
+    {
+        return normal.Normalize();
+    }
+
+    // If we did not find any normals or the normals offset each other for some
+    // reason, let's just let max tell us what it thinks the normal should be.
+    return mesh->getNormal(vertIndex);
 }
 
 Point3 AlembicPolyMesh::GetVertexNormal(MNMesh *mesh, int faceNo, int faceVertNo, std::vector<VNormal> &sgVertexNormals)
@@ -747,9 +777,29 @@ BOOL AlembicPolyMesh::CheckForFaceMap(Mtl* mtl, Mesh* mesh)
     return TRUE;
 }
 
-void AlembicPolyMesh::BuildMNMeshSmoothingGroupNormals(MNMesh &mesh)
+void AlembicPolyMesh::BuildMeshSmoothingGroupNormals(Mesh &mesh)
 {
-    m_MNMeshSmoothGroupNormals.resize(mesh.numv);
+    m_MeshSmoothGroupNormals.resize(mesh.numVerts);
+    
+    for (int i = 0; i < mesh.numFaces; i++) 
+    {     
+        Face *face = &mesh.faces[i];
+        Point3 faceNormal = mesh.getFaceNormal(i);
+        for (int j=0; j<3; j++) 
+        {       
+            m_MeshSmoothGroupNormals[face->v[j]].AddNormal(faceNormal, face->smGroup);     
+        }     
+    }   
+    
+    for (int i=0; i < mesh.numVerts; i++) 
+    {     
+        m_MeshSmoothGroupNormals[i].Normalize(); 
+    }
+}
+
+void AlembicPolyMesh::BuildMeshSmoothingGroupNormals(MNMesh &mesh)
+{
+    m_MeshSmoothGroupNormals.resize(mesh.numv);
     
     for (int i = 0; i < mesh.numf; i++) 
     {     
@@ -757,21 +807,21 @@ void AlembicPolyMesh::BuildMNMeshSmoothingGroupNormals(MNMesh &mesh)
         Point3 faceNormal = mesh.GetFaceNormal(i);
         for (int j=0; j<face->deg; j++) 
         {       
-            m_MNMeshSmoothGroupNormals[face->vtx[j]].AddNormal(faceNormal, face->smGroup);     
+            m_MeshSmoothGroupNormals[face->vtx[j]].AddNormal(faceNormal, face->smGroup);     
         }     
     }   
     
     for (int i=0; i < mesh.numv; i++) 
     {     
-        m_MNMeshSmoothGroupNormals[i].Normalize();   
+        m_MeshSmoothGroupNormals[i].Normalize();   
     }
 }
 
-void AlembicPolyMesh::ClearMNMeshSmoothingGroupNormals()
+void AlembicPolyMesh::ClearMeshSmoothingGroupNormals()
 {
-    for (int i=0; i < m_MNMeshSmoothGroupNormals.size(); i++) 
+    for (int i=0; i < m_MeshSmoothGroupNormals.size(); i++) 
     {   
-        VNormal *ptr = m_MNMeshSmoothGroupNormals[i].next;
+        VNormal *ptr = m_MeshSmoothGroupNormals[i].next;
         while (ptr)
         {
             VNormal *tmp = ptr;
@@ -780,6 +830,6 @@ void AlembicPolyMesh::ClearMNMeshSmoothingGroupNormals()
         }
     }
 
-    m_MNMeshSmoothGroupNormals.clear();  
+    m_MeshSmoothGroupNormals.clear();  
 }
 

@@ -36,15 +36,19 @@ private:
    std::vector<Alembic::Abc::V3f> mVelocitiesVec;
    std::vector<Alembic::Abc::V2f> mUvVec;
    std::vector<Alembic::Abc::uint32_t> mUvIndexVec;
-   facesetmap mFaceSetsMap;
+   std::vector<Alembic::Abc::uint32_t> mMatIdIndexVec;
    Alembic::Abc::ALEMBIC_VERSION_NS::OV3fArrayProperty mBindPoseProperty;
    Alembic::Abc::ALEMBIC_VERSION_NS::OV3fArrayProperty mVelocityProperty;
-   std::vector<VNormal> m_MNMeshSmoothGroupNormals;
+   Alembic::Abc::ALEMBIC_VERSION_NS::OUInt32ArrayProperty mMatIdProperty;
+   std::vector<float> mRadiusVec;
+   std::vector<VNormal> m_MeshSmoothGroupNormals;
+   facesetmap mFaceSetsMap;
 private:
-    void BuildMNMeshSmoothingGroupNormals(MNMesh &mesh);
-    void ClearMNMeshSmoothingGroupNormals();
+    void BuildMeshSmoothingGroupNormals(Mesh &mesh);
+    void BuildMeshSmoothingGroupNormals(MNMesh &mesh);
+    void ClearMeshSmoothingGroupNormals();
 public:
-    static Point3 GetVertexNormal(Mesh* mesh, int faceNo, RVertex* rv);
+    static Point3 GetVertexNormal(Mesh* mesh, int faceNo, int faceVertNo, std::vector<VNormal> &sgVertexNormals);
     static Point3 GetVertexNormal(MNMesh *mesh, int faceNo, int faceVertNo, std::vector<VNormal> &sgVertexNormals);
     static void make_face_uv(Face *f, Point3 *tv);
     static BOOL CheckForFaceMap(Mtl* mtl, Mesh* mesh);

@@ -2,6 +2,7 @@
 #define _UTILITY_H_
 
 #include "Foundation.h"
+#include "AlembicPolyMsh.h"
 
 const double ALEMBIC_3DSMAX_TICK_VALUE = 4800;
 
@@ -28,7 +29,7 @@ int GetTimeValueFromSeconds( double seconds );
 int GetTimeValueFromFrame( double frame );
 
 // Debug functions
-void AlembicDebug_PrintMeshData( Mesh &mesh );
+void AlembicDebug_PrintMeshData( Mesh &mesh, std::vector<VNormal> &sgVertexNormals );
 void AlembicDebug_PrintTransform( Matrix3 &m );
 
 // Conversion functions to Alembic Standards

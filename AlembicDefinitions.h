@@ -11,7 +11,7 @@ const unsigned int ALEMBIC_DATAFILL_FACELIST = 2;
 const unsigned int ALEMBIC_DATAFILL_NORMALS = 4;
 const unsigned int ALEMBIC_DATAFILL_UVS = 8;
 const unsigned int ALEMBIC_DATAFILL_BOUNDINGBOX = 16;
-const unsigned int ALEMBIC_DATAFILL_FACESETS = 32;
+const unsigned int ALEMBIC_DATAFILL_MATERIALIDS = 32;
 const unsigned int ALEMBIC_DATAFILL_BINDPOSE = 64;
 const unsigned int ALEMBIC_DATAFILL_SPLINE_KNOTS = 128;
 
