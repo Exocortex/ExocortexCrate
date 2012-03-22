@@ -76,7 +76,7 @@ int GetLicense()
 				return gLicenseToken;
 			}
 		}
-#endif // Exocortex_BETA_EXPIRY_DATE
+#endif // Exocortex_BETA_EXPIRY_DATE 
 
 	}
 
@@ -99,6 +99,9 @@ void MaxLogSink(const char* szLogMessage, Exocortex::ecLogLevel::Value level ) {
 		break;
 	}
 }
+
+// trick from: http://www.codeproject.com/KB/DLL/DLLModuleFileName.aspx
+EXTERN_C IMAGE_DOS_HEADER __ImageBase;
 
 namespace Exocortex {
 	void essOnDemandInitialization() {

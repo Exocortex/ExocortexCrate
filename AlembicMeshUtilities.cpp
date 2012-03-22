@@ -129,7 +129,7 @@ bool isAlembicMeshTopoDynamic( Alembic::AbcGeom::IObject *pIObj ) {
 void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options);
 
 void AlembicImport_FillInPolyMesh(alembic_fillmesh_options &options)
-{
+{ 
 	ESS_STRUCTURED_EXCEPTION_REPORTING_START
 		AlembicImport_FillInPolyMesh_Internal( options );
 	ESS_STRUCTURED_EXCEPTION_REPORTING_END
@@ -138,10 +138,12 @@ void AlembicImport_FillInPolyMesh(alembic_fillmesh_options &options)
 void validateMeshes( alembic_fillmesh_options &options, char* szName ) {
 	if (options.pMNMesh != NULL)
 	{
-		if( ! options.pMNMesh->CheckAllData() ) {
-			ESS_LOG_WARNING( "options.pMNMesh->CheckAllData() failed, section: " << szName );
-			options.pMNMesh->MNDebugPrint();
-		}
+		//ESS_LOG_WARNING( "options.pMNMesh->MNDebugPrint() ------------------------------------------------------------ section: " << szName );
+		//options.pMNMesh->MNDebugPrint( FALSE );
+		//if( ! options.pMNMesh->CheckAllData() ) {
+		//	ESS_LOG_WARNING( "options.pMNMesh->CheckAllData() failed, section: " << szName );
+		//	options.pMNMesh->MNDebugPrint();
+		//}
 	}
 }
 
@@ -235,9 +237,9 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
 				   }
 			   }
 		   } 
-   }
 
-   validateMeshes( options, "ALEMBIC_DATAFILL_FACELIST" );
+		validateMeshes( options, "ALEMBIC_DATAFILL_FACELIST | ALEMBIC_DATAFILL_VERTEX" );
+   }
 
    if ( options.nDataFillFlags & ALEMBIC_DATAFILL_VERTEX )
    {
@@ -326,7 +328,8 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
 	   else {
 		   ESS_LOG_WARNING("Should not get here." );
 	   }
-   }
+		validateMeshes( options, "ALEMBIC_DATAFILL_VERTEX" );
+    }
 
   
 
@@ -355,21 +358,38 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
         int offset = 0;
 		if (options.pMNMesh != NULL)
 		{
+			bool onlyTriangles = true;
+
 		    options.pMNMesh->setNumFaces(numFaces);
 			MNFace *pFaces = options.pMNMesh->F(0);
 			for (int i = 0; i < numFaces; ++i)
 			{
 				int degree = pMeshFaceCount[i];
 
+				if( degree > 3 ) {
+					onlyTriangles = false;
+				}
 				MNFace *pFace = &(pFaces[i]);
 				pFace->SetDeg(degree);
 				pFace->material = 1;
-
+				
 				for (int j = degree - 1; j >= 0; --j)
 				{
 					pFace->vtx[j] = pMeshFaceIndices[offset];
+					pFace->edg[j] = -1;
 					++offset;
 				}
+			}
+			if( ! onlyTriangles ) {
+				options.pMNMesh->SetFlag( MN_MESH_NONTRI, TRUE );
+			}
+			else {
+				options.pMNMesh->SetFlag( MN_MESH_NONTRI, FALSE );
+			}
+			options.pMNMesh->SetFlag( MN_MESH_FILLED_IN, FALSE );
+		    // this can fail if the mesh isn't correctly filled in.
+			if( ! options.pMNMesh->GetFlag(MN_MESH_FILLED_IN ) ) {
+				options.pMNMesh->FillInMesh();
 			}
 		}
 		else if (options.pMesh != NULL )
@@ -399,9 +419,9 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
 		else {
 			ESS_LOG_WARNING("Should not get here." );
 		}
+		validateMeshes( options, "ALEMBIC_DATAFILL_FACELIST" );
    }
 
-     validateMeshes( options, "ALEMBIC_DATAFILL_FACELIST" );
 
    if ( objMesh.valid() && ( options.nDataFillFlags & ALEMBIC_DATAFILL_NORMALS ) )
    {
@@ -540,9 +560,9 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
                options.pMesh->checkNormals(TRUE);
            }
        }
-   }
+    validateMeshes( options, "ALEMBIC_DATAFILL_NORMALS" );
+  }
 
-   validateMeshes( options, "ALEMBIC_DATAFILL_NORMALS" );
 
 
    if ( options.nDataFillFlags & ALEMBIC_DATAFILL_UVS )
@@ -648,16 +668,18 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
                map.setNumFaces(numFaces);
 
                // Set the map texture vertices
-               for (int i = 0; i < uvsToSet.size(); i += 1)
+			   for (int i = 0; i < uvsToSet.size(); i += 1) {
                     map.tv[i] = uvsToSet[i];
+			   }
 
                // Set up the map texture faces
-               for (int i =0; i < numFaces; i += 1)
-                   map.tf[i].setTVerts(i*3, i*3+1, i*3+2);
+			   for (int i =0; i < numFaces; i += 1) {
+                   map.tf[i].setTVerts(i*3, i*3+1, i*3+2);					
+			   }
            }
        }
+	   validateMeshes( options, "ALEMBIC_DATAFILL_UVS" );
    }
-   validateMeshes( options, "ALEMBIC_DATAFILL_UVS" );
 
    if ( options.nDataFillFlags & ALEMBIC_DATAFILL_MATERIALIDS )
    {
@@ -708,7 +730,7 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
                Alembic::AbcGeom::IFaceSetSchema::Sample faceSetSample = faceSet.getValue();
                Alembic::Abc::Int32ArraySamplePtr faces = faceSetSample.getFaces();
 
-               int nMatId = j;
+               int nMatId = (int) j;
                for(size_t k=0;k<faces->size();k++)
                {
                    int faceId = faces->get()[k];
@@ -723,9 +745,8 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
                }
            }
        }
+	   validateMeshes( options, "ALEMBIC_DATAFILL_MATERIALIDS" );
    }
-
-   validateMeshes( options, "ALEMBIC_DATAFILL_MATERIALIDS" );
  
   // This isn't required if we notify 3DS Max properly via the channel flags for vertex changes.
   if (options.pMNMesh != NULL)

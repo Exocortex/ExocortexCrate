@@ -219,21 +219,20 @@ void AlembicImport_ConnectTimeControl( char* szControllerName, alembic_importopt
 	ExecuteMAXScriptScript( szBuffer );
 }
 
-int ExocortexAlembicImport_Internal(MCHAR* strPath, BOOL bImportNormals, BOOL bImportUVs, BOOL bImportMaterialIds, BOOL bAttachToExisting, int iVisOption);
+int ExocortexAlembicStaticInterface_ExocortexAlembicImport(MCHAR* strPath, BOOL bImportNormals, BOOL bImportUVs, BOOL bImportMaterialIds, BOOL bAttachToExisting, int iVisOption);
 
 int ExocortexAlembicStaticInterface::ExocortexAlembicImport(MCHAR* strPath, BOOL bImportNormals, BOOL bImportUVs, BOOL bImportMaterialIds, BOOL bAttachToExisting, int iVisOption)
 {
 	ESS_STRUCTURED_EXCEPTION_REPORTING_START
 
-		return ExocortexAlembicImport_Internal( strPath, bImportNormals, bImportUVs, bImportMaterialIds, bAttachToExisting, iVisOption);
+		return ExocortexAlembicStaticInterface_ExocortexAlembicImport( strPath, bImportNormals, bImportUVs, bImportMaterialIds, bAttachToExisting, iVisOption);
 
 	ESS_STRUCTURED_EXCEPTION_REPORTING_END
 
 	return alembic_failure;
 }
 
-
-int ExocortexAlembicImport_Internal(MCHAR* strPath, BOOL bImportNormals, BOOL bImportUVs, BOOL bImportMaterialIds, BOOL bAttachToExisting, int iVisOption)
+int ExocortexAlembicStaticInterface_ExocortexAlembicImport(MCHAR* strPath, BOOL bImportNormals, BOOL bImportUVs, BOOL bImportMaterialIds, BOOL bAttachToExisting, int iVisOption)
 {
 	ESS_CPP_EXCEPTION_REPORTING_START
 
@@ -400,6 +399,7 @@ int ExocortexAlembicImport_Internal(MCHAR* strPath, BOOL bImportNormals, BOOL bI
 	return alembic_success;
 }
 
+Mesh* ExocortexAlembicStaticInterface_ExocortexAlembicImportMesh(Mesh* pMesh, MCHAR* strPath, MCHAR* strIdentifier, float time, BOOL bImportFaceList, BOOL bImportVertices, BOOL bImportNormals, BOOL bImportUVs, BOOL bImportMaterialIds );
 
 Mesh* ExocortexAlembicStaticInterface::ExocortexAlembicImportMesh(Mesh* pMesh, MCHAR* strPath, MCHAR* strIdentifier, float time, BOOL bImportFaceList, BOOL bImportVertices, BOOL bImportNormals, BOOL bImportUVs, BOOL bImportMaterialIds )
 {
@@ -407,6 +407,15 @@ Mesh* ExocortexAlembicStaticInterface::ExocortexAlembicImportMesh(Mesh* pMesh, M
 		pMesh = CreateNewMesh();
 	}
 
+	ESS_STRUCTURED_EXCEPTION_REPORTING_START
+		return ExocortexAlembicStaticInterface_ExocortexAlembicImportMesh( pMesh, strPath, strIdentifier, time, bImportFaceList, bImportVertices, bImportNormals, bImportUVs, bImportMaterialIds );
+	ESS_STRUCTURED_EXCEPTION_REPORTING_END
+
+	return pMesh;
+}
+
+Mesh* ExocortexAlembicStaticInterface_ExocortexAlembicImportMesh(Mesh* pMesh, MCHAR* strPath, MCHAR* strIdentifier, float time, BOOL bImportFaceList, BOOL bImportVertices, BOOL bImportNormals, BOOL bImportUVs, BOOL bImportMaterialIds )
+{
 	ESS_CPP_EXCEPTION_REPORTING_START
 
 		if( ! HasFullLicense() ) {
@@ -483,7 +492,23 @@ Mesh* ExocortexAlembicStaticInterface::ExocortexAlembicImportMesh(Mesh* pMesh, M
 	return pMesh;
 }
 
+int ExocortexAlembicStaticInterface_ExocortexAlembicExport(MCHAR * strPath, int iFrameIn, int iFrameOut, int iFrameSteps, int iFrameSubSteps, int iType,
+															BOOL bExportUV, BOOL bExportMaterialIds, BOOL bExportEnvelopeBindPose, BOOL bExportDynamicTopology,
+															BOOL bExportSelected);
+
 int ExocortexAlembicStaticInterface::ExocortexAlembicExport(MCHAR * strPath, int iFrameIn, int iFrameOut, int iFrameSteps, int iFrameSubSteps, int iType,
+															BOOL bExportUV, BOOL bExportMaterialIds, BOOL bExportEnvelopeBindPose, BOOL bExportDynamicTopology,
+															BOOL bExportSelected)
+{
+	ESS_STRUCTURED_EXCEPTION_REPORTING_START
+		return ExocortexAlembicStaticInterface_ExocortexAlembicExport( strPath, iFrameIn, iFrameOut, iFrameSteps, iFrameSubSteps, iType,
+															bExportUV, bExportMaterialIds, bExportEnvelopeBindPose, bExportDynamicTopology,
+															bExportSelected );
+	ESS_STRUCTURED_EXCEPTION_REPORTING_END
+	return alembic_failure;
+}
+
+int ExocortexAlembicStaticInterface_ExocortexAlembicExport(MCHAR * strPath, int iFrameIn, int iFrameOut, int iFrameSteps, int iFrameSubSteps, int iType,
 															BOOL bExportUV, BOOL bExportMaterialIds, BOOL bExportEnvelopeBindPose, BOOL bExportDynamicTopology,
 															BOOL bExportSelected)
 {
