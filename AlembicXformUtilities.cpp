@@ -158,7 +158,7 @@ int AlembicImport_XForm(const std::string &file, const std::string &identifier, 
 	pControl->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pControl, 0, "camera" ), zero, ( xformOptions.bIsCameraTransform ? TRUE : FALSE ) );
     pControl->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pControl, 0, "muted" ), zero, FALSE );
 	
-	// Add the modifier to the node
+   	// Add the modifier to the node
     pNode->SetTMController(pControl);
 
 	if( ! isConstant ) {

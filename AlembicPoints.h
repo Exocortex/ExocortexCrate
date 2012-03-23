@@ -3,11 +3,27 @@
 
 #include "AlembicObject.h"
 
+class IParticleObjectExt;
+
 class AlembicPoints: public AlembicObject
 {
+public:
+    enum ShapeType
+    {
+      ShapeType_Point,
+      ShapeType_Box,
+      ShapeType_Sphere,
+      ShapeType_Cylinder,
+      ShapeType_Cone,
+      ShapeType_Disc,
+      ShapeType_Rectangle,
+      ShapeType_Instance,
+      ShapeType_NbElements
+    };
 private:
     static void AlembicPoints::ConvertMaxEulerXYZToAlembicQuat(const Point3 &degrees, Alembic::Abc::Quatf &quat);
     static void AlembicPoints::ConvertMaxAngAxisToAlembicQuat(const AngAxis &angAxis, Alembic::Abc::Quatf &quat);
+    static void AlembicPoints::GetShapeType(IParticleObjectExt *pExt, int particleId, TimeValue ticks, ShapeType &type, unsigned short &instanceId, float &animationTime, std::vector<std::string> &nameList);
 
     Alembic::AbcGeom::OXformSchema mXformSchema;
     Alembic::AbcGeom::OPointsSchema mPointsSchema;
@@ -31,20 +47,6 @@ private:
     Alembic::Abc::ALEMBIC_VERSION_NS::OC4fArrayProperty mColorProperty;
 
 public:
-
-    enum ShapeType
-    {
-      ShapeType_Point,
-      ShapeType_Box,
-      ShapeType_Sphere,
-      ShapeType_Cylinder,
-      ShapeType_Cone,
-      ShapeType_Disc,
-      ShapeType_Rectangle,
-      ShapeType_Instance,
-      ShapeType_NbElements
-    };
-
     AlembicPoints(const SceneEntry & in_Ref, AlembicWriteJob * in_Job);
     ~AlembicPoints();
 

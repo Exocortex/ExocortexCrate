@@ -10,6 +10,8 @@
 #include <ParticleFlow/IParticleContainer.h>
 #include <ParticleFlow/IParticleGroup.h>
 #include <ParticleFlow/IPFSystem.h>
+#include <ParticleFlow/IPFActionList.h>
+#include <ParticleFlow/PFSimpleOperator.h>
 
 namespace AbcA = ::Alembic::AbcCoreAbstract::ALEMBIC_VERSION_NS;
 namespace AbcB = ::Alembic::Abc::ALEMBIC_VERSION_NS;
@@ -94,10 +96,10 @@ bool AlembicPoints::Save(double time)
     std::vector<float> widthVec(numParticles);
     std::vector<float> ageVec(numParticles);
     std::vector<float> massVec;
-    std::vector<float> shapeTimeVec;
+    std::vector<float> shapeTimeVec(numParticles);
     std::vector<uint64_t> idVec(numParticles);
-    std::vector<uint16_t> shapeTypeVec;
-    std::vector<uint16_t> shapeInstanceIDVec;
+    std::vector<uint16_t> shapeTypeVec(numParticles);
+    std::vector<uint16_t> shapeInstanceIDVec(numParticles);
     std::vector<Alembic::Abc::Quatf> orientationVec(numParticles);
     std::vector<Alembic::Abc::Quatf> angularVelocityVec(numParticles);
     std::vector<Alembic::Abc::C4f> colorVec;
@@ -124,24 +126,10 @@ bool AlembicPoints::Save(double time)
         ConvertMaxEulerXYZToAlembicQuat(*particlesExt->GetParticleOrientationByIndex(i), orientation);
         ConvertMaxAngAxisToAlembicQuat(*particlesExt->GetParticleSpinByIndex(i), spin);
 
-        /*
-        Mesh *mesh = particlesExt->GetParticleShapeByIndex(i);
-        INode *particleGroupNode = particlesExt->GetParticleGroup(i);
-        Object *particleGroupObj = (particleGroupNode != NULL) ? particleGroupNode->EvalWorldState(ticks).obj : NULL;
-        IParticleGroup *particleGroup = GetParticleGroupInterface(particleGroupObj);
-        ::IObject *particleContainerObject = (particleGroup != NULL) ? particleGroup->GetParticleContainer() : NULL;
-        IParticleChannelIDR *chID = GetParticleChannelIDRInterface(particleContainerObject);
-        if (chID != NULL)
-        {
-            id = chID->GetParticleIndex(i);
-        }
-        IParticleChannelMeshR *channelMesh = GetParticleChannelShapeRInterface(particleContainerObject);
-        if (channelMesh != NULL)
-        {
-            bool isShared = channelMesh->IsShared();
-            const Mesh *mesh = channelMesh->GetValue(i);
-        }
-        */
+        ShapeType shapetype;
+        float shapeInstanceTime;
+        uint16_t shapeInstanceId;
+        AlembicPoints::GetShapeType(particlesExt, i, ticks, shapetype, shapeInstanceId, shapeInstanceTime, instanceNamesVec);
 
         positionVec[i].setValue(pos.x, pos.y, pos.z);
         velocityVec[i].setValue(vel.x, vel.y, vel.z);
@@ -152,6 +140,9 @@ bool AlembicPoints::Save(double time)
         orientationVec[i] = orientation;
         angularVelocityVec[i] = spin;
         bbox.extendBy(positionVec[i]);
+        shapeTypeVec[i] = shapetype;
+        shapeInstanceIDVec[i] = shapeInstanceId;
+        shapeTimeVec[i] = shapeInstanceTime;
 
         constantPos &= (positionVec[i] == positionVec[0]);
         constantVel &= (velocityVec[i] == velocityVec[0]);
@@ -257,4 +248,87 @@ void AlembicPoints::ConvertMaxAngAxisToAlembicQuat(const AngAxis &angAxis, Alemb
     quat.v.y = alembicAxis.y;
     quat.v.z = alembicAxis.z;
     quat.r = angAxis.angle;
+}
+
+void AlembicPoints::GetShapeType(IParticleObjectExt *pExt, int particleId, TimeValue ticks, ShapeType &type, uint16_t &instanceId, float &animationTime, std::vector<std::string> &nameList)
+{
+    // Set up initial values
+    type = ShapeType_Point;
+    instanceId = 0;
+    animationTime = 0.0f;
+
+    // Go into the particle's action list
+    INode *particleGroupNode = pExt->GetParticleGroup(particleId);
+    Object *particleGroupObj = (particleGroupNode != NULL) ? particleGroupNode->EvalWorldState(ticks).obj : NULL;
+
+    if (!particleGroupObj)
+        return;
+
+    IParticleGroup *particleGroup = GetParticleGroupInterface(particleGroupObj);
+    INode *particleActionListNode = particleGroup->GetActionList();
+    Object *particleActionObj = (particleActionListNode != NULL ? particleActionListNode->EvalWorldState(ticks).obj : NULL);
+
+    if (!particleActionObj)
+        return;
+
+    PFSimpleOperator *pSimpleOperator = NULL;
+
+    IPFActionList *particleActionList = GetPFActionListInterface(particleActionObj);
+    for (int p = particleActionList->NumActions()-1; p >= 0; p -= 1)
+    {
+        INode *pActionNode = particleActionList->GetAction(p);
+        Object *pActionObj = (pActionNode != NULL ? pActionNode->EvalWorldState(ticks).obj : NULL);
+
+        if (pActionObj == NULL)
+            continue;
+
+        if (pActionObj->ClassID() == PFOperatorSimpleShape_Class_ID)
+        {
+            pSimpleOperator = static_cast<PFSimpleOperator*>(pActionObj);
+            break;
+        }
+        else if (pActionObj->ClassID() == PFOperatorInstanceShape_Class_ID)
+        {
+            pSimpleOperator = static_cast<PFSimpleOperator*>(pActionObj);
+            break;
+        }
+    }
+
+    if (pSimpleOperator && pSimpleOperator->ClassID() == PFOperatorSimpleShape_Class_ID)
+    {
+        int j = 1;
+        j++;
+    }
+    else if (pSimpleOperator && pSimpleOperator->ClassID() == PFOperatorInstanceShape_Class_ID)
+    {
+        Interval interval = FOREVER;
+
+        // Get the instance shape
+        int pid_shapeobject = GetParamIdByName(pSimpleOperator, 0, "Shape_Object");
+        INode *pNode = pSimpleOperator->GetParamBlockByID(0)->GetINode(pid_shapeobject, ticks);
+
+        if (pNode != NULL && pNode->GetName() != NULL)
+        {
+            type = ShapeType_Instance;
+
+            // Find if the name is alerady registered, otherwise add it to the list
+            instanceId = USHRT_MAX;
+            for ( int i = 0; i < nameList.size(); i += 1)
+            {
+                if (!strcmp(nameList[i].c_str(), pNode->GetName()))
+                {
+                    instanceId = i;
+                    break;
+                }
+            }
+
+            if (instanceId == USHRT_MAX)
+            {
+                nameList.push_back(pNode->GetName());
+                instanceId = (uint16_t)nameList.size()-1;
+            }
+
+            animationTime = 0.0f;
+        }
+    }
 }

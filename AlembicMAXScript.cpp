@@ -12,6 +12,8 @@
 #include "AlembicSimpleSpline.h"
 #include "AlembicXformUtilities.h"
 #include <maxscript\maxscript.h>
+#include <notify.h>
+#include <modstack.h>
 
 // Dummy function for progress bar
 DWORD WINAPI DummyProgressFunction(LPVOID arg)
@@ -30,6 +32,7 @@ public:
 		exocortexAlembicImport,
 		exocortexAlembicExport,
 		exocortexAlembicImportMesh,	
+        exocortexAlembicInit
 	};
 
 	ExocortexAlembicStaticInterface()
@@ -139,7 +142,16 @@ public:
 			0,                    //* argument localizable name string resource id * /
 			TYPE_BOOL,          //* arg type * /
 			end); 	
-	}
+       
+        AppendFunction(
+			exocortexAlembicInit,	//* function ID * /
+			_M("init"),             //* internal name * /
+            0,                      //* function name string resource name * / 
+			TYPE_INT,               //* Return type * /
+			0,                      //* Flags  * /
+			0,                     //* Number  of arguments * /
+            end);           
+    }
 
 	static int ExocortexAlembicImport(
 		MCHAR * strPath, 
@@ -159,10 +171,13 @@ public:
 		int iType,
 		BOOL bExportUV, BOOL bExportMaterialIds, BOOL bExportEnvelopeBindPose, BOOL bExportDynamicTopology, BOOL bExportSelected );
 
-	BEGIN_FUNCTION_MAP
+    static int ExocortexAlembicInit();
+     	
+    BEGIN_FUNCTION_MAP
 		FN_6(exocortexAlembicImport, TYPE_INT, ExocortexAlembicImport, TYPE_FILENAME, TYPE_BOOL, TYPE_BOOL, TYPE_BOOL, TYPE_BOOL, TYPE_INT)
 		FN_9(exocortexAlembicImportMesh, TYPE_MESH, ExocortexAlembicImportMesh, TYPE_MESH, TYPE_FILENAME, TYPE_STRING, TYPE_FLOAT, TYPE_BOOL, TYPE_BOOL, TYPE_BOOL, TYPE_BOOL, TYPE_BOOL)
 		FN_11(exocortexAlembicExport, TYPE_INT, ExocortexAlembicExport, TYPE_FILENAME, TYPE_INT, TYPE_INT, TYPE_INT, TYPE_INT, TYPE_INT, TYPE_BOOL, TYPE_BOOL, TYPE_BOOL, TYPE_BOOL, TYPE_BOOL)
+        FN_0(exocortexAlembicInit, TYPE_INT, ExocortexAlembicInit);
 	END_FUNCTION_MAP
 };
 
@@ -272,6 +287,9 @@ int ExocortexAlembicStaticInterface_ExocortexAlembicImport(MCHAR* strPath, BOOL 
 			ESS_LOG_ERROR( "Unable to open Alembic file: " << file  );
 			return alembic_failure;
 		}
+
+        // Since the archive is valid, add a reference to it
+        addRefArchive(file);
 
 		// let's figure out which objects we have
 		std::vector<Alembic::Abc::IObject> objects;
@@ -630,4 +648,67 @@ int ExocortexAlembicStaticInterface_ExocortexAlembicExport(MCHAR * strPath, int 
 	ESS_CPP_EXCEPTION_REPORTING_END
 
 	return alembic_success;
+}
+
+void Alembic_NodeDeleteNotify(void *param, NotifyInfo *info)
+{
+    // Get the nodes being deleted  
+    INode *pNode = (INode*)info->callParam;
+
+    if (pNode)
+    {
+        // Check the xform controller
+        Control *pXfrmControl = pNode->GetTMController();
+        if (pXfrmControl && pXfrmControl->ClassID() == ALEMBIC_XFORM_CONTROLLER_CLASSID)
+        {
+            pXfrmControl->DeleteAllRefsFromMe();
+            pXfrmControl->DeleteAllRefsToMe();
+            pXfrmControl->DeleteThis();
+        }
+
+        // Check the visibility controller
+        Control *pVisControl = pNode->GetVisController();
+        if (pVisControl && pVisControl->ClassID() == ALEMBIC_VISIBILITY_CONTROLLER_CLASSID)
+        {
+            pVisControl->DeleteAllRefsFromMe();
+            pVisControl->DeleteAllRefsToMe();
+            pVisControl->DeleteThis();
+        }
+
+        // Run through the modifier stack
+        Object *pObject = pNode->GetObjectRef();
+        while (pObject && pObject->SuperClassID() == GEN_DERIVOB_CLASS_ID)
+        {
+            IDerivedObject *pDerivedObj = static_cast<IDerivedObject*>(pObject);
+
+            int ModStackIndex = 0;
+            while (ModStackIndex < pDerivedObj->NumModifiers())
+            {
+                Modifier *pModifier = pDerivedObj->GetModifier(ModStackIndex);
+
+                if (pModifier->ClassID() == ALEMBIC_MESH_GEOM_MODIFIER_CLASSID ||
+                    pModifier->ClassID() == ALEMBIC_MESH_NORMALS_MODIFIER_CLASSID ||
+                    pModifier->ClassID() == ALEMBIC_MESH_TOPO_MODIFIER_CLASSID ||
+                    pModifier->ClassID() == ALEMBIC_MESH_UVW_MODIFIER_CLASSID)
+                {
+                    pDerivedObj->DeleteModifier(ModStackIndex);
+                    pModifier->DeleteAllRefsFromMe();
+                    pModifier->DeleteAllRefsToMe();
+                    pModifier->DeleteThis();
+                }
+                else
+                {
+                    ModStackIndex += 1;
+                }
+            }
+
+            pObject = pDerivedObj->GetObjRef();
+        }
+    }
+}
+
+int ExocortexAlembicStaticInterface::ExocortexAlembicInit()
+{
+    int result = RegisterNotification(Alembic_NodeDeleteNotify, NULL, NOTIFY_SCENE_PRE_DELETED_NODE);
+    return result;
 }

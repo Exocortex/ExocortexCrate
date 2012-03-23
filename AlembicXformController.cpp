@@ -133,8 +133,7 @@ void AlembicXformController::GetValueLocalTime(TimeValue t, void *ptr, Interval 
 
     AlembicImport_FillInXForm(xformOptions);
 
-    Interval alembicInterval(t,t);
-    valid = valid & alembicInterval;
+    valid = valid & interval;
 
 	if (method == CTRL_ABSOLUTE)
 	{
@@ -158,13 +157,14 @@ AlembicXformController::AlembicXformController()
 
 AlembicXformController::~AlembicXformController()
 {
+    delRefArchive(m_CachedAbcFile);
 }
 
 RefTargetHandle AlembicXformController::Clone(RemapDir& remap) 
 {
 	AlembicXformController *ctrl = new AlembicXformController();
-    ctrl->ReplaceReference (0, remap.CloneRef(pblock));
-	
+    ctrl->ReplaceReference (ALEMBIC_XFORM_CONTROLLER_REF_PBLOCK, remap.CloneRef(pblock));
+   	
     BaseClone(this, ctrl, remap);
 	return ctrl;
 }
@@ -200,14 +200,6 @@ void AlembicXformController::MultiplyValue(void *val, float m)
 void AlembicXformController::Extrapolate(Interval range, TimeValue t, void *val, Interval &valid, int type)
 {
 }
-
-/*
-void AlembicXformController::SetAlembicId(const std::string &file, const std::string &identifier, TimeValue t)
-{
-    m_AlembicNodeProps.m_File = file;
-    m_AlembicNodeProps.m_Identifier = identifier;
-}*/
-
 
 #define LOCK_CHUNK		0x2535  //the lock value
 IOResult AlembicXformController::Save(ISave *isave)
@@ -265,14 +257,25 @@ RefResult AlembicXformController::NotifyRefChanged(
     switch (msg) 
     {
         case REFMSG_CHANGE:
-            if (editMod != this) 
-            {
-                break;
-            }
-
             if (hTarg == pblock) 
             {
                 ParamID changing_param = pblock->LastNotifyParamID();
+                switch(changing_param)
+                {
+                case ID_PATH:
+                    {
+                        delRefArchive(m_CachedAbcFile);
+                        MCHAR const* strPath = NULL;
+                        TimeValue t = GetCOREInterface()->GetTime();
+                        pblock->GetValue( AlembicXformController::ID_PATH, t, strPath, iv);
+                        m_CachedAbcFile = strPath;
+                        addRefArchive(m_CachedAbcFile);
+                    }
+                    break;
+                default:
+                    break;
+                }
+
                 AlembicXformControllerParams.InvalidateUI(changing_param);
             }
             break;
@@ -292,13 +295,6 @@ void AlembicXformController::BeginEditParams(IObjParam *ip,ULONG flags,Animatabl
 
     LockableStdControl::BeginEditParams(ip, flags, prev);
 	sAlembicXformControllerClassDesc.BeginEditParams(ip, this, flags, prev);
-    
-//    AlembicXformControllerDlgProc* dlgProc;
-//	dlgProc = new AlembicXformControllerDlgProc(this);
-//	xform_params_desc.SetUserDlgProc( AlembicXformController_params, dlgProc );
-
-    // Necessary?
-	// NotifyDependents(FOREVER, PART_ALL, REFMSG_CHANGE);
 }
 
 void AlembicXformController::EndEditParams( IObjParam *ip, ULONG flags, Animatable *next )
@@ -309,38 +305,27 @@ void AlembicXformController::EndEditParams( IObjParam *ip, ULONG flags, Animatab
 	this->ip = NULL;
     editMod  = NULL;
 }
-/*
-void AlembicXformController::MainPanelInitDialog( HWND hWnd ) 
-{
-	mhPanel = hWnd;
-	MainPanelUpdateUI();
+
+void AlembicXformController::SetReference(int i, ReferenceTarget* pTarget)
+{ 
+    switch(i) 
+    { 
+    case ALEMBIC_XFORM_CONTROLLER_REF_PBLOCK:
+        pblock = static_cast<IParamBlock2*>(pTarget);
+    default:
+        break;
+    }
 }
 
-void AlembicXformController::MainPanelDestroy( HWND hWnd ) 
-{
-	mhPanel = NULL;
+RefTargetHandle AlembicXformController::GetReference(int i)
+{ 
+    switch(i)
+    {
+    case ALEMBIC_XFORM_CONTROLLER_REF_PBLOCK:
+        return pblock;
+    default:
+        return NULL;
+    }
 }
 
-void AlembicXformController::MainPanelUpdateUI()
-{
-	if( (mhPanel == NULL) || mbSuspendPanelUpdate) 
-		return;
 
-	mbSuspendPanelUpdate = true;
-
-    TimeValue t = GET_MAX_INTERFACE()->GetTime();
-    Interval valid = FOREVER;
-
-    // Update the abc archive and identifier
-    MCHAR const* strPath = NULL;
-	pblock->GetValue( alembicxform_abc_archive, t, strPath, valid);
-    HWND hDlg = GetDlgItem(mhPanel,IDC_ABC_ARCHIVE);
-    SetWindowText(hDlg, strPath);
-
-    MCHAR const* strIdentifier = NULL;
-	pblock->GetValue( alembicxform_abc_id, t, strIdentifier, valid);
-    SetWindowText(GetDlgItem(mhPanel,IDC_ABC_OBJECTID), strIdentifier);
-
-	mbSuspendPanelUpdate = false;
-}
-*/

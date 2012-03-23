@@ -35,6 +35,7 @@ public:
 	static AlembicMeshTopoModifier *editMod;
 
 	AlembicMeshTopoModifier();
+    ~AlembicMeshTopoModifier();
 
 	// From Animatable
 	virtual Class_ID ClassID() { return ALEMBIC_MESH_TOPO_MODIFIER_CLASSID; }		
@@ -75,6 +76,8 @@ public:
 
 private:
 	virtual void SetReference(int i, RefTargetHandle rtarg) { pblock = (IParamBlock2 *) rtarg; }
+private:
+     std::string m_CachedAbcFile;
 };
 
 

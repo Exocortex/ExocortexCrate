@@ -77,6 +77,11 @@ AlembicMeshTopoModifier::AlembicMeshTopoModifier()
 	GetAlembicMeshTopoModifierClassDesc()->MakeAutoParamBlocks(this);
 }
 
+AlembicMeshTopoModifier::~AlembicMeshTopoModifier()
+{
+    delRefArchive(m_CachedAbcFile);
+}
+
 RefTargetHandle AlembicMeshTopoModifier::Clone(RemapDir& remap) 
 {
 	AlembicMeshTopoModifier *mod = new AlembicMeshTopoModifier();
@@ -227,12 +232,30 @@ RefResult AlembicMeshTopoModifier::NotifyRefChanged (Interval changeInt, RefTarg
 
 	switch (message) 
     {
-	case REFMSG_CHANGE:
-		if (editMod!=this) break;
-		
-        AlembicMeshTopoModifierParams.InvalidateUI(pblock->LastNotifyParamID());
-		break;
- 
+    case REFMSG_CHANGE:
+        if (hTarget == pblock) 
+        {
+            ParamID changing_param = pblock->LastNotifyParamID();
+            switch(changing_param)
+            {
+            case ID_PATH:
+                {
+                    delRefArchive(m_CachedAbcFile);
+                    MCHAR const* strPath = NULL;
+                    TimeValue t = GetCOREInterface()->GetTime();
+                    pblock->GetValue( AlembicMeshTopoModifier::ID_PATH, t, strPath, changeInt);
+                    m_CachedAbcFile = strPath;
+                    addRefArchive(m_CachedAbcFile);
+                }
+                break;
+            default:
+                break;
+            }
+
+            AlembicMeshTopoModifierParams.InvalidateUI(changing_param);
+        }
+        break;
+
     case REFMSG_WANT_SHOWPARAMLEVEL:
 
         break;

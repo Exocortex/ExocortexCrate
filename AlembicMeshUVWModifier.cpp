@@ -61,8 +61,14 @@ static ParamBlockDesc2 AlembicMeshUVWModifierParams(
 AlembicMeshUVWModifier::AlembicMeshUVWModifier() 
 {
     pblock = NULL;
+    m_CachedAbcFile = "";
 
 	GetAlembicMeshUVWModifierClassDesc()->MakeAutoParamBlocks(this);
+}
+
+AlembicMeshUVWModifier::~AlembicMeshUVWModifier() 
+{
+     delRefArchive(m_CachedAbcFile);
 }
 
 RefTargetHandle AlembicMeshUVWModifier::Clone(RemapDir& remap) 
@@ -207,13 +213,31 @@ RefResult AlembicMeshUVWModifier::NotifyRefChanged (Interval changeInt, RefTarge
 										   PartID& partID, RefMessage message) {
 	ESS_CPP_EXCEPTION_REPORTING_START
 
-	switch (message) 
+    switch (message) 
     {
-	case REFMSG_CHANGE:
-		if (editMod!=this) break;
-		
-        AlembicMeshUVWModifierParams.InvalidateUI(pblock->LastNotifyParamID());
-		break;
+        case REFMSG_CHANGE:
+            if (hTarget == pblock) 
+            {
+                ParamID changing_param = pblock->LastNotifyParamID();
+                switch(changing_param)
+                {
+                case ID_PATH:
+                    {
+                        delRefArchive(m_CachedAbcFile);
+                        MCHAR const* strPath = NULL;
+                        TimeValue t = GetCOREInterface()->GetTime();
+                        pblock->GetValue( AlembicMeshUVWModifier::ID_PATH, t, strPath, changeInt);
+                        m_CachedAbcFile = strPath;
+                        addRefArchive(m_CachedAbcFile);
+                    }
+                    break;
+                default:
+                    break;
+                }
+
+                AlembicMeshUVWModifierParams.InvalidateUI(changing_param);
+            }
+            break;
  
     case REFMSG_WANT_SHOWPARAMLEVEL:
 

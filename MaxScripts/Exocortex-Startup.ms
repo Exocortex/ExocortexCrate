@@ -39,6 +39,9 @@ fn initializeAlembicMenus =
 
     -- redraw the menu bar with the new item
     menuMan.updateMenuBar()
+    
+    -- Initialize the exocortex alembic libraries
+    ExocortexAlembic.init()
 )
 
 

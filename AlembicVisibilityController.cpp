@@ -130,6 +130,7 @@ AlembicVisibilityController::AlembicVisibilityController()
 
 AlembicVisibilityController::~AlembicVisibilityController()
 {
+    delRefArchive(m_CachedAbcFile);
 }
 
 RefTargetHandle AlembicVisibilityController::Clone(RemapDir& remap) 
@@ -227,22 +228,33 @@ RefResult AlembicVisibilityController::NotifyRefChanged(
 {
     switch (msg) 
     {
-        case REFMSG_CHANGE:
-            if (editMod != this) 
+    case REFMSG_CHANGE:
+        if (hTarg == pblock) 
+        {
+            ParamID changing_param = pblock->LastNotifyParamID();
+            switch(changing_param)
             {
+            case ID_PATH:
+                {
+                    delRefArchive(m_CachedAbcFile);
+                    MCHAR const* strPath = NULL;
+                    TimeValue t = GetCOREInterface()->GetTime();
+                    pblock->GetValue( AlembicVisibilityController::ID_PATH, t, strPath, iv);
+                    m_CachedAbcFile = strPath;
+                    addRefArchive(m_CachedAbcFile);
+                }
+                break;
+            default:
                 break;
             }
 
-            if (hTarg == pblock) 
-            {
-                ParamID changing_param = pblock->LastNotifyParamID();
-                AlembicVisibilityControllerParams.InvalidateUI(changing_param);
-            }
-            break;
+            AlembicVisibilityControllerParams.InvalidateUI(changing_param);
+        }
+        break;
 
-        case REFMSG_OBJECT_CACHE_DUMPED:
-            return REF_STOP;
-            break;
+    case REFMSG_OBJECT_CACHE_DUMPED:
+        return REF_STOP;
+        break;
     }
 
     return REF_SUCCEED;

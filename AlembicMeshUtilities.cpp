@@ -735,7 +735,7 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
                Alembic::AbcGeom::IFaceSetSchema::Sample faceSetSample = faceSet.getValue();
                Alembic::Abc::Int32ArraySamplePtr faces = faceSetSample.getFaces();
 
-               int nMatId = (int) j;
+               int nMatId = (int)j;
                for(size_t k=0;k<faces->size();k++)
                {
                    int faceId = faces->get()[k];

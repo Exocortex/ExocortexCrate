@@ -6,13 +6,17 @@
 #include "iparamb2.h"
 #include "ILockedTracks.h"
 #include "AlembicNames.h"
+#include <INodeMonitor.h>
+
+const int ALEMBIC_XFORM_CONTROLLER_REF_PBLOCK = 0;
+const int ALEMBIC_XFORM_CONTROLLER_REF_INODE = 1;
 
 class AlembicXformController : public LockableStdControl
 {
 public:
     IParamBlock2* pblock;
-
-	// Parameters in first block:
+   
+    // Parameters in first block:
 	enum 
 	{ 
 		ID_PATH,
@@ -49,8 +53,8 @@ public:
     IParamBlock2* GetParamBlockByID(BlockID id) { return (pblock->ID() == id) ? pblock : NULL; } // return id'd ParamBlock
 
 	int NumRefs() { return 1; }
-	void SetReference(int i, ReferenceTarget* pTarget) { if( i == 0 ) { pblock = (IParamBlock2*)pTarget; } }
-	RefTargetHandle GetReference(int i) { return pblock; }
+	void SetReference(int i, ReferenceTarget* pTarget); 
+	RefTargetHandle GetReference(int i); 
 	RefResult NotifyRefChanged(Interval, RefTargetHandle, PartID&, RefMessage);
 
     int NumSubs()  {return 1;} //because it uses the paramblock
@@ -75,7 +79,7 @@ public:
     IOResult Load(ILoad *iload);
 
 private:
-    Interval m_CurrentAlembicInterval;
+    std::string m_CachedAbcFile;
 };
 
 class AlembicXformControllerClassDesc : public ClassDesc2

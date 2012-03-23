@@ -68,9 +68,16 @@ static ParamBlockDesc2 AlembicMeshGeomModifierParams(
 AlembicMeshGeomModifier::AlembicMeshGeomModifier() 
 {
     pblock = NULL;
+    m_CachedAbcFile = "";
 
 	GetAlembicMeshGeomModifierClassDesc()->MakeAutoParamBlocks(this);
 }
+
+AlembicMeshGeomModifier::~AlembicMeshGeomModifier()
+{
+   delRefArchive(m_CachedAbcFile);
+}
+
 
 RefTargetHandle AlembicMeshGeomModifier::Clone(RemapDir& remap) 
 {
@@ -219,11 +226,29 @@ RefResult AlembicMeshGeomModifier::NotifyRefChanged (Interval changeInt, RefTarg
 
 	switch (message) 
     {
-	case REFMSG_CHANGE:
-		if (editMod!=this) break;
-		
-        AlembicMeshGeomModifierParams.InvalidateUI(pblock->LastNotifyParamID());
-		break;
+    case REFMSG_CHANGE:
+        if (hTarget == pblock) 
+        {
+            ParamID changing_param = pblock->LastNotifyParamID();
+            switch(changing_param)
+            {
+            case ID_PATH:
+                {
+                    delRefArchive(m_CachedAbcFile);
+                    MCHAR const* strPath = NULL;
+                    TimeValue t = GetCOREInterface()->GetTime();
+                    pblock->GetValue( AlembicMeshGeomModifier::ID_PATH, t, strPath, changeInt);
+                    m_CachedAbcFile = strPath;
+                    addRefArchive(m_CachedAbcFile);
+                }
+                break;
+            default:
+                break;
+            }
+
+            AlembicMeshGeomModifierParams.InvalidateUI(changing_param);
+        }
+        break;
  
     case REFMSG_WANT_SHOWPARAMLEVEL:
 

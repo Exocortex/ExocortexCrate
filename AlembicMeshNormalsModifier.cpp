@@ -67,8 +67,14 @@ static ParamBlockDesc2 AlembicMeshNormalsModifierParams(
 AlembicMeshNormalsModifier::AlembicMeshNormalsModifier() 
 {
     pblock = NULL;
+    m_CachedAbcFile = "";
 
 	GetAlembicMeshNormalsModifierClassDesc()->MakeAutoParamBlocks(this);
+}
+
+AlembicMeshNormalsModifier::~AlembicMeshNormalsModifier()
+{
+    delRefArchive(m_CachedAbcFile);
 }
 
 RefTargetHandle AlembicMeshNormalsModifier::Clone(RemapDir& remap) 
@@ -218,12 +224,32 @@ RefResult AlembicMeshNormalsModifier::NotifyRefChanged (Interval changeInt, RefT
 
 	switch (message) 
     {
-	case REFMSG_CHANGE:
-		if (editMod!=this) break;
-		
-        AlembicMeshNormalsModifierParams.InvalidateUI(pblock->LastNotifyParamID());
-		break;
- 
+    case REFMSG_CHANGE:
+        {
+            if (hTarget == pblock) 
+            {
+                ParamID changing_param = pblock->LastNotifyParamID();
+                switch(changing_param)
+                {
+                case ID_PATH:
+                    {
+                        delRefArchive(m_CachedAbcFile);
+                        MCHAR const* strPath = NULL;
+                        TimeValue t = GetCOREInterface()->GetTime();
+                        pblock->GetValue( AlembicMeshNormalsModifier::ID_PATH, t, strPath, changeInt);
+                        m_CachedAbcFile = strPath;
+                        addRefArchive(m_CachedAbcFile);
+                    }
+                    break;
+                default:
+                    break;
+                }
+
+                AlembicMeshNormalsModifierParams.InvalidateUI(changing_param);
+            }
+        }
+        break;
+	 
     case REFMSG_WANT_SHOWPARAMLEVEL:
 
         break;

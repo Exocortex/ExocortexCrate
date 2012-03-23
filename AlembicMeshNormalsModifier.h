@@ -35,6 +35,7 @@ public:
 	static AlembicMeshNormalsModifier *editMod;
 
 	AlembicMeshNormalsModifier();
+    ~AlembicMeshNormalsModifier();
 
 	// From Animatable
 	virtual Class_ID ClassID() { return ALEMBIC_MESH_NORMALS_MODIFIER_CLASSID; }		
@@ -75,6 +76,8 @@ public:
 
 private:
 	virtual void SetReference(int i, RefTargetHandle rtarg) { pblock = (IParamBlock2 *) rtarg; }
+private:
+     std::string m_CachedAbcFile;
 };
 
 
