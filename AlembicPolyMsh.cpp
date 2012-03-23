@@ -424,7 +424,7 @@ bool AlembicPolyMesh::Save(double time)
                   int degree = polyObj->GetMesh().F(i)->deg;
                   for (int j = degree-1; j >= 0; j -= 1)
                   {
-                      if (map != NULL && map->FNum() > i)
+                      if (map != NULL && map->FNum() > i && map->F(i)->deg > j)
                       {
                           int vertIndex = map->F(i)->tv[j];
                           UVVert texCoord = map->V(vertIndex);
