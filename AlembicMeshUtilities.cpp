@@ -13,7 +13,7 @@
 #include <exprlib.h>
 #include <ifnpub.h> 
 #include <maxscript\maxscript.h>
-#include "AlembicMAXScript.h"
+#include "AlembicMAXScript.h" 
 
 bool isAlembicMeshValid( Alembic::AbcGeom::IObject *pIObj ) {
 	Alembic::AbcGeom::IPolyMesh objMesh;
@@ -311,7 +311,7 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
 	   if (options.pMNMesh != NULL)
 	   {
 		   MNVert* pMeshVerties = options.pMNMesh->V(0);
-
+		 
 		   for(int i=0;i<vArray.size();i++)
 		   {
 			   pMeshVerties[i].p += ConvertAlembicPointToMaxPoint(vArray[i], masterScaleUnitMeters );
@@ -388,7 +388,7 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
 			}
 			options.pMNMesh->SetFlag( MN_MESH_FILLED_IN, FALSE );
 		    // this can fail if the mesh isn't correctly filled in.
-			if( ! options.pMNMesh->GetFlag(MN_MESH_FILLED_IN ) ) {
+			if( ! options.pMNMesh->GetFlag( MN_MESH_FILLED_IN ) ) {
 				options.pMNMesh->FillInMesh();
 			}
 		}
@@ -758,11 +758,12 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
    {
 	   if ( options.nDataFillFlags & ALEMBIC_DATAFILL_FACELIST ) {
 		   options.pMNMesh->InvalidateTopoCache();
-	   }
+	 		options.pMNMesh->InvalidateGeomCache();
+		}
 	   else {
-		  // if( options.nDataFillFlags & ALEMBIC_DATAFILL_VERTEX ) {
-			//options.pMNMesh->InvalidateGeomCache();
-		 //  }
+		  if( options.nDataFillFlags & ALEMBIC_DATAFILL_VERTEX ) {
+			options.pMNMesh->InvalidateGeomCache();
+		  }
 	   }
    }
 
@@ -770,11 +771,12 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
    {	
 	   if ( options.nDataFillFlags & ALEMBIC_DATAFILL_FACELIST ) {
 		   options.pMesh->InvalidateTopologyCache();
-	   }
+	 	   options.pMesh->InvalidateGeomCache();
+	  }
 	   else {
-		  // if( options.nDataFillFlags & ALEMBIC_DATAFILL_VERTEX ) {
-		//	   options.pMesh->InvalidateGeomCache();
-		  // }
+			if( options.nDataFillFlags & ALEMBIC_DATAFILL_VERTEX ) {
+			   options.pMesh->InvalidateGeomCache();
+		  }
 	   }
    }
 }

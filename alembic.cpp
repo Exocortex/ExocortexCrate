@@ -25,7 +25,7 @@ static INT_PTR CALLBACK ExportDlgProc(HWND hWnd, UINT msg,	WPARAM wParam, LPARAM
     switch (msg) {
     case WM_INITDIALOG:
         {
-            char str[32];
+            char str[32]; 
             HWND hwndEdit = NULL;
 
             // The the dialogue with values from exporter            
