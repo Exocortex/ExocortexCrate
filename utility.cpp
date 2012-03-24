@@ -1,9 +1,8 @@
 #include "Alembic.h"
+#include "AlembicMax.h"
 #include "Utility.h"
 #include "SceneEntry.h"
 #include "AlembicPolyMsh.h"
-#include <object.h>
-#include <iparamb2.h>
 
 SampleInfo getSampleInfo
 (

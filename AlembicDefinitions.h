@@ -1,6 +1,8 @@
 #ifndef __ALEMBICDEFINITIONS_H__
 #define __ALEMBICDEFINITIONS_H__
 
+#include <Max.h>
+#include <Object.h>
 #include "SceneEnumProc.h"
 #include "ObjectList.h"
 

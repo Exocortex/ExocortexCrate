@@ -1,19 +1,16 @@
 #include "Alembic.h"
+#include "AlembicMax.h"
 #include "AlembicArchiveStorage.h"
 #include "AlembicMeshUtilities.h"
 #include "AlembicXformController.h"
 #include "AlembicCameraBaseModifier.h"
 #include "AlembicSimpleParticle.h"
-#include "MeshMtlList.h"
 #include "SceneEnumProc.h"
 #include "AlembicDefinitions.h"
 #include "AlembicWriteJob.h"
 #include "Utility.h"
 #include "AlembicSimpleSpline.h"
 #include "AlembicXformUtilities.h"
-#include <maxscript\maxscript.h>
-#include <notify.h>
-#include <modstack.h>
 
 // Dummy function for progress bar
 DWORD WINAPI DummyProgressFunction(LPVOID arg)
@@ -304,9 +301,7 @@ int ExocortexAlembicStaticInterface_ExocortexAlembicImport(MCHAR* strPath, BOOL 
 		// Get a list of the current objects in the scene
 		MAXInterface *i = GET_MAX_INTERFACE();
 
-		MeshMtlList allMtls;
-
-		options.sceneEnumProc.Init(i->GetScene(), i->GetTime(), i, &allMtls);
+		options.sceneEnumProc.Init(i->GetScene(), i->GetTime(), i);
 		options.currentSceneList.FillList(options.sceneEnumProc);
 		Object *currentObject = NULL;
 
@@ -550,8 +545,7 @@ int ExocortexAlembicStaticInterface_ExocortexAlembicExport(MCHAR * strPath, int 
 
 		MeshTopologyType eTopologyType = static_cast<MeshTopologyType>(iType);
 
-		MeshMtlList allMtls;
-		SceneEnumProc currentScene(i->GetScene(), i->GetTime(), i, &allMtls);
+		SceneEnumProc currentScene(i->GetScene(), i->GetTime(), i);
 		ObjectList allSceneObjects(currentScene);
 		Object *currentObject = NULL;
 

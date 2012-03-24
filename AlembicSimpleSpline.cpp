@@ -1,17 +1,10 @@
-#include "iparamb.h"
-#include "splshape.h"
-#include "iparamm.h"
-#include "simpspl.h"
+#include "AlembicMax.h"
 #include "AlembicSimpleSpline.h"
 #include "AlembicArchiveStorage.h"
-#include "utility.h"
-#include "iparamb2.h"
 #include "AlembicVisibilityController.h"
-#include <linshape.h>
-#include <splshape.h>
-#include <iparamb2.h>
 #include "AlembicLicensing.h"
 #include "AlembicNames.h"
+#include "Utility.h"
 
 class AlembicSimpleSpline;
 

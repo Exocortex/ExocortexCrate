@@ -1,6 +1,8 @@
 #ifndef __ALEMBIC_NAMES_H__
 #define __ALEMBIC_NAMES_H__
 
+#include "AlembicMax.h"
+
 #define EXOCORTEX_ALEMBIC_CATEGORY _T("Alembic")
 
 //#define EXOCORTEX_ALEMBIC_MESH_GEOMETRY _T("EA Mesh")

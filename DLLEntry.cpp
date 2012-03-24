@@ -1,6 +1,6 @@
 #include "Alembic.h"
+#include "AlembicMax.h"
 #include "AlembicDefinitions.h"
-#include "iparamm2.h"
 #include "AlembicNames.h" 
 
 HINSTANCE hInstance;

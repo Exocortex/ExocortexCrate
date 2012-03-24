@@ -1,11 +1,9 @@
 #include "Alembic.h"
+#include "AlembicMax.h"
 #include "AlembicArchiveStorage.h"
 #include "AlembicDefinitions.h"
 #include "AlembicVisibilityController.h"
 #include "Utility.h"
-#include "dummy.h"
-#include <ILockedTracks.h>
-#include "iparamb2.h"
 #include "AlembicNames.h"
 #include "resource.h"
 #include "AlembicMAXScript.h"

@@ -1,5 +1,5 @@
+#include "AlembicMax.h"
 #include "AlembicXformUtilities.h"
-#include <maxscript\maxscript.h>
 #include "AlembicMAXScript.h"
 
 bool isAlembicXform( Alembic::AbcGeom::IObject *pIObj, bool& isConstant ) {

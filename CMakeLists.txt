@@ -3,7 +3,7 @@
 project ( Max${Max_VERSION}ExocortexAlembic${alembic_VERSION} ) 
 
 INCLUDE(../../ExocortexAlembicShared/ExocortexCMakeShared.txt) 
-
+ 
 if( Exocortex_SERVICES OR Exocortex_RLM_ONLY )
 	include_directories( ${Rlm_INCLUDE_DIR} )
 	include_directories( ${Exocortex_INCLUDE_DIR} )
@@ -61,8 +61,8 @@ ENDIF()
 
 SET( 3DSMAX_LIBRARIES core geom gfx maxutil mesh paramblk2 mnmath poly ParticleFlow particle maxscrpt ) 
 
-MESSAGE( "3DSMAX_DIR_LIBRARY: ${3DSMAX_DIR_LIBRARY}" )
-MESSAGE( "3DSMAX_LIBRARIES: ${3DSMAX_LIBRARIES}" )
+#MESSAGE( "3DSMAX_DIR_LIBRARY: ${3DSMAX_DIR_LIBRARY}" )
+#MESSAGE( "3DSMAX_LIBRARIES: ${3DSMAX_LIBRARIES}" )
 
 set( Sources ${Sources} ${BASE_DIR}/Alembic.rc )
 

@@ -1,8 +1,7 @@
 #include "Alembic.h"
-#include <inode.h>
+#include "AlembicMax.h"
 #include "SceneEntry.h"
 #include "AlembicXform.h"
-#include "Dummy.h"
 #include "ImathVec.h"
 #include "Utility.h"
 

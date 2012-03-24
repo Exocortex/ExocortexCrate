@@ -1,6 +1,6 @@
 #include "Alembic.h"
+#include "AlembicMax.h"
 #include "SceneEntry.h"
-#include <inode.h>
 #include "Utility.h"
 
 SceneEntry::SceneEntry(INode *n, Object *o, int t, std::string *providedfullname) 

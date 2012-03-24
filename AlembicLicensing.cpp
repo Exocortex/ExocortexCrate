@@ -1,10 +1,7 @@
-#include <time.h>
-#include <string>
-#include <sstream>
 #include "Foundation.h"
+#include "AlembicMax.h"
 #include "AlembicLicensing.h"
 #include "Alembic.h"
-#include <maxscript/maxscript.h>
 
 using namespace std;
 

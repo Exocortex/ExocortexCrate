@@ -1,12 +1,7 @@
 #include "Alembic.h"
+#include "AlembicMax.h"
 #include "SceneEnumProc.h"
-#include <sceneapi.h>
-#include <object.h>
-#include <triobj.h>
-#include <ParticleFlow/PFClassIDs.h>
-#include <ParticleFlow/IPFSystem.h>
 #include "SceneEntry.h"
-#include "MeshMtlList.h"
 
 SceneEnumProc::SceneEnumProc()
 {
@@ -15,12 +10,11 @@ SceneEnumProc::SceneEnumProc()
 	count = 0;
 	head = tail = NULL;
 	i = 0;
-	mtlList = 0;
 }
 
-SceneEnumProc::SceneEnumProc(IScene *scene, TimeValue t, Interface *i, MeshMtlList *ml) 
+SceneEnumProc::SceneEnumProc(IScene *scene, TimeValue t, Interface *i ) 
 {
-	Init(scene, t, i, ml);
+	Init(scene, t, i);
 }
 
 SceneEnumProc::~SceneEnumProc() 
@@ -55,7 +49,6 @@ int SceneEnumProc::callback(INode *node)
          obj->CanConvertToType(triObjectClassID))) 
     {
 		Append(node, obj, OBTYPE_MESH, 0);
-		mtlList->AddMtl(node->GetMtl());
 		return TREE_CONTINUE;
 	}
 
@@ -158,13 +151,12 @@ SceneEntry *SceneEnumProc::Find(INode *node)
 	return NULL;
 }
 
-void SceneEnumProc::Init(IScene *scene, TimeValue t, Interface *i, MeshMtlList *ml)
+void SceneEnumProc::Init(IScene *scene, TimeValue t, Interface *i )
 {
     time = t;
 	theScene = scene;
 	count = 0;
 	head = tail = NULL;
 	this->i = i;
-	mtlList = ml;
 	theScene->EnumTree(this);
 }

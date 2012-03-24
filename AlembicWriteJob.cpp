@@ -1,7 +1,6 @@
 #include "Alembic.h"
+#include "AlembicMax.h"
 #include "AlembicWriteJob.h"
-#include <gup.h>
-#include <maxapi.h>
 #include "ObjectList.h"
 #include "ObjectEntry.h"
 #include "SceneEnumProc.h"

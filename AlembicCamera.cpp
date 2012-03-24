@@ -1,9 +1,8 @@
 #include "Alembic.h"
+#include "AlembicMax.h"
 #include "AlembicCamera.h"
 #include "AlembicXForm.h"
 #include "SceneEntry.h"
-#include <Object.h>
-#include <IMetaData.h>
 #include "Utility.h"
 
 namespace AbcA = ::Alembic::AbcCoreAbstract::ALEMBIC_VERSION_NS;

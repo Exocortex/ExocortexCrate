@@ -1,12 +1,8 @@
 #include "Alembic.h"
-#include "AlembicPolyMsh.h"
+#include "AlembicMax.h"
 #include "AlembicPolyMsh.h"
 #include "AlembicXForm.h"
 #include "SceneEntry.h"
-#include <Object.h>
-#include <triobj.h>
-#include <IMetaData.h>
-#include <MeshNormalSpec.h>
 #include "Utility.h"
 
 namespace AbcA = ::Alembic::AbcCoreAbstract::ALEMBIC_VERSION_NS;

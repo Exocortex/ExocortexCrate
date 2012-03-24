@@ -5,6 +5,26 @@
     #undef NOMINMAX
 #endif
 
+#include <math.h>
+#include <float.h>
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+#include <assert.h>
+#include <time.h>
+
+#include <utility>
+#include <limits>
+#include <set>
+#include <vector>
+#include <map>
+#include <list>
+#include <stdexcept>
+#include <exception>
+#include <string>
+#include <sstream>
+
+#include <boost/cstdint.hpp>
 #include <boost/smart_ptr.hpp>
 #include <boost/format.hpp>
 #include <boost/variant.hpp>
@@ -15,39 +35,10 @@
 
 namespace fs = boost::filesystem;
 
-#include <utility>
-#include <limits>
-#include <set>
-#include <vector>
-#include <map>
-#include <list>
-
-#include <stdexcept>
-#include <exception>
-
-#include <string>
-
-#include <boost/cstdint.hpp>
-
-#include <math.h>
-#include <float.h>
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
-#include <assert.h>
-#include <map>
-
 #include <Alembic/Abc/All.h>
 #include <Alembic/AbcGeom/All.h>
 #include <Alembic/AbcCoreHDF5/All.h>
 
-#include <Max.h>
-#include <MeshNormalSpec.h>
-
-//MAXInterface *i = GET_MAX_INTERFACE();
-
-typedef Interface12 MAXInterface;
-#define GET_MAX_INTERFACE()	GetCOREInterface12()
 
 typedef std::map<std::string,std::string> stringMap;
 typedef std::map<std::string,std::string>::iterator stringMapIt;

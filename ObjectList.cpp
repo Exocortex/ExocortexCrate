@@ -1,6 +1,6 @@
 #include "Alembic.h"
+#include "AlembicMax.h"
 #include "ObjectList.h"
-#include <inode.h>
 #include "ObjectEntry.h"
 #include "SceneEntry.h"
 #include "SceneEnumProc.h"

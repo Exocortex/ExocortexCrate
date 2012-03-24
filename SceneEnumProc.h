@@ -5,7 +5,6 @@
 
 class SceneEntry;
 class IScene;
-class MeshMtlList;
 
 #define OBTYPE_MESH 0
 #define OBTYPE_CAMERA 1
@@ -25,18 +24,17 @@ public:
 	SceneEntry *tail;
 	IScene		*theScene;
 	int			count;
-	MeshMtlList *mtlList;
 	TimeValue	time;
 public:
                 SceneEnumProc();
-	            SceneEnumProc(IScene *scene, TimeValue t, Interface *i, MeshMtlList *ml);
+	            SceneEnumProc(IScene *scene, TimeValue t, Interface *i);
                 ~SceneEnumProc();
 	int			Count() { return count; }
     SceneEntry*	Append(INode *node, Object *obj, int type, std::string *providedfullname);
 	int			callback( INode *node );
 	Box3		Bound();
 	SceneEntry *Find(INode *node);
-    void        Init(IScene *scene, TimeValue t, Interface *i, MeshMtlList *ml);
+    void        Init(IScene *scene, TimeValue t, Interface *i);
 };
 
 #endif //_SCENEENUMPROC_H_

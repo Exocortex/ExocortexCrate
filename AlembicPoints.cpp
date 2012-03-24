@@ -1,8 +1,8 @@
 #include "Alembic.h"
+#include "AlembicMax.h"
 #include "AlembicPoints.h"
 #include "AlembicXform.h"
 #include "SceneEntry.h"
-#include "SimpObj.h"
 #include "Utility.h"
 #include <IParticleObjectExt.h>
 #include <ParticleFlow/IParticleChannelID.h>

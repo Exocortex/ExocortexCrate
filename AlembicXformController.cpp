@@ -1,13 +1,9 @@
 #include "Alembic.h"
+#include "AlembicMax.h"
 #include "AlembicArchiveStorage.h"
 #include "AlembicDefinitions.h"
 #include "AlembicXformController.h"
 #include "Utility.h"
-#include "dummy.h"
-#include <ILockedTracks.h>
-#include "iparamb2.h"
-#include <iparamm2.h>
-
 #include "AlembicXformUtilities.h"
 
 // This function returns a pointer to a class descriptor for our Utility

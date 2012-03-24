@@ -1,10 +1,10 @@
 #include "Alembic.h"
+#include "AlembicMax.h"
 #include "AlembicDefinitions.h"
 #include "AlembicSimpleParticle.h"
 #include "AlembicArchiveStorage.h"
 #include "AlembicVisibilityController.h"
 #include "utility.h"
-#include "iparamb2.h"
 
 namespace AbcA = ::Alembic::AbcCoreAbstract::ALEMBIC_VERSION_NS;
 namespace AbcB = ::Alembic::Abc::ALEMBIC_VERSION_NS;

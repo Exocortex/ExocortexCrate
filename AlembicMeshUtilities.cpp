@@ -1,18 +1,12 @@
 #include "Alembic.h"
+#include "AlembicMax.h"
 #include "AlembicDefinitions.h"
 #include "AlembicArchiveStorage.h"
 #include "utility.h"
-#include <iparamb2.h>
-#include <MeshNormalSpec.h>
-#include <Assetmanagement\AssetType.h>
-#include "alembic.h"
 #include "AlembicXForm.h"
 #include "AlembicVisibilityController.h"
 #include "AlembicNames.h"
 #include "AlembicMeshUtilities.h"
-#include <exprlib.h>
-#include <ifnpub.h> 
-#include <maxscript\maxscript.h>
 #include "AlembicMAXScript.h" 
 
 bool isAlembicMeshValid( Alembic::AbcGeom::IObject *pIObj ) {

@@ -1,7 +1,7 @@
+#include "AlembicMax.h"
 #include "AlembicCurves.h"
 #include "AlembicXform.h"
 #include "SceneEntry.h"
-#include <object.h>
 #include "utility.h"
 
 namespace AbcA = ::Alembic::AbcCoreAbstract::ALEMBIC_VERSION_NS;

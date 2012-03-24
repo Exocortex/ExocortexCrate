@@ -1,7 +1,6 @@
 #include "Alembic.h"
 #include "AlembicArchiveStorage.h"
-#include <boost/algorithm/string.hpp>
-
+#include <boost/algorithm/string.hpp>
 #pragma warning( disable: 4996 )
 
 struct AlembicArchiveInfo
