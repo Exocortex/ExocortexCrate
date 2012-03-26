@@ -1,6 +1,10 @@
 cmake_minimum_required(VERSION 2.6)
 
-project( ExocortexAlembic )
+if( HDF5_ENABLE_THREADSAFE )
+	project( ExocortexAlembic )
+else()
+	project( ExocortexAlembic_WinXP )
+endif()
 
 INCLUDE(./ExocortexCMakeShared.txt)
 
@@ -34,14 +38,7 @@ else()
 	message(FATAL_ERROR "Should not get here")
 endif()
 
-#set( Exocortex_BETA_EXPIRY_DATE 1330560000 )	# when beta is over, undefine this and it will not be enabled.
 set( Exocortex_RLM_ONLY ON )					# use only RLM licensing.
-
-# Exocortex Services
-if( Exocortex_BETA_EXPIRY_DATE )
-	message( "---> ENABLING EXPIRY DATE LICENSING: ${EXOCORTEX_BETA_EXPIRY_DATE}" )
-	add_definitions( "-DEXOCORTEX_BETA_EXPIRY_DATE=${Exocortex_BETA_EXPIRY_DATE}" )
-endif()
 
 if( Exocortex_RLM_ONLY )
 	add_definitions( "-DEXOCORTEX_RLM_ONLY" )
