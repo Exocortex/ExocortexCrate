@@ -6,11 +6,16 @@
 #include <Max.h>
 #include <iparamb2.h>
 #include <iparamm2.h>
+
+#pragma warning( disable : 4244 )
+
 #if MAX_PRODUCT_YEAR_NUMBER > 2010 
 	#include <maxscript\maxscript.h>
 #else
 	#include <maxscrpt\maxscrpt.h>
 #endif
+
+#pragma warning( default : 4244 )
 
 #include <notify.h>
 #include <modstack.h>
