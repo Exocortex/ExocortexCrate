@@ -12,13 +12,13 @@ folder structure:
        |-------- ExocortexAlembicMaya (optional)
        |-------- ExocortexAlembicHoudini (optional) **
        |-------- ExocortexAlembic3DSMax (optional)
-       |-------- Libraries
+       |-------- Libraries.########.##
 
 The Libraries folder contains SDKs and other large binaries not suitable
 for inclusion in GIT repositories.  We currently distribute it manually.  The
 most recent version can be found here:
 
-http://www.exocortex.com/files/Exocortex-Libraries-20120306-01.7z
+http://www.exocortex.com/files/Libraries.20120326.01.7z
 
 In order to build on Windows platforms, Visual Studio 2008 (with x64 tools) is
 required as is CMake.  After installing Visual Studio 2008 and CMake, you can then
@@ -32,7 +32,8 @@ Then, use cmake to build the solution. For that cd into ExocortexAlembicShared/b
 and run the corresponding batch file, for example
 
     cd ExocortexAlembicShared/build
-    build_vs2008_x64.bat (for windows)
+    build_vs2008_x64.bat (for Windows Vista, 7 and 8)
+    build_vs2008_WinXP_x64.bat (for Windows XP)
     build_unix.sh (for linux)
 
 This will merge all build files into the build folder below ExocortexAlembicShared,
