@@ -151,6 +151,13 @@ bool AlembicPoints::Save(double time)
         constantAge &= (ageVec[i] == ageVec[0]);
         constantOrientation &= (orientationVec[i] == orientationVec[0]);
         constantAngularVel &= (angularVelocityVec[i] == angularVelocityVec[0]);
+
+        // Set the archive bounding box
+        // Positions for particles are already cnsider to be in world space
+        if (mJob)
+        {
+            mJob->GetArchiveBBox().extendBy(pos);
+        }
     }
 
     // Set constant properties that are not currently supported by Max
@@ -327,6 +334,13 @@ void AlembicPoints::GetShapeType(IParticleObjectExt *pExt, int particleId, TimeV
                 nameList.push_back(pNode->GetName());
                 instanceId = (uint16_t)nameList.size()-1;
             }
+
+            // Fill in the animation time
+          /*  int pid_randomoffset = GetParamIdByName(pSimpleOperator, 0, "Random_Offset");
+            int nRandomOffset = pSimpleOperator->GetParamBlockByID(0)->GetInt(pid_randomoffset, ticks);
+            int pid_randomseed = GetParamIdByName(pSimpleOperator, 0, "Random_Seed");
+            int nRandomSeed = pSimpleOperator->GetParamBlockByID(0)->GetInt(pid_randomseed, ticks);
+            */
 
             animationTime = 0.0f;
         }

@@ -19,6 +19,8 @@ private:
     std::vector<AlembicObjectPtr> mObjects;
     float mFrameRate;
     Interface *mApplication;
+    Alembic::Abc::OBox3dProperty m_ArchiveBoxProp;
+    Alembic::Abc::Box3d m_Archivebbox;
 
     void AddObject(AlembicObjectPtr obj);
 public:
@@ -33,6 +35,8 @@ public:
    bool HasOption(const std::string & in_Name);
    bool GetOption(const std::string & in_Name);
    size_t GetNbObjects() { return mObjects.size(); }
+   Alembic::Abc::Box3d &GetArchiveBBox() { return m_Archivebbox; }
+
  
    bool PreProcess();
    bool Process(double frame);

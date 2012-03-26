@@ -10,8 +10,6 @@
 #include "AlembicPoints.h"
 #include "AlembicCurves.h"
 
-
-
 namespace AbcA = ::Alembic::AbcCoreAbstract::ALEMBIC_VERSION_NS;
 using namespace AbcA;
 
@@ -125,7 +123,7 @@ bool AlembicWriteJob::PreProcess()
         mTs = mArchive.addTimeSampling(sampling);
     }
 
-    Alembic::Abc::OBox3dProperty boxProp = Alembic::AbcGeom::CreateOArchiveBounds(mArchive,mTs);
+    m_ArchiveBoxProp = Alembic::AbcGeom::CreateOArchiveBounds(mArchive,mTs);
 
     // create object for each
     for (ObjectEntry *object = mSelection.head; object != NULL; object = object->next) 
@@ -257,7 +255,9 @@ bool AlembicWriteJob::Process(double frame)
             continue;
         }
 
-
+        // run the export for all objects
+        m_Archivebbox.makeEmpty();
+        
         // run the export for all objects
         for(size_t j=0; j < mObjects.size(); j++)
         {
@@ -268,6 +268,9 @@ bool AlembicWriteJob::Process(double frame)
             }
             result = true;
         }
+
+        // Set the archive bounds bounding box
+        m_ArchiveBoxProp.set(m_Archivebbox);
     }
 
     return result;

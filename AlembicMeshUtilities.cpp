@@ -814,7 +814,7 @@ int AlembicImport_PolyMesh(const std::string &path, const std::string &identifie
     dataFillOptions.nDataFillFlags |= options.importUVs ? ALEMBIC_DATAFILL_UVS : 0;
     dataFillOptions.nDataFillFlags |= options.importBboxes ? ALEMBIC_DATAFILL_BOUNDINGBOX : 0;
     dataFillOptions.nDataFillFlags |= options.importMaterialIds ? ALEMBIC_DATAFILL_MATERIALIDS : 0;
-    
+
     // Create the poly or tri object and place it in the scene
     // Need to use the attach to existing import flag here 
     if (!Alembic::AbcGeom::IPolyMesh::matches(iObj.getMetaData()))
@@ -852,17 +852,12 @@ int AlembicImport_PolyMesh(const std::string &path, const std::string &identifie
         return alembic_failure;
     }
 
-	// we will not be filling in the initial polymesh data.
-	//AlembicImport_FillInPolyMesh(dataFillOptions);
-
-	// Create the object pNode
+    // Create the object pNode
 	INode *pNode = GET_MAX_INTERFACE()->CreateObjectNode(newObject, iObj.getName().c_str());
 	if (pNode == NULL)
     {
 		return alembic_failure;
     }
-
-	//TimeValue now =  GET_MAX_INTERFACE()->GetTime();
 
 	TimeValue zero( 0 );
 

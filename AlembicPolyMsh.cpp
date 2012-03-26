@@ -191,12 +191,21 @@ bool AlembicPolyMesh::Save(double time)
 
     // allocate the points and normals
     posVec.resize(vertCount);
+    Matrix3 wm = GetRef().node->GetObjTMAfterWSM(ticks);
     for(LONG i=0;i<vertCount;i++)
     {
         Point3 &maxPoint = (polyObj != NULL) ? polyObj->GetMesh().V(i)->p
                                              : triObj->GetMesh().getVert(i);
         posVec[i] = ConvertMaxPointToAlembicPoint(maxPoint, masterScaleUnitMeters );
         bbox.extendBy(posVec[i]);
+
+        // Extend the archive bounding box
+        if (mJob)
+        {
+            Point3 worldMaxPoint = wm * maxPoint;
+            Imath::V3f alembicWorldPoint = ConvertMaxPointToAlembicPoint(worldMaxPoint, masterScaleUnitMeters);
+            mJob->GetArchiveBBox().extendBy(alembicWorldPoint);
+        }
     }
 
     // allocate the sample for the points

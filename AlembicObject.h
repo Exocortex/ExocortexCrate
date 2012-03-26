@@ -11,12 +11,11 @@ class AlembicObject
 {
 private:
     std::vector<const SceneEntry*> mRefs;
-    AlembicWriteJob * mJob;
     Alembic::Abc::OObject mOParent;
 protected:
     int mNumSamples;
     Alembic::AbcGeom::OVisibilityProperty mOVisibility;
-
+    AlembicWriteJob * mJob;
 public:
     AlembicObject(const SceneEntry & in_Ref, AlembicWriteJob * in_Job);
     ~AlembicObject();

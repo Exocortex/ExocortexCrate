@@ -173,10 +173,19 @@ bool AlembicCurves::Save(double time)
 
     // allocate the points and normals
     std::vector<Alembic::Abc::V3f> posVec(vertCount);
+    Matrix3 wm = GetRef().node->GetObjTMAfterWSM(ticks);
     for(int i=0;i<vertCount;i++)
     {
         posVec[i] = ConvertMaxPointToAlembicPoint(controlPoints[i], masterScaleUnitMeters );
         bbox.extendBy(posVec[i]);
+
+        // Set the archive bounding box
+        if (mJob)
+        {
+            Point3 worldMaxPoint = wm * controlPoints[i];
+            Alembic::Abc::V3f alembicWorldPoint = ConvertMaxPointToAlembicPoint(worldMaxPoint, masterScaleUnitMeters);
+            mJob->GetArchiveBBox().extendBy(alembicWorldPoint);
+        }
     }
 
     // store the bbox

@@ -44,6 +44,16 @@ bool AlembicCamera::Save(double time)
     // Store the transformation
     SaveCameraXformSample(GetRef(), mXformSchema, mXformSample, time);
 
+    // Set the xform sample
+    Matrix3 wm = GetRef().node->GetObjTMAfterWSM(ticks);
+    if (mJob)
+    {
+        Point3 worldMaxPoint = wm.GetTrans();
+        float masterScaleUnitMeters = (float)GetMasterScale(UNITS_METERS);
+        Alembic::Abc::V3f alembicWorldPoint = ConvertMaxPointToAlembicPoint(worldMaxPoint, masterScaleUnitMeters);
+        mJob->GetArchiveBBox().extendBy(alembicWorldPoint);
+    }
+
     // store the metadata
     // IMetaDataManager mng;
     // mng.GetMetaData(GetRef().node, 0);
@@ -63,7 +73,6 @@ bool AlembicCamera::Save(double time)
             return true;
         }
     }
-
 
     // Return a pointer to a Camera given an INode or return false if the node cannot be converted to a Camera
     Object *obj = GetRef().node->EvalWorldState(ticks).obj;
