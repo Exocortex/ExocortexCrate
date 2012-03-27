@@ -272,6 +272,9 @@ MStatus AlembicXformNode::compute(const MPlug & plug, MDataBlock & dataBlock)
       }
    }
 
+   if(mTimes.size() == 0)
+      return MStatus::kFailure;
+
    // find the index
    size_t index = mLastFloor;
    while(inputTime > mTimes[index] && index < mTimes.size()-1)
@@ -280,13 +283,13 @@ MStatus AlembicXformNode::compute(const MPlug & plug, MDataBlock & dataBlock)
       index--;
 
    Alembic::Abc::M44d matrix;
-   if(fabs(time - mTimes[index]) < 0.001 || index == mTimes.size()-1)
+   if(fabs(inputTime - mTimes[index]) < 0.001 || index == mTimes.size()-1)
    {
       matrix = mMatrices[index];
    }
    else
    {
-      double blend = (time - mTimes[index]) / (mTimes[index+1] - mTimes[index]);
+      double blend = (inputTime - mTimes[index]) / (mTimes[index+1] - mTimes[index]);
       matrix = (1.0f - blend) * mMatrices[index] + blend * mMatrices[index+1];
    }
    mLastFloor = index;
