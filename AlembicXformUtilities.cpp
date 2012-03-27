@@ -29,7 +29,11 @@ void AlembicImport_FillInXForm(alembic_fillxform_options &options)
 
 void AlembicImport_FillInXForm_Internal(alembic_fillxform_options &options)
 {
-    if(!options.pIObj->valid())
+   if( ! HasFullLicense() ) {
+		ESS_LOG_ERROR( "No valid license found for Exocortex Alembic, XForm FillIn failed." );
+	}
+
+   if(!options.pIObj->valid())
         return;
     
     // Alembic::AbcGeom::IXform obj;
