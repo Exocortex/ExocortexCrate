@@ -25,6 +25,7 @@ proc exocortexAlembicImport(string $filename)
     string $infos[] = `ExocortexAlembic_getInfo -f $filename`;
     string $identifiers[];
     string $types[];
+    int $nbTransforms = 0;
     string $names[];
     int $nbSamples[];
     for($i=0; $i<size($infos); $i=$i+1)
@@ -41,6 +42,8 @@ proc exocortexAlembicImport(string $filename)
         // extract the information
         string $identifier = $tokens[0];
         string $type = $tokens[1];
+        if($type == "Xform")
+          $nbTransforms = $nbTransforms + 1;
         string $name = $tokens[2];
         
         // try to find the identifier in the map
@@ -103,13 +106,18 @@ proc exocortexAlembicImport(string $filename)
         tokenize $identifiers[$i] "/" $parts;
         string $name = $names[$i];
         string $reader;
+        string $topoReader;
         string $shape;
         if($types[$i] == "PolyMesh")
         {
             $shape = `createNode -name $name "mesh"`;
-            $reader = `createNode "ExocortexAlembicPolyMesh"`;
-            connectAttr ($reader+".outMesh") ($shape+".inMesh");        
+            $topoReader = `createNode "ExocortexAlembicPolyMesh"`;
+            connectAttr ($topoReader+".outMesh") ($shape+".inMesh");
+            connectAttr ($fileNode+".outFileName") ($topoReader+".fileName");        
+            setAttr -type "string" ($topoReader+".identifier") $identifiers[$i];
             ExocortexAlembic_createFaceSets -f $filename -i $identifiers[$i] -o $shape;
+            string $readers[] = `deformer -type "ExocortexAlembicPolyMeshDeform" $shape`;
+            $reader = $readers[0];
         }
         else if($types[$i] == "SubD")
         {
@@ -137,23 +145,37 @@ proc exocortexAlembicImport(string $filename)
         }
         else if($types[$i] == "Xform")
         {
-            // let's look for the next element in the list
-            // and access its parent
-            $reader = "";
-            for($j=$i+1;$j<size($identifiers);$j=$j+1)
+            // if we have only transforms in the alembic file, this is a transform cache!
+            if($nbTransforms == size($types))
             {
-                string $substring = `substring $identifiers[$j] 1 (size($identifiers[$i])+1)`;
-                if($substring == ($identifiers[$i]+"/"))
-                {
-                    $shape = $objects[$j];
-                    $xform = `listRelatives -p $shape`;
-                    $shape = `rename -ignoreShape $xform[0] $name`;
-                    $reader = createNode("ExocortexAlembicXform");
-                    connectAttr ($reader+".translate") ($shape+".translate");
-                    connectAttr ($reader+".rotate") ($shape+".rotate");
-                    connectAttr ($reader+".scale") ($shape+".scale");
-                    break;
-                }
+              string $locator = `createNode -name ($name+"Shape") "locator"`;
+              $xform = `listRelatives -p $locator`;
+              $shape = $xform[0];
+              $reader = createNode("ExocortexAlembicXform");
+              connectAttr ($reader+".translate") ($shape+".translate");
+              connectAttr ($reader+".rotate") ($shape+".rotate");
+              connectAttr ($reader+".scale") ($shape+".scale");
+            }
+            else
+            {
+              // let's look for the next element in the list
+              // and access its parent
+              $reader = "";
+              for($j=$i+1;$j<size($identifiers);$j=$j+1)
+              {
+                  string $substring = `substring $identifiers[$j] 1 (size($identifiers[$i])+1)`;
+                  if($substring == ($identifiers[$i]+"/"))
+                  {
+                      $shape = $objects[$j];
+                      $xform = `listRelatives -p $shape`;
+                      $shape = `rename -ignoreShape $xform[0] $name`;
+                      $reader = createNode("ExocortexAlembicXform");
+                      connectAttr ($reader+".translate") ($shape+".translate");
+                      connectAttr ($reader+".rotate") ($shape+".rotate");
+                      connectAttr ($reader+".scale") ($shape+".scale");
+                      break;
+                  }
+              }
             }
             if($reader == "")
                 continue;
@@ -161,8 +183,18 @@ proc exocortexAlembicImport(string $filename)
         else if($types[$i] == "Group")
         {
             // find all xforms below this
-            $shape = `createNode -name $name "transform"`;
-            $reader = createNode("ExocortexAlembicXform");
+            if($nbTransforms == size($types))
+            {
+              string $locator = `createNode -name ($name+"Shape") "locator"`;
+              $xform = `listRelatives -p $locator`;
+              $shape = $xform[0];
+              $reader = createNode("ExocortexAlembicXform");
+            }
+            else
+            {
+              $shape = `createNode -name $name "transform"`;
+              $reader = createNode("ExocortexAlembicXform");
+            }
             connectAttr ($reader+".translate") ($shape+".translate");
             connectAttr ($reader+".rotate") ($shape+".rotate");
             connectAttr ($reader+".scale") ($shape+".scale");
@@ -175,7 +207,19 @@ proc exocortexAlembicImport(string $filename)
                 tokenize $identifiers[$j] "/" $childParts;
                 if(size($childParts) != (size($parts)+1))
                     continue;
-                parent $objects[$j] $shape;
+                string $identifierA = "";
+                string $identifierB = "";
+                for($k=0;$k<size($parts);$k=$k+1)
+                {
+                  $identifierA = $identifierA + "/";
+                  $identifierB = $identifierB + "/";
+                  $identifierA = $identifierA + $parts[$k];
+                  $identifierB = $identifierB + $childParts[$k];
+                }
+                if($identifierA != $identifierB)
+                  continue;
+                if($objects[$j] != "")
+                  parent $objects[$j] $shape;
             }
         }
         else
@@ -185,7 +229,10 @@ proc exocortexAlembicImport(string $filename)
         }
         
         // connect the standard ports
-        connectAttr ($timeControl+".outTime") ($reader+".inTime");        
+        if($nbSamples[$i] > 1)
+        {
+            connectAttr ($timeControl+".outTime") ($reader+".inTime");        
+        }
         connectAttr ($fileNode+".outFileName") ($reader+".fileName");        
         setAttr -type "string" ($reader+".identifier") $identifiers[$i];
         $objects[$i] = $shape;

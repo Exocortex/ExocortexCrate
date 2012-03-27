@@ -50,6 +50,7 @@
 #include <maya/MMatrix.h>
 #include <maya/MTransformationMatrix.h>
 #include <maya/MPxNode.h>
+#include <maya/MPxDeformerNode.h>
 #include <maya/MDataHandle.h>
 #include <maya/MDGContext.h>
 #include <maya/MFnUnitAttribute.h>
@@ -64,6 +65,7 @@
 #include <maya/MIntArray.h>
 #include <maya/MFnIntArrayData.h>
 #include <maya/MFloatArray.h>
+#include <maya/MItGeometry.h>
 
 #include "Utility.h"
 #include "AlembicArchiveStorage.h"

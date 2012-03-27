@@ -20,6 +20,7 @@ const MTypeId mXformNodeId(0x0011A102);
 const MTypeId mCameraNodeId(0x0011A103);
 const MTypeId mPolyMeshNodeId(0x0011A104);
 const MTypeId mSubDNodeId(0x0011A105);
+const MTypeId mPolyMeshDeformNodeId(0x0011A106);
 
 static MCallbackId deleteAllArchivesCallbackOnNewId = 0;
 static MCallbackId deleteAllArchivesCallbackOnOpenId = 0;
@@ -87,6 +88,11 @@ MStatus initializePlugin(MObject obj)
       mSubDNodeId,
       &AlembicSubDNode::creator,
       &AlembicSubDNode::initialize);
+   status = plugin.registerNode("ExocortexAlembicPolyMeshDeform",
+      mPolyMeshDeformNodeId,
+      &AlembicPolyMeshDeformNode::creator,
+      &AlembicPolyMeshDeformNode::initialize,
+      MPxNode::kDeformerNode);
    return status;
 }
 
@@ -124,6 +130,7 @@ MStatus uninitializePlugin(MObject obj)
    status = plugin.deregisterNode(mCameraNodeId);
    status = plugin.deregisterNode(mPolyMeshNodeId);
    status = plugin.deregisterNode(mSubDNodeId);
+   status = plugin.deregisterNode(mPolyMeshDeformNodeId);
 
    return status;
 }
