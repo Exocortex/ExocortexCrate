@@ -43,6 +43,12 @@ rollout AlembicExportSettings "Alembic Export Settings" width:288 height:388
 	(
 	    destroyDialog AlembicExportSettings
 	)
+	
+	on AlembicExportSettings open do
+    (
+		inSpinner.value = animationRange.start
+		outSpinner.value = animationRange.end
+    )
 )
 ---------------------------------------------------------------------------------------------------------
 -- MAXScript functions to bring up the options dialogs

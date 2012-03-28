@@ -124,7 +124,7 @@ bool AlembicPolyMesh::Save(double time)
    
     // Clear our data
     mFaceCountVec.clear();
-    mFaceIndicesVec.clear();
+    mFaceIndicesVec.clear(); 
     mBindPoseVec.clear();
     mVelocitiesVec.clear();
     mUvVec.clear();
@@ -196,7 +196,7 @@ bool AlembicPolyMesh::Save(double time)
     {
         Point3 &maxPoint = (polyObj != NULL) ? polyObj->GetMesh().V(i)->p
                                              : triObj->GetMesh().getVert(i);
-        posVec[i] = ConvertMaxPointToAlembicPoint(maxPoint, masterScaleUnitMeters );
+        posVec[i] = ConvertMaxPointToAlembicPoint( maxPoint, masterScaleUnitMeters );
         bbox.extendBy(posVec[i]);
 
         // Extend the archive bounding box
