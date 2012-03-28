@@ -871,6 +871,7 @@ CStatus alembic_create_item_Invoke
          {
             CRef opRef;
             opRef.Set(realTarget.GetAsText()+L"."+realType);
+            op = opRef;
          }
          if(!op.IsValid())
          {
