@@ -451,6 +451,7 @@ bool hasStandinSupport()
    }
    return gHasStandinSupport > 0;
 }
+#pragma disable( warning: 4996 )
 
 CString getDSOPath()
 {
