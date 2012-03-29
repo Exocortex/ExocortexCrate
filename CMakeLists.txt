@@ -71,4 +71,17 @@ SET_TARGET_PROPERTIES( ${PROJECT_NAME}
 TARGET_LINK_LIBRARIES( ${PROJECT_NAME} ${ALEMBIC_ILMBASE_LIBS} ${ALEMBIC_ZLIB_LIBS} ${ALEMBIC_HDF5_LIBS} ${ALEMBIC_CORE_LIBS} ${BOOST_LIBS} ${Maya_LIBRARIES} ${Rlm_LIBRARIES} )
 ADD_DEPENDENCIES(${PROJECT_NAME} AlembicAbcGeom)
 
+SET( Install_DIR ${Exocortex_INSTALL_BASE_DIR}/Maya${Maya_VERSION}/ )
 
+SET( Module_FILENAME ${CMAKE_CURRENT_SOURCE_DIR}/Maya${Maya_VERSION}ExocortexAlembic.mod )
+copy_file_to_directory( ${Module_FILENAME} ${Install_DIR} )
+
+copy_directory( "${BASE_DIR}/MEL" ${Install_DIR}/Module/scripts )
+
+get_target_property( Install_TARGET ${PROJECT_NAME} LOCATION )
+copy_file_to_directory( ${Install_TARGET} ${Install_DIR}/Module/plug-ins )
+
+if( WIN32 )
+	copy_file_to_directory( ${RER_DEPENDENCIES} ${Install_DIR}/Module/plug-ins )
+	copy_file_to_directory( ${EAH_DEPENDENCIES} ${Install_DIR}/Module/plug-ins )
+endif()

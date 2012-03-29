@@ -12,7 +12,7 @@
 #include <maya/MFnPlugin.h>
 #include <maya/MSceneMessage.h>
 
-// IDs issues for this plugin are:
+// IDs issues for this plugin are: 
 // 0x0011A100 - 0x0011A1FF
 const MTypeId mTimeControlNodeId(0x0011A100);
 const MTypeId mFileNodeId(0x0011A101);
@@ -27,7 +27,7 @@ static MCallbackId deleteAllArchivesCallbackOnOpenId = 0;
 static MCallbackId deleteAllArchivesCallbackOnExitId = 0;
 static void deleteAllArchivesCallback( void* clientData )
 {
-   preDestructAllNodes();
+   preDestructAllNodes(); 
    deleteAllArchives();
 }
 
