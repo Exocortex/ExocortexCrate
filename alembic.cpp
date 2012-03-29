@@ -5,13 +5,13 @@
 // Tip: You need to compile the generated code before you can load the plug-in.
 // After you compile the plug-in, you can load it by clicking Update All in the Plugin Manager.
 #include <xsi_application.h>
-#include <xsi_context.h>
+#include <xsi_context.h> 
 #include <xsi_pluginregistrar.h>
 #include <xsi_status.h>
 #include <xsi_argument.h>
 #include <xsi_command.h>
 #include <xsi_menu.h>
-#include <xsi_uitoolkit.h>
+#include <xsi_uitoolkit.h> 
 #include <xsi_progressbar.h>
 #include <xsi_comapihandler.h>
 #include <xsi_project.h>
@@ -23,7 +23,7 @@
 #include <xsi_kinematics.h>
 #include <xsi_kinematicstate.h>
 #include <xsi_factory.h>
-#include <xsi_primitive.h>
+#include <xsi_primitive.h> 
 #include <xsi_math.h>
 #include <xsi_cluster.h>
 #include <xsi_clusterproperty.h>
