@@ -77,6 +77,7 @@ SET( Module_FILENAME ${CMAKE_CURRENT_SOURCE_DIR}/Maya${Maya_VERSION}ExocortexAle
 copy_file_to_directory( ${Module_FILENAME} ${Install_DIR} )
 
 copy_directory( "${BASE_DIR}/MEL" ${Install_DIR}/Module/scripts )
+copy_directory( "${BASE_DIR}/UI" ${Install_DIR}/Module/ui )
 
 get_target_property( Install_TARGET ${PROJECT_NAME} LOCATION )
 copy_file_to_directory( ${Install_TARGET} ${Install_DIR}/Module/plug-ins )
