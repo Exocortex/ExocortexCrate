@@ -82,6 +82,16 @@ SET_TARGET_PROPERTIES( ${PROJECT_NAME} PROPERTIES SUFFIX ".dlu" )
 set( PluginDirectory "${CMAKE_CURRENT_SOURCE_DIR}/Plugin" )
 copy_directory( "${BASE_DIR}/MaxScripts" ${PluginDirectory} )
 get_target_property( OutputFilePath ${PROJECT_NAME} LOCATION )
-copy_file( ${OutputFilePath} ${PluginDirectory} )
 
-copy_file( ${RER_DEPENDENCIES} ${PluginDirectory} )
+copy_file_to_directory( ${OutputFilePath} ${PluginDirectory} )
+copy_file_to_directory( ${RER_DEPENDENCIES} ${PluginDirectory} )
+
+SET( Install_DIR ${Exocortex_INSTALL_BASE_DIR}/Max${Max_VERSION}/ )
+
+copy_directory( "${BASE_DIR}/MaxScripts" ${Install_DIR} )
+
+get_target_property( Install_TARGET ${PROJECT_NAME} LOCATION )
+copy_file_to_directory( ${Install_TARGET} ${Install_DIR} )
+
+copy_file_to_directory( ${RER_DEPENDENCIES} ${Install_DIR} )
+copy_file_to_directory( ${EAH_DEPENDENCIES} ${Install_DIR} )
