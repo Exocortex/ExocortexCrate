@@ -69,8 +69,11 @@ SET_TARGET_PROPERTIES( ${PROJECT_NAME}
 )
 
 SET( Install_DIR ${Exocortex_INSTALL_BASE_DIR}/Python${Python_SHORTNAME}/ )
+
 get_target_property( Install_TARGET ${PROJECT_NAME} LOCATION )
 copy_file_to_directory( ${Install_TARGET} ${Install_DIR} )
 
-copy_file_to_directory( ${RER_DEPENDENCIES} ${Install_DIR} )
-copy_file_to_directory( ${EAH_DEPENDENCIES} ${Install_DIR} )
+if( WIN32 )
+	copy_file_to_directory( ${RER_DEPENDENCIES} ${Install_DIR} )
+	copy_file_to_directory( ${EAH_DEPENDENCIES} ${Install_DIR} )
+endif()
