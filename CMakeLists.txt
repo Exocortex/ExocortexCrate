@@ -67,3 +67,10 @@ SET_TARGET_PROPERTIES( ${PROJECT_NAME}
     PREFIX "" # There is no prefix even on UNIXes
     SUFFIX "${MODSUFFIX}"
 )
+
+SET( Install_DIR ${Exocortex_INSTALL_BASE_DIR}/Python${Python_SHORTNAME}ExocortexAlembic/ )
+get_target_property( Install_TARGET ${PROJECT_NAME} LOCATION )
+copy_file_to_directory( ${Install_TARGET} ${Install_DIR} )
+
+copy_file_to_directory( ${RER_DEPENDENCIES} ${Install_DIR} )
+copy_file_to_directory( ${EAH_DEPENDENCIES} ${Install_DIR} )

@@ -20,7 +20,7 @@ static PyMethodDef extension_methods[] = {
    {"getVersion", (PyCFunction)extension_getVersion, METH_NOARGS},
    {"getAlembicVersion", (PyCFunction)extension_getVersion, METH_NOARGS},
    {"iArchive", (PyCFunction)iArchive_new, METH_VARARGS},
-   {"oArchive", (PyCFunction)oArchive_new, METH_VARARGS},
+   {"oArchive", (PyCFunction)oArchive_new, METH_VARARGS}, 
    {NULL, NULL}
 };
 
