@@ -68,7 +68,7 @@ SET_TARGET_PROPERTIES( ${PROJECT_NAME}
     SUFFIX "${MODSUFFIX}"
 )
 
-SET( Install_DIR ${Exocortex_INSTALL_BASE_DIR}/Python${Python_SHORTNAME}ExocortexAlembic/ )
+SET( Install_DIR ${Exocortex_INSTALL_BASE_DIR}/Python${Python_SHORTNAME}/ )
 get_target_property( Install_TARGET ${PROJECT_NAME} LOCATION )
 copy_file_to_directory( ${Install_TARGET} ${Install_DIR} )
 
