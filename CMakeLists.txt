@@ -253,7 +253,8 @@ SET( ALEMBIC_CORE_LIBS AlembicAbcGeom AlembicAbc AlembicAbcCoreHDF5 AlembicAbcCo
 
 # Python extension
 IF(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../ExocortexAlembicPython/CMakeLists.txt")
-	ADD_SUBDIRECTORY ( "${CMAKE_CURRENT_SOURCE_DIR}/../ExocortexAlembicPython" "${CMAKE_CURRENT_BINARY_DIR}/ExocortexAlembicPython" )
+	ADD_SUBDIRECTORY ( "${CMAKE_CURRENT_SOURCE_DIR}/../ExocortexAlembicPython/2.6.7" "${CMAKE_CURRENT_BINARY_DIR}/ExocortexAlembicPython/2.6.7" )
+	ADD_SUBDIRECTORY ( "${CMAKE_CURRENT_SOURCE_DIR}/../ExocortexAlembicPython/2.7.2" "${CMAKE_CURRENT_BINARY_DIR}/ExocortexAlembicPython/2.7.2" )
 ENDIF()
 
 # Arnold dso
