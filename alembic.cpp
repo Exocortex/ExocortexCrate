@@ -10,7 +10,7 @@
 #include "resource.h"
 #include "utility.h"
 #include "AlembicNames.h"
- 
+  
 void AlembicImport_SetupChildLinks( Alembic::Abc::IObject &obj, alembic_importoptions &options )
 {
     INode *pParentNode = options.currentSceneList.FindNodeWithName(std::string(obj.getName()));
