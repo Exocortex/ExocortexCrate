@@ -36,3 +36,11 @@ link_directories( "${Arnold_BASE_DIR}/lib" )
 add_library( ${PROJECT_NAME} SHARED ${Sources} ${Includes})
 TARGET_LINK_LIBRARIES( ${PROJECT_NAME} ${ALEMBIC_CORE_LIBS} ${ALEMBIC_ILMBASE_LIBS} ${ALEMBIC_ZLIB_LIBS} ${ALEMBIC_HDF5_LIBS} ${Boost_LIBRARIES} ${Rlm_LIBRARIES} ${Arnold_LIBRARIES} )
 ADD_DEPENDENCIES(${PROJECT_NAME} AlembicAbcGeom)
+
+SET( Install_DIR ${Exocortex_INSTALL_BASE_DIR}/SoftimageExocortexAlembic/Application/Plugins/bin/DSO/ )
+
+get_target_property( Install_TARGET ${PROJECT_NAME} LOCATION )
+copy_file_to_directory( ${Install_TARGET} ${Install_DIR} )
+
+copy_file_to_directory( ${RER_DEPENDENCIES} ${Install_DIR} )
+copy_file_to_directory( ${EAH_DEPENDENCIES} ${Install_DIR} )
