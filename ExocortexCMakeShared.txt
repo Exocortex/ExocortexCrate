@@ -317,9 +317,15 @@ function(copy_files GLOBPAT OutputName)
 endfunction(copy_files)
 
 
-function( copy_file SourceFileName DestinationDirectory )
+function( copy_file_to_file SourceFileName DestinationFileName )
 	add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
-		COMMAND ${CMAKE_COMMAND} -E copy ${SourceFileName} ${DestinationDirectory} )
+		COMMAND ${CMAKE_COMMAND} -E copy ${SourceFileName} ${DestinationFileName} )
+endfunction()
+
+function( copy_file_to_directory SourceFileName DestinationDirectory )
+	get_filename_component( FileName "${SourceFileName}" NAME )
+	add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+		COMMAND ${CMAKE_COMMAND} -E copy ${SourceFileName} ${DestinationDirectory}/${FileName} )
 endfunction()
 
 function( copy_directory SourceDir DestinationDirectory )	
@@ -328,6 +334,6 @@ function( copy_directory SourceDir DestinationDirectory )
 	foreach( SourceFileName ${SourceFileNames} )
 		get_filename_component( FileName "${SourceFileName}" NAME )
 		set(DestinationFileName "${DestinationDirectory}/${FileName}")
-		copy_file( ${SourceFileName} ${DestinationFileName} )
+		copy_file_to_file( ${SourceFileName} ${DestinationFileName} )
 	endforeach()
 endfunction()
