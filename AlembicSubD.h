@@ -60,4 +60,27 @@ private:
    std::vector<unsigned int> mSampleLookup;
 };
 
+class AlembicSubDDeformNode : public AlembicObjectDeformNode
+{
+public:
+   virtual ~AlembicSubDDeformNode();
+   // override virtual methods from MPxDeformerNode
+   virtual void PreDestruction();
+   virtual MStatus deform(MDataBlock & dataBlock, MItGeometry & iter, const MMatrix & localToWorld, unsigned int geomIndex);
+   static void* creator() { return (new AlembicSubDDeformNode()); }
+   static MStatus initialize();
+
+private:
+   // input attributes
+   static MObject mTimeAttr;
+   static MObject mFileNameAttr;
+   static MObject mIdentifierAttr;
+   MString mFileName;
+   MString mIdentifier;
+   Alembic::AbcGeom::ISubDSchema mSchema;
+
+   // members
+   SampleInfo mLastSampleInfo;
+};
+
 #endif

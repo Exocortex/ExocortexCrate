@@ -124,13 +124,11 @@ MString getFullNameFromIdentifier(std::string in_Identifier)
       return mapped;
    MStringArray parts;
    MString(in_Identifier.c_str()).split('/',parts);
-   MString parentXfoName;
-   MString objName = truncateName(parts[parts.length()-1]);
-   if(objName.toLowerCase() == (parts[parts.length()-1]).toLowerCase())
-      return objName;
-   if(parts.length() > 2)
-      parentXfoName = truncateName(parts[parts.length()-3]) + ".";
-   return parentXfoName+objName;
+   MString lastPart = parts[parts.length()-1];
+   if(lastPart.substring(lastPart.length()-3,lastPart.length()-1).toLowerCase() == "xfo")
+      return truncateName(lastPart);
+   MString trail = removeTrailFromName(lastPart);
+   return lastPart+"Shape"+trail;
 }
 
 MObject getRefFromFullName(const MString & in_Path)
