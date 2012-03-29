@@ -69,8 +69,10 @@ endif()
 get_target_property( Install_TARGET ${PROJECT_NAME} LOCATION )
 
 copy_file_to_directory( ${Install_TARGET} ${Install_DIR} )
-copy_file_to_directory( ${RER_DEPENDENCIES} ${Install_DIR} )
-copy_file_to_directory( ${EAH_DEPENDENCIES} ${Install_DIR} )
+if( WIN32 )
+	copy_file_to_directory( ${RER_DEPENDENCIES} ${Install_DIR} )
+	copy_file_to_directory( ${EAH_DEPENDENCIES} ${Install_DIR} )
+endif()
 
 SET( CompoundSource_DIR ${CMAKE_CURRENT_SOURCE_DIR}/Workgroup/Addons/ExocortexAlembic1.0/Data/Compounds )
 SET( CompoundInstall_DIR ${Exocortex_INSTALL_BASE_DIR}/Softimage/Data/Compounds )
