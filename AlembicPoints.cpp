@@ -273,10 +273,6 @@ void AlembicPoints::GetShapeType(IParticleObjectExt *pExt, int particleId, TimeV
     instanceId = 0;
     animationTime = 0.0f;
 
-    // Check to see if we have a mesh, if not then break out
-    if (!pExt->GetParticleShapeByIndex(particleId))
-        return;
-
     // Go into the particle's action list
     INode *particleGroupNode = pExt->GetParticleGroup(particleId);
     Object *particleGroupObj = (particleGroupNode != NULL) ? particleGroupNode->EvalWorldState(ticks).obj : NULL;
@@ -417,7 +413,6 @@ void AlembicPoints::GetShapeType(IParticleObjectExt *pExt, int particleId, TimeV
         if (syncRandom) 
         {
             chLocalOffR =  (IParticleChannelIntR*)chCont->GetPrivateInterface(PARTICLECHANNELLOCALOFFSETR_INTERFACE, pSimpleOperator);
-            // chLocalOffR = GetParticleChannelLocalOffsetRInterface(pCont);
         }
 
         // get new shape from the source
