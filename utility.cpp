@@ -1,7 +1,7 @@
 #include "Alembic.h"
 #include "AlembicMax.h"
 #include "Utility.h"
-#include "SceneEntry.h"
+#include "SceneEnumProc.h"
 #include "AlembicPolyMsh.h"
 
 SampleInfo getSampleInfo

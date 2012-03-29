@@ -3,7 +3,7 @@
 project ( Max${Max_VERSION}ExocortexAlembic${alembic_VERSION} ) 
 
 INCLUDE(../../ExocortexAlembicShared/ExocortexCMakeShared.txt) 
- 
+  
 if( Exocortex_SERVICES OR Exocortex_RLM_ONLY )
 	include_directories( ${Rlm_INCLUDE_DIR} )
 	include_directories( ${Exocortex_INCLUDE_DIR} )

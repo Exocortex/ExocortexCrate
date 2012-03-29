@@ -856,7 +856,7 @@ int AlembicImport_PolyMesh(const std::string &path, const std::string &identifie
         return alembic_failure;
     }
 
-    // Create the object pNode
+   // Create the object pNode
 	INode *pNode = GET_MAX_INTERFACE()->CreateObjectNode(newObject, iObj.getName().c_str());
 	if (pNode == NULL)
     {
@@ -899,8 +899,9 @@ int AlembicImport_PolyMesh(const std::string &path, const std::string &identifie
 		GET_MAX_INTERFACE()->AddModifier(*pNode, *pModifier);
 
 		if( isDynamicTopo ) {
+			GET_MAX_INTERFACE()->SelectNode( pNode );
 			char szControllerName[10000];
-			sprintf_s( szControllerName, 10000, "$'%s'.modifiers[#Alembic_Mesh_Topology].time", pNode->GetName() );
+			sprintf_s( szControllerName, 10000, "$.modifiers[#Alembic_Mesh_Topology].time" );
 			AlembicImport_ConnectTimeControl( szControllerName, options );
 		}
 
@@ -925,8 +926,9 @@ int AlembicImport_PolyMesh(const std::string &path, const std::string &identifie
 		// Add the modifier to the pNode
 		GET_MAX_INTERFACE()->AddModifier(*pNode, *pModifier);
 		if( ! isUVWContant ) {
+			GET_MAX_INTERFACE()->SelectNode( pNode );
 			char szControllerName[10000];
-			sprintf_s( szControllerName, 10000, "$'%s'.modifiers[#Alembic_Mesh_UVW].time", pNode->GetName() );
+			sprintf_s( szControllerName, 10000, "$.modifiers[#Alembic_Mesh_UVW].time" );
 			AlembicImport_ConnectTimeControl( szControllerName, options );
 		}
 
@@ -954,8 +956,9 @@ int AlembicImport_PolyMesh(const std::string &path, const std::string &identifie
 		GET_MAX_INTERFACE()->AddModifier(*pNode, *pModifier);
 
 		if( ! isGeomContant ) {
+			GET_MAX_INTERFACE()->SelectNode( pNode );
 			char szControllerName[10000];
-			sprintf_s( szControllerName, 10000, "$'%s'.modifiers[#Alembic_Mesh_Geometry].time", pNode->GetName() );
+			sprintf_s( szControllerName, 10000, "$.modifiers[#Alembic_Mesh_Geometry].time" );
 			AlembicImport_ConnectTimeControl( szControllerName, options );
 		}
 
@@ -980,8 +983,9 @@ int AlembicImport_PolyMesh(const std::string &path, const std::string &identifie
 		GET_MAX_INTERFACE()->AddModifier(*pNode, *pModifier);
 
 		if( ! isNormalsContant ) {
+			GET_MAX_INTERFACE()->SelectNode( pNode );
 			char szControllerName[10000];
-			sprintf_s( szControllerName, 10000, "$'%s'.modifiers[#Alembic_Mesh_Normals].time", pNode->GetName() );
+			sprintf_s( szControllerName, 10000, "$.modifiers[#Alembic_Mesh_Normals].time" );
 			AlembicImport_ConnectTimeControl( szControllerName, options );
 		}
 	

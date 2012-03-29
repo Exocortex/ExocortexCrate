@@ -2,7 +2,6 @@
 #include "AlembicMax.h"
 #include "ObjectList.h"
 #include "ObjectEntry.h"
-#include "SceneEntry.h"
 #include "SceneEnumProc.h"
 #include "Utility.h"
 
@@ -104,14 +103,16 @@ INode* ObjectList::FindNodeWithName(std::string &identifier)
     // then we extract the model name from the identifier
     std::string modelName = getModelName(identifier);
     
+	// we get the last node to ensure that it is one of the new nodes we just imported rather than one with the same name that already existed.
+	INode* pLastNode = NULL;
     ObjectEntry *e;
 	for (e=head; e!=NULL; e = e->next) 
     {
 		if(e->entry->node->GetName() == modelName)
         {
-			return e->entry->node;
+			pLastNode = e->entry->node;
         }
 	}
 
-    return 0;
+    return pLastNode;
 }

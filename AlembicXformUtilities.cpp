@@ -166,8 +166,9 @@ int AlembicImport_XForm(const std::string &file, const std::string &identifier, 
     pNode->SetTMController(pControl);
 
 	if( ! isConstant ) {
+		GET_MAX_INTERFACE()->SelectNode( pNode );
 		char szControllerName[10000];	
-		sprintf_s( szControllerName, 10000, "$'%s'.transform.controller.time", pNode->GetName() );
+		sprintf_s( szControllerName, 10000, "$.transform.controller.time" );
 		AlembicImport_ConnectTimeControl( szControllerName, options );
 	}
     pNode->InvalidateTreeTM();

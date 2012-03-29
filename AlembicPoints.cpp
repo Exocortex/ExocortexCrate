@@ -2,7 +2,7 @@
 #include "AlembicMax.h"
 #include "AlembicPoints.h"
 #include "AlembicXform.h"
-#include "SceneEntry.h"
+#include "SceneEnumProc.h"
 #include "Utility.h"
 #include <IParticleObjectExt.h>
 #include <ParticleFlow/IParticleChannelID.h>

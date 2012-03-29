@@ -1,6 +1,6 @@
 #include "Alembic.h"
 #include "AlembicMax.h"
-#include "SceneEntry.h"
+#include "SceneEnumProc.h"
 #include "AlembicXform.h"
 #include "ImathVec.h"
 #include "Utility.h"

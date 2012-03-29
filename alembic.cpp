@@ -4,7 +4,6 @@
 #include "AlembicWriteJob.h"
 //#include "MeshMtlList.h"
 #include "SceneEnumProc.h"
-#include "SceneEntry.h"
 #include "ObjectList.h"
 #include "ObjectEntry.h"
 #include "resource.h"
