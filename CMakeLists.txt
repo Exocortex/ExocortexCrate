@@ -86,7 +86,7 @@ get_target_property( OutputFilePath ${PROJECT_NAME} LOCATION )
 copy_file_to_directory( ${OutputFilePath} ${PluginDirectory} )
 copy_file_to_directory( ${RER_DEPENDENCIES} ${PluginDirectory} )
 
-SET( Install_DIR ${Exocortex_INSTALL_BASE_DIR}/Max${Max_VERSION}ExocortexAlembic/ )
+SET( Install_DIR ${Exocortex_INSTALL_BASE_DIR}/Max${Max_VERSION}/ )
 
 copy_directory( "${BASE_DIR}/MaxScripts" ${Install_DIR} )
 
