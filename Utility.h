@@ -65,7 +65,7 @@ inline Imath::V3f ConvertMaxVectorToAlembicVector( const Point3 &maxPoint, const
 	return Imath::V3f(maxPoint.x, maxPoint.z, -maxPoint.y) * (scale ? GetInchesToDecimetersRatio( masterScaleUnitMeters ) : 1.0f);
 }
 
-inline Point3 ConvertAlembicPointToMaxPoint( const Imath::V3f &alembicPoint, const float &masterScaleUnitMeters, bool scale )
+inline Point3 ConvertAlembicVectorToMaxVector( const Imath::V3f &alembicPoint, const float &masterScaleUnitMeters, bool scale )
 {
 	return Point3(alembicPoint.x, -alembicPoint.z, alembicPoint.y) * (scale ? GetDecimetersToInchesRatio( masterScaleUnitMeters ) : 1.0f);
 }
@@ -84,6 +84,16 @@ inline Point3 ConvertAlembicNormalToMaxNormal( const Imath::V3f &alembicPoint )
 inline Point3 ConvertAlembicNormalToMaxNormal_Normalized( const Imath::V3f &alembicPoint )
 {
 	return ConvertAlembicNormalToMaxNormal(alembicPoint).Normalize();
+}
+
+inline Imath::V3f ConvertMaxScaleToAlembicScale( const Point3 &maxScale )
+{
+	return Imath::V3f(maxScale.x, maxScale.z, maxScale.y);
+}
+
+inline Point3 ConvertAlembicScaleToMaxScale( const Imath::V3f &alembicScale )
+{
+	return Point3(alembicScale.x, alembicScale.z, alembicScale.y);
 }
 
 

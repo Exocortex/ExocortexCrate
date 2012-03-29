@@ -12,12 +12,18 @@
 #include <ParticleFlow/IPFSystem.h>
 #include <ParticleFlow/IPFActionList.h>
 #include <ParticleFlow/PFSimpleOperator.h>
+#include <ParticleFlow/IParticleChannels.h>
+#include <ParticleFlow/IChannelContainer.h>
+#include <ParticleFlow/IParticleChannelLifespan.h>
+#include <ifnpub.h>
 
 namespace AbcA = ::Alembic::AbcCoreAbstract::ALEMBIC_VERSION_NS;
 namespace AbcB = ::Alembic::Abc::ALEMBIC_VERSION_NS;
 using namespace AbcA;
 using namespace AbcB;
 
+#define PARTICLECHANNELLOCALOFFSETR_INTERFACE Interface_ID(0x12ec5d1d, 0x1eb34500) 
+#define GetParticleChannelLocalOffsetRInterface(obj) ((IParticleChannelIntR*)obj->GetInterface(PARTICLECHANNELLOCALOFFSETR_INTERFACE)) 
 
 AlembicPoints::AlembicPoints(const SceneEntry &in_Ref, AlembicWriteJob *in_Job)
     : AlembicObject(in_Ref, in_Job)
@@ -119,12 +125,17 @@ bool AlembicPoints::Save(double time)
     {
         Imath::V3f pos = ConvertMaxPointToAlembicPoint(*particlesExt->GetParticlePositionByIndex(i), masterScaleUnitMeters);
         Imath::V3f vel = ConvertMaxVectorToAlembicVector(*particlesExt->GetParticleSpeedByIndex(i), masterScaleUnitMeters, true);
-        Imath::V3f scale = ConvertMaxVectorToAlembicVector(*particlesExt->GetParticleScaleXYZByIndex(i), masterScaleUnitMeters, false);
-        float width = particlesExt->GetParticleScaleByIndex(i) * GetInchesToDecimetersRatio( masterScaleUnitMeters );
+        Imath::V3f scale = ConvertMaxScaleToAlembicScale(*particlesExt->GetParticleScaleXYZByIndex(i));
+        // float width = particlesExt->GetParticleScaleByIndex(i) * GetInchesToDecimetersRatio( masterScaleUnitMeters ) / 2.0f;
         TimeValue age = particlesExt->GetParticleAgeByIndex(i);
         uint64_t id = particlesExt->GetParticleBornIndex(i);
         ConvertMaxEulerXYZToAlembicQuat(*particlesExt->GetParticleOrientationByIndex(i), orientation);
         ConvertMaxAngAxisToAlembicQuat(*particlesExt->GetParticleSpinByIndex(i), spin);
+
+        // Particle size is a uniform scale multiplier in XSI.  In Max, I need to learn where to get this 
+        // For now, we'll just default to 1
+        // float width = particlesExt->GetParticleScaleByIndex(i) * GetInchesToDecimetersRatio( masterScaleUnitMeters );
+        float width = 1.0f;
 
         ShapeType shapetype;
         float shapeInstanceTime;
@@ -233,14 +244,15 @@ bool AlembicPoints::Save(double time)
 // static
 void AlembicPoints::ConvertMaxEulerXYZToAlembicQuat(const Point3 &degrees, Alembic::Abc::Quatf &quat)
 {
-    // Get the angles as a float vector of radians
-    float angles[] = { DEG_TO_RAD * degrees.x, DEG_TO_RAD * degrees.y, DEG_TO_RAD * degrees.z };
+    // Get the angles as a float vector of radians - strangeley they already are even though the documentation says degrees
+    float angles[] = { degrees.x, degrees.y, degrees.z };
 
     // Convert the angles to a quaternion
     Quat maxQuat;
     EulerToQuat(angles, maxQuat, EULERTYPE_XYZ);
 
     // Convert the quaternion to an angle and axis
+    maxQuat.Normalize();
     AngAxis maxAngAxis(maxQuat);
 
     ConvertMaxAngAxisToAlembicQuat(maxAngAxis, quat);
@@ -250,11 +262,8 @@ void AlembicPoints::ConvertMaxEulerXYZToAlembicQuat(const Point3 &degrees, Alemb
 void AlembicPoints::ConvertMaxAngAxisToAlembicQuat(const AngAxis &angAxis, Alembic::Abc::Quatf &quat)
 {
     Imath::V3f alembicAxis = ConvertMaxNormalToAlembicNormal(angAxis.axis);
-
-    quat.v.x = alembicAxis.x;
-    quat.v.y = alembicAxis.y;
-    quat.v.z = alembicAxis.z;
-    quat.r = angAxis.angle;
+    quat.setAxisAngle(alembicAxis, angAxis.angle);
+    quat.normalize();
 }
 
 void AlembicPoints::GetShapeType(IParticleObjectExt *pExt, int particleId, TimeValue ticks, ShapeType &type, uint16_t &instanceId, float &animationTime, std::vector<std::string> &nameList)
@@ -263,6 +272,10 @@ void AlembicPoints::GetShapeType(IParticleObjectExt *pExt, int particleId, TimeV
     type = ShapeType_Point;
     instanceId = 0;
     animationTime = 0.0f;
+
+    // Check to see if we have a mesh, if not then break out
+    if (!pExt->GetParticleShapeByIndex(particleId))
+        return;
 
     // Go into the particle's action list
     INode *particleGroupNode = pExt->GetParticleGroup(particleId);
@@ -303,46 +316,133 @@ void AlembicPoints::GetShapeType(IParticleObjectExt *pExt, int particleId, TimeV
 
     if (pSimpleOperator && pSimpleOperator->ClassID() == PFOperatorSimpleShape_Class_ID)
     {
-        int j = 1;
-        j++;
+        IParamBlock2 *pblock = pSimpleOperator->GetParamBlockByID(0);
+        int nShapeId = pblock->GetInt(PFlow_kSimpleShape_shape, ticks);
+
+        switch(nShapeId)
+        {
+        case PFlow_kSimpleShape_shape_pyramid:
+            type = ShapeType_Cone;
+            break;
+        case PFlow_kSimpleShape_shape_cube:
+            type = ShapeType_Box;
+            break;
+        case PFlow_kSimpleShape_shape_sphere:
+            type = ShapeType_Sphere;
+            break;
+        case PFlow_kSimpleShape_shape_vertex:
+            type = ShapeType_Point;
+            break;
+        }
     }
     else if (pSimpleOperator && pSimpleOperator->ClassID() == PFOperatorInstanceShape_Class_ID)
     {
-        Interval interval = FOREVER;
+        // Assign animation time and shape here
+        IParamBlock2 *pblock = pSimpleOperator->GetParamBlockByID(0);
+        INode *pNode = pblock->GetINode(PFlow_kInstanceShape_objectMaxscript, ticks);
 
-        // Get the instance shape
-        int pid_shapeobject = GetParamIdByName(pSimpleOperator, 0, "Shape_Object");
-        INode *pNode = pSimpleOperator->GetParamBlockByID(0)->GetINode(pid_shapeobject, ticks);
-
-        if (pNode != NULL && pNode->GetName() != NULL)
+        if (pNode == NULL || pNode->GetName() == NULL)
         {
-            type = ShapeType_Instance;
-
-            // Find if the name is alerady registered, otherwise add it to the list
-            instanceId = USHRT_MAX;
-            for ( int i = 0; i < nameList.size(); i += 1)
-            {
-                if (!strcmp(nameList[i].c_str(), pNode->GetName()))
-                {
-                    instanceId = i;
-                    break;
-                }
-            }
-
-            if (instanceId == USHRT_MAX)
-            {
-                nameList.push_back(pNode->GetName());
-                instanceId = (uint16_t)nameList.size()-1;
-            }
-
-            // Fill in the animation time
-          /*  int pid_randomoffset = GetParamIdByName(pSimpleOperator, 0, "Random_Offset");
-            int nRandomOffset = pSimpleOperator->GetParamBlockByID(0)->GetInt(pid_randomoffset, ticks);
-            int pid_randomseed = GetParamIdByName(pSimpleOperator, 0, "Random_Seed");
-            int nRandomSeed = pSimpleOperator->GetParamBlockByID(0)->GetInt(pid_randomseed, ticks);
-            */
-
-            animationTime = 0.0f;
+            return;
         }
+
+        type = ShapeType_Instance;
+
+        // Find if the name is alerady registered, otherwise add it to the list
+        instanceId = USHRT_MAX;
+        for ( int i = 0; i < nameList.size(); i += 1)
+        {
+            if (!strcmp(nameList[i].c_str(), pNode->GetName()))
+            {
+                instanceId = i;
+                break;
+            }
+        }
+
+        if (instanceId == USHRT_MAX)
+        {
+            nameList.push_back(pNode->GetName());
+            instanceId = (uint16_t)nameList.size()-1;
+        }
+
+        // Get the necesary particle channels to grab the current time values
+        ::IObject *pCont = particleGroup->GetParticleContainer();
+        if (!pCont)
+        {
+            return;
+        }
+
+        // Get synch values that we are interested in fromt the param block
+        int syncType = pblock->GetInt(PFlow_kInstanceShape_syncType);
+        BOOL syncRandom = pblock->GetInt(PFlow_kInstanceShape_syncRandom);
+
+        IParticleChannelPTVR* chTime = GetParticleChannelTimeRInterface(pCont);
+        if (chTime == NULL) 
+        {
+            return; // can't find particle times in the container
+        }
+
+        IChannelContainer* chCont = GetChannelContainerInterface(pCont);
+        if (chCont == NULL) 
+        {
+            return;  // can't get access to ChannelContainer interface
+        }
+
+        IParticleChannelPTVR* chBirthTime = NULL;
+        IParticleChannelPTVR* chEventStartR = NULL;
+        bool initEventStart = false;
+
+        if (syncType == PFlow_kInstanceShape_syncBy_particleAge) 
+        {
+            chBirthTime = GetParticleChannelBirthTimeRInterface(pCont);
+            if (chBirthTime == NULL) 
+            {
+                return; // can't read particle age
+            }
+        }
+        else if (syncType == PFlow_kInstanceShape_syncBy_eventStart) 
+        {
+            chEventStartR = GetParticleChannelEventStartRInterface(pCont);
+             
+            if (chEventStartR == NULL) 
+            {
+                return; // can't read event start time
+            }
+        }
+
+        IParticleChannelIntR* chLocalOffR = NULL;
+        bool initLocalOff = false;
+
+        // acquire LocalOffset particle channel; if not present then create it.
+        if (syncRandom) 
+        {
+            chLocalOffR =  (IParticleChannelIntR*)chCont->GetPrivateInterface(PARTICLECHANNELLOCALOFFSETR_INTERFACE, pSimpleOperator);
+            // chLocalOffR = GetParticleChannelLocalOffsetRInterface(pCont);
+        }
+
+        // get new shape from the source
+        PreciseTimeValue time = chTime->GetValue(particleId);
+        switch(syncType)
+        {
+        case PFlow_kInstanceShape_syncBy_absoluteTime:
+            break;
+        case PFlow_kInstanceShape_syncBy_particleAge:
+            time -= chBirthTime->GetValue(particleId);
+            break;
+        case PFlow_kInstanceShape_syncBy_eventStart:
+            time -= chEventStartR->GetValue(particleId);
+            break;
+        default:
+            break;
+        }
+
+        if (syncRandom) 
+        {
+            if (chLocalOffR != NULL)
+                time += chLocalOffR->GetValue(particleId);
+        }
+
+        TimeValue t = TimeValue(time);
+        animationTime = (float)GetSecondsFromTimeValue(t);
     }
 }

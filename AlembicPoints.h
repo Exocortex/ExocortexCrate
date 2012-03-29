@@ -20,6 +20,54 @@ public:
       ShapeType_Instance,
       ShapeType_NbElements
     };
+public:
+    enum 
+    {	
+        PFlow_kInstanceShape_sepGroup,
+		PFlow_kInstanceShape_sepHierarchy,
+		PFlow_kInstanceShape_sepElements,
+		PFlow_kInstanceShape_scale,
+		PFlow_kInstanceShape_variation,
+		PFlow_kInstanceShape_mapping,
+		PFlow_kInstanceShape_material,
+		PFlow_kInstanceShape_randomShape,
+		PFlow_kInstanceShape_animatedShape,
+		PFlow_kInstanceShape_acquireShape,
+		PFlow_kInstanceShape_syncType,
+		PFlow_kInstanceShape_syncRandom,
+		PFlow_kInstanceShape_randomOffset,
+		PFlow_kInstanceShape_randomSeed,
+		PFlow_kInstanceShape_setScale,
+		PFlow_kInstanceShape_objectMaxscript,
+		PFlow_kInstanceShape_objectList,
+		PFlow_kInstanceShape_fastShapeEvaluation
+    };
+public:
+    enum 
+    {	
+        PFlow_kInstanceShape_syncBy_absoluteTime,
+		PFlow_kInstanceShape_syncBy_particleAge,
+		PFlow_kInstanceShape_syncBy_eventStart,
+		PFlow_kInstanceShape_syncBy_num=3 
+    };
+public:
+    enum 
+    {	
+        PFlow_kSimpleShape_shape, 
+        PFlow_kSimpleShape_size,
+        PFlow_kSimpleShape_useScale,
+        PFlow_kSimpleShape_scale 
+    };
+
+public:
+    enum 
+    {	
+        PFlow_kSimpleShape_shape_pyramid, 
+        PFlow_kSimpleShape_shape_cube,
+        PFlow_kSimpleShape_shape_sphere,
+        PFlow_kSimpleShape_shape_vertex,
+        PFlow_kSimpleShape_shape_num=4 
+    };
 private:
     static void AlembicPoints::ConvertMaxEulerXYZToAlembicQuat(const Point3 &degrees, Alembic::Abc::Quatf &quat);
     static void AlembicPoints::ConvertMaxAngAxisToAlembicQuat(const AngAxis &angAxis, Alembic::Abc::Quatf &quat);
