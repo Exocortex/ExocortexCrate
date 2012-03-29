@@ -1,4 +1,11 @@
+
 project ( Python${Python_SHORTNAME}ExocortexAlembic${alembic_VERSION} ) 
+
+if(WIN32) 
+  SET( Python_LIBS ${Python_Win32_LIBS} )
+else()
+  SET( Python_LIBS ${Python_Linux_LIBS} )
+endif()
 
 get_filename_component( BASE_DIR "${CMAKE_CURRENT_SOURCE_DIR}" PATH )
 set( LOCAL_CMAKE_FILE_NAME "${BASE_DIR}/CMakeLists.txt" )
@@ -41,7 +48,8 @@ if(WIN32)
   ADD_DEFINITIONS( /DBOOST_ALL_NO_LIB )
   SET( MODSUFFIX ".pyd" )
 else()
-  MESSAGE("WE NEED TO IMPLEMENT LINUX FOR THE PYTHON EXTENSION!")
+  INCLUDE_DIRECTORIES( ${LIBRARY_ROOT}/python/2.6.7/Fedora )
+  LINK_DIRECTORIES( ${LIBRARY_ROOT}/python/2.6.7/libsFedora )
   SET( MODSUFFIX ".so" )
 endif()
 

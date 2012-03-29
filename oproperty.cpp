@@ -525,7 +525,7 @@ static PyObject * oProperty_setValues(PyObject * self, PyObject * args)
       case propertyTP_char_array:
       {
          _COPY_TUPLE_TO_VECTOR_(int,int,"i",1);
-         std::vector<const signed char> values(nbItems);
+         std::vector<signed char> values(nbItems);
          for(size_t i=0;i<nbItems;i++)
             values[i] = tupleVec[i] > 0;
          Alembic::Abc::OCharArrayProperty::sample_type sample;
@@ -554,7 +554,7 @@ static PyObject * oProperty_setValues(PyObject * self, PyObject * args)
       }
       case propertyTP_uint32_array:
       {
-         _COPY_TUPLE_TO_VECTOR_(unsigned long,unsigned long,"k",1);
+         _COPY_TUPLE_TO_VECTOR_(boost::uint32_t,unsigned long,"k",1);
          Alembic::Abc::OUInt32ArrayProperty::sample_type sample;
          if(tupleVec.size() > 0)
             sample = Alembic::Abc::OUInt32ArrayProperty::sample_type(&tupleVec.front(),tupleVec.size());
@@ -563,7 +563,7 @@ static PyObject * oProperty_setValues(PyObject * self, PyObject * args)
       }
       case propertyTP_int32_array:
       {
-         _COPY_TUPLE_TO_VECTOR_(long,long,"l",1);
+         _COPY_TUPLE_TO_VECTOR_(boost::int32_t,long,"l",1);
          Alembic::Abc::OInt32ArrayProperty::sample_type sample;
          if(tupleVec.size() > 0)
             sample = Alembic::Abc::OInt32ArrayProperty::sample_type(&tupleVec.front(),tupleVec.size());
@@ -572,7 +572,7 @@ static PyObject * oProperty_setValues(PyObject * self, PyObject * args)
       }
       case propertyTP_uint64_array:
       {
-         _COPY_TUPLE_TO_VECTOR_(unsigned long long,unsigned long long,"K",1);
+         _COPY_TUPLE_TO_VECTOR_(boost::uint64_t,unsigned long long,"K",1);
          Alembic::Abc::OUInt64ArrayProperty::sample_type sample;
          if(tupleVec.size() > 0)
             sample = Alembic::Abc::OUInt64ArrayProperty::sample_type(&tupleVec.front(),tupleVec.size());
@@ -581,7 +581,7 @@ static PyObject * oProperty_setValues(PyObject * self, PyObject * args)
       }
       case propertyTP_int64_array:
       {
-         _COPY_TUPLE_TO_VECTOR_(long long,long long,"L",1);
+         _COPY_TUPLE_TO_VECTOR_(boost::int64_t,long long,"L",1);
          Alembic::Abc::OInt64ArrayProperty::sample_type sample;
          if(tupleVec.size() > 0)
             sample = Alembic::Abc::OInt64ArrayProperty::sample_type(&tupleVec.front(),tupleVec.size());
