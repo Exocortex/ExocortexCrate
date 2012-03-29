@@ -1,0 +1,5 @@
+install/Windows7
+install/WindowsXP
+install/Linux
+build/vs*
+build/unix*
