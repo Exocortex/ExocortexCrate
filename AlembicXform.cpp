@@ -19,7 +19,7 @@ using namespace MATH;
 namespace AbcA = ::Alembic::AbcCoreAbstract::ALEMBIC_VERSION_NS;
 using namespace AbcA;
 
-void SaveXformSample(XSI::CRef kinestateRef, Alembic::AbcGeom::OXformSchema & schema, Alembic::AbcGeom::XformSample & sample, double time)
+void SaveXformSample(XSI::CRef kinestateRef, Alembic::AbcGeom::OXformSchema & schema, Alembic::AbcGeom::XformSample & sample, double time, bool xformCache)
 {
    KinematicState kineState(kinestateRef);
 
@@ -27,13 +27,17 @@ void SaveXformSample(XSI::CRef kinestateRef, Alembic::AbcGeom::OXformSchema & sc
    if(schema.getNumSamples() > 0)
    {
       X3DObject parent(kineState.GetParent3DObject());
-      if(!isRefAnimated(kineState.GetParent3DObject().GetRef()))
+      if(!isRefAnimated(kineState.GetParent3DObject().GetRef(),xformCache))
          return;
    }
 
    CTransformation global = kineState.GetTransform(time);
-   CTransformation model = kineState.GetParent3DObject().GetModel().GetKinematics().GetGlobal().GetTransform(time);
-   global = MapWorldPoseToObjectSpace(model,global);
+   if(!xformCache)
+   {
+      CTransformation model;
+      kineState.GetParent3DObject().GetModel().GetKinematics().GetGlobal().GetTransform(time);
+      global = MapWorldPoseToObjectSpace(model,global);
+   }
 
    // store the transform
    CVector3 trans = global.GetTranslation();
@@ -58,6 +62,12 @@ XSIPLUGINCALLBACK CStatus alembic_xform_DefineLayout( CRef& in_ctxt )
    return alembicOp_DefineLayout(in_ctxt);
 }
 
+struct alembic_xform_UD
+{
+   std::vector<double> times;
+   size_t lastFloor;
+   std::vector<Alembic::Abc::M44d> matrices;
+};
 
 XSIPLUGINCALLBACK CStatus alembic_xform_Update( CRef& in_ctxt )
 {
@@ -66,34 +76,57 @@ XSIPLUGINCALLBACK CStatus alembic_xform_Update( CRef& in_ctxt )
    if((bool)ctxt.GetParameterValue(L"muted"))
       return CStatus::OK;
 
-   CString path = ctxt.GetParameterValue(L"path");
-   CString identifier = ctxt.GetParameterValue(L"identifier");
+   CValue udVal = ctxt.GetUserData();
+   alembic_xform_UD * p = (alembic_xform_UD*)(CValue::siPtrType)udVal;
 
-   Alembic::AbcGeom::IObject iObj = getObjectFromArchive(path,identifier);
-   if(!iObj.valid())
-      return CStatus::OK;
-   Alembic::AbcGeom::IXform obj(iObj,Alembic::Abc::kWrapExisting);
-   if(!obj.valid())
-      return CStatus::OK;
-
-   SampleInfo sampleInfo = getSampleInfo(
-      ctxt.GetParameterValue(L"time"),
-      obj.getSchema().getTimeSampling(),
-      obj.getSchema().getNumSamples()
-   );
-
-   Alembic::AbcGeom::XformSample sample;
-   obj.getSchema().get(sample,sampleInfo.floorIndex);
-   Alembic::Abc::M44d matrix = sample.getMatrix();
-
-   // blend
-   if(sampleInfo.alpha != 0.0)
+   if(p == NULL)
    {
-      obj.getSchema().get(sample,sampleInfo.ceilIndex);
-      Alembic::Abc::M44d ceilMatrix = sample.getMatrix();
-      matrix = (1.0 - sampleInfo.alpha) * matrix + sampleInfo.alpha * ceilMatrix;
+      CString path = ctxt.GetParameterValue(L"path");
+      CString identifier = ctxt.GetParameterValue(L"identifier");
+
+      Alembic::AbcGeom::IObject iObj = getObjectFromArchive(path,identifier);
+      if(!iObj.valid())
+         return CStatus::OK;
+      Alembic::AbcGeom::IXform obj(iObj,Alembic::Abc::kWrapExisting);
+      if(!obj.valid())
+         return CStatus::OK;
+
+      p = new alembic_xform_UD();
+      p->lastFloor = 0;
+
+      Alembic::AbcGeom::XformSample sample;
+      for(size_t i=0;i<obj.getSchema().getNumSamples();i++)
+      {
+         p->times.push_back((double)obj.getSchema().getTimeSampling()->getStoredTimes()[i]);
+         obj.getSchema().get(sample,i);
+         p->matrices.push_back(sample.getMatrix());
+      }
+
+      CValue val = (CValue::siPtrType) p;
+      ctxt.PutUserData( val ) ;
    }
 
+   double time = ctxt.GetParameterValue(L"time");
+   
+   // find the index
+   size_t index = p->lastFloor;
+   while(time > p->times[index] && index < p->times.size()-1)
+      index++;
+   while(time < p->times[index] && index > 0)
+      index--;
+
+   Alembic::Abc::M44d matrix;
+   if(fabs(time - p->times[index]) < 0.001 || index == p->times.size()-1)
+   {
+      matrix = p->matrices[index];
+   }
+   else
+   {
+      double blend = (time - p->times[index]) / (p->times[index+1] - p->times[index]);
+      matrix = (1.0f - blend) * p->matrices[index] + blend * p->matrices[index+1];
+   }
+   p->lastFloor = index;
+   
    CMatrix4 xsiMatrix;
    xsiMatrix.Set(
       matrix.getValue()[0],matrix.getValue()[1],matrix.getValue()[2],matrix.getValue()[3],
@@ -114,6 +147,15 @@ XSIPLUGINCALLBACK CStatus alembic_xform_Term(CRef & in_ctxt)
    Context ctxt( in_ctxt );
    CustomOperator op(ctxt.GetSource());
    delRefArchive(op.GetParameterValue(L"path").GetAsText());
+
+   CValue udVal = ctxt.GetUserData();
+   alembic_xform_UD * p = (alembic_xform_UD*)(CValue::siPtrType)udVal;
+   if(p!=NULL)
+   {
+      delete(p);
+      p = NULL;
+   }
+
    return CStatus::OK;
 }
 

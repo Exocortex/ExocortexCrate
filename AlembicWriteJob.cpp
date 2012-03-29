@@ -200,10 +200,22 @@ CStatus AlembicWriteJob::PreProcess()
       if(!model.IsValid())
          model = xObj.GetModel();
       CRefArray modelRefs;
-      while(model.IsValid() && !model.GetFullName().IsEqualNoCase(Application().GetActiveSceneRoot().GetFullName()))
+      if((bool)GetOption(L"transformCache"))
       {
-         modelRefs.Add(model.GetActivePrimitive().GetRef());
-         model = model.GetModel();
+         X3DObject parent = xObj.GetParent3DObject();
+         while(parent.IsValid() && !parent.GetFullName().IsEqualNoCase(Application().GetActiveSceneRoot().GetFullName()))
+         {
+            modelRefs.Add(parent.GetActivePrimitive().GetRef());
+            parent = parent.GetParent3DObject();
+         }
+      }
+      else
+      {
+         while(model.IsValid() && !model.GetFullName().IsEqualNoCase(Application().GetActiveSceneRoot().GetFullName()))
+         {
+            modelRefs.Add(model.GetActivePrimitive().GetRef());
+            model = model.GetModel();
+         }
       }
       for(LONG j=modelRefs.GetCount()-1;j>=0;j--)
       {
@@ -213,6 +225,14 @@ CStatus AlembicWriteJob::PreProcess()
             ptr.reset(new AlembicModel(modelRefs[j],this));
             AddObject(ptr);
          }
+      }
+
+      // only do models if we perform pure transformcache
+      if((bool)GetOption(L"transformCache")) {
+         AlembicObjectPtr ptr;
+         ptr.reset(new AlembicModel(xObj.GetActivePrimitive().GetRef(),this));
+         AddObject(ptr);
+         continue;
       }
 
       // take care of all other types

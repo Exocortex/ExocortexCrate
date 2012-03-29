@@ -24,19 +24,12 @@ IF( WIN32 )
 	ELSE()
 		SET( Softimage_DIR_LIBRARY ${Softimage_DIR_ROOT}/lib/nt-x86 )
 	ENDIF()	
-	#SET( Softimage_LIBRARIES "${Softimage_DIR_LIBRARY}/sicoresdk.lib" "${Softimage_DIR_LIBRARY}/sicppsdk.lib" )		
 ELSEIF( UNIX )
 	SET( Softimage_DIR_LIBRARY ${Softimage_DIR_ROOT}/lib/linux-x86-64 )
-	#SET( Softimage_LIBRARIES "${Softimage_DIR_LIBRARY}/libsicoresdk.so" "${Softimage_DIR_LIBRARY}/libsicppsdk.so" )		
-
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wl,--version-script=${CMAKE_CURRENT_SOURCE_DIR}/SoftimageAlembic.versionScript")
 ENDIF()
 
 SET( Softimage_LIBRARIES sicoresdk sicppsdk )		
-
-MESSAGE( "Softimage_DIR_LIBRARY: ${Softimage_DIR_LIBRARY}" )
-
-MESSAGE( "Softimage_LIBRARIES: ${Softimage_LIBRARIES}" )
 
 if( Exocortex_SERVICES )
 	add_definitions( "-DEXOCORTEX_SERVICES" )
@@ -56,8 +49,32 @@ endif()
 
 add_library( ${PROJECT_NAME} SHARED ${Sources} ${Includes})
 
-TARGET_LINK_LIBRARIES( ${PROJECT_NAME} ${ALEMBIC_CORE_LIBS} ${BOOST_LIBS} ${ALEMBIC_ILMBASE_LIBS} ${ALEMBIC_ZLIB_LIBS} ${ALEMBIC_HDF5_LIBS} ${Softimage_LIBRARIES} ${ExocortexSoftimage_LIBRARIES} ${Rlm_LIBRARIES} )
+TARGET_LINK_LIBRARIES( ${PROJECT_NAME} 
+	${ALEMBIC_ILMBASE_LIBS}
+	${ALEMBIC_ZLIB_LIBS} ${ALEMBIC_HDF5_LIBS} ${ALEMBIC_CORE_LIBS}
+	${BOOST_LIBS} ${3DSMAX_LIBRARIES} ${Softimage_LIBRARIES} ${ExocortexSoftimage_LIBRARIES} ${Rlm_LIBRARIES} )
+
 ADD_DEPENDENCIES(${PROJECT_NAME} AlembicAbcGeom)
 
 deploy_softimage( ${PROJECT_NAME} ExocortexAlembic${alembic_VERSION} ${TBB_DEPENDENCIES} ${RER_DEPENDENCIES} ${EAH_DEPENDENCIES} )
 
+if( WIN32 )
+	SET( Install_DIR ${Exocortex_INSTALL_BASE_DIR}/Softimage/Application/Plugins/bin/nt-x86-64 )
+elseif( UNIX )
+	SET( Install_DIR ${Exocortex_INSTALL_BASE_DIR}/Softimage/Application/Plugins/bin/linux-x86-64 )
+else()
+	message(FATAL_ERROR "Should not get here")
+endif()
+
+get_target_property( Install_TARGET ${PROJECT_NAME} LOCATION )
+
+copy_file_to_directory( ${Install_TARGET} ${Install_DIR} )
+if( WIN32 )
+	copy_file_to_directory( ${RER_DEPENDENCIES} ${Install_DIR} )
+	copy_file_to_directory( ${EAH_DEPENDENCIES} ${Install_DIR} )
+endif()
+
+SET( CompoundSource_DIR ${CMAKE_CURRENT_SOURCE_DIR}/Workgroup/Addons/ExocortexAlembic1.0/Data/Compounds )
+SET( CompoundInstall_DIR ${Exocortex_INSTALL_BASE_DIR}/Softimage/Data/Compounds )
+
+copy_directory( ${CompoundSource_DIR} ${CompoundInstall_DIR} )

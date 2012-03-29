@@ -21,12 +21,12 @@ XSI::CStatus alembicOp_DefineLayout( XSI::CRef& in_ctxt );
 XSI::CStatus alembicOp_Term( XSI::CRef& in_ctxt );
 
 SampleInfo getSampleInfo(double iFrame,Alembic::AbcCoreAbstract::TimeSamplingPtr iTime, size_t numSamps);
-std::string getIdentifierFromRef(XSI::CRef in_Ref);
+std::string getIdentifierFromRef(XSI::CRef in_Ref, bool includeHierarchy = false);
 XSI::CString truncateName(const XSI::CString & in_Name);
 XSI::CString getFullNameFromIdentifier(std::string in_Identifier);
 XSI::CRef getRefFromIdentifier(std::string in_Identifier);
 XSI::CRefArray getOperators( XSI::CRef in_Ref);
-bool isRefAnimated(const XSI::CRef & in_Ref);
+bool isRefAnimated(const XSI::CRef & in_Ref, bool xformCache = false);
 bool returnIsRefAnimated(const XSI::CRef & in_Ref, bool animated);
 void clearIsRefAnimatedCache();
 

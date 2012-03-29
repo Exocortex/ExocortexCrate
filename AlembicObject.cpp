@@ -1,5 +1,6 @@
 #include "AlembicObject.h"
 #include <xsi_ref.h>
+#include <xsi_value.h>
 #include <boost/algorithm/string.hpp>
 
 namespace AbcA = ::Alembic::AbcCoreAbstract::ALEMBIC_VERSION_NS;
@@ -19,7 +20,7 @@ AlembicObject::AlembicObject
    mOParent = mJob->GetArchive().getTop();
 
    // find the parent
-   std::string identifier = getIdentifierFromRef(GetRef());
+   std::string identifier = getIdentifierFromRef(GetRef(),mJob->GetOption(L"transformCache"));
    std::vector<std::string> parts;
    boost::split(parts, identifier, boost::is_any_of("/"));
 
