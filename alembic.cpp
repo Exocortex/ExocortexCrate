@@ -1,6 +1,7 @@
 #include "Foundation.h"
 #include "AlembicWriteJob.h"
 #include "AlembicGetInfo.h"
+#include "AlembicGetNodeFromIdentifier.h"
 #include "AlembicTimeControl.h"
 #include "AlembicFileNode.h"
 #include "AlembicXform.h"
@@ -21,6 +22,7 @@ const MTypeId mCameraNodeId(0x0011A103);
 const MTypeId mPolyMeshNodeId(0x0011A104);
 const MTypeId mSubDNodeId(0x0011A105);
 const MTypeId mPolyMeshDeformNodeId(0x0011A106);
+const MTypeId mSubDDeformNodeId(0x0011A107);
 
 static MCallbackId deleteAllArchivesCallbackOnNewId = 0;
 static MCallbackId deleteAllArchivesCallbackOnOpenId = 0;
@@ -53,6 +55,9 @@ MStatus initializePlugin(MObject obj)
    status = plugin.registerCommand("ExocortexAlembic_getInfo",
       AlembicGetInfoCommand::creator,
       AlembicGetInfoCommand::createSyntax);
+   status = plugin.registerCommand("ExocortexAlembic_getNodeFromIdentifier",
+      AlembicGetNodeFromIdentifierCommand::creator,
+      AlembicGetNodeFromIdentifierCommand::createSyntax);
    status = plugin.registerCommand("ExocortexAlembic_resolvePath",
       AlembicResolvePathCommand::creator,
       AlembicResolvePathCommand::createSyntax);
@@ -93,6 +98,11 @@ MStatus initializePlugin(MObject obj)
       &AlembicPolyMeshDeformNode::creator,
       &AlembicPolyMeshDeformNode::initialize,
       MPxNode::kDeformerNode);
+   status = plugin.registerNode("ExocortexAlembicSubDDeform",
+      mSubDDeformNodeId,
+      &AlembicSubDDeformNode::creator,
+      &AlembicSubDDeformNode::initialize,
+      MPxNode::kDeformerNode);
    return status;
 }
 
@@ -131,6 +141,7 @@ MStatus uninitializePlugin(MObject obj)
    status = plugin.deregisterNode(mPolyMeshNodeId);
    status = plugin.deregisterNode(mSubDNodeId);
    status = plugin.deregisterNode(mPolyMeshDeformNodeId);
+   status = plugin.deregisterNode(mSubDDeformNodeId);
 
    return status;
 }

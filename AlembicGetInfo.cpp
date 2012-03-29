@@ -40,7 +40,7 @@ MStatus AlembicGetInfoCommand::doIt(const MArgList & args)
    {
       // TODO: display dialog
       MGlobal::displayError("[ExocortexAlembic] No fileName specified.");
-      return status;
+      return MS::kFailure;
    }
 
    // get the filename arg
@@ -75,6 +75,45 @@ MStatus AlembicGetInfoCommand::doIt(const MArgList & args)
          MString numSamples;
          numSamples.set((double)getNumSamplesFromObject(child));
          identifier += "|"+numSamples;
+
+         // additional data fields
+         MString data;
+         if(Alembic::AbcGeom::IPolyMesh::matches(child.getMetaData())) {
+            // check if we have topo or not
+            Alembic::AbcGeom::IPolyMesh obj(child,Alembic::Abc::kWrapExisting);
+            if(obj.valid())
+            {
+               Alembic::AbcGeom::IPolyMeshSchema::Sample sample;
+               obj.getSchema().get(sample,0);
+               Alembic::Abc::Int32ArraySamplePtr faceCounts = sample.getFaceCounts();
+               if(faceCounts)
+               {
+                  if(faceCounts->get()[0] == 0)
+                  {
+                     data += "purepointcache=1";
+                  }
+               }
+            }
+         } else if(Alembic::AbcGeom::ISubD::matches(child.getMetaData())) {
+            // check if we have topo or not
+            Alembic::AbcGeom::ISubD obj(child,Alembic::Abc::kWrapExisting);
+            if(obj.valid())
+            {
+               Alembic::AbcGeom::ISubDSchema::Sample sample;
+               obj.getSchema().get(sample,0);
+               Alembic::Abc::Int32ArraySamplePtr faceCounts = sample.getFaceCounts();
+               if(faceCounts)
+               {
+                  if(faceCounts->get()[0] == 0)
+                  {
+                     data += "purepointcache=1";
+                  }
+               }
+            }
+         }
+         if(data.length() > 0)
+            identifier += "|"+data;
+
          identifiers.append(identifier);
       }
    }

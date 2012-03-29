@@ -440,6 +440,10 @@ MStatus AlembicPolyMeshNode::compute(const MPlug & plug, MDataBlock & dataBlock)
    Alembic::Abc::Int32ArraySamplePtr sampleCounts = sample.getFaceCounts();
    Alembic::Abc::Int32ArraySamplePtr sampleIndices = sample.getFaceIndices();
 
+   // ensure that we are not running on a purepoint cache mesh
+   if(sampleCounts->get()[0] == 0)
+      return MStatus::kFailure;
+
    MFloatPointArray points;
    if(samplePos->size() > 0)
    {

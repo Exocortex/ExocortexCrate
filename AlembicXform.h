@@ -39,6 +39,9 @@ private:
    MString mFileName;
    MString mIdentifier;
    Alembic::AbcGeom::IXformSchema mSchema;
+   std::vector<double> mTimes;
+   size_t mLastFloor;
+   std::vector<Alembic::Abc::M44d> mMatrices;
 
    // output attributes
    static MObject mOutTranslateXAttr;

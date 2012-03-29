@@ -1,41 +1,90 @@
-proc exocortexAlembicExport(string $filename)
+proc closeDialog(string $dialog)
 {
-    $minTime = `playbackOptions -q -min`;
-    $maxTime = `playbackOptions -q -max`;
-
-    // check selection
-    string $selection[] = `ls -sl`;
-    if(size($selection) == 0)
-    {
-        error("Nothing selected!");
-        return;
-    }
-    
-    // check filename
-    if($filename == "")
-    {
-        $files = `fileDialog2 -ds 1 -cap "Choose the Alembic File To Export" -ff "Alembic Files (*.abc)" -fm 0`;
-        print $files;
-        if(size($files) == 0)
-        {
-            error "Export aborted by user.";
-            return;
-        }
-        $filename = $files[0];
-    }
-    $filename = `ExocortexAlembic_resolvePath -f $filename`;
-    
-    // TODO: check options
-
-    // construct the job string
-    string $job = ("in="+$minTime+";out="+$maxTime+";filename="+$filename+";objects=");
-    for($i=0;$i<size($selection);$i++)
-    {
-      if($i>0)
-        $job += ",";
-      $job += $selection[$i];
-    }
-    ExocortexAlembic_export -j $job;
+  deleteUI -window $dialog;
 }
 
-exocortexAlembicExport("");
+proc exocortexAlembicExport(string $filename, string $dialog)
+{
+  // parse all options
+  string $exportInframe = `textField -q -text inframe`;
+  string $exportOutframe = `textField -q -text outframe`;
+  string $exportStepframe = `textField -q -text stepframe`;
+  string $exportSubstepframe = `textField -q -text substepframe`;
+  int $exportTopology = `optionMenu -q -select topology`;
+  int $exportUVs = `checkBox -q -value uvs`;
+  int $exportFaceSets = `checkBox -q -value facesets`;
+  int $exportDynamicTopo = `checkBox -q -value dynamictopology`;
+  closeDialog($dialog);
+
+  $minTime = `playbackOptions -q -min`;
+  $maxTime = `playbackOptions -q -max`;
+
+  // check selection
+  string $selection[] = `ls -sl`;
+  if(size($selection) == 0)
+  {
+    error("Nothing selected!");
+    return;
+  }
+  
+  // check filename
+  if($filename == "")
+  {
+    $files = `fileDialog2 -ds 1 -cap "Choose the Alembic File To Export" -ff "Alembic Files (*.abc)" -fm 0`;
+    print $files;
+    if(size($files) == 0)
+    {
+      error "Export aborted by user.";
+      return;
+    }
+    $filename = $files[0];
+  }
+  $filename = `ExocortexAlembic_resolvePath -f $filename`;
+  
+  // construct the job string
+  string $job = ("in="+$exportInframe+";out="+$exportOutframe+";step="+$exportStepframe+";substep="+$exportSubstepframe+";filename="+$filename+";objects=");
+  for($i=0;$i<size($selection);$i++)
+  {
+    if($i>0)
+    $job += ",";
+    $job += $selection[$i];
+  }
+  print $exportTopology;
+  if($exportTopology == 1)    
+  {
+    $job += ";purepointcache=1;dynamictopology=0;normals=0;uvs=0;facesets=0";
+  }
+  else if($exportTopology == 2)    
+  {
+    $job += ";purepointcache=0;normals=0;dynamictopology=0";
+    $job += ";uvs="+$exportUVs;
+    $job += ";facesets="+$exportFaceSets;
+  }
+  else if($exportTopology == 3)    
+  {
+    $job += ";purepointcache=0;normals=1";
+    $job += ";uvs="+$exportUVs;
+    $job += ";facesets="+$exportFaceSets;
+    $job += ";dynamictopology="+$exportDynamicTopo;
+  }
+  print $job;
+  ExocortexAlembic_export -j $job;
+}
+
+proc closeDialog(string $dialog)
+{
+  deleteUI -window $dialog;
+}
+
+proc chooseFile(string $dialog)
+{
+  exocortexAlembicExport("",$dialog);
+}
+
+string $uiDirectory = "c:/development/exocortex/ExocortexAlembicMaya/UI";
+string $dialog;
+if (`window -exists $dialog`) deleteUI -window $dialog;
+$dialog = `loadUI -uiFile ($uiDirectory+"/ExocortexAlembicExport.ui")`;
+textField -edit -text `playbackOptions -q -min` inframe;
+textField -edit -text `playbackOptions -q -max` outframe;
+showWindow $dialog;

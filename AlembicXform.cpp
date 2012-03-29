@@ -256,30 +256,43 @@ MStatus AlembicXformNode::compute(const MPlug & plug, MDataBlock & dataBlock)
          return MStatus::kFailure;
       }
       mSchema = obj.getSchema();
+
+      if(!mSchema.valid())
+         return MStatus::kFailure;
+
+      Alembic::AbcGeom::XformSample sample;
+      mLastFloor = 0;
+      mTimes.clear();
+      mMatrices.clear();
+      for(size_t i=0;i<mSchema.getNumSamples();i++)
+      {
+         mTimes.push_back((double)mSchema.getTimeSampling()->getStoredTimes()[i]);
+         mSchema.get(sample,i);
+         mMatrices.push_back(sample.getMatrix());
+      }
    }
 
-   if(!mSchema.valid())
+   if(mTimes.size() == 0)
       return MStatus::kFailure;
 
-   // get the sample
-   SampleInfo sampleInfo = getSampleInfo(
-      inputTime,
-      mSchema.getTimeSampling(),
-      mSchema.getNumSamples()
-   );
+   // find the index
+   size_t index = mLastFloor;
+   while(inputTime > mTimes[index] && index < mTimes.size()-1)
+      index++;
+   while(inputTime < mTimes[index] && index > 0)
+      index--;
 
-   // access the matrix
-   Alembic::AbcGeom::XformSample sample;
-   mSchema.get(sample,sampleInfo.floorIndex);
-   Alembic::Abc::M44d matrix = sample.getMatrix();
-
-   // blend the matrix if we are between frames
-   if(sampleInfo.alpha != 0.0)
+   Alembic::Abc::M44d matrix;
+   if(fabs(inputTime - mTimes[index]) < 0.001 || index == mTimes.size()-1)
    {
-      mSchema.get(sample,sampleInfo.ceilIndex);
-      Alembic::Abc::M44d ceilMatrix = sample.getMatrix();
-      matrix = (1.0 - sampleInfo.alpha) * matrix + sampleInfo.alpha * ceilMatrix;
+      matrix = mMatrices[index];
    }
+   else
+   {
+      double blend = (inputTime - mTimes[index]) / (mTimes[index+1] - mTimes[index]);
+      matrix = (1.0f - blend) * mMatrices[index] + blend * mMatrices[index+1];
+   }
+   mLastFloor = index;
 
    // get the maya matrix
    MMatrix m(matrix.x);
