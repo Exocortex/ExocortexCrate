@@ -2,9 +2,23 @@ cmake_minimum_required(VERSION 2.6)
 
 if( HDF5_ENABLE_THREADSAFE )
 	project( ExocortexAlembic )
+	if( WIN32 )
+		set( Exocortex_INSTALL_BASE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/ExocortexAlembicInstall/Windows7 )
+	elseif( UNIX )
+		set( Exocortex_INSTALL_BASE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/ExocortexAlembicInstall/Linux )	
+	else()
+		message(FATAL_ERROR "Should not get here")
+	endif()
 else()
 	project( ExocortexAlembic_WinXP )
+	if( WIN32 )
+		set( Exocortex_INSTALL_BASE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/ExocortexAlembicInstall/WindowsXP )
+	else()
+		message(FATAL_ERROR "Should not get here")
+	endif()
 endif()
+
+
 
 INCLUDE(./ExocortexCMakeShared.txt)
 
@@ -211,6 +225,7 @@ SET( ALEMBIC_ILMBASE_LIBS ilmbase )
 
 # ZLib
 SET( BUILD_SHARED_LIBS OFF )
+SET( SKIP_INSTALL_ALL ON )
 SET( SKIP_INSTALL_LIBRARIES ON )
 
 # For multithreaded builds		
