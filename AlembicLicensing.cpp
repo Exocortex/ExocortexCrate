@@ -20,17 +20,32 @@ int GetAlembicLicense() {
 		return s_alembicLicense;
 	}
 
-	bool isInteractive = XSI::Application().IsInteractive();
-	if( isInteractive ) {
-		if( getenv("EXOCORTEX_ALEMBIC_READER_ONLY") != NULL ) {
-			isInteractive = false;
+	bool isWriterLicense = XSI::Application().IsInteractive();
+
+	bool isForceReader = ( getenv("EXOCORTEX_ALEMBIC_FORCE_READER") != NULL );
+	bool isForceWriter = ( getenv("EXOCORTEX_ALEMBIC_FORCE_WRITER") != NULL );
+
+	if( isForceReader && isForceWriter ) {
+		ESS_LOG_ERROR( "Both environment variables EXOCORTEX_ALEMBIC_FORCE_READER and EXOCORTEX_ALEMBIC_FORCE_WRITER defined, these conflict" );
+	}
+
+	if( isWriterLicense ) {
+		if( isForceReader ) {
+			ESS_LOG_ERROR( "Environment variable EXOCORTEX_ALEMBIC_FORCE_WRITER defined, forcing usage of write-capable license." );
+			isWriterLicense = false;
+		}
+	}	
+	if( ! isWriterLicense ) {
+		if( isForceWriter ) {
+			ESS_LOG_ERROR( "Environment variable EXOCORTEX_ALEMBIC_FORCE_READER defined, forcing usage of read-only license." );
+			isWriterLicense = true;
 		}
 	}
 
 	vector<RlmProductID> rlmProductIds;
 	int pluginLicenseResult;
 
-	if( isInteractive ) {
+	if( isWriterLicense ) {
 		RlmProductID pluginLicenseIds[] = ALEMBIC_WRITER_LICENSE_IDS;
 		for( int i = 0; i < sizeof( pluginLicenseIds ) / sizeof( RlmProductID ); i ++ ) {
 			rlmProductIds.push_back( pluginLicenseIds[i] );
