@@ -760,7 +760,7 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
 		}
 	   else {
 		  if( options.nDataFillFlags & ALEMBIC_DATAFILL_VERTEX ) {
-			options.pMNMesh->InvalidateGeomCache();
+		      options.pMNMesh->InvalidateGeomCache();
 		  }
 	   }
    }
