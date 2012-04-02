@@ -875,7 +875,7 @@ CStatus alembic_create_item_Invoke
          }
          if(!op.IsValid())
          {
-            op = Application().GetFactory().CreateObject(realType);
+		    op = Application().GetFactory().CreateObject(realType);
             op.AddOutputPort(realTarget);
             op.AddInputPort(realTarget);
 

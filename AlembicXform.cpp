@@ -95,10 +95,11 @@ XSIPLUGINCALLBACK CStatus alembic_xform_Update( CRef& in_ctxt )
       p->lastFloor = 0;
 
       Alembic::AbcGeom::XformSample sample;
+
       for(size_t i=0;i<obj.getSchema().getNumSamples();i++)
       {
-         p->times.push_back((double)obj.getSchema().getTimeSampling()->getStoredTimes()[i]);
-         obj.getSchema().get(sample,i);
+		p->times.push_back((double)obj.getSchema().getTimeSampling()->getSampleTime( i ));
+		 obj.getSchema().get(sample,i);				 
          p->matrices.push_back(sample.getMatrix());
       }
 
