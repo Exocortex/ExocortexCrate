@@ -336,12 +336,11 @@ void AlembicPoints::GetShapeType(IParticleObjectExt *pExt, int particleId, TimeV
         // Assign animation time and shape here
         IParamBlock2 *pblock = pSimpleOperator->GetParamBlockByID(0);
         INode *pNode = pblock->GetINode(PFlow_kInstanceShape_objectMaxscript, ticks);
-
         if (pNode == NULL || pNode->GetName() == NULL)
         {
             return;
         }
-
+        
         type = ShapeType_Instance;
 
         // Find if the name is alerady registered, otherwise add it to the list
@@ -359,6 +358,15 @@ void AlembicPoints::GetShapeType(IParticleObjectExt *pExt, int particleId, TimeV
         {
             nameList.push_back(pNode->GetName());
             instanceId = (uint16_t)nameList.size()-1;
+        }
+
+        // Determine if we have an animated shape
+        BOOL animatedShape = pblock->GetInt(PFlow_kInstanceShape_animatedShape);
+	    BOOL acquireShape = pblock->GetInt(PFlow_kInstanceShape_acquireShape);
+
+        if (!animatedShape && !acquireShape)
+        {
+            return;
         }
 
         // Get the necesary particle channels to grab the current time values
