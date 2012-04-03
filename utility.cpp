@@ -304,3 +304,31 @@ int GetParamIdByName( Animatable *pBaseObject, int pblockIndex, char const* pPar
 
 	return -1;
 }
+
+// Return a pointer to a TriObject given an INode or return NULL
+// if the node cannot be converted to a TriObject
+TriObject* GetTriObjectFromNode(INode *iNode, const TimeValue t, bool &deleteIt)
+{
+	deleteIt = false;
+	if (iNode == NULL) return NULL;
+	Object *obj = iNode->EvalWorldState(t).obj;
+	obj = GetPFObject(obj);
+	if (obj == NULL) return NULL;
+	if (obj->IsParticleSystem()) return NULL;
+    if (obj->SuperClassID()==GEOMOBJECT_CLASS_ID) {
+		if (obj->IsSubClassOf(triObjectClassID)) {
+		  return (TriObject*)obj;
+		} else if (obj->CanConvertToType(Class_ID(TRIOBJ_CLASS_ID, 0))) { 
+			TriObject *tri = (TriObject *) obj->ConvertToType(t, Class_ID(TRIOBJ_CLASS_ID, 0));
+			// Note that the TriObject should only be deleted
+			// if the pointer to it is not equal to the object
+			// pointer that called ConvertToType()
+			if (obj != tri) deleteIt = true;
+			return tri;
+		} else {
+			return NULL;
+		}
+	} else {
+		return NULL;
+	}
+}
