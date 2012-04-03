@@ -201,6 +201,8 @@ void AlembicImport_TimeControl( alembic_importoptions &options ) {
 	SceneEntry *pEntry = options.sceneEnumProc.Append(node, pHelper, OBTYPE_CURVES, &std::string( node->GetName() ) ); 
 	options.currentSceneList.Append(pEntry);
 
+	GET_MAX_INTERFACE()->SelectNode( node );
+
 	char szBuffer[10000];	
 	sprintf_s( szBuffer, 10000,
 		"$'%s'.current.controller = float_expression()\n"

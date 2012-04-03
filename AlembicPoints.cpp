@@ -2,7 +2,7 @@
 #include "AlembicMax.h"
 #include "AlembicPoints.h"
 #include "AlembicXform.h"
-#include "SceneEntry.h"
+#include "SceneEnumProc.h"
 #include "Utility.h"
 #include <IParticleObjectExt.h>
 #include <ParticleFlow/IParticleChannelID.h>
@@ -273,10 +273,6 @@ void AlembicPoints::GetShapeType(IParticleObjectExt *pExt, int particleId, TimeV
     instanceId = 0;
     animationTime = 0.0f;
 
-    // Check to see if we have a mesh, if not then break out
-    if (!pExt->GetParticleShapeByIndex(particleId))
-        return;
-
     // Go into the particle's action list
     INode *particleGroupNode = pExt->GetParticleGroup(particleId);
     Object *particleGroupObj = (particleGroupNode != NULL) ? particleGroupNode->EvalWorldState(ticks).obj : NULL;
@@ -340,12 +336,11 @@ void AlembicPoints::GetShapeType(IParticleObjectExt *pExt, int particleId, TimeV
         // Assign animation time and shape here
         IParamBlock2 *pblock = pSimpleOperator->GetParamBlockByID(0);
         INode *pNode = pblock->GetINode(PFlow_kInstanceShape_objectMaxscript, ticks);
-
         if (pNode == NULL || pNode->GetName() == NULL)
         {
             return;
         }
-
+        
         type = ShapeType_Instance;
 
         // Find if the name is alerady registered, otherwise add it to the list
@@ -363,6 +358,15 @@ void AlembicPoints::GetShapeType(IParticleObjectExt *pExt, int particleId, TimeV
         {
             nameList.push_back(pNode->GetName());
             instanceId = (uint16_t)nameList.size()-1;
+        }
+
+        // Determine if we have an animated shape
+        BOOL animatedShape = pblock->GetInt(PFlow_kInstanceShape_animatedShape);
+	    BOOL acquireShape = pblock->GetInt(PFlow_kInstanceShape_acquireShape);
+
+        if (!animatedShape && !acquireShape)
+        {
+            return;
         }
 
         // Get the necesary particle channels to grab the current time values
@@ -417,7 +421,6 @@ void AlembicPoints::GetShapeType(IParticleObjectExt *pExt, int particleId, TimeV
         if (syncRandom) 
         {
             chLocalOffR =  (IParticleChannelIntR*)chCont->GetPrivateInterface(PARTICLECHANNELLOCALOFFSETR_INTERFACE, pSimpleOperator);
-            // chLocalOffR = GetParticleChannelLocalOffsetRInterface(pCont);
         }
 
         // get new shape from the source

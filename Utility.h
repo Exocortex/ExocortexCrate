@@ -96,6 +96,16 @@ inline Point3 ConvertAlembicScaleToMaxScale( const Imath::V3f &alembicScale )
 	return Point3(alembicScale.x, alembicScale.z, alembicScale.y);
 }
 
+inline Quat ConvertAlembicQuatToMaxQuat( const Imath::Quatf &alembicQuat, bool bNormalize)
+{
+    Quat q(alembicQuat.v.x, -alembicQuat.v.z, alembicQuat.v.y, -alembicQuat.r);
+
+    if (bNormalize)
+        q.Normalize();
+
+    return q;
+}
+
 
 
 // Utility functions for working on INodes
@@ -105,5 +115,6 @@ INode *GetParentModelTransformNode( INode *pNode );
 void LockNodeTransform(INode *pNode, bool bLock);
 
 int GetParamIdByName( Animatable *pBaseObject, int pblockIndex, char const* pParamName );
+TriObject* GetTriObjectFromNode(INode *iNode, const TimeValue t, bool &deleteIt);
 
 #endif  // _FOUNDATION_H_
