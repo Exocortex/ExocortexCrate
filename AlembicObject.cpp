@@ -6,6 +6,9 @@
 namespace AbcA = ::Alembic::AbcCoreAbstract::ALEMBIC_VERSION_NS;
 using namespace AbcA;
 
+#pragma warning( disable: 4996 )
+
+
 AlembicObject::AlembicObject
 (
    const XSI::CRef & in_Ref,

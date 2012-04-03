@@ -459,7 +459,7 @@ XSIPLUGINCALLBACK CStatus alembic_polymesh_Define( CRef& in_ctxt )
 
 XSIPLUGINCALLBACK CStatus alembic_polymesh_DefineLayout( CRef& in_ctxt )
 {
-   return alembicOp_DefineLayout(in_ctxt);
+   return alembicOp_DefineLayout(in_ctxt); 
 }
 
 

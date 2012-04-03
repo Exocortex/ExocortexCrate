@@ -23,6 +23,9 @@ XSI::CString resolvePath(XSI::CString path)
    return XSI::CUtils::ResolveTokenString(path,XSI::CTime(),false);
 }
 
+#pragma warning( disable: 4996 )
+
+
 Alembic::Abc::IArchive * getArchiveFromID(XSI::CString path)
 {
    XSI::CString resolvedPath = resolvePath(path);
