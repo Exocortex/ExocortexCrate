@@ -31,13 +31,13 @@ int GetAlembicLicense() {
 
 	if( isWriterLicense ) {
 		if( isForceReader ) {
-			ESS_LOG_ERROR( "Environment variable EXOCORTEX_ALEMBIC_FORCE_WRITER defined, forcing usage of write-capable license." );
+			ESS_LOG_ERROR( "Environment variable EXOCORTEX_ALEMBIC_FORCE_READER defined, forcing usage of read-only license." );
 			isWriterLicense = false;
 		}
 	}	
 	if( ! isWriterLicense ) {
 		if( isForceWriter ) {
-			ESS_LOG_ERROR( "Environment variable EXOCORTEX_ALEMBIC_FORCE_READER defined, forcing usage of read-only license." );
+			ESS_LOG_ERROR( "Environment variable EXOCORTEX_ALEMBIC_FORCE_WRITER defined, forcing usage of write-capable license." );
 			isWriterLicense = true;
 		}
 	}
