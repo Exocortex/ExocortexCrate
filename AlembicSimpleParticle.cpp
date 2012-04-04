@@ -1084,14 +1084,13 @@ int AlembicImport_Points(const std::string &file, const std::string &identifier,
     // Set the visibility controller
     AlembicImport_SetupVisControl( file.c_str(), identifier.c_str(), iObj, pNode, options);
 
-   /* if( !isConstant ) 
+    if( !isConstant ) 
     {
         GET_MAX_INTERFACE()->SelectNode( pNode );
         char szControllerName[10000];	
         sprintf_s( szControllerName, 10000, "$.time" );
         AlembicImport_ConnectTimeControl( szControllerName, options );
     }
-    */
 
     return 0;
 }
