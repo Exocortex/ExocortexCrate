@@ -818,6 +818,77 @@ int AlembicSimpleParticle::Display(TimeValue t, INode* inode, ViewExp *vpt, int 
    return 0;
 }
 
+int AlembicSimpleParticle::HitTest(TimeValue t, INode *inode, int type, int crossing, int flags, IPoint2 *p, ViewExp *vpt)
+{
+   BOOL doupdate = ((t!=tvalid)||!valid);
+   if (doupdate)
+   {
+       Update(t,inode);
+   }
+
+   DWORD savedLimits;
+   Matrix3 gwTM;
+   int res = 0;
+   HitRegion hr;
+
+   GraphicsWindow* gw = vpt->getGW();
+   savedLimits = gw->getRndLimits();
+   gwTM.IdentityMatrix();
+   gw->setTransform(gwTM);
+   MakeHitRegion(hr, type, crossing, 4, p);
+   gw->setHitRegion(&hr);
+   gw->clearHitCode();
+
+   // Hit test against the emitter mesh
+   if (EmitterVisible()) 
+   {
+       gw->setRndLimits((savedLimits|GW_PICK|GW_WIREFRAME) 
+           & ~(GW_ILLUM|GW_BACKCULL|GW_FLAT|GW_SPECULAR));
+       gw->setTransform(inode->GetObjTMBeforeWSM(t));
+       res = mesh.select(gw, &particleMtl, &hr, flags & HIT_ABORTONHIT);
+   }
+
+   if (res)
+   {
+       gw->setRndLimits(savedLimits);
+       return res;
+   }
+
+   // Hit test against the particles
+   NullView nullView;
+   gw->setRndLimits((savedLimits|GW_PICK) & ~ GW_ILLUM);
+   for (int i = 0; i < NumberOfRenderMeshes(); i += 1)
+   {
+       if (m_ParticleViewportMeshes[i])
+       {
+           Matrix3 meshTM;
+           Interval meshTMValid = FOREVER;
+           GetMultipleRenderMeshTM(t, inode, nullView, i, meshTM, meshTMValid);
+           INode *meshNode = GetParticleMeshNode(i, inode);
+           Material *mtls = meshNode->Mtls();
+           int numMtls = meshNode->NumMtls();
+
+           gw->setTransform(meshTM);
+           m_ParticleViewportMeshes[i]->select(gw, mtls, &hr, TRUE, numMtls);
+       }
+       else
+       {
+           Point3 pos = parts.points[i];
+           gw->marker(&pos, POINT_MRKR);
+       }
+       
+       if (gw->checkHitCode()) 
+       {
+           res = TRUE;
+           gw->clearHitCode();
+           break;
+       }
+   }
+
+   gw->setRndLimits(savedLimits);
+   return res;
+}
+
 int AlembicSimpleParticle::callback( INode *node )
 {
     int enumCode = TREE_CONTINUE;
