@@ -215,8 +215,8 @@ void AlembicImport_TimeControl( alembic_importoptions &options ) {
 	options.pTimeControl = pHelper;
 }
 
-void AlembicImport_ConnectTimeControl( char* szControllerName, alembic_importoptions &options ) {
-
+void AlembicImport_ConnectTimeControl( char* szControllerName, alembic_importoptions &options ) 
+{
 	char szBuffer[10000];	
 	sprintf_s( szBuffer, 10000, 
 		"%s.controller = float_expression()\n"

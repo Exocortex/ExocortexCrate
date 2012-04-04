@@ -9,6 +9,8 @@
 #include "AlembicNames.h"
 #include "AlembicPoints.h"
 
+const int ALEMBIC_SIMPLE_PARTICLE_REF_PBLOCK = 0;
+
 class NullView: public View 
 {
 public:
@@ -40,14 +42,40 @@ class AlembicSimpleParticle;
 class AlembicSimpleParticle : public SimpleParticle, ITreeEnumProc
 {
 public:
-	static AlembicSimpleParticle *s_EditObject;
-	static IObjParam *s_ObjParam;
+    IParamBlock2* pblock;
+   
+    // Parameters in first block:
+	enum 
+	{ 
+		ID_PATH,
+		ID_IDENTIFIER,
+		ID_TIME,
+        ID_MUTED,
+	};
 
+    static IObjParam *s_ObjParam;
+    static AlembicSimpleParticle *s_EditObject;
+public:
     AlembicSimpleParticle();
     virtual ~AlembicSimpleParticle();
+public:
+    void BeginEditParams( IObjParam  *ip, ULONG flags,Animatable *prev);
+    void EndEditParams( IObjParam *ip, ULONG flags,Animatable *next);
 
-    void SetAlembicId(const std::string &file, const std::string &identifier);
+    int	NumParamBlocks() { return 1; }					// return number of ParamBlocks in this instance
+    IParamBlock2* GetParamBlock(int i) { return pblock; } // return i'th ParamBlock
+    IParamBlock2* GetParamBlockByID(BlockID id) { return (pblock->ID() == id) ? pblock : NULL; } // return id'd ParamBlock
 
+	int NumRefs() { return 1; }
+	void SetReference(int i, ReferenceTarget* pTarget); 
+	RefTargetHandle GetReference(int i); 
+	RefResult NotifyRefChanged(Interval, RefTargetHandle, PartID&, RefMessage);
+
+    int NumSubs()  {return 1;} //because it uses the paramblock
+    Animatable* SubAnim(int i) {return GetReference(i);}
+    TSTR SubAnimName(int i) { return _T("Parameters"); }
+    int SubNumToRefNum(int subNum) {if (subNum==0) return 0; else return -1;}
+public:
     // --- Derived class implementation of the virtual functions in SimpleParticle ---
     void UpdateParticles(TimeValue t, INode *node);
     void BuildEmitter(TimeValue t, Mesh &mesh);
@@ -56,6 +84,7 @@ public:
 
     // --- Derived class implementation of the virtual functions in Animatable ---
     void DeleteThis() { delete this; }
+    RefTargetHandle Clone(RemapDir& remap);
     Class_ID ClassID() { return ALEMBIC_SIMPLE_PARTICLE_CLASSID; } 
     int RenderBegin(TimeValue t, ULONG flags);		
     int RenderEnd(TimeValue t);
@@ -69,9 +98,10 @@ public:
     CreateMouseCallBack* GetCreateMouseCallBack() { return NULL; }
     TCHAR *GetObjectName() { return "Alembic Simple Particle"; }
     int Display(TimeValue t, INode* inode, ViewExp *vpt, int flags);
+    virtual BOOL OKtoDisplay( TimeValue t);
 
 private:
-    bool            GetAlembicIPoints(Alembic::AbcGeom::IPoints &iPoints);
+    bool            GetAlembicIPoints(Alembic::AbcGeom::IPoints &iPoints, const char *strFile, const char *strIdentifier);
     SampleInfo      GetSampleAtTime(Alembic::AbcGeom::IPoints &iPoints, TimeValue t, Alembic::AbcGeom::IPointsSchema::Sample &floorSample, Alembic::AbcGeom::IPointsSchema::Sample &ceilSample) const;
     int             GetNumParticles(const Alembic::AbcGeom::IPointsSchema::Sample &floorSample) const;
     Point3          GetParticlePosition(const Alembic::AbcGeom::IPointsSchema::Sample &floorSample, const Alembic::AbcGeom::IPointsSchema::Sample &ceilSample, const SampleInfo &sampleInfo, int index) const;
@@ -86,7 +116,8 @@ private:
     void            FillParticleShapeNodes(Alembic::AbcGeom::IPoints &iPoints, const SampleInfo &sampleInfo);
     int			    callback( INode *node );
     INode*          GetParticleMeshNode(int meshNumber, INode *displayNode);
-private:
+    void            ClearCurrentViewportMeshes();
+   private:
     Mesh *BuildPointMesh();
     Mesh *BuildBoxMesh();
     Mesh *BuildSphereMesh();
@@ -106,7 +137,7 @@ private:
     std::vector<INode*> m_InstanceShapeINodes;
     size_t m_TotalShapesToEnumerate;
     std::vector<Mesh*> m_ParticleViewportMeshes;
-    alembic_nodeprops m_AlembicNodeProps;
+    std::string m_CachedAbcFile;
 };
 
 
@@ -115,11 +146,11 @@ class AlembicSimpleParticleClassDesc : public ClassDesc2
 public:
 	int 			IsPublic() { return TRUE; }
 	void *			Create(BOOL loading = FALSE) { return new AlembicSimpleParticle(); }
-	const TCHAR *	ClassName() { return _T("Alembic Particles"); }
+	const TCHAR *	ClassName() { return ALEMBIC_SIMPLE_PARTICLE_NAME; }
 	SClass_ID		SuperClassID() { return GEOMOBJECT_CLASS_ID; }
 	Class_ID		ClassID() { return ALEMBIC_SIMPLE_PARTICLE_CLASSID; }
 	const TCHAR* 	Category() { return EXOCORTEX_ALEMBIC_CATEGORY; }
-	const TCHAR*	InternalName() { return _T("AlembicSimpleParticle"); }  // returns fixed parsable name (scripter-visible name)
+	const TCHAR*	InternalName() { return ALEMBIC_SIMPLE_PARTICLE_SCRIPTNAME; }  // returns fixed parsable name (scripter-visible name)
 	HINSTANCE		HInstance() { return hInstance; }                       // returns owning module handle
 };
 

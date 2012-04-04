@@ -5,6 +5,7 @@
 #include "AlembicArchiveStorage.h"
 #include "AlembicVisibilityController.h"
 #include "utility.h"
+#include "AlembicMAXScript.h"
 
 namespace AbcA = ::Alembic::AbcCoreAbstract::ALEMBIC_VERSION_NS;
 namespace AbcB = ::Alembic::Abc::ALEMBIC_VERSION_NS;
@@ -13,6 +14,48 @@ using namespace AbcB;
 
 static AlembicSimpleParticleClassDesc s_AlembicSimpleParticleClassDesc;
 ClassDesc2 *GetAlembicSimpleParticleClassDesc() { return &s_AlembicSimpleParticleClassDesc; }
+
+//////////////////////////////////////////////////////////////////////////////////////////////////
+// Alembic_XForm_Ctrl_Param_Blk
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
+static ParamBlockDesc2 AlembicSimpleParticleParams(
+	0,
+	_T(ALEMBIC_SIMPLE_PARTICLE_SCRIPTNAME),
+	0,
+	GetAlembicSimpleParticleClassDesc(),
+	P_AUTO_CONSTRUCT | P_AUTO_UI,
+	0,
+
+	// rollout description 
+	IDD_ALEMBIC_PARTICLE_PARAMS, IDS_ALEMBIC, 0, 0, NULL,
+
+    // params
+	AlembicSimpleParticle::ID_PATH, _T("path"), TYPE_FILENAME, P_RESET_DEFAULT, IDS_PATH,
+	    p_default, "",
+	    p_ui,        TYPE_EDITBOX,		IDC_PATH_EDIT,
+	 	end,
+        
+	AlembicSimpleParticle::ID_IDENTIFIER, _T("identifier"), TYPE_STRING, P_RESET_DEFAULT, IDS_IDENTIFIER,
+	    p_default, "",
+	    p_ui,        TYPE_EDITBOX,		IDC_IDENTIFIER_EDIT,
+	 	end,
+
+	AlembicSimpleParticle::ID_TIME, _T("time"), TYPE_FLOAT, P_ANIMATABLE, IDS_TIME,
+		p_default,       0.0f,
+		p_range,         0.0f, 1000.0f,
+		p_ui,            TYPE_SPINNER,       EDITTYPE_FLOAT, IDC_TIME_EDIT,    IDC_TIME_SPIN, 0.01f,
+		end,
+        
+    AlembicSimpleParticle::ID_MUTED, _T("muted"), TYPE_BOOL, P_ANIMATABLE, IDS_MUTED,
+		p_default,       FALSE,
+		p_ui,            TYPE_SINGLECHEKBOX,  IDC_MUTED_CHECKBOX,
+		end,
+
+	end
+);
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
 
 // static member variables
 AlembicSimpleParticle *AlembicSimpleParticle::s_EditObject = NULL;
@@ -34,51 +77,85 @@ ParticleMtl::ParticleMtl():Material()
 AlembicSimpleParticle::AlembicSimpleParticle()
     : SimpleParticle(), m_TotalShapesToEnumerate(0)
 {
+    pblock = NULL;
+    s_AlembicSimpleParticleClassDesc.MakeAutoParamBlocks(this);
 }
 
 // virtual
 AlembicSimpleParticle::~AlembicSimpleParticle()
 {
-}
-
-void AlembicSimpleParticle::SetAlembicId(const std::string &file, const std::string &identifier)
-{
-    m_AlembicNodeProps.m_File = file;
-    m_AlembicNodeProps.m_Identifier = identifier;
+    ClearCurrentViewportMeshes();
 }
 
 void AlembicSimpleParticle::UpdateParticles(TimeValue t, INode *node)
 {
 	ESS_CPP_EXCEPTION_REPORTING_START
+   
+    Interval interval = FOREVER;//os->obj->ObjectValidity(t);
+	//ESS_LOG_INFO( "Interval Start: " << interval.Start() << " End: " << interval.End() );
+
+    MCHAR const* strPath = NULL;
+	this->pblock->GetValue( AlembicSimpleParticle::ID_PATH, t, strPath, interval);
+
+	MCHAR const* strIdentifier = NULL;
+	this->pblock->GetValue( AlembicSimpleParticle::ID_IDENTIFIER, t, strIdentifier, interval);
+ 
+	float fTime;
+	this->pblock->GetValue( AlembicSimpleParticle::ID_TIME, t, fTime, interval);
+
+	BOOL bMuted;
+	this->pblock->GetValue( AlembicSimpleParticle::ID_MUTED, t, bMuted, interval);
+
+    if (bMuted)
+    {
+        valid = FALSE;
+        return;
+    }
+
+    if( strlen( strPath ) == 0 ) 
+    {
+       valid = FALSE;
+	   ESS_LOG_ERROR( "No filename specified." );
+	   return; 
+	}
+	if( strlen( strIdentifier ) == 0 ) 
+    {
+       valid = FALSE;
+	   ESS_LOG_ERROR( "No path specified." );
+	   return;
+	}
+
+	if( !fs::exists( strPath ) ) 
+    {
+        valid = FALSE;
+		ESS_LOG_ERROR( "Can't file Alembic file.  Path: " << strPath );
+		return;
+	}
 
 	Alembic::AbcGeom::IPoints iPoints;
-    if (!GetAlembicIPoints(iPoints))
+    if (!GetAlembicIPoints(iPoints, strPath, strIdentifier))
+    {
+        valid = FALSE;
+        return;
+    }
+
+    if(tvalid == t && valid == TRUE)
     {
         return;
     }
 
-    if(tvalid == t)
-    {
-        return;
-    }
+    TimeValue ticks = GetTimeValueFromSeconds( fTime );
 
     Alembic::AbcGeom::IPointsSchema::Sample floorSample;
     Alembic::AbcGeom::IPointsSchema::Sample ceilSample;
-    SampleInfo sampleInfo = GetSampleAtTime(iPoints, t, floorSample, ceilSample);
+    SampleInfo sampleInfo = GetSampleAtTime(iPoints, ticks, floorSample, ceilSample);
 
     int numParticles = GetNumParticles(floorSample);
     parts.SetCount(numParticles, PARTICLE_VELS | PARTICLE_AGES | PARTICLE_RADIUS);
     parts.SetCustomDraw(NULL);
 
     // Delete the old viewport meshes
-    for (int i = 0; i < m_ParticleViewportMeshes.size(); i += 1)
-    {
-        if (m_ParticleViewportMeshes[i])
-        {
-            delete m_ParticleViewportMeshes[i];
-            m_ParticleViewportMeshes[i] = NULL;
-        }
-    }
+    ClearCurrentViewportMeshes();
 
     m_InstanceShapeType.resize(numParticles);
     m_InstanceShapeTimes.resize(numParticles);
@@ -223,10 +300,10 @@ MarkerType AlembicSimpleParticle::GetMarkerType()
     return POINT_MRKR;
 }
 
-bool AlembicSimpleParticle::GetAlembicIPoints(Alembic::AbcGeom::IPoints &iPoints)
+bool AlembicSimpleParticle::GetAlembicIPoints(Alembic::AbcGeom::IPoints &iPoints, const char *strFile, const char *strIdentifier)
 {
     // Find the object in the archive
-    Alembic::AbcGeom::IObject iObj = getObjectFromArchive(m_AlembicNodeProps.m_File, m_AlembicNodeProps.m_Identifier);
+    Alembic::AbcGeom::IObject iObj = getObjectFromArchive(strFile, strIdentifier);
 	if (!iObj.valid())
     {
 		return false;
@@ -690,9 +767,8 @@ int AlembicSimpleParticle::Display(TimeValue t, INode* inode, ViewExp *vpt, int 
    {
        return 0;
    }
-   
-   BOOL doupdate = ((t!=tvalid)||!valid);
 
+   BOOL doupdate = ((t!=tvalid)||!valid);
    if (doupdate)
    {
        Update(t,inode);
@@ -830,6 +906,139 @@ Mesh *AlembicSimpleParticle::BuildNbElementsMesh()
     return NULL;
 }
 
+RefResult AlembicSimpleParticle::NotifyRefChanged(
+    Interval iv, 
+    RefTargetHandle hTarg, 
+    PartID& partID, 
+    RefMessage msg) 
+{
+    switch (msg) 
+    {
+        case REFMSG_CHANGE:
+            if (hTarg == pblock) 
+            {
+                ParamID changing_param = pblock->LastNotifyParamID();
+                switch(changing_param)
+                {
+                case ID_PATH:
+                    {
+                        delRefArchive(m_CachedAbcFile);
+                        MCHAR const* strPath = NULL;
+                        TimeValue t = GetCOREInterface()->GetTime();
+                        pblock->GetValue( AlembicSimpleParticle::ID_PATH, t, strPath, iv);
+                        m_CachedAbcFile = strPath;
+                        addRefArchive(m_CachedAbcFile);
+                    }
+                    break;
+                default:
+                    break;
+                }
+
+                AlembicSimpleParticleParams.InvalidateUI(changing_param);
+            }
+            break;
+
+        case REFMSG_OBJECT_CACHE_DUMPED:
+            return REF_STOP;
+            break;
+    }
+
+    return REF_SUCCEED;
+}
+
+void AlembicSimpleParticle::BeginEditParams(IObjParam *ip,ULONG flags,Animatable *prev)
+{
+	this->ip = ip;
+    s_EditObject  = this;
+
+    SimpleParticle::BeginEditParams(ip, flags, prev);
+	s_AlembicSimpleParticleClassDesc.BeginEditParams(ip, this, flags, prev);
+}
+
+void AlembicSimpleParticle::EndEditParams( IObjParam *ip, ULONG flags, Animatable *next )
+{
+    SimpleParticle::EndEditParams(ip, flags, next);
+	s_AlembicSimpleParticleClassDesc.EndEditParams(ip, this, flags, next);
+
+	this->ip = NULL;
+    s_EditObject  = NULL;
+}
+
+void AlembicSimpleParticle::SetReference(int i, ReferenceTarget* pTarget)
+{ 
+    switch(i) 
+    { 
+    case ALEMBIC_SIMPLE_PARTICLE_REF_PBLOCK:
+        pblock = static_cast<IParamBlock2*>(pTarget);
+    default:
+        break;
+    }
+}
+
+RefTargetHandle AlembicSimpleParticle::GetReference(int i)
+{ 
+    switch(i)
+    {
+    case ALEMBIC_SIMPLE_PARTICLE_REF_PBLOCK:
+        return pblock;
+    default:
+        return NULL;
+    }
+}
+
+RefTargetHandle AlembicSimpleParticle::Clone(RemapDir& remap) 
+{
+	AlembicSimpleParticle *particle = new AlembicSimpleParticle();
+    particle->ReplaceReference (ALEMBIC_SIMPLE_PARTICLE_REF_PBLOCK, remap.CloneRef(pblock));
+   	
+    BaseClone(this, particle, remap);
+	return particle;
+}
+
+void AlembicSimpleParticle::ClearCurrentViewportMeshes()
+{
+    for (int i = 0; i < m_ParticleViewportMeshes.size(); i += 1)
+    {
+        if (m_ParticleViewportMeshes[i])
+        {
+            delete m_ParticleViewportMeshes[i];
+            m_ParticleViewportMeshes[i] = NULL;
+        }
+    }
+}
+
+BOOL AlembicSimpleParticle::OKtoDisplay( TimeValue t)
+{
+    if (parts.Count() == 0)
+        return FALSE;
+
+    if (!valid)
+        return FALSE;
+
+    Interval interval = FOREVER;
+
+	BOOL bMuted;
+	this->pblock->GetValue( AlembicSimpleParticle::ID_MUTED, t, bMuted, interval);
+
+    return !bMuted;
+}
+
+bool isAlembicPoints( Alembic::AbcGeom::IObject *pIObj, bool& isConstant ) 
+{
+	Alembic::AbcGeom::IPoints objPoints;
+
+	isConstant = true; 
+
+	if(Alembic::AbcGeom::IPoints::matches((*pIObj).getMetaData())) {
+		objPoints = Alembic::AbcGeom::IPoints(*pIObj,Alembic::Abc::kWrapExisting);
+		if( objPoints.valid() ) {
+			isConstant = objPoints.getSchema().isConstant();
+		}
+	}
+
+	return objPoints.valid();
+}
+
 int AlembicImport_Points(const std::string &file, const std::string &identifier, alembic_importoptions &options)
 {
     // Find the object in the archive
@@ -839,15 +1048,27 @@ int AlembicImport_Points(const std::string &file, const std::string &identifier,
 		return alembic_failure;
     }
 
+    bool isConstant = false;
+	if( !isAlembicPoints( &iObj, isConstant ) ) 
+    {
+		return alembic_failure;
+	}
+
 	// Create the particle emitter object and place it in the scene
-    AlembicSimpleParticle *pParticleObj = new AlembicSimpleParticle();
+    AlembicSimpleParticle *pParticleObj = static_cast<AlembicSimpleParticle*>
+		(GetCOREInterface()->CreateInstance(GEOMOBJECT_CLASS_ID, ALEMBIC_SIMPLE_PARTICLE_CLASSID));
+   
     if (pParticleObj == NULL)
     {
         return alembic_failure;
     }
 
     // Set the alembic information
-    pParticleObj->SetAlembicId(file, identifier);
+    TimeValue zero( 0 );
+    pParticleObj->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pParticleObj, 0, "path" ), zero, file.c_str());
+	pParticleObj->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pParticleObj, 0, "identifier" ), zero, identifier.c_str() );
+	pParticleObj->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pParticleObj, 0, "time" ), zero, 0.0f );
+	pParticleObj->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pParticleObj, 0, "muted" ), zero, FALSE );
 
     // Create the object node
 	INode *pNode = GET_MAX_INTERFACE()->CreateObjectNode(pParticleObj, iObj.getName().c_str());
@@ -862,6 +1083,15 @@ int AlembicImport_Points(const std::string &file, const std::string &identifier,
 
     // Set the visibility controller
     AlembicImport_SetupVisControl( file.c_str(), identifier.c_str(), iObj, pNode, options);
+
+   /* if( !isConstant ) 
+    {
+        GET_MAX_INTERFACE()->SelectNode( pNode );
+        char szControllerName[10000];	
+        sprintf_s( szControllerName, 10000, "$.time" );
+        AlembicImport_ConnectTimeControl( szControllerName, options );
+    }
+    */
 
     return 0;
 }

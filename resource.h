@@ -124,6 +124,7 @@
 #define IDS_TIMESCALE                   4014
 #define IDS_CURRENTTIMEHIDDEN           4015
 #define IDD_ALEMBIC_VISIBILITY_PARAMS   4016
+#define IDD_ALEMBIC_PARTICLE_PARAMS     4016
 #define IDS_RB_RADIUS                   30045
 #define IDS_RB_SEGS                     30046
 #define IDS_RB_POS                      30047
@@ -176,6 +177,7 @@
 #define IDD_ALEMBIC_MESH_NORMALS_PARAMS 30307
 #define IDD_ALEMBIC_MESH_UVW_PARAMS     30308
 #define IDD_ALEMBIC_XFORM_PARAMS        30309
+#define IDD_ALEMBIC_VISIBILITY_PARAMS1  30310
 #define IDC_TEXTUREPATH                 40000
 #define IDC_PATH_EDIT                   40000
 #define IDC_IDENTIFIER_EDIT             40001
