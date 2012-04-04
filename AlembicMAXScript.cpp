@@ -646,65 +646,67 @@ int ExocortexAlembicStaticInterface_ExocortexAlembicExport(MCHAR * strPath, int 
 	return alembic_success;
 }
 
-void Alembic_NodeDeleteNotify(void *param, NotifyInfo *info)
-{
-    // Get the nodes being deleted  
-    INode *pNode = (INode*)info->callParam;
-
-    if (pNode)
-    {
-        // Check the xform controller
-        Control *pXfrmControl = pNode->GetTMController();
-        if (pXfrmControl && pXfrmControl->ClassID() == ALEMBIC_XFORM_CONTROLLER_CLASSID)
-        {
-            pXfrmControl->DeleteAllRefsFromMe();
-            pXfrmControl->DeleteAllRefsToMe();
-            pXfrmControl->DeleteThis();
-        }
-
-        // Check the visibility controller
-        Control *pVisControl = pNode->GetVisController();
-        if (pVisControl && pVisControl->ClassID() == ALEMBIC_VISIBILITY_CONTROLLER_CLASSID)
-        {
-            pVisControl->DeleteAllRefsFromMe();
-            pVisControl->DeleteAllRefsToMe();
-            pVisControl->DeleteThis();
-        }
-
-        // Run through the modifier stack
-        Object *pObject = pNode->GetObjectRef();
-        while (pObject && pObject->SuperClassID() == GEN_DERIVOB_CLASS_ID)
-        {
-            IDerivedObject *pDerivedObj = static_cast<IDerivedObject*>(pObject);
-
-            int ModStackIndex = 0;
-            while (ModStackIndex < pDerivedObj->NumModifiers())
-            {
-                Modifier *pModifier = pDerivedObj->GetModifier(ModStackIndex);
-
-                if (pModifier->ClassID() == ALEMBIC_MESH_GEOM_MODIFIER_CLASSID ||
-                    pModifier->ClassID() == ALEMBIC_MESH_NORMALS_MODIFIER_CLASSID ||
-                    pModifier->ClassID() == ALEMBIC_MESH_TOPO_MODIFIER_CLASSID ||
-                    pModifier->ClassID() == ALEMBIC_MESH_UVW_MODIFIER_CLASSID)
-                {
-                    pDerivedObj->DeleteModifier(ModStackIndex);
-                    pModifier->DeleteAllRefsFromMe();
-                    pModifier->DeleteAllRefsToMe();
-                    pModifier->DeleteThis();
-                }
-                else
-                {
-                    ModStackIndex += 1;
-                }
-            }
-
-            pObject = pDerivedObj->GetObjRef();
-        }
-    }
-}
+//MarshallH: This function probably isn't necessary and it breaks the node undo mechanism
+//void Alembic_NodeDeleteNotify(void *param, NotifyInfo *info)
+//{
+//    // Get the nodes being deleted  
+//    INode *pNode = (INode*)info->callParam;
+//
+//    if (pNode)
+//    {
+//        // Check the xform controller
+//        Control *pXfrmControl = pNode->GetTMController();
+//        if (pXfrmControl && pXfrmControl->ClassID() == ALEMBIC_XFORM_CONTROLLER_CLASSID)
+//        {
+//            pXfrmControl->DeleteAllRefsFromMe();
+//            pXfrmControl->DeleteAllRefsToMe();
+//            pXfrmControl->DeleteThis();
+//        }
+//
+//        // Check the visibility controller
+//        Control *pVisControl = pNode->GetVisController();
+//        if (pVisControl && pVisControl->ClassID() == ALEMBIC_VISIBILITY_CONTROLLER_CLASSID)
+//        {
+//            pVisControl->DeleteAllRefsFromMe();
+//            pVisControl->DeleteAllRefsToMe();
+//            pVisControl->DeleteThis();
+//        }
+//
+//        // Run through the modifier stack
+//        Object *pObject = pNode->GetObjectRef();
+//        while (pObject && pObject->SuperClassID() == GEN_DERIVOB_CLASS_ID)
+//        {
+//            IDerivedObject *pDerivedObj = static_cast<IDerivedObject*>(pObject);
+//
+//            int ModStackIndex = 0;
+//            while (ModStackIndex < pDerivedObj->NumModifiers())
+//            {
+//                Modifier *pModifier = pDerivedObj->GetModifier(ModStackIndex);
+//
+//                if (pModifier->ClassID() == ALEMBIC_MESH_GEOM_MODIFIER_CLASSID ||
+//                    pModifier->ClassID() == ALEMBIC_MESH_NORMALS_MODIFIER_CLASSID ||
+//                    pModifier->ClassID() == ALEMBIC_MESH_TOPO_MODIFIER_CLASSID ||
+//                    pModifier->ClassID() == ALEMBIC_MESH_UVW_MODIFIER_CLASSID)
+//                {
+//                    pDerivedObj->DeleteModifier(ModStackIndex);
+//                    pModifier->DeleteAllRefsFromMe();
+//                    pModifier->DeleteAllRefsToMe();
+//                    pModifier->DeleteThis();
+//                }
+//                else
+//                {
+//                    ModStackIndex += 1;
+//                }
+//            }
+//
+//            pObject = pDerivedObj->GetObjRef();
+//        }
+//    }
+//}
 
 int ExocortexAlembicStaticInterface::ExocortexAlembicInit()
 {
-    int result = RegisterNotification(Alembic_NodeDeleteNotify, NULL, NOTIFY_SCENE_PRE_DELETED_NODE);
-    return result;
+    //int result = RegisterNotification(Alembic_NodeDeleteNotify, NULL, NOTIFY_SCENE_PRE_DELETED_NODE);
+    //return result;
+	return 1;
 }
