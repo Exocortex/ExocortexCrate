@@ -190,6 +190,7 @@ bool AlembicCurves::Save(double time)
 
     // store the bbox
     mCurvesSample.setSelfBounds(bbox);
+	mCurvesSample.setChildBounds(bbox);
 
     // allocate for the points and normals
     Alembic::Abc::P3fArraySample posSample(&posVec.front(),posVec.size());

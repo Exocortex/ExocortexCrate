@@ -233,6 +233,7 @@ bool AlembicPoints::Save(double time)
     mPointsSample.setWidths(Alembic::AbcGeom::OFloatGeomParam::Sample(widthSample, Alembic::AbcGeom::kVertexScope));
     mPointsSample.setIds(idSample);
     mPointsSample.setSelfBounds(bbox);
+	mPointsSample.setChildBounds(bbox);
 
     mPointsSchema.set(mPointsSample);
 

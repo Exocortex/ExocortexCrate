@@ -220,6 +220,7 @@ bool AlembicPolyMesh::Save(double time)
     // store the positions && bbox
     mMeshSample.setPositions(posSample);
     mMeshSample.setSelfBounds(bbox);
+	mMeshSample.setChildBounds(bbox);
 
     // abort here if we are just storing points
     if(purePointCache)
