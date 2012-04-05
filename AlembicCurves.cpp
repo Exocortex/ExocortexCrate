@@ -3,6 +3,7 @@
 #include "AlembicXform.h"
 #include "SceneEnumProc.h"
 #include "utility.h"
+#include "ExocortexCoreServicesAPI.h"
 
 namespace AbcA = ::Alembic::AbcCoreAbstract::ALEMBIC_VERSION_NS;
 namespace AbcB = ::Alembic::Abc::ALEMBIC_VERSION_NS;
@@ -53,10 +54,21 @@ Alembic::Abc::OCompoundProperty AlembicCurves::GetCompound()
 
 bool AlembicCurves::Save(double time)
 {
+    TimeValue ticks = GET_MAX_INTERFACE()->GetTime();
+
+	Object *obj = GetRef().node->EvalWorldState(ticks).obj;
+	if(mNumSamples == 0){
+		bForever = CheckIfObjIsValidForever(obj, time);
+	}
+	else{
+		bool bNewForever = CheckIfObjIsValidForever(obj, time);
+		if(bForever && bNewForever != bForever){
+			ESS_LOG_INFO( "bForever has changed" );
+		}
+	}
+
     // Store the transformation
     SaveXformSample(GetRef(), mXformSchema, mXformSample, time);
-
-    TimeValue ticks = GET_MAX_INTERFACE()->GetTime();
 
     // store the metadata
     // IMetaDataManager mng;
@@ -64,7 +76,7 @@ bool AlembicCurves::Save(double time)
     // SaveMetaData(prim.GetParent3DObject().GetRef(),this);
 
     // set the visibility
-    if(GetRef().node->IsAnimated() || mNumSamples == 0)
+    if(!bForever || mNumSamples == 0)
     {
         float flVisibility = GetRef().node->GetLocalVisibility(ticks);
         mOVisibility.set(flVisibility > 0 ? Alembic::AbcGeom::kVisibilityVisible : Alembic::AbcGeom::kVisibilityHidden);
@@ -73,7 +85,7 @@ bool AlembicCurves::Save(double time)
     // check if the spline is animated
     if(mNumSamples > 0) 
     {
-        if(!GetRef().node->IsAnimated())
+        if(bForever)
         {
             return true;
         }
@@ -86,7 +98,7 @@ bool AlembicCurves::Save(double time)
     bool bBezier = false;
 
     // Get a pointer to the spline shpae
-    Object *obj = GetRef().node->EvalWorldState(ticks).obj;
+    //Object *obj = GetRef().node->EvalWorldState(ticks).obj;
     ShapeObject *pShapeObject = NULL;
     if (obj->IsShapeObject())
     {

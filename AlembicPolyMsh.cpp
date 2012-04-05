@@ -119,6 +119,17 @@ bool AlembicPolyMesh::Save(double time)
 
 	TimeValue ticks = GetTimeValueFromFrame(time);
 
+	Object *obj = GetRef().node->EvalWorldState(ticks).obj;
+	if(mNumSamples == 0){
+		bForever = CheckIfObjIsValidForever(obj, time);
+	}
+	else{
+		bool bNewForever = CheckIfObjIsValidForever(obj, time);
+		if(bForever && bNewForever != bForever){
+			ESS_LOG_INFO( "bForever has changed" );
+		}
+	}
+
     // Store the transformation
     SaveXformSample(GetRef(), mXformSchema, mXformSample, time);
    
@@ -138,7 +149,7 @@ bool AlembicPolyMesh::Save(double time)
     // SaveMetaData(prim.GetParent3DObject().GetRef(),this);
 
     // set the visibility
-    if(GetRef().node->IsAnimated() || mNumSamples == 0)
+    if(!bForever || mNumSamples == 0)
     {
         float flVisibility = GetRef().node->GetLocalVisibility(ticks);
         mOVisibility.set(flVisibility > 0 ? Alembic::AbcGeom::kVisibilityVisible : Alembic::AbcGeom::kVisibilityHidden);
@@ -147,7 +158,7 @@ bool AlembicPolyMesh::Save(double time)
     // check if the mesh is animated (Otherwise, no need to export)
     if(mNumSamples > 0) 
     {
-        if(!GetRef().node->IsAnimated())
+        if(bForever)
         {
 			ESS_LOG_INFO( "Node is not animated, not saving topology on subsequent frames." );
             return true;
@@ -162,9 +173,6 @@ bool AlembicPolyMesh::Save(double time)
     std::vector<Alembic::Abc::N3f> normalVec;
     std::vector<uint32_t> normalIndexVec;
 
-    // Return a pointer to a TriObject given an INode or return NULL
-    // if the node cannot be converted to a TriObject
-    Object *obj = GetRef().node->EvalWorldState(ticks).obj;
     PolyObject *polyObj = NULL;
     TriObject *triObj = NULL;
 
@@ -176,7 +184,6 @@ bool AlembicPolyMesh::Save(double time)
     {
         triObj = reinterpret_cast<TriObject *>(obj->ConvertToType(ticks, Class_ID(TRIOBJ_CLASS_ID, 0)));
     }
-
     // Make sure we have a poly or a tri object
     if (polyObj == NULL && triObj == NULL)
     {

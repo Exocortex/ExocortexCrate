@@ -110,6 +110,7 @@ inline Quat ConvertAlembicQuatToMaxQuat( const Imath::Quatf &alembicQuat, bool b
 
 // Utility functions for working on INodes
 bool CheckIfNodeIsAnimated( INode *pNode );
+bool CheckIfObjIsValidForever(Object *obj, TimeValue v);
 bool IsModelTransformNode( INode *pNode );
 INode *GetParentModelTransformNode( INode *pNode );
 void LockNodeTransform(INode *pNode, bool bLock);

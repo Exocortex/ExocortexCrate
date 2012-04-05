@@ -16,6 +16,7 @@ protected:
     int mNumSamples;
     Alembic::AbcGeom::OVisibilityProperty mOVisibility;
     AlembicWriteJob * mJob;
+	bool bForever;
 public:
     AlembicObject(const SceneEntry & in_Ref, AlembicWriteJob * in_Job);
     ~AlembicObject();

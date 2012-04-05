@@ -41,6 +41,17 @@ bool AlembicCamera::Save(double time)
 {
     TimeValue ticks = GetTimeValueFromFrame(time);
 
+	Object *obj = GetRef().node->EvalWorldState(ticks).obj;
+	if(mNumSamples == 0){
+		bForever = CheckIfObjIsValidForever(obj, time);
+	}
+	else{
+		bool bNewForever = CheckIfObjIsValidForever(obj, time);
+		if(bForever && bNewForever != bForever){
+			ESS_LOG_INFO( "bForever has changed" );
+		}
+	}
+
     // Store the transformation
     SaveCameraXformSample(GetRef(), mXformSchema, mXformSample, time);
 
@@ -60,7 +71,7 @@ bool AlembicCamera::Save(double time)
     // SaveMetaData(prim.GetParent3DObject().GetRef(),this);
 
     // set the visibility
-    if(GetRef().node->IsAnimated() || mNumSamples == 0)
+    if(!bForever || mNumSamples == 0)
     {
         mOVisibility.set(GetRef().node->GetLocalVisibility(ticks) > 0 ? Alembic::AbcGeom::kVisibilityVisible : Alembic::AbcGeom::kVisibilityHidden);
     }
@@ -68,14 +79,14 @@ bool AlembicCamera::Save(double time)
     // check if the camera is animated
     if(mNumSamples > 0) 
     {
-        if(!GetRef().node->IsAnimated())
+        if(bForever)
         {
             return true;
         }
     }
 
     // Return a pointer to a Camera given an INode or return false if the node cannot be converted to a Camera
-    Object *obj = GetRef().node->EvalWorldState(ticks).obj;
+ 
     CameraObject *cam = NULL;
 
     if (obj->CanConvertToType(Class_ID(SIMPLE_CAM_CLASS_ID, 0)))

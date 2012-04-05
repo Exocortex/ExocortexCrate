@@ -222,6 +222,12 @@ bool CheckIfNodeIsAnimated( INode *pNode )
     return false;
 }
 
+bool CheckIfObjIsValidForever(Object *obj, TimeValue v)
+{
+	Interval interval = obj->ObjectValidity(v); 
+	return interval.Start() == TIME_NegInfinity && interval.End() == TIME_PosInfinity;
+}
+
 bool IsModelTransformNode( INode *pNode )
 {
     return false;

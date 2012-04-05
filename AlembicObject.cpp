@@ -15,6 +15,7 @@ AlembicObject::AlembicObject (const SceneEntry & in_Ref, AlembicWriteJob * in_Jo
     AddRef(in_Ref);
     mJob = in_Job;
     mOParent = mJob->GetArchive().getTop();
+	bForever = false;
 
    // find the parent
    std::string identifier = getIdentifierFromRef(GetRef());
