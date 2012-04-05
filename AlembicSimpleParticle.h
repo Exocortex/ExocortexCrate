@@ -9,7 +9,7 @@
 #include "AlembicNames.h"
 #include "AlembicPoints.h"
 
-const int ALEMBIC_SIMPLE_PARTICLE_REF_PBLOCK = 0;
+const int ALEMBIC_SIMPLE_PARTICLE_REF_PBLOCK2 = 0;
 
 class NullView: public View 
 {
@@ -39,10 +39,17 @@ extern int AlembicImport_Points(const std::string &file, const std::string &iden
 
 class AlembicSimpleParticle;
 
+typedef struct _viewportmesh
+{
+    Mesh *mesh;
+    BOOL needDelete;
+    _viewportmesh() : mesh(NULL), needDelete(FALSE) {}
+} viewportmesh;
+
 class AlembicSimpleParticle : public SimpleParticle, ITreeEnumProc
 {
 public:
-    IParamBlock2* pblock;
+    IParamBlock2* pblock2;
    
     // Parameters in first block:
 	enum 
@@ -63,8 +70,8 @@ public:
     void EndEditParams( IObjParam *ip, ULONG flags,Animatable *next);
 
     int	NumParamBlocks() { return 1; }					// return number of ParamBlocks in this instance
-    IParamBlock2* GetParamBlock(int i) { return pblock; } // return i'th ParamBlock
-    IParamBlock2* GetParamBlockByID(BlockID id) { return (pblock->ID() == id) ? pblock : NULL; } // return id'd ParamBlock
+    IParamBlock2* GetParamBlock(int i) { return pblock2; } // return i'th ParamBlock
+    IParamBlock2* GetParamBlockByID(BlockID id) { return (pblock2->ID() == id) ? pblock2 : NULL; } // return id'd ParamBlock
 
 	int NumRefs() { return 1; }
 	void SetReference(int i, ReferenceTarget* pTarget); 
@@ -118,16 +125,16 @@ private:
     int			    callback( INode *node );
     INode*          GetParticleMeshNode(int meshNumber, INode *displayNode);
     void            ClearCurrentViewportMeshes();
-   private:
-    Mesh *BuildPointMesh();
-    Mesh *BuildBoxMesh();
-    Mesh *BuildSphereMesh();
-    Mesh *BuildCylinderMesh();
-    Mesh *BuildConeMesh();
-    Mesh *BuildDiscMesh();
-    Mesh *BuildRectangleMesh();
-    Mesh *BuildInstanceMesh(int meshNumber);
-    Mesh *BuildNbElementsMesh();
+private:
+    Mesh *BuildPointMesh(int meshNumber, TimeValue t, INode *node, View& view, BOOL &needDelete);
+    Mesh *BuildBoxMesh(int meshNumber, TimeValue t, INode *node, View& view, BOOL &needDelete);
+    Mesh *BuildSphereMesh(int meshNumber, TimeValue t, INode *node, View& view, BOOL &needDelete);
+    Mesh *BuildCylinderMesh(int meshNumber, TimeValue t, INode *node, View& view, BOOL &needDelete);
+    Mesh *BuildConeMesh(int meshNumber, TimeValue t, INode *node, View& view, BOOL &needDelete);
+    Mesh *BuildDiscMesh(int meshNumber, TimeValue t, INode *node, View& view, BOOL &needDelete);
+    Mesh *BuildRectangleMesh(int meshNumber, TimeValue t, INode *node, View& view, BOOL &needDelete);
+    Mesh *BuildInstanceMesh(int meshNumber, TimeValue t, INode *node, View& view, BOOL &needDelete);
+    Mesh *BuildNbElementsMesh(int meshNumber, TimeValue t, INode *node, View& view, BOOL &needDelete);
 private:
     std::vector<Quat> m_ParticleOrientations;
     std::vector<Point3> m_ParticleScales;
@@ -137,8 +144,11 @@ private:
     Alembic::Abc::StringArraySamplePtr m_InstanceShapeNames;
     std::vector<INode*> m_InstanceShapeINodes;
     size_t m_TotalShapesToEnumerate;
-    std::vector<Mesh*> m_ParticleViewportMeshes;
+    std::vector<viewportmesh> m_ParticleViewportMeshes;
     std::string m_CachedAbcFile;
+private:
+    GenBoxObject *m_pBoxMaker;
+    GenSphere *m_pSphereMaker;
 };
 
 
