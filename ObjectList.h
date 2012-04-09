@@ -22,7 +22,7 @@ public:
 	ObjectEntry *Contains(INode *node);
 	INode		*FindLookatNode(INode *node);
     INode       *FindNodeWithFullName(std::string &identifier);
-    INode       *FindNodeWithName(std::string &identifier);
+    INode       *FindNodeWithName(std::string &identifier, bool removeXfo=true);
     void        FillList(SceneEnumProc &scene);
     void        ClearList();
 };

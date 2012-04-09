@@ -96,12 +96,13 @@ INode* ObjectList::FindNodeWithFullName(std::string &identifier)
     return 0;
 }
 
-INode* ObjectList::FindNodeWithName(std::string &identifier)
+INode* ObjectList::FindNodeWithName(std::string &identifier, bool removeXfo)
 {
     // Max Scene nodes are also identified by their transform nodes since an INode contains
     // both the transform and the shape.  So if we find an "xfo" at the end of the identifier
     // then we extract the model name from the identifier
-    std::string modelName = getModelName(identifier);
+	std::string modelName = identifier;
+    if(removeXfo) modelName = getModelName(identifier);
     
 	// we get the last node to ensure that it is one of the new nodes we just imported rather than one with the same name that already existed.
 	INode* pLastNode = NULL;

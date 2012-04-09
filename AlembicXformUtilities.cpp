@@ -17,6 +17,19 @@ bool isAlembicXform( Alembic::AbcGeom::IObject *pIObj, bool& isConstant ) {
 	return objXfrm.valid();
 }
 
+size_t getNumXformChildren( Alembic::AbcGeom::IObject& iObj )
+{
+	size_t xFormChildCount = 0;
+	// An XForm with xForm(s) with an xForm child will require a dummy node (and a single xform can be attached it child geometry node)
+	for(size_t j=0; j<iObj.getNumChildren(); j++)
+	{
+		if(Alembic::AbcGeom::IXform::matches(iObj.getChild(j).getMetaData()))
+		{
+			xFormChildCount++;
+		}
+	} 
+	return xFormChildCount;
+}
 
 void AlembicImport_FillInXForm_Internal(alembic_fillxform_options &options);
 
@@ -112,17 +125,42 @@ int AlembicImport_XForm(const std::string &file, const std::string &identifier, 
     xformOptions.bIsCameraTransform = bIsCamera;
     AlembicImport_FillInXForm(xformOptions);
 
+
     // Find the scene node that this transform belongs too
     // If the node does not exist, then this is just a transform, so we create
-    // a dummy helper object to attach the modifier
-    std::string modelid = getModelName(std::string(iObj.getName()));
-    INode *pNode = options.currentSceneList.FindNodeWithName(modelid);
-    if (!pNode)
+    // a dummy helper object to attach the modifier (In the case of any alembic other node, we have already created a 3DS max node)
+
+	size_t childCount = iObj.getNumChildren();
+	size_t xFormChildCount = getNumXformChildren(iObj);
+	// An XForm with xForm(s) with an xForm child will require a dummy node (and a single xform can be attached it child geometry node)
+	bool bCreateDummyNode = false;
+
+	if(xFormChildCount > 0)
+	{
+		if(childCount == xFormChildCount)
+		{
+			bCreateDummyNode = true;
+		}
+		else if(xFormChildCount > 1)
+		{
+			ESS_LOG_INFO("Warning: xForm has children of multiple types.");
+			return alembic_failure;
+		}
+	}
+	else if(childCount > 1)
+	{
+		ESS_LOG_INFO("Warning: xForm has multiple children.");
+		return alembic_failure;
+	}
+	
+	INode *pNode = NULL;
+    if(bCreateDummyNode)
     {
         // TO DO:  I think this code works but I want to review it more when we get around to supportin
         // transform tracks.  For now, I'm disabling it.
         // - PeterM 
-        /*Object* obj = static_cast<Object*>(CreateInstance(HELPER_CLASS_ID, Class_ID(DUMMY_CLASS_ID,0)));
+		// MarshallH: the code looks ok to me
+        Object* obj = static_cast<Object*>(CreateInstance(HELPER_CLASS_ID, Class_ID(DUMMY_CLASS_ID,0)));
 
         if (!obj)
             return alembic_failure;
@@ -135,7 +173,7 @@ int AlembicImport_XForm(const std::string &file, const std::string &identifier, 
 
         pDummy->EnableDisplay();
 
-        pNode = GET_MAX_INTERFACE()->CreateObjectNode(obj, modelid.c_str());
+        pNode = GET_MAX_INTERFACE()->CreateObjectNode(obj, iObj.getName().c_str());
 
         if (!pNode)
             return alembic_failure;
@@ -146,8 +184,18 @@ int AlembicImport_XForm(const std::string &file, const std::string &identifier, 
 
         // Set up any child links for this node
         AlembicImport_SetupChildLinks(iObj, options);
-        */
     }
+	else
+	{
+		std::string modelid = iObj.getChild(0).getName();//getModelName(std::string(iObj.getName()));
+		pNode = options.currentSceneList.FindNodeWithName(modelid, false);
+	}
+
+	if(pNode == NULL)
+	{
+		ESS_LOG_INFO("Error: xForm node is NULL.");
+		return alembic_failure;
+	}
  
 	// Create the xform modifier
 	AlembicXformController *pControl = static_cast<AlembicXformController*>
