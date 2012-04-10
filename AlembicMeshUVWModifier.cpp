@@ -144,7 +144,7 @@ void AlembicMeshUVWModifier::ModifyObject (TimeValue t, ModContext &mc, ObjectSt
    options.fVertexAlpha = fGeoAlpha;
     if( bTopology ) {
 	   options.nDataFillFlags |= ALEMBIC_DATAFILL_FACELIST;
-		options.nDataFillFlags |= ALEMBIC_DATAFILL_MATERIALIDS;
+	   options.nDataFillFlags |= ALEMBIC_DATAFILL_MATERIALIDS;
    }
    if( bGeometry ) {
 	   options.nDataFillFlags |= ALEMBIC_DATAFILL_VERTEX;
@@ -253,13 +253,6 @@ void AlembicMeshUVWModifier::BeginEditParams(IObjParam *ip,ULONG flags,Animatabl
     editMod  = this;
 
 	AlembicMeshUVWModifierDesc.BeginEditParams(ip, this, flags, prev);
-    
-//    AlembicXformControllerDlgProc* dlgProc;
-//	dlgProc = new AlembicXformControllerDlgProc(this);
-//	xform_params_desc.SetUserDlgProc( AlembicXformController_params, dlgProc );
-
-    // Necessary?
-	// NotifyDependents(FOREVER, PART_ALL, REFMSG_CHANGE);
 }
 
 void AlembicMeshUVWModifier::EndEditParams( IObjParam *ip, ULONG flags, Animatable *next )

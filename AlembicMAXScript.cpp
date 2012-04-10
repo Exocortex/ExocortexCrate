@@ -2,6 +2,8 @@
 #include "AlembicMax.h"
 #include "AlembicArchiveStorage.h"
 #include "AlembicMeshUtilities.h"
+#include "AlembicSplineUtilities.h"
+#include "AlembicXformUtilities.h"
 #include "AlembicXformController.h"
 #include "AlembicCameraBaseModifier.h"
 #include "AlembicSimpleParticle.h"
@@ -9,8 +11,6 @@
 #include "AlembicDefinitions.h"
 #include "AlembicWriteJob.h"
 #include "Utility.h"
-#include "AlembicSimpleSpline.h"
-#include "AlembicXformUtilities.h"
 
 // Dummy function for progress bar
 DWORD WINAPI DummyProgressFunction(LPVOID arg)

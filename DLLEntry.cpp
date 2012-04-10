@@ -31,12 +31,13 @@ ClassDesc2** getClassDescs( int& numClassDescs ) {
 		GetAlembicCameraBaseModifierClassDesc(),
 		GetAlembicVisibilityControllerClassDesc(),
 		GetAlembicSimpleParticleClassDesc(),
-		GetAlembicSimpleSplineClassDesc(),
 		GetAlembicMeshTopoModifierClassDesc(),
 		GetAlembicMeshGeomModifierClassDesc(),
 		GetAlembicMeshNormalsModifierClassDesc(),
 		GetAlembicMeshUVWModifierClassDesc(),
-		GetAlembicXformBaseModifierClassDesc()
+		GetEmptySplineObjectClassDesc(),
+		GetAlembicSplineTopoModifierClassDesc(),
+		GetAlembicSplineGeomModifierClassDesc(),
 	};
 	numClassDescs = sizeof( s_classDescs ) / sizeof( ClassDescPtr );
 	return s_classDescs;

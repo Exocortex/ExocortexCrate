@@ -264,13 +264,6 @@ void AlembicMeshNormalsModifier::BeginEditParams(IObjParam *ip,ULONG flags,Anima
     editMod  = this;
 
 	AlembicMeshNormalsModifierDesc.BeginEditParams(ip, this, flags, prev);
-    
-//    AlembicXformControllerDlgProc* dlgProc;
-//	dlgProc = new AlembicXformControllerDlgProc(this);
-//	xform_params_desc.SetUserDlgProc( AlembicXformController_params, dlgProc );
-
-    // Necessary?
-	// NotifyDependents(FOREVER, PART_ALL, REFMSG_CHANGE);
 }
 
 void AlembicMeshNormalsModifier::EndEditParams( IObjParam *ip, ULONG flags, Animatable *next )

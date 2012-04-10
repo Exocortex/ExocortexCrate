@@ -11,7 +11,7 @@ endif()
 
 if( Exocortex_SERVICES )
 	add_definitions( "-DEXOCORTEX_SERVICES" )
-endif()
+endif() 
 
 add_definitions( "-DEXOCORTEX_BETA_EXPIRY_DATE=1338422400" )	# 1338422400 - May 31, 2012
 

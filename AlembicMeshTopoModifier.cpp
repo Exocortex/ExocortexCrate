@@ -270,13 +270,6 @@ void AlembicMeshTopoModifier::BeginEditParams(IObjParam *ip,ULONG flags,Animatab
     editMod  = this;
 
 	AlembicMeshTopoModifierDesc.BeginEditParams(ip, this, flags, prev);
-    
-//    AlembicXformControllerDlgProc* dlgProc;
-//	dlgProc = new AlembicXformControllerDlgProc(this);
-//	xform_params_desc.SetUserDlgProc( AlembicXformController_params, dlgProc );
-
-    // Necessary?
-	// NotifyDependents(FOREVER, PART_ALL, REFMSG_CHANGE);
 }
 
 void AlembicMeshTopoModifier::EndEditParams( IObjParam *ip, ULONG flags, Animatable *next )

@@ -5,22 +5,13 @@
 
 #define EXOCORTEX_ALEMBIC_CATEGORY _T("Alembic")
 
-//#define EXOCORTEX_ALEMBIC_MESH_GEOMETRY _T("EA Mesh")
-//#define EXOCORTEX_ALEMBIC_SIMPLE_PARTICLES _T("EA Particles")
-//#define EXOCORTEX_ALEMBIC_POINT_CACHE_MODIFIER _T("EA Point Cache")
-
-// MAX SCRIPT
-#define ALEMBIC_MESH_GEOMETRY_CLASSID		        Class_ID(0xe855567c, 0xbcd73b8b)
-#define ALEMBIC_MESH_MODIFIER_CLASSID	            Class_ID(0x20730623, 0x5d650bdb)
-#define ALEMBIC_MESH_BASE_MODIFIER_CLASSID			Class_ID(0x45365062, 0x60984267)
-
 #define ALEMBIC_CAMERA_BASE_MODIFIER_CLASSID		Class_ID(0x115150b9, 0x5b6d187a)
 #define ALEMBIC_CAMERA_MODIFIER_CLASSID				Class_ID(0x20730624, 0x3d650bdb)
 
 #define ALEMBIC_XFORM_BASE_MODIFIER_CLASSID		    Class_ID(0x45365062, 0x69989267)
 #define ALEMBIC_TRANSFORM_MODIFIER_CLASSID			Class_ID(0x20730666, 0x5d650666)
 
-#define ALEMBIC_SIMPLE_SPLINE_CLASSID				Class_ID(0xa720ab9, 0x7efc73de)
+#define EMPTY_SPLINE_OBJET_CLASSID					Class_ID(0x4eb65d6, 0x7c454597)
 #define ALEMBIC_EXPORTER_CLASSID					Class_ID(0x79d613a4, 0x4f21c3ad)
 
 #define ALEMBIC_MESH_NORMALS_MODIFIER_CLASSID		Class_ID(0x4a9c3800, 0x7f1d67d8)
@@ -55,9 +46,15 @@
 #define ALEMBIC_SIMPLE_PARTICLE_NAME			    "Alembic Particles"
 #define ALEMBIC_SIMPLE_PARTICLE_SCRIPTNAME		    "AlembicParticles"
 
-#define ALEMBIC_UNUSED_05_CLASSID					Class_ID(0x4eb65d6, 0x7c454597)
-#define ALEMBIC_UNUSED_06_CLASSID					Class_ID(0x28233914, 0x18260c30)
-#define ALEMBIC_UNUSED_07_CLASSID					Class_ID(0x4f5637f1, 0x3ffd61f3)
+#define ALEMBIC_SPLINE_GEOM_MODIFIER_CLASSID				Class_ID(0x28233914, 0x18260c30)
+#define ALEMBIC_SPLINE_GEOM_MODIFIER_NAME			    "Alembic Spline Geometry"
+#define ALEMBIC_SPLINE_GEOM_MODIFIER_SCRIPTNAME		    "AlembicSplineGeometry"
+
+#define ALEMBIC_SPLINE_TOPO_MODIFIER_CLASSID				Class_ID(0x4f5637f1, 0x3ffd61f3)
+#define ALEMBIC_SPLINE_TOPO_MODIFIER_NAME			    "Alembic Spline Topology"
+#define ALEMBIC_SPLINE_TOPO_MODIFIER_SCRIPTNAME		    "AlembicSplineTopology"
+
+
 #define ALEMBIC_UNUSED_08_CLASSID					Class_ID(0x2cac433a, 0x424c0456)s
 #define ALEMBIC_UNUSED_09_CLASSID					Class_ID(0x5fd044f3, 0xe030797)
 #define ALEMBIC_UNUSED_10_CLASSID					Class_ID(0x5d3031e, 0x5c223799)
@@ -80,15 +77,21 @@
 
 
 ClassDesc2* GetAlembicXformControllerClassDesc();
-ClassDesc2* GetAlembicCameraBaseModifierClassDesc();
 ClassDesc2* GetAlembicVisibilityControllerClassDesc();
+
+ClassDesc2* GetAlembicCameraBaseModifierClassDesc();
+
 ClassDesc2* GetAlembicSimpleParticleClassDesc();
-ClassDesc2* GetAlembicSimpleSplineClassDesc();
+
 ClassDesc2* GetAlembicMeshTopoModifierClassDesc();
 ClassDesc2* GetAlembicMeshGeomModifierClassDesc();
 ClassDesc2* GetAlembicMeshNormalsModifierClassDesc();
 ClassDesc2* GetAlembicMeshUVWModifierClassDesc();
-ClassDesc2 *GetAlembicXformBaseModifierClassDesc();
+
+ClassDesc2 *GetEmptySplineObjectClassDesc();
+
+ClassDesc2 *GetAlembicSplineGeomModifierClassDesc();
+ClassDesc2 *GetAlembicSplineTopoModifierClassDesc();
 
 extern HINSTANCE hInstance;
 
