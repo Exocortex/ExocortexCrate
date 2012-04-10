@@ -95,7 +95,7 @@ void AlembicImport_FillInShape_Internal(alembic_fillshape_options &options)
       return;
    }
 
-   if (curveSample.getType() == Alembic::AbcGeom::ALEMBIC_VERSION_NS::kCubic && !options.pBezierShape)
+ /*  if (curveSample.getType() == Alembic::AbcGeom::ALEMBIC_VERSION_NS::kCubic && !options.pBezierShape)
    {
        return;
    }
@@ -103,7 +103,7 @@ void AlembicImport_FillInShape_Internal(alembic_fillshape_options &options)
    if (curveSample.getType() == Alembic::AbcGeom::ALEMBIC_VERSION_NS::kLinear && !options.pPolyShape)
    {
        return;
-   }
+   }*/
 
    Alembic::Abc::Int32ArraySamplePtr curveNbVertices = curveSample.getCurvesNumVertices();
    Alembic::Abc::P3fArraySamplePtr curvePos = curveSample.getPositions();
