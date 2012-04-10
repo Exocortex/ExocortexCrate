@@ -164,7 +164,7 @@ void AlembicSplineTopoModifier::ModifyObject (TimeValue t, ModContext &mc, Objec
 	alembic_fillshape_options options;
     options.pIObj =  &iObj;
 	options.pShapeObject = shape;
-    options.dTicks = t;
+    options.dTicks = GetTimeValueFromSeconds( fTime );
   	options.nDataFillFlags = 0;
     options.nDataFillFlags |= ALEMBIC_DATAFILL_SPLINE_KNOTS;
 	if( bGeometry ) {
