@@ -40,7 +40,7 @@ Alembic::Abc::OCompoundProperty AlembicCamera::GetCompound()
 bool AlembicCamera::Save(double time)
 {
     TimeValue ticks = GetTimeValueFromFrame(time);
-
+ 
 	Object *obj = GetRef().node->EvalWorldState(ticks).obj;
 	if(mNumSamples == 0){
 		bForever = CheckIfObjIsValidForever(obj, ticks);
