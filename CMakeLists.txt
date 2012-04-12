@@ -264,8 +264,8 @@ UNSET(CMAKE_LIBRARY_OUTPUT_DIRECTORY CACHE)
 UNSET(CMAKE_ARCHIVE_OUTPUT_DIRECTORY CACHE)
 
 # Alembic
-include_directories( "alembic-1.0.4" )
-ADD_SUBDIRECTORY ( alembic-1.0.4 )
+include_directories( "alembic-1.0.5" )
+ADD_SUBDIRECTORY ( alembic-1.0.5 )
 SET( ALEMBIC_CORE_LIBS AlembicAbcGeom AlembicAbc AlembicAbcCoreHDF5 AlembicAbcCoreAbstract AlembicUtil )
 
 # Python extension

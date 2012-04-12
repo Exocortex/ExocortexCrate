@@ -35,107 +35,83 @@
 
 # C++ files for this project
 SET( CXX_FILES
-
-  ArchiveBounds.cpp
-
-  GeometryScope.cpp
-
-  FilmBackXformOp.cpp
-  CameraSample.cpp
-  ICamera.cpp
-  OCamera.cpp
-
-  Basis.cpp
-  ICurves.cpp
-  OCurves.cpp
-
-  OFaceSet.cpp
-  IFaceSet.cpp
-
-  ONuPatch.cpp
-  INuPatch.cpp
-
-  OPoints.cpp
-  IPoints.cpp
-
-  OPolyMesh.cpp
-  IPolyMesh.cpp
-
-  OSubD.cpp
-  ISubD.cpp
-
-  Visibility.cpp
-
-  XformOp.cpp
-  XformSample.cpp
-  IXform.cpp
-  OXform.cpp
+  AprImpl.cpp
+  ApwImpl.cpp
+  ArImpl.cpp
+  AwImpl.cpp
+  BaseCprImpl.cpp
+  BaseCpwImpl.cpp
+  BaseOrImpl.cpp
+  BaseOwImpl.cpp
+  CacheImpl.cpp
+  CprImpl.cpp
+  CpwImpl.cpp
+  DataTypeRegistry.cpp
+  HDF5Util.cpp
+  OrImpl.cpp
+  OwImpl.cpp
+  ProtoObjectReader.cpp
+  ReadUtil.cpp
+  ReadWrite.cpp
+  SprImpl.cpp
+  SpwImpl.cpp
+  StringReadUtil.cpp
+  StringWriteUtil.cpp
+  TopCprImpl.cpp
+  TopCpwImpl.cpp
+  TopOrImpl.cpp
+  TopOwImpl.cpp
+  WriteUtil.cpp
 )
 
 SET( H_FILES
-
   All.h
-
+  AprImpl.h
+  ApwImpl.h
+  ArImpl.h
+  AwImpl.h
+  BaseCprImpl.h
+  BaseCpwImpl.h
+  BaseOrImpl.h
+  BaseOwImpl.h
+  CacheImpl.h
+  CprImpl.h
+  CpwImpl.h
+  DataTypeRegistry.h
+  HDF5Util.h
   Foundation.h
-
-  ArchiveBounds.h
-
-  IGeomBase.h
-  OGeomBase.h
-
-  GeometryScope.h
-
-  SchemaInfoDeclarations.h
-
-  FilmBackXformOp.h
-  CameraSample.h
-  ICamera.h
-  OCamera.h
-
-  Basis.h
-  CurveType.h
-  ICurves.h
-  OCurves.h
-
-  FaceSetExclusivity.h
-  OFaceSet.h
-  IFaceSet.h
-
-  ONuPatch.h
-  INuPatch.h
-
-  OGeomParam.h
-  IGeomParam.h
-
-  OPoints.h
-  IPoints.h
-
-  OPolyMesh.h
-  IPolyMesh.h
-
-  OSubD.h
-  ISubD.h
-
-  Visibility.h
-
-  XformOp.h
-  XformSample.h
-  IXform.h
-  OXform.h
+  OrImpl.h
+  OwImpl.h
+  ProtoObjectReader.h
+  ReadUtil.h
+  ReadWrite.h
+  SimplePrImpl.h
+  SimplePwImpl.h
+  SprImpl.h
+  SpwImpl.h
+  StringReadUtil.h
+  StringWriteUtil.h
+  TopCprImpl.h
+  TopCpwImpl.h
+  TopOrImpl.h
+  TopOwImpl.h
+  WriteUtil.h
+  WrittenArraySampleMap.h
 )
 
 SET( SOURCE_FILES ${CXX_FILES} ${H_FILES} )
 
-ADD_LIBRARY( AlembicAbcGeom ${SOURCE_FILES} )
+ADD_LIBRARY( AlembicAbcCoreHDF5 ${SOURCE_FILES} )
 
-set_property(TARGET "AlembicAbcGeom" PROPERTY FOLDER "${AlembicFolder}")
-
-
-INSTALL( TARGETS AlembicAbcGeom
+INSTALL( TARGETS AlembicAbcCoreHDF5
          LIBRARY DESTINATION lib
          ARCHIVE DESTINATION lib/static )
 
-INSTALL( FILES ${H_FILES}
-         DESTINATION include/Alembic/AbcGeom
+# Only install AbcCoreHDF5.h and ReadArraySampleCache
+INSTALL( FILES
+         All.h
+         ReadWrite.h
+         DESTINATION include/Alembic/AbcCoreHDF5
          PERMISSIONS OWNER_READ GROUP_READ WORLD_READ )
 
+#ADD_SUBDIRECTORY( Tests )

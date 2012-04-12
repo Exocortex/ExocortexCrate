@@ -1,6 +1,6 @@
 //-*****************************************************************************
 //
-// Copyright (c) 2009-2011,
+// Copyright (c) 2009-2012,
 //  Sony Pictures Imageworks, Inc. and
 //  Industrial Light & Magic, a division of Lucasfilm Entertainment Company Ltd.
 //
@@ -70,9 +70,8 @@ public:
     static bool matches( const AbcA::MetaData &iMetaData,
                          SchemaInterpMatching iMatching = kStrictMatching )
     {
-        return ( getInterpretation() == "" ||
-                 ( iMetaData.get( "interpretation" ) ==
-                   getInterpretation() ) );
+        return ( iMetaData.get( "interpretation" ) ==
+                 getInterpretation() );
     }
 
     //! This will check whether or not a given object (as represented by
@@ -81,8 +80,13 @@ public:
     static bool matches( const AbcA::PropertyHeader &iHeader,
                          SchemaInterpMatching iMatching = kStrictMatching )
     {
-        return ( iHeader.getDataType() == TRAITS::dataType() ) &&
-                 matches( iHeader.getMetaData(), iMatching );
+        return ( iHeader.getDataType().getPod() ==
+                 TRAITS::dataType().getPod() &&
+                 ( iHeader.getDataType().getExtent() ==
+                   TRAITS::dataType().getExtent() ||
+                   getInterpretation() == "" ) ) &&
+               iHeader.isScalar() &&
+               matches( iHeader.getMetaData(), iMatching );
     }
 
     //-*************************************************************************
