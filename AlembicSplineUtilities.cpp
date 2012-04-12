@@ -6,6 +6,7 @@
 #include "Utility.h"
 #include "AlembicSplineUtilities.h"
 #include "EmptySplineObject.h"
+#include "EmptyPolyLineObject.h"
 #include "AlembicMAXScript.h"
 
 
@@ -94,7 +95,7 @@ void AlembicImport_FillInShape_Internal(alembic_fillshape_options &options)
       return;
    }
 
- /*  if (curveSample.getType() == Alembic::AbcGeom::ALEMBIC_VERSION_NS::kCubic && !options.pBezierShape)
+   if (curveSample.getType() == Alembic::AbcGeom::ALEMBIC_VERSION_NS::kCubic && !options.pBezierShape)
    {
        return;
    }
@@ -102,7 +103,7 @@ void AlembicImport_FillInShape_Internal(alembic_fillshape_options &options)
    if (curveSample.getType() == Alembic::AbcGeom::ALEMBIC_VERSION_NS::kLinear && !options.pPolyShape)
    {
        return;
-   }*/
+   }
 
    Alembic::Abc::Int32ArraySamplePtr curveNbVertices = curveSample.getCurvesNumVertices();
    Alembic::Abc::P3fArraySamplePtr curvePos = curveSample.getPositions();
@@ -122,7 +123,7 @@ void AlembicImport_FillInShape_Internal(alembic_fillshape_options &options)
                
                if (curveSample.getWrap() == Alembic::AbcGeom::ALEMBIC_VERSION_NS::kPeriodic)
                    pSpline->SetClosed();
-
+			
                SplineKnot knot;
                int nNumKnots = (curveNbVertices->get()[i]+3-1)/3;
                for (int j = 0; j < nNumKnots; j += 1)
@@ -152,7 +153,7 @@ void AlembicImport_FillInShape_Internal(alembic_fillshape_options &options)
 
            for (int i = 0; i < options.pBezierShape->SplineCount(); i +=1)
            {
-               Spline3D *pSpline = options.pBezierShape->GetSpline(i);
+			   Spline3D *pSpline = options.pBezierShape->GetSpline(i);
                int knots = pSpline->KnotCount();
                int kType;
                for(int ix = 0; ix < knots; ++ix) 
@@ -189,7 +190,7 @@ void AlembicImport_FillInShape_Internal(alembic_fillshape_options &options)
                    pSpline->SetKnot(ix, SplineKnot(kType, LTYPE_CURVE, p, in, out)); 
                }
 
-               pSpline->ComputeBezPoints();
+			  pSpline->ComputeBezPoints();
            }
        }
        else if (options.pPolyShape)
@@ -324,19 +325,24 @@ int AlembicImport_Shape(const std::string &path, const std::string &identifier, 
         return alembic_failure;
     }
 
+	if( objCurves.getSchema().getNumSamples() == 0 ) {
+        ESS_LOG_WARNING( "Alembic Curve set has 0 samples, ignoring." );
+        return alembic_failure;
+	}
+
     Alembic::AbcGeom::ICurvesSchema::Sample curveSample;
     objCurves.getSchema().get(curveSample, 0);
 
     Object *newObject = NULL;
     if (curveSample.getType() == Alembic::AbcGeom::ALEMBIC_VERSION_NS::kCubic)
     {
-		EmptySplineObject *pEmptySplineObject = static_cast<EmptySplineObject*>(GET_MAX_INTERFACE()->CreateInstance(SHAPE_CLASS_ID, EMPTY_SPLINE_OBJET_CLASSID));
+		EmptySplineObject *pEmptySplineObject = static_cast<EmptySplineObject*>(GET_MAX_INTERFACE()->CreateInstance(SHAPE_CLASS_ID, EMPTY_SPLINE_OBJECT_CLASSID));
 	    newObject = pEmptySplineObject;
     }
     else
     {
-		EmptySplineObject *pEmptySplineObject = static_cast<EmptySplineObject*>(GET_MAX_INTERFACE()->CreateInstance(SHAPE_CLASS_ID, EMPTY_SPLINE_OBJET_CLASSID));
-	    newObject = pEmptySplineObject;
+		EmptyPolyLineObject *pEmptyPolyLineObject = static_cast<EmptyPolyLineObject*>(GET_MAX_INTERFACE()->CreateInstance(SHAPE_CLASS_ID, EMPTY_POLYLINE_OBJECT_CLASSID));
+	    newObject = pEmptyPolyLineObject;
     }
 
     if (newObject == NULL)

@@ -19,12 +19,12 @@ class EmptySplineObject: public SimpleSpline {
 
 		//  inherited virtual methods:
 
-        CreateMouseCallBack* GetCreateMouseCallBack();
+        CreateMouseCallBack* GetCreateMouseCallBack() { return NULL; }
 		void BeginEditParams( IObjParam *ip, ULONG flags,Animatable *prev);
 		void EndEditParams( IObjParam *ip, ULONG flags,Animatable *next);
 		TCHAR *GetObjectName() { return _T("Spline"); }
 		void InitNodeName(TSTR& s) { s = _T("Spline"); }		
-		Class_ID ClassID() { return EMPTY_SPLINE_OBJET_CLASSID; }  
+		Class_ID ClassID() { return EMPTY_SPLINE_OBJECT_CLASSID; }  
 		void GetClassName(TSTR& s) { s = _T("Spline"); }
 		RefTargetHandle Clone(RemapDir& remap);
 		BOOL ValidForDisplay(TimeValue t);
@@ -44,7 +44,7 @@ class EmptySplineObjectClassDesc:public ClassDesc2 {
 	void *			Create(BOOL loading = FALSE) { return new EmptySplineObject; }
 	const TCHAR *	ClassName() { return _T("Spline"); }
 	SClass_ID		SuperClassID() { return SHAPE_CLASS_ID; }
-   	Class_ID		ClassID() { return EMPTY_SPLINE_OBJET_CLASSID; }
+   	Class_ID		ClassID() { return EMPTY_SPLINE_OBJECT_CLASSID; }
     const TCHAR* 	Category() { return EXOCORTEX_ALEMBIC_CATEGORY;  }
 	void			ResetClassParams(BOOL fileReset) {}
 	};

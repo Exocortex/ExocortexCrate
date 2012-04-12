@@ -36,6 +36,7 @@ ClassDesc2** getClassDescs( int& numClassDescs ) {
 		GetAlembicMeshNormalsModifierClassDesc(),
 		GetAlembicMeshUVWModifierClassDesc(),
 		GetEmptySplineObjectClassDesc(),
+		GetEmptyPolyLineObjectClassDesc(),
 		GetAlembicSplineTopoModifierClassDesc(),
 		GetAlembicSplineGeomModifierClassDesc(),
 	};

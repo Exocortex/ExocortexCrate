@@ -43,10 +43,6 @@ EmptySplineObject::~EmptySplineObject()
 	}
 
 
-CreateMouseCallBack* EmptySplineObject::GetCreateMouseCallBack() 
-{
-    return NULL;
-}
 
 RefTargetHandle EmptySplineObject::Clone(RemapDir& remap) 
 {

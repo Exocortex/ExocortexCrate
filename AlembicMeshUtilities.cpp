@@ -843,7 +843,11 @@ int AlembicImport_PolyMesh(const std::string &path, const std::string &identifie
         return alembic_failure;
     }
 
-    // TODO: Do we need to check more than the first sample?
+	if( objMesh.getSchema().getNumSamples() == 0 ) {
+        ESS_LOG_WARNING( "Alembic Mesh set has 0 samples, ignoring." );
+        return alembic_failure;
+	}
+
     Alembic::AbcGeom::IPolyMeshSchema::Sample polyMeshSample;
     objMesh.getSchema().get(polyMeshSample, 0);
 

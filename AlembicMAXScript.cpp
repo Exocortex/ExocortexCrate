@@ -385,7 +385,7 @@ int ExocortexAlembicStaticInterface_ExocortexAlembicImport(MCHAR* strPath, BOOL 
 				ESS_LOG_INFO( "AlembicImport_XForm: " << objects[j].getFullName() );
 				int ret = AlembicImport_XForm(file, objects[j].getFullName(), options);
 				progressUpdateInterval ++;
-			}
+			} 
 
 			// PolyMesh
 			else if (Alembic::AbcGeom::IPolyMesh::matches(objects[j].getMetaData()))
