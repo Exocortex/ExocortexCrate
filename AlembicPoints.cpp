@@ -126,7 +126,7 @@ bool AlembicPoints::Save(double time)
         Imath::V3f pos = ConvertMaxPointToAlembicPoint(*particlesExt->GetParticlePositionByIndex(i), masterScaleUnitMeters);
         Imath::V3f vel = ConvertMaxVectorToAlembicVector(*particlesExt->GetParticleSpeedByIndex(i), masterScaleUnitMeters, true);
         Imath::V3f scale = ConvertMaxScaleToAlembicScale(*particlesExt->GetParticleScaleXYZByIndex(i));
-        // float width = particlesExt->GetParticleScaleByIndex(i) * GetInchesToDecimetersRatio( masterScaleUnitMeters ) / 2.0f;
+        // float width = particlesExt->GetParticleScaleByIndex(i) * GetMasterUnitToDecimeterRatio( masterScaleUnitMeters ) / 2.0f;
         TimeValue age = particlesExt->GetParticleAgeByIndex(i);
         uint64_t id = particlesExt->GetParticleBornIndex(i);
         ConvertMaxEulerXYZToAlembicQuat(*particlesExt->GetParticleOrientationByIndex(i), orientation);
@@ -134,7 +134,7 @@ bool AlembicPoints::Save(double time)
 
         // Particle size is a uniform scale multiplier in XSI.  In Max, I need to learn where to get this 
         // For now, we'll just default to 1
-        // float width = particlesExt->GetParticleScaleByIndex(i) * GetInchesToDecimetersRatio( masterScaleUnitMeters );
+        // float width = particlesExt->GetParticleScaleByIndex(i) * GetMasterUnitToDecimeterRatio( masterScaleUnitMeters );
         float width = 1.0f;
 
         ShapeType shapetype;

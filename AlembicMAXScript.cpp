@@ -262,6 +262,8 @@ int ExocortexAlembicStaticInterface_ExocortexAlembicImport(MCHAR* strPath, BOOL 
 {
 	ESS_CPP_EXCEPTION_REPORTING_START
 
+		//TestMasterUnit();
+		
 		if( ! HasFullLicense() ) {
 			ESS_LOG_ERROR( "No valid license found for Exocortex Alembic." );
 			return alembic_failure;

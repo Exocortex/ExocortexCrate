@@ -435,128 +435,131 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
            Imath::V3f const* pMeshNormalsFloor = ( meshNormalsFloor.get() != NULL ) ? meshNormalsFloor->get() : NULL;
 		   Imath::V3f const* pMeshNormalsCeil = ( meshNormalsCeil.get() != NULL ) ? meshNormalsCeil->get() : NULL;
 
-		   assert( pMeshNormalsFloor != NULL );
-		   assert( pMeshNormalsCeil != NULL );
+		   if( pMeshNormalsFloor == NULL || pMeshNormalsCeil == NULL ) {
+			   ESS_LOG_WARNING( "Mesh normals are in an invalid state in Alembic file, ignoring." );
+		   }
+		   else {
 
-           // Blend 
-           if (sampleInfo.alpha != 0.0f && meshNormalsFloor->size() == meshNormalsCeil->size())
-           {
-               int offset = 0;
-               for (int i = 0; i < numFaces; i += 1)
-               {
-                   int degree = pMeshFaceCount[i];
-                   int first = offset + degree - 1;
-                   int last = offset;
-                   for (int j = first; j >= last; j -= 1)
-                   {
-					   Imath::V3f interpolatedNormal = pMeshNormalsFloor[j] + (pMeshNormalsCeil[j] - pMeshNormalsFloor[j]) * float(sampleInfo.alpha);
-                       normalsToSet.push_back( ConvertAlembicNormalToMaxNormal_Normalized( interpolatedNormal ) );
-                   }
+			   // Blend 
+			   if (sampleInfo.alpha != 0.0f && meshNormalsFloor->size() == meshNormalsCeil->size())
+			   {
+				   int offset = 0;
+				   for (int i = 0; i < numFaces; i += 1)
+				   {
+					   int degree = pMeshFaceCount[i];
+					   int first = offset + degree - 1;
+					   int last = offset;
+					   for (int j = first; j >= last; j -= 1)
+					   {
+						   Imath::V3f interpolatedNormal = pMeshNormalsFloor[j] + (pMeshNormalsCeil[j] - pMeshNormalsFloor[j]) * float(sampleInfo.alpha);
+						   normalsToSet.push_back( ConvertAlembicNormalToMaxNormal_Normalized( interpolatedNormal ) );
+					   }
 
-                   offset += degree;
-               }
-           }
-           else
-           {
-               int offset = 0;
-               for (int i = 0; i < numFaces; i += 1)
-               {
-                   int degree = pMeshFaceCount[i];
-                   int first = offset + degree - 1;
-                   int last = offset;
-                   for (int j = first; j >= last; j -=1)
-                   {
-                       if (j > meshNormalsFloor->size())
-                       {
-                           ESS_LOG_ERROR("Normal at Face " << i << ", Vertex " << j << "does not exist at sample time " << sampleTime);
-                           normalsToSet.push_back( Point3(0,0,0) );
-                           continue;
-                       }
-                                            
-                       normalsToSet.push_back( ConvertAlembicNormalToMaxNormal( pMeshNormalsFloor[j] ) );
-                   }
+					   offset += degree;
+				   }
+			   }
+			   else
+			   {
+				   int offset = 0;
+				   for (int i = 0; i < numFaces; i += 1)
+				   {
+					   int degree = pMeshFaceCount[i];
+					   int first = offset + degree - 1;
+					   int last = offset;
+					   for (int j = first; j >= last; j -=1)
+					   {
+						   if (j > meshNormalsFloor->size())
+						   {
+							   ESS_LOG_ERROR("Normal at Face " << i << ", Vertex " << j << "does not exist at sample time " << sampleTime);
+							   normalsToSet.push_back( Point3(0,0,0) );
+							   continue;
+						   }
+	                                            
+						   normalsToSet.push_back( ConvertAlembicNormalToMaxNormal( pMeshNormalsFloor[j] ) );
+					   }
 
-                   offset += degree;
-               }
-           }
+					   offset += degree;
+				   }
+			   }
 
-		   if( options.fVertexAlpha != 1.0f ) 
-           {
-			   for( int i = 0; i < normalsToSet.size(); i ++) 
-               {
-				normalsToSet[i] *= options.fVertexAlpha;
+			   if( options.fVertexAlpha != 1.0f ) 
+			   {
+				   for( int i = 0; i < normalsToSet.size(); i ++) 
+				   {
+					normalsToSet[i] *= options.fVertexAlpha;
+				   }
+			   }
+
+			   // Set up the specify normals
+			   if (options.pMNMesh != NULL)
+			   {
+				   options.pMNMesh->SpecifyNormals();
+				   MNNormalSpec *normalSpec = options.pMNMesh->GetSpecifiedNormals();
+				   normalSpec->ClearNormals();
+				   normalSpec->SetNumFaces(numFaces);
+				   normalSpec->SetFlag(MESH_NORMAL_MODIFIER_SUPPORT, true);
+				   normalSpec->SetNumNormals((int)normalsToSet.size());
+
+				   for (int i = 0; i < normalsToSet.size(); i += 1)
+				   {
+					   normalSpec->Normal(i) = normalsToSet[i];
+					   normalSpec->SetNormalExplicit(i, true);
+				   }
+
+				   // Set up the normal faces
+				   int offset = 0;
+				   for (int i =0; i < numFaces; i += 1)
+				   {
+					   int degree = pMeshFaceCount[i];
+
+					   MNNormalFace &normalFace = normalSpec->Face(i);
+					   normalFace.SetDegree(degree);
+					   normalFace.SpecifyAll();
+
+					   for (int j = 0; j < degree; ++j)
+					   {
+						   normalFace.SetNormalID(j, offset);
+						   ++offset;
+					   }
+				   }
+
+				   // Fill in any normals we may have not gotten specified.  Also allocates space for the RVert array
+				   // which we need for doing any normal vector queries
+				   normalSpec->CheckNormals();
+				   options.pMNMesh->checkNormals(TRUE);
+			   }
+
+			   if (options.pMesh != NULL)
+			   {
+				   options.pMesh->SpecifyNormals();
+				   MeshNormalSpec *normalSpec = options.pMesh->GetSpecifiedNormals();
+				   normalSpec->ClearNormals();
+				   normalSpec->SetNumFaces(numFaces);
+				   normalSpec->SetFlag(MESH_NORMAL_MODIFIER_SUPPORT, true);
+				   normalSpec->SetNumNormals((int)normalsToSet.size());
+
+				   for (int i = 0; i < normalsToSet.size(); i += 1)
+				   {
+					   normalSpec->Normal(i) = normalsToSet[i];
+					   normalSpec->SetNormalExplicit(i, true);
+				   }
+
+				   // Set up the normal faces
+				   for (int i =0; i < numFaces; i += 1)
+				   {
+					   MeshNormalFace &normalFace = normalSpec->Face(i);
+					   normalFace.SpecifyAll();
+					   normalFace.SetNormalID(0, i*3);
+					   normalFace.SetNormalID(1, i*3+1);
+					   normalFace.SetNormalID(2, i*3+2);
+				   }
+
+				   // Fill in any normals we may have not gotten specified.  Also allocates space for the RVert array
+				   // which we need for doing any normal vector queries
+				   normalSpec->CheckNormals();
+				   options.pMesh->checkNormals(TRUE);
 			   }
 		   }
-
-           // Set up the specify normals
-           if (options.pMNMesh != NULL)
-           {
-               options.pMNMesh->SpecifyNormals();
-               MNNormalSpec *normalSpec = options.pMNMesh->GetSpecifiedNormals();
-               normalSpec->ClearNormals();
-               normalSpec->SetNumFaces(numFaces);
-               normalSpec->SetFlag(MESH_NORMAL_MODIFIER_SUPPORT, true);
-               normalSpec->SetNumNormals((int)normalsToSet.size());
-
-               for (int i = 0; i < normalsToSet.size(); i += 1)
-               {
-                   normalSpec->Normal(i) = normalsToSet[i];
-                   normalSpec->SetNormalExplicit(i, true);
-               }
-
-               // Set up the normal faces
-               int offset = 0;
-               for (int i =0; i < numFaces; i += 1)
-               {
-                   int degree = pMeshFaceCount[i];
-
-                   MNNormalFace &normalFace = normalSpec->Face(i);
-                   normalFace.SetDegree(degree);
-                   normalFace.SpecifyAll();
-
-                   for (int j = 0; j < degree; ++j)
-                   {
-                       normalFace.SetNormalID(j, offset);
-                       ++offset;
-                   }
-               }
-
-               // Fill in any normals we may have not gotten specified.  Also allocates space for the RVert array
-               // which we need for doing any normal vector queries
-               normalSpec->CheckNormals();
-               options.pMNMesh->checkNormals(TRUE);
-           }
-
-           if (options.pMesh != NULL)
-           {
-               options.pMesh->SpecifyNormals();
-               MeshNormalSpec *normalSpec = options.pMesh->GetSpecifiedNormals();
-               normalSpec->ClearNormals();
-               normalSpec->SetNumFaces(numFaces);
-               normalSpec->SetFlag(MESH_NORMAL_MODIFIER_SUPPORT, true);
-               normalSpec->SetNumNormals((int)normalsToSet.size());
-
-               for (int i = 0; i < normalsToSet.size(); i += 1)
-               {
-                   normalSpec->Normal(i) = normalsToSet[i];
-                   normalSpec->SetNormalExplicit(i, true);
-               }
-
-               // Set up the normal faces
-               for (int i =0; i < numFaces; i += 1)
-               {
-                   MeshNormalFace &normalFace = normalSpec->Face(i);
-                   normalFace.SpecifyAll();
-                   normalFace.SetNormalID(0, i*3);
-                   normalFace.SetNormalID(1, i*3+1);
-                   normalFace.SetNormalID(2, i*3+2);
-               }
-
-               // Fill in any normals we may have not gotten specified.  Also allocates space for the RVert array
-               // which we need for doing any normal vector queries
-               normalSpec->CheckNormals();
-               options.pMesh->checkNormals(TRUE);
-           }
        }
     validateMeshes( options, "ALEMBIC_DATAFILL_NORMALS" );
   }
@@ -584,102 +587,110 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
            std::vector<Point3> uvsToSet;
            uvsToSet.reserve(meshUVsFloor->size());
 
-           // Blend
-           if (sampleInfo.alpha != 0.0f && meshUVsFloor->size() == meshUVsCeil->size())
-           {
-               int offset = 0;
-               for (int i = 0; i < numFaces; i += 1)
-               {
-                   int degree = meshFaceCount->get()[i];
-                   int first = offset + degree - 1;
-                   int last = offset;
-                   for (int j = first; j >= last; j -= 1)
-                   {
-                       Point3 floorUV(meshUVsFloor->get()[j].x, meshUVsFloor->get()[j].y, 0.0f);
-                       Point3 ceilUV(meshUVsCeil->get()[j].x, meshUVsCeil->get()[j].y, 0.0f);
-                       Point3 delta = (ceilUV - floorUV) * float(sampleInfo.alpha);
-                       Point3 maxUV = floorUV + delta;
-                       uvsToSet.push_back(maxUV);
-                   }
+		   Imath::V2f const* pMeshUVsFloor = ( meshUVsFloor.get() != NULL ) ? meshUVsFloor->get() : NULL;
+		   Imath::V2f const* pMeshUVsCeil = ( meshUVsCeil.get() != NULL ) ? meshUVsCeil->get() : NULL;
 
-                   offset += degree;
-               }
-           }
-           else
-           {
-               int offset = 0;
-               for (int i = 0; i < numFaces; i += 1)
-               {
-                   int degree = meshFaceCount->get()[i];
-                   int first = offset + degree - 1;
-                   int last = offset;
-                   for (int j = first; j >= last; j -=1)
-                   {
-                       Point3 maxUV(meshUVsFloor->get()[j].x, meshUVsFloor->get()[j].y, 0.0f);
-                       uvsToSet.push_back(maxUV);
-                   }
+		   if( pMeshUVsFloor == NULL || pMeshUVsCeil == NULL ) {
+			   ESS_LOG_WARNING( "Mesh UVs are in an invalid state in Alembic file, ignoring." );
+		   }
+		   else {
+			   // Blend
+			   if (sampleInfo.alpha != 0.0f && meshUVsFloor->size() == meshUVsCeil->size())
+			   {
+				   int offset = 0;
+				   for (int i = 0; i < numFaces; i += 1)
+				   {
+					   int degree = meshFaceCount->get()[i];
+					   int first = offset + degree - 1;
+					   int last = offset;
+					   for (int j = first; j >= last; j -= 1)
+					   {
+						   Point3 floorUV(meshUVsFloor->get()[j].x, meshUVsFloor->get()[j].y, 0.0f);
+						   Point3 ceilUV(meshUVsCeil->get()[j].x, meshUVsCeil->get()[j].y, 0.0f);
+						   Point3 delta = (ceilUV - floorUV) * float(sampleInfo.alpha);
+						   Point3 maxUV = floorUV + delta;
+						   uvsToSet.push_back(maxUV);
+					   }
 
-                   offset += degree;
-               }
-           }
+					   offset += degree;
+				   }
+			   }
+			   else
+			   {
+				   int offset = 0;
+				   for (int i = 0; i < numFaces; i += 1)
+				   {
+					   int degree = meshFaceCount->get()[i];
+					   int first = offset + degree - 1;
+					   int last = offset;
+					   for (int j = first; j >= last; j -=1)
+					   {
+						   Point3 maxUV(meshUVsFloor->get()[j].x, meshUVsFloor->get()[j].y, 0.0f);
+						   uvsToSet.push_back(maxUV);
+					   }
 
-
-           // Set up the default texture map channel
-           if (options.pMNMesh != NULL)
-           {
-               int numVertices = static_cast<int>(uvsToSet.size());
-
-               options.pMNMesh->SetMapNum(2);
-               options.pMNMesh->InitMap(0);
-               options.pMNMesh->InitMap(1);
-               MNMap *map = options.pMNMesh->M(1);
-               map->setNumVerts(numVertices);
-               map->setNumFaces(numFaces);
-
-			   Point3* mapV = map->v;
-               for (int i = 0; i < numVertices; i += 1)
-               {
-                   mapV[i] = uvsToSet[i];
-               }
-
-               int offset = 0;
-               MNMapFace* mapF = map->f;
-               for (int i =0; i < numFaces; i += 1)
-               {
-                   int degree;
-                   if (i < options.pMNMesh->numf)
-                       degree = options.pMNMesh->F(i)->deg;
-                   else
-                       degree = 0;
-
-                   mapF[i].SetSize(degree);
-
-                   for (int j = 0; j < degree; j ++)
-                   {
-                       mapF[i].tv[j] = offset;
-                       ++offset;
-                   }
-               }
-           }
-           
-           if (options.pMesh != NULL)
-           {
-               options.pMesh->setNumMaps(2);
-               options.pMesh->setMapSupport(1, TRUE);
-               MeshMap &map = options.pMesh->Map(1);
-               map.setNumVerts((int)uvsToSet.size());
-               map.setNumFaces(numFaces);
-
-               // Set the map texture vertices
-			   for (int i = 0; i < uvsToSet.size(); i += 1) {
-                    map.tv[i] = uvsToSet[i];
+					   offset += degree;
+				   }
 			   }
 
-               // Set up the map texture faces
-			   for (int i =0; i < numFaces; i += 1) {
-                   map.tf[i].setTVerts(i*3, i*3+1, i*3+2);					
+
+			   // Set up the default texture map channel
+			   if (options.pMNMesh != NULL)
+			   {
+				   int numVertices = static_cast<int>(uvsToSet.size());
+
+				   options.pMNMesh->SetMapNum(2);
+				   options.pMNMesh->InitMap(0);
+				   options.pMNMesh->InitMap(1);
+				   MNMap *map = options.pMNMesh->M(1);
+				   map->setNumVerts(numVertices);
+				   map->setNumFaces(numFaces);
+
+				   Point3* mapV = map->v;
+				   for (int i = 0; i < numVertices; i += 1)
+				   {
+					   mapV[i] = uvsToSet[i];
+				   }
+
+				   int offset = 0;
+				   MNMapFace* mapF = map->f;
+				   for (int i =0; i < numFaces; i += 1)
+				   {
+					   int degree;
+					   if (i < options.pMNMesh->numf)
+						   degree = options.pMNMesh->F(i)->deg;
+					   else
+						   degree = 0;
+
+					   mapF[i].SetSize(degree);
+
+					   for (int j = 0; j < degree; j ++)
+					   {
+						   mapF[i].tv[j] = offset;
+						   ++offset;
+					   }
+				   }
 			   }
-           }
+	           
+			   if (options.pMesh != NULL)
+			   {
+				   options.pMesh->setNumMaps(2);
+				   options.pMesh->setMapSupport(1, TRUE);
+				   MeshMap &map = options.pMesh->Map(1);
+				   map.setNumVerts((int)uvsToSet.size());
+				   map.setNumFaces(numFaces);
+
+				   // Set the map texture vertices
+				   for (int i = 0; i < uvsToSet.size(); i += 1) {
+						map.tv[i] = uvsToSet[i];
+				   }
+
+				   // Set up the map texture faces
+				   for (int i =0; i < numFaces; i += 1) {
+					   map.tf[i].setTVerts(i*3, i*3+1, i*3+2);					
+				   }
+			   }
+		   }
        }
 	   validateMeshes( options, "ALEMBIC_DATAFILL_UVS" );
    }

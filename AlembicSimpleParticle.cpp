@@ -953,7 +953,7 @@ Mesh *AlembicSimpleParticle::BuildBoxMesh(int meshNumber, TimeValue t, INode *no
         m_pBoxMaker = static_cast<GenBoxObject*>
             (GET_MAX_INTERFACE()->CreateInstance(GEOMOBJECT_CLASS_ID, Class_ID(BOXOBJ_CLASS_ID, 0)));
         float masterUnitScale = (float)GetMasterScale(UNITS_METERS);
-        float oneDecimeter = GetDecimetersToInchesRatio(masterUnitScale);
+        float oneDecimeter = GetDecimeterToMasterUnitRatio(masterUnitScale);
         float size = 2 * oneDecimeter;
         m_pBoxMaker->SetParams(size, size, size);
         m_pBoxMaker->BuildMesh(0);
@@ -978,7 +978,7 @@ Mesh *AlembicSimpleParticle::BuildSphereMesh(int meshNumber, TimeValue t, INode 
             (GET_MAX_INTERFACE()->CreateInstance(GEOMOBJECT_CLASS_ID, Class_ID(SPHERE_CLASS_ID, 0)));
 
         float masterUnitScale = (float)GetMasterScale(UNITS_METERS);
-        float oneDecimeter = GetDecimetersToInchesRatio(masterUnitScale);
+        float oneDecimeter = GetDecimeterToMasterUnitRatio(masterUnitScale);
         float size = 2 * oneDecimeter;
         m_pSphereMaker->SetParams(size, 32);
         m_pSphereMaker->BuildMesh(0);

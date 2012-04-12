@@ -185,7 +185,7 @@ void ConvertMaxMatrixToAlembicMatrix( const Matrix3 &maxMatrix, const float& mas
     result = AlembicRefFrame * maxMatrix * AlembicRefFrameInverse;
 
     // Scale the translation
-    Point3 meterTrans = result.GetTrans() * GetInchesToDecimetersRatio( masterScaleUnitMeters );
+    Point3 meterTrans = result.GetTrans() * GetMasterUnitToDecimeterRatio( masterScaleUnitMeters );
     result.SetTrans(meterTrans);
 }
    
@@ -199,7 +199,7 @@ void ConvertAlembicMatrixToMaxMatrix( const Matrix3 &alembicMatrix, const float&
     result = AlembicRefFrameInverse * alembicMatrix * AlembicRefFrame;
 
     // Scale the translation
-    Point3 inchesTrans = result.GetTrans() * GetDecimetersToInchesRatio( masterScaleUnitMeters );
+    Point3 inchesTrans = result.GetTrans() * GetDecimeterToMasterUnitRatio( masterScaleUnitMeters );
     result.SetTrans(inchesTrans);
 }
 

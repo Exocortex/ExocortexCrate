@@ -40,13 +40,13 @@ Alembic::Abc::OCompoundProperty AlembicCamera::GetCompound()
 bool AlembicCamera::Save(double time)
 {
     TimeValue ticks = GetTimeValueFromFrame(time);
-
+ 
 	Object *obj = GetRef().node->EvalWorldState(ticks).obj;
 	if(mNumSamples == 0){
-		bForever = CheckIfObjIsValidForever(obj, time);
+		bForever = CheckIfObjIsValidForever(obj, ticks);
 	}
 	else{
-		bool bNewForever = CheckIfObjIsValidForever(obj, time);
+		bool bNewForever = CheckIfObjIsValidForever(obj, ticks);
 		if(bForever && bNewForever != bForever){
 			ESS_LOG_INFO( "bForever has changed" );
 		}
