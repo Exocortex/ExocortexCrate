@@ -56,7 +56,6 @@ void AlembicImport_FillInShape_Internal(alembic_fillshape_options &options)
 
    double sampleTime = GetSecondsFromTimeValue(options.dTicks);
 
-   ESS_LOG_WARNING( "Spline_Import sampleTime: " << sampleTime );
    SampleInfo sampleInfo = getSampleInfo(
       sampleTime,
       obj.getSchema().getTimeSampling(),
@@ -111,7 +110,6 @@ void AlembicImport_FillInShape_Internal(alembic_fillshape_options &options)
    // Prepare the knots
    if (options.nDataFillFlags & ALEMBIC_DATAFILL_SPLINE_KNOTS)
    {
-	   ESS_LOG_WARNING( "Spline_Import ALEMBIC_DATAFILL_SPLINE_KNOTS" );
        Alembic::Abc::Int32ArraySamplePtr curveNbVertices = curveSample.getCurvesNumVertices();
 
        if (options.pBezierShape)
@@ -147,7 +145,6 @@ void AlembicImport_FillInShape_Internal(alembic_fillshape_options &options)
    // Set the control points
    if (options.nDataFillFlags & ALEMBIC_DATAFILL_VERTEX)
    {
-	   ESS_LOG_WARNING( "Spline_Import ALEMBIC_DATAFILL_VERTEX" );
        if (options.pBezierShape)
        {
            int nVertexOffset = 0;

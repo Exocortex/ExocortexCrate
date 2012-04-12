@@ -183,6 +183,18 @@ static ExocortexAlembicStaticInterface exocortexAlembic;
 
 void AlembicImport_TimeControl( alembic_importoptions &options ) {
 
+	// check if an Alembic Time Control already exists in the scene.
+
+	BOOL alreadyExists = ExecuteMAXScriptScript( "select $Alembic_Time_Control", TRUE );
+	if( alreadyExists != 0 ) {
+		if( GetCOREInterface()->GetSelNodeCount() > 0 ) {
+			INode *pSelectedNode = GetCOREInterface()->GetSelNode( 0 );
+			HelperObject *pSelectedHelper = static_cast<HelperObject*>( pSelectedNode->GetObjectRef() );
+			options.pTimeControl = pSelectedHelper;
+			return;
+		}
+	}
+
 	// Create the xform modifier
 	HelperObject *pHelper = static_cast<HelperObject*>
 		(GetCOREInterface()->CreateInstance(HELPER_CLASS_ID, ALEMBIC_TIME_CONTROL_HELPER_CLASSID));
