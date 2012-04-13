@@ -33,21 +33,73 @@
 ##
 ##-*****************************************************************************
 
-# Create a container project for all the libraries.
-PROJECT( ALEMBIC_LIBS )
+# C++ files for this project
+SET( CXX_FILES 
+     Foundation.cpp
+     TimeSampling.cpp
+     TimeSamplingType.cpp
 
-# Include the source dirs to make the library root dir an include
-INCLUDE_DIRECTORIES( ${ALEMBIC_LIBS_SOURCE_DIR} )
+     ArraySample.cpp
+     ReadArraySampleCache.cpp
+     ScalarSample.cpp
 
-# Recurse into all the subdirectories
-ADD_SUBDIRECTORY( Alembic )
+     BasePropertyWriter.cpp
+     ScalarPropertyWriter.cpp
+     ArrayPropertyWriter.cpp
+     CompoundPropertyWriter.cpp
+     ObjectWriter.cpp 
+     ArchiveWriter.cpp 
 
-# Setup dependencies
-ADD_DEPENDENCIES(AlembicUtil zlib)
-ADD_DEPENDENCIES(AlembicUtil ilmbase)
-ADD_DEPENDENCIES(AlembicAbc hdf5)
-ADD_DEPENDENCIES(AlembicAbc hdf5_hl)
-ADD_DEPENDENCIES(AlembicAbc AlembicUtil)
-ADD_DEPENDENCIES(AlembicAbcCoreAbstract AlembicAbc)
-ADD_DEPENDENCIES(AlembicAbcCoreHDF5 AlembicAbcCoreAbstract)
-ADD_DEPENDENCIES(AlembicAbcGeom AlembicAbcCoreHDF5)
+     BasePropertyReader.cpp
+     ScalarPropertyReader.cpp
+     ArrayPropertyReader.cpp
+     CompoundPropertyReader.cpp
+     ObjectReader.cpp 
+     ArchiveReader.cpp 
+)
+
+SET( H_FILES 
+     All.h
+     ForwardDeclarations.h
+
+     ArraySample.h
+     ArraySampleKey.h
+     ReadArraySampleCache.h
+     ScalarSample.h
+
+     DataType.h
+     Foundation.h
+     MetaData.h
+     ObjectHeader.h
+     PropertyHeader.h
+     TimeSampling.h
+     TimeSamplingType.h 
+
+     BasePropertyWriter.h
+     ScalarPropertyWriter.h
+     ArrayPropertyWriter.h
+     CompoundPropertyWriter.h
+     ObjectWriter.h 
+     ArchiveWriter.h 
+
+     BasePropertyReader.h
+     ScalarPropertyReader.h
+     ArrayPropertyReader.h
+     CompoundPropertyReader.h
+     ObjectReader.h 
+     ArchiveReader.h 
+)
+
+SET( SOURCE_FILES ${CXX_FILES} ${H_FILES} )
+
+ADD_LIBRARY( AlembicAbcCoreAbstract ${SOURCE_FILES} )
+
+INSTALL( TARGETS AlembicAbcCoreAbstract
+         LIBRARY DESTINATION lib
+         ARCHIVE DESTINATION lib/static )
+
+INSTALL( FILES ${H_FILES}
+         DESTINATION include/Alembic/AbcCoreAbstract
+         PERMISSIONS OWNER_READ GROUP_READ WORLD_READ )
+
+#ADD_SUBDIRECTORY( Tests )

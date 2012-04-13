@@ -33,13 +33,12 @@
 ##
 ##-*****************************************************************************
 
+# Create a container project for all the libraries.
+PROJECT( ALEMBIC_LIBS )
+
+# Include the source dirs to make the library root dir an include
+INCLUDE_DIRECTORIES( ${ALEMBIC_LIBS_SOURCE_DIR} )
+
 # Recurse into all the subdirectories
-PROJECT( ALEMBIC_BOOTSTRAP_LIBS )
-
-# Include the source dirs
-INCLUDE_DIRECTORIES( ${ALEMBIC_BOOTSTRAP_LIBS_SOURCE_DIR} )
-
-# Recurse into subdirectories
-ADD_SUBDIRECTORY( CMakeHelloWorldUtil )
-ADD_SUBDIRECTORY( TrivialBoostUsageUtil )
-
+ADD_SUBDIRECTORY( Bootstrap )
+ADD_SUBDIRECTORY( Alembic )

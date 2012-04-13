@@ -1,6 +1,6 @@
 //-*****************************************************************************
 //
-// Copyright (c) 2009-2011,
+// Copyright (c) 2009-2012,
 //  Sony Pictures Imageworks, Inc. and
 //  Industrial Light & Magic, a division of Lucasfilm Entertainment Company Ltd.
 //
@@ -75,9 +75,8 @@ public:
     {
         if ( iMatching == kStrictMatching )
         {
-            return ( getInterpretation() == "" ||
-                     ( iMetaData.get( "interpretation" ) ==
-                       getInterpretation() ) );
+            return ( iMetaData.get( "interpretation" ) ==
+                     getInterpretation() );
         }
         return true;
     }
@@ -88,8 +87,13 @@ public:
     static bool matches( const AbcA::PropertyHeader &iHeader,
                          SchemaInterpMatching iMatching = kStrictMatching )
     {
-        return ( iHeader.getDataType() == TRAITS::dataType() ) &&
-            matches( iHeader.getMetaData(), iMatching );
+        return ( iHeader.getDataType().getPod() ==
+                 TRAITS::dataType().getPod() &&
+                 ( iHeader.getDataType().getExtent() ==
+                   TRAITS::dataType().getExtent() ||
+                   getInterpretation() == "" ) ) &&
+               iHeader.isArray() &&
+               matches( iHeader.getMetaData(), iMatching );
     }
 
     //-*************************************************************************
