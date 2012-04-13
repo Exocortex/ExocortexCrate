@@ -34,86 +34,69 @@
 ##-*****************************************************************************
 
 # C++ files for this project
-SET( CXX_FILES
-  AprImpl.cpp
-  ApwImpl.cpp
-  ArImpl.cpp
-  AwImpl.cpp
-  BaseCprImpl.cpp
-  BaseCpwImpl.cpp
-  BaseOrImpl.cpp
-  BaseOwImpl.cpp
-  CacheImpl.cpp
-  CprImpl.cpp
-  CpwImpl.cpp
-  DataTypeRegistry.cpp
-  HDF5Util.cpp
-  OrImpl.cpp
-  OwImpl.cpp
-  ProtoObjectReader.cpp
-  ReadUtil.cpp
-  ReadWrite.cpp
-  SprImpl.cpp
-  SpwImpl.cpp
-  StringReadUtil.cpp
-  StringWriteUtil.cpp
-  TopCprImpl.cpp
-  TopCpwImpl.cpp
-  TopOrImpl.cpp
-  TopOwImpl.cpp
-  WriteUtil.cpp
+SET( CXX_FILES 
+  ArchiveInfo.cpp
+  ErrorHandler.cpp
+
+  IArchive.cpp
+  IArrayProperty.cpp
+  ICompoundProperty.cpp
+  IObject.cpp
+  ISampleSelector.cpp
+  IScalarProperty.cpp
+
+  OArchive.cpp
+  OArrayProperty.cpp
+  OCompoundProperty.cpp
+  OObject.cpp
+  OScalarProperty.cpp
 )
 
-SET( H_FILES
+SET( H_FILES 
   All.h
-  AprImpl.h
-  ApwImpl.h
-  ArImpl.h
-  AwImpl.h
-  BaseCprImpl.h
-  BaseCpwImpl.h
-  BaseOrImpl.h
-  BaseOwImpl.h
-  CacheImpl.h
-  CprImpl.h
-  CpwImpl.h
-  DataTypeRegistry.h
-  HDF5Util.h
+  Base.h
+  ErrorHandler.h
   Foundation.h
-  OrImpl.h
-  OwImpl.h
-  ProtoObjectReader.h
-  ReadUtil.h
-  ReadWrite.h
-  SimplePrImpl.h
-  SimplePwImpl.h
-  SprImpl.h
-  SpwImpl.h
-  StringReadUtil.h
-  StringWriteUtil.h
-  TopCprImpl.h
-  TopCpwImpl.h
-  TopOrImpl.h
-  TopOwImpl.h
-  WriteUtil.h
-  WrittenArraySampleMap.h
+  Argument.h
+  ArchiveInfo.h
+
+  IArchive.h
+  IArrayProperty.h
+  IBaseProperty.h
+  ICompoundProperty.h
+  IObject.h
+  ISampleSelector.h
+  IScalarProperty.h
+  ISchema.h
+  ISchemaObject.h
+  ITypedArrayProperty.h
+  ITypedScalarProperty.h
+
+  OArchive.h
+  OArrayProperty.h
+  OBaseProperty.h
+  OCompoundProperty.h
+  OObject.h
+  OScalarProperty.h
+  OSchema.h
+  OSchemaObject.h
+  OTypedArrayProperty.h
+  OTypedScalarProperty.h
+
+  TypedArraySample.h
+  TypedPropertyTraits.h
 )
 
 SET( SOURCE_FILES ${CXX_FILES} ${H_FILES} )
 
-ADD_LIBRARY( AlembicAbcCoreHDF5 ${SOURCE_FILES} )
+ADD_LIBRARY( AlembicAbc ${SOURCE_FILES} )
 
-set_property(TARGET "AlembicAbcCoreHDF5" PROPERTY FOLDER "${AlembicFolder}")
-
-
-INSTALL( TARGETS AlembicAbcCoreHDF5
+INSTALL( TARGETS AlembicAbc
          LIBRARY DESTINATION lib
          ARCHIVE DESTINATION lib/static )
-
-# Only install AbcCoreHDF5.h and ReadArraySampleCache
-INSTALL( FILES
-         All.h
-         ReadWrite.h
-         DESTINATION include/Alembic/AbcCoreHDF5
+ 
+INSTALL( FILES ${H_FILES}
+         DESTINATION include/Alembic/Abc
          PERMISSIONS OWNER_READ GROUP_READ WORLD_READ )
 
+#ADD_SUBDIRECTORY( Tests )

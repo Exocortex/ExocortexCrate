@@ -33,75 +33,13 @@
 ##
 ##-*****************************************************************************
 
-# C++ files for this project
-SET( CXX_FILES 
-     Foundation.cpp
-     TimeSampling.cpp
-     TimeSamplingType.cpp
+# Recurse into all the subdirectories
+PROJECT( ALEMBIC_BOOTSTRAP_LIBS )
 
-     ArraySample.cpp
-     ReadArraySampleCache.cpp
-     ScalarSample.cpp
+# Include the source dirs
+INCLUDE_DIRECTORIES( ${ALEMBIC_BOOTSTRAP_LIBS_SOURCE_DIR} )
 
-     BasePropertyWriter.cpp
-     ScalarPropertyWriter.cpp
-     ArrayPropertyWriter.cpp
-     CompoundPropertyWriter.cpp
-     ObjectWriter.cpp 
-     ArchiveWriter.cpp 
-
-     BasePropertyReader.cpp
-     ScalarPropertyReader.cpp
-     ArrayPropertyReader.cpp
-     CompoundPropertyReader.cpp
-     ObjectReader.cpp 
-     ArchiveReader.cpp 
-)
-
-SET( H_FILES 
-     All.h
-     ForwardDeclarations.h
-
-     ArraySample.h
-     ArraySampleKey.h
-     ReadArraySampleCache.h
-     ScalarSample.h
-
-     DataType.h
-     Foundation.h
-     MetaData.h
-     ObjectHeader.h
-     PropertyHeader.h
-     TimeSampling.h
-     TimeSamplingType.h 
-
-     BasePropertyWriter.h
-     ScalarPropertyWriter.h
-     ArrayPropertyWriter.h
-     CompoundPropertyWriter.h
-     ObjectWriter.h 
-     ArchiveWriter.h 
-
-     BasePropertyReader.h
-     ScalarPropertyReader.h
-     ArrayPropertyReader.h
-     CompoundPropertyReader.h
-     ObjectReader.h 
-     ArchiveReader.h 
-)
-
-SET( SOURCE_FILES ${CXX_FILES} ${H_FILES} )
-
-ADD_LIBRARY( AlembicAbcCoreAbstract ${SOURCE_FILES} )
-
-set_property(TARGET "AlembicAbcCoreAbstract" PROPERTY FOLDER "${AlembicFolder}")
-
-
-INSTALL( TARGETS AlembicAbcCoreAbstract
-         LIBRARY DESTINATION lib
-         ARCHIVE DESTINATION lib/static )
-
-INSTALL( FILES ${H_FILES}
-         DESTINATION include/Alembic/AbcCoreAbstract
-         PERMISSIONS OWNER_READ GROUP_READ WORLD_READ )
+# Recurse into subdirectories
+#ADD_SUBDIRECTORY( CMakeHelloWorldUtil )
+#ADD_SUBDIRECTORY( TrivialBoostUsageUtil )
 
