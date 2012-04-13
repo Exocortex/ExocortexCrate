@@ -165,6 +165,11 @@ void AlembicCameraBaseModifier::ModifyObject(TimeValue t, ModContext &mc, Object
 
 	// Find out if we are modifying a poly object or a tri object
 	ESS_LOG_INFO( "SuperclassID: " << os->obj->SuperClassID() );
+	MSTR pClassName;
+	os->obj->GetClassName( pClassName );
+	ESS_LOG_INFO( "GetClassName: " << pClassName  );
+	ESS_LOG_INFO( "ClassID: " << os->obj->ClassID().PartA() << " " <<  os->obj->ClassID().PartB() );
+	ESS_LOG_INFO( "GetObjectName: " << os->obj->GetObjectName() );
 	MSTR szName;
 	
 	ESS_LOG_INFO( "os->obj->CanConvertToType(Class_ID(SIMPLE_CAM_CLASS_ID,0)): " << os->obj->CanConvertToType(Class_ID(SIMPLE_CAM_CLASS_ID,0)) );

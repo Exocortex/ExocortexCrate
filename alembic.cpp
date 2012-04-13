@@ -31,7 +31,7 @@ void AlembicImport_SetupChildLinks( Alembic::Abc::IObject &obj, alembic_importop
 			}
 			else 
 			{
-				name = childObj.getName();
+				name = childObj.getName(); 
 			}
 
             INode *pChildNode = options.currentSceneList.FindNodeWithName(name, false);
