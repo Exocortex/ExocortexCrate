@@ -3,4 +3,5 @@ install/WindowsXP
 install/Linux
 build/vs*
 build/unix*
+build/Unix*
 *~
