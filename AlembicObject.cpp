@@ -17,25 +17,28 @@ AlembicObject::AlembicObject (const SceneEntry & in_Ref, AlembicWriteJob * in_Jo
     mOParent = mJob->GetArchive().getTop();
 	bForever = false;
 
-   // find the parent
-   std::string identifier = getIdentifierFromRef(GetRef());
-   std::vector<std::string> parts;
-   boost::split(parts, identifier, boost::is_any_of("/"));
+	bool bFlatten = GetCurrentJob()->GetOption("flattenHierarchy");
+	if(!bFlatten){
+		// find the parent
+		std::string identifier = getIdentifierFromRef(GetRef());
+		std::vector<std::string> parts;
+		boost::split(parts, identifier, boost::is_any_of("/"));
 
-   for(size_t i=1;i<parts.size();i++)
-   {
-      for(size_t j=0;j<mOParent.getNumChildren();j++)
-      {
-         Alembic::Abc::OObject child = mOParent.getChild(j);
-         if(child.getName() == parts[i])
-         {
-            mOParent = child;
-            break;
-         }
-      }
-   }
+		for(size_t i=1;i<parts.size();i++)
+		{
+		  for(size_t j=0;j<mOParent.getNumChildren();j++)
+		  {
+			 Alembic::Abc::OObject child = mOParent.getChild(j);
+			 if(child.getName() == parts[i])
+			 {
+				mOParent = child;
+				break;
+			 }
+		  }
+		}
+	}
 
-   mNumSamples = 0;
+	mNumSamples = 0;
 }
 
 AlembicObject::~AlembicObject()

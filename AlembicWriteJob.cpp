@@ -145,7 +145,7 @@ bool AlembicWriteJob::PreProcess()
             ptr.reset(new AlembicCamera(*object->entry,this));
             AddObject(ptr);
         }
-        else if (type == OBTYPE_DUMMY)
+        else if (type == OBTYPE_DUMMY && !GetOption("flattenHierarchy"))
         {
             AlembicObjectPtr ptr;
             ptr.reset(new AlembicXForm(*object->entry,this));            

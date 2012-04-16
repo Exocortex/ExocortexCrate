@@ -230,7 +230,7 @@ bool CheckIfObjIsValidForever(Object *obj, TimeValue v)
 
 bool IsModelTransformNode( INode *pNode )
 {
-    return false;
+    return true;
 }
 
 INode *GetParentModelTransformNode( INode *pNode )

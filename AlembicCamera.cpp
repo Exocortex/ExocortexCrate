@@ -52,8 +52,10 @@ bool AlembicCamera::Save(double time)
 		}
 	}
 
+	bool bFlatten = GetCurrentJob()->GetOption("flattenHierarchy");
+
     // Store the transformation
-    SaveCameraXformSample(GetRef(), mXformSchema, mXformSample, time);
+    SaveCameraXformSample(GetRef(), mXformSchema, mXformSample, time, bFlatten);
 
     // Set the xform sample
     Matrix3 wm = GetRef().node->GetObjTMAfterWSM(ticks);
