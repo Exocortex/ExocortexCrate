@@ -610,6 +610,10 @@ void AlembicSimpleParticle::FillParticleShapeNodes(Alembic::AbcGeom::IPoints &iP
     m_TotalShapesToEnumerate = 0;
     m_InstanceShapeINodes.clear();
 
+	if( iPoints.getSchema().getPropertyHeader( ".instancenames" ) == NULL ) {
+		return;
+	}
+
     IStringArrayProperty shapeInstanceNameProperty = Alembic::Abc::IStringArrayProperty(iPoints.getSchema(), ".instancenames");
     if (!shapeInstanceNameProperty.valid() || shapeInstanceNameProperty.getNumSamples() == 0)
     {
