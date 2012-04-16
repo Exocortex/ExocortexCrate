@@ -439,6 +439,14 @@ int ExocortexAlembicStaticInterface_ExocortexAlembicImport(MCHAR* strPath, BOOL 
 				int ret = AlembicImport_Shape(file, objects[j].getFullName(), options);
 				progressUpdateInterval ++;
 			}
+			else if (Alembic::AbcGeom::ISubD::matches(objects[j].getMetaData())) {
+				ESS_LOG_WARNING( "Exocortex Alembic for 3DS Max does not yet support SubD primitives: " << objects[j].getFullName() );
+			}
+			else {
+				std::string schemaObjTitle = objects[j].getMetaData().get( "schemaObjTitle" );
+				std::string schema = objects[j].getMetaData().get( "schema" );
+				ESS_LOG_INFO( "Diagnostics, primitive not supported: " << objects[j].getFullName() << "( " << schemaObjTitle << " " << schema << " )" );
+			}
 		}
 
 		i->ProgressEnd();
