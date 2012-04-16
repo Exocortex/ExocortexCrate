@@ -93,8 +93,8 @@ public:
 
     void Copy(Control* pFrom){}
     virtual int IsKeyable() { return 0; }
-    virtual BOOL IsLeaf() { return TRUE; }
-    virtual BOOL IsReplaceable() { return FALSE; }
+    virtual BOOL IsLeaf() { return FALSE; }
+    virtual BOOL IsReplaceable() { return TRUE; }
 
     virtual void  GetValueLocalTime(TimeValue t, void *ptr, Interval &valid, GetSetMethod method = CTRL_ABSOLUTE);
     virtual void  SetValueLocalTime(TimeValue t, void *ptr, int commit, GetSetMethod method = CTRL_ABSOLUTE);
