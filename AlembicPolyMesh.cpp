@@ -755,7 +755,7 @@ MStatus AlembicPolyMeshDeformNode::deform(MDataBlock & dataBlock, MItGeometry & 
    float iblend = 1.0f - blend;
    for(iter.reset(); !iter.isDone(); iter.next())
    {
-      float weight = weightValue(dataBlock,geomIndex,iter.index());
+      float weight = weightValue(dataBlock,geomIndex,iter.index()) * env;
       if(weight == 0.0f)
          continue;
       float iweight = 1.0f - weight;

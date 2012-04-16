@@ -4,6 +4,7 @@
 #include <maya/MPoint.h>
 #include <maya/MPointArray.h>
 #include <maya/MFnSubDNames.h>
+#include <maya/MItSubdVertex.h>
 
 namespace AbcA = ::Alembic::AbcCoreAbstract::ALEMBIC_VERSION_NS;
 using namespace AbcA;
@@ -407,76 +408,69 @@ MStatus AlembicSubDNode::compute(const MPlug & plug, MDataBlock & dataBlock)
       }
    }
 
-   // check if we already have the right polygons
-   if(mSubD.vertexCount() != points.length() || 
-      mSubD.polygonCount() != (unsigned int)sampleCounts->size())
+   MIntArray counts;
+   MIntArray indices;
+   counts.setLength((unsigned int)sampleCounts->size());
+   indices.setLength((unsigned int)sampleIndices->size());
+   mSampleLookup.resize(indices.length());
+
+   unsigned int offset = 0;
+   for(unsigned int i=0;i<counts.length();i++)
    {
-      MIntArray counts;
-      MIntArray indices;
-      counts.setLength((unsigned int)sampleCounts->size());
-      indices.setLength((unsigned int)sampleIndices->size());
-      mSampleLookup.resize(indices.length());
-
-      unsigned int offset = 0;
-      for(unsigned int i=0;i<counts.length();i++)
+      counts[i] = sampleCounts->get()[i];
+      for(int j=0;j<counts[i];j++)
       {
-         counts[i] = sampleCounts->get()[i];
-         for(int j=0;j<counts[i];j++)
-         {
-            MString count,index;
-            count.set((double)counts[i]);
-            index.set((double)sampleIndices->get()[offset+j]);
-            mSampleLookup[offset+counts[i]-j-1] = offset+j;
-            indices[offset+j] = sampleIndices->get()[offset+counts[i]-j-1];
-         }
-         offset += counts[i];
+         MString count,index;
+         count.set((double)counts[i]);
+         index.set((double)sampleIndices->get()[offset+j]);
+         mSampleLookup[offset+counts[i]-j-1] = offset+j;
+         indices[offset+j] = sampleIndices->get()[offset+counts[i]-j-1];
       }
+      offset += counts[i];
+   }
 
-      // create a subd either with or without uvs
-      mSubD.createBaseMesh(false,points.length(),counts.length(),points,counts,indices,mSubDData);
-      //mSubD.updateSubdSurface();
+   // create a subd either with or without uvs
+   mSubD.createBaseMesh(false,points.length(),counts.length(),points,counts,indices,mSubDData);
+   //mSubD.updateSubdSurface();
 
-      // check if we need to import uvs
-      if(importUvs)
+   // check if we need to import uvs
+   if(importUvs)
+   {
+      Alembic::AbcGeom::IV2fGeomParam uvsParam = mSchema.getUVsParam();
+      if(uvsParam.valid())
       {
-         Alembic::AbcGeom::IV2fGeomParam uvsParam = mSchema.getUVsParam();
-         if(uvsParam.valid())
+         if(uvsParam.getNumSamples() > 0)
          {
-            if(uvsParam.getNumSamples() > 0)
-            {
-               sampleInfo = getSampleInfo(
-                  inputTime,
-                  uvsParam.getTimeSampling(),
-                  uvsParam.getNumSamples()
-               );
+            sampleInfo = getSampleInfo(
+               inputTime,
+               uvsParam.getTimeSampling(),
+               uvsParam.getNumSamples()
+            );
 
-               Alembic::Abc::V2fArraySamplePtr sampleUvs = uvsParam.getExpandedValue(sampleInfo.floorIndex).getVals();
-               if(sampleUvs->size() == (size_t)indices.length())
+            Alembic::Abc::V2fArraySamplePtr sampleUvs = uvsParam.getExpandedValue(sampleInfo.floorIndex).getVals();
+            if(sampleUvs->size() == (size_t)indices.length())
+            {
+               unsigned int offset = 0;
+               MUint64Array indices;
+               for(unsigned int i=0;i<mSubD.polygonCount();i++)
                {
-                  unsigned int offset = 0;
-                  MUint64Array indices;
-                  for(unsigned int i=0;i<mSubD.polygonCount();i++)
+                  unsigned int count = mSubD.polygonVertexCount(MFnSubdNames::baseFaceIdFromIndex(i));
+                  MDoubleArray uValues,vValues;
+                  uValues.setLength(count);
+                  vValues.setLength(count);
+                  for(unsigned int j=0;j<count;j++)
                   {
-                     unsigned int count = mSubD.polygonVertexCount(MFnSubdNames::baseFaceIdFromIndex(i));
-                     MDoubleArray uValues,vValues;
-                     uValues.setLength(count);
-                     vValues.setLength(count);
-                     for(unsigned int j=0;j<count;j++)
-                     {
-                        uValues[count-j-1] = sampleUvs->get()[offset].x;
-                        vValues[count-j-1] = sampleUvs->get()[offset].y;
-                        offset++;
-                     }
-                     mSubD.polygonSetVertexUVs(MFnSubdNames::baseFaceIdFromIndex(i),uValues,vValues);
-                     mSubD.polygonSetUseUVs(MFnSubdNames::baseFaceIdFromIndex(i),true);
+                     uValues[count-j-1] = sampleUvs->get()[offset].x;
+                     vValues[count-j-1] = sampleUvs->get()[offset].y;
+                     offset++;
                   }
+                  mSubD.polygonSetVertexUVs(MFnSubdNames::baseFaceIdFromIndex(i),uValues,vValues);
+                  mSubD.polygonSetUseUVs(MFnSubdNames::baseFaceIdFromIndex(i),true);
                }
             }
          }
       }
    }
-   else if(mSubD.vertexCount() == points.length())
-      mSubD.vertexBaseMeshSet(points);
 
    // output all channels
    dataBlock.outputValue(mOutGeometryAttr).set(mSubDData);
@@ -539,10 +533,46 @@ MStatus AlembicSubDDeformNode::initialize()
    return status;
 }
 
+MStatus AlembicSubDDeformNode::compute(const MPlug& plug, MDataBlock& dataBlock)
+{
+   if (plug.attribute() == outputGeom && mVertexLookup.size() == 0)
+   {
+      unsigned int index = plug.logicalIndex();
+      MObject thisNode = this->thisMObject();
+      MPlug inPlug(thisNode,input);
+      inPlug.selectAncestorLogicalIndex(index,input);
+      MDataHandle hInput = dataBlock.inputValue(inPlug);
+
+      MDataHandle hGeom = hInput.child(inputGeom);
+      MFnSubd subDiv(hGeom.asSubdSurface());
+
+      MFnSubdNames names;
+
+      unsigned int count = subDiv.polygonCount();
+      std::vector<bool> done(subDiv.vertexCount());
+      for(size_t i=0;i<done.size();i++)
+         done[i] = false;
+
+      MUint64Array vertices;
+      for(index=0; index<count; index++)
+      {
+         MUint64 id = names.baseFaceIdFromIndex(index);
+         subDiv.polygonVertices(id,vertices);
+         for(unsigned int i=0;i<vertices.length();i++)
+         {
+            unsigned int j = subDiv.vertexBaseIndexFromVertexId(vertices[i]);
+            if(done[j])
+               continue;
+            done[j] = true;
+            mVertexLookup.push_back(j);
+         }
+      }
+   }
+   return AlembicObjectDeformNode::compute(plug,dataBlock);
+}
+
 MStatus AlembicSubDDeformNode::deform(MDataBlock & dataBlock, MItGeometry & iter, const MMatrix & localToWorld, unsigned int geomIndex)
 {
-   MStatus status;
-
    // get the envelope data
    float env = dataBlock.inputValue( envelope ).asFloat();
    if(env == 0.0f) // deformer turned off
@@ -614,35 +644,39 @@ MStatus AlembicSubDDeformNode::deform(MDataBlock & dataBlock, MItGeometry & iter
    // several times
    float blend = (float)sampleInfo.alpha;
    float iblend = 1.0f - blend;
-   for(iter.reset(); !iter.isDone(); iter.next())
+   unsigned int index = 0;
+   for(iter.reset();!iter.isDone(); iter.next())
    {
-      float weight = weightValue(dataBlock,geomIndex,iter.index());
+      index = iter.index();
+      MFloatPoint pt = iter.position();
+      MPoint abcPos = pt;
+      if(index >= mVertexLookup.size())
+         continue;
+      float weight = weightValue(dataBlock,geomIndex,index) * env;
       if(weight == 0.0f)
          continue;
       float iweight = 1.0f - weight;
-      if(iter.index() >= samplePos->size())
+      if(index >= samplePos->size())
          continue;
       bool done = false;
-      MFloatPoint pt = iter.position();
-      MFloatPoint abcPt;
+      index = mVertexLookup[index];
       if(sampleInfo.alpha != 0.0)
       {
          if(samplePos2->size() == samplePos->size())
          {
-            pt.x = iweight * pt.x + weight * (samplePos->get()[iter.index()].x * iblend + samplePos2->get()[iter.index()].x * blend);
-            pt.y = iweight * pt.y + weight * (samplePos->get()[iter.index()].y * iblend + samplePos2->get()[iter.index()].y * blend);
-            pt.z = iweight * pt.z + weight * (samplePos->get()[iter.index()].z * iblend + samplePos2->get()[iter.index()].z * blend);
+            abcPos.x = iweight * pt.x + weight * (samplePos->get()[index].x * iblend + samplePos2->get()[index].x * blend);
+            abcPos.y = iweight * pt.y + weight * (samplePos->get()[index].y * iblend + samplePos2->get()[index].y * blend);
+            abcPos.z = iweight * pt.z + weight * (samplePos->get()[index].z * iblend + samplePos2->get()[index].z * blend);
             done = true;
          }
       }
       if(!done)
       {
-         pt.x = iweight * pt.x + weight * samplePos->get()[iter.index()].x;
-         pt.y = iweight * pt.y + weight * samplePos->get()[iter.index()].y;
-         pt.z = iweight * pt.z + weight * samplePos->get()[iter.index()].z;
+         abcPos.x = iweight * pt.x + weight * samplePos->get()[index].x;
+         abcPos.y = iweight * pt.y + weight * samplePos->get()[index].y;
+         abcPos.z = iweight * pt.z + weight * samplePos->get()[index].z;
       }
-      iter.setPosition(pt);
+      iter.setPosition(abcPos);
    }
-
    return MStatus::kSuccess;
 }

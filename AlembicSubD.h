@@ -66,6 +66,7 @@ public:
    virtual ~AlembicSubDDeformNode();
    // override virtual methods from MPxDeformerNode
    virtual void PreDestruction();
+   virtual MStatus compute(const MPlug& plug, MDataBlock& dataBlock);
    virtual MStatus deform(MDataBlock & dataBlock, MItGeometry & iter, const MMatrix & localToWorld, unsigned int geomIndex);
    static void* creator() { return (new AlembicSubDDeformNode()); }
    static MStatus initialize();
@@ -78,6 +79,7 @@ private:
    MString mFileName;
    MString mIdentifier;
    Alembic::AbcGeom::ISubDSchema mSchema;
+   std::vector<unsigned int> mVertexLookup;
 
    // members
    SampleInfo mLastSampleInfo;
