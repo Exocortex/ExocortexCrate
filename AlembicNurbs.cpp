@@ -54,7 +54,13 @@ XSI::CStatus AlembicNurbs::Save(double time)
 {
    // store the transform
    Primitive prim(GetRef());
-   SaveXformSample(GetRef(1),mXformSchema,mXformSample,time);
+   bool globalSpace = GetJob()->GetOption(L"globalSpace");
+   SaveXformSample(GetRef(1),mXformSchema,mXformSample,time,false,globalSpace);
+
+   // query the global space
+   CTransformation globalXfo;
+   if(globalSpace)
+      globalXfo = Kinematics(KinematicState(GetRef(1)).GetParent()).GetGlobal().GetTransform(time);
 
    // store the metadata
    SaveMetaData(prim.GetParent3DObject().GetRef(),this);
@@ -82,6 +88,8 @@ XSI::CStatus AlembicNurbs::Save(double time)
    posVec.resize(vertCount);
    for(LONG i=0;i<vertCount;i++)
    {
+      if(globalSpace)
+         pos[i] = MapObjectPositionToWorldSpace(globalXfo,pos[i]);
       posVec[i].x = (float)pos[i].GetX();
       posVec[i].y = (float)pos[i].GetY();
       posVec[i].z = (float)pos[i].GetZ();

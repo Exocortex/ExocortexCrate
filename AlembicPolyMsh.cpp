@@ -68,7 +68,15 @@ XSI::CStatus AlembicPolyMesh::Save(double time)
 {
    // store the transform
    Primitive prim(GetRef());
-   SaveXformSample(GetRef(1),mXformSchema,mXformSample,time);
+   bool globalSpace = GetJob()->GetOption(L"globalSpace");
+   SaveXformSample(GetRef(1),mXformSchema,mXformSample,time,false,globalSpace);
+
+   // query the global space
+   CTransformation globalXfo;
+   if(globalSpace)
+      globalXfo = Kinematics(KinematicState(GetRef(1)).GetParent()).GetGlobal().GetTransform(time);
+   CTransformation globalRotation;
+   globalRotation.SetRotation(globalXfo.GetRotation());
 
    // store the metadata
    SaveMetaData(prim.GetParent3DObject().GetRef(),this);
@@ -84,7 +92,7 @@ XSI::CStatus AlembicPolyMesh::Save(double time)
 
    // check if the mesh is animated
    if(mNumSamples > 0) {
-      if(!isRefAnimated(GetRef()))
+      if(!isRefAnimated(GetRef(),false,globalSpace))
          return CStatus::OK;
    }
 
@@ -108,6 +116,8 @@ XSI::CStatus AlembicPolyMesh::Save(double time)
    posVec.resize(vertCount);
    for(LONG i=0;i<vertCount;i++)
    {
+      if(globalSpace)
+         pos[i] = MapObjectPositionToWorldSpace(globalXfo,pos[i]);
       posVec[i].x = (float)pos[i].GetX();
       posVec[i].y = (float)pos[i].GetY();
       posVec[i].z = (float)pos[i].GetZ();
@@ -197,9 +207,18 @@ XSI::CStatus AlembicPolyMesh::Save(double time)
       for(LONG i=0;i<sampleCount;i++)
       {
          LONG lookedup = sampleLookup[i];
-         normalVec[i].x = shadingNormals[lookedup * 3 + 0];
-         normalVec[i].y = shadingNormals[lookedup * 3 + 1];
-         normalVec[i].z = shadingNormals[lookedup * 3 + 2];
+         CVector3 normal;
+         normal.PutX(shadingNormals[lookedup * 3 + 0]);
+         normal.PutY(shadingNormals[lookedup * 3 + 1]);
+         normal.PutZ(shadingNormals[lookedup * 3 + 2]);
+         if(globalSpace)
+         {
+            normal = MapObjectPositionToWorldSpace(globalRotation,normal);
+            normal.NormalizeInPlace();
+         }
+         normalVec[i].x = (float)normal.GetX();
+         normalVec[i].y = (float)normal.GetY();
+         normalVec[i].z = (float)normal.GetZ();
       }
 
       // now let's sort the normals 
@@ -255,9 +274,15 @@ XSI::CStatus AlembicPolyMesh::Save(double time)
          mVelocitiesVec.resize(vertCount);
          for(LONG i=0;i<vertCount;i++)
          {
-            mVelocitiesVec[i].x = velocitiesData[i].GetX();
-            mVelocitiesVec[i].y = velocitiesData[i].GetY();
-            mVelocitiesVec[i].z = velocitiesData[i].GetZ();
+            CVector3 vel;
+            vel.PutX(velocitiesData[i].GetX());
+            vel.PutY(velocitiesData[i].GetY());
+            vel.PutZ(velocitiesData[i].GetZ());
+            if(globalSpace)
+               vel = MapObjectPositionToWorldSpace(globalRotation,vel);
+            mVelocitiesVec[i].x = (float)vel.GetX();
+            mVelocitiesVec[i].y = (float)vel.GetY();
+            mVelocitiesVec[i].z = (float)vel.GetZ();
          }
 
          if(mVelocitiesVec.size() == 0)

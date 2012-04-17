@@ -3,6 +3,12 @@
 
 #include "AlembicObject.h"
 
-void SaveXformSample(XSI::CRef kinestateRef, Alembic::AbcGeom::OXformSchema & schema, Alembic::AbcGeom::XformSample & sample, double time, bool xformCache = false);
+void SaveXformSample(
+   XSI::CRef kinestateRef, 
+   Alembic::AbcGeom::OXformSchema & schema, 
+   Alembic::AbcGeom::XformSample & sample, 
+   double time, bool xformCache = false, 
+   bool globalSpace = true
+);
 
 #endif

@@ -84,7 +84,15 @@ XSI::CStatus AlembicCurves::Save(double time)
 {
    // store the transform
    Primitive prim(GetRef());
-   SaveXformSample(GetRef(1),mXformSchema,mXformSample,time);
+   bool globalSpace = GetJob()->GetOption(L"globalSpace");
+   SaveXformSample(GetRef(1),mXformSchema,mXformSample,time,false,globalSpace);
+
+   // query the global space
+   CTransformation globalXfo;
+   if(globalSpace)
+      globalXfo = Kinematics(KinematicState(GetRef(1)).GetParent()).GetGlobal().GetTransform(time);
+   CTransformation globalRotation;
+   globalRotation.SetRotation(globalXfo.GetRotation());
 
    // set the visibility
    Property visProp;
@@ -100,7 +108,7 @@ XSI::CStatus AlembicCurves::Save(double time)
 
    // check if the crvlist is animated
    if(mNumSamples > 0) {
-      if(!isRefAnimated(GetRef()))
+      if(!isRefAnimated(GetRef(),false,globalSpace))
          return CStatus::OK;
    }
 
@@ -118,6 +126,8 @@ XSI::CStatus AlembicCurves::Save(double time)
       std::vector<Alembic::Abc::V3f> posVec(vertCount);
       for(ULONG i=0;i<vertCount;i++)
       {
+         if(globalSpace)
+            pos[i] = MapObjectPositionToWorldSpace(globalXfo,pos[i]);
          posVec[i].x = (float)pos[i].GetX();
          posVec[i].y = (float)pos[i].GetY();
          posVec[i].z = (float)pos[i].GetZ();
@@ -179,9 +189,15 @@ XSI::CStatus AlembicCurves::Save(double time)
       ULONG offset = 0;
       for(ULONG i=0;i<vertCount;i++)
       {
-         posVec[i].x = hairPos[offset++];
-         posVec[i].y = hairPos[offset++];
-         posVec[i].z = hairPos[offset++];
+         CVector3 pos;
+         pos.PutX(hairPos[offset++]);
+         pos.PutY(hairPos[offset++]);
+         pos.PutZ(hairPos[offset++]);
+         if(globalSpace)
+            pos = MapObjectPositionToWorldSpace(globalXfo,pos);
+         posVec[i].x = (float)pos.GetX();
+         posVec[i].y = (float)pos.GetY();
+         posVec[i].z = (float)pos.GetZ();
          bbox.extendBy(posVec[i]);
       }
       mCurvesSample.setPositions(Alembic::Abc::P3fArraySample(&posVec.front(),posVec.size()));
@@ -288,9 +304,15 @@ XSI::CStatus AlembicCurves::Save(double time)
             data.GetSubArray(i,sub);
             for(ULONG j=0;j<sub.GetCount();j++)
             {
-               posVec[offset].x = (float)sub[j].GetX();
-               posVec[offset].y = (float)sub[j].GetY();
-               posVec[offset].z = (float)sub[j].GetZ();
+               CVector3 pos;
+               pos.PutX(sub[j].GetX());
+               pos.PutY(sub[j].GetY());
+               pos.PutZ(sub[j].GetZ());
+               if(globalSpace)
+                  pos = MapObjectPositionToWorldSpace(globalXfo,pos);
+               posVec[offset].x = (float)pos.GetX();
+               posVec[offset].y = (float)pos.GetY();
+               posVec[offset].z = (float)pos.GetZ();
                bbox.extendBy(posVec[offset]);
                offset++;
             }
@@ -440,9 +462,15 @@ XSI::CStatus AlembicCurves::Save(double time)
                data.GetSubArray(data.IsConstant() ? 0 : i,sub);
                for(ULONG j=0;j<sub.GetCount();j++)
                {
-                  mVelVec[offset].x = sub[j].GetX() / fps;
-                  mVelVec[offset].y = sub[j].GetY() / fps;
-                  mVelVec[offset].z = sub[j].GetZ() / fps;
+                  CVector3 vel;
+                  vel.PutX(sub[j].GetX() / fps);
+                  vel.PutY(sub[j].GetY() / fps);
+                  vel.PutZ(sub[j].GetZ() / fps);
+                  if(globalSpace)
+                     vel = MapObjectPositionToWorldSpace(globalRotation,vel);
+                  mVelVec[offset].x = (float)vel.GetX();
+                  mVelVec[offset].y = (float)vel.GetY();
+                  mVelVec[offset].z = (float)vel.GetZ();
                   offset++;
                }
             }
@@ -460,9 +488,15 @@ XSI::CStatus AlembicCurves::Save(double time)
                mVelVec.resize(data.GetCount());
                for(ULONG i=0;i<data.GetCount();i++)
                {
-                  mVelVec[i].x = data[i].GetX() / fps;
-                  mVelVec[i].y = data[i].GetY() / fps;
-                  mVelVec[i].z = data[i].GetZ() / fps;
+                  CVector3 vel;
+                  vel.PutX(data[i].GetX() / fps);
+                  vel.PutY(data[i].GetY() / fps);
+                  vel.PutZ(data[i].GetZ() / fps);
+                  if(globalSpace)
+                     vel = MapObjectPositionToWorldSpace(globalRotation,vel);
+                  mVelVec[i].x = (float)vel.GetX();
+                  mVelVec[i].y = (float)vel.GetY();
+                  mVelVec[i].z = (float)vel.GetZ();
                }
                mCurvesSample.setVelocities(Alembic::Abc::V3fArraySample(&mVelVec.front(),mVelVec.size()));
             }

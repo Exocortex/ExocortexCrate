@@ -174,7 +174,7 @@ CRefArray getOperators( CRef in_Ref)
 }
 
 std::map<std::string,bool> gIsRefAnimatedMap;
-bool isRefAnimated(const CRef & in_Ref, bool xformCache)
+bool isRefAnimated(const CRef & in_Ref, bool xformCache, bool globalSpace)
 {
    // check the cache
    std::map<std::string,bool>::iterator it = gIsRefAnimatedMap.find(in_Ref.GetAsText().GetAsciiString());
@@ -216,6 +216,14 @@ bool isRefAnimated(const CRef & in_Ref, bool xformCache)
       return returnIsRefAnimated(in_Ref,prop.IsAnimated());
    else if(prim.IsValid())
    {
+      // check if we are in global space mode and there's animation on the
+      // kinematics
+      if(globalSpace)
+      {
+         if(isRefAnimated(prim.GetParent3DObject().GetRef()))
+            return returnIsRefAnimated(in_Ref,true);
+      }
+
       // first check if there are any envelopes
       if(prim.GetParent3DObject().GetEnvelopes().GetCount() > 0)
          return returnIsRefAnimated(in_Ref,true);

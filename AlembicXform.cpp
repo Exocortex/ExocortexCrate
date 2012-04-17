@@ -19,9 +19,25 @@ using namespace MATH;
 namespace AbcA = ::Alembic::AbcCoreAbstract::ALEMBIC_VERSION_NS;
 using namespace AbcA;
 
-void SaveXformSample(XSI::CRef kinestateRef, Alembic::AbcGeom::OXformSchema & schema, Alembic::AbcGeom::XformSample & sample, double time, bool xformCache)
+void SaveXformSample(XSI::CRef kinestateRef, Alembic::AbcGeom::OXformSchema & schema, Alembic::AbcGeom::XformSample & sample, double time, bool xformCache, bool globalSpace)
 {
    KinematicState kineState(kinestateRef);
+
+   // check if we are exporting in global space
+   if(globalSpace)
+   {
+      if(schema.getNumSamples() > 0)
+         return;
+
+      // store identity matrix
+      sample.setTranslation(Imath::V3d(0.0,0.0,0.0));
+      sample.setRotation(Imath::V3d(1.0,0.0,0.0),0.0);
+      sample.setScale(Imath::V3d(1.0,1.0,1.0));
+
+      // save the sample
+      schema.set(sample);
+      return;
+   }
 
    // check if the transform is animated
    if(schema.getNumSamples() > 0)
