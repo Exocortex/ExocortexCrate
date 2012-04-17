@@ -10,6 +10,7 @@
 #include "SceneEnumProc.h"
 #include "AlembicDefinitions.h"
 #include "AlembicWriteJob.h"
+#include "AlembicRecursiveImporter.h"
 #include "Utility.h"
 
 // Dummy function for progress bar
@@ -284,7 +285,6 @@ int ExocortexAlembicStaticInterface_ExocortexAlembicImport(MCHAR* strPath, BOOL 
 	ESS_CPP_EXCEPTION_REPORTING_START
 
 		//TestMasterUnit();
-		
 		if( ! HasFullLicense() ) {
 			ESS_LOG_ERROR( "No valid license found for Exocortex Alembic." );
 			return alembic_failure;
@@ -325,6 +325,8 @@ int ExocortexAlembicStaticInterface_ExocortexAlembicImport(MCHAR* strPath, BOOL 
         // Since the archive is valid, add a reference to it
         addRefArchive(file);
 
+
+
 		// let's figure out which objects we have
 		std::vector<Alembic::Abc::IObject> objects;
 		objects.push_back(pArchive->getTop());
@@ -349,107 +351,36 @@ int ExocortexAlembicStaticInterface_ExocortexAlembicImport(MCHAR* strPath, BOOL 
 
 		// Create the max objects as needed, we loop through the list in reverse to create
 		// the children node first and then hook them up to their parents
-		int totalAlemicItems = 0;
+		int totalAlembicItems = 0;
 		ESS_LOG_INFO( "Alembic file contents:" );
 		for(int j=(int)objects.size()-1; j>=0 ; j -= 1)
 		{
 			ESS_LOG_INFO( objects[j].getFullName() );
-			// XForm
-			if(Alembic::AbcGeom::IXform::matches(objects[j].getMetaData()))
-			{
-				totalAlemicItems++;
-			}
 
-			// PolyMesh
-			else if (Alembic::AbcGeom::IPolyMesh::matches(objects[j].getMetaData()))
-			{
-				totalAlemicItems++;
-			}
-
-			// Camera
-			else if (Alembic::AbcGeom::ICamera::matches(objects[j].getMetaData()))
-			{
-				totalAlemicItems++;
-			}
-
-			// Points
-			else if (Alembic::AbcGeom::IPoints::matches(objects[j].getMetaData()))
-			{
-				totalAlemicItems++;
-			}
-
-			// Curves
-			else if (Alembic::AbcGeom::ICurves::matches(objects[j].getMetaData()))
-			{
-				totalAlemicItems++;
+			nodeCategory cat = getNodeCategory(objects[j]);
+			if( cat != NODECAT_UNSUPPORTED ){
+				totalAlembicItems++;
 			}
 		}
 		char szBuffer[1000];
-		sprintf_s( szBuffer, 1000, "Importing %i Alembic Streams", totalAlemicItems );
+		sprintf_s( szBuffer, 1000, "Importing %i Alembic Streams", totalAlembicItems );
 		i->ProgressStart(szBuffer, TRUE, DummyProgressFunction, NULL);
 
 		int progressUpdateInterval = 0;
 		int lastUpdateProcess = 0;
-		for(int j=(int)objects.size()-1; j>=0 ; j -= 1)
+
+		progressUpdate progress(totalAlembicItems);
+
+		Alembic::AbcGeom::IObject root = pArchive->getTop();
+		for(size_t j=0; j<root.getNumChildren(); j++)
 		{
-			if( ( progressUpdateInterval % 10 ) == 0 ) {
-				if( lastUpdateProcess != progressUpdateInterval ) {
-					double dbProgress = ((double)progressUpdateInterval) / totalAlemicItems;
-					i->ProgressUpdate(static_cast<int>(100 * dbProgress));
-					lastUpdateProcess = progressUpdateInterval;
-				}
-			}
-			
-			// XForm
-			if(Alembic::AbcGeom::IXform::matches(objects[j].getMetaData()))
-			{
-				ESS_LOG_INFO( "AlembicImport_XForm: " << objects[j].getFullName() );
-				int ret = AlembicImport_XForm(file, objects[j].getFullName(), options);
-				progressUpdateInterval ++;
-			} 
-
-			// PolyMesh
-			else if (Alembic::AbcGeom::IPolyMesh::matches(objects[j].getMetaData()))
-			{
-				ESS_LOG_INFO( "AlembicImport_PolyMesh: " << objects[j].getFullName() );
-				int ret = AlembicImport_PolyMesh(file, objects[j].getFullName(), options); 
-				progressUpdateInterval ++;
-			}
-
-			// Camera
-			else if (Alembic::AbcGeom::ICamera::matches(objects[j].getMetaData()))
-			{
-				ESS_LOG_INFO( "AlembicImport_Camera: " << objects[j].getFullName() );
-				int ret = AlembicImport_Camera(file, objects[j].getFullName(), options);
-				progressUpdateInterval ++;
-			}
-
-			// Points
-			else if (Alembic::AbcGeom::IPoints::matches(objects[j].getMetaData()))
-			{
-				ESS_LOG_INFO( "AlembicImport_Points: " << objects[j].getFullName() );
-				int ret = AlembicImport_Points(file, objects[j].getFullName(), options);
-				progressUpdateInterval ++;
-			}
-
-			// Curves
-			else if (Alembic::AbcGeom::ICurves::matches(objects[j].getMetaData()))
-			{
-				ESS_LOG_INFO( "AlembicImport_Shape: " << objects[j].getFullName() );
-				int ret = AlembicImport_Shape(file, objects[j].getFullName(), options);
-				progressUpdateInterval ++;
-			}
-			else if (Alembic::AbcGeom::ISubD::matches(objects[j].getMetaData())) {
-				ESS_LOG_WARNING( "Exocortex Alembic for 3DS Max does not yet support SubD primitives: " << objects[j].getFullName() );
-			}
-			else {
-				std::string schemaObjTitle = objects[j].getMetaData().get( "schemaObjTitle" );
-				std::string schema = objects[j].getMetaData().get( "schema" );
-				ESS_LOG_INFO( "Diagnostics, primitive not supported: " << objects[j].getFullName() << "( " << schemaObjTitle << " " << schema << " )" );
-			}
-		}
+			int ret = recurseOnAlembicObject(root.getChild(j), NULL, false, options, file, progress);
+			if( ret != 0 ) return alembic_failure;
+		} 
 
 		i->ProgressEnd();
+
+
 		delRefArchive(file);
 
 	ESS_CPP_EXCEPTION_REPORTING_END

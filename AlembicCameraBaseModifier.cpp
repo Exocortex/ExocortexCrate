@@ -270,14 +270,9 @@ void AlembicImport_FillInCamera(alembic_fillcamera_options &options)
 	ESS_CPP_EXCEPTION_REPORTING_END
 }
 
-int AlembicImport_Camera(const std::string &path, const std::string &identifier, alembic_importoptions &options)
+int AlembicImport_Camera(const std::string &path, Alembic::AbcGeom::IObject& iObj, alembic_importoptions &options, INode** pMaxNode)
 {
-    // Find the object in the archive
-    Alembic::AbcGeom::IObject iObj = getObjectFromArchive(path, identifier);
-	if (!iObj.valid())
-    {
-		return alembic_failure;
-    }
+	const std::string &identifier = iObj.getFullName();
 
 	// Create the camera object and place it in the scene
     GenCamera *pCameraObj = GET_MAX_INTERFACE()->CreateCameraObject(FREE_CAMERA);
@@ -301,6 +296,7 @@ int AlembicImport_Camera(const std::string &path, const std::string &identifier,
     {
 		return alembic_failure;
     }
+	*pMaxNode = pNode;
 
 	// Create the Camera modifier
 	Modifier *pModifier = static_cast<Modifier*>

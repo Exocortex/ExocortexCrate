@@ -98,6 +98,6 @@ ClassDesc2 *GetAlembicCameraBaseModifierClassDesc();
 
 // Alembic Functions
 typedef struct _alembic_importoptions alembic_importoptions;
-int AlembicImport_Camera(const std::string &file, const std::string &identifier, alembic_importoptions &options);
+int AlembicImport_Camera(const std::string &path, Alembic::AbcGeom::IObject& iObj, alembic_importoptions &options, INode** pMaxNode);
 
 #endif	// __ALEMBIC_CAMERA_MODIFIER__H

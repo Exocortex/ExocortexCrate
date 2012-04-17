@@ -33,7 +33,8 @@ typedef struct _alembic_fillxform_options
 
 
 void AlembicImport_FillInXForm(alembic_fillxform_options &options);
-int AlembicImport_XForm(const std::string &file, const std::string &identifier, alembic_importoptions &options);
+int AlembicImport_XForm(INode* pMaxNode, Alembic::AbcGeom::IObject& iObj, const std::string &file, alembic_importoptions &options);
+int AlembicImport_DummyNode(Alembic::AbcGeom::IObject& iObj, alembic_importoptions &options, INode** pMaxNode);
 
 size_t getNumXformChildren( Alembic::AbcGeom::IObject& iObj );
 
