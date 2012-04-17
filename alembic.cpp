@@ -5,7 +5,7 @@
 //#include "MeshMtlList.h"
 #include "SceneEnumProc.h"
 #include "ObjectList.h"
-#include "ObjectEntry.h"
+
 #include "resource.h"
 #include "utility.h"
 #include "AlembicNames.h"

@@ -1,5 +1,5 @@
 #include "Alembic.h"
-#include "ObjectEntry.h"
+
 #include "AlembicObject.h"
 #include <boost/algorithm/string.hpp>
 #include "utility.h"

@@ -2,7 +2,7 @@
 #include "AlembicMax.h"
 #include "AlembicWriteJob.h"
 #include "ObjectList.h"
-#include "ObjectEntry.h"
+
 #include "SceneEnumProc.h"
 #include "AlembicPolyMsh.h"
 #include "AlembicXForm.h"
@@ -126,41 +126,42 @@ bool AlembicWriteJob::PreProcess()
     m_ArchiveBoxProp = Alembic::AbcGeom::CreateOArchiveBounds(mArchive,mTs);
 
     // create object for each
-    for (ObjectEntry *object = mSelection.head; object != NULL; object = object->next) 
-    {
-        // Only export selected objects if told
-        if (GetOption("exportSelected") && !object->entry->node->Selected())
+	for( int i = 0; i < mSelection.objectEntries.size(); i ++ ) {
+		ObjectEntry *object = &( mSelection.objectEntries[i] );
+
+		// Only export selected objects if told
+        if (GetOption("exportSelected") && !object->entry.node->Selected())
             continue;
 
-        int type = object->entry->type;
+        int type = object->entry.type;
 		if (type == OBTYPE_MESH) 
         {
             AlembicObjectPtr ptr;
-            ptr.reset(new AlembicPolyMesh(*object->entry,this));            
+            ptr.reset(new AlembicPolyMesh(object->entry,this));            
             AddObject(ptr);
 		}
         else if (type == OBTYPE_CAMERA)
         {
             AlembicObjectPtr ptr;
-            ptr.reset(new AlembicCamera(*object->entry,this));
+            ptr.reset(new AlembicCamera(object->entry,this));
             AddObject(ptr);
         }
         else if (type == OBTYPE_DUMMY && !GetOption("flattenHierarchy"))
         {
             AlembicObjectPtr ptr;
-            ptr.reset(new AlembicXForm(*object->entry,this));            
+            ptr.reset(new AlembicXForm(object->entry,this));            
             AddObject(ptr);
         }
         else if (type == OBTYPE_POINTS)
         {
             AlembicObjectPtr ptr;
-            ptr.reset(new AlembicPoints(*object->entry,this));
+            ptr.reset(new AlembicPoints(object->entry,this));
             AddObject(ptr);
         }
         else if (type == OBTYPE_CURVES)
         {
             AlembicObjectPtr ptr;
-            ptr.reset(new AlembicCurves(*object->entry,this));
+            ptr.reset(new AlembicCurves(object->entry,this));
             AddObject(ptr);
         }
 

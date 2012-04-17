@@ -8,7 +8,6 @@ SceneEntry::SceneEntry(INode *n, Object *o, int t, std::string *providedfullname
 	node = n; 
     obj = o; 
     type = t; 
-    next = NULL; 
 	tnode = n->GetTarget();
 
     if (providedfullname == 0)
@@ -27,8 +26,6 @@ SceneEnumProc::SceneEnumProc()
 {
     time = 0;
 	theScene = 0;
-	count = 0;
-	head = tail = NULL;
 	i = 0;
 }
 
@@ -38,16 +35,7 @@ SceneEnumProc::SceneEnumProc(IScene *scene, TimeValue t, Interface *i )
 }
 
 SceneEnumProc::~SceneEnumProc() 
-{
-	while(head) 
-    {
-		SceneEntry *next = head->next;
-		delete head;
-		head = next;
-	}
-
-	head = tail = NULL;
-	count = 0;	
+{	
 }
 
 int SceneEnumProc::callback(INode *node) 
@@ -124,48 +112,33 @@ int SceneEnumProc::callback(INode *node)
 
 SceneEntry *SceneEnumProc::Append(INode *node, Object *obj, int type, std::string *providedfullname) 
 {
-	SceneEntry *entry = new SceneEntry(node, obj, type, providedfullname);
-
-	if(tail)
-    {
-		tail->next = entry;
-    }
-	tail = entry;
-	if(!head)
-    {
-		head = entry;
-    }
-	count++;
-
-    return entry;
+	this->sceneEntries.push_back( SceneEntry(node, obj, type, providedfullname) );
+    return &( this->sceneEntries[ this->sceneEntries.size() - 1 ] );
 }
 
 Box3 SceneEnumProc::Bound() 
 {
 	Box3 bound;
 	bound.Init();
-	SceneEntry *e = head;
 	ViewExp *vpt = i->GetViewport(NULL);
-	while(e) 
-    {
+	for( int i = 0; i < this->sceneEntries.size(); i ++ ) {
+		SceneEntry *e = &( this->sceneEntries[ i ] );
 		Box3 bb;
 		e->obj->GetWorldBoundBox(time, e->node, vpt, bb);
 		bound += bb;
-		e = e->next;
 	}
 	return bound;
 }
 
 SceneEntry *SceneEnumProc::Find(INode *node) 
 {
-	SceneEntry *e = head;
-	while(e) 
-    {
+	for( int i = 0; i < this->sceneEntries.size(); i ++ ) {
+		SceneEntry *e = &( this->sceneEntries[ i ] );
+
 		if(e->node == node)
         {
 			return e;
         }
-		e = e->next;
 	}
 
 	return NULL;
@@ -175,8 +148,7 @@ void SceneEnumProc::Init(IScene *scene, TimeValue t, Interface *i )
 {
     time = t;
 	theScene = scene;
-	count = 0;
-	head = tail = NULL;
+	this->sceneEntries.clear();
 	this->i = i;
 	theScene->EnumTree(this);
 }
