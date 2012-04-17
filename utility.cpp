@@ -2,6 +2,7 @@
 #include "AlembicObject.h"
 #include "AlembicLicensing.h"
 #include "AlembicArchiveStorage.h"
+#include <maya/MFnTransform.h>
 
 SampleInfo getSampleInfo
 (
@@ -280,6 +281,43 @@ size_t getNumSamplesFromObject(Alembic::Abc::IObject object)
    }
    return 0;
 }
+
+MMatrix GetGlobalMMatrix(const MObject & in_Ref)
+{
+   MMatrix result;
+   result.setToIdentity();
+
+   MFnDagNode node(in_Ref);
+
+   MString typeStr = in_Ref.apiTypeStr();
+   if(typeStr == "kTransform")
+   {
+      MFnTransform transformNode(in_Ref);
+      MTransformationMatrix xf = transformNode.transformation();
+      result = xf.asMatrix();
+   }
+
+   for(unsigned int i=0;i<node.parentCount();i++)
+   {
+      MObject parent = node.parent(i);
+      typeStr = parent.apiTypeStr();
+      if(typeStr == "kTransform")
+      {
+         return result * GetGlobalMMatrix(parent);
+      }
+   }
+
+   return result;
+}
+
+Alembic::Abc::M44f GetGlobalMatrix(const MObject & in_Ref)
+{
+   MMatrix matrix = GetGlobalMMatrix(in_Ref);
+   Alembic::Abc::M44f result;
+   matrix.get(result.x);
+   return result;
+}
+
 
 MSyntax AlembicResolvePathCommand::createSyntax()
 {

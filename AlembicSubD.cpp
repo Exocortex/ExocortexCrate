@@ -36,6 +36,12 @@ MStatus AlembicSubD::Save(double time)
    // prepare the bounding box
    Alembic::Abc::Box3d bbox;
 
+   // check if we have the global cache option
+   bool globalCache = GetJob()->GetOption(L"exportInGlobalSpace").asInt() > 0;
+   Alembic::Abc::M44f globalXfo;
+   if(globalCache)
+      globalXfo = GetGlobalMatrix(GetRef());
+
    // access the points
    mPosVec.resize(node.vertexCount());
    MPointArray positions;
@@ -45,6 +51,8 @@ MStatus AlembicSubD::Save(double time)
       mPosVec[i].x = (float)positions[i].x;
       mPosVec[i].y = (float)positions[i].y;
       mPosVec[i].z = (float)positions[i].z;
+      if(globalCache)
+         globalXfo.multVecMatrix(mPosVec[i],mPosVec[i]);
       bbox.extendBy(mPosVec[i]);
    }
 

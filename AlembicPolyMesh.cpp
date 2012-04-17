@@ -36,7 +36,11 @@ MStatus AlembicPolyMesh::Save(double time)
    MFloatPointArray points;
    node.getPoints(points);
 
-   // face indices
+   // check if we have the global cache option
+   bool globalCache = GetJob()->GetOption(L"exportInGlobalSpace").asInt() > 0;
+   Alembic::Abc::M44f globalXfo;
+   if(globalCache)
+      globalXfo = GetGlobalMatrix(GetRef());
 
    mPosVec.resize(points.length());
    for(unsigned int i=0;i<points.length();i++)
@@ -44,6 +48,8 @@ MStatus AlembicPolyMesh::Save(double time)
       mPosVec[i].x = points[i].x;
       mPosVec[i].y = points[i].y;
       mPosVec[i].z = points[i].z;
+      if(globalCache)
+         globalXfo.multVecMatrix(mPosVec[i],mPosVec[i]);
       bbox.extendBy(mPosVec[i]);
    }
 
@@ -225,6 +231,8 @@ MStatus AlembicPolyMesh::Save(double time)
             mNormalVec[mSampleLookup[offset]].x = normals[normalIDs[j]].x;
             mNormalVec[mSampleLookup[offset]].y = normals[normalIDs[j]].y;
             mNormalVec[mSampleLookup[offset]].z = normals[normalIDs[j]].z;
+            if(globalCache)
+               globalXfo.multDirMatrix(mNormalVec[mSampleLookup[offset]],mNormalVec[mSampleLookup[offset]]);
             offset++;
          }
       }

@@ -40,6 +40,9 @@ Alembic::Abc::ICompoundProperty getCompoundFromObject(Alembic::Abc::IObject obje
 Alembic::Abc::TimeSamplingPtr getTimeSamplingFromObject(Alembic::Abc::IObject object);
 size_t getNumSamplesFromObject(Alembic::Abc::IObject object);
 
+// transform wranglers
+Alembic::Abc::M44f GetGlobalMatrix(const MObject & in_Ref);
+
 // metadata related
 class AlembicObject;
 

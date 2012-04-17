@@ -2,6 +2,14 @@
 <ui version="4.0">
  <class>Dialog</class>
  <widget class="QDialog" name="Dialog">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>400</width>
+    <height>301</height>
+   </rect>
+  </property>
   <property name="minimumSize">
    <size>
     <width>400</width>
@@ -154,6 +162,23 @@
      <widget class="QLabel" name="label_10">
       <property name="text">
        <string>Dynamic Topology</string>
+      </property>
+     </widget>
+    </item>
+    <item row="8" column="0">
+     <widget class="QLabel" name="label_11">
+      <property name="text">
+       <string>Global Space</string>
+      </property>
+     </widget>
+    </item>
+    <item row="8" column="1">
+     <widget class="QCheckBox" name="globalspace">
+      <property name="text">
+       <string/>
+      </property>
+      <property name="checked">
+       <bool>false</bool>
       </property>
      </widget>
     </item>

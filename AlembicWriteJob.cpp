@@ -314,6 +314,7 @@ MStatus AlembicExportCommand::doIt(const MArgList & args)
       bool facesets = true;
 	   bool bindpose = true;
       bool dynamictopology = false;
+      bool globalspace = false;
       MObjectArray objects;
 
       // process all tokens of the job
@@ -349,6 +350,8 @@ MStatus AlembicExportCommand::doIt(const MArgList & args)
             purepointcache = valuePair[1].asInt() != 0;
 		   else if(valuePair[0].toLowerCase() == "dynamictopology")
             dynamictopology = valuePair[1].asInt() != 0;
+		   else if(valuePair[0].toLowerCase() == "globalspace")
+            globalspace = valuePair[1].asInt() != 0;
          else if(valuePair[0].toLowerCase() == "filename")
             filename = valuePair[1];
          else if(valuePair[0].toLowerCase() == "objects")
@@ -453,6 +456,7 @@ MStatus AlembicExportCommand::doIt(const MArgList & args)
       job->SetOption("exportDynamicTopology",dynamictopology ? "1" : "0");
       job->SetOption("indexedNormals","1");
       job->SetOption("indexedUVs","1");
+      job->SetOption("exportInGlobalSpace",globalspace ? "1" : "0");
 
       // check if the job is satifsied
       if(job->PreProcess() != MStatus::kSuccess)

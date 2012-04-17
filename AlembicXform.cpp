@@ -30,12 +30,27 @@ MStatus AlembicXform::Save(double time)
    // save the metadata
    SaveMetaData(this);
 
-   MTransformationMatrix xf = node.transformation();
-   MMatrix matrix = xf.asMatrix();
-   Alembic::Abc::M44d abcMatrix;
-   matrix.get(abcMatrix.x);
-   mSample.setMatrix(abcMatrix);
-   mSample.setInheritsXforms(true);
+   // check if we have the global cache option
+   bool globalCache = GetJob()->GetOption(L"exportInGlobalSpace").asInt() > 0;
+   if(globalCache)
+   {
+      if(mNumSamples > 0)
+         return MStatus::kSuccess;
+
+      // store identity matrix
+      mSample.setTranslation(Imath::V3d(0.0,0.0,0.0));
+      mSample.setRotation(Imath::V3d(1.0,0.0,0.0),0.0);
+      mSample.setScale(Imath::V3d(1.0,1.0,1.0));
+   }
+   else
+   {
+      MTransformationMatrix xf = node.transformation();
+      MMatrix matrix = xf.asMatrix();
+      Alembic::Abc::M44d abcMatrix;
+      matrix.get(abcMatrix.x);
+      mSample.setMatrix(abcMatrix);
+      mSample.setInheritsXforms(true);
+   }
 
    // save the sample
    mSchema.set(mSample);
