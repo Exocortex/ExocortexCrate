@@ -35,7 +35,7 @@ static ParticleMtl particleMtl;
 
 // Alembic functions to create the simple particle object
 typedef struct _alembic_importoptions alembic_importoptions;
-extern int AlembicImport_Points(const std::string &file, const std::string &identifier, alembic_importoptions &options);
+extern int AlembicImport_Points(const std::string &file, Alembic::AbcGeom::IObject& iObj, alembic_importoptions &options, INode** pMaxNode);
 
 class AlembicSimpleParticle;
 

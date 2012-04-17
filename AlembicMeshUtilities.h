@@ -35,7 +35,7 @@ typedef struct _alembic_fillmesh_options
 } alembic_fillmesh_options;
 
 void	AlembicImport_FillInPolyMesh(alembic_fillmesh_options &options);
-int		AlembicImport_PolyMesh(const std::string &file, const std::string &identifier, alembic_importoptions &options);
+int AlembicImport_PolyMesh(const std::string &path, Alembic::AbcGeom::IObject& iObj, alembic_importoptions &options, INode** pMaxNode);
 bool	AlembicImport_IsPolyObject(Alembic::AbcGeom::IPolyMeshSchema::Sample &polyMeshSample);
 
 #endif	// __ALEMBIC_MESH_UTILITY__H

@@ -10,6 +10,7 @@
 #include "SceneEnumProc.h"
 #include "AlembicDefinitions.h"
 #include "AlembicWriteJob.h"
+#include "AlembicRecursiveImporter.h"
 #include "Utility.h"
 
 // Dummy function for progress bar
@@ -17,6 +18,24 @@ DWORD WINAPI DummyProgressFunction(LPVOID arg)
 {
 	return 0;
 }
+
+//MarshallH: ifnpub.h only has defines for up to FN_11
+#define FN_12(_fid, _rtype, _f, _p1, _p2, _p3, _p4, _p5, _p6, _p7, _p8, _p9, _p10, _p11, _p12)	\
+	case _fid:											\
+		result.LoadPtr(_rtype,	_rtype##_RSLT(		\
+					_f(FP_FIELD(_p1, p->params[0]),		\
+					   FP_FIELD(_p2, p->params[1]),		\
+					   FP_FIELD(_p3, p->params[2]),		\
+					   FP_FIELD(_p4, p->params[3]),		\
+					   FP_FIELD(_p5, p->params[4]),		\
+					   FP_FIELD(_p6, p->params[5]),		\
+					   FP_FIELD(_p7, p->params[6]),		\
+					   FP_FIELD(_p8, p->params[7]),		\
+					   FP_FIELD(_p9, p->params[8]),		\
+					   FP_FIELD(_p10, p->params[9]),		\
+					   FP_FIELD(_p11, p->params[10]), \
+					   FP_FIELD(_p12, p->params[11]))));	\
+		break;	
 
 class ExocortexAlembicStaticInterface : public FPInterfaceDesc
 {
@@ -95,7 +114,7 @@ public:
 			TYPE_BOOL,          //* arg type * /
 			_M("importMaterialIds"), //* argument internal name * /
 			0,                  //* argument localizable name string resource id * /
-			TYPE_BOOL,          //* arg type * /                
+			TYPE_BOOL,          //* arg type * /              
 			end); 
 
 		AppendFunction(
@@ -104,7 +123,7 @@ public:
 			0,                      //* function name string resource name * / 
 			TYPE_INT,               //* Return type * /
 			0,                      //* Flags  * /
-			11,                     //* Number  of arguments * /
+			12,                     //* Number  of arguments * /
 			_M("path"),     //* argument internal name * /
 			0,                  //* argument localizable name string resource id * /
 			TYPE_FILENAME,      //* arg type * /
@@ -138,6 +157,9 @@ public:
 			_M("exportSelected"), //* argument internal name * /
 			0,                    //* argument localizable name string resource id * /
 			TYPE_BOOL,          //* arg type * /
+			_M("flattenHierarchy"), //* argument internal name * /
+			0,                    //* argument localizable name string resource id * /
+			TYPE_BOOL,          //* arg type * /
 			end); 	
        
         AppendFunction(
@@ -166,14 +188,14 @@ public:
 		MCHAR * strPath,
 		int iFrameIn, int iFrameOut, int iFrameSteps, int iFrameSubSteps,
 		int iType,
-		BOOL bExportUV, BOOL bExportMaterialIds, BOOL bExportEnvelopeBindPose, BOOL bExportDynamicTopology, BOOL bExportSelected );
+		BOOL bExportUV, BOOL bExportMaterialIds, BOOL bExportEnvelopeBindPose, BOOL bExportDynamicTopology, BOOL bExportSelected, BOOL bFlattenHierarchy );
 
     static int ExocortexAlembicInit();
      	
     BEGIN_FUNCTION_MAP
 		FN_6(exocortexAlembicImport, TYPE_INT, ExocortexAlembicImport, TYPE_FILENAME, TYPE_BOOL, TYPE_BOOL, TYPE_BOOL, TYPE_BOOL, TYPE_INT)
 		FN_9(exocortexAlembicImportMesh, TYPE_MESH, ExocortexAlembicImportMesh, TYPE_MESH, TYPE_FILENAME, TYPE_STRING, TYPE_FLOAT, TYPE_BOOL, TYPE_BOOL, TYPE_BOOL, TYPE_BOOL, TYPE_BOOL)
-		FN_11(exocortexAlembicExport, TYPE_INT, ExocortexAlembicExport, TYPE_FILENAME, TYPE_INT, TYPE_INT, TYPE_INT, TYPE_INT, TYPE_INT, TYPE_BOOL, TYPE_BOOL, TYPE_BOOL, TYPE_BOOL, TYPE_BOOL)
+		FN_12(exocortexAlembicExport, TYPE_INT, ExocortexAlembicExport, TYPE_FILENAME, TYPE_INT, TYPE_INT, TYPE_INT, TYPE_INT, TYPE_INT, TYPE_BOOL, TYPE_BOOL, TYPE_BOOL, TYPE_BOOL, TYPE_BOOL, TYPE_BOOL)
         FN_0(exocortexAlembicInit, TYPE_INT, ExocortexAlembicInit);
 	END_FUNCTION_MAP
 };
@@ -263,7 +285,6 @@ int ExocortexAlembicStaticInterface_ExocortexAlembicImport(MCHAR* strPath, BOOL 
 	ESS_CPP_EXCEPTION_REPORTING_START
 
 		//TestMasterUnit();
-		
 		if( ! HasFullLicense() ) {
 			ESS_LOG_ERROR( "No valid license found for Exocortex Alembic." );
 			return alembic_failure;
@@ -304,6 +325,8 @@ int ExocortexAlembicStaticInterface_ExocortexAlembicImport(MCHAR* strPath, BOOL 
         // Since the archive is valid, add a reference to it
         addRefArchive(file);
 
+
+
 		// let's figure out which objects we have
 		std::vector<Alembic::Abc::IObject> objects;
 		objects.push_back(pArchive->getTop());
@@ -328,107 +351,36 @@ int ExocortexAlembicStaticInterface_ExocortexAlembicImport(MCHAR* strPath, BOOL 
 
 		// Create the max objects as needed, we loop through the list in reverse to create
 		// the children node first and then hook them up to their parents
-		int totalAlemicItems = 0;
+		int totalAlembicItems = 0;
 		ESS_LOG_INFO( "Alembic file contents:" );
 		for(int j=(int)objects.size()-1; j>=0 ; j -= 1)
 		{
 			ESS_LOG_INFO( objects[j].getFullName() );
-			// XForm
-			if(Alembic::AbcGeom::IXform::matches(objects[j].getMetaData()))
-			{
-				totalAlemicItems++;
-			}
 
-			// PolyMesh
-			else if (Alembic::AbcGeom::IPolyMesh::matches(objects[j].getMetaData()))
-			{
-				totalAlemicItems++;
-			}
-
-			// Camera
-			else if (Alembic::AbcGeom::ICamera::matches(objects[j].getMetaData()))
-			{
-				totalAlemicItems++;
-			}
-
-			// Points
-			else if (Alembic::AbcGeom::IPoints::matches(objects[j].getMetaData()))
-			{
-				totalAlemicItems++;
-			}
-
-			// Curves
-			else if (Alembic::AbcGeom::ICurves::matches(objects[j].getMetaData()))
-			{
-				totalAlemicItems++;
+			nodeCategory cat = getNodeCategory(objects[j]);
+			if( cat != NODECAT_UNSUPPORTED ){
+				totalAlembicItems++;
 			}
 		}
 		char szBuffer[1000];
-		sprintf_s( szBuffer, 1000, "Importing %i Alembic Streams", totalAlemicItems );
+		sprintf_s( szBuffer, 1000, "Importing %i Alembic Streams", totalAlembicItems );
 		i->ProgressStart(szBuffer, TRUE, DummyProgressFunction, NULL);
 
 		int progressUpdateInterval = 0;
 		int lastUpdateProcess = 0;
-		for(int j=(int)objects.size()-1; j>=0 ; j -= 1)
+
+		progressUpdate progress(totalAlembicItems);
+
+		Alembic::AbcGeom::IObject root = pArchive->getTop();
+		for(size_t j=0; j<root.getNumChildren(); j++)
 		{
-			if( ( progressUpdateInterval % 10 ) == 0 ) {
-				if( lastUpdateProcess != progressUpdateInterval ) {
-					double dbProgress = ((double)progressUpdateInterval) / totalAlemicItems;
-					i->ProgressUpdate(static_cast<int>(100 * dbProgress));
-					lastUpdateProcess = progressUpdateInterval;
-				}
-			}
-			
-			// XForm
-			if(Alembic::AbcGeom::IXform::matches(objects[j].getMetaData()))
-			{
-				ESS_LOG_INFO( "AlembicImport_XForm: " << objects[j].getFullName() );
-				int ret = AlembicImport_XForm(file, objects[j].getFullName(), options);
-				progressUpdateInterval ++;
-			} 
-
-			// PolyMesh
-			else if (Alembic::AbcGeom::IPolyMesh::matches(objects[j].getMetaData()))
-			{
-				ESS_LOG_INFO( "AlembicImport_PolyMesh: " << objects[j].getFullName() );
-				int ret = AlembicImport_PolyMesh(file, objects[j].getFullName(), options); 
-				progressUpdateInterval ++;
-			}
-
-			// Camera
-			else if (Alembic::AbcGeom::ICamera::matches(objects[j].getMetaData()))
-			{
-				ESS_LOG_INFO( "AlembicImport_Camera: " << objects[j].getFullName() );
-				int ret = AlembicImport_Camera(file, objects[j].getFullName(), options);
-				progressUpdateInterval ++;
-			}
-
-			// Points
-			else if (Alembic::AbcGeom::IPoints::matches(objects[j].getMetaData()))
-			{
-				ESS_LOG_INFO( "AlembicImport_Points: " << objects[j].getFullName() );
-				int ret = AlembicImport_Points(file, objects[j].getFullName(), options);
-				progressUpdateInterval ++;
-			}
-
-			// Curves
-			else if (Alembic::AbcGeom::ICurves::matches(objects[j].getMetaData()))
-			{
-				ESS_LOG_INFO( "AlembicImport_Shape: " << objects[j].getFullName() );
-				int ret = AlembicImport_Shape(file, objects[j].getFullName(), options);
-				progressUpdateInterval ++;
-			}
-			else if (Alembic::AbcGeom::ISubD::matches(objects[j].getMetaData())) {
-				ESS_LOG_WARNING( "Exocortex Alembic for 3DS Max does not yet support SubD primitives: " << objects[j].getFullName() );
-			}
-			else {
-				std::string schemaObjTitle = objects[j].getMetaData().get( "schemaObjTitle" );
-				std::string schema = objects[j].getMetaData().get( "schema" );
-				ESS_LOG_INFO( "Diagnostics, primitive not supported: " << objects[j].getFullName() << "( " << schemaObjTitle << " " << schema << " )" );
-			}
-		}
+			int ret = recurseOnAlembicObject(root.getChild(j), NULL, false, options, file, progress);
+			if( ret != 0 ) return alembic_failure;
+		} 
 
 		i->ProgressEnd();
+
+
 		delRefArchive(file);
 
 	ESS_CPP_EXCEPTION_REPORTING_END
@@ -531,23 +483,23 @@ Mesh* ExocortexAlembicStaticInterface_ExocortexAlembicImportMesh(Mesh* pMesh, MC
 
 int ExocortexAlembicStaticInterface_ExocortexAlembicExport(MCHAR * strPath, int iFrameIn, int iFrameOut, int iFrameSteps, int iFrameSubSteps, int iType,
 															BOOL bExportUV, BOOL bExportMaterialIds, BOOL bExportEnvelopeBindPose, BOOL bExportDynamicTopology,
-															BOOL bExportSelected);
+															BOOL bExportSelected, BOOL bFlattenHierarchy);
 
 int ExocortexAlembicStaticInterface::ExocortexAlembicExport(MCHAR * strPath, int iFrameIn, int iFrameOut, int iFrameSteps, int iFrameSubSteps, int iType,
 															BOOL bExportUV, BOOL bExportMaterialIds, BOOL bExportEnvelopeBindPose, BOOL bExportDynamicTopology,
-															BOOL bExportSelected)
+															BOOL bExportSelected, BOOL bFlattenHierarchy)
 {
 	ESS_STRUCTURED_EXCEPTION_REPORTING_START
 		return ExocortexAlembicStaticInterface_ExocortexAlembicExport( strPath, iFrameIn, iFrameOut, iFrameSteps, iFrameSubSteps, iType,
 															bExportUV, bExportMaterialIds, bExportEnvelopeBindPose, bExportDynamicTopology,
-															bExportSelected );
+															bExportSelected, bFlattenHierarchy );
 	ESS_STRUCTURED_EXCEPTION_REPORTING_END
 	return alembic_failure;
 }
 
 int ExocortexAlembicStaticInterface_ExocortexAlembicExport(MCHAR * strPath, int iFrameIn, int iFrameOut, int iFrameSteps, int iFrameSubSteps, int iType,
 															BOOL bExportUV, BOOL bExportMaterialIds, BOOL bExportEnvelopeBindPose, BOOL bExportDynamicTopology,
-															BOOL bExportSelected)
+															BOOL bExportSelected, BOOL bFlattenHierarchy)
 {
 	ESS_CPP_EXCEPTION_REPORTING_START
 
@@ -636,6 +588,7 @@ int ExocortexAlembicStaticInterface_ExocortexAlembicExport(MCHAR * strPath, int 
 		job->SetOption("indexedNormals", true);
 		job->SetOption("indexedUVs", true);
 		job->SetOption("exportSelected", (bExportSelected != FALSE));
+		job->SetOption("flattenHierarchy",(bFlattenHierarchy != FALSE));
 
 		// check if the job is satisfied
 		if (job->PreProcess() != true)

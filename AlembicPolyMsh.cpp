@@ -130,8 +130,10 @@ bool AlembicPolyMesh::Save(double time)
 		}
 	}
 
+	bool bFlatten = GetCurrentJob()->GetOption("flattenHierarchy");
+
     // Store the transformation
-    SaveXformSample(GetRef(), mXformSchema, mXformSample, time);
+    SaveXformSample(GetRef(), mXformSchema, mXformSample, time, bFlatten);
    
     // Clear our data
     mFaceCountVec.clear();

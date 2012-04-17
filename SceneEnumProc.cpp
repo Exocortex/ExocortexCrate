@@ -92,7 +92,7 @@ int SceneEnumProc::callback(INode *node)
 		case HELPER_CLASS_ID:
 			if (classID == Class_ID(DUMMY_CLASS_ID, 0))
             {
-				// Append(node, obj, OBTYPE_DUMMY, 0);
+				Append(node, obj, OBTYPE_DUMMY, 0);
             }
 			break;
 		case LIGHT_CLASS_ID: 

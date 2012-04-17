@@ -8,19 +8,22 @@
 // namespace AbcA = ::Alembic::AbcCoreAbstract::ALEMBIC_VERSION_NS;
 // using namespace AbcA;
 
-void GetObjectMatrix(TimeValue ticks, INode *node, Matrix3 &out)
+void GetObjectMatrix(TimeValue ticks, INode *node, Matrix3 &out, bool bFlattenHierarchy)
 {
     out = node->GetObjTMAfterWSM(ticks);
+	
+	if(bFlattenHierarchy) return;
+
     INode *pModelTransformParent = GetParentModelTransformNode(node);
 
-    if (pModelTransformParent)
+	if (pModelTransformParent)
     {
         Matrix3 modelParentTM = pModelTransformParent->GetObjTMAfterWSM(ticks);
         out = out * Inverse(modelParentTM);
     }
 }
 
-void SaveXformSample(const SceneEntry &in_Ref, Alembic::AbcGeom::OXformSchema &schema, Alembic::AbcGeom::XformSample &sample, double time)
+void SaveXformSample(const SceneEntry &in_Ref, Alembic::AbcGeom::OXformSchema &schema, Alembic::AbcGeom::XformSample &sample, double time, bool bFlattenHierarchy)
 {
     float masterScaleUnitMeters = (float)GetMasterScale(UNITS_METERS);
 
@@ -39,7 +42,7 @@ void SaveXformSample(const SceneEntry &in_Ref, Alembic::AbcGeom::OXformSchema &s
     TimeValue ticks = GetTimeValueFromFrame(time);
 
     Matrix3 transformation;
-    GetObjectMatrix(ticks, in_Ref.node, transformation);
+    GetObjectMatrix(ticks, in_Ref.node, transformation, bFlattenHierarchy);
 
     // Convert the max transform to alembic
     Matrix3 alembicMatrix;
@@ -54,7 +57,7 @@ void SaveXformSample(const SceneEntry &in_Ref, Alembic::AbcGeom::OXformSchema &s
     schema.set(sample);
 }
 
-void SaveCameraXformSample(const SceneEntry &in_Ref, Alembic::AbcGeom::OXformSchema &schema, Alembic::AbcGeom::XformSample &sample, double time)
+void SaveCameraXformSample(const SceneEntry &in_Ref, Alembic::AbcGeom::OXformSchema &schema, Alembic::AbcGeom::XformSample &sample, double time, bool bFlatten)
 {
    // check if the transform is animated
     if(schema.getNumSamples() > 0)
@@ -72,7 +75,7 @@ void SaveCameraXformSample(const SceneEntry &in_Ref, Alembic::AbcGeom::OXformSch
     TimeValue ticks = GetTimeValueFromFrame(time);
     
     Matrix3 transformation;
-    GetObjectMatrix(ticks, in_Ref.node, transformation);
+    GetObjectMatrix(ticks, in_Ref.node, transformation, bFlatten);
 
     // Cameras in Max are already pointing down the negative z-axis (as is expected from Alembic).
     // So we rotate it by 90 degrees so that it is pointing down the positive y-axis.
@@ -116,7 +119,7 @@ bool AlembicXForm::Save(double time)
     mXformSample.setChildBounds(Alembic::Abc::Box3d(minpoint, maxpoint));
 
     // Store the transformation
-    SaveXformSample(GetRef(), mXformSchema, mXformSample, time);
+    SaveXformSample(GetRef(), mXformSchema, mXformSample, time, false);
 
     return true;
 }

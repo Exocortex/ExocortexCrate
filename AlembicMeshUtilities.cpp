@@ -808,14 +808,9 @@ bool AlembicImport_IsPolyObject(Alembic::AbcGeom::IPolyMeshSchema::Sample &polyM
     return false;
 }
 
-int AlembicImport_PolyMesh(const std::string &path, const std::string &identifier, alembic_importoptions &options)
+int AlembicImport_PolyMesh(const std::string &path, Alembic::AbcGeom::IObject& iObj, alembic_importoptions &options, INode** pMaxNode)
 {
-	// Find the object in the archive
-	Alembic::AbcGeom::IObject iObj = getObjectFromArchive(path,identifier);
-	if(!iObj.valid())
-	{
-		return alembic_failure;
-	}
+	const std::string &identifier = iObj.getFullName();
 
 	// Fill in the mesh
     alembic_fillmesh_options dataFillOptions;
@@ -873,10 +868,10 @@ int AlembicImport_PolyMesh(const std::string &path, const std::string &identifie
 
    // Create the object pNode
 	INode *pNode = GET_MAX_INTERFACE()->CreateObjectNode(newObject, iObj.getName().c_str());
-	if (pNode == NULL)
-    {
+	if (pNode == NULL){
 		return alembic_failure;
     }
+	*pMaxNode = pNode;
 
 	TimeValue zero( 0 );
 

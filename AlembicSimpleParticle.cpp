@@ -1212,14 +1212,9 @@ bool isAlembicPoints( Alembic::AbcGeom::IObject *pIObj, bool& isConstant )
 	return objPoints.valid();
 }
 
-int AlembicImport_Points(const std::string &file, const std::string &identifier, alembic_importoptions &options)
+int AlembicImport_Points(const std::string &file, Alembic::AbcGeom::IObject& iObj, alembic_importoptions &options, INode** pMaxNode)
 {
-    // Find the object in the archive
-    Alembic::AbcGeom::IObject iObj = getObjectFromArchive(file, identifier);
-	if (!iObj.valid())
-    {
-		return alembic_failure;
-    }
+	const std::string &identifier = iObj.getFullName();
 
     bool isConstant = false;
 	if( !isAlembicPoints( &iObj, isConstant ) ) 
@@ -1249,6 +1244,7 @@ int AlembicImport_Points(const std::string &file, const std::string &identifier,
     {
 		return alembic_failure;
     }
+	*pMaxNode = pNode;
 
     // Add the new inode to our current scene list
     SceneEntry *pEntry = options.sceneEnumProc.Append(pNode, pParticleObj, OBTYPE_POINTS, &std::string(iObj.getFullName())); 

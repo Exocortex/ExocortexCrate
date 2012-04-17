@@ -304,15 +304,10 @@ int AlembicImport_Shape(const std::string &file, const std::string &identifier, 
 }*/
 
 
-int AlembicImport_Shape(const std::string &path, const std::string &identifier, alembic_importoptions &options)
+int AlembicImport_Shape(const std::string &path, Alembic::AbcGeom::IObject& iObj, alembic_importoptions &options, INode** pMaxNode)
 {
    
- 	// Find the object in the archive
-	Alembic::AbcGeom::IObject iObj = getObjectFromArchive(path,identifier);
-	if(!iObj.valid())
-	{
-		return alembic_failure;
-	}
+	const std::string &identifier = iObj.getFullName();
 
     if (!Alembic::AbcGeom::ICurves::matches(iObj.getMetaData()))
     {
@@ -356,6 +351,7 @@ int AlembicImport_Shape(const std::string &path, const std::string &identifier, 
     {
 		return alembic_failure;
     }
+	*pMaxNode = pNode;
 
 	TimeValue zero( 0 );
 

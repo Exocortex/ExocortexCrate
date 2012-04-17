@@ -100,13 +100,59 @@ void AlembicImport_FillInXForm_Internal(alembic_fillxform_options &options)
     }
 }
 
+int AlembicImport_DummyNode(Alembic::AbcGeom::IObject& iObj, alembic_importoptions &options, INode** pMaxNode)
+{
+    Object* dObj = static_cast<Object*>(CreateInstance(HELPER_CLASS_ID, Class_ID(DUMMY_CLASS_ID,0)));
+	if (!dObj){
+		return alembic_failure;
+	}
+
+    DummyObject *pDummy = static_cast<DummyObject*>(dObj);
+
+    // Hard code these values for now
+    pDummy->SetColor(Point3(0.6f, 0.8f, 1.0f));
+    
+
+    double SampleTime = GetSecondsFromTimeValue( GET_MAX_INTERFACE()->GetTime() );
+
+    Alembic::AbcGeom::IXform obj(iObj, Alembic::Abc::kWrapExisting);
+
+	if(!obj.valid()){
+		return alembic_failure;
+	}
+
+	float masterScaleUnitMeters = (float)GetMasterScale(UNITS_METERS);
+
+    SampleInfo sampleInfo = getSampleInfo(
+        SampleTime,
+        obj.getSchema().getTimeSampling(),
+        obj.getSchema().getNumSamples()
+        );
+
+    Alembic::AbcGeom::XformSample sample;
+    obj.getSchema().get(sample,sampleInfo.floorIndex);
+    Alembic::Abc::M44d matrix = sample.getMatrix();
+
+    const Alembic::Abc::Box3d &box3d = sample.getChildBounds();
+
+	pDummy->SetBox( Box3(Point3(box3d.min.x, box3d.min.y, box3d.min.z), Point3(box3d.max.x, box3d.max.y, box3d.max.z)) );
+
+    pDummy->EnableDisplay();
+
+    *pMaxNode = GET_MAX_INTERFACE()->CreateObjectNode(dObj, iObj.getName().c_str());
+
+    SceneEntry *pEntry = options.sceneEnumProc.Append(*pMaxNode, dObj, OBTYPE_DUMMY, &std::string(iObj.getFullName())); 
+    options.currentSceneList.Append(pEntry);
+
+	return alembic_success;
+}
+
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // AlembicImport_XForm
 ///////////////////////////////////////////////////////////////////////////////////////////////////
-int AlembicImport_XForm(const std::string &file, const std::string &identifier, alembic_importoptions &options)
+int AlembicImport_XForm(INode* pMaxNode, Alembic::AbcGeom::IObject& iObj, const std::string &file, alembic_importoptions &options)
 {
-    // Find the object in the archive
-	Alembic::AbcGeom::IObject iObj = getObjectFromArchive(file,identifier);
+	const std::string &identifier = iObj.getFullName();
 
 	bool isConstant = false;
 	if( ! isAlembicXform( &iObj, isConstant ) ) {
@@ -125,78 +171,6 @@ int AlembicImport_XForm(const std::string &file, const std::string &identifier, 
     xformOptions.bIsCameraTransform = bIsCamera;
     AlembicImport_FillInXForm(xformOptions);
 
-
-    // Find the scene node that this transform belongs too
-    // If the node does not exist, then this is just a transform, so we create
-    // a dummy helper object to attach the modifier (In the case of any alembic other node, we have already created a 3DS max node)
-
-	size_t childCount = iObj.getNumChildren();
-	size_t xFormChildCount = getNumXformChildren(iObj);
-	// An XForm with xForm(s) with an xForm child will require a dummy node (and a single xform can be attached it child geometry node)
-	bool bCreateDummyNode = false;
-
-	if(xFormChildCount > 0)
-	{
-		if(childCount == xFormChildCount)
-		{
-			bCreateDummyNode = true;
-		}
-		else if(xFormChildCount > 1)
-		{
-			ESS_LOG_INFO("Warning: xForm has children of multiple types.");
-			return alembic_failure;
-		}
-	}
-	else if(childCount > 1)
-	{
-		ESS_LOG_INFO("Warning: xForm has multiple children.");
-		return alembic_failure;
-	}
-	
-	INode *pNode = NULL;
-    if(bCreateDummyNode)
-    {
-        // TO DO:  I think this code works but I want to review it more when we get around to supportin
-        // transform tracks.  For now, I'm disabling it.
-        // - PeterM 
-		// MarshallH: the code looks ok to me
-        Object* obj = static_cast<Object*>(CreateInstance(HELPER_CLASS_ID, Class_ID(DUMMY_CLASS_ID,0)));
-
-        if (!obj)
-            return alembic_failure;
-
-        DummyObject *pDummy = static_cast<DummyObject*>(obj);
-
-        // Hard code these values for now
-        pDummy->SetColor(Point3(0.6f, 0.8f, 1.0f));
-        pDummy->SetBox(xformOptions.maxBoundingBox);
-
-        pDummy->EnableDisplay();
-
-        pNode = GET_MAX_INTERFACE()->CreateObjectNode(obj, iObj.getName().c_str());
-
-        if (!pNode)
-            return alembic_failure;
-
-        // Add it to our current scene list
-        SceneEntry *pEntry = options.sceneEnumProc.Append(pNode, obj, OBTYPE_DUMMY, &std::string(iObj.getFullName())); 
-        options.currentSceneList.Append(pEntry);
-
-        // Set up any child links for this node
-        AlembicImport_SetupChildLinks(iObj, options);
-    }
-	else
-	{
-		std::string modelid = iObj.getChild(0).getName();//getModelName(std::string(iObj.getName()));
-		pNode = options.currentSceneList.FindNodeWithName(modelid, false);
-	}
-
-	if(pNode == NULL)
-	{
-		ESS_LOG_INFO("Error: xForm node is NULL.");
-		return alembic_failure;
-	}
- 
 	// Create the xform modifier
 	AlembicXformController *pControl = static_cast<AlembicXformController*>
 		(GetCOREInterface()->CreateInstance(CTRL_MATRIX3_CLASS_ID, ALEMBIC_XFORM_CONTROLLER_CLASSID));
@@ -211,18 +185,18 @@ int AlembicImport_XForm(const std::string &file, const std::string &identifier, 
     pControl->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pControl, 0, "muted" ), zero, FALSE );
 	
    	// Add the modifier to the node
-    pNode->SetTMController(pControl);
+    pMaxNode->SetTMController(pControl);
 
 	if( ! isConstant ) {
-		GET_MAX_INTERFACE()->SelectNode( pNode );
+		GET_MAX_INTERFACE()->SelectNode( pMaxNode );
 		char szControllerName[10000];	
 		sprintf_s( szControllerName, 10000, "$.transform.controller.time" );
 		AlembicImport_ConnectTimeControl( szControllerName, options );
 	}
-    pNode->InvalidateTreeTM();
+    pMaxNode->InvalidateTreeTM();
 
     // Lock the transform
-    LockNodeTransform(pNode, true);
+    LockNodeTransform(pMaxNode, true);
 
 	return alembic_success;
 }
