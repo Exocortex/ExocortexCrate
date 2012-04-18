@@ -49,6 +49,11 @@ MStatus AlembicGetInfoCommand::doIt(const MArgList & args)
    // create an archive and get it
    addRefArchive(fileName);
    Alembic::Abc::IArchive * archive = getArchiveFromID(fileName);
+   if(archive == NULL)
+   {
+      MGlobal::displayError("[ExocortexAlembic] FileName specified. '"+fileName+"' does not exist.");
+      return MS::kFailure;
+   }
 
    // get the root object
    std::vector<Alembic::Abc::IObject> objects;
