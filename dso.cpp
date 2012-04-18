@@ -97,12 +97,13 @@ std::string getNameFromIdentifier(const std::string & identifier, long id = -1, 
    if(group >= 0)
       result += "."+boost::lexical_cast<std::string>(group);
    return result;
-}
-
+}  
+ 
 std::map<std::string,std::string> gUsedArchives;
 
 static int Init(AtNode *mynode, void **user_ptr)
 {
+	ESS_LOG_INFO( "ExocortexAlembicArnoldDSO: Init:" );
    userData * ud = new userData();
    *user_ptr = ud;
    ud->gProcShaders = NULL;
@@ -122,6 +123,8 @@ static int Init(AtNode *mynode, void **user_ptr)
       AiMsgError("[ExocortexAlembicArnold] No data string specified.");
       return NULL;
    }
+
+   ESS_LOG_INFO( "ExocortexAlembicArnoldDSO: Init: DataString: " + completeStr );
 
    // split the string using boost
    std::vector<std::string> nameValuePairs;
@@ -177,7 +180,9 @@ static int Init(AtNode *mynode, void **user_ptr)
    ud->gCentroidTime = 0.0f;
    for(size_t j=0;j<ud->gMbKeys.size();j++)
       ud->gCentroidTime += ud->gMbKeys[j];
-   ud->gCentroidTime /= float(ud->gMbKeys.size());
+   if( ud->gMbKeys.size() > 0 ) {
+      ud->gCentroidTime /= float(ud->gMbKeys.size());
+   }
    ud->gCentroidTime = roundCentroid(ud->gCentroidTime);
 
    // check if we have all important values
@@ -890,6 +895,7 @@ static int NumNodes(void *user_ptr)
 // Get the i_th node
 static AtNode *GetNode(void *user_ptr, int i)
 {
+	ESS_LOG_INFO( "ExocortexAlembicArnoldDSO: GetNode:" );
    userData * ud = (userData*)user_ptr;
    // check if this is a known object
    if(i >= (int)ud->gIObjects.size())
@@ -914,7 +920,8 @@ static AtNode *GetNode(void *user_ptr, int i)
    // now check if this is supposed to be an instance
    if(ud->gIObjects[i].instanceID > -1)
    {
-      Alembic::AbcGeom::IPoints typedObject(ud->gIObjects[i].abc,Alembic::Abc::kWrapExisting);
+	   ESS_LOG_INFO( "ExocortexAlembicArnoldDSO: GetNode: InstanceID: " + ud->gIObjects[i].instanceID );
+       Alembic::AbcGeom::IPoints typedObject(ud->gIObjects[i].abc,Alembic::Abc::kWrapExisting);
 
       instanceCloudInfo * info = ud->gIObjects[i].instanceCloud;
 
@@ -1129,6 +1136,8 @@ static AtNode *GetNode(void *user_ptr, int i)
    const Alembic::Abc::MetaData &md = object.getMetaData();
    if(Alembic::AbcGeom::IPolyMesh::matches(md)) {
 
+	   ESS_LOG_INFO( "ExocortexAlembicArnoldDSO: GetNode: IPolyMesh" );
+		
       // cast to polymesh and ensure we have got the 
       // normals parameter!
       Alembic::AbcGeom::IPolyMesh typedObject(object,Alembic::Abc::kWrapExisting);
@@ -1392,6 +1401,8 @@ static AtNode *GetNode(void *user_ptr, int i)
 
    } else if(Alembic::AbcGeom::ISubD::matches(md)) {
 
+      ESS_LOG_INFO( "ExocortexAlembicArnoldDSO: GetNode: ISubD" );
+	
       // cast to subd
       Alembic::AbcGeom::ISubD typedObject(object,Alembic::Abc::kWrapExisting);
       size_t minNumSamples = typedObject.getSchema().getNumSamples() == 1 ? typedObject.getSchema().getNumSamples() : samples.size();
@@ -1595,6 +1606,7 @@ static AtNode *GetNode(void *user_ptr, int i)
       AiNodeSetArray(shapeNode, "vlist", pos);
 
    } else if(Alembic::AbcGeom::ICurves::matches(md)) {
+      ESS_LOG_INFO( "ExocortexAlembicArnoldDSO: GetNode: ICurves" );
 
       // cast to curves
       Alembic::AbcGeom::ICurves typedObject(object,Alembic::Abc::kWrapExisting);
@@ -1827,10 +1839,13 @@ static AtNode *GetNode(void *user_ptr, int i)
       AiNodeSetArray(shapeNode, "points", pos);
 
    } else if(Alembic::AbcGeom::INuPatch::matches(md)) {
-      AiMsgWarning("[ExocortexAlembicArnold] This object type is not YET implemented: '%s'.",md.get("schema").c_str());
+      ESS_LOG_INFO( "ExocortexAlembicArnoldDSO: GetNode: INuPatch" );
+	  AiMsgWarning("[ExocortexAlembicArnold] This object type is not YET implemented: '%s'.",md.get("schema").c_str());
    } else if(Alembic::AbcGeom::IPoints::matches(md)) {
 
-      // cast to curves
+      ESS_LOG_INFO( "ExocortexAlembicArnoldDSO: GetNode: IPoints" );
+	  
+	  // cast to curves
       Alembic::AbcGeom::IPoints typedObject(object,Alembic::Abc::kWrapExisting);
       size_t minNumSamples = typedObject.getSchema().getNumSamples() == 1 ? typedObject.getSchema().getNumSamples() : samples.size();
 
