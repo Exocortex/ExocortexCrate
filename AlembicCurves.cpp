@@ -478,19 +478,16 @@ XSI::CStatus AlembicCurves::Save(double time)
    return CStatus::OK;
 }
 
-XSIPLUGINCALLBACK CStatus alembic_crvlist_Define( CRef& in_ctxt )
-{
+ESS_CALLBACK_START( alembic_crvlist_Define, CRef& )
    return alembicOp_Define(in_ctxt);
-}
+ESS_CALLBACK_END
 
-XSIPLUGINCALLBACK CStatus alembic_crvlist_DefineLayout( CRef& in_ctxt )
-{
+ESS_CALLBACK_START( alembic_crvlist_DefineLayout, CRef& )
    return alembicOp_DefineLayout(in_ctxt);
-}
+ESS_CALLBACK_END
 
 
-XSIPLUGINCALLBACK CStatus alembic_crvlist_Update( CRef& in_ctxt )
-{
+ESS_CALLBACK_START( alembic_crvlist_Update, CRef& )
    OperatorContext ctxt( in_ctxt );
 
    if((bool)ctxt.GetParameterValue(L"muted"))
@@ -538,12 +535,12 @@ XSIPLUGINCALLBACK CStatus alembic_crvlist_Update( CRef& in_ctxt )
    Primitive(ctxt.GetOutputTarget()).GetGeometry().GetPoints().PutPositionArray(pos);
 
    return CStatus::OK;
-}
+ESS_CALLBACK_END
 
-XSIPLUGINCALLBACK CStatus alembic_crvlist_Term(CRef & in_ctxt)
-{
+
+ESS_CALLBACK_START( alembic_crvlist_Term, CRef& )
    return alembicOp_Term(in_ctxt);
-}
+ESS_CALLBACK_END
 
 enum IDs
 {
@@ -951,18 +948,15 @@ XSIPLUGINCALLBACK CStatus alembic_curves_Term(CRef& in_ctxt)
    return CStatus::OK;
 }
 
-XSIPLUGINCALLBACK CStatus alembic_crvlist_topo_Define( CRef& in_ctxt )
-{
+ESS_CALLBACK_START( alembic_crvlist_topo_Define, CRef& )
    return alembicOp_Define(in_ctxt);
-}
+ESS_CALLBACK_END
 
-XSIPLUGINCALLBACK CStatus alembic_crvlist_topo_DefineLayout( CRef& in_ctxt )
-{
+ESS_CALLBACK_START( alembic_crvlist_topo_DefineLayout, CRef& )
    return alembicOp_DefineLayout(in_ctxt);
-}
+ESS_CALLBACK_END
 
-XSIPLUGINCALLBACK CStatus alembic_crvlist_topo_Update( CRef& in_ctxt )
-{
+ESS_CALLBACK_START( alembic_crvlist_topo_Update, CRef& )
    OperatorContext ctxt( in_ctxt );
 
    if((bool)ctxt.GetParameterValue(L"muted"))
@@ -1050,9 +1044,9 @@ XSIPLUGINCALLBACK CStatus alembic_crvlist_topo_Update( CRef& in_ctxt )
    curves.Set(curveDatas);
 
    return CStatus::OK;
-}
+ESS_CALLBACK_END
 
-XSIPLUGINCALLBACK CStatus alembic_crvlist_topo_Term(CRef & in_ctxt)
-{
+
+ESS_CALLBACK_START( alembic_crvlist_topo_Term, CRef& )
    return alembicOp_Term(in_ctxt);
-}
+ESS_CALLBACK_END

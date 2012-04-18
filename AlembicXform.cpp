@@ -52,15 +52,13 @@ void SaveXformSample(XSI::CRef kinestateRef, Alembic::AbcGeom::OXformSchema & sc
    schema.set(sample);
 }
 
-XSIPLUGINCALLBACK CStatus alembic_xform_Define( CRef& in_ctxt )
-{
+ESS_CALLBACK_START( alembic_xform_Define, CRef& )
    return alembicOp_Define(in_ctxt);
-}
+ESS_CALLBACK_END
 
-XSIPLUGINCALLBACK CStatus alembic_xform_DefineLayout( CRef& in_ctxt )
-{
+ESS_CALLBACK_START( alembic_xform_DefineLayout, CRef& )
    return alembicOp_DefineLayout(in_ctxt);
-}
+ESS_CALLBACK_END
 
 struct alembic_xform_UD
 {
@@ -69,8 +67,7 @@ struct alembic_xform_UD
    std::vector<Alembic::Abc::M44d> matrices;
 };
 
-XSIPLUGINCALLBACK CStatus alembic_xform_Update( CRef& in_ctxt )
-{
+ESS_CALLBACK_START( alembic_xform_Update, CRef& )
    OperatorContext ctxt( in_ctxt );
 
    if((bool)ctxt.GetParameterValue(L"muted"))
@@ -141,10 +138,10 @@ XSIPLUGINCALLBACK CStatus alembic_xform_Update( CRef& in_ctxt )
    state.PutTransform(xsiTransform);
 
    return CStatus::OK;
-}
+ESS_CALLBACK_END
 
-XSIPLUGINCALLBACK CStatus alembic_xform_Term(CRef & in_ctxt)
-{
+
+ESS_CALLBACK_START( alembic_xform_Term, CRef& )
    Context ctxt( in_ctxt );
    CustomOperator op(ctxt.GetSource());
    delRefArchive(op.GetParameterValue(L"path").GetAsText());
@@ -158,20 +155,17 @@ XSIPLUGINCALLBACK CStatus alembic_xform_Term(CRef & in_ctxt)
    }
 
    return CStatus::OK;
-}
+ESS_CALLBACK_END
 
-XSIPLUGINCALLBACK CStatus alembic_visibility_Define( CRef& in_ctxt )
-{
+ESS_CALLBACK_START( alembic_visibility_Define, CRef& )
    return alembicOp_Define(in_ctxt);
-}
+ESS_CALLBACK_END
 
-XSIPLUGINCALLBACK CStatus alembic_visibility_DefineLayout( CRef& in_ctxt )
-{
+ESS_CALLBACK_START( alembic_visibility_DefineLayout, CRef& )
    return alembicOp_DefineLayout(in_ctxt);
-}
+ESS_CALLBACK_END
 
-XSIPLUGINCALLBACK CStatus alembic_visibility_Update( CRef& in_ctxt )
-{
+ESS_CALLBACK_START( alembic_visibility_Update, CRef& )
    OperatorContext ctxt( in_ctxt );
 
    if((bool)ctxt.GetParameterValue(L"muted"))
@@ -220,9 +214,9 @@ XSIPLUGINCALLBACK CStatus alembic_visibility_Update( CRef& in_ctxt )
    }
 
    return CStatus::OK;
-}
+ESS_CALLBACK_END
 
-XSIPLUGINCALLBACK CStatus alembic_visibility_Term(CRef & in_ctxt)
-{
+
+ESS_CALLBACK_START( alembic_visibility_Term, CRef& )
    return alembicOp_Term(in_ctxt);
-}
+ESS_CALLBACK_END
