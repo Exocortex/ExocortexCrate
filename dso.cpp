@@ -344,8 +344,17 @@ static int Init(AtNode *mynode, void **user_ptr)
 
    // open the archive
    Alembic::Abc::IArchive archive(Alembic::AbcCoreHDF5::ReadArchive(), paths[0]);
+   	if(!archive.getTop().valid()) {
+		 AiMsgError("[ExocortexAlembicArnold] Not a valid Alembic data stream.  Path: %s", paths[0] );
+		return NULL;
+	}
    Alembic::Abc::IArchive instancesArchive(Alembic::AbcCoreHDF5::ReadArchive(), paths[1]);
-   std::vector<std::string> parts;
+   	if(!instancesArchive.getTop().valid()) {
+		 AiMsgError("[ExocortexAlembicArnold] Not a valid Alembic data stream.  Path: %s", paths[1] );
+		return NULL;
+	}
+
+	std::vector<std::string> parts;
    boost::split(parts, identifier, boost::is_any_of("/\\"));
    ud->proceduralDepth = (int)(parts.size() - 2);
 
@@ -1151,6 +1160,12 @@ static AtNode *GetNode(void *user_ptr, int i)
 
    // check what kind of object it is
    Alembic::Abc::IObject object = ud->gIObjects[i].abc;
+   
+	if(!object.valid()) {
+		 AiMsgError("[ExocortexAlembicArnold] Not a valid Alembic data stream." );
+		return NULL;
+	}
+
    const Alembic::Abc::MetaData &md = object.getMetaData();
    if(Alembic::AbcGeom::IPolyMesh::matches(md)) {
 
