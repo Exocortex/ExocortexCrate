@@ -2512,7 +2512,7 @@ ESS_CALLBACK_START(alembic_standinop_Update, CRef&)
    {
       if(gMbTime != globalTime)
       {
-         gMbTime = globalTime;
+         /*gMbTime = globalTime;
          gMbKeysStr.Clear();
          CValue mbKeysResult;
          CValueArray mbKeysArgs(3);
@@ -2528,7 +2528,8 @@ ESS_CALLBACK_START(alembic_standinop_Update, CRef&)
             gMbKeysStr = L"mbkeys="+CValue(floorf(float(mbKeys[0]) * 1000.0f + 0.5f) / (1000.0f * (float)CTime().GetFrameRate())).GetAsText();
             for(LONG i=1;i<mbKeys.GetCount();i++)
                gMbKeysStr += L";"+CValue(floorf(float(mbKeys[i]) * 1000.0f + 0.5f) / (1000.0f * (float)CTime().GetFrameRate())).GetAsText();
-         }
+         }*/
+		  ESS_LOG_WARNING( "ExocortexAlembicArnold: motion blur currently disabled to work around freeze bug within SITOA_GetMotionBlurKeys" );
       }
       if(!gMbKeysStr.IsEmpty())
          data += CString(data.IsEmpty() ? L"" : L"&")+gMbKeysStr;
