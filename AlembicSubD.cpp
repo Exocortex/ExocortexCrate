@@ -69,7 +69,15 @@ XSI::CStatus AlembicSubD::Save(double time)
 {
    // store the transform
    Primitive prim(GetRef());
-   SaveXformSample(GetRef(1),mXformSchema,mXformSample,time);
+   bool globalSpace = GetJob()->GetOption(L"globalSpace");
+   SaveXformSample(GetRef(1),mXformSchema,mXformSample,time,false,globalSpace);
+
+   // query the global space
+   CTransformation globalXfo;
+   if(globalSpace)
+      globalXfo = Kinematics(KinematicState(GetRef(1)).GetParent()).GetGlobal().GetTransform(time);
+   CTransformation globalRotation;
+   globalRotation.SetRotation(globalXfo.GetRotation());
 
    // store the metadata
    SaveMetaData(prim.GetParent3DObject().GetRef(),this);
@@ -85,7 +93,7 @@ XSI::CStatus AlembicSubD::Save(double time)
 
    // check if the mesh is animated
    if(mNumSamples > 0) {
-      if(!isRefAnimated(GetRef()))
+      if(!isRefAnimated(GetRef(),false,globalSpace))
          return CStatus::OK;
    }
 
@@ -104,6 +112,8 @@ XSI::CStatus AlembicSubD::Save(double time)
    std::vector<Alembic::Abc::V3f> posVec(vertCount);
    for(LONG i=0;i<vertCount;i++)
    {
+      if(globalSpace)
+         pos[i] = MapObjectPositionToWorldSpace(globalXfo,pos[i]);
       posVec[i].x = (float)pos[i].GetX();
       posVec[i].y = (float)pos[i].GetY();
       posVec[i].z = (float)pos[i].GetZ();
@@ -171,9 +181,15 @@ XSI::CStatus AlembicSubD::Save(double time)
          mVelocitiesVec.resize(vertCount);
          for(LONG i=0;i<vertCount;i++)
          {
-            mVelocitiesVec[i].x = velocitiesData[i].GetX();
-            mVelocitiesVec[i].y = velocitiesData[i].GetY();
-            mVelocitiesVec[i].z = velocitiesData[i].GetZ();
+            CVector3 vel;
+            vel.PutX(velocitiesData[i].GetX());
+            vel.PutY(velocitiesData[i].GetY());
+            vel.PutZ(velocitiesData[i].GetZ());
+            if(globalSpace)
+               vel = MapObjectPositionToWorldSpace(globalRotation,vel);
+            mVelocitiesVec[i].x = (float)vel.GetX();
+            mVelocitiesVec[i].y = (float)vel.GetY();
+            mVelocitiesVec[i].z = (float)vel.GetZ();
          }
 
          if(mVelocitiesVec.size() == 0)

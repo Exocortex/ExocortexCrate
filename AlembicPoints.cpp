@@ -88,7 +88,15 @@ XSI::CStatus AlembicPoints::Save(double time)
 {
    // store the transform
    Primitive prim(GetRef());
-   SaveXformSample(GetRef(1),mXformSchema,mXformSample,time);
+   bool globalSpace = GetJob()->GetOption(L"globalSpace");
+   SaveXformSample(GetRef(1),mXformSchema,mXformSample,time,false,globalSpace);
+
+   // query the global space
+   CTransformation globalXfo;
+   if(globalSpace)
+      globalXfo = Kinematics(KinematicState(GetRef(1)).GetParent()).GetGlobal().GetTransform(time);
+   CTransformation globalRotation;
+   globalRotation.SetRotation(globalXfo.GetRotation());
 
    // store the metadata
    SaveMetaData(prim.GetParent3DObject().GetRef(),this);
@@ -104,7 +112,7 @@ XSI::CStatus AlembicPoints::Save(double time)
 
    // check if the pointcloud is animated
    if(mNumSamples > 0) {
-      if(!isRefAnimated(GetRef()))
+      if(!isRefAnimated(GetRef(),false,globalSpace))
          return CStatus::OK;
    }
 

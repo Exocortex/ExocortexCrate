@@ -26,7 +26,7 @@ XSI::CString truncateName(const XSI::CString & in_Name);
 XSI::CString getFullNameFromIdentifier(std::string in_Identifier);
 XSI::CRef getRefFromIdentifier(std::string in_Identifier);
 XSI::CRefArray getOperators( XSI::CRef in_Ref);
-bool isRefAnimated(const XSI::CRef & in_Ref, bool xformCache = false);
+bool isRefAnimated(const XSI::CRef & in_Ref, bool xformCache = false, bool globalSpace = false);
 bool returnIsRefAnimated(const XSI::CRef & in_Ref, bool animated);
 void clearIsRefAnimatedCache();
 

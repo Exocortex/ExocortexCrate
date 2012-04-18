@@ -215,6 +215,7 @@ ESS_CALLBACK_START(alembic_export_Execute,CRef&)
 	      jobString += L";bindpose="+settings.GetParameterValue(L"bindpose").GetAsText();
 	      jobString += L";dynamictopology="+settings.GetParameterValue(L"dtopology").GetAsText();
       }
+      jobString += L";globalspace="+settings.GetParameterValue(L"globalspace").GetAsText();
  
       Application().ExecuteCommand(L"DeleteObj",inspectArgs,inspectResult);
    }
@@ -242,6 +243,7 @@ ESS_CALLBACK_START(alembic_export_Execute,CRef&)
       bool facesets = true;
 	   bool bindpose = true;
       bool dynamictopology = false;
+      bool globalspace = false;
       CRefArray objects;
 
       // process all tokens of the job
@@ -277,6 +279,8 @@ ESS_CALLBACK_START(alembic_export_Execute,CRef&)
             purepointcache = (bool)CValue(valuePair[1]);
 		   else if(valuePair[0].IsEqualNoCase(L"dynamictopology"))
             dynamictopology = (bool)CValue(valuePair[1]);
+		   else if(valuePair[0].IsEqualNoCase(L"globalspace"))
+            globalspace = (bool)CValue(valuePair[1]);
          else if(valuePair[0].IsEqualNoCase(L"filename"))
             filename = CValue(valuePair[1]).GetAsText();
          else if(valuePair[0].IsEqualNoCase(L"objects"))
@@ -394,6 +398,7 @@ ESS_CALLBACK_START(alembic_export_Execute,CRef&)
       job->SetOption(L"exportDynamicTopology",dynamictopology);
       job->SetOption(L"indexedNormals",true);
       job->SetOption(L"indexedUVs",true);
+      job->SetOption(L"globalSpace",globalspace);
 
       // check if the job is satifsied
       if(job->PreProcess() != CStatus::OK)
@@ -1030,6 +1035,13 @@ CStatus alembic_create_item_Invoke
                      addRefArchive(file);
                      op.PutParameterValue(L"path",file);
                      op.PutParameterValue(L"identifier",identifier);
+                     if(!timeControlProp.IsValid())
+                     {
+                        CRef timeControlRef;
+                        if(args.GetCount() > 0)
+                           timeControlRef = args[0];
+                        timeControlProp = timeControlRef;
+                     }
                      if(timeControlProp.IsValid())
                      {
                         CValue setExprReturn;
@@ -2216,6 +2228,7 @@ ESS_CALLBACK_START(alembic_export_settings_Define,CRef&)
    oCustomProperty.AddParameter(L"uvs",CValue::siBool,siPersistable,L"",L"",1,0,1,0,1,oParam);
    oCustomProperty.AddParameter(L"facesets",CValue::siBool,siPersistable,L"",L"",1,0,1,0,1,oParam);
    oCustomProperty.AddParameter(L"bindpose",CValue::siBool,siPersistable,L"",L"",1,0,1,0,1,oParam);
+   oCustomProperty.AddParameter(L"globalspace",CValue::siBool,siPersistable,L"",L"",0,0,1,0,1,oParam);
    oCustomProperty.AddParameter(L"dtopology",CValue::siBool,siPersistable,L"",L"",0,0,1,0,1,oParam);
    oCustomProperty.AddParameter(L"transformcache",CValue::siBool,siPersistable,L"",L"",0,0,1,0,1,oParam);
  
@@ -2249,8 +2262,9 @@ ESS_CALLBACK_START(alembic_export_settings_DefineLayout,CRef&)
    oLayout.AddItem(L"facesets",L"Clusters");
    oLayout.AddItem(L"bindpose",L"Envelope BindPose");
    oLayout.AddItem(L"dtopology",L"Dynamic Topology");
-   oLayout.AddItem(L"transformcache",L"Transform Cache");
+   oLayout.AddItem(L"globalspace",L"Use Global Space");
    oLayout.EndGroup();
+   oLayout.AddItem(L"transformcache",L"Transform Cache");
 
 	return CStatus::OK;
 ESS_CALLBACK_END
