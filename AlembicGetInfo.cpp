@@ -97,6 +97,18 @@ MStatus AlembicGetInfoCommand::doIt(const MArgList & args)
                   {
                      data += "purepointcache=1";
                   }
+                  else
+                  {
+                     Alembic::Abc::ICompoundProperty abcCompound = getCompoundFromObject(obj);
+                     Alembic::Abc::IInt32ArrayProperty faceCountProp = Alembic::Abc::IInt32ArrayProperty(abcCompound,".faceCounts");
+                     if(faceCountProp.valid())
+                     {
+                        if(!faceCountProp.isConstant())
+                        {
+                           data += "dynamictopology=1";
+                        }
+                     }
+                  }
                }
             }
          } else if(Alembic::AbcGeom::ISubD::matches(child.getMetaData())) {
@@ -112,6 +124,18 @@ MStatus AlembicGetInfoCommand::doIt(const MArgList & args)
                   if(faceCounts->get()[0] == 0)
                   {
                      data += "purepointcache=1";
+                  }
+                  else
+                  {
+                     Alembic::Abc::ICompoundProperty abcCompound = getCompoundFromObject(obj);
+                     Alembic::Abc::IInt32ArrayProperty faceCountProp = Alembic::Abc::IInt32ArrayProperty(abcCompound,".faceCounts");
+                     if(faceCountProp.valid())
+                     {
+                        if(!faceCountProp.isConstant())
+                        {
+                           data += "dynamictopology=1";
+                        }
+                     }
                   }
                }
             }

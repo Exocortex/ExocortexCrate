@@ -185,12 +185,15 @@ proc exocortexAlembicImport(string $filename,string $dialog)
     
     // parse additional data options
     int $purepointcache = 0;
+    int $dynamictopology = 0;
     string $data[];
     tokenize $datas[$i] ";" $data;
     for($j=0;$j<size($data);$j=$j+1)
     {
       if($data[$j]=="purepointcache=1")
         $purepointcache = 1;
+      else if($data[$j]=="dynamictopology=1")
+        $dynamictopology = 1;
     }
 
     if($types[$i] == "PolyMesh")
@@ -201,7 +204,10 @@ proc exocortexAlembicImport(string $filename,string $dialog)
         error ("Mesh '"+$name+"' not found for purepointcache alembic import.");
         return;
       }
-      $reader = createOrReuseNode($name+".inMesh","ExocortexAlembicPolyMeshDeform",$importAttach,1,1);
+      if($dynamictopology == 1)
+        $reader = createOrReuseNode($name+".inMesh","ExocortexAlembicPolyMesh",$importAttach,1,1);
+      else
+        $reader = createOrReuseNode($name+".inMesh","ExocortexAlembicPolyMeshDeform",$importAttach,1,1);
       if($reader == "")
       {
         if($purepointcache == 0)
@@ -214,9 +220,14 @@ proc exocortexAlembicImport(string $filename,string $dialog)
           setAttr ($topoReader+".uvs") $importUvs;
           if($importFaceSets)
             ExocortexAlembic_createFaceSets -f $filename -i $identifiers[$i] -o $shape;
+          if($dynamictopology == 1)
+            $reader = $topoReader;
         }
-        string $readers[] = `deformer -type "ExocortexAlembicPolyMeshDeform" $shape`;
-        $reader = $readers[0];
+        if($reader == "")
+        {
+          string $readers[] = `deformer -type "ExocortexAlembicPolyMeshDeform" $shape`;
+          $reader = $readers[0];
+        }
       }
     }
     else if($types[$i] == "SubD")
@@ -227,7 +238,10 @@ proc exocortexAlembicImport(string $filename,string $dialog)
         error ("Subdiv '"+$name+"' not found for purepointcache alembic import.");
         return;
       }
-      $reader = createOrReuseNode($name+".create","ExocortexAlembicSubDDeform",$importAttach,1,1);
+      if($dynamictopology == 1)
+        $reader = createOrReuseNode($name+".create","ExocortexAlembicSubD",$importAttach,1,1);
+      else
+        $reader = createOrReuseNode($name+".create","ExocortexAlembicSubDDeform",$importAttach,1,1);
       if($reader == "")
       {
         if($purepointcache == 0)
@@ -240,9 +254,14 @@ proc exocortexAlembicImport(string $filename,string $dialog)
           setAttr ($topoReader+".uvs") $importUvs;
           if($importFaceSets)
             ExocortexAlembic_createFaceSets -f $filename -i $identifiers[$i] -o $shape;
+          if($dynamictopology == 1)
+            $reader = $topoReader;
         }
-        string $readers[] = `deformer -type "ExocortexAlembicSubDDeform" $shape`;
-        $reader = $readers[0];
+        if($reader == "")
+        {
+          string $readers[] = `deformer -type "ExocortexAlembicSubDDeform" $shape`;
+          $reader = $readers[0];
+        }
       }
     }
     else if($types[$i] == "Camera")
