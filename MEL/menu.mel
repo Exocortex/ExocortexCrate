@@ -1,0 +1,13 @@
+global proc exocortexAlembicMenu()
+{
+  global string $showMyMenuCtrl;
+  if (`menu -exists $showMyMenuCtrl`)
+     deleteUI $showMyMenuCtrl;
+  string $name = "Exocortex";
+  global string $gMainWindow;
+  $showMyMenuCtrl = `menu -p $gMainWindow -to true -l $name`;
+  menuItem -p $showMyMenuCtrl -l "Alembic 1.0 Import" -c ("source \"C:/ExocortexAlembic/Maya2012/Module/MEL/import.mel\"; ");
+  menuItem -p $showMyMenuCtrl -l "Alembic 1.0 Export" -c ("source \"C:/ExocortexAlembic/Maya2012/Module/MEL/export.mel\"; ");
+}
+
+exocortexAlembicMenu;

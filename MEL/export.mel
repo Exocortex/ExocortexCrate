@@ -1,9 +1,9 @@
-proc closeDialog(string $dialog)
+global proc exocortexCloseDialog(string $dialog)
 {
   deleteUI -window $dialog;
 }
 
-proc exocortexAlembicExport(string $filename, string $dialog)
+global proc exocortexAlembicExport(string $filename, string $dialog)
 {
   // parse all options
   string $exportInframe = `textField -q -text inframe`;
@@ -15,7 +15,7 @@ proc exocortexAlembicExport(string $filename, string $dialog)
   int $exportFaceSets = `checkBox -q -value facesets`;
   int $exportDynamicTopo = `checkBox -q -value dynamictopology`;
   int $exportGlobalSpace = `checkBox -q -value globalspace`;
-  closeDialog($dialog);
+  exocortexCloseDialog($dialog);
 
   $minTime = `playbackOptions -q -min`;
   $maxTime = `playbackOptions -q -max`;
@@ -73,17 +73,17 @@ proc exocortexAlembicExport(string $filename, string $dialog)
   ExocortexAlembic_export -j $job;
 }
 
-proc closeDialog(string $dialog)
+global proc exocortexCloseDialog(string $dialog)
 {
   deleteUI -window $dialog;
 }
 
-proc chooseFile(string $dialog)
+global proc exocortexChooseFile(string $dialog)
 {
   exocortexAlembicExport("",$dialog);
 }
 
-string $uiDirectory = "c:/development/exocortex/ExocortexAlembicMaya/UI";
+string $uiDirectory = "C:/ExocortexAlembic/Maya2012/Module/UI";
 string $dialog;
 if (`window -exists $dialog`) deleteUI -window $dialog;
 $dialog = `loadUI -uiFile ($uiDirectory+"/ExocortexAlembicExport.ui")`;

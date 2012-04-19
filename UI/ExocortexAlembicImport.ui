@@ -131,7 +131,7 @@
        <string>Cancel</string>
       </property>
       <property name="-c" stdset="0">
-       <string>&quot;closeDialog($dialog);&quot;</string>
+       <string>&quot;exocortexCloseDialog($dialog);&quot;</string>
       </property>
      </widget>
     </item>
@@ -141,7 +141,7 @@
        <string>Import</string>
       </property>
       <property name="-c" stdset="0">
-       <string>&quot;chooseFile($dialog);&quot;</string>
+       <string>&quot;exocortexChooseFile($dialog);&quot;</string>
       </property>
      </widget>
     </item>

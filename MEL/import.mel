@@ -1,9 +1,9 @@
-proc closeDialog(string $dialog)
+global proc exocortexexocortexCloseDialog(string $dialog)
 {
   deleteUI -window $dialog;
 }
 
-proc string createOrReuseNode(string $name, string $type, int $importAttach, int $checkConnections, int $onlyReuse)
+global proc string exocortexCreateOrReuseNode(string $name, string $type, int $importAttach, int $checkConnections, int $onlyReuse)
 {
   string $result;
   $result = "";
@@ -45,14 +45,14 @@ proc string createOrReuseNode(string $name, string $type, int $importAttach, int
   return $result;
 }
 
-proc connectIfUnconnected(string $source, string $target)
+global proc exocortexConnectIfUnconnected(string $source, string $target)
 {
   string $currentSource = `connectionInfo -sfd $target`;
   if($currentSource != $source)
     connectAttr $source $target;
 }
 
-proc exocortexAlembicImport(string $filename,string $dialog)
+global proc exocortexAlembicImport(string $filename,string $dialog)
 {
   // parse all options
   int $importNormals = `checkBox -q -value normals`;
@@ -60,7 +60,7 @@ proc exocortexAlembicImport(string $filename,string $dialog)
   int $importFaceSets = `checkBox -q -value facesets`;
   string $importVisibility = `optionMenu -q -value visibility`;
   int $importAttach = `checkBox -q -value attach`;
-  closeDialog($dialog);
+  exocortexCloseDialog($dialog);
   
   // check if the filename is valid
   if($filename == "")
@@ -163,9 +163,9 @@ proc exocortexAlembicImport(string $filename,string $dialog)
   }
 
   // let's create the time node and file node
-  $timeControl = createOrReuseNode("ExocortexAlembicTimeControl","ExocortexAlembicTimeControl",$importAttach,0,0);
-  connectIfUnconnected("time1.outTime",($timeControl+".inTime"));
-  $fileNode = createOrReuseNode("ExocortexAlembicFile","ExocortexAlembicFile",0,0,0);
+  $timeControl = exocortexCreateOrReuseNode("ExocortexAlembicTimeControl","ExocortexAlembicTimeControl",$importAttach,0,0);
+  exocortexConnectIfUnconnected("time1.outTime",($timeControl+".inTime"));
+  $fileNode = exocortexCreateOrReuseNode("ExocortexAlembicFile","ExocortexAlembicFile",0,0,0);
   setAttr -type "string" ($fileNode+".fileName ") $filename;
   
   print "parsing file...";
@@ -198,23 +198,23 @@ proc exocortexAlembicImport(string $filename,string $dialog)
 
     if($types[$i] == "PolyMesh")
     {
-      $shape = createOrReuseNode($name,"mesh",$importAttach,0,$purepointcache);
+      $shape = exocortexCreateOrReuseNode($name,"mesh",$importAttach,0,$purepointcache);
       if($shape == "")
       {
         error ("Mesh '"+$name+"' not found for purepointcache alembic import.");
         return;
       }
       if($dynamictopology == 1)
-        $reader = createOrReuseNode($name+".inMesh","ExocortexAlembicPolyMesh",$importAttach,1,1);
+        $reader = exocortexCreateOrReuseNode($name+".inMesh","ExocortexAlembicPolyMesh",$importAttach,1,1);
       else
-        $reader = createOrReuseNode($name+".inMesh","ExocortexAlembicPolyMeshDeform",$importAttach,1,1);
+        $reader = exocortexCreateOrReuseNode($name+".inMesh","ExocortexAlembicPolyMeshDeform",$importAttach,1,1);
       if($reader == "")
       {
         if($purepointcache == 0)
         {
-          $topoReader = createOrReuseNode("ExocortexAlembicPolyMesh","ExocortexAlembicPolyMesh",0,0,0);
-          connectIfUnconnected(($topoReader+".outMesh"), ($shape+".inMesh"));
-          connectIfUnconnected(($fileNode+".outFileName"), ($topoReader+".fileName"));
+          $topoReader = exocortexCreateOrReuseNode("ExocortexAlembicPolyMesh","ExocortexAlembicPolyMesh",0,0,0);
+          exocortexConnectIfUnconnected(($topoReader+".outMesh"), ($shape+".inMesh"));
+          exocortexConnectIfUnconnected(($fileNode+".outFileName"), ($topoReader+".fileName"));
           setAttr -type "string" ($topoReader+".identifier") $identifiers[$i];
           setAttr ($topoReader+".normals") $importNormals;
           setAttr ($topoReader+".uvs") $importUvs;
@@ -232,24 +232,24 @@ proc exocortexAlembicImport(string $filename,string $dialog)
     }
     else if($types[$i] == "SubD")
     {
-      $shape = createOrReuseNode($name,"subdiv",$importAttach,0,$purepointcache);
+      $shape = exocortexCreateOrReuseNode($name,"subdiv",$importAttach,0,$purepointcache);
       if($shape == "")
       {
         error ("Subdiv '"+$name+"' not found for purepointcache alembic import.");
         return;
       }
       if($dynamictopology == 1)
-        $reader = createOrReuseNode($name+".create","ExocortexAlembicSubD",$importAttach,1,1);
+        $reader = exocortexCreateOrReuseNode($name+".create","ExocortexAlembicSubD",$importAttach,1,1);
       else
-        $reader = createOrReuseNode($name+".create","ExocortexAlembicSubDDeform",$importAttach,1,1);
+        $reader = exocortexCreateOrReuseNode($name+".create","ExocortexAlembicSubDDeform",$importAttach,1,1);
       if($reader == "")
       {
         if($purepointcache == 0)
         {
-          $topoReader = createOrReuseNode("ExocortexAlembicSubD","ExocortexAlembicSubD",0,0,0);
-          connectIfUnconnected(($topoReader+".outSubdiv"), ($shape+".create"));
-          connectIfUnconnected(($topoReader+".dispResolution"), ($shape+".dispResolution"));
-          connectIfUnconnected(($fileNode+".outFileName"), ($topoReader+".fileName"));
+          $topoReader = exocortexCreateOrReuseNode("ExocortexAlembicSubD","ExocortexAlembicSubD",0,0,0);
+          exocortexConnectIfUnconnected(($topoReader+".outSubdiv"), ($shape+".create"));
+          exocortexConnectIfUnconnected(($topoReader+".dispResolution"), ($shape+".dispResolution"));
+          exocortexConnectIfUnconnected(($fileNode+".outFileName"), ($topoReader+".fileName"));
           setAttr -type "string" ($topoReader+".identifier") $identifiers[$i];
           setAttr ($topoReader+".uvs") $importUvs;
           if($importFaceSets)
@@ -266,32 +266,32 @@ proc exocortexAlembicImport(string $filename,string $dialog)
     }
     else if($types[$i] == "Camera")
     {
-      $shape = createOrReuseNode($name,"camera",$importAttach,0,0);
-      $reader = createOrReuseNode($shape+".focalLength","ExocortexAlembicCamera",$importAttach,1,0);
-      connectIfUnconnected(($reader+".focalLength"), ($shape+".focalLength"));
-      connectIfUnconnected(($reader+".focusDistance"), ($shape+".focusDistance"));
-      connectIfUnconnected(($reader+".lensSqueezeRatio"), ($shape+".lensSqueezeRatio"));
-      connectIfUnconnected(($reader+".horizontalFilmAperture"), ($shape+".horizontalFilmAperture"));
-      connectIfUnconnected(($reader+".verticalFilmAperture"), ($shape+".verticalFilmAperture"));
-      connectIfUnconnected(($reader+".horizontalFilmOffset"), ($shape+".horizontalFilmOffset"));
-      connectIfUnconnected(($reader+".verticalFilmOffset"), ($shape+".verticalFilmOffset"));
-      //connectIfUnconnected(($reader+".nearClippingPlane"), ($shape+".nearClippingPlane"));
-      //connectIfUnconnected(($reader+".farClippingPlane"), ($shape+".farClippingPlane"));
-      connectIfUnconnected(($reader+".fStop"), ($shape+".fStop"));
-      connectIfUnconnected(($reader+".shutterAngle"), ($shape+".shutterAngle"));
+      $shape = exocortexCreateOrReuseNode($name,"camera",$importAttach,0,0);
+      $reader = exocortexCreateOrReuseNode($shape+".focalLength","ExocortexAlembicCamera",$importAttach,1,0);
+      exocortexConnectIfUnconnected(($reader+".focalLength"), ($shape+".focalLength"));
+      exocortexConnectIfUnconnected(($reader+".focusDistance"), ($shape+".focusDistance"));
+      exocortexConnectIfUnconnected(($reader+".lensSqueezeRatio"), ($shape+".lensSqueezeRatio"));
+      exocortexConnectIfUnconnected(($reader+".horizontalFilmAperture"), ($shape+".horizontalFilmAperture"));
+      exocortexConnectIfUnconnected(($reader+".verticalFilmAperture"), ($shape+".verticalFilmAperture"));
+      exocortexConnectIfUnconnected(($reader+".horizontalFilmOffset"), ($shape+".horizontalFilmOffset"));
+      exocortexConnectIfUnconnected(($reader+".verticalFilmOffset"), ($shape+".verticalFilmOffset"));
+      //exocortexConnectIfUnconnected(($reader+".nearClippingPlane"), ($shape+".nearClippingPlane"));
+      //exocortexConnectIfUnconnected(($reader+".farClippingPlane"), ($shape+".farClippingPlane"));
+      exocortexConnectIfUnconnected(($reader+".fStop"), ($shape+".fStop"));
+      exocortexConnectIfUnconnected(($reader+".shutterAngle"), ($shape+".shutterAngle"));
     }
     else if($types[$i] == "Xform")
     {
       // if we have only transforms in the alembic file, this is a transform cache!
       if($nbTransforms == size($types))
       {
-        string $locator = createOrReuseNode(($name+"Shape"),"locator",$importAttach,0,0);
+        string $locator = exocortexCreateOrReuseNode(($name+"Shape"),"locator",$importAttach,0,0);
         $xform = `listRelatives -p $locator`;
         $shape = $xform[0];
-        $reader = createOrReuseNode($shape+".translate","ExocortexAlembicXform",$importAttach,1,0);
-        connectIfUnconnected(($reader+".translate"), ($shape+".translate"));
-        connectIfUnconnected(($reader+".rotate"), ($shape+".rotate"));
-        connectIfUnconnected(($reader+".scale"), ($shape+".scale"));
+        $reader = exocortexCreateOrReuseNode($shape+".translate","ExocortexAlembicXform",$importAttach,1,0);
+        exocortexConnectIfUnconnected(($reader+".translate"), ($shape+".translate"));
+        exocortexConnectIfUnconnected(($reader+".rotate"), ($shape+".rotate"));
+        exocortexConnectIfUnconnected(($reader+".scale"), ($shape+".scale"));
       }
       else
       {
@@ -306,10 +306,10 @@ proc exocortexAlembicImport(string $filename,string $dialog)
             $shape = $objects[$j];
             $xform = `listRelatives -p $shape`;
             $shape = `rename -ignoreShape $xform[0] $name`;
-            $reader = createOrReuseNode($shape+".translate","ExocortexAlembicXform",$importAttach,1,0);
-            connectIfUnconnected(($reader+".translate"), ($shape+".translate"));
-            connectIfUnconnected(($reader+".rotate"), ($shape+".rotate"));
-            connectIfUnconnected(($reader+".scale"), ($shape+".scale"));
+            $reader = exocortexCreateOrReuseNode($shape+".translate","ExocortexAlembicXform",$importAttach,1,0);
+            exocortexConnectIfUnconnected(($reader+".translate"), ($shape+".translate"));
+            exocortexConnectIfUnconnected(($reader+".rotate"), ($shape+".rotate"));
+            exocortexConnectIfUnconnected(($reader+".scale"), ($shape+".scale"));
             break;
           }
         }
@@ -322,19 +322,19 @@ proc exocortexAlembicImport(string $filename,string $dialog)
       // find all xforms below this
       if($nbTransforms == size($types))
       {
-        string $locator = createOrReuseNode(($name+"Shape"),"locator",$importAttach,0,0);
+        string $locator = exocortexCreateOrReuseNode(($name+"Shape"),"locator",$importAttach,0,0);
         $xform = `listRelatives -p $locator`;
         $shape = $xform[0];
-        $reader = createOrReuseNode($shape+".translate","ExocortexAlembicXform",$importAttach,1,0);
+        $reader = exocortexCreateOrReuseNode($shape+".translate","ExocortexAlembicXform",$importAttach,1,0);
       }
       else
       {
-        $shape = createOrReuseNode($name,"transform",$importAttach,0,0);
-        $reader = createOrReuseNode($shape+".translate","ExocortexAlembicXform",$importAttach,1,0);
+        $shape = exocortexCreateOrReuseNode($name,"transform",$importAttach,0,0);
+        $reader = exocortexCreateOrReuseNode($shape+".translate","ExocortexAlembicXform",$importAttach,1,0);
       }
-      connectIfUnconnected(($reader+".translate"), ($shape+".translate"));
-      connectIfUnconnected(($reader+".rotate"), ($shape+".rotate"));
-      connectIfUnconnected(($reader+".scale"), ($shape+".scale"));
+      exocortexConnectIfUnconnected(($reader+".translate"), ($shape+".translate"));
+      exocortexConnectIfUnconnected(($reader+".rotate"), ($shape+".rotate"));
+      exocortexConnectIfUnconnected(($reader+".scale"), ($shape+".scale"));
 
       for($j=$i+1;$j<size($identifiers);$j=$j+1)
       {
@@ -367,8 +367,8 @@ proc exocortexAlembicImport(string $filename,string $dialog)
     
     // connect the standard ports
     if($nbSamples[$i] > 1)
-      connectIfUnconnected(($timeControl+".outTime"), ($reader+".inTime"));
-    connectIfUnconnected(($fileNode+".outFileName"), ($reader+".fileName"));
+      exocortexConnectIfUnconnected(($timeControl+".outTime"), ($reader+".inTime"));
+    exocortexConnectIfUnconnected(($fileNode+".outFileName"), ($reader+".fileName"));
     setAttr -type "string" ($reader+".identifier") $identifiers[$i];
     $objects[$i] = $shape;
     
@@ -377,17 +377,17 @@ proc exocortexAlembicImport(string $filename,string $dialog)
   }
 }
 
-proc closeDialog(string $dialog)
+global proc exocortexCloseDialog(string $dialog)
 {
   deleteUI -window $dialog;
 }
 
-proc chooseFile(string $dialog)
+global proc exocortexChooseFile(string $dialog)
 {
   exocortexAlembicImport("",$dialog);
 }
 
-string $uiDirectory = "c:/development/exocortex/ExocortexAlembicMaya/UI";
+string $uiDirectory = "C:/ExocortexAlembic/Maya2012/Module/UI";
 string $dialog;
 if (`window -exists $dialog`) deleteUI -window $dialog;
 $dialog = `loadUI -uiFile ($uiDirectory+"/ExocortexAlembicImport.ui")`;
