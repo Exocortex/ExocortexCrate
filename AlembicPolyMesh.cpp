@@ -42,6 +42,18 @@ MStatus AlembicPolyMesh::Save(double time)
    if(globalCache)
       globalXfo = GetGlobalMatrix(GetRef());
 
+   // ensure to keep the same topology if dynamic topology is disabled
+   bool dynamicTopology = GetJob()->GetOption(L"exportDynamicTopology").asInt() > 0;
+   if(!dynamicTopology && mNumSamples > 0)
+   {
+      if(mPosVec.size() != (size_t)points.length())
+      {
+         MString fullName = MFnDagNode(GetRef()).fullPathName();
+         MGlobal::displayError("[ExocortexAlembic] Object '"+fullName+"' contains dynamic topology. Not exporting sample.");
+         return MStatus::kFailure;
+      }
+   }
+
    mPosVec.resize(points.length());
    for(unsigned int i=0;i<points.length();i++)
    {
@@ -75,7 +87,6 @@ MStatus AlembicPolyMesh::Save(double time)
       return MStatus::kSuccess;
    }
 
-   bool dynamicTopology = GetJob()->GetOption(L"exportDynamicTopology").asInt() > 0;
    if(mNumSamples == 0 || dynamicTopology)
    {
       MIntArray counts,indices;
