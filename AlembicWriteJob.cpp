@@ -378,7 +378,12 @@ MStatus AlembicExportCommand::doIt(const MArgList & args)
 
                   // check all of the shapes below
                   for(unsigned int m=0;m<dag.childCount();m++)
-                     objects.append(dag.child(m));
+                  {
+                     MFnDagNode child(dag.child(m));
+                     if(child.isIntermediateObject())
+                        continue;
+                     objects.append(child.object());
+                  }
                }
             }
          }
