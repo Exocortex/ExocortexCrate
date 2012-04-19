@@ -114,9 +114,7 @@ Alembic::Abc::OCompoundProperty AlembicPolyMesh::GetCompound()
 }
 
 bool AlembicPolyMesh::Save(double time)
-{
-    float masterScaleUnitMeters = (float)GetMasterScale(UNITS_METERS);
-
+{   
 	TimeValue ticks = GetTimeValueFromFrame(time);
 
 	Object *obj = GetRef().node->EvalWorldState(ticks).obj;
@@ -205,14 +203,14 @@ bool AlembicPolyMesh::Save(double time)
     {
         Point3 &maxPoint = (polyObj != NULL) ? polyObj->GetMesh().V(i)->p
                                              : triObj->GetMesh().getVert(i);
-        posVec[i] = ConvertMaxPointToAlembicPoint( maxPoint, masterScaleUnitMeters );
+        posVec[i] = ConvertMaxPointToAlembicPoint( maxPoint );
         bbox.extendBy(posVec[i]);
 
         // Extend the archive bounding box
         if (mJob)
         {
             Point3 worldMaxPoint = wm * maxPoint;
-            Imath::V3f alembicWorldPoint = ConvertMaxPointToAlembicPoint(worldMaxPoint, masterScaleUnitMeters);
+            Imath::V3f alembicWorldPoint = ConvertMaxPointToAlembicPoint(worldMaxPoint);
             mJob->GetArchiveBBox().extendBy(alembicWorldPoint);
         }
     }

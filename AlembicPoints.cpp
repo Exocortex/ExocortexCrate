@@ -93,8 +93,6 @@ bool AlembicPoints::Save(double time)
     float flVisibility = GetRef().node->GetLocalVisibility(ticks);
     mOVisibility.set(flVisibility > 0 ? Alembic::AbcGeom::kVisibilityVisible : Alembic::AbcGeom::kVisibilityHidden);
 
-    float masterScaleUnitMeters = (float)GetMasterScale(UNITS_METERS);
-
     // Store positions, velocity, width/size, scale, id, bounding box
     std::vector<Alembic::Abc::V3f> positionVec(numParticles);
     std::vector<Alembic::Abc::V3f> velocityVec(numParticles);
@@ -123,10 +121,9 @@ bool AlembicPoints::Save(double time)
 
     for (int i = 0; i < numParticles; ++i)
     {
-        Imath::V3f pos = ConvertMaxPointToAlembicPoint(*particlesExt->GetParticlePositionByIndex(i), masterScaleUnitMeters);
-        Imath::V3f vel = ConvertMaxVectorToAlembicVector(*particlesExt->GetParticleSpeedByIndex(i), masterScaleUnitMeters, true);
+        Imath::V3f pos = ConvertMaxPointToAlembicPoint(*particlesExt->GetParticlePositionByIndex(i));
+        Imath::V3f vel = ConvertMaxVectorToAlembicVector(*particlesExt->GetParticleSpeedByIndex(i));
         Imath::V3f scale = ConvertMaxScaleToAlembicScale(*particlesExt->GetParticleScaleXYZByIndex(i));
-        // float width = particlesExt->GetParticleScaleByIndex(i) * GetMasterUnitToDecimeterRatio( masterScaleUnitMeters ) / 2.0f;
         TimeValue age = particlesExt->GetParticleAgeByIndex(i);
         uint64_t id = particlesExt->GetParticleBornIndex(i);
         ConvertMaxEulerXYZToAlembicQuat(*particlesExt->GetParticleOrientationByIndex(i), orientation);
@@ -134,7 +131,6 @@ bool AlembicPoints::Save(double time)
 
         // Particle size is a uniform scale multiplier in XSI.  In Max, I need to learn where to get this 
         // For now, we'll just default to 1
-        // float width = particlesExt->GetParticleScaleByIndex(i) * GetMasterUnitToDecimeterRatio( masterScaleUnitMeters );
         float width = 1.0f;
 
         ShapeType shapetype;

@@ -62,8 +62,7 @@ bool AlembicCamera::Save(double time)
     if (mJob)
     {
         Point3 worldMaxPoint = wm.GetTrans();
-        float masterScaleUnitMeters = (float)GetMasterScale(UNITS_METERS);
-        Alembic::Abc::V3f alembicWorldPoint = ConvertMaxPointToAlembicPoint(worldMaxPoint, masterScaleUnitMeters);
+        Alembic::Abc::V3f alembicWorldPoint = ConvertMaxPointToAlembicPoint(worldMaxPoint);
         mJob->GetArchiveBBox().extendBy(alembicWorldPoint);
     }
 

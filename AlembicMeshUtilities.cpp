@@ -147,8 +147,6 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
 		ESS_LOG_ERROR( "No valid license found for Exocortex Alembic, PolyMesh FillIn failed." );
 	}
    
-   float masterScaleUnitMeters = (float)GetMasterScale(UNITS_METERS);
-
    Alembic::AbcGeom::IPolyMesh objMesh;
    Alembic::AbcGeom::ISubD objSubD;
 
@@ -312,7 +310,7 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
 		 
 		   for(int i=0;i<vArray.size();i++)
 		   {
-			   pMeshVerties[i].p += ConvertAlembicPointToMaxPoint(vArray[i], masterScaleUnitMeters );
+			   pMeshVerties[i].p += ConvertAlembicPointToMaxPoint(vArray[i] );
 		   }
 	   }
 	   else if (options.pMesh != NULL)
@@ -320,7 +318,7 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
 		   Point3 *pVerts = options.pMesh->verts;
 		   for(int i=0;i<vArray.size();i++)
 		   {
-			   pVerts[i] += ConvertAlembicPointToMaxPoint(vArray[i], masterScaleUnitMeters );
+			   pVerts[i] += ConvertAlembicPointToMaxPoint(vArray[i]);
 		   }
 	   }
 	   else {

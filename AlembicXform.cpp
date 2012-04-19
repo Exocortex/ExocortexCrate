@@ -25,8 +25,6 @@ void GetObjectMatrix(TimeValue ticks, INode *node, Matrix3 &out, bool bFlattenHi
 
 void SaveXformSample(const SceneEntry &in_Ref, Alembic::AbcGeom::OXformSchema &schema, Alembic::AbcGeom::XformSample &sample, double time, bool bFlattenHierarchy)
 {
-    float masterScaleUnitMeters = (float)GetMasterScale(UNITS_METERS);
-
 	// check if the transform is animated
     if(schema.getNumSamples() > 0)
     {
@@ -46,7 +44,7 @@ void SaveXformSample(const SceneEntry &in_Ref, Alembic::AbcGeom::OXformSchema &s
 
     // Convert the max transform to alembic
     Matrix3 alembicMatrix;
-    ConvertMaxMatrixToAlembicMatrix(transformation, masterScaleUnitMeters, alembicMatrix);
+    ConvertMaxMatrixToAlembicMatrix(transformation, alembicMatrix);
     Alembic::Abc::M44d iMatrix( alembicMatrix.GetRow(0).x,  alembicMatrix.GetRow(0).y,  alembicMatrix.GetRow(0).z,  0,
                                 alembicMatrix.GetRow(1).x,  alembicMatrix.GetRow(1).y,  alembicMatrix.GetRow(1).z,  0,
                                 alembicMatrix.GetRow(2).x,  alembicMatrix.GetRow(2).y,  alembicMatrix.GetRow(2).z,  0,
@@ -69,8 +67,6 @@ void SaveCameraXformSample(const SceneEntry &in_Ref, Alembic::AbcGeom::OXformSch
         }
     }
 
-   float masterScaleUnitMeters = (float)GetMasterScale(UNITS_METERS);
-
    // Model transform
     TimeValue ticks = GetTimeValueFromFrame(time);
     
@@ -85,7 +81,7 @@ void SaveCameraXformSample(const SceneEntry &in_Ref, Alembic::AbcGeom::OXformSch
 
     // Convert the max transform to alembic
     Matrix3 alembicMatrix;
-    ConvertMaxMatrixToAlembicMatrix(transformation, masterScaleUnitMeters, alembicMatrix);
+    ConvertMaxMatrixToAlembicMatrix(transformation, alembicMatrix);
     Alembic::Abc::M44d iMatrix( alembicMatrix.GetRow(0).x,  alembicMatrix.GetRow(0).y,  alembicMatrix.GetRow(0).z,  0,
                                 alembicMatrix.GetRow(1).x,  alembicMatrix.GetRow(1).y,  alembicMatrix.GetRow(1).z,  0,
                                 alembicMatrix.GetRow(2).x,  alembicMatrix.GetRow(2).y,  alembicMatrix.GetRow(2).z,  0,
