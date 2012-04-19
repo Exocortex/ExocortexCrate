@@ -361,22 +361,25 @@ MStatus AlembicExportCommand::doIt(const MArgList & args)
             valuePair[1].split(',',objectStrings);
             for(unsigned int k=0;k<objectStrings.length();k++)
             {
-               MObject objRef = getRefFromFullName(objectStrings[k]);
-               if(objRef.isNull())
+               MSelectionList sl;
+               MString objectString = objectStrings[k];
+               sl.add(objectString);
+               MDagPath dag;
+               for(unsigned int l=0;l<sl.length();l++)
                {
-                  MGlobal::displayWarning("[ExocortexAlembic] Skipping object '"+objectStrings[k]+"', not found.");
-                  continue;
+                  sl.getDagPath(l,dag);
+                  MObject objRef = dag.node();
+                  if(objRef.isNull())
+                  {
+                     MGlobal::displayWarning("[ExocortexAlembic] Skipping object '"+objectStrings[k]+"', not found.");
+                     break;
+                  }
+                  objects.append(objRef);
+
+                  // check all of the shapes below
+                  for(unsigned int m=0;m<dag.childCount();m++)
+                     objects.append(dag.child(m));
                }
-               objects.append(objRef);
-
-
-               // check all of the shapes below
-               MFnDagNode dag(objRef);
-               for(unsigned int l=0;l<dag.childCount();l++)
-                  objects.append(dag.child(l));
-
-               // TODO: if this is similar to a model
-               // then we should add all elements below
             }
          }
          else

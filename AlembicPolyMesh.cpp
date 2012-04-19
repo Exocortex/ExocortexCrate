@@ -9,7 +9,7 @@ AlembicPolyMesh::AlembicPolyMesh(const MObject & in_Ref, AlembicWriteJob * in_Jo
 : AlembicObject(in_Ref, in_Job)
 {
    MFnDependencyNode node(in_Ref);
-   MString name = truncateName(node.name());
+   MString name = GetUniqueName(truncateName(node.name()));
    mObject = Alembic::AbcGeom::OPolyMesh(GetParentObject(),name.asChar(),GetJob()->GetAnimatedTs());
 
    mSchema = mObject.getSchema();

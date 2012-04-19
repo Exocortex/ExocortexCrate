@@ -43,6 +43,31 @@ Alembic::Abc::OObject AlembicObject::GetParentObject()
    return mJob->GetArchive().getTop();
 }
 
+MString AlembicObject::GetUniqueName(const MString & in_Name)
+{
+   Alembic::Abc::OObject parent = GetParentObject();
+   bool unique = false;
+   MString name = in_Name;
+   unsigned int index = 0;
+   while(!unique)
+   {
+      unique = true;
+      for(size_t i=0;i<parent.getNumChildren();i++)
+      {
+         MString childName = parent.getChildHeader(i).getName().c_str();
+         if(childName == name)
+         {
+            index++;
+            MString indexString;
+            indexString.set((double)index);
+            name = in_Name + indexString;
+            unique = false;
+            break;
+         }
+      }
+   }
+   return name;
+}
 
 unsigned int gRefIdMax = 0;
 std::map<unsigned int,AlembicObjectNode*> gNodes;

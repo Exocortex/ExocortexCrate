@@ -30,6 +30,7 @@ public:
    Alembic::Abc::OObject GetParentObject();
    virtual Alembic::Abc::OCompoundProperty GetCompound() = 0;
    int GetNumSamples() { return mNumSamples; }
+   MString GetUniqueName(const MString & in_Name);
 
    virtual MStatus Save(double time) = 0;
 };
