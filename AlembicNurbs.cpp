@@ -122,19 +122,16 @@ XSI::CStatus AlembicNurbs::Save(double time)
    return CStatus::OK;
 }
 
-XSIPLUGINCALLBACK CStatus alembic_nurbs_Define( CRef& in_ctxt )
-{
+ESS_CALLBACK_START( alembic_nurbs_Define, CRef& )
    return alembicOp_Define(in_ctxt);
-}
+ESS_CALLBACK_END
 
-XSIPLUGINCALLBACK CStatus alembic_nurbs_DefineLayout( CRef& in_ctxt )
-{
+ESS_CALLBACK_START( alembic_nurbs_DefineLayout, CRef& )
    return alembicOp_DefineLayout(in_ctxt);
-}
+ESS_CALLBACK_END
 
 
-XSIPLUGINCALLBACK CStatus alembic_nurbs_Update( CRef& in_ctxt )
-{
+ESS_CALLBACK_START( alembic_nurbs_Update, CRef& )
    OperatorContext ctxt( in_ctxt );
 
    if((bool)ctxt.GetParameterValue(L"muted"))
@@ -181,9 +178,8 @@ XSIPLUGINCALLBACK CStatus alembic_nurbs_Update( CRef& in_ctxt )
    Primitive(ctxt.GetOutputTarget()).GetGeometry().GetPoints().PutPositionArray(pos);
 
    return CStatus::OK;
-}
+ESS_CALLBACK_END
 
-XSIPLUGINCALLBACK CStatus alembic_nurbs_Term(CRef & in_ctxt)
-{
+ESS_CALLBACK_START( alembic_nurbs_Term, CRef& )
    return alembicOp_Term(in_ctxt);
-}
+ESS_CALLBACK_END

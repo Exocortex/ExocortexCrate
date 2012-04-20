@@ -477,19 +477,16 @@ XSI::CStatus AlembicPolyMesh::Save(double time)
    return CStatus::OK;
 }
 
-XSIPLUGINCALLBACK CStatus alembic_polymesh_Define( CRef& in_ctxt )
-{
+ESS_CALLBACK_START( alembic_polymesh_Define, CRef& )
    return alembicOp_Define(in_ctxt);
-}
+ESS_CALLBACK_END
 
-XSIPLUGINCALLBACK CStatus alembic_polymesh_DefineLayout( CRef& in_ctxt )
-{
+ESS_CALLBACK_START( alembic_polymesh_DefineLayout, CRef& )
    return alembicOp_DefineLayout(in_ctxt); 
-}
+ESS_CALLBACK_END
 
 
-XSIPLUGINCALLBACK CStatus alembic_polymesh_Update( CRef& in_ctxt )
-{
+ESS_CALLBACK_START( alembic_polymesh_Update, CRef& )
    OperatorContext ctxt( in_ctxt );
 
    if((bool)ctxt.GetParameterValue(L"muted"))
@@ -569,26 +566,22 @@ XSIPLUGINCALLBACK CStatus alembic_polymesh_Update( CRef& in_ctxt )
    Primitive(ctxt.GetOutputTarget()).GetGeometry().GetPoints().PutPositionArray(pos);
 
    return CStatus::OK;
-}
+ESS_CALLBACK_END
 
-XSIPLUGINCALLBACK CStatus alembic_polymesh_Term(CRef & in_ctxt)
-{
+ESS_CALLBACK_START( alembic_polymesh_Term, CRef& )
    return alembicOp_Term(in_ctxt);
-}
+ESS_CALLBACK_END
 
-XSIPLUGINCALLBACK CStatus alembic_normals_Define( CRef& in_ctxt )
-{
+ESS_CALLBACK_START( alembic_normals_Define, CRef& )
    return alembicOp_Define(in_ctxt);
-}
+ESS_CALLBACK_END
 
-XSIPLUGINCALLBACK CStatus alembic_normals_DefineLayout( CRef& in_ctxt )
-{
+ESS_CALLBACK_START( alembic_normals_DefineLayout, CRef& )
    return alembicOp_DefineLayout(in_ctxt);
-}
+ESS_CALLBACK_END
 
 
-XSIPLUGINCALLBACK CStatus alembic_normals_Update( CRef& in_ctxt )
-{
+ESS_CALLBACK_START( alembic_normals_Update, CRef& )
    OperatorContext ctxt( in_ctxt );
 
    if((bool)ctxt.GetParameterValue(L"muted"))
@@ -669,29 +662,25 @@ XSIPLUGINCALLBACK CStatus alembic_normals_Update( CRef& in_ctxt )
    ClusterProperty(ctxt.GetOutputTarget()).GetElements().PutArray(normalValues);
 
    return CStatus::OK;
-}
+ESS_CALLBACK_END
 
-XSIPLUGINCALLBACK CStatus alembic_normals_Term(CRef & in_ctxt)
-{
+ESS_CALLBACK_START( alembic_normals_Term, CRef& )
    Context ctxt( in_ctxt );
    CustomOperator op(ctxt.GetSource());
    delRefArchive(op.GetParameterValue(L"path").GetAsText());
    return CStatus::OK;
-}
+ESS_CALLBACK_END
 
-XSIPLUGINCALLBACK CStatus alembic_uvs_Define( CRef& in_ctxt )
-{
+ESS_CALLBACK_START( alembic_uvs_Define, CRef& )
    return alembicOp_Define(in_ctxt);
-}
+ESS_CALLBACK_END
 
-XSIPLUGINCALLBACK CStatus alembic_uvs_DefineLayout( CRef& in_ctxt )
-{
+ESS_CALLBACK_START( alembic_uvs_DefineLayout, CRef& )
    return alembicOp_DefineLayout(in_ctxt);
-}
+ESS_CALLBACK_END
 
 
-XSIPLUGINCALLBACK CStatus alembic_uvs_Update( CRef& in_ctxt )
-{
+ESS_CALLBACK_START( alembic_uvs_Update, CRef& )
    OperatorContext ctxt( in_ctxt );
 
    if((bool)ctxt.GetParameterValue(L"muted"))
@@ -776,26 +765,23 @@ XSIPLUGINCALLBACK CStatus alembic_uvs_Update( CRef& in_ctxt )
    ClusterProperty(ctxt.GetOutputTarget()).GetElements().PutArray(uvValues);
 
    return CStatus::OK;
-}
+ESS_CALLBACK_END
 
-XSIPLUGINCALLBACK CStatus alembic_uvs_Term(CRef & in_ctxt)
-{
+
+ESS_CALLBACK_START( alembic_uvs_Term, CRef& )
    return alembicOp_Term(in_ctxt);
-}
+ESS_CALLBACK_END
 
-XSIPLUGINCALLBACK CStatus alembic_polymesh_topo_Define( CRef& in_ctxt )
-{
+ESS_CALLBACK_START( alembic_polymesh_topo_Define, CRef& )
    return alembicOp_Define(in_ctxt);
-}
+ESS_CALLBACK_END
 
-XSIPLUGINCALLBACK CStatus alembic_polymesh_topo_DefineLayout( CRef& in_ctxt )
-{
+ESS_CALLBACK_START( alembic_polymesh_topo_DefineLayout, CRef& )
    return alembicOp_DefineLayout(in_ctxt);
-}
+ESS_CALLBACK_END
 
 
-XSIPLUGINCALLBACK CStatus alembic_polymesh_topo_Update( CRef& in_ctxt )
-{
+ESS_CALLBACK_START( alembic_polymesh_topo_Update, CRef& )
    OperatorContext ctxt( in_ctxt );
 
    if((bool)ctxt.GetParameterValue(L"muted"))
@@ -954,15 +940,14 @@ XSIPLUGINCALLBACK CStatus alembic_polymesh_topo_Update( CRef& in_ctxt )
    outMesh.Set(pos,polies);
 
    return CStatus::OK;
-}
+ESS_CALLBACK_END
 
-XSIPLUGINCALLBACK CStatus alembic_polymesh_topo_Term(CRef & in_ctxt)
-{
+
+ESS_CALLBACK_START( alembic_polymesh_topo_Term, CRef& )
    return alembicOp_Term(in_ctxt);
-}
+ESS_CALLBACK_END
 
-XSIPLUGINCALLBACK CStatus alembic_bbox_Define( CRef& in_ctxt )
-{
+ESS_CALLBACK_START( alembic_bbox_Define, CRef& )
    alembicOp_Define(in_ctxt);
 
    Context ctxt( in_ctxt );
@@ -977,10 +962,10 @@ XSIPLUGINCALLBACK CStatus alembic_bbox_Define( CRef& in_ctxt )
    oPDef = oFactory.CreateParamDef(L"extend",CValue::siFloat,siAnimatable| siPersistable,L"extend",L"extend",0.0f,-10000.0f,10000.0f,0.0f,10.0f);
    oCustomOperator.AddParameter(oPDef,oParam);
    return CStatus::OK;
-}
+ESS_CALLBACK_END
 
-XSIPLUGINCALLBACK CStatus alembic_bbox_DefineLayout( CRef& in_ctxt )
-{
+
+ESS_CALLBACK_START( alembic_bbox_DefineLayout, CRef& )
    alembicOp_DefineLayout(in_ctxt);
 
    Context ctxt( in_ctxt );
@@ -989,11 +974,10 @@ XSIPLUGINCALLBACK CStatus alembic_bbox_DefineLayout( CRef& in_ctxt )
    oLayout = ctxt.GetSource();
    oLayout.AddItem(L"extend",L"Extend Box");
    return CStatus::OK;
-}
+ESS_CALLBACK_END
 
 
-XSIPLUGINCALLBACK CStatus alembic_bbox_Update( CRef& in_ctxt )
-{
+ESS_CALLBACK_START( alembic_bbox_Update, CRef& )
    OperatorContext ctxt( in_ctxt );
 
    if((bool)ctxt.GetParameterValue(L"muted"))
@@ -1128,9 +1112,9 @@ XSIPLUGINCALLBACK CStatus alembic_bbox_Update( CRef& in_ctxt )
    outPrim.GetGeometry().GetPoints().PutPositionArray(pos);
 
    return CStatus::OK;
-}
+ESS_CALLBACK_END
 
-XSIPLUGINCALLBACK CStatus alembic_bbox_Term(CRef & in_ctxt)
-{
+
+ESS_CALLBACK_START( alembic_bbox_Term, CRef& )
    return alembicOp_Term(in_ctxt);
-}
+ESS_CALLBACK_END

@@ -384,18 +384,15 @@ XSI::CStatus AlembicSubD::Save(double time)
    return CStatus::OK;
 }
 
-XSIPLUGINCALLBACK CStatus alembic_geomapprox_Define( CRef& in_ctxt )
-{
+ESS_CALLBACK_START( alembic_geomapprox_Define, CRef& )
    return alembicOp_Define(in_ctxt);
-}
+ESS_CALLBACK_END
 
-XSIPLUGINCALLBACK CStatus alembic_geomapprox_DefineLayout( CRef& in_ctxt )
-{
+ESS_CALLBACK_START( alembic_geomapprox_DefineLayout, CRef& )
    return alembicOp_DefineLayout(in_ctxt);
-}
+ESS_CALLBACK_END
 
-XSIPLUGINCALLBACK CStatus alembic_geomapprox_Update( CRef& in_ctxt )
-{
+ESS_CALLBACK_START( alembic_geomapprox_Update, CRef& )
    OperatorContext ctxt( in_ctxt );
 
    if((bool)ctxt.GetParameterValue(L"muted"))
@@ -421,9 +418,8 @@ XSIPLUGINCALLBACK CStatus alembic_geomapprox_Update( CRef& in_ctxt )
    prop.PutParameterValue(L"gapproxmordrsl",subDLevel);
 
    return CStatus::OK;
-}
+ESS_CALLBACK_END
 
-XSIPLUGINCALLBACK CStatus alembic_geomapprox_Term(CRef & in_ctxt)
-{
+ESS_CALLBACK_START( alembic_geomapprox_Term, CRef& )
    return alembicOp_Term(in_ctxt);
-}
+ESS_CALLBACK_END
