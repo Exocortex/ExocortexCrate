@@ -43,6 +43,7 @@
 #include <xsi_customoperator.h>
 #include <xsi_operatorcontext.h>
 #include <xsi_outputport.h>
+#include "arnoldHelpers.h"
 
 using namespace XSI; 
 using namespace MATH; 
@@ -2405,9 +2406,6 @@ ESS_CALLBACK_START(alembic_standinop_DefineLayout, CRef&)
    return CStatus::OK;
 ESS_CALLBACK_END
 
-float gMbTime = FLT_MAX;
-CString gMbKeysStr;
-
 ESS_CALLBACK_START(alembic_standinop_Update, CRef&)
 
    // if we are not interactive, let's just return here
@@ -2510,29 +2508,17 @@ ESS_CALLBACK_START(alembic_standinop_Update, CRef&)
    // now get the motion blur keys
    if(tokensLower.FindString(L"&mbkeys=") == -1)
    {
-      if(gMbTime != globalTime)
+      CString mbKeysStr;
+      CDoubleArray mbKeys;
+      GetArnoldMotionBlurData(mbKeys,globalTime * (float)CTime().GetFrameRate());
+      if(mbKeys.GetCount() > 0)
       {
-         /*gMbTime = globalTime;
-         gMbKeysStr.Clear();
-         CValue mbKeysResult;
-         CValueArray mbKeysArgs(3);
-         mbKeysArgs[0] = x3dRef;
-         mbKeysArgs[1] = true;
-         mbKeysArgs[2] = globalTime * (float)CTime().GetFrameRate();
-
-         Application().ExecuteCommand(L"SITOA_GetMotionBlurKeys",mbKeysArgs,mbKeysResult);
-
-         CValueArray mbKeys = mbKeysResult;
-         if(mbKeys.GetCount() > 0)
-         {
-            gMbKeysStr = L"mbkeys="+CValue(floorf(float(mbKeys[0]) * 1000.0f + 0.5f) / (1000.0f * (float)CTime().GetFrameRate())).GetAsText();
-            for(LONG i=1;i<mbKeys.GetCount();i++)
-               gMbKeysStr += L";"+CValue(floorf(float(mbKeys[i]) * 1000.0f + 0.5f) / (1000.0f * (float)CTime().GetFrameRate())).GetAsText();
-         }*/
-		  ESS_LOG_WARNING( "ExocortexAlembicArnold: motion blur currently disabled to work around freeze bug within SITOA_GetMotionBlurKeys" );
+         mbKeysStr = L"mbkeys="+CValue(floorf(float(mbKeys[0]) * 1000.0f + 0.5f) / (1000.0f * (float)CTime().GetFrameRate())).GetAsText();
+         for(LONG i=1;i<mbKeys.GetCount();i++)
+            mbKeysStr += L";"+CValue(floorf(float(mbKeys[i]) * 1000.0f + 0.5f) / (1000.0f * (float)CTime().GetFrameRate())).GetAsText();
       }
-      if(!gMbKeysStr.IsEmpty())
-         data += CString(data.IsEmpty() ? L"" : L"&")+gMbKeysStr;
+      if(!mbKeysStr.IsEmpty())
+         data += CString(data.IsEmpty() ? L"" : L"&")+mbKeysStr;
    }
 
    // output the data to a custom property
