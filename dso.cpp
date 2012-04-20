@@ -345,13 +345,13 @@ static int Init(AtNode *mynode, void **user_ptr)
    ESS_LOG_INFO(paths[0].c_str());
    Alembic::Abc::IArchive archive(Alembic::AbcCoreHDF5::ReadArchive(), paths[0]);
    	if(!archive.getTop().valid()) {
-		 AiMsgError("[ExocortexAlembicArnold] Not a valid Alembic data stream.  Path: %s", paths[0] );
+		 AiMsgError("[ExocortexAlembicArnold] Not a valid Alembic data stream.  Path: %s", paths[0].c_str() );
 		return NULL;
 	}
    ESS_LOG_INFO(paths[1].c_str());
    Alembic::Abc::IArchive instancesArchive(Alembic::AbcCoreHDF5::ReadArchive(), paths[1]);
    	if(!instancesArchive.getTop().valid()) {
-		 AiMsgError("[ExocortexAlembicArnold] Not a valid Alembic data stream.  Path: %s", paths[1] );
+		 AiMsgError("[ExocortexAlembicArnold] Not a valid Alembic data stream.  Path: %s", paths[1].c_str() );
 		return NULL;
 	}
 
@@ -971,7 +971,7 @@ static AtNode *GetNode(void *user_ptr, int i)
       std::map<float,AtNode*>::iterator it = group->nodes[groupID].find(centroidTime);
       if(it == group->nodes[groupID].end())
       {
-         AiMsgError("[ExocortexAlembicArnold] Cannot find masterNode '%s' for centroidTime '%f'. Aborting.",group->identifiers[groupID],centroidTime);
+         AiMsgError("[ExocortexAlembicArnold] Cannot find masterNode '%s' for centroidTime '%f'. Aborting.",group->identifiers[groupID].c_str(),centroidTime);
          return NULL;
       }
       AtNode * usedMasterNode = it->second;
@@ -1170,7 +1170,7 @@ static AtNode *GetNode(void *user_ptr, int i)
          AiMsgError("[ExocortexAlembicArnold] Mesh '%s' does not contain normals. Aborting.",object.getFullName().c_str());
          return NULL;
       }
-      super_debug_var = 0;
+     // super_debug_var = 0;
 
       // create the arnold node
       if(shifted)
