@@ -174,34 +174,37 @@ XSI::CStatus AlembicCurves::Save(double time)
    {
       HairPrimitive hairPrim(GetRef());
       LONG totalHairs = prim.GetParameterValue(L"TotalHairs");
-      CRenderHairAccessor accessor = hairPrim.GetRenderHairAccessor(totalHairs,totalHairs,time);
-      accessor.Next();
-
-      CFloatArray hairPos;
-      CStatus result = accessor.GetVertexPositions(hairPos);
+      totalHairs *= (LONG)prim.GetParameterValue(L"StrandMult");
+      CRenderHairAccessor accessor = hairPrim.GetRenderHairAccessor(totalHairs,10000,time);
 
       // prepare the bounding box
       Alembic::Abc::Box3d bbox;
+      std::vector<Alembic::Abc::V3f> posVec;
 
-      ULONG vertCount = hairPos.GetCount();
-      vertCount /= 3;
-      std::vector<Alembic::Abc::V3f> posVec(vertCount);
-      ULONG offset = 0;
-      for(ULONG i=0;i<vertCount;i++)
+      while(accessor.Next())
       {
-         CVector3 pos;
-         pos.PutX(hairPos[offset++]);
-         pos.PutY(hairPos[offset++]);
-         pos.PutZ(hairPos[offset++]);
-         if(globalSpace)
-            pos = MapObjectPositionToWorldSpace(globalXfo,pos);
-         posVec[i].x = (float)pos.GetX();
-         posVec[i].y = (float)pos.GetY();
-         posVec[i].z = (float)pos.GetZ();
-         bbox.extendBy(posVec[i]);
+         CFloatArray hairPos;
+         CStatus result = accessor.GetVertexPositions(hairPos);
+         ULONG vertCount = hairPos.GetCount();
+         vertCount /= 3;
+         size_t posVecOffset = posVec.size();
+         posVec.resize(posVec.size() + size_t(vertCount));
+         ULONG offset = 0;
+         for(ULONG i=0;i<vertCount;i++)
+         {
+            CVector3 pos;
+            pos.PutX(hairPos[offset++]);
+            pos.PutY(hairPos[offset++]);
+            pos.PutZ(hairPos[offset++]);
+            if(globalSpace)
+               pos = MapObjectPositionToWorldSpace(globalXfo,pos);
+            posVec[posVecOffset+i].x = (float)pos.GetX();
+            posVec[posVecOffset+i].y = (float)pos.GetY();
+            posVec[posVecOffset+i].z = (float)pos.GetZ();
+            bbox.extendBy(posVec[posVecOffset+i]);
+         }
       }
       mCurvesSample.setPositions(Alembic::Abc::P3fArraySample(&posVec.front(),posVec.size()));
-      hairPos.Clear();
 
       // store the bbox
       mCurvesSample.setSelfBounds(bbox);
