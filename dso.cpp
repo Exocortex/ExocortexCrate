@@ -3,6 +3,7 @@
 #include <time.h>
 #include <boost/lexical_cast.hpp>
 #include <map>
+#include <boost/thread/mutex.hpp>
 
 #include <syslog.h>
 
@@ -100,11 +101,15 @@ std::string getNameFromIdentifier(const std::string & identifier, long id = -1, 
       result += "."+boost::lexical_cast<std::string>(group);
    return result;
 }  
- 
+
+boost::mutex gGlobalLock;
+
 std::map<std::string,std::string> gUsedArchives;
 
 static int Init(AtNode *mynode, void **user_ptr)
 {
+   boost::mutex::scoped_lock writeLock( gGlobalLock );
+
    userData * ud = new userData();
    *user_ptr = ud;
    ud->gProcShaders = NULL;
@@ -888,6 +893,8 @@ static int Init(AtNode *mynode, void **user_ptr)
 // All done, deallocate stuff
 static int Cleanup(void *user_ptr)
 {
+	boost::mutex::scoped_lock writeLock( gGlobalLock );
+
 	userData * ud = (userData*)user_ptr;
    ud->gIObjects.clear();
    ud->gInstances.clear();
@@ -900,7 +907,9 @@ static int Cleanup(void *user_ptr)
 // Get number of nodes
 static int NumNodes(void *user_ptr)
 {
-   userData * ud = (userData*)user_ptr;
+	boost::mutex::scoped_lock writeLock( gGlobalLock );
+
+	userData * ud = (userData*)user_ptr;
    int size = (int)ud->gIObjects.size();
    return size;
 }
@@ -909,7 +918,9 @@ static int NumNodes(void *user_ptr)
 // Get the i_th node
 static AtNode *GetNode(void *user_ptr, int i)
 {
-   userData * ud = (userData*)user_ptr;
+	boost::mutex::scoped_lock writeLock( gGlobalLock );
+
+	userData * ud = (userData*)user_ptr;
    // check if this is a known object
    if(i >= (int)ud->gIObjects.size())
       return NULL;
