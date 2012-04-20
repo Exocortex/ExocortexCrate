@@ -4,6 +4,8 @@
 #include <boost/lexical_cast.hpp>
 #include <map>
 
+#include <syslog.h>
+
 struct instanceGroupInfo{
    std::vector<std::string> identifiers;
    std::vector<std::map<float,AtNode*> > nodes;
@@ -343,11 +345,13 @@ static int Init(AtNode *mynode, void **user_ptr)
    }
 
    // open the archive
+   ESS_LOG_INFO(paths[0].c_str());
    Alembic::Abc::IArchive archive(Alembic::AbcCoreHDF5::ReadArchive(), paths[0]);
    	if(!archive.getTop().valid()) {
 		 AiMsgError("[ExocortexAlembicArnold] Not a valid Alembic data stream.  Path: %s", paths[0] );
 		return NULL;
 	}
+   ESS_LOG_INFO(paths[1].c_str());
    Alembic::Abc::IArchive instancesArchive(Alembic::AbcCoreHDF5::ReadArchive(), paths[1]);
    	if(!instancesArchive.getTop().valid()) {
 		 AiMsgError("[ExocortexAlembicArnold] Not a valid Alembic data stream.  Path: %s", paths[1] );
@@ -1167,10 +1171,13 @@ static AtNode *GetNode(void *user_ptr, int i)
 	}
 
    const Alembic::Abc::MetaData &md = object.getMetaData();
-   if(Alembic::AbcGeom::IPolyMesh::matches(md)) {
+   if(Alembic::AbcGeom::IPolyMesh::matches(md))
+   {
+           ESS_LOG_INFO(object.getFullName().c_str());
 
 	   ESS_LOG_INFO( "ExocortexAlembicArnoldDSO: GetNode: IPolyMesh" );
 		
+
       // cast to polymesh and ensure we have got the 
       // normals parameter!
       Alembic::AbcGeom::IPolyMesh typedObject(object,Alembic::Abc::kWrapExisting);
@@ -1181,6 +1188,7 @@ static AtNode *GetNode(void *user_ptr, int i)
          AiMsgError("[ExocortexAlembicArnold] Mesh '%s' does not contain normals. Aborting.",object.getFullName().c_str());
          return NULL;
       }
+      super_debug_var = 0;
 
       // create the arnold node
       if(shifted)

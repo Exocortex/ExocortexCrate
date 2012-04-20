@@ -10,10 +10,19 @@
 #define EC_LICENSE_RESULT_DEMO_LICENSE	(1)
 #define EC_LICENSE_RESULT_FULL_LICENSE	(2)
 
-#define ESS_LOG_ERROR(a) do { std::stringstream s; s << a;  AiMsgError(s.str().c_str() ); } while(0)
-#define ESS_LOG_WARNING(a) do { std::stringstream s; s << a; AiMsgWarning(s.str().c_str() ); } while(0)
-#define ESS_LOG_INFO(a) do { std::stringstream s; s << a; AiMsgInfo(s.str().c_str() ); } while(0)
+#ifdef WIN32
+	#define ESS_LOG_ERROR(a) do { std::stringstream s; s << a;  AiMsgError(s.str().c_str() ); } while(0)
+	#define ESS_LOG_WARNING(a) do { std::stringstream s; s << a; AiMsgWarning(s.str().c_str() ); } while(0)
+	#define ESS_LOG_INFO(a) do { std::stringstream s; s << a; AiMsgInfo(s.str().c_str() ); } while(0)
+#else
+	#include <syslog.h>
 
+	#define ESS_LOG_SYSLOG(msg_type, msg) do { std::stringstream ss; ss << "[" << msg_type << "] " << __FILE__ << ":" << __LINE__ << " -> " << msg; syslog(LOG_USER, "%s", ss.str().c_str()); } while(0)
+
+	#define ESS_LOG_ERROR(a) do { std::stringstream s; s << a;  AiMsgError(s.str().c_str() ); ESS_LOG_SYSLOG("error", a); } while(0)
+	#define ESS_LOG_WARNING(a) do { std::stringstream s; s << a; AiMsgWarning(s.str().c_str() ); ESS_LOG_SYSLOG("warning", a); } while(0)
+	#define ESS_LOG_INFO(a) do { std::stringstream s; s << a; AiMsgInfo(s.str().c_str() ); ESS_LOG_SYSLOG("info", a); } while(0)
+#endif
 
 #ifndef EC_LOG_ERROR
 	#define EC_LOG_ERROR(a)		ESS_LOG_ERROR(a)
