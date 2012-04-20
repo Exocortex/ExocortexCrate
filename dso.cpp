@@ -105,9 +105,6 @@ std::map<std::string,std::string> gUsedArchives;
 
 static int Init(AtNode *mynode, void **user_ptr)
 {
-	for( int i = 0; i < 100; i ++ ) {
- 	ESS_LOG_INFO( "ExocortexAlembicArnoldDSO: Init: " << i );
-	}
    userData * ud = new userData();
    *user_ptr = ud;
    ud->gProcShaders = NULL;
@@ -891,16 +888,11 @@ static int Init(AtNode *mynode, void **user_ptr)
 // All done, deallocate stuff
 static int Cleanup(void *user_ptr)
 {
-	for( int i = 0; i < 100; i ++ ) {
-		ESS_LOG_INFO( "ExocortexAlembicArnoldDSO: Cleanup: " << i );
-	}
 	userData * ud = (userData*)user_ptr;
    ud->gIObjects.clear();
    ud->gInstances.clear();
    delete(ud);
-	for( int i = 0; i < 100; i ++ ) {
-		ESS_LOG_INFO( "ExocortexAlembicArnoldDSO: Cleanup: End: " << i );
-	}
+	
    return TRUE;
 }
 
@@ -908,15 +900,8 @@ static int Cleanup(void *user_ptr)
 // Get number of nodes
 static int NumNodes(void *user_ptr)
 {
-	for( int i = 0; i < 100; i ++ ) {
-		ESS_LOG_INFO( "ExocortexAlembicArnoldDSO: NumNodes: " << i );
-	}
    userData * ud = (userData*)user_ptr;
    int size = (int)ud->gIObjects.size();
-	for( int i = 0; i < 100; i ++ ) {
-		ESS_LOG_INFO( "ExocortexAlembicArnoldDSO: NumNodes: End: " << i );
-	}
- 
    return size;
 }
 
@@ -924,9 +909,6 @@ static int NumNodes(void *user_ptr)
 // Get the i_th node
 static AtNode *GetNode(void *user_ptr, int i)
 {
-	for( int j = 0; j < 100; j ++ ) {
-		ESS_LOG_INFO( "ExocortexAlembicArnoldDSO: GetNode: " << j );
-	}
    userData * ud = (userData*)user_ptr;
    // check if this is a known object
    if(i >= (int)ud->gIObjects.size())
@@ -2111,10 +2093,6 @@ extern "C" {
 
 AI_EXPORT_LIB int ProcLoader(AtProcVtable *vtable) 
 {
-	for( int i = 0; i < 100; i ++ ) {
-	 ESS_LOG_INFO( "ExocortexAlembicArnoldDSO: ProcLoader: " << i );
-	}
-   
    vtable->Init     = Init;
    vtable->Cleanup  = Cleanup;
    vtable->NumNodes = NumNodes;
@@ -2122,9 +2100,6 @@ AI_EXPORT_LIB int ProcLoader(AtProcVtable *vtable)
    
    sprintf(vtable->version, AI_VERSION);
 
-	for( int i = 0; i < 100; i ++ ) {
-		ESS_LOG_INFO( "ExocortexAlembicArnoldDSO: ProcLoader: End: " << i );
-	}
    return 1;
 }
 
