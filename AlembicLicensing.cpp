@@ -34,8 +34,12 @@ bool HasFullLicense()
 	return ( GetLicense() == EC_LICENSE_RESULT_FULL_LICENSE );
 }
 
+boost::mutex gGlobalLock;
+
 int GetLicense()
 {
+	boost::mutex::scoped_lock writeLock( gGlobalLock );
+
 	if( gLicenseToken == EC_LICENSE_RESULT_NO_LICENSE )
 	{
 		// default license status, could be overriden below.
@@ -102,6 +106,7 @@ EXTERN_C IMAGE_DOS_HEADER __ImageBase;
 
 namespace Exocortex {
 	void essOnDemandInitialization() {
+
 		static string pluginName(PLUGIN_NAME);
 
 		char szTempPath[4096];
