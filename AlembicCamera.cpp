@@ -108,14 +108,19 @@ bool AlembicCamera::Save(double time)
     cam->EvalCameraState(ticks, valid, &cs); 
     float tDist = cam->GetTDist(ticks);
     float ratio = GetCOREInterface()->GetRendImageAspect();
+	float aperatureWidth = GetCOREInterface()->GetRendApertureWidth();//this may differ from the imported value unfortunately
+	float focalLength = (aperatureWidth/2.0) / tan(cs.fov/2.0);//alembic wants this one in millimeters
+	aperatureWidth/=10.0f; //convert to centimeters
+
 
     // store the camera data    
-    mCameraSample.setNearClippingPlane(cs.nearRange);
-    mCameraSample.setFarClippingPlane(cs.farRange);
+    mCameraSample.setNearClippingPlane(cs.hither);
+    mCameraSample.setFarClippingPlane(cs.yon);
     mCameraSample.setLensSqueezeRatio(ratio);
-    mCameraSample.setFocalLength(tDist);
-    mCameraSample.setHorizontalAperture(cs.fov);
-    mCameraSample.setVerticalAperture(cs.fov / ratio);
+    mCameraSample.setFocalLength(focalLength);
+    mCameraSample.setHorizontalAperture(aperatureWidth);
+    mCameraSample.setVerticalAperture(aperatureWidth / ratio);
+	mCameraSample.setFocusDistance(tDist);
 
     // save the samples
     mCameraSchema.set(mCameraSample);
