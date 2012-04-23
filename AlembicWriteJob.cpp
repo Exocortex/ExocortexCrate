@@ -5,8 +5,8 @@
 #include "AlembicCamera.h"
 #include "AlembicPolyMesh.h"
 #include "AlembicSubD.h"
+#include "AlembicPoints.h"
 //#include "AlembicCurves.h"
-//#include "AlembicPoints.h"
 //#include "AlembicModel.h"
 //#include "AlembicNurbs.h"
 
@@ -200,6 +200,12 @@ MStatus AlembicWriteJob::PreProcess()
       {
          AlembicObjectPtr ptr;
          ptr.reset(new AlembicSubD(mObj,this));
+         AddObject(ptr);
+      }
+      else if(mType == "kParticle")
+      {
+         AlembicObjectPtr ptr;
+         ptr.reset(new AlembicPoints(mObj,this));
          AddObject(ptr);
       }
       else

@@ -264,6 +264,14 @@ global proc exocortexAlembicImport(string $filename,string $dialog)
         }
       }
     }
+    if($types[$i] == "Points")
+    {
+      $shape = exocortexCreateOrReuseNode($name,"particle",$importAttach,0,0);
+      $reader = exocortexCreateOrReuseNode($shape+".newParticles[0]","ExocortexAlembicPoints",$importAttach,1,1);
+      if($reader == "")
+        $reader = exocortexCreateOrReuseNode("ExocortexAlembicPoints","ExocortexAlembicPoints",$importAttach,0,0);
+      exocortexConnectIfUnconnected(($reader+".output[0]"), ($shape+".newParticles[0]"));
+    }
     else if($types[$i] == "Camera")
     {
       $shape = exocortexCreateOrReuseNode($name,"camera",$importAttach,0,0);

@@ -72,6 +72,7 @@ MString AlembicObject::GetUniqueName(const MString & in_Name)
 unsigned int gRefIdMax = 0;
 std::map<unsigned int,AlembicObjectNode*> gNodes;
 std::map<unsigned int,AlembicObjectDeformNode*> gDeformNodes;
+std::map<unsigned int,AlembicObjectEmitterNode*> gEmitterNodes;
 
 AlembicObjectNode::AlembicObjectNode()
 {
@@ -97,6 +98,18 @@ AlembicObjectDeformNode::~AlembicObjectDeformNode()
    gDeformNodes.erase(gDeformNodes.find(mRefId));
 }
 
+AlembicObjectEmitterNode::AlembicObjectEmitterNode()
+{
+   mRefId = gRefIdMax;
+   gRefIdMax++;
+   gEmitterNodes.insert(std::pair<unsigned int,AlembicObjectEmitterNode*>(mRefId,this));
+}
+
+AlembicObjectEmitterNode::~AlembicObjectEmitterNode()
+{
+   gEmitterNodes.erase(gEmitterNodes.find(mRefId));
+}
+
 void preDestructAllNodes()
 {
    std::map<unsigned int,AlembicObjectNode*>::iterator it;
@@ -105,4 +118,7 @@ void preDestructAllNodes()
    std::map<unsigned int,AlembicObjectDeformNode*>::iterator itDeform;
    for(itDeform = gDeformNodes.begin(); itDeform != gDeformNodes.end(); itDeform++)
       itDeform->second->PreDestruction();
+   std::map<unsigned int,AlembicObjectEmitterNode*>::iterator itEmitter;
+   for(itEmitter = gEmitterNodes.begin(); itEmitter != gEmitterNodes.end(); itEmitter++)
+      itEmitter->second->PreDestruction();
 }
