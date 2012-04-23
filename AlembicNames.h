@@ -55,9 +55,10 @@
 #define ALEMBIC_SPLINE_TOPO_MODIFIER_NAME			    "Alembic Spline Topology"
 #define ALEMBIC_SPLINE_TOPO_MODIFIER_SCRIPTNAME		    "AlembicSplineTopology"
 
+#define ALEMBIC_FLOAT_CONTROLLER_CLASSID		Class_ID(0x5fd044f3, 0xe030797)
+#define ALEMBIC_FLOAT_CONTROLLER_NAME			"Alembic Float"
+#define ALEMBIC_FLOAT_CONTROLLER_SCRIPTNAME		"AlembicFloat"
 
-#define ALEMBIC_UNUSED_09_CLASSID					Class_ID(0x5fd044f3, 0xe030797)
-#define ALEMBIC_UNUSED_10_CLASSID					Class_ID(0x5d3031e, 0x5c223799)
 #define ALEMBIC_UNUSED_11_CLASSID					Class_ID(0x3a5b6550, 0x5e14408f)
 #define ALEMBIC_UNUSED_12_CLASSID					Class_ID(0x59980cef, 0x6e0077ff)
 #define ALEMBIC_UNUSED_13_CLASSID					Class_ID(0x75d0291, 0x77876660)
@@ -93,6 +94,9 @@ ClassDesc2 *GetEmptyPolyLineObjectClassDesc();
 
 ClassDesc2 *GetAlembicSplineGeomModifierClassDesc();
 ClassDesc2 *GetAlembicSplineTopoModifierClassDesc();
+
+
+ClassDesc2* GetAlembicFloatControllerClassDesc();
 
 extern HINSTANCE hInstance;
 

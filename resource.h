@@ -179,9 +179,11 @@
 #define IDD_ALEMBIC_XFORM_PARAMS        30313
 #define IDD_ALEMBIC_VISIBILITY_PARAMS   30314
 #define IDD_ALEMBIC_PARTICLE_PARAMS     30315
+#define IDD_ALEMBIC_FLOAT_CTRL_PARAMS   30316
 #define IDC_TEXTUREPATH                 40000
 #define IDC_PATH_EDIT                   40000
 #define IDC_IDENTIFIER_EDIT             40001
+#define IDC_PROPERTY_EDIT               40002
 #define IDC_THRESH_LABEL                65535
 #define IDC_MAX_SIZE_LABEL              65535
 #define IDC_TIME_LABEL                  65535

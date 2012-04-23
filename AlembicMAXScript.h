@@ -3,6 +3,6 @@
 
 #include "AlembicDefinitions.h"
 
-void AlembicImport_ConnectTimeControl( char* szControllerName, alembic_importoptions &options );
+void AlembicImport_ConnectTimeControl( const char* szControllerName, alembic_importoptions &options );
 
 #endif
