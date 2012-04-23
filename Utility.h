@@ -34,43 +34,27 @@ void AlembicDebug_PrintMeshData( Mesh &mesh, std::vector<VNormal> &sgVertexNorma
 void AlembicDebug_PrintTransform( Matrix3 &m );
 
 // Conversion functions to Alembic Standards
-inline float GetMasterUnitToDecimeterRatio( const float& masterScaleUnitMeters )
+void ConvertMaxMatrixToAlembicMatrix( const Matrix3 &maxMatrix, Matrix3 &alembicMatrix );
+void ConvertAlembicMatrixToMaxMatrix( const Matrix3 &alembicMatrix, Matrix3 &maxMatrix );
+
+inline Imath::V3f ConvertMaxPointToAlembicPoint( const Point3 &maxPoint )
 {
-    return masterScaleUnitMeters * 10;
+	return Imath::V3f(maxPoint.x, maxPoint.z, -maxPoint.y);
 }
 
-inline float GetDecimeterToMasterUnitRatio( const float& masterScaleUnitMeters )
+inline Point3 ConvertAlembicPointToMaxPoint( const Imath::V3f &alembicPoint )
 {
-    return ( 1.0f / GetMasterUnitToDecimeterRatio( masterScaleUnitMeters ) );
+	return Point3(alembicPoint.x, -alembicPoint.z, alembicPoint.y);
 }
 
-inline void TestMasterUnit() {
-	ESS_LOG_WARNING( "GetMasterScale(UNITS_CENTIMETERS): " << GetMasterScale(UNITS_CENTIMETERS) );
-	ESS_LOG_WARNING( "GetMasterScale(UNITS_METERS): " << GetMasterScale(UNITS_METERS) );
-	ESS_LOG_WARNING( "GetMasterScale(UNITS_INCHES): " << GetMasterScale(UNITS_INCHES) );
-	ESS_LOG_WARNING( "GetMasterScale(UNITS_FEET): " << GetMasterScale(UNITS_FEET) );
-}
-void ConvertMaxMatrixToAlembicMatrix( const Matrix3 &maxMatrix, const float& masterScaleUnitMeters, Matrix3 &alembicMatrix );
-void ConvertAlembicMatrixToMaxMatrix( const Matrix3 &alembicMatrix, const float& masterScaleUnitMeters, Matrix3 &maxMatrix );
-
-inline Imath::V3f ConvertMaxPointToAlembicPoint( const Point3 &maxPoint, const float &masterScaleUnitMeters)
+inline Imath::V3f ConvertMaxVectorToAlembicVector( const Point3 &maxPoint )
 {
-	return Imath::V3f(maxPoint.x, maxPoint.z, -maxPoint.y) * GetMasterUnitToDecimeterRatio( masterScaleUnitMeters );
+	return Imath::V3f(maxPoint.x, maxPoint.z, -maxPoint.y);
 }
 
-inline Point3 ConvertAlembicPointToMaxPoint( const Imath::V3f &alembicPoint, const float &masterScaleUnitMeters )
+inline Point3 ConvertAlembicVectorToMaxVector( const Imath::V3f &alembicPoint )
 {
-	return Point3(alembicPoint.x, -alembicPoint.z, alembicPoint.y) * GetDecimeterToMasterUnitRatio( masterScaleUnitMeters );
-}
-
-inline Imath::V3f ConvertMaxVectorToAlembicVector( const Point3 &maxPoint, const float &masterScaleUnitMeters, bool scale )
-{
-	return Imath::V3f(maxPoint.x, maxPoint.z, -maxPoint.y) * (scale ? GetMasterUnitToDecimeterRatio( masterScaleUnitMeters ) : 1.0f);
-}
-
-inline Point3 ConvertAlembicVectorToMaxVector( const Imath::V3f &alembicPoint, const float &masterScaleUnitMeters, bool scale )
-{
-	return Point3(alembicPoint.x, -alembicPoint.z, alembicPoint.y) * (scale ? GetDecimeterToMasterUnitRatio( masterScaleUnitMeters ) : 1.0f);
+	return Point3(alembicPoint.x, -alembicPoint.z, alembicPoint.y);
 }
 
 inline Imath::V3f ConvertMaxNormalToAlembicNormal( const Point3 &maxPoint )

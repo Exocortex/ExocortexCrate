@@ -226,14 +226,13 @@ void AlembicSimpleParticle::BuildEmitter(TimeValue t, Mesh &mesh)
     GetSampleAtTime(iPoints, t, floorSample, ceilSample);
 
     // Create a box the size of the bounding box
-    float masterScaleUnitMeters = (float)GetMasterScale(UNITS_METERS);
     Alembic::Abc::Box3d bbox = floorSample.getSelfBounds();
     Imath::V3f alembicMinPt(float(bbox.min.x), float(bbox.min.y), float(bbox.min.z));
     Imath::V3f alembicMaxPt(float(bbox.max.x), float(bbox.max.y), float(bbox.max.z));
     Point3 maxMinPt;
     Point3 maxMaxPt;
-    maxMinPt = ConvertAlembicPointToMaxPoint(alembicMinPt, masterScaleUnitMeters);
-    maxMaxPt = ConvertAlembicPointToMaxPoint(alembicMaxPt, masterScaleUnitMeters);
+    maxMinPt = ConvertAlembicPointToMaxPoint(alembicMinPt);
+    maxMaxPt = ConvertAlembicPointToMaxPoint(alembicMaxPt);
 
     const float EPSILON = 0.0001f;
     Point3 minPt(min(maxMinPt.x, maxMaxPt.x) - EPSILON, min(maxMinPt.y, maxMaxPt.y) - EPSILON, min(maxMinPt.z, maxMaxPt.z) - EPSILON);
@@ -349,7 +348,6 @@ int AlembicSimpleParticle::GetNumParticles(const Alembic::AbcGeom::IPointsSchema
 
 Point3 AlembicSimpleParticle::GetParticlePosition(const Alembic::AbcGeom::IPointsSchema::Sample &floorSample, const Alembic::AbcGeom::IPointsSchema::Sample &ceilSample, const SampleInfo &sampleInfo, int index) const
 {
-    float masterScaleUnitMeters = (float)GetMasterScale(UNITS_METERS);
 
 	Imath::V3f alembicP3f = floorSample.getPositions()->get()[index];
 
@@ -373,7 +371,7 @@ Point3 AlembicSimpleParticle::GetParticlePosition(const Alembic::AbcGeom::IPoint
         alembicP3f.z = alembicP3f.z + alpha * alembicVel3f.z;
     }
 
-    return ConvertAlembicPointToMaxPoint(alembicP3f, masterScaleUnitMeters );
+    return ConvertAlembicPointToMaxPoint(alembicP3f );
 }
 
 Point3 AlembicSimpleParticle::GetParticleVelocity(const Alembic::AbcGeom::IPointsSchema::Sample &floorSample, const Alembic::AbcGeom::IPointsSchema::Sample &ceilSample, const SampleInfo &sampleInfo, int index) const
@@ -396,8 +394,7 @@ Point3 AlembicSimpleParticle::GetParticleVelocity(const Alembic::AbcGeom::IPoint
         }
     }
 
-    float masterScaleUnitMeters = (float)GetMasterScale(UNITS_METERS);
-    return ConvertAlembicPointToMaxPoint(alembicP3f, masterScaleUnitMeters );
+    return ConvertAlembicPointToMaxPoint(alembicP3f );
 }
 
 float AlembicSimpleParticle::GetParticleRadius(Alembic::AbcGeom::IPoints &iPoints, const SampleInfo &sampleInfo, int index) const
@@ -609,6 +606,10 @@ void AlembicSimpleParticle::FillParticleShapeNodes(Alembic::AbcGeom::IPoints &iP
 {
     m_TotalShapesToEnumerate = 0;
     m_InstanceShapeINodes.clear();
+
+	if( iPoints.getSchema().getPropertyHeader( ".instancenames" ) == NULL ) {
+		return;
+	}
 
     IStringArrayProperty shapeInstanceNameProperty = Alembic::Abc::IStringArrayProperty(iPoints.getSchema(), ".instancenames");
     if (!shapeInstanceNameProperty.valid() || shapeInstanceNameProperty.getNumSamples() == 0)
@@ -952,9 +953,7 @@ Mesh *AlembicSimpleParticle::BuildBoxMesh(int meshNumber, TimeValue t, INode *no
     {
         m_pBoxMaker = static_cast<GenBoxObject*>
             (GET_MAX_INTERFACE()->CreateInstance(GEOMOBJECT_CLASS_ID, Class_ID(BOXOBJ_CLASS_ID, 0)));
-        float masterUnitScale = (float)GetMasterScale(UNITS_METERS);
-        float oneDecimeter = GetDecimeterToMasterUnitRatio(masterUnitScale);
-        float size = 2 * oneDecimeter;
+        float size = 2;
         m_pBoxMaker->SetParams(size, size, size);
         m_pBoxMaker->BuildMesh(0);
         m_pBoxMaker->UpdateValidity(TOPO_CHAN_NUM, FOREVER);
@@ -977,9 +976,7 @@ Mesh *AlembicSimpleParticle::BuildSphereMesh(int meshNumber, TimeValue t, INode 
         m_pSphereMaker = static_cast<GenSphere*>
             (GET_MAX_INTERFACE()->CreateInstance(GEOMOBJECT_CLASS_ID, Class_ID(SPHERE_CLASS_ID, 0)));
 
-        float masterUnitScale = (float)GetMasterScale(UNITS_METERS);
-        float oneDecimeter = GetDecimeterToMasterUnitRatio(masterUnitScale);
-        float size = 2 * oneDecimeter;
+        float size = 2;
         m_pSphereMaker->SetParams(size, 32);
         m_pSphereMaker->BuildMesh(0);
         m_pSphereMaker->UpdateValidity(TOPO_CHAN_NUM, FOREVER);

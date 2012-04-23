@@ -175,7 +175,7 @@ void AlembicDebug_PrintTransform(Matrix3 &m)
 }
 
 
-void ConvertMaxMatrixToAlembicMatrix( const Matrix3 &maxMatrix, const float& masterScaleUnitMeters, Matrix3 &result)
+void ConvertMaxMatrixToAlembicMatrix( const Matrix3 &maxMatrix, Matrix3 &result)
 {
     // Rotate the max matrix into an alembic reference frame, a right handed co-ordinate system
     // We set up an alembic reference frame relative to Max's coordinate system
@@ -185,11 +185,11 @@ void ConvertMaxMatrixToAlembicMatrix( const Matrix3 &maxMatrix, const float& mas
     result = AlembicRefFrame * maxMatrix * AlembicRefFrameInverse;
 
     // Scale the translation
-    Point3 meterTrans = result.GetTrans() * GetMasterUnitToDecimeterRatio( masterScaleUnitMeters );
+    Point3 meterTrans = result.GetTrans();
     result.SetTrans(meterTrans);
 }
    
-void ConvertAlembicMatrixToMaxMatrix( const Matrix3 &alembicMatrix, const float& masterScaleUnitMeters, Matrix3 &result)
+void ConvertAlembicMatrixToMaxMatrix( const Matrix3 &alembicMatrix, Matrix3 &result)
 {
     // Rotate the max matrix into an alembic reference frame, a right handed co-ordinate system
     // We set up an alembic reference frame relative to Max's coordinate system
@@ -199,7 +199,7 @@ void ConvertAlembicMatrixToMaxMatrix( const Matrix3 &alembicMatrix, const float&
     result = AlembicRefFrameInverse * alembicMatrix * AlembicRefFrame;
 
     // Scale the translation
-    Point3 inchesTrans = result.GetTrans() * GetDecimeterToMasterUnitRatio( masterScaleUnitMeters );
+    Point3 inchesTrans = result.GetTrans();
     result.SetTrans(inchesTrans);
 }
 

@@ -25,8 +25,12 @@ public:
 	Object *obj;
 	int type;		
 	int id;
-	SceneEntry *next;
-    SceneEntry(INode *n, Object *o, int t, std::string *providedfullname);
+	SceneEntry() {
+		this->node = NULL;
+		this->tnode = NULL;
+		this->obj = NULL;
+	}
+	SceneEntry(INode *n, Object *o, int t, std::string * providedfullname);
 	void SetID(int id);
 };
 
@@ -34,16 +38,14 @@ class SceneEnumProc : public ITreeEnumProc
 {
 public:
 	Interface	*i;
-	SceneEntry *head;
-	SceneEntry *tail;
+	std::vector<SceneEntry> sceneEntries;
 	IScene		*theScene;
-	int			count;
 	TimeValue	time;
 public:
                 SceneEnumProc();
 	            SceneEnumProc(IScene *scene, TimeValue t, Interface *i);
                 ~SceneEnumProc();
-	int			Count() { return count; }
+	int			Count() { return (int)sceneEntries.size(); }
     SceneEntry*	Append(INode *node, Object *obj, int type, std::string *providedfullname);
 	int			callback( INode *node );
 	Box3		Bound();

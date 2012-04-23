@@ -64,7 +64,7 @@ public:
 
     void Copy(Control* pFrom){}
     virtual int IsKeyable() { return 0; }
-    virtual BOOL IsLeaf() { return TRUE; }
+    virtual BOOL IsLeaf() { return FALSE; }
     virtual BOOL IsReplaceable() { return TRUE; }
 
     virtual void  GetValueLocalTime(TimeValue t, void *ptr, Interval &valid, GetSetMethod method = CTRL_ABSOLUTE);

@@ -55,8 +55,6 @@ void AlembicImport_FillInXForm_Internal(alembic_fillxform_options &options)
     if(!obj.valid())
         return;
 
-   float masterScaleUnitMeters = (float)GetMasterScale(UNITS_METERS);
-
    double SampleTime = GetSecondsFromTimeValue(options.dTicks);
 
     SampleInfo sampleInfo = getSampleInfo(
@@ -88,7 +86,7 @@ void AlembicImport_FillInXForm_Internal(alembic_fillxform_options &options)
         Point3(matrix.getValue()[8], matrix.getValue()[9], matrix.getValue()[10]),
         Point3(matrix.getValue()[12], matrix.getValue()[13], matrix.getValue()[14]));
 
-    ConvertAlembicMatrixToMaxMatrix(objMatrix, masterScaleUnitMeters, options.maxMatrix);
+    ConvertAlembicMatrixToMaxMatrix(objMatrix, options.maxMatrix);
 
     if (options.bIsCameraTransform)
     {
@@ -120,8 +118,6 @@ int AlembicImport_DummyNode(Alembic::AbcGeom::IObject& iObj, alembic_importoptio
 	if(!obj.valid()){
 		return alembic_failure;
 	}
-
-	float masterScaleUnitMeters = (float)GetMasterScale(UNITS_METERS);
 
     SampleInfo sampleInfo = getSampleInfo(
         SampleTime,

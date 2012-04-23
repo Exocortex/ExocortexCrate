@@ -46,8 +46,6 @@ void AlembicImport_FillInShape(alembic_fillshape_options &options)
 
 void AlembicImport_FillInShape_Internal(alembic_fillshape_options &options)
 {
-   float masterScaleUnitMeters = (float)GetMasterScale(UNITS_METERS);
-
    Alembic::AbcGeom::ICurves obj(*options.pIObj,Alembic::Abc::kWrapExisting);
 
    if(!obj.valid())
@@ -160,29 +158,29 @@ void AlembicImport_FillInShape_Internal(alembic_fillshape_options &options)
                {
                    if (ix == 0 && !pSpline->Closed())
                    {
-                       p = ConvertAlembicPointToMaxPoint(curvePos->get()[nVertexOffset], masterScaleUnitMeters); 
+                       p = ConvertAlembicPointToMaxPoint(curvePos->get()[nVertexOffset]); 
                        nVertexOffset += 1;
-                       out = ConvertAlembicPointToMaxPoint(curvePos->get()[nVertexOffset], masterScaleUnitMeters); 
+                       out = ConvertAlembicPointToMaxPoint(curvePos->get()[nVertexOffset]); 
                        nVertexOffset += 1;
                        in = p;
                        kType = KTYPE_BEZIER_CORNER;
                    }
                    else if ( ix == knots-1 && !pSpline->Closed())
                    {
-                       in = ConvertAlembicPointToMaxPoint(curvePos->get()[nVertexOffset], masterScaleUnitMeters); 
+                       in = ConvertAlembicPointToMaxPoint(curvePos->get()[nVertexOffset]); 
                        nVertexOffset += 1;
-                       p = ConvertAlembicPointToMaxPoint(curvePos->get()[nVertexOffset], masterScaleUnitMeters); 
+                       p = ConvertAlembicPointToMaxPoint(curvePos->get()[nVertexOffset]); 
                        nVertexOffset += 1;
                        out = p;
                        kType = KTYPE_BEZIER_CORNER;
                    }
                    else
                    {
-                       in = ConvertAlembicPointToMaxPoint(curvePos->get()[nVertexOffset], masterScaleUnitMeters); 
+                       in = ConvertAlembicPointToMaxPoint(curvePos->get()[nVertexOffset]); 
                        nVertexOffset += 1;
-                       p = ConvertAlembicPointToMaxPoint(curvePos->get()[nVertexOffset], masterScaleUnitMeters); 
+                       p = ConvertAlembicPointToMaxPoint(curvePos->get()[nVertexOffset]); 
                        nVertexOffset += 1;
-                       out = ConvertAlembicPointToMaxPoint(curvePos->get()[nVertexOffset], masterScaleUnitMeters); 
+                       out = ConvertAlembicPointToMaxPoint(curvePos->get()[nVertexOffset]); 
                        nVertexOffset += 1;
                        kType = KTYPE_BEZIER;
                    }
@@ -203,7 +201,7 @@ void AlembicImport_FillInShape_Internal(alembic_fillshape_options &options)
                PolyLine &pLine = options.pPolyShape->lines[i];
                for (int j = 0; j < pLine.numPts; j += 1)
                {
-                   p = ConvertAlembicPointToMaxPoint(curvePos->get()[nVertexOffset], masterScaleUnitMeters);
+                   p = ConvertAlembicPointToMaxPoint(curvePos->get()[nVertexOffset]);
                    nVertexOffset += 1;
                    pLine[j].p = p;
                }
