@@ -6,8 +6,7 @@
 #include "AlembicPolyMesh.h"
 #include "AlembicSubD.h"
 #include "AlembicPoints.h"
-//#include "AlembicCurves.h"
-//#include "AlembicModel.h"
+#include "AlembicCurves.h"
 //#include "AlembicNurbs.h"
 
 #include <maya/MAnimControl.h>
@@ -200,6 +199,12 @@ MStatus AlembicWriteJob::PreProcess()
       {
          AlembicObjectPtr ptr;
          ptr.reset(new AlembicSubD(mObj,this));
+         AddObject(ptr);
+      }
+      else if(mType == "kNurbsCurve")
+      {
+         AlembicObjectPtr ptr;
+         ptr.reset(new AlembicCurves(mObj,this));
          AddObject(ptr);
       }
       else if(mType == "kParticle")

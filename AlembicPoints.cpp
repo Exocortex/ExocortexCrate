@@ -260,7 +260,7 @@ MStatus AlembicPointsNode::compute(const MPlug & plug, MDataBlock & dataBlock)
       Alembic::AbcGeom::IPoints obj(iObj,Alembic::Abc::kWrapExisting);
       if(!obj.valid())
       {
-         MGlobal::displayWarning("[ExocortexAlembic] Identifier '"+identifier+"' in archive '"+mFileName+"' is not a Camera.");
+         MGlobal::displayWarning("[ExocortexAlembic] Identifier '"+identifier+"' in archive '"+mFileName+"' is not a Points.");
          return MStatus::kFailure;
       }
       mSchema = obj.getSchema();

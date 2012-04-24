@@ -338,7 +338,7 @@ MStatus AlembicSubDNode::compute(const MPlug & plug, MDataBlock & dataBlock)
       Alembic::AbcGeom::ISubD obj(iObj,Alembic::Abc::kWrapExisting);
       if(!obj.valid())
       {
-         MGlobal::displayWarning("[ExocortexAlembic] Identifier '"+identifier+"' in archive '"+mFileName+"' is not a Camera.");
+         MGlobal::displayWarning("[ExocortexAlembic] Identifier '"+identifier+"' in archive '"+mFileName+"' is not a SubD.");
          return MStatus::kFailure;
       }
       mSchema = obj.getSchema();
@@ -613,7 +613,7 @@ MStatus AlembicSubDDeformNode::deform(MDataBlock & dataBlock, MItGeometry & iter
       Alembic::AbcGeom::ISubD obj(iObj,Alembic::Abc::kWrapExisting);
       if(!obj.valid())
       {
-         MGlobal::displayWarning("[ExocortexAlembic] Identifier '"+identifier+"' in archive '"+mFileName+"' is not a Camera.");
+         MGlobal::displayWarning("[ExocortexAlembic] Identifier '"+identifier+"' in archive '"+mFileName+"' is not a SubD.");
          return MStatus::kFailure;
       }
       mSchema = obj.getSchema();

@@ -418,7 +418,7 @@ MStatus AlembicPolyMeshNode::compute(const MPlug & plug, MDataBlock & dataBlock)
       Alembic::AbcGeom::IPolyMesh obj(iObj,Alembic::Abc::kWrapExisting);
       if(!obj.valid())
       {
-         MGlobal::displayWarning("[ExocortexAlembic] Identifier '"+identifier+"' in archive '"+mFileName+"' is not a Camera.");
+         MGlobal::displayWarning("[ExocortexAlembic] Identifier '"+identifier+"' in archive '"+mFileName+"' is not a PolyMesh.");
          return MStatus::kFailure;
       }
       mSchema = obj.getSchema();
@@ -733,7 +733,7 @@ MStatus AlembicPolyMeshDeformNode::deform(MDataBlock & dataBlock, MItGeometry & 
       Alembic::AbcGeom::IPolyMesh obj(iObj,Alembic::Abc::kWrapExisting);
       if(!obj.valid())
       {
-         MGlobal::displayWarning("[ExocortexAlembic] Identifier '"+identifier+"' in archive '"+mFileName+"' is not a Camera.");
+         MGlobal::displayWarning("[ExocortexAlembic] Identifier '"+identifier+"' in archive '"+mFileName+"' is not a PolyMesh.");
          return MStatus::kFailure;
       }
       mSchema = obj.getSchema();
