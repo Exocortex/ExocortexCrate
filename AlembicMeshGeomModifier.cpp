@@ -149,6 +149,8 @@ void AlembicMeshGeomModifier::ModifyObject (TimeValue t, ModContext &mc, ObjectS
 	}
 
    alembic_fillmesh_options options;
+   options.fileName = strPath;
+   options.identifier = strIdentifier;
    options.pIObj = &iObj;
    options.dTicks = GetTimeValueFromSeconds( fTime );
    options.nDataFillFlags = 0;

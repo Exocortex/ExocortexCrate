@@ -160,7 +160,7 @@ public:
 			_M("flattenHierarchy"), //* argument internal name * /
 			0,                    //* argument localizable name string resource id * /
 			TYPE_BOOL,          //* arg type * /
-			p_end); 	
+			p_end); 	 
        
         AppendFunction(
 			exocortexAlembicInit,	//* function ID * /

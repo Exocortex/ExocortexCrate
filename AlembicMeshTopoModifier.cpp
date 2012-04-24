@@ -70,12 +70,16 @@ static ParamBlockDesc2 AlembicMeshTopoModifierParams(
 AlembicMeshTopoModifier::AlembicMeshTopoModifier() 
 {
     pblock = NULL;
-
+	pFilledToOriginalIndices = NULL;
 	GetAlembicMeshTopoModifierClassDesc()->MakeAutoParamBlocks(this);
 }
 
 AlembicMeshTopoModifier::~AlembicMeshTopoModifier()
 {
+	if( pFilledToOriginalIndices != NULL ) {
+		delete[] pFilledToOriginalIndices;
+		pFilledToOriginalIndices = NULL;
+	}
     delRefArchive(m_CachedAbcFile);
 }
 
@@ -155,6 +159,9 @@ void AlembicMeshTopoModifier::ModifyObject (TimeValue t, ModContext &mc, ObjectS
 	}
 
    alembic_fillmesh_options options;
+   options.fileName = strPath;
+   options.pFilledToOriginalIndices = pFilledToOriginalIndices;
+   options.identifier = strIdentifier;
    options.pIObj = &iObj; 
    options.dTicks = GetTimeValueFromSeconds( fTime );
    options.nDataFillFlags = 0;
@@ -207,6 +214,8 @@ void AlembicMeshTopoModifier::ModifyObject (TimeValue t, ModContext &mc, ObjectS
 		ESS_LOG_ERROR( "Error reading mesh from Alembic data stream.  Path: " << strPath << " identifier: " << strIdentifier << " reason: " << exp.what() );
 		return;
    }
+
+   pFilledToOriginalIndices = options.pFilledToOriginalIndices;
 
    // update the validity channel
     if( bTopology ) {

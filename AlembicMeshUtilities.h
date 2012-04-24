@@ -13,6 +13,9 @@ typedef struct _alembic_fillmesh_options
     Alembic::AbcGeom::IObject *pIObj;
     //TriObject *pTriObj;
 	Mesh *pMesh;
+	std::string fileName;
+	std::string identifier;
+	int *pFilledToOriginalIndices;
 
     //PolyObject *pPolyObj;
 	MNMesh *pMNMesh;
@@ -25,6 +28,7 @@ typedef struct _alembic_fillmesh_options
         pIObj = NULL;
         pMesh = NULL;
         pMNMesh = NULL;
+		pFilledToOriginalIndices = NULL;
         dTicks = 0;
         nDataFillFlags = 0;
 		fVertexAlpha = 1.0f;
