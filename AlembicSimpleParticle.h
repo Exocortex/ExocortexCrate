@@ -4,7 +4,6 @@
 #include "Foundation.h"
 #include "AlembicDefinitions.h"
 #include "Utility.h"
-#include <iparamb2.h>
 #include <simpobj.h>
 #include "AlembicNames.h"
 #include "AlembicPoints.h"
@@ -103,7 +102,7 @@ public:
 
     // --- Derived class implementation of the virtual functions in BaseObject ---
     CreateMouseCallBack* GetCreateMouseCallBack() { return NULL; }
-    TCHAR *GetObjectName() { return "Alembic Simple Particle"; }
+    CONST_2013 TCHAR *GetObjectName() { return "Alembic Simple Particle"; }
     virtual int Display(TimeValue t, INode* inode, ViewExp *vpt, int flags);
     virtual int HitTest(TimeValue t, INode *inode, int type, int crossing, int flags, IPoint2 *p, ViewExp *vpt);
     virtual BOOL OKtoDisplay( TimeValue t);

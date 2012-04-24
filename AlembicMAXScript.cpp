@@ -52,7 +52,7 @@ public:
 	};
 
 	ExocortexAlembicStaticInterface()
-		: FPInterfaceDesc(id, _M("ExocortexAlembic"), 0, NULL, FP_CORE, end)
+		: FPInterfaceDesc(id, _M("ExocortexAlembic"), 0, NULL, FP_CORE, p_end)
 	{
 		AppendFunction(
 			exocortexAlembicImport,	//* function ID * /
@@ -79,7 +79,7 @@ public:
 			_M("visibilityOption"), //* argument internal name * /
 			0,                  //* argument localizable name string resource id * /
 			TYPE_INT,           //* arg type * /
-			end); 
+			p_end); 
 
 		AppendFunction(
 			exocortexAlembicImportMesh,	//* function ID * /
@@ -115,7 +115,7 @@ public:
 			_M("importMaterialIds"), //* argument internal name * /
 			0,                  //* argument localizable name string resource id * /
 			TYPE_BOOL,          //* arg type * /              
-			end); 
+			p_end); 
 
 		AppendFunction(
 			exocortexAlembicExport,	//* function ID * /
@@ -160,7 +160,7 @@ public:
 			_M("flattenHierarchy"), //* argument internal name * /
 			0,                    //* argument localizable name string resource id * /
 			TYPE_BOOL,          //* arg type * /
-			end); 	
+			p_end); 	
        
         AppendFunction(
 			exocortexAlembicInit,	//* function ID * /
@@ -169,23 +169,23 @@ public:
 			TYPE_INT,               //* Return type * /
 			0,                      //* Flags  * /
 			0,                     //* Number  of arguments * /
-            end);           
+            p_end);           
     }
 
 	static int ExocortexAlembicImport(
-		MCHAR * strPath, 
+		CONST_2013 MCHAR * strPath, 
 		BOOL bImportNormals, BOOL bImportUVs, BOOL bImportMaterialIds,
 		BOOL bAttachToExisting,
 		int iVisOption);
 
 	static Mesh* ExocortexAlembicImportMesh(
 		Mesh* pMesh,
-		MCHAR * strPath, MCHAR * strIdentifier,
+		CONST_2013 MCHAR * strPath, CONST_2013 MCHAR * strIdentifier,
 		float time, 
 		BOOL bImportFaceList, BOOL bImportVertices, BOOL bImportNormals, BOOL bImportUVs, BOOL bImportMaterialIds
 		);
 	static int ExocortexAlembicExport(
-		MCHAR * strPath,
+		CONST_2013 MCHAR * strPath,
 		int iFrameIn, int iFrameOut, int iFrameSteps, int iFrameSubSteps,
 		int iType,
 		BOOL bExportUV, BOOL bExportMaterialIds, BOOL bExportEnvelopeBindPose, BOOL bExportDynamicTopology, BOOL bExportSelected, BOOL bFlattenHierarchy );
@@ -267,9 +267,9 @@ void AlembicImport_ConnectTimeControl( char* szControllerName, alembic_importopt
 	ExecuteMAXScriptScript( szBuffer );
 }
 
-int ExocortexAlembicStaticInterface_ExocortexAlembicImport(MCHAR* strPath, BOOL bImportNormals, BOOL bImportUVs, BOOL bImportMaterialIds, BOOL bAttachToExisting, int iVisOption);
+int ExocortexAlembicStaticInterface_ExocortexAlembicImport( CONST_2013 MCHAR* strPath, BOOL bImportNormals, BOOL bImportUVs, BOOL bImportMaterialIds, BOOL bAttachToExisting, int iVisOption);
 
-int ExocortexAlembicStaticInterface::ExocortexAlembicImport(MCHAR* strPath, BOOL bImportNormals, BOOL bImportUVs, BOOL bImportMaterialIds, BOOL bAttachToExisting, int iVisOption)
+int ExocortexAlembicStaticInterface::ExocortexAlembicImport( CONST_2013 MCHAR* strPath, BOOL bImportNormals, BOOL bImportUVs, BOOL bImportMaterialIds, BOOL bAttachToExisting, int iVisOption)
 {
 	ESS_STRUCTURED_EXCEPTION_REPORTING_START
 
@@ -280,7 +280,7 @@ int ExocortexAlembicStaticInterface::ExocortexAlembicImport(MCHAR* strPath, BOOL
 	return alembic_failure;
 }
 
-int ExocortexAlembicStaticInterface_ExocortexAlembicImport(MCHAR* strPath, BOOL bImportNormals, BOOL bImportUVs, BOOL bImportMaterialIds, BOOL bAttachToExisting, int iVisOption)
+int ExocortexAlembicStaticInterface_ExocortexAlembicImport( CONST_2013 MCHAR* strPath, BOOL bImportNormals, BOOL bImportUVs, BOOL bImportMaterialIds, BOOL bAttachToExisting, int iVisOption)
 {
 	ESS_CPP_EXCEPTION_REPORTING_START
 
@@ -388,9 +388,9 @@ int ExocortexAlembicStaticInterface_ExocortexAlembicImport(MCHAR* strPath, BOOL 
 	return alembic_success;
 }
 
-Mesh* ExocortexAlembicStaticInterface_ExocortexAlembicImportMesh(Mesh* pMesh, MCHAR* strPath, MCHAR* strIdentifier, float time, BOOL bImportFaceList, BOOL bImportVertices, BOOL bImportNormals, BOOL bImportUVs, BOOL bImportMaterialIds );
+Mesh* ExocortexAlembicStaticInterface_ExocortexAlembicImportMesh(Mesh* pMesh, CONST_2013 MCHAR* strPath, CONST_2013 MCHAR* strIdentifier, float time, BOOL bImportFaceList, BOOL bImportVertices, BOOL bImportNormals, BOOL bImportUVs, BOOL bImportMaterialIds );
 
-Mesh* ExocortexAlembicStaticInterface::ExocortexAlembicImportMesh(Mesh* pMesh, MCHAR* strPath, MCHAR* strIdentifier, float time, BOOL bImportFaceList, BOOL bImportVertices, BOOL bImportNormals, BOOL bImportUVs, BOOL bImportMaterialIds )
+Mesh* ExocortexAlembicStaticInterface::ExocortexAlembicImportMesh(Mesh* pMesh, CONST_2013 MCHAR* strPath, CONST_2013 MCHAR* strIdentifier, float time, BOOL bImportFaceList, BOOL bImportVertices, BOOL bImportNormals, BOOL bImportUVs, BOOL bImportMaterialIds )
 {
 	if( pMesh == NULL ) {
 		pMesh = CreateNewMesh();
@@ -403,7 +403,7 @@ Mesh* ExocortexAlembicStaticInterface::ExocortexAlembicImportMesh(Mesh* pMesh, M
 	return pMesh;
 }
 
-Mesh* ExocortexAlembicStaticInterface_ExocortexAlembicImportMesh(Mesh* pMesh, MCHAR* strPath, MCHAR* strIdentifier, float time, BOOL bImportFaceList, BOOL bImportVertices, BOOL bImportNormals, BOOL bImportUVs, BOOL bImportMaterialIds )
+Mesh* ExocortexAlembicStaticInterface_ExocortexAlembicImportMesh(Mesh* pMesh, CONST_2013 MCHAR* strPath, CONST_2013 MCHAR* strIdentifier, float time, BOOL bImportFaceList, BOOL bImportVertices, BOOL bImportNormals, BOOL bImportUVs, BOOL bImportMaterialIds )
 {
 	ESS_CPP_EXCEPTION_REPORTING_START
 
@@ -481,11 +481,11 @@ Mesh* ExocortexAlembicStaticInterface_ExocortexAlembicImportMesh(Mesh* pMesh, MC
 	return pMesh;
 }
 
-int ExocortexAlembicStaticInterface_ExocortexAlembicExport(MCHAR * strPath, int iFrameIn, int iFrameOut, int iFrameSteps, int iFrameSubSteps, int iType,
+int ExocortexAlembicStaticInterface_ExocortexAlembicExport(CONST_2013 MCHAR * strPath, int iFrameIn, int iFrameOut, int iFrameSteps, int iFrameSubSteps, int iType,
 															BOOL bExportUV, BOOL bExportMaterialIds, BOOL bExportEnvelopeBindPose, BOOL bExportDynamicTopology,
 															BOOL bExportSelected, BOOL bFlattenHierarchy);
 
-int ExocortexAlembicStaticInterface::ExocortexAlembicExport(MCHAR * strPath, int iFrameIn, int iFrameOut, int iFrameSteps, int iFrameSubSteps, int iType,
+int ExocortexAlembicStaticInterface::ExocortexAlembicExport(CONST_2013 MCHAR * strPath, int iFrameIn, int iFrameOut, int iFrameSteps, int iFrameSubSteps, int iType,
 															BOOL bExportUV, BOOL bExportMaterialIds, BOOL bExportEnvelopeBindPose, BOOL bExportDynamicTopology,
 															BOOL bExportSelected, BOOL bFlattenHierarchy)
 {
@@ -497,7 +497,7 @@ int ExocortexAlembicStaticInterface::ExocortexAlembicExport(MCHAR * strPath, int
 	return alembic_failure;
 }
 
-int ExocortexAlembicStaticInterface_ExocortexAlembicExport(MCHAR * strPath, int iFrameIn, int iFrameOut, int iFrameSteps, int iFrameSubSteps, int iType,
+int ExocortexAlembicStaticInterface_ExocortexAlembicExport(CONST_2013 MCHAR * strPath, int iFrameIn, int iFrameOut, int iFrameSteps, int iFrameSubSteps, int iType,
 															BOOL bExportUV, BOOL bExportMaterialIds, BOOL bExportEnvelopeBindPose, BOOL bExportDynamicTopology,
 															BOOL bExportSelected, BOOL bFlattenHierarchy)
 {

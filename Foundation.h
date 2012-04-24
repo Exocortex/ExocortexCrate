@@ -21,7 +21,6 @@
 #include <list>
 #include <stdexcept>
 #include <exception>
-#include <string>
 #include <sstream>
 
 #include <boost/cstdint.hpp>

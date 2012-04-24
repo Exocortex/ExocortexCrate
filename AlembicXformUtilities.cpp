@@ -11,7 +11,7 @@ bool isAlembicXform( Alembic::AbcGeom::IObject *pIObj, bool& isConstant ) {
 		objXfrm = Alembic::AbcGeom::IXform(*pIObj,Alembic::Abc::kWrapExisting);
 		if( objXfrm.valid() ) {
 			isConstant = objXfrm.getSchema().isConstant();
-		}
+		} 
 	}
 
 	return objXfrm.valid();
@@ -55,30 +55,35 @@ void AlembicImport_FillInXForm_Internal(alembic_fillxform_options &options)
     if(!obj.valid())
         return;
 
-   double SampleTime = GetSecondsFromTimeValue(options.dTicks);
+	double SampleTime = GetSecondsFromTimeValue(options.dTicks);
 
-    SampleInfo sampleInfo = getSampleInfo(
-        SampleTime,
-        obj.getSchema().getTimeSampling(),
-        obj.getSchema().getNumSamples()
-        );
+	 Alembic::Abc::M44d matrix;	// constructor creates an identity matrix
 
-    Alembic::AbcGeom::XformSample sample;
-    obj.getSchema().get(sample,sampleInfo.floorIndex);
-    Alembic::Abc::M44d matrix = sample.getMatrix();
+   // if no time samples, default to identity matrix
+   if( obj.getSchema().getNumSamples() > 0 ) {
+		SampleInfo sampleInfo = getSampleInfo(
+			SampleTime,
+			obj.getSchema().getTimeSampling(),
+			obj.getSchema().getNumSamples()
+			);
 
-    const Alembic::Abc::Box3d &box3d = sample.getChildBounds();
+		Alembic::AbcGeom::XformSample sample;
+		obj.getSchema().get(sample,sampleInfo.floorIndex);
+		Alembic::Abc::M44d matrix = sample.getMatrix();
 
-    options.maxBoundingBox = Box3(Point3(box3d.min.x, box3d.min.y, box3d.min.z), 
-        Point3(box3d.max.x, box3d.max.y, box3d.max.z));
+		const Alembic::Abc::Box3d &box3d = sample.getChildBounds();
 
-    // blend 
-    if(sampleInfo.alpha != 0.0)
-    {
-        obj.getSchema().get(sample,sampleInfo.ceilIndex);
-        Alembic::Abc::M44d ceilMatrix = sample.getMatrix();
-        matrix = (1.0 - sampleInfo.alpha) * matrix + sampleInfo.alpha * ceilMatrix;
-    }
+		options.maxBoundingBox = Box3(Point3(box3d.min.x, box3d.min.y, box3d.min.z), 
+			Point3(box3d.max.x, box3d.max.y, box3d.max.z));
+
+		// blend 
+		if(sampleInfo.alpha != 0.0)
+		{
+			obj.getSchema().get(sample,sampleInfo.ceilIndex);
+			Alembic::Abc::M44d ceilMatrix = sample.getMatrix();
+			matrix = (1.0 - sampleInfo.alpha) * matrix + sampleInfo.alpha * ceilMatrix;
+		}
+   }
 
     Matrix3 objMatrix(
         Point3(matrix.getValue()[0], matrix.getValue()[1], matrix.getValue()[2]),

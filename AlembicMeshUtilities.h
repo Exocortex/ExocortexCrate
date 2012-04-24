@@ -2,11 +2,8 @@
 #define __ALEMBIC_MESH_UTILITY__H
 
 #include "Foundation.h"   
-#include "MNMath.h"
-#include "PolyObj.h"
+#include "AlembicMax.h"
 #include "resource.h"
-#include "surf_api.h"
-#include <string>
 #include "AlembicDefinitions.h"
 
 // Alembic Functions

@@ -2,11 +2,9 @@
 #define __EMPTY_SPLINE_OBJECT__H
 
 #include "Foundation.h"
-#include "MNMath.h"
+#include "AlembicMax.h"
 #include "resource.h"
-#include "surf_api.h"
 #include "AlembicDefinitions.h"
-#include <iparamb2.h>
 #include "AlembicNames.h"
 
 
@@ -22,7 +20,7 @@ class EmptySplineObject: public SimpleSpline {
         CreateMouseCallBack* GetCreateMouseCallBack() { return NULL; }
 		void BeginEditParams( IObjParam *ip, ULONG flags,Animatable *prev);
 		void EndEditParams( IObjParam *ip, ULONG flags,Animatable *next);
-		TCHAR *GetObjectName() { return _T("Spline"); }
+		CONST_2013 TCHAR *GetObjectName() { return _T("Spline"); }
 		void InitNodeName(TSTR& s) { s = _T("Spline"); }		
 		Class_ID ClassID() { return EMPTY_SPLINE_OBJECT_CLASSID; }  
 		void GetClassName(TSTR& s) { s = _T("Spline"); }

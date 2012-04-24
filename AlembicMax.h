@@ -44,7 +44,6 @@
 #include <iparamb.h>
 #include <splshape.h>
 #include <iparamm.h>
-#include <iparamb2.h>
 #include <simpspl.h>
 #include <linshape.h>
 #include <sceneapi.h>
@@ -53,5 +52,17 @@
 
 typedef Interface12 MAXInterface;
 #define GET_MAX_INTERFACE()	GetCOREInterface12()
+
+#if MAX_PRODUCT_YEAR_NUMBER < 2013
+	#define p_end	end 
+	#define	CONST_2013
+#else
+	#define	CONST_2013	const
+#endif
+
+#ifdef base_type
+	#undef base_type
+#endif
+
 
 #endif // __MAX_H__

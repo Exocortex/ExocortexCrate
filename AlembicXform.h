@@ -1,6 +1,7 @@
 #ifndef _ALEMBIC_XFORM_H_
 #define _ALEMBIC_XFORM_H_
 
+#include "AlembicMax.h"
 #include "AlembicObject.h"
 // #include "Point3.h"
 

@@ -1,6 +1,7 @@
 #ifndef _ALEMBIC_CURVES_H_
 #define _ALEMBIC_CURVES_H_
 
+#include "AlembicMax.h"
 #include "AlembicObject.h"
 
 class AlembicCurves: public AlembicObject

@@ -32,31 +32,31 @@ static ParamBlockDesc2 AlembicMeshNormalsModifierParams(
 	AlembicMeshNormalsModifier::ID_PATH, _T("path"), TYPE_FILENAME, P_RESET_DEFAULT, IDS_PATH,
 	    p_default, "",
 	    p_ui,        TYPE_EDITBOX,		IDC_PATH_EDIT,
-	 	end,
+		p_end,
         
 	AlembicMeshNormalsModifier::ID_IDENTIFIER, _T("identifier"), TYPE_STRING, P_RESET_DEFAULT, IDS_IDENTIFIER,
 	    p_default, "",
 	    p_ui,        TYPE_EDITBOX,		IDC_IDENTIFIER_EDIT,
-	 	end,
+		p_end,
 
 	AlembicMeshNormalsModifier::ID_TIME, _T("time"), TYPE_FLOAT, P_ANIMATABLE, IDS_TIME,
 		p_default,       0.0f,
 		p_range,         0.0f, 1000.0f,
 		p_ui,            TYPE_SPINNER,       EDITTYPE_FLOAT, IDC_TIME_EDIT,    IDC_TIME_SPIN,  0.01f,
-		end,
+		p_end,
 
 	/*AlembicMeshNormalsModifier::ID_GEOALPHA, _T("geoAlpha"), TYPE_FLOAT, P_ANIMATABLE, IDS_GEOALPHA,
 		p_default,       1.0f,
 		p_range,         0.0f, 1.0f,
 		p_ui,            TYPE_SPINNER,       EDITTYPE_FLOAT, IDC_GEOALPHA_EDIT,    IDC_GEOALPHA_SPIN, 0.1f,
-		end,*/
+		p_end,*/
 
 	AlembicMeshNormalsModifier::ID_MUTED, _T("muted"), TYPE_BOOL, P_ANIMATABLE, IDS_MUTED,
 		p_default,       TRUE,
 		p_ui,            TYPE_SINGLECHEKBOX,  IDC_MUTED_CHECKBOX,
-		end,
+		p_end,
 
-	end
+	p_end
 );
 
 //--- Modifier methods -------------------------------

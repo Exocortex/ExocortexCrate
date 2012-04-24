@@ -2,11 +2,9 @@
 #define __EMPTY_POLYLINE_OBJECT__H
 
 #include "Foundation.h"
-#include "MNMath.h"
+#include "AlembicMax.h"
 #include "resource.h"
-#include "surf_api.h"
 #include "AlembicDefinitions.h"
-#include <iparamb2.h>
 #include "AlembicNames.h"
 
 
@@ -20,7 +18,7 @@ class EmptyPolyLineObject : public LinearShape {
 		//  inherited virtual methods:
 
 		CreateMouseCallBack* GetCreateMouseCallBack() { return NULL; }
-		TCHAR *GetObjectName() { return _T("PolyLine"); }
+		CONST_2013 TCHAR *GetObjectName() { return _T("PolyLine"); }
 		void InitNodeName(TSTR& s) { s = _T("PolyLine"); }		
 		Class_ID ClassID() { return EMPTY_POLYLINE_OBJECT_CLASSID; }  
 		void GetClassName(TSTR& s) { s = _T("PolyLine"); }
