@@ -7,6 +7,7 @@
 #include "AlembicSubD.h"
 #include "AlembicPoints.h"
 #include "AlembicCurves.h"
+#include "AlembicHair.h"
 //#include "AlembicNurbs.h"
 
 #include <maya/MAnimControl.h>
@@ -211,6 +212,12 @@ MStatus AlembicWriteJob::PreProcess()
       {
          AlembicObjectPtr ptr;
          ptr.reset(new AlembicPoints(mObj,this));
+         AddObject(ptr);
+      }
+      else if(mType == "kPfxHair")
+      {
+         AlembicObjectPtr ptr;
+         ptr.reset(new AlembicHair(mObj,this));
          AddObject(ptr);
       }
       else

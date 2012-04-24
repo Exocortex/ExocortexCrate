@@ -1,11 +1,11 @@
-#ifndef _ALEMBIC_CURVES_H_
-#define _ALEMBIC_CURVES_H_
+#ifndef _ALEMBIC_HAIR_H_
+#define _ALEMBIC_HAIR_H_
 
 #include "AlembicObject.h"
-#include <maya/MFnNurbsCurve.h>
+#include <maya/MFnPfxGeometry.h>
 #include <maya/MUint64Array.h>
 
-class AlembicCurves: public AlembicObject
+class AlembicHair: public AlembicObject
 {
 private:
    Alembic::AbcGeom::OCurves mObject;
@@ -14,28 +14,36 @@ private:
 
    std::vector<Alembic::Abc::V3f> mPosVec;
    std::vector<Alembic::AbcCoreAbstract::ALEMBIC_VERSION_NS::int32_t> mNbVertices;
+
+   Alembic::Abc::ALEMBIC_VERSION_NS::OV3fArrayProperty mVelocityProperty;
    Alembic::Abc::ALEMBIC_VERSION_NS::OFloatArrayProperty mRadiusProperty;
+   Alembic::Abc::ALEMBIC_VERSION_NS::OC4fArrayProperty mColorProperty;
+
    std::vector<float> mRadiusVec;
+   std::vector<Alembic::Abc::V2f> mUvVec;
+   std::vector<Alembic::Abc::C4f> mColorVec;
+   std::vector<Alembic::Abc::V3f> mVelVec;
 
 public:
-   AlembicCurves(const MObject & in_Ref, AlembicWriteJob * in_Job);
-   ~AlembicCurves();
+   AlembicHair(const MObject & in_Ref, AlembicWriteJob * in_Job);
+   ~AlembicHair();
 
    virtual Alembic::Abc::OObject GetObject() { return mObject; }
    virtual Alembic::Abc::OCompoundProperty GetCompound() { return mSchema; }
    virtual MStatus Save(double time);
 };
 
-class AlembicCurvesNode : public AlembicObjectNode
+/*
+class AlembicHairNode : public AlembicObjectNode
 {
 public:
-   AlembicCurvesNode() {}
-   virtual ~AlembicCurvesNode();
+   AlembicHairNode() {}
+   virtual ~AlembicHairNode();
 
    // override virtual methods from MPxNode
    virtual void PreDestruction();
    virtual MStatus compute(const MPlug & plug, MDataBlock & dataBlock);
-   static void* creator() { return (new AlembicCurvesNode()); }
+   static void* creator() { return (new AlembicHairNode()); }
    static MStatus initialize();
 
 private:
@@ -56,14 +64,14 @@ private:
    MFnNurbsCurve mCurves;
 };
 
-class AlembicCurvesDeformNode : public AlembicObjectDeformNode
+class AlembicHairDeformNode : public AlembicObjectDeformNode
 {
 public:
-   virtual ~AlembicCurvesDeformNode();
+   virtual ~AlembicHairDeformNode();
    // override virtual methods from MPxDeformerNode
    virtual void PreDestruction();
    virtual MStatus deform(MDataBlock & dataBlock, MItGeometry & iter, const MMatrix & localToWorld, unsigned int geomIndex);
-   static void* creator() { return (new AlembicCurvesDeformNode()); }
+   static void* creator() { return (new AlembicHairDeformNode()); }
    static MStatus initialize();
 
 private:
@@ -78,5 +86,6 @@ private:
    // members
    SampleInfo mLastSampleInfo;
 };
+*/
 
 #endif

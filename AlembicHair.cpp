@@ -1,13 +1,13 @@
-#include "AlembicCurves.h"
-#include <maya/MFnNurbsCurveData.h>
+#include "AlembicHair.h"
 #include "MetaData.h"
 #include <maya/MPoint.h>
-#include <maya/MPointArray.h>
+#include <maya/MRenderLine.h>
+#include <maya/MRenderLineArray.h>
 
 namespace AbcA = ::Alembic::AbcCoreAbstract::ALEMBIC_VERSION_NS;
 using namespace AbcA;
 
-AlembicCurves::AlembicCurves(const MObject & in_Ref, AlembicWriteJob * in_Job)
+AlembicHair::AlembicHair(const MObject & in_Ref, AlembicWriteJob * in_Job)
 : AlembicObject(in_Ref, in_Job)
 {
    MFnDependencyNode node(in_Ref);
@@ -18,18 +18,21 @@ AlembicCurves::AlembicCurves(const MObject & in_Ref, AlembicWriteJob * in_Job)
 
    // create all properties
    mRadiusProperty = Alembic::Abc::OFloatArrayProperty(mSchema, ".radius", mSchema.getMetaData(), GetJob()->GetAnimatedTs() );
+   mColorProperty = Alembic::Abc::OC4fArrayProperty(mSchema, ".color", mSchema.getMetaData(), GetJob()->GetAnimatedTs() );
 }
 
-AlembicCurves::~AlembicCurves()
+AlembicHair::~AlembicHair()
 {
    mObject.reset();
    mSchema.reset();
 }
 
-MStatus AlembicCurves::Save(double time)
+MStatus AlembicHair::Save(double time)
 {
+   MStatus status;
+
    // access the geometry
-   MFnNurbsCurve node(GetRef());
+   MFnPfxGeometry node(GetRef());
 
    // save the metadata
    SaveMetaData(this);
@@ -39,22 +42,59 @@ MStatus AlembicCurves::Save(double time)
 
    // check if we have the global cache option
    bool globalCache = GetJob()->GetOption(L"exportInGlobalSpace").asInt() > 0;
-   Alembic::Abc::M44f globalXfo;
-   if(globalCache)
-      globalXfo = GetGlobalMatrix(GetRef());
 
-   MPointArray positions;
-   node.getCVs(positions);
+   MRenderLineArray mainLines, leafLines, flowerLines;
+   node.getLineData(mainLines,leafLines,flowerLines, true, false, mNumSamples == 0, false, false, mNumSamples == 0, false, true, globalCache);
 
-   mPosVec.resize(positions.length());
-   for(unsigned int i=0;i<positions.length();i++)
+   // first we need to count the number of points
+   unsigned int vertexCount = 0;
+   for(unsigned int i=0;i<(unsigned int)mainLines.length();i++)
+      vertexCount += mainLines.renderLine(i,&status).getLine().length();
+
+   mPosVec.resize(vertexCount);
+   unsigned int offset = 0;
+   if(mNumSamples==0)
    {
-      mPosVec[i].x = (float)positions[i].x;
-      mPosVec[i].y = (float)positions[i].y;
-      mPosVec[i].z = (float)positions[i].z;
-      if(globalCache)
-         globalXfo.multVecMatrix(mPosVec[i],mPosVec[i]);
-      bbox.extendBy(mPosVec[i]);
+      mNbVertices.resize((size_t)mainLines.length());
+      mRadiusVec.resize(vertexCount);
+      mColorVec.resize(vertexCount);
+      for(unsigned int i=0;i<(unsigned int)mainLines.length();i++)
+      {
+         const MRenderLine & line = mainLines.renderLine(i,&status);
+         const MVectorArray & positions = line.getLine();
+         const MDoubleArray & radii = line.getWidth();
+         const MVectorArray & colors = line.getColor();
+         const MVectorArray & transparencies = line.getTransparency();
+         mNbVertices[i] = positions.length();
+
+         for(unsigned int j=0;j<positions.length();j++)
+         {
+            mPosVec[offset].x = (float)positions[j].x;
+            mPosVec[offset].y = (float)positions[j].y;
+            mPosVec[offset].z = (float)positions[j].z;
+            mRadiusVec[offset] = (float)radii[j];
+            mColorVec[offset].r = (float)colors[j].x;
+            mColorVec[offset].g = (float)colors[j].y;
+            mColorVec[offset].b = (float)colors[j].z;
+            mColorVec[offset].a = 1.0f - (float)transparencies[j].x;
+            offset++;
+         }
+      }
+   }
+   else
+   {
+      for(unsigned int i=0;i<(unsigned int)mainLines.length();i++)
+      {
+         const MRenderLine & line = mainLines.renderLine(i,&status);
+         const MVectorArray & positions = line.getLine();
+         for(unsigned int j=0;j<positions.length();j++)
+         {
+            mPosVec[offset].x = (float)positions[j].x;
+            mPosVec[offset].y = (float)positions[j].y;
+            mPosVec[offset].z = (float)positions[j].z;
+            offset++;
+         }
+      }
    }
 
    // store the positions to the samples
@@ -63,25 +103,12 @@ MStatus AlembicCurves::Save(double time)
 
    if(mNumSamples == 0)
    {
-      mNbVertices.push_back(node.numCVs());
       mSample.setCurvesNumVertices(Alembic::Abc::Int32ArraySample(mNbVertices));
-
-      if (node.form() == MFnNurbsCurve::kOpen)
-         mSample.setWrap(Alembic::AbcGeom::kNonPeriodic);
-      else
-         mSample.setWrap(Alembic::AbcGeom::kPeriodic);
-      if (node.degree() == 3)
-         mSample.setType(Alembic::AbcGeom::kCubic);
-      else
-         mSample.setType(Alembic::AbcGeom::kLinear);
-
-      MPlug widthPlug = node.findPlug("width");
-      if (!widthPlug.isNull())
-         mRadiusVec.push_back(widthPlug.asFloat());
-      else
-         mRadiusVec.push_back(1.0);
+      mSample.setWrap(Alembic::AbcGeom::kNonPeriodic);
+      mSample.setType(Alembic::AbcGeom::kLinear);
 
       mRadiusProperty.set(Alembic::Abc::FloatArraySample(&mRadiusVec.front(),mRadiusVec.size()));
+      mColorProperty.set(Alembic::Abc::C4fArraySample(&mColorVec.front(),mColorVec.size()));
    }
 
    // save the sample
@@ -91,24 +118,25 @@ MStatus AlembicCurves::Save(double time)
    return MStatus::kSuccess;
 }
 
-void AlembicCurvesNode::PreDestruction()
+/*
+void AlembicHairNode::PreDestruction()
 {
    mSchema.reset();
    delRefArchive(mFileName);
    mFileName.clear();
 }
 
-AlembicCurvesNode::~AlembicCurvesNode()
+AlembicHairNode::~AlembicHairNode()
 {
    PreDestruction();
 }
 
-MObject AlembicCurvesNode::mTimeAttr;
-MObject AlembicCurvesNode::mFileNameAttr;
-MObject AlembicCurvesNode::mIdentifierAttr;
-MObject AlembicCurvesNode::mOutGeometryAttr;
+MObject AlembicHairNode::mTimeAttr;
+MObject AlembicHairNode::mFileNameAttr;
+MObject AlembicHairNode::mIdentifierAttr;
+MObject AlembicHairNode::mOutGeometryAttr;
 
-MStatus AlembicCurvesNode::initialize()
+MStatus AlembicHairNode::initialize()
 {
    MStatus status;
 
@@ -153,7 +181,7 @@ MStatus AlembicCurvesNode::initialize()
    return status;
 }
 
-MStatus AlembicCurvesNode::compute(const MPlug & plug, MDataBlock & dataBlock)
+MStatus AlembicHairNode::compute(const MPlug & plug, MDataBlock & dataBlock)
 {
    MStatus status;
 
@@ -289,23 +317,23 @@ MStatus AlembicCurvesNode::compute(const MPlug & plug, MDataBlock & dataBlock)
    return MStatus::kSuccess;
 }
 
-void AlembicCurvesDeformNode::PreDestruction()
+void AlembicHairDeformNode::PreDestruction()
 {
    mSchema.reset();
    delRefArchive(mFileName);
    mFileName.clear();
 }
 
-AlembicCurvesDeformNode::~AlembicCurvesDeformNode()
+AlembicHairDeformNode::~AlembicHairDeformNode()
 {
    PreDestruction();
 }
 
-MObject AlembicCurvesDeformNode::mTimeAttr;
-MObject AlembicCurvesDeformNode::mFileNameAttr;
-MObject AlembicCurvesDeformNode::mIdentifierAttr;
+MObject AlembicHairDeformNode::mTimeAttr;
+MObject AlembicHairDeformNode::mFileNameAttr;
+MObject AlembicHairDeformNode::mIdentifierAttr;
 
-MStatus AlembicCurvesDeformNode::initialize()
+MStatus AlembicHairDeformNode::initialize()
 {
    MStatus status;
 
@@ -343,7 +371,7 @@ MStatus AlembicCurvesDeformNode::initialize()
    return status;
 }
 
-MStatus AlembicCurvesDeformNode::deform(MDataBlock & dataBlock, MItGeometry & iter, const MMatrix & localToWorld, unsigned int geomIndex)
+MStatus AlembicHairDeformNode::deform(MDataBlock & dataBlock, MItGeometry & iter, const MMatrix & localToWorld, unsigned int geomIndex)
 {
    // get the envelope data
    float env = dataBlock.inputValue( envelope ).asFloat();
@@ -449,3 +477,4 @@ MStatus AlembicCurvesDeformNode::deform(MDataBlock & dataBlock, MItGeometry & it
    }
    return MStatus::kSuccess;
 }
+*/
