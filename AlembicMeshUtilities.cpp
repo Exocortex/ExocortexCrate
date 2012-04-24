@@ -387,7 +387,7 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
 			if( ! options.pMNMesh->GetFlag( MN_MESH_FILLED_IN ) ) {				
 				options.pMNMesh->FillInMesh();
 				if( options.pMNMesh->GetFlag( MN_MESH_RATSNEST ) ) {
-					ESS_LOG_ERROR( "Mesh is a 'Rat's Nest' (more than 2 faces per edge) and not currently supported, fileName: " << options.fileName << " identifier: " << options.identifier );
+					ESS_LOG_ERROR( "Mesh is a 'Rat's Nest' (more than 2 faces per edge) and not fully supported, fileName: " << options.fileName << " identifier: " << options.identifier );
 				}
 			}
 		}

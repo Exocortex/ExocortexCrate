@@ -69,7 +69,7 @@ void AlembicImport_FillInXForm_Internal(alembic_fillxform_options &options)
 
 		Alembic::AbcGeom::XformSample sample;
 		obj.getSchema().get(sample,sampleInfo.floorIndex);
-		Alembic::Abc::M44d matrix = sample.getMatrix();
+		matrix = sample.getMatrix();
 
 		const Alembic::Abc::Box3d &box3d = sample.getChildBounds();
 
