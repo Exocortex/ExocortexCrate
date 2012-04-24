@@ -249,7 +249,7 @@ void AlembicImport_TimeControl( alembic_importoptions &options ) {
 	options.pTimeControl = pHelper;
 }
 
-void AlembicImport_ConnectTimeControl( char* szControllerName, alembic_importoptions &options ) 
+void AlembicImport_ConnectTimeControl( const char* szControllerName, alembic_importoptions &options ) 
 {
 	char szBuffer[10000];	
 	sprintf_s( szBuffer, 10000, 
@@ -284,6 +284,8 @@ int ExocortexAlembicStaticInterface_ExocortexAlembicImport( CONST_2013 MCHAR* st
 {
 	ESS_CPP_EXCEPTION_REPORTING_START
 
+
+
 		//TestMasterUnit();
 		if( ! HasFullLicense() ) {
 			ESS_LOG_ERROR( "No valid license found for Exocortex Alembic." );
@@ -294,6 +296,8 @@ int ExocortexAlembicStaticInterface_ExocortexAlembicImport( CONST_2013 MCHAR* st
 			", bImportNormals=" << bImportNormals << ", bImportUVs=" << bImportUVs <<
 			", bImportMaterialIds=" << bImportMaterialIds << ", bAttachToExisting=" << bAttachToExisting <<
 			", iVisOption=" << iVisOption << " )" );
+
+
 
 		alembic_importoptions options;
 		options.importNormals = (bImportNormals != FALSE);

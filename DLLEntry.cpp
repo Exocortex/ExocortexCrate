@@ -38,7 +38,7 @@ ClassDesc2** getClassDescs( int& numClassDescs ) {
 		GetEmptySplineObjectClassDesc(),
 		GetEmptyPolyLineObjectClassDesc(),
 		GetAlembicSplineTopoModifierClassDesc(),
-		GetAlembicSplineGeomModifierClassDesc(),
+		GetAlembicFloatControllerClassDesc(),
 	};
 	numClassDescs = sizeof( s_classDescs ) / sizeof( ClassDescPtr );
 	return s_classDescs;
