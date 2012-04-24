@@ -211,7 +211,7 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
 
    if(  ( options.nDataFillFlags & ALEMBIC_DATAFILL_FACELIST ) ||
 	   ( options.nDataFillFlags & ALEMBIC_DATAFILL_VERTEX ) ) {
-		   if (currentNumVerts != meshPos->size())
+		   if (currentNumVerts != meshPos->size() && ! options.pMNMesh->GetFlag( MN_MESH_RATSNEST ) )
 		   {
 			   int numVerts = static_cast<int>(meshPos->size());
 			   if (options.pMNMesh != NULL)
@@ -232,12 +232,12 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
 					   pVerts[i] = Point3(0,0,0);
 				   }
 			   }
-		   } 
+		   }
 
 		validateMeshes( options, "ALEMBIC_DATAFILL_FACELIST | ALEMBIC_DATAFILL_VERTEX" );
    }
 
-   if ( options.nDataFillFlags & ALEMBIC_DATAFILL_VERTEX )
+   if (( options.nDataFillFlags & ALEMBIC_DATAFILL_VERTEX ) || ( options.nDataFillFlags & ALEMBIC_DATAFILL_FACELIST ) )
    {
 	   Imath::V3f const* pPositionArray = ( meshPos.get() != NULL ) ? meshPos->get() : NULL;
 	   Imath::V3f const* pVelocityArray = ( meshVel.get() != NULL ) ? meshVel->get() : NULL;
@@ -384,8 +384,11 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
 			}
 			options.pMNMesh->SetFlag( MN_MESH_FILLED_IN, FALSE );
 		    // this can fail if the mesh isn't correctly filled in.
-			if( ! options.pMNMesh->GetFlag( MN_MESH_FILLED_IN ) ) {
+			if( ! options.pMNMesh->GetFlag( MN_MESH_FILLED_IN ) ) {				
 				options.pMNMesh->FillInMesh();
+				if( options.pMNMesh->GetFlag( MN_MESH_RATSNEST ) ) {
+					ESS_LOG_ERROR( "Mesh is a 'Rat's Nest' (more than 2 faces per edge) and not currently supported, fileName: " << options.fileName << " identifier: " << options.identifier );
+				}
 			}
 		}
 		else if (options.pMesh != NULL )
@@ -418,6 +421,25 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
 		validateMeshes( options, "ALEMBIC_DATAFILL_FACELIST" );
    }
 
+	if( ( options.nDataFillFlags & ALEMBIC_DATAFILL_FACELIST ) &&
+	   ( ! ( options.nDataFillFlags & ALEMBIC_DATAFILL_VERTEX ) ) ) {
+			   if (options.pMNMesh != NULL)
+			   {
+				   MNVert* pMeshVerties = options.pMNMesh->V(0);
+				   for(int i=0;i<meshPos->size();i++)
+				   {
+					   pMeshVerties[i].p = Point3(0,0,0);
+				   }
+			   }
+			   if (options.pMesh != NULL)
+			   {
+				   Point3 *pVerts = options.pMesh->verts;
+				   for(int i=0;i<meshPos->size();i++)
+				   {
+					   pVerts[i] = Point3(0,0,0);
+				   }
+			   }	
+	}
 
    if ( objMesh.valid() && ( options.nDataFillFlags & ALEMBIC_DATAFILL_NORMALS ) )
    {

@@ -74,7 +74,6 @@ private:
 	virtual void SetReference(int i, RefTargetHandle rtarg) { pblock = (IParamBlock2 *) rtarg; }
 private:
      std::string m_CachedAbcFile;
-	 int *pFilledToOriginalIndices;
 };
 
 

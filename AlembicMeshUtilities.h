@@ -15,8 +15,7 @@ typedef struct _alembic_fillmesh_options
 	Mesh *pMesh;
 	std::string fileName;
 	std::string identifier;
-	int *pFilledToOriginalIndices;
-
+	
     //PolyObject *pPolyObj;
 	MNMesh *pMNMesh;
     TimeValue dTicks;
@@ -28,7 +27,6 @@ typedef struct _alembic_fillmesh_options
         pIObj = NULL;
         pMesh = NULL;
         pMNMesh = NULL;
-		pFilledToOriginalIndices = NULL;
         dTicks = 0;
         nDataFillFlags = 0;
 		fVertexAlpha = 1.0f;
