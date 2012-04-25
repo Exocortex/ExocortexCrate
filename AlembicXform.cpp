@@ -112,7 +112,7 @@ MStatus AlembicXformNode::initialize()
    status = addAttribute(mFileNameAttr);
 
    // input identifier
-   mIdentifierAttr = tAttr.create("identifier", "it", MFnData::kString, emptyStringObject);
+   mIdentifierAttr = tAttr.create("identifier", "if", MFnData::kString, emptyStringObject);
    status = tAttr.setStorable(true);
    status = tAttr.setKeyable(false);
    status = addAttribute(mIdentifierAttr);

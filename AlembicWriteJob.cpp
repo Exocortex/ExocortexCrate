@@ -5,9 +5,9 @@
 #include "AlembicCamera.h"
 #include "AlembicPolyMesh.h"
 #include "AlembicSubD.h"
-//#include "AlembicCurves.h"
-//#include "AlembicPoints.h"
-//#include "AlembicModel.h"
+#include "AlembicPoints.h"
+#include "AlembicCurves.h"
+#include "AlembicHair.h"
 //#include "AlembicNurbs.h"
 
 #include <maya/MAnimControl.h>
@@ -200,6 +200,24 @@ MStatus AlembicWriteJob::PreProcess()
       {
          AlembicObjectPtr ptr;
          ptr.reset(new AlembicSubD(mObj,this));
+         AddObject(ptr);
+      }
+      else if(mType == "kNurbsCurve")
+      {
+         AlembicObjectPtr ptr;
+         ptr.reset(new AlembicCurves(mObj,this));
+         AddObject(ptr);
+      }
+      else if(mType == "kParticle")
+      {
+         AlembicObjectPtr ptr;
+         ptr.reset(new AlembicPoints(mObj,this));
+         AddObject(ptr);
+      }
+      else if(mType == "kPfxHair")
+      {
+         AlembicObjectPtr ptr;
+         ptr.reset(new AlembicHair(mObj,this));
          AddObject(ptr);
       }
       else

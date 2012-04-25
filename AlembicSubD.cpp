@@ -268,7 +268,7 @@ MStatus AlembicSubDNode::initialize()
    status = addAttribute(mFileNameAttr);
 
    // input identifier
-   mIdentifierAttr = tAttr.create("identifier", "it", MFnData::kString, emptyStringObject);
+   mIdentifierAttr = tAttr.create("identifier", "if", MFnData::kString, emptyStringObject);
    status = tAttr.setStorable(true);
    status = tAttr.setKeyable(false);
    status = addAttribute(mIdentifierAttr);
@@ -338,7 +338,7 @@ MStatus AlembicSubDNode::compute(const MPlug & plug, MDataBlock & dataBlock)
       Alembic::AbcGeom::ISubD obj(iObj,Alembic::Abc::kWrapExisting);
       if(!obj.valid())
       {
-         MGlobal::displayWarning("[ExocortexAlembic] Identifier '"+identifier+"' in archive '"+mFileName+"' is not a Camera.");
+         MGlobal::displayWarning("[ExocortexAlembic] Identifier '"+identifier+"' in archive '"+mFileName+"' is not a SubD.");
          return MStatus::kFailure;
       }
       mSchema = obj.getSchema();
@@ -528,7 +528,7 @@ MStatus AlembicSubDDeformNode::initialize()
    status = addAttribute(mFileNameAttr);
 
    // input identifier
-   mIdentifierAttr = tAttr.create("identifier", "it", MFnData::kString, emptyStringObject);
+   mIdentifierAttr = tAttr.create("identifier", "if", MFnData::kString, emptyStringObject);
    status = tAttr.setStorable(true);
    status = tAttr.setKeyable(false);
    status = addAttribute(mIdentifierAttr);
@@ -613,7 +613,7 @@ MStatus AlembicSubDDeformNode::deform(MDataBlock & dataBlock, MItGeometry & iter
       Alembic::AbcGeom::ISubD obj(iObj,Alembic::Abc::kWrapExisting);
       if(!obj.valid())
       {
-         MGlobal::displayWarning("[ExocortexAlembic] Identifier '"+identifier+"' in archive '"+mFileName+"' is not a Camera.");
+         MGlobal::displayWarning("[ExocortexAlembic] Identifier '"+identifier+"' in archive '"+mFileName+"' is not a SubD.");
          return MStatus::kFailure;
       }
       mSchema = obj.getSchema();

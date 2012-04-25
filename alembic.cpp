@@ -8,6 +8,9 @@
 #include "AlembicCamera.h"
 #include "AlembicPolyMesh.h"
 #include "AlembicSubD.h"
+#include "AlembicPoints.h"
+#include "AlembicCurves.h"
+//#include "AlembicNurbs.h"
 #include "MetaData.h"
 
 #include <maya/MFnPlugin.h>
@@ -23,6 +26,9 @@ const MTypeId mPolyMeshNodeId(0x0011A104);
 const MTypeId mSubDNodeId(0x0011A105);
 const MTypeId mPolyMeshDeformNodeId(0x0011A106);
 const MTypeId mSubDDeformNodeId(0x0011A107);
+const MTypeId mPointsNodeId(0x0011A108);
+const MTypeId mCurvesNodeId(0x0011A109);
+const MTypeId mCurvesDeformNodeId(0x0011A110);
 
 static MCallbackId deleteAllArchivesCallbackOnNewId = 0;
 static MCallbackId deleteAllArchivesCallbackOnOpenId = 0;
@@ -103,6 +109,20 @@ MStatus initializePlugin(MObject obj)
       &AlembicSubDDeformNode::creator,
       &AlembicSubDDeformNode::initialize,
       MPxNode::kDeformerNode);
+   status = plugin.registerNode("ExocortexAlembicPoints",
+      mPointsNodeId,
+      &AlembicPointsNode::creator,
+      &AlembicPointsNode::initialize,
+      MPxNode::kEmitterNode);
+   status = plugin.registerNode("ExocortexAlembicCurves",
+      mCurvesNodeId,
+      &AlembicCurvesNode::creator,
+      &AlembicCurvesNode::initialize);
+   status = plugin.registerNode("ExocortexAlembicCurvesDeform",
+      mCurvesDeformNodeId,
+      &AlembicCurvesDeformNode::creator,
+      &AlembicCurvesDeformNode::initialize,
+      MPxNode::kDeformerNode);
    return status;
 }
 
@@ -142,6 +162,9 @@ MStatus uninitializePlugin(MObject obj)
    status = plugin.deregisterNode(mSubDNodeId);
    status = plugin.deregisterNode(mPolyMeshDeformNodeId);
    status = plugin.deregisterNode(mSubDDeformNodeId);
+   status = plugin.deregisterNode(mPointsNodeId);
+   status = plugin.deregisterNode(mCurvesNodeId);
+   status = plugin.deregisterNode(mCurvesDeformNodeId);
 
    return status;
 }

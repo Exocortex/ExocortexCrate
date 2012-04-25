@@ -350,7 +350,7 @@ MStatus AlembicPolyMeshNode::initialize()
    status = addAttribute(mFileNameAttr);
 
    // input identifier
-   mIdentifierAttr = tAttr.create("identifier", "it", MFnData::kString, emptyStringObject);
+   mIdentifierAttr = tAttr.create("identifier", "if", MFnData::kString, emptyStringObject);
    status = tAttr.setStorable(true);
    status = tAttr.setKeyable(false);
    status = addAttribute(mIdentifierAttr);
@@ -418,7 +418,7 @@ MStatus AlembicPolyMeshNode::compute(const MPlug & plug, MDataBlock & dataBlock)
       Alembic::AbcGeom::IPolyMesh obj(iObj,Alembic::Abc::kWrapExisting);
       if(!obj.valid())
       {
-         MGlobal::displayWarning("[ExocortexAlembic] Identifier '"+identifier+"' in archive '"+mFileName+"' is not a Camera.");
+         MGlobal::displayWarning("[ExocortexAlembic] Identifier '"+identifier+"' in archive '"+mFileName+"' is not a PolyMesh.");
          return MStatus::kFailure;
       }
       mSchema = obj.getSchema();
@@ -684,7 +684,7 @@ MStatus AlembicPolyMeshDeformNode::initialize()
    status = addAttribute(mFileNameAttr);
 
    // input identifier
-   mIdentifierAttr = tAttr.create("identifier", "it", MFnData::kString, emptyStringObject);
+   mIdentifierAttr = tAttr.create("identifier", "if", MFnData::kString, emptyStringObject);
    status = tAttr.setStorable(true);
    status = tAttr.setKeyable(false);
    status = addAttribute(mIdentifierAttr);
@@ -733,7 +733,7 @@ MStatus AlembicPolyMeshDeformNode::deform(MDataBlock & dataBlock, MItGeometry & 
       Alembic::AbcGeom::IPolyMesh obj(iObj,Alembic::Abc::kWrapExisting);
       if(!obj.valid())
       {
-         MGlobal::displayWarning("[ExocortexAlembic] Identifier '"+identifier+"' in archive '"+mFileName+"' is not a Camera.");
+         MGlobal::displayWarning("[ExocortexAlembic] Identifier '"+identifier+"' in archive '"+mFileName+"' is not a PolyMesh.");
          return MStatus::kFailure;
       }
       mSchema = obj.getSchema();
