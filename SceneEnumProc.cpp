@@ -46,11 +46,18 @@ int SceneEnumProc::callback(INode *node)
     SClass_ID superClassID = obj->SuperClassID();
     Class_ID classID = obj->ClassID();
 
-    if (PFSystemInterface(obj) != NULL)
-    {
+    //if (obj->IsParticleSystem())
+    //{
+    //    Append(node, obj, OBTYPE_POINTS, 0);
+    //    return TREE_CONTINUE;
+    //}
+
+	ParticleObject* pParticleObject = GetParticleInterface(obj);
+
+	if(pParticleObject){
         Append(node, obj, OBTYPE_POINTS, 0);
         return TREE_CONTINUE;
-    }
+	}
 
 	if (obj->IsShapeObject() == FALSE &&
         (obj->CanConvertToType(polyObjectClassID) || 

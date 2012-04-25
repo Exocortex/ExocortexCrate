@@ -66,6 +66,8 @@ Alembic::Abc::OCompoundProperty AlembicPoints::GetCompound()
     return mPointsSchema;
 }
 
+
+
 bool AlembicPoints::Save(double time)
 {
     // Note: Particles are always considered to be animated even though
@@ -74,20 +76,36 @@ bool AlembicPoints::Save(double time)
     // Extract our particle emitter at the given time
     TimeValue ticks = GetTimeValueFromFrame(time);
     Object *obj = GetRef().node->EvalWorldState(ticks).obj;
-    IPFSystem *particleSystem = PFSystemInterface(obj);
-    if (particleSystem == NULL)
-    {
-        return false;
-    }
 
-    IParticleObjectExt *particlesExt = GetParticleObjectExtInterface(obj);
-    if (particlesExt == NULL)
-    {
-        return false;
-    }
 
-    particlesExt->UpdateParticles(GetRef().node, ticks);
-    int numParticles = particlesExt->NumParticles();
+
+
+	ParticleObject* pParticleObject = GetParticleInterface(obj);
+
+	if(!pParticleObject){
+		return false;
+	}
+
+    //IPFSystem *particleSystem = PFSystemInterface(pParticleObject);
+    //if (particleSystem == NULL)
+    //{
+    //    return false;
+    //}
+
+    //IParticleObjectExt *particlesExt = GetParticleObjectExtInterface(pParticleObject);
+    //if (particlesExt == NULL)
+    //{
+    //    return false;
+    //}
+
+    //particlesExt->UpdateParticles(GetRef().node, ticks);
+    //int numParticles = particlesExt->NumParticles();
+	
+	int numParticles = pParticleObject->NumberOfRenderMeshes();
+
+	return true;
+
+	IParticleObjectExt *particlesExt = NULL;
 
     // Set the visibility
     float flVisibility = GetRef().node->GetLocalVisibility(ticks);
