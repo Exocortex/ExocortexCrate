@@ -40,6 +40,7 @@ int GetLicense()
 
 			if( rlmSingleton.checkoutLicense( "", pluginName, rlmProductIds ) ) {
 				gLicenseToken = EC_LICENSE_RESULT_FULL_LICENSE;
+				ESS_LOG_INFO( "Exocortex Alembic for Arnold - license found." );
 				return gLicenseToken;
 			}
 		}

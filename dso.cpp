@@ -102,11 +102,11 @@ std::string getNameFromIdentifier(const std::string & identifier, long id = -1, 
 
 boost::mutex gGlobalLock;
 
-#ifdef __UNIX__
+//#ifdef __UNIX__
 #define GLOBAL_LOCK	   boost::mutex::scoped_lock writeLock( gGlobalLock );
-#else
-#define GLOBAL_LOCK
-#endif
+//#else
+//#define GLOBAL_LOCK
+//#endif
 
 std::map<std::string,std::string> gUsedArchives;
 
