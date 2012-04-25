@@ -83,10 +83,13 @@ global proc exocortexChooseFile(string $dialog)
   exocortexAlembicExport("",$dialog);
 }
 
-string $uiDirectory = "C:/ExocortexAlembic/Maya2012/Module/UI";
-string $dialog;
-if (`window -exists $dialog`) deleteUI -window $dialog;
-$dialog = `loadUI -uiFile ($uiDirectory+"/ExocortexAlembicExport.ui")`;
-textField -edit -text `playbackOptions -q -min` inframe;
-textField -edit -text `playbackOptions -q -max` outframe;
-showWindow $dialog;
+global proc exocortexSetupDialog(string $uiDirectory)
+{
+  global string $dialog;
+  if (`window -exists $dialog`) deleteUI -window $dialog;
+  $dialog = `loadUI -uiFile ($uiDirectory+"/ExocortexAlembicExport.ui")`;
+  textField -edit -text `playbackOptions -q -min` inframe;
+  textField -edit -text `playbackOptions -q -max` outframe;
+  showWindow $dialog;
+}
+

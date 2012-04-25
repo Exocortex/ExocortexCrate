@@ -387,8 +387,14 @@ global proc exocortexChooseFile(string $dialog)
   exocortexAlembicImport("",$dialog);
 }
 
-string $uiDirectory = "C:/ExocortexAlembic/Maya2012/Module/UI";
-string $dialog;
-if (`window -exists $dialog`) deleteUI -window $dialog;
-$dialog = `loadUI -uiFile ($uiDirectory+"/ExocortexAlembicImport.ui")`;
-showWindow $dialog;
+global proc exocortexSetupDialog(string $uiDirectory)
+{
+  global string $dialog;
+  if (`window -exists $dialog`)
+    deleteUI -window $dialog;
+
+  $dialog = `loadUI -uiFile ($uiDirectory+"/ExocortexAlembicImport.ui")`;
+  showWindow $dialog;
+}
+
+

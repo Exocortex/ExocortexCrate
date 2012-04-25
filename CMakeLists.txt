@@ -1,4 +1,8 @@
-#cmake_minimum_required (VERSION 2.6) 
+cmake_minimum_required (VERSION 2.6)
+if(POLICY CMP0011)
+   cmake_policy(SET CMP0011 NEW) # or even better, NEW
+endif(POLICY CMP0011)
+
 
 project ( Maya${Maya_VERSION}ExocortexAlembic${alembic_VERSION} ) 
 
