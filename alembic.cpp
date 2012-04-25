@@ -15,6 +15,8 @@
 
 #include <maya/MFnPlugin.h>
 #include <maya/MSceneMessage.h>
+
+#include <sstream>
  
 // IDs issues for this plugin are: 
 // 0x0011A100 - 0x0011A1FF
@@ -123,12 +125,28 @@ MStatus initializePlugin(MObject obj)
       &AlembicCurvesDeformNode::creator,
       &AlembicCurvesDeformNode::initialize,
       MPxNode::kDeformerNode);
+
+   // Load the menu!
+   std::stringstream load_command;
+   load_command << "source \"menu.mel\"; exocortexAlembicLoadMenu(\"" << plugin.name() << "\");";
+   MStatus commandStatus = MGlobal::executeCommand(load_command.str().c_str(), true, false);
+   if (commandStatus != MStatus::kSuccess)
+   {
+	  //EC_LOG_ERROR("FAILED TO SOURCE ../scripts/menu.mel: " << commandStatus.errorString());
+   }
    return status;
 }
 
 MStatus uninitializePlugin(MObject obj)
 {
    MFnPlugin plugin(obj);
+
+   // Unload the menu!
+   MStatus commandStatus = MGlobal::executeCommand("source \"menu.mel\"; exocortexAlembicUnloadMenu;", true, false);
+   if (commandStatus != MStatus::kSuccess)
+   {
+	  //EC_LOG_ERROR("FAILED TO SOURCE ../scripts/menu.mel: " << commandStatus.errorString());
+   }
 
    MStatus status;
 

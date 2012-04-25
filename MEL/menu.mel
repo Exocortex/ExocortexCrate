@@ -1,13 +1,29 @@
-global proc exocortexAlembicMenu()
+
+
+global proc exocortexAlembicLoadMenu(string $pluginName)
 {
   global string $showMyMenuCtrl;
   if (`menu -exists $showMyMenuCtrl`)
      deleteUI $showMyMenuCtrl;
-  string $name = "Exocortex";
+
+  string $name = "Alembic";
   global string $gMainWindow;
   $showMyMenuCtrl = `menu -p $gMainWindow -to true -l $name`;
-  menuItem -p $showMyMenuCtrl -l "Alembic 1.0 Import" -c ("source \"C:/ExocortexAlembic/Maya2012/Module/MEL/import.mel\"; ");
-  menuItem -p $showMyMenuCtrl -l "Alembic 1.0 Export" -c ("source \"C:/ExocortexAlembic/Maya2012/Module/MEL/export.mel\"; ");
+
+  // get the plugin's UIs directory and setup the instruction to launch the import/export UI
+  string $uiDirectory = dirname(`pluginInfo -query -path $pluginName`) + "/../ui";
+  string $import_instruction = "source \"import.mel\"; exocortexSetupDialog(\"" + $uiDirectory + "\");";
+  string $export_instruction = "source \"export.mel\"; exocortexSetupDialog(\"" + $uiDirectory + "\");";
+
+  menuItem -p $showMyMenuCtrl -l "Alembic Import..." -c ($import_instruction);
+  menuItem -p $showMyMenuCtrl -l "Alembic Export..." -c ($export_instruction);
 }
 
-exocortexAlembicMenu;
+global proc exocortexAlembicUnloadMenu()
+{
+  global string $showMyMenuCtrl;
+  if (`menu -exists $showMyMenuCtrl`)
+    deleteUI $showMyMenuCtrl;
+
+}
+
