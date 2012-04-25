@@ -1,4 +1,4 @@
-global proc exocortexCloseDialog(string $dialog)
+global proc exocortexexocortexCloseDialog(string $dialog)
 {
   deleteUI -window $dialog;
 }
@@ -264,28 +264,6 @@ global proc exocortexAlembicImport(string $filename,string $dialog)
         }
       }
     }
-    else if($types[$i] == "Curves")
-    {
-      $shape = exocortexCreateOrReuseNode($name,"nurbsCurve",$importAttach,0,0);
-      $reader = exocortexCreateOrReuseNode($name+".create","ExocortexAlembicCurvesDeform",$importAttach,1,1);
-      if($reader == "")
-      {
-        $topoReader = exocortexCreateOrReuseNode("ExocortexAlembicCurves","ExocortexAlembicCurves",0,0,0);
-        exocortexConnectIfUnconnected(($topoReader+".outCurve"), ($shape+".create"));
-        exocortexConnectIfUnconnected(($fileNode+".outFileName"), ($topoReader+".fileName"));
-        setAttr -type "string" ($topoReader+".identifier") $identifiers[$i];
-        string $readers[] = `deformer -type "ExocortexAlembicCurvesDeform" $shape`;
-        $reader = $readers[0];
-      }
-    }
-    else if($types[$i] == "Points")
-    {
-      $shape = exocortexCreateOrReuseNode($name,"particle",$importAttach,0,0);
-      $reader = exocortexCreateOrReuseNode($shape+".newParticles[0]","ExocortexAlembicPoints",$importAttach,1,1);
-      if($reader == "")
-        $reader = exocortexCreateOrReuseNode("ExocortexAlembicPoints","ExocortexAlembicPoints",$importAttach,0,0);
-      exocortexConnectIfUnconnected(($reader+".output[0]"), ($shape+".newParticles[0]"));
-    }
     else if($types[$i] == "Camera")
     {
       $shape = exocortexCreateOrReuseNode($name,"camera",$importAttach,0,0);
@@ -409,8 +387,14 @@ global proc exocortexChooseFile(string $dialog)
   exocortexAlembicImport("",$dialog);
 }
 
-string $uiDirectory = "C:/ExocortexAlembic/Maya2012/Module/UI";
-string $dialog;
-if (`window -exists $dialog`) deleteUI -window $dialog;
-$dialog = `loadUI -uiFile ($uiDirectory+"/ExocortexAlembicImport.ui")`;
-showWindow $dialog;
+global proc exocortexSetupDialog(string $uiDirectory)
+{
+  global string $dialog;
+  if (`window -exists $dialog`)
+    deleteUI -window $dialog;
+
+  $dialog = `loadUI -uiFile ($uiDirectory+"/ExocortexAlembicImport.ui")`;
+  showWindow $dialog;
+}
+
+
