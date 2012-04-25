@@ -102,11 +102,17 @@ std::string getNameFromIdentifier(const std::string & identifier, long id = -1, 
 
 boost::mutex gGlobalLock;
 
+#ifdef __UNIX__
+#define GLOBAL_LOCK	   boost::mutex::scoped_lock writeLock( gGlobalLock );
+#else
+#define GLOBAL_LOCK
+#endif
+
 std::map<std::string,std::string> gUsedArchives;
 
 static int Init(AtNode *mynode, void **user_ptr)
 {
-   boost::mutex::scoped_lock writeLock( gGlobalLock );
+	GLOBAL_LOCK;
 
    userData * ud = new userData();
    *user_ptr = ud;
@@ -889,7 +895,7 @@ static int Init(AtNode *mynode, void **user_ptr)
 // All done, deallocate stuff
 static int Cleanup(void *user_ptr)
 {
-	boost::mutex::scoped_lock writeLock( gGlobalLock );
+	GLOBAL_LOCK;
 
 	userData * ud = (userData*)user_ptr;
    ud->gIObjects.clear();
@@ -903,7 +909,7 @@ static int Cleanup(void *user_ptr)
 // Get number of nodes
 static int NumNodes(void *user_ptr)
 {
-	boost::mutex::scoped_lock writeLock( gGlobalLock );
+	GLOBAL_LOCK;
 
 	userData * ud = (userData*)user_ptr;
    int size = (int)ud->gIObjects.size();
@@ -914,7 +920,7 @@ static int NumNodes(void *user_ptr)
 // Get the i_th node
 static AtNode *GetNode(void *user_ptr, int i)
 {
-	boost::mutex::scoped_lock writeLock( gGlobalLock );
+	GLOBAL_LOCK;
 
 	userData * ud = (userData*)user_ptr;
    // check if this is a known object
