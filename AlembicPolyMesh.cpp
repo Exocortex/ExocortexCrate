@@ -781,7 +781,9 @@ MStatus AlembicPolyMeshDeformNode::deform(MDataBlock & dataBlock, MItGeometry & 
       if(iter.index() >= samplePos->size())
          continue;
       bool done = false;
-      MFloatPoint pt = iter.position();
+      //MFloatPoint pt = iter.position();
+      MPoint pt = iter.position();
+
       MFloatPoint abcPt;
       if(sampleInfo.alpha != 0.0)
       {

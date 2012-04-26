@@ -31,7 +31,7 @@ global proc exocortexAlembicExport(string $filename, string $dialog)
   // check filename
   if($filename == "")
   {
-    $files = `fileDialog2 -ds 1 -cap "Choose the Alembic File To Export" -ff "Alembic Files (*.abc)" -fm 0`;
+    $files = `fileDialog2 -ds 2 -cap "Choose the Alembic File To Export" -ff "Alembic Files (*.abc)" -fm 0`;
     print $files;
     if(size($files) == 0)
     {
