@@ -77,6 +77,11 @@ bool AlembicPoints::Save(double time)
     TimeValue ticks = GetTimeValueFromFrame(time);
     Object *obj = GetRef().node->EvalWorldState(ticks).obj;
 
+	bool bFlatten = GetCurrentJob()->GetOption("flattenHierarchy");
+
+    // Store the transformation
+    SaveXformSample(GetRef(), mXformSchema, mXformSample, time, bFlatten);
+
     IPFSystem* particleSystem = PFSystemInterface(obj);
 	IParticleObjectExt* particlesExt = GetParticleObjectExtInterface(obj);
 	SimpleParticle* pSimpleParticle = (SimpleParticle*) obj->GetInterface(I_SIMPLEPARTICLEOBJ);
