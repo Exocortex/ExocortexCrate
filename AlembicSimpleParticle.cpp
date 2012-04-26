@@ -500,7 +500,7 @@ Quat AlembicSimpleParticle::GetParticleOrientation(Alembic::AbcGeom::IPoints &iP
     if (sampleInfo.alpha != 0.0)
     {
         Alembic::Abc::QuatfArraySamplePtr floorAngVelSamples = angVelProperty.getValue(sampleInfo.floorIndex);
-        if (floorAngVelSamples != NULL && floorAngVelSamples->size() > 0 && floorAngVelSamples->size() < index) 
+        if (floorAngVelSamples != NULL && floorAngVelSamples->size() > 0 && floorAngVelSamples->size() > index) 
         {
             Alembic::Abc::Quatf velquat = floorAngVelSamples->get()[index];
             Quat v = ConvertAlembicQuatToMaxQuat(velquat, false);
