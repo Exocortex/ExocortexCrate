@@ -30,6 +30,10 @@
 #include <Alembic/AbcGeom/All.h>
 #include <Alembic/AbcCoreHDF5/All.h>
 
+#ifndef _BOOL
+  #define _BOOL
+#endif
+
 #include <maya/MGlobal.h>
 #include <maya/MObject.h>
 #include <maya/MObjectArray.h>
@@ -74,5 +78,13 @@
 typedef std::map<std::string,std::string> stringMap;
 typedef std::map<std::string,std::string>::iterator stringMapIt;
 typedef std::pair<std::string,std::string> stringPair;
+
+#ifndef LONG
+	typedef long LONG;
+#endif
+
+#ifndef ULONG
+	typedef unsigned long ULONG;
+#endif
 
 #endif  // _FOUNDATION_H_

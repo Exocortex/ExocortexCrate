@@ -41,7 +41,13 @@ static void deleteAllArchivesCallback( void* clientData )
    deleteAllArchives();
 }
 
-MStatus initializePlugin(MObject obj)
+//#ifdef __UNIX__
+  #define EC_EXPORT extern "C"
+//#else
+  //#define EC_EXPORT
+//#endif
+
+EC_EXPORT MStatus initializePlugin(MObject obj)
 {
    const char * pluginVersion = "1.0";
    MFnPlugin plugin(obj, "ExocortexAlembicMaya", pluginVersion, "Any");
@@ -137,7 +143,7 @@ MStatus initializePlugin(MObject obj)
    return status;
 }
 
-MStatus uninitializePlugin(MObject obj)
+EC_EXPORT MStatus uninitializePlugin(MObject obj)
 {
    MFnPlugin plugin(obj);
 

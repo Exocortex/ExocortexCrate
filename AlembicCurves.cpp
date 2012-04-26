@@ -420,7 +420,8 @@ MStatus AlembicCurvesDeformNode::deform(MDataBlock & dataBlock, MItGeometry & it
    for(iter.reset();!iter.isDone(); iter.next())
    {
       index = iter.index();
-      MFloatPoint pt = iter.position();
+      //MFloatPoint pt = iter.position();
+      MPoint pt = iter.position();
       MPoint abcPos = pt;
       float weight = weightValue(dataBlock,geomIndex,index) * env;
       if(weight == 0.0f)

@@ -3,7 +3,7 @@
 #include "MetaData.h"
 #include <maya/MPoint.h>
 #include <maya/MPointArray.h>
-#include <maya/MFnSubDNames.h>
+#include <maya/MFnSubdNames.h>
 #include <maya/MItSubdVertex.h>
 
 namespace AbcA = ::Alembic::AbcCoreAbstract::ALEMBIC_VERSION_NS;
@@ -656,7 +656,8 @@ MStatus AlembicSubDDeformNode::deform(MDataBlock & dataBlock, MItGeometry & iter
    for(iter.reset();!iter.isDone(); iter.next())
    {
       index = iter.index();
-      MFloatPoint pt = iter.position();
+      //MFloatPoint pt = iter.position();
+      MPoint pt = iter.position();
       MPoint abcPos = pt;
       if(index >= mVertexLookup.size())
          continue;
