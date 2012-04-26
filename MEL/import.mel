@@ -65,7 +65,7 @@ global proc exocortexAlembicImport(string $filename,string $dialog)
   // check if the filename is valid
   if($filename == "")
   {
-    $files = `fileDialog2 -ds 1 -cap "Choose the Alembic File To Import" -ff "Alembic Files (*.abc)" -fm 1`;
+    $files = `fileDialog2 -ds 2 -cap "Choose the Alembic File To Import" -ff "Alembic Files (*.abc)" -fm 1`;
     print $files;
     if(size($files) == 0)
     {
