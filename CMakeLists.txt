@@ -1,5 +1,9 @@
 cmake_minimum_required(VERSION 2.6)
 
+IF (UNIX AND NOT APPLE )
+	ADD_DEFINITIONS(-DLINUX)
+ENDIF()
+
 set( Exocortex_INSTALL_BASE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/install" )
 
 if( HDF5_ENABLE_THREADSAFE )
@@ -33,7 +37,7 @@ set( AlembicFolder "Externals" )
 SET(DIR_SOFTIMAGEALEBMIC ${CMAKE_CURRENT_SOURCE_DIR})
 
 get_filename_component( LIBRARY_ROOT "${CMAKE_CURRENT_SOURCE_DIR}" PATH )
-set( LIBRARY_ROOT "${LIBRARY_ROOT}/Libraries.20120326.01" )
+set( LIBRARY_ROOT "${LIBRARY_ROOT}/Libraries.20120423.01" )
 if( NOT EXISTS ${LIBRARY_ROOT} )
 	message(FATAL_ERROR "Can't find LIBRARY_ROOT: ${LIBRARY_ROOT}" )
 endif()
@@ -292,6 +296,9 @@ ENDIF()
 IF(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../ExocortexAlembicMaya/CMakeLists.txt")
 	ADD_SUBDIRECTORY ( "${CMAKE_CURRENT_SOURCE_DIR}/../ExocortexAlembicMaya/2011" "${CMAKE_CURRENT_BINARY_DIR}/ExocortexAlembicMaya/2011" )
 	ADD_SUBDIRECTORY ( "${CMAKE_CURRENT_SOURCE_DIR}/../ExocortexAlembicMaya/2012" "${CMAKE_CURRENT_BINARY_DIR}/ExocortexAlembicMaya/2012" )
+	if( ( WIN32 AND MSVC10 ) OR UNIX )
+		ADD_SUBDIRECTORY ( "${CMAKE_CURRENT_SOURCE_DIR}/../ExocortexAlembicMaya/2013" "${CMAKE_CURRENT_BINARY_DIR}/ExocortexAlembicMaya/2013" )
+	endif()
 ENDIF()
 
 # houdini plugin
@@ -307,5 +314,8 @@ if( WIN32 )
 		ADD_SUBDIRECTORY ( "${CMAKE_CURRENT_SOURCE_DIR}/../ExocortexAlembic3DSMax/2010" "${CMAKE_CURRENT_BINARY_DIR}/ExocortexAlembic3DSMax/2010" )
 		ADD_SUBDIRECTORY ( "${CMAKE_CURRENT_SOURCE_DIR}/../ExocortexAlembic3DSMax/2011" "${CMAKE_CURRENT_BINARY_DIR}/ExocortexAlembic3DSMax/2011" )
 		ADD_SUBDIRECTORY ( "${CMAKE_CURRENT_SOURCE_DIR}/../ExocortexAlembic3DSMax/2012" "${CMAKE_CURRENT_BINARY_DIR}/ExocortexAlembic3DSMax/2012" )
+		if( MSVC10 ) 
+			ADD_SUBDIRECTORY ( "${CMAKE_CURRENT_SOURCE_DIR}/../ExocortexAlembic3DSMax/2013" "${CMAKE_CURRENT_BINARY_DIR}/ExocortexAlembic3DSMax/2013" )
+		endif()
 	ENDIF()
 endif()
