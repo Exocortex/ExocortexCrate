@@ -33,7 +33,7 @@ set( AlembicFolder "Externals" )
 SET(DIR_SOFTIMAGEALEBMIC ${CMAKE_CURRENT_SOURCE_DIR})
 
 get_filename_component( LIBRARY_ROOT "${CMAKE_CURRENT_SOURCE_DIR}" PATH )
-set( LIBRARY_ROOT "${LIBRARY_ROOT}/Libraries.20120423.01" )
+set( LIBRARY_ROOT "${LIBRARY_ROOT}/Libraries.20120426.01" )
 if( NOT EXISTS ${LIBRARY_ROOT} )
 	message(FATAL_ERROR "Can't find LIBRARY_ROOT: ${LIBRARY_ROOT}" )
 endif()
