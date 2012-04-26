@@ -122,24 +122,28 @@ ESS_CALLBACK_START( alembic_xform_Update, CRef& )
 
    double time = ctxt.GetParameterValue(L"time");
    
-   // find the index
-   size_t index = p->lastFloor;
-   while(time > p->times[index] && index < p->times.size()-1)
-      index++;
-   while(time < p->times[index] && index > 0)
-      index--;
+   Alembic::Abc::M44d matrix;	// constructor creates an identity matrix
 
-   Alembic::Abc::M44d matrix;
-   if(fabs(time - p->times[index]) < 0.001 || index == p->times.size()-1)
-   {
-      matrix = p->matrices[index];
+   // if no time samples, default to identity matrix
+   if( p->times.size() > 0 ) {
+	   // find the index
+	   size_t index = p->lastFloor;
+	   while(time > p->times[index] && index < p->times.size()-1)
+		  index++;
+	   while(time < p->times[index] && index > 0)
+		  index--;
+
+	   if(fabs(time - p->times[index]) < 0.001 || index == p->times.size()-1)
+	   {
+		  matrix = p->matrices[index];
+	   }
+	   else
+	   {
+		  double blend = (time - p->times[index]) / (p->times[index+1] - p->times[index]);
+		  matrix = (1.0f - blend) * p->matrices[index] + blend * p->matrices[index+1];
+	   }
+	   p->lastFloor = index;
    }
-   else
-   {
-      double blend = (time - p->times[index]) / (p->times[index+1] - p->times[index]);
-      matrix = (1.0f - blend) * p->matrices[index] + blend * p->matrices[index+1];
-   }
-   p->lastFloor = index;
    
    CMatrix4 xsiMatrix;
    xsiMatrix.Set(
