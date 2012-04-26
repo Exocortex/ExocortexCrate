@@ -66,8 +66,9 @@ if (WIN32)
 
 	set( MAYA_EXTENSION ".mll" )
 	SET_TARGET_PROPERTIES( ${PROJECT_NAME}
-  		PREFIX ""  # There is no prefix even on UNIXes
-		SUFFIX ${MAYA_EXTENSION} )
+		PROPERTIES #
+	  		PREFIX ""  # There is no prefix even on UNIXes
+			SUFFIX ${MAYA_EXTENSION} )
 #	set( MAYA_LINK_FLAGS " /export:initializePlugin /export:uninitializePlugin " )
 elseif ( UNIX )
 	set( MAYA_EXTENSION ".so" )
