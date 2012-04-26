@@ -77,35 +77,35 @@ bool AlembicPoints::Save(double time)
     TimeValue ticks = GetTimeValueFromFrame(time);
     Object *obj = GetRef().node->EvalWorldState(ticks).obj;
 
+    IPFSystem* particleSystem = PFSystemInterface(obj);
+	IParticleObjectExt* particlesExt = GetParticleObjectExtInterface(obj);
+	SimpleParticle* pSimpleParticle = (SimpleParticle*) obj->GetInterface(I_SIMPLEPARTICLEOBJ);
+	if(!pSimpleParticle){
 
+		particleSystem = PFSystemInterface(obj);
+		if(!particleSystem){
+			return false;
+		}
+		particlesExt = GetParticleObjectExtInterface(obj);
+		if(!particlesExt){
+			return false;
+		}
+	}
+	//If we get here, either particlesExt (for particle flow system) is nonnull 
+	//OR pSimpleParticle (for older particle systems) is nonnull 
 
-
-	ParticleObject* pParticleObject = GetParticleInterface(obj);
-
-	if(!pParticleObject){
+	int numParticles = 0;
+	if(particlesExt){
+		particlesExt->UpdateParticles(GetRef().node, ticks);
+		numParticles = particlesExt->NumParticles();
+	}
+	else if(pSimpleParticle){
+		pSimpleParticle->Update(ticks, GetRef().node);
+		numParticles = pSimpleParticle->parts.points.Count();
+	}
+	else{
 		return false;
 	}
-
-    //IPFSystem *particleSystem = PFSystemInterface(pParticleObject);
-    //if (particleSystem == NULL)
-    //{
-    //    return false;
-    //}
-
-    //IParticleObjectExt *particlesExt = GetParticleObjectExtInterface(pParticleObject);
-    //if (particlesExt == NULL)
-    //{
-    //    return false;
-    //}
-
-    //particlesExt->UpdateParticles(GetRef().node, ticks);
-    //int numParticles = particlesExt->NumParticles();
-	
-	int numParticles = pParticleObject->NumberOfRenderMeshes();
-
-	return true;
-
-	IParticleObjectExt *particlesExt = NULL;
 
     // Set the visibility
     float flVisibility = GetRef().node->GetLocalVisibility(ticks);
@@ -126,8 +126,6 @@ bool AlembicPoints::Save(double time)
     std::vector<Alembic::Abc::Quatf> angularVelocityVec(numParticles);
     std::vector<Alembic::Abc::C4f> colorVec;
     std::vector<std::string> instanceNamesVec;
-    Alembic::Abc::Quatf orientation;
-    Alembic::Abc::Quatf spin;
     Alembic::Abc::Box3d bbox;
     bool constantPos = true;
     bool constantVel = true;
@@ -137,54 +135,73 @@ bool AlembicPoints::Save(double time)
     bool constantOrientation = true;
     bool constantAngularVel = true;
 
-    for (int i = 0; i < numParticles; ++i)
-    {
-        Imath::V3f pos = ConvertMaxPointToAlembicPoint(*particlesExt->GetParticlePositionByIndex(i));
-        Imath::V3f vel = ConvertMaxVectorToAlembicVector(*particlesExt->GetParticleSpeedByIndex(i));
-        Imath::V3f scale = ConvertMaxScaleToAlembicScale(*particlesExt->GetParticleScaleXYZByIndex(i));
-        TimeValue age = particlesExt->GetParticleAgeByIndex(i);
-        uint64_t id = particlesExt->GetParticleBornIndex(i);
-        ConvertMaxEulerXYZToAlembicQuat(*particlesExt->GetParticleOrientationByIndex(i), orientation);
-        ConvertMaxAngAxisToAlembicQuat(*particlesExt->GetParticleSpinByIndex(i), spin);
+	for (int i = 0; i < numParticles; ++i)
+	{
+		Imath::V3f pos(0.0);
+		Imath::V3f vel(0.0);
+		Imath::V3f scale(1.0);
+		TimeValue age = 0;
+		uint64_t id = 0;
+	    Alembic::Abc::Quatf orientation(0.0, 0.0, 1.0, 0.0);
+		Alembic::Abc::Quatf spin(0.0, 0.0, 1.0, 0.0);
+		// Particle size is a uniform scale multiplier in XSI.  In Max, I need to learn where to get this 
+		// For now, we'll just default to 1
+		float width = 1.0f;
 
-        // Particle size is a uniform scale multiplier in XSI.  In Max, I need to learn where to get this 
-        // For now, we'll just default to 1
-        float width = 1.0f;
+		ShapeType shapetype = ShapeType_Point;
+		float shapeInstanceTime = time;
+		uint16_t shapeInstanceId = 0;
 
-        ShapeType shapetype;
-        float shapeInstanceTime;
-        uint16_t shapeInstanceId;
-        AlembicPoints::GetShapeType(particlesExt, i, ticks, shapetype, shapeInstanceId, shapeInstanceTime, instanceNamesVec);
+		if(particlesExt){
+			pos = ConvertMaxPointToAlembicPoint(*particlesExt->GetParticlePositionByIndex(i));
+			vel = ConvertMaxVectorToAlembicVector(*particlesExt->GetParticleSpeedByIndex(i));
+			scale = ConvertMaxScaleToAlembicScale(*particlesExt->GetParticleScaleXYZByIndex(i));
+			age = particlesExt->GetParticleAgeByIndex(i);
+			id = particlesExt->GetParticleBornIndex(i);
+			ConvertMaxEulerXYZToAlembicQuat(*particlesExt->GetParticleOrientationByIndex(i), orientation);
+			ConvertMaxAngAxisToAlembicQuat(*particlesExt->GetParticleSpinByIndex(i), spin);
+			AlembicPoints::GetShapeType(particlesExt, i, ticks, shapetype, shapeInstanceId, shapeInstanceTime, instanceNamesVec);
+		}
+		else if(pSimpleParticle){
+			pos = ConvertMaxPointToAlembicPoint(pSimpleParticle->ParticlePosition(ticks, i));
+			vel = ConvertMaxVectorToAlembicVector(pSimpleParticle->ParticleVelocity(ticks, i));
+			//simple particles have no scale?
+			age = pSimpleParticle->ParticleAge(ticks, i);
+			//simple particles have born index
+			//simple particles have no orientation?
 
-        positionVec[i].setValue(pos.x, pos.y, pos.z);
-        velocityVec[i].setValue(vel.x, vel.y, vel.z);
-        scaleVec[i].setValue(scale.x, scale.y, scale.z);
-        widthVec[i] = width;
-        ageVec[i] = static_cast<float>(GetSecondsFromTimeValue(age));
-        idVec[i] = id;
-        orientationVec[i] = orientation;
-        angularVelocityVec[i] = spin;
-        bbox.extendBy(positionVec[i]);
+			width = pSimpleParticle->ParticleSize(ticks, i);
+		}
+		
+		positionVec[i].setValue(pos.x, pos.y, pos.z);
+		velocityVec[i].setValue(vel.x, vel.y, vel.z);
+		scaleVec[i].setValue(scale.x, scale.y, scale.z);
+		widthVec[i] = width;
+		ageVec[i] = static_cast<float>(GetSecondsFromTimeValue(age));
+		idVec[i] = id;
+		orientationVec[i] = orientation;
+		angularVelocityVec[i] = spin;
+		bbox.extendBy(positionVec[i]);
         shapeTypeVec[i] = shapetype;
         shapeInstanceIDVec[i] = shapeInstanceId;
         shapeTimeVec[i] = shapeInstanceTime;
 
-        constantPos &= (positionVec[i] == positionVec[0]);
-        constantVel &= (velocityVec[i] == velocityVec[0]);
-        constantScale &= (scaleVec[i] == scaleVec[0]);
-        constantWidth &= (widthVec[i] == widthVec[0]);
-        constantAge &= (ageVec[i] == ageVec[0]);
-        constantOrientation &= (orientationVec[i] == orientationVec[0]);
-        constantAngularVel &= (angularVelocityVec[i] == angularVelocityVec[0]);
+		constantPos &= (positionVec[i] == positionVec[0]);
+		constantVel &= (velocityVec[i] == velocityVec[0]);
+		constantScale &= (scaleVec[i] == scaleVec[0]);
+		constantWidth &= (widthVec[i] == widthVec[0]);
+		constantAge &= (ageVec[i] == ageVec[0]);
+		constantOrientation &= (orientationVec[i] == orientationVec[0]);
+		constantAngularVel &= (angularVelocityVec[i] == angularVelocityVec[0]);
 
-        // Set the archive bounding box
-        // Positions for particles are already cnsider to be in world space
-        if (mJob)
-        {
-            mJob->GetArchiveBBox().extendBy(pos);
-        }
-    }
-
+		// Set the archive bounding box
+		// Positions for particles are already cnsider to be in world space
+		if (mJob)
+		{
+			mJob->GetArchiveBBox().extendBy(pos);
+		}
+	}
+	
     // Set constant properties that are not currently supported by Max
     massVec.push_back(1.0f);
     shapeTimeVec.push_back(1.0f);
