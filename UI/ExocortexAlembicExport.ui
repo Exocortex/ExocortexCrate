@@ -6,40 +6,52 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>400</width>
-    <height>301</height>
+    <width>350</width>
+    <height>250</height>
    </rect>
   </property>
   <property name="minimumSize">
    <size>
-    <width>400</width>
-    <height>300</height>
+    <width>350</width>
+    <height>250</height>
+   </size>
+  </property>
+  <property name="maximumSize">
+   <size>
+    <width>350</width>
+    <height>250</height>
    </size>
   </property>
   <property name="windowTitle">
-   <string>Dialog</string>
+   <string>Alembic Export Settings</string>
   </property>
   <widget class="QWidget" name="gridLayoutWidget">
    <property name="geometry">
     <rect>
      <x>10</x>
      <y>10</y>
-     <width>371</width>
-     <height>241</height>
+     <width>331</width>
+     <height>181</height>
     </rect>
    </property>
    <layout class="QGridLayout" name="gridLayout">
     <item row="0" column="0">
      <widget class="QLabel" name="label">
       <property name="text">
-       <string>In</string>
+       <string>In:</string>
+      </property>
+      <property name="alignment">
+       <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
       </property>
      </widget>
     </item>
     <item row="4" column="0">
      <widget class="QLabel" name="label_4">
       <property name="text">
-       <string>Topology</string>
+       <string>Topology:</string>
+      </property>
+      <property name="alignment">
+       <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
       </property>
      </widget>
     </item>
@@ -68,7 +80,10 @@
     <item row="5" column="0">
      <widget class="QLabel" name="label_5">
       <property name="text">
-       <string>Uvs</string>
+       <string>Uvs:</string>
+      </property>
+      <property name="alignment">
+       <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
       </property>
      </widget>
     </item>
@@ -92,7 +107,10 @@
     <item row="1" column="0">
      <widget class="QLabel" name="label_6">
       <property name="text">
-       <string>Out</string>
+       <string>Out:</string>
+      </property>
+      <property name="alignment">
+       <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
       </property>
      </widget>
     </item>
@@ -113,7 +131,10 @@
     <item row="2" column="0">
      <widget class="QLabel" name="label_7">
       <property name="text">
-       <string>Frame-Steps</string>
+       <string>Frame-Steps:</string>
+      </property>
+      <property name="alignment">
+       <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
       </property>
      </widget>
     </item>
@@ -127,7 +148,10 @@
     <item row="3" column="0">
      <widget class="QLabel" name="label_8">
       <property name="text">
-       <string>Sub-Steps</string>
+       <string>Sub-Steps:</string>
+      </property>
+      <property name="alignment">
+       <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
       </property>
      </widget>
     </item>
@@ -154,21 +178,30 @@
     <item row="6" column="0">
      <widget class="QLabel" name="label_9">
       <property name="text">
-       <string>FaceSets</string>
+       <string>FaceSets:</string>
+      </property>
+      <property name="alignment">
+       <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
       </property>
      </widget>
     </item>
     <item row="7" column="0">
      <widget class="QLabel" name="label_10">
       <property name="text">
-       <string>Dynamic Topology</string>
+       <string>Dynamic Topology:</string>
+      </property>
+      <property name="alignment">
+       <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
       </property>
      </widget>
     </item>
     <item row="8" column="0">
      <widget class="QLabel" name="label_11">
       <property name="text">
-       <string>Global Space</string>
+       <string>Global Space:</string>
+      </property>
+      <property name="alignment">
+       <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
       </property>
      </widget>
     </item>
@@ -187,23 +220,13 @@
   <widget class="QWidget" name="horizontalLayoutWidget">
    <property name="geometry">
     <rect>
-     <x>199</x>
-     <y>260</y>
-     <width>181</width>
+     <x>10</x>
+     <y>210</y>
+     <width>331</width>
      <height>31</height>
     </rect>
    </property>
    <layout class="QHBoxLayout" name="horizontalLayout">
-    <item>
-     <widget class="QPushButton" name="pushButton_2">
-      <property name="text">
-       <string>Cancel</string>
-      </property>
-      <property name="-c" stdset="0">
-       <string>&quot;exocortexCloseDialog($dialog);&quot;</string>
-      </property>
-     </widget>
-    </item>
     <item>
      <widget class="QPushButton" name="pushButton">
       <property name="text">
@@ -211,6 +234,16 @@
       </property>
       <property name="-c" stdset="0">
        <string>&quot;exocortexChooseFile($dialog);&quot;</string>
+      </property>
+     </widget>
+    </item>
+    <item>
+     <widget class="QPushButton" name="pushButton_2">
+      <property name="text">
+       <string>Cancel</string>
+      </property>
+      <property name="-c" stdset="0">
+       <string>&quot;exocortexCloseDialog($dialog);&quot;</string>
       </property>
      </widget>
     </item>

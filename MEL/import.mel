@@ -69,7 +69,7 @@ global proc exocortexAlembicImport(string $filename,string $dialog)
     print $files;
     if(size($files) == 0)
     {
-      error "Import aborted by user.";
+      print("Import aborted by user.");
       return;
     }
     $filename = $files[0];
