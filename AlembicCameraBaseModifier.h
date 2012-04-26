@@ -2,11 +2,9 @@
 #define __ALEMBIC_CAMERA_MODIFIER__H
 
 #include "Foundation.h"
-#include "MNMath.h" 
+#include "AlembicMax.h"
 #include "resource.h"
-#include "surf_api.h"
 #include "AlembicDefinitions.h"
-#include <iparamb2.h>
 #include "AlembicNames.h"
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -42,7 +40,7 @@ public:
 	void DeleteThis() { delete this; }
 	void GetClassName(TSTR& s) { s = _T("Alembic Camera Base Modifier"); }  
 	virtual Class_ID ClassID() { return ALEMBIC_CAMERA_BASE_MODIFIER_CLASSID; }		
-	TCHAR *GetObjectName() { return _T("Alembic Camera Base Modifier"); }
+	CONST_2013 TCHAR *GetObjectName() { return _T("Alembic Camera Base Modifier"); }
 
 	// From modifier
 	ChannelMask ChannelsUsed() { return DISP_ATTRIB_CHANNEL; }		// TODO: What channels do we actually need?

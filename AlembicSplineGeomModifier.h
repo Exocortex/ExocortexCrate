@@ -2,13 +2,8 @@
 #define __ALEMBIC_SPLINE_GEOM_MODIFIER__H
 
 #include "Foundation.h"  
-#include <MNMath.h>
-#include <iparamb2.h>
-#include <PolyObj.h>
+#include "AlembicMax.h"
 #include "resource.h"
-#include "surf_api.h"
-#include <string>
-#include <genshape.h>
 #include "AlembicDefinitions.h"
 #include "AlembicNames.h"
 #include "AlembicSplineUtilities.h"
@@ -41,7 +36,7 @@ public:
 	// From Animatable
 	virtual Class_ID ClassID() { return ALEMBIC_SPLINE_GEOM_MODIFIER_CLASSID; }		
 	void GetClassName(TSTR& s) { s = _T(ALEMBIC_SPLINE_GEOM_MODIFIER_NAME); }  
-	TCHAR *GetObjectName() { return _T(ALEMBIC_SPLINE_GEOM_MODIFIER_NAME); }
+	CONST_2013 TCHAR *GetObjectName() { return _T(ALEMBIC_SPLINE_GEOM_MODIFIER_NAME); }
 
 	void DeleteThis() { delete this; }
 	RefTargetHandle Clone(RemapDir& remap);

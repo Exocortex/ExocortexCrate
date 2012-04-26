@@ -1,7 +1,7 @@
 #ifndef _SCENEENUMPROC_H_
 #define _SCENEENUMPROC_H_
-#include <inode.h>
-#include <box3.h>
+
+#include "AlembicMax.h"
 
 class IScene;
 class Object;

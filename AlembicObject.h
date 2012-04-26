@@ -2,6 +2,7 @@
 #define _ALEMBIC_OBJECT_H_
 
 #include "Foundation.h"
+#include "AlembicMax.h"
 #include "ObjectList.h"
 
 class SceneEntry;

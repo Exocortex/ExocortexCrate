@@ -59,26 +59,26 @@ static ParamBlockDesc2 AlembicCameraBaseModifierParams(
 
     // params
 	AlembicCameraBaseModifier::ID_PATH, _T("path"), TYPE_FILENAME, 0, IDS_PATH,
-		end,
+		p_end,
         
 	AlembicCameraBaseModifier::ID_IDENTIFIER, _T("identifier"), TYPE_STRING, 0, IDS_IDENTIFIER,
-		end,
+		p_end,
 
 	AlembicCameraBaseModifier::ID_CURRENTTIMEHIDDEN, _T("currentTimeHidden"), TYPE_FLOAT, 0, IDS_CURRENTTIMEHIDDEN,
-		end,
+		p_end,
 
 	AlembicCameraBaseModifier::ID_TIMEOFFSET, _T("timeOffset"), TYPE_FLOAT, 0, IDS_TIMEOFFSET,
-		end,
+		p_end,
 
 	AlembicCameraBaseModifier::ID_TIMESCALE, _T("timeScale"), TYPE_FLOAT, 0, IDS_TIMESCALE,
-		end,
+		p_end,
 
 		/*
 	AlembicCameraBaseModifier::ID_MUTED, _T("muted"), TYPE_BOOL, 0, IDS_MUTED,
-		end,
+		p_end,
 		*/
 
-	end
+	p_end
 );
 
 //--- Modifier methods -------------------------------

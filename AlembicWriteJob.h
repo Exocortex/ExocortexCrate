@@ -1,6 +1,7 @@
 #ifndef _ALEMBIC_WRITE_JOB_H_
 #define _ALEMBIC_WRITE_JOB_H_
 #include "Foundation.h"
+#include "AlembicMax.h"
 #include "ObjectList.h" 
 #include "AlembicObject.h"
 

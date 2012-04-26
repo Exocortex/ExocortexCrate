@@ -2,11 +2,8 @@
 #define __ALEMBIC_MESH_UTILITY__H
 
 #include "Foundation.h"   
-#include "MNMath.h"
-#include "PolyObj.h"
+#include "AlembicMax.h"
 #include "resource.h"
-#include "surf_api.h"
-#include <string>
 #include "AlembicDefinitions.h"
 
 // Alembic Functions
@@ -16,7 +13,9 @@ typedef struct _alembic_fillmesh_options
     Alembic::AbcGeom::IObject *pIObj;
     //TriObject *pTriObj;
 	Mesh *pMesh;
-
+	std::string fileName;
+	std::string identifier;
+	
     //PolyObject *pPolyObj;
 	MNMesh *pMNMesh;
     TimeValue dTicks;

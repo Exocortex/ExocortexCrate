@@ -2,8 +2,8 @@
 #define _ALEMBIC_ARCHIVE_STORAGE_H_
 
 #include "Foundation.h"
+#include "AlembicMax.h"
 #include <map>
-#include <string>
 
 Alembic::Abc::IArchive * getArchiveFromID(std::string path);
 std::string addArchive(Alembic::Abc::IArchive * archive);

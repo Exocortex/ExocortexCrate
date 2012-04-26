@@ -1,8 +1,8 @@
+#include "AlembicMax.h"
 #include "Alembic.h"
-
 #include "AlembicObject.h"
-#include <boost/algorithm/string.hpp>
 #include "utility.h"
+#include <boost/algorithm/string.hpp>
 
 namespace AbcA = ::Alembic::AbcCoreAbstract::ALEMBIC_VERSION_NS;
 using namespace AbcA;

@@ -2,11 +2,9 @@
 #define __ALEMBIC_SPLINE_UTILITIES_H
 
 #include "Foundation.h"
-#include "MNMath.h"
+#include "AlembicMax.h"
 #include "resource.h"
-#include "surf_api.h"
 #include "AlembicDefinitions.h"
-#include <iparamb2.h>
 
 // Alembic Functions
 
