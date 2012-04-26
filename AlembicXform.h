@@ -7,8 +7,9 @@ void SaveXformSample(
    XSI::CRef kinestateRef, 
    Alembic::AbcGeom::OXformSchema & schema, 
    Alembic::AbcGeom::XformSample & sample, 
-   double time, bool xformCache = false, 
-   bool globalSpace = true
+   double time, 
+   bool xformCache, 
+   bool globalSpace
 );
 
 #endif

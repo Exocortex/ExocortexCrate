@@ -239,6 +239,17 @@ bool isRefAnimated(const CRef & in_Ref, bool xformCache, bool globalSpace)
       }
       if(prim.IsAnimated())
          return returnIsRefAnimated(in_Ref,true);
+
+      // check all parameters on the primitive
+      CParameterRefArray parameters = prim.GetParameters();
+      for(LONG i=0;i<parameters.GetCount();i++)
+      {
+         Parameter param(parameters[i]);
+         if(param.IsAnimated())
+            return returnIsRefAnimated(in_Ref,true);
+         if(param.GetSource().IsValid())
+            return returnIsRefAnimated(in_Ref,true);
+      }
    }
    else if(kineState.IsValid())
    {

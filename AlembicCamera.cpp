@@ -56,7 +56,7 @@ XSI::CStatus AlembicCamera::Save(double time)
    Primitive prim(GetRef());
 
    // store the transform
-   SaveXformSample(GetRef(1),mXformSchema,mXformSample,time);
+   SaveXformSample(GetRef(1),mXformSchema,mXformSample,time,false,false);
 
    // set the visibility
    Property visProp;
@@ -70,14 +70,8 @@ XSI::CStatus AlembicCamera::Save(double time)
    // store the metadata
    SaveMetaData(prim.GetParent3DObject().GetRef(),this);
 
-   // check if the camera is animated
-   if(mCameraSchema.getNumSamples() > 0)
-   {
-      if(!isRefAnimated(GetRef()))
-         return CStatus::OK;
-   }
-
    // store the camera data
+   mCameraSample.setFocusDistance(prim.GetParameterValue(L"interestdist",time));
    mCameraSample.setLensSqueezeRatio(prim.GetParameterValue(L"aspect",time));
    mCameraSample.setFocalLength(prim.GetParameterValue(L"projplanedist",time));
    mCameraSample.setVerticalAperture(float(prim.GetParameterValue(L"projplaneheight",time)) * 2.54f);
@@ -87,6 +81,7 @@ XSI::CStatus AlembicCamera::Save(double time)
 
    // save the samples
    mCameraSchema.set(mCameraSample);
+   mNumSamples++;
 
    return CStatus::OK;
 }
@@ -132,6 +127,7 @@ ESS_CALLBACK_START( alembic_camera_Update, CRef& )
    double yaperture = sample.getVerticalAperture() / 2.54f;
    double nearClipping = sample.getNearClippingPlane();
    double farClipping = sample.getFarClippingPlane();
+   double interestDist = sample.getFocusDistance();
 
    // blend
    if(sampleInfo.alpha != 0.0)
@@ -143,6 +139,7 @@ ESS_CALLBACK_START( alembic_camera_Update, CRef& )
       yaperture = (1.0 - sampleInfo.alpha) * yaperture + sampleInfo.alpha * sample.getVerticalAperture() / 2.54f;
       nearClipping = (1.0 - sampleInfo.alpha) * nearClipping + sampleInfo.alpha * sample.getNearClippingPlane();
       farClipping = (1.0 - sampleInfo.alpha) * farClipping + sampleInfo.alpha * sample.getFarClippingPlane();
+      interestDist = (1.0 - sampleInfo.alpha) * interestDist + sampleInfo.alpha * sample.getFocusDistance();
    }
 
    // output
@@ -157,6 +154,7 @@ ESS_CALLBACK_START( alembic_camera_Update, CRef& )
    prim.PutParameterValue(L"projplaneheight",yaperture);
    prim.PutParameterValue(L"near",nearClipping);
    prim.PutParameterValue(L"far",farClipping);
+   prim.PutParameterValue(L"interestdist",interestDist);
 
    return CStatus::OK;
 ESS_CALLBACK_END
