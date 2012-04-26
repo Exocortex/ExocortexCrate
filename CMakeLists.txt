@@ -1,5 +1,9 @@
 cmake_minimum_required(VERSION 2.6)
 
+IF (UNIX AND NOT APPLE )
+	ADD_DEFINITIONS(-DLINUX)
+ENDIF()
+
 set( Exocortex_INSTALL_BASE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/install" )
 
 if( HDF5_ENABLE_THREADSAFE )
