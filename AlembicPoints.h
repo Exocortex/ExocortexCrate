@@ -59,8 +59,14 @@ private:
    MString mIdentifier;
    Alembic::AbcGeom::IPointsSchema mSchema;
 
+   typedef std::map<unsigned int, unsigned int> lookupMap;
+   typedef lookupMap::iterator lookupIt;
+   typedef std::pair<unsigned int, unsigned int> lookupPair;
+
    // members
    SampleInfo mLastSampleInfo;
+   lookupMap mLookup;
+   unsigned int mMaxId;
 };
 
 #endif

@@ -223,6 +223,9 @@ MStatus AlembicPointsNode::initialize()
 
 MStatus AlembicPointsNode::compute(const MPlug & plug, MDataBlock & dataBlock)
 {
+   if ( !( plug == mOutput ) )
+      return ( MS::kUnknownParameter );
+
    MStatus status;
 
    // from the maya api examples (ownerEmitter.cpp)
@@ -232,6 +235,16 @@ MStatus AlembicPointsNode::compute(const MPlug & plug, MDataBlock & dataBlock)
 	MDataHandle hOut = bOutArray.addElement(multiIndex, &status);
 	MFnArrayAttrsData fnOutput;
 	MObject dOutput = fnOutput.create ( &status );
+
+   MPlugArray  connectionArray;
+   plug.connectedTo(connectionArray, false, true, &status);
+   if(connectionArray.length() == 0)
+      return status;
+
+   MPlug particleShapeOutPlug = connectionArray[0];
+   MObject particleShapeNode = particleShapeOutPlug.node(&status);
+   MFnParticleSystem part(particleShapeNode, &status);
+   part.setCount(0);
 
    // update the frame number to be imported
    double inputTime = dataBlock.inputValue(mTimeAttr).asTime().as(MTime::kSeconds);
@@ -282,9 +295,89 @@ MStatus AlembicPointsNode::compute(const MPlug & plug, MDataBlock & dataBlock)
 
    mLastSampleInfo = sampleInfo;
 
-   // access the camera values
+   // access the points values
    Alembic::AbcGeom::IPointsSchema::Sample sample;
    mSchema.get(sample,sampleInfo.floorIndex);
+
+   // if we are in the first sample, remove all known particles
+   if(sampleInfo.floorIndex == 0)
+   {
+      mLookup.clear();
+      mMaxId = UINT_MAX;
+   }
+
+   // first time around we figure out which particles are known
+   Alembic::Abc::UInt64ArraySamplePtr sampleIds = sample.getIds();
+   std::vector<unsigned int> idToRemove, idToUpdate, idToEmit;
+   idToRemove.reserve(sampleIds->size());
+   idToUpdate.reserve(sampleIds->size());
+   idToEmit.reserve(sampleIds->size());
+   unsigned int newMaxId = UINT_MAX;
+   unsigned int lastId = UINT_MAX;
+   lookupIt it;
+
+   // check if we need to remove all particles
+   if(sampleIds->size() == 0)
+   {
+      idToRemove.reserve(mLookup.size());
+      for(it = mLookup.begin(); it != mLookup.end(); it++)
+         idToRemove.push_back(it->second);
+   }
+   else
+   {
+      for(unsigned int i=0;i<sampleIds->size();i++)
+      {
+         unsigned int id = (unsigned int)sampleIds->get()[i];
+         if(id > newMaxId || newMaxId == UINT_MAX)
+            newMaxId = id;
+
+         // if this is a higher id than what we have in the map
+         if(id > mMaxId || mMaxId == UINT_MAX)
+         {
+            mLookup.insert(lookupPair(id,(unsigned int)mLookup.size()));
+            idToEmit.push_back(id);
+            continue;
+         }
+
+         // check if we skipped some ids, which means we need to remove them
+         if(lastId != UINT_MAX && lastId != id - 1)
+         {
+            for(unsigned int j=lastId+1; j<id; j++)
+            {
+               it = mLookup.find(j);
+               if(it != mLookup.end())
+               {
+                  idToRemove.push_back(it->second);
+                  mLookup.erase(it);
+               }
+            }
+         }
+
+         // now check if we have this id, if not, insert it
+         it = mLookup.find(id);
+         if(it != mLookup.end())
+         {
+            idToUpdate.push_back(it->second);
+         }
+         else
+         {
+            mLookup.insert(lookupPair(id,(unsigned int)mLookup.size()));
+            idToEmit.push_back(id);
+         }
+
+         lastId = id;
+      }
+   }
+
+   // update the lookup with continuous indices
+   if(mLookup.size() > 0)
+   {
+      unsigned int lookupIndex = 0;
+      for(it = mLookup.begin(); it != mLookup.end(); it++, lookupIndex++)
+         it->second = lookupIndex;
+   }
+
+   mMaxId = newMaxId;
 
    Alembic::Abc::P3fArraySamplePtr samplePos = sample.getPositions();
    unsigned int particleCount = 0;
@@ -296,14 +389,25 @@ MStatus AlembicPointsNode::compute(const MPlug & plug, MDataBlock & dataBlock)
    if(particleCount > 0)
    {
       // positions
-   	MVectorArray outPos = fnOutput.vectorArray("position", &status);
+   	MPointArray outPos;// = fnOutput.vectorArray("position", &status);
+   	MDoubleArray outLifeSpan;// = fnOutput.doubleArray("lifespanPP", &status);
+      //outIds.setLength(particleCount);
       outPos.setLength(particleCount);
+      outLifeSpan.setLength(particleCount);
       for(unsigned int i=0;i<particleCount;i++)
       {
+         //outIds[i] = (int)sampleIds->get()[i];
          outPos[i].x = samplePos->get()[i].x;
          outPos[i].y = samplePos->get()[i].y;
          outPos[i].z = samplePos->get()[i].z;
+         outLifeSpan[i] = 0.0;
       }
+      
+      part.emit(outPos);
+
+      //part.setPerParticleAttribute("particleId",outIds);
+      //part.setPerParticleAttribute("position",outPos);
+      part.setPerParticleAttribute("lifespanPP",outLifeSpan);
 
       // velocities
       Alembic::Abc::V3fArraySamplePtr sampleVel = sample.getVelocities();
@@ -311,7 +415,7 @@ MStatus AlembicPointsNode::compute(const MPlug & plug, MDataBlock & dataBlock)
       {
          if(sampleVel->size() == particleCount)
          {
-         	MVectorArray outVel = fnOutput.vectorArray("velocity", &status);
+         	MVectorArray outVel;// = fnOutput.vectorArray("velocity", &status);
             outVel.setLength(particleCount);
             for(unsigned int i=0;i<particleCount;i++)
             {
@@ -319,6 +423,7 @@ MStatus AlembicPointsNode::compute(const MPlug & plug, MDataBlock & dataBlock)
                outVel[i].y = sampleVel->get()[i].y;
                outVel[i].z = sampleVel->get()[i].z;
             }
+            //part.setPerParticleAttribute("velocity",outVel);
          }
       }
    }

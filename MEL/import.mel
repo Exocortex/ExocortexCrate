@@ -285,6 +285,7 @@ global proc exocortexAlembicImport(string $filename,string $dialog)
       if($reader == "")
         $reader = exocortexCreateOrReuseNode("ExocortexAlembicPoints","ExocortexAlembicPoints",$importAttach,0,0);
       exocortexConnectIfUnconnected(($reader+".output[0]"), ($shape+".newParticles[0]"));
+      exocortexConnectIfUnconnected(($timeControl+".outTime"), ($shape+".currentTime"));
     }
     else if($types[$i] == "Camera")
     {
