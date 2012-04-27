@@ -5,7 +5,7 @@
 #include "AlembicSplineUtilities.h"
 #include "AlembicXformUtilities.h"
 #include "AlembicXformController.h"
-#include "AlembicCameraBaseModifier.h"
+#include "AlembicCameraUtilities.h"
 #include "AlembicSimpleParticle.h"
 #include "SceneEnumProc.h"
 #include "AlembicDefinitions.h"

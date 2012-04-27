@@ -5,12 +5,6 @@
 
 #define EXOCORTEX_ALEMBIC_CATEGORY _T("Alembic")
 
-#define ALEMBIC_CAMERA_BASE_MODIFIER_CLASSID		Class_ID(0x115150b9, 0x5b6d187a)
-#define ALEMBIC_CAMERA_MODIFIER_CLASSID				Class_ID(0x20730624, 0x3d650bdb)
-
-#define ALEMBIC_XFORM_BASE_MODIFIER_CLASSID		    Class_ID(0x45365062, 0x69989267)
-#define ALEMBIC_TRANSFORM_MODIFIER_CLASSID			Class_ID(0x20730666, 0x5d650666)
-
 #define EMPTY_SPLINE_OBJECT_CLASSID					Class_ID(0x4eb65d6, 0x7c454597)
 #define EMPTY_POLYLINE_OBJECT_CLASSID				Class_ID(0x2cac433a, 0x424c0456)
 #define ALEMBIC_EXPORTER_CLASSID					Class_ID(0x79d613a4, 0x4f21c3ad)
@@ -47,17 +41,17 @@
 #define ALEMBIC_SIMPLE_PARTICLE_NAME			    "Alembic Particles"
 #define ALEMBIC_SIMPLE_PARTICLE_SCRIPTNAME		    "AlembicParticles"
 
-#define ALEMBIC_SPLINE_GEOM_MODIFIER_CLASSID				Class_ID(0x28233914, 0x18260c30)
+#define ALEMBIC_SPLINE_GEOM_MODIFIER_CLASSID			Class_ID(0x28233914, 0x18260c30)
 #define ALEMBIC_SPLINE_GEOM_MODIFIER_NAME			    "Alembic Spline Geometry"
 #define ALEMBIC_SPLINE_GEOM_MODIFIER_SCRIPTNAME		    "AlembicSplineGeometry"
 
-#define ALEMBIC_SPLINE_TOPO_MODIFIER_CLASSID				Class_ID(0x4f5637f1, 0x3ffd61f3)
+#define ALEMBIC_SPLINE_TOPO_MODIFIER_CLASSID			Class_ID(0x4f5637f1, 0x3ffd61f3)
 #define ALEMBIC_SPLINE_TOPO_MODIFIER_NAME			    "Alembic Spline Topology"
 #define ALEMBIC_SPLINE_TOPO_MODIFIER_SCRIPTNAME		    "AlembicSplineTopology"
 
-#define ALEMBIC_FLOAT_CONTROLLER_CLASSID		Class_ID(0x5fd044f3, 0xe030797)
-#define ALEMBIC_FLOAT_CONTROLLER_NAME			"Alembic Float"
-#define ALEMBIC_FLOAT_CONTROLLER_SCRIPTNAME		"AlembicFloat"
+#define ALEMBIC_FLOAT_CONTROLLER_CLASSID				Class_ID(0x5fd044f3, 0xe030797)
+#define ALEMBIC_FLOAT_CONTROLLER_NAME					"Alembic Float"
+#define ALEMBIC_FLOAT_CONTROLLER_SCRIPTNAME				"AlembicFloat"
 
 #define ALEMBIC_UNUSED_11_CLASSID					Class_ID(0x3a5b6550, 0x5e14408f)
 #define ALEMBIC_UNUSED_12_CLASSID					Class_ID(0x59980cef, 0x6e0077ff)
@@ -80,8 +74,6 @@
 ClassDesc2* GetAlembicXformControllerClassDesc();
 ClassDesc2* GetAlembicVisibilityControllerClassDesc();
 
-ClassDesc2* GetAlembicCameraBaseModifierClassDesc();
-
 ClassDesc2* GetAlembicSimpleParticleClassDesc();
 
 ClassDesc2* GetAlembicMeshTopoModifierClassDesc();
@@ -94,7 +86,6 @@ ClassDesc2 *GetEmptyPolyLineObjectClassDesc();
 
 ClassDesc2 *GetAlembicSplineGeomModifierClassDesc();
 ClassDesc2 *GetAlembicSplineTopoModifierClassDesc();
-
 
 ClassDesc2* GetAlembicFloatControllerClassDesc();
 
