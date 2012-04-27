@@ -1,8 +1,8 @@
-#cmake_minimum_required (VERSION 2.6) 
+
 
 project ( Maya${Maya_VERSION}ExocortexAlembic${alembic_VERSION} ) 
 
-INCLUDE(../../ExocortexAlembicShared/ExocortexCMakeShared.txt)
+INCLUDE(../../ExocortexAlembicShared/ExocortexCMakeShared.txt)		#????
 
 if( Exocortex_SERVICES OR Exocortex_RLM_ONLY )
 	include_directories( ${Rlm_INCLUDE_DIR} )
@@ -27,15 +27,18 @@ SOURCE_GROUP("Source Files" FILES ${Sources})
 SOURCE_GROUP("Header Files" FILES ${Includes})
 
 IF( WIN32 )
+
 	IF( ${ALEMBIC64} )
 		SET( Maya_DIR_LIBRARY ${Maya_DIR_ROOT}/lib/nt-x86-64 )
 	ELSE()
 		SET( Maya_DIR_LIBRARY ${Maya_DIR_ROOT}/lib/nt-x86 )
 	ENDIF()	
-ELSEIF( UNIX )
-	SET( Maya_DIR_LIBRARY ${Maya_DIR_ROOT}/lib/linux-x86-64 )
 
+ELSEIF( UNIX )
+
+	SET( Maya_DIR_LIBRARY ${Maya_DIR_ROOT}/lib/linux-x86-64 )
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wl,--version-script=${CMAKE_CURRENT_SOURCE_DIR}/MayaAlembic.versionScript")
+
 ENDIF()
 
 SET( Maya_LIBRARIES Foundation OpenMaya OpenMayaAnim OpenMayaFX OpenMayaRender OpenMayaUI )		
@@ -55,20 +58,25 @@ if( Exocortex_SERVICES OR Exocortex_RLM_ONLY )
 	link_directories( ${Rlm_LIBRARYDIR} )
 endif()
 
-set( MAYA_EXTENSION ".mll" )
-set( MAYA_COMPILE_FLAGS "/D \"NT_PLUGIN\" /D \"REQUIRE_IOSTREAM\" /D \"_BOOL\"" )
-set( MAYA_LINK_FLAGS " /export:initializePlugin /export:uninitializePlugin " )
 
 add_library( ${PROJECT_NAME} SHARED ${Sources} ${Includes} ${LOCAL_CMAKE_FILE_NAME} )
 
-SET_TARGET_PROPERTIES( ${PROJECT_NAME}
-  PROPERTIES
-  COMPILE_FLAGS ${MAYA_COMPILE_FLAGS}
-  LINK_FLAGS ${MAYA_LINK_FLAGS}
-  PREFIX ""
-  SUFFIX ${MAYA_EXTENSION} )
+if (WIN32)
+	add_definitions( -DNT_PLUGIN )
+	add_definitions( -DREQUIRE_IOSTREAM )
+	add_definitions( -D_BOOL )
 
-TARGET_LINK_LIBRARIES( ${PROJECT_NAME} ${ALEMBIC_ILMBASE_LIBS} ${ALEMBIC_ZLIB_LIBS} ${ALEMBIC_HDF5_LIBS} ${ALEMBIC_CORE_LIBS} ${BOOST_LIBS} ${Maya_LIBRARIES} ${Rlm_LIBRARIES} )
+	set( MAYA_EXTENSION ".mll" )
+	SET_TARGET_PROPERTIES( ${PROJECT_NAME}
+		PROPERTIES #
+	  		PREFIX ""  # There is no prefix even on UNIXes
+			SUFFIX ${MAYA_EXTENSION} )
+#	set( MAYA_LINK_FLAGS " /export:initializePlugin /export:uninitializePlugin " )
+elseif ( UNIX )
+	set( MAYA_EXTENSION ".so" )
+endif()
+
+TARGET_LINK_LIBRARIES( ${PROJECT_NAME} ${ALEMBIC_CORE_LIBS} ${BOOST_LIBS} ${ALEMBIC_ILMBASE_LIBS} ${ALEMBIC_ZLIB_LIBS} ${ALEMBIC_HDF5_LIBS} ${Maya_LIBRARIES} ${Rlm_LIBRARIES} )
 ADD_DEPENDENCIES(${PROJECT_NAME} AlembicAbcGeom)
 
 SET( Install_DIR ${Exocortex_INSTALL_BASE_DIR}/Maya${Maya_VERSION}/ )

@@ -15,6 +15,8 @@
 
 #include <maya/MFnPlugin.h>
 #include <maya/MSceneMessage.h>
+
+#include <sstream>
  
 // IDs issues for this plugin are: 
 // 0x0011A100 - 0x0011A1FF
@@ -39,7 +41,13 @@ static void deleteAllArchivesCallback( void* clientData )
    deleteAllArchives();
 }
 
-MStatus initializePlugin(MObject obj)
+//#ifdef __UNIX__
+  #define EC_EXPORT extern "C"
+//#else
+  //#define EC_EXPORT
+//#endif
+
+EC_EXPORT MStatus initializePlugin(MObject obj)
 {
    const char * pluginVersion = "1.0";
    MFnPlugin plugin(obj, "ExocortexAlembicMaya", pluginVersion, "Any");
@@ -123,12 +131,28 @@ MStatus initializePlugin(MObject obj)
       &AlembicCurvesDeformNode::creator,
       &AlembicCurvesDeformNode::initialize,
       MPxNode::kDeformerNode);
+
+   // Load the menu!
+   std::stringstream load_command;
+   load_command << "source \"menu.mel\"; exocortexAlembicLoadMenu(\"" << plugin.name() << "\");";
+   MStatus commandStatus = MGlobal::executeCommand(load_command.str().c_str(), true, false);
+   if (commandStatus != MStatus::kSuccess)
+   {
+	  //EC_LOG_ERROR("FAILED TO SOURCE ../scripts/menu.mel: " << commandStatus.errorString());
+   }
    return status;
 }
 
-MStatus uninitializePlugin(MObject obj)
+EC_EXPORT MStatus uninitializePlugin(MObject obj)
 {
    MFnPlugin plugin(obj);
+
+   // Unload the menu!
+   MStatus commandStatus = MGlobal::executeCommand("source \"menu.mel\"; exocortexAlembicUnloadMenu;", true, false);
+   if (commandStatus != MStatus::kSuccess)
+   {
+	  //EC_LOG_ERROR("FAILED TO SOURCE ../scripts/menu.mel: " << commandStatus.errorString());
+   }
 
    MStatus status;
 
