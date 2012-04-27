@@ -67,14 +67,16 @@ if (WIN32)
 	add_definitions( -D_BOOL )
 
 	set( MAYA_EXTENSION ".mll" )
+	set( MAYA_LINK_FLAGS " /export:initializePlugin /export:uninitializePlugin " )
 	SET_TARGET_PROPERTIES( ${PROJECT_NAME}
 		PROPERTIES #
 	  		PREFIX ""  # There is no prefix even on UNIXes
+	  		LINK_FLAGS ${MAYA_LINK_FLAGS}
 			SUFFIX ${MAYA_EXTENSION} )
-#	set( MAYA_LINK_FLAGS " /export:initializePlugin /export:uninitializePlugin " )
 elseif ( UNIX )
 	set( MAYA_EXTENSION ".so" )
 endif()
+
 
 TARGET_LINK_LIBRARIES( ${PROJECT_NAME} ${ALEMBIC_CORE_LIBS} ${BOOST_LIBS} ${ALEMBIC_ILMBASE_LIBS} ${ALEMBIC_ZLIB_LIBS} ${ALEMBIC_HDF5_LIBS} ${Maya_LIBRARIES} ${Rlm_LIBRARIES} )
 ADD_DEPENDENCIES(${PROJECT_NAME} AlembicAbcGeom)
