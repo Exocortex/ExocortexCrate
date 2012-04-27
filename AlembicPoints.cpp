@@ -258,7 +258,7 @@ MStatus AlembicPointsNode::compute(const MPlug & plug, MDataBlock & dataBlock)
       if(fileName != mFileName)
       {
          delRefArchive(mFileName);
-         mFileName = fileName;
+         mFileName = fileName;;
          addRefArchive(mFileName);
       }
       mIdentifier = identifier;
@@ -308,9 +308,11 @@ MStatus AlembicPointsNode::compute(const MPlug & plug, MDataBlock & dataBlock)
 
    // first time around we figure out which particles are known
    Alembic::Abc::UInt64ArraySamplePtr sampleIds = sample.getIds();
-   std::vector<unsigned int> idToRemove, idToUpdate, idToEmit;
+   bool performIdCheck = true;
+   std::vector<unsigned int> idToRemove, idToUpdate, idToUpdateTo, idToEmit;
    idToRemove.reserve(sampleIds->size());
    idToUpdate.reserve(sampleIds->size());
+   idToUpdateTo.reserve(sampleIds->size());
    idToEmit.reserve(sampleIds->size());
    unsigned int newMaxId = UINT_MAX;
    unsigned int lastId = UINT_MAX;
@@ -322,9 +324,23 @@ MStatus AlembicPointsNode::compute(const MPlug & plug, MDataBlock & dataBlock)
       idToRemove.reserve(mLookup.size());
       for(it = mLookup.begin(); it != mLookup.end(); it++)
          idToRemove.push_back(it->second);
+      performIdCheck = false;
    }
-   else
+   else if(sampleIds->size() == 1)
    {
+      // check if this is purely an empty cloud
+      if(sampleIds->get()[0] == (uint64_t)-1)
+      {
+         idToRemove.reserve(mLookup.size());
+         for(it = mLookup.begin(); it != mLookup.end(); it++)
+            idToRemove.push_back(it->second);
+         performIdCheck = false;
+      }
+   }
+   
+   if(performIdCheck)
+   {
+      it = mLookup.begin();
       for(unsigned int i=0;i<sampleIds->size();i++)
       {
          unsigned int id = (unsigned int)sampleIds->get()[i];
@@ -335,17 +351,25 @@ MStatus AlembicPointsNode::compute(const MPlug & plug, MDataBlock & dataBlock)
          if(id > mMaxId || mMaxId == UINT_MAX)
          {
             mLookup.insert(lookupPair(id,(unsigned int)mLookup.size()));
-            idToEmit.push_back(id);
+            idToEmit.push_back(i);
             continue;
          }
 
          // check if we skipped some ids, which means we need to remove them
-         if(lastId != UINT_MAX && lastId != id - 1)
+         if(lastId != id - 1 && mLookup.size() > 0)
          {
-            for(unsigned int j=lastId+1; j<id; j++)
+            unsigned int j = lastId;
+            if(j == UINT_MAX)
+               j = 0;
+            for(; j<id; j++)
             {
-               it = mLookup.find(j);
-               if(it != mLookup.end())
+               while(it->second < j)
+               {
+                  it++;
+                  if(it == mLookup.end())
+                     break;
+               }
+               if(it->second == j && it != mLookup.end())
                {
                   idToRemove.push_back(it->second);
                   mLookup.erase(it);
@@ -354,15 +378,21 @@ MStatus AlembicPointsNode::compute(const MPlug & plug, MDataBlock & dataBlock)
          }
 
          // now check if we have this id, if not, insert it
-         it = mLookup.find(id);
-         if(it != mLookup.end())
+         while(it->second < id)
+         {
+            it++;
+            if(it == mLookup.end())
+               break;
+         }
+         if(it->second == id && it != mLookup.end())
          {
             idToUpdate.push_back(it->second);
+            idToUpdateTo.push_back(i);
          }
          else
          {
             mLookup.insert(lookupPair(id,(unsigned int)mLookup.size()));
-            idToEmit.push_back(id);
+            idToEmit.push_back(i);
          }
 
          lastId = id;
@@ -370,62 +400,215 @@ MStatus AlembicPointsNode::compute(const MPlug & plug, MDataBlock & dataBlock)
    }
 
    // update the lookup with continuous indices
-   if(mLookup.size() > 0)
+   if(mLookup.size() > 0 && idToRemove.size() > 0)
    {
       unsigned int lookupIndex = 0;
       for(it = mLookup.begin(); it != mLookup.end(); it++, lookupIndex++)
          it->second = lookupIndex;
    }
-
    mMaxId = newMaxId;
 
+   // get all of the data from alembic
    Alembic::Abc::P3fArraySamplePtr samplePos = sample.getPositions();
-   unsigned int particleCount = 0;
-   if(samplePos)
-      if(samplePos->size() > 0)
-         if(samplePos->get()[0].x != FLT_MAX)
-            particleCount = (unsigned int)samplePos->size();
-
-   if(particleCount > 0)
+   Alembic::Abc::V3fArraySamplePtr sampleVel = sample.getVelocities();
+   Alembic::Abc::C4fArraySamplePtr sampleColor;
+   if ( mSchema.getPropertyHeader( ".color" ) != NULL )
    {
-      // positions
-   	MPointArray outPos;// = fnOutput.vectorArray("position", &status);
-   	MDoubleArray outLifeSpan;// = fnOutput.doubleArray("lifespanPP", &status);
-      //outIds.setLength(particleCount);
-      outPos.setLength(particleCount);
-      outLifeSpan.setLength(particleCount);
-      for(unsigned int i=0;i<particleCount;i++)
+      Alembic::Abc::IC4fArrayProperty prop = Alembic::Abc::IC4fArrayProperty( mSchema, ".color" );
+      if(prop.valid())
       {
-         //outIds[i] = (int)sampleIds->get()[i];
-         outPos[i].x = samplePos->get()[i].x;
-         outPos[i].y = samplePos->get()[i].y;
-         outPos[i].z = samplePos->get()[i].z;
-         outLifeSpan[i] = 0.0;
-      }
-      
-      part.emit(outPos);
-
-      //part.setPerParticleAttribute("particleId",outIds);
-      //part.setPerParticleAttribute("position",outPos);
-      part.setPerParticleAttribute("lifespanPP",outLifeSpan);
-
-      // velocities
-      Alembic::Abc::V3fArraySamplePtr sampleVel = sample.getVelocities();
-      if(sampleVel)
-      {
-         if(sampleVel->size() == particleCount)
+         if(prop.getNumSamples() > 0)
          {
-         	MVectorArray outVel;// = fnOutput.vectorArray("velocity", &status);
-            outVel.setLength(particleCount);
-            for(unsigned int i=0;i<particleCount;i++)
-            {
-               outVel[i].x = sampleVel->get()[i].x;
-               outVel[i].y = sampleVel->get()[i].y;
-               outVel[i].z = sampleVel->get()[i].z;
-            }
-            //part.setPerParticleAttribute("velocity",outVel);
+            sampleColor = prop.getValue(sampleInfo.floorIndex);
          }
       }
+   }
+   Alembic::Abc::FloatArraySamplePtr sampleAge;
+   if ( mSchema.getPropertyHeader( ".age" ) != NULL )
+   {
+      Alembic::Abc::IFloatArrayProperty prop = Alembic::Abc::IFloatArrayProperty( mSchema, ".age" );
+      if(prop.valid())
+      {
+         if(prop.getNumSamples() > 0)
+         {
+            sampleAge = prop.getValue(sampleInfo.floorIndex);
+         }
+      }
+   }
+   Alembic::Abc::FloatArraySamplePtr sampleMass;
+   if ( mSchema.getPropertyHeader( ".mass" ) != NULL )
+   {
+      Alembic::Abc::IFloatArrayProperty prop = Alembic::Abc::IFloatArrayProperty( mSchema, ".mass" );
+      if(prop.valid())
+      {
+         if(prop.getNumSamples() > 0)
+         {
+            sampleMass = prop.getValue(sampleInfo.floorIndex);
+         }
+      }
+   }
+
+   // get the current values from the particle cloud
+   MIntArray ids;
+   part.particleIds(ids);
+   MVectorArray positions;
+   part.position(positions);
+   MVectorArray velocities;
+   part.velocity(velocities);
+   MVectorArray rgbs;
+   part.rgb(rgbs);
+   MDoubleArray opacities;
+   part.opacity(opacities);
+   MDoubleArray ages;
+   part.age(ages);
+   MDoubleArray masses;
+   part.mass(masses);
+
+   // if we need to remove any particles, do that now
+   if(idToRemove.size() > 0)
+   {
+      for(size_t i=0;i<idToRemove.size();i++)
+      {
+         ids.remove(idToRemove[i]);
+         positions.remove(idToRemove[i]);
+         velocities.remove(idToRemove[i]);
+         rgbs.remove(idToRemove[i]);
+         opacities.remove(idToRemove[i]);
+         ages.remove(idToRemove[i]);
+         masses.remove(idToRemove[i]);
+      }
+   }
+
+   // if we need to update existing particles, do that now
+   if(idToUpdate.size() > 0)
+   {
+      for(size_t i=0;i<idToUpdate.size();i++)
+      {
+         positions[idToUpdate[i]].x = samplePos->get()[idToUpdateTo[i]].x;
+         positions[idToUpdate[i]].y = samplePos->get()[idToUpdateTo[i]].y;
+         positions[idToUpdate[i]].z = samplePos->get()[idToUpdateTo[i]].z;
+
+         if(sampleVel)
+         {
+            velocities[idToUpdate[i]].x = sampleVel->get()[idToUpdateTo[i]].x;
+            velocities[idToUpdate[i]].y = sampleVel->get()[idToUpdateTo[i]].y;
+            velocities[idToUpdate[i]].z = sampleVel->get()[idToUpdateTo[i]].z;
+         }
+         else
+         {
+            velocities[idToUpdate[i]] = MVector(0.0,0.0,0.0);
+         }
+
+         if(sampleInfo.alpha != 0.0)
+         {
+            positions[idToUpdate[i]] += velocities[idToUpdate[i]] * sampleInfo.alpha;
+         }
+
+         if(sampleColor)
+         {
+            rgbs[idToUpdate[i]].x = sampleColor->get()[idToUpdateTo[i]].r;
+            rgbs[idToUpdate[i]].y = sampleColor->get()[idToUpdateTo[i]].g;
+            rgbs[idToUpdate[i]].z = sampleColor->get()[idToUpdateTo[i]].b;
+            opacities[idToUpdate[i]] = sampleColor->get()[idToUpdateTo[i]].a;
+         }
+         
+         if(sampleAge)
+         {
+            ages[idToUpdate[i]] = sampleAge->get()[idToUpdateTo[i]];
+         }
+
+         if(sampleMass)
+         {
+            masses[idToUpdate[i]] = sampleMass->get()[idToUpdateTo[i]];
+            if(masses[idToUpdate[i]] == 0.0)
+               masses[idToUpdate[i]] = 0.001;
+         }
+      }
+   }
+
+   // force an update of the values
+   if(idToUpdate.size() > 0 || idToRemove.size() > 0)
+   {
+      part.setPerParticleAttribute("position", positions);
+	   part.setPerParticleAttribute("velocity", velocities);
+   }
+
+   // if we need to emit new particles, do that now
+   if(idToEmit.size() > 0)
+   {
+   	MPointArray outPos;
+      outPos.setLength((unsigned int)idToEmit.size());
+   	MVectorArray outVel;
+      outVel.setLength((unsigned int)idToEmit.size());
+
+      unsigned int offset = positions.length();
+      rgbs.setLength(offset + (unsigned int)idToEmit.size());
+      opacities.setLength(offset + (unsigned int)idToEmit.size());
+      ages.setLength(offset + (unsigned int)idToEmit.size());
+      masses.setLength(offset + (unsigned int)idToEmit.size());
+
+      for(unsigned int i=0;i<(unsigned int)idToEmit.size();i++,offset++)
+      {
+         outPos[i].x = samplePos->get()[idToEmit[i]].x;
+         outPos[i].y = samplePos->get()[idToEmit[i]].y;
+         outPos[i].z = samplePos->get()[idToEmit[i]].z;
+
+         if(sampleVel)
+         {
+            outVel[i].x = sampleVel->get()[idToEmit[i]].x;
+            outVel[i].y = sampleVel->get()[idToEmit[i]].y;
+            outVel[i].z = sampleVel->get()[idToEmit[i]].z;
+         }
+
+         if(sampleInfo.alpha != 0.0)
+         {
+            outPos[i] += outVel[i] * sampleInfo.alpha;
+         }
+
+         if(sampleColor)
+         {
+            rgbs[offset].x = sampleColor->get()[idToEmit[i]].r;
+            rgbs[offset].y = sampleColor->get()[idToEmit[i]].g;
+            rgbs[offset].z = sampleColor->get()[idToEmit[i]].b;
+            opacities[offset] = sampleColor->get()[idToEmit[i]].a;
+         }
+         else
+         {
+            rgbs[offset] = MVector(0.0,0.0,0.0);
+            opacities[offset] = 1.0;
+         }
+         
+         if(sampleAge)
+         {
+            ages[offset] = sampleAge->get()[idToEmit[i]];
+         }
+         else
+         {
+            ages[offset] = 0.0;
+         }
+
+         if(sampleMass)
+         {
+            masses[offset] = sampleMass->get()[idToEmit[i]];
+            if(masses[offset] == 0.0)
+               masses[offset] = 0.001;
+         }
+         else
+         {
+            masses[offset] = 1.0;
+         }
+      }
+      
+      part.emit(outPos,outVel);
+   }
+
+   // take care of the remaining attributes
+   if(idToUpdate.size() > 0 || idToRemove.size() > 0 || idToEmit.size() > 0)
+   {
+      part.setPerParticleAttribute("rgbPP", rgbs);
+      part.setPerParticleAttribute("opacityPP", opacities);
+      part.setPerParticleAttribute("agePP", ages);
+      part.setPerParticleAttribute("massPP", masses);
    }
 
    hOut.set( dOutput );
