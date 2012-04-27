@@ -1,0 +1,11 @@
+ExocortexAlembicMaya.so
+{
+    global:
+        extern "C" {
+			uninitializePlugin;
+			initializePlugin;
+			alembic_*;
+        };
+    local:
+	*;
+};
