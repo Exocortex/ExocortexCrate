@@ -37,9 +37,14 @@ set( AlembicFolder "Externals" )
 SET(DIR_SOFTIMAGEALEBMIC ${CMAKE_CURRENT_SOURCE_DIR})
 
 get_filename_component( LIBRARY_ROOT "${CMAKE_CURRENT_SOURCE_DIR}" PATH )
-set( LIBRARY_ROOT "${LIBRARY_ROOT}/Libraries.20120426.01" )
+set( LIBRARY_VERSION "20120426.01" )
+set( LIBRARY_ROOT "${LIBRARY_ROOT}/Libraries.${LIBRARY_VERSION}" )
 if( NOT EXISTS ${LIBRARY_ROOT} )
-	message(FATAL_ERROR "Can't find LIBRARY_ROOT: ${LIBRARY_ROOT}" )
+	message( "!!!" )
+	message( "!!! Download the latest library from here: " )
+	message( "!!! http://exocortex.com/files/Libraries.${LIBRARY_VERSION}.7z")
+	message( "!!!" )
+	message( FATAL_ERROR "Can't find LIBRARY_ROOT: ${LIBRARY_ROOT}" )
 endif()
  
 # Configuration
