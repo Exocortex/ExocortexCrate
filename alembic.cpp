@@ -41,11 +41,11 @@ static void deleteAllArchivesCallback( void* clientData )
    deleteAllArchives();
 }
 
-//#ifdef __UNIX__
-  #define EC_EXPORT extern "C"
-//#else
-  //#define EC_EXPORT
-//#endif
+#ifdef __UNIX__
+   #define EC_EXPORT extern "C"
+#else
+   #define EC_EXPORT
+#endif
 
 EC_EXPORT MStatus initializePlugin(MObject obj)
 {

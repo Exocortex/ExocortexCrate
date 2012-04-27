@@ -67,11 +67,15 @@ if (WIN32)
 	add_definitions( -D_BOOL )
 
 	set( MAYA_EXTENSION ".mll" )
+        set( MAYA_COMPILE_FLAGS "/D \"NT_PLUGIN\" /D \"REQUIRE_IOSTREAM\" /D \"_BOOL\"" )
+        set( MAYA_LINK_FLAGS " /export:initializePlugin /export:uninitializePlugin " )
+        
 	SET_TARGET_PROPERTIES( ${PROJECT_NAME}
 		PROPERTIES #
 	  		PREFIX ""  # There is no prefix even on UNIXes
-			SUFFIX ${MAYA_EXTENSION} )
-#	set( MAYA_LINK_FLAGS " /export:initializePlugin /export:uninitializePlugin " )
+			SUFFIX ${MAYA_EXTENSION}
+                        COMPILE_FLAGS ${MAYA_COMPILE_FLAGS}
+                        LINK_FLAGS ${MAYA_LINK_FLAGS} )
 elseif ( UNIX )
 	set( MAYA_EXTENSION ".so" )
 endif()
