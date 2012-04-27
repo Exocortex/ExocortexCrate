@@ -244,7 +244,6 @@ MStatus AlembicPointsNode::compute(const MPlug & plug, MDataBlock & dataBlock)
    MPlug particleShapeOutPlug = connectionArray[0];
    MObject particleShapeNode = particleShapeOutPlug.node(&status);
    MFnParticleSystem part(particleShapeNode, &status);
-   part.setCount(0);
 
    // update the frame number to be imported
    double inputTime = dataBlock.inputValue(mTimeAttr).asTime().as(MTime::kSeconds);
@@ -299,116 +298,8 @@ MStatus AlembicPointsNode::compute(const MPlug & plug, MDataBlock & dataBlock)
    Alembic::AbcGeom::IPointsSchema::Sample sample;
    mSchema.get(sample,sampleInfo.floorIndex);
 
-   // if we are in the first sample, remove all known particles
-   if(sampleInfo.floorIndex == 0)
-   {
-      mLookup.clear();
-      mMaxId = UINT_MAX;
-   }
-
-   // first time around we figure out which particles are known
-   Alembic::Abc::UInt64ArraySamplePtr sampleIds = sample.getIds();
-   bool performIdCheck = true;
-   std::vector<unsigned int> idToRemove, idToUpdate, idToUpdateTo, idToEmit;
-   idToRemove.reserve(sampleIds->size());
-   idToUpdate.reserve(sampleIds->size());
-   idToUpdateTo.reserve(sampleIds->size());
-   idToEmit.reserve(sampleIds->size());
-   unsigned int newMaxId = UINT_MAX;
-   unsigned int lastId = UINT_MAX;
-   lookupIt it;
-
-   // check if we need to remove all particles
-   if(sampleIds->size() == 0)
-   {
-      idToRemove.reserve(mLookup.size());
-      for(it = mLookup.begin(); it != mLookup.end(); it++)
-         idToRemove.push_back(it->second);
-      performIdCheck = false;
-   }
-   else if(sampleIds->size() == 1)
-   {
-      // check if this is purely an empty cloud
-      if(sampleIds->get()[0] == (uint64_t)-1)
-      {
-         idToRemove.reserve(mLookup.size());
-         for(it = mLookup.begin(); it != mLookup.end(); it++)
-            idToRemove.push_back(it->second);
-         performIdCheck = false;
-      }
-   }
-   
-   if(performIdCheck)
-   {
-      it = mLookup.begin();
-      for(unsigned int i=0;i<sampleIds->size();i++)
-      {
-         unsigned int id = (unsigned int)sampleIds->get()[i];
-         if(id > newMaxId || newMaxId == UINT_MAX)
-            newMaxId = id;
-
-         // if this is a higher id than what we have in the map
-         if(id > mMaxId || mMaxId == UINT_MAX)
-         {
-            mLookup.insert(lookupPair(id,(unsigned int)mLookup.size()));
-            idToEmit.push_back(i);
-            continue;
-         }
-
-         // check if we skipped some ids, which means we need to remove them
-         if(lastId != id - 1 && mLookup.size() > 0)
-         {
-            unsigned int j = lastId;
-            if(j == UINT_MAX)
-               j = 0;
-            for(; j<id; j++)
-            {
-               while(it->second < j)
-               {
-                  it++;
-                  if(it == mLookup.end())
-                     break;
-               }
-               if(it->second == j && it != mLookup.end())
-               {
-                  idToRemove.push_back(it->second);
-                  mLookup.erase(it);
-               }
-            }
-         }
-
-         // now check if we have this id, if not, insert it
-         while(it->second < id)
-         {
-            it++;
-            if(it == mLookup.end())
-               break;
-         }
-         if(it->second == id && it != mLookup.end())
-         {
-            idToUpdate.push_back(it->second);
-            idToUpdateTo.push_back(i);
-         }
-         else
-         {
-            mLookup.insert(lookupPair(id,(unsigned int)mLookup.size()));
-            idToEmit.push_back(i);
-         }
-
-         lastId = id;
-      }
-   }
-
-   // update the lookup with continuous indices
-   if(mLookup.size() > 0 && idToRemove.size() > 0)
-   {
-      unsigned int lookupIndex = 0;
-      for(it = mLookup.begin(); it != mLookup.end(); it++, lookupIndex++)
-         it->second = lookupIndex;
-   }
-   mMaxId = newMaxId;
-
    // get all of the data from alembic
+   Alembic::Abc::UInt64ArraySamplePtr sampleIds = sample.getIds();
    Alembic::Abc::P3fArraySamplePtr samplePos = sample.getPositions();
    Alembic::Abc::V3fArraySamplePtr sampleVel = sample.getVelocities();
    Alembic::Abc::C4fArraySamplePtr sampleColor;
@@ -464,152 +355,98 @@ MStatus AlembicPointsNode::compute(const MPlug & plug, MDataBlock & dataBlock)
    MDoubleArray masses;
    part.mass(masses);
 
-   // if we need to remove any particles, do that now
-   if(idToRemove.size() > 0)
+   // check if this is a valid sample
+   unsigned int particleCount = (unsigned int)samplePos->size();
+   if(sampleIds->size() == 1)
    {
-      for(size_t i=0;i<idToRemove.size();i++)
+      if(sampleIds->get()[0] == (uint64_t)-1)
       {
-         ids.remove(idToRemove[i]);
-         positions.remove(idToRemove[i]);
-         velocities.remove(idToRemove[i]);
-         rgbs.remove(idToRemove[i]);
-         opacities.remove(idToRemove[i]);
-         ages.remove(idToRemove[i]);
-         masses.remove(idToRemove[i]);
+         particleCount = 0;
       }
    }
 
-   // if we need to update existing particles, do that now
-   if(idToUpdate.size() > 0)
+   // ensure to have the right amount of particles
+   if(positions.length() > particleCount)
    {
-      for(size_t i=0;i<idToUpdate.size();i++)
-      {
-         positions[idToUpdate[i]].x = samplePos->get()[idToUpdateTo[i]].x;
-         positions[idToUpdate[i]].y = samplePos->get()[idToUpdateTo[i]].y;
-         positions[idToUpdate[i]].z = samplePos->get()[idToUpdateTo[i]].z;
-
-         if(sampleVel)
-         {
-            velocities[idToUpdate[i]].x = sampleVel->get()[idToUpdateTo[i]].x;
-            velocities[idToUpdate[i]].y = sampleVel->get()[idToUpdateTo[i]].y;
-            velocities[idToUpdate[i]].z = sampleVel->get()[idToUpdateTo[i]].z;
-         }
-         else
-         {
-            velocities[idToUpdate[i]] = MVector(0.0,0.0,0.0);
-         }
-
-         if(sampleInfo.alpha != 0.0)
-         {
-            positions[idToUpdate[i]] += velocities[idToUpdate[i]] * sampleInfo.alpha;
-         }
-
-         if(sampleColor)
-         {
-            rgbs[idToUpdate[i]].x = sampleColor->get()[idToUpdateTo[i]].r;
-            rgbs[idToUpdate[i]].y = sampleColor->get()[idToUpdateTo[i]].g;
-            rgbs[idToUpdate[i]].z = sampleColor->get()[idToUpdateTo[i]].b;
-            opacities[idToUpdate[i]] = sampleColor->get()[idToUpdateTo[i]].a;
-         }
-         
-         if(sampleAge)
-         {
-            ages[idToUpdate[i]] = sampleAge->get()[idToUpdateTo[i]];
-         }
-
-         if(sampleMass)
-         {
-            masses[idToUpdate[i]] = sampleMass->get()[idToUpdateTo[i]];
-            if(masses[idToUpdate[i]] == 0.0)
-               masses[idToUpdate[i]] = 0.001;
-         }
-      }
+      part.setCount(particleCount);
+   }
+   else
+   {
+      MPointArray emitted;
+      emitted.setLength(particleCount - positions.length());
+      part.emit(emitted);
    }
 
-   // force an update of the values
-   if(idToUpdate.size() > 0 || idToRemove.size() > 0)
-   {
-      part.setPerParticleAttribute("position", positions);
-	   part.setPerParticleAttribute("velocity", velocities);
-   }
+   positions.setLength(particleCount);
+   velocities.setLength(particleCount);
+   rgbs.setLength(particleCount);
+   opacities.setLength(particleCount);
+   ages.setLength(particleCount);
+   masses.setLength(particleCount);
 
    // if we need to emit new particles, do that now
-   if(idToEmit.size() > 0)
+   if(particleCount > 0)
    {
-   	MPointArray outPos;
-      outPos.setLength((unsigned int)idToEmit.size());
-   	MVectorArray outVel;
-      outVel.setLength((unsigned int)idToEmit.size());
-
-      unsigned int offset = positions.length();
-      rgbs.setLength(offset + (unsigned int)idToEmit.size());
-      opacities.setLength(offset + (unsigned int)idToEmit.size());
-      ages.setLength(offset + (unsigned int)idToEmit.size());
-      masses.setLength(offset + (unsigned int)idToEmit.size());
-
-      for(unsigned int i=0;i<(unsigned int)idToEmit.size();i++,offset++)
+      for(unsigned int i=0;i<particleCount;i++)
       {
-         outPos[i].x = samplePos->get()[idToEmit[i]].x;
-         outPos[i].y = samplePos->get()[idToEmit[i]].y;
-         outPos[i].z = samplePos->get()[idToEmit[i]].z;
+         positions[i].x = samplePos->get()[i].x;
+         positions[i].y = samplePos->get()[i].y;
+         positions[i].z = samplePos->get()[i].z;
 
          if(sampleVel)
          {
-            outVel[i].x = sampleVel->get()[idToEmit[i]].x;
-            outVel[i].y = sampleVel->get()[idToEmit[i]].y;
-            outVel[i].z = sampleVel->get()[idToEmit[i]].z;
+            velocities[i].x = sampleVel->get()[i].x;
+            velocities[i].y = sampleVel->get()[i].y;
+            velocities[i].z = sampleVel->get()[i].z;
          }
 
          if(sampleInfo.alpha != 0.0)
          {
-            outPos[i] += outVel[i] * sampleInfo.alpha;
+            positions[i] += velocities[i] * sampleInfo.alpha;
          }
 
          if(sampleColor)
          {
-            rgbs[offset].x = sampleColor->get()[idToEmit[i]].r;
-            rgbs[offset].y = sampleColor->get()[idToEmit[i]].g;
-            rgbs[offset].z = sampleColor->get()[idToEmit[i]].b;
-            opacities[offset] = sampleColor->get()[idToEmit[i]].a;
+            rgbs[i].x = sampleColor->get()[i].r;
+            rgbs[i].y = sampleColor->get()[i].g;
+            rgbs[i].z = sampleColor->get()[i].b;
+            opacities[i] = sampleColor->get()[i].a;
          }
          else
          {
-            rgbs[offset] = MVector(0.0,0.0,0.0);
-            opacities[offset] = 1.0;
+            rgbs[i] = MVector(0.0,0.0,0.0);
+            opacities[i] = 1.0;
          }
          
          if(sampleAge)
          {
-            ages[offset] = sampleAge->get()[idToEmit[i]];
+            ages[i] = sampleAge->get()[i];
          }
          else
          {
-            ages[offset] = 0.0;
+            ages[i] = 0.0;
          }
 
          if(sampleMass)
          {
-            masses[offset] = sampleMass->get()[idToEmit[i]];
-            if(masses[offset] == 0.0)
-               masses[offset] = 0.001;
+            masses[i] = sampleMass->get()[i];
+            if(masses[i] == 0.0)
+               masses[i] = 0.001;
          }
          else
          {
-            masses[offset] = 1.0;
+            masses[i] = 1.0;
          }
       }
-      
-      part.emit(outPos,outVel);
    }
 
    // take care of the remaining attributes
-   if(idToUpdate.size() > 0 || idToRemove.size() > 0 || idToEmit.size() > 0)
-   {
-      part.setPerParticleAttribute("rgbPP", rgbs);
-      part.setPerParticleAttribute("opacityPP", opacities);
-      part.setPerParticleAttribute("agePP", ages);
-      part.setPerParticleAttribute("massPP", masses);
-   }
+   part.setPerParticleAttribute("position", positions);
+   part.setPerParticleAttribute("velocity", velocities);
+   part.setPerParticleAttribute("rgbPP", rgbs);
+   part.setPerParticleAttribute("opacityPP", opacities);
+   part.setPerParticleAttribute("agePP", ages);
+   part.setPerParticleAttribute("massPP", masses);
 
    hOut.set( dOutput );
 	dataBlock.setClean( plug );
