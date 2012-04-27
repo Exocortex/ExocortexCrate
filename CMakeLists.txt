@@ -1,4 +1,4 @@
-cmake_minimum_required (VERSION 2.6) 
+
 
 project ( Maya${Maya_VERSION}ExocortexAlembic${alembic_VERSION} ) 
 
@@ -59,22 +59,24 @@ if( Exocortex_SERVICES OR Exocortex_RLM_ONLY )
 endif()
 
 
+add_library( ${PROJECT_NAME} SHARED ${Sources} ${Includes} ${LOCAL_CMAKE_FILE_NAME} )
+
 if (WIN32)
 	add_definitions( -DNT_PLUGIN )
 	add_definitions( -DREQUIRE_IOSTREAM )
 	add_definitions( -D_BOOL )
 
 	set( MAYA_EXTENSION ".mll" )
+	set( MAYA_LINK_FLAGS " /export:initializePlugin /export:uninitializePlugin " )
 	SET_TARGET_PROPERTIES( ${PROJECT_NAME}
 		PROPERTIES #
 	  		PREFIX ""  # There is no prefix even on UNIXes
+	  		LINK_FLAGS ${MAYA_LINK_FLAGS}
 			SUFFIX ${MAYA_EXTENSION} )
-#	set( MAYA_LINK_FLAGS " /export:initializePlugin /export:uninitializePlugin " )
 elseif ( UNIX )
 	set( MAYA_EXTENSION ".so" )
 endif()
 
-add_library( ${PROJECT_NAME} SHARED ${Sources} ${Includes} ${LOCAL_CMAKE_FILE_NAME} )
 
 TARGET_LINK_LIBRARIES( ${PROJECT_NAME} ${ALEMBIC_CORE_LIBS} ${BOOST_LIBS} ${ALEMBIC_ILMBASE_LIBS} ${ALEMBIC_ZLIB_LIBS} ${ALEMBIC_HDF5_LIBS} ${Maya_LIBRARIES} ${Rlm_LIBRARIES} )
 ADD_DEPENDENCIES(${PROJECT_NAME} AlembicAbcGeom)

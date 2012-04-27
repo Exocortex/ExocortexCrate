@@ -223,6 +223,9 @@ MStatus AlembicPointsNode::initialize()
 
 MStatus AlembicPointsNode::compute(const MPlug & plug, MDataBlock & dataBlock)
 {
+   if ( !( plug == mOutput ) )
+      return ( MS::kUnknownParameter );
+
    MStatus status;
 
    // from the maya api examples (ownerEmitter.cpp)
@@ -232,6 +235,15 @@ MStatus AlembicPointsNode::compute(const MPlug & plug, MDataBlock & dataBlock)
 	MDataHandle hOut = bOutArray.addElement(multiIndex, &status);
 	MFnArrayAttrsData fnOutput;
 	MObject dOutput = fnOutput.create ( &status );
+
+   MPlugArray  connectionArray;
+   plug.connectedTo(connectionArray, false, true, &status);
+   if(connectionArray.length() == 0)
+      return status;
+
+   MPlug particleShapeOutPlug = connectionArray[0];
+   MObject particleShapeNode = particleShapeOutPlug.node(&status);
+   MFnParticleSystem part(particleShapeNode, &status);
 
    // update the frame number to be imported
    double inputTime = dataBlock.inputValue(mTimeAttr).asTime().as(MTime::kSeconds);
@@ -245,7 +257,7 @@ MStatus AlembicPointsNode::compute(const MPlug & plug, MDataBlock & dataBlock)
       if(fileName != mFileName)
       {
          delRefArchive(mFileName);
-         mFileName = fileName;
+         mFileName = fileName;;
          addRefArchive(mFileName);
       }
       mIdentifier = identifier;
@@ -282,46 +294,159 @@ MStatus AlembicPointsNode::compute(const MPlug & plug, MDataBlock & dataBlock)
 
    mLastSampleInfo = sampleInfo;
 
-   // access the camera values
+   // access the points values
    Alembic::AbcGeom::IPointsSchema::Sample sample;
    mSchema.get(sample,sampleInfo.floorIndex);
 
+   // get all of the data from alembic
+   Alembic::Abc::UInt64ArraySamplePtr sampleIds = sample.getIds();
    Alembic::Abc::P3fArraySamplePtr samplePos = sample.getPositions();
-   unsigned int particleCount = 0;
-   if(samplePos)
-      if(samplePos->size() > 0)
-         if(samplePos->get()[0].x != FLT_MAX)
-            particleCount = (unsigned int)samplePos->size();
-
-   if(particleCount > 0)
+   Alembic::Abc::V3fArraySamplePtr sampleVel = sample.getVelocities();
+   Alembic::Abc::C4fArraySamplePtr sampleColor;
+   if ( mSchema.getPropertyHeader( ".color" ) != NULL )
    {
-      // positions
-   	MVectorArray outPos = fnOutput.vectorArray("position", &status);
-      outPos.setLength(particleCount);
-      for(unsigned int i=0;i<particleCount;i++)
+      Alembic::Abc::IC4fArrayProperty prop = Alembic::Abc::IC4fArrayProperty( mSchema, ".color" );
+      if(prop.valid())
       {
-         outPos[i].x = samplePos->get()[i].x;
-         outPos[i].y = samplePos->get()[i].y;
-         outPos[i].z = samplePos->get()[i].z;
-      }
-
-      // velocities
-      Alembic::Abc::V3fArraySamplePtr sampleVel = sample.getVelocities();
-      if(sampleVel)
-      {
-         if(sampleVel->size() == particleCount)
+         if(prop.getNumSamples() > 0)
          {
-         	MVectorArray outVel = fnOutput.vectorArray("velocity", &status);
-            outVel.setLength(particleCount);
-            for(unsigned int i=0;i<particleCount;i++)
-            {
-               outVel[i].x = sampleVel->get()[i].x;
-               outVel[i].y = sampleVel->get()[i].y;
-               outVel[i].z = sampleVel->get()[i].z;
-            }
+            sampleColor = prop.getValue(sampleInfo.floorIndex);
          }
       }
    }
+   Alembic::Abc::FloatArraySamplePtr sampleAge;
+   if ( mSchema.getPropertyHeader( ".age" ) != NULL )
+   {
+      Alembic::Abc::IFloatArrayProperty prop = Alembic::Abc::IFloatArrayProperty( mSchema, ".age" );
+      if(prop.valid())
+      {
+         if(prop.getNumSamples() > 0)
+         {
+            sampleAge = prop.getValue(sampleInfo.floorIndex);
+         }
+      }
+   }
+   Alembic::Abc::FloatArraySamplePtr sampleMass;
+   if ( mSchema.getPropertyHeader( ".mass" ) != NULL )
+   {
+      Alembic::Abc::IFloatArrayProperty prop = Alembic::Abc::IFloatArrayProperty( mSchema, ".mass" );
+      if(prop.valid())
+      {
+         if(prop.getNumSamples() > 0)
+         {
+            sampleMass = prop.getValue(sampleInfo.floorIndex);
+         }
+      }
+   }
+
+   // get the current values from the particle cloud
+   MIntArray ids;
+   part.particleIds(ids);
+   MVectorArray positions;
+   part.position(positions);
+   MVectorArray velocities;
+   part.velocity(velocities);
+   MVectorArray rgbs;
+   part.rgb(rgbs);
+   MDoubleArray opacities;
+   part.opacity(opacities);
+   MDoubleArray ages;
+   part.age(ages);
+   MDoubleArray masses;
+   part.mass(masses);
+
+   // check if this is a valid sample
+   unsigned int particleCount = (unsigned int)samplePos->size();
+   if(sampleIds->size() == 1)
+   {
+      if(sampleIds->get()[0] == (uint64_t)-1)
+      {
+         particleCount = 0;
+      }
+   }
+
+   // ensure to have the right amount of particles
+   if(positions.length() > particleCount)
+   {
+      part.setCount(particleCount);
+   }
+   else
+   {
+      MPointArray emitted;
+      emitted.setLength(particleCount - positions.length());
+      part.emit(emitted);
+   }
+
+   positions.setLength(particleCount);
+   velocities.setLength(particleCount);
+   rgbs.setLength(particleCount);
+   opacities.setLength(particleCount);
+   ages.setLength(particleCount);
+   masses.setLength(particleCount);
+
+   // if we need to emit new particles, do that now
+   if(particleCount > 0)
+   {
+      for(unsigned int i=0;i<particleCount;i++)
+      {
+         positions[i].x = samplePos->get()[i].x;
+         positions[i].y = samplePos->get()[i].y;
+         positions[i].z = samplePos->get()[i].z;
+
+         if(sampleVel)
+         {
+            velocities[i].x = sampleVel->get()[i].x;
+            velocities[i].y = sampleVel->get()[i].y;
+            velocities[i].z = sampleVel->get()[i].z;
+         }
+
+         if(sampleInfo.alpha != 0.0)
+         {
+            positions[i] += velocities[i] * sampleInfo.alpha;
+         }
+
+         if(sampleColor)
+         {
+            rgbs[i].x = sampleColor->get()[i].r;
+            rgbs[i].y = sampleColor->get()[i].g;
+            rgbs[i].z = sampleColor->get()[i].b;
+            opacities[i] = sampleColor->get()[i].a;
+         }
+         else
+         {
+            rgbs[i] = MVector(0.0,0.0,0.0);
+            opacities[i] = 1.0;
+         }
+         
+         if(sampleAge)
+         {
+            ages[i] = sampleAge->get()[i];
+         }
+         else
+         {
+            ages[i] = 0.0;
+         }
+
+         if(sampleMass)
+         {
+            masses[i] = sampleMass->get()[i];
+            if(masses[i] == 0.0)
+               masses[i] = 0.001;
+         }
+         else
+         {
+            masses[i] = 1.0;
+         }
+      }
+   }
+
+   // take care of the remaining attributes
+   part.setPerParticleAttribute("position", positions);
+   part.setPerParticleAttribute("velocity", velocities);
+   part.setPerParticleAttribute("rgbPP", rgbs);
+   part.setPerParticleAttribute("opacityPP", opacities);
+   part.setPerParticleAttribute("agePP", ages);
+   part.setPerParticleAttribute("massPP", masses);
 
    hOut.set( dOutput );
 	dataBlock.setClean( plug );
