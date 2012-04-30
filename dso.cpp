@@ -1222,10 +1222,19 @@ static AtNode *GetNode(void *user_ptr, int i)
       AtArray * nor = NULL;
       AtArray * uvsIdx = NULL;
 
+      // check if we have dynamic topology
+      bool dynamicTopology = false;
+      Alembic::Abc::IInt32ArrayProperty faceIndicesProp = Alembic::Abc::IInt32ArrayProperty(typedObject.getSchema(),".faceIndices");
+      if(faceIndicesProp.valid())
+         dynamicTopology = !faceIndicesProp.isConstant();
+
       // loop over all samples
       AtULong posOffset = 0;
       AtULong norOffset = 0;
       size_t firstSampleCount = 0;
+      Alembic::Abc::Int32ArraySamplePtr abcFaceCounts;
+      Alembic::Abc::Int32ArraySamplePtr abcFaceIndices;
+
       for(size_t sampleIndex = 0; sampleIndex < minNumSamples; sampleIndex++)
       {
          SampleInfo sampleInfo = getSampleInfo(
@@ -1241,8 +1250,8 @@ static AtNode *GetNode(void *user_ptr, int i)
          // take care of the topology
          if(sampleIndex == 0 && !createdShifted)
          {
-            Alembic::Abc::Int32ArraySamplePtr abcFaceCounts = sample.getFaceCounts();
-            Alembic::Abc::Int32ArraySamplePtr abcFaceIndices = sample.getFaceIndices();
+            abcFaceCounts = sample.getFaceCounts();
+            abcFaceIndices = sample.getFaceIndices();
             if(abcFaceCounts->get()[0] == 0)
                return NULL;
             AtArray * faceCounts = AiArrayAllocate((AtInt)abcFaceCounts->size(), 1, AI_TYPE_UINT);
@@ -1311,8 +1320,7 @@ static AtNode *GetNode(void *user_ptr, int i)
             pos = AiArrayAllocate((AtInt)(abcPos->size() * 3),(AtInt)minNumSamples,AI_TYPE_FLOAT);
          }
 
-         // if the count has changed, let's move back to the first sample
-         if(abcPos->size() != sample.getFaceIndices()->size())
+         if(dynamicTopology)
          {
             SampleInfo sampleInfoFirst = getSampleInfo(
                samples[0],
@@ -1359,7 +1367,7 @@ static AtNode *GetNode(void *user_ptr, int i)
             Alembic::Abc::P3fArraySamplePtr abcPos2 = sample2.getPositions();
             float alpha = (float)sampleInfo.alpha;
             float ialpha = 1.0f - alpha;
-            if(abcPos2->size() == abcPos->size())
+            if(!dynamicTopology)
             {
                for(size_t i=0;i<abcPos->size();i++)
                {
@@ -1401,7 +1409,7 @@ static AtNode *GetNode(void *user_ptr, int i)
             if(abcNor != NULL)
             {
                Alembic::Abc::N3fArraySamplePtr abcNor2 = normalParam.getExpandedValue(sampleInfo.ceilIndex).getVals();
-               if(abcNor->size() == abcNor2->size())
+               if(!dynamicTopology)
                {
                   for(size_t i=0;i<abcNor->size();i++)
                   {
@@ -1478,9 +1486,16 @@ static AtNode *GetNode(void *user_ptr, int i)
       // create arrays to hold the data
       AtArray * pos = NULL;
 
+      // check if we have dynamic topology
+      bool dynamicTopology = false;
+      Alembic::Abc::IInt32ArrayProperty faceIndicesProp = Alembic::Abc::IInt32ArrayProperty(typedObject.getSchema(),".faceIndices");
+      if(faceIndicesProp.valid())
+         dynamicTopology = !faceIndicesProp.isConstant();
+
       // loop over all samples
       size_t firstSampleCount = 0;
       AtULong posOffset = 0;
+
       for(size_t sampleIndex = 0; sampleIndex < minNumSamples; sampleIndex++)
       {
          SampleInfo sampleInfo = getSampleInfo(
@@ -1555,7 +1570,7 @@ static AtNode *GetNode(void *user_ptr, int i)
          }
 
          // if the count has changed, let's move back to the first sample
-         if(abcPos->size() != sample.getFaceIndices()->size())
+         if(dynamicTopology)
          {
             SampleInfo sampleInfoFirst = getSampleInfo(
                samples[0],
@@ -1586,7 +1601,7 @@ static AtNode *GetNode(void *user_ptr, int i)
             Alembic::Abc::P3fArraySamplePtr abcPos2 = sample2.getPositions();
             float alpha = (float)sampleInfo.alpha;
             float ialpha = 1.0f - alpha;
-            if(abcPos->size() == abcPos2->size())
+            if(!dynamicTopology)
             {
                for(size_t i=0;i<abcPos->size();i++)
                {
