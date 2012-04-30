@@ -177,7 +177,8 @@ XSI::CStatus AlembicPolyMesh::Save(double time)
    // let's check if we have user normals
    size_t normalCount = 0;
    size_t normalIndexCount = 0;
-   if((bool)GetJob()->GetOption(L"exportNormals"))
+   bool exportNormals = GetJob()->GetOption(L"exportNormals");
+   if(exportNormals)
    {
       CVector3Array normals = mesh.GetVertices().GetNormalArray();
 
@@ -245,18 +246,9 @@ XSI::CStatus AlembicPolyMesh::Save(double time)
          }
 
          // use indexed normals if they use less space
-         if(sortedNormalCount * sizeof(Alembic::Abc::V3f) + 
-            normalIndexCount * sizeof(uint32_t) < 
-            sizeof(Alembic::Abc::V3f) * normalVec.size())
-         {
-            normalVec = sortedNormalVec;
-            normalCount = sortedNormalCount;
-         }
-         else
-         {
-            normalIndexCount = 0;
-            normalIndexVec.clear();
-         }
+         normalVec = sortedNormalVec;
+         normalCount = sortedNormalCount;
+
          sortedNormalCount = 0;
          sortedNormalVec.clear();
       }
@@ -323,6 +315,13 @@ XSI::CStatus AlembicPolyMesh::Save(double time)
       mMeshSample.setFaceIndices(faceIndicesSample);
 
       Alembic::AbcGeom::ON3fGeomParam::Sample normalSample;
+      if((normalVec.size() == 0 || normalCount == 0) && exportNormals && dynamicTopology)
+      {
+         normalVec.push_back(Alembic::Abc::V3f(FLT_MAX,FLT_MAX,FLT_MAX));
+         normalCount = 1;
+         normalIndexVec.push_back(0);
+         normalIndexCount = 1;
+      }
       if(normalVec.size() > 0 && normalCount > 0)
       {
          normalSample.setScope(Alembic::AbcGeom::kFacevaryingScope);
@@ -380,18 +379,9 @@ XSI::CStatus AlembicPolyMesh::Save(double time)
                }
 
                // use indexed uvs if they use less space
-               if(sortedUVCount * sizeof(Alembic::Abc::V2f) + 
-                  uvIndexCount * sizeof(uint32_t) < 
-                  sizeof(Alembic::Abc::V2f) * mUvVec.size())
-               {
-                  mUvVec = sortedUVVec;
-                  uvCount = sortedUVCount;
-               }
-               else
-               {
-                  uvIndexCount = 0;
-                  mUvIndexVec.clear();
-               }
+               mUvVec = sortedUVVec;
+               uvCount = sortedUVCount;
+
                sortedUVCount = 0;
                sortedUVVec.clear();
             }

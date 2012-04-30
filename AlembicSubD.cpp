@@ -296,18 +296,12 @@ XSI::CStatus AlembicSubD::Save(double time)
                }
 
                // use indexed uvs if they use less space
-               if(sortedUVCount * sizeof(Alembic::Abc::V2f) + 
-                  uvIndexCount * sizeof(uint32_t) < 
-                  sizeof(Alembic::Abc::V2f) * mUvVec.size())
-               {
-                  mUvVec = sortedUVVec;
-                  uvCount = sortedUVCount;
-               }
-               else
-               {
-                  uvIndexCount = 0;
-                  mUvIndexVec.clear();
-               }
+               mUvVec = sortedUVVec;
+               uvCount = sortedUVCount;
+
+               uvIndexCount = 0;
+               mUvIndexVec.clear();
+
                sortedUVCount = 0;
                sortedUVVec.clear();
             }
