@@ -1,8 +1,7 @@
 
-
 project ( Maya${Maya_VERSION}ExocortexAlembic${alembic_VERSION} ) 
 
-INCLUDE(../../ExocortexAlembicShared/ExocortexCMakeShared.txt)		#????
+INCLUDE(../../ExocortexAlembicShared/ExocortexCMakeShared.txt)
 
 if( Exocortex_SERVICES OR Exocortex_RLM_ONLY )
 	include_directories( ${Rlm_INCLUDE_DIR} )

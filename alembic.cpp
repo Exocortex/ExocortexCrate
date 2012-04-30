@@ -17,7 +17,7 @@
 #include <maya/MSceneMessage.h>
 
 #include <sstream>
- 
+
 // IDs issues for this plugin are: 
 // 0x0011A100 - 0x0011A1FF
 const MTypeId mTimeControlNodeId(0x0011A100);
