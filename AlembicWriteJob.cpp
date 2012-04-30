@@ -78,12 +78,14 @@ CValue AlembicWriteJob::GetOption(const CString & in_Name)
 
 AlembicObjectPtr AlembicWriteJob::GetObject(const XSI::CRef & in_Ref)
 {
-   for(size_t i=0;i<mObjects.size();i++)
-   {
-      if(mObjects[i]->GetRef().GetAsText() == in_Ref.GetAsText())
-         return mObjects[i];
-   }
-   return AlembicObjectPtr();
+ 	std::string key = std::string( in_Ref.GetAsText().GetAsciiString() );
+
+	std::map<std::string,AlembicObjectPtr>::const_iterator it = mObjectsNames.find( key );
+
+	if (it != mObjectsNames.end()) {
+		return it->second;
+	}
+	return AlembicObjectPtr();
 }
 
 bool AlembicWriteJob::AddObject(AlembicObjectPtr in_Obj)
@@ -96,6 +98,7 @@ bool AlembicWriteJob::AddObject(AlembicObjectPtr in_Obj)
    if(existing != NULL)
       return false;
    mObjects.push_back(in_Obj);
+   mObjectsNames.insert( std::map<std::string,AlembicObjectPtr>::value_type( std::string( in_Obj->GetRef().GetAsText().GetAsciiString() ), in_Obj ) );
    return true;
 }
 
@@ -188,11 +191,13 @@ CStatus AlembicWriteJob::PreProcess()
 
    Alembic::Abc::OBox3dProperty boxProp = Alembic::AbcGeom::CreateOArchiveBounds(mArchive,mTs);
 
+   CString activeSceneRoot_GetFullName = Application().GetActiveSceneRoot().GetFullName();
    // create object for each
    for(LONG i=0;i<mSelection.GetCount();i++)
    {
       X3DObject xObj(mSelection[i]);
-      if(GetObject(xObj.GetActivePrimitive().GetRef()) != NULL)
+	  CRef xObj_GetActivePrimitive_GetRef = xObj.GetActivePrimitive().GetRef();
+      if(GetObject(xObj_GetActivePrimitive_GetRef) != NULL)
          continue;
 
       // push all models up the hierarchy
@@ -203,7 +208,7 @@ CStatus AlembicWriteJob::PreProcess()
       if((bool)GetOption(L"transformCache"))
       {
          X3DObject parent = xObj.GetParent3DObject();
-         while(parent.IsValid() && !parent.GetFullName().IsEqualNoCase(Application().GetActiveSceneRoot().GetFullName()))
+         while(parent.IsValid() && !parent.GetFullName().IsEqualNoCase( activeSceneRoot_GetFullName ))
          {
             modelRefs.Add(parent.GetActivePrimitive().GetRef());
             parent = parent.GetParent3DObject();
@@ -211,7 +216,7 @@ CStatus AlembicWriteJob::PreProcess()
       }
       else
       {
-         while(model.IsValid() && !model.GetFullName().IsEqualNoCase(Application().GetActiveSceneRoot().GetFullName()))
+         while(model.IsValid() && !model.GetFullName().IsEqualNoCase( activeSceneRoot_GetFullName ))
          {
             modelRefs.Add(model.GetActivePrimitive().GetRef());
             model = model.GetModel();
@@ -230,19 +235,20 @@ CStatus AlembicWriteJob::PreProcess()
       // only do models if we perform pure transformcache
       if((bool)GetOption(L"transformCache")) {
          AlembicObjectPtr ptr;
-         ptr.reset(new AlembicModel(xObj.GetActivePrimitive().GetRef(),this));
+         ptr.reset(new AlembicModel(xObj_GetActivePrimitive_GetRef,this));
          AddObject(ptr);
          continue;
       }
 
       // take care of all other types
-      if(xObj.GetType().IsEqualNoCase(L"camera"))
+	  CString xObj_GetType = xObj.GetType();
+      if(xObj_GetType.IsEqualNoCase(L"camera"))
       {
          AlembicObjectPtr ptr;
-         ptr.reset(new AlembicCamera(xObj.GetActivePrimitive().GetRef(),this));
+         ptr.reset(new AlembicCamera(xObj_GetActivePrimitive_GetRef,this));
          AddObject(ptr);
       }
-      else if(xObj.GetType().IsEqualNoCase(L"polymsh"))
+      else if(xObj_GetType.IsEqualNoCase(L"polymsh"))
       {
          Property geomProp;
          xObj.GetPropertyFromName(L"geomapprox",geomProp);
@@ -250,42 +256,42 @@ CStatus AlembicWriteJob::PreProcess()
          if(subDivLevel > 0)
          {
             AlembicObjectPtr ptr;
-            ptr.reset(new AlembicSubD(xObj.GetActivePrimitive().GetRef(),this));
+            ptr.reset(new AlembicSubD(xObj_GetActivePrimitive_GetRef,this));
             AddObject(ptr);
          }
          else
          {
             AlembicObjectPtr ptr;
-            ptr.reset(new AlembicPolyMesh(xObj.GetActivePrimitive().GetRef(),this));
+            ptr.reset(new AlembicPolyMesh(xObj_GetActivePrimitive_GetRef,this));
             AddObject(ptr);
          }
       }
-      else if(xObj.GetType().IsEqualNoCase(L"surfmsh"))
+      else if(xObj_GetType.IsEqualNoCase(L"surfmsh"))
       {
          AlembicObjectPtr ptr;
-         ptr.reset(new AlembicNurbs(xObj.GetActivePrimitive().GetRef(),this));
+         ptr.reset(new AlembicNurbs(xObj_GetActivePrimitive_GetRef,this));
          AddObject(ptr);
       }
-      else if(xObj.GetType().IsEqualNoCase(L"crvlist"))
+      else if(xObj_GetType.IsEqualNoCase(L"crvlist"))
       {
          AlembicObjectPtr ptr;
-         ptr.reset(new AlembicCurves(xObj.GetActivePrimitive().GetRef(),this));
+         ptr.reset(new AlembicCurves(xObj_GetActivePrimitive_GetRef,this));
          AddObject(ptr);
       }
-      else if(xObj.GetType().IsEqualNoCase(L"hair"))
+      else if(xObj_GetType.IsEqualNoCase(L"hair"))
       {
          AlembicObjectPtr ptr;
-         ptr.reset(new AlembicCurves(xObj.GetActivePrimitive().GetRef(),this));
+         ptr.reset(new AlembicCurves(xObj_GetActivePrimitive_GetRef,this));
          AddObject(ptr);
       }
-      else if(xObj.GetType().IsEqualNoCase(L"pointcloud"))
+      else if(xObj_GetType.IsEqualNoCase(L"pointcloud"))
       {
          AlembicObjectPtr ptr;
          ICEAttribute strandPosition = xObj.GetActivePrimitive().GetGeometry().GetICEAttributeFromName(L"StrandPosition");
          if(strandPosition.IsDefined() && strandPosition.IsValid())
-            ptr.reset(new AlembicCurves(xObj.GetActivePrimitive().GetRef(),this));
+            ptr.reset(new AlembicCurves(xObj_GetActivePrimitive_GetRef,this));
          else
-            ptr.reset(new AlembicPoints(xObj.GetActivePrimitive().GetRef(),this));
+            ptr.reset(new AlembicPoints(xObj_GetActivePrimitive_GetRef,this));
          AddObject(ptr);
       }
    }

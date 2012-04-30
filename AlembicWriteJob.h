@@ -16,6 +16,7 @@ private:
     unsigned int mTs;
     std::map<XSI::CString,XSI::CValue> mOptions;
     std::vector<AlembicObjectPtr> mObjects;
+	std::map<std::string,AlembicObjectPtr> mObjectsNames;
     float mFrameRate;
 public:
    AlembicWriteJob(
