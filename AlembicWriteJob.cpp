@@ -151,6 +151,8 @@ CStatus AlembicWriteJob::PreProcess()
       return CStatus::InvalidArgument;
    }
 
+   mTop = mArchive.getTop();
+
    // get the frame rate
    mFrameRate = 25.0;
    CValue returnVal;

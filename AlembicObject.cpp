@@ -17,7 +17,7 @@ AlembicObject::AlembicObject
 {
    AddRef(in_Ref);
    mJob = in_Job;
-   mOParent = mJob->GetArchive().getTop();
+   mOParent = mJob->GetTop();
 
    // find the parent
    std::string identifier = getIdentifierFromRef(GetRef(),mJob->GetOption(L"transformCache"));
@@ -26,15 +26,16 @@ AlembicObject::AlembicObject
 
    for(size_t i=1;i<parts.size();i++)
    {
-      for(size_t j=0;j<mOParent.getNumChildren();j++)
-      {
-         Alembic::Abc::OObject child = mOParent.getChild(j);
-         if(child.getName() == parts[i])
+	   int numChildren = mOParent.getNumChildren();
+     // for(size_t j=0;j<numChildren;j++)
+      //{
+		 Alembic::Abc::ObjectHeader const* pChildHeader = mOParent.getChildHeader( parts[i] );
+         if( pChildHeader != NULL )
          {
-            mOParent = child;
-            break;
+            mOParent = mOParent.getChild( parts[i] );
+          //  break;
          }
-      }
+     // }
    }
 
    mNumSamples = 0;
