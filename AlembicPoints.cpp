@@ -340,6 +340,11 @@ void AlembicPoints::GetShapeType(IParticleObjectExt *pExt, int particleId, TimeV
             pSimpleOperator = static_cast<PFSimpleOperator*>(pActionObj);
             break;
         }
+		else if(pActionObj->ClassID() == PFOperatorShapeLib_Class_ID)
+		{
+            pSimpleOperator = static_cast<PFSimpleOperator*>(pActionObj);
+            break;
+		}
         else if (pActionObj->ClassID() == PFOperatorInstanceShape_Class_ID)
         {
             pSimpleOperator = static_cast<PFSimpleOperator*>(pActionObj);
@@ -368,6 +373,52 @@ void AlembicPoints::GetShapeType(IParticleObjectExt *pExt, int particleId, TimeV
             break;
         }
     }
+	else if (pSimpleOperator && pSimpleOperator->ClassID() == PFOperatorShapeLib_Class_ID)
+	{
+        IParamBlock2 *pblock = pSimpleOperator->GetParamBlockByID(0);
+		int nDimension = pblock->GetInt(PFlow_kShapeLibary_dimensionType, ticks);
+		if(nDimension == PFlow_kShapeLibrary_dimensionType_2D){
+			int n2DShapeId = pblock->GetInt(PFlow_kShapeLibary_2DType, ticks);
+			if( n2DShapeId == PFlow_kShapeLibrary_dimensionType_2D_square){
+				type = ShapeType_Rectangle;
+			}
+			else{
+				ESS_LOG_INFO("Unsupported shape type.");
+			}
+		}
+		else if(nDimension == PFlow_kShapeLibrary_dimensionType_3D){
+			int n3DShapeId = pblock->GetInt(PFlow_kShapeLibary_3DType, ticks);
+			if(n3DShapeId == PFlow_kShapeLibary_3DType_cube){
+				type = ShapeType_Box;
+			}
+			else if(n3DShapeId == PFlow_kShapeLibary_3DType_Sphere20sides ||
+					n3DShapeId == PFlow_kShapeLibary_3DType_Sphere80sides){
+				type = ShapeType_Sphere;
+			}
+			else{
+				ESS_LOG_INFO("Unsupported shape type.");
+			}
+		
+			//ShapeType_Cylinder unsupported
+			//ShapeType_Cone unsupported
+			//ShapeType_Disc unsupported
+			//ShapeType_NbElements unsupported
+		}
+		else{
+			ESS_LOG_INFO("Unknown dimension.");
+		}
+			
+		//int nNumParams = pblock->NumParams();
+
+		//for(int i=0; i<nNumParams; i++){
+	
+		//	ParamID id = pblock->IndextoID(i);
+		//	MSTR paramStr = pblock->GetLocalName(id, 0);
+		//	int n = 0;
+		//
+		//}
+
+	}
     else if (pSimpleOperator && pSimpleOperator->ClassID() == PFOperatorInstanceShape_Class_ID)
     {
         // Assign animation time and shape here

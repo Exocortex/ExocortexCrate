@@ -58,7 +58,6 @@ public:
         PFlow_kSimpleShape_useScale,
         PFlow_kSimpleShape_scale 
     };
-
 public:
     enum 
     {	
@@ -68,6 +67,58 @@ public:
         PFlow_kSimpleShape_shape_vertex,
         PFlow_kSimpleShape_shape_num=4 
     };
+public:
+	enum
+	{
+		PFlow_kShapeLibary_dimensionType,
+		PFlow_kShapeLibary_2DType,
+		PFlow_kShapeLibary_3DType,
+		PFlow_kShapeLibary_size,
+		PFlow_kShapeLibary_useScale,
+		PFlow_kShapeLibary_scale,
+		PFlow_kShapeLibary_scaleVariation,
+		PFlow_kShapeLibary_randomMultishapeOrder,
+		PFlow_kShapeLibary_randomSeed,
+		PFlow_kShapeLibary_generateMappingCoords,
+		PFlow_kShapeLibary_FitMapping
+	};
+public:
+	enum
+	{
+		PFlow_kShapeLibrary_dimensionType_2D,
+		PFlow_kShapeLibrary_dimensionType_3D
+	};
+public:
+	enum
+	{
+		PFlow_kShapeLibary_3DType_cube,
+		PFlow_kShapeLibary_3DType_diamond,
+		PFlow_kShapeLibary_3DType_long,
+		PFlow_kShapeLibary_3DType_digitsArial,
+		PFlow_kShapeLibary_3DType_digitsCourier,
+		PFlow_kShapeLibary_3DType_digitsTimes,
+		PFlow_kShapeLibary_3DType_Dodecahedron,
+		PFlow_kShapeLibary_3DType_Heart,
+		PFlow_kShapeLibary_3DType_LettersArial,
+		PFlow_kShapeLibary_3DType_LettersCourier,
+		PFlow_kShapeLibary_3DType_LettersTimes,
+		PFlow_kShapeLibary_3DType_Notes,
+		PFlow_kShapeLibary_3DType_Pyramid,
+		PFlow_kShapeLibary_3DType_Special,
+		PFlow_kShapeLibary_3DType_Sphere20sides,
+		PFlow_kShapeLibary_3DType_Sphere80sides,
+		PFlow_kShapeLibary_3DType_Star5point,
+		PFlow_kShapeLibary_3DType_Star6point,
+		PFlow_kShapeLibary_3DType_Tetra,
+		PFlow_kShapeLibary_3DType_Torus
+	};
+public:
+	enum
+	{
+		PFlow_kShapeLibrary_dimensionType_2D_circle12sides = 0,
+		PFlow_kShapeLibrary_dimensionType_2D_circle24sides = 1,
+		PFlow_kShapeLibrary_dimensionType_2D_square = 14
+	};
 private:
     static void AlembicPoints::ConvertMaxEulerXYZToAlembicQuat(const Point3 &degrees, Alembic::Abc::Quatf &quat);
     static void AlembicPoints::ConvertMaxAngAxisToAlembicQuat(const AngAxis &angAxis, Alembic::Abc::Quatf &quat);
