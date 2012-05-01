@@ -213,6 +213,6 @@ PyObject * iArchive_new(PyObject * self, PyObject * args)
 
 bool register_object_iArchive(PyObject *module)
 {
-  return register_object(module, iArchive_Type, "c_iArchive");
+  return register_object(module, iArchive_Type, "iArchive");
 }
 
