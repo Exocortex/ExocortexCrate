@@ -11,6 +11,6 @@ typedef struct {
 PyObject * iArchive_new(PyObject * self, PyObject * args);
 size_t getNbIArchives();
 
-bool register_module_iArchive(PyObject *module);
+bool register_object_iArchive(PyObject *module);
 
 #endif

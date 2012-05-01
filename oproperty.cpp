@@ -1607,8 +1607,8 @@ PyObject * oProperty_new(oObjectPtr in_casted, char * in_propName, char * in_pro
    ALEMBIC_PYOBJECT_CATCH_STATEMENT
 }
 
-bool register_module_oProperty(PyObject *module)
+bool register_object_oProperty(PyObject *module)
 {
-  return register_module(module, oProperty_Type, "oProperty");
+  return register_object(module, oProperty_Type, "oProperty");
 }
 

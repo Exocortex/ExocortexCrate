@@ -18,6 +18,6 @@ PyObject * getError();
 	#endif
 #endif
 
-bool register_module(PyObject *module, PyTypeObject &type_object, const char *object_name);
+bool register_object(PyObject *module, PyTypeObject &type_object, const char *object_name);
 
 #endif

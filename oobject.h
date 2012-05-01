@@ -36,6 +36,8 @@ typedef struct {
 PyObject * oObject_new(Alembic::Abc::OObject in_Object, oObjectPtr in_Casted, void * in_Archive);
 void oObject_deletePointers(oObject * object);
 
-bool register_module_oObject(PyObject *module);
+bool register_object_oObject(PyObject *module);
 
 #endif
+
+

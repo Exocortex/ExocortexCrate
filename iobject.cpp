@@ -277,9 +277,9 @@ PyObject * iObject_new(Alembic::Abc::IObject in_Object)
    ALEMBIC_PYOBJECT_CATCH_STATEMENT
 }
 
-bool register_module_iObject(PyObject *module)
+bool register_object_iObject(PyObject *module)
 {
-  return register_module(module, iObject_Type, "iObject");
+  return register_object(module, iObject_Type, "iObject");
 }
 
 

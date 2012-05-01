@@ -12,6 +12,6 @@ typedef struct {
 
 PyObject * iObject_new(Alembic::Abc::IObject in_Object);
 
-bool register_module_iObject(PyObject *module);
+bool register_object_iObject(PyObject *module);
 
 #endif

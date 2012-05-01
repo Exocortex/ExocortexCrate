@@ -444,7 +444,7 @@ oXformProperty * oArchive_getXformElement(oArchive * archive, std::string identi
    return NULL;
 }
 
-bool register_module_oArchive(PyObject *module)
+bool register_object_oArchive(PyObject *module)
 {
-  return register_module(module, oArchive_Type, "oArchive");
+  return register_object(module, oArchive_Type, "oArchive");
 }

@@ -156,7 +156,7 @@ static PyTypeObject iArchive_Type = {
   0,                         /*tp_setattro*/
   0,                         /*tp_as_buffer*/
   Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE, /*tp_flags*/
-  "his is the input archive. It provides access to all of the archive’s data, including TimeSamplings as well as objects.",           /* tp_doc */
+  "This is the input archive. It provides access to all of the archive's data, including TimeSamplings as well as objects.",           /* tp_doc */
   0,		               /* tp_traverse */
   0,		               /* tp_clear */
   0,		               /* tp_richcompare */
@@ -211,8 +211,8 @@ PyObject * iArchive_new(PyObject * self, PyObject * args)
    ALEMBIC_PYOBJECT_CATCH_STATEMENT
 }
 
-bool register_module_iArchive(PyObject *module)
+bool register_object_iArchive(PyObject *module)
 {
-  return register_module(module, iArchive_Type, "iArchive");
+  return register_object(module, iArchive_Type, "c_iArchive");
 }
 

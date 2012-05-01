@@ -2511,7 +2511,7 @@ static PyTypeObject iProperty_Type = {
   0,                         /*tp_setattro*/
   0,                         /*tp_as_buffer*/
   Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE, /*tp_flags*/
-  "This is the input property. It provides access to the propery’s data, such as name, type and per sample values.",           /* tp_doc */
+  "This is the input property. It provides access to the propery's data, such as name, type and per sample values.",           /* tp_doc */
   0,		               /* tp_traverse */
   0,		               /* tp_clear */
   0,		               /* tp_richcompare */
@@ -2808,8 +2808,8 @@ PyObject * iProperty_new(Alembic::Abc::IObject in_Object, char * in_propName)
    ALEMBIC_PYOBJECT_CATCH_STATEMENT
 }
 
-bool register_module_iProperty(PyObject *module)
+bool register_object_iProperty(PyObject *module)
 {
-  return register_module(module, iProperty_Type, "iProperty");
+  return register_object(module, iProperty_Type, "iProperty");
 }
 

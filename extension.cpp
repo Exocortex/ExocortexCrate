@@ -32,7 +32,7 @@ static PyMethodDef unlicensed_extension_methods[] = {
    {NULL, NULL}
 };
 
-bool register_module(PyObject *module, PyTypeObject &type_object, const char *object_name)
+bool register_object(PyObject *module, PyTypeObject &type_object, const char *object_name)
 {
   if (PyType_Ready(&type_object) < 0)
     return false;
@@ -48,12 +48,12 @@ EXTENSION_CALLBACK init_ExocortexAlembicPython(void)
    PyObject * m = Py_InitModule3("_ExocortexAlembicPython", extension_methods, "This is the core extension module. It provides access to input as well as output archive objects.");
    PyObject * d = PyModule_GetDict(m);
 
-   register_module_iArchive(m);
-   register_module_oArchive(m);
-   register_module_iObject(m);
-   register_module_oObject(m);
-   register_module_iProperty(m);
-   register_module_oProperty(m);
+   register_object_iArchive(m);
+   register_object_oArchive(m);
+   register_object_iObject(m);
+   register_object_oObject(m);
+   register_object_iProperty(m);
+   register_object_oProperty(m);
 
    extension_error = PyErr_NewException("ExocortexAlembicPython.error", NULL, NULL);
    PyDict_SetItemString(d, "error", extension_error);
