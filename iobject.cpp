@@ -208,13 +208,13 @@ static PyObject * iObject_getProperty(PyObject * self, PyObject * args)
 }
 
 static PyMethodDef iObject_methods[] = {
-   {"getIdentifier", (PyCFunction)iObject_getIdentifier, METH_NOARGS},
-   {"getMetaData", (PyCFunction)iObject_getMetaData, METH_NOARGS},
-   {"getType", (PyCFunction)iObject_getType, METH_NOARGS},
-   {"getSampleTimes", (PyCFunction)iObject_getSampleTimes, METH_NOARGS},
-   {"getNbStoredSamples", (PyCFunction)iObject_getNbStoredSamples, METH_NOARGS},
-   {"getPropertyNames", (PyCFunction)iObject_getPropertyNames, METH_NOARGS},
-   {"getProperty", (PyCFunction)iObject_getProperty, METH_VARARGS},
+   {"getIdentifier", (PyCFunction)iObject_getIdentifier, METH_NOARGS, "Returns the identifier linked to this object."},
+   {"getMetaData", (PyCFunction)iObject_getMetaData, METH_NOARGS, "Returns the string array storing the metadata, if it exists on this object. Otherwise it returns an empty tuple."},
+   {"getType", (PyCFunction)iObject_getType, METH_NOARGS, "Returns the type of this object. Usually encodes the schema name inside of Alembic.IO."},
+   {"getSampleTimes", (PyCFunction)iObject_getSampleTimes, METH_NOARGS, "Returns the TimeSampling this object is linked to."},
+   {"getNbStoredSamples", (PyCFunction)iObject_getNbStoredSamples, METH_NOARGS, "Returns the actual number of stored samples."},
+   {"getPropertyNames", (PyCFunction)iObject_getPropertyNames, METH_NOARGS, "Returns a string list of all property names below this object."},
+   {"getProperty", (PyCFunction)iObject_getProperty, METH_VARARGS, "Returns an iProperty for the given propertyName string."},
    {NULL, NULL}
 };
 static PyObject * iObject_getAttr(PyObject * self, char * attrName)
@@ -244,6 +244,25 @@ static PyTypeObject iObject_Type = {
   (getattrfunc)iObject_getAttr,     // tp_getattr
   0,                                // tp_setattr
   0,                                // tp_compare
+  0,                         /*tp_repr*/
+  0,                         /*tp_as_number*/
+  0,                         /*tp_as_sequence*/
+  0,                         /*tp_as_mapping*/
+  0,                         /*tp_hash */
+  0,                         /*tp_call*/
+  0,                         /*tp_str*/
+  0,                         /*tp_getattro*/
+  0,                         /*tp_setattro*/
+  0,                         /*tp_as_buffer*/
+  Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE, /*tp_flags*/
+  "This is the input object type. It provides access to all of the objects data, including basic data such as name + type as well as object based data such as propertynames and properties.",           /* tp_doc */
+  0,		               /* tp_traverse */
+  0,		               /* tp_clear */
+  0,		               /* tp_richcompare */
+  0,		               /* tp_weaklistoffset */
+  0,		               /* tp_iter */
+  0,		               /* tp_iternext */
+  iObject_methods,             /* tp_methods */
 };
 
 PyObject * iObject_new(Alembic::Abc::IObject in_Object)
@@ -257,3 +276,10 @@ PyObject * iObject_new(Alembic::Abc::IObject in_Object)
    return (PyObject *)object;
    ALEMBIC_PYOBJECT_CATCH_STATEMENT
 }
+
+bool register_module_iObject(PyObject *module)
+{
+  return register_module(module, iObject_Type, "iObject");
+}
+
+

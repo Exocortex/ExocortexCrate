@@ -109,11 +109,11 @@ static PyObject * iArchive_getSampleTimes(PyObject * self, PyObject * args)
 }
 
 static PyMethodDef iArchive_methods[] = {
-   {"getFileName", (PyCFunction)iArchive_getFileName, METH_NOARGS},
-   {"getVersion", (PyCFunction)iArchive_getVersion, METH_NOARGS},
-   {"getIdentifiers", (PyCFunction)iArchive_getIdentifiers, METH_NOARGS},
-   {"getObject", (PyCFunction)iArchive_getObject, METH_VARARGS},
-   {"getSampleTimes", (PyCFunction)iArchive_getSampleTimes, METH_NOARGS},
+   {"getFileName", (PyCFunction)iArchive_getFileName, METH_NOARGS, "Returns the filename this archive is linked to."},
+   {"getVersion", (PyCFunction)iArchive_getVersion, METH_NOARGS, "Returns the version of the archive loaded."},
+   {"getIdentifiers", (PyCFunction)iArchive_getIdentifiers, METH_NOARGS, "Returns a flat string list of all of the identifiers available."},
+   {"getObject", (PyCFunction)iArchive_getObject, METH_VARARGS, "Returns an iObject for the provided identifier string."},
+   {"getSampleTimes", (PyCFunction)iArchive_getSampleTimes, METH_NOARGS, "Returns a two dimensional array of all TimeSamplings available in this file."},
    {NULL, NULL}
 };
 
@@ -144,6 +144,26 @@ static PyTypeObject iArchive_Type = {
   (getattrfunc)iArchive_getAttr,    // tp_getattr
   0,                                // tp_setattr
   0,                                // tp_compare
+
+  0,                         /*tp_repr*/
+  0,                         /*tp_as_number*/
+  0,                         /*tp_as_sequence*/
+  0,                         /*tp_as_mapping*/
+  0,                         /*tp_hash */
+  0,                         /*tp_call*/
+  0,                         /*tp_str*/
+  0,                         /*tp_getattro*/
+  0,                         /*tp_setattro*/
+  0,                         /*tp_as_buffer*/
+  Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE, /*tp_flags*/
+  "his is the input archive. It provides access to all of the archive’s data, including TimeSamplings as well as objects.",           /* tp_doc */
+  0,		               /* tp_traverse */
+  0,		               /* tp_clear */
+  0,		               /* tp_richcompare */
+  0,		               /* tp_weaklistoffset */
+  0,		               /* tp_iter */
+  0,		               /* tp_iternext */
+  iArchive_methods,             /* tp_methods */
 };
 
 PyObject * iArchive_new(PyObject * self, PyObject * args)
@@ -190,3 +210,9 @@ PyObject * iArchive_new(PyObject * self, PyObject * args)
    return (PyObject *)object;
    ALEMBIC_PYOBJECT_CATCH_STATEMENT
 }
+
+bool register_module_iArchive(PyObject *module)
+{
+  return register_module(module, iArchive_Type, "iArchive");
+}
+

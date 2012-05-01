@@ -2342,12 +2342,12 @@ static PyObject * iProperty_getValues(PyObject * self, PyObject * args)
 }
 
 static PyMethodDef iProperty_methods[] = {
-   {"getName", (PyCFunction)iProperty_getName, METH_NOARGS},
-   {"getType", (PyCFunction)iProperty_getType, METH_NOARGS},
-   {"getSampleTimes", (PyCFunction)iProperty_getSampleTimes, METH_NOARGS},
-   {"getNbStoredSamples", (PyCFunction)iProperty_getNbStoredSamples, METH_NOARGS},
-   {"getSize", (PyCFunction)iProperty_getSize, METH_VARARGS},
-   {"getValues", (PyCFunction)iProperty_getValues, METH_VARARGS},
+   {"getName", (PyCFunction)iProperty_getName, METH_NOARGS, "Returns the name of this property."},
+   {"getType", (PyCFunction)iProperty_getType, METH_NOARGS, "Returns the type of this property."},
+   {"getSampleTimes", (PyCFunction)iProperty_getSampleTimes, METH_NOARGS, "Returns the TimeSampling this object is linked to."},
+   {"getNbStoredSamples", (PyCFunction)iProperty_getNbStoredSamples, METH_NOARGS, "Returns the actual number of stored samples."},
+   {"getSize", (PyCFunction)iProperty_getSize, METH_VARARGS, "Returns the size of the property. For single value properties, this method returns 1, for array value properties it returns the size of the array."},
+   {"getValues", (PyCFunction)iProperty_getValues, METH_VARARGS, "Returns the values of the property at the (optional) sample index."},
    {NULL, NULL}
 };
 
@@ -2500,6 +2500,25 @@ static PyTypeObject iProperty_Type = {
   (getattrfunc)iProperty_getAttr,   // tp_getattr
   0,                                // tp_setattr
   0,                                // tp_compare
+  0,                         /*tp_repr*/
+  0,                         /*tp_as_number*/
+  0,                         /*tp_as_sequence*/
+  0,                         /*tp_as_mapping*/
+  0,                         /*tp_hash */
+  0,                         /*tp_call*/
+  0,                         /*tp_str*/
+  0,                         /*tp_getattro*/
+  0,                         /*tp_setattro*/
+  0,                         /*tp_as_buffer*/
+  Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE, /*tp_flags*/
+  "This is the input property. It provides access to the propery’s data, such as name, type and per sample values.",           /* tp_doc */
+  0,		               /* tp_traverse */
+  0,		               /* tp_clear */
+  0,		               /* tp_richcompare */
+  0,		               /* tp_weaklistoffset */
+  0,		               /* tp_iter */
+  0,		               /* tp_iternext */
+  iProperty_methods,             /* tp_methods */
 };
 
 #define _NEW_PROP_IMPL_(tp,base,singleprop,arrayprop) \
@@ -2788,3 +2807,9 @@ PyObject * iProperty_new(Alembic::Abc::IObject in_Object, char * in_propName)
    return (PyObject *)prop;
    ALEMBIC_PYOBJECT_CATCH_STATEMENT
 }
+
+bool register_module_iProperty(PyObject *module)
+{
+  return register_module(module, iProperty_Type, "iProperty");
+}
+

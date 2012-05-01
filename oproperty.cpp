@@ -1007,8 +1007,8 @@ static PyObject * oProperty_setValues(PyObject * self, PyObject * args)
 }
 
 static PyMethodDef oProperty_methods[] = {
-   {"getName", (PyCFunction)oProperty_getName, METH_NOARGS},
-   {"setValues", (PyCFunction)oProperty_setValues, METH_VARARGS},
+   {"getName", (PyCFunction)oProperty_getName, METH_NOARGS, "Returns the name of the property."},
+   {"setValues", (PyCFunction)oProperty_setValues, METH_VARARGS, "Appends a new sample to the property, given the values provided. The values have to be a flat list of components, matching the count of the property. For example if this is a vector3farray property the tuple has to contain a multiple of 3 float values."},
    {NULL, NULL}
 };
 
@@ -1171,6 +1171,25 @@ static PyTypeObject oProperty_Type = {
   (getattrfunc)oProperty_getAttr,   // tp_getattr
   0,                                // tp_setattr
   0,                                // tp_compare
+  0,                         /*tp_repr*/
+  0,                         /*tp_as_number*/
+  0,                         /*tp_as_sequence*/
+  0,                         /*tp_as_mapping*/
+  0,                         /*tp_hash */
+  0,                         /*tp_call*/
+  0,                         /*tp_str*/
+  0,                         /*tp_getattro*/
+  0,                         /*tp_setattro*/
+  0,                         /*tp_as_buffer*/
+  Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE, /*tp_flags*/
+  "This is the output property. It provides methods for setting data on the property.",           /* tp_doc */
+  0,		               /* tp_traverse */
+  0,		               /* tp_clear */
+  0,		               /* tp_richcompare */
+  0,		               /* tp_weaklistoffset */
+  0,		               /* tp_iter */
+  0,		               /* tp_iternext */
+  oProperty_methods,             /* tp_methods */
 };
 
 #define _NEW_PROP_IMPL_(tp,base,singleprop,arrayprop,writer) \
@@ -1587,3 +1606,9 @@ PyObject * oProperty_new(oObjectPtr in_casted, char * in_propName, char * in_pro
    return (PyObject *)prop;
    ALEMBIC_PYOBJECT_CATCH_STATEMENT
 }
+
+bool register_module_oProperty(PyObject *module)
+{
+  return register_module(module, oProperty_Type, "oProperty");
+}
+

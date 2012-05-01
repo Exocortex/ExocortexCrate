@@ -11,9 +11,9 @@
 #define EC_LICENSE_RESULT_DEMO_LICENSE	(1)
 #define EC_LICENSE_RESULT_FULL_LICENSE	(2)
 
-#define ESS_LOG_ERROR(a) do { std::stringstream s; s << a;  std::cerr << ( s.str().c_str() ); } while(0)
-#define ESS_LOG_WARNING(a) do { std::stringstream s; s << a; std::cout << (s.str().c_str() ); } while(0)
-#define ESS_LOG_INFO(a) do { std::stringstream s; s << a; std::cout << (s.str().c_str() ); } while(0)
+#define ESS_LOG_ERROR(a) do { std::stringstream s; s << a;  std::cerr << ( s.str().c_str() ) << std::endl; } while(0)
+#define ESS_LOG_WARNING(a) do { std::stringstream s; s << a; std::cout << (s.str().c_str() ) << std::endl; } while(0)
+#define ESS_LOG_INFO(a) do { std::stringstream s; s << a; std::cout << (s.str().c_str() ) << std::endl; } while(0)
 
 
 #ifndef EC_LOG_ERROR

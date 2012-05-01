@@ -236,9 +236,9 @@ static PyObject * oArchive_createObject(PyObject * self, PyObject * args)
 }
 
 static PyMethodDef oArchive_methods[] = {
-   {"getFileName", (PyCFunction)oArchive_getFileName, METH_NOARGS},
-   {"createTimeSampling", (PyCFunction)oArchive_createTimeSampling, METH_VARARGS},
-   {"createObject", (PyCFunction)oArchive_createObject, METH_VARARGS},
+   {"getFileName", (PyCFunction)oArchive_getFileName, METH_NOARGS, "Returns the filename this archive is linked to."},
+   {"createTimeSampling", (PyCFunction)oArchive_createTimeSampling, METH_VARARGS, "Takes in a flat list of sample times (float) and creates a new TimeSampling. Returns 1 if successful."},
+   {"createObject", (PyCFunction)oArchive_createObject, METH_VARARGS, "Takes in a valid type string, an identifier string as well as an optional timeSamplingIndex. Returns the created oObject. Valid object types can be found in AppendixA of this document."},
    {NULL, NULL}
 };
 
@@ -312,6 +312,25 @@ static PyTypeObject oArchive_Type = {
   (getattrfunc)oArchive_getAttr,    // tp_getattr
   0,                                // tp_setattr
   0,                                // tp_compare
+  0,                         /*tp_repr*/
+  0,                         /*tp_as_number*/
+  0,                         /*tp_as_sequence*/
+  0,                         /*tp_as_mapping*/
+  0,                         /*tp_hash */
+  0,                         /*tp_call*/
+  0,                         /*tp_str*/
+  0,                         /*tp_getattro*/
+  0,                         /*tp_setattro*/
+  0,                         /*tp_as_buffer*/
+  Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE, /*tp_flags*/
+  "This is the output archive. It provides methods for creating content inside the archive, including TimeSamplings as well as objects.",           /* tp_doc */
+  0,		               /* tp_traverse */
+  0,		               /* tp_clear */
+  0,		               /* tp_richcompare */
+  0,		               /* tp_weaklistoffset */
+  0,		               /* tp_iter */
+  0,		               /* tp_iternext */
+  oArchive_methods,             /* tp_methods */
 };
 
 PyObject * oArchive_new(PyObject * self, PyObject * args)
@@ -423,4 +442,9 @@ oXformProperty * oArchive_getXformElement(oArchive * archive, std::string identi
          return element.xform;
    }
    return NULL;
+}
+
+bool register_module_oArchive(PyObject *module)
+{
+  return register_module(module, oArchive_Type, "oArchive");
 }

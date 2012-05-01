@@ -242,4 +242,6 @@ typedef struct {
 
 PyObject * iProperty_new(Alembic::Abc::IObject in_Object, char * in_propName);
 
+bool register_module_iProperty(PyObject *module);
+
 #endif

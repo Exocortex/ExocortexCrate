@@ -132,4 +132,6 @@ typedef struct {
 PyObject * oProperty_new(oObjectPtr in_casted, char * in_propName, char * in_propType, int tsIndex, void * in_Archive);
 void oProperty_deletePointers(oProperty * prop);
 
+bool register_module_oProperty(PyObject *module);
+
 #endif
