@@ -130,7 +130,7 @@ static int Init(AtNode *mynode, void **user_ptr)
       return NULL;
    }
 
-   ESS_LOG_INFO( "ExocortexAlembicArnoldDSO: Init: DataString: " + completeStr );
+   //ESS_LOG_INFO( "ExocortexAlembicArnoldDSO: Init: DataString: " + completeStr );
 
    // split the string using boost
    std::vector<std::string> nameValuePairs;
@@ -347,13 +347,13 @@ static int Init(AtNode *mynode, void **user_ptr)
    }
 
    // open the archive
-   ESS_LOG_INFO(paths[0].c_str());
+   //ESS_LOG_INFO(paths[0].c_str());
    Alembic::Abc::IArchive archive(Alembic::AbcCoreHDF5::ReadArchive(), paths[0]);
    	if(!archive.getTop().valid()) {
 		 AiMsgError("[ExocortexAlembicArnold] Not a valid Alembic data stream.  Path: %s", paths[0].c_str() );
 		return NULL;
 	}
-   ESS_LOG_INFO(paths[1].c_str());
+   //ESS_LOG_INFO(paths[1].c_str());
    Alembic::Abc::IArchive instancesArchive(Alembic::AbcCoreHDF5::ReadArchive(), paths[1]);
    	if(!instancesArchive.getTop().valid()) {
 		 AiMsgError("[ExocortexAlembicArnold] Not a valid Alembic data stream.  Path: %s", paths[1].c_str() );
@@ -944,7 +944,7 @@ static AtNode *GetNode(void *user_ptr, int i)
    // now check if this is supposed to be an instance
    if(ud->gIObjects[i].instanceID > -1)
    {
-	   ESS_LOG_INFO( "ExocortexAlembicArnoldDSO: GetNode: InstanceID: " + ud->gIObjects[i].instanceID );
+	//   ESS_LOG_INFO( "ExocortexAlembicArnoldDSO: GetNode: InstanceID: " + ud->gIObjects[i].instanceID );
        Alembic::AbcGeom::IPoints typedObject(ud->gIObjects[i].abc,Alembic::Abc::kWrapExisting);
 
       instanceCloudInfo * info = ud->gIObjects[i].instanceCloud;
@@ -1166,9 +1166,9 @@ static AtNode *GetNode(void *user_ptr, int i)
    const Alembic::Abc::MetaData &md = object.getMetaData();
    if(Alembic::AbcGeom::IPolyMesh::matches(md))
    {
-           ESS_LOG_INFO(object.getFullName().c_str());
+           //ESS_LOG_INFO(object.getFullName().c_str());
 
-	   ESS_LOG_INFO( "ExocortexAlembicArnoldDSO: GetNode: IPolyMesh" );
+	   //ESS_LOG_INFO( "ExocortexAlembicArnoldDSO: GetNode: IPolyMesh" );
 		
 
       // cast to polymesh and ensure we have got the 
@@ -1435,7 +1435,7 @@ static AtNode *GetNode(void *user_ptr, int i)
 
    } else if(Alembic::AbcGeom::ISubD::matches(md)) {
 
-      ESS_LOG_INFO( "ExocortexAlembicArnoldDSO: GetNode: ISubD" );
+      //ESS_LOG_INFO( "ExocortexAlembicArnoldDSO: GetNode: ISubD" );
 	
       // cast to subd
       Alembic::AbcGeom::ISubD typedObject(object,Alembic::Abc::kWrapExisting);
@@ -1640,7 +1640,7 @@ static AtNode *GetNode(void *user_ptr, int i)
       AiNodeSetArray(shapeNode, "vlist", pos);
 
    } else if(Alembic::AbcGeom::ICurves::matches(md)) {
-      ESS_LOG_INFO( "ExocortexAlembicArnoldDSO: GetNode: ICurves" );
+      //ESS_LOG_INFO( "ExocortexAlembicArnoldDSO: GetNode: ICurves" );
 
       // cast to curves
       Alembic::AbcGeom::ICurves typedObject(object,Alembic::Abc::kWrapExisting);
@@ -1877,7 +1877,7 @@ static AtNode *GetNode(void *user_ptr, int i)
 	  AiMsgWarning("[ExocortexAlembicArnold] This object type is not YET implemented: '%s'.",md.get("schema").c_str());
    } else if(Alembic::AbcGeom::IPoints::matches(md)) {
 
-      ESS_LOG_INFO( "ExocortexAlembicArnoldDSO: GetNode: IPoints" );
+      //ESS_LOG_INFO( "ExocortexAlembicArnoldDSO: GetNode: IPoints" );
 	  
 	  // cast to curves
       Alembic::AbcGeom::IPoints typedObject(object,Alembic::Abc::kWrapExisting);
