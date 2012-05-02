@@ -1102,6 +1102,45 @@ CStatus alembic_create_item_Invoke
                      }
                      if(uvProp.IsValid())
                      {
+                        // check if this alembic file has a uv options property
+                        bool hasUvOptions = false;
+                        if(abcMesh.valid())
+                           hasUvOptions = abcMesh.getSchema().getPropertyHeader( ".uvOptions" ) != NULL;
+                        else
+                           hasUvOptions = abcSubD.getSchema().getPropertyHeader( ".uvOptions" ) != NULL;
+                        if(hasUvOptions)
+                        {
+                           Alembic::Abc::IFloatArrayProperty prop;
+                           if(abcMesh.valid())
+                              prop = Alembic::Abc::IFloatArrayProperty( abcMesh.getSchema(), ".uvOptions" );
+                           else
+                              prop = Alembic::Abc::IFloatArrayProperty( abcSubD.getSchema(), ".uvOptions" );
+
+                           // if the prop stores any data
+                           if(prop.getNumSamples() > 0)
+                           {
+                              Alembic::Abc::FloatArraySamplePtr ptr = prop.getValue(0);
+                              if(ptr->size() > 1)
+                              {
+                                 bool uWrap = ptr->get()[0] != 0.0f;
+                                 bool vWrap = ptr->get()[1] != 0.0f;
+
+                                 CRefArray children = uvProp.GetNestedObjects();
+                                 for(LONG i=0; i<children.GetCount(); i++)
+                                 {
+                                    ProjectItem child(children.GetItem(i));
+                                    CString type = child.GetType();
+                                    if(type == L"uvprojdef")
+                                    {
+                                       child.GetParameter(L"wrap_u").PutValue(uWrap);
+                                       child.GetParameter(L"wrap_v").PutValue(vWrap);
+                                       break;
+                                    }
+                                 }
+                              }
+                           }
+                        }
+
                         // we found it, and we need to attach the op
                         CustomOperator op;
                         if(attachToExisting)

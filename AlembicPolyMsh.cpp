@@ -45,11 +45,11 @@ AlembicPolyMesh::AlembicPolyMesh(const XSI::CRef & in_Ref, AlembicWriteJob * in_
    Alembic::AbcGeom::OPolyMesh mesh(xform,meshName.GetAsciiString(),GetJob()->GetAnimatedTs());
    AddRef(prim.GetParent3DObject().GetKinematics().GetGlobal().GetRef());
 
-   // create the generic properties
-   mOVisibility = CreateVisibilityProperty(mesh,GetJob()->GetAnimatedTs());
-
    mXformSchema = xform.getSchema();
    mMeshSchema = mesh.getSchema();
+
+   // create the generic properties
+   mOVisibility = CreateVisibilityProperty(mesh,GetJob()->GetAnimatedTs());
 }
 
 AlembicPolyMesh::~AlembicPolyMesh()
@@ -391,6 +391,33 @@ XSI::CStatus AlembicPolyMesh::Save(double time)
             if(mUvIndexVec.size() > 0 && uvIndexCount > 0)
                uvSample.setIndices(Alembic::Abc::UInt32ArraySample(&mUvIndexVec.front(),uvIndexCount));
             mMeshSample.setUVs(uvSample);
+
+            // create the uv options
+            if(mUvOptionsVec.size() == 0)
+            {
+               CRefArray children = ClusterProperty(uvPropRef).GetNestedObjects();
+               bool uWrap = false;
+               bool vWrap = false;
+               for(LONG i=0; i<children.GetCount(); i++)
+               {
+                  ProjectItem child(children.GetItem(i));
+                  CString type = child.GetType();
+                  if(type == L"uvprojdef")
+                  {
+                     uWrap = (bool)child.GetParameter(L"wrap_u").GetValue();
+                     vWrap = (bool)child.GetParameter(L"wrap_v").GetValue();
+                     break;
+                  }
+               }
+
+               mUvOptionsProperty = OFloatArrayProperty(mMeshSchema, ".uvOptions", mMeshSchema.getMetaData(), GetJob()->GetAnimatedTs() );
+               
+               // uv wrapping
+               mUvOptionsVec.push_back(uWrap ? 1.0f : 0.0f);
+               mUvOptionsVec.push_back(vWrap ? 1.0f : 0.0f);
+
+               mUvOptionsProperty.set(Alembic::Abc::FloatArraySample(&mUvOptionsVec.front(),mUvOptionsVec.size()));
+            }
          }
       }
 

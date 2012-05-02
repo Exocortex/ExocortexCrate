@@ -18,6 +18,8 @@ private:
    std::vector<Alembic::Abc::uint32_t> mUvIndexVec;
    std::vector<std::vector<Alembic::AbcCoreAbstract::ALEMBIC_VERSION_NS::int32_t> > mFaceSetsVec;
    Alembic::Abc::ALEMBIC_VERSION_NS::OV3fArrayProperty mBindPoseProperty;
+   Alembic::Abc::ALEMBIC_VERSION_NS::OFloatArrayProperty mUvOptionsProperty;
+   std::vector<float> mUvOptionsVec;
 
 public:
 

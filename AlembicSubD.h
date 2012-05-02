@@ -18,6 +18,8 @@ private:
    Alembic::Abc::ALEMBIC_VERSION_NS::OV3fArrayProperty mBindPoseProperty;
    std::vector<Alembic::Abc::V3f> mBindPoseVec;
    std::vector<Alembic::Abc::V3f> mVelocitiesVec;
+   Alembic::Abc::ALEMBIC_VERSION_NS::OFloatArrayProperty mUvOptionsProperty;
+   std::vector<float> mUvOptionsVec;
 
 public:
 
