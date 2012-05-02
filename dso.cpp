@@ -104,11 +104,17 @@ std::string getNameFromIdentifier(const std::string & identifier, long id = -1, 
 
 boost::mutex gGlobalLock;
 
+//#ifdef __UNIX__
+#define GLOBAL_LOCK	   boost::mutex::scoped_lock writeLock( gGlobalLock );
+//#else
+//#define GLOBAL_LOCK
+//#endif
+
 std::map<std::string,std::string> gUsedArchives;
 
 static int Init(AtNode *mynode, void **user_ptr)
 {
-   boost::mutex::scoped_lock writeLock( gGlobalLock );
+	GLOBAL_LOCK;
 
    userData * ud = new userData();
    *user_ptr = ud;
@@ -893,7 +899,7 @@ static int Init(AtNode *mynode, void **user_ptr)
 // All done, deallocate stuff
 static int Cleanup(void *user_ptr)
 {
-	boost::mutex::scoped_lock writeLock( gGlobalLock );
+	GLOBAL_LOCK;
 
 	userData * ud = (userData*)user_ptr;
    ud->gIObjects.clear();
@@ -907,7 +913,7 @@ static int Cleanup(void *user_ptr)
 // Get number of nodes
 static int NumNodes(void *user_ptr)
 {
-	boost::mutex::scoped_lock writeLock( gGlobalLock );
+	GLOBAL_LOCK;
 
 	userData * ud = (userData*)user_ptr;
    int size = (int)ud->gIObjects.size();
@@ -918,7 +924,7 @@ static int NumNodes(void *user_ptr)
 // Get the i_th node
 static AtNode *GetNode(void *user_ptr, int i)
 {
-	boost::mutex::scoped_lock writeLock( gGlobalLock );
+	GLOBAL_LOCK;
 
 	userData * ud = (userData*)user_ptr;
    // check if this is a known object
@@ -1224,10 +1230,19 @@ static AtNode *GetNode(void *user_ptr, int i)
       AtArray * nor = NULL;
       AtArray * uvsIdx = NULL;
 
+      // check if we have dynamic topology
+      bool dynamicTopology = false;
+      Alembic::Abc::IInt32ArrayProperty faceIndicesProp = Alembic::Abc::IInt32ArrayProperty(typedObject.getSchema(),".faceIndices");
+      if(faceIndicesProp.valid())
+         dynamicTopology = !faceIndicesProp.isConstant();
+
       // loop over all samples
       AtULong posOffset = 0;
       AtULong norOffset = 0;
       size_t firstSampleCount = 0;
+      Alembic::Abc::Int32ArraySamplePtr abcFaceCounts;
+      Alembic::Abc::Int32ArraySamplePtr abcFaceIndices;
+
       for(size_t sampleIndex = 0; sampleIndex < minNumSamples; sampleIndex++)
       {
          SampleInfo sampleInfo = getSampleInfo(
@@ -1243,8 +1258,8 @@ static AtNode *GetNode(void *user_ptr, int i)
          // take care of the topology
          if(sampleIndex == 0 && !createdShifted)
          {
-            Alembic::Abc::Int32ArraySamplePtr abcFaceCounts = sample.getFaceCounts();
-            Alembic::Abc::Int32ArraySamplePtr abcFaceIndices = sample.getFaceIndices();
+            abcFaceCounts = sample.getFaceCounts();
+            abcFaceIndices = sample.getFaceIndices();
             if(abcFaceCounts->get()[0] == 0)
                return NULL;
             AtArray * faceCounts = AiArrayAllocate((AtInt)abcFaceCounts->size(), 1, AI_TYPE_UINT);
@@ -1279,6 +1294,33 @@ static AtNode *GetNode(void *user_ptr, int i)
                }
                AiNodeSetArray(shapeNode, "uvlist", uvs);
                AiNodeSetArray(shapeNode, "uvidxs", AiArrayCopy(uvsIdx));
+
+               // check if we have uvOptions
+               if(typedObject.getSchema().getPropertyHeader( ".uvOptions" ) != NULL)
+               {
+                  Alembic::Abc::IFloatArrayProperty prop = Alembic::Abc::IFloatArrayProperty( typedObject.getSchema(), ".uvOptions" );
+                  if(prop.getNumSamples() > 0)
+                  {
+                     Alembic::Abc::FloatArraySamplePtr ptr = prop.getValue(0);
+                     if(ptr->size() > 1)
+                     {
+                        bool uWrap = ptr->get()[0] != 0.0f;
+                        bool vWrap = ptr->get()[1] != 0.0f;
+
+                        // fill the arnold array
+                        AtArray * uvOptions = AiArrayAllocate(2,1,AI_TYPE_BOOLEAN);
+                        AiArraySetBool(uvOptions,0,uWrap);
+                        AiArraySetBool(uvOptions,1,vWrap);
+
+                        // we need to define this two times, once for a named and once
+                        // for an unnamed texture projection.
+                        AiNodeDeclare(shapeNode, "Texture_Projection_wrap", "constant ARRAY BOOL");
+                        AiNodeDeclare(shapeNode, "_wrap", "constant ARRAY BOOL");
+                        AiNodeSetArray(shapeNode, "Texture_Projection_wrap", uvOptions);
+                        AiNodeSetArray(shapeNode, "_wrap", uvOptions);
+                     }
+                  }
+               }
             }
 
             // check if we have a bindpose in the alembic file
@@ -1313,8 +1355,7 @@ static AtNode *GetNode(void *user_ptr, int i)
             pos = AiArrayAllocate((AtInt)(abcPos->size() * 3),(AtInt)minNumSamples,AI_TYPE_FLOAT);
          }
 
-         // if the count has changed, let's move back to the first sample
-         if(abcPos->size() != sample.getFaceIndices()->size())
+         if(dynamicTopology)
          {
             SampleInfo sampleInfoFirst = getSampleInfo(
                samples[0],
@@ -1361,7 +1402,7 @@ static AtNode *GetNode(void *user_ptr, int i)
             Alembic::Abc::P3fArraySamplePtr abcPos2 = sample2.getPositions();
             float alpha = (float)sampleInfo.alpha;
             float ialpha = 1.0f - alpha;
-            if(abcPos2->size() == abcPos->size())
+            if(!dynamicTopology)
             {
                for(size_t i=0;i<abcPos->size();i++)
                {
@@ -1403,7 +1444,7 @@ static AtNode *GetNode(void *user_ptr, int i)
             if(abcNor != NULL)
             {
                Alembic::Abc::N3fArraySamplePtr abcNor2 = normalParam.getExpandedValue(sampleInfo.ceilIndex).getVals();
-               if(abcNor->size() == abcNor2->size())
+               if(!dynamicTopology)
                {
                   for(size_t i=0;i<abcNor->size();i++)
                   {
@@ -1480,9 +1521,16 @@ static AtNode *GetNode(void *user_ptr, int i)
       // create arrays to hold the data
       AtArray * pos = NULL;
 
+      // check if we have dynamic topology
+      bool dynamicTopology = false;
+      Alembic::Abc::IInt32ArrayProperty faceIndicesProp = Alembic::Abc::IInt32ArrayProperty(typedObject.getSchema(),".faceIndices");
+      if(faceIndicesProp.valid())
+         dynamicTopology = !faceIndicesProp.isConstant();
+
       // loop over all samples
       size_t firstSampleCount = 0;
       AtULong posOffset = 0;
+
       for(size_t sampleIndex = 0; sampleIndex < minNumSamples; sampleIndex++)
       {
          SampleInfo sampleInfo = getSampleInfo(
@@ -1540,6 +1588,33 @@ static AtNode *GetNode(void *user_ptr, int i)
                }
                AiNodeSetArray(shapeNode, "uvlist", uvs);
                AiNodeSetArray(shapeNode, "uvidxs", uvsIdx);
+
+               // check if we have uvOptions
+               if(typedObject.getSchema().getPropertyHeader( ".uvOptions" ) != NULL)
+               {
+                  Alembic::Abc::IFloatArrayProperty prop = Alembic::Abc::IFloatArrayProperty( typedObject.getSchema(), ".uvOptions" );
+                  if(prop.getNumSamples() > 0)
+                  {
+                     Alembic::Abc::FloatArraySamplePtr ptr = prop.getValue(0);
+                     if(ptr->size() > 1)
+                     {
+                        bool uWrap = ptr->get()[0] != 0.0f;
+                        bool vWrap = ptr->get()[1] != 0.0f;
+
+                        // fill the arnold array
+                        AtArray * uvOptions = AiArrayAllocate(2,1,AI_TYPE_BOOLEAN);
+                        AiArraySetBool(uvOptions,0,uWrap);
+                        AiArraySetBool(uvOptions,1,vWrap);
+
+                        // we need to define this two times, once for a named and once
+                        // for an unnamed texture projection.
+                        AiNodeDeclare(shapeNode, "Texture_Projection_wrap", "constant ARRAY BOOL");
+                        AiNodeDeclare(shapeNode, "_wrap", "constant ARRAY BOOL");
+                        AiNodeSetArray(shapeNode, "Texture_Projection_wrap", uvOptions);
+                        AiNodeSetArray(shapeNode, "_wrap", uvOptions);
+                     }
+                  }
+               }
             }
             else
             {
@@ -1557,7 +1632,7 @@ static AtNode *GetNode(void *user_ptr, int i)
          }
 
          // if the count has changed, let's move back to the first sample
-         if(abcPos->size() != sample.getFaceIndices()->size())
+         if(dynamicTopology)
          {
             SampleInfo sampleInfoFirst = getSampleInfo(
                samples[0],
@@ -1588,7 +1663,7 @@ static AtNode *GetNode(void *user_ptr, int i)
             Alembic::Abc::P3fArraySamplePtr abcPos2 = sample2.getPositions();
             float alpha = (float)sampleInfo.alpha;
             float ialpha = 1.0f - alpha;
-            if(abcPos->size() == abcPos2->size())
+            if(!dynamicTopology)
             {
                for(size_t i=0;i<abcPos->size();i++)
                {
