@@ -415,13 +415,18 @@ ESS_CALLBACK_START(alembic_export_Execute,CRef&)
    }
 
    // compute the job count
-   ULONG jobCount = 0;
-   for(size_t i=0;i<jobPtrs.size();i++)
+   ULONG jobCount = 0;   
+   ULONG objectCount = 0;
+   for(size_t i=0;i<jobPtrs.size();i++) {
       jobCount += (ULONG)jobPtrs[i]->GetNbObjects() * (ULONG)jobPtrs[i]->GetFrames().size();
+	  objectCount += (ULONG)jobPtrs[i]->GetNbObjects();
+   }
+
+
 
    ProgressBar prog;
    prog = Application().GetUIToolkit().GetProgressBar();
-   prog.PutCaption(L"Exporting "+CString(jobCount)+L" object's frames...");
+   prog.PutCaption(L"Exporting "+CString(jobCount)+L" frames from " + CString(objectCount) + " objects...");
    prog.PutMinimum(0);
    prog.PutMaximum(jobCount);
    prog.PutValue(0);
