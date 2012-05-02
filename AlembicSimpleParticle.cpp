@@ -804,6 +804,8 @@ int AlembicSimpleParticle::Display(TimeValue t, INode* inode, ViewExp *vpt, int 
        mesh.render(gw, &particleMtl, 
            (flags&USE_DAMAGE_RECT) ? &vpt->GetDammageRect() : NULL, COMP_ALL);
    }
+
+   Matrix3 nodeWorldTM = inode->GetObjTMAfterWSM(t);
       
    // Draw the particles
    NullView nullView;
@@ -815,6 +817,8 @@ int AlembicSimpleParticle::Display(TimeValue t, INode* inode, ViewExp *vpt, int 
            Matrix3 meshTM;
            Interval meshTMValid = FOREVER;
            GetMultipleRenderMeshTM(t, inode, nullView, i, meshTM, meshTMValid);
+		   meshTM = meshTM * nodeWorldTM;
+
            INode *meshNode = GetParticleMeshNode(i, inode);
            Material *mtls = meshNode->Mtls();
            int numMtls = meshNode->NumMtls();
