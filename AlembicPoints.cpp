@@ -194,7 +194,7 @@ bool AlembicPoints::Save(double time)
 		//move everything from world space to local space
 		pos = pos * nodeWorldTransInv;
 		vel = vel * nodeWorldTransInv;
-		scale = scale * nodeWorldTransInv;
+		//scale = scale * nodeWorldTransInv;
 		orientation = Imath::extractQuat(orientation.toMatrix44() * nodeWorldTransInv);
 		spin = extractQuat(spin.toMatrix44() * nodeWorldTransInv);
 		
