@@ -1286,6 +1286,33 @@ static AtNode *GetNode(void *user_ptr, int i)
                }
                AiNodeSetArray(shapeNode, "uvlist", uvs);
                AiNodeSetArray(shapeNode, "uvidxs", AiArrayCopy(uvsIdx));
+
+               // check if we have uvOptions
+               if(typedObject.getSchema().getPropertyHeader( ".uvOptions" ) != NULL)
+               {
+                  Alembic::Abc::IFloatArrayProperty prop = Alembic::Abc::IFloatArrayProperty( typedObject.getSchema(), ".uvOptions" );
+                  if(prop.getNumSamples() > 0)
+                  {
+                     Alembic::Abc::FloatArraySamplePtr ptr = prop.getValue(0);
+                     if(ptr->size() > 1)
+                     {
+                        bool uWrap = ptr->get()[0] != 0.0f;
+                        bool vWrap = ptr->get()[1] != 0.0f;
+
+                        // fill the arnold array
+                        AtArray * uvOptions = AiArrayAllocate(2,1,AI_TYPE_BOOLEAN);
+                        AiArraySetBool(uvOptions,0,uWrap);
+                        AiArraySetBool(uvOptions,1,vWrap);
+
+                        // we need to define this two times, once for a named and once
+                        // for an unnamed texture projection.
+                        AiNodeDeclare(shapeNode, "Texture_Projection_wrap", "constant ARRAY BOOL");
+                        AiNodeDeclare(shapeNode, "_wrap", "constant ARRAY BOOL");
+                        AiNodeSetArray(shapeNode, "Texture_Projection_wrap", uvOptions);
+                        AiNodeSetArray(shapeNode, "_wrap", uvOptions);
+                     }
+                  }
+               }
             }
 
             // check if we have a bindpose in the alembic file
@@ -1553,6 +1580,33 @@ static AtNode *GetNode(void *user_ptr, int i)
                }
                AiNodeSetArray(shapeNode, "uvlist", uvs);
                AiNodeSetArray(shapeNode, "uvidxs", uvsIdx);
+
+               // check if we have uvOptions
+               if(typedObject.getSchema().getPropertyHeader( ".uvOptions" ) != NULL)
+               {
+                  Alembic::Abc::IFloatArrayProperty prop = Alembic::Abc::IFloatArrayProperty( typedObject.getSchema(), ".uvOptions" );
+                  if(prop.getNumSamples() > 0)
+                  {
+                     Alembic::Abc::FloatArraySamplePtr ptr = prop.getValue(0);
+                     if(ptr->size() > 1)
+                     {
+                        bool uWrap = ptr->get()[0] != 0.0f;
+                        bool vWrap = ptr->get()[1] != 0.0f;
+
+                        // fill the arnold array
+                        AtArray * uvOptions = AiArrayAllocate(2,1,AI_TYPE_BOOLEAN);
+                        AiArraySetBool(uvOptions,0,uWrap);
+                        AiArraySetBool(uvOptions,1,vWrap);
+
+                        // we need to define this two times, once for a named and once
+                        // for an unnamed texture projection.
+                        AiNodeDeclare(shapeNode, "Texture_Projection_wrap", "constant ARRAY BOOL");
+                        AiNodeDeclare(shapeNode, "_wrap", "constant ARRAY BOOL");
+                        AiNodeSetArray(shapeNode, "Texture_Projection_wrap", uvOptions);
+                        AiNodeSetArray(shapeNode, "_wrap", uvOptions);
+                     }
+                  }
+               }
             }
             else
             {
