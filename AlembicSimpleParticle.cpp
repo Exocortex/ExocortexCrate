@@ -81,6 +81,10 @@ AlembicSimpleParticle::AlembicSimpleParticle()
     pblock2 = NULL;
     m_pBoxMaker = NULL;
     m_pSphereMaker = NULL;
+	m_pCylinderMaker = NULL;
+    m_pConeMaker = NULL;
+	m_pDiskMaker = NULL;
+	m_pRectangleMaker = NULL;
 
     s_AlembicSimpleParticleClassDesc.MakeAutoParamBlocks(this);
 }
@@ -730,19 +734,24 @@ Mesh* AlembicSimpleParticle::GetMultipleRenderMesh(TimeValue  t,  INode *inode, 
 
 void AlembicSimpleParticle::GetMultipleRenderMeshTM(TimeValue  t, INode *inode, View &view, int  meshNumber, Matrix3 &meshTM, Interval &meshTMValid)
 {
-    if (meshNumber > parts.Count() || !parts.Alive(meshNumber) || view.CheckForRenderAbort())
-    {
-        meshTM.IdentityMatrix();
-    }
+    //if (meshNumber > parts.Count() || !parts.Alive(meshNumber) || view.CheckForRenderAbort())
+    //{
+    //    
+    //}
+
+	 //Matrix3 nodeWorldTM = inode->GetObjTMAfterWSM(t);
 
     // Calculate the matrix
     Point3 pos = parts.points[meshNumber];
     Quat orient = m_ParticleOrientations[meshNumber];
     Point3 scaleVec = m_ParticleScales[meshNumber];
     scaleVec *= parts.radius[meshNumber];
-    meshTM.SetRotate(orient);
+	meshTM.IdentityMatrix();
+	//meshTM.SetRotate(orient);//TODO: the orientation is wrong
     meshTM.PreScale(scaleVec);
-    meshTM.SetTrans(pos);
+    meshTM.Translate(pos);
+
+
  
     meshTMValid = Interval(t, t);
 }
@@ -944,9 +953,10 @@ int AlembicSimpleParticle::callback( INode *node )
 
 Mesh *AlembicSimpleParticle::BuildPointMesh(int meshNumber, TimeValue t, INode *node, View& view, BOOL &needDelete)
 {
-    Mesh *pMesh = NULL;
-    needDelete = FALSE;
-    return pMesh;
+    //Mesh *pMesh = NULL;
+    //needDelete = FALSE;
+    //return pMesh;
+	return BuildSphereMesh(meshNumber, t, node, view, needDelete);
 }
 
 Mesh *AlembicSimpleParticle::BuildBoxMesh(int meshNumber, TimeValue t, INode *node, View& view, BOOL &needDelete)
@@ -974,7 +984,6 @@ Mesh *AlembicSimpleParticle::BuildSphereMesh(int meshNumber, TimeValue t, INode 
     Mesh *pMesh = NULL;
     needDelete = FALSE;
 
-    // Sphere Maker
     if (!m_pSphereMaker)
     {
         m_pSphereMaker = static_cast<GenSphere*>
@@ -996,27 +1005,123 @@ Mesh *AlembicSimpleParticle::BuildCylinderMesh(int meshNumber, TimeValue t, INod
 {
     Mesh *pMesh = NULL;
     needDelete = FALSE;
-    return pMesh;
+
+    if (!m_pCylinderMaker)
+    {
+        m_pCylinderMaker = static_cast<GenCylinder*>
+            (GET_MAX_INTERFACE()->CreateInstance(GEOMOBJECT_CLASS_ID, Class_ID(CYLINDER_CLASS_ID, 0)));
+
+        float radius = 1;
+		float height = 1;
+		int numSegments = 1;
+		int numSides = 32;
+        m_pCylinderMaker->SetParams( radius, height, numSegments, numSides );
+        m_pCylinderMaker->BuildMesh(0);
+        m_pCylinderMaker->UpdateValidity(TOPO_CHAN_NUM, FOREVER);
+        m_pCylinderMaker->UpdateValidity(GEOM_CHAN_NUM, FOREVER);
+        m_pCylinderMaker->UpdateValidity(TEXMAP_CHAN_NUM, FOREVER);
+   }
+
+   pMesh = m_pCylinderMaker->GetRenderMesh(t, node, view, needDelete);
+   return pMesh;
 }
+
 
 Mesh *AlembicSimpleParticle::BuildConeMesh(int meshNumber, TimeValue t, INode *node, View& view, BOOL &needDelete)
 {
     Mesh *pMesh = NULL;
     needDelete = FALSE;
-    return pMesh;
+
+	if (!m_pConeMaker)
+    {
+        m_pConeMaker = static_cast<SimpleObject*>
+            (GET_MAX_INTERFACE()->CreateInstance(GEOMOBJECT_CLASS_ID, Class_ID(CONE_CLASS_ID, 0)));
+
+        float radius1 = 1;
+        float radius2 = 0;
+		float height = 1;
+		int numSegments = 1;
+		int numCapSegments = 1;
+		int numSides = 32;
+
+		TimeValue zero( 0 );
+
+/*#define PB_RADIUS1		0
+#define PB_RADIUS2		1
+#define PB_HEIGHT		2
+#define PB_SEGMENTS		3
+#define PB_CAPSEGMENTS	4
+#define PB_SIDES		5*/
+
+        m_pConeMaker->GetParamBlockByID( 0 )->SetValue( 0, zero, radius1 );
+        m_pConeMaker->GetParamBlockByID( 0 )->SetValue( 1, zero, radius2 );
+        m_pConeMaker->GetParamBlockByID( 0 )->SetValue( 2, zero, height );
+        m_pConeMaker->GetParamBlockByID( 0 )->SetValue( 3, zero, numSegments );
+        m_pConeMaker->GetParamBlockByID( 0 )->SetValue( 4, zero, numCapSegments );
+        m_pConeMaker->GetParamBlockByID( 0 )->SetValue( 5, zero, numSides );
+        m_pConeMaker->BuildMesh(0);
+        m_pConeMaker->UpdateValidity(TOPO_CHAN_NUM, FOREVER);
+        m_pConeMaker->UpdateValidity(GEOM_CHAN_NUM, FOREVER);
+        m_pConeMaker->UpdateValidity(TEXMAP_CHAN_NUM, FOREVER);
+   }
+
+   pMesh = m_pConeMaker->GetRenderMesh(t, node, view, needDelete);
+   return pMesh;
 }
 
 Mesh *AlembicSimpleParticle::BuildDiscMesh(int meshNumber, TimeValue t, INode *node, View& view, BOOL &needDelete)
 {
     Mesh *pMesh = NULL;
     needDelete = FALSE;
-    return pMesh;
-}
+    
+	if (!m_pDiskMaker)
+    {
+        m_pDiskMaker = static_cast<GenCylinder*>
+            (GET_MAX_INTERFACE()->CreateInstance(GEOMOBJECT_CLASS_ID, Class_ID(CYLINDER_CLASS_ID, 0)));
 
+        float radius = 1;
+		float height = 0;
+		int numSegments = 1;
+		int numSides = 32;
+        m_pDiskMaker->SetParams( radius, height, numSegments, numSides );
+        m_pDiskMaker->BuildMesh(0);
+        m_pDiskMaker->UpdateValidity(TOPO_CHAN_NUM, FOREVER);
+        m_pDiskMaker->UpdateValidity(GEOM_CHAN_NUM, FOREVER);
+        m_pDiskMaker->UpdateValidity(TEXMAP_CHAN_NUM, FOREVER);
+   }
+
+   pMesh = m_pDiskMaker->GetRenderMesh(t, node, view, needDelete);
+   return pMesh;
+}
+ 
 Mesh *AlembicSimpleParticle::BuildRectangleMesh(int meshNumber, TimeValue t, INode *node, View& view, BOOL &needDelete)
 {
     Mesh *pMesh = NULL;
     needDelete = FALSE;
+
+	if (!m_pRectangleMaker)
+    {
+        m_pRectangleMaker = static_cast<SimpleObject*>
+            (GET_MAX_INTERFACE()->CreateInstance(GEOMOBJECT_CLASS_ID, Class_ID(CONE_CLASS_ID, 0)));
+
+        float width = 1;
+        float length = 1;
+
+		TimeValue zero( 0 );
+
+/*// Parameter map indices
+#define PB_LENGTH		0
+#define PB_WIDTH		1*/
+
+        m_pRectangleMaker->GetParamBlockByID( 0 )->SetValue( 0, zero, width );
+        m_pRectangleMaker->GetParamBlockByID( 0 )->SetValue( 1, zero, length );
+        m_pRectangleMaker->BuildMesh(0);
+        m_pRectangleMaker->UpdateValidity(TOPO_CHAN_NUM, FOREVER);
+        m_pRectangleMaker->UpdateValidity(GEOM_CHAN_NUM, FOREVER);
+        m_pRectangleMaker->UpdateValidity(TEXMAP_CHAN_NUM, FOREVER);
+   }
+
+   pMesh = m_pRectangleMaker->GetRenderMesh(t, node, view, needDelete);
     return pMesh;
 }
 
