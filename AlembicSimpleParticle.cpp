@@ -748,7 +748,7 @@ void AlembicSimpleParticle::GetMultipleRenderMeshTM(TimeValue  t, INode *inode, 
     scaleVec *= parts.radius[meshNumber];
 	meshTM.IdentityMatrix();
 	//meshTM.SetRotate(orient);//TODO: the orientation is wrong
-    meshTM.PreScale(scaleVec);
+    //meshTM.PreScale(scaleVec);
     meshTM.Translate(pos);
 
 
@@ -814,7 +814,7 @@ int AlembicSimpleParticle::Display(TimeValue t, INode* inode, ViewExp *vpt, int 
            (flags&USE_DAMAGE_RECT) ? &vpt->GetDammageRect() : NULL, COMP_ALL);
    }
 
-   Matrix3 nodeWorldTM = inode->GetObjTMAfterWSM(t);
+    Matrix3 objToWorld = inode->GetObjTMAfterWSM(t);
       
    // Draw the particles
    NullView nullView;
@@ -823,10 +823,17 @@ int AlembicSimpleParticle::Display(TimeValue t, INode* inode, ViewExp *vpt, int 
    {
        if (m_ParticleViewportMeshes[i].mesh)
        {
-           Matrix3 meshTM;
-           Interval meshTMValid = FOREVER;
-           GetMultipleRenderMeshTM(t, inode, nullView, i, meshTM, meshTMValid);
-		   meshTM = meshTM * nodeWorldTM;
+           Matrix3 elemToObj;
+           elemToObj.IdentityMatrix();
+
+		   Interval meshTMValid = FOREVER;
+
+		   BOOL deleteMesh = FALSE;
+		    
+           GetMultipleRenderMeshTM(t, inode, nullView, i, elemToObj, meshTMValid);
+		   Mesh *mesh = GetMultipleRenderMesh(t, inode, nullView, deleteMesh, i);
+
+		   Matrix3 elemToWorld = elemToObj * objToWorld;
 
            INode *meshNode = GetParticleMeshNode(i, inode);
            Material *mtls = meshNode->Mtls();
@@ -835,8 +842,8 @@ int AlembicSimpleParticle::Display(TimeValue t, INode* inode, ViewExp *vpt, int 
            if (numMtls > 1)
                gw->setMaterial(mtls[0], 0);
 
-           gw->setTransform(meshTM);
-           m_ParticleViewportMeshes[i].mesh->render(gw, mtls, (flags&USE_DAMAGE_RECT) ? &vpt->GetDammageRect() : NULL, COMP_ALL, numMtls);
+           gw->setTransform( elemToWorld );
+           mesh->render(gw, mtls, (flags&USE_DAMAGE_RECT) ? &vpt->GetDammageRect() : NULL, COMP_ALL, numMtls);
        }
        else
        {
@@ -887,14 +894,26 @@ int AlembicSimpleParticle::HitTest(TimeValue t, INode *inode, int type, int cros
    // Hit test against the particles
    NullView nullView;
    gw->setRndLimits((savedLimits|GW_PICK) & ~ GW_ILLUM);
+
+   Matrix3 objToWorld = inode->GetObjTMAfterWSM(t);
+ 
    for (int i = 0; i < NumberOfRenderMeshes(); i += 1)
    {
        if (m_ParticleViewportMeshes[i].mesh)
        {
-           Matrix3 meshTM;
-           Interval meshTMValid = FOREVER;
-           GetMultipleRenderMeshTM(t, inode, nullView, i, meshTM, meshTMValid);
-           INode *meshNode = GetParticleMeshNode(i, inode);
+           Matrix3 elemToObj;
+           elemToObj.IdentityMatrix();
+
+		   Interval meshTMValid = FOREVER;
+
+		   BOOL deleteMesh = FALSE;
+		    
+           GetMultipleRenderMeshTM(t, inode, nullView, i, elemToObj, meshTMValid);
+		   Mesh *mesh = GetMultipleRenderMesh(t, inode, nullView, deleteMesh, i);
+
+          Matrix3 elemToWorld = elemToObj * objToWorld;
+
+		   INode *meshNode = GetParticleMeshNode(i, inode);
            Material *mtls = 0;
            int numMtls = 0;
 
@@ -909,8 +928,8 @@ int AlembicSimpleParticle::HitTest(TimeValue t, INode *inode, int type, int cros
                 numMtls = 1;
            }
 
-           gw->setTransform(meshTM);
-           m_ParticleViewportMeshes[i].mesh->select(gw, mtls, &hr, TRUE, numMtls);
+           gw->setTransform( elemToWorld );
+           mesh->select(gw, mtls, &hr, TRUE, numMtls);
        }
        else
        {
