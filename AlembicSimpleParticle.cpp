@@ -730,19 +730,24 @@ Mesh* AlembicSimpleParticle::GetMultipleRenderMesh(TimeValue  t,  INode *inode, 
 
 void AlembicSimpleParticle::GetMultipleRenderMeshTM(TimeValue  t, INode *inode, View &view, int  meshNumber, Matrix3 &meshTM, Interval &meshTMValid)
 {
-    if (meshNumber > parts.Count() || !parts.Alive(meshNumber) || view.CheckForRenderAbort())
-    {
-        meshTM.IdentityMatrix();
-    }
+    //if (meshNumber > parts.Count() || !parts.Alive(meshNumber) || view.CheckForRenderAbort())
+    //{
+    //    
+    //}
+
+	 //Matrix3 nodeWorldTM = inode->GetObjTMAfterWSM(t);
 
     // Calculate the matrix
     Point3 pos = parts.points[meshNumber];
     Quat orient = m_ParticleOrientations[meshNumber];
     Point3 scaleVec = m_ParticleScales[meshNumber];
     scaleVec *= parts.radius[meshNumber];
-    meshTM.SetRotate(orient);
+	meshTM.IdentityMatrix();
+	//meshTM.SetRotate(orient);//TODO: the orientation is wrong
     meshTM.PreScale(scaleVec);
-    meshTM.SetTrans(pos);
+    meshTM.Translate(pos);
+
+
  
     meshTMValid = Interval(t, t);
 }
@@ -804,6 +809,8 @@ int AlembicSimpleParticle::Display(TimeValue t, INode* inode, ViewExp *vpt, int 
        mesh.render(gw, &particleMtl, 
            (flags&USE_DAMAGE_RECT) ? &vpt->GetDammageRect() : NULL, COMP_ALL);
    }
+
+   Matrix3 nodeWorldTM = inode->GetObjTMAfterWSM(t);
       
    // Draw the particles
    NullView nullView;
@@ -815,6 +822,8 @@ int AlembicSimpleParticle::Display(TimeValue t, INode* inode, ViewExp *vpt, int 
            Matrix3 meshTM;
            Interval meshTMValid = FOREVER;
            GetMultipleRenderMeshTM(t, inode, nullView, i, meshTM, meshTMValid);
+		   meshTM = meshTM * nodeWorldTM;
+
            INode *meshNode = GetParticleMeshNode(i, inode);
            Material *mtls = meshNode->Mtls();
            int numMtls = meshNode->NumMtls();
@@ -940,9 +949,10 @@ int AlembicSimpleParticle::callback( INode *node )
 
 Mesh *AlembicSimpleParticle::BuildPointMesh(int meshNumber, TimeValue t, INode *node, View& view, BOOL &needDelete)
 {
-    Mesh *pMesh = NULL;
-    needDelete = FALSE;
-    return pMesh;
+    //Mesh *pMesh = NULL;
+    //needDelete = FALSE;
+    //return pMesh;
+	return BuildSphereMesh(meshNumber, t, node, view, needDelete);
 }
 
 Mesh *AlembicSimpleParticle::BuildBoxMesh(int meshNumber, TimeValue t, INode *node, View& view, BOOL &needDelete)

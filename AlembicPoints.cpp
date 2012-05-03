@@ -16,6 +16,7 @@
 #include <ParticleFlow/IChannelContainer.h>
 #include <ParticleFlow/IParticleChannelLifespan.h>
 #include <ifnpub.h>
+#include <ImathMatrixAlgo.h>
 
 namespace AbcA = ::Alembic::AbcCoreAbstract::ALEMBIC_VERSION_NS;
 namespace AbcB = ::Alembic::Abc::ALEMBIC_VERSION_NS;
@@ -140,6 +141,19 @@ bool AlembicPoints::Save(double time)
     bool constantOrientation = true;
     bool constantAngularVel = true;
 
+	//The MAX interfaces return everything in world coordinates,
+	//so we need to multiply the inverse the node world transform matrix
+    Matrix3 nodeWorldTM = GetRef().node->GetObjTMAfterWSM(ticks);
+    // Convert the max transform to alembic
+    Matrix3 alembicMatrix;
+    ConvertMaxMatrixToAlembicMatrix(nodeWorldTM, alembicMatrix);
+    Alembic::Abc::M44d nodeWorldTrans(	alembicMatrix.GetRow(0).x,  alembicMatrix.GetRow(0).y,  alembicMatrix.GetRow(0).z,  0,
+										alembicMatrix.GetRow(1).x,  alembicMatrix.GetRow(1).y,  alembicMatrix.GetRow(1).z,  0,
+										alembicMatrix.GetRow(2).x,  alembicMatrix.GetRow(2).y,  alembicMatrix.GetRow(2).z,  0,
+										alembicMatrix.GetRow(3).x,  alembicMatrix.GetRow(3).y,  alembicMatrix.GetRow(3).z,  1);
+	Alembic::Abc::M44d nodeWorldTransInv = nodeWorldTrans.inverse();
+
+
 	for (int i = 0; i < numParticles; ++i)
 	{
 		Imath::V3f pos(0.0);
@@ -147,8 +161,8 @@ bool AlembicPoints::Save(double time)
 		Imath::V3f scale(1.0);
 		TimeValue age = 0;
 		uint64_t id = 0;
-	    Alembic::Abc::Quatf orientation(0.0, 0.0, 1.0, 0.0);
-		Alembic::Abc::Quatf spin(0.0, 0.0, 1.0, 0.0);
+	    Alembic::Abc::Quatd orientation(0.0, 0.0, 1.0, 0.0);
+		Alembic::Abc::Quatd spin(0.0, 0.0, 1.0, 0.0);
 		// Particle size is a uniform scale multiplier in XSI.  In Max, I need to learn where to get this 
 		// For now, we'll just default to 1
 		float width = 1.0f;
@@ -161,23 +175,33 @@ bool AlembicPoints::Save(double time)
 			pos = ConvertMaxPointToAlembicPoint(*particlesExt->GetParticlePositionByIndex(i));
 			vel = ConvertMaxVectorToAlembicVector(*particlesExt->GetParticleSpeedByIndex(i));
 			scale = ConvertMaxScaleToAlembicScale(*particlesExt->GetParticleScaleXYZByIndex(i));
-			age = particlesExt->GetParticleAgeByIndex(i);
-			id = particlesExt->GetParticleBornIndex(i);
 			ConvertMaxEulerXYZToAlembicQuat(*particlesExt->GetParticleOrientationByIndex(i), orientation);
 			ConvertMaxAngAxisToAlembicQuat(*particlesExt->GetParticleSpinByIndex(i), spin);
+			age = particlesExt->GetParticleAgeByIndex(i);
+			id = particlesExt->GetParticleBornIndex(i);
 			AlembicPoints::GetShapeType(particlesExt, i, ticks, shapetype, shapeInstanceId, shapeInstanceTime, instanceNamesVec);
 		}
 		else if(pSimpleParticle){
 			pos = ConvertMaxPointToAlembicPoint(pSimpleParticle->ParticlePosition(ticks, i));
 			vel = ConvertMaxVectorToAlembicVector(pSimpleParticle->ParticleVelocity(ticks, i));
 			//simple particles have no scale?
+			//simple particles have no orientation?
 			age = pSimpleParticle->ParticleAge(ticks, i);
 			//simple particles have born index
-			//simple particles have no orientation?
-
 			width = pSimpleParticle->ParticleSize(ticks, i);
 		}
-		
+
+		//move everything from world space to local space
+		pos = pos * nodeWorldTransInv;
+
+		Imath::V4f vel4(vel.x, vel.y, vel.z, 0.0);
+		vel4 = vel4 * nodeWorldTransInv;
+		vel.setValue(vel4.x, vel4.y, vel4.z);
+
+		//scale = scale * nodeWorldTransInv;
+		//orientation = Imath::extractQuat(orientation.toMatrix44() * nodeWorldTransInv);
+		//spin = Imath::extractQuat(spin.toMatrix44() * nodeWorldTransInv);
+
 		positionVec[i].setValue(pos.x, pos.y, pos.z);
 		velocityVec[i].setValue(vel.x, vel.y, vel.z);
 		scaleVec[i].setValue(scale.x, scale.y, scale.z);
@@ -279,7 +303,7 @@ bool AlembicPoints::Save(double time)
 }
 
 // static
-void AlembicPoints::ConvertMaxEulerXYZToAlembicQuat(const Point3 &degrees, Alembic::Abc::Quatf &quat)
+void AlembicPoints::ConvertMaxEulerXYZToAlembicQuat(const Point3 &degrees, Alembic::Abc::Quatd &quat)
 {
     // Get the angles as a float vector of radians - strangeley they already are even though the documentation says degrees
     float angles[] = { degrees.x, degrees.y, degrees.z };
@@ -296,7 +320,7 @@ void AlembicPoints::ConvertMaxEulerXYZToAlembicQuat(const Point3 &degrees, Alemb
 }
 
 // static
-void AlembicPoints::ConvertMaxAngAxisToAlembicQuat(const AngAxis &angAxis, Alembic::Abc::Quatf &quat)
+void AlembicPoints::ConvertMaxAngAxisToAlembicQuat(const AngAxis &angAxis, Alembic::Abc::Quatd &quat)
 {
     Imath::V3f alembicAxis = ConvertMaxNormalToAlembicNormal(angAxis.axis);
     quat.setAxisAngle(alembicAxis, angAxis.angle);
