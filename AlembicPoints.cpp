@@ -118,18 +118,18 @@ bool AlembicPoints::Save(double time)
     mOVisibility.set(flVisibility > 0 ? Alembic::AbcGeom::kVisibilityVisible : Alembic::AbcGeom::kVisibilityHidden);
 
     // Store positions, velocity, width/size, scale, id, bounding box
-    std::vector<Alembic::Abc::V3f> positionVec(numParticles);
-    std::vector<Alembic::Abc::V3f> velocityVec(numParticles);
-    std::vector<Alembic::Abc::V3f> scaleVec(numParticles);
-    std::vector<float> widthVec(numParticles);
-    std::vector<float> ageVec(numParticles);
+    std::vector<Alembic::Abc::V3f> positionVec;
+    std::vector<Alembic::Abc::V3f> velocityVec;
+    std::vector<Alembic::Abc::V3f> scaleVec;
+    std::vector<float> widthVec;
+    std::vector<float> ageVec;
     std::vector<float> massVec;
-    std::vector<float> shapeTimeVec(numParticles);
-    std::vector<uint64_t> idVec(numParticles);
-    std::vector<uint16_t> shapeTypeVec(numParticles);
-    std::vector<uint16_t> shapeInstanceIDVec(numParticles);
-    std::vector<Alembic::Abc::Quatf> orientationVec(numParticles);
-    std::vector<Alembic::Abc::Quatf> angularVelocityVec(numParticles);
+    std::vector<float> shapeTimeVec;
+    std::vector<uint64_t> idVec;
+    std::vector<uint16_t> shapeTypeVec;
+    std::vector<uint16_t> shapeInstanceIDVec;
+    std::vector<Alembic::Abc::Quatf> orientationVec;
+    std::vector<Alembic::Abc::Quatf> angularVelocityVec;
     std::vector<Alembic::Abc::C4f> colorVec;
     std::vector<std::string> instanceNamesVec;
     Alembic::Abc::Box3d bbox;
@@ -159,7 +159,7 @@ bool AlembicPoints::Save(double time)
 		Imath::V3f pos(0.0);
 		Imath::V3f vel(0.0);
 		Imath::V3f scale(1.0);
-		TimeValue age = 0;
+		float age = 0;
 		uint64_t id = 0;
 	    Alembic::Abc::Quatd orientation(0.0, 0.0, 1.0, 0.0);
 		Alembic::Abc::Quatd spin(0.0, 0.0, 1.0, 0.0);
@@ -168,7 +168,7 @@ bool AlembicPoints::Save(double time)
 		float width = 1.0f;
 
 		ShapeType shapetype = ShapeType_Point;
-		float shapeInstanceTime = time;
+		float shapeInstanceTime = (float)time;
 		uint16_t shapeInstanceId = 0;
 
 		if(particlesExt){
@@ -177,16 +177,20 @@ bool AlembicPoints::Save(double time)
 			scale = ConvertMaxScaleToAlembicScale(*particlesExt->GetParticleScaleXYZByIndex(i));
 			ConvertMaxEulerXYZToAlembicQuat(*particlesExt->GetParticleOrientationByIndex(i), orientation);
 			ConvertMaxAngAxisToAlembicQuat(*particlesExt->GetParticleSpinByIndex(i), spin);
-			age = particlesExt->GetParticleAgeByIndex(i);
+			age = (float)GetSecondsFromTimeValue(particlesExt->GetParticleAgeByIndex(i));
 			id = particlesExt->GetParticleBornIndex(i);
 			AlembicPoints::GetShapeType(particlesExt, i, ticks, shapetype, shapeInstanceId, shapeInstanceTime, instanceNamesVec);
 		}
 		else if(pSimpleParticle){
+			if( ! pSimpleParticle->parts.Alive( i ) ) {
+				continue;
+			}
+
 			pos = ConvertMaxPointToAlembicPoint(pSimpleParticle->ParticlePosition(ticks, i));
 			vel = ConvertMaxVectorToAlembicVector(pSimpleParticle->ParticleVelocity(ticks, i));
 			//simple particles have no scale?
 			//simple particles have no orientation?
-			age = pSimpleParticle->ParticleAge(ticks, i);
+			age = (float)GetSecondsFromTimeValue( pSimpleParticle->ParticleAge(ticks, i) );
 			//simple particles have born index
 			width = pSimpleParticle->ParticleSize(ticks, i);
 		}
@@ -202,26 +206,27 @@ bool AlembicPoints::Save(double time)
 		//orientation = Imath::extractQuat(orientation.toMatrix44() * nodeWorldTransInv);
 		//spin = Imath::extractQuat(spin.toMatrix44() * nodeWorldTransInv);
 
-		positionVec[i].setValue(pos.x, pos.y, pos.z);
-		velocityVec[i].setValue(vel.x, vel.y, vel.z);
-		scaleVec[i].setValue(scale.x, scale.y, scale.z);
-		widthVec[i] = width;
-		ageVec[i] = static_cast<float>(GetSecondsFromTimeValue(age));
-		idVec[i] = id;
-		orientationVec[i] = orientation;
-		angularVelocityVec[i] = spin;
-		bbox.extendBy(positionVec[i]);
-        shapeTypeVec[i] = shapetype;
-        shapeInstanceIDVec[i] = shapeInstanceId;
-        shapeTimeVec[i] = shapeInstanceTime;
+		bbox.extendBy( pos );
 
-		constantPos &= (positionVec[i] == positionVec[0]);
-		constantVel &= (velocityVec[i] == velocityVec[0]);
-		constantScale &= (scaleVec[i] == scaleVec[0]);
-		constantWidth &= (widthVec[i] == widthVec[0]);
-		constantAge &= (ageVec[i] == ageVec[0]);
-		constantOrientation &= (orientationVec[i] == orientationVec[0]);
-		constantAngularVel &= (angularVelocityVec[i] == angularVelocityVec[0]);
+		positionVec.push_back( pos );
+		velocityVec.push_back( vel );
+		scaleVec.push_back( scale );
+		widthVec.push_back( width );
+		ageVec.push_back( age );
+		idVec.push_back( id );
+		orientationVec.push_back( orientation );
+		angularVelocityVec.push_back( spin );
+        shapeTypeVec.push_back( shapetype );
+        shapeInstanceIDVec.push_back( shapeInstanceId );
+        shapeTimeVec.push_back( shapeInstanceTime );
+
+		constantPos &= (pos == positionVec[0]);
+		constantVel &= (vel == velocityVec[0]);
+		constantScale &= (scale == scaleVec[0]);
+		constantWidth &= (width == widthVec[0]);
+		constantAge &= (age == ageVec[0]);
+		constantOrientation &= (orientation == orientationVec[0]);
+		constantAngularVel &= (spin == angularVelocityVec[0]);
 
 		// Set the archive bounding box
 		// Positions for particles are already cnsider to be in world space
@@ -239,18 +244,7 @@ bool AlembicPoints::Save(double time)
     colorVec.push_back(Alembic::Abc::C4f(0.0f, 0.0f, 0.0f, 1.0f));
     instanceNamesVec.push_back("");
 
-    if (numParticles == 0)
-    {
-        positionVec.push_back(Alembic::Abc::V3f(FLT_MAX, FLT_MAX, FLT_MAX));
-        velocityVec.push_back(Alembic::Abc::V3f(0.0f, 0.0f, 0.0f));
-        scaleVec.push_back(Alembic::Abc::V3f(1.0f, 1.0f, 1.0f));
-        widthVec.push_back(0.0f);
-        ageVec.push_back(0.0f);
-        idVec.push_back(static_cast<uint64_t>(-1));
-        orientationVec.push_back(Alembic::Abc::Quatf(0.0f, 1.0f, 0.0f, 0.0f));
-        angularVelocityVec.push_back(Alembic::Abc::Quatf(0.0f, 1.0f, 0.0f, 0.0f));
-    }
-    else
+    if (numParticles > 1)
     {
         if (constantPos)        { positionVec.resize(1); }
         if (constantVel)        { velocityVec.resize(1); }
@@ -262,20 +256,20 @@ bool AlembicPoints::Save(double time)
     }
 
     // Store the information into our properties and points schema
-    Alembic::Abc::P3fArraySample positionSample(&positionVec.front(), positionVec.size());
-    Alembic::Abc::P3fArraySample velocitySample(&velocityVec.front(), velocityVec.size());
-    Alembic::Abc::P3fArraySample scaleSample(&scaleVec.front(), scaleVec.size());
-    Alembic::Abc::FloatArraySample widthSample(&widthVec.front(), widthVec.size());
-    Alembic::Abc::FloatArraySample ageSample(&ageVec.front(), ageVec.size());
-    Alembic::Abc::FloatArraySample massSample(&massVec.front(), massVec.size());
-    Alembic::Abc::FloatArraySample shapeTimeSample(&shapeTimeVec.front(), shapeTimeVec.size());
-    Alembic::Abc::UInt64ArraySample idSample(&idVec.front(), idVec.size());
-    Alembic::Abc::UInt16ArraySample shapeTypeSample(&shapeTypeVec.front(), shapeTypeVec.size());
-    Alembic::Abc::UInt16ArraySample shapeInstanceIDSample(&shapeInstanceIDVec.front(), shapeInstanceIDVec.size());
-    Alembic::Abc::QuatfArraySample orientationSample(&orientationVec.front(), orientationVec.size());
-    Alembic::Abc::QuatfArraySample angularVelocitySample(&angularVelocityVec.front(), angularVelocityVec.size());
-    Alembic::Abc::C4fArraySample colorSample(&colorVec.front(), colorVec.size());
-    Alembic::Abc::StringArraySample instanceNamesSample(&instanceNamesVec.front(), instanceNamesVec.size());
+    Alembic::Abc::P3fArraySample positionSample( positionVec);
+    Alembic::Abc::P3fArraySample velocitySample(velocityVec);
+    Alembic::Abc::P3fArraySample scaleSample(scaleVec);
+    Alembic::Abc::FloatArraySample widthSample(widthVec);
+    Alembic::Abc::FloatArraySample ageSample(ageVec);
+    Alembic::Abc::FloatArraySample massSample(massVec);
+    Alembic::Abc::FloatArraySample shapeTimeSample(shapeTimeVec);
+    Alembic::Abc::UInt64ArraySample idSample(idVec);
+    Alembic::Abc::UInt16ArraySample shapeTypeSample(shapeTypeVec);
+    Alembic::Abc::UInt16ArraySample shapeInstanceIDSample(shapeInstanceIDVec);
+    Alembic::Abc::QuatfArraySample orientationSample(orientationVec);
+    Alembic::Abc::QuatfArraySample angularVelocitySample(angularVelocityVec);
+    Alembic::Abc::C4fArraySample colorSample(colorVec);
+    Alembic::Abc::StringArraySample instanceNamesSample(instanceNamesVec);
 
     mScaleProperty.set(scaleSample);
     mAgeProperty.set(ageSample);
