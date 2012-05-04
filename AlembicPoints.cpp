@@ -17,6 +17,7 @@
 #include <ParticleFlow/IParticleChannelLifespan.h>
 #include <ifnpub.h>
 #include <ImathMatrixAlgo.h>
+#include "AlembicMetadataUtils.h"
 
 namespace AbcA = ::Alembic::AbcCoreAbstract::ALEMBIC_VERSION_NS;
 namespace AbcB = ::Alembic::Abc::ALEMBIC_VERSION_NS;
@@ -82,6 +83,8 @@ bool AlembicPoints::Save(double time)
 
     // Store the transformation
     SaveXformSample(GetRef(), mXformSchema, mXformSample, time, bFlatten);
+
+	SaveMetaData(GetRef().node, this);
 
     IPFSystem* particleSystem = PFSystemInterface(obj);
 	IParticleObjectExt* particlesExt = GetParticleObjectExtInterface(obj);

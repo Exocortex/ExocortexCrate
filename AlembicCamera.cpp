@@ -4,6 +4,7 @@
 #include "AlembicXForm.h"
 #include "SceneEnumProc.h"
 #include "Utility.h"
+#include "AlembicMetadataUtils.h"
 
 namespace AbcA = ::Alembic::AbcCoreAbstract::ALEMBIC_VERSION_NS;
 namespace AbcB = ::Alembic::Abc::ALEMBIC_VERSION_NS;
@@ -56,6 +57,8 @@ bool AlembicCamera::Save(double time)
 
     // Store the transformation
     SaveCameraXformSample(GetRef(), mXformSchema, mXformSample, time, bFlatten);
+
+	SaveMetaData(GetRef().node, this);
 
     // Set the xform sample
     Matrix3 wm = GetRef().node->GetObjTMAfterWSM(ticks);
