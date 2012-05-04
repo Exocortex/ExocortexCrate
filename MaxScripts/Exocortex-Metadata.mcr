@@ -103,7 +103,9 @@ macroScript AlembicCreateMetadataModifier
 (
     on execute do 
     (
-
-        CreateAlembicMetadataModifier $
+    	for i = 1 to selection.count do
+    	(
+    		CreateAlembicMetadataModifier selection[i]
+    	)
     )
 )
