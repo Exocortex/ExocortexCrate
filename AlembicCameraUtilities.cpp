@@ -8,6 +8,7 @@
 #include "AlembicNames.h"
 #include "AlembicFloatController.h"
 #include "AlembicMAXScript.h"
+#include "AlembicMetadataUtils.h"
 
  
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -207,7 +208,8 @@ int AlembicImport_Camera(const std::string &path, Alembic::AbcGeom::IObject& iOb
     // Set the visibility controller
     AlembicImport_SetupVisControl( path, identifier, iObj, pNode, options);
 
+	GET_MAX_INTERFACE()->SelectNode( pNode );
+	importMetadata(iObj);
+
 	return 0;
-
-
 }

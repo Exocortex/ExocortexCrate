@@ -1,5 +1,8 @@
 #include "AlembicMetadataUtils.h"
-#include "AlembicMax.h"
+#include <icustattribcontainer.h> 
+#include <custattrib.h> 
+#include "AlembicObject.h"
+
 
 Alembic::Abc::ICompoundProperty getCompoundFromObject(Alembic::Abc::IObject& object)
 {
@@ -43,59 +46,9 @@ void importMetadata(Alembic::AbcGeom::IObject& iObj)
 
 	char szBuffer[10000];	
 	sprintf_s( szBuffer, 10000, 
-		"AlembicMetaDataModifier = EmptyModifier()\n"
-		"AlembicMetaDataModifier.name = \"alembic_metadata\"\n"
-		"addmodifier $ AlembicMetaDataModifier\n"
-		"AlembicMetadataCA = attributes AlembicMetadata\n"
-		"(\n"
-			"parameters AlembicMetadataPRM rollout:AlembicMetadataRLT\n"
-			"(\n"
-				"name0 type:#string ui:eName0 default:\"%s\"\n"
-				"value0 type:#string ui:eValue0 default:\"%s\"\n"
-				"name1 type:#string ui:eName1 default:\"%s\"\n"
-				"value1 type:#string ui:eValue1 default:\"%s\"\n"
-				"name2 type:#string ui:eName2 default:\"%s\"\n"
-				"value2 type:#string ui:eValue2 default:\"%s\"\n"
-				"name3 type:#string ui:eName3 default:\"%s\"\n"
-				"value3 type:#string ui:eValue3 default:\"%s\"\n"
-				"name4 type:#string ui:eName4 default:\"%s\"\n"
-				"value4 type:#string ui:eValue4 default:\"%s\"\n"
-				"name5 type:#string ui:eName5 default:\"%s\"\n"
-				"value5 type:#string ui:eValue5 default:\"%s\"\n"
-				"name6 type:#string ui:eName6 default:\"%s\"\n"
-				"value6 type:#string ui:eValue6 default:\"%s\"\n"
-				"name7 type:#string ui:eName7 default:\"%s\"\n"
-				"value7 type:#string ui:eValue7 default:\"%s\"\n"
-				"name8 type:#string ui:eName8 default:\"%s\"\n"
-				"value8 type:#string ui:eValue8 default:\"%s\"\n"
-				"name9 type:#string ui:eName9 default:\"%s\"\n"
-				"value9 type:#string ui:eValue9 default:\"%s\"\n"
-			")\n"
-			"rollout AlembicMetadataRLT \"alembic_metadata\"\n"
-			"(\n"
-				"edittext eName0 \"n0\" fieldWidth:120 labelOnTop:false\n"
-				"edittext eValue0 \"v0\" fieldWidth:120 labelOnTop:false\n"
-				"edittext eName1 \"n1\" fieldWidth:120 labelOnTop:false\n"
-				"edittext eValue1 \"v1\" fieldWidth:120 labelOnTop:false\n"
-				"edittext eName2 \"n2\" fieldWidth:120 labelOnTop:false\n"
-				"edittext eValue2 \"v2\" fieldWidth:120 labelOnTop:false\n"
-				"edittext eName3 \"n3\" fieldWidth:120 labelOnTop:false\n"
-				"edittext eValue3 \"v3\" fieldWidth:120 labelOnTop:false\n"
-				"edittext eName4 \"n4\" fieldWidth:120 labelOnTop:false\n"
-				"edittext eValue4 \"v4\" fieldWidth:120 labelOnTop:false\n"
-				"edittext eName5 \"n5\" fieldWidth:120 labelOnTop:false\n"
-				"edittext eValue5 \"v5\" fieldWidth:120 labelOnTop:false\n"
-				"edittext eName6 \"n6\" fieldWidth:120 labelOnTop:false\n"
-				"edittext eValue6 \"v6\" fieldWidth:120 labelOnTop:false\n"
-				"edittext eName7 \"n7\" fieldWidth:120 labelOnTop:false\n"
-				"edittext eValue7 \"v7\" fieldWidth:120 labelOnTop:false\n"
-				"edittext eName8 \"n8\" fieldWidth:120 labelOnTop:false\n"
-				"edittext eValue8 \"v8\" fieldWidth:120 labelOnTop:false\n"
-				"edittext eName9 \"n9\" fieldWidth:120 labelOnTop:false\n"
-				"edittext eValue9 \"v9\" fieldWidth:120 labelOnTop:false\n"
-			")\n"
-		")\n"
-		"custattributes.add $.modifiers[\"alembic_metadata\"] AlembicMetadataCA baseobject:false\n", 
+		"include \"Exocortex-Metadata.mcr\"\n"
+		"CreateAlembicMetadataModifier $\n"
+		"InitAlembicMetadataModifier $ \"%s\" \"%s\" \"%s\" \"%s\" \"%s\" \"%s\" \"%s\" \"%s\" \"%s\" \"%s\" \"%s\" \"%s\" \"%s\" \"%s\" \"%s\" \"%s\" \"%s\" \"%s\" \"%s\" \"%s\" \n",
 
 		(0 < ptr->size()) ? ptr->get()[0].c_str() : "",
 		(1 < ptr->size()) ? ptr->get()[1].c_str() : "",
@@ -123,4 +76,67 @@ void importMetadata(Alembic::AbcGeom::IObject& iObj)
 
 	ExecuteMAXScriptScript( szBuffer );
 	
+}
+
+Modifier* FindModifier(INode* node, char* name)
+{
+	int i = 0;
+	int idx = 0;
+	Modifier* pRetMod = NULL;
+	while(true){
+		Modifier* pMod;
+		IDerivedObject* pObj = GET_MAX_INTERFACE()->FindModifier(*node, i, idx, pMod);
+		if(!pObj){
+			break;
+		}
+
+		if(strstr(pMod->GetName(), name) != NULL){
+			pRetMod = pMod;
+			break;
+		}
+
+		//const char* cname = pObj->GetClassName();
+		//const char* oname = pMod->GetObjectName();
+		//const char* name = pMod->GetName();
+		i++;
+	}
+
+	return pRetMod;
+}
+
+
+void SaveMetaData(INode* node, AlembicObject* object)
+{
+	Modifier* pMod = FindModifier(node, "metadata");
+	
+	ICustAttribContainer* cont = pMod->GetCustAttribContainer();
+	if(!cont){
+		return;
+	}
+
+	std::vector<std::string> metaData(20);
+	size_t offset = 0;
+
+	//for(int i=0; i<cont->GetNumCustAttribs(); i++)
+	//{
+		CustAttrib* ca = cont->GetCustAttrib(0);
+		//const char* name = ca->GetName();
+	
+		IParamBlock2 *pblock = ca->GetParamBlockByID(0);
+		if(pblock){
+			int nNumParams = pblock->NumParams();
+			for(int i=0; i<nNumParams; i++){
+
+				ParamID id = pblock->IndextoID(i);
+				//MSTR name = pblock->GetLocalName(id, 0);
+				MSTR value = pblock->GetStr(id, 0);
+				metaData[offset++] = value;
+			}
+		}
+	//}
+
+	//Alembic::Abc::OStringArrayProperty metaDataProperty = Alembic::Abc::OStringArrayProperty(
+	// object->GetCompound(), ".metadata", object->GetCompound().getMetaData(), object->GetCurrentJob()->GetAnimatedTs() );
+	//Alembic::Abc::StringArraySample metaDataSample(&metaData.front(),metaData.size());
+	//metaDataProperty.set(metaDataSample);
 }

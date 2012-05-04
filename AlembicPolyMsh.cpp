@@ -4,6 +4,7 @@
 #include "AlembicXForm.h"
 #include "SceneEnumProc.h"
 #include "Utility.h"
+#include "AlembicMetadataUtils.h"
 
 namespace AbcA = ::Alembic::AbcCoreAbstract::ALEMBIC_VERSION_NS;
 namespace AbcB = ::Alembic::Abc::ALEMBIC_VERSION_NS;
@@ -132,6 +133,8 @@ bool AlembicPolyMesh::Save(double time)
 
     // Store the transformation
     SaveXformSample(GetRef(), mXformSchema, mXformSample, time, bFlatten);
+
+	SaveMetaData(GetRef().node, this);
    
     // Clear our data
     mFaceCountVec.clear();

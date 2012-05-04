@@ -8,6 +8,7 @@
 #include "AlembicNames.h"
 #include "AlembicMeshUtilities.h"
 #include "AlembicMAXScript.h" 
+#include "AlembicMetadataUtils.h"
 
 bool isAlembicMeshValid( Alembic::AbcGeom::IObject *pIObj ) {
 	Alembic::AbcGeom::IPolyMesh objMesh;
@@ -1035,6 +1036,9 @@ int AlembicImport_PolyMesh(const std::string &path, Alembic::AbcGeom::IObject& i
 	for( int i = 0; i < modifiersToEnable.size(); i ++ ) {
 		modifiersToEnable[i]->EnableMod();
 	}
+
+	GET_MAX_INTERFACE()->SelectNode( pNode );
+	importMetadata(iObj);
 
 	return 0;
 }
