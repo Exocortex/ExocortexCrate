@@ -107,7 +107,17 @@ Modifier* FindModifier(INode* node, char* name)
 
 void SaveMetaData(INode* node, AlembicObject* object)
 {
+	if(object == NULL){
+		return;
+	}
+	if(object->GetNumSamples() > 0){
+		return;
+	}
+
 	Modifier* pMod = FindModifier(node, "metadata");
+	if(!pMod){
+		return;
+	}
 	
 	ICustAttribContainer* cont = pMod->GetCustAttribContainer();
 	if(!cont){
@@ -135,8 +145,10 @@ void SaveMetaData(INode* node, AlembicObject* object)
 		}
 	//}
 
-	//Alembic::Abc::OStringArrayProperty metaDataProperty = Alembic::Abc::OStringArrayProperty(
-	// object->GetCompound(), ".metadata", object->GetCompound().getMetaData(), object->GetCurrentJob()->GetAnimatedTs() );
-	//Alembic::Abc::StringArraySample metaDataSample(&metaData.front(),metaData.size());
-	//metaDataProperty.set(metaDataSample);
+	if(metaData.size() > 0){
+		Alembic::Abc::OStringArrayProperty metaDataProperty = Alembic::Abc::OStringArrayProperty(
+		 object->GetCompound(), ".metadata", object->GetCompound().getMetaData(), object->GetCurrentJob()->GetAnimatedTs() );
+		Alembic::Abc::StringArraySample metaDataSample(&metaData.front(),metaData.size());
+		metaDataProperty.set(metaDataSample);
+	}
 }
