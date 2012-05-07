@@ -1,0 +1,152 @@
+#include "extension.h"
+#include "icompoundproperty.h"
+#include "iobject.h"
+#include <boost/lexical_cast.hpp>
+#include "AlembicLicensing.h"
+
+#undef iProperty
+
+static PyObject * iCompoundProperty_getName(PyObject * self, PyObject * args)
+{
+   ALEMBIC_TRY_STATEMENT
+      return Py_BuildValue("s", ((iCompoundProperty*)self)->mBaseCompoundProperty->getName().c_str());
+   ALEMBIC_PYOBJECT_CATCH_STATEMENT
+}
+
+static PyObject * iCompoundProperty_getType(PyObject * self, PyObject * args)
+{
+   //ALEMBIC_TRY_STATEMENT //--- does not access any Alembic objects
+   return Py_BuildValue("s","compound");
+   //ALEMBIC_PYOBJECT_CATCH_STATEMENT
+}
+
+static PyObject * iCompoundProperty_getSampleTimes(PyObject * self, PyObject * args)
+{
+   //ALEMBIC_TRY_STATEMENT //--- does not access any Alembic objects
+   return PyTuple_New(0);
+   //ALEMBIC_PYOBJECT_CATCH_STATEMENT
+}
+
+static PyObject * iCompoundProperty_getNbStoredSamples(PyObject * self, PyObject * args)
+{
+   //ALEMBIC_TRY_STATEMENT //--- does not access any Alembic objects
+   return Py_BuildValue("I",(unsigned int)0);
+   //ALEMBIC_PYOBJECT_CATCH_STATEMENT
+}
+
+static PyObject * iCompoundProperty_getSize(PyObject * self, PyObject * args)
+{
+   //ALEMBIC_TRY_STATEMENT //--- does not access any Alembic objects
+   return Py_BuildValue("I",(unsigned int)0);
+   //ALEMBIC_PYOBJECT_CATCH_STATEMENT
+}
+
+static PyObject * iCompoundProperty_getValues(PyObject * self, PyObject * args)
+{
+   //ALEMBIC_TRY_STATEMENT //--- does not access any Alembic objects
+   return PyTuple_New(0);
+   //ALEMBIC_PYOBJECT_CATCH_STATEMENT
+}
+
+static PyObject * iCompoundProperty_getPropertyNames(PyObject * self, PyObject * args)
+{
+   ALEMBIC_TRY_STATEMENT
+      Alembic::Abc::ICompoundProperty *icprop = ((iCompoundProperty*)self)->mBaseCompoundProperty;
+      const int nb_prop = icprop->getNumProperties();
+
+      PyObject *tuple = PyTuple_New(nb_prop);
+      for (int i = 0; i < nb_prop; ++i)
+         PyTuple_SetItem(tuple,i,Py_BuildValue("s",icprop->getPropertyHeader(i).getName().c_str()));
+
+      return tuple;
+   ALEMBIC_PYOBJECT_CATCH_STATEMENT
+}
+
+static PyObject * iCompoundProperty_getProperty(PyObject * self, PyObject * args)
+{
+   ALEMBIC_TRY_STATEMENT
+      char * propName = NULL;
+      if(!PyArg_ParseTuple(args, "s", &propName))
+      {
+         PyErr_SetString(getError(), "No property name specified!");
+         return NULL;
+      }
+      return iProperty_new(*((iCompoundProperty*)self)->mBaseCompoundProperty, propName);
+   ALEMBIC_PYOBJECT_CATCH_STATEMENT
+}
+
+static PyMethodDef iCompoundProperty_methods[] =
+{
+   {"getName", (PyCFunction)iCompoundProperty_getName, METH_NOARGS, "Returns the name of this compound property."},
+   {"getType", (PyCFunction)iCompoundProperty_getType, METH_NOARGS, "Returns the type, always \"compound\"."},
+   {"getSampleTimes", (PyCFunction)iCompoundProperty_getSampleTimes, METH_NOARGS, "Returns the TimeSampling this object is linked to, always zero for a compound."},
+   {"getNbStoredSamples", (PyCFunction)iCompoundProperty_getNbStoredSamples, METH_NOARGS, "Returns the actual number of stored samples, always zero for a compound."},
+   {"getSize", (PyCFunction)iCompoundProperty_getSize, METH_VARARGS, "Returns zero because a compound property does not have any values."},
+   {"getValues", (PyCFunction)iCompoundProperty_getValues, METH_VARARGS, "Returns an empty tuple because a compound property does not have any values."},
+   {"getPropertyNames", (PyCFunction)iCompoundProperty_getPropertyNames, METH_NOARGS, "Returns a string list of all property names below this compound."},
+   {"getProperty", (PyCFunction)iCompoundProperty_getProperty, METH_VARARGS, "Returns an iProperty for the given propertyName string."},
+   {NULL, NULL}
+};
+
+static PyObject * iCompoundProperty_getAttr(PyObject * self, char * attrName)
+{
+   //ALEMBIC_TRY_STATEMENT //--- does not access any Alembic objects
+   return Py_FindMethod(iCompoundProperty_methods, self, attrName);
+   //ALEMBIC_PYOBJECT_CATCH_STATEMENT
+}
+
+static void iCompoundProperty_delete(PyObject * self)
+{
+   ALEMBIC_TRY_STATEMENT
+      delete ((iCompoundProperty*)self)->mBaseCompoundProperty;
+      PyObject_FREE(self);
+   ALEMBIC_VOID_CATCH_STATEMENT
+}
+
+static PyTypeObject iCompoundProperty_Type =
+{
+  PyObject_HEAD_INIT(&PyType_Type)
+  0,                                // op_size
+  "iCompoundProperty",                      // tp_name
+  sizeof(iCompoundProperty),                // tp_basicsize
+  0,                                // tp_itemsize
+  (destructor)iCompoundProperty_delete,     // tp_dealloc
+  0,                                // tp_print
+  (getattrfunc)iCompoundProperty_getAttr,   // tp_getattr
+  0,                                // tp_setattr
+  0,                                // tp_compare
+  0,                         /*tp_repr*/
+  0,                         /*tp_as_number*/
+  0,                         /*tp_as_sequence*/
+  0,                         /*tp_as_mapping*/
+  0,                         /*tp_hash */
+  0,                         /*tp_call*/
+  0,                         /*tp_str*/
+  0,                         /*tp_getattro*/
+  0,                         /*tp_setattro*/
+  0,                         /*tp_as_buffer*/
+  Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE, /*tp_flags*/
+  "This is the input property. It provides access to the propery's data, such as name, type and per sample values.",           /* tp_doc */
+  0,		               /* tp_traverse */
+  0,		               /* tp_clear */
+  0,		               /* tp_richcompare */
+  0,		               /* tp_weaklistoffset */
+  0,		               /* tp_iter */
+  0,		               /* tp_iternext */
+  iCompoundProperty_methods,             /* tp_methods */
+};
+
+PyObject * iCompoundProperty_new(Alembic::Abc::ICompoundProperty in_cprop, char *in_propName)
+{
+   ALEMBIC_TRY_STATEMENT
+      iCompoundProperty * prop = PyObject_NEW(iCompoundProperty, &iCompoundProperty_Type);
+      prop->mBaseCompoundProperty = new Alembic::Abc::ICompoundProperty(in_cprop, in_propName);
+      return (PyObject*)prop;
+   ALEMBIC_PYOBJECT_CATCH_STATEMENT
+}
+
+bool register_object_iCompoundProperty(PyObject *module)
+{
+   return register_object(module, iCompoundProperty_Type, "iCompoundProperty");
+}
+

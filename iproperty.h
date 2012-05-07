@@ -120,7 +120,7 @@ enum propertyTP
 
 typedef struct {
    PyObject_HEAD
-   bool mIsCompound;
+   bool mIsCompound;		// should be useless after debugging
    bool mIsArray;
    propertyTP mPropType;
    union {
@@ -240,6 +240,8 @@ typedef struct {
    };
 } iProperty;
 
+// Two version of iProperty_new the first one is used by iCompoundProperty to create iProperty and also by the second version of the function
+PyObject * iProperty_new(Alembic::Abc::ICompoundProperty &in_compound, char * in_propName);
 PyObject * iProperty_new(Alembic::Abc::IObject in_Object, char * in_propName);
 
 bool register_object_iProperty(PyObject *module);

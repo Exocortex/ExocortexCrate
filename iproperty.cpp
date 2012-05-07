@@ -1,5 +1,6 @@
 #include "extension.h"
 #include "iproperty.h"
+#include "icompoundproperty.h"   // to call iCompoundProperty_new in iProperty_new if it's an iCompoundProperty
 #include "iobject.h"
 #include <boost/lexical_cast.hpp>
 #include "AlembicLicensing.h"
@@ -9,7 +10,7 @@ static std::string iProperty_getName_func(PyObject * self)
    ALEMBIC_TRY_STATEMENT
    iProperty * prop = (iProperty*)self;
    std::string name;
-   if(prop->mIsCompound)
+   if(prop->mIsCompound)		// TODO after debugging, remove this test because it should be false all the time
       name = prop->mBaseCompoundProperty->getName();
    else if(prop->mIsArray)
       name = prop->mBaseArrayProperty->getName();
@@ -39,7 +40,7 @@ static PyObject * iProperty_getType(PyObject * self, PyObject * args)
          type.append("unknown");
          break;
       }
-      case propertyTP_compound:
+      case propertyTP_compound:		// TODO after debugging, remove because it should never be reached!
       {
          type.append("compound");
          break;
@@ -2541,24 +2542,9 @@ static PyTypeObject iProperty_Type = {
    }
 #define _NEW_PROP_CASE_(pod,tp,base) _NEW_PROP_CASE_IMPL_(pod,tp,base,Property,ArrayProperty)
 
-PyObject * iProperty_new(Alembic::Abc::IObject in_Object, char * in_propName)
+PyObject * iProperty_new(Alembic::Abc::ICompoundProperty &compound, char * in_propName)
 {
-   ALEMBIC_TRY_STATEMENT
-   // check if we have this header
-   Alembic::Abc::ICompoundProperty compound = getCompoundFromIObject(in_Object);
    const Alembic::Abc::PropertyHeader * propHeader = compound.getPropertyHeader( in_propName );
-   if ( propHeader == NULL )
-   {
-      std::string msg;
-      msg.append("Property '");
-      msg.append(in_propName);
-      msg.append("' not found on '");
-      msg.append(in_Object.getFullName());
-      msg.append("'!");
-      PyErr_SetString(getError(), msg.c_str());
-      return NULL;
-   }
-
    iProperty * prop = PyObject_NEW(iProperty, &iProperty_Type);
    if (prop != NULL)
    {
@@ -2566,8 +2552,10 @@ PyObject * iProperty_new(Alembic::Abc::IObject in_Object, char * in_propName)
       prop->mIsArray = prop->mIsCompound ? false : propHeader->isArray();
       if(prop->mIsCompound)
       {
-         prop->mPropType = propertyTP_compound;
-         prop->mBaseCompoundProperty = new Alembic::Abc::ICompoundProperty(compound,in_propName);
+         //prop->mPropType = propertyTP_compound;
+         //prop->mBaseCompoundProperty = new Alembic::Abc::ICompoundProperty(compound,in_propName);
+         PyObject_FREE(prop);    // Free it because one will be created in iCompoundProperty_new
+         return iCompoundProperty_new(compound, in_propName);
       }
       else
       {
@@ -2805,6 +2793,27 @@ PyObject * iProperty_new(Alembic::Abc::IObject in_Object, char * in_propName)
       }
    }
    return (PyObject *)prop;
+}
+
+PyObject * iProperty_new(Alembic::Abc::IObject in_Object, char * in_propName)
+{
+   ALEMBIC_TRY_STATEMENT
+   // check if we have this header
+   Alembic::Abc::ICompoundProperty compound = getCompoundFromIObject(in_Object);
+   //const Alembic::Abc::PropertyHeader * propHeader = compound.getPropertyHeader( in_propName );
+   if (compound.getPropertyHeader( in_propName ) == NULL )
+   {
+      std::string msg;
+      msg.append("Property '");
+      msg.append(in_propName);
+      msg.append("' not found on '");
+      msg.append(in_Object.getFullName());
+      msg.append("'!");
+      PyErr_SetString(getError(), msg.c_str());
+      return NULL;
+   }
+
+   return iProperty_new(compound, in_propName);
    ALEMBIC_PYOBJECT_CATCH_STATEMENT
 }
 
