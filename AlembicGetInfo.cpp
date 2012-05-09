@@ -139,6 +139,18 @@ MStatus AlembicGetInfoCommand::doIt(const MArgList & args)
                   }
                }
             }
+         } else if(Alembic::AbcGeom::ICurves::matches(child.getMetaData())) {
+            // check if we have topo or not
+            Alembic::AbcGeom::ICurves obj(child,Alembic::Abc::kWrapExisting);
+            if(obj.valid())
+            {
+               Alembic::AbcGeom::ICurvesSchema::Sample sample;
+               obj.getSchema().get(sample,0);
+               if(sample.getNumCurves() != 1)
+               {
+                  data += "hair=1";
+               }
+            }
          }
          if(data.length() > 0)
             identifier += "|"+data;

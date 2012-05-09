@@ -79,4 +79,42 @@ private:
    SampleInfo mLastSampleInfo;
 };
 
+class AlembicCurvesLocatorNode : public AlembicObjectLocatorNode
+{
+public:
+   AlembicCurvesLocatorNode();
+   virtual ~AlembicCurvesLocatorNode();
+   
+   // override virtual methods from MPxDeformerNode
+   virtual void PreDestruction();
+   virtual MStatus compute(const MPlug & plug, MDataBlock & dataBlock);
+   virtual void draw( M3dView & view, const MDagPath & path, M3dView::DisplayStyle style, M3dView::DisplayStatus status);
+   static void* creator() { return (new AlembicCurvesLocatorNode()); }
+   static MStatus initialize();
+   virtual bool isBounded() const { return true; }
+   MBoundingBox boundingBox() const;
+
+private:
+   // private methods
+   bool updated();
+
+   // input attributes
+   static MObject mTimeAttr;
+   static MObject mFileNameAttr;
+   static MObject mIdentifierAttr;
+   static MObject mSentinelAttr;
+   MString mFileName;
+   MString mIdentifier;
+   Alembic::AbcGeom::ICurvesSchema mSchema;
+   int mSent;
+   unsigned int mNbCurves;
+   std::vector<unsigned int> mIndices;
+   std::vector<Alembic::Abc::V3f> mPositions;
+   std::vector<Alembic::Abc::C4f> mColors;
+   MBoundingBox mBoundingBox;
+
+   // members
+   SampleInfo mLastSampleInfo;
+};
+
 #endif

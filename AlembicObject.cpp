@@ -73,6 +73,7 @@ unsigned int gRefIdMax = 0;
 std::map<unsigned int,AlembicObjectNode*> gNodes;
 std::map<unsigned int,AlembicObjectDeformNode*> gDeformNodes;
 std::map<unsigned int,AlembicObjectEmitterNode*> gEmitterNodes;
+std::map<unsigned int,AlembicObjectLocatorNode*> gLocatorNodes;
 
 AlembicObjectNode::AlembicObjectNode()
 {
@@ -110,6 +111,18 @@ AlembicObjectEmitterNode::~AlembicObjectEmitterNode()
    gEmitterNodes.erase(gEmitterNodes.find(mRefId));
 }
 
+AlembicObjectLocatorNode::AlembicObjectLocatorNode()
+{
+   mRefId = gRefIdMax;
+   gRefIdMax++;
+   gLocatorNodes.insert(std::pair<unsigned int,AlembicObjectLocatorNode*>(mRefId,this));
+}
+
+AlembicObjectLocatorNode::~AlembicObjectLocatorNode()
+{
+   gLocatorNodes.erase(gLocatorNodes.find(mRefId));
+}
+
 void preDestructAllNodes()
 {
    std::map<unsigned int,AlembicObjectNode*>::iterator it;
@@ -121,4 +134,7 @@ void preDestructAllNodes()
    std::map<unsigned int,AlembicObjectEmitterNode*>::iterator itEmitter;
    for(itEmitter = gEmitterNodes.begin(); itEmitter != gEmitterNodes.end(); itEmitter++)
       itEmitter->second->PreDestruction();
+   std::map<unsigned int,AlembicObjectLocatorNode*>::iterator itLocator;
+   for(itLocator = gLocatorNodes.begin(); itLocator != gLocatorNodes.end(); itLocator++)
+      itLocator->second->PreDestruction();
 }

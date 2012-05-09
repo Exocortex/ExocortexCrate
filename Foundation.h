@@ -56,6 +56,7 @@
 #include <maya/MPxNode.h>
 #include <maya/MPxDeformerNode.h>
 #include <maya/MPxEmitterNode.h>
+#include <maya/MPxLocatorNode.h>
 #include <maya/MDataHandle.h>
 #include <maya/MDGContext.h>
 #include <maya/MFnUnitAttribute.h>

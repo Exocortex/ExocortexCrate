@@ -450,3 +450,310 @@ MStatus AlembicCurvesDeformNode::deform(MDataBlock & dataBlock, MItGeometry & it
    }
    return MStatus::kSuccess;
 }
+
+
+AlembicCurvesLocatorNode::AlembicCurvesLocatorNode()
+{
+   mNbCurves = 0;
+   mBoundingBox.clear();
+   mSent = 0;
+}
+
+void AlembicCurvesLocatorNode::PreDestruction()
+{
+   mSchema.reset();
+   delRefArchive(mFileName);
+   mFileName.clear();
+}
+
+AlembicCurvesLocatorNode::~AlembicCurvesLocatorNode()
+{
+   PreDestruction();
+}
+
+MObject AlembicCurvesLocatorNode::mTimeAttr;
+MObject AlembicCurvesLocatorNode::mFileNameAttr;
+MObject AlembicCurvesLocatorNode::mIdentifierAttr;
+MObject AlembicCurvesLocatorNode::mSentinelAttr;
+
+MStatus AlembicCurvesLocatorNode::initialize()
+{
+   MStatus status;
+
+   MFnUnitAttribute uAttr;
+   MFnTypedAttribute tAttr;
+   MFnNumericAttribute nAttr;
+   MFnGenericAttribute gAttr;
+   MFnStringData emptyStringData;
+   MObject emptyStringObject = emptyStringData.create("");
+
+   // input time
+   mTimeAttr = uAttr.create("inTime", "tm", MFnUnitAttribute::kTime, 0.0);
+   status = uAttr.setStorable(true);
+   status = uAttr.setKeyable(true);
+   status = addAttribute(mTimeAttr);
+
+   // input file name
+   mFileNameAttr = tAttr.create("fileName", "fn", MFnData::kString, emptyStringObject);
+   status = tAttr.setStorable(true);
+   status = tAttr.setUsedAsFilename(true);
+   status = tAttr.setKeyable(false);
+   status = addAttribute(mFileNameAttr);
+
+   // input identifier
+   mIdentifierAttr = tAttr.create("identifier", "if", MFnData::kString, emptyStringObject);
+   status = tAttr.setStorable(true);
+   status = tAttr.setKeyable(false);
+   status = addAttribute(mIdentifierAttr);
+
+   // sentinel attr
+   mSentinelAttr = nAttr.create("sentinel", "sent", MFnNumericData::kInt, 0);
+   nAttr.setHidden(true);
+   status = addAttribute(mSentinelAttr);
+
+   // create a mapping
+   status = attributeAffects(mTimeAttr, mSentinelAttr);
+   status = attributeAffects(mFileNameAttr, mSentinelAttr);
+   status = attributeAffects(mIdentifierAttr, mSentinelAttr);
+
+   return status;
+}
+
+MStatus AlembicCurvesLocatorNode::compute(const MPlug & plug, MDataBlock & dataBlock)
+{
+   MStatus status;
+
+   // update the frame number to be imported
+   double inputTime = dataBlock.inputValue(mTimeAttr).asTime().as(MTime::kSeconds);
+   MString & fileName = dataBlock.inputValue(mFileNameAttr).asString();
+   MString & identifier = dataBlock.inputValue(mIdentifierAttr).asString();
+
+   // check if we have the file
+   if(fileName != mFileName || identifier != mIdentifier)
+   {
+      mSchema.reset();
+      if(fileName != mFileName)
+      {
+         delRefArchive(mFileName);
+         mFileName = fileName;
+         addRefArchive(mFileName);
+      }
+      mIdentifier = identifier;
+
+      // get the object from the archive
+      Alembic::Abc::IObject iObj = getObjectFromArchive(mFileName,identifier);
+      if(!iObj.valid())
+      {
+         MGlobal::displayWarning("[ExocortexAlembic] Identifier '"+identifier+"' not found in archive '"+mFileName+"'.");
+         return MStatus::kFailure;
+      }
+      Alembic::AbcGeom::ICurves obj(iObj,Alembic::Abc::kWrapExisting);
+      if(!obj.valid())
+      {
+         MGlobal::displayWarning("[ExocortexAlembic] Identifier '"+identifier+"' in archive '"+mFileName+"' is not a Curves.");
+         return MStatus::kFailure;
+      }
+      mSchema = obj.getSchema();
+   }
+
+   if(!mSchema.valid())
+      return MStatus::kFailure;
+
+   // get the sample
+   SampleInfo sampleInfo = getSampleInfo(
+      inputTime,
+      mSchema.getTimeSampling(),
+      mSchema.getNumSamples()
+   );
+
+   // check if we have to do this at all
+   if(mNbCurves == 0 || mLastSampleInfo.floorIndex != sampleInfo.floorIndex || mLastSampleInfo.ceilIndex != sampleInfo.ceilIndex)
+   {
+      Alembic::AbcGeom::ICurvesSchema::Sample sample;
+      Alembic::AbcGeom::ICurvesSchema::Sample sample2;
+      mSchema.get(sample,sampleInfo.floorIndex);
+      if(sampleInfo.alpha != 0.0)
+         mSchema.get(sample2,sampleInfo.ceilIndex);
+
+      // update the indices
+      if(mNbCurves != sample.getNumCurves())
+      {
+         mNbCurves = (unsigned int)sample.getNumCurves();
+
+         Alembic::Abc::Int32ArraySamplePtr nbVertices = sample.getCurvesNumVertices();
+         mIndices.clear();
+         unsigned int offset = 0;
+         for(unsigned int i=0;i<mNbCurves;i++)
+         {
+            unsigned int verticesPerCurve = nbVertices->get()[i];
+            for(unsigned j=0;j<verticesPerCurve-1;j++)
+            {
+               mIndices.push_back(offset);
+               offset++;
+               mIndices.push_back(offset);
+            }
+            offset++;
+         }
+      }
+
+      Alembic::Abc::P3fArraySamplePtr samplePos = sample.getPositions();
+      if(mPositions.size() != samplePos->size())
+         mPositions.resize(samplePos->size());
+
+      // check if we need to interpolate
+      bool done = false;
+      mBoundingBox.clear();
+      if(sampleInfo.alpha != 0.0)
+      {
+         Alembic::Abc::P3fArraySamplePtr samplePos2 = sample2.getPositions();
+         if(samplePos->size() == samplePos2->size())
+         {
+            float alpha = float(sampleInfo.alpha);
+            float ialpha = 1.0f - alpha;
+            for(unsigned int i=0;i<samplePos->size();i++)
+            {
+               mPositions[i].x = ialpha * samplePos->get()[i].x + alpha * samplePos2->get()[i].x;
+               mPositions[i].y = ialpha * samplePos->get()[i].y + alpha * samplePos2->get()[i].y;
+               mPositions[i].z = ialpha * samplePos->get()[i].z + alpha * samplePos2->get()[i].z;
+               mBoundingBox.expand(MPoint(mPositions[i].x,mPositions[i].y,mPositions[i].z));
+            }
+            done = true;
+         }
+      }
+
+      if(!done)
+      {
+         for(unsigned int i=0;i<samplePos->size();i++)
+         {
+            mPositions[i].x = samplePos->get()[i].x;
+            mPositions[i].y = samplePos->get()[i].y;
+            mPositions[i].z = samplePos->get()[i].z;
+            mBoundingBox.expand(MPoint(mPositions[i].x,mPositions[i].y,mPositions[i].z));
+         }
+      }
+
+      // get the colors
+      mColors.clear();
+      if ( mSchema.getPropertyHeader( ".color" ) != NULL )
+      {
+         Alembic::Abc::IC4fArrayProperty prop = Alembic::Abc::IC4fArrayProperty( mSchema, ".color" );
+         if(prop.valid())
+         {
+            if(prop.getNumSamples() > 0)
+            {
+               SampleInfo colorSampleInfo = getSampleInfo(inputTime,prop.getTimeSampling(),prop.getNumSamples());
+               Alembic::Abc::C4fArraySamplePtr sampleColor = prop.getValue(colorSampleInfo.floorIndex);
+               mColors.resize(mPositions.size());
+               if(sampleColor->size() == 1)
+               {
+                  for(unsigned int i=0;i<(unsigned int)mColors.size();i++)
+                  {
+                     mColors[i].r = sampleColor->get()[0].r;
+                     mColors[i].g = sampleColor->get()[0].g;
+                     mColors[i].b = sampleColor->get()[0].b;
+                     mColors[i].a = sampleColor->get()[0].a;
+                  }
+               }
+               else if(sampleColor->size() == mPositions.size())
+               {
+                  for(unsigned int i=0;i<sampleColor->size();i++)
+                  {
+                     mColors[i].r = sampleColor->get()[i].r;
+                     mColors[i].g = sampleColor->get()[i].g;
+                     mColors[i].b = sampleColor->get()[i].b;
+                     mColors[i].a = sampleColor->get()[i].a;
+                  }
+               }
+               else if(sampleColor->size() == mNbCurves)
+               {
+                  Alembic::Abc::Int32ArraySamplePtr nbVertices = sample.getCurvesNumVertices();
+                  unsigned int offset = 0;
+                  for(unsigned int i=0;i<nbVertices->size();i++)
+                  {
+                     for(unsigned j=0;j<(unsigned int)nbVertices->get()[i];j++)
+                     {
+                        mColors[offset].r = sampleColor->get()[i].r;
+                        mColors[offset].g = sampleColor->get()[i].g;
+                        mColors[offset].b = sampleColor->get()[i].b;
+                        mColors[offset].a = sampleColor->get()[i].a;
+                        offset++;
+                     }
+                  }
+               }
+            }
+         }
+      }
+   }
+
+   mLastSampleInfo = sampleInfo;
+
+   MDataHandle outSent = dataBlock.outputValue(mSentinelAttr);
+    //increment, this tells the draw routine that the display list needs to be regenerated
+   outSent.set((mSent + 1 % 10));
+   dataBlock.setClean(mSentinelAttr);
+
+   return MStatus::kSuccess;
+}
+
+bool AlembicCurvesLocatorNode::updated()
+{
+   MPlug SentinelPlug(thisMObject(), AlembicCurvesLocatorNode::mSentinelAttr);
+   int sent = 0;
+   SentinelPlug.getValue( sent );
+   if(sent != mSent)
+   {
+      mSent = sent;
+      return true;
+   }
+   return false;
+}
+
+MBoundingBox AlembicCurvesLocatorNode::boundingBox() const
+{
+   MPlug SentinelPlug(thisMObject(), AlembicCurvesLocatorNode::mSentinelAttr);
+   int sent = 0;
+   SentinelPlug.getValue( sent );
+   return mBoundingBox;
+}
+
+
+void AlembicCurvesLocatorNode::draw( M3dView & view, const MDagPath & path, M3dView::DisplayStyle style, M3dView::DisplayStatus status)
+{
+   // I don't know how to use VBO's here, which of course would speed things
+   // up significantly.
+
+   updated();
+   if(mIndices.size() == 0 || mPositions.size() == 0)
+      return;
+
+   // prepare draw
+   view.beginGL();
+   glPushAttrib(GL_CURRENT_BIT);
+
+   // draw
+   glBegin(GL_LINES);
+   if(mColors.size() == mPositions.size())
+   {
+      for(size_t i=0;i<mIndices.size();i++)
+      {
+         Alembic::Abc::C4f & color = mColors[mIndices[i]];
+         glColor4f(color.r,color.g,color.b,color.a);
+         Alembic::Abc::V3f & pos = mPositions[mIndices[i]];
+         glVertex3f(pos.x,pos.y,pos.z);
+      }
+   }
+   else
+   {
+      glColor4f(0.0,0.0,0.0,1.0);
+      for(size_t i=0;i<mIndices.size();i++)
+      {
+         Alembic::Abc::V3f & pos = mPositions[mIndices[i]];
+         glVertex3f(pos.x,pos.y,pos.z);
+      }
+   }
+   glEnd();
+
+   // end draw
+   glPopAttrib();
+   view.endGL();
+}

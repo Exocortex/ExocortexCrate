@@ -186,6 +186,7 @@ global proc exocortexAlembicImport(string $filename,string $dialog)
     // parse additional data options
     int $purepointcache = 0;
     int $dynamictopology = 0;
+    int $hair = 0;
     string $data[];
     tokenize $datas[$i] ";" $data;
     for($j=0;$j<size($data);$j=$j+1)
@@ -194,6 +195,8 @@ global proc exocortexAlembicImport(string $filename,string $dialog)
         $purepointcache = 1;
       else if($data[$j]=="dynamictopology=1")
         $dynamictopology = 1;
+      else if($data[$j]=="hair=1")
+        $hair = 1;
     }
 
     if($types[$i] == "PolyMesh")
@@ -266,16 +269,24 @@ global proc exocortexAlembicImport(string $filename,string $dialog)
     }
     else if($types[$i] == "Curves")
     {
-      $shape = exocortexCreateOrReuseNode($name,"nurbsCurve",$importAttach,0,0);
-      $reader = exocortexCreateOrReuseNode($name+".create","ExocortexAlembicCurvesDeform",$importAttach,1,1);
-      if($reader == "")
+      if($hair == 0)
       {
-        $topoReader = exocortexCreateOrReuseNode("ExocortexAlembicCurves","ExocortexAlembicCurves",0,0,0);
-        exocortexConnectIfUnconnected(($topoReader+".outCurve"), ($shape+".create"));
-        exocortexConnectIfUnconnected(($fileNode+".outFileName"), ($topoReader+".fileName"));
-        setAttr -type "string" ($topoReader+".identifier") $identifiers[$i];
-        string $readers[] = `deformer -type "ExocortexAlembicCurvesDeform" $shape`;
-        $reader = $readers[0];
+        $shape = exocortexCreateOrReuseNode($name,"nurbsCurve",$importAttach,0,0);
+        $reader = exocortexCreateOrReuseNode($name+".create","ExocortexAlembicCurvesDeform",$importAttach,1,1);
+        if($reader == "")
+        {
+          $topoReader = exocortexCreateOrReuseNode("ExocortexAlembicCurves","ExocortexAlembicCurves",0,0,0);
+          exocortexConnectIfUnconnected(($topoReader+".outCurve"), ($shape+".create"));
+          exocortexConnectIfUnconnected(($fileNode+".outFileName"), ($topoReader+".fileName"));
+          setAttr -type "string" ($topoReader+".identifier") $identifiers[$i];
+          string $readers[] = `deformer -type "ExocortexAlembicCurvesDeform" $shape`;
+          $reader = $readers[0];
+        }
+      }
+      else
+      {
+        $shape = exocortexCreateOrReuseNode($name,"ExocortexAlembicCurvesLocator",$importAttach,0,0);
+        $reader = $shape;
       }
     }
     else if($types[$i] == "Points")

@@ -64,6 +64,17 @@ public:
 protected:
    unsigned int mRefId;
 };
+
+class AlembicObjectLocatorNode : public MPxLocatorNode
+{
+public:
+   AlembicObjectLocatorNode();
+   virtual ~AlembicObjectLocatorNode();
+   virtual void PreDestruction() = 0;
+protected:
+   unsigned int mRefId;
+};
+
 void preDestructAllNodes();
 
 #include "AlembicWriteJob.h"

@@ -31,6 +31,7 @@ const MTypeId mSubDDeformNodeId(0x0011A107);
 const MTypeId mPointsNodeId(0x0011A108);
 const MTypeId mCurvesNodeId(0x0011A109);
 const MTypeId mCurvesDeformNodeId(0x0011A110);
+const MTypeId mCurvesLocatorNodeId(0x0011A111);
 
 static MCallbackId deleteAllArchivesCallbackOnNewId = 0;
 static MCallbackId deleteAllArchivesCallbackOnOpenId = 0;
@@ -131,6 +132,11 @@ EC_EXPORT MStatus initializePlugin(MObject obj)
       &AlembicCurvesDeformNode::creator,
       &AlembicCurvesDeformNode::initialize,
       MPxNode::kDeformerNode);
+   status = plugin.registerNode("ExocortexAlembicCurvesLocator",
+      mCurvesLocatorNodeId,
+      &AlembicCurvesLocatorNode::creator,
+      &AlembicCurvesLocatorNode::initialize,
+      MPxNode::kLocatorNode);
 
    // Load the menu!
    std::stringstream load_command;
@@ -189,6 +195,7 @@ EC_EXPORT MStatus uninitializePlugin(MObject obj)
    status = plugin.deregisterNode(mPointsNodeId);
    status = plugin.deregisterNode(mCurvesNodeId);
    status = plugin.deregisterNode(mCurvesDeformNodeId);
+   status = plugin.deregisterNode(mCurvesLocatorNodeId);
 
    return status;
 }
