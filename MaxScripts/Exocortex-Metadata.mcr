@@ -3,10 +3,10 @@ function CreateAlembicMetadataModifier selectedObject = (
 
 	if selectedObject != undefined then (
 		--only allow one modifier
-		if selectedObject.modifiers["alembic_metadata"] == undefined then (
+		if selectedObject.modifiers["Alembic Metadata"] == undefined then (
 
 			AlembicMetaDataModifier = EmptyModifier()
-			AlembicMetaDataModifier.name = "alembic_metadata"
+			AlembicMetaDataModifier.name = "Alembic Metadata"
 			addmodifier selectedObject AlembicMetaDataModifier
 
 			AlembicMetadataCA = attributes AlembicMetadata
@@ -35,7 +35,7 @@ function CreateAlembicMetadataModifier selectedObject = (
 					value9 type:#string ui:eValue9 default:""
 				)
 					
-				rollout AlembicMetadataRLT "alembic_metadata"
+				rollout AlembicMetadataRLT "Alembic Metadata"
 				(
 					edittext eName0 "n0" fieldWidth:120 labelOnTop:false
 					edittext eValue0 "v0" fieldWidth:120 labelOnTop:false
@@ -60,7 +60,7 @@ function CreateAlembicMetadataModifier selectedObject = (
 				)
 			)
 
-			custattributes.add selectedObject.modifiers["alembic_metadata"] AlembicMetadataCA baseobject:false
+			custattributes.add selectedObject.modifiers["Alembic Metadata"] AlembicMetadataCA baseobject:false
 		)
 	)
 )
@@ -70,26 +70,26 @@ function InitAlembicMetadataModifier selectedObject dname0 dvalue0 dname1 dvalue
 
 	if selectedObject != undefined then 
 	(
-		selectedObject.modifiers["alembic_metadata"].name0 = dname0;
-		selectedObject.modifiers["alembic_metadata"].value0 = dvalue0;
-		selectedObject.modifiers["alembic_metadata"].name1 = dname1;
-		selectedObject.modifiers["alembic_metadata"].value1 = dvalue1;
-		selectedObject.modifiers["alembic_metadata"].name2 = dname2;
-		selectedObject.modifiers["alembic_metadata"].value2 = dvalue2;
-		selectedObject.modifiers["alembic_metadata"].name3 = dname3;
-		selectedObject.modifiers["alembic_metadata"].value3 = dvalue3;
-		selectedObject.modifiers["alembic_metadata"].name4 = dname4;
-		selectedObject.modifiers["alembic_metadata"].value4 = dvalue4;
-		selectedObject.modifiers["alembic_metadata"].name5 = dname5;
-		selectedObject.modifiers["alembic_metadata"].value5 = dvalue5;
-		selectedObject.modifiers["alembic_metadata"].name6 = dname6;
-		selectedObject.modifiers["alembic_metadata"].value6 = dvalue6;
-		selectedObject.modifiers["alembic_metadata"].name7 = dname7;
-		selectedObject.modifiers["alembic_metadata"].value7 = dvalue7;
-		selectedObject.modifiers["alembic_metadata"].name8 = dname8;
-		selectedObject.modifiers["alembic_metadata"].value8 = dvalue8;
-		selectedObject.modifiers["alembic_metadata"].name9 = dname9;
-		selectedObject.modifiers["alembic_metadata"].value9 = dvalue9;
+		selectedObject.modifiers["Alembic Metadata"].name0 = dname0;
+		selectedObject.modifiers["Alembic Metadata"].value0 = dvalue0;
+		selectedObject.modifiers["Alembic Metadata"].name1 = dname1;
+		selectedObject.modifiers["Alembic Metadata"].value1 = dvalue1;
+		selectedObject.modifiers["Alembic Metadata"].name2 = dname2;
+		selectedObject.modifiers["Alembic Metadata"].value2 = dvalue2;
+		selectedObject.modifiers["Alembic Metadata"].name3 = dname3;
+		selectedObject.modifiers["Alembic Metadata"].value3 = dvalue3;
+		selectedObject.modifiers["Alembic Metadata"].name4 = dname4;
+		selectedObject.modifiers["Alembic Metadata"].value4 = dvalue4;
+		selectedObject.modifiers["Alembic Metadata"].name5 = dname5;
+		selectedObject.modifiers["Alembic Metadata"].value5 = dvalue5;
+		selectedObject.modifiers["Alembic Metadata"].name6 = dname6;
+		selectedObject.modifiers["Alembic Metadata"].value6 = dvalue6;
+		selectedObject.modifiers["Alembic Metadata"].name7 = dname7;
+		selectedObject.modifiers["Alembic Metadata"].value7 = dvalue7;
+		selectedObject.modifiers["Alembic Metadata"].name8 = dname8;
+		selectedObject.modifiers["Alembic Metadata"].value8 = dvalue8;
+		selectedObject.modifiers["Alembic Metadata"].name9 = dname9;
+		selectedObject.modifiers["Alembic Metadata"].value9 = dvalue9;
 	)
 )
 

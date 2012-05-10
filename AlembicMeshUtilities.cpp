@@ -893,7 +893,7 @@ void addAlembicMaterialsModifier(INode *pNode, Alembic::AbcGeom::IObject& iObj)
 	char szBuffer[10000];
 	sprintf_s(szBuffer, 10000,
 			"AlembicMaterialModifier = EmptyModifier()\n"
-			"AlembicMaterialModifier.name = \"alembic_materials\"\n"
+			"AlembicMaterialModifier.name = \"Alembic Materials\"\n"
 			"addmodifier $ AlembicMaterialModifier\n"
 
 			"AlembicMaterialCA = attributes AlembicMaterialModifier\n"
