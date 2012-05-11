@@ -103,9 +103,16 @@ public:
     // --- Derived class implementation of the virtual functions in BaseObject ---
     CreateMouseCallBack* GetCreateMouseCallBack() { return NULL; }
     CONST_2013 TCHAR *GetObjectName() { return "Alembic Simple Particle"; }
-    virtual int Display(TimeValue t, INode* inode, ViewExp *vpt, int flags);
-    virtual int HitTest(TimeValue t, INode *inode, int type, int crossing, int flags, IPoint2 *p, ViewExp *vpt);
-    virtual BOOL OKtoDisplay( TimeValue t);
+    //virtual int Display(TimeValue t, INode* inode, ViewExp *vpt, int flags);
+    //virtual int HitTest(TimeValue t, INode *inode, int type, int crossing, int flags, IPoint2 *p, ViewExp *vpt);
+    //virtual BOOL OKtoDisplay( TimeValue t);
+
+	virtual Point3 ParticlePosition(TimeValue t,int i);
+	virtual Point3 ParticleVelocity(TimeValue t,int i);
+	virtual float ParticleSize(TimeValue t,int i);
+	virtual int ParticleCenter(TimeValue t,int i);
+	virtual TimeValue ParticleAge(TimeValue t, int i);
+	virtual TimeValue ParticleLife(TimeValue t, int i);
 
 private:
     bool            GetAlembicIPoints(Alembic::AbcGeom::IPoints &iPoints, const char *strFile, const char *strIdentifier);
@@ -123,7 +130,7 @@ private:
     void            FillParticleShapeNodes(Alembic::AbcGeom::IPoints &iPoints, const SampleInfo &sampleInfo);
     int			    callback( INode *node );
     INode*          GetParticleMeshNode(int meshNumber, INode *displayNode);
-    void            ClearCurrentViewportMeshes();
+  //  void            ClearCurrentViewportMeshes();
 private:
     Mesh *BuildPointMesh(int meshNumber, TimeValue t, INode *node, View& view, BOOL &needDelete);
     Mesh *BuildBoxMesh(int meshNumber, TimeValue t, INode *node, View& view, BOOL &needDelete);
@@ -143,7 +150,7 @@ private:
     Alembic::Abc::StringArraySamplePtr m_InstanceShapeNames;
     std::vector<INode*> m_InstanceShapeINodes;
     size_t m_TotalShapesToEnumerate;
-    std::vector<viewportmesh> m_ParticleViewportMeshes;
+   // std::vector<viewportmesh> m_ParticleViewportMeshes;
     std::string m_CachedAbcFile;
 private:
     GenBoxObject *m_pBoxMaker;
@@ -152,6 +159,7 @@ private:
     SimpleObject *m_pConeMaker;
 	GenCylinder *m_pDiskMaker;
 	SimpleObject* m_pRectangleMaker;
+	Matrix3  m_objToWorld;
 };
 
 
