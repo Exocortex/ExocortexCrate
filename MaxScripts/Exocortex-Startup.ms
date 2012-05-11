@@ -1,6 +1,7 @@
 include "Exocortex-Dialog-AlembicImport.mcr"
 include "Exocortex-Dialog-AlembicExport.mcr"
 include "Exocortex-Helper-AlembicTimeControl.mcr"
+include "Exocortex-Metadata.mcr"
 
 ---------------------------------------------------------------------------------------------------------
 -- Function to create the menu items in the main menu bar
@@ -22,10 +23,14 @@ fn initializeAlembicMenus =
 
     -- Create a menu item that brings up the export dialog
     alembicExportItem = menuMan.createActionItem "AlembicExportUI" "Alembic"
+
+    -- Create a menu item that add Metadata display modifier to selected objects
+    alembicAddMetadata = menuMan.createActionItem "AlembicCreateMetadataModifier" "Alembic"
 	
     -- Add the items to the menu
     alembicMenu.addItem alembicImportItem 1
     alembicMenu.addItem alembicExportItem 2
+    alembicMenu.addItem alembicAddMetadata 3
 
     -- Create a new menu item with the menu as it's sub-menu
     alembicMainMenuItem = menuMan.createSubMenuItem "Alembic" alembicMenu

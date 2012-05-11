@@ -6,6 +6,7 @@
 #include "AlembicVisibilityController.h"
 #include "utility.h"
 #include "AlembicMAXScript.h"
+#include "AlembicMetadataUtils.h"
 
 namespace AbcA = ::Alembic::AbcCoreAbstract::ALEMBIC_VERSION_NS;
 namespace AbcB = ::Alembic::Abc::ALEMBIC_VERSION_NS;
@@ -1451,6 +1452,9 @@ int AlembicImport_Points(const std::string &file, Alembic::AbcGeom::IObject& iOb
         sprintf_s( szControllerName, 10000, "$.time" );
         AlembicImport_ConnectTimeControl( szControllerName, options );
     }
+
+	GET_MAX_INTERFACE()->SelectNode( pNode );
+	importMetadata(iObj);
 
     return 0;
 }

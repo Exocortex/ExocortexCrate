@@ -8,7 +8,7 @@
 #include "EmptySplineObject.h"
 #include "EmptyPolyLineObject.h"
 #include "AlembicMAXScript.h"
-
+#include "AlembicMetadataUtils.h"
 
 
 bool isAlembicSplinePositions( Alembic::AbcGeom::IObject *pIObj, bool& isConstant ) {
@@ -428,6 +428,9 @@ int AlembicImport_Shape(const std::string &path, Alembic::AbcGeom::IObject& iObj
 	for( int i = 0; i < modifiersToEnable.size(); i ++ ) {
 		modifiersToEnable[i]->EnableMod();
 	}
+
+	GET_MAX_INTERFACE()->SelectNode( pNode );
+	importMetadata(iObj);
 
 	return 0;
 }

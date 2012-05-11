@@ -4,6 +4,7 @@
 #include "SceneEnumProc.h"
 #include "utility.h"
 #include "ExocortexCoreServicesAPI.h"
+#include "AlembicMetadataUtils.h"
 
 namespace AbcA = ::Alembic::AbcCoreAbstract::ALEMBIC_VERSION_NS;
 namespace AbcB = ::Alembic::Abc::ALEMBIC_VERSION_NS;
@@ -71,6 +72,8 @@ bool AlembicCurves::Save(double time)
 
     // Store the transformation
     SaveXformSample(GetRef(), mXformSchema, mXformSample, time, bFlatten);
+
+	SaveMetaData(GetRef().node, this);
 
     // store the metadata
     // IMetaDataManager mng;

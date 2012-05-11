@@ -8,6 +8,9 @@
 #include "AlembicNames.h"
 #include "AlembicMeshUtilities.h"
 #include "AlembicMAXScript.h" 
+#include "AlembicMetadataUtils.h"
+#include "AlembicMax.h"
+
 
 bool isAlembicMeshValid( Alembic::AbcGeom::IObject *pIObj ) {
 	Alembic::AbcGeom::IPolyMesh objMesh;
@@ -829,6 +832,85 @@ bool AlembicImport_IsPolyObject(Alembic::AbcGeom::IPolyMeshSchema::Sample &polyM
     return false;
 }
 
+void addAlembicMaterialsModifier(INode *pNode, Alembic::AbcGeom::IObject& iObj)
+{
+
+	Alembic::AbcGeom::IPolyMesh objMesh;
+	Alembic::AbcGeom::ISubD objSubD;
+
+	if(Alembic::AbcGeom::IPolyMesh::matches(iObj.getMetaData())){
+	   objMesh = Alembic::AbcGeom::IPolyMesh(iObj,Alembic::Abc::kWrapExisting);
+	}
+	else{
+	   objSubD = Alembic::AbcGeom::ISubD(iObj,Alembic::Abc::kWrapExisting);
+	}
+
+	if(!objMesh.valid() && !objSubD.valid()){
+	   return;
+	}
+
+	SampleInfo sampleInfo;
+	if(objMesh.valid()){
+		sampleInfo = getSampleInfo(0, objMesh.getSchema().getTimeSampling(), objMesh.getSchema().getNumSamples());
+	}
+	else{
+		sampleInfo = getSampleInfo(0, objSubD.getSchema().getTimeSampling(), objSubD.getSchema().getNumSamples());
+	}
+
+	Alembic::AbcGeom::IPolyMeshSchema::Sample polyMeshSample;
+	Alembic::AbcGeom::ISubDSchema::Sample subDSample;
+
+	if(objMesh.valid()){
+	   objMesh.getSchema().get(polyMeshSample,sampleInfo.floorIndex);
+	}
+	else{
+	   objSubD.getSchema().get(subDSample,sampleInfo.floorIndex);
+	}
+
+	std::vector<std::string> faceSetNames;
+	if(objMesh.valid()){
+		objMesh.getSchema().getFaceSetNames(faceSetNames);
+	}
+	else{
+		objSubD.getSchema().getFaceSetNames(faceSetNames);
+	}
+
+	std::string names("");
+
+	for(size_t j=0;j<faceSetNames.size();j++)
+	{
+		const char* name = faceSetNames[j].c_str();
+		names+="\"";
+		names+=name;
+		names+="\"";
+		if(j != faceSetNames.size()-1){
+			names+=", ";
+		}
+	}
+
+	GET_MAX_INTERFACE()->SelectNode( pNode );
+
+	char szBuffer[10000];
+	sprintf_s(szBuffer, 10000,
+			"AlembicMaterialModifier = EmptyModifier()\n"
+			"AlembicMaterialModifier.name = \"Alembic Materials\"\n"
+			"addmodifier $ AlembicMaterialModifier\n"
+
+			"AlembicMaterialCA = attributes AlembicMaterialModifier\n"
+			"(\n"	
+				"rollout AlembicMaterialModifierRLT \"alembic_materials\"\n"
+				"(\n"
+					"listbox eTestList \"\" items:#(%s)\n"
+				")\n"
+			")\n"
+
+			"custattributes.add $.modifiers[\"alembic_materials\"] AlembicMaterialCA baseobject:false",
+			names.c_str()
+	);
+
+	ExecuteMAXScriptScript( szBuffer );
+}
+
 int AlembicImport_PolyMesh(const std::string &path, Alembic::AbcGeom::IObject& iObj, alembic_importoptions &options, INode** pMaxNode)
 {
 	const std::string &identifier = iObj.getFullName();
@@ -1035,6 +1117,11 @@ int AlembicImport_PolyMesh(const std::string &path, Alembic::AbcGeom::IObject& i
 	for( int i = 0; i < modifiersToEnable.size(); i ++ ) {
 		modifiersToEnable[i]->EnableMod();
 	}
+
+	GET_MAX_INTERFACE()->SelectNode( pNode );
+	importMetadata(iObj);
+
+	addAlembicMaterialsModifier(pNode, iObj);
 
 	return 0;
 }

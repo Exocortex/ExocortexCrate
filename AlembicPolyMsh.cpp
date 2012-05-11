@@ -4,6 +4,7 @@
 #include "AlembicXForm.h"
 #include "SceneEnumProc.h"
 #include "Utility.h"
+#include "AlembicMetadataUtils.h"
 
 namespace AbcA = ::Alembic::AbcCoreAbstract::ALEMBIC_VERSION_NS;
 namespace AbcB = ::Alembic::Abc::ALEMBIC_VERSION_NS;
@@ -132,6 +133,8 @@ bool AlembicPolyMesh::Save(double time)
 
     // Store the transformation
     SaveXformSample(GetRef(), mXformSchema, mXformSample, time, bFlatten);
+
+	SaveMetaData(GetRef().node, this);
    
     // Clear our data
     mFaceCountVec.clear();
@@ -597,22 +600,37 @@ bool AlembicPolyMesh::Save(double time)
               Alembic::Abc::UInt32ArraySample sample = Alembic::Abc::UInt32ArraySample(&mMatIdIndexVec.front(), nMatIndexSize);
               mMatIdProperty.set(sample);
 
+			  Mtl* pMat = GetRef().node->GetMtl();
+
               // For sample zero, export the material ids as face sets
               if (mNumSamples == 0)
               {
-                  for ( facesetmap_it it=mFaceSetsMap.begin(); it != mFaceSetsMap.end(); it++ )
+				  int i = 0;
+				  for ( facesetmap_it it=mFaceSetsMap.begin(); it != mFaceSetsMap.end(); it++)
                   {
                       std::string name;
-                      std::stringstream convert;
-                      int nMaterialId = it->first + 1;
-                      convert << nMaterialId;
-                      name = "Material" + convert.str();
+
+					  Mtl* pSubMat = NULL;
+					  if(pMat && i<pMat->NumSubMtls()){
+					      pSubMat = pMat->GetSubMtl(i);
+					  }
+					  if(pSubMat){
+                          name = pSubMat->GetName();
+					  }
+					  else{
+						  std::stringstream convert;
+						  int nMaterialId = it->first + 1;
+						  convert << nMaterialId;
+						  name = "Material" + convert.str();
+					  }
+
                       std::vector<int32_t> & faceSetVec = it->second;
 
                       Alembic::AbcGeom::OFaceSet faceSet = mMeshSchema.createFaceSet(name);
                       Alembic::AbcGeom::OFaceSetSchema::Sample faceSetSample(Alembic::Abc::Int32ArraySample(&faceSetVec.front(),faceSetVec.size()));
                       faceSet.getSchema().set(faceSetSample);
 
+					  i++;
                   }
               }
           }
