@@ -37,3 +37,7 @@ and run the corresponding batch file, for example
 
 This will merge all build files into the build folder below ExocortexAlembicShared,
 which allows to debug all the way down to the python libs or the hdf5 source.
+
+The build process will automatically make a deployment.  That deployment is located here:
+
+ExocortexAlembicShared/install/
