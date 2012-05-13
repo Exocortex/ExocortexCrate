@@ -317,7 +317,7 @@ MarkerType AlembicSimpleParticle::GetMarkerType()
 }
 
 Point3 AlembicSimpleParticle::ParticlePosition(TimeValue t,int i) {
-	ESS_LOG_INFO( "AlembicSimpleParticle::ParticlePosition( i: " << i << " )" );
+	//ESS_LOG_INFO( "AlembicSimpleParticle::ParticlePosition( i: " << i << " )" );
 	return parts.points[i];
 }
 /**		Returns the velocity of the specified particle at the time passed (in 3ds
@@ -326,7 +326,7 @@ texture map and the Particle Motion Blur texture map use this method.
 \param t The time to return the particle velocity.
 \param i The index of the particle. */
 Point3 AlembicSimpleParticle::ParticleVelocity(TimeValue t,int i) {
-	ESS_LOG_INFO( "AlembicSimpleParticle::ParticleVelocity( i: " << i << " )" );
+	//ESS_LOG_INFO( "AlembicSimpleParticle::ParticleVelocity( i: " << i << " )" );
 	return parts.vels[i];
 }
 
@@ -746,13 +746,13 @@ TimeValue AlembicSimpleParticle::GetParticleShapeInstanceTime(Alembic::AbcGeom::
 
 int AlembicSimpleParticle::NumberOfRenderMeshes()
 {
-	ESS_LOG_INFO( "AlembicSimpleParticle::NumberOfRenderMeshes()" );
+	//ESS_LOG_INFO( "AlembicSimpleParticle::NumberOfRenderMeshes()" );
      return parts.Count();
 }
 
 Mesh* AlembicSimpleParticle::GetMultipleRenderMesh(TimeValue  t,  INode *inode,  View &view,  BOOL &needDelete,  int meshNumber)
 {
-	ESS_LOG_INFO( "AlembicSimpleParticle::GetMultipleRenderMesh( t: " << t << " meshNumber: " << meshNumber << ", t: " << t << " )" );
+	//ESS_LOG_INFO( "AlembicSimpleParticle::GetMultipleRenderMesh( t: " << t << " meshNumber: " << meshNumber << ", t: " << t << " )" );
     if (meshNumber > parts.Count() || !parts.Alive(meshNumber) || view.CheckForRenderAbort())
     {
         needDelete = NULL;
@@ -800,7 +800,7 @@ Mesh* AlembicSimpleParticle::GetMultipleRenderMesh(TimeValue  t,  INode *inode, 
 
 void AlembicSimpleParticle::GetMultipleRenderMeshTM(TimeValue  t, INode *inode, View &view, int  meshNumber, Matrix3 &meshTM, Interval &meshTMValid)
 {
-	ESS_LOG_INFO( "AlembicSimpleParticle::GetMultipleRenderMeshTM( t: " << t << " meshNumber: " << meshNumber << ", t: " << t << " )" );
+	//ESS_LOG_INFO( "AlembicSimpleParticle::GetMultipleRenderMeshTM( t: " << t << " meshNumber: " << meshNumber << ", t: " << t << " )" );
    //if (meshNumber > parts.Count() || !parts.Alive(meshNumber) || view.CheckForRenderAbort())
     //{
     //    
@@ -822,7 +822,7 @@ void AlembicSimpleParticle::GetMultipleRenderMeshTM(TimeValue  t, INode *inode, 
 	Matrix3 objectToWorld = inode->GetObjectTM( t );
 
 	if( renderer.find( string( "mental ray Renderer" ) ) !=string::npos ) {
-		ESS_LOG_INFO( "MR renderer mode" );
+		//ESS_LOG_INFO( "MR renderer mode" );
 		meshTM.IdentityMatrix();
 		//meshTM.SetRotate(orient);//TODO: the orientation is wrong
 		meshTM.PreScale(scaleVec);
@@ -830,22 +830,25 @@ void AlembicSimpleParticle::GetMultipleRenderMeshTM(TimeValue  t, INode *inode, 
 		meshTM = meshTM * Inverse( objectToWorld );
 	}
 	else if( renderer.find( string( "iray" ) ) !=string::npos ) {
-		ESS_LOG_INFO( "MR renderer mode" );
+		//ESS_LOG_INFO( "MR renderer mode" );
 		meshTM.IdentityMatrix();
 		//meshTM.SetRotate(orient);//TODO: the orientation is wrong
 		meshTM.PreScale(scaleVec);
 		meshTM.SetTrans(pos);
 		meshTM = meshTM * Inverse( objectToWorld );
 	}
-	else if( renderer.find( string( "vray" ) ) !=string::npos ) {
-		ESS_LOG_INFO( "MR renderer mode" );
+	else if(( renderer.find( string( "vray" ) ) != string::npos )||
+		( renderer.find( string( "Vray" ) ) != string::npos )||
+		( renderer.find( string( "VRay" ) ) != string::npos ) ) {
+		//ESS_LOG_INFO( "Vray renderer mode" );
 		meshTM.IdentityMatrix();
 		//meshTM.SetRotate(orient);//TODO: the orientation is wrong
 		meshTM.PreScale(scaleVec);
 		meshTM.SetTrans(pos);
 		meshTM = meshTM * Inverse( objectToWorld );
-	}	else {
-		ESS_LOG_INFO( "Default renderer mode" );
+	} 
+	else {
+		//ESS_LOG_INFO( "Default renderer mode" );
 		meshTM.IdentityMatrix();
 		//meshTM.SetRotate(orient);//TODO: the orientation is wrong
 		meshTM.PreScale(scaleVec);
