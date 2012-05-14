@@ -129,7 +129,7 @@ typedef struct {
    };
 } oProperty;
 
-PyObject * oProperty_new(oObjectPtr in_casted, char * in_propName, char * in_propType, int tsIndex, void * in_Archive);
+PyObject * oProperty_new(Alembic::Abc::OCompoundProperty compound, char * in_propName, char * in_propType, int tsIndex, void * in_Archive);
 void oProperty_deletePointers(oProperty * prop);
 
 bool register_object_oProperty(PyObject *module);

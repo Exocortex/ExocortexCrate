@@ -5,6 +5,11 @@
 #include <boost/lexical_cast.hpp>
 #include "AlembicLicensing.h"
 
+#ifdef __cplusplus__
+extern "C"
+{
+#endif
+
 static std::string iProperty_getName_func(PyObject * self)
 {
    ALEMBIC_TRY_STATEMENT
@@ -2342,6 +2347,12 @@ static PyObject * iProperty_getValues(PyObject * self, PyObject * args)
    ALEMBIC_PYOBJECT_CATCH_STATEMENT
 }
 
+static PyObject *iProperty_isCompound(PyObject *self, PyObject * args)
+{
+   Py_INCREF(Py_False);
+   return Py_False;
+}
+
 static PyMethodDef iProperty_methods[] = {
    {"getName", (PyCFunction)iProperty_getName, METH_NOARGS, "Returns the name of this property."},
    {"getType", (PyCFunction)iProperty_getType, METH_NOARGS, "Returns the type of this property."},
@@ -2349,6 +2360,7 @@ static PyMethodDef iProperty_methods[] = {
    {"getNbStoredSamples", (PyCFunction)iProperty_getNbStoredSamples, METH_NOARGS, "Returns the actual number of stored samples."},
    {"getSize", (PyCFunction)iProperty_getSize, METH_VARARGS, "Returns the size of the property. For single value properties, this method returns 1, for array value properties it returns the size of the array."},
    {"getValues", (PyCFunction)iProperty_getValues, METH_VARARGS, "Returns the values of the property at the (optional) sample index."},
+   {"isCompound", (PyCFunction)iProperty_isCompound, METH_NOARGS, "To distinguish between an iProperty and an iCompoundProperty, always returns false for iProperty."},
    {NULL, NULL}
 };
 
@@ -2521,6 +2533,10 @@ static PyTypeObject iProperty_Type = {
   0,		               /* tp_iternext */
   iProperty_methods,             /* tp_methods */
 };
+
+#ifdef __cplusplus__
+}
+#endif
 
 #define _NEW_PROP_IMPL_(tp,base,singleprop,arrayprop) \
    if(prop->mIsArray) \
@@ -2821,4 +2837,5 @@ bool register_object_iProperty(PyObject *module)
 {
   return register_object(module, iProperty_Type, "iProperty");
 }
+
 

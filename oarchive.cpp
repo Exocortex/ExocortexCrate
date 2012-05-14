@@ -7,6 +7,8 @@
 #include "AlembicLicensing.h"
 
 #include <boost/algorithm/string.hpp>
+#include <cstring>
+#include <iostream>
 
 size_t gNbOArchives = 0;
 size_t getNbOArchives() { return gNbOArchives; }
@@ -372,15 +374,31 @@ PyObject * oArchive_new(PyObject * self, PyObject * args)
    ALEMBIC_PYOBJECT_CATCH_STATEMENT
 }
 
+static void init_oArchiveElement(oArchiveElement &element, std::string &identifier)
+{
+   element.identifier = identifier;    // then set the identifier
+   element.object = NULL;
+   element.prop = NULL;
+   element.comp_prop = NULL;
+   element.xform = NULL;
+}
+
 void oArchive_registerObjectElement(oArchive * archive, std::string identifier, oObject * object)
 {
-   if(oArchive_getObjectElement(archive,identifier))
+   if(oArchive_getObjectElement(archive, identifier))
       return;
    oArchiveElement element;
+   //std::cerr << "Identifier value: " << identifier << std::endl;
+   init_oArchiveElement(element, identifier);
+
+   /*
    element.identifier = identifier;
    element.object = object;
    element.prop = NULL;
    element.xform = NULL;
+   */
+
+   element.object = object;
    archive->mElements->push_back(element);
    Py_INCREF(object);
 }
@@ -390,12 +408,29 @@ void oArchive_registerPropElement(oArchive * archive, std::string identifier, oP
    if(oArchive_getPropElement(archive,identifier))
       return;
    oArchiveElement element;
+   init_oArchiveElement(element, identifier);
+   /*
    element.identifier = identifier;
    element.object = NULL;
    element.prop = prop;
    element.xform = NULL;
+   */
+
+   element.prop = prop;
    archive->mElements->push_back(element);
    Py_INCREF(prop);
+}
+
+void oArchive_registerCompPropElement(oArchive * archive, std::string identifier, oCompoundProperty * comp_prop)
+{
+   if(oArchive_getPropElement(archive,identifier))
+      return;
+   oArchiveElement element;
+   init_oArchiveElement(element, identifier);
+
+   element.comp_prop = comp_prop;
+   archive->mElements->push_back(element);
+   Py_INCREF(comp_prop);
 }
 
 void oArchive_registerXformElement(oArchive * archive, std::string identifier, oXformProperty * xform)
@@ -403,48 +438,84 @@ void oArchive_registerXformElement(oArchive * archive, std::string identifier, o
    if(oArchive_getXformElement(archive,identifier))
       return;
    oArchiveElement element;
+   init_oArchiveElement(element, identifier);
+   /*
    element.identifier = identifier;
    element.object = NULL;
    element.prop = NULL;
+   element.xform = xform;
+   */
+
    element.xform = xform;
    archive->mElements->push_back(element);
    Py_INCREF(xform);
 }
 
+static oArchiveElement *oArchive_getArchiveElement(oArchive *archive, std::string identifier)
+{
+   oArchiveElementVec &elements = (*archive->mElements);
+   oArchiveElementVec::iterator end = elements.end();
+   for (oArchiveElementVec::iterator beg = elements.begin(); beg != end; ++beg)
+   {
+      if (beg->identifier == identifier)
+         return &(*beg);   
+   }
+   /*for(size_t i = 0; i < archive->mElements->size(); ++i)
+   {
+      oArchiveElement element = (*archive->mElements)[i];
+      if(element.identifier == identifier)
+         return &element;
+   }*/
+   return NULL;
+}
+
 oObject * oArchive_getObjectElement(oArchive * archive, std::string identifier)
 {
-   for(size_t i=0;i<archive->mElements->size();i++)
+   oArchiveElement *element = oArchive_getArchiveElement(archive, identifier);
+   return element ? element->object : NULL;
+   /*for(size_t i=0;i<archive->mElements->size();i++)
    {
       oArchiveElement element = (*archive->mElements)[i];
       if(element.identifier == identifier)
          return element.object;
    }
-   return NULL;
+   return NULL;*/
 }
 
 oProperty * oArchive_getPropElement(oArchive * archive, std::string identifier)
 {
-   for(size_t i=0;i<archive->mElements->size();i++)
+   oArchiveElement *element = oArchive_getArchiveElement(archive, identifier);
+   return element ? element->prop : NULL;
+   /*for(size_t i=0;i<archive->mElements->size();i++)
    {
       oArchiveElement element = (*archive->mElements)[i];
       if(element.identifier == identifier)
          return element.prop;
    }
-   return NULL;
+   return NULL;*/
+}
+
+oCompoundProperty * oArchive_getCompPropElement(oArchive * archive, std::string identifier)
+{
+   oArchiveElement *element = oArchive_getArchiveElement(archive, identifier);
+   return element ? element->comp_prop : NULL;
 }
 
 oXformProperty * oArchive_getXformElement(oArchive * archive, std::string identifier)
 {
-   for(size_t i=0;i<archive->mElements->size();i++)
+   oArchiveElement *element = oArchive_getArchiveElement(archive, identifier);
+   return element ? element->xform : NULL;
+   /*for(size_t i=0;i<archive->mElements->size();i++)
    {
       oArchiveElement element = (*archive->mElements)[i];
       if(element.identifier == identifier)
          return element.xform;
    }
-   return NULL;
+   return NULL;*/
 }
 
 bool register_object_oArchive(PyObject *module)
 {
   return register_object(module, oArchive_Type, "oArchive");
 }
+

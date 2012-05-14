@@ -6,6 +6,7 @@
 #include "iproperty.h"
 #include "oproperty.h"
 #include "icompoundproperty.h"
+#include "ocompoundproperty.h"
 #include <time.h>
 
 static PyObject * extension_error = NULL;
@@ -21,7 +22,8 @@ static PyObject* extension_getAlembicVersion(PyObject* self, PyObject* args)
    return Py_BuildValue("i", ALEMBIC_VERSION);
 }
 
-static PyMethodDef extension_methods[] = {
+static PyMethodDef extension_methods[] =
+{
    {"getVersion", (PyCFunction)extension_getVersion, METH_NOARGS, "Returns the version number of the alembic extension"},
    {"getAlembicVersion", (PyCFunction)extension_getVersion, METH_NOARGS, "Returns the Alembic.IO version number used for the extension"},
    {"getIArchive", (PyCFunction)iArchive_new, METH_VARARGS, "Takes in a filename to an Alembic file, and returns an iArchive linked to that file."},
@@ -57,7 +59,7 @@ EXTENSION_CALLBACK init_ExocortexAlembicPython(void)
    register_object_oArchive(m);
    register_object_oObject(m);
    register_object_oProperty(m);
-   //register_object_oCompoundProperty(m);
+   register_object_oCompoundProperty(m);
 
    extension_error = PyErr_NewException("ExocortexAlembicPython.error", NULL, NULL);
    PyDict_SetItemString(d, "error", extension_error);

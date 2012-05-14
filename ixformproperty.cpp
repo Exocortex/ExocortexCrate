@@ -10,16 +10,16 @@ static std::string iXformProperty_getName_func()
 
 static PyObject * iXformProperty_getName(PyObject * self, PyObject * args)
 {
-   ALEMBIC_TRY_STATEMENT
+   //ALEMBIC_TRY_STATEMENT  //--- does not access any Alembic objects
    return Py_BuildValue("s",iXformProperty_getName_func().c_str());
-   ALEMBIC_PYOBJECT_CATCH_STATEMENT
+   //ALEMBIC_PYOBJECT_CATCH_STATEMENT
 }
 
 static PyObject * iXformProperty_getType(PyObject * self, PyObject * args)
 {
-   ALEMBIC_TRY_STATEMENT
+   //ALEMBIC_TRY_STATEMENT  //--- does not access any Alembic objects
    return Py_BuildValue("s","matrix4d");
-   ALEMBIC_PYOBJECT_CATCH_STATEMENT
+   //ALEMBIC_PYOBJECT_CATCH_STATEMENT
 }
 
 static PyObject * iXformProperty_getSampleTimes(PyObject * self, PyObject * args)
@@ -52,9 +52,9 @@ static PyObject * iXformProperty_getNbStoredSamples(PyObject * self, PyObject * 
 
 static PyObject * iXformProperty_getSize(PyObject * self, PyObject * args)
 {
-   ALEMBIC_TRY_STATEMENT
+   //ALEMBIC_TRY_STATEMENT  //--- does not access any Alembic objects
    return Py_BuildValue("I",(unsigned int)1);
-   ALEMBIC_PYOBJECT_CATCH_STATEMENT
+   //ALEMBIC_PYOBJECT_CATCH_STATEMENT
 }
 
 static PyObject * iXformProperty_getValues(PyObject * self, PyObject * args)
@@ -106,21 +106,29 @@ static PyObject * iXformProperty_getValues(PyObject * self, PyObject * args)
    ALEMBIC_PYOBJECT_CATCH_STATEMENT
 }
 
-static PyMethodDef iXformProperty_methods[] = {
+static PyObject *iXformProperty_isCompound(PyObject *self, PyObject * args)
+{
+   Py_INCREF(Py_False);
+   return Py_False;
+}
+
+static PyMethodDef iXformProperty_methods[] =
+{
    {"getName", (PyCFunction)iXformProperty_getName, METH_NOARGS},
    {"getType", (PyCFunction)iXformProperty_getType, METH_NOARGS},
    {"getSampleTimes", (PyCFunction)iXformProperty_getSampleTimes, METH_NOARGS},
    {"getNbStoredSamples", (PyCFunction)iXformProperty_getNbStoredSamples, METH_NOARGS},
    {"getSize", (PyCFunction)iXformProperty_getSize, METH_VARARGS},
    {"getValues", (PyCFunction)iXformProperty_getValues, METH_VARARGS},
+   {"isCompound", (PyCFunction)iXformProperty_isCompound, METH_NOARGS, "To distinguish between an iProperty and an iCompoundProperty, always returns false for iXformProperty."},
    {NULL, NULL}
 };
 
 static PyObject * iXformProperty_getAttr(PyObject * self, char * attrName)
 {
-   ALEMBIC_TRY_STATEMENT
+   //ALEMBIC_TRY_STATEMENT  //--- does not access any Alembic objects
    return Py_FindMethod(iXformProperty_methods, self, attrName);
-   ALEMBIC_PYOBJECT_CATCH_STATEMENT
+   //ALEMBIC_PYOBJECT_CATCH_STATEMENT
 }
 
 static void iXformProperty_delete(PyObject * self)

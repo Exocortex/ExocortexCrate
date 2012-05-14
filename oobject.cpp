@@ -2,9 +2,14 @@
 #include "oarchive.h"
 #include "oobject.h"
 #include "oproperty.h"
+#include "ocompoundproperty.h"
 //#include "ixformproperty.h"
 #include "foundation.h"
 #include <boost/lexical_cast.hpp>
+
+#include <iostream>
+#define INFO_MSG(msg)    std::cerr << "ExocortexAlembicPython (" << __FILE__ << ":" << __LINE__ << " -> " << msg << std::endl
+
 
 Alembic::Abc::OCompoundProperty getCompoundFromOObject(oObjectPtr in_Casted)
 {
@@ -222,7 +227,12 @@ static PyObject * oObject_getProperty(PyObject * self, PyObject * args)
       }
    }
 
-   return oProperty_new(object->mCasted,propName,propType,tsIndex, object->mArchive);
+   // Test if it's a compound or a normal property
+   if (propType && std::strcmp(propType, "compound") == 0)
+   {
+      return oCompoundProperty_new(getCompoundFromOObject(object->mCasted), propName, "compound", tsIndex, object->mArchive);
+   }
+   return oProperty_new(getCompoundFromOObject(object->mCasted), propName, propType, tsIndex, object->mArchive);
    ALEMBIC_PYOBJECT_CATCH_STATEMENT
 }
 
@@ -230,7 +240,7 @@ static PyMethodDef oObject_methods[] = {
    {"getIdentifier", (PyCFunction)oObject_getIdentifier, METH_NOARGS, "Returns the identifier linked to this object."},
    {"getType", (PyCFunction)oObject_getType, METH_NOARGS, "Returns the type of this object. Usually encodes the schema name inside of Alembic.IO."},
    {"setMetaData", (PyCFunction)oObject_setMetaData, METH_VARARGS, "Takes in a tuple of 20 strings to store as metadata. If you have less strings, make sure to fill the tuple with empty string to match the count of 20."},
-   {"getProperty", (PyCFunction)oObject_getProperty, METH_VARARGS, "Return an oProperty for the given propertyName string. If the property doesn't exist yet, you will have to provide the optional propertyType string parameter. Valid property types can be found in AppendixB of this document."},
+   {"getProperty", (PyCFunction)oObject_getProperty, METH_VARARGS, "Return an oProperty or an oCompoundProperty for the given propertyName string. If the property doesn't exist yet, you will have to provide the optional propertyType string parameter. Valid property types can be found in AppendixB of this document."},
    {NULL, NULL}
 };
 static PyObject * oObject_getAttr(PyObject * self, char * attrName)
@@ -359,4 +369,6 @@ bool register_object_oObject(PyObject *module)
 {
   return register_object(module, oObject_Type, "oObject");
 }
+
+
 

@@ -5,6 +5,9 @@
 #include <boost/lexical_cast.hpp>
 #include "AlembicLicensing.h"
 
+#include <iostream>
+#define INFO_MSG(msg)    std::cerr << "INFO [" << __FILE__ << ":" << __LINE__ << "] " << msg << std::endl
+
 static std::string oProperty_getName_func(PyObject * self)
 {
    ALEMBIC_TRY_STATEMENT
@@ -1025,7 +1028,7 @@ void oProperty_deletePointers(oProperty * prop)
    if(prop->mBaseScalarProperty == NULL)
       return;
    // first delete the base property
-   if(prop->mIsCompound)
+   if(prop->mIsCompound)      // TODO remove this after debuggin everything
       delete(prop->mBaseCompoundProperty);
    else if(prop->mIsArray)
       delete(prop->mBaseArrayProperty);
@@ -1192,6 +1195,7 @@ static PyTypeObject oProperty_Type = {
   oProperty_methods,             /* tp_methods */
 };
 
+
 #define _NEW_PROP_IMPL_(tp,base,singleprop,arrayprop,writer) \
    if(prop->mIsArray) \
    { \
@@ -1230,17 +1234,27 @@ static PyTypeObject oProperty_Type = {
    }
 #define _IF_CREATE_PROP_(tp,base,str) _IF_CREATE_PROP_IMPL_(tp,base,str,Property,ArrayProperty)
 
-PyObject * oProperty_new(oObjectPtr in_casted, char * in_propName, char * in_propType, int tsIndex, void * in_Archive)
+PyObject * oProperty_new(Alembic::Abc::OCompoundProperty compound, char * in_propName, char * in_propType, int tsIndex, void * in_Archive)
 {
    ALEMBIC_TRY_STATEMENT
 
    // check if we already have this property somewhere
-   Alembic::Abc::OCompoundProperty compound = getCompoundFromOObject(in_casted);
+   //Alembic::Abc::OCompoundProperty compound = getCompoundFromOObject(in_casted);
    std::string identifier = compound.getObject().getFullName();
    identifier.append("/");
    identifier.append(in_propName);
+
+   INFO_MSG("identifier: " << identifier);
    oArchive * archive = (oArchive*)in_Archive;
-   oProperty * prop = oArchive_getPropElement(archive,identifier);
+
+   // check if it's an iCompoundProperty, they shouldn't have similar names to avoid confusion when reading it!
+   /*{
+      oCompoundProperty *cprop = oArchive_getCompPropElement(archive, identifier);
+      if (cprop)
+         return (PyObject*)cprop;
+   }*/
+
+   oProperty * prop = oArchive_getPropElement(archive, identifier);
    if(prop)
       return (PyObject*)prop;
 
@@ -1252,7 +1266,7 @@ PyObject * oProperty_new(oObjectPtr in_casted, char * in_propName, char * in_pro
    oArchive_registerPropElement(archive,identifier,prop);
 
    // get the compound property writer
-   Alembic::Abc::CompoundPropertyWriterPtr compoundWriter = GetCompoundPropertyWriterPtr(compound);
+   Alembic::Abc::CompoundPropertyWriterPtr compoundWriter = GetCompoundPropertyWriterPtr(compound);      // this variable is unused!
    const Alembic::Abc::PropertyHeader * propHeader = compound.getPropertyHeader( in_propName );
    if(propHeader != NULL)
    {
@@ -1611,4 +1625,6 @@ bool register_object_oProperty(PyObject *module)
 {
   return register_object(module, oProperty_Type, "oProperty");
 }
+
+
 
