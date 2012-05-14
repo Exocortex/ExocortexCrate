@@ -56,6 +56,38 @@ using namespace MATH;
 #include "AlembicPoints.h"
 #include "AlembicCurves.h"
 
+#ifdef __DEBUG__
+
+   #include <sstream>
+   #ifdef LINUX
+      #include <cstdio>
+      #include <fstream>
+   #endif
+
+   void Exocortex_Debug_Msg(const char *x_msg)
+   {
+      //std::stringstream ss;
+      //ss << "[" << __FILE__ << ":" << __LINE__ << "] " << x_msg;
+
+      //CString final_msg(ss.str().c_str());
+      CString final_msg(x_msg);
+      Application().LogMessage(final_msg, siWarningMsg);
+
+      #ifdef LINUX
+         FILE *console = fopen("/dev/tty", "w");
+         if (console)
+         {
+            //fputs(ss.str().c_str(), console);
+            fputs(x_msg, console);
+            fclose(console);
+         }
+      #else
+
+      #endif
+   }
+
+#endif
+
 SICALLBACK XSILoadPlugin( PluginRegistrar& in_reg )
 {
 	in_reg.PutAuthor(L"Helge Mathee");
@@ -106,7 +138,9 @@ SICALLBACK XSILoadPlugin( PluginRegistrar& in_reg )
 		in_reg.RegisterEvent(L"alembic_OnCloseScene",siOnCloseScene);
 	//}
 
-	return CStatus::OK;
+   EXOCORTEX_XSI_LOG_INFO("PLUGIN loaded");
+
+ 	return CStatus::OK;
 }
 
 SICALLBACK XSIUnloadPlugin( const PluginRegistrar& in_reg )
@@ -120,6 +154,7 @@ SICALLBACK XSIUnloadPlugin( const PluginRegistrar& in_reg )
 }
 
 ESS_CALLBACK_START(alembic_export_Init,CRef&)
+
 	Context ctxt( in_ctxt );
 	Command oCmd;
 	oCmd = ctxt.GetSource();
