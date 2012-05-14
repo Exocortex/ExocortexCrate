@@ -1677,6 +1677,9 @@ ESS_CALLBACK_START(alembic_import_Execute, CRef&)
    CString transformCacheModelName;
    Model transformCacheModel;
 
+   // clear all alembic user data
+   alembic_UD::clearAll();
+
    for(size_t i=1;i<objects.size();i++)
    {
       if(identifierMap.size() > 0)

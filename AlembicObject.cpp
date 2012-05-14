@@ -44,3 +44,35 @@ AlembicObject::AlembicObject
 AlembicObject::~AlembicObject()
 {
 }
+
+std::map<ULONG,alembic_UD*> alembic_UD::gAlembicUDs;
+
+alembic_UD::alembic_UD(ULONG in_id)
+{
+   id = in_id;
+   lastFloor = 0;
+
+   std::map<ULONG,alembic_UD*>::iterator it = gAlembicUDs.find(id);
+   if(it == gAlembicUDs.end())
+      gAlembicUDs.insert(std::pair<ULONG,alembic_UD*>(id,this));
+   else
+      it->second = this;
+}
+
+alembic_UD::~alembic_UD()
+{
+   std::map<ULONG,alembic_UD*>::iterator it = gAlembicUDs.find(id);
+   if(it == gAlembicUDs.end())
+      return;
+   gAlembicUDs.erase(it);
+}
+
+void alembic_UD::clearAll()
+{
+   std::map<ULONG,alembic_UD*>::iterator it = gAlembicUDs.begin();
+   for(;it!=gAlembicUDs.end();it++)
+   {
+      it->second->times.clear();
+      it->second->matrices.clear();
+   }
+}

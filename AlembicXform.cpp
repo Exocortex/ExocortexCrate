@@ -76,13 +76,6 @@ ESS_CALLBACK_START( alembic_xform_DefineLayout, CRef& )
    return alembicOp_DefineLayout(in_ctxt);
 ESS_CALLBACK_END
 
-struct alembic_xform_UD
-{
-   std::vector<double> times;
-   size_t lastFloor;
-   std::vector<Alembic::Abc::M44d> matrices;
-};
-
 ESS_CALLBACK_START( alembic_xform_Update, CRef& )
    OperatorContext ctxt( in_ctxt );
 
@@ -90,10 +83,13 @@ ESS_CALLBACK_START( alembic_xform_Update, CRef& )
       return CStatus::OK;
 
    CValue udVal = ctxt.GetUserData();
-   alembic_xform_UD * p = (alembic_xform_UD*)(CValue::siPtrType)udVal;
+   alembic_UD * p = (alembic_UD*)(CValue::siPtrType)udVal;
 
-   if(p == NULL)
+   double time = ctxt.GetParameterValue(L"time");
+   if(p->times.size() == 0 || abs(p->lastTime - time) < 0.001)
    {
+      p->times.clear();
+
       CString path = ctxt.GetParameterValue(L"path");
       CString identifier = ctxt.GetParameterValue(L"identifier");
 
@@ -104,24 +100,16 @@ ESS_CALLBACK_START( alembic_xform_Update, CRef& )
       if(!obj.valid())
          return CStatus::OK;
 
-      p = new alembic_xform_UD();
-      p->lastFloor = 0;
-
       Alembic::AbcGeom::XformSample sample;
 
       for(size_t i=0;i<obj.getSchema().getNumSamples();i++)
       {
-		p->times.push_back((double)obj.getSchema().getTimeSampling()->getSampleTime( i ));
-		 obj.getSchema().get(sample,i);				 
+		   p->times.push_back((double)obj.getSchema().getTimeSampling()->getSampleTime( i ));
+		   obj.getSchema().get(sample,i);				 
          p->matrices.push_back(sample.getMatrix());
       }
-
-      CValue val = (CValue::siPtrType) p;
-      ctxt.PutUserData( val ) ;
    }
 
-   double time = ctxt.GetParameterValue(L"time");
-   
    Alembic::Abc::M44d matrix;	// constructor creates an identity matrix
 
    // if no time samples, default to identity matrix
@@ -144,6 +132,7 @@ ESS_CALLBACK_START( alembic_xform_Update, CRef& )
 	   }
 	   p->lastFloor = index;
    }
+   p->lastTime = time;
    
    CMatrix4 xsiMatrix;
    xsiMatrix.Set(
@@ -161,13 +150,23 @@ ESS_CALLBACK_START( alembic_xform_Update, CRef& )
 ESS_CALLBACK_END
 
 
+ESS_CALLBACK_START( alembic_xform_Init, CRef& )
+   Context ctxt( in_ctxt );
+   CustomOperator op(ctxt.GetSource());
+
+   CValue val = (CValue::siPtrType) new alembic_UD(op.GetObjectID());
+   ctxt.PutUserData( val ) ;
+
+   return CStatus::OK;
+ESS_CALLBACK_END
+
 ESS_CALLBACK_START( alembic_xform_Term, CRef& )
    Context ctxt( in_ctxt );
    CustomOperator op(ctxt.GetSource());
    delRefArchive(op.GetParameterValue(L"path").GetAsText());
 
    CValue udVal = ctxt.GetUserData();
-   alembic_xform_UD * p = (alembic_xform_UD*)(CValue::siPtrType)udVal;
+   alembic_UD * p = (alembic_UD*)(CValue::siPtrType)udVal;
    if(p!=NULL)
    {
       delete(p);

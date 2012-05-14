@@ -38,6 +38,26 @@ public:
 
 typedef boost::shared_ptr < AlembicObject > AlembicObjectPtr;
 
+class alembic_UD
+{
+public:
+   alembic_UD(ULONG in_id);
+   ~alembic_UD();
+
+   size_t lastFloor;
+   double lastTime;
+
+   std::vector<double> times;
+   std::vector<Alembic::Abc::M44d> matrices;
+
+   static void clearAll();
+
+private:
+   ULONG id;
+   static std::map<ULONG,alembic_UD*> gAlembicUDs;
+
+};
+
 #include "AlembicWriteJob.h"
 
 #endif
