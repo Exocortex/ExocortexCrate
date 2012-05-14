@@ -178,13 +178,7 @@ MStatus AlembicWriteJob::PreProcess()
 
       // take care of all other types
       MString mType = mObj.apiTypeStr();
-      if(mType == "kTransform")
-      {
-         AlembicObjectPtr ptr;
-         ptr.reset(new AlembicXform(mObj,this));
-         AddObject(ptr);
-      }
-      else if(mType == "kCamera")
+      if(mType == "kCamera")
       {
          AlembicObjectPtr ptr;
          ptr.reset(new AlembicCamera(mObj,this));
@@ -222,7 +216,11 @@ MStatus AlembicWriteJob::PreProcess()
       }
       else
       {
-         MGlobal::displayInfo("unsupported type: "+mType);
+         if(!(mType == "kTransform"))
+            MGlobal::displayInfo("[ExocortexAlembic] Exporting "+mType+" node as kTransform.\n");
+         AlembicObjectPtr ptr;
+         ptr.reset(new AlembicXform(mObj,this));
+         AddObject(ptr);
       }
    }
 
@@ -392,9 +390,45 @@ MStatus AlembicExportCommand::doIt(const MArgList & args)
                      MGlobal::displayWarning("[ExocortexAlembic] Skipping object '"+objectStrings[k]+"', not found.");
                      break;
                   }
-                  objects.append(objRef);
+
+                  // get all parents
+                  MObjectArray parents;
+                  MString typeStr = dag.node().apiTypeStr();
+                  if(typeStr == "kTransform")
+                  {
+                     MDagPath ppath = dag;
+                     while(!ppath.node().isNull() && ppath.length() > 0 && ppath.isValid())
+                     {
+                        parents.append(ppath.node());
+                        MStatus status = ppath.pop();
+                        if(status != MStatus::kSuccess)
+                           break;
+                     }
+                  }
+                  else
+                  {
+                     parents.append(dag.node());
+                  }
+
+                  // push all parents in
+                  while(parents.length() > 0)
+                  {
+                     bool found = false;
+                     for(unsigned int m=0;m<objects.length();m++)
+                     {
+                        if(objects[m] == parents[parents.length()-1])
+                        {
+                           found = true;
+                           break;
+                        }
+                     }
+                     if(!found)
+                        objects.append(parents[parents.length()-1]);
+                     parents.remove(parents.length()-1);
+                  }
 
                   // check all of the shapes below
+                  sl.getDagPath(l,dag);
                   for(unsigned int m=0;m<dag.childCount();m++)
                   {
                      MFnDagNode child(dag.child(m));

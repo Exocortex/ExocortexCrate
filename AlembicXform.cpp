@@ -24,9 +24,6 @@ AlembicXform::~AlembicXform()
 
 MStatus AlembicXform::Save(double time)
 {
-   // access the xform
-   MFnTransform node(GetRef());
-
    // save the metadata
    SaveMetaData(this);
 
@@ -44,9 +41,27 @@ MStatus AlembicXform::Save(double time)
    }
    else
    {
-      MTransformationMatrix xf = node.transformation();
-      MMatrix matrix = xf.asMatrix();
+      MMatrix matrix;
+      matrix.setToIdentity();
+
+      MString typeStr = GetRef().apiTypeStr();
+
+      // iterate all dagpaths 
+      MFnDagNode dagNode(GetRef());
+      MDagPathArray dagPaths;
+      dagNode.getAllPaths(dagPaths);
+      MDagPath path = dagPaths[0];
+
       Alembic::Abc::M44d abcMatrix;
+
+      // decide if we need to project to local
+      if(IsParentedToRoot())
+         matrix = path.inclusiveMatrix();
+      else
+         matrix.setToProduct(path.inclusiveMatrix(), path.exclusiveMatrixInverse());
+
+      matrix = MTransformationMatrix(matrix).asMatrix();
+
       matrix.get(abcMatrix.x);
       mSample.setMatrix(abcMatrix);
       mSample.setInheritsXforms(true);

@@ -46,6 +46,7 @@
 #include <maya/MArgParser.h>
 #include <maya/MTime.h>
 #include <maya/MDagPath.h>
+#include <maya/MDagPathArray.h>
 #include <maya/MFnDagNode.h>
 #include <maya/MFnDependencyNode.h>
 #include <maya/MSelectionList.h>
