@@ -877,6 +877,10 @@ CStatus alembic_create_item_Invoke
             }
          }
 
+         // for xform, disable softimage scaling
+         if(itemType == alembicItemType_xform)
+            KinematicState(realTarget).PutParameterValue(L"siscaling",false);
+
          CustomOperator op;
          if(attachToExisting)
          {
