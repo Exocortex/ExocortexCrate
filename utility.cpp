@@ -266,6 +266,15 @@ bool isRefAnimated(const CRef & in_Ref, bool xformCache, bool globalSpace)
       // check myself
       if(op.IsAnimated())
          return returnIsRefAnimated(in_Ref,true);
+
+      // check several custom types
+      if(op.GetType().IsEqualNoCase(L"shapejitterop"))
+         return returnIsRefAnimated(in_Ref,true);
+      if(op.GetType().IsEqualNoCase(L"wave"))
+         return returnIsRefAnimated(in_Ref,true);
+      if(op.GetType().IsEqualNoCase(L"qstretch"))
+         return returnIsRefAnimated(in_Ref,true);
+
       CRefArray outputPorts = op.GetOutputPorts();
       CRefArray inputPorts = op.GetInputPorts();
       for(LONG i=0;i<inputPorts.GetCount();i++)

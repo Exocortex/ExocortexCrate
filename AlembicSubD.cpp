@@ -299,9 +299,6 @@ XSI::CStatus AlembicSubD::Save(double time)
                mUvVec = sortedUVVec;
                uvCount = sortedUVCount;
 
-               uvIndexCount = 0;
-               mUvIndexVec.clear();
-
                sortedUVCount = 0;
                sortedUVVec.clear();
             }

@@ -912,6 +912,10 @@ CStatus alembic_create_item_Invoke
             }
          }
 
+         // for xform, disable softimage scaling
+         if(itemType == alembicItemType_xform)
+            KinematicState(realTarget).PutParameterValue(L"siscaling",false);
+
          CustomOperator op;
          if(attachToExisting)
          {
@@ -1712,6 +1716,9 @@ ESS_CALLBACK_START(alembic_import_Execute, CRef&)
    CString transformCacheModelName;
    Model transformCacheModel;
 
+   // clear all alembic user data
+   alembic_UD::clearAll();
+
    for(size_t i=1;i<objects.size();i++)
    {
       if(identifierMap.size() > 0)
@@ -1740,6 +1747,9 @@ ESS_CALLBACK_START(alembic_import_Execute, CRef&)
                CRef modelRef;
                modelRef.Set(transformCacheModelName);
                model = modelRef;
+
+               if(!model.GetType().IsEqualNoCase(L"#model"))
+                  model.ResetObject();
             }
             if(!model.IsValid())
             {
@@ -1834,6 +1844,9 @@ ESS_CALLBACK_START(alembic_import_Execute, CRef&)
                CRef modelRef;
                modelRef.Set(getFullNameFromIdentifier(objects[i].getFullName()));
                model = modelRef;
+
+               if(!model.GetType().IsEqualNoCase(L"#model"))
+                  model.ResetObject();
             }
             if(!model.IsValid())
             {
@@ -1876,6 +1889,8 @@ ESS_CALLBACK_START(alembic_import_Execute, CRef&)
             CRef cameraRef;
             cameraRef.Set(getFullNameFromIdentifier(objects[i].getFullName()));
             camera = cameraRef;
+            if(!camera.GetType().IsEqualNoCase(L"camera"))
+               camera.ResetObject();
          }
          if(!camera.IsValid())
          {
@@ -1909,6 +1924,9 @@ ESS_CALLBACK_START(alembic_import_Execute, CRef&)
             CRef meshRef;
             meshRef.Set(getFullNameFromIdentifier(objects[i].getFullName()));
             meshObj = meshRef;
+
+            if(!meshObj.GetType().IsEqualNoCase(L"PolyMsh"))
+               meshObj.ResetObject();
          }
          if(!meshObj.IsValid())
          {
@@ -1975,6 +1993,9 @@ ESS_CALLBACK_START(alembic_import_Execute, CRef&)
             CRef meshRef;
             meshRef.Set(getFullNameFromIdentifier(objects[i].getFullName()));
             meshObj = meshRef;
+
+            if(!meshObj.GetType().IsEqualNoCase(L"PolyMsh"))
+               meshObj.ResetObject();
          }
          if(!meshObj.IsValid())
          {
@@ -2043,6 +2064,8 @@ ESS_CALLBACK_START(alembic_import_Execute, CRef&)
             CRef nurbsRef;
             nurbsRef.Set(getFullNameFromIdentifier(objects[i].getFullName()));
             nurbsObj = nurbsRef;
+            if(!nurbsObj.GetType().IsEqualNoCase(L"surfmsh"))
+               nurbsObj.ResetObject();
          }
          if(!nurbsObj.IsValid())
          {
@@ -2106,6 +2129,8 @@ ESS_CALLBACK_START(alembic_import_Execute, CRef&)
                CRef pointsRef;
                pointsRef.Set(getFullNameFromIdentifier(objects[i].getFullName()));
                pointsObj = pointsRef;
+               if(!pointsObj.GetType().IsEqualNoCase(L"pointcloud"))
+                  pointsObj.ResetObject();
             }
             if(!pointsObj.IsValid())
             {
@@ -2153,6 +2178,8 @@ ESS_CALLBACK_START(alembic_import_Execute, CRef&)
                CRef curveRef;
                curveRef.Set(getFullNameFromIdentifier(objects[i].getFullName()));
                curveObj = curveRef;
+               if(!curveObj.GetType().IsEqualNoCase(L"crvlist"))
+                  curveObj.ResetObject();
             }
             if(!curveObj.IsValid())
             {
@@ -2209,6 +2236,8 @@ ESS_CALLBACK_START(alembic_import_Execute, CRef&)
             CRef pointsRef;
             pointsRef.Set(getFullNameFromIdentifier(objects[i].getFullName()));
             pointsObj = pointsRef;
+            if(!pointsObj.GetType().IsEqualNoCase(L"pointcloud"))
+               pointsObj.ResetObject();
          }
          if(!pointsObj.IsValid())
          {
