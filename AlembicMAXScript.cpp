@@ -48,12 +48,14 @@ public:
 		exocortexAlembicImport,
 		exocortexAlembicExport,
 		exocortexAlembicImportMesh,	
-        exocortexAlembicInit
+        exocortexAlembicInit,
+		exocortexGetBinVersion
 	};
 
 	ExocortexAlembicStaticInterface()
 		: FPInterfaceDesc(id, _M("ExocortexAlembic"), 0, NULL, FP_CORE, p_end)
 	{
+
 		AppendFunction(
 			exocortexAlembicImport,	//* function ID * /
 			_M("import"),           //* internal name * /
@@ -170,7 +172,16 @@ public:
 			0,                      //* Flags  * /
 			0,                     //* Number  of arguments * /
             p_end);           
-    }
+  
+		AppendFunction(
+			exocortexGetBinVersion,	//* function ID * /
+			_M("getBinVersion"),           //* internal name * /
+			0,                      //* function name string resource name * / 
+			TYPE_STRING,               //* Return type * /
+			0,                      //* Flags  * /
+			0,                      //* Number  of arguments * /
+			p_end); 
+  }
 
 	static int ExocortexAlembicImport(
 		CONST_2013 MCHAR * strPath, 
@@ -192,11 +203,14 @@ public:
 
     static int ExocortexAlembicInit();
      	
-    BEGIN_FUNCTION_MAP
+	static CONST_2013 MCHAR* ExocortexGetBinVersion();
+
+	BEGIN_FUNCTION_MAP
 		FN_6(exocortexAlembicImport, TYPE_INT, ExocortexAlembicImport, TYPE_FILENAME, TYPE_BOOL, TYPE_BOOL, TYPE_BOOL, TYPE_BOOL, TYPE_INT)
 		FN_9(exocortexAlembicImportMesh, TYPE_MESH, ExocortexAlembicImportMesh, TYPE_MESH, TYPE_FILENAME, TYPE_STRING, TYPE_FLOAT, TYPE_BOOL, TYPE_BOOL, TYPE_BOOL, TYPE_BOOL, TYPE_BOOL)
 		FN_12(exocortexAlembicExport, TYPE_INT, ExocortexAlembicExport, TYPE_FILENAME, TYPE_INT, TYPE_INT, TYPE_INT, TYPE_INT, TYPE_INT, TYPE_BOOL, TYPE_BOOL, TYPE_BOOL, TYPE_BOOL, TYPE_BOOL, TYPE_BOOL)
         FN_0(exocortexAlembicInit, TYPE_INT, ExocortexAlembicInit);
+		FN_0(exocortexGetBinVersion, TYPE_STRING, ExocortexGetBinVersion)
 	END_FUNCTION_MAP
 };
 
@@ -265,6 +279,11 @@ void AlembicImport_ConnectTimeControl( const char* szControllerName, alembic_imp
 		szControllerName );
 
 	ExecuteMAXScriptScript( szBuffer );
+}
+
+CONST_2013 MCHAR* ExocortexAlembicStaticInterface::ExocortexGetBinVersion()
+{
+	return PLUGIN_NAME;
 }
 
 int ExocortexAlembicStaticInterface_ExocortexAlembicImport( CONST_2013 MCHAR* strPath, BOOL bImportNormals, BOOL bImportUVs, BOOL bImportMaterialIds, BOOL bAttachToExisting, int iVisOption);
