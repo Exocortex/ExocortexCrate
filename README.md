@@ -10,7 +10,6 @@ folder structure:
        |-------- ExocortexAlembicPython (optional)
        |-------- ExocortexAlembicSoftimage (optional)
        |-------- ExocortexAlembicMaya (optional)
-       |-------- ExocortexAlembicHoudini (optional) **
        |-------- ExocortexAlembic3DSMax (optional)
        |-------- Libraries.########.##
 
@@ -18,7 +17,7 @@ The Libraries folder contains SDKs and other large binaries not suitable
 for inclusion in GIT repositories.  We currently distribute it manually.  The
 most recent version can be found here:
 
-http://www.exocortex.com/files/Libraries.20120423.01.7z
+http://www.exocortex.com/files/Libraries.20120426.01.7z
 
 In order to build on Windows platforms, Visual Studio 2008 (with x64 tools) is
 required as is CMake.  After installing Visual Studio 2008 and CMake, you can then
@@ -39,9 +38,6 @@ and run the corresponding batch file, for example
 This will merge all build files into the build folder below ExocortexAlembicShared,
 which allows to debug all the way down to the python libs or the hdf5 source.
 
-** In order to build ExocortexAlembicHoudini, Visual Studio 2005 (with x64
-   tools) is required, as is Houdini.  First, launch Git Bash with the environment
-   variables from VS2005's vcvarsall.bat set.  Then navigate to your Houdini
-   installation directory, and run the command "source houdini_setup" from Git
-   Bash.  At that point, you can use cmake to build the solution.  From
-   ExocortexAlembicShared/build, run "cmd /k build_vs2005_x64.bat".
+The build process will automatically make a deployment.  That deployment is located here:
+
+ExocortexAlembicShared/install/

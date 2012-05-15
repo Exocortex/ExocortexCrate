@@ -1,5 +1,9 @@
 cmake_minimum_required(VERSION 2.6)
 
+IF (CMAKE_BUILD_TYPE MATCHES "Debug")
+	ADD_DEFINITIONS(-D__DEBUG__)
+ENDIF()
+
 IF (UNIX AND NOT APPLE )
 	ADD_DEFINITIONS(-DLINUX)
 ENDIF()
@@ -37,9 +41,14 @@ set( AlembicFolder "Externals" )
 SET(DIR_SOFTIMAGEALEBMIC ${CMAKE_CURRENT_SOURCE_DIR})
 
 get_filename_component( LIBRARY_ROOT "${CMAKE_CURRENT_SOURCE_DIR}" PATH )
-set( LIBRARY_ROOT "${LIBRARY_ROOT}/Libraries.20120423.01" )
+set( LIBRARY_VERSION "20120426.01" )
+set( LIBRARY_ROOT "${LIBRARY_ROOT}/Libraries.${LIBRARY_VERSION}" )
 if( NOT EXISTS ${LIBRARY_ROOT} )
-	message(FATAL_ERROR "Can't find LIBRARY_ROOT: ${LIBRARY_ROOT}" )
+	message( "!!!" )
+	message( "!!! Download the latest library from here: " )
+	message( "!!! http://exocortex.com/files/Libraries.${LIBRARY_VERSION}.7z")
+	message( "!!!" )
+	message( FATAL_ERROR "Can't find LIBRARY_ROOT: ${LIBRARY_ROOT}" )
 endif()
  
 # Configuration
@@ -141,6 +150,7 @@ IF( WIN32 )
 		SET( ALEMBIC64 1 )
 	ENDIF( CMAKE_SIZEOF_VOID_P MATCHES "8" )
 ENDIF( WIN32 )
+
 IF( UNIX )
 	IF( CMAKE_SIZEOF_VOID_P MATCHES "8" )
 		SET( ALEMBIC64 1 )
@@ -149,8 +159,17 @@ ENDIF( UNIX )
 
 IF( UNIX )
 	# Issues with fpic (requires position independent code option during linking to these libs).
-	SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS_RELEASE} -fPIC"  )
-	SET(CMAKE_C_FLAGS "${CMAKE_CXX_FLAGS_DEBUG} -fPIC"  )
+
+	# C Flags
+	SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fPIC"  )
+	SET(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -g3"  )
+	#SET(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -fPIC"  )
+
+	# C++ Flags
+	SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC"  )
+	SET(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_RELEASE} -g3"  )
+	#SET(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -fPIC"  )
+
 ENDIF()
 
 # Boost.
