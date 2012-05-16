@@ -84,6 +84,8 @@ ADD_DEPENDENCIES(${PROJECT_NAME} AlembicAbcGeom)
 
 SET( Install_DIR ${Exocortex_INSTALL_BASE_DIR}/Maya${Maya_VERSION}/ )
 
+remove_dir( ${Install_DIR} )
+
 SET( Module_FILENAME ${CMAKE_CURRENT_SOURCE_DIR}/Maya${Maya_VERSION}ExocortexAlembic.mod )
 copy_file_to_directory( ${Module_FILENAME} ${Install_DIR} )
 
