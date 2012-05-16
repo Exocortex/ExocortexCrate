@@ -316,6 +316,11 @@ function(copy_files GLOBPAT OutputName)
   endforeach(FILENAME)
 endfunction(copy_files)
 
+function( remove_dir Directory )	
+	add_custom_command(
+		TARGET ${PROJECT_NAME} POST_BUILD
+		COMMAND ${CMAKE_COMMAND} -E remove_directory ${Directory} )
+endfunction()
 
 function( copy_file_to_file SourceFileName DestinationFileName )
 	add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
