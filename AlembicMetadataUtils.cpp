@@ -114,7 +114,7 @@ void SaveMetaData(INode* node, AlembicObject* object)
 		return;
 	}
 
-	Modifier* pMod = FindModifier(node, "metadata");
+	Modifier* pMod = FindModifier(node, "Metadata");
 	if(!pMod){
 		return;
 	}
