@@ -875,6 +875,10 @@ void addAlembicMaterialsModifier(INode *pNode, Alembic::AbcGeom::IObject& iObj)
 		objSubD.getSchema().getFaceSetNames(faceSetNames);
 	}
 
+	if(faceSetNames.size() <= 0){
+		return;
+	}
+
 	std::string names("");
 
 	for(size_t j=0;j<faceSetNames.size();j++)
@@ -898,7 +902,7 @@ void addAlembicMaterialsModifier(INode *pNode, Alembic::AbcGeom::IObject& iObj)
 
 			"AlembicMaterialCA = attributes AlembicMaterialModifier\n"
 			"(\n"	
-				"rollout AlembicMaterialModifierRLT \"alembic_materials\"\n"
+				"rollout AlembicMaterialModifierRLT \"Alembic Materials\"\n"
 				"(\n"
 					"listbox eTestList \"\" items:#(%s)\n"
 				")\n"
