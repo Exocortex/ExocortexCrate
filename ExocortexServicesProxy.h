@@ -70,6 +70,24 @@
 
 #endif	// EXOCORTEX_RLM_ONLY
 
+#ifdef __DEBUG__
 
+   void Exocortex_Debug_Msg(const char *str);
+
+   #define MAKE_MSG(x, type) do { std::stringstream ss; ss << "[" << __FILE__ << ":" << __LINE__ << "] " << x << std::endl; Exocortex_Debug_Msg(ss.str().c_str()); } while(0)
+
+   #define EXOCORTEX_XSI_LOG_FATAL(x) MAKE_MSG(x, siFatalMsg)
+   #define EXOCORTEX_XSI_LOG_ERROR(x) MAKE_MSG(x, siErrorMsg)
+   #define EXOCORTEX_XSI_LOG_WARNING(x) MAKE_MSG(x, siWarningMsg)
+   #define EXOCORTEX_XSI_LOG_INFO(x) MAKE_MSG(x, siInfoMsg)
+
+#else
+
+   #define EXOCORTEX_XSI_LOG_FATAL(x)
+   #define EXOCORTEX_XSI_LOG_ERROR(x)
+   #define EXOCORTEX_XSI_LOG_WARNING(x)
+   #define EXOCORTEX_XSI_LOG_INFO(x)
+   
+#endif
 
 #endif // __EXOCORTEX_SERVICES_PROXY_H
