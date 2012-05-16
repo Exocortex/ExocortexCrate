@@ -65,6 +65,8 @@ else()
 	message(FATAL_ERROR "Should not get here")
 endif()
 
+remove_dir( ${Install_DIR} )
+
 get_target_property( Install_TARGET ${PROJECT_NAME} LOCATION )
 
 copy_file_to_directory( ${Install_TARGET} ${Install_DIR} )
@@ -76,4 +78,5 @@ endif()
 SET( CompoundSource_DIR ${CMAKE_CURRENT_SOURCE_DIR}/Workgroup/Addons/ExocortexAlembic1.0/Data/Compounds )
 SET( CompoundInstall_DIR ${Exocortex_INSTALL_BASE_DIR}/Softimage/Data/Compounds )
 
+remove_dir( ${CompoundInstall_DIR} )
 copy_directory( ${CompoundSource_DIR} ${CompoundInstall_DIR} )
