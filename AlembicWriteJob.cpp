@@ -420,7 +420,7 @@ MStatus AlembicExportCommand::doIt(const MArgList & args)
                }
             }
 
-            if(typeStr == "kTransform" && !isCamera && !withouthierarchy)
+            if(typeStr == "kTransform" && !isCamera && !globalspace && !withouthierarchy)
             {
                MDagPath ppath = dag;
                while(!ppath.node().isNull() && ppath.length() > 0 && ppath.isValid())
