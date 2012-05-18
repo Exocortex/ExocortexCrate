@@ -134,7 +134,7 @@ bool AlembicWriteJob::PreProcess()
             continue;
 
         int type = object->entry.type;
-		if (type == OBTYPE_MESH) 
+		if (type == OBTYPE_MESH || (GetOption("exportParticlesAsMesh") && type == OBTYPE_POINTS) ) 
         {
             AlembicObjectPtr ptr;
             ptr.reset(new AlembicPolyMesh(object->entry,this));            
@@ -152,7 +152,7 @@ bool AlembicWriteJob::PreProcess()
             ptr.reset(new AlembicXForm(object->entry,this));            
             AddObject(ptr);
         }
-        else if (type == OBTYPE_POINTS)
+        else if (type == OBTYPE_POINTS && !GetOption("exportParticlesAsMesh"))
         {
             AlembicObjectPtr ptr;
             ptr.reset(new AlembicPoints(object->entry,this));

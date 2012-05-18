@@ -5,6 +5,7 @@
 #include "SceneEnumProc.h"
 #include "Utility.h"
 #include "AlembicMetadataUtils.h"
+#include "AlembicPointsUtils.h"
 
 namespace AbcA = ::Alembic::AbcCoreAbstract::ALEMBIC_VERSION_NS;
 namespace AbcB = ::Alembic::Abc::ALEMBIC_VERSION_NS;
@@ -119,15 +120,16 @@ bool AlembicPolyMesh::Save(double time)
 	TimeValue ticks = GetTimeValueFromFrame(time);
 
 	Object *obj = GetRef().node->EvalWorldState(ticks).obj;
-	if(mNumSamples == 0){
-		bForever = CheckIfObjIsValidForever(obj, ticks);
-	}
-	else{
-		bool bNewForever = CheckIfObjIsValidForever(obj, ticks);
-		if(bForever && bNewForever != bForever){
-			ESS_LOG_INFO( "bForever has changed" );
-		}
-	}
+	//if(mNumSamples == 0){
+	//	bForever = CheckIfObjIsValidForever(obj, ticks);
+	//}
+	//else{
+	//	bool bNewForever = CheckIfObjIsValidForever(obj, ticks);
+	//	if(bForever && bNewForever != bForever){
+	//		ESS_LOG_INFO( "bForever has changed" );
+	//	}
+	//}
+	bForever = false;//TODO...
 
 	bool bFlatten = GetCurrentJob()->GetOption("flattenHierarchy");
 
@@ -176,25 +178,39 @@ bool AlembicPolyMesh::Save(double time)
     std::vector<Alembic::Abc::N3f> normalVec;
     std::vector<uint32_t> normalIndexVec;
 
-    PolyObject *polyObj = NULL;
-    TriObject *triObj = NULL;
+	PolyObject *polyObj = NULL;
+	TriObject *triObj = NULL;
 
-    if (obj->CanConvertToType(Class_ID(POLYOBJ_CLASS_ID, 0)))
-    {
-        polyObj = reinterpret_cast<PolyObject *>(obj->ConvertToType(ticks, Class_ID(POLYOBJ_CLASS_ID, 0)));
-    }
-    else if (obj->CanConvertToType(Class_ID(TRIOBJ_CLASS_ID, 0)))
-    {
-        triObj = reinterpret_cast<TriObject *>(obj->ConvertToType(ticks, Class_ID(TRIOBJ_CLASS_ID, 0)));
-    }
-    // Make sure we have a poly or a tri object
-    if (polyObj == NULL && triObj == NULL)
-    {
-        return false;
-    }
+	Mesh *triMesh = NULL;
+	MNMesh* polyMesh = NULL;
 
-    LONG vertCount = (polyObj != NULL) ? polyObj->GetMesh().VNum()
-                                       : triObj->GetMesh().getNumVerts();
+	BOOL bParticleMeshNeedDelete = FALSE;
+	Mesh* particleMesh = getParticleSystemRenderMesh(ticks, obj, GetRef().node, bParticleMeshNeedDelete);
+
+	if(particleMesh){
+		triMesh = particleMesh;
+	}
+	else{
+		if (obj->CanConvertToType(Class_ID(POLYOBJ_CLASS_ID, 0)))
+		{
+			polyObj = reinterpret_cast<PolyObject *>(obj->ConvertToType(ticks, Class_ID(POLYOBJ_CLASS_ID, 0)));
+			polyMesh = &polyObj->GetMesh();
+		}
+		else if (obj->CanConvertToType(Class_ID(TRIOBJ_CLASS_ID, 0)))
+		{
+			triObj = reinterpret_cast<TriObject *>(obj->ConvertToType(ticks, Class_ID(TRIOBJ_CLASS_ID, 0)));
+			triMesh = &triObj->GetMesh();
+		}
+	}
+
+	// Make sure we have a poly or a tri object
+	if (polyMesh == NULL && triMesh == NULL)
+	{
+		return false;
+	}
+
+    LONG vertCount = (polyMesh != NULL) ? polyMesh->VNum()
+                                       : triMesh->getNumVerts();
 
     // prepare the bounding box
     Alembic::Abc::Box3d bbox;
@@ -204,8 +220,8 @@ bool AlembicPolyMesh::Save(double time)
     Matrix3 wm = GetRef().node->GetObjTMAfterWSM(ticks);
     for(LONG i=0;i<vertCount;i++)
     {
-        Point3 &maxPoint = (polyObj != NULL) ? polyObj->GetMesh().V(i)->p
-                                             : triObj->GetMesh().getVert(i);
+        Point3 &maxPoint = (polyMesh != NULL) ? polyMesh->V(i)->p
+                                             : triMesh->getVert(i);
         posVec[i] = ConvertMaxPointToAlembicPoint( maxPoint );
         bbox.extendBy(posVec[i]);
 
@@ -255,14 +271,14 @@ bool AlembicPolyMesh::Save(double time)
 	bool dynamicTopology = static_cast<bool>(GetCurrentJob()->GetOption("exportDynamicTopology"));
 
 	// Get the entire face count and index Count for the mesh
-    LONG faceCount = (polyObj != NULL) ? polyObj->GetMesh().FNum()
-                                       : triObj->GetMesh().getNumFaces();
+    LONG faceCount = (polyMesh != NULL) ? polyMesh->FNum()
+                                       : triMesh->getNumFaces();
 
 	// create an index lookup table
     LONG sampleCount = 0;
     for(int f = 0; f < faceCount; f += 1)
     {
-        int degree = (polyObj != NULL) ? polyObj->GetMesh().F(f)->deg : 3;
+        int degree = (polyMesh != NULL) ? polyMesh->F(f)->deg : 3;
         sampleCount += degree;
 	}
 
@@ -271,15 +287,15 @@ bool AlembicPolyMesh::Save(double time)
     size_t normalIndexCount = 0;
     if((bool)GetCurrentJob()->GetOption("exportNormals"))
     {
-        if (polyObj != NULL)
+        if (polyMesh != NULL)
         {
-            polyObj->GetMesh().buildNormals();
-            BuildMeshSmoothingGroupNormals(polyObj->GetMesh());
+            polyMesh->buildNormals();
+            BuildMeshSmoothingGroupNormals(*polyMesh);
         }
-        if (triObj != NULL)
+        if (triMesh != NULL)
         {
-            triObj->GetMesh().buildNormals();
-            BuildMeshSmoothingGroupNormals(triObj->GetMesh());
+            triMesh->buildNormals();
+            BuildMeshSmoothingGroupNormals(*triMesh);
         }
 
         normalVec.resize(sampleCount);
@@ -288,32 +304,32 @@ bool AlembicPolyMesh::Save(double time)
         // In MAX a vertex can have more than one normal (but doesn't always have it).
         for (int i = 0; i < faceCount; i++) 
         {
-            int degree = (polyObj != NULL) ? polyObj->GetMesh().F(i)->deg : 3;
+            int degree = (polyMesh != NULL) ? polyMesh->F(i)->deg : 3;
             for (int j = degree-1; j >= 0; j--)
             {
                 Point3 vertexNormal;
-                if (polyObj != NULL)
+                if (polyMesh != NULL)
                 {
-                    MNNormalSpec *normalSpec = polyObj->GetMesh().GetSpecifiedNormals();
+                    MNNormalSpec *normalSpec = polyMesh->GetSpecifiedNormals();
                     if (normalSpec != NULL)
                     {
                         vertexNormal = normalSpec->GetNormal(i, j);
                     }
                     else
                     {
-                        vertexNormal = GetVertexNormal(&polyObj->GetMesh(), i, j, m_MeshSmoothGroupNormals);
+                        vertexNormal = GetVertexNormal(polyMesh, i, j, m_MeshSmoothGroupNormals);
                     }
                 }
                 else
                 {
-                    MeshNormalSpec *normalSpec = triObj->GetMesh().GetSpecifiedNormals();
+                    MeshNormalSpec *normalSpec = triMesh->GetSpecifiedNormals();
                     if (normalSpec != NULL)
                     {
                         vertexNormal = normalSpec->GetNormal(i, j);
                     }
                     else
                     {
-                        vertexNormal = GetVertexNormal(&triObj->GetMesh(), i, j, m_MeshSmoothGroupNormals);
+                        vertexNormal = GetVertexNormal(triMesh, i, j, m_MeshSmoothGroupNormals);
                     }
                 }
 
@@ -380,12 +396,12 @@ bool AlembicPolyMesh::Save(double time)
          int offset = 0;
          for(LONG f=0;f<faceCount;f++)
          {
-            int degree = (polyObj != NULL) ? polyObj->GetMesh().F(f)->deg : 3;
+            int degree = (polyMesh != NULL) ? polyMesh->F(f)->deg : 3;
             mFaceCountVec[f] = degree;
 			for (int i = degree-1; i >= 0; i -= 1)
             {
-                int vertIndex = (polyObj != NULL) ? polyObj->GetMesh().F(f)->vtx[i]
-                                                  : triObj->GetMesh().faces[f].v[i];
+                int vertIndex = (polyMesh != NULL) ? polyMesh->F(f)->vtx[i]
+                                                  : triMesh->faces[f].v[i];
 				mFaceIndicesVec[offset++] = vertIndex;
             }
          }
@@ -431,13 +447,13 @@ bool AlembicPolyMesh::Save(double time)
       {
           mUvVec.reserve(sampleCount);
 
-          if (polyObj != NULL)
+          if (polyMesh != NULL)
           {
-              MNMap *map = polyObj->GetMesh().M(1);
+              MNMap *map = polyMesh->M(1);
 
               for (int i=0; i<faceCount; i++) 
               {
-                  int degree = polyObj->GetMesh().F(i)->deg;
+                  int degree = polyMesh->F(i)->deg;
                   for (int j = degree-1; j >= 0; j -= 1)
                   {
                       if (map != NULL && map->FNum() > i && map->F(i)->deg > j)
@@ -455,14 +471,14 @@ bool AlembicPolyMesh::Save(double time)
                   }
               }
           }
-          else if (triObj != NULL)
+          else if (triMesh != NULL)
           {
-              if (CheckForFaceMap(GetRef().node->GetMtl(), &triObj->GetMesh())) 
+              if (CheckForFaceMap(GetRef().node->GetMtl(), triMesh)) 
               {
                   for (int i=0; i<faceCount; i++) 
                   {
                       Point3 tv[3];
-                      Face* f = &triObj->GetMesh().faces[i];
+                      Face* f = &triMesh->faces[i];
                       make_face_uv(f, tv);
 
                       for (int j=2; j>=0; j-=1)
@@ -472,9 +488,9 @@ bool AlembicPolyMesh::Save(double time)
                       }
                   }
               }
-              else if (triObj->GetMesh().mapSupport(1))
+              else if (triMesh->mapSupport(1))
               {
-                  MeshMap &map = triObj->GetMesh().Map(1);
+                  MeshMap &map = triMesh->Map(1);
 
                   for (int findex =0; findex < map.fnum; findex += 1)
                   {
@@ -564,7 +580,7 @@ bool AlembicPolyMesh::Save(double time)
       std::vector<boost::int32_t> zeroFaceVector;
 	  if(GetCurrentJob()->GetOption("exportMaterialIds") && (mNumSamples == 0 || dynamicTopology))
       {
-          if (polyObj != NULL || triObj != NULL)
+          if (polyMesh != NULL || triMesh != NULL)
           {
               if(!mMatIdProperty.valid())
               {
@@ -572,11 +588,11 @@ bool AlembicPolyMesh::Save(double time)
               }
 
 			  int numMatId = 0;
-              int numFaces = polyObj ? polyObj->GetMesh().numf : triObj->GetMesh().getNumFaces();
+              int numFaces = polyMesh ? polyMesh->numf : triMesh->getNumFaces();
               mMatIdIndexVec.resize(numFaces);
               for (int i = 0; i < numFaces; i += 1)
               {
-                  int matId = polyObj ? polyObj->GetMesh().f[i].material : triObj->GetMesh().faces[i].getMatID();
+                  int matId = polyMesh ? polyMesh->f[i].material : triMesh->faces[i].getMatID();
                   mMatIdIndexVec[i] = matId;
 
                   // Record the face set map if sample zero
@@ -726,6 +742,11 @@ bool AlembicPolyMesh::Save(double time)
    {
        delete triObj;
        triObj = NULL;
+   }
+
+   if(particleMesh != NULL && bParticleMeshNeedDelete)
+   {
+		delete particleMesh;
    }
 
 	///////////////////////////////////////////////////////////////////////////////////////////////

@@ -612,6 +612,7 @@ int ExocortexAlembicStaticInterface_ExocortexAlembicExport(CONST_2013 MCHAR * st
 		job->SetOption("indexedUVs", true);
 		job->SetOption("exportSelected", (bExportSelected != FALSE));
 		job->SetOption("flattenHierarchy",(bFlattenHierarchy != FALSE));
+		job->SetOption("exportParticlesAsMesh", true);//TODO: add this option to UI
 
 		// check if the job is satisfied
 		if (job->PreProcess() != true)
