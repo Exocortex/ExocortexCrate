@@ -61,6 +61,13 @@ function CreateAlembicMetadataModifier selectedObject = (
 			)
 
 			custattributes.add selectedObject.modifiers["Alembic Metadata"] AlembicMetadataCA baseobject:false
+
+			--if $.modifiers["Alembic Mesh Normals"] != undefined then (
+			--	$.modifiers["Alembic Mesh Normals"].enabled = true
+			--
+			if $.modifiers["Alembic Mesh Topology"] != undefined then (
+				$.modifiers["Alembic Mesh Topology"].enabled = true
+			)
 		)
 	)
 )
