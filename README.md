@@ -1,4 +1,9 @@
-# Build environment for Exocortex Alembic Suite
+# Exocortex Crate - The Professional Grade Alembic Suite
+
+Exocortex Crate's developer and technical lead is Helge Mathee (helge.mathee@gmx.net)
+and is supported by Exocortex Technologies, Inc. (http://www.exocortex.com)
+
+# Building Exocortex Crate
 
 To build all repos in a single place, clone the git repositories
 into directories with the repo's name, and ensure to have following
@@ -41,3 +46,10 @@ which allows to debug all the way down to the python libs or the hdf5 source.
 The build process will automatically make a deployment.  That deployment is located here:
 
 ExocortexAlembicShared/install/
+
+# GitHub Workflow for Committing Changes
+
+We have developed the following policy document that must be followed
+for committing changes to the Exocortex Crate Alembic suite:
+
+https://docs.google.com/document/d/1M57fEgEoGoqizzRCbKCePQVGR4IU2IF-4-lIhhHGFfE/edit
