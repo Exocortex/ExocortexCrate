@@ -1,7 +1,12 @@
 cmake_minimum_required(VERSION 2.6)
 
-IF (CMAKE_BUILD_TYPE MATCHES "Debug" AND UNIX)
-	ADD_DEFINITIONS(-D_DEBUG)
+# Have Linux builds use the same _DEBUG / NDEBUG defines as Microsoft's C++ compiler.
+if( UNIX )
+	IF (CMAKE_BUILD_TYPE MATCHES "Debug" )
+		ADD_DEFINITIONS(-D_DEBUG)
+	ELSE()
+		ADD_DEFINITIONS(-DNDEBUG)
+	ENDIF()	
 ENDIF()
 
 IF (UNIX AND NOT APPLE )
