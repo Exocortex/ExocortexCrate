@@ -39,7 +39,7 @@
 
 #define ALEMBIC_SIMPLE_PARTICLE_CLASSID				Class_ID(0x246b1c1e, 0x3b2f032f)
 #define ALEMBIC_SIMPLE_PARTICLE_NAME			    "Alembic Particles"
-#define ALEMBIC_SIMPLE_PARTICLE_SCRIPTNAME		    "AlembicParticles"
+#define ALEMBIC_SIMPLE_PARTICLE_SCRIPTNAME		    "AlembicParticless"
 
 #define ALEMBIC_SPLINE_GEOM_MODIFIER_CLASSID			Class_ID(0x28233914, 0x18260c30)
 #define ALEMBIC_SPLINE_GEOM_MODIFIER_NAME			    "Alembic Spline Geometry"
@@ -74,7 +74,7 @@
 ClassDesc2* GetAlembicXformControllerClassDesc();
 ClassDesc2* GetAlembicVisibilityControllerClassDesc();
 
-ClassDesc2* GetAlembicSimpleParticleClassDesc();
+ClassDesc2* GetAlembicParticlesClassDesc();
 
 ClassDesc2* GetAlembicMeshTopoModifierClassDesc();
 ClassDesc2* GetAlembicMeshGeomModifierClassDesc();

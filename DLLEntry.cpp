@@ -29,7 +29,7 @@ ClassDesc2** getClassDescs( int& numClassDescs ) {
 	static ClassDescPtr s_classDescs[] = {
 		GetAlembicXformControllerClassDesc(),
 		GetAlembicVisibilityControllerClassDesc(),
-		GetAlembicSimpleParticleClassDesc(),
+		GetAlembicParticlesClassDesc(),
 		GetAlembicMeshTopoModifierClassDesc(),
 		GetAlembicMeshGeomModifierClassDesc(),
 		GetAlembicMeshNormalsModifierClassDesc(),
