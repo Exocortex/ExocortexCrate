@@ -6,6 +6,11 @@
 
 #undef iProperty
 
+#ifdef __cplusplus__
+extern "C"
+{
+#endif
+
 static PyObject * iCompoundProperty_getName(PyObject * self, PyObject * args)
 {
    ALEMBIC_TRY_STATEMENT
@@ -75,6 +80,12 @@ static PyObject * iCompoundProperty_getProperty(PyObject * self, PyObject * args
    ALEMBIC_PYOBJECT_CATCH_STATEMENT
 }
 
+static PyObject *iCompoundProperty_isCompound(PyObject *self, PyObject * args)
+{
+   Py_INCREF(Py_True);
+   return Py_True;
+}
+
 static PyMethodDef iCompoundProperty_methods[] =
 {
    {"getName", (PyCFunction)iCompoundProperty_getName, METH_NOARGS, "Returns the name of this compound property."},
@@ -85,6 +96,7 @@ static PyMethodDef iCompoundProperty_methods[] =
    {"getValues", (PyCFunction)iCompoundProperty_getValues, METH_VARARGS, "Returns an empty tuple because a compound property does not have any values."},
    {"getPropertyNames", (PyCFunction)iCompoundProperty_getPropertyNames, METH_NOARGS, "Returns a string list of all property names below this compound."},
    {"getProperty", (PyCFunction)iCompoundProperty_getProperty, METH_VARARGS, "Returns an iProperty for the given propertyName string."},
+   {"isCompound", (PyCFunction)iCompoundProperty_isCompound, METH_NOARGS, "To distinguish between an iProperty and an iCompoundProperty, always returns true for iCompoundProperty."},
    {NULL, NULL}
 };
 
@@ -135,6 +147,10 @@ static PyTypeObject iCompoundProperty_Type =
   0,		               /* tp_iternext */
   iCompoundProperty_methods,             /* tp_methods */
 };
+
+#ifdef __cplusplus__
+}
+#endif
 
 PyObject * iCompoundProperty_new(Alembic::Abc::ICompoundProperty in_cprop, char *in_propName)
 {

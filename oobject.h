@@ -3,7 +3,8 @@
 
 #include "foundation.h"
 
-enum oObjectType{
+enum oObjectType
+{
    oObjectType_Xform,
    oObjectType_Camera,
    oObjectType_PolyMesh,
@@ -12,9 +13,11 @@ enum oObjectType{
    oObjectType_SubD
 };
 
-typedef struct {
+typedef struct
+{
    oObjectType mType; 
-   union {
+   union
+   {
      Alembic::AbcGeom::OXform * mXform;
      Alembic::AbcGeom::OCamera * mCamera;
      Alembic::AbcGeom::OPolyMesh * mPolyMesh;
