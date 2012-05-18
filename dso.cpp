@@ -1472,7 +1472,40 @@ static AtNode *GetNode(void *user_ptr, int i)
       AiNodeSetArray(shapeNode, "vlist", pos);
       AiNodeSetArray(shapeNode, "nlist", nor);
       if(!createdShifted)
+      {
          AiNodeSetArray(shapeNode, "nidxs", uvsIdx);
+
+         if(ud->gProcShaders != NULL)
+         {
+            if(ud->gProcShaders->nelements > 1)
+            {
+               // check if we have facesets on this node
+               std::vector<std::string> faceSetNames;
+               typedObject.getSchema().getFaceSetNames(faceSetNames);
+               if(faceSetNames.size() > 0)
+               {
+                  // allocate the shader index array
+                  size_t shaderIndexCount = abcFaceCounts->size();
+                  AtArray * shaderIndices = AiArrayAllocate((AtUInt32)shaderIndexCount,1,AI_TYPE_BYTE);
+                  for(size_t i=0;i<shaderIndexCount;i++)
+                     AiArraySetByte(shaderIndices,(AtUInt32)i,0);
+
+                  for(size_t i=0;i<faceSetNames.size();i++)
+                  {
+                     Alembic::AbcGeom::IFaceSetSchema faceSet = typedObject.getSchema().getFaceSet(faceSetNames[i]).getSchema();
+                     Alembic::AbcGeom::IFaceSetSchema::Sample faceSetSample = faceSet.getValue();
+                     Alembic::Abc::Int32ArraySamplePtr faces = faceSetSample.getFaces();
+                     for(size_t j=0;j<faces->size();j++)
+                     {
+                        if((size_t)faces->get()[j] < shaderIndexCount)
+                           AiArraySetByte(shaderIndices,(AtUInt32)faces->get()[j],(AtByte)i);
+                     }
+                  }
+                  AiNodeSetArray(shapeNode, "shidxs", shaderIndices);
+               }
+            }
+         }
+      }
 
    } else if(Alembic::AbcGeom::ISubD::matches(md)) {
 
@@ -1530,6 +1563,7 @@ static AtNode *GetNode(void *user_ptr, int i)
       // loop over all samples
       size_t firstSampleCount = 0;
       AtULong posOffset = 0;
+      Alembic::Abc::Int32ArraySamplePtr abcFaceCounts;
 
       for(size_t sampleIndex = 0; sampleIndex < minNumSamples; sampleIndex++)
       {
@@ -1546,7 +1580,7 @@ static AtNode *GetNode(void *user_ptr, int i)
          // take care of the topology
          if(sampleIndex == 0 && !createdShifted)
          {
-            Alembic::Abc::Int32ArraySamplePtr abcFaceCounts = sample.getFaceCounts();
+            abcFaceCounts = sample.getFaceCounts();
             Alembic::Abc::Int32ArraySamplePtr abcFaceIndices = sample.getFaceIndices();
             if(abcFaceCounts->get()[0] == 0)
                return NULL;
@@ -1713,6 +1747,37 @@ static AtNode *GetNode(void *user_ptr, int i)
          }
       }
       AiNodeSetArray(shapeNode, "vlist", pos);
+
+      if(ud->gProcShaders != NULL && !createdShifted)
+      {
+         if(ud->gProcShaders->nelements > 1)
+         {
+            // check if we have facesets on this node
+            std::vector<std::string> faceSetNames;
+            typedObject.getSchema().getFaceSetNames(faceSetNames);
+            if(faceSetNames.size() > 0)
+            {
+               // allocate the shader index array
+               size_t shaderIndexCount = abcFaceCounts->size();
+               AtArray * shaderIndices = AiArrayAllocate((AtUInt32)shaderIndexCount,1,AI_TYPE_BYTE);
+               for(size_t i=0;i<shaderIndexCount;i++)
+                  AiArraySetByte(shaderIndices,(AtUInt32)i,0);
+
+               for(size_t i=0;i<faceSetNames.size();i++)
+               {
+                  Alembic::AbcGeom::IFaceSetSchema faceSet = typedObject.getSchema().getFaceSet(faceSetNames[i]).getSchema();
+                  Alembic::AbcGeom::IFaceSetSchema::Sample faceSetSample = faceSet.getValue();
+                  Alembic::Abc::Int32ArraySamplePtr faces = faceSetSample.getFaces();
+                  for(size_t j=0;j<faces->size();j++)
+                  {
+                     if((size_t)faces->get()[j] < shaderIndexCount)
+                        AiArraySetByte(shaderIndices,(AtUInt32)faces->get()[j],(AtByte)i);
+                  }
+               }
+               AiNodeSetArray(shapeNode, "shidxs", shaderIndices);
+            }
+         }
+      }
 
    } else if(Alembic::AbcGeom::ICurves::matches(md)) {
       //ESS_LOG_INFO( "ExocortexAlembicArnoldDSO: GetNode: ICurves" );
