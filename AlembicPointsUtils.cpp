@@ -14,6 +14,8 @@
 #include <ParticleFlow/IPFRender.h>
 #include <ParticleFlow/IChannelContainer.h>
 #include <ParticleFlow/IParticleContainer.h>
+#include <map>
+#include <vector>
 
 class NullView: public View 
 {
@@ -21,6 +23,31 @@ public:
     Point2 ViewToScreen(Point3 p) { return Point2(p.x,p.y); }
     NullView() { worldToView.IdentityMatrix(); screenW=640.0f; screenH = 480.0f; }
 };
+
+typedef std::map<INode*, IParticleGroup*> groupMapT;
+
+void getParticleGroups(TimeValue ticks, Object* obj, INode* node, std::vector<IParticleGroup*>& groups)
+{
+	IParticleObjectExt* particlesExt = GetParticleObjectExtInterface(obj);
+
+	groupMapT groupMap;
+
+	for(int i=0; i< particlesExt->NumParticles(); i++){
+		INode *particleGroupNode = particlesExt->GetParticleGroup(i);
+
+		Object *particleGroupObj = (particleGroupNode != NULL) ? particleGroupNode->EvalWorldState(ticks).obj : NULL;
+		IParticleGroup *particleGroup = GetParticleGroupInterface(particleGroupObj);
+
+		groupMap[particleGroupNode] = particleGroup;
+	}
+
+	for( groupMapT::iterator it=groupMap.begin(); it!=groupMap.end(); it++)
+	{
+		groups.push_back((*it).second);
+	}
+
+}
+
 
 Mesh* getParticleSystemRenderMesh(TimeValue ticks, Object* obj, INode* node, BOOL& bNeedDelete)
 {
@@ -30,6 +57,9 @@ Mesh* getParticleSystemRenderMesh(TimeValue ticks, Object* obj, INode* node, BOO
 	if(!particleActionList){
 		return pMesh;
 	}
+
+	std::vector<IParticleGroup*> groups;
+	getParticleGroups(ticks, obj, node, groups);
 
 	int numActions = particleActionList->NumActions();
 	for (int p = particleActionList->NumActions()-1; p >= 0; p -= 1)
@@ -47,16 +77,16 @@ Mesh* getParticleSystemRenderMesh(TimeValue ticks, Object* obj, INode* node, BOO
 		if(particleRender){
 
 			NullView nullView;
-			//IParticleContainer* pCont = GetChannelContainerInterface(obj);
 
-			IParticleObjectExt* particlesExt = GetParticleObjectExtInterface(obj);
-			INode *particleGroupNode = particlesExt->GetParticleGroup(0);
-			Object *particleGroupObj = (particleGroupNode != NULL) ? particleGroupNode->EvalWorldState(ticks).obj : NULL;
-
-		    IParticleGroup *particleGroup = GetParticleGroupInterface(particleGroupObj);
-			if(!particleGroup){
+			if(groups.size() < 0){
 				continue;
 			}
+
+		    IParticleGroup *particleGroup = groups[0];
+			if(groups.size() > 1){
+				particleGroup = groups[1];
+			}
+
 			::IObject *pCont = particleGroup->GetParticleContainer();
 
 			pMesh = particleRender->GetRenderMesh(pCont, ticks, obj, node, nullView, bNeedDelete);
@@ -67,7 +97,6 @@ Mesh* getParticleSystemRenderMesh(TimeValue ticks, Object* obj, INode* node, BOO
 
 	return pMesh;
 }
-
 
 const Mesh* GetShapeMesh(IParticleObjectExt *pExt, int particleId, TimeValue ticks)
 {
