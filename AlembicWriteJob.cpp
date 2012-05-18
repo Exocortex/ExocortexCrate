@@ -394,7 +394,21 @@ MStatus AlembicExportCommand::doIt(const MArgList & args)
                   // get all parents
                   MObjectArray parents;
                   MString typeStr = dag.node().apiTypeStr();
-                  if(typeStr == "kTransform")
+
+                  // check if this is a camera
+                  bool isCamera = false;
+                  for(unsigned int m=0;m<dag.childCount();m++)
+                  {
+                     MFnDagNode child(dag.child(m));
+                     MString cameraTypeStr = child.object().apiTypeStr();
+                     if(cameraTypeStr == "kCamera")
+                     {
+                        isCamera = true;
+                        break;
+                     }
+                  }
+
+                  if(typeStr == "kTransform" && !isCamera)
                   {
                      MDagPath ppath = dag;
                      while(!ppath.node().isNull() && ppath.length() > 0 && ppath.isValid())
