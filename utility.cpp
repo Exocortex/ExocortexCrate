@@ -288,22 +288,26 @@ MMatrix GetGlobalMMatrix(const MObject & in_Ref)
    result.setToIdentity();
 
    MFnDagNode node(in_Ref);
+   MDagPathArray paths;
+   node.getAllPaths(paths);
+   MDagPath path = paths[0];
 
    MString typeStr = in_Ref.apiTypeStr();
    if(typeStr == "kTransform")
    {
-      MFnTransform transformNode(in_Ref);
-      MTransformationMatrix xf = transformNode.transformation();
-      result = xf.asMatrix();
+      result = path.inclusiveMatrix();
    }
-
-   for(unsigned int i=0;i<node.parentCount();i++)
+   else
    {
-      MObject parent = node.parent(i);
-      typeStr = parent.apiTypeStr();
-      if(typeStr == "kTransform")
+      for(unsigned int i=0;i<node.parentCount();i++)
       {
-         return result * GetGlobalMMatrix(parent);
+         MObject parent = node.parent(i);
+         typeStr = parent.apiTypeStr();
+         if(typeStr == "kTransform")
+         {
+            result = GetGlobalMMatrix(parent);
+            //break;
+         }
       }
    }
 

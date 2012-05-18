@@ -331,6 +331,8 @@ MStatus AlembicExportCommand::doIt(const MArgList & args)
 	   bool bindpose = true;
       bool dynamictopology = false;
       bool globalspace = false;
+      bool withouthierarchy = false;
+      MStringArray objectStrings;
       MObjectArray objects;
 
       // process all tokens of the job
@@ -368,81 +370,98 @@ MStatus AlembicExportCommand::doIt(const MArgList & args)
             dynamictopology = valuePair[1].asInt() != 0;
 		   else if(valuePair[0].toLowerCase() == "globalspace")
             globalspace = valuePair[1].asInt() != 0;
+		   else if(valuePair[0].toLowerCase() == "withouthierarchy")
+            withouthierarchy = valuePair[1].asInt() != 0;
          else if(valuePair[0].toLowerCase() == "filename")
             filename = valuePair[1];
          else if(valuePair[0].toLowerCase() == "objects")
          {
             // try to find each object
-            MStringArray objectStrings;
             valuePair[1].split(',',objectStrings);
-            for(unsigned int k=0;k<objectStrings.length();k++)
-            {
-               MSelectionList sl;
-               MString objectString = objectStrings[k];
-               sl.add(objectString);
-               MDagPath dag;
-               for(unsigned int l=0;l<sl.length();l++)
-               {
-                  sl.getDagPath(l,dag);
-                  MObject objRef = dag.node();
-                  if(objRef.isNull())
-                  {
-                     MGlobal::displayWarning("[ExocortexAlembic] Skipping object '"+objectStrings[k]+"', not found.");
-                     break;
-                  }
-
-                  // get all parents
-                  MObjectArray parents;
-                  MString typeStr = dag.node().apiTypeStr();
-                  if(typeStr == "kTransform")
-                  {
-                     MDagPath ppath = dag;
-                     while(!ppath.node().isNull() && ppath.length() > 0 && ppath.isValid())
-                     {
-                        parents.append(ppath.node());
-                        MStatus status = ppath.pop();
-                        if(status != MStatus::kSuccess)
-                           break;
-                     }
-                  }
-                  else
-                  {
-                     parents.append(dag.node());
-                  }
-
-                  // push all parents in
-                  while(parents.length() > 0)
-                  {
-                     bool found = false;
-                     for(unsigned int m=0;m<objects.length();m++)
-                     {
-                        if(objects[m] == parents[parents.length()-1])
-                        {
-                           found = true;
-                           break;
-                        }
-                     }
-                     if(!found)
-                        objects.append(parents[parents.length()-1]);
-                     parents.remove(parents.length()-1);
-                  }
-
-                  // check all of the shapes below
-                  sl.getDagPath(l,dag);
-                  for(unsigned int m=0;m<dag.childCount();m++)
-                  {
-                     MFnDagNode child(dag.child(m));
-                     if(child.isIntermediateObject())
-                        continue;
-                     objects.append(child.object());
-                  }
-               }
-            }
          }
          else
          {
             MGlobal::displayWarning("[ExocortexAlembic] Skipping invalid token: "+tokens[j]);
             continue;
+         }
+      }
+
+      // now check the object strings
+      for(unsigned int k=0;k<objectStrings.length();k++)
+      {
+         MSelectionList sl;
+         MString objectString = objectStrings[k];
+         sl.add(objectString);
+         MDagPath dag;
+         for(unsigned int l=0;l<sl.length();l++)
+         {
+            sl.getDagPath(l,dag);
+            MObject objRef = dag.node();
+            if(objRef.isNull())
+            {
+               MGlobal::displayWarning("[ExocortexAlembic] Skipping object '"+objectStrings[k]+"', not found.");
+               break;
+            }
+
+            // get all parents
+            MObjectArray parents;
+            MString typeStr = dag.node().apiTypeStr();
+
+            // check if this is a camera
+            bool isCamera = false;
+            for(unsigned int m=0;m<dag.childCount();m++)
+            {
+               MFnDagNode child(dag.child(m));
+               MString cameraTypeStr = child.object().apiTypeStr();
+               if(cameraTypeStr == "kCamera")
+               {
+                  isCamera = true;
+                  break;
+               }
+            }
+
+            if(typeStr == "kTransform" && !isCamera && !globalspace && !withouthierarchy)
+            {
+               MDagPath ppath = dag;
+               while(!ppath.node().isNull() && ppath.length() > 0 && ppath.isValid())
+               {
+                  parents.append(ppath.node());
+                  MStatus status = ppath.pop();
+                  if(status != MStatus::kSuccess)
+                     break;
+               }
+            }
+            else
+            {
+               parents.append(dag.node());
+            }
+
+            // push all parents in
+            while(parents.length() > 0)
+            {
+               bool found = false;
+               for(unsigned int m=0;m<objects.length();m++)
+               {
+                  if(objects[m] == parents[parents.length()-1])
+                  {
+                     found = true;
+                     break;
+                  }
+               }
+               if(!found)
+                  objects.append(parents[parents.length()-1]);
+               parents.remove(parents.length()-1);
+            }
+
+            // check all of the shapes below
+            sl.getDagPath(l,dag);
+            for(unsigned int m=0;m<dag.childCount();m++)
+            {
+               MFnDagNode child(dag.child(m));
+               if(child.isIntermediateObject())
+                  continue;
+               objects.append(child.object());
+            }
          }
       }
 
