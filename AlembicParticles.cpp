@@ -912,7 +912,7 @@ int AlembicParticles::Display(TimeValue t, INode* inode, ViewExp *vpt, int flags
       
    // Draw the particles
    NullView nullView;
-   nullView.worldToView = objToWorld;
+   //nullView.worldToView = objToWorld;
    gw->setRndLimits(rlim);
    for (int i = 0; i < NumberOfRenderMeshes(); i += 1)
    {
@@ -928,7 +928,7 @@ int AlembicParticles::Display(TimeValue t, INode* inode, ViewExp *vpt, int flags
            GetMultipleRenderMeshTM_Internal(t, inode, nullView, i, elemToObj, meshTMValid);
 		   Mesh *mesh = GetMultipleRenderMesh(t, inode, nullView, deleteMesh, i);
 
-		   Matrix3 elemToWorld = elemToObj * objToWorld;
+		   Matrix3 elemToWorld = elemToObj;// * objToWorld;
 
            INode *meshNode = GetParticleMeshNode(i, inode);
            Material *mtls = meshNode->Mtls();
@@ -1005,7 +1005,7 @@ int AlembicParticles::HitTest(TimeValue t, INode *inode, int type, int crossing,
 
 		   BOOL deleteMesh = FALSE;
 		    
-           GetMultipleRenderMeshTM(t, inode, nullView, i, elemToObj, meshTMValid);
+           GetMultipleRenderMeshTM_Internal(t, inode, nullView, i, elemToObj, meshTMValid);
 		   Mesh *mesh = GetMultipleRenderMesh(t, inode, nullView, deleteMesh, i);
 
            Matrix3 elemToWorld = elemToObj;// * objToWorld;
@@ -1106,7 +1106,8 @@ Mesh *AlembicParticles::BuildSphereMesh(int meshNumber, TimeValue t, INode *node
             (GET_MAX_INTERFACE()->CreateInstance(GEOMOBJECT_CLASS_ID, Class_ID(SPHERE_CLASS_ID, 0)));
 
         float size = 2;
-        m_pSphereMaker->SetParams(size, 32);
+		int segments = 12;
+        m_pSphereMaker->SetParams(size, segments);
         m_pSphereMaker->BuildMesh(0);
         m_pSphereMaker->UpdateValidity(TOPO_CHAN_NUM, FOREVER);
         m_pSphereMaker->UpdateValidity(GEOM_CHAN_NUM, FOREVER);
