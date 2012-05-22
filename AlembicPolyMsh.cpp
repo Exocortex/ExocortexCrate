@@ -607,13 +607,13 @@ bool AlembicPolyMesh::Save(double time)
               // For sample zero, export the material ids as face sets
 			  if (mNumSamples == 0 && numMatId > 1 )
               {
-				  int i = 0;
 				  for ( facesetmap_it it=mFaceSetsMap.begin(); it != mFaceSetsMap.end(); it++)
                   {
-                     
+					  int i = it->first;
 
 					  Mtl* pSubMat = NULL;
-					  if(pMat && i<pMat->NumSubMtls()){
+					  const int numMat = pMat ? pMat->NumSubMtls() : 0;
+					  if(pMat && i < numMat){
 					      pSubMat = pMat->GetSubMtl(i);
 					  }
 					  std::stringstream nameStream;
@@ -635,8 +635,6 @@ bool AlembicPolyMesh::Save(double time)
                       Alembic::AbcGeom::OFaceSet faceSet = mMeshSchema.createFaceSet(name);
                       Alembic::AbcGeom::OFaceSetSchema::Sample faceSetSample(Alembic::Abc::Int32ArraySample(&faceSetVec.front(),faceSetVec.size()));
                       faceSet.getSchema().set(faceSetSample);
-
-					  i++;
                   }
               }
           }
