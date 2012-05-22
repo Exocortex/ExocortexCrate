@@ -61,6 +61,12 @@ Mesh* getParticleSystemRenderMesh(TimeValue ticks, Object* obj, INode* node, BOO
 	std::vector<IParticleGroup*> groups;
 	getParticleGroups(ticks, obj, node, groups);
 
+	//TODO: create an empty particle group
+	//then append the contents of all particle groups to this group
+	//then get the render mesh of this particle group:
+	//	virtual bool AppendSurplusContainer(IObject* pCont) = 0;
+
+
 	int numActions = particleActionList->NumActions();
 	for (int p = particleActionList->NumActions()-1; p >= 0; p -= 1)
 	{
