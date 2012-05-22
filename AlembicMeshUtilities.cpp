@@ -912,9 +912,10 @@ void addAlembicMaterialsModifier(INode *pNode, Alembic::AbcGeom::IObject& iObj)
 			//"if $.modifiers[\"Alembic Mesh Normals\"] != undefined then (\n"
 			//"$.modifiers[\"Alembic Mesh Normals\"].enabled = true\n"
 			//")\n"
-			"if $.modifiers[\"Alembic Mesh Topology\"] != undefined then (\n"
-			"$.modifiers[\"Alembic Mesh Topology\"].enabled = true\n",
-			")\n",
+			//"if $.modifiers[\"Alembic Mesh Topology\"] != undefined then (\n"
+			//"$.modifiers[\"Alembic Mesh Topology\"].enabled = true\n",
+			//")\n"
+			,
 			names.c_str()
 	);
 
