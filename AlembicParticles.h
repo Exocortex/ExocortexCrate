@@ -36,7 +36,7 @@ static ParticleMtl particleMtl;
 typedef struct _alembic_importoptions alembic_importoptions;
 extern int AlembicImport_Points(const std::string &file, Alembic::AbcGeom::IObject& iObj, alembic_importoptions &options, INode** pMaxNode);
 
-class AlembicSimpleParticle;
+class AlembicParticles;
 
 typedef struct _viewportmesh
 {
@@ -45,7 +45,7 @@ typedef struct _viewportmesh
     _viewportmesh() : mesh(NULL), needDelete(FALSE) {}
 } viewportmesh;
 
-class AlembicSimpleParticle : public SimpleParticle, ITreeEnumProc
+class AlembicParticles : public SimpleParticle, ITreeEnumProc
 {
 public:
     IParamBlock2* pblock2;
@@ -60,10 +60,10 @@ public:
 	};
 
     static IObjParam *s_ObjParam;
-    static AlembicSimpleParticle *s_EditObject;
+    static AlembicParticles *s_EditObject;
 public:
-    AlembicSimpleParticle();
-    virtual ~AlembicSimpleParticle();
+    AlembicParticles();
+    virtual ~AlembicParticles();
 public:
     void BeginEditParams( IObjParam  *ip, ULONG flags,Animatable *prev);
     void EndEditParams( IObjParam *ip, ULONG flags,Animatable *next);
@@ -99,13 +99,14 @@ public:
     virtual int NumberOfRenderMeshes();
     virtual Mesh* GetMultipleRenderMesh(TimeValue  t,  INode *inode,  View &view,  BOOL &needDelete,  int meshNumber); 
     virtual void GetMultipleRenderMeshTM (TimeValue  t, INode *inode, View &view, int  meshNumber, Matrix3 &meshTM, Interval &meshTMValid); 
+	void GetMultipleRenderMeshTM_Internal(TimeValue  t, INode *inode, View &view, int  meshNumber, Matrix3 &meshTM, Interval &meshTMValid);
 
     // --- Derived class implementation of the virtual functions in BaseObject ---
     CreateMouseCallBack* GetCreateMouseCallBack() { return NULL; }
-    CONST_2013 TCHAR *GetObjectName() { return "Alembic Simple Particle"; }
-    //virtual int Display(TimeValue t, INode* inode, ViewExp *vpt, int flags);
-    //virtual int HitTest(TimeValue t, INode *inode, int type, int crossing, int flags, IPoint2 *p, ViewExp *vpt);
-    //virtual BOOL OKtoDisplay( TimeValue t);
+    CONST_2013 TCHAR *GetObjectName() { return "Alembic Particles"; }
+    virtual int Display(TimeValue t, INode* inode, ViewExp *vpt, int flags);
+    virtual int HitTest(TimeValue t, INode *inode, int type, int crossing, int flags, IPoint2 *p, ViewExp *vpt);
+    virtual BOOL OKtoDisplay( TimeValue t);
 
 	virtual Point3 ParticlePosition(TimeValue t,int i);
 	virtual Point3 ParticleVelocity(TimeValue t,int i);
@@ -163,11 +164,11 @@ private:
 };
 
 
-class AlembicSimpleParticleClassDesc : public ClassDesc2 
+class AlembicParticlesClassDesc : public ClassDesc2 
 {
 public:
 	int 			IsPublic() { return TRUE; }
-	void *			Create(BOOL loading = FALSE) { return new AlembicSimpleParticle(); }
+	void *			Create(BOOL loading = FALSE) { return new AlembicParticles(); }
 	const TCHAR *	ClassName() { return ALEMBIC_SIMPLE_PARTICLE_NAME; }
 	SClass_ID		SuperClassID() { return GEOMOBJECT_CLASS_ID; }
 	Class_ID		ClassID() { return ALEMBIC_SIMPLE_PARTICLE_CLASSID; }

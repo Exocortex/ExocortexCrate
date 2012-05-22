@@ -1,7 +1,7 @@
 #include "Alembic.h"
 #include "AlembicMax.h"
 #include "AlembicDefinitions.h"
-#include "AlembicSimpleParticle.h"
+#include "AlembicParticles.h"
 #include "AlembicArchiveStorage.h"
 #include "AlembicVisibilityController.h"
 #include "utility.h"
@@ -13,19 +13,19 @@ namespace AbcB = ::Alembic::Abc::ALEMBIC_VERSION_NS;
 using namespace AbcA;
 using namespace AbcB;
 
-static AlembicSimpleParticleClassDesc s_AlembicSimpleParticleClassDesc;
-ClassDesc2 *GetAlembicSimpleParticleClassDesc() { return &s_AlembicSimpleParticleClassDesc; }
+static AlembicParticlesClassDesc s_AlembicParticlesClassDesc;
+ClassDesc2 *GetAlembicParticlesClassDesc() { return &s_AlembicParticlesClassDesc; }
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
 // Alembic_XForm_Ctrl_Param_Blk
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-static ParamBlockDesc2 AlembicSimpleParticleParams(
+static ParamBlockDesc2 AlembicParticlesParams(
 	0,
 	_T(ALEMBIC_SIMPLE_PARTICLE_SCRIPTNAME),
 	0,
-	GetAlembicSimpleParticleClassDesc(),
+	GetAlembicParticlesClassDesc(),
 	P_AUTO_CONSTRUCT | P_AUTO_UI,
 	0,
 
@@ -33,23 +33,23 @@ static ParamBlockDesc2 AlembicSimpleParticleParams(
 	IDD_ALEMBIC_PARTICLE_PARAMS, IDS_ALEMBIC, 0, 0, NULL,
 
     // params
-	AlembicSimpleParticle::ID_PATH, _T("path"), TYPE_FILENAME, P_RESET_DEFAULT, IDS_PATH,
+	AlembicParticles::ID_PATH, _T("path"), TYPE_FILENAME, P_RESET_DEFAULT, IDS_PATH,
 	    p_default, "",
 	    p_ui,        TYPE_EDITBOX,		IDC_PATH_EDIT,
 		p_end,
         
-	AlembicSimpleParticle::ID_IDENTIFIER, _T("identifier"), TYPE_STRING, P_RESET_DEFAULT, IDS_IDENTIFIER,
+	AlembicParticles::ID_IDENTIFIER, _T("identifier"), TYPE_STRING, P_RESET_DEFAULT, IDS_IDENTIFIER,
 	    p_default, "",
 	    p_ui,        TYPE_EDITBOX,		IDC_IDENTIFIER_EDIT,
 		p_end,
 
-	AlembicSimpleParticle::ID_TIME, _T("time"), TYPE_FLOAT, P_ANIMATABLE, IDS_TIME,
+	AlembicParticles::ID_TIME, _T("time"), TYPE_FLOAT, P_ANIMATABLE, IDS_TIME,
 		p_default,       0.0f,
 		p_range,         0.0f, 1000.0f,
 		p_ui,            TYPE_SPINNER,       EDITTYPE_FLOAT, IDC_TIME_EDIT,    IDC_TIME_SPIN, 0.01f,
 		p_end,
         
-    AlembicSimpleParticle::ID_MUTED, _T("muted"), TYPE_BOOL, P_ANIMATABLE, IDS_MUTED,
+    AlembicParticles::ID_MUTED, _T("muted"), TYPE_BOOL, P_ANIMATABLE, IDS_MUTED,
 		p_default,       FALSE,
 		p_ui,            TYPE_SINGLECHEKBOX,  IDC_MUTED_CHECKBOX,
 		p_end,
@@ -60,8 +60,8 @@ static ParamBlockDesc2 AlembicSimpleParticleParams(
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
 // static member variables
-AlembicSimpleParticle *AlembicSimpleParticle::s_EditObject = NULL;
-IObjParam *AlembicSimpleParticle::s_ObjParam = NULL;
+AlembicParticles *AlembicParticles::s_EditObject = NULL;
+IObjParam *AlembicParticles::s_ObjParam = NULL;
 
 ParticleMtl::ParticleMtl():Material() 
 {
@@ -76,7 +76,7 @@ ParticleMtl::ParticleMtl():Material()
    selfIllum = (float)1.0;
 }
 
-AlembicSimpleParticle::AlembicSimpleParticle()
+AlembicParticles::AlembicParticles()
     : SimpleParticle(), m_TotalShapesToEnumerate(0)
 {
     pblock2 = NULL;
@@ -87,11 +87,11 @@ AlembicSimpleParticle::AlembicSimpleParticle()
 	m_pDiskMaker = NULL;
 	m_pRectangleMaker = NULL;
 
-    s_AlembicSimpleParticleClassDesc.MakeAutoParamBlocks(this);
+    s_AlembicParticlesClassDesc.MakeAutoParamBlocks(this);
 }
 
 // virtual
-AlembicSimpleParticle::~AlembicSimpleParticle()
+AlembicParticles::~AlembicParticles()
 {
     ALEMBIC_SAFE_DELETE(m_pBoxMaker);
     ALEMBIC_SAFE_DELETE(m_pSphereMaker);
@@ -101,7 +101,7 @@ AlembicSimpleParticle::~AlembicSimpleParticle()
     ALEMBIC_SAFE_DELETE(m_pRectangleMaker);
 }
 
-void AlembicSimpleParticle::UpdateParticles(TimeValue t, INode *node)
+void AlembicParticles::UpdateParticles(TimeValue t, INode *node)
 {
 	ESS_CPP_EXCEPTION_REPORTING_START
    
@@ -109,16 +109,16 @@ void AlembicSimpleParticle::UpdateParticles(TimeValue t, INode *node)
 	//ESS_LOG_INFO( "Interval Start: " << interval.Start() << " End: " << interval.End() );
 
     MCHAR const* strPath = NULL;
-	this->pblock2->GetValue( AlembicSimpleParticle::ID_PATH, t, strPath, interval);
+	this->pblock2->GetValue( AlembicParticles::ID_PATH, t, strPath, interval);
 
 	MCHAR const* strIdentifier = NULL;
-	this->pblock2->GetValue( AlembicSimpleParticle::ID_IDENTIFIER, t, strIdentifier, interval);
+	this->pblock2->GetValue( AlembicParticles::ID_IDENTIFIER, t, strIdentifier, interval);
  
 	float fTime;
-	this->pblock2->GetValue( AlembicSimpleParticle::ID_TIME, t, fTime, interval);
+	this->pblock2->GetValue( AlembicParticles::ID_TIME, t, fTime, interval);
 
 	BOOL bMuted;
-	this->pblock2->GetValue( AlembicSimpleParticle::ID_MUTED, t, bMuted, interval);
+	this->pblock2->GetValue( AlembicParticles::ID_MUTED, t, bMuted, interval);
 
     if (bMuted)
     {
@@ -211,16 +211,16 @@ void AlembicSimpleParticle::UpdateParticles(TimeValue t, INode *node)
 	ESS_CPP_EXCEPTION_REPORTING_END
 }
 
-void AlembicSimpleParticle::BuildEmitter(TimeValue t, Mesh &mesh)
+void AlembicParticles::BuildEmitter(TimeValue t, Mesh &mesh)
 {
     /*Interval interval = FOREVER;//os->obj->ObjectValidity(t);
 	//ESS_LOG_INFO( "Interval Start: " << interval.Start() << " End: " << interval.End() );
 
     MCHAR const* strPath = NULL;
-	this->pblock2->GetValue( AlembicSimpleParticle::ID_PATH, t, strPath, interval);
+	this->pblock2->GetValue( AlembicParticles::ID_PATH, t, strPath, interval);
 
 	MCHAR const* strIdentifier = NULL;
-	this->pblock2->GetValue( AlembicSimpleParticle::ID_IDENTIFIER, t, strIdentifier, interval);
+	this->pblock2->GetValue( AlembicParticles::ID_IDENTIFIER, t, strIdentifier, interval);
 
     Alembic::AbcGeom::IPoints iPoints;
     if (!GetAlembicIPoints(iPoints, strPath, strIdentifier))
@@ -289,7 +289,7 @@ void AlembicSimpleParticle::BuildEmitter(TimeValue t, Mesh &mesh)
     mvalid = Interval(t ,t);
 }
 
-int AlembicSimpleParticle::RenderBegin(TimeValue t, ULONG flags)
+int AlembicParticles::RenderBegin(TimeValue t, ULONG flags)
 {
     SetAFlag(A_RENDER);
     ParticleInvalid();		
@@ -297,7 +297,7 @@ int AlembicSimpleParticle::RenderBegin(TimeValue t, ULONG flags)
     return 0;
 }
     
-int AlembicSimpleParticle::RenderEnd(TimeValue t)
+int AlembicParticles::RenderEnd(TimeValue t)
 {
     ClearAFlag(A_RENDER);
 	ParticleInvalid();		
@@ -305,19 +305,19 @@ int AlembicSimpleParticle::RenderEnd(TimeValue t)
 	return 0;
 }
 
-Interval AlembicSimpleParticle::GetValidity(TimeValue t)
+Interval AlembicParticles::GetValidity(TimeValue t)
 {
     Interval interval(t, t);
     return interval;
 }
 
-MarkerType AlembicSimpleParticle::GetMarkerType()
+MarkerType AlembicParticles::GetMarkerType()
 {
     return POINT_MRKR;
 }
 
-Point3 AlembicSimpleParticle::ParticlePosition(TimeValue t,int i) {
-	//ESS_LOG_INFO( "AlembicSimpleParticle::ParticlePosition( i: " << i << " )" );
+Point3 AlembicParticles::ParticlePosition(TimeValue t,int i) {
+	//ESS_LOG_INFO( "AlembicParticles::ParticlePosition( i: " << i << " )" );
 	return parts.points[i];
 }
 /**		Returns the velocity of the specified particle at the time passed (in 3ds
@@ -325,8 +325,8 @@ Max units per tick). This is specified as a vector. The Particle Age
 texture map and the Particle Motion Blur texture map use this method.
 \param t The time to return the particle velocity.
 \param i The index of the particle. */
-Point3 AlembicSimpleParticle::ParticleVelocity(TimeValue t,int i) {
-	//ESS_LOG_INFO( "AlembicSimpleParticle::ParticleVelocity( i: " << i << " )" );
+Point3 AlembicParticles::ParticleVelocity(TimeValue t,int i) {
+	//ESS_LOG_INFO( "AlembicParticles::ParticleVelocity( i: " << i << " )" );
 	return parts.vels[i];
 }
 
@@ -336,7 +336,7 @@ The Particle Age texture map and the Particle Motion Blur texture map use
 this method.
 \param t The time to return the particle size.
 \param i The index of the particle. */
-float AlembicSimpleParticle::ParticleSize(TimeValue t,int i) {
+float AlembicParticles::ParticleSize(TimeValue t,int i) {
  	return parts.radius[i];
 }
 /**		Returns a value indicating where the particle geometry (mesh) lies in
@@ -355,7 +355,7 @@ The particle geometry lies behind the particle position.
 The particle geometry is centered around particle position. 
 \ref PARTCENTER_TAIL 
 The particle geometry lies in front of the particle position. */
-int AlembicSimpleParticle::ParticleCenter(TimeValue t,int i) {
+int AlembicParticles::ParticleCenter(TimeValue t,int i) {
 	return PARTCENTER_CENTER;
 }
 /**	Returns the age of the specified particle -- the length of time it has been
@@ -364,7 +364,7 @@ The Particle Age texture map and the Particle Motion Blur texture map use
 this method.
 \param t Specifies the time to compute the particle age.
 \param i The index of the particle. */
-TimeValue AlembicSimpleParticle::ParticleAge(TimeValue t, int i) {
+TimeValue AlembicParticles::ParticleAge(TimeValue t, int i) {
 	return parts.ages[i];
 }
 /**		Returns the life of the particle -- the length of time the particle will be
@@ -373,11 +373,11 @@ The Particle Age texture map and the Particle Motion Blur texture map use
 this method.
 \param t Specifies the time to compute the particle life span.
 \param i The index of the particle. */
-TimeValue AlembicSimpleParticle::ParticleLife(TimeValue t, int i) {
+TimeValue AlembicParticles::ParticleLife(TimeValue t, int i) {
 	return -1;
 }
 
-bool AlembicSimpleParticle::GetAlembicIPoints(Alembic::AbcGeom::IPoints &iPoints, const char *strFile, const char *strIdentifier)
+bool AlembicParticles::GetAlembicIPoints(Alembic::AbcGeom::IPoints &iPoints, const char *strFile, const char *strIdentifier)
 {
     // Find the object in the archive
     Alembic::AbcGeom::IObject iObj = getObjectFromArchive(strFile, strIdentifier);
@@ -395,7 +395,7 @@ bool AlembicSimpleParticle::GetAlembicIPoints(Alembic::AbcGeom::IPoints &iPoints
     return true;
 }
 
-SampleInfo AlembicSimpleParticle::GetSampleAtTime(Alembic::AbcGeom::IPoints &iPoints, TimeValue t, Alembic::AbcGeom::IPointsSchema::Sample &floorSample, Alembic::AbcGeom::IPointsSchema::Sample &ceilSample) const
+SampleInfo AlembicParticles::GetSampleAtTime(Alembic::AbcGeom::IPoints &iPoints, TimeValue t, Alembic::AbcGeom::IPointsSchema::Sample &floorSample, Alembic::AbcGeom::IPointsSchema::Sample &ceilSample) const
 {
     double sampleTime = GetSecondsFromTimeValue(t);
     SampleInfo sampleInfo = getSampleInfo(sampleTime,
@@ -408,13 +408,13 @@ SampleInfo AlembicSimpleParticle::GetSampleAtTime(Alembic::AbcGeom::IPoints &iPo
     return sampleInfo;
 }
 
-int AlembicSimpleParticle::GetNumParticles(const Alembic::AbcGeom::IPointsSchema::Sample &floorSample) const
+int AlembicParticles::GetNumParticles(const Alembic::AbcGeom::IPointsSchema::Sample &floorSample) const
 {
     // We assume that the number of position items is the number of particles
     return static_cast<int>(floorSample.getPositions()->size());
 }
 
-Point3 AlembicSimpleParticle::GetParticlePosition(const Alembic::AbcGeom::IPointsSchema::Sample &floorSample, const Alembic::AbcGeom::IPointsSchema::Sample &ceilSample, const SampleInfo &sampleInfo, int index) const
+Point3 AlembicParticles::GetParticlePosition(const Alembic::AbcGeom::IPointsSchema::Sample &floorSample, const Alembic::AbcGeom::IPointsSchema::Sample &ceilSample, const SampleInfo &sampleInfo, int index) const
 {
 	
 	Imath::V3f alembicP3f = floorSample.getPositions()->get()[index];
@@ -442,7 +442,7 @@ Point3 AlembicSimpleParticle::GetParticlePosition(const Alembic::AbcGeom::IPoint
     return ConvertAlembicPointToMaxPoint(alembicP3f );
 }
 
-Point3 AlembicSimpleParticle::GetParticleVelocity(const Alembic::AbcGeom::IPointsSchema::Sample &floorSample, const Alembic::AbcGeom::IPointsSchema::Sample &ceilSample, const SampleInfo &sampleInfo, int index) const
+Point3 AlembicParticles::GetParticleVelocity(const Alembic::AbcGeom::IPointsSchema::Sample &floorSample, const Alembic::AbcGeom::IPointsSchema::Sample &ceilSample, const SampleInfo &sampleInfo, int index) const
 {
     Alembic::Abc::V3fArraySamplePtr velocitiesArray = floorSample.getVelocities();
     if (velocitiesArray == NULL || velocitiesArray->size() == 0)
@@ -465,7 +465,7 @@ Point3 AlembicSimpleParticle::GetParticleVelocity(const Alembic::AbcGeom::IPoint
     return ConvertAlembicPointToMaxPoint(alembicP3f );
 }
 
-float AlembicSimpleParticle::GetParticleRadius(Alembic::AbcGeom::IPoints &iPoints, const SampleInfo &sampleInfo, int index) const
+float AlembicParticles::GetParticleRadius(Alembic::AbcGeom::IPoints &iPoints, const SampleInfo &sampleInfo, int index) const
 {
     Alembic::AbcGeom::IFloatGeomParam widthsParam = iPoints.getSchema().getWidthsParam();
     if (widthsParam == NULL || widthsParam.getNumSamples() == 0)
@@ -494,7 +494,7 @@ float AlembicSimpleParticle::GetParticleRadius(Alembic::AbcGeom::IPoints &iPoint
     return size;
 }
 
-TimeValue AlembicSimpleParticle::GetParticleAge(Alembic::AbcGeom::IPoints &iPoints, const SampleInfo &sampleInfo, int index) const
+TimeValue AlembicParticles::GetParticleAge(Alembic::AbcGeom::IPoints &iPoints, const SampleInfo &sampleInfo, int index) const
 {
     if (iPoints.getSchema().getPropertyHeader(".age") == NULL)
     {
@@ -528,7 +528,7 @@ TimeValue AlembicSimpleParticle::GetParticleAge(Alembic::AbcGeom::IPoints &iPoin
     return GetTimeValueFromSeconds(age);
 }
 
-Quat AlembicSimpleParticle::GetParticleOrientation(Alembic::AbcGeom::IPoints &iPoints, const SampleInfo &sampleInfo, int index) const
+Quat AlembicParticles::GetParticleOrientation(Alembic::AbcGeom::IPoints &iPoints, const SampleInfo &sampleInfo, int index) const
 {
     Quat identity;
     identity.Identity();
@@ -583,7 +583,7 @@ Quat AlembicSimpleParticle::GetParticleOrientation(Alembic::AbcGeom::IPoints &iP
     return q;
 }
 
-Point3 AlembicSimpleParticle::GetParticleScale(Alembic::AbcGeom::IPoints &iPoints, const SampleInfo &sampleInfo, int index) const
+Point3 AlembicParticles::GetParticleScale(Alembic::AbcGeom::IPoints &iPoints, const SampleInfo &sampleInfo, int index) const
 {
     if (iPoints.getSchema().getPropertyHeader(".scale") == NULL)
     {
@@ -622,7 +622,7 @@ Point3 AlembicSimpleParticle::GetParticleScale(Alembic::AbcGeom::IPoints &iPoint
     return maxScale;
 }
 
-AlembicPoints::ShapeType AlembicSimpleParticle::GetParticleShapeType(Alembic::AbcGeom::IPoints &iPoints, const SampleInfo &sampleInfo, int index) const
+AlembicPoints::ShapeType AlembicParticles::GetParticleShapeType(Alembic::AbcGeom::IPoints &iPoints, const SampleInfo &sampleInfo, int index) const
 {
     if (iPoints.getSchema().getPropertyHeader(".shapetype") == NULL)
     {
@@ -646,7 +646,7 @@ AlembicPoints::ShapeType AlembicSimpleParticle::GetParticleShapeType(Alembic::Ab
     return shapeType;
 }
 
-uint16_t AlembicSimpleParticle::GetParticleShapeInstanceId(Alembic::AbcGeom::IPoints &iPoints, const SampleInfo &sampleInfo, int index) const
+uint16_t AlembicParticles::GetParticleShapeInstanceId(Alembic::AbcGeom::IPoints &iPoints, const SampleInfo &sampleInfo, int index) const
 {
     if (iPoints.getSchema().getPropertyHeader(".shapeinstanceid") == NULL || iPoints.getSchema().getPropertyHeader(".instancenames") == NULL)
     {
@@ -670,7 +670,7 @@ uint16_t AlembicSimpleParticle::GetParticleShapeInstanceId(Alembic::AbcGeom::IPo
     return instanceId;
 }
 
-void AlembicSimpleParticle::FillParticleShapeNodes(Alembic::AbcGeom::IPoints &iPoints, const SampleInfo &sampleInfo)
+void AlembicParticles::FillParticleShapeNodes(Alembic::AbcGeom::IPoints &iPoints, const SampleInfo &sampleInfo)
 {
     m_TotalShapesToEnumerate = 0;
     m_InstanceShapeINodes.clear();
@@ -710,7 +710,7 @@ void AlembicSimpleParticle::FillParticleShapeNodes(Alembic::AbcGeom::IPoints &iP
     pScene->EnumTree(this);
 }
 
-TimeValue AlembicSimpleParticle::GetParticleShapeInstanceTime(Alembic::AbcGeom::IPoints &iPoints, const SampleInfo &sampleInfo, int index) const
+TimeValue AlembicParticles::GetParticleShapeInstanceTime(Alembic::AbcGeom::IPoints &iPoints, const SampleInfo &sampleInfo, int index) const
 {
     if (iPoints.getSchema().getPropertyHeader(".shapetime") == NULL)
     {
@@ -744,15 +744,15 @@ TimeValue AlembicSimpleParticle::GetParticleShapeInstanceTime(Alembic::AbcGeom::
     return GetTimeValueFromSeconds(shapeTime);
 }
 
-int AlembicSimpleParticle::NumberOfRenderMeshes()
+int AlembicParticles::NumberOfRenderMeshes()
 {
-	//ESS_LOG_INFO( "AlembicSimpleParticle::NumberOfRenderMeshes()" );
+	//ESS_LOG_INFO( "AlembicParticles::NumberOfRenderMeshes()" );
      return parts.Count();
 }
 
-Mesh* AlembicSimpleParticle::GetMultipleRenderMesh(TimeValue  t,  INode *inode,  View &view,  BOOL &needDelete,  int meshNumber)
+Mesh* AlembicParticles::GetMultipleRenderMesh(TimeValue  t,  INode *inode,  View &view,  BOOL &needDelete,  int meshNumber)
 {
-	//ESS_LOG_INFO( "AlembicSimpleParticle::GetMultipleRenderMesh( t: " << t << " meshNumber: " << meshNumber << ", t: " << t << " )" );
+	//ESS_LOG_INFO( "AlembicParticles::GetMultipleRenderMesh( t: " << t << " meshNumber: " << meshNumber << ", t: " << t << " )" );
     if (meshNumber > parts.Count() || !parts.Alive(meshNumber) || view.CheckForRenderAbort())
     {
         needDelete = NULL;
@@ -798,20 +798,43 @@ Mesh* AlembicSimpleParticle::GetMultipleRenderMesh(TimeValue  t,  INode *inode, 
     return pMesh;
 }
 
-void AlembicSimpleParticle::GetMultipleRenderMeshTM(TimeValue  t, INode *inode, View &view, int  meshNumber, Matrix3 &meshTM, Interval &meshTMValid)
+void AlembicParticles::GetMultipleRenderMeshTM(TimeValue  t, INode *inode, View &view, int  meshNumber, Matrix3 &meshTM, Interval &meshTMValid)
 {
-	//ESS_LOG_INFO( "AlembicSimpleParticle::GetMultipleRenderMeshTM( t: " << t << " meshNumber: " << meshNumber << ", t: " << t << " )" );
-   //if (meshNumber > parts.Count() || !parts.Alive(meshNumber) || view.CheckForRenderAbort())
-    //{
-    //    
-    //}
-
-	 //Matrix3 nodeWorldTM = inode->GetObjTMAfterWSM(t);
-
-
 	MSTR rendererName;
 	GET_MAX_INTERFACE()->GetCurrentRenderer()->GetClassName( rendererName );
 	string renderer( rendererName );
+
+	GetMultipleRenderMeshTM_Internal(t, inode, view, meshNumber, meshTM, meshTMValid);
+
+	
+
+	Matrix3 objectToWorld = inode->GetObjectTM( t );
+
+	if( renderer.find( string( "mental ray Renderer" ) ) !=string::npos ) {
+		//ESS_LOG_INFO( "MR renderer mode" );
+		
+		meshTM = meshTM * Inverse( objectToWorld );
+	}
+	else if( renderer.find( string( "iray" ) ) !=string::npos ) {
+		//ESS_LOG_INFO( "MR renderer mode" );
+		meshTM = meshTM * Inverse( objectToWorld );
+	}
+	else if(( renderer.find( string( "vray" ) ) != string::npos )||
+		( renderer.find( string( "Vray" ) ) != string::npos )||
+		( renderer.find( string( "VRay" ) ) != string::npos ) ) {
+		//ESS_LOG_INFO( "Vray renderer mode" );
+		meshTM = meshTM * Inverse( objectToWorld );
+	} 
+	else {
+		//ESS_LOG_INFO( "Default renderer mode" );
+		meshTM = Inverse( objectToWorld ) * meshTM;
+	}
+ 
+	meshTMValid.SetInstant( t );
+}
+
+void AlembicParticles::GetMultipleRenderMeshTM_Internal(TimeValue  t, INode *inode, View &view, int  meshNumber, Matrix3 &meshTM, Interval &meshTMValid)
+{
 	
     // Calculate the matrix
     Point3 pos = parts.points[meshNumber];
@@ -819,49 +842,15 @@ void AlembicSimpleParticle::GetMultipleRenderMeshTM(TimeValue  t, INode *inode, 
     Point3 scaleVec = m_ParticleScales[meshNumber];
     scaleVec *= parts.radius[meshNumber];
 
-	Matrix3 objectToWorld = inode->GetObjectTM( t );
-
-	if( renderer.find( string( "mental ray Renderer" ) ) !=string::npos ) {
-		//ESS_LOG_INFO( "MR renderer mode" );
-		meshTM.IdentityMatrix();
-		//meshTM.SetRotate(orient);//TODO: the orientation is wrong
-		meshTM.PreScale(scaleVec);
-		meshTM.SetTrans(pos);
-		meshTM = meshTM * Inverse( objectToWorld );
-	}
-	else if( renderer.find( string( "iray" ) ) !=string::npos ) {
-		//ESS_LOG_INFO( "MR renderer mode" );
-		meshTM.IdentityMatrix();
-		//meshTM.SetRotate(orient);//TODO: the orientation is wrong
-		meshTM.PreScale(scaleVec);
-		meshTM.SetTrans(pos);
-		meshTM = meshTM * Inverse( objectToWorld );
-	}
-	else if(( renderer.find( string( "vray" ) ) != string::npos )||
-		( renderer.find( string( "Vray" ) ) != string::npos )||
-		( renderer.find( string( "VRay" ) ) != string::npos ) ) {
-		//ESS_LOG_INFO( "Vray renderer mode" );
-		meshTM.IdentityMatrix();
-		//meshTM.SetRotate(orient);//TODO: the orientation is wrong
-		meshTM.PreScale(scaleVec);
-		meshTM.SetTrans(pos);
-		meshTM = meshTM * Inverse( objectToWorld );
-	} 
-	else {
-		//ESS_LOG_INFO( "Default renderer mode" );
-		meshTM.IdentityMatrix();
-		//meshTM.SetRotate(orient);//TODO: the orientation is wrong
-		meshTM.PreScale(scaleVec);
-		meshTM.SetTrans(pos);
-		meshTM = Inverse( objectToWorld ) * meshTM;
-	}
- 
-	meshTMValid.SetInstant( t );
+	meshTM.IdentityMatrix();
+	//meshTM.SetRotate(orient);//TODO: the orientation is wrong
+	meshTM.PreScale(scaleVec);
+	meshTM.SetTrans(pos);
 }
 
-INode* AlembicSimpleParticle::GetParticleMeshNode(int meshNumber, INode *displayNode)
+INode* AlembicParticles::GetParticleMeshNode(int meshNumber, INode *displayNode)
 {
-	ESS_LOG_INFO( "AlembicSimpleParticle::GetParticleMeshNode( meshNumber: " << meshNumber << " )" );
+	ESS_LOG_INFO( "AlembicParticles::GetParticleMeshNode( meshNumber: " << meshNumber << " )" );
     if (meshNumber > parts.Count() || !parts.Alive(meshNumber))
     {
         return displayNode;
@@ -886,8 +875,8 @@ INode* AlembicSimpleParticle::GetParticleMeshNode(int meshNumber, INode *display
     }
 }
 
-/*
-int AlembicSimpleParticle::Display(TimeValue t, INode* inode, ViewExp *vpt, int flags)
+
+int AlembicParticles::Display(TimeValue t, INode* inode, ViewExp *vpt, int flags)
 {
    if (!OKtoDisplay(t)) 
    {
@@ -923,12 +912,12 @@ int AlembicSimpleParticle::Display(TimeValue t, INode* inode, ViewExp *vpt, int 
       
    // Draw the particles
    NullView nullView;
-   nullView.worldToView = objToWorld;
+   //nullView.worldToView = objToWorld;
    gw->setRndLimits(rlim);
    for (int i = 0; i < NumberOfRenderMeshes(); i += 1)
    {
-       if (m_ParticleViewportMeshes[i].mesh)
-       {
+     //  if (m_ParticleViewportMeshes[i].mesh)
+      // {
            Matrix3 elemToObj;
            elemToObj.IdentityMatrix();
 
@@ -936,7 +925,7 @@ int AlembicSimpleParticle::Display(TimeValue t, INode* inode, ViewExp *vpt, int 
 
 		   BOOL deleteMesh = FALSE;
 		    
-           GetMultipleRenderMeshTM(t, inode, nullView, i, elemToObj, meshTMValid);
+           GetMultipleRenderMeshTM_Internal(t, inode, nullView, i, elemToObj, meshTMValid);
 		   Mesh *mesh = GetMultipleRenderMesh(t, inode, nullView, deleteMesh, i);
 
 		   Matrix3 elemToWorld = elemToObj;// * objToWorld;
@@ -950,18 +939,18 @@ int AlembicSimpleParticle::Display(TimeValue t, INode* inode, ViewExp *vpt, int 
 
            gw->setTransform( elemToWorld );
            mesh->render(gw, mtls, (flags&USE_DAMAGE_RECT) ? &vpt->GetDammageRect() : NULL, COMP_ALL, numMtls);
-       }
+       /*}
        else
        {
            gw->setTransform(Matrix3(1));
            gw->marker(&parts.points[i], POINT_MRKR);  
-       }
+       }*/
    }
    
    return 0;
 }
 
-int AlembicSimpleParticle::HitTest(TimeValue t, INode *inode, int type, int crossing, int flags, IPoint2 *p, ViewExp *vpt)
+int AlembicParticles::HitTest(TimeValue t, INode *inode, int type, int crossing, int flags, IPoint2 *p, ViewExp *vpt)
 {
    BOOL doupdate = ((t!=tvalid)||!valid);
    if (doupdate)
@@ -1007,8 +996,8 @@ int AlembicSimpleParticle::HitTest(TimeValue t, INode *inode, int type, int cros
 
    for (int i = 0; i < NumberOfRenderMeshes(); i += 1)
    {
-       if (m_ParticleViewportMeshes[i].mesh)
-       {
+//       if (m_ParticleViewportMeshes[i].mesh)
+  //     {
            Matrix3 elemToObj;
            elemToObj.IdentityMatrix();
 
@@ -1016,7 +1005,7 @@ int AlembicSimpleParticle::HitTest(TimeValue t, INode *inode, int type, int cros
 
 		   BOOL deleteMesh = FALSE;
 		    
-           GetMultipleRenderMeshTM(t, inode, nullView, i, elemToObj, meshTMValid);
+           GetMultipleRenderMeshTM_Internal(t, inode, nullView, i, elemToObj, meshTMValid);
 		   Mesh *mesh = GetMultipleRenderMesh(t, inode, nullView, deleteMesh, i);
 
            Matrix3 elemToWorld = elemToObj;// * objToWorld;
@@ -1038,12 +1027,12 @@ int AlembicSimpleParticle::HitTest(TimeValue t, INode *inode, int type, int cros
 
            gw->setTransform( elemToWorld );
            mesh->select(gw, mtls, &hr, TRUE, numMtls);
-       }
-       else
-       {
+   //    }
+   //    else
+   //    {
            Point3 pos = parts.points[i];
            gw->marker(&pos, POINT_MRKR);
-       }
+  //     }
        
        if (gw->checkHitCode()) 
        {
@@ -1056,9 +1045,9 @@ int AlembicSimpleParticle::HitTest(TimeValue t, INode *inode, int type, int cros
 
    gw->setRndLimits(savedLimits);
    return res;
-}*/
+}
 
-int AlembicSimpleParticle::callback( INode *node )
+int AlembicParticles::callback( INode *node )
 {
     int enumCode = TREE_CONTINUE;
 
@@ -1078,7 +1067,7 @@ int AlembicSimpleParticle::callback( INode *node )
     return enumCode;
 }
 
-Mesh *AlembicSimpleParticle::BuildPointMesh(int meshNumber, TimeValue t, INode *node, View& view, BOOL &needDelete)
+Mesh *AlembicParticles::BuildPointMesh(int meshNumber, TimeValue t, INode *node, View& view, BOOL &needDelete)
 {
     //Mesh *pMesh = NULL;
     //needDelete = FALSE;
@@ -1086,7 +1075,7 @@ Mesh *AlembicSimpleParticle::BuildPointMesh(int meshNumber, TimeValue t, INode *
 	return BuildSphereMesh(meshNumber, t, node, view, needDelete);
 }
 
-Mesh *AlembicSimpleParticle::BuildBoxMesh(int meshNumber, TimeValue t, INode *node, View& view, BOOL &needDelete)
+Mesh *AlembicParticles::BuildBoxMesh(int meshNumber, TimeValue t, INode *node, View& view, BOOL &needDelete)
 {
     Mesh *pMesh = NULL;
 
@@ -1106,7 +1095,7 @@ Mesh *AlembicSimpleParticle::BuildBoxMesh(int meshNumber, TimeValue t, INode *no
     return pMesh;
 }
 
-Mesh *AlembicSimpleParticle::BuildSphereMesh(int meshNumber, TimeValue t, INode *node, View& view, BOOL &needDelete)
+Mesh *AlembicParticles::BuildSphereMesh(int meshNumber, TimeValue t, INode *node, View& view, BOOL &needDelete)
 {
     Mesh *pMesh = NULL;
     needDelete = FALSE;
@@ -1117,7 +1106,8 @@ Mesh *AlembicSimpleParticle::BuildSphereMesh(int meshNumber, TimeValue t, INode 
             (GET_MAX_INTERFACE()->CreateInstance(GEOMOBJECT_CLASS_ID, Class_ID(SPHERE_CLASS_ID, 0)));
 
         float size = 2;
-        m_pSphereMaker->SetParams(size, 32);
+		int segments = 12;
+        m_pSphereMaker->SetParams(size, segments);
         m_pSphereMaker->BuildMesh(0);
         m_pSphereMaker->UpdateValidity(TOPO_CHAN_NUM, FOREVER);
         m_pSphereMaker->UpdateValidity(GEOM_CHAN_NUM, FOREVER);
@@ -1128,7 +1118,7 @@ Mesh *AlembicSimpleParticle::BuildSphereMesh(int meshNumber, TimeValue t, INode 
     return pMesh;
 }
 
-Mesh *AlembicSimpleParticle::BuildCylinderMesh(int meshNumber, TimeValue t, INode *node, View& view, BOOL &needDelete)
+Mesh *AlembicParticles::BuildCylinderMesh(int meshNumber, TimeValue t, INode *node, View& view, BOOL &needDelete)
 {
     Mesh *pMesh = NULL;
     needDelete = FALSE;
@@ -1154,7 +1144,7 @@ Mesh *AlembicSimpleParticle::BuildCylinderMesh(int meshNumber, TimeValue t, INod
 }
 
 
-Mesh *AlembicSimpleParticle::BuildConeMesh(int meshNumber, TimeValue t, INode *node, View& view, BOOL &needDelete)
+Mesh *AlembicParticles::BuildConeMesh(int meshNumber, TimeValue t, INode *node, View& view, BOOL &needDelete)
 {
     Mesh *pMesh = NULL;
     needDelete = FALSE;
@@ -1196,7 +1186,7 @@ Mesh *AlembicSimpleParticle::BuildConeMesh(int meshNumber, TimeValue t, INode *n
    return pMesh;
 }
 
-Mesh *AlembicSimpleParticle::BuildDiscMesh(int meshNumber, TimeValue t, INode *node, View& view, BOOL &needDelete)
+Mesh *AlembicParticles::BuildDiscMesh(int meshNumber, TimeValue t, INode *node, View& view, BOOL &needDelete)
 {
     Mesh *pMesh = NULL;
     needDelete = FALSE;
@@ -1221,7 +1211,7 @@ Mesh *AlembicSimpleParticle::BuildDiscMesh(int meshNumber, TimeValue t, INode *n
    return pMesh;
 }
  
-Mesh *AlembicSimpleParticle::BuildRectangleMesh(int meshNumber, TimeValue t, INode *node, View& view, BOOL &needDelete)
+Mesh *AlembicParticles::BuildRectangleMesh(int meshNumber, TimeValue t, INode *node, View& view, BOOL &needDelete)
 {
     Mesh *pMesh = NULL;
     needDelete = FALSE;
@@ -1252,7 +1242,7 @@ Mesh *AlembicSimpleParticle::BuildRectangleMesh(int meshNumber, TimeValue t, INo
     return pMesh;
 }
 
-Mesh *AlembicSimpleParticle::BuildInstanceMesh(int meshNumber, TimeValue t, INode *node, View& view, BOOL &needDelete)
+Mesh *AlembicParticles::BuildInstanceMesh(int meshNumber, TimeValue t, INode *node, View& view, BOOL &needDelete)
 {
    needDelete = FALSE;
 
@@ -1298,14 +1288,14 @@ Mesh *AlembicSimpleParticle::BuildInstanceMesh(int meshNumber, TimeValue t, INod
    return pMesh;
 }
 
-Mesh *AlembicSimpleParticle::BuildNbElementsMesh(int meshNumber, TimeValue t, INode *node, View& view, BOOL &needDelete)
+Mesh *AlembicParticles::BuildNbElementsMesh(int meshNumber, TimeValue t, INode *node, View& view, BOOL &needDelete)
 {
     Mesh *pMesh = NULL;
     needDelete = FALSE;
     return pMesh;
 }
 
-RefResult AlembicSimpleParticle::NotifyRefChanged(
+RefResult AlembicParticles::NotifyRefChanged(
     Interval iv, 
     RefTargetHandle hTarg, 
     PartID& partID, 
@@ -1324,7 +1314,7 @@ RefResult AlembicSimpleParticle::NotifyRefChanged(
                         delRefArchive(m_CachedAbcFile);
                         MCHAR const* strPath = NULL;
                         TimeValue t = GetCOREInterface()->GetTime();
-                        pblock2->GetValue( AlembicSimpleParticle::ID_PATH, t, strPath, iv);
+                        pblock2->GetValue( AlembicParticles::ID_PATH, t, strPath, iv);
                         m_CachedAbcFile = strPath;
                         addRefArchive(m_CachedAbcFile);
                     }
@@ -1333,7 +1323,7 @@ RefResult AlembicSimpleParticle::NotifyRefChanged(
                     break;
                 }
 
-                AlembicSimpleParticleParams.InvalidateUI(changing_param);
+                AlembicParticlesParams.InvalidateUI(changing_param);
             }
             break;
 
@@ -1345,25 +1335,25 @@ RefResult AlembicSimpleParticle::NotifyRefChanged(
     return REF_SUCCEED;
 }
 
-void AlembicSimpleParticle::BeginEditParams(IObjParam *ip,ULONG flags,Animatable *prev)
+void AlembicParticles::BeginEditParams(IObjParam *ip,ULONG flags,Animatable *prev)
 {
 	this->ip = ip;
     s_EditObject  = this;
 
     SimpleParticle::BeginEditParams(ip, flags, prev);
-	s_AlembicSimpleParticleClassDesc.BeginEditParams(ip, this, flags, prev);
+	s_AlembicParticlesClassDesc.BeginEditParams(ip, this, flags, prev);
 }
 
-void AlembicSimpleParticle::EndEditParams( IObjParam *ip, ULONG flags, Animatable *next )
+void AlembicParticles::EndEditParams( IObjParam *ip, ULONG flags, Animatable *next )
 {
     SimpleParticle::EndEditParams(ip, flags, next);
-	s_AlembicSimpleParticleClassDesc.EndEditParams(ip, this, flags, next);
+	s_AlembicParticlesClassDesc.EndEditParams(ip, this, flags, next);
 
 	this->ip = NULL;
     s_EditObject  = NULL;
 }
 
-void AlembicSimpleParticle::SetReference(int i, ReferenceTarget* pTarget)
+void AlembicParticles::SetReference(int i, ReferenceTarget* pTarget)
 { 
     switch(i) 
     { 
@@ -1374,7 +1364,7 @@ void AlembicSimpleParticle::SetReference(int i, ReferenceTarget* pTarget)
     }
 }
 
-RefTargetHandle AlembicSimpleParticle::GetReference(int i)
+RefTargetHandle AlembicParticles::GetReference(int i)
 { 
     switch(i)
     {
@@ -1385,9 +1375,9 @@ RefTargetHandle AlembicSimpleParticle::GetReference(int i)
     }
 }
 
-RefTargetHandle AlembicSimpleParticle::Clone(RemapDir& remap) 
+RefTargetHandle AlembicParticles::Clone(RemapDir& remap) 
 {
-	AlembicSimpleParticle *particle = new AlembicSimpleParticle();
+	AlembicParticles *particle = new AlembicParticles();
     particle->ReplaceReference (ALEMBIC_SIMPLE_PARTICLE_REF_PBLOCK2, remap.CloneRef(pblock2));
    	
     BaseClone(this, particle, remap);
@@ -1395,8 +1385,7 @@ RefTargetHandle AlembicSimpleParticle::Clone(RemapDir& remap)
 }
 
 
-/*
-BOOL AlembicSimpleParticle::OKtoDisplay( TimeValue t)
+BOOL AlembicParticles::OKtoDisplay( TimeValue t)
 {
     if (parts.Count() == 0)
         return FALSE;
@@ -1407,10 +1396,10 @@ BOOL AlembicSimpleParticle::OKtoDisplay( TimeValue t)
     Interval interval = FOREVER;
 
 	BOOL bMuted;
-	this->pblock2->GetValue( AlembicSimpleParticle::ID_MUTED, t, bMuted, interval);
+	this->pblock2->GetValue( AlembicParticles::ID_MUTED, t, bMuted, interval);
 
     return !bMuted;
-}*/
+}
 
 bool isAlembicPoints( Alembic::AbcGeom::IObject *pIObj, bool& isConstant ) 
 {
@@ -1439,7 +1428,7 @@ int AlembicImport_Points(const std::string &file, Alembic::AbcGeom::IObject& iOb
 	}
 
 	// Create the particle emitter object and place it in the scene
-    AlembicSimpleParticle *pParticleObj = static_cast<AlembicSimpleParticle*>
+    AlembicParticles *pParticleObj = static_cast<AlembicParticles*>
 		(GetCOREInterface()->CreateInstance(GEOMOBJECT_CLASS_ID, ALEMBIC_SIMPLE_PARTICLE_CLASSID));
    
     if (pParticleObj == NULL)
