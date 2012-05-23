@@ -8,20 +8,20 @@ typedef std::map<int, std::vector<Alembic::AbcCoreAbstract::ALEMBIC_VERSION_NS::
 typedef std::pair<int, std::vector<Alembic::AbcCoreAbstract::ALEMBIC_VERSION_NS::int32_t> > facesetmap_insert_pair;
 typedef std::pair<facesetmap_it, bool> facesetmap_ret_pair;
 
-class VNormal
-{   
-public:     
-    Point3 norm;     
-    DWORD smooth;     
-    VNormal *next;     
-    BOOL init;      
-    VNormal() {smooth=0;next=NULL;init=FALSE;norm=Point3(0,0,0);}     
-    VNormal(Point3 &n,DWORD s) {next=NULL;init=TRUE;norm=n;smooth=s;}     
-    ~VNormal() {smooth=0;next=NULL;init=FALSE;norm=Point3(0,0,0);}     
-    void AddNormal(Point3 &n,DWORD s);     
-    Point3 &GetNormal(DWORD s);     
-    void Normalize();
-};
+//class VNormal
+//{   
+//public:     
+//    Point3 norm;     
+//    DWORD smooth;     
+//    VNormal *next;     
+//    BOOL init;      
+//    VNormal() {smooth=0;next=NULL;init=FALSE;norm=Point3(0,0,0);}     
+//    VNormal(Point3 &n,DWORD s) {next=NULL;init=TRUE;norm=n;smooth=s;}     
+//    ~VNormal() {smooth=0;next=NULL;init=FALSE;norm=Point3(0,0,0);}     
+//    void AddNormal(Point3 &n,DWORD s);     
+//    Point3 &GetNormal(DWORD s);     
+//    void Normalize();
+//};
 
 class AlembicPolyMesh: public AlembicObject
 {
@@ -41,17 +41,17 @@ private:
    Alembic::Abc::ALEMBIC_VERSION_NS::OV3fArrayProperty mVelocityProperty;
    Alembic::Abc::ALEMBIC_VERSION_NS::OUInt32ArrayProperty mMatIdProperty;
    std::vector<float> mRadiusVec;
-   std::vector<VNormal> m_MeshSmoothGroupNormals;
+   //std::vector<VNormal> m_MeshSmoothGroupNormals;
    facesetmap mFaceSetsMap;
-private:
-    void BuildMeshSmoothingGroupNormals(Mesh &mesh);
-    void BuildMeshSmoothingGroupNormals(MNMesh &mesh);
-    void ClearMeshSmoothingGroupNormals();
-public:
-    static Point3 GetVertexNormal(Mesh* mesh, int faceNo, int faceVertNo, std::vector<VNormal> &sgVertexNormals);
-    static Point3 GetVertexNormal(MNMesh *mesh, int faceNo, int faceVertNo, std::vector<VNormal> &sgVertexNormals);
-    static void make_face_uv(Face *f, Point3 *tv);
-    static BOOL CheckForFaceMap(Mtl* mtl, Mesh* mesh);
+//private:
+//    void BuildMeshSmoothingGroupNormals(Mesh &mesh);
+//    void BuildMeshSmoothingGroupNormals(MNMesh &mesh);
+//    void ClearMeshSmoothingGroupNormals();
+//public:
+//    static Point3 GetVertexNormal(Mesh* mesh, int faceNo, int faceVertNo, std::vector<VNormal> &sgVertexNormals);
+//    static Point3 GetVertexNormal(MNMesh *mesh, int faceNo, int faceVertNo, std::vector<VNormal> &sgVertexNormals);
+//    static void make_face_uv(Face *f, Point3 *tv);
+//    static BOOL CheckForFaceMap(Mtl* mtl, Mesh* mesh);
 public:
 
    AlembicPolyMesh(const SceneEntry &in_Ref, AlembicWriteJob *in_Job);
@@ -61,6 +61,7 @@ public:
    virtual bool Save(double time);
 };
 
+/*
 class SortableV3f : public Alembic::Abc::V3f
 {
 public:  
@@ -132,6 +133,6 @@ public:
          return false;
       return other.y == y;
    }
-};
+};*/
 
 #endif
