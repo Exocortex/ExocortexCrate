@@ -224,7 +224,7 @@ void IntermediatePolyMesh3DSMax::Save(AlembicWriteJob* writeJob, TimeValue ticks
                                        : triMesh->getNumFaces();
 
 	// create an index lookup table
-    LONG sampleCount = 0;
+    sampleCount = 0;
     for(int f = 0; f < faceCount; f += 1)
     {
         int degree = (polyMesh != NULL) ? polyMesh->F(f)->deg : 3;
@@ -232,10 +232,11 @@ void IntermediatePolyMesh3DSMax::Save(AlembicWriteJob* writeJob, TimeValue ticks
 	}
 
     // let's check if we have user normals
-    normalCount = 0;
-    normalIndexCount = 0;
     if((bool)writeJob->GetOption("exportNormals"))
     {
+		size_t normalCount = 0;
+		size_t normalIndexCount = 0;
+
         if (polyMesh != NULL)
         {
             polyMesh->buildNormals();
@@ -247,7 +248,7 @@ void IntermediatePolyMesh3DSMax::Save(AlembicWriteJob* writeJob, TimeValue ticks
             BuildMeshSmoothingGroupNormals(*triMesh);
         }
 
-        normalVec.resize(sampleCount);
+        normalVec.reserve(sampleCount);
 
         // Face and vertex normals.
         // In MAX a vertex can have more than one normal (but doesn't always have it).
@@ -282,7 +283,7 @@ void IntermediatePolyMesh3DSMax::Save(AlembicWriteJob* writeJob, TimeValue ticks
                     }
                 }
 
-                normalVec[normalCount] = ConvertMaxNormalToAlembicNormal(vertexNormal );
+				normalVec.push_back(ConvertMaxNormalToAlembicNormal(vertexNormal));
                 normalCount += 1;
             }
         }
@@ -296,20 +297,23 @@ void IntermediatePolyMesh3DSMax::Save(AlembicWriteJob* writeJob, TimeValue ticks
             std::map<SortableV3f,size_t>::const_iterator it;
             size_t sortedNormalCount = 0;
             std::vector<Alembic::Abc::V3f> sortedNormalVec;
-            normalIndexVec.resize(normalVec.size());
-            sortedNormalVec.resize(normalVec.size());
+            normalIndexVec.reserve(normalVec.size());
+            sortedNormalVec.reserve(normalVec.size());
 
             // loop over all normals
             for(size_t i=0;i<normalVec.size();i++)
             {
                 it = normalMap.find(normalVec[i]);
-                if(it != normalMap.end())
-                    normalIndexVec[normalIndexCount++] = (uint32_t)it->second;
-                else
-                {
-                    normalIndexVec[normalIndexCount++] = (uint32_t)sortedNormalCount;
+				if(it != normalMap.end()){//the normal was found in the map, so store the index to normal
+                    normalIndexVec.push_back((uint32_t)it->second);
+					normalIndexCount++;
+				}
+                else {
+                    normalIndexVec.push_back((uint32_t)sortedNormalCount);
+					normalIndexCount++;
                     normalMap.insert(std::pair<Alembic::Abc::V3f,size_t>(normalVec[i],(uint32_t)sortedNormalCount));
-                    sortedNormalVec[sortedNormalCount++] = normalVec[i];
+                    sortedNormalVec.push_back(normalVec[i]);
+					sortedNormalCount++;
                 }
             }
 
@@ -319,14 +323,14 @@ void IntermediatePolyMesh3DSMax::Save(AlembicWriteJob* writeJob, TimeValue ticks
                 sizeof(Alembic::Abc::V3f) * normalVec.size())
             {
                 normalVec = sortedNormalVec;
-                normalCount = sortedNormalCount;
+                //normalCount = sortedNormalCount;
             }
             else
             {
-                normalIndexCount = 0;
+                //normalIndexCount = 0;
                 normalIndexVec.clear();
             }
-            sortedNormalCount = 0;
+            //sortedNormalCount = 0;
             sortedNormalVec.clear();
         }
 
@@ -466,20 +470,24 @@ void IntermediatePolyMesh3DSMax::Save(AlembicWriteJob* writeJob, TimeValue ticks
                   std::map<SortableV2f,size_t>::const_iterator it;
                   size_t sortedUVCount = 0;
                   std::vector<Alembic::Abc::V2f> sortedUVVec;
-                  mUvIndexVec.resize(mUvVec.size());
-                  sortedUVVec.resize(mUvVec.size());
+                  mUvIndexVec.reserve(mUvVec.size());
+                  sortedUVVec.reserve(mUvVec.size());
 
                   // loop over all uvs
-                  for(size_t i=0;i<mUvVec.size();i++)
+                  for(size_t i=0; i<mUvVec.size(); i++)
                   {
                       it = uvMap.find(mUvVec[i]);
-                      if(it != uvMap.end())
-                          mUvIndexVec[uvIndexCount++] = (uint32_t)it->second;
+                      if(it != uvMap.end()){
+                          mUvIndexVec.push_back((uint32_t)it->second);
+						  uvIndexCount++;
+					  }
                       else
-                      {
-                          mUvIndexVec[uvIndexCount++] = (uint32_t)sortedUVCount;
+					  {
+                          mUvIndexVec.push_back((uint32_t)sortedUVCount);
+						  uvIndexCount++;
                           uvMap.insert(std::pair<Alembic::Abc::V2f,size_t>(mUvVec[i],(uint32_t)sortedUVCount));
-                          sortedUVVec[sortedUVCount++] = mUvVec[i];
+                          sortedUVVec.push_back(mUvVec[i]);
+						  sortedUVCount++;
                       }
                   }
 
@@ -489,14 +497,14 @@ void IntermediatePolyMesh3DSMax::Save(AlembicWriteJob* writeJob, TimeValue ticks
                       sizeof(Alembic::Abc::V2f) * mUvVec.size())
                   {
                       mUvVec = sortedUVVec;
-                      uvCount = sortedUVCount;
+                      //uvCount = sortedUVCount;
                   }
                   else
                   {
-                      uvIndexCount = 0;
+                      //uvIndexCount = 0;
                       mUvIndexVec.clear();
                   }
-                  sortedUVCount = 0;
+                  //sortedUVCount = 0;
                   sortedUVVec.clear();
               }
 

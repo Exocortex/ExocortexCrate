@@ -44,8 +44,7 @@ public:
 
 	void Save(AlembicWriteJob* writeJob, TimeValue ticks, Mesh *triMesh, MNMesh* polyMesh, Matrix3& wm, Mtl* pMtl, const int nNumSamplesWritten);
 
-	size_t normalCount;
-    size_t normalIndexCount;
+	LONG sampleCount;
 };
 
 

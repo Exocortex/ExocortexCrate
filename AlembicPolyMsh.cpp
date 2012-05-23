@@ -144,16 +144,13 @@ bool AlembicPolyMesh::Save(double time)
 	IntermediatePolyMesh3DSMax currPolyMesh;
 	currPolyMesh.Save(mJob, ticks, triMesh, polyMesh, GetRef().node->GetObjTMAfterWSM(ticks), GetRef().node->GetMtl(), mNumSamples);
 
-	{
-		// Extend the archive bounding box
-		if (mJob){
-			//Point3 worldMaxPoint = wm * maxPoint;
-			//Imath::V3f alembicWorldPoint = ConvertMaxPointToAlembicPoint(worldMaxPoint);
-			
-			mJob->GetArchiveBBox().extendBy(currPolyMesh.bbox);
-		}
-	    
+	// Extend the archive bounding box
 
+	if (mJob){
+		mJob->GetArchiveBBox().extendBy(currPolyMesh.bbox);
+	}
+
+	{
 		// allocate the sample for the points
 		if(currPolyMesh.posVec.size() == 0)
 		{
@@ -199,11 +196,11 @@ bool AlembicPolyMesh::Save(double time)
 	  //write out the normal data
       Alembic::AbcGeom::ON3fGeomParam::Sample normalSample;
 	  normalSample.setScope(Alembic::AbcGeom::kFacevaryingScope);
-      if(currPolyMesh.normalVec.size() > 0 && currPolyMesh.normalCount > 0)
+      if(currPolyMesh.normalVec.size() > 0)
       {
-         normalSample.setVals(Alembic::Abc::N3fArraySample(&currPolyMesh.normalVec.front(), currPolyMesh.normalCount));//MH: not sure why use a size other than the vec size
-		 if(currPolyMesh.normalIndexCount > 0){
-            normalSample.setIndices(Alembic::Abc::UInt32ArraySample(&currPolyMesh.normalIndexVec.front(), currPolyMesh.normalIndexCount));
+         normalSample.setVals(Alembic::Abc::N3fArraySample(&currPolyMesh.normalVec.front(), currPolyMesh.normalVec.size()));
+		 if(currPolyMesh.normalIndexVec.size() > 0){
+            normalSample.setIndices(Alembic::Abc::UInt32ArraySample(&currPolyMesh.normalIndexVec.front(), currPolyMesh.normalIndexVec.size()));
 		 }
       }
       else if (mNumSamples == 0 && dynamicTopology)
@@ -212,23 +209,21 @@ bool AlembicPolyMesh::Save(double time)
          // your parameter to be defined at sample zero if you plan to use it even later on, so we create a dummy normal parameter here if the case
          // requires it
          currPolyMesh.normalVec.push_back(Imath::V3f(0,0,0));
-         currPolyMesh.normalCount = 0;
          currPolyMesh.normalIndexVec.push_back(0);
-         currPolyMesh.normalIndexCount = 0;
-         normalSample.setVals(Alembic::Abc::N3fArraySample(&currPolyMesh.normalVec.front(),currPolyMesh.normalCount));//MH: not sure why use a size other than the vec size
-         normalSample.setIndices(Alembic::Abc::UInt32ArraySample(&currPolyMesh.normalIndexVec.front(),currPolyMesh.normalIndexCount));
+         normalSample.setVals(Alembic::Abc::N3fArraySample(&currPolyMesh.normalVec.front(), 0));
+         normalSample.setIndices(Alembic::Abc::UInt32ArraySample(&currPolyMesh.normalIndexVec.front(), 0));
       }
 	  mMeshSample.setNormals(normalSample);
    }
    else
    {
       Alembic::AbcGeom::ON3fGeomParam::Sample normalSample;
-      if(currPolyMesh.normalVec.size() > 0 && currPolyMesh.normalCount > 0)
+      if(currPolyMesh.normalVec.size() > 0)
       {
          normalSample.setScope(Alembic::AbcGeom::kFacevaryingScope);
-         normalSample.setVals(Alembic::Abc::N3fArraySample(&currPolyMesh.normalVec.front(), currPolyMesh.normalCount));
-		 if(currPolyMesh.normalIndexCount > 0){
-            normalSample.setIndices(Alembic::Abc::UInt32ArraySample(&currPolyMesh.normalIndexVec.front(), currPolyMesh.normalIndexCount));
+         normalSample.setVals(Alembic::Abc::N3fArraySample(&currPolyMesh.normalVec.front(), currPolyMesh.normalVec.size()));
+		 if(currPolyMesh.normalIndexVec.size() > 0){
+            normalSample.setIndices(Alembic::Abc::UInt32ArraySample(&currPolyMesh.normalIndexVec.front(), currPolyMesh.normalIndexVec.size()));
 		 }
          mMeshSample.setNormals(normalSample);
       }
@@ -239,7 +234,7 @@ bool AlembicPolyMesh::Save(double time)
    if(bIsFirstFrame || (dynamicTopology))
    {
       // we also need to store the face counts as well as face indices
-      //if(mFaceIndicesVec.size() != sampleCount || sampleCount == 0) //TODO: is this condition important?
+      //if(mFaceIndicesVec.size() != sampleCount || sampleCount == 0) //TODO: is this condition important? I get the impression it is useless from the original code
       {
          if(currPolyMesh.mFaceIndicesVec.size() == 0)
          {
@@ -254,142 +249,39 @@ bool AlembicPolyMesh::Save(double time)
       }
    }
 
+	//write out the texture coordinates if necessary
+	if((bool)GetCurrentJob()->GetOption("exportUVs") && (bIsFirstFrame || dynamicTopology))
+	{
+		if (currPolyMesh.mUvVec.size() == currPolyMesh.sampleCount)
+		{
+			if (currPolyMesh.mUvVec.size() > 0)
+			{
+				Alembic::AbcGeom::OV2fGeomParam::Sample uvSample(
+					Alembic::Abc::V2fArraySample(&currPolyMesh.mUvVec.front(),currPolyMesh.mUvVec.size()),
+					Alembic::AbcGeom::kFacevaryingScope);
+
+				if(mUvIndexVec.size() > 0){
+				  uvSample.setIndices(Alembic::Abc::UInt32ArraySample(&currPolyMesh.mUvIndexVec.front(),currPolyMesh.mUvIndexVec.size()));
+				}
+				mMeshSample.setUVs(uvSample);
+			}
+			else if (mNumSamples == 0 && dynamicTopology)
+			{
+				// If we are exporting dynamic topology, then we may have uvs that show up later in our scene.  The problem is that Alembic wants
+				// your parameter to be defined at sample zero if you plan to use it even later on, so we create a dummy uv parameter here if the case
+				// requires it
+				currPolyMesh.mUvVec.push_back(Imath::V2f(0,0));
+				currPolyMesh.mUvIndexVec.push_back(0);
+				Alembic::AbcGeom::OV2fGeomParam::Sample uvSample(Alembic::Abc::V2fArraySample(&mUvVec.front(), 0), Alembic::AbcGeom::kFacevaryingScope);
+				uvSample.setIndices(Alembic::Abc::UInt32ArraySample(&mUvIndexVec.front(), 0) );
+				mMeshSample.setUVs(uvSample);
+			}
+		}
+	}
+
 #if 0
    if(bIsFirstFrame || (dynamicTopology))
    {
-      // also check if we need to store UV
-      if((bool)GetCurrentJob()->GetOption("exportUVs"))
-      {
-          mUvVec.reserve(sampleCount);
-
-          if (polyMesh != NULL)
-          {
-              MNMap *map = polyMesh->M(1);
-
-              for (int i=0; i<faceCount; i++) 
-              {
-                  int degree = polyMesh->F(i)->deg;
-                  for (int j = degree-1; j >= 0; j -= 1)
-                  {
-                      if (map != NULL && map->FNum() > i && map->F(i)->deg > j)
-                      {
-                          int vertIndex = map->F(i)->tv[j];
-                          UVVert texCoord = map->V(vertIndex);
-                          Alembic::Abc::V2f alembicUV(texCoord.x, texCoord.y);
-                          mUvVec.push_back(alembicUV);
-                      }
-                      else
-                      {
-                          Alembic::Abc::V2f alembicUV(0.0f, 0.0f);
-                          mUvVec.push_back(alembicUV);
-                      }
-                  }
-              }
-          }
-          else if (triMesh != NULL)
-          {
-              if (CheckForFaceMap(GetRef().node->GetMtl(), triMesh)) 
-              {
-                  for (int i=0; i<faceCount; i++) 
-                  {
-                      Point3 tv[3];
-                      Face* f = &triMesh->faces[i];
-                      make_face_uv(f, tv);
-
-                      for (int j=2; j>=0; j-=1)
-                      {
-                          Alembic::Abc::V2f alembicUV(tv[j].x, tv[j].y);
-                          mUvVec.push_back(alembicUV);
-                      }
-                  }
-              }
-              else if (triMesh->mapSupport(1))
-              {
-                  MeshMap &map = triMesh->Map(1);
-
-                  for (int findex =0; findex < map.fnum; findex += 1)
-                  {
-                      TVFace &texFace = map.tf[findex];
-                      for (int vindex = 2; vindex >= 0; vindex -= 1)
-                      {
-                          int vertexid = texFace.t[vindex];
-                          UVVert uvVert = map.tv[vertexid];
-                          Alembic::Abc::V2f alembicUV(uvVert.x, uvVert.y);
-                          mUvVec.push_back(alembicUV);
-                      }
-                  }
-              }
-          }
-
-          if (mUvVec.size() == sampleCount)
-          {
-              // now let's sort the uvs 
-              size_t uvCount = mUvVec.size();
-              size_t uvIndexCount = 0;
-              if((bool)GetCurrentJob()->GetOption("indexedUVs")) 
-              {
-                  std::map<SortableV2f,size_t> uvMap;
-                  std::map<SortableV2f,size_t>::const_iterator it;
-                  size_t sortedUVCount = 0;
-                  std::vector<Alembic::Abc::V2f> sortedUVVec;
-                  mUvIndexVec.resize(mUvVec.size());
-                  sortedUVVec.resize(mUvVec.size());
-
-                  // loop over all uvs
-                  for(size_t i=0;i<mUvVec.size();i++)
-                  {
-                      it = uvMap.find(mUvVec[i]);
-                      if(it != uvMap.end())
-                          mUvIndexVec[uvIndexCount++] = (uint32_t)it->second;
-                      else
-                      {
-                          mUvIndexVec[uvIndexCount++] = (uint32_t)sortedUVCount;
-                          uvMap.insert(std::pair<Alembic::Abc::V2f,size_t>(mUvVec[i],(uint32_t)sortedUVCount));
-                          sortedUVVec[sortedUVCount++] = mUvVec[i];
-                      }
-                  }
-
-                  // use indexed uvs if they use less space
-                  if(sortedUVCount * sizeof(Alembic::Abc::V2f) + 
-                      uvIndexCount * sizeof(uint32_t) < 
-                      sizeof(Alembic::Abc::V2f) * mUvVec.size())
-                  {
-                      mUvVec = sortedUVVec;
-                      uvCount = sortedUVCount;
-                  }
-                  else
-                  {
-                      uvIndexCount = 0;
-                      mUvIndexVec.clear();
-                  }
-                  sortedUVCount = 0;
-                  sortedUVVec.clear();
-              }
-
-              if (mUvVec.size() > 0 && uvCount > 0)
-              {
-                  Alembic::AbcGeom::OV2fGeomParam::Sample uvSample(Alembic::Abc::V2fArraySample(&mUvVec.front(),uvCount),Alembic::AbcGeom::kFacevaryingScope);
-
-                  if(mUvIndexVec.size() > 0 && uvIndexCount > 0)
-                      uvSample.setIndices(Alembic::Abc::UInt32ArraySample(&mUvIndexVec.front(),uvIndexCount));
-                  mMeshSample.setUVs(uvSample);
-              }
-              else if (mNumSamples == 0 && dynamicTopology)
-              {
-                  // If we are exporting dynamic topology, then we may have uvs that show up later in our scene.  The problem is that Alembic wants
-                  // your parameter to be defined at sample zero if you plan to use it even later on, so we create a dummy uv parameter here if the case
-                  // requires it
-                  mUvVec.push_back(Imath::V2f(0,0));
-                  uvCount = 0;
-                  mUvIndexVec.push_back(0);
-                  uvIndexCount = 0;
-                  Alembic::AbcGeom::OV2fGeomParam::Sample uvSample(Alembic::Abc::V2fArraySample(&mUvVec.front(),uvCount),Alembic::AbcGeom::kFacevaryingScope);
-                  uvSample.setIndices(Alembic::Abc::UInt32ArraySample(&mUvIndexVec.front(),uvIndexCount));
-                  mMeshSample.setUVs(uvSample);
-              }
-          }
-      }
-
       // sweet, now let's have a look at face sets (really only for first sample)
       // for 3DS Max, we are mapping this to the material ids
       std::vector<boost::int32_t> zeroFaceVector;
@@ -473,9 +365,6 @@ bool AlembicPolyMesh::Save(double time)
           }
       }
 
-      // save the sample
-      mMeshSchema.set(mMeshSample);
-
       // check if we need to export the bindpose (also only for first frame)
 	  /*
       if(GetJob()->GetOption(L"exportBindPose") && prim.GetParent3DObject().GetEnvelopes().GetCount() > 0 && mNumSamples == 0)
@@ -529,6 +418,10 @@ bool AlembicPolyMesh::Save(double time)
       }
    }
    */
+
+
+   // save the sample
+   mMeshSchema.set(mMeshSample);
 
    mNumSamples++;
 

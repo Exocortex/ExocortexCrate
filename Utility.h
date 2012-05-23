@@ -2,7 +2,7 @@
 #define _UTILITY_H_
 
 #include "Foundation.h"
-#include "AlembicPolyMsh.h"
+#include "AlembicIntermediatePolyMesh3DSMax.h"
 #include "AlembicLicensing.h"
 
 const double ALEMBIC_3DSMAX_TICK_VALUE = 4800;

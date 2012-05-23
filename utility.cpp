@@ -2,7 +2,7 @@
 #include "AlembicMax.h"
 #include "Utility.h"
 #include "SceneEnumProc.h"
-#include "AlembicPolyMsh.h"
+#include "AlembicIntermediatePolyMesh3DSMax.h"
 
 SampleInfo getSampleInfo
 (
@@ -152,7 +152,7 @@ void AlembicDebug_PrintMeshData( Mesh &mesh, std::vector<VNormal> &sgVertexNorma
         {
             int vertexId = f->getVert(j);
             Point3 vertexPos = mesh.getVert(vertexId);
-            Point3 vertexNormal = AlembicPolyMesh::GetVertexNormal(&mesh, i, vertexId, sgVertexNormals);
+			Point3 vertexNormal = IntermediatePolyMesh3DSMax::GetVertexNormal(&mesh, i, vertexId, sgVertexNormals);
             int matId = f->getMatID();
 			ESS_LOG_INFO("Vertex " << vertexId <<
 				", Position (" << vertexPos.x << ", " << vertexPos.y << ", " << vertexPos.z <<
