@@ -232,7 +232,7 @@ void IntermediatePolyMesh3DSMax::Save(AlembicWriteJob* writeJob, TimeValue ticks
 	}
 
     // let's check if we have user normals
-    if((bool)writeJob->GetOption("exportNormals"))
+    if((bool)writeJob->GetOption("exportNormals") && (bFirstFrame || dynamicTopology))
     {
 		size_t normalCount = 0;
 		size_t normalIndexCount = 0;
