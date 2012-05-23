@@ -5,6 +5,8 @@
 #include <map>
 #include <boost/thread/mutex.hpp>
 
+#include <syslog.h>
+
 struct instanceGroupInfo{
    std::vector<std::string> identifiers;
    std::vector<std::map<float,AtNode*> > nodes;
@@ -362,14 +364,16 @@ static int Init(AtNode *mynode, void **user_ptr)
    }
 
    // open the archive
+   ESS_LOG_INFO(paths[0].c_str());
    Alembic::Abc::IArchive archive(Alembic::AbcCoreHDF5::ReadArchive(), paths[0]);
    	if(!archive.getTop().valid()) {
-		 AiMsgError("[ExocortexAlembicArnold] Not a valid Alembic data stream.  Path: %s", paths[0] );
+		 AiMsgError("[ExocortexAlembicArnold] Not a valid Alembic data stream.  Path: %s", paths[0].c_str() );
 		return NULL;
 	}
+   ESS_LOG_INFO(paths[1].c_str());
    Alembic::Abc::IArchive instancesArchive(Alembic::AbcCoreHDF5::ReadArchive(), paths[1]);
    	if(!instancesArchive.getTop().valid()) {
-		 AiMsgError("[ExocortexAlembicArnold] Not a valid Alembic data stream.  Path: %s", paths[1] );
+		 AiMsgError("[ExocortexAlembicArnold] Not a valid Alembic data stream.  Path: %s", paths[1].c_str() );
 		return NULL;
 	}
 
@@ -1004,7 +1008,7 @@ static AtNode *GetNode(void *user_ptr, int i)
       std::map<float,AtNode*>::iterator it = group->nodes[groupID].find(centroidTime);
       if(it == group->nodes[groupID].end())
       {
-         AiMsgError("[ExocortexAlembicArnold] Cannot find masterNode '%s' for centroidTime '%f'. Aborting.",group->identifiers[groupID],centroidTime);
+         AiMsgError("[ExocortexAlembicArnold] Cannot find masterNode '%s' for centroidTime '%f'. Aborting.",group->identifiers[groupID].c_str(),centroidTime);
          return NULL;
       }
       AtNode * usedMasterNode = it->second;
@@ -1187,10 +1191,13 @@ static AtNode *GetNode(void *user_ptr, int i)
 	}
 
    const Alembic::Abc::MetaData &md = object.getMetaData();
-   if(Alembic::AbcGeom::IPolyMesh::matches(md)) {
+   if(Alembic::AbcGeom::IPolyMesh::matches(md))
+   {
+           ESS_LOG_INFO(object.getFullName().c_str());
 
 	   ESS_LOG_INFO( "ExocortexAlembicArnoldDSO: GetNode: IPolyMesh" );
 		
+
       // cast to polymesh and ensure we have got the 
       // normals parameter!
       Alembic::AbcGeom::IPolyMesh typedObject(object,Alembic::Abc::kWrapExisting);
@@ -1201,6 +1208,7 @@ static AtNode *GetNode(void *user_ptr, int i)
          AiMsgError("[ExocortexAlembicArnold] Mesh '%s' does not contain normals. Aborting.",object.getFullName().c_str());
          return NULL;
       }
+     // super_debug_var = 0;
 
       // create the arnold node
       if(shifted)
