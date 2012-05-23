@@ -2,7 +2,13 @@
 #define _ALEMBIC_POINTSUTILS_H_
 
 #include "AlembicMax.h"
+#include <vector>
 
-Mesh* getParticleSystemRenderMesh(TimeValue ticks, Object* obj, INode* node, BOOL& bNeedDelete);
+struct particleMeshData{
+	BOOL bNeedDelete;
+	Mesh* pMesh;
+};
+
+void getParticleSystemRenderMeshes(TimeValue ticks, Object* obj, INode* node, std::vector<particleMeshData>& meshes);
 
 #endif

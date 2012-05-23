@@ -49,23 +49,17 @@ void getParticleGroups(TimeValue ticks, Object* obj, INode* node, std::vector<IP
 }
 
 
-Mesh* getParticleSystemRenderMesh(TimeValue ticks, Object* obj, INode* node, BOOL& bNeedDelete)
+void getParticleSystemRenderMeshes(TimeValue ticks, Object* obj, INode* node, std::vector<particleMeshData>& meshes)
 {
-	Mesh* pMesh = NULL;
-
 	IPFActionList* particleActionList = GetPFActionListInterface(obj);
 	if(!particleActionList){
-		return pMesh;
+		return;
 	}
 
 	std::vector<IParticleGroup*> groups;
 	getParticleGroups(ticks, obj, node, groups);
 
-	//TODO: create an empty particle group
-	//then append the contents of all particle groups to this group
-	//then get the render mesh of this particle group:
-	//	virtual bool AppendSurplusContainer(IObject* pCont) = 0;
-
+	IPFRender* particleRender = NULL;
 
 	int numActions = particleActionList->NumActions();
 	for (int p = particleActionList->NumActions()-1; p >= 0; p -= 1)
@@ -79,29 +73,27 @@ Mesh* getParticleSystemRenderMesh(TimeValue ticks, Object* obj, INode* node, BOO
 		//MSTR name;
 		//pActionObj->GetClassName(name);
 
-		IPFRender* particleRender = GetPFRenderInterface(pActionObj);
+		particleRender = GetPFRenderInterface(pActionObj);
 		if(particleRender){
-
-			NullView nullView;
-
-			if(groups.size() < 0){
-				continue;
-			}
-
-		    IParticleGroup *particleGroup = groups[0];
-			if(groups.size() > 1){
-				particleGroup = groups[1];
-			}
-
-			::IObject *pCont = particleGroup->GetParticleContainer();
-
-			pMesh = particleRender->GetRenderMesh(pCont, ticks, obj, node, nullView, bNeedDelete);
-			return pMesh;
+			break;
 		}
-
 	}
 
-	return pMesh;
+	if(particleRender){
+
+		NullView nullView;
+
+		for(int g=0; g<groups.size(); g++){
+			
+			::IObject *pCont = groups[g]->GetParticleContainer();
+
+			particleMeshData mdata;
+			mdata.pMesh = particleRender->GetRenderMesh(pCont, ticks, obj, node, nullView, mdata.bNeedDelete);
+
+			meshes.push_back(mdata);
+		}
+	}
+
 }
 
 const Mesh* GetShapeMesh(IParticleObjectExt *pExt, int particleId, TimeValue ticks)
