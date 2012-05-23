@@ -63,12 +63,16 @@ struct userData
    std::string gCurvesMode;
    std::string gPointsMode;
    AtArray * gProcShaders;
+   AtArray * gProcDispMap;
    std::vector<objectInfo> gIObjects;
    std::vector<instanceCloudInfo> gInstances;
    std::vector<float> gMbKeys;
    float gTime;
    float gCurrTime;
    int proceduralDepth;
+
+   std::vector<AtNode*> constructedNodes;
+   std::vector<AtArray*> shadersToAssign;
 };
 
 #define sampleTolerance 0.00001
@@ -119,9 +123,16 @@ static int Init(AtNode *mynode, void **user_ptr)
    userData * ud = new userData();
    *user_ptr = ud;
    ud->gProcShaders = NULL;
+   ud->gProcDispMap= NULL;
 
    ud->gDataString = (char*) AiNodeGetStr(mynode, "data");
-   ud->gProcShaders = AiNodeGetArray(mynode, "shader");
+   ud->gProcShaders = AiArrayCopy(AiNodeGetArray(mynode, "shader"));
+   ud->gProcDispMap = AiNodeGetArray(mynode, "disp_map");
+
+   // empty the procedural's shader
+   //AtArray * emptyShaders = AiArrayAllocate(1,1,AI_TYPE_NODE);
+   //AiArraySetPtr(emptyShaders,0,NULL);
+   //AiNodeSetArray(mynode, "shader", emptyShaders);
 
    // set defaults for options
    ud->gCurvesMode = "ribbon";
@@ -902,10 +913,19 @@ static int Cleanup(void *user_ptr)
 	GLOBAL_LOCK;
 
 	userData * ud = (userData*)user_ptr;
+
+   // assign remaining shaders
+   //for(size_t i=0;i<ud->constructedNodes.size();i++)
+   //{
+   //   if(ud->shadersToAssign[i] == NULL)
+   //      continue;
+   //   AiNodeSetArray(ud->constructedNodes[i],"shader",ud->shadersToAssign[i]);
+   //}
+
    ud->gIObjects.clear();
    ud->gInstances.clear();
    delete(ud);
-	
+
    return TRUE;
 }
 
@@ -1160,6 +1180,7 @@ static AtNode *GetNode(void *user_ptr, int i)
    }
 
    AtArray * shaders = NULL;
+   AtArray * shaderIndices = NULL;
 
    // check what kind of object it is
    Alembic::Abc::IObject object = ud->gIObjects[i].abc;
@@ -1475,8 +1496,9 @@ static AtNode *GetNode(void *user_ptr, int i)
       {
          AiNodeSetArray(shapeNode, "nidxs", uvsIdx);
 
-         if(ud->gProcShaders != NULL)
+         if(ud->gProcShaders != NULL && shaders == NULL)
          {
+            //shaders = ud->gProcShaders;
             if(ud->gProcShaders->nelements > 1)
             {
                // check if we have facesets on this node
@@ -1486,7 +1508,7 @@ static AtNode *GetNode(void *user_ptr, int i)
                {
                   // allocate the shader index array
                   size_t shaderIndexCount = abcFaceCounts->size();
-                  AtArray * shaderIndices = AiArrayAllocate((AtUInt32)shaderIndexCount,1,AI_TYPE_BYTE);
+                  shaderIndices = AiArrayAllocate((AtUInt32)shaderIndexCount,1,AI_TYPE_BYTE);
                   for(size_t i=0;i<shaderIndexCount;i++)
                      AiArraySetByte(shaderIndices,(AtUInt32)i,0);
 
@@ -1497,11 +1519,12 @@ static AtNode *GetNode(void *user_ptr, int i)
                      Alembic::Abc::Int32ArraySamplePtr faces = faceSetSample.getFaces();
                      for(size_t j=0;j<faces->size();j++)
                      {
-                        if((size_t)faces->get()[j] < shaderIndexCount)
-                           AiArraySetByte(shaderIndices,(AtUInt32)faces->get()[j],(AtByte)i);
+                        if((size_t)faces->get()[j] < shaderIndexCount && i+1 < ud->gProcShaders->nelements)
+                        {
+                           AiArraySetByte(shaderIndices,(AtUInt32)faces->get()[j],(AtByte)(i+1));
+                        }
                      }
                   }
-                  AiNodeSetArray(shapeNode, "shidxs", shaderIndices);
                }
             }
          }
@@ -1748,9 +1771,10 @@ static AtNode *GetNode(void *user_ptr, int i)
       }
       AiNodeSetArray(shapeNode, "vlist", pos);
 
-      if(ud->gProcShaders != NULL && !createdShifted)
+      if(ud->gProcShaders != NULL && !createdShifted && shaders == NULL)
       {
-         if(ud->gProcShaders->nelements > 1)
+         shaders = ud->gProcShaders;
+         if(shaders->nelements > 1)
          {
             // check if we have facesets on this node
             std::vector<std::string> faceSetNames;
@@ -1759,7 +1783,7 @@ static AtNode *GetNode(void *user_ptr, int i)
             {
                // allocate the shader index array
                size_t shaderIndexCount = abcFaceCounts->size();
-               AtArray * shaderIndices = AiArrayAllocate((AtUInt32)shaderIndexCount,1,AI_TYPE_BYTE);
+               shaderIndices = AiArrayAllocate((AtUInt32)shaderIndexCount,1,AI_TYPE_BYTE);
                for(size_t i=0;i<shaderIndexCount;i++)
                   AiArraySetByte(shaderIndices,(AtUInt32)i,0);
 
@@ -1770,11 +1794,12 @@ static AtNode *GetNode(void *user_ptr, int i)
                   Alembic::Abc::Int32ArraySamplePtr faces = faceSetSample.getFaces();
                   for(size_t j=0;j<faces->size();j++)
                   {
-                     if((size_t)faces->get()[j] < shaderIndexCount)
-                        AiArraySetByte(shaderIndices,(AtUInt32)faces->get()[j],(AtByte)i);
+                     if((size_t)faces->get()[j] < shaderIndexCount && i+1 < ud->gProcShaders->nelements)
+                     {
+                        AiArraySetByte(shaderIndices,(AtUInt32)faces->get()[j],(AtByte)(i+1));
+                     }
                   }
                }
-               AiNodeSetArray(shapeNode, "shidxs", shaderIndices);
             }
          }
       }
@@ -2131,8 +2156,19 @@ static AtNode *GetNode(void *user_ptr, int i)
    // if we have a shape
    if(shapeNode != NULL)
    {
+      ud->constructedNodes.push_back(shapeNode);
       if(shaders != NULL)
-         AiNodeSetArray(shapeNode,"shader",AiArrayCopy(shaders));
+         ud->shadersToAssign.push_back(AiArrayCopy(shaders));
+      else if(ud->gProcShaders != NULL)
+         ud->shadersToAssign.push_back(AiArrayCopy(ud->gProcShaders));
+      else
+         ud->shadersToAssign.push_back(NULL);
+
+      if(ud->gProcDispMap != NULL)
+         AiNodeSetArray(shapeNode,"disp_map",AiArrayCopy(ud->gProcDispMap));
+      if(shaderIndices != NULL)
+         AiNodeSetArray(shapeNode, "shidxs", shaderIndices);
+
 
       // allocate the matrices for arnold and initiate them with identities
       AtArray * matrices = AiArrayAllocate(1,(AtInt)nbSamples,AI_TYPE_MATRIX);
