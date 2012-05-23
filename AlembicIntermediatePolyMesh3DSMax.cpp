@@ -177,22 +177,9 @@ void IntermediatePolyMesh3DSMax::Save(AlembicWriteJob* writeJob, TimeValue ticks
                                              : triMesh->getVert(i);
         posVec[i] = ConvertMaxPointToAlembicPoint( maxPoint );
         bbox.extendBy(posVec[i]);
-
-		//TODO: Extend the archive bounding box
-        //if (writeJob)
-        //{
-        //    Point3 worldMaxPoint = wm * maxPoint;
-        //    Imath::V3f alembicWorldPoint = ConvertMaxPointToAlembicPoint(worldMaxPoint);
-        //    writeJob->GetArchiveBBox().extendBy(alembicWorldPoint);
-        //}
     }
 
-    // allocate the sample for the points
-    //if(posVec.size() == 0)
-    //{
-    //    bbox.extendBy(Alembic::Abc::V3f(0,0,0));
-    //    posVec.push_back(Alembic::Abc::V3f(FLT_MAX,FLT_MAX,FLT_MAX));
-    //}
+
 
 
 
@@ -200,19 +187,6 @@ void IntermediatePolyMesh3DSMax::Save(AlembicWriteJob* writeJob, TimeValue ticks
 	bool purePointCache = static_cast<bool>(writeJob->GetOption("exportPurePointCache"));
     if(purePointCache)
     {
-        //if(bFirstFrame)
-        //{
-        //    // store a dummy empty topology
-        //    mFaceCountVec.push_back(0);
-        //    mFaceIndicesVec.push_back(0);
-        //    //Alembic::Abc::Int32ArraySample faceCountSample(&mFaceCountVec.front(),mFaceCountVec.size());
-        //    //Alembic::Abc::Int32ArraySample faceIndicesSample(&mFaceIndicesVec.front(),mFaceIndicesVec.size());
-        //    //mMeshSample.setFaceCounts(faceCountSample);
-        //    //mMeshSample.setFaceIndices(faceIndicesSample);
-        //}
-
-        //mMeshSchema.set(mMeshSample);
-       // mNumSamples++;
         return;
     }
 
@@ -359,41 +333,8 @@ void IntermediatePolyMesh3DSMax::Save(AlembicWriteJob* writeJob, TimeValue ticks
             }
          }
 
-         //if(mFaceIndicesVec.size() == 0)
-         //{
-         //   mFaceCountVec.push_back(0);
-         //   mFaceIndicesVec.push_back(0);
-         //}
-         //Alembic::Abc::Int32ArraySample faceCountSample(&mFaceCountVec.front(),mFaceCountVec.size());
-         //Alembic::Abc::Int32ArraySample faceIndicesSample(&mFaceIndicesVec.front(),mFaceIndicesVec.size());
 
-         //mMeshSample.setFaceCounts(faceCountSample);
-         //mMeshSample.setFaceIndices(faceIndicesSample);
       }
-
-      //Alembic::AbcGeom::ON3fGeomParam::Sample normalSample;
-      //if(normalVec.size() > 0 && normalCount > 0)
-      //{
-      //   normalSample.setScope(Alembic::AbcGeom::kFacevaryingScope);
-      //   normalSample.setVals(Alembic::Abc::N3fArraySample(&normalVec.front(),normalCount));
-      //   if(normalIndexCount > 0)
-      //      normalSample.setIndices(Alembic::Abc::UInt32ArraySample(&normalIndexVec.front(),normalIndexCount));
-      //   mMeshSample.setNormals(normalSample);
-      //}
-      //else if (mNumSamples == 0 && dynamicTopology)
-      //{
-      //   // If we are exporting dynamic topology, then we may have normals that show up later in our scene.  The problem is that Alembic wants
-      //   // your parameter to be defined at sample zero if you plan to use it even later on, so we create a dummy normal parameter here if the case
-      //   // requires it
-      //   normalVec.push_back(Imath::V3f(0,0,0));
-      //   normalCount = 0;
-      //   normalIndexVec.push_back(0);
-      //   normalIndexCount = 0;
-      //   normalSample.setScope(Alembic::AbcGeom::kFacevaryingScope);
-      //   normalSample.setVals(Alembic::Abc::N3fArraySample(&normalVec.front(),normalCount));
-      //   normalSample.setIndices(Alembic::Abc::UInt32ArraySample(&normalIndexVec.front(),normalIndexCount));
-      //   mMeshSample.setNormals(normalSample);
-      //}
 
       // also check if we need to store UV
       if((bool)writeJob->GetOption("exportUVs"))
@@ -507,28 +448,6 @@ void IntermediatePolyMesh3DSMax::Save(AlembicWriteJob* writeJob, TimeValue ticks
                   //sortedUVCount = 0;
                   sortedUVVec.clear();
               }
-
-              //if (mUvVec.size() > 0 && uvCount > 0)
-              //{
-              //    Alembic::AbcGeom::OV2fGeomParam::Sample uvSample(Alembic::Abc::V2fArraySample(&mUvVec.front(),uvCount),Alembic::AbcGeom::kFacevaryingScope);
-
-              //    if(mUvIndexVec.size() > 0 && uvIndexCount > 0)
-              //        uvSample.setIndices(Alembic::Abc::UInt32ArraySample(&mUvIndexVec.front(),uvIndexCount));
-              //    mMeshSample.setUVs(uvSample);
-              //}
-              //else if (mNumSamples == 0 && dynamicTopology)
-              //{
-              //    // If we are exporting dynamic topology, then we may have uvs that show up later in our scene.  The problem is that Alembic wants
-              //    // your parameter to be defined at sample zero if you plan to use it even later on, so we create a dummy uv parameter here if the case
-              //    // requires it
-              //    mUvVec.push_back(Imath::V2f(0,0));
-              //    uvCount = 0;
-              //    mUvIndexVec.push_back(0);
-              //    uvIndexCount = 0;
-              //    Alembic::AbcGeom::OV2fGeomParam::Sample uvSample(Alembic::Abc::V2fArraySample(&mUvVec.front(),uvCount),Alembic::AbcGeom::kFacevaryingScope);
-              //    uvSample.setIndices(Alembic::Abc::UInt32ArraySample(&mUvIndexVec.front(),uvIndexCount));
-              //    mMeshSample.setUVs(uvSample);
-              //}
           }
       }
 
