@@ -311,10 +311,9 @@ void IntermediatePolyMesh3DSMax::Save(AlembicWriteJob* writeJob, TimeValue ticks
         ClearMeshSmoothingGroupNormals();
     }
 
-	////////////////////////////////////////////////////////////////////////////////////////////////
+	// we also need to store the face counts as well as face indices
    if(bFirstFrame || (dynamicTopology))
    {
-      // we also need to store the face counts as well as face indices
       if(mFaceIndicesVec.size() != sampleCount || sampleCount == 0)
       {
          mFaceCountVec.resize(faceCount);
@@ -332,128 +331,129 @@ void IntermediatePolyMesh3DSMax::Save(AlembicWriteJob* writeJob, TimeValue ticks
 				mFaceIndicesVec[offset++] = vertIndex;
             }
          }
-
-
       }
+   }
 
-      // also check if we need to store UV
-      if((bool)writeJob->GetOption("exportUVs"))
+   //write out the UVs
+   if((bool)writeJob->GetOption("exportUVs") && (bFirstFrame || dynamicTopology))
+   {
+      mUvVec.reserve(sampleCount);
+
+      if (polyMesh != NULL)
       {
-          mUvVec.reserve(sampleCount);
+          MNMap *map = polyMesh->M(1);
 
-          if (polyMesh != NULL)
+          for (int i=0; i<faceCount; i++) 
           {
-              MNMap *map = polyMesh->M(1);
-
-              for (int i=0; i<faceCount; i++) 
+              int degree = polyMesh->F(i)->deg;
+              for (int j = degree-1; j >= 0; j -= 1)
               {
-                  int degree = polyMesh->F(i)->deg;
-                  for (int j = degree-1; j >= 0; j -= 1)
+                  if (map != NULL && map->FNum() > i && map->F(i)->deg > j)
                   {
-                      if (map != NULL && map->FNum() > i && map->F(i)->deg > j)
-                      {
-                          int vertIndex = map->F(i)->tv[j];
-                          UVVert texCoord = map->V(vertIndex);
-                          Alembic::Abc::V2f alembicUV(texCoord.x, texCoord.y);
-                          mUvVec.push_back(alembicUV);
-                      }
-                      else
-                      {
-                          Alembic::Abc::V2f alembicUV(0.0f, 0.0f);
-                          mUvVec.push_back(alembicUV);
-                      }
-                  }
-              }
-          }
-          else if (triMesh != NULL)
-          {
-              if (CheckForFaceMap(pMtl, triMesh)) 
-              {
-                  for (int i=0; i<faceCount; i++) 
-                  {
-                      Point3 tv[3];
-                      Face* f = &triMesh->faces[i];
-                      make_face_uv(f, tv);
-
-                      for (int j=2; j>=0; j-=1)
-                      {
-                          Alembic::Abc::V2f alembicUV(tv[j].x, tv[j].y);
-                          mUvVec.push_back(alembicUV);
-                      }
-                  }
-              }
-              else if (triMesh->mapSupport(1))
-              {
-                  MeshMap &map = triMesh->Map(1);
-
-                  for (int findex =0; findex < map.fnum; findex += 1)
-                  {
-                      TVFace &texFace = map.tf[findex];
-                      for (int vindex = 2; vindex >= 0; vindex -= 1)
-                      {
-                          int vertexid = texFace.t[vindex];
-                          UVVert uvVert = map.tv[vertexid];
-                          Alembic::Abc::V2f alembicUV(uvVert.x, uvVert.y);
-                          mUvVec.push_back(alembicUV);
-                      }
-                  }
-              }
-          }
-
-          if (mUvVec.size() == sampleCount)
-          {
-              // now let's sort the uvs 
-              size_t uvCount = mUvVec.size();
-              size_t uvIndexCount = 0;
-              if((bool)writeJob->GetOption("indexedUVs")) 
-              {
-                  std::map<SortableV2f,size_t> uvMap;
-                  std::map<SortableV2f,size_t>::const_iterator it;
-                  size_t sortedUVCount = 0;
-                  std::vector<Alembic::Abc::V2f> sortedUVVec;
-                  mUvIndexVec.reserve(mUvVec.size());
-                  sortedUVVec.reserve(mUvVec.size());
-
-                  // loop over all uvs
-                  for(size_t i=0; i<mUvVec.size(); i++)
-                  {
-                      it = uvMap.find(mUvVec[i]);
-                      if(it != uvMap.end()){
-                          mUvIndexVec.push_back((uint32_t)it->second);
-						  uvIndexCount++;
-					  }
-                      else
-					  {
-                          mUvIndexVec.push_back((uint32_t)sortedUVCount);
-						  uvIndexCount++;
-                          uvMap.insert(std::pair<Alembic::Abc::V2f,size_t>(mUvVec[i],(uint32_t)sortedUVCount));
-                          sortedUVVec.push_back(mUvVec[i]);
-						  sortedUVCount++;
-                      }
-                  }
-
-                  // use indexed uvs if they use less space
-                  if(sortedUVCount * sizeof(Alembic::Abc::V2f) + 
-                      uvIndexCount * sizeof(uint32_t) < 
-                      sizeof(Alembic::Abc::V2f) * mUvVec.size())
-                  {
-                      mUvVec = sortedUVVec;
-                      //uvCount = sortedUVCount;
+                      int vertIndex = map->F(i)->tv[j];
+                      UVVert texCoord = map->V(vertIndex);
+                      Alembic::Abc::V2f alembicUV(texCoord.x, texCoord.y);
+                      mUvVec.push_back(alembicUV);
                   }
                   else
                   {
-                      //uvIndexCount = 0;
-                      mUvIndexVec.clear();
+                      Alembic::Abc::V2f alembicUV(0.0f, 0.0f);
+                      mUvVec.push_back(alembicUV);
                   }
-                  //sortedUVCount = 0;
-                  sortedUVVec.clear();
+              }
+          }
+      }
+      else if (triMesh != NULL)
+      {
+          if (CheckForFaceMap(pMtl, triMesh)) 
+          {
+              for (int i=0; i<faceCount; i++) 
+              {
+                  Point3 tv[3];
+                  Face* f = &triMesh->faces[i];
+                  make_face_uv(f, tv);
+
+                  for (int j=2; j>=0; j-=1)
+                  {
+                      Alembic::Abc::V2f alembicUV(tv[j].x, tv[j].y);
+                      mUvVec.push_back(alembicUV);
+                  }
+              }
+          }
+          else if (triMesh->mapSupport(1))
+          {
+              MeshMap &map = triMesh->Map(1);
+
+              for (int findex =0; findex < map.fnum; findex += 1)
+              {
+                  TVFace &texFace = map.tf[findex];
+                  for (int vindex = 2; vindex >= 0; vindex -= 1)
+                  {
+                      int vertexid = texFace.t[vindex];
+                      UVVert uvVert = map.tv[vertexid];
+                      Alembic::Abc::V2f alembicUV(uvVert.x, uvVert.y);
+                      mUvVec.push_back(alembicUV);
+                  }
               }
           }
       }
 
-//TODO: finish writing out facesets
+      if (mUvVec.size() == sampleCount)
+      {
+          // now let's sort the uvs 
+          size_t uvCount = mUvVec.size();
+          size_t uvIndexCount = 0;
+          if((bool)writeJob->GetOption("indexedUVs")) 
+          {
+              std::map<SortableV2f,size_t> uvMap;
+              std::map<SortableV2f,size_t>::const_iterator it;
+              size_t sortedUVCount = 0;
+              std::vector<Alembic::Abc::V2f> sortedUVVec;
+              mUvIndexVec.reserve(mUvVec.size());
+              sortedUVVec.reserve(mUvVec.size());
 
+              // loop over all uvs
+              for(size_t i=0; i<mUvVec.size(); i++)
+              {
+                  it = uvMap.find(mUvVec[i]);
+                  if(it != uvMap.end()){
+                      mUvIndexVec.push_back((uint32_t)it->second);
+					  uvIndexCount++;
+				  }
+                  else
+				  {
+                      mUvIndexVec.push_back((uint32_t)sortedUVCount);
+					  uvIndexCount++;
+                      uvMap.insert(std::pair<Alembic::Abc::V2f,size_t>(mUvVec[i],(uint32_t)sortedUVCount));
+                      sortedUVVec.push_back(mUvVec[i]);
+					  sortedUVCount++;
+                  }
+              }
+
+              // use indexed uvs if they use less space
+              if(sortedUVCount * sizeof(Alembic::Abc::V2f) + 
+                  uvIndexCount * sizeof(uint32_t) < 
+                  sizeof(Alembic::Abc::V2f) * mUvVec.size())
+              {
+                  mUvVec = sortedUVVec;
+                  //uvCount = sortedUVCount;
+              }
+              else
+              {
+                  //uvIndexCount = 0;
+                  mUvIndexVec.clear();
+              }
+              //sortedUVCount = 0;
+              sortedUVVec.clear();
+          }
+      }
+  }
+   
+
+//TODO: finish writing out facesets
+	
 #if 0
+  if (bFirstFrame || dynamicTopology)
       // sweet, now let's have a look at face sets (really only for first sample)
       // for 3DS Max, we are mapping this to the material ids
       std::vector<boost::int32_t> zeroFaceVector;
@@ -538,11 +538,11 @@ void IntermediatePolyMesh3DSMax::Save(AlembicWriteJob* writeJob, TimeValue ticks
       }
 #endif
 
-      // save the sample
-      //mMeshSchema.set(mMeshSample);
+
 
       // check if we need to export the bindpose (also only for first frame)
 	  /*
+	if (bFirstFrame || dynamicTopology)
       if(GetJob()->GetOption(L"exportBindPose") && prim.GetParent3DObject().GetEnvelopes().GetCount() > 0 && mNumSamples == 0)
       {
          mBindPoseProperty = OV3fArrayProperty(mMeshSchema, ".bindpose", mMeshSchema.getMetaData(), GetJob()->GetAnimatedTs());
@@ -563,21 +563,8 @@ void IntermediatePolyMesh3DSMax::Save(AlembicWriteJob* writeJob, TimeValue ticks
             sample = Alembic::Abc::V3fArraySample(&mBindPoseVec.front(),mBindPoseVec.size());
          mBindPoseProperty.set(sample);
       }
+   }
       */
-   }
-   else// the else clause for if(bFirstFrame || (dynamicTopology))
-   {
-      //Alembic::AbcGeom::ON3fGeomParam::Sample normalSample;
-      //if(normalVec.size() > 0 && normalCount > 0)
-      //{
-      //   normalSample.setScope(Alembic::AbcGeom::kFacevaryingScope);
-      //   normalSample.setVals(Alembic::Abc::N3fArraySample(&normalVec.front(),normalCount));
-      //   if(normalIndexCount > 0)
-      //      normalSample.setIndices(Alembic::Abc::UInt32ArraySample(&normalIndexVec.front(),normalIndexCount));
-      //   mMeshSample.setNormals(normalSample);
-      //}
-      //mMeshSchema.set(mMeshSample);
-   }
 
    // check if we should export the velocities
    /*if(dynamicTopology)
