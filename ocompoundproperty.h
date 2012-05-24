@@ -12,10 +12,6 @@
       PyObject_HEAD
       void * mArchive;
       Alembic::Abc::OCompoundProperty * mBaseCompoundProperty;
-      Alembic::Abc::OCompoundProperty * useless_pointer; // just used to create some pointers
-      //Alembic::Abc::OBoolProperty * useless_pointer;
-      
-      char *extra_path;
    } oCompoundProperty;
 
    PyObject * oCompoundProperty_new(Alembic::Abc::OCompoundProperty compound, char * in_propName, char * in_propType, int tsIndex, void * in_Archive);

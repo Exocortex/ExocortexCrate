@@ -50,26 +50,11 @@ static PyObject *oCompoundProperty_getProperty(PyObject * self, PyObject * args)
          return oXformProperty_new(object->mCasted,object->mArchive,(boost::uint32_t)tsIndex);
       }
    }
-   */
-
-   // Test if it's a compound or a normal property
-   /*
-   std::string new_propName(cprop->extra_path);
-   new_propName.append("/");
-   new_propName.append(propName);
    //*/
 
-   //*
    if (propType && std::strcmp(propType, "compound") == 0)
       return oCompoundProperty_new(*(cprop->mBaseCompoundProperty), propName, "compound", tsIndex, cprop->mArchive);
    return oProperty_new(*(cprop->mBaseCompoundProperty), propName, propType, tsIndex, cprop->mArchive);
-   //*/
-
-   /*
-   if (propType && std::strcmp(propType, "compound") == 0)
-      return oCompoundProperty_new(*(cprop->mBaseCompoundProperty), (char*)new_propName.c_str(), "compound", tsIndex, cprop->mArchive);
-   return oProperty_new(*(cprop->mBaseCompoundProperty), (char*)new_propName.c_str(), propType, tsIndex, cprop->mArchive);
-   //*/
    ALEMBIC_PYOBJECT_CATCH_STATEMENT
 }
 
@@ -101,10 +86,6 @@ static void oCompoundProperty_delete(PyObject * self)
 
    if (cprop->mBaseCompoundProperty)
       delete cprop->mBaseCompoundProperty;
-   if (cprop->useless_pointer)
-      delete cprop->useless_pointer;
-   if (cprop->extra_path)
-      delete [] cprop->extra_path;
 
    PyObject_FREE(self);
    ALEMBIC_VOID_CATCH_STATEMENT
@@ -153,7 +134,6 @@ PyObject * oCompoundProperty_new(Alembic::Abc::OCompoundProperty compound, char 
    identifier.append(in_propName);
 
    INFO_MSG("identifier: " << identifier);
-
    oArchive * archive = (oArchive*)in_Archive;
 
    // check if a property has the same name and return it!
@@ -173,51 +153,16 @@ PyObject * oCompoundProperty_new(Alembic::Abc::OCompoundProperty compound, char 
    // if we don't have it yet, create a new one and insert it into our map
    cprop = PyObject_NEW(oCompoundProperty, &oCompoundProperty_Type);
    cprop->mBaseCompoundProperty = NULL;
-   cprop->useless_pointer = NULL;
    cprop->mArchive = in_Archive;
-   int in_propName_len = std::strlen(in_propName);
-   if (in_propName_len)
-   {
-      cprop->extra_path = new char[in_propName_len+2];
-      std::strcpy(cprop->extra_path, identifier.c_str());
-   }
-   else
-      cprop->extra_path = NULL;
    oArchive_registerCompPropElement(archive,identifier,cprop);
 
    // get the compound property writer
-   
+   Alembic::Abc::CompoundPropertyWriterPtr compoundWriter = GetCompoundPropertyWriterPtr(compound);      // this variable is unused!
    const Alembic::Abc::PropertyHeader * propHeader = compound.getPropertyHeader( in_propName );
-   if (propHeader != NULL)
-   {
-      Alembic::Abc::OBaseProperty baseProp = compound.getProperty( in_propName );
-      cprop->mBaseCompoundProperty = new Alembic::Abc::OCompoundProperty(boost::dynamic_pointer_cast<Alembic::Abc::CompoundPropertyWriter>(baseProp.getPtr()), Alembic::Abc::kWrapExisting);
-   }
-   else
-   {
-      Alembic::AbcCoreAbstract::MetaData md = compound.getMetaData();
+   
 
-      md.set( "isGeomParam", "true" );      
 
-      Alembic::AbcCoreAbstract::ALEMBIC_VERSION_NS::CompoundPropertyWriterPtr cpwp = compound.getPtr()->createCompoundProperty(in_propName, md);
-      if (cpwp)
-      {
-         if (cpwp->isCompound())
-         {
-            INFO_MSG("IT CREATES a compound");
-         }
-         else
-            INFO_MSG("IT CREATES something else");
-      }
-      else
-         INFO_MSG("IT FAILS");
 
-      //Alembic::AbcCoreAbstract::ALEMBIC_VERSION_NS::CompoundPropertyWriterPtr cpwp = compound.getPtr()->createCompoundProperty(identifier.c_str(), md);
-      //cprop->mBaseCompoundProperty = new Alembic::Abc::OCompoundProperty(compound, in_propName, md, 0);
-      //cprop->useless_pointer = new Alembic::Abc::OCompoundProperty(compound.getPtr(), in_propName, md, tsIndex);
-      cprop->mBaseCompoundProperty = new Alembic::Abc::OCompoundProperty(cpwp, Alembic::Abc::kWrapExisting);
-   }
-   INFO_MSG("NEW compound property name: " << (cprop->mBaseCompoundProperty->getObject().getFullName()));
    return (PyObject *)cprop;
    ALEMBIC_PYOBJECT_CATCH_STATEMENT
 }
