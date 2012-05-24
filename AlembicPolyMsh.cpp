@@ -571,6 +571,7 @@ bool AlembicPolyMesh::Save(double time)
                   mMatIdProperty = OUInt32ArrayProperty(mMeshSchema, ".materialids", mMeshSchema.getMetaData(), GetCurrentJob()->GetAnimatedTs());
               }
 
+			  int numMatId = 0;
               int numFaces = polyObj ? polyObj->GetMesh().numf : triObj->GetMesh().getNumFaces();
               mMatIdIndexVec.resize(numFaces);
               for (int i = 0; i < numFaces; i += 1)
@@ -588,6 +589,7 @@ bool AlembicPolyMesh::Save(double time)
                       {
                           facesetmap_ret_pair ret = mFaceSetsMap.insert(facesetmap_insert_pair(matId, std::vector<int32_t>()));
                           it = ret.first;
+						  numMatId++;
                       }
 
                       it->second.push_back(i);
@@ -603,34 +605,36 @@ bool AlembicPolyMesh::Save(double time)
 			  Mtl* pMat = GetRef().node->GetMtl();
 
               // For sample zero, export the material ids as face sets
-              if (mNumSamples == 0)
+			  if (mNumSamples == 0 && numMatId > 1 )
               {
-				  int i = 0;
 				  for ( facesetmap_it it=mFaceSetsMap.begin(); it != mFaceSetsMap.end(); it++)
                   {
-                      std::string name;
+					  int i = it->first;
 
 					  Mtl* pSubMat = NULL;
-					  if(pMat && i<pMat->NumSubMtls()){
+					  const int numMat = pMat ? pMat->NumSubMtls() : 0;
+					  if(pMat && i < numMat){
 					      pSubMat = pMat->GetSubMtl(i);
 					  }
+					  std::stringstream nameStream;
+					  int nMaterialId = it->first+1;
 					  if(pSubMat){
-                          name = pSubMat->GetName();
+                          nameStream<<pSubMat->GetName();
+					  }
+					  else if(pMat){
+						  nameStream<<pMat->GetName();
 					  }
 					  else{
-						  std::stringstream convert;
-						  int nMaterialId = it->first + 1;
-						  convert << nMaterialId;
-						  name = "Material" + convert.str();
+					      nameStream<<"Unnamed";
 					  }
+					  nameStream<<" : "<<nMaterialId;
+					  std::string name = nameStream.str();
 
                       std::vector<int32_t> & faceSetVec = it->second;
 
                       Alembic::AbcGeom::OFaceSet faceSet = mMeshSchema.createFaceSet(name);
                       Alembic::AbcGeom::OFaceSetSchema::Sample faceSetSample(Alembic::Abc::Int32ArraySample(&faceSetVec.front(),faceSetVec.size()));
                       faceSet.getSchema().set(faceSetSample);
-
-					  i++;
                   }
               }
           }

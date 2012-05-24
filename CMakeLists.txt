@@ -80,6 +80,9 @@ ADD_DEPENDENCIES( ${PROJECT_NAME} AlembicAbcGeom )
 SET_TARGET_PROPERTIES( ${PROJECT_NAME} PROPERTIES SUFFIX ".dlu" ) 
 
 set( PluginDirectory "${CMAKE_CURRENT_SOURCE_DIR}/Plugin" )
+
+remove_dir( ${PluginDirectory} )
+
 copy_directory( "${BASE_DIR}/MaxScripts" ${PluginDirectory} )
 get_target_property( OutputFilePath ${PROJECT_NAME} LOCATION )
 
@@ -87,6 +90,8 @@ copy_file_to_directory( ${OutputFilePath} ${PluginDirectory} )
 copy_file_to_directory( ${RER_DEPENDENCIES} ${PluginDirectory} )
 
 SET( Install_DIR ${Exocortex_INSTALL_BASE_DIR}/Max${Max_VERSION}/ )
+
+remove_dir( ${Install_DIR} )
 
 copy_directory( "${BASE_DIR}/MaxScripts" ${Install_DIR} )
 
