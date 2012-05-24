@@ -5,11 +5,6 @@
 #include "AlembicMax.h"
 #include "AlembicIntermediatePolyMesh.h"
 
-typedef std::map<int, std::vector<Alembic::AbcCoreAbstract::ALEMBIC_VERSION_NS::int32_t> > facesetmap;
-typedef std::map<int, std::vector<Alembic::AbcCoreAbstract::ALEMBIC_VERSION_NS::int32_t> >::iterator facesetmap_it;
-typedef std::pair<int, std::vector<Alembic::AbcCoreAbstract::ALEMBIC_VERSION_NS::int32_t> > facesetmap_insert_pair;
-typedef std::pair<facesetmap_it, bool> facesetmap_ret_pair;
-
 class VNormal
 {   
 public:     
@@ -43,8 +38,6 @@ public:
     static BOOL CheckForFaceMap(Mtl* mtl, Mesh* mesh);
 
 	void Save(AlembicWriteJob* writeJob, TimeValue ticks, Mesh *triMesh, MNMesh* polyMesh, Matrix3& wm, Mtl* pMtl, const int nNumSamplesWritten);
-
-	LONG sampleCount;
 };
 
 

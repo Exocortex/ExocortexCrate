@@ -452,92 +452,92 @@ void IntermediatePolyMesh3DSMax::Save(AlembicWriteJob* writeJob, TimeValue ticks
 
 //TODO: finish writing out facesets
 	
-#if 0
-  if (bFirstFrame || dynamicTopology)
-      // sweet, now let's have a look at face sets (really only for first sample)
-      // for 3DS Max, we are mapping this to the material ids
-      std::vector<boost::int32_t> zeroFaceVector;
-	  if(writeJob->GetOption("exportMaterialIds") && (mNumSamples == 0 || dynamicTopology))
-      {
-          if (polyMesh != NULL || triMesh != NULL)
-          {
-              if(!mMatIdProperty.valid())
-              {
-                  mMatIdProperty = OUInt32ArrayProperty(mMeshSchema, ".materialids", mMeshSchema.getMetaData(), writeJob->GetAnimatedTs());
-              }
 
-			  int numMatId = 0;
-              int numFaces = polyMesh ? polyMesh->numf : triMesh->getNumFaces();
-              mMatIdIndexVec.resize(numFaces);
-              for (int i = 0; i < numFaces; i += 1)
-              {
-                  int matId = polyMesh ? polyMesh->f[i].material : triMesh->faces[i].getMatID();
-                  mMatIdIndexVec[i] = matId;
 
-                  // Record the face set map if sample zero
-                  if (mNumSamples == 0)
-                  {
-                      facesetmap_it it;
-                      it = mFaceSetsMap.find(matId);
+	// sweet, now let's have a look at face sets (really only for first sample)
+	// for 3DS Max, we are mapping this to the material ids
+	//std::vector<boost::int32_t> zeroFaceVector;
+	if(writeJob->GetOption("exportMaterialIds") && (bFirstFrame || dynamicTopology))
+	{
+		if (polyMesh != NULL || triMesh != NULL)
+		{
+			//if(!mMatIdProperty.valid())
+			//{
+			//    mMatIdProperty = OUInt32ArrayProperty(mMeshSchema, ".materialids", mMeshSchema.getMetaData(), writeJob->GetAnimatedTs());
+			//}
 
-                      if (it == mFaceSetsMap.end())
-                      {
-                          facesetmap_ret_pair ret = mFaceSetsMap.insert(facesetmap_insert_pair(matId, std::vector<int32_t>()));
-                          it = ret.first;
-						  numMatId++;
-                      }
+			int numMatId = 0;
+			int numFaces = polyMesh ? polyMesh->numf : triMesh->getNumFaces();
+			mMatIdIndexVec.resize(numFaces);
+			for (int i = 0; i < numFaces; i += 1)
+			{
+			  int matId = polyMesh ? polyMesh->f[i].material : triMesh->faces[i].getMatID();
+			  mMatIdIndexVec[i] = matId;
 
-                      it->second.push_back(i);
-                  }
-              }
+			  // Record the face set map if sample zero
+			  if (bFirstFrame)
+			  {
+				  facesetmap_it it;
+				  it = mFaceSetsMap.find(matId);
 
-              size_t nMatIndexSize = mMatIdIndexVec.size();
-              if(nMatIndexSize == 0)
-                  mMatIdIndexVec.push_back(0);
-              Alembic::Abc::UInt32ArraySample sample = Alembic::Abc::UInt32ArraySample(&mMatIdIndexVec.front(), nMatIndexSize);
-              mMatIdProperty.set(sample);
+				  if (it == mFaceSetsMap.end())
+				  {
+					  facesetmap_ret_pair ret = mFaceSetsMap.insert(facesetmap_insert_pair(matId, std::vector<int32_t>()));
+					  it = ret.first;
+					  numMatId++;
+				  }
 
-			  //Mtl* pMat = GetRef().node->GetMtl();
+				  it->second.push_back(i);
+			  }
+			}
 
-              // For sample zero, export the material ids as face sets
-			  if (mNumSamples == 0 && numMatId > 1 )
-              {
-				  int i = 0;
-				  for ( facesetmap_it it=mFaceSetsMap.begin(); it != mFaceSetsMap.end(); it++)
-                  {
-                     
+			//         size_t nMatIndexSize = mMatIdIndexVec.size();
+			//if(nMatIndexSize == 0){
+			//             mMatIdIndexVec.push_back(0);
+			//}
+			//Alembic::Abc::UInt32ArraySample sample = Alembic::Abc::UInt32ArraySample(&mMatIdIndexVec.front(), nMatIndexSize);
+			//mMatIdProperty.set(sample);
 
-					  Mtl* pSubMat = NULL;
-					  if(pMat && i<pMat->NumSubMtls()){
-					      pSubMat = pMat->GetSubMtl(i);
-					  }
-					  std::stringstream nameStream;
-					  int nMaterialId = it->first+1;
-					  if(pSubMat){
-                          nameStream<<pSubMat->GetName();
-					  }
-					  else if(pMat){
-						  nameStream<<pMat->GetName();
-					  }
-					  else{
-					      nameStream<<"Unnamed";
-					  }
-					  nameStream<<" : "<<nMaterialId;
-					  std::string name = nameStream.str();
+			//Mtl* pMat = GetRef().node->GetMtl();
 
-                      std::vector<int32_t> & faceSetVec = it->second;
+			// For sample zero, export the material ids as face sets
+			if (bFirstFrame && numMatId > 1 )
+			{
 
-                      Alembic::AbcGeom::OFaceSet faceSet = mMeshSchema.createFaceSet(name);
-                      Alembic::AbcGeom::OFaceSetSchema::Sample faceSetSample(Alembic::Abc::Int32ArraySample(&faceSetVec.front(),faceSetVec.size()));
-                      faceSet.getSchema().set(faceSetSample);
+			  for ( facesetmap_it it=mFaceSetsMap.begin(); it != mFaceSetsMap.end(); it++)
+			  {
+				  int i = it->first; 
 
-					  i++;
-                  }
-              }
-          }
-      }
-#endif
+				  Mtl* pSubMat = NULL;
+				  const int numMat = pMtl ? pMtl->NumSubMtls() : 0;
+				  if(pMtl && i < numMat){
+					  pSubMat = pMtl->GetSubMtl(i);
+				  }
+				  std::stringstream nameStream;
+				  int nMaterialId = it->first+1;
+				  if(pSubMat){
+					  nameStream<<pSubMat->GetName();
+				  }
+				  else if(pMtl){
+					  nameStream<<pMtl->GetName();
+				  }
+				  else{
+					  nameStream<<"Unnamed";
+				  }
+				  nameStream<<" : "<<nMaterialId;
+				  std::string name = nameStream.str();
 
+				  mMatNames.push_back(name);
+
+				  //std::vector<int32_t> & faceSetVec = it->second;
+
+				  //Alembic::AbcGeom::OFaceSet faceSet = mMeshSchema.createFaceSet(name);
+				  //Alembic::AbcGeom::OFaceSetSchema::Sample faceSetSample(Alembic::Abc::Int32ArraySample(&faceSetVec.front(),faceSetVec.size()));
+				  //faceSet.getSchema().set(faceSetSample);
+			  }
+			}
+		}
+	}
 
 
       // check if we need to export the bindpose (also only for first frame)

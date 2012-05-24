@@ -87,14 +87,14 @@ bool AlembicPolyMesh::Save(double time)
 	SaveMetaData(GetRef().node, this);
    
     // Clear our data
-    mFaceCountVec.clear();
-    mFaceIndicesVec.clear(); 
-    mBindPoseVec.clear();
-    mVelocitiesVec.clear();
-    mUvVec.clear();
-    mUvIndexVec.clear();
-    mMatIdIndexVec.clear();
-    mFaceSetsMap.clear();
+    //mFaceCountVec.clear();
+    //mFaceIndicesVec.clear(); 
+    //mBindPoseVec.clear();
+    //mVelocitiesVec.clear();
+    //mUvVec.clear();
+    //mUvIndexVec.clear();
+    //mMatIdIndexVec.clear();
+    //mFaceSetsMap.clear();
 
     // store the metadata
     //IMetaDataManager mng;
@@ -173,10 +173,10 @@ bool AlembicPolyMesh::Save(double time)
         if(mNumSamples == 0)
         {
             // store a dummy empty topology
-            mFaceCountVec.push_back(0);
-            mFaceIndicesVec.push_back(0);
-            Alembic::Abc::Int32ArraySample faceCountSample(&mFaceCountVec.front(),mFaceCountVec.size());
-            Alembic::Abc::Int32ArraySample faceIndicesSample(&mFaceIndicesVec.front(),mFaceIndicesVec.size());
+            currPolyMesh.mFaceCountVec.push_back(0);
+            currPolyMesh.mFaceIndicesVec.push_back(0);
+            Alembic::Abc::Int32ArraySample faceCountSample(&currPolyMesh.mFaceCountVec.front(), currPolyMesh.mFaceCountVec.size());
+            Alembic::Abc::Int32ArraySample faceIndicesSample(&currPolyMesh.mFaceIndicesVec.front(), currPolyMesh.mFaceIndicesVec.size());
             mMeshSample.setFaceCounts(faceCountSample);
             mMeshSample.setFaceIndices(faceIndicesSample);
         }
@@ -252,7 +252,7 @@ bool AlembicPolyMesh::Save(double time)
 	//write out the texture coordinates if necessary
 	if((bool)GetCurrentJob()->GetOption("exportUVs") && (bIsFirstFrame || dynamicTopology))
 	{
-		if (currPolyMesh.mUvVec.size() == currPolyMesh.sampleCount)
+		///if (currPolyMesh.mUvVec.size() == currPolyMesh.sampleCount) //TODO: is this condition important?
 		{
 			if (currPolyMesh.mUvVec.size() > 0)
 			{
@@ -260,7 +260,7 @@ bool AlembicPolyMesh::Save(double time)
 					Alembic::Abc::V2fArraySample(&currPolyMesh.mUvVec.front(),currPolyMesh.mUvVec.size()),
 					Alembic::AbcGeom::kFacevaryingScope);
 
-				if(mUvIndexVec.size() > 0){
+				if(currPolyMesh.mUvIndexVec.size() > 0){
 				  uvSample.setIndices(Alembic::Abc::UInt32ArraySample(&currPolyMesh.mUvIndexVec.front(),currPolyMesh.mUvIndexVec.size()));
 				}
 				mMeshSample.setUVs(uvSample);
@@ -272,99 +272,56 @@ bool AlembicPolyMesh::Save(double time)
 				// requires it
 				currPolyMesh.mUvVec.push_back(Imath::V2f(0,0));
 				currPolyMesh.mUvIndexVec.push_back(0);
-				Alembic::AbcGeom::OV2fGeomParam::Sample uvSample(Alembic::Abc::V2fArraySample(&mUvVec.front(), 0), Alembic::AbcGeom::kFacevaryingScope);
-				uvSample.setIndices(Alembic::Abc::UInt32ArraySample(&mUvIndexVec.front(), 0) );
+				Alembic::AbcGeom::OV2fGeomParam::Sample uvSample(Alembic::Abc::V2fArraySample(&currPolyMesh.mUvVec.front(), 0), Alembic::AbcGeom::kFacevaryingScope);
+				uvSample.setIndices(Alembic::Abc::UInt32ArraySample(&currPolyMesh.mUvIndexVec.front(), 0) );
 				mMeshSample.setUVs(uvSample);
 			}
 		}
 	}
 
-#if 0
-   if(bIsFirstFrame || (dynamicTopology))
-   {
+
+
       // sweet, now let's have a look at face sets (really only for first sample)
       // for 3DS Max, we are mapping this to the material ids
-      std::vector<boost::int32_t> zeroFaceVector;
-	  if(GetCurrentJob()->GetOption("exportMaterialIds") && (mNumSamples == 0 || dynamicTopology))
+	  if(GetCurrentJob()->GetOption("exportMaterialIds") && (bIsFirstFrame || dynamicTopology))
       {
-          if (polyMesh != NULL || triMesh != NULL)
+
+          if(!mMatIdProperty.valid())
           {
-              if(!mMatIdProperty.valid())
+              mMatIdProperty = OUInt32ArrayProperty(mMeshSchema, ".materialids", mMeshSchema.getMetaData(), GetCurrentJob()->GetAnimatedTs());
+          }
+
+          size_t nMatIndexSize = currPolyMesh.mMatIdIndexVec.size();
+		  if(nMatIndexSize == 0){
+              currPolyMesh.mMatIdIndexVec.push_back(0);
+		  }
+          Alembic::Abc::UInt32ArraySample sample = Alembic::Abc::UInt32ArraySample(&currPolyMesh.mMatIdIndexVec.front(), nMatIndexSize);
+          mMatIdProperty.set(sample);
+
+		  size_t numMatId = currPolyMesh.mMatNames.size();
+          // For sample zero, export the material ids as face sets
+		  if (bIsFirstFrame && numMatId > 1)
+          {
+			  int i = 0;
+			  for ( facesetmap_it it=currPolyMesh.mFaceSetsMap.begin(); it != currPolyMesh.mFaceSetsMap.end(); it++)
               {
-                  mMatIdProperty = OUInt32ArrayProperty(mMeshSchema, ".materialids", mMeshSchema.getMetaData(), GetCurrentJob()->GetAnimatedTs());
-              }
+				  std::string name = currPolyMesh.mMatNames[i];
 
-			  int numMatId = 0;
-              int numFaces = polyMesh ? polyMesh->numf : triMesh->getNumFaces();
-              mMatIdIndexVec.resize(numFaces);
-              for (int i = 0; i < numFaces; i += 1)
-              {
-                  int matId = polyMesh ? polyMesh->f[i].material : triMesh->faces[i].getMatID();
-                  mMatIdIndexVec[i] = matId;
+                  std::vector<int32_t> & faceSetVec = it->second;
 
-                  // Record the face set map if sample zero
-                  if (mNumSamples == 0)
-                  {
-                      facesetmap_it it;
-                      it = mFaceSetsMap.find(matId);
+                  Alembic::AbcGeom::OFaceSet faceSet = mMeshSchema.createFaceSet(name);
+                  Alembic::AbcGeom::OFaceSetSchema::Sample faceSetSample(Alembic::Abc::Int32ArraySample(&faceSetVec.front(),faceSetVec.size()));
+                  faceSet.getSchema().set(faceSetSample);
 
-                      if (it == mFaceSetsMap.end())
-                      {
-                          facesetmap_ret_pair ret = mFaceSetsMap.insert(facesetmap_insert_pair(matId, std::vector<int32_t>()));
-                          it = ret.first;
-						  numMatId++;
-                      }
-
-                      it->second.push_back(i);
-                  }
-              }
-
-              size_t nMatIndexSize = mMatIdIndexVec.size();
-              if(nMatIndexSize == 0)
-                  mMatIdIndexVec.push_back(0);
-              Alembic::Abc::UInt32ArraySample sample = Alembic::Abc::UInt32ArraySample(&mMatIdIndexVec.front(), nMatIndexSize);
-              mMatIdProperty.set(sample);
-
-			  Mtl* pMat = GetRef().node->GetMtl();
-
-              // For sample zero, export the material ids as face sets
-			  if (mNumSamples == 0 && numMatId > 1 )
-              {
-				  int i = 0;
-				  for ( facesetmap_it it=mFaceSetsMap.begin(); it != mFaceSetsMap.end(); it++)
-                  {
-                     
-
-					  Mtl* pSubMat = NULL;
-					  if(pMat && i<pMat->NumSubMtls()){
-					      pSubMat = pMat->GetSubMtl(i);
-					  }
-					  std::stringstream nameStream;
-					  int nMaterialId = it->first+1;
-					  if(pSubMat){
-                          nameStream<<pSubMat->GetName();
-					  }
-					  else if(pMat){
-						  nameStream<<pMat->GetName();
-					  }
-					  else{
-					      nameStream<<"Unnamed";
-					  }
-					  nameStream<<" : "<<nMaterialId;
-					  std::string name = nameStream.str();
-
-                      std::vector<int32_t> & faceSetVec = it->second;
-
-                      Alembic::AbcGeom::OFaceSet faceSet = mMeshSchema.createFaceSet(name);
-                      Alembic::AbcGeom::OFaceSetSchema::Sample faceSetSample(Alembic::Abc::Int32ArraySample(&faceSetVec.front(),faceSetVec.size()));
-                      faceSet.getSchema().set(faceSetSample);
-
-					  i++;
-                  }
+				  i++;
               }
           }
-      }
 
+       }
+   
+
+   if(bIsFirstFrame || (dynamicTopology))
+   {
       // check if we need to export the bindpose (also only for first frame)
 	  /*
       if(GetJob()->GetOption(L"exportBindPose") && prim.GetParent3DObject().GetEnvelopes().GetCount() > 0 && mNumSamples == 0)
@@ -389,7 +346,7 @@ bool AlembicPolyMesh::Save(double time)
       }
       */
    }
-#endif
+
 
    // check if we should export the velocities
    /*if(dynamicTopology)
