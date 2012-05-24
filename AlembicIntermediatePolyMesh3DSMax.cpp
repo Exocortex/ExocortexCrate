@@ -459,84 +459,60 @@ void IntermediatePolyMesh3DSMax::Save(AlembicWriteJob* writeJob, TimeValue ticks
 	//std::vector<boost::int32_t> zeroFaceVector;
 	if(writeJob->GetOption("exportMaterialIds") && (bFirstFrame || dynamicTopology))
 	{
-		if (polyMesh != NULL || triMesh != NULL)
+		int numMatId = 0;
+		int numFaces = polyMesh ? polyMesh->numf : triMesh->getNumFaces();
+		mMatIdIndexVec.resize(numFaces);
+		for (int i = 0; i < numFaces; i += 1)
 		{
-			//if(!mMatIdProperty.valid())
-			//{
-			//    mMatIdProperty = OUInt32ArrayProperty(mMeshSchema, ".materialids", mMeshSchema.getMetaData(), writeJob->GetAnimatedTs());
-			//}
+		  int matId = polyMesh ? polyMesh->f[i].material : triMesh->faces[i].getMatID();
+		  mMatIdIndexVec[i] = matId;
 
-			int numMatId = 0;
-			int numFaces = polyMesh ? polyMesh->numf : triMesh->getNumFaces();
-			mMatIdIndexVec.resize(numFaces);
-			for (int i = 0; i < numFaces; i += 1)
-			{
-			  int matId = polyMesh ? polyMesh->f[i].material : triMesh->faces[i].getMatID();
-			  mMatIdIndexVec[i] = matId;
+		  // Record the face set map if sample zero
+		  if (bFirstFrame)
+		  {
+			  facesetmap_it it;
+			  it = mFaceSetsMap.find(matId);
 
-			  // Record the face set map if sample zero
-			  if (bFirstFrame)
+			  if (it == mFaceSetsMap.end())
 			  {
-				  facesetmap_it it;
-				  it = mFaceSetsMap.find(matId);
-
-				  if (it == mFaceSetsMap.end())
-				  {
-					  facesetmap_ret_pair ret = mFaceSetsMap.insert(facesetmap_insert_pair(matId, std::vector<int32_t>()));
-					  it = ret.first;
-					  numMatId++;
-				  }
-
-				  it->second.push_back(i);
+				  facesetmap_ret_pair ret = mFaceSetsMap.insert(facesetmap_insert_pair(matId, std::vector<int32_t>()));
+				  it = ret.first;
+				  numMatId++;
 			  }
-			}
 
-			//         size_t nMatIndexSize = mMatIdIndexVec.size();
-			//if(nMatIndexSize == 0){
-			//             mMatIdIndexVec.push_back(0);
-			//}
-			//Alembic::Abc::UInt32ArraySample sample = Alembic::Abc::UInt32ArraySample(&mMatIdIndexVec.front(), nMatIndexSize);
-			//mMatIdProperty.set(sample);
-
-			//Mtl* pMat = GetRef().node->GetMtl();
-
-			// For sample zero, export the material ids as face sets
-			if (bFirstFrame && numMatId > 1 )
-			{
-
-			  for ( facesetmap_it it=mFaceSetsMap.begin(); it != mFaceSetsMap.end(); it++)
-			  {
-				  int i = it->first; 
-
-				  Mtl* pSubMat = NULL;
-				  const int numMat = pMtl ? pMtl->NumSubMtls() : 0;
-				  if(pMtl && i < numMat){
-					  pSubMat = pMtl->GetSubMtl(i);
-				  }
-				  std::stringstream nameStream;
-				  int nMaterialId = it->first+1;
-				  if(pSubMat){
-					  nameStream<<pSubMat->GetName();
-				  }
-				  else if(pMtl){
-					  nameStream<<pMtl->GetName();
-				  }
-				  else{
-					  nameStream<<"Unnamed";
-				  }
-				  nameStream<<" : "<<nMaterialId;
-				  std::string name = nameStream.str();
-
-				  mMatNames.push_back(name);
-
-				  //std::vector<int32_t> & faceSetVec = it->second;
-
-				  //Alembic::AbcGeom::OFaceSet faceSet = mMeshSchema.createFaceSet(name);
-				  //Alembic::AbcGeom::OFaceSetSchema::Sample faceSetSample(Alembic::Abc::Int32ArraySample(&faceSetVec.front(),faceSetVec.size()));
-				  //faceSet.getSchema().set(faceSetSample);
-			  }
-			}
+			  it->second.push_back(i);
+		  }
 		}
+
+		// For sample zero, export the material ids as face sets
+		if (bFirstFrame && numMatId > 1 )
+		{
+
+		  for ( facesetmap_it it=mFaceSetsMap.begin(); it != mFaceSetsMap.end(); it++)
+		  {
+			  int i = it->first; 
+
+			  Mtl* pSubMat = NULL;
+			  const int numMat = pMtl ? pMtl->NumSubMtls() : 0;
+			  if(pMtl && i < numMat){
+				  pSubMat = pMtl->GetSubMtl(i);
+			  }
+			  std::stringstream nameStream;
+			  int nMaterialId = it->first+1;
+			  if(pSubMat){
+				  nameStream<<pSubMat->GetName();
+			  }
+			  else if(pMtl){
+				  nameStream<<pMtl->GetName();
+			  }
+			  else{
+				  nameStream<<"Unnamed";
+			  }
+
+			  mMatNamesMap[i] = nameStream.str();
+		  }
+		}
+		
 	}
 
 

@@ -65,7 +65,7 @@ bool AlembicPolyMesh::Save(double time)
 	const bool bIsParticleSystem = obj->IsParticleSystem() == 1;
 
 	if(bIsParticleSystem){
-		bForever = false;//TODO...
+		bForever = false;
 	}
 	else{
 		if(mNumSamples == 0){
@@ -130,16 +130,20 @@ bool AlembicPolyMesh::Save(double time)
 			return false;
 		}
 
-		//TODO: save each mesh, then merge then into finalPolymesh
-		//for(int i=0; i<meshes.size(); i++){
-		//	
-		//	IntermediatePolyMesh3DSMax currPolyMesh;
-		//	//TODO: should I get the material off of the node for a particle system?
-		//	currPolyMesh.Save(mJob, ticks, meshes[i].pMesh, NULL, GetRef().node->GetObjTMAfterWSM(ticks), GetRef().node->GetMtl(), mNumSamples);
-		//	finalPolyMesh.mergeWith(currPolyMesh);
-		//}
 
+		//TODO: should I get the material off of the node for a particle system?
+
+		//save the first mesh to final result, and then merge the others with it
 		finalPolyMesh.Save(mJob, ticks, meshes[0].pMesh, NULL, GetRef().node->GetObjTMAfterWSM(ticks), GetRef().node->GetMtl(), mNumSamples);
+
+		for(int i=1; i<meshes.size(); i++){
+			IntermediatePolyMesh3DSMax currPolyMesh;
+			currPolyMesh.Save(mJob, ticks, meshes[i].pMesh, NULL, GetRef().node->GetObjTMAfterWSM(ticks), GetRef().node->GetMtl(), mNumSamples);
+			bool bSuccess = finalPolyMesh.mergeWith(currPolyMesh);
+			if(!bSuccess){
+				return false;
+			}
+		}
 
 		for(int i=0; i<meshes.size(); i++){
 			
@@ -345,22 +349,21 @@ bool AlembicPolyMesh::Save(double time)
           Alembic::Abc::UInt32ArraySample sample = Alembic::Abc::UInt32ArraySample(&finalPolyMesh.mMatIdIndexVec.front(), nMatIndexSize);
           mMatIdProperty.set(sample);
 
-		  size_t numMatId = finalPolyMesh.mMatNames.size();
+		  size_t numMatId = finalPolyMesh.mMatNamesMap.size();
           // For sample zero, export the material ids as face sets
 		  if (bIsFirstFrame && numMatId > 1)
           {
-			  int i = 0;
 			  for ( facesetmap_it it=finalPolyMesh.mFaceSetsMap.begin(); it != finalPolyMesh.mFaceSetsMap.end(); it++)
               {
-				  std::string name = finalPolyMesh.mMatNames[i];
+				  std::stringstream nameStream;
+				  int nMaterialId = it->first+1;
+				  nameStream<<finalPolyMesh.mMatNamesMap[it->first]<<" : "<<nMaterialId;
 
                   std::vector<int32_t> & faceSetVec = it->second;
 
-                  Alembic::AbcGeom::OFaceSet faceSet = mMeshSchema.createFaceSet(name);
+                  Alembic::AbcGeom::OFaceSet faceSet = mMeshSchema.createFaceSet(nameStream.str());
                   Alembic::AbcGeom::OFaceSetSchema::Sample faceSetSample(Alembic::Abc::Int32ArraySample(&faceSetVec.front(),faceSetVec.size()));
                   faceSet.getSchema().set(faceSetSample);
-
-				  i++;
               }
           }
 
