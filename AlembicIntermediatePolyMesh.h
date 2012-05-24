@@ -5,14 +5,18 @@
 #include "Alembic.h"
 
 typedef std::vector<Alembic::AbcCoreAbstract::ALEMBIC_VERSION_NS::int32_t> facesetmap_vec;
-typedef std::map<int, facesetmap_vec> facesetmap;
-typedef std::map<int, facesetmap_vec>::iterator facesetmap_it;
-typedef std::map<int, facesetmap_vec>::const_iterator facesetmap_cit;
-typedef std::pair<int, facesetmap_vec> facesetmap_insert_pair;
-typedef std::pair<facesetmap_it, bool> facesetmap_ret_pair;
 
-typedef std::map<int, std::string> matnamemap;
-//typedef std::pair<int, std::string> matnamemap_insert_pair;
+struct faceSetStr
+{
+	std::string name;
+	facesetmap_vec faceIds;
+};
+
+typedef std::map<int, faceSetStr> facesetmap;
+typedef std::map<int, faceSetStr>::iterator facesetmap_it;
+typedef std::map<int, faceSetStr>::const_iterator facesetmap_cit;
+typedef std::pair<int, faceSetStr> facesetmap_insert_pair;
+typedef std::pair<facesetmap_it, bool> facesetmap_ret_pair;
 
 class AlembicIntermediatePolyMesh
 {
@@ -35,7 +39,6 @@ public:
 	std::vector<Alembic::Abc::uint32_t> mUvIndexVec;//will have size 0 if not using indexed UVs
 
 	std::vector<Alembic::Abc::uint32_t> mMatIdIndexVec;
-	matnamemap mMatNamesMap;
 	facesetmap mFaceSetsMap;
 
    //std::vector<Alembic::Abc::V3f> mBindPoseVec;

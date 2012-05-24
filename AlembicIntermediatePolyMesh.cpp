@@ -63,39 +63,36 @@ bool AlembicIntermediatePolyMesh::mergeWith(const AlembicIntermediatePolyMesh& s
 
 
 
-	//if(nLargestMatId == 0){ //merge has never been run before, so reassign the dest matIDs as well
-	//	for ( facesetmap_it it=destMesh.mFaceSetsMap.begin(); it != destMesh.mFaceSetsMap.end(); it++)
-	//	{
-	//		it->first = nLargestMatId; 
-	//		nLargestMatId++;
-	//	}
-	//}
+	if(nLargestMatId == 0){ //merge has never been run before, so reassign the dest matIDs as well
 
-	////reassign the src matIDs, and append this map to the dest map
-	//for ( facesetmap_cit it=srcMesh.mFaceSetsMap.begin(); it != srcMesh.mFaceSetsMap.end(); it++)
-	//{
-	//	destMesh.mFaceSetsMap.insert(facesetmap_insert_pair(nLargestMatId, it->second));
-	//	nLargestMatId++;
-	//}
+		facesetmap newFaceSetsMap;
+		for ( facesetmap_it it=destMesh.mFaceSetsMap.begin(); it != destMesh.mFaceSetsMap.end(); it++)
+		{
+			newFaceSetsMap[nLargestMatId] = it->second; 
+			nLargestMatId++;
+		}
+		mFaceSetsMap = newFaceSetsMap;
+	}
 
-	////the names have the same order after merge, so just append one vector to the other
-	//for(int i=0; i<srcMesh.mMatNames.size(); i++){
-	//	destMesh.mMatNames.push_back( srcMesh.mMatNames[i] );
-	//}
+	//reassign the src matIDs, and append this map to the dest map
+	for ( facesetmap_cit it=srcMesh.mFaceSetsMap.begin(); it != srcMesh.mFaceSetsMap.end(); it++)
+	{
+		destMesh.mFaceSetsMap.insert(facesetmap_insert_pair(nLargestMatId, it->second));
+		nLargestMatId++;
+	}
 
-	//mMatIdIndexVec.resize(destMesh.mFaceSetsMap.size());
+	//now rebuilt the matID index array
+	mMatIdIndexVec.resize(destMesh.mFaceSetsMap.size());
+	for ( facesetmap_it it=destMesh.mFaceSetsMap.begin(); it != destMesh.mFaceSetsMap.end(); it++)
+	{
+		int matId = it->first; 
+		facesetmap_vec& faceSetVec = it->second.faceIds;
 
-	////now rebuilt the matID index array
-	//for ( facesetmap_it it=destMesh.mFaceSetsMap.begin(); it != destMesh.mFaceSetsMap.end(); it++)
-	//{
-	//	int matId = it->first; 
-	//	facesetmap_vec& faceSetVec = it->second;
-
-	//	for(int i=0; i<faceSetVec.size(); i++)
-	//	{
-	//		mMatIdIndexVec[faceSetVec[i]] = matId;
-	//	}
-	//}
+		for(int i=0; i<faceSetVec.size(); i++)
+		{
+			mMatIdIndexVec[faceSetVec[i]] = matId;
+		}
+	}
 
 
 	return true;

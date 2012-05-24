@@ -89,6 +89,8 @@ void getParticleSystemRenderMeshes(TimeValue ticks, Object* obj, INode* node, st
 			::INode *pNode = groups[g]->GetParticleSystem();
 
 			particleMeshData mdata;
+			mdata.pMtl = groups[g]->GetMaterial();
+
 			mdata.pMesh = particleRender->GetRenderMesh(pCont, ticks, obj, pNode, nullView, mdata.bNeedDelete);
 
 			if(mdata.pMesh){

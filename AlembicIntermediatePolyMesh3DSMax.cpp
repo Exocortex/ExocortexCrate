@@ -475,17 +475,19 @@ void IntermediatePolyMesh3DSMax::Save(AlembicWriteJob* writeJob, TimeValue ticks
 
 			  if (it == mFaceSetsMap.end())
 			  {
-				  facesetmap_ret_pair ret = mFaceSetsMap.insert(facesetmap_insert_pair(matId, std::vector<int32_t>()));
+				  faceSetStr faceSet;
+				  faceSet.faceIds = std::vector<int32_t>();
+				  facesetmap_ret_pair ret = mFaceSetsMap.insert( facesetmap_insert_pair(matId, faceSet) );
 				  it = ret.first;
 				  numMatId++;
 			  }
 
-			  it->second.push_back(i);
+			  it->second.faceIds.push_back(i);
 		  }
 		}
 
 		// For sample zero, export the material ids as face sets
-		if (bFirstFrame && numMatId > 1 )
+		if (bFirstFrame)// && numMatId > 1 )
 		{
 
 		  for ( facesetmap_it it=mFaceSetsMap.begin(); it != mFaceSetsMap.end(); it++)
@@ -509,7 +511,7 @@ void IntermediatePolyMesh3DSMax::Save(AlembicWriteJob* writeJob, TimeValue ticks
 				  nameStream<<"Unnamed";
 			  }
 
-			  mMatNamesMap[i] = nameStream.str();
+			  it->second.name = nameStream.str();
 		  }
 		}
 		

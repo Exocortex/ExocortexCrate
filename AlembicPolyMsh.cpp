@@ -130,15 +130,12 @@ bool AlembicPolyMesh::Save(double time)
 			return false;
 		}
 
-
-		//TODO: should I get the material off of the node for a particle system?
-
-		//save the first mesh to final result, and then merge the others with it
-		finalPolyMesh.Save(mJob, ticks, meshes[0].pMesh, NULL, GetRef().node->GetObjTMAfterWSM(ticks), GetRef().node->GetMtl(), mNumSamples);
+		//save the first mesh to the final result, and then merge the others with it
+		finalPolyMesh.Save(mJob, ticks, meshes[0].pMesh, NULL, GetRef().node->GetObjTMAfterWSM(ticks), meshes[0].pMtl, mNumSamples);
 
 		for(int i=1; i<meshes.size(); i++){
 			IntermediatePolyMesh3DSMax currPolyMesh;
-			currPolyMesh.Save(mJob, ticks, meshes[i].pMesh, NULL, GetRef().node->GetObjTMAfterWSM(ticks), GetRef().node->GetMtl(), mNumSamples);
+			currPolyMesh.Save(mJob, ticks, meshes[i].pMesh, NULL, GetRef().node->GetObjTMAfterWSM(ticks), meshes[i].pMtl, mNumSamples);
 			bool bSuccess = finalPolyMesh.mergeWith(currPolyMesh);
 			if(!bSuccess){
 				return false;
@@ -349,7 +346,7 @@ bool AlembicPolyMesh::Save(double time)
           Alembic::Abc::UInt32ArraySample sample = Alembic::Abc::UInt32ArraySample(&finalPolyMesh.mMatIdIndexVec.front(), nMatIndexSize);
           mMatIdProperty.set(sample);
 
-		  size_t numMatId = finalPolyMesh.mMatNamesMap.size();
+		  size_t numMatId = finalPolyMesh.mFaceSetsMap.size();
           // For sample zero, export the material ids as face sets
 		  if (bIsFirstFrame && numMatId > 1)
           {
@@ -357,9 +354,9 @@ bool AlembicPolyMesh::Save(double time)
               {
 				  std::stringstream nameStream;
 				  int nMaterialId = it->first+1;
-				  nameStream<<finalPolyMesh.mMatNamesMap[it->first]<<" : "<<nMaterialId;
+				  nameStream<<it->second.name<<" : "<<nMaterialId;
 
-                  std::vector<int32_t> & faceSetVec = it->second;
+                  std::vector<int32_t> & faceSetVec = it->second.faceIds;
 
                   Alembic::AbcGeom::OFaceSet faceSet = mMeshSchema.createFaceSet(nameStream.str());
                   Alembic::AbcGeom::OFaceSetSchema::Sample faceSetSample(Alembic::Abc::Int32ArraySample(&faceSetVec.front(),faceSetVec.size()));

@@ -7,6 +7,7 @@
 struct particleMeshData{
 	BOOL bNeedDelete;
 	Mesh* pMesh;
+	Mtl* pMtl;
 };
 
 void getParticleSystemRenderMeshes(TimeValue ticks, Object* obj, INode* node, std::vector<particleMeshData>& meshes);
