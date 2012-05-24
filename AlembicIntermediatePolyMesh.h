@@ -10,7 +10,7 @@ typedef std::pair<int, std::vector<Alembic::AbcCoreAbstract::ALEMBIC_VERSION_NS:
 typedef std::pair<facesetmap_it, bool> facesetmap_ret_pair;
 
 
-class AlembicIntermidiatePolyMesh
+class AlembicIntermediatePolyMesh
 {
 public:
 	Alembic::Abc::Box3d bbox;
@@ -34,7 +34,9 @@ public:
    //std::vector<Alembic::Abc::V3f> mVelocitiesVec;
    //std::vector<float> mRadiusVec;
   
-	LONG sampleCount;
+	LONG sampleCount;//TODO: do I need this?
+
+	void mergeWith(const AlembicIntermediatePolyMesh& mesh2);
 };
 
 

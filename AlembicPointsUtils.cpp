@@ -90,7 +90,9 @@ void getParticleSystemRenderMeshes(TimeValue ticks, Object* obj, INode* node, st
 			particleMeshData mdata;
 			mdata.pMesh = particleRender->GetRenderMesh(pCont, ticks, obj, node, nullView, mdata.bNeedDelete);
 
-			meshes.push_back(mdata);
+			if(mdata.pMesh){
+				meshes.push_back(mdata);
+			}
 		}
 	}
 

@@ -22,7 +22,7 @@ public:
 
 class AlembicWriteJob;
 
-class IntermediatePolyMesh3DSMax : public AlembicIntermidiatePolyMesh
+class IntermediatePolyMesh3DSMax : public AlembicIntermediatePolyMesh
 {
 	std::vector<VNormal> m_MeshSmoothGroupNormals;
 
