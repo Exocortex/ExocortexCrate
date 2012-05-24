@@ -86,9 +86,10 @@ void getParticleSystemRenderMeshes(TimeValue ticks, Object* obj, INode* node, st
 		for(int g=0; g<groups.size(); g++){
 			
 			::IObject *pCont = groups[g]->GetParticleContainer();
+			::INode *pNode = groups[g]->GetParticleSystem();
 
 			particleMeshData mdata;
-			mdata.pMesh = particleRender->GetRenderMesh(pCont, ticks, obj, node, nullView, mdata.bNeedDelete);
+			mdata.pMesh = particleRender->GetRenderMesh(pCont, ticks, obj, pNode, nullView, mdata.bNeedDelete);
 
 			if(mdata.pMesh){
 				meshes.push_back(mdata);
