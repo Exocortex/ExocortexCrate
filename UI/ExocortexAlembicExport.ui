@@ -195,26 +195,46 @@
       </property>
      </widget>
     </item>
-    <item row="8" column="0">
-     <widget class="QLabel" name="label_11">
-      <property name="text">
-       <string>Global Space:</string>
-      </property>
-      <property name="alignment">
-       <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-      </property>
-     </widget>
-    </item>
-    <item row="8" column="1">
-     <widget class="QCheckBox" name="globalspace">
-      <property name="text">
-       <string/>
-      </property>
-      <property name="checked">
-       <bool>false</bool>
-      </property>
-     </widget>
-    </item>
+     <item row="8" column="0">
+       <widget class="QLabel" name="label_11">
+         <property name="text">
+           <string>Global Space:</string>
+         </property>
+         <property name="alignment">
+           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+         </property>
+       </widget>
+     </item>
+     <item row="8" column="1">
+       <widget class="QCheckBox" name="globalspace">
+         <property name="text">
+           <string/>
+         </property>
+         <property name="checked">
+           <bool>false</bool>
+         </property>
+       </widget>
+     </item>
+     <item row="9" column="0">
+       <widget class="QLabel" name="label_12">
+         <property name="text">
+           <string>Without Hierarchy:</string>
+         </property>
+         <property name="alignment">
+           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+         </property>
+       </widget>
+     </item>
+     <item row="9" column="1">
+       <widget class="QCheckBox" name="withouthierarchy">
+         <property name="text">
+           <string/>
+         </property>
+         <property name="checked">
+           <bool>false</bool>
+         </property>
+       </widget>
+     </item>
    </layout>
   </widget>
   <widget class="QWidget" name="horizontalLayoutWidget">

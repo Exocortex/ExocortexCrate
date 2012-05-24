@@ -15,6 +15,7 @@ global proc exocortexAlembicExport(string $filename, string $dialog)
   int $exportFaceSets = `checkBox -q -value facesets`;
   int $exportDynamicTopo = `checkBox -q -value dynamictopology`;
   int $exportGlobalSpace = `checkBox -q -value globalspace`;
+  int $exportWithoutHierarchy = `checkBox -q -value withouthierarchy`;
   exocortexCloseDialog($dialog);
 
   $minTime = `playbackOptions -q -min`;
@@ -69,6 +70,7 @@ global proc exocortexAlembicExport(string $filename, string $dialog)
     $job += ";dynamictopology="+$exportDynamicTopo;
   }
   $job += ";globalspace="+$exportGlobalSpace;
+  $job += ";withouthierarchy="+$exportWithoutHierarchy;
   print $job;
   ExocortexAlembic_export -j $job;
 }
