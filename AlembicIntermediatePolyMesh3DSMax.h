@@ -20,6 +20,22 @@ public:
     void Normalize();
 };
 
+
+struct materialStr
+{
+	std::string name;
+	int newMapId;
+};
+
+typedef std::map<int, materialStr> meshMaterialsMap;
+typedef std::map<int, materialStr>::iterator meshMaterialsMap_it;
+typedef std::map<int, materialStr>::const_iterator meshMaterialsMap_cit;
+
+typedef std::map<AnimHandle, meshMaterialsMap> mergedMeshMaterialsMap;
+typedef std::map<AnimHandle, meshMaterialsMap>::iterator mergedMeshMaterialsMap_it;
+typedef std::map<AnimHandle, meshMaterialsMap>::const_iterator mergedMaterialsMap_cit;
+
+
 class AlembicWriteJob;
 
 class IntermediatePolyMesh3DSMax : public AlembicIntermediatePolyMesh
