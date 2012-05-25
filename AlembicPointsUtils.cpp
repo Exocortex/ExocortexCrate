@@ -90,6 +90,8 @@ void getParticleSystemRenderMeshes(TimeValue ticks, Object* obj, INode* node, st
 
 			particleMeshData mdata;
 			mdata.pMtl = groups[g]->GetMaterial();
+			
+			mdata.animHandle = Animatable::GetHandleByAnim(groups[g]->GetActionList());
 
 			mdata.pMesh = particleRender->GetRenderMesh(pCont, ticks, obj, pNode, nullView, mdata.bNeedDelete);
 
