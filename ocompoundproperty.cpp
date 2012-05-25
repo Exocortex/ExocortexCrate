@@ -188,6 +188,9 @@ PyObject * oCompoundProperty_new(Alembic::Abc::OCompoundProperty compound, const
 
       cprop->mBaseCompoundProperty = new Alembic::Abc::OCompoundProperty(compound.getPtr(), in_propName, md);
       INFO_MSG("NEW compound property name: " << (cprop->mBaseCompoundProperty->getObject().getFullName()));
+
+      if (cprop->mBaseCompoundProperty->getObject().getFullName() == compound.getObject().getFullName())
+         throw int(3);
    }
 
    /*
