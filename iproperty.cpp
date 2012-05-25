@@ -2568,8 +2568,6 @@ PyObject * iProperty_new(Alembic::Abc::ICompoundProperty &compound, char * in_pr
       prop->mIsArray = prop->mIsCompound ? false : propHeader->isArray();
       if(prop->mIsCompound)
       {
-         //prop->mPropType = propertyTP_compound;
-         //prop->mBaseCompoundProperty = new Alembic::Abc::ICompoundProperty(compound,in_propName);
          PyObject_FREE(prop);    // Free it because one will be created in iCompoundProperty_new
          return iCompoundProperty_new(compound, in_propName);
       }
@@ -2814,9 +2812,7 @@ PyObject * iProperty_new(Alembic::Abc::ICompoundProperty &compound, char * in_pr
 PyObject * iProperty_new(Alembic::Abc::IObject in_Object, char * in_propName)
 {
    ALEMBIC_TRY_STATEMENT
-   // check if we have this header
    Alembic::Abc::ICompoundProperty compound = getCompoundFromIObject(in_Object);
-   //const Alembic::Abc::PropertyHeader * propHeader = compound.getPropertyHeader( in_propName );
    if (compound.getPropertyHeader( in_propName ) == NULL )
    {
       std::string msg;
@@ -2828,7 +2824,6 @@ PyObject * iProperty_new(Alembic::Abc::IObject in_Object, char * in_propName)
       PyErr_SetString(getError(), msg.c_str());
       return NULL;
    }
-
    return iProperty_new(compound, in_propName);
    ALEMBIC_PYOBJECT_CATCH_STATEMENT
 }

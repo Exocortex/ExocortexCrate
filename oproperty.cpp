@@ -1009,9 +1009,16 @@ static PyObject * oProperty_setValues(PyObject * self, PyObject * args)
    ALEMBIC_PYOBJECT_CATCH_STATEMENT
 }
 
+static PyObject *oProperty_isCompound(PyObject *self)
+{
+   Py_INCREF(Py_False);
+   return Py_False;
+}
+
 static PyMethodDef oProperty_methods[] = {
    {"getName", (PyCFunction)oProperty_getName, METH_NOARGS, "Returns the name of the property."},
    {"setValues", (PyCFunction)oProperty_setValues, METH_VARARGS, "Appends a new sample to the property, given the values provided. The values have to be a flat list of components, matching the count of the property. For example if this is a vector3farray property the tuple has to contain a multiple of 3 float values."},
+   {"isCompound", (PyCFunction)oProperty_isCompound, METH_NOARGS, "To distinguish between an oProperty and an oCompoundProperty, always returns false for oProperty."},
    {NULL, NULL}
 };
 
@@ -1027,9 +1034,10 @@ void oProperty_deletePointers(oProperty * prop)
    ALEMBIC_TRY_STATEMENT
    if(prop->mBaseScalarProperty == NULL)
       return;
+
    // first delete the base property
    if(prop->mIsCompound)      // TODO remove this after debuggin everything
-      delete(prop->mBaseCompoundProperty);
+      ;//delete(prop->mBaseCompoundProperty);
    else if(prop->mIsArray)
       delete(prop->mBaseArrayProperty);
    else
@@ -1248,11 +1256,11 @@ PyObject * oProperty_new(Alembic::Abc::OCompoundProperty compound, char * in_pro
    oArchive * archive = (oArchive*)in_Archive;
 
    // check if it's an iCompoundProperty, they shouldn't have similar names to avoid confusion when reading it!
-   /*{
+   {
       oCompoundProperty *cprop = oArchive_getCompPropElement(archive, identifier);
       if (cprop)
          return (PyObject*)cprop;
-   }*/
+   }
 
    oProperty * prop = oArchive_getPropElement(archive, identifier);
    if(prop)
@@ -1260,10 +1268,11 @@ PyObject * oProperty_new(Alembic::Abc::OCompoundProperty compound, char * in_pro
 
    // if we don't have it yet, create a new one and insert it into our map
    prop = PyObject_NEW(oProperty, &oProperty_Type);
+   prop->mIsCompound = false;
    prop->mBaseScalarProperty = NULL;
    prop->mBoolProperty = NULL;
    prop->mArchive = in_Archive;
-   oArchive_registerPropElement(archive,identifier,prop);
+   //oArchive_registerPropElement(archive,identifier,prop); // moved where it won't interfere with compounds
 
    // get the compound property writer
    Alembic::Abc::CompoundPropertyWriterPtr compoundWriter = GetCompoundPropertyWriterPtr(compound);      // this variable is unused!
@@ -1275,12 +1284,18 @@ PyObject * oProperty_new(Alembic::Abc::OCompoundProperty compound, char * in_pro
       std::string interpretation;
       if(baseProp.isCompound())
       {
+         /*
          prop->mIsArray = false;
          prop->mIsCompound = true;
          prop->mBaseCompoundProperty = new Alembic::Abc::OCompoundProperty(
             boost::dynamic_pointer_cast<Alembic::Abc::CompoundPropertyWriter>(baseProp.getPtr()), 
             Alembic::Abc::kWrapExisting
          );
+         */
+         // is a compound, must return an oCompoundProperty
+         INFO_MSG("It's a compound");
+         PyObject_FREE(prop);
+         return oCompoundProperty_new(compound, in_propName, "compound", tsIndex, in_Archive);
       }
       else if(baseProp.isArray())
       {
@@ -1302,6 +1317,8 @@ PyObject * oProperty_new(Alembic::Abc::OCompoundProperty compound, char * in_pro
          );
          interpretation = prop->mBaseScalarProperty->getMetaData().get("interpretation");
       }
+
+      oArchive_registerPropElement(archive,identifier,prop);
 
       // check for custom structs
       if(interpretation.empty())
@@ -1526,13 +1543,22 @@ PyObject * oProperty_new(Alembic::Abc::OCompoundProperty compound, char * in_pro
    }
    else
    {
+      INFO_MSG("CREATING property " << in_propName << " of type " << in_propType);
+
       // here we need the property type
       if(in_propType == NULL)
       {
          PyErr_SetString(getError(), "No property type specified!");
+         PyObject_FREE(prop);
          return NULL;
       }
+      else if (strcmp(in_propType, "compound") == 0)
+      {
+         PyObject_FREE(prop);
+         return oCompoundProperty_new(compound, in_propName, "compound", tsIndex, in_Archive);
+      }
 
+      oArchive_registerPropElement(archive,identifier,prop);
       prop->mIsCompound = false;
 
       // check if this is an array

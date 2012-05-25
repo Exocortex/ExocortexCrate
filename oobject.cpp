@@ -7,10 +7,6 @@
 #include "foundation.h"
 #include <boost/lexical_cast.hpp>
 
-#include <iostream>
-#define INFO_MSG(msg)    std::cerr << "ExocortexAlembicPython (" << __FILE__ << ":" << __LINE__ << " -> " << msg << std::endl
-
-
 Alembic::Abc::OCompoundProperty getCompoundFromOObject(oObjectPtr in_Casted)
 {
    ALEMBIC_TRY_STATEMENT
@@ -228,10 +224,10 @@ static PyObject * oObject_getProperty(PyObject * self, PyObject * args)
    }
 
    // Test if it's a compound or a normal property
-   if (propType && std::strcmp(propType, "compound") == 0)
+   /*if (propType && std::strcmp(propType, "compound") == 0)
    {
       return oCompoundProperty_new(getCompoundFromOObject(object->mCasted), propName, "compound", tsIndex, object->mArchive);
-   }
+   }*/
    return oProperty_new(getCompoundFromOObject(object->mCasted), propName, propType, tsIndex, object->mArchive);
    ALEMBIC_PYOBJECT_CATCH_STATEMENT
 }

@@ -120,17 +120,25 @@ static PyObject * iObject_getMetaData(PyObject * self, PyObject * args)
    ALEMBIC_TRY_STATEMENT
    iObject * object = (iObject*)self;
    Alembic::Abc::ICompoundProperty compound = getCompoundFromIObject(*object->mObject);
-   if(!compound.valid())
-      return PyTuple_New(0);
-   if ( compound.getPropertyHeader( ".metadata" ) == NULL )
-      return PyTuple_New(0);
+   if (!compound.valid() || compound.getPropertyHeader( ".metadata" ) == NULL )  // create an empty Meta Data with empty strings
+   {
+      PyObject * tuple = PyTuple_New(20);
+      for (int i = 0; i < 20; ++i)
+         PyTuple_SetItem(tuple,i,Py_BuildValue("s",""));
+      return tuple;
+   }
 
    Alembic::Abc::IStringArrayProperty metaDataProp = Alembic::Abc::IStringArrayProperty( compound, ".metadata" );
    Alembic::Abc::StringArraySamplePtr metaDataPtr = metaDataProp.getValue(0);
 
-   PyObject * tuple = PyTuple_New(metaDataPtr->size());
-   for(size_t i=0;i<metaDataPtr->size();i++)
+   PyObject * tuple = PyTuple_New(20);    // needs to be exactly 20
+   size_t i = 0; // initialized here, so it can go through two loops;
+   for(;i<metaDataPtr->size(); ++i)  // put the meta data in the tuple
       PyTuple_SetItem(tuple,i,Py_BuildValue("s",metaDataPtr->get()[i].c_str()));
+
+   for (; i < 20; ++i)               // fill the rest with empty strings
+      PyTuple_SetItem(tuple,i,Py_BuildValue("s",""));
+
    return tuple;
    ALEMBIC_PYOBJECT_CATCH_STATEMENT
 }

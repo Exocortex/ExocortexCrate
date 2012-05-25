@@ -2,6 +2,7 @@
 #include "oarchive.h"
 #include "oobject.h"
 #include "oproperty.h"
+#include "ocompoundproperty.h"
 #include "oxformproperty.h"
 #include "foundation.h"
 #include "AlembicLicensing.h"
@@ -127,6 +128,7 @@ static PyObject * oArchive_createObject(PyObject * self, PyObject * args)
    boost::split(parts, identifierStr, boost::is_any_of("/"));
    if(parts.size() < 2)
    {
+      INFO_MSG("INVALID IDENTIFIER, less than two parts: " << identifier);
       PyErr_SetString(getError(), "Invalid identifier!");
       return NULL;
    }
@@ -143,12 +145,13 @@ static PyObject * oArchive_createObject(PyObject * self, PyObject * args)
    if(parts.size() > 2)
    {
       // look for the parent in our map
-      std::string parentIdentifier = "/";
+      std::string parentIdentifier = "";
       for(size_t i=1;i<parts.size()-1;i++)
-         parentIdentifier += parts[i];
+         parentIdentifier += "/" + parts[i];
       oObject * parentPtr = oArchive_getObjectElement(archive,parentIdentifier);
       if(!parentPtr)
       {
+         INFO_MSG("INVALID IDENTIFIER, more than two parts: " << parentIdentifier << ", no parent");
          PyErr_SetString(getError(), "Invalid identifier!");
          return NULL;
       }
@@ -170,6 +173,7 @@ static PyObject * oArchive_createObject(PyObject * self, PyObject * args)
       // if we are not a transform, ensure that we are nested below a xform!
       if(parent.getMetaData().get("schema").substr(0,14) != "AbcGeom_Xform_")
       {
+         INFO_MSG("parent.getMetaData().get(\"schema\") = " << parent.getMetaData().get("schema"));
          PyErr_SetString(getError(), "This type of object has to be put below a xform object!");
          return NULL;
       }
@@ -278,6 +282,14 @@ static void oArchive_delete(PyObject * self)
             oProperty_deletePointers(element.prop);
             Py_DECREF(element.prop);
             element.prop = NULL;
+         }
+         else if (element.comp_prop)
+         {
+            element.comp_prop->mArchive = NULL;
+            element.identifier.empty();
+            oCompoundProperty_deletePointers(element.comp_prop);
+            Py_DECREF(element.comp_prop);
+            element.comp_prop = NULL;
          }
          else if(element.xform)
          {
@@ -405,8 +417,8 @@ void oArchive_registerObjectElement(oArchive * archive, std::string identifier, 
 
 void oArchive_registerPropElement(oArchive * archive, std::string identifier, oProperty * prop)
 {
-   if(oArchive_getPropElement(archive,identifier))
-      return;
+   /*if(oArchive_getCompPropElement(archive,identifier))
+      return;*/
    oArchiveElement element;
    init_oArchiveElement(element, identifier);
    /*
@@ -423,8 +435,8 @@ void oArchive_registerPropElement(oArchive * archive, std::string identifier, oP
 
 void oArchive_registerCompPropElement(oArchive * archive, std::string identifier, oCompoundProperty * comp_prop)
 {
-   if(oArchive_getPropElement(archive,identifier))
-      return;
+   /*if(oArchive_getPropElement(archive,identifier))
+      return;*/
    oArchiveElement element;
    init_oArchiveElement(element, identifier);
 
