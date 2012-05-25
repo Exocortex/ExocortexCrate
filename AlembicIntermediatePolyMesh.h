@@ -22,8 +22,8 @@ class AlembicIntermediatePolyMesh
 {
 public:
 
-	AlembicIntermediatePolyMesh():nLargestMatId(0)
-	{}
+	//AlembicIntermediatePolyMesh():nLargestMatId(0)
+	//{}
 
 	Alembic::Abc::Box3d bbox;
 
@@ -50,9 +50,6 @@ public:
 	//TODO: add method to setup sizes for multiple merges
 
 	bool mergeWith(const AlembicIntermediatePolyMesh& srcMesh);
-
-	int nLargestMatId;//used for merge the material IDs
-
 };
 
 

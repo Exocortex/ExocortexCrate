@@ -61,38 +61,43 @@ bool AlembicIntermediatePolyMesh::mergeWith(const AlembicIntermediatePolyMesh& s
 	}
 
 
-
-
-	if(nLargestMatId == 0){ //merge has never been run before, so reassign the dest matIDs as well
-
-		facesetmap newFaceSetsMap;
-		for ( facesetmap_it it=destMesh.mFaceSetsMap.begin(); it != destMesh.mFaceSetsMap.end(); it++)
-		{
-			newFaceSetsMap[nLargestMatId] = it->second; 
-			nLargestMatId++;
-		}
-		mFaceSetsMap = newFaceSetsMap;
-	}
-
-	//reassign the src matIDs, and append this map to the dest map
+	//merge the faceset maps
+	//I assume if that if a key is common, we combine the face lists (this assumption is compatible with
+	//our current method of saving out the mapIds and names)
 	for ( facesetmap_cit it=srcMesh.mFaceSetsMap.begin(); it != srcMesh.mFaceSetsMap.end(); it++)
 	{
-		destMesh.mFaceSetsMap.insert(facesetmap_insert_pair(nLargestMatId, it->second));
-		nLargestMatId++;
-	}
+		if( destMesh.mFaceSetsMap.find(it->first) == destMesh.mFaceSetsMap.end() ){ // a new key
+			
+			destMesh.mFaceSetsMap[it->first] = it->second;
+		}
+		else{// the key is common
 
-	//now rebuilt the matID index array
-	mMatIdIndexVec.resize(destMesh.mFaceSetsMap.size());
-	for ( facesetmap_it it=destMesh.mFaceSetsMap.begin(); it != destMesh.mFaceSetsMap.end(); it++)
-	{
-		int matId = it->first; 
-		facesetmap_vec& faceSetVec = it->second.faceIds;
+			const facesetmap_vec& srcFaceSetVec = it->second.faceIds;
+			facesetmap_vec& destFaceSetVec = destMesh.mFaceSetsMap[it->first].faceIds;
 
-		for(int i=0; i<faceSetVec.size(); i++)
-		{
-			mMatIdIndexVec[faceSetVec[i]] = matId;
+			for(int i=0; i<srcFaceSetVec.size(); i++){
+				destFaceSetVec.push_back(srcFaceSetVec[i]);
+			}
 		}
 	}
+
+	for(int i=0; i<srcMesh.mMatIdIndexVec.size(); i++){
+		destMesh.mMatIdIndexVec.push_back(srcMesh.mMatIdIndexVec[i]);
+	}
+
+
+	////now rebuilt the matID index array
+	//mMatIdIndexVec.resize(destMesh.mFaceSetsMap.size());
+	//for ( facesetmap_it it=destMesh.mFaceSetsMap.begin(); it != destMesh.mFaceSetsMap.end(); it++)
+	//{
+	//	int matId = it->first; 
+	//	facesetmap_vec& faceSetVec = it->second.faceIds;
+
+	//	for(int i=0; i<faceSetVec.size(); i++)
+	//	{
+	//		mMatIdIndexVec[faceSetVec[i]] = matId;
+	//	}
+	//}
 
 
 	return true;
