@@ -2,7 +2,8 @@
 import imp
 import sys
 
-alembic = imp.load_dynamic("_ExocortexAlembicPython", "/home/BuildUser/Work/ExocortexAlembicShared/install/Linux/Python26/_ExocortexAlembicPython.so")
+import _ExocortexAlembicPython as alembic
+# alembic = imp.load_dynamic("_ExocortexAlembicPython", "/home/BuildUser/Work/ExocortexAlembicShared/install/Linux/Python26/_ExocortexAlembicPython.so")
 
 def copy_property(prop, outProp):
    print("Copy property " + prop.getName() + " of type " + prop.getType() + " with " + str(prop.getNbStoredSamples()) + " stored samples")
