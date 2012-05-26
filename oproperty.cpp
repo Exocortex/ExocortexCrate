@@ -1,12 +1,10 @@
 #include "extension.h"
 #include "oproperty.h"
+#include "ocompoundproperty.h"
 #include "oobject.h"
 #include "oarchive.h"
 #include <boost/lexical_cast.hpp>
 #include "AlembicLicensing.h"
-
-#include <iostream>
-#define INFO_MSG(msg)    std::cerr << "INFO [" << __FILE__ << ":" << __LINE__ << "] " << msg << std::endl
 
 static std::string oProperty_getName_func(PyObject * self)
 {
@@ -1242,17 +1240,18 @@ static PyTypeObject oProperty_Type = {
    }
 #define _IF_CREATE_PROP_(tp,base,str) _IF_CREATE_PROP_IMPL_(tp,base,str,Property,ArrayProperty)
 
-PyObject * oProperty_new(Alembic::Abc::OCompoundProperty compound, char * in_propName, char * in_propType, int tsIndex, void * in_Archive)
+PyObject * oProperty_new(Alembic::Abc::OCompoundProperty compound, std::string compoundFullName, char * in_propName, char * in_propType, int tsIndex, void * in_Archive)
 {
    ALEMBIC_TRY_STATEMENT
 
    // check if we already have this property somewhere
    //Alembic::Abc::OCompoundProperty compound = getCompoundFromOObject(in_casted);
-   std::string identifier = compound.getObject().getFullName();
+   std::string identifier = compoundFullName;
    identifier.append("/");
    identifier.append(in_propName);
 
    INFO_MSG("identifier: " << identifier);
+
    oArchive * archive = (oArchive*)in_Archive;
 
    // check if it's an iCompoundProperty, they shouldn't have similar names to avoid confusion when reading it!
@@ -1295,7 +1294,7 @@ PyObject * oProperty_new(Alembic::Abc::OCompoundProperty compound, char * in_pro
          // is a compound, must return an oCompoundProperty
          INFO_MSG("It's a compound");
          PyObject_FREE(prop);
-         return oCompoundProperty_new(compound, in_propName, "compound", tsIndex, in_Archive);
+         return oCompoundProperty_new(compound, compoundFullName, in_propName, tsIndex, in_Archive);
       }
       else if(baseProp.isArray())
       {
@@ -1555,7 +1554,7 @@ PyObject * oProperty_new(Alembic::Abc::OCompoundProperty compound, char * in_pro
       else if (strcmp(in_propType, "compound") == 0)
       {
          PyObject_FREE(prop);
-         return oCompoundProperty_new(compound, in_propName, "compound", tsIndex, in_Archive);
+         return oCompoundProperty_new(compound, compoundFullName, in_propName, tsIndex, in_Archive);
       }
 
       oArchive_registerPropElement(archive,identifier,prop);

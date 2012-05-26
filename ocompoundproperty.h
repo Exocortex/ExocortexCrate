@@ -12,9 +12,10 @@
       PyObject_HEAD
       void * mArchive;
       Alembic::Abc::OCompoundProperty * mBaseCompoundProperty;
+      std::string * mFullName;
    } oCompoundProperty;
 
-   PyObject * oCompoundProperty_new(Alembic::Abc::OCompoundProperty compound, const char * in_propName, const char * in_propType, int tsIndex, void * in_Archive);
+   PyObject * oCompoundProperty_new(Alembic::Abc::OCompoundProperty compound, std::string compoundFullName, const char * in_propName, int tsIndex, void * in_Archive);
    void oCompoundProperty_deletePointers(oCompoundProperty * prop);
 
    bool register_object_oCompoundProperty(PyObject *module);

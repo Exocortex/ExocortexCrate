@@ -22,8 +22,8 @@ def copy_compound_property(cprop, outCprop):
    pass
 
 def start_copy(in_data, out_data):
-   #out_data.createTimeSampling(in_data.getSampleTimes()[1])
-   out_data.createTimeSampling( (1) )
+   out_data.createTimeSampling(in_data.getSampleTimes()[1])
+   #out_data.createTimeSampling( [1] )
    for identifier in in_data.getIdentifiers():
       obj = in_data.getObject(identifier)
       print("Copy object " + identifier + " of type " + obj.getType())
