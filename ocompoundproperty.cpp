@@ -47,26 +47,9 @@ static PyObject *oCompoundProperty_getProperty(PyObject * self, PyObject * args)
          return oXformProperty_new(object->mCasted,object->mArchive,(boost::uint32_t)tsIndex);
       }
    }
-   */
-
-   // Test if it's a compound or a normal property
-   /*
-   std::string new_propName(cprop->extra_path);
-   new_propName.append("/");
-   new_propName.append(propName);
    //*/
 
-   //*
-   //if (propType && std::strcmp(propType, "compound") == 0)
-      //return oCompoundProperty_new(*(cprop->mBaseCompoundProperty), propName, "compound", tsIndex, cprop->mArchive);
    return oProperty_new(*(cprop->mBaseCompoundProperty), propName, propType, tsIndex, cprop->mArchive);
-   //*/
-
-   /*
-   if (propType && std::strcmp(propType, "compound") == 0)
-      return oCompoundProperty_new(*(cprop->mBaseCompoundProperty), (char*)new_propName.c_str(), "compound", tsIndex, cprop->mArchive);
-   return oProperty_new(*(cprop->mBaseCompoundProperty), (char*)new_propName.c_str(), propType, tsIndex, cprop->mArchive);
-   //*/
    ALEMBIC_PYOBJECT_CATCH_STATEMENT
 }
 
@@ -152,7 +135,6 @@ PyObject * oCompoundProperty_new(Alembic::Abc::OCompoundProperty compound, const
    identifier.append(in_propName);
 
    INFO_MSG("identifier: " << identifier);
-
    oArchive * archive = (oArchive*)in_Archive;
 
    oCompoundProperty * cprop = oArchive_getCompPropElement(archive,identifier);
