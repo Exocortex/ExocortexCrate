@@ -6,7 +6,7 @@
 #include "AlembicXformUtilities.h"
 #include "AlembicXformController.h"
 #include "AlembicCameraUtilities.h"
-#include "AlembicSimpleParticle.h"
+#include "AlembicParticles.h"
 #include "SceneEnumProc.h"
 #include "AlembicDefinitions.h"
 #include "AlembicWriteJob.h"
