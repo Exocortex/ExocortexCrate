@@ -262,7 +262,7 @@ bool AlembicWriteJob::Process(double frame)
         // run the export for all objects
         for(size_t j=0; j < mObjects.size(); j++)
         {
-            bool status = mObjects[j]->Save(mFrames[i]);
+            bool status = mObjects[j]->Save(mFrames[i], i == (mFrames.size()-1) );
             if(status != true)
             {
                 return status;

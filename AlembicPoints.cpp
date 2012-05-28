@@ -70,7 +70,7 @@ Alembic::Abc::OCompoundProperty AlembicPoints::GetCompound()
 
 
 
-bool AlembicPoints::Save(double time)
+bool AlembicPoints::Save(double time, bool bLastFrame)
 {
     // Note: Particles are always considered to be animated even though
     //       the node does not have the IsAnimated() flag.

@@ -105,7 +105,7 @@ AlembicXForm::~AlembicXForm()
 {
 }
 
-bool AlembicXForm::Save(double time)
+bool AlembicXForm::Save(double time, bool bLastFrame)
 {
     // Set the bounding box to be used to draw the dummy object on import
     DummyObject *pDummyObject = static_cast<DummyObject*>(GetRef().obj);

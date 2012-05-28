@@ -53,7 +53,7 @@ Alembic::Abc::OCompoundProperty AlembicCurves::GetCompound()
    return mCurvesSchema;
 }
 
-bool AlembicCurves::Save(double time)
+bool AlembicCurves::Save(double time, bool bLastFrame)
 {
     TimeValue ticks = GET_MAX_INTERFACE()->GetTime();
 

@@ -16,7 +16,7 @@ private:
 public:
    AlembicXForm(const SceneEntry &in_Ref, AlembicWriteJob *in_Job);
    ~AlembicXForm();
-   virtual bool Save(double time);
+   virtual bool Save(double time, bool bLastFrame);
    virtual Alembic::Abc::OCompoundProperty GetCompound();
 };
 

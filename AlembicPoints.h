@@ -150,7 +150,7 @@ public:
     ~AlembicPoints();
 
     virtual Alembic::Abc::OCompoundProperty GetCompound();
-    virtual bool Save(double time);
+    virtual bool Save(double time, bool bLastFrame);
 };
 
 #endif

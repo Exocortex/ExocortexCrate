@@ -30,7 +30,7 @@ public:
     virtual Alembic::Abc::OCompoundProperty GetCompound() = 0;
     int GetNumSamples();
 
-    virtual bool Save(double time) = 0;
+    virtual bool Save(double time, bool bLastFrame) = 0;
 };
 
 typedef boost::shared_ptr < AlembicObject > AlembicObjectPtr;

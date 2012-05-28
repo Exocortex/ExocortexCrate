@@ -38,7 +38,7 @@ Alembic::Abc::OCompoundProperty AlembicCamera::GetCompound()
     return mCameraSchema;
 }
 
-bool AlembicCamera::Save(double time)
+bool AlembicCamera::Save(double time, bool bLastFrame)
 {
     TimeValue ticks = GetTimeValueFromFrame(time);
  

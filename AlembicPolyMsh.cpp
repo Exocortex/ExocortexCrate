@@ -55,7 +55,7 @@ Alembic::Abc::OCompoundProperty AlembicPolyMesh::GetCompound()
     return mMeshSchema;
 }
 
-bool AlembicPolyMesh::Save(double time)
+bool AlembicPolyMesh::Save(double time, bool bLastFrame)
 {   
 	const bool bIsFirstFrame = mNumSamples == 0;
 
@@ -333,7 +333,7 @@ bool AlembicPolyMesh::Save(double time)
 
       // sweet, now let's have a look at face sets (really only for first sample)
       // for 3DS Max, we are mapping this to the material ids
-	  if(GetCurrentJob()->GetOption("exportMaterialIds") && (bIsFirstFrame || dynamicTopology))
+	  if(GetCurrentJob()->GetOption("exportMaterialIds") && (bLastFrame || dynamicTopology))
       {
 
           if(!mMatIdProperty.valid())
@@ -350,7 +350,7 @@ bool AlembicPolyMesh::Save(double time)
 
 		  size_t numMatId = finalPolyMesh.mFaceSetsMap.size();
           // For sample zero, export the material ids as face sets
-		  if (bIsFirstFrame && numMatId > 1)
+		  if (bLastFrame)// && numMatId > 1)
           {
 			  for ( facesetmap_it it=finalPolyMesh.mFaceSetsMap.begin(); it != finalPolyMesh.mFaceSetsMap.end(); it++)
               {
