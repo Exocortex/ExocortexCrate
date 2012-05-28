@@ -177,6 +177,12 @@ materialStr& materialsMergeStr::getMatEntry(AnimHandle uniqueHandle, int matId)
 		materialStr& matStr = (*pMatMap)[matId];
 		matStr.matId = nNextMatId;	
 		nNextMatId++;
+
+		std::stringstream nameStream;
+
+		nameStream<<"("<<uniqueHandle<<", "<<matId<<")";
+
+		matStr.name = nameStream.str();
 		return matStr; 
 	}
 	else{
@@ -497,6 +503,7 @@ void IntermediatePolyMesh3DSMax::Save(AlembicWriteJob* writeJob, TimeValue ticks
 		for (int i = 0; i < numFaces; i += 1)
 		{
 		  int matId = polyMesh ? polyMesh->f[i].material : triMesh->faces[i].getMatID();
+		  int originalMatId = matId;
 		  if(pMatMerge){
 		      matId = pMatMerge->getUniqueMatId(matId);
 		  }
@@ -512,6 +519,7 @@ void IntermediatePolyMesh3DSMax::Save(AlembicWriteJob* writeJob, TimeValue ticks
 			  {
 				  faceSetStr faceSet;
 				  faceSet.faceIds = std::vector<int32_t>();
+				  faceSet.originalMatId = originalMatId;
 				  facesetmap_ret_pair ret = mFaceSetsMap.insert( facesetmap_insert_pair(matId, faceSet) );
 				  it = ret.first;
 				  numMatId++;
@@ -549,7 +557,7 @@ void IntermediatePolyMesh3DSMax::Save(AlembicWriteJob* writeJob, TimeValue ticks
 			  it->second.name = nameStream.str();
 
 			  if(pMatMerge){
-			      pMatMerge->setMatName(i, nameStream.str());
+			      pMatMerge->setMatName(it->second.originalMatId, nameStream.str());
 			  }
 		  }
 		}

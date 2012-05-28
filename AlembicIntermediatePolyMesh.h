@@ -10,6 +10,7 @@ struct faceSetStr
 {
 	std::string name;
 	facesetmap_vec faceIds;
+	int originalMatId;
 };
 
 typedef std::map<int, faceSetStr> facesetmap;
