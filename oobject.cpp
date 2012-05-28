@@ -24,6 +24,12 @@ Alembic::Abc::OCompoundProperty getCompoundFromOObject(oObjectPtr in_Casted)
          return in_Casted.mPoints->getSchema();
       case oObjectType_SubD:
          return in_Casted.mSubD->getSchema();
+
+      // NEW
+      case oObjectType_FaceSet:
+         return in_Casted.mFaceSet->getSchema();
+      case oObjectType_NuPatch:
+         return in_Casted.mNuPatch->getSchema();
    }
    return Alembic::Abc::OCompoundProperty();
    ALEMBIC_VALUE_CATCH_STATEMENT(Alembic::Abc::OCompoundProperty())
@@ -47,6 +53,12 @@ Alembic::Abc::TimeSamplingPtr getTimeSamplingFromObject(Alembic::Abc::OObject ob
       return Alembic::AbcGeom::OSubD(object,Alembic::Abc::kWrapExisting).getSchema().getTimeSampling();
    } else if(Alembic::AbcGeom::OCamera::matches(md)) {
       return Alembic::AbcGeom::OCamera(object,Alembic::Abc::kWrapExisting).getSchema().getTimeSampling();
+
+   // NEW
+   } else if(Alembic::AbcGeom::OFaceSet::matches(md)) {
+      return Alembic::AbcGeom::OFaceSet(object,Alembic::Abc::kWrapExisting).getSchema().getTimeSampling();
+   } else if(Alembic::AbcGeom::ONuPatch::matches(md)) {
+      return Alembic::AbcGeom::ONuPatch(object,Alembic::Abc::kWrapExisting).getSchema().getTimeSampling();
    }
    return Alembic::Abc::TimeSamplingPtr();
    ALEMBIC_VALUE_CATCH_STATEMENT(Alembic::Abc::TimeSamplingPtr())
@@ -70,6 +82,12 @@ size_t getNumSamplesFromObject(Alembic::Abc::OObject object)
       return Alembic::AbcGeom::OSubD(object,Alembic::Abc::kWrapExisting).getSchema().getNumSamples();
    } else if(Alembic::AbcGeom::OCamera::matches(md)) {
       return Alembic::AbcGeom::OCamera(object,Alembic::Abc::kWrapExisting).getSchema().getNumSamples();
+
+   // NEW
+   } else if(Alembic::AbcGeom::OFaceSet::matches(md)) {
+      return Alembic::AbcGeom::OFaceSet(object,Alembic::Abc::kWrapExisting).getSchema().getNumSamples();
+   } else if(Alembic::AbcGeom::ONuPatch::matches(md)) {
+      return Alembic::AbcGeom::ONuPatch(object,Alembic::Abc::kWrapExisting).getSchema().getNumSamples();
    }
    return 0;
    ALEMBIC_VALUE_CATCH_STATEMENT(0)
