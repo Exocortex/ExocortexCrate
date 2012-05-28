@@ -57,8 +57,6 @@ Alembic::Abc::TimeSamplingPtr getTimeSamplingFromObject(Alembic::Abc::OObject ob
    // NEW
    } else if(Alembic::AbcGeom::OFaceSet::matches(md)) {
       return Alembic::AbcGeom::OFaceSet(object,Alembic::Abc::kWrapExisting).getSchema().getTimeSampling();
-   } else if(Alembic::AbcGeom::ONuPatch::matches(md)) {
-      return Alembic::AbcGeom::ONuPatch(object,Alembic::Abc::kWrapExisting).getSchema().getTimeSampling();
    }
    return Alembic::Abc::TimeSamplingPtr();
    ALEMBIC_VALUE_CATCH_STATEMENT(Alembic::Abc::TimeSamplingPtr())
@@ -86,8 +84,6 @@ size_t getNumSamplesFromObject(Alembic::Abc::OObject object)
    // NEW
    } else if(Alembic::AbcGeom::OFaceSet::matches(md)) {
       return Alembic::AbcGeom::OFaceSet(object,Alembic::Abc::kWrapExisting).getSchema().getNumSamples();
-   } else if(Alembic::AbcGeom::ONuPatch::matches(md)) {
-      return Alembic::AbcGeom::ONuPatch(object,Alembic::Abc::kWrapExisting).getSchema().getNumSamples();
    }
    return 0;
    ALEMBIC_VALUE_CATCH_STATEMENT(0)
