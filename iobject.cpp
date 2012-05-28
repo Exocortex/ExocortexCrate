@@ -151,16 +151,16 @@ static PyObject * iObject_getPropertyNames(PyObject * self, PyObject * args)
    if(!compound.valid())
       return PyTuple_New(0);
 
-   PyObject * tuple;
+   PyObject * tuple = NULL;
    if(Alembic::AbcGeom::IXform::matches(object->mObject->getMetaData()))
    {
-      tuple = PyTuple_New(1);
       for(size_t i=0;i<compound.getNumProperties();i++)
       {
          std::string propNameStr = compound.getPropertyHeader(i).getName();
          if(propNameStr == ".xform" || propNameStr == ".vals")
          {
-            PyTuple_SetItem(tuple,0,Py_BuildValue("s",compound.getPropertyHeader(i).getName().c_str()));
+            tuple = PyTuple_New(1);
+            PyTuple_SetItem(tuple,0,Py_BuildValue("s",propNameStr.c_str()));
             break;
          }
       }
@@ -168,9 +168,14 @@ static PyObject * iObject_getPropertyNames(PyObject * self, PyObject * args)
    else
    {
       tuple = PyTuple_New(compound.getNumProperties());
-      for(size_t i=0;i<compound.getNumProperties();i++)
+      for(size_t i=0;i<compound.getNumProperties();i++) 
+      {
          PyTuple_SetItem(tuple,i,Py_BuildValue("s",compound.getPropertyHeader(i).getName().c_str()));
+      }
    }
+
+   if(tuple == NULL)
+      tuple = PyTuple_New(0);
    return tuple;
    ALEMBIC_PYOBJECT_CATCH_STATEMENT
 }

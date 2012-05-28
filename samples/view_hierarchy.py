@@ -2,8 +2,8 @@
 import imp
 import sys
 
-
-alembic = imp.load_dynamic("_ExocortexAlembicPython", "/home/BuildUser/Work/ExocortexAlembicShared/install/Linux/Python26/_ExocortexAlembicPython.so")
+import _ExocortexAlembicPython as alembic
+#alembic = imp.load_dynamic("_ExocortexAlembicPython", "/home/BuildUser/Work/ExocortexAlembicShared/install/Linux/Python26/_ExocortexAlembicPython.so")
 
 #car = ap.getIArchive("/home/jcaron/alembic_data/car.abc")
 #car_obj = car.getObject('/AI20_011_15Xfo/AI20_011_15')

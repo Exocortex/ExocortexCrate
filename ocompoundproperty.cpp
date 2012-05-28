@@ -80,6 +80,8 @@ void oCompoundProperty_deletePointers(oCompoundProperty * cprop)
    {
       delete cprop->mBaseCompoundProperty;
       cprop->mBaseCompoundProperty = NULL;
+      delete cprop->mFullName;
+      cprop->mFullName = NULL;
    }
 }
 
@@ -125,12 +127,12 @@ static PyTypeObject oCompoundProperty_Type = {
 };
 
 
-PyObject * oCompoundProperty_new(Alembic::Abc::OCompoundProperty compound, const char * in_propName, const char * in_propType, int tsIndex, void * in_Archive)
+PyObject * oCompoundProperty_new(Alembic::Abc::OCompoundProperty compound, std::string compoundFullName, const char * in_propName, int tsIndex, void * in_Archive)
 {
    ALEMBIC_TRY_STATEMENT
 
    // check if we already have this property somewhere
-   std::string identifier = compound.getObject().getFullName();
+   std::string identifier = compoundFullName;
    identifier.append("/");
    identifier.append(in_propName);
 
@@ -149,6 +151,7 @@ PyObject * oCompoundProperty_new(Alembic::Abc::OCompoundProperty compound, const
    cprop->mBaseCompoundProperty = NULL;
    cprop->mArchive = in_Archive;
    oArchive_registerCompPropElement(archive,identifier,cprop);
+   cprop->mFullName = new std::string(identifier);
 
    // get the compound property writer
    Alembic::Abc::CompoundPropertyWriterPtr compoundWriter = GetCompoundPropertyWriterPtr(compound);
@@ -166,51 +169,15 @@ PyObject * oCompoundProperty_new(Alembic::Abc::OCompoundProperty compound, const
    }
    else
    {
-      Alembic::AbcCoreAbstract::MetaData md = compound.getMetaData();
+      std::string propName(in_propName);
+      cprop->mBaseCompoundProperty = new Alembic::Abc::OCompoundProperty(compound.getPtr(), propName);
 
-      cprop->mBaseCompoundProperty = new Alembic::Abc::OCompoundProperty(compound.getPtr(), in_propName, md);
+      /* helge: this is buggy. there is a bug in alembic which doesn't use the right name
+         for created compound properties. they do use the right header though. so checking
+         for a name here doesn't actually work */
       INFO_MSG("NEW compound property name: " << (cprop->mBaseCompoundProperty->getObject().getFullName()));
-
-      if (cprop->mBaseCompoundProperty->getObject().getFullName() == compound.getObject().getFullName())
-         throw int(3);
    }
 
-   /*
-   INFO_MSG("propHeader: " << (propHeader ? "True" : "False"));
-   if (propHeader != NULL)
-   {
-      Alembic::Abc::OBaseProperty baseProp = compound.getProperty( in_propName );
-      cprop->mBaseCompoundProperty = new Alembic::Abc::OCompoundProperty(boost::dynamic_pointer_cast<Alembic::Abc::CompoundPropertyWriter>(baseProp.getPtr()), Alembic::Abc::kWrapExisting);
-   }
-   else
-   {
-      INFO_MSG("Meta data");
-      Alembic::AbcCoreAbstract::MetaData md = compound.getMetaData();
-
-      //INFO_MSG("set isGeomParam");
-      md.set( "isGeomParam", "true" );      
-
-      INFO_MSG("Writer Ptr");
-      Alembic::AbcCoreAbstract::ALEMBIC_VERSION_NS::CompoundPropertyWriterPtr cpwp = compound.getPtr()->createCompoundProperty(in_propName, md);
-      /*if (cpwp)
-      {
-         if (cpwp->isCompound())
-         {
-            INFO_MSG("IT CREATES a compound");
-         }
-         else
-            INFO_MSG("IT CREATES something else");
-      }
-      else
-         INFO_MSG("IT FAILS");*
-      /*
-      //Alembic::AbcCoreAbstract::ALEMBIC_VERSION_NS::CompoundPropertyWriterPtr cpwp = compound.getPtr()->createCompoundProperty(identifier.c_str(), md);
-      cprop->mBaseCompoundProperty = new Alembic::Abc::OCompoundProperty(compound, in_propName, md, 0);
-      //*
-      cprop->mBaseCompoundProperty = new Alembic::Abc::OCompoundProperty(cpwp, Alembic::Abc::kWrapExisting);
-   }
-   //*/
-   //INFO_MSG("NEW compound property name: " << (cprop->mBaseCompoundProperty->getObject().getFullName()));
    return (PyObject *)cprop;
    ALEMBIC_PYOBJECT_CATCH_STATEMENT
 }

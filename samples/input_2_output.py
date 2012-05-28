@@ -2,7 +2,8 @@
 import imp
 import sys
 
-alembic = imp.load_dynamic("_ExocortexAlembicPython", "/home/BuildUser/Work/ExocortexAlembicShared/install/Linux/Python26/_ExocortexAlembicPython.so")
+import _ExocortexAlembicPython as alembic
+# alembic = imp.load_dynamic("_ExocortexAlembicPython", "/home/BuildUser/Work/ExocortexAlembicShared/install/Linux/Python26/_ExocortexAlembicPython.so")
 
 def copy_property(prop, outProp):
    print("Copy property " + prop.getName() + " of type " + prop.getType() + " with " + str(prop.getNbStoredSamples()) + " stored samples")
@@ -21,8 +22,8 @@ def copy_compound_property(cprop, outCprop):
    pass
 
 def start_copy(in_data, out_data):
-   #out_data.createTimeSampling(in_data.getSampleTimes()[1])
-   out_data.createTimeSampling( (1) )
+   out_data.createTimeSampling(in_data.getSampleTimes()[1])
+   #out_data.createTimeSampling( [1] )
    for identifier in in_data.getIdentifiers():
       obj = in_data.getObject(identifier)
       print("Copy object " + identifier + " of type " + obj.getType())
