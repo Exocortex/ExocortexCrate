@@ -131,11 +131,13 @@ bool AlembicPolyMesh::Save(double time)
 		}
 
 		//save the first mesh to the final result, and then merge the others with it
-		finalPolyMesh.Save(mJob, ticks, meshes[0].pMesh, NULL, GetRef().node->GetObjTMAfterWSM(ticks), meshes[0].pMtl, mNumSamples);
+		materialsMerge.currUniqueHandle = meshes[0].animHandle;
+		finalPolyMesh.Save(mJob, ticks, meshes[0].pMesh, NULL, GetRef().node->GetObjTMAfterWSM(ticks), meshes[0].pMtl, mNumSamples, &materialsMerge);
 
 		for(int i=1; i<meshes.size(); i++){
 			IntermediatePolyMesh3DSMax currPolyMesh;
-			currPolyMesh.Save(mJob, ticks, meshes[i].pMesh, NULL, GetRef().node->GetObjTMAfterWSM(ticks), meshes[i].pMtl, mNumSamples);
+			materialsMerge.currUniqueHandle = meshes[i].animHandle;
+			currPolyMesh.Save(mJob, ticks, meshes[i].pMesh, NULL, GetRef().node->GetObjTMAfterWSM(ticks), meshes[i].pMtl, mNumSamples, &materialsMerge);
 			bool bSuccess = finalPolyMesh.mergeWith(currPolyMesh);
 			if(!bSuccess){
 				return false;

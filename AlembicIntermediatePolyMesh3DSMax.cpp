@@ -156,8 +156,37 @@ void VNormal::Normalize()
     }
 }
 
+int materialsMergeStr::getUniqueMatId(int matId){	
+	
+	return getUniqueMatId(currUniqueHandle, matId);
+}
 
-void IntermediatePolyMesh3DSMax::Save(AlembicWriteJob* writeJob, TimeValue ticks, Mesh *triMesh, MNMesh* polyMesh, Matrix3& wm, Mtl* pMtl, const int nNumSamplesWritten)
+int materialsMergeStr::getUniqueMatId(AnimHandle uniqueHandle, int matId)
+{
+	int retMatId = 0;
+	
+	mergedMeshMaterialsMap_it groupIt = groupMatMap.find(uniqueHandle);
+	if(groupIt == groupMatMap.end()){
+		meshMaterialsMap matMap;
+		groupMatMap[uniqueHandle] = matMap;
+	}
+	meshMaterialsMap* pMatMap = &groupMatMap[uniqueHandle];
+	
+
+	meshMaterialsMap_it matIt = pMatMap->find(matId);
+	if(matIt == pMatMap->end()){
+		retMatId = nNextMatId;	
+		nNextMatId++;
+		(*pMatMap)[matId] = retMatId;
+	}
+	else{
+		retMatId = (*pMatMap)[matId];
+	}
+	
+	return retMatId;
+}
+
+void IntermediatePolyMesh3DSMax::Save(AlembicWriteJob* writeJob, TimeValue ticks, Mesh *triMesh, MNMesh* polyMesh, Matrix3& wm, Mtl* pMtl, const int nNumSamplesWritten, materialsMergeStr* pMatMerge)
 {
 	const bool bFirstFrame = nNumSamplesWritten == 0;
 
@@ -465,6 +494,9 @@ void IntermediatePolyMesh3DSMax::Save(AlembicWriteJob* writeJob, TimeValue ticks
 		for (int i = 0; i < numFaces; i += 1)
 		{
 		  int matId = polyMesh ? polyMesh->f[i].material : triMesh->faces[i].getMatID();
+		  if(pMatMerge){
+		      matId = pMatMerge->getUniqueMatId(matId);
+		  }
 		  mMatIdIndexVec[i] = matId;
 
 		  // Record the face set map if sample zero

@@ -21,20 +21,28 @@ public:
 };
 
 
-struct materialStr
-{
-	std::string name;
-	int newMapId;
-};
 
-typedef std::map<int, materialStr> meshMaterialsMap;
-typedef std::map<int, materialStr>::iterator meshMaterialsMap_it;
-typedef std::map<int, materialStr>::const_iterator meshMaterialsMap_cit;
+
+typedef std::map<int, int> meshMaterialsMap;
+typedef std::map<int, int>::iterator meshMaterialsMap_it;
+typedef std::map<int, int>::const_iterator meshMaterialsMap_cit;
 
 typedef std::map<AnimHandle, meshMaterialsMap> mergedMeshMaterialsMap;
 typedef std::map<AnimHandle, meshMaterialsMap>::iterator mergedMeshMaterialsMap_it;
 typedef std::map<AnimHandle, meshMaterialsMap>::const_iterator mergedMaterialsMap_cit;
 
+struct materialsMergeStr
+{
+	mergedMeshMaterialsMap groupMatMap;
+	AnimHandle currUniqueHandle;
+	int nNextMatId;
+
+	materialsMergeStr():currUniqueHandle(NULL), nNextMatId(0)
+	{}
+
+	int getUniqueMatId(int matId);
+	int getUniqueMatId(AnimHandle uniqueHandle, int matId);
+};
 
 class AlembicWriteJob;
 
@@ -53,7 +61,7 @@ public:
     static void make_face_uv(Face *f, Point3 *tv);
     static BOOL CheckForFaceMap(Mtl* mtl, Mesh* mesh);
 
-	void Save(AlembicWriteJob* writeJob, TimeValue ticks, Mesh *triMesh, MNMesh* polyMesh, Matrix3& wm, Mtl* pMtl, const int nNumSamplesWritten);
+	void Save(AlembicWriteJob* writeJob, TimeValue ticks, Mesh *triMesh, MNMesh* polyMesh, Matrix3& wm, Mtl* pMtl, const int nNumSamplesWritten, materialsMergeStr* pMatMerge=NULL);
 };
 
 
