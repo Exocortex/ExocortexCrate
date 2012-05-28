@@ -175,7 +175,7 @@ bool AlembicPolyMesh::Save(double time, bool bLastFrame)
 			return false;
 		}
 
-		finalPolyMesh.Save(mJob, ticks, triMesh, polyMesh, GetRef().node->GetObjTMAfterWSM(ticks), GetRef().node->GetMtl(), mNumSamples);
+		finalPolyMesh.Save(mJob, ticks, triMesh, polyMesh, GetRef().node->GetObjTMAfterWSM(ticks), GetRef().node->GetMtl(), mNumSamples, &materialsMerge);
 
 	   // Note that the TriObject should only be deleted
 	   // if the pointer to it is not equal to the object
@@ -376,8 +376,17 @@ bool AlembicPolyMesh::Save(double time, bool bLastFrame)
 				  }
               }
 
-			  Alembic::Abc::StringArraySample sample = Alembic::Abc::StringArraySample(&materialNames.front(), materialNames.size());
-			  mMatNamesProperty.set(sample);
+
+			  if(materialNames.size() > 0){
+				  Alembic::Abc::StringArraySample sample = Alembic::Abc::StringArraySample(&materialNames.front(), materialNames.size());
+				  mMatNamesProperty.set(sample);
+			  }
+			  else{
+				  materialNames.push_back("");
+				  Alembic::Abc::StringArraySample sample = Alembic::Abc::StringArraySample(&materialNames.front(), 0);
+				  mMatNamesProperty.set(sample);
+			  }
+			  
 		  }
 
 		  size_t numMatId = finalPolyMesh.mFaceSetsMap.size();
