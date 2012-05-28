@@ -867,7 +867,7 @@ void addAlembicMaterialsModifier(INode *pNode, Alembic::AbcGeom::IObject& iObj)
 	if(objMesh.valid() && objMesh.getSchema().getPropertyHeader(".materialnames")){
 		matNamesProperty = Alembic::Abc::IStringArrayProperty(objMesh.getSchema(), ".materialnames");
 	}
-	else if(objSubD.getSchema().getPropertyHeader(".materialnames")){
+	else if(objSubD.valid() && objSubD.getSchema().getPropertyHeader(".materialnames")){
 		matNamesProperty = Alembic::Abc::IStringArrayProperty(objSubD.getSchema(), ".materialnames");
 	}
 
