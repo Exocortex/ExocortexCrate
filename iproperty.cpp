@@ -15,9 +15,7 @@ static std::string iProperty_getName_func(PyObject * self)
    ALEMBIC_TRY_STATEMENT
    iProperty * prop = (iProperty*)self;
    std::string name;
-   if(prop->mIsCompound)		// TODO after debugging, remove this test because it should be false all the time
-      name = prop->mBaseCompoundProperty->getName();
-   else if(prop->mIsArray)
+   if(prop->mIsArray)
       name = prop->mBaseArrayProperty->getName();
    else
       name = prop->mBaseScalarProperty->getName();
@@ -388,14 +386,13 @@ static PyObject * iProperty_getSampleTimes(PyObject * self, PyObject * args)
 {
    ALEMBIC_TRY_STATEMENT
    iProperty * prop = (iProperty*)self;
-   if(prop->mIsCompound)
-      return PyTuple_New(0);
-
+ 
    Alembic::Abc::TimeSamplingPtr ts;
    if(prop->mIsArray)
       ts = prop->mBaseArrayProperty->getTimeSampling();
    else
       ts = prop->mBaseScalarProperty->getTimeSampling();
+
    if(ts)
    {
       const std::vector <Alembic::Abc::chrono_t> & times = ts->getStoredTimes();
@@ -412,8 +409,6 @@ static size_t iProperty_getNbStoredSamples_func(PyObject * self)
 {
    ALEMBIC_TRY_STATEMENT
    iProperty * prop = (iProperty*)self;
-   if(prop->mIsCompound)
-      return 0;
 
    size_t numSamples = 0;
    if(prop->mIsArray)
@@ -444,9 +439,7 @@ static PyObject * iProperty_getSize(PyObject * self, PyObject * args)
 {
    ALEMBIC_TRY_STATEMENT
    iProperty * prop = (iProperty*)self;
-   if(prop->mIsCompound)
-      return Py_BuildValue("I",(unsigned int)0);
-   else if(!prop->mIsArray)
+   if(!prop->mIsArray)
       return Py_BuildValue("I",(unsigned int)1);
 
    unsigned long long sampleIndex = 0;
@@ -533,8 +526,6 @@ static PyObject * iProperty_getValues(PyObject * self, PyObject * args)
 {
    ALEMBIC_TRY_STATEMENT
    iProperty * prop = (iProperty*)self;
-   if(prop->mIsCompound)
-      return PyTuple_New(0);
    if(prop->mPropType == propertyTP_unknown)
       return PyTuple_New(0);
 
@@ -2377,9 +2368,7 @@ static void iProperty_delete(PyObject * self)
    // delete the property
    iProperty * prop = (iProperty*)self;
    // first delete the base property
-   if(prop->mIsCompound)
-      delete(prop->mBaseCompoundProperty);
-   else if(prop->mIsArray)
+   if(prop->mIsArray)
       delete(prop->mBaseArrayProperty);
    else
       delete(prop->mBaseScalarProperty);
@@ -2564,15 +2553,14 @@ PyObject * iProperty_new(Alembic::Abc::ICompoundProperty &compound, char * in_pr
    iProperty * prop = PyObject_NEW(iProperty, &iProperty_Type);
    if (prop != NULL)
    {
-      prop->mIsCompound = propHeader->isCompound();
-      prop->mIsArray = prop->mIsCompound ? false : propHeader->isArray();
-      if(prop->mIsCompound)
+      if(propHeader->isCompound())
       {
          PyObject_FREE(prop);    // Free it because one will be created in iCompoundProperty_new
          return iCompoundProperty_new(compound, in_propName);
       }
       else
       {
+         prop->mIsArray = propHeader->isArray();
          std::string interpretation;
          if(prop->mIsArray)
          {

@@ -10,7 +10,9 @@ enum oObjectType
    oObjectType_PolyMesh,
    oObjectType_Curves,
    oObjectType_Points,
-   oObjectType_SubD
+   oObjectType_SubD,
+   oObjectType_FaceSet,    // new
+   oObjectType_NuPatch     // new
 };
 
 typedef struct
@@ -24,6 +26,8 @@ typedef struct
      Alembic::AbcGeom::OCurves * mCurves;
      Alembic::AbcGeom::OPoints * mPoints;
      Alembic::AbcGeom::OSubD * mSubD;
+     Alembic::AbcGeom::OFaceSet * mFaceSet;  // new
+     Alembic::AbcGeom::ONuPatch * mNuPatch;  // new
    };
 } oObjectPtr;
 

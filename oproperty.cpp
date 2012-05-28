@@ -16,9 +16,7 @@ static std::string oProperty_getName_func(PyObject * self)
       return NULL;
    }
    std::string name;
-   if(prop->mIsCompound)
-      name = prop->mBaseCompoundProperty->getName();
-   else if(prop->mIsArray)
+   if(prop->mIsArray)
       name = prop->mBaseArrayProperty->getName();
    else
       name = prop->mBaseScalarProperty->getName();
@@ -113,11 +111,6 @@ static PyObject * oProperty_setValues(PyObject * self, PyObject * args)
    if(prop->mArchive == NULL)
    {
       PyErr_SetString(getError(), "Archive already closed!");
-      return NULL;
-   }
-   if(prop->mIsCompound)
-   {
-      PyErr_SetString(getError(), "Cannot store a sample on a compound property!");
       return NULL;
    }
    if(prop->mPropType == propertyTP_unknown)
@@ -1034,9 +1027,7 @@ void oProperty_deletePointers(oProperty * prop)
       return;
 
    // first delete the base property
-   if(prop->mIsCompound)      // TODO remove this after debuggin everything
-      ;//delete(prop->mBaseCompoundProperty);
-   else if(prop->mIsArray)
+   if(prop->mIsArray)
       delete(prop->mBaseArrayProperty);
    else
       delete(prop->mBaseScalarProperty);
@@ -1267,7 +1258,6 @@ PyObject * oProperty_new(Alembic::Abc::OCompoundProperty compound, std::string c
 
    // if we don't have it yet, create a new one and insert it into our map
    prop = PyObject_NEW(oProperty, &oProperty_Type);
-   prop->mIsCompound = false;
    prop->mBaseScalarProperty = NULL;
    prop->mBoolProperty = NULL;
    prop->mArchive = in_Archive;
@@ -1283,23 +1273,14 @@ PyObject * oProperty_new(Alembic::Abc::OCompoundProperty compound, std::string c
       std::string interpretation;
       if(baseProp.isCompound())
       {
-         /*
-         prop->mIsArray = false;
-         prop->mIsCompound = true;
-         prop->mBaseCompoundProperty = new Alembic::Abc::OCompoundProperty(
-            boost::dynamic_pointer_cast<Alembic::Abc::CompoundPropertyWriter>(baseProp.getPtr()), 
-            Alembic::Abc::kWrapExisting
-         );
-         */
          // is a compound, must return an oCompoundProperty
-         INFO_MSG("It's a compound");
+         //INFO_MSG("It's a compound");
          PyObject_FREE(prop);
          return oCompoundProperty_new(compound, compoundFullName, in_propName, tsIndex, in_Archive);
       }
       else if(baseProp.isArray())
       {
          prop->mIsArray = true;
-         prop->mIsCompound = false;
          prop->mBaseArrayProperty = new Alembic::Abc::OArrayProperty(
             boost::dynamic_pointer_cast<Alembic::Abc::ArrayPropertyWriter>(baseProp.getPtr()), 
             Alembic::Abc::kWrapExisting
@@ -1309,7 +1290,6 @@ PyObject * oProperty_new(Alembic::Abc::OCompoundProperty compound, std::string c
       else
       {
          prop->mIsArray = false;
-         prop->mIsCompound = false;
          prop->mBaseScalarProperty = new Alembic::Abc::OScalarProperty(
             boost::dynamic_pointer_cast<Alembic::Abc::ScalarPropertyWriter>(baseProp.getPtr()), 
             Alembic::Abc::kWrapExisting
@@ -1325,11 +1305,7 @@ PyObject * oProperty_new(Alembic::Abc::OCompoundProperty compound, std::string c
             interpretation = "unknown";
 
       // now let's determine the specialized property type
-      if(prop->mIsCompound)
-      {
-         prop->mPropType = propertyTP_compound;
-      }
-      else if(interpretation.empty())
+      if(interpretation.empty())
       {
          switch(propHeader->getDataType().getPod())
          {
@@ -1558,7 +1534,6 @@ PyObject * oProperty_new(Alembic::Abc::OCompoundProperty compound, std::string c
       }
 
       oArchive_registerPropElement(archive,identifier,prop);
-      prop->mIsCompound = false;
 
       // check if this is an array
       std::string propType = in_propType;

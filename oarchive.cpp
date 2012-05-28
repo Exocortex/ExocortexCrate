@@ -128,7 +128,6 @@ static PyObject * oArchive_createObject(PyObject * self, PyObject * args)
    boost::split(parts, identifierStr, boost::is_any_of("/"));
    if(parts.size() < 2)
    {
-      INFO_MSG("INVALID IDENTIFIER, less than two parts: " << identifier);
       PyErr_SetString(getError(), "Invalid identifier!");
       return NULL;
    }
@@ -151,7 +150,6 @@ static PyObject * oArchive_createObject(PyObject * self, PyObject * args)
       oObject * parentPtr = oArchive_getObjectElement(archive,parentIdentifier);
       if(!parentPtr)
       {
-         INFO_MSG("INVALID IDENTIFIER, more than two parts: " << parentIdentifier << ", no parent");
          PyErr_SetString(getError(), "Invalid identifier!");
          return NULL;
       }
@@ -171,12 +169,9 @@ static PyObject * oArchive_createObject(PyObject * self, PyObject * args)
    else
    {
       // if we are not a transform, ensure that we are nested below a xform!
-      if(parent.getMetaData().get("schema").substr(0,14) != "AbcGeom_Xform_")
-      {
-         INFO_MSG("parent.getMetaData().get(\"schema\") = " << parent.getMetaData().get("schema"));
-         PyErr_SetString(getError(), "This type of object has to be put below a xform object!");
-         return NULL;
-      }
+      INFO_MSG("parent.getMetaData().get(\"schema\") = " << parent.getMetaData().get("schema"));
+      INFO_MSG("type string = " << typeStr);
+
       // check if there is already a child below this transform
       if(parent.getNumChildren() > 0)
       {
@@ -213,6 +208,27 @@ static PyObject * oArchive_createObject(PyObject * self, PyObject * args)
          casted.mType = oObjectType_Points;
          casted.mPoints = new Alembic::AbcGeom::OPoints(parent,parts[parts.size()-1],tsIndex);
          obj = Alembic::Abc::OObject(*casted.mPoints,Alembic::Abc::kWrapExisting);
+      }
+
+      // **** NEW
+      else if(typeStr.substr(0,16) == "AbcGeom_FaceSet_")
+      {
+         casted.mType = oObjectType_FaceSet;
+         casted.mFaceSet = new Alembic::AbcGeom::OFaceSet(parent,parts[parts.size()-1],tsIndex);
+         obj = Alembic::Abc::OObject(*casted.mFaceSet,Alembic::Abc::kWrapExisting);
+      }
+      else if(typeStr.substr(0,16) == "AbcGeom_NuPatch_")
+      {
+         casted.mType = oObjectType_NuPatch;
+         casted.mNuPatch = new Alembic::AbcGeom::ONuPatch(parent,parts[parts.size()-1],tsIndex);
+         obj = Alembic::Abc::OObject(*casted.mNuPatch,Alembic::Abc::kWrapExisting);
+      }
+
+      // moved at the end!! let see if it works
+      else if(parent.getMetaData().get("schema").substr(0,14) != "AbcGeom_Xform_")
+      {
+         PyErr_SetString(getError(), "This type of object has to be put below a xform object!");
+         return NULL;
       }
       else
       {
@@ -400,15 +416,7 @@ void oArchive_registerObjectElement(oArchive * archive, std::string identifier, 
    if(oArchive_getObjectElement(archive, identifier))
       return;
    oArchiveElement element;
-   //std::cerr << "Identifier value: " << identifier << std::endl;
    init_oArchiveElement(element, identifier);
-
-   /*
-   element.identifier = identifier;
-   element.object = object;
-   element.prop = NULL;
-   element.xform = NULL;
-   */
 
    element.object = object;
    archive->mElements->push_back(element);
@@ -417,16 +425,8 @@ void oArchive_registerObjectElement(oArchive * archive, std::string identifier, 
 
 void oArchive_registerPropElement(oArchive * archive, std::string identifier, oProperty * prop)
 {
-   /*if(oArchive_getCompPropElement(archive,identifier))
-      return;*/
    oArchiveElement element;
    init_oArchiveElement(element, identifier);
-   /*
-   element.identifier = identifier;
-   element.object = NULL;
-   element.prop = prop;
-   element.xform = NULL;
-   */
 
    element.prop = prop;
    archive->mElements->push_back(element);
@@ -435,8 +435,6 @@ void oArchive_registerPropElement(oArchive * archive, std::string identifier, oP
 
 void oArchive_registerCompPropElement(oArchive * archive, std::string identifier, oCompoundProperty * comp_prop)
 {
-   /*if(oArchive_getPropElement(archive,identifier))
-      return;*/
    oArchiveElement element;
    init_oArchiveElement(element, identifier);
 
@@ -451,12 +449,6 @@ void oArchive_registerXformElement(oArchive * archive, std::string identifier, o
       return;
    oArchiveElement element;
    init_oArchiveElement(element, identifier);
-   /*
-   element.identifier = identifier;
-   element.object = NULL;
-   element.prop = NULL;
-   element.xform = xform;
-   */
 
    element.xform = xform;
    archive->mElements->push_back(element);
@@ -472,12 +464,6 @@ static oArchiveElement *oArchive_getArchiveElement(oArchive *archive, std::strin
       if (beg->identifier == identifier)
          return &(*beg);   
    }
-   /*for(size_t i = 0; i < archive->mElements->size(); ++i)
-   {
-      oArchiveElement element = (*archive->mElements)[i];
-      if(element.identifier == identifier)
-         return &element;
-   }*/
    return NULL;
 }
 
@@ -485,26 +471,12 @@ oObject * oArchive_getObjectElement(oArchive * archive, std::string identifier)
 {
    oArchiveElement *element = oArchive_getArchiveElement(archive, identifier);
    return element ? element->object : NULL;
-   /*for(size_t i=0;i<archive->mElements->size();i++)
-   {
-      oArchiveElement element = (*archive->mElements)[i];
-      if(element.identifier == identifier)
-         return element.object;
-   }
-   return NULL;*/
 }
 
 oProperty * oArchive_getPropElement(oArchive * archive, std::string identifier)
 {
    oArchiveElement *element = oArchive_getArchiveElement(archive, identifier);
    return element ? element->prop : NULL;
-   /*for(size_t i=0;i<archive->mElements->size();i++)
-   {
-      oArchiveElement element = (*archive->mElements)[i];
-      if(element.identifier == identifier)
-         return element.prop;
-   }
-   return NULL;*/
 }
 
 oCompoundProperty * oArchive_getCompPropElement(oArchive * archive, std::string identifier)
@@ -517,13 +489,6 @@ oXformProperty * oArchive_getXformElement(oArchive * archive, std::string identi
 {
    oArchiveElement *element = oArchive_getArchiveElement(archive, identifier);
    return element ? element->xform : NULL;
-   /*for(size_t i=0;i<archive->mElements->size();i++)
-   {
-      oArchiveElement element = (*archive->mElements)[i];
-      if(element.identifier == identifier)
-         return element.xform;
-   }
-   return NULL;*/
 }
 
 bool register_object_oArchive(PyObject *module)

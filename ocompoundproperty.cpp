@@ -3,53 +3,40 @@
 #include "ocompoundproperty.h"
 #include <Alembic/Abc/All.h>
 #include <Alembic/AbcCoreAbstract/All.h>
-//#include <Alembic/Abc/Arguments.h>
 
 static PyObject * oCompoundProperty_getName(PyObject * self, PyObject * args)
 {
-   ALEMBIC_TRY_STATEMENT
    oCompoundProperty * prop = (oCompoundProperty*)self;
    if(prop->mArchive == NULL)
    {
       PyErr_SetString(getError(), "Archive already closed!");
       return NULL;
    }
-   return Py_BuildValue("s",prop->mBaseCompoundProperty->getName().c_str());
+   ALEMBIC_TRY_STATEMENT
+      return Py_BuildValue("s",prop->mBaseCompoundProperty->getName().c_str());
    ALEMBIC_PYOBJECT_CATCH_STATEMENT
 }
 
 static PyObject *oCompoundProperty_getProperty(PyObject * self, PyObject * args)
 {
    ALEMBIC_TRY_STATEMENT
-   oCompoundProperty * cprop = (oCompoundProperty*)self;
-   if(cprop->mArchive == NULL)
-   {
-      PyErr_SetString(getError(), "Archive already closed!");
-      return NULL;
-   }
-
-   char * propName = NULL;
-   char * propType = NULL;
-   int tsIndex = 1;
-   if(!PyArg_ParseTuple(args, "s|si", &propName,&propType,&tsIndex))
-   {
-      PyErr_SetString(getError(), "No property name and/or property type specified!");
-      return NULL;
-   }
-
-   // TODO check if that case can happen
-   /*
-   if(Alembic::AbcGeom::OXform::matches(object->mObject->getMetaData()))
-   {
-      std::string propNameStr(propName);
-      if(propNameStr == ".xform" || propNameStr == ".vals")
+      oCompoundProperty * cprop = (oCompoundProperty*)self;
+      if(cprop->mArchive == NULL)
       {
-         return oXformProperty_new(object->mCasted,object->mArchive,(boost::uint32_t)tsIndex);
+         PyErr_SetString(getError(), "Archive already closed!");
+         return NULL;
       }
-   }
-   //*/
 
-   return oProperty_new(*(cprop->mBaseCompoundProperty), propName, propType, tsIndex, cprop->mArchive);
+      char * propName = NULL;
+      char * propType = NULL;
+      int tsIndex = 1;
+      if(!PyArg_ParseTuple(args, "s|si", &propName, &propType, &tsIndex))
+      {
+         PyErr_SetString(getError(), "No property name and/or property type specified!");
+         return NULL;
+      }
+
+      return oProperty_new(*(cprop->mBaseCompoundProperty), *(cprop->mFullName), propName, propType, tsIndex, cprop->mArchive);
    ALEMBIC_PYOBJECT_CATCH_STATEMENT
 }
 
@@ -69,32 +56,31 @@ static PyMethodDef oCompoundProperty_methods[] =
 
 static PyObject * oCompoundProperty_getAttr(PyObject * self, char * attrName)
 {
-   ALEMBIC_TRY_STATEMENT
-      return Py_FindMethod(oCompoundProperty_methods, self, attrName);
-   ALEMBIC_PYOBJECT_CATCH_STATEMENT
+   return Py_FindMethod(oCompoundProperty_methods, self, attrName);
 }
 
 void oCompoundProperty_deletePointers(oCompoundProperty * cprop)
 {
-   if (cprop->mBaseCompoundProperty)
-   {
-      delete cprop->mBaseCompoundProperty;
-      cprop->mBaseCompoundProperty = NULL;
-      delete cprop->mFullName;
-      cprop->mFullName = NULL;
-   }
+   ALEMBIC_TRY_STATEMENT
+      if (cprop->mBaseCompoundProperty)
+      {
+         delete cprop->mBaseCompoundProperty;
+         cprop->mBaseCompoundProperty = NULL;
+         delete cprop->mFullName;
+         cprop->mFullName = NULL;
+      }
+   ALEMBIC_VOID_CATCH_STATEMENT
 }
 
 static void oCompoundProperty_delete(PyObject * self)
 {
-   ALEMBIC_TRY_STATEMENT
    oCompoundProperty *cprop = (oCompoundProperty*)self;
    oCompoundProperty_deletePointers(cprop);
    PyObject_FREE(self);
-   ALEMBIC_VOID_CATCH_STATEMENT
 }
 
-static PyTypeObject oCompoundProperty_Type = {
+static PyTypeObject oCompoundProperty_Type =
+{
   PyObject_HEAD_INIT(&PyType_Type)
   0,                                // op_size
   "oCompoundProperty",                      // tp_name
@@ -126,59 +112,48 @@ static PyTypeObject oCompoundProperty_Type = {
   oCompoundProperty_methods,             /* tp_methods */
 };
 
-
 PyObject * oCompoundProperty_new(Alembic::Abc::OCompoundProperty compound, std::string compoundFullName, const char * in_propName, int tsIndex, void * in_Archive)
 {
    ALEMBIC_TRY_STATEMENT
 
-   // check if we already have this property somewhere
-   std::string identifier = compoundFullName;
-   identifier.append("/");
-   identifier.append(in_propName);
+      // check if we already have this property somewhere
+      std::string identifier = compoundFullName;
+      identifier.append("/");
+      identifier.append(in_propName);
 
-   INFO_MSG("identifier: " << identifier);
-   oArchive * archive = (oArchive*)in_Archive;
+      oArchive * archive = (oArchive*)in_Archive;
 
-   oCompoundProperty * cprop = oArchive_getCompPropElement(archive,identifier);
-   if(cprop)
-   {
-      INFO_MSG("already in the archive, with name: " << (cprop->mBaseCompoundProperty->getObject().getFullName()));
-      return (PyObject*)cprop;
-   }
+      oCompoundProperty * cprop = oArchive_getCompPropElement(archive,identifier);
+      if(cprop)
+         return (PyObject*)cprop;
 
-   INFO_MSG("Creating a new oCompoundProperty");
-   cprop = PyObject_NEW(oCompoundProperty, &oCompoundProperty_Type);
-   cprop->mBaseCompoundProperty = NULL;
-   cprop->mArchive = in_Archive;
-   oArchive_registerCompPropElement(archive,identifier,cprop);
-   cprop->mFullName = new std::string(identifier);
+      INFO_MSG("Creating a new oCompoundProperty");
+      cprop = PyObject_NEW(oCompoundProperty, &oCompoundProperty_Type);
+      cprop->mBaseCompoundProperty = NULL;
+      cprop->mArchive = in_Archive;
+      oArchive_registerCompPropElement(archive,identifier,cprop);
+      cprop->mFullName = new std::string(identifier);
 
-   // get the compound property writer
-   Alembic::Abc::CompoundPropertyWriterPtr compoundWriter = GetCompoundPropertyWriterPtr(compound);
-   const Alembic::Abc::PropertyHeader * propHeader = compound.getPropertyHeader( in_propName );
-   INFO_MSG("propHeader: " << (propHeader ? "True" : "False"));
+      const Alembic::Abc::PropertyHeader * propHeader = compound.getPropertyHeader( in_propName );
+      if(propHeader != NULL)
+      {
+         // this property already exists
+         Alembic::Abc::OBaseProperty baseProp = compound.getProperty( in_propName );
+         cprop->mBaseCompoundProperty = new Alembic::Abc::OCompoundProperty(
+                                                boost::dynamic_pointer_cast<Alembic::Abc::CompoundPropertyWriter>(baseProp.getPtr()), 
+                                                Alembic::Abc::kWrapExisting);
+      }
+      else
+      {
+         std::string propName(in_propName);
+         cprop->mBaseCompoundProperty = new Alembic::Abc::OCompoundProperty(compound.getPtr(), propName);
 
-   if(propHeader != NULL)
-   {
-      // this property already exists
-      Alembic::Abc::OBaseProperty baseProp = compound.getProperty( in_propName );
-      cprop->mBaseCompoundProperty = new Alembic::Abc::OCompoundProperty(
-                                             boost::dynamic_pointer_cast<Alembic::Abc::CompoundPropertyWriter>(baseProp.getPtr()), 
-                                             Alembic::Abc::kWrapExisting);
-      INFO_MSG("EXISTING compound property name: " << (cprop->mBaseCompoundProperty->getObject().getFullName()));
-   }
-   else
-   {
-      std::string propName(in_propName);
-      cprop->mBaseCompoundProperty = new Alembic::Abc::OCompoundProperty(compound.getPtr(), propName);
+         /* helge: this is buggy. there is a bug in alembic which doesn't use the right name
+            for created compound properties. they do use the right header though. so checking
+            for a name here doesn't actually work */
+      }
 
-      /* helge: this is buggy. there is a bug in alembic which doesn't use the right name
-         for created compound properties. they do use the right header though. so checking
-         for a name here doesn't actually work */
-      INFO_MSG("NEW compound property name: " << (cprop->mBaseCompoundProperty->getObject().getFullName()));
-   }
-
-   return (PyObject *)cprop;
+      return (PyObject *)cprop;
    ALEMBIC_PYOBJECT_CATCH_STATEMENT
 }
 

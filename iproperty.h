@@ -120,7 +120,6 @@ enum propertyTP
 
 typedef struct {
    PyObject_HEAD
-   bool mIsCompound;		// should be useless after debugging
    bool mIsArray;
    propertyTP mPropType;
    union {

@@ -1,6 +1,9 @@
-import _ExocortexAlembicPython as alembic
 import imp
 import sys
+
+#import _ExocortexAlembicPython as alembic
+alembic = imp.load_dynamic("_ExocortexAlembicPython", "/home/BuildUser/Work/ExocortexAlembicShared/install/Linux/Python26/_ExocortexAlembicPython.so")
+
 
 archive = alembic.getOArchive(sys.argv[1])
 archive.createTimeSampling([0,1])

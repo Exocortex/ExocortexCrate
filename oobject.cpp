@@ -223,10 +223,6 @@ static PyObject * oObject_getProperty(PyObject * self, PyObject * args)
       }
    }
 
-   // Test if it's a compound or a normal property
-   if (propType && std::strcmp(propType, "compound") == 0)
-      return oCompoundProperty_new(getCompoundFromOObject(object->mCasted), object->mObject->getFullName(), propName, tsIndex, object->mArchive);
-   
    return oProperty_new(getCompoundFromOObject(object->mCasted), object->mObject->getFullName(), propName, propType, tsIndex, object->mArchive);
    ALEMBIC_PYOBJECT_CATCH_STATEMENT
 }
@@ -289,6 +285,21 @@ void oObject_deletePointers(oObject * object)
             object->mCasted.mSubD->reset();
             delete(object->mCasted.mSubD);
             object->mCasted.mSubD = NULL;
+            break;
+         }
+         // NEW
+         case oObjectType_FaceSet:
+         {
+            object->mCasted.mFaceSet->reset();
+            delete(object->mCasted.mFaceSet);
+            object->mCasted.mFaceSet = NULL;
+            break;
+         }
+         case oObjectType_NuPatch:
+         {
+            object->mCasted.mNuPatch->reset();
+            delete(object->mCasted.mNuPatch);
+            object->mCasted.mNuPatch = NULL;
             break;
          }
       }

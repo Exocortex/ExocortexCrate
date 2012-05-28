@@ -20,37 +20,27 @@ static PyObject * iCompoundProperty_getName(PyObject * self, PyObject * args)
 
 static PyObject * iCompoundProperty_getType(PyObject * self, PyObject * args)
 {
-   //ALEMBIC_TRY_STATEMENT //--- does not access any Alembic objects
    return Py_BuildValue("s","compound");
-   //ALEMBIC_PYOBJECT_CATCH_STATEMENT
 }
 
 static PyObject * iCompoundProperty_getSampleTimes(PyObject * self, PyObject * args)
 {
-   //ALEMBIC_TRY_STATEMENT //--- does not access any Alembic objects
    return PyTuple_New(0);
-   //ALEMBIC_PYOBJECT_CATCH_STATEMENT
 }
 
 static PyObject * iCompoundProperty_getNbStoredSamples(PyObject * self, PyObject * args)
 {
-   //ALEMBIC_TRY_STATEMENT //--- does not access any Alembic objects
    return Py_BuildValue("I",(unsigned int)0);
-   //ALEMBIC_PYOBJECT_CATCH_STATEMENT
 }
 
 static PyObject * iCompoundProperty_getSize(PyObject * self, PyObject * args)
 {
-   //ALEMBIC_TRY_STATEMENT //--- does not access any Alembic objects
    return Py_BuildValue("I",(unsigned int)0);
-   //ALEMBIC_PYOBJECT_CATCH_STATEMENT
 }
 
 static PyObject * iCompoundProperty_getValues(PyObject * self, PyObject * args)
 {
-   //ALEMBIC_TRY_STATEMENT //--- does not access any Alembic objects
    return PyTuple_New(0);
-   //ALEMBIC_PYOBJECT_CATCH_STATEMENT
 }
 
 static PyObject * iCompoundProperty_getPropertyNames(PyObject * self, PyObject * args)
@@ -102,9 +92,7 @@ static PyMethodDef iCompoundProperty_methods[] =
 
 static PyObject * iCompoundProperty_getAttr(PyObject * self, char * attrName)
 {
-   //ALEMBIC_TRY_STATEMENT //--- does not access any Alembic objects
    return Py_FindMethod(iCompoundProperty_methods, self, attrName);
-   //ALEMBIC_PYOBJECT_CATCH_STATEMENT
 }
 
 static void iCompoundProperty_delete(PyObject * self)

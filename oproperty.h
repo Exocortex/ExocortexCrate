@@ -7,7 +7,6 @@
 
 typedef struct {
    PyObject_HEAD
-   bool mIsCompound;    // will be able to remove this after debugging
    bool mIsArray;
    void * mArchive;
 

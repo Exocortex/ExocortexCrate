@@ -1,5 +1,5 @@
 #ifndef _PYTHON_ALEMBIC_OCOMPOUNDPROPERTY_H_
-#define _PYTHON_ALEMBIC_OCOMPOUNDPROPERTY_H_
+   #define _PYTHON_ALEMBIC_OCOMPOUNDPROPERTY_H_
 
    #include "foundation.h"
    #include "oproperty.h"
@@ -20,11 +20,6 @@
 
    bool register_object_oCompoundProperty(PyObject *module);
 
-   #ifdef _DEBUG
-      #include <iostream>
-      #define INFO_MSG(msg)    std::cerr << "INFO [" << __FILE__ << ":" << __LINE__ << "] " << msg << std::endl
-   #else
-      #define INFO_MSG(msg)
-   #endif
-
 #endif
+
+
