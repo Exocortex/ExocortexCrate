@@ -837,12 +837,15 @@ void addAlembicMaterialsModifier(INode *pNode, Alembic::AbcGeom::IObject& iObj)
 
 	Alembic::AbcGeom::IPolyMesh objMesh;
 	Alembic::AbcGeom::ISubD objSubD;
+	int nLastSample = 0;
 
 	if(Alembic::AbcGeom::IPolyMesh::matches(iObj.getMetaData())){
 	   objMesh = Alembic::AbcGeom::IPolyMesh(iObj,Alembic::Abc::kWrapExisting);
+	   nLastSample = (int)objMesh.getSchema().getNumSamples()-1;
 	}
 	else{
 	   objSubD = Alembic::AbcGeom::ISubD(iObj,Alembic::Abc::kWrapExisting);
+	   nLastSample = (int)objSubD.getSchema().getNumSamples()-1;
 	}
 
 	if(!objMesh.valid() && !objSubD.valid()){
@@ -851,43 +854,44 @@ void addAlembicMaterialsModifier(INode *pNode, Alembic::AbcGeom::IObject& iObj)
 
 	SampleInfo sampleInfo;
 	if(objMesh.valid()){
-		sampleInfo = getSampleInfo(0, objMesh.getSchema().getTimeSampling(), objMesh.getSchema().getNumSamples());
+		sampleInfo = getSampleInfo(nLastSample, objMesh.getSchema().getTimeSampling(), objMesh.getSchema().getNumSamples());
 	}
 	else{
-		sampleInfo = getSampleInfo(0, objSubD.getSchema().getTimeSampling(), objSubD.getSchema().getNumSamples());
+		sampleInfo = getSampleInfo(nLastSample, objSubD.getSchema().getTimeSampling(), objSubD.getSchema().getNumSamples());
 	}
 
-	Alembic::AbcGeom::IPolyMeshSchema::Sample polyMeshSample;
-	Alembic::AbcGeom::ISubDSchema::Sample subDSample;
 
-	if(objMesh.valid()){
-	   objMesh.getSchema().get(polyMeshSample,sampleInfo.floorIndex);
-	}
-	else{
-	   objSubD.getSchema().get(subDSample,sampleInfo.floorIndex);
-	}
 
-	std::vector<std::string> faceSetNames;
-	if(objMesh.valid()){
-		objMesh.getSchema().getFaceSetNames(faceSetNames);
+
+	Alembic::Abc::IStringArrayProperty matNamesProperty;
+	if(objMesh.valid() && objMesh.getSchema().getPropertyHeader(".materialnames")){
+		matNamesProperty = Alembic::Abc::IStringArrayProperty(objMesh.getSchema(), ".materialnames");
 	}
-	else{
-		objSubD.getSchema().getFaceSetNames(faceSetNames);
+	else if(objSubD.getSchema().getPropertyHeader(".materialnames")){
+		matNamesProperty = Alembic::Abc::IStringArrayProperty(objSubD.getSchema(), ".materialnames");
 	}
 
-	if(faceSetNames.size() <= 0){
+	if(!matNamesProperty.valid() || matNamesProperty.getNumSamples() == 0){
+		return;
+	}
+
+	Alembic::Abc::StringArraySamplePtr matNamesSamplePtr = matNamesProperty.getValue(sampleInfo.floorIndex);
+
+	size_t len = matNamesSamplePtr->size();
+
+	if(len <= 0){
 		return;
 	}
 
 	std::string names("");
 
-	for(size_t j=0;j<faceSetNames.size();j++)
+	for(size_t j=0;j<len;j++)
 	{
-		const char* name = faceSetNames[j].c_str();
+		const char* name = matNamesSamplePtr->get()[j].c_str();
 		names+="\"";
 		names+=name;
 		names+="\"";
-		if(j != faceSetNames.size()-1){
+		if(j != len-1){
 			names+=", ";
 		}
 	}
