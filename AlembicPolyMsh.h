@@ -12,6 +12,7 @@ private:
    Alembic::AbcGeom::XformSample mXformSample;
    Alembic::AbcGeom::OPolyMeshSchema::Sample mMeshSample;
    Alembic::Abc::ALEMBIC_VERSION_NS::OUInt32ArrayProperty mMatIdProperty;
+   Alembic::Abc::ALEMBIC_VERSION_NS::OStringArrayProperty mMatNamesProperty;
 
    materialsMergeStr materialsMerge;
 

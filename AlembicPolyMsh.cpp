@@ -57,7 +57,7 @@ Alembic::Abc::OCompoundProperty AlembicPolyMesh::GetCompound()
 
 bool AlembicPolyMesh::Save(double time, bool bLastFrame)
 {   
-	const bool bIsFirstFrame = mNumSamples == 0;
+	const bool bFirstFrame = mNumSamples == 0;
 
 	TimeValue ticks = GetTimeValueFromFrame(time);
 
@@ -241,7 +241,7 @@ bool AlembicPolyMesh::Save(double time, bool bLastFrame)
 	// check if we support changing topology
 	bool dynamicTopology = static_cast<bool>(GetCurrentJob()->GetOption("exportDynamicTopology"));
 	
-   if(bIsFirstFrame || (dynamicTopology))//write out the Normal data
+   if(bFirstFrame || (dynamicTopology))//write out the Normal data
    {
 	  //write out the normal data
       Alembic::AbcGeom::ON3fGeomParam::Sample normalSample;
@@ -281,7 +281,7 @@ bool AlembicPolyMesh::Save(double time, bool bLastFrame)
    }
 
 	//write out the face counts and face indices
-   if(bIsFirstFrame || (dynamicTopology))
+   if(bFirstFrame || (dynamicTopology))
    {
       // we also need to store the face counts as well as face indices
       //if(mFaceIndicesVec.size() != sampleCount || sampleCount == 0) //TODO: is this condition important? I get the impression it is useless from the original code
@@ -300,7 +300,7 @@ bool AlembicPolyMesh::Save(double time, bool bLastFrame)
    }
 
 	//write out the texture coordinates if necessary
-	if((bool)GetCurrentJob()->GetOption("exportUVs") && (bIsFirstFrame || dynamicTopology))
+	if((bool)GetCurrentJob()->GetOption("exportUVs") && (bFirstFrame || dynamicTopology))
 	{
 		///if (finalPolyMesh.mUvVec.size() == finalPolyMesh.sampleCount) //TODO: is this condition important?
 		{
@@ -333,7 +333,7 @@ bool AlembicPolyMesh::Save(double time, bool bLastFrame)
 
       // sweet, now let's have a look at face sets (really only for first sample)
       // for 3DS Max, we are mapping this to the material ids
-	  if(GetCurrentJob()->GetOption("exportMaterialIds") && (bLastFrame || dynamicTopology))
+	  if(GetCurrentJob()->GetOption("exportMaterialIds") && (bFirstFrame || dynamicTopology || bLastFrame))
       {
 
           if(!mMatIdProperty.valid())
@@ -348,9 +348,41 @@ bool AlembicPolyMesh::Save(double time, bool bLastFrame)
           Alembic::Abc::UInt32ArraySample sample = Alembic::Abc::UInt32ArraySample(&finalPolyMesh.mMatIdIndexVec.front(), nMatIndexSize);
           mMatIdProperty.set(sample);
 
+		  if(!mMatNamesProperty.valid())
+		  {
+			  mMatNamesProperty = OStringArrayProperty(mMeshSchema, ".materialnames", mMeshSchema.getMetaData(), GetCurrentJob()->GetAnimatedTs());
+		  }
+
+		  std::vector<std::string> materialNames;
+
+		  if(bFirstFrame){//alembic requires every property to have a sample at time 0
+			  materialNames.push_back("");
+			  Alembic::Abc::StringArraySample sample = Alembic::Abc::StringArraySample(&materialNames.front(), 0);
+			  mMatNamesProperty.set(sample);
+		  }
+		  else if(bLastFrame){
+			  
+			  mergedMeshMaterialsMap& matMap = materialsMerge.groupMatMap;
+				
+			  for ( mergedMeshMaterialsMap_it it=matMap.begin(); it != matMap.end(); it++)
+              {
+				  meshMaterialsMap& map = it->second;
+				  for( meshMaterialsMap_it it2 =map.begin(); it2 != map.end(); it2++)
+				  {
+					  std::stringstream nameStream;
+					  int nMaterialId = it2->second.matId;
+					  nameStream<<it2->second.name<<" : "<<nMaterialId;
+					  materialNames.push_back(nameStream.str());
+				  }
+              }
+
+			  Alembic::Abc::StringArraySample sample = Alembic::Abc::StringArraySample(&materialNames.front(), materialNames.size());
+			  mMatNamesProperty.set(sample);
+		  }
+
 		  size_t numMatId = finalPolyMesh.mFaceSetsMap.size();
           // For sample zero, export the material ids as face sets
-		  if (bLastFrame)// && numMatId > 1)
+		  if (bFirstFrame && numMatId > 1)
           {
 			  for ( facesetmap_it it=finalPolyMesh.mFaceSetsMap.begin(); it != finalPolyMesh.mFaceSetsMap.end(); it++)
               {
@@ -369,7 +401,7 @@ bool AlembicPolyMesh::Save(double time, bool bLastFrame)
        }
    
 
-   if(bIsFirstFrame || (dynamicTopology))
+   if(bFirstFrame || (dynamicTopology))
    {
       // check if we need to export the bindpose (also only for first frame)
 	  /*

@@ -158,12 +158,12 @@ void VNormal::Normalize()
 
 int materialsMergeStr::getUniqueMatId(int matId){	
 	
-	return getUniqueMatId(currUniqueHandle, matId);
+	return getMatEntry(currUniqueHandle, matId).matId;
 }
 
-int materialsMergeStr::getUniqueMatId(AnimHandle uniqueHandle, int matId)
+materialStr& materialsMergeStr::getMatEntry(AnimHandle uniqueHandle, int matId)
 {
-	int retMatId = 0;
+
 	
 	mergedMeshMaterialsMap_it groupIt = groupMatMap.find(uniqueHandle);
 	if(groupIt == groupMatMap.end()){
@@ -172,18 +172,21 @@ int materialsMergeStr::getUniqueMatId(AnimHandle uniqueHandle, int matId)
 	}
 	meshMaterialsMap* pMatMap = &groupMatMap[uniqueHandle];
 	
-
 	meshMaterialsMap_it matIt = pMatMap->find(matId);
-	if(matIt == pMatMap->end()){
-		retMatId = nNextMatId;	
+	if(matIt == pMatMap->end()){ 
+		materialStr& matStr = (*pMatMap)[matId];
+		matStr.matId = nNextMatId;	
 		nNextMatId++;
-		(*pMatMap)[matId] = retMatId;
+		return matStr; 
 	}
 	else{
-		retMatId = (*pMatMap)[matId];
+		return (*pMatMap)[matId];
 	}
-	
-	return retMatId;
+}
+
+void materialsMergeStr::setMatName(int matId, const std::string& name)
+{
+	getMatEntry(currUniqueHandle, matId).name = name;
 }
 
 void IntermediatePolyMesh3DSMax::Save(AlembicWriteJob* writeJob, TimeValue ticks, Mesh *triMesh, MNMesh* polyMesh, Matrix3& wm, Mtl* pMtl, const int nNumSamplesWritten, materialsMergeStr* pMatMerge)
@@ -500,7 +503,7 @@ void IntermediatePolyMesh3DSMax::Save(AlembicWriteJob* writeJob, TimeValue ticks
 		  mMatIdIndexVec[i] = matId;
 
 		  // Record the face set map if sample zero
-		  if (bFirstFrame)
+		  if (bFirstFrame || pMatMerge)
 		  {
 			  facesetmap_it it;
 			  it = mFaceSetsMap.find(matId);
@@ -519,7 +522,7 @@ void IntermediatePolyMesh3DSMax::Save(AlembicWriteJob* writeJob, TimeValue ticks
 		}
 
 		// For sample zero, export the material ids as face sets
-		if (bFirstFrame)// && numMatId > 1 )
+		if (bFirstFrame || pMatMerge)
 		{
 
 		  for ( facesetmap_it it=mFaceSetsMap.begin(); it != mFaceSetsMap.end(); it++)
@@ -540,10 +543,14 @@ void IntermediatePolyMesh3DSMax::Save(AlembicWriteJob* writeJob, TimeValue ticks
 				  nameStream<<pMtl->GetName();
 			  }
 			  else{
-				  nameStream<<"Unnamed";
+				  nameStream<<"Unassigned";
 			  }
 
 			  it->second.name = nameStream.str();
+
+			  if(pMatMerge){
+			      pMatMerge->setMatName(i, nameStream.str());
+			  }
 		  }
 		}
 		

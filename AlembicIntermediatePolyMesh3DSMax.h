@@ -21,11 +21,16 @@ public:
 };
 
 
+struct materialStr{
+	
+	std::string name;
+	int matId;
 
+};
 
-typedef std::map<int, int> meshMaterialsMap;
-typedef std::map<int, int>::iterator meshMaterialsMap_it;
-typedef std::map<int, int>::const_iterator meshMaterialsMap_cit;
+typedef std::map<int, materialStr> meshMaterialsMap;
+typedef std::map<int, materialStr>::iterator meshMaterialsMap_it;
+typedef std::map<int, materialStr>::const_iterator meshMaterialsMap_cit;
 
 typedef std::map<AnimHandle, meshMaterialsMap> mergedMeshMaterialsMap;
 typedef std::map<AnimHandle, meshMaterialsMap>::iterator mergedMeshMaterialsMap_it;
@@ -41,7 +46,9 @@ struct materialsMergeStr
 	{}
 
 	int getUniqueMatId(int matId);
-	int getUniqueMatId(AnimHandle uniqueHandle, int matId);
+	materialStr& getMatEntry(AnimHandle uniqueHandle, int matId);
+
+	void setMatName(int matId, const std::string& name);
 };
 
 class AlembicWriteJob;
