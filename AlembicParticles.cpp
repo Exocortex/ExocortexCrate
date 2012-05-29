@@ -1050,7 +1050,7 @@ int AlembicParticles::callback( INode *node )
     for (int i = 0; i < m_InstanceShapeNames->size(); i += 1)
     {
         const char *shapename = m_InstanceShapeNames->get()[i].c_str();
-        if (!strcmp(node->GetName(), shapename))
+        if (strcmp(node->GetName(), shapename) == 0)
         {
             m_InstanceShapeINodes[i] = node;
             m_TotalShapesToEnumerate -= 1;
