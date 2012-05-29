@@ -5,8 +5,6 @@
 #include <map>
 #include <boost/thread/mutex.hpp>
 
-#include <syslog.h>
-
 struct instanceGroupInfo{
    std::vector<std::string> identifiers;
    std::vector<std::map<float,AtNode*> > nodes;
