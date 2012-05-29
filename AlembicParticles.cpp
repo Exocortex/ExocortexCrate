@@ -916,35 +916,37 @@ int AlembicParticles::Display(TimeValue t, INode* inode, ViewExp *vpt, int flags
    gw->setRndLimits(rlim);
    for (int i = 0; i < NumberOfRenderMeshes(); i += 1)
    {
-     //  if (m_ParticleViewportMeshes[i].mesh)
-      // {
-           Matrix3 elemToObj;
-           elemToObj.IdentityMatrix();
 
-		   Interval meshTMValid = FOREVER;
+		Matrix3 elemToObj;
+		elemToObj.IdentityMatrix();
 
-		   BOOL deleteMesh = FALSE;
-		    
-           GetMultipleRenderMeshTM_Internal(t, inode, nullView, i, elemToObj, meshTMValid);
-		   Mesh *mesh = GetMultipleRenderMesh(t, inode, nullView, deleteMesh, i);
+		Interval meshTMValid = FOREVER;
 
-		   Matrix3 elemToWorld = elemToObj;// * objToWorld;
+		BOOL deleteMesh = FALSE;
 
-           INode *meshNode = GetParticleMeshNode(i, inode);
-           Material *mtls = meshNode->Mtls();
-           int numMtls = meshNode->NumMtls();
-           
-           if (numMtls > 1)
-               gw->setMaterial(mtls[0], 0);
+		GetMultipleRenderMeshTM_Internal(t, inode, nullView, i, elemToObj, meshTMValid);
+		Mesh *mesh = GetMultipleRenderMesh(t, inode, nullView, deleteMesh, i);
 
-           gw->setTransform( elemToWorld );
-           mesh->render(gw, mtls, (flags&USE_DAMAGE_RECT) ? &vpt->GetDammageRect() : NULL, COMP_ALL, numMtls);
-       /*}
-       else
-       {
-           gw->setTransform(Matrix3(1));
-           gw->marker(&parts.points[i], POINT_MRKR);  
-       }*/
+		if(mesh){
+
+			Matrix3 elemToWorld = elemToObj * objToWorld;
+
+			INode *meshNode = GetParticleMeshNode(i, inode);
+			Material *mtls = meshNode->Mtls();
+			int numMtls = meshNode->NumMtls();
+
+			if (numMtls > 1){
+				gw->setMaterial(mtls[0], 0);
+			}
+
+			gw->setTransform( elemToWorld );
+			mesh->render(gw, mtls, (flags&USE_DAMAGE_RECT) ? &vpt->GetDammageRect() : NULL, COMP_ALL, numMtls);
+		}
+		else
+		{
+			gw->setTransform(Matrix3(1));
+			gw->marker(&parts.points[i], POINT_MRKR);  
+		}
    }
    
    return 0;
@@ -996,51 +998,45 @@ int AlembicParticles::HitTest(TimeValue t, INode *inode, int type, int crossing,
 
    for (int i = 0; i < NumberOfRenderMeshes(); i += 1)
    {
-//       if (m_ParticleViewportMeshes[i].mesh)
-  //     {
-           Matrix3 elemToObj;
-           elemToObj.IdentityMatrix();
+		Matrix3 elemToObj;
+		elemToObj.IdentityMatrix();
 
-		   Interval meshTMValid = FOREVER;
+		Interval meshTMValid = FOREVER;
 
-		   BOOL deleteMesh = FALSE;
-		    
-           GetMultipleRenderMeshTM_Internal(t, inode, nullView, i, elemToObj, meshTMValid);
-		   Mesh *mesh = GetMultipleRenderMesh(t, inode, nullView, deleteMesh, i);
+		BOOL deleteMesh = FALSE;
 
-           Matrix3 elemToWorld = elemToObj;// * objToWorld;
+		GetMultipleRenderMeshTM_Internal(t, inode, nullView, i, elemToObj, meshTMValid);
+		Mesh *mesh = GetMultipleRenderMesh(t, inode, nullView, deleteMesh, i);
+		if(!mesh){
+			continue;
+		}
 
-		   INode *meshNode = GetParticleMeshNode(i, inode);
-           Material *mtls = 0;
-           int numMtls = 0;
+		Matrix3 elemToWorld = elemToObj * objToWorld;
 
-           if (meshNode != inode)
-           {
-               mtls = meshNode->Mtls();
-               numMtls = meshNode->NumMtls();
-           }
-           else
-           {
-                mtls = &particleMtl;
-                numMtls = 1;
-           }
+		INode *meshNode = GetParticleMeshNode(i, inode);
+		Material *mtls = 0;
+		int numMtls = 0;
 
-           gw->setTransform( elemToWorld );
-           mesh->select(gw, mtls, &hr, TRUE, numMtls);
-   //    }
-   //    else
-   //    {
-           Point3 pos = parts.points[i];
-           gw->marker(&pos, POINT_MRKR);
-  //     }
-       
-       if (gw->checkHitCode()) 
-       {
-           res = TRUE;
+		if (meshNode && meshNode != inode)
+		{
+		   mtls = meshNode->Mtls();
+		   numMtls = meshNode->NumMtls();
+		}
+		else
+		{
+			mtls = &particleMtl;
+			numMtls = 1;
+		}
 
-           gw->clearHitCode();
-           break;
-       }
+		gw->setTransform( elemToWorld );
+		mesh->select(gw, mtls, &hr, TRUE, numMtls);
+
+		if (gw->checkHitCode()) 
+		{
+			res = TRUE;
+			gw->clearHitCode();
+			break;
+		}
    }
 
    gw->setRndLimits(savedLimits);
