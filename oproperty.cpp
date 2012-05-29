@@ -1241,8 +1241,6 @@ PyObject * oProperty_new(Alembic::Abc::OCompoundProperty compound, std::string c
    identifier.append("/");
    identifier.append(in_propName);
 
-   INFO_MSG("identifier: " << identifier);
-
    oArchive * archive = (oArchive*)in_Archive;
 
    // check if it's an iCompoundProperty, they shouldn't have similar names to avoid confusion when reading it!
@@ -1518,8 +1516,6 @@ PyObject * oProperty_new(Alembic::Abc::OCompoundProperty compound, std::string c
    }
    else
    {
-      INFO_MSG("CREATING property " << in_propName << " of type " << in_propType);
-
       // here we need the property type
       if(in_propType == NULL)
       {

@@ -127,7 +127,7 @@ PyObject * oCompoundProperty_new(Alembic::Abc::OCompoundProperty compound, std::
       if(cprop)
          return (PyObject*)cprop;
 
-      INFO_MSG("Creating a new oCompoundProperty");
+      //INFO_MSG("Creating a new oCompoundProperty");
       cprop = PyObject_NEW(oCompoundProperty, &oCompoundProperty_Type);
       cprop->mBaseCompoundProperty = NULL;
       cprop->mArchive = in_Archive;

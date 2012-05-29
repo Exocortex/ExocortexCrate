@@ -23,6 +23,10 @@ Alembic::Abc::ICompoundProperty getCompoundFromIObject(Alembic::Abc::IObject obj
       return Alembic::AbcGeom::ISubD(object,Alembic::Abc::kWrapExisting).getSchema();
    } else if(Alembic::AbcGeom::ICamera::matches(md)) {
       return Alembic::AbcGeom::ICamera(object,Alembic::Abc::kWrapExisting).getSchema();
+
+   // NEW
+   } else if(Alembic::AbcGeom::IFaceSet::matches(md)) {
+      return Alembic::AbcGeom::IFaceSet(object,Alembic::Abc::kWrapExisting).getSchema();
    }
    return Alembic::Abc::ICompoundProperty();
    ALEMBIC_VALUE_CATCH_STATEMENT(Alembic::Abc::ICompoundProperty())
@@ -46,6 +50,10 @@ Alembic::Abc::TimeSamplingPtr getTimeSamplingFromObject(Alembic::Abc::IObject ob
       return Alembic::AbcGeom::ISubD(object,Alembic::Abc::kWrapExisting).getSchema().getTimeSampling();
    } else if(Alembic::AbcGeom::ICamera::matches(md)) {
       return Alembic::AbcGeom::ICamera(object,Alembic::Abc::kWrapExisting).getSchema().getTimeSampling();
+
+   // NEW
+   } else if(Alembic::AbcGeom::IFaceSet::matches(md)) {
+      return Alembic::AbcGeom::IFaceSet(object,Alembic::Abc::kWrapExisting).getSchema().getTimeSampling();
    }
    return Alembic::Abc::TimeSamplingPtr();
    ALEMBIC_VALUE_CATCH_STATEMENT(Alembic::Abc::TimeSamplingPtr())
@@ -69,6 +77,10 @@ size_t getNumSamplesFromObject(Alembic::Abc::IObject object)
       return Alembic::AbcGeom::ISubD(object,Alembic::Abc::kWrapExisting).getSchema().getNumSamples();
    } else if(Alembic::AbcGeom::ICamera::matches(md)) {
       return Alembic::AbcGeom::ICamera(object,Alembic::Abc::kWrapExisting).getSchema().getNumSamples();
+
+   //NEW
+   } else if(Alembic::AbcGeom::IFaceSet::matches(md)) {
+      return Alembic::AbcGeom::IFaceSet(object,Alembic::Abc::kWrapExisting).getSchema().getNumSamples();
    }
    return 0;
    ALEMBIC_VALUE_CATCH_STATEMENT(0)

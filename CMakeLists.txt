@@ -78,3 +78,13 @@ if( WIN32 )
 	copy_file_to_directory( ${RER_DEPENDENCIES} ${Install_DIR} )
 	copy_file_to_directory( ${EAH_DEPENDENCIES} ${Install_DIR} )
 endif()
+
+# Copy the sample files
+
+SET( Install_SAMPLE_DIR ${Exocortex_INSTALL_BASE_DIR}/Python${Python_SHORTNAME}/samples )
+SET( Python_SAMPLE_DIR ${BASE_DIR}/samples )
+
+copy_directory( ${Python_SAMPLE_DIR} ${Install_SAMPLE_DIR} )
+
+
+

@@ -169,8 +169,8 @@ static PyObject * oArchive_createObject(PyObject * self, PyObject * args)
    else
    {
       // if we are not a transform, ensure that we are nested below a xform!
-      INFO_MSG("parent.getMetaData().get(\"schema\") = " << parent.getMetaData().get("schema"));
-      INFO_MSG("type string = " << typeStr);
+      //INFO_MSG("parent.getMetaData().get(\"schema\") = " << parent.getMetaData().get("schema"));
+      //INFO_MSG("type string = " << typeStr);
 
       // check if there is already a child below this transform
       if(parent.getNumChildren() > 0)
