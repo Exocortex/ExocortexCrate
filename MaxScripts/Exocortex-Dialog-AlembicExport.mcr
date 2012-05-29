@@ -13,7 +13,7 @@ rollout AlembicExportSettings "Alembic Export Settings" width:288 height:388
 	spinner stepsSpinner "" pos:[112,120] width:160 height:16 range:[1,1e+006,1] type:#integer
 	spinner subStepsSpinner "" pos:[112,136] width:160 height:16 range:[1,1e+006,1] type:#integer
     
-	GroupBox geoGroup "Geometry" pos:[8,168] width:272 height:160
+	GroupBox geoGroup "Geometry" pos:[8,168] width:272 height:176
 	dropdownList meshTopologyDropDown "Mesh Topology" pos:[16,192] width:256 height:40 items:#("Just Surfaces (No Normals)", "Point Cache (No Surfaces)", "Surface + Normals (For Interchange)") selection:3
 	checkbox uvCheckbox "UVs" pos:[32,240] width:128 height:15 checked:true
     --checkbox clustersCheckbox "Clusters" pos:[32,200] width:128 height:15 checked:true
@@ -21,9 +21,10 @@ rollout AlembicExportSettings "Alembic Export Settings" width:288 height:388
 	checkbox dynamicTopologyCheckbox "Dynamic Topology" pos:[32,272] width:128 height:15 checked:true
 	checkbox materialIdsCheckbox "Material Ids" pos:[32,288] width:107 height:14 checked:true
 	checkbox flattenHierarchyCheckbox "Flatten Hierarchy" pos:[32,304] width:107 height:14 checked:true
+	checkbox exportAsSingleMeshCheckbox "Particle System to Mesh Conversion" pos:[32,320] width:200 height:14 checked:true
 
-	button exportButton "Export" pos:[16,338] width:64 height:24
-	button cancelButton "Cancel" pos:[208,338] width:64 height:24
+	button exportButton "Export" pos:[16,354] width:64 height:24
+	button cancelButton "Cancel" pos:[208,354] width:64 height:24
 	GroupBox selectGroup "Selection" pos:[8,16] width:272 height:40
 	checkbox exportSelectedCheckbox "Export Selected Objects" pos:[32,32] width:232 height:16 checked:true
 
@@ -32,7 +33,7 @@ rollout AlembicExportSettings "Alembic Export Settings" width:288 height:388
 	    filename = getSaveFileName caption:"Export to Alembic File:" types:"Alembic(*.abc)|*.abc|All(*.*)|*.*" historyCategory:"Alembic"
 	    if (filename != undefined) do
 	    (
-	        result = ExocortexAlembic.export filename inSpinner.value outSpinner.value stepsSpinner.value subStepsSpinner.value meshTopologyDropDown.selection uvCheckbox.checked materialIdsCheckbox.checked envelopeCheckbox.checked dynamicTopologyCheckbox.checked exportSelectedCheckbox.checked flattenHierarchyCheckbox.checked
+	        result = ExocortexAlembic.export filename inSpinner.value outSpinner.value stepsSpinner.value subStepsSpinner.value meshTopologyDropDown.selection uvCheckbox.checked materialIdsCheckbox.checked envelopeCheckbox.checked dynamicTopologyCheckbox.checked exportSelectedCheckbox.checked flattenHierarchyCheckbox.checked exportAsSingleMeshCheckbox.checked
 	        if( result != 0 ) do
 	        (
 	            	messageBox "Failure - See Maxscript Listener for details." title:"Exocortex Alembic Export"
