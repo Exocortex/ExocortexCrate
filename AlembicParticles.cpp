@@ -77,7 +77,7 @@ ParticleMtl::ParticleMtl():Material()
 }
 
 AlembicParticles::AlembicParticles()
-    : SimpleParticle(), m_TotalShapesToEnumerate(0)
+    : SimpleParticle()
 {
     pblock2 = NULL;
     m_pBoxMaker = NULL;
@@ -174,7 +174,7 @@ void AlembicParticles::UpdateParticles(TimeValue t, INode *node)
     m_ParticleOrientations.resize(numParticles);
     m_ParticleScales.resize(numParticles);
     
-    m_TotalShapesToEnumerate = 0;
+  
 
 
     m_objToWorld = node->GetObjTMAfterWSM(t);
@@ -672,7 +672,7 @@ uint16_t AlembicParticles::GetParticleShapeInstanceId(Alembic::AbcGeom::IPoints 
 
 void AlembicParticles::FillParticleShapeNodes(Alembic::AbcGeom::IPoints &iPoints, const SampleInfo &sampleInfo)
 {
-    m_TotalShapesToEnumerate = 0;
+    //m_TotalShapesToEnumerate = 0;
     m_InstanceShapeINodes.clear();
 
 	if( iPoints.getSchema().getPropertyHeader( ".instancenames" ) == NULL ) {
@@ -692,22 +692,14 @@ void AlembicParticles::FillParticleShapeNodes(Alembic::AbcGeom::IPoints &iPoints
         return;
     }
 
-    m_TotalShapesToEnumerate = m_InstanceShapeNames->size();
-    m_InstanceShapeINodes.resize(m_TotalShapesToEnumerate);
+    //m_TotalShapesToEnumerate = m_InstanceShapeNames->size();
+    m_InstanceShapeINodes.resize(m_InstanceShapeNames->size());
     
-    for (int i = 0; i < m_TotalShapesToEnumerate; i += 1)
+    for (int i = 0; i < m_InstanceShapeINodes.size(); i += 1)
     {
-        m_InstanceShapeINodes[i] = NULL;
-
-        // Take out any blanks from our count
-        if (m_InstanceShapeNames->get()[i].empty())
-        {
-            m_TotalShapesToEnumerate -= 1;
-        }
+		const std::string& path = m_InstanceShapeNames->get()[i];
+		m_InstanceShapeINodes[i] = GetNodeFromHierarchyPath(path);
     }
-
-    IScene *pScene = GET_MAX_INTERFACE()->GetScene();
-    pScene->EnumTree(this);
 }
 
 TimeValue AlembicParticles::GetParticleShapeInstanceTime(Alembic::AbcGeom::IPoints &iPoints, const SampleInfo &sampleInfo, int index) const
@@ -841,6 +833,10 @@ void AlembicParticles::GetMultipleRenderMeshTM_Internal(TimeValue  t, INode *ino
     Quat orient = m_ParticleOrientations[meshNumber];
     Point3 scaleVec = m_ParticleScales[meshNumber];
     scaleVec *= parts.radius[meshNumber];
+
+	//if(m_InstanceShapeType[meshNumber] == AlembicPoints::ShapeType_Box){
+	//	pos.z -= 2;
+	//}
 
 	meshTM.IdentityMatrix();
 	//meshTM.SetRotate(orient);//TODO: the orientation is wrong
@@ -1041,26 +1037,6 @@ int AlembicParticles::HitTest(TimeValue t, INode *inode, int type, int crossing,
 
    gw->setRndLimits(savedLimits);
    return res;
-}
-
-int AlembicParticles::callback( INode *node )
-{
-    int enumCode = TREE_CONTINUE;
-
-    for (int i = 0; i < m_InstanceShapeNames->size(); i += 1)
-    {
-        const char *shapename = m_InstanceShapeNames->get()[i].c_str();
-        if (strcmp(node->GetName(), shapename) == 0)
-        {
-            m_InstanceShapeINodes[i] = node;
-            m_TotalShapesToEnumerate -= 1;
-            break;
-        }        
-    }
-
-    enumCode = m_TotalShapesToEnumerate > 0 ?  TREE_CONTINUE : TREE_ABORT;
-
-    return enumCode;
 }
 
 Mesh *AlembicParticles::BuildPointMesh(int meshNumber, TimeValue t, INode *node, View& view, BOOL &needDelete)

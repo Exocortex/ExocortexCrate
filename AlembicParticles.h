@@ -45,7 +45,7 @@ typedef struct _viewportmesh
     _viewportmesh() : mesh(NULL), needDelete(FALSE) {}
 } viewportmesh;
 
-class AlembicParticles : public SimpleParticle, ITreeEnumProc
+class AlembicParticles : public SimpleParticle
 {
 public:
     IParamBlock2* pblock2;
@@ -129,7 +129,6 @@ private:
     unsigned short  GetParticleShapeInstanceId(Alembic::AbcGeom::IPoints &iPoints, const SampleInfo &sampleInfo, int index) const;
     TimeValue       GetParticleShapeInstanceTime(Alembic::AbcGeom::IPoints &iPoints, const SampleInfo &sampleInfo, int index) const;
     void            FillParticleShapeNodes(Alembic::AbcGeom::IPoints &iPoints, const SampleInfo &sampleInfo);
-    int			    callback( INode *node );
     INode*          GetParticleMeshNode(int meshNumber, INode *displayNode);
   //  void            ClearCurrentViewportMeshes();
 private:
@@ -150,7 +149,7 @@ private:
     std::vector<TimeValue> m_InstanceShapeTimes;
     Alembic::Abc::StringArraySamplePtr m_InstanceShapeNames;
     std::vector<INode*> m_InstanceShapeINodes;
-    size_t m_TotalShapesToEnumerate;
+    //size_t m_TotalShapesToEnumerate;
    // std::vector<viewportmesh> m_ParticleViewportMeshes;
     std::string m_CachedAbcFile;
 private:

@@ -105,4 +105,7 @@ void LockNodeTransform(INode *pNode, bool bLock);
 int GetParamIdByName( Animatable *pBaseObject, int pblockIndex, char const* pParamName );
 TriObject* GetTriObjectFromNode(INode *iNode, const TimeValue t, bool &deleteIt);
 
+
+INode* GetNodeFromHierarchyPath(const std::string& path);
+
 #endif  // _FOUNDATION_H_

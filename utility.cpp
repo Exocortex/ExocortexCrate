@@ -3,6 +3,7 @@
 #include "Utility.h"
 #include "SceneEnumProc.h"
 #include "AlembicIntermediatePolyMesh3DSMax.h"
+#include <boost/algorithm/string.hpp>
 
 SampleInfo getSampleInfo
 (
@@ -337,4 +338,74 @@ TriObject* GetTriObjectFromNode(INode *iNode, const TimeValue t, bool &deleteIt)
 	} else {
 		return NULL;
 	}
+}
+
+class HierarchyPathResolver : public ITreeEnumProc
+{
+public:
+
+	std::vector<std::string> parts;
+	INode* pRetNode;
+
+	HierarchyPathResolver(const std::string& path):pRetNode(NULL)
+	{
+		boost::split(parts, path, boost::is_any_of("/"));
+		
+		if(parts.size() > 1){
+			//delete the parent transform of the leaf node, since these nodes were merged on import
+			parts[parts.size()-2] = parts[parts.size()-1];
+			parts.pop_back();
+		}
+	}
+
+	void walkToChild(INode* node, int& childIndex)
+	{
+		if(childIndex >= parts.size()){
+			return;
+		}
+		std::string childName = parts[childIndex];
+		
+		for(int i=0; i<node->NumberOfChildren(); i++){
+
+			INode* childNode = node->GetChildNode(i);
+
+			if (strcmp(childNode->GetName(), childName.c_str()) == 0){
+				childIndex++;
+				pRetNode = childNode;
+				walkToChild(childNode, childIndex);		
+			}
+		}
+	}
+
+	int callback( INode* node )
+	{
+		int enumCode = TREE_CONTINUE;
+
+		if(parts.size() <= 1){
+			return TREE_ABORT;
+		}
+
+		//skip the first entry because we split based on slash, and the path starts with a a slash,
+		//so the first entry is an empty string
+		const char* name = node->GetName();
+		INode* pParent = node->GetParentNode();
+		if (pParent && pParent->IsRootNode() && strcmp(node->GetName(), parts[1].c_str()) == 0)
+		{
+			int partIndex = 2;
+			pRetNode = node;
+			walkToChild(node, partIndex);
+			return TREE_ABORT;
+		}        
+
+		return TREE_CONTINUE;
+	}
+
+};
+
+INode* GetNodeFromHierarchyPath(const std::string& path)
+{
+	HierarchyPathResolver resolver(path);
+    IScene *pScene = GET_MAX_INTERFACE()->GetScene();
+    pScene->EnumTree(&resolver);
+	return resolver.pRetNode;
 }
