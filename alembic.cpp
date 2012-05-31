@@ -2339,6 +2339,7 @@ ESS_CALLBACK_START(alembic_export_settings_Define,CRef&)
    oCustomProperty.AddParameter(L"bindpose",CValue::siBool,siPersistable,L"",L"",1,0,1,0,1,oParam);
    oCustomProperty.AddParameter(L"globalspace",CValue::siBool,siPersistable,L"",L"",0,0,1,0,1,oParam);
    oCustomProperty.AddParameter(L"dtopology",CValue::siBool,siPersistable,L"",L"",0,0,1,0,1,oParam);
+   oCustomProperty.AddParameter(L"guidecurves",CValue::siBool,siPersistable,L"",L"",0,0,1,0,1,oParam);
    oCustomProperty.AddParameter(L"transformcache",CValue::siBool,siPersistable,L"",L"",0,0,1,0,1,oParam);
  
 	return CStatus::OK;
@@ -2371,6 +2372,7 @@ ESS_CALLBACK_START(alembic_export_settings_DefineLayout,CRef&)
    oLayout.AddItem(L"facesets",L"Clusters");
    oLayout.AddItem(L"bindpose",L"Envelope BindPose");
    oLayout.AddItem(L"dtopology",L"Dynamic Topology");
+   oLayout.AddItem(L"guidecurves",L"Dynamic Topology");
    oLayout.AddItem(L"globalspace",L"Use Global Space");
    oLayout.EndGroup();
    oLayout.AddItem(L"transformcache",L"Transform Cache");
