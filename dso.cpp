@@ -1654,8 +1654,7 @@ static AtNode *GetNode(void *user_ptr, int i)
             {
                Alembic::Abc::V2fArraySamplePtr abcUvs = uvParam.getExpandedValue(sampleInfo.floorIndex).getVals();
                AtArray * uvs = AiArrayAllocate((AtInt)abcUvs->size() * 2, 1, AI_TYPE_FLOAT);
-               AtArray * uvsIdx = AiArrayAllocate((AtInt)(abcUvs->size()),1,AI_TYPE_UINT);
-               AtULong offset = 0;
+               offset = 0;
                for(AtULong i=0;i<abcUvs->size();i++)
                {
                   AiArraySetFlt(uvs,offset++,abcUvs->get()[i].x);
