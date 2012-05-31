@@ -57,9 +57,6 @@ AlembicPoints::AlembicPoints(const XSI::CRef & in_Ref, AlembicWriteJob * in_Job)
    mXformSchema = xform.getSchema();
    mPointsSchema = points.getSchema();
 
-   // create all properties
-   mInstancenamesProperty = OStringArrayProperty(mPointsSchema, ".instancenames", mPointsSchema.getMetaData(), GetJob()->GetAnimatedTs() );
-
    // particle attributes
    mScaleProperty = OV3fArrayProperty(mPointsSchema, ".scale", mPointsSchema.getMetaData(), GetJob()->GetAnimatedTs() );
    mOrientationProperty = OQuatfArrayProperty(mPointsSchema, ".orientation", mPointsSchema.getMetaData(), GetJob()->GetAnimatedTs() );
@@ -67,8 +64,6 @@ AlembicPoints::AlembicPoints(const XSI::CRef & in_Ref, AlembicWriteJob * in_Job)
    mAgeProperty = OFloatArrayProperty(mPointsSchema, ".age", mPointsSchema.getMetaData(), GetJob()->GetAnimatedTs() );
    mMassProperty = OFloatArrayProperty(mPointsSchema, ".mass", mPointsSchema.getMetaData(), GetJob()->GetAnimatedTs() );
    mShapeTypeProperty = OUInt16ArrayProperty(mPointsSchema, ".shapetype", mPointsSchema.getMetaData(), GetJob()->GetAnimatedTs() );
-   mShapeTimeProperty = OFloatArrayProperty(mPointsSchema, ".shapetime", mPointsSchema.getMetaData(), GetJob()->GetAnimatedTs() );
-   mShapeInstanceIDProperty = OUInt16ArrayProperty(mPointsSchema, ".shapeinstanceid", mPointsSchema.getMetaData(), GetJob()->GetAnimatedTs() );
    mColorProperty = OC4fArrayProperty(mPointsSchema, ".color", mPointsSchema.getMetaData(), GetJob()->GetAnimatedTs() );
 }
 
@@ -525,82 +520,88 @@ XSI::CStatus AlembicPoints::Save(double time)
    {
       ICEAttribute attr = geo.GetICEAttributeFromName(L"Shape");
       std::vector<uint16_t> vec;
-      if(attr.IsDefined() && attr.IsValid() && attr.GetElementCount() > 0)
+      if(attr.IsDefined() && attr.IsValid())
       {
+         if(attr.GetElementCount() > 0)
          {
-            std::map<unsigned long,size_t>::iterator it;
-
-            CICEAttributeDataArrayShape data;
-            attr.GetDataArray(data);
-            ULONG count = (data.IsConstant() || attr.IsConstant()) ? 1 : data.GetCount();
-            vec.resize((size_t)count);
-            if(count > 0)
             {
-               bool isConstant = true;
-               uint16_t firstVal;
-               for(ULONG i=0;i<count;i++)
+               std::map<unsigned long,size_t>::iterator it;
+
+               CICEAttributeDataArrayShape data;
+               attr.GetDataArray(data);
+               ULONG count = (data.IsConstant() || attr.IsConstant()) ? 1 : data.GetCount();
+               vec.resize((size_t)count);
+               if(count > 0)
                {
-                  CShape shape = data[i];
-                  switch(shape.GetType())
+                  bool isConstant = true;
+                  uint16_t firstVal;
+                  for(ULONG i=0;i<count;i++)
                   {
-                     case siICEShapeInstance:
-                     case siICEShapeReference:
+                     CShape shape = data[i];
+                     switch(shape.GetType())
                      {
-                        // check if we know this instance
-                        it = mInstanceMap.find(shape.GetReferenceID());
-                        if(it == mInstanceMap.end())
+                        case siICEShapeInstance:
+                        case siICEShapeReference:
                         {
-                           // insert it
-                           CRef ref = Application().GetObjectFromID(shape.GetReferenceID());
-                           mInstanceMap.insert(std::pair<unsigned long,size_t>(shape.GetReferenceID(),mInstanceNames.size()));
-                           vec[i] = (unsigned short)mInstanceNames.size();
-                           mInstanceNames.push_back(getIdentifierFromRef(ref));
+                           // check if we know this instance
+                           it = mInstanceMap.find(shape.GetReferenceID());
+                           if(it == mInstanceMap.end())
+                           {
+                              // insert it
+                              CRef ref = Application().GetObjectFromID(shape.GetReferenceID());
+                              mInstanceMap.insert(std::pair<unsigned long,size_t>(shape.GetReferenceID(),mInstanceNames.size()));
+                              vec[i] = (unsigned short)mInstanceNames.size();
+                              mInstanceNames.push_back(getIdentifierFromRef(ref));
+                           }
+                           else
+                              vec[i] = (unsigned short)it->second;
+                           break;
                         }
-                        else
-                           vec[i] = (unsigned short)it->second;
-                        break;
+                        default:
+                        {
+                           vec[i] = 0;
+                           break;
+                        }
                      }
-                     default:
-                     {
-                        vec[i] = 0;
-                        break;
-                     }
+                     if(i==0)
+                        firstVal = vec[i];
+                     else if(isConstant)
+                        isConstant = firstVal == vec[i];
                   }
-                  if(i==0)
-                     firstVal = vec[i];
-                  else if(isConstant)
-                     isConstant = firstVal == vec[i];
+                  if(isConstant)
+                     vec.resize(1);
                }
-               if(isConstant)
-                  vec.resize(1);
+            }
+
+            if(mInstanceNames.size() > 0)
+            {
+               if(!mInstancenamesProperty)
+                  mInstancenamesProperty = OStringArrayProperty(mPointsSchema, ".instancenames", mPointsSchema.getMetaData(), GetJob()->GetAnimatedTs() );
+
+               std::vector<std::string> preRollVec(1,"");
+               Alembic::Abc::StringArraySample preRollSample(&preRollVec.front(),preRollVec.size());
+               for(int i=mInstancenamesProperty.getNumSamples();i<mNumSamples;i++)
+                  mInstancenamesProperty.set(preRollSample);
+
+
+               Alembic::Abc::StringArraySample sample(&mInstanceNames.front(),mInstanceNames.size());
+               mInstancenamesProperty.set(sample);
+
+               if(vec.size() > 0)
+               {
+                  if(!mShapeInstanceIDProperty)
+                     mShapeInstanceIDProperty = OUInt16ArrayProperty(mPointsSchema, ".shapeinstanceid", mPointsSchema.getMetaData(), GetJob()->GetAnimatedTs() );
+
+                  std::vector<uint16_t> preRollVec(1,0);
+                  Alembic::Abc::UInt16ArraySample preRollSample(&preRollVec.front(),preRollVec.size());
+                  for(int i=mShapeInstanceIDProperty.getNumSamples();i<mNumSamples;i++)
+                     mShapeInstanceIDProperty.set(preRollSample);
+
+                  Alembic::Abc::UInt16ArraySample sample(&vec.front(),vec.size());
+                  mShapeInstanceIDProperty.set(sample);
+               }
             }
          }
-         if(vec.size() == 0)
-            vec.push_back(0 );
-         Alembic::Abc::UInt16ArraySample sample(&vec.front(),vec.size());
-         mShapeInstanceIDProperty.set(sample);
-
-         Alembic::Abc::StringArraySample namesSample;
-         std::vector<std::string> mTempName;
-         if(mInstanceNames.size() > 0)
-            namesSample = Alembic::Abc::StringArraySample(&mInstanceNames.front(),mInstanceNames.size());
-         else
-         {
-            mTempName.push_back("");
-            namesSample = Alembic::Abc::StringArraySample(&mTempName.front(),mTempName.size());
-         }
-         mInstancenamesProperty.set(namesSample);
-      }
-      else
-      {
-         vec.push_back(0);
-         Alembic::Abc::UInt16ArraySample sample(&vec.front(),vec.size());
-         mShapeInstanceIDProperty.set(sample);
-
-         std::vector<std::string> mTempName;
-         mTempName.push_back("");
-         Alembic::Abc::StringArraySample namesSample(&mTempName.front(),mTempName.size());
-         mInstancenamesProperty.set(namesSample);
       }
    }
 
@@ -608,37 +609,43 @@ XSI::CStatus AlembicPoints::Save(double time)
    {
       ICEAttribute attr = geo.GetICEAttributeFromName(L"ShapeInstancetime");
       std::vector<float> vec;
-      if(attr.IsDefined() && attr.IsValid() && attr.GetElementCount() > 0)
+      if(attr.IsDefined() && attr.IsValid())
       {
+         if(mNumSamples == 0)
+            mShapeTimeProperty = OFloatArrayProperty(mPointsSchema, ".shapetime", mPointsSchema.getMetaData(), GetJob()->GetAnimatedTs() );
+
+         if(attr.GetElementCount() > 0)
          {
-            CICEAttributeDataArrayFloat data;
-            attr.GetDataArray(data);
-            ULONG count = (data.IsConstant() || attr.IsConstant()) ? 1 : data.GetCount();
-            vec.resize((size_t)count);
-            if(count > 0)
             {
-               bool isConstant = true;
-               float firstVal = data[0];
-               for(ULONG i=0;i<count;i++)
+               CICEAttributeDataArrayFloat data;
+               attr.GetDataArray(data);
+               ULONG count = (data.IsConstant() || attr.IsConstant()) ? 1 : data.GetCount();
+               vec.resize((size_t)count);
+               if(count > 0)
                {
-                  vec[i] = data[i];
+                  bool isConstant = true;
+                  float firstVal = data[0];
+                  for(ULONG i=0;i<count;i++)
+                  {
+                     vec[i] = data[i];
+                     if(isConstant)
+                        isConstant = firstVal == data[i];
+                  }
                   if(isConstant)
-                     isConstant = firstVal == data[i];
+                     vec.resize(1);
                }
-               if(isConstant)
-                  vec.resize(1);
             }
+            Alembic::Abc::FloatArraySample sample;
+            if(vec.size() > 0)
+               sample = Alembic::Abc::FloatArraySample(&vec.front(),vec.size());
+            mShapeTimeProperty.set(sample);
          }
-         Alembic::Abc::FloatArraySample sample;
-         if(vec.size() > 0)
-            sample = Alembic::Abc::FloatArraySample(&vec.front(),vec.size());
-         mShapeTimeProperty.set(sample);
-      }
-      else
-      {
-         vec.resize(1,1.0f);
-         Alembic::Abc::FloatArraySample sample(&vec.front(),vec.size());
-         mMassProperty.set(sample);
+         else
+         {
+            vec.resize(1,1.0f);
+            Alembic::Abc::FloatArraySample sample(&vec.front(),vec.size());
+            mMassProperty.set(sample);
+         }
       }
    }
 

@@ -493,35 +493,58 @@ bool hasStandinSupport()
 }
 #pragma disable( warning: 4996 )
 
+CString gDSOPath;
+
 CString getDSOPath()
 {
+   // check if we have a cached result
+   if(!gDSOPath.IsEmpty())
+      return gDSOPath;
+
+   CString result;
    // first check the environment variables
    if(getenv("ArnoldAlembicDSO") != NULL)
    {
       std::string env = getenv("ArnoldAlembicDSO");
       if(!env.empty())
-         return env.c_str();
+         result = env.c_str();
    }
 
-   CRefArray plugins = Application().GetPlugins();
-   for(LONG i=0;i<plugins.GetCount();i++)
+   if(result.IsEmpty())
    {
-      Plugin plugin(plugins[i]);
-      if(plugin.GetName().IsEqualNoCase(L"ExocortexAlembicSoftimage"))
+      CRefArray plugins = Application().GetPlugins();
+      for(LONG i=0;i<plugins.GetCount();i++)
       {
-         CString path = plugin.GetFilename();
-         path = path.GetSubString(0,path.ReverseFindString(CUtils::Slash()));
-         path = path.GetSubString(0,path.ReverseFindString(CUtils::Slash()));
+         Plugin plugin(plugins[i]);
+         if(plugin.GetName().IsEqualNoCase(L"ExocortexAlembicSoftimage"))
+         {
+            CString path = plugin.GetFilename();
+            path = path.GetSubString(0,path.ReverseFindString(CUtils::Slash()));
+            path = path.GetSubString(0,path.ReverseFindString(CUtils::Slash()));
 #ifdef _WIN32
-         path = CUtils::BuildPath(path,L"DSO",L"ExocortexAlembicArnold.dll");
+            path = CUtils::BuildPath(path,L"DSO",L"ExocortexAlembicArnold.dll");
 #else
-         path = CUtils::BuildPath(path,L"DSO",L"libExocortexAlembicArnold.so");
+            path = CUtils::BuildPath(path,L"DSO",L"libExocortexAlembicArnold.so");
 #endif
-         return path;
+            result = path;
+         }
       }
    }
-#ifdef _DEBUG
-   return L"C:\\development\\alembic\\build\\vs2008_x64\\arnoldalembic\\Debug\\ExocortexAlembicArnold.dll";
-#endif
-   return CString();
+
+   // validate the path exists
+   if(!result.IsEmpty())
+   {
+      FILE * dsoFile = fopen(result.GetAsciiString(),"r");
+      if(dsoFile == NULL)
+      {
+         Application().LogMessage(L"[ExocortexAlembic] Arnold DSO path '"+result+L"' does not exist.",siErrorMsg);
+         result.Clear();
+      }
+      else
+         fclose(dsoFile);
+   }
+
+   // store the cached result
+   gDSOPath = result;
+   return result;
 }

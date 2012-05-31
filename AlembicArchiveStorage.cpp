@@ -52,6 +52,7 @@ Alembic::Abc::IArchive * getArchiveFromID(XSI::CString path)
          addArchive(new Alembic::Abc::IArchive( Alembic::AbcCoreHDF5::ReadArchive(), resolvedPath.GetAsciiString()));
          return getArchiveFromID(resolvedPath);
       }
+      XSI::Application().LogMessage(L"[ExocortexAlembic] File not found: "+resolvedPath,XSI::siErrorMsg);
       return NULL;
    }
    return it->second.archive;
