@@ -904,8 +904,9 @@ static int Cleanup(void *user_ptr)
 	userData * ud = (userData*)user_ptr;
    ud->gIObjects.clear();
    ud->gInstances.clear();
+   ud->gMbKeys.clear();
+
    delete(ud);
-	
    return TRUE;
 }
 
@@ -1312,12 +1313,17 @@ static AtNode *GetNode(void *user_ptr, int i)
                         AiArraySetBool(uvOptions,0,uWrap);
                         AiArraySetBool(uvOptions,1,vWrap);
 
+                        // create a second identical array to avoid problem when deleted
+                        AtArray * uvOptions2 = AiArrayAllocate(2,1,AI_TYPE_BOOLEAN);
+                        AiArraySetBool(uvOptions2,0,uWrap);
+                        AiArraySetBool(uvOptions2,1,vWrap);
+
                         // we need to define this two times, once for a named and once
                         // for an unnamed texture projection.
                         AiNodeDeclare(shapeNode, "Texture_Projection_wrap", "constant ARRAY BOOL");
                         AiNodeDeclare(shapeNode, "_wrap", "constant ARRAY BOOL");
                         AiNodeSetArray(shapeNode, "Texture_Projection_wrap", uvOptions);
-                        AiNodeSetArray(shapeNode, "_wrap", uvOptions);
+                        AiNodeSetArray(shapeNode, "_wrap", uvOptions2);
                      }
                   }
                }
@@ -1640,12 +1646,17 @@ static AtNode *GetNode(void *user_ptr, int i)
                         AiArraySetBool(uvOptions,0,uWrap);
                         AiArraySetBool(uvOptions,1,vWrap);
 
+                        // create a second identical array to avoid problem when deleted
+                        AtArray * uvOptions2 = AiArrayAllocate(2,1,AI_TYPE_BOOLEAN);
+                        AiArraySetBool(uvOptions2,0,uWrap);
+                        AiArraySetBool(uvOptions2,1,vWrap);
+
                         // we need to define this two times, once for a named and once
                         // for an unnamed texture projection.
                         AiNodeDeclare(shapeNode, "Texture_Projection_wrap", "constant ARRAY BOOL");
                         AiNodeDeclare(shapeNode, "_wrap", "constant ARRAY BOOL");
                         AiNodeSetArray(shapeNode, "Texture_Projection_wrap", uvOptions);
-                        AiNodeSetArray(shapeNode, "_wrap", uvOptions);
+                        AiNodeSetArray(shapeNode, "_wrap", uvOptions2);
                      }
                   }
                }
