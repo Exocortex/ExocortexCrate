@@ -1077,7 +1077,7 @@ Mesh *AlembicParticles::BuildSphereMesh(int meshNumber, TimeValue t, INode *node
         m_pSphereMaker = static_cast<GenSphere*>
             (GET_MAX_INTERFACE()->CreateInstance(GEOMOBJECT_CLASS_ID, Class_ID(SPHERE_CLASS_ID, 0)));
 
-        float size = 2;
+        float size = 1;
 		int segments = 12;
         m_pSphereMaker->SetParams(size, segments);
         m_pSphereMaker->BuildMesh(0);
