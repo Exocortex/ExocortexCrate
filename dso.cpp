@@ -5,8 +5,6 @@
 #include <map>
 #include <boost/thread/mutex.hpp>
 
-#include <syslog.h>
-
 struct instanceGroupInfo{
    std::vector<std::string> identifiers;
    std::vector<std::map<float,AtNode*> > nodes;
@@ -73,6 +71,11 @@ struct userData
 
    std::vector<AtNode*> constructedNodes;
    std::vector<AtArray*> shadersToAssign;
+
+   std::string subdiv_type;
+   int subdiv_iterations;
+   float subdiv_pixel_error;
+   std::string subdiv_dicing_camera;
 };
 
 #define sampleTolerance 0.00001
@@ -128,6 +131,17 @@ static int Init(AtNode *mynode, void **user_ptr)
    ud->gDataString = (char*) AiNodeGetStr(mynode, "data");
    ud->gProcShaders = AiArrayCopy(AiNodeGetArray(mynode, "shader"));
    ud->gProcDispMap = AiNodeGetArray(mynode, "disp_map");
+
+   if(AiNodeGetStr(mynode, "subdiv_type"))
+      ud->subdiv_type = AiNodeGetStr(mynode, "subdiv_type");
+   else
+      ud->subdiv_type.clear();
+   ud->subdiv_iterations = AiNodeGetInt(mynode, "subdiv_iterations");
+   ud->subdiv_pixel_error = AiNodeGetFlt(mynode, "subdiv_pixel_error");
+   if(AiNodeGetStr(mynode, "subdiv_dicing_camera"))
+      ud->subdiv_dicing_camera = AiNodeGetStr(mynode, "subdiv_dicing_camera");
+   else
+      ud->subdiv_dicing_camera.clear();
 
    // empty the procedural's shader
    //AtArray * emptyShaders = AiArrayAllocate(1,1,AI_TYPE_NODE);
@@ -1190,6 +1204,8 @@ static AtNode *GetNode(void *user_ptr, int i)
 		return NULL;
 	}
 
+   bool isPolyMeshNode = false;
+
    const Alembic::Abc::MetaData &md = object.getMetaData();
    if(Alembic::AbcGeom::IPolyMesh::matches(md))
    {
@@ -1244,6 +1260,7 @@ static AtNode *GetNode(void *user_ptr, int i)
       {
          shapeNode = AiNode("polymesh");
          createdShifted = false;
+         isPolyMeshNode = true;
       }
 
       // create arrays to hold the data
@@ -1572,6 +1589,7 @@ static AtNode *GetNode(void *user_ptr, int i)
       {
          shapeNode = AiNode("polymesh");
          createdShifted = false;
+         isPolyMeshNode = true;
       }
 
       // create arrays to hold the data
@@ -1636,8 +1654,7 @@ static AtNode *GetNode(void *user_ptr, int i)
             {
                Alembic::Abc::V2fArraySamplePtr abcUvs = uvParam.getExpandedValue(sampleInfo.floorIndex).getVals();
                AtArray * uvs = AiArrayAllocate((AtInt)abcUvs->size() * 2, 1, AI_TYPE_FLOAT);
-               AtArray * uvsIdx = AiArrayAllocate((AtInt)(abcUvs->size()),1,AI_TYPE_UINT);
-               AtULong offset = 0;
+               offset = 0;
                for(AtULong i=0;i<abcUvs->size();i++)
                {
                   AiArraySetFlt(uvs,offset++,abcUvs->get()[i].x);
@@ -2164,11 +2181,24 @@ static AtNode *GetNode(void *user_ptr, int i)
       else
          ud->shadersToAssign.push_back(NULL);
 
-      if(ud->gProcDispMap != NULL)
-         AiNodeSetArray(shapeNode,"disp_map",AiArrayCopy(ud->gProcDispMap));
-      if(shaderIndices != NULL)
-         AiNodeSetArray(shapeNode, "shidxs", shaderIndices);
+      if(isPolyMeshNode)
+      {
+         if(ud->gProcDispMap != NULL)
+            AiNodeSetArray(shapeNode,"disp_map",AiArrayCopy(ud->gProcDispMap));
+         if(shaderIndices != NULL)
+            AiNodeSetArray(shapeNode, "shidxs", shaderIndices);
 
+         // do we have subdivision settings
+         if(ud->subdiv_type.length() > 0)
+         {
+            AiNodeSetStr(shapeNode,"subdiv_type",ud->subdiv_type.c_str());
+            AiNodeSetInt(shapeNode,"subdiv_iterations",ud->subdiv_iterations);
+            AiNodeSetFlt(shapeNode,"subdiv_pixel_error",ud->subdiv_pixel_error);
+
+            if(ud->subdiv_dicing_camera.length() > 0)
+               AiNodeSetStr(shapeNode,"subdiv_dicing_camera",ud->subdiv_dicing_camera.c_str());
+         }
+      }
 
       // allocate the matrices for arnold and initiate them with identities
       AtArray * matrices = AiArrayAllocate(1,(AtInt)nbSamples,AI_TYPE_MATRIX);
