@@ -898,8 +898,8 @@ void addAlembicMaterialsModifier(INode *pNode, Alembic::AbcGeom::IObject& iObj)
 
 	GET_MAX_INTERFACE()->SelectNode( pNode );
 
-	char szBuffer[10000];
-	sprintf_s(szBuffer, 10000,
+	char szBuffer[100000];
+	sprintf_s(szBuffer, 100000,
 			"AlembicMaterialModifier = EmptyModifier()\n"
 			"AlembicMaterialModifier.name = \"Alembic Materials\"\n"
 			"addmodifier $ AlembicMaterialModifier\n"
