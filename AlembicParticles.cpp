@@ -1154,7 +1154,7 @@ Mesh *AlembicParticles::BuildRectangleMesh(int meshNumber, TimeValue t, INode *n
     {
         m_pRectangleMaker = static_cast<GenBoxObject*>
             (GET_MAX_INTERFACE()->CreateInstance(GEOMOBJECT_CLASS_ID, Class_ID(BOXOBJ_CLASS_ID, 0)));
-        float size = 1;
+        float size = 2;
         m_pRectangleMaker->SetParams(size, 0, size);
         m_pRectangleMaker->BuildMesh(0);
         m_pRectangleMaker->UpdateValidity(TOPO_CHAN_NUM, FOREVER);
