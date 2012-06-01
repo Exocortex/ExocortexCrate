@@ -132,12 +132,12 @@ bool AlembicPolyMesh::Save(double time, bool bLastFrame)
 
 		//save the first mesh to the final result, and then merge the others with it
 		materialsMerge.currUniqueHandle = meshes[0].animHandle;
-		finalPolyMesh.Save(mJob, ticks, meshes[0].pMesh, NULL, GetRef().node->GetObjTMAfterWSM(ticks), meshes[0].pMtl, mNumSamples, &materialsMerge);
+		finalPolyMesh.Save(mJob, ticks, meshes[0].pMesh, NULL, meshes[0].worldTrans, meshes[0].pMtl, mNumSamples, &materialsMerge);
 
 		for(int i=1; i<meshes.size(); i++){
 			IntermediatePolyMesh3DSMax currPolyMesh;
 			materialsMerge.currUniqueHandle = meshes[i].animHandle;
-			currPolyMesh.Save(mJob, ticks, meshes[i].pMesh, NULL, GetRef().node->GetObjTMAfterWSM(ticks), meshes[i].pMtl, mNumSamples, &materialsMerge);
+			currPolyMesh.Save(mJob, ticks, meshes[i].pMesh, NULL, meshes[i].worldTrans, meshes[i].pMtl, mNumSamples, &materialsMerge);
 			bool bSuccess = finalPolyMesh.mergeWith(currPolyMesh);
 			if(!bSuccess){
 				return false;
@@ -175,7 +175,9 @@ bool AlembicPolyMesh::Save(double time, bool bLastFrame)
 			return false;
 		}
 
-		finalPolyMesh.Save(mJob, ticks, triMesh, polyMesh, GetRef().node->GetObjTMAfterWSM(ticks), GetRef().node->GetMtl(), mNumSamples, &materialsMerge);
+		Matrix3 worldTrans;
+		worldTrans.IdentityMatrix();
+		finalPolyMesh.Save(mJob, ticks, triMesh, polyMesh, worldTrans, GetRef().node->GetMtl(), mNumSamples, &materialsMerge);
 
 	   // Note that the TriObject should only be deleted
 	   // if the pointer to it is not equal to the object
@@ -197,6 +199,7 @@ bool AlembicPolyMesh::Save(double time, bool bLastFrame)
 	// Extend the archive bounding box
 
 	if (mJob){
+		//TODO: I think you need to transform the box into world space first
 		mJob->GetArchiveBBox().extendBy(finalPolyMesh.bbox);
 	}
 

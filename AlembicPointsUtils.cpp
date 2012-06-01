@@ -16,13 +16,14 @@
 #include <ParticleFlow/IParticleContainer.h>
 #include <map>
 #include <vector>
+#include "AlembicParticles.h"
 
-class NullView: public View 
-{
-public:
-    Point2 ViewToScreen(Point3 p) { return Point2(p.x,p.y); }
-    NullView() { worldToView.IdentityMatrix(); screenW=640.0f; screenH = 480.0f; }
-};
+//class NullView: public View 
+//{
+//public:
+//    Point2 ViewToScreen(Point3 p) { return Point2(p.x,p.y); }
+//    NullView() { worldToView.IdentityMatrix(); screenW=640.0f; screenH = 480.0f; }
+//};
 
 typedef std::map<INode*, IParticleGroup*> groupMapT;
 
@@ -51,56 +52,107 @@ void getParticleGroups(TimeValue ticks, Object* obj, INode* node, std::vector<IP
 
 void getParticleSystemRenderMeshes(TimeValue ticks, Object* obj, INode* node, std::vector<particleMeshData>& meshes)
 {
-	IPFActionList* particleActionList = GetPFActionListInterface(obj);
-	if(!particleActionList){
-		return;
-	}
 
-	std::vector<IParticleGroup*> groups;
-	getParticleGroups(ticks, obj, node, groups);
-
-	IPFRender* particleRender = NULL;
-
-	int numActions = particleActionList->NumActions();
-	for (int p = particleActionList->NumActions()-1; p >= 0; p -= 1)
-	{
-		INode *pActionNode = particleActionList->GetAction(p);
-		Object *pActionObj = (pActionNode != NULL ? pActionNode->EvalWorldState(ticks).obj : NULL);
-
-		if (pActionObj == NULL){
-			continue;
-		}
-		//MSTR name;
-		//pActionObj->GetClassName(name);
-
-		particleRender = GetPFRenderInterface(pActionObj);
-		if(particleRender){
-			break;
-		}
-	}
-
-	if(particleRender){
+	SimpleParticle* pSimpleParticle = (SimpleParticle*) obj->GetInterface(I_SIMPLEPARTICLEOBJ);
+	if(pSimpleParticle){
 
 		NullView nullView;
 
-		for(int g=0; g<groups.size(); g++){
-			
-			::IObject *pCont = groups[g]->GetParticleContainer();
-			::INode *pNode = groups[g]->GetParticleSystem();
+		AlembicParticles* pAlembicParticles = NULL;
+		if(obj->CanConvertToType(ALEMBIC_SIMPLE_PARTICLE_CLASSID))
+		{
+			pAlembicParticles = reinterpret_cast<AlembicParticles*>(obj->ConvertToType(ticks, ALEMBIC_SIMPLE_PARTICLE_CLASSID));
+		}
 
+		if(pAlembicParticles){
+
+			pSimpleParticle->Update(ticks, node);
+			int numParticles = pSimpleParticle->parts.points.Count();
+
+			for(int i=0; i<numParticles; i++){
+
+				particleMeshData mdata;
+				mdata.pMtl = NULL; //TODO: where get material?
+				mdata.animHandle = 0; //TODO: where to get handle?
+				Interval interval = FOREVER;
+				pAlembicParticles->GetMultipleRenderMeshTM_Internal(ticks, NULL, nullView, i, mdata.worldTrans, interval);
+
+				//Matrix3 objectToWorld = inode->GetObjectTM( ticks );
+				//mdata.worldTrans = mdata.worldTrans * Inverse(objectToWorld); 
+
+				mdata.pMesh = pAlembicParticles->GetMultipleRenderMesh(ticks, node /*system node or particle node?*/ , nullView, mdata.bNeedDelete, i);
+
+				if(mdata.pMesh){
+					meshes.push_back(mdata);
+				}
+			}
+		}
+		else{
 			particleMeshData mdata;
-			mdata.pMtl = groups[g]->GetMaterial();
-			
-			mdata.animHandle = Animatable::GetHandleByAnim(groups[g]->GetActionList());
-
-			mdata.pMesh = particleRender->GetRenderMesh(pCont, ticks, obj, pNode, nullView, mdata.bNeedDelete);
-
+			mdata.pMtl = NULL;//TODO: where to get material?
+			mdata.animHandle = 0;//TODO: where to get handle?
+			mdata.worldTrans.IdentityMatrix();
+			mdata.pMesh = pSimpleParticle->GetRenderMesh(ticks, node, nullView, mdata.bNeedDelete);
 			if(mdata.pMesh){
 				meshes.push_back(mdata);
 			}
 		}
 	}
+	else{
 
+		IPFActionList* particleActionList = GetPFActionListInterface(obj);
+		if(!particleActionList){
+			return;
+		}
+
+		std::vector<IParticleGroup*> groups;
+		getParticleGroups(ticks, obj, node, groups);
+
+		IPFRender* particleRender = NULL;
+
+		int numActions = particleActionList->NumActions();
+		for (int p = particleActionList->NumActions()-1; p >= 0; p -= 1)
+		{
+			INode *pActionNode = particleActionList->GetAction(p);
+			Object *pActionObj = (pActionNode != NULL ? pActionNode->EvalWorldState(ticks).obj : NULL);
+
+			if (pActionObj == NULL){
+				continue;
+			}
+			//MSTR name;
+			//pActionObj->GetClassName(name);
+
+			particleRender = GetPFRenderInterface(pActionObj);
+			if(particleRender){
+				break;
+			}
+		}
+
+		if(particleRender){
+
+			NullView nullView;
+
+			for(int g=0; g<groups.size(); g++){
+				
+				::IObject *pCont = groups[g]->GetParticleContainer();
+				::INode *pNode = groups[g]->GetParticleSystem();
+
+				particleMeshData mdata;
+				mdata.pMtl = groups[g]->GetMaterial();
+				
+				mdata.animHandle = Animatable::GetHandleByAnim(groups[g]->GetActionList());
+
+				mdata.worldTrans.IdentityMatrix();
+
+				mdata.pMesh = particleRender->GetRenderMesh(pCont, ticks, obj, pNode, nullView, mdata.bNeedDelete);
+
+				if(mdata.pMesh){
+					meshes.push_back(mdata);
+				}
+			}
+		}
+
+	}
 }
 
 const Mesh* GetShapeMesh(IParticleObjectExt *pExt, int particleId, TimeValue ticks)

@@ -4,6 +4,7 @@
 //#include "AlembicMetadataUtils.h"
 //#include "AlembicPointsUtils.h"
 #include "AlembicWriteJob.h"
+#include <algorithm>
 
 namespace AbcA = ::Alembic::AbcCoreAbstract::ALEMBIC_VERSION_NS;
 namespace AbcB = ::Alembic::Abc::ALEMBIC_VERSION_NS;
@@ -195,11 +196,44 @@ void materialsMergeStr::setMatName(int matId, const std::string& name)
 	getMatEntry(currUniqueHandle, matId).name = name;
 }
 
+Matrix3 TransposeRot(const Matrix3& mat){
+	//std::swap(mat.m[1][0], mat.m[0][1]);
+	//std::swap(mat.m[2][0], mat.m[0][2]);
+	//std::swap(mat.m[2][1], mat.m[1][2]);
+
+	Point3 row1 = mat.GetRow(0);
+	Point3 row2 = mat.GetRow(1);
+	Point3 row3 = mat.GetRow(2);
+	Point3 row4 = mat.GetRow(3);
+
+	Point3 nrow1;
+	Point3 nrow2;
+	Point3 nrow3;
+
+	nrow1.x = row1.x;
+	nrow1.y = row2.x;
+	nrow1.z = row3.x;
+
+	nrow2.x = row1.y;
+	nrow2.y = row2.y;
+	nrow2.z = row3.y;
+
+	nrow3.x = row1.z;
+	nrow3.y = row2.z;
+	nrow3.z = row3.z;
+
+	return Matrix3(nrow1, nrow2, nrow3, row4);
+}
+
 void IntermediatePolyMesh3DSMax::Save(AlembicWriteJob* writeJob, TimeValue ticks, Mesh *triMesh, MNMesh* polyMesh, Matrix3& wm, Mtl* pMtl, const int nNumSamplesWritten, materialsMergeStr* pMatMerge)
 {
 	const bool bFirstFrame = nNumSamplesWritten == 0;
 
-
+	//TODO: will need to transform normals when exporting from AlembicParticle system
+	//for transforming the normals
+	//Matrix3 wmIT = Inverse(wm);
+	//wmIT = TransposeRot(wmIT);
+	
     LONG vertCount = (polyMesh != NULL) ? polyMesh->VNum()
                                        : triMesh->getNumVerts();
 
@@ -213,13 +247,10 @@ void IntermediatePolyMesh3DSMax::Save(AlembicWriteJob* writeJob, TimeValue ticks
     {
         Point3 &maxPoint = (polyMesh != NULL) ? polyMesh->V(i)->p
                                              : triMesh->getVert(i);
-        posVec[i] = ConvertMaxPointToAlembicPoint( maxPoint );
+		
+        posVec[i] = ConvertMaxPointToAlembicPoint( wm * maxPoint );
         bbox.extendBy(posVec[i]);
     }
-
-
-
-
 
     // abort here if we are just storing points
 	bool purePointCache = static_cast<bool>(writeJob->GetOption("exportPurePointCache"));
@@ -294,6 +325,8 @@ void IntermediatePolyMesh3DSMax::Save(AlembicWriteJob* writeJob, TimeValue ticks
                         vertexNormal = GetVertexNormal(triMesh, i, j, m_MeshSmoothGroupNormals);
                     }
                 }
+
+				//vertexNormal = vertexNormal * wmIT;
 
 				normalVec.push_back(ConvertMaxNormalToAlembicNormal(vertexNormal));
                 normalCount += 1;

@@ -9,6 +9,7 @@ struct particleMeshData{
 	Mesh* pMesh;
 	Mtl* pMtl;
 	AnimHandle animHandle;//needed to uniquely identifiy particle groups
+	Matrix3 worldTrans;
 };
 
 void getParticleSystemRenderMeshes(TimeValue ticks, Object* obj, INode* node, std::vector<particleMeshData>& meshes);
