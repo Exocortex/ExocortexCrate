@@ -252,6 +252,7 @@ ESS_CALLBACK_START(alembic_export_Execute,CRef&)
 	      jobString += L";dynamictopology="+settings.GetParameterValue(L"dtopology").GetAsText();
       }
       jobString += L";globalspace="+settings.GetParameterValue(L"globalspace").GetAsText();
+      jobString += L";guidecurves="+settings.GetParameterValue(L"guidecurves").GetAsText();
  
       Application().ExecuteCommand(L"DeleteObj",inspectArgs,inspectResult);
    }
@@ -280,6 +281,7 @@ ESS_CALLBACK_START(alembic_export_Execute,CRef&)
 	   bool bindpose = true;
       bool dynamictopology = false;
       bool globalspace = false;
+      bool guidecurves = false;
       CRefArray objects;
 
       // process all tokens of the job
@@ -317,6 +319,8 @@ ESS_CALLBACK_START(alembic_export_Execute,CRef&)
             dynamictopology = (bool)CValue(valuePair[1]);
 		   else if(valuePair[0].IsEqualNoCase(L"globalspace"))
             globalspace = (bool)CValue(valuePair[1]);
+           else if(valuePair[0].IsEqualNoCase(L"guidecurves"))
+            guidecurves = (bool)CValue(valuePair[1]);
          else if(valuePair[0].IsEqualNoCase(L"filename"))
             filename = CValue(valuePair[1]).GetAsText();
          else if(valuePair[0].IsEqualNoCase(L"objects"))
@@ -435,6 +439,7 @@ ESS_CALLBACK_START(alembic_export_Execute,CRef&)
       job->SetOption(L"indexedNormals",true);
       job->SetOption(L"indexedUVs",true);
       job->SetOption(L"globalSpace",globalspace);
+      job->SetOption(L"guideCurves",guidecurves);
 
       // check if the job is satifsied
       if(job->PreProcess() != CStatus::OK)
@@ -2372,7 +2377,7 @@ ESS_CALLBACK_START(alembic_export_settings_DefineLayout,CRef&)
    oLayout.AddItem(L"facesets",L"Clusters");
    oLayout.AddItem(L"bindpose",L"Envelope BindPose");
    oLayout.AddItem(L"dtopology",L"Dynamic Topology");
-   oLayout.AddItem(L"guidecurves",L"Dynamic Topology");
+   oLayout.AddItem(L"guidecurves",L"Guide Curves");
    oLayout.AddItem(L"globalspace",L"Use Global Space");
    oLayout.EndGroup();
    oLayout.AddItem(L"transformcache",L"Transform Cache");

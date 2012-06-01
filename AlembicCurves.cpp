@@ -112,6 +112,8 @@ XSI::CStatus AlembicCurves::Save(double time)
          return CStatus::OK;
    }
 
+   bool guideCurves = GetJob()->GetOption(L"guideCurves");
+
    // access the crvlist
    if(prim.GetType().IsEqualNoCase(L"crvlist"))
    {
@@ -170,7 +172,7 @@ XSI::CStatus AlembicCurves::Save(double time)
          mCurvesSchema.set(mCurvesSample);
       }
    }
-   else if(prim.GetType().IsEqualNoCase(L"hair"))
+   else if(prim.GetType().IsEqualNoCase(L"hair") && !guideCurves)
    {
       HairPrimitive hairPrim(GetRef());
       LONG totalHairs = prim.GetParameterValue(L"TotalHairs");
@@ -204,12 +206,7 @@ XSI::CStatus AlembicCurves::Save(double time)
             bbox.extendBy(posVec[posVecOffset+i]);
          }
       }
-
-      // check for an empty position vector
-      if(posVec.size() == 0)
-         mCurvesSample.setPositions(Alembic::Abc::P3fArraySample());
-      else
-         mCurvesSample.setPositions(Alembic::Abc::P3fArraySample(&posVec.front(),posVec.size()));
+      mCurvesSample.setPositions(Alembic::Abc::P3fArraySample(&posVec.front(),posVec.size()));
 
       // store the bbox
       mCurvesSample.setSelfBounds(bbox);
@@ -273,6 +270,52 @@ XSI::CStatus AlembicCurves::Save(double time)
             mCurvesSample.setUVs(Alembic::AbcGeom::OV2fGeomParam::Sample(Alembic::Abc::V2fArraySample(&mUvVec.front(),mUvVec.size()),Alembic::AbcGeom::kVertexScope));
             hairUV.Clear();
          }
+      }
+      mCurvesSchema.set(mCurvesSample);
+   }
+   else if(prim.GetType().IsEqualNoCase(L"hair") && guideCurves)
+   {
+      // access the guide hairs
+      Geometry geom = prim.GetGeometry(time);
+      CPointRefArray pointRefArray(geom.GetPoints());
+      CVector3Array pos( pointRefArray.GetPositionArray());	  
+      LONG vertCount = pos.GetCount();
+
+      // prepare the bounding box
+      Alembic::Abc::Box3d bbox;
+      std::vector<Alembic::Abc::V3f> posVec;
+
+      posVec.resize(vertCount);
+      for(LONG i=0;i<vertCount;i++)
+      {
+          if(globalSpace)
+            pos[i] = MapObjectPositionToWorldSpace(globalXfo,pos[i]);
+          posVec[i].x = (float)pos[i].GetX();
+          posVec[i].y = (float)pos[i].GetY();
+          posVec[i].z = (float)pos[i].GetZ();
+          bbox.extendBy(posVec[i]);
+	  }
+
+      mCurvesSample.setPositions(Alembic::Abc::P3fArraySample(&posVec.front(),posVec.size()));
+
+      // store the bbox
+      mCurvesSample.setSelfBounds(bbox);
+
+      // if we are the first frame!
+      if(mNumSamples == 0)
+      {
+         const int hairVertCount = 14;
+         const int guideCount = vertCount/hairVertCount;
+
+         mNbVertices.clear();
+         mNbVertices.resize(guideCount, hairVertCount);
+         mCurvesSample.setCurvesNumVertices(Alembic::Abc::Int32ArraySample(&mNbVertices.front(),mNbVertices.size()));
+
+         // set the type + wrapping
+         mCurvesSample.setType(kLinear);
+         mCurvesSample.setWrap(kNonPeriodic);
+         mCurvesSample.setBasis(kNoBasis);
+
       }
       mCurvesSchema.set(mCurvesSample);
    }
