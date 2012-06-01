@@ -296,7 +296,11 @@ XSI::CStatus AlembicCurves::Save(double time)
           bbox.extendBy(posVec[i]);
 	  }
 
-      mCurvesSample.setPositions(Alembic::Abc::P3fArraySample(&posVec.front(),posVec.size()));
+      // check for an empty position vector
+      if(posVec.size() == 0)
+          mCurvesSample.setPositions(Alembic::Abc::P3fArraySample());
+      else
+          mCurvesSample.setPositions(Alembic::Abc::P3fArraySample(&posVec.front(),posVec.size()));
 
       // store the bbox
       mCurvesSample.setSelfBounds(bbox);
