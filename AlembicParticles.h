@@ -157,7 +157,7 @@ private:
     GenSphere *m_pSphereMaker;
 	GenCylinder *m_pCylinderMaker;
 	GenCylinder *m_pDiskMaker;
-	SimpleObject* m_pRectangleMaker;
+	GenBoxObject* m_pRectangleMaker;
 	Matrix3  m_objToWorld;
 };
 

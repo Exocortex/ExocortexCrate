@@ -1152,20 +1152,10 @@ Mesh *AlembicParticles::BuildRectangleMesh(int meshNumber, TimeValue t, INode *n
 
 	if (!m_pRectangleMaker)
     {
-        m_pRectangleMaker = static_cast<SimpleObject*>
-            (GET_MAX_INTERFACE()->CreateInstance(GEOMOBJECT_CLASS_ID, Class_ID(CONE_CLASS_ID, 0)));
-
-        float width = 1;
-        float length = 1;
-
-		TimeValue zero( 0 );
-
-/*// Parameter map indices
-#define PB_LENGTH		0
-#define PB_WIDTH		1*/
-
-        m_pRectangleMaker->GetParamBlockByID( 0 )->SetValue( 0, zero, width );
-        m_pRectangleMaker->GetParamBlockByID( 0 )->SetValue( 1, zero, length );
+        m_pRectangleMaker = static_cast<GenBoxObject*>
+            (GET_MAX_INTERFACE()->CreateInstance(GEOMOBJECT_CLASS_ID, Class_ID(BOXOBJ_CLASS_ID, 0)));
+        float size = 1;
+        m_pRectangleMaker->SetParams(size, 0, size);
         m_pRectangleMaker->BuildMesh(0);
         m_pRectangleMaker->UpdateValidity(TOPO_CHAN_NUM, FOREVER);
         m_pRectangleMaker->UpdateValidity(GEOM_CHAN_NUM, FOREVER);
@@ -1173,7 +1163,7 @@ Mesh *AlembicParticles::BuildRectangleMesh(int meshNumber, TimeValue t, INode *n
    }
 
    pMesh = m_pRectangleMaker->GetRenderMesh(t, node, view, needDelete);
-    return pMesh;
+   return pMesh;
 }
 
 Mesh *AlembicParticles::BuildInstanceMesh(int meshNumber, TimeValue t, INode *node, View& view, BOOL &needDelete)
