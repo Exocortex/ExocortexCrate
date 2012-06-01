@@ -830,16 +830,31 @@ void AlembicParticles::GetMultipleRenderMeshTM_Internal(TimeValue  t, INode *ino
     Point3 pos = parts.points[meshNumber];
     Quat orient = m_ParticleOrientations[meshNumber];
     Point3 scaleVec = m_ParticleScales[meshNumber];
-    scaleVec *= parts.radius[meshNumber];
 
-	//if(m_InstanceShapeType[meshNumber] == AlembicPoints::ShapeType_Box){
-	//	pos.z -= 2;
-	//}
+	//TODO: why is the radius 0 when calling during export?
+	if(parts.radius[meshNumber] != 0.0){
+		scaleVec *= parts.radius[meshNumber];
+	}
 
 	meshTM.IdentityMatrix();
-	//meshTM.SetRotate(orient);//TODO: the orientation is wrong
-	meshTM.PreScale(scaleVec);
-	meshTM.SetTrans(pos);
+
+	if(	m_InstanceShapeType[meshNumber] == AlembicPoints::ShapeType_Box ||
+		m_InstanceShapeType[meshNumber] == AlembicPoints::ShapeType_Cylinder ||
+		m_InstanceShapeType[meshNumber] == AlembicPoints::ShapeType_Cone){
+		Matrix3 localTrans;
+		localTrans.IdentityMatrix();
+		//the object size is 2, and we want it centered along z-axis of local frame
+		localTrans.SetTrans(Point3(0.0, 0.0, -1.0));
+		meshTM = meshTM * localTrans;
+	}
+
+	Matrix3 worldTrans;
+	worldTrans.IdentityMatrix();
+	worldTrans.SetRotate(orient);
+	worldTrans.PreScale(scaleVec);
+	worldTrans.SetTrans(pos);
+
+	meshTM = meshTM * worldTrans;
 }
 
 INode* AlembicParticles::GetParticleMeshNode(int meshNumber, INode *displayNode)
@@ -1099,7 +1114,7 @@ Mesh *AlembicParticles::BuildCylinderMesh(int meshNumber, TimeValue t, INode *no
             (GET_MAX_INTERFACE()->CreateInstance(GEOMOBJECT_CLASS_ID, Class_ID(CYLINDER_CLASS_ID, 0)));
 
         float radius = 1;
-		float height = 1;
+		float height = 2;
 		int numSegments = 1;
 		int numSides = 32;
         m_pCylinderMaker->SetParams( radius, height, numSegments, numSides );
