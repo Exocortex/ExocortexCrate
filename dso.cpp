@@ -72,10 +72,16 @@ struct userData
    std::vector<AtNode*> constructedNodes;
    std::vector<AtArray*> shadersToAssign;
 
+   bool has_subdiv_settings;
    std::string subdiv_type;
    int subdiv_iterations;
    float subdiv_pixel_error;
    std::string subdiv_dicing_camera;
+   bool has_disp_settings;
+   float disp_zero_value;
+   float disp_height;
+   bool disp_autobump;
+   float disp_padding;
 };
 
 #define sampleTolerance 0.00001
@@ -132,16 +138,26 @@ static int Init(AtNode *mynode, void **user_ptr)
    ud->gProcShaders = AiArrayCopy(AiNodeGetArray(mynode, "shader"));
    ud->gProcDispMap = AiNodeGetArray(mynode, "disp_map");
 
-   if(AiNodeGetStr(mynode, "subdiv_type"))
+   ud->has_subdiv_settings = AiNodeLookUpUserParameter(mynode,"subdiv_type") != NULL;
+   if(ud->has_subdiv_settings)
+   {
       ud->subdiv_type = AiNodeGetStr(mynode, "subdiv_type");
-   else
-      ud->subdiv_type.clear();
-   ud->subdiv_iterations = AiNodeGetInt(mynode, "subdiv_iterations");
-   ud->subdiv_pixel_error = AiNodeGetFlt(mynode, "subdiv_pixel_error");
-   if(AiNodeGetStr(mynode, "subdiv_dicing_camera"))
-      ud->subdiv_dicing_camera = AiNodeGetStr(mynode, "subdiv_dicing_camera");
-   else
-      ud->subdiv_dicing_camera.clear();
+      ud->subdiv_iterations = AiNodeGetInt(mynode, "subdiv_iterations");
+      ud->subdiv_pixel_error = AiNodeGetFlt(mynode, "subdiv_pixel_error");
+      if(AiNodeGetStr(mynode, "subdiv_dicing_camera"))
+         ud->subdiv_dicing_camera = AiNodeGetStr(mynode, "subdiv_dicing_camera");
+      else
+         ud->subdiv_dicing_camera.clear();
+   }
+
+   ud->has_disp_settings = AiNodeLookUpUserParameter(mynode,"disp_zero_value") != NULL;
+   if(ud->has_disp_settings)
+   {
+      ud->disp_zero_value = AiNodeGetFlt(mynode, "disp_zero_value");
+      ud->disp_height = AiNodeGetFlt(mynode, "disp_height");
+      ud->disp_autobump = AiNodeGetBool(mynode, "disp_autobump");
+      ud->disp_padding = AiNodeGetFlt(mynode, "disp_padding");
+   }
 
    // empty the procedural's shader
    //AtArray * emptyShaders = AiArrayAllocate(1,1,AI_TYPE_NODE);
@@ -2196,17 +2212,25 @@ static AtNode *GetNode(void *user_ptr, int i)
       if(isPolyMeshNode)
       {
          if(ud->gProcDispMap != NULL)
+         {
             AiNodeSetArray(shapeNode,"disp_map",AiArrayCopy(ud->gProcDispMap));
+            if(ud->has_disp_settings)
+            {
+               AiNodeSetFlt(shapeNode, "disp_zero_value", ud->disp_zero_value);
+               AiNodeSetFlt(shapeNode, "disp_height", ud->disp_height);
+               AiNodeSetBool(shapeNode, "disp_autobump", ud->disp_autobump);
+               AiNodeSetFlt(shapeNode, "disp_padding", ud->disp_padding);
+            }
+         }
          if(shaderIndices != NULL)
             AiNodeSetArray(shapeNode, "shidxs", shaderIndices);
 
          // do we have subdivision settings
-         if(ud->subdiv_type.length() > 0)
+         if(ud->has_subdiv_settings)
          {
             AiNodeSetStr(shapeNode,"subdiv_type",ud->subdiv_type.c_str());
             AiNodeSetInt(shapeNode,"subdiv_iterations",ud->subdiv_iterations);
             AiNodeSetFlt(shapeNode,"subdiv_pixel_error",ud->subdiv_pixel_error);
-
             if(ud->subdiv_dicing_camera.length() > 0)
                AiNodeSetStr(shapeNode,"subdiv_dicing_camera",ud->subdiv_dicing_camera.c_str());
          }
