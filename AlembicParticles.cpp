@@ -83,7 +83,6 @@ AlembicParticles::AlembicParticles()
     m_pBoxMaker = NULL;
     m_pSphereMaker = NULL;
 	m_pCylinderMaker = NULL;
-    m_pConeMaker = NULL;
 	m_pDiskMaker = NULL;
 	m_pRectangleMaker = NULL;
 
@@ -96,7 +95,6 @@ AlembicParticles::~AlembicParticles()
     ALEMBIC_SAFE_DELETE(m_pBoxMaker);
     ALEMBIC_SAFE_DELETE(m_pSphereMaker);
     ALEMBIC_SAFE_DELETE(m_pCylinderMaker);
-    ALEMBIC_SAFE_DELETE(m_pConeMaker);
     ALEMBIC_SAFE_DELETE(m_pDiskMaker);
     ALEMBIC_SAFE_DELETE(m_pRectangleMaker);
 }
@@ -1118,44 +1116,8 @@ Mesh *AlembicParticles::BuildCylinderMesh(int meshNumber, TimeValue t, INode *no
 
 Mesh *AlembicParticles::BuildConeMesh(int meshNumber, TimeValue t, INode *node, View& view, BOOL &needDelete)
 {
-    Mesh *pMesh = NULL;
-    needDelete = FALSE;
-
-	if (!m_pConeMaker)
-    {
-        m_pConeMaker = static_cast<SimpleObject*>
-            (GET_MAX_INTERFACE()->CreateInstance(GEOMOBJECT_CLASS_ID, Class_ID(CONE_CLASS_ID, 0)));
-
-        float radius1 = 1;
-        float radius2 = 0;
-		float height = 1;
-		int numSegments = 1;
-		int numCapSegments = 1;
-		int numSides = 32;
-
-		TimeValue zero( 0 );
-
-/*#define PB_RADIUS1		0
-#define PB_RADIUS2		1
-#define PB_HEIGHT		2
-#define PB_SEGMENTS		3
-#define PB_CAPSEGMENTS	4
-#define PB_SIDES		5*/
-
-        m_pConeMaker->GetParamBlockByID( 0 )->SetValue( 0, zero, radius1 );
-        m_pConeMaker->GetParamBlockByID( 0 )->SetValue( 1, zero, radius2 );
-        m_pConeMaker->GetParamBlockByID( 0 )->SetValue( 2, zero, height );
-        m_pConeMaker->GetParamBlockByID( 0 )->SetValue( 3, zero, numSegments );
-        m_pConeMaker->GetParamBlockByID( 0 )->SetValue( 4, zero, numCapSegments );
-        m_pConeMaker->GetParamBlockByID( 0 )->SetValue( 5, zero, numSides );
-        m_pConeMaker->BuildMesh(0);
-        m_pConeMaker->UpdateValidity(TOPO_CHAN_NUM, FOREVER);
-        m_pConeMaker->UpdateValidity(GEOM_CHAN_NUM, FOREVER);
-        m_pConeMaker->UpdateValidity(TEXMAP_CHAN_NUM, FOREVER);
-   }
-
-   pMesh = m_pConeMaker->GetRenderMesh(t, node, view, needDelete);
-   return pMesh;
+	//3DS Max doesn't seem to have a cone builder, so just return a cylinder for now.
+	return BuildCylinderMesh(meshNumber, t, node, view, needDelete);
 }
 
 Mesh *AlembicParticles::BuildDiscMesh(int meshNumber, TimeValue t, INode *node, View& view, BOOL &needDelete)
