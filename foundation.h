@@ -30,6 +30,8 @@
    #include <Alembic/AbcCoreHDF5/All.h>
    #include <Python.h>
 
+   using namespace std;
+
    //#define PYTHON_DEBUG 1
 
    #define ALEMBIC_TRY_STATEMENT try {

@@ -104,6 +104,14 @@ static PyObject * oProperty_getName(PyObject * self, PyObject * args)
    std::vector<stype> values(nbItems/modulo); \
    memcpy(&values.front(),&tupleVec.front(),tupleVec.size() * sizeof(ctype));
 
+#define _SET_PROPERTY(mXProperty) \
+   { \
+      if (prop->intent > 1) \
+         prop->mBaseScalarProperty->set(&tupleVec[0]); \
+      else \
+         prop->mXProperty->set(tupleVec[0]); \
+   }
+
 static PyObject * oProperty_setValues(PyObject * self, PyObject * args)
 {
    ALEMBIC_TRY_STATEMENT
@@ -168,74 +176,85 @@ static PyObject * oProperty_setValues(PyObject * self, PyObject * args)
    {
       case propertyTP_boolean:
       {
-         _COPY_TUPLE_TO_VALUE_(int,"i",1);
-         prop->mBoolProperty->set(tupleVec[0] == 1);
+         _COPY_TUPLE_TO_VALUE_(unsigned char,"i", prop->intent);  // cannot use bool, because it would create a bit-train
+         _SET_PROPERTY(mBoolProperty);
+         //prop->mBoolProperty->set(tupleVec[0] == 1);
          break;
       }
       case propertyTP_uchar:
       {
-         _COPY_TUPLE_TO_VALUE_(unsigned int,"I",1);
-         prop->mUcharProperty->set((unsigned char)tupleVec[0]);
+         _COPY_TUPLE_TO_VALUE_(unsigned int,"I", prop->intent);
+         _SET_PROPERTY(mUcharProperty);
+         //prop->mUcharProperty->set((unsigned char)tupleVec[0]);
          break;
       }
       case propertyTP_char:
       {
-         _COPY_TUPLE_TO_VALUE_(int,"i",1);
-         prop->mCharProperty->set((char)tupleVec[0]);
+         _COPY_TUPLE_TO_VALUE_(int,"i", prop->intent);
+         _SET_PROPERTY(mCharProperty);
+         //prop->mCharProperty->set((char)tupleVec[0]);
          break;
       }
       case propertyTP_uint16:
       {
-         _COPY_TUPLE_TO_VALUE_(unsigned int,"I",1);
-         prop->mUInt16Property->set(tupleVec[0]);
+         _COPY_TUPLE_TO_VALUE_(unsigned int,"I", prop->intent);
+         _SET_PROPERTY(mUInt16Property);
+         //prop->mUInt16Property->set(tupleVec[0]);
          break;
       }
       case propertyTP_int16:
       {
-         _COPY_TUPLE_TO_VALUE_(int,"i",1);
-         prop->mInt16Property->set(tupleVec[0]);
+         _COPY_TUPLE_TO_VALUE_(int,"i", prop->intent);
+         _SET_PROPERTY(mInt16Property);
+         //prop->mInt16Property->set(tupleVec[0]);
          break;
       }
       case propertyTP_uint32:
       {
-         _COPY_TUPLE_TO_VALUE_(unsigned long,"k",1);
-         prop->mUInt32Property->set(tupleVec[0]);
+         _COPY_TUPLE_TO_VALUE_(unsigned long,"k", prop->intent);
+         _SET_PROPERTY(mUInt32Property);
+         //prop->mUInt32Property->set(tupleVec[0]);
          break;
       }
       case propertyTP_int32:
       {
-         _COPY_TUPLE_TO_VALUE_(long,"l",1);
-         prop->mInt32Property->set(tupleVec[0]);
+         _COPY_TUPLE_TO_VALUE_(long,"l", prop->intent);
+         _SET_PROPERTY(mInt32Property);
+         //prop->mInt32Property->set(tupleVec[0]);
          break;
       }
       case propertyTP_uint64:
       {
-         _COPY_TUPLE_TO_VALUE_(unsigned long long,"K",1);
-         prop->mUInt64Property->set(tupleVec[0]);
+         _COPY_TUPLE_TO_VALUE_(unsigned long long,"K", prop->intent);
+         _SET_PROPERTY(mUInt64Property);
+         //prop->mUInt64Property->set(tupleVec[0]);
          break;
       }
       case propertyTP_int64:
       {
-         _COPY_TUPLE_TO_VALUE_(long long,"L",1);
-         prop->mInt64Property->set(tupleVec[0]);
+         _COPY_TUPLE_TO_VALUE_(long long,"L", prop->intent);
+         _SET_PROPERTY(mInt64Property);
+         //prop->mInt64Property->set(tupleVec[0]);
          break;
       }
       case propertyTP_half:
       {
-         _COPY_TUPLE_TO_VALUE_(float,"f",1);
-         prop->mHalfProperty->set(tupleVec[0]);
+         _COPY_TUPLE_TO_VALUE_(float,"f", prop->intent);
+         _SET_PROPERTY(mHalfProperty);
+         //prop->mHalfProperty->set(tupleVec[0]);
          break;
       }
       case propertyTP_float:
       {
-         _COPY_TUPLE_TO_VALUE_(float,"f",1);
-         prop->mFloatProperty->set(tupleVec[0]);
+         _COPY_TUPLE_TO_VALUE_(float,"f", prop->intent);
+         _SET_PROPERTY(mFloatProperty);
+         //prop->mFloatProperty->set(tupleVec[0]);
          break;
       }
       case propertyTP_double:
       {
-         _COPY_TUPLE_TO_VALUE_(double,"d",1);
-         prop->mDoubleProperty->set(tupleVec[0]);
+         _COPY_TUPLE_TO_VALUE_(double, "d", prop->intent);
+         _SET_PROPERTY(mDoubleProperty);
          break;
       }
       case propertyTP_string:
@@ -1241,7 +1260,9 @@ PyObject * oProperty_new(Alembic::Abc::OCompoundProperty compound, std::string c
    identifier.append("/");
    identifier.append(in_propName);
 
+   INFO_MSG("propType = " << in_propType);
    oArchive * archive = (oArchive*)in_Archive;
+
 
    // check if it's an iCompoundProperty, they shouldn't have similar names to avoid confusion when reading it!
    {
@@ -1259,13 +1280,33 @@ PyObject * oProperty_new(Alembic::Abc::OCompoundProperty compound, std::string c
    prop->mBaseScalarProperty = NULL;
    prop->mBoolProperty = NULL;
    prop->mArchive = in_Archive;
-   //oArchive_registerPropElement(archive,identifier,prop); // moved where it won't interfere with compounds
+
+   std::string propType = in_propType;
+
+   // NEW check for intent! and assign it if necessary
+   {
+      int i_pos = propType.find('[');
+      if (i_pos != string::npos)
+      {
+         string sz_intent = propType.substr(i_pos+1, propType.length()-i_pos-2);
+         sscanf(sz_intent.c_str(), "%d", &(prop->intent));
+
+         // remove intent information from the property type
+         propType = propType.substr(0, i_pos).c_str();
+
+         INFO_MSG("propType = " << propType << " with intent = " << (prop->intent));
+      }
+      else
+         prop->intent = 1;
+   }
 
    // get the compound property writer
    Alembic::Abc::CompoundPropertyWriterPtr compoundWriter = GetCompoundPropertyWriterPtr(compound);      // this variable is unused!
    const Alembic::Abc::PropertyHeader * propHeader = compound.getPropertyHeader( in_propName );
    if(propHeader != NULL)
    {
+      prop->intent = propHeader->getDataType().getExtent(); // NEW
+
       // this property already exists
       Alembic::Abc::OBaseProperty baseProp = compound.getProperty( in_propName );
       std::string interpretation;
@@ -1299,11 +1340,11 @@ PyObject * oProperty_new(Alembic::Abc::OCompoundProperty compound, std::string c
 
       // check for custom structs
       if(interpretation.empty())
-         if(propHeader->getDataType().getExtent() > 1)
-            interpretation = "unknown";
+         if(prop->intent > 1)
+            interpretation = "intent_data";  //"unknown";   // NEW
 
       // now let's determine the specialized property type
-      if(interpretation.empty())
+      if(interpretation.empty() || interpretation == "intent_data")
       {
          switch(propHeader->getDataType().getPod())
          {
@@ -1516,6 +1557,7 @@ PyObject * oProperty_new(Alembic::Abc::OCompoundProperty compound, std::string c
    }
    else
    {
+
       // here we need the property type
       if(in_propType == NULL)
       {
@@ -1532,7 +1574,6 @@ PyObject * oProperty_new(Alembic::Abc::OCompoundProperty compound, std::string c
       oArchive_registerPropElement(archive,identifier,prop);
 
       // check if this is an array
-      std::string propType = in_propType;
       if(propType.length() > 5)
       {
          prop->mIsArray = propType.substr(propType.length()-5,5) == "array";

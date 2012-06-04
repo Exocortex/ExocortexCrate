@@ -8,6 +8,7 @@
 typedef struct {
    PyObject_HEAD
    bool mIsArray;
+   int intent;
    void * mArchive;
 
    propertyTP mPropType;

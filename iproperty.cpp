@@ -34,6 +34,7 @@ static PyObject * iProperty_getType(PyObject * self, PyObject * args)
 {
    ALEMBIC_TRY_STATEMENT
    iProperty * prop = (iProperty*)self;
+   bool use_intent = false;
 
    std::string type;
    switch(prop->mPropType)
@@ -52,72 +53,84 @@ static PyObject * iProperty_getType(PyObject * self, PyObject * args)
       case propertyTP_boolean_array:
       {
          type.append("bool");
+         use_intent = true;
          break;
       }
       case propertyTP_uchar:
       case propertyTP_uchar_array:
       {
          type.append("uchar");
+         use_intent = true;
          break;
       }
       case propertyTP_char:
       case propertyTP_char_array:
       {
          type.append("char");
+         use_intent = true;
          break;
       }
       case propertyTP_uint16:
       case propertyTP_uint16_array:
       {
          type.append("uint16");
+         use_intent = true;
          break;
       }
       case propertyTP_int16:
       case propertyTP_int16_array:
       {
          type.append("int16");
+         use_intent = true;
          break;
       }
       case propertyTP_uint32:
       case propertyTP_uint32_array:
       {
          type.append("uint32");
+         use_intent = true;
          break;
       }
       case propertyTP_int32:
       case propertyTP_int32_array:
       {
          type.append("int32");
+         use_intent = true;
          break;
       }
       case propertyTP_uint64:
       case propertyTP_uint64_array:
       {
          type.append("uint64");
+         use_intent = true;
          break;
       }
       case propertyTP_int64:
       case propertyTP_int64_array:
       {
          type.append("int64");
+         use_intent = true;
          break;
       }
       case propertyTP_half:
       case propertyTP_half_array:
       {
          type.append("half");
+         use_intent = true;
          break;
       }
       case propertyTP_float:
       case propertyTP_float_array:
       {
          type.append("float");
+         use_intent = true;
          break;
       }
       case propertyTP_double:
       case propertyTP_double_array:
       {
          type.append("double");
+         use_intent = true;
          break;
       }
       case propertyTP_string:
@@ -378,6 +391,12 @@ static PyObject * iProperty_getType(PyObject * self, PyObject * args)
 
    if(prop->mIsArray)
       type.append("array");
+   else if (use_intent && prop->intent > 1)
+   {
+      char sz_intent[9];
+      sprintf(sz_intent, "[%d]", prop->intent);
+      type.append(sz_intent);
+   }
    return Py_BuildValue("s",type.c_str());
    ALEMBIC_PYOBJECT_CATCH_STATEMENT
 }
@@ -522,6 +541,24 @@ static PyObject * iProperty_getSize(PyObject * self, PyObject * args)
    ALEMBIC_PYOBJECT_CATCH_STATEMENT
 }
 
+#define _GET_VALUE_INTENT(mXProperty, AlembicType, python_cast, cast_type) \
+         if (prop->intent > 1) \
+         { \
+            tuple = PyTuple_New(prop->intent); \
+            AlembicType *values = new AlembicType[prop->intent]; \
+            prop->mBaseScalarProperty->get(values, sampleIndex); \
+            for (int i = 0; i < prop->intent; ++i) \
+               PyTuple_SetItem(tuple,i,Py_BuildValue(python_cast,(cast_type)values[i])); \
+            delete [] values; \
+         } \
+         else \
+         { \
+            tuple = PyTuple_New(1); \
+            AlembicType value; \
+            prop->mXProperty->get(value,sampleIndex); \
+            PyTuple_SetItem(tuple,0,Py_BuildValue(python_cast,(cast_type)value)); \
+         }
+
 static PyObject * iProperty_getValues(PyObject * self, PyObject * args)
 {
    ALEMBIC_TRY_STATEMENT
@@ -563,98 +600,128 @@ static PyObject * iProperty_getValues(PyObject * self, PyObject * args)
    {
       case propertyTP_boolean:
       {
+         _GET_VALUE_INTENT(mBoolProperty, Alembic::Abc::bool_t, "i", bool);
+         /*
          tuple = PyTuple_New(1);
          Alembic::Abc::bool_t value;
          prop->mBoolProperty->get(value,sampleIndex);
          PyTuple_SetItem(tuple,0,Py_BuildValue("i",value ? 1 : 0));
+         */
          break;
       }
       case propertyTP_uchar:
       {
+         _GET_VALUE_INTENT(mUcharProperty, unsigned char, "I", unsigned int);
+         /*
          tuple = PyTuple_New(1);
          unsigned char value;
          prop->mUcharProperty->get(value,sampleIndex);
          PyTuple_SetItem(tuple,0,Py_BuildValue("I",(unsigned int)value));
+         */
          break;
       }
       case propertyTP_char:
       {
+         _GET_VALUE_INTENT(mCharProperty, signed char, "i", int);
+         /*
          tuple = PyTuple_New(1);
          signed char value;
          prop->mCharProperty->get(value,sampleIndex);
          PyTuple_SetItem(tuple,0,Py_BuildValue("i",(int)value));
+         */
          break;
       }
       case propertyTP_uint16:
       {
+         _GET_VALUE_INTENT(mUInt16Property, Alembic::Abc::uint16_t, "I", unsigned int);
+         /*
          tuple = PyTuple_New(1);
          Alembic::Abc::uint16_t value;
          prop->mUInt16Property->get(value,sampleIndex);
          PyTuple_SetItem(tuple,0,Py_BuildValue("I",(unsigned int)value));
+         */
          break;
       }
       case propertyTP_int16:
       {
+         _GET_VALUE_INTENT(mInt16Property, Alembic::Abc::int16_t, "i", int);
+         /*
          tuple = PyTuple_New(1);
          Alembic::Abc::int16_t value;
          prop->mInt16Property->get(value,sampleIndex);
          PyTuple_SetItem(tuple,0,Py_BuildValue("i",(int)value));
+         */
          break;
       }
       case propertyTP_uint32:
       {
+         _GET_VALUE_INTENT(mUInt32Property, Alembic::Abc::uint32_t, "k", unsigned long);
+         /*
          tuple = PyTuple_New(1);
          Alembic::Abc::uint32_t value;
          prop->mUInt32Property->get(value,sampleIndex);
          PyTuple_SetItem(tuple,0,Py_BuildValue("k",(unsigned long)value));
+         */
          break;
       }
       case propertyTP_int32:
       {
+         _GET_VALUE_INTENT(mInt32Property, Alembic::Abc::int32_t, "l", long);
+         /*
          tuple = PyTuple_New(1);
          Alembic::Abc::int32_t value;
          prop->mInt32Property->get(value,sampleIndex);
          PyTuple_SetItem(tuple,0,Py_BuildValue("l",(long)value));
+         */
          break;
       }
       case propertyTP_uint64:
       {
+         _GET_VALUE_INTENT(mUInt64Property, Alembic::Abc::uint64_t, "K", unsigned long long);
+         /*
          tuple = PyTuple_New(1);
          Alembic::Abc::uint64_t value;
          prop->mUInt64Property->get(value,sampleIndex);
          PyTuple_SetItem(tuple,0,Py_BuildValue("K",(unsigned long long)value));
+         */
          break;
       }
       case propertyTP_int64:
       {
+         _GET_VALUE_INTENT(mInt64Property, Alembic::Abc::int64_t, "L", long long);
+         /*
          tuple = PyTuple_New(1);
          Alembic::Abc::int64_t value;
          prop->mInt64Property->get(value,sampleIndex);
          PyTuple_SetItem(tuple,0,Py_BuildValue("L",(long long)value));
+         */
          break;
       }
       case propertyTP_half:
       {
+         _GET_VALUE_INTENT(mHalfProperty, Alembic::Abc::float16_t, "f", float);
+         /*
          tuple = PyTuple_New(1);
          Alembic::Abc::float16_t value;
          prop->mHalfProperty->get(value,sampleIndex);
          PyTuple_SetItem(tuple,0,Py_BuildValue("f",(float)value));
+         */
          break;
       }
       case propertyTP_float:
       {
+         _GET_VALUE_INTENT(mFloatProperty, Alembic::Abc::float32_t, "f", float);
+         /*
          tuple = PyTuple_New(1);
          Alembic::Abc::float32_t value;
          prop->mFloatProperty->get(value,sampleIndex);
          PyTuple_SetItem(tuple,0,Py_BuildValue("f",(float)value));
+         */
          break;
       }
       case propertyTP_double:
       {
-         tuple = PyTuple_New(1);
-         Alembic::Abc::float64_t value;
-         prop->mDoubleProperty->get(value,sampleIndex);
-         PyTuple_SetItem(tuple,0,Py_BuildValue("d",(double)value));
+         _GET_VALUE_INTENT(mDoubleProperty, Alembic::Abc::float64_t, "d", double);
          break;
       }
       case propertyTP_string:
@@ -2551,6 +2618,7 @@ PyObject * iProperty_new(Alembic::Abc::ICompoundProperty &compound, char * in_pr
 {
    const Alembic::Abc::PropertyHeader * propHeader = compound.getPropertyHeader( in_propName );
    iProperty * prop = PyObject_NEW(iProperty, &iProperty_Type);
+   INFO_MSG(in_propName << " of type " << propHeader->getDataType());
    if (prop != NULL)
    {
       if(propHeader->isCompound())
@@ -2561,9 +2629,11 @@ PyObject * iProperty_new(Alembic::Abc::ICompoundProperty &compound, char * in_pr
       else
       {
          prop->mIsArray = propHeader->isArray();
+         prop->intent = propHeader->getDataType().getExtent();    // NEW
          std::string interpretation;
          if(prop->mIsArray)
          {
+            prop->intent = 0;
             prop->mBaseArrayProperty = new Alembic::Abc::IArrayProperty(compound,in_propName);
             interpretation = prop->mBaseArrayProperty->getMetaData().get("interpretation");
          }
@@ -2578,11 +2648,11 @@ PyObject * iProperty_new(Alembic::Abc::ICompoundProperty &compound, char * in_pr
          if(interpretation.empty())
          {
             // check for custom structs
-            if(propHeader->getDataType().getExtent() > 1)
-               interpretation = "unknown";
+            if(prop->intent > 1)
+               interpretation = "intent_data";  // NEW, previously unknown
          }
 
-         if(interpretation.empty())
+         if(interpretation.empty() || interpretation == "intent_data")
          {
             switch(propHeader->getDataType().getPod())
             {

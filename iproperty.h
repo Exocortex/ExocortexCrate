@@ -122,6 +122,7 @@ typedef struct {
    PyObject_HEAD
    bool mIsArray;
    propertyTP mPropType;
+   int intent;       // NEW
    union {
       Alembic::Abc::IScalarProperty * mBaseScalarProperty;
       Alembic::Abc::IArrayProperty * mBaseArrayProperty;
