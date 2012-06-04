@@ -7,6 +7,8 @@
 #include "oproperty.h"
 #include "icompoundproperty.h"
 #include "ocompoundproperty.h"
+#include "ixformproperty.h"
+#include "oxformproperty.h"
 #include <time.h>
 
 static PyObject * extension_error = NULL;
@@ -55,11 +57,13 @@ EXTENSION_CALLBACK init_ExocortexAlembicPython(void)
    register_object_iObject(m);
    register_object_iProperty(m);
    register_object_iCompoundProperty(m);
+   register_object_iXformProperty(m);
 
    register_object_oArchive(m);
    register_object_oObject(m);
    register_object_oProperty(m);
    register_object_oCompoundProperty(m);
+   register_object_oXformProperty(m);
 
    extension_error = PyErr_NewException("ExocortexAlembicPython.error", NULL, NULL);
    PyDict_SetItemString(d, "error", extension_error);

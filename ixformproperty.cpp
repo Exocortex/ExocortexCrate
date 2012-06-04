@@ -114,12 +114,12 @@ static PyObject *iXformProperty_isCompound(PyObject *self, PyObject * args)
 
 static PyMethodDef iXformProperty_methods[] =
 {
-   {"getName", (PyCFunction)iXformProperty_getName, METH_NOARGS},
-   {"getType", (PyCFunction)iXformProperty_getType, METH_NOARGS},
-   {"getSampleTimes", (PyCFunction)iXformProperty_getSampleTimes, METH_NOARGS},
-   {"getNbStoredSamples", (PyCFunction)iXformProperty_getNbStoredSamples, METH_NOARGS},
-   {"getSize", (PyCFunction)iXformProperty_getSize, METH_VARARGS},
-   {"getValues", (PyCFunction)iXformProperty_getValues, METH_VARARGS},
+   {"getName", (PyCFunction)iXformProperty_getName, METH_NOARGS, "Returns the name of this property."},
+   {"getType", (PyCFunction)iXformProperty_getType, METH_NOARGS, "Returns the type of this property."},
+   {"getSampleTimes", (PyCFunction)iXformProperty_getSampleTimes, METH_NOARGS, "Returns the TimeSampling this object is linked to."},
+   {"getNbStoredSamples", (PyCFunction)iXformProperty_getNbStoredSamples, METH_NOARGS, "Returns the actual number of stored samples."},
+   {"getSize", (PyCFunction)iXformProperty_getSize, METH_VARARGS, "Returns the size of the property. For single value properties, this method returns 1, for array value properties it returns the size of the array."},
+   {"getValues", (PyCFunction)iXformProperty_getValues, METH_VARARGS, "Returns the values of the property at the (optional) sample index."},
    {"isCompound", (PyCFunction)iXformProperty_isCompound, METH_NOARGS, "To distinguish between an iProperty and an iCompoundProperty, always returns false for iXformProperty."},
    {NULL, NULL}
 };
@@ -151,6 +151,25 @@ static PyTypeObject iXformProperty_Type = {
   (getattrfunc)iXformProperty_getAttr,   // tp_getattr
   0,                                // tp_setattr
   0,                                // tp_compare
+  0,                         /*tp_repr*/
+  0,                         /*tp_as_number*/
+  0,                         /*tp_as_sequence*/
+  0,                         /*tp_as_mapping*/
+  0,                         /*tp_hash */
+  0,                         /*tp_call*/
+  0,                         /*tp_str*/
+  0,                         /*tp_getattro*/
+  0,                         /*tp_setattro*/
+  0,                         /*tp_as_buffer*/
+  Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE, /*tp_flags*/
+  "This is the input Xform property. It provides access to the Xform's data, such as name, type and per sample values.",           /* tp_doc */
+  0,		               /* tp_traverse */
+  0,		               /* tp_clear */
+  0,		               /* tp_richcompare */
+  0,		               /* tp_weaklistoffset */
+  0,		               /* tp_iter */
+  0,		               /* tp_iternext */
+  iXformProperty_methods,             /* tp_methods */
 };
 
 PyObject * iXformProperty_new(Alembic::Abc::IObject in_Object)
@@ -173,3 +192,10 @@ PyObject * iXformProperty_new(Alembic::Abc::IObject in_Object)
    return (PyObject *)prop;
    ALEMBIC_PYOBJECT_CATCH_STATEMENT
 }
+
+bool register_object_iXformProperty(PyObject *module)
+{
+  return register_object(module, iXformProperty_Type, "iXformProperty");
+}
+
+

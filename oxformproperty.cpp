@@ -82,9 +82,16 @@ static PyObject * oXformProperty_setValues(PyObject * self, PyObject * args)
    ALEMBIC_PYOBJECT_CATCH_STATEMENT
 }
 
+static PyObject *oXformProperty_isCompound(PyObject *self)
+{
+   Py_INCREF(Py_False);
+   return Py_False;
+}
+
 static PyMethodDef oXformProperty_methods[] = {
-   {"getName", (PyCFunction)oXformProperty_getName, METH_NOARGS},
-   {"setValues", (PyCFunction)oXformProperty_setValues, METH_VARARGS},
+   {"getName", (PyCFunction)oXformProperty_getName, METH_NOARGS, "Returns the name of the property."},
+   {"setValues", (PyCFunction)oXformProperty_setValues, METH_VARARGS, "Appends a new sample to the property, given the values provided. The values have to be a flat list of components, matching the count of the property. For example if this is a vector3farray property the tuple has to contain a multiple of 3 float values."},
+   {"isCompound", (PyCFunction)oXformProperty_isCompound, METH_NOARGS, "To distinguish between an oXformProperty and an oCompoundProperty, always returns false for oXformProperty."},
    {NULL, NULL}
 };
 
@@ -127,6 +134,25 @@ static PyTypeObject oXformProperty_Type = {
   (getattrfunc)oXformProperty_getAttr,   // tp_getattr
   0,                                // tp_setattr
   0,                                // tp_compare
+  0,                         /*tp_repr*/
+  0,                         /*tp_as_number*/
+  0,                         /*tp_as_sequence*/
+  0,                         /*tp_as_mapping*/
+  0,                         /*tp_hash */
+  0,                         /*tp_call*/
+  0,                         /*tp_str*/
+  0,                         /*tp_getattro*/
+  0,                         /*tp_setattro*/
+  0,                         /*tp_as_buffer*/
+  Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE, /*tp_flags*/
+  "This is the output Xform property. It provides methods for setting data on the Xform.",           /* tp_doc */
+  0,		               /* tp_traverse */
+  0,		               /* tp_clear */
+  0,		               /* tp_richcompare */
+  0,		               /* tp_weaklistoffset */
+  0,		               /* tp_iter */
+  0,		               /* tp_iternext */
+  oXformProperty_methods,             /* tp_methods */
 };
 
 PyObject * oXformProperty_new(oObjectPtr in_casted, void * in_Archive, boost::uint32_t tsIndex)
@@ -153,3 +179,9 @@ PyObject * oXformProperty_new(oObjectPtr in_casted, void * in_Archive, boost::ui
    return (PyObject *)prop;
    ALEMBIC_PYOBJECT_CATCH_STATEMENT
 }
+
+bool register_object_oXformProperty(PyObject *module)
+{
+   return register_object(module, oXformProperty_Type, "oXformProperty");
+}
+

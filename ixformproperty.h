@@ -10,4 +10,6 @@ typedef struct {
 
 PyObject * iXformProperty_new(Alembic::Abc::IObject in_Object);
 
+bool register_object_iXformProperty(PyObject *module);
+
 #endif
