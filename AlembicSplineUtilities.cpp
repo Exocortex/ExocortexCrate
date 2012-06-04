@@ -44,6 +44,67 @@ void AlembicImport_FillInShape(alembic_fillshape_options &options)
 	ESS_STRUCTURED_EXCEPTION_REPORTING_END
 }
 
+
+class curvePositionSampler{
+public:
+
+	Alembic::Abc::P3fArraySamplePtr curvePos1;
+	Alembic::Abc::V3fArraySamplePtr curveVel1;
+	Alembic::Abc::P3fArraySamplePtr curvePos2;
+
+	enum interpT{
+		NONE,
+		POSITION,
+		VELOCITY
+	};
+
+	interpT interp;
+
+	float sampleInfoAlpha; 
+
+	curvePositionSampler(Alembic::AbcGeom::ICurves& obj, SampleInfo& sampleInfo){
+
+		bool isDynamicTopo = isAlembicSplineTopoDynamic( &obj );
+
+		Alembic::AbcGeom::ICurvesSchema::Sample curveSample;
+		obj.getSchema().get(curveSample, sampleInfo.floorIndex);
+		curvePos1 = curveSample.getPositions();
+
+		sampleInfoAlpha = (float)sampleInfo.alpha; 
+
+		if(isDynamicTopo){ //interpolate based on velocity
+			curveVel1 = curveSample.getVelocities();
+			interp = VELOCITY;
+		}
+		else{
+			Alembic::AbcGeom::ICurvesSchema::Sample curveSample2;
+			obj.getSchema().get(curveSample2, sampleInfo.ceilIndex);
+			curvePos2 = curveSample2.getPositions();
+
+			if(curvePos1->size() == curvePos2->size()){ // interpolate based on positions
+				interp = POSITION;
+			}
+		}
+
+	}
+
+	Imath::V3f operator[](int index){
+
+		Imath::V3f pos1 = curvePos1->get()[index];
+		if(sampleInfoAlpha != 0.0 && interp == POSITION){
+			return pos1 + ((curvePos2->get()[index] - pos1) * sampleInfoAlpha);
+		}
+		else if(sampleInfoAlpha != 0.0 && interp == VELOCITY){
+			return pos1 + (curveVel1->get()[index] * sampleInfoAlpha);
+		}
+		else{
+			return pos1;
+		}
+	}
+};
+
+
+
 void AlembicImport_FillInShape_Internal(alembic_fillshape_options &options)
 {
    Alembic::AbcGeom::ICurves obj(*options.pIObj,Alembic::Abc::kWrapExisting);
@@ -104,7 +165,9 @@ void AlembicImport_FillInShape_Internal(alembic_fillshape_options &options)
    }
 
    Alembic::Abc::Int32ArraySamplePtr curveNbVertices = curveSample.getCurvesNumVertices();
-   Alembic::Abc::P3fArraySamplePtr curvePos = curveSample.getPositions();
+
+   curvePositionSampler posSampler(obj, sampleInfo);
+
 
    // Prepare the knots
    if (options.nDataFillFlags & ALEMBIC_DATAFILL_SPLINE_KNOTS)
@@ -158,29 +221,29 @@ void AlembicImport_FillInShape_Internal(alembic_fillshape_options &options)
                {
                    if (ix == 0 && !pSpline->Closed())
                    {
-                       p = ConvertAlembicPointToMaxPoint(curvePos->get()[nVertexOffset]); 
+                       p = ConvertAlembicPointToMaxPoint(posSampler[nVertexOffset]); 
                        nVertexOffset += 1;
-                       out = ConvertAlembicPointToMaxPoint(curvePos->get()[nVertexOffset]); 
+                       out = ConvertAlembicPointToMaxPoint(posSampler[nVertexOffset]); 
                        nVertexOffset += 1;
                        in = p;
                        kType = KTYPE_BEZIER_CORNER;
                    }
                    else if ( ix == knots-1 && !pSpline->Closed())
                    {
-                       in = ConvertAlembicPointToMaxPoint(curvePos->get()[nVertexOffset]); 
+                       in = ConvertAlembicPointToMaxPoint(posSampler[nVertexOffset]); 
                        nVertexOffset += 1;
-                       p = ConvertAlembicPointToMaxPoint(curvePos->get()[nVertexOffset]); 
+                       p = ConvertAlembicPointToMaxPoint(posSampler[nVertexOffset]); 
                        nVertexOffset += 1;
                        out = p;
                        kType = KTYPE_BEZIER_CORNER;
                    }
                    else
                    {
-                       in = ConvertAlembicPointToMaxPoint(curvePos->get()[nVertexOffset]); 
+                       in = ConvertAlembicPointToMaxPoint(posSampler[nVertexOffset]); 
                        nVertexOffset += 1;
-                       p = ConvertAlembicPointToMaxPoint(curvePos->get()[nVertexOffset]); 
+                       p = ConvertAlembicPointToMaxPoint(posSampler[nVertexOffset]); 
                        nVertexOffset += 1;
-                       out = ConvertAlembicPointToMaxPoint(curvePos->get()[nVertexOffset]); 
+                       out = ConvertAlembicPointToMaxPoint(posSampler[nVertexOffset]); 
                        nVertexOffset += 1;
                        kType = KTYPE_BEZIER;
                    }
@@ -201,7 +264,7 @@ void AlembicImport_FillInShape_Internal(alembic_fillshape_options &options)
                PolyLine &pLine = options.pPolyShape->lines[i];
                for (int j = 0; j < pLine.numPts; j += 1)
                {
-                   p = ConvertAlembicPointToMaxPoint(curvePos->get()[nVertexOffset]);
+                   p = ConvertAlembicPointToMaxPoint(posSampler[nVertexOffset]);
                    nVertexOffset += 1;
                    pLine[j].p = p;
                }
