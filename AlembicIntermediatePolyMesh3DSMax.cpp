@@ -225,7 +225,7 @@ Matrix3 TransposeRot(const Matrix3& mat){
 	return Matrix3(nrow1, nrow2, nrow3, row4);
 }
 
-void IntermediatePolyMesh3DSMax::Save(AlembicWriteJob* writeJob, TimeValue ticks, Mesh *triMesh, MNMesh* polyMesh, Matrix3& wm, Mtl* pMtl, const int nNumSamplesWritten, materialsMergeStr* pMatMerge)
+void IntermediatePolyMesh3DSMax::Save(AlembicWriteJob* writeJob, TimeValue ticks, Mesh *triMesh, MNMesh* polyMesh, Matrix3& meshTM, Mtl* pMtl, const int nNumSamplesWritten, materialsMergeStr* pMatMerge)
 {
 	const bool bFirstFrame = nNumSamplesWritten == 0;
 
@@ -237,8 +237,7 @@ void IntermediatePolyMesh3DSMax::Save(AlembicWriteJob* writeJob, TimeValue ticks
     LONG vertCount = (polyMesh != NULL) ? polyMesh->VNum()
                                        : triMesh->getNumVerts();
 
-    // prepare the bounding box
-    Alembic::Abc::Box3d bbox;
+
 
     // allocate the points and normals
     posVec.resize(vertCount);
@@ -248,8 +247,10 @@ void IntermediatePolyMesh3DSMax::Save(AlembicWriteJob* writeJob, TimeValue ticks
         Point3 &maxPoint = (polyMesh != NULL) ? polyMesh->V(i)->p
                                              : triMesh->getVert(i);
 		
-        posVec[i] = ConvertMaxPointToAlembicPoint( wm * maxPoint );
+        posVec[i] = ConvertMaxPointToAlembicPoint( meshTM * maxPoint );
         bbox.extendBy(posVec[i]);
+		//Alembic::Abc::Box3d& box = bbox;
+		//ESS_LOG_INFO( "Archive bbox: min("<<box.min.x<<", "<<box.min.y<<", "<<box.min.z<<") max("<<box.max.x<<", "<<box.max.y<<", "<<box.max.z<<")" );
     }
 
     // abort here if we are just storing points

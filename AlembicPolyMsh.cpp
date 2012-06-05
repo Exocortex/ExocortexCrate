@@ -166,12 +166,12 @@ bool AlembicPolyMesh::Save(double time, bool bLastFrame)
 
 		//save the first mesh to the final result, and then merge the others with it
 		materialsMerge.currUniqueHandle = meshes[0].animHandle;
-		finalPolyMesh.Save(mJob, ticks, meshes[0].pMesh, NULL, meshes[0].worldTrans, meshes[0].pMtl, mNumSamples, &materialsMerge);
+		finalPolyMesh.Save(mJob, ticks, meshes[0].pMesh, NULL, meshes[0].meshTM, meshes[0].pMtl, mNumSamples, &materialsMerge);
 
 		for(int i=1; i<meshes.size(); i++){
 			IntermediatePolyMesh3DSMax currPolyMesh;
 			materialsMerge.currUniqueHandle = meshes[i].animHandle;
-			currPolyMesh.Save(mJob, ticks, meshes[i].pMesh, NULL, meshes[i].worldTrans, meshes[i].pMtl, mNumSamples, &materialsMerge);
+			currPolyMesh.Save(mJob, ticks, meshes[i].pMesh, NULL, meshes[i].meshTM, meshes[i].pMtl, mNumSamples, &materialsMerge);
 			bool bSuccess = finalPolyMesh.mergeWith(currPolyMesh);
 			if(!bSuccess){
 				return false;
@@ -233,11 +233,22 @@ bool AlembicPolyMesh::Save(double time, bool bLastFrame)
 	// Extend the archive bounding box
 
 	if (mJob){
-		//Alembic::Abc::M44d wm;
-		//ConvertMaxMatrixToAlembicMatrix(GetRef().node->GetObjTMAfterWSM(ticks), wm);
-		//finalPolyMesh.bbox.min = finalPolyMesh.bbox.min * wm;
-		//finalPolyMesh.bbox.max = finalPolyMesh.bbox.max * wm;
+		Alembic::Abc::M44d wm;
+		ConvertMaxMatrixToAlembicMatrix(GetRef().node->GetObjTMAfterWSM(ticks), wm);
+
+		Alembic::Abc::Box3d& b = finalPolyMesh.bbox;
+
+		//ESS_LOG_INFO( "Archive bbox: min("<<b.min.x<<", "<<b.min.y<<", "<<b.min.z<<") max("<<b.max.x<<", "<<b.max.y<<", "<<b.max.z<<")" );
+
+		finalPolyMesh.bbox.min = finalPolyMesh.bbox.min * wm;
+		finalPolyMesh.bbox.max = finalPolyMesh.bbox.max * wm;
+
+		//ESS_LOG_INFO( "Archive bbox: min("<<b.min.x<<", "<<b.min.y<<", "<<b.min.z<<") max("<<b.max.x<<", "<<b.max.y<<", "<<b.max.z<<")" );
+
 		mJob->GetArchiveBBox().extendBy(finalPolyMesh.bbox);
+
+		//Alembic::Abc::Box3d box = mJob->GetArchiveBBox();
+		//ESS_LOG_INFO( "Archive bbox: min("<<box.min.x<<", "<<box.min.y<<", "<<box.min.z<<") max("<<box.max.x<<", "<<box.max.y<<", "<<box.max.z<<")" );
 	}
 
 	{

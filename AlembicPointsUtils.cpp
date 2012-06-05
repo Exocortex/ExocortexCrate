@@ -75,10 +75,10 @@ void getParticleSystemRenderMeshes(TimeValue ticks, Object* obj, INode* node, st
 				mdata.pMtl = NULL; //TODO: where get material?
 				mdata.animHandle = 0; //TODO: where to get handle?
 				Interval interval = FOREVER;
-				pAlembicParticles->GetMultipleRenderMeshTM_Internal(ticks, NULL, nullView, i, mdata.worldTrans, interval);
+				pAlembicParticles->GetMultipleRenderMeshTM_Internal(ticks, NULL, nullView, i, mdata.meshTM, interval);
 
 				//Matrix3 objectToWorld = inode->GetObjectTM( ticks );
-				//mdata.worldTrans = mdata.worldTrans * Inverse(objectToWorld); 
+				//mdata.meshTM = mdata.meshTM * Inverse(objectToWorld); 
 
 				mdata.pMesh = pAlembicParticles->GetMultipleRenderMesh(ticks, node /*system node or particle node?*/ , nullView, mdata.bNeedDelete, i);
 
@@ -91,7 +91,7 @@ void getParticleSystemRenderMeshes(TimeValue ticks, Object* obj, INode* node, st
 			particleMeshData mdata;
 			mdata.pMtl = NULL;//TODO: where to get material?
 			mdata.animHandle = 0;//TODO: where to get handle?
-			mdata.worldTrans.IdentityMatrix();
+			mdata.meshTM.IdentityMatrix();
 			mdata.pMesh = pSimpleParticle->GetRenderMesh(ticks, node, nullView, mdata.bNeedDelete);
 			if(mdata.pMesh){
 				meshes.push_back(mdata);
@@ -142,7 +142,7 @@ void getParticleSystemRenderMeshes(TimeValue ticks, Object* obj, INode* node, st
 				
 				mdata.animHandle = Animatable::GetHandleByAnim(groups[g]->GetActionList());
 
-				mdata.worldTrans.IdentityMatrix();
+				mdata.meshTM.IdentityMatrix();
 
 				mdata.pMesh = particleRender->GetRenderMesh(pCont, ticks, obj, pNode, nullView, mdata.bNeedDelete);
 
