@@ -189,7 +189,16 @@ void ConvertMaxMatrixToAlembicMatrix( const Matrix3 &maxMatrix, Matrix3 &result)
     Point3 meterTrans = result.GetTrans();
     result.SetTrans(meterTrans);
 }
-   
+void ConvertMaxMatrixToAlembicMatrix( const Matrix3 &maxMatrix, Alembic::Abc::M44d& iMatrix )
+{
+	Matrix3 alembicMatrix;
+    ConvertMaxMatrixToAlembicMatrix(maxMatrix, alembicMatrix);
+    iMatrix = Alembic::Abc::M44d( alembicMatrix.GetRow(0).x,  alembicMatrix.GetRow(0).y,  alembicMatrix.GetRow(0).z,  0,
+                                 alembicMatrix.GetRow(1).x,  alembicMatrix.GetRow(1).y,  alembicMatrix.GetRow(1).z,  0,
+                                 alembicMatrix.GetRow(2).x,  alembicMatrix.GetRow(2).y,  alembicMatrix.GetRow(2).z,  0,
+                                 alembicMatrix.GetRow(3).x,  alembicMatrix.GetRow(3).y,  alembicMatrix.GetRow(3).z,  1);
+}
+
 void ConvertAlembicMatrixToMaxMatrix( const Matrix3 &alembicMatrix, Matrix3 &result)
 {
     // Rotate the max matrix into an alembic reference frame, a right handed co-ordinate system

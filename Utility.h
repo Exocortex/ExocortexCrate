@@ -35,6 +35,7 @@ void AlembicDebug_PrintTransform( Matrix3 &m );
 
 // Conversion functions to Alembic Standards
 void ConvertMaxMatrixToAlembicMatrix( const Matrix3 &maxMatrix, Matrix3 &alembicMatrix );
+void ConvertMaxMatrixToAlembicMatrix( const Matrix3 &maxMatrix, Alembic::Abc::M44d& iMatrix);
 void ConvertAlembicMatrixToMaxMatrix( const Matrix3 &alembicMatrix, Matrix3 &maxMatrix );
 
 inline Imath::V3f ConvertMaxPointToAlembicPoint( const Point3 &maxPoint )
