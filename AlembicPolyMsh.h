@@ -23,6 +23,8 @@ public:
 
    virtual Alembic::Abc::OCompoundProperty GetCompound();
    virtual bool Save(double time, bool bLastFrame);
+
+   void SaveMaterialsProperty(bool bFirstFrame, bool bLastFrame);
 };
 
 #endif

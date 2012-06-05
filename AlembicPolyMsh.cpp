@@ -55,6 +55,50 @@ Alembic::Abc::OCompoundProperty AlembicPolyMesh::GetCompound()
     return mMeshSchema;
 }
 
+
+void AlembicPolyMesh::SaveMaterialsProperty(bool bFirstFrame, bool bLastFrame)
+{
+	std::vector<std::string> materialNames;
+
+	if(!mMatNamesProperty.valid())
+	{
+		mMatNamesProperty = OStringArrayProperty(mMeshSchema, ".materialnames", mMeshSchema.getMetaData(), GetCurrentJob()->GetAnimatedTs());
+	}
+
+	if(bLastFrame){
+	  
+		mergedMeshMaterialsMap& matMap = materialsMerge.groupMatMap;
+
+		for ( mergedMeshMaterialsMap_it it=matMap.begin(); it != matMap.end(); it++)
+		{
+			meshMaterialsMap& map = it->second;
+			for( meshMaterialsMap_it it2 =map.begin(); it2 != map.end(); it2++)
+			{
+				std::stringstream nameStream;
+				int nMaterialId = it2->second.matId;
+				nameStream<<it2->second.name<<" : "<<nMaterialId;
+				materialNames.push_back(nameStream.str());
+			}
+		}
+
+		if(materialNames.size() > 0){
+			Alembic::Abc::StringArraySample sample = Alembic::Abc::StringArraySample(&materialNames.front(), materialNames.size());
+			mMatNamesProperty.set(sample);
+		}
+		else{
+			materialNames.push_back("");
+			Alembic::Abc::StringArraySample sample = Alembic::Abc::StringArraySample(&materialNames.front(), 0);
+			mMatNamesProperty.set(sample);
+		}
+	}
+	else if(bFirstFrame){//alembic requires every property to have a sample at time 0
+		materialNames.push_back("");
+		Alembic::Abc::StringArraySample sample = Alembic::Abc::StringArraySample(&materialNames.front(), 0);
+		mMatNamesProperty.set(sample);
+	}
+}
+
+
 bool AlembicPolyMesh::Save(double time, bool bLastFrame)
 {   
 	const bool bFirstFrame = mNumSamples == 0;
@@ -86,16 +130,6 @@ bool AlembicPolyMesh::Save(double time, bool bLastFrame)
 
 	SaveMetaData(GetRef().node, this);
    
-    // Clear our data
-    //mFaceCountVec.clear();
-    //mFaceIndicesVec.clear(); 
-    //mBindPoseVec.clear();
-    //mVelocitiesVec.clear();
-    //mUvVec.clear();
-    //mUvIndexVec.clear();
-    //mMatIdIndexVec.clear();
-    //mFaceSetsMap.clear();
-
     // store the metadata
     //IMetaDataManager mng;
     // mng.GetMetaData(GetRef().node, 0);
@@ -199,7 +233,10 @@ bool AlembicPolyMesh::Save(double time, bool bLastFrame)
 	// Extend the archive bounding box
 
 	if (mJob){
-		//TODO: I think you need to transform the box into world space first
+		//Alembic::Abc::M44d wm;
+		//ConvertMaxMatrixToAlembicMatrix(GetRef().node->GetObjTMAfterWSM(ticks), wm);
+		//finalPolyMesh.bbox.min = finalPolyMesh.bbox.min * wm;
+		//finalPolyMesh.bbox.max = finalPolyMesh.bbox.max * wm;
 		mJob->GetArchiveBBox().extendBy(finalPolyMesh.bbox);
 	}
 
@@ -351,46 +388,7 @@ bool AlembicPolyMesh::Save(double time, bool bLastFrame)
           Alembic::Abc::UInt32ArraySample sample = Alembic::Abc::UInt32ArraySample(&finalPolyMesh.mMatIdIndexVec.front(), nMatIndexSize);
           mMatIdProperty.set(sample);
 
-		  if(!mMatNamesProperty.valid())
-		  {
-			  mMatNamesProperty = OStringArrayProperty(mMeshSchema, ".materialnames", mMeshSchema.getMetaData(), GetCurrentJob()->GetAnimatedTs());
-		  }
-
-		  std::vector<std::string> materialNames;
-
-		  if(bFirstFrame){//alembic requires every property to have a sample at time 0
-			  materialNames.push_back("");
-			  Alembic::Abc::StringArraySample sample = Alembic::Abc::StringArraySample(&materialNames.front(), 0);
-			  mMatNamesProperty.set(sample);
-		  }
-		  else if(bLastFrame){
-			  
-			  mergedMeshMaterialsMap& matMap = materialsMerge.groupMatMap;
-				
-			  for ( mergedMeshMaterialsMap_it it=matMap.begin(); it != matMap.end(); it++)
-              {
-				  meshMaterialsMap& map = it->second;
-				  for( meshMaterialsMap_it it2 =map.begin(); it2 != map.end(); it2++)
-				  {
-					  std::stringstream nameStream;
-					  int nMaterialId = it2->second.matId;
-					  nameStream<<it2->second.name<<" : "<<nMaterialId;
-					  materialNames.push_back(nameStream.str());
-				  }
-              }
-
-
-			  if(materialNames.size() > 0){
-				  Alembic::Abc::StringArraySample sample = Alembic::Abc::StringArraySample(&materialNames.front(), materialNames.size());
-				  mMatNamesProperty.set(sample);
-			  }
-			  else{
-				  materialNames.push_back("");
-				  Alembic::Abc::StringArraySample sample = Alembic::Abc::StringArraySample(&materialNames.front(), 0);
-				  mMatNamesProperty.set(sample);
-			  }
-			  
-		  }
+		  SaveMaterialsProperty(bFirstFrame, bLastFrame || bForever);
 
 		  size_t numMatId = finalPolyMesh.mFaceSetsMap.size();
           // For sample zero, export the material ids as face sets
