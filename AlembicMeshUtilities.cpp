@@ -860,9 +860,6 @@ void addAlembicMaterialsModifier(INode *pNode, Alembic::AbcGeom::IObject& iObj)
 		sampleInfo = getSampleInfo(nLastSample, objSubD.getSchema().getTimeSampling(), objSubD.getSchema().getNumSamples());
 	}
 
-
-
-
 	Alembic::Abc::IStringArrayProperty matNamesProperty;
 	if(objMesh.valid() && objMesh.getSchema().getPropertyHeader(".materialnames")){
 		matNamesProperty = Alembic::Abc::IStringArrayProperty(objMesh.getSchema(), ".materialnames");
@@ -871,35 +868,58 @@ void addAlembicMaterialsModifier(INode *pNode, Alembic::AbcGeom::IObject& iObj)
 		matNamesProperty = Alembic::Abc::IStringArrayProperty(objSubD.getSchema(), ".materialnames");
 	}
 
-	if(!matNamesProperty.valid() || matNamesProperty.getNumSamples() == 0){
-		return;
+	std::vector<std::string> faceSetNames;
+
+	if(!matNamesProperty.valid() || matNamesProperty.getNumSamples() == 0){//if we couldn't read the .materialnames property, look for the faceset names
+
+		if(objMesh.valid()){
+			sampleInfo = getSampleInfo(0, objMesh.getSchema().getTimeSampling(), objMesh.getSchema().getNumSamples());
+		}
+		else{
+			sampleInfo = getSampleInfo(0, objSubD.getSchema().getTimeSampling(), objSubD.getSchema().getNumSamples());
+		}
+
+		if(objMesh.valid()){
+			objMesh.getSchema().getFaceSetNames(faceSetNames);
+		}
+		else{
+			objSubD.getSchema().getFaceSetNames(faceSetNames);
+		}
+	}
+	else{
+
+		Alembic::Abc::StringArraySamplePtr matNamesSamplePtr = matNamesProperty.getValue(sampleInfo.floorIndex);
+		size_t len = matNamesSamplePtr->size();
+
+		for(size_t i=0; i<len; i++){
+
+			faceSetNames.push_back(matNamesSamplePtr->get()[i]);
+		}
 	}
 
-	Alembic::Abc::StringArraySamplePtr matNamesSamplePtr = matNamesProperty.getValue(sampleInfo.floorIndex);
-
-	size_t len = matNamesSamplePtr->size();
-
-	if(len <= 0){
+	if(faceSetNames.size() <= 0){
 		return;
 	}
 
 	std::string names("");
 
-	for(size_t j=0;j<len;j++)
+	for(size_t j=0;j<faceSetNames.size();j++)
 	{
-		const char* name = matNamesSamplePtr->get()[j].c_str();
+		const char* name = faceSetNames[j].c_str();
 		names+="\"";
 		names+=name;
 		names+="\"";
-		if(j != len-1){
+		if(j != faceSetNames.size()-1){
 			names+=", ";
 		}
 	}
 
 	GET_MAX_INTERFACE()->SelectNode( pNode );
 
-	char szBuffer[100000];
-	sprintf_s(szBuffer, 100000,
+	const size_t bufSize = names.size() + 500;
+
+	char* szBuffer = new char[bufSize];
+	sprintf_s(szBuffer, bufSize,
 			"AlembicMaterialModifier = EmptyModifier()\n"
 			"AlembicMaterialModifier.name = \"Alembic Materials\"\n"
 			"addmodifier $ AlembicMaterialModifier\n"
@@ -924,6 +944,8 @@ void addAlembicMaterialsModifier(INode *pNode, Alembic::AbcGeom::IObject& iObj)
 	);
 
 	ExecuteMAXScriptScript( szBuffer );
+
+	delete[] szBuffer;
 }
 
 int AlembicImport_PolyMesh(const std::string &path, Alembic::AbcGeom::IObject& iObj, alembic_importoptions &options, INode** pMaxNode)
