@@ -172,32 +172,44 @@ int AlembicImport_XForm(INode* pMaxNode, Alembic::AbcGeom::IObject& iObj, const 
     xformOptions.bIsCameraTransform = bIsCamera;
     AlembicImport_FillInXForm(xformOptions);
 
-	// Create the xform modifier
-	AlembicXformController *pControl = static_cast<AlembicXformController*>
-		(GetCOREInterface()->CreateInstance(CTRL_MATRIX3_CLASS_ID, ALEMBIC_XFORM_CONTROLLER_CLASSID));
-
 	TimeValue zero( 0 );
+	if(!isConstant) {
 
-	// Set the alembic id
-    pControl->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pControl, 0, "path" ), zero, file.c_str());
-	pControl->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pControl, 0, "identifier" ), zero, identifier.c_str() );
-	pControl->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pControl, 0, "time" ), zero, 0.0f );
-	pControl->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pControl, 0, "camera" ), zero, ( xformOptions.bIsCameraTransform ? TRUE : FALSE ) );
-    pControl->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pControl, 0, "muted" ), zero, FALSE );
-	
-   	// Add the modifier to the node
-    pMaxNode->SetTMController(pControl);
+		// Create the xform modifier
+		AlembicXformController *pControl = static_cast<AlembicXformController*>
+			(GetCOREInterface()->CreateInstance(CTRL_MATRIX3_CLASS_ID, ALEMBIC_XFORM_CONTROLLER_CLASSID));
 
-	if( ! isConstant ) {
+		// Set the alembic id
+		pControl->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pControl, 0, "path" ), zero, file.c_str());
+		pControl->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pControl, 0, "identifier" ), zero, identifier.c_str() );
+		pControl->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pControl, 0, "time" ), zero, 0.0f );
+		pControl->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pControl, 0, "camera" ), zero, ( xformOptions.bIsCameraTransform ? TRUE : FALSE ) );
+		pControl->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pControl, 0, "muted" ), zero, FALSE );
+		
+   		// Add the modifier to the node
+		pMaxNode->SetTMController(pControl);
+
 		GET_MAX_INTERFACE()->SelectNode( pMaxNode );
 		char szControllerName[10000];	
 		sprintf_s( szControllerName, 10000, "$.transform.controller.time" );
 		AlembicImport_ConnectTimeControl( szControllerName, options );
 	}
-    pMaxNode->InvalidateTreeTM();
+	else{//if the transform is not animated, do not use a controller. Thus, the user will be able to adjust the object position, orientation and so on.
+		alembic_fillxform_options xformOptions;
+		xformOptions.pIObj = &iObj;
+		xformOptions.dTicks = 0;
+		xformOptions.bIsCameraTransform = bIsCamera;
 
-    // Lock the transform
-    LockNodeTransform(pMaxNode, true);
+		AlembicImport_FillInXForm(xformOptions);
+
+		pMaxNode->SetNodeTM(zero, xformOptions.maxMatrix);
+	}
+    pMaxNode->InvalidateTreeTM();
+	
+	if(!isConstant){
+		// Lock the transform
+		LockNodeTransform(pMaxNode, true);
+	}
 
 	return alembic_success;
 }

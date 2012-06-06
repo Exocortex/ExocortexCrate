@@ -152,6 +152,7 @@ int recurseOnAlembicObject(Alembic::AbcGeom::IObject& iObj, INode *pParentMaxNod
 					int ret = createAlembicObject(*mergedGeomChild, &pMaxNode, options, file);
 					if(ret != 0) return ret;
 					ret = AlembicImport_XForm(pMaxNode, iObj, file, options);
+					if(ret != 0) return ret;
 				}
 			}
 			else{ //multiple geometry nodes under a dummy node (in pParentMaxNode)
