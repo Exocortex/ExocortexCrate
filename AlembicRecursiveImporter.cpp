@@ -128,28 +128,45 @@ int recurseOnAlembicObject(Alembic::AbcGeom::IObject& iObj, INode *pParentMaxNod
 		}
 
 		if(bCreateDummyNode){
-			int ret = AlembicImport_DummyNode(iObj, options, &pMaxNode);
-			if(ret != 0) return ret;
+			
+			INode* pExistingNode = GetNodeFromName(iObj.getName());
+			if(options.attachToExisting && pExistingNode){
+				pMaxNode = pExistingNode;
+			}//only create node if either attachToExisting is false or it is true and the object does not already exist
+			else{
+				int ret = AlembicImport_DummyNode(iObj, options, &pMaxNode);
+				if(ret != 0) return ret;
 
-			//add this iObj as transform controller controller
-			ret = AlembicImport_XForm(pMaxNode, iObj, file, options);
-			if(ret != 0) return ret;
+				//add this iObj as transform controller controller
+				ret = AlembicImport_XForm(pMaxNode, iObj, file, options);
+				if(ret != 0) return ret;
+			}
 		}
 		else{
-
 			if(mergedGeomNodeIndex != -1){//we are merging, so look at the child geometry node
-				int ret = createAlembicObject(*mergedGeomChild, &pMaxNode, options, file);
-				if(ret != 0) return ret;
-				ret = AlembicImport_XForm(pMaxNode, iObj, file, options);
+				INode* pExistingNode = GetNodeFromName(mergedGeomChild->getName());
+				if(options.attachToExisting && pExistingNode){
+					pMaxNode = pExistingNode;
+				}//only create node if either attachToExisting is false or it is true and the object does not already exist
+				else{
+					int ret = createAlembicObject(*mergedGeomChild, &pMaxNode, options, file);
+					if(ret != 0) return ret;
+					ret = AlembicImport_XForm(pMaxNode, iObj, file, options);
+				}
 			}
 			else{ //multiple geometry nodes under a dummy node (in pParentMaxNode)
-				int ret = createAlembicObject(iObj, &pMaxNode, options, file);
-				if(ret != 0) return ret;
-				//import identity matrix, since more than goemetry node share the same transform
-				//Should we just list MAX put a default position/scale/rotation controller on?
+				INode* pExistingNode = GetNodeFromName(iObj.getName());
+				if(options.attachToExisting && pExistingNode){
+					pMaxNode = pExistingNode;
+				}//only create node if either attachToExisting is false or it is true and the object does not already exist
+				else{
+					int ret = createAlembicObject(iObj, &pMaxNode, options, file);
+					if(ret != 0) return ret;
+					//import identity matrix, since more than goemetry node share the same transform
+					//Should we just list MAX put a default position/scale/rotation controller on?
 
-				//	int ret = AlembicImport_XForm(pMaxNode, *piParentObj, file, options);
-
+					//	int ret = AlembicImport_XForm(pMaxNode, *piParentObj, file, options);
+				}
 			}
 
 			if(!pMaxNode){

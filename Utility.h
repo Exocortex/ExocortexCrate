@@ -108,5 +108,6 @@ TriObject* GetTriObjectFromNode(INode *iNode, const TimeValue t, bool &deleteIt)
 
 
 INode* GetNodeFromHierarchyPath(const std::string& path);
+INode* GetNodeFromName(const std::string& name);
 
 #endif  // _FOUNDATION_H_

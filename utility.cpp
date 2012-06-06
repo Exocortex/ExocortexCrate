@@ -418,3 +418,37 @@ INode* GetNodeFromHierarchyPath(const std::string& path)
     pScene->EnumTree(&resolver);
 	return resolver.pRetNode;
 }
+
+class NodeFindByName : public ITreeEnumProc
+{
+public:
+
+	std::string name;
+	INode* pRetNode;
+
+	NodeFindByName(const std::string& name):name(name), pRetNode(NULL)
+	{}
+
+	int callback( INode* node )
+	{
+
+		//skip the first entry because we split based on slash, and the path starts with a a slash,
+		//so the first entry is an empty string
+		if (strcmp(node->GetName(), name.c_str()) == 0)
+		{
+			pRetNode = node;
+			return TREE_ABORT;
+		}        
+
+		return TREE_CONTINUE;
+	}
+
+};
+
+INode* GetNodeFromName(const std::string& name)
+{
+	NodeFindByName resolver(name);
+    IScene *pScene = GET_MAX_INTERFACE()->GetScene();
+    pScene->EnumTree(&resolver);
+	return resolver.pRetNode;
+}
