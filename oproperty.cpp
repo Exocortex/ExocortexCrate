@@ -3,7 +3,6 @@
 #include "ocompoundproperty.h"
 #include "oobject.h"
 #include "oarchive.h"
-#include <boost/lexical_cast.hpp>
 #include "AlembicLicensing.h"
 
 static std::string oProperty_getName_func(PyObject * self)
@@ -1285,7 +1284,7 @@ PyObject * oProperty_new(Alembic::Abc::OCompoundProperty compound, std::string c
 
    // NEW check for intent! and assign it if necessary
    {
-      int i_pos = propType.find('[');
+	   string::size_type i_pos = propType.find('[');
       if (i_pos != string::npos)
       {
          string sz_intent = propType.substr(i_pos+1, propType.length()-i_pos-2);

@@ -2,7 +2,6 @@
 #include "iproperty.h"
 #include "icompoundproperty.h"   // to call iCompoundProperty_new in iProperty_new if it's an iCompoundProperty
 #include "iobject.h"
-#include <boost/lexical_cast.hpp>
 #include "AlembicLicensing.h"
 
 #ifdef __cplusplus__
