@@ -345,7 +345,14 @@ void AlembicImport_SetupVisControl( std::string const& file, std::string const& 
     if (!pNode)
         return;
 
-    if (options.importVisibility == VisImport_JustImportValue)
+	Alembic::AbcGeom::IVisibilityProperty visibilityProperty = Alembic::AbcGeom::GetVisibilityProperty(obj);
+
+	bool isConstant = true;
+	if( visibilityProperty.valid() ) {
+		isConstant = visibilityProperty.isConstant();
+	}
+
+    if (options.importVisibility == VisImport_JustImportValue || (options.importVisibility == VisImport_ConnectedControllers && isConstant))
     {
         alembic_fillvis_options visFillOptions;
         visFillOptions.pIObj = &obj;
@@ -358,13 +365,6 @@ void AlembicImport_SetupVisControl( std::string const& file, std::string const& 
     }
     else if (options.importVisibility == VisImport_ConnectedControllers)
     {
-		Alembic::AbcGeom::IVisibilityProperty visibilityProperty = Alembic::AbcGeom::GetVisibilityProperty(obj);
-    
-		bool isConstant = true;
-		if( visibilityProperty.valid() ) {
-			isConstant = visibilityProperty.isConstant();
-		}
-
         // Create the xform modifier
         AlembicVisibilityController *pControl = static_cast<AlembicVisibilityController*>
             (GetCOREInterface()->CreateInstance(CTRL_FLOAT_CLASS_ID, ALEMBIC_VISIBILITY_CONTROLLER_CLASSID));
