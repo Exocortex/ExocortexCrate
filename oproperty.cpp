@@ -1259,7 +1259,7 @@ PyObject * oProperty_new(Alembic::Abc::OCompoundProperty compound, std::string c
    identifier.append("/");
    identifier.append(in_propName);
 
-   INFO_MSG("propType = " << in_propType);
+   //INFO_MSG("propType = " << in_propType);
    oArchive * archive = (oArchive*)in_Archive;
 
 
@@ -1293,7 +1293,7 @@ PyObject * oProperty_new(Alembic::Abc::OCompoundProperty compound, std::string c
          // remove intent information from the property type
          propType = propType.substr(0, i_pos).c_str();
 
-         INFO_MSG("propType = " << propType << " with intent = " << (prop->intent));
+         //INFO_MSG("propType = " << propType << " with intent = " << (prop->intent));
       }
       else
          prop->intent = 1;

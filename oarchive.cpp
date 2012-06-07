@@ -135,8 +135,9 @@ static PyObject * oArchive_createObject(PyObject * self, PyObject * args)
    oObject * objectPtr = oArchive_getObjectElement(archive,identifier);
    if(objectPtr)
    {
-      PyErr_SetString(getError(), "Object already exists!");
-      return NULL;
+      //PyErr_SetString(getError(), "Object already exists!");
+      //return NULL;
+      return (PyObject*)objectPtr;  // NEW changed because when you get an oProperty, if it already exists, it returns it, it doesn't say there's some kind of error
    }
 
    // recurse to find it
