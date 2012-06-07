@@ -360,7 +360,7 @@ public:
 	{
 		boost::split(parts, path, boost::is_any_of("/"));
 		
-		if(parts.size() > 1){
+		if(parts.size() > 2){
 			//delete the parent transform of the leaf node, since these nodes were merged on import
 			parts[parts.size()-2] = parts[parts.size()-1];
 			parts.pop_back();
@@ -452,3 +452,26 @@ INode* GetNodeFromName(const std::string& name)
     pScene->EnumTree(&resolver);
 	return resolver.pRetNode;
 }
+
+INode* GetChildNodeFromName(const std::string& name, INode* pParent)
+{
+	if(pParent){
+		const char* pname = pParent->GetName();
+		for(int i=0; i<pParent->NumberOfChildren(); i++){
+			INode* childNode = pParent->GetChildNode(i);
+			const char* cname = childNode->GetName();
+
+			if (strcmp(childNode->GetName(), name.c_str()) == 0){
+				return childNode;	
+			}
+		}
+		return NULL;
+	}
+	else{ //in this case, the node will have root node as parent, which is only exposed indirectly in max via EnumTree interface
+		HierarchyPathResolver resolver(std::string("/") + name);
+		IScene *pScene = GET_MAX_INTERFACE()->GetScene();
+		pScene->EnumTree(&resolver);
+		return resolver.pRetNode;
+	}
+}
+

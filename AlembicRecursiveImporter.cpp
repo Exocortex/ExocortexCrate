@@ -91,7 +91,9 @@ int recurseOnAlembicObject(Alembic::AbcGeom::IObject& iObj, INode *pParentMaxNod
 		return alembic_failure;
 	}
 
-	const char* name = iObj.getFullName().c_str();
+	const char* fullname = iObj.getFullName().c_str();
+	const char* pname = (pParentMaxNode) ? pParentMaxNode->GetName() : "";
+	const char* name = iObj.getName().c_str();
 
 	INode* pMaxNode = NULL;
 	size_t mergedGeomNodeIndex = -1;
@@ -127,9 +129,10 @@ int recurseOnAlembicObject(Alembic::AbcGeom::IObject& iObj, INode *pParentMaxNod
 			}
 		}
 
+		INode* pExistingNode = NULL;
 		if(bCreateDummyNode){
 			
-			INode* pExistingNode = GetNodeFromName(iObj.getName());
+			pExistingNode = GetChildNodeFromName(iObj.getName(), pParentMaxNode);
 			if(options.attachToExisting && pExistingNode){
 				pMaxNode = pExistingNode;
 			}//only create node if either attachToExisting is false or it is true and the object does not already exist
@@ -144,7 +147,7 @@ int recurseOnAlembicObject(Alembic::AbcGeom::IObject& iObj, INode *pParentMaxNod
 		}
 		else{
 			if(mergedGeomNodeIndex != -1){//we are merging, so look at the child geometry node
-				INode* pExistingNode = GetNodeFromName(mergedGeomChild->getName());
+				pExistingNode = GetChildNodeFromName(mergedGeomChild->getName(), pParentMaxNode);
 				if(options.attachToExisting && pExistingNode){
 					pMaxNode = pExistingNode;
 				}//only create node if either attachToExisting is false or it is true and the object does not already exist
@@ -156,7 +159,7 @@ int recurseOnAlembicObject(Alembic::AbcGeom::IObject& iObj, INode *pParentMaxNod
 				}
 			}
 			else{ //multiple geometry nodes under a dummy node (in pParentMaxNode)
-				INode* pExistingNode = GetNodeFromName(iObj.getName());
+				pExistingNode = GetChildNodeFromName(iObj.getName(), pParentMaxNode);
 				if(options.attachToExisting && pExistingNode){
 					pMaxNode = pExistingNode;
 				}//only create node if either attachToExisting is false or it is true and the object does not already exist
@@ -175,7 +178,7 @@ int recurseOnAlembicObject(Alembic::AbcGeom::IObject& iObj, INode *pParentMaxNod
 			}
 		}
 
-		if(pParentMaxNode){
+		if(pParentMaxNode && !pExistingNode){
 			pParentMaxNode->AttachChild(pMaxNode, 0);
 		}
 	}
