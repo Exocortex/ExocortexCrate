@@ -30,6 +30,7 @@ typedef std::map<INode*, IParticleGroup*> groupMapT;
 void getParticleGroups(TimeValue ticks, Object* obj, INode* node, std::vector<IParticleGroup*>& groups)
 {
 	IParticleObjectExt* particlesExt = GetParticleObjectExtInterface(obj);
+	particlesExt->UpdateParticles(node, ticks);
 
 	groupMapT groupMap;
 
