@@ -350,9 +350,19 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
    boost::int32_t const* pMeshFaceIndices = ( meshFaceIndices.get() != NULL ) ? meshFaceIndices->get() : NULL;
 
    int numFaces = static_cast<int>(meshFaceCount->size());
+   int numIndices = static_cast<int>(meshFaceIndices->size());
+
+   int sampleCount = 0;
+   for(int i=0; i<numFaces; i++){
+		int degree = pMeshFaceCount[i];
+		sampleCount+=degree;
+   }
 
    if ( options.nDataFillFlags & ALEMBIC_DATAFILL_FACELIST )
    {
+	   if(sampleCount == numIndices)
+	   {
+	   
         // Set up the index buffer
         int offset = 0;
 		if (options.pMNMesh != NULL)
@@ -422,6 +432,11 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
 			ESS_LOG_WARNING("Should not get here." );
 		}
 		validateMeshes( options, "ALEMBIC_DATAFILL_FACELIST" );
+
+	   }//if(sampleCount != numIndices)
+	   else{
+			ESS_LOG_WARNING("faceCount, index array mismatch. Not filling in indices.");
+	   }
    }
 
 	if( ( options.nDataFillFlags & ALEMBIC_DATAFILL_FACELIST ) &&
@@ -474,6 +489,13 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
 					   int last = offset;
 					   for (int j = first; j >= last; j -= 1)
 					   {
+						   if (j > meshNormalsFloor->size())
+						   {
+							   ESS_LOG_ERROR("Normal at Face " << i << ", Vertex " << j << "does not exist at sample time " << sampleTime);
+							   normalsToSet.push_back( Point3(0,0,0) );
+							   continue;
+						   }
+
 						   Imath::V3f interpolatedNormal = pMeshNormalsFloor[j] + (pMeshNormalsCeil[j] - pMeshNormalsFloor[j]) * float(sampleInfo.alpha);
 						   normalsToSet.push_back( ConvertAlembicNormalToMaxNormal_Normalized( interpolatedNormal ) );
 					   }
