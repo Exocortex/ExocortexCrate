@@ -613,7 +613,7 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
 		   Imath::V2f const* pMeshUVsFloor = ( meshUVsFloor.get() != NULL ) ? meshUVsFloor->get() : NULL;
 		   Imath::V2f const* pMeshUVsCeil = ( meshUVsCeil.get() != NULL ) ? meshUVsCeil->get() : NULL;
 
-		   if( pMeshUVsFloor == NULL || pMeshUVsCeil == NULL ) {
+		   if( !pMeshUVsFloor || !pMeshUVsCeil || meshUVsFloor->size() == 0) {
 			   ESS_LOG_WARNING( "Mesh UVs are in an invalid state in Alembic file, ignoring." );
 		   }
 		   else {
@@ -648,6 +648,10 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
 					   int last = offset;
 					   for (int j = first; j >= last; j -=1)
 					   {
+						   if(j >= meshUVsFloor->size() ){
+						       ESS_LOG_WARNING( "j >= meshUVsFloor->size()" );
+							   continue;
+						   }
 						   Point3 maxUV(meshUVsFloor->get()[j].x, meshUVsFloor->get()[j].y, 0.0f);
 						   uvsToSet.push_back(maxUV);
 					   }
