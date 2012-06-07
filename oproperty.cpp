@@ -1267,12 +1267,18 @@ PyObject * oProperty_new(Alembic::Abc::OCompoundProperty compound, std::string c
    {
       oCompoundProperty *cprop = oArchive_getCompPropElement(archive, identifier);
       if (cprop)
+      {
+         Py_INCREF(cprop);
          return (PyObject*)cprop;
+      }
    }
 
    oProperty * prop = oArchive_getPropElement(archive, identifier);
    if(prop)
+   {
+      Py_INCREF(prop);
       return (PyObject*)prop;
+   }
 
    // if we don't have it yet, create a new one and insert it into our map
    prop = PyObject_NEW(oProperty, &oProperty_Type);

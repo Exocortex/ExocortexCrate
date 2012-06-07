@@ -1,5 +1,6 @@
 #include "extension.h"
 #include "oarchive.h"
+#include "iarchive.h"
 #include "oobject.h"
 #include "oproperty.h"
 #include "ocompoundproperty.h"
@@ -10,6 +11,25 @@
 #include <boost/algorithm/string.hpp>
 #include <cstring>
 #include <iostream>
+#include <set>
+
+typedef std::set<std::string> str_set;
+
+static str_set oArchive_filenames;
+bool isOArchiveOpened(std::string filename)
+{
+   return oArchive_filenames.find(filename) != oArchive_filenames.end();
+}
+
+static bool setOArchiveOpened(std::string filename)
+{
+   return oArchive_filenames.insert(filename).second;
+}
+
+static bool setOArchiveClosed(std::string filename)
+{
+   return oArchive_filenames.erase(filename) == 1;
+}
 
 size_t gNbOArchives = 0;
 size_t getNbOArchives() { return gNbOArchives; }
@@ -135,8 +155,7 @@ static PyObject * oArchive_createObject(PyObject * self, PyObject * args)
    oObject * objectPtr = oArchive_getObjectElement(archive,identifier);
    if(objectPtr)
    {
-      //PyErr_SetString(getError(), "Object already exists!");
-      //return NULL;
+      Py_INCREF(objectPtr);
       return (PyObject*)objectPtr;  // NEW changed because when you get an oProperty, if it already exists, it returns it, it doesn't say there's some kind of error
    }
 
@@ -275,6 +294,8 @@ static void oArchive_delete(PyObject * self)
    ALEMBIC_TRY_STATEMENT
    // delete the archive
    oArchive * archive = (oArchive *)self;
+   setOArchiveClosed(archive->mArchive->getName());   // NEW
+
    if(archive->mElements != NULL)
    {
 #ifdef PYTHON_DEBUG
@@ -384,6 +405,13 @@ PyObject * oArchive_new(PyObject * self, PyObject * args)
       }
    }
 
+   // NEW check if the archive is already open as an iArchive or oArchive
+   if (isIArchiveOpened(fileName) || isOArchiveOpened(fileName))
+   {
+      PyErr_SetString(getError(), "This archive is already opened");
+      return NULL;
+   }
+
    oArchive * object = PyObject_NEW(oArchive, &oArchive_Type);
    if (object != NULL)
    {
@@ -397,6 +425,7 @@ PyObject * oArchive_new(PyObject * self, PyObject * args)
       Alembic::AbcGeom::CreateOArchiveBounds(*object->mArchive,0);
 
       object->mElements = new oArchiveElementVec();
+      setOArchiveOpened(fileName);
       gNbOArchives++;
    }
    return (PyObject *)object;

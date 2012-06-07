@@ -164,7 +164,10 @@ PyObject * oXformProperty_new(oObjectPtr in_casted, void * in_Archive, boost::ui
    oArchive * archive = (oArchive*)in_Archive;
    oXformProperty * prop = oArchive_getXformElement(archive,identifier);
    if(prop)
+   {
+      Py_INCREF(prop);
       return (PyObject*)prop;
+   }
 
    // if we don't have it yet, create a new one and insert it into our map
    prop = PyObject_NEW(oXformProperty, &oXformProperty_Type);
