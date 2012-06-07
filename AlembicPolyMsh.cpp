@@ -353,33 +353,29 @@ bool AlembicPolyMesh::Save(double time, bool bLastFrame)
 	//write out the texture coordinates if necessary
 	if((bool)GetCurrentJob()->GetOption("exportUVs") && (bFirstFrame || dynamicTopology))
 	{
-		///if (finalPolyMesh.mUvVec.size() == finalPolyMesh.sampleCount) //TODO: is this condition important?
+		if (finalPolyMesh.mUvVec.size() > 0 && finalPolyMesh.mUvVec.size() == finalPolyMesh.mFaceIndicesVec.size() )
 		{
-			if (finalPolyMesh.mUvVec.size() > 0)
-			{
-				Alembic::AbcGeom::OV2fGeomParam::Sample uvSample(
-					Alembic::Abc::V2fArraySample(&finalPolyMesh.mUvVec.front(),finalPolyMesh.mUvVec.size()),
-					Alembic::AbcGeom::kFacevaryingScope);
+			Alembic::AbcGeom::OV2fGeomParam::Sample uvSample(
+				Alembic::Abc::V2fArraySample(&finalPolyMesh.mUvVec.front(),finalPolyMesh.mUvVec.size()),
+				Alembic::AbcGeom::kFacevaryingScope);
 
-				if(finalPolyMesh.mUvIndexVec.size() > 0){
-				  uvSample.setIndices(Alembic::Abc::UInt32ArraySample(&finalPolyMesh.mUvIndexVec.front(),finalPolyMesh.mUvIndexVec.size()));
-				}
-				mMeshSample.setUVs(uvSample);
+			if(finalPolyMesh.mUvIndexVec.size() > 0){
+			  uvSample.setIndices(Alembic::Abc::UInt32ArraySample(&finalPolyMesh.mUvIndexVec.front(),finalPolyMesh.mUvIndexVec.size()));
 			}
-			else if (mNumSamples == 0 && dynamicTopology)
-			{
-				// If we are exporting dynamic topology, then we may have uvs that show up later in our scene.  The problem is that Alembic wants
-				// your parameter to be defined at sample zero if you plan to use it even later on, so we create a dummy uv parameter here if the case
-				// requires it
-				finalPolyMesh.mUvVec.push_back(Imath::V2f(0,0));
-				finalPolyMesh.mUvIndexVec.push_back(0);
-				Alembic::AbcGeom::OV2fGeomParam::Sample uvSample(Alembic::Abc::V2fArraySample(&finalPolyMesh.mUvVec.front(), 0), Alembic::AbcGeom::kFacevaryingScope);
-				uvSample.setIndices(Alembic::Abc::UInt32ArraySample(&finalPolyMesh.mUvIndexVec.front(), 0) );
-				mMeshSample.setUVs(uvSample);
-			}
+			mMeshSample.setUVs(uvSample);
+		}
+		else if (mNumSamples == 0 && dynamicTopology)
+		{
+			// If we are exporting dynamic topology, then we may have uvs that show up later in our scene.  The problem is that Alembic wants
+			// your parameter to be defined at sample zero if you plan to use it even later on, so we create a dummy uv parameter here if the case
+			// requires it
+			finalPolyMesh.mUvVec.push_back(Imath::V2f(0,0));
+			finalPolyMesh.mUvIndexVec.push_back(0);
+			Alembic::AbcGeom::OV2fGeomParam::Sample uvSample(Alembic::Abc::V2fArraySample(&finalPolyMesh.mUvVec.front(), 0), Alembic::AbcGeom::kFacevaryingScope);
+			uvSample.setIndices(Alembic::Abc::UInt32ArraySample(&finalPolyMesh.mUvIndexVec.front(), 0) );
+			mMeshSample.setUVs(uvSample);
 		}
 	}
-
 
 
       // sweet, now let's have a look at face sets (really only for first sample)
