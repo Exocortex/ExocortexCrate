@@ -2,7 +2,6 @@
 #include "iproperty.h"
 #include "icompoundproperty.h"   // to call iCompoundProperty_new in iProperty_new if it's an iCompoundProperty
 #include "iobject.h"
-#include <boost/lexical_cast.hpp>
 #include "AlembicLicensing.h"
 
 #ifdef __cplusplus__
@@ -2618,7 +2617,7 @@ PyObject * iProperty_new(Alembic::Abc::ICompoundProperty &compound, char * in_pr
 {
    const Alembic::Abc::PropertyHeader * propHeader = compound.getPropertyHeader( in_propName );
    iProperty * prop = PyObject_NEW(iProperty, &iProperty_Type);
-   INFO_MSG(in_propName << " of type " << propHeader->getDataType());
+   //INFO_MSG(in_propName << " of type " << propHeader->getDataType());
    if (prop != NULL)
    {
       if(propHeader->isCompound())

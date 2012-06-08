@@ -6,6 +6,25 @@
 #include "AlembicLicensing.h"
 
 #include <boost/algorithm/string.hpp>
+#include <set>
+
+typedef std::set<std::string> str_set;
+
+static str_set iArchive_filenames;
+bool isIArchiveOpened(std::string filename)
+{
+   return iArchive_filenames.find(filename) != iArchive_filenames.end();
+}
+
+static bool setIArchiveOpened(std::string filename)
+{
+   return iArchive_filenames.insert(filename).second;
+}
+
+static bool setIArchiveClosed(std::string filename)
+{
+   return iArchive_filenames.erase(filename) == 1;
+}
 
 size_t gNbIArchives = 0;
 size_t getNbIArchives() { return gNbIArchives; }
@@ -127,6 +146,10 @@ static void iArchive_delete(PyObject * self)
    ALEMBIC_TRY_STATEMENT
    // delete the archive
    iArchive * object = (iArchive *)self;
+
+   // NEW, remove the filename from the list
+   setIArchiveClosed(object->mArchive->getName());
+
    delete(object->mArchive);
    PyObject_FREE(object);
    gNbIArchives--;
@@ -169,11 +192,11 @@ static PyTypeObject iArchive_Type = {
 PyObject * iArchive_new(PyObject * self, PyObject * args)
 {
    ALEMBIC_TRY_STATEMENT
-   if(getNbOArchives() > 0)
+   /*if(getNbOArchives() > 0)
    {
       PyErr_SetString(getError(), "Can only create iArchives if all oArchives are closed!");
       return NULL;
-   }
+   }*/
 
    if(!HasFullLicense())
    {
@@ -192,6 +215,13 @@ PyObject * iArchive_new(PyObject * self, PyObject * args)
       return NULL;
    }
 
+   // NEW check if the archive is already open as an iArchive or oArchive
+   if (isIArchiveOpened(fileName) || isOArchiveOpened(fileName))
+   {
+      PyErr_SetString(getError(), "This archive is already opened");
+      return NULL;
+   }
+
    // check if the filename exists
    FILE * file = fopen(fileName,"rb");
    if(file == NULL)
@@ -205,6 +235,7 @@ PyObject * iArchive_new(PyObject * self, PyObject * args)
    if (object != NULL)
    {
       object->mArchive = new Alembic::Abc::IArchive( Alembic::AbcCoreHDF5::ReadArchive(), fileName);
+      setIArchiveOpened(fileName);
       gNbIArchives++;
    }
    return (PyObject *)object;

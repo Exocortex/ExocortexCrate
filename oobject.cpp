@@ -332,6 +332,7 @@ static void oObject_delete(PyObject * self)
    // delete the object
    oObject * object = (oObject *)self;
    oObject_deletePointers(object);
+   object->mObject = NULL;
    PyObject_FREE(object);
    ALEMBIC_VOID_CATCH_STATEMENT
 }

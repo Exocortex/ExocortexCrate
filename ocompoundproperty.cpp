@@ -125,7 +125,10 @@ PyObject * oCompoundProperty_new(Alembic::Abc::OCompoundProperty compound, std::
 
       oCompoundProperty * cprop = oArchive_getCompPropElement(archive,identifier);
       if(cprop)
+      {
+         Py_INCREF(cprop);
          return (PyObject*)cprop;
+      }
 
       //INFO_MSG("Creating a new oCompoundProperty");
       cprop = PyObject_NEW(oCompoundProperty, &oCompoundProperty_Type);

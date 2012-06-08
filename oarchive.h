@@ -36,6 +36,7 @@ oXformProperty * oArchive_getXformElement(oArchive * archive, std::string identi
 
 PyObject * oArchive_new(PyObject * self, PyObject * args);
 size_t getNbOArchives();
+bool isOArchiveOpened(std::string filename);
 
 bool register_object_oArchive(PyObject *module);
 

@@ -3,7 +3,6 @@
 #include "ocompoundproperty.h"
 #include "oobject.h"
 #include "oarchive.h"
-#include <boost/lexical_cast.hpp>
 #include "AlembicLicensing.h"
 
 static std::string oProperty_getName_func(PyObject * self)
@@ -1260,7 +1259,7 @@ PyObject * oProperty_new(Alembic::Abc::OCompoundProperty compound, std::string c
    identifier.append("/");
    identifier.append(in_propName);
 
-   INFO_MSG("propType = " << in_propType);
+   //INFO_MSG("propType = " << in_propType);
    oArchive * archive = (oArchive*)in_Archive;
 
 
@@ -1268,12 +1267,18 @@ PyObject * oProperty_new(Alembic::Abc::OCompoundProperty compound, std::string c
    {
       oCompoundProperty *cprop = oArchive_getCompPropElement(archive, identifier);
       if (cprop)
+      {
+         Py_INCREF(cprop);
          return (PyObject*)cprop;
+      }
    }
 
    oProperty * prop = oArchive_getPropElement(archive, identifier);
    if(prop)
+   {
+      Py_INCREF(prop);
       return (PyObject*)prop;
+   }
 
    // if we don't have it yet, create a new one and insert it into our map
    prop = PyObject_NEW(oProperty, &oProperty_Type);
@@ -1285,7 +1290,7 @@ PyObject * oProperty_new(Alembic::Abc::OCompoundProperty compound, std::string c
 
    // NEW check for intent! and assign it if necessary
    {
-      int i_pos = propType.find('[');
+	   string::size_type i_pos = propType.find('[');
       if (i_pos != string::npos)
       {
          string sz_intent = propType.substr(i_pos+1, propType.length()-i_pos-2);
@@ -1294,7 +1299,7 @@ PyObject * oProperty_new(Alembic::Abc::OCompoundProperty compound, std::string c
          // remove intent information from the property type
          propType = propType.substr(0, i_pos).c_str();
 
-         INFO_MSG("propType = " << propType << " with intent = " << (prop->intent));
+         //INFO_MSG("propType = " << propType << " with intent = " << (prop->intent));
       }
       else
          prop->intent = 1;
@@ -1303,6 +1308,7 @@ PyObject * oProperty_new(Alembic::Abc::OCompoundProperty compound, std::string c
    // get the compound property writer
    Alembic::Abc::CompoundPropertyWriterPtr compoundWriter = GetCompoundPropertyWriterPtr(compound);      // this variable is unused!
    const Alembic::Abc::PropertyHeader * propHeader = compound.getPropertyHeader( in_propName );
+
    if(propHeader != NULL)
    {
       prop->intent = propHeader->getDataType().getExtent(); // NEW
