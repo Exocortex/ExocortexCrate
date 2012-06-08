@@ -946,7 +946,7 @@ int AlembicParticles::Display(TimeValue t, INode* inode, ViewExp *vpt, int flags
 		GetMultipleRenderMeshTM_Internal(t, inode, nullView, i, elemToObj, meshTMValid);
 		Mesh *mesh = GetMultipleRenderMesh(t, inode, nullView, deleteMesh, i);
 
-		if(mesh){
+		if(mesh && m_InstanceShapeType[i] != AlembicPoints::ShapeType_Point ){
 
 			Matrix3 elemToWorld = elemToObj;// * objToWorld; 
 
