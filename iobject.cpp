@@ -1,4 +1,5 @@
 #include "extension.h"
+#include "iarchive.h"
 #include "iobject.h"
 #include "iproperty.h"
 #include "ixformproperty.h"
@@ -232,6 +233,28 @@ static PyObject * iObject_getProperty(PyObject * self, PyObject * args)
    ALEMBIC_PYOBJECT_CATCH_STATEMENT
 }
 
+static PyObject * iObject_getTsIndex(PyObject * self, PyObject * args)
+{
+   iObject *obj = (iObject*)self;
+   if (obj->tsIndex == -1)
+   {
+      ALEMBIC_TRY_STATEMENT
+         Alembic::Abc::TimeSamplingPtr ts_ptr = getTimeSamplingFromObject(*(obj->mObject));
+         const int nb_ts = ((iArchive*)obj->mArchive)->mArchive->getNumTimeSamplings();
+         for (int i = 0; i < nb_ts; ++i)
+         {
+            Alembic::Abc::TimeSamplingPtr ts = ((iArchive*)obj->mArchive)->mArchive->getTimeSampling((boost::uint32_t)i);
+            if (ts == ts_ptr)
+            {
+               obj->tsIndex = i;
+               break;
+            }
+         }
+      ALEMBIC_PYOBJECT_CATCH_STATEMENT
+   }
+   return Py_BuildValue("i",(int)obj->tsIndex);
+}
+
 static PyMethodDef iObject_methods[] = {
    {"getIdentifier", (PyCFunction)iObject_getIdentifier, METH_NOARGS, "Returns the identifier linked to this object."},
    {"getMetaData", (PyCFunction)iObject_getMetaData, METH_NOARGS, "Returns the string array storing the metadata, if it exists on this object. Otherwise it returns an empty tuple."},
@@ -240,6 +263,7 @@ static PyMethodDef iObject_methods[] = {
    {"getNbStoredSamples", (PyCFunction)iObject_getNbStoredSamples, METH_NOARGS, "Returns the actual number of stored samples."},
    {"getPropertyNames", (PyCFunction)iObject_getPropertyNames, METH_NOARGS, "Returns a string list of all property names below this object."},
    {"getProperty", (PyCFunction)iObject_getProperty, METH_VARARGS, "Returns an iProperty for the given propertyName string."},
+   {"getTsIndex", (PyCFunction)iObject_getTsIndex, METH_NOARGS, "Returns time sampling index used by this object."},
    {NULL, NULL}
 };
 static PyObject * iObject_getAttr(PyObject * self, char * attrName)
@@ -290,13 +314,15 @@ static PyTypeObject iObject_Type = {
   iObject_methods,             /* tp_methods */
 };
 
-PyObject * iObject_new(Alembic::Abc::IObject in_Object)
+PyObject * iObject_new(Alembic::Abc::IObject in_Object, void *in_Archive)
 {
    ALEMBIC_TRY_STATEMENT
    iObject * object = PyObject_NEW(iObject, &iObject_Type);
    if (object != NULL)
    {
       object->mObject = new Alembic::Abc::IObject(in_Object,Alembic::Abc::kWrapExisting);
+      object->mArchive = in_Archive;
+      object->tsIndex = -1;
    }
    return (PyObject *)object;
    ALEMBIC_PYOBJECT_CATCH_STATEMENT

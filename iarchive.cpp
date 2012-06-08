@@ -86,7 +86,7 @@ static PyObject * iArchive_getObject(PyObject * self, PyObject * args)
       }
    }
 
-   return iObject_new(obj);
+   return iObject_new(obj, archive);
    ALEMBIC_PYOBJECT_CATCH_STATEMENT
 }
 

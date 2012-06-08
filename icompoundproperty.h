@@ -8,9 +8,6 @@
 typedef struct
 {
    PyObject_HEAD
-   //bool mIsCompound;	// always true	USELESS FOR NOW
-   //bool mIsArray;	// always false
-   //propertyTP mPropType;
    Alembic::Abc::ICompoundProperty *mBaseCompoundProperty;
 } iCompoundProperty;
 
