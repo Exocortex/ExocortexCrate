@@ -159,6 +159,8 @@ private:
 	GenCylinder *m_pDiskMaker;
 	GenBoxObject* m_pRectangleMaker;
 	Matrix3  m_objToWorld;
+	Alembic::AbcGeom::IPoints m_iPoints;
+	TimeValue m_currTick;
 };
 
 

@@ -103,7 +103,7 @@ void AlembicParticles::UpdateParticles(TimeValue t, INode *node)
 {
 	ESS_CPP_EXCEPTION_REPORTING_START
    
-    Interval interval = FOREVER;//os->obj->ObjectValidity(t);
+	Interval interval = FOREVER;//os->obj->ObjectValidity(t);
 	//ESS_LOG_INFO( "Interval Start: " << interval.Start() << " End: " << interval.End() );
 
     MCHAR const* strPath = NULL;
@@ -144,8 +144,8 @@ void AlembicParticles::UpdateParticles(TimeValue t, INode *node)
 		return;
 	}
 
-	Alembic::AbcGeom::IPoints iPoints;
-    if (!GetAlembicIPoints(iPoints, strPath, strIdentifier))
+	//Alembic::AbcGeom::IPoints iPoints;
+    if (!GetAlembicIPoints(m_iPoints, strPath, strIdentifier))
     {
         valid = FALSE;
         return;
@@ -156,11 +156,11 @@ void AlembicParticles::UpdateParticles(TimeValue t, INode *node)
         return;
     }
 
-    TimeValue ticks = GetTimeValueFromSeconds( fTime );
+    m_currTick = GetTimeValueFromSeconds( fTime );
 
     Alembic::AbcGeom::IPointsSchema::Sample floorSample;
     Alembic::AbcGeom::IPointsSchema::Sample ceilSample;
-    SampleInfo sampleInfo = GetSampleAtTime(iPoints, ticks, floorSample, ceilSample);
+    SampleInfo sampleInfo = GetSampleAtTime(m_iPoints, m_currTick, floorSample, ceilSample);
 
     int numParticles = GetNumParticles(floorSample);
     parts.SetCount(numParticles, PARTICLE_VELS | PARTICLE_AGES | PARTICLE_RADIUS);
@@ -181,17 +181,17 @@ void AlembicParticles::UpdateParticles(TimeValue t, INode *node)
     {
         parts.points[i] = GetParticlePosition(floorSample, ceilSample, sampleInfo, i) * m_objToWorld;
         parts.vels[i] = GetParticleVelocity(floorSample, ceilSample, sampleInfo, i);
-        parts.ages[i] = GetParticleAge(iPoints, sampleInfo, i);
-		parts.radius[i] = GetParticleRadius(iPoints, sampleInfo, i);
-        m_InstanceShapeType[i] = GetParticleShapeType(iPoints, sampleInfo, i);
-        m_InstanceShapeIds[i] = GetParticleShapeInstanceId(iPoints, sampleInfo, i);
-        m_InstanceShapeTimes[i] = GetParticleShapeInstanceTime(iPoints, sampleInfo, i);
-        m_ParticleOrientations[i] = GetParticleOrientation(iPoints, sampleInfo, i);
-        m_ParticleScales[i] = GetParticleScale(iPoints, sampleInfo, i);
+        parts.ages[i] = GetParticleAge(m_iPoints, sampleInfo, i);
+		parts.radius[i] = GetParticleRadius(m_iPoints, sampleInfo, i);
+        m_InstanceShapeType[i] = GetParticleShapeType(m_iPoints, sampleInfo, i);
+        m_InstanceShapeIds[i] = GetParticleShapeInstanceId(m_iPoints, sampleInfo, i);
+        m_InstanceShapeTimes[i] = GetParticleShapeInstanceTime(m_iPoints, sampleInfo, i);
+        m_ParticleOrientations[i] = GetParticleOrientation(m_iPoints, sampleInfo, i);
+        m_ParticleScales[i] = GetParticleScale(m_iPoints, sampleInfo, i);
     }
 
     // Find the scene nodes for all our instances
-    FillParticleShapeNodes(iPoints, sampleInfo);
+    FillParticleShapeNodes(m_iPoints, sampleInfo);
 
   /*  // Rebuild the viewport meshes
     NullView nullView;
@@ -413,11 +413,10 @@ int AlembicParticles::GetNumParticles(const Alembic::AbcGeom::IPointsSchema::Sam
 }
 
 Point3 AlembicParticles::GetParticlePosition(const Alembic::AbcGeom::IPointsSchema::Sample &floorSample, const Alembic::AbcGeom::IPointsSchema::Sample &ceilSample, const SampleInfo &sampleInfo, int index) const
-{
-	
+{	
 	Imath::V3f alembicP3f = floorSample.getPositions()->get()[index];
 
-    // Get the velocity if there is an alpha
+    //Get the velocity if there is an alpha
     if (sampleInfo.alpha != 0.0f)
     {
         Imath::V3f alembicVel3f;
@@ -819,17 +818,28 @@ void AlembicParticles::GetMultipleRenderMeshTM(TimeValue  t, INode *inode, View 
 		//ESS_LOG_INFO( "Default renderer mode" );
 		meshTM = Inverse( objectToWorld ) * meshTM;
 	}
+
  
 	meshTMValid.SetInstant( t );
 }
 
 void AlembicParticles::GetMultipleRenderMeshTM_Internal(TimeValue  t, INode *inode, View &view, int  meshNumber, Matrix3 &meshTM, Interval &meshTMValid)
 {
-	
     // Calculate the matrix
     Point3 pos = parts.points[meshNumber];
     Quat orient = m_ParticleOrientations[meshNumber];
-    Point3 scaleVec = m_ParticleScales[meshNumber];
+	Point3 scaleVec = m_ParticleScales[meshNumber];
+
+	//for motion blur we need to be able sample at numerous times. So we can't read from the stored state directly
+	if(t != m_currTick){
+		Alembic::AbcGeom::IPointsSchema::Sample floorSample;
+		Alembic::AbcGeom::IPointsSchema::Sample ceilSample;
+		SampleInfo sampleInfo = GetSampleAtTime(m_iPoints, t, floorSample, ceilSample);
+		pos = GetParticlePosition(floorSample, ceilSample, sampleInfo, meshNumber) * m_objToWorld;
+		orient = GetParticleOrientation(m_iPoints, sampleInfo, meshNumber);
+		//TODO: we could possibly do it this way as well:
+		//Point3 pos2 = pos + static_cast<float>(sampleInfo.alpha) * parts.vels[meshNumber];
+	}
 
 	//TODO: why is the radius 0 when calling during export?
 	if(parts.radius[meshNumber] != 0.0){
@@ -859,7 +869,7 @@ void AlembicParticles::GetMultipleRenderMeshTM_Internal(TimeValue  t, INode *ino
 
 INode* AlembicParticles::GetParticleMeshNode(int meshNumber, INode *displayNode)
 {
-	ESS_LOG_INFO( "AlembicParticles::GetParticleMeshNode( meshNumber: " << meshNumber << " )" );
+	//ESS_LOG_INFO( "AlembicParticles::GetParticleMeshNode( meshNumber: " << meshNumber << " )" );
     if (meshNumber > parts.Count() || !parts.Alive(meshNumber))
     {
         return displayNode;
