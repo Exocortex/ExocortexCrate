@@ -1308,6 +1308,7 @@ PyObject * oProperty_new(Alembic::Abc::OCompoundProperty compound, std::string c
    // get the compound property writer
    Alembic::Abc::CompoundPropertyWriterPtr compoundWriter = GetCompoundPropertyWriterPtr(compound);      // this variable is unused!
    const Alembic::Abc::PropertyHeader * propHeader = compound.getPropertyHeader( in_propName );
+
    if(propHeader != NULL)
    {
       prop->intent = propHeader->getDataType().getExtent(); // NEW

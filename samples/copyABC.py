@@ -2,12 +2,15 @@ import _ExocortexAlembicPython as alembic
 import sys
 import argparse
 
+# ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ----
+# global variables
 b_verbose = False
 obj_filter = None
 typ_filter = None
 noo_filter = None
 not_filter = None
 
+# ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ----
 #copy directly a property and its corresponding values
 def copy_property(prop, outProp, full_name):
    if b_verbose:
@@ -16,6 +19,7 @@ def copy_property(prop, outProp, full_name):
       vals = prop.getValues(i)
       outProp.setValues(vals)
 
+# ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ----
 #visiting the structure, if it's a property, copy it, if it's a compound, continue the visit there
 def copy_compound_property(cprop, outCprop, full_name):
    full_name = full_name + "/" + cprop.getName()
@@ -23,7 +27,7 @@ def copy_compound_property(cprop, outCprop, full_name):
       print("COMP: \"" + full_name + "\"")
    for prop_name in cprop.getPropertyNames():
       if prop_name == ".metadata":
-         pass           # .metadata cause some problem
+         continue                                                    # .metadata cause some problem
       sub_prop = cprop.getProperty(prop_name)
       out_prop = outCprop.getProperty(prop_name, sub_prop.getType())
       if sub_prop.isCompound():
@@ -31,7 +35,8 @@ def copy_compound_property(cprop, outCprop, full_name):
       else:
          copy_property(sub_prop, out_prop, full_name)
 
-#going through each object
+# ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ----
+# going through each object
 def copy_objects(in_data, out_data):
    global obj_filter
    global typ_filter
@@ -40,12 +45,12 @@ def copy_objects(in_data, out_data):
    
    for identifier in in_data.getIdentifiers():
       if (obj_filter != None and identifier.find(obj_filter) < 0) or (noo_filter != None and identifier.find(noo_filter) >= 0):
-         continue          # pass over this object!
+         continue                                                    # pass over this object!
       
       obj = in_data.getObject(identifier)
       obj_typ = obj.getType()
       if (typ_filter != None and obj_typ.find(typ_filter) < 0) or (not_filter != None and obj_typ.find(not_filter) >= 0):
-         continue          # pass over this object because of its type!
+         continue                                                    # pass over this object because of its type!
       
       if b_verbose:
          print("OBJ : \"" + identifier + "\" of type " + obj_typ)
@@ -54,7 +59,7 @@ def copy_objects(in_data, out_data):
       out.setMetaData(obj.getMetaData())
       for prop_name in obj.getPropertyNames():
          if prop_name == ".metadata":
-            continue       # .metadata cause some problem
+            continue                                                 # .metadata cause some problem
          prop = obj.getProperty(prop_name)
          out_prop = out.getProperty(prop_name, prop.getType())
          if prop.isCompound():
@@ -62,6 +67,7 @@ def copy_objects(in_data, out_data):
          else:
             copy_property(prop, out_prop, identifier)
 
+# ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ----
 def main(args):
    global b_verbose
    global obj_filter
@@ -88,9 +94,10 @@ def main(args):
    
    in_data = alembic.getIArchive(ns["abc_in"])
    out_data = alembic.getOArchive(ns["o"])
-   out_data.createTimeSampling(in_data.getSampleTimes()[1]) #copy first the time sampling
+   out_data.createTimeSampling(in_data.getSampleTimes()[1])          #copy first the time sampling
    copy_objects(in_data, out_data)
 
+# ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ----
 if __name__ == "__main__":
    main(sys.argv)
 
