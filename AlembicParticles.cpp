@@ -948,7 +948,7 @@ int AlembicParticles::Display(TimeValue t, INode* inode, ViewExp *vpt, int flags
 
 		if(mesh){
 
-			Matrix3 elemToWorld = elemToObj * objToWorld;
+			Matrix3 elemToWorld = elemToObj;// * objToWorld; 
 
 			INode *meshNode = GetParticleMeshNode(i, inode);
 			Material *mtls = meshNode->Mtls();
