@@ -267,7 +267,7 @@ static PyObject * oArchive_createObject(PyObject * self, PyObject * args)
 #ifdef PYTHON_DEBUG
    printf("creating new object: '%s'\n",identifier);
 #endif
-   PyObject * newObj = oObject_new(obj,casted,archive);
+   PyObject * newObj = oObject_new(obj,casted,archive, tsIndex);
 #ifdef PYTHON_DEBUG
    printf("inserting object into map: '%s'\n",identifier);
 #endif

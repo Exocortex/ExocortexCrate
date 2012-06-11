@@ -220,7 +220,7 @@ static PyObject * oObject_getProperty(PyObject * self, PyObject * args)
 
    char * propName = NULL;
    char * propType = NULL;
-   int tsIndex = 1;
+   int tsIndex = object->tsIndex;
    if(!PyArg_ParseTuple(args, "s|si", &propName,&propType,&tsIndex))
    {
       PyErr_SetString(getError(), "No property name and/or property type specified!");
@@ -369,7 +369,7 @@ static PyTypeObject oObject_Type = {
   oObject_methods,             /* tp_methods */
 };
 
-PyObject * oObject_new(Alembic::Abc::OObject in_Object, oObjectPtr in_Casted, void * in_Archive)
+PyObject * oObject_new(Alembic::Abc::OObject in_Object, oObjectPtr in_Casted, void * in_Archive, int tsIndex)
 {
    ALEMBIC_TRY_STATEMENT
    oObject * object = PyObject_NEW(oObject, &oObject_Type);
@@ -381,6 +381,7 @@ PyObject * oObject_new(Alembic::Abc::OObject in_Object, oObjectPtr in_Casted, vo
       object->mObject = new Alembic::Abc::OObject(in_Object,Alembic::Abc::kWrapExisting);
       object->mCasted = in_Casted;
       object->mArchive = in_Archive;
+      object->tsIndex = tsIndex;
    }
    return (PyObject *)object;
    ALEMBIC_PYOBJECT_CATCH_STATEMENT

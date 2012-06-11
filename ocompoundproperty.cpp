@@ -29,7 +29,7 @@ static PyObject *oCompoundProperty_getProperty(PyObject * self, PyObject * args)
 
       char * propName = NULL;
       char * propType = NULL;
-      int tsIndex = 1;
+      int tsIndex = cprop->tsIndex;
       if(!PyArg_ParseTuple(args, "s|si", &propName, &propType, &tsIndex))
       {
          PyErr_SetString(getError(), "No property name and/or property type specified!");
@@ -136,6 +136,7 @@ PyObject * oCompoundProperty_new(Alembic::Abc::OCompoundProperty compound, std::
       cprop->mArchive = in_Archive;
       oArchive_registerCompPropElement(archive,identifier,cprop);
       cprop->mFullName = new std::string(identifier);
+      cprop->tsIndex = tsIndex;
 
       const Alembic::Abc::PropertyHeader * propHeader = compound.getPropertyHeader( in_propName );
       if(propHeader != NULL)

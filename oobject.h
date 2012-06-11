@@ -38,9 +38,10 @@ typedef struct {
   Alembic::Abc::OObject * mObject;
   oObjectPtr mCasted;
   void * mArchive;
+   int tsIndex;   // new, for quick access!
 } oObject;
 
-PyObject * oObject_new(Alembic::Abc::OObject in_Object, oObjectPtr in_Casted, void * in_Archive);
+PyObject * oObject_new(Alembic::Abc::OObject in_Object, oObjectPtr in_Casted, void * in_Archive, int tsIndex);
 void oObject_deletePointers(oObject * object);
 
 bool register_object_oObject(PyObject *module);

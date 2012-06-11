@@ -13,6 +13,7 @@
       void * mArchive;
       Alembic::Abc::OCompoundProperty * mBaseCompoundProperty;
       std::string * mFullName;
+      int tsIndex;      // for quick access!
    } oCompoundProperty;
 
    PyObject * oCompoundProperty_new(Alembic::Abc::OCompoundProperty compound, std::string compoundFullName, const char * in_propName, int tsIndex, void * in_Archive);
