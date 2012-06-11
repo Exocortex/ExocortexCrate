@@ -21,7 +21,7 @@ static PyObject * iTimeSampling_getTsIndex(PyObject * self, PyObject * args)
    return Py_BuildValue("i",((iTimeSampling*)self)->tsIndex);
 }
 
-static PyObject * iTimeSampling_createOTimeSampling(PyObject * self, PyObject * args)
+PyObject * iTimeSampling_createOTimeSampling(PyObject * self, PyObject * args)
 {
    ALEMBIC_TRY_STATEMENT
       return oTimeSampling_new(((iTimeSampling*)self)->ts_ptr);
@@ -93,6 +93,11 @@ PyObject * iTimeSampling_new(Alembic::Abc::TimeSamplingPtr ts_ptr, int tsIndex)
       }
       return (PyObject*)ts;
    ALEMBIC_PYOBJECT_CATCH_STATEMENT
+}
+
+bool is_iTimeSampling(PyObject *obj)
+{
+   return obj->ob_type == &iTimeSampling_Type;
 }
 
 bool register_object_iTimeSampling(PyObject *module)

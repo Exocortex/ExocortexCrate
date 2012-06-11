@@ -22,11 +22,67 @@ static void oTimeSampling_delete(PyObject * self)
    ALEMBIC_VOID_CATCH_STATEMENT
 }
 
+/*       LATER
+         static PyObject *oTimeSampling_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
+         {
+             Noddy *self;
+
+             self = (Noddy *)type->tp_alloc(type, 0);
+             if (self != NULL) {
+                 self->first = PyString_FromString("");
+                 if (self->first == NULL)
+                   {
+                     Py_DECREF(self);
+                     return NULL;
+                   }
+                 
+                 self->last = PyString_FromString("");
+                 if (self->last == NULL)
+                   {
+                     Py_DECREF(self);
+                     return NULL;
+                   }
+
+                 self->number = 0;
+             }
+
+             return (PyObject *)self;
+         }
+
+         static int oTimeSampling_init(Noddy *self, PyObject *args, PyObject *kwds)
+         {
+             PyObject *first=NULL, *last=NULL, *tmp;
+
+             static char *kwlist[] = {"first", "last", "number", NULL};
+
+             if (! PyArg_ParseTupleAndKeywords(args, kwds, "|OOi", kwlist, 
+                                               &first, &last, 
+                                               &self->number))
+                 return -1; 
+
+             if (first) {
+                 tmp = self->first;
+                 Py_INCREF(first);
+                 self->first = first;
+                 Py_XDECREF(tmp);
+             }
+
+             if (last) {
+                 tmp = self->last;
+                 Py_INCREF(last);
+                 self->last = last;
+                 Py_XDECREF(tmp);
+             }
+
+             return 0;
+         }
+//*/
+
 static PyTypeObject oTimeSampling_Type =
 {
   PyObject_HEAD_INIT(&PyType_Type)
   0,                                // op_size
-  "iTimeSampling",                        // tp_name
+  "oTimeSampling",                        // tp_name
   sizeof(oTimeSampling),                  // tp_basicsize
   0,                                // tp_itemsize
   (destructor)oTimeSampling_delete,       // tp_dealloc
@@ -53,6 +109,17 @@ static PyTypeObject oTimeSampling_Type =
   0,		               /* tp_iter */
   0,		               /* tp_iternext */
   oTimeSampling_methods,             /* tp_methods */
+    0,             /* tp_members */
+    0,                         /* tp_getset */
+    0,                         /* tp_base */
+    0,                         /* tp_dict */
+    0,                         /* tp_descr_get */
+    0,                         /* tp_descr_set */
+    0,                         /* tp_dictoffset */
+    0,//(initproc)oTimeSampling_init,      /* tp_init */    // LATER
+    0,                         /* tp_alloc */
+    0,//oTimeSampling_new,                 /* tp_new */     // LATER
+
 };
 
 PyObject * oTimeSampling_new(Alembic::Abc::TimeSamplingPtr ts_ptr)

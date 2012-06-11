@@ -7,6 +7,8 @@
 #include "oxformproperty.h"
 #include "foundation.h"
 #include "AlembicLicensing.h"
+#include "otimesampling.h"
+#include "itimesampling.h"
 
 #include <boost/algorithm/string.hpp>
 #include <cstring>
@@ -50,68 +52,73 @@ static PyObject * oArchive_getFileName(PyObject * self, PyObject * args)
 static PyObject * oArchive_createTimeSampling(PyObject * self, PyObject * args)
 {
    ALEMBIC_TRY_STATEMENT
-   oArchive * archive = (oArchive *)self;
-   if(archive->mArchive == NULL)
-   {
-      PyErr_SetString(getError(), "Archive already closed!");
-      return NULL;
-   }
-
-   // parse the args
-   PyObject * timesTuple = NULL;
-   if(!PyArg_ParseTuple(args, "O", &timesTuple))
-   {
-      PyErr_SetString(getError(), "No timesTuple specified!");
-      return NULL;
-   }
-   if(!PyTuple_Check(timesTuple) && !PyList_Check(timesTuple))
-   {
-      PyErr_SetString(getError(), "timesTuple argument is not a tuple!");
-      return NULL;
-   }
-   size_t nbTimes = 0;
-   if(PyTuple_Check(timesTuple))
-      nbTimes = PyTuple_Size(timesTuple);
-   else
-      nbTimes = PyList_Size(timesTuple);
-
-   if(nbTimes == 0)
-   {
-      PyErr_SetString(getError(), "timesTuple has zero length!");
-      return NULL;
-   }
-
-   std::vector<Alembic::Abc::chrono_t> frames(nbTimes);
-   for(size_t i=0;i<nbTimes;i++)
-   {
-      PyObject * item = NULL;
-      if(PyTuple_Check(timesTuple))
-         item = PyTuple_GetItem(timesTuple,i);
-      else
-         item = PyList_GetItem(timesTuple,i);
-      float timeValue = 0.0f;
-      if(!PyArg_Parse(item,"f",&timeValue))
+      oArchive * archive = (oArchive *)self;
+      if(archive->mArchive == NULL)
       {
-         PyErr_SetString(getError(), "Some item of timesTuple is not a floating point number!");
+         PyErr_SetString(getError(), "Archive already closed!");
          return NULL;
       }
-      frames[i] = timeValue;
-   }
 
-   if(frames.size() > 1)
-   {
-      double timePerCycle = frames[frames.size()-1] - frames[0];
-      Alembic::Abc::TimeSamplingType samplingType((boost::uint32_t)frames.size(),timePerCycle);
-      Alembic::Abc::TimeSampling sampling(samplingType,frames);
-      archive->mArchive->addTimeSampling(sampling);
-   }
-   else
-   {
-      Alembic::Abc::TimeSampling sampling(1.0,frames[0]);
-      archive->mArchive->addTimeSampling(sampling);
-   }
+      // parse the args
+      PyObject * timesTuple = NULL;
+      if(!PyArg_ParseTuple(args, "O", &timesTuple))
+      {
+         PyErr_SetString(getError(), "No timesTuple specified!");
+         return NULL;
+      }
 
-   return Py_BuildValue("i",1);
+      bool is_list = false;   
+      PyObject *(*_GetItem)(PyObject*, Py_ssize_t) = PyTuple_GetItem;
+      if(!PyTuple_Check(timesTuple))
+      {
+         if (PyList_Check(timesTuple))
+         {
+            _GetItem = PyList_GetItem;
+            is_list = true;
+         }
+         else
+         {
+            PyErr_SetString(getError(), "timesTuple argument is not a tuple!");
+            return NULL;
+         }
+      }
+
+      const size_t nbTimes = is_list ? PyList_Size(timesTuple) : PyTuple_Size(timesTuple);
+      if(nbTimes == 0)
+      {
+         PyErr_SetString(getError(), "timesTuple has zero length!");
+         return NULL;
+      }
+
+      // check the list/tuple if all the items are valid!
+      std::list<PyObject*> valid_obj;
+      for (int i = 0; i < nbTimes; ++i)
+      {
+         PyObject *item = _GetItem(timesTuple, i);
+         PyObject *out = NULL;
+
+         if (PyTuple_Check(item) || PyList_Check(item))
+            out = oTimeSampling_new(item);                        // construct a oTimeSampling from the list
+         else if (is_iTimeSampling(item))
+            out = iTimeSampling_createOTimeSampling(item, NULL);  // must be an iTimeSampling!
+         else
+         {
+            // not valid, delete previous made PyObject
+            for (std::list<PyObject*>::iterator beg = valid_obj.begin(); beg != valid_obj.end(); ++beg)
+               PyObject_FREE(*beg);
+            PyErr_SetString(getError(), "item should be a tuple, a list, or an iTimeSampling");
+            return NULL;
+         }
+         valid_obj.push_back(out);
+      }
+
+      // add the time sampling!
+      for (std::list<PyObject*>::iterator beg = valid_obj.begin(); beg != valid_obj.end(); ++beg)
+      {
+         archive->mArchive->addTimeSampling(((oTimeSampling*)*beg)->ts);
+         PyObject_FREE(*beg);
+      }
+      return Py_BuildValue("i",1);
    ALEMBIC_PYOBJECT_CATCH_STATEMENT
 }
 

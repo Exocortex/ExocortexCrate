@@ -11,6 +11,8 @@
    } iTimeSampling;
 
    PyObject * iTimeSampling_new(Alembic::Abc::TimeSamplingPtr ts_ptr, int tsIndex);
+   PyObject * iTimeSampling_createOTimeSampling(PyObject * self, PyObject * args);
+   bool is_iTimeSampling(PyObject *obj);
 
    bool register_object_iTimeSampling(PyObject *module);
 
