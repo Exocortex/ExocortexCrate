@@ -3,6 +3,7 @@
 #include "oarchive.h"
 #include "iobject.h"
 #include "foundation.h"
+#include "itimesampling.h"
 #include "AlembicLicensing.h"
 
 #include <boost/algorithm/string.hpp>
@@ -112,18 +113,15 @@ static PyObject * iArchive_getObject(PyObject * self, PyObject * args)
 static PyObject * iArchive_getSampleTimes(PyObject * self, PyObject * args)
 {
    ALEMBIC_TRY_STATEMENT
-   iArchive * archive = (iArchive *)self;
-   PyObject * mainTuple = PyTuple_New(archive->mArchive->getNumTimeSamplings());
-   for(size_t i=0;i<archive->mArchive->getNumTimeSamplings();i++)
-   {
-      Alembic::Abc::TimeSamplingPtr ts = archive->mArchive->getTimeSampling((boost::uint32_t)i);
-      const std::vector <Alembic::Abc::chrono_t> & times = ts->getStoredTimes();
-      PyObject * tuple = PyTuple_New(times.size());
-      for(size_t j=0;j<times.size();j++)
-         PyTuple_SetItem(tuple,j,Py_BuildValue("f",(float)times[j]));
-      PyTuple_SetItem(mainTuple,i,tuple);
-   }
-   return mainTuple;
+      iArchive * archive = (iArchive *)self;
+      const int nb_ts = archive->mArchive->getNumTimeSamplings();
+      PyObject *_list = PyList_New(nb_ts);
+      for (int i = 0; i < nb_ts; ++i)
+      {
+         PyObject *ts = iTimeSampling_new(archive->mArchive->getTimeSampling((boost::uint32_t)i), i);
+         PyList_SetItem(_list, i, ts);
+      }
+      return _list;
    ALEMBIC_PYOBJECT_CATCH_STATEMENT
 }
 

@@ -15,3 +15,4 @@ bool isIArchiveOpened(std::string filename);
 bool register_object_iArchive(PyObject *module);
 
 #endif
+
