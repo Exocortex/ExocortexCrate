@@ -9,17 +9,17 @@ bool AlembicIntermediatePolyMesh::mergeWith(const AlembicIntermediatePolyMesh& s
 
 	//TODO: watch out for the mixing of indexed attributes with nonindexed attributes
 
-	if(	(destMesh.normalIndexVec.size() == 0 && srcMesh.normalIndexVec.size() > 0) ||
-		(destMesh.normalIndexVec.size() > 0 && srcMesh.normalIndexVec.size() == 0)) {
-		ESS_LOG_INFO( "Error: can't mix indexed normals and nonindexed normals." );
-		return false; //don't allow the mixing of indexed normals with nonindexed normals
-	}
+	//if(	(destMesh.normalIndexVec.size() == 0 && srcMesh.normalIndexVec.size() > 0) ||
+	//	(destMesh.normalIndexVec.size() > 0 && srcMesh.normalIndexVec.size() == 0)) {
+	//	ESS_LOG_INFO( "Error: can't mix indexed normals and nonindexed normals." );
+	//	return false; //don't allow the mixing of indexed normals with nonindexed normals
+	//}
 
-	if( (destMesh.mUvIndexVec.size() == 0 && srcMesh.mUvIndexVec.size() > 0) || 
-		(destMesh.mUvIndexVec.size() > 0 && srcMesh.mUvIndexVec.size() == 0)) {
-		ESS_LOG_INFO( "Error: can't mix indexed UVs and nonindexed UVs." );
-		return false; //don't allow the mixing of indexed UVs with nonindexed UVs
-	}
+	//if( (destMesh.mUvIndexVec.size() == 0 && srcMesh.mUvIndexVec.size() > 0) || 
+	//	(destMesh.mUvIndexVec.size() > 0 && srcMesh.mUvIndexVec.size() == 0)) {
+	//	ESS_LOG_INFO( "Error: can't mix indexed UVs and nonindexed UVs." );
+	//	return false; //don't allow the mixing of indexed UVs with nonindexed UVs
+	//}
 
 	destMesh.bbox.extendBy(srcMesh.bbox);
 

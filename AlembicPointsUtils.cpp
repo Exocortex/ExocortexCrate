@@ -1,5 +1,5 @@
-#include "AlembicPointsUtils.h"
 
+#include "AlembicPointsUtils.h"
 #include <IParticleObjectExt.h>
 #include <ParticleFlow/IParticleChannelID.h>
 #include <ParticleFlow/IParticleChannelShape.h>
@@ -17,13 +17,118 @@
 #include <map>
 #include <vector>
 #include "AlembicParticles.h"
+#include "AlembicIntermediatePolyMesh3DSMax.h" 
+#include "AlembicWriteJob.h"
 
-//class NullView: public View 
-//{
-//public:
-//    Point2 ViewToScreen(Point3 p) { return Point2(p.x,p.y); }
-//    NullView() { worldToView.IdentityMatrix(); screenW=640.0f; screenH = 480.0f; }
-//};
+
+IPFRender* getIPFRender(Object* obj, TimeValue ticks)
+{
+	IPFActionList* particleActionList = GetPFActionListInterface(obj);
+	if(!particleActionList){
+		return NULL;
+	}
+
+	IPFRender* particleRender = NULL;
+
+	int numActions = particleActionList->NumActions();
+	for (int p = particleActionList->NumActions()-1; p >= 0; p -= 1)
+	{
+		INode *pActionNode = particleActionList->GetAction(p);
+		Object *pActionObj = (pActionNode != NULL ? pActionNode->EvalWorldState(ticks).obj : NULL);
+
+		if (pActionObj == NULL){
+			continue;
+		}
+		//MSTR name;
+		//pActionObj->GetClassName(name);
+
+		IPFRender* particleRender = GetPFRenderInterface(pActionObj);
+		if(particleRender){
+			return particleRender;
+		}
+	}
+
+	return NULL;
+}
+
+typedef std::map<INode*, int> groupParticleCountT;
+
+bool getParticleSystemMesh(TimeValue ticks, Object* obj, INode* node, IntermediatePolyMesh3DSMax* mesh, 
+						   materialsMergeStr* pMatMerge, AlembicWriteJob * mJob, int nNumSamples)
+{
+
+	IParticleObjectExt* particlesExt = GetParticleObjectExtInterface(obj);
+	particlesExt->UpdateParticles(node, ticks);
+
+	static NullView nullView;
+
+	//static Mesh nullMesh;
+	groupParticleCountT groupParticleCount;
+
+	for(int i=0; i< particlesExt->NumParticles(); i++){
+		INode *particleGroupNode = particlesExt->GetParticleGroup(i);
+
+		Object *particleGroupObj = (particleGroupNode != NULL) ? particleGroupNode->EvalWorldState(ticks).obj : NULL;
+		IParticleGroup* particleGroup = GetParticleGroupInterface(particleGroupObj);
+
+		if( groupParticleCount.find(particleGroupNode) == groupParticleCount.end() ){
+			groupParticleCount[particleGroupNode] = 0;
+		}
+
+		::IObject *pCont = particleGroup->GetParticleContainer();
+		::INode *pNode = particleGroup->GetParticleSystem();
+		Mtl* pMtl = particleGroup->GetMaterial();
+
+		pMatMerge->currUniqueHandle = Animatable::GetHandleByAnim(particleGroup->GetActionList());
+		
+		IPFRender* particleRender = getIPFRender(particleGroupObj, ticks);
+		if(!particleRender){
+			ESS_LOG_INFO("Error. Failed to obtain IPFRender interface.");
+			return false;
+		}
+
+		Matrix3 meshTM;
+		meshTM.IdentityMatrix();
+		Interval meshValid;
+		meshValid.SetInstant(ticks);
+
+		int meshId = groupParticleCount[particleGroupNode];
+
+		particleRender->GetMultipleRenderMeshTM(pCont, ticks, obj, pNode, nullView, meshId, meshTM, meshValid);
+
+		BOOL bNeedDelete = FALSE;
+		Mesh* pMesh = particleRender->GetMultipleRenderMesh(pCont, ticks, obj, pNode, nullView, bNeedDelete, meshId);
+
+		groupParticleCount[particleGroupNode]++;
+
+		if(!pMesh || (pMesh && pMesh->numVerts == 0) ){
+			ESS_LOG_INFO("Error. Null render mesh. Tick: "<<ticks<<" pid: "<<i);
+			//return false;
+		}
+
+		if(i == 0){
+			mesh->Save(mJob, ticks, pMesh, NULL, meshTM, pMtl, nNumSamples, pMatMerge);
+		}
+		else{
+			IntermediatePolyMesh3DSMax currPolyMesh;
+			currPolyMesh.Save(mJob, ticks, pMesh, NULL, meshTM, pMtl, nNumSamples, pMatMerge);
+			bool bSuccess = mesh->mergeWith(currPolyMesh);
+			if(!bSuccess){
+				if(bNeedDelete){
+					delete pMesh;
+				}
+				continue;
+			}
+		}
+
+		if(bNeedDelete){
+			delete pMesh;
+		}
+	}
+
+	return true;
+}
+
 
 typedef std::map<INode*, IParticleGroup*> groupMapT;
 

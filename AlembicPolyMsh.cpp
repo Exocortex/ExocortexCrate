@@ -156,34 +156,40 @@ bool AlembicPolyMesh::Save(double time, bool bLastFrame)
 
 	if(bIsParticleSystem){
 
-		std::vector<particleMeshData> meshes;
-
-		getParticleSystemRenderMeshes(ticks, obj, GetRef().node, meshes);
-
-		if(meshes.size() <= 0){
+		bool bSuccess = getParticleSystemMesh(ticks, obj, GetRef().node, &finalPolyMesh, &materialsMerge, mJob, mNumSamples);
+		if(!bSuccess){
+			ESS_LOG_INFO( "Error. Could not get particle system mesh. Time: "<<time );
 			return false;
 		}
 
-		//save the first mesh to the final result, and then merge the others with it
-		materialsMerge.currUniqueHandle = meshes[0].animHandle;
-		finalPolyMesh.Save(mJob, ticks, meshes[0].pMesh, NULL, meshes[0].meshTM, meshes[0].pMtl, mNumSamples, &materialsMerge);
+		//std::vector<particleMeshData> meshes;
 
-		for(int i=1; i<meshes.size(); i++){
-			IntermediatePolyMesh3DSMax currPolyMesh;
-			materialsMerge.currUniqueHandle = meshes[i].animHandle;
-			currPolyMesh.Save(mJob, ticks, meshes[i].pMesh, NULL, meshes[i].meshTM, meshes[i].pMtl, mNumSamples, &materialsMerge);
-			bool bSuccess = finalPolyMesh.mergeWith(currPolyMesh);
-			if(!bSuccess){
-				return false;
-			}
-		}
+		//getParticleSystemRenderMeshes(ticks, obj, GetRef().node, meshes);
 
-		for(int i=0; i<meshes.size(); i++){
-			
-			if(meshes[i].bNeedDelete){
-				delete meshes[i].pMesh;
-			}
-		}
+		//if(meshes.size() <= 0){
+		//	return false;
+		//}
+
+		////save the first mesh to the final result, and then merge the others with it
+		//materialsMerge.currUniqueHandle = meshes[0].animHandle;
+		//finalPolyMesh.Save(mJob, ticks, meshes[0].pMesh, NULL, meshes[0].meshTM, meshes[0].pMtl, mNumSamples, &materialsMerge);
+
+		//for(int i=1; i<meshes.size(); i++){
+		//	IntermediatePolyMesh3DSMax currPolyMesh;
+		//	materialsMerge.currUniqueHandle = meshes[i].animHandle;
+		//	currPolyMesh.Save(mJob, ticks, meshes[i].pMesh, NULL, meshes[i].meshTM, meshes[i].pMtl, mNumSamples, &materialsMerge);
+		//	bool bSuccess = finalPolyMesh.mergeWith(currPolyMesh);
+		//	if(!bSuccess){
+		//		return false;
+		//	}
+		//}
+
+		//for(int i=0; i<meshes.size(); i++){
+		//	
+		//	if(meshes[i].bNeedDelete){
+		//		delete meshes[i].pMesh;
+		//	}
+		//}
 	}
 	else
 	{
