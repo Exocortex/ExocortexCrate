@@ -453,32 +453,26 @@ bool AlembicPolyMesh::Save(double time, bool bLastFrame)
 
 
    // check if we should export the velocities
-   /*if(dynamicTopology)
+   if(dynamicTopology)
    {
-      ICEAttribute velocitiesAttr = mesh.GetICEAttributeFromName(L"PointVelocity");
-      if(velocitiesAttr.IsDefined() && velocitiesAttr.IsValid())
+
+      if(finalPolyMesh.mVelocitiesVec.size() > 0)
       {
-         CICEAttributeDataArrayVector3f velocitiesData;
-         velocitiesAttr.GetDataArray(velocitiesData);
+
+		  if(finalPolyMesh.posVec.size() != finalPolyMesh.mVelocitiesVec.size()){
+
+			  ESS_LOG_INFO("mVelocitiesVec has wrong size.");
+		  }
+
 
          if(!mVelocityProperty.valid())
-            mVelocityProperty = OV3fArrayProperty(mMeshSchema, ".velocities", mMeshSchema.getMetaData(), GetJob()->GetAnimatedTs());
+            mVelocityProperty = OV3fArrayProperty(mMeshSchema, ".velocities", mMeshSchema.getMetaData(), mJob->GetAnimatedTs());
 
-         mVelocitiesVec.resize(vertCount);
-         for(LONG i=0;i<vertCount;i++)
-         {
-            mVelocitiesVec[i].x = velocitiesData[i].GetX();
-            mVelocitiesVec[i].y = velocitiesData[i].GetY();
-            mVelocitiesVec[i].z = velocitiesData[i].GetZ();
-         }
-
-         if(mVelocitiesVec.size() == 0)
-            mVelocitiesVec.push_back(Alembic::Abc::V3f(0,0,0));
-         Alembic::Abc::V3fArraySample sample = Alembic::Abc::V3fArraySample(&mVelocitiesVec.front(),mVelocitiesVec.size());
+         Alembic::Abc::V3fArraySample sample = Alembic::Abc::V3fArraySample(&finalPolyMesh.mVelocitiesVec.front(),finalPolyMesh.mVelocitiesVec.size());
          mVelocityProperty.set(sample);
       }
    }
-   */
+   
 
 
    // save the sample

@@ -57,13 +57,21 @@ bool getParticleSystemMesh(TimeValue ticks, Object* obj, INode* node, Intermedia
 						   materialsMergeStr* pMatMerge, AlembicWriteJob * mJob, int nNumSamples)
 {
 
+    Matrix3 nodeWorldTM = node->GetObjTMAfterWSM(ticks);
+    Alembic::Abc::M44d nodeWorldTrans;
+    ConvertMaxMatrixToAlembicMatrix(nodeWorldTM, nodeWorldTrans);
+	Alembic::Abc::M44d nodeWorldTransInv = nodeWorldTrans.inverse();
+
 	IParticleObjectExt* particlesExt = GetParticleObjectExtInterface(obj);
 	particlesExt->UpdateParticles(node, ticks);
 
 	static NullView nullView;
 
 	//static Mesh nullMesh;
+	//I use this std::map to keep to obtain iteration index for each particle group.
 	groupParticleCountT groupParticleCount;
+
+	//TODO: currently the render operator settings will affect the export
 
 	for(int i=0; i< particlesExt->NumParticles(); i++){
 		INode *particleGroupNode = particlesExt->GetParticleGroup(i);
@@ -74,6 +82,8 @@ bool getParticleSystemMesh(TimeValue ticks, Object* obj, INode* node, Intermedia
 		if( groupParticleCount.find(particleGroupNode) == groupParticleCount.end() ){
 			groupParticleCount[particleGroupNode] = 0;
 		}
+		int meshId = groupParticleCount[particleGroupNode];
+		groupParticleCount[particleGroupNode]++;
 
 		::IObject *pCont = particleGroup->GetParticleContainer();
 		::INode *pNode = particleGroup->GetParticleSystem();
@@ -92,18 +102,40 @@ bool getParticleSystemMesh(TimeValue ticks, Object* obj, INode* node, Intermedia
 		Interval meshValid;
 		meshValid.SetInstant(ticks);
 
-		int meshId = groupParticleCount[particleGroupNode];
-
 		particleRender->GetMultipleRenderMeshTM(pCont, ticks, obj, pNode, nullView, meshId, meshTM, meshValid);
 
 		BOOL bNeedDelete = FALSE;
 		Mesh* pMesh = particleRender->GetMultipleRenderMesh(pCont, ticks, obj, pNode, nullView, bNeedDelete, meshId);
 
-		groupParticleCount[particleGroupNode]++;
 
 		if(!pMesh || (pMesh && pMesh->numVerts == 0) ){
 			ESS_LOG_INFO("Error. Null render mesh. Tick: "<<ticks<<" pid: "<<i);
 			//return false;
+		}
+
+		//conpute vertex velocity, and save them immediately to final result
+		//max meshes do not store per vertex velocities
+		//we want the end result relative particle system space
+
+		Imath::V4f pPosition4 = ConvertMaxPointToAlembicPoint4(*particlesExt->GetParticlePositionByIndex(i));
+		Imath::V4f pVelocity4 = ConvertMaxVectorToAlembicVector4(*particlesExt->GetParticleSpeedByIndex(i));
+		Alembic::Abc::Quatd pAngularVelocity(0.0, 0.0, 1.0, 0.0);
+		ConvertMaxAngAxisToAlembicQuat(*particlesExt->GetParticleSpinByIndex(i), pAngularVelocity);
+		Imath::M44d mAngularVelocity44 = pAngularVelocity.toMatrix44();
+
+		//the values are returned in world space, so move them to particle space
+		pPosition4 = pPosition4 * nodeWorldTransInv;
+		pVelocity4 = pVelocity4 * nodeWorldTransInv;
+		mAngularVelocity44 = mAngularVelocity44 * nodeWorldTransInv;
+
+		Imath::V3f pPosition = Imath::V3f(pPosition4.x, pPosition4.y, pPosition4.z);
+		Imath::V3f pVelocity = Imath::V3f(pVelocity4.x, pVelocity4.y, pVelocity4.z);
+		Imath::M33d mAngularVelocity = extractRotation(mAngularVelocity44);
+
+		for(int j=0; j<pMesh->getNumVerts(); j++){
+			Imath::V3f meshVertex = ConvertMaxPointToAlembicPoint(pMesh->getVert(j) * meshTM);//the mesh vertex in particle system space
+			Imath::V3f velocity = ((meshVertex - pPosition) * mAngularVelocity) + pVelocity;
+			mesh->mVelocitiesVec.push_back(velocity);
 		}
 
 		if(i == 0){

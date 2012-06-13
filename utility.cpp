@@ -175,6 +175,18 @@ void AlembicDebug_PrintTransform(Matrix3 &m)
     }
 }
 
+Imath::M33d extractRotation(Imath::M44d& m)
+{
+	double values[3][3];
+
+	for(int i=0; i<3; i++){
+		for(int j=0; j<3; j++){
+			values[i][j] = m[i][j];
+		}
+	}
+	
+	return Imath::M33d(values);
+}
 
 void ConvertMaxMatrixToAlembicMatrix( const Matrix3 &maxMatrix, Matrix3 &result)
 {

@@ -43,7 +43,7 @@ public:
 	facesetmap mFaceSetsMap;
 
    //std::vector<Alembic::Abc::V3f> mBindPoseVec;
-   //std::vector<Alembic::Abc::V3f> mVelocitiesVec;
+   std::vector<Alembic::Abc::V3f> mVelocitiesVec;
    //std::vector<float> mRadiusVec;
   
 	LONG sampleCount;//TODO: do I need this?

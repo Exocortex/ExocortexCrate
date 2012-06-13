@@ -38,9 +38,16 @@ void ConvertMaxMatrixToAlembicMatrix( const Matrix3 &maxMatrix, Matrix3 &alembic
 void ConvertMaxMatrixToAlembicMatrix( const Matrix3 &maxMatrix, Alembic::Abc::M44d& iMatrix);
 void ConvertAlembicMatrixToMaxMatrix( const Matrix3 &alembicMatrix, Matrix3 &maxMatrix );
 
+Imath::M33d extractRotation(Imath::M44d& m);
+
 inline Imath::V3f ConvertMaxPointToAlembicPoint( const Point3 &maxPoint )
 {
 	return Imath::V3f(maxPoint.x, maxPoint.z, -maxPoint.y);
+}
+
+inline Imath::V4f ConvertMaxPointToAlembicPoint4( const Point3 &maxPoint )
+{
+	return Imath::V4f(maxPoint.x, maxPoint.z, -maxPoint.y, 1.0);
 }
 
 inline Point3 ConvertAlembicPointToMaxPoint( const Imath::V3f &alembicPoint )
@@ -51,6 +58,11 @@ inline Point3 ConvertAlembicPointToMaxPoint( const Imath::V3f &alembicPoint )
 inline Imath::V3f ConvertMaxVectorToAlembicVector( const Point3 &maxPoint )
 {
 	return Imath::V3f(maxPoint.x, maxPoint.z, -maxPoint.y);
+}
+
+inline Imath::V4f ConvertMaxVectorToAlembicVector4( const Point3 &maxPoint )
+{
+	return Imath::V4f(maxPoint.x, maxPoint.z, -maxPoint.y, 0.0);
 }
 
 inline Point3 ConvertAlembicVectorToMaxVector( const Imath::V3f &alembicPoint )
@@ -94,7 +106,12 @@ inline Quat ConvertAlembicQuatToMaxQuat( const Imath::Quatf &alembicQuat, bool b
     return q;
 }
 
-
+inline void ConvertMaxAngAxisToAlembicQuat(const AngAxis &angAxis, Alembic::Abc::Quatd &quat)
+{
+    Imath::V3f alembicAxis = ConvertMaxNormalToAlembicNormal(angAxis.axis);
+    quat.setAxisAngle(alembicAxis, angAxis.angle);
+    quat.normalize();
+}
 
 // Utility functions for working on INodes
 bool CheckIfNodeIsAnimated( INode *pNode );
