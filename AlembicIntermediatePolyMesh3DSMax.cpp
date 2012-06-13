@@ -229,10 +229,12 @@ void IntermediatePolyMesh3DSMax::Save(AlembicWriteJob* writeJob, TimeValue ticks
 {
 	const bool bFirstFrame = nNumSamplesWritten == 0;
 
-	//TODO: will need to transform normals when exporting from AlembicParticle system
 	//for transforming the normals
-	//Matrix3 wmIT = Inverse(wm);
-	//wmIT = TransposeRot(wmIT);
+	Matrix3 meshTM_I_T = meshTM;
+	meshTM_I_T.SetTrans(Point3(0.0, 0.0, 0.0));
+	//the following two steps are necessary because meshTM can contain a scale factor
+	meshTM_I_T = Inverse(meshTM_I_T);
+	meshTM_I_T = TransposeRot(meshTM_I_T);
 	
     LONG vertCount = (polyMesh != NULL) ? polyMesh->VNum()
                                        : triMesh->getNumVerts();
@@ -247,7 +249,7 @@ void IntermediatePolyMesh3DSMax::Save(AlembicWriteJob* writeJob, TimeValue ticks
         Point3 &maxPoint = (polyMesh != NULL) ? polyMesh->V(i)->p
                                              : triMesh->getVert(i);
 		
-        posVec[i] = ConvertMaxPointToAlembicPoint( meshTM * maxPoint );
+        posVec[i] = ConvertMaxPointToAlembicPoint( maxPoint * meshTM );
         bbox.extendBy(posVec[i]);
 		//Alembic::Abc::Box3d& box = bbox;
 		//ESS_LOG_INFO( "Archive bbox: min("<<box.min.x<<", "<<box.min.y<<", "<<box.min.z<<") max("<<box.max.x<<", "<<box.max.y<<", "<<box.max.z<<")" );
@@ -327,7 +329,7 @@ void IntermediatePolyMesh3DSMax::Save(AlembicWriteJob* writeJob, TimeValue ticks
                     }
                 }
 
-				//vertexNormal = vertexNormal * wmIT;
+				vertexNormal = vertexNormal * meshTM_I_T;
 
 				normalVec.push_back(ConvertMaxNormalToAlembicNormal(vertexNormal));
                 normalCount += 1;
