@@ -331,33 +331,45 @@ XSI::CStatus AlembicCurves::Save(double time)
 	  emitterKineRef = Port(hairGenOp.GetInputPorts().GetItem(1)).GetTarget();
 	  emitterClusterRef = Port(hairGenOp.GetInputPorts().GetItem(3)).GetTarget();
 
-	  if(!SIObject(emitterPrimRef).GetType().IsEqualNoCase(L"polymsh")
-		 || !SIObject(emitterClusterRef).GetType().IsEqualNoCase(L"poly"))
-	  {
-		Application().LogMessage(L"Error: The hair needs to be grown of a polygon mesh cluster!",siWarningMsg);
-		return CStatus::Fail;
-	  }
-
-      Cluster emitterCluster(emitterClusterRef);
-      CLongArray clusterElements = emitterCluster.GetElements().GetArray();
 	  Primitive emitterPrim(emitterPrimRef);
 	  PolygonMesh emitterGeo = emitterPrim.GetGeometry(time);
 	  CPointRefArray emitterPointRefArray(emitterGeo.GetPoints());
-      CLongArray emitterPntUsed(emitterPointRefArray.GetCount());
       CLongArray emitterPntIndex;
-      CLongArray facetIndex;
-      for(long i=0;i<clusterElements.GetCount();i++)
-      {
-         facetIndex = Facet(emitterGeo.GetFacets().GetItem(clusterElements[i])).GetPoints().GetIndexArray();
-         for(long j=0;j<facetIndex.GetCount();j++)
-         {
-            if(emitterPntUsed[facetIndex[j]]==0)
-            {
-               emitterPntUsed[facetIndex[j]] = 1;
-               emitterPntIndex.Add(facetIndex[j]);
-            }
-         }
-      }
+
+	  if( !SIObject(emitterPrimRef).GetType().IsEqualNoCase(L"polymsh"))
+	  {
+        Application().LogMessage(L"Error: The hair needs to be emitted from a polygon",siWarningMsg);
+		return CStatus::Fail;
+	  }
+	  else if ( !SIObject(emitterClusterRef).GetType().IsEqualNoCase(L"poly"))
+	  {
+		  // assume that there is a guide cuve per vertex in the emitter geometry
+		  // hence the base points should correspond to point ids
+		  assert( numCurves==emitterPointRefArray.GetCount());
+		  for(long i=0;i<numCurves;i++)
+			emitterPntIndex.Add(i);
+	  }
+	  else
+	  {
+		  // otherwise use the cluster
+		  Cluster emitterCluster(emitterClusterRef);
+		  CLongArray clusterElements = emitterCluster.GetElements().GetArray();
+		  CLongArray emitterPntUsed(emitterPointRefArray.GetCount());
+
+		  CLongArray facetIndex;
+		  for(long i=0;i<clusterElements.GetCount();i++)
+		  {
+			 facetIndex = Facet(emitterGeo.GetFacets().GetItem(clusterElements[i])).GetPoints().GetIndexArray();
+			 for(long j=0;j<facetIndex.GetCount();j++)
+			 {
+				if(emitterPntUsed[facetIndex[j]]==0)
+				{
+				   emitterPntUsed[facetIndex[j]] = 1;
+				   emitterPntIndex.Add(facetIndex[j]);
+				}
+			 }
+		  }
+	  }
 
 	  long curveCount = emitterPntIndex.GetCount();
 	  assert( curveCount == numCurves);
