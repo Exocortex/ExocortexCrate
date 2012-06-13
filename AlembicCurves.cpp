@@ -7,6 +7,8 @@
 #include <xsi_geometry.h>
 #include <xsi_sample.h>
 #include <xsi_knot.h>
+#include <xsi_polygonmesh.h>
+#include <xsi_facet.h>
 #include <xsi_controlpoint.h>
 #include <xsi_math.h>
 #include <xsi_context.h>
@@ -206,7 +208,12 @@ XSI::CStatus AlembicCurves::Save(double time)
             bbox.extendBy(posVec[posVecOffset+i]);
          }
       }
-      mCurvesSample.setPositions(Alembic::Abc::P3fArraySample(&posVec.front(),posVec.size()));
+
+      // check for an empty position vector
+      if(posVec.size() == 0)
+	    mCurvesSample.setPositions(Alembic::Abc::P3fArraySample());
+      else
+        mCurvesSample.setPositions(Alembic::Abc::P3fArraySample(&posVec.front(),posVec.size()));
 
       // store the bbox
       mCurvesSample.setSelfBounds(bbox);
@@ -285,34 +292,108 @@ XSI::CStatus AlembicCurves::Save(double time)
       Alembic::Abc::Box3d bbox;
       std::vector<Alembic::Abc::V3f> posVec;
 
-      posVec.resize(vertCount);
-      for(LONG i=0;i<vertCount;i++)
-      {
-          if(globalSpace)
-            pos[i] = MapObjectPositionToWorldSpace(globalXfo,pos[i]);
-          posVec[i].x = (float)pos[i].GetX();
-          posVec[i].y = (float)pos[i].GetY();
-          posVec[i].z = (float)pos[i].GetZ();
-          bbox.extendBy(posVec[i]);
+	  LONG numCurves = vertCount/14;
+	  posVec.resize(numCurves*15); // include base points
+
+	  // add curve points
+	  LONG posIndex=0, posVecIndex=0;
+	  for(LONG j=0;j<numCurves;j++)
+	  {
+		  posVecIndex++;
+
+		  // add guide hair points
+		  for(LONG i=0;i<14;i++,posIndex++,posVecIndex++)
+		  {
+			 if(globalSpace)
+	           pos[posIndex] = MapObjectPositionToWorldSpace(globalXfo,pos[posIndex]);
+             posVec[posVecIndex].x = (float)pos[posIndex].GetX();
+             posVec[posVecIndex].y = (float)pos[posIndex].GetY();
+             posVec[posVecIndex].z = (float)pos[posIndex].GetZ();
+		  }		  
 	  }
 
-      // check for an empty position vector
-      if(posVec.size() == 0)
-          mCurvesSample.setPositions(Alembic::Abc::P3fArraySample());
-      else
-          mCurvesSample.setPositions(Alembic::Abc::P3fArraySample(&posVec.front(),posVec.size()));
+      // Collect all base points for the roots of the hairs:
+      // note that the root point of the guide curves is not part of the hair geometry so
+      // you have to go through the hairGen operators input ports, find the connected cluster
+      // and iterate the faces in the cluster. the guide hairs are order by cloickwise first hit face vertex
+	  // Also note that the base point is not on the subdiv surface currently.
+      CRef hairGenOpRef;
+      hairGenOpRef.Set(GetRef().GetAsText()+L".hairGenOp");
+      if(hairGenOpRef.GetAsText().IsEmpty())
+	  {
+        Application().LogMessage(L"Fatal error: The hair doesn't have a hairGenOperator!",siWarningMsg);
+        return CStatus::Fail;
+      }
+
+	  Operator hairGenOp(hairGenOpRef);
+	  CRef emitterPrimRef,emitterKineRef,emitterClusterRef;
+	  emitterPrimRef = Port(hairGenOp.GetInputPorts().GetItem(0)).GetTarget();
+	  emitterKineRef = Port(hairGenOp.GetInputPorts().GetItem(1)).GetTarget();
+	  emitterClusterRef = Port(hairGenOp.GetInputPorts().GetItem(3)).GetTarget();
+
+	  if(!SIObject(emitterPrimRef).GetType().IsEqualNoCase(L"polymsh")
+		 || !SIObject(emitterClusterRef).GetType().IsEqualNoCase(L"poly"))
+	  {
+		Application().LogMessage(L"Error: The hair needs to be grown of a polygon mesh cluster!",siWarningMsg);
+		return CStatus::Fail;
+	  }
+
+      Cluster emitterCluster(emitterClusterRef);
+      CLongArray clusterElements = emitterCluster.GetElements().GetArray();
+	  Primitive emitterPrim(emitterPrimRef);
+	  PolygonMesh emitterGeo = emitterPrim.GetGeometry(time);
+	  CPointRefArray emitterPointRefArray(emitterGeo.GetPoints());
+      CLongArray emitterPntUsed(emitterPointRefArray.GetCount());
+      CLongArray emitterPntIndex;
+      CLongArray facetIndex;
+      for(long i=0;i<clusterElements.GetCount();i++)
+      {
+         facetIndex = Facet(emitterGeo.GetFacets().GetItem(clusterElements[i])).GetPoints().GetIndexArray();
+         for(long j=0;j<facetIndex.GetCount();j++)
+         {
+            if(emitterPntUsed[facetIndex[j]]==0)
+            {
+               emitterPntUsed[facetIndex[j]] = 1;
+               emitterPntIndex.Add(facetIndex[j]);
+            }
+         }
+      }
+
+	  long curveCount = emitterPntIndex.GetCount();
+	  assert( curveCount == numCurves);
+
+	  // add base points
+      posVecIndex=0;
+	  for(LONG j=0;j<numCurves;j++)
+	  {
+		  // add base point
+		  CVector3 base = Point(emitterPointRefArray.GetItem(emitterPntIndex[j])).GetPosition();
+		  if(globalSpace)
+              base = MapObjectPositionToWorldSpace(globalXfo,base);
+
+          posVec[posVecIndex].x = (float)base.GetX();
+		  posVec[posVecIndex].y = (float)base.GetY();
+		  posVec[posVecIndex].z = (float)base.GetZ();
+
+		  posVecIndex += 15;
+	  }
+
+      mCurvesSample.setPositions(Alembic::Abc::P3fArraySample(&posVec.front(),posVec.size()));
+
+	  // caclulate bbox
+	  for ( LONG i=0; i<curveCount*15; i++)
+		  bbox.extendBy(posVec[i]);
 
       // store the bbox
       mCurvesSample.setSelfBounds(bbox);
 
-      // if we are the first frame!
+      // if we are the first frame then define the curves
       if(mNumSamples == 0)
       {
-         const int hairVertCount = 14;
-         const int guideCount = vertCount/hairVertCount;
-
+         const int hairVertCount = 15;
+ 
          mNbVertices.clear();
-         mNbVertices.resize(guideCount, hairVertCount);
+         mNbVertices.resize(numCurves, hairVertCount);
          mCurvesSample.setCurvesNumVertices(Alembic::Abc::Int32ArraySample(&mNbVertices.front(),mNbVertices.size()));
 
          // set the type + wrapping
