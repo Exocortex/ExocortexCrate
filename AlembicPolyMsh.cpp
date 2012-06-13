@@ -464,12 +464,8 @@ bool AlembicPolyMesh::Save(double time, bool bLastFrame)
 			  ESS_LOG_INFO("mVelocitiesVec has wrong size.");
 		  }
 
-
-         if(!mVelocityProperty.valid())
-            mVelocityProperty = OV3fArrayProperty(mMeshSchema, ".velocities", mMeshSchema.getMetaData(), mJob->GetAnimatedTs());
-
          Alembic::Abc::V3fArraySample sample = Alembic::Abc::V3fArraySample(&finalPolyMesh.mVelocitiesVec.front(),finalPolyMesh.mVelocitiesVec.size());
-         mVelocityProperty.set(sample);
+		 mMeshSample.setVelocities( sample );
       }
    }
    
