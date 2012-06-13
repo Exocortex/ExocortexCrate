@@ -265,10 +265,13 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
               Alembic::AbcGeom::IPolyMeshSchema::Sample polyMeshSample2;
               objMesh.getSchema().get(polyMeshSample2,sampleInfo.ceilIndex);
               meshPos = polyMeshSample2.getPositions();
+
+			  const int posSize = meshPos ? meshPos->size() : 0;
+			  const int velSize = meshVel ? meshVel->size() : 0;
              
               if(meshPos->size() == vArray.size() && !hasDynamicTopo)
                   bSampleInterpolate = true;
-              else if(meshVel && meshVel->size() == meshPos->size())
+              else if(meshVel && meshVel->size() == vArray.size())
                   bVelInterpolate = true;
           }
 		  else
@@ -313,7 +316,7 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
 		 
 		   for(int i=0;i<vArray.size();i++)
 		   {
-			   pMeshVerties[i].p += ConvertAlembicPointToMaxPoint(vArray[i] );
+			   pMeshVerties[i].p = ConvertAlembicPointToMaxPoint(vArray[i] );
 		   }
 	   }
 	   else if (options.pMesh != NULL)
@@ -321,7 +324,7 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
 		   Point3 *pVerts = options.pMesh->verts;
 		   for(int i=0;i<vArray.size();i++)
 		   {
-			   pVerts[i] += ConvertAlembicPointToMaxPoint(vArray[i]);
+			   pVerts[i] = ConvertAlembicPointToMaxPoint(vArray[i]);
 		   }
 	   }
 	   else {
