@@ -726,7 +726,10 @@ CStatus alembic_create_item_Invoke
          }
          else if(itemType == alembicItemType_crvlist_topo || itemType == alembicItemType_crvlist)
          {
-            if(!Primitive(realTarget).GetType().IsEqualNoCase(L"crvlist") && !Primitive(realTarget).GetType().IsEqualNoCase(L"pointcloud"))
+			CString type = Primitive(realTarget).GetType();
+            if(!Primitive(realTarget).GetType().IsEqualNoCase(L"crvlist") && 
+			   !Primitive(realTarget).GetType().IsEqualNoCase(L"pointcloud") &&
+			   !Primitive(realTarget).GetType().IsEqualNoCase(L"hair"))
             {
                Application().LogMessage(L"[ExocortexAlembic] Invalid target '"+target.GetAsText()+L"' for "+type+L".",siErrorMsg);
                return CStatus::InvalidArgument;
@@ -2183,7 +2186,7 @@ ESS_CALLBACK_START(alembic_import_Execute, CRef&)
                CRef curveRef;
                curveRef.Set(getFullNameFromIdentifier(objects[i].getFullName()));
                curveObj = curveRef;
-               if(!curveObj.GetType().IsEqualNoCase(L"crvlist"))
+               if(!curveObj.GetType().IsEqualNoCase(L"crvlist") && !curveObj.GetType().IsEqualNoCase(L"hair"))
                   curveObj.ResetObject();
             }
             if(!curveObj.IsValid())
@@ -2201,8 +2204,8 @@ ESS_CALLBACK_START(alembic_import_Execute, CRef&)
             // load visibility
             alembic_create_item_Invoke(L"alembic_visibility",curveObj.GetRef(),filename,objects[i].getFullName().c_str(),attachToExisting,createItemArgs);
 
-            // load curve topo
-            if(!importBboxes)
+            // load curve topo if it's not hair because that will already have desired topology if it exists
+            if(!importBboxes && !curveObj.GetType().IsEqualNoCase(L"hair"))
                alembic_create_item_Invoke(L"alembic_crvlist_topo",curveObj.GetRef(),filename,objects[i].getFullName().c_str(),attachToExisting,createItemArgs);
 
             // load curve anim
@@ -2219,6 +2222,18 @@ ESS_CALLBACK_START(alembic_import_Execute, CRef&)
                alembic_create_item_Invoke(L"alembic_crvlist",curveObj.GetRef(),filename,objects[i].getFullName().c_str(),attachToExisting,createItemArgs,returnedOpVal);
                returnOpRef = (CRef)returnedOpVal;
             }
+
+			// allow stretching as there may have been dynamics applied to the hair
+			if( curveObj.GetType().IsEqualNoCase(L"hair"))
+			{
+				// TODO: This fails (gracefully), not sure why.
+				CRef opRef;
+				CString opName = curveObj.GetRef().GetAsText()+L".hair";
+				opRef.Set( opName);
+				CustomOperator op( opRef);
+				if ( op.IsValid())
+					op.PutParameterValue(L"AllowStretch", true);
+			}
 
             // let's setup the xform op
             if(Alembic::AbcGeom::IXform::matches(parent.getMetaData()))

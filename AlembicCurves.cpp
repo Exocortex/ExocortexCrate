@@ -694,24 +694,61 @@ ESS_CALLBACK_START( alembic_crvlist_Update, CRef& )
    Alembic::AbcGeom::ICurvesSchema::Sample sample;
    obj.getSchema().get(sample,sampleInfo.floorIndex);
 
-   NurbsCurveList curves = Primitive((CRef)ctxt.GetInputValue(0)).GetGeometry();
-   CVector3Array pos = curves.GetPoints().GetPositionArray();
+   CVector3Array pos;
+   Primitive prim( (CRef)ctxt.GetInputValue(0));
+   bool isHair = false;
+   if (prim.GetType().IsEqualNoCase(L"hair"))
+   {
+      Geometry geom = prim.GetGeometry();
+	  pos = geom.GetPoints().GetPositionArray();
+	  isHair = true;
+   }
+   else
+   {
+	   NurbsCurveList curves = prim.GetGeometry();
+	   pos = curves.GetPoints().GetPositionArray();
+   }
 
    Alembic::Abc::P3fArraySamplePtr curvePos = sample.getPositions();
 
-   if(pos.GetCount() != curvePos->size())
-      return CStatus::OK;
+   if (!isHair)
+   {
+	   if(pos.GetCount() != curvePos->size())
+		  return CStatus::OK;
+   }
+   else
+   {
+	   size_t cacheSize = 14*(curvePos->size()/15);
+	   if(pos.GetCount() != cacheSize)
+		  return CStatus::OK;
+   }
 
-   for(size_t i=0;i<curvePos->size();i++)
-      pos[(LONG)i].Set(curvePos->get()[i].x,curvePos->get()[i].y,curvePos->get()[i].z);
+
+   size_t alembicSize= curvePos->size();
+   size_t xsiSize = pos.GetCount();
+
+   for(size_t i=0, index=0;i<pos.GetCount();i++,index++)
+   {
+      // guide hairs don't store base point but they are present in the alembic file
+	  if (isHair && ( i%14==0))
+		index++;
+
+      pos[(LONG)i].Set(curvePos->get()[index].x,curvePos->get()[index].y,curvePos->get()[index].z);
+   }
 
    // blend
    if(sampleInfo.alpha != 0.0)
    {
       obj.getSchema().get(sample,sampleInfo.ceilIndex);
       curvePos = sample.getPositions();
-      for(size_t i=0;i<curvePos->size();i++)
-         pos[(LONG)i].LinearlyInterpolate(pos[(LONG)i],CVector3(curvePos->get()[i].x,curvePos->get()[i].y,curvePos->get()[i].z),sampleInfo.alpha);
+      for(size_t i=0, index=0;i<pos.GetCount();i++,index++)
+	  {
+		 // guide hairs don't store base point but they are present in the alembic file
+    	 if (isHair && ( i%14==0))
+		   index++;
+
+         pos[(LONG)i].LinearlyInterpolate(pos[(LONG)i],CVector3(curvePos->get()[index].x,curvePos->get()[index].y,curvePos->get()[index].z),sampleInfo.alpha);
+	  }
    }
 
    Primitive(ctxt.GetOutputTarget()).GetGeometry().GetPoints().PutPositionArray(pos);
