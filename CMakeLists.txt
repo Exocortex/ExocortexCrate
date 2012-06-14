@@ -8,7 +8,7 @@ if( Exocortex_SERVICES OR Exocortex_RLM_ONLY )
 	include_directories( ${Exocortex_INCLUDE_DIR} )
 endif()
 
-add_definitions( "-DEXOCORTEX_BETA_EXPIRY_DATE=1341014400" )	# 1341014400 - June 30, 2012
+add_definitions( "-DEXOCORTEX_BETA_EXPIRY_DATE=1343692800" )	# 1343692800 - July 31, 2012
 
 SET( Maya_DIR_ROOT ${LIBRARY_ROOT}/Maya/${Maya_VERSION} )
 SET( Maya_DIR_INCLUDE ${Maya_DIR_ROOT}/include )
