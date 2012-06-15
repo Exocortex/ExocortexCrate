@@ -22,20 +22,14 @@ nodeCategory getNodeCategory(Alembic::AbcGeom::IObject& iObj)
 	if( Alembic::AbcGeom::IPolyMesh::matches(iObj.getMetaData()) ||
 		Alembic::AbcGeom::ICamera::matches(iObj.getMetaData()) ||
 		Alembic::AbcGeom::IPoints::matches(iObj.getMetaData()) ||
-		Alembic::AbcGeom::ICurves::matches(iObj.getMetaData())) {
+		Alembic::AbcGeom::ICurves::matches(iObj.getMetaData()) ||
+		Alembic::AbcGeom::ISubD::matches(iObj.getMetaData())) {
 		return NODECAT_GEOMETRY;
 	}
 	else if(Alembic::AbcGeom::IXform::matches(iObj.getMetaData())){
 		return NODECAT_XFORM;
 	}
-	else if (Alembic::AbcGeom::ISubD::matches(iObj.getMetaData())) {
-		ESS_LOG_WARNING( "Exocortex Alembic for 3DS Max does not yet support SubD primitives: " << iObj.getFullName() );
-		return NODECAT_UNSUPPORTED;
-	}
 	else {
-	//	std::string schemaObjTitle = iObj.getMetaData().get( "schemaObjTitle" );
-	//	std::string schema = iObj.getMetaData().get( "schema" );
-	//	ESS_LOG_INFO( "Diagnostics, primitive not supported: " << iObj.getFullName() << "( " << schemaObjTitle << " " << schema << " )" );
 		return NODECAT_UNSUPPORTED;
 	}
 }
@@ -48,7 +42,8 @@ int createAlembicObject(Alembic::AbcGeom::IObject& iObj, INode **pMaxNode, alemb
 	//	ESS_LOG_INFO( "AlembicImport_XForm: " << objects[j].getFullName() );
 	//	int ret = AlembicImport_PolyMesh(file, iObj, options, pMaxNode); 
 	//} 	
-	if (Alembic::AbcGeom::IPolyMesh::matches(iObj.getMetaData())) // PolyMesh
+	if (Alembic::AbcGeom::IPolyMesh::matches(iObj.getMetaData()) || 
+		Alembic::AbcGeom::ISubD::matches(iObj.getMetaData()) ) // PolyMesh / SubD
 	{
 		ESS_LOG_INFO( "AlembicImport_PolyMesh: " << iObj.getFullName() );
 		ret = AlembicImport_PolyMesh(file, iObj, options, pMaxNode); 
@@ -68,14 +63,6 @@ int createAlembicObject(Alembic::AbcGeom::IObject& iObj, INode **pMaxNode, alemb
 		ESS_LOG_INFO( "AlembicImport_Shape: " << iObj.getFullName() );
 		ret = AlembicImport_Shape(file, iObj, options, pMaxNode);
 	}
-	//else if (Alembic::AbcGeom::ISubD::matches(iObj.getMetaData())) {
-	//	ESS_LOG_WARNING( "Exocortex Alembic for 3DS Max does not yet support SubD primitives: " << iObj.getFullName() );
-	//}
-	//else {
-	//	std::string schemaObjTitle = iObj.getMetaData().get( "schemaObjTitle" );
-	//	std::string schema = iObj.getMetaData().get( "schema" );
-	//	ESS_LOG_INFO( "Diagnostics, primitive not supported: " << iObj.getFullName() << "( " << schemaObjTitle << " " << schema << " )" );
-	//}
 	return ret;
 }
 
