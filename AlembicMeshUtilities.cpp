@@ -1196,7 +1196,8 @@ int AlembicImport_PolyMesh(const std::string &path, Alembic::AbcGeom::IObject& i
 	{
 		GET_MAX_INTERFACE()->SelectNode( pNode );
 
-		char* szBuffer = "modPanel.addModToSelection (TurboSmooth ()) ui:on\n";
+		char* szBuffer = "modPanel.addModToSelection (meshsmooth ()) ui:on\n"
+						 "$.modifiers[#MeshSmooth].iterations = 1\n";
 
 		ExecuteMAXScriptScript( szBuffer );
 	}
