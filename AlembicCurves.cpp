@@ -457,7 +457,6 @@ XSI::CStatus AlembicCurves::Save(double time)
          attr = geo.GetICEAttributeFromName(L"StrandVelocity");
          if(attr.IsDefined() && attr.IsValid())
          {
-            float fps = (float)CTime().GetFrameRate();
             CICEAttributeDataArray2DVector3f data;
             attr.GetDataArray2D(data);
 
@@ -471,9 +470,9 @@ XSI::CStatus AlembicCurves::Save(double time)
                for(ULONG j=0;j<sub.GetCount();j++)
                {
                   CVector3 vel;
-                  vel.PutX(sub[j].GetX() / fps);
-                  vel.PutY(sub[j].GetY() / fps);
-                  vel.PutZ(sub[j].GetZ() / fps);
+                  vel.PutX(sub[j].GetX());
+                  vel.PutY(sub[j].GetY());
+                  vel.PutZ(sub[j].GetZ());
                   if(globalSpace)
                      vel = MapObjectPositionToWorldSpace(globalRotation,vel);
                   mVelVec[offset].x = (float)vel.GetX();
@@ -489,7 +488,6 @@ XSI::CStatus AlembicCurves::Save(double time)
             attr = geo.GetICEAttributeFromName(L"PointVelocity");
             if(attr.IsDefined() && attr.IsValid())
             {
-               float fps = (float)CTime().GetFrameRate();
                CICEAttributeDataArrayVector3f data;
                attr.GetDataArray(data);
 
@@ -497,9 +495,9 @@ XSI::CStatus AlembicCurves::Save(double time)
                for(ULONG i=0;i<data.GetCount();i++)
                {
                   CVector3 vel;
-                  vel.PutX(data[i].GetX() / fps);
-                  vel.PutY(data[i].GetY() / fps);
-                  vel.PutZ(data[i].GetZ() / fps);
+                  vel.PutX(data[i].GetX());
+                  vel.PutY(data[i].GetY());
+                  vel.PutZ(data[i].GetZ());
                   if(globalSpace)
                      vel = MapObjectPositionToWorldSpace(globalRotation,vel);
                   mVelVec[i].x = (float)vel.GetX();

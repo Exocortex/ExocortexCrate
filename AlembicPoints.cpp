@@ -146,7 +146,6 @@ XSI::CStatus AlembicPoints::Save(double time)
       // velocity == PointVelocity
       std::vector<Alembic::Abc::V3f> velocityVec;
       {
-         float fps = (float)CTime().GetFrameRate();
          ICEAttribute attr = geo.GetICEAttributeFromName(L"PointVelocity");
          if(attr.IsDefined() && attr.IsValid())
          {
@@ -160,7 +159,7 @@ XSI::CStatus AlembicPoints::Save(double time)
                CVector3f firstVal = data[0];
                for(ULONG i=0;i<count;i++)
                {
-                  velocityVec[i].setValue(data[i].GetX() / fps,data[i].GetY() / fps,data[i].GetZ() / fps);
+                  velocityVec[i].setValue(data[i].GetX(),data[i].GetY(),data[i].GetZ());
                   if(isConstant)
                      isConstant = firstVal == data[i];
                }
@@ -895,10 +894,9 @@ XSIPLUGINCALLBACK CStatus alembic_points_Evaluate(ICENodeContext& in_ctxt)
             acc = outData.Resize(0,0);
          else
          {
-            float fps = (float)CTime().GetFrameRate();
             acc = outData.Resize(0,(ULONG)ptr->size());
             for(ULONG i=0;i<acc.GetCount();i++)
-               acc[i].Set(ptr->get()[i].x * fps,ptr->get()[i].y * fps,ptr->get()[i].z * fps);
+               acc[i].Set(ptr->get()[i].x,ptr->get()[i].y,ptr->get()[i].z);
          }
    		break;
 		}
