@@ -1085,8 +1085,10 @@ static AtNode *GetNode(void *user_ptr, int i)
          }
          else
          {
+            float timeAlpha = (float)(typedObject.getSchema().getTimeSampling()->getSampleTime(sampleInfo.ceilIndex) - 
+                               typedObject.getSchema().getTimeSampling()->getSampleTime(sampleInfo.floorIndex)) * (float)sampleInfo.alpha;
             matrixAbc.setTranslation(info->pos[floorIndex]->get()[id < info->pos[floorIndex]->size() ? id : info->pos[floorIndex]->size() - 1] + 
-                                     info->vel[floorIndex]->get()[id < info->vel[floorIndex]->size() ? id : info->vel[floorIndex]->size() - 1] * (float)sampleInfo.alpha);
+                                     info->vel[floorIndex]->get()[id < info->vel[floorIndex]->size() ? id : info->vel[floorIndex]->size() - 1] * timeAlpha);
          }
 
          // now take care of rotation
@@ -1476,11 +1478,13 @@ static AtNode *GetNode(void *user_ptr, int i)
             {
                if(abcVel->size() == abcPos->size())
                {
+                  float timeAlpha = (float)(typedObject.getSchema().getTimeSampling()->getSampleTime(sampleInfo.ceilIndex) - 
+                                     typedObject.getSchema().getTimeSampling()->getSampleTime(sampleInfo.floorIndex)) * alpha;
                   for(size_t i=0;i<abcPos->size();i++)
                   {
-                     AiArraySetFlt(pos,posOffset++,abcPos->get()[i].x + alpha * abcVel->get()[i].x);
-                     AiArraySetFlt(pos,posOffset++,abcPos->get()[i].y + alpha * abcVel->get()[i].y);
-                     AiArraySetFlt(pos,posOffset++,abcPos->get()[i].z + alpha * abcVel->get()[i].z);
+                     AiArraySetFlt(pos,posOffset++,abcPos->get()[i].x + timeAlpha * abcVel->get()[i].x);
+                     AiArraySetFlt(pos,posOffset++,abcPos->get()[i].y + timeAlpha * abcVel->get()[i].y);
+                     AiArraySetFlt(pos,posOffset++,abcPos->get()[i].z + timeAlpha * abcVel->get()[i].z);
                   }
                }
                else
@@ -2179,13 +2183,15 @@ static AtNode *GetNode(void *user_ptr, int i)
          }
          else
          {
-            Alembic::Abc::V3fArraySamplePtr abcVel = sample.getVelocities();
             float alpha = (float)sampleInfo.alpha;
+            float timeAlpha = (float)(typedObject.getSchema().getTimeSampling()->getSampleTime(sampleInfo.ceilIndex) - 
+                               typedObject.getSchema().getTimeSampling()->getSampleTime(sampleInfo.floorIndex)) * alpha;
+            Alembic::Abc::V3fArraySamplePtr abcVel = sample.getVelocities();
             for(size_t i=0;i<abcPos->size();i++)
             {
-               AiArraySetFlt(pos,posOffset++,abcPos->get()[i].x + alpha * abcVel->get()[i].x);
-               AiArraySetFlt(pos,posOffset++,abcPos->get()[i].y + alpha * abcVel->get()[i].y);
-               AiArraySetFlt(pos,posOffset++,abcPos->get()[i].z + alpha * abcVel->get()[i].z);
+               AiArraySetFlt(pos,posOffset++,abcPos->get()[i].x + timeAlpha * abcVel->get()[i].x);
+               AiArraySetFlt(pos,posOffset++,abcPos->get()[i].y + timeAlpha * abcVel->get()[i].y);
+               AiArraySetFlt(pos,posOffset++,abcPos->get()[i].z + timeAlpha * abcVel->get()[i].z);
             }
          }
       }
