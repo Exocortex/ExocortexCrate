@@ -2223,17 +2223,11 @@ ESS_CALLBACK_START(alembic_import_Execute, CRef&)
                returnOpRef = (CRef)returnedOpVal;
             }
 
-			// allow stretching as there may have been dynamics applied to the hair
-			if( curveObj.GetType().IsEqualNoCase(L"hair"))
-			{
-				// TODO: This fails (gracefully), not sure why.
-				CRef opRef;
-				CString opName = curveObj.GetRef().GetAsText()+L".hair";
-				opRef.Set( opName);
-				CustomOperator op( opRef);
-				if ( op.IsValid())
-					op.PutParameterValue(L"AllowStretch", true);
-			}
+            // allow stretching as there may have been dynamics applied to the hair
+            if( curveObj.GetType().IsEqualNoCase(L"hair"))
+            {
+               curveObj.GetActivePrimitive().PutParameterValue(L"AllowStretch", true);
+            }
 
             // let's setup the xform op
             if(Alembic::AbcGeom::IXform::matches(parent.getMetaData()))
