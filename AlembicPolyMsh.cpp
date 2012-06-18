@@ -955,13 +955,15 @@ ESS_CALLBACK_START( alembic_polymesh_topo_Update, CRef& )
       }
       else if(meshVel)
       {
+         double timeAlpha = (double)(obj.getSchema().getTimeSampling()->getSampleTime(sampleInfo.ceilIndex) - 
+                            obj.getSchema().getTimeSampling()->getSampleTime(sampleInfo.floorIndex)) * alpha;
          if(meshVel->size() == (size_t)pos.GetCount())
          {
             for(LONG i=0;i<(LONG)meshVel->size();i++)
             {
-               pos[i].PutX(pos[i].GetX() + alpha * meshVel->get()[i].x);
-               pos[i].PutY(pos[i].GetY() + alpha * meshVel->get()[i].y);
-               pos[i].PutZ(pos[i].GetZ() + alpha * meshVel->get()[i].z);
+               pos[i].PutX(pos[i].GetX() + timeAlpha * meshVel->get()[i].x);
+               pos[i].PutY(pos[i].GetY() + timeAlpha * meshVel->get()[i].y);
+               pos[i].PutZ(pos[i].GetZ() + timeAlpha * meshVel->get()[i].z);
             }
          }
       }

@@ -791,12 +791,14 @@ XSIPLUGINCALLBACK CStatus alembic_curves_Evaluate(ICENodeContext& in_ctxt)
                   Alembic::Abc::V3fArraySamplePtr vel = sample.getVelocities();
                   if(vel->size() == ptr->size())
                   {
+                     double timeAlpha = (double)(obj.getSchema().getTimeSampling()->getSampleTime(sampleInfo.ceilIndex) - 
+                                        obj.getSchema().getTimeSampling()->getSampleTime(sampleInfo.floorIndex)) * alpha;
                      for(ULONG i=0;i<acc.GetCount();i++)
                      {
                         acc[i].Set(
-                           ptr->get()[i].x + alpha * vel->get()[i].x,
-                           ptr->get()[i].y + alpha * vel->get()[i].y,
-                           ptr->get()[i].z + alpha * vel->get()[i].z);
+                           ptr->get()[i].x + timeAlpha * vel->get()[i].x,
+                           ptr->get()[i].y + timeAlpha * vel->get()[i].y,
+                           ptr->get()[i].z + timeAlpha * vel->get()[i].z);
                      }
                      done = true;
                   }

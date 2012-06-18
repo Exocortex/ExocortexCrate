@@ -579,7 +579,7 @@ XSI::CStatus AlembicPoints::Save(double time)
 
                std::vector<std::string> preRollVec(1,"");
                Alembic::Abc::StringArraySample preRollSample(&preRollVec.front(),preRollVec.size());
-               for(int i=mInstancenamesProperty.getNumSamples();i<mNumSamples;i++)
+               for(size_t i=mInstancenamesProperty.getNumSamples();i<mNumSamples;i++)
                   mInstancenamesProperty.set(preRollSample);
 
 
@@ -593,7 +593,7 @@ XSI::CStatus AlembicPoints::Save(double time)
 
                   std::vector<uint16_t> preRollVec(1,0);
                   Alembic::Abc::UInt16ArraySample preRollSample(&preRollVec.front(),preRollVec.size());
-                  for(int i=mShapeInstanceIDProperty.getNumSamples();i<mNumSamples;i++)
+                  for(size_t i=mShapeInstanceIDProperty.getNumSamples();i<mNumSamples;i++)
                      mShapeInstanceIDProperty.set(preRollSample);
 
                   Alembic::Abc::UInt16ArraySample sample(&vec.front(),vec.size());
