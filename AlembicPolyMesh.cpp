@@ -116,72 +116,107 @@ MStatus AlembicPolyMesh::Save(double time)
       if(GetJob()->GetOption(L"exportUVs").asInt() > 0)
       {
          MStatus status;
-         MString uvSetName = node.currentUVSetName(&status);
-         if (status == MS::kSuccess && uvSetName != MString(""))
+         MStringArray uvSetNames;
+         node.getUVSetNames(uvSetNames);
+
+         if(mNumSamples == 0)
          {
-            MFloatArray uValues, vValues;
-            status = node.getUVs(uValues, vValues, &uvSetName);
-            if ( uValues.length() == vValues.length() )
+            std::vector<std::string> cUvSetNames;
+            for(unsigned int uvSetIndex = 0; uvSetIndex < uvSetNames.length(); uvSetIndex++)
+               cUvSetNames.push_back(uvSetNames[uvSetIndex].asChar());
+            Alembic::Abc::OStringArrayProperty uvSetNamesProperty = Alembic::Abc::OStringArrayProperty(
+               GetCompound(), ".uvSetNames", GetCompound().getMetaData(), GetJob()->GetAnimatedTs() );
+            Alembic::Abc::StringArraySample uvSetNamesSample(&cUvSetNames.front(),cUvSetNames.size());
+            uvSetNamesProperty.set(uvSetNamesSample);
+         }
+
+         mUvVec.resize(uvSetNames.length());
+         mUvIndexVec.resize(uvSetNames.length());
+
+         for(unsigned int uvSetIndex = 0; uvSetIndex < uvSetNames.length(); uvSetIndex++)
+         {
+            if (uvSetNames[uvSetIndex] != MString(""))
             {
-               MIntArray uvCounts, uvIds;
-               status = node.getAssignedUVs(uvCounts, uvIds, &uvSetName);
-               unsigned int uvCount = (unsigned int)mSampleLookup.size();
-               if(uvIds.length() == uvCount)
+               MFloatArray uValues, vValues;
+               status = node.getUVs(uValues, vValues, &uvSetNames[uvSetIndex]);
+               if ( uValues.length() == vValues.length() )
                {
-                  mUvVec.resize(uvCount);
-                  unsigned int offset = 0;
-                  for (unsigned int i=0;i<uvIds.length();i++)
+                  MIntArray uvCounts, uvIds;
+                  status = node.getAssignedUVs(uvCounts, uvIds, &uvSetNames[uvSetIndex]);
+                  unsigned int uvCount = (unsigned int)mSampleLookup.size();
+                  if(uvIds.length() == uvCount)
                   {
-                     mUvVec[mSampleLookup[offset]].x = uValues[uvIds[i]];
-                     mUvVec[mSampleLookup[offset]].y = vValues[uvIds[i]];
-                     offset++;
-                  }
-
-                  // now let's sort the normals 
-                  unsigned int uvIndexCount = 0;
-                  if(GetJob()->GetOption(L"indexedUVs").asInt() > 0) {
-                     std::map<SortableV2f,size_t> uvMap;
-                     std::map<SortableV2f,size_t>::const_iterator it;
-                     unsigned int sortedUVCount = 0;
-                     std::vector<Alembic::Abc::V2f> sortedUVVec;
-                     mUvIndexVec.resize(mUvVec.size());
-                     sortedUVVec.resize(mUvVec.size());
-
-                     // loop over all uvs
-                     for(size_t i=0;i<mUvVec.size();i++)
+                     mUvVec[uvSetIndex].resize(uvCount);
+                     unsigned int offset = 0;
+                     for (unsigned int i=0;i<uvIds.length();i++)
                      {
-                        it = uvMap.find(mUvVec[i]);
-                        if(it != uvMap.end())
-                           mUvIndexVec[uvIndexCount++] = (uint32_t)it->second;
-                        else
-                        {
-                           mUvIndexVec[uvIndexCount++] = (uint32_t)sortedUVCount;
-                           uvMap.insert(std::pair<Alembic::Abc::V2f,size_t>(mUvVec[i],(uint32_t)sortedUVCount));
-                           sortedUVVec[sortedUVCount++] = mUvVec[i];
-                        }
+                        mUvVec[uvSetIndex][mSampleLookup[offset]].x = uValues[uvIds[i]];
+                        mUvVec[uvSetIndex][mSampleLookup[offset]].y = vValues[uvIds[i]];
+                        offset++;
                      }
 
-                     // use indexed uvs if they use less space
-                     if(sortedUVCount * sizeof(Alembic::Abc::V2f) + 
-                        uvIndexCount * sizeof(uint32_t) < 
-                        sizeof(Alembic::Abc::V2f) * mUvVec.size())
+                     // now let's sort the normals 
+                     unsigned int uvIndexCount = 0;
+                     if(GetJob()->GetOption(L"indexedUVs").asInt() > 0) {
+                        std::map<SortableV2f,size_t> uvMap;
+                        std::map<SortableV2f,size_t>::const_iterator it;
+                        unsigned int sortedUVCount = 0;
+                        std::vector<Alembic::Abc::V2f> sortedUVVec;
+                        mUvIndexVec[uvSetIndex].resize(mUvVec[uvSetIndex].size());
+                        sortedUVVec.resize(mUvVec[uvSetIndex].size());
+
+                        // loop over all uvs
+                        for(size_t i=0;i<mUvVec[uvSetIndex].size();i++)
+                        {
+                           it = uvMap.find(mUvVec[uvSetIndex][i]);
+                           if(it != uvMap.end())
+                              mUvIndexVec[uvSetIndex][uvIndexCount++] = (uint32_t)it->second;
+                           else
+                           {
+                              mUvIndexVec[uvSetIndex][uvIndexCount++] = (uint32_t)sortedUVCount;
+                              uvMap.insert(std::pair<Alembic::Abc::V2f,size_t>(mUvVec[uvSetIndex][i],(uint32_t)sortedUVCount));
+                              sortedUVVec[sortedUVCount++] = mUvVec[uvSetIndex][i];
+                           }
+                        }
+
+                        // use indexed uvs if they use less space
+                        if(sortedUVCount * sizeof(Alembic::Abc::V2f) + 
+                           uvIndexCount * sizeof(uint32_t) < 
+                           sizeof(Alembic::Abc::V2f) * mUvVec[uvSetIndex].size())
+                        {
+                           mUvVec[uvSetIndex] = sortedUVVec;
+                           uvCount = sortedUVCount;
+                        }
+                        else
+                        {
+                           uvIndexCount = 0;
+                           mUvIndexVec[uvSetIndex].clear();
+                        }
+                        sortedUVCount = 0;
+                        sortedUVVec.clear();
+                     }
+
+                     Alembic::AbcGeom::OV2fGeomParam::Sample uvSample(Alembic::Abc::V2fArraySample(&mUvVec[uvSetIndex].front(),uvCount),Alembic::AbcGeom::kFacevaryingScope);
+                     if(mUvIndexVec[uvSetIndex].size() > 0 && uvIndexCount > 0)
+                        uvSample.setIndices(Alembic::Abc::UInt32ArraySample(&mUvIndexVec[uvSetIndex].front(),uvIndexCount));
+
+                     if(uvSetIndex == 0)
                      {
-                        mUvVec = sortedUVVec;
-                        uvCount = sortedUVCount;
+                        mSample.setUVs(uvSample);
                      }
                      else
                      {
-                        uvIndexCount = 0;
-                        mUvIndexVec.clear();
+                        if(mNumSamples == 0)
+                        {
+                           MString storedUvSetName;
+                           storedUvSetName.set((double)uvSetIndex);
+                           storedUvSetName = MString("uv") + storedUvSetName;
+                           mUvParams.push_back(Alembic::AbcGeom::OV2fGeomParam( mSchema, storedUvSetName.asChar(), uvIndexCount > 0,
+                                               Alembic::AbcGeom::kFacevaryingScope, 1, mSchema.getTimeSampling()));
+                        }
+                        mUvParams[uvSetIndex-1].set(uvSample);
                      }
-                     sortedUVCount = 0;
-                     sortedUVVec.clear();
                   }
-
-                  Alembic::AbcGeom::OV2fGeomParam::Sample uvSample(Alembic::Abc::V2fArraySample(&mUvVec.front(),uvCount),Alembic::AbcGeom::kFacevaryingScope);
-                  if(mUvIndexVec.size() > 0 && uvIndexCount > 0)
-                     uvSample.setIndices(Alembic::Abc::UInt32ArraySample(&mUvIndexVec.front(),uvIndexCount));
-                  mSample.setUVs(uvSample);
                }
             }
          }
@@ -545,36 +580,89 @@ MStatus AlembicPolyMeshNode::compute(const MPlug & plug, MDataBlock & dataBlock)
                   uvsParam.getNumSamples()
                );
 
-               Alembic::Abc::V2fArraySamplePtr sampleUvs = uvsParam.getExpandedValue(sampleInfo.floorIndex).getVals();
-               if(sampleUvs->size() == (size_t)indices.length())
+               // check if we have uvSetNames
+               MStringArray uvSetNames;
+               if ( mSchema.getPropertyHeader( ".uvSetNames" ) != NULL )
                {
-                  // create a uv set if necessary
-                  MString uvSetName("uvset1");
-                  status = mMesh.getCurrentUVSetName(uvSetName);
+                  Alembic::Abc::IStringArrayProperty uvSetNamesProp = Alembic::Abc::IStringArrayProperty( mSchema, ".uvSetNames" );
+                  Alembic::Abc::StringArraySamplePtr ptr = uvSetNamesProp.getValue(0);
+                  for(size_t i=0;i<ptr->size();i++)
+                     uvSetNames.append(ptr->get()[i].c_str());
+               }
+               else
+                  uvSetNames.append("map1");
+
+               // fill in all of the data
+               for(unsigned int uvSetIndex =0; uvSetIndex < uvSetNames.length(); uvSetIndex++)
+               {
+                  MString currentUVSetName;
+                  status = mMesh.getCurrentUVSetName(currentUVSetName);
                   if ( status != MS::kSuccess )
                   {
-                     uvSetName = MString("uvset1");
-                     status = mMesh.createUVSet(uvSetName);
-                     status = mMesh.setCurrentUVSetName(uvSetName);
+                     currentUVSetName = uvSetNames[uvSetIndex];
+                     status = mMesh.createUVSet(currentUVSetName);
+                     status = mMesh.setCurrentUVSetName(currentUVSetName);
                   }
-
-                  MFloatArray uValues,vValues;
-                  uValues.setLength((unsigned int)sampleUvs->size());
-                  vValues.setLength((unsigned int)sampleUvs->size());
-
-                  MIntArray uvIndices;
-                  uvIndices.setLength(uValues.length());
-
-                  for(unsigned int i=0;i<uValues.length();i++)
+                  else if(currentUVSetName != uvSetNames[uvSetIndex])
                   {
-                     uValues[mSampleLookup[i]] = sampleUvs->get()[i].x;
-                     vValues[mSampleLookup[i]] = sampleUvs->get()[i].y;
-                     uvIndices[i] = i;
+                     // create a uv set if necessary
+                     MStringArray existingUVSets;
+                     mMesh.getUVSetNames(existingUVSets);
+                     bool exists = false;
+                     for(unsigned int i=0;i<existingUVSets.length();i++)
+                     {
+                        if(existingUVSets[i] == uvSetNames[uvSetIndex])
+                        {
+                           exists = true;
+                           break;
+                        }
+                     }
+                     if(!exists)
+                     {
+                        if(uvSetIndex == 0 && uvSetNames.length() == 1 && existingUVSets.length() == 1)
+                           status = mMesh.setCurrentUVSetName(uvSetNames[uvSetIndex]);
+                        else
+                        {
+                           currentUVSetName = uvSetNames[uvSetIndex];
+                           status = mMesh.createUVSet(currentUVSetName);
+                           status = mMesh.setCurrentUVSetName(currentUVSetName);
+                        }
+                     }
                   }
 
-                  status = mMesh.clearUVs();
-                  status = mMesh.setUVs(uValues, vValues, &uvSetName);
-                  status = mMesh.assignUVs(counts, uvIndices);
+                  Alembic::Abc::V2fArraySamplePtr sampleUvs;
+                  if(uvSetIndex == 0)
+                     sampleUvs = uvsParam.getExpandedValue(sampleInfo.floorIndex).getVals();
+                  else
+                  {
+                     MString storedUvSetName;
+                     storedUvSetName.set((double)uvSetIndex);
+                     storedUvSetName = MString("uv") + storedUvSetName;
+                     if(mSchema.getPropertyHeader( storedUvSetName.asChar() ) == NULL)
+                        continue;
+                     sampleUvs = Alembic::AbcGeom::IV2fGeomParam( mSchema, storedUvSetName.asChar() ).getExpandedValue(sampleInfo.floorIndex).getVals();
+                  }
+
+                  if(sampleUvs->size() == (size_t)indices.length())
+                  {
+                     MFloatArray uValues,vValues;
+                     uValues.setLength((unsigned int)sampleUvs->size());
+                     vValues.setLength((unsigned int)sampleUvs->size());
+
+                     MIntArray uvIndices;
+                     uvIndices.setLength(uValues.length());
+
+                     for(unsigned int i=0;i<uValues.length();i++)
+                     {
+                        uValues[mSampleLookup[i]] = sampleUvs->get()[i].x;
+                        vValues[mSampleLookup[i]] = sampleUvs->get()[i].y;
+                        uvIndices[i] = i;
+                     }
+
+                     status = mMesh.clearUVs(&uvSetNames[uvSetIndex]);
+                     status = mMesh.setUVs(uValues, vValues, &uvSetNames[uvSetIndex]);
+                     status = mMesh.assignUVs(counts, uvIndices, &uvSetNames[uvSetIndex]);
+                  }
                }
             }
          }
