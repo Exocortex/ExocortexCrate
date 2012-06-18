@@ -1702,12 +1702,19 @@ ESS_CALLBACK_START(alembic_import_Execute, CRef&)
    size_t nbTransforms = 1;
    for(size_t i=0;i<objects.size();i++)
    {
-      // first, let's recurse
+      // first, let's recurse, do the transforms last
       for(size_t j=0;j<objects[i].getNumChildren();j++)
       {
-         objects.push_back(objects[i].getChild(j));
-         if(Alembic::AbcGeom::IXform::matches(objects[objects.size()-1].getMetaData()))
+         if(!Alembic::AbcGeom::IXform::matches(objects[i].getChild(j).getMetaData()))
+            objects.push_back(objects[i].getChild(j));
+      }
+      for(size_t j=0;j<objects[i].getNumChildren();j++)
+      {
+         if(Alembic::AbcGeom::IXform::matches(objects[i].getChild(j).getMetaData())) 
+         {
+            objects.push_back(objects[i].getChild(j));
             nbTransforms++;
+         }
       }
    }
 
@@ -1818,32 +1825,29 @@ ESS_CALLBACK_START(alembic_import_Execute, CRef&)
       }
 
       // access the model to create content in!
-      Model parentModel = Application().GetActiveSceneRoot();
+      X3DObject parentX3DObject = Application().GetActiveSceneRoot();
 
       // now let's see what we have here
       if(Alembic::AbcGeom::IXform::matches(objects[i].getMetaData()))
       {
          // check if this xform has xform children (is is model in this case)
-         bool isModel = false;
+         size_t nbTransformChildren = 0;
          for(size_t j=0;j<objects[i].getNumChildren();j++)
          {
             if(Alembic::AbcGeom::IXform::matches(objects[i].getChild(j).getMetaData()))
-            {
-               isModel = true;
-               break;
-            }
+               nbTransformChildren++;
          }
 
-         if(isModel)
+         if(nbTransformChildren == objects[i].getNumChildren())
          {
             // first let's check for the parent model
             if(Alembic::AbcGeom::IXform::matches(objects[i].getParent().getMetaData()))
             {
-               parentModel = getRefFromIdentifier(objects[i].getParent().getFullName().c_str());
-               if(!parentModel.IsValid())
+               parentX3DObject = getRefFromIdentifier(objects[i].getParent().getFullName().c_str());
+               if(!parentX3DObject.IsValid())
                {
                   Application().LogMessage(L"[ExocortexAlembic] Didn't find model for "+CString(objects[i].getParent().getFullName().c_str())+L"', using Scene_Root..",siWarningMsg);
-                  parentModel = Application().GetActiveSceneRoot();
+                  parentX3DObject = Application().GetActiveSceneRoot();
                }
             }
             Model model;
@@ -1859,7 +1863,7 @@ ESS_CALLBACK_START(alembic_import_Execute, CRef&)
             if(!model.IsValid())
             {
                CRefArray children;
-               parentModel.AddModel(children,name,model);
+               parentX3DObject.AddModel(children,name,model);
                nameMapAdd(objects[i].getFullName().c_str(),model.GetFullName());
             }
 
@@ -1882,7 +1886,7 @@ ESS_CALLBACK_START(alembic_import_Execute, CRef&)
             if(Alembic::AbcGeom::IXform::matches(parent.getParent().getMetaData()))
             {
                // this is a model, so let's get it
-               parentModel = getRefFromIdentifier(parent.getParent().getFullName());
+               parentX3DObject = getRefFromIdentifier(parent.getParent().getFullName());
             }
          }
       }
@@ -1902,7 +1906,7 @@ ESS_CALLBACK_START(alembic_import_Execute, CRef&)
          }
          if(!camera.IsValid())
          {
-            parentModel.AddCamera(L"Camera",name,camera);
+            parentX3DObject.AddCamera(L"Camera",name,camera);
             nameMapAdd(objects[i].getFullName().c_str(),camera.GetFullName());
          }
 
@@ -1939,9 +1943,9 @@ ESS_CALLBACK_START(alembic_import_Execute, CRef&)
          if(!meshObj.IsValid())
          {
             if(importBboxes)
-               parentModel.AddGeometry(L"Cube",L"MeshSurface",name,meshObj);
+               parentX3DObject.AddGeometry(L"Cube",L"MeshSurface",name,meshObj);
             else
-               parentModel.AddPrimitive(L"EmptyPolygonMesh",name,meshObj);
+               parentX3DObject.AddPrimitive(L"EmptyPolygonMesh",name,meshObj);
             nameMapAdd(objects[i].getFullName().c_str(),meshObj.GetFullName());
          }
 
@@ -2008,9 +2012,9 @@ ESS_CALLBACK_START(alembic_import_Execute, CRef&)
          if(!meshObj.IsValid())
          {
             if(importBboxes)
-               parentModel.AddGeometry(L"Cube",L"MeshSurface",name,meshObj);
+               parentX3DObject.AddGeometry(L"Cube",L"MeshSurface",name,meshObj);
             else
-               parentModel.AddPrimitive(L"EmptyPolygonMesh",name,meshObj);
+               parentX3DObject.AddPrimitive(L"EmptyPolygonMesh",name,meshObj);
             nameMapAdd(objects[i].getFullName().c_str(),meshObj.GetFullName());
          }
 
@@ -2143,9 +2147,9 @@ ESS_CALLBACK_START(alembic_import_Execute, CRef&)
             if(!pointsObj.IsValid())
             {
                if(importBboxes)
-                  parentModel.AddGeometry(L"Cube",L"MeshSurface",name,pointsObj);
+                  parentX3DObject.AddGeometry(L"Cube",L"MeshSurface",name,pointsObj);
                else
-                  parentModel.AddPrimitive(L"PointCloud",name,pointsObj);
+                  parentX3DObject.AddPrimitive(L"PointCloud",name,pointsObj);
                nameMapAdd(objects[i].getFullName().c_str(),pointsObj.GetFullName());
             }
 
@@ -2192,9 +2196,9 @@ ESS_CALLBACK_START(alembic_import_Execute, CRef&)
             if(!curveObj.IsValid())
             {
                if(importBboxes)
-                  parentModel.AddGeometry(L"Cube",L"MeshSurface",name,curveObj);
+                  parentX3DObject.AddGeometry(L"Cube",L"MeshSurface",name,curveObj);
                else
-                  parentModel.AddNurbsCurveList(CNurbsCurveDataArray(),siSINurbs,name,curveObj);
+                  parentX3DObject.AddNurbsCurveList(CNurbsCurveDataArray(),siSINurbs,name,curveObj);
                nameMapAdd(objects[i].getFullName().c_str(),curveObj.GetFullName());
             }
 
@@ -2256,9 +2260,9 @@ ESS_CALLBACK_START(alembic_import_Execute, CRef&)
          if(!pointsObj.IsValid())
          {
             if(importBboxes)
-               parentModel.AddGeometry(L"Cube",L"MeshSurface",name,pointsObj);
+               parentX3DObject.AddGeometry(L"Cube",L"MeshSurface",name,pointsObj);
             else
-               parentModel.AddPrimitive(L"PointCloud",name,pointsObj);
+               parentX3DObject.AddPrimitive(L"PointCloud",name,pointsObj);
             nameMapAdd(objects[i].getFullName().c_str(),pointsObj.GetFullName());
          }
 

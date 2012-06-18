@@ -50,8 +50,7 @@ void SaveXformSample(XSI::CRef kinestateRef, Alembic::AbcGeom::OXformSchema & sc
    CTransformation global = kineState.GetTransform(time);
    if(!xformCache)
    {
-      CTransformation model;
-      kineState.GetParent3DObject().GetModel().GetKinematics().GetGlobal().GetTransform(time);
+      CTransformation model = kineState.GetParent3DObject().GetModel().GetKinematics().GetGlobal().GetTransform(time);
       global = MapWorldPoseToObjectSpace(model,global);
    }
 
