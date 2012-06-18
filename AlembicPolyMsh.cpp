@@ -913,7 +913,7 @@ ESS_CALLBACK_START( alembic_polymesh_topo_Update, CRef& )
             EXOCORTEX_XSI_LOG_INFO("offset2: " << (unsigned int)offset2);
             EXOCORTEX_XSI_LOG_INFO("meshFaceIndices->size(): " << (unsigned int)meshFaceIndices->size());
 
-            unsigned int meshFIndxSz = meshFaceIndices->size();
+            unsigned int meshFIndxSz = (unsigned int)meshFaceIndices->size();
 
             for(size_t k=0;k<singleFaceCount;k++)
             {
@@ -955,8 +955,8 @@ ESS_CALLBACK_START( alembic_polymesh_topo_Update, CRef& )
       }
       else if(meshVel)
       {
-         double timeAlpha = (double)(obj.getSchema().getTimeSampling()->getSampleTime(sampleInfo.ceilIndex) - 
-                            obj.getSchema().getTimeSampling()->getSampleTime(sampleInfo.floorIndex)) * alpha;
+         double timeAlpha = (double)(objMesh.getSchema().getTimeSampling()->getSampleTime(sampleInfo.ceilIndex) - 
+                            objMesh.getSchema().getTimeSampling()->getSampleTime(sampleInfo.floorIndex)) * alpha;
          if(meshVel->size() == (size_t)pos.GetCount())
          {
             for(LONG i=0;i<(LONG)meshVel->size();i++)
