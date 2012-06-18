@@ -600,7 +600,7 @@ MStatus AlembicPolyMeshNode::compute(const MPlug & plug, MDataBlock & dataBlock)
                   if ( status != MS::kSuccess )
                   {
                      currentUVSetName = uvSetNames[uvSetIndex];
-                     status = mMesh.createUVSet(currentUVSetName);
+                     status = mMesh.createUVSetDataMesh(currentUVSetName);
                      status = mMesh.setCurrentUVSetName(currentUVSetName);
                   }
                   else if(currentUVSetName != uvSetNames[uvSetIndex])
@@ -624,7 +624,7 @@ MStatus AlembicPolyMeshNode::compute(const MPlug & plug, MDataBlock & dataBlock)
                         else
                         {
                            currentUVSetName = uvSetNames[uvSetIndex];
-                           status = mMesh.createUVSet(currentUVSetName);
+                           status = mMesh.createUVSetDataMesh(currentUVSetName);
                            status = mMesh.setCurrentUVSetName(currentUVSetName);
                         }
                      }
