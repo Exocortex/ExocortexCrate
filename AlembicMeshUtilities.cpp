@@ -294,9 +294,18 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
 			  assert( pVelocityArray != NULL );
 			  pVelocityArray = meshVel->get();
 
+			  double timeAlpha;
+			  if( objMesh.valid() ) {
+			      timeAlpha = (double)(objMesh.getSchema().getTimeSampling()->getSampleTime(sampleInfo.ceilIndex) - 
+						objMesh.getSchema().getTimeSampling()->getSampleTime(sampleInfo.floorIndex)) * sampleInfoAlpha;
+			  }
+			  else {
+			     timeAlpha = (double)(objSubD.getSchema().getTimeSampling()->getSampleTime(sampleInfo.ceilIndex) - 
+						objSubD.getSchema().getTimeSampling()->getSampleTime(sampleInfo.floorIndex)) * sampleInfoAlpha;
+			  }
               for(size_t i=0;i<meshVel->size();i++)
               {
-                  vArray[i] += pVelocityArray[i] * sampleInfoAlpha;                  
+                  vArray[i] += pVelocityArray[i] * timeAlpha;                  
               }
           }
 	   }
