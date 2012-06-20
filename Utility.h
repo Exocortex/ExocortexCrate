@@ -111,4 +111,28 @@ INode* GetNodeFromHierarchyPath(const std::string& path);
 INode* GetNodeFromName(const std::string& name);
 INode* GetChildNodeFromName(const std::string& name, INode* pParent);
 
+
+class AlembicPathAccessor : public  IAssetAccessor	{
+	public:
+
+	AlembicPathAccessor(Animatable* pAnimatable) : pAnimatable(pAnimatable) {}
+
+	// path accessor functions
+	MaxSDK::AssetManagement::AssetUser GetAsset() const {
+		return pAnimatable->GetParamBlockByID( 0 )->GetAssetUser( GetParamIdByName( pAnimatable, 0, "path" ), 0 );
+	}
+
+	bool SetAsset(const MaxSDK::AssetManagement::AssetUser& aNewAssetUser) {
+		pAnimatable->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pAnimatable, 0, "path" ), 0, aNewAssetUser );
+		return true;
+	}
+
+	// asset client information
+	MaxSDK::AssetManagement::AssetType GetAssetType() const 	{ return MaxSDK::AssetManagement::kExternalLink; }
+
+protected:
+	Animatable* pAnimatable;
+};
+
+
 #endif  // _FOUNDATION_H_

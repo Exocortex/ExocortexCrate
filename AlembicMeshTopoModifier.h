@@ -41,6 +41,8 @@ public:
 	void DeleteThis() { delete this; }
 	RefTargetHandle Clone(RemapDir& remap);
 
+	void EnumAuxFiles(AssetEnumCallback& nameEnum, DWORD flags);
+
 	// From Modifier
 	ChannelMask ChannelsUsed()  { return TOPO_CHANNEL|GEOM_CHANNEL|TEXMAP_CHANNEL; }
 	ChannelMask ChannelsChanged() { return TOPO_CHANNEL|GEOM_CHANNEL|TEXMAP_CHANNEL; }
@@ -49,6 +51,7 @@ public:
 	//Interval LocalValidity(TimeValue t) { return GetValidity(t); }
 	//Interval GetValidity (TimeValue t);
 	BOOL DependOnTopology(ModContext &mc) { return FALSE; }
+
 
 	// From BaseObject
 	CreateMouseCallBack* GetCreateMouseCallBack() {return NULL;} 

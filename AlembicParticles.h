@@ -68,7 +68,9 @@ public:
     void BeginEditParams( IObjParam  *ip, ULONG flags,Animatable *prev);
     void EndEditParams( IObjParam *ip, ULONG flags,Animatable *next);
 
-    int	NumParamBlocks() { return 1; }					// return number of ParamBlocks in this instance
+	void EnumAuxFiles(AssetEnumCallback& nameEnum, DWORD flags);
+
+	int	NumParamBlocks() { return 1; }					// return number of ParamBlocks in this instance
     IParamBlock2* GetParamBlock(int i) { return pblock2; } // return i'th ParamBlock
     IParamBlock2* GetParamBlockByID(BlockID id) { return (pblock2->ID() == id) ? pblock2 : NULL; } // return id'd ParamBlock
 

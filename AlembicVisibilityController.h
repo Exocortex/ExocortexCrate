@@ -72,6 +72,9 @@ public:
 	void GetClassName(TSTR& s) { s = _T("Alembic Visibility"); }  
 	virtual Class_ID ClassID() { return ALEMBIC_VISIBILITY_CONTROLLER_CLASSID; }		
 	RefTargetHandle Clone(RemapDir& remap);
+	
+	void EnumAuxFiles(AssetEnumCallback& nameEnum, DWORD flags);
+		
 	TCHAR *GetObjectName() { return _T("Alembic Visibility"); }
 
     void BeginEditParams( IObjParam  *ip, ULONG flags,Animatable *prev);

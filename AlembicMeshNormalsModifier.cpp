@@ -32,6 +32,7 @@ static ParamBlockDesc2 AlembicMeshNormalsModifierParams(
 	AlembicMeshNormalsModifier::ID_PATH, _T("path"), TYPE_FILENAME, P_RESET_DEFAULT, IDS_PATH,
 	    p_default, "",
 	    p_ui,        TYPE_EDITBOX,		IDC_PATH_EDIT,
+		p_assetTypeID,	kExternalLink,
 		p_end,
         
 	AlembicMeshNormalsModifier::ID_IDENTIFIER, _T("identifier"), TYPE_STRING, P_RESET_DEFAULT, IDS_IDENTIFIER,
@@ -83,6 +84,24 @@ RefTargetHandle AlembicMeshNormalsModifier::Clone(RemapDir& remap)
     BaseClone(this, mod, remap);
 	return mod;
 }
+
+
+
+void AlembicMeshNormalsModifier::EnumAuxFiles(AssetEnumCallback& nameEnum, DWORD flags)  {
+	if ((flags&FILE_ENUM_CHECK_AWORK1)&&TestAFlag(A_WORK1)) return; // LAM - 4/11/03
+
+	if (!(flags&FILE_ENUM_INACTIVE)) return; // not needed by renderer
+
+	if(flags & FILE_ENUM_ACCESSOR_INTERFACE)	{
+		IEnumAuxAssetsCallback* callback = static_cast<IEnumAuxAssetsCallback*>(&nameEnum);
+		callback->DeclareAsset(AlembicPathAccessor(this));		
+	}
+	//else {
+	//	IPathConfigMgr::GetPathConfigMgr()->RecordInputAsset( this->GetParamBlockByID( 0 )->GetAssetUser( GetParamIdByName( this, 0, "path" ), 0 ), nameEnum, flags);
+	//}
+
+	ReferenceTarget::EnumAuxFiles(nameEnum, flags);
+} 
 
 void AlembicMeshNormalsModifier::ModifyObject (TimeValue t, ModContext &mc, ObjectState *os, INode *node) 
 {

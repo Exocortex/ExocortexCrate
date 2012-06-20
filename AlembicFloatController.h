@@ -50,6 +50,9 @@ public:
 	void GetClassName(TSTR& s) { s = _T("Alembic Float"); }  
 	virtual Class_ID ClassID() { return ALEMBIC_FLOAT_CONTROLLER_CLASSID; }		
 	RefTargetHandle Clone(RemapDir& remap);
+
+	void EnumAuxFiles(AssetEnumCallback& nameEnum, DWORD flags);
+
 	TCHAR *GetObjectName() { return _T("Alembic Float"); }
 
     void BeginEditParams( IObjParam  *ip, ULONG flags,Animatable *prev);

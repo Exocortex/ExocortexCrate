@@ -50,6 +50,9 @@
 #include <ParticleFlow/PFClassIDs.h>
 #include <ParticleFlow/IPFSystem.h>
 
+#include <assetmanagement\AssetType.h>
+#include <Assetmanagement\iassetmanager.h>
+
 typedef Interface12 MAXInterface;
 #define GET_MAX_INTERFACE()	GetCOREInterface12()
 
@@ -64,5 +67,6 @@ typedef Interface12 MAXInterface;
 	#undef base_type
 #endif
 
+using namespace MaxSDK;
 
 #endif // __MAX_H__
