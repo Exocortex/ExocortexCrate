@@ -95,7 +95,12 @@ MStatus AlembicGetInfoCommand::doIt(const MArgList & args)
                {
                   if(faceCounts->get()[0] == 0)
                   {
-                     data += "purepointcache=1";
+                     // check if this eventually holds only one point
+                     Alembic::Abc::P3fArraySamplePtr samplePos = sample.getPositions();
+                     if(samplePos->size() <= 1)
+                        data += "dynamictopology=1";
+                     else
+                        data += "purepointcache=1";
                   }
                   else
                   {
@@ -123,7 +128,12 @@ MStatus AlembicGetInfoCommand::doIt(const MArgList & args)
                {
                   if(faceCounts->get()[0] == 0)
                   {
-                     data += "purepointcache=1";
+                     // check if this eventually holds only one point
+                     Alembic::Abc::P3fArraySamplePtr samplePos = sample.getPositions();
+                     if(samplePos->size() <= 1)
+                        data += "dynamictopology=1";
+                     else
+                        data += "purepointcache=1";
                   }
                   else
                   {
