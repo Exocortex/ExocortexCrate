@@ -61,6 +61,7 @@ public:
 	interpT interp;
 
 	float sampleInfoAlpha; 
+	float timeAlpha;
 
 	curvePositionSampler(Alembic::AbcGeom::ICurves& obj, SampleInfo& sampleInfo){
 
@@ -75,6 +76,9 @@ public:
 		if(isDynamicTopo){ //interpolate based on velocity
 			curveVel1 = curveSample.getVelocities();
 			interp = VELOCITY;
+
+			timeAlpha = (double)(obj.getSchema().getTimeSampling()->getSampleTime(sampleInfo.ceilIndex) - 
+ 					obj.getSchema().getTimeSampling()->getSampleTime(sampleInfo.floorIndex)) * sampleInfoAlpha;    
 		}
 		else{
 			Alembic::AbcGeom::ICurvesSchema::Sample curveSample2;
@@ -95,7 +99,7 @@ public:
 			return pos1 + ((curvePos2->get()[index] - pos1) * sampleInfoAlpha);
 		}
 		else if(sampleInfoAlpha != 0.0 && interp == VELOCITY){
-			return pos1 + (curveVel1->get()[index] * sampleInfoAlpha);
+			return pos1 + (curveVel1->get()[index] * timeAlpha);
 		}
 		else{
 			return pos1;

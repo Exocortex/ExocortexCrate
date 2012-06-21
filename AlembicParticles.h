@@ -68,7 +68,9 @@ public:
     void BeginEditParams( IObjParam  *ip, ULONG flags,Animatable *prev);
     void EndEditParams( IObjParam *ip, ULONG flags,Animatable *next);
 
-    int	NumParamBlocks() { return 1; }					// return number of ParamBlocks in this instance
+	void EnumAuxFiles(AssetEnumCallback& nameEnum, DWORD flags);
+
+	int	NumParamBlocks() { return 1; }					// return number of ParamBlocks in this instance
     IParamBlock2* GetParamBlock(int i) { return pblock2; } // return i'th ParamBlock
     IParamBlock2* GetParamBlockByID(BlockID id) { return (pblock2->ID() == id) ? pblock2 : NULL; } // return id'd ParamBlock
 
@@ -119,7 +121,7 @@ private:
     bool            GetAlembicIPoints(Alembic::AbcGeom::IPoints &iPoints, const char *strFile, const char *strIdentifier);
     SampleInfo      GetSampleAtTime(Alembic::AbcGeom::IPoints &iPoints, TimeValue t, Alembic::AbcGeom::IPointsSchema::Sample &floorSample, Alembic::AbcGeom::IPointsSchema::Sample &ceilSample) const;
     int             GetNumParticles(const Alembic::AbcGeom::IPointsSchema::Sample &floorSample) const;
-    Point3          GetParticlePosition(const Alembic::AbcGeom::IPointsSchema::Sample &floorSample, const Alembic::AbcGeom::IPointsSchema::Sample &ceilSample, const SampleInfo &sampleInfo, int index) const;
+    Point3          GetParticlePosition(Alembic::AbcGeom::IPoints &iPoints, const Alembic::AbcGeom::IPointsSchema::Sample &floorSample, const Alembic::AbcGeom::IPointsSchema::Sample &ceilSample, const SampleInfo &sampleInfo, int index) const;
     Point3          GetParticleVelocity(const Alembic::AbcGeom::IPointsSchema::Sample &floorSample, const Alembic::AbcGeom::IPointsSchema::Sample &ceilSample, const SampleInfo &sampleInfo, int index) const;
     float           GetParticleRadius(Alembic::AbcGeom::IPoints &iPoints, const SampleInfo &sampleInfo, int index) const;
     TimeValue       GetParticleAge(Alembic::AbcGeom::IPoints &iPoints, const SampleInfo &sampleInfo, int index) const;

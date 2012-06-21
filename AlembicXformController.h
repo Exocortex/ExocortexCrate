@@ -45,7 +45,9 @@ public:
     void DeleteThis() { delete this; }
 	RefTargetHandle Clone(RemapDir& remap);
 
-    void BeginEditParams( IObjParam  *ip, ULONG flags,Animatable *prev);
+	void EnumAuxFiles(AssetEnumCallback& nameEnum, DWORD flags);
+
+	void BeginEditParams( IObjParam  *ip, ULONG flags,Animatable *prev);
     void EndEditParams( IObjParam *ip, ULONG flags,Animatable *next);
 
     int	NumParamBlocks() { return 1; }					// return number of ParamBlocks in this instance

@@ -36,6 +36,7 @@ static ParamBlockDesc2 AlembicParticlesParams(
 	AlembicParticles::ID_PATH, _T("path"), TYPE_FILENAME, P_RESET_DEFAULT, IDS_PATH,
 	    p_default, "",
 	    p_ui,        TYPE_EDITBOX,		IDC_PATH_EDIT,
+		p_assetTypeID,	AssetManagement::kExternalLink,
 		p_end,
         
 	AlembicParticles::ID_IDENTIFIER, _T("identifier"), TYPE_STRING, P_RESET_DEFAULT, IDS_IDENTIFIER,
@@ -62,6 +63,23 @@ static ParamBlockDesc2 AlembicParticlesParams(
 // static member variables
 AlembicParticles *AlembicParticles::s_EditObject = NULL;
 IObjParam *AlembicParticles::s_ObjParam = NULL;
+
+
+void AlembicParticles::EnumAuxFiles(AssetEnumCallback& nameEnum, DWORD flags)  {
+	if ((flags&FILE_ENUM_CHECK_AWORK1)&&TestAFlag(A_WORK1)) return; // LAM - 4/11/03
+
+	if (!(flags&FILE_ENUM_INACTIVE)) return; // not needed by renderer
+
+	if(flags & FILE_ENUM_ACCESSOR_INTERFACE)	{
+		IEnumAuxAssetsCallback* callback = static_cast<IEnumAuxAssetsCallback*>(&nameEnum);
+		callback->DeclareAsset(AlembicPathAccessor(this));		
+	}
+	//else {
+	//	IPathConfigMgr::GetPathConfigMgr()->RecordInputAsset( this->GetParamBlockByID( 0 )->GetAssetUser( GetParamIdByName( this, 0, "path" ), 0 ), nameEnum, flags);
+	//}
+
+	ReferenceTarget::EnumAuxFiles(nameEnum, flags);
+} 
 
 ParticleMtl::ParticleMtl():Material() 
 {
@@ -179,7 +197,7 @@ void AlembicParticles::UpdateParticles(TimeValue t, INode *node)
  
     for (int i = 0; i < numParticles; ++i)
     {
-        parts.points[i] = GetParticlePosition(floorSample, ceilSample, sampleInfo, i) * m_objToWorld;
+        parts.points[i] = GetParticlePosition( m_iPoints, floorSample, ceilSample, sampleInfo, i) * m_objToWorld;
         parts.vels[i] = GetParticleVelocity(floorSample, ceilSample, sampleInfo, i);
         parts.ages[i] = GetParticleAge(m_iPoints, sampleInfo, i);
 		parts.radius[i] = GetParticleRadius(m_iPoints, sampleInfo, i);
@@ -412,7 +430,7 @@ int AlembicParticles::GetNumParticles(const Alembic::AbcGeom::IPointsSchema::Sam
     return static_cast<int>(floorSample.getPositions()->size());
 }
 
-Point3 AlembicParticles::GetParticlePosition(const Alembic::AbcGeom::IPointsSchema::Sample &floorSample, const Alembic::AbcGeom::IPointsSchema::Sample &ceilSample, const SampleInfo &sampleInfo, int index) const
+Point3 AlembicParticles::GetParticlePosition(Alembic::AbcGeom::IPoints &iPoints, const Alembic::AbcGeom::IPointsSchema::Sample &floorSample, const Alembic::AbcGeom::IPointsSchema::Sample &ceilSample, const SampleInfo &sampleInfo, int index) const
 {	
 	Imath::V3f alembicP3f = floorSample.getPositions()->get()[index];
 
@@ -430,7 +448,10 @@ Point3 AlembicParticles::GetParticlePosition(const Alembic::AbcGeom::IPointsSche
             alembicVel3f = velocitiesArray->get()[(velocitiesArray->size() > index) ? index : 0];
         }
 
-        float alpha = static_cast<float>(sampleInfo.alpha);
+	 	double timeAlpha = (double)(iPoints.getSchema().getTimeSampling()->getSampleTime(sampleInfo.ceilIndex) - 
+ 					iPoints.getSchema().getTimeSampling()->getSampleTime(sampleInfo.floorIndex)) * sampleInfo.alpha;
+      
+        float alpha = static_cast<float>(timeAlpha);
         alembicP3f.x = alembicP3f.x + alpha * alembicVel3f.x;
         alembicP3f.y = alembicP3f.y + alpha * alembicVel3f.y;
         alembicP3f.z = alembicP3f.z + alpha * alembicVel3f.z;
@@ -451,7 +472,7 @@ Point3 AlembicParticles::GetParticleVelocity(const Alembic::AbcGeom::IPointsSche
 
     if (sampleInfo.alpha != 0.0)
     {
-        velocitiesArray = ceilSample.getVelocities();
+		velocitiesArray = ceilSample.getVelocities();
         if (velocitiesArray != NULL && velocitiesArray->size() > 0)
         {
             const Imath::V3f &alembicCeilP3f = velocitiesArray->get()[(velocitiesArray->size() > index) ? index : 0];
@@ -835,7 +856,7 @@ void AlembicParticles::GetMultipleRenderMeshTM_Internal(TimeValue  t, INode *ino
 		Alembic::AbcGeom::IPointsSchema::Sample floorSample;
 		Alembic::AbcGeom::IPointsSchema::Sample ceilSample;
 		SampleInfo sampleInfo = GetSampleAtTime(m_iPoints, t, floorSample, ceilSample);
-		pos = GetParticlePosition(floorSample, ceilSample, sampleInfo, meshNumber) * m_objToWorld;
+		pos = GetParticlePosition( m_iPoints, floorSample, ceilSample, sampleInfo, meshNumber) * m_objToWorld;
 		orient = GetParticleOrientation(m_iPoints, sampleInfo, meshNumber);
 		//TODO: we could possibly do it this way as well:
 		//Point3 pos2 = pos + static_cast<float>(sampleInfo.alpha) * parts.vels[meshNumber];

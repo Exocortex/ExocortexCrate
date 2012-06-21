@@ -24,11 +24,11 @@ ObjectList::~ObjectList()
 {
 }
 
-ObjectEntry *ObjectList::Contains(Object *obj) 
+ObjectEntry *ObjectList::Contains(INode *node) 
 {
 	for( int i = 0; i < this->objectEntries.size(); i ++ ) {
 		ObjectEntry *e = &( this->objectEntries[i] );
-		if(e->entry.obj == obj)
+		if(e->entry.node == node)
         {
 			return e;
         }
@@ -38,7 +38,7 @@ ObjectEntry *ObjectList::Contains(Object *obj)
 
 void ObjectList::Append(SceneEntry *e) 
 {
-    if (e->type == OBTYPE_MESH && Contains(e->obj))
+    if (e->type == OBTYPE_MESH && Contains(e->node))
         return;
 
 	ObjectEntry oe( e );

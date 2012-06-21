@@ -297,9 +297,18 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
 			  assert( pVelocityArray != NULL );
 			  pVelocityArray = meshVel->get();
 
+			  double timeAlpha;
+			  if( objMesh.valid() ) {
+			      timeAlpha = (double)(objMesh.getSchema().getTimeSampling()->getSampleTime(sampleInfo.ceilIndex) - 
+						objMesh.getSchema().getTimeSampling()->getSampleTime(sampleInfo.floorIndex)) * sampleInfoAlpha;
+			  }
+			  else {
+			     timeAlpha = (double)(objSubD.getSchema().getTimeSampling()->getSampleTime(sampleInfo.ceilIndex) - 
+						objSubD.getSchema().getTimeSampling()->getSampleTime(sampleInfo.floorIndex)) * sampleInfoAlpha;
+			  }
               for(size_t i=0;i<meshVel->size();i++)
               {
-                  vArray[i] += pVelocityArray[i] * sampleInfoAlpha;                  
+                  vArray[i] += pVelocityArray[i] * timeAlpha;                  
               }
           }
 	   }
@@ -996,39 +1005,61 @@ int AlembicImport_PolyMesh(const std::string &path, Alembic::AbcGeom::IObject& i
 
     // Create the poly or tri object and place it in the scene
     // Need to use the attach to existing import flag here 
-    if (!Alembic::AbcGeom::IPolyMesh::matches(iObj.getMetaData()))
-    {
-        return alembic_failure;
-    }
+	Object *newObject = NULL;
 
-    Alembic::AbcGeom::IPolyMesh objMesh = Alembic::AbcGeom::IPolyMesh(iObj, Alembic::Abc::kWrapExisting);
-    if (!objMesh.valid())
-    {
-        return alembic_failure;
-    }
+	if( Alembic::AbcGeom::IPolyMesh::matches(iObj.getMetaData()) ) {
 
-	if( objMesh.getSchema().getNumSamples() == 0 ) {
-        ESS_LOG_WARNING( "Alembic Mesh set has 0 samples, ignoring." );
-        return alembic_failure;
+		Alembic::AbcGeom::IPolyMesh objMesh = Alembic::AbcGeom::IPolyMesh(iObj, Alembic::Abc::kWrapExisting);
+		if (!objMesh.valid())
+		{
+			return alembic_failure;
+		}
+
+		if( objMesh.getSchema().getNumSamples() == 0 ) {
+			ESS_LOG_WARNING( "Alembic Mesh set has 0 samples, ignoring." );
+			return alembic_failure;
+		}
+
+		Alembic::AbcGeom::IPolyMeshSchema::Sample polyMeshSample;
+		objMesh.getSchema().get(polyMeshSample, 0);
+
+		if (AlembicImport_IsPolyObject(polyMeshSample))
+		{
+			
+			PolyObject *pPolyObject = (PolyObject *) GetPolyObjDescriptor()->Create();
+			dataFillOptions.pMNMesh = &(pPolyObject->GetMesh());
+			newObject = pPolyObject;
+		}
+		else
+		{
+			TriObject *pTriObj = (TriObject *) GetTriObjDescriptor()->Create();
+			dataFillOptions.pMesh = &( pTriObj->GetMesh() );
+			newObject = pTriObj;
+		}
 	}
+	else if( Alembic::AbcGeom::ISubD::matches(iObj.getMetaData()) )
+	{
+		Alembic::AbcGeom::ISubD objSubD = Alembic::AbcGeom::ISubD(iObj, Alembic::Abc::kWrapExisting);
+		if (!objSubD.valid())
+		{
+			return alembic_failure;
+		}
 
-    Alembic::AbcGeom::IPolyMeshSchema::Sample polyMeshSample;
-    objMesh.getSchema().get(polyMeshSample, 0);
+		if( objSubD.getSchema().getNumSamples() == 0 ) {
+			ESS_LOG_WARNING( "Alembic SubD set has 0 samples, ignoring." );
+			return alembic_failure;
+		}
 
-    Object *newObject = NULL;
-    if (AlembicImport_IsPolyObject(polyMeshSample))
-    {
-		
+		Alembic::AbcGeom::ISubDSchema::Sample subDSample;
+		objSubD.getSchema().get(subDSample, 0);
+
 		PolyObject *pPolyObject = (PolyObject *) GetPolyObjDescriptor()->Create();
 		dataFillOptions.pMNMesh = &(pPolyObject->GetMesh());
-	    newObject = pPolyObject;
-    }
-    else
-    {
-        TriObject *pTriObj = (TriObject *) GetTriObjDescriptor()->Create();
-	    dataFillOptions.pMesh = &( pTriObj->GetMesh() );
-	    newObject = pTriObj;
-    }
+		newObject = pPolyObject;
+	}
+	else {
+		return alembic_failure;
+	}
 
     if (newObject == NULL)
     {
@@ -1171,6 +1202,16 @@ int AlembicImport_PolyMesh(const std::string &path, Alembic::AbcGeom::IObject& i
 		if( options.importNormals ) {
 			modifiersToEnable.push_back( pModifier );
 		}
+	}
+
+	if( Alembic::AbcGeom::ISubD::matches(iObj.getMetaData()) )
+	{
+		GET_MAX_INTERFACE()->SelectNode( pNode );
+
+		char* szBuffer = "modPanel.addModToSelection (meshsmooth ()) ui:on\n"
+						 "$.modifiers[#MeshSmooth].iterations = 1\n";
+
+		ExecuteMAXScriptScript( szBuffer );
 	}
 
     // Add the new inode to our current scene list

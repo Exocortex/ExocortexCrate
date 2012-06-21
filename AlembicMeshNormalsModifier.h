@@ -41,6 +41,8 @@ public:
 	void DeleteThis() { delete this; }
 	RefTargetHandle Clone(RemapDir& remap);
 
+	void EnumAuxFiles(AssetEnumCallback& nameEnum, DWORD flags);
+
 	// From Modifier
 	ChannelMask ChannelsUsed()  { return GEOM_CHANNEL; }
 	ChannelMask ChannelsChanged() { return GEOM_CHANNEL; }

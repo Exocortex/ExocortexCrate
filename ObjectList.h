@@ -24,7 +24,7 @@ public:
 				~ObjectList();
 	int			Count() { return (int) objectEntries.size(); }
 	void		Append(SceneEntry *e);
-	ObjectEntry *Contains(Object *obj);
+	//ObjectEntry *Contains(Object *obj);
 	ObjectEntry *Contains(INode *node);
 	INode		*FindLookatNode(INode *node);
     INode       *FindNodeWithFullName(std::string &identifier);
