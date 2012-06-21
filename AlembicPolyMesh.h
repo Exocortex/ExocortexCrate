@@ -15,8 +15,8 @@ private:
    std::vector<Alembic::Abc::uint32_t> mNormalIndexVec;
    std::vector<Alembic::Abc::int32_t> mFaceCountVec;
    std::vector<Alembic::Abc::int32_t> mFaceIndicesVec;
-   std::vector<std::vector<Alembic::Abc::V2f>> mUvVec;
-   std::vector<std::vector<Alembic::Abc::uint32_t>> mUvIndexVec;
+   std::vector<std::vector<Alembic::Abc::V2f> > mUvVec;
+   std::vector<std::vector<Alembic::Abc::uint32_t> > mUvIndexVec;
    std::vector<Alembic::AbcGeom::OV2fGeomParam> mUvParams;
    std::vector<unsigned int> mSampleLookup;
 
