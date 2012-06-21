@@ -56,6 +56,74 @@ typedef std::map<INode*, int> groupParticleCountT;
 bool getParticleSystemMesh(TimeValue ticks, Object* obj, INode* node, IntermediatePolyMesh3DSMax* mesh, 
 						   materialsMergeStr* pMatMerge, AlembicWriteJob * mJob, int nNumSamples)
 {
+	static const bool ENABLE_VELOCITY_EXPORT = true;
+
+	SimpleParticle* pSimpleParticle = (SimpleParticle*) obj->GetInterface(I_SIMPLEPARTICLEOBJ);
+	if(pSimpleParticle){
+
+		NullView nullView;
+
+		AlembicParticles* pAlembicParticles = NULL;
+		if(obj->CanConvertToType(ALEMBIC_SIMPLE_PARTICLE_CLASSID))
+		{
+			pAlembicParticles = reinterpret_cast<AlembicParticles*>(obj->ConvertToType(ticks, ALEMBIC_SIMPLE_PARTICLE_CLASSID));
+		}
+
+		if(pAlembicParticles){
+
+			//pSimpleParticle->Update(ticks, node);
+			//int numParticles = pSimpleParticle->parts.points.Count();
+
+			//for(int i=0; i<numParticles; i++){
+
+			//	particleMeshData mdata;
+			//	mdata.pMtl = NULL; //TODO: where get material?
+			//	mdata.animHandle = 0; //TODO: where to get handle?
+			//	Interval interval = FOREVER;
+			//	pAlembicParticles->GetMultipleRenderMeshTM_Internal(ticks, NULL, nullView, i, mdata.meshTM, interval);
+
+			//	//Matrix3 objectToWorld = inode->GetObjectTM( ticks );
+			//	//mdata.meshTM = mdata.meshTM * Inverse(objectToWorld); 
+
+			//	mdata.pMesh = pAlembicParticles->GetMultipleRenderMesh(ticks, node /*system node or particle node?*/ , nullView, mdata.bNeedDelete, i);
+
+			//	if(mdata.pMesh){
+			//		meshes.push_back(mdata);
+			//	}
+			//}
+		}
+		else{
+
+			Mtl* pMtl = NULL;//TODO: where to get material?
+			pMatMerge->currUniqueHandle = 0;//TODO: where to get handle?
+	
+			Matrix3 meshTM;
+			meshTM.IdentityMatrix();
+			//Interval meshValid;
+			//meshValid.SetInstant(ticks);
+
+			BOOL bNeedDelete = FALSE;
+			Mesh* pMesh = pSimpleParticle->GetRenderMesh(ticks, node, nullView, bNeedDelete);
+
+			if(!pMesh || (pMesh && pMesh->numVerts == 0) ){
+				ESS_LOG_INFO("Error. Null render mesh. Tick: "<<ticks);
+				//return false;
+			}
+
+			if(ENABLE_VELOCITY_EXPORT){//TODO...
+
+			}
+
+			mesh->Save(mJob, ticks, pMesh, NULL, meshTM, pMtl, nNumSamples, pMatMerge);
+
+			if(bNeedDelete){
+				delete pMesh;
+			}
+		}
+
+		return true;
+	}
+	//Export as particle flow if not simple particle
 
     Matrix3 nodeWorldTM = node->GetObjTMAfterWSM(ticks);
     Alembic::Abc::M44d nodeWorldTrans;
@@ -72,8 +140,6 @@ bool getParticleSystemMesh(TimeValue ticks, Object* obj, INode* node, Intermedia
 	groupParticleCountT groupParticleCount;
 
 	//TODO: currently the render operator settings will affect the export
-
-	static const bool ENABLE_VELOCITY_EXPORT = true;
 
 	//static Imath::V4f prevPos(0.0, 0.0, 0.0, 0.0);
 
@@ -110,7 +176,6 @@ bool getParticleSystemMesh(TimeValue ticks, Object* obj, INode* node, Intermedia
 
 		BOOL bNeedDelete = FALSE;
 		Mesh* pMesh = particleRender->GetMultipleRenderMesh(pCont, ticks, obj, pNode, nullView, bNeedDelete, meshId);
-
 
 		if(!pMesh || (pMesh && pMesh->numVerts == 0) ){
 			ESS_LOG_INFO("Error. Null render mesh. Tick: "<<ticks<<" pid: "<<i);
