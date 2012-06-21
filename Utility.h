@@ -127,7 +127,7 @@ TriObject* GetTriObjectFromNode(INode *iNode, const TimeValue t, bool &deleteIt)
 INode* GetNodeFromHierarchyPath(const std::string& path);
 INode* GetNodeFromName(const std::string& name);
 INode* GetChildNodeFromName(const std::string& name, INode* pParent);
-
+std::string getNodePath(const std::string& name);
 
 class AlembicPathAccessor : public  IAssetAccessor	{
 	public:

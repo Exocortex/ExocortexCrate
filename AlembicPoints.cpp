@@ -465,7 +465,7 @@ void AlembicPoints::GetShapeType(IParticleObjectExt *pExt, int particleId, TimeV
 
         if (instanceId == USHRT_MAX)
         {
-            nameList.push_back(pNode->GetName());
+			nameList.push_back(getNodePath(pNode->GetName()));
             instanceId = (uint16_t)nameList.size()-1;
         }
 
