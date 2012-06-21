@@ -176,7 +176,7 @@ bool AlembicPoints::Save(double time, bool bLastFrame)
 
 		if(particlesExt){
 			pos = ConvertMaxPointToAlembicPoint(*particlesExt->GetParticlePositionByIndex(i));
-			vel = ConvertMaxVectorToAlembicVector(*particlesExt->GetParticleSpeedByIndex(i));
+			vel = ConvertMaxVectorToAlembicVector(*particlesExt->GetParticleSpeedByIndex(i) * TIME_TICKSPERSEC);
 			scale = ConvertMaxScaleToAlembicScale(*particlesExt->GetParticleScaleXYZByIndex(i));
 			ConvertMaxEulerXYZToAlembicQuat(*particlesExt->GetParticleOrientationByIndex(i), orientation);
 			ConvertMaxAngAxisToAlembicQuat(*particlesExt->GetParticleSpinByIndex(i), spin);
