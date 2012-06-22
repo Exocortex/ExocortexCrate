@@ -3,6 +3,8 @@
 
 #include "AlembicObject.h"
 
+
+
 class IParticleObjectExt;
 
 class AlembicPoints: public AlembicObject
@@ -120,9 +122,24 @@ public:
 		PFlow_kShapeLibrary_dimensionType_2D_square = 14
 	};
 private:
+
+	struct shapeInfo
+	{
+		ShapeType type;
+		float animationTime;
+		std::string instanceName;
+	};
+
+	//maps born index to shape type
+	//used to store most recent shape assignment
+	typedef std::map<int, shapeInfo> perParticleShapeMap;
+	typedef std::map<int, shapeInfo>::iterator perParticleShapeMap_it;
+	typedef std::map<int, shapeInfo>::const_iterator perParticleShapeMap_cit;
+
     static void AlembicPoints::ConvertMaxEulerXYZToAlembicQuat(const Point3 &degrees, Alembic::Abc::Quatd &quat);
     static void AlembicPoints::ConvertMaxAngAxisToAlembicQuat(const AngAxis &angAxis, Alembic::Abc::Quatd &quat);
-    static void AlembicPoints::GetShapeType(IParticleObjectExt *pExt, int particleId, TimeValue ticks, ShapeType &type, unsigned short &instanceId, float &animationTime, std::vector<std::string> &nameList);
+    void AlembicPoints::GetShapeType(IParticleObjectExt *pExt, int particleId, TimeValue ticks, ShapeType &type, unsigned short &instanceId, float &animationTime, std::vector<std::string> &nameList);
+	void AlembicPoints::ReadOrWriteShapeMap(IParticleObjectExt *pExt, int particleId, ShapeType &type, unsigned short &instanceId, float &animationTime, std::vector<std::string> &nameList);
 
     Alembic::AbcGeom::OXformSchema mXformSchema;
     Alembic::AbcGeom::OPointsSchema mPointsSchema;
@@ -132,7 +149,8 @@ private:
     // instance lookups
     Alembic::Abc::ALEMBIC_VERSION_NS::OStringArrayProperty mInstanceNamesProperty;
     std::vector<std::string> mInstanceNames;
-    std::map<unsigned long, size_t> mInstanceMap;
+    //std::map<unsigned long, size_t> mInstanceMap;
+	perParticleShapeMap mPerParticleShapeMap;
 
     // Additional particle attributes
     Alembic::Abc::ALEMBIC_VERSION_NS::OV3fArrayProperty mScaleProperty;

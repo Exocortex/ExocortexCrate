@@ -182,7 +182,8 @@ bool AlembicPoints::Save(double time, bool bLastFrame)
 			ConvertMaxAngAxisToAlembicQuat(*particlesExt->GetParticleSpinByIndex(i), spin);
 			age = (float)GetSecondsFromTimeValue(particlesExt->GetParticleAgeByIndex(i));
 			id = particlesExt->GetParticleBornIndex(i);
-			AlembicPoints::GetShapeType(particlesExt, i, ticks, shapetype, shapeInstanceId, shapeInstanceTime, instanceNamesVec);
+			GetShapeType(particlesExt, i, ticks, shapetype, shapeInstanceId, shapeInstanceTime, instanceNamesVec);
+			ReadOrWriteShapeMap(particlesExt, i, shapetype, shapeInstanceId, shapeInstanceTime, instanceNamesVec);
 		}
 		else if(pSimpleParticle){
 			if( ! pSimpleParticle->parts.Alive( i ) ) {
@@ -349,13 +350,14 @@ void AlembicPoints::GetShapeType(IParticleObjectExt *pExt, int particleId, TimeV
 
 	//In the case of multiple shape operators in an action list, the one furthest down the list seems to be the one that applies
     IPFActionList *particleActionList = GetPFActionListInterface(particleActionObj);
-    for (int p = particleActionList->NumActions()-1; p >= 0; p -= 1)
-    {
-        INode *pActionNode = particleActionList->GetAction(p);
-        Object *pActionObj = (pActionNode != NULL ? pActionNode->EvalWorldState(ticks).obj : NULL);
+	
+	for (int p = particleActionList->NumActions()-1; p >= 0; p -= 1)
+	{
+		INode *pActionNode = particleActionList->GetAction(p);
+		Object *pActionObj = (pActionNode != NULL ? pActionNode->EvalWorldState(ticks).obj : NULL);
 
 		if (pActionObj == NULL){
-            continue;
+			continue;
 		}
 
 		if (pActionObj->ClassID() == PFOperatorSimpleShape_Class_ID){
@@ -371,10 +373,10 @@ void AlembicPoints::GetShapeType(IParticleObjectExt *pExt, int particleId, TimeV
 			pSimpleOperator = static_cast<PFSimpleOperator*>(pActionObj);
 			break;
 		}else if(pActionObj->ClassID() == PFOperatorFacingShape_Class_ID){
-            pSimpleOperator = static_cast<PFSimpleOperator*>(pActionObj);
+			pSimpleOperator = static_cast<PFSimpleOperator*>(pActionObj);
 			break;
-        }
-    }
+		}
+	}
 
     if (pSimpleOperator && pSimpleOperator->ClassID() == PFOperatorSimpleShape_Class_ID)
     {
@@ -455,11 +457,13 @@ void AlembicPoints::GetShapeType(IParticleObjectExt *pExt, int particleId, TimeV
         
         type = ShapeType_Instance;
 
+		std::string nodePath = getNodePath(pNode->GetName());
+
         // Find if the name is alerady registered, otherwise add it to the list
         instanceId = USHRT_MAX;
         for ( int i = 0; i < nameList.size(); i += 1)
         {
-            if (!strcmp(nameList[i].c_str(), pNode->GetName()))
+            if (!strcmp(nameList[i].c_str(), nodePath.c_str()))
             {
                 instanceId = i;
                 break;
@@ -468,7 +472,7 @@ void AlembicPoints::GetShapeType(IParticleObjectExt *pExt, int particleId, TimeV
 
         if (instanceId == USHRT_MAX)
         {
-			nameList.push_back(getNodePath(pNode->GetName()));
+			nameList.push_back(nodePath);
             instanceId = (uint16_t)nameList.size()-1;
         }
 
@@ -567,5 +571,59 @@ void AlembicPoints::GetShapeType(IParticleObjectExt *pExt, int particleId, TimeV
 	else if (pSimpleOperator && pSimpleOperator->ClassID() == PFOperatorFacingShape_Class_ID)
 	{
 		ESS_LOG_INFO("Shape Facing operator not supported.");
+	}
+}
+
+
+void AlembicPoints::ReadOrWriteShapeMap(IParticleObjectExt *pExt, int particleId, ShapeType &type, uint16_t &instanceId, float &animationTime, std::vector<std::string> &nameList)
+{
+	int nBornIndex = pExt->GetParticleBornIndex(particleId);
+	if(type == ShapeType_NbElements)
+	{
+		//Couldn't find assignment for this particle group. 
+		//Check the cache to see if a shape was previously assigned to this particle by different particle group's action list
+
+		mPerParticleShapeMap[0];
+
+		AlembicPoints::perParticleShapeMap_it it = mPerParticleShapeMap.find(nBornIndex);
+		if(it != mPerParticleShapeMap.end()){
+			AlembicPoints::shapeInfo& sInfo = it->second;
+			type = sInfo.type;
+			animationTime = sInfo.animationTime;
+			
+			// Find if the name is alerady registered, otherwise add it to the list
+			instanceId = USHRT_MAX;
+			for ( int i = 0; i < nameList.size(); i += 1)
+			{
+				if (!strcmp(nameList[i].c_str(), sInfo.instanceName.c_str()))
+				{
+					instanceId = i;
+					break;
+				}
+			}
+
+			if (instanceId == USHRT_MAX)
+			{
+				nameList.push_back(sInfo.instanceName);
+				instanceId = (uint16_t)nameList.size()-1;
+			}
+		}
+		else{
+			ESS_LOG_INFO("Could not determine shape type for particle with born index: "<<nBornIndex<<". Defaulting to point.");
+ 			type = ShapeType_Point;
+		}
+	}
+	else
+	{
+		//A shape shape assignment was found
+		//cache the most recently assigned shape for each particle
+
+		AlembicPoints::shapeInfo sInfo;
+		sInfo.type = type;
+		sInfo.animationTime = animationTime;
+		if(sInfo.type == ShapeType_Instance){
+			sInfo.instanceName = nameList[instanceId];
+		}
+		mPerParticleShapeMap[nBornIndex] = sInfo;
 	}
 }
