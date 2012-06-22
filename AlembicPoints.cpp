@@ -327,7 +327,7 @@ void AlembicPoints::ConvertMaxAngAxisToAlembicQuat(const AngAxis &angAxis, Alemb
 void AlembicPoints::GetShapeType(IParticleObjectExt *pExt, int particleId, TimeValue ticks, ShapeType &type, uint16_t &instanceId, float &animationTime, std::vector<std::string> &nameList)
 {
     // Set up initial values
-    type = ShapeType_Point;
+    type = ShapeType_NbElements;//default to nothing
     instanceId = 0;
     animationTime = 0.0f;
 
@@ -347,29 +347,32 @@ void AlembicPoints::GetShapeType(IParticleObjectExt *pExt, int particleId, TimeV
 
     PFSimpleOperator *pSimpleOperator = NULL;
 
+	//In the case of multiple shape operators in an action list, the one furthest down the list seems to be the one that applies
     IPFActionList *particleActionList = GetPFActionListInterface(particleActionObj);
     for (int p = particleActionList->NumActions()-1; p >= 0; p -= 1)
     {
         INode *pActionNode = particleActionList->GetAction(p);
         Object *pActionObj = (pActionNode != NULL ? pActionNode->EvalWorldState(ticks).obj : NULL);
 
-        if (pActionObj == NULL)
+		if (pActionObj == NULL){
             continue;
-
-        if (pActionObj->ClassID() == PFOperatorSimpleShape_Class_ID)
-        {
-            pSimpleOperator = static_cast<PFSimpleOperator*>(pActionObj);
-            break;
-        }
-		else if(pActionObj->ClassID() == PFOperatorShapeLib_Class_ID)
-		{
-            pSimpleOperator = static_cast<PFSimpleOperator*>(pActionObj);
-            break;
 		}
-        else if (pActionObj->ClassID() == PFOperatorInstanceShape_Class_ID)
-        {
+
+		if (pActionObj->ClassID() == PFOperatorSimpleShape_Class_ID){
+			pSimpleOperator = static_cast<PFSimpleOperator*>(pActionObj);
+			break;
+		}else if(pActionObj->ClassID() == PFOperatorShapeLib_Class_ID){
+			pSimpleOperator = static_cast<PFSimpleOperator*>(pActionObj);
+			break;
+		}else if(pActionObj->ClassID() == PFOperatorInstanceShape_Class_ID){
+			pSimpleOperator = static_cast<PFSimpleOperator*>(pActionObj);
+			break;
+		}else if(pActionObj->ClassID() == PFOperatorMarkShape_Class_ID){
+			pSimpleOperator = static_cast<PFSimpleOperator*>(pActionObj);
+			break;
+		}else if(pActionObj->ClassID() == PFOperatorFacingShape_Class_ID){
             pSimpleOperator = static_cast<PFSimpleOperator*>(pActionObj);
-            break;
+			break;
         }
     }
 
@@ -557,4 +560,12 @@ void AlembicPoints::GetShapeType(IParticleObjectExt *pExt, int particleId, TimeV
         TimeValue t = TimeValue(time);
         animationTime = (float)GetSecondsFromTimeValue(t);
     }
+	else if (pSimpleOperator && pSimpleOperator->ClassID() == PFOperatorMarkShape_Class_ID)
+	{
+		ESS_LOG_INFO("Shape Mark operator not supported.");
+	}
+	else if (pSimpleOperator && pSimpleOperator->ClassID() == PFOperatorFacingShape_Class_ID)
+	{
+		ESS_LOG_INFO("Shape Facing operator not supported.");
+	}
 }
