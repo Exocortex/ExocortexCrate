@@ -132,6 +132,7 @@ private:
     TimeValue       GetParticleShapeInstanceTime(Alembic::AbcGeom::IPoints &iPoints, const SampleInfo &sampleInfo, int index) const;
     void            FillParticleShapeNodes(Alembic::AbcGeom::IPoints &iPoints, const SampleInfo &sampleInfo);
     INode*          GetParticleMeshNode(int meshNumber, INode *displayNode);
+	VertColor		GetParticleColor(Alembic::AbcGeom::IPoints &iPoints, const SampleInfo &sampleInfo, int index) const;
   //  void            ClearCurrentViewportMeshes();
 private:
     Mesh *BuildPointMesh(int meshNumber, TimeValue t, INode *node, View& view, BOOL &needDelete);
@@ -151,6 +152,7 @@ private:
     std::vector<TimeValue> m_InstanceShapeTimes;
     Alembic::Abc::StringArraySamplePtr m_InstanceShapeNames;
     std::vector<INode*> m_InstanceShapeINodes;
+	std::vector<VertColor> m_VCArray;
     //size_t m_TotalShapesToEnumerate;
    // std::vector<viewportmesh> m_ParticleViewportMeshes;
     std::string m_CachedAbcFile;
