@@ -1029,13 +1029,17 @@ int AlembicParticles::Display(TimeValue t, INode* inode, ViewExp *vpt, int flags
 			Material *mtls = meshNode->Mtls();
 			int numMtls = meshNode->NumMtls();
 
-			//Mtl* pMtl = inode->GetMtl();
+			Mtl* pMtl = inode->GetMtl();
 
-			//if(pMtl && numMtls > 0){
-			//	mtls[0].Kd = m_VCArray[i];
-			//	mtls[0].Ks = pMtl->GetSpecular();
-			//	mtls[0].Ka = pMtl->GetAmbient();
-			//}
+			if(!pMtl && numMtls > 0){
+				mtls[0].Kd = m_VCArray[i];
+			}
+
+			if(pMtl && numMtls > 0){
+				mtls[0].Kd = pMtl->GetDiffuse();
+				mtls[0].Ks = pMtl->GetSpecular();
+				mtls[0].Ka = pMtl->GetAmbient();
+			}
 
 			if (numMtls > 1){
 				gw->setMaterial(mtls[0], 0);
