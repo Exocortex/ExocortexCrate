@@ -121,6 +121,15 @@ public:
 		PFlow_kShapeLibrary_dimensionType_2D_circle24sides = 1,
 		PFlow_kShapeLibrary_dimensionType_2D_square = 14
 	};
+public:
+	enum
+	{	
+		kDisplay_type, 
+		kDisplay_visible,
+		kDisplay_color,
+		kDisplay_showNumbering,
+		kDisplay_selectedType,
+	};
 private:
 
 	struct shapeInfo
@@ -140,6 +149,7 @@ private:
     static void AlembicPoints::ConvertMaxAngAxisToAlembicQuat(const AngAxis &angAxis, Alembic::Abc::Quatd &quat);
     void AlembicPoints::GetShapeType(IParticleObjectExt *pExt, int particleId, TimeValue ticks, ShapeType &type, unsigned short &instanceId, float &animationTime, std::vector<std::string> &nameList);
 	void AlembicPoints::ReadOrWriteShapeMap(IParticleObjectExt *pExt, int particleId, ShapeType &type, unsigned short &instanceId, float &animationTime, std::vector<std::string> &nameList);
+	Alembic::Abc::C4f AlembicPoints::GetColor(IParticleObjectExt *pExt, int particleId, TimeValue ticks);
 
     Alembic::AbcGeom::OXformSchema mXformSchema;
     Alembic::AbcGeom::OPointsSchema mPointsSchema;
