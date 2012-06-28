@@ -394,8 +394,10 @@ global proc exocortexAlembicImport(string $filename,string $dialog)
         }
         if($identifierA != $identifierB)
           continue;
-        if($objects[$j] != "")
+
+        if($objects[$j] != "" && $objects[$j] != $shape) {
           parent $objects[$j] $shape;
+        }
       }
     }
     else
