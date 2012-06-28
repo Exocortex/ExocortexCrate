@@ -760,7 +760,7 @@ VertColor AlembicParticles::GetParticleColor(Alembic::AbcGeom::IPoints &iPoints,
 {
 	//int color = RGB(FLto255(0),FLto255(0), FLto255(0));
 
-	VertColor color(0.0, 0.0, 0.0);
+	VertColor color(0.5, 0.5, 0.5);
     if (iPoints.getSchema().getPropertyHeader(".color") == NULL)
     {
         return color;
@@ -1029,26 +1029,31 @@ int AlembicParticles::Display(TimeValue t, INode* inode, ViewExp *vpt, int flags
 			Material *mtls = meshNode->Mtls();
 			int numMtls = meshNode->NumMtls();
 
-			Mtl* pMtl = inode->GetMtl();
+			Mtl* pMtl = inode->GetMtl();//apply the particle system material first
+			//if(!pMtl){
+			//	pMtl = meshNode->GetMtl();//apply the instance material otherwise
+			//}
 
-			if(!pMtl && numMtls > 0){
-				mtls[0].Kd = m_VCArray[i];
+			if(numMtls > 0){
+				if(pMtl){
+					mtls[0].Kd = pMtl->GetDiffuse();
+					mtls[0].Ks = pMtl->GetSpecular();
+					mtls[0].Ka = pMtl->GetAmbient();
+				}
+				else{//if there is no material, set diffuse equal to the particle color
+					mtls[0].Kd = m_VCArray[i];
+				}
 			}
 
-			if(pMtl && numMtls > 0){
-				mtls[0].Kd = pMtl->GetDiffuse();
-				mtls[0].Ks = pMtl->GetSpecular();
-				mtls[0].Ka = pMtl->GetAmbient();
-			}
-
-			if (numMtls > 1){
+			//if (pMtl/*numMtls > 1*/){
 				gw->setMaterial(mtls[0], 0);
-			}
+			//}
 			gw->setTransform( elemToWorld );
 			mesh->render(gw, mtls, (flags&USE_DAMAGE_RECT) ? &vpt->GetDammageRect() : NULL, COMP_ALL, numMtls);
 		}
 		else
 		{
+			gw->setColor(FILL_COLOR, m_VCArray[i].x, m_VCArray[i].y, m_VCArray[i].z);
 			gw->setTransform(Matrix3(1));
 			gw->marker(&parts.points[i], POINT_MRKR);  
 		}
