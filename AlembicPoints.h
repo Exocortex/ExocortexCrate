@@ -6,6 +6,8 @@
 
 
 class IParticleObjectExt;
+class PFSimpleOperator;
+class IParticleGroup;
 
 class AlembicPoints: public AlembicObject
 {
@@ -137,18 +139,22 @@ private:
 		ShapeType type;
 		float animationTime;
 		std::string instanceName;
+		INode* pParentActionList;
+
+		shapeInfo():type(ShapeType_NbElements), animationTime(-1.0), instanceName(), pParentActionList(NULL)
+		{}
 	};
 
-	//maps born index to shape type
-	//used to store most recent shape assignment
-	typedef std::map<int, shapeInfo> perParticleShapeMap;
-	typedef std::map<int, shapeInfo>::iterator perParticleShapeMap_it;
-	typedef std::map<int, shapeInfo>::const_iterator perParticleShapeMap_cit;
+	//maps born actionList to shape type
+	//needed so that we can find the parent shape in the case that there is no shape assignment
+	typedef std::map<INode*, shapeInfo> perActionListShapeMap;
+	typedef std::map<INode*, shapeInfo>::iterator perActionListShapeMap_it;
+	typedef std::map<INode*, shapeInfo>::const_iterator perActionListShapeMap_cit;
 
     static void AlembicPoints::ConvertMaxEulerXYZToAlembicQuat(const Point3 &degrees, Alembic::Abc::Quatd &quat);
     static void AlembicPoints::ConvertMaxAngAxisToAlembicQuat(const AngAxis &angAxis, Alembic::Abc::Quatd &quat);
     void AlembicPoints::GetShapeType(IParticleObjectExt *pExt, int particleId, TimeValue ticks, ShapeType &type, unsigned short &instanceId, float &animationTime, std::vector<std::string> &nameList);
-	void AlembicPoints::ReadOrWriteShapeMap(IParticleObjectExt *pExt, int particleId, ShapeType &type, unsigned short &instanceId, float &animationTime, std::vector<std::string> &nameList);
+	void AlembicPoints::ReadShapeFromOperator( IParticleGroup *particleGroup, PFSimpleOperator *pSimpleOperator, int particleId, TimeValue ticks, ShapeType &type, unsigned short &instanceId, float &animationTime, std::vector<std::string> &nameList);
 	Alembic::Abc::C4f AlembicPoints::GetColor(IParticleObjectExt *pExt, int particleId, TimeValue ticks);
 
     Alembic::AbcGeom::OXformSchema mXformSchema;
@@ -160,7 +166,7 @@ private:
     Alembic::Abc::ALEMBIC_VERSION_NS::OStringArrayProperty mInstanceNamesProperty;
     std::vector<std::string> mInstanceNames;
     //std::map<unsigned long, size_t> mInstanceMap;
-	perParticleShapeMap mPerParticleShapeMap;
+	perActionListShapeMap mPerActionListShapeMap;
 
     // Additional particle attributes
     Alembic::Abc::ALEMBIC_VERSION_NS::OV3fArrayProperty mScaleProperty;
