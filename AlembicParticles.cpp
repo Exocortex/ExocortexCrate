@@ -480,7 +480,7 @@ AlembicParticles::GetParticleVelocities(const Alembic::AbcGeom::IPointsSchema::S
 	if( floorVelocities != NULL && floorVelocities->valid() && floorVelocities->size() > 0 ) {
 		int j = 0;
 		int jIncrement = floorVelocities->size() == vels.Count() ? 1 : 0;
-		for( int i = 0; i < std::min( (int)vels.Count(), (int)floorVelocities->size() ); i ++ ) {
+		for( int i = 0; i < vels.Count(); i ++ ) {
 			vels[i] = ConvertAlembicPointToMaxPoint( (*floorVelocities)[j] );
 			j += jIncrement;
 		}
@@ -503,7 +503,7 @@ AlembicParticles::GetParticleRadii(Alembic::AbcGeom::IPoints &iPoints, const Sam
 		if( floorSamples != NULL && floorSamples->valid() && floorSamples->size() > 0 ) {
 			int j = 0;
 			int jIncrement = floorSamples->size() == radius.Count() ? 1 : 0;
-			for( int i = 0; i < std::min( (int)radius.Count(), (int)floorSamples->size() ); i ++ ) {
+			for( int i = 0; i < radius.Count(); i ++ ) {
 				radius[i] = (*floorSamples)[j];
 				j += jIncrement;
 			}
@@ -529,7 +529,7 @@ AlembicParticles::GetParticleAges(Alembic::AbcGeom::IPoints &iPoints, const Samp
 			if( floorSamples != NULL && floorSamples->size() > 0  && floorSamples->size() == ages.Count() ) {
 				int j = 0;
 				int jIncrement = floorSamples->size() == ages.Count() ? 1 : 0;
-				for( int i = 0; i < std::min( (int)ages.Count(), (int)floorSamples->size() ); i ++ ) {
+				for( int i = 0; i < ages.Count(); i ++ ) {
 					ages[i] = GetTimeValueFromSeconds( (*floorSamples)[j] );
 					j += jIncrement;
 				}
@@ -622,7 +622,7 @@ AlembicParticles::GetParticleScales(Alembic::AbcGeom::IPoints &iPoints, const Sa
 			if( floorSamples != NULL && floorSamples->size() > 0 ) {
 				int j = 0;
 				int jIncrement = floorSamples->size() == scales.size() ? 1 : 0;
-				for( int i = 0; i < std::min( (int)scales.size(), (int)floorSamples->size() ); i ++ ) {
+				for( int i = 0; i < scales.size(); i ++ ) {
 					scales[i] = ConvertAlembicScaleToMaxScale( (*floorSamples)[j] );
 					j += jIncrement;									
 				}
@@ -648,7 +648,7 @@ AlembicParticles::GetParticleShapeTypes(Alembic::AbcGeom::IPoints &iPoints, cons
 			if( floorSamples != NULL && floorSamples->size() > 0 ) {
 				int j = 0;
 				int jIncrement = floorSamples->size() == instanceShapeType.size() ? 1 : 0;
-				for( int i = 0; i < std::min( (int)instanceShapeType.size(), (int)floorSamples->size() ); i ++ ) {
+				for( int i = 0; i < instanceShapeType.size(); i ++ ) {
 					instanceShapeType[i] =  static_cast<AlembicPoints::ShapeType>( (*floorSamples)[j] );
 					j += jIncrement;
 				}
@@ -674,7 +674,7 @@ AlembicParticles::GetParticleShapeInstanceIds(Alembic::AbcGeom::IPoints &iPoints
 			if( floorSamples != NULL && floorSamples->size() > 0 ) {
 				int j = 0;
 				int jIncrement = floorSamples->size() == instanceShapeIds.size() ? 1 : 0;
-				for( int i = 0; i < std::min( (int)instanceShapeIds.size(), (int)floorSamples->size() ); i ++ ) {
+				for( int i = 0; i < instanceShapeIds.size(); i ++ ) {
 					instanceShapeIds[i] =  (*floorSamples)[j];
 					j += jIncrement;
 				}
@@ -733,7 +733,7 @@ AlembicParticles::GetParticleShapeInstanceTimes(Alembic::AbcGeom::IPoints &iPoin
 			if( floorSamples != NULL && floorSamples->size() > 0 ) {
 				int j = 0;
 				int jIncrement = floorSamples->size() == instanceShapeTimes.size() ? 1 : 0;
-				for( int i = 0; i < std::min( (int)instanceShapeTimes.size(), (int)floorSamples->size() ); i ++ ) {
+				for( int i = 0; i < instanceShapeTimes.size(); i ++ ) {
 					instanceShapeTimes[i] = GetTimeValueFromSeconds( (*floorSamples)[j] );
 					j += jIncrement;
 				}
@@ -758,7 +758,7 @@ AlembicParticles::GetParticleColors(Alembic::AbcGeom::IPoints &iPoints, const Sa
 			if( floorSamples != NULL && floorSamples->size() > 0 ) {
 				int j = 0;
 				int jIncrement = floorSamples->size() == colors.size() ? 1 : 0;
-				for( int i = 0; i <  std::min( (int)colors.size(), (int)floorSamples->size() ); i ++ ) {
+				for( int i = 0; i < colors.size(); i ++ ) {
 					C4f color = (*floorSamples)[j];					
 					j += jIncrement;
 					colors[i] = VertColor( color.r, color.g, color.b );
