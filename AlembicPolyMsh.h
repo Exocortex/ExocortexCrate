@@ -13,6 +13,7 @@ private:
    Alembic::AbcGeom::OPolyMeshSchema::Sample mMeshSample;
    Alembic::Abc::ALEMBIC_VERSION_NS::OUInt32ArrayProperty mMatIdProperty;
    Alembic::Abc::ALEMBIC_VERSION_NS::OStringArrayProperty mMatNamesProperty;
+   Alembic::Abc::ALEMBIC_VERSION_NS::OV3fArrayProperty mVelocityProperty;
 
    materialsMergeStr materialsMerge;
 

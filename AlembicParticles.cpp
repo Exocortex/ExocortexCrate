@@ -7,6 +7,7 @@
 #include "utility.h"
 #include "AlembicMAXScript.h"
 #include "AlembicMetadataUtils.h"
+#include <color.h>
 
 namespace AbcA = ::Alembic::AbcCoreAbstract::ALEMBIC_VERSION_NS;
 namespace AbcB = ::Alembic::Abc::ALEMBIC_VERSION_NS;
@@ -189,7 +190,7 @@ void AlembicParticles::UpdateParticles(TimeValue t, INode *node)
     m_InstanceShapeIds.resize(numParticles);
     m_ParticleOrientations.resize(numParticles);
     m_ParticleScales.resize(numParticles);
-    
+    m_VCArray.resize(numParticles);
   
 
 
@@ -201,10 +202,13 @@ void AlembicParticles::UpdateParticles(TimeValue t, INode *node)
 	GetParticleAges( m_iPoints, sampleInfo, parts.ages);
 	GetParticleOrientations( m_iPoints, sampleInfo, m_objToWorld,  m_ParticleOrientations );
 	GetParticleScales( m_iPoints, sampleInfo, m_objToWorld,  m_ParticleScales );
+	GetParticleColors(m_iPoints, sampleInfo, m_VCArray);
 
 	GetParticleShapeTypes(m_iPoints, sampleInfo, m_InstanceShapeType );
 	GetParticleShapeInstanceIds(m_iPoints, sampleInfo, m_InstanceShapeIds );
 	GetParticleShapeInstanceTimes(m_iPoints, sampleInfo, m_InstanceShapeTimes );
+
+
 
     // Find the scene nodes for all our instances
     FillParticleShapeNodes(m_iPoints, sampleInfo);
@@ -713,6 +717,28 @@ AlembicParticles::GetParticleShapeInstanceTimes(Alembic::AbcGeom::IPoints &iPoin
 	}
 }
 
+void
+AlembicParticles::GetParticleColors(Alembic::AbcGeom::IPoints &iPoints, const SampleInfo &sampleInfo, std::vector<VertColor>& colors ) const {
+	bool useDefaultValues = true;
+	if( iPoints.getSchema().getPropertyHeader(".color") != NULL ) {
+	    IC4fArrayProperty colorProperty = Alembic::Abc::IC4fArrayProperty(iPoints.getSchema(), ".color");
+		if( colorProperty != NULL && colorProperty.valid() && colorProperty.getNumSamples() > 0 ) {
+		    Alembic::Abc::C4fArraySamplePtr floorSamples = colorProperty.getValue(sampleInfo.floorIndex);
+			if( floorSamples != NULL && floorSamples->size() > 0 && floorSamples->size() == colors.size() ) {
+				for( int i = 0; i < floorSamples->size(); i ++ ) {
+					C4f color = (*floorSamples)[i];					
+					colors[i] = VertColor( color.r, color.g, color.b );
+				}
+				useDefaultValues = false;
+			}
+	    }
+	}
+	if( useDefaultValues ) {
+		for( int i = 0; i < colors.size(); i ++ ) {
+			colors[i] = VertColor(0.5, 0.5, 0.5);
+		}
+	}
+}
 
 
 int AlembicParticles::NumberOfRenderMeshes()
@@ -765,6 +791,25 @@ Mesh* AlembicParticles::GetMultipleRenderMesh(TimeValue  t,  INode *inode,  View
         needDelete = FALSE;
 	    break;
     }
+
+	if(pMesh && m_VCArray.size() > 0 ){
+		inode->SetVertexColorType(nvct_map_channel);
+		inode->SetVertexColorMapChannel(0);
+		pMesh->setVCDisplayData(inode->GetVertexColorMapChannel());
+
+		VertColor color = m_VCArray[meshNumber];
+
+		//TODO: clear first?
+		pMesh->setMapSupport(0, TRUE);
+		MeshMap& map = pMesh->Map(0);
+		map.setNumVerts(1);
+		map.tv[0] = color;
+		const int nNumFaces = pMesh->getNumFaces();
+		map.setNumFaces(nNumFaces);
+		for(int i=0; i<nNumFaces; i++){
+			map.tf[i].setTVerts(0, 0, 0);
+		}
+	}
 
     return pMesh;
 }
@@ -944,15 +989,31 @@ int AlembicParticles::Display(TimeValue t, INode* inode, ViewExp *vpt, int flags
 			Material *mtls = meshNode->Mtls();
 			int numMtls = meshNode->NumMtls();
 
-			if (numMtls > 1){
-				gw->setMaterial(mtls[0], 0);
+			Mtl* pMtl = inode->GetMtl();//apply the particle system material first
+			//if(!pMtl){
+			//	pMtl = meshNode->GetMtl();//apply the instance material otherwise
+			//}
+
+			if(numMtls > 0){
+				if(pMtl){
+					mtls[0].Kd = pMtl->GetDiffuse();
+					mtls[0].Ks = pMtl->GetSpecular();
+					mtls[0].Ka = pMtl->GetAmbient();
+				}
+				else{//if there is no material, set diffuse equal to the particle color
+					mtls[0].Kd = m_VCArray[i];
+				}
 			}
 
+			//if (pMtl/*numMtls > 1*/){
+				gw->setMaterial(mtls[0], 0);
+			//}
 			gw->setTransform( elemToWorld );
 			mesh->render(gw, mtls, (flags&USE_DAMAGE_RECT) ? &vpt->GetDammageRect() : NULL, COMP_ALL, numMtls);
 		}
 		else
 		{
+			gw->setColor(FILL_COLOR, m_VCArray[i].x, m_VCArray[i].y, m_VCArray[i].z);
 			gw->setTransform(Matrix3(1));
 			gw->marker(&parts.points[i], POINT_MRKR);  
 		}
@@ -1224,7 +1285,7 @@ Mesh *AlembicParticles::BuildInstanceMesh(int meshNumber, TimeValue t, INode *no
    if (deleteTriObj)
        delete triObj;
 
-   return pMesh;
+	return pMesh;
 }
 
 Mesh *AlembicParticles::BuildNbElementsMesh(int meshNumber, TimeValue t, INode *node, View& view, BOOL &needDelete)

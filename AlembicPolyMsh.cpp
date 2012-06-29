@@ -156,34 +156,40 @@ bool AlembicPolyMesh::Save(double time, bool bLastFrame)
 
 	if(bIsParticleSystem){
 
-		std::vector<particleMeshData> meshes;
-
-		getParticleSystemRenderMeshes(ticks, obj, GetRef().node, meshes);
-
-		if(meshes.size() <= 0){
+		bool bSuccess = getParticleSystemMesh(ticks, obj, GetRef().node, &finalPolyMesh, &materialsMerge, mJob, mNumSamples);
+		if(!bSuccess){
+			ESS_LOG_INFO( "Error. Could not get particle system mesh. Time: "<<time );
 			return false;
 		}
 
-		//save the first mesh to the final result, and then merge the others with it
-		materialsMerge.currUniqueHandle = meshes[0].animHandle;
-		finalPolyMesh.Save(mJob, ticks, meshes[0].pMesh, NULL, meshes[0].meshTM, meshes[0].pMtl, mNumSamples, &materialsMerge);
+		//std::vector<particleMeshData> meshes;
 
-		for(int i=1; i<meshes.size(); i++){
-			IntermediatePolyMesh3DSMax currPolyMesh;
-			materialsMerge.currUniqueHandle = meshes[i].animHandle;
-			currPolyMesh.Save(mJob, ticks, meshes[i].pMesh, NULL, meshes[i].meshTM, meshes[i].pMtl, mNumSamples, &materialsMerge);
-			bool bSuccess = finalPolyMesh.mergeWith(currPolyMesh);
-			if(!bSuccess){
-				return false;
-			}
-		}
+		//getParticleSystemRenderMeshes(ticks, obj, GetRef().node, meshes);
 
-		for(int i=0; i<meshes.size(); i++){
-			
-			if(meshes[i].bNeedDelete){
-				delete meshes[i].pMesh;
-			}
-		}
+		//if(meshes.size() <= 0){
+		//	return false;
+		//}
+
+		////save the first mesh to the final result, and then merge the others with it
+		//materialsMerge.currUniqueHandle = meshes[0].animHandle;
+		//finalPolyMesh.Save(mJob, ticks, meshes[0].pMesh, NULL, meshes[0].meshTM, meshes[0].pMtl, mNumSamples, &materialsMerge);
+
+		//for(int i=1; i<meshes.size(); i++){
+		//	IntermediatePolyMesh3DSMax currPolyMesh;
+		//	materialsMerge.currUniqueHandle = meshes[i].animHandle;
+		//	currPolyMesh.Save(mJob, ticks, meshes[i].pMesh, NULL, meshes[i].meshTM, meshes[i].pMtl, mNumSamples, &materialsMerge);
+		//	bool bSuccess = finalPolyMesh.mergeWith(currPolyMesh);
+		//	if(!bSuccess){
+		//		return false;
+		//	}
+		//}
+
+		//for(int i=0; i<meshes.size(); i++){
+		//	
+		//	if(meshes[i].bNeedDelete){
+		//		delete meshes[i].pMesh;
+		//	}
+		//}
 	}
 	else
 	{
@@ -447,32 +453,22 @@ bool AlembicPolyMesh::Save(double time, bool bLastFrame)
 
 
    // check if we should export the velocities
-   /*if(dynamicTopology)
+   if(dynamicTopology)
    {
-      ICEAttribute velocitiesAttr = mesh.GetICEAttributeFromName(L"PointVelocity");
-      if(velocitiesAttr.IsDefined() && velocitiesAttr.IsValid())
+
+      if(finalPolyMesh.mVelocitiesVec.size() > 0)
       {
-         CICEAttributeDataArrayVector3f velocitiesData;
-         velocitiesAttr.GetDataArray(velocitiesData);
 
-         if(!mVelocityProperty.valid())
-            mVelocityProperty = OV3fArrayProperty(mMeshSchema, ".velocities", mMeshSchema.getMetaData(), GetJob()->GetAnimatedTs());
+		  if(finalPolyMesh.posVec.size() != finalPolyMesh.mVelocitiesVec.size()){
 
-         mVelocitiesVec.resize(vertCount);
-         for(LONG i=0;i<vertCount;i++)
-         {
-            mVelocitiesVec[i].x = velocitiesData[i].GetX();
-            mVelocitiesVec[i].y = velocitiesData[i].GetY();
-            mVelocitiesVec[i].z = velocitiesData[i].GetZ();
-         }
+			  ESS_LOG_INFO("mVelocitiesVec has wrong size.");
+		  }
 
-         if(mVelocitiesVec.size() == 0)
-            mVelocitiesVec.push_back(Alembic::Abc::V3f(0,0,0));
-         Alembic::Abc::V3fArraySample sample = Alembic::Abc::V3fArraySample(&mVelocitiesVec.front(),mVelocitiesVec.size());
-         mVelocityProperty.set(sample);
+         Alembic::Abc::V3fArraySample sample = Alembic::Abc::V3fArraySample(&finalPolyMesh.mVelocitiesVec.front(),finalPolyMesh.mVelocitiesVec.size());
+		 mMeshSample.setVelocities( sample );
       }
    }
-   */
+   
 
 
    // save the sample

@@ -175,6 +175,18 @@ void AlembicDebug_PrintTransform(Matrix3 &m)
     }
 }
 
+Imath::M33d extractRotation(Imath::M44d& m)
+{
+	double values[3][3];
+
+	for(int i=0; i<3; i++){
+		for(int j=0; j<3; j++){
+			values[i][j] = m[i][j];
+		}
+	}
+	
+	return Imath::M33d(values);
+}
 
 void ConvertMaxMatrixToAlembicMatrix( const Matrix3 &maxMatrix, Matrix3 &result)
 {
@@ -475,3 +487,57 @@ INode* GetChildNodeFromName(const std::string& name, INode* pParent)
 	}
 }
 
+
+
+class HierarchyPathConstructor : public ITreeEnumProc
+{
+public:
+
+	std::string nodeName;
+	std::string path;
+	std::vector<std::string> pathNodeNames;
+
+	HierarchyPathConstructor(const std::string& n):nodeName(n)
+	{
+
+	}
+
+	void walkToParent(INode* node)
+	{
+		INode* pParent = node->GetParentNode();
+		if(pParent){
+			const char* name = node->GetName();
+			pathNodeNames.push_back(name);
+			walkToParent(pParent);
+		}
+		else{
+			//Note: the hidden 3DS max root node should not be included in the path
+			for(int i=pathNodeNames.size()-1; i>=0; i--){
+				path+="/";
+				path+=pathNodeNames[i];
+			}
+		}
+	}
+
+	int callback( INode* node )
+	{
+		int enumCode = TREE_CONTINUE;
+
+		const char* name = node->GetName();
+		if (strcmp(name, nodeName.c_str()) == 0)
+		{
+			walkToParent(node);
+			return TREE_ABORT;
+		}        
+
+		return TREE_CONTINUE;
+	}
+
+};
+
+std::string getNodePath(const std::string& name){
+	HierarchyPathConstructor pathConstructor(name);
+    IScene *pScene = GET_MAX_INTERFACE()->GetScene();
+    pScene->EnumTree(&pathConstructor);
+	return pathConstructor.path;
+}

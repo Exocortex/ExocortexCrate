@@ -143,6 +143,7 @@ bool AlembicPoints::Save(double time, bool bLastFrame)
     bool constantAge = true;
     bool constantOrientation = true;
     bool constantAngularVel = true;
+	bool constantColor = true;
 
 	//The MAX interfaces return everything in world coordinates,
 	//so we need to multiply the inverse the node world transform matrix
@@ -162,6 +163,7 @@ bool AlembicPoints::Save(double time, bool bLastFrame)
 		Imath::V3f pos(0.0);
 		Imath::V3f vel(0.0);
 		Imath::V3f scale(1.0);
+		Imath::C4f color(0.5, 0.5, 0.5, 1.0);
 		float age = 0;
 		uint64_t id = 0;
 	    Alembic::Abc::Quatd orientation(0.0, 0.0, 1.0, 0.0);
@@ -176,13 +178,15 @@ bool AlembicPoints::Save(double time, bool bLastFrame)
 
 		if(particlesExt){
 			pos = ConvertMaxPointToAlembicPoint(*particlesExt->GetParticlePositionByIndex(i));
-			vel = ConvertMaxVectorToAlembicVector(*particlesExt->GetParticleSpeedByIndex(i));
+			vel = ConvertMaxVectorToAlembicVector(*particlesExt->GetParticleSpeedByIndex(i) * TIME_TICKSPERSEC);
 			scale = ConvertMaxScaleToAlembicScale(*particlesExt->GetParticleScaleXYZByIndex(i));
 			ConvertMaxEulerXYZToAlembicQuat(*particlesExt->GetParticleOrientationByIndex(i), orientation);
 			ConvertMaxAngAxisToAlembicQuat(*particlesExt->GetParticleSpinByIndex(i), spin);
 			age = (float)GetSecondsFromTimeValue(particlesExt->GetParticleAgeByIndex(i));
 			id = particlesExt->GetParticleBornIndex(i);
-			AlembicPoints::GetShapeType(particlesExt, i, ticks, shapetype, shapeInstanceId, shapeInstanceTime, instanceNamesVec);
+			GetShapeType(particlesExt, i, ticks, shapetype, shapeInstanceId, shapeInstanceTime, instanceNamesVec);
+			ReadOrWriteShapeMap(particlesExt, i, shapetype, shapeInstanceId, shapeInstanceTime, instanceNamesVec);
+			color = GetColor(particlesExt, i, ticks);
 		}
 		else if(pSimpleParticle){
 			if( ! pSimpleParticle->parts.Alive( i ) ) {
@@ -222,6 +226,7 @@ bool AlembicPoints::Save(double time, bool bLastFrame)
         shapeTypeVec.push_back( shapetype );
         shapeInstanceIDVec.push_back( shapeInstanceId );
         shapeTimeVec.push_back( shapeInstanceTime );
+		colorVec.push_back( color );
 
 		constantPos &= (pos == positionVec[0]);
 		constantVel &= (vel == velocityVec[0]);
@@ -230,6 +235,7 @@ bool AlembicPoints::Save(double time, bool bLastFrame)
 		constantAge &= (age == ageVec[0]);
 		constantOrientation &= (orientation == orientationVec[0]);
 		constantAngularVel &= (spin == angularVelocityVec[0]);
+		constantColor &= (color == colorVec[0]);
 
 		// Set the archive bounding box
 		// Positions for particles are already cnsider to be in world space
@@ -241,10 +247,10 @@ bool AlembicPoints::Save(double time, bool bLastFrame)
 	
     // Set constant properties that are not currently supported by Max
     massVec.push_back(1.0f);
+	//Aren't these next four lines no longer necessary?
     shapeTimeVec.push_back(1.0f);
     shapeTypeVec.push_back(ShapeType_Point);
     shapeInstanceIDVec.push_back(0);
-    colorVec.push_back(Alembic::Abc::C4f(0.0f, 0.0f, 0.0f, 1.0f));
     instanceNamesVec.push_back("");
 
     if (numParticles > 1)
@@ -256,6 +262,7 @@ bool AlembicPoints::Save(double time, bool bLastFrame)
         if (constantAge)        { ageVec.resize(1); }
         if (constantOrientation){ orientationVec.resize(1); }
         if (constantAngularVel) { angularVelocityVec.resize(1); }
+		if (constantColor)		{ colorVec.resize(1); }
     }
 
     // Store the information into our properties and points schema
@@ -324,10 +331,64 @@ void AlembicPoints::ConvertMaxAngAxisToAlembicQuat(const AngAxis &angAxis, Alemb
     quat.normalize();
 }
 
+
+Alembic::Abc::C4f AlembicPoints::GetColor(IParticleObjectExt *pExt, int particleId, TimeValue ticks)
+{
+	Alembic::Abc::C4f color(0.5, 0.5, 0.5, 1.0);
+
+    // Go into the particle's action list
+    INode *particleGroupNode = pExt->GetParticleGroup(particleId);
+    Object *particleGroupObj = (particleGroupNode != NULL) ? particleGroupNode->EvalWorldState(ticks).obj : NULL;
+
+	if (!particleGroupObj){
+        return color;
+	}
+
+    IParticleGroup *particleGroup = GetParticleGroupInterface(particleGroupObj);
+    INode *particleActionListNode = particleGroup->GetActionList();
+    Object *particleActionObj = (particleActionListNode != NULL ? particleActionListNode->EvalWorldState(ticks).obj : NULL);
+
+	if (!particleActionObj){
+        return color;
+	}
+
+	PFSimpleOperator *pSimpleOperator = NULL;
+
+	//In the case of multiple shape operators in an action list, the one furthest down the list seems to be the one that applies
+    IPFActionList *particleActionList = GetPFActionListInterface(particleActionObj);
+	
+	for (int p = particleActionList->NumActions()-1; p >= 0; p -= 1)
+	{
+		INode *pActionNode = particleActionList->GetAction(p);
+		Object *pActionObj = (pActionNode != NULL ? pActionNode->EvalWorldState(ticks).obj : NULL);
+
+		if (pActionObj == NULL){
+			continue;
+		}
+
+		if (pActionObj->ClassID() == PFOperatorDisplay_Class_ID){
+			pSimpleOperator = static_cast<PFSimpleOperator*>(pActionObj);
+			break;
+		}
+	}
+	
+	if(pSimpleOperator){
+		IParamBlock2 *pblock = pSimpleOperator->GetParamBlockByID(0);
+		Point3 c = pblock->GetPoint3(kDisplay_color);
+		color.r = c.x;
+		color.g = c.y;
+		color.b = c.z;
+		color.a = 1.0;
+	}
+
+	return color;
+}
+
+
 void AlembicPoints::GetShapeType(IParticleObjectExt *pExt, int particleId, TimeValue ticks, ShapeType &type, uint16_t &instanceId, float &animationTime, std::vector<std::string> &nameList)
 {
     // Set up initial values
-    type = ShapeType_Point;
+    type = ShapeType_NbElements;//default to nothing
     instanceId = 0;
     animationTime = 0.0f;
 
@@ -347,31 +408,35 @@ void AlembicPoints::GetShapeType(IParticleObjectExt *pExt, int particleId, TimeV
 
     PFSimpleOperator *pSimpleOperator = NULL;
 
+	//In the case of multiple shape operators in an action list, the one furthest down the list seems to be the one that applies
     IPFActionList *particleActionList = GetPFActionListInterface(particleActionObj);
-    for (int p = particleActionList->NumActions()-1; p >= 0; p -= 1)
-    {
-        INode *pActionNode = particleActionList->GetAction(p);
-        Object *pActionObj = (pActionNode != NULL ? pActionNode->EvalWorldState(ticks).obj : NULL);
+	
+	for (int p = particleActionList->NumActions()-1; p >= 0; p -= 1)
+	{
+		INode *pActionNode = particleActionList->GetAction(p);
+		Object *pActionObj = (pActionNode != NULL ? pActionNode->EvalWorldState(ticks).obj : NULL);
 
-        if (pActionObj == NULL)
-            continue;
-
-        if (pActionObj->ClassID() == PFOperatorSimpleShape_Class_ID)
-        {
-            pSimpleOperator = static_cast<PFSimpleOperator*>(pActionObj);
-            break;
-        }
-		else if(pActionObj->ClassID() == PFOperatorShapeLib_Class_ID)
-		{
-            pSimpleOperator = static_cast<PFSimpleOperator*>(pActionObj);
-            break;
+		if (pActionObj == NULL){
+			continue;
 		}
-        else if (pActionObj->ClassID() == PFOperatorInstanceShape_Class_ID)
-        {
-            pSimpleOperator = static_cast<PFSimpleOperator*>(pActionObj);
-            break;
-        }
-    }
+
+		if (pActionObj->ClassID() == PFOperatorSimpleShape_Class_ID){
+			pSimpleOperator = static_cast<PFSimpleOperator*>(pActionObj);
+			break;
+		}else if(pActionObj->ClassID() == PFOperatorShapeLib_Class_ID){
+			pSimpleOperator = static_cast<PFSimpleOperator*>(pActionObj);
+			break;
+		}else if(pActionObj->ClassID() == PFOperatorInstanceShape_Class_ID){
+			pSimpleOperator = static_cast<PFSimpleOperator*>(pActionObj);
+			break;
+		}else if(pActionObj->ClassID() == PFOperatorMarkShape_Class_ID){
+			pSimpleOperator = static_cast<PFSimpleOperator*>(pActionObj);
+			break;
+		}else if(pActionObj->ClassID() == PFOperatorFacingShape_Class_ID){
+			pSimpleOperator = static_cast<PFSimpleOperator*>(pActionObj);
+			break;
+		}
+	}
 
     if (pSimpleOperator && pSimpleOperator->ClassID() == PFOperatorSimpleShape_Class_ID)
     {
@@ -452,11 +517,13 @@ void AlembicPoints::GetShapeType(IParticleObjectExt *pExt, int particleId, TimeV
         
         type = ShapeType_Instance;
 
+		std::string nodePath = getNodePath(pNode->GetName());
+
         // Find if the name is alerady registered, otherwise add it to the list
         instanceId = USHRT_MAX;
         for ( int i = 0; i < nameList.size(); i += 1)
         {
-            if (!strcmp(nameList[i].c_str(), pNode->GetName()))
+            if (!strcmp(nameList[i].c_str(), nodePath.c_str()))
             {
                 instanceId = i;
                 break;
@@ -465,7 +532,7 @@ void AlembicPoints::GetShapeType(IParticleObjectExt *pExt, int particleId, TimeV
 
         if (instanceId == USHRT_MAX)
         {
-            nameList.push_back(pNode->GetName());
+			nameList.push_back(nodePath);
             instanceId = (uint16_t)nameList.size()-1;
         }
 
@@ -557,4 +624,66 @@ void AlembicPoints::GetShapeType(IParticleObjectExt *pExt, int particleId, TimeV
         TimeValue t = TimeValue(time);
         animationTime = (float)GetSecondsFromTimeValue(t);
     }
+	else if (pSimpleOperator && pSimpleOperator->ClassID() == PFOperatorMarkShape_Class_ID)
+	{
+		ESS_LOG_INFO("Shape Mark operator not supported.");
+	}
+	else if (pSimpleOperator && pSimpleOperator->ClassID() == PFOperatorFacingShape_Class_ID)
+	{
+		ESS_LOG_INFO("Shape Facing operator not supported.");
+	}
+}
+
+
+void AlembicPoints::ReadOrWriteShapeMap(IParticleObjectExt *pExt, int particleId, ShapeType &type, uint16_t &instanceId, float &animationTime, std::vector<std::string> &nameList)
+{
+	int nBornIndex = pExt->GetParticleBornIndex(particleId);
+	if(type == ShapeType_NbElements)
+	{
+		//Couldn't find assignment for this particle group. 
+		//Check the cache to see if a shape was previously assigned to this particle by different particle group's action list
+
+		mPerParticleShapeMap[0];
+
+		AlembicPoints::perParticleShapeMap_it it = mPerParticleShapeMap.find(nBornIndex);
+		if(it != mPerParticleShapeMap.end()){
+			AlembicPoints::shapeInfo& sInfo = it->second;
+			type = sInfo.type;
+			animationTime = sInfo.animationTime;
+			
+			// Find if the name is alerady registered, otherwise add it to the list
+			instanceId = USHRT_MAX;
+			for ( int i = 0; i < nameList.size(); i += 1)
+			{
+				if (!strcmp(nameList[i].c_str(), sInfo.instanceName.c_str()))
+				{
+					instanceId = i;
+					break;
+				}
+			}
+
+			if (instanceId == USHRT_MAX)
+			{
+				nameList.push_back(sInfo.instanceName);
+				instanceId = (uint16_t)nameList.size()-1;
+			}
+		}
+		else{
+			ESS_LOG_INFO("Could not determine shape type for particle with born index: "<<nBornIndex<<". Defaulting to point.");
+ 			type = ShapeType_Point;
+		}
+	}
+	else
+	{
+		//A shape shape assignment was found
+		//cache the most recently assigned shape for each particle
+
+		AlembicPoints::shapeInfo sInfo;
+		sInfo.type = type;
+		sInfo.animationTime = animationTime;
+		if(sInfo.type == ShapeType_Instance){
+			sInfo.instanceName = nameList[instanceId];
+		}
+		mPerParticleShapeMap[nBornIndex] = sInfo;
+	}
 }

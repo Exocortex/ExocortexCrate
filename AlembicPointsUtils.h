@@ -13,5 +13,11 @@ struct particleMeshData{
 };
 
 void getParticleSystemRenderMeshes(TimeValue ticks, Object* obj, INode* node, std::vector<particleMeshData>& meshes);
+class IntermediatePolyMesh3DSMax;
+struct materialsMergeStr;
+class AlembicWriteJob;
+bool getParticleSystemMesh(TimeValue ticks, Object* obj, INode* node, IntermediatePolyMesh3DSMax* mesh, 
+						   materialsMergeStr* pMatMerge, AlembicWriteJob * mJob, int nNumSamples);
+
 
 #endif
