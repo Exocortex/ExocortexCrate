@@ -121,19 +121,22 @@ private:
     bool            GetAlembicIPoints(Alembic::AbcGeom::IPoints &iPoints, const char *strFile, const char *strIdentifier);
     SampleInfo      GetSampleAtTime(Alembic::AbcGeom::IPoints &iPoints, TimeValue t, Alembic::AbcGeom::IPointsSchema::Sample &floorSample, Alembic::AbcGeom::IPointsSchema::Sample &ceilSample) const;
     int             GetNumParticles(const Alembic::AbcGeom::IPointsSchema::Sample &floorSample) const;
-    Point3          GetParticlePosition(Alembic::AbcGeom::IPoints &iPoints, const Alembic::AbcGeom::IPointsSchema::Sample &floorSample, const Alembic::AbcGeom::IPointsSchema::Sample &ceilSample, const SampleInfo &sampleInfo, int index) const;
-    Point3          GetParticleVelocity(const Alembic::AbcGeom::IPointsSchema::Sample &floorSample, const Alembic::AbcGeom::IPointsSchema::Sample &ceilSample, const SampleInfo &sampleInfo, int index) const;
-    float           GetParticleRadius(Alembic::AbcGeom::IPoints &iPoints, const SampleInfo &sampleInfo, int index) const;
-    TimeValue       GetParticleAge(Alembic::AbcGeom::IPoints &iPoints, const SampleInfo &sampleInfo, int index) const;
-    Quat            GetParticleOrientation(Alembic::AbcGeom::IPoints &iPoints, const SampleInfo &sampleInfo, int index) const;
-    Point3          GetParticleScale(Alembic::AbcGeom::IPoints &iPoints, const SampleInfo &sampleInfo, int index) const;
-    AlembicPoints::ShapeType GetParticleShapeType(Alembic::AbcGeom::IPoints &iPoints, const SampleInfo &sampleInfo, int index) const;
-    unsigned short  GetParticleShapeInstanceId(Alembic::AbcGeom::IPoints &iPoints, const SampleInfo &sampleInfo, int index) const;
-    TimeValue       GetParticleShapeInstanceTime(Alembic::AbcGeom::IPoints &iPoints, const SampleInfo &sampleInfo, int index) const;
-    void            FillParticleShapeNodes(Alembic::AbcGeom::IPoints &iPoints, const SampleInfo &sampleInfo);
+
+	void	GetParticlePositions(Alembic::AbcGeom::IPoints &iPoints, const Alembic::AbcGeom::IPointsSchema::Sample &floorSample, const Alembic::AbcGeom::IPointsSchema::Sample &ceilSample, const SampleInfo &sampleInfo, const Matrix3& objToWorld, Tab<Point3>& points) const;
+    void	GetParticleVelocities(const Alembic::AbcGeom::IPointsSchema::Sample &floorSample, const Alembic::AbcGeom::IPointsSchema::Sample &ceilSample, const SampleInfo &sampleInfo, const Matrix3& objToWorld, Tab<Point3>& vels) const;
+    void	GetParticleRadii(Alembic::AbcGeom::IPoints &iPoints, const SampleInfo &sampleInfo, Tab<float>& radius) const;
+    void	GetParticleAges(Alembic::AbcGeom::IPoints &iPoints, const SampleInfo &sampleInfo, Tab<TimeValue>& ages) const;
+	void	GetParticleOrientations(Alembic::AbcGeom::IPoints &iPoints, const SampleInfo &sampleInfo, const Matrix3& objToWorld, std::vector<Quat>& particleOrientations) const;
+    void	GetParticleScales(Alembic::AbcGeom::IPoints &iPoints, const SampleInfo &sampleInfo, const Matrix3& objToWorld, std::vector<Point3>& particleScales) const;
+	void	GetParticleColors(Alembic::AbcGeom::IPoints &iPoints, const SampleInfo &sampleInfo, std::vector<VertColor>& colors ) const;
+    void	GetParticleShapeTypes(Alembic::AbcGeom::IPoints &iPoints, const SampleInfo &sampleInfo, std::vector<AlembicPoints::ShapeType>& instanceShapeType) const;
+    void	GetParticleShapeInstanceIds(Alembic::AbcGeom::IPoints &iPoints, const SampleInfo &sampleInfo, std::vector<unsigned short>& instanceShapeIds) const;
+    void	GetParticleShapeInstanceTimes(Alembic::AbcGeom::IPoints &iPoints, const SampleInfo &sampleInfo, std::vector<TimeValue>& instanceShapeTimes) const;
+
+	void            FillParticleShapeNodes(Alembic::AbcGeom::IPoints &iPoints, const SampleInfo &sampleInfo);
     INode*          GetParticleMeshNode(int meshNumber, INode *displayNode);
-	VertColor		GetParticleColor(Alembic::AbcGeom::IPoints &iPoints, const SampleInfo &sampleInfo, int index) const;
   //  void            ClearCurrentViewportMeshes();
+
 private:
     Mesh *BuildPointMesh(int meshNumber, TimeValue t, INode *node, View& view, BOOL &needDelete);
     Mesh *BuildBoxMesh(int meshNumber, TimeValue t, INode *node, View& view, BOOL &needDelete);
