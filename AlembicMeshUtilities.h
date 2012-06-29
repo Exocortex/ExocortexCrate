@@ -21,6 +21,7 @@ typedef struct _alembic_fillmesh_options
 	MNMesh *pMNMesh;
     TimeValue dTicks;
     AlembicDataFillFlags nDataFillFlags;
+	bool bAdditive;
 	float fVertexAlpha;
 
     _alembic_fillmesh_options()
@@ -30,6 +31,7 @@ typedef struct _alembic_fillmesh_options
         pMNMesh = NULL;
         dTicks = 0;
         nDataFillFlags = 0;
+		bAdditive = false;
 		fVertexAlpha = 1.0f;
     }
 } alembic_fillmesh_options;

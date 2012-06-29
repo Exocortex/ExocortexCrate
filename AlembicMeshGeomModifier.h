@@ -21,6 +21,7 @@ public:
 		ID_TIME,
 /*		ID_TOPOLOGY,
 		ID_GEOMETRY,*/
+		ID_ADDITIVE,
 		ID_GEOALPHA,
 /*		ID_NORMALS,
 		ID_UVS,*/

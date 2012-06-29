@@ -27,6 +27,7 @@
 #define IDS_ALEMBIC                     114
 #define IDS_GEOALPHA                    115
 #define IDS_CAMERA                      116
+#define IDS_ADDITIVE					117
 #define IDD_GSPHERE1                    179
 #define IDD_GSPHERE2                    180
 #define IDD_GSPHERE3                    181
@@ -111,6 +112,7 @@
 #define IDC_SEL_PIPELINE                3088
 #define IDC_ELIMINATE_COLLINEAR         3089
 #define IDC_PLANAR                      3147
+#define IDC_ADDITIVE_CHECKBOX           3148
 #define IDS_PARAMS                      4000
 #define IDS_PATH                        4001
 #define IDS_IDENTIFIER                  4002
