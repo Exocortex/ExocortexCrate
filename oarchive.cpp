@@ -56,7 +56,7 @@ static PyObject * oArchive_createTimeSampling(PyObject * self, PyObject * args)
       if(archive->mArchive == NULL)
       {
          PyErr_SetString(getError(), "Archive already closed!");
-         return NULL;
+         {Py_INCREF(Py_False); return Py_False;}
       }
 
       // parse the args
@@ -64,7 +64,7 @@ static PyObject * oArchive_createTimeSampling(PyObject * self, PyObject * args)
       if(!PyArg_ParseTuple(args, "O", &timesTuple))
       {
          PyErr_SetString(getError(), "No timesTuple specified!");
-         return NULL;
+         {Py_INCREF(Py_False); return Py_False;}
       }
 
       bool is_list = false;   
@@ -79,7 +79,7 @@ static PyObject * oArchive_createTimeSampling(PyObject * self, PyObject * args)
          else
          {
             PyErr_SetString(getError(), "timesTuple argument is not a tuple!");
-            return NULL;
+            {Py_INCREF(Py_False); return Py_False;}
          }
       }
 
@@ -87,7 +87,7 @@ static PyObject * oArchive_createTimeSampling(PyObject * self, PyObject * args)
       if(nbTimes == 0)
       {
          PyErr_SetString(getError(), "timesTuple has zero length!");
-         return NULL;
+         {Py_INCREF(Py_False); return Py_False;}
       }
 
       // check the list/tuple if all the items are valid!
@@ -100,14 +100,14 @@ static PyObject * oArchive_createTimeSampling(PyObject * self, PyObject * args)
          if (PyTuple_Check(item) || PyList_Check(item))
             out = oTimeSampling_new(item);                        // construct a oTimeSampling from the list
          else if (is_iTimeSampling(item))
-            out = iTimeSampling_createOTimeSampling(item, NULL);  // must be an iTimeSampling!
+            out = iTimeSampling_createOTimeSampling(item);  // must be an iTimeSampling!
          else
          {
             // not valid, delete previous made PyObject
             for (std::list<PyObject*>::iterator beg = valid_obj.begin(); beg != valid_obj.end(); ++beg)
                PyObject_FREE(*beg);
             PyErr_SetString(getError(), "item should be a tuple, a list, or an iTimeSampling");
-            return NULL;
+            {Py_INCREF(Py_False); return Py_False;}
          }
          valid_obj.push_back(out);
       }
@@ -118,7 +118,7 @@ static PyObject * oArchive_createTimeSampling(PyObject * self, PyObject * args)
          archive->mArchive->addTimeSampling(((oTimeSampling*)*beg)->ts);
          PyObject_FREE(*beg);
       }
-      return Py_BuildValue("i",1);
+      {Py_INCREF(Py_True); return Py_True;}
    ALEMBIC_PYOBJECT_CATCH_STATEMENT
 }
 
@@ -286,8 +286,8 @@ static PyObject * oArchive_createObject(PyObject * self, PyObject * args)
 
 static PyMethodDef oArchive_methods[] = {
    {"getFileName", (PyCFunction)oArchive_getFileName, METH_NOARGS, "Returns the filename this archive is linked to."},
-   {"createTimeSampling", (PyCFunction)oArchive_createTimeSampling, METH_VARARGS, "Takes in a flat list of sample times (float) and creates a new TimeSampling. Returns 1 if successful."},
-   {"createObject", (PyCFunction)oArchive_createObject, METH_VARARGS, "Takes in a valid type string, an identifier string as well as an optional timeSamplingIndex. Returns the created oObject. Valid object types can be found in AppendixA of this document."},
+   {"createTimeSampling", (PyCFunction)oArchive_createTimeSampling, METH_VARARGS, "Takes in a flat list of sample times (float) and creates a new TimeSampling. Returns True if successful, False otherwise."},
+   {"createObject", (PyCFunction)oArchive_createObject, METH_VARARGS, "Takes in a valid type string, an identifier string as well as an optional timeSamplingIndex. Returns the created oObject or, if it already exists, a reference to this oObject. Valid object types can be found in AppendixA of the documentation."},
    {NULL, NULL}
 };
 

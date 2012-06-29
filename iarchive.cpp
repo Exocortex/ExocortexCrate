@@ -114,12 +114,22 @@ static PyObject * iArchive_getSampleTimes(PyObject * self, PyObject * args)
 {
    ALEMBIC_TRY_STATEMENT
       iArchive * archive = (iArchive *)self;
-      const int nb_ts = archive->mArchive->getNumTimeSamplings();
+      Alembic::Abc::IArchive *iarchive = archive->mArchive;
+      const int nb_ts = iarchive->getNumTimeSamplings();
+
       PyObject *_list = PyList_New(nb_ts);
       for (int i = 0; i < nb_ts; ++i)
       {
-         PyObject *ts = iTimeSampling_new(archive->mArchive->getTimeSampling((boost::uint32_t)i), i);
-         PyList_SetItem(_list, i, ts);
+         // For this release, going back to sending a list of list to simplify everything!
+         //PyObject *ts = iTimeSampling_new(archive->mArchive->getTimeSampling((boost::uint32_t)i), i);
+         //PyList_SetItem(_list, i, ts);
+
+         const std::vector<Alembic::Abc::chrono_t> & times = iarchive->getTimeSampling((boost::uint32_t)i)->getStoredTimes();
+         PyObject* ts_list = PyList_New(times.size());
+         int ii = 0;
+         for (std::vector<Alembic::Abc::chrono_t>::const_iterator beg = times.begin(); beg != times.end(); ++beg, ++ii)
+            PyList_SetItem(ts_list, ii, Py_BuildValue("f",(float)*beg));
+         PyList_SetItem(_list, i, ts_list);
       }
       return _list;
    ALEMBIC_PYOBJECT_CATCH_STATEMENT

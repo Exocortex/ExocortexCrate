@@ -120,7 +120,7 @@ static PyMethodDef iXformProperty_methods[] =
    {"getNbStoredSamples", (PyCFunction)iXformProperty_getNbStoredSamples, METH_NOARGS, "Returns the actual number of stored samples."},
    {"getSize", (PyCFunction)iXformProperty_getSize, METH_VARARGS, "Returns the size of the property. For single value properties, this method returns 1, for array value properties it returns the size of the array."},
    {"getValues", (PyCFunction)iXformProperty_getValues, METH_VARARGS, "Returns the values of the property at the (optional) sample index."},
-   {"isCompound", (PyCFunction)iXformProperty_isCompound, METH_NOARGS, "To distinguish between an iProperty and an iCompoundProperty, always returns false for iXformProperty."},
+   {"isCompound", (PyCFunction)iXformProperty_isCompound, METH_NOARGS, "To distinguish between an iXformProperty and an iCompoundProperty, always returns false for iXformProperty."},
    {NULL, NULL}
 };
 

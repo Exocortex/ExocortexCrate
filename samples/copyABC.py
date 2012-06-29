@@ -94,7 +94,7 @@ def main(args):
    
    in_data = alembic.getIArchive(ns["abc_in"])
    out_data = alembic.getOArchive(ns["o"])
-   out_data.createTimeSampling(in_data.getSampleTimes()[1])          #copy first the time sampling
+   out_data.createTimeSampling(in_data.getSampleTimes())
    copy_objects(in_data, out_data)
 
 # ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ----

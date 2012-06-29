@@ -85,7 +85,7 @@ static PyMethodDef iCompoundProperty_methods[] =
    {"getSize", (PyCFunction)iCompoundProperty_getSize, METH_VARARGS, "Returns zero because a compound property does not have any values."},
    {"getValues", (PyCFunction)iCompoundProperty_getValues, METH_VARARGS, "Returns an empty tuple because a compound property does not have any values."},
    {"getPropertyNames", (PyCFunction)iCompoundProperty_getPropertyNames, METH_NOARGS, "Returns a string list of all property names below this compound."},
-   {"getProperty", (PyCFunction)iCompoundProperty_getProperty, METH_VARARGS, "Returns an iProperty for the given propertyName string."},
+   {"getProperty", (PyCFunction)iCompoundProperty_getProperty, METH_VARARGS, "Returns an input property (iProperty/iCompoundProperty/iXformProperty) for the given propertyName string."},
    {"isCompound", (PyCFunction)iCompoundProperty_isCompound, METH_NOARGS, "To distinguish between an iProperty and an iCompoundProperty, always returns true for iCompoundProperty."},
    {NULL, NULL}
 };
@@ -126,7 +126,7 @@ static PyTypeObject iCompoundProperty_Type =
   0,                         /*tp_setattro*/
   0,                         /*tp_as_buffer*/
   Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE, /*tp_flags*/
-  "This is the input property. It provides access to the propery's data, such as name, type and per sample values.",           /* tp_doc */
+  "This is the input compound property. It provides access to the compound property’s data, such as name, type and per sample values. iCompoundProperty has the same set of function as iProperty and iXformProperty so it can be used like a normal property but many functions have default values typical to a compound. iCompoundProperty also behave like an iObject because it has properties under it.",           /* tp_doc */
   0,		               /* tp_traverse */
   0,		               /* tp_clear */
   0,		               /* tp_richcompare */

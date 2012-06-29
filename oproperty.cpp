@@ -1286,7 +1286,7 @@ PyObject * oProperty_new(Alembic::Abc::OCompoundProperty compound, std::string c
    prop->mBoolProperty = NULL;
    prop->mArchive = in_Archive;
 
-   std::string propType = in_propType;
+   std::string propType(in_propType ? in_propType : "");
 
    // NEW check for intent! and assign it if necessary
    {

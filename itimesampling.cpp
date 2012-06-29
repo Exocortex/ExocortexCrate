@@ -21,16 +21,15 @@ static PyObject * iTimeSampling_getTsIndex(PyObject * self, PyObject * args)
    return Py_BuildValue("i",((iTimeSampling*)self)->tsIndex);
 }
 
-PyObject * iTimeSampling_createOTimeSampling(PyObject * self, PyObject * args)
+PyObject * iTimeSampling_createOTimeSampling(PyObject * iTS)
 {
    ALEMBIC_TRY_STATEMENT
-      return oTimeSampling_new(((iTimeSampling*)self)->ts_ptr);
+      return oTimeSampling_new(((iTimeSampling*)iTS)->ts_ptr);
    ALEMBIC_PYOBJECT_CATCH_STATEMENT
 }
 
 static PyMethodDef iTimeSampling_methods[] =
 {
-   //{"getProperty", (PyCFunction)iObject_getProperty, METH_VARARGS, "Returns an iProperty for the given propertyName string."},
    {"getSampleTimes", (PyCFunction)iTimeSampling_getSampleTimes, METH_NOARGS, "Returns a list fo sample times."},
    {"getTsIndex", (PyCFunction)iTimeSampling_getTsIndex, METH_NOARGS, "Returns time sampling index of this time sampling."},
    {NULL, NULL}

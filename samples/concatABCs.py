@@ -141,7 +141,7 @@ def create_output(out_arch, in_arch, firstFile):
    global xforms_dict
    
    if firstFile:
-      out_arch.createTimeSampling(concat_ts)                         # assign the time sampling only once to the output archive
+      out_arch.createTimeSampling([concat_ts])                         # assign the time sampling only once to the output archive
    
    for identifier in in_arch.getIdentifiers():
       obj = in_arch.getObject(identifier)

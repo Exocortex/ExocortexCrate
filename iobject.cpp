@@ -262,7 +262,7 @@ static PyMethodDef iObject_methods[] = {
    {"getSampleTimes", (PyCFunction)iObject_getSampleTimes, METH_NOARGS, "Returns the TimeSampling this object is linked to."},
    {"getNbStoredSamples", (PyCFunction)iObject_getNbStoredSamples, METH_NOARGS, "Returns the actual number of stored samples."},
    {"getPropertyNames", (PyCFunction)iObject_getPropertyNames, METH_NOARGS, "Returns a string list of all property names below this object."},
-   {"getProperty", (PyCFunction)iObject_getProperty, METH_VARARGS, "Returns an iProperty for the given propertyName string."},
+   {"getProperty", (PyCFunction)iObject_getProperty, METH_VARARGS, "Returns an input property (iProperty/iCompoundProperty/iXformProperty) for the given propertyName string."},
    {"getTsIndex", (PyCFunction)iObject_getTsIndex, METH_NOARGS, "Returns time sampling index used by this object."},
    {NULL, NULL}
 };

@@ -245,7 +245,7 @@ static PyMethodDef oObject_methods[] = {
    {"getIdentifier", (PyCFunction)oObject_getIdentifier, METH_NOARGS, "Returns the identifier linked to this object."},
    {"getType", (PyCFunction)oObject_getType, METH_NOARGS, "Returns the type of this object. Usually encodes the schema name inside of Alembic.IO."},
    {"setMetaData", (PyCFunction)oObject_setMetaData, METH_VARARGS, "Takes in a tuple of 20 strings to store as metadata. If you have less strings, make sure to fill the tuple with empty string to match the count of 20."},
-   {"getProperty", (PyCFunction)oObject_getProperty, METH_VARARGS, "Return an oProperty or an oCompoundProperty for the given propertyName string. If the property doesn't exist yet, you will have to provide the optional propertyType string parameter. Valid property types can be found in AppendixB of this document."},
+   {"getProperty", (PyCFunction)oObject_getProperty, METH_VARARGS, "Return an output property (oProperty/oCompoundProperty/oXformProperty) for the given propertyName string. If the property doesn't exist yet, you will have to provide the optional propertyType string parameter. An optional tsIndex can be specified when the property is created. Valid property types can be found in AppendixB of this document."},
    {NULL, NULL}
 };
 static PyObject * oObject_getAttr(PyObject * self, char * attrName)

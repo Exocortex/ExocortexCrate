@@ -49,7 +49,7 @@ static PyObject *oCompoundProperty_isCompound(PyObject *self)
 static PyMethodDef oCompoundProperty_methods[] =
 {
    {"getName", (PyCFunction)oCompoundProperty_getName, METH_NOARGS, "Returns the name of the compound property."},
-   {"getProperty", (PyCFunction)oCompoundProperty_getProperty, METH_VARARGS, "Return an oProperty or an oCompoundProperty for the given propertyName string. If the property doesn't exist yet, you will have to provide the optional propertyType string parameter. Valid property types can be found in AppendixB of this document."},
+   {"getProperty", (PyCFunction)oCompoundProperty_getProperty, METH_VARARGS, "Return an output property (oProperty/oCompoundProperty/oXformProperty) for the given propertyName string. If the property doesn’t exist yet, you will have to provide the optional propertyType string parameter. An optional tsIndex can be specified when the property is created. Valid property types can be found in AppendixB of this document."},
    {"isCompound", (PyCFunction)oCompoundProperty_isCompound, METH_NOARGS, "To distinguish between an oProperty and an oCompoundProperty, always returns true for oCompoundProperty."},
    {NULL, NULL}
 };

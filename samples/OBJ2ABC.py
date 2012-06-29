@@ -79,12 +79,12 @@ class OBJ_structure:
    
    # Creating the Alembic file from the OBJ structure
    def to_alembic(self, archive):
-      archive.createTimeSampling([0,1])
+      archive.createTimeSampling([[0,],[1,]])
       mesh = archive.createObject("AbcGeom_PolyMesh_v1", "/pFromObj")
       faceCounts = []
       faceIndices = []
       P = []
-      
+
       #create the point list and compute the bounding box required by any PolyMesh
       pts = self.vertices[0]
       min_x = max_x = pts[0]
@@ -163,7 +163,6 @@ def main(args):
    parser.add_argument("-o", type=str, metavar="{Alembic file name}", help="optional output file name, default is \"a.abc\"")
    ns = vars(parser.parse_args(args[1:]))
    
-   archive = alembic.getOArchive(abc_out)
    
    print("Parsing " + ns["obj_in"])
    file_in = open(ns["obj_in"], "r")
@@ -175,7 +174,9 @@ def main(args):
    abc_out = ns["o"]
    if abc_out == None:
       abc_out = "a.out"
+
    print("Creating " + abc_out)
+   archive = alembic.getOArchive(abc_out)
    obj_st.to_alembic(archive)
 
 if __name__ == "__main__":
