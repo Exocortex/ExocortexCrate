@@ -338,8 +338,6 @@ int ExocortexAlembicStaticInterface_ExocortexAlembicImport( CONST_2013 MCHAR* st
 			", bImportMaterialIds=" << bImportMaterialIds << ", bAttachToExisting=" << bAttachToExisting <<
 			", iVisOption=" << iVisOption << " )" );
 
-
-
 		alembic_importoptions options;
 		options.importNormals = (bImportNormals != FALSE);
 		options.importUVs = (bImportUVs != FALSE);
