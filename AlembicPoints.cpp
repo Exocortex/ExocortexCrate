@@ -409,6 +409,8 @@ void AlembicPoints::ReadShapeFromOperator( IParticleGroup *particleGroup, PFSimp
         case PFlow_kSimpleShape_shape_vertex:
             type = ShapeType_Point;
             break;
+		default:
+			type = ShapeType_Point;
         }
     }
 	else if (pSimpleOperator->ClassID() == PFOperatorShapeLib_Class_ID)
@@ -422,6 +424,7 @@ void AlembicPoints::ReadShapeFromOperator( IParticleGroup *particleGroup, PFSimp
 			}
 			else{
 				ESS_LOG_INFO("Unsupported shape type.");
+				type = ShapeType_Point;
 			}
 		}
 		else if(nDimension == PFlow_kShapeLibrary_dimensionType_3D){
@@ -435,6 +438,7 @@ void AlembicPoints::ReadShapeFromOperator( IParticleGroup *particleGroup, PFSimp
 			}
 			else{
 				ESS_LOG_INFO("Unsupported shape type.");
+				type = ShapeType_Point;
 			}
 		
 			//ShapeType_Cylinder unsupported
@@ -444,6 +448,7 @@ void AlembicPoints::ReadShapeFromOperator( IParticleGroup *particleGroup, PFSimp
 		}
 		else{
 			ESS_LOG_INFO("Unknown dimension.");
+			type = ShapeType_Point;
 		}
 			
 		//int nNumParams = pblock->NumParams();
@@ -704,7 +709,9 @@ void AlembicPoints::GetShapeType(IParticleObjectExt *pExt, int particleId, TimeV
 		INode* currActionNode = particleActionListNode;
 		
 		//search for shape along path from this node to the root node
-		while(currActionNode && sInfo.type == ShapeType_NbElements){
+		const int MAX_DEPTH = 10; //just in case there is an infinite loop due a bug
+		int i = 0;
+		while(currActionNode && sInfo.type == ShapeType_NbElements && i<MAX_DEPTH){
 
 			AlembicPoints::perActionListShapeMap_it actionListIt = mPerActionListShapeMap.find(currActionNode);
 			if(actionListIt != mPerActionListShapeMap.end()){
@@ -712,7 +719,7 @@ void AlembicPoints::GetShapeType(IParticleObjectExt *pExt, int particleId, TimeV
 			}
 
 			currActionNode = sInfo.pParentActionList;
-
+			i++;
 		}
 
 		if(sInfo.type != ShapeType_NbElements){//We have found shape, so add it to the list if necessary
