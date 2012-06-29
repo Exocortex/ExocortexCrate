@@ -199,7 +199,7 @@ void AlembicParticles::UpdateParticles(TimeValue t, INode *node)
 	GetParticleVelocities( floorSample, ceilSample, sampleInfo, m_objToWorld, parts.vels );
 	GetParticleRadii( m_iPoints, sampleInfo, parts.radius);
 	GetParticleAges( m_iPoints, sampleInfo, parts.ages);
-	GetParticleOrientation( m_iPoints, sampleInfo, m_objToWorld,  m_ParticleOrientations );
+	GetParticleOrientations( m_iPoints, sampleInfo, m_objToWorld,  m_ParticleOrientations );
 	GetParticleScales( m_iPoints, sampleInfo, m_objToWorld,  m_ParticleScales );
 
 	GetParticleShapeTypes(m_iPoints, sampleInfo, m_InstanceShapeType );
@@ -428,36 +428,6 @@ int AlembicParticles::GetNumParticles(const Alembic::AbcGeom::IPointsSchema::Sam
     return static_cast<int>(floorSample.getPositions()->size());
 }
 
-Point3 AlembicParticles::GetParticlePosition(Alembic::AbcGeom::IPoints &iPoints, const Alembic::AbcGeom::IPointsSchema::Sample &floorSample, const Alembic::AbcGeom::IPointsSchema::Sample &ceilSample, const SampleInfo &sampleInfo, int index) const
-{	
-	Imath::V3f alembicP3f = floorSample.getPositions()->get()[index];
-
-    //Get the velocity if there is an alpha
-    if (sampleInfo.alpha != 0.0f)
-    {
-        Imath::V3f alembicVel3f;
-        Alembic::Abc::V3fArraySamplePtr velocitiesArray = floorSample.getVelocities();
-        if (velocitiesArray == NULL || velocitiesArray->size() == 0)
-        {
-            alembicVel3f = Imath::V3f(0.0f, 0.0f, 0.0f);
-        }
-        else
-        {
-            alembicVel3f = velocitiesArray->get()[(velocitiesArray->size() > index) ? index : 0];
-        }
-
-	 	double timeAlpha = (double)(iPoints.getSchema().getTimeSampling()->getSampleTime(sampleInfo.ceilIndex) - 
- 					iPoints.getSchema().getTimeSampling()->getSampleTime(sampleInfo.floorIndex)) * sampleInfo.alpha;
-      
-        float alpha = static_cast<float>(timeAlpha);
-        alembicP3f.x = alembicP3f.x + alpha * alembicVel3f.x;
-        alembicP3f.y = alembicP3f.y + alpha * alembicVel3f.y;
-        alembicP3f.z = alembicP3f.z + alpha * alembicVel3f.z;
-    }
-
-    return ConvertAlembicPointToMaxPoint(alembicP3f );
-}
-
 void
 AlembicParticles::GetParticlePositions(Alembic::AbcGeom::IPoints &iPoints, const Alembic::AbcGeom::IPointsSchema::Sample &floorSample, const Alembic::AbcGeom::IPointsSchema::Sample &ceilSample, const SampleInfo &sampleInfo, const Matrix3& objToWorld, Tab<Point3>& points) const {
 	Alembic::Abc::P3fArraySamplePtr floorPositions = floorSample.getPositions();
@@ -494,31 +464,6 @@ AlembicParticles::GetParticlePositions(Alembic::AbcGeom::IPoints &iPoints, const
 		}
 	}
 }
-
-
-Point3 AlembicParticles::GetParticleVelocity(const Alembic::AbcGeom::IPointsSchema::Sample &floorSample, const Alembic::AbcGeom::IPointsSchema::Sample &ceilSample, const SampleInfo &sampleInfo, int index) const
-{
-    Alembic::Abc::V3fArraySamplePtr velocitiesArray = floorSample.getVelocities();
-    if (velocitiesArray == NULL || velocitiesArray->size() == 0)
-    {
-        return Point3(0.0f, 0.0f, 0.0f);
-    }
-
-	Imath::V3f alembicP3f = velocitiesArray->get()[(velocitiesArray->size() > index) ? index : 0];
-
-    if (sampleInfo.alpha != 0.0)
-    {
-		velocitiesArray = ceilSample.getVelocities();
-        if (velocitiesArray != NULL && velocitiesArray->size() > 0)
-        {
-            const Imath::V3f &alembicCeilP3f = velocitiesArray->get()[(velocitiesArray->size() > index) ? index : 0];
-            alembicP3f = static_cast<float>(1.0 - sampleInfo.alpha) * alembicP3f + static_cast<float>(sampleInfo.alpha) * alembicCeilP3f;
-        }
-    }
-
-    return ConvertAlembicPointToMaxPoint( alembicP3f );
-}
-
 void
 AlembicParticles::GetParticleVelocities(const Alembic::AbcGeom::IPointsSchema::Sample &floorSample, const Alembic::AbcGeom::IPointsSchema::Sample &ceilSample, const SampleInfo &sampleInfo, const Matrix3& objToWorld, Tab<Point3>& vels) const {
 	ESS_LOG_WARNING( "Particle velocities are not transformed into world space." );
@@ -537,34 +482,6 @@ AlembicParticles::GetParticleVelocities(const Alembic::AbcGeom::IPointsSchema::S
 	}
 }
 
-float AlembicParticles::GetParticleRadius(Alembic::AbcGeom::IPoints &iPoints, const SampleInfo &sampleInfo, int index) const
-{
-    Alembic::AbcGeom::IFloatGeomParam widthsParam = iPoints.getSchema().getWidthsParam();
-    if (widthsParam == NULL || widthsParam.getNumSamples() == 0)
-    {
-        return 0.0f;
-    }
-
-    Alembic::Abc::FloatArraySamplePtr floorSamples = widthsParam.getExpandedValue(sampleInfo.floorIndex).getVals();
-    if (floorSamples == NULL || floorSamples->size() == 0)
-    {
-        return 0.0f;
-    }
-
-    float size = floorSamples->get()[(floorSamples->size() > index) ? index : 0];
-
-    if (sampleInfo.alpha != 0.0)
-    {
-        Alembic::Abc::FloatArraySamplePtr ceilSamples = widthsParam.getExpandedValue(sampleInfo.ceilIndex).getVals();
-        if (ceilSamples != NULL && ceilSamples->size() > 0)
-        {
-            float ceilSize = ceilSamples->get()[(ceilSamples->size() > index) ? index : 0];
-            size = static_cast<float>((1.0 - sampleInfo.alpha) * size + sampleInfo.alpha * ceilSize);
-        }
-    }
-
-    return size;
-}
 
 void
 AlembicParticles::GetParticleRadii(Alembic::AbcGeom::IPoints &iPoints, const SampleInfo &sampleInfo, Tab<float>& radius) const {
@@ -586,39 +503,6 @@ AlembicParticles::GetParticleRadii(Alembic::AbcGeom::IPoints &iPoints, const Sam
 	}
 }
 
-TimeValue AlembicParticles::GetParticleAge(Alembic::AbcGeom::IPoints &iPoints, const SampleInfo &sampleInfo, int index) const
-{
-    if (iPoints.getSchema().getPropertyHeader(".age") == NULL)
-    {
-        return 0;
-    }
-
-    IFloatArrayProperty ageProperty = Alembic::Abc::IFloatArrayProperty(iPoints.getSchema(), ".age");
-    if (!ageProperty.valid() || ageProperty.getNumSamples() == 0)
-    {
-        return 0;
-    }
-
-    Alembic::Abc::FloatArraySamplePtr floorSamples = ageProperty.getValue(sampleInfo.floorIndex);
-    if (floorSamples == NULL || floorSamples->size() == 0)
-    {
-        return 0;
-    }
-
-    float age = floorSamples->get()[(floorSamples->size() > index) ? index : 0];
-
-    if (sampleInfo.alpha != 0.0)
-    {
-        Alembic::Abc::FloatArraySamplePtr ceilSamples = ageProperty.getValue(sampleInfo.ceilIndex);
-        if (ceilSamples != NULL && ceilSamples->size() > 0)
-        {
-            float ceilAge = ceilSamples->get()[(ceilSamples->size() > index) ? index : 0];
-            age = static_cast<float>((1.0 - sampleInfo.alpha) * age + sampleInfo.alpha * ceilAge);
-        }
-    }
-
-    return GetTimeValueFromSeconds(age);
-}
 
 
 void
@@ -643,64 +527,8 @@ AlembicParticles::GetParticleAges(Alembic::AbcGeom::IPoints &iPoints, const Samp
 	}
 }
 
-
-Quat AlembicParticles::GetParticleOrientation(Alembic::AbcGeom::IPoints &iPoints, const SampleInfo &sampleInfo, int index) const
-{
-    Quat identity;
-    identity.Identity();
-
-    if (iPoints.getSchema().getPropertyHeader(".orientation") == NULL)
-    {
-        return identity;
-    }
-
-    IQuatfArrayProperty orientProperty = Alembic::Abc::IQuatfArrayProperty(iPoints.getSchema(), ".orientation");
-    if (!orientProperty.valid() || orientProperty.getNumSamples() == 0)
-    {
-        return identity;
-    }
-
-    Alembic::Abc::QuatfArraySamplePtr floorSamples = orientProperty.getValue(sampleInfo.floorIndex);
-    if (floorSamples == NULL || floorSamples->size() == 0)
-    {
-        return identity;
-    }
-
-    Alembic::Abc::Quatf quat = floorSamples->get()[(floorSamples->size() > index) ? index : 0];
-    Quat q = ConvertAlembicQuatToMaxQuat(quat, true);
-    q.Normalize();
-
-    if (iPoints.getSchema().getPropertyHeader(".angularvelocity") == NULL)
-    {
-        return q;
-    }
-
-    IQuatfArrayProperty angVelProperty = Alembic::Abc::IQuatfArrayProperty(iPoints.getSchema(), ".angularvelocity");
-    if (!angVelProperty.valid() || angVelProperty.getNumSamples() == 0 )
-    {
-        return q;
-    }
-
-    if (sampleInfo.alpha != 0.0)
-    {
-        Alembic::Abc::QuatfArraySamplePtr floorAngVelSamples = angVelProperty.getValue(sampleInfo.floorIndex);
-        if (floorAngVelSamples != NULL && floorAngVelSamples->size() > 0 && floorAngVelSamples->size() > index) 
-        {
-            Alembic::Abc::Quatf velquat = floorAngVelSamples->get()[index];
-            Quat v = ConvertAlembicQuatToMaxQuat(velquat, false);
-            float alpha = static_cast<float>(sampleInfo.alpha);
-            v = v * alpha;
-            if (v.w != 0.0f)
-                q = v * q;
-            q.Normalize();
-        }
-    }
-
-    return q;
-}
-
 void
-AlembicParticles::GetParticleOrientation(Alembic::AbcGeom::IPoints &iPoints, const SampleInfo &sampleInfo, const Matrix3& objToWorld, std::vector<Quat>& particleOrientations) const {
+AlembicParticles::GetParticleOrientations(Alembic::AbcGeom::IPoints &iPoints, const SampleInfo &sampleInfo, const Matrix3& objToWorld, std::vector<Quat>& particleOrientations) const {
 	ESS_LOG_WARNING( "Particle orientations are not transformed into world space." );
 	bool useDefaultValues = true;
 
@@ -760,45 +588,6 @@ AlembicParticles::GetParticleOrientation(Alembic::AbcGeom::IPoints &iPoints, con
 	}
 }
 
-Point3 AlembicParticles::GetParticleScale(Alembic::AbcGeom::IPoints &iPoints, const SampleInfo &sampleInfo, int index) const
-{
-    if (iPoints.getSchema().getPropertyHeader(".scale") == NULL)
-    {
-        return Point3(1,1,1);
-    }
-
-    IV3fArrayProperty scaleProperty = Alembic::Abc::IV3fArrayProperty(iPoints.getSchema(), ".scale");
-    if (!scaleProperty.valid() || scaleProperty.getNumSamples() == 0)
-    {
-        return Point3(1,1,1);
-    }
-
-    Alembic::Abc::V3fArraySamplePtr floorSamples = scaleProperty.getValue(sampleInfo.floorIndex);
-    if (floorSamples == NULL || floorSamples->size() == 0)
-    {
-        return Point3(1,1,1);
-    }
-
-    Alembic::Abc::V3f floorScale = floorSamples->get()[(floorSamples->size() > index) ? index : 0];
-
-    if (sampleInfo.alpha != 0.0)
-    {
-        Alembic::Abc::V3fArraySamplePtr ceilSamples = scaleProperty.getValue(sampleInfo.ceilIndex);
-        if (ceilSamples != NULL && ceilSamples->size() > 0)
-        {
-            float invalpha = static_cast<float>(1.0 - sampleInfo.alpha);
-            float alpha = static_cast<float>(sampleInfo.alpha);
-            Alembic::Abc::V3f ceilScale = ceilSamples->get()[(ceilSamples->size() > index) ? index : 0];
-            floorScale.x = invalpha * floorScale.x + alpha * ceilScale.x;
-            floorScale.y = invalpha * floorScale.y + alpha * ceilScale.y;
-            floorScale.z = invalpha * floorScale.z + alpha * ceilScale.z;
-        }
-    }
-
-    Point3 maxScale = ConvertAlembicScaleToMaxScale(floorScale);
-    return maxScale;
-}
-
 void
 AlembicParticles::GetParticleScales(Alembic::AbcGeom::IPoints &iPoints, const SampleInfo &sampleInfo, const Matrix3& objToWorld, std::vector<Point3>& scales) const {
 	ESS_LOG_WARNING( "Particle scales are not transformed into world space ??" );
@@ -822,29 +611,6 @@ AlembicParticles::GetParticleScales(Alembic::AbcGeom::IPoints &iPoints, const Sa
 	}
 }
 
-AlembicPoints::ShapeType AlembicParticles::GetParticleShapeType(Alembic::AbcGeom::IPoints &iPoints, const SampleInfo &sampleInfo, int index) const
-{
-    if (iPoints.getSchema().getPropertyHeader(".shapetype") == NULL)
-    {
-        return AlembicPoints::ShapeType_Point;
-    }
-
-    IUInt16ArrayProperty shapeTypeProperty = Alembic::Abc::IUInt16ArrayProperty(iPoints.getSchema(), ".shapetype");
-    if (!shapeTypeProperty.valid() || shapeTypeProperty.getNumSamples() == 0)
-    {
-        return AlembicPoints::ShapeType_Point;
-    }
-
-    Alembic::Abc::UInt16ArraySamplePtr floorSamples = shapeTypeProperty.getValue(sampleInfo.floorIndex);
-    if (floorSamples == NULL || floorSamples->size() == 0)
-    {
-        return AlembicPoints::ShapeType_Point;
-    }
-
-    AlembicPoints::ShapeType shapeType = static_cast<AlembicPoints::ShapeType>(floorSamples->get()[(floorSamples->size() > index) ? index : 0]);
-
-    return shapeType;
-}
 
 void
 AlembicParticles::GetParticleShapeTypes(Alembic::AbcGeom::IPoints &iPoints, const SampleInfo &sampleInfo, std::vector<AlembicPoints::ShapeType>& instanceShapeType ) const {
@@ -868,29 +634,6 @@ AlembicParticles::GetParticleShapeTypes(Alembic::AbcGeom::IPoints &iPoints, cons
 	}
 }
 
-uint16_t AlembicParticles::GetParticleShapeInstanceId(Alembic::AbcGeom::IPoints &iPoints, const SampleInfo &sampleInfo, int index) const
-{
-    if (iPoints.getSchema().getPropertyHeader(".shapeinstanceid") == NULL || iPoints.getSchema().getPropertyHeader(".instancenames") == NULL)
-    {
-        return 0;
-    }
-
-    IUInt16ArrayProperty shapeIdProperty = Alembic::Abc::IUInt16ArrayProperty(iPoints.getSchema(), ".shapeinstanceid");
-    if (!shapeIdProperty.valid() || shapeIdProperty.getNumSamples() == 0)
-    {
-        return 0;
-    }
-
-    Alembic::Abc::UInt16ArraySamplePtr floorSamples = shapeIdProperty.getValue(sampleInfo.floorIndex);
-    if (floorSamples == NULL || floorSamples->size() == 0)
-    {
-        return 0;
-    }
-
-    uint16_t instanceId = floorSamples->get()[(floorSamples->size() > index) ? index : 0];
-
-    return instanceId;
-}
 
 void
 AlembicParticles::GetParticleShapeInstanceIds(Alembic::AbcGeom::IPoints &iPoints, const SampleInfo &sampleInfo, std::vector<unsigned short>& instanceShapeIds ) const {
@@ -947,39 +690,6 @@ void AlembicParticles::FillParticleShapeNodes(Alembic::AbcGeom::IPoints &iPoints
     }
 }
 
-TimeValue AlembicParticles::GetParticleShapeInstanceTime(Alembic::AbcGeom::IPoints &iPoints, const SampleInfo &sampleInfo, int index) const
-{
-    if (iPoints.getSchema().getPropertyHeader(".shapetime") == NULL)
-    {
-        return 0;
-    }
-
-    IFloatArrayProperty ageProperty = Alembic::Abc::IFloatArrayProperty(iPoints.getSchema(), ".shapetime");
-    if (!ageProperty.valid() || ageProperty.getNumSamples() == 0)
-    {
-        return 0;
-    }
-
-    Alembic::Abc::FloatArraySamplePtr floorSamples = ageProperty.getValue(sampleInfo.floorIndex);
-    if (floorSamples == NULL || floorSamples->size() == 0)
-    {
-        return 0;
-    }
-
-    float shapeTime = floorSamples->get()[(floorSamples->size() > index) ? index : 0];
-
-    if (sampleInfo.alpha != 0.0)
-    {
-        Alembic::Abc::FloatArraySamplePtr ceilSamples = ageProperty.getValue(sampleInfo.ceilIndex);
-        if (ceilSamples != NULL && ceilSamples->size() > 0)
-        {
-            float ceilShapeTime = ceilSamples->get()[(ceilSamples->size() > index) ? index : 0];
-            shapeTime = static_cast<float>((1.0 - sampleInfo.alpha) * shapeTime + sampleInfo.alpha * ceilShapeTime);
-        }
-    }
-
-    return GetTimeValueFromSeconds(shapeTime);
-}
 
 void
 AlembicParticles::GetParticleShapeInstanceTimes(Alembic::AbcGeom::IPoints &iPoints, const SampleInfo &sampleInfo, std::vector<TimeValue>& instanceShapeTimes) const {
@@ -1107,8 +817,16 @@ void AlembicParticles::GetMultipleRenderMeshTM_Internal(TimeValue  t, INode *ino
 		Alembic::AbcGeom::IPointsSchema::Sample floorSample;
 		Alembic::AbcGeom::IPointsSchema::Sample ceilSample;
 		SampleInfo sampleInfo = GetSampleAtTime(m_iPoints, t, floorSample, ceilSample);
-		pos = GetParticlePosition( m_iPoints, floorSample, ceilSample, sampleInfo, meshNumber) * m_objToWorld;
-		orient = GetParticleOrientation(m_iPoints, sampleInfo, meshNumber);
+
+			double timeAlpha = (double)(m_iPoints.getSchema().getTimeSampling()->getSampleTime(sampleInfo.ceilIndex) - 
+ 						m_iPoints.getSchema().getTimeSampling()->getSampleTime(sampleInfo.floorIndex)) * sampleInfo.alpha;      
+
+			float alpha = static_cast<float>(timeAlpha);
+
+			pos += parts.vels[meshNumber] * alpha;
+		//	GetParticlePosition( m_iPoints, floorSample, ceilSample, sampleInfo, meshNumber) * m_objToWorld;
+		ESS_LOG_WARNING( "Not advancing orientation of particles for sub-sample motion blur." );
+		//orient *= GetParticleOrientation(m_iPoints, sampleInfo, meshNumber);
 		//TODO: we could possibly do it this way as well:
 		//Point3 pos2 = pos + static_cast<float>(sampleInfo.alpha) * parts.vels[meshNumber];
 	}
