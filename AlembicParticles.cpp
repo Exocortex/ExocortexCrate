@@ -633,7 +633,7 @@ AlembicParticles::GetParticleShapeTypes(Alembic::AbcGeom::IPoints &iPoints, cons
 	}
 	if( useDefaultValues ) {
 		for( int i = 0; i < instanceShapeType.size(); i ++ ) {
-			instanceShapeType[i] = AlembicPoints::ShapeType_Box;
+			instanceShapeType[i] = AlembicPoints::ShapeType_Point;
 		}
 	}
 }
