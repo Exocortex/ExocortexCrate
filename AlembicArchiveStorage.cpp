@@ -28,6 +28,9 @@ XSI::CString resolvePath(XSI::CString path)
 
 Alembic::Abc::IArchive * getArchiveFromID(XSI::CString path)
 {
+   if(path.IsEmpty())
+      return NULL;
+
    XSI::CString resolvedPath = resolvePath(path);
    std::map<std::string,AlembicArchiveInfo>::iterator it;
    it = gArchives.find(resolvedPath.GetAsciiString());

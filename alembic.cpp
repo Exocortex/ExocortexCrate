@@ -252,6 +252,7 @@ ESS_CALLBACK_START(alembic_export_Execute,CRef&)
 	      jobString += L";dynamictopology="+settings.GetParameterValue(L"dtopology").GetAsText();
       }
       jobString += L";globalspace="+settings.GetParameterValue(L"globalspace").GetAsText();
+      jobString += L";guidecurves="+settings.GetParameterValue(L"guidecurves").GetAsText();
  
       Application().ExecuteCommand(L"DeleteObj",inspectArgs,inspectResult);
    }
@@ -280,6 +281,7 @@ ESS_CALLBACK_START(alembic_export_Execute,CRef&)
 	   bool bindpose = true;
       bool dynamictopology = false;
       bool globalspace = false;
+      bool guidecurves = false;
       CRefArray objects;
 
       // process all tokens of the job
@@ -317,6 +319,8 @@ ESS_CALLBACK_START(alembic_export_Execute,CRef&)
             dynamictopology = (bool)CValue(valuePair[1]);
 		   else if(valuePair[0].IsEqualNoCase(L"globalspace"))
             globalspace = (bool)CValue(valuePair[1]);
+           else if(valuePair[0].IsEqualNoCase(L"guidecurves"))
+            guidecurves = (bool)CValue(valuePair[1]);
          else if(valuePair[0].IsEqualNoCase(L"filename"))
             filename = CValue(valuePair[1]).GetAsText();
          else if(valuePair[0].IsEqualNoCase(L"objects"))
@@ -435,6 +439,7 @@ ESS_CALLBACK_START(alembic_export_Execute,CRef&)
       job->SetOption(L"indexedNormals",true);
       job->SetOption(L"indexedUVs",true);
       job->SetOption(L"globalSpace",globalspace);
+      job->SetOption(L"guideCurves",guidecurves);
 
       // check if the job is satifsied
       if(job->PreProcess() != CStatus::OK)
@@ -721,7 +726,10 @@ CStatus alembic_create_item_Invoke
          }
          else if(itemType == alembicItemType_crvlist_topo || itemType == alembicItemType_crvlist)
          {
-            if(!Primitive(realTarget).GetType().IsEqualNoCase(L"crvlist") && !Primitive(realTarget).GetType().IsEqualNoCase(L"pointcloud"))
+			CString type = Primitive(realTarget).GetType();
+            if(!Primitive(realTarget).GetType().IsEqualNoCase(L"crvlist") && 
+			   !Primitive(realTarget).GetType().IsEqualNoCase(L"pointcloud") &&
+			   !Primitive(realTarget).GetType().IsEqualNoCase(L"hair"))
             {
                Application().LogMessage(L"[ExocortexAlembic] Invalid target '"+target.GetAsText()+L"' for "+type+L".",siErrorMsg);
                return CStatus::InvalidArgument;
@@ -2182,7 +2190,7 @@ ESS_CALLBACK_START(alembic_import_Execute, CRef&)
                CRef curveRef;
                curveRef.Set(getFullNameFromIdentifier(objects[i].getFullName()));
                curveObj = curveRef;
-               if(!curveObj.GetType().IsEqualNoCase(L"crvlist"))
+               if(!curveObj.GetType().IsEqualNoCase(L"crvlist") && !curveObj.GetType().IsEqualNoCase(L"hair"))
                   curveObj.ResetObject();
             }
             if(!curveObj.IsValid())
@@ -2200,8 +2208,8 @@ ESS_CALLBACK_START(alembic_import_Execute, CRef&)
             // load visibility
             alembic_create_item_Invoke(L"alembic_visibility",curveObj.GetRef(),filename,objects[i].getFullName().c_str(),attachToExisting,createItemArgs);
 
-            // load curve topo
-            if(!importBboxes)
+            // load curve topo if it's not hair because that will already have desired topology if it exists
+            if(!importBboxes && !curveObj.GetType().IsEqualNoCase(L"hair"))
                alembic_create_item_Invoke(L"alembic_crvlist_topo",curveObj.GetRef(),filename,objects[i].getFullName().c_str(),attachToExisting,createItemArgs);
 
             // load curve anim
@@ -2217,6 +2225,12 @@ ESS_CALLBACK_START(alembic_import_Execute, CRef&)
                CValue returnedOpVal;
                alembic_create_item_Invoke(L"alembic_crvlist",curveObj.GetRef(),filename,objects[i].getFullName().c_str(),attachToExisting,createItemArgs,returnedOpVal);
                returnOpRef = (CRef)returnedOpVal;
+            }
+
+            // allow stretching as there may have been dynamics applied to the hair
+            if( curveObj.GetType().IsEqualNoCase(L"hair"))
+            {
+               curveObj.GetActivePrimitive().PutParameterValue(L"AllowStretch", true);
             }
 
             // let's setup the xform op
@@ -2343,6 +2357,7 @@ ESS_CALLBACK_START(alembic_export_settings_Define,CRef&)
    oCustomProperty.AddParameter(L"bindpose",CValue::siBool,siPersistable,L"",L"",1,0,1,0,1,oParam);
    oCustomProperty.AddParameter(L"globalspace",CValue::siBool,siPersistable,L"",L"",0,0,1,0,1,oParam);
    oCustomProperty.AddParameter(L"dtopology",CValue::siBool,siPersistable,L"",L"",0,0,1,0,1,oParam);
+   oCustomProperty.AddParameter(L"guidecurves",CValue::siBool,siPersistable,L"",L"",0,0,1,0,1,oParam);
    oCustomProperty.AddParameter(L"transformcache",CValue::siBool,siPersistable,L"",L"",0,0,1,0,1,oParam);
  
 	return CStatus::OK;
@@ -2375,6 +2390,7 @@ ESS_CALLBACK_START(alembic_export_settings_DefineLayout,CRef&)
    oLayout.AddItem(L"facesets",L"Clusters");
    oLayout.AddItem(L"bindpose",L"Envelope BindPose");
    oLayout.AddItem(L"dtopology",L"Dynamic Topology");
+   oLayout.AddItem(L"guidecurves",L"Guide Curves");
    oLayout.AddItem(L"globalspace",L"Use Global Space");
    oLayout.EndGroup();
    oLayout.AddItem(L"transformcache",L"Transform Cache");
