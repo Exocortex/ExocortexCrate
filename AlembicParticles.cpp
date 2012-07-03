@@ -784,6 +784,11 @@ int AlembicParticles::NumberOfRenderMeshes()
 Mesh* AlembicParticles::GetMultipleRenderMesh(TimeValue  t,  INode *inode,  View &view,  BOOL &needDelete,  int meshNumber)
 {
 	//ESS_LOG_INFO( "AlembicParticles::GetMultipleRenderMesh( t: " << t << " meshNumber: " << meshNumber << ", t: " << t << " )" );
+	return GetMultipleRenderMesh_Internal(t, inode, view, needDelete, meshNumber);
+}
+
+Mesh* AlembicParticles::GetMultipleRenderMesh_Internal(TimeValue  t,  INode *inode,  View &view,  BOOL &needDelete,  int meshNumber)
+{
     if (meshNumber > parts.Count() || !parts.Alive(meshNumber) || view.CheckForRenderAbort())
     {
         needDelete = NULL;
@@ -846,6 +851,101 @@ Mesh* AlembicParticles::GetMultipleRenderMesh(TimeValue  t,  INode *inode,  View
 	}
 
     return pMesh;
+}
+
+Mesh* AlembicParticles::GetRenderMesh(TimeValue t, INode *inode, View &view, BOOL &needDelete)
+{
+	NullView nullView;
+
+	//Based upon the PFOperatorRender.cpp code
+	
+	//int j, k, mp, curIndex, curNumVerts, curNumFaces;
+
+	Mesh* renderMesh = new Mesh();
+	needDelete = true;
+	int vertNum = 0;
+	int faceNum = 0;
+
+	for(int i=0; i<NumberOfRenderMeshes(); i++)
+	{
+		BOOL curNeedDelete = FALSE;
+		Mesh* pMesh = GetMultipleRenderMesh_Internal(t, inode, nullView, curNeedDelete, i);
+
+		if(!pMesh){
+			continue;
+		}
+
+		int curNumVerts = pMesh->getNumVerts();
+		if(curNumVerts == 0){
+			if (curNeedDelete) {
+				pMesh->FreeAll();
+				delete pMesh;
+			}
+			continue;
+		}
+
+		vertNum += pMesh->getNumVerts();
+		faceNum += pMesh->getNumFaces();
+	}
+
+	if(!renderMesh->setNumVerts(vertNum)){
+		return renderMesh;
+	}
+	if(!renderMesh->setNumFaces(faceNum)){
+		return renderMesh;
+	}
+
+	Matrix3 inverseTM = Inverse(inode->GetObjectTM(t));
+	
+	int vertOffset=0;
+	int faceOffset=0;
+	for(int i=0; i<NumberOfRenderMeshes(); i++)
+	{
+		BOOL curNeedDelete = FALSE;
+		Mesh* pMesh = GetMultipleRenderMesh_Internal(t, inode, nullView, curNeedDelete, i);
+
+		if(!pMesh){
+			continue;
+		}
+
+		int curNumVerts = pMesh->getNumVerts();
+		if(curNumVerts == 0){
+			if (curNeedDelete) {
+				pMesh->FreeAll();
+				delete pMesh;
+			}
+			pMesh = NULL;
+			continue;
+		}
+
+		int curNumFaces = pMesh->getNumFaces();
+		Matrix3 meshTM;
+		meshTM.IdentityMatrix();
+		Interval meshTMValid = FOREVER;
+		GetMultipleRenderMeshTM_Internal(t, inode, nullView, i, meshTM, meshTMValid);
+
+		for(int j=0, curIndex=vertOffset; j<curNumVerts; j++, curIndex++) {
+			renderMesh->verts[curIndex] = pMesh->verts[j] * meshTM * inverseTM;
+		}
+		for(int j=0, curIndex=faceOffset; j<curNumFaces; j++, curIndex++) {
+			renderMesh->faces[curIndex] = pMesh->faces[j];
+			for(int k=0; k<3; k++) {
+				renderMesh->faces[curIndex].v[k] += vertOffset;
+			}
+		}
+
+
+		
+		if (curNeedDelete) {
+			pMesh->FreeAll();
+			delete pMesh;
+		}
+
+		vertOffset += curNumVerts;
+		faceOffset += curNumFaces;
+	}
+
+	return renderMesh;
 }
 
 void AlembicParticles::GetMultipleRenderMeshTM(TimeValue  t, INode *inode, View &view, int  meshNumber, Matrix3 &meshTM, Interval &meshTMValid)
@@ -1013,7 +1113,7 @@ int AlembicParticles::Display(TimeValue t, INode* inode, ViewExp *vpt, int flags
 		BOOL deleteMesh = FALSE;
 
 		GetMultipleRenderMeshTM_Internal(t, inode, nullView, i, elemToObj, meshTMValid);
-		Mesh *mesh = GetMultipleRenderMesh(t, inode, nullView, deleteMesh, i);
+		Mesh *mesh = GetMultipleRenderMesh_Internal(t, inode, nullView, deleteMesh, i);
 
 		if(mesh && m_InstanceShapeType[i] != AlembicPoints::ShapeType_Point ){
 
@@ -1110,7 +1210,7 @@ int AlembicParticles::HitTest(TimeValue t, INode *inode, int type, int crossing,
 		BOOL deleteMesh = FALSE;
 
 		GetMultipleRenderMeshTM_Internal(t, inode, nullView, i, elemToObj, meshTMValid);
-		Mesh *mesh = GetMultipleRenderMesh(t, inode, nullView, deleteMesh, i);
+		Mesh *mesh = GetMultipleRenderMesh_Internal(t, inode, nullView, deleteMesh, i);
 		if(!mesh){
 			continue;
 		}

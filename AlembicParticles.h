@@ -98,10 +98,13 @@ public:
     int RenderEnd(TimeValue t);
 
     // --- Derived class implementation of the virtual functions in GeomObject ---
+
     virtual int NumberOfRenderMeshes();
     virtual Mesh* GetMultipleRenderMesh(TimeValue  t,  INode *inode,  View &view,  BOOL &needDelete,  int meshNumber); 
+	Mesh* GetMultipleRenderMesh_Internal(TimeValue  t,  INode *inode,  View &view,  BOOL &needDelete,  int meshNumber); 
     virtual void GetMultipleRenderMeshTM (TimeValue  t, INode *inode, View &view, int  meshNumber, Matrix3 &meshTM, Interval &meshTMValid); 
 	void GetMultipleRenderMeshTM_Internal(TimeValue  t, INode *inode, View &view, int  meshNumber, Matrix3 &meshTM, Interval &meshTMValid);
+	virtual Mesh* GetRenderMesh(TimeValue t, INode *inode, View &view, BOOL &needDelete);
 
     // --- Derived class implementation of the virtual functions in BaseObject ---
     CreateMouseCallBack* GetCreateMouseCallBack() { return NULL; }
