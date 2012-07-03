@@ -55,7 +55,7 @@ def copy_objects(in_data, out_data):
       if b_verbose:
          print("OBJ : \"" + identifier + "\" of type " + obj_typ)
       
-      out = out_data.createObject(obj_typ, identifier)
+      out = out_data.createObject(obj_typ, identifier, obj.getTsIndex())
       out.setMetaData(obj.getMetaData())
       for prop_name in obj.getPropertyNames():
          if prop_name == ".metadata":

@@ -118,6 +118,7 @@ static PyObject * oArchive_createTimeSampling(PyObject * self, PyObject * args)
          archive->mArchive->addTimeSampling(((oTimeSampling*)*beg)->ts);
          PyObject_FREE(*beg);
       }
+
       {Py_INCREF(Py_True); return Py_True;}
    ALEMBIC_PYOBJECT_CATCH_STATEMENT
 }

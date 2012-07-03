@@ -173,7 +173,7 @@ def main(args):
    global vertex_def
    # parser args
    parser = argparse.ArgumentParser(description="Concatenate multiple alembic files only if their geometries are identical.\n\nCurrently, it only supports Xforms. Issue #16 on GitHub is about adding vertex/normal deformations.")
-   parser.add_argument("abc_files", metavar="{Alembic files}", type=str, nargs="+", help="alembic files to concatenate")
+   parser.add_argument("abc_files", metavar="{Alembic file}", type=str, nargs="+", help="alembic file to concatenate")
    parser.add_argument("-o", type=str, metavar="{Alembic output file}", help="optional output file name, default is \"a.abc\"", default="a.abc")
    ns = vars(parser.parse_args(args[1:]))
    
