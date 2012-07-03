@@ -860,8 +860,6 @@ Mesh* AlembicParticles::GetRenderMesh(TimeValue t, INode *inode, View &view, BOO
 
 	//Based upon the PFOperatorRender.cpp code
 	
-	//int j, k, mp, curIndex, curNumVerts, curNumFaces;
-
 	Mesh* renderMesh = new Mesh();
 	needDelete = true;
 	int vertNum = 0;
@@ -898,6 +896,14 @@ Mesh* AlembicParticles::GetRenderMesh(TimeValue t, INode *inode, View &view, BOO
 
 	Matrix3 inverseTM = Inverse(inode->GetObjectTM(t));
 	
+	int tvertOffset[MAX_MESHMAPS];
+	for(int i=0; i<MAX_MESHMAPS; i++){
+		tvertOffset[i] = 0;
+	}
+
+	TVFace tvFace;
+	tvFace.setTVerts(0, 0, 0);
+
 	int vertOffset=0;
 	int faceOffset=0;
 	for(int i=0; i<NumberOfRenderMeshes(); i++)
@@ -935,7 +941,40 @@ Mesh* AlembicParticles::GetRenderMesh(TimeValue t, INode *inode, View &view, BOO
 			}
 		}
 
-
+		int numMaps = pMesh->getNumMaps();
+		for(int mp=0; mp<numMaps; mp++) {
+			int tvertsToAdd = pMesh->mapSupport(mp) ? pMesh->getNumMapVerts(mp) : 0;
+			if (tvertsToAdd == 0) {
+				continue;
+			}
+			if (tvertOffset[mp] == 0) { // the map channel needs expansion
+				renderMesh->setMapSupport(mp, TRUE);
+				int numMapVerts = 3*faceNum+1; // triple number of faces covers the maximum + one extra
+				renderMesh->setNumMapVerts(mp, numMapVerts);
+				for (int j=0; j < numMapVerts; j++) { // zero out verts
+					renderMesh->setMapVert(mp, j, Point3::Origin);	
+				}
+				renderMesh->setNumMapFaces(mp, faceNum);
+				for(int j=0; j<faceNum; j++){  // zero out vertex indices
+					renderMesh->mapFaces(mp)[j] = tvFace;
+				}
+				tvertOffset[mp] = 1;
+			}
+			// verify that the tverts array is in proper array range
+			if (tvertOffset[mp] + tvertsToAdd > renderMesh->getNumMapVerts(mp)) {
+				renderMesh->setNumMapVerts(mp, tvertOffset[mp] + tvertsToAdd, TRUE);
+			}
+			for(int j=0, curIndex=tvertOffset[mp]; j<tvertsToAdd; j++, curIndex++) {
+				renderMesh->setMapVert(mp, curIndex, pMesh->mapVerts(mp)[j] );
+			}
+			for(int j=0, curIndex=faceOffset; j<curNumFaces; j++, curIndex++) {
+				renderMesh->mapFaces(mp)[curIndex] = pMesh->mapFaces(mp)[j];
+				for(int k=0; k<3; k++) {
+					renderMesh->mapFaces(mp)[curIndex].t[k] += tvertOffset[mp];
+				}
+			}
+			tvertOffset[mp] += tvertsToAdd;
+		}
 		
 		if (curNeedDelete) {
 			pMesh->FreeAll();
