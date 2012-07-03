@@ -435,6 +435,7 @@ global proc exocortexSetupDialog(string $uiDirectory)
     deleteUI -window $dialog;
 
   $dialog = `loadUI -uiFile ($uiDirectory+"/ExocortexAlembicImport.ui")`;
+  windowPref -topEdge 300 -leftEdge 300 $dialog;
   showWindow $dialog;
 }
 

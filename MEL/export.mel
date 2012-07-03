@@ -88,8 +88,11 @@ global proc exocortexChooseFile(string $dialog)
 global proc exocortexSetupDialog(string $uiDirectory)
 {
   global string $dialog;
-  if (`window -exists $dialog`) deleteUI -window $dialog;
+  if (`window -exists $dialog`)
+    deleteUI -window $dialog;
+
   $dialog = `loadUI -uiFile ($uiDirectory+"/ExocortexAlembicExport.ui")`;
+  windowPref -topEdge 300 -leftEdge 300 $dialog;
   textField -edit -text `playbackOptions -q -min` inframe;
   textField -edit -text `playbackOptions -q -max` outframe;
   showWindow $dialog;
