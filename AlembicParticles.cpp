@@ -695,6 +695,7 @@ void AlembicParticles::FillParticleShapeNodes(Alembic::AbcGeom::IPoints &iPoints
 {
     //m_TotalShapesToEnumerate = 0;
     m_InstanceShapeINodes.clear();
+	ClearMeshCache();
 
 	if( iPoints.getSchema().getPropertyHeader( ".instancenames" ) == NULL ) {
 		return;
@@ -1417,50 +1418,90 @@ Mesh *AlembicParticles::BuildRectangleMesh(int meshNumber, TimeValue t, INode *n
 }
 
 
+void AlembicParticles::ClearMeshCache()
+{
+	for(nodeAndTimeToMeshMap::iterator it=meshCacheMap.begin(); it != meshCacheMap.end(); it++){
+		meshInfo& mi = it->second;
+		if(mi.bMeshNeedDelete){
+			delete mi.pMesh;
+		}
+	}
+	meshCacheMap.clear();
+}
+
+Mesh* GetMeshFromNode(INode *iNode, const TimeValue t, BOOL bNeedDelete)
+{
+	bNeedDelete = FALSE;
+	if (iNode == NULL) return NULL;
+	Object *obj = iNode->EvalWorldState(t).obj;
+
+    if (obj->SuperClassID()==GEOMOBJECT_CLASS_ID) {
+		NullView nullView;
+		GeomObject* geomObject = (GeomObject*)obj;
+		return geomObject->GetRenderMesh(t, iNode, nullView, bNeedDelete);
+	}
+	else{
+		return NULL;
+	}
+}
+
 Mesh *AlembicParticles::BuildInstanceMesh(int meshNumber, TimeValue t, INode *node, View& view, BOOL &needDelete)
 {
-   needDelete = FALSE;
+	needDelete = FALSE;
 
-   if (meshNumber > m_InstanceShapeIds.size())
-       return NULL;
+	if (meshNumber > m_InstanceShapeIds.size()){
+		return NULL;
+	}
 
-   uint16_t shapeid = m_InstanceShapeIds[meshNumber];
+	uint16_t shapeid = m_InstanceShapeIds[meshNumber];
 
-   if (shapeid > m_InstanceShapeINodes.size())
-       return NULL;
+	if (shapeid > m_InstanceShapeINodes.size()){
+	   return NULL;
+	}
 
-   INode *pNode = m_InstanceShapeINodes[shapeid];
-   TimeValue shapet = m_InstanceShapeTimes[meshNumber];
+	INode *pNode = m_InstanceShapeINodes[shapeid];
+	TimeValue shapet = m_InstanceShapeTimes[meshNumber];
 
-   bool deleteTriObj = false;
-   TriObject *triObj = GetTriObjectFromNode(pNode, shapet, deleteTriObj);
+	nodeAndTimeToMeshMap::iterator it = meshCacheMap.find(nodeTimePair(pNode, shapet));
+	if( it != meshCacheMap.end() ){
+		meshInfo& mi = it->second;
+		return mi.pMesh;
+	}
+	else{
+		meshInfo& mi = meshCacheMap[nodeTimePair(pNode, shapet)];
+		mi.pMesh = GetMeshFromNode(pNode, shapet, mi.bMeshNeedDelete);
+		return mi.pMesh;
+	}
 
-   if (!triObj)
-       return NULL;
+ //  bool deleteTriObj = false;
+ //  TriObject *triObj = GetTriObjectFromNode(pNode, shapet, deleteTriObj);
 
-   if (!deleteTriObj)
-   {
-       triObj->UpdateValidity(TOPO_CHAN_NUM, Interval(t, t));
-       triObj->UpdateValidity(GEOM_CHAN_NUM, Interval(t, t));
-       triObj->UpdateValidity(TEXMAP_CHAN_NUM, Interval(t, t));
-   }
+ //  if (!triObj)
+ //      return NULL;
 
-   Mesh *pMesh = triObj->GetRenderMesh(shapet, node, view, needDelete);
+ //  if (!deleteTriObj)
+ //  {
+ //      triObj->UpdateValidity(TOPO_CHAN_NUM, Interval(t, t));
+ //      triObj->UpdateValidity(GEOM_CHAN_NUM, Interval(t, t));
+ //      triObj->UpdateValidity(TEXMAP_CHAN_NUM, Interval(t, t));
+ //  }
 
-   if (deleteTriObj && !needDelete)
-   {
-       Mesh *pTempMesh = new Mesh;
-       *pTempMesh = *pMesh;
-       pMesh = pTempMesh;
-       pMesh->InvalidateGeomCache();
-       pMesh->InvalidateTopologyCache();
-       needDelete = TRUE;
-   }
+ //  Mesh *pMesh = triObj->GetRenderMesh(shapet, node, view, needDelete);
 
-   if (deleteTriObj)
-       delete triObj;
+ //  if (deleteTriObj && !needDelete)
+ //  {
+ //      Mesh *pTempMesh = new Mesh;
+ //      *pTempMesh = *pMesh;
+ //      pMesh = pTempMesh;
+ //      pMesh->InvalidateGeomCache();
+ //      pMesh->InvalidateTopologyCache();
+ //      needDelete = TRUE;
+ //  }
 
-	return pMesh;
+ //  if (deleteTriObj)
+ //      delete triObj;
+
+	//return pMesh;
 }
 
 Mesh *AlembicParticles::BuildNbElementsMesh(int meshNumber, TimeValue t, INode *node, View& view, BOOL &needDelete)
