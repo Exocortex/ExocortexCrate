@@ -20,9 +20,9 @@ def copy_compound_property(cprop, outCprop):
       sub_prop = cprop.getProperty(prop_name)
       out_prop = outCprop.getProperty(prop_name, sub_prop.getType())
       if sub_prop.isCompound():
-         copy_compound_property(sub_prop, out_prop, full_name)
+         copy_compound_property(sub_prop, out_prop)
       else:
-         copy_property(sub_prop, out_prop, full_name)
+         copy_property(sub_prop, out_prop)
 
 # ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ----
 # going through each object
@@ -39,9 +39,9 @@ def copy_objects(in_data, out_data):
          prop = obj.getProperty(prop_name)
          out_prop = out.getProperty(prop_name, prop.getType())
          if prop.isCompound():
-            copy_compound_property(prop, out_prop, identifier)
+            copy_compound_property(prop, out_prop)
          else:
-            copy_property(prop, out_prop, identifier)
+            copy_property(prop, out_prop)
 
 # ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ----
 def main(args):

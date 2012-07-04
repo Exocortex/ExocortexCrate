@@ -14,7 +14,7 @@ not_filter = None
 #copy directly a property and its corresponding values
 def copy_property(prop, outProp, full_name):
    if b_verbose:
-      print("PROP: \"" + full_name + "/" + prop.getName() + "\" of type " + prop.getType())
+      print("PROP: \"" + full_name + "/" + prop.getName() + "\" of type " + prop.getType() + " with " + str(prop.getNbStoredSamples()) + " stored samples")
    for i in xrange(0, prop.getNbStoredSamples()):
       vals = prop.getValues(i)
       outProp.setValues(vals)
