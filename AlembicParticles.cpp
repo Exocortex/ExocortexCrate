@@ -614,7 +614,7 @@ AlembicParticles::GetParticleOrientations(Alembic::AbcGeom::IPoints &iPoints, co
 
 void
 AlembicParticles::GetParticleScales(Alembic::AbcGeom::IPoints &iPoints, const SampleInfo &sampleInfo, const Matrix3& objToWorld, std::vector<Point3>& scales) const {
-	ESS_LOG_WARNING( "Particle scales are not transformed into world space ??" );
+	//ESS_LOG_WARNING( "Particle scales are not transformed into world space ??" );
 	bool useDefaultValues = true;
 	if( iPoints.getSchema().getPropertyHeader(".scale") != NULL ) {
 	    IV3fArrayProperty scaleProperty = Alembic::Abc::IV3fArrayProperty(iPoints.getSchema(), ".scale");
