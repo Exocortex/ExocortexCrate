@@ -222,7 +222,7 @@ void AlembicMeshNormalsModifier::ModifyObject (TimeValue t, ModContext &mc, Obje
    }
 
    // update the validity channel
-    if( bTopology ) {
+    if( bTopology || bNormals ) {
 		os->obj->UpdateValidity(TOPO_CHAN_NUM, interval);
 		os->obj->UpdateValidity(GEOM_CHAN_NUM, interval);
 	}

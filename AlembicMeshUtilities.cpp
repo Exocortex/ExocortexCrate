@@ -981,6 +981,8 @@ void addAlembicMaterialsModifier(INode *pNode, Alembic::AbcGeom::IObject& iObj)
 			")\n"
 
 			"custattributes.add $.modifiers[\"Alembic Materials\"] AlembicMaterialCA baseobject:false\n"
+			"$.modifiers[\"Alembic Materials\"].enabled = false"
+			//"$.modifiers[\"Alembic Materials\"].enabled = false\n"
 			//"if $.modifiers[\"Alembic Mesh Normals\"] != undefined then (\n"
 			//"$.modifiers[\"Alembic Mesh Normals\"].enabled = true\n"
 			//")\n"
@@ -1088,6 +1090,13 @@ int AlembicImport_PolyMesh(const std::string &path, Alembic::AbcGeom::IObject& i
 	std::vector<Modifier*> modifiersToEnable;
 
 	bool isDynamicTopo = isAlembicMeshTopoDynamic( &iObj );
+	//isDynamicTopo = true;
+
+
+	GET_MAX_INTERFACE()->SelectNode( pNode );
+	importMetadata(iObj);
+	addAlembicMaterialsModifier(pNode, iObj);
+
 
 	//ESS_LOG_INFO( "Node: " << pNode->GetName() );
 	//ESS_LOG_INFO( "isDynamicTopo: " << isDynamicTopo );
@@ -1235,10 +1244,6 @@ int AlembicImport_PolyMesh(const std::string &path, Alembic::AbcGeom::IObject& i
 		modifiersToEnable[i]->EnableMod();
 	}
 
-	GET_MAX_INTERFACE()->SelectNode( pNode );
-	importMetadata(iObj);
-
-	addAlembicMaterialsModifier(pNode, iObj);
 
 	return 0;
 }

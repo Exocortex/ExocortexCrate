@@ -7,7 +7,8 @@ function CreateAlembicMetadataModifier selectedObject = (
 
 			AlembicMetaDataModifier = EmptyModifier()
 			AlembicMetaDataModifier.name = "Alembic Metadata"
-			addmodifier selectedObject AlembicMetaDataModifier
+			modCount = $.modifiers.count
+			addmodifier selectedObject AlembicMetaDataModifier before:modCount
 
 			AlembicMetadataCA = attributes AlembicMetadata
 			(
@@ -61,13 +62,14 @@ function CreateAlembicMetadataModifier selectedObject = (
 			)
 
 			custattributes.add selectedObject.modifiers["Alembic Metadata"] AlembicMetadataCA baseobject:false
+			selectedObject.modifiers["Alembic Metadata"].enabled = false
 
 			--if $.modifiers["Alembic Mesh Normals"] != undefined then (
 			--	$.modifiers["Alembic Mesh Normals"].enabled = true
 			--
-			if $.modifiers["Alembic Mesh Topology"] != undefined then (
-				$.modifiers["Alembic Mesh Topology"].enabled = true
-			)
+			--if $.modifiers["Alembic Mesh Topology"] != undefined then (
+			--	$.modifiers["Alembic Mesh Topology"].enabled = true
+			--)
 		)
 	)
 )
