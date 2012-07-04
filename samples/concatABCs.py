@@ -177,12 +177,17 @@ def main(args):
    parser.add_argument("-o", type=str, metavar="{Alembic output file}", help="optional output file name, default is \"a.abc\"", default="a.abc")
    ns = vars(parser.parse_args(args[1:]))
    
-   if len(ns["abc_files"]) < 2:
+   abc_files = ns["abc_files"]
+   if len(abc_files) < 2:
       print("Error: need at least two files for the concatenation")
       return
    
+   for abc in abc_files:
+      if abc == ns["o"]:
+         print("Error: the output filename must be distinct from all the input files")
+         return
+   
    #read the first file and extract the time sampling, xforms and identifying vertex deforms
-   abc_files = ns["abc_files"]
    print("\n\nScanning: " + abc_files[0])
    extract_ts_xforms(alembic.getIArchive(abc_files[0]))
    

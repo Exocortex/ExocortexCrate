@@ -99,6 +99,11 @@ def main(args):
       print("Error: need at least two files to merge")
       return
    
+   for abc in abc_files:
+      if abc == ns["o"]:
+         print("Error: the output filename must be distinct from all the input files")
+         return
+   
    # 1. scan the files
    ts_man = ts_manager()
    idx = 0
