@@ -475,7 +475,7 @@ AlembicParticles::GetParticlePositions(Alembic::AbcGeom::IPoints &iPoints, const
 }
 void
 AlembicParticles::GetParticleVelocities(const Alembic::AbcGeom::IPointsSchema::Sample &floorSample, const Alembic::AbcGeom::IPointsSchema::Sample &ceilSample, const SampleInfo &sampleInfo, const Matrix3& objToWorld, Tab<Point3>& vels) const {
-	ESS_LOG_WARNING( "Particle velocities are not transformed into world space." );
+	//ESS_LOG_WARNING( "Particle velocities are not transformed into world space." );
 	bool useDefaultValues = true;
 	Alembic::Abc::V3fArraySamplePtr floorVelocities = floorSample.getVelocities();
 	if( floorVelocities != NULL && floorVelocities->valid() && floorVelocities->size() > 0 ) {
@@ -547,7 +547,7 @@ AlembicParticles::GetParticleAges(Alembic::AbcGeom::IPoints &iPoints, const Samp
 
 void
 AlembicParticles::GetParticleOrientations(Alembic::AbcGeom::IPoints &iPoints, const SampleInfo &sampleInfo, const Matrix3& objToWorld, std::vector<Quat>& particleOrientations) const {
-	ESS_LOG_WARNING( "Particle orientations are not transformed into world space." );
+	//ESS_LOG_WARNING( "Particle orientations are not transformed into world space." );
 	bool useDefaultValues = true;
 
 	if( iPoints.getSchema().getPropertyHeader(".orientation") != NULL ) {
