@@ -458,15 +458,16 @@ bool AlembicPolyMesh::Save(double time, bool bLastFrame)
 
       if(finalPolyMesh.mVelocitiesVec.size() > 0)
       {
-
 		  if(finalPolyMesh.posVec.size() != finalPolyMesh.mVelocitiesVec.size()){
 
 			  ESS_LOG_INFO("mVelocitiesVec has wrong size.");
 		  }
-
-         Alembic::Abc::V3fArraySample sample = Alembic::Abc::V3fArraySample(&finalPolyMesh.mVelocitiesVec.front(),finalPolyMesh.mVelocitiesVec.size());
-		 mMeshSample.setVelocities( sample );
       }
+	  else{
+		  finalPolyMesh.mVelocitiesVec.push_back(Imath::V3f(0,0,0));
+	  }
+      Alembic::Abc::V3fArraySample sample = Alembic::Abc::V3fArraySample(&finalPolyMesh.mVelocitiesVec.front(),finalPolyMesh.mVelocitiesVec.size());
+	  mMeshSample.setVelocities( sample );
    }
    
 
