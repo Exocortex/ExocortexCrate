@@ -79,13 +79,13 @@ Alembic::Abc::IObject getObjectFromArchive(std::string path, std::string identif
    if(archive == NULL)
       return Alembic::Abc::IObject();
 
+   if(identifier[0] != '/'){
+		return Alembic::Abc::IObject();
+   }
+
    // split the path
    std::vector<std::string> parts;
    boost::split(parts, identifier, boost::is_any_of("/"));
-
-   if(strcmp(parts[0].c_str(), "/") != 0){
-		return Alembic::Abc::IObject();
-   }
 
    // recurse to find it
    Alembic::Abc::IObject obj = archive->getTop();
