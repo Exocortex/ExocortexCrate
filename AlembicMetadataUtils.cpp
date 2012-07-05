@@ -42,40 +42,30 @@ void importMetadata(Alembic::AbcGeom::IObject& iObj)
 	//	Alembic::Abc::StringArraySamplePtr ptr = metaDataProp.getValue(0);
 	//
 	//}
+
+	std::string dataStr("#(");
+
+	for(int i=0; i<ptr->size()-1; i++){
 	
-
-	char szBuffer[10000];	
-	sprintf_s( szBuffer, 10000, 
-		"include \"Exocortex-Metadata.mcr\"\n"
-		"CreateAlembicMetadataModifier $\n"
-		"InitAlembicMetadataModifier $ \"%s\" \"%s\" \"%s\" \"%s\" \"%s\" \"%s\" \"%s\" \"%s\" \"%s\" \"%s\" \"%s\" \"%s\" \"%s\" \"%s\" \"%s\" \"%s\" \"%s\" \"%s\" \"%s\" \"%s\" \n",
-
-		(0 < ptr->size()) ? ptr->get()[0].c_str() : "",
-		(1 < ptr->size()) ? ptr->get()[1].c_str() : "",
-		(2 < ptr->size()) ? ptr->get()[2].c_str() : "",
-		(3 < ptr->size()) ? ptr->get()[3].c_str() : "",
-		(4 < ptr->size()) ? ptr->get()[4].c_str() : "",
-		(5 < ptr->size()) ? ptr->get()[5].c_str() : "",
-		(6 < ptr->size()) ? ptr->get()[6].c_str() : "",
-		(7 < ptr->size()) ? ptr->get()[7].c_str() : "",
-		(8 < ptr->size()) ? ptr->get()[8].c_str() : "",
-		(9 < ptr->size()) ? ptr->get()[9].c_str() : "",
-		(10 < ptr->size()) ? ptr->get()[10].c_str() : "",
-		(11 < ptr->size()) ? ptr->get()[11].c_str() : "",
-		(12 < ptr->size()) ? ptr->get()[12].c_str() : "",
-		(13 < ptr->size()) ? ptr->get()[13].c_str() : "",
-		(14 < ptr->size()) ? ptr->get()[14].c_str() : "",
-		(15 < ptr->size()) ? ptr->get()[15].c_str() : "",
-		(16 < ptr->size()) ? ptr->get()[16].c_str() : "",
-		(17 < ptr->size()) ? ptr->get()[17].c_str() : "",
-		(18 < ptr->size()) ? ptr->get()[18].c_str() : "",
-		(19 < ptr->size()) ? ptr->get()[19].c_str() : ""
-
-		//"1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20"
+		dataStr += "\"";
+		dataStr += ptr->get()[i];
+		dataStr += "\", ";
+	}
+	dataStr += "\"";
+	dataStr += ptr->get()[ptr->size()-1];
+	dataStr += "\")";
+	
+	const size_t bufSize = dataStr.size() + 500;
+	char* szBuffer = new char[bufSize];	
+	sprintf_s( szBuffer, bufSize, 
+		"include \"Exocortex-Metadata.mcr\" \n"
+		"ImportMetadata $ %s \n",
+		dataStr.c_str()
 	);
 
 	ExecuteMAXScriptScript( szBuffer );
 	
+	delete[] szBuffer;
 }
 
 Modifier* FindModifier(INode* node, char* name)
@@ -124,13 +114,12 @@ void SaveMetaData(INode* node, AlembicObject* object)
 		return;
 	}
 
-	std::vector<std::string> metaData(20);
-	size_t offset = 0;
+	std::vector<std::string> metaData;
 
-	//for(int i=0; i<cont->GetNumCustAttribs(); i++)
-	//{
-		CustAttrib* ca = cont->GetCustAttrib(0);
-		//const char* name = ca->GetName();
+	for(int i=0; i<cont->GetNumCustAttribs(); i++)
+	{
+		CustAttrib* ca = cont->GetCustAttrib(i);
+		const char* name = ca->GetName();
 	
 		IParamBlock2 *pblock = ca->GetParamBlockByID(0);
 		if(pblock){
@@ -140,10 +129,10 @@ void SaveMetaData(INode* node, AlembicObject* object)
 				ParamID id = pblock->IndextoID(i);
 				//MSTR name = pblock->GetLocalName(id, 0);
 				MSTR value = pblock->GetStr(id, 0);
-				metaData[offset++] = value;
+				metaData.push_back(std::string(value));
 			}
 		}
-	//}
+	}
 
 	if(metaData.size() > 0){
 		Alembic::Abc::OStringArrayProperty metaDataProperty = Alembic::Abc::OStringArrayProperty(
