@@ -3,26 +3,34 @@ import sys
 import argparse
 
 # ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ----
-# Our own Exception class
-class ABCException(Exception):
-   def __init__(self, value):
-      self.value = value
-   def __str__(self):
-      return repr(self.value)
-
-# ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ----
 # global variables
-concat_ts = []                                                       # keep the time samples over all alembic files
+upper_ts = [0]                                                       # keep the maximum TS value in each file, initialized with [0],
+                                                                     # because no need to add on the first file, just need to add it to recreate the right one!
+                                                                     # the last value is a dummy value!
+
 xforms_dict = {}                                                     # keep the transformation matrix
-vertex_def = {}                                                      # identify vertex transform properties in all alembic files
+vertex_def  = {}                                                     # identify vertex transform properties in all alembic files
+
+vertex_tss = {}                                                      # keep all the TS index used by the objects amongst the different input files
+all_tss = []                                                         # keep all TS to access them later!
+final_tss = []                                                       # the final TS once concatenate
+tss_indices = {}                                                     # associate the TS indices tuple with the final TS index
 
 # ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ----
-# concat the time samples by adding add the end of the list and adding the 
-def concat_time_samples(append_ts):
-   global concat_ts
-   last = concat_ts[-1]                                              # pick the last time sample currently known
-   for ap in append_ts:
-      concat_ts.append(ap + last)                                    # the time stamps must be added at the end
+# extract maximum TS values
+def extract_max_TS(sampleTimes):
+   global upper_ts
+   f_max = 0.0
+   start_0 = False
+   for st in sampleTimes:
+      if st[0] == 0.0:
+         start_0 = True
+      if st[-1] > f_max:
+         f_max = st[-1]
+   
+   if start_0:
+      f_max = f_max + (1.0/24.0)                                     # if at least one of the time samples starts at time zero, need an extra padding!
+   upper_ts.append(f_max)
 
 # ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ----
 # visit the object's properties and identify the vertex deforms one
@@ -41,13 +49,19 @@ def extract_vertex_deform_info(prop, fullname, nb_ts):
 # get the information about the Xforms and identify which properties are vertex deforms
 def extract_ts_xforms(archive):
    global xforms_dict
-   global concat_ts
-   concat_ts = concat_ts + list(archive.getSampleTimes()[1])         #get the first TS
-   nb_ts = len(archive.getSampleTimes()[1])
-   print("\t\tsample times: " + str(nb_ts))
+   global vertex_tss
+   global all_tss
+   
+   sampleTimes = archive.getSampleTimes()
+   all_tss.append(sampleTimes)
+   extract_max_TS(sampleTimes)
+
    for identifier in archive.getIdentifiers():
       obj = archive.getObject(identifier)
       o_type = obj.getType()
+      
+      vertex_tss[identifier] = [obj.getTsIndex()]                    # get the TS index of this object (first file)
+      nb_ts = len(sampleTimes[obj.getTsIndex()])
       
       if o_type.find("Xform") > -1:                                  # is an Xform
          xkey = identifier
@@ -55,7 +69,7 @@ def extract_ts_xforms(archive):
          xfm = obj.getProperty(".xform")
          
          if xfm == None:
-            raise ABCException("no .xform in " + identifier)
+            raise Exception("no .xform in " + identifier)
          
          last_i = xfm.getNbStoredSamples()                           # need to be sure that theirs one matrices per sampling
          for i in xrange(0, last_i):
@@ -75,21 +89,29 @@ def extract_ts_xforms(archive):
 # identical to previous function, but check if the structure is identical
 def concat_ts_xforms(archive):
    global xforms_dict
-   global concat_ts
-   arch_ts = archive.getSampleTimes()[1]                             # archive's TS
-   concat_time_samples(arch_ts)                                      # add the TS right at the end of the list
-   nb_ts = len(arch_ts)
-   print("\t\tsample times: " + str(nb_ts))
+   global vertex_tss
+   
+   sampleTimes = archive.getSampleTimes()
+   all_tss.append(sampleTimes)
+   extract_max_TS(sampleTimes)
+   
    nb_xforms = len(xforms_dict)                                      # need to be sure there's the same amount of Xforms in each file and that they're the same
    
    for identifier in archive.getIdentifiers():
+      # is this object already known ?
+      if identifier not in vertex_tss.keys():
+         raise Exception(identifier + " doesn't exist in previous files")
+      
       obj = archive.getObject(identifier)
       o_type = obj.getType()
+      
+      # append the TS index
+      vertex_tss[identifier].append(obj.getTsIndex())
+      nb_ts = len(sampleTimes[obj.getTsIndex()])
+      
       if o_type.find("Xform") > -1:
          xfm = obj.getProperty(".xform")
-         xvalues = xforms_dict[identifier]                           # get the values for this identifier and test if it's a valid one!
-         if xvalues == None:
-            raise ABCException(identifier + " doesn't exist in previous files")
+         xvalues = xforms_dict[identifier]                           # get the values for this identifier
          
          last_i = xfm.getNbStoredSamples()                           # need to be sure that theirs one matrices per sampling
          for i in xrange(0, last_i):
@@ -107,7 +129,35 @@ def concat_ts_xforms(archive):
             extract_vertex_deform_info(obj.getProperty(prop), identifier + "/" + prop, nb_ts)
    
    if nb_xforms != 0:
-      raise ABCException("The file is missing some xforms")
+      raise Exception("The file is missing some xforms")
+
+# ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ----
+# create the final Time Sampling information for the concatenation!
+def create_concat_ts():
+   global upper_ts
+   global vertex_tss
+   global all_tss
+   global final_tss
+   global tss_indices
+   
+   # get all unique indices and create the right TS and associate them with the right index
+   final_tss = [[0.0]]
+   xx = 1
+   for k in vertex_tss.keys():
+      t_idx = tuple(vertex_tss[k])
+      if t_idx not in tss_indices.keys():
+         out_ts = []
+         ii = 0
+         for ti in t_idx:
+            u_ts = upper_ts[ii]                                      # the upper_ts value for this file, file #ii!
+            for a in all_tss[ii][ti]:
+               out_ts.append(a + u_ts)                               # add u_ts to a, so the time sampling stays in chronological order
+            ii = ii + 1
+         final_tss.append(out_ts)
+         tss_indices[t_idx] = xx                                     # all object with indices t_idx, are now associated with TS number xx
+         xx = xx + 1
+   
+   pass
 
 # ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ----
 # copy directly a property and its corresponding values
@@ -139,14 +189,17 @@ def copy_compound_property(cprop, outCprop, full_name, firstFile):
 def create_output(out_arch, in_arch, firstFile):
    global concat_ts
    global xforms_dict
-   
-   if firstFile:
-      out_arch.createTimeSampling([concat_ts])                         # assign the time sampling only once to the output archive
+   global vertex_tss
+   global tss_indices
    
    for identifier in in_arch.getIdentifiers():
       obj = in_arch.getObject(identifier)
       o_type = obj.getType()
-      out = out_arch.createObject(o_type, identifier)
+
+      # get the TS tuple of this object to retreive the right TS index
+      tup_idx = tuple(vertex_tss[identifier])
+
+      out = out_arch.createObject(o_type, identifier, tss_indices[tup_idx])
       if firstFile:
          out.setMetaData(obj.getMetaData())
       
@@ -171,6 +224,8 @@ def create_output(out_arch, in_arch, firstFile):
 def main(args):
    global concat_ts
    global vertex_def
+   global final_tss
+   
    # parser args
    parser = argparse.ArgumentParser(description="Concatenate multiple alembic files only if their geometries are identical.\n\nCurrently, it only supports Xforms. Issue #16 on GitHub is about adding vertex/normal deformations.")
    parser.add_argument("abc_files", metavar="{Alembic file}", type=str, nargs="+", help="alembic file to concatenate")
@@ -196,15 +251,17 @@ def main(args):
       for abc in abc_files[1:]:
          print("Scanning: " + abc)
          concat_ts_xforms(alembic.getIArchive(abc))
-   except ABCException as abc_error:
-      print("Error: not able to concatenate files")
-      print("\t" + abc_error)
+   except Exception as abc_error:
+      print("Error: not able to concatenate file " + abc_error)
       return
    
+   # compute the new TSs
+   create_concat_ts()
+   
    # create the concatenate archive
-   print("\nCreating: " + ns["o"])
-   print("\t>> time sampling: " + str(len(concat_ts)))
+   print("\nCreating:  " + ns["o"])
    out_arch = alembic.getOArchive(ns["o"])
+   out_arch.createTimeSampling(final_tss)
    firstFile = True
    
    # going through each file to append their xforms
@@ -219,5 +276,6 @@ def main(args):
 # ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ----
 if __name__ == "__main__":
    main(sys.argv)
+
 
 
