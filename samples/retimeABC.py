@@ -3,7 +3,15 @@ import sys
 import argparse
 
 # ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ----
-# global variables
+def create_new_TS(tsampling, scale, offset):
+   new_ts = []
+   for sampling in tsampling:
+      sub_ts = []
+      K = sampling[0] * (1.0 - scale) + offset
+      for s in sampling:
+         sub_ts.append(s*scale + K)
+      new_ts.append(sub_ts)
+   return new_ts
 
 # ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ----
 #copy directly a property and its corresponding values
@@ -46,22 +54,34 @@ def copy_objects(in_data, out_data):
 # ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ----
 def main(args):
    # parser args
-   parser = argparse.ArgumentParser(description="Copy integrally an alembic file into a second alembic file")
-   parser.add_argument("abc_in", type=str, metavar="{Alembic input file}", help="input alembic file to be copied")
-   parser.add_argument("-o", type=str, metavar="{Alembic output file}", help="optional output file name, default is \"a.abc\"", default="a.abc")
+   parser = argparse.ArgumentParser(description="Copy an alembic file into a new one by changing it's time sampling.\n\nNote that this program doesn't validate the time sampling. It's possible to create time samplings with negative values.")
+   parser.add_argument("abc_in", type=str,   metavar="{Alembic input file}",  help="input alembic file to be copied and retimed")
+   parser.add_argument("-o",     type=str,   metavar="{Alembic output file}", help="optional output file name, default is \"a.abc\"", default="a.abc")
+   parser.add_argument("-s",     type=float, metavar="{scaling factor}",      help="scaling factor, default is 1.0",                  default=1.0)
+   parser.add_argument("-a",     type=float, metavar="{offset}",              help="offset for the time sampling, default is 0.0",    default=0.0)
    ns = vars(parser.parse_args(args[1:]))
    
    if ns["abc_in"] == ns["o"]:
       print("Error: input and output filenames must be different")
       return
    
-   in_data = alembic.getIArchive(ns["abc_in"])
+   scale  = ns["s"]
+   offset = ns["a"]
+   
+   if scale <= 0.0:
+      print("Error: the scale factor cannot be less or equal to zero")
+      return
+   
+   in_data  = alembic.getIArchive(ns["abc_in"])
    out_data = alembic.getOArchive(ns["o"])
-   out_data.createTimeSampling(in_data.getSampleTimes())
+   out_data.createTimeSampling(create_new_TS(in_data.getSampleTimes(), scale, offset))
    copy_objects(in_data, out_data)
+   
+   print("\n\n")
 
 # ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ----
 if __name__ == "__main__":
    main(sys.argv)
+
 
 

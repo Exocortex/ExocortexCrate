@@ -9,6 +9,7 @@ show_meta = False
 show_size = False
 show_vals = False
 show_just_obj = False
+show_ts = False
 obj_filter = None
 typ_filter = None
 noo_filter = None
@@ -45,6 +46,7 @@ def visit_alembic(abc_archive):
    global typ_filter
    global noo_filter
    global not_filter
+   global show_ts
    
    if show_time:
       print("Time sampling: " + str(abc_archive.getSampleTimes()))
@@ -60,6 +62,8 @@ def visit_alembic(abc_archive):
       print("OBJ: " + identifier + ", " + obj_typ)
       if show_meta:
          print("-- meta data: " + str(obj.getMetaData()))
+      if show_ts:
+         print("-- TS index: " + str(obj.getTsIndex()))
       
       if not show_just_obj:
          visit_object(obj)
@@ -75,6 +79,7 @@ def main(args):
    global typ_filter
    global noo_filter
    global not_filter
+   global show_ts
    
    # parser args
    parser = argparse.ArgumentParser(description="Explore the structure of an Alembic file.")
@@ -88,12 +93,14 @@ def main(args):
    parser.add_argument("-T", "--typefilter", type=str, metavar="{type filter}", help="only show objects containing substring {type filter} in their type")
    parser.add_argument("-nf", "--NOTfilter", type=str, metavar="{id filter}", help="only copy objects NOT containing substring {id filter} in their identifier")
    parser.add_argument("-nT", "--NOTtypefilter", type=str, metavar="{type filter}", help="only copy objects NOT containing substring {type filter} in their type")
+   parser.add_argument("-S", "--samp", action='store_true', help="show object's time sampling index")
    ns = vars(parser.parse_args(args[1:]))
    
    show_time = ns["time"]
    show_meta = ns["meta"]
    show_size = ns["size"]
    show_vals = ns["vals"]
+   show_ts   = ns["samp"]
    obj_filter = ns["filter"]
    typ_filter = ns["typefilter"]
    noo_filter = ns["NOTfilter"]
