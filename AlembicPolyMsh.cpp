@@ -242,19 +242,19 @@ bool AlembicPolyMesh::Save(double time, bool bLastFrame)
 		Alembic::Abc::M44d wm;
 		ConvertMaxMatrixToAlembicMatrix(GetRef().node->GetObjTMAfterWSM(ticks), wm);
 
-		Alembic::Abc::Box3d& b = finalPolyMesh.bbox;
+		Alembic::Abc::Box3d bbox = finalPolyMesh.bbox;
 
-		//ESS_LOG_INFO( "Archive bbox: min("<<b.min.x<<", "<<b.min.y<<", "<<b.min.z<<") max("<<b.max.x<<", "<<b.max.y<<", "<<b.max.z<<")" );
+		ESS_LOG_INFO( "Archive bbox: min("<<bbox.min.x<<", "<<bbox.min.y<<", "<<bbox.min.z<<") max("<<bbox.max.x<<", "<<bbox.max.y<<", "<<bbox.max.z<<")" );
 
-		finalPolyMesh.bbox.min = finalPolyMesh.bbox.min * wm;
-		finalPolyMesh.bbox.max = finalPolyMesh.bbox.max * wm;
+		bbox.min = finalPolyMesh.bbox.min * wm;
+		bbox.max = finalPolyMesh.bbox.max * wm;
 
-		//ESS_LOG_INFO( "Archive bbox: min("<<b.min.x<<", "<<b.min.y<<", "<<b.min.z<<") max("<<b.max.x<<", "<<b.max.y<<", "<<b.max.z<<")" );
+		ESS_LOG_INFO( "Archive bbox: min("<<bbox.min.x<<", "<<bbox.min.y<<", "<<bbox.min.z<<") max("<<bbox.max.x<<", "<<bbox.max.y<<", "<<bbox.max.z<<")" );
 
-		mJob->GetArchiveBBox().extendBy(finalPolyMesh.bbox);
+		mJob->GetArchiveBBox().extendBy(bbox);
 
-		//Alembic::Abc::Box3d box = mJob->GetArchiveBBox();
-		//ESS_LOG_INFO( "Archive bbox: min("<<box.min.x<<", "<<box.min.y<<", "<<box.min.z<<") max("<<box.max.x<<", "<<box.max.y<<", "<<box.max.z<<")" );
+		Alembic::Abc::Box3d box = mJob->GetArchiveBBox();
+		ESS_LOG_INFO( "Archive bbox: min("<<box.min.x<<", "<<box.min.y<<", "<<box.min.z<<") max("<<box.max.x<<", "<<box.max.y<<", "<<box.max.z<<")" );
 	}
 
 	{
