@@ -83,6 +83,10 @@ Alembic::Abc::IObject getObjectFromArchive(std::string path, std::string identif
    std::vector<std::string> parts;
    boost::split(parts, identifier, boost::is_any_of("/"));
 
+   if(strcmp(parts[0].c_str(), "/") != 0){
+		return Alembic::Abc::IObject();
+   }
+
    // recurse to find it
    Alembic::Abc::IObject obj = archive->getTop();
    for(size_t i=1;i<parts.size();i++)
