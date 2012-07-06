@@ -14,8 +14,9 @@ private:
    std::vector<Alembic::AbcCoreAbstract::ALEMBIC_VERSION_NS::int32_t> mFaceIndicesVec;
    std::vector<Alembic::Abc::V3f> mBindPoseVec;
    std::vector<Alembic::Abc::V3f> mVelocitiesVec;
-   std::vector<Alembic::Abc::V2f> mUvVec;
-   std::vector<Alembic::Abc::uint32_t> mUvIndexVec;
+   std::vector<std::vector<Alembic::Abc::V2f> > mUvVec;
+   std::vector<std::vector<Alembic::Abc::uint32_t> > mUvIndexVec;
+   std::vector<Alembic::AbcGeom::OV2fGeomParam> mUvParams;
    std::vector<std::vector<Alembic::AbcCoreAbstract::ALEMBIC_VERSION_NS::int32_t> > mFaceSetsVec;
    Alembic::Abc::ALEMBIC_VERSION_NS::OV3fArrayProperty mBindPoseProperty;
    Alembic::Abc::ALEMBIC_VERSION_NS::OFloatArrayProperty mUvOptionsProperty;
