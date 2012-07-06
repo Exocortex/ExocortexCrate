@@ -216,7 +216,6 @@ void AlembicParticles::UpdateParticles(TimeValue t, INode *node)
     // Find the scene nodes for all our instances
     FillParticleShapeNodes(m_iPoints, sampleInfo);
 
-
   /*  // Rebuild the viewport meshes
     NullView nullView;
     for (int i = 0; i < m_ParticleViewportMeshes.size(); i += 1)
@@ -793,7 +792,7 @@ Mesh* AlembicParticles::GetMultipleRenderMesh_Internal(TimeValue  t,  INode *ino
 {
     if (meshNumber > parts.Count() || !parts.Alive(meshNumber) || view.CheckForRenderAbort())
     {
-        needDelete = FALSE;
+        needDelete = NULL;
         return NULL;
     }
 
@@ -1418,6 +1417,7 @@ Mesh *AlembicParticles::BuildRectangleMesh(int meshNumber, TimeValue t, INode *n
 }
 
 
+
 void AlembicParticles::ClearMeshCache()
 {
 	for(nodeAndTimeToMeshMap::iterator it=meshCacheMap.begin(); it != meshCacheMap.end(); it++){
@@ -1479,12 +1479,7 @@ Mesh *AlembicParticles::BuildInstanceMesh(int meshNumber, TimeValue t, INode *no
  //  if (!triObj)
  //      return NULL;
 
- //  if (!deleteTriObj)
- //  {
- //      triObj->UpdateValidity(TOPO_CHAN_NUM, Interval(t, t));
- //      triObj->UpdateValidity(GEOM_CHAN_NUM, Interval(t, t));
- //      triObj->UpdateValidity(TEXMAP_CHAN_NUM, Interval(t, t));
- //  }
+//   Mesh *pMesh = triObj->GetRenderMesh(t, node, view, needDelete);
 
  //  Mesh *pMesh = triObj->GetRenderMesh(shapet, node, view, needDelete);
 
