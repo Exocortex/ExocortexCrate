@@ -156,6 +156,7 @@ PyObject * oTimeSampling_new(PyObject *time_list)
    std::vector<Alembic::Abc::chrono_t> ts_vector(nbTimes);
 
    float prev = -1.0f;
+   bool not_first = false;
    for (int i = 0; i < nbTimes; ++i)
    {
       PyObject * item = _GetItem(time_list, i);
@@ -166,11 +167,12 @@ PyObject * oTimeSampling_new(PyObject *time_list)
          return NULL;
       }
 
-      if (prev >= timeValue)
+      if (not_first && prev >= timeValue)
       {
          PyErr_SetString(getError(), "Time samples not in chronological order!");
          return NULL;
       }
+      not_first = true;
       prev = timeValue;
       ts_vector[i] = timeValue;
    }
