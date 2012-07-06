@@ -4,8 +4,8 @@ import argparse
 
 # ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ----
 def create_new_TS(tsampling, scale, offset):
-   new_ts = []
-   for sampling in tsampling:
+   new_ts = [[0.0]]
+   for sampling in tsampling[1:]:
       sub_ts = []
       K = sampling[0] * (1.0 - scale) + offset
       for s in sampling:
@@ -17,7 +17,8 @@ def create_new_TS(tsampling, scale, offset):
 #copy directly a property and its corresponding values
 def copy_property(prop, outProp):
    for i in xrange(0, prop.getNbStoredSamples()):
-      outProp.setValues(prop.getValues(i))
+      vals = prop.getValues(i)
+      outProp.setValues(vals)
 
 # ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ----
 #visiting the structure, if it's a property, copy it, if it's a compound, continue the visit there
@@ -74,7 +75,9 @@ def main(args):
    
    in_data  = alembic.getIArchive(ns["abc_in"])
    out_data = alembic.getOArchive(ns["o"])
-   out_data.createTimeSampling(create_new_TS(in_data.getSampleTimes(), scale, offset))
+   ori_ts = in_data.getSampleTimes()
+   new_ts = create_new_TS(ori_ts, scale, offset)
+   out_data.createTimeSampling(new_ts)
    copy_objects(in_data, out_data)
    
    print("\n\n")
