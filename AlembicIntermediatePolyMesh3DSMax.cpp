@@ -463,52 +463,52 @@ void IntermediatePolyMesh3DSMax::Save(AlembicWriteJob* writeJob, TimeValue ticks
 				}
 			}
       }
-
-#if 0
       else if (triMesh != NULL)
       {
-			int numMaps = triMesh->getNumMaps();
-			for(int mp=0; mp<numMaps; mp++) {
-				int tvertsToAdd = triMesh->mapSupport(mp) ? triMesh->getNumMapVerts(mp) : 0;
-				if (tvertsToAdd == 0) {
-					continue;
-				}
-				ESS_LOG_INFO("map channel: "<<mp);
-			}
+		  ESS_LOG_INFO("Warning: uv channel export not implemented for trimesh.");
 
-          if (CheckForFaceMap(pMtl, triMesh)) 
-          {
-              for (int i=0; i<faceCount; i++) 
-              {
-                  Point3 tv[3];
-                  Face* f = &triMesh->faces[i];
-                  make_face_uv(f, tv);
+			//int numMaps = triMesh->getNumMaps();
+			//for(int mp=0; mp<numMaps; mp++) {
+			//	int tvertsToAdd = triMesh->mapSupport(mp) ? triMesh->getNumMapVerts(mp) : 0;
+			//	if (tvertsToAdd == 0) {
+			//		continue;
+			//	}
+			//	ESS_LOG_INFO("map channel: "<<mp);
+			//}
 
-                  for (int j=2; j>=0; j-=1)
-                  {
-                      Alembic::Abc::V2f alembicUV(tv[j].x, tv[j].y);
-                      mUvVec.push_back(alembicUV);
-                  }
-              }
-          }
-          else if (triMesh->mapSupport(1))
-          {
-              MeshMap &map = triMesh->Map(1);
+   //       if (CheckForFaceMap(pMtl, triMesh)) 
+   //       {
+   //           for (int i=0; i<faceCount; i++) 
+   //           {
+   //               Point3 tv[3];
+   //               Face* f = &triMesh->faces[i];
+   //               make_face_uv(f, tv);
 
-              for (int findex =0; findex < map.fnum; findex += 1)
-              {
-                  TVFace &texFace = map.tf[findex];
-                  for (int vindex = 2; vindex >= 0; vindex -= 1)
-                  {
-                      int vertexid = texFace.t[vindex];
-                      UVVert uvVert = map.tv[vertexid];
-                      Alembic::Abc::V2f alembicUV(uvVert.x, uvVert.y);
-                      mUvVec.push_back(alembicUV);
-                  }
-              }
-          }
+   //               for (int j=2; j>=0; j-=1)
+   //               {
+   //                   Alembic::Abc::V2f alembicUV(tv[j].x, tv[j].y);
+   //                   mUvVec.push_back(alembicUV);
+   //               }
+   //           }
+   //       }
+   //       else if (triMesh->mapSupport(1))
+   //       {
+   //           MeshMap &map = triMesh->Map(1);
+
+   //           for (int findex =0; findex < map.fnum; findex += 1)
+   //           {
+   //               TVFace &texFace = map.tf[findex];
+   //               for (int vindex = 2; vindex >= 0; vindex -= 1)
+   //               {
+   //                   int vertexid = texFace.t[vindex];
+   //                   UVVert uvVert = map.tv[vertexid];
+   //                   Alembic::Abc::V2f alembicUV(uvVert.x, uvVert.y);
+   //                   mUvVec.push_back(alembicUV);
+   //               }
+   //           }
+   //       }
       }
-#endif
+
 
 
 		if((bool)writeJob->GetOption("indexedUVs")) 
