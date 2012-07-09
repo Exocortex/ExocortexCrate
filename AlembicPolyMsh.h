@@ -15,6 +15,8 @@ private:
    Alembic::Abc::ALEMBIC_VERSION_NS::OStringArrayProperty mMatNamesProperty;
    Alembic::Abc::ALEMBIC_VERSION_NS::OV3fArrayProperty mVelocityProperty;
 
+   std::vector<Alembic::AbcGeom::OV2fGeomParam> mUvParams;
+
    materialsMergeStr materialsMerge;
 
 public:

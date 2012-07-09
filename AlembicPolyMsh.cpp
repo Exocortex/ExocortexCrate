@@ -333,10 +333,12 @@ bool AlembicPolyMesh::Save(double time, bool bLastFrame)
 	if((bool)GetCurrentJob()->GetOption("exportUVs") && (bFirstFrame || dynamicTopology))
 	{
 
-		Alembic::Abc::OStringArrayProperty uvSetNamesProperty = Alembic::Abc::OStringArrayProperty(
-			mMeshSchema, ".uvSetNames", mMeshSchema.getMetaData(), mJob->GetAnimatedTs() );
-		Alembic::Abc::StringArraySample uvSetNamesSample(&finalPolyMesh.mUvSetNames.front(), finalPolyMesh.mUvSetNames.size());
-		uvSetNamesProperty.set(uvSetNamesSample);
+		if(mNumSamples == 0){
+			Alembic::Abc::OStringArrayProperty uvSetNamesProperty = Alembic::Abc::OStringArrayProperty(
+				mMeshSchema, ".uvSetNames", mMeshSchema.getMetaData(), mJob->GetAnimatedTs() );
+			Alembic::Abc::StringArraySample uvSetNamesSample(&finalPolyMesh.mUvSetNames.front(), finalPolyMesh.mUvSetNames.size());
+			uvSetNamesProperty.set(uvSetNamesSample);
+		}
 
 		for(int i=0; i<finalPolyMesh.mUvVec.size(); i++){
 			std::vector<Alembic::Abc::V2f>& uvVec = finalPolyMesh.mUvVec[i];
@@ -348,10 +350,14 @@ bool AlembicPolyMesh::Save(double time, bool bLastFrame)
 				// If we are exporting dynamic topology, then we may have uvs that show up later in our scene.  The problem is that Alembic wants
 				// your parameter to be defined at sample zero if you plan to use it even later on, so we create a dummy uv parameter here if the case
 				// requires it
-				uvVec.push_back(Imath::V2f(0,0));
-				uvIndexVec.push_back(0);
-				uvSize = 0;
-				uvIndexSize = 0;
+				if(uvSize == 0){
+					uvVec.push_back(Imath::V2f(0,0));
+					uvSize = 0;
+				}
+				if(uvIndexSize == 0){
+					uvIndexVec.push_back(0);
+					uvIndexSize = 0;
+				}
 			}
 			
 			Alembic::AbcGeom::OV2fGeomParam::Sample uvSample(Alembic::Abc::V2fArraySample(&uvVec.front(),uvSize), Alembic::AbcGeom::kFacevaryingScope);
@@ -364,7 +370,15 @@ bool AlembicPolyMesh::Save(double time, bool bLastFrame)
 				mMeshSample.setUVs(uvSample);
 			}
 			else{
-
+				// create the uv param if required
+				if(mNumSamples == 0)
+				{
+					std::string storedUvSetName("uv");
+					storedUvSetName += i;
+					mUvParams.push_back(Alembic::AbcGeom::OV2fGeomParam( mMeshSchema, storedUvSetName.c_str(), uvIndexSize > 0,
+									 Alembic::AbcGeom::kFacevaryingScope, 1, mJob->GetAnimatedTs()));
+				}
+				mUvParams[i-1].set(uvSample);
 			}
 		}
 	}

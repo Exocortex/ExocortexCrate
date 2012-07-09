@@ -42,7 +42,6 @@ public:
 	std::vector<std::string> mUvSetNames;
 	std::vector<std::vector<Alembic::Abc::V2f> > mUvVec;
 	std::vector<std::vector<Alembic::Abc::uint32_t> > mUvIndexVec;
-	//std::vector<Alembic::AbcGeom::OV2fGeomParam> mUvParams;
 
 	std::vector<Alembic::Abc::uint32_t> mMatIdIndexVec;
 	facesetmap mFaceSetsMap;

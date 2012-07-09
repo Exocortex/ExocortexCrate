@@ -433,13 +433,13 @@ void IntermediatePolyMesh3DSMax::Save(AlembicWriteJob* writeJob, TimeValue ticks
 			mUvVec.resize(usedChannels.size());
 			mUvSetNames.reserve(usedChannels.size());
 			
-			int c = 0;
 			for(int i=0; i<usedChannels.size(); i++){
 				int chanNum = usedChannels[i];
 				MNMap *map = polyMesh->M(chanNum);
 
-				std::string chanName("");
-				mUvSetNames.push_back(chanName+chanNum);
+				std::stringstream nameStream;
+				nameStream<<"Channel_"<<chanNum;
+				mUvSetNames.push_back(nameStream.str());
 
 				for (int f=0; f<faceCount; f++) 
 				{
@@ -451,17 +451,16 @@ void IntermediatePolyMesh3DSMax::Save(AlembicWriteJob* writeJob, TimeValue ticks
 							int vertIndex = map->F(f)->tv[j];
 							UVVert texCoord = map->V(vertIndex);
 							Alembic::Abc::V2f alembicUV(texCoord.x, texCoord.y);
-							mUvVec[c].push_back(alembicUV);
+							mUvVec[i].push_back(alembicUV);
 						}
 						else
 						{
 							ESS_LOG_INFO("Warning: vertex is missing uv coordinate.");
 							Alembic::Abc::V2f alembicUV(0.0f, 0.0f);
-							mUvVec[c].push_back(alembicUV);
+							mUvVec[i].push_back(alembicUV);
 						}
 					}
 				}
-				c++;
 			}
       }
 
@@ -560,12 +559,6 @@ void IntermediatePolyMesh3DSMax::Save(AlembicWriteJob* writeJob, TimeValue ticks
 			}
 		}
 	}
-
-   
-
-//TODO: finish writing out facesets
-	
-
 
 	// sweet, now let's have a look at face sets (really only for first sample)
 	// for 3DS Max, we are mapping this to the material ids
