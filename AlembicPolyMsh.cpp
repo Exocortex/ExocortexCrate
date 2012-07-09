@@ -373,9 +373,9 @@ bool AlembicPolyMesh::Save(double time, bool bLastFrame)
 				// create the uv param if required
 				if(mNumSamples == 0)
 				{
-					std::string storedUvSetName("uv");
-					storedUvSetName += i;
-					mUvParams.push_back(Alembic::AbcGeom::OV2fGeomParam( mMeshSchema, storedUvSetName.c_str(), uvIndexSize > 0,
+					std::stringstream storedUVSetNameStream;
+					storedUVSetNameStream<<"uv"<<i;
+					mUvParams.push_back(Alembic::AbcGeom::OV2fGeomParam( mMeshSchema, storedUVSetNameStream.str().c_str(), uvIndexSize > 0,
 									 Alembic::AbcGeom::kFacevaryingScope, 1, mJob->GetAnimatedTs()));
 				}
 				mUvParams[i-1].set(uvSample);
