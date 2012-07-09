@@ -439,20 +439,21 @@ bool AlembicPolyMesh::Save(double time, bool bLastFrame)
 
 
    // check if we should export the velocities
-   if(dynamicTopology)
+   // TODO: support velocity property for nonparticle system meshes if possible
+   if(dynamicTopology && bIsParticleSystem)
    {
-
+	  size_t size = 0;
       if(finalPolyMesh.mVelocitiesVec.size() > 0)
       {
 		  if(finalPolyMesh.posVec.size() != finalPolyMesh.mVelocitiesVec.size()){
-
 			  ESS_LOG_INFO("mVelocitiesVec has wrong size.");
 		  }
+		  size = finalPolyMesh.mVelocitiesVec.size();
       }
 	  else{
 		  finalPolyMesh.mVelocitiesVec.push_back(Imath::V3f(0,0,0));
 	  }
-      Alembic::Abc::V3fArraySample sample = Alembic::Abc::V3fArraySample(&finalPolyMesh.mVelocitiesVec.front(),finalPolyMesh.mVelocitiesVec.size());
+	  Alembic::Abc::V3fArraySample sample = Alembic::Abc::V3fArraySample(&finalPolyMesh.mVelocitiesVec.front(), size);
 	  mMeshSample.setVelocities( sample );
    }
    
