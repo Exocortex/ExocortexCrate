@@ -143,9 +143,14 @@ void AlembicMeshUVWModifier::ModifyObject (TimeValue t, ModContext &mc, ObjectSt
 		return;
 	}
 
+	//we need the path to the alembic mesh object, so we need to remove the channel name part of the identifier
+	std::string strObjectIdentifier = strIdentifier;
+	size_t found = strObjectIdentifier.find_last_of(":");
+	strObjectIdentifier = strObjectIdentifier.substr(0, found);
+		
 	Alembic::AbcGeom::IObject iObj;
 	try {
-		iObj = getObjectFromArchive(strPath, strIdentifier);
+		iObj = getObjectFromArchive(strPath, strObjectIdentifier);
 	} catch( std::exception exp ) {
 		ESS_LOG_ERROR( "Can not open Alembic data stream.  Path: " << strPath << " identifier: " << strIdentifier << " reason: " << exp.what() );
 		return;

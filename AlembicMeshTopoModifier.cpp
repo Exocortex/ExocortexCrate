@@ -193,6 +193,8 @@ void AlembicMeshTopoModifier::ModifyObject (TimeValue t, ModContext &mc, ObjectS
    if( bUVs ) {
 		options.nDataFillFlags |= ALEMBIC_DATAFILL_UVS;
    }
+
+   options.nDataFillFlags |= ALEMBIC_DATAFILL_ALLOCATE_UV_STORAGE;
   
    // Find out if we are modifying a poly object or a tri object
    if (os->obj->CanConvertToType(Class_ID(POLYOBJ_CLASS_ID, 0)))

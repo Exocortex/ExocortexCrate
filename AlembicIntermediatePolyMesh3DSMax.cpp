@@ -418,8 +418,9 @@ void IntermediatePolyMesh3DSMax::Save(AlembicWriteJob* writeJob, TimeValue ticks
 	  {
 			std::vector<int> usedChannels;
 			usedChannels.reserve(100);//max channels can range from 0 to 99
-			int numMaps = polyMesh->MNum(); 
-			for(int mp=0; mp<numMaps; mp++){
+			int numMaps = polyMesh->MNum();
+			//start at 1 because channel 0 is reserve for vertex colors
+			for(int mp=1; mp<numMaps; mp++){
 				MNMap* map = polyMesh->M(mp);
 				if(!map){
 					continue;
