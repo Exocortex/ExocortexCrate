@@ -414,125 +414,152 @@ void IntermediatePolyMesh3DSMax::Save(AlembicWriteJob* writeJob, TimeValue ticks
    //write out the UVs
    if((bool)writeJob->GetOption("exportUVs") && (bFirstFrame || dynamicTopology))
    {
-      mUvVec.reserve(sampleCount);
+	  if (polyMesh != NULL)
+	  {
+			std::vector<int> usedChannels;
+			usedChannels.reserve(100);//max channels can range from 0 to 99
+			int numMaps = polyMesh->MNum();
+			//start at 1 because channel 0 is reserve for vertex colors
+			for(int mp=1; mp<numMaps; mp++){
+				MNMap* map = polyMesh->M(mp);
+				if(!map){
+					continue;
+				}
+				if(map->numv <= 0 || map->numf <= 0){
+					continue;
+				}
+				usedChannels.push_back(mp);
+			}
 
-      if (polyMesh != NULL)
-      {
-          MNMap *map = polyMesh->M(1);
+			mUvVec.resize(usedChannels.size());
+			mUvSetNames.reserve(usedChannels.size());
+			
+			for(int i=0; i<usedChannels.size(); i++){
+				int chanNum = usedChannels[i];
+				MNMap *map = polyMesh->M(chanNum);
 
-          for (int i=0; i<faceCount; i++) 
-          {
-              int degree = polyMesh->F(i)->deg;
-              for (int j = degree-1; j >= 0; j -= 1)
-              {
-                  if (map != NULL && map->FNum() > i && map->F(i)->deg > j)
-                  {
-                      int vertIndex = map->F(i)->tv[j];
-                      UVVert texCoord = map->V(vertIndex);
-                      Alembic::Abc::V2f alembicUV(texCoord.x, texCoord.y);
-                      mUvVec.push_back(alembicUV);
-                  }
-                  else
-                  {
-                      Alembic::Abc::V2f alembicUV(0.0f, 0.0f);
-                      mUvVec.push_back(alembicUV);
-                  }
-              }
-          }
+				std::stringstream nameStream;
+				nameStream<<"Channel_"<<chanNum;
+				mUvSetNames.push_back(nameStream.str());
+
+				for (int f=0; f<faceCount; f++) 
+				{
+					int degree = polyMesh->F(f)->deg;
+					for (int j = degree-1; j >= 0; j -= 1)
+					{
+						if (f < map->FNum() && j < map->F(f)->deg)
+						{
+							int vertIndex = map->F(f)->tv[j];
+							UVVert texCoord = map->V(vertIndex);
+							Alembic::Abc::V2f alembicUV(texCoord.x, texCoord.y);
+							mUvVec[i].push_back(alembicUV);
+						}
+						else
+						{
+							ESS_LOG_INFO("Warning: vertex is missing uv coordinate.");
+							Alembic::Abc::V2f alembicUV(0.0f, 0.0f);
+							mUvVec[i].push_back(alembicUV);
+						}
+					}
+				}
+			}
       }
       else if (triMesh != NULL)
       {
-          if (CheckForFaceMap(pMtl, triMesh)) 
-          {
-              for (int i=0; i<faceCount; i++) 
-              {
-                  Point3 tv[3];
-                  Face* f = &triMesh->faces[i];
-                  make_face_uv(f, tv);
+		  ESS_LOG_INFO("Warning: uv channel export not implemented for trimesh.");
 
-                  for (int j=2; j>=0; j-=1)
-                  {
-                      Alembic::Abc::V2f alembicUV(tv[j].x, tv[j].y);
-                      mUvVec.push_back(alembicUV);
-                  }
-              }
-          }
-          else if (triMesh->mapSupport(1))
-          {
-              MeshMap &map = triMesh->Map(1);
+			//int numMaps = triMesh->getNumMaps();
+			//for(int mp=0; mp<numMaps; mp++) {
+			//	int tvertsToAdd = triMesh->mapSupport(mp) ? triMesh->getNumMapVerts(mp) : 0;
+			//	if (tvertsToAdd == 0) {
+			//		continue;
+			//	}
+			//	ESS_LOG_INFO("map channel: "<<mp);
+			//}
 
-              for (int findex =0; findex < map.fnum; findex += 1)
-              {
-                  TVFace &texFace = map.tf[findex];
-                  for (int vindex = 2; vindex >= 0; vindex -= 1)
-                  {
-                      int vertexid = texFace.t[vindex];
-                      UVVert uvVert = map.tv[vertexid];
-                      Alembic::Abc::V2f alembicUV(uvVert.x, uvVert.y);
-                      mUvVec.push_back(alembicUV);
-                  }
-              }
-          }
+   //       if (CheckForFaceMap(pMtl, triMesh)) 
+   //       {
+   //           for (int i=0; i<faceCount; i++) 
+   //           {
+   //               Point3 tv[3];
+   //               Face* f = &triMesh->faces[i];
+   //               make_face_uv(f, tv);
+
+   //               for (int j=2; j>=0; j-=1)
+   //               {
+   //                   Alembic::Abc::V2f alembicUV(tv[j].x, tv[j].y);
+   //                   mUvVec.push_back(alembicUV);
+   //               }
+   //           }
+   //       }
+   //       else if (triMesh->mapSupport(1))
+   //       {
+   //           MeshMap &map = triMesh->Map(1);
+
+   //           for (int findex =0; findex < map.fnum; findex += 1)
+   //           {
+   //               TVFace &texFace = map.tf[findex];
+   //               for (int vindex = 2; vindex >= 0; vindex -= 1)
+   //               {
+   //                   int vertexid = texFace.t[vindex];
+   //                   UVVert uvVert = map.tv[vertexid];
+   //                   Alembic::Abc::V2f alembicUV(uvVert.x, uvVert.y);
+   //                   mUvVec.push_back(alembicUV);
+   //               }
+   //           }
+   //       }
       }
 
-      if (mUvVec.size() == sampleCount)
-      {
-          // now let's sort the uvs 
-          size_t uvCount = mUvVec.size();
-          size_t uvIndexCount = 0;
-          if((bool)writeJob->GetOption("indexedUVs")) 
-          {
-              std::map<SortableV2f,size_t> uvMap;
-              std::map<SortableV2f,size_t>::const_iterator it;
-              size_t sortedUVCount = 0;
-              std::vector<Alembic::Abc::V2f> sortedUVVec;
-              mUvIndexVec.reserve(mUvVec.size());
-              sortedUVVec.reserve(mUvVec.size());
 
-              // loop over all uvs
-              for(size_t i=0; i<mUvVec.size(); i++)
-              {
-                  it = uvMap.find(mUvVec[i]);
-                  if(it != uvMap.end()){
-                      mUvIndexVec.push_back((uint32_t)it->second);
-					  uvIndexCount++;
-				  }
-                  else
-				  {
-                      mUvIndexVec.push_back((uint32_t)sortedUVCount);
-					  uvIndexCount++;
-                      uvMap.insert(std::pair<Alembic::Abc::V2f,size_t>(mUvVec[i],(uint32_t)sortedUVCount));
-                      sortedUVVec.push_back(mUvVec[i]);
-					  sortedUVCount++;
-                  }
-              }
 
-			  //mhahn: disabled this code for now since it makes merging more difficult
-			  //we could in the future do this step when saving the final mesh
+		if((bool)writeJob->GetOption("indexedUVs")) 
+		{
+			mUvIndexVec.resize(mUvVec.size());
 
-              // use indexed uvs if they use less space
-              //if(sortedUVCount * sizeof(Alembic::Abc::V2f) + 
-              //    uvIndexCount * sizeof(uint32_t) < 
-              //    sizeof(Alembic::Abc::V2f) * mUvVec.size())
-              //{
-                  mUvVec = sortedUVVec;
-                  //uvCount = sortedUVCount;
-              //}
-              //else
-              //{
-              //    //uvIndexCount = 0;
-              //    mUvIndexVec.clear();
-              //}
-              //sortedUVCount = 0;
-              sortedUVVec.clear();
-          }
-      }
-  }
-   
+			for(int i=0; i<mUvVec.size(); i++){
 
-//TODO: finish writing out facesets
-	
+				if (mUvVec[i].size() != sampleCount){
+					ESS_LOG_INFO("Warning: missing texture coord samples in channel "<<i);
+				}
+				else{
 
+					// now let's sort the uvs 
+					size_t uvCount = mUvVec[i].size();
+					size_t uvIndexCount = 0;
+
+					mUvIndexVec[i].reserve(uvCount);
+
+					std::map<SortableV2f,size_t> uvMap;
+					std::map<SortableV2f,size_t>::const_iterator it;
+
+					size_t sortedUVCount = 0;
+					std::vector<Alembic::Abc::V2f> sortedUVVec;
+					sortedUVVec.reserve(uvCount);
+
+					// loop over all uvs
+					for(size_t j=0; j<mUvVec[i].size(); j++)
+					{
+					  it = uvMap.find(mUvVec[i][j]);
+					  if(it != uvMap.end()){
+						  mUvIndexVec[i].push_back((uint32_t)it->second);
+						  uvIndexCount++;
+					  }
+					  else
+					  {
+						  mUvIndexVec[i].push_back((uint32_t)sortedUVCount);
+						  uvIndexCount++;
+						  uvMap.insert(std::pair<Alembic::Abc::V2f,size_t>(mUvVec[i][j],(uint32_t)sortedUVCount));
+						  sortedUVVec.push_back(mUvVec[i][j]);
+						  sortedUVCount++;
+					  }
+					}
+					mUvVec[i] = sortedUVVec;
+					sortedUVVec.clear();
+					
+				}
+			}
+		}
+	}
 
 	// sweet, now let's have a look at face sets (really only for first sample)
 	// for 3DS Max, we are mapping this to the material ids

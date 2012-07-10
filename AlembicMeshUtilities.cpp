@@ -11,7 +11,6 @@
 #include "AlembicMetadataUtils.h"
 #include "AlembicMax.h"
 
-
 bool isAlembicMeshValid( Alembic::AbcGeom::IObject *pIObj ) {
 	Alembic::AbcGeom::IPolyMesh objMesh;
 	Alembic::AbcGeom::ISubD objSubD;
@@ -621,15 +620,59 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
     validateMeshes( options, "ALEMBIC_DATAFILL_NORMALS" );
   }
 
-
+	if( options.nDataFillFlags & ALEMBIC_DATAFILL_ALLOCATE_UV_STORAGE )
+	{
+		if (options.pMNMesh != NULL)
+		{
+			//we can probably set this to the actual number of channels required if necessary
+			options.pMNMesh->SetMapNum(100);
+			options.pMNMesh->InitMap(0);
+		}
+		if (options.pMesh != NULL)
+		{
+			options.pMesh->setNumMaps(100, FALSE);
+		}
+	}
 
    if ( options.nDataFillFlags & ALEMBIC_DATAFILL_UVS )
    {
-       Alembic::AbcGeom::IV2fGeomParam meshUvParam;
-       if(objMesh.valid())
-           meshUvParam = objMesh.getSchema().getUVsParam();
-       else
-           meshUvParam = objSubD.getSchema().getUVsParam();
+		std::string strObjectIdentifier = options.identifier;
+		size_t found = strObjectIdentifier.find_last_of(":");
+		strObjectIdentifier = strObjectIdentifier.substr(found+1);
+		std::istringstream is(strObjectIdentifier);
+		int uvI = 0;
+		is >> uvI;
+
+		uvI--;
+
+		Alembic::AbcGeom::IV2fGeomParam meshUvParam;
+		if(objMesh.valid()){
+			if(uvI == 0){
+				meshUvParam = objMesh.getSchema().getUVsParam();
+			}
+			else{
+				std::stringstream storedUVNameStream;
+				storedUVNameStream<<"uv"<<uvI;
+				if(objMesh.getSchema().getPropertyHeader( storedUVNameStream.str() ) != NULL){
+					meshUvParam = Alembic::AbcGeom::IV2fGeomParam( objMesh.getSchema(), storedUVNameStream.str());
+				}
+			}
+		}
+		else{
+			if(uvI == 0){
+				meshUvParam = objSubD.getSchema().getUVsParam();
+			}
+			else{
+				std::stringstream storedUVNameStream;
+				storedUVNameStream<<"uv"<<uvI;
+				if(objSubD.getSchema().getPropertyHeader( storedUVNameStream.str() ) != NULL){
+					meshUvParam = Alembic::AbcGeom::IV2fGeomParam( objSubD.getSchema(), storedUVNameStream.str());
+				}
+			}
+		}
+
+		//add 1 since channel 0 is reserved for colors
+		uvI++;
 
        if(meshUvParam.valid())
        {
@@ -700,10 +743,10 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
 			   {
 				   int numVertices = static_cast<int>(uvsToSet.size());
 
-				   options.pMNMesh->SetMapNum(2);
-				   options.pMNMesh->InitMap(0);
-				   options.pMNMesh->InitMap(1);
-				   MNMap *map = options.pMNMesh->M(1);
+				   //options.pMNMesh->SetMapNum(2);
+				   //options.pMNMesh->InitMap(0);
+				   options.pMNMesh->InitMap(uvI);
+				   MNMap *map = options.pMNMesh->M(uvI);
 				   map->setNumVerts(numVertices);
 				   map->setNumFaces(numFaces);
 
@@ -715,7 +758,7 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
 
 				   int offset = 0;
 				   MNMapFace* mapF = map->f;
-				   for (int i =0; i < numFaces; i += 1)
+				   for (int i = 0; i < numFaces; i += 1)
 				   {
 					   int degree;
 					   if (i < options.pMNMesh->numf)
@@ -731,13 +774,14 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
 						   ++offset;
 					   }
 				   }
+
 			   }
 	           
 			   if (options.pMesh != NULL)
 			   {
-				   options.pMesh->setNumMaps(2);
-				   options.pMesh->setMapSupport(1, TRUE);
-				   MeshMap &map = options.pMesh->Map(1);
+				   //options.pMesh->setNumMaps(2, TRUE);
+				   options.pMesh->setMapSupport(uvI, TRUE);
+				   MeshMap &map = options.pMesh->Map(uvI);
 				   map.setNumVerts((int)uvsToSet.size());
 				   map.setNumFaces(numFaces);
 
@@ -990,7 +1034,7 @@ void addAlembicMaterialsModifier(INode *pNode, Alembic::AbcGeom::IObject& iObj)
 
 int AlembicImport_PolyMesh(const std::string &path, Alembic::AbcGeom::IObject& iObj, alembic_importoptions &options, INode** pMaxNode)
 {
-	const std::string &identifier = iObj.getFullName();
+	const std::string& identifier = iObj.getFullName();
 
 	// Fill in the mesh
     alembic_fillmesh_options dataFillOptions;
@@ -1008,10 +1052,12 @@ int AlembicImport_PolyMesh(const std::string &path, Alembic::AbcGeom::IObject& i
     // Create the poly or tri object and place it in the scene
     // Need to use the attach to existing import flag here 
 	Object *newObject = NULL;
+	Alembic::AbcGeom::IPolyMesh objMesh;
+	Alembic::AbcGeom::ISubD objSubD;
 
 	if( Alembic::AbcGeom::IPolyMesh::matches(iObj.getMetaData()) ) {
 
-		Alembic::AbcGeom::IPolyMesh objMesh = Alembic::AbcGeom::IPolyMesh(iObj, Alembic::Abc::kWrapExisting);
+		objMesh = Alembic::AbcGeom::IPolyMesh(iObj, Alembic::Abc::kWrapExisting);
 		if (!objMesh.valid())
 		{
 			return alembic_failure;
@@ -1041,7 +1087,7 @@ int AlembicImport_PolyMesh(const std::string &path, Alembic::AbcGeom::IObject& i
 	}
 	else if( Alembic::AbcGeom::ISubD::matches(iObj.getMetaData()) )
 	{
-		Alembic::AbcGeom::ISubD objSubD = Alembic::AbcGeom::ISubD(iObj, Alembic::Abc::kWrapExisting);
+		objSubD = Alembic::AbcGeom::ISubD(iObj, Alembic::Abc::kWrapExisting);
 		if (!objSubD.valid())
 		{
 			return alembic_failure;
@@ -1104,7 +1150,7 @@ int AlembicImport_PolyMesh(const std::string &path, Alembic::AbcGeom::IObject& i
 		if( isDynamicTopo ) {
 			pModifier->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pModifier, 0, "geometry" ), zero, TRUE );
 			pModifier->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pModifier, 0, "normals" ), zero, ( options.importNormals ? TRUE : FALSE ) );
-			pModifier->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pModifier, 0, "uvs" ), zero, ( options.importMaterialIds ? TRUE : FALSE ) );
+			pModifier->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pModifier, 0, "uvs" ), zero, FALSE );
 		}
 		else {
 			pModifier->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pModifier, 0, "geometry" ), zero, FALSE );
@@ -1127,33 +1173,71 @@ int AlembicImport_PolyMesh(const std::string &path, Alembic::AbcGeom::IObject& i
 		modifiersToEnable.push_back( pModifier );
 	}
 	bool isUVWContant = true;
-	if( ( ! isDynamicTopo ) && isAlembicMeshUVWs( &iObj, isUVWContant ) ) {
+	if( /*!isDynamicTopo &&*/ options.importUVs && isAlembicMeshUVWs( &iObj, isUVWContant ) ) {
 		//ESS_LOG_INFO( "isUVWContant: " << isUVWContant );
-	// Create the polymesh modifier
-		Modifier *pModifier = static_cast<Modifier*>
-			(GET_MAX_INTERFACE()->CreateInstance(OSM_CLASS_ID, ALEMBIC_MESH_UVW_MODIFIER_CLASSID));
 
-		pModifier->DisableMod();
-
-		// Set the alembic id
-		pModifier->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pModifier, 0, "path" ), zero, path.c_str());
-		pModifier->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pModifier, 0, "identifier" ), zero, identifier.c_str() );
-		pModifier->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pModifier, 0, "time" ), zero, 0.0f );
-		pModifier->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pModifier, 0, "muted" ), zero, FALSE );
-
-	
-		// Add the modifier to the pNode
-		GET_MAX_INTERFACE()->AddModifier(*pNode, *pModifier);
-		if( ! isUVWContant ) {
-			GET_MAX_INTERFACE()->SelectNode( pNode );
-			char szControllerName[10000];
-			sprintf_s( szControllerName, 10000, "$.modifiers[#Alembic_Mesh_UVW].time" );
-			AlembicImport_ConnectTimeControl( szControllerName, options );
+		Alembic::AbcGeom::IV2fGeomParam meshUVsParam;
+		if(objMesh.valid()){
+			meshUVsParam = objMesh.getSchema().getUVsParam();
+		}
+		else{
+			meshUVsParam = objSubD.getSchema().getUVsParam();
 		}
 
-		if( options.importUVs ) {
-			modifiersToEnable.push_back( pModifier );
+		if(meshUVsParam.valid())
+		{
+			size_t numUVSamples = meshUVsParam.getNumSamples();
+			Alembic::Abc::V2fArraySamplePtr meshUVs = meshUVsParam.getExpandedValue(0).getVals();
+			if(meshUVs->size() > 0)
+			{
+				// check if we have a uv set names prop
+				std::vector<std::string> uvSetNames;
+				if(objMesh.valid() && objMesh.getSchema().getPropertyHeader( ".uvSetNames" ) != NULL ){
+					Alembic::Abc::IStringArrayProperty uvSetNamesProp = Alembic::Abc::IStringArrayProperty( objMesh.getSchema(), ".uvSetNames" );
+					Alembic::Abc::StringArraySamplePtr ptr = uvSetNamesProp.getValue(0);
+					for(size_t i=0;i<ptr->size();i++){
+						uvSetNames.push_back(ptr->get()[i].c_str());
+					}
+				}
+				else if ( objSubD.getSchema().getPropertyHeader( ".uvSetNames" ) != NULL ){
+					Alembic::Abc::IStringArrayProperty uvSetNamesProp = Alembic::Abc::IStringArrayProperty( objSubD.getSchema(), ".uvSetNames" );
+					Alembic::Abc::StringArraySamplePtr ptr = uvSetNamesProp.getValue(0);
+					for(size_t i=0;i<ptr->size();i++){
+						uvSetNames.push_back(ptr->get()[i].c_str());
+					}
+				}
+
+				for(int i=0; i<uvSetNames.size(); i++){
+					// Create the polymesh modifier
+					Modifier *pModifier = static_cast<Modifier*>
+						(GET_MAX_INTERFACE()->CreateInstance(OSM_CLASS_ID, ALEMBIC_MESH_UVW_MODIFIER_CLASSID));
+
+					pModifier->DisableMod();
+
+					std::stringstream identifierStream;
+					identifierStream<<identifier<<":"<<(i+1);
+
+					// Set the alembic id
+					pModifier->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pModifier, 0, "path" ), zero, path.c_str());
+					pModifier->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pModifier, 0, "identifier" ), zero, identifierStream.str().c_str() );
+					pModifier->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pModifier, 0, "time" ), zero, 0.0f );
+					pModifier->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pModifier, 0, "muted" ), zero, FALSE );
+
+					// Add the modifier to the pNode
+					GET_MAX_INTERFACE()->AddModifier(*pNode, *pModifier);
+					if( ! isUVWContant ) {
+						GET_MAX_INTERFACE()->SelectNode( pNode );
+						char szControllerName[10000];
+						sprintf_s( szControllerName, 10000, "$.modifiers[#Alembic_Mesh_UVW].time" );
+						AlembicImport_ConnectTimeControl( szControllerName, options );
+					}
+
+					modifiersToEnable.push_back( pModifier );
+				}
+			}
 		}
+
+
 	}
 	bool isGeomContant = true;
 	if( ( ! isDynamicTopo ) && isAlembicMeshPositions( &iObj, isGeomContant ) ) {

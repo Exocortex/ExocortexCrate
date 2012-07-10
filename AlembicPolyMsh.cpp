@@ -327,30 +327,59 @@ bool AlembicPolyMesh::Save(double time, bool bLastFrame)
       }
    }
 
+//TODO: update this code
+ 
 	//write out the texture coordinates if necessary
 	if((bool)GetCurrentJob()->GetOption("exportUVs") && (bFirstFrame || dynamicTopology))
 	{
-		if (finalPolyMesh.mUvVec.size() > 0 && finalPolyMesh.mUvVec.size() == finalPolyMesh.mFaceIndicesVec.size() )
-		{
-			Alembic::AbcGeom::OV2fGeomParam::Sample uvSample(
-				Alembic::Abc::V2fArraySample(&finalPolyMesh.mUvVec.front(),finalPolyMesh.mUvVec.size()),
-				Alembic::AbcGeom::kFacevaryingScope);
 
-			if(finalPolyMesh.mUvIndexVec.size() > 0){
-			  uvSample.setIndices(Alembic::Abc::UInt32ArraySample(&finalPolyMesh.mUvIndexVec.front(),finalPolyMesh.mUvIndexVec.size()));
-			}
-			mMeshSample.setUVs(uvSample);
+		if(mNumSamples == 0){
+			Alembic::Abc::OStringArrayProperty uvSetNamesProperty = Alembic::Abc::OStringArrayProperty(
+				mMeshSchema, ".uvSetNames", mMeshSchema.getMetaData(), mJob->GetAnimatedTs() );
+			Alembic::Abc::StringArraySample uvSetNamesSample(&finalPolyMesh.mUvSetNames.front(), finalPolyMesh.mUvSetNames.size());
+			uvSetNamesProperty.set(uvSetNamesSample);
 		}
-		else if (mNumSamples == 0 && dynamicTopology)
-		{
-			// If we are exporting dynamic topology, then we may have uvs that show up later in our scene.  The problem is that Alembic wants
-			// your parameter to be defined at sample zero if you plan to use it even later on, so we create a dummy uv parameter here if the case
-			// requires it
-			finalPolyMesh.mUvVec.push_back(Imath::V2f(0,0));
-			finalPolyMesh.mUvIndexVec.push_back(0);
-			Alembic::AbcGeom::OV2fGeomParam::Sample uvSample(Alembic::Abc::V2fArraySample(&finalPolyMesh.mUvVec.front(), 0), Alembic::AbcGeom::kFacevaryingScope);
-			uvSample.setIndices(Alembic::Abc::UInt32ArraySample(&finalPolyMesh.mUvIndexVec.front(), 0) );
-			mMeshSample.setUVs(uvSample);
+
+		for(int i=0; i<finalPolyMesh.mUvVec.size(); i++){
+			std::vector<Alembic::Abc::V2f>& uvVec = finalPolyMesh.mUvVec[i];
+			std::vector<Alembic::Abc::uint32_t>& uvIndexVec = finalPolyMesh.mUvIndexVec[i];
+			size_t uvSize = uvVec.size();
+			size_t uvIndexSize = uvIndexVec.size();
+
+			if(dynamicTopology && mNumSamples == 0){
+				// If we are exporting dynamic topology, then we may have uvs that show up later in our scene.  The problem is that Alembic wants
+				// your parameter to be defined at sample zero if you plan to use it even later on, so we create a dummy uv parameter here if the case
+				// requires it
+				if(uvSize == 0){
+					uvVec.push_back(Imath::V2f(0,0));
+					uvSize = 0;
+				}
+				if(uvIndexSize == 0){
+					uvIndexVec.push_back(0);
+					uvIndexSize = 0;
+				}
+			}
+			
+			Alembic::AbcGeom::OV2fGeomParam::Sample uvSample(Alembic::Abc::V2fArraySample(&uvVec.front(),uvSize), Alembic::AbcGeom::kFacevaryingScope);
+
+			if(finalPolyMesh.mUvIndexVec.size() > 0 || (dynamicTopology && mNumSamples == 0)){
+				uvSample.setIndices(Alembic::Abc::UInt32ArraySample(&uvIndexVec.front(), uvIndexSize));
+			}
+
+			if(i == 0){
+				mMeshSample.setUVs(uvSample);
+			}
+			else{
+				// create the uv param if required
+				if(mNumSamples == 0)
+				{
+					std::stringstream storedUVSetNameStream;
+					storedUVSetNameStream<<"uv"<<i;
+					mUvParams.push_back(Alembic::AbcGeom::OV2fGeomParam( mMeshSchema, storedUVSetNameStream.str().c_str(), uvIndexSize > 0,
+									 Alembic::AbcGeom::kFacevaryingScope, 1, mJob->GetAnimatedTs()));
+				}
+				mUvParams[i-1].set(uvSample);
+			}
 		}
 	}
 
@@ -424,20 +453,21 @@ bool AlembicPolyMesh::Save(double time, bool bLastFrame)
 
 
    // check if we should export the velocities
-   if(dynamicTopology)
+   // TODO: support velocity property for nonparticle system meshes if possible
+   if(dynamicTopology && bIsParticleSystem)
    {
-
+	  size_t size = 0;
       if(finalPolyMesh.mVelocitiesVec.size() > 0)
       {
 		  if(finalPolyMesh.posVec.size() != finalPolyMesh.mVelocitiesVec.size()){
-
 			  ESS_LOG_INFO("mVelocitiesVec has wrong size.");
 		  }
+		  size = finalPolyMesh.mVelocitiesVec.size();
       }
 	  else{
 		  finalPolyMesh.mVelocitiesVec.push_back(Imath::V3f(0,0,0));
 	  }
-      Alembic::Abc::V3fArraySample sample = Alembic::Abc::V3fArraySample(&finalPolyMesh.mVelocitiesVec.front(),finalPolyMesh.mVelocitiesVec.size());
+	  Alembic::Abc::V3fArraySample sample = Alembic::Abc::V3fArraySample(&finalPolyMesh.mVelocitiesVec.front(), size);
 	  mMeshSample.setVelocities( sample );
    }
    

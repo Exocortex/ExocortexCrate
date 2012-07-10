@@ -52,13 +52,13 @@ bool AlembicIntermediatePolyMesh::mergeWith(const AlembicIntermediatePolyMesh& s
 
 	Alembic::Abc::uint32_t amountToOffsetSrcUvIndicesBy = (Alembic::Abc::uint32_t)destMesh.mUvVec.size();
 
-	for(int i=0; i<srcMesh.mUvVec.size(); i++){
-		destMesh.mUvVec.push_back( srcMesh.mUvVec[i] ); 
-	}
+	//for(int i=0; i<srcMesh.mUvVec.size(); i++){
+	//	destMesh.mUvVec.push_back( srcMesh.mUvVec[i] ); 
+	//}
 
-	for(int i=0; i<srcMesh.mUvIndexVec.size(); i++){
-		destMesh.mUvIndexVec.push_back( srcMesh.mUvIndexVec[i] + amountToOffsetSrcUvIndicesBy );
-	}
+	//for(int i=0; i<srcMesh.mUvIndexVec.size(); i++){
+	//	destMesh.mUvIndexVec.push_back( srcMesh.mUvIndexVec[i] + amountToOffsetSrcUvIndicesBy );
+	//}
 
 
 	//merge the faceset maps

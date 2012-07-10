@@ -36,8 +36,12 @@ public:
 	std::vector<Alembic::AbcCoreAbstract::ALEMBIC_VERSION_NS::int32_t> mFaceCountVec;
 	std::vector<Alembic::AbcCoreAbstract::ALEMBIC_VERSION_NS::int32_t> mFaceIndicesVec;  
 
-	std::vector<Alembic::Abc::V2f> mUvVec;
-	std::vector<Alembic::Abc::uint32_t> mUvIndexVec;//will have size 0 if not using indexed UVs
+	//std::vector<Alembic::Abc::V2f> mUvVec;
+	//std::vector<Alembic::Abc::uint32_t> mUvIndexVec;//will have size 0 if not using indexed UVs
+
+	std::vector<std::string> mUvSetNames;
+	std::vector<std::vector<Alembic::Abc::V2f> > mUvVec;
+	std::vector<std::vector<Alembic::Abc::uint32_t> > mUvIndexVec;
 
 	std::vector<Alembic::Abc::uint32_t> mMatIdIndexVec;
 	facesetmap mFaceSetsMap;
