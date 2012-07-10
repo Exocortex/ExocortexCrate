@@ -3,10 +3,10 @@ global proc exocortexCloseDialog(string $dialog)
   deleteUI -window $dialog;
 }
 
-global proc exocortexAlembicExport(string $filename,         string $exported_objects[], string $exportInframe,
-                                      string $exportOutframe,   string $exportStepframe,    string $exportSubstepframe,
-                                      int $exportTopology,      int $exportUVs,             int $exportFaceSets,
-                                      int $exportDynamicTopo,   int $exportGlobalSpace,     int $exportWithoutHierarchy)
+global proc exocortexAlembicExport(string $filename,         string $exported_objects[], int $exportInframe,
+                                   int $exportOutframe,      int $exportStepframe,       int $exportSubstepframe,
+                                   int $exportTopology,      int $exportUVs,             int $exportFaceSets,
+                                   int $exportDynamicTopo,   int $exportGlobalSpace,     int $exportWithoutHierarchy)
 {
   // construct the job string
   string $job = ("in="+$exportInframe+";out="+$exportOutframe+";step="+$exportStepframe+";substep="+$exportSubstepframe+";filename="+$filename+";objects=");
