@@ -3,7 +3,44 @@ global proc exocortexCloseDialog(string $dialog)
   deleteUI -window $dialog;
 }
 
-global proc exocortexAlembicExport(string $filename, string $dialog)
+global proc exocortexAlembicExport(string $filename,         string $exported_objects[], string $exportInframe,
+                                      string $exportOutframe,   string $exportStepframe,    string $exportSubstepframe,
+                                      int $exportTopology,      int $exportUVs,             int $exportFaceSets,
+                                      int $exportDynamicTopo,   int $exportGlobalSpace,     int $exportWithoutHierarchy)
+{
+  // construct the job string
+  string $job = ("in="+$exportInframe+";out="+$exportOutframe+";step="+$exportStepframe+";substep="+$exportSubstepframe+";filename="+$filename+";objects=");
+  for($i=0;$i<size($exported_objects);$i++)
+  {
+    if($i>0)
+      $job += ",";
+    $job += $exported_objects[$i];
+  }
+  print $exportTopology;
+  if($exportTopology == 1)    
+  {
+    $job += ";purepointcache=1;dynamictopology=0;normals=0;uvs=0;facesets=0";
+  }
+  else if($exportTopology == 2)    
+  {
+    $job += ";purepointcache=0;normals=0;dynamictopology=0";
+    $job += ";uvs="+$exportUVs;
+    $job += ";facesets="+$exportFaceSets;
+  }
+  else if($exportTopology == 3)    
+  {
+    $job += ";purepointcache=0;normals=1";
+    $job += ";uvs="+$exportUVs;
+    $job += ";facesets="+$exportFaceSets;
+    $job += ";dynamictopology="+$exportDynamicTopo;
+  }
+  $job += ";globalspace="+$exportGlobalSpace;
+  $job += ";withouthierarchy="+$exportWithoutHierarchy;
+  print $job;
+  ExocortexAlembic_export -j $job;
+}
+
+global proc exocortexAlembicExportGUI(string $filename, string $dialog)
 {
   // parse all options
   string $exportInframe = `textField -q -text inframe`;
@@ -42,37 +79,7 @@ global proc exocortexAlembicExport(string $filename, string $dialog)
     $filename = $files[0];
   }
   $filename = `ExocortexAlembic_resolvePath -f $filename`;
-  
-  // construct the job string
-  string $job = ("in="+$exportInframe+";out="+$exportOutframe+";step="+$exportStepframe+";substep="+$exportSubstepframe+";filename="+$filename+";objects=");
-  for($i=0;$i<size($selection);$i++)
-  {
-    if($i>0)
-    $job += ",";
-    $job += $selection[$i];
-  }
-  print $exportTopology;
-  if($exportTopology == 1)    
-  {
-    $job += ";purepointcache=1;dynamictopology=0;normals=0;uvs=0;facesets=0";
-  }
-  else if($exportTopology == 2)    
-  {
-    $job += ";purepointcache=0;normals=0;dynamictopology=0";
-    $job += ";uvs="+$exportUVs;
-    $job += ";facesets="+$exportFaceSets;
-  }
-  else if($exportTopology == 3)    
-  {
-    $job += ";purepointcache=0;normals=1";
-    $job += ";uvs="+$exportUVs;
-    $job += ";facesets="+$exportFaceSets;
-    $job += ";dynamictopology="+$exportDynamicTopo;
-  }
-  $job += ";globalspace="+$exportGlobalSpace;
-  $job += ";withouthierarchy="+$exportWithoutHierarchy;
-  print $job;
-  ExocortexAlembic_export -j $job;
+  exocortexAlembicExport($filename, $selection, $exportInframe, $exportOutframe, $exportStepframe, $exportSubstepframe, $exportTopology, $exportUVs, $exportFaceSets, $exportDynamicTopo, $exportGlobalSpace, $exportWithoutHierarchy);
 }
 
 global proc exocortexCloseDialog(string $dialog)
@@ -82,7 +89,7 @@ global proc exocortexCloseDialog(string $dialog)
 
 global proc exocortexChooseFile(string $dialog)
 {
-  exocortexAlembicExport("",$dialog);
+  exocortexAlembicExportGUI("",$dialog);
 }
 
 global proc exocortexSetupDialog(string $uiDirectory)

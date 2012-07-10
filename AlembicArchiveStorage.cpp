@@ -29,8 +29,8 @@ MString resolvePath(MString path)
          MGlobal::displayError("[ExocortexAlembic] Invalid token bracketing in path: "+path);
          return path;
       }
-      MString prefix = openPos > 0 ? path.substring(0,openPos-1) : "";
-      MString suffix = closePos < path.length() - 1 ? path.substring(closePos+1,path.length()-1) : "";
+      MString prefix = (openPos > 0) ? path.substring(0,openPos-1) : "";
+      MString suffix = (closePos < path.length() - 1) ? path.substring(closePos+1,path.length()-1) : "";
       MString token = path.substring(openPos+1,closePos-1);
       MStringArray tokens;
       token.split(' ',tokens);

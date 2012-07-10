@@ -52,7 +52,7 @@ global proc exocortexConnectIfUnconnected(string $source, string $target)
     connectAttr $source $target;
 }
 
-global proc exocortexAlembicImport(string $filename,string $dialog)
+global proc exocortexAlembicImportGUI(string $filename,string $dialog)
 {
   // parse all options
   int $importNormals = `checkBox -q -value normals`;
@@ -83,6 +83,11 @@ global proc exocortexAlembicImport(string $filename,string $dialog)
     return;
   }
   
+  exocortexAlembicImport($filename, $importNormals, $importUvs, $importFaceSets, $importVisibility, $importAttach);
+}
+
+global proc exocortexAlembicImport(string $filename, int $importNormals, int $importUvs, int $importFaceSets, string $importVisibility, int $importAttach)
+{
   // query the content of the file
   string $infos[] = `ExocortexAlembic_getInfo -f $filename`;
   string $identifiers[];
@@ -425,7 +430,7 @@ global proc exocortexCloseDialog(string $dialog)
 
 global proc exocortexChooseFile(string $dialog)
 {
-  exocortexAlembicImport("",$dialog);
+  exocortexAlembicImportGUI("",$dialog);
 }
 
 global proc exocortexSetupDialog(string $uiDirectory)
