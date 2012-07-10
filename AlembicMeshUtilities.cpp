@@ -741,58 +741,70 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
 			   // Set up the default texture map channel
 			   if (options.pMNMesh != NULL)
 			   {
-				   int numVertices = static_cast<int>(uvsToSet.size());
-
-				   //options.pMNMesh->SetMapNum(2);
-				   //options.pMNMesh->InitMap(0);
-				   options.pMNMesh->InitMap(uvI);
-				   MNMap *map = options.pMNMesh->M(uvI);
-				   map->setNumVerts(numVertices);
-				   map->setNumFaces(numFaces);
-
-				   Point3* mapV = map->v;
-				   for (int i = 0; i < numVertices; i += 1)
+				   if(options.pMNMesh->MNum() > uvI)
 				   {
-					   mapV[i] = uvsToSet[i];
-				   }
+					   int numVertices = static_cast<int>(uvsToSet.size());
 
-				   int offset = 0;
-				   MNMapFace* mapF = map->f;
-				   for (int i = 0; i < numFaces; i += 1)
-				   {
-					   int degree;
-					   if (i < options.pMNMesh->numf)
-						   degree = options.pMNMesh->F(i)->deg;
-					   else
-						   degree = 0;
+					   //options.pMNMesh->SetMapNum(2);
+					   //options.pMNMesh->InitMap(0);
+					   options.pMNMesh->InitMap(uvI);
+					   MNMap *map = options.pMNMesh->M(uvI);
+					   map->setNumVerts(numVertices);
+					   map->setNumFaces(numFaces);
 
-					   mapF[i].SetSize(degree);
-
-					   for (int j = 0; j < degree; j ++)
+					   Point3* mapV = map->v;
+					   for (int i = 0; i < numVertices; i += 1)
 					   {
-						   mapF[i].tv[j] = offset;
-						   ++offset;
+						   mapV[i] = uvsToSet[i];
+					   }
+
+					   int offset = 0;
+					   MNMapFace* mapF = map->f;
+					   for (int i = 0; i < numFaces; i += 1)
+					   {
+						   int degree;
+						   if (i < options.pMNMesh->numf)
+							   degree = options.pMNMesh->F(i)->deg;
+						   else
+							   degree = 0;
+
+						   mapF[i].SetSize(degree);
+
+						   for (int j = 0; j < degree; j ++)
+						   {
+							   mapF[i].tv[j] = offset;
+							   ++offset;
+						   }
 					   }
 				   }
-
+				   else{
+						ESS_LOG_WARNING( "UV channels have not been allocated. Cannot load uv channel "<<uvI );
+				   }
 			   }
 	           
 			   if (options.pMesh != NULL)
 			   {
-				   //options.pMesh->setNumMaps(2, TRUE);
-				   options.pMesh->setMapSupport(uvI, TRUE);
-				   MeshMap &map = options.pMesh->Map(uvI);
-				   map.setNumVerts((int)uvsToSet.size());
-				   map.setNumFaces(numFaces);
+				   if(options.pMesh->getNumMaps() > uvI)
+				   {
 
-				   // Set the map texture vertices
-				   for (int i = 0; i < uvsToSet.size(); i += 1) {
-						map.tv[i] = uvsToSet[i];
+					   //options.pMesh->setNumMaps(2, TRUE);
+					   options.pMesh->setMapSupport(uvI, TRUE);
+					   MeshMap &map = options.pMesh->Map(uvI);
+					   map.setNumVerts((int)uvsToSet.size());
+					   map.setNumFaces(numFaces);
+
+					   // Set the map texture vertices
+					   for (int i = 0; i < uvsToSet.size(); i += 1) {
+							map.tv[i] = uvsToSet[i];
+					   }
+
+					   // Set up the map texture faces
+					   for (int i =0; i < numFaces; i += 1) {
+						   map.tf[i].setTVerts(i*3, i*3+1, i*3+2);					
+					   }
 				   }
-
-				   // Set up the map texture faces
-				   for (int i =0; i < numFaces; i += 1) {
-					   map.tf[i].setTVerts(i*3, i*3+1, i*3+2);					
+				   else{
+						ESS_LOG_WARNING( "UV channels have not been allocated. Cannot load uv channel "<<uvI );
 				   }
 			   }
 		   }
