@@ -653,6 +653,8 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
 		int uvI = 0;
 		is >> uvI;
 
+		uvI--;
+
 		Alembic::AbcGeom::IV2fGeomParam meshUvParam;
 		if(objMesh.valid()){
 			if(uvI == 0){
@@ -1223,7 +1225,7 @@ int AlembicImport_PolyMesh(const std::string &path, Alembic::AbcGeom::IObject& i
 					pModifier->DisableMod();
 
 					std::stringstream identifierStream;
-					identifierStream<<identifier<<":"<<i;
+					identifierStream<<identifier<<":"<<(i+1);
 
 					// Set the alembic id
 					pModifier->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pModifier, 0, "path" ), zero, path.c_str());
