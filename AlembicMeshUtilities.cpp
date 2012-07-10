@@ -255,7 +255,7 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
 	   }
 
 	   // blend - either between samples or using point velocities
-	   if(sampleInfo.alpha != 0.0) 
+	   if(sampleInfo.alpha != 0.0)
 	   {
            bool bSampleInterpolate = false;
            bool bVelInterpolate = false;
@@ -266,12 +266,12 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
               objMesh.getSchema().get(polyMeshSample2,sampleInfo.ceilIndex);
               meshPos = polyMeshSample2.getPositions();
 
-			  const int posSize = ( meshPos != NULL ) ? meshPos->size() : 0;
-			  const int velSize = ( meshVel != NULL ) ? meshVel->size() : 0;
+			  const int posSize = meshPos ? meshPos->size() : 0;
+			  const int velSize = meshVel ? meshVel->size() : 0;
              
-              if( posSize == vArray.size() && !hasDynamicTopo)
+              if(meshPos->size() == vArray.size() && !hasDynamicTopo)
                   bSampleInterpolate = true;
-              else if(meshVel && velSize == vArray.size())
+              else if(meshVel && meshVel->size() == vArray.size())
                   bVelInterpolate = true;
           }
 		  else
@@ -325,12 +325,7 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
 		 
 		   for(int i=0;i<vArray.size();i++)
 		   {
-			   if( options.bAdditive ) {
-					pMeshVerties[i].p += ConvertAlembicPointToMaxPoint(vArray[i] );
-			   }
-			   else {
-				   pMeshVerties[i].p = ConvertAlembicPointToMaxPoint(vArray[i] );
-			   }
+			   pMeshVerties[i].p = ConvertAlembicPointToMaxPoint(vArray[i] );
 		   }
 	   }
 	   else if (options.pMesh != NULL)
@@ -338,12 +333,7 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
 		   Point3 *pVerts = options.pMesh->verts;
 		   for(int i=0;i<vArray.size();i++)
 		   {
-			   if( options.bAdditive ) {
-				   pVerts[i] += ConvertAlembicPointToMaxPoint(vArray[i]);
-			   }
-			   else {
-				   pVerts[i] = ConvertAlembicPointToMaxPoint(vArray[i]);
-			   }
+			   pVerts[i] = ConvertAlembicPointToMaxPoint(vArray[i]);
 		   }
 	   }
 	   else {

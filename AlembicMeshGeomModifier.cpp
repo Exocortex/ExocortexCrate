@@ -47,11 +47,6 @@ static ParamBlockDesc2 AlembicMeshGeomModifierParams(
 		p_ui,            TYPE_SPINNER,       EDITTYPE_FLOAT, IDC_TIME_EDIT,    IDC_TIME_SPIN,  0.01f,
 		p_end,
 
-	AlembicMeshGeomModifier::ID_ADDITIVE, _T("additive"), TYPE_BOOL, P_ANIMATABLE, IDS_ADDITIVE,
-		p_default,       TRUE,
-		p_ui,            TYPE_SINGLECHEKBOX,  IDC_ADDITIVE_CHECKBOX,
-		p_end,
-
 	AlembicMeshGeomModifier::ID_GEOALPHA, _T("geoAlpha"), TYPE_FLOAT, P_ANIMATABLE, IDS_GEOALPHA,
 		p_default,       1.0f,
 		p_range,         0.0f, 1.0f,
@@ -136,9 +131,6 @@ void AlembicMeshGeomModifier::ModifyObject (TimeValue t, ModContext &mc, ObjectS
 	BOOL bNormals = false;
 	BOOL bUVs = false;
 
-	BOOL bAdditive;
-	this->pblock->GetValue( AlembicMeshGeomModifier::ID_ADDITIVE, t, bAdditive, interval);
-
 	BOOL bMuted;
 	this->pblock->GetValue( AlembicMeshGeomModifier::ID_MUTED, t, bMuted, interval);
 	
@@ -183,7 +175,6 @@ void AlembicMeshGeomModifier::ModifyObject (TimeValue t, ModContext &mc, ObjectS
    options.dTicks = GetTimeValueFromSeconds( fTime );
    options.nDataFillFlags = 0;
    options.fVertexAlpha = fGeoAlpha;
-   options.bAdditive = bAdditive;
     if( bTopology ) {
 	   options.nDataFillFlags |= ALEMBIC_DATAFILL_FACELIST;
 		options.nDataFillFlags |= ALEMBIC_DATAFILL_MATERIALIDS;
