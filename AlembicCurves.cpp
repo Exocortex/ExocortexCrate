@@ -4,6 +4,7 @@
 #include <xsi_application.h>
 #include <xsi_x3dobject.h>
 #include <xsi_primitive.h>
+#include <xsi_polygonface.h>
 #include <xsi_geometry.h>
 #include <xsi_sample.h>
 #include <xsi_knot.h>
@@ -68,6 +69,8 @@ AlembicCurves::AlembicCurves(const XSI::CRef & in_Ref, AlembicWriteJob * in_Job)
    // create all properties
    mRadiusProperty = OFloatArrayProperty(mCurvesSchema, ".radius", mCurvesSchema.getMetaData(), GetJob()->GetAnimatedTs() );
    mColorProperty = OC4fArrayProperty(mCurvesSchema, ".color", mCurvesSchema.getMetaData(), GetJob()->GetAnimatedTs() );
+   mFaceIndexProperty = OInt32ArrayProperty(mCurvesSchema, ".face_index", mCurvesSchema.getMetaData(), GetJob()->GetAnimatedTs() );
+   mVertexIndexProperty = OInt32ArrayProperty(mCurvesSchema, ".vertex_index", mCurvesSchema.getMetaData(), GetJob()->GetAnimatedTs() );
 }
 
 AlembicCurves::~AlembicCurves()
@@ -336,6 +339,8 @@ XSI::CStatus AlembicCurves::Save(double time)
       CPointRefArray emitterPointRefArray(emitterGeo.GetPoints());
       CLongArray emitterPntIndex;
 
+	  vector<long> faceIndices;
+
       if( !SIObject(emitterPrimRef).GetType().IsEqualNoCase(L"polymsh"))
       {
          Application().LogMessage(L"Error: The hair needs to be emitted from a polygon",siWarningMsg);
@@ -343,11 +348,17 @@ XSI::CStatus AlembicCurves::Save(double time)
       }
       else if ( !SIObject(emitterClusterRef).GetType().IsEqualNoCase(L"poly"))
       {
-         // assume that there is a guide cuve per vertex in the emitter geometry
+         // assume that there is a guide curve per vertex in the emitter geometry
          // hence the base points should correspond to point ids
          assert( numCurves==emitterPointRefArray.GetCount());
          for(long i=0;i<numCurves;i++)
             emitterPntIndex.Add(i);
+
+		 // add all the faces to the face indices
+		 int numPolys = emitterGeo.GetPolygons().GetCount();
+		 faceIndices.resize( numPolys);
+		 for ( int i=0; i<numPolys; i++)
+			faceIndices[i] = i;
       }
       else
       {
@@ -356,9 +367,11 @@ XSI::CStatus AlembicCurves::Save(double time)
          CLongArray clusterElements = emitterCluster.GetElements().GetArray();
          CLongArray emitterPntUsed(emitterPointRefArray.GetCount());
 
+		 faceIndices.resize( clusterElements.GetCount());
          CLongArray facetIndex;
          for(long i=0;i<clusterElements.GetCount();i++)
          {
+			faceIndices[i] = clusterElements[i];
             facetIndex = Facet(emitterGeo.GetFacets().GetItem(clusterElements[i])).GetPoints().GetIndexArray();
             for(long j=0;j<facetIndex.GetCount();j++)
             {
@@ -370,6 +383,15 @@ XSI::CStatus AlembicCurves::Save(double time)
             }
          }
       }
+
+     // store the vertex indices
+	 vector<long> vertexIndices( emitterPntIndex.GetCount());
+     for(LONG i=0;i<emitterPntIndex.GetCount();i++)
+        vertexIndices[i] = emitterPntIndex[i];
+     mVertexIndexProperty.set(Alembic::Abc::Int32ArraySample(&vertexIndices.front(),vertexIndices.size()));
+
+	 // store the face indices
+     mFaceIndexProperty.set(Alembic::Abc::Int32ArraySample(&faceIndices.front(),faceIndices.size()));
 
       long curveCount = emitterPntIndex.GetCount();
       assert( curveCount == numCurves);
