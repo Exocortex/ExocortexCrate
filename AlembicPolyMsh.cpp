@@ -336,86 +336,121 @@ XSI::CStatus AlembicPolyMesh::Save(double time)
       if((bool)GetJob()->GetOption(L"exportUVs"))
       {
          CGeometryAccessor accessor = mesh.GetGeometryAccessor(siConstructionModeSecondaryShape);
-         CRef uvPropRef;
-         if(accessor.GetUVs().GetCount()>0)
-            uvPropRef = accessor.GetUVs()[0];
+         CRefArray uvPropRefs = accessor.GetUVs();
 
          // if we now finally found a valid uvprop
-         if(uvPropRef.IsValid())
+         if(uvPropRefs.GetCount() > 0)
          {
             // ok, great, we found UVs, let's set them up
-            mUvVec.resize(sampleCount);
-            CDoubleArray uvValues = ClusterProperty(uvPropRef).GetElements().GetArray();
-
-            for(LONG i=0;i<sampleCount;i++)
+            if(mNumSamples == 0)
             {
-               mUvVec[i].x = (float)uvValues[sampleLookup[i] * 3 + 0];
-               mUvVec[i].y = (float)uvValues[sampleLookup[i] * 3 + 1];
+               mUvVec.resize(uvPropRefs.GetCount());
+               if((bool)GetJob()->GetOption(L"indexedUVs"))
+                  mUvIndexVec.resize(uvPropRefs.GetCount());
+
+               // query the names of all uv properties
+               std::vector<std::string> uvSetNames;
+               for(LONG i=0;i< uvPropRefs.GetCount();i++)
+                  uvSetNames.push_back(ClusterProperty(uvPropRefs[i]).GetName().GetAsciiString());
+
+               Alembic::Abc::OStringArrayProperty uvSetNamesProperty = Alembic::Abc::OStringArrayProperty(
+                  mMeshSchema, ".uvSetNames", mMeshSchema.getMetaData(), GetJob()->GetAnimatedTs() );
+               Alembic::Abc::StringArraySample uvSetNamesSample(&uvSetNames.front(),uvSetNames.size());
+               uvSetNamesProperty.set(uvSetNamesSample);
             }
 
-            // now let's sort the normals 
-            size_t uvCount = mUvVec.size();
-            size_t uvIndexCount = 0;
-            if((bool)GetJob()->GetOption(L"indexedUVs")) {
-               std::map<SortableV2f,size_t> uvMap;
-               std::map<SortableV2f,size_t>::const_iterator it;
-               size_t sortedUVCount = 0;
-               std::vector<Alembic::Abc::V2f> sortedUVVec;
-               mUvIndexVec.resize(mUvVec.size());
-               sortedUVVec.resize(mUvVec.size());
+            // loop over all uvsets
+            for(LONG uvI=0;uvI<uvPropRefs.GetCount();uvI++)
+            {
+               mUvVec[uvI].resize(sampleCount);
+               CDoubleArray uvValues = ClusterProperty(uvPropRefs[uvI]).GetElements().GetArray();
 
-               // loop over all uvs
-               for(size_t i=0;i<mUvVec.size();i++)
+               for(LONG i=0;i<sampleCount;i++)
                {
-                  it = uvMap.find(mUvVec[i]);
-                  if(it != uvMap.end())
-                     mUvIndexVec[uvIndexCount++] = (uint32_t)it->second;
-                  else
-                  {
-                     mUvIndexVec[uvIndexCount++] = (uint32_t)sortedUVCount;
-                     uvMap.insert(std::pair<Alembic::Abc::V2f,size_t>(mUvVec[i],(uint32_t)sortedUVCount));
-                     sortedUVVec[sortedUVCount++] = mUvVec[i];
-                  }
+                  mUvVec[uvI][i].x = (float)uvValues[sampleLookup[i] * 3 + 0];
+                  mUvVec[uvI][i].y = (float)uvValues[sampleLookup[i] * 3 + 1];
                }
 
-               // use indexed uvs if they use less space
-               mUvVec = sortedUVVec;
-               uvCount = sortedUVCount;
+               // now let's sort the normals 
+               size_t uvCount = mUvVec[uvI].size();
+               size_t uvIndexCount = 0;
+               if((bool)GetJob()->GetOption(L"indexedUVs")) {
+                  std::map<SortableV2f,size_t> uvMap;
+                  std::map<SortableV2f,size_t>::const_iterator it;
+                  size_t sortedUVCount = 0;
+                  std::vector<Alembic::Abc::V2f> sortedUVVec;
+                  mUvIndexVec[uvI].resize(mUvVec[uvI].size());
+                  sortedUVVec.resize(mUvVec[uvI].size());
 
-               sortedUVCount = 0;
-               sortedUVVec.clear();
+                  // loop over all uvs
+                  for(size_t i=0;i<mUvVec[uvI].size();i++)
+                  {
+                     it = uvMap.find(mUvVec[uvI][i]);
+                     if(it != uvMap.end())
+                        mUvIndexVec[uvI][uvIndexCount++] = (uint32_t)it->second;
+                     else
+                     {
+                        mUvIndexVec[uvI][uvIndexCount++] = (uint32_t)sortedUVCount;
+                        uvMap.insert(std::pair<Alembic::Abc::V2f,size_t>(mUvVec[uvI][i],(uint32_t)sortedUVCount));
+                        sortedUVVec[sortedUVCount++] = mUvVec[uvI][i];
+                     }
+                  }
+
+                  // use indexed uvs if they use less space
+                  mUvVec[uvI] = sortedUVVec;
+                  uvCount = sortedUVCount;
+
+                  sortedUVCount = 0;
+                  sortedUVVec.clear();
+               }
+
+               Alembic::AbcGeom::OV2fGeomParam::Sample uvSample(Alembic::Abc::V2fArraySample(&mUvVec[uvI].front(),uvCount),Alembic::AbcGeom::kFacevaryingScope);
+               if(mUvIndexVec.size() > 0 && uvIndexCount > 0)
+                  uvSample.setIndices(Alembic::Abc::UInt32ArraySample(&mUvIndexVec[uvI].front(),uvIndexCount));
+
+               if(uvI == 0)
+               {
+                  mMeshSample.setUVs(uvSample);
+               }
+               else
+               {
+                  // create the uv param if required
+                  if(mNumSamples == 0)
+                  {
+                     CString storedUvSetName = CString(L"uv") + CString(uvI);
+                     mUvParams.push_back(Alembic::AbcGeom::OV2fGeomParam( mMeshSchema, storedUvSetName.GetAsciiString(), uvIndexCount > 0,
+                                         Alembic::AbcGeom::kFacevaryingScope, 1, GetJob()->GetAnimatedTs()));
+                  }
+                  mUvParams[uvI-1].set(uvSample);
+               }
             }
-
-
-            Alembic::AbcGeom::OV2fGeomParam::Sample uvSample(Alembic::Abc::V2fArraySample(&mUvVec.front(),uvCount),Alembic::AbcGeom::kFacevaryingScope);
-            if(mUvIndexVec.size() > 0 && uvIndexCount > 0)
-               uvSample.setIndices(Alembic::Abc::UInt32ArraySample(&mUvIndexVec.front(),uvIndexCount));
-            mMeshSample.setUVs(uvSample);
 
             // create the uv options
             if(mUvOptionsVec.size() == 0)
             {
-               CRefArray children = ClusterProperty(uvPropRef).GetNestedObjects();
-               bool uWrap = false;
-               bool vWrap = false;
-               for(LONG i=0; i<children.GetCount(); i++)
-               {
-                  ProjectItem child(children.GetItem(i));
-                  CString type = child.GetType();
-                  if(type == L"uvprojdef")
-                  {
-                     uWrap = (bool)child.GetParameter(L"wrap_u").GetValue();
-                     vWrap = (bool)child.GetParameter(L"wrap_v").GetValue();
-                     break;
-                  }
-               }
-
                mUvOptionsProperty = OFloatArrayProperty(mMeshSchema, ".uvOptions", mMeshSchema.getMetaData(), GetJob()->GetAnimatedTs() );
-               
-               // uv wrapping
-               mUvOptionsVec.push_back(uWrap ? 1.0f : 0.0f);
-               mUvOptionsVec.push_back(vWrap ? 1.0f : 0.0f);
 
+               for(LONG uvI=0;uvI<uvPropRefs.GetCount();uvI++)
+               {
+                  CRefArray children = ClusterProperty(uvPropRefs[uvI]).GetNestedObjects();
+                  bool uWrap = false;
+                  bool vWrap = false;
+                  for(LONG i=0; i<children.GetCount(); i++)
+                  {
+                     ProjectItem child(children.GetItem(i));
+                     CString type = child.GetType();
+                     if(type == L"uvprojdef")
+                     {
+                        uWrap = (bool)child.GetParameter(L"wrap_u").GetValue();
+                        vWrap = (bool)child.GetParameter(L"wrap_v").GetValue();
+                        break;
+                     }
+                  }
+
+                  // uv wrapping
+                  mUvOptionsVec.push_back(uWrap ? 1.0f : 0.0f);
+                  mUvOptionsVec.push_back(vWrap ? 1.0f : 0.0f);
+               }
                mUvOptionsProperty.set(Alembic::Abc::FloatArraySample(&mUvOptionsVec.front(),mUvOptionsVec.size()));
             }
          }
@@ -704,7 +739,11 @@ ESS_CALLBACK_START( alembic_uvs_Update, CRef& )
       return CStatus::OK;
 
    CString path = ctxt.GetParameterValue(L"path");
-   CString identifier = ctxt.GetParameterValue(L"identifier");
+   CStringArray identifierAndIndex = CString(ctxt.GetParameterValue(L"identifier")).Split(L":");
+   CString identifier = identifierAndIndex[0];
+   LONG uvI = 0;
+   if(identifierAndIndex.GetCount() > 1)
+      uvI = (LONG)CValue(identifierAndIndex[1]);
 
    Alembic::AbcGeom::IObject iObj = getObjectFromArchive(path,identifier);
    if(!iObj.valid())
@@ -727,9 +766,29 @@ ESS_CALLBACK_START( alembic_uvs_Update, CRef& )
 
    Alembic::AbcGeom::IV2fGeomParam meshUvParam;
    if(objMesh.valid())
-      meshUvParam = objMesh.getSchema().getUVsParam();
+   {
+      if(uvI == 0)
+         meshUvParam = objMesh.getSchema().getUVsParam();
+      else
+      {
+         CString storedUVName = CString(L"uv")+CString(uvI);
+         if(objMesh.getSchema().getPropertyHeader( storedUVName.GetAsciiString() ) == NULL)
+            return CStatus::OK;
+         meshUvParam = Alembic::AbcGeom::IV2fGeomParam( objMesh.getSchema(), storedUVName.GetAsciiString());
+      }
+   }
    else
-      meshUvParam = objSubD.getSchema().getUVsParam();
+   {
+      if(uvI == 0)
+         meshUvParam = objSubD.getSchema().getUVsParam();
+      else
+      {
+         CString storedUVName = CString(L"uv")+CString(uvI);
+         if(objSubD.getSchema().getPropertyHeader( storedUVName.GetAsciiString() ) == NULL)
+            return CStatus::OK;
+         meshUvParam = Alembic::AbcGeom::IV2fGeomParam( objSubD.getSchema(), storedUVName.GetAsciiString());
+      }
+   }
 
    if(meshUvParam.valid())
    {
