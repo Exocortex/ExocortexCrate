@@ -483,14 +483,19 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
 
 			   // Set up the specify normals
 			   if( options.pMNMesh->GetSpecifiedNormals() == NULL ) {
+				   ESS_LOG_ERROR( "Allocating new specified normals." );
 					options.pMNMesh->SpecifyNormals();
 			   }
 			   MNNormalSpec *normalSpec = options.pMNMesh->GetSpecifiedNormals();
-			   normalSpec->ClearAndFree();
-			   normalSpec->SetNumFaces(numFaces);
+			   normalSpec->SetParent( options.pMNMesh );
+			   if( normalSpec->GetNumFaces() != numFaces || normalSpec->GetNumNormals() != (int)normalsToSet.size() ) {
+					//normalSpec->ClearAndFree();
+				   ESS_LOG_ERROR( "Setting new faces and normal counts for specified normals." );
+				   normalSpec->SetNumFaces(numFaces);
+					normalSpec->SetNumNormals((int)normalsToSet.size());
+				}
 			   normalSpec->SetFlag(MESH_NORMAL_MODIFIER_SUPPORT, true);
-			   normalSpec->SetNumNormals((int)normalsToSet.size());
-
+			   
 			   for (int i = 0; i < normalsToSet.size(); i += 1)
 			   {
 				   normalSpec->Normal(i) = normalsToSet[i];
@@ -724,7 +729,7 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
                    faceSet = objMesh.getSchema().getFaceSet(faceSetNames[j]).getSchema();
                else
                    faceSet = objSubD.getSchema().getFaceSet(faceSetNames[j]).getSchema();
-
+ 
                Alembic::AbcGeom::IFaceSetSchema::Sample faceSetSample = faceSet.getValue();
                Alembic::Abc::Int32ArraySamplePtr faces = faceSetSample.getFaces();
 
@@ -742,19 +747,23 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
 	   validateMeshes( options, "ALEMBIC_DATAFILL_MATERIALIDS" );
    }
  
+     if( options.pMNMesh->GetSpecifiedNormals() == NULL ) {
+		ESS_LOG_ERROR( "Allocating new specified normals." );
+		options.pMNMesh->SpecifyNormals();
+		options.pMNMesh->GetSpecifiedNormals()->CheckNormals();
+	    options.pMNMesh->checkNormals(TRUE);
+	}
+
   // This isn't required if we notify 3DS Max properly via the channel flags for vertex changes.
-  if (options.pMNMesh != NULL)
-   {
-	   //options.pMNMesh->MNDebugPrint();
-	   if ( options.nDataFillFlags & ALEMBIC_DATAFILL_FACELIST ) {
-		   options.pMNMesh->InvalidateTopoCache();
-	 		options.pMNMesh->InvalidateGeomCache();
-		}
-	   else {
-		  if( options.nDataFillFlags & ALEMBIC_DATAFILL_VERTEX ) {
-		      options.pMNMesh->InvalidateGeomCache();
-		  }
-	   }
+   //options.pMNMesh->MNDebugPrint();
+   if ( options.nDataFillFlags & ALEMBIC_DATAFILL_FACELIST ) {
+	   options.pMNMesh->InvalidateTopoCache();
+		options.pMNMesh->InvalidateGeomCache();
+	}
+   else {
+	  if( options.nDataFillFlags & ALEMBIC_DATAFILL_VERTEX ) {
+		  options.pMNMesh->InvalidateGeomCache();
+	  }
    }
 }
 
