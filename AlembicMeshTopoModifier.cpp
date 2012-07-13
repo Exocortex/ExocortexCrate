@@ -197,7 +197,17 @@ void AlembicMeshTopoModifier::ModifyObject (TimeValue t, ModContext &mc, ObjectS
    options.nDataFillFlags |= ALEMBIC_DATAFILL_ALLOCATE_UV_STORAGE;
   
    // Find out if we are modifying a poly object or a tri object
-   if (os->obj->CanConvertToType(Class_ID(POLYOBJ_CLASS_ID, 0)))
+   if (os->obj->ClassID() == Class_ID(POLYOBJ_CLASS_ID, 0) )
+   {
+	   PolyObject *pPolyObj = reinterpret_cast<PolyObject *>(os->obj );
+
+	   options.pMNMesh = &( pPolyObj->GetMesh() );
+    
+	   if (os->obj != pPolyObj) {
+          os->obj = pPolyObj;
+	   }
+   }
+   else if (os->obj->CanConvertToType(Class_ID(POLYOBJ_CLASS_ID, 0)))
    {
 	   PolyObject *pPolyObj = reinterpret_cast<PolyObject *>(os->obj->ConvertToType(t, Class_ID(POLYOBJ_CLASS_ID, 0)));
 
@@ -208,19 +218,9 @@ void AlembicMeshTopoModifier::ModifyObject (TimeValue t, ModContext &mc, ObjectS
 	   }
 
    }
-   else if (os->obj->CanConvertToType(Class_ID(TRIOBJ_CLASS_ID, 0)))
-   {
-      TriObject *pTriObj = reinterpret_cast<TriObject *>(os->obj->ConvertToType(t, Class_ID(TRIOBJ_CLASS_ID, 0)));
-		options.pMesh = &( pTriObj->GetMesh() );
-
-		if (os->obj != pTriObj) {
-          os->obj = pTriObj;
-		}
-   } 
-   else
-   {
-  		ESS_LOG_ERROR( "Can not convert internal mesh data into a TriObject or PolyObject, confused." );
-	     return;
+   else {
+  		ESS_LOG_ERROR( "Can not convert internal mesh data into a PolyObject, confused." );
+	    return;
    }
 
    try {

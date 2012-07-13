@@ -29,8 +29,17 @@ Alembic::Abc::IArchive * getArchiveFromID(std::string path)
    it = gArchives.find(resolvedPath);
    if(it == gArchives.end())
    {
-      // check if the file exists
-      FILE * file = fopen(resolvedPath.c_str(),"rb");
+     // check if the file exists
+     if( ! HasAlembicReaderLicense() )
+     {
+         if(gArchives.size() == 1)
+         {
+            ESS_LOG_WARNING("[ExocortexAlembic] Reader license not found: Only one open archive at a time allowed!");
+            return NULL;
+         }
+      }
+   
+	  FILE * file = fopen(resolvedPath.c_str(),"rb");
       if(file != NULL)
       {
          fclose(file);
