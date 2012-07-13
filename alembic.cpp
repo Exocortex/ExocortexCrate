@@ -19,7 +19,7 @@ void AlembicImport_SetupChildLinks( Alembic::Abc::IObject &obj, alembic_importop
 
     if (pParentNode)
     {
-		std::string name;
+		std::string name; 
 
         for (size_t i = 0; i < obj.getNumChildren(); i += 1)
         {

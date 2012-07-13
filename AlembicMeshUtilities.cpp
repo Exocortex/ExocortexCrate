@@ -1192,7 +1192,7 @@ int AlembicImport_PolyMesh(const std::string &path, Alembic::AbcGeom::IObject& i
 		if(objMesh.valid()){
 			meshUVsParam = objMesh.getSchema().getUVsParam();
 		}
-		else{
+		else{ 
 			meshUVsParam = objSubD.getSchema().getUVsParam();
 		}
 
@@ -1211,7 +1211,7 @@ int AlembicImport_PolyMesh(const std::string &path, Alembic::AbcGeom::IObject& i
 						uvSetNames.push_back(ptr->get()[i].c_str());
 					}
 				}
-				else if ( objSubD.getSchema().getPropertyHeader( ".uvSetNames" ) != NULL ){
+				else if ( objSubD.valid() && objSubD.getSchema().getPropertyHeader( ".uvSetNames" ) != NULL ){
 					Alembic::Abc::IStringArrayProperty uvSetNamesProp = Alembic::Abc::IStringArrayProperty( objSubD.getSchema(), ".uvSetNames" );
 					Alembic::Abc::StringArraySamplePtr ptr = uvSetNamesProp.getValue(0);
 					for(size_t i=0;i<ptr->size();i++){
