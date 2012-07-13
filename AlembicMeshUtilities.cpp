@@ -1077,6 +1077,10 @@ int AlembicImport_PolyMesh(const std::string &path, Alembic::AbcGeom::IObject& i
 					}
 				}
 
+				if(uvSetNames.size() == 0){
+					uvSetNames.push_back("Default");
+				}
+
 				for(int i=0; i<uvSetNames.size(); i++){
 					// Create the polymesh modifier
 					Modifier *pModifier = static_cast<Modifier*>
