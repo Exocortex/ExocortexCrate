@@ -111,7 +111,7 @@ public:
 
 void AlembicImport_FillInShape_Internal(alembic_fillshape_options &options)
 {
-   Alembic::AbcGeom::ICurves obj(*options.pIObj,Alembic::Abc::kWrapExisting);
+	Alembic::AbcGeom::ICurves obj(*options.pIObj,Alembic::Abc::kWrapExisting);
 
    if(!obj.valid())
    {

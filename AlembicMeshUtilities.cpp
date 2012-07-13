@@ -145,10 +145,6 @@ void validateMeshes( alembic_fillmesh_options &options, char* szName ) {
 
 void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
 {
-   if( ! HasFullLicense() ) {
-		ESS_LOG_ERROR( "No valid license found for Exocortex Alembic, PolyMesh FillIn failed." );
-	}
-   
    Alembic::AbcGeom::IPolyMesh objMesh;
    Alembic::AbcGeom::ISubD objSubD;
 

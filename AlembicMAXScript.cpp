@@ -69,7 +69,9 @@ public:
 		exocortexAlembicExport,
 		exocortexAlembicImportMesh,	
         exocortexAlembicInit,
-		exocortexGetBinVersion
+		exocortexGetBinVersion,
+		exocortexMemoryDiagnostics,
+		exocortexGetLicenseStatus
 	};
 
 	ExocortexAlembicStaticInterface()
@@ -204,6 +206,24 @@ public:
 			0,                      //* Flags  * /
 			0,                      //* Number  of arguments * /
 			p_end); 
+
+		AppendFunction(
+			exocortexMemoryDiagnostics,	//* function ID * /
+			_M("memoryDiagnostics"),           //* internal name * /
+			0,                      //* function name string resource name * / 
+			TYPE_INT,               //* Return type * /
+			0,                      //* Flags  * /
+			0,                      //* Number  of arguments * /
+			p_end); 
+
+		AppendFunction(
+			exocortexGetLicenseStatus,	//* function ID * /
+			_M("getLicenseStatus"),           //* internal name * /
+			0,                      //* function name string resource name * / 
+			TYPE_INT,               //* Return type * /
+			0,                      //* Flags  * /
+			0,                      //* Number  of arguments * /
+			p_end); 
   }
 
 	static int ExocortexAlembicImport(
@@ -229,12 +249,18 @@ public:
      	
 	static int ExocortexGetBinVersion();
 
+	static int ExocortexMemoryDiagnostics();
+
+	static int ExocortexGetLicenseStatus();
+
 	BEGIN_FUNCTION_MAP
 		FN_6(exocortexAlembicImport, TYPE_INT, ExocortexAlembicImport, TYPE_FILENAME, TYPE_BOOL, TYPE_BOOL, TYPE_BOOL, TYPE_BOOL, TYPE_INT)
 		FN_9(exocortexAlembicImportMesh, TYPE_MESH, ExocortexAlembicImportMesh, TYPE_MESH, TYPE_FILENAME, TYPE_STRING, TYPE_FLOAT, TYPE_BOOL, TYPE_BOOL, TYPE_BOOL, TYPE_BOOL, TYPE_BOOL)
 		FN_13(exocortexAlembicExport, TYPE_INT, ExocortexAlembicExport, TYPE_FILENAME, TYPE_INT, TYPE_INT, TYPE_INT, TYPE_INT, TYPE_INT, TYPE_BOOL, TYPE_BOOL, TYPE_BOOL, TYPE_BOOL, TYPE_BOOL, TYPE_BOOL, TYPE_BOOL)
         FN_0(exocortexAlembicInit, TYPE_INT, ExocortexAlembicInit);
 		FN_0(exocortexGetBinVersion, TYPE_INT, ExocortexGetBinVersion)
+		FN_0(exocortexMemoryDiagnostics, TYPE_INT, ExocortexMemoryDiagnostics)
+		FN_0(exocortexGetLicenseStatus, TYPE_INT, ExocortexGetLicenseStatus)
 	END_FUNCTION_MAP
 };
 
@@ -310,6 +336,24 @@ int ExocortexAlembicStaticInterface::ExocortexGetBinVersion()
 	return PLUGIN_MAJOR_VERSION * 1000 + PLUGIN_MINOR_VERSION;
 }
 
+int ExocortexAlembicStaticInterface::ExocortexMemoryDiagnostics()
+{
+	Exocortex::essLogWarning( "Exocortex Memory Diagnostics -----------------------------------------------------" );
+	Exocortex::essLogActiveAllocations();
+	return 0;
+}
+
+int ExocortexAlembicStaticInterface::ExocortexGetLicenseStatus()
+{
+	if( HasAlembicWriterLicense() ) {
+		return 1;
+	}
+	if( HasAlembicReaderLicense() ) {
+		return 2;
+	}
+	return 0;
+}
+
 int ExocortexAlembicStaticInterface_ExocortexAlembicImport( CONST_2013 MCHAR* strPath, BOOL bImportNormals, BOOL bImportUVs, BOOL bImportMaterialIds, BOOL bAttachToExisting, int iVisOption);
 
 int ExocortexAlembicStaticInterface::ExocortexAlembicImport( CONST_2013 MCHAR* strPath, BOOL bImportNormals, BOOL bImportUVs, BOOL bImportMaterialIds, BOOL bAttachToExisting, int iVisOption)
@@ -326,12 +370,6 @@ int ExocortexAlembicStaticInterface::ExocortexAlembicImport( CONST_2013 MCHAR* s
 int ExocortexAlembicStaticInterface_ExocortexAlembicImport( CONST_2013 MCHAR* strPath, BOOL bImportNormals, BOOL bImportUVs, BOOL bImportMaterialIds, BOOL bAttachToExisting, int iVisOption)
 {
 	try {
-
-		//TestMasterUnit();
-		if( ! HasFullLicense() ) {
-			ESS_LOG_ERROR( "No valid license found for Exocortex Alembic." );
-			return alembic_failure;
-		}
 
 		ESS_LOG_INFO( "ExocortexAlembicImport( strPath=" << strPath <<
 			", bImportNormals=" << bImportNormals << ", bImportUVs=" << bImportUVs <<
@@ -477,11 +515,6 @@ Mesh* ExocortexAlembicStaticInterface::ExocortexAlembicImportMesh(Mesh* pMesh, C
 Mesh* ExocortexAlembicStaticInterface_ExocortexAlembicImportMesh(Mesh* pMesh, CONST_2013 MCHAR* strPath, CONST_2013 MCHAR* strIdentifier, float time, BOOL bImportFaceList, BOOL bImportVertices, BOOL bImportNormals, BOOL bImportUVs, BOOL bImportMaterialIds )
 {
 	ESS_CPP_EXCEPTION_REPORTING_START
-		if( ! HasFullLicense() ) {
-			ESS_LOG_ERROR( "No valid license found for Exocortex Alembic." );
-			return pMesh;
-		}
-
 		ESS_LOG_INFO( "ExocortexAlembicImportMesh( strPath=" << strPath <<
 			", strIdentifier=" << strIdentifier << 
 			", bImportFaceList=" << bImportFaceList << ", bImportVertices=" << bImportVertices <<
@@ -571,11 +604,6 @@ int ExocortexAlembicStaticInterface_ExocortexAlembicExport(CONST_2013 MCHAR * st
 															BOOL bExportSelected, BOOL bFlattenHierarchy, BOOL bExportAsSingleMesh)
 {
 	try {
-
-		if( ! HasFullLicense() ) {
-			ESS_LOG_ERROR( "No valid license found for Exocortex Alembic." );
-			return alembic_failure;
-		}
 
 		ESS_LOG_INFO( "ExocortexAlembicExport( strPath=" << strPath <<
 			", iFrameIn=" << iFrameIn << ", iFrameOut=" << iFrameOut <<
