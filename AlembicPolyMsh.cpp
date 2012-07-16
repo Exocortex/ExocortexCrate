@@ -333,7 +333,7 @@ bool AlembicPolyMesh::Save(double time, bool bLastFrame)
 	if((bool)GetCurrentJob()->GetOption("exportUVs") && (bFirstFrame || dynamicTopology))
 	{
 
-		if(mNumSamples == 0){
+		if(mNumSamples == 0 && finalPolyMesh.mUvSetNames.size() > 0){
 			Alembic::Abc::OStringArrayProperty uvSetNamesProperty = Alembic::Abc::OStringArrayProperty(
 				mMeshSchema, ".uvSetNames", mMeshSchema.getMetaData(), mJob->GetAnimatedTs() );
 			Alembic::Abc::StringArraySample uvSetNamesSample(&finalPolyMesh.mUvSetNames.front(), finalPolyMesh.mUvSetNames.size());

@@ -133,6 +133,7 @@ bool getParticleSystemMesh(TimeValue ticks, Object* obj, INode* node, Intermedia
 	IParticleObjectExt* particlesExt = GetParticleObjectExtInterface(obj);
 	particlesExt->UpdateParticles(node, ticks);
 
+	GET_MAX_INTERFACE()->SetTime(ticks);
 	static NullView nullView;
 
 	//static Mesh nullMesh;
@@ -171,6 +172,10 @@ bool getParticleSystemMesh(TimeValue ticks, Object* obj, INode* node, Intermedia
 		meshTM.IdentityMatrix();
 		Interval meshValid;
 		meshValid.SetInstant(ticks);
+
+		//PFOperatorRender.cpp Notes:
+		// The pSystem (obj) argument doesn't seem to be used
+		// 
 
 		particleRender->GetMultipleRenderMeshTM(pCont, ticks, obj, pNode, nullView, meshId, meshTM, meshValid);
 
