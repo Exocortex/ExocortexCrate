@@ -13,7 +13,6 @@
 #include <ParticleFlow/IParticleChannelLifespan.h>
 #include <ParticleFlow/IPFRender.h>
 #include <ParticleFlow/IChannelContainer.h>
-#include <ParticleFlow/IParticleContainer.h>
 #include <map>
 #include <vector>
 #include "AlembicParticles.h"
@@ -50,6 +49,84 @@ IPFRender* getIPFRender(Object* obj, TimeValue ticks)
 
 	return NULL;
 }
+
+enum splitTypeT
+{	kRender_splitType_single,
+	kRender_splitType_multiple,
+	kRender_splitType_particle,
+	kRender_splitType_num=3 
+};
+
+splitTypeT setPerParticleMeshRenderSetting(Object* obj, TimeValue ticks, splitTypeT nNewValue)
+{
+	if(nNewValue == kRender_splitType_num){
+		return kRender_splitType_num;
+	}
+
+	splitTypeT nOldValue = kRender_splitType_num;
+
+	IPFActionList* particleActionList = GetPFActionListInterface(obj);
+	if(!particleActionList){
+		return nOldValue;
+	}
+
+	PFSimpleOperator *pSimpleOperator = NULL;
+
+	int numActions = particleActionList->NumActions();
+	for (int p = particleActionList->NumActions()-1; p >= 0; p -= 1)
+	{
+		INode *pActionNode = particleActionList->GetAction(p);
+		Object *pActionObj = (pActionNode != NULL ? pActionNode->EvalWorldState(ticks).obj : NULL);
+
+		if (pActionObj == NULL){
+			continue;
+		}
+		MSTR name;
+		pActionObj->GetClassName(name);
+
+		if (pActionObj->ClassID() == PFOperatorRender_Class_ID){
+			pSimpleOperator = static_cast<PFSimpleOperator*>(pActionObj);
+			break;
+		}
+	}
+
+	if(pSimpleOperator){
+		
+		//int nNumBlocks = pSimpleOperator->NumParamBlocks();
+		//for(int j=0; j<nNumBlocks; j++){
+		//	IParamBlock2 *pblock = pSimpleOperator->GetParamBlockByID(j);
+		//	if(pblock){
+		//		int nNumParams = pblock->NumParams();
+		//		for(int i=0; i<nNumParams; i++){
+
+		//			ParamID id = pblock->IndextoID(i);
+		//			MSTR name = pblock->GetLocalName(id, 0);
+		//			MSTR value = pblock->GetStr(id, 0);
+		//			
+		//			int n=0;
+		//			n++;
+		//		}
+		//	}
+		//}
+
+		IParamBlock2 *pblock = pSimpleOperator->GetParamBlockByID(0);
+		if(pblock){
+			ParamID id = pblock->IndextoID(2);
+			MSTR name = pblock->GetLocalName(id, 0);
+			int nSplitType = pblock->GetInt(id);
+			nOldValue = (splitTypeT)nSplitType;
+
+			TimeValue zero(0);
+			pblock->SetValue(id, zero, (int)nNewValue);
+		}
+
+	}
+
+	return nOldValue;
+
+}
+
+
 
 typedef std::map<INode*, int> groupParticleCountT;
 
@@ -125,6 +202,8 @@ bool getParticleSystemMesh(TimeValue ticks, Object* obj, INode* node, Intermedia
 	}
 	//Export as particle flow if not simple particle
 
+	splitTypeT oldSplitType = setPerParticleMeshRenderSetting(obj, ticks, kRender_splitType_particle);
+
     Matrix3 nodeWorldTM = node->GetObjTMAfterWSM(ticks);
     Alembic::Abc::M44d nodeWorldTrans;
     ConvertMaxMatrixToAlembicMatrix(nodeWorldTM, nodeWorldTrans);
@@ -165,6 +244,7 @@ bool getParticleSystemMesh(TimeValue ticks, Object* obj, INode* node, Intermedia
 		IPFRender* particleRender = getIPFRender(particleGroupObj, ticks);
 		if(!particleRender){
 			ESS_LOG_INFO("Error. Failed to obtain IPFRender interface.");
+			setPerParticleMeshRenderSetting(obj, ticks, oldSplitType);
 			return false;
 		}
 
@@ -184,6 +264,7 @@ bool getParticleSystemMesh(TimeValue ticks, Object* obj, INode* node, Intermedia
 
 		if(!pMesh || (pMesh && pMesh->numVerts == 0) ){
 			ESS_LOG_INFO("Error. Null render mesh. Tick: "<<ticks<<" pid: "<<i);
+			//setPerParticleMeshRenderSetting(obj, ticks, oldSplitType);
 			//return false;
 		}
 
@@ -253,6 +334,7 @@ bool getParticleSystemMesh(TimeValue ticks, Object* obj, INode* node, Intermedia
 		}
 	}
 
+	setPerParticleMeshRenderSetting(obj, ticks, oldSplitType);
 	return true;
 }
 
