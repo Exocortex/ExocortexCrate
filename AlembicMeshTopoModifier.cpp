@@ -71,7 +71,7 @@ static ParamBlockDesc2 AlembicMeshTopoModifierParams(
 //--- Modifier methods -------------------------------
 
 AlembicMeshTopoModifier::AlembicMeshTopoModifier() 
-{
+{ 
     pblock = NULL;
 	GetAlembicMeshTopoModifierClassDesc()->MakeAutoParamBlocks(this);
 }
@@ -93,7 +93,7 @@ RefTargetHandle AlembicMeshTopoModifier::Clone(RemapDir& remap)
 
 void AlembicMeshTopoModifier::EnumAuxFiles(AssetEnumCallback& nameEnum, DWORD flags)  {
 	if ((flags&FILE_ENUM_CHECK_AWORK1)&&TestAFlag(A_WORK1)) return; // LAM - 4/11/03
-
+ 
 	if (!(flags&FILE_ENUM_INACTIVE)) return; // not needed by renderer
 
 	if(flags & FILE_ENUM_ACCESSOR_INTERFACE)	{

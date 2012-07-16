@@ -73,11 +73,34 @@ public:
 
 		sampleInfoAlpha = (float)sampleInfo.alpha; 
 
+		
+		/*Alembic::Abc::V3fArraySamplePtr inTangentSampler; 
+		if ( obj.getSchema().getPropertyHeader( ".inTangent" ) != NULL )
+			 IV3fArrayProperty prop = Alembic::Abc::IV3fArrayProperty( obj.getSchema(), ".inTangent" );
+			 if(prop.valid()) {
+				 if(prop.getNumSamples() > 0)
+				 {
+					 inTangentSampler = prop.getValue(sampleInfo.floorIndex);
+					 if( inTangentSampler.get()->size() == posSampler.curvePos1.get()->size() );
+				}
+			 }
+		}
+		Alembic::Abc::V3fArraySamplePtr outTangentSampler; 
+		if ( obj.getSchema().getPropertyHeader( ".outTangent" ) != NULL )
+			 IV3fArrayProperty prop = Alembic::Abc::IV3fArrayProperty( obj.getSchema(), ".outTangent" );
+			 if(prop.valid()) {
+				 if(prop.getNumSamples() > 0)
+				 {
+					 outTangentSampler = prop.getValue(sampleInfo.floorIndex);
+				}
+			 }
+		}*/
+
 		if(isDynamicTopo){ //interpolate based on velocity
 			curveVel1 = curveSample.getVelocities();
 			interp = VELOCITY;
 
-			timeAlpha = (double)(obj.getSchema().getTimeSampling()->getSampleTime(sampleInfo.ceilIndex) - 
+			timeAlpha = (float)(obj.getSchema().getTimeSampling()->getSampleTime(sampleInfo.ceilIndex) - 
  					obj.getSchema().getTimeSampling()->getSampleTime(sampleInfo.floorIndex)) * sampleInfoAlpha;    
 		}
 		else{
@@ -131,7 +154,7 @@ void AlembicImport_FillInShape_Internal(alembic_fillshape_options &options)
    {
        options.validInterval = Interval(options.dTicks, options.dTicks);
    }
-   else
+   /*else
    {
        double startSeconds = obj.getSchema().getTimeSampling()->getSampleTime(sampleInfo.floorIndex);
        double endSeconds = obj.getSchema().getTimeSampling()->getSampleTime(sampleInfo.ceilIndex);
@@ -145,7 +168,7 @@ void AlembicImport_FillInShape_Internal(alembic_fillshape_options &options)
        {
             options.validInterval.Set(start, end);
        }
-   }
+   }*/
 
    Alembic::AbcGeom::ICurvesSchema::Sample curveSample;
    obj.getSchema().get(curveSample,sampleInfo.floorIndex);
@@ -154,18 +177,24 @@ void AlembicImport_FillInShape_Internal(alembic_fillshape_options &options)
    if(curveSample.getType() != Alembic::AbcGeom::ALEMBIC_VERSION_NS::kLinear &&
       curveSample.getType() != Alembic::AbcGeom::ALEMBIC_VERSION_NS::kCubic)
    {
-      // Application().LogMessage(L"[ExocortexAlembic] Skipping curve '"+identifier+L"', invalid curve type.",siWarningMsg);
+	   ESS_LOG_ERROR( "Skipping curve '" << options.pIObj->getFullName() << "', invalid curve type." );
       return;
    }
 
-   if (curveSample.getType() == Alembic::AbcGeom::ALEMBIC_VERSION_NS::kCubic && !options.pBezierShape)
-   {
-       return;
-   }
+   int curveType = KTYPE_BEZIER;
+   int cornerType = KTYPE_BEZIER_CORNER;
+   int lineType = LTYPE_CURVE;
 
-   if (curveSample.getType() == Alembic::AbcGeom::ALEMBIC_VERSION_NS::kLinear && !options.pPolyShape)
+  /* if (curveSample.getType() == Alembic::AbcGeom::ALEMBIC_VERSION_NS::kCubic && !options.pBezierShape)
    {
        return;
+   }*/
+
+   if (curveSample.getType() == Alembic::AbcGeom::ALEMBIC_VERSION_NS::kLinear )
+   {
+	   curveType = KTYPE_CORNER;
+	   cornerType = KTYPE_CORNER;
+       lineType = LTYPE_LINE;
    }
 
    Alembic::Abc::Int32ArraySamplePtr curveNbVertices = curveSample.getCurvesNumVertices();
@@ -189,8 +218,14 @@ void AlembicImport_FillInShape_Internal(alembic_fillshape_options &options)
                if (curveSample.getWrap() == Alembic::AbcGeom::ALEMBIC_VERSION_NS::kPeriodic)
                    pSpline->SetClosed();
 			
-               SplineKnot knot;
-               int nNumKnots = (curveNbVertices->get()[i]+3-1)/3;
+               SplineKnot knot( curveType, lineType, Point3(0,0,0), Point3(0,0,0), Point3(0,0,0) );
+			   int nNumKnots = curveNbVertices->get()[i];
+			   /*if (curveSample.getType() == Alembic::AbcGeom::ALEMBIC_VERSION_NS::kCubic ) {
+					assert( ( nNumKnots % 3 ) == 0 );
+				   nNumKnots /= 3;
+			   }			   
+			   */
+
                for (int j = 0; j < nNumKnots; j += 1)
                    pSpline->AddKnot(knot);
            }
@@ -218,41 +253,82 @@ void AlembicImport_FillInShape_Internal(alembic_fillshape_options &options)
 
            for (int i = 0; i < options.pBezierShape->SplineCount(); i +=1)
            {
+			   int startVertex = nVertexOffset;
+			   int vertexCount = curveNbVertices->get()[i];
+
+			   nVertexOffset += vertexCount;
+
 			   Spline3D *pSpline = options.pBezierShape->GetSpline(i);
                int knots = pSpline->KnotCount();
-               int kType;
-               for(int ix = 0; ix < knots; ++ix) 
-               {
-                   if (ix == 0 && !pSpline->Closed())
-                   {
-                       p = ConvertAlembicPointToMaxPoint(posSampler[nVertexOffset]); 
-                       nVertexOffset += 1;
-                       out = ConvertAlembicPointToMaxPoint(posSampler[nVertexOffset]); 
-                       nVertexOffset += 1;
-                       in = p;
-                       kType = KTYPE_BEZIER_CORNER;
-                   }
-                   else if ( ix == knots-1 && !pSpline->Closed())
-                   {
-                       in = ConvertAlembicPointToMaxPoint(posSampler[nVertexOffset]); 
-                       nVertexOffset += 1;
-                       p = ConvertAlembicPointToMaxPoint(posSampler[nVertexOffset]); 
-                       nVertexOffset += 1;
-                       out = p;
-                       kType = KTYPE_BEZIER_CORNER;
-                   }
-                   else
-                   {
-                       in = ConvertAlembicPointToMaxPoint(posSampler[nVertexOffset]); 
-                       nVertexOffset += 1;
-                       p = ConvertAlembicPointToMaxPoint(posSampler[nVertexOffset]); 
-                       nVertexOffset += 1;
-                       out = ConvertAlembicPointToMaxPoint(posSampler[nVertexOffset]); 
-                       nVertexOffset += 1;
-                       kType = KTYPE_BEZIER;
-                   }
+			  /* if (curveSample.getType() == Alembic::AbcGeom::ALEMBIC_VERSION_NS::kCubic ) {
+				   assert( 3*knots == vertexCount );
+			   }
+			   else {
+				   assert( knots == vertexCount );
+			   }*/
 
-                   pSpline->SetKnot(ix, SplineKnot(kType, LTYPE_CURVE, p, in, out)); 
+               int kType = curveType;
+               for(int j = 0; j < knots; j ++ ) 
+               { 
+
+                   Point3 in, p, out;
+
+				  /*if (curveSample.getType() == Alembic::AbcGeom::ALEMBIC_VERSION_NS::kCubic ) {
+					   /*int k = j * 3;
+					   in = ConvertAlembicPointToMaxPoint(posSampler[startVertex + k ]); 
+					   p = ConvertAlembicPointToMaxPoint(posSampler[startVertex + k + 1 ]); 
+					   out = ConvertAlembicPointToMaxPoint(posSampler[startVertex + k + 2 ]); 					
+					   * /
+
+					   in = ConvertAlembicPointToMaxPoint(posSampler[startVertex + max( j - 1, 0 )]); 
+					   p = ConvertAlembicPointToMaxPoint(posSampler[startVertex + j]); 
+					   out = ConvertAlembicPointToMaxPoint(posSampler[startVertex + min( j + 1, knots - 1 )]);                
+				   }
+				   else {*/
+					   in = ConvertAlembicPointToMaxPoint(posSampler[startVertex + max( j - 1, 0 )]); 
+					   p = ConvertAlembicPointToMaxPoint(posSampler[startVertex + j]); 
+					   out = ConvertAlembicPointToMaxPoint(posSampler[startVertex + min( j + 1, knots - 1 )]);					
+               
+					   if( pSpline->Closed() ) {
+						   if (j == 0 )
+						   {
+							   in = ConvertAlembicPointToMaxPoint(posSampler[startVertex + knots - 1]);
+						   }
+						   else if ( j == knots-1 )
+						   {
+							   out = ConvertAlembicPointToMaxPoint(posSampler[startVertex + 0]);
+						   }                   
+					   }
+					   else {
+						   if (j == 0 )
+						   {
+							   in = p;
+						   }
+						   else if ( j == knots-1 )
+						   {
+							   out = p;
+						   }
+					   }
+				  // }
+
+					   if( curveType == KTYPE_BEZIER ) {
+						   Point3 inNew = ( in - out ) * 0.5f + p;
+						   Point3 outNew = ( out - in ) * 0.5f + p;
+						   in = inNew;
+						   out = outNew;
+					   }
+
+					if( ! pSpline->Closed() ) {
+					   if (j == 0 )
+					   {
+						   kType = cornerType;
+					   }
+					   else if ( j == knots-1 )
+					   {
+						   kType = cornerType;
+					   }                   
+					}
+					pSpline->SetKnot(j, SplineKnot(kType, lineType, p, in, out)); 
                }
 
 			  pSpline->ComputeBezPoints();
@@ -355,7 +431,7 @@ int AlembicImport_Shape(const std::string &file, const std::string &identifier, 
     {
         ALEMBIC_SAFE_DELETE(pAlembicSpline);
         ALEMBIC_SAFE_DELETE(pAlembicShape);
-		return alembic_failure;
+		return alembic_failure; 
     }
 
     // Add the new inode to our current scene list
@@ -394,16 +470,16 @@ int AlembicImport_Shape(const std::string &path, Alembic::AbcGeom::IObject& iObj
     objCurves.getSchema().get(curveSample, 0);
 
     Object *newObject = NULL;
-    if (curveSample.getType() == Alembic::AbcGeom::ALEMBIC_VERSION_NS::kCubic)
+    //if (curveSample.getType() == Alembic::AbcGeom::ALEMBIC_VERSION_NS::kCubic)
     {
 		EmptySplineObject *pEmptySplineObject = static_cast<EmptySplineObject*>(GET_MAX_INTERFACE()->CreateInstance(SHAPE_CLASS_ID, EMPTY_SPLINE_OBJECT_CLASSID));
 	    newObject = pEmptySplineObject;
     }
-    else
+    /*else
     {
 		EmptyPolyLineObject *pEmptyPolyLineObject = static_cast<EmptyPolyLineObject*>(GET_MAX_INTERFACE()->CreateInstance(SHAPE_CLASS_ID, EMPTY_POLYLINE_OBJECT_CLASSID));
 	    newObject = pEmptyPolyLineObject;
-    }
+    }*/
 
     if (newObject == NULL)
     {

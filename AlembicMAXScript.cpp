@@ -295,7 +295,9 @@ int ExocortexAlembicStaticInterface::ExocortexGetBinVersion()
 int ExocortexAlembicStaticInterface::ExocortexMemoryDiagnostics()
 {
 	Exocortex::essLogWarning( "Exocortex Memory Diagnostics -----------------------------------------------------" );
-	//Exocortex::essLogActiveAllocations();
+#ifdef _DEBUG
+	Exocortex::essLogActiveAllocations();
+#endif
 	return 0;
 }
 

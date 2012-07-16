@@ -37,6 +37,8 @@ AlembicCurves::AlembicCurves(const SceneEntry &in_Ref, AlembicWriteJob * in_Job)
    mCurvesSchema = curves.getSchema();
 
    // create all properties
+   mInTangentProperty = OV3fArrayProperty(mCurvesSchema, ".inTangent", mCurvesSchema.getMetaData(), GetCurrentJob()->GetAnimatedTs() );
+   mOutTangentProperty = OV3fArrayProperty(mCurvesSchema, ".outTangent", mCurvesSchema.getMetaData(), GetCurrentJob()->GetAnimatedTs() );
    mRadiusProperty = OFloatArrayProperty(mCurvesSchema, ".radius", mCurvesSchema.getMetaData(), GetCurrentJob()->GetAnimatedTs() );
    mColorProperty = OC4fArrayProperty(mCurvesSchema, ".color", mCurvesSchema.getMetaData(), GetCurrentJob()->GetAnimatedTs() );
 }
@@ -128,11 +130,12 @@ bool AlembicCurves::Save(double time, bool bLastFrame)
     }
 
     // Get the control points
-    std::vector<Point3> controlPoints;
+    std::vector<Point3> vertices;
+    std::vector<Point3> inTangents;
+	std::vector<Point3> outTangents;
     if (bBezier)
     {
-        mNbVertices.reserve(beziershape.SplineCount());
-        int oldControlPointCount = (int)controlPoints.size();
+        int oldVerticesCount = (int)vertices.size();
         for (int i = 0; i < beziershape.SplineCount(); i += 1)
         {
             Spline3D *pSpline = beziershape.GetSpline(i);
@@ -143,32 +146,18 @@ bool AlembicCurves::Save(double time, bool bLastFrame)
                 Point3 p = pSpline->GetKnotPoint(ix);
                 Point3 out = pSpline->GetOutVec(ix);
 
-                if (ix == 0 && !pSpline->Closed())
-                {
-                    controlPoints.push_back(p);
-                    controlPoints.push_back(out);
-                }
-                else if ( ix == knots-1 && !pSpline->Closed())
-                {
-                    controlPoints.push_back(in);
-                    controlPoints.push_back(p);
-                }
-                else
-                {
-                    controlPoints.push_back(in);
-                    controlPoints.push_back(p);
-                    controlPoints.push_back(out);
-                }
+                vertices.push_back( p );
+				inTangents.push_back( in );
+				outTangents.push_back( out );
             }
 
-            int nNumPointsAdded = (int)controlPoints.size() - oldControlPointCount;
-            mNbVertices.push_back(nNumPointsAdded);
-            oldControlPointCount = (int)controlPoints.size();
+            int nNumVerticesAdded = (int)vertices.size() - oldVerticesCount;
+            mNbVertices.push_back( nNumVerticesAdded );
+            oldVerticesCount = (int)vertices.size();
         }
     }
     else
     {
-        mNbVertices.resize(polyShape.numLines);
         for (int i = 0; i < polyShape.numLines; i += 1)
         {
             PolyLine &refLine = polyShape.lines[i];
@@ -176,28 +165,40 @@ bool AlembicCurves::Save(double time, bool bLastFrame)
             for (int j = 0; j < refLine.numPts; j += 1)
             {
                 Point3 p = refLine.pts[j].p;
-                controlPoints.push_back(p);
+                vertices.push_back(p);
             }
         }
     }
 
-    int vertCount = (int)controlPoints.size();
+    int vertCount = (int)vertices.size();
 
     // prepare the bounding box
     Alembic::Abc::Box3d bbox;
 
     // allocate the points and normals
     std::vector<Alembic::Abc::V3f> posVec(vertCount);
+    std::vector<Alembic::Abc::V3f> posInTangent(inTangents.size());
+    std::vector<Alembic::Abc::V3f> posOutTangent(outTangents.size());
     Matrix3 wm = GetRef().node->GetObjTMAfterWSM(ticks);
+
+	for(int i=0;i<inTangents.size();i++)
+    {
+        posInTangent[i] = ConvertMaxPointToAlembicPoint(inTangents[i] );
+	}
+	for(int i=0;i<outTangents.size();i++)
+    {
+        posOutTangent[i] = ConvertMaxPointToAlembicPoint(outTangents[i] );
+	}
+
     for(int i=0;i<vertCount;i++)
     {
-        posVec[i] = ConvertMaxPointToAlembicPoint(controlPoints[i] );
+        posVec[i] = ConvertMaxPointToAlembicPoint(vertices[i] );
         bbox.extendBy(posVec[i]);
 
         // Set the archive bounding box
         if (mJob)
         {
-            Point3 worldMaxPoint = wm * controlPoints[i];
+            Point3 worldMaxPoint = wm * vertices[i];
             Alembic::Abc::V3f alembicWorldPoint = ConvertMaxPointToAlembicPoint(worldMaxPoint);
             mJob->GetArchiveBBox().extendBy(alembicWorldPoint);
         }
@@ -207,29 +208,33 @@ bool AlembicCurves::Save(double time, bool bLastFrame)
     mCurvesSample.setSelfBounds(bbox);
 	mCurvesSample.setChildBounds(bbox);
 
-    // allocate for the points and normals
-    Alembic::Abc::P3fArraySample posSample(&posVec.front(),posVec.size());
-
+ 
     // if we are the first frame!
     if(mNumSamples == 0)
     {
         Alembic::Abc::Int32ArraySample nbVerticesSample(&mNbVertices.front(),mNbVertices.size());
-        mCurvesSample.setPositions(posSample);
         mCurvesSample.setCurvesNumVertices(nbVerticesSample);
 
         // set the type + wrapping
         mCurvesSample.setType(bBezier ? kCubic : kLinear);
         mCurvesSample.setWrap(pShapeObject->CurveClosed(ticks, 0) ? kPeriodic : kNonPeriodic);
         mCurvesSample.setBasis(kNoBasis);
+    }
+ 
+    // allocate for the points and normals
+    Alembic::Abc::P3fArraySample posSample(&posVec.front(),posVec.size());
+	mCurvesSample.setPositions(posSample);
 
-        // save the sample
-        mCurvesSchema.set(mCurvesSample);
-    }
-    else
-    {
-        mCurvesSample.setPositions(posSample);
-        mCurvesSchema.set(mCurvesSample);
-    }
+	/*if( posInTangent.size() == posVec.size() ) {
+		assert( posInTangent.size() == posOutTangent.size() );
+		Alembic::Abc::V3fArraySample inTangentSample = Alembic::Abc::V3fArraySample(&posInTangent.front(),posInTangent.size());
+		mInTangentProperty.set(inTangentSample);
+
+	    Alembic::Abc::V3fArraySample outTangentSample = Alembic::Abc::V3fArraySample(&posOutTangent.front(),posOutTangent.size());
+	    mOutTangentProperty.set(outTangentSample);
+	}*/
+
+    mCurvesSchema.set(mCurvesSample);
 
    /*else if(prim.GetType().IsEqualNoCase(L"hair"))
    {
