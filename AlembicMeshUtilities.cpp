@@ -483,14 +483,14 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
 
 			   // Set up the specify normals
 			   if( options.pMNMesh->GetSpecifiedNormals() == NULL ) {
-				   ESS_LOG_ERROR( "Allocating new specified normals." );
+				  //ESS_LOG_ERROR( "Allocating new specified normals." );
 					options.pMNMesh->SpecifyNormals();
 			   }
 			   MNNormalSpec *normalSpec = options.pMNMesh->GetSpecifiedNormals();
 			   normalSpec->SetParent( options.pMNMesh );
 			   if( normalSpec->GetNumFaces() != numFaces || normalSpec->GetNumNormals() != (int)normalsToSet.size() ) {
 					//normalSpec->ClearAndFree();
-				   ESS_LOG_ERROR( "Setting new faces and normal counts for specified normals." );
+				  // ESS_LOG_ERROR( "Setting new faces and normal counts for specified normals." );
 				   normalSpec->SetNumFaces(numFaces);
 					normalSpec->SetNumNormals((int)normalsToSet.size());
 				}
@@ -748,7 +748,7 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
    }
  
      if( options.pMNMesh->GetSpecifiedNormals() == NULL ) {
-		ESS_LOG_ERROR( "Allocating new specified normals." );
+		//ESS_LOG_ERROR( "Allocating new specified normals." );
 		options.pMNMesh->SpecifyNormals();
 		options.pMNMesh->GetSpecifiedNormals()->CheckNormals();
 	    options.pMNMesh->checkNormals(TRUE);
