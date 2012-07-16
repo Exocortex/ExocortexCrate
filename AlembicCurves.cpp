@@ -711,7 +711,7 @@ ESS_CALLBACK_START( alembic_crvlist_Update, CRef& )
    if (!isHair)
    {
       if(pos.GetCount() != curvePos->size())
-      return CStatus::OK;
+		 return CStatus::OK;
    }
    else
    {
@@ -1205,9 +1205,9 @@ ESS_CALLBACK_START( alembic_crvlist_topo_Update, CRef& )
    {
       Application().LogMessage(L"[ExocortexAlembic] Skipping curve '"+identifier+L"', invalid curve type.",siWarningMsg);
       return CStatus::Fail;
-   }
+   } 
 
-   // prepare the curves
+   // prepare the curves 
    Alembic::Abc::P3fArraySamplePtr curvePos = curveSample.getPositions();
    Alembic::Abc::Int32ArraySamplePtr curveNbVertices = curveSample.getCurvesNumVertices();
 
@@ -1215,10 +1215,16 @@ ESS_CALLBACK_START( alembic_crvlist_topo_Update, CRef& )
 
    CNurbsCurveDataArray curveDatas;
    size_t offset = 0;
+  
    for(size_t j=0;j<curveNbVertices->size();j++)
    {
       CNurbsCurveData curveData;
       LONG nbVertices = (LONG)curveNbVertices->get()[j];
+	  if( nbVertices == 0 ) {
+		  ESS_WARNING( "Softimage does not support 0 size curves in a curve set, ignoring but this may introduce errors on animation." );
+		  continue;
+	  }
+
       curveData.m_aControlPoints.Resize(nbVertices);
       curveData.m_aKnots.Resize(nbVertices);
       curveData.m_siParameterization = siUniformParameterization;
@@ -1236,23 +1242,24 @@ ESS_CALLBACK_START( alembic_crvlist_topo_Update, CRef& )
       }
 
       // based on curve type, we do this for linear or closed cubic curves
-      if(curveSample.getType() == Alembic::AbcGeom::ALEMBIC_VERSION_NS::kLinear || curveData.m_bClosed)
-      {
+      if(curveSample.getType() == Alembic::AbcGeom::ALEMBIC_VERSION_NS::kLinear || curveData.m_bClosed )
+      { 
          curveData.m_aKnots.Resize(nbVertices);
-         for(LONG k=0;k<nbVertices;k++)
+		 for(LONG k=0;k<nbVertices;k++) {
             curveData.m_aKnots[k] = k;
+		  }
          if(curveData.m_bClosed)
             curveData.m_aKnots.Add(nbVertices);
       }
       else // cubic open
       {
-         curveData.m_aKnots.Resize(nbVertices+2);
-         curveData.m_aKnots[0] = 0;
-         curveData.m_aKnots[1] = 0;
-         for(LONG k=0;k<nbVertices-2;k++)
-            curveData.m_aKnots[k+2] = k;
-         curveData.m_aKnots[nbVertices] = nbVertices-3;
-         curveData.m_aKnots[nbVertices+1] = nbVertices-3;
+		 curveData.m_aKnots.Resize(nbVertices+2);
+		 curveData.m_aKnots[0] = 0;
+		 curveData.m_aKnots[1] = 0;
+		 for(LONG k=0;k<nbVertices;k++)
+			curveData.m_aKnots[2+k] = k;
+		 curveData.m_aKnots[nbVertices+2] = nbVertices-1;
+		 curveData.m_aKnots[nbVertices+1] = nbVertices-1;
       }
 
       curveDatas.Add(curveData);
