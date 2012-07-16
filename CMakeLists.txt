@@ -28,6 +28,7 @@ endif()
 
 LINK_LIBRARIES( ${ALEMBIC_CORE_LIBS}
 			  ${ALEMBIC_HDF5_LIBS}
+			  ${ALEMBIC_ZLIB_LIBS}
 			  ${Python_LIBS}
 			  ${Boost_LIBRARIES}
 			  ${ALEMBIC_ILMBASE_LIBS}
