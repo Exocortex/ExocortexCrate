@@ -1221,7 +1221,7 @@ ESS_CALLBACK_START( alembic_crvlist_topo_Update, CRef& )
       CNurbsCurveData curveData;
       LONG nbVertices = (LONG)curveNbVertices->get()[j];
 	  if( nbVertices == 0 ) {
-		  ESS_WARNING( "Softimage does not support 0 size curves in a curve set, ignoring but this may introduce errors on animation." );
+		  Application().LogMessage(L"[ExocortexAlembic] Softimage does not support 0 size curves in a curve set, ignoring but this may introduce errors on animation." );
 		  continue;
 	  }
 
