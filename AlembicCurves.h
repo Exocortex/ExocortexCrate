@@ -16,6 +16,9 @@ private:
    Alembic::Abc::ALEMBIC_VERSION_NS::OV3fArrayProperty mVelocityProperty;
    Alembic::Abc::ALEMBIC_VERSION_NS::OFloatArrayProperty mRadiusProperty;
    Alembic::Abc::ALEMBIC_VERSION_NS::OC4fArrayProperty mColorProperty;
+   Alembic::Abc::ALEMBIC_VERSION_NS::OV3fArrayProperty mInTangentProperty;
+   Alembic::Abc::ALEMBIC_VERSION_NS::OV3fArrayProperty mOutTangentProperty;
+
    std::vector<float> mRadiusVec;
    std::vector<Alembic::Abc::V2f> mUvVec;
    std::vector<Alembic::Abc::C4f> mColorVec;
