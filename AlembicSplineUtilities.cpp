@@ -154,7 +154,7 @@ void AlembicImport_FillInShape_Internal(alembic_fillshape_options &options)
    {
        options.validInterval = Interval(options.dTicks, options.dTicks);
    }
-   else
+   /*else
    {
        double startSeconds = obj.getSchema().getTimeSampling()->getSampleTime(sampleInfo.floorIndex);
        double endSeconds = obj.getSchema().getTimeSampling()->getSampleTime(sampleInfo.ceilIndex);
@@ -168,7 +168,7 @@ void AlembicImport_FillInShape_Internal(alembic_fillshape_options &options)
        {
             options.validInterval.Set(start, end);
        }
-   }
+   }*/
 
    Alembic::AbcGeom::ICurvesSchema::Sample curveSample;
    obj.getSchema().get(curveSample,sampleInfo.floorIndex);
@@ -287,7 +287,7 @@ void AlembicImport_FillInShape_Internal(alembic_fillshape_options &options)
 				   else {*/
 					   in = ConvertAlembicPointToMaxPoint(posSampler[startVertex + max( j - 1, 0 )]); 
 					   p = ConvertAlembicPointToMaxPoint(posSampler[startVertex + j]); 
-					   out = ConvertAlembicPointToMaxPoint(posSampler[startVertex + min( j + 1, knots - 1 )]); 
+					   out = ConvertAlembicPointToMaxPoint(posSampler[startVertex + min( j + 1, knots - 1 )]);					
                
 					   if( pSpline->Closed() ) {
 						   if (j == 0 )
@@ -307,9 +307,16 @@ void AlembicImport_FillInShape_Internal(alembic_fillshape_options &options)
 						   else if ( j == knots-1 )
 						   {
 							   out = p;
-						   }                   
+						   }
 					   }
 				  // }
+
+					   if( curveType == KTYPE_BEZIER ) {
+						   Point3 inNew = ( in - out ) * 0.5f + p;
+						   Point3 outNew = ( out - in ) * 0.5f + p;
+						   in = inNew;
+						   out = outNew;
+					   }
 
 					if( ! pSpline->Closed() ) {
 					   if (j == 0 )
