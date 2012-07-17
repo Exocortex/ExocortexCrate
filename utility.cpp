@@ -580,3 +580,31 @@ Modifier* FindModifier(INode* node, char* name)
 
 	return pRetMod;
 }
+
+void printAnimatables(Animatable* pObj){
+
+	ESS_LOG_INFO("Printing Animatables: ");
+	int num0 = pObj->NumSubs();
+	for(int i=0; i<num0; i++){
+		Animatable* an0 = pObj->SubAnim(i);
+		MSTR n0 = pObj->SubAnimName(i);
+		ESS_LOG_INFO( "("<<i<<"): "<<n0 );
+
+		int num1 = an0->NumSubs();
+		for(int j=0; j<num1; j++){
+			Animatable* an1 = an0->SubAnim(j);
+			MSTR n1 = an0->SubAnimName(j);
+			ESS_LOG_INFO( "("<<i<<", "<<j<<"): "<<n1 );
+
+			int num2 = an1->NumSubs();
+			for(int k=0; k<num2; k++){
+				Animatable* an2 = an1->SubAnim(k);
+				MSTR n2 = an1->SubAnimName(k);
+				ESS_LOG_INFO( "("<<i<<", "<<j<<", "<<k<<"): "<<n2 );
+			}
+		}
+	}
+	ESS_LOG_INFO("DONE.");
+}
+
+
