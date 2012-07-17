@@ -52,6 +52,7 @@ bool AlembicCamera::Save(double time, bool bLastFrame)
 			ESS_LOG_INFO( "bForever has changed" );
 		}
 	}
+	bForever = false;
 
 	bool bFlatten = GetCurrentJob()->GetOption("flattenHierarchy");
 
@@ -116,6 +117,18 @@ bool AlembicCamera::Save(double time, bool bLastFrame)
 	aperatureWidth/=10.0f; //convert to centimeters
 
 
+	IMultiPassCameraEffect* pCameraEffect = cam->GetIMultiPassCameraEffect();
+
+	Interval interval = FOREVER;
+	
+	BOOL bUseTargetDistance = FALSE;
+	const int TARGET_DISTANCE = 0;
+	pCameraEffect->GetParamBlockByID(0)->GetValue( TARGET_DISTANCE, ticks, bUseTargetDistance, interval );
+	float fFocalDepth = 0.0f;
+	const int FOCAL_DEPTH = 1;
+	pCameraEffect->GetParamBlockByID(0)->GetValue( FOCAL_DEPTH, ticks, fFocalDepth, interval );
+
+
     // store the camera data    
     mCameraSample.setNearClippingPlane(cs.hither);
     mCameraSample.setFarClippingPlane(cs.yon);
@@ -123,7 +136,13 @@ bool AlembicCamera::Save(double time, bool bLastFrame)
     mCameraSample.setFocalLength(focalLength);
     mCameraSample.setHorizontalAperture(aperatureWidth);
     mCameraSample.setVerticalAperture(aperatureWidth / ratio);
-	mCameraSample.setFocusDistance(tDist);
+	if(bUseTargetDistance){
+		mCameraSample.setFocusDistance(tDist);
+	}
+	else{
+		mCameraSample.setFocusDistance(fFocalDepth);
+	}
+	
 
     // save the samples
     mCameraSchema.set(mCameraSample);

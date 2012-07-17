@@ -132,6 +132,33 @@ bool assignControllerToLevel1SubAnim(Animatable* controller, Animatable* pObj, i
 	return true;
 }
 
+bool assignControllerToLevel2SubAnim(Animatable* controller, Animatable* pObj, int i, int j, int k)
+{
+
+	if( i >= pObj->NumSubs() ){
+		ESS_LOG_WARNING("Level 0 NumAnimSubs exceeded. Controller not assigned.");
+		return false;
+	}
+
+	Animatable* an = pObj->SubAnim(i);
+
+	if( j >= an->NumSubs() ){
+		ESS_LOG_WARNING("Level 1 NumAnimSubs exceeded. Controller not assigned.");
+		return false;
+	}
+
+	an = an->SubAnim(j);
+
+	if( k >= an->NumSubs() ){
+		ESS_LOG_WARNING("Level 2 NumAnimSubs exceeded. Controller not assigned.");
+		return false;
+	}
+
+	an->AssignController(controller, k);
+
+	return true;
+}
+
 int AlembicImport_Camera(const std::string &path, Alembic::AbcGeom::IObject& iObj, alembic_importoptions &options, INode** pMaxNode)
 {
 	const std::string &identifier = iObj.getFullName();
@@ -170,13 +197,25 @@ int AlembicImport_Camera(const std::string &path, Alembic::AbcGeom::IObject& iOb
     }
 	*pMaxNode = pNode;
 
+	//printAnimatables(pCameraObj);
+
+	IMultiPassCameraEffect* pCameraEffect = pCameraObj->GetIMultiPassCameraEffect();
+
+	TimeValue zero(0);
+	Interval interval = FOREVER;
+	
+	const int TARGET_DISTANCE = 0;
+	pCameraEffect->GetParamBlockByID(0)->SetValue( TARGET_DISTANCE, zero, FALSE );
 
 	GET_MAX_INTERFACE()->SelectNode( pNode );
 	if(assignControllerToLevel1SubAnim(createFloatController(path, identifier, std::string("horizontalFOV")), pCameraObj, 0, 0) && !isConstant){
 		AlembicImport_ConnectTimeControl( "$.FOV.controller.time", options );
 	}
-	if(assignControllerToLevel1SubAnim(createFloatController(path, identifier, std::string("FocusDistance")), pCameraObj, 0, 1) && !isConstant){
-		AlembicImport_ConnectTimeControl( "$.targetDistance.controller.time", options );
+	//if(assignControllerToLevel1SubAnim(createFloatController(path, identifier, std::string("FocusDistance")), pCameraObj, 0, 1) && !isConstant){
+	//	AlembicImport_ConnectTimeControl( "$.targetDistance.controller.time", options );
+	//}	
+	if(assignControllerToLevel2SubAnim(createFloatController(path, identifier, std::string("FocusDistance")), pCameraObj, 1, 0, 1) && !isConstant){
+		AlembicImport_ConnectTimeControl( "$.MultiPass_Effect.focalDepth.controller.time", options );
 	}	
 	if(assignControllerToLevel1SubAnim(createFloatController(path, identifier, std::string("NearClippingPlane")), pCameraObj, 0, 2) && !isConstant){
 		AlembicImport_ConnectTimeControl( "$.nearclip.controller.time", options );
