@@ -139,9 +139,8 @@ EC_EXPORT MStatus initializePlugin(MObject obj)
       MPxNode::kLocatorNode);
 
    // Load the menu!
-   std::stringstream load_command;
-   load_command << "source \"menu.mel\"; exocortexAlembicLoadMenu(\"" << plugin.name() << "\");";
-   MStatus commandStatus = MGlobal::executeCommand(load_command.str().c_str(), true, false);
+   MString cmd = "source \"menu.mel\"; exocortexAlembicLoadMenu(\"" + plugin.name() + "\");";
+   MStatus commandStatus = MGlobal::executeCommand(cmd, true, false);
    if (commandStatus != MStatus::kSuccess)
    {
 	  //EC_LOG_ERROR("FAILED TO SOURCE ../scripts/menu.mel: " << commandStatus.errorString());
