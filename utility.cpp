@@ -394,6 +394,11 @@ public:
 
 	void walkToChild(INode* node, int& childIndex)
 	{
+		if(!node){
+			ESS_LOG_INFO("walkToChild: node is null.");
+			return;
+		}
+
 		if(childIndex >= parts.size()){
 			return;
 		}
@@ -414,6 +419,11 @@ public:
 	int callback( INode* node )
 	{
 		int enumCode = TREE_CONTINUE;
+
+		if(!node){
+			ESS_LOG_INFO("callback: node is null.");
+			return TREE_ABORT;
+		}
 
 		if(parts.size() <= 1){
 			return TREE_ABORT;
@@ -440,6 +450,10 @@ INode* GetNodeFromHierarchyPath(const std::string& path)
 {
 	HierarchyPathResolver resolver(path);
     IScene *pScene = GET_MAX_INTERFACE()->GetScene();
+	if(!pScene){
+		ESS_LOG_INFO("pScene is null.");
+		return NULL;
+	}
     pScene->EnumTree(&resolver);
 	return resolver.pRetNode;
 }
