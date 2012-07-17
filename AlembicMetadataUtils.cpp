@@ -2,7 +2,7 @@
 #include <icustattribcontainer.h> 
 #include <custattrib.h> 
 #include "AlembicObject.h"
-
+#include "utility.h"
 
 Alembic::Abc::ICompoundProperty getCompoundFromObject(Alembic::Abc::IObject& object)
 {
@@ -67,33 +67,6 @@ void importMetadata(Alembic::AbcGeom::IObject& iObj)
 	
 	delete[] szBuffer;
 }
-
-Modifier* FindModifier(INode* node, char* name)
-{
-	int i = 0;
-	int idx = 0;
-	Modifier* pRetMod = NULL;
-	while(true){
-		Modifier* pMod;
-		IDerivedObject* pObj = GET_MAX_INTERFACE()->FindModifier(*node, i, idx, pMod);
-		if(!pObj){
-			break;
-		}
-
-		if(strstr(pMod->GetName(), name) != NULL){
-			pRetMod = pMod;
-			break;
-		}
-
-		//const char* cname = pObj->GetClassName();
-		//const char* oname = pMod->GetObjectName();
-		//const char* name = pMod->GetName();
-		i++;
-	}
-
-	return pRetMod;
-}
-
 
 void SaveMetaData(INode* node, AlembicObject* object)
 {

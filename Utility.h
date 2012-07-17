@@ -129,6 +129,8 @@ INode* GetNodeFromName(const std::string& name);
 INode* GetChildNodeFromName(const std::string& name, INode* pParent);
 std::string getNodePath(const std::string& name);
 
+Modifier* FindModifier(INode* node, char* name);
+
 class AlembicPathAccessor : public  IAssetAccessor	{
 	public:
 
