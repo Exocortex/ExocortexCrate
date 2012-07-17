@@ -14,7 +14,14 @@ class NullView: public View
 {
 public:
     Point2 ViewToScreen(Point3 p) { return Point2(p.x,p.y); }
-    NullView() { worldToView.IdentityMatrix(); screenW=640.0f; screenH = 480.0f; }
+    NullView() { 
+		worldToView.IdentityMatrix(); 
+		screenW = 640.0f; 
+		screenH = 480.0f; 
+		fov = 0.5f;
+		pixelSize = 1.0;
+		affineTM.IdentityMatrix();
+	}
 };
 
 class ParticleMtl: public Material 
