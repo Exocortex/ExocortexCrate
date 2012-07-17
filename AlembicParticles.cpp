@@ -1138,6 +1138,8 @@ int AlembicParticles::Display(TimeValue t, INode* inode, ViewExp *vpt, int flags
 
     Matrix3 objToWorld = inode->GetObjTMAfterWSM(t);
       
+	Material nullMaterial;
+
    // Draw the particles
    NullView nullView;
    //nullView.worldToView = objToWorld;
@@ -1162,6 +1164,10 @@ int AlembicParticles::Display(TimeValue t, INode* inode, ViewExp *vpt, int flags
 			INode *meshNode = GetParticleMeshNode(i, inode);
 			Material *mtls = meshNode->Mtls();
 			int numMtls = meshNode->NumMtls();
+			if(!mtls){
+				mtls = &nullMaterial;
+				numMtls = 1;
+			}
 
 			Mtl* pMtl = inode->GetMtl();//apply the particle system material first
 			//if(!pMtl){
@@ -1179,9 +1185,11 @@ int AlembicParticles::Display(TimeValue t, INode* inode, ViewExp *vpt, int flags
 				}
 			}
 
-			//if (pMtl/*numMtls > 1*/){
+
+
+			if (numMtls > 0){
 				gw->setMaterial(mtls[0], 0);
-			//}
+			}
 			gw->setTransform( elemToWorld );
 			mesh->render(gw, mtls, (flags&USE_DAMAGE_RECT) ? &vpt->GetDammageRect() : NULL, COMP_ALL, numMtls);
 		}
@@ -1432,13 +1440,21 @@ void AlembicParticles::ClearMeshCache()
 Mesh* GetMeshFromNode(INode *iNode, const TimeValue t, BOOL bNeedDelete)
 {
 	bNeedDelete = FALSE;
-	if (iNode == NULL) return NULL;
+	if (!iNode){
+		ESS_LOG_INFO("GetMeshFromNode: iNode is null.");
+		return NULL;
+	}
 	Object *obj = iNode->EvalWorldState(t).obj;
+	if(!obj){
+		ESS_LOG_INFO("GetMeshFromNode: iNode is null.");
+		return NULL;
+	}
 
     if (obj->SuperClassID()==GEOMOBJECT_CLASS_ID) {
 		NullView nullView;
 		GeomObject* geomObject = (GeomObject*)obj;
-		return geomObject->GetRenderMesh(t, iNode, nullView, bNeedDelete);
+		Mesh* pMesh = geomObject->GetRenderMesh(t, iNode, nullView, bNeedDelete);
+		return pMesh;
 	}
 	else{
 		return NULL;
@@ -1447,6 +1463,7 @@ Mesh* GetMeshFromNode(INode *iNode, const TimeValue t, BOOL bNeedDelete)
 
 Mesh *AlembicParticles::BuildInstanceMesh(int meshNumber, TimeValue t, INode *node, View& view, BOOL &needDelete)
 {
+
 	needDelete = FALSE;
 
 	if (meshNumber > m_InstanceShapeIds.size()){
