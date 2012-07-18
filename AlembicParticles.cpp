@@ -1160,6 +1160,11 @@ int AlembicParticles::Display(TimeValue t, INode* inode, ViewExp *vpt, int flags
       
 	Material nullMaterial;
 
+	//the particles fail to clear properly in 3DS MAX 2010 if the we do not invalidate the viewport
+	Rect rect;
+	rect.top = 0; rect.bottom = gw->getWinSizeY(); rect.left = 0; rect.right = gw->getWinSizeX();
+	vpt->InvalidateRect(rect);
+
    // Draw the particles
    NullView nullView;
    //nullView.worldToView = objToWorld;
@@ -1211,6 +1216,7 @@ int AlembicParticles::Display(TimeValue t, INode* inode, ViewExp *vpt, int flags
 				gw->setMaterial(mtls[0], 0);
 			}
 			gw->setTransform( elemToWorld );
+
 			mesh->render(gw, mtls, (flags&USE_DAMAGE_RECT) ? &vpt->GetDammageRect() : NULL, COMP_ALL, numMtls);
 		}
 		else
