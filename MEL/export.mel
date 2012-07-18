@@ -42,6 +42,14 @@ global proc exocortexAlembicExportGUI(string $filename, string $dialog)
       return;
     }
     $filename = $files[0];
+
+    $__file = `fopen $filename`;
+    if ($__file == 0)
+    {
+      error("Error, unable to create file \"" + $filename + "\"");
+      return;
+    }
+    fclose $__file;
   }
   $filename = `ExocortexAlembic_resolvePath -f $filename`;
   exocortexAlembicExport($filename, $selection, $exportInframe, $exportOutframe, $exportStepframe, $exportSubstepframe, $exportTopology, $exportUVs, $exportFaceSets, $exportDynamicTopo, $exportGlobalSpace, $exportWithoutHierarchy);
