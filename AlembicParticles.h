@@ -192,6 +192,8 @@ private:
 	Matrix3  m_objToWorld;
 	Alembic::AbcGeom::IPoints m_iPoints;
 	TimeValue m_currTick;
+
+	bool m_outputOrientationMotionBlurWarning;
 };
 
 

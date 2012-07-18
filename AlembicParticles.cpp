@@ -109,6 +109,8 @@ AlembicParticles::AlembicParticles()
 	m_pRectangleMaker = NULL;
 
     s_AlembicParticlesClassDesc.MakeAutoParamBlocks(this);
+
+	m_outputOrientationMotionBlurWarning = true;
 }
 
 // virtual
@@ -178,11 +180,15 @@ void AlembicParticles::UpdateParticles(TimeValue t, INode *node)
         return;
     }
 
-    m_currTick = GetTimeValueFromSeconds( fTime );
+	float fSampleTime = GetTimeValueFromSeconds( fTime );
+
+	m_currTick = t;
+
+	m_outputOrientationMotionBlurWarning = true;
 
     Alembic::AbcGeom::IPointsSchema::Sample floorSample;
     Alembic::AbcGeom::IPointsSchema::Sample ceilSample;
-    SampleInfo sampleInfo = GetSampleAtTime(m_iPoints, m_currTick, floorSample, ceilSample);
+    SampleInfo sampleInfo = GetSampleAtTime(m_iPoints, fSampleTime, floorSample, ceilSample);
 
     int numParticles = GetNumParticles(floorSample);
     parts.SetCount(numParticles, PARTICLE_VELS | PARTICLE_AGES | PARTICLE_RADIUS);
@@ -1064,7 +1070,12 @@ void AlembicParticles::GetMultipleRenderMeshTM_Internal(TimeValue  t, INode *ino
 
 			pos += parts.vels[meshNumber] * alpha;
 		//	GetParticlePosition( m_iPoints, floorSample, ceilSample, sampleInfo, meshNumber) * m_objToWorld;
-		ESS_LOG_WARNING( "Not advancing orientation of particles for sub-sample motion blur." );
+
+		if(m_outputOrientationMotionBlurWarning){
+			ESS_LOG_WARNING( "Not advancing orientation of particles for sub-sample motion blur." );
+			m_outputOrientationMotionBlurWarning = false;
+		}
+
 		//orient *= GetParticleOrientation(m_iPoints, sampleInfo, meshNumber);
 		//TODO: we could possibly do it this way as well:
 		//Point3 pos2 = pos + static_cast<float>(sampleInfo.alpha) * parts.vels[meshNumber];
