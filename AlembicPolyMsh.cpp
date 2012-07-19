@@ -58,15 +58,8 @@ Alembic::Abc::OCompoundProperty AlembicPolyMesh::GetCompound()
 
 void AlembicPolyMesh::SaveMaterialsProperty(bool bFirstFrame, bool bLastFrame)
 {
-	std::vector<std::string> materialNames;
-
-	if(!mMatNamesProperty.valid())
-	{
-		mMatNamesProperty = OStringArrayProperty(mMeshSchema, ".materialnames", mMeshSchema.getMetaData(), GetCurrentJob()->GetAnimatedTs());
-	}
-
 	if(bLastFrame){
-	  
+		std::vector<std::string> materialNames;
 		mergedMeshMaterialsMap& matMap = materialsMerge.groupMatMap;
 
 		for ( mergedMeshMaterialsMap_it it=matMap.begin(); it != matMap.end(); it++)
@@ -82,19 +75,13 @@ void AlembicPolyMesh::SaveMaterialsProperty(bool bFirstFrame, bool bLastFrame)
 		}
 
 		if(materialNames.size() > 0){
-			Alembic::Abc::StringArraySample sample = Alembic::Abc::StringArraySample(&materialNames.front(), materialNames.size());
+			if(!mMatNamesProperty.valid())
+			{
+				mMatNamesProperty = OStringArrayProperty(mMeshSchema, ".materialnames", mMeshSchema.getMetaData(), GetCurrentJob()->GetAnimatedTs());
+			}
+			Alembic::Abc::StringArraySample sample = Alembic::Abc::StringArraySample(materialNames);
 			mMatNamesProperty.set(sample);
 		}
-		else{
-			materialNames.push_back("");
-			Alembic::Abc::StringArraySample sample = Alembic::Abc::StringArraySample(&materialNames.front(), 0);
-			mMatNamesProperty.set(sample);
-		}
-	}
-	else if(bFirstFrame){//alembic requires every property to have a sample at time 0
-		materialNames.push_back("");
-		Alembic::Abc::StringArraySample sample = Alembic::Abc::StringArraySample(&materialNames.front(), 0);
-		mMatNamesProperty.set(sample);
 	}
 }
 
@@ -206,6 +193,7 @@ bool AlembicPolyMesh::Save(double time, bool bLastFrame)
 	   }
 	}
 
+	bool dynamicTopology = static_cast<bool>(GetCurrentJob()->GetOption("exportDynamicTopology"));
 	
 	// Extend the archive bounding box
 
@@ -228,26 +216,21 @@ bool AlembicPolyMesh::Save(double time, bool bLastFrame)
 		//ESS_LOG_INFO( "Archive bbox: min("<<box.min.x<<", "<<box.min.y<<", "<<box.min.z<<") max("<<box.max.x<<", "<<box.max.y<<", "<<box.max.z<<")" );
 	}
 
-	{
-		// allocate the sample for the points
-		if(finalPolyMesh.posVec.size() == 0)
-		{
-			finalPolyMesh.bbox.extendBy(Alembic::Abc::V3f(0,0,0));
-			finalPolyMesh.posVec.push_back(Alembic::Abc::V3f(FLT_MAX,FLT_MAX,FLT_MAX));
-		}
-
-		Alembic::Abc::P3fArraySample posSample(&finalPolyMesh.posVec.front(), finalPolyMesh.posVec.size());
-
-		// store the positions && bbox
-		mMeshSample.setPositions(posSample);
-		mMeshSample.setSelfBounds(finalPolyMesh.bbox);
-		mMeshSample.setChildBounds(finalPolyMesh.bbox);
+	if((mNumSamples == 0 || dynamicTopology) && finalPolyMesh.posVec.size() > 0){
+		mMeshSample.setPositions(Alembic::Abc::P3fArraySample(finalPolyMesh.posVec));
 	}
+	else if(mNumSamples == 0 && dynamicTopology){
+		mMeshSample.setPositions(Alembic::Abc::P3fArraySample(NULL, 0));
+	}
+
+	mMeshSample.setSelfBounds(finalPolyMesh.bbox);
+	mMeshSample.setChildBounds(finalPolyMesh.bbox);
 	
 	bool purePointCache = static_cast<bool>(GetCurrentJob()->GetOption("exportPurePointCache"));
     // abort here if we are just storing points
     if(purePointCache)
     {
+		//TODO: update to new method
         if(mNumSamples == 0)
         {
             // store a dummy empty topology
@@ -266,69 +249,34 @@ bool AlembicPolyMesh::Save(double time, bool bLastFrame)
 
 
 
-	// check if we support changing topology
-	bool dynamicTopology = static_cast<bool>(GetCurrentJob()->GetOption("exportDynamicTopology"));
-	
-   if(bFirstFrame || (dynamicTopology))//write out the Normal data
-   {
-	  //write out the normal data
-      Alembic::AbcGeom::ON3fGeomParam::Sample normalSample;
-	  normalSample.setScope(Alembic::AbcGeom::kFacevaryingScope);
-      if(finalPolyMesh.normalVec.size() > 0)
-      {
-         normalSample.setVals(Alembic::Abc::N3fArraySample(&finalPolyMesh.normalVec.front(), finalPolyMesh.normalVec.size()));
-		 if(finalPolyMesh.normalIndexVec.size() > 0){
-            normalSample.setIndices(Alembic::Abc::UInt32ArraySample(&finalPolyMesh.normalIndexVec.front(), finalPolyMesh.normalIndexVec.size()));
-		 }
-      }
-      else if (mNumSamples == 0 && dynamicTopology)
-      {
-         // If we are exporting dynamic topology, then we may have normals that show up later in our scene.  The problem is that Alembic wants
-         // your parameter to be defined at sample zero if you plan to use it even later on, so we create a dummy normal parameter here if the case
-         // requires it
-         finalPolyMesh.normalVec.push_back(Imath::V3f(0,0,0));
-         finalPolyMesh.normalIndexVec.push_back(0);
-         normalSample.setVals(Alembic::Abc::N3fArraySample(&finalPolyMesh.normalVec.front(), 0));
-         normalSample.setIndices(Alembic::Abc::UInt32ArraySample(&finalPolyMesh.normalIndexVec.front(), 0));
-      }
-	  mMeshSample.setNormals(normalSample);
-   }
-   else
-   {
-      Alembic::AbcGeom::ON3fGeomParam::Sample normalSample;
-      if(finalPolyMesh.normalVec.size() > 0)
-      {
-         normalSample.setScope(Alembic::AbcGeom::kFacevaryingScope);
-         normalSample.setVals(Alembic::Abc::N3fArraySample(&finalPolyMesh.normalVec.front(), finalPolyMesh.normalVec.size()));
-		 if(finalPolyMesh.normalIndexVec.size() > 0){
-            normalSample.setIndices(Alembic::Abc::UInt32ArraySample(&finalPolyMesh.normalIndexVec.front(), finalPolyMesh.normalIndexVec.size()));
-		 }
-         mMeshSample.setNormals(normalSample);
-      }
-      mMeshSchema.set(mMeshSample);
-   }
+	if((mNumSamples == 0 || dynamicTopology) && finalPolyMesh.normalVec.size() > 0){
+		Alembic::AbcGeom::ON3fGeomParam::Sample normalSample;
+		normalSample.setScope(Alembic::AbcGeom::kFacevaryingScope);
+		normalSample.setVals(Alembic::Abc::N3fArraySample(finalPolyMesh.normalVec));
+		if(finalPolyMesh.normalIndexVec.size() > 0){
+			normalSample.setIndices(Alembic::Abc::UInt32ArraySample(finalPolyMesh.normalIndexVec));
+		}
+		mMeshSample.setNormals(normalSample);
+	}
+	else if(mNumSamples == 0 && dynamicTopology){
+		Alembic::AbcGeom::ON3fGeomParam::Sample normalSample;
+		normalSample.setScope(Alembic::AbcGeom::kFacevaryingScope);
+		normalSample.setVals(Alembic::Abc::N3fArraySample(NULL, 0));
+		normalSample.setIndices(Alembic::Abc::UInt32ArraySample(NULL, 0));
+		mMeshSample.setNormals(normalSample);
+	}
 
-	//write out the face counts and face indices
-   if(bFirstFrame || (dynamicTopology))
-   {
-      // we also need to store the face counts as well as face indices
-      //if(mFaceIndicesVec.size() != sampleCount || sampleCount == 0) //TODO: is this condition important? I get the impression it is useless from the original code
-      {
-         if(finalPolyMesh.mFaceIndicesVec.size() == 0)
-         {
-            finalPolyMesh.mFaceCountVec.push_back(0);
-            finalPolyMesh.mFaceIndicesVec.push_back(0);
-         }
-         Alembic::Abc::Int32ArraySample faceCountSample(&finalPolyMesh.mFaceCountVec.front(), finalPolyMesh.mFaceCountVec.size());
-         Alembic::Abc::Int32ArraySample faceIndicesSample(&finalPolyMesh.mFaceIndicesVec.front(), finalPolyMesh.mFaceIndicesVec.size());
+	if((mNumSamples == 0 || dynamicTopology) && finalPolyMesh.mFaceCountVec.size() > 0 && finalPolyMesh.mFaceIndicesVec.size() > 0){
+		Alembic::Abc::Int32ArraySample faceCountSample(finalPolyMesh.mFaceCountVec);
+		Alembic::Abc::Int32ArraySample faceIndicesSample(finalPolyMesh.mFaceIndicesVec);
+		mMeshSample.setFaceCounts(faceCountSample);
+		mMeshSample.setFaceIndices(faceIndicesSample);
+	}
+	else if(mNumSamples == 0 && dynamicTopology){
+		mMeshSample.setFaceCounts(Alembic::Abc::Int32ArraySample(NULL, 0));
+		mMeshSample.setFaceIndices(Alembic::Abc::Int32ArraySample(NULL, 0));
+	}
 
-         mMeshSample.setFaceCounts(faceCountSample);
-         mMeshSample.setFaceIndices(faceIndicesSample);
-      }
-   }
-
-//TODO: update this code
- 
 	//write out the texture coordinates if necessary
 	if((bool)GetCurrentJob()->GetOption("exportUVs") && (bFirstFrame || dynamicTopology))
 	{
@@ -343,27 +291,22 @@ bool AlembicPolyMesh::Save(double time, bool bLastFrame)
 		for(int i=0; i<finalPolyMesh.mUvVec.size(); i++){
 			std::vector<Alembic::Abc::V2f>& uvVec = finalPolyMesh.mUvVec[i];
 			std::vector<Alembic::Abc::uint32_t>& uvIndexVec = finalPolyMesh.mUvIndexVec[i];
-			size_t uvSize = uvVec.size();
-			size_t uvIndexSize = uvIndexVec.size();
 
-			if(dynamicTopology && mNumSamples == 0){
-				// If we are exporting dynamic topology, then we may have uvs that show up later in our scene.  The problem is that Alembic wants
-				// your parameter to be defined at sample zero if you plan to use it even later on, so we create a dummy uv parameter here if the case
-				// requires it
-				if(uvSize == 0){
-					uvVec.push_back(Imath::V2f(0,0));
-					uvSize = 0;
-				}
-				if(uvIndexSize == 0){
-					uvIndexVec.push_back(0);
-					uvIndexSize = 0;
+			int uvIndexSize = 0;
+			Alembic::AbcGeom::OV2fGeomParam::Sample uvSample;
+			if((mNumSamples == 0 || dynamicTopology) && uvVec.size() > 0){
+				uvSample = Alembic::AbcGeom::OV2fGeomParam::Sample(Alembic::Abc::V2fArraySample(uvVec), Alembic::AbcGeom::kFacevaryingScope);
+				if(uvIndexVec.size() > 0){
+					uvIndexSize = (int)uvIndexVec.size();
+					uvSample.setIndices(Alembic::Abc::UInt32ArraySample(uvIndexVec));
 				}
 			}
-			
-			Alembic::AbcGeom::OV2fGeomParam::Sample uvSample(Alembic::Abc::V2fArraySample(&uvVec.front(),uvSize), Alembic::AbcGeom::kFacevaryingScope);
-
-			if(finalPolyMesh.mUvIndexVec.size() > 0 || (dynamicTopology && mNumSamples == 0)){
-				uvSample.setIndices(Alembic::Abc::UInt32ArraySample(&uvIndexVec.front(), uvIndexSize));
+			else if(mNumSamples == 0 && dynamicTopology){
+				uvSample = Alembic::AbcGeom::OV2fGeomParam::Sample(Alembic::Abc::V2fArraySample(NULL, 0), Alembic::AbcGeom::kFacevaryingScope);
+				uvSample.setIndices(Alembic::Abc::UInt32ArraySample(NULL, 0));
+			}
+			else{
+				continue;
 			}
 
 			if(i == 0){
@@ -395,11 +338,10 @@ bool AlembicPolyMesh::Save(double time, bool bLastFrame)
           }
 
           size_t nMatIndexSize = finalPolyMesh.mMatIdIndexVec.size();
-		  if(nMatIndexSize == 0){
-              finalPolyMesh.mMatIdIndexVec.push_back(0);
+		  if(nMatIndexSize != 0){
+				Alembic::Abc::UInt32ArraySample sample = Alembic::Abc::UInt32ArraySample(&finalPolyMesh.mMatIdIndexVec.front(), nMatIndexSize);
+				mMatIdProperty.set(sample);
 		  }
-          Alembic::Abc::UInt32ArraySample sample = Alembic::Abc::UInt32ArraySample(&finalPolyMesh.mMatIdIndexVec.front(), nMatIndexSize);
-          mMatIdProperty.set(sample);
 
 		  SaveMaterialsProperty(bFirstFrame, bLastFrame || bForever);
 
@@ -422,7 +364,6 @@ bool AlembicPolyMesh::Save(double time, bool bLastFrame)
           }
 
        }
-   
 
    if(bFirstFrame || (dynamicTopology))
    {
@@ -454,23 +395,19 @@ bool AlembicPolyMesh::Save(double time, bool bLastFrame)
 
    // check if we should export the velocities
    // TODO: support velocity property for nonparticle system meshes if possible
-   if(dynamicTopology && bIsParticleSystem)
-   {
-	  size_t size = 0;
-      if(finalPolyMesh.mVelocitiesVec.size() > 0)
-      {
-		  if(finalPolyMesh.posVec.size() != finalPolyMesh.mVelocitiesVec.size()){
-			  ESS_LOG_INFO("mVelocitiesVec has wrong size.");
-		  }
-		  size = finalPolyMesh.mVelocitiesVec.size();
-      }
-	  else{
-		  finalPolyMesh.mVelocitiesVec.push_back(Imath::V3f(0,0,0));
-	  }
-	  Alembic::Abc::V3fArraySample sample = Alembic::Abc::V3fArraySample(&finalPolyMesh.mVelocitiesVec.front(), size);
-	  mMeshSample.setVelocities( sample );
-   }
-   
+	if(dynamicTopology && bIsParticleSystem)
+	{
+		if(finalPolyMesh.mVelocitiesVec.size() > 0)
+		{
+			if(finalPolyMesh.posVec.size() != finalPolyMesh.mVelocitiesVec.size()){
+				ESS_LOG_INFO("mVelocitiesVec has wrong size.");
+			}
+			mMeshSample.setVelocities(Alembic::Abc::V3fArraySample(finalPolyMesh.mVelocitiesVec));
+		}
+		else if(mNumSamples == 0 && dynamicTopology){
+			mMeshSample.setVelocities(Alembic::Abc::V3fArraySample(NULL, 0));
+		}
+	}
 
 
    // save the sample
