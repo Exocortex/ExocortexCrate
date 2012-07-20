@@ -244,14 +244,12 @@ bool AlembicPoints::Save(double time, bool bLastFrame)
 			mJob->GetArchiveBBox().extendBy(pos);
 		}
 	}
-	
-    // Set constant properties that are not currently supported by Max
-    massVec.push_back(1.0f);
-	//Aren't these next four lines no longer necessary?
-    shapeTimeVec.push_back(1.0f);
-    shapeTypeVec.push_back(ShapeType_Point);
-    shapeInstanceIDVec.push_back(0);
-    instanceNamesVec.push_back("");
+
+	//if(instanceNamesVec.size() == 1){
+	//for some reason the .dims property is not written when there is exactly one entry if we don't push an empty string
+	//having an extra unreferenced entry seems to be harmless
+	instanceNamesVec.push_back("");
+	//}
 
     if (numParticles > 1)
     {
