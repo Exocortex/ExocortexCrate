@@ -167,6 +167,16 @@ ESS_CALLBACK_START(alembic_export_Init,CRef&)
 	return CStatus::OK;
 ESS_CALLBACK_END
 
+#include <fstream>
+static bool validate_filename_location(const char *filename)
+{
+   std::ofstream fout(filename);
+   if (!fout.is_open())
+      return false;
+   fout.close();
+   return true;
+}
+
 ESS_CALLBACK_START(alembic_export_Execute,CRef&)
 	Context ctxt( in_ctxt );
 	CValueArray args = ctxt.GetAttribute(L"Arguments");
@@ -406,13 +416,7 @@ ESS_CALLBACK_START(alembic_export_Execute,CRef&)
             filebrowser.PutProperty(L"Filter",L"Alembic Files(*.abc)|*.abc||");
             CValue returnVal;
             filebrowser.Call(L"ShowSave",returnVal);
-            filename = filebrowser.GetProperty(L"FilePathName").GetAsText();
-            if(filename.IsEmpty())
-            {
-               for(size_t k=0;k<jobPtrs.size();k++)
-                  delete(jobPtrs[k]);
-               return CStatus::Abort;
-            }
+            filename = filebrowser.GetProperty(L"FilePathName").GetAsText();            
          }
          else
          {
@@ -421,6 +425,14 @@ ESS_CALLBACK_START(alembic_export_Execute,CRef&)
                delete(jobPtrs[k]);
             return CStatus::InvalidArgument;
          }
+      }
+
+      if(filename.IsEmpty() || !validate_filename_location(filename.GetAsciiString()))
+      {
+         Application().LogMessage(L"[ExocortexAlembic] cannot write file " + filename,siErrorMsg);
+         for(size_t k=0;k<jobPtrs.size();k++)
+            delete(jobPtrs[k]);
+         return CStatus::Abort;
       }
 
       // construct the frames
