@@ -1483,7 +1483,7 @@ Mesh* GetMeshFromNode(INode *iNode, const TimeValue t, BOOL bNeedDelete)
 	}
 	Object *obj = iNode->EvalWorldState(t).obj;
 	if(!obj){
-		ESS_LOG_INFO("GetMeshFromNode: iNode is null.");
+		ESS_LOG_INFO("GetMeshFromNode: obj is null.");
 		return NULL;
 	}
 
