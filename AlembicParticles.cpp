@@ -1503,13 +1503,13 @@ Mesh *AlembicParticles::BuildInstanceMesh(int meshNumber, TimeValue t, INode *no
 
 	needDelete = FALSE;
 
-	if (meshNumber > m_InstanceShapeIds.size()){
+	if (meshNumber >= m_InstanceShapeIds.size()){
 		return NULL;
 	}
 
 	uint16_t shapeid = m_InstanceShapeIds[meshNumber];
 
-	if (shapeid > m_InstanceShapeINodes.size()){
+	if (shapeid >= m_InstanceShapeINodes.size()){
 	   return NULL;
 	}
 
