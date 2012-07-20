@@ -41,8 +41,9 @@ struct materialsMergeStr
 	mergedMeshMaterialsMap groupMatMap;
 	AnimHandle currUniqueHandle;
 	int nNextMatId;
+	bool bPreserveIds;
 
-	materialsMergeStr():currUniqueHandle(NULL), nNextMatId(0)
+	materialsMergeStr():currUniqueHandle(NULL), nNextMatId(0), bPreserveIds(false)
 	{}
 
 	int getUniqueMatId(int matId);

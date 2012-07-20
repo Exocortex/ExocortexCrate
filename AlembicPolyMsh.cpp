@@ -68,7 +68,7 @@ void AlembicPolyMesh::SaveMaterialsProperty(bool bFirstFrame, bool bLastFrame)
 			for( meshMaterialsMap_it it2 =map.begin(); it2 != map.end(); it2++)
 			{
 				std::stringstream nameStream;
-				int nMaterialId = it2->second.matId;
+				int nMaterialId = it2->second.matId+1;
 				nameStream<<it2->second.name<<" : "<<nMaterialId;
 				materialNames.push_back(nameStream.str());
 			}
@@ -172,6 +172,9 @@ bool AlembicPolyMesh::Save(double time, bool bLastFrame)
 		{
 			return false;
 		}
+
+		//keep the orignal material IDs, since we are not saving out a single nonmerged mesh
+		materialsMerge.bPreserveIds = true;
 
 		Matrix3 worldTrans;
 		worldTrans.IdentityMatrix();

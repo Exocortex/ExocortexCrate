@@ -176,8 +176,13 @@ materialStr& materialsMergeStr::getMatEntry(AnimHandle uniqueHandle, int matId)
 	meshMaterialsMap_it matIt = pMatMap->find(matId);
 	if(matIt == pMatMap->end()){ 
 		materialStr& matStr = (*pMatMap)[matId];
-		matStr.matId = nNextMatId;	
-		nNextMatId++;
+		if(!bPreserveIds){
+			matStr.matId = nNextMatId;	
+			nNextMatId++;
+		}
+		else{
+			matStr.matId = matId;
+		}
 
 		std::stringstream nameStream;
 
