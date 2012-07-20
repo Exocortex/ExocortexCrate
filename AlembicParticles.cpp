@@ -731,8 +731,9 @@ void AlembicParticles::FillParticleShapeNodes(Alembic::AbcGeom::IPoints &iPoints
     {
         return;
     }
-
-    m_InstanceShapeNames = shapeInstanceNameProperty.getValue(sampleInfo.floorIndex);
+	
+	const size_t sIndex = shapeInstanceNameProperty.getNumSamples()-1;
+    m_InstanceShapeNames = shapeInstanceNameProperty.getValue(sIndex);//sampleInfo.floorIndex);
 
     if (m_InstanceShapeNames == NULL || m_InstanceShapeNames->size() == 0)
     {

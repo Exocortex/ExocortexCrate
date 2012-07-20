@@ -135,7 +135,7 @@ bool AlembicPoints::Save(double time, bool bLastFrame)
     std::vector<Alembic::Abc::Quatf> orientationVec;
     std::vector<Alembic::Abc::Quatf> angularVelocityVec;
     std::vector<Alembic::Abc::C4f> colorVec;
-    std::vector<std::string> instanceNamesVec;
+    //std::vector<std::string> instanceNamesVec;
     Alembic::Abc::Box3d bbox;
     bool constantPos = true;
     bool constantVel = true;
@@ -185,7 +185,7 @@ bool AlembicPoints::Save(double time, bool bLastFrame)
 			ConvertMaxAngAxisToAlembicQuat(*particlesExt->GetParticleSpinByIndex(i), spin);
 			age = (float)GetSecondsFromTimeValue(particlesExt->GetParticleAgeByIndex(i));
 			id = particlesExt->GetParticleBornIndex(i);
-			GetShapeType(particlesExt, i, ticks, shapetype, shapeInstanceId, shapeInstanceTime, instanceNamesVec);
+			GetShapeType(particlesExt, i, ticks, shapetype, shapeInstanceId, shapeInstanceTime);
 			color = GetColor(particlesExt, i, ticks);
 		}
 		else if(pSimpleParticle){
@@ -245,11 +245,7 @@ bool AlembicPoints::Save(double time, bool bLastFrame)
 		}
 	}
 
-	//if(instanceNamesVec.size() == 1){
-	//for some reason the .dims property is not written when there is exactly one entry if we don't push an empty string
-	//having an extra unreferenced entry seems to be harmless
-	instanceNamesVec.push_back("");
-	//}
+
 
     if (numParticles > 1)
     {
@@ -277,7 +273,14 @@ bool AlembicPoints::Save(double time, bool bLastFrame)
     Alembic::Abc::QuatfArraySample orientationSample(orientationVec);
     Alembic::Abc::QuatfArraySample angularVelocitySample(angularVelocityVec);
     Alembic::Abc::C4fArraySample colorSample(colorVec);
-    Alembic::Abc::StringArraySample instanceNamesSample(instanceNamesVec);
+
+	//if(instanceNamesVec.size() == 1){
+	//for some reason the .dims property is not written when there is exactly one entry if we don't push an empty string
+	//having an extra unreferenced entry seems to be harmless
+	mInstanceNames.push_back("");
+	//}
+
+    Alembic::Abc::StringArraySample instanceNamesSample(mInstanceNames);
 
     mScaleProperty.set(scaleSample);
     mAgeProperty.set(ageSample);
@@ -300,6 +303,8 @@ bool AlembicPoints::Save(double time, bool bLastFrame)
     mPointsSchema.set(mPointsSample);
 
     mNumSamples++;
+
+	mInstanceNames.pop_back();
 
     return true;
 }
@@ -382,7 +387,7 @@ Alembic::Abc::C4f AlembicPoints::GetColor(IParticleObjectExt *pExt, int particle
 	return color;
 }
 
-void AlembicPoints::ReadShapeFromOperator( IParticleGroup *particleGroup, PFSimpleOperator *pSimpleOperator, int particleId, TimeValue ticks, ShapeType &type, uint16_t &instanceId, float &animationTime, std::vector<std::string> &nameList)
+void AlembicPoints::ReadShapeFromOperator( IParticleGroup *particleGroup, PFSimpleOperator *pSimpleOperator, int particleId, TimeValue ticks, ShapeType &type, uint16_t &instanceId, float &animationTime)
 {
 	if(!pSimpleOperator){
 		return;
@@ -475,20 +480,11 @@ void AlembicPoints::ReadShapeFromOperator( IParticleGroup *particleGroup, PFSimp
 		std::string nodePath = getNodePath(pNode->GetName());
 
         // Find if the name is alerady registered, otherwise add it to the list
-        instanceId = USHRT_MAX;
-        for ( int i = 0; i < nameList.size(); i += 1)
-        {
-            if (!strcmp(nameList[i].c_str(), nodePath.c_str()))
-            {
-                instanceId = i;
-                break;
-            }
-        }
-
+        instanceId = FindInstanceName(nodePath);
         if (instanceId == USHRT_MAX)
         {
-			nameList.push_back(nodePath);
-            instanceId = (uint16_t)nameList.size()-1;
+			mInstanceNames.push_back(nodePath);
+            instanceId = (uint16_t)mInstanceNames.size()-1;
         }
 
         // Determine if we have an animated shape
@@ -590,7 +586,7 @@ void AlembicPoints::ReadShapeFromOperator( IParticleGroup *particleGroup, PFSimp
 
 }
 
-void AlembicPoints::GetShapeType(IParticleObjectExt *pExt, int particleId, TimeValue ticks, ShapeType &type, uint16_t &instanceId, float &animationTime, std::vector<std::string> &nameList)
+void AlembicPoints::GetShapeType(IParticleObjectExt *pExt, int particleId, TimeValue ticks, ShapeType &type, uint16_t &instanceId, float &animationTime)
 {
     // Set up initial values
     type = ShapeType_NbElements;//default to nothing
@@ -678,7 +674,7 @@ void AlembicPoints::GetShapeType(IParticleObjectExt *pExt, int particleId, TimeV
 		}
 	}
 
-	ReadShapeFromOperator(particleGroup, pSimpleOperator, particleId, ticks, type, instanceId, animationTime, nameList);
+	ReadShapeFromOperator(particleGroup, pSimpleOperator, particleId, ticks, type, instanceId, animationTime);
 
 	if(type != ShapeType_NbElements){//write the shape to the cache
 
@@ -697,7 +693,7 @@ void AlembicPoints::GetShapeType(IParticleObjectExt *pExt, int particleId, TimeV
 			sInfo.type = type;
 			sInfo.animationTime = animationTime;
 			if(sInfo.type == ShapeType_Instance){
-				sInfo.instanceName = nameList[instanceId];
+				sInfo.instanceName = mInstanceNames[instanceId];
 			}
 		}
 	}
@@ -723,20 +719,11 @@ void AlembicPoints::GetShapeType(IParticleObjectExt *pExt, int particleId, TimeV
 		if(sInfo.type != ShapeType_NbElements){//We have found shape, so add it to the list if necessary
 
 			// Find if the name is alerady registered, otherwise add it to the list
-			instanceId = USHRT_MAX;
-			for ( int i = 0; i < nameList.size(); i += 1)
-			{
-				if (!strcmp(nameList[i].c_str(), sInfo.instanceName.c_str()))
-				{
-					instanceId = i;
-					break;
-				}
-			}
-
+			instanceId = FindInstanceName(sInfo.instanceName);
 			if (instanceId == USHRT_MAX)
 			{
-				nameList.push_back(sInfo.instanceName);
-				instanceId = (uint16_t)nameList.size()-1;
+				mInstanceNames.push_back(sInfo.instanceName);
+				instanceId = (uint16_t)mInstanceNames.size()-1;
 			}
 		}
 		else{
@@ -745,4 +732,14 @@ void AlembicPoints::GetShapeType(IParticleObjectExt *pExt, int particleId, TimeV
  			type = ShapeType_Point;
 		}
 	}
+}
+
+uint16_t AlembicPoints::FindInstanceName(const std::string& name)
+{
+	for ( int i = 0; i < mInstanceNames.size(); i += 1){
+		if (strcmp(mInstanceNames[i].c_str(), name.c_str()) == 0){
+			return i;
+		}
+	}
+	return USHRT_MAX;
 }
