@@ -139,9 +139,8 @@ XSI::CStatus AlembicPoints::Save(double time)
          // store the bbox
          mPointsSample.setSelfBounds(bbox);
       }
-      if(positionVec.size() == 0)
-         positionVec.push_back(Alembic::Abc::V3f(FLT_MAX,FLT_MAX,FLT_MAX));
-      Alembic::Abc::P3fArraySample positionSample = Alembic::Abc::P3fArraySample(&positionVec.front(),positionVec.size());
+
+      Alembic::Abc::P3fArraySample positionSample = Alembic::Abc::P3fArraySample(positionVec);
 
       // velocity == PointVelocity
       std::vector<Alembic::Abc::V3f> velocityVec;
@@ -168,9 +167,8 @@ XSI::CStatus AlembicPoints::Save(double time)
             }
          }
       }
-      if(velocityVec.size() == 0)
-         velocityVec.push_back(Alembic::Abc::V3f(0.0f,0.0f,0.0f));
-      Alembic::Abc::V3fArraySample velocitySample = Alembic::Abc::V3fArraySample(&velocityVec.front(),velocityVec.size());
+
+      Alembic::Abc::V3fArraySample velocitySample = Alembic::Abc::V3fArraySample(velocityVec);
 
       // width == Size
       std::vector<float> widthVec;
@@ -197,9 +195,8 @@ XSI::CStatus AlembicPoints::Save(double time)
             }
          }
       }
-      if(widthVec.size() == 0)
-         widthVec.push_back(0.0f);
-      Alembic::Abc::FloatArraySample widthSample = Alembic::Abc::FloatArraySample(&widthVec.front(),widthVec.size());
+
+      Alembic::Abc::FloatArraySample widthSample = Alembic::Abc::FloatArraySample(widthVec);
 
       // id == ID
       std::vector<uint64_t> idVec;
@@ -226,9 +223,8 @@ XSI::CStatus AlembicPoints::Save(double time)
             }
          }
       }
-      if(idVec.size() == 0)
-         idVec.push_back((uint64_t)-1);
-      Alembic::Abc::UInt64ArraySample idSample(&idVec.front(),idVec.size());
+
+      Alembic::Abc::UInt64ArraySample idSample(idVec);
 
       // store the Points sample
       mPointsSample.setPositions(positionSample);
@@ -263,15 +259,10 @@ XSI::CStatus AlembicPoints::Save(double time)
                   vec.resize(1);
             }
          }
-         Alembic::Abc::V3fArraySample sample = Alembic::Abc::V3fArraySample(&vec.front(),vec.size());
-         mScaleProperty.set(sample);
+
       }
-      else
-      {
-         vec.resize(1,Alembic::Abc::V3f(1.0f,1.0f,1.0f));
-         Alembic::Abc::V3fArraySample sample(&vec.front(),vec.size());
-         mScaleProperty.set(sample);
-      }
+      Alembic::Abc::V3fArraySample sample = Alembic::Abc::V3fArraySample(vec);
+      mScaleProperty.set(sample);
    }
 
    // orientation + angular vel
@@ -332,23 +323,14 @@ XSI::CStatus AlembicPoints::Save(double time)
                   vec.resize(1);
             }
          }
-         Alembic::Abc::QuatfArraySample sample;
-         if(vec.size() > 0)
-            sample = Alembic::Abc::QuatfArraySample(&vec.front(),vec.size());
-         if(attrIndex == 0)
-            mOrientationProperty.set(sample);
-         else
-            mAngularVelocityProperty.set(sample);
+
       }
+
+      Alembic::Abc::QuatfArraySample sample(vec);
+      if(attrIndex == 0)
+         mOrientationProperty.set(sample);
       else
-      {
-         vec.resize(1,Alembic::Abc::Quatf(0.0f,1.0f,0.0f,0.0f));
-         Alembic::Abc::QuatfArraySample sample(&vec.front(),vec.size());
-         if(attrIndex == 0)
-            mOrientationProperty.set(sample);
-         else
-            mAngularVelocityProperty.set(sample);
-      }
+         mAngularVelocityProperty.set(sample);
    }
 
    // age
@@ -376,17 +358,9 @@ XSI::CStatus AlembicPoints::Save(double time)
                   vec.resize(1);
             }
          }
-         Alembic::Abc::FloatArraySample sample;
-         if(vec.size() > 0)
-            sample = Alembic::Abc::FloatArraySample(&vec.front(),vec.size());
-         mAgeProperty.set(sample);
       }
-      else
-      {
-         vec.resize(1,0.0f);
-         Alembic::Abc::FloatArraySample sample(&vec.front(),vec.size());
-         mAgeProperty.set(sample);
-      }
+      Alembic::Abc::FloatArraySample sample(vec);
+      mAgeProperty.set(sample);
    }
 
    // mass
@@ -414,17 +388,9 @@ XSI::CStatus AlembicPoints::Save(double time)
                   vec.resize(1);
             }
          }
-         Alembic::Abc::FloatArraySample sample;
-         if(vec.size() > 0)
-            sample = Alembic::Abc::FloatArraySample(&vec.front(),vec.size());
-         mMassProperty.set(sample);
       }
-      else
-      {
-         vec.resize(1,1.0f);
-         Alembic::Abc::FloatArraySample sample(&vec.front(),vec.size());
-         mMassProperty.set(sample);
-      }
+      Alembic::Abc::FloatArraySample sample(vec);
+      mMassProperty.set(sample);
    }
 
    // shapetype
@@ -502,17 +468,10 @@ XSI::CStatus AlembicPoints::Save(double time)
                   vec.resize(1);
             }
          }
-         Alembic::Abc::UInt16ArraySample sample;
-         if(vec.size() > 0)
-            sample = Alembic::Abc::UInt16ArraySample(&vec.front(),vec.size());
-         mShapeTypeProperty.set(sample);
+
       }
-      else
-      {
-         vec.resize(1,ShapeType_Point);
-         Alembic::Abc::UInt16ArraySample sample(&vec.front(),vec.size());
-         mShapeTypeProperty.set(sample);
-      }
+      Alembic::Abc::UInt16ArraySample sample(vec);
+      mShapeTypeProperty.set(sample);
    }
 
    // shapeInstanceID
@@ -578,12 +537,12 @@ XSI::CStatus AlembicPoints::Save(double time)
                   mInstancenamesProperty = OStringArrayProperty(mPointsSchema, ".instancenames", mPointsSchema.getMetaData(), GetJob()->GetAnimatedTs() );
 
                std::vector<std::string> preRollVec(1,"");
-               Alembic::Abc::StringArraySample preRollSample(&preRollVec.front(),preRollVec.size());
+               Alembic::Abc::StringArraySample preRollSample(preRollVec);
                for(size_t i=mInstancenamesProperty.getNumSamples();i<mNumSamples;i++)
                   mInstancenamesProperty.set(preRollSample);
 
 
-               Alembic::Abc::StringArraySample sample(&mInstanceNames.front(),mInstanceNames.size());
+               Alembic::Abc::StringArraySample sample(mInstanceNames);
                mInstancenamesProperty.set(sample);
 
                if(vec.size() > 0)
@@ -592,11 +551,11 @@ XSI::CStatus AlembicPoints::Save(double time)
                      mShapeInstanceIDProperty = OUInt16ArrayProperty(mPointsSchema, ".shapeinstanceid", mPointsSchema.getMetaData(), GetJob()->GetAnimatedTs() );
 
                   std::vector<uint16_t> preRollVec(1,0);
-                  Alembic::Abc::UInt16ArraySample preRollSample(&preRollVec.front(),preRollVec.size());
+                  Alembic::Abc::UInt16ArraySample preRollSample(preRollVec);
                   for(size_t i=mShapeInstanceIDProperty.getNumSamples();i<mNumSamples;i++)
                      mShapeInstanceIDProperty.set(preRollSample);
 
-                  Alembic::Abc::UInt16ArraySample sample(&vec.front(),vec.size());
+                  Alembic::Abc::UInt16ArraySample sample(vec);
                   mShapeInstanceIDProperty.set(sample);
                }
             }
@@ -634,17 +593,9 @@ XSI::CStatus AlembicPoints::Save(double time)
                      vec.resize(1);
                }
             }
-            Alembic::Abc::FloatArraySample sample;
-            if(vec.size() > 0)
-               sample = Alembic::Abc::FloatArraySample(&vec.front(),vec.size());
-            mShapeTimeProperty.set(sample);
          }
-         else
-         {
-            vec.resize(1,1.0f);
-            Alembic::Abc::FloatArraySample sample(&vec.front(),vec.size());
-            mMassProperty.set(sample);
-         }
+         Alembic::Abc::FloatArraySample sample(vec);
+         mShapeTimeProperty.set(sample);
       }
    }
 
@@ -678,17 +629,9 @@ XSI::CStatus AlembicPoints::Save(double time)
                   vec.resize(1);
             }
          }
-         Alembic::Abc::C4fArraySample sample;
-         if(vec.size() > 0)
-            sample = Alembic::Abc::C4fArraySample(&vec.front(),vec.size());
-         mColorProperty.set(sample);
       }
-      else
-      {
-         vec.resize(1,Alembic::Abc::C4f(0.0f,0.0f,0.0f,1.0f));
-         Alembic::Abc::C4fArraySample sample(&vec.front(),vec.size());
-         mColorProperty.set(sample);
-      }
+      Alembic::Abc::C4fArraySample sample(vec);
+      mColorProperty.set(sample);
    }
 
    mNumSamples++;
