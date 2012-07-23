@@ -302,11 +302,14 @@ global proc exocortexAlembicImport(string $filename, int $importNormals, int $im
           {
             $shape = $objects[$j];
             $xform = `listRelatives -p $shape`;
-            $shape = `rename -ignoreShape $xform[0] $name`;
-            $reader = exocortexCreateOrReuseNode($shape+".translate","ExocortexAlembicXform",$importAttach,1,0);
-            exocortexConnectIfUnconnected(($reader+".translate"), ($shape+".translate"));
-            exocortexConnectIfUnconnected(($reader+".rotate"), ($shape+".rotate"));
-            exocortexConnectIfUnconnected(($reader+".scale"), ($shape+".scale"));
+            if ( $name != "front" && $name != "top" && $name != "side" && $name != "persp" )
+            {
+              $shape = `rename -ignoreShape $xform[0] $name`;
+              $reader = exocortexCreateOrReuseNode($shape+".translate","ExocortexAlembicXform",$importAttach,1,0);
+              exocortexConnectIfUnconnected(($reader+".translate"), ($shape+".translate"));
+              exocortexConnectIfUnconnected(($reader+".rotate"), ($shape+".rotate"));
+              exocortexConnectIfUnconnected(($reader+".scale"), ($shape+".scale"));
+            }
             break;
           }
         }
