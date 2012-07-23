@@ -837,10 +837,6 @@ MStatus AlembicPolyMeshDeformNode::deform(MDataBlock & dataBlock, MItGeometry & 
       mSchema.getNumSamples()
    );
 
-   // check if we have to do this at all
-   if(mLastSampleInfo.floorIndex == sampleInfo.floorIndex && mLastSampleInfo.ceilIndex == sampleInfo.ceilIndex)
-      return MStatus::kSuccess;
-
    mLastSampleInfo = sampleInfo;
 
    // access the camera values

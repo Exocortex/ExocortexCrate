@@ -176,9 +176,6 @@ MStatus AlembicWriteJob::PreProcess()
       if(GetObject(mObj) != NULL)
          continue;
 
-      MFnDependencyNode node(mObj);
-      MGlobal::displayInfo(node.name());
-
       // take care of all other types
       MString mType = mObj.apiTypeStr();
       if(mType == "kCamera")
