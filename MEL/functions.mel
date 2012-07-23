@@ -3,7 +3,8 @@
 global proc exocortexAlembicExport(string $filename,         string $exported_objects[], int $exportInframe,
                                    int $exportOutframe,      int $exportStepframe,       int $exportSubstepframe,
                                    int $exportTopology,      int $exportUVs,             int $exportFaceSets,
-                                   int $exportDynamicTopo,   int $exportGlobalSpace,     int $exportWithoutHierarchy)
+                                   int $exportDynamicTopo,   int $exportGlobalSpace,     int $exportWithoutHierarchy,
+                                   int $exportTransformCache)
 {
   // construct the job string
   string $job = ("in="+$exportInframe+";out="+$exportOutframe+";step="+$exportStepframe+";substep="+$exportSubstepframe+";filename="+$filename+";objects=");
@@ -33,6 +34,7 @@ global proc exocortexAlembicExport(string $filename,         string $exported_ob
   }
   $job += ";globalspace="+$exportGlobalSpace;
   $job += ";withouthierarchy="+$exportWithoutHierarchy;
+  $job += ";transformcache="+$exportTransformCache;
   print $job;
   ExocortexAlembic_export -j $job;
 }

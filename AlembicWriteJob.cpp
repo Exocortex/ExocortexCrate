@@ -332,6 +332,7 @@ MStatus AlembicExportCommand::doIt(const MArgList & args)
       bool dynamictopology = false;
       bool globalspace = false;
       bool withouthierarchy = false;
+      bool transformcache = false;
       MStringArray objectStrings;
       MObjectArray objects;
 
@@ -372,6 +373,8 @@ MStatus AlembicExportCommand::doIt(const MArgList & args)
             globalspace = valuePair[1].asInt() != 0;
 		   else if(valuePair[0].toLowerCase() == "withouthierarchy")
             withouthierarchy = valuePair[1].asInt() != 0;
+		   else if(valuePair[0].toLowerCase() == "transformcache")
+            transformcache = valuePair[1].asInt() != 0;
          else if(valuePair[0].toLowerCase() == "filename")
             filename = valuePair[1];
          else if(valuePair[0].toLowerCase() == "objects")
@@ -454,13 +457,16 @@ MStatus AlembicExportCommand::doIt(const MArgList & args)
             }
 
             // check all of the shapes below
-            sl.getDagPath(l,dag);
-            for(unsigned int m=0;m<dag.childCount();m++)
+            if(!transformcache)
             {
-               MFnDagNode child(dag.child(m));
-               if(child.isIntermediateObject())
-                  continue;
-               objects.append(child.object());
+               sl.getDagPath(l,dag);
+               for(unsigned int m=0;m<dag.childCount();m++)
+               {
+                  MFnDagNode child(dag.child(m));
+                  if(child.isIntermediateObject())
+                     continue;
+                  objects.append(child.object());
+               }
             }
          }
       }
