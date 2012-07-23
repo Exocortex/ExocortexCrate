@@ -233,16 +233,11 @@ bool AlembicPolyMesh::Save(double time, bool bLastFrame)
     // abort here if we are just storing points
     if(purePointCache)
     {
-		//TODO: update to new method
         if(mNumSamples == 0)
         {
             // store a dummy empty topology
-            finalPolyMesh.mFaceCountVec.push_back(0);
-            finalPolyMesh.mFaceIndicesVec.push_back(0);
-            Alembic::Abc::Int32ArraySample faceCountSample(&finalPolyMesh.mFaceCountVec.front(), finalPolyMesh.mFaceCountVec.size());
-            Alembic::Abc::Int32ArraySample faceIndicesSample(&finalPolyMesh.mFaceIndicesVec.front(), finalPolyMesh.mFaceIndicesVec.size());
-            mMeshSample.setFaceCounts(faceCountSample);
-            mMeshSample.setFaceIndices(faceIndicesSample);
+			mMeshSample.setFaceCounts(Alembic::Abc::Int32ArraySample(NULL, 0));
+			mMeshSample.setFaceIndices(Alembic::Abc::Int32ArraySample(NULL, 0));
         }
 
         mMeshSchema.set(mMeshSample);
