@@ -155,10 +155,14 @@ MStatus AlembicGetInfoCommand::doIt(const MArgList & args)
             if(obj.valid())
             {
                Alembic::AbcGeom::ICurvesSchema::Sample sample;
-               obj.getSchema().get(sample,0);
-               if(sample.getNumCurves() != 1)
+               for(size_t k=0;k<obj.getSchema().getNumSamples();k++)
                {
-                  data += "hair=1";
+                  obj.getSchema().get(sample,k);
+                  if(sample.getNumCurves() != 1)
+                  {
+                     data += "hair=1";
+                     break;
+                  }
                }
             }
          }

@@ -455,6 +455,7 @@ MStatus AlembicCurvesDeformNode::deform(MDataBlock & dataBlock, MItGeometry & it
 AlembicCurvesLocatorNode::AlembicCurvesLocatorNode()
 {
    mNbCurves = 0;
+   mNbVertices = 0;
    mBoundingBox.clear();
    mSent = 0;
 }
@@ -576,10 +577,12 @@ MStatus AlembicCurvesLocatorNode::compute(const MPlug & plug, MDataBlock & dataB
          mSchema.get(sample2,sampleInfo.ceilIndex);
 
       // update the indices
-      if(mNbCurves != sample.getNumCurves())
+      Alembic::Abc::P3fArraySamplePtr samplePos = sample.getPositions();
+      if(mNbCurves != sample.getNumCurves() || mNbVertices != samplePos->size())
       {
          mNbCurves = (unsigned int)sample.getNumCurves();
-
+         mNbVertices = (unsigned int)samplePos->size();
+         
          Alembic::Abc::Int32ArraySamplePtr nbVertices = sample.getCurvesNumVertices();
          mIndices.clear();
          unsigned int offset = 0;
@@ -596,7 +599,6 @@ MStatus AlembicCurvesLocatorNode::compute(const MPlug & plug, MDataBlock & dataB
          }
       }
 
-      Alembic::Abc::P3fArraySamplePtr samplePos = sample.getPositions();
       if(mPositions.size() != samplePos->size())
          mPositions.resize(samplePos->size());
 
