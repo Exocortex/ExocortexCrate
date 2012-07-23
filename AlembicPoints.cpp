@@ -725,6 +725,7 @@ void AlembicPoints::GetShapeType(IParticleObjectExt *pExt, int particleId, TimeV
 				mInstanceNames.push_back(sInfo.instanceName);
 				instanceId = (uint16_t)mInstanceNames.size()-1;
 			}
+			type = sInfo.type;
 		}
 		else{
 			int nBornIndex = pExt->GetParticleBornIndex(particleId);
