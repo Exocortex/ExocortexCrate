@@ -345,7 +345,13 @@ MarkerType AlembicParticles::GetMarkerType()
 
 Point3 AlembicParticles::ParticlePosition(TimeValue t,int i) {
 	//ESS_LOG_INFO( "AlembicParticles::ParticlePosition( i: " << i << " )" );
-	return parts.points[i];
+	if( i < parts.points.Count() ){
+		return parts.points[i];
+	}
+	else{
+		ESS_LOG_INFO("ParticlePosition out of bounds at "<<i);
+		return Point3(0.0f, 0.0f, 0.0f);
+	}
 }
 /**		Returns the velocity of the specified particle at the time passed (in 3ds
 Max units per tick). This is specified as a vector. The Particle Age
@@ -354,7 +360,13 @@ texture map and the Particle Motion Blur texture map use this method.
 \param i The index of the particle. */
 Point3 AlembicParticles::ParticleVelocity(TimeValue t,int i) {
 	//ESS_LOG_INFO( "AlembicParticles::ParticleVelocity( i: " << i << " )" );
-	return parts.vels[i];
+	if( i < parts.vels.Count() ){
+		return parts.vels[i];
+	}
+	else{
+		ESS_LOG_INFO("ParticleVelocity out of bounds at "<<i);
+		return Point3(0.0f, 0.0f, 0.0f);
+	}
 }
 
 /**		Returns the world space size of the specified particle in at the time
@@ -364,7 +376,13 @@ this method.
 \param t The time to return the particle size.
 \param i The index of the particle. */
 float AlembicParticles::ParticleSize(TimeValue t,int i) {
- 	return parts.radius[i];
+	if( i < parts.radius.Count()) {
+ 		return parts.radius[i];
+	}
+	else{
+		ESS_LOG_INFO("ParticleSize out of bounds at "<<i);
+		return 0.0f;
+	}
 }
 /**		Returns a value indicating where the particle geometry (mesh) lies in
 relation to the particle position. 
@@ -392,7 +410,13 @@ this method.
 \param t Specifies the time to compute the particle age.
 \param i The index of the particle. */
 TimeValue AlembicParticles::ParticleAge(TimeValue t, int i) {
-	return parts.ages[i];
+	if( i < parts.ages.Count() ){
+		return parts.ages[i];
+	}
+	else{
+		ESS_LOG_INFO("ParticleAge out of bounds at "<<i);
+		return TimeValue(0);
+	}
 }
 /**		Returns the life of the particle -- the length of time the particle will be
 'alive'. 
@@ -806,7 +830,8 @@ AlembicParticles::GetParticleColors(Alembic::AbcGeom::IPoints &iPoints, const Sa
 int AlembicParticles::NumberOfRenderMeshes()
 {
 	//ESS_LOG_INFO( "AlembicParticles::NumberOfRenderMeshes()" );
-     return parts.Count();
+     int count = parts.Count();
+	 return count;
 }
 
 Mesh* AlembicParticles::GetMultipleRenderMesh(TimeValue  t,  INode *inode,  View &view,  BOOL &needDelete,  int meshNumber)
@@ -817,7 +842,7 @@ Mesh* AlembicParticles::GetMultipleRenderMesh(TimeValue  t,  INode *inode,  View
 
 Mesh* AlembicParticles::GetMultipleRenderMesh_Internal(TimeValue  t,  INode *inode,  View &view,  BOOL &needDelete,  int meshNumber)
 {
-    if (meshNumber > parts.Count() || !parts.Alive(meshNumber) || view.CheckForRenderAbort())
+    if (meshNumber >= parts.Count() || !parts.Alive(meshNumber) || view.CheckForRenderAbort())
     {
         needDelete = NULL;
         return NULL;
