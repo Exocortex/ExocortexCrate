@@ -123,9 +123,15 @@ AlembicParticles::~AlembicParticles()
     ALEMBIC_SAFE_DELETE(m_pRectangleMaker);
 }
 
+static const bool LOG = false;
+
 void AlembicParticles::UpdateParticles(TimeValue t, INode *node)
 {
 	ESS_CPP_EXCEPTION_REPORTING_START
+
+	if(LOG){
+		ESS_LOG_WARNING("UpdateParticles at time = "<<t);
+	}
 
 	Interval interval = FOREVER;//os->obj->ObjectValidity(t);
 	//ESS_LOG_INFO( "Interval Start: " << interval.Start() << " End: " << interval.End() );
@@ -531,7 +537,7 @@ AlembicParticles::GetParticleVelocities(const Alembic::AbcGeom::IPointsSchema::S
 		int j = 0;
 		int jIncrement = floorVelocities->size() == vels.Count() ? 1 : 0;
 		for( int i = 0; i < vels.Count(); i ++ ) {
-			vels[i] = ConvertAlembicPointToMaxPoint( (*floorVelocities)[j] );
+			vels[i] = ConvertAlembicPointToMaxPoint( (*floorVelocities)[j] ) / TIME_TICKSPERSEC;
 			j += jIncrement;
 		}
 		useDefaultValues = false;
@@ -1046,6 +1052,11 @@ void AlembicParticles::GetMultipleRenderMeshTM(TimeValue  t, INode *inode, View 
 	GET_MAX_INTERFACE()->GetCurrentRenderer()->GetClassName( rendererName );
 	string renderer( rendererName );
 
+	if(LOG){
+		ESS_LOG_WARNING("GetMultipleRenderMeshTM_Internal at time = "<<t<<", mesh #:"<<meshNumber<<", numOfParticles: "<<parts.Count());
+	}
+
+
 	GetMultipleRenderMeshTM_Internal(t, inode, view, meshNumber, meshTM, meshTMValid);
 
 	
@@ -1078,24 +1089,24 @@ void AlembicParticles::GetMultipleRenderMeshTM(TimeValue  t, INode *inode, View 
 
 void AlembicParticles::GetMultipleRenderMeshTM_Internal(TimeValue  t, INode *inode, View &view, int  meshNumber, Matrix3 &meshTM, Interval &meshTMValid)
 {
+	if(meshNumber >= parts.Count()){
+		meshTM.IdentityMatrix();
+		return;
+	}
+
+
     // Calculate the matrix
     Point3 pos = parts.points[meshNumber];
     Quat orient = m_ParticleOrientations[meshNumber];
 	Point3 scaleVec = m_ParticleScales[meshNumber];
 
-	//for motion blur we need to be able sample at numerous times. So we can't read from the stored state directly
+	//for scanline motion blur we need to be able sample at numerous times. So we can't read from the stored state directly
+	//also, Mental Ray seems to sample at some offset before the current tick, but only once per particle
+	//the velocity array is used instead of multiple calls to the MeshTm method
 	if(t != m_currTick){
-		Alembic::AbcGeom::IPointsSchema::Sample floorSample;
-		Alembic::AbcGeom::IPointsSchema::Sample ceilSample;
-		SampleInfo sampleInfo = GetSampleAtTime(m_iPoints, t, floorSample, ceilSample);
-
-			double timeAlpha = (double)(m_iPoints.getSchema().getTimeSampling()->getSampleTime(sampleInfo.ceilIndex) - 
- 						m_iPoints.getSchema().getTimeSampling()->getSampleTime(sampleInfo.floorIndex)) * sampleInfo.alpha;      
-
-			float alpha = static_cast<float>(timeAlpha);
-
-			pos += parts.vels[meshNumber] * alpha;
-		//	GetParticlePosition( m_iPoints, floorSample, ceilSample, sampleInfo, meshNumber) * m_objToWorld;
+		const float tDiff = static_cast<float>(GetSecondsFromTimeValue(m_currTick) - GetSecondsFromTimeValue(t));
+		
+		pos += parts.vels[meshNumber] * TIME_TICKSPERSEC * tDiff;
 
 		if(m_outputOrientationMotionBlurWarning){
 			ESS_LOG_WARNING( "Not advancing orientation of particles for sub-sample motion blur." );
