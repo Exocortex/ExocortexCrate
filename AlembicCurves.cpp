@@ -37,8 +37,8 @@ AlembicCurves::AlembicCurves(const SceneEntry &in_Ref, AlembicWriteJob * in_Job)
    mCurvesSchema = curves.getSchema();
 
    // create all properties
-   mInTangentProperty = OV3fArrayProperty(mCurvesSchema, ".inTangent", mCurvesSchema.getMetaData(), GetCurrentJob()->GetAnimatedTs() );
-   mOutTangentProperty = OV3fArrayProperty(mCurvesSchema, ".outTangent", mCurvesSchema.getMetaData(), GetCurrentJob()->GetAnimatedTs() );
+   //mInTangentProperty = OV3fArrayProperty(mCurvesSchema, ".inTangent", mCurvesSchema.getMetaData(), GetCurrentJob()->GetAnimatedTs() );
+   //mOutTangentProperty = OV3fArrayProperty(mCurvesSchema, ".outTangent", mCurvesSchema.getMetaData(), GetCurrentJob()->GetAnimatedTs() );
    mRadiusProperty = OFloatArrayProperty(mCurvesSchema, ".radius", mCurvesSchema.getMetaData(), GetCurrentJob()->GetAnimatedTs() );
    mColorProperty = OC4fArrayProperty(mCurvesSchema, ".color", mCurvesSchema.getMetaData(), GetCurrentJob()->GetAnimatedTs() );
 }
@@ -130,6 +130,7 @@ bool AlembicCurves::Save(double time, bool bLastFrame)
     }
 
     // Get the control points
+	std::vector<Alembic::AbcCoreAbstract::ALEMBIC_VERSION_NS::int32_t> nbVertices;
     std::vector<Point3> vertices;
     std::vector<Point3> inTangents;
 	std::vector<Point3> outTangents;
@@ -152,7 +153,7 @@ bool AlembicCurves::Save(double time, bool bLastFrame)
             }
 
             int nNumVerticesAdded = (int)vertices.size() - oldVerticesCount;
-            mNbVertices.push_back( nNumVerticesAdded );
+            nbVertices.push_back( nNumVerticesAdded );
             oldVerticesCount = (int)vertices.size();
         }
     }
@@ -161,7 +162,7 @@ bool AlembicCurves::Save(double time, bool bLastFrame)
         for (int i = 0; i < polyShape.numLines; i += 1)
         {
             PolyLine &refLine = polyShape.lines[i];
-            mNbVertices.push_back(refLine.numPts);
+            nbVertices.push_back(refLine.numPts);
             for (int j = 0; j < refLine.numPts; j += 1)
             {
                 Point3 p = refLine.pts[j].p;
@@ -210,16 +211,13 @@ bool AlembicCurves::Save(double time, bool bLastFrame)
 
  
     // if we are the first frame!
-    if(mNumSamples == 0)
-    {
-        Alembic::Abc::Int32ArraySample nbVerticesSample(&mNbVertices.front(),mNbVertices.size());
-        mCurvesSample.setCurvesNumVertices(nbVerticesSample);
+    Alembic::Abc::Int32ArraySample nbVerticesSample(&nbVertices.front(),nbVertices.size());
+    mCurvesSample.setCurvesNumVertices(nbVerticesSample);
 
-        // set the type + wrapping
-        mCurvesSample.setType(bBezier ? kCubic : kLinear);
-        mCurvesSample.setWrap(pShapeObject->CurveClosed(ticks, 0) ? kPeriodic : kNonPeriodic);
-        mCurvesSample.setBasis(kNoBasis);
-    }
+    // set the type + wrapping
+    mCurvesSample.setType(bBezier ? kCubic : kLinear);
+    mCurvesSample.setWrap(pShapeObject->CurveClosed(ticks, 0) ? kPeriodic : kNonPeriodic);
+    mCurvesSample.setBasis(kNoBasis);
  
     // allocate for the points and normals
     Alembic::Abc::P3fArraySample posSample(&posVec.front(),posVec.size());
