@@ -43,4 +43,25 @@ size_t getNumSamplesFromObject(Alembic::Abc::IObject object);
 bool hasStandinSupport();
 XSI::CString getDSOPath();
 
+
+template<class OBJTYPE, class DATATYPE>
+bool getArbGeomParamPropertyAlembic( OBJTYPE obj, std::string name, Alembic::Abc::ITypedArrayProperty<DATATYPE> &pOut ) {
+	if ( obj.getSchema().getPropertyHeader( name ) != NULL ) {
+		Alembic::Abc::ITypedArrayProperty<DATATYPE> prop = Alembic::Abc::ITypedArrayProperty<DATATYPE>( obj.getSchema(), name );
+		if( prop.valid() && prop.getNumSamples() > 0 ) {
+			pOut = prop;
+			return true;
+		}
+	}
+	if ( obj.getSchema().getArbGeomParams().getPropertyHeader( name ) != NULL ) {
+		Alembic::Abc::ITypedArrayProperty<DATATYPE> prop = Alembic::Abc::ITypedArrayProperty<DATATYPE>( obj.getSchema().getArbGeomParams(), name );
+		if( prop.valid() && prop.getNumSamples() > 0 ) {
+			pOut = prop;
+			return true;
+		}
+	}
+
+	return false;
+}
+
 #endif  // _FOUNDATION_H_

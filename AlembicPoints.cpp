@@ -41,25 +41,6 @@ namespace AbcB = ::Alembic::Abc::ALEMBIC_VERSION_NS;
 using namespace AbcA;
 using namespace AbcB;
 
-template<class OBJTYPE, class DATATYPE>
-bool getArbGeomParamPropertyAlembic( OBJTYPE obj, std::string name, Alembic::Abc::ITypedArrayProperty<DATATYPE> &pOut ) {
-	if ( obj.getSchema().getPropertyHeader( name ) != NULL ) {
-		Alembic::Abc::ITypedArrayProperty<DATATYPE> prop = Alembic::Abc::ITypedArrayProperty<DATATYPE>( obj.getSchema(), name );
-		if( prop.valid() && prop.getNumSamples() > 0 ) {
-			pOut = prop;
-			return true;
-		}
-	}
-	if ( obj.getSchema().getArbGeomParams().getPropertyHeader( name ) != NULL ) {
-		Alembic::Abc::ITypedArrayProperty<DATATYPE> prop = Alembic::Abc::ITypedArrayProperty<DATATYPE>( obj.getSchema().getArbGeomParams(), name );
-		if( prop.valid() && prop.getNumSamples() > 0 ) {
-			pOut = prop;
-			return true;
-		}
-	}
-
-	return false;
- }
 
 AlembicPoints::AlembicPoints(const XSI::CRef & in_Ref, AlembicWriteJob * in_Job)
 : AlembicObject(in_Ref, in_Job)
