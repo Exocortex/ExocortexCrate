@@ -477,14 +477,14 @@ static int Init(AtNode *mynode, void **user_ptr)
          Alembic::AbcGeom::IPoints typedObject(objects[i],Alembic::Abc::kWrapExisting);
 
          // first thing to check is if this is an instancing cloud
-         if ( typedObject.getSchema().getPropertyHeader( ".shapetype" ) != NULL &&
-              typedObject.getSchema().getPropertyHeader( ".shapeinstanceid" ) != NULL &&
-              typedObject.getSchema().getPropertyHeader( ".instancenames" ) != NULL )
-         {
+         Alembic::Abc::IUInt16ArrayProperty shapeTypeProp;// Alembic::Abc::IUInt16ArrayProperty( typedObject.getSchema(), ".shapetype" );
+         Alembic::Abc::IUInt16ArrayProperty shapeInstanceIDProp;// Alembic::Abc::IUInt16ArrayProperty( typedObject.getSchema(), ".shapeinstanceid" );
+         Alembic::Abc::IStringArrayProperty shapeInstanceNamesProp;// Alembic::Abc::IStringArrayProperty( typedObject.getSchema(), ".instancenames" );
+		 if( getArbGeomParamPropertyAlembic( typedObject, ".shapetype", shapeTypeProp ) &&
+			 getArbGeomParamPropertyAlembic( typedObject, ".shapeinstanceid", shapeInstanceIDProp ) &&
+			 getArbGeomParamPropertyAlembic( typedObject, ".instancenames", shapeInstanceNamesProp ) ) {
+
             size_t minNumSamples = typedObject.getSchema().getNumSamples() == 1 ? typedObject.getSchema().getNumSamples() : ud->gMbKeys.size();
-            Alembic::Abc::IUInt16ArrayProperty shapeTypeProp = Alembic::Abc::IUInt16ArrayProperty( typedObject.getSchema(), ".shapetype" );
-            Alembic::Abc::IUInt16ArrayProperty shapeInstanceIDProp = Alembic::Abc::IUInt16ArrayProperty( typedObject.getSchema(), ".shapeinstanceid" );
-            Alembic::Abc::IStringArrayProperty shapeInstanceNamesProp = Alembic::Abc::IStringArrayProperty( typedObject.getSchema(), ".instancenames" );
             if(shapeTypeProp.getNumSamples() > 0 && shapeInstanceIDProp.getNumSamples() > 0 && shapeInstanceNamesProp.getNumSamples() > 0)
             {
                // check all of the nodes to be instanced
@@ -677,172 +677,120 @@ static int Init(AtNode *mynode, void **user_ptr)
                }
 
                // store the scale
-               if ( typedObject.getSchema().getPropertyHeader( ".scale" ) != NULL )
-               {
-                  Alembic::Abc::IV3fArrayProperty prop = Alembic::Abc::IV3fArrayProperty( typedObject.getSchema(), ".scale" );
-                  if(prop.valid())
-                  {
-                     if(prop.getNumSamples() > 0)
-                     {
-                        for(size_t j=0;j<minNumSamples;j++)
-                        {
-                          SampleInfo sampleInfo = getSampleInfo(
-                              ud->gMbKeys[j],
-                              prop.getTimeSampling(),
-                              prop.getNumSamples()
-                           );
-                           cloudInfo.scale.push_back(prop.getValue(sampleInfo.floorIndex));
-                           cloudInfo.scale.push_back(prop.getValue(sampleInfo.ceilIndex));
-                        }
-                     }
-                  }
+                 Alembic::Abc::IV3fArrayProperty propScale;
+			   if( getArbGeomParamPropertyAlembic( typedObject, ".scale", propScale ) ) {            
+                    for(size_t j=0;j<minNumSamples;j++)
+                    {
+                      SampleInfo sampleInfo = getSampleInfo(
+                          ud->gMbKeys[j],
+                          propScale.getTimeSampling(),
+                          propScale.getNumSamples()
+                       );
+                       cloudInfo.scale.push_back(propScale.getValue(sampleInfo.floorIndex));
+                       cloudInfo.scale.push_back(propScale.getValue(sampleInfo.ceilIndex));
+                    }
                }
 
                // store the orientation
-               if ( typedObject.getSchema().getPropertyHeader( ".orientation" ) != NULL )
-               {
-                  Alembic::Abc::IQuatfArrayProperty prop = Alembic::Abc::IQuatfArrayProperty( typedObject.getSchema(), ".orientation" );
-                  if(prop.valid())
-                  {
-                     if(prop.getNumSamples() > 0)
-                     {
-                        for(size_t j=0;j<minNumSamples;j++)
-                        {
-                          SampleInfo sampleInfo = getSampleInfo(
-                              ud->gMbKeys[j],
-                              prop.getTimeSampling(),
-                              prop.getNumSamples()
-                           );
-                           cloudInfo.rot.push_back(prop.getValue(sampleInfo.floorIndex));
-                        }
-                     }
-                  }
+			   Alembic::Abc::IQuatfArrayProperty propOrientation;
+			   if( getArbGeomParamPropertyAlembic( typedObject, ".orientation", propOrientation ) ) {
+					for(size_t j=0;j<minNumSamples;j++)
+					{
+					  SampleInfo sampleInfo = getSampleInfo(
+						  ud->gMbKeys[j],
+						  propOrientation.getTimeSampling(),
+						  propOrientation.getNumSamples()
+					   );
+					   cloudInfo.rot.push_back(propOrientation.getValue(sampleInfo.floorIndex));
+					}
                }
 
                // store the angular velocity
-               if ( typedObject.getSchema().getPropertyHeader( ".angularvelocity" ) != NULL )
-               {
-                  Alembic::Abc::IQuatfArrayProperty prop = Alembic::Abc::IQuatfArrayProperty( typedObject.getSchema(), ".angularvelocity" );
-                  if(prop.valid())
-                  {
-                     if(prop.getNumSamples() > 0)
-                     {
-                        for(size_t j=0;j<minNumSamples;j++)
-                        {
-                          SampleInfo sampleInfo = getSampleInfo(
-                              ud->gMbKeys[j],
-                              prop.getTimeSampling(),
-                              prop.getNumSamples()
-                           );
-                           cloudInfo.ang.push_back(prop.getValue(sampleInfo.floorIndex));
-                        }
-                     }
-                  }
+			   Alembic::Abc::IQuatfArrayProperty propAngularvelocity;
+			   if( getArbGeomParamPropertyAlembic( typedObject, ".angularvelocity", propAngularvelocity ) ) {            
+                    for(size_t j=0;j<minNumSamples;j++)
+                    {
+                      SampleInfo sampleInfo = getSampleInfo(
+                          ud->gMbKeys[j],
+                          propAngularvelocity.getTimeSampling(),
+                          propAngularvelocity.getNumSamples()
+                       );
+                       cloudInfo.ang.push_back(propAngularvelocity.getValue(sampleInfo.floorIndex));
+                    }
                }
 
                // store the age
-               if ( typedObject.getSchema().getPropertyHeader( ".age" ) != NULL )
-               {
-                  Alembic::Abc::IFloatArrayProperty prop = Alembic::Abc::IFloatArrayProperty( typedObject.getSchema(), ".age" );
-                  if(prop.valid())
-                  {
-                     if(prop.getNumSamples() > 0)
-                     {
-                        for(size_t j=0;j<minNumSamples;j++)
-                        {
-                          SampleInfo sampleInfo = getSampleInfo(
-                              ud->gMbKeys[j],
-                              prop.getTimeSampling(),
-                              prop.getNumSamples()
-                           );
-                           cloudInfo.age.push_back(prop.getValue(sampleInfo.floorIndex));
-                        }
-                     }
-                  }
+                Alembic::Abc::IFloatArrayProperty propAge;
+			   if( getArbGeomParamPropertyAlembic( typedObject, ".age", propAge ) ) {            
+                    for(size_t j=0;j<minNumSamples;j++)
+                    {
+                      SampleInfo sampleInfo = getSampleInfo(
+                          ud->gMbKeys[j],
+                          propAge.getTimeSampling(),
+                          propAge.getNumSamples()
+                       );
+                       cloudInfo.age.push_back(propAge.getValue(sampleInfo.floorIndex));
+                    }
                }
 
                // store the mass
-               if ( typedObject.getSchema().getPropertyHeader( ".mass" ) != NULL )
-               {
-                  Alembic::Abc::IFloatArrayProperty prop = Alembic::Abc::IFloatArrayProperty( typedObject.getSchema(), ".mass" );
-                  if(prop.valid())
-                  {
-                     if(prop.getNumSamples() > 0)
-                     {
-                        for(size_t j=0;j<minNumSamples;j++)
-                        {
-                          SampleInfo sampleInfo = getSampleInfo(
-                              ud->gMbKeys[j],
-                              prop.getTimeSampling(),
-                              prop.getNumSamples()
-                           );
-                           cloudInfo.mass.push_back(prop.getValue(sampleInfo.floorIndex));
-                        }
-                     }
-                  }
+                 Alembic::Abc::IFloatArrayProperty propMass;
+			   if( getArbGeomParamPropertyAlembic( typedObject, ".mass", propMass ) ) {            
+                    for(size_t j=0;j<minNumSamples;j++)
+                    {
+                      SampleInfo sampleInfo = getSampleInfo(
+                          ud->gMbKeys[j],
+                          propMass.getTimeSampling(),
+                          propMass.getNumSamples()
+                       );
+                       cloudInfo.mass.push_back(propMass.getValue(sampleInfo.floorIndex));
+                    }
                }
 
                // store the shape id
-               if ( typedObject.getSchema().getPropertyHeader( ".shapeinstanceid" ) != NULL )
-               {
-                  Alembic::Abc::IUInt16ArrayProperty prop = Alembic::Abc::IUInt16ArrayProperty( typedObject.getSchema(), ".shapeinstanceid" );
-                  if(prop.valid())
-                  {
-                     if(prop.getNumSamples() > 0)
-                     {
-                        for(size_t j=0;j<minNumSamples;j++)
-                        {
-                          SampleInfo sampleInfo = getSampleInfo(
-                              ud->gMbKeys[j],
-                              prop.getTimeSampling(),
-                              prop.getNumSamples()
-                           );
-                           cloudInfo.shape.push_back(prop.getValue(sampleInfo.floorIndex));
-                        }
-                     }
-                  }
+               Alembic::Abc::IUInt16ArrayProperty propShapeInstanceID;
+			   if( getArbGeomParamPropertyAlembic( typedObject, ".shapeinstanceid", propShapeInstanceID ) ) {            
+         
+                    for(size_t j=0;j<minNumSamples;j++)
+                    {
+                      SampleInfo sampleInfo = getSampleInfo(
+                          ud->gMbKeys[j],
+                          propShapeInstanceID.getTimeSampling(),
+                          propShapeInstanceID.getNumSamples()
+                       );
+                       cloudInfo.shape.push_back(propShapeInstanceID.getValue(sampleInfo.floorIndex));
+                    }
                }
 
                // store the shape time
-               if ( typedObject.getSchema().getPropertyHeader( ".shapetime" ) != NULL )
-               {
-                  Alembic::Abc::IFloatArrayProperty prop = Alembic::Abc::IFloatArrayProperty( typedObject.getSchema(), ".shapetime" );
-                  if(prop.valid())
-                  {
-                     if(prop.getNumSamples() > 0)
-                     {
-                        SampleInfo sampleInfo = getSampleInfo(
-                           ud->gCentroidTime,
-                           prop.getTimeSampling(),
-                           prop.getNumSamples()
-                        );
-                        cloudInfo.time.push_back(prop.getValue(sampleInfo.floorIndex));
-                        cloudInfo.timeAlpha = (float)sampleInfo.alpha;
-                        if(sampleInfo.alpha != 0.0)
-                           cloudInfo.time.push_back(prop.getValue(sampleInfo.ceilIndex));
-                     }
-                  }
+                 Alembic::Abc::IFloatArrayProperty propShapeTime;
+			   if( getArbGeomParamPropertyAlembic( typedObject, ".shapetime", propShapeTime ) ) {            
+     
+                    SampleInfo sampleInfo = getSampleInfo(
+                       ud->gCentroidTime,
+                       propShapeTime.getTimeSampling(),
+                       propShapeTime.getNumSamples()
+                    );
+                    cloudInfo.time.push_back(propShapeTime.getValue(sampleInfo.floorIndex));
+                    cloudInfo.timeAlpha = (float)sampleInfo.alpha;
+                    if(sampleInfo.alpha != 0.0)
+                       cloudInfo.time.push_back(propShapeTime.getValue(sampleInfo.ceilIndex));
+                  
                }
 
                // store the color
-               if ( typedObject.getSchema().getPropertyHeader( ".color" ) != NULL )
-               {
-                  Alembic::Abc::IC4fArrayProperty prop = Alembic::Abc::IC4fArrayProperty( typedObject.getSchema(), ".color" );
-                  if(prop.valid())
-                  {
-                     if(prop.getNumSamples() > 0)
-                     {
-                        for(size_t j=0;j<minNumSamples;j++)
-                        {
-                          SampleInfo sampleInfo = getSampleInfo(
-                              ud->gMbKeys[j],
-                              prop.getTimeSampling(),
-                              prop.getNumSamples()
-                           );
-                           cloudInfo.color.push_back(prop.getValue(sampleInfo.floorIndex));
-                        }
-                     }
-                  }
+                   Alembic::Abc::IC4fArrayProperty propColor;
+			   if( getArbGeomParamPropertyAlembic( typedObject, ".color", propColor ) ) {            
+
+                    for(size_t j=0;j<minNumSamples;j++)
+                    {
+                      SampleInfo sampleInfo = getSampleInfo(
+                          ud->gMbKeys[j],
+                          propColor.getTimeSampling(),
+                          propColor.getNumSamples()
+                       );
+                       cloudInfo.color.push_back(propColor.getValue(sampleInfo.floorIndex));
+                    }
                }
 
                // now check if we have the time offsets, and if so let's export all of these master nodes as well
@@ -1937,10 +1885,9 @@ static AtNode *GetNode(void *user_ptr, int i)
             AiNodeSetArray(shapeNode,"num_points",numPoints);
 
             // check if we have a radius
-            if( typedObject.getSchema().getPropertyHeader( ".radius" ) != NULL )
-            {
-               Alembic::Abc::IFloatArrayProperty prop = Alembic::Abc::IFloatArrayProperty( typedObject.getSchema(), ".radius" );
-               Alembic::Abc::FloatArraySamplePtr abcRadius = prop.getValue(sampleInfo.floorIndex);
+            Alembic::Abc::IFloatArrayProperty propRadius;
+			if( getArbGeomParamPropertyAlembic_Permissive( typedObject, ".radius", propRadius ) ) {            
+               Alembic::Abc::FloatArraySamplePtr abcRadius = propRadius.getValue(sampleInfo.floorIndex);
 
                AtArray * radius = AiArrayAllocate((AtInt)abcRadius->size(),1,AI_TYPE_FLOAT);
                for(size_t i=0;i<abcRadius->size();i++)
@@ -1968,10 +1915,9 @@ static AtNode *GetNode(void *user_ptr, int i)
             }
 
             // check if we have colors
-            if ( typedObject.getSchema().getPropertyHeader( ".color" ) != NULL )
-            {
-               Alembic::Abc::IC4fArrayProperty prop = Alembic::Abc::IC4fArrayProperty( typedObject.getSchema(), ".color" );
-               Alembic::Abc::C4fArraySamplePtr abcColors = prop.getValue(sampleInfo.floorIndex);
+            Alembic::Abc::IC4fArrayProperty propColor;
+			if( getArbGeomParamPropertyAlembic_Permissive( typedObject, ".color", propColor ) ) {            
+               Alembic::Abc::C4fArraySamplePtr abcColors = propColor.getValue(sampleInfo.floorIndex);
                AtBoolean result = false;
                if(abcColors->size() == 1)
                   result = AiNodeDeclare(shapeNode, "Color", "constant RGBA");
@@ -2141,10 +2087,9 @@ static AtNode *GetNode(void *user_ptr, int i)
             }
 
             // check if we have colors
-            if ( typedObject.getSchema().getPropertyHeader( ".color" ) != NULL )
-            {
-               Alembic::Abc::IC4fArrayProperty prop = Alembic::Abc::IC4fArrayProperty( typedObject.getSchema(), ".color" );
-               Alembic::Abc::C4fArraySamplePtr abcColors = prop.getValue(sampleInfo.floorIndex);
+            Alembic::Abc::IC4fArrayProperty propColor;
+			if( getArbGeomParamPropertyAlembic_Permissive( typedObject, ".color", propColor ) ) {            
+               Alembic::Abc::C4fArraySamplePtr abcColors = propColor.getValue(sampleInfo.floorIndex);
                AtBoolean result = false;
                if(abcColors->size() == 1)
                   result = AiNodeDeclare(shapeNode, "Color", "constant RGBA");
