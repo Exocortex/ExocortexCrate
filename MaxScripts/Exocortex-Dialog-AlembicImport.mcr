@@ -1,7 +1,7 @@
 ---------------------------------------------------------------------------------------------------------
 -- Custom import/export dialog with settings
 
-rollout AlembicImportSettings "Alembic Import Settings" width:288 height:236
+rollout AlembicImportSettings "Alembic Import Settings" width:288 height:150
 (
     local filename
 
@@ -11,15 +11,15 @@ rollout AlembicImportSettings "Alembic Import Settings" width:288 height:236
     --checkbox clustersCheckbox "Clusters" pos:[48,64] width:200 height:15 checked:true
 	checkbox attachCheckbox "Attach to existing objects" pos:[48,64] width:200 height:15 checked:true
 
-	button importButton "Import" pos:[16,200] width:64 height:24
-	button cancelButton "Cancel" pos:[208,200] width:64 height:24
-	GroupBox grpVisibility "Visibility" pos:[9,121] width:272 height:46
-	dropdownList dropDownVis "" pos:[20,140] width:252 height:21 items:#("Just Import Value", "Connected Controllers") selection:1
+	button importButton "Import" pos:[16,120] width:64 height:24
+	button cancelButton "Cancel" pos:[208,120] width:64 height:24
+	--GroupBox grpVisibility "Visibility" pos:[9,121] width:272 height:46
+	--dropdownList dropDownVis "" pos:[20,140] width:252 height:21 items:#("Just Import Value", "Connected Controllers") selection:1
 	checkbox materialIdsCheckbox "Material Ids" pos:[48,82] width:145 height:16 checked:true
 
 	on importButton pressed do
 	(
-	    result = ExocortexAlembic.import filename normalCheckbox.checked uvCheckbox.checked materialIdsCheckbox.checked attachCheckbox.checked dropDownVis.selection
+	    result = ExocortexAlembic.import filename normalCheckbox.checked uvCheckbox.checked materialIdsCheckbox.checked attachCheckbox.checked 0
 	    if( result != 0 ) do
 	    (
 	    	messageBox "Failure - See Maxscript Listener for details." title:"Exocortex Alembic Import"
