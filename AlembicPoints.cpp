@@ -15,21 +15,21 @@ AlembicPoints::AlembicPoints(const MObject & in_Ref, AlembicWriteJob * in_Job)
 
    mSchema = mObject.getSchema();
 
-   mAgeProperty = Alembic::Abc::OFloatArrayProperty(mSchema, ".age", mSchema.getMetaData(), GetJob()->GetAnimatedTs() );
-   mMassProperty = Alembic::Abc::OFloatArrayProperty(mSchema, ".mass", mSchema.getMetaData(), GetJob()->GetAnimatedTs() );
-   mColorProperty = Alembic::Abc::OC4fArrayProperty(mSchema, ".color", mSchema.getMetaData(), GetJob()->GetAnimatedTs() );
+   mAgeProperty = Alembic::Abc::OFloatArrayProperty(mSchema.getArbGeomParams(), ".age", mSchema.getMetaData(), GetJob()->GetAnimatedTs() );
+   mMassProperty = Alembic::Abc::OFloatArrayProperty(mSchema.getArbGeomParams(), ".mass", mSchema.getMetaData(), GetJob()->GetAnimatedTs() );
+   mColorProperty = Alembic::Abc::OC4fArrayProperty(mSchema.getArbGeomParams(), ".color", mSchema.getMetaData(), GetJob()->GetAnimatedTs() );
 
    /*
    // create all properties
-   mInstancenamesProperty = OStringArrayProperty(mSchema, ".instancenames", mSchema.getMetaData(), GetJob()->GetAnimatedTs() );
+   mInstancenamesProperty = OStringArrayProperty(mSchema.getArbGeomParams(), ".instancenames", mSchema.getMetaData(), GetJob()->GetAnimatedTs() );
 
    // particle attributes
-   mScaleProperty = OV3fArrayProperty(mSchema, ".scale", mSchema.getMetaData(), GetJob()->GetAnimatedTs() );
-   mOrientationProperty = OQuatfArrayProperty(mSchema, ".orientation", mSchema.getMetaData(), GetJob()->GetAnimatedTs() );
-   mAngularVelocityProperty = OQuatfArrayProperty(mSchema, ".angularvelocity", mSchema.getMetaData(), GetJob()->GetAnimatedTs() );
-   mShapeTypeProperty = OUInt16ArrayProperty(mSchema, ".shapetype", mSchema.getMetaData(), GetJob()->GetAnimatedTs() );
-   mShapeTimeProperty = OFloatArrayProperty(mSchema, ".shapetime", mSchema.getMetaData(), GetJob()->GetAnimatedTs() );
-   mShapeInstanceIDProperty = OUInt16ArrayProperty(mSchema, ".shapeinstanceid", mSchema.getMetaData(), GetJob()->GetAnimatedTs() );
+   mScaleProperty = OV3fArrayProperty(mSchema.getArbGeomParams(), ".scale", mSchema.getMetaData(), GetJob()->GetAnimatedTs() );
+   mOrientationProperty = OQuatfArrayProperty(mSchema.getArbGeomParams(), ".orientation", mSchema.getMetaData(), GetJob()->GetAnimatedTs() );
+   mAngularVelocityProperty = OQuatfArrayProperty(mSchema.getArbGeomParams(), ".angularvelocity", mSchema.getMetaData(), GetJob()->GetAnimatedTs() );
+   mShapeTypeProperty = OUInt16ArrayProperty(mSchema.getArbGeomParams(), ".shapetype", mSchema.getMetaData(), GetJob()->GetAnimatedTs() );
+   mShapeTimeProperty = OFloatArrayProperty(mSchema.getArbGeomParams(), ".shapetime", mSchema.getMetaData(), GetJob()->GetAnimatedTs() );
+   mShapeInstanceIDProperty = OUInt16ArrayProperty(mSchema.getArbGeomParams(), ".shapeinstanceid", mSchema.getMetaData(), GetJob()->GetAnimatedTs() );
    */
 }
 
@@ -221,6 +221,28 @@ MStatus AlembicPointsNode::initialize()
    return status;
 }
 
+
+template<class OBJTYPE, class DATATYPE>
+bool getArbGeomParamPropertyAlembic( OBJTYPE obj, std::string name, Alembic::Abc::ITypedArrayProperty<DATATYPE> &pOut ) {
+	if ( obj.getSchema().getPropertyHeader( name ) != NULL ) {
+		Alembic::Abc::ITypedArrayProperty<DATATYPE> prop = Alembic::Abc::ITypedArrayProperty<DATATYPE>( obj.getSchema(), name );
+		if( prop.valid() && prop.getNumSamples() > 0 ) {
+			pOut = prop;
+			return true;
+		}
+	}
+	if ( obj.getSchema().getArbGeomParams().getPropertyHeader( name ) != NULL ) {
+		Alembic::Abc::ITypedArrayProperty<DATATYPE> prop = Alembic::Abc::ITypedArrayProperty<DATATYPE>( obj.getSchema().getArbGeomParams(), name );
+		if( prop.valid() && prop.getNumSamples() > 0 ) {
+			pOut = prop;
+			return true;
+		}
+	}
+
+	return false;
+}
+
+
 MStatus AlembicPointsNode::compute(const MPlug & plug, MDataBlock & dataBlock)
 {
    if ( !( plug == mOutput ) )
@@ -250,6 +272,8 @@ MStatus AlembicPointsNode::compute(const MPlug & plug, MDataBlock & dataBlock)
    MString & fileName = dataBlock.inputValue(mFileNameAttr).asString();
    MString & identifier = dataBlock.inputValue(mIdentifierAttr).asString();
 
+    Alembic::AbcGeom::IPoints obj;
+
    // check if we have the file
    if(fileName != mFileName || identifier != mIdentifier)
    {
@@ -269,7 +293,7 @@ MStatus AlembicPointsNode::compute(const MPlug & plug, MDataBlock & dataBlock)
          MGlobal::displayWarning("[ExocortexAlembic] Identifier '"+identifier+"' not found in archive '"+mFileName+"'.");
          return MStatus::kFailure;
       }
-      Alembic::AbcGeom::IPoints obj(iObj,Alembic::Abc::kWrapExisting);
+      obj = Alembic::AbcGeom::IPoints(iObj,Alembic::Abc::kWrapExisting);
       if(!obj.valid())
       {
          MGlobal::displayWarning("[ExocortexAlembic] Identifier '"+identifier+"' in archive '"+mFileName+"' is not a Points.");
@@ -302,41 +326,21 @@ MStatus AlembicPointsNode::compute(const MPlug & plug, MDataBlock & dataBlock)
    Alembic::Abc::UInt64ArraySamplePtr sampleIds = sample.getIds();
    Alembic::Abc::P3fArraySamplePtr samplePos = sample.getPositions();
    Alembic::Abc::V3fArraySamplePtr sampleVel = sample.getVelocities();
+
    Alembic::Abc::C4fArraySamplePtr sampleColor;
-   if ( mSchema.getPropertyHeader( ".color" ) != NULL )
-   {
-      Alembic::Abc::IC4fArrayProperty prop = Alembic::Abc::IC4fArrayProperty( mSchema, ".color" );
-      if(prop.valid())
-      {
-         if(prop.getNumSamples() > 0)
-         {
-            sampleColor = prop.getValue(sampleInfo.floorIndex);
-         }
-      }
+   Alembic::Abc::IC4fArrayProperty propColor;
+   if( getArbGeomParamPropertyAlembic( obj, ".color", propColor ) ) {
+	   sampleColor = propColor.getValue(sampleInfo.floorIndex);
    }
    Alembic::Abc::FloatArraySamplePtr sampleAge;
-   if ( mSchema.getPropertyHeader( ".age" ) != NULL )
-   {
-      Alembic::Abc::IFloatArrayProperty prop = Alembic::Abc::IFloatArrayProperty( mSchema, ".age" );
-      if(prop.valid())
-      {
-         if(prop.getNumSamples() > 0)
-         {
-            sampleAge = prop.getValue(sampleInfo.floorIndex);
-         }
-      }
+   Alembic::Abc::IFloatArrayProperty propAge;
+   if( getArbGeomParamPropertyAlembic( obj, ".age", propAge ) ) {
+	   sampleAge = propAge.getValue(sampleInfo.floorIndex);
    }
    Alembic::Abc::FloatArraySamplePtr sampleMass;
-   if ( mSchema.getPropertyHeader( ".mass" ) != NULL )
-   {
-      Alembic::Abc::IFloatArrayProperty prop = Alembic::Abc::IFloatArrayProperty( mSchema, ".mass" );
-      if(prop.valid())
-      {
-         if(prop.getNumSamples() > 0)
-         {
-            sampleMass = prop.getValue(sampleInfo.floorIndex);
-         }
-      }
+  Alembic::Abc::IFloatArrayProperty propMass;
+   if( getArbGeomParamPropertyAlembic( obj, ".mass", propMass ) ) {
+       sampleMass = propMass.getValue(sampleInfo.floorIndex);
    }
 
    // get the current values from the particle cloud
