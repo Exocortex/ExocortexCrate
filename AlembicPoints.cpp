@@ -222,27 +222,6 @@ MStatus AlembicPointsNode::initialize()
 }
 
 
-template<class OBJTYPE, class DATATYPE>
-bool getArbGeomParamPropertyAlembic( OBJTYPE obj, std::string name, Alembic::Abc::ITypedArrayProperty<DATATYPE> &pOut ) {
-	if ( obj.getSchema().getPropertyHeader( name ) != NULL ) {
-		Alembic::Abc::ITypedArrayProperty<DATATYPE> prop = Alembic::Abc::ITypedArrayProperty<DATATYPE>( obj.getSchema(), name );
-		if( prop.valid() && prop.getNumSamples() > 0 ) {
-			pOut = prop;
-			return true;
-		}
-	}
-	if ( obj.getSchema().getArbGeomParams().getPropertyHeader( name ) != NULL ) {
-		Alembic::Abc::ITypedArrayProperty<DATATYPE> prop = Alembic::Abc::ITypedArrayProperty<DATATYPE>( obj.getSchema().getArbGeomParams(), name );
-		if( prop.valid() && prop.getNumSamples() > 0 ) {
-			pOut = prop;
-			return true;
-		}
-	}
-
-	return false;
-}
-
-
 MStatus AlembicPointsNode::compute(const MPlug & plug, MDataBlock & dataBlock)
 {
    if ( !( plug == mOutput ) )
