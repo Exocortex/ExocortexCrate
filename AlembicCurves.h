@@ -12,9 +12,9 @@ private:
    Alembic::AbcGeom::XformSample mXformSample;
    Alembic::AbcGeom::OCurvesSchema::Sample mCurvesSample;
 
-   Alembic::Abc::ALEMBIC_VERSION_NS::OV3fArrayProperty mVelocityProperty;
-   Alembic::Abc::ALEMBIC_VERSION_NS::OFloatArrayProperty mRadiusProperty;
-   Alembic::Abc::ALEMBIC_VERSION_NS::OC4fArrayProperty mColorProperty;
+   //Alembic::Abc::ALEMBIC_VERSION_NS::OV3fArrayProperty mVelocityProperty;
+   //Alembic::Abc::ALEMBIC_VERSION_NS::OFloatArrayProperty mRadiusProperty;
+   //Alembic::Abc::ALEMBIC_VERSION_NS::OC4fArrayProperty mColorProperty;
    //Alembic::Abc::ALEMBIC_VERSION_NS::OV3fArrayProperty mInTangentProperty;
    //Alembic::Abc::ALEMBIC_VERSION_NS::OV3fArrayProperty mOutTangentProperty;
 

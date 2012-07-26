@@ -186,7 +186,7 @@ void AlembicParticles::UpdateParticles(TimeValue t, INode *node)
         return;
     }
 
-	float fSampleTime = (float) GetTimeValueFromSeconds( fTime );
+	int iSampleTime = GetTimeValueFromSeconds( fTime );
 
 	m_currTick = t;
 
@@ -194,7 +194,7 @@ void AlembicParticles::UpdateParticles(TimeValue t, INode *node)
 
     Alembic::AbcGeom::IPointsSchema::Sample floorSample;
     Alembic::AbcGeom::IPointsSchema::Sample ceilSample;
-    SampleInfo sampleInfo = GetSampleAtTime(m_iPoints, fSampleTime, floorSample, ceilSample);
+    SampleInfo sampleInfo = GetSampleAtTime(m_iPoints, iSampleTime, floorSample, ceilSample);
 
     int numParticles = GetNumParticles(floorSample);
     parts.SetCount(numParticles, PARTICLE_VELS | PARTICLE_AGES | PARTICLE_RADIUS);
@@ -571,26 +571,6 @@ AlembicParticles::GetParticleRadii(Alembic::AbcGeom::IPoints &iPoints, const Sam
 			radius[i] = 1.0f;
 		}
 	}
-}
-
-template<class OBJTYPE, class DATATYPE>
-bool getArbGeomParamPropertyAlembic( OBJTYPE obj, std::string name, Alembic::Abc::ITypedArrayProperty<DATATYPE> &pOut ) {
-	if ( obj.getSchema().getPropertyHeader( name ) != NULL ) {
-		Alembic::Abc::ITypedArrayProperty<DATATYPE> prop = Alembic::Abc::ITypedArrayProperty<DATATYPE>( obj.getSchema(), name );
-		if( prop.valid() && prop.getNumSamples() > 0 ) {
-			pOut = prop;
-			return true;
-		}
-	}
-	if ( obj.getSchema().getArbGeomParams().getPropertyHeader( name ) != NULL ) {
-		Alembic::Abc::ITypedArrayProperty<DATATYPE> prop = Alembic::Abc::ITypedArrayProperty<DATATYPE>( obj.getSchema().getArbGeomParams(), name );
-		if( prop.valid() && prop.getNumSamples() > 0 ) {
-			pOut = prop;
-			return true;
-		}
-	}
-
-	return false;
 }
 
 void
