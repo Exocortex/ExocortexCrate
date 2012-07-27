@@ -34,6 +34,8 @@ public:
 	void SetID(int id);
 };
 
+SceneEntry createSceneEntry(INode* node, TimeValue time, std::string* pFullname);
+
 class SceneEnumProc : public ITreeEnumProc 
 {
 public:

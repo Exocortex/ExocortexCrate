@@ -21,6 +21,71 @@ void SceneEntry::SetID(int id)
     this->id = id; 
 }
 
+SceneEntry createSceneEntry(INode* node, TimeValue time, std::string* pFullname)
+{
+	ESS_CPP_EXCEPTION_REPORTING_START
+
+	Object *obj = node->EvalWorldState(time).obj;
+    SClass_ID superClassID = obj->SuperClassID();
+    Class_ID classID = obj->ClassID();
+
+    if (obj->IsParticleSystem()){
+        return SceneEntry(node, obj, OBTYPE_POINTS, pFullname);
+    }
+
+	if (obj->IsShapeObject() == FALSE &&
+        (obj->CanConvertToType(polyObjectClassID) || 
+         obj->CanConvertToType(triObjectClassID))){
+		return SceneEntry(node, obj, OBTYPE_MESH, pFullname);
+	}
+
+	if (node->IsTarget()) 
+    {
+		INode* ln = node->GetLookatNode();
+		if (ln) 
+        {
+			Object *lobj = ln->EvalWorldState(time).obj;
+			switch(lobj->SuperClassID()) 
+            {
+				case LIGHT_CLASS_ID:  return SceneEntry(node, obj, OBTYPE_LTARGET, pFullname); break;
+				case CAMERA_CLASS_ID: return SceneEntry(node, obj, OBTYPE_CTARGET, pFullname); break;
+			}
+		}
+	}
+
+	switch (superClassID) 
+    { 
+		case HELPER_CLASS_ID:
+			if (classID == Class_ID(DUMMY_CLASS_ID, 0))
+            {
+				return SceneEntry(node, obj, OBTYPE_DUMMY, pFullname);
+            }
+			break;
+		case LIGHT_CLASS_ID: 
+            {
+                /* LIGHT */
+                break;
+            }
+		case CAMERA_CLASS_ID:
+			if (classID == Class_ID(LOOKAT_CAM_CLASS_ID, 0) ||
+                classID == Class_ID(SIMPLE_CAM_CLASS_ID, 0))
+            {
+				return SceneEntry(node, obj, OBTYPE_CAMERA, pFullname);
+            }
+			break;
+        case SHAPE_CLASS_ID:
+            if (obj->IsShapeObject() == TRUE)
+            {
+                return SceneEntry(node, obj, OBTYPE_CURVES, pFullname);
+            }
+            break;
+	}
+
+	ESS_CPP_EXCEPTION_REPORTING_END
+
+	return SceneEntry();
+}
+
 
 SceneEnumProc::SceneEnumProc()
 {
@@ -40,72 +105,12 @@ SceneEnumProc::~SceneEnumProc()
 
 int SceneEnumProc::callback(INode *node) 
 {
-	ESS_CPP_EXCEPTION_REPORTING_START
-
-	Object *obj = node->EvalWorldState(time).obj;
-    SClass_ID superClassID = obj->SuperClassID();
-    Class_ID classID = obj->ClassID();
-
-    if (obj->IsParticleSystem())
-    {
-        Append(node, obj, OBTYPE_POINTS, 0);
-        return TREE_CONTINUE;
-    }
-
-	if (obj->IsShapeObject() == FALSE &&
-        (obj->CanConvertToType(polyObjectClassID) || 
-         obj->CanConvertToType(triObjectClassID))) 
-    {
-		Append(node, obj, OBTYPE_MESH, 0);
-		return TREE_CONTINUE;
+	SceneEntry sEntry = createSceneEntry(node, time, 0);
+	
+	if(sEntry.node){
+		this->sceneEntries.push_back(sEntry);
 	}
-
-	if (node->IsTarget()) 
-    {
-		INode* ln = node->GetLookatNode();
-		if (ln) 
-        {
-			Object *lobj = ln->EvalWorldState(time).obj;
-			switch(lobj->SuperClassID()) 
-            {
-				case LIGHT_CLASS_ID:  Append(node, obj, OBTYPE_LTARGET, 0); break;
-				case CAMERA_CLASS_ID: Append(node, obj, OBTYPE_CTARGET, 0); break;
-			}
-		}
-		return TREE_CONTINUE;
-	}
-
-	switch (superClassID) 
-    { 
-		case HELPER_CLASS_ID:
-			if (classID == Class_ID(DUMMY_CLASS_ID, 0))
-            {
-				Append(node, obj, OBTYPE_DUMMY, 0);
-            }
-			break;
-		case LIGHT_CLASS_ID: 
-            {
-                /* LIGHT */
-                break;
-            }
-		case CAMERA_CLASS_ID:
-			if (classID == Class_ID(LOOKAT_CAM_CLASS_ID, 0) ||
-                classID == Class_ID(SIMPLE_CAM_CLASS_ID, 0))
-            {
-				Append(node, obj, OBTYPE_CAMERA, 0);
-            }
-			break;
-        case SHAPE_CLASS_ID:
-            if (obj->IsShapeObject() == TRUE)
-            {
-                Append(node, obj, OBTYPE_CURVES, 0);
-            }
-            break;
-	}
-
-	ESS_CPP_EXCEPTION_REPORTING_END
-
-
+	
 	return TREE_CONTINUE;
 }
 
