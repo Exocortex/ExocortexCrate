@@ -48,11 +48,13 @@ bool getArbGeomParamPropertyAlembic_Permissive( OBJTYPE obj, std::string name, A
 			return true;
 		}
 	}
-	if ( obj.getSchema().getArbGeomParams().getPropertyHeader( name ) != NULL ) {
-		Alembic::Abc::ITypedArrayProperty<DATATYPE> prop = Alembic::Abc::ITypedArrayProperty<DATATYPE>( obj.getSchema().getArbGeomParams(), name );
-		if( prop.valid() ) {
-			pOut = prop;
-			return true;
+	if( obj.getSchema().getArbGeomParams() != NULL ) {
+		if ( obj.getSchema().getArbGeomParams().getPropertyHeader( name ) != NULL ) {
+			Alembic::Abc::ITypedArrayProperty<DATATYPE> prop = Alembic::Abc::ITypedArrayProperty<DATATYPE>( obj.getSchema().getArbGeomParams(), name );
+			if( prop.valid() ) {
+				pOut = prop;
+				return true;
+			}
 		}
 	}
 
