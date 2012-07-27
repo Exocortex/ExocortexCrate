@@ -1,4 +1,4 @@
----------------------------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------------------------------
 -- Custom import/export dialog with settings
 
 rollout AlembicExportSettings "Alembic Export Settings" width:288 height:388
@@ -33,7 +33,31 @@ rollout AlembicExportSettings "Alembic Export Settings" width:288 height:388
 	    filename = getSaveFileName caption:"Export to Alembic File:" types:"Alembic(*.abc)|*.abc|All(*.*)|*.*" historyCategory:"Alembic"
 	    if (filename != undefined) do
 	    (
-	        result = ExocortexAlembic.export filename inSpinner.value outSpinner.value stepsSpinner.value subStepsSpinner.value meshTopologyDropDown.selection uvCheckbox.checked materialIdsCheckbox.checked envelopeCheckbox.checked dynamicTopologyCheckbox.checked exportSelectedCheckbox.checked flattenHierarchyCheckbox.checked exportAsSingleMeshCheckbox.checked
+
+
+	    	jobString = "filename=" + (filename as string)
+	    	jobString += ";in=" + (inSpinner.value as string)
+	    	jobString += ";out=" + (outSpinner.value as string)
+	    	jobString += ";step=" + (stepsSpinner.value as string)
+	    	jobString += ";substep=" + (subStepsSpinner.value as string)
+	    	if(meshTopologyDropDown.selection == 2) do jobString += ";purepointcache=true"
+	    	if(meshTopologyDropDown.selection == 3) do jobString += ";normals=true"
+	    	jobString += ";uvs=" 
+	    	jobString += (uvCheckbox.checked as string)
+	    	jobString += ";materialids=" 
+	    	jobString += (materialIdsCheckbox.checked as string)
+	    	jobString += ";bindpose=" 
+	    	jobString += (envelopeCheckbox.checked as string)
+	    	jobString += ";dynamictopology=" 
+	    	jobString += (dynamicTopologyCheckbox.checked as string)
+	    	jobString += ";exportselected=" 
+	    	jobString += (exportSelectedCheckbox.checked as string)
+	    	jobString += ";flattenhierarchy=" 
+	    	jobString += (flattenHierarchyCheckbox.checked as string)
+	    	jobString += ";particlesystemtomeshconversion=" 
+	    	jobString += (exportAsSingleMeshCheckbox.checked as string)
+
+	    	result = ExocortexAlembic.createExportJobs(jobString)
 	        if( result != 0 ) do
 	        (
 	            	messageBox "Failure - See Maxscript Listener for details." title:"Exocortex Alembic Export"
