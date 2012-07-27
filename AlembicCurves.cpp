@@ -37,10 +37,10 @@ AlembicCurves::AlembicCurves(const SceneEntry &in_Ref, AlembicWriteJob * in_Job)
    mCurvesSchema = curves.getSchema();
 
    // create all properties
-   //mInTangentProperty = OV3fArrayProperty(mCurvesSchema, ".inTangent", mCurvesSchema.getMetaData(), GetCurrentJob()->GetAnimatedTs() );
-   //mOutTangentProperty = OV3fArrayProperty(mCurvesSchema, ".outTangent", mCurvesSchema.getMetaData(), GetCurrentJob()->GetAnimatedTs() );
-   mRadiusProperty = OFloatArrayProperty(mCurvesSchema, ".radius", mCurvesSchema.getMetaData(), GetCurrentJob()->GetAnimatedTs() );
-   mColorProperty = OC4fArrayProperty(mCurvesSchema, ".color", mCurvesSchema.getMetaData(), GetCurrentJob()->GetAnimatedTs() );
+   //mInTangentProperty = OV3fArrayProperty(mCurvesSchema.getArbGeomParams(), ".inTangent", mCurvesSchema.getMetaData(), GetCurrentJob()->GetAnimatedTs() );
+   //mOutTangentProperty = OV3fArrayProperty(mCurvesSchema.getArbGeomParams(), ".outTangent", mCurvesSchema.getMetaData(), GetCurrentJob()->GetAnimatedTs() );
+   //mRadiusProperty = OFloatArrayProperty(mCurvesSchema.getArbGeomParams(), ".radius", mCurvesSchema.getMetaData(), GetCurrentJob()->GetAnimatedTs() );
+   //mColorProperty = OC4fArrayProperty(mCurvesSchema.getArbGeomParams(), ".color", mCurvesSchema.getMetaData(), GetCurrentJob()->GetAnimatedTs() );
 }
 
 AlembicCurves::~AlembicCurves()
@@ -77,11 +77,7 @@ bool AlembicCurves::Save(double time, bool bLastFrame)
 
 	SaveMetaData(GetRef().node, this);
 
-    // store the metadata
-    // IMetaDataManager mng;
-    // mng.GetMetaData(GetRef().node, 0);
-    // SaveMetaData(prim.GetParent3DObject().GetRef(),this);
-
+ 
     // set the visibility
     if(!bForever || mNumSamples == 0)
     {
@@ -105,7 +101,6 @@ bool AlembicCurves::Save(double time, bool bLastFrame)
     bool bBezier = false;
 
     // Get a pointer to the spline shpae
-    //Object *obj = GetRef().node->EvalWorldState(ticks).obj;
     ShapeObject *pShapeObject = NULL;
     if (obj->IsShapeObject())
     {
@@ -178,18 +173,7 @@ bool AlembicCurves::Save(double time, bool bLastFrame)
 
     // allocate the points and normals
     std::vector<Alembic::Abc::V3f> posVec(vertCount);
-    std::vector<Alembic::Abc::V3f> posInTangent(inTangents.size());
-    std::vector<Alembic::Abc::V3f> posOutTangent(outTangents.size());
-    Matrix3 wm = GetRef().node->GetObjTMAfterWSM(ticks);
-
-	for(int i=0;i<inTangents.size();i++)
-    {
-        posInTangent[i] = ConvertMaxPointToAlembicPoint(inTangents[i] );
-	}
-	for(int i=0;i<outTangents.size();i++)
-    {
-        posOutTangent[i] = ConvertMaxPointToAlembicPoint(outTangents[i] );
-	}
+   Matrix3 wm = GetRef().node->GetObjTMAfterWSM(ticks);
 
     for(int i=0;i<vertCount;i++)
     {
@@ -223,331 +207,9 @@ bool AlembicCurves::Save(double time, bool bLastFrame)
     Alembic::Abc::P3fArraySample posSample(&posVec.front(),posVec.size());
 	mCurvesSample.setPositions(posSample);
 
-	/*if( posInTangent.size() == posVec.size() ) {
-		assert( posInTangent.size() == posOutTangent.size() );
-		Alembic::Abc::V3fArraySample inTangentSample = Alembic::Abc::V3fArraySample(&posInTangent.front(),posInTangent.size());
-		mInTangentProperty.set(inTangentSample);
-
-	    Alembic::Abc::V3fArraySample outTangentSample = Alembic::Abc::V3fArraySample(&posOutTangent.front(),posOutTangent.size());
-	    mOutTangentProperty.set(outTangentSample);
-	}*/
 
     mCurvesSchema.set(mCurvesSample);
 
-   /*else if(prim.GetType().IsEqualNoCase(L"hair"))
-   {
-      HairPrimitive hairPrim(GetRef());
-      LONG totalHairs = prim.GetParameterValue(L"TotalHairs");
-      CRenderHairAccessor accessor = hairPrim.GetRenderHairAccessor(totalHairs,totalHairs,time);
-      accessor.Next();
-
-      CFloatArray hairPos;
-      CStatus result = accessor.GetVertexPositions(hairPos);
-
-      // prepare the bounding box
-      Alembic::Abc::Box3d bbox;
-
-      ULONG vertCount = hairPos.GetCount();
-      vertCount /= 3;
-      std::vector<Alembic::Abc::V3f> posVec(vertCount);
-      ULONG offset = 0;
-      for(ULONG i=0;i<vertCount;i++)
-      {
-         posVec[i].x = hairPos[offset++];
-         posVec[i].y = hairPos[offset++];
-         posVec[i].z = hairPos[offset++];
-         bbox.extendBy(posVec[i]);
-      }
-      mCurvesSample.setPositions(Alembic::Abc::P3fArraySample(&posVec.front(),posVec.size()));
-      hairPos.Clear();
-
-      // store the bbox
-      mCurvesSample.setSelfBounds(bbox);
-
-      // if we are the first frame!
-      if(mNumSamples == 0)
-      {
-         CLongArray hairCount;
-         accessor.GetVerticesCount(hairCount);
-         mNbVertices.resize((size_t)hairCount.GetCount());
-         for(LONG i=0;i<hairCount.GetCount();i++)
-            mNbVertices[i] = (int32_t)hairCount[i];
-         mCurvesSample.setCurvesNumVertices(Alembic::Abc::Int32ArraySample(&mNbVertices.front(),mNbVertices.size()));
-         hairCount.Clear();
-
-         // set the type + wrapping
-         mCurvesSample.setType(kLinear);
-         mCurvesSample.setWrap(kNonPeriodic);
-         mCurvesSample.setBasis(kNoBasis);
-
-         // store the hair radius
-         CFloatArray hairRadius;
-         accessor.GetVertexRadiusValues(hairRadius);
-         mRadiusVec.resize((size_t)hairRadius.GetCount());
-         for(LONG i=0;i<hairRadius.GetCount();i++)
-            mRadiusVec[i] = hairRadius[i];
-         mRadiusProperty.set(Alembic::Abc::FloatArraySample(&mRadiusVec.front(),mRadiusVec.size()));
-         hairRadius.Clear();
-
-         // store the hair color (if any)
-         if(accessor.GetVertexColorCount() > 0)
-         {
-            CFloatArray hairColor;
-            accessor.GetVertexColorValues(0,hairColor);
-            mColorVec.resize((size_t)hairColor.GetCount()/4);
-            ULONG offset = 0;
-            for(size_t i=0;i<mColorVec.size();i++)
-            {
-               mColorVec[i].r = hairColor[offset++];
-               mColorVec[i].g = hairColor[offset++];
-               mColorVec[i].b = hairColor[offset++];
-               mColorVec[i].a = hairColor[offset++];
-            }
-            mColorProperty.set(Alembic::Abc::C4fArraySample(&mColorVec.front(),mColorVec.size()));
-            hairColor.Clear();
-         }
-
-         // store the hair color (if any)
-         if(accessor.GetUVCount() > 0)
-         {
-            CFloatArray hairUV;
-            accessor.GetUVValues(0,hairUV);
-            mUvVec.resize((size_t)hairUV.GetCount()/3);
-            ULONG offset = 0;
-            for(size_t i=0;i<mUvVec.size();i++)
-            {
-               mUvVec[i].x = hairUV[offset++];
-               mUvVec[i].y = 1.0f - hairUV[offset++];
-               offset++;
-            }
-            mCurvesSample.setUVs(Alembic::AbcGeom::OV2fGeomParam::Sample(Alembic::Abc::V2fArraySample(&mUvVec.front(),mUvVec.size()),Alembic::AbcGeom::kVertexScope));
-            hairUV.Clear();
-         }
-      }
-      mCurvesSchema.set(mCurvesSample);
-   }
-   else if(prim.GetType().IsEqualNoCase(L"pointcloud"))
-   {
-      // prepare the bounding box
-      Alembic::Abc::Box3d bbox;
-
-      Geometry geo = prim.GetGeometry(time);
-      ICEAttribute attr = geo.GetICEAttributeFromName(L"StrandPosition");
-      size_t vertexCount = 0;
-      std::vector<Alembic::Abc::V3f> posVec;
-      if(attr.IsDefined() && attr.IsValid())
-      {
-         CICEAttributeDataArray2DVector3f data;
-         attr.GetDataArray2D(data);
-
-         CICEAttributeDataArrayVector3f sub;
-         mNbVertices.resize(data.GetCount());
-         for(ULONG i=0;i<data.GetCount();i++)
-         {
-            data.GetSubArray(i,sub);
-            vertexCount += sub.GetCount();
-            mNbVertices[i] = (int32_t)sub.GetCount();
-         }
-         mCurvesSample.setCurvesNumVertices(Alembic::Abc::Int32ArraySample(&mNbVertices.front(),mNbVertices.size()));
-
-         // set wrap parameters
-         mCurvesSample.setType(kLinear);
-         mCurvesSample.setWrap(kNonPeriodic);
-         mCurvesSample.setBasis(kNoBasis);
-
-         posVec.resize(vertexCount);
-         size_t offset = 0;
-         for(ULONG i=0;i<data.GetCount();i++)
-         {
-            data.GetSubArray(i,sub);
-            for(ULONG j=0;j<sub.GetCount();j++)
-            {
-               posVec[offset].x = (float)sub[j].GetX();
-               posVec[offset].y = (float)sub[j].GetY();
-               posVec[offset].z = (float)sub[j].GetZ();
-               bbox.extendBy(posVec[offset]);
-               offset++;
-            }
-         }
-
-         if(vertexCount > 0)
-            mCurvesSample.setPositions(Alembic::Abc::P3fArraySample(&posVec.front(),posVec.size()));
-         else
-            mCurvesSample.setPositions(Alembic::Abc::P3fArraySample());
-      }
-
-      // store the bbox
-      mCurvesSample.setSelfBounds(bbox);
-
-      if(vertexCount > 0)
-      {
-         ICEAttribute attr = geo.GetICEAttributeFromName(L"StrandSize");
-         if(attr.IsDefined() && attr.IsValid())
-         {
-            CICEAttributeDataArray2DFloat data;
-            attr.GetDataArray2D(data);
-
-            CICEAttributeDataArrayFloat sub;
-
-            mRadiusVec.resize(vertexCount);
-            size_t offset = 0;
-            for(ULONG i=0;i<data.GetCount();i++)
-            {
-               data.GetSubArray(data.IsConstant() ? 0 : i,sub);
-               for(ULONG j=0;j<sub.GetCount();j++)
-                  mRadiusVec[offset++] = (float)sub[j];
-            }
-            mRadiusProperty.set(Alembic::Abc::FloatArraySample(&mRadiusVec.front(),mRadiusVec.size()));
-         }
-         else
-         {
-            attr = geo.GetICEAttributeFromName(L"Size");
-            if(attr.IsDefined() && attr.IsValid())
-            {
-               CICEAttributeDataArrayFloat data;
-               attr.GetDataArray(data);
-
-               mRadiusVec.resize(data.GetCount());
-               for(ULONG i=0;i<data.GetCount();i++)
-                  mRadiusVec[i] = (float)data[data.IsConstant() ? 0 : i];
-               mRadiusProperty.set(Alembic::Abc::FloatArraySample(&mRadiusVec.front(),mRadiusVec.size()));
-            }
-         }
-
-         attr = geo.GetICEAttributeFromName(L"StrandColor");
-         if(attr.IsDefined() && attr.IsValid())
-         {
-            CICEAttributeDataArray2DColor4f data;
-            attr.GetDataArray2D(data);
-
-            CICEAttributeDataArrayColor4f sub;
-
-            mColorVec.resize(vertexCount);
-            size_t offset = 0;
-            for(ULONG i=0;i<data.GetCount();i++)
-            {
-               data.GetSubArray(data.IsConstant() ? 0 : i,sub);
-               for(ULONG j=0;j<sub.GetCount();j++)
-               {
-                  mColorVec[offset].r = (float)sub[j].GetR();
-                  mColorVec[offset].g = (float)sub[j].GetG();
-                  mColorVec[offset].b = (float)sub[j].GetB();
-                  mColorVec[offset].a = (float)sub[j].GetA();
-                  offset++;
-               }
-            }
-            mColorProperty.set(Alembic::Abc::C4fArraySample(&mColorVec.front(),mColorVec.size()));
-         }
-         else
-         {
-            attr = geo.GetICEAttributeFromName(L"Color");
-            if(attr.IsDefined() && attr.IsValid())
-            {
-               CICEAttributeDataArrayColor4f data;
-               attr.GetDataArray(data);
-
-               mColorVec.resize(data.GetCount());
-               for(ULONG i=0;i<data.GetCount();i++)
-               {
-                  mColorVec[i].r = (float)data[i].GetR();
-                  mColorVec[i].g = (float)data[i].GetG();
-                  mColorVec[i].b = (float)data[i].GetB();
-                  mColorVec[i].a = (float)data[i].GetA();
-               }
-               mColorProperty.set(Alembic::Abc::C4fArraySample(&mColorVec.front(),mColorVec.size()));
-            }
-         }
-
-         attr = geo.GetICEAttributeFromName(L"StrandUVs");
-         if(attr.IsDefined() && attr.IsValid())
-         {
-            CICEAttributeDataArray2DVector2f data;
-            attr.GetDataArray2D(data);
-
-            CICEAttributeDataArrayVector2f sub;
-
-            mUvVec.resize(vertexCount);
-            size_t offset = 0;
-            for(ULONG i=0;i<data.GetCount();i++)
-            {
-               data.GetSubArray(data.IsConstant() ? 0 : i,sub);
-               for(ULONG j=0;j<sub.GetCount();j++)
-               {
-                  mUvVec[offset].x = (float)sub[j].GetX();
-                  mUvVec[offset].y = (float)sub[j].GetY();
-                  offset++;
-               }
-            }
-            mCurvesSample.setUVs(Alembic::AbcGeom::OV2fGeomParam::Sample(Alembic::Abc::V2fArraySample(&mUvVec.front(),mUvVec.size()),Alembic::AbcGeom::kVertexScope));
-         }
-         else
-         {
-            attr = geo.GetICEAttributeFromName(L"UVs");
-            if(attr.IsDefined() && attr.IsValid())
-            {
-               CICEAttributeDataArrayVector2f data;
-               attr.GetDataArray(data);
-
-               mUvVec.resize(data.GetCount());
-               for(ULONG i=0;i<data.GetCount();i++)
-               {
-                  mUvVec[i].x = (float)data[i].GetX();
-                  mUvVec[i].y = (float)data[i].GetY();
-               }
-               mCurvesSample.setUVs(Alembic::AbcGeom::OV2fGeomParam::Sample(Alembic::Abc::V2fArraySample(&mUvVec.front(),mUvVec.size()),Alembic::AbcGeom::kVertexScope));
-            }
-         }
-
-         attr = geo.GetICEAttributeFromName(L"StrandVelocity");
-         if(attr.IsDefined() && attr.IsValid())
-         {
-            float fps = (float)CTime().GetFrameRate();
-            CICEAttributeDataArray2DVector3f data;
-            attr.GetDataArray2D(data);
-
-            CICEAttributeDataArrayVector3f sub;
-
-            mVelVec.resize(vertexCount);
-            size_t offset = 0;
-            for(ULONG i=0;i<data.GetCount();i++)
-            {
-               data.GetSubArray(data.IsConstant() ? 0 : i,sub);
-               for(ULONG j=0;j<sub.GetCount();j++)
-               {
-                  mVelVec[offset].x = sub[j].GetX() / fps;
-                  mVelVec[offset].y = sub[j].GetY() / fps;
-                  mVelVec[offset].z = sub[j].GetZ() / fps;
-                  offset++;
-               }
-            }
-            mCurvesSample.setVelocities(Alembic::Abc::V3fArraySample(&mVelVec.front(),mVelVec.size()));
-         }
-         else
-         {
-            attr = geo.GetICEAttributeFromName(L"PointVelocity");
-            if(attr.IsDefined() && attr.IsValid())
-            {
-               float fps = (float)CTime().GetFrameRate();
-               CICEAttributeDataArrayVector3f data;
-               attr.GetDataArray(data);
-
-               mVelVec.resize(data.GetCount());
-               for(ULONG i=0;i<data.GetCount();i++)
-               {
-                  mVelVec[i].x = data[i].GetX() / fps;
-                  mVelVec[i].y = data[i].GetY() / fps;
-                  mVelVec[i].z = data[i].GetZ() / fps;
-               }
-               mCurvesSample.setVelocities(Alembic::Abc::V3fArraySample(&mVelVec.front(),mVelVec.size()));
-            }
-         }
-      }
-      if(vertexCount > 0)
-      {
-         mCurvesSchema.set(mCurvesSample);
-      }
-   }
-   */
    mNumSamples++;
 
    return true;
