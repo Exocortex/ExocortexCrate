@@ -1179,7 +1179,11 @@ XSIPLUGINCALLBACK CStatus alembic_points_Evaluate(ICENodeContext& in_ctxt)
 
          IUInt16ArrayProperty shapeTypeProp;
 		 if( ! getArbGeomParamPropertyAlembic( obj, ".shapetype", shapeTypeProp ) ) {
-		    acc = outData.Resize(0,0);
+			acc = outData.Resize(0,(ULONG)sample.getPositions()->size());
+			for(ULONG i=0;i<acc.GetCount();i++) {
+				acc[i] = CShape(siICEShapePoint);
+			}
+		    //acc = outData.Resize(0,0);
 			return CStatus::OK;
 		 }
          /*if ( obj.getSchema().getPropertyHeader( ".shapetype" ) == NULL )
@@ -1377,7 +1381,11 @@ XSIPLUGINCALLBACK CStatus alembic_points_Evaluate(ICENodeContext& in_ctxt)
 
   		 IC4fArrayProperty prop;
 		 if( ! getArbGeomParamPropertyAlembic( obj, ".color", prop ) ) {
-		    acc = outData.Resize(0,0);
+			acc = outData.Resize(0,(ULONG)sample.getPositions()->size());
+			for(ULONG i=0;i<acc.GetCount();i++) {
+				acc[i] = CColor4f(1.0f,1.0f,0.0f,1.0f);
+			}
+		    //acc = outData.Resize(0,0);
 			return CStatus::OK;
 		 }
 
