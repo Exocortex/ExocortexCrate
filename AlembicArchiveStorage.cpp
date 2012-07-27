@@ -22,6 +22,14 @@ std::string resolvePath(std::string path)
 	return path;
 }
 
+bool archiveExists(std::string path)
+{
+   std::string resolvedPath = resolvePath(path);
+   std::map<std::string,AlembicArchiveInfo>::iterator it;
+   it = gArchives.find(resolvedPath);
+   return it != gArchives.end();
+}
+
 Alembic::Abc::IArchive * getArchiveFromID(std::string path)
 {
    std::string resolvedPath = resolvePath(path);
