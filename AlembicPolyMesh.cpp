@@ -1,5 +1,7 @@
 #include "AlembicPolyMesh.h"
 #include <maya/MFnMeshData.h>
+#include <maya/MFnSet.h>
+#include <maya/MItMeshPolygon.h>
 #include "MetaData.h"
 
 namespace AbcA = ::Alembic::AbcCoreAbstract::ALEMBIC_VERSION_NS;
@@ -25,6 +27,8 @@ MStatus AlembicPolyMesh::Save(double time)
 {
    // access the geometry
    MFnMesh node(GetRef());
+   MDagPath path;
+   node.getPath(path);
 
    // save the metadata
    SaveMetaData(this);
@@ -249,6 +253,25 @@ MStatus AlembicPolyMesh::Save(double time)
             for (unsigned int j = 0; j < numData; ++j)
                 faceVals[j] = arr[j];
 
+            Alembic::AbcGeom::OFaceSet faceSet = mSchema.createFaceSet(faceSetName);
+            Alembic::AbcGeom::OFaceSetSchema::Sample faceSetSample;
+            faceSetSample.setFaces(Alembic::Abc::Int32ArraySample(faceVals));
+            faceSet.getSchema().set(faceSetSample);
+         }
+
+         // more face sets, based on the material assignments
+         MObjectArray sets, comps;
+         unsigned int instanceNumber = path.instanceNumber();
+         node.getConnectedSetsAndMembers( instanceNumber, sets, comps, 1 );
+         for ( unsigned int i = 0; i < sets.length() ; i++ )
+         {
+            MFnSet setFn ( sets[i] );
+            MItMeshPolygon tempFaceIt ( path, comps[i] ); 
+            std::vector<Alembic::Util::int32_t> faceVals(tempFaceIt.count());
+            unsigned int j=0;
+            for ( ;!tempFaceIt.isDone() ; tempFaceIt.next() )
+               faceVals[j++] = tempFaceIt.index();
+            std::string faceSetName = setFn.name().asChar();
             Alembic::AbcGeom::OFaceSet faceSet = mSchema.createFaceSet(faceSetName);
             Alembic::AbcGeom::OFaceSetSchema::Sample faceSetSample;
             faceSetSample.setFaces(Alembic::Abc::Int32ArraySample(faceVals));
