@@ -678,7 +678,7 @@ static int Init(AtNode *mynode, void **user_ptr)
 
                // store the scale
                  Alembic::Abc::IV3fArrayProperty propScale;
-			   if( getArbGeomParamPropertyAlembic( typedObject, ".scale", propScale ) ) {            
+			   if( getArbGeomParamPropertyAlembic( typedObject, "scale", propScale ) ) {            
                     for(size_t j=0;j<minNumSamples;j++)
                     {
                       SampleInfo sampleInfo = getSampleInfo(
