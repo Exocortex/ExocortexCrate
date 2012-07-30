@@ -996,7 +996,7 @@ XSIPLUGINCALLBACK CStatus alembic_curves_Evaluate(ICENodeContext& in_ctxt)
          CDataArray2DVector3f::Accessor acc;
 
 		  IV3fArrayProperty prop;
-		  if( ! getArbGeomParamPropertyAlembic( obj, ".velocity", prop ) ) {
+		  if( ! getArbGeomParamPropertyAlembic( obj, "velocity", prop ) ) {
             acc = outData.Resize(0,0);
             return CStatus::OK;
          }
@@ -1052,7 +1052,7 @@ XSIPLUGINCALLBACK CStatus alembic_curves_Evaluate(ICENodeContext& in_ctxt)
          CDataArray2DFloat ::Accessor acc;
 
           IFloatArrayProperty prop;
-		  if( ! getArbGeomParamPropertyAlembic( obj, ".radius", prop ) ) {
+		  if( ! getArbGeomParamPropertyAlembic( obj, "radius", prop ) ) {
             acc = outData.Resize(0,0);
             return CStatus::OK;
          }
@@ -1095,7 +1095,7 @@ XSIPLUGINCALLBACK CStatus alembic_curves_Evaluate(ICENodeContext& in_ctxt)
          CDataArray2DColor4f::Accessor acc;
 
          IC4fArrayProperty prop;
-		  if( ! getArbGeomParamPropertyAlembic( obj, ".color", prop ) ) {
+		  if( ! getArbGeomParamPropertyAlembic( obj, "color", prop ) ) {
             acc = outData.Resize(0,0);
             return CStatus::OK;
          }

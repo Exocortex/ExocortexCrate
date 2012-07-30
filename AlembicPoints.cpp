@@ -537,7 +537,7 @@ XSI::CStatus AlembicPoints::Save(double time)
             if(mInstanceNames.size() > 0)
             {
                if(!mInstancenamesProperty)
-                  mInstancenamesProperty = OStringArrayProperty(mPointsSchema, ".instancenames", mPointsSchema.getMetaData(), GetJob()->GetAnimatedTs() );
+                  mInstancenamesProperty = OStringArrayProperty(mPointsSchema.getArbGeomParams(), "instancenames", mPointsSchema.getMetaData(), GetJob()->GetAnimatedTs() );
 
                std::vector<std::string> preRollVec(1,"");
                Alembic::Abc::StringArraySample preRollSample(preRollVec);
@@ -551,7 +551,7 @@ XSI::CStatus AlembicPoints::Save(double time)
                if(vec.size() > 0)
                {
                   if(!mShapeInstanceIDProperty)
-                     mShapeInstanceIDProperty = OUInt16ArrayProperty(mPointsSchema, ".shapeinstanceid", mPointsSchema.getMetaData(), GetJob()->GetAnimatedTs() );
+                     mShapeInstanceIDProperty = OUInt16ArrayProperty(mPointsSchema.getArbGeomParams(), "shapeinstanceid", mPointsSchema.getMetaData(), GetJob()->GetAnimatedTs() );
 
                   std::vector<uint16_t> preRollVec(1,0);
                   Alembic::Abc::UInt16ArraySample preRollSample(preRollVec);
@@ -573,7 +573,7 @@ XSI::CStatus AlembicPoints::Save(double time)
       if(attr.IsDefined() && attr.IsValid())
       {
          if(mNumSamples == 0)
-            mShapeTimeProperty = OFloatArrayProperty(mPointsSchema, ".shapetime", mPointsSchema.getMetaData(), GetJob()->GetAnimatedTs() );
+            mShapeTimeProperty = OFloatArrayProperty(mPointsSchema.getArbGeomParams(), "shapetime", mPointsSchema.getMetaData(), GetJob()->GetAnimatedTs() );
 
          if(attr.GetElementCount() > 0)
          {
@@ -903,7 +903,7 @@ XSIPLUGINCALLBACK CStatus alembic_points_Evaluate(ICENodeContext& in_ctxt)
          CDataArray2DVector3f::Accessor acc;
 
 		 IV3fArrayProperty prop;
-		 if( ! getArbGeomParamPropertyAlembic( obj, ".scale", prop ) ) {
+		 if( ! getArbGeomParamPropertyAlembic( obj, "scale", prop ) ) {
             acc = outData.Resize(0,0);
             return CStatus::OK;
          }
@@ -945,7 +945,7 @@ XSIPLUGINCALLBACK CStatus alembic_points_Evaluate(ICENodeContext& in_ctxt)
          CDataArray2DRotationf::Accessor acc;
 
          IQuatfArrayProperty prop;
-		 if( ! getArbGeomParamPropertyAlembic( obj, ".orientation", prop ) ) {
+		 if( ! getArbGeomParamPropertyAlembic( obj, "orientation", prop ) ) {
             acc = outData.Resize(0,0);
             return CStatus::OK;
          }
@@ -980,7 +980,7 @@ XSIPLUGINCALLBACK CStatus alembic_points_Evaluate(ICENodeContext& in_ctxt)
                float alpha = (float)sampleInfo.alpha;
 
 	            IQuatfArrayProperty velProp;
-				 if( ! getArbGeomParamPropertyAlembic( obj, ".angularvelocity", velProp ) ) {
+				 if( ! getArbGeomParamPropertyAlembic( obj, "angularvelocity", velProp ) ) {
 					acc = outData.Resize(0,0);
 					return CStatus::OK;
 				 }
@@ -1049,7 +1049,7 @@ XSIPLUGINCALLBACK CStatus alembic_points_Evaluate(ICENodeContext& in_ctxt)
          CDataArray2DRotationf::Accessor acc;
 
          IQuatfArrayProperty prop;
-		 if( ! getArbGeomParamPropertyAlembic( obj, ".angularvelocity", prop ) ) {
+		 if( ! getArbGeomParamPropertyAlembic( obj, "angularvelocity", prop ) ) {
 		    acc = outData.Resize(0,0);
 			return CStatus::OK;
 		 }
@@ -1094,7 +1094,7 @@ XSIPLUGINCALLBACK CStatus alembic_points_Evaluate(ICENodeContext& in_ctxt)
          CDataArray2DFloat ::Accessor acc;
 
          IFloatArrayProperty prop;
-		 if( ! getArbGeomParamPropertyAlembic( obj, ".age", prop ) ) {
+		 if( ! getArbGeomParamPropertyAlembic( obj, "age", prop ) ) {
 		    acc = outData.Resize(0,0);
 			return CStatus::OK;
 		 }
@@ -1136,7 +1136,7 @@ XSIPLUGINCALLBACK CStatus alembic_points_Evaluate(ICENodeContext& in_ctxt)
          CDataArray2DFloat ::Accessor acc;
 
          IFloatArrayProperty prop;
-		 if( ! getArbGeomParamPropertyAlembic( obj, ".mass", prop ) ) {
+		 if( ! getArbGeomParamPropertyAlembic( obj, "mass", prop ) ) {
 		    acc = outData.Resize(0,0);
 			return CStatus::OK;
 		 }
@@ -1178,7 +1178,7 @@ XSIPLUGINCALLBACK CStatus alembic_points_Evaluate(ICENodeContext& in_ctxt)
          CDataArray2DShape::Accessor acc;
 
          IUInt16ArrayProperty shapeTypeProp;
-		 if( ! getArbGeomParamPropertyAlembic( obj, ".shapetype", shapeTypeProp ) ) {
+		 if( ! getArbGeomParamPropertyAlembic( obj, "shapetype", shapeTypeProp ) ) {
 			acc = outData.Resize(0,(ULONG)sample.getPositions()->size());
 			for(ULONG i=0;i<acc.GetCount();i++) {
 				acc[i] = CShape(siICEShapePoint);
@@ -1272,12 +1272,12 @@ XSIPLUGINCALLBACK CStatus alembic_points_Evaluate(ICENodeContext& in_ctxt)
          CDataArray2DLong::Accessor acc;
 
 		 IUInt16ArrayProperty shapeTypeProp;
-		 if( ! getArbGeomParamPropertyAlembic( obj, ".shapetype", shapeTypeProp ) ) {
+		 if( ! getArbGeomParamPropertyAlembic( obj, "shapetype", shapeTypeProp ) ) {
 		    acc = outData.Resize(0,0);
 			return CStatus::OK;
 		 }
 		 IUInt16ArrayProperty shapeInstanceIDProp;
-		 if( ! getArbGeomParamPropertyAlembic( obj, ".shapeinstanceid", shapeInstanceIDProp ) ) {
+		 if( ! getArbGeomParamPropertyAlembic( obj, "shapeinstanceid", shapeInstanceIDProp ) ) {
 		    acc = outData.Resize(0,0);
 			return CStatus::OK;
 		 }
@@ -1337,7 +1337,7 @@ XSIPLUGINCALLBACK CStatus alembic_points_Evaluate(ICENodeContext& in_ctxt)
          CDataArray2DFloat ::Accessor acc;
 
  		 IFloatArrayProperty prop;
-		 if( ! getArbGeomParamPropertyAlembic( obj, ".shapetime", prop ) ) {
+		 if( ! getArbGeomParamPropertyAlembic( obj, "shapetime", prop ) ) {
 		    acc = outData.Resize(0,0);
 			return CStatus::OK;
 		 }
@@ -1380,7 +1380,7 @@ XSIPLUGINCALLBACK CStatus alembic_points_Evaluate(ICENodeContext& in_ctxt)
          CDataArray2DColor4f::Accessor acc;
 
   		 IC4fArrayProperty prop;
-		 if( ! getArbGeomParamPropertyAlembic( obj, ".color", prop ) ) {
+		 if( ! getArbGeomParamPropertyAlembic( obj, "color", prop ) ) {
 			acc = outData.Resize(0,(ULONG)sample.getPositions()->size());
 			for(ULONG i=0;i<acc.GetCount();i++) {
 				acc[i] = CColor4f(1.0f,1.0f,0.0f,1.0f);
