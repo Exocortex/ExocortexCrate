@@ -88,6 +88,7 @@ void AlembicPolyMesh::SaveMaterialsProperty(bool bFirstFrame, bool bLastFrame)
 
 bool AlembicPolyMesh::Save(double time, bool bLastFrame)
 {   
+	//this call is here to avoid reading pointers that are only valid on a single frame
 	mMeshSample.reset();
 
 	const bool bFirstFrame = mNumSamples == 0;
