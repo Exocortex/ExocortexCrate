@@ -640,7 +640,7 @@ MStatus AlembicCurvesLocatorNode::compute(const MPlug & plug, MDataBlock & dataB
       mColors.clear();
 
 	  Alembic::Abc::IC4fArrayProperty propColor;
-      if( ! getArbGeomParamPropertyAlembic( obj, ".color", propColor ) ) {          
+      if( ! getArbGeomParamPropertyAlembic( obj, "color", propColor ) ) {          
 		   SampleInfo colorSampleInfo = getSampleInfo(inputTime,propColor.getTimeSampling(),propColor.getNumSamples());
 		   Alembic::Abc::C4fArraySamplePtr sampleColor = propColor.getValue(colorSampleInfo.floorIndex);
 		   mColors.resize(mPositions.size());

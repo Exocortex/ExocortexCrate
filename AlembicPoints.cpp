@@ -309,17 +309,17 @@ MStatus AlembicPointsNode::compute(const MPlug & plug, MDataBlock & dataBlock)
 
    Alembic::Abc::C4fArraySamplePtr sampleColor;
    Alembic::Abc::IC4fArrayProperty propColor;
-   if( getArbGeomParamPropertyAlembic( obj, ".color", propColor ) ) {
+   if( getArbGeomParamPropertyAlembic( obj, "color", propColor ) ) {
 	   sampleColor = propColor.getValue(sampleInfo.floorIndex);
    }
    Alembic::Abc::FloatArraySamplePtr sampleAge;
    Alembic::Abc::IFloatArrayProperty propAge;
-   if( getArbGeomParamPropertyAlembic( obj, ".age", propAge ) ) {
+   if( getArbGeomParamPropertyAlembic( obj, "age", propAge ) ) {
 	   sampleAge = propAge.getValue(sampleInfo.floorIndex);
    }
    Alembic::Abc::FloatArraySamplePtr sampleMass;
   Alembic::Abc::IFloatArrayProperty propMass;
-   if( getArbGeomParamPropertyAlembic( obj, ".mass", propMass ) ) {
+   if( getArbGeomParamPropertyAlembic( obj, "mass", propMass ) ) {
        sampleMass = propMass.getValue(sampleInfo.floorIndex);
    }
 
