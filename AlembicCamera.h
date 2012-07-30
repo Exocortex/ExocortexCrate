@@ -43,7 +43,7 @@ private:
    // output attributes
    static MObject mOutFocalLengthAttr;
    static MObject mOutFocusDistanceAttr;
-   static MObject mOutAspectRatioAttr;
+   static MObject mOutLensSqueezeRatioAttr;
    static MObject mOutHorizontalApertureAttr;
    static MObject mOutVerticalApertureAttr;
    static MObject mOutHorizontalOffsetAttr;
