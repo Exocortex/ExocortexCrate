@@ -99,7 +99,7 @@ void AlembicImport_FillInXForm_Internal(alembic_fillxform_options &options)
     }
 }
 
-int AlembicImport_DummyNode(Alembic::AbcGeom::IObject& iObj, alembic_importoptions &options, INode** pMaxNode)
+int AlembicImport_DummyNode(Alembic::AbcGeom::IObject& iObj, alembic_importoptions &options, INode** pMaxNode, const std::string& importName)
 {
     Object* dObj = static_cast<Object*>(CreateInstance(HELPER_CLASS_ID, Class_ID(DUMMY_CLASS_ID,0)));
 	if (!dObj){
@@ -136,7 +136,7 @@ int AlembicImport_DummyNode(Alembic::AbcGeom::IObject& iObj, alembic_importoptio
 
     pDummy->EnableDisplay();
 
-    *pMaxNode = GET_MAX_INTERFACE()->CreateObjectNode(dObj, iObj.getName().c_str());
+    *pMaxNode = GET_MAX_INTERFACE()->CreateObjectNode(dObj, importName.c_str());
 
     SceneEntry *pEntry = options.sceneEnumProc.Append(*pMaxNode, dObj, OBTYPE_DUMMY, &std::string(iObj.getFullName())); 
     options.currentSceneList.Append(pEntry);
