@@ -165,6 +165,7 @@ global proc exocortexAlembicImport(string $filename, int $importNormals, int $im
         error ("Mesh '"+$name+"' not found for purepointcache alembic import.");
         return;
       }
+      sets -e -forceElement initialShadingGroup $shape;
       if($dynamictopology == 1)
         $reader = exocortexCreateOrReuseNode($name+".inMesh","ExocortexAlembicPolyMesh",$importAttach,1,1);
       else
@@ -199,6 +200,7 @@ global proc exocortexAlembicImport(string $filename, int $importNormals, int $im
         error ("Subdiv '"+$name+"' not found for purepointcache alembic import.");
         return;
       }
+      sets -e -forceElement initialShadingGroup $shape;
       if($dynamictopology == 1)
         $reader = exocortexCreateOrReuseNode($name+".create","ExocortexAlembicSubD",$importAttach,1,1);
       else
