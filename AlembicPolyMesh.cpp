@@ -3,6 +3,7 @@
 #include <maya/MFnSet.h>
 #include <maya/MItMeshPolygon.h>
 #include "MetaData.h"
+#include <sstream>
 
 namespace AbcA = ::Alembic::AbcCoreAbstract::ALEMBIC_VERSION_NS;
 using namespace AbcA;
@@ -227,6 +228,7 @@ MStatus AlembicPolyMesh::Save(double time)
       }
 
       // loop for facesets
+      std::map<std::string,unsigned int> setNameMap;
       std::size_t attrCount = node.attributeCount();
       for (unsigned int i = 0; i < attrCount; ++i)
       {
@@ -238,6 +240,7 @@ MStatus AlembicPolyMesh::Save(double time)
          if (!mfnAttr.isReadable() || plug.isNull())
             continue;
 
+
          MString propName = plug.partialName(0, 0, 0, 0, 0, 1);
          std::string propStr = propName.asChar();
          if (propStr.substr(0, 8) == "FACESET_")
@@ -247,7 +250,19 @@ MStatus AlembicPolyMesh::Save(double time)
             if (status != MS::kSuccess)
                 continue;
 
+            // ensure the faceSetName is unique
             std::string faceSetName = propStr.substr(8);
+            int suffixId = 1;
+            std::string suffix;
+            while(setNameMap.find(faceSetName+suffix) != setNameMap.end()) {
+               std::stringstream out;
+               out << suffixId;
+               suffix = out.str();
+               suffixId++;
+            }
+            faceSetName += suffix;
+            setNameMap.insert(std::pair<std::string, unsigned int>(faceSetName, (unsigned int)setNameMap.size()));
+
             std::size_t numData = arr.length();
             std::vector<Alembic::Util::int32_t> faceVals(numData);
             for (unsigned int j = 0; j < numData; ++j)
@@ -258,25 +273,38 @@ MStatus AlembicPolyMesh::Save(double time)
             faceSetSample.setFaces(Alembic::Abc::Int32ArraySample(faceVals));
             faceSet.getSchema().set(faceSetSample);
          }
+      }
 
-         // more face sets, based on the material assignments
-         MObjectArray sets, comps;
-         unsigned int instanceNumber = path.instanceNumber();
-         node.getConnectedSetsAndMembers( instanceNumber, sets, comps, 1 );
-         for ( unsigned int i = 0; i < sets.length() ; i++ )
-         {
-            MFnSet setFn ( sets[i] );
-            MItMeshPolygon tempFaceIt ( path, comps[i] ); 
-            std::vector<Alembic::Util::int32_t> faceVals(tempFaceIt.count());
-            unsigned int j=0;
-            for ( ;!tempFaceIt.isDone() ; tempFaceIt.next() )
-               faceVals[j++] = tempFaceIt.index();
-            std::string faceSetName = setFn.name().asChar();
-            Alembic::AbcGeom::OFaceSet faceSet = mSchema.createFaceSet(faceSetName);
-            Alembic::AbcGeom::OFaceSetSchema::Sample faceSetSample;
-            faceSetSample.setFaces(Alembic::Abc::Int32ArraySample(faceVals));
-            faceSet.getSchema().set(faceSetSample);
+      // more face sets, based on the material assignments
+      MObjectArray sets, comps;
+      unsigned int instanceNumber = path.instanceNumber();
+      node.getConnectedSetsAndMembers( instanceNumber, sets, comps, 1 );
+      for ( unsigned int i = 0; i < sets.length() ; i++ )
+      {
+         MFnSet setFn ( sets[i] );
+         MItMeshPolygon tempFaceIt ( path, comps[i] ); 
+         std::vector<Alembic::Util::int32_t> faceVals(tempFaceIt.count());
+         unsigned int j=0;
+         for ( ;!tempFaceIt.isDone() ; tempFaceIt.next() )
+            faceVals[j++] = tempFaceIt.index();
+
+         // ensure the faceSetName is unique
+         std::string faceSetName = setFn.name().asChar();
+         int suffixId = 1;
+         std::string suffix;
+         while(setNameMap.find(faceSetName+suffix) != setNameMap.end()) {
+            std::stringstream out;
+            out << suffixId;
+            suffix = out.str();
+            suffixId++;
          }
+         faceSetName += suffix;
+         setNameMap.insert(std::pair<std::string, unsigned int>(faceSetName, (unsigned int)setNameMap.size()));
+
+         Alembic::AbcGeom::OFaceSet faceSet = mSchema.createFaceSet(faceSetName);
+         Alembic::AbcGeom::OFaceSetSchema::Sample faceSetSample;
+         faceSetSample.setFaces(Alembic::Abc::Int32ArraySample(faceVals));
+         faceSet.getSchema().set(faceSetSample);
       }
    }
 
