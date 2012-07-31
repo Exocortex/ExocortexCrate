@@ -308,7 +308,7 @@ bool getParticleSystemMesh(TimeValue ticks, Object* obj, INode* node, Intermedia
 			for(int j=0; j<pMesh->getNumVerts(); j++){
 				Imath::V3f meshVertex = ConvertMaxPointToAlembicPoint(pMesh->getVert(j) * meshTM);//the mesh vertex in particle system space
 				Imath::V3f vVelocity = meshVertex * mAngularVelocity;
-				mesh->mVelocitiesVec.push_back(vVelocity/* + pVelocity*/);
+				mesh->mVelocitiesVec.push_back(pVelocity /*+ vVelocity*/);
 			}
 
 
