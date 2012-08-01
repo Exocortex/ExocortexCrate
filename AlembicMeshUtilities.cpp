@@ -158,9 +158,9 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
 
 
    int nTicks = options.dTicks;
-   float fTimeAlpha = 0.0f;
+   float fRoundedTimeAlpha = 0.0f;
    if(options.nDataFillFlags & ALEMBIC_DATAFILL_IGNORE_SUBFRAME_SAMPLES){
-      RoundTicksToNearestFrame(nTicks, fTimeAlpha);
+      RoundTicksToNearestFrame(nTicks, fRoundedTimeAlpha);
    }
   double sampleTime = GetSecondsFromTimeValue(nTicks);
 
@@ -244,7 +244,8 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
 		   }
 
 		   // blend - either between samples or using point velocities
-		   if(sampleInfo.alpha != 0.0 || ((options.nDataFillFlags & ALEMBIC_DATAFILL_IGNORE_SUBFRAME_SAMPLES) && fTimeAlpha != 0.0f))
+		   if( ((options.nDataFillFlags & ~ALEMBIC_DATAFILL_IGNORE_SUBFRAME_SAMPLES) && sampleInfo.alpha != 0.0f ) || 
+			   ((options.nDataFillFlags & ALEMBIC_DATAFILL_IGNORE_SUBFRAME_SAMPLES) && fRoundedTimeAlpha != 0.0f ) )
 		   {
 			   bool bSampleInterpolate = false;
 			   bool bVelInterpolate = false;
@@ -288,7 +289,7 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
 
 				  float timeAlpha;
 				  if(options.nDataFillFlags & ALEMBIC_DATAFILL_IGNORE_SUBFRAME_SAMPLES){
-				      timeAlpha = fTimeAlpha;	
+				      timeAlpha = fRoundedTimeAlpha;	
 				  }
 				  else if( objMesh.valid() ) {
 					  timeAlpha = (float)(objMesh.getSchema().getTimeSampling()->getSampleTime(sampleInfo.ceilIndex) - 
