@@ -18,12 +18,15 @@ ClassDesc2* GetAlembicMeshGeomModifierClassDesc() {return &AlembicMeshGeomModifi
 
 //--- Properties block -------------------------------
 
+static const int ALEMBIC_MESH_GEOMETRY_MODIFIER_VERSION = 1;
+
 static ParamBlockDesc2 AlembicMeshGeomModifierParams(
 	0,
 	_T(ALEMBIC_MESH_GEOM_MODIFIER_SCRIPTNAME),
 	0,
 	GetAlembicMeshGeomModifierClassDesc(),
-	P_AUTO_CONSTRUCT | P_AUTO_UI,
+	P_AUTO_CONSTRUCT | P_AUTO_UI | P_VERSION,
+	ALEMBIC_MESH_GEOMETRY_MODIFIER_VERSION,
 	0,
 
 	// rollout description 
@@ -56,6 +59,11 @@ static ParamBlockDesc2 AlembicMeshGeomModifierParams(
 	AlembicMeshGeomModifier::ID_MUTED, _T("muted"), TYPE_BOOL, P_ANIMATABLE, IDS_MUTED,
 		p_default,       TRUE,
 		p_ui,            TYPE_SINGLECHEKBOX,  IDC_MUTED_CHECKBOX,
+		p_end,
+
+	AlembicMeshGeomModifier::ID_ADDITIVE, _T("additive"), TYPE_BOOL, P_ANIMATABLE, IDS_ADDITIVE,
+		p_default,       FALSE,
+		p_ui,            TYPE_SINGLECHEKBOX,  IDC_ADDITIVE_CHECKBOX,
 		p_end,
 
 	p_end
@@ -134,6 +142,9 @@ void AlembicMeshGeomModifier::ModifyObject (TimeValue t, ModContext &mc, ObjectS
 	BOOL bMuted;
 	this->pblock->GetValue( AlembicMeshGeomModifier::ID_MUTED, t, bMuted, interval);
 	
+	BOOL bAdditive;
+	this->pblock->GetValue( AlembicMeshGeomModifier::ID_ADDITIVE, t, bAdditive, interval);
+
 	//ESS_LOG_INFO( "AlembicMeshGeomModifier::ModifyObject strPath: " << strPath << " strIdentifier: " << strIdentifier << " fTime: " << fTime << 
 	//	" bTopology: " << bTopology << " bGeometry: " << bGeometry << " bNormals: " << bNormals << " bUVs: " << bUVs << " bMuted: " << bMuted );
 
@@ -175,7 +186,13 @@ void AlembicMeshGeomModifier::ModifyObject (TimeValue t, ModContext &mc, ObjectS
    options.dTicks = GetTimeValueFromSeconds( fTime );
    options.nDataFillFlags = 0;
    options.fVertexAlpha = fGeoAlpha;
-    if( bTopology ) {
+   if(bAdditive == TRUE){
+       options.bAdditive = true;
+   }
+   else{
+       options.bAdditive = false;
+   }
+   if( bTopology ) {
 	   options.nDataFillFlags |= ALEMBIC_DATAFILL_FACELIST;
 		options.nDataFillFlags |= ALEMBIC_DATAFILL_MATERIALIDS;
    }

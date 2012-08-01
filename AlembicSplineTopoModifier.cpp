@@ -66,7 +66,7 @@ static ParamBlockDesc2 AlembicSplineTopoModifierParams(
 		p_ui,            TYPE_SINGLECHEKBOX,  IDC_MUTED_CHECKBOX,
 		p_end,
 
-	AlembicSplineTopoModifier::ID_IGNORE_SUBFRAME_SAMPLES, _T("Ignore subframe samples"), TYPE_BOOL, P_ANIMATABLE, IDS_MUTED,
+	AlembicSplineTopoModifier::ID_IGNORE_SUBFRAME_SAMPLES, _T("Ignore subframe samples"), TYPE_BOOL, P_ANIMATABLE, IDS_IGNORE_SUBFRAME_SAMPLES,
 		p_default,       FALSE,
 		p_ui,            TYPE_SINGLECHEKBOX,  IDC_IGNORE_SUBFRAME_SAMPLES,
 		p_end,

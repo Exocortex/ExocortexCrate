@@ -229,7 +229,7 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
 		validateMeshes( options, "ALEMBIC_DATAFILL_FACELIST | ALEMBIC_DATAFILL_VERTEX" );
    }
 
-   if (( options.nDataFillFlags & ALEMBIC_DATAFILL_VERTEX ) || ( options.nDataFillFlags & ALEMBIC_DATAFILL_FACELIST ) )
+   if ( options.nDataFillFlags & ALEMBIC_DATAFILL_VERTEX )
    {
 	   Imath::V3f const* pPositionArray = ( meshPos.get() != NULL ) ? meshPos->get() : NULL;
 	   Imath::V3f const* pVelocityArray = ( meshVel.get() != NULL ) ? meshVel->get() : NULL;
@@ -316,10 +316,14 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
 		 
 		   for(int i=0;i<vArray.size();i++)
 		   {
-			   pMeshVerties[i].p = ConvertAlembicPointToMaxPoint(vArray[i] );
+			   if( options.bAdditive ) {
+				   pMeshVerties[i].p += ConvertAlembicPointToMaxPoint(vArray[i]);
+			   }
+			   else {
+				   pMeshVerties[i].p = ConvertAlembicPointToMaxPoint(vArray[i]);
+			   }
 		   }
-		 
-			validateMeshes( options, "ALEMBIC_DATAFILL_VERTEX" );
+		   validateMeshes( options, "ALEMBIC_DATAFILL_VERTEX" );
 	   }
     }
 
