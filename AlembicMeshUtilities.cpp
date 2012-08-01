@@ -156,7 +156,13 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
    if(!objMesh.valid() && !objSubD.valid())
        return;
 
-  double sampleTime = GetSecondsFromTimeValue(options.dTicks);
+
+   int nTicks = options.dTicks;
+   float fTimeAlpha = 0.0f;
+   if(options.nDataFillFlags & ALEMBIC_DATAFILL_IGNORE_SUBFRAME_SAMPLES){
+      RoundTicksToNearestFrame(nTicks, fTimeAlpha);
+   }
+  double sampleTime = GetSecondsFromTimeValue(nTicks);
 
   SampleInfo sampleInfo;
    if(objMesh.valid())
@@ -238,7 +244,7 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
 		   }
 
 		   // blend - either between samples or using point velocities
-		   if(sampleInfo.alpha != 0.0)
+		   if(sampleInfo.alpha != 0.0 || ((options.nDataFillFlags & ALEMBIC_DATAFILL_IGNORE_SUBFRAME_SAMPLES) && fTimeAlpha != 0.0f))
 		   {
 			   bool bSampleInterpolate = false;
 			   bool bVelInterpolate = false;
@@ -249,8 +255,8 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
 				  objMesh.getSchema().get(polyMeshSample2,sampleInfo.ceilIndex);
 				  meshPos = polyMeshSample2.getPositions();
 
-				  const int posSize = meshPos ? meshPos->size() : 0;
-				  const int velSize = meshVel ? meshVel->size() : 0;
+				  const int posSize = meshPos ? (const int)meshPos->size() : 0;
+				  const int velSize = meshVel ? (const int)meshVel->size() : 0;
 	             
 				  if(meshPos->size() == vArray.size() && !hasDynamicTopo)
 					  bSampleInterpolate = true;
@@ -280,13 +286,16 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
 				  assert( pVelocityArray != NULL );
 				  pVelocityArray = meshVel->get();
 
-				  double timeAlpha;
-				  if( objMesh.valid() ) {
-					  timeAlpha = (double)(objMesh.getSchema().getTimeSampling()->getSampleTime(sampleInfo.ceilIndex) - 
+				  float timeAlpha;
+				  if(options.nDataFillFlags & ALEMBIC_DATAFILL_IGNORE_SUBFRAME_SAMPLES){
+				      timeAlpha = fTimeAlpha;	
+				  }
+				  else if( objMesh.valid() ) {
+					  timeAlpha = (float)(objMesh.getSchema().getTimeSampling()->getSampleTime(sampleInfo.ceilIndex) - 
 							objMesh.getSchema().getTimeSampling()->getSampleTime(sampleInfo.floorIndex)) * sampleInfoAlpha;
 				  }
 				  else {
-					 timeAlpha = (double)(objSubD.getSchema().getTimeSampling()->getSampleTime(sampleInfo.ceilIndex) - 
+					 timeAlpha = (float)(objSubD.getSchema().getTimeSampling()->getSampleTime(sampleInfo.ceilIndex) - 
 							objSubD.getSchema().getTimeSampling()->getSampleTime(sampleInfo.floorIndex)) * sampleInfoAlpha;
 				  }
 				  for(size_t i=0;i<meshVel->size();i++)

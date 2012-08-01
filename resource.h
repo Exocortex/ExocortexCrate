@@ -45,6 +45,7 @@
 #define IDC_SEGSPINNER                  1004
 #define IDC_CHECK_VISIBILITY            1004
 #define IDC_CHECK_MUTED                 1004
+#define IDC_IGNORE_SUBFRAME_SAMPLES     1004
 #define IDC_CHECK2                      1005
 #define IDC_CHECK_UV                    1005
 #define IDC_RADSPINNER                  1005

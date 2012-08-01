@@ -28,6 +28,7 @@ std::string getModelFullName( const std::string &identifier );
 double GetSecondsFromTimeValue(TimeValue t); 
 int GetTimeValueFromSeconds( double seconds );
 int GetTimeValueFromFrame( double frame );
+void RoundTicksToNearestFrame( int& nTicks, float& fTimeAlpha );
 
 // Debug functions
 void AlembicDebug_PrintMeshData( Mesh &mesh, std::vector<VNormal> &sgVertexNormals );

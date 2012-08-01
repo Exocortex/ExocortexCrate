@@ -136,6 +136,17 @@ std::string getModelName( const std::string &identifier )
     return modelName;
 }
 
+void RoundTicksToNearestFrame( int& nTicks, float& fTimeAlpha )
+{
+	int nOrigTicks = nTicks;
+	float fTicks = (float)nTicks/GetTicksPerFrame();
+	nTicks = (int)floor(fTicks);
+	fTimeAlpha = (fTicks - nTicks)/GetFrameRate();
+	nTicks *= GetTicksPerFrame();
+
+	ESS_LOG_WARNING("TicksPerFrame: "<<GetTicksPerFrame()<<" PolyMesh tick: "<<nOrigTicks<<" roundedTick: "<<nTicks<<" roundedTimeAlpha: "<<fTimeAlpha);
+}
+
 double GetSecondsFromTimeValue(TimeValue t)
 { 
     return double(t)/double(GetTicksPerFrame())/double(GetFrameRate()); 

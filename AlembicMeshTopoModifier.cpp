@@ -19,12 +19,16 @@ ClassDesc2* GetAlembicMeshTopoModifierClassDesc() {return &AlembicMeshTopoModifi
 
 //--- Properties block -------------------------------
 
+//IMPORTANT: increment this value if you have added new fields to the param block
+static const int ALEMBIC_MESH_TOPO_MODIFIER_VERSION = 1;
+
 static ParamBlockDesc2 AlembicMeshTopoModifierParams(
 	0,
 	_T(ALEMBIC_MESH_TOPO_MODIFIER_SCRIPTNAME),
 	0,
 	GetAlembicMeshTopoModifierClassDesc(),
-	P_AUTO_CONSTRUCT | P_AUTO_UI,
+	P_AUTO_CONSTRUCT | P_AUTO_UI | P_VERSION,
+	ALEMBIC_MESH_TOPO_MODIFIER_VERSION,
 	0,
 
 	// rollout description 
@@ -63,6 +67,11 @@ static ParamBlockDesc2 AlembicMeshTopoModifierParams(
 	AlembicMeshTopoModifier::ID_MUTED, _T("muted"), TYPE_BOOL, P_ANIMATABLE, IDS_MUTED,
 		p_default,       TRUE,
 		p_ui,            TYPE_SINGLECHEKBOX,  IDC_MUTED_CHECKBOX,
+		p_end,
+
+	AlembicMeshTopoModifier::ID_IGNORE_SUBFRAME_SAMPLES, _T("Ignore subframe samples"), TYPE_BOOL, P_ANIMATABLE, IDS_MUTED,
+		p_default,       TRUE,
+		p_ui,            TYPE_SINGLECHEKBOX,  IDC_IGNORE_SUBFRAME_SAMPLES,
 		p_end,
 
 	p_end
@@ -139,6 +148,9 @@ void AlembicMeshTopoModifier::ModifyObject (TimeValue t, ModContext &mc, ObjectS
 	BOOL bMuted;
 	this->pblock->GetValue( AlembicMeshTopoModifier::ID_MUTED, t, bMuted, interval);
 	
+	BOOL bIgnoreSubframeSamples;
+	this->pblock->GetValue( AlembicMeshTopoModifier::ID_IGNORE_SUBFRAME_SAMPLES, t, bIgnoreSubframeSamples, interval);
+
 	//ESS_LOG_INFO( "AlembicMeshTopoModifier::ModifyObject strPath: " << strPath << " strIdentifier: " << strIdentifier << " fTime: " << fTime << 
 	//	" bTopology: " << bTopology << " bGeometry: " << bGeometry << " bNormals: " << bNormals << " bUVs: " << bUVs << " bMuted: " << bMuted );
 
@@ -195,7 +207,10 @@ void AlembicMeshTopoModifier::ModifyObject (TimeValue t, ModContext &mc, ObjectS
    }
 
    options.nDataFillFlags |= ALEMBIC_DATAFILL_ALLOCATE_UV_STORAGE;
-  
+   if(bIgnoreSubframeSamples){
+      options.nDataFillFlags |= ALEMBIC_DATAFILL_IGNORE_SUBFRAME_SAMPLES;
+   }
+
    // Find out if we are modifying a poly object or a tri object
    if (os->obj->ClassID() == Class_ID(POLYOBJ_CLASS_ID, 0) )
    {
