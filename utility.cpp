@@ -144,7 +144,7 @@ void RoundTicksToNearestFrame( int& nTicks, float& fTimeAlpha )
 	fTimeAlpha = (fTicks - nTicks)/GetFrameRate();
 	nTicks *= GetTicksPerFrame();
 
-	ESS_LOG_WARNING("TicksPerFrame: "<<GetTicksPerFrame()<<" PolyMesh tick: "<<nOrigTicks<<" roundedTick: "<<nTicks<<" roundedTimeAlpha: "<<fTimeAlpha);
+	//ESS_LOG_WARNING("TicksPerFrame: "<<GetTicksPerFrame()<<" PolyMesh tick: "<<nOrigTicks<<" roundedTick: "<<nTicks<<" roundedTimeAlpha: "<<fTimeAlpha);
 }
 
 double GetSecondsFromTimeValue(TimeValue t)
