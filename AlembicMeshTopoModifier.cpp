@@ -70,7 +70,7 @@ static ParamBlockDesc2 AlembicMeshTopoModifierParams(
 		p_end,
 
 	AlembicMeshTopoModifier::ID_IGNORE_SUBFRAME_SAMPLES, _T("Ignore subframe samples"), TYPE_BOOL, P_ANIMATABLE, IDS_MUTED,
-		p_default,       TRUE,
+		p_default,       FALSE,
 		p_ui,            TYPE_SINGLECHEKBOX,  IDC_IGNORE_SUBFRAME_SAMPLES,
 		p_end,
 
