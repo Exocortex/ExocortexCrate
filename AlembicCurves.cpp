@@ -66,8 +66,8 @@ AlembicCurves::AlembicCurves(const XSI::CRef & in_Ref, AlembicWriteJob * in_Job)
    mCurvesSchema = curves.getSchema();
 
    // create all properties
-   mRadiusProperty = OFloatArrayProperty(mCurvesSchema, ".radius", mCurvesSchema.getMetaData(), GetJob()->GetAnimatedTs() );
-   mColorProperty = OC4fArrayProperty(mCurvesSchema, ".color", mCurvesSchema.getMetaData(), GetJob()->GetAnimatedTs() );
+   mRadiusProperty = OFloatArrayProperty(mCurvesSchema.getArbGeomParams(), ".radius", mCurvesSchema.getMetaData(), GetJob()->GetAnimatedTs() );
+   mColorProperty = OC4fArrayProperty(mCurvesSchema.getArbGeomParams(), ".color", mCurvesSchema.getMetaData(), GetJob()->GetAnimatedTs() );
 }
 
 AlembicCurves::~AlembicCurves()
@@ -995,7 +995,12 @@ XSIPLUGINCALLBACK CStatus alembic_curves_Evaluate(ICENodeContext& in_ctxt)
          CDataArray2DVector3f outData( in_ctxt );
          CDataArray2DVector3f::Accessor acc;
 
-         if ( obj.getSchema().getPropertyHeader( ".velocity" ) == NULL )
+		  IV3fArrayProperty prop;
+		  if( ! getArbGeomParamPropertyAlembic( obj, "velocity", prop ) ) {
+            acc = outData.Resize(0,0);
+            return CStatus::OK;
+         }
+		  /*if ( obj.getSchema().getPropertyHeader( ".velocity" ) == NULL )
          {
             acc = outData.Resize(0,0);
             return CStatus::OK;
@@ -1010,7 +1015,7 @@ XSIPLUGINCALLBACK CStatus alembic_curves_Evaluate(ICENodeContext& in_ctxt)
          {
             acc = outData.Resize(0,0);
             return CStatus::OK;
-         }
+         }*/
          Alembic::Abc::V3fArraySamplePtr ptr = prop.getValue(sampleInfo.floorIndex);
          if(ptr == NULL)
             acc = outData.Resize(0,0);
@@ -1046,7 +1051,13 @@ XSIPLUGINCALLBACK CStatus alembic_curves_Evaluate(ICENodeContext& in_ctxt)
          CDataArray2DFloat outData( in_ctxt );
          CDataArray2DFloat ::Accessor acc;
 
-         if ( obj.getSchema().getPropertyHeader( ".radius" ) == NULL )
+          IFloatArrayProperty prop;
+		  if( ! getArbGeomParamPropertyAlembic( obj, "radius", prop ) ) {
+            acc = outData.Resize(0,0);
+            return CStatus::OK;
+         }
+		  
+		 /* if ( obj.getSchema().getPropertyHeader( ".radius" ) == NULL )
          {
             acc = outData.Resize(0,0);
             return CStatus::OK;
@@ -1061,7 +1072,7 @@ XSIPLUGINCALLBACK CStatus alembic_curves_Evaluate(ICENodeContext& in_ctxt)
          {
             acc = outData.Resize(0,0);
             return CStatus::OK;
-         }
+         }*/
          Alembic::Abc::FloatArraySamplePtr ptr = prop.getValue(sampleInfo.floorIndex);
          if(ptr == NULL)
             acc = outData.Resize(0,0);
@@ -1083,7 +1094,13 @@ XSIPLUGINCALLBACK CStatus alembic_curves_Evaluate(ICENodeContext& in_ctxt)
          CDataArray2DColor4f outData( in_ctxt );
          CDataArray2DColor4f::Accessor acc;
 
-         if ( obj.getSchema().getPropertyHeader( ".color" ) == NULL )
+         IC4fArrayProperty prop;
+		  if( ! getArbGeomParamPropertyAlembic( obj, "color", prop ) ) {
+            acc = outData.Resize(0,0);
+            return CStatus::OK;
+         }
+		  /*
+		  if ( obj.getSchema().getPropertyHeader( ".color" ) == NULL )
          {
             acc = outData.Resize(0,0);
             return CStatus::OK;
@@ -1098,7 +1115,7 @@ XSIPLUGINCALLBACK CStatus alembic_curves_Evaluate(ICENodeContext& in_ctxt)
          {
             acc = outData.Resize(0,0);
             return CStatus::OK;
-         }
+         }*/
          Alembic::Abc::C4fArraySamplePtr ptr = prop.getValue(sampleInfo.floorIndex);
          if(ptr == NULL)
             acc = outData.Resize(0,0);
