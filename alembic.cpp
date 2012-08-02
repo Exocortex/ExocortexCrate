@@ -2725,6 +2725,7 @@ ESS_CALLBACK_START(alembic_path_manager_Execute, CRef&)
    {
       search = L"*.*.*.alembic_*,*.*.*.ABC_*";
       search += L",*.*.alembic_*,*.*.ABC_*";
+	  search += L",*.*.cls.Texture_Coordinates_AUTO.*.alembic*";
    }
    else
       search = model+L".*.*.alembic_*,"+model+"L.*.*.ABC_*";
