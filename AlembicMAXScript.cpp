@@ -782,15 +782,7 @@ int ExocortexAlembicStaticInterface_ExocortexAlembicExportJobs( CONST_2013 MCHAR
 			}
 
 			AlembicWriteJob * job = new AlembicWriteJob(filename, allSceneObjects, frames, pMaxInterface);
-			//job->SetOption(L"transformCache",transformCache);
-			//job->SetOption(L"exportNormals",normals);
-			//job->SetOption(L"exportUVs",uvs);
 			//job->SetOption(L"exportFaceSets",facesets);
-			//job->SetOption(L"exportBindPose",bindpose);
-			//job->SetOption(L"exportPurePointCache",purepointcache);
-			//job->SetOption(L"exportDynamicTopology",dynamictopology);
-			//job->SetOption(L"indexedNormals",true);
-			//job->SetOption(L"indexedUVs",true);
 			//job->SetOption(L"globalSpace",globalspace);
 			//job->SetOption(L"guideCurves",guidecurves);
 			job->SetOption("exportNormals", bNormals);
@@ -802,9 +794,9 @@ int ExocortexAlembicStaticInterface_ExocortexAlembicExportJobs( CONST_2013 MCHAR
 			job->SetOption("indexedNormals", true);
 			job->SetOption("indexedUVs", true);
 			job->SetOption("exportSelected", bExportSelected);
-			job->SetOption("flattenHierarchy",bFlattenHierarchy);
+			job->SetOption("flattenHierarchy", bFlattenHierarchy);
 			job->SetOption("exportParticlesAsMesh", bExportAsSingleMesh);
-
+			job->SetOption("transformCache", bTransformCache);
 
 			if (job->PreProcess() != true)
 			{

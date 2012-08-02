@@ -134,116 +134,70 @@ bool AlembicWriteJob::PreProcess()
 
     m_ArchiveBoxProp = Alembic::AbcGeom::CreateOArchiveBounds(mArchive,mTs);
 
-    // create object for each
-	for( int i = 0; i < mSelection.objectEntries.size(); i ++ ) {
-		ObjectEntry *object = &( mSelection.objectEntries[i] );
+	
+	const bool bParticleMesh = GetOption("exportParticlesAsMesh");
+	const bool bFlattenHierarchy = GetOption("flattenHierarchy");
+	const bool bTransformCache = GetOption("transformCache");
 
-		// Only export selected objects if told
-        if (GetOption("exportSelected") && !object->entry.node->Selected())
-            continue;
+	if(bTransformCache){
+		for( int i = 0; i < mSelection.objectEntries.size(); i ++ ) {
+			ObjectEntry *object = &( mSelection.objectEntries[i] );
 
-        int type = object->entry.type;
-		if (type == OBTYPE_MESH || (GetOption("exportParticlesAsMesh") && type == OBTYPE_POINTS) ) 
-        {
-            AlembicObjectPtr ptr;
-            ptr.reset(new AlembicPolyMesh(object->entry,this));            
-            AddObject(ptr);
+			if (GetOption("exportSelected") && !object->entry.node->Selected())
+				continue;
+
+			int type = object->entry.type;
+			if (type == OBTYPE_MESH || 
+				type == OBTYPE_CAMERA || 
+				(type == OBTYPE_DUMMY && !bFlattenHierarchy)|| 
+				type == OBTYPE_POINTS || 
+				type == OBTYPE_CURVES)
+			{
+				AlembicObjectPtr ptr;
+				ptr.reset(new AlembicXForm(object->entry,this));            
+				AddObject(ptr);
+			}
 		}
-        else if (type == OBTYPE_CAMERA)
-        {
-            AlembicObjectPtr ptr;
-            ptr.reset(new AlembicCamera(object->entry,this));
-            AddObject(ptr);
-        }
-        else if (type == OBTYPE_DUMMY && !GetOption("flattenHierarchy"))
-        {
-            AlembicObjectPtr ptr;
-            ptr.reset(new AlembicXForm(object->entry,this));            
-            AddObject(ptr);
-        }
-        else if (type == OBTYPE_POINTS && !GetOption("exportParticlesAsMesh"))
-        {
-            AlembicObjectPtr ptr;
-            ptr.reset(new AlembicPoints(object->entry,this));
-            AddObject(ptr);
-        }
-        else if (type == OBTYPE_CURVES)
-        {
-            AlembicObjectPtr ptr;
-            ptr.reset(new AlembicCurves(object->entry,this));
-            AddObject(ptr);
-        }
+	}else{
+		for( int i = 0; i < mSelection.objectEntries.size(); i ++ ) {
+			ObjectEntry *object = &( mSelection.objectEntries[i] );
 
-        // push all models up the hierarchy
-        /*
-        Model model(xObj.GetRef());
-        if(!model.IsValid())
-            model = xObj.GetModel();
-        CRefArray modelRefs;
-        while(model.IsValid() && !model.GetFullName().IsEqualNoCase(Application().GetActiveSceneRoot().GetFullName()))
-        {
-            modelRefs.Add(model.GetActivePrimitive().GetRef());
-            model = model.GetModel();
-        }
-        for(LONG j=modelRefs.GetCount()-1;j>=0;j--)
-        {
-            if(GetRefObject(modelRefs[j]) == NULL)
-            {
-                AlembicObjectPtr ptr;
-                ptr.reset(new AlembicModel(modelRefs[j],this));
-                AddObject(ptr);
-            }
-        }
-        */
+			if (GetOption("exportSelected") && !object->entry.node->Selected())
+				continue;
 
-        /*
-        // take care of all other types
-        else if(xObj.GetType().IsEqualNoCase(L"polymsh"))
-        {
-            Property geomProp;
-            xObj.GetPropertyFromName(L"geomapprox",geomProp);
-            LONG subDivLevel = geomProp.GetParameterValue(L"gapproxmordrsl");
-            if(subDivLevel > 0)
-            {
-                AlembicObjectPtr ptr;
-                ptr.reset(new AlembicSubD(xObj.GetActivePrimitive().GetRef(),this));
-                AddObject(ptr);
-            }
-            else
-            {
-                AlembicObjectPtr ptr;
-                ptr.reset(new AlembicPolyMesh(xObj.GetActivePrimitive().GetRef(),this));
-                AddObject(ptr);
-            }
-        }
-        else if(xObj.GetType().IsEqualNoCase(L"crvlist"))
-        {
-            AlembicObjectPtr ptr;
-            ptr.reset(new AlembicCurves(xObj.GetActivePrimitive().GetRef(),this));
-            AddObject(ptr);
-        }
-        else if(xObj.GetType().IsEqualNoCase(L"hair"))
-        {
-            AlembicObjectPtr ptr;
-            ptr.reset(new AlembicCurves(xObj.GetActivePrimitive().GetRef(),this));
-            AddObject(ptr);
-        }
-        else if(xObj.GetType().IsEqualNoCase(L"pointcloud"))
-        {
-            AlembicObjectPtr ptr;
-            ICEAttribute strandPosition = xObj.GetActivePrimitive().GetGeometry().GetICEAttributeFromName(L"StrandPosition");
-            if(strandPosition.IsDefined() && strandPosition.IsValid())
-            {
-                ptr.reset(new AlembicCurves(xObj.GetActivePrimitive().GetRef(),this));
-            }
-            else
-            {
-                ptr.reset(new AlembicPoints(xObj.GetActivePrimitive().GetRef(),this));
-            }
-            AddObject(ptr);
-        }
-        */
-    }
+			int type = object->entry.type;
+			if (type == OBTYPE_MESH || (bParticleMesh && type == OBTYPE_POINTS) ) 
+			{
+				AlembicObjectPtr ptr;
+				ptr.reset(new AlembicPolyMesh(object->entry,this));            
+				AddObject(ptr);
+			}
+			else if (type == OBTYPE_CAMERA)
+			{
+				AlembicObjectPtr ptr;
+				ptr.reset(new AlembicCamera(object->entry,this));
+				AddObject(ptr);
+			}
+			else if (type == OBTYPE_DUMMY && !bFlattenHierarchy)
+			{
+				AlembicObjectPtr ptr;
+				ptr.reset(new AlembicXForm(object->entry,this));            
+				AddObject(ptr);
+			}
+			else if (type == OBTYPE_POINTS && !bParticleMesh)
+			{
+				AlembicObjectPtr ptr;
+				ptr.reset(new AlembicPoints(object->entry,this));
+				AddObject(ptr);
+			}
+			else if (type == OBTYPE_CURVES)
+			{
+				AlembicObjectPtr ptr;
+				ptr.reset(new AlembicCurves(object->entry,this));
+				AddObject(ptr);
+			}
+		}
+	}
 
     return true;
 }

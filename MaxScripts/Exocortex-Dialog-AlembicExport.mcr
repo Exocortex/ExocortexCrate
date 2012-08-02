@@ -20,6 +20,7 @@ rollout AlembicExportSettings "Alembic Export Settings" width:288 height:388
 	checkbox materialIdsCheckbox "Material Ids" pos:[32,272] width:107 height:14 checked:true
 	checkbox flattenHierarchyCheckbox "Flatten Hierarchy" pos:[32,288] width:107 height:14 checked:true
 	checkbox exportAsSingleMeshCheckbox "Particle System to Mesh Conversion" pos:[32,304] width:200 height:14 checked:false
+	checkbox transformCacheCheckbox "Transform Cache" pos:[32,320] width:200 height:14 checked:false
 
 	button exportButton "Export" pos:[16,354] width:64 height:24
 	button cancelButton "Cancel" pos:[208,354] width:64 height:24
@@ -52,6 +53,8 @@ rollout AlembicExportSettings "Alembic Export Settings" width:288 height:388
 	    	jobString += (flattenHierarchyCheckbox.checked as string)
 	    	jobString += ";particlesystemtomeshconversion=" 
 	    	jobString += (exportAsSingleMeshCheckbox.checked as string)
+	    	jobString += ";transformCache="
+	    	jobString += (transformCacheCheckbox.checked as string)
 
 	    	result = ExocortexAlembic.createExportJobs(jobString)
 	        if( result != 0 ) do
