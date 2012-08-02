@@ -1330,6 +1330,15 @@ static AtNode *GetNode(void *user_ptr, int i)
                         AiNodeSetArray(shapeNode, "Texture_Projection_wrap", uvOptions);
                         AiNodeSetArray(shapeNode, "_wrap", uvOptions2);
                      }
+					 if( ptr->size() > 2 ) {
+						bool subdsmooth = ptr->get()[2] != 0.0f;
+						if( subdsmooth ) {
+							AiNodeSetStr(shapeNode, "subdiv_uv_smoothing", "pin_borders");
+						}
+						else {
+							AiNodeSetStr(shapeNode, "subdiv_uv_smoothing", "linear");
+						}
+					 }
                   }
                }
             }
@@ -1667,6 +1676,15 @@ static AtNode *GetNode(void *user_ptr, int i)
                         AiNodeSetArray(shapeNode, "Texture_Projection_wrap", uvOptions);
                         AiNodeSetArray(shapeNode, "_wrap", uvOptions2);
                      }
+					 if( ptr->size() > 2 ) {
+						bool subdsmooth = ptr->get()[2] != 0.0f;
+						if( subdsmooth ) {
+							AiNodeSetStr(shapeNode, "subdiv_uv_smoothing", "pin_borders");
+						}
+						else {
+							AiNodeSetStr(shapeNode, "subdiv_uv_smoothing", "linear");
+						}
+					 }
                   }
                }
             }
