@@ -22,7 +22,7 @@ SampleInfo getSampleInfo
    result.ceilIndex = result.floorIndex;
 
    // check if we have a full license
-   if(!HasFullLicense())
+   if(!HasAlembicReaderLicense())
    {
       if(result.floorIndex > 75)
       {

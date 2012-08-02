@@ -14,11 +14,11 @@
 #define PLUGIN_NAME						"ExocortexAlembicMaya" EC_QUOTE( alembic_MAJOR_VERSION ) "." EC_QUOTE( alembic_MINOR_VERSION )
 #define PLUGIN_MAJOR_VERSION			alembic_MAJOR_VERSION
 #define PLUGIN_MINOR_VERSION			alembic_MINOR_VERSION
-#define PLUGIN_LICENSE_NAME				"alembic"
+#define PLUGIN_LICENSE_NAME				"alembic_maya"
 #define PLUGIN_LICENSE_VERSION			(alembic_MAJOR_VERSION*10)
 
+#include "ExocortexServicesProxy.h"
 
-/*
 #define ALEMBIC_WRITER_LICENSE_IDS	{ RlmProductID( "alembic_maya", 10 ), RlmProductID( "alembic", 10 ) }
 #define ALEMBIC_READER_LICENSE_IDS	{ RlmProductID( "alembic_maya", 10 ), RlmProductID( "alembic_reader", 10 ), RlmProductID( "alembic", 10 ) }
 
@@ -30,13 +30,6 @@
 int GetAlembicLicense();
 bool HasAlembicWriterLicense();
 bool HasAlembicReaderLicense();
-*/
-
-#include "ExocortexServicesProxy.h"
-
-extern int gLicenseToken;
-int GetLicense();
-bool HasFullLicense();
 
 
 #endif // __ALEMBIC_LICENSING_H

@@ -85,7 +85,7 @@ Alembic::Abc::IArchive * getArchiveFromID(MString path)
    if(it == gArchives.end())
    {
       // check if we can open more archives
-      if(!HasFullLicense())
+      if( ! HasAlembicReaderLicense() )
       {
          if(gArchives.size() == 2)
          {

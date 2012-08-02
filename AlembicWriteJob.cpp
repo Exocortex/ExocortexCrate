@@ -147,10 +147,10 @@ MStatus AlembicWriteJob::PreProcess()
    double timePerSample = 1.0 / mFrameRate;
    if(frames.size() > 1)
    {
-      if(!HasFullLicense())
+      if( ! HasAlembicWriterLicense() )
       {
          if(frames.size() > 75)
-         {
+         {           
             frames.resize(75);
             EC_LOG_WARNING("[ExocortexAlembic] Demo Mode: Maximum exportable samplecount is 75!");
          }
