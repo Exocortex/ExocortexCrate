@@ -17,7 +17,7 @@ if( Exocortex_SERVICES OR Exocortex_RLM_ONLY )
 	link_directories( ${Rlm_LIBRARYDIR} )
 endif()
 
-SET( EXOCORTEX_ARNOLD_VERSION "4.0.5.1" )
+SET( EXOCORTEX_ARNOLD_VERSION "4.0.7.0" )
 
 if( WIN32 )
 	set( Arnold_BASE_DIR "${LIBRARY_ROOT}/arnold/${EXOCORTEX_ARNOLD_VERSION}/windows" )
