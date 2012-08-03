@@ -17,12 +17,15 @@ ClassDesc2* GetAlembicSplineTopoModifierClassDesc() {return &AlembicSplineTopoMo
 
 //--- Properties block -------------------------------
 
+const int ALEMBIC_SPLINE_TOPO_MODIFIER_VERSION = 1;
+
 static ParamBlockDesc2 AlembicSplineTopoModifierParams(
 	0,
 	_T(ALEMBIC_SPLINE_TOPO_MODIFIER_SCRIPTNAME),
 	0,
 	GetAlembicSplineTopoModifierClassDesc(),
-	P_AUTO_CONSTRUCT | P_AUTO_UI,
+	P_AUTO_CONSTRUCT | P_AUTO_UI | P_VERSION,
+	ALEMBIC_SPLINE_TOPO_MODIFIER_VERSION,
 	0,
 
 	// rollout description 
@@ -61,6 +64,11 @@ static ParamBlockDesc2 AlembicSplineTopoModifierParams(
 	AlembicSplineTopoModifier::ID_MUTED, _T("muted"), TYPE_BOOL, P_ANIMATABLE, IDS_MUTED,
 		p_default,       TRUE,
 		p_ui,            TYPE_SINGLECHEKBOX,  IDC_MUTED_CHECKBOX,
+		p_end,
+
+	AlembicSplineTopoModifier::ID_IGNORE_SUBFRAME_SAMPLES, _T("Ignore subframe samples"), TYPE_BOOL, P_ANIMATABLE, IDS_IGNORE_SUBFRAME_SAMPLES,
+		p_default,       FALSE,
+		p_ui,            TYPE_SINGLECHEKBOX,  IDC_IGNORE_SUBFRAME_SAMPLES,
 		p_end,
 
 	p_end
@@ -140,6 +148,9 @@ void AlembicSplineTopoModifier::ModifyObject (TimeValue t, ModContext &mc, Objec
 	BOOL bMuted;
 	this->pblock->GetValue( AlembicSplineTopoModifier::ID_MUTED, t, bMuted, interval);
 	
+	BOOL bIgnoreSubframeSamples;
+	this->pblock->GetValue( AlembicSplineTopoModifier::ID_IGNORE_SUBFRAME_SAMPLES, t, bIgnoreSubframeSamples, interval);
+
 	//ESS_LOG_INFO( "AlembicSplineTopoModifier::ModifyObject strPath: " << strPath << " strIdentifier: " << strIdentifier << " fTime: " << fTime << 
 	//	" bTopology: " << bTopology << " bGeometry: " << bGeometry << " bNormals: " << bNormals << " bUVs: " << bUVs << " bMuted: " << bMuted );
 
@@ -190,6 +201,10 @@ void AlembicSplineTopoModifier::ModifyObject (TimeValue t, ModContext &mc, Objec
 		options.nDataFillFlags |= ALEMBIC_DATAFILL_BOUNDINGBOX;
 	}
  
+	if(bIgnoreSubframeSamples){
+		options.nDataFillFlags |= ALEMBIC_DATAFILL_IGNORE_SUBFRAME_SAMPLES;
+	}
+
 	SClass_ID superClassID = os->obj->SuperClassID();
 	Class_ID classID = os->obj->ClassID();
 	if( superClassID != SHAPE_CLASS_ID ) {

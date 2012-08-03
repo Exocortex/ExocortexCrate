@@ -17,6 +17,7 @@ const unsigned int ALEMBIC_DATAFILL_MATERIALIDS = 32;
 const unsigned int ALEMBIC_DATAFILL_BINDPOSE = 64;
 const unsigned int ALEMBIC_DATAFILL_SPLINE_KNOTS = 128;
 const unsigned int ALEMBIC_DATAFILL_ALLOCATE_UV_STORAGE = 256;
+const unsigned int ALEMBIC_DATAFILL_IGNORE_SUBFRAME_SAMPLES = 512;
 
 enum MeshTopologyType
 {

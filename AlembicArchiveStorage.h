@@ -5,6 +5,7 @@
 #include "AlembicMax.h"
 #include <map>
 
+bool archiveExists(std::string path);
 Alembic::Abc::IArchive * getArchiveFromID(std::string path);
 std::string addArchive(Alembic::Abc::IArchive * archive);
 void deleteArchive(std::string path);

@@ -156,7 +156,13 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
    if(!objMesh.valid() && !objSubD.valid())
        return;
 
-  double sampleTime = GetSecondsFromTimeValue(options.dTicks);
+
+   int nTicks = options.dTicks;
+   float fRoundedTimeAlpha = 0.0f;
+   if(options.nDataFillFlags & ALEMBIC_DATAFILL_IGNORE_SUBFRAME_SAMPLES){
+      RoundTicksToNearestFrame(nTicks, fRoundedTimeAlpha);
+   }
+  double sampleTime = GetSecondsFromTimeValue(nTicks);
 
   SampleInfo sampleInfo;
    if(objMesh.valid())
@@ -223,7 +229,7 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
 		validateMeshes( options, "ALEMBIC_DATAFILL_FACELIST | ALEMBIC_DATAFILL_VERTEX" );
    }
 
-   if (( options.nDataFillFlags & ALEMBIC_DATAFILL_VERTEX ) || ( options.nDataFillFlags & ALEMBIC_DATAFILL_FACELIST ) )
+   if ( options.nDataFillFlags & ALEMBIC_DATAFILL_VERTEX )
    {
 	   Imath::V3f const* pPositionArray = ( meshPos.get() != NULL ) ? meshPos->get() : NULL;
 	   Imath::V3f const* pVelocityArray = ( meshVel.get() != NULL ) ? meshVel->get() : NULL;
@@ -238,7 +244,8 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
 		   }
 
 		   // blend - either between samples or using point velocities
-		   if(sampleInfo.alpha != 0.0)
+		   if( ((options.nDataFillFlags & ~ALEMBIC_DATAFILL_IGNORE_SUBFRAME_SAMPLES) && sampleInfo.alpha != 0.0f ) || 
+			   ((options.nDataFillFlags & ALEMBIC_DATAFILL_IGNORE_SUBFRAME_SAMPLES) && fRoundedTimeAlpha != 0.0f ) )
 		   {
 			   bool bSampleInterpolate = false;
 			   bool bVelInterpolate = false;
@@ -249,8 +256,8 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
 				  objMesh.getSchema().get(polyMeshSample2,sampleInfo.ceilIndex);
 				  meshPos = polyMeshSample2.getPositions();
 
-				  const int posSize = meshPos ? meshPos->size() : 0;
-				  const int velSize = meshVel ? meshVel->size() : 0;
+				  const int posSize = meshPos ? (const int)meshPos->size() : 0;
+				  const int velSize = meshVel ? (const int)meshVel->size() : 0;
 	             
 				  if(meshPos->size() == vArray.size() && !hasDynamicTopo)
 					  bSampleInterpolate = true;
@@ -280,13 +287,16 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
 				  assert( pVelocityArray != NULL );
 				  pVelocityArray = meshVel->get();
 
-				  double timeAlpha;
-				  if( objMesh.valid() ) {
-					  timeAlpha = (double)(objMesh.getSchema().getTimeSampling()->getSampleTime(sampleInfo.ceilIndex) - 
+				  float timeAlpha;
+				  if(options.nDataFillFlags & ALEMBIC_DATAFILL_IGNORE_SUBFRAME_SAMPLES){
+				      timeAlpha = fRoundedTimeAlpha;	
+				  }
+				  else if( objMesh.valid() ) {
+					  timeAlpha = (float)(objMesh.getSchema().getTimeSampling()->getSampleTime(sampleInfo.ceilIndex) - 
 							objMesh.getSchema().getTimeSampling()->getSampleTime(sampleInfo.floorIndex)) * sampleInfoAlpha;
 				  }
 				  else {
-					 timeAlpha = (double)(objSubD.getSchema().getTimeSampling()->getSampleTime(sampleInfo.ceilIndex) - 
+					 timeAlpha = (float)(objSubD.getSchema().getTimeSampling()->getSampleTime(sampleInfo.ceilIndex) - 
 							objSubD.getSchema().getTimeSampling()->getSampleTime(sampleInfo.floorIndex)) * sampleInfoAlpha;
 				  }
 				  for(size_t i=0;i<meshVel->size();i++)
@@ -307,10 +317,14 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
 		 
 		   for(int i=0;i<vArray.size();i++)
 		   {
-			   pMeshVerties[i].p = ConvertAlembicPointToMaxPoint(vArray[i] );
+			   if( options.bAdditive ) {
+				   pMeshVerties[i].p += ConvertAlembicPointToMaxPoint(vArray[i]);
+			   }
+			   else {
+				   pMeshVerties[i].p = ConvertAlembicPointToMaxPoint(vArray[i]);
+			   }
 		   }
-		 
-			validateMeshes( options, "ALEMBIC_DATAFILL_VERTEX" );
+		   validateMeshes( options, "ALEMBIC_DATAFILL_VERTEX" );
 	   }
     }
 

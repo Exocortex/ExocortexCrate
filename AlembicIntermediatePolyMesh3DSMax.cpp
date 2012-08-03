@@ -283,7 +283,7 @@ void IntermediatePolyMesh3DSMax::Save(AlembicWriteJob* writeJob, TimeValue ticks
 	}
 
     // let's check if we have user normals
-    if((bool)writeJob->GetOption("exportNormals") && (bFirstFrame || dynamicTopology))
+    if(writeJob->GetOption("exportNormals") == TRUE)
     {
 		size_t normalCount = 0;
 		size_t normalIndexCount = 0;
@@ -344,7 +344,7 @@ void IntermediatePolyMesh3DSMax::Save(AlembicWriteJob* writeJob, TimeValue ticks
         // AlembicPrintFaceData(objectMesh);
 
         // now let's sort the normals 
-        if((bool)writeJob->GetOption("indexedNormals")) 
+        if(writeJob->GetOption("indexedNormals") == TRUE) 
         {
             std::map<SortableV3f,size_t> normalMap;
             std::map<SortableV3f,size_t>::const_iterator it;
@@ -394,30 +394,27 @@ void IntermediatePolyMesh3DSMax::Save(AlembicWriteJob* writeJob, TimeValue ticks
     }
 
 	// we also need to store the face counts as well as face indices
-   if(bFirstFrame || (dynamicTopology))
-   {
-      if(mFaceIndicesVec.size() != sampleCount || sampleCount == 0)
-      {
-         mFaceCountVec.resize(faceCount);
-         mFaceIndicesVec.resize(sampleCount);
 
-         int offset = 0;
-         for(LONG f=0;f<faceCount;f++)
-         {
-            int degree = (polyMesh != NULL) ? polyMesh->F(f)->deg : 3;
-            mFaceCountVec[f] = degree;
-			for (int i = degree-1; i >= 0; i -= 1)
-            {
-                int vertIndex = (polyMesh != NULL) ? polyMesh->F(f)->vtx[i]
-                                                  : triMesh->faces[f].v[i];
-				mFaceIndicesVec[offset++] = vertIndex;
-            }
-         }
-      }
-   }
+     mFaceCountVec.resize(faceCount);
+     mFaceIndicesVec.resize(sampleCount);
+
+     int offset = 0;
+     for(LONG f=0;f<faceCount;f++)
+     {
+        int degree = (polyMesh != NULL) ? polyMesh->F(f)->deg : 3;
+        mFaceCountVec[f] = degree;
+		for (int i = degree-1; i >= 0; i -= 1)
+        {
+            int vertIndex = (polyMesh != NULL) ? polyMesh->F(f)->vtx[i]
+                                              : triMesh->faces[f].v[i];
+			mFaceIndicesVec[offset++] = vertIndex;
+        }
+     }
+ 
+   
 
    //write out the UVs
-   if((bool)writeJob->GetOption("exportUVs") && (bFirstFrame || dynamicTopology))
+   if(writeJob->GetOption("exportUVs") == TRUE)
    {
 	  if (polyMesh != NULL)
 	  {
@@ -517,7 +514,7 @@ void IntermediatePolyMesh3DSMax::Save(AlembicWriteJob* writeJob, TimeValue ticks
 
 
 
-		if((bool)writeJob->GetOption("indexedUVs")) 
+		if(writeJob->GetOption("indexedUVs") == TRUE) 
 		{
 			mUvIndexVec.resize(mUvVec.size());
 
@@ -569,7 +566,7 @@ void IntermediatePolyMesh3DSMax::Save(AlembicWriteJob* writeJob, TimeValue ticks
 	// sweet, now let's have a look at face sets (really only for first sample)
 	// for 3DS Max, we are mapping this to the material ids
 	//std::vector<boost::int32_t> zeroFaceVector;
-	if(writeJob->GetOption("exportMaterialIds") && (bFirstFrame || dynamicTopology))
+	if(writeJob->GetOption("exportMaterialIds") == TRUE)
 	{
 		int numMatId = 0;
 		int numFaces = polyMesh ? polyMesh->numf : triMesh->getNumFaces();

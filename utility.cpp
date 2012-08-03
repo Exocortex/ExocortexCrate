@@ -136,6 +136,17 @@ std::string getModelName( const std::string &identifier )
     return modelName;
 }
 
+void RoundTicksToNearestFrame( int& nTicks, float& fTimeAlpha )
+{
+	int nOrigTicks = nTicks;
+	float fTicks = (float)nTicks/GetTicksPerFrame();
+	nTicks = (int)floor(fTicks);
+	fTimeAlpha = (fTicks - nTicks)/GetFrameRate();
+	nTicks *= GetTicksPerFrame();
+
+	//ESS_LOG_WARNING("TicksPerFrame: "<<GetTicksPerFrame()<<" PolyMesh tick: "<<nOrigTicks<<" roundedTick: "<<nTicks<<" roundedTimeAlpha: "<<fTimeAlpha);
+}
+
 double GetSecondsFromTimeValue(TimeValue t)
 { 
     return double(t)/double(GetTicksPerFrame())/double(GetFrameRate()); 
@@ -395,7 +406,7 @@ public:
 	void walkToChild(INode* node, int& childIndex)
 	{
 		if(!node){
-			ESS_LOG_INFO("walkToChild: node is null.");
+			//ESS_LOG_INFO("walkToChild: node is null.");
 			return;
 		}
 
@@ -421,7 +432,7 @@ public:
 		int enumCode = TREE_CONTINUE;
 
 		if(!node){
-			ESS_LOG_INFO("callback: node is null.");
+			//ESS_LOG_INFO("callback: node is null.");
 			return TREE_ABORT;
 		}
 
@@ -451,7 +462,7 @@ INode* GetNodeFromHierarchyPath(const std::string& path)
 	HierarchyPathResolver resolver(path);
     IScene *pScene = GET_MAX_INTERFACE()->GetScene();
 	if(!pScene){
-		ESS_LOG_INFO("pScene is null.");
+		//ESS_LOG_INFO("pScene is null.");
 		return NULL;
 	}
     pScene->EnumTree(&resolver);

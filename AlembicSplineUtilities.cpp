@@ -60,10 +60,9 @@ public:
 
 	interpT interp;
 
-	float sampleInfoAlpha; 
-	float timeAlpha;
+	float fAlpha;
 
-	curvePositionSampler(Alembic::AbcGeom::ICurves& obj, SampleInfo& sampleInfo){
+	curvePositionSampler(Alembic::AbcGeom::ICurves& obj, SampleInfo& sampleInfo, float fAlpha){
 
 		bool isDynamicTopo = isAlembicSplineTopoDynamic( &obj );
 
@@ -71,7 +70,7 @@ public:
 		obj.getSchema().get(curveSample, sampleInfo.floorIndex);
 		curvePos1 = curveSample.getPositions();
 
-		sampleInfoAlpha = (float)sampleInfo.alpha; 
+		this->fAlpha = fAlpha;
 
 		
 		/*Alembic::Abc::V3fArraySamplePtr inTangentSampler; 
@@ -100,8 +99,8 @@ public:
 			curveVel1 = curveSample.getVelocities();
 			interp = VELOCITY;
 
-			timeAlpha = (float)(obj.getSchema().getTimeSampling()->getSampleTime(sampleInfo.ceilIndex) - 
- 					obj.getSchema().getTimeSampling()->getSampleTime(sampleInfo.floorIndex)) * sampleInfoAlpha;    
+			//timeAlpha = (float)(obj.getSchema().getTimeSampling()->getSampleTime(sampleInfo.ceilIndex) - 
+ 			//		obj.getSchema().getTimeSampling()->getSampleTime(sampleInfo.floorIndex)) * sampleInfoAlpha;    
 		}
 		else{
 			Alembic::AbcGeom::ICurvesSchema::Sample curveSample2;
@@ -118,11 +117,11 @@ public:
 	Imath::V3f operator[](int index){
 
 		Imath::V3f pos1 = curvePos1->get()[index];
-		if(sampleInfoAlpha != 0.0 && interp == POSITION){
-			return pos1 + ((curvePos2->get()[index] - pos1) * sampleInfoAlpha);
+		if(fAlpha != 0.0 && interp == POSITION){
+			return pos1 + ((curvePos2->get()[index] - pos1) * fAlpha);
 		}
-		else if(sampleInfoAlpha != 0.0 && interp == VELOCITY){
-			return pos1 + (curveVel1->get()[index] * timeAlpha);
+		else if(fAlpha != 0.0 && interp == VELOCITY){
+			return pos1 + (curveVel1->get()[index] * fAlpha);
 		}
 		else{
 			return pos1;
@@ -141,7 +140,12 @@ void AlembicImport_FillInShape_Internal(alembic_fillshape_options &options)
       return;
    }
 
-   double sampleTime = GetSecondsFromTimeValue(options.dTicks);
+   int nTicks = options.dTicks;
+   float fTimeAlpha = 0.0f;
+   if(options.nDataFillFlags & ALEMBIC_DATAFILL_IGNORE_SUBFRAME_SAMPLES){
+      RoundTicksToNearestFrame(nTicks, fTimeAlpha);
+   }
+   double sampleTime = GetSecondsFromTimeValue(nTicks);
 
    SampleInfo sampleInfo = getSampleInfo(
       sampleTime,
@@ -199,7 +203,14 @@ void AlembicImport_FillInShape_Internal(alembic_fillshape_options &options)
 
    Alembic::Abc::Int32ArraySamplePtr curveNbVertices = curveSample.getCurvesNumVertices();
 
-   curvePositionSampler posSampler(obj, sampleInfo);
+   float fAlpha;
+   if(options.nDataFillFlags & ALEMBIC_DATAFILL_IGNORE_SUBFRAME_SAMPLES){
+       fAlpha = fTimeAlpha;
+   }
+   else{ 
+       fAlpha = (float)sampleInfo.alpha;
+   }
+   curvePositionSampler posSampler(obj, sampleInfo, fAlpha);
 
 
    // Prepare the knots

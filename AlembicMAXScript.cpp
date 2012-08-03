@@ -12,6 +12,9 @@
 #include "AlembicWriteJob.h"
 #include "AlembicRecursiveImporter.h"
 #include "Utility.h"
+#include <boost/algorithm/string/split.hpp>
+#include <boost/algorithm/string/predicate.hpp>
+#include <boost/algorithm/string/classification.hpp>
 
 // Dummy function for progress bar
 DWORD WINAPI DummyProgressFunction(LPVOID arg)
@@ -70,7 +73,9 @@ public:
         exocortexAlembicInit,
 		exocortexGetBinVersion,
 		exocortexMemoryDiagnostics,
-		exocortexGetLicenseStatus
+		exocortexGetLicenseStatus,
+		exocortexAlembicImportJobs,
+		exocortexAlembicExportJobs
 	};
 
 	ExocortexAlembicStaticInterface()
@@ -187,6 +192,30 @@ public:
 			0,                      //* Flags  * /
 			0,                      //* Number  of arguments * /
 			p_end); 
+
+		AppendFunction(
+			exocortexAlembicImportJobs,	//* function ID * /
+			_M("createImportJobs"),           //* internal name * /
+			0,                      //* function name string resource name * / 
+			TYPE_INT,               //* Return type * /
+			0,                      //* Flags  * /
+			1,                      //* Number  of arguments * /
+			_M("path"),     //* argument internal name * /
+			0,                  //* argument localizable name string resource id * /
+			TYPE_STRING,      //* arg type * /
+			p_end); 
+
+		AppendFunction(
+			exocortexAlembicExportJobs,	//* function ID * /
+			_M("createExportJobs"),           //* internal name * /
+			0,                      //* function name string resource name * / 
+			TYPE_INT,               //* Return type * /
+			0,                      //* Flags  * /
+			1,                      //* Number  of arguments * /
+			_M("path"),     //* argument internal name * /
+			0,                  //* argument localizable name string resource id * /
+			TYPE_STRING,      //* arg type * /
+			p_end); 
   }
 
 	static int ExocortexAlembicImport(
@@ -210,6 +239,10 @@ public:
 
 	static int ExocortexGetLicenseStatus();
 
+	static int ExocortexAlembicImportJobs(CONST_2013 MCHAR* jobString);
+
+	static int ExocortexAlembicExportJobs(CONST_2013 MCHAR* jobString);
+
 	BEGIN_FUNCTION_MAP
 		FN_6(exocortexAlembicImport, TYPE_INT, ExocortexAlembicImport, TYPE_FILENAME, TYPE_BOOL, TYPE_BOOL, TYPE_BOOL, TYPE_BOOL, TYPE_INT)
 		FN_13(exocortexAlembicExport, TYPE_INT, ExocortexAlembicExport, TYPE_FILENAME, TYPE_INT, TYPE_INT, TYPE_INT, TYPE_INT, TYPE_INT, TYPE_BOOL, TYPE_BOOL, TYPE_BOOL, TYPE_BOOL, TYPE_BOOL, TYPE_BOOL, TYPE_BOOL)
@@ -217,6 +250,8 @@ public:
 		FN_0(exocortexGetBinVersion, TYPE_INT, ExocortexGetBinVersion)
 		FN_0(exocortexMemoryDiagnostics, TYPE_INT, ExocortexMemoryDiagnostics)
 		FN_0(exocortexGetLicenseStatus, TYPE_INT, ExocortexGetLicenseStatus)
+		FN_1(exocortexAlembicImportJobs, TYPE_INT, ExocortexAlembicImportJobs, TYPE_STRING)
+		FN_1(exocortexAlembicExportJobs, TYPE_INT, ExocortexAlembicExportJobs, TYPE_STRING)
 	END_FUNCTION_MAP
 };
 
@@ -296,7 +331,7 @@ int ExocortexAlembicStaticInterface::ExocortexMemoryDiagnostics()
 {
 	Exocortex::essLogWarning( "Exocortex Memory Diagnostics -----------------------------------------------------" );
 #ifdef _DEBUG
-	Exocortex::essLogActiveAllocations();
+	//Exocortex::essLogActiveAllocations();
 #endif
 	return 0;
 }
@@ -311,6 +346,21 @@ int ExocortexAlembicStaticInterface::ExocortexGetLicenseStatus()
 	}
 	return 0;
 }
+
+int ExocortexAlembicStaticInterface_ExocortexAlembicImportJobs( CONST_2013 MCHAR* jobString );
+int ExocortexAlembicStaticInterface::ExocortexAlembicImportJobs( CONST_2013 MCHAR* jobString )
+{
+
+	//ESS_STRUCTURED_EXCEPTION_REPORTING_START
+
+	//	return ExocortexAlembicStaticInterface_ExocortexAlembicImport( strPath, bImportNormals, bImportUVs, bImportMaterialIds, bAttachToExisting, iVisOption);
+
+	//ESS_STRUCTURED_EXCEPTION_REPORTING_END
+
+	//return alembic_failure;
+	return 0;
+}
+
 
 int ExocortexAlembicStaticInterface_ExocortexAlembicImport( CONST_2013 MCHAR* strPath, BOOL bImportNormals, BOOL bImportUVs, BOOL bImportMaterialIds, BOOL bAttachToExisting, int iVisOption);
 
@@ -381,7 +431,6 @@ int ExocortexAlembicStaticInterface_ExocortexAlembicImport( CONST_2013 MCHAR* st
 
 		options.sceneEnumProc.Init(i->GetScene(), i->GetTime(), i);
 		options.currentSceneList.FillList(options.sceneEnumProc);
-		Object *currentObject = NULL;
 
 		ESS_LOG_INFO( "AlembicImport_TimeControl." );
 				
@@ -456,136 +505,360 @@ int ExocortexAlembicStaticInterface_ExocortexAlembicImport( CONST_2013 MCHAR* st
 }
 
 
-int ExocortexAlembicStaticInterface_ExocortexAlembicExport(CONST_2013 MCHAR * strPath, int iFrameIn, int iFrameOut, int iFrameSteps, int iFrameSubSteps, int iType,
-															BOOL bExportUV, BOOL bExportMaterialIds, BOOL bExportEnvelopeBindPose, BOOL bExportDynamicTopology,
-															BOOL bExportSelected, BOOL bFlattenHierarchy, BOOL bExportAsSingleMesh);
-
-int ExocortexAlembicStaticInterface::ExocortexAlembicExport(CONST_2013 MCHAR * strPath, int iFrameIn, int iFrameOut, int iFrameSteps, int iFrameSubSteps, int iType,
-															BOOL bExportUV, BOOL bExportMaterialIds, BOOL bExportEnvelopeBindPose, BOOL bExportDynamicTopology,
-															BOOL bExportSelected, BOOL bFlattenHierarchy, BOOL bExportAsSingleMesh)
+void addNodeChildren(INode* pNode, ObjectList& allSceneObjects, TimeValue time, std::string path)
 {
-	ESS_STRUCTURED_EXCEPTION_REPORTING_START
-		return ExocortexAlembicStaticInterface_ExocortexAlembicExport( strPath, iFrameIn, iFrameOut, iFrameSteps, iFrameSubSteps, iType,
-															bExportUV, bExportMaterialIds, bExportEnvelopeBindPose, bExportDynamicTopology,
-															bExportSelected, bFlattenHierarchy, bExportAsSingleMesh );
-	ESS_STRUCTURED_EXCEPTION_REPORTING_END
-	return alembic_failure;
+	for(int i=0; i<pNode->NumberOfChildren(); i++){
+
+		INode* pChildNode = pNode->GetChildNode(i);
+
+		path += "/";
+		path += pChildNode->GetName();
+
+		SceneEntry sEntry = createSceneEntry(pChildNode, time, &path);
+		allSceneObjects.Append(&sEntry);//The append will make a copy sEntry, so this is safe
+
+		addNodeChildren(pChildNode, allSceneObjects, time, path);
+	}
 }
 
-int ExocortexAlembicStaticInterface_ExocortexAlembicExport(CONST_2013 MCHAR * strPath, int iFrameIn, int iFrameOut, int iFrameSteps, int iFrameSubSteps, int iType,
-															BOOL bExportUV, BOOL bExportMaterialIds, BOOL bExportEnvelopeBindPose, BOOL bExportDynamicTopology,
-															BOOL bExportSelected, BOOL bFlattenHierarchy, BOOL bExportAsSingleMesh)
+int parseObjectsParameter(const std::string& objectsString, ObjectList& allSceneObjects, TimeValue time)
 {
-	try {
+	std::vector<std::string> objects;
+	boost::split(objects, objectsString, boost::is_any_of(","));
 
-		ESS_LOG_INFO( "ExocortexAlembicExport( strPath=" << strPath <<
-			", iFrameIn=" << iFrameIn << ", iFrameOut=" << iFrameOut <<
-			", iFrameSteps=" << iFrameSteps << ", iFrameSubSteps=" << iFrameSubSteps <<
-			", iType=" << iType  << ", bExportUV=" << bExportUV <<
-			", bExportMaterialIds=" << bExportMaterialIds << ", bExportEnvelopeBindPose=" << bExportEnvelopeBindPose <<
-			", bExportDynamicTopology=" << bExportDynamicTopology << ", bExportSelected=" << bExportSelected <<
-			" )" );
-
-		MAXInterface *i = GET_MAX_INTERFACE();
-		i->ProgressStart("Exporting Alembic File", TRUE, DummyProgressFunction, NULL);
-
-		MeshTopologyType eTopologyType = static_cast<MeshTopologyType>(iType);
-
-		SceneEnumProc currentScene(i->GetScene(), i->GetTime(), i);
-		ObjectList allSceneObjects(currentScene);
-		Object *currentObject = NULL;
-
-		if (strlen(strPath) <= 0)
-		{
-			ESS_LOG_ERROR( "No filename specified." );
-			i->ProgressEnd();
-			return alembic_invalidarg;
+	for(int i=0; i<objects.size(); i++){
+		std::string path("");
+		if(objects[i][0] != '/'){
+			path += "/";
 		}
+		path += objects[i];
 
-		// Delete this archive if we have already imported it and are currently using it
-		deleteArchive(strPath);
+		INode* pNode = GetNodeFromHierarchyPath(path);
 
-		// Keep track of the min/max values when processing multiple jobs
-		double dbFrameMinIn = 1000000.0;
-		double dbFrameMaxOut = -1000000.0;
-		double dbFrameMaxSteps = 1.0;
-		double dbFrameMaxSubSteps = 1.0;
-
-		double dbFrameIn = static_cast<double>(iFrameIn);
-		double dbFrameOut = static_cast<double>(iFrameOut);
-		double dbFrameSteps = static_cast<double>(iFrameSteps);
-		double dbFrameSubSteps = (iFrameSteps > 1) ? 1.0 : static_cast<double>(iFrameSubSteps);
-
-		// check if we have incompatible subframes
-		if (dbFrameMaxSubSteps > 1.0 && dbFrameSubSteps > 1.0)
-		{
-			if (dbFrameMaxSubSteps > dbFrameSubSteps)
-			{
-				double part = dbFrameMaxSubSteps / dbFrameSubSteps;
-				if (abs(part - floor(part)) > 0.001)
-				{
-					ESS_LOG_ERROR( "Invalid combination of substeps in the same export. Aborting." );
-					i->ProgressEnd();
-					return alembic_invalidarg;
-				}
-			}
-			else if (dbFrameSubSteps > dbFrameMaxSubSteps)
-			{
-				double part = dbFrameSubSteps / dbFrameMaxSubSteps;
-				if (abs(part - floor(part)) > 0.001)
-				{
-					ESS_LOG_ERROR( "Invalid combination of substeps in the same export. Aborting." );
-					i->ProgressEnd();
-					return alembic_invalidarg;
-				}
-			}
-		}
-
-		std::vector<double> frames;
-		for (double dbFrame = dbFrameIn; dbFrame <= dbFrameOut; dbFrame += dbFrameSteps / dbFrameSubSteps)
-		{
-			// Adding frames
-			frames.push_back(dbFrame);
-		}
-
-		AlembicWriteJob *job = new AlembicWriteJob(strPath, allSceneObjects, frames, i);
-		job->SetOption("exportNormals", eTopologyType == SURFACE_NORMAL);
-		job->SetOption("exportUVs", (bExportUV != FALSE));
-		job->SetOption("exportPurePointCache", eTopologyType == POINTCACHE);
-		job->SetOption("exportBindPose", (bExportEnvelopeBindPose != FALSE));
-		job->SetOption("exportMaterialIds", (bExportMaterialIds != FALSE));
-		job->SetOption("exportDynamicTopology", (bExportDynamicTopology != FALSE));
-		job->SetOption("indexedNormals", true);
-		job->SetOption("indexedUVs", true);
-		job->SetOption("exportSelected", (bExportSelected != FALSE));
-		job->SetOption("flattenHierarchy",(bFlattenHierarchy != FALSE));
-		job->SetOption("exportParticlesAsMesh", (bExportAsSingleMesh != FALSE));
-
-		// check if the job is satisfied
-		if (job->PreProcess() != true)
-		{
-			ESS_LOG_ERROR( "Job skipped. Not satisfied.");
-			delete(job);
-			i->ProgressEnd();
+		if(!pNode){
+			ESS_LOG_ERROR("Could not find "<<objects[i]<<". Please ensure you have provide the full path.");
 			return alembic_failure;
 		}
 
-		dbFrameMinIn = min(dbFrameMinIn, dbFrameIn);
-		dbFrameMaxOut = max(dbFrameMaxOut, dbFrameOut);
-		dbFrameMaxSteps = max(dbFrameMaxSteps, dbFrameSteps);   // TODO: Shouldn't this be a min?
-		dbFrameMaxSubSteps = max(dbFrameMaxSubSteps, dbFrameSubSteps);
+		SceneEntry sEntry = createSceneEntry(pNode, time, &path);
+		allSceneObjects.Append(&sEntry);//The append will make a copy sEntry, so this is safe
 
-		// now, let's run through all frames, and process the jobs
-		for (double dbFrame = dbFrameMinIn; dbFrame <= dbFrameMaxOut; dbFrame += dbFrameMaxSteps / dbFrameMaxSubSteps)
-		{
-			double dbProgress = (100.0 * dbFrame - dbFrameMinIn) / (dbFrameMaxOut - dbFrameMinIn);
-			i->ProgressUpdate(static_cast<int>(dbProgress));
-			job->Process(dbFrame);
+		addNodeChildren(pNode, allSceneObjects, time, path);
+	}
+
+	return alembic_success;
+}
+
+bool parseBool(std::string value){
+	//std::istringstream(valuePair[1]) >> bExportSelected;
+
+	if( value.find("true") != std::string::npos || value.find("1") != std::string::npos ){
+		return true;
+	}
+	else{
+		return false;
+	}
+}
+
+int ExocortexAlembicStaticInterface_ExocortexAlembicExportJobs( CONST_2013 MCHAR* jobString );
+int ExocortexAlembicStaticInterface::ExocortexAlembicExportJobs( CONST_2013 MCHAR* jobString )
+{
+	ESS_STRUCTURED_EXCEPTION_REPORTING_START
+
+		return ExocortexAlembicStaticInterface_ExocortexAlembicExportJobs( jobString );
+
+	ESS_STRUCTURED_EXCEPTION_REPORTING_END
+
+	return alembic_failure;
+}
+
+int ExocortexAlembicStaticInterface_ExocortexAlembicExportJobs( CONST_2013 MCHAR* jobString )
+{
+	try {
+
+		ESS_LOG_INFO( "Processing export jobs: "<<jobString);
+
+		MAXInterface *pMaxInterface = GET_MAX_INTERFACE();
+		pMaxInterface->ProgressStart("Exporting Alembic File", TRUE, DummyProgressFunction, NULL);
+
+
+		TimeValue currentTime = pMaxInterface->GetTime();
+
+		SceneEnumProc currentScene;
+
+		std::vector<std::string> jobs;
+		boost::split(jobs, jobString, boost::is_any_of("|"));
+
+		std::vector<AlembicWriteJob*> jobPtrs;
+
+		double dbMinFrame = 1000000.0;
+		double dbMaxFrame = -1000000.0;
+		double dbMaxSteps = 1;
+		double dbMaxSubsteps = 1;
+
+		for(int i=0; i<jobs.size(); i++){
+
+			double dbFrameIn = 1.0;
+			double dbFrameOut = 1.0;
+			double dbFrameSteps = 1.0;
+			double dbFrameSubSteps = 1.0;
+			std::string filename;
+			bool bTransformCache = false;
+			bool bPurePointCache = false;
+			bool bNormals = true;
+			bool bVelocities = false;
+			bool bUVs = true;
+			bool bFacesets = true;
+			bool bMaterialIds = true;
+			bool bBindPose = true;
+			bool bDynamicTopology = false;
+			bool bGlobalSpace = false;
+			bool bGuideCurves = false;
+			bool bExportSelected = false;
+			bool bFlattenHierarchy = false;
+			bool bExportAsSingleMesh = false;
+			bool bObjectsParameterExists = false;
+			bool bUiExport = false;
+
+			ObjectList allSceneObjects;
+			
+			std::vector<std::string> tokens;
+			boost::split(tokens, jobs[i], boost::is_any_of(";"));
+			for(int j=0; j<tokens.size(); j++){
+
+				std::vector<std::string> valuePair;
+				boost::split(valuePair, tokens[j], boost::is_any_of("="));
+				if(valuePair.size() != 2){
+					ESS_LOG_WARNING("Skipping invalid token: "<<tokens[j]);
+					continue;
+				}
+
+				if(boost::iequals(valuePair[0], "in")){
+					std::istringstream(valuePair[1]) >> dbFrameIn;
+				}
+				else if(boost::iequals(valuePair[0], "out")){
+					std::istringstream(valuePair[1]) >> dbFrameOut;
+				}
+				else if(boost::iequals(valuePair[0], "step")){
+					std::istringstream(valuePair[1]) >> dbFrameSteps;
+				}
+				else if(boost::iequals(valuePair[0], "substep")){
+					std::istringstream(valuePair[1]) >> dbFrameSubSteps;
+				}
+				else if(boost::iequals(valuePair[0], "normals")){
+					bNormals = parseBool(valuePair[1]);
+				}
+				else if(boost::iequals(valuePair[0], "velocities")){
+					bVelocities = parseBool(valuePair[1]);
+				}
+				else if(boost::iequals(valuePair[0], "uvs")){
+					bUVs = parseBool(valuePair[1]);
+				}
+				else if(boost::iequals(valuePair[0], "facesets")){
+					bFacesets = parseBool(valuePair[1]);
+				}
+				else if(boost::iequals(valuePair[0], "materialids")){
+					bMaterialIds = parseBool(valuePair[1]);
+				}
+				else if(boost::iequals(valuePair[0], "bindpose")){
+					bBindPose = parseBool(valuePair[1]);
+				}
+				else if(boost::iequals(valuePair[0], "transformcache")){
+					bTransformCache = parseBool(valuePair[1]);
+				}
+				else if(boost::iequals(valuePair[0], "purepointcache")){
+					bPurePointCache = parseBool(valuePair[1]);
+				}
+				else if(boost::iequals(valuePair[0], "dynamictopology")){
+					bDynamicTopology = parseBool(valuePair[1]);
+				}
+				else if(boost::iequals(valuePair[0], "globalspace")){
+					bGlobalSpace = parseBool(valuePair[1]);
+				}
+				else if(boost::iequals(valuePair[0], "guidecurves")){
+					bGuideCurves = parseBool(valuePair[1]);
+				}
+				else if(boost::iequals(valuePair[0], "filename")){
+					std::istringstream(valuePair[1]) >> filename;
+				}
+				else if(boost::iequals(valuePair[0], "flattenhierarchy")){
+					bFlattenHierarchy = parseBool(valuePair[1]);
+				}
+				else if(boost::iequals(valuePair[0], "particlesystemtomeshconversion")){
+					bExportAsSingleMesh = parseBool(valuePair[1]);
+				}
+				else if(boost::iequals(valuePair[0], "exportselected")){
+					bExportSelected = parseBool(valuePair[1]);
+				}
+				else if(boost::iequals(valuePair[0], "uiExport")){
+					bUiExport = parseBool(valuePair[1]);
+				}
+				else if(boost::iequals(valuePair[0], "objects")){
+					bObjectsParameterExists = true;
+					int res = parseObjectsParameter(valuePair[1], allSceneObjects, currentTime);
+					if(res != alembic_success){
+						pMaxInterface->ProgressEnd();
+						return res;
+					}
+					if(allSceneObjects.Count() == 0){
+						ESS_LOG_ERROR("0 export objects were specified via object parameter.");
+						pMaxInterface->ProgressEnd();
+						return alembic_invalidarg;
+					}
+				}
+				else
+				{
+					ESS_LOG_INFO("Skipping invalid token: "<<tokens[j]);
+					continue;
+				}
+			}
+
+			if(filename.size() == 0){
+				ESS_LOG_ERROR("No filename specified.");
+				pMaxInterface->ProgressEnd();
+				return alembic_invalidarg;
+			}
+
+			if(archiveExists(filename)){
+				ESS_LOG_ERROR(""<<filename<<" is already open.");
+				pMaxInterface->ProgressEnd();
+				return alembic_invalidarg;
+			}
+
+			// check if we have incompatible subframes
+			if(dbMaxSubsteps > 1.0 && dbFrameSubSteps > 1.0)
+			{
+				if(dbMaxSubsteps > dbFrameSubSteps)
+				{
+					double part = dbMaxSubsteps / dbFrameSubSteps;
+					if(abs(part - floor(part)) > 0.001)
+					{
+						ESS_LOG_INFO("You cannot combine substeps "<<dbFrameSubSteps<<" and "<<dbMaxSubsteps<<" in one export. Aborting.");
+						pMaxInterface->ProgressEnd();
+						return alembic_invalidarg;
+					}
+				}
+				else if(dbFrameSubSteps > dbMaxSubsteps )
+				{
+					double part = dbFrameSubSteps / dbMaxSubsteps;
+					if(abs(part - floor(part)) > 0.001)
+					{
+						ESS_LOG_INFO("You cannot combine substeps "<<dbMaxSubsteps<<" and "<<dbFrameSubSteps<<" in one export. Aborting.");
+						pMaxInterface->ProgressEnd();
+						return alembic_invalidarg;
+					}
+				}
+			}
+
+			// remember the min and max values for the frames
+			if(dbFrameIn < dbMinFrame) dbMinFrame = dbFrameIn;
+			if(dbFrameOut > dbMaxFrame) dbMaxFrame = dbFrameOut;
+			if(dbFrameSteps > dbMaxSteps) dbMaxSteps = dbFrameSteps;
+			if(dbFrameSteps > 1.0) dbFrameSubSteps = 1.0;
+			if(dbFrameSubSteps > dbMaxSubsteps) dbMaxSubsteps = dbFrameSubSteps;
+
+			std::vector<double> frames;
+			for (double frame = dbFrameIn; frame <= dbFrameOut; frame += dbFrameSteps / dbFrameSubSteps){
+				frames.push_back(frame);
+			}
+
+			if(bObjectsParameterExists){
+				bExportSelected = false;
+			}
+			else{
+				if(!bUiExport){
+					if(bExportSelected){
+						ESS_LOG_WARNING("Objects parameter not specified. Exporting all selected objects.");
+					}
+					else{
+						ESS_LOG_WARNING("Objects parameter not specified. Exporting all objects.");
+					}
+				}
+
+				if(currentScene.Count() == 0){
+					currentScene.Init(pMaxInterface->GetScene(), currentTime, pMaxInterface);
+				}
+				allSceneObjects.FillList(currentScene);
+			}
+
+			AlembicWriteJob * job = new AlembicWriteJob(filename, allSceneObjects, frames, pMaxInterface);
+			//job->SetOption(L"exportFaceSets",facesets);
+			//job->SetOption(L"globalSpace",globalspace);
+			//job->SetOption(L"guideCurves",guidecurves);
+			job->SetOption("exportNormals", bNormals);
+			job->SetOption("exportUVs", bUVs);
+			job->SetOption("exportPurePointCache", bPurePointCache);
+			job->SetOption("exportBindPose", bBindPose);
+			job->SetOption("exportMaterialIds", bMaterialIds);
+			job->SetOption("exportDynamicTopology", bDynamicTopology);
+			job->SetOption("indexedNormals", true);
+			job->SetOption("indexedUVs", true);
+			job->SetOption("exportSelected", bExportSelected);
+			job->SetOption("flattenHierarchy", bFlattenHierarchy);
+			job->SetOption("exportParticlesAsMesh", bExportAsSingleMesh);
+			job->SetOption("transformCache", bTransformCache);
+
+			if (job->PreProcess() != true)
+			{
+				ESS_LOG_ERROR( "Job skipped. Not satisfied.");
+				delete(job);
+				continue;
+			}
+
+			// push the job to our registry
+			ESS_LOG_INFO("[ExocortexAlembic] Using WriteJob:"<<jobs[i]);
+			jobPtrs.push_back(job);
 		}
 
-		delete(job);
+		//ProgressBar prog;
+		//prog = Application().GetUIToolkit().GetProgressBar();
+		//prog.PutCaption(L"Exporting "+CString(jobCount)+L" frames from " + CString(objectCount) + " objects...");
+		//prog.PutMinimum(0);
+		//prog.PutMaximum(jobCount);
+		//prog.PutValue(0);
+		//prog.PutCancelEnabled(true);
+		//prog.PutVisible(true);
 
-		i->ProgressEnd();
+		// now, let's run through all frames, and process the jobs
+		bool bSuccess = true;
+		double dbErrorFrame = 0.0;
+		size_t nErrorJob = 0;
+		for(double frame = dbMinFrame; frame<=dbMaxFrame; frame += dbMaxSteps / dbMaxSubsteps)
+		{
+			for(size_t i=0; i<jobPtrs.size(); i++)
+			{
+				bool bStatusOK = jobPtrs[i]->Process(frame);
+				if(bStatusOK){
+					double dbProgress = (100.0 * frame - dbMinFrame) / (dbMaxFrame - dbMinFrame);
+					pMaxInterface->ProgressUpdate(static_cast<int>(dbProgress));
+				}
+				else{
+					bSuccess = false;
+					dbErrorFrame = frame;
+					nErrorJob = i;
+					goto EXIT_ON_ERROR;
+				}
+
+			}
+		} EXIT_ON_ERROR:
+
+		//prog.PutVisible(false);
+
+		// delete all jobs
+		for(size_t k=0;k<jobPtrs.size();k++){
+			deleteArchive(jobPtrs[k]->GetFileName());
+			delete(jobPtrs[k]);
+		}
+
+		// remove all known archives
+		//deleteAllArchives(); Why do this?
+
+		pMaxInterface->ProgressEnd();
+
+		if(!bSuccess){
+			ESS_LOG_ERROR("Encountered error on frame "<<dbErrorFrame<<" of job "<<nErrorJob);
+			return alembic_failure;
+		}
 
 	} catch( boost::exception& e ) { 								
 		ESS_LOG_ERROR(__FILE__ << "(line " << __LINE__ << "). A boost::exception occurred: " << boost::diagnostic_information(e) );					
@@ -618,6 +891,46 @@ int ExocortexAlembicStaticInterface_ExocortexAlembicExport(CONST_2013 MCHAR * st
 	}
 
 	return alembic_success;
+}
+
+int ExocortexAlembicStaticInterface_ExocortexAlembicExport(CONST_2013 MCHAR * strPath, int iFrameIn, int iFrameOut, int iFrameSteps, int iFrameSubSteps, int iType,
+															BOOL bExportUV, BOOL bExportMaterialIds, BOOL bExportEnvelopeBindPose, BOOL bExportDynamicTopology,
+															BOOL bExportSelected, BOOL bFlattenHierarchy, BOOL bExportAsSingleMesh);
+int ExocortexAlembicStaticInterface::ExocortexAlembicExport(CONST_2013 MCHAR * strPath, int iFrameIn, int iFrameOut, int iFrameSteps, int iFrameSubSteps, int iType,
+															BOOL bExportUV, BOOL bExportMaterialIds, BOOL bExportEnvelopeBindPose, BOOL bExportDynamicTopology,
+															BOOL bExportSelected, BOOL bFlattenHierarchy, BOOL bExportAsSingleMesh)
+{
+	ESS_STRUCTURED_EXCEPTION_REPORTING_START
+		return ExocortexAlembicStaticInterface_ExocortexAlembicExport( strPath, iFrameIn, iFrameOut, iFrameSteps, iFrameSubSteps, iType,
+															bExportUV, bExportMaterialIds, bExportEnvelopeBindPose, bExportDynamicTopology,
+															bExportSelected, bFlattenHierarchy, bExportAsSingleMesh );
+	ESS_STRUCTURED_EXCEPTION_REPORTING_END
+	return alembic_failure;
+}
+
+int ExocortexAlembicStaticInterface_ExocortexAlembicExport(CONST_2013 MCHAR * strPath, int iFrameIn, int iFrameOut, int iFrameSteps, int iFrameSubSteps, int iType,
+															BOOL bExportUV, BOOL bExportMaterialIds, BOOL bExportEnvelopeBindPose, BOOL bExportDynamicTopology,
+															BOOL bExportSelected, BOOL bFlattenHierarchy, BOOL bExportAsSingleMesh)
+{
+
+	std::stringstream jobStream;
+	jobStream<<"filename="<<strPath<<";in="<<iFrameIn<<";out="<<iFrameOut<<";step="<<iFrameSteps<<";substep="<<iFrameSubSteps;
+
+	MeshTopologyType eTopologyType = static_cast<MeshTopologyType>(iType);	if(eTopologyType == SURFACE){
+	}
+	else if(eTopologyType == POINTCACHE){
+		jobStream<<";purepointcache=true";
+	}
+	else if(eTopologyType == SURFACE_NORMAL){
+		jobStream<<";normals=true";
+	}
+	jobStream<<";uvs="<<bExportUV<<";materialids="<<bExportMaterialIds<<";bindpose="<<bExportEnvelopeBindPose<<";dynamictopology="<<bExportDynamicTopology;
+	jobStream<<";exportselected="<<bExportSelected<<";flattenhierarchy="<<bFlattenHierarchy<<";particlesystemtomeshconversion="<<bExportAsSingleMesh;
+	jobStream<<";uiExport=true";
+	
+	return ExocortexAlembicStaticInterface_ExocortexAlembicExportJobs( (MCHAR*)jobStream.str().c_str() );
+
+	return 0;
 }
 
 //MarshallH: This function probably isn't necessary and it breaks the node undo mechanism

@@ -24,7 +24,8 @@ public:
 		//ID_GEOALPHA,
 		//ID_NORMALS,
 		//ID_UVS,
-		ID_MUTED
+		ID_MUTED,
+		ID_IGNORE_SUBFRAME_SAMPLES
 	};
 
 	static IObjParam *ip;

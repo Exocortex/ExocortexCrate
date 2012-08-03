@@ -118,13 +118,23 @@ int recurseOnAlembicObject(Alembic::AbcGeom::IObject& iObj, INode *pParentMaxNod
 
 		INode* pExistingNode = NULL;
 		if(bCreateDummyNode){
+
+			std::string importName = iObj.getName();
+
+			size_t found = importName.find("Xfo");
+			if(found == std::string::npos){
+				found = importName.find("xfo");
+			}
+			if(found != std::string::npos){
+				importName = importName.substr(0, found);
+			}
 			
-			pExistingNode = GetChildNodeFromName(iObj.getName(), pParentMaxNode);
+			pExistingNode = GetChildNodeFromName(importName, pParentMaxNode);
 			if(options.attachToExisting && pExistingNode){
 				pMaxNode = pExistingNode;
 			}//only create node if either attachToExisting is false or it is true and the object does not already exist
 			else{
-				int ret = AlembicImport_DummyNode(iObj, options, &pMaxNode);
+				int ret = AlembicImport_DummyNode(iObj, options, &pMaxNode, importName);
 				if(ret != 0) return ret;
 
 				//add this iObj as transform controller controller

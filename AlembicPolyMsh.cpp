@@ -88,6 +88,9 @@ void AlembicPolyMesh::SaveMaterialsProperty(bool bFirstFrame, bool bLastFrame)
 
 bool AlembicPolyMesh::Save(double time, bool bLastFrame)
 {   
+	//this call is here to avoid reading pointers that are only valid on a single frame
+	mMeshSample.reset();
+
 	const bool bFirstFrame = mNumSamples == 0;
 
 	TimeValue ticks = GetTimeValueFromFrame(time);
@@ -219,19 +222,14 @@ bool AlembicPolyMesh::Save(double time, bool bLastFrame)
 		//ESS_LOG_INFO( "Archive bbox: min("<<box.min.x<<", "<<box.min.y<<", "<<box.min.z<<") max("<<box.max.x<<", "<<box.max.y<<", "<<box.max.z<<")" );
 	}
 
-	if((mNumSamples == 0 || dynamicTopology) && finalPolyMesh.posVec.size() > 0){
-		mMeshSample.setPositions(Alembic::Abc::P3fArraySample(finalPolyMesh.posVec));
-	}
-	else if(mNumSamples == 0 && dynamicTopology){
-		mMeshSample.setPositions(Alembic::Abc::P3fArraySample(NULL, 0));
-	}
+
+	mMeshSample.setPositions(Alembic::Abc::P3fArraySample(finalPolyMesh.posVec));
 
 	mMeshSample.setSelfBounds(finalPolyMesh.bbox);
 	mMeshSample.setChildBounds(finalPolyMesh.bbox);
 	
-	bool purePointCache = static_cast<bool>(GetCurrentJob()->GetOption("exportPurePointCache"));
     // abort here if we are just storing points
-    if(purePointCache)
+    if(mJob->GetOption("exportPurePointCache") == TRUE)
     {
         if(mNumSamples == 0)
         {
@@ -245,38 +243,23 @@ bool AlembicPolyMesh::Save(double time, bool bLastFrame)
         return true;
     }
 
+	Alembic::Abc::Int32ArraySample faceCountSample(finalPolyMesh.mFaceCountVec);
+	Alembic::Abc::Int32ArraySample faceIndicesSample(finalPolyMesh.mFaceIndicesVec);
+	mMeshSample.setFaceCounts(faceCountSample);
+	mMeshSample.setFaceIndices(faceIndicesSample);
 
-
-	if((mNumSamples == 0 || dynamicTopology) && finalPolyMesh.normalVec.size() > 0){
+	if(mJob->GetOption("exportNormals") == TRUE){
 		Alembic::AbcGeom::ON3fGeomParam::Sample normalSample;
 		normalSample.setScope(Alembic::AbcGeom::kFacevaryingScope);
 		normalSample.setVals(Alembic::Abc::N3fArraySample(finalPolyMesh.normalVec));
-		if(finalPolyMesh.normalIndexVec.size() > 0){
+		if(mJob->GetOption("indexedNormals") == TRUE){
 			normalSample.setIndices(Alembic::Abc::UInt32ArraySample(finalPolyMesh.normalIndexVec));
 		}
 		mMeshSample.setNormals(normalSample);
 	}
-	else if(mNumSamples == 0 && dynamicTopology){
-		Alembic::AbcGeom::ON3fGeomParam::Sample normalSample;
-		normalSample.setScope(Alembic::AbcGeom::kFacevaryingScope);
-		normalSample.setVals(Alembic::Abc::N3fArraySample(NULL, 0));
-		normalSample.setIndices(Alembic::Abc::UInt32ArraySample(NULL, 0));
-		mMeshSample.setNormals(normalSample);
-	}
-
-	if((mNumSamples == 0 || dynamicTopology) && finalPolyMesh.mFaceCountVec.size() > 0 && finalPolyMesh.mFaceIndicesVec.size() > 0){
-		Alembic::Abc::Int32ArraySample faceCountSample(finalPolyMesh.mFaceCountVec);
-		Alembic::Abc::Int32ArraySample faceIndicesSample(finalPolyMesh.mFaceIndicesVec);
-		mMeshSample.setFaceCounts(faceCountSample);
-		mMeshSample.setFaceIndices(faceIndicesSample);
-	}
-	else if(mNumSamples == 0 && dynamicTopology){
-		mMeshSample.setFaceCounts(Alembic::Abc::Int32ArraySample(NULL, 0));
-		mMeshSample.setFaceIndices(Alembic::Abc::Int32ArraySample(NULL, 0));
-	}
 
 	//write out the texture coordinates if necessary
-	if((bool)GetCurrentJob()->GetOption("exportUVs") && (bFirstFrame || dynamicTopology))
+	if(mJob->GetOption("exportUVs") == TRUE)
 	{
 
 		if(mNumSamples == 0 && finalPolyMesh.mUvSetNames.size() > 0){
@@ -291,20 +274,11 @@ bool AlembicPolyMesh::Save(double time, bool bLastFrame)
 			std::vector<Alembic::Abc::uint32_t>& uvIndexVec = finalPolyMesh.mUvIndexVec[i];
 
 			int uvIndexSize = 0;
-			Alembic::AbcGeom::OV2fGeomParam::Sample uvSample;
-			if((mNumSamples == 0 || dynamicTopology) && uvVec.size() > 0){
-				uvSample = Alembic::AbcGeom::OV2fGeomParam::Sample(Alembic::Abc::V2fArraySample(uvVec), Alembic::AbcGeom::kFacevaryingScope);
-				if(uvIndexVec.size() > 0){
-					uvIndexSize = (int)uvIndexVec.size();
-					uvSample.setIndices(Alembic::Abc::UInt32ArraySample(uvIndexVec));
-				}
-			}
-			else if(mNumSamples == 0 && dynamicTopology){
-				uvSample = Alembic::AbcGeom::OV2fGeomParam::Sample(Alembic::Abc::V2fArraySample(NULL, 0), Alembic::AbcGeom::kFacevaryingScope);
-				uvSample.setIndices(Alembic::Abc::UInt32ArraySample(NULL, 0));
-			}
-			else{
-				continue;
+			Alembic::AbcGeom::OV2fGeomParam::Sample uvSample = 
+				Alembic::AbcGeom::OV2fGeomParam::Sample(Alembic::Abc::V2fArraySample(uvVec), Alembic::AbcGeom::kFacevaryingScope);
+			if(mJob->GetOption("indexedUVs") == TRUE){
+				uvIndexSize = (int)uvIndexVec.size();
+				uvSample.setIndices(Alembic::Abc::UInt32ArraySample(uvIndexVec));
 			}
 
 			if(i == 0){
@@ -325,48 +299,44 @@ bool AlembicPolyMesh::Save(double time, bool bLastFrame)
 	}
 
 
-      // sweet, now let's have a look at face sets (really only for first sample)
-      // for 3DS Max, we are mapping this to the material ids
-	  if(GetCurrentJob()->GetOption("exportMaterialIds") && (bFirstFrame || dynamicTopology || bLastFrame))
-      {
+	// sweet, now let's have a look at face sets (really only for first sample)
+	// for 3DS Max, we are mapping this to the material ids
+	if(GetCurrentJob()->GetOption("exportMaterialIds") == TRUE)
+	{
+		if(!mMatIdProperty.valid())
+		{
+			mMatIdProperty = OUInt32ArrayProperty(mMeshSchema, ".materialids", mMeshSchema.getMetaData(), GetCurrentJob()->GetAnimatedTs());
+		}
 
-          if(!mMatIdProperty.valid())
-          {
-              mMatIdProperty = OUInt32ArrayProperty(mMeshSchema, ".materialids", mMeshSchema.getMetaData(), GetCurrentJob()->GetAnimatedTs());
-          }
+		Alembic::Abc::UInt32ArraySample sample = Alembic::Abc::UInt32ArraySample(finalPolyMesh.mMatIdIndexVec);
+		mMatIdProperty.set(sample);
 
-          size_t nMatIndexSize = finalPolyMesh.mMatIdIndexVec.size();
-		  if(nMatIndexSize != 0){
-				Alembic::Abc::UInt32ArraySample sample = Alembic::Abc::UInt32ArraySample(&finalPolyMesh.mMatIdIndexVec.front(), nMatIndexSize);
-				mMatIdProperty.set(sample);
-		  }
+		SaveMaterialsProperty(bFirstFrame, bLastFrame || bForever);
 
-		  SaveMaterialsProperty(bFirstFrame, bLastFrame || bForever);
+		size_t numMatId = finalPolyMesh.mFaceSetsMap.size();
+		// For sample zero, export the material ids as face sets
+		if (bFirstFrame && numMatId > 1)
+		{
+			for ( facesetmap_it it=finalPolyMesh.mFaceSetsMap.begin(); it != finalPolyMesh.mFaceSetsMap.end(); it++)
+			{
+				std::stringstream nameStream;
+				int nMaterialId = it->first+1;
+				nameStream<<it->second.name<<" : "<<nMaterialId;
 
-		  size_t numMatId = finalPolyMesh.mFaceSetsMap.size();
-          // For sample zero, export the material ids as face sets
-		  if (bFirstFrame && numMatId > 1)
-          {
-			  for ( facesetmap_it it=finalPolyMesh.mFaceSetsMap.begin(); it != finalPolyMesh.mFaceSetsMap.end(); it++)
-              {
-				  std::stringstream nameStream;
-				  int nMaterialId = it->first+1;
-				  nameStream<<it->second.name<<" : "<<nMaterialId;
+				std::vector<int32_t>& faceSetVec = it->second.faceIds;
 
-                  std::vector<int32_t> & faceSetVec = it->second.faceIds;
+				Alembic::AbcGeom::OFaceSet faceSet = mMeshSchema.createFaceSet(nameStream.str());
+				Alembic::AbcGeom::OFaceSetSchema::Sample faceSetSample(Alembic::Abc::Int32ArraySample(&faceSetVec.front(), faceSetVec.size()));
+				faceSet.getSchema().set(faceSetSample);
+			}
+		}
 
-                  Alembic::AbcGeom::OFaceSet faceSet = mMeshSchema.createFaceSet(nameStream.str());
-                  Alembic::AbcGeom::OFaceSetSchema::Sample faceSetSample(Alembic::Abc::Int32ArraySample(&faceSetVec.front(),faceSetVec.size()));
-                  faceSet.getSchema().set(faceSetSample);
-              }
-          }
+	}
 
-       }
-
-   if(bFirstFrame || (dynamicTopology))
+   /*if(bFirstFrame || (dynamicTopology))
    {
       // check if we need to export the bindpose (also only for first frame)
-	  /*
+	  
       if(GetJob()->GetOption(L"exportBindPose") && prim.GetParent3DObject().GetEnvelopes().GetCount() > 0 && mNumSamples == 0)
       {
          mBindPoseProperty = OV3fArrayProperty(mMeshSchema, ".bindpose", mMeshSchema.getMetaData(), GetJob()->GetAnimatedTs());
@@ -387,24 +357,19 @@ bool AlembicPolyMesh::Save(double time, bool bLastFrame)
             sample = Alembic::Abc::V3fArraySample(&mBindPoseVec.front(),mBindPoseVec.size());
          mBindPoseProperty.set(sample);
       }
-      */
-   }
+      
+   }*/
 
 
    // check if we should export the velocities
    // TODO: support velocity property for nonparticle system meshes if possible
-	if(dynamicTopology && bIsParticleSystem)
+	//TODO: add export velocities option
+	if(bIsParticleSystem)
 	{
-		if(finalPolyMesh.mVelocitiesVec.size() > 0)
-		{
-			if(finalPolyMesh.posVec.size() != finalPolyMesh.mVelocitiesVec.size()){
-				ESS_LOG_INFO("mVelocitiesVec has wrong size.");
-			}
-			mMeshSample.setVelocities(Alembic::Abc::V3fArraySample(finalPolyMesh.mVelocitiesVec));
+		if(finalPolyMesh.posVec.size() != finalPolyMesh.mVelocitiesVec.size()){
+			ESS_LOG_INFO("mVelocitiesVec has wrong size.");
 		}
-		else if(mNumSamples == 0 && dynamicTopology){
-			mMeshSample.setVelocities(Alembic::Abc::V3fArraySample(NULL, 0));
-		}
+		mMeshSample.setVelocities(Alembic::Abc::V3fArraySample(finalPolyMesh.mVelocitiesVec));
 	}
 
 
