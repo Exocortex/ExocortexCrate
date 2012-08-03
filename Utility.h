@@ -131,7 +131,8 @@ INode* GetChildNodeFromName(const std::string& name, INode* pParent);
 std::string getNodePath(const std::string& name);
 
 Modifier* FindModifier(INode* node, char* name);
-void printAnimatables(Animatable* pObj);
+Modifier* FindModifier(INode* node, Class_ID obtype, const char* path, const char* identifier);
+void printControllers(Animatable* anim);
 
 class AlembicPathAccessor : public  IAssetAccessor	{
 	public:
