@@ -180,7 +180,7 @@ int recurseOnAlembicObject(Alembic::AbcGeom::IObject& iObj, INode *pParentMaxNod
 				return alembic_failure;
 			}
 
-			printControllers(pMaxNode);
+			//printControllers(pMaxNode);
 		}
 
 		if(pParentMaxNode && !pExistingNode){
