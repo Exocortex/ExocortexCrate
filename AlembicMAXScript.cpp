@@ -679,7 +679,7 @@ int ExocortexAlembicStaticInterface_ExocortexAlembicExportJobs( CONST_2013 MCHAR
 					bGuideCurves = parseBool(valuePair[1]);
 				}
 				else if(boost::iequals(valuePair[0], "filename")){
-					std::istringstream(valuePair[1]) >> filename;
+					filename = valuePair[1];
 				}
 				else if(boost::iequals(valuePair[0], "flattenhierarchy")){
 					bFlattenHierarchy = parseBool(valuePair[1]);
