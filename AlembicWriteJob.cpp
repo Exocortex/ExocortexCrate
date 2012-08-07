@@ -91,7 +91,7 @@ bool AlembicWriteJob::PreProcess()
     catch(Alembic::Util::Exception& e)
     {
         std::string exc(e.what());
-        ESS_LOG_ERROR("[alembic] Error writing to file. Do you still have it opened?");
+		ESS_LOG_ERROR("[alembic] Error writing to file: "<<e.what());
         return false;
     }
 
