@@ -637,7 +637,7 @@ void printControllers(Animatable* anim)
 	ESS_LOG_WARNING("Done printing");
 }
 
-Modifier* FindModifier(INode* node, Class_ID obtype, const char* path, const char* identifier)
+Modifier* FindModifier(INode* node, Class_ID obtype, const char* identifier)
 {
     TimeValue zero(0);
     int i = 0;
@@ -661,10 +661,10 @@ Modifier* FindModifier(INode* node, Class_ID obtype, const char* path, const cha
                 continue;
             }
 
-            const char* modPath = pBlock->GetStr(GetParamIdByName(pMod, 0, "path"), zero);
+            //const char* modPath = pBlock->GetStr(GetParamIdByName(pMod, 0, "path"), zero);
             const char* modIdentifier = pBlock->GetStr(GetParamIdByName(pMod, 0, "identifier"), zero);
 
-            if(strcmp(modPath, path) == 0 && strcmp(modIdentifier, identifier)){
+            if(/*strcmp(modPath, path) == 0 && */strcmp(modIdentifier, identifier) == 0){
                 pRetMod = pMod;
                 break;
             }
