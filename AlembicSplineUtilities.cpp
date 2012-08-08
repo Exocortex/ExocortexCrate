@@ -497,13 +497,20 @@ int AlembicImport_Shape(const std::string &path, Alembic::AbcGeom::IObject& iObj
         return alembic_failure;
     }
 
+   
    // Create the object pNode
-	INode *pNode = GET_MAX_INTERFACE()->CreateObjectNode(newObject, iObj.getName().c_str());
-	if (pNode == NULL)
-    {
-		return alembic_failure;
-    }
-	*pMaxNode = pNode;
+	INode *pNode = *pMaxNode;
+	bool bReplaceExistingModifiers = false;
+	if(!pNode){
+		pNode = GET_MAX_INTERFACE()->CreateObjectNode(newObject, iObj.getName().c_str());
+		if (pNode == NULL){
+			return alembic_failure;
+		}
+		*pMaxNode = pNode;
+	}
+	else{
+		bReplaceExistingModifiers = true;
+	}
 
 	TimeValue zero( 0 );
 
@@ -512,27 +519,36 @@ int AlembicImport_Shape(const std::string &path, Alembic::AbcGeom::IObject& iObj
 	bool isDynamicTopo = isAlembicSplineTopoDynamic( &iObj );
 
 	{
-		// Create the polymesh modifier
-		Modifier *pModifier = static_cast<Modifier*>
-			(GET_MAX_INTERFACE()->CreateInstance(OSM_CLASS_ID, ALEMBIC_SPLINE_TOPO_MODIFIER_CLASSID));
+		Modifier *pModifier = NULL;
+		bool bCreatedModifier = false;
+		if(bReplaceExistingModifiers){
+			pModifier = FindModifier(pNode, ALEMBIC_SPLINE_TOPO_MODIFIER_CLASSID, identifier.c_str());
+		}
+		if(!pModifier){
+			pModifier = static_cast<Modifier*>
+				(GET_MAX_INTERFACE()->CreateInstance(OSM_CLASS_ID, ALEMBIC_SPLINE_TOPO_MODIFIER_CLASSID));
+			bCreatedModifier = true;
+		}
 
 		pModifier->DisableMod();
 
-		// Set the alembic id
 		pModifier->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pModifier, 0, "path" ), zero, path.c_str());
-		pModifier->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pModifier, 0, "identifier" ), zero, identifier.c_str() );
-		pModifier->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pModifier, 0, "time" ), zero, 0.0f );
-		if( isDynamicTopo ) {
-			pModifier->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pModifier, 0, "geometry" ), zero, TRUE );
-		}
-		else {
-			pModifier->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pModifier, 0, "geometry" ), zero, FALSE );
-		}
 
-		pModifier->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pModifier, 0, "muted" ), zero, FALSE );
-	
-		// Add the modifier to the pNode
-		GET_MAX_INTERFACE()->AddModifier(*pNode, *pModifier);
+		if(bCreatedModifier){
+			pModifier->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pModifier, 0, "identifier" ), zero, identifier.c_str() );
+			pModifier->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pModifier, 0, "time" ), zero, 0.0f );
+			if( isDynamicTopo ) {
+				pModifier->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pModifier, 0, "geometry" ), zero, TRUE );
+			}
+			else {
+				pModifier->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pModifier, 0, "geometry" ), zero, FALSE );
+			}
+
+			pModifier->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pModifier, 0, "muted" ), zero, FALSE );
+		
+			// Add the modifier to the pNode
+			GET_MAX_INTERFACE()->AddModifier(*pNode, *pModifier);
+		}
 
 		if( isDynamicTopo ) {
 			GET_MAX_INTERFACE()->SelectNode( pNode );
@@ -546,21 +562,31 @@ int AlembicImport_Shape(const std::string &path, Alembic::AbcGeom::IObject& iObj
 	bool isGeomContant = true;
 	if( ( ! isDynamicTopo ) && isAlembicSplinePositions( &iObj, isGeomContant ) ) {
 		//ESS_LOG_INFO( "isGeomContant: " << isGeomContant );
-		// Create the polymesh modifier
-		Modifier *pModifier = static_cast<Modifier*>
-			(GET_MAX_INTERFACE()->CreateInstance(OSM_CLASS_ID, ALEMBIC_SPLINE_GEOM_MODIFIER_CLASSID));
+
+		Modifier *pModifier = NULL;
+		bool bCreatedModifier = false;
+		if(bReplaceExistingModifiers){
+			pModifier = FindModifier(pNode, ALEMBIC_SPLINE_GEOM_MODIFIER_CLASSID, identifier.c_str());
+		}
+		if(!pModifier){
+			pModifier = static_cast<Modifier*>
+				(GET_MAX_INTERFACE()->CreateInstance(OSM_CLASS_ID, ALEMBIC_SPLINE_GEOM_MODIFIER_CLASSID));
+			bCreatedModifier = true;
+		}
 
 		pModifier->DisableMod();
 
-		// Set the alembic id
 		pModifier->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pModifier, 0, "path" ), zero, path.c_str());
-		pModifier->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pModifier, 0, "identifier" ), zero, identifier.c_str() );
-		//pModifier->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pModifier, 0, "geoAlpha" ), zero, 1.0f );
-		pModifier->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pModifier, 0, "time" ), zero, 0.0f );
-		pModifier->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pModifier, 0, "muted" ), zero, FALSE );
-	
-		// Add the modifier to the pNode
-		GET_MAX_INTERFACE()->AddModifier(*pNode, *pModifier);
+
+		if(bCreatedModifier){
+			pModifier->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pModifier, 0, "identifier" ), zero, identifier.c_str() );
+			//pModifier->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pModifier, 0, "geoAlpha" ), zero, 1.0f );
+			pModifier->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pModifier, 0, "time" ), zero, 0.0f );
+			pModifier->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pModifier, 0, "muted" ), zero, FALSE );
+		
+			// Add the modifier to the pNode
+			GET_MAX_INTERFACE()->AddModifier(*pNode, *pModifier);
+		}
 
 		if( ! isGeomContant ) {
 			GET_MAX_INTERFACE()->SelectNode( pNode );
@@ -583,8 +609,10 @@ int AlembicImport_Shape(const std::string &path, Alembic::AbcGeom::IObject& iObj
 		modifiersToEnable[i]->EnableMod();
 	}
 
-	GET_MAX_INTERFACE()->SelectNode( pNode );
-	importMetadata(iObj);
+	if( !FindModifier(pNode, "Alembic Metadata") ){
+		GET_MAX_INTERFACE()->SelectNode( pNode );
+		importMetadata(iObj);
+	}
 
 	return 0;
 }
