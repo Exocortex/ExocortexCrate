@@ -147,7 +147,7 @@ int AlembicImport_DummyNode(Alembic::AbcGeom::IObject& iObj, alembic_importoptio
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // AlembicImport_XForm
 ///////////////////////////////////////////////////////////////////////////////////////////////////
-int AlembicImport_XForm(INode* pMaxNode, Alembic::AbcGeom::IObject& iObj, const std::string &file, alembic_importoptions &options)
+int AlembicImport_XForm(INode* pParentNode, INode* pMaxNode, Alembic::AbcGeom::IObject& iObj, const std::string &file, alembic_importoptions &options)
 {
 	const std::string &identifier = iObj.getFullName();
 
@@ -156,17 +156,10 @@ int AlembicImport_XForm(INode* pMaxNode, Alembic::AbcGeom::IObject& iObj, const 
 		return alembic_failure;
 	}
 
-    // Find out if we're dealing with a camera
-    std::string modelfullid = getModelFullName(std::string(iObj.getFullName()));
-    Alembic::AbcGeom::IObject iChildObj = getObjectFromArchive(file,modelfullid);
-    bool bIsCamera = iChildObj.valid() && Alembic::AbcGeom::ICamera::matches(iChildObj.getMetaData());
-
-    // Get the matrix for the current time 
-    alembic_fillxform_options xformOptions;
-    xformOptions.pIObj = &iObj;
-    xformOptions.dTicks = GET_MAX_INTERFACE()->GetTime();
-    xformOptions.bIsCameraTransform = bIsCamera;
-    AlembicImport_FillInXForm(xformOptions);
+	// Find out if we're dealing with a camera
+	std::string modelfullid = getModelFullName(std::string(iObj.getFullName()));
+	Alembic::AbcGeom::IObject iChildObj = getObjectFromArchive(file,modelfullid);
+	bool bIsCamera = iChildObj.valid() && Alembic::AbcGeom::ICamera::matches(iChildObj.getMetaData());
 
 	TimeValue zero(0);
 	if(!isConstant) {
@@ -195,9 +188,10 @@ int AlembicImport_XForm(INode* pMaxNode, Alembic::AbcGeom::IObject& iObj, const 
 		pControl->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pControl, 0, "identifier" ), zero, identifier.c_str() );
 
 		if(bCreatedController){
+
 			pControl->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pControl, 0, "path" ), zero, file.c_str());
 			pControl->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pControl, 0, "time" ), zero, 0.0f );
-			pControl->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pControl, 0, "camera" ), zero, ( xformOptions.bIsCameraTransform ? TRUE : FALSE ) );
+			pControl->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pControl, 0, "camera" ), zero, ( bIsCamera ? TRUE : FALSE ) );
 			pControl->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pControl, 0, "muted" ), zero, FALSE );
 
    			// Add the modifier to the node
@@ -237,7 +231,12 @@ int AlembicImport_XForm(INode* pMaxNode, Alembic::AbcGeom::IObject& iObj, const 
 
 		AlembicImport_FillInXForm(xformOptions);
 
-		pMaxNode->SetNodeTM(zero, xformOptions.maxMatrix);
+		if(pParentNode != NULL){
+			pMaxNode->SetNodeTM(zero, xformOptions.maxMatrix * pParentNode->GetObjectTM(zero));
+		}
+		else{
+			pMaxNode->SetNodeTM(zero, xformOptions.maxMatrix);
+		}
 	}
     pMaxNode->InvalidateTreeTM();
 	
