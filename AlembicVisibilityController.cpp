@@ -373,6 +373,12 @@ void AlembicImport_SetupVisControl( std::string const& file, std::string const& 
 
     if (isConstant)
     {
+		Animatable* pAnimatable = pNode->SubAnim(0);
+
+		if(pAnimatable && pAnimatable->ClassID() == ALEMBIC_VISIBILITY_CONTROLLER_CLASSID){
+			pNode->DeleteSubAnim(0);
+		}
+
         alembic_fillvis_options visFillOptions;
         visFillOptions.pIObj = &obj;
         visFillOptions.dTicks = 0;
