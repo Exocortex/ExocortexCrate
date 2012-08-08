@@ -829,6 +829,7 @@ int ExocortexAlembicStaticInterface_ExocortexAlembicExportJobs( CONST_2013 MCHAR
 			{
 				bool bStatusOK = jobPtrs[i]->Process(frame);
 				if(bStatusOK){
+					//TODO: should probably move this block after the loop
 					double dbProgress = (100.0 * frame - dbMinFrame) / (dbMaxFrame - dbMinFrame);
 					pMaxInterface->ProgressUpdate(static_cast<int>(dbProgress));
 				}
