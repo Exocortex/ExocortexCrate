@@ -86,6 +86,7 @@ void AlembicPolyMesh::SaveMaterialsProperty(bool bFirstFrame, bool bLastFrame)
 }
 
 
+
 bool AlembicPolyMesh::Save(double time, bool bLastFrame)
 {   
 	//this call is here to avoid reading pointers that are only valid on a single frame
@@ -181,7 +182,7 @@ bool AlembicPolyMesh::Save(double time, bool bLastFrame)
 
 		Matrix3 worldTrans;
 		worldTrans.IdentityMatrix();
-		finalPolyMesh.Save(mJob, ticks, triMesh, polyMesh, worldTrans, GetRef().node->GetMtl(), mNumSamples, &materialsMerge);
+		finalPolyMesh.Save(mJob->mOptions, triMesh, polyMesh, worldTrans, GetRef().node->GetMtl(), mNumSamples == 0, &materialsMerge);
 
 	   // Note that the TriObject should only be deleted
 	   // if the pointer to it is not equal to the object
@@ -202,7 +203,6 @@ bool AlembicPolyMesh::Save(double time, bool bLastFrame)
 	bool dynamicTopology = static_cast<bool>(GetCurrentJob()->GetOption("exportDynamicTopology"));
 	
 	// Extend the archive bounding box
-
 	if (mJob){
 		Alembic::Abc::M44d wm;
 		ConvertMaxMatrixToAlembicMatrix(GetRef().node->GetObjTMAfterWSM(ticks), wm);
@@ -222,14 +222,13 @@ bool AlembicPolyMesh::Save(double time, bool bLastFrame)
 		//ESS_LOG_INFO( "Archive bbox: min("<<box.min.x<<", "<<box.min.y<<", "<<box.min.z<<") max("<<box.max.x<<", "<<box.max.y<<", "<<box.max.z<<")" );
 	}
 
-
 	mMeshSample.setPositions(Alembic::Abc::P3fArraySample(finalPolyMesh.posVec));
 
 	mMeshSample.setSelfBounds(finalPolyMesh.bbox);
 	mMeshSample.setChildBounds(finalPolyMesh.bbox);
 	
     // abort here if we are just storing points
-    if(mJob->GetOption("exportPurePointCache") == TRUE)
+    if(mJob->GetOption("exportPurePointCache"))
     {
         if(mNumSamples == 0)
         {
@@ -248,18 +247,18 @@ bool AlembicPolyMesh::Save(double time, bool bLastFrame)
 	mMeshSample.setFaceCounts(faceCountSample);
 	mMeshSample.setFaceIndices(faceIndicesSample);
 
-	if(mJob->GetOption("exportNormals") == TRUE){
+	if(mJob->GetOption("exportNormals")){
 		Alembic::AbcGeom::ON3fGeomParam::Sample normalSample;
 		normalSample.setScope(Alembic::AbcGeom::kFacevaryingScope);
 		normalSample.setVals(Alembic::Abc::N3fArraySample(finalPolyMesh.normalVec));
-		if(mJob->GetOption("indexedNormals") == TRUE){
+		if(mJob->GetOption("indexedNormals")){
 			normalSample.setIndices(Alembic::Abc::UInt32ArraySample(finalPolyMesh.normalIndexVec));
 		}
 		mMeshSample.setNormals(normalSample);
 	}
 
 	//write out the texture coordinates if necessary
-	if(mJob->GetOption("exportUVs") == TRUE)
+	if(mJob->GetOption("exportUVs"))
 	{
 
 		if(mNumSamples == 0 && finalPolyMesh.mUvSetNames.size() > 0){
@@ -276,7 +275,7 @@ bool AlembicPolyMesh::Save(double time, bool bLastFrame)
 			int uvIndexSize = 0;
 			Alembic::AbcGeom::OV2fGeomParam::Sample uvSample = 
 				Alembic::AbcGeom::OV2fGeomParam::Sample(Alembic::Abc::V2fArraySample(uvVec), Alembic::AbcGeom::kFacevaryingScope);
-			if(mJob->GetOption("indexedUVs") == TRUE){
+			if(mJob->GetOption("indexedUVs")){
 				uvIndexSize = (int)uvIndexVec.size();
 				uvSample.setIndices(Alembic::Abc::UInt32ArraySample(uvIndexVec));
 			}
@@ -301,7 +300,7 @@ bool AlembicPolyMesh::Save(double time, bool bLastFrame)
 
 	// sweet, now let's have a look at face sets (really only for first sample)
 	// for 3DS Max, we are mapping this to the material ids
-	if(GetCurrentJob()->GetOption("exportMaterialIds") == TRUE)
+	if(GetCurrentJob()->GetOption("exportMaterialIds"))
 	{
 		if(!mMatIdProperty.valid())
 		{

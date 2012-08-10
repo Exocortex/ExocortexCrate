@@ -191,7 +191,7 @@ bool getParticleSystemMesh(TimeValue ticks, Object* obj, INode* node, Intermedia
 
 			}
 
-			mesh->Save(mJob, ticks, pMesh, NULL, meshTM, pMtl, nNumSamples, pMatMerge);
+			mesh->Save(mJob->mOptions, pMesh, NULL, meshTM, pMtl, nNumSamples == 0, pMatMerge);
 
 			if(bNeedDelete){
 				delete pMesh;
@@ -315,11 +315,11 @@ bool getParticleSystemMesh(TimeValue ticks, Object* obj, INode* node, Intermedia
 		}
 
 		if(i == 0){
-			mesh->Save(mJob, ticks, pMesh, NULL, meshTM, pMtl, nNumSamples, pMatMerge);
+			mesh->Save(mJob->mOptions, pMesh, NULL, meshTM, pMtl, nNumSamples == 0, pMatMerge);
 		}
 		else{
 			IntermediatePolyMesh3DSMax currPolyMesh;
-			currPolyMesh.Save(mJob, ticks, pMesh, NULL, meshTM, pMtl, nNumSamples, pMatMerge);
+			currPolyMesh.Save(mJob->mOptions, pMesh, NULL, meshTM, pMtl, nNumSamples == 0, pMatMerge);
 			bool bSuccess = mesh->mergeWith(currPolyMesh);
 			if(!bSuccess){
 				if(bNeedDelete){

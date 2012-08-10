@@ -16,15 +16,16 @@ private:
     std::vector<double> mFrames;
     Alembic::Abc::OArchive mArchive;
     unsigned int mTs;
-    std::map<std::string, bool> mOptions;
     std::vector<AlembicObjectPtr> mObjects;
     float mFrameRate;
     Interface *mApplication;
     Alembic::Abc::OBox3dProperty m_ArchiveBoxProp;
     Alembic::Abc::Box3d m_Archivebbox;
-
     void AddObject(AlembicObjectPtr obj);
 public:
+
+	std::map<std::string, bool> mOptions;
+
    AlembicWriteJob(const std::string &in_FileName, const ObjectList &in_Selection, const std::vector<double> &in_Frames, Interface *i);
    ~AlembicWriteJob();
 

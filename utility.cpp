@@ -550,7 +550,12 @@ public:
 		}
 		else{
 			//Note: the hidden 3DS max root node should not be included in the path
-			for(size_t i=pathNodeNames.size()-1; i>=0; i--){
+			size_t nStart = 0;
+			if(pathNodeNames.size() >= 1){
+				nStart = pathNodeNames.size()-1;
+			}
+				
+			for(size_t i=nStart; i>=0; i--){
 				path+="/";
 				path+=pathNodeNames[i];
 			}
