@@ -77,34 +77,60 @@ void SaveMetaData(INode* node, AlembicObject* object)
 		return;
 	}
 
-	Modifier* pMod = FindModifier(node, "Metadata");
+	Modifier* pMod = FindModifier(node, Class_ID(0xd81fc3e, 0x1e4eacf5));
+
+	bool bReadCustAttribs = false;
 	if(!pMod){
-		return;
+		pMod = FindModifier(node, "Metadata");
+		bReadCustAttribs = true;
 	}
-	
-	ICustAttribContainer* cont = pMod->GetCustAttribContainer();
-	if(!cont){
+
+	if(!pMod){
 		return;
 	}
 
 	std::vector<std::string> metaData;
 
-	for(int i=0; i<cont->GetNumCustAttribs(); i++)
-	{
-		CustAttrib* ca = cont->GetCustAttrib(i);
-		const char* name = ca->GetName();
+	if(bReadCustAttribs){
 	
-		IParamBlock2 *pblock = ca->GetParamBlockByID(0);
-		if(pblock){
-			int nNumParams = pblock->NumParams();
-			for(int i=0; i<nNumParams; i++){
+		ICustAttribContainer* cont = pMod->GetCustAttribContainer();
+		if(!cont){
+			return;
+		}
+		for(int i=0; i<cont->GetNumCustAttribs(); i++)
+		{
+			CustAttrib* ca = cont->GetCustAttrib(i);
+			const char* name = ca->GetName();
+		
+			IParamBlock2 *pblock = ca->GetParamBlockByID(0);
+			if(pblock){
+				int nNumParams = pblock->NumParams();
+				for(int i=0; i<nNumParams; i++){
 
-				ParamID id = pblock->IndextoID(i);
-				//MSTR name = pblock->GetLocalName(id, 0);
-				MSTR value = pblock->GetStr(id, 0);
+					ParamID id = pblock->IndextoID(i);
+					//MSTR name = pblock->GetLocalName(id, 0);
+					MSTR value = pblock->GetStr(id, 0);
+					metaData.push_back(std::string(value));
+				}
+			}
+		}
+
+	}
+	else{
+
+		IParamBlock2 *pblock = pMod->GetParamBlockByID(0);
+		if(pblock && pblock->NumParams() == 1){
+			
+			ParamID id = pblock->IndextoID(0);
+			MSTR name = pblock->GetLocalName(id, 0);
+			int nSize = pblock->Count(id);
+
+			for(int i=0; i<nSize; i++){
+				MSTR value = pblock->GetStr(id, 0, i);
 				metaData.push_back(std::string(value));
 			}
 		}
+
 	}
 
 	if(metaData.size() > 0){

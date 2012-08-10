@@ -132,6 +132,7 @@ std::string getNodePath(const std::string& name);
 
 Modifier* FindModifier(INode* node, char* name);
 Modifier* FindModifier(INode* node, Class_ID obtype, const char* identifier);
+Modifier* FindModifier(INode* node, Class_ID obtype);
 void printControllers(Animatable* anim);
 
 class AlembicPathAccessor : public  IAssetAccessor	{

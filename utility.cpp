@@ -550,7 +550,12 @@ public:
 		}
 		else{
 			//Note: the hidden 3DS max root node should not be included in the path
-			for(size_t i=pathNodeNames.size()-1; i>=0; i--){
+			size_t nStart = 0;
+			if(pathNodeNames.size() >= 1){
+				nStart = pathNodeNames.size()-1;
+			}
+				
+			for(size_t i=nStart; i>=0; i--){
 				path+="/";
 				path+=pathNodeNames[i];
 			}
@@ -670,6 +675,34 @@ Modifier* FindModifier(INode* node, Class_ID obtype, const char* identifier)
             }
 
             
+        }
+
+        i++;
+    }
+
+    return pRetMod;
+}
+
+Modifier* FindModifier(INode* node, Class_ID obtype)
+{
+    TimeValue zero(0);
+    int i = 0;
+    int idx = 0;
+    Modifier* pRetMod = NULL;
+    while(true){
+        Modifier* pMod;
+        IDerivedObject* pObj = GET_MAX_INTERFACE()->FindModifier(*node, i, idx, pMod);
+        if(!pObj){
+            break;
+        }
+
+        //const char* cname = pObj->GetClassName();
+        const char* oname = pMod->GetObjectName();
+        const char* name = pMod->GetName();
+
+		if(pMod->ClassID() == obtype){
+            pRetMod = pMod;
+            break;  
         }
 
         i++;
