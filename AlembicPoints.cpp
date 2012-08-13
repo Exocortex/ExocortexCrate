@@ -166,6 +166,7 @@ bool AlembicPoints::Save(double time, bool bLastFrame)
 										alembicMatrix.GetRow(3).x,  alembicMatrix.GetRow(3).y,  alembicMatrix.GetRow(3).z,  1);
 	Alembic::Abc::M44d nodeWorldTransInv = nodeWorldTrans.inverse();
 
+	const bool bAutomaticInstancing = GetCurrentJob()->GetOption("automaticInstancing");
 
 	for (int i = 0; i < numParticles; ++i)
 	{
@@ -193,8 +194,12 @@ bool AlembicPoints::Save(double time, bool bLastFrame)
 			ConvertMaxAngAxisToAlembicQuat(*particlesExt->GetParticleSpinByIndex(i), spin);
 			age = (float)GetSecondsFromTimeValue(particlesExt->GetParticleAgeByIndex(i));
 			id = particlesExt->GetParticleBornIndex(i);
-			//GetShapeType(particlesExt, i, ticks, shapetype, shapeInstanceId, shapeInstanceTime);
-			ReadShapeMesh(particlesExt, i, ticks, shapetype, shapeInstanceId, shapeInstanceTime);
+			if(bAutomaticInstancing){
+				ReadShapeMesh(particlesExt, i, ticks, shapetype, shapeInstanceId, shapeInstanceTime);
+			}
+			else{
+				GetShapeType(particlesExt, i, ticks, shapetype, shapeInstanceId, shapeInstanceTime);
+			}
 			color = GetColor(particlesExt, i, ticks);
 		}
 		else if(pSimpleParticle){
@@ -315,9 +320,9 @@ bool AlembicPoints::Save(double time, bool bLastFrame)
 
 	mInstanceNames.pop_back();
 
-
-	saveCurrentFrameMeshes();
-
+	if(bAutomaticInstancing){
+		saveCurrentFrameMeshes();
+	}
 
     return true;
 }

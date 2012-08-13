@@ -1,7 +1,7 @@
 --------------------------------------------------------------------------------------------------------
 -- Custom import/export dialog with settings
 
-rollout AlembicExportSettings "Alembic Export Settings" width:288 height:388
+rollout AlembicExportSettings "Alembic Export Settings" width:288 height:420
 (
 	GroupBox animGroup "Animation" pos:[8,64] width:272 height:96
 	label inLabel "Frame In" pos:[16,88] width:128 height:21
@@ -13,17 +13,20 @@ rollout AlembicExportSettings "Alembic Export Settings" width:288 height:388
 	spinner stepsSpinner "" pos:[112,120] width:160 height:16 range:[1,1e+006,1] type:#integer
 	spinner subStepsSpinner "" pos:[112,136] width:160 height:16 range:[1,1e+006,1] type:#integer
     
-	GroupBox geoGroup "Geometry" pos:[8,168] width:272 height:176
+	GroupBox geoGroup "Geometry" pos:[8,168] width:272 height:208
+	
 	dropdownList meshTopologyDropDown "Mesh Topology" pos:[16,192] width:256 height:40 items:#("Just Surfaces (No Normals)", "Point Cache (No Surfaces)", "Surface + Normals (For Interchange)") selection:3
-	checkbox uvCheckbox "UVs" pos:[32,240] width:128 height:15 checked:true
-	checkbox envelopeCheckbox "Envelope BindPose" pos:[32,256] width:150 height:15 checked:true
-	checkbox materialIdsCheckbox "Material Ids" pos:[32,272] width:107 height:14 checked:true
-	checkbox flattenHierarchyCheckbox "Flatten Hierarchy" pos:[32,288] width:107 height:14 checked:true
-	checkbox exportAsSingleMeshCheckbox "Particle System to Mesh Conversion" pos:[32,304] width:200 height:14 checked:false
-	checkbox transformCacheCheckbox "Transform Cache" pos:[32,320] width:200 height:14 checked:false
+	
+	dropdownList particleSystemExportMethod "Particle System Export Method" pos:[16,240] width:256 height:40 items:#("Shape Node Instancing", "Automatic Instancing", "Merged Mesh") selection:1
 
-	button exportButton "Export" pos:[16,354] width:64 height:24
-	button cancelButton "Cancel" pos:[208,354] width:64 height:24
+	checkbox uvCheckbox "UVs" pos:[32,288] width:128 height:15 checked:true
+	checkbox envelopeCheckbox "Envelope BindPose" pos:[32,304] width:150 height:15 checked:true
+	checkbox materialIdsCheckbox "Material Ids" pos:[32,320] width:107 height:14 checked:true
+	checkbox flattenHierarchyCheckbox "Flatten Hierarchy" pos:[32,336] width:107 height:14 checked:true
+	checkbox transformCacheCheckbox "Transform Cache" pos:[32,352] width:200 height:14 checked:false
+
+	button exportButton "Export" pos:[16,386] width:64 height:24
+	button cancelButton "Cancel" pos:[208,386] width:64 height:24
 	GroupBox selectGroup "Selection" pos:[8,16] width:272 height:40
 	checkbox exportSelectedCheckbox "Export Selected Objects" pos:[32,32] width:232 height:16 checked:true
 
@@ -51,8 +54,8 @@ rollout AlembicExportSettings "Alembic Export Settings" width:288 height:388
 	    	jobString += (exportSelectedCheckbox.checked as string)
 	    	jobString += ";flattenhierarchy=" 
 	    	jobString += (flattenHierarchyCheckbox.checked as string)
-	    	jobString += ";particlesystemtomeshconversion=" 
-	    	jobString += (exportAsSingleMeshCheckbox.checked as string)
+	    	if(particleSystemExportMethod.selection == 2) do jobString += ";automaticinstancing=true" 
+	    	if(particleSystemExportMethod.selection == 3) do jobString += ";particlesystemtomeshconversion=true" 
 	    	jobString += ";transformCache="
 	    	jobString += (transformCacheCheckbox.checked as string)
 
