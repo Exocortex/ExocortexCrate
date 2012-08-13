@@ -798,6 +798,7 @@ void AlembicPoints::ReadShapeMesh(IParticleObjectExt *pExt, int particleId, Time
 		meshInfo& mi = mShapeMeshCache[faceVertexHashPair(vertexDigest, faceDigest)];
 		mi.pMesh = pShapeMesh;
 		std::stringstream nameStream;
+		nameStream<<GetRef().node->GetName()<<" ";
 		nameStream<<"InstanceMesh"<<mNumShapeMeshes;
 		mi.name=nameStream.str();
 		currShapeInfo = mi;
