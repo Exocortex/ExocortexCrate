@@ -1,6 +1,8 @@
 #include "AlembicMax.h"
 #include "AlembicXformUtilities.h"
 #include "AlembicMAXScript.h"
+#include "AlembicMetadataUtils.h"
+
 
 bool isAlembicXform( Alembic::AbcGeom::IObject *pIObj, bool& isConstant ) {
 	Alembic::AbcGeom::IXform objXfrm;
@@ -141,6 +143,8 @@ int AlembicImport_DummyNode(Alembic::AbcGeom::IObject& iObj, alembic_importoptio
     SceneEntry *pEntry = options.sceneEnumProc.Append(*pMaxNode, dObj, OBTYPE_DUMMY, &std::string(iObj.getFullName())); 
     options.currentSceneList.Append(pEntry);
 
+	importMetadata(iObj);
+	
 	return alembic_success;
 }
 
