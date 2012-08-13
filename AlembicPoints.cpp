@@ -20,6 +20,8 @@
 #include <ImathMatrixAlgo.h>
 #include "AlembicMetadataUtils.h"
 
+#include <Alembic/Util/Murmur3.h>
+
 namespace AbcA = ::Alembic::AbcCoreAbstract::ALEMBIC_VERSION_NS;
 namespace AbcB = ::Alembic::Abc::ALEMBIC_VERSION_NS;
 using namespace AbcA;
@@ -31,6 +33,10 @@ using namespace AbcB;
 AlembicPoints::AlembicPoints(const SceneEntry &in_Ref, AlembicWriteJob *in_Job)
     : AlembicObject(in_Ref, in_Job)
 {
+	mNumShapeMeshes = 0;
+	mTotalShapeMeshes = 0;
+	//mTimeSamplesCount = 0;
+
     std::string pointsName = in_Ref.node->GetName();
     std::string xformName = pointsName + "Xfo";
 
@@ -160,6 +166,7 @@ bool AlembicPoints::Save(double time, bool bLastFrame)
 										alembicMatrix.GetRow(3).x,  alembicMatrix.GetRow(3).y,  alembicMatrix.GetRow(3).z,  1);
 	Alembic::Abc::M44d nodeWorldTransInv = nodeWorldTrans.inverse();
 
+	const bool bAutomaticInstancing = GetCurrentJob()->GetOption("automaticInstancing");
 
 	for (int i = 0; i < numParticles; ++i)
 	{
@@ -187,7 +194,12 @@ bool AlembicPoints::Save(double time, bool bLastFrame)
 			ConvertMaxAngAxisToAlembicQuat(*particlesExt->GetParticleSpinByIndex(i), spin);
 			age = (float)GetSecondsFromTimeValue(particlesExt->GetParticleAgeByIndex(i));
 			id = particlesExt->GetParticleBornIndex(i);
-			GetShapeType(particlesExt, i, ticks, shapetype, shapeInstanceId, shapeInstanceTime);
+			if(bAutomaticInstancing){
+				ReadShapeMesh(particlesExt, i, ticks, shapetype, shapeInstanceId, shapeInstanceTime);
+			}
+			else{
+				GetShapeType(particlesExt, i, ticks, shapetype, shapeInstanceId, shapeInstanceTime);
+			}
 			color = GetColor(particlesExt, i, ticks);
 		}
 		else if(pSimpleParticle){
@@ -307,6 +319,10 @@ bool AlembicPoints::Save(double time, bool bLastFrame)
     mNumSamples++;
 
 	mInstanceNames.pop_back();
+
+	if(bAutomaticInstancing){
+		saveCurrentFrameMeshes();
+	}
 
     return true;
 }
@@ -573,6 +589,16 @@ void AlembicPoints::ReadShapeFromOperator( IParticleGroup *particleGroup, PFSimp
             if (chLocalOffR != NULL)
                 time += chLocalOffR->GetValue(particleId);
         }
+		
+		//timeValueMap::iterator it = mTimeValueMap.find(time);
+		//if( it != mTimeValueMap.end() ){
+		//	ESS_LOG_WARNING("sampleTime already seen.");
+		//}
+		//else{
+		//	mTimeValueMap[time] = true;
+		//	mTimeSamplesCount++;
+		//	ESS_LOG_WARNING("sampleTime: "<<(float)time<<" totalSamples: "<<mTimeSamplesCount);
+		//}
 
         TimeValue t = TimeValue(time);
         animationTime = (float)GetSecondsFromTimeValue(t);
@@ -745,4 +771,130 @@ uint16_t AlembicPoints::FindInstanceName(const std::string& name)
 		}
 	}
 	return USHRT_MAX;
+}
+
+void AlembicPoints::ReadShapeMesh(IParticleObjectExt *pExt, int particleId, TimeValue ticks, ShapeType &type, uint16_t &instanceId, float &animationTime)
+{
+	type = ShapeType_Instance;
+	//animationTime = 0;
+	
+	Mesh* pShapeMesh = pExt->GetParticleShapeByIndex(particleId);
+
+	Digest vertexDigest;
+	MurmurHash3_x64_128( pShapeMesh->verts, pShapeMesh->numVerts * sizeof(Point3), sizeof(Point3), vertexDigest.words );
+
+	Digest faceDigest;
+	MurmurHash3_x64_128( pShapeMesh->faces, pShapeMesh->numFaces * sizeof(Face), sizeof(Face), faceDigest.words );
+	
+	mTotalShapeMeshes++;
+
+	meshInfo currShapeInfo;
+	faceVertexHashToShapeMap::iterator it = mShapeMeshCache.find(faceVertexHashPair(vertexDigest, faceDigest));
+	if( it != mShapeMeshCache.end() ){
+		meshInfo& mi = it->second;
+		currShapeInfo = mi;
+	}
+	else{
+		meshInfo& mi = mShapeMeshCache[faceVertexHashPair(vertexDigest, faceDigest)];
+		mi.pMesh = pShapeMesh;
+		std::stringstream nameStream;
+		nameStream<<GetRef().node->GetName()<<" ";
+		nameStream<<"InstanceMesh"<<mNumShapeMeshes;
+		mi.name=nameStream.str();
+		currShapeInfo = mi;
+		mNumShapeMeshes++;
+
+		mMeshesToSaveForCurrentFrame.push_back(&mi);
+
+		//ESS_LOG_WARNING("ticks: "<<ticks<<" particleId: "<<particleId);
+		//ESS_LOG_WARNING("Adding shape with hash("<<vertexDigest.str()<<", "<<faceDigest.str()<<") \n auto assigned name "<<mi.name <<" efficiency:"<<(double)mNumShapeMeshes/mTotalShapeMeshes);
+	}
+
+	std::string pathName("/");
+	pathName += currShapeInfo.name;
+
+	instanceId = FindInstanceName(pathName);
+	if (instanceId == USHRT_MAX){
+		mInstanceNames.push_back(pathName);
+		instanceId = (uint16_t)mInstanceNames.size()-1;
+	}
+}
+
+//we have to save out all mesh encountered on the current frame of this object immediately, because 
+//the pointers will no longer be valid when the object is evaluated at a new time
+void AlembicPoints::saveCurrentFrameMeshes()
+{
+	for(int i=0; i<mMeshesToSaveForCurrentFrame.size(); i++){
+
+		meshInfo* mi = mMeshesToSaveForCurrentFrame[i];
+
+		if(mi->pMesh){
+			Mesh* pMesh = mi->pMesh;
+			mi->pMesh = NULL;//each mesh only needs to be saved once
+
+			Matrix3 worldTrans;
+			worldTrans.IdentityMatrix();
+
+			std::map<std::string, bool> options;
+			options["exportNormals"] = mJob->GetOption("exportNormals");
+			options["indexedNormals"] = mJob->GetOption("indexedNormals");
+
+			//gather the mesh data
+			IntermediatePolyMesh3DSMax finalPolyMesh;
+			finalPolyMesh.Save(options, pMesh, NULL, worldTrans, NULL, false, NULL);
+
+			//save out the mesh xForm
+		
+			std::string xformName = mi->name + "Xfo";
+			Alembic::AbcGeom::OXform xform(mJob->GetArchive().getTop(), xformName.c_str(), GetCurrentJob()->GetAnimatedTs());
+			Alembic::AbcGeom::OXformSchema& xformSchema = xform.getSchema();//mi->xformSchema;
+
+			Alembic::AbcGeom::OPolyMesh mesh(xform, mi->name.c_str(), GetCurrentJob()->GetAnimatedTs());
+			Alembic::AbcGeom::OPolyMeshSchema& meshSchema = mesh.getSchema();
+
+			Alembic::AbcGeom::XformSample xformSample;
+
+			Matrix3 alembicMatrix;
+			alembicMatrix.IdentityMatrix();
+			alembicMatrix.SetTrans(Point3(-10000.0f, -10000.0f, -10000.0f));
+			Alembic::Abc::M44d iMatrix;
+			ConvertMaxMatrixToAlembicMatrix(alembicMatrix, iMatrix);
+
+			xformSample.setMatrix(iMatrix);
+			xformSchema.set(xformSample);
+
+			//update the archive bounding box
+			Alembic::Abc::Box3d bbox;
+			bbox.min = finalPolyMesh.bbox.min * iMatrix;
+			bbox.max = finalPolyMesh.bbox.max * iMatrix;
+
+			mJob->GetArchiveBBox().extendBy(bbox);
+
+			//save out the mesh data			
+			Alembic::AbcGeom::OPolyMeshSchema::Sample meshSample;
+
+			meshSample.setPositions(Alembic::Abc::P3fArraySample(finalPolyMesh.posVec));
+			meshSample.setSelfBounds(finalPolyMesh.bbox);
+			meshSample.setChildBounds(finalPolyMesh.bbox);
+
+			meshSample.setFaceCounts(Alembic::Abc::Int32ArraySample(finalPolyMesh.mFaceCountVec));
+			meshSample.setFaceIndices(Alembic::Abc::Int32ArraySample(finalPolyMesh.mFaceIndicesVec));
+
+			if(mJob->GetOption("exportNormals")){
+				Alembic::AbcGeom::ON3fGeomParam::Sample normalSample;
+				normalSample.setScope(Alembic::AbcGeom::kFacevaryingScope);
+				normalSample.setVals(Alembic::Abc::N3fArraySample(finalPolyMesh.normalVec));
+				if(mJob->GetOption("indexedNormals")){
+					normalSample.setIndices(Alembic::Abc::UInt32ArraySample(finalPolyMesh.normalIndexVec));
+				}
+				meshSample.setNormals(normalSample);
+			}
+
+			meshSchema.set(meshSample);
+
+
+		}
+	}
+	
+	mMeshesToSaveForCurrentFrame.clear();
 }
