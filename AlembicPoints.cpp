@@ -806,8 +806,8 @@ void AlembicPoints::ReadShapeMesh(IParticleObjectExt *pExt, int particleId, Time
 
 		mMeshesToSaveForCurrentFrame.push_back(&mi);
 
-		ESS_LOG_WARNING("ticks: "<<ticks<<" particleId: "<<particleId);
-		ESS_LOG_WARNING("Adding shape with hash("<<vertexDigest.str()<<", "<<faceDigest.str()<<") \n auto assigned name "<<mi.name <<" efficiency:"<<(double)mNumShapeMeshes/mTotalShapeMeshes);
+		//ESS_LOG_WARNING("ticks: "<<ticks<<" particleId: "<<particleId);
+		//ESS_LOG_WARNING("Adding shape with hash("<<vertexDigest.str()<<", "<<faceDigest.str()<<") \n auto assigned name "<<mi.name <<" efficiency:"<<(double)mNumShapeMeshes/mTotalShapeMeshes);
 	}
 
 	std::string pathName("/");
