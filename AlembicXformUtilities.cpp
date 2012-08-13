@@ -1,6 +1,8 @@
 #include "AlembicMax.h"
 #include "AlembicXformUtilities.h"
 #include "AlembicMAXScript.h"
+#include "AlembicMetadataUtils.h"
+
 
 bool isAlembicXform( Alembic::AbcGeom::IObject *pIObj, bool& isConstant ) {
 	Alembic::AbcGeom::IXform objXfrm;
@@ -141,13 +143,15 @@ int AlembicImport_DummyNode(Alembic::AbcGeom::IObject& iObj, alembic_importoptio
     SceneEntry *pEntry = options.sceneEnumProc.Append(*pMaxNode, dObj, OBTYPE_DUMMY, &std::string(iObj.getFullName())); 
     options.currentSceneList.Append(pEntry);
 
+	importMetadata(iObj);
+	
 	return alembic_success;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // AlembicImport_XForm
 ///////////////////////////////////////////////////////////////////////////////////////////////////
-int AlembicImport_XForm(INode* pMaxNode, Alembic::AbcGeom::IObject& iObj, const std::string &file, alembic_importoptions &options)
+int AlembicImport_XForm(INode* pParentNode, INode* pMaxNode, Alembic::AbcGeom::IObject& iObj, const std::string &file, alembic_importoptions &options)
 {
 	const std::string &identifier = iObj.getFullName();
 
@@ -156,41 +160,74 @@ int AlembicImport_XForm(INode* pMaxNode, Alembic::AbcGeom::IObject& iObj, const 
 		return alembic_failure;
 	}
 
-    // Find out if we're dealing with a camera
-    std::string modelfullid = getModelFullName(std::string(iObj.getFullName()));
-    Alembic::AbcGeom::IObject iChildObj = getObjectFromArchive(file,modelfullid);
-    bool bIsCamera = iChildObj.valid() && Alembic::AbcGeom::ICamera::matches(iChildObj.getMetaData());
+	// Find out if we're dealing with a camera
+	std::string modelfullid = getModelFullName(std::string(iObj.getFullName()));
+	Alembic::AbcGeom::IObject iChildObj = getObjectFromArchive(file,modelfullid);
+	bool bIsCamera = iChildObj.valid() && Alembic::AbcGeom::ICamera::matches(iChildObj.getMetaData());
 
-    // Get the matrix for the current time 
-    alembic_fillxform_options xformOptions;
-    xformOptions.pIObj = &iObj;
-    xformOptions.dTicks = GET_MAX_INTERFACE()->GetTime();
-    xformOptions.bIsCameraTransform = bIsCamera;
-    AlembicImport_FillInXForm(xformOptions);
-
-	TimeValue zero( 0 );
+	TimeValue zero(0);
 	if(!isConstant) {
 
-		// Create the xform modifier
-		AlembicXformController *pControl = static_cast<AlembicXformController*>
-			(GetCOREInterface()->CreateInstance(CTRL_MATRIX3_CLASS_ID, ALEMBIC_XFORM_CONTROLLER_CLASSID));
+		AlembicXformController *pControl = NULL;		
+		bool bCreatedController = false;
 
-		// Set the alembic id
-		pControl->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pControl, 0, "path" ), zero, file.c_str());
+		if(options.attachToExisting){
+			Animatable* pAnimatable = pMaxNode->SubAnim(2);
+
+			if(pAnimatable && pAnimatable->ClassID() == ALEMBIC_XFORM_CONTROLLER_CLASSID){
+				pControl = static_cast<AlembicXformController*>(pAnimatable);
+
+				const char* modIdentifier = pControl->GetParamBlockByID(0)->GetStr(GetParamIdByName(pControl, 0, "identifier"), zero);
+				if(strcmp(modIdentifier, identifier.c_str()) != 0){
+					pControl = NULL;
+				}
+			}
+		}
+		if(!pControl){
+			pControl = static_cast<AlembicXformController*>
+				(GetCOREInterface()->CreateInstance(CTRL_MATRIX3_CLASS_ID, ALEMBIC_XFORM_CONTROLLER_CLASSID));
+			bCreatedController = true;
+		}
+
 		pControl->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pControl, 0, "identifier" ), zero, identifier.c_str() );
-		pControl->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pControl, 0, "time" ), zero, 0.0f );
-		pControl->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pControl, 0, "camera" ), zero, ( xformOptions.bIsCameraTransform ? TRUE : FALSE ) );
-		pControl->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pControl, 0, "muted" ), zero, FALSE );
-		
-   		// Add the modifier to the node
-		pMaxNode->SetTMController(pControl);
 
-		GET_MAX_INTERFACE()->SelectNode( pMaxNode );
-		char szControllerName[10000];	
-		sprintf_s( szControllerName, 10000, "$.transform.controller.time" );
-		AlembicImport_ConnectTimeControl( szControllerName, options );
+		if(bCreatedController){
+
+			pControl->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pControl, 0, "path" ), zero, file.c_str());
+			pControl->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pControl, 0, "time" ), zero, 0.0f );
+			pControl->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pControl, 0, "camera" ), zero, ( bIsCamera ? TRUE : FALSE ) );
+			pControl->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pControl, 0, "muted" ), zero, FALSE );
+
+   			// Add the modifier to the node
+			pMaxNode->SetTMController(pControl);
+
+			GET_MAX_INTERFACE()->SelectNode( pMaxNode );
+			char szControllerName[10000];	
+			sprintf_s( szControllerName, 10000, "$.transform.controller.time" );
+			AlembicImport_ConnectTimeControl( szControllerName, options );
+		}
 	}
 	else{//if the transform is not animated, do not use a controller. Thus, the user will be able to adjust the object position, orientation and so on.
+		
+		//check if the xform controlller exists, and then delete it
+		
+		Control* pControl = pMaxNode->GetTMController();
+		
+		if(pControl){
+			MSTR name;
+			pControl->GetClassName(name);
+			if(strcmp(name, "Position/Rotation/Scale") != 0){
+				//TODO: Do I need to be concerned with deleting controllers?
+				pMaxNode->SetTMController(CreatePRSControl());
+			}
+		}
+
+		//doesn't work for some reason
+		//Animatable* pAnimatable = pMaxNode->SubAnim(2);
+		//if(pAnimatable && pMaxNode->CanDeleteSubAnim(2) ){
+		//	pMaxNode->DeleteSubAnim(2);
+		//}
+		
 		alembic_fillxform_options xformOptions;
 		xformOptions.pIObj = &iObj;
 		xformOptions.dTicks = 0;
@@ -198,7 +235,12 @@ int AlembicImport_XForm(INode* pMaxNode, Alembic::AbcGeom::IObject& iObj, const 
 
 		AlembicImport_FillInXForm(xformOptions);
 
-		pMaxNode->SetNodeTM(zero, xformOptions.maxMatrix);
+		if(pParentNode != NULL){
+			pMaxNode->SetNodeTM(zero, xformOptions.maxMatrix * pParentNode->GetObjectTM(zero));
+		}
+		else{
+			pMaxNode->SetNodeTM(zero, xformOptions.maxMatrix);
+		}
 	}
     pMaxNode->InvalidateTreeTM();
 	

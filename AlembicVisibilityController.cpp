@@ -371,8 +371,14 @@ void AlembicImport_SetupVisControl( std::string const& file, std::string const& 
 		isConstant = visibilityProperty.isConstant();
 	}
 
-    if (options.importVisibility == VisImport_JustImportValue || (options.importVisibility == VisImport_ConnectedControllers && isConstant))
+    if (isConstant)
     {
+		Animatable* pAnimatable = pNode->SubAnim(0);
+
+		if(pAnimatable && pAnimatable->ClassID() == ALEMBIC_VISIBILITY_CONTROLLER_CLASSID){
+			pNode->DeleteSubAnim(0);
+		}
+
         alembic_fillvis_options visFillOptions;
         visFillOptions.pIObj = &obj;
         visFillOptions.dTicks = 0;
@@ -382,7 +388,7 @@ void AlembicImport_SetupVisControl( std::string const& file, std::string const& 
         float fBool = bVis ? 1.0f : 0.0f;
         pNode->SetVisibility(0, fBool);
     }
-    else if (options.importVisibility == VisImport_ConnectedControllers)
+    else
     {
         // Create the xform modifier
         AlembicVisibilityController *pControl = static_cast<AlembicVisibilityController*>

@@ -2,8 +2,8 @@
 #define _ALEMBIC_POINTS_H_
 
 #include "AlembicObject.h"
-
-
+#include <Alembic/Util/Digest.h>
+#include <ParticleFlow/IParticleChannelTime.h>
 
 class IParticleObjectExt;
 class PFSimpleOperator;
@@ -151,12 +151,37 @@ private:
 	typedef std::map<INode*, shapeInfo>::iterator perActionListShapeMap_it;
 	typedef std::map<INode*, shapeInfo>::const_iterator perActionListShapeMap_cit;
 
+	struct meshInfo{
+		Mesh* pMesh;
+		std::string name;
+		//Alembic::AbcGeom::OXformSchema xformSchema;
+		//Alembic::AbcGeom::OPolyMeshSchema meshSchema;
+
+		meshInfo(): pMesh(NULL)
+		{}
+	};
+	typedef std::pair<Alembic::Util::ALEMBIC_VERSION_NS::Digest, Alembic::Util::ALEMBIC_VERSION_NS::Digest> faceVertexHashPair;
+	typedef std::map<faceVertexHashPair, meshInfo> faceVertexHashToShapeMap;
+	faceVertexHashToShapeMap mShapeMeshCache;
+	int mNumShapeMeshes;
+	int mTotalShapeMeshes;
+
+	//typedef std::map<PreciseTimeValue, bool> timeValueMap;
+	//timeValueMap mTimeValueMap;
+	//int mTimeSamplesCount;
+
+	std::vector<meshInfo*> mMeshesToSaveForCurrentFrame;
+
     static void AlembicPoints::ConvertMaxEulerXYZToAlembicQuat(const Point3 &degrees, Alembic::Abc::Quatd &quat);
     static void AlembicPoints::ConvertMaxAngAxisToAlembicQuat(const AngAxis &angAxis, Alembic::Abc::Quatd &quat);
     void AlembicPoints::GetShapeType(IParticleObjectExt *pExt, int particleId, TimeValue ticks, ShapeType &type, unsigned short &instanceId, float &animationTime);
 	void AlembicPoints::ReadShapeFromOperator( IParticleGroup *particleGroup, PFSimpleOperator *pSimpleOperator, int particleId, TimeValue ticks, ShapeType &type, unsigned short &instanceId, float &animationTime);
 	Alembic::Abc::C4f AlembicPoints::GetColor(IParticleObjectExt *pExt, int particleId, TimeValue ticks);
 	unsigned short FindInstanceName(const std::string& name);
+
+	void ReadShapeMesh(IParticleObjectExt *pExt, int particleId, TimeValue ticks, ShapeType &type, unsigned short &instanceId, float &animationTime);
+
+	void saveCurrentFrameMeshes();
 
     Alembic::AbcGeom::OXformSchema mXformSchema;
     Alembic::AbcGeom::OPointsSchema mPointsSchema;

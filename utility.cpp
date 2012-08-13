@@ -550,7 +550,12 @@ public:
 		}
 		else{
 			//Note: the hidden 3DS max root node should not be included in the path
-			for(int i=pathNodeNames.size()-1; i>=0; i--){
+			int nStart = 0;
+			if(pathNodeNames.size() >= 1){
+				nStart = (int)pathNodeNames.size()-1;
+			}
+				
+			for(int i=nStart; i>=0; i--){
 				path+="/";
 				path+=pathNodeNames[i];
 			}
@@ -604,6 +609,106 @@ Modifier* FindModifier(INode* node, char* name)
 	}
 
 	return pRetMod;
+}
+
+void printControllers(Animatable* anim, int level)
+{
+	for(int i=0; i<anim->NumSubs(); i++){
+		Animatable* an = anim->SubAnim(i);
+
+		if(!an){
+			continue;
+		}
+
+		MSTR name;
+		an->GetClassName(name);
+		ESS_LOG_WARNING("("<<level<<", "<<i<<"):"<<name);
+
+		printControllers(an, level+1);
+	}
+
+}
+
+void printControllers(Animatable* anim)
+{
+	if(!anim){
+		return;
+	}
+
+	MSTR name;
+	anim->GetClassName(name);
+	ESS_LOG_WARNING("Printing controllers of "<<name);
+	printControllers(anim, 0);
+	ESS_LOG_WARNING("Done printing");
+}
+
+Modifier* FindModifier(INode* node, Class_ID obtype, const char* identifier)
+{
+    TimeValue zero(0);
+    int i = 0;
+    int idx = 0;
+    Modifier* pRetMod = NULL;
+    while(true){
+        Modifier* pMod;
+        IDerivedObject* pObj = GET_MAX_INTERFACE()->FindModifier(*node, i, idx, pMod);
+        if(!pObj){
+            break;
+        }
+
+        //const char* cname = pObj->GetClassName();
+        const char* oname = pMod->GetObjectName();
+        const char* name = pMod->GetName();
+
+		if(pMod->ClassID() == obtype){
+            
+            IParamBlock2 *pBlock = pMod->GetParamBlockByID(0);
+            if(!pBlock){
+                continue;
+            }
+
+            //const char* modPath = pBlock->GetStr(GetParamIdByName(pMod, 0, "path"), zero);
+            const char* modIdentifier = pBlock->GetStr(GetParamIdByName(pMod, 0, "identifier"), zero);
+
+            if(/*strcmp(modPath, path) == 0 && */strcmp(modIdentifier, identifier) == 0){
+                pRetMod = pMod;
+                break;
+            }
+
+            
+        }
+
+        i++;
+    }
+
+    return pRetMod;
+}
+
+Modifier* FindModifier(INode* node, Class_ID obtype)
+{
+    TimeValue zero(0);
+    int i = 0;
+    int idx = 0;
+    Modifier* pRetMod = NULL;
+    while(true){
+        Modifier* pMod;
+        IDerivedObject* pObj = GET_MAX_INTERFACE()->FindModifier(*node, i, idx, pMod);
+        if(!pObj){
+            break;
+        }
+
+        //const char* cname = pObj->GetClassName();
+        const char* oname = pMod->GetObjectName();
+        const char* name = pMod->GetName();
+
+		if(pMod->ClassID() == obtype){
+            pRetMod = pMod;
+            break;  
+        }
+
+        i++;
+    }
+
+    return pRetMod;
 }
 
 void printAnimatables(Animatable* pObj){

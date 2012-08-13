@@ -230,10 +230,18 @@ Matrix3 TransposeRot(const Matrix3& mat){
 	return Matrix3(nrow1, nrow2, nrow3, row4);
 }
 
-void IntermediatePolyMesh3DSMax::Save(AlembicWriteJob* writeJob, TimeValue ticks, Mesh *triMesh, MNMesh* polyMesh, Matrix3& meshTM, Mtl* pMtl, const int nNumSamplesWritten, materialsMergeStr* pMatMerge)
+bool GetOption(std::map<std::string, bool>& mOptions, const std::string& in_Name)
 {
-	const bool bFirstFrame = nNumSamplesWritten == 0;
+    std::map<std::string,bool>::iterator it = mOptions.find(in_Name);
+    if(it != mOptions.end())
+    {
+        return it->second;
+    }
+    return false;
+}
 
+void IntermediatePolyMesh3DSMax::Save(std::map<std::string, bool>& mOptions, Mesh *triMesh, MNMesh* polyMesh, Matrix3& meshTM, Mtl* pMtl, bool bFirstFrame, materialsMergeStr* pMatMerge)
+{
 	//for transforming the normals
 	Matrix3 meshTM_I_T = meshTM;
 	meshTM_I_T.SetTrans(Point3(0.0, 0.0, 0.0));
@@ -261,14 +269,12 @@ void IntermediatePolyMesh3DSMax::Save(AlembicWriteJob* writeJob, TimeValue ticks
     }
 
     // abort here if we are just storing points
-	bool purePointCache = static_cast<bool>(writeJob->GetOption("exportPurePointCache"));
+	bool purePointCache = GetOption(mOptions, "exportPurePointCache");
     if(purePointCache)
     {
         return;
     }
 
-	// check if we support changing topology
-	bool dynamicTopology = static_cast<bool>(writeJob->GetOption("exportDynamicTopology"));
 
 	// Get the entire face count and index Count for the mesh
     LONG faceCount = (polyMesh != NULL) ? polyMesh->FNum()
@@ -283,7 +289,7 @@ void IntermediatePolyMesh3DSMax::Save(AlembicWriteJob* writeJob, TimeValue ticks
 	}
 
     // let's check if we have user normals
-    if(writeJob->GetOption("exportNormals") == TRUE)
+    if(GetOption(mOptions, "exportNormals"))
     {
 		size_t normalCount = 0;
 		size_t normalIndexCount = 0;
@@ -344,7 +350,7 @@ void IntermediatePolyMesh3DSMax::Save(AlembicWriteJob* writeJob, TimeValue ticks
         // AlembicPrintFaceData(objectMesh);
 
         // now let's sort the normals 
-        if(writeJob->GetOption("indexedNormals") == TRUE) 
+        if(GetOption(mOptions, "indexedNormals")) 
         {
             std::map<SortableV3f,size_t> normalMap;
             std::map<SortableV3f,size_t>::const_iterator it;
@@ -414,7 +420,7 @@ void IntermediatePolyMesh3DSMax::Save(AlembicWriteJob* writeJob, TimeValue ticks
    
 
    //write out the UVs
-   if(writeJob->GetOption("exportUVs") == TRUE)
+   if(GetOption(mOptions, "exportUVs"))
    {
 	  if (polyMesh != NULL)
 	  {
@@ -514,7 +520,7 @@ void IntermediatePolyMesh3DSMax::Save(AlembicWriteJob* writeJob, TimeValue ticks
 
 
 
-		if(writeJob->GetOption("indexedUVs") == TRUE) 
+		if(GetOption(mOptions, "indexedUVs")) 
 		{
 			mUvIndexVec.resize(mUvVec.size());
 
@@ -566,7 +572,7 @@ void IntermediatePolyMesh3DSMax::Save(AlembicWriteJob* writeJob, TimeValue ticks
 	// sweet, now let's have a look at face sets (really only for first sample)
 	// for 3DS Max, we are mapping this to the material ids
 	//std::vector<boost::int32_t> zeroFaceVector;
-	if(writeJob->GetOption("exportMaterialIds") == TRUE)
+	if(GetOption(mOptions, "exportMaterialIds"))
 	{
 		int numMatId = 0;
 		int numFaces = polyMesh ? polyMesh->numf : triMesh->getNumFaces();

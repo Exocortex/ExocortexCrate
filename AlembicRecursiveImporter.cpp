@@ -132,13 +132,18 @@ int recurseOnAlembicObject(Alembic::AbcGeom::IObject& iObj, INode *pParentMaxNod
 			pExistingNode = GetChildNodeFromName(importName, pParentMaxNode);
 			if(options.attachToExisting && pExistingNode){
 				pMaxNode = pExistingNode;
+
+				//see if a controller already exists, and then delete it
+				
+
+				int ret = AlembicImport_XForm(pParentMaxNode, pMaxNode, iObj, file, options);
+				if(ret != 0) return ret;
 			}//only create node if either attachToExisting is false or it is true and the object does not already exist
 			else{
 				int ret = AlembicImport_DummyNode(iObj, options, &pMaxNode, importName);
 				if(ret != 0) return ret;
 
-				//add this iObj as transform controller controller
-				ret = AlembicImport_XForm(pMaxNode, iObj, file, options);
+				ret = AlembicImport_XForm(pParentMaxNode, pMaxNode, iObj, file, options);
 				if(ret != 0) return ret;
 			}
 		}
@@ -148,35 +153,38 @@ int recurseOnAlembicObject(Alembic::AbcGeom::IObject& iObj, INode *pParentMaxNod
 				if(options.attachToExisting && pExistingNode){
 					pMaxNode = pExistingNode;
 				}//only create node if either attachToExisting is false or it is true and the object does not already exist
-				else{
-					int ret = createAlembicObject(*mergedGeomChild, &pMaxNode, options, file);
-					if(ret != 0) return ret;
-					ret = AlembicImport_XForm(pMaxNode, iObj, file, options);
-					if(ret != 0) return ret;
-				}
+				
+				int ret = createAlembicObject(*mergedGeomChild, &pMaxNode, options, file);
+				if(ret != 0) return ret;
+				ret = AlembicImport_XForm(pParentMaxNode, pMaxNode, iObj, file, options);
+				if(ret != 0) return ret;
+				
 			}
 			else{ //multiple geometry nodes under a dummy node (in pParentMaxNode)
 				pExistingNode = GetChildNodeFromName(iObj.getName(), pParentMaxNode);
 				if(options.attachToExisting && pExistingNode){
 					pMaxNode = pExistingNode;
 				}//only create node if either attachToExisting is false or it is true and the object does not already exist
-				else{
-					int ret = createAlembicObject(iObj, &pMaxNode, options, file);
-					if(ret != 0) return ret;
-					//import identity matrix, since more than goemetry node share the same transform
-					//Should we just list MAX put a default position/scale/rotation controller on?
+				
+				int ret = createAlembicObject(iObj, &pMaxNode, options, file);
+				if(ret != 0) return ret;
 
-					//	int ret = AlembicImport_XForm(pMaxNode, *piParentObj, file, options);
-				}
+				//import identity matrix, since more than goemetry node share the same transform
+				//Should we just list MAX put a default position/scale/rotation controller on?
+
+				//	int ret = AlembicImport_XForm(pMaxNode, *piParentObj, file, options);
+				
 			}
 
 			if(!pMaxNode){
 				return alembic_failure;
 			}
+
+			//printControllers(pMaxNode);
 		}
 
 		if(pParentMaxNode && !pExistingNode){
-			pParentMaxNode->AttachChild(pMaxNode, 0);
+			pParentMaxNode->AttachChild(pMaxNode, 1);
 		}
 	}
 

@@ -619,6 +619,7 @@ int ExocortexAlembicStaticInterface_ExocortexAlembicExportJobs( CONST_2013 MCHAR
 			bool bExportAsSingleMesh = false;
 			bool bObjectsParameterExists = false;
 			bool bUiExport = false;
+			bool bAutomaticInstancing = false;
 
 			ObjectList allSceneObjects;
 			
@@ -679,13 +680,16 @@ int ExocortexAlembicStaticInterface_ExocortexAlembicExportJobs( CONST_2013 MCHAR
 					bGuideCurves = parseBool(valuePair[1]);
 				}
 				else if(boost::iequals(valuePair[0], "filename")){
-					std::istringstream(valuePair[1]) >> filename;
+					filename = valuePair[1];
 				}
 				else if(boost::iequals(valuePair[0], "flattenhierarchy")){
 					bFlattenHierarchy = parseBool(valuePair[1]);
 				}
 				else if(boost::iequals(valuePair[0], "particlesystemtomeshconversion")){
 					bExportAsSingleMesh = parseBool(valuePair[1]);
+				}
+				else if(boost::iequals(valuePair[0], "automaticinstancing")){
+					bAutomaticInstancing = parseBool(valuePair[1]);
 				}
 				else if(boost::iequals(valuePair[0], "exportselected")){
 					bExportSelected = parseBool(valuePair[1]);
@@ -781,6 +785,7 @@ int ExocortexAlembicStaticInterface_ExocortexAlembicExportJobs( CONST_2013 MCHAR
 				allSceneObjects.FillList(currentScene);
 			}
 
+
 			AlembicWriteJob * job = new AlembicWriteJob(filename, allSceneObjects, frames, pMaxInterface);
 			//job->SetOption(L"exportFaceSets",facesets);
 			//job->SetOption(L"globalSpace",globalspace);
@@ -797,6 +802,7 @@ int ExocortexAlembicStaticInterface_ExocortexAlembicExportJobs( CONST_2013 MCHAR
 			job->SetOption("flattenHierarchy", bFlattenHierarchy);
 			job->SetOption("exportParticlesAsMesh", bExportAsSingleMesh);
 			job->SetOption("transformCache", bTransformCache);
+			job->SetOption("automaticInstancing", bAutomaticInstancing);
 
 			if (job->PreProcess() != true)
 			{
@@ -829,6 +835,7 @@ int ExocortexAlembicStaticInterface_ExocortexAlembicExportJobs( CONST_2013 MCHAR
 			{
 				bool bStatusOK = jobPtrs[i]->Process(frame);
 				if(bStatusOK){
+					//TODO: should probably move this block after the loop
 					double dbProgress = (100.0 * frame - dbMinFrame) / (dbMaxFrame - dbMinFrame);
 					pMaxInterface->ProgressUpdate(static_cast<int>(dbProgress));
 				}

@@ -4,6 +4,8 @@
 #include "AlembicXform.h"
 #include "ImathVec.h"
 #include "Utility.h"
+#include "AlembicMetadataUtils.h"
+
 
 // namespace AbcA = ::Alembic::AbcCoreAbstract::ALEMBIC_VERSION_NS;
 // using namespace AbcA;
@@ -113,6 +115,11 @@ bool AlembicXForm::Save(double time, bool bLastFrame)
     Alembic::Abc::V3d minpoint(maxBox.pmin.x, maxBox.pmin.y, maxBox.pmin.z);
     Alembic::Abc::V3d maxpoint(maxBox.pmax.x, maxBox.pmax.y, maxBox.pmax.z);
     mXformSample.setChildBounds(Alembic::Abc::Box3d(minpoint, maxpoint));
+
+    if(mXformSchema.getNumSamples() == 0)
+    {
+		SaveMetaData(GetRef().node, this);
+    }
 
     // Store the transformation
     SaveXformSample(GetRef(), mXformSchema, mXformSample, time, false);
