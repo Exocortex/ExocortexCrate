@@ -552,8 +552,9 @@ public:
 	std::string nodeName;
 	std::string path;
 	std::vector<std::string> pathNodeNames;
+	bool bFlatten;
 
-	HierarchyPathConstructor(const std::string& n):nodeName(n)
+	HierarchyPathConstructor(const std::string& n, bool bFlatten):nodeName(n), bFlatten(bFlatten)
 	{
 
 	}
@@ -568,15 +569,20 @@ public:
 		}
 		else{
 			//Note: the hidden 3DS max root node should not be included in the path
-			int nStart = 0;
-			if(pathNodeNames.size() >= 1){
-				nStart = (int)pathNodeNames.size()-1;
-			}
+		
+			if(pathNodeNames.size() > 0){
+				int nStart = (int)pathNodeNames.size()-1;
 				
-			for(int i=nStart; i>=0; i--){
+				for(int i=nStart; i>=0; i--){
+					path+="/";
+					path+=pathNodeNames[i];
+					path+="Xfo";
+				}
+
 				path+="/";
-				path+=pathNodeNames[i];
+				path+=pathNodeNames[0];
 			}
+			
 		}
 	}
 
@@ -596,8 +602,14 @@ public:
 
 };
 
-std::string getNodePath(const std::string& name){
-	HierarchyPathConstructor pathConstructor(name);
+std::string getNodeAlembicPath(const std::string& name, bool bFlatten){
+	if(bFlatten){
+		 std::stringstream nameStream;
+		 nameStream<<"/"<<name<<"Xfo/"<<name;
+		 return nameStream.str();
+	}
+
+	HierarchyPathConstructor pathConstructor(name, bFlatten);
     IScene *pScene = GET_MAX_INTERFACE()->GetScene();
     pScene->EnumTree(&pathConstructor);
 	return pathConstructor.path;

@@ -128,7 +128,7 @@ TriObject* GetTriObjectFromNode(INode *iNode, const TimeValue t, bool &deleteIt)
 INode* GetNodeFromHierarchyPath(const std::string& path);
 INode* GetNodeFromName(const std::string& name);
 INode* GetChildNodeFromName(const std::string& name, INode* pParent);
-std::string getNodePath(const std::string& name);
+std::string getNodeAlembicPath(const std::string& name, bool bFlatten);
 std::string removeXfoSuffix(const std::string& importName);
 
 Modifier* FindModifier(INode* node, char* name);

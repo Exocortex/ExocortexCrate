@@ -495,7 +495,8 @@ void AlembicPoints::ReadShapeFromOperator( IParticleGroup *particleGroup, PFSimp
         
         type = ShapeType_Instance;
 
-		std::string nodePath = getNodePath(pNode->GetName());
+		bool bFlatten = GetCurrentJob()->GetOption("flattenHierarchy");
+		std::string nodePath = getNodeAlembicPath(pNode->GetName(), bFlatten);
 
         // Find if the name is alerady registered, otherwise add it to the list
         instanceId = FindInstanceName(nodePath);
