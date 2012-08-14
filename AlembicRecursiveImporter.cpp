@@ -119,16 +119,8 @@ int recurseOnAlembicObject(Alembic::AbcGeom::IObject& iObj, INode *pParentMaxNod
 		INode* pExistingNode = NULL;
 		if(bCreateDummyNode){
 
-			std::string importName = iObj.getName();
+			std::string importName = removeXfoSuffix(iObj.getName());
 
-			size_t found = importName.find("Xfo");
-			if(found == std::string::npos){
-				found = importName.find("xfo");
-			}
-			if(found != std::string::npos){
-				importName = importName.substr(0, found);
-			}
-			
 			pExistingNode = GetChildNodeFromName(importName, pParentMaxNode);
 			if(options.attachToExisting && pExistingNode){
 				pMaxNode = pExistingNode;

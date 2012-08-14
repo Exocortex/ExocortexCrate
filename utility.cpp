@@ -385,6 +385,18 @@ TriObject* GetTriObjectFromNode(INode *iNode, const TimeValue t, bool &deleteIt)
 	}
 }
 
+std::string removeXfoSuffix(const std::string& importName)
+{
+	size_t found = importName.find("Xfo");
+	if(found == std::string::npos){
+		found = importName.find("xfo");
+	}
+	if(found != std::string::npos){
+		return importName.substr(0, found);
+	}
+	return importName;
+}
+
 class HierarchyPathResolver : public ITreeEnumProc
 {
 public:
@@ -400,6 +412,12 @@ public:
 			//delete the parent transform of the leaf node, since these nodes were merged on import
 			parts[parts.size()-2] = parts[parts.size()-1];
 			parts.pop_back();
+		}
+
+		if(parts.size() >= 2){
+			for(int i=0; i<parts.size()-1; i++){
+				parts[i] = removeXfoSuffix(parts[i]);
+			}
 		}
 	}
 
