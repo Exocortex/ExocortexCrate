@@ -29,6 +29,7 @@
 #define IDS_CAMERA                      116
 #define IDS_ADDITIVE                    117
 #define IDS_IGNORE_SUBFRAME_SAMPLES     118
+#define IDS_RENDER_AS_TICKS             119
 #define IDD_GSPHERE1                    179
 #define IDD_GSPHERE2                    180
 #define IDD_GSPHERE3                    181
@@ -49,6 +50,7 @@
 #define IDC_CHECK_MUTED                 1004
 #define IDC_IGNORE_SUBFRAME_SAMPLES     1004
 #define IDC_ADDITIVE_CHECKBOX           1004
+#define IDC_RENDER_AS_TICKS_CHECKBOX    1004
 #define IDC_CHECK2                      1005
 #define IDC_CHECK_UV                    1005
 #define IDC_RADSPINNER                  1005

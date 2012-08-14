@@ -25,12 +25,15 @@ ClassDesc2 *GetAlembicParticlesClassDesc() { return &s_AlembicParticlesClassDesc
 // Alembic_XForm_Ctrl_Param_Blk
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
+static const int ALEMBIC_PARTICLES_VERSION = 1;
+
 static ParamBlockDesc2 AlembicParticlesParams(
 	0,
 	_T(ALEMBIC_SIMPLE_PARTICLE_SCRIPTNAME),
 	0,
 	GetAlembicParticlesClassDesc(),
-	P_AUTO_CONSTRUCT | P_AUTO_UI,
+	P_AUTO_CONSTRUCT | P_AUTO_UI | P_VERSION,
+	ALEMBIC_PARTICLES_VERSION,
 	0,
 
 	// rollout description 
@@ -57,6 +60,11 @@ static ParamBlockDesc2 AlembicParticlesParams(
     AlembicParticles::ID_MUTED, _T("muted"), TYPE_BOOL, P_ANIMATABLE, IDS_MUTED,
 		p_default,       FALSE,
 		p_ui,            TYPE_SINGLECHEKBOX,  IDC_MUTED_CHECKBOX,
+		p_end,
+
+    AlembicParticles::ID_RENDER_AS_TICKS, _T("Render as ticks"), TYPE_BOOL, P_ANIMATABLE, IDS_RENDER_AS_TICKS,
+		p_default,       FALSE,
+		p_ui,            TYPE_SINGLECHEKBOX,  IDC_RENDER_AS_TICKS_CHECKBOX,
 		p_end,
 
 	p_end
@@ -111,6 +119,8 @@ AlembicParticles::AlembicParticles()
     s_AlembicParticlesClassDesc.MakeAutoParamBlocks(this);
 
 	m_outputOrientationMotionBlurWarning = true;
+
+	 m_bRenderAsTicks = false;
 }
 
 // virtual
@@ -153,6 +163,10 @@ void AlembicParticles::UpdateParticles(TimeValue t, INode *node)
         valid = FALSE;
         return;
     }
+
+	BOOL bRenderAsTicks;
+	this->pblock2->GetValue( AlembicParticles::ID_RENDER_AS_TICKS, t, bRenderAsTicks, interval);
+	m_bRenderAsTicks = bRenderAsTicks == TRUE;
 
     if( strlen( strPath ) == 0 ) 
     {
@@ -1190,67 +1204,83 @@ int AlembicParticles::Display(TimeValue t, INode* inode, ViewExp *vpt, int flags
 	rect.top = 0; rect.bottom = gw->getWinSizeY(); rect.left = 0; rect.right = gw->getWinSizeX();
 	vpt->InvalidateRect(rect);
 
-   // Draw the particles
-   NullView nullView;
-   //nullView.worldToView = objToWorld;
-   gw->setRndLimits(rlim);
-   for (int i = 0; i < NumberOfRenderMeshes(); i += 1)
-   {
 
-		Matrix3 elemToObj;
-		elemToObj.IdentityMatrix();
-
-		Interval meshTMValid = FOREVER;
-
-		BOOL deleteMesh = FALSE;
-
-		GetMultipleRenderMeshTM_Internal(t, inode, nullView, i, elemToObj, meshTMValid);
-		Mesh *mesh = GetMultipleRenderMesh_Internal(t, inode, nullView, deleteMesh, i);
-
-		if(mesh && m_InstanceShapeType[i] != AlembicPoints::ShapeType_Point ){
-
-			Matrix3 elemToWorld = elemToObj;// * objToWorld; 
-
-			INode *meshNode = GetParticleMeshNode(i, inode);
-			Material *mtls = meshNode->Mtls();
-			int numMtls = meshNode->NumMtls();
-			if(!mtls){
-				mtls = &nullMaterial;
-				numMtls = 1;
-			}
-
-			Mtl* pMtl = inode->GetMtl();//apply the particle system material first
-			//if(!pMtl){
-			//	pMtl = meshNode->GetMtl();//apply the instance material otherwise
-			//}
-
-			if(numMtls > 0){
-				if(pMtl){
-					mtls[0].Kd = pMtl->GetDiffuse();
-					mtls[0].Ks = pMtl->GetSpecular();
-					mtls[0].Ka = pMtl->GetAmbient();
-				}
-				else{//if there is no material, set diffuse equal to the particle color
-					mtls[0].Kd = m_VCArray[i];
-				}
-			}
-
-
-
-			if (numMtls > 0){
-				gw->setMaterial(mtls[0], 0);
-			}
-			gw->setTransform( elemToWorld );
-
-			mesh->render(gw, mtls, (flags&USE_DAMAGE_RECT) ? &vpt->GetDammageRect() : NULL, COMP_ALL, numMtls);
-		}
-		else
-		{
+	if(m_bRenderAsTicks){
+	   // Draw the particles
+	   NullView nullView;
+	   //nullView.worldToView = objToWorld;
+	   gw->setRndLimits(rlim);
+	   for (int i = 0; i < NumberOfRenderMeshes(); i += 1)
+	   {
 			gw->setColor(FILL_COLOR, m_VCArray[i].x, m_VCArray[i].y, m_VCArray[i].z);
 			gw->setTransform(Matrix3(1));
 			gw->marker(&parts.points[i], POINT_MRKR);  
-		}
-   }
+	   }
+	}
+	else{
+	   // Draw the particles
+	   NullView nullView;
+	   //nullView.worldToView = objToWorld;
+	   gw->setRndLimits(rlim);
+	   for (int i = 0; i < NumberOfRenderMeshes(); i += 1)
+	   {
+			Matrix3 elemToObj;
+			elemToObj.IdentityMatrix();
+
+			Interval meshTMValid = FOREVER;
+
+			BOOL deleteMesh = FALSE;
+
+			GetMultipleRenderMeshTM_Internal(t, inode, nullView, i, elemToObj, meshTMValid);
+			Mesh *mesh = GetMultipleRenderMesh_Internal(t, inode, nullView, deleteMesh, i);
+
+			if(mesh && m_InstanceShapeType[i] != AlembicPoints::ShapeType_Point ){
+
+				Matrix3 elemToWorld = elemToObj;// * objToWorld; 
+
+				INode *meshNode = GetParticleMeshNode(i, inode);
+				Material *mtls = meshNode->Mtls();
+				int numMtls = meshNode->NumMtls();
+				if(!mtls){
+					mtls = &nullMaterial;
+					numMtls = 1;
+				}
+
+				Mtl* pMtl = inode->GetMtl();//apply the particle system material first
+				//if(!pMtl){
+				//	pMtl = meshNode->GetMtl();//apply the instance material otherwise
+				//}
+
+				if(numMtls > 0){
+					if(pMtl){
+						mtls[0].Kd = pMtl->GetDiffuse();
+						mtls[0].Ks = pMtl->GetSpecular();
+						mtls[0].Ka = pMtl->GetAmbient();
+					}
+					else{//if there is no material, set diffuse equal to the particle color
+						mtls[0].Kd = m_VCArray[i];
+					}
+				}
+
+
+
+				if (numMtls > 0){
+					gw->setMaterial(mtls[0], 0);
+				}
+				gw->setTransform( elemToWorld );
+
+				mesh->render(gw, mtls, (flags&USE_DAMAGE_RECT) ? &vpt->GetDammageRect() : NULL, COMP_ALL, numMtls);
+			}
+			else
+			{
+				gw->setColor(FILL_COLOR, m_VCArray[i].x, m_VCArray[i].y, m_VCArray[i].z);
+				gw->setTransform(Matrix3(1));
+				gw->marker(&parts.points[i], POINT_MRKR);  
+			}
+	   }
+	}
+
+
    
    return 0;
 }

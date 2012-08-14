@@ -64,6 +64,7 @@ public:
 		ID_IDENTIFIER,
 		ID_TIME,
         ID_MUTED,
+		ID_RENDER_AS_TICKS
 	};
 
     static IObjParam *s_ObjParam;
@@ -194,6 +195,7 @@ private:
 	TimeValue m_currTick;
 
 	bool m_outputOrientationMotionBlurWarning;
+	bool m_bRenderAsTicks;
 };
 
 

@@ -286,10 +286,11 @@ BEGIN
     CONTROL         "",IDC_TIME_SPIN,"SpinnerControl",0x0,91,44,7,10
     RTEXT           "Time:",-1,19,44,32,8
     CONTROL         "",IDC_TIME_EDIT,"CustEdit",WS_TABSTOP,53,44,36,10
-    CONTROL         "Muted ",IDC_MUTED_CHECKBOX,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,40,68,38,10
+    CONTROL         "Muted ",IDC_MUTED_CHECKBOX,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,36,58,38,10
     LTEXT           "Path:",-1,0,0,32,8
     CONTROL         "Custom1",IDC_IDENTIFIER_EDIT,"CustEdit",WS_TABSTOP,0,29,107,12
     LTEXT           "Identifier:",-1,0,21,32,8
+    CONTROL         "Render as ticks",IDC_RENDER_AS_TICKS_CHECKBOX,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,36,68,65,10
 END
 
 IDD_ALEMBIC_VISIBILITY_PARAMS DIALOGEX 0, 0, 108, 83
@@ -418,6 +419,7 @@ BEGIN
     IDS_CAMERA              "Camera"
     IDS_ADDITIVE            "Additive"
     IDS_IGNORE_SUBFRAME_SAMPLES "Ignore subframe geometry"
+    IDS_RENDER_AS_TICKS     "Render as ticks"
 END
 
 STRINGTABLE 
