@@ -108,6 +108,7 @@ private:
    Alembic::AbcGeom::ICurvesSchema mSchema;
    int mSent;
    unsigned int mNbCurves;
+   unsigned int mNbVertices;
    std::vector<unsigned int> mIndices;
    std::vector<Alembic::Abc::V3f> mPositions;
    std::vector<Alembic::Abc::C4f> mColors;

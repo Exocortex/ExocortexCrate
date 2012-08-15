@@ -296,9 +296,7 @@ MStatus AlembicXformNode::compute(const MPlug & plug, MDataBlock & dataBlock)
       mMatrices.clear();
       for(size_t i=0;i<mSchema.getNumSamples();i++)
       {
-         if(mSchema.getTimeSampling()->getNumStoredTimes() <= i)
-            break;
-         mTimes.push_back((double)mSchema.getTimeSampling()->getStoredTimes()[i]);
+         mTimes.push_back((double)mSchema.getTimeSampling()->getSampleTime(i));
          mSchema.get(sample,i);
          mMatrices.push_back(sample.getMatrix());
       }

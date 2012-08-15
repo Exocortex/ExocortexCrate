@@ -3,7 +3,8 @@
 global proc exocortexAlembicExport(string $filename,         string $exported_objects[], int $exportInframe,
                                    int $exportOutframe,      int $exportStepframe,       int $exportSubstepframe,
                                    int $exportTopology,      int $exportUVs,             int $exportFaceSets,
-                                   int $exportDynamicTopo,   int $exportGlobalSpace,     int $exportWithoutHierarchy)
+                                   int $exportDynamicTopo,   int $exportGlobalSpace,     int $exportWithoutHierarchy,
+                                   int $exportTransformCache)
 {
   // construct the job string
   string $job = ("in="+$exportInframe+";out="+$exportOutframe+";step="+$exportStepframe+";substep="+$exportSubstepframe+";filename="+$filename+";objects=");
@@ -33,6 +34,7 @@ global proc exocortexAlembicExport(string $filename,         string $exported_ob
   }
   $job += ";globalspace="+$exportGlobalSpace;
   $job += ";withouthierarchy="+$exportWithoutHierarchy;
+  $job += ";transformcache="+$exportTransformCache;
   print $job;
   ExocortexAlembic_export -j $job;
 }
@@ -163,6 +165,7 @@ global proc exocortexAlembicImport(string $filename, int $importNormals, int $im
         error ("Mesh '"+$name+"' not found for purepointcache alembic import.");
         return;
       }
+      sets -e -forceElement initialShadingGroup $shape;
       if($dynamictopology == 1)
         $reader = exocortexCreateOrReuseNode($name+".inMesh","ExocortexAlembicPolyMesh",$importAttach,1,1);
       else
@@ -197,6 +200,7 @@ global proc exocortexAlembicImport(string $filename, int $importNormals, int $im
         error ("Subdiv '"+$name+"' not found for purepointcache alembic import.");
         return;
       }
+      sets -e -forceElement initialShadingGroup $shape;
       if($dynamictopology == 1)
         $reader = exocortexCreateOrReuseNode($name+".create","ExocortexAlembicSubD",$importAttach,1,1);
       else
@@ -300,11 +304,14 @@ global proc exocortexAlembicImport(string $filename, int $importNormals, int $im
           {
             $shape = $objects[$j];
             $xform = `listRelatives -p $shape`;
-            $shape = `rename -ignoreShape $xform[0] $name`;
-            $reader = exocortexCreateOrReuseNode($shape+".translate","ExocortexAlembicXform",$importAttach,1,0);
-            exocortexConnectIfUnconnected(($reader+".translate"), ($shape+".translate"));
-            exocortexConnectIfUnconnected(($reader+".rotate"), ($shape+".rotate"));
-            exocortexConnectIfUnconnected(($reader+".scale"), ($shape+".scale"));
+            if ( $name != "front" && $name != "top" && $name != "side" && $name != "persp" )
+            {
+              $shape = `rename -ignoreShape $xform[0] $name`;
+              $reader = exocortexCreateOrReuseNode($shape+".translate","ExocortexAlembicXform",$importAttach,1,0);
+              exocortexConnectIfUnconnected(($reader+".translate"), ($shape+".translate"));
+              exocortexConnectIfUnconnected(($reader+".rotate"), ($shape+".rotate"));
+              exocortexConnectIfUnconnected(($reader+".scale"), ($shape+".scale"));
+            }
             break;
           }
         }

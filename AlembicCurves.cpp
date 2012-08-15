@@ -17,7 +17,7 @@ AlembicCurves::AlembicCurves(const MObject & in_Ref, AlembicWriteJob * in_Job)
    mSchema = mObject.getSchema();
 
    // create all properties
-   mRadiusProperty = Alembic::Abc::OFloatArrayProperty(mSchema, ".radius", mSchema.getMetaData(), GetJob()->GetAnimatedTs() );
+   mRadiusProperty = Alembic::Abc::OFloatArrayProperty(mSchema.getArbGeomParams(), ".radius", mSchema.getMetaData(), GetJob()->GetAnimatedTs() );
 }
 
 AlembicCurves::~AlembicCurves()
@@ -455,6 +455,7 @@ MStatus AlembicCurvesDeformNode::deform(MDataBlock & dataBlock, MItGeometry & it
 AlembicCurvesLocatorNode::AlembicCurvesLocatorNode()
 {
    mNbCurves = 0;
+   mNbVertices = 0;
    mBoundingBox.clear();
    mSent = 0;
 }
@@ -528,6 +529,8 @@ MStatus AlembicCurvesLocatorNode::compute(const MPlug & plug, MDataBlock & dataB
    MString & fileName = dataBlock.inputValue(mFileNameAttr).asString();
    MString & identifier = dataBlock.inputValue(mIdentifierAttr).asString();
 
+   Alembic::AbcGeom::ICurves obj;
+
    // check if we have the file
    if(fileName != mFileName || identifier != mIdentifier)
    {
@@ -547,7 +550,7 @@ MStatus AlembicCurvesLocatorNode::compute(const MPlug & plug, MDataBlock & dataB
          MGlobal::displayWarning("[ExocortexAlembic] Identifier '"+identifier+"' not found in archive '"+mFileName+"'.");
          return MStatus::kFailure;
       }
-      Alembic::AbcGeom::ICurves obj(iObj,Alembic::Abc::kWrapExisting);
+      obj = Alembic::AbcGeom::ICurves(iObj,Alembic::Abc::kWrapExisting);
       if(!obj.valid())
       {
          MGlobal::displayWarning("[ExocortexAlembic] Identifier '"+identifier+"' in archive '"+mFileName+"' is not a Curves.");
@@ -576,10 +579,12 @@ MStatus AlembicCurvesLocatorNode::compute(const MPlug & plug, MDataBlock & dataB
          mSchema.get(sample2,sampleInfo.ceilIndex);
 
       // update the indices
-      if(mNbCurves != sample.getNumCurves())
+      Alembic::Abc::P3fArraySamplePtr samplePos = sample.getPositions();
+      if(mNbCurves != sample.getNumCurves() || mNbVertices != samplePos->size())
       {
          mNbCurves = (unsigned int)sample.getNumCurves();
-
+         mNbVertices = (unsigned int)samplePos->size();
+         
          Alembic::Abc::Int32ArraySamplePtr nbVertices = sample.getCurvesNumVertices();
          mIndices.clear();
          unsigned int offset = 0;
@@ -596,7 +601,6 @@ MStatus AlembicCurvesLocatorNode::compute(const MPlug & plug, MDataBlock & dataB
          }
       }
 
-      Alembic::Abc::P3fArraySamplePtr samplePos = sample.getPositions();
       if(mPositions.size() != samplePos->size())
          mPositions.resize(samplePos->size());
 
@@ -634,55 +638,49 @@ MStatus AlembicCurvesLocatorNode::compute(const MPlug & plug, MDataBlock & dataB
 
       // get the colors
       mColors.clear();
-      if ( mSchema.getPropertyHeader( ".color" ) != NULL )
-      {
-         Alembic::Abc::IC4fArrayProperty prop = Alembic::Abc::IC4fArrayProperty( mSchema, ".color" );
-         if(prop.valid())
-         {
-            if(prop.getNumSamples() > 0)
-            {
-               SampleInfo colorSampleInfo = getSampleInfo(inputTime,prop.getTimeSampling(),prop.getNumSamples());
-               Alembic::Abc::C4fArraySamplePtr sampleColor = prop.getValue(colorSampleInfo.floorIndex);
-               mColors.resize(mPositions.size());
-               if(sampleColor->size() == 1)
-               {
-                  for(unsigned int i=0;i<(unsigned int)mColors.size();i++)
-                  {
-                     mColors[i].r = sampleColor->get()[0].r;
-                     mColors[i].g = sampleColor->get()[0].g;
-                     mColors[i].b = sampleColor->get()[0].b;
-                     mColors[i].a = sampleColor->get()[0].a;
-                  }
-               }
-               else if(sampleColor->size() == mPositions.size())
-               {
-                  for(unsigned int i=0;i<sampleColor->size();i++)
-                  {
-                     mColors[i].r = sampleColor->get()[i].r;
-                     mColors[i].g = sampleColor->get()[i].g;
-                     mColors[i].b = sampleColor->get()[i].b;
-                     mColors[i].a = sampleColor->get()[i].a;
-                  }
-               }
-               else if(sampleColor->size() == mNbCurves)
-               {
-                  Alembic::Abc::Int32ArraySamplePtr nbVertices = sample.getCurvesNumVertices();
-                  unsigned int offset = 0;
-                  for(unsigned int i=0;i<nbVertices->size();i++)
-                  {
-                     for(unsigned j=0;j<(unsigned int)nbVertices->get()[i];j++)
-                     {
-                        mColors[offset].r = sampleColor->get()[i].r;
-                        mColors[offset].g = sampleColor->get()[i].g;
-                        mColors[offset].b = sampleColor->get()[i].b;
-                        mColors[offset].a = sampleColor->get()[i].a;
-                        offset++;
-                     }
-                  }
-               }
-            }
-         }
-      }
+
+	  Alembic::Abc::IC4fArrayProperty propColor;
+      if( ! getArbGeomParamPropertyAlembic( obj, "color", propColor ) ) {          
+		   SampleInfo colorSampleInfo = getSampleInfo(inputTime,propColor.getTimeSampling(),propColor.getNumSamples());
+		   Alembic::Abc::C4fArraySamplePtr sampleColor = propColor.getValue(colorSampleInfo.floorIndex);
+		   mColors.resize(mPositions.size());
+		   if(sampleColor->size() == 1)
+		   {
+			  for(unsigned int i=0;i<(unsigned int)mColors.size();i++)
+			  {
+				 mColors[i].r = sampleColor->get()[0].r;
+				 mColors[i].g = sampleColor->get()[0].g;
+				 mColors[i].b = sampleColor->get()[0].b;
+				 mColors[i].a = sampleColor->get()[0].a;
+			  }
+		   }
+		   else if(sampleColor->size() == mPositions.size())
+		   {
+			  for(unsigned int i=0;i<sampleColor->size();i++)
+			  {
+				 mColors[i].r = sampleColor->get()[i].r;
+				 mColors[i].g = sampleColor->get()[i].g;
+				 mColors[i].b = sampleColor->get()[i].b;
+				 mColors[i].a = sampleColor->get()[i].a;
+			  }
+		   }
+		   else if(sampleColor->size() == mNbCurves)
+		   {
+			  Alembic::Abc::Int32ArraySamplePtr nbVertices = sample.getCurvesNumVertices();
+			  unsigned int offset = 0;
+			  for(unsigned int i=0;i<nbVertices->size();i++)
+			  {
+				 for(unsigned j=0;j<(unsigned int)nbVertices->get()[i];j++)
+				 {
+					mColors[offset].r = sampleColor->get()[i].r;
+					mColors[offset].g = sampleColor->get()[i].g;
+					mColors[offset].b = sampleColor->get()[i].b;
+					mColors[offset].a = sampleColor->get()[i].a;
+					offset++;
+				 }
+			  }
+		   }
+	  }
    }
 
    mLastSampleInfo = sampleInfo;

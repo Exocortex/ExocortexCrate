@@ -32,7 +32,7 @@ MStatus AlembicCamera::Save(double time)
 
    mSample.setFocalLength(node.focalLength());
    mSample.setFocusDistance(node.focusDistance());
-   mSample.setLensSqueezeRatio(node.aspectRatio());
+   mSample.setLensSqueezeRatio(node.lensSqueezeRatio());
    mSample.setHorizontalAperture(node.horizontalFilmAperture() * 2.54);
    mSample.setVerticalAperture(node.verticalFilmAperture() * 2.54);
    mSample.setHorizontalFilmOffset(node.horizontalFilmOffset() * 2.54);
@@ -69,7 +69,7 @@ MObject AlembicCameraNode::mFileNameAttr;
 MObject AlembicCameraNode::mIdentifierAttr;
 MObject AlembicCameraNode::mOutFocalLengthAttr;
 MObject AlembicCameraNode::mOutFocusDistanceAttr;
-MObject AlembicCameraNode::mOutAspectRatioAttr;
+MObject AlembicCameraNode::mOutLensSqueezeRatioAttr;
 MObject AlembicCameraNode::mOutHorizontalApertureAttr;
 MObject AlembicCameraNode::mOutVerticalApertureAttr;
 MObject AlembicCameraNode::mOutHorizontalOffsetAttr;
@@ -129,12 +129,12 @@ MStatus AlembicCameraNode::initialize()
    status = addAttribute(mOutFocusDistanceAttr);
 
    // output focalLength
-   mOutAspectRatioAttr = nAttr.create("lensSqueezeRatio", "lr", MFnNumericData::kDouble, 1.0);
+   mOutLensSqueezeRatioAttr = nAttr.create("lensSqueezeRatio", "lr", MFnNumericData::kDouble, 1.0);
    status = nAttr.setStorable(false);
    status = nAttr.setWritable(false);
    status = nAttr.setKeyable(false);
    status = nAttr.setHidden(false);
-   status = addAttribute(mOutAspectRatioAttr);
+   status = addAttribute(mOutLensSqueezeRatioAttr);
 
    // horizonal aperture
    mOutHorizontalApertureAttr = nAttr.create("horizontalFilmAperture", "ha", MFnNumericData::kDouble, 10.0);
@@ -207,9 +207,9 @@ MStatus AlembicCameraNode::initialize()
    status = attributeAffects(mTimeAttr, mOutFocusDistanceAttr);
    status = attributeAffects(mFileNameAttr, mOutFocusDistanceAttr);
    status = attributeAffects(mIdentifierAttr, mOutFocusDistanceAttr);
-   status = attributeAffects(mTimeAttr, mOutAspectRatioAttr);
-   status = attributeAffects(mFileNameAttr, mOutAspectRatioAttr);
-   status = attributeAffects(mIdentifierAttr, mOutAspectRatioAttr);
+   status = attributeAffects(mTimeAttr, mOutLensSqueezeRatioAttr);
+   status = attributeAffects(mFileNameAttr, mOutLensSqueezeRatioAttr);
+   status = attributeAffects(mIdentifierAttr, mOutLensSqueezeRatioAttr);
    status = attributeAffects(mTimeAttr, mOutHorizontalApertureAttr);
    status = attributeAffects(mFileNameAttr, mOutHorizontalApertureAttr);
    status = attributeAffects(mIdentifierAttr, mOutHorizontalApertureAttr);
@@ -290,7 +290,7 @@ MStatus AlembicCameraNode::compute(const MPlug & plug, MDataBlock & dataBlock)
    mSchema.get(sample,sampleInfo.floorIndex);
    double focalLength = sample.getFocalLength();
    double focusDistance = sample.getFocusDistance();
-   double aspectRatio = sample.getLensSqueezeRatio();
+   double lensSqueezeRatio = sample.getLensSqueezeRatio();
    double horizontalAperture = sample.getHorizontalAperture();
    double verticalAperture = sample.getVerticalAperture();
    double horizontalOffset = sample.getHorizontalFilmOffset();
@@ -309,7 +309,7 @@ MStatus AlembicCameraNode::compute(const MPlug & plug, MDataBlock & dataBlock)
       double iblend = 1.0 - blend;
       focalLength = iblend * focalLength + blend * sample.getFocalLength();
       focusDistance = iblend * focusDistance + blend * sample.getFocusDistance();
-      aspectRatio = iblend * aspectRatio + blend * sample.getLensSqueezeRatio();
+      lensSqueezeRatio = iblend * lensSqueezeRatio + blend * sample.getLensSqueezeRatio();
       horizontalAperture = iblend * horizontalAperture + blend * sample.getHorizontalAperture();
       verticalAperture = iblend * verticalAperture + blend * sample.getVerticalAperture();
       horizontalOffset = iblend * horizontalOffset + blend * sample.getHorizontalFilmOffset();
@@ -324,7 +324,7 @@ MStatus AlembicCameraNode::compute(const MPlug & plug, MDataBlock & dataBlock)
    // output all channels
    dataBlock.outputValue(mOutFocalLengthAttr).set(focalLength);
    dataBlock.outputValue(mOutFocusDistanceAttr).set(focusDistance);
-   dataBlock.outputValue(mOutAspectRatioAttr).set(aspectRatio);
+   dataBlock.outputValue(mOutLensSqueezeRatioAttr).set(lensSqueezeRatio);
    dataBlock.outputValue(mOutHorizontalApertureAttr).set(horizontalAperture / 2.54);
    dataBlock.outputValue(mOutVerticalApertureAttr).set(verticalAperture / 2.54);
    dataBlock.outputValue(mOutHorizontalOffsetAttr).set(horizontalOffset / 2.54);

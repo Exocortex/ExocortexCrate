@@ -22,7 +22,7 @@ SampleInfo getSampleInfo
    result.ceilIndex = result.floorIndex;
 
    // check if we have a full license
-   if(!HasFullLicense())
+   if(!HasAlembicReaderLicense())
    {
       if(result.floorIndex > 75)
       {
@@ -100,6 +100,16 @@ MString truncateName(const MString & in_Name)
       name = name.substring(0,name.length()-4);
    else if(name.substring(name.length()-5,name.length()-1).toLowerCase() == "shape")
       name = name.substring(0,name.length()-6);
+
+   // replace the name space
+   MStringArray nameParts;
+   name.split(':',nameParts);
+   name = nameParts[0];
+   for(unsigned int i=1;i<nameParts.length();i++)
+   {
+      name += ".";
+      name += nameParts[i];
+   }
 
    return name + trail;
 }
