@@ -135,30 +135,17 @@ MStatus AlembicPoints::Save(double time)
       vectors.clear();
       doubles.clear();
    }
-   if(colorVec.size() == 0)
-      colorVec.push_back(Alembic::Abc::C4f(0.0f,0.0f,0.0f,0.0f));
 
-   // resize the sample to use at least one particle
-   if(particleCount == 0)
-   {
-      posVec.push_back(Alembic::Abc::V3f(FLT_MAX,FLT_MAX,FLT_MAX));
-      velVec.push_back(Alembic::Abc::V3f(0.0f,0.0f,0.0f));
-      widthVec.push_back(0.0f);
-      idVec.push_back((uint64_t)-1);
-      ageVec.push_back(0.0f);
-      massVec.push_back(0.0f);
-   }
-   else
-      mSample.setSelfBounds(bbox);
+   mSample.setSelfBounds(bbox);
 
    // setup the sample
-   mSample.setPositions(Alembic::Abc::P3fArraySample(&posVec.front(),posVec.size()));
-   mSample.setVelocities(Alembic::Abc::V3fArraySample(&velVec.front(),velVec.size()));
-   mSample.setWidths(Alembic::AbcGeom::OFloatGeomParam::Sample(Alembic::Abc::FloatArraySample(&widthVec.front(),widthVec.size()),Alembic::AbcGeom::kVertexScope));
-   mSample.setIds(Alembic::Abc::UInt64ArraySample(&idVec.front(),idVec.size()));
-   mAgeProperty.set(Alembic::Abc::FloatArraySample(&ageVec.front(),ageVec.size()));
-   mMassProperty.set(Alembic::Abc::FloatArraySample(&massVec.front(),massVec.size()));
-   mColorProperty.set(Alembic::Abc::C4fArraySample(&colorVec.front(),colorVec.size()));
+   mSample.setPositions(Alembic::Abc::P3fArraySample(posVec));
+   mSample.setVelocities(Alembic::Abc::V3fArraySample(velVec));
+   mSample.setWidths(Alembic::AbcGeom::OFloatGeomParam::Sample(Alembic::Abc::FloatArraySample(widthVec), Alembic::AbcGeom::kVertexScope));
+   mSample.setIds(Alembic::Abc::UInt64ArraySample(idVec));
+   mAgeProperty.set(Alembic::Abc::FloatArraySample(ageVec));
+   mMassProperty.set(Alembic::Abc::FloatArraySample(massVec));
+   mColorProperty.set(Alembic::Abc::C4fArraySample(colorVec));
 
    // save the sample
    mSchema.set(mSample);
