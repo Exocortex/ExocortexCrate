@@ -69,7 +69,7 @@ void AlembicPolyMesh::SaveMaterialsProperty(bool bFirstFrame, bool bLastFrame)
 			{
 				std::stringstream nameStream;
 				int nMaterialId = it2->second.matId+1;
-				nameStream<<it2->second.name<<" : "<<nMaterialId;
+				nameStream<<it2->second.name<<"_"<<nMaterialId;
 				materialNames.push_back(nameStream.str());
 			}
 		}
@@ -320,7 +320,7 @@ bool AlembicPolyMesh::Save(double time, bool bLastFrame)
 			{
 				std::stringstream nameStream;
 				int nMaterialId = it->first+1;
-				nameStream<<it->second.name<<" : "<<nMaterialId;
+				nameStream<<it->second.name<<"_"<<nMaterialId;
 
 				std::vector<int32_t>& faceSetVec = it->second.faceIds;
 
