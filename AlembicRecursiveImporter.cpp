@@ -78,9 +78,9 @@ int recurseOnAlembicObject(Alembic::AbcGeom::IObject& iObj, INode *pParentMaxNod
 		return alembic_failure;
 	}
 
-	const char* fullname = iObj.getFullName().c_str();
-	const char* pname = (pParentMaxNode) ? pParentMaxNode->GetName() : "";
-	const char* name = iObj.getName().c_str();
+	std::string fullname = iObj.getFullName();
+	std::string pname = (pParentMaxNode) ? EC_MCHAR_to_UTF8( pParentMaxNode->GetName() ) : std::string("");
+	std::string name = iObj.getName();
 
 	INode* pMaxNode = NULL;
 	size_t mergedGeomNodeIndex = -1;

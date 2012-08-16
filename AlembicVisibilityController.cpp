@@ -90,8 +90,25 @@ void AlembicVisibilityController::GetValueLocalTime(TimeValue t, void *ptr, Inte
     {
         return;
     }
-	
-	Alembic::AbcGeom::IObject iObj = getObjectFromArchive(strPath, strIdentifier);
+
+	std::string szPath = EC_MCHAR_to_UTF8( strPath );
+	std::string szIdentifier = EC_MCHAR_to_UTF8( strIdentifier );
+
+	if( szPath.size() == 0 ) {
+	   ESS_LOG_ERROR( "No filename specified." );
+	   return;
+	}
+	if( szIdentifier.size() == 0 ) {
+	   ESS_LOG_ERROR( "No path specified." );
+	   return;
+	}
+
+	if( ! fs::exists( szPath.c_str() ) ) {
+		ESS_LOG_ERROR( "Can't find Alembic file.  Path: " << strPath );
+		return;
+	}
+
+	Alembic::AbcGeom::IObject iObj = getObjectFromArchive(szPath, szIdentifier);
     
 	if(!iObj.valid()) {
         return;
@@ -259,7 +276,7 @@ RefResult AlembicVisibilityController::NotifyRefChanged(
                     MCHAR const* strPath = NULL;
                     TimeValue t = GetCOREInterface()->GetTime();
                     pblock->GetValue( AlembicVisibilityController::ID_PATH, t, strPath, iv);
-                    m_CachedAbcFile = strPath;
+                    m_CachedAbcFile = EC_MCHAR_to_UTF8( strPath );
                     addRefArchive(m_CachedAbcFile);
                 }
                 break;
@@ -400,8 +417,8 @@ void AlembicImport_SetupVisControl( std::string const& file, std::string const& 
 		TimeValue zero( 0 );
 
 		// Set the alembic id
-		pControl->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pControl, 0, "path" ), zero, file.c_str() );
-		pControl->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pControl, 0, "identifier" ), zero, identifier.c_str() );
+		pControl->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pControl, 0, "path" ), zero, EC_UTF8_to_TCHAR( file.c_str() ) );
+		pControl->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pControl, 0, "identifier" ), zero, EC_UTF8_to_TCHAR( identifier.c_str() ) );
 		pControl->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pControl, 0, "time" ), zero, 0.0f );
 		pControl->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pControl, 0, "muted" ), zero, FALSE );
 

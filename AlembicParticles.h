@@ -116,7 +116,7 @@ public:
 
     // --- Derived class implementation of the virtual functions in BaseObject ---
     CreateMouseCallBack* GetCreateMouseCallBack() { return NULL; }
-    CONST_2013 TCHAR *GetObjectName() { return "Alembic Particles"; }
+    CONST_2013 TCHAR *GetObjectName() { return EC_UTF8_to_TCHAR( "Alembic Particles" ); }
     virtual int Display(TimeValue t, INode* inode, ViewExp *vpt, int flags);
     virtual int HitTest(TimeValue t, INode *inode, int type, int crossing, int flags, IPoint2 *p, ViewExp *vpt);
     virtual BOOL OKtoDisplay( TimeValue t);
@@ -129,7 +129,7 @@ public:
 	virtual TimeValue ParticleLife(TimeValue t, int i);
 
 private:
-    bool            GetAlembicIPoints(Alembic::AbcGeom::IPoints &iPoints, const char *strFile, const char *strIdentifier);
+    bool            GetAlembicIPoints(Alembic::AbcGeom::IPoints &iPoints, std::string strFile, std::string strIdentifier);
     SampleInfo      GetSampleAtTime(Alembic::AbcGeom::IPoints &iPoints, TimeValue t, Alembic::AbcGeom::IPointsSchema::Sample &floorSample, Alembic::AbcGeom::IPointsSchema::Sample &ceilSample) const;
     int             GetNumParticles(const Alembic::AbcGeom::IPointsSchema::Sample &floorSample) const;
 
@@ -204,11 +204,11 @@ class AlembicParticlesClassDesc : public ClassDesc2
 public:
 	int 			IsPublic() { return TRUE; }
 	void *			Create(BOOL loading = FALSE) { return new AlembicParticles(); }
-	const TCHAR *	ClassName() { return ALEMBIC_SIMPLE_PARTICLE_NAME; }
+	const TCHAR *	ClassName() { return _T(ALEMBIC_SIMPLE_PARTICLE_NAME); }
 	SClass_ID		SuperClassID() { return GEOMOBJECT_CLASS_ID; }
 	Class_ID		ClassID() { return ALEMBIC_SIMPLE_PARTICLE_CLASSID; }
 	const TCHAR* 	Category() { return EXOCORTEX_ALEMBIC_CATEGORY; }
-	const TCHAR*	InternalName() { return ALEMBIC_SIMPLE_PARTICLE_SCRIPTNAME; }  // returns fixed parsable name (scripter-visible name)
+	const TCHAR*	InternalName() { return _T(ALEMBIC_SIMPLE_PARTICLE_SCRIPTNAME); }  // returns fixed parsable name (scripter-visible name)
 	HINSTANCE		HInstance() { return hInstance; }                       // returns owning module handle
 };
 

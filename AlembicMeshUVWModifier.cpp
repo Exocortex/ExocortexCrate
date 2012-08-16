@@ -129,41 +129,44 @@ void AlembicMeshUVWModifier::ModifyObject (TimeValue t, ModContext &mc, ObjectSt
 		return;
 	}
 
-	if( strlen( strPath ) == 0 ) {
+	std::string szPath = EC_MCHAR_to_UTF8( strPath );
+	std::string szIdentifier = EC_MCHAR_to_UTF8( strIdentifier );
+
+	if( szPath.size() == 0 ) {
 	   ESS_LOG_ERROR( "No filename specified." );
 	   return;
 	}
-	if( strlen( strIdentifier ) == 0 ) {
+	if( szIdentifier.size() == 0 ) {
 	   ESS_LOG_ERROR( "No path specified." );
 	   return;
 	}
 
-	if( ! fs::exists( strPath ) ) {
-		ESS_LOG_ERROR( "Can't file Alembic file.  Path: " << strPath );
+	if( ! fs::exists( szPath.c_str() ) ) {
+		ESS_LOG_ERROR( "Can't find Alembic file.  Path: " << strPath );
 		return;
 	}
 
 	//we need the path to the alembic mesh object, so we need to remove the channel name part of the identifier
-	std::string strObjectIdentifier = strIdentifier;
+	std::string strObjectIdentifier = szIdentifier;
 	size_t found = strObjectIdentifier.find_last_of(":");
 	strObjectIdentifier = strObjectIdentifier.substr(0, found);
 		
 	Alembic::AbcGeom::IObject iObj;
 	try {
-		iObj = getObjectFromArchive(strPath, strObjectIdentifier);
+		iObj = getObjectFromArchive(szPath, strObjectIdentifier);
 	} catch( std::exception exp ) {
-		ESS_LOG_ERROR( "Can not open Alembic data stream.  Path: " << strPath << " identifier: " << strIdentifier << " reason: " << exp.what() );
+		ESS_LOG_ERROR( "Can not open Alembic data stream.  Path: " << szPath << " identifier: " << szIdentifier << " reason: " << exp.what() );
 		return;
 	}
 
 	if(!iObj.valid()) {
-		ESS_LOG_ERROR( "Not a valid Alembic data stream.  Path: " << strPath << " identifier: " << strIdentifier );
+		ESS_LOG_ERROR( "Not a valid Alembic data stream.  Path: " << szPath << " identifier: " << szIdentifier );
 		return;
 	}
 
    alembic_fillmesh_options options;
-   options.fileName = strPath;
-   options.identifier = strIdentifier;
+   options.fileName = szPath;
+   options.identifier = szIdentifier;
    options.pIObj = &iObj;
    options.dTicks = GetTimeValueFromSeconds( fTime );
    options.nDataFillFlags = 0;
@@ -250,7 +253,7 @@ RefResult AlembicMeshUVWModifier::NotifyRefChanged (Interval changeInt, RefTarge
                         MCHAR const* strPath = NULL;
                         TimeValue t = GetCOREInterface()->GetTime();
                         pblock->GetValue( AlembicMeshUVWModifier::ID_PATH, t, strPath, changeInt);
-                        m_CachedAbcFile = strPath;
+                        m_CachedAbcFile = EC_MCHAR_to_UTF8( strPath );
                         addRefArchive(m_CachedAbcFile);
                     }
                     break;

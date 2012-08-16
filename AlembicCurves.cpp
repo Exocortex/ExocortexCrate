@@ -24,7 +24,7 @@ enum SplineExportType
 AlembicCurves::AlembicCurves(const SceneEntry &in_Ref, AlembicWriteJob * in_Job)
 : AlembicObject(in_Ref, in_Job)
 {
-   std::string curveName = in_Ref.node->GetName();
+   std::string curveName = EC_MCHAR_to_UTF8( in_Ref.node->GetName() );
    std::string xformName = curveName + "Xfo";
 
    Alembic::AbcGeom::OXform xform(GetOParent(),xformName,GetCurrentJob()->GetAnimatedTs());

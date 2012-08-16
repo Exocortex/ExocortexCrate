@@ -37,7 +37,7 @@ AlembicPoints::AlembicPoints(const SceneEntry &in_Ref, AlembicWriteJob *in_Job)
 	mTotalShapeMeshes = 0;
 	//mTimeSamplesCount = 0;
 
-    std::string pointsName = in_Ref.node->GetName();
+    std::string pointsName = EC_MCHAR_to_UTF8(  in_Ref.node->GetName() );
     std::string xformName = pointsName + "Xfo";
 
     Alembic::AbcGeom::OXform xform(GetOParent(), xformName.c_str(), GetCurrentJob()->GetAnimatedTs());
@@ -496,7 +496,7 @@ void AlembicPoints::ReadShapeFromOperator( IParticleGroup *particleGroup, PFSimp
         type = ShapeType_Instance;
 
 		bool bFlatten = GetCurrentJob()->GetOption("flattenHierarchy");
-		std::string nodePath = getNodeAlembicPath(pNode->GetName(), bFlatten);
+		std::string nodePath = getNodeAlembicPath( EC_MCHAR_to_UTF8( pNode->GetName() ), bFlatten);
 
         // Find if the name is alerady registered, otherwise add it to the list
         instanceId = FindInstanceName(nodePath);

@@ -50,7 +50,7 @@ public:
 	int			Count() { return (int)sceneEntries.size(); }
     SceneEntry*	Append(INode *node, Object *obj, int type, std::string *providedfullname);
 	int			callback( INode *node );
-	Box3		Bound();
+	//Box3		Bound();
 	SceneEntry *Find(INode *node);
     void        Init(IScene *scene, TimeValue t, Interface *i);
 };

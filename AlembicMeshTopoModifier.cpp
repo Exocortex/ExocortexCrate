@@ -158,36 +158,39 @@ void AlembicMeshTopoModifier::ModifyObject (TimeValue t, ModContext &mc, ObjectS
 		return;
 	}
 
-	if( strlen( strPath ) == 0 ) {
+		std::string szPath = EC_MCHAR_to_UTF8( strPath );
+	std::string szIdentifier = EC_MCHAR_to_UTF8( strIdentifier );
+
+	if( szPath.size() == 0 ) {
 	   ESS_LOG_ERROR( "No filename specified." );
 	   return;
 	}
-	if( strlen( strIdentifier ) == 0 ) {
+	if( szIdentifier.size() == 0 ) {
 	   ESS_LOG_ERROR( "No path specified." );
 	   return;
 	}
 
-	if( ! fs::exists( strPath ) ) {
-		ESS_LOG_ERROR( "Can't file Alembic file.  Path: " << strPath );
+	if( ! fs::exists( szPath.c_str() ) ) {
+		ESS_LOG_ERROR( "Can't find Alembic file.  Path: " << strPath );
 		return;
 	}
 
 	Alembic::AbcGeom::IObject iObj;
 	try {
-		iObj = getObjectFromArchive(strPath, strIdentifier);
+		iObj = getObjectFromArchive(szPath, szIdentifier);
 	} catch( std::exception exp ) {
-		ESS_LOG_ERROR( "Can not open Alembic data stream.  Path: " << strPath << " identifier: " << strIdentifier << " reason: " << exp.what() );
+		ESS_LOG_ERROR( "Can not open Alembic data stream.  Path: " << szPath << " identifier: " << szIdentifier << " reason: " << exp.what() );
 		return;
 	}
 
 	if(!iObj.valid()) {
-		ESS_LOG_ERROR( "Not a valid Alembic data stream.  Path: " << strPath << " identifier: " << strIdentifier );
+		ESS_LOG_ERROR( "Not a valid Alembic data stream.  Path: " << szPath << " identifier: " << szIdentifier );
 		return;
 	}
 
    alembic_fillmesh_options options;
-   options.fileName = strPath;
-   options.identifier = strIdentifier;
+   options.fileName = szPath;
+   options.identifier = szIdentifier;
    options.pIObj = &iObj; 
    options.dTicks = GetTimeValueFromSeconds( fTime );
    options.nDataFillFlags = 0;
@@ -279,7 +282,7 @@ RefResult AlembicMeshTopoModifier::NotifyRefChanged (Interval changeInt, RefTarg
                     MCHAR const* strPath = NULL;
                     TimeValue t = GetCOREInterface()->GetTime();
                     pblock->GetValue( AlembicMeshTopoModifier::ID_PATH, t, strPath, changeInt);
-                    m_CachedAbcFile = strPath;
+                    m_CachedAbcFile = EC_MCHAR_to_UTF8( strPath );
                     addRefArchive(m_CachedAbcFile);
                 }
                 break;

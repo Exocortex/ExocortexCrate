@@ -138,7 +138,7 @@ int AlembicImport_DummyNode(Alembic::AbcGeom::IObject& iObj, alembic_importoptio
 
     pDummy->EnableDisplay();
 
-    *pMaxNode = GET_MAX_INTERFACE()->CreateObjectNode(dObj, importName.c_str());
+    *pMaxNode = GET_MAX_INTERFACE()->CreateObjectNode(dObj, EC_UTF8_to_TCHAR( importName.c_str() ) );
 
     SceneEntry *pEntry = options.sceneEnumProc.Append(*pMaxNode, dObj, OBTYPE_DUMMY, &std::string(iObj.getFullName())); 
     options.currentSceneList.Append(pEntry);
@@ -177,8 +177,8 @@ int AlembicImport_XForm(INode* pParentNode, INode* pMaxNode, Alembic::AbcGeom::I
 			if(pAnimatable && pAnimatable->ClassID() == ALEMBIC_XFORM_CONTROLLER_CLASSID){
 				pControl = static_cast<AlembicXformController*>(pAnimatable);
 
-				const char* modIdentifier = pControl->GetParamBlockByID(0)->GetStr(GetParamIdByName(pControl, 0, "identifier"), zero);
-				if(strcmp(modIdentifier, identifier.c_str()) != 0){
+				std::string modIdentifier = EC_MCHAR_to_UTF8( pControl->GetParamBlockByID(0)->GetStr(GetParamIdByName(pControl, 0, "identifier"), zero) );
+				if(strcmp(modIdentifier.c_str(), identifier.c_str()) != 0){
 					pControl = NULL;
 				}
 			}
@@ -189,11 +189,11 @@ int AlembicImport_XForm(INode* pParentNode, INode* pMaxNode, Alembic::AbcGeom::I
 			bCreatedController = true;
 		}
 
-		pControl->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pControl, 0, "identifier" ), zero, identifier.c_str() );
+		pControl->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pControl, 0, "identifier" ), zero, EC_UTF8_to_TCHAR( identifier.c_str() ) );
 
 		if(bCreatedController){
 
-			pControl->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pControl, 0, "path" ), zero, file.c_str());
+			pControl->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pControl, 0, "path" ), zero, EC_UTF8_to_TCHAR( file.c_str() ) );
 			pControl->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pControl, 0, "time" ), zero, 0.0f );
 			pControl->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pControl, 0, "camera" ), zero, ( bIsCamera ? TRUE : FALSE ) );
 			pControl->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pControl, 0, "muted" ), zero, FALSE );
@@ -216,7 +216,7 @@ int AlembicImport_XForm(INode* pParentNode, INode* pMaxNode, Alembic::AbcGeom::I
 		if(pControl){
 			MSTR name;
 			pControl->GetClassName(name);
-			if(strcmp(name, "Position/Rotation/Scale") != 0){
+			if(strcmp( EC_MSTR_to_UTF8( name ).c_str(), "Position/Rotation/Scale") != 0){
 				//TODO: Do I need to be concerned with deleting controllers?
 				pMaxNode->SetTMController(CreatePRSControl());
 			}

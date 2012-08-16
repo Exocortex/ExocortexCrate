@@ -103,9 +103,9 @@ AlembicFloatController* createFloatController(const std::string &path, const std
 	TimeValue zero( 0 );
 
 	// Set the alembic id
-    pControl->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pControl, 0, "path" ), zero, path.c_str());
-	pControl->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pControl, 0, "identifier" ), zero, identifier.c_str() );
-	pControl->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pControl, 0, "property" ), zero, prop.c_str() );
+    pControl->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pControl, 0, "path" ), zero, EC_UTF8_to_TCHAR( path.c_str() ) );
+	pControl->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pControl, 0, "identifier" ), zero, EC_UTF8_to_TCHAR( identifier.c_str() ) );
+	pControl->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pControl, 0, "property" ), zero, EC_UTF8_to_TCHAR( prop.c_str() ) );
 	pControl->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pControl, 0, "time" ), zero, 0.0f );
     pControl->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pControl, 0, "muted" ), zero, FALSE );
 
@@ -190,7 +190,7 @@ int AlembicImport_Camera(const std::string &path, Alembic::AbcGeom::IObject& iOb
 	AlembicImport_FillInCamera(dataFillOptions);
 
     // Create the object node
-	INode *pNode = GET_MAX_INTERFACE()->CreateObjectNode(pCameraObj, iObj.getName().c_str());
+	INode *pNode = GET_MAX_INTERFACE()->CreateObjectNode(pCameraObj, EC_UTF8_to_TCHAR( iObj.getName().c_str() ) );
 	if (pNode == NULL)
     {
 		return alembic_failure;

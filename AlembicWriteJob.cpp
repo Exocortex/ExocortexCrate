@@ -83,7 +83,7 @@ bool AlembicWriteJob::PreProcess()
 
     // init archive (use a locally scoped archive)
     std::string sceneFileName = "Exported from: ";
-    sceneFileName.append(mApplication->GetCurFilePath());
+    sceneFileName.append( EC_MSTR_to_UTF8( mApplication->GetCurFilePath() ) );
     try
     {
         mArchive = CreateArchiveWithInfo(Alembic::AbcCoreHDF5::WriteArchive(), mFileName.c_str(), "Max Alembic Plugin", sceneFileName.c_str(), Alembic::Abc::ErrorHandler::kThrowPolicy);

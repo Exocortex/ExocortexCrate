@@ -120,7 +120,7 @@ SceneEntry *SceneEnumProc::Append(INode *node, Object *obj, int type, std::strin
 	this->sceneEntries.push_back( SceneEntry(node, obj, type, providedfullname) );
     return &( this->sceneEntries[ this->sceneEntries.size() - 1 ] );
 }
-
+/*
 Box3 SceneEnumProc::Bound() 
 {
 	Box3 bound;
@@ -133,7 +133,7 @@ Box3 SceneEnumProc::Bound()
 		bound += bb;
 	}
 	return bound;
-}
+}*/
 
 SceneEntry *SceneEnumProc::Find(INode *node) 
 {

@@ -14,6 +14,13 @@ if( Exocortex_SERVICES )
 endif() 
 
 #add_definitions( "-DEXOCORTEX_BETA_EXPIRY_DATE=1343692800" )	# 1343692800 - July 31, 2012
+add_definitions( -D_SCL_SECURE_NO_WARNINGS ) 
+add_definitions( -D_CRT_SECURE_NO_WARNINGS )
+
+if( Max_VERSION MATCHES "2013" )
+	add_definitions( -D_UNICODE ) 
+	add_definitions( -DUNICODE ) 
+endif()
 
 SET( 3DSMAX_DIR_ROOT ${LIBRARY_ROOT}/Max/${Max_VERSION} ) 
 if( NOT EXISTS ${3DSMAX_DIR_ROOT} )

@@ -168,28 +168,25 @@ void AlembicParticles::UpdateParticles(TimeValue t, INode *node)
 	this->pblock2->GetValue( AlembicParticles::ID_RENDER_AS_TICKS, t, bRenderAsTicks, interval);
 	m_bRenderAsTicks = bRenderAsTicks == TRUE;
 
-    if( strlen( strPath ) == 0 ) 
-    {
-       valid = FALSE;
+	std::string szPath = EC_MCHAR_to_UTF8( strPath );
+	std::string szIdentifier = EC_MCHAR_to_UTF8( strIdentifier );
+
+	if( szPath.size() == 0 ) {
 	   ESS_LOG_ERROR( "No filename specified." );
-	   return; 
+	   return;
 	}
-	if( strlen( strIdentifier ) == 0 ) 
-    {
-       valid = FALSE;
+	if( szIdentifier.size() == 0 ) {
 	   ESS_LOG_ERROR( "No path specified." );
 	   return;
 	}
 
-	if( !fs::exists( strPath ) ) 
-    {
-        valid = FALSE;
-		ESS_LOG_ERROR( "Can't file Alembic file.  Path: " << strPath );
+	if( ! fs::exists( szPath.c_str() ) ) {
+		ESS_LOG_ERROR( "Can't find Alembic file.  Path: " << strPath );
 		return;
 	}
 
 	//Alembic::AbcGeom::IPoints iPoints;
-    if (!GetAlembicIPoints(m_iPoints, strPath, strIdentifier))
+    if (!GetAlembicIPoints(m_iPoints, szPath, szIdentifier))
     {
         valid = FALSE;
         return;
@@ -448,7 +445,7 @@ TimeValue AlembicParticles::ParticleLife(TimeValue t, int i) {
 	return -1;
 }
 
-bool AlembicParticles::GetAlembicIPoints(Alembic::AbcGeom::IPoints &iPoints, const char *strFile, const char *strIdentifier)
+bool AlembicParticles::GetAlembicIPoints(Alembic::AbcGeom::IPoints &iPoints, std::string strFile, std::string strIdentifier)
 {
     // Find the object in the archive
     Alembic::AbcGeom::IObject iObj = getObjectFromArchive(strFile, strIdentifier);
@@ -1041,7 +1038,7 @@ void AlembicParticles::GetMultipleRenderMeshTM(TimeValue  t, INode *inode, View 
 {
 	MSTR rendererName;
 	GET_MAX_INTERFACE()->GetCurrentRenderer()->GetClassName( rendererName );
-	string renderer( rendererName );
+	string renderer( EC_MSTR_to_UTF8( rendererName ) );
 
 	if(LOG){
 		ESS_LOG_WARNING("GetMultipleRenderMeshTM_Internal at time = "<<t<<", mesh #:"<<meshNumber<<", numOfParticles: "<<parts.Count());
@@ -1624,7 +1621,7 @@ RefResult AlembicParticles::NotifyRefChanged(
                         MCHAR const* strPath = NULL;
                         TimeValue t = GetCOREInterface()->GetTime();
                         pblock2->GetValue( AlembicParticles::ID_PATH, t, strPath, iv);
-                        m_CachedAbcFile = strPath;
+                        m_CachedAbcFile = EC_MCHAR_to_UTF8( strPath );
                         addRefArchive(m_CachedAbcFile);
                     }
                     break;
@@ -1747,13 +1744,13 @@ int AlembicImport_Points(const std::string &file, Alembic::AbcGeom::IObject& iOb
 
     // Set the alembic information
     TimeValue zero( 0 );
-    pParticleObj->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pParticleObj, 0, "path" ), zero, file.c_str());
-	pParticleObj->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pParticleObj, 0, "identifier" ), zero, identifier.c_str() );
+    pParticleObj->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pParticleObj, 0, "path" ), zero, EC_UTF8_to_TCHAR( file.c_str() ) );
+	pParticleObj->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pParticleObj, 0, "identifier" ), zero, EC_UTF8_to_TCHAR( identifier.c_str() ) );
 	pParticleObj->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pParticleObj, 0, "time" ), zero, 0.0f );
 	pParticleObj->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pParticleObj, 0, "muted" ), zero, FALSE );
 
     // Create the object node
-	INode *pNode = GET_MAX_INTERFACE()->CreateObjectNode(pParticleObj, iObj.getName().c_str());
+	INode *pNode = GET_MAX_INTERFACE()->CreateObjectNode(pParticleObj, EC_UTF8_to_TCHAR( iObj.getName().c_str() ));
 	if (pNode == NULL)
     {
 		return alembic_failure;
