@@ -64,6 +64,7 @@ public:
 		ID_IDENTIFIER,
 		ID_TIME,
         ID_MUTED,
+		ID_VIEWPORT_PERCENT,
 		ID_RENDER_AS_TICKS
 	};
 
@@ -196,6 +197,7 @@ private:
 
 	bool m_outputOrientationMotionBlurWarning;
 	bool m_bRenderAsTicks;
+	float m_fViewportPercent;
 };
 
 

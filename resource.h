@@ -30,6 +30,7 @@
 #define IDS_ADDITIVE                    117
 #define IDS_IGNORE_SUBFRAME_SAMPLES     118
 #define IDS_RENDER_AS_TICKS             119
+#define IDS_VIEWPORT_PERCENT            120
 #define IDD_GSPHERE1                    179
 #define IDD_GSPHERE2                    180
 #define IDD_GSPHERE3                    181
@@ -85,6 +86,8 @@
 #define IDC_MUTED_CHECKBOX              1021
 #define IDC_TOPOLOGY_CHECKBOX           1022
 #define IDC_CAMERA_CHECKBOX             1022
+#define IDC_TIME_SPIN2                  1022
+#define IDC_VIEWPORT_PERCENT_SPIN       1022
 #define IDC_GEOMETRY_CHECKBOX           1023
 #define IDC_NORMALS_CHECKBOX2           1024
 #define IDC_NORMALS_CHECKBOX            1024
@@ -190,6 +193,7 @@
 #define IDC_PATH_EDIT                   40000
 #define IDC_IDENTIFIER_EDIT             40001
 #define IDC_PROPERTY_EDIT               40002
+#define IDC_VIEWPORT_PERCENT_EDIT       40002
 #define IDC_THRESH_LABEL                65535
 #define IDC_MAX_SIZE_LABEL              65535
 #define IDC_TIME_LABEL                  65535
@@ -200,7 +204,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        108
 #define _APS_NEXT_COMMAND_VALUE         40001
-#define _APS_NEXT_CONTROL_VALUE         1022
+#define _APS_NEXT_CONTROL_VALUE         1023
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

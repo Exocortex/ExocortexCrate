@@ -18,7 +18,7 @@
 #include "AlembicParticles.h"
 #include "AlembicIntermediatePolyMesh3DSMax.h" 
 #include "AlembicWriteJob.h"
-
+#include "MaxSceneTimeManager.h"
 
 IPFRender* getIPFRender(Object* obj, TimeValue ticks)
 {
@@ -212,7 +212,8 @@ bool getParticleSystemMesh(TimeValue ticks, Object* obj, INode* node, Intermedia
 	IParticleObjectExt* particlesExt = GetParticleObjectExtInterface(obj);
 	particlesExt->UpdateParticles(node, ticks);
 
-	GET_MAX_INTERFACE()->SetTime(ticks);
+	SetMaxSceneTime(ticks);
+
 	static NullView nullView;
 
 	//static Mesh nullMesh;

@@ -19,7 +19,7 @@
 #include <ifnpub.h>
 #include <ImathMatrixAlgo.h>
 #include "AlembicMetadataUtils.h"
-
+#include "MaxSceneTimeManager.h"
 #include <Alembic/Util/Murmur3.h>
 
 namespace AbcA = ::Alembic::AbcCoreAbstract::ALEMBIC_VERSION_NS;
@@ -91,6 +91,7 @@ bool AlembicPoints::Save(double time, bool bLastFrame)
 	bool bFlatten = GetCurrentJob()->GetOption("flattenHierarchy");
 
     // Store the transformation
+
     SaveXformSample(GetRef(), mXformSchema, mXformSample, time, bFlatten);
 
 	SaveMetaData(GetRef().node, this);
@@ -154,6 +155,8 @@ bool AlembicPoints::Save(double time, bool bLastFrame)
     bool constantAngularVel = true;
 	bool constantColor = true;
 
+
+
 	//The MAX interfaces return everything in world coordinates,
 	//so we need to multiply the inverse the node world transform matrix
     Matrix3 nodeWorldTM = GetRef().node->GetObjTMAfterWSM(ticks);
@@ -167,6 +170,10 @@ bool AlembicPoints::Save(double time, bool bLastFrame)
 	Alembic::Abc::M44d nodeWorldTransInv = nodeWorldTrans.inverse();
 
 	const bool bAutomaticInstancing = GetCurrentJob()->GetOption("automaticInstancing");
+
+	if(bAutomaticInstancing){
+		SetMaxSceneTime(ticks);
+	}
 
 	for (int i = 0; i < numParticles; ++i)
 	{
@@ -237,6 +244,7 @@ bool AlembicPoints::Save(double time, bool bLastFrame)
 		idVec.push_back( id );
 		orientationVec.push_back( orientation );
 		angularVelocityVec.push_back( spin );
+
         shapeTypeVec.push_back( shapetype );
         shapeInstanceIDVec.push_back( shapeInstanceId );
         shapeTimeVec.push_back( shapeInstanceTime );

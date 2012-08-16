@@ -62,6 +62,13 @@ static ParamBlockDesc2 AlembicParticlesParams(
 		p_ui,            TYPE_SINGLECHEKBOX,  IDC_MUTED_CHECKBOX,
 		p_end,
 
+	AlembicParticles::ID_VIEWPORT_PERCENT, _T("Viewport %"), TYPE_FLOAT, P_ANIMATABLE, IDS_VIEWPORT_PERCENT,
+		p_default,       100.0f,
+		p_range,         0.0f, 100.0f,
+		p_ui,            TYPE_SPINNER,       EDITTYPE_FLOAT, IDC_VIEWPORT_PERCENT_EDIT,    IDC_VIEWPORT_PERCENT_SPIN, 1.0f,
+		p_end,
+        
+
     AlembicParticles::ID_RENDER_AS_TICKS, _T("Render as ticks"), TYPE_BOOL, P_ANIMATABLE, IDS_RENDER_AS_TICKS,
 		p_default,       FALSE,
 		p_ui,            TYPE_SINGLECHEKBOX,  IDC_RENDER_AS_TICKS_CHECKBOX,
@@ -121,6 +128,8 @@ AlembicParticles::AlembicParticles()
 	m_outputOrientationMotionBlurWarning = true;
 
 	 m_bRenderAsTicks = false;
+
+	 m_fViewportPercent = 100.0f;
 }
 
 // virtual
@@ -170,6 +179,8 @@ void AlembicParticles::UpdateParticles(TimeValue t, INode *node)
 
 	std::string szPath = EC_MCHAR_to_UTF8( strPath );
 	std::string szIdentifier = EC_MCHAR_to_UTF8( strIdentifier );
+
+	this->pblock2->GetValue( AlembicParticles::ID_VIEWPORT_PERCENT, t, m_fViewportPercent, interval);
 
 	if( szPath.size() == 0 ) {
 	   ESS_LOG_ERROR( "No filename specified." );
@@ -1202,13 +1213,26 @@ int AlembicParticles::Display(TimeValue t, INode* inode, ViewExp *vpt, int flags
 	vpt->InvalidateRect(rect);
 
 
+	if(m_fViewportPercent == 0.0){
+		return 0;
+	}
+
+	const float fFraction = m_fViewportPercent / 100.0f;
+	int nNumParticlesToRender = (int)ceil((float)NumberOfRenderMeshes() * fFraction);
+	const float fStep = 1 / fFraction;
+
 	if(m_bRenderAsTicks){
 	   // Draw the particles
 	   NullView nullView;
 	   //nullView.worldToView = objToWorld;
 	   gw->setRndLimits(rlim);
-	   for (int i = 0; i < NumberOfRenderMeshes(); i += 1)
+	   for (int ii = 0; ; ii++)
 	   {
+			int i = (int)floor(ii * fStep);
+			if( i >= NumberOfRenderMeshes() ){
+				break;
+			}
+
 			gw->setColor(FILL_COLOR, m_VCArray[i].x, m_VCArray[i].y, m_VCArray[i].z);
 			gw->setTransform(Matrix3(1));
 			gw->marker(&parts.points[i], POINT_MRKR);  
@@ -1219,8 +1243,13 @@ int AlembicParticles::Display(TimeValue t, INode* inode, ViewExp *vpt, int flags
 	   NullView nullView;
 	   //nullView.worldToView = objToWorld;
 	   gw->setRndLimits(rlim);
-	   for (int i = 0; i < NumberOfRenderMeshes(); i += 1)
+	   for (int ii = 0; ; ii++ )
 	   {
+			int i = (int)floor(ii * fStep);
+			if( i >= NumberOfRenderMeshes() ){
+				break;
+			}
+			
 			Matrix3 elemToObj;
 			elemToObj.IdentityMatrix();
 
@@ -1326,8 +1355,17 @@ int AlembicParticles::HitTest(TimeValue t, INode *inode, int type, int crossing,
    nullView.worldToView = objToWorld;
    gw->setRndLimits((savedLimits|GW_PICK) & ~ GW_ILLUM);
 
-   for (int i = 0; i < NumberOfRenderMeshes(); i += 1)
+	const float fFraction = m_fViewportPercent / 100.0f;
+	int nNumParticlesToRender = (int)ceil((float)NumberOfRenderMeshes() * fFraction);
+	const float fStep = 1 / fFraction;
+
+   for (int ii=0; ; ii++)
    {
+		int i = (int)floor(ii * fStep);
+		if( i >= NumberOfRenderMeshes() ){
+			break;
+		}
+
 		Matrix3 elemToObj;
 		elemToObj.IdentityMatrix();
 
