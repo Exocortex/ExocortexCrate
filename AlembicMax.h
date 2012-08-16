@@ -93,6 +93,15 @@ using namespace MaxSDK;
 	#define EC_WQUOTE( x ) EC_WSTR( EC_QUOTE( x ) )
 #endif
 
+
+#if MAX_PRODUCT_YEAR_NUMBER < 2013
+	#define EC_UTF8_to_MCHAR( x )	x
+	#define	EC_UTF8_to_TSTR( x )	TSTR( x )
+	#define	EC_UTF8_to_TCHAR( x )	x
+	#define EC_MCHAR_to_UTF8( x )	std::string( x )
+	#define EC_MSTR_to_UTF8( x )	std::string( x.data() )
+#else
+
 inline std::string ec_toUtf8( std::wstring const& src ) {
 	WStr wStr( src.c_str() );
 	CStr cStr = wStr.ToCStr();
@@ -110,13 +119,6 @@ inline std::string ec_toUtf8( std::wstring const& src ) {
 	return convertedString;*/
 }
 
-#if MAX_PRODUCT_YEAR_NUMBER < 2013
-	#define EC_UTF8_to_MCHAR( x )	x
-	#define	EC_UTF8_to_TSTR( x )	TSTR( x )
-	#define	EC_UTF8_to_TCHAR( x )	x
-	#define EC_MCHAR_to_UTF8( x )	std::string( x )
-	#define EC_MSTR_to_UTF8( x )	std::string( x.data() )
-#else
 	#define EC_UTF8_to_MCHAR( x )	EC_WSTR( x )
 	#define	EC_UTF8_to_TSTR( x )	TSTR::FromUTF8( x )
 	#define	EC_UTF8_to_TCHAR( x )	TSTR::FromUTF8( x ).data()
