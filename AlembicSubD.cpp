@@ -343,7 +343,7 @@ XSI::CStatus AlembicSubD::Save(double time)
 				  bool subdsmooth = false;
 				  if( clusterProperty.GetType() == L"uvspace") {
 				      subdsmooth = (bool)clusterProperty.GetParameter(L"subdsmooth").GetValue();      
-					  ESS_LOG_ERROR( "subdsmooth: " << subdsmooth );
+					 // ESS_LOG_ERROR( "subdsmooth: " << subdsmooth );
 				  }
 
                   CRefArray children = clusterProperty.GetNestedObjects();
@@ -353,7 +353,7 @@ XSI::CStatus AlembicSubD::Save(double time)
                   {
                      ProjectItem child(children.GetItem(i));
                      CString type = child.GetType();
-					 ESS_LOG_ERROR( "  Cluster Property child type: " << type.GetAsciiString() );
+					// ESS_LOG_ERROR( "  Cluster Property child type: " << type.GetAsciiString() );
                      if(type == L"uvprojdef")
                      {
                         uWrap = (bool)child.GetParameter(L"wrap_u").GetValue();
