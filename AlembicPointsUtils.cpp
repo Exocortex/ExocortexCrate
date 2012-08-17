@@ -135,21 +135,21 @@ bool getParticleSystemMesh(TimeValue ticks, Object* obj, INode* node, Intermedia
 {
 	static const bool ENABLE_VELOCITY_EXPORT = true;
 
-	SimpleParticle* pSimpleParticle = (SimpleParticle*) obj->GetInterface(I_SIMPLEPARTICLEOBJ);
-	if(pSimpleParticle){
+	ParticleObject* pParticleObject = (ParticleObject*)obj->GetInterface(I_PARTICLEOBJ);//(SimpleParticle*) obj->GetInterface(I_SIMPLEPARTICLEOBJ);
+	if(pParticleObject){
 
 		NullView nullView;
 
-		AlembicParticles* pAlembicParticles = NULL;
-		if(obj->CanConvertToType(ALEMBIC_SIMPLE_PARTICLE_CLASSID))
-		{
-			pAlembicParticles = reinterpret_cast<AlembicParticles*>(obj->ConvertToType(ticks, ALEMBIC_SIMPLE_PARTICLE_CLASSID));
-		}
+		//AlembicParticles* pAlembicParticles = NULL;
+		//if(obj->CanConvertToType(ALEMBIC_SIMPLE_PARTICLE_CLASSID))
+		//{
+		//	pAlembicParticles = reinterpret_cast<AlembicParticles*>(obj->ConvertToType(ticks, ALEMBIC_SIMPLE_PARTICLE_CLASSID));
+		//}
 
-		if(pAlembicParticles){
+		//if(pAlembicParticles){
 
-			//pSimpleParticle->Update(ticks, node);
-			//int numParticles = pSimpleParticle->parts.points.Count();
+			//pParticleObject->Update(ticks, node);
+			//int numParticles = pParticleObject->parts.points.Count();
 
 			//for(int i=0; i<numParticles; i++){
 
@@ -168,8 +168,8 @@ bool getParticleSystemMesh(TimeValue ticks, Object* obj, INode* node, Intermedia
 			//		meshes.push_back(mdata);
 			//	}
 			//}
-		}
-		else{
+		//}
+		//else{
 
 			Mtl* pMtl = NULL;//TODO: where to get material?
 			pMatMerge->currUniqueHandle = 0;//TODO: where to get handle?
@@ -180,7 +180,7 @@ bool getParticleSystemMesh(TimeValue ticks, Object* obj, INode* node, Intermedia
 			//meshValid.SetInstant(ticks);
 
 			BOOL bNeedDelete = FALSE;
-			Mesh* pMesh = pSimpleParticle->GetRenderMesh(ticks, node, nullView, bNeedDelete);
+			Mesh* pMesh = pParticleObject->GetRenderMesh(ticks, node, nullView, bNeedDelete);
 
 			if(!pMesh || (pMesh && pMesh->numVerts == 0) ){
 				ESS_LOG_INFO("Error. Null render mesh. Tick: "<<ticks);
@@ -196,10 +196,11 @@ bool getParticleSystemMesh(TimeValue ticks, Object* obj, INode* node, Intermedia
 			if(bNeedDelete){
 				delete pMesh;
 			}
-		}
+		//}
 
 		return true;
 	}
+
 	//Export as particle flow if not simple particle
 
 	splitTypeT oldSplitType = setPerParticleMeshRenderSetting(obj, ticks, kRender_splitType_particle);
