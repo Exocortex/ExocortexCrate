@@ -432,13 +432,21 @@ XSI::CStatus AlembicPolyMesh::Save(double time)
 
                for(LONG uvI=0;uvI<uvPropRefs.GetCount();uvI++)
                {
-                  CRefArray children = ClusterProperty(uvPropRefs[uvI]).GetNestedObjects();
+                 ClusterProperty clusterProperty = (ClusterProperty) uvPropRefs[uvI];
+				  bool subdsmooth = false;
+				  if( clusterProperty.GetType() == L"uvspace") {
+				      subdsmooth = (bool)clusterProperty.GetParameter(L"subdsmooth").GetValue();      
+					  ESS_LOG_ERROR( "subdsmooth: " << subdsmooth );
+				  }
+
+                  CRefArray children = clusterProperty.GetNestedObjects();
                   bool uWrap = false;
                   bool vWrap = false;
                   for(LONG i=0; i<children.GetCount(); i++)
                   {
                      ProjectItem child(children.GetItem(i));
                      CString type = child.GetType();
+					 ESS_LOG_ERROR( "  Cluster Property child type: " << type.GetAsciiString() );
                      if(type == L"uvprojdef")
                      {
                         uWrap = (bool)child.GetParameter(L"wrap_u").GetValue();
@@ -450,6 +458,7 @@ XSI::CStatus AlembicPolyMesh::Save(double time)
                   // uv wrapping
                   mUvOptionsVec.push_back(uWrap ? 1.0f : 0.0f);
                   mUvOptionsVec.push_back(vWrap ? 1.0f : 0.0f);
+				  mUvOptionsVec.push_back(subdsmooth ? 1.0f : 0.0f);
                }
                mUvOptionsProperty.set(Alembic::Abc::FloatArraySample(&mUvOptionsVec.front(),mUvOptionsVec.size()));
             }
