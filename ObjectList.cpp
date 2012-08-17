@@ -89,7 +89,7 @@ INode* ObjectList::FindNodeWithName(std::string &identifier, bool removeXfo)
 	INode* pLastNode = NULL;
    	for( int i = 0; i < this->objectEntries.size(); i ++ ) {
 		ObjectEntry *e = &( this->objectEntries[i] );
-		if(e->entry.node->GetName() == modelName)
+		if( strcmp( EC_MCHAR_to_UTF8( e->entry.node->GetName() ).c_str(), modelName.c_str() ) == 0 )
         {
 			pLastNode = e->entry.node;
         }

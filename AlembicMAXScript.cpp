@@ -262,7 +262,7 @@ void AlembicImport_TimeControl( alembic_importoptions &options ) {
 
 	// check if an Alembic Time Control already exists in the scene.
 
-	BOOL alreadyExists = ExecuteMAXScriptScript( "select $Alembic_Time_Control", TRUE );
+	BOOL alreadyExists = ExecuteMAXScriptScript( _T( "select $Alembic_Time_Control" ), TRUE );
 	if( alreadyExists != 0 ) {
 		if( GetCOREInterface()->GetSelNodeCount() > 0 ) {
 			INode *pSelectedNode = GetCOREInterface()->GetSelNode( 0 );
@@ -287,25 +287,27 @@ void AlembicImport_TimeControl( alembic_importoptions &options ) {
 	INode *node = GET_MAX_INTERFACE()->CreateObjectNode(pHelper, pHelper->GetObjectName() );
 
 	// Add the new inode to our current scene list
-	SceneEntry *pEntry = options.sceneEnumProc.Append(node, pHelper, OBTYPE_CURVES, &std::string( node->GetName() ) ); 
+	SceneEntry *pEntry = options.sceneEnumProc.Append(node, pHelper, OBTYPE_CURVES, &std::string( EC_MCHAR_to_UTF8( node->GetName() ) ) ); 
 	options.currentSceneList.Append(pEntry);
 
 	GET_MAX_INTERFACE()->SelectNode( node );
 
+	std::string nodeName = EC_MCHAR_to_UTF8( node->GetName() );
 	char szBuffer[10000];	
 	sprintf_s( szBuffer, 10000,
 		"$'%s'.current.controller = float_expression()\n"
 		"$'%s'.current.controller.setExpression \"S\"\n"
 		"$'%s'.offset.controller = bezier_float()\n"
 		"$'%s'.factor.controller = bezier_float()\n"
-		, node->GetName(), node->GetName(), node->GetName(), node->GetName() );
-	ExecuteMAXScriptScript( szBuffer );
+		, nodeName.c_str(), nodeName.c_str(), nodeName.c_str(), nodeName.c_str() );
+	ExecuteMAXScriptScript( EC_UTF8_to_TCHAR( szBuffer ) );
 
 	options.pTimeControl = pHelper;
 }
 
 void AlembicImport_ConnectTimeControl( const char* szControllerName, alembic_importoptions &options ) 
 {
+	std::string objectNameName = EC_MCHAR_to_UTF8( options.pTimeControl->GetObjectName() );
 	char szBuffer[10000];	
 	sprintf_s( szBuffer, 10000, 
 		"%s.controller = float_expression()\n"
@@ -314,12 +316,12 @@ void AlembicImport_ConnectTimeControl( const char* szControllerName, alembic_imp
 		"%s.controller.AddScalarTarget \"factor\" $'%s'.factor.controller\n"
 		"%s.controller.setExpression \"current * factor + offset\"\n",
 		szControllerName,
-		szControllerName, options.pTimeControl->GetObjectName(),
-		szControllerName, options.pTimeControl->GetObjectName(),
-		szControllerName, options.pTimeControl->GetObjectName(),
+		szControllerName, objectNameName.c_str(),
+		szControllerName, objectNameName.c_str(),
+		szControllerName, objectNameName.c_str(),
 		szControllerName );
 
-	ExecuteMAXScriptScript( szBuffer );
+	ExecuteMAXScriptScript( EC_UTF8_to_TCHAR( szBuffer ) );
 }
 
 int ExocortexAlembicStaticInterface::ExocortexGetBinVersion()
@@ -391,18 +393,20 @@ int ExocortexAlembicStaticInterface_ExocortexAlembicImport( CONST_2013 MCHAR* st
 		options.attachToExisting = (bAttachToExisting != FALSE);
 		options.importVisibility = static_cast<VisImportOption>(iVisOption);
 
-		// If no filename, then return an error code
-		if(strPath[0] == 0) {
+		std::string file = EC_MCHAR_to_UTF8( strPath );
+	
+	// If no filename, then return an error code
+		if(file.size() == 0) {
 			ESS_LOG_ERROR( "No filename specified." );
 			return alembic_invalidarg;
 		}
 
-		if( ! fs::exists( strPath ) ) {
-			ESS_LOG_ERROR( "Can't file Alembic file.  Path: " << strPath );
+		if( ! fs::exists( file.c_str() ) ) {
+			ESS_LOG_ERROR( "Can't find Alembic file.  Path: " << file );
 			return alembic_invalidarg;
 		}
 
-		std::string file(strPath);
+		//std::string file(szPath);
 
 		// Try opening up the archive
 		Alembic::Abc::IArchive *pArchive = getArchiveFromID(file);
@@ -452,7 +456,7 @@ int ExocortexAlembicStaticInterface_ExocortexAlembicImport( CONST_2013 MCHAR* st
 		}
 		char szBuffer[1000];
 		sprintf_s( szBuffer, 1000, "Importing %i Alembic Streams", totalAlembicItems );
-		i->ProgressStart(szBuffer, TRUE, DummyProgressFunction, NULL);
+		i->ProgressStart( EC_UTF8_to_TCHAR( szBuffer ), TRUE, DummyProgressFunction, NULL);
 
 		int progressUpdateInterval = 0;
 		int lastUpdateProcess = 0;
@@ -512,7 +516,7 @@ void addNodeChildren(INode* pNode, ObjectList& allSceneObjects, TimeValue time, 
 		INode* pChildNode = pNode->GetChildNode(i);
 
 		path += "/";
-		path += pChildNode->GetName();
+		path += EC_MCHAR_to_UTF8( pChildNode->GetName() );
 
 		SceneEntry sEntry = createSceneEntry(pChildNode, time, &path);
 		allSceneObjects.Append(&sEntry);//The append will make a copy sEntry, so this is safe
@@ -579,7 +583,7 @@ int ExocortexAlembicStaticInterface_ExocortexAlembicExportJobs( CONST_2013 MCHAR
 		ESS_LOG_INFO( "Processing export jobs: "<<jobString);
 
 		MAXInterface *pMaxInterface = GET_MAX_INTERFACE();
-		pMaxInterface->ProgressStart("Exporting Alembic File", TRUE, DummyProgressFunction, NULL);
+		pMaxInterface->ProgressStart( _T( "Exporting Alembic File" ), TRUE, DummyProgressFunction, NULL);
 
 
 		TimeValue currentTime = pMaxInterface->GetTime();
@@ -902,7 +906,8 @@ int ExocortexAlembicStaticInterface_ExocortexAlembicExportJobs( CONST_2013 MCHAR
 
 int ExocortexAlembicStaticInterface_ExocortexAlembicExport(CONST_2013 MCHAR * strPath, int iFrameIn, int iFrameOut, int iFrameSteps, int iFrameSubSteps, int iType,
 															BOOL bExportUV, BOOL bExportMaterialIds, BOOL bExportEnvelopeBindPose, BOOL bExportDynamicTopology,
-															BOOL bExportSelected, BOOL bFlattenHierarchy, BOOL bExportAsSingleMesh);
+															BOOL bExportSelected, BOOL bFlattenHierarchy, BOOL bExportAsSingleMesh);
+
 int ExocortexAlembicStaticInterface::ExocortexAlembicExport(CONST_2013 MCHAR * strPath, int iFrameIn, int iFrameOut, int iFrameSteps, int iFrameSubSteps, int iType,
 															BOOL bExportUV, BOOL bExportMaterialIds, BOOL bExportEnvelopeBindPose, BOOL bExportDynamicTopology,
 															BOOL bExportSelected, BOOL bFlattenHierarchy, BOOL bExportAsSingleMesh)
@@ -923,7 +928,8 @@ int ExocortexAlembicStaticInterface_ExocortexAlembicExport(CONST_2013 MCHAR * st
 	std::stringstream jobStream;
 	jobStream<<"filename="<<strPath<<";in="<<iFrameIn<<";out="<<iFrameOut<<";step="<<iFrameSteps<<";substep="<<iFrameSubSteps;
 
-	MeshTopologyType eTopologyType = static_cast<MeshTopologyType>(iType);	if(eTopologyType == SURFACE){
+	MeshTopologyType eTopologyType = static_cast<MeshTopologyType>(iType);
+	if(eTopologyType == SURFACE){
 	}
 	else if(eTopologyType == POINTCACHE){
 		jobStream<<";purepointcache=true";
@@ -935,7 +941,8 @@ int ExocortexAlembicStaticInterface_ExocortexAlembicExport(CONST_2013 MCHAR * st
 	jobStream<<";exportselected="<<bExportSelected<<";flattenhierarchy="<<bFlattenHierarchy<<";particlesystemtomeshconversion="<<bExportAsSingleMesh;
 	jobStream<<";uiExport=true";
 	
-	return ExocortexAlembicStaticInterface_ExocortexAlembicExportJobs( (MCHAR*)jobStream.str().c_str() );
+	TSTR tStr = EC_UTF8_to_TSTR( jobStream.str().c_str() );
+	return ExocortexAlembicStaticInterface_ExocortexAlembicExportJobs( tStr.data() );
 
 	return 0;
 }

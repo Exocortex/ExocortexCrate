@@ -20,7 +20,7 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL,ULONG fdwReason,LPVOID lpvReserved)
 
 MAX_DLL_EXPORT const TCHAR* LibDescription()
 {
-   return "Exocortex Alembic for 3DS Max";
+   return _T("Exocortex Alembic for 3DS Max");
 }
 
 typedef ClassDesc2* ClassDescPtr;

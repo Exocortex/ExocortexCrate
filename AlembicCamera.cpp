@@ -14,7 +14,7 @@ using namespace AbcB;
 AlembicCamera::AlembicCamera(const SceneEntry &in_Ref, AlembicWriteJob *in_Job)
 : AlembicObject(in_Ref, in_Job)
 {
-    std::string cameraName = in_Ref.node->GetName();
+    std::string cameraName = EC_MCHAR_to_UTF8( in_Ref.node->GetName() );
     std::string xformName = cameraName + "Xfo";
 
     Alembic::AbcGeom::OXform xform(GetOParent(), xformName.c_str(), GetCurrentJob()->GetAnimatedTs());

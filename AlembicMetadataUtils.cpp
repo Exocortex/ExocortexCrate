@@ -63,7 +63,7 @@ void importMetadata(Alembic::AbcGeom::IObject& iObj)
 		dataStr.c_str()
 	);
 
-	ExecuteMAXScriptScript( szBuffer );
+	ExecuteMAXScriptScript( EC_UTF8_to_TCHAR( szBuffer ) );
 	
 	delete[] szBuffer;
 }
@@ -100,7 +100,7 @@ void SaveMetaData(INode* node, AlembicObject* object)
 		for(int i=0; i<cont->GetNumCustAttribs(); i++)
 		{
 			CustAttrib* ca = cont->GetCustAttrib(i);
-			const char* name = ca->GetName();
+			std::string name = EC_MCHAR_to_UTF8( ca->GetName() );
 		
 			IParamBlock2 *pblock = ca->GetParamBlockByID(0);
 			if(pblock){
@@ -110,7 +110,7 @@ void SaveMetaData(INode* node, AlembicObject* object)
 					ParamID id = pblock->IndextoID(i);
 					//MSTR name = pblock->GetLocalName(id, 0);
 					MSTR value = pblock->GetStr(id, 0);
-					metaData.push_back(std::string(value));
+					metaData.push_back( EC_MSTR_to_UTF8( value ) );
 				}
 			}
 		}
@@ -127,7 +127,7 @@ void SaveMetaData(INode* node, AlembicObject* object)
 
 			for(int i=0; i<nSize; i++){
 				MSTR value = pblock->GetStr(id, 0, i);
-				metaData.push_back(std::string(value));
+				metaData.push_back( EC_MSTR_to_UTF8( value ) );
 			}
 		}
 

@@ -67,15 +67,15 @@ std::string buildIdentifierFromRef(const SceneEntry &in_Ref)
    INode *pNode = in_Ref.node;
 
    // Build the base string
-   result = std::string("/")+ std::string(pNode->GetName()) + result;
-   result = std::string("/")+ std::string(pNode->GetName()) + std::string("Xfo") + result;
+   result = std::string("/")+ std::string( EC_MCHAR_to_UTF8( pNode->GetName() ) ) + result;
+   result = std::string("/")+ std::string( EC_MCHAR_to_UTF8( pNode->GetName() ) ) + std::string("Xfo") + result;
 
    // Look for any nodes that we might add to the alembic hiearchy
    pNode = pNode->GetParentNode();
    while(pNode && !pNode->IsRootNode())
    {
        if (IsModelTransformNode(pNode))
-           result = std::string("/")+ std::string(pNode->GetName()) + std::string("Xfo") + result;
+           result = std::string("/")+ std::string( EC_MCHAR_to_UTF8( pNode->GetName() ) ) + std::string("Xfo") + result;
        
        pNode = pNode->GetParentNode();
    }
@@ -348,7 +348,7 @@ int GetParamIdByName( Animatable *pBaseObject, int pblockIndex, char const* pPar
 	for( int iParamID = 0; iParamID < pParamBlock2->NumParams(); iParamID ++ ) 
     {
 		ParamDef &paramDef = pParamBlock2->GetParamDef( iParamID );
-		if( strcmp( paramDef.int_name, pParamName ) == 0 ) 
+		if( strcmp( EC_MCHAR_to_UTF8( paramDef.int_name ).c_str(), pParamName ) == 0 ) 
         {
 			return iParamID;
 		}
@@ -437,7 +437,7 @@ public:
 
 			INode* childNode = node->GetChildNode(i);
 
-			if (strcmp(childNode->GetName(), childName.c_str()) == 0){
+			if (strcmp( EC_MCHAR_to_UTF8( childNode->GetName() ).c_str(), childName.c_str()) == 0){
 				childIndex++;
 				pRetNode = childNode;
 				walkToChild(childNode, childIndex);		
@@ -460,9 +460,9 @@ public:
 
 		//skip the first entry because we split based on slash, and the path starts with a a slash,
 		//so the first entry is an empty string
-		const char* name = node->GetName();
+		std::string name = EC_MCHAR_to_UTF8( node->GetName() );
 		INode* pParent = node->GetParentNode();
-		if (pParent && pParent->IsRootNode() && strcmp(node->GetName(), parts[1].c_str()) == 0)
+		if (pParent && pParent->IsRootNode() && strcmp( name.c_str(), parts[1].c_str()) == 0)
 		{
 			int partIndex = 2;
 			pRetNode = node;
@@ -502,7 +502,7 @@ public:
 
 		//skip the first entry because we split based on slash, and the path starts with a a slash,
 		//so the first entry is an empty string
-		if (strcmp(node->GetName(), name.c_str()) == 0)
+		if (strcmp( EC_MCHAR_to_UTF8( node->GetName() ).c_str(), name.c_str()) == 0)
 		{
 			pRetNode = node;
 			return TREE_ABORT;
@@ -524,12 +524,12 @@ INode* GetNodeFromName(const std::string& name)
 INode* GetChildNodeFromName(const std::string& name, INode* pParent)
 {
 	if(pParent){
-		const char* pname = pParent->GetName();
+		std::string pname = EC_MCHAR_to_UTF8( pParent->GetName() );
 		for(int i=0; i<pParent->NumberOfChildren(); i++){
 			INode* childNode = pParent->GetChildNode(i);
-			const char* cname = childNode->GetName();
+			std::string cname = EC_MCHAR_to_UTF8( childNode->GetName() );
 
-			if (strcmp(childNode->GetName(), name.c_str()) == 0){
+			if (strcmp(cname.c_str(), name.c_str()) == 0){
 				return childNode;	
 			}
 		}
@@ -563,7 +563,7 @@ public:
 	{
 		INode* pParent = node->GetParentNode();
 		if(pParent){
-			const char* name = node->GetName();
+			std::string name = EC_MCHAR_to_UTF8( node->GetName() );
 			pathNodeNames.push_back(name);
 			walkToParent(pParent);
 		}
@@ -590,8 +590,8 @@ public:
 	{
 		int enumCode = TREE_CONTINUE;
 
-		const char* name = node->GetName();
-		if (strcmp(name, nodeName.c_str()) == 0)
+		std::string name = EC_MCHAR_to_UTF8( node->GetName() );
+		if (strcmp(name.c_str(), nodeName.c_str()) == 0)
 		{
 			walkToParent(node);
 			return TREE_ABORT;
@@ -627,14 +627,14 @@ Modifier* FindModifier(INode* node, char* name)
 			break;
 		}
 
-		if(strstr(pMod->GetName(), name) != NULL){
+		if(strstr( EC_MSTR_to_UTF8( pMod->GetName() ).c_str(), name) != NULL){
 			pRetMod = pMod;
 			break;
 		}
 
 		//const char* cname = pObj->GetClassName();
-		const char* oname = pMod->GetObjectName();
-		const char* name = pMod->GetName();
+		//const char* oname = EC_MCHAR_to_UTF8( pMod->GetObjectName() );
+		//const char* name = EC_MSTR_to_UTF8( pMod->GetName() );
 		i++;
 	}
 
@@ -686,8 +686,8 @@ Modifier* FindModifier(INode* node, Class_ID obtype, const char* identifier)
         }
 
         //const char* cname = pObj->GetClassName();
-        const char* oname = pMod->GetObjectName();
-        const char* name = pMod->GetName();
+        std::string oname = EC_MCHAR_to_UTF8( pMod->GetObjectName() );
+        std::string  name = EC_MSTR_to_UTF8( pMod->GetName() );
 
 		if(pMod->ClassID() == obtype){
             
@@ -697,9 +697,9 @@ Modifier* FindModifier(INode* node, Class_ID obtype, const char* identifier)
             }
 
             //const char* modPath = pBlock->GetStr(GetParamIdByName(pMod, 0, "path"), zero);
-            const char* modIdentifier = pBlock->GetStr(GetParamIdByName(pMod, 0, "identifier"), zero);
+            std::string modIdentifier = EC_MCHAR_to_UTF8( pBlock->GetStr(GetParamIdByName(pMod, 0, "identifier"), zero) );
 
-            if(/*strcmp(modPath, path) == 0 && */strcmp(modIdentifier, identifier) == 0){
+            if(/*strcmp(modPath, path) == 0 && */strcmp(modIdentifier.c_str(), identifier) == 0){
                 pRetMod = pMod;
                 break;
             }
@@ -727,8 +727,8 @@ Modifier* FindModifier(INode* node, Class_ID obtype)
         }
 
         //const char* cname = pObj->GetClassName();
-        const char* oname = pMod->GetObjectName();
-        const char* name = pMod->GetName();
+        //std::string oname = EC_MCHAR_to_UTF8( pMod->GetObjectName() );
+        //std::string name = EC_MSTR_to_UTF8( pMod->GetName() );
 
 		if(pMod->ClassID() == obtype){
             pRetMod = pMod;

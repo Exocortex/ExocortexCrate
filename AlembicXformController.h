@@ -91,7 +91,8 @@ public:
 	~AlembicXformControllerClassDesc() {}
 
 	int				IsPublic()			{ return TRUE; }	// We do want the user to see this plug-in
-	const MCHAR*	ClassName()			{ static const MSTR str(ALEMBIC_XFORM_CONTROLLER_NAME); return str; }
+	const MCHAR*	ClassName()			{ static const MSTR str( _T( ALEMBIC_XFORM_CONTROLLER_NAME ) ); return str; }
+
 	SClass_ID		SuperClassID()		{ return CTRL_MATRIX3_CLASS_ID; }
 	Class_ID		ClassID()			{ return ALEMBIC_XFORM_CONTROLLER_CLASSID; }
 	const MCHAR*	Category()			{ return EXOCORTEX_ALEMBIC_CATEGORY; }

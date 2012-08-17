@@ -42,7 +42,13 @@ int GetAlembicLicense() {
 		return s_alembicLicense;
 	}
 
-	bool isWriterLicense = ! GET_MAX_INTERFACE()->InSlaveMode();
+	bool isWriterLicense = false;
+
+#if MAX_PRODUCT_YEAR_NUMBER < 2013
+	isWriterLicense = ! GET_MAX_INTERFACE()->InSlaveMode();
+#else
+	isWriterLicense = ! GET_MAX_INTERFACE()->IsNetworkRenderServer();
+#endif
 
 	bool isForceReader = ( getenv("EXOCORTEX_ALEMBIC_FORCE_READER") != NULL );
 	bool isForceWriter = ( getenv("EXOCORTEX_ALEMBIC_FORCE_WRITER") != NULL );
@@ -175,13 +181,13 @@ int GetLicense()
 void MaxLogSink(const char* szLogMessage, Exocortex::ecLogLevel::Value level ) {
 	switch( level ) {
 	case Exocortex::ecLogLevel::Info:
-		//mprintf( "Exocortex Alembic: %s\n", szLogMessage );
+		//mprintf( EC_UTF8_to_TCHAR( "Exocortex Alembic: %s\n" ), EC_UTF8_to_TCHAR( szLogMessage ) );
 		break;
 	case Exocortex::ecLogLevel::Warning:
-		mprintf( "Exocortex Alembic Warning: %s\n", szLogMessage );
+		mprintf( EC_UTF8_to_TCHAR( "Exocortex Alembic Warning: %s\n" ), EC_UTF8_to_TCHAR( szLogMessage ) );
 		break;
 	case Exocortex::ecLogLevel::Error:
-		mprintf( "Exocortex Alembic Error: %s\n", szLogMessage );
+		mprintf( EC_UTF8_to_TCHAR( "Exocortex Alembic Error: %s\n" ), EC_UTF8_to_TCHAR( szLogMessage ) );
 		break;
 	}
 }
@@ -195,7 +201,7 @@ namespace Exocortex {
 		static string pluginName(PLUGIN_NAME);
 
 		char szTempPath[4096];
-		GetTempPath( 4096, szTempPath );
+		GetTempPathA( 4096, szTempPath );
 
 		char szLogPath[4096];
 		sprintf_s( szLogPath, 4096, "%sExocortexAlembic", szTempPath );
@@ -215,11 +221,11 @@ namespace Exocortex {
 			ESS_LOG_INFO( szOsVersion );		
 		}
 		char szExePath[_MAX_PATH];
-		GetModuleFileName( NULL, szExePath, _MAX_PATH );
+		GetModuleFileNameA( NULL, szExePath, _MAX_PATH );
 		ESS_LOG_INFO( "Executable path: " << szExePath );
 
 		char szDllPath[_MAX_PATH];
-		GetModuleFileName((HINSTANCE)&__ImageBase, szDllPath, _MAX_PATH);
+		GetModuleFileNameA((HINSTANCE)&__ImageBase, szDllPath, _MAX_PATH);
 		ESS_LOG_INFO( "Dll path: " << szDllPath );
 		ESS_LOG_INFO( "------------------------------------------------------------------------------------------" );
 	}

@@ -38,30 +38,30 @@ static ParamBlockDesc2 AlembicFloatControllerParams(
 	    p_default, "",
 	    p_ui,        TYPE_EDITBOX,		IDC_PATH_EDIT,
 		p_assetTypeID,	AssetManagement::kExternalLink,
-	 	end,
+	 	p_end,
         
 	AlembicFloatController::ID_IDENTIFIER, _T("identifier"), TYPE_STRING, P_RESET_DEFAULT, IDS_IDENTIFIER,
 	    p_default, "",
 	    p_ui,        TYPE_EDITBOX,		IDC_IDENTIFIER_EDIT,
-	 	end,
+	 	p_end,
 
 	AlembicFloatController::ID_PROPERTY, _T("property"), TYPE_STRING, P_RESET_DEFAULT, IDC_PROPERTY_EDIT,
 	    p_default, "",
 	    p_ui,        TYPE_EDITBOX,		IDC_PROPERTY_EDIT,
-		end,
+		p_end,
 
 	AlembicFloatController::ID_TIME, _T("time"), TYPE_FLOAT, P_ANIMATABLE, IDS_TIME,
 		p_default,       0.0f,
 		p_range,         0.0f, 1000.0f,
 		p_ui,            TYPE_SPINNER,       EDITTYPE_FLOAT, IDC_TIME_EDIT,    IDC_TIME_SPIN, 0.01f,
-		end,
+		p_end,
 
 	AlembicFloatController::ID_MUTED, _T("muted"), TYPE_BOOL, P_ANIMATABLE, IDS_MUTED,
 		p_default,       FALSE,
 		p_ui,            TYPE_SINGLECHEKBOX,  IDC_MUTED_CHECKBOX,
-		end,
+		p_end,
 
-	end
+	p_end
 );
 
 bool iequals(const char* a, const char* b)
@@ -185,12 +185,33 @@ void AlembicFloatController::GetValueLocalTime(TimeValue t, void *ptr, Interval 
 	BOOL bMuted;
 	this->pblock->GetValue( AlembicFloatController::ID_MUTED, t, bMuted, interval);
 
-    if (bMuted || !strPath || !strIdentifier || !strProperty)
+    if (bMuted || !strProperty)
     {
         return;
     }
 	
-	Alembic::AbcGeom::IObject iObj = getObjectFromArchive(strPath, strIdentifier);
+	std::string szPath = EC_MCHAR_to_UTF8( strPath );
+	std::string szIdentifier = EC_MCHAR_to_UTF8( strIdentifier );
+	std::string szProperty = EC_MCHAR_to_UTF8( strProperty );	
+
+	if( szPath.size() == 0 ) {
+	   ESS_LOG_ERROR( "No filename specified." );
+	   return;
+	}
+	if( szIdentifier.size() == 0 ) {
+	   ESS_LOG_ERROR( "No path specified." );
+	   return;
+	}
+	if( szProperty.size() == 0 ) {
+	   ESS_LOG_ERROR( "No property specified." );
+	   return;
+	}
+	if( ! fs::exists( szPath.c_str() ) ) {
+		ESS_LOG_ERROR( "Can't find Alembic file.  Path: " << szPath );
+		return;
+	}
+
+	Alembic::AbcGeom::IObject iObj = getObjectFromArchive(szPath, szIdentifier);
     
 	if(!iObj.valid() || !Alembic::AbcGeom::ICamera::matches(iObj.getMetaData())) {
         return;
@@ -208,7 +229,7 @@ void AlembicFloatController::GetValueLocalTime(TimeValue t, void *ptr, Interval 
     objCamera.getSchema().get(sample, sampleInfo.floorIndex);
 
 	double sampleVal = 0.0;
-	if(!getCameraSampleVal(objCamera, sampleInfo, sample, strProperty, sampleVal)){
+	if(!getCameraSampleVal(objCamera, sampleInfo, sample, szProperty.c_str(), sampleVal)){
 		return;
 	}
 
@@ -217,7 +238,7 @@ void AlembicFloatController::GetValueLocalTime(TimeValue t, void *ptr, Interval 
     {
         objCamera.getSchema().get(sample, sampleInfo.ceilIndex);
 		double sampleVal2 = 0.0;
-		if(getCameraSampleVal(objCamera, sampleInfo, sample, strProperty, sampleVal2)){
+		if(getCameraSampleVal(objCamera, sampleInfo, sample, szProperty.c_str(), sampleVal2)){
 			sampleVal = (1.0 - sampleInfo.alpha) * sampleVal + sampleInfo.alpha * sampleVal2;
 		}
     }
@@ -376,7 +397,7 @@ RefResult AlembicFloatController::NotifyRefChanged(
                     MCHAR const* strPath = NULL;
                     TimeValue t = GetCOREInterface()->GetTime();
                     pblock->GetValue( AlembicFloatController::ID_PATH, t, strPath, iv);
-                    m_CachedAbcFile = strPath;
+                    m_CachedAbcFile = EC_MCHAR_to_UTF8( strPath );
                     addRefArchive(m_CachedAbcFile);
                 }
                 break;
