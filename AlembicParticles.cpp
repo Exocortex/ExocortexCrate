@@ -25,7 +25,7 @@ ClassDesc2 *GetAlembicParticlesClassDesc() { return &s_AlembicParticlesClassDesc
 // Alembic_XForm_Ctrl_Param_Blk
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-static const int ALEMBIC_PARTICLES_VERSION = 1;
+static const int ALEMBIC_PARTICLES_VERSION = 2;
 
 static ParamBlockDesc2 AlembicParticlesParams(
 	0,
