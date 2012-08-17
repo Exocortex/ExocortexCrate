@@ -128,14 +128,14 @@ int recurseOnAlembicObject(Alembic::AbcGeom::IObject& iObj, INode *pParentMaxNod
 				//see if a controller already exists, and then delete it
 				
 
-				int ret = AlembicImport_XForm(pParentMaxNode, pMaxNode, iObj, file, options);
+				int ret = AlembicImport_XForm(pParentMaxNode, pMaxNode, iObj, NULL, file, options);
 				if(ret != 0) return ret;
 			}//only create node if either attachToExisting is false or it is true and the object does not already exist
 			else{
 				int ret = AlembicImport_DummyNode(iObj, options, &pMaxNode, importName);
 				if(ret != 0) return ret;
 
-				ret = AlembicImport_XForm(pParentMaxNode, pMaxNode, iObj, file, options);
+				ret = AlembicImport_XForm(pParentMaxNode, pMaxNode, iObj, NULL, file, options);
 				if(ret != 0) return ret;
 			}
 		}
@@ -148,7 +148,7 @@ int recurseOnAlembicObject(Alembic::AbcGeom::IObject& iObj, INode *pParentMaxNod
 				
 				int ret = createAlembicObject(*mergedGeomChild, &pMaxNode, options, file);
 				if(ret != 0) return ret;
-				ret = AlembicImport_XForm(pParentMaxNode, pMaxNode, iObj, file, options);
+				ret = AlembicImport_XForm(pParentMaxNode, pMaxNode, iObj, mergedGeomChild, file, options);
 				if(ret != 0) return ret;
 				
 			}

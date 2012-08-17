@@ -151,20 +151,17 @@ int AlembicImport_DummyNode(Alembic::AbcGeom::IObject& iObj, alembic_importoptio
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // AlembicImport_XForm
 ///////////////////////////////////////////////////////////////////////////////////////////////////
-int AlembicImport_XForm(INode* pParentNode, INode* pMaxNode, Alembic::AbcGeom::IObject& iObj, const std::string &file, alembic_importoptions &options)
+int AlembicImport_XForm(INode* pParentNode, INode* pMaxNode, Alembic::AbcGeom::IObject& iObjXform, Alembic::AbcGeom::IObject* p_iObjGeom, const std::string &file, alembic_importoptions &options)
 {
-	const std::string &identifier = iObj.getFullName();
+	const std::string &identifier = iObjXform.getFullName();
 
 	bool isConstant = false;
-	if( ! isAlembicXform( &iObj, isConstant ) ) {
+	if( ! isAlembicXform( &iObjXform, isConstant ) ) {
 		return alembic_failure;
 	}
 
-	// Find out if we're dealing with a camera
-	std::string modelfullid = getModelFullName(std::string(iObj.getFullName()));
-	Alembic::AbcGeom::IObject iChildObj = getObjectFromArchive(file,modelfullid);
-	bool bIsCamera = iChildObj.valid() && Alembic::AbcGeom::ICamera::matches(iChildObj.getMetaData());
-
+	bool bIsCamera = p_iObjGeom && p_iObjGeom->valid() && Alembic::AbcGeom::ICamera::matches(p_iObjGeom->getMetaData());
+	
 	TimeValue zero(0);
 	if(!isConstant) {
 
@@ -229,7 +226,7 @@ int AlembicImport_XForm(INode* pParentNode, INode* pMaxNode, Alembic::AbcGeom::I
 		//}
 		
 		alembic_fillxform_options xformOptions;
-		xformOptions.pIObj = &iObj;
+		xformOptions.pIObj = &iObjXform;
 		xformOptions.dTicks = 0;
 		xformOptions.bIsCameraTransform = bIsCamera;
 
