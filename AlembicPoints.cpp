@@ -96,11 +96,23 @@ bool AlembicPoints::Save(double time, bool bLastFrame)
 
 	SaveMetaData(GetRef().node, this);
 
-    IPFSystem* particleSystem = PFSystemInterface(obj);
-	IParticleObjectExt* particlesExt = GetParticleObjectExtInterface(obj);
-	SimpleParticle* pSimpleParticle = (SimpleParticle*) obj->GetInterface(I_SIMPLEPARTICLEOBJ);
-	if(!pSimpleParticle){
 
+	
+
+
+
+    IPFSystem* particleSystem = NULL;
+	IParticleObjectExt* particlesExt = NULL;
+	SimpleParticle* pSimpleParticle = NULL;
+	ParticleObject* pParticleObject = (ParticleObject*)obj->GetInterface(I_PARTICLEOBJ);
+	if(pParticleObject){
+		pSimpleParticle = (SimpleParticle*) obj->GetInterface(I_SIMPLEPARTICLEOBJ);
+		particlesExt = GetParticleObjectExtInterface(obj);
+		if(!particlesExt){
+			return false;
+		}
+	}
+	else{
 		particleSystem = PFSystemInterface(obj);
 		if(!particleSystem){
 			return false;
@@ -194,12 +206,19 @@ bool AlembicPoints::Save(double time, bool bLastFrame)
 		uint16_t shapeInstanceId = 0;
 
 		if(particlesExt){
+
+			TimeValue ageValue = particlesExt->GetParticleAgeByIndex(i);
+			if(ageValue == -1){
+				continue;
+			}
+			age = (float)GetSecondsFromTimeValue(ageValue);
+
 			pos = ConvertMaxPointToAlembicPoint(*particlesExt->GetParticlePositionByIndex(i));
 			vel = ConvertMaxVectorToAlembicVector(*particlesExt->GetParticleSpeedByIndex(i) * TIME_TICKSPERSEC);
 			scale = ConvertMaxScaleToAlembicScale(*particlesExt->GetParticleScaleXYZByIndex(i));
 			ConvertMaxEulerXYZToAlembicQuat(*particlesExt->GetParticleOrientationByIndex(i), orientation);
 			ConvertMaxAngAxisToAlembicQuat(*particlesExt->GetParticleSpinByIndex(i), spin);
-			age = (float)GetSecondsFromTimeValue(particlesExt->GetParticleAgeByIndex(i));
+			//age = (float)GetSecondsFromTimeValue(particlesExt->GetParticleAgeByIndex(i));
 			id = particlesExt->GetParticleBornIndex(i);
 			if(bAutomaticInstancing){
 				ReadShapeMesh(particlesExt, i, ticks, shapetype, shapeInstanceId, shapeInstanceTime);
@@ -788,6 +807,12 @@ void AlembicPoints::ReadShapeMesh(IParticleObjectExt *pExt, int particleId, Time
 	//animationTime = 0;
 	
 	Mesh* pShapeMesh = pExt->GetParticleShapeByIndex(particleId);
+
+	if(!pShapeMesh){
+
+		type = ShapeType_Point;
+		return;
+	}
 
 	Digest vertexDigest;
 	MurmurHash3_x64_128( pShapeMesh->verts, pShapeMesh->numVerts * sizeof(Point3), sizeof(Point3), vertexDigest.words );
