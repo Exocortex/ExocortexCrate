@@ -1327,9 +1327,10 @@ CStatus alembic_create_item_Invoke
          Alembic::AbcGeom::IPoints abcPoints(abcObject,Alembic::Abc::kWrapExisting);
          if(!abcPoints.valid())
             return CStatus::OK;
-         if ( abcPoints.getSchema().getPropertyHeader( ".instancenames" ) != NULL)
+
+		 Alembic::Abc::IStringArrayProperty shapeInstanceNamesProp;
+         if ( getArbGeomParamPropertyAlembic(abcPoints, "instancenames", shapeInstanceNamesProp) )
          {
-            Alembic::Abc::IStringArrayProperty shapeInstanceNamesProp = Alembic::Abc::IStringArrayProperty( abcPoints.getSchema(), ".instancenames" );
             if(shapeInstanceNamesProp.getNumSamples() > 0)
             {
                Alembic::Abc::StringArraySamplePtr shapeInstanceNamesPtr = shapeInstanceNamesProp.getValue(shapeInstanceNamesProp.getNumSamples()-1);
