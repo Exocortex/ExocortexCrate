@@ -45,7 +45,7 @@ SampleInfo getSampleInfo
    {
       if(result.floorIndex > 75)
       {
-         EC_LOG_WARNING("[ExocortexAlembic] Reader license not found: Cannot open sample indices higher than 75.");
+         EC_LOG_ERROR("[ExocortexAlembic] Reader license not found: Cannot open sample indices higher than 75.");
          result.floorIndex = 75;
          result.ceilIndex = 75;
          result.alpha = 0.0;

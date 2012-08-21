@@ -42,7 +42,7 @@ Alembic::Abc::IArchive * getArchiveFromID(XSI::CString path)
      {
          if(gArchives.size() == 1)
          {
-            EC_LOG_WARNING("[ExocortexAlembic] Reader license not found: Only one open archive at a time allowed!");
+            EC_LOG_ERROR("[ExocortexAlembic] Reader license not found: Only one open archive at a time allowed!");
             return NULL;
          }
       }
