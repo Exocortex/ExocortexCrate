@@ -1287,9 +1287,10 @@ static AtNode *GetNode(void *user_ptr, int i)
             AiNodeSetBool(shapeNode, "smoothing", true);
 
             // check if we have UVs in the alembic file
-            Alembic::AbcGeom::IV2fGeomParam uvParam= typedObject.getSchema().getUVsParam();
+            Alembic::AbcGeom::IV2fGeomParam uvParam = typedObject.getSchema().getUVsParam();
             if(uvParam.valid())
             {
+               /*
                Alembic::Abc::V2fArraySamplePtr abcUvs = uvParam.getExpandedValue(sampleInfo.floorIndex).getVals();
                AtArray * uvs = AiArrayAllocate((AtInt)abcUvs->size() * 2, 1, AI_TYPE_FLOAT);
                AtULong offset = 0;
@@ -1300,6 +1301,10 @@ static AtNode *GetNode(void *user_ptr, int i)
                }
                AiNodeSetArray(shapeNode, "uvlist", uvs);
                AiNodeSetArray(shapeNode, "uvidxs", AiArrayCopy(uvsIdx));
+
+               //*/
+               AiNodeSetArray(shapeNode, "uvlist", removeUvsDuplicate(uvParam, sampleInfo, uvsIdx, faceIndices));
+               AiNodeSetArray(shapeNode, "uvidxs", uvsIdx);
 
                // check if we have uvOptions
                if(typedObject.getSchema().getPropertyHeader( ".uvOptions" ) != NULL)
@@ -1615,13 +1620,15 @@ static AtNode *GetNode(void *user_ptr, int i)
             AtUInt offset = 0;
             for(AtULong i=0;i<faceCounts->nelements;i++)
             {
-               AiArraySetUInt(faceCounts,i,abcFaceCounts->get()[i]);
-               for(AtLong j=0;j<abcFaceCounts->get()[i];j++)
+               const AtLong i_FaceCount = abcFaceCounts->get()[i];
+               AiArraySetUInt(faceCounts, i, i_FaceCount);
+               for(AtLong j = 0; j < i_FaceCount; ++j)
                {
-                  AiArraySetUInt(faceIndices,offset+j,abcFaceIndices->get()[offset+abcFaceCounts->get()[i]-(j+1)]);
-                  AiArraySetUInt(uvsIdx,offset+j,offset+abcFaceCounts->get()[i]-(j+1));
+                  const AtUInt localOffset = offset + i_FaceCount - (j+1);
+                  AiArraySetUInt(faceIndices, offset+j, abcFaceIndices->get()[localOffset]);
+                  AiArraySetUInt(uvsIdx, offset+j, localOffset);
                }
-               offset += abcFaceCounts->get()[i];
+               offset += i_FaceCount;
             }
             AiNodeSetArray(shapeNode, "nsides", faceCounts);
             AiNodeSetArray(shapeNode, "vidxs", faceIndices);
@@ -1636,7 +1643,10 @@ static AtNode *GetNode(void *user_ptr, int i)
             Alembic::AbcGeom::IV2fGeomParam uvParam= typedObject.getSchema().getUVsParam();
             if(uvParam.valid())
             {
+               /*
                Alembic::Abc::V2fArraySamplePtr abcUvs = uvParam.getExpandedValue(sampleInfo.floorIndex).getVals();
+               Alembic::Abc::UInt32ArraySamplePtr abcUvIdx = uvParam.getExpandedValue(sampleInfo.floorIndex).getIndices();
+
                AtArray * uvs = AiArrayAllocate((AtInt)abcUvs->size() * 2, 1, AI_TYPE_FLOAT);
                offset = 0;
                for(AtULong i=0;i<abcUvs->size();i++)
@@ -1644,8 +1654,10 @@ static AtNode *GetNode(void *user_ptr, int i)
                   AiArraySetFlt(uvs,offset++,abcUvs->get()[i].x);
                   AiArraySetFlt(uvs,offset++,abcUvs->get()[i].y);
                }
-               AiNodeSetArray(shapeNode, "uvlist", uvs);
+               //*/
+               AiNodeSetArray(shapeNode, "uvlist", removeUvsDuplicate(uvParam, sampleInfo, uvsIdx, faceIndices));
                AiNodeSetArray(shapeNode, "uvidxs", uvsIdx);
+               //*/
 
                // check if we have uvOptions
                if(typedObject.getSchema().getPropertyHeader( ".uvOptions" ) != NULL)
