@@ -2,6 +2,7 @@
 #include "AlembicMax.h"
 #include "AlembicLicensing.h"
 #include "Alembic.h"
+#include <boost/algorithm/string.hpp>
 
 using namespace std;
 
@@ -22,6 +23,8 @@ using namespace std;
 
 
 #include "RlmSingleton.h"
+
+bool g_bVerboseLogging = false;
 
 int gLicenseToken = EC_LICENSE_RESULT_NO_LICENSE;
 
@@ -197,6 +200,12 @@ EXTERN_C IMAGE_DOS_HEADER __ImageBase;
 
 namespace Exocortex {
 	void essOnDemandInitialization() {
+
+
+		char* loggingEnv = getenv("EXOCORTEX_ALEMBIC_VERBOSE_LOGGING");
+		if(loggingEnv){
+			g_bVerboseLogging = boost::iequals(loggingEnv, "true");
+		}
 
 		static string pluginName(PLUGIN_NAME);
 

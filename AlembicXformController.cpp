@@ -91,6 +91,18 @@ void AlembicXformController::GetValueLocalTime(TimeValue t, void *ptr, Interval 
 	BOOL bMuted;
 	this->pblock->GetValue( AlembicXformController::ID_MUTED, t, bMuted, interval);
 
+	extern bool g_bVerboseLogging;
+
+	if(g_bVerboseLogging){
+		ESS_LOG_INFO("Param block at tick "<<t<<"---------------------");
+		ESS_LOG_INFO("PATH: "<<strPath);
+		ESS_LOG_INFO("IDENTIFIER: "<<strIdentifier);
+		ESS_LOG_INFO("TIME: "<<fTime);
+		ESS_LOG_INFO("CAMERA: "<<bCamera);
+		ESS_LOG_INFO("MUTED: "<<bMuted);
+		ESS_LOG_INFO("Param block end -------------");
+	}
+
     if (bMuted)
     {
         return;
@@ -124,6 +136,10 @@ void AlembicXformController::GetValueLocalTime(TimeValue t, void *ptr, Interval 
 	if(!iObj.valid()) {
 		ESS_LOG_ERROR( "Not a valid Alembic data stream.  Path: " << szPath << " identifier: " << szIdentifier );
 		return;
+	}
+
+	if(g_bVerboseLogging){
+		ESS_LOG_INFO("Xform object found.");
 	}
 
     alembic_fillxform_options xformOptions;
