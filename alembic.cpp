@@ -1353,6 +1353,12 @@ CStatus alembic_create_item_Invoke
                   for(size_t j=0;j<shapeInstanceNamesPtr->size();j++)
                   {
                      std::string instanceIdentifier = shapeInstanceNamesPtr->get()[j];
+					 //replace spaces with underscores
+					 for(int c=0; c<instanceIdentifier.size(); c++){
+						 if(instanceIdentifier[c] == ' '){
+                             instanceIdentifier[c] = '_';
+						 }
+					 }
                      CString fullName = getFullNameFromIdentifier(instanceIdentifier);
                      treeArgs[0] = iceTree.GetFullName()+L".ABC_Instance_Shapes.Reference"+CString((LONG)j);
                      treeArgs[1] = fullName;
