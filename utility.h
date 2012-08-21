@@ -18,4 +18,6 @@ SampleInfo getSampleInfo
    size_t numSamps
 );
 
+bool removeUvsDuplicate(Alembic::AbcGeom::IV2fGeomParam &uvParam, SampleInfo &sampleInfo, AtArray *uvs, AtArray *uvsIdx);
+
 #endif

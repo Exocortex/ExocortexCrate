@@ -1265,9 +1265,10 @@ static AtNode *GetNode(void *user_ptr, int i)
             AiNodeSetBool(shapeNode, "smoothing", true);
 
             // check if we have UVs in the alembic file
-            Alembic::AbcGeom::IV2fGeomParam uvParam= typedObject.getSchema().getUVsParam();
+            Alembic::AbcGeom::IV2fGeomParam uvParam = typedObject.getSchema().getUVsParam();
             if(uvParam.valid())
             {
+               /*
                Alembic::Abc::V2fArraySamplePtr abcUvs = uvParam.getExpandedValue(sampleInfo.floorIndex).getVals();
                AtArray * uvs = AiArrayAllocate((AtInt)abcUvs->size() * 2, 1, AI_TYPE_FLOAT);
                AtULong offset = 0;
@@ -1278,6 +1279,11 @@ static AtNode *GetNode(void *user_ptr, int i)
                }
                AiNodeSetArray(shapeNode, "uvlist", uvs);
                AiNodeSetArray(shapeNode, "uvidxs", AiArrayCopy(uvsIdx));
+               //*/
+               AtArray *uvs = 0, *uvsIdx = 0;
+               removeUvsDuplicate(uvParam, sampleInfo, uvs, uvsIdx);
+               AiNodeSetArray(shapeNode, "uvlist", uvs);
+               AiNodeSetArray(shapeNode, "uvidxs", uvsIdx);
             }
 
             // check if we have a bindpose in the alembic file
@@ -1528,7 +1534,10 @@ static AtNode *GetNode(void *user_ptr, int i)
             Alembic::AbcGeom::IV2fGeomParam uvParam= typedObject.getSchema().getUVsParam();
             if(uvParam.valid())
             {
+               /*
                Alembic::Abc::V2fArraySamplePtr abcUvs = uvParam.getExpandedValue(sampleInfo.floorIndex).getVals();
+               Alembic::Abc::UInt32ArraySamplePtr abcUvIdx = uvParam.getExpandedValue(sampleInfo.floorIndex).getIndices();
+
                AtArray * uvs = AiArrayAllocate((AtInt)abcUvs->size() * 2, 1, AI_TYPE_FLOAT);
                AtArray * uvsIdx = AiArrayAllocate((AtInt)(abcUvs->size()),1,AI_TYPE_UINT);
                AtULong offset = 0;
@@ -1537,6 +1546,11 @@ static AtNode *GetNode(void *user_ptr, int i)
                   AiArraySetFlt(uvs,offset++,abcUvs->get()[i].x);
                   AiArraySetFlt(uvs,offset++,abcUvs->get()[i].y);
                }
+               AiNodeSetArray(shapeNode, "uvlist", uvs);
+               AiNodeSetArray(shapeNode, "uvidxs", uvsIdx);
+               //*/
+               AtArray *uvs = 0, *uvsIdx = 0;
+               removeUvsDuplicate(uvParam, sampleInfo, uvs, uvsIdx);
                AiNodeSetArray(shapeNode, "uvlist", uvs);
                AiNodeSetArray(shapeNode, "uvidxs", uvsIdx);
             }
