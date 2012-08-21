@@ -89,7 +89,7 @@ Alembic::Abc::IArchive * getArchiveFromID(MString path)
       {
          if(gArchives.size() == 2)
          {
-            EC_LOG_WARNING("[ExocortexAlembic] Demo Mode: Only two open archives at a time allowed!");
+            EC_LOG_ERROR("[ExocortexAlembic] Demo Mode: Only two open archives at a time allowed!");
             return NULL;
          }
       }
