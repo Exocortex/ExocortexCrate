@@ -1303,9 +1303,7 @@ static AtNode *GetNode(void *user_ptr, int i)
                AiNodeSetArray(shapeNode, "uvidxs", AiArrayCopy(uvsIdx));
 
                //*/
-               AtArray *uvs = 0, *uvsIdx = 0;
-               removeUvsDuplicate(uvParam, sampleInfo, uvs, uvsIdx);
-               AiNodeSetArray(shapeNode, "uvlist", uvs);
+               AiNodeSetArray(shapeNode, "uvlist", removeUvsDuplicate(uvParam, sampleInfo, uvsIdx, faceIndices));
                AiNodeSetArray(shapeNode, "uvidxs", uvsIdx);
 
                // check if we have uvOptions
@@ -1622,13 +1620,15 @@ static AtNode *GetNode(void *user_ptr, int i)
             AtUInt offset = 0;
             for(AtULong i=0;i<faceCounts->nelements;i++)
             {
-               AiArraySetUInt(faceCounts,i,abcFaceCounts->get()[i]);
-               for(AtLong j=0;j<abcFaceCounts->get()[i];j++)
+               const AtLong i_FaceCount = abcFaceCounts->get()[i];
+               AiArraySetUInt(faceCounts, i, i_FaceCount);
+               for(AtLong j = 0; j < i_FaceCount; ++j)
                {
-                  AiArraySetUInt(faceIndices,offset+j,abcFaceIndices->get()[offset+abcFaceCounts->get()[i]-(j+1)]);
-                  AiArraySetUInt(uvsIdx,offset+j,offset+abcFaceCounts->get()[i]-(j+1));
+                  const AtUInt localOffset = offset + i_FaceCount - (j+1);
+                  AiArraySetUInt(faceIndices, offset+j, abcFaceIndices->get()[localOffset]);
+                  AiArraySetUInt(uvsIdx, offset+j, localOffset);
                }
-               offset += abcFaceCounts->get()[i];
+               offset += i_FaceCount;
             }
             AiNodeSetArray(shapeNode, "nsides", faceCounts);
             AiNodeSetArray(shapeNode, "vidxs", faceIndices);
@@ -1654,13 +1654,10 @@ static AtNode *GetNode(void *user_ptr, int i)
                   AiArraySetFlt(uvs,offset++,abcUvs->get()[i].x);
                   AiArraySetFlt(uvs,offset++,abcUvs->get()[i].y);
                }
-               AiNodeSetArray(shapeNode, "uvlist", uvs);
+               //*/
+               AiNodeSetArray(shapeNode, "uvlist", removeUvsDuplicate(uvParam, sampleInfo, uvsIdx, faceIndices));
                AiNodeSetArray(shapeNode, "uvidxs", uvsIdx);
                //*/
-               AtArray *uvs = 0, *uvsIdx = 0;
-               removeUvsDuplicate(uvParam, sampleInfo, uvs, uvsIdx);
-               AiNodeSetArray(shapeNode, "uvlist", uvs);
-               AiNodeSetArray(shapeNode, "uvidxs", uvsIdx);
 
                // check if we have uvOptions
                if(typedObject.getSchema().getPropertyHeader( ".uvOptions" ) != NULL)

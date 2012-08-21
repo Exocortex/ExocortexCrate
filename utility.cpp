@@ -56,63 +56,68 @@ SampleInfo getSampleInfo
    return result;
 }
 
-typedef std::pair<float, float> pairff;      // a pair of floats, to represent a UV coordinate
+typedef struct __map_key
+{
+   int vertexId;
+   float uv_x;
+   float uv_y;
+} map_key;
 
-class pairff_less: public std::binary_function<pairff, pairff, bool>
+class map_key_less: public std::binary_function<map_key, map_key, bool>
 {
 public:
-   bool operator()(const pairff &p1, const pairff &p2)
+   bool operator()(const map_key &p1, const map_key &p2)
    {
-      if (p1.first == p2.first)
-         return p1.second < p2.second;
-      return p1.first < p2.first;
+      if (p1.vertexId < p2.vertexId)
+         return true;
+      else if (p1.vertexId > p2.vertexId)
+         return false;
+
+      else if (p1.uv_x < p2.uv_x)
+         return true;
+      else if (p1.uv_x > p2.uv_x)
+         return false;
+
+      return p1.uv_y < p2.uv_y;
    }
 };
 
-typedef std::map<pairff, int, pairff_less> map_ff_int;    // a map from UVs to their respective indices!
+typedef std::map<map_key, int, map_key_less> map_map_key_to_int;    // a map from UVs to their respective indices!
 
-bool removeUvsDuplicate(Alembic::AbcGeom::IV2fGeomParam &uvParam, SampleInfo &sampleInfo, AtArray *uvs, AtArray *uvsIdx)
+AtArray *removeUvsDuplicate(Alembic::AbcGeom::IV2fGeomParam &uvParam, SampleInfo &sampleInfo,AtArray *uvsIdx, AtArray *faceIndices)
 {
-   const Alembic::Abc::V2fArraySamplePtr    abcUvs   = uvParam.getExpandedValue(sampleInfo.floorIndex).getVals();
-   const Alembic::Abc::UInt32ArraySamplePtr abcUvIdx = uvParam.getExpandedValue(sampleInfo.floorIndex).getIndices();
-   
-   // fill the MAP!
-   const int nb_uvs = abcUvs->size();
-   map_ff_int UVs;
-   for (int i = 0; i < nb_uvs; ++i)
+   const int nb_indices = faceIndices->nelements;
+   Alembic::Abc::V2fArraySamplePtr abcUvs = uvParam.getExpandedValue(sampleInfo.floorIndex).getVals();
+   map_map_key_to_int UVs_map;
+
+   // fill the map and rewrite uvsIdx
+   int new_idx = 0;
+   for (int i = 0; i < nb_indices; ++i)
    {
-      const pairff curUV(abcUvs->get()[i].x, abcUvs->get()[i].y); // the current pair!
-      if (UVs.find(curUV) == UVs.end())   // not found, add it!
+      map_key mkey;
+      mkey.vertexId = AiArrayGetUInt(faceIndices, i);
+      unsigned int uvs_id = AiArrayGetUInt(uvsIdx, i);
+      mkey.uv_x = abcUvs->get()[uvs_id].x;
+      mkey.uv_y = abcUvs->get()[uvs_id].y;
+
+      if (UVs_map.find(mkey) == UVs_map.end())
       {
-         UVs[curUV] = -1;  // not putting the right index now, because cannot know where it will be exactly!
+         UVs_map[mkey] = new_idx;
+         ++new_idx;
       }
+      AiArraySetUInt(uvsIdx, i, UVs_map[mkey]);   // replace with the right index
    }
 
-   // reindex the map and fill the UV array
+   // fill the UVs
+   AtArray *uvs = AiArrayAllocate(UVs_map.size(), 1, AI_TYPE_POINT2);
+   for (map_map_key_to_int::const_iterator beg = UVs_map.begin(); beg != UVs_map.end(); ++beg)
    {
-      int new_idx = 0;
-      uvs = AiArrayAllocate(UVs.size(), 1, AI_TYPE_POINT2); // uvs point
-      AtPoint2 in_pt;
-      for (map_ff_int::iterator beg = UVs.begin(); beg != UVs.end(); ++beg, ++new_idx)
-      {
-         beg->second = new_idx;     // new index
-         in_pt.x = beg->first.first;
-         in_pt.y = beg->first.second;
-         AiArraySetPnt2(uvs, new_idx, in_pt);
-      }
-   }
+      AtPoint2 pt;
+      pt.x = beg->first.uv_x;
+      pt.y = beg->first.uv_y;
 
-   // fill the index array
-   {
-      const int nb_idx = abcUvIdx->size();
-      uvsIdx = AiArrayAllocate(nb_idx, 1, AI_TYPE_UINT);
-      for (int i = 0; i < nb_idx; ++i)
-      {
-         const int curIdx = abcUvIdx->get()[i]; // current index
-         const pairff curUV(abcUvs->get()[curIdx].x, abcUvs->get()[curIdx].y);   // get the current UV
-         AiArraySetUInt(uvsIdx, i, UVs[curUV]); // assign replace the curIdx with the non-replicated index
-      }
+      AiArraySetPnt2(uvs, beg->second, pt);
    }
-   return true;
+   return uvs;
 }
 
