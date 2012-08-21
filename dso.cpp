@@ -3,6 +3,7 @@
 #include <time.h>
 #include <boost/lexical_cast.hpp>
 #include <map>
+#include <boost/thread/mutex.hpp>
 
 struct instanceGroupInfo{
    std::vector<std::string> identifiers;
@@ -60,12 +61,27 @@ struct userData
    std::string gCurvesMode;
    std::string gPointsMode;
    AtArray * gProcShaders;
+   AtArray * gProcDispMap;
    std::vector<objectInfo> gIObjects;
    std::vector<instanceCloudInfo> gInstances;
    std::vector<float> gMbKeys;
    float gTime;
    float gCurrTime;
    int proceduralDepth;
+
+   std::vector<AtNode*> constructedNodes;
+   std::vector<AtArray*> shadersToAssign;
+
+   bool has_subdiv_settings;
+   std::string subdiv_type;
+   int subdiv_iterations;
+   float subdiv_pixel_error;
+   std::string subdiv_dicing_camera;
+   bool has_disp_settings;
+   float disp_zero_value;
+   float disp_height;
+   bool disp_autobump;
+   float disp_padding;
 };
 
 #define sampleTolerance 0.00001
@@ -98,20 +114,55 @@ std::string getNameFromIdentifier(const std::string & identifier, long id = -1, 
       result += "."+boost::lexical_cast<std::string>(group);
    return result;
 }  
- 
+
+boost::mutex gGlobalLock;
+
+//#ifdef __UNIX__
+#define GLOBAL_LOCK	   boost::mutex::scoped_lock writeLock( gGlobalLock );
+//#else
+//#define GLOBAL_LOCK
+//#endif
+
 std::map<std::string,std::string> gUsedArchives;
 
 static int Init(AtNode *mynode, void **user_ptr)
 {
-	for( int i = 0; i < 100; i ++ ) {
- 	ESS_LOG_INFO( "ExocortexAlembicArnoldDSO: Init: " << i );
-	}
+	GLOBAL_LOCK;
+
    userData * ud = new userData();
    *user_ptr = ud;
    ud->gProcShaders = NULL;
+   ud->gProcDispMap= NULL;
 
    ud->gDataString = (char*) AiNodeGetStr(mynode, "data");
-   ud->gProcShaders = AiNodeGetArray(mynode, "shader");
+   ud->gProcShaders = AiArrayCopy(AiNodeGetArray(mynode, "shader"));
+   ud->gProcDispMap = AiNodeGetArray(mynode, "disp_map");
+
+   ud->has_subdiv_settings = AiNodeLookUpUserParameter(mynode,"subdiv_type") != NULL;
+   if(ud->has_subdiv_settings)
+   {
+      ud->subdiv_type = AiNodeGetStr(mynode, "subdiv_type");
+      ud->subdiv_iterations = AiNodeGetInt(mynode, "subdiv_iterations");
+      ud->subdiv_pixel_error = AiNodeGetFlt(mynode, "subdiv_pixel_error");
+      if(AiNodeGetStr(mynode, "subdiv_dicing_camera"))
+         ud->subdiv_dicing_camera = AiNodeGetStr(mynode, "subdiv_dicing_camera");
+      else
+         ud->subdiv_dicing_camera.clear();
+   }
+
+   ud->has_disp_settings = AiNodeLookUpUserParameter(mynode,"disp_zero_value") != NULL;
+   if(ud->has_disp_settings)
+   {
+      ud->disp_zero_value = AiNodeGetFlt(mynode, "disp_zero_value");
+      ud->disp_height = AiNodeGetFlt(mynode, "disp_height");
+      ud->disp_autobump = AiNodeGetBool(mynode, "disp_autobump");
+      ud->disp_padding = AiNodeGetFlt(mynode, "disp_padding");
+   }
+
+   // empty the procedural's shader
+   //AtArray * emptyShaders = AiArrayAllocate(1,1,AI_TYPE_NODE);
+   //AiArraySetPtr(emptyShaders,0,NULL);
+   //AiNodeSetArray(mynode, "shader", emptyShaders);
 
    // set defaults for options
    ud->gCurvesMode = "ribbon";
@@ -126,7 +177,7 @@ static int Init(AtNode *mynode, void **user_ptr)
       return NULL;
    }
 
-   ESS_LOG_INFO( "ExocortexAlembicArnoldDSO: Init: DataString: " + completeStr );
+   //ESS_LOG_INFO( "ExocortexAlembicArnoldDSO: Init: DataString: " + completeStr );
 
    // split the string using boost
    std::vector<std::string> nameValuePairs;
@@ -343,14 +394,16 @@ static int Init(AtNode *mynode, void **user_ptr)
    }
 
    // open the archive
+   //ESS_LOG_INFO(paths[0].c_str());
    Alembic::Abc::IArchive archive(Alembic::AbcCoreHDF5::ReadArchive(), paths[0]);
    	if(!archive.getTop().valid()) {
-		 AiMsgError("[ExocortexAlembicArnold] Not a valid Alembic data stream.  Path: %s", paths[0] );
+		 AiMsgError("[ExocortexAlembicArnold] Not a valid Alembic data stream.  Path: %s", paths[0].c_str() );
 		return NULL;
 	}
+   //ESS_LOG_INFO(paths[1].c_str());
    Alembic::Abc::IArchive instancesArchive(Alembic::AbcCoreHDF5::ReadArchive(), paths[1]);
    	if(!instancesArchive.getTop().valid()) {
-		 AiMsgError("[ExocortexAlembicArnold] Not a valid Alembic data stream.  Path: %s", paths[1] );
+		 AiMsgError("[ExocortexAlembicArnold] Not a valid Alembic data stream.  Path: %s", paths[1].c_str() );
 		return NULL;
 	}
 
@@ -424,14 +477,14 @@ static int Init(AtNode *mynode, void **user_ptr)
          Alembic::AbcGeom::IPoints typedObject(objects[i],Alembic::Abc::kWrapExisting);
 
          // first thing to check is if this is an instancing cloud
-         if ( typedObject.getSchema().getPropertyHeader( ".shapetype" ) != NULL &&
-              typedObject.getSchema().getPropertyHeader( ".shapeinstanceid" ) != NULL &&
-              typedObject.getSchema().getPropertyHeader( ".instancenames" ) != NULL )
-         {
+         Alembic::Abc::IUInt16ArrayProperty shapeTypeProp;// Alembic::Abc::IUInt16ArrayProperty( typedObject.getSchema(), ".shapetype" );
+         Alembic::Abc::IUInt16ArrayProperty shapeInstanceIDProp;// Alembic::Abc::IUInt16ArrayProperty( typedObject.getSchema(), ".shapeinstanceid" );
+         Alembic::Abc::IStringArrayProperty shapeInstanceNamesProp;// Alembic::Abc::IStringArrayProperty( typedObject.getSchema(), ".instancenames" );
+		   if(   getArbGeomParamPropertyAlembic( typedObject, "shapetype", shapeTypeProp ) &&
+			      getArbGeomParamPropertyAlembic( typedObject, "shapeinstanceid", shapeInstanceIDProp ) &&
+			      getArbGeomParamPropertyAlembic( typedObject, "instancenames", shapeInstanceNamesProp ) ) {
+
             size_t minNumSamples = typedObject.getSchema().getNumSamples() == 1 ? typedObject.getSchema().getNumSamples() : ud->gMbKeys.size();
-            Alembic::Abc::IUInt16ArrayProperty shapeTypeProp = Alembic::Abc::IUInt16ArrayProperty( typedObject.getSchema(), ".shapetype" );
-            Alembic::Abc::IUInt16ArrayProperty shapeInstanceIDProp = Alembic::Abc::IUInt16ArrayProperty( typedObject.getSchema(), ".shapeinstanceid" );
-            Alembic::Abc::IStringArrayProperty shapeInstanceNamesProp = Alembic::Abc::IStringArrayProperty( typedObject.getSchema(), ".instancenames" );
             if(shapeTypeProp.getNumSamples() > 0 && shapeInstanceIDProp.getNumSamples() > 0 && shapeInstanceNamesProp.getNumSamples() > 0)
             {
                // check all of the nodes to be instanced
@@ -624,172 +677,120 @@ static int Init(AtNode *mynode, void **user_ptr)
                }
 
                // store the scale
-               if ( typedObject.getSchema().getPropertyHeader( ".scale" ) != NULL )
-               {
-                  Alembic::Abc::IV3fArrayProperty prop = Alembic::Abc::IV3fArrayProperty( typedObject.getSchema(), ".scale" );
-                  if(prop.valid())
-                  {
-                     if(prop.getNumSamples() > 0)
-                     {
-                        for(size_t j=0;j<minNumSamples;j++)
-                        {
-                          SampleInfo sampleInfo = getSampleInfo(
-                              ud->gMbKeys[j],
-                              prop.getTimeSampling(),
-                              prop.getNumSamples()
-                           );
-                           cloudInfo.scale.push_back(prop.getValue(sampleInfo.floorIndex));
-                           cloudInfo.scale.push_back(prop.getValue(sampleInfo.ceilIndex));
-                        }
-                     }
-                  }
+               Alembic::Abc::IV3fArrayProperty propScale;
+			      if( getArbGeomParamPropertyAlembic( typedObject, "scale", propScale ) ) {            
+                    for(size_t j=0;j<minNumSamples;j++)
+                    {
+                      SampleInfo sampleInfo = getSampleInfo(
+                          ud->gMbKeys[j],
+                          propScale.getTimeSampling(),
+                          propScale.getNumSamples()
+                       );
+                       cloudInfo.scale.push_back(propScale.getValue(sampleInfo.floorIndex));
+                       cloudInfo.scale.push_back(propScale.getValue(sampleInfo.ceilIndex));
+                    }
                }
 
                // store the orientation
-               if ( typedObject.getSchema().getPropertyHeader( ".orientation" ) != NULL )
-               {
-                  Alembic::Abc::IQuatfArrayProperty prop = Alembic::Abc::IQuatfArrayProperty( typedObject.getSchema(), ".orientation" );
-                  if(prop.valid())
-                  {
-                     if(prop.getNumSamples() > 0)
-                     {
-                        for(size_t j=0;j<minNumSamples;j++)
-                        {
-                          SampleInfo sampleInfo = getSampleInfo(
-                              ud->gMbKeys[j],
-                              prop.getTimeSampling(),
-                              prop.getNumSamples()
-                           );
-                           cloudInfo.rot.push_back(prop.getValue(sampleInfo.floorIndex));
-                        }
-                     }
-                  }
+			      Alembic::Abc::IQuatfArrayProperty propOrientation;
+			      if( getArbGeomParamPropertyAlembic( typedObject, "orientation", propOrientation ) ) {
+					   for(size_t j=0;j<minNumSamples;j++)
+					   {
+					     SampleInfo sampleInfo = getSampleInfo(
+						     ud->gMbKeys[j],
+						     propOrientation.getTimeSampling(),
+						     propOrientation.getNumSamples()
+					      );
+					      cloudInfo.rot.push_back(propOrientation.getValue(sampleInfo.floorIndex));
+					   }
                }
 
                // store the angular velocity
-               if ( typedObject.getSchema().getPropertyHeader( ".angularvelocity" ) != NULL )
-               {
-                  Alembic::Abc::IQuatfArrayProperty prop = Alembic::Abc::IQuatfArrayProperty( typedObject.getSchema(), ".angularvelocity" );
-                  if(prop.valid())
-                  {
-                     if(prop.getNumSamples() > 0)
-                     {
-                        for(size_t j=0;j<minNumSamples;j++)
-                        {
-                          SampleInfo sampleInfo = getSampleInfo(
-                              ud->gMbKeys[j],
-                              prop.getTimeSampling(),
-                              prop.getNumSamples()
-                           );
-                           cloudInfo.ang.push_back(prop.getValue(sampleInfo.floorIndex));
-                        }
-                     }
-                  }
+			      Alembic::Abc::IQuatfArrayProperty propAngularvelocity;
+			      if( getArbGeomParamPropertyAlembic( typedObject, "angularvelocity", propAngularvelocity ) ) {            
+                    for(size_t j=0;j<minNumSamples;j++)
+                    {
+                      SampleInfo sampleInfo = getSampleInfo(
+                          ud->gMbKeys[j],
+                          propAngularvelocity.getTimeSampling(),
+                          propAngularvelocity.getNumSamples()
+                       );
+                       cloudInfo.ang.push_back(propAngularvelocity.getValue(sampleInfo.floorIndex));
+                    }
                }
 
                // store the age
-               if ( typedObject.getSchema().getPropertyHeader( ".age" ) != NULL )
-               {
-                  Alembic::Abc::IFloatArrayProperty prop = Alembic::Abc::IFloatArrayProperty( typedObject.getSchema(), ".age" );
-                  if(prop.valid())
-                  {
-                     if(prop.getNumSamples() > 0)
-                     {
-                        for(size_t j=0;j<minNumSamples;j++)
-                        {
-                          SampleInfo sampleInfo = getSampleInfo(
-                              ud->gMbKeys[j],
-                              prop.getTimeSampling(),
-                              prop.getNumSamples()
-                           );
-                           cloudInfo.age.push_back(prop.getValue(sampleInfo.floorIndex));
-                        }
-                     }
-                  }
+               Alembic::Abc::IFloatArrayProperty propAge;
+			      if( getArbGeomParamPropertyAlembic( typedObject, "age", propAge ) ) {            
+                    for(size_t j=0;j<minNumSamples;j++)
+                    {
+                      SampleInfo sampleInfo = getSampleInfo(
+                          ud->gMbKeys[j],
+                          propAge.getTimeSampling(),
+                          propAge.getNumSamples()
+                       );
+                       cloudInfo.age.push_back(propAge.getValue(sampleInfo.floorIndex));
+                    }
                }
 
                // store the mass
-               if ( typedObject.getSchema().getPropertyHeader( ".mass" ) != NULL )
-               {
-                  Alembic::Abc::IFloatArrayProperty prop = Alembic::Abc::IFloatArrayProperty( typedObject.getSchema(), ".mass" );
-                  if(prop.valid())
-                  {
-                     if(prop.getNumSamples() > 0)
-                     {
-                        for(size_t j=0;j<minNumSamples;j++)
-                        {
-                          SampleInfo sampleInfo = getSampleInfo(
-                              ud->gMbKeys[j],
-                              prop.getTimeSampling(),
-                              prop.getNumSamples()
-                           );
-                           cloudInfo.mass.push_back(prop.getValue(sampleInfo.floorIndex));
-                        }
-                     }
-                  }
+               Alembic::Abc::IFloatArrayProperty propMass;
+			      if( getArbGeomParamPropertyAlembic( typedObject, "mass", propMass ) ) {            
+                    for(size_t j=0;j<minNumSamples;j++)
+                    {
+                      SampleInfo sampleInfo = getSampleInfo(
+                          ud->gMbKeys[j],
+                          propMass.getTimeSampling(),
+                          propMass.getNumSamples()
+                       );
+                       cloudInfo.mass.push_back(propMass.getValue(sampleInfo.floorIndex));
+                    }
                }
 
                // store the shape id
-               if ( typedObject.getSchema().getPropertyHeader( ".shapeinstanceid" ) != NULL )
-               {
-                  Alembic::Abc::IUInt16ArrayProperty prop = Alembic::Abc::IUInt16ArrayProperty( typedObject.getSchema(), ".shapeinstanceid" );
-                  if(prop.valid())
-                  {
-                     if(prop.getNumSamples() > 0)
-                     {
-                        for(size_t j=0;j<minNumSamples;j++)
-                        {
-                          SampleInfo sampleInfo = getSampleInfo(
-                              ud->gMbKeys[j],
-                              prop.getTimeSampling(),
-                              prop.getNumSamples()
-                           );
-                           cloudInfo.shape.push_back(prop.getValue(sampleInfo.floorIndex));
-                        }
-                     }
-                  }
+               Alembic::Abc::IUInt16ArrayProperty propShapeInstanceID;
+			      if( getArbGeomParamPropertyAlembic( typedObject, "shapeinstanceid", propShapeInstanceID ) ) {            
+         
+                    for(size_t j=0;j<minNumSamples;j++)
+                    {
+                      SampleInfo sampleInfo = getSampleInfo(
+                          ud->gMbKeys[j],
+                          propShapeInstanceID.getTimeSampling(),
+                          propShapeInstanceID.getNumSamples()
+                       );
+                       cloudInfo.shape.push_back(propShapeInstanceID.getValue(sampleInfo.floorIndex));
+                    }
                }
 
                // store the shape time
-               if ( typedObject.getSchema().getPropertyHeader( ".shapetime" ) != NULL )
-               {
-                  Alembic::Abc::IFloatArrayProperty prop = Alembic::Abc::IFloatArrayProperty( typedObject.getSchema(), ".shapetime" );
-                  if(prop.valid())
-                  {
-                     if(prop.getNumSamples() > 0)
-                     {
-                        SampleInfo sampleInfo = getSampleInfo(
-                           ud->gCentroidTime,
-                           prop.getTimeSampling(),
-                           prop.getNumSamples()
-                        );
-                        cloudInfo.time.push_back(prop.getValue(sampleInfo.floorIndex));
-                        cloudInfo.timeAlpha = (float)sampleInfo.alpha;
-                        if(sampleInfo.alpha != 0.0)
-                           cloudInfo.time.push_back(prop.getValue(sampleInfo.ceilIndex));
-                     }
-                  }
+               Alembic::Abc::IFloatArrayProperty propShapeTime;
+			      if( getArbGeomParamPropertyAlembic( typedObject, "shapetime", propShapeTime ) ) {            
+     
+                    SampleInfo sampleInfo = getSampleInfo(
+                       ud->gCentroidTime,
+                       propShapeTime.getTimeSampling(),
+                       propShapeTime.getNumSamples()
+                    );
+                    cloudInfo.time.push_back(propShapeTime.getValue(sampleInfo.floorIndex));
+                    cloudInfo.timeAlpha = (float)sampleInfo.alpha;
+                    if(sampleInfo.alpha != 0.0)
+                       cloudInfo.time.push_back(propShapeTime.getValue(sampleInfo.ceilIndex));
+                  
                }
 
                // store the color
-               if ( typedObject.getSchema().getPropertyHeader( ".color" ) != NULL )
-               {
-                  Alembic::Abc::IC4fArrayProperty prop = Alembic::Abc::IC4fArrayProperty( typedObject.getSchema(), ".color" );
-                  if(prop.valid())
-                  {
-                     if(prop.getNumSamples() > 0)
-                     {
-                        for(size_t j=0;j<minNumSamples;j++)
-                        {
-                          SampleInfo sampleInfo = getSampleInfo(
-                              ud->gMbKeys[j],
-                              prop.getTimeSampling(),
-                              prop.getNumSamples()
-                           );
-                           cloudInfo.color.push_back(prop.getValue(sampleInfo.floorIndex));
-                        }
-                     }
-                  }
+               Alembic::Abc::IC4fArrayProperty propColor;
+			      if( getArbGeomParamPropertyAlembic( typedObject, "color", propColor ) ) {            
+
+                    for(size_t j=0;j<minNumSamples;j++)
+                    {
+                      SampleInfo sampleInfo = getSampleInfo(
+                          ud->gMbKeys[j],
+                          propColor.getTimeSampling(),
+                          propColor.getNumSamples()
+                       );
+                       cloudInfo.color.push_back(propColor.getValue(sampleInfo.floorIndex));
+                    }
                }
 
                // now check if we have the time offsets, and if so let's export all of these master nodes as well
@@ -887,16 +888,24 @@ static int Init(AtNode *mynode, void **user_ptr)
 // All done, deallocate stuff
 static int Cleanup(void *user_ptr)
 {
-	for( int i = 0; i < 100; i ++ ) {
-		ESS_LOG_INFO( "ExocortexAlembicArnoldDSO: Cleanup: " << i );
-	}
+	GLOBAL_LOCK;
+
 	userData * ud = (userData*)user_ptr;
+
+   // assign remaining shaders
+   //for(size_t i=0;i<ud->constructedNodes.size();i++)
+   //{
+   //   if(ud->shadersToAssign[i] == NULL)
+   //      continue;
+   //   AiNodeSetArray(ud->constructedNodes[i],"shader",ud->shadersToAssign[i]);
+   //}
+
    ud->gIObjects.clear();
    ud->gInstances.clear();
+   ud->gMbKeys.clear();
+
    delete(ud);
-	for( int i = 0; i < 100; i ++ ) {
-		ESS_LOG_INFO( "ExocortexAlembicArnoldDSO: Cleanup: End: " << i );
-	}
+
    return TRUE;
 }
 
@@ -904,15 +913,10 @@ static int Cleanup(void *user_ptr)
 // Get number of nodes
 static int NumNodes(void *user_ptr)
 {
-	for( int i = 0; i < 100; i ++ ) {
-		ESS_LOG_INFO( "ExocortexAlembicArnoldDSO: NumNodes: " << i );
-	}
-   userData * ud = (userData*)user_ptr;
+	GLOBAL_LOCK;
+
+	userData * ud = (userData*)user_ptr;
    int size = (int)ud->gIObjects.size();
-	for( int i = 0; i < 100; i ++ ) {
-		ESS_LOG_INFO( "ExocortexAlembicArnoldDSO: NumNodes: End: " << i );
-	}
- 
    return size;
 }
 
@@ -920,10 +924,9 @@ static int NumNodes(void *user_ptr)
 // Get the i_th node
 static AtNode *GetNode(void *user_ptr, int i)
 {
-	for( int j = 0; j < 100; j ++ ) {
-		ESS_LOG_INFO( "ExocortexAlembicArnoldDSO: GetNode: " << j );
-	}
-   userData * ud = (userData*)user_ptr;
+	GLOBAL_LOCK;
+
+	userData * ud = (userData*)user_ptr;
    // check if this is a known object
    if(i >= (int)ud->gIObjects.size())
       return NULL;
@@ -947,7 +950,7 @@ static AtNode *GetNode(void *user_ptr, int i)
    // now check if this is supposed to be an instance
    if(ud->gIObjects[i].instanceID > -1)
    {
-	   ESS_LOG_INFO( "ExocortexAlembicArnoldDSO: GetNode: InstanceID: " + ud->gIObjects[i].instanceID );
+	//   ESS_LOG_INFO( "ExocortexAlembicArnoldDSO: GetNode: InstanceID: " + ud->gIObjects[i].instanceID );
        Alembic::AbcGeom::IPoints typedObject(ud->gIObjects[i].abc,Alembic::Abc::kWrapExisting);
 
       instanceCloudInfo * info = ud->gIObjects[i].instanceCloud;
@@ -985,7 +988,7 @@ static AtNode *GetNode(void *user_ptr, int i)
       std::map<float,AtNode*>::iterator it = group->nodes[groupID].find(centroidTime);
       if(it == group->nodes[groupID].end())
       {
-         AiMsgError("[ExocortexAlembicArnold] Cannot find masterNode '%s' for centroidTime '%f'. Aborting.",group->identifiers[groupID],centroidTime);
+         AiMsgError("[ExocortexAlembicArnold] Cannot find masterNode '%s' for centroidTime '%f'. Aborting.",group->identifiers[groupID].c_str(),centroidTime);
          return NULL;
       }
       AtNode * usedMasterNode = it->second;
@@ -1030,8 +1033,10 @@ static AtNode *GetNode(void *user_ptr, int i)
          }
          else
          {
+            float timeAlpha = (float)(typedObject.getSchema().getTimeSampling()->getSampleTime(sampleInfo.ceilIndex) - 
+                               typedObject.getSchema().getTimeSampling()->getSampleTime(sampleInfo.floorIndex)) * (float)sampleInfo.alpha;
             matrixAbc.setTranslation(info->pos[floorIndex]->get()[id < info->pos[floorIndex]->size() ? id : info->pos[floorIndex]->size() - 1] + 
-                                     info->vel[floorIndex]->get()[id < info->vel[floorIndex]->size() ? id : info->vel[floorIndex]->size() - 1] * (float)sampleInfo.alpha);
+                                     info->vel[floorIndex]->get()[id < info->vel[floorIndex]->size() ? id : info->vel[floorIndex]->size() - 1] * timeAlpha);
          }
 
          // now take care of rotation
@@ -1157,6 +1162,7 @@ static AtNode *GetNode(void *user_ptr, int i)
    }
 
    AtArray * shaders = NULL;
+   AtArray * shaderIndices = NULL;
 
    // check what kind of object it is
    Alembic::Abc::IObject object = ud->gIObjects[i].abc;
@@ -1166,11 +1172,16 @@ static AtNode *GetNode(void *user_ptr, int i)
 		return NULL;
 	}
 
-   const Alembic::Abc::MetaData &md = object.getMetaData();
-   if(Alembic::AbcGeom::IPolyMesh::matches(md)) {
+   bool isPolyMeshNode = false;
 
-	   ESS_LOG_INFO( "ExocortexAlembicArnoldDSO: GetNode: IPolyMesh" );
+   const Alembic::Abc::MetaData &md = object.getMetaData();
+   if(Alembic::AbcGeom::IPolyMesh::matches(md))
+   {
+           //ESS_LOG_INFO(object.getFullName().c_str());
+
+	   //ESS_LOG_INFO( "ExocortexAlembicArnoldDSO: GetNode: IPolyMesh" );
 		
+
       // cast to polymesh and ensure we have got the 
       // normals parameter!
       Alembic::AbcGeom::IPolyMesh typedObject(object,Alembic::Abc::kWrapExisting);
@@ -1181,6 +1192,7 @@ static AtNode *GetNode(void *user_ptr, int i)
          AiMsgError("[ExocortexAlembicArnold] Mesh '%s' does not contain normals. Aborting.",object.getFullName().c_str());
          return NULL;
       }
+     // super_debug_var = 0;
 
       // create the arnold node
       if(shifted)
@@ -1216,6 +1228,7 @@ static AtNode *GetNode(void *user_ptr, int i)
       {
          shapeNode = AiNode("polymesh");
          createdShifted = false;
+         isPolyMeshNode = true;
       }
 
       // create arrays to hold the data
@@ -1223,10 +1236,19 @@ static AtNode *GetNode(void *user_ptr, int i)
       AtArray * nor = NULL;
       AtArray * uvsIdx = NULL;
 
+      // check if we have dynamic topology
+      bool dynamicTopology = false;
+      Alembic::Abc::IInt32ArrayProperty faceIndicesProp = Alembic::Abc::IInt32ArrayProperty(typedObject.getSchema(),".faceIndices");
+      if(faceIndicesProp.valid())
+         dynamicTopology = !faceIndicesProp.isConstant();
+
       // loop over all samples
       AtULong posOffset = 0;
       AtULong norOffset = 0;
       size_t firstSampleCount = 0;
+      Alembic::Abc::Int32ArraySamplePtr abcFaceCounts;
+      Alembic::Abc::Int32ArraySamplePtr abcFaceIndices;
+
       for(size_t sampleIndex = 0; sampleIndex < minNumSamples; sampleIndex++)
       {
          SampleInfo sampleInfo = getSampleInfo(
@@ -1242,8 +1264,8 @@ static AtNode *GetNode(void *user_ptr, int i)
          // take care of the topology
          if(sampleIndex == 0 && !createdShifted)
          {
-            Alembic::Abc::Int32ArraySamplePtr abcFaceCounts = sample.getFaceCounts();
-            Alembic::Abc::Int32ArraySamplePtr abcFaceIndices = sample.getFaceIndices();
+            abcFaceCounts = sample.getFaceCounts();
+            abcFaceIndices = sample.getFaceIndices();
             if(abcFaceCounts->get()[0] == 0)
                return NULL;
             AtArray * faceCounts = AiArrayAllocate((AtInt)abcFaceCounts->size(), 1, AI_TYPE_UINT);
@@ -1279,11 +1301,53 @@ static AtNode *GetNode(void *user_ptr, int i)
                }
                AiNodeSetArray(shapeNode, "uvlist", uvs);
                AiNodeSetArray(shapeNode, "uvidxs", AiArrayCopy(uvsIdx));
+
                //*/
                AtArray *uvs = 0, *uvsIdx = 0;
                removeUvsDuplicate(uvParam, sampleInfo, uvs, uvsIdx);
                AiNodeSetArray(shapeNode, "uvlist", uvs);
                AiNodeSetArray(shapeNode, "uvidxs", uvsIdx);
+
+               // check if we have uvOptions
+               if(typedObject.getSchema().getPropertyHeader( ".uvOptions" ) != NULL)
+               {
+                  Alembic::Abc::IFloatArrayProperty prop = Alembic::Abc::IFloatArrayProperty( typedObject.getSchema(), ".uvOptions" );
+                  if(prop.getNumSamples() > 0)
+                  {
+                     Alembic::Abc::FloatArraySamplePtr ptr = prop.getValue(0);
+                     if(ptr->size() > 1)
+                     {
+                        bool uWrap = ptr->get()[0] != 0.0f;
+                        bool vWrap = ptr->get()[1] != 0.0f;
+
+                        // fill the arnold array
+                        AtArray * uvOptions = AiArrayAllocate(2,1,AI_TYPE_BOOLEAN);
+                        AiArraySetBool(uvOptions,0,uWrap);
+                        AiArraySetBool(uvOptions,1,vWrap);
+
+                        // create a second identical array to avoid problem when deleted
+                        AtArray * uvOptions2 = AiArrayAllocate(2,1,AI_TYPE_BOOLEAN);
+                        AiArraySetBool(uvOptions2,0,uWrap);
+                        AiArraySetBool(uvOptions2,1,vWrap);
+
+                        // we need to define this two times, once for a named and once
+                        // for an unnamed texture projection.
+                        AiNodeDeclare(shapeNode, "Texture_Projection_wrap", "constant ARRAY BOOL");
+                        AiNodeDeclare(shapeNode, "_wrap", "constant ARRAY BOOL");
+                        AiNodeSetArray(shapeNode, "Texture_Projection_wrap", uvOptions);
+                        AiNodeSetArray(shapeNode, "_wrap", uvOptions2);
+                     }
+					 if( ptr->size() > 2 ) {
+						bool subdsmooth = ptr->get()[2] != 0.0f;
+						if( subdsmooth ) {
+							AiNodeSetStr(shapeNode, "subdiv_uv_smoothing", "pin_borders");
+						}
+						else {
+							AiNodeSetStr(shapeNode, "subdiv_uv_smoothing", "linear");
+						}
+					 }
+                  }
+               }
             }
 
             // check if we have a bindpose in the alembic file
@@ -1318,8 +1382,7 @@ static AtNode *GetNode(void *user_ptr, int i)
             pos = AiArrayAllocate((AtInt)(abcPos->size() * 3),(AtInt)minNumSamples,AI_TYPE_FLOAT);
          }
 
-         // if the count has changed, let's move back to the first sample
-         if(abcPos->size() != sample.getFaceIndices()->size())
+         if(dynamicTopology)
          {
             SampleInfo sampleInfoFirst = getSampleInfo(
                samples[0],
@@ -1366,7 +1429,7 @@ static AtNode *GetNode(void *user_ptr, int i)
             Alembic::Abc::P3fArraySamplePtr abcPos2 = sample2.getPositions();
             float alpha = (float)sampleInfo.alpha;
             float ialpha = 1.0f - alpha;
-            if(abcPos2->size() == abcPos->size())
+            if(!dynamicTopology)
             {
                for(size_t i=0;i<abcPos->size();i++)
                {
@@ -1379,11 +1442,13 @@ static AtNode *GetNode(void *user_ptr, int i)
             {
                if(abcVel->size() == abcPos->size())
                {
+                  float timeAlpha = (float)(typedObject.getSchema().getTimeSampling()->getSampleTime(sampleInfo.ceilIndex) - 
+                                     typedObject.getSchema().getTimeSampling()->getSampleTime(sampleInfo.floorIndex)) * alpha;
                   for(size_t i=0;i<abcPos->size();i++)
                   {
-                     AiArraySetFlt(pos,posOffset++,abcPos->get()[i].x + alpha * abcVel->get()[i].x);
-                     AiArraySetFlt(pos,posOffset++,abcPos->get()[i].y + alpha * abcVel->get()[i].y);
-                     AiArraySetFlt(pos,posOffset++,abcPos->get()[i].z + alpha * abcVel->get()[i].z);
+                     AiArraySetFlt(pos,posOffset++,abcPos->get()[i].x + timeAlpha * abcVel->get()[i].x);
+                     AiArraySetFlt(pos,posOffset++,abcPos->get()[i].y + timeAlpha * abcVel->get()[i].y);
+                     AiArraySetFlt(pos,posOffset++,abcPos->get()[i].z + timeAlpha * abcVel->get()[i].z);
                   }
                }
                else
@@ -1408,7 +1473,7 @@ static AtNode *GetNode(void *user_ptr, int i)
             if(abcNor != NULL)
             {
                Alembic::Abc::N3fArraySamplePtr abcNor2 = normalParam.getExpandedValue(sampleInfo.ceilIndex).getVals();
-               if(abcNor->size() == abcNor2->size())
+               if(!dynamicTopology)
                {
                   for(size_t i=0;i<abcNor->size();i++)
                   {
@@ -1436,11 +1501,46 @@ static AtNode *GetNode(void *user_ptr, int i)
       AiNodeSetArray(shapeNode, "vlist", pos);
       AiNodeSetArray(shapeNode, "nlist", nor);
       if(!createdShifted)
+      {
          AiNodeSetArray(shapeNode, "nidxs", uvsIdx);
+
+         if(ud->gProcShaders != NULL && shaders == NULL)
+         {
+            //shaders = ud->gProcShaders;
+            if(ud->gProcShaders->nelements > 1)
+            {
+               // check if we have facesets on this node
+               std::vector<std::string> faceSetNames;
+               typedObject.getSchema().getFaceSetNames(faceSetNames);
+               if(faceSetNames.size() > 0)
+               {
+                  // allocate the shader index array
+                  size_t shaderIndexCount = abcFaceCounts->size();
+                  shaderIndices = AiArrayAllocate((AtUInt32)shaderIndexCount,1,AI_TYPE_BYTE);
+                  for(size_t i=0;i<shaderIndexCount;i++)
+                     AiArraySetByte(shaderIndices,(AtUInt32)i,0);
+
+                  for(size_t i=0;i<faceSetNames.size();i++)
+                  {
+                     Alembic::AbcGeom::IFaceSetSchema faceSet = typedObject.getSchema().getFaceSet(faceSetNames[i]).getSchema();
+                     Alembic::AbcGeom::IFaceSetSchema::Sample faceSetSample = faceSet.getValue();
+                     Alembic::Abc::Int32ArraySamplePtr faces = faceSetSample.getFaces();
+                     for(size_t j=0;j<faces->size();j++)
+                     {
+                        if((size_t)faces->get()[j] < shaderIndexCount && i+1 < ud->gProcShaders->nelements)
+                        {
+                           AiArraySetByte(shaderIndices,(AtUInt32)faces->get()[j],(AtByte)(i+1));
+                        }
+                     }
+                  }
+               }
+            }
+         }
+      }
 
    } else if(Alembic::AbcGeom::ISubD::matches(md)) {
 
-      ESS_LOG_INFO( "ExocortexAlembicArnoldDSO: GetNode: ISubD" );
+      //ESS_LOG_INFO( "ExocortexAlembicArnoldDSO: GetNode: ISubD" );
 	
       // cast to subd
       Alembic::AbcGeom::ISubD typedObject(object,Alembic::Abc::kWrapExisting);
@@ -1480,14 +1580,23 @@ static AtNode *GetNode(void *user_ptr, int i)
       {
          shapeNode = AiNode("polymesh");
          createdShifted = false;
+         isPolyMeshNode = true;
       }
 
       // create arrays to hold the data
       AtArray * pos = NULL;
 
+      // check if we have dynamic topology
+      bool dynamicTopology = false;
+      Alembic::Abc::IInt32ArrayProperty faceIndicesProp = Alembic::Abc::IInt32ArrayProperty(typedObject.getSchema(),".faceIndices");
+      if(faceIndicesProp.valid())
+         dynamicTopology = !faceIndicesProp.isConstant();
+
       // loop over all samples
       size_t firstSampleCount = 0;
       AtULong posOffset = 0;
+      Alembic::Abc::Int32ArraySamplePtr abcFaceCounts;
+
       for(size_t sampleIndex = 0; sampleIndex < minNumSamples; sampleIndex++)
       {
          SampleInfo sampleInfo = getSampleInfo(
@@ -1503,7 +1612,7 @@ static AtNode *GetNode(void *user_ptr, int i)
          // take care of the topology
          if(sampleIndex == 0 && !createdShifted)
          {
-            Alembic::Abc::Int32ArraySamplePtr abcFaceCounts = sample.getFaceCounts();
+            abcFaceCounts = sample.getFaceCounts();
             Alembic::Abc::Int32ArraySamplePtr abcFaceIndices = sample.getFaceIndices();
             if(abcFaceCounts->get()[0] == 0)
                return NULL;
@@ -1539,8 +1648,7 @@ static AtNode *GetNode(void *user_ptr, int i)
                Alembic::Abc::UInt32ArraySamplePtr abcUvIdx = uvParam.getExpandedValue(sampleInfo.floorIndex).getIndices();
 
                AtArray * uvs = AiArrayAllocate((AtInt)abcUvs->size() * 2, 1, AI_TYPE_FLOAT);
-               AtArray * uvsIdx = AiArrayAllocate((AtInt)(abcUvs->size()),1,AI_TYPE_UINT);
-               AtULong offset = 0;
+               offset = 0;
                for(AtULong i=0;i<abcUvs->size();i++)
                {
                   AiArraySetFlt(uvs,offset++,abcUvs->get()[i].x);
@@ -1553,6 +1661,47 @@ static AtNode *GetNode(void *user_ptr, int i)
                removeUvsDuplicate(uvParam, sampleInfo, uvs, uvsIdx);
                AiNodeSetArray(shapeNode, "uvlist", uvs);
                AiNodeSetArray(shapeNode, "uvidxs", uvsIdx);
+
+               // check if we have uvOptions
+               if(typedObject.getSchema().getPropertyHeader( ".uvOptions" ) != NULL)
+               {
+                  Alembic::Abc::IFloatArrayProperty prop = Alembic::Abc::IFloatArrayProperty( typedObject.getSchema(), ".uvOptions" );
+                  if(prop.getNumSamples() > 0)
+                  {
+                     Alembic::Abc::FloatArraySamplePtr ptr = prop.getValue(0);
+                     if(ptr->size() > 1)
+                     {
+                        bool uWrap = ptr->get()[0] != 0.0f;
+                        bool vWrap = ptr->get()[1] != 0.0f;
+
+                        // fill the arnold array
+                        AtArray * uvOptions = AiArrayAllocate(2,1,AI_TYPE_BOOLEAN);
+                        AiArraySetBool(uvOptions,0,uWrap);
+                        AiArraySetBool(uvOptions,1,vWrap);
+
+                        // create a second identical array to avoid problem when deleted
+                        AtArray * uvOptions2 = AiArrayAllocate(2,1,AI_TYPE_BOOLEAN);
+                        AiArraySetBool(uvOptions2,0,uWrap);
+                        AiArraySetBool(uvOptions2,1,vWrap);
+
+                        // we need to define this two times, once for a named and once
+                        // for an unnamed texture projection.
+                        AiNodeDeclare(shapeNode, "Texture_Projection_wrap", "constant ARRAY BOOL");
+                        AiNodeDeclare(shapeNode, "_wrap", "constant ARRAY BOOL");
+                        AiNodeSetArray(shapeNode, "Texture_Projection_wrap", uvOptions);
+                        AiNodeSetArray(shapeNode, "_wrap", uvOptions2);
+                     }
+					 if( ptr->size() > 2 ) {
+						bool subdsmooth = ptr->get()[2] != 0.0f;
+						if( subdsmooth ) {
+							AiNodeSetStr(shapeNode, "subdiv_uv_smoothing", "pin_borders");
+						}
+						else {
+							AiNodeSetStr(shapeNode, "subdiv_uv_smoothing", "linear");
+						}
+					 }
+                  }
+               }
             }
             else
             {
@@ -1570,7 +1719,7 @@ static AtNode *GetNode(void *user_ptr, int i)
          }
 
          // if the count has changed, let's move back to the first sample
-         if(abcPos->size() != sample.getFaceIndices()->size())
+         if(dynamicTopology)
          {
             SampleInfo sampleInfoFirst = getSampleInfo(
                samples[0],
@@ -1601,7 +1750,7 @@ static AtNode *GetNode(void *user_ptr, int i)
             Alembic::Abc::P3fArraySamplePtr abcPos2 = sample2.getPositions();
             float alpha = (float)sampleInfo.alpha;
             float ialpha = 1.0f - alpha;
-            if(abcPos->size() == abcPos2->size())
+            if(!dynamicTopology)
             {
                for(size_t i=0;i<abcPos->size();i++)
                {
@@ -1652,8 +1801,41 @@ static AtNode *GetNode(void *user_ptr, int i)
       }
       AiNodeSetArray(shapeNode, "vlist", pos);
 
+      if(ud->gProcShaders != NULL && !createdShifted && shaders == NULL)
+      {
+         shaders = ud->gProcShaders;
+         if(shaders->nelements > 1)
+         {
+            // check if we have facesets on this node
+            std::vector<std::string> faceSetNames;
+            typedObject.getSchema().getFaceSetNames(faceSetNames);
+            if(faceSetNames.size() > 0)
+            {
+               // allocate the shader index array
+               size_t shaderIndexCount = abcFaceCounts->size();
+               shaderIndices = AiArrayAllocate((AtUInt32)shaderIndexCount,1,AI_TYPE_BYTE);
+               for(size_t i=0;i<shaderIndexCount;i++)
+                  AiArraySetByte(shaderIndices,(AtUInt32)i,0);
+
+               for(size_t i=0;i<faceSetNames.size();i++)
+               {
+                  Alembic::AbcGeom::IFaceSetSchema faceSet = typedObject.getSchema().getFaceSet(faceSetNames[i]).getSchema();
+                  Alembic::AbcGeom::IFaceSetSchema::Sample faceSetSample = faceSet.getValue();
+                  Alembic::Abc::Int32ArraySamplePtr faces = faceSetSample.getFaces();
+                  for(size_t j=0;j<faces->size();j++)
+                  {
+                     if((size_t)faces->get()[j] < shaderIndexCount && i+1 < ud->gProcShaders->nelements)
+                     {
+                        AiArraySetByte(shaderIndices,(AtUInt32)faces->get()[j],(AtByte)(i+1));
+                     }
+                  }
+               }
+            }
+         }
+      }
+
    } else if(Alembic::AbcGeom::ICurves::matches(md)) {
-      ESS_LOG_INFO( "ExocortexAlembicArnoldDSO: GetNode: ICurves" );
+      //ESS_LOG_INFO( "ExocortexAlembicArnoldDSO: GetNode: ICurves" );
 
       // cast to curves
       Alembic::AbcGeom::ICurves typedObject(object,Alembic::Abc::kWrapExisting);
@@ -1736,10 +1918,9 @@ static AtNode *GetNode(void *user_ptr, int i)
             AiNodeSetArray(shapeNode,"num_points",numPoints);
 
             // check if we have a radius
-            if( typedObject.getSchema().getPropertyHeader( ".radius" ) != NULL )
-            {
-               Alembic::Abc::IFloatArrayProperty prop = Alembic::Abc::IFloatArrayProperty( typedObject.getSchema(), ".radius" );
-               Alembic::Abc::FloatArraySamplePtr abcRadius = prop.getValue(sampleInfo.floorIndex);
+            Alembic::Abc::IFloatArrayProperty propRadius;
+			   if( getArbGeomParamPropertyAlembic( typedObject, "radius", propRadius ) ) {            
+               Alembic::Abc::FloatArraySamplePtr abcRadius = propRadius.getValue(sampleInfo.floorIndex);
 
                AtArray * radius = AiArrayAllocate((AtInt)abcRadius->size(),1,AI_TYPE_FLOAT);
                for(size_t i=0;i<abcRadius->size();i++)
@@ -1767,10 +1948,9 @@ static AtNode *GetNode(void *user_ptr, int i)
             }
 
             // check if we have colors
-            if ( typedObject.getSchema().getPropertyHeader( ".color" ) != NULL )
-            {
-               Alembic::Abc::IC4fArrayProperty prop = Alembic::Abc::IC4fArrayProperty( typedObject.getSchema(), ".color" );
-               Alembic::Abc::C4fArraySamplePtr abcColors = prop.getValue(sampleInfo.floorIndex);
+            Alembic::Abc::IC4fArrayProperty propColor;
+			   if( getArbGeomParamPropertyAlembic( typedObject, "color", propColor ) ) {            
+               Alembic::Abc::C4fArraySamplePtr abcColors = propColor.getValue(sampleInfo.floorIndex);
                AtBoolean result = false;
                if(abcColors->size() == 1)
                   result = AiNodeDeclare(shapeNode, "Color", "constant RGBA");
@@ -1890,7 +2070,7 @@ static AtNode *GetNode(void *user_ptr, int i)
 	  AiMsgWarning("[ExocortexAlembicArnold] This object type is not YET implemented: '%s'.",md.get("schema").c_str());
    } else if(Alembic::AbcGeom::IPoints::matches(md)) {
 
-      ESS_LOG_INFO( "ExocortexAlembicArnoldDSO: GetNode: IPoints" );
+      //ESS_LOG_INFO( "ExocortexAlembicArnoldDSO: GetNode: IPoints" );
 	  
 	  // cast to curves
       Alembic::AbcGeom::IPoints typedObject(object,Alembic::Abc::kWrapExisting);
@@ -1940,10 +2120,9 @@ static AtNode *GetNode(void *user_ptr, int i)
             }
 
             // check if we have colors
-            if ( typedObject.getSchema().getPropertyHeader( ".color" ) != NULL )
-            {
-               Alembic::Abc::IC4fArrayProperty prop = Alembic::Abc::IC4fArrayProperty( typedObject.getSchema(), ".color" );
-               Alembic::Abc::C4fArraySamplePtr abcColors = prop.getValue(sampleInfo.floorIndex);
+            Alembic::Abc::IC4fArrayProperty propColor;
+			if( getArbGeomParamPropertyAlembic_Permissive( typedObject, "color", propColor ) ) {            
+               Alembic::Abc::C4fArraySamplePtr abcColors = propColor.getValue(sampleInfo.floorIndex);
                AtBoolean result = false;
                if(abcColors->size() == 1)
                   result = AiNodeDeclare(shapeNode, "Color", "constant RGBA");
@@ -1982,13 +2161,15 @@ static AtNode *GetNode(void *user_ptr, int i)
          }
          else
          {
-            Alembic::Abc::V3fArraySamplePtr abcVel = sample.getVelocities();
             float alpha = (float)sampleInfo.alpha;
+            float timeAlpha = (float)(typedObject.getSchema().getTimeSampling()->getSampleTime(sampleInfo.ceilIndex) - 
+                               typedObject.getSchema().getTimeSampling()->getSampleTime(sampleInfo.floorIndex)) * alpha;
+            Alembic::Abc::V3fArraySamplePtr abcVel = sample.getVelocities();
             for(size_t i=0;i<abcPos->size();i++)
             {
-               AiArraySetFlt(pos,posOffset++,abcPos->get()[i].x + alpha * abcVel->get()[i].x);
-               AiArraySetFlt(pos,posOffset++,abcPos->get()[i].y + alpha * abcVel->get()[i].y);
-               AiArraySetFlt(pos,posOffset++,abcPos->get()[i].z + alpha * abcVel->get()[i].z);
+               AiArraySetFlt(pos,posOffset++,abcPos->get()[i].x + timeAlpha * abcVel->get()[i].x);
+               AiArraySetFlt(pos,posOffset++,abcPos->get()[i].y + timeAlpha * abcVel->get()[i].y);
+               AiArraySetFlt(pos,posOffset++,abcPos->get()[i].z + timeAlpha * abcVel->get()[i].z);
             }
          }
       }
@@ -2004,8 +2185,40 @@ static AtNode *GetNode(void *user_ptr, int i)
    // if we have a shape
    if(shapeNode != NULL)
    {
+      ud->constructedNodes.push_back(shapeNode);
       if(shaders != NULL)
-         AiNodeSetArray(shapeNode,"shader",AiArrayCopy(shaders));
+         ud->shadersToAssign.push_back(AiArrayCopy(shaders));
+      else if(ud->gProcShaders != NULL)
+         ud->shadersToAssign.push_back(AiArrayCopy(ud->gProcShaders));
+      else
+         ud->shadersToAssign.push_back(NULL);
+
+      if(isPolyMeshNode)
+      {
+         if(ud->gProcDispMap != NULL)
+         {
+            AiNodeSetArray(shapeNode,"disp_map",AiArrayCopy(ud->gProcDispMap));
+            if(ud->has_disp_settings)
+            {
+               AiNodeSetFlt(shapeNode, "disp_zero_value", ud->disp_zero_value);
+               AiNodeSetFlt(shapeNode, "disp_height", ud->disp_height);
+               AiNodeSetBool(shapeNode, "disp_autobump", ud->disp_autobump);
+               AiNodeSetFlt(shapeNode, "disp_padding", ud->disp_padding);
+            }
+         }
+         if(shaderIndices != NULL)
+            AiNodeSetArray(shapeNode, "shidxs", shaderIndices);
+
+         // do we have subdivision settings
+         if(ud->has_subdiv_settings)
+         {
+            AiNodeSetStr(shapeNode,"subdiv_type",ud->subdiv_type.c_str());
+            AiNodeSetInt(shapeNode,"subdiv_iterations",ud->subdiv_iterations);
+            AiNodeSetFlt(shapeNode,"subdiv_pixel_error",ud->subdiv_pixel_error);
+            if(ud->subdiv_dicing_camera.length() > 0)
+               AiNodeSetStr(shapeNode,"subdiv_dicing_camera",ud->subdiv_dicing_camera.c_str());
+         }
+      }
 
       // allocate the matrices for arnold and initiate them with identities
       AtArray * matrices = AiArrayAllocate(1,(AtInt)nbSamples,AI_TYPE_MATRIX);
@@ -2117,10 +2330,6 @@ extern "C" {
 
 AI_EXPORT_LIB int ProcLoader(AtProcVtable *vtable) 
 {
-	for( int i = 0; i < 100; i ++ ) {
-	 ESS_LOG_INFO( "ExocortexAlembicArnoldDSO: ProcLoader: " << i );
-	}
-   
    vtable->Init     = Init;
    vtable->Cleanup  = Cleanup;
    vtable->NumNodes = NumNodes;
@@ -2128,9 +2337,6 @@ AI_EXPORT_LIB int ProcLoader(AtProcVtable *vtable)
    
    sprintf(vtable->version, AI_VERSION);
 
-	for( int i = 0; i < 100; i ++ ) {
-		ESS_LOG_INFO( "ExocortexAlembicArnoldDSO: ProcLoader: End: " << i );
-	}
    return 1;
 }
 
