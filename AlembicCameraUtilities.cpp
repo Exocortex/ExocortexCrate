@@ -92,7 +92,6 @@ void AlembicImport_FillInCamera(alembic_fillcamera_options &options)
 
 AlembicFloatController* createFloatController(const std::string &path, const std::string &identifier, const std::string& prop)
 {
-    // Create the xform modifier
     AlembicFloatController *pControl = static_cast<AlembicFloatController*>
         (GetCOREInterface()->CreateInstance(CTRL_FLOAT_CLASS_ID, ALEMBIC_FLOAT_CONTROLLER_CLASSID));
 
@@ -112,52 +111,72 @@ AlembicFloatController* createFloatController(const std::string &path, const std
 	return pControl;
 }
 
-bool assignControllerToLevel1SubAnim(Animatable* controller, Animatable* pObj, int i, int j)
+AlembicFloatController* getController(Animatable* pObj, const std::string &identifier, const std::string &camProperty, int i, int j, int k=-1 )
 {
-
 	if( i >= pObj->NumSubs() ){
-		ESS_LOG_WARNING("Level 0 NumAnimSubs exceeded. Controller not assigned.");
-		return false;
+		return NULL;
 	}
 
 	Animatable* an = pObj->SubAnim(i);
 
-	if( j >= an->NumSubs() ){
-		ESS_LOG_WARNING("Level 1 NumAnimSubs exceeded. Controller not assigned.");
-		return false;
-	}
-
-	an->AssignController(controller, j);
-
-	return true;
-}
-
-bool assignControllerToLevel2SubAnim(Animatable* controller, Animatable* pObj, int i, int j, int k)
-{
-
-	if( i >= pObj->NumSubs() ){
-		ESS_LOG_WARNING("Level 0 NumAnimSubs exceeded. Controller not assigned.");
-		return false;
-	}
-
-	Animatable* an = pObj->SubAnim(i);
-
-	if( j >= an->NumSubs() ){
-		ESS_LOG_WARNING("Level 1 NumAnimSubs exceeded. Controller not assigned.");
-		return false;
+	if( !an || j >= an->NumSubs() ){
+		return NULL;
 	}
 
 	an = an->SubAnim(j);
 
-	if( k >= an->NumSubs() ){
-		ESS_LOG_WARNING("Level 2 NumAnimSubs exceeded. Controller not assigned.");
+	if( k != -1 ){
+		if(!an || k >= an->NumSubs()){
+			return NULL;
+		}
+		an = an->SubAnim(k);
+	}
+
+	Class_ID cid = an->ClassID();
+	if( !an || an->ClassID() != ALEMBIC_FLOAT_CONTROLLER_CLASSID){
+		return NULL;
+	}
+
+	AlembicFloatController* pControl = static_cast<AlembicFloatController*>(an);	
+	TimeValue zero(0);
+	std::string contIdentifier = EC_MCHAR_to_UTF8( pControl->GetParamBlockByID(0)->GetStr(GetParamIdByName(pControl, 0, "identifier"), zero) );
+	if(strcmp(contIdentifier.c_str(), identifier.c_str()) != 0){
+		return NULL;
+	}
+
+	std::string contCamProperty = EC_MCHAR_to_UTF8( pControl->GetParamBlockByID(0)->GetStr(GetParamIdByName(pControl, 0, "property"), zero) );
+	if(strcmp(contCamProperty.c_str(), camProperty.c_str()) != 0){
+		return NULL;
+	}
+	
+	return pControl;
+}
+
+bool assignController(Animatable* controller, Animatable* pObj, int i, int j, int k=-1)
+{
+	if( i >= pObj->NumSubs() ){
 		return false;
 	}
 
-	an->AssignController(controller, k);
+	Animatable* an = pObj->SubAnim(i);
 
-	return true;
+	if( !an || j >= an->NumSubs() ){
+		return false;
+	}
+	int aIndex = j;
+
+	if( k != -1 ){
+		an = an->SubAnim(j);
+		if( k >= an->NumSubs() ){
+			return false;
+		}
+		aIndex = k;
+	}
+
+	return an->AssignController(controller, aIndex) == TRUE;
 }
+
+
 
 int AlembicImport_Camera(const std::string &path, Alembic::AbcGeom::IObject& iObj, alembic_importoptions &options, INode** pMaxNode)
 {
@@ -172,57 +191,112 @@ int AlembicImport_Camera(const std::string &path, Alembic::AbcGeom::IObject& iOb
     }
 	bool isConstant = objCamera.getSchema().isConstant();
 
+	TimeValue zero(0);
 
-	// Create the camera object and place it in the scene
-    GenCamera *pCameraObj = GET_MAX_INTERFACE()->CreateCameraObject(FREE_CAMERA);
-    if (pCameraObj == NULL)
-    {
-        return alembic_failure;
-    }
-    pCameraObj->Enable(TRUE);
-    pCameraObj->SetConeState(TRUE);
+	INode* pNode = *pMaxNode;
+	CameraObject* pCameraObj = NULL;
+	if(!pNode){
+		// Create the camera object and place it in the scene
+		GenCamera* pGenCameraObj = GET_MAX_INTERFACE()->CreateCameraObject(FREE_CAMERA);
+		if (pGenCameraObj == NULL){
+			return alembic_failure;
+		}
+		pGenCameraObj->Enable(TRUE);
+		pGenCameraObj->SetConeState(TRUE);
+		pGenCameraObj->SetManualClip(TRUE);
 
-    // Fill in the mesh
-    alembic_fillcamera_options dataFillOptions;
-    dataFillOptions.pIObj = &iObj;
-    dataFillOptions.pCameraObj = pCameraObj;
-    dataFillOptions.dTicks =  GET_MAX_INTERFACE()->GetTime();
-	AlembicImport_FillInCamera(dataFillOptions);
+		IMultiPassCameraEffect* pCameraEffect = pGenCameraObj->GetIMultiPassCameraEffect();
+		const int TARGET_DISTANCE = 0;
+		pCameraEffect->GetParamBlockByID(0)->SetValue( TARGET_DISTANCE, zero, FALSE );
 
-    // Create the object node
-	INode *pNode = GET_MAX_INTERFACE()->CreateObjectNode(pCameraObj, EC_UTF8_to_TCHAR( iObj.getName().c_str() ) );
-	if (pNode == NULL)
-    {
-		return alembic_failure;
-    }
-	*pMaxNode = pNode;
+		pCameraObj = pGenCameraObj;
+
+		pNode = GET_MAX_INTERFACE()->CreateObjectNode(pGenCameraObj, EC_UTF8_to_TCHAR( iObj.getName().c_str() ) );
+		if (pNode == NULL){
+			return alembic_failure;
+		}
+		*pMaxNode = pNode;
+	}
+	else{
+		Object *obj = pNode->EvalWorldState(zero).obj;
+
+		if (obj->CanConvertToType(Class_ID(SIMPLE_CAM_CLASS_ID, 0))){
+			pCameraObj = reinterpret_cast<CameraObject *>(obj->ConvertToType(zero, Class_ID(SIMPLE_CAM_CLASS_ID, 0)));
+		}
+		else if (obj->CanConvertToType(Class_ID(LOOKAT_CAM_CLASS_ID, 0))){
+			pCameraObj = reinterpret_cast<CameraObject *>(obj->ConvertToType(zero, Class_ID(LOOKAT_CAM_CLASS_ID, 0)));
+		}
+		else{
+			return alembic_failure;
+		}
+	}
+
+     //Fill in the mesh
+ //   alembic_fillcamera_options dataFillOptions;
+ //   dataFillOptions.pIObj = &iObj;
+ //   dataFillOptions.pCameraObj = pCameraObj;
+ //   dataFillOptions.dTicks =  GET_MAX_INTERFACE()->GetTime();
+	//AlembicImport_FillInCamera(dataFillOptions);
 
 	//printAnimatables(pCameraObj);
-
-	IMultiPassCameraEffect* pCameraEffect = pCameraObj->GetIMultiPassCameraEffect();
-
-	TimeValue zero(0);
+	
 	Interval interval = FOREVER;
 	
-	const int TARGET_DISTANCE = 0;
-	pCameraEffect->GetParamBlockByID(0)->SetValue( TARGET_DISTANCE, zero, FALSE );
-
 	GET_MAX_INTERFACE()->SelectNode( pNode );
-	if(assignControllerToLevel1SubAnim(createFloatController(path, identifier, std::string("horizontalFOV")), pCameraObj, 0, 0) && !isConstant){
-		AlembicImport_ConnectTimeControl( "$.FOV.controller.time", options );
+
+	AlembicFloatController* pControl = NULL;
+	{
+		std::string prop("horizontalFOV");
+		if(options.attachToExisting){
+			pControl = getController(pCameraObj, identifier, prop, 0, 0);
+		}
+		if(pControl){
+			pControl->GetParamBlockByID(0)->SetValue( GetParamIdByName( pControl, 0, "path" ), zero, EC_UTF8_to_TCHAR( path.c_str() ) );
+		}
+		else if(assignController(createFloatController(path, identifier, prop), pCameraObj, 0, 0) && !isConstant){
+			AlembicImport_ConnectTimeControl("$.FOV.controller.time", options );
+		}
 	}
+	{
+		std::string prop("FocusDistance");
+		if(options.attachToExisting){
+			pControl = getController(pCameraObj, identifier, prop, 1, 0, 1);
+		}
+		if(pControl){
+			pControl->GetParamBlockByID(0)->SetValue( GetParamIdByName( pControl, 0, "path" ), zero, EC_UTF8_to_TCHAR( path.c_str() ) );
+		}
+		else if(assignController(createFloatController(path, identifier, prop), pCameraObj, 1, 0, 1) && !isConstant){
+			AlembicImport_ConnectTimeControl("$.MultiPass_Effect.focalDepth.controller.time", options );
+		}
+	}
+	{
+		std::string prop("NearClippingPlane");
+		if(options.attachToExisting){
+			pControl = getController(pCameraObj, identifier, prop, 0, 2);
+		}
+		if(pControl){
+			pControl->GetParamBlockByID(0)->SetValue( GetParamIdByName( pControl, 0, "path" ), zero, EC_UTF8_to_TCHAR( path.c_str() ) );
+		}
+		else if(assignController(createFloatController(path, identifier, prop), pCameraObj, 0, 2) && !isConstant){
+			AlembicImport_ConnectTimeControl("$.nearclip.controller.time", options );
+		}
+	}
+	{
+		std::string prop("FarClippingPlane");
+		if(options.attachToExisting){
+			pControl = getController(pCameraObj, identifier, prop, 0, 3);
+		}
+		if(pControl){
+			pControl->GetParamBlockByID(0)->SetValue( GetParamIdByName( pControl, 0, "path" ), zero, EC_UTF8_to_TCHAR( path.c_str() ) );
+		}
+		else if(assignController(createFloatController(path, identifier, prop), pCameraObj, 0, 3) && !isConstant){
+			AlembicImport_ConnectTimeControl("$.farclip.controller.time", options );
+		}
+	}
+
 	//if(assignControllerToLevel1SubAnim(createFloatController(path, identifier, std::string("FocusDistance")), pCameraObj, 0, 1) && !isConstant){
 	//	AlembicImport_ConnectTimeControl( "$.targetDistance.controller.time", options );
 	//}	
-	if(assignControllerToLevel2SubAnim(createFloatController(path, identifier, std::string("FocusDistance")), pCameraObj, 1, 0, 1) && !isConstant){
-		AlembicImport_ConnectTimeControl( "$.MultiPass_Effect.focalDepth.controller.time", options );
-	}	
-	if(assignControllerToLevel1SubAnim(createFloatController(path, identifier, std::string("NearClippingPlane")), pCameraObj, 0, 2) && !isConstant){
-		AlembicImport_ConnectTimeControl( "$.nearclip.controller.time", options );
-	}	
-	if(assignControllerToLevel1SubAnim(createFloatController(path, identifier, std::string("FarClippingPlane")), pCameraObj, 0, 3) && !isConstant){
-		AlembicImport_ConnectTimeControl( "$.farclip.controller.time", options );
-	}
 
 	////Create the Camera modifier
 	//Modifier *pModifier = static_cast<Modifier*>
