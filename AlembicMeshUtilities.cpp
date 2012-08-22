@@ -953,16 +953,16 @@ int AlembicImport_PolyMesh(const std::string &path, Alembic::AbcGeom::IObject& i
 			return alembic_failure;
 		}
 
-		Alembic::AbcGeom::IPolyMeshSchema::Sample polyMeshSample;
-		objMesh.getSchema().get(polyMeshSample, 0);
+		//Alembic::AbcGeom::IPolyMeshSchema::Sample polyMeshSample;
+		//objMesh.getSchema().get(polyMeshSample, 0);
 
 		//if (AlembicImport_IsPolyObject(polyMeshSample))
-		{
-			
-			PolyObject *pPolyObject = (PolyObject *) GetPolyObjDescriptor()->Create();
-			dataFillOptions.pMNMesh = &(pPolyObject->GetMesh());
-			newObject = pPolyObject;
-		}
+		//{
+		//	
+		//	PolyObject *pPolyObject = (PolyObject *) GetPolyObjDescriptor()->Create();
+		//	dataFillOptions.pMNMesh = &(pPolyObject->GetMesh());
+		//	newObject = pPolyObject;
+		//}
 		/*else
 		{
 			TriObject *pTriObj = (TriObject *) GetTriObjDescriptor()->Create();
@@ -983,26 +983,26 @@ int AlembicImport_PolyMesh(const std::string &path, Alembic::AbcGeom::IObject& i
 			return alembic_failure;
 		}
 
-		Alembic::AbcGeom::ISubDSchema::Sample subDSample;
-		objSubD.getSchema().get(subDSample, 0);
+		//Alembic::AbcGeom::ISubDSchema::Sample subDSample;
+		//objSubD.getSchema().get(subDSample, 0);
 
-		PolyObject *pPolyObject = (PolyObject *) GetPolyObjDescriptor()->Create();
-		dataFillOptions.pMNMesh = &(pPolyObject->GetMesh());
-		newObject = pPolyObject;
+		//PolyObject *pPolyObject = (PolyObject *) GetPolyObjDescriptor()->Create();
+		//dataFillOptions.pMNMesh = &(pPolyObject->GetMesh());
+		//newObject = pPolyObject;
 	}
 	else {
 		return alembic_failure;
 	}
 
-    if (newObject == NULL)
-    {
-        return alembic_failure;
-    }
-
    // Create the object pNode
 	INode *pNode = *pMaxNode;
 	bool bReplaceExistingModifiers = false;
 	if(!pNode){
+		Object* newObject = (PolyObject*)GetPolyObjDescriptor()->Create();
+		if (newObject == NULL)
+		{
+			return alembic_failure;
+		}
 		pNode = GET_MAX_INTERFACE()->CreateObjectNode(newObject, EC_UTF8_to_TCHAR( iObj.getName().c_str() ) );
 		if (pNode == NULL){
 			return alembic_failure;
@@ -1255,8 +1255,8 @@ int AlembicImport_PolyMesh(const std::string &path, Alembic::AbcGeom::IObject& i
 	}
 
     // Add the new inode to our current scene list
-    SceneEntry *pEntry = options.sceneEnumProc.Append(pNode, newObject, OBTYPE_MESH, &std::string(iObj.getFullName())); 
-    options.currentSceneList.Append(pEntry);
+   // SceneEntry *pEntry = options.sceneEnumProc.Append(pNode, newObject, OBTYPE_MESH, &std::string(iObj.getFullName())); 
+    //options.currentSceneList.Append(pEntry);
 
     // Set the visibility controller
     AlembicImport_SetupVisControl( path.c_str(), identifier.c_str(), iObj, pNode, options);
