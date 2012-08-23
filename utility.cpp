@@ -66,7 +66,7 @@ typedef struct __map_key
 class map_key_less: public std::binary_function<map_key, map_key, bool>
 {
 public:
-   bool operator()(const map_key &p1, const map_key &p2)
+   bool operator()(const map_key &p1, const map_key &p2) const
    {
       if (p1.vertexId < p2.vertexId)
          return true;
