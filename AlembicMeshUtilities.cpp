@@ -501,6 +501,9 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
 				  //ESS_LOG_ERROR( "Allocating new specified normals." );
 					options.pMNMesh->SpecifyNormals();
 			   }
+
+			   //NOTE: options.pMNMesh->ClearSpecifiedNormals() will make getSpecifiedNormals return NULL again
+
 			   MNNormalSpec *normalSpec = options.pMNMesh->GetSpecifiedNormals();
 			   normalSpec->SetParent( options.pMNMesh );
 			   if( normalSpec->GetNumFaces() != numFaces || normalSpec->GetNumNormals() != (int)normalsToSet.size() ) {
@@ -510,12 +513,14 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
 					normalSpec->SetNumNormals((int)normalsToSet.size());
 				}
 			   normalSpec->SetFlag(MESH_NORMAL_MODIFIER_SUPPORT, true);
-			   
-			   for (int i = 0; i < normalsToSet.size(); i += 1)
-			   {
+			   //normalSpec->SetFlag(MESH_NORMAL_NORMALS_BUILT);
+			   //normalSpec->SetFlag(MESH_NORMAL_NORMALS_COMPUTED);
+
+			   for (int i = 0; i < normalsToSet.size(); i += 1){
 				   normalSpec->Normal(i) = normalsToSet[i];
-				   normalSpec->SetNormalExplicit(i, true);
+				   //normalSpec->SetNormalExplicit(i, true);
 			   }
+			   normalSpec->SetAllExplicit(true);//this call is probably more efficient than the above call since 3DS Max uses bit flags
 
 			   // Set up the normal faces
 			   int offset = 0;
@@ -534,10 +539,15 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
 				   }
 			   }
 
-			   // Fill in any normals we may have not gotten specified.  Also allocates space for the RVert array
-			   // which we need for doing any normal vector queries
-			   normalSpec->CheckNormals();
-			   options.pMNMesh->checkNormals(TRUE);
+			   //3DS Max documentation on MNMesh::checkNormals() - checks our flags and calls BuildNormals, ComputeNormals as needed. 
+			   //MHahn: Probably not necessary since we explicility setting every normals
+			   //normalSpec->CheckNormals();
+
+			   //Also allocates space for the RVert array which we need for doing any normal vector queries
+			   //options.pMNMesh->checkNormals(FALSE);
+			   //MHahn: switched to build normals call, since all we need to is build the RVert array. Note: documentation says we only need
+			   //to this if we query the MNMesh to ask about vertices. Do we actually need this capability?
+			   options.pMNMesh->buildNormals();
 
 		   }
        }
