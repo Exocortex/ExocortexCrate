@@ -427,74 +427,16 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
        if(meshNormalsParam.valid())
        {
 		   Alembic::Abc::N3fArraySamplePtr meshNormalsFloor = meshNormalsParam.getExpandedValue(sampleInfo.floorIndex).getVals();
-           std::vector<Point3> normalsToSet;
-           normalsToSet.reserve(meshNormalsFloor->size());
            Alembic::Abc::N3fArraySamplePtr meshNormalsCeil = meshNormalsParam.getExpandedValue(sampleInfo.ceilIndex).getVals();
 
            Imath::V3f const* pMeshNormalsFloor = ( meshNormalsFloor.get() != NULL ) ? meshNormalsFloor->get() : NULL;
 		   Imath::V3f const* pMeshNormalsCeil = ( meshNormalsCeil.get() != NULL ) ? meshNormalsCeil->get() : NULL;
 
-		   if( pMeshNormalsFloor == NULL || pMeshNormalsCeil == NULL ) {
+		   if( pMeshNormalsFloor == NULL || pMeshNormalsCeil == NULL || meshNormalsFloor->size() != sampleCount) {
+			   //The last check ensures we will no exceeds the array bounds of PMeshNormalsFloor
 			   ESS_LOG_WARNING( "Mesh normals are in an invalid state in Alembic file, ignoring." );
 		   }
 		   else {
-
-			   // Blend 
-			   if (sampleInfo.alpha != 0.0f && meshNormalsFloor->size() == meshNormalsCeil->size())
-			   {
-				   int offset = 0;
-				   for (int i = 0; i < numFaces; i += 1)
-				   {
-					   int degree = pMeshFaceCount[i];
-					   int first = offset + degree - 1;
-					   int last = offset;
-					   for (int j = first; j >= last; j -= 1)
-					   {
-						   if (j > meshNormalsFloor->size())
-						   {
-							   ESS_LOG_ERROR("Normal at Face " << i << ", Vertex " << j << "does not exist at sample time " << sampleTime);
-							   normalsToSet.push_back( Point3(0,0,0) );
-							   continue;
-						   }
-
-						   Imath::V3f interpolatedNormal = pMeshNormalsFloor[j] + (pMeshNormalsCeil[j] - pMeshNormalsFloor[j]) * float(sampleInfo.alpha);
-						   normalsToSet.push_back( ConvertAlembicNormalToMaxNormal_Normalized( interpolatedNormal ) );
-					   }
-
-					   offset += degree;
-				   }
-			   }
-			   else
-			   {
-				   int offset = 0;
-				   for (int i = 0; i < numFaces; i += 1)
-				   {
-					   int degree = pMeshFaceCount[i];
-					   int first = offset + degree - 1;
-					   int last = offset;
-					   for (int j = first; j >= last; j -=1)
-					   {
-						   if (j > meshNormalsFloor->size())
-						   {
-							   ESS_LOG_ERROR("Normal at Face " << i << ", Vertex " << j << "does not exist at sample time " << sampleTime);
-							   normalsToSet.push_back( Point3(0,0,0) );
-							   continue;
-						   }
-	                                            
-						   normalsToSet.push_back( ConvertAlembicNormalToMaxNormal( pMeshNormalsFloor[j] ) );
-					   }
-
-					   offset += degree;
-				   }
-			   }
-
-			   if( options.fVertexAlpha != 1.0f ) 
-			   {
-				   for( int i = 0; i < normalsToSet.size(); i ++) 
-				   {
-					normalsToSet[i] *= options.fVertexAlpha;
-				   }
-			   }
 
 			   // Set up the specify normals
 			   if( options.pMNMesh->GetSpecifiedNormals() == NULL ) {
@@ -503,37 +445,63 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
 			   }
 
 			   //NOTE: options.pMNMesh->ClearSpecifiedNormals() will make getSpecifiedNormals return NULL again
-
-			   MNNormalSpec *normalSpec = options.pMNMesh->GetSpecifiedNormals();
+  			   MNNormalSpec *normalSpec = options.pMNMesh->GetSpecifiedNormals();
 			   normalSpec->SetParent( options.pMNMesh );
-			   if( normalSpec->GetNumFaces() != numFaces || normalSpec->GetNumNormals() != (int)normalsToSet.size() ) {
+			   if( normalSpec->GetNumFaces() != numFaces || normalSpec->GetNumNormals() != sampleCount){
 					//normalSpec->ClearAndFree();
 				  // ESS_LOG_ERROR( "Setting new faces and normal counts for specified normals." );
-				   normalSpec->SetNumFaces(numFaces);
-					normalSpec->SetNumNormals((int)normalsToSet.size());
-				}
-			   normalSpec->SetFlag(MESH_NORMAL_MODIFIER_SUPPORT, true);
-			   //normalSpec->SetFlag(MESH_NORMAL_NORMALS_BUILT);
-			   //normalSpec->SetFlag(MESH_NORMAL_NORMALS_COMPUTED);
-
-			   for (int i = 0; i < normalsToSet.size(); i += 1){
-				   normalSpec->Normal(i) = normalsToSet[i];
-				   //normalSpec->SetNormalExplicit(i, true);
+				    normalSpec->SetNumFaces(numFaces);
+					normalSpec->SetNumNormals(meshNormalsFloor->size());
 			   }
-			   normalSpec->SetAllExplicit(true);//this call is probably more efficient than the above call since 3DS Max uses bit flags
+			   normalSpec->SetFlag(MESH_NORMAL_MODIFIER_SUPPORT, true);
+			   normalSpec->SetAllExplicit(true); //this call is probably more efficient than the per vertex one since 3DS Max uses bit flags
+
+			   // Blend 
+			   if (sampleInfo.alpha != 0.0f && meshNormalsFloor->size() == meshNormalsCeil->size())
+			   {
+				   int offset = 0;
+				   for (int i = 0; i < numFaces; i += 1){
+					   int degree = pMeshFaceCount[i];
+					   int first = offset + degree - 1;
+					   int last = offset;
+					   for (int j = first; j >= last; j -= 1){
+						   Imath::V3f interpolatedNormal = pMeshNormalsFloor[j] + (pMeshNormalsCeil[j] - pMeshNormalsFloor[j]) * float(sampleInfo.alpha);
+				           if( options.fVertexAlpha != 1.0f ) {
+				               interpolatedNormal *= options.fVertexAlpha;
+				           }
+						   normalSpec->Normal(i) = ConvertAlembicNormalToMaxNormal_Normalized( interpolatedNormal );
+					   }
+					   offset += degree;
+				   }
+			   }
+			   else
+			   {
+				   int offset = 0;
+				   for (int i = 0; i < numFaces; i += 1){
+					   int degree = pMeshFaceCount[i];
+					   int first = offset + degree - 1;
+					   int last = offset;
+					   for (int j = first; j >= last; j -=1){    
+						   if( options.fVertexAlpha != 1.0f ){
+                               ConvertAlembicNormalToMaxNormal( pMeshNormalsFloor[j] * options.fVertexAlpha );
+						   }
+						   else{
+                               ConvertAlembicNormalToMaxNormal( pMeshNormalsFloor[j] );
+						   }
+					   }
+					   offset += degree;
+				   }
+			   }
 
 			   // Set up the normal faces
 			   int offset = 0;
-			   for (int i =0; i < numFaces; i += 1)
-			   {
-				   int degree = pMeshFaceCount[i];
+			   for (int i =0; i < numFaces; i += 1){
+				   const int degree = pMeshFaceCount[i];
 
 				   MNNormalFace &normalFace = normalSpec->Face(i);
 				   normalFace.SetDegree(degree);
-				   normalFace.SpecifyAll();
 
-				   for (int j = 0; j < degree; ++j)
-				   {
+				   for (int j = 0; j < degree; ++j){
 					   normalFace.SetNormalID(j, offset);
 					   ++offset;
 				   }
@@ -542,6 +510,9 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
 			   //3DS Max documentation on MNMesh::checkNormals() - checks our flags and calls BuildNormals, ComputeNormals as needed. 
 			   //MHahn: Probably not necessary since we explicility setting every normals
 			   //normalSpec->CheckNormals();
+			   //The following flags are set after the CheckNormals call
+			   //normalSpec->SetFlag(MESH_NORMAL_NORMALS_BUILT);
+			   //normalSpec->SetFlag(MESH_NORMAL_NORMALS_COMPUTED);
 
 			   //Also allocates space for the RVert array which we need for doing any normal vector queries
 			   //options.pMNMesh->checkNormals(FALSE);
