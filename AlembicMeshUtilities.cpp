@@ -392,14 +392,16 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
 		else {
 			options.pMNMesh->SetFlag( MN_MESH_NONTRI, FALSE );
 		}
-		options.pMNMesh->SetFlag( MN_MESH_FILLED_IN, FALSE );
-	    // this can fail if the mesh isn't correctly filled in.
-		if( ! options.pMNMesh->GetFlag( MN_MESH_FILLED_IN ) ) {				
-			options.pMNMesh->FillInMesh();
-			if( options.pMNMesh->GetFlag( MN_MESH_RATSNEST ) ) {
-				ESS_LOG_ERROR( "Mesh is a 'Rat's Nest' (more than 2 faces per edge) and not fully supported, fileName: " << options.fileName << " identifier: " << options.identifier );
-			}
-		}
+		//options.pMNMesh->SetFlag( MN_MESH_FILLED_IN, FALSE );
+	 //   // this can fail if the mesh isn't correctly filled in.
+		//if( ! options.pMNMesh->GetFlag( MN_MESH_FILLED_IN ) ) {
+		//	HighResolutionTimer tFillInMesh;
+		//	//options.pMNMesh->FillInMesh();
+		//	ESS_LOG_WARNING("Rat's nest FillInMesh call time: "<<tFillInMesh.elapsed());
+		//	if( options.pMNMesh->GetFlag( MN_MESH_RATSNEST ) ) {
+		//		ESS_LOG_ERROR( "Mesh is a 'Rat's Nest' (more than 2 faces per edge) and not fully supported, fileName: " << options.fileName << " identifier: " << options.identifier );
+		//	}
+		//}
 	
 		validateMeshes( options, "ALEMBIC_DATAFILL_FACELIST" );
 
