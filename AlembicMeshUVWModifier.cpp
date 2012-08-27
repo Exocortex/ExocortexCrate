@@ -191,10 +191,6 @@ void AlembicMeshUVWModifier::ModifyObject (TimeValue t, ModContext &mc, ObjectSt
 	   PolyObject *pPolyObj = reinterpret_cast<PolyObject *>(os->obj );
 
 	   options.pMNMesh = &( pPolyObj->GetMesh() );
-    
-	   if (os->obj != pPolyObj) {
-          os->obj = pPolyObj;
-	   }
    }
    else if (os->obj->CanConvertToType(Class_ID(POLYOBJ_CLASS_ID, 0)))
    {
@@ -204,6 +200,7 @@ void AlembicMeshUVWModifier::ModifyObject (TimeValue t, ModContext &mc, ObjectSt
     
 	   if (os->obj != pPolyObj) {
           os->obj = pPolyObj;
+		  os->obj->UnlockObject();
 	   }
 
    }

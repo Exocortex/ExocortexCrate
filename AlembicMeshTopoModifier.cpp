@@ -214,16 +214,13 @@ void AlembicMeshTopoModifier::ModifyObject (TimeValue t, ModContext &mc, ObjectS
       options.nDataFillFlags |= ALEMBIC_DATAFILL_IGNORE_SUBFRAME_SAMPLES;
    }
 
+   bool bNeedDelete = false;
    // Find out if we are modifying a poly object or a tri object
    if (os->obj->ClassID() == Class_ID(POLYOBJ_CLASS_ID, 0) )
    {
 	   PolyObject *pPolyObj = reinterpret_cast<PolyObject *>(os->obj );
 
 	   options.pMNMesh = &( pPolyObj->GetMesh() );
-    
-	   if (os->obj != pPolyObj) {
-          os->obj = pPolyObj;
-	   }
    }
    else if (os->obj->CanConvertToType(Class_ID(POLYOBJ_CLASS_ID, 0)))
    {
@@ -233,6 +230,7 @@ void AlembicMeshTopoModifier::ModifyObject (TimeValue t, ModContext &mc, ObjectS
     
 	   if (os->obj != pPolyObj) {
           os->obj = pPolyObj;
+		  os->obj->UnlockObject();
 	   }
 
    }
@@ -254,7 +252,7 @@ void AlembicMeshTopoModifier::ModifyObject (TimeValue t, ModContext &mc, ObjectS
 		os->obj->UpdateValidity(TOPO_CHAN_NUM, interval);
 		os->obj->UpdateValidity(GEOM_CHAN_NUM, interval);
 	}
-    if( bGeometry ) {
+    else if( bGeometry ) {
 		os->obj->UpdateValidity(GEOM_CHAN_NUM, interval);
 	}
     if( bUVs ) {
