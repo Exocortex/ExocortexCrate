@@ -1,5 +1,6 @@
 include "Exocortex-Dialog-AlembicImport.mcr"
 include "Exocortex-Dialog-AlembicExport.mcr"
+include "Exocortex-Helper-AlembicTimeControl_Mesh.mcr"
 include "Exocortex-Helper-AlembicTimeControl.mcr"
 include "Exocortex-Metadata.mcr"
 
