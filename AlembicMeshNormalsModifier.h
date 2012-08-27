@@ -44,8 +44,8 @@ public:
 	void EnumAuxFiles(AssetEnumCallback& nameEnum, DWORD flags);
 
 	// From Modifier
-	ChannelMask ChannelsUsed()  { return GEOM_CHANNEL; }
-	ChannelMask ChannelsChanged() { return GEOM_CHANNEL; }
+	ChannelMask ChannelsUsed()  { return TOPO_CHANNEL|GEOM_CHANNEL; }
+	ChannelMask ChannelsChanged() { return TOPO_CHANNEL|GEOM_CHANNEL; }
 	Class_ID InputType() { return polyObjectClassID; }
 	void ModifyObject (TimeValue t, ModContext &mc, ObjectState *os, INode *node);
 	//Interval LocalValidity(TimeValue t) { return GetValidity(t); }
