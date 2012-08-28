@@ -402,9 +402,9 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
 #if MAX_PRODUCT_YEAR_NUMBER != 2010
 		
 		if( ! options.pMNMesh->GetFlag( MN_MESH_FILLED_IN ) ) {
-			HighResolutionTimer tFillInMesh;
+			//HighResolutionTimer tFillInMesh;
 			options.pMNMesh->FillInMesh();
-			ESS_LOG_WARNING("FillInMesh time: "<<tFillInMesh.elapsed());
+			//ESS_LOG_WARNING("FillInMesh time: "<<tFillInMesh.elapsed());
 			if( options.pMNMesh->GetFlag(MN_MESH_RATSNEST) ) {
 				ESS_LOG_ERROR( "Mesh is a 'Rat's Nest' (more than 2 faces per edge) and not fully supported, fileName: " << options.fileName << " identifier: " << options.identifier );
 			}
