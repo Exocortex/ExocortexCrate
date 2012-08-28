@@ -382,7 +382,7 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
 			for (int j = degree - 1; j >= 0; --j)
 			{
 				pFace->vtx[j] = pMeshFaceIndices[offset];
-				pFace->edg[j] = -1;
+				//pFace->edg[j] = -1;
 				++offset;
 			}
 		}
@@ -392,16 +392,25 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
 		else {
 			options.pMNMesh->SetFlag( MN_MESH_NONTRI, FALSE );
 		}
-		//options.pMNMesh->SetFlag( MN_MESH_FILLED_IN, FALSE );
-	 //   // this can fail if the mesh isn't correctly filled in.
-		//if( ! options.pMNMesh->GetFlag( MN_MESH_FILLED_IN ) ) {
-		//	HighResolutionTimer tFillInMesh;
-		//	//options.pMNMesh->FillInMesh();
-		//	ESS_LOG_WARNING("Rat's nest FillInMesh call time: "<<tFillInMesh.elapsed());
-		//	if( options.pMNMesh->GetFlag( MN_MESH_RATSNEST ) ) {
-		//		ESS_LOG_ERROR( "Mesh is a 'Rat's Nest' (more than 2 faces per edge) and not fully supported, fileName: " << options.fileName << " identifier: " << options.identifier );
-		//	}
-		//}
+
+		//the FillInMesh call breaks the topology of some meshes in 3DS Max 2012
+		//(my test case in referenced here: https://github.com/Exocortex/ExocortexAlembic3DSMax/issues/191)
+		//the FillInMesh call is necessary to prevent all meshes from crashing 3DS Max 2010
+		//the FillInMesh call doesn't seem to break anything in 3DS Max 2011, and its absense doesn't seem to hurt anything
+		//3DS Max 2013?
+	
+#if MAX_PRODUCT_YEAR_NUMBER != 2010
+		
+		if( ! options.pMNMesh->GetFlag( MN_MESH_FILLED_IN ) ) {
+			HighResolutionTimer tFillInMesh;
+			options.pMNMesh->FillInMesh();
+			ESS_LOG_WARNING("FillInMesh time: "<<tFillInMesh.elapsed());
+			if( options.pMNMesh->GetFlag(MN_MESH_RATSNEST) ) {
+				ESS_LOG_ERROR( "Mesh is a 'Rat's Nest' (more than 2 faces per edge) and not fully supported, fileName: " << options.fileName << " identifier: " << options.identifier );
+			}
+		}
+
+#endif
 	
 		validateMeshes( options, "ALEMBIC_DATAFILL_FACELIST" );
 
