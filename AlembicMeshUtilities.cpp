@@ -399,7 +399,7 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
 		//the FillInMesh call doesn't seem to break anything in 3DS Max 2011, and its absense doesn't seem to hurt anything
 		//3DS Max 2013?
 	
-#if MAX_PRODUCT_YEAR_NUMBER != 2010
+#if MAX_PRODUCT_YEAR_NUMBER == 2010
 		
 		if( ! options.pMNMesh->GetFlag( MN_MESH_FILLED_IN ) ) {
 			//HighResolutionTimer tFillInMesh;
