@@ -318,7 +318,7 @@ void IntermediatePolyMesh3DSMax::Save(std::map<std::string, bool>& mOptions, Mes
                 if (polyMesh != NULL)
                 {
                     MNNormalSpec *normalSpec = polyMesh->GetSpecifiedNormals();
-                    if (normalSpec != NULL)
+                    if (normalSpec && normalSpec->GetNumNormals() > 0 && normalSpec->GetNumFaces() > 0)
                     {
                         vertexNormal = normalSpec->GetNormal(i, j);
                     }
@@ -330,7 +330,7 @@ void IntermediatePolyMesh3DSMax::Save(std::map<std::string, bool>& mOptions, Mes
                 else
                 {
                     MeshNormalSpec *normalSpec = triMesh->GetSpecifiedNormals();
-                    if (normalSpec != NULL)
+					if (normalSpec && normalSpec->GetNumNormals() > 0 && normalSpec->GetNumFaces() > 0)
                     {
                         vertexNormal = normalSpec->GetNormal(i, j);
                     }
