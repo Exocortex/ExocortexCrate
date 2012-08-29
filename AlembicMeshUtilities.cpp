@@ -395,11 +395,10 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
 
 		//the FillInMesh call breaks the topology of some meshes in 3DS Max 2012
 		//(my test case in referenced here: https://github.com/Exocortex/ExocortexAlembic3DSMax/issues/191)
-		//the FillInMesh call is necessary to prevent all meshes from crashing 3DS Max 2010
-		//the FillInMesh call doesn't seem to break anything in 3DS Max 2011, and its absense doesn't seem to hurt anything
-		//3DS Max 2013?
+		//the FillInMesh call is necessary to prevent all meshes from crashing 3DS Max 2010 and 2011
+		//untested in 2013
 	
-#if MAX_PRODUCT_YEAR_NUMBER == 2010
+#if MAX_PRODUCT_YEAR_NUMBER < 2012
 		
 		if( ! options.pMNMesh->GetFlag( MN_MESH_FILLED_IN ) ) {
 			//HighResolutionTimer tFillInMesh;
