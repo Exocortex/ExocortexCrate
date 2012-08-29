@@ -434,6 +434,126 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
    {
        Alembic::AbcGeom::IN3fGeomParam meshNormalsParam = objMesh.getSchema().getNormalsParam();
 
+#if MAX_PRODUCT_YEAR_NUMBER < 2011
+       if(meshNormalsParam.valid())
+       {
+		   Alembic::Abc::N3fArraySamplePtr meshNormalsFloor = meshNormalsParam.getExpandedValue(sampleInfo.floorIndex).getVals();
+           std::vector<Point3> normalsToSet;
+           normalsToSet.reserve(meshNormalsFloor->size());
+           Alembic::Abc::N3fArraySamplePtr meshNormalsCeil = meshNormalsParam.getExpandedValue(sampleInfo.ceilIndex).getVals();
+
+           Imath::V3f const* pMeshNormalsFloor = ( meshNormalsFloor.get() != NULL ) ? meshNormalsFloor->get() : NULL;
+		   Imath::V3f const* pMeshNormalsCeil = ( meshNormalsCeil.get() != NULL ) ? meshNormalsCeil->get() : NULL;
+
+		   if( pMeshNormalsFloor == NULL || pMeshNormalsCeil == NULL ) {
+			   ESS_LOG_WARNING( "Mesh normals are in an invalid state in Alembic file, ignoring." );
+		   }
+		   else {
+
+			   // Blend 
+			   if (sampleInfo.alpha != 0.0f && meshNormalsFloor->size() == meshNormalsCeil->size())
+			   {
+				   int offset = 0;
+				   for (int i = 0; i < numFaces; i += 1)
+				   {
+					   int degree = pMeshFaceCount[i];
+					   int first = offset + degree - 1;
+					   int last = offset;
+					   for (int j = first; j >= last; j -= 1)
+					   {
+						   if (j > meshNormalsFloor->size())
+						   {
+							   ESS_LOG_ERROR("Normal at Face " << i << ", Vertex " << j << "does not exist at sample time " << sampleTime);
+							   normalsToSet.push_back( Point3(0,0,0) );
+							   continue;
+						   }
+
+						   Imath::V3f interpolatedNormal = pMeshNormalsFloor[j] + (pMeshNormalsCeil[j] - pMeshNormalsFloor[j]) * float(sampleInfo.alpha);
+						   normalsToSet.push_back( ConvertAlembicNormalToMaxNormal_Normalized( interpolatedNormal ) );
+					   }
+
+					   offset += degree;
+				   }
+			   }
+			   else
+			   {
+				   int offset = 0;
+				   for (int i = 0; i < numFaces; i += 1)
+				   {
+					   int degree = pMeshFaceCount[i];
+					   int first = offset + degree - 1;
+					   int last = offset;
+					   for (int j = first; j >= last; j -=1)
+					   {
+						   if (j > meshNormalsFloor->size())
+						   {
+							   ESS_LOG_ERROR("Normal at Face " << i << ", Vertex " << j << "does not exist at sample time " << sampleTime);
+							   normalsToSet.push_back( Point3(0,0,0) );
+							   continue;
+						   }
+	                                            
+						   normalsToSet.push_back( ConvertAlembicNormalToMaxNormal( pMeshNormalsFloor[j] ) );
+					   }
+
+					   offset += degree;
+				   }
+			   }
+
+			   if( options.fVertexAlpha != 1.0f ) 
+			   {
+				   for( int i = 0; i < normalsToSet.size(); i ++) 
+				   {
+					normalsToSet[i] *= options.fVertexAlpha;
+				   }
+			   }
+
+			   // Set up the specify normals
+			   if( options.pMNMesh->GetSpecifiedNormals() == NULL ) {
+				  //ESS_LOG_ERROR( "Allocating new specified normals." );
+					options.pMNMesh->SpecifyNormals();
+			   }
+			   MNNormalSpec *normalSpec = options.pMNMesh->GetSpecifiedNormals();
+			   normalSpec->SetParent( options.pMNMesh );
+			   if( normalSpec->GetNumFaces() != numFaces || normalSpec->GetNumNormals() != (int)normalsToSet.size() ) {
+					//normalSpec->ClearAndFree();
+				  // ESS_LOG_ERROR( "Setting new faces and normal counts for specified normals." );
+				   normalSpec->SetNumFaces(numFaces);
+					normalSpec->SetNumNormals((int)normalsToSet.size());
+				}
+			   normalSpec->SetFlag(MESH_NORMAL_MODIFIER_SUPPORT, true);
+			   
+			   for (int i = 0; i < normalsToSet.size(); i += 1)
+			   {
+				   normalSpec->Normal(i) = normalsToSet[i];
+				   normalSpec->SetNormalExplicit(i, true);
+			   }
+
+			   // Set up the normal faces
+			   int offset = 0;
+			   for (int i =0; i < numFaces; i += 1)
+			   {
+				   int degree = pMeshFaceCount[i];
+
+				   MNNormalFace &normalFace = normalSpec->Face(i);
+				   normalFace.SetDegree(degree);
+				   normalFace.SpecifyAll();
+
+				   for (int j = 0; j < degree; ++j)
+				   {
+					   normalFace.SetNormalID(j, offset);
+					   ++offset;
+				   }
+			   }
+
+			   // Fill in any normals we may have not gotten specified.  Also allocates space for the RVert array
+			   // which we need for doing any normal vector queries
+			   normalSpec->CheckNormals();
+			   options.pMNMesh->checkNormals(TRUE);
+
+		   }
+       }
+
+#else
        if(meshNormalsParam.valid())
        {
 		   Alembic::Abc::N3fArraySamplePtr meshNormalsFloor = meshNormalsParam.getExpandedValue(sampleInfo.floorIndex).getVals();
@@ -516,29 +636,30 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
 			   //3DS Max documentation on MNMesh::checkNormals() - checks our flags and calls BuildNormals, ComputeNormals as needed. 
 			   //MHahn: Probably not necessary since we explicility setting every normals
 			   //normalSpec->CheckNormals();
+
+
 			   //The following flags are set after the CheckNormals call
 			   //normalSpec->SetFlag(MESH_NORMAL_NORMALS_BUILT);
 			   //normalSpec->SetFlag(MESH_NORMAL_NORMALS_COMPUTED);
 
 			   //Also allocates space for the RVert array which we need for doing any normal vector queries
-			   //options.pMNMesh->checkNormals(FALSE);
+			   //options.pMNMesh->checkNormals(TRUE);
 			   //MHahn: switched to build normals call, since all we need to is build the RVert array. Note: documentation says we only need
 			   //to this if we query the MNMesh to ask about vertices. Do we actually need this capability?
 			   options.pMNMesh->buildNormals();
 
 		   }
        }
-    validateMeshes( options, "ALEMBIC_DATAFILL_NORMALS" );
-  }
+#endif
+        validateMeshes( options, "ALEMBIC_DATAFILL_NORMALS" );
+   }
 
-	if( options.nDataFillFlags & ALEMBIC_DATAFILL_ALLOCATE_UV_STORAGE )
-	{
-		
-		//we can probably set this to the actual number of channels required if necessary
-		options.pMNMesh->SetMapNum(100);
-		options.pMNMesh->InitMap(0);
-	
-	}
+   if( options.nDataFillFlags & ALEMBIC_DATAFILL_ALLOCATE_UV_STORAGE )
+   {
+       //we can probably set this to the actual number of channels required if necessary
+       options.pMNMesh->SetMapNum(100);
+       options.pMNMesh->InitMap(0);
+   }
 
    if ( options.nDataFillFlags & ALEMBIC_DATAFILL_UVS )
    {
