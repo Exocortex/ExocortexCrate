@@ -2162,7 +2162,19 @@ ESS_CALLBACK_START(alembic_import_Execute, CRef&)
          }
 
          // now let's check if we are looking at a curves node with color and radii
-         bool useParticles = curveSchema.getPropertyHeader( ".radius" ) != NULL || curveSchema.getPropertyHeader( ".color" ) != NULL;
+
+		 bool useParticles = true;
+		 {
+			 Alembic::Abc::IFloatArrayProperty propRadius;
+			 if( ! getArbGeomParamPropertyAlembic( curveIObject, "radius", propRadius ) ) {
+				 useParticles = false;
+			 }
+			 Alembic::Abc::IC4fArrayProperty propColor;
+			 if( ! getArbGeomParamPropertyAlembic( curveIObject, "color", propColor ) ) {
+				 useParticles = false;
+			 } 
+		 }
+         /*bool useParticles = curveSchema.getPropertyHeader( ".radius" ) != NULL || curveSchema.getPropertyHeader( ".color" ) != NULL;
          if(useParticles)
          {
             if( curveSchema.getPropertyHeader( ".radius" ) != NULL )
@@ -2181,7 +2193,7 @@ ESS_CALLBACK_START(alembic_import_Execute, CRef&)
                else if(prop.getNumSamples() == 0)
                   useParticles = false;
             }
-         }
+         }*/
 
          if (useParticles)
          {
