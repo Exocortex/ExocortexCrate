@@ -960,6 +960,20 @@ Mesh* AlembicParticles::GetRenderMesh(TimeValue t, INode *inode, View &view, BOO
 		return renderMesh;
 	}
 
+	//MeshNormalSpec* pMeshNormalSpec = renderMesh->GetSpecifiedNormals();
+
+	renderMesh->SpecifyNormals();
+	MeshNormalSpec* pRenderMeshNormalSpec = renderMesh->GetSpecifiedNormals();
+	pRenderMeshNormalSpec->SetParent(renderMesh);
+
+	pRenderMeshNormalSpec->SetAllExplicit(true);
+	pRenderMeshNormalSpec->SetNumFaces(faceNum);
+	pRenderMeshNormalSpec->SetNumNormals(faceNum);
+	//pRenderMeshNormalSpec->SetNumNormals(1);
+	//pRenderMeshNormalSpec->Normal(0) = Point3(0.0, 0.0, 0.0);
+
+
+
 	Matrix3 inverseTM = Inverse(inode->GetObjectTM(t));
 	//inverseTM.IdentityMatrix();
 
@@ -1005,8 +1019,27 @@ Mesh* AlembicParticles::GetRenderMesh(TimeValue t, INode *inode, View &view, BOO
 			renderMesh->faces[curIndex] = pMesh->faces[j];
 			for(int k=0; k<3; k++) {
 				renderMesh->faces[curIndex].v[k] += vertOffset;
+				//pRenderMeshNormalSpec->Face(curIndex).SetNormalID(k, 0);
+				//pRenderMeshNormalSpec->Face(curIndex).SpecifyAll(true);
 			}
 		}
+
+		MeshNormalSpec *pNormalSpec = pMesh->GetSpecifiedNormals();
+		if(pNormalSpec && curNumFaces == pNormalSpec->GetNumFaces() ){
+			for(int j=0, curIndex=faceOffset; j<curNumFaces; j++, curIndex++){
+				for(int f=0; f<3; f++){
+					pRenderMeshNormalSpec->SetNormal(curIndex, f, pNormalSpec->GetNormal(j, f));
+				}
+			}
+		}
+		else{
+			ESS_LOG_WARNING("Particle mesh has invalid normals.");
+			for(int j=0, curIndex=faceOffset; j<curNumFaces; j++, curIndex++){
+				for(int f=0; f<3; f++){
+					pRenderMeshNormalSpec->SetNormal(curIndex, f, Point3(0.0, 0.0, 0.0));
+				}
+			}
+		}	
 
 		int numMaps = pMesh->getNumMaps();
 		for(int mp=0; mp<numMaps; mp++) {
@@ -1051,6 +1084,9 @@ Mesh* AlembicParticles::GetRenderMesh(TimeValue t, INode *inode, View &view, BOO
 		vertOffset += curNumVerts;
 		faceOffset += curNumFaces;
 	}
+
+	//pRenderMeshNormalSpec->CheckNormals();
+	renderMesh->buildNormals();
 
 	return renderMesh;
 }

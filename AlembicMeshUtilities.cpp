@@ -879,7 +879,7 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
 
   // This isn't required if we notify 3DS Max properly via the channel flags for vertex changes.
    //options.pMNMesh->MNDebugPrint();
-   if ( options.nDataFillFlags & ALEMBIC_DATAFILL_FACELIST ) {
+   if ( (options.nDataFillFlags & ALEMBIC_DATAFILL_FACELIST) || (options.nDataFillFlags & ALEMBIC_DATAFILL_NORMALS) ) {
 	   options.pMNMesh->InvalidateTopoCache();
 		options.pMNMesh->InvalidateGeomCache();
 	}
