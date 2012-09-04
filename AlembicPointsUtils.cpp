@@ -173,6 +173,7 @@ bool getParticleSystemMesh(TimeValue ticks, Object* obj, INode* node, Intermedia
 
 			Mtl* pMtl = NULL;//TODO: where to get material?
 			pMatMerge->currUniqueHandle = 0;//TODO: where to get handle?
+			pMatMerge->bPreserveIds = true;
 	
 			Matrix3 meshTM;
 			meshTM.IdentityMatrix();
@@ -241,6 +242,7 @@ bool getParticleSystemMesh(TimeValue ticks, Object* obj, INode* node, Intermedia
 		Mtl* pMtl = particleGroup->GetMaterial();
 
 		pMatMerge->currUniqueHandle = Animatable::GetHandleByAnim(particleGroup->GetActionList());
+		pMatMerge->bPreserveIds = true;
 		
 		IPFRender* particleRender = getIPFRender(particleGroupObj, ticks);
 		if(!particleRender){
