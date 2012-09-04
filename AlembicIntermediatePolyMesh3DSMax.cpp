@@ -240,7 +240,7 @@ bool GetOption(std::map<std::string, bool>& mOptions, const std::string& in_Name
     return false;
 }
 
-void IntermediatePolyMesh3DSMax::Save(std::map<std::string, bool>& mOptions, Mesh *triMesh, MNMesh* polyMesh, Matrix3& meshTM, Mtl* pMtl, bool bFirstFrame, materialsMergeStr* pMatMerge)
+void IntermediatePolyMesh3DSMax::Save(std::map<std::string, bool>& mOptions, Mesh *triMesh, MNMesh* polyMesh, Matrix3& meshTM, Mtl* pMtl, int nMatId, bool bFirstFrame, materialsMergeStr* pMatMerge)
 {
 	//for transforming the normals
 	Matrix3 meshTM_I_T = meshTM;
@@ -579,7 +579,17 @@ void IntermediatePolyMesh3DSMax::Save(std::map<std::string, bool>& mOptions, Mes
 		mMatIdIndexVec.resize(numFaces);
 		for (int i = 0; i < numFaces; i += 1)
 		{
-		  int matId = polyMesh ? polyMesh->f[i].material : triMesh->faces[i].getMatID();
+		  int matId;
+		  if(nMatId > 0){
+		    matId = nMatId;
+		  }
+		  else if(polyMesh){
+            matId = polyMesh->f[i].material;
+		  }
+		  else{
+            matId = triMesh->faces[i].getMatID();
+		  }
+		  
 		  int originalMatId = matId;
 		  if(pMatMerge){
 		      matId = pMatMerge->getUniqueMatId(matId);

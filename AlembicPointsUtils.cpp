@@ -192,7 +192,7 @@ bool getParticleSystemMesh(TimeValue ticks, Object* obj, INode* node, Intermedia
 
 			}
 
-			mesh->Save(mJob->mOptions, pMesh, NULL, meshTM, pMtl, nNumSamples == 0, pMatMerge);
+			mesh->Save(mJob->mOptions, pMesh, NULL, meshTM, pMtl, -1, nNumSamples == 0, pMatMerge);
 
 			if(bNeedDelete){
 				delete pMesh;
@@ -204,6 +204,14 @@ bool getParticleSystemMesh(TimeValue ticks, Object* obj, INode* node, Intermedia
 	//Export as particle flow if not simple particle
 
 	splitTypeT oldSplitType = setPerParticleMeshRenderSetting(obj, ticks, kRender_splitType_particle);
+
+	IPFSystem* iSystem = GetPFSystemInterface(obj);
+	//We have to put the particle system into the renders state so that PFOperatorMaterialFrequency::Proceed will set the materialID channel
+	bool bRenderStateForced = false;
+	if(iSystem && !iSystem->IsRenderState()){
+		iSystem->SetRenderState(true);
+		bRenderStateForced = true;
+	}
 
     Matrix3 nodeWorldTM = node->GetObjTMAfterWSM(ticks);
     Alembic::Abc::M44d nodeWorldTrans;
@@ -317,12 +325,18 @@ bool getParticleSystemMesh(TimeValue ticks, Object* obj, INode* node, Intermedia
 
 		}
 
+		//IParticleChannelIntR* chMtlIndex = GetParticleChannelMtlIndexRInterface(pCont);
+		//int nMatId = -1;
+		//if(chMtlIndex){
+		//	chMtlIndex->GetValue(meshId);
+		//}
+
 		if(i == 0){
-			mesh->Save(mJob->mOptions, pMesh, NULL, meshTM, pMtl, nNumSamples == 0, pMatMerge);
+			mesh->Save(mJob->mOptions, pMesh, NULL, meshTM, pMtl, -1, nNumSamples == 0, pMatMerge);
 		}
 		else{
 			IntermediatePolyMesh3DSMax currPolyMesh;
-			currPolyMesh.Save(mJob->mOptions, pMesh, NULL, meshTM, pMtl, nNumSamples == 0, pMatMerge);
+			currPolyMesh.Save(mJob->mOptions, pMesh, NULL, meshTM, pMtl, -1, nNumSamples == 0, pMatMerge);
 			bool bSuccess = mesh->mergeWith(currPolyMesh);
 			if(!bSuccess){
 				if(bNeedDelete){
@@ -335,9 +349,15 @@ bool getParticleSystemMesh(TimeValue ticks, Object* obj, INode* node, Intermedia
 		if(bNeedDelete){
 			delete pMesh;
 		}
+
+	}
+
+	if(bRenderStateForced){
+		iSystem->SetRenderState(false);
 	}
 
 	setPerParticleMeshRenderSetting(obj, ticks, oldSplitType);
+	
 	return true;
 }
 

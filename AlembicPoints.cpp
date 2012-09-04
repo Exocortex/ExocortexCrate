@@ -850,7 +850,7 @@ void AlembicPoints::saveCurrentFrameMeshes()
 
 			//gather the mesh data
 			IntermediatePolyMesh3DSMax finalPolyMesh;
-			finalPolyMesh.Save(options, pMesh, NULL, worldTrans, NULL, false, NULL);
+			finalPolyMesh.Save(options, pMesh, NULL, worldTrans, NULL, -1, false, NULL);
 
 			//save out the mesh xForm
 		

@@ -182,7 +182,7 @@ bool AlembicPolyMesh::Save(double time, bool bLastFrame)
 
 		Matrix3 worldTrans;
 		worldTrans.IdentityMatrix();
-		finalPolyMesh.Save(mJob->mOptions, triMesh, polyMesh, worldTrans, GetRef().node->GetMtl(), mNumSamples == 0, &materialsMerge);
+		finalPolyMesh.Save(mJob->mOptions, triMesh, polyMesh, worldTrans, GetRef().node->GetMtl(), -1, mNumSamples == 0, &materialsMerge);
 
 	   // Note that the TriObject should only be deleted
 	   // if the pointer to it is not equal to the object
