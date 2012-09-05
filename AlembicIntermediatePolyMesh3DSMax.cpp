@@ -580,7 +580,7 @@ void IntermediatePolyMesh3DSMax::Save(std::map<std::string, bool>& mOptions, Mes
 		for (int i = 0; i < numFaces; i += 1)
 		{
 		  int matId;
-		  if(nMatId > 0){
+		  if(nMatId >= 0){
 		    matId = nMatId;
 		  }
 		  else if(polyMesh){
