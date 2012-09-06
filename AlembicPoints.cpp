@@ -100,30 +100,33 @@ bool AlembicPoints::Save(double time, bool bLastFrame)
 
 
 	
+	//ParticleObject* pParticleObject = (ParticleObject*)obj->GetInterface(I_PARTICLEOBJ);
+	SimpleParticle* pSimpleParticle = (SimpleParticle*)obj->GetInterface(I_SIMPLEPARTICLEOBJ);
+	IPFSystem* ipfSystem = GetPFSystemInterface(obj);
+	IParticleObjectExt* particlesExt = GetParticleObjectExtInterface(obj);
 
 
-
-    IPFSystem* particleSystem = NULL;
-	IParticleObjectExt* particlesExt = NULL;
-	SimpleParticle* pSimpleParticle = NULL;
-	ParticleObject* pParticleObject = (ParticleObject*)obj->GetInterface(I_PARTICLEOBJ);
-	if(pParticleObject){
-		pSimpleParticle = (SimpleParticle*) obj->GetInterface(I_SIMPLEPARTICLEOBJ);
-		particlesExt = GetParticleObjectExtInterface(obj);
-		if(!particlesExt){
-			return false;
-		}
-	}
-	else{
-		particleSystem = PFSystemInterface(obj);
-		if(!particleSystem){
-			return false;
-		}
-		particlesExt = GetParticleObjectExtInterface(obj);
-		if(!particlesExt){
-			return false;
-		}
-	}
+ //   IPFSystem* ipfSystem = NULL;
+	//IParticleObjectExt* particlesExt = NULL;
+	//SimpleParticle* pSimpleParticle = NULL;
+	//ParticleObject* pParticleObject = (ParticleObject*)obj->GetInterface(I_PARTICLEOBJ);
+	//if(pParticleObject){
+	//	pSimpleParticle = (SimpleParticle*) obj->GetInterface(I_SIMPLEPARTICLEOBJ);
+	//	particlesExt = GetParticleObjectExtInterface(obj);
+	//	if(!particlesExt){
+	//		return false;
+	//	}
+	//}
+	//else{
+	//	ipfSystem = PFSystemInterface(obj);
+	//	if(!ipfSystem){
+	//		return false;
+	//	}
+	//	particlesExt = GetParticleObjectExtInterface(obj);
+	//	if(!particlesExt){
+	//		return false;
+	//	}
+	//}
 	//If we get here, either particlesExt (for particle flow system) is nonnull 
 	//OR pSimpleParticle (for older particle systems) is nonnull 
 
@@ -140,10 +143,13 @@ bool AlembicPoints::Save(double time, bool bLastFrame)
 		return false;
 	}
 
+	const bool bAutomaticInstancing = GetCurrentJob()->GetOption("automaticInstancing");
+
 	//We have to put the particle system into the renders state so that PFOperatorMaterialFrequency::Proceed will set the materialID channel
+	//Note: settting the render state to true breaks the shape node instancing export
 	bool bRenderStateForced = false;
-	if(particleSystem && !particleSystem->IsRenderState()){
-		particleSystem->SetRenderState(true);
+	if(bAutomaticInstancing && ipfSystem && !ipfSystem->IsRenderState()){
+		ipfSystem->SetRenderState(true);
 		bRenderStateForced = true;
 	}
 
@@ -192,7 +198,6 @@ bool AlembicPoints::Save(double time, bool bLastFrame)
 
 
 
-	const bool bAutomaticInstancing = GetCurrentJob()->GetOption("automaticInstancing");
 	if(bAutomaticInstancing){
 		SetMaxSceneTime(ticks);
 	}
@@ -235,9 +240,11 @@ bool AlembicPoints::Save(double time, bool bLastFrame)
 			id = particlesExt->GetParticleBornIndex(i);
 			if(bAutomaticInstancing){
 
-				groupInterface.setCurrentParticle(ticks, i);
-
-				int nMatId = groupInterface.getCurrentMtlId();
+				int nMatId = -1;
+				if(ipfSystem){
+					groupInterface.setCurrentParticle(ticks, i);
+					nMatId = groupInterface.getCurrentMtlId();
+				}
 
 				Mesh* pMesh = particlesExt->GetParticleShapeByIndex(i);
 				if(pMesh){
@@ -376,7 +383,7 @@ bool AlembicPoints::Save(double time, bool bLastFrame)
 	}
 
 	if(bRenderStateForced){
-		particleSystem->SetRenderState(false);
+		ipfSystem->SetRenderState(false);
 	}
 
     return true;
@@ -673,7 +680,7 @@ void AlembicPoints::ReadShapeFromOperator( IParticleGroup *particleGroup, PFSimp
 void AlembicPoints::GetShapeType(IParticleObjectExt *pExt, int particleId, TimeValue ticks, ShapeType &type, uint16_t &instanceId, float &animationTime)
 {
     // Set up initial values
-    type = ShapeType_NbElements;//default to nothing
+    type = ShapeType_Point;
     instanceId = 0;
     animationTime = 0.0f;
 
