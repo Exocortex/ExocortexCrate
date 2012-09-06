@@ -331,6 +331,7 @@ bool getParticleSystemMesh(TimeValue ticks, Object* obj, INode* node, Intermedia
 		//we want the end result relative particle system space
 
 		if(ENABLE_VELOCITY_EXPORT){
+#if 1
 			//float fps = (float)GetFrameRate();
 			Imath::V4f pPosition4 = ConvertMaxPointToAlembicPoint4(*particlesExt->GetParticlePositionByIndex(i));
 			Imath::V4f pVelocity4 = ConvertMaxVectorToAlembicVector4(*particlesExt->GetParticleSpeedByIndex(i) * TIME_TICKSPERSEC); 
@@ -369,8 +370,23 @@ bool getParticleSystemMesh(TimeValue ticks, Object* obj, INode* node, Intermedia
 				Imath::V3f vVelocity = meshVertex * mAngularVelocity;
 				mesh->mVelocitiesVec.push_back(pVelocity /*+ vVelocity*/);
 			}
+#else
+			Tab<Point3> perVertexVelocities;
+			//particlesExt->UpdateParticles(node, ticks);
+			//Note: this call doesn't seem to be implemented for pflow
+			particlesExt->GetRenderMeshVertexSpeed(ticks, node, nullView, perVertexVelocities);  
 
+			if(perVertexVelocities.Count() != pMesh->getNumVerts()){
+				ESS_LOG_WARNING("Warning: Mesh Vertices count and velocities count do not match.");
+			}
 
+			mesh->mVelocitiesVec.reserve(perVertexVelocities.Count());
+			for(int j=0; j<perVertexVelocities.Count(); j++){
+				Imath::V4f pVelocity4 = ConvertMaxVectorToAlembicVector4(perVertexVelocities[j] * TIME_TICKSPERSEC); 
+				pVelocity4 = pVelocity4 * nodeWorldTransInv;
+				mesh->mVelocitiesVec.push_back(Imath::V3f(pVelocity4.x, pVelocity4.y, pVelocity4.z));
+			}
+#endif
 		}
 
 		//IParticleChannelIntR* chMtlIndex = GetParticleChannelMtlIndexRInterface(pCont);
