@@ -125,10 +125,70 @@ splitTypeT setPerParticleMeshRenderSetting(Object* obj, TimeValue ticks, splitTy
 	return nOldValue;
 
 }
+	
+bool particleGroupInterface::setCurrentParticle(TimeValue ticks, int i)
+{
+	m_currTicks = ticks;
 
+	INode *particleGroupNode = m_pParticlesExt->GetParticleGroup(i);
 
+	Object *particleGroupObj = (particleGroupNode != NULL) ? particleGroupNode->EvalWorldState(ticks).obj : NULL;
+	m_pCurrParticleGroup = GetParticleGroupInterface(particleGroupObj);
 
-typedef std::map<INode*, int> groupParticleCountT;
+	if( groupParticleCount.find(particleGroupNode) == groupParticleCount.end() ){
+		groupParticleCount[particleGroupNode] = 0;
+	}
+	m_nCurrParticleGroupId = groupParticleCount[particleGroupNode];
+	groupParticleCount[particleGroupNode]++;
+
+	m_pCurrGroupContainer = m_pCurrParticleGroup->GetParticleContainer();
+	m_pCurrGroupSystem = m_pCurrParticleGroup->GetParticleSystem();
+	m_pCurrGroupMtl = m_pCurrParticleGroup->GetMaterial();
+	m_pCurrRender = getIPFRender(particleGroupObj, ticks);
+
+	return true;
+}
+	
+bool particleGroupInterface::getCurrentParticleMeshTM(Matrix3& meshTM)
+{
+	meshTM.IdentityMatrix();
+	Interval meshValid;
+	meshValid.SetInstant(m_currTicks);
+
+	if(!m_pCurrRender){
+		return false;
+	}
+
+	m_pCurrRender->GetMultipleRenderMeshTM(
+		m_pCurrGroupContainer, m_currTicks, m_pSystemObject, m_pCurrGroupSystem, *m_pNullView, m_nCurrParticleGroupId, meshTM, meshValid);
+
+	return true;
+}
+
+Mesh* particleGroupInterface::getCurrentParticleMesh(BOOL& bNeedDelete){
+	if(!m_pCurrRender){
+		return NULL;
+	}
+
+	Mesh* pMesh = m_pCurrRender->GetMultipleRenderMesh(m_pCurrGroupContainer, m_currTicks, m_pSystemObject, m_pCurrGroupSystem, *m_pNullView, bNeedDelete, m_nCurrParticleGroupId);
+
+	if(!pMesh){
+		return NULL;
+	}
+	if(pMesh && pMesh->numVerts == 0){
+		return NULL;	
+	}
+	return pMesh;
+}
+
+int particleGroupInterface::getCurrentMtlId(){
+	IParticleChannelIntR* chMtlIndex = GetParticleChannelMtlIndexRInterface(m_pCurrGroupContainer);
+	if(chMtlIndex){
+		return chMtlIndex->GetValue(m_nCurrParticleGroupId);
+	}
+	return -1;
+}
+
 
 bool getParticleSystemMesh(TimeValue ticks, Object* obj, INode* node, IntermediatePolyMesh3DSMax* mesh, 
 						   materialsMergeStr* pMatMerge, AlembicWriteJob * mJob, int nNumSamples)
@@ -173,6 +233,7 @@ bool getParticleSystemMesh(TimeValue ticks, Object* obj, INode* node, Intermedia
 
 			Mtl* pMtl = NULL;//TODO: where to get material?
 			pMatMerge->currUniqueHandle = 0;//TODO: where to get handle?
+			pMatMerge->bPreserveIds = true;
 	
 			Matrix3 meshTM;
 			meshTM.IdentityMatrix();
@@ -191,7 +252,7 @@ bool getParticleSystemMesh(TimeValue ticks, Object* obj, INode* node, Intermedia
 
 			}
 
-			mesh->Save(mJob->mOptions, pMesh, NULL, meshTM, pMtl, nNumSamples == 0, pMatMerge);
+			mesh->Save(mJob->mOptions, pMesh, NULL, meshTM, pMtl, -1, nNumSamples == 0, pMatMerge);
 
 			if(bNeedDelete){
 				delete pMesh;
@@ -205,6 +266,14 @@ bool getParticleSystemMesh(TimeValue ticks, Object* obj, INode* node, Intermedia
 
 	splitTypeT oldSplitType = setPerParticleMeshRenderSetting(obj, ticks, kRender_splitType_particle);
 
+	IPFSystem* iSystem = GetPFSystemInterface(obj);
+	//We have to put the particle system into the renders state so that PFOperatorMaterialFrequency::Proceed will set the materialID channel
+	bool bRenderStateForced = false;
+	if(iSystem && !iSystem->IsRenderState()){
+		iSystem->SetRenderState(true);
+		bRenderStateForced = true;
+	}
+
     Matrix3 nodeWorldTM = node->GetObjTMAfterWSM(ticks);
     Alembic::Abc::M44d nodeWorldTrans;
     ConvertMaxMatrixToAlembicMatrix(nodeWorldTM, nodeWorldTrans);
@@ -215,59 +284,24 @@ bool getParticleSystemMesh(TimeValue ticks, Object* obj, INode* node, Intermedia
 
 	SetMaxSceneTime(ticks);
 
-	static NullView nullView;
-
-	//static Mesh nullMesh;
-	//I use this std::map to keep to obtain iteration index for each particle group.
-	groupParticleCountT groupParticleCount;
-
-	//TODO: currently the render operator settings will affect the export
-
-	//static Imath::V4f prevPos(0.0, 0.0, 0.0, 0.0);
+	NullView nullView;
+	particleGroupInterface groupInterface(particlesExt, obj, node, &nullView);
 
 	for(int i=0; i< particlesExt->NumParticles(); i++){
-		INode *particleGroupNode = particlesExt->GetParticleGroup(i);
 
-		Object *particleGroupObj = (particleGroupNode != NULL) ? particleGroupNode->EvalWorldState(ticks).obj : NULL;
-		IParticleGroup* particleGroup = GetParticleGroupInterface(particleGroupObj);
-
-		if( groupParticleCount.find(particleGroupNode) == groupParticleCount.end() ){
-			groupParticleCount[particleGroupNode] = 0;
-		}
-		int meshId = groupParticleCount[particleGroupNode];
-		groupParticleCount[particleGroupNode]++;
-
-		::IObject *pCont = particleGroup->GetParticleContainer();
-		::INode *pNode = particleGroup->GetParticleSystem();
-		Mtl* pMtl = particleGroup->GetMaterial();
-
-		pMatMerge->currUniqueHandle = Animatable::GetHandleByAnim(particleGroup->GetActionList());
-		
-		IPFRender* particleRender = getIPFRender(particleGroupObj, ticks);
-		if(!particleRender){
-			ESS_LOG_INFO("Error. Failed to obtain IPFRender interface.");
-			setPerParticleMeshRenderSetting(obj, ticks, oldSplitType);
-			return false;
-		}
+		groupInterface.setCurrentParticle(ticks, i);
 
 		Matrix3 meshTM;
-		meshTM.IdentityMatrix();
-		Interval meshValid;
-		meshValid.SetInstant(ticks);
-
-		//PFOperatorRender.cpp Notes:
-		// The pSystem (obj) argument doesn't seem to be used
-		// 
-
-		particleRender->GetMultipleRenderMeshTM(pCont, ticks, obj, pNode, nullView, meshId, meshTM, meshValid);
+		if(!groupInterface.getCurrentParticleMeshTM(meshTM)){
+			continue;
+		}
 
 		BOOL bNeedDelete = FALSE;
-		Mesh* pMesh = particleRender->GetMultipleRenderMesh(pCont, ticks, obj, pNode, nullView, bNeedDelete, meshId);
+		Mesh* pMesh = groupInterface.getCurrentParticleMesh(bNeedDelete);
 
-		if(!pMesh || (pMesh && pMesh->numVerts == 0) ){
+		if(!pMesh){
 			ESS_LOG_INFO("Error. Null render mesh. Tick: "<<ticks<<" pid: "<<i);
-			//setPerParticleMeshRenderSetting(obj, ticks, oldSplitType);
-			//return false;
+			continue;
 		}
 
 		//conpute vertex velocity, and save them immediately to final result
@@ -316,12 +350,21 @@ bool getParticleSystemMesh(TimeValue ticks, Object* obj, INode* node, Intermedia
 
 		}
 
+		//IParticleChannelIntR* chMtlIndex = GetParticleChannelMtlIndexRInterface(pCont);
+		//int nMatId = -1;
+		//if(chMtlIndex){
+		//	chMtlIndex->GetValue(meshId);
+		//}
+
+		pMatMerge->currUniqueHandle = Animatable::GetHandleByAnim(groupInterface.m_pCurrParticleGroup->GetActionList());
+		pMatMerge->bPreserveIds = true;
+
 		if(i == 0){
-			mesh->Save(mJob->mOptions, pMesh, NULL, meshTM, pMtl, nNumSamples == 0, pMatMerge);
+			mesh->Save(mJob->mOptions, pMesh, NULL, meshTM, groupInterface.m_pCurrGroupMtl, -1, nNumSamples == 0, pMatMerge);
 		}
 		else{
 			IntermediatePolyMesh3DSMax currPolyMesh;
-			currPolyMesh.Save(mJob->mOptions, pMesh, NULL, meshTM, pMtl, nNumSamples == 0, pMatMerge);
+			currPolyMesh.Save(mJob->mOptions, pMesh, NULL, meshTM, groupInterface.m_pCurrGroupMtl, -1, nNumSamples == 0, pMatMerge);
 			bool bSuccess = mesh->mergeWith(currPolyMesh);
 			if(!bSuccess){
 				if(bNeedDelete){
@@ -334,9 +377,15 @@ bool getParticleSystemMesh(TimeValue ticks, Object* obj, INode* node, Intermedia
 		if(bNeedDelete){
 			delete pMesh;
 		}
+
+	}
+
+	if(bRenderStateForced){
+		iSystem->SetRenderState(false);
 	}
 
 	setPerParticleMeshRenderSetting(obj, ticks, oldSplitType);
+	
 	return true;
 }
 

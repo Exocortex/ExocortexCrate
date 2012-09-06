@@ -8,6 +8,7 @@
 #include "AlembicMAXScript.h"
 #include "AlembicMetadataUtils.h"
 #include <color.h>
+#include "AlembicParticlesExtInterface.h"
 
 namespace AbcA = ::Alembic::AbcCoreAbstract::ALEMBIC_VERSION_NS;
 namespace AbcB = ::Alembic::Abc::ALEMBIC_VERSION_NS;
@@ -130,6 +131,8 @@ AlembicParticles::AlembicParticles()
 	 m_bRenderAsTicks = false;
 
 	 m_fViewportPercent = 100.0f;
+
+	 m_pAlembicParticlesExt = new IAlembicParticlesExt(this);
 }
 
 // virtual
@@ -140,6 +143,7 @@ AlembicParticles::~AlembicParticles()
     ALEMBIC_SAFE_DELETE(m_pCylinderMaker);
     ALEMBIC_SAFE_DELETE(m_pDiskMaker);
     ALEMBIC_SAFE_DELETE(m_pRectangleMaker);
+	ALEMBIC_SAFE_DELETE(m_pAlembicParticlesExt);
 }
 
 static const bool LOG = false;
@@ -372,7 +376,7 @@ MarkerType AlembicParticles::GetMarkerType()
 }
 
 Point3 AlembicParticles::ParticlePosition(TimeValue t,int i) {
-	//ESS_LOG_INFO( "AlembicParticles::ParticlePosition( i: " << i << " )" );
+	//ESS_LOG_INFO( "AlembicParticles::ParticlePosition( t: "<<t<<"   i: " << i << " )" );
 	if( i < parts.points.Count() ){
 		return parts.points[i];
 	}
@@ -387,7 +391,7 @@ texture map and the Particle Motion Blur texture map use this method.
 \param t The time to return the particle velocity.
 \param i The index of the particle. */
 Point3 AlembicParticles::ParticleVelocity(TimeValue t,int i) {
-	//ESS_LOG_INFO( "AlembicParticles::ParticleVelocity( i: " << i << " )" );
+	//ESS_LOG_INFO( "AlembicParticles::ParticleVelocity( t: "<<t<<"   i: " << i << " )" );
 	if( i < parts.vels.Count() ){
 		return parts.vels[i];
 	}
@@ -551,15 +555,18 @@ AlembicParticles::GetParticlePositions(Alembic::AbcGeom::IPoints &iPoints, const
 	}
 }
 void
-AlembicParticles::GetParticleVelocities(const Alembic::AbcGeom::IPointsSchema::Sample &floorSample, const Alembic::AbcGeom::IPointsSchema::Sample &ceilSample, const SampleInfo &sampleInfo, const Matrix3& objToWorld, Tab<Point3>& vels) const {
+AlembicParticles::GetParticleVelocities(const Alembic::AbcGeom::IPointsSchema::Sample &floorSample, const Alembic::AbcGeom::IPointsSchema::Sample &ceilSample, const SampleInfo &sampleInfo, Matrix3 objToWorld, Tab<Point3>& vels) const {
 	//ESS_LOG_WARNING( "Particle velocities are not transformed into world space." );
+
+	objToWorld.SetTrans(Point3(0.0, 0.0, 0.0));
+
 	bool useDefaultValues = true;
 	Alembic::Abc::V3fArraySamplePtr floorVelocities = floorSample.getVelocities();
 	if( floorVelocities != NULL && floorVelocities->valid() && floorVelocities->size() > 0 ) {
 		int j = 0;
 		int jIncrement = floorVelocities->size() == vels.Count() ? 1 : 0;
 		for( int i = 0; i < vels.Count(); i ++ ) {
-			vels[i] = ConvertAlembicPointToMaxPoint( (*floorVelocities)[j] ) / TIME_TICKSPERSEC;
+			vels[i] = (ConvertAlembicPointToMaxPoint( (*floorVelocities)[j] ) / TIME_TICKSPERSEC ) * objToWorld;
 			j += jIncrement;
 		}
 		useDefaultValues = false;
@@ -619,9 +626,11 @@ AlembicParticles::GetParticleAges(Alembic::AbcGeom::IPoints &iPoints, const Samp
 }
 
 void
-AlembicParticles::GetParticleOrientations(Alembic::AbcGeom::IPoints &iPoints, const SampleInfo &sampleInfo, const Matrix3& objToWorld, std::vector<Quat>& particleOrientations) const {
+AlembicParticles::GetParticleOrientations(Alembic::AbcGeom::IPoints &iPoints, const SampleInfo &sampleInfo, Matrix3 objToWorld, std::vector<Quat>& particleOrientations) const {
 	//ESS_LOG_WARNING( "Particle orientations are not transformed into world space." );
 	bool useDefaultValues = true;
+
+	objToWorld.SetTrans(Point3(0.0, 0.0, 0.0));
 
 	IQuatfArrayProperty orientProperty;
 	if( getArbGeomParamPropertyAlembic( iPoints, "orientation", orientProperty ) ) {
@@ -668,7 +677,7 @@ AlembicParticles::GetParticleOrientations(Alembic::AbcGeom::IPoints &iPoints, co
 			}
 
 			for( int i = 0; i < maxOrientations.size(); i ++ ) {
-				particleOrientations[i] = maxOrientations[i];
+				particleOrientations[i] = maxOrientations[i] * objToWorld;
 			}
 			useDefaultValues = false;
 		}
@@ -835,8 +844,8 @@ AlembicParticles::GetParticleColors(Alembic::AbcGeom::IPoints &iPoints, const Sa
 int AlembicParticles::NumberOfRenderMeshes()
 {
 	//ESS_LOG_INFO( "AlembicParticles::NumberOfRenderMeshes()" );
-     int count = parts.Count();
-	 return count;
+	int count = parts.Count();
+	return count;
 }
 
 Mesh* AlembicParticles::GetMultipleRenderMesh(TimeValue  t,  INode *inode,  View &view,  BOOL &needDelete,  int meshNumber)
@@ -951,8 +960,23 @@ Mesh* AlembicParticles::GetRenderMesh(TimeValue t, INode *inode, View &view, BOO
 		return renderMesh;
 	}
 
+	//MeshNormalSpec* pMeshNormalSpec = renderMesh->GetSpecifiedNormals();
+
+	renderMesh->SpecifyNormals();
+	MeshNormalSpec* pRenderMeshNormalSpec = renderMesh->GetSpecifiedNormals();
+	pRenderMeshNormalSpec->SetParent(renderMesh);
+
+	pRenderMeshNormalSpec->SetAllExplicit(true);
+	pRenderMeshNormalSpec->SetNumFaces(faceNum);
+	pRenderMeshNormalSpec->SetNumNormals(faceNum);
+	//pRenderMeshNormalSpec->SetNumNormals(1);
+	//pRenderMeshNormalSpec->Normal(0) = Point3(0.0, 0.0, 0.0);
+
+
+
 	Matrix3 inverseTM = Inverse(inode->GetObjectTM(t));
-	
+	//inverseTM.IdentityMatrix();
+
 	int tvertOffset[MAX_MESHMAPS];
 	for(int i=0; i<MAX_MESHMAPS; i++){
 		tvertOffset[i] = 0;
@@ -995,8 +1019,27 @@ Mesh* AlembicParticles::GetRenderMesh(TimeValue t, INode *inode, View &view, BOO
 			renderMesh->faces[curIndex] = pMesh->faces[j];
 			for(int k=0; k<3; k++) {
 				renderMesh->faces[curIndex].v[k] += vertOffset;
+				//pRenderMeshNormalSpec->Face(curIndex).SetNormalID(k, 0);
+				//pRenderMeshNormalSpec->Face(curIndex).SpecifyAll(true);
 			}
 		}
+
+		MeshNormalSpec *pNormalSpec = pMesh->GetSpecifiedNormals();
+		if(pNormalSpec && curNumFaces == pNormalSpec->GetNumFaces() ){
+			for(int j=0, curIndex=faceOffset; j<curNumFaces; j++, curIndex++){
+				for(int f=0; f<3; f++){
+					pRenderMeshNormalSpec->SetNormal(curIndex, f, pNormalSpec->GetNormal(j, f));
+				}
+			}
+		}
+		else{
+			ESS_LOG_WARNING("Particle mesh has invalid normals.");
+			for(int j=0, curIndex=faceOffset; j<curNumFaces; j++, curIndex++){
+				for(int f=0; f<3; f++){
+					pRenderMeshNormalSpec->SetNormal(curIndex, f, Point3(0.0, 0.0, 0.0));
+				}
+			}
+		}	
 
 		int numMaps = pMesh->getNumMaps();
 		for(int mp=0; mp<numMaps; mp++) {
@@ -1042,6 +1085,9 @@ Mesh* AlembicParticles::GetRenderMesh(TimeValue t, INode *inode, View &view, BOO
 		faceOffset += curNumFaces;
 	}
 
+	//pRenderMeshNormalSpec->CheckNormals();
+	renderMesh->buildNormals();
+
 	return renderMesh;
 }
 
@@ -1086,13 +1132,16 @@ void AlembicParticles::GetMultipleRenderMeshTM(TimeValue  t, INode *inode, View 
 	meshTMValid.SetInstant( t );
 }
 
-void AlembicParticles::GetMultipleRenderMeshTM_Internal(TimeValue  t, INode *inode, View &view, int  meshNumber, Matrix3 &meshTM, Interval &meshTMValid)
+void AlembicParticles::GetMultipleRenderMeshTM_Internal(TimeValue  t, INode *inode, View &view, int  meshNumber, Matrix3 &meshTM, Interval &meshTMValid, bool bCalledFromViewport)
 {
 	if(meshNumber >= parts.Count()){
 		meshTM.IdentityMatrix();
 		return;
 	}
-
+	
+	if(!bCalledFromViewport){
+		ESS_LOG_INFO("IAlembicParticlesExt::GetMultipleRenderMeshTM_Internal() - t: "<<t<<"  currTick: "<<m_currTick);
+	}
 
     // Calculate the matrix
     Point3 pos = parts.points[meshNumber];
@@ -1103,7 +1152,7 @@ void AlembicParticles::GetMultipleRenderMeshTM_Internal(TimeValue  t, INode *ino
 	//also, Mental Ray seems to sample at some offset before the current tick, but only once per particle
 	//the velocity array is used instead of multiple calls to the MeshTm method
 	if(t != m_currTick){
-		const float tDiff = static_cast<float>(GetSecondsFromTimeValue(m_currTick) - GetSecondsFromTimeValue(t));
+		const float tDiff = static_cast<float>(GetSecondsFromTimeValue(t) - GetSecondsFromTimeValue(m_currTick));
 		
 		pos += parts.vels[meshNumber] * TIME_TICKSPERSEC * tDiff;
 
@@ -1257,7 +1306,7 @@ int AlembicParticles::Display(TimeValue t, INode* inode, ViewExp *vpt, int flags
 
 			BOOL deleteMesh = FALSE;
 
-			GetMultipleRenderMeshTM_Internal(t, inode, nullView, i, elemToObj, meshTMValid);
+			GetMultipleRenderMeshTM_Internal(t, inode, nullView, i, elemToObj, meshTMValid, true);
 			Mesh *mesh = GetMultipleRenderMesh_Internal(t, inode, nullView, deleteMesh, i);
 
 			if(mesh && m_InstanceShapeType[i] != AlembicPoints::ShapeType_Point ){
@@ -1373,7 +1422,7 @@ int AlembicParticles::HitTest(TimeValue t, INode *inode, int type, int crossing,
 
 		BOOL deleteMesh = FALSE;
 
-		GetMultipleRenderMeshTM_Internal(t, inode, nullView, i, elemToObj, meshTMValid);
+		GetMultipleRenderMeshTM_Internal(t, inode, nullView, i, elemToObj, meshTMValid, true);
 		Mesh *mesh = GetMultipleRenderMesh_Internal(t, inode, nullView, deleteMesh, i);
 		if(!mesh){
 			continue;
@@ -1814,4 +1863,16 @@ int AlembicImport_Points(const std::string &file, Alembic::AbcGeom::IObject& iOb
 	importMetadata(iObj);
 
     return 0;
+}
+
+
+
+BaseInterface* AlembicParticles::GetInterface(Interface_ID id)
+{ 
+	if(id == PARTICLEOBJECTEXT_INTERFACE){
+		ESS_LOG_WARNING("ParticleObject Extended interface being retrieved.");
+		return m_pAlembicParticlesExt;
+		//return NULL;
+	}
+	else return SimpleParticle::GetInterface(id);
 }

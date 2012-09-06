@@ -154,14 +154,34 @@ private:
 	struct meshInfo{
 		Mesh* pMesh;
 		std::string name;
+		int nMatId;
 		//Alembic::AbcGeom::OXformSchema xformSchema;
 		//Alembic::AbcGeom::OPolyMeshSchema meshSchema;
 
-		meshInfo(): pMesh(NULL)
+		meshInfo(): pMesh(NULL), nMatId(-1)
 		{}
 	};
-	typedef std::pair<Alembic::Util::ALEMBIC_VERSION_NS::Digest, Alembic::Util::ALEMBIC_VERSION_NS::Digest> faceVertexHashPair;
-	typedef std::map<faceVertexHashPair, meshInfo> faceVertexHashToShapeMap;
+	//typedef std::pair<Alembic::Util::ALEMBIC_VERSION_NS::Digest, Alembic::Util::ALEMBIC_VERSION_NS::Digest> faceVertexHashPair;
+	struct meshDigests{
+		Alembic::Util::ALEMBIC_VERSION_NS::Digest Vertices;
+		Alembic::Util::ALEMBIC_VERSION_NS::Digest Faces;
+		Alembic::Util::ALEMBIC_VERSION_NS::Digest MatIds;
+		Alembic::Util::ALEMBIC_VERSION_NS::Digest UVWs;
+
+		
+		bool operator<( const meshDigests &iRhs ) const
+		{
+			if(Vertices < iRhs.Vertices ) return true;
+			if(Vertices > iRhs.Vertices ) return false;
+			if(Faces < iRhs.Faces ) return true;
+			if(Faces > iRhs.Faces ) return false;
+			if(MatIds < iRhs.MatIds ) return true;
+			if(MatIds > iRhs.MatIds ) return false;
+			if(UVWs < iRhs.UVWs ) return true;
+			return false;
+    	}
+	};
+	typedef std::map<meshDigests, meshInfo> faceVertexHashToShapeMap;
 	faceVertexHashToShapeMap mShapeMeshCache;
 	int mNumShapeMeshes;
 	int mTotalShapeMeshes;
@@ -179,7 +199,7 @@ private:
 	Alembic::Abc::C4f AlembicPoints::GetColor(IParticleObjectExt *pExt, int particleId, TimeValue ticks);
 	unsigned short FindInstanceName(const std::string& name);
 
-	void ReadShapeMesh(IParticleObjectExt *pExt, int particleId, TimeValue ticks, ShapeType &type, unsigned short &instanceId, float &animationTime);
+	void CacheShapeMesh(Mesh* pShapeMesh, int nMatId, int particleId, TimeValue ticks, ShapeType &type, unsigned short &instanceId, float &animationTime);
 
 	void saveCurrentFrameMeshes();
 

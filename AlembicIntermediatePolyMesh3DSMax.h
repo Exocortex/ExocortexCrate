@@ -69,7 +69,7 @@ public:
     static void make_face_uv(Face *f, Point3 *tv);
     static BOOL CheckForFaceMap(Mtl* mtl, Mesh* mesh);
 
-	void Save(std::map<std::string, bool>& mOptions, Mesh *triMesh, MNMesh* polyMesh, Matrix3& meshTM, Mtl* pMtl, bool bFirstFrame, materialsMergeStr* pMatMerge=NULL);
+	void Save(std::map<std::string, bool>& mOptions, Mesh *triMesh, MNMesh* polyMesh, Matrix3& meshTM, Mtl* pMtl, int nMatId, bool bFirstFrame, materialsMergeStr* pMatMerge);
 };
 
 

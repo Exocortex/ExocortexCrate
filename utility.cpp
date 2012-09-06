@@ -27,7 +27,7 @@ SampleInfo getSampleInfo
    {
       if(result.floorIndex > 75)
       {
-         ESS_LOG_WARNING("[ExocortexAlembic] Reader license not found: Cannot open sample indices higher than 75.");
+         ESS_LOG_ERROR("[ExocortexAlembic] Reader license not found: Cannot open sample indices higher than 75.");
          result.floorIndex = 75;
          result.ceilIndex = 75;
          result.alpha = 0.0;
@@ -83,7 +83,7 @@ std::string buildIdentifierFromRef(const SceneEntry &in_Ref)
    return result;
 }
 
-std::string buildModelIdFromXFormId(const std::string &xformId)
+/*std::string buildModelIdFromXFormId(const std::string &xformId)
 {
     size_t start = xformId.rfind("/");
     start += 1;
@@ -92,14 +92,14 @@ std::string buildModelIdFromXFormId(const std::string &xformId)
     std::string modelName = xformId.substr(start, end-start+1);
     modelName = xformId + std::string("/") + modelName;
     return modelName;
-}
+}*/
 
 std::string getIdentifierFromRef(const SceneEntry &in_Ref)
 {
     return in_Ref.fullname;
 }
 
-std::string getModelFullName( const std::string &identifier )
+/*std::string getModelFullName( const std::string &identifier )
 {
     // Max Scene nodes are also identified by their transform nodes since an INode contains
     // both the transform and the shape.  So if we find an "xfo" at the end of the identifier
@@ -119,7 +119,7 @@ std::string getModelFullName( const std::string &identifier )
     }
 
     return modelName;
-}
+}*/
 
 std::string getModelName( const std::string &identifier )
 {
@@ -134,6 +134,18 @@ std::string getModelName( const std::string &identifier )
         modelName = identifier.substr(0, identifier.length()-3);
 
     return modelName;
+}
+
+std::string removeXfoSuffix(const std::string& importName)
+{
+	size_t found = importName.find("Xfo");
+	if(found == std::string::npos){
+		found = importName.find("xfo");
+	}
+	if(found != std::string::npos){
+		return importName.substr(0, found);
+	}
+	return importName;
 }
 
 void RoundTicksToNearestFrame( int& nTicks, float& fTimeAlpha )
@@ -383,18 +395,6 @@ TriObject* GetTriObjectFromNode(INode *iNode, const TimeValue t, bool &deleteIt)
 	} else {
 		return NULL;
 	}
-}
-
-std::string removeXfoSuffix(const std::string& importName)
-{
-	size_t found = importName.find("Xfo");
-	if(found == std::string::npos){
-		found = importName.find("xfo");
-	}
-	if(found != std::string::npos){
-		return importName.substr(0, found);
-	}
-	return importName;
 }
 
 class HierarchyPathResolver : public ITreeEnumProc

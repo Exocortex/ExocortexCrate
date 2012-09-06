@@ -382,7 +382,7 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
 			for (int j = degree - 1; j >= 0; --j)
 			{
 				pFace->vtx[j] = pMeshFaceIndices[offset];
-				pFace->edg[j] = -1;
+				//pFace->edg[j] = -1;
 				++offset;
 			}
 		}
@@ -392,14 +392,24 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
 		else {
 			options.pMNMesh->SetFlag( MN_MESH_NONTRI, FALSE );
 		}
-		options.pMNMesh->SetFlag( MN_MESH_FILLED_IN, FALSE );
-	    // this can fail if the mesh isn't correctly filled in.
-		if( ! options.pMNMesh->GetFlag( MN_MESH_FILLED_IN ) ) {				
+
+		//the FillInMesh call breaks the topology of some meshes in 3DS Max 2012
+		//(my test case in referenced here: https://github.com/Exocortex/ExocortexAlembic3DSMax/issues/191)
+		//the FillInMesh call is necessary to prevent all meshes from crashing 3DS Max 2010 and 2011
+		//untested in 2013
+	
+#if MAX_PRODUCT_YEAR_NUMBER < 2012
+		
+		if( ! options.pMNMesh->GetFlag( MN_MESH_FILLED_IN ) ) {
+			//HighResolutionTimer tFillInMesh;
 			options.pMNMesh->FillInMesh();
-			if( options.pMNMesh->GetFlag( MN_MESH_RATSNEST ) ) {
+			//ESS_LOG_WARNING("FillInMesh time: "<<tFillInMesh.elapsed());
+			if( options.pMNMesh->GetFlag(MN_MESH_RATSNEST) ) {
 				ESS_LOG_ERROR( "Mesh is a 'Rat's Nest' (more than 2 faces per edge) and not fully supported, fileName: " << options.fileName << " identifier: " << options.identifier );
 			}
 		}
+
+#endif
 	
 		validateMeshes( options, "ALEMBIC_DATAFILL_FACELIST" );
 
@@ -424,6 +434,7 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
    {
        Alembic::AbcGeom::IN3fGeomParam meshNormalsParam = objMesh.getSchema().getNormalsParam();
 
+#if MAX_PRODUCT_YEAR_NUMBER < 2011
        if(meshNormalsParam.valid())
        {
 		   Alembic::Abc::N3fArraySamplePtr meshNormalsFloor = meshNormalsParam.getExpandedValue(sampleInfo.floorIndex).getVals();
@@ -541,17 +552,114 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
 
 		   }
        }
-    validateMeshes( options, "ALEMBIC_DATAFILL_NORMALS" );
-  }
 
-	if( options.nDataFillFlags & ALEMBIC_DATAFILL_ALLOCATE_UV_STORAGE )
-	{
-		
-		//we can probably set this to the actual number of channels required if necessary
-		options.pMNMesh->SetMapNum(100);
-		options.pMNMesh->InitMap(0);
-	
-	}
+#else
+       if(meshNormalsParam.valid())
+       {
+		   Alembic::Abc::N3fArraySamplePtr meshNormalsFloor = meshNormalsParam.getExpandedValue(sampleInfo.floorIndex).getVals();
+           Alembic::Abc::N3fArraySamplePtr meshNormalsCeil = meshNormalsParam.getExpandedValue(sampleInfo.ceilIndex).getVals();
+
+           Imath::V3f const* pMeshNormalsFloor = ( meshNormalsFloor.get() != NULL ) ? meshNormalsFloor->get() : NULL;
+		   Imath::V3f const* pMeshNormalsCeil = ( meshNormalsCeil.get() != NULL ) ? meshNormalsCeil->get() : NULL;
+
+		   if( pMeshNormalsFloor == NULL || pMeshNormalsCeil == NULL || meshNormalsFloor->size() != sampleCount) {
+			   //The last check ensures that we will not exceed the array bounds of PMeshNormalsFloor
+			   ESS_LOG_WARNING( "Mesh normals are in an invalid state in Alembic file, ignoring." );
+		   }
+		   else {
+
+			   // Set up the specify normals
+			   if( options.pMNMesh->GetSpecifiedNormals() == NULL ) {
+				  //ESS_LOG_ERROR( "Allocating new specified normals." );
+					options.pMNMesh->SpecifyNormals();
+			   }
+
+			   //NOTE: options.pMNMesh->ClearSpecifiedNormals() will make getSpecifiedNormals return NULL again
+  			   MNNormalSpec *normalSpec = options.pMNMesh->GetSpecifiedNormals();
+			   normalSpec->SetParent( options.pMNMesh );
+			   if( normalSpec->GetNumFaces() != numFaces || normalSpec->GetNumNormals() != sampleCount){
+					//normalSpec->ClearAndFree();
+				  // ESS_LOG_ERROR( "Setting new faces and normal counts for specified normals." );
+				    normalSpec->SetNumFaces(numFaces);
+					normalSpec->SetNumNormals((int)meshNormalsFloor->size());
+			   }
+			   normalSpec->SetFlag(MESH_NORMAL_MODIFIER_SUPPORT, true);
+			   normalSpec->SetAllExplicit(true); //this call is probably more efficient than the per vertex one since 3DS Max uses bit flags
+
+			   // Blend 
+			   if (sampleInfo.alpha != 0.0f && meshNormalsFloor->size() == meshNormalsCeil->size())
+			   {
+				   int offset = 0;
+				   for (int i = 0; i < numFaces; i++){
+					   int degree = pMeshFaceCount[i];
+					   int first = offset + degree - 1;
+					   int last = offset;
+
+                       MNNormalFace &normalFace = normalSpec->Face(i);
+				       normalFace.SetDegree(degree);
+
+					   for (int j = first, f = 0; j >= last; j--, f++){    
+						   normalFace.SetNormalID(f, j);
+						   Imath::V3f interpolatedNormal = pMeshNormalsFloor[j] + (pMeshNormalsCeil[j] - pMeshNormalsFloor[j]) * float(sampleInfo.alpha);
+				           if( options.fVertexAlpha != 1.0f ) {
+				               interpolatedNormal *= options.fVertexAlpha;
+				           }
+						   normalSpec->Normal(j) = ConvertAlembicNormalToMaxNormal_Normalized( interpolatedNormal );
+					   }
+					   offset += degree;
+				   }
+			   }
+			   else
+			   {
+				   int offset = 0;
+				   for (int i = 0; i < numFaces; i++){
+					   int degree = pMeshFaceCount[i];
+					   int first = offset + degree - 1;
+					   int last = offset;
+
+                       MNNormalFace &normalFace = normalSpec->Face(i);
+				       normalFace.SetDegree(degree);
+
+					   for (int j = first, f = 0; j >= last; j--, f++){    
+						   normalFace.SetNormalID(f, j);
+						   if( options.fVertexAlpha != 1.0f ){
+                               normalSpec->Normal(j) = ConvertAlembicNormalToMaxNormal( pMeshNormalsFloor[j] * options.fVertexAlpha );
+						   }
+						   else{
+                               normalSpec->Normal(j) = ConvertAlembicNormalToMaxNormal( pMeshNormalsFloor[j] );
+						   }
+					   }
+					   offset += degree;
+				   }
+			   }
+
+			   //3DS Max documentation on MNMesh::checkNormals() - checks our flags and calls BuildNormals, ComputeNormals as needed. 
+			   //MHahn: Probably not necessary since we explicility setting every normals
+			   //normalSpec->CheckNormals();
+
+
+			   //The following flags are set after the CheckNormals call
+			   //normalSpec->SetFlag(MESH_NORMAL_NORMALS_BUILT);
+			   //normalSpec->SetFlag(MESH_NORMAL_NORMALS_COMPUTED);
+
+			   //Also allocates space for the RVert array which we need for doing any normal vector queries
+			   //options.pMNMesh->checkNormals(TRUE);
+			   //MHahn: switched to build normals call, since all we need to is build the RVert array. Note: documentation says we only need
+			   //to this if we query the MNMesh to ask about vertices. Do we actually need this capability?
+			   options.pMNMesh->buildNormals();
+
+		   }
+       }
+#endif
+        validateMeshes( options, "ALEMBIC_DATAFILL_NORMALS" );
+   }
+
+   if( options.nDataFillFlags & ALEMBIC_DATAFILL_ALLOCATE_UV_STORAGE )
+   {
+       //we can probably set this to the actual number of channels required if necessary
+       options.pMNMesh->SetMapNum(100);
+       options.pMNMesh->InitMap(0);
+   }
 
    if ( options.nDataFillFlags & ALEMBIC_DATAFILL_UVS )
    {
@@ -771,7 +879,7 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
 
   // This isn't required if we notify 3DS Max properly via the channel flags for vertex changes.
    //options.pMNMesh->MNDebugPrint();
-   if ( options.nDataFillFlags & ALEMBIC_DATAFILL_FACELIST ) {
+   if ( (options.nDataFillFlags & ALEMBIC_DATAFILL_FACELIST) || (options.nDataFillFlags & ALEMBIC_DATAFILL_NORMALS) ) {
 	   options.pMNMesh->InvalidateTopoCache();
 		options.pMNMesh->InvalidateGeomCache();
 	}
@@ -953,16 +1061,16 @@ int AlembicImport_PolyMesh(const std::string &path, Alembic::AbcGeom::IObject& i
 			return alembic_failure;
 		}
 
-		Alembic::AbcGeom::IPolyMeshSchema::Sample polyMeshSample;
-		objMesh.getSchema().get(polyMeshSample, 0);
+		//Alembic::AbcGeom::IPolyMeshSchema::Sample polyMeshSample;
+		//objMesh.getSchema().get(polyMeshSample, 0);
 
 		//if (AlembicImport_IsPolyObject(polyMeshSample))
-		{
-			
-			PolyObject *pPolyObject = (PolyObject *) GetPolyObjDescriptor()->Create();
-			dataFillOptions.pMNMesh = &(pPolyObject->GetMesh());
-			newObject = pPolyObject;
-		}
+		//{
+		//	
+		//	PolyObject *pPolyObject = (PolyObject *) GetPolyObjDescriptor()->Create();
+		//	dataFillOptions.pMNMesh = &(pPolyObject->GetMesh());
+		//	newObject = pPolyObject;
+		//}
 		/*else
 		{
 			TriObject *pTriObj = (TriObject *) GetTriObjDescriptor()->Create();
@@ -983,26 +1091,26 @@ int AlembicImport_PolyMesh(const std::string &path, Alembic::AbcGeom::IObject& i
 			return alembic_failure;
 		}
 
-		Alembic::AbcGeom::ISubDSchema::Sample subDSample;
-		objSubD.getSchema().get(subDSample, 0);
+		//Alembic::AbcGeom::ISubDSchema::Sample subDSample;
+		//objSubD.getSchema().get(subDSample, 0);
 
-		PolyObject *pPolyObject = (PolyObject *) GetPolyObjDescriptor()->Create();
-		dataFillOptions.pMNMesh = &(pPolyObject->GetMesh());
-		newObject = pPolyObject;
+		//PolyObject *pPolyObject = (PolyObject *) GetPolyObjDescriptor()->Create();
+		//dataFillOptions.pMNMesh = &(pPolyObject->GetMesh());
+		//newObject = pPolyObject;
 	}
 	else {
 		return alembic_failure;
 	}
 
-    if (newObject == NULL)
-    {
-        return alembic_failure;
-    }
-
    // Create the object pNode
 	INode *pNode = *pMaxNode;
 	bool bReplaceExistingModifiers = false;
 	if(!pNode){
+		Object* newObject = (PolyObject*)GetPolyObjDescriptor()->Create();
+		if (newObject == NULL)
+		{
+			return alembic_failure;
+		}
 		pNode = GET_MAX_INTERFACE()->CreateObjectNode(newObject, EC_UTF8_to_TCHAR( iObj.getName().c_str() ) );
 		if (pNode == NULL){
 			return alembic_failure;
@@ -1255,8 +1363,8 @@ int AlembicImport_PolyMesh(const std::string &path, Alembic::AbcGeom::IObject& i
 	}
 
     // Add the new inode to our current scene list
-    SceneEntry *pEntry = options.sceneEnumProc.Append(pNode, newObject, OBTYPE_MESH, &std::string(iObj.getFullName())); 
-    options.currentSceneList.Append(pEntry);
+   // SceneEntry *pEntry = options.sceneEnumProc.Append(pNode, newObject, OBTYPE_MESH, &std::string(iObj.getFullName())); 
+    //options.currentSceneList.Append(pEntry);
 
     // Set the visibility controller
     AlembicImport_SetupVisControl( path.c_str(), identifier.c_str(), iObj, pNode, options);

@@ -195,10 +195,6 @@ void AlembicMeshNormalsModifier::ModifyObject (TimeValue t, ModContext &mc, Obje
 	   PolyObject *pPolyObj = reinterpret_cast<PolyObject *>(os->obj );
 
 	   options.pMNMesh = &( pPolyObj->GetMesh() );
-    
-	   if (os->obj != pPolyObj) {
-          os->obj = pPolyObj;
-	   }
    }
    else if (os->obj->CanConvertToType(Class_ID(POLYOBJ_CLASS_ID, 0)))
    {
@@ -208,6 +204,7 @@ void AlembicMeshNormalsModifier::ModifyObject (TimeValue t, ModContext &mc, Obje
     
 	   if (os->obj != pPolyObj) {
           os->obj = pPolyObj;
+		  os->obj->UnlockObject();
 	   }
 
    }

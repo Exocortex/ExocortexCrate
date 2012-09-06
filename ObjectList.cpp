@@ -59,7 +59,7 @@ void ObjectList::ClearList()
 	this->objectEntries.clear();
 }
 
-INode* ObjectList::FindNodeWithFullName(std::string &identifier)
+/*INode* ObjectList::FindNodeWithFullName(std::string &identifier)
 {
     // Max Scene nodes are also identified by their transform nodes since an INode contains
     // both the transform and the shape.  So if we find an "xfo" at the end of the identifier
@@ -75,9 +75,9 @@ INode* ObjectList::FindNodeWithFullName(std::string &identifier)
 	}
 
     return NULL;
-}
+}*/
 
-INode* ObjectList::FindNodeWithName(std::string &identifier, bool removeXfo)
+/*INode* ObjectList::FindNodeWithName(std::string &identifier, bool removeXfo)
 {
     // Max Scene nodes are also identified by their transform nodes since an INode contains
     // both the transform and the shape.  So if we find an "xfo" at the end of the identifier
@@ -96,4 +96,4 @@ INode* ObjectList::FindNodeWithName(std::string &identifier, bool removeXfo)
 	}
 
     return pLastNode;
-}
+}*/

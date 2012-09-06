@@ -57,6 +57,6 @@ private:
     MeshTopologyType topologyType;
 };
 
-void AlembicImport_SetupChildLinks( Alembic::Abc::IObject &obj, alembic_importoptions &options );
+//void AlembicImport_SetupChildLinks( Alembic::Abc::IObject &obj, alembic_importoptions &options );
 
 #endif

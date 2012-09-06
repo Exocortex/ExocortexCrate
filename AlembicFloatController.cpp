@@ -8,6 +8,7 @@
 #include "resource.h"
 #include "AlembicMAXScript.h"
 #include <cmath>
+#include <boost/algorithm/string.hpp>
 
 // This function returns a pointer to a class descriptor for our Utility
 // This is the function that informs max that our plug-in exists and is 
@@ -185,6 +186,18 @@ void AlembicFloatController::GetValueLocalTime(TimeValue t, void *ptr, Interval 
 	BOOL bMuted;
 	this->pblock->GetValue( AlembicFloatController::ID_MUTED, t, bMuted, interval);
 
+	extern bool g_bVerboseLogging;
+
+	if(g_bVerboseLogging){
+		ESS_LOG_INFO("Param block at tick "<<t<<"-----------------------");
+		ESS_LOG_INFO("PATH: "<<strPath);
+		ESS_LOG_INFO("IDENTIFIER: "<<strIdentifier);
+		ESS_LOG_INFO("PROPERTY: "<<strProperty);
+		ESS_LOG_INFO("TIME: "<<fTime);
+		ESS_LOG_INFO("MUTED: "<<bMuted);
+		ESS_LOG_INFO("Param block end -------------");
+	}
+
     if (bMuted || !strProperty)
     {
         return;
@@ -211,10 +224,15 @@ void AlembicFloatController::GetValueLocalTime(TimeValue t, void *ptr, Interval 
 		return;
 	}
 
+
 	Alembic::AbcGeom::IObject iObj = getObjectFromArchive(szPath, szIdentifier);
     
 	if(!iObj.valid() || !Alembic::AbcGeom::ICamera::matches(iObj.getMetaData())) {
         return;
+	}
+
+	if(g_bVerboseLogging){
+		ESS_LOG_INFO("Camera object found.");
 	}
 
     Alembic::AbcGeom::ICamera objCamera = Alembic::AbcGeom::ICamera(iObj, Alembic::Abc::kWrapExisting);
@@ -227,6 +245,11 @@ void AlembicFloatController::GetValueLocalTime(TimeValue t, void *ptr, Interval 
                                           objCamera.getSchema().getNumSamples());
     Alembic::AbcGeom::CameraSample sample;
     objCamera.getSchema().get(sample, sampleInfo.floorIndex);
+
+	if(g_bVerboseLogging){
+		ESS_LOG_INFO("dTicks: "<<dTicks<<" sampleTime: "<<sampleTime);
+		ESS_LOG_INFO("SampleInfo.alpha: "<<sampleInfo.alpha<< "SampleInfo(fi, ci): "<<sampleInfo.floorIndex<<", "<<sampleInfo.ceilIndex);
+	}
 
 	double sampleVal = 0.0;
 	if(!getCameraSampleVal(objCamera, sampleInfo, sample, szProperty.c_str(), sampleVal)){
@@ -244,6 +267,11 @@ void AlembicFloatController::GetValueLocalTime(TimeValue t, void *ptr, Interval 
     }
 
 	const float fSampleVal = (float)sampleVal;
+
+	if(g_bVerboseLogging){
+		ESS_LOG_INFO("Property "<<strProperty<<": "<<fSampleVal);
+		
+	}
 
 	valid = interval;
 

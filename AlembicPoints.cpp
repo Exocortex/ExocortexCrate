@@ -21,6 +21,8 @@
 #include "AlembicMetadataUtils.h"
 #include "MaxSceneTimeManager.h"
 #include <Alembic/Util/Murmur3.h>
+#include "AlembicPointsUtils.h"
+#include "AlembicParticles.h"
 
 namespace AbcA = ::Alembic::AbcCoreAbstract::ALEMBIC_VERSION_NS;
 namespace AbcB = ::Alembic::Abc::ALEMBIC_VERSION_NS;
@@ -138,6 +140,13 @@ bool AlembicPoints::Save(double time, bool bLastFrame)
 		return false;
 	}
 
+	//We have to put the particle system into the renders state so that PFOperatorMaterialFrequency::Proceed will set the materialID channel
+	bool bRenderStateForced = false;
+	if(!particleSystem->IsRenderState()){
+		particleSystem->SetRenderState(true);
+		bRenderStateForced = true;
+	}
+
     // Set the visibility
     float flVisibility = GetRef().node->GetLocalVisibility(ticks);
     mOVisibility.set(flVisibility > 0 ? Alembic::AbcGeom::kVisibilityVisible : Alembic::AbcGeom::kVisibilityHidden);
@@ -181,11 +190,15 @@ bool AlembicPoints::Save(double time, bool bLastFrame)
 										alembicMatrix.GetRow(3).x,  alembicMatrix.GetRow(3).y,  alembicMatrix.GetRow(3).z,  1);
 	Alembic::Abc::M44d nodeWorldTransInv = nodeWorldTrans.inverse();
 
-	const bool bAutomaticInstancing = GetCurrentJob()->GetOption("automaticInstancing");
 
+
+	const bool bAutomaticInstancing = GetCurrentJob()->GetOption("automaticInstancing");
 	if(bAutomaticInstancing){
 		SetMaxSceneTime(ticks);
 	}
+	NullView nullView;
+	particleGroupInterface groupInterface(particlesExt, obj, GetRef().node, &nullView);
+
 
 	for (int i = 0; i < numParticles; ++i)
 	{
@@ -221,7 +234,18 @@ bool AlembicPoints::Save(double time, bool bLastFrame)
 			//age = (float)GetSecondsFromTimeValue(particlesExt->GetParticleAgeByIndex(i));
 			id = particlesExt->GetParticleBornIndex(i);
 			if(bAutomaticInstancing){
-				ReadShapeMesh(particlesExt, i, ticks, shapetype, shapeInstanceId, shapeInstanceTime);
+
+				groupInterface.setCurrentParticle(ticks, i);
+
+				int nMatId = groupInterface.getCurrentMtlId();
+
+				Mesh* pMesh = particlesExt->GetParticleShapeByIndex(i);
+				if(pMesh){
+					CacheShapeMesh(pMesh, nMatId, i, ticks, shapetype, shapeInstanceId, shapeInstanceTime);
+				}
+				else{
+					shapetype = ShapeType_Point;
+				}
 			}
 			else{
 				GetShapeType(particlesExt, i, ticks, shapetype, shapeInstanceId, shapeInstanceTime);
@@ -349,6 +373,10 @@ bool AlembicPoints::Save(double time, bool bLastFrame)
 
 	if(bAutomaticInstancing){
 		saveCurrentFrameMeshes();
+	}
+
+	if(bRenderStateForced){
+		particleSystem->SetRenderState(false);
 	}
 
     return true;
@@ -801,36 +829,50 @@ uint16_t AlembicPoints::FindInstanceName(const std::string& name)
 	return USHRT_MAX;
 }
 
-void AlembicPoints::ReadShapeMesh(IParticleObjectExt *pExt, int particleId, TimeValue ticks, ShapeType &type, uint16_t &instanceId, float &animationTime)
+
+
+void AlembicPoints::CacheShapeMesh(Mesh* pShapeMesh, int nMatId, int particleId, TimeValue ticks, ShapeType &type, uint16_t &instanceId, float &animationTime)
 {
 	type = ShapeType_Instance;
 	//animationTime = 0;
 	
-	Mesh* pShapeMesh = pExt->GetParticleShapeByIndex(particleId);
+	//Mesh* pShapeMesh = pExt->GetParticleShapeByIndex(particleId);
 
-	if(!pShapeMesh){
+	meshDigests digests;
+	MurmurHash3_x64_128( pShapeMesh->verts, pShapeMesh->numVerts * sizeof(Point3), sizeof(Point3), digests.Vertices.words );
+	MurmurHash3_x64_128( pShapeMesh->faces, pShapeMesh->numFaces * sizeof(Face), sizeof(Face), digests.Faces.words );
+	if(mJob->GetOption("exportMaterialIds")){
 
-		type = ShapeType_Point;
-		return;
+		std::vector<MtlID> matIds;
+
+		if(nMatId < 0){
+			matIds.reserve(pShapeMesh->getNumFaces());
+			for(int i=0; i<pShapeMesh->getNumFaces(); i++){
+				matIds.push_back(pShapeMesh->getFaceMtlIndex(i));
+			}
+		}
+		else{
+			matIds.push_back(nMatId);
+		}
+
+		MurmurHash3_x64_128( &matIds[0], matIds.size() * sizeof(MtlID), sizeof(MtlID), digests.MatIds.words );
 	}
-
-	Digest vertexDigest;
-	MurmurHash3_x64_128( pShapeMesh->verts, pShapeMesh->numVerts * sizeof(Point3), sizeof(Point3), vertexDigest.words );
-
-	Digest faceDigest;
-	MurmurHash3_x64_128( pShapeMesh->faces, pShapeMesh->numFaces * sizeof(Face), sizeof(Face), faceDigest.words );
+	if(mJob->GetOption("exportUVs")){
+		//TODO...
+	}
 	
 	mTotalShapeMeshes++;
 
 	meshInfo currShapeInfo;
-	faceVertexHashToShapeMap::iterator it = mShapeMeshCache.find(faceVertexHashPair(vertexDigest, faceDigest));
+	faceVertexHashToShapeMap::iterator it = mShapeMeshCache.find(digests);
 	if( it != mShapeMeshCache.end() ){
 		meshInfo& mi = it->second;
 		currShapeInfo = mi;
 	}
 	else{
-		meshInfo& mi = mShapeMeshCache[faceVertexHashPair(vertexDigest, faceDigest)];
+		meshInfo& mi = mShapeMeshCache[digests];
 		mi.pMesh = pShapeMesh;
+		mi.nMatId = nMatId;
 		std::stringstream nameStream;
 		nameStream<<GetRef().node->GetName()<<" ";
 		nameStream<<"InstanceMesh"<<mNumShapeMeshes;
@@ -872,10 +914,11 @@ void AlembicPoints::saveCurrentFrameMeshes()
 			std::map<std::string, bool> options;
 			options["exportNormals"] = mJob->GetOption("exportNormals");
 			options["indexedNormals"] = mJob->GetOption("indexedNormals");
+			options["exportMaterialIds"] = mJob->GetOption("exportMaterialIds");
 
 			//gather the mesh data
 			IntermediatePolyMesh3DSMax finalPolyMesh;
-			finalPolyMesh.Save(options, pMesh, NULL, worldTrans, NULL, false, NULL);
+			finalPolyMesh.Save(options, pMesh, NULL, worldTrans, NULL, mi->nMatId, true, NULL);
 
 			//save out the mesh xForm
 		
@@ -924,9 +967,30 @@ void AlembicPoints::saveCurrentFrameMeshes()
 				meshSample.setNormals(normalSample);
 			}
 
+			if(mJob->GetOption("exportMaterialIds")){
+				Alembic::Abc::ALEMBIC_VERSION_NS::OUInt32ArrayProperty mMatIdProperty = 
+					OUInt32ArrayProperty(meshSchema, ".materialids", meshSchema.getMetaData(), mJob->GetAnimatedTs());
+				mMatIdProperty.set(Alembic::Abc::UInt32ArraySample(finalPolyMesh.mMatIdIndexVec));
+
+				for ( facesetmap_it it=finalPolyMesh.mFaceSetsMap.begin(); it != finalPolyMesh.mFaceSetsMap.end(); it++)
+				{
+					std::stringstream nameStream;
+					int nMaterialId = it->first+1;
+					nameStream<<it->second.name<<"_"<<nMaterialId;
+
+					std::vector<int32_t>& faceSetVec = it->second.faceIds;
+
+					Alembic::AbcGeom::OFaceSet faceSet = meshSchema.createFaceSet(nameStream.str());
+					Alembic::AbcGeom::OFaceSetSchema::Sample faceSetSample(Alembic::Abc::Int32ArraySample(&faceSetVec.front(), faceSetVec.size()));
+					faceSet.getSchema().set(faceSetSample);
+				}
+			}
+
+			if(mJob->GetOption("exportUVs")){
+				//TODO...
+			}
+
 			meshSchema.set(meshSample);
-
-
 		}
 	}
 	

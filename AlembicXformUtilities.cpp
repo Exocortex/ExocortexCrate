@@ -53,9 +53,15 @@ void AlembicImport_FillInXForm_Internal(alembic_fillxform_options &options)
     if(!obj.valid())
         return;
 
+	extern bool g_bVerboseLogging;
+
 	double SampleTime = GetSecondsFromTimeValue(options.dTicks);
 
 	 Alembic::Abc::M44d matrix;	// constructor creates an identity matrix
+
+	if(g_bVerboseLogging){
+		ESS_LOG_INFO("dTicks: "<<options.dTicks<<" sampleTime: "<<SampleTime);
+	}
 
    // if no time samples, default to identity matrix
    if( obj.getSchema().getNumSamples() > 0 ) {
@@ -64,6 +70,10 @@ void AlembicImport_FillInXForm_Internal(alembic_fillxform_options &options)
 			obj.getSchema().getTimeSampling(),
 			obj.getSchema().getNumSamples()
 			);
+
+		if(g_bVerboseLogging){
+			ESS_LOG_INFO("SampleInfo.alpha: "<<sampleInfo.alpha<< "SampleInfo(fi, ci): "<<sampleInfo.floorIndex<<", "<<sampleInfo.ceilIndex);
+		}
 
 		Alembic::AbcGeom::XformSample sample;
 		obj.getSchema().get(sample,sampleInfo.floorIndex);
@@ -99,6 +109,21 @@ void AlembicImport_FillInXForm_Internal(alembic_fillxform_options &options)
         rotation.RotateX(HALFPI);
         options.maxMatrix = rotation * options.maxMatrix;
     }
+
+
+	if(g_bVerboseLogging){
+
+		Point3 r0 = options.maxMatrix.GetRow(0);
+		Point3 r1 = options.maxMatrix.GetRow(1);
+		Point3 r2 = options.maxMatrix.GetRow(2);
+		Point3 r3 = options.maxMatrix.GetRow(3);
+
+		ESS_LOG_INFO("transform r0: "<<r0.x<<", "<<r0.y<<", "<<r0.z);
+		ESS_LOG_INFO("transform r1: "<<r1.x<<", "<<r1.y<<", "<<r1.z);
+		ESS_LOG_INFO("transform r2: "<<r2.x<<", "<<r2.y<<", "<<r2.z);
+		ESS_LOG_INFO("transform r3: "<<r3.x<<", "<<r3.y<<", "<<r3.z);
+
+	}
 }
 
 int AlembicImport_DummyNode(Alembic::AbcGeom::IObject& iObj, alembic_importoptions &options, INode** pMaxNode, const std::string& importName)

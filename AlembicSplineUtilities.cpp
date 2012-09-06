@@ -480,28 +480,17 @@ int AlembicImport_Shape(const std::string &path, Alembic::AbcGeom::IObject& iObj
     Alembic::AbcGeom::ICurvesSchema::Sample curveSample;
     objCurves.getSchema().get(curveSample, 0);
 
-    Object *newObject = NULL;
-    //if (curveSample.getType() == Alembic::AbcGeom::ALEMBIC_VERSION_NS::kCubic)
-    {
-		EmptySplineObject *pEmptySplineObject = static_cast<EmptySplineObject*>(GET_MAX_INTERFACE()->CreateInstance(SHAPE_CLASS_ID, EMPTY_SPLINE_OBJECT_CLASSID));
-	    newObject = pEmptySplineObject;
-    }
-    /*else
-    {
-		EmptyPolyLineObject *pEmptyPolyLineObject = static_cast<EmptyPolyLineObject*>(GET_MAX_INTERFACE()->CreateInstance(SHAPE_CLASS_ID, EMPTY_POLYLINE_OBJECT_CLASSID));
-	    newObject = pEmptyPolyLineObject;
-    }*/
 
-    if (newObject == NULL)
-    {
-        return alembic_failure;
-    }
-
-   
    // Create the object pNode
 	INode *pNode = *pMaxNode;
 	bool bReplaceExistingModifiers = false;
 	if(!pNode){
+
+		Object *newObject = reinterpret_cast<Object*>(GET_MAX_INTERFACE()->CreateInstance(SHAPE_CLASS_ID, EMPTY_SPLINE_OBJECT_CLASSID));
+		if (newObject == NULL){
+			return alembic_failure;
+		}
+
 		pNode = GET_MAX_INTERFACE()->CreateObjectNode(newObject, EC_UTF8_to_TCHAR( iObj.getName().c_str() ) );
 		if (pNode == NULL){
 			return alembic_failure;
@@ -599,8 +588,8 @@ int AlembicImport_Shape(const std::string &path, Alembic::AbcGeom::IObject& iObj
 	}	
 
     // Add the new inode to our current scene list
-    SceneEntry *pEntry = options.sceneEnumProc.Append(pNode, newObject, OBTYPE_MESH, &std::string(iObj.getFullName())); 
-    options.currentSceneList.Append(pEntry);
+    //SceneEntry *pEntry = options.sceneEnumProc.Append(pNode, newObject, OBTYPE_MESH, &std::string(iObj.getFullName())); 
+    //options.currentSceneList.Append(pEntry);
 
     // Set the visibility controller
     AlembicImport_SetupVisControl( path.c_str(), identifier.c_str(), iObj, pNode, options);

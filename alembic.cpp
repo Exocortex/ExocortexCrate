@@ -12,7 +12,7 @@
 #include "AlembicNames.h"
 #include "AlembicXformUtilities.h"
   
-void AlembicImport_SetupChildLinks( Alembic::Abc::IObject &obj, alembic_importoptions &options )
+/*void AlembicImport_SetupChildLinks( Alembic::Abc::IObject &obj, alembic_importoptions &options )
 {
 	std::string pName = obj.getName();
     INode *pParentNode = options.currentSceneList.FindNodeWithName(pName, false);
@@ -43,4 +43,4 @@ void AlembicImport_SetupChildLinks( Alembic::Abc::IObject &obj, alembic_importop
 			}
         }
     }
-}
+}*/
