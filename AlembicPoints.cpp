@@ -142,7 +142,7 @@ bool AlembicPoints::Save(double time, bool bLastFrame)
 
 	//We have to put the particle system into the renders state so that PFOperatorMaterialFrequency::Proceed will set the materialID channel
 	bool bRenderStateForced = false;
-	if(!particleSystem->IsRenderState()){
+	if(particleSystem && !particleSystem->IsRenderState()){
 		particleSystem->SetRenderState(true);
 		bRenderStateForced = true;
 	}

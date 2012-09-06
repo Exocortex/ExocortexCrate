@@ -193,7 +193,13 @@ int particleGroupInterface::getCurrentMtlId(){
 bool getParticleSystemMesh(TimeValue ticks, Object* obj, INode* node, IntermediatePolyMesh3DSMax* mesh, 
 						   materialsMergeStr* pMatMerge, AlembicWriteJob * mJob, int nNumSamples)
 {
+	static NullView nullView;
 	static const bool ENABLE_VELOCITY_EXPORT = true;
+
+    Matrix3 nodeWorldTM = node->GetObjTMAfterWSM(ticks);
+    Alembic::Abc::M44d nodeWorldTrans;
+    ConvertMaxMatrixToAlembicMatrix(nodeWorldTM, nodeWorldTrans);
+	Alembic::Abc::M44d nodeWorldTransInv = nodeWorldTrans.inverse();
 
 	ParticleObject* pParticleObject = (ParticleObject*)obj->GetInterface(I_PARTICLEOBJ);//(SimpleParticle*) obj->GetInterface(I_SIMPLEPARTICLEOBJ);
 	if(pParticleObject){
@@ -250,6 +256,26 @@ bool getParticleSystemMesh(TimeValue ticks, Object* obj, INode* node, Intermedia
 
 			if(ENABLE_VELOCITY_EXPORT){//TODO...
 
+				IParticleObjectExt* particlesExt = GetParticleObjectExtInterface(pParticleObject);
+				if(particlesExt){
+					Tab<Point3> perVertexVelocities;
+					particlesExt->UpdateParticles(node, ticks);
+					particlesExt->GetRenderMeshVertexSpeed(ticks, node, nullView, perVertexVelocities);  
+
+					if(perVertexVelocities.Count() != pMesh->getNumVerts()){
+						ESS_LOG_WARNING("Warning: Mesh Vertices count and velocities count do not match.");
+					}
+
+					mesh->mVelocitiesVec.reserve(perVertexVelocities.Count());
+					for(int j=0; j<perVertexVelocities.Count(); j++){
+						Imath::V4f pVelocity4 = ConvertMaxVectorToAlembicVector4(perVertexVelocities[j] * TIME_TICKSPERSEC); 
+						pVelocity4 = pVelocity4 * nodeWorldTransInv;
+						mesh->mVelocitiesVec.push_back(Imath::V3f(pVelocity4.x, pVelocity4.y, pVelocity4.z));
+					}
+				}
+				else{
+					ESS_LOG_WARNING("Warning: could not obtain per vertex velocities.");
+				}	
 			}
 
 			mesh->Save(mJob->mOptions, pMesh, NULL, meshTM, pMtl, -1, nNumSamples == 0, pMatMerge);
@@ -274,17 +300,11 @@ bool getParticleSystemMesh(TimeValue ticks, Object* obj, INode* node, Intermedia
 		bRenderStateForced = true;
 	}
 
-    Matrix3 nodeWorldTM = node->GetObjTMAfterWSM(ticks);
-    Alembic::Abc::M44d nodeWorldTrans;
-    ConvertMaxMatrixToAlembicMatrix(nodeWorldTM, nodeWorldTrans);
-	Alembic::Abc::M44d nodeWorldTransInv = nodeWorldTrans.inverse();
-
 	IParticleObjectExt* particlesExt = GetParticleObjectExtInterface(obj);
 	particlesExt->UpdateParticles(node, ticks);
 
 	SetMaxSceneTime(ticks);
 
-	NullView nullView;
 	particleGroupInterface groupInterface(particlesExt, obj, node, &nullView);
 
 	for(int i=0; i< particlesExt->NumParticles(); i++){
@@ -341,6 +361,7 @@ bool getParticleSystemMesh(TimeValue ticks, Object* obj, INode* node, Intermedia
 			mIdentity.makeIdentity();
 			mAngularVelocity -= mIdentity;
 
+			mesh->mVelocitiesVec.reserve(pMesh->getNumVerts());
 			for(int j=0; j<pMesh->getNumVerts(); j++){
 				Imath::V3f meshVertex = ConvertMaxPointToAlembicPoint(pMesh->getVert(j) * meshTM);//the mesh vertex in particle system space
 				Imath::V3f vVelocity = meshVertex * mAngularVelocity;
