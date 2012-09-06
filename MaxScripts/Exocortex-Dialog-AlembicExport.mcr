@@ -17,7 +17,7 @@ rollout AlembicExportSettings "Alembic Export Settings" width:288 height:420
 	
 	dropdownList meshTopologyDropDown "Mesh Topology" pos:[16,192] width:256 height:40 items:#("Just Surfaces (No Normals)", "Point Cache (No Surfaces)", "Surface + Normals (For Interchange)") selection:3
 	
-	dropdownList particleSystemExportMethod "Particle System Export Method" pos:[16,240] width:256 height:40 items:#("Shape Node Instancing", "Automatic Instancing", "Merged Mesh") selection:1
+	dropdownList particleSystemExportMethod "Particle System Export Method" pos:[16,240] width:256 height:40 items:#("Automatic Instancing", "Merged Mesh", "Shape Node Instancing (deprecated)") selection:1
 
 	checkbox uvCheckbox "UVs" pos:[32,288] width:128 height:15 checked:true
 	checkbox envelopeCheckbox "Envelope BindPose" pos:[32,304] width:150 height:15 checked:true
@@ -54,8 +54,8 @@ rollout AlembicExportSettings "Alembic Export Settings" width:288 height:420
 	    	jobString += (exportSelectedCheckbox.checked as string)
 	    	jobString += ";flattenhierarchy=" 
 	    	jobString += (flattenHierarchyCheckbox.checked as string)
-	    	if(particleSystemExportMethod.selection == 2) do jobString += ";automaticinstancing=true" 
-	    	if(particleSystemExportMethod.selection == 3) do jobString += ";particlesystemtomeshconversion=true" 
+	    	if(particleSystemExportMethod.selection == 1) do jobString += ";automaticinstancing=true" 
+	    	if(particleSystemExportMethod.selection == 2) do jobString += ";particlesystemtomeshconversion=true" 
 	    	jobString += ";transformCache="
 	    	jobString += (transformCacheCheckbox.checked as string)
 
