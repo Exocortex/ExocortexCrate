@@ -201,11 +201,15 @@ bool getParticleSystemMesh(TimeValue ticks, Object* obj, INode* node, Intermedia
     ConvertMaxMatrixToAlembicMatrix(nodeWorldTM, nodeWorldTrans);
 	Alembic::Abc::M44d nodeWorldTransInv = nodeWorldTrans.inverse();
 
-	ParticleObject* pParticleObject = (ParticleObject*)obj->GetInterface(I_PARTICLEOBJ);//(SimpleParticle*) obj->GetInterface(I_SIMPLEPARTICLEOBJ);
-	if(pParticleObject){
-
-		NullView nullView;
-
+	ParticleObject* pParticleObject = (ParticleObject*)obj->GetInterface(I_PARTICLEOBJ);
+	//SimpleParticle* pSimpleParticle = (SimpleParticle*)obj->GetInterface(I_SIMPLEPARTICLEOBJ);
+	IPFSystem* iSystem = GetPFSystemInterface(obj);
+	IParticleObjectExt* particlesExt = GetParticleObjectExtInterface(obj);
+	
+	if(pParticleObject && !iSystem){
+	// for simple particles and thinking particles, else clause applies to pFlow
+	// TODO: try using particlesExt->GetRenderMeshVertexSpeed with pFlow instead of calculating the velocities manually
+		
 		//AlembicParticles* pAlembicParticles = NULL;
 		//if(obj->CanConvertToType(ALEMBIC_SIMPLE_PARTICLE_CLASSID))
 		//{
@@ -259,7 +263,7 @@ bool getParticleSystemMesh(TimeValue ticks, Object* obj, INode* node, Intermedia
 				IParticleObjectExt* particlesExt = GetParticleObjectExtInterface(pParticleObject);
 				if(particlesExt){
 					Tab<Point3> perVertexVelocities;
-					particlesExt->UpdateParticles(node, ticks);
+					//particlesExt->UpdateParticles(node, ticks);
 					particlesExt->GetRenderMeshVertexSpeed(ticks, node, nullView, perVertexVelocities);  
 
 					if(perVertexVelocities.Count() != pMesh->getNumVerts()){
@@ -292,7 +296,6 @@ bool getParticleSystemMesh(TimeValue ticks, Object* obj, INode* node, Intermedia
 
 	splitTypeT oldSplitType = setPerParticleMeshRenderSetting(obj, ticks, kRender_splitType_particle);
 
-	IPFSystem* iSystem = GetPFSystemInterface(obj);
 	//We have to put the particle system into the renders state so that PFOperatorMaterialFrequency::Proceed will set the materialID channel
 	bool bRenderStateForced = false;
 	if(iSystem && !iSystem->IsRenderState()){
@@ -300,8 +303,7 @@ bool getParticleSystemMesh(TimeValue ticks, Object* obj, INode* node, Intermedia
 		bRenderStateForced = true;
 	}
 
-	IParticleObjectExt* particlesExt = GetParticleObjectExtInterface(obj);
-	particlesExt->UpdateParticles(node, ticks);
+	//particlesExt->UpdateParticles(node, ticks);
 
 	SetMaxSceneTime(ticks);
 
