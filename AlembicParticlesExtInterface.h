@@ -82,44 +82,6 @@ public:
 	}
 
 	// Implemented by the Plug-in
-	// This method defines a maxscript to be executed after every step of particle system
-	// update integration. When a particle system updates itself from frame 0 to frame 10,
-	// it goes through a series of integration steps: frame 1, frame 2, frame 3, ... or even
-	// smaller steps up to the frame 10. The script will be called after each integration
-	// step to update particle properties. Name of the file is stored by the particle system
-	// Parameters:
-	//		MCHAR *script
-	//			The maxscript
-	//		MCHAR *file
-	//			The file name for the script file.
-	virtual void SetEveryStepUpdateScriptLine(MCHAR* script) { ; }
-	virtual void SetEveryStepUpdateScriptFile(MCHAR* file) { ; }
-
-	// Implemented by the Plug-in
-	// This method defines a maxscript to be executed after last step of particle system
-	// update integration. When a particle system updates itself from frame 0 to frame 10,
-	// it goes through a series of integration steps: frame 1, frame 2, frame 3, ... or even
-	// smaller steps up to the frame 10. The script will be called after the last integration
-	// step at frame 10. If you don't need to update particle properties in intermediate steps
-	// then use this method, i.e. if you can define particle position given the current
-	// frame without speed data.
-	// You can use both SetUpdateScript and SetFinalUpdateScript methods at the same time.
-	// Name of the file is stored by the particle system.
-	// Parameters:
-	//		MCHAR *script
-	//			The maxscript
-	//		MCHAR *file
-	//			The file name for the script file.
-	virtual void SetFinalStepUpdateScriptLine(MCHAR* script) { ; }
-	virtual void SetFinalStepUpdateScriptFile(MCHAR* file) { ; }
-
-	// Implemented by the Plug-in
-	// This methods envokes execution of update scripts
-	// -- for internal use only (may-21-2002)
-	virtual void ExecuteEveryStepUpdateScript() { ; }
-	virtual void ExecuteFinalStepUpdateScript() { ; }
-
-	// Implemented by the Plug-in
 	// Use this method to retrieve time of the current update step. The update time maybe unrelated to 
 	// the current time of the scene.
 	virtual TimeValue GetUpdateTime() { 
