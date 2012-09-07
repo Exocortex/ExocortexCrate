@@ -211,7 +211,8 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
                hasDynamicTopo = !faceCountProp.isConstant();
        }   
 
-
+	//MH: What is this code for? //related to vertex blending
+	//note that the fillInMesh call will crash if the points are not initilaized (tested max 2013)
    if(  ( options.nDataFillFlags & ALEMBIC_DATAFILL_FACELIST ) ||
 	   ( options.nDataFillFlags & ALEMBIC_DATAFILL_VERTEX ) ) {
 		   if (currentNumVerts != meshPos->size() && ! options.pMNMesh->GetFlag( MN_MESH_RATSNEST ) )
@@ -396,9 +397,9 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
 		//the FillInMesh call breaks the topology of some meshes in 3DS Max 2012
 		//(my test case in referenced here: https://github.com/Exocortex/ExocortexAlembic3DSMax/issues/191)
 		//the FillInMesh call is necessary to prevent all meshes from crashing 3DS Max 2010 and 2011
-		//untested in 2013
-	
-#if MAX_PRODUCT_YEAR_NUMBER < 2012
+		//Tested in 2013, some simples meshes seem to crash, so I'm putting it back in
+
+#if 1//MAX_PRODUCT_YEAR_NUMBER < 2012
 		
 		if( ! options.pMNMesh->GetFlag( MN_MESH_FILLED_IN ) ) {
 			//HighResolutionTimer tFillInMesh;
