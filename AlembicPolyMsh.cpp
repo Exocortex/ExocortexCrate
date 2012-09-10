@@ -142,12 +142,8 @@ XSI::CStatus AlembicPolyMesh::Save(double time)
       if(mNumSamples == 0)
       {
          // store a dummy empty topology
-         mFaceCountVec.push_back(0);
-         mFaceIndicesVec.push_back(0);
-         Alembic::Abc::Int32ArraySample faceCountSample(&mFaceCountVec.front(),mFaceCountVec.size());
-         Alembic::Abc::Int32ArraySample faceIndicesSample(&mFaceIndicesVec.front(),mFaceIndicesVec.size());
-         mMeshSample.setFaceCounts(faceCountSample);
-         mMeshSample.setFaceIndices(faceIndicesSample);
+         mMeshSample.setFaceCounts(Alembic::Abc::Int32ArraySample(NULL, 0));
+         mMeshSample.setFaceIndices(Alembic::Abc::Int32ArraySample(NULL, 0));
       }
 
       mMeshSchema.set(mMeshSample);
