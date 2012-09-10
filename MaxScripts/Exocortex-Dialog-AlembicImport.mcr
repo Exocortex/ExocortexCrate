@@ -9,7 +9,7 @@ rollout AlembicImportSettings "Alembic Import Settings" width:288 height:150
 	checkbox normalCheckbox "Normals" pos:[48,32] width:200 height:15 checked:true
 	checkbox uvCheckbox "UVs" pos:[48,48] width:200 height:15 checked:true
     --checkbox clustersCheckbox "Clusters" pos:[48,64] width:200 height:15 checked:true
-	checkbox attachCheckbox "Attach to existing objects" pos:[48,64] width:200 height:15 checked:true
+	checkbox attachCheckbox "Attach to existing objects" pos:[48,64] width:200 height:15 checked:false
 
 	button importButton "Import" pos:[16,120] width:64 height:24
 	button cancelButton "Cancel" pos:[208,120] width:64 height:24
