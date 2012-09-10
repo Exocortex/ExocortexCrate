@@ -37,6 +37,21 @@ int AlembicImport_PolyMesh(const std::string &path, Alembic::AbcGeom::IObject& i
 bool	AlembicImport_IsPolyObject(Alembic::AbcGeom::IPolyMeshSchema::Sample &polyMeshSample);
 
 
+class alembicMeshInfo
+{
+public:
+
+	Alembic::AbcGeom::IPolyMesh objMesh;
+	Alembic::AbcGeom::ISubD objSubD;
+	Alembic::AbcGeom::IPolyMeshSchema::Sample polyMeshSample;
+	Alembic::AbcGeom::ISubDSchema::Sample subDSample;
+	SampleInfo sampleInfo;
+
+	bool open(const std::string& szPath, const std::string szIdentifier);
+	void setSample(TimeValue nTicks);
+	bool hasTopology();
+	bool hasNormals();
+};
 
 
 /*
