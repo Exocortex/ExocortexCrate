@@ -922,6 +922,10 @@ Mesh* AlembicParticles::GetMultipleRenderMesh_Internal(TimeValue  t,  INode *ino
 
 Mesh* AlembicParticles::GetRenderMesh(TimeValue t, INode *inode, View &view, BOOL &needDelete)
 {
+	if (m_currTick != t){
+		Update(t,inode);
+	}
+
 	NullView nullView;
 
 	//Based upon the PFOperatorRender.cpp code
