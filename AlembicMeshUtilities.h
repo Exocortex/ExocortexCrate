@@ -47,7 +47,7 @@ public:
 	Alembic::AbcGeom::ISubDSchema::Sample subDSample;
 	SampleInfo sampleInfo;
 
-	bool open(const std::string& szPath, const std::string szIdentifier);
+	bool open(const std::string& szPath, const std::string& szIdentifier);
 	void setSample(TimeValue nTicks);
 	bool hasTopology();
 	bool hasNormals();

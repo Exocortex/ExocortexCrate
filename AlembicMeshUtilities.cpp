@@ -1142,7 +1142,7 @@ int AlembicImport_PolyMesh(const std::string &path, Alembic::AbcGeom::IObject& i
 	}
 
 	alembicMeshInfo meshInfo;
-	meshInfo.open( EC_UTF8_to_TCHAR(path.c_str()), EC_UTF8_to_TCHAR(identifier.c_str()) );
+	meshInfo.open(path, identifier);
 	meshInfo.setSample(0);
 
 	//ESS_LOG_INFO( "Node: " << pNode->GetName() );
@@ -1383,7 +1383,7 @@ int AlembicImport_PolyMesh(const std::string &path, Alembic::AbcGeom::IObject& i
 	return 0;
 }
 
-bool alembicMeshInfo::open(const std::string& szPath, const std::string szIdentifier)
+bool alembicMeshInfo::open(const std::string& szPath, const std::string& szIdentifier)
 {
 	Alembic::AbcGeom::IObject iObj;
 	try {
