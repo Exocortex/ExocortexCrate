@@ -567,9 +567,16 @@ MStatus AlembicExportCommand::doIt(const MArgList & args)
 	
    // now, let's run through all frames, and process the jobs
    double frameRate = MAnimControl::currentTime().value() / MAnimControl::currentTime().as(MTime::kSeconds);
-   for(double frame = minFrame; frame<=maxFrame; frame += maxSteps / maxSubsteps)
+   // save the current animation start/end time information!
+   //MTime currentAnimStartTime = MAnimControl::animationStartTime(),
+   //      currentAnimEndTime   = MAnimControl::animationEndTime();
+   const double incrSteps = maxSteps / maxSubsteps;
+   double prevFrame = minFrame - incrSteps;
+   for(double frame = minFrame; frame<=maxFrame; frame += incrSteps, prevFrame += incrSteps)
    {
-      MAnimControl::setCurrentTime(MTime(frame/frameRate,MTime::kSeconds));
+      MAnimControl::setCurrentTime(MTime(prevFrame/frameRate,MTime::kSeconds));
+      MAnimControl::setAnimationEndTime( MTime(frame/frameRate,MTime::kSeconds) );
+      MAnimControl::playForward();  // this way, it should only play one frame at the time!
 
       bool canceled = false;
       for(size_t i=0;i<jobPtrs.size();i++)
@@ -585,6 +592,7 @@ MStatus AlembicExportCommand::doIt(const MArgList & args)
             MGlobal::displayError("[ExocortexAlembic] Job aborted :"+jobPtrs[i]->GetFileName());
             for(size_t k=0;k<jobPtrs.size();k++)
                delete(jobPtrs[k]);
+            //MAnimControl::setAnimationStartEndTime(currentAnimStartTime, currentAnimEndTime);
             return status;
          }
 
@@ -598,6 +606,9 @@ MStatus AlembicExportCommand::doIt(const MArgList & args)
       if(canceled)
          break;
    }
+
+   // restore the animation start/end time!
+   //MAnimControl::setAnimationStartEndTime(currentAnimStartTime, currentAnimEndTime);
 
    // TODO: hide progressbar
    //prog.PutVisible(false);
