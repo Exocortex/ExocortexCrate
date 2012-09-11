@@ -1028,11 +1028,18 @@ Mesh* AlembicParticles::GetRenderMesh(TimeValue t, INode *inode, View &view, BOO
 			}
 		}
 
+		//for transforming the normals
+		Matrix3 meshTM_I_T = meshTM;
+		meshTM_I_T.SetTrans(Point3(0.0, 0.0, 0.0));
+		//the following two steps are necessary because meshTM can contain a scale factor
+		meshTM_I_T = Inverse(meshTM_I_T);
+		meshTM_I_T = TransposeRot(meshTM_I_T);
+
 		MeshNormalSpec *pNormalSpec = pMesh->GetSpecifiedNormals();
 		if(pNormalSpec && curNumFaces == pNormalSpec->GetNumFaces() ){
 			for(int j=0, curIndex=faceOffset; j<curNumFaces; j++, curIndex++){
 				for(int f=0; f<3; f++){
-					pRenderMeshNormalSpec->SetNormal(curIndex, f, pNormalSpec->GetNormal(j, f));
+					pRenderMeshNormalSpec->SetNormal(curIndex, f, pNormalSpec->GetNormal(j, f) * meshTM_I_T);
 				}
 			}
 		}
@@ -1223,7 +1230,7 @@ INode* AlembicParticles::GetParticleMeshNode(int meshNumber, INode *displayNode)
     }
 }
 
-
+//Note: the display and hittest methods called often, so we definitely should have caching
 int AlembicParticles::Display(TimeValue t, INode* inode, ViewExp *vpt, int flags)
 {
    if (!OKtoDisplay(t)) 

@@ -135,6 +135,7 @@ Modifier* FindModifier(INode* node, char* name);
 Modifier* FindModifier(INode* node, Class_ID obtype, const char* identifier);
 Modifier* FindModifier(INode* node, Class_ID obtype);
 void printControllers(Animatable* anim);
+Matrix3 TransposeRot(const Matrix3& mat);
 
 class AlembicPathAccessor : public  IAssetAccessor	{
 	public:
