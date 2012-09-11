@@ -276,11 +276,32 @@ void* AlembicExportCommand::creator()
    return new AlembicExportCommand();
 }
 
+static void restoreOldTime(MTime &start, MTime &end, MTime &curr, MTime &minT, MTime &maxT)
+{
+  const double st = start.as(start.unit()),
+               en = end.as(end.unit()),
+               cu = curr.as(curr.unit());
+
+  MString inst = "playbackOptions -min ";
+  inst += st;
+  inst += " -max ";
+  inst += en;
+  inst += ";\ncurrentTime ";
+  inst += cu;
+  inst += ";";
+
+  MGlobal::executeCommand(inst);
+}
+
 MStatus AlembicExportCommand::doIt(const MArgList & args)
 {
    MStatus status = MS::kFailure;
 
-   MTime oldCurTime = MAnimControl::currentTime();
+   MTime currentAnimStartTime = MAnimControl::animationStartTime(),
+         currentAnimEndTime   = MAnimControl::animationEndTime(),
+         oldCurTime           = MAnimControl::currentTime(),
+         curMinTime           = MAnimControl::minTime(),
+         curMaxTime           = MAnimControl::maxTime();
    MArgParser argData(syntax(), args, &status);
 
    if (argData.isFlagSet("help"))
@@ -566,17 +587,14 @@ MStatus AlembicExportCommand::doIt(const MArgList & args)
    //prog.PutVisible(true);
 	
    // now, let's run through all frames, and process the jobs
-   double frameRate = MAnimControl::currentTime().value() / MAnimControl::currentTime().as(MTime::kSeconds);
-   // save the current animation start/end time information!
-   //MTime currentAnimStartTime = MAnimControl::animationStartTime(),
-   //      currentAnimEndTime   = MAnimControl::animationEndTime();
+   const double frameRate = MAnimControl::currentTime().value() / MAnimControl::currentTime().as(MTime::kSeconds);
    const double incrSteps = maxSteps / maxSubsteps;
    double prevFrame = minFrame - incrSteps;
    for(double frame = minFrame; frame<=maxFrame; frame += incrSteps, prevFrame += incrSteps)
    {
       MAnimControl::setCurrentTime(MTime(prevFrame/frameRate,MTime::kSeconds));
       MAnimControl::setAnimationEndTime( MTime(frame/frameRate,MTime::kSeconds) );
-      MAnimControl::playForward();  // this way, it should only play one frame at the time!
+      MAnimControl::playForward();  // this way, it forces Maya to play exactly one frame! and particles are updated!
 
       bool canceled = false;
       for(size_t i=0;i<jobPtrs.size();i++)
@@ -592,7 +610,7 @@ MStatus AlembicExportCommand::doIt(const MArgList & args)
             MGlobal::displayError("[ExocortexAlembic] Job aborted :"+jobPtrs[i]->GetFileName());
             for(size_t k=0;k<jobPtrs.size();k++)
                delete(jobPtrs[k]);
-            //MAnimControl::setAnimationStartEndTime(currentAnimStartTime, currentAnimEndTime);
+            restoreOldTime(currentAnimStartTime, currentAnimEndTime, oldCurTime, curMinTime, curMaxTime);
             return status;
          }
 
@@ -607,8 +625,8 @@ MStatus AlembicExportCommand::doIt(const MArgList & args)
          break;
    }
 
-   // restore the animation start/end time!
-   //MAnimControl::setAnimationStartEndTime(currentAnimStartTime, currentAnimEndTime);
+   // restore the animation start/end time and the current time!
+   restoreOldTime(currentAnimStartTime, currentAnimEndTime, oldCurTime, curMinTime, curMaxTime);
 
    // TODO: hide progressbar
    //prog.PutVisible(false);
