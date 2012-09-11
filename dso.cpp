@@ -1290,7 +1290,7 @@ static AtNode *GetNode(void *user_ptr, int i)
             Alembic::AbcGeom::IV2fGeomParam uvParam = typedObject.getSchema().getUVsParam();
             if(uvParam.valid())
             {
-               /*
+               //*
                Alembic::Abc::V2fArraySamplePtr abcUvs = uvParam.getExpandedValue(sampleInfo.floorIndex).getVals();
                AtArray * uvs = AiArrayAllocate((AtInt)abcUvs->size() * 2, 1, AI_TYPE_FLOAT);
                AtULong offset = 0;
@@ -1302,9 +1302,10 @@ static AtNode *GetNode(void *user_ptr, int i)
                AiNodeSetArray(shapeNode, "uvlist", uvs);
                AiNodeSetArray(shapeNode, "uvidxs", AiArrayCopy(uvsIdx));
 
-               //*/
+               /*/
                AiNodeSetArray(shapeNode, "uvlist", removeUvsDuplicate(uvParam, sampleInfo, uvsIdx, faceIndices));
                AiNodeSetArray(shapeNode, "uvidxs", uvsIdx);
+               //*/
 
                // check if we have uvOptions
                if(typedObject.getSchema().getPropertyHeader( ".uvOptions" ) != NULL)
@@ -1654,12 +1655,13 @@ static AtNode *GetNode(void *user_ptr, int i)
                   AiArraySetFlt(uvs,offset++,abcUvs->get()[i].x);
                   AiArraySetFlt(uvs,offset++,abcUvs->get()[i].y);
                }
-               //*/
+               /*/
                AiNodeSetArray(shapeNode, "uvlist", removeUvsDuplicate(uvParam, sampleInfo, uvsIdx, faceIndices));
                AiNodeSetArray(shapeNode, "uvidxs", uvsIdx);
                //*/
 
                // check if we have uvOptions
+               //*
                if(typedObject.getSchema().getPropertyHeader( ".uvOptions" ) != NULL)
                {
                   Alembic::Abc::IFloatArrayProperty prop = Alembic::Abc::IFloatArrayProperty( typedObject.getSchema(), ".uvOptions" );
@@ -1688,17 +1690,19 @@ static AtNode *GetNode(void *user_ptr, int i)
                         AiNodeSetArray(shapeNode, "Texture_Projection_wrap", uvOptions);
                         AiNodeSetArray(shapeNode, "_wrap", uvOptions2);
                      }
-					 if( ptr->size() > 2 ) {
-						bool subdsmooth = ptr->get()[2] != 0.0f;
-						if( subdsmooth ) {
-							AiNodeSetStr(shapeNode, "subdiv_uv_smoothing", "pin_borders");
-						}
-						else {
-							AiNodeSetStr(shapeNode, "subdiv_uv_smoothing", "linear");
-						}
-					 }
+					           if( ptr->size() > 2 )
+                     {
+                        bool subdsmooth = ptr->get()[2] != 0.0f;
+                        if( subdsmooth ) {
+                          AiNodeSetStr(shapeNode, "subdiv_uv_smoothing", "pin_borders");
+                        }
+                        else {
+                          AiNodeSetStr(shapeNode, "subdiv_uv_smoothing", "linear");
+                        }
+					           }
                   }
                }
+               //*/
             }
             else
             {
