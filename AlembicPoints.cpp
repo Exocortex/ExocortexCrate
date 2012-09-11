@@ -419,7 +419,7 @@ MStatus AlembicPointsNode::compute(const MPlug & plug, MDataBlock & dataBlock)
    part.setPerParticleAttribute("massPP", masses);
 
    hOut.set( dOutput );
-	dataBlock.setClean( plug );
+	 dataBlock.setClean( plug );
 
    return MStatus::kSuccess;
 }
