@@ -926,7 +926,7 @@ Mesh* AlembicParticles::GetRenderMesh(TimeValue t, INode *inode, View &view, BOO
 		Update(t,inode);
 	}
 
-	NullView nullView;
+	ExoNullView nullView;
 
 	//Based upon the PFOperatorRender.cpp code
 	
@@ -1150,9 +1150,9 @@ void AlembicParticles::GetMultipleRenderMeshTM_Internal(TimeValue  t, INode *ino
 		return;
 	}
 	
-	if(!bCalledFromViewport){
-		ESS_LOG_INFO("IAlembicParticlesExt::GetMultipleRenderMeshTM_Internal() - t: "<<t<<"  currTick: "<<m_currTick);
-	}
+	//if(!bCalledFromViewport){
+	//	ESS_LOG_INFO("IAlembicParticlesExt::GetMultipleRenderMeshTM_Internal() - t: "<<t<<"  currTick: "<<m_currTick);
+	//}
 
     // Calculate the matrix
     Point3 pos = parts.points[meshNumber];
@@ -1283,7 +1283,7 @@ int AlembicParticles::Display(TimeValue t, INode* inode, ViewExp *vpt, int flags
 
 	if(m_bRenderAsTicks){
 	   // Draw the particles
-	   NullView nullView;
+	   ExoNullView nullView;
 	   //nullView.worldToView = objToWorld;
 	   gw->setRndLimits(rlim);
 	   for (int ii = 0; ; ii++)
@@ -1300,7 +1300,7 @@ int AlembicParticles::Display(TimeValue t, INode* inode, ViewExp *vpt, int flags
 	}
 	else{
 	   // Draw the particles
-	   NullView nullView;
+	   ExoNullView nullView;
 	   //nullView.worldToView = objToWorld;
 	   gw->setRndLimits(rlim);
 	   for (int ii = 0; ; ii++ )
@@ -1411,7 +1411,7 @@ int AlembicParticles::HitTest(TimeValue t, INode *inode, int type, int crossing,
    Matrix3 objToWorld = inode->GetObjTMAfterWSM(t);
  
    // Hit test against the particles
-   NullView nullView;
+   ExoNullView nullView;
    nullView.worldToView = objToWorld;
    gw->setRndLimits((savedLimits|GW_PICK) & ~ GW_ILLUM);
 
@@ -1627,7 +1627,7 @@ Mesh* GetMeshFromNode(INode *iNode, const TimeValue t, BOOL bNeedDelete)
 	}
 
     if (obj->SuperClassID()==GEOMOBJECT_CLASS_ID) {
-		NullView nullView;
+		ExoNullView nullView;
 		GeomObject* geomObject = (GeomObject*)obj;
 		Mesh* pMesh = geomObject->GetRenderMesh(t, iNode, nullView, bNeedDelete);
 		return pMesh;

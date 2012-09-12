@@ -40,10 +40,7 @@ public:
 	//			The node in the scene
 	//		View& view
 	//			If the renderer calls this method it will pass the view information here.
-	virtual int NumberOfRenderMeshes(TimeValue t, INode *inode, View& view) { 
-		ESS_LOG_WARNING("IAlembicParticlesExt::NumberOfRenderMeshes not implmented.");
-		return 0; 
-	}
+	virtual int NumberOfRenderMeshes(TimeValue t, INode *inode, View& view);
 	
 	// For multiple render meshes, if it supports vertex speed for motion blur, this method must be implemented
 	// Since particles may have different motion, the particle system should supply speed information
@@ -98,10 +95,7 @@ public:
 	// Implemented by the Plug-In.
 	// The method returns how many particles are currently in the particle system. 
 	// Some of these particles may be dead or not born yet (indicated by GetAge(..) method =-1). 
-	virtual int NumParticles(){
-		ESS_LOG_WARNING("IAlembicParticlesExt::NumParticles not implmented.");
-		return 0;
-	}
+	virtual int NumParticles();
 
 	// Implemented by the Plug-In.
 	// The method returns how many particles were born. Since particle systems have

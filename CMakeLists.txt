@@ -22,6 +22,13 @@ if( Max_VERSION MATCHES "2013" )
 	add_definitions( -DUNICODE ) 
 endif()
 
+if( NOT Max_VERSION MATCHES "2011" )
+	add_definitions( -DTHINKING_PARTICLES ) 
+	set( TP ON )
+else()
+	set( TP OFF )
+endif()
+
 SET( 3DSMAX_DIR_ROOT ${LIBRARY_ROOT}/Max/${Max_VERSION} ) 
 if( NOT EXISTS ${3DSMAX_DIR_ROOT} )
 	SET( 3DSMAX_DIR_ROOT ${LIBRARY_ROOT}/Max ) 
@@ -32,6 +39,26 @@ endif()
 SET( 3DSMAX_DIR_INCLUDE ${3DSMAX_DIR_ROOT}/include )
 if( NOT EXISTS ${3DSMAX_DIR_INCLUDE} )
 	message(FATAL_ERROR "Can't find 3DSMAX_DIR_INCLUDE: ${3DSMAX_DIR_INCLUDE}" )
+endif()
+
+if( TP )
+	SET( TP_DIR_ROOT ${LIBRARY_ROOT}/thinkingParticlesSDK/TP5.0_SDK ) 
+	if( NOT EXISTS ${TP_DIR_ROOT} )
+		message(FATAL_ERROR "Can't find TP_DIR_ROOT: ${TP_DIR_ROOT}" )
+	endif()
+	SET( TP_DIR_INCLUDE ${TP_DIR_ROOT}/include )
+	if( NOT EXISTS ${TP_DIR_INCLUDE} )
+		message(FATAL_ERROR "Can't find TP_DIR_INCLUDE: ${TP_DIR_INCLUDE}" )
+	endif()
+	
+	SET( TPL_DIR_ROOT ${LIBRARY_ROOT}/thinkingParticlesSDK/TPLightlineSDK ) 
+	if( NOT EXISTS ${TPL_DIR_ROOT} )
+		message(FATAL_ERROR "Can't find TPL_DIR_ROOT: ${TPL_DIR_ROOT}" )
+	endif()
+	SET( TPL_DIR_INCLUDE ${TPL_DIR_ROOT}/include )
+	if( NOT EXISTS ${TPL_DIR_INCLUDE} )
+		message(FATAL_ERROR "Can't find TPL_DIR_INCLUDE: ${TPL_DIR_INCLUDE}" )
+	endif()
 endif()
  
 get_filename_component( BASE_DIR "${CMAKE_CURRENT_SOURCE_DIR}" PATH )
@@ -61,8 +88,9 @@ endif()
 IF( WIN32 )
 	IF( ${ALEMBIC64} )
 		SET( 3DSMAX_DIR_LIBRARY ${3DSMAX_DIR_ROOT}/x64/lib )
+		SET( TP_DIR_LIBRARY ${TP_DIR_ROOT}/${Max_VERSION}/x64/lib )
+		SET( TPL_DIR_LIBRARY ${TPL_DIR_ROOT}/${Max_VERSION}/x64/lib )
 	ELSE()
-		SET( 3DSMAX_DIR_LIBRARY ${3DSMAX_DIR_ROOT}/lib )
 	ENDIF()	
 ENDIF()
 
@@ -72,6 +100,12 @@ set( Sources ${Sources} ${BASE_DIR}/Alembic.rc )
 
 include_directories( ${3DSMAX_DIR_INCLUDE} )
 link_directories( ${3DSMAX_DIR_LIBRARY} )
+
+include_directories( ${TP_DIR_INCLUDE} )
+link_directories( ${TP_DIR_LIBRARY} )
+
+include_directories( ${TPL_DIR_INCLUDE} )
+link_directories( ${TPL_DIR_LIBRARY} )
 
 if( Exocortex_RLM_ONLY )
 	link_directories( ${Rlm_LIBRARYDIR} )
@@ -83,6 +117,9 @@ TARGET_LINK_LIBRARIES( ${PROJECT_NAME} ${ALEMBIC_ILMBASE_LIBS}
 	${ALEMBIC_ZLIB_LIBS} ${ALEMBIC_HDF5_LIBS} ${ALEMBIC_CORE_LIBS}
 	${BOOST_LIBS} ${3DSMAX_LIBRARIES} ${Rlm_LIBRARIES} ${Exocortex_LIBRARIES} )
 ADD_DEPENDENCIES( ${PROJECT_NAME} AlembicAbcGeom ) 
+
+
+
 
 SET_TARGET_PROPERTIES( ${PROJECT_NAME} PROPERTIES SUFFIX ".dlu" ) 
 

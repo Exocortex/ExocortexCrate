@@ -10,11 +10,11 @@
 
 const int ALEMBIC_SIMPLE_PARTICLE_REF_PBLOCK2 = 0;
 
-class NullView: public View 
+class ExoNullView: public View 
 {
 public:
     Point2 ViewToScreen(Point3 p) { return Point2(p.x,p.y); }
-    NullView() { 
+    ExoNullView() { 
 		worldToView.IdentityMatrix(); 
 		screenW = 640.0f; 
 		screenH = 480.0f; 

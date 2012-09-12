@@ -1,3 +1,12 @@
+
+
+#include "Foundation.h"
+
+#ifdef THINKING_PARTICLES
+#define IDS_CLASS_NAME 3
+#include <matterwaves.h>
+#endif
+
 #include "Alembic.h"
 #include "AlembicMax.h"
 #include "AlembicPoints.h"
@@ -23,6 +32,7 @@
 #include <Alembic/Util/Murmur3.h>
 #include "AlembicPointsUtils.h"
 #include "AlembicParticles.h"
+
 
 namespace AbcA = ::Alembic::AbcCoreAbstract::ALEMBIC_VERSION_NS;
 namespace AbcB = ::Alembic::Abc::ALEMBIC_VERSION_NS;
@@ -100,35 +110,18 @@ bool AlembicPoints::Save(double time, bool bLastFrame)
 
 
 	
-	//ParticleObject* pParticleObject = (ParticleObject*)obj->GetInterface(I_PARTICLEOBJ);
+	
 	SimpleParticle* pSimpleParticle = (SimpleParticle*)obj->GetInterface(I_SIMPLEPARTICLEOBJ);
 	IPFSystem* ipfSystem = GetPFSystemInterface(obj);
 	IParticleObjectExt* particlesExt = GetParticleObjectExtInterface(obj);
-
-
- //   IPFSystem* ipfSystem = NULL;
-	//IParticleObjectExt* particlesExt = NULL;
-	//SimpleParticle* pSimpleParticle = NULL;
-	//ParticleObject* pParticleObject = (ParticleObject*)obj->GetInterface(I_PARTICLEOBJ);
-	//if(pParticleObject){
-	//	pSimpleParticle = (SimpleParticle*) obj->GetInterface(I_SIMPLEPARTICLEOBJ);
-	//	particlesExt = GetParticleObjectExtInterface(obj);
-	//	if(!particlesExt){
-	//		return false;
-	//	}
-	//}
-	//else{
-	//	ipfSystem = PFSystemInterface(obj);
-	//	if(!ipfSystem){
-	//		return false;
-	//	}
-	//	particlesExt = GetParticleObjectExtInterface(obj);
-	//	if(!particlesExt){
-	//		return false;
-	//	}
-	//}
-	//If we get here, either particlesExt (for particle flow system) is nonnull 
-	//OR pSimpleParticle (for older particle systems) is nonnull 
+	
+#ifdef THINKING_PARTICLES
+	ParticleMat* pThinkingParticleMat = NULL;
+	if(obj->CanConvertToType(MATTERWAVES_CLASS_ID))
+	{
+		pThinkingParticleMat = reinterpret_cast<ParticleMat*>(obj->ConvertToType(ticks, MATTERWAVES_CLASS_ID));
+	}
+#endif
 
 	int numParticles = 0;
 	if(particlesExt){
@@ -201,7 +194,7 @@ bool AlembicPoints::Save(double time, bool bLastFrame)
 	if(bAutomaticInstancing){
 		SetMaxSceneTime(ticks);
 	}
-	NullView nullView;
+	ExoNullView nullView;
 	particleGroupInterface groupInterface(particlesExt, obj, GetRef().node, &nullView);
 
 
@@ -246,9 +239,21 @@ bool AlembicPoints::Save(double time, bool bLastFrame)
 					nMatId = groupInterface.getCurrentMtlId();
 				}
 
-				Mesh* pMesh = particlesExt->GetParticleShapeByIndex(i);
+				Mesh* pMesh = NULL;
+				Matrix3 meshTM;
+				meshTM.IdentityMatrix();
+				BOOL bNeedDelete = FALSE;
+#ifdef THINKING_PARTICLES
+				BOOL bChanged = FALSE;
+				if(pThinkingParticleMat){
+					pMesh = pThinkingParticleMat->GetParticleRenderMesh(ticks, GetRef().node, nullView, bNeedDelete, i, meshTM, bChanged);
+				}
+				else{
+					particlesExt->GetParticleShapeByIndex(i);
+				}
+#endif
 				if(pMesh){
-					CacheShapeMesh(pMesh, nMatId, i, ticks, shapetype, shapeInstanceId, shapeInstanceTime);
+					CacheShapeMesh(pMesh, bNeedDelete, meshTM, nMatId, i, ticks, shapetype, shapeInstanceId, shapeInstanceTime);
 				}
 				else{
 					shapetype = ShapeType_Point;
@@ -838,7 +843,7 @@ uint16_t AlembicPoints::FindInstanceName(const std::string& name)
 
 
 
-void AlembicPoints::CacheShapeMesh(Mesh* pShapeMesh, int nMatId, int particleId, TimeValue ticks, ShapeType &type, uint16_t &instanceId, float &animationTime)
+void AlembicPoints::CacheShapeMesh(Mesh* pShapeMesh, BOOL bNeedDelete, Matrix3 meshTM, int nMatId, int particleId, TimeValue ticks, ShapeType &type, uint16_t &instanceId, float &animationTime)
 {
 	type = ShapeType_Instance;
 	//animationTime = 0;
@@ -880,10 +885,15 @@ void AlembicPoints::CacheShapeMesh(Mesh* pShapeMesh, int nMatId, int particleId,
 		meshInfo& mi = mShapeMeshCache[digests];
 		mi.pMesh = pShapeMesh;
 		mi.nMatId = nMatId;
+		
 		std::stringstream nameStream;
 		nameStream<<GetRef().node->GetName()<<" ";
 		nameStream<<"InstanceMesh"<<mNumShapeMeshes;
 		mi.name=nameStream.str();
+
+		mi.bNeedDelete = bNeedDelete;
+		mi.meshTM = meshTM;
+
 		currShapeInfo = mi;
 		mNumShapeMeshes++;
 
@@ -913,10 +923,10 @@ void AlembicPoints::saveCurrentFrameMeshes()
 
 		if(mi->pMesh){
 			Mesh* pMesh = mi->pMesh;
-			mi->pMesh = NULL;//each mesh only needs to be saved once
+			//mi->pMesh = NULL;//each mesh only needs to be saved once
 
-			Matrix3 worldTrans;
-			worldTrans.IdentityMatrix();
+			//Matrix3 worldTrans;
+			//worldTrans.IdentityMatrix();
 
 			std::map<std::string, bool> options;
 			options["exportNormals"] = mJob->GetOption("exportNormals");
@@ -924,8 +934,9 @@ void AlembicPoints::saveCurrentFrameMeshes()
 			options["exportMaterialIds"] = mJob->GetOption("exportMaterialIds");
 
 			//gather the mesh data
+			mi->meshTM.IdentityMatrix();
 			IntermediatePolyMesh3DSMax finalPolyMesh;
-			finalPolyMesh.Save(options, pMesh, NULL, worldTrans, NULL, mi->nMatId, true, NULL);
+			finalPolyMesh.Save(options, pMesh, NULL, mi->meshTM, NULL, mi->nMatId, true, NULL);
 
 			//save out the mesh xForm
 		
@@ -998,6 +1009,12 @@ void AlembicPoints::saveCurrentFrameMeshes()
 			}
 
 			meshSchema.set(meshSample);
+
+			if(mi->bNeedDelete){
+				delete mi->pMesh;
+				mi->bNeedDelete = FALSE;
+			}
+			mi->pMesh = NULL;
 		}
 	}
 	

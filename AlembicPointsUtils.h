@@ -12,7 +12,7 @@ struct particleMeshData{
 	Matrix3 meshTM;
 };
 
-class NullView;
+class ExoNullView;
 class IParticleObjectExt;
 class IParticleGroup;
 class IPFRender;
@@ -20,7 +20,7 @@ class particleGroupInterface
 {
 public:
 
-	NullView* m_pNullView;
+	ExoNullView* m_pNullView;
 
 	typedef std::map<INode*, int> groupParticleCountT;
 	//I use this std::map to keep to obtain iteration index for each particle group.
@@ -38,7 +38,7 @@ public:
 	IPFRender* m_pCurrRender;
 	TimeValue m_currTicks;
 
-	particleGroupInterface( IParticleObjectExt* particlesExt, Object* obj, INode* node, NullView* pNullView ):
+	particleGroupInterface( IParticleObjectExt* particlesExt, Object* obj, INode* node, ExoNullView* pNullView ):
 		m_pParticlesExt(particlesExt), m_pSystemObject(obj), m_pSystemNode(node), m_pNullView(pNullView),
 		m_pCurrParticleGroup(NULL), m_nCurrParticleGroupId(-1),
 		m_pCurrGroupContainer(NULL), m_pCurrGroupSystem(NULL), m_pCurrGroupMtl(NULL), m_pCurrRender(NULL)

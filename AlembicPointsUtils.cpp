@@ -193,7 +193,7 @@ int particleGroupInterface::getCurrentMtlId(){
 bool getParticleSystemMesh(TimeValue ticks, Object* obj, INode* node, IntermediatePolyMesh3DSMax* mesh, 
 						   materialsMergeStr* pMatMerge, AlembicWriteJob * mJob, int nNumSamples)
 {
-	static NullView nullView;
+	static ExoNullView nullView;
 	static const bool ENABLE_VELOCITY_EXPORT = true;
 
     Matrix3 nodeWorldTM = node->GetObjTMAfterWSM(ticks);
@@ -461,7 +461,7 @@ void getParticleSystemRenderMeshes(TimeValue ticks, Object* obj, INode* node, st
 	SimpleParticle* pSimpleParticle = (SimpleParticle*) obj->GetInterface(I_SIMPLEPARTICLEOBJ);
 	if(pSimpleParticle){
 
-		NullView nullView;
+		ExoNullView nullView;
 
 		AlembicParticles* pAlembicParticles = NULL;
 		if(obj->CanConvertToType(ALEMBIC_SIMPLE_PARTICLE_CLASSID))
@@ -535,7 +535,7 @@ void getParticleSystemRenderMeshes(TimeValue ticks, Object* obj, INode* node, st
 
 		if(particleRender){
 
-			NullView nullView;
+			ExoNullView nullView;
 
 			for(int g=0; g<groups.size(); g++){
 				

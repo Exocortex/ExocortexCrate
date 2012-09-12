@@ -41,7 +41,7 @@ bool IAlembicParticlesExt::GetRenderMeshVertexSpeed(TimeValue t, INode *inode, V
  //   ConvertMaxMatrixToAlembicMatrix(nodeWorldTM, nodeWorldTrans);
 	//Alembic::Abc::M44d nodeWorldTransInv = nodeWorldTrans.inverse();
 
-	NullView nullView;
+	ExoNullView nullView;
 
 	//calculate the total number of vertices in the particle system render mesh
 	int totalVerts = 0;
@@ -100,4 +100,19 @@ bool IAlembicParticlesExt::GetRenderMeshVertexSpeed(TimeValue t, INode *inode, V
 	}
 
 	return true; 
+}
+
+int IAlembicParticlesExt::NumberOfRenderMeshes(TimeValue t, INode *inode, View& view) { 
+	ESS_LOG_WARNING("IAlembicParticlesExt::NumberOfRenderMeshes");
+	return m_pAlembicParticles->NumberOfRenderMeshes();
+	return 0;
+}
+
+// Implemented by the Plug-In.
+// The method returns how many particles are currently in the particle system. 
+// Some of these particles may be dead or not born yet (indicated by GetAge(..) method =-1). 
+int IAlembicParticlesExt::NumParticles(){
+	ESS_LOG_WARNING("IAlembicParticlesExt::NumParticles");
+	//return m_pAlembicParticles->NumberOfRenderMeshes();
+	return 0;
 }
