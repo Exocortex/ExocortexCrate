@@ -158,7 +158,10 @@ private:
 		//Alembic::AbcGeom::OXformSchema xformSchema;
 		//Alembic::AbcGeom::OPolyMeshSchema meshSchema;
 
-		meshInfo(): pMesh(NULL), nMatId(-1)
+		BOOL bNeedDelete;
+		Matrix3 meshTM;
+
+		meshInfo(): pMesh(NULL), nMatId(-1), bNeedDelete(FALSE) 
 		{}
 	};
 	//typedef std::pair<Alembic::Util::ALEMBIC_VERSION_NS::Digest, Alembic::Util::ALEMBIC_VERSION_NS::Digest> faceVertexHashPair;
@@ -199,7 +202,7 @@ private:
 	Alembic::Abc::C4f AlembicPoints::GetColor(IParticleObjectExt *pExt, int particleId, TimeValue ticks);
 	unsigned short FindInstanceName(const std::string& name);
 
-	void CacheShapeMesh(Mesh* pShapeMesh, int nMatId, int particleId, TimeValue ticks, ShapeType &type, unsigned short &instanceId, float &animationTime);
+	void CacheShapeMesh(Mesh* pShapeMesh, BOOL bNeedDelete, Matrix3 meshTM, int nMatId, int particleId, TimeValue ticks, ShapeType &type, unsigned short &instanceId, float &animationTime);
 
 	void saveCurrentFrameMeshes();
 

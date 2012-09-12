@@ -850,6 +850,10 @@ void AlembicPoints::CacheShapeMesh(Mesh* pShapeMesh, BOOL bNeedDelete, Matrix3 m
 	
 	//Mesh* pShapeMesh = pExt->GetParticleShapeByIndex(particleId);
 
+	if(pShapeMesh->getNumFaces() == 0 || pShapeMesh->getNumVerts() == 0){
+		return;
+	}
+
 	meshDigests digests;
 	MurmurHash3_x64_128( pShapeMesh->verts, pShapeMesh->numVerts * sizeof(Point3), sizeof(Point3), digests.Vertices.words );
 	MurmurHash3_x64_128( pShapeMesh->faces, pShapeMesh->numFaces * sizeof(Face), sizeof(Face), digests.Faces.words );
