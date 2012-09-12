@@ -18,10 +18,6 @@ SampleInfo getSampleInfo
    size_t numSamps
 );
 
-// uvsIdx is rewritten!
-// returns a UVs array!
-AtArray *removeUvsDuplicate(Alembic::AbcGeom::IV2fGeomParam &uvParam, SampleInfo &sampleInfo, AtArray *uvsIdx, AtArray *faceIndices);
-
 template<class OBJTYPE, class DATATYPE>
 bool getArbGeomParamPropertyAlembic( OBJTYPE obj, std::string name, Alembic::Abc::ITypedArrayProperty<DATATYPE> &pOut ) {
 	// look for name with period on it.

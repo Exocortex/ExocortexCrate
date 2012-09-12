@@ -1,5 +1,6 @@
 #include "foundation.h"
 #include "utility.h"
+#include "dataUniqueness.h"
 #include <time.h>
 #include <boost/lexical_cast.hpp>
 #include <map>
@@ -1235,6 +1236,8 @@ static AtNode *GetNode(void *user_ptr, int i)
       AtArray * pos = NULL;
       AtArray * nor = NULL;
       AtArray * uvsIdx = NULL;
+      AtArray * nsIdx = NULL;
+      AtArray * faceIndices = NULL;
 
       // check if we have dynamic topology
       bool dynamicTopology = false;
@@ -1269,16 +1272,20 @@ static AtNode *GetNode(void *user_ptr, int i)
             if(abcFaceCounts->get()[0] == 0)
                return NULL;
             AtArray * faceCounts = AiArrayAllocate((AtInt)abcFaceCounts->size(), 1, AI_TYPE_UINT);
-            AtArray * faceIndices = AiArrayAllocate((AtInt)abcFaceIndices->size(), 1, AI_TYPE_UINT);
+            faceIndices = AiArrayAllocate((AtInt)abcFaceIndices->size(), 1, AI_TYPE_UINT);
             uvsIdx = AiArrayAllocate((AtInt)(abcFaceIndices->size()),1,AI_TYPE_UINT);
+            nsIdx = AiArrayAllocate((AtInt)(abcFaceIndices->size()),1,AI_TYPE_UINT);
             AtUInt offset = 0;
-            for(AtULong i=0;i<faceCounts->nelements;i++)
+            for(AtULong i=0;i<faceCounts->nelements; ++i)
             {
-               AiArraySetUInt(faceCounts,i,abcFaceCounts->get()[i]);
-               for(AtLong j=0;j<abcFaceCounts->get()[i];j++)
+               const int _FaceCounts = abcFaceCounts->get()[i];
+               AiArraySetUInt(faceCounts, i, _FaceCounts);
+               for(AtLong j=0; j < _FaceCounts; ++j)
                {
-                  AiArraySetUInt(faceIndices,offset+j,abcFaceIndices->get()[offset+abcFaceCounts->get()[i]-(j+1)]);
-                  AiArraySetUInt(uvsIdx,offset+j,offset+abcFaceCounts->get()[i]-(j+1));
+                  const int offFaceCounts = offset + _FaceCounts - (j+1);
+                  AiArraySetUInt(faceIndices,offset+j,abcFaceIndices->get()[offFaceCounts]);
+                  AiArraySetUInt(uvsIdx,offset+j, offFaceCounts);
+                  AiArraySetUInt(nsIdx, offset+j, offFaceCounts);
                }
                offset += abcFaceCounts->get()[i];
             }
@@ -1290,7 +1297,7 @@ static AtNode *GetNode(void *user_ptr, int i)
             Alembic::AbcGeom::IV2fGeomParam uvParam = typedObject.getSchema().getUVsParam();
             if(uvParam.valid())
             {
-               //*
+               /*
                Alembic::Abc::V2fArraySamplePtr abcUvs = uvParam.getExpandedValue(sampleInfo.floorIndex).getVals();
                AtArray * uvs = AiArrayAllocate((AtInt)abcUvs->size() * 2, 1, AI_TYPE_FLOAT);
                AtULong offset = 0;
@@ -1301,7 +1308,6 @@ static AtNode *GetNode(void *user_ptr, int i)
                }
                AiNodeSetArray(shapeNode, "uvlist", uvs);
                AiNodeSetArray(shapeNode, "uvidxs", AiArrayCopy(uvsIdx));
-
                /*/
                AiNodeSetArray(shapeNode, "uvlist", removeUvsDuplicate(uvParam, sampleInfo, uvsIdx, faceIndices));
                AiNodeSetArray(shapeNode, "uvidxs", uvsIdx);
@@ -1336,15 +1342,15 @@ static AtNode *GetNode(void *user_ptr, int i)
                         AiNodeSetArray(shapeNode, "Texture_Projection_wrap", uvOptions);
                         AiNodeSetArray(shapeNode, "_wrap", uvOptions2);
                      }
-					 if( ptr->size() > 2 ) {
-						bool subdsmooth = ptr->get()[2] != 0.0f;
-						if( subdsmooth ) {
-							AiNodeSetStr(shapeNode, "subdiv_uv_smoothing", "pin_borders");
-						}
-						else {
-							AiNodeSetStr(shapeNode, "subdiv_uv_smoothing", "linear");
-						}
-					 }
+					           if( ptr->size() > 2 ) {
+						            bool subdsmooth = ptr->get()[2] != 0.0f;
+						            if( subdsmooth ) {
+							            AiNodeSetStr(shapeNode, "subdiv_uv_smoothing", "pin_borders");
+						            }
+						            else {
+							            AiNodeSetStr(shapeNode, "subdiv_uv_smoothing", "linear");
+						            }
+					           }
                   }
                }
             }
@@ -1397,8 +1403,8 @@ static AtNode *GetNode(void *user_ptr, int i)
 
          // access the normals
          Alembic::Abc::N3fArraySamplePtr abcNor = normalParam.getExpandedValue(sampleInfo.floorIndex).getVals();
-         if(nor == NULL)
-            nor = AiArrayAllocate((AtInt)(abcNor->size()),(AtInt)minNumSamples,AI_TYPE_VECTOR);
+         //if(nor == NULL)
+            //nor = AiArrayAllocate((AtInt)(abcNor->size()),(AtInt)minNumSamples,AI_TYPE_VECTOR);
 
          // if we have to interpolate
          if(sampleInfo.alpha <= sampleTolerance)
@@ -1411,14 +1417,15 @@ static AtNode *GetNode(void *user_ptr, int i)
             }
             if(abcNor != NULL)
             {
-               for(size_t i=0;i<abcNor->size();i++)
+               /*for(size_t i=0;i<abcNor->size();i++)
                {
                   AtVector n;
                   n.x = abcNor->get()[i].x;
                   n.y = abcNor->get()[i].y;
                   n.z = abcNor->get()[i].z;
                   AiArraySetVec(nor,norOffset++,n);
-               }
+               }*/
+               nor = removeNormalsDuplicate(abcNor, sampleInfo, nsIdx, faceIndices);
             }
          }
          else
@@ -1469,40 +1476,42 @@ static AtNode *GetNode(void *user_ptr, int i)
                   AiArraySetFlt(pos,posOffset++,abcPos->get()[i].z);
                }
             }
+
             if(abcNor != NULL)
             {
-               Alembic::Abc::N3fArraySamplePtr abcNor2 = normalParam.getExpandedValue(sampleInfo.ceilIndex).getVals();
                if(!dynamicTopology)
                {
-                  for(size_t i=0;i<abcNor->size();i++)
+                  Alembic::Abc::N3fArraySamplePtr abcNor2 = normalParam.getExpandedValue(sampleInfo.ceilIndex).getVals();
+                  /*for(size_t i=0;i<abcNor->size();i++)
                   {
                      AtVector n;
                      n.x = abcNor->get()[i].x * ialpha + abcNor2->get()[i].x * alpha;
                      n.y = abcNor->get()[i].y * ialpha + abcNor2->get()[i].y * alpha;
                      n.z = abcNor->get()[i].z * ialpha + abcNor2->get()[i].z * alpha;
                      AiArraySetVec(nor,norOffset++,n);
-                  }
+                  }*/
+                 nor = removeNormalsDuplicateDynTopology(abcNor, abcNor2, alpha, sampleInfo, nsIdx, faceIndices);
                }
                else
                {
-                  for(size_t i=0;i<abcNor->size();i++)
+                  /*for(size_t i=0;i<abcNor->size();i++)
                   {
                      AtVector n;
                      n.x = abcNor->get()[i].x;
                      n.y = abcNor->get()[i].y;
                      n.z = abcNor->get()[i].z;
                      AiArraySetVec(nor,norOffset++,n);
-                  }
+                  }*/
+                 nor = removeNormalsDuplicate(abcNor, sampleInfo, nsIdx, faceIndices);
                }
             }
          }
       }
       AiNodeSetArray(shapeNode, "vlist", pos);
       AiNodeSetArray(shapeNode, "nlist", nor);
+      AiNodeSetArray(shapeNode, "nidxs", nsIdx);    // recycling uvsIdx
       if(!createdShifted)
       {
-         AiNodeSetArray(shapeNode, "nidxs", uvsIdx);
-
          if(ud->gProcShaders != NULL && shaders == NULL)
          {
             //shaders = ud->gProcShaders;
