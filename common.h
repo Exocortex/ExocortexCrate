@@ -106,5 +106,8 @@
 
   std::string getNameFromIdentifier(const std::string & identifier, long id = -1, long group = -1);
 
+  // executed only if (nodata.shifted), same code in multiple places, in a single unique function!
+  // return true if a shader has been assigned!
+  bool shiftedProcessing(nodeData &nodata, userData * ud);
 
 #endif

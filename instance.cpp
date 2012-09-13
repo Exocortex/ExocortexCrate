@@ -49,13 +49,10 @@ AtNode *createInstanceNode(nodeData &nodata, userData * ud, int i)
   AiNodeSetPtr(shapeNode, "node", usedMasterNode);
 
   // declare color on the ginstance
-  if(info->color.size() > 0)
+  if(info->color.size() > 0 && AiNodeDeclare(shapeNode, "Color", "constant RGBA"))
   {
-    if (AiNodeDeclare(shapeNode, "Color", "constant RGBA"))
-    {
-      Alembic::Abc::C4f color = info->color[0]->get()[id < info->color[0]->size() ? id : info->color[0]->size() - 1];
-      AiNodeSetRGBA(shapeNode, "Color", color.r, color.g, color.b, color.a);
-    }
+    Alembic::Abc::C4f color = info->color[0]->get()[id < info->color[0]->size() ? id : info->color[0]->size() - 1];
+    AiNodeSetRGBA(shapeNode, "Color", color.r, color.g, color.b, color.a);
   }
 
   // now let's take care of the transform
@@ -70,8 +67,8 @@ AtNode *createInstanceNode(nodeData &nodata, userData * ud, int i)
 
     Alembic::Abc::M44f matrixAbc;
     matrixAbc.makeIdentity();
-    size_t floorIndex = j * 2 + 0;
-    size_t ceilIndex = j * 2 + 1;
+    const size_t floorIndex = j << 1;
+    const size_t ceilIndex =  floorIndex + 1;
 
     // apply translation
     if(info->pos[floorIndex]->size() == info->pos[ceilIndex]->size())
@@ -81,8 +78,7 @@ AtNode *createInstanceNode(nodeData &nodata, userData * ud, int i)
     }
     else
     {
-      float timeAlpha = (float)(typedObject.getSchema().getTimeSampling()->getSampleTime(sampleInfo.ceilIndex) - 
-                         typedObject.getSchema().getTimeSampling()->getSampleTime(sampleInfo.floorIndex)) * (float)sampleInfo.alpha;
+      const float timeAlpha = (float)(typedObject.getSchema().getTimeSampling()->getSampleTime(sampleInfo.ceilIndex) - typedObject.getSchema().getTimeSampling()->getSampleTime(sampleInfo.floorIndex)) * (float)sampleInfo.alpha;
       matrixAbc.setTranslation(info->pos[floorIndex]->get()[id < info->pos[floorIndex]->size() ? id : info->pos[floorIndex]->size() - 1] + 
                                info->vel[floorIndex]->get()[id < info->vel[floorIndex]->size() ? id : info->vel[floorIndex]->size() - 1] * timeAlpha);
     }
@@ -108,16 +104,16 @@ AtNode *createInstanceNode(nodeData &nodata, userData * ud, int i)
     // and finally scaling
     if(info->scale.size() == ud->gMbKeys.size() * 2)
     {
-      Alembic::Abc::V3f scalingAbc = info->scale[floorIndex]->get()[id < info->scale[floorIndex]->size() ? id : info->scale[floorIndex]->size() - 1] * 
-                                     info->width[floorIndex]->get()[id < info->width[floorIndex]->size() ? id : info->width[floorIndex]->size() - 1] * float(1.0 - sampleInfo.alpha) + 
-                                     info->scale[ceilIndex]->get()[id < info->scale[ceilIndex]->size() ? id : info->scale[ceilIndex]->size() - 1] * 
-                                     info->width[ceilIndex]->get()[id < info->width[ceilIndex]->size() ? id : info->width[ceilIndex]->size() - 1] * float(sampleInfo.alpha);
+      const Alembic::Abc::V3f scalingAbc = info->scale[floorIndex]->get()[id < info->scale[floorIndex]->size() ? id : info->scale[floorIndex]->size() - 1] * 
+                                           info->width[floorIndex]->get()[id < info->width[floorIndex]->size() ? id : info->width[floorIndex]->size() - 1] * float(1.0 - sampleInfo.alpha) + 
+                                           info->scale[ceilIndex]->get()[id < info->scale[ceilIndex]->size() ? id : info->scale[ceilIndex]->size() - 1] * 
+                                           info->width[ceilIndex]->get()[id < info->width[ceilIndex]->size() ? id : info->width[ceilIndex]->size() - 1] * float(sampleInfo.alpha);
       matrixAbc.scale(scalingAbc);
     }
     else
     {
-      float width = info->width[floorIndex]->get()[id < info->width[floorIndex]->size() ? id : info->width[floorIndex]->size() - 1] * float(1.0 - sampleInfo.alpha) + 
-                    info->width[ceilIndex]->get()[id < info->width[ceilIndex]->size() ? id : info->width[ceilIndex]->size() - 1] * float(sampleInfo.alpha);
+      const float width = info->width[floorIndex]->get()[id < info->width[floorIndex]->size() ? id : info->width[floorIndex]->size() - 1] * float(1.0 - sampleInfo.alpha) + 
+                          info->width[ceilIndex]->get()[id < info->width[ceilIndex]->size() ? id : info->width[ceilIndex]->size() - 1] * float(sampleInfo.alpha);
       matrixAbc.scale(Alembic::Abc::V3f(width,width,width));
     }
 
