@@ -1,128 +1,8 @@
-#include "foundation.h"
-#include "utility.h"
-#include "dataUniqueness.h"
-#include <time.h>
-#include <boost/lexical_cast.hpp>
-#include <map>
-#include <boost/thread/mutex.hpp>
-
-struct instanceGroupInfo{
-   std::vector<std::string> identifiers;
-   std::vector<std::map<float,AtNode*> > nodes;
-   std::vector<Alembic::Abc::IObject> objects;
-   std::vector<Alembic::Abc::IObject> parents;
-   std::vector<std::map<float,std::vector<Alembic::Abc::M44f> > > matrices;
-};
-
-struct instanceCloudInfo{
-   std::vector<Alembic::Abc::P3fArraySamplePtr> pos;
-   std::vector<Alembic::Abc::V3fArraySamplePtr> vel;
-   std::vector<Alembic::Abc::UInt64ArraySamplePtr> id;
-   std::vector<Alembic::Abc::FloatArraySamplePtr> width;
-   std::vector<Alembic::Abc::V3fArraySamplePtr> scale;
-   std::vector<Alembic::Abc::QuatfArraySamplePtr> rot;
-   std::vector<Alembic::Abc::QuatfArraySamplePtr> ang;
-   std::vector<Alembic::Abc::FloatArraySamplePtr> age;
-   std::vector<Alembic::Abc::FloatArraySamplePtr> mass;
-   std::vector<Alembic::Abc::C4fArraySamplePtr> color;
-   std::vector<Alembic::Abc::UInt16ArraySamplePtr> shape;
-   std::vector<Alembic::Abc::FloatArraySamplePtr> time;
-   float timeAlpha;
-   std::vector<instanceGroupInfo> groupInfos;
-};
-
-struct objectInfo{
-   Alembic::Abc::IObject abc;
-   AtNode * node;
-   float centroidTime;
-   bool hide;
-   long ID;
-   long instanceID;
-   long instanceGroupID;
-   instanceCloudInfo * instanceCloud;
-   std::string suffix;
-
-   objectInfo(float in_centroidTime)
-   {
-      hide = false;
-      ID = -1;
-      instanceID = -1;
-      instanceGroupID = -1 ;
-      instanceCloud = NULL;
-      node = NULL;
-      centroidTime = in_centroidTime;
-      suffix = "_DSO";
-   }
-};
-
-struct userData
-{
-   float gCentroidTime;
-   char * gDataString;
-   std::string gCurvesMode;
-   std::string gPointsMode;
-   AtArray * gProcShaders;
-   AtArray * gProcDispMap;
-   std::vector<objectInfo> gIObjects;
-   std::vector<instanceCloudInfo> gInstances;
-   std::vector<float> gMbKeys;
-   float gTime;
-   float gCurrTime;
-   int proceduralDepth;
-
-   std::vector<AtNode*> constructedNodes;
-   std::vector<AtArray*> shadersToAssign;
-
-   bool has_subdiv_settings;
-   std::string subdiv_type;
-   int subdiv_iterations;
-   float subdiv_pixel_error;
-   std::string subdiv_dicing_camera;
-   bool has_disp_settings;
-   float disp_zero_value;
-   float disp_height;
-   bool disp_autobump;
-   float disp_padding;
-};
-
-#define sampleTolerance 0.00001
-#define gCentroidPrecision 50.0f
-#define roundCentroid(x) floorf(x * gCentroidPrecision) / gCentroidPrecision
-
-// Reads the parameter value from data file and assign it to node
-AtVoid ReadParameterValue(AtNode* curve_node, FILE* fp, const AtChar* param_name);
-
-std::string getNameFromIdentifier(const std::string & identifier, long id = -1, long group = -1)
-{
-   std::string result;
-   std::vector<std::string> parts;
-   boost::split(parts, identifier, boost::is_any_of("/\\"));
-   result = parts[parts.size()-1];
-   for(int i=(int)parts.size()-3;i>=0;i--)
-   {
-      if(parts[i].empty())
-         break;
-      std::string suffix = parts[i].substr(parts[i].length()-3,3);
-      if(suffix == "xfo" || suffix == "XFO" || suffix == "Xfo")
-         result = parts[i].substr(0,parts[i].length()-3) + "." + result;
-      else
-         result = suffix + "." + result;
-   }
-
-   if(id >= 0)
-      result += "."+boost::lexical_cast<std::string>(id);
-   if(group >= 0)
-      result += "."+boost::lexical_cast<std::string>(group);
-   return result;
-}  
+#include "common.h"
 
 boost::mutex gGlobalLock;
 
-//#ifdef __UNIX__
 #define GLOBAL_LOCK	   boost::mutex::scoped_lock writeLock( gGlobalLock );
-//#else
-//#define GLOBAL_LOCK
-//#endif
 
 std::map<std::string,std::string> gUsedArchives;
 
@@ -933,9 +813,9 @@ static AtNode *GetNode(void *user_ptr, int i)
       return NULL;
 
    // now check the camera node for shutter settings
-   AtNode * cameraNode = AiUniverseGetCamera();
-   float shutterStart = AiNodeGetFlt(cameraNode,"shutter_start");
-   float shutterEnd = AiNodeGetFlt(cameraNode,"shutter_end");
+   //AtNode * cameraNode = AiUniverseGetCamera();
+   //float shutterStart = AiNodeGetFlt(cameraNode,"shutter_start");
+   //float shutterEnd = AiNodeGetFlt(cameraNode,"shutter_end");
 
    // construct the timesamples
    size_t nbSamples = ud->gMbKeys.size();
@@ -1297,21 +1177,8 @@ static AtNode *GetNode(void *user_ptr, int i)
             Alembic::AbcGeom::IV2fGeomParam uvParam = typedObject.getSchema().getUVsParam();
             if(uvParam.valid())
             {
-               /*
-               Alembic::Abc::V2fArraySamplePtr abcUvs = uvParam.getExpandedValue(sampleInfo.floorIndex).getVals();
-               AtArray * uvs = AiArrayAllocate((AtInt)abcUvs->size() * 2, 1, AI_TYPE_FLOAT);
-               AtULong offset = 0;
-               for(AtULong i=0;i<abcUvs->size();i++)
-               {
-                  AiArraySetFlt(uvs,offset++,abcUvs->get()[i].x);
-                  AiArraySetFlt(uvs,offset++,abcUvs->get()[i].y);
-               }
-               AiNodeSetArray(shapeNode, "uvlist", uvs);
-               AiNodeSetArray(shapeNode, "uvidxs", AiArrayCopy(uvsIdx));
-               /*/
                AiNodeSetArray(shapeNode, "uvlist", removeUvsDuplicate(uvParam, sampleInfo, uvsIdx, faceIndices));
                AiNodeSetArray(shapeNode, "uvidxs", uvsIdx);
-               //*/
 
                // check if we have uvOptions
                if(typedObject.getSchema().getPropertyHeader( ".uvOptions" ) != NULL)
@@ -1403,8 +1270,6 @@ static AtNode *GetNode(void *user_ptr, int i)
 
          // access the normals
          Alembic::Abc::N3fArraySamplePtr abcNor = normalParam.getExpandedValue(sampleInfo.floorIndex).getVals();
-         //if(nor == NULL)
-            //nor = AiArrayAllocate((AtInt)(abcNor->size()),(AtInt)minNumSamples,AI_TYPE_VECTOR);
 
          // if we have to interpolate
          if(sampleInfo.alpha <= sampleTolerance)
@@ -1417,14 +1282,6 @@ static AtNode *GetNode(void *user_ptr, int i)
             }
             if(abcNor != NULL)
             {
-               /*for(size_t i=0;i<abcNor->size();i++)
-               {
-                  AtVector n;
-                  n.x = abcNor->get()[i].x;
-                  n.y = abcNor->get()[i].y;
-                  n.z = abcNor->get()[i].z;
-                  AiArraySetVec(nor,norOffset++,n);
-               }*/
                nor = removeNormalsDuplicate(abcNor, sampleInfo, nsIdx, faceIndices);
             }
          }
@@ -1481,35 +1338,23 @@ static AtNode *GetNode(void *user_ptr, int i)
             {
                if(!dynamicTopology)
                {
-                  Alembic::Abc::N3fArraySamplePtr abcNor2 = normalParam.getExpandedValue(sampleInfo.ceilIndex).getVals();
-                  /*for(size_t i=0;i<abcNor->size();i++)
-                  {
-                     AtVector n;
-                     n.x = abcNor->get()[i].x * ialpha + abcNor2->get()[i].x * alpha;
-                     n.y = abcNor->get()[i].y * ialpha + abcNor2->get()[i].y * alpha;
-                     n.z = abcNor->get()[i].z * ialpha + abcNor2->get()[i].z * alpha;
-                     AiArraySetVec(nor,norOffset++,n);
-                  }*/
+                 Alembic::Abc::N3fArraySamplePtr abcNor2 = normalParam.getExpandedValue(sampleInfo.ceilIndex).getVals();
                  nor = removeNormalsDuplicateDynTopology(abcNor, abcNor2, alpha, sampleInfo, nsIdx, faceIndices);
                }
                else
                {
-                  /*for(size_t i=0;i<abcNor->size();i++)
-                  {
-                     AtVector n;
-                     n.x = abcNor->get()[i].x;
-                     n.y = abcNor->get()[i].y;
-                     n.z = abcNor->get()[i].z;
-                     AiArraySetVec(nor,norOffset++,n);
-                  }*/
                  nor = removeNormalsDuplicate(abcNor, sampleInfo, nsIdx, faceIndices);
                }
             }
          }
       }
       AiNodeSetArray(shapeNode, "vlist", pos);
-      AiNodeSetArray(shapeNode, "nlist", nor);
-      AiNodeSetArray(shapeNode, "nidxs", nsIdx);    // recycling uvsIdx
+      if (nor != NULL)
+      {
+        AiNodeSetArray(shapeNode, "nlist", nor);
+        AiNodeSetArray(shapeNode, "nidxs", nsIdx);
+      }
+
       if(!createdShifted)
       {
          if(ud->gProcShaders != NULL && shaders == NULL)
@@ -1653,21 +1498,8 @@ static AtNode *GetNode(void *user_ptr, int i)
             Alembic::AbcGeom::IV2fGeomParam uvParam= typedObject.getSchema().getUVsParam();
             if(uvParam.valid())
             {
-               /*
-               Alembic::Abc::V2fArraySamplePtr abcUvs = uvParam.getExpandedValue(sampleInfo.floorIndex).getVals();
-               Alembic::Abc::UInt32ArraySamplePtr abcUvIdx = uvParam.getExpandedValue(sampleInfo.floorIndex).getIndices();
-
-               AtArray * uvs = AiArrayAllocate((AtInt)abcUvs->size() * 2, 1, AI_TYPE_FLOAT);
-               offset = 0;
-               for(AtULong i=0;i<abcUvs->size();i++)
-               {
-                  AiArraySetFlt(uvs,offset++,abcUvs->get()[i].x);
-                  AiArraySetFlt(uvs,offset++,abcUvs->get()[i].y);
-               }
-               /*/
                AiNodeSetArray(shapeNode, "uvlist", removeUvsDuplicate(uvParam, sampleInfo, uvsIdx, faceIndices));
                AiNodeSetArray(shapeNode, "uvidxs", uvsIdx);
-               //*/
 
                // check if we have uvOptions
                //*

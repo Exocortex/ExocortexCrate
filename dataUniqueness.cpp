@@ -49,13 +49,15 @@ AtArray *removeUvsDuplicate(Alembic::AbcGeom::IV2fGeomParam &uvParam, SampleInfo
       if (UVs_map.find(mkey) == UVs_map.end())
       {
          UVs_map[mkey] = new_idx;
+         AiArraySetUInt(uvsIdx, i, new_idx);
          ++new_idx;
       }
-      AiArraySetUInt(uvsIdx, i, UVs_map[mkey]);   // replace with the right index
+      else
+        AiArraySetUInt(uvsIdx, i, UVs_map[mkey]);   // replace with the right index
    }
 
    // fill the UVs
-   AtArray *uvs = AiArrayAllocate(UVs_map.size(), 1, AI_TYPE_POINT2);
+   AtArray *uvs = AiArrayAllocate((AtUInt32)UVs_map.size(), 1, AI_TYPE_POINT2);
    for (uv_map_map_key_to_int::const_iterator beg = UVs_map.begin(); beg != UVs_map.end(); ++beg)
    {
       AtPoint2 pt;
@@ -104,7 +106,7 @@ typedef std::map<n_map_key, int, n_map_key_less> n_map_map_key_to_int;    // a m
 
 static AtArray *fillNormals(const n_map_map_key_to_int &Ns_map)
 {
-   AtArray *ns = AiArrayAllocate(Ns_map.size(), 1, AI_TYPE_VECTOR);
+   AtArray *ns = AiArrayAllocate((AtUInt32)Ns_map.size(), 1, AI_TYPE_VECTOR);
    for (n_map_map_key_to_int::const_iterator beg = Ns_map.begin(); beg != Ns_map.end(); ++beg)
    {
       AtVector norm;
@@ -137,9 +139,11 @@ AtArray *removeNormalsDuplicate(Alembic::Abc::N3fArraySamplePtr &abcN, SampleInf
       if (Ns_map.find(mkey) == Ns_map.end())
       {
          Ns_map[mkey] = new_idx;
+         AiArraySetUInt(nIdx, i, new_idx);
          ++new_idx;
       }
-      AiArraySetUInt(nIdx, i, Ns_map[mkey]);   // replace with the right index
+      else
+        AiArraySetUInt(nIdx, i, Ns_map[mkey]);   // replace with the right index
    }
 
    // fill the Ns
@@ -169,9 +173,11 @@ AtArray *removeNormalsDuplicateDynTopology(Alembic::Abc::N3fArraySamplePtr &abcN
       if (Ns_map.find(mkey) == Ns_map.end())
       {
          Ns_map[mkey] = new_idx;
+         AiArraySetUInt(nIdx, i, new_idx);
          ++new_idx;
       }
-      AiArraySetUInt(nIdx, i, Ns_map[mkey]);   // replace with the right index
+      else
+        AiArraySetUInt(nIdx, i, Ns_map[mkey]);   // replace with the right index
    }
 
    // fill the Ns
