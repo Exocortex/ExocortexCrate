@@ -109,13 +109,23 @@ int recurseOnAlembicObject(Alembic::AbcGeom::IObject& iObj, INode *pParentMaxNod
 				bCreateDummyNode = true;
 			}
 			else if(geomNodeCount == 1){ //create geometry node
-				mergedGeomNodeIndex = mergeIndex;
+
+				std::string parentName = removeXfoSuffix(iObj.getName());
+				std::string childName = mergedGeomChild->getName();
+				//only merge if the parent and child have the same after the Xfo suffix has been removed (if present)
+				if(parentName.compare(childName) == 0){
+					mergedGeomNodeIndex = mergeIndex;
+				}
+				else{
+					bCreateDummyNode = true;
+				}
 			}
 			else if(geomNodeCount > 1){ //create dummy node
 				bCreateDummyNode = true;
 			}
 		}
 
+		int keepTM = 1;//I don't remember why this needed to be set in some cases.
 		INode* pExistingNode = NULL;
 		if(bCreateDummyNode){
 
@@ -152,7 +162,7 @@ int recurseOnAlembicObject(Alembic::AbcGeom::IObject& iObj, INode *pParentMaxNod
 				if(ret != 0) return ret;
 				
 			}
-			else{ //multiple geometry nodes under a dummy node (in pParentMaxNode)
+			else{ //geometry node(s) under a dummy node (in pParentMaxNode)
 				pExistingNode = GetChildNodeFromName(iObj.getName(), pParentMaxNode);
 				if(options.attachToExisting && pExistingNode){
 					pMaxNode = pExistingNode;
@@ -160,6 +170,9 @@ int recurseOnAlembicObject(Alembic::AbcGeom::IObject& iObj, INode *pParentMaxNod
 				
 				int ret = createAlembicObject(iObj, &pMaxNode, options, file);
 				if(ret != 0) return ret;
+
+				//since the transform is the identity, should position relative to parent
+				keepTM = 0;
 
 				//import identity matrix, since more than goemetry node share the same transform
 				//Should we just list MAX put a default position/scale/rotation controller on?
@@ -176,7 +189,7 @@ int recurseOnAlembicObject(Alembic::AbcGeom::IObject& iObj, INode *pParentMaxNod
 		}
 
 		if(pParentMaxNode && !pExistingNode){
-			pParentMaxNode->AttachChild(pMaxNode, 1);
+			pParentMaxNode->AttachChild(pMaxNode, keepTM);
 		}
 	}
 
