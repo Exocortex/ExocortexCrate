@@ -248,10 +248,12 @@ bool AlembicPoints::Save(double time, bool bLastFrame)
 				if(pThinkingParticleMat){
 					pMesh = pThinkingParticleMat->GetParticleRenderMesh(ticks, GetRef().node, nullView, bNeedDelete, i, meshTM, bChanged);
 				}
-				else{
+				else
+#endif			
+				{
 					pMesh = particlesExt->GetParticleShapeByIndex(i);
 				}
-#endif
+
 				if(pMesh){
 					CacheShapeMesh(pMesh, bNeedDelete, meshTM, nMatId, i, ticks, shapetype, shapeInstanceId, shapeInstanceTime);
 				}
