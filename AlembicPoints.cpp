@@ -249,7 +249,7 @@ bool AlembicPoints::Save(double time, bool bLastFrame)
 					pMesh = pThinkingParticleMat->GetParticleRenderMesh(ticks, GetRef().node, nullView, bNeedDelete, i, meshTM, bChanged);
 				}
 				else{
-					particlesExt->GetParticleShapeByIndex(i);
+					pMesh = particlesExt->GetParticleShapeByIndex(i);
 				}
 #endif
 				if(pMesh){
