@@ -978,6 +978,7 @@ Mesh* AlembicParticles::GetRenderMesh(TimeValue t, INode *inode, View &view, BOO
 
 
 
+	//the mesh should be relative to the particle frame
 	Matrix3 inverseTM = Inverse(inode->GetObjectTM(t));
 	//inverseTM.IdentityMatrix();
 
@@ -1029,7 +1030,7 @@ Mesh* AlembicParticles::GetRenderMesh(TimeValue t, INode *inode, View &view, BOO
 		}
 
 		//for transforming the normals
-		Matrix3 meshTM_I_T = meshTM;
+		Matrix3 meshTM_I_T = meshTM * inverseTM;
 		meshTM_I_T.SetTrans(Point3(0.0, 0.0, 0.0));
 		//the following two steps are necessary because meshTM can contain a scale factor
 		meshTM_I_T = Inverse(meshTM_I_T);
