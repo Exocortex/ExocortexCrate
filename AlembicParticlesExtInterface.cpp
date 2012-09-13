@@ -104,7 +104,7 @@ bool IAlembicParticlesExt::GetRenderMeshVertexSpeed(TimeValue t, INode *inode, V
 
 int IAlembicParticlesExt::NumberOfRenderMeshes(TimeValue t, INode *inode, View& view) { 
 	ESS_LOG_WARNING("IAlembicParticlesExt::NumberOfRenderMeshes");
-	return m_pAlembicParticles->NumberOfRenderMeshes();
+	//return m_pAlembicParticles->NumberOfRenderMeshes();
 	return 0;
 }
 
@@ -113,6 +113,6 @@ int IAlembicParticlesExt::NumberOfRenderMeshes(TimeValue t, INode *inode, View& 
 // Some of these particles may be dead or not born yet (indicated by GetAge(..) method =-1). 
 int IAlembicParticlesExt::NumParticles(){
 	ESS_LOG_WARNING("IAlembicParticlesExt::NumParticles");
-	//return m_pAlembicParticles->NumberOfRenderMeshes();
-	return 0;
+	return m_pAlembicParticles->NumberOfRenderMeshes();
+	//return 0;
 }
