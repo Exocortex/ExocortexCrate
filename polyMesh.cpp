@@ -148,7 +148,6 @@ template<typename SCHEMA, typename SCHEMA_SAMPLE>
 static bool hadToInterpolatePositions(SCHEMA &schema, SCHEMA_SAMPLE &sample, AtArray *pos, AtULong &posOffset, std::vector<float> &samples, SampleInfo &sampleInfo, bool dynamicTopology)
 {
   Alembic::Abc::P3fArraySamplePtr abcPos = sample.getPositions();
-  Alembic::Abc::V3fArraySamplePtr abcVel = sample.getVelocities();
 
   if(dynamicTopology)
   {
@@ -178,6 +177,7 @@ static bool hadToInterpolatePositions(SCHEMA &schema, SCHEMA_SAMPLE &sample, AtA
     Alembic::Abc::P3fArraySamplePtr abcPos2 = sample2.getPositions();
     const float alpha = (float)sampleInfo.alpha;
     const float ialpha = 1.0f - alpha;
+
     if(!dynamicTopology)
     {
       for(size_t i=0;i<abcPos->size();i++)
@@ -189,11 +189,12 @@ static bool hadToInterpolatePositions(SCHEMA &schema, SCHEMA_SAMPLE &sample, AtA
         AiArraySetPnt(pos, posOffset++, pt);
       }
     }
-    else if(abcVel)
+    else
     {
-      if(abcVel->size() == abcPos->size())
+      Alembic::Abc::V3fArraySamplePtr abcVel = sample.getVelocities();
+      if(abcVel && abcVel->size() == abcPos->size())
       {
-        float timeAlpha = (float)(schema.getTimeSampling()->getSampleTime(sampleInfo.ceilIndex) - schema.getTimeSampling()->getSampleTime(sampleInfo.floorIndex)) * alpha;
+        const float timeAlpha = (float)(schema.getTimeSampling()->getSampleTime(sampleInfo.ceilIndex) - schema.getTimeSampling()->getSampleTime(sampleInfo.floorIndex)) * alpha;
         for(size_t i=0;i<abcPos->size();i++)
         {
           AtPoint pt;
@@ -204,13 +205,7 @@ static bool hadToInterpolatePositions(SCHEMA &schema, SCHEMA_SAMPLE &sample, AtA
         }
       }
       else
-      {
         plainPositionCopy(pos, abcPos, posOffset);
-      }
-    }
-    else
-    {
-      plainPositionCopy(pos, abcPos, posOffset);
     }
   }
   return true;
