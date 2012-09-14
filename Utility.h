@@ -107,6 +107,16 @@ inline Quat ConvertAlembicQuatToMaxQuat( const Imath::Quatf &alembicQuat, bool b
     return q;
 }
 
+inline Imath::Quatf ConvertMaxQuatToAlembicQuat( const Imath::Quatf &alembicQuat, bool bNormalize)
+{
+	Imath::Quatf q(alembicQuat.v.x, alembicQuat.v.z, -alembicQuat.v.y, -alembicQuat.r);
+
+    if (bNormalize)
+		q.normalize();
+
+    return q;
+}
+
 inline void ConvertMaxAngAxisToAlembicQuat(const AngAxis &angAxis, Alembic::Abc::Quatd &quat)
 {
     Imath::V3f alembicAxis = ConvertMaxNormalToAlembicNormal(angAxis.axis);

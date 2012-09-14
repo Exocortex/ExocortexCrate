@@ -252,6 +252,13 @@ bool AlembicPoints::Save(double time, bool bLastFrame)
 			Matrix3 alignmentMatMax = pTPMasterSystemInt->Alignment(i);
 			Alembic::Abc::M44d alignmentMat;
 			ConvertMaxMatrixToAlembicMatrix(alignmentMatMax, alignmentMat);
+			/*alignmentMat = Alembic::Abc::M44d( alignmentMatMax.GetRow(0).x,  alignmentMatMax.GetRow(0).y,  alignmentMatMax.GetRow(0).z,  0,
+                                 alignmentMatMax.GetRow(1).x,  alignmentMatMax.GetRow(1).y,  alignmentMatMax.GetRow(1).z,  0,
+                                 alignmentMatMax.GetRow(2).x,  alignmentMatMax.GetRow(2).y,  alignmentMatMax.GetRow(2).z,  0,
+                                 alignmentMatMax.GetRow(3).x,  alignmentMatMax.GetRow(3).y,  alignmentMatMax.GetRow(3).z,  1);*/
+			//orientation = ConvertMaxQuatToAlembicQuat(extracctuat(alignmentMat), true);
+
+			alignmentMat = alignmentMat * nodeWorldTransInv;
 			orientation = extractQuat(alignmentMat);
 
 			//ConvertMaxAngAxisToAlembicQuat(*particlesExt->GetParticleSpinByIndex(i), spin);
