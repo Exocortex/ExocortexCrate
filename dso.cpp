@@ -1,6 +1,9 @@
 #include "common.h"
 #include "instance.h"
 #include "polyMesh.h"
+#include "curves.h"
+#include "nurbs.h"
+#include "points.h"
 
 boost::mutex gGlobalLock;
 

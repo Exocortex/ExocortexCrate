@@ -21,9 +21,9 @@ static bool faceCount(AtNode *shapeNode, __indices &ind, Alembic::Abc::Int32Arra
   if(abcFaceCounts->get()[0] == 0)
     return false;
 
-  AtArray * faceCounts = AiArrayAllocate((AtInt)abcFaceCounts->size(),   1, AI_TYPE_UINT);
-  ind.faceIndices      = AiArrayAllocate((AtInt)abcFaceIndices->size(),  1, AI_TYPE_UINT);
-  ind.indices          = AiArrayAllocate((AtInt)(abcFaceIndices->size()),1, AI_TYPE_UINT);
+  AtArray *faceCounts = AiArrayAllocate((AtInt)abcFaceCounts->size(),  1, AI_TYPE_UINT);
+  ind.faceIndices     = AiArrayAllocate((AtInt)abcFaceIndices->size(), 1, AI_TYPE_UINT);
+  ind.indices         = AiArrayAllocate((AtInt)abcFaceIndices->size(), 1, AI_TYPE_UINT);
   AtUInt offset = 0;
   for(AtULong i=0; i<faceCounts->nelements; ++i)
   {
@@ -130,6 +130,92 @@ static void postShaderProcess(SCHEMA &schema, nodeData &nodata, userData *ud, Al
   }
 }
 
+static void plainPositionCopy(AtArray *pos, Alembic::Abc::P3fArraySamplePtr &abcPos, AtULong &posOffset)
+{
+  const int nbPos = abcPos->size();
+  for(size_t i=0; i < nbPos; ++i)
+  {
+    AtPoint pt;
+    pt.x = abcPos->get()[i].x;
+    pt.y = abcPos->get()[i].y;
+    pt.z = abcPos->get()[i].z;
+    AiArraySetPnt(pos, posOffset++, pt);
+  }
+}
+
+// IF pos == NULL, it needs to be done before calling that function
+template<typename SCHEMA, typename SCHEMA_SAMPLE>
+static bool hadToInterpolatePositions(SCHEMA &schema, SCHEMA_SAMPLE &sample, AtArray *pos, AtULong &posOffset, std::vector<float> &samples, SampleInfo &sampleInfo, bool dynamicTopology)
+{
+  Alembic::Abc::P3fArraySamplePtr abcPos = sample.getPositions();
+  Alembic::Abc::V3fArraySamplePtr abcVel = sample.getVelocities();
+
+  if(dynamicTopology)
+  {
+    SampleInfo sampleInfoFirst = getSampleInfo
+    (
+      samples[0],
+      schema.getTimeSampling(),
+      schema.getNumSamples()
+    );
+    schema.get(sample,sampleInfoFirst.floorIndex);
+    abcPos = sample.getPositions();
+
+    sampleInfoFirst.alpha += double(sampleInfo.floorIndex) - double(sampleInfoFirst.floorIndex);
+    sampleInfo = sampleInfoFirst;
+  }
+
+  // if we have to interpolate
+  if(sampleInfo.alpha <= sampleTolerance) // NOT!
+  {
+    plainPositionCopy(pos, abcPos, posOffset);
+    return false;
+  }
+  else
+  {
+    SCHEMA_SAMPLE sample2;
+    schema.get(sample2,sampleInfo.ceilIndex);
+    Alembic::Abc::P3fArraySamplePtr abcPos2 = sample2.getPositions();
+    const float alpha = (float)sampleInfo.alpha;
+    const float ialpha = 1.0f - alpha;
+    if(!dynamicTopology)
+    {
+      for(size_t i=0;i<abcPos->size();i++)
+      {
+        AtPoint pt;
+        pt.x = abcPos->get()[i].x * ialpha + abcPos2->get()[i].x * alpha;
+        pt.y = abcPos->get()[i].y * ialpha + abcPos2->get()[i].y * alpha;
+        pt.z = abcPos->get()[i].z * ialpha + abcPos2->get()[i].z * alpha;
+        AiArraySetPnt(pos, posOffset++, pt);
+      }
+    }
+    else if(abcVel)
+    {
+      if(abcVel->size() == abcPos->size())
+      {
+        float timeAlpha = (float)(schema.getTimeSampling()->getSampleTime(sampleInfo.ceilIndex) - schema.getTimeSampling()->getSampleTime(sampleInfo.floorIndex)) * alpha;
+        for(size_t i=0;i<abcPos->size();i++)
+        {
+          AtPoint pt;
+          pt.x = abcPos->get()[i].x + timeAlpha * abcVel->get()[i].x;
+          pt.y = abcPos->get()[i].y + timeAlpha * abcVel->get()[i].y;
+          pt.z = abcPos->get()[i].z + timeAlpha * abcVel->get()[i].z;
+          AiArraySetPnt(pos, posOffset++, pt);
+        }
+      }
+      else
+      {
+        plainPositionCopy(pos, abcPos, posOffset);
+      }
+    }
+    else
+    {
+      plainPositionCopy(pos, abcPos, posOffset);
+    }
+  }
+  return true;
+}
+
 AtNode *createPolyMeshNode(nodeData &nodata, userData * ud, std::vector<float> &samples, int i)
 {
   Alembic::AbcGeom::IPolyMesh typedObject(nodata.object,Alembic::Abc::kWrapExisting);
@@ -162,7 +248,7 @@ AtNode *createPolyMeshNode(nodeData &nodata, userData * ud, std::vector<float> &
   Alembic::Abc::Int32ArraySamplePtr abcFaceCounts;
   Alembic::Abc::Int32ArraySamplePtr abcFaceIndices;
 
-  for(size_t sampleIndex = 0; sampleIndex < minNumSamples; sampleIndex++)
+  for(size_t sampleIndex = 0; sampleIndex < minNumSamples; ++sampleIndex)
   {
     SampleInfo sampleInfo = getSampleInfo(
       samples[sampleIndex],
@@ -205,7 +291,7 @@ AtNode *createPolyMeshNode(nodeData &nodata, userData * ud, std::vector<float> &
           Alembic::Abc::V3fArraySamplePtr abcBindPose = prop.getValue(sampleInfo.floorIndex);
           AiNodeDeclare(shapeNode, "Pref", "varying POINT");
 
-          AtArray * bindPose = AiArrayAllocate((AtInt)abcBindPose->size(), 1, AI_TYPE_POINT);
+          AtArray *bindPose = AiArrayAllocate((AtInt)abcBindPose->size(), 1, AI_TYPE_POINT);
           AtPoint pnt;
           for(AtULong i=0;i<abcBindPose->size();i++)
           {
@@ -220,110 +306,35 @@ AtNode *createPolyMeshNode(nodeData &nodata, userData * ud, std::vector<float> &
     }
 
     // access the positions
-    Alembic::Abc::P3fArraySamplePtr abcPos = sample.getPositions();
-    Alembic::Abc::V3fArraySamplePtr abcVel = sample.getVelocities();
+    Alembic::Abc::N3fArraySamplePtr abcNor = normalParam.getExpandedValue(sampleInfo.floorIndex).getVals();
     if(pos == NULL)
     {
+      Alembic::Abc::P3fArraySamplePtr abcPos = sample.getPositions();
       firstSampleCount = sample.getFaceIndices()->size();
-      pos = AiArrayAllocate((AtInt)(abcPos->size() * 3),(AtInt)minNumSamples,AI_TYPE_FLOAT);
+      pos = AiArrayAllocate((AtInt)abcPos->size(), (AtInt)minNumSamples, AI_TYPE_POINT);
     }
 
-    if(dynamicTopology)
+    const bool interpolated = hadToInterpolatePositions(typedObject.getSchema(), sample, pos, posOffset, samples, sampleInfo, dynamicTopology);
+    if (abcNor != NULL)
     {
-      SampleInfo sampleInfoFirst = getSampleInfo(
-         samples[0],
-         typedObject.getSchema().getTimeSampling(),
-         typedObject.getSchema().getNumSamples()
-      );
-      typedObject.getSchema().get(sample,sampleInfoFirst.floorIndex);
-      abcPos = sample.getPositions();
-
-      sampleInfoFirst.alpha += double(sampleInfo.floorIndex) - double(sampleInfoFirst.floorIndex);
-      sampleInfo = sampleInfoFirst;
-    }
-
-    // access the normals
-    Alembic::Abc::N3fArraySamplePtr abcNor = normalParam.getExpandedValue(sampleInfo.floorIndex).getVals();
-
-    // if we have to interpolate
-    if(sampleInfo.alpha <= sampleTolerance)
-    {
-      for(size_t i=0;i<abcPos->size();i++)
-      {
-        AiArraySetFlt(pos,posOffset++,abcPos->get()[i].x);
-        AiArraySetFlt(pos,posOffset++,abcPos->get()[i].y);
-        AiArraySetFlt(pos,posOffset++,abcPos->get()[i].z);
-      }
-      if(abcNor != NULL)
+      if (!interpolated || dynamicTopology)
         nor = removeNormalsDuplicate(abcNor, sampleInfo, nsIdx, ind.faceIndices);
-    }
-    else
-    {
-      Alembic::AbcGeom::IPolyMeshSchema::Sample sample2;
-      typedObject.getSchema().get(sample2,sampleInfo.ceilIndex);
-      Alembic::Abc::P3fArraySamplePtr abcPos2 = sample2.getPositions();
-      float alpha = (float)sampleInfo.alpha;
-      float ialpha = 1.0f - alpha;
-      if(!dynamicTopology)
-      {
-        for(size_t i=0;i<abcPos->size();i++)
-        {
-          AiArraySetFlt(pos,posOffset++,abcPos->get()[i].x * ialpha + abcPos2->get()[i].x * alpha);
-          AiArraySetFlt(pos,posOffset++,abcPos->get()[i].y * ialpha + abcPos2->get()[i].y * alpha);
-          AiArraySetFlt(pos,posOffset++,abcPos->get()[i].z * ialpha + abcPos2->get()[i].z * alpha);
-        }
-      }
-      else if(abcVel)
-      {
-        if(abcVel->size() == abcPos->size())
-        {
-          float timeAlpha = (float)(typedObject.getSchema().getTimeSampling()->getSampleTime(sampleInfo.ceilIndex) - 
-                            typedObject.getSchema().getTimeSampling()->getSampleTime(sampleInfo.floorIndex)) * alpha;
-          for(size_t i=0;i<abcPos->size();i++)
-          {
-            AiArraySetFlt(pos,posOffset++,abcPos->get()[i].x + timeAlpha * abcVel->get()[i].x);
-            AiArraySetFlt(pos,posOffset++,abcPos->get()[i].y + timeAlpha * abcVel->get()[i].y);
-            AiArraySetFlt(pos,posOffset++,abcPos->get()[i].z + timeAlpha * abcVel->get()[i].z);
-          }
-        }
-        else
-        {
-          for(size_t i=0;i<abcPos->size();i++)
-          {
-            AiArraySetFlt(pos,posOffset++,abcPos->get()[i].x);
-            AiArraySetFlt(pos,posOffset++,abcPos->get()[i].y);
-            AiArraySetFlt(pos,posOffset++,abcPos->get()[i].z);
-          }
-        }
-      }
       else
       {
-        for(size_t i=0;i<abcPos->size();i++)
-        {
-          AiArraySetFlt(pos,posOffset++,abcPos->get()[i].x);
-          AiArraySetFlt(pos,posOffset++,abcPos->get()[i].y);
-          AiArraySetFlt(pos,posOffset++,abcPos->get()[i].z);
-        }
-      }
-
-      if(abcNor != NULL)
-      {
-        if(!dynamicTopology)
-        {
-          Alembic::Abc::N3fArraySamplePtr abcNor2 = normalParam.getExpandedValue(sampleInfo.ceilIndex).getVals();
-          nor = removeNormalsDuplicateDynTopology(abcNor, abcNor2, alpha, sampleInfo, nsIdx, ind.faceIndices);
-        }
-        else
-        {
-          nor = removeNormalsDuplicate(abcNor, sampleInfo, nsIdx, ind.faceIndices);
-        }
+        Alembic::Abc::N3fArraySamplePtr abcNor2 = normalParam.getExpandedValue(sampleInfo.ceilIndex).getVals();
+        nor = removeNormalsDuplicateDynTopology(abcNor, abcNor2, (float)sampleInfo.alpha, sampleInfo, nsIdx, ind.faceIndices);
       }
     }
   }
 
   AiNodeSetArray(shapeNode, "vlist", pos);
-  AiNodeSetArray(shapeNode, "nlist", nor);
-  AiNodeSetArray(shapeNode, "nidxs", nsIdx);
+  if (nor != NULL)
+  {
+    AiNodeSetArray(shapeNode, "nlist", nor);
+    AiNodeSetArray(shapeNode, "nidxs", nsIdx);
+  }
+  else
+    AiArrayDestroy(nsIdx);    // no normals... no need for nsIdx!
 
   postShaderProcess(typedObject.getSchema(), nodata, ud, abcFaceCounts);
   return shapeNode;
@@ -351,7 +362,7 @@ AtNode *createSubDNode(nodeData &nodata, userData * ud, std::vector<float> &samp
   AtULong posOffset = 0;
   Alembic::Abc::Int32ArraySamplePtr abcFaceCounts;
 
-  for(size_t sampleIndex = 0; sampleIndex < minNumSamples; sampleIndex++)
+  for(size_t sampleIndex = 0; sampleIndex < minNumSamples; ++sampleIndex)
   {
     SampleInfo sampleInfo = getSampleInfo(
       samples[sampleIndex],
@@ -367,6 +378,7 @@ AtNode *createSubDNode(nodeData &nodata, userData * ud, std::vector<float> &samp
     if(sampleIndex == 0)
     {
       __indices ind;
+      abcFaceCounts = sample.getFaceCounts();
       Alembic::Abc::Int32ArraySamplePtr abcFaceIndices = sample.getFaceIndices();
       if (!faceCount(shapeNode, ind, abcFaceCounts, abcFaceIndices))
         return NULL;
@@ -385,93 +397,13 @@ AtNode *createSubDNode(nodeData &nodata, userData * ud, std::vector<float> &samp
     }
 
     // access the positions
-    Alembic::Abc::P3fArraySamplePtr abcPos = sample.getPositions();
     if(pos == NULL)
     {
-      pos = AiArrayAllocate((AtInt)(abcPos->size() * 3),(AtInt)minNumSamples,AI_TYPE_FLOAT);
+      Alembic::Abc::P3fArraySamplePtr abcPos = sample.getPositions();
+      pos = AiArrayAllocate((AtInt)abcPos->size(), (AtInt)minNumSamples, AI_TYPE_POINT);
       firstSampleCount = sample.getFaceIndices()->size();
     }
-
-     // if the count has changed, let's move back to the first sample
-     if(dynamicTopology)
-     {
-        SampleInfo sampleInfoFirst = getSampleInfo(
-           samples[0],
-           typedObject.getSchema().getTimeSampling(),
-           typedObject.getSchema().getNumSamples()
-        );
-        typedObject.getSchema().get(sample,sampleInfoFirst.floorIndex);
-        abcPos = sample.getPositions();
-
-        sampleInfoFirst.alpha += double(sampleInfo.floorIndex) - double(sampleInfoFirst.floorIndex);
-        sampleInfo = sampleInfoFirst;
-     }
-
-     // if we have to interpolate
-     if(sampleInfo.alpha <= sampleTolerance)
-     {
-        for(size_t i=0;i<abcPos->size();i++)
-        {
-           AiArraySetFlt(pos,posOffset++,abcPos->get()[i].x);
-           AiArraySetFlt(pos,posOffset++,abcPos->get()[i].y);
-           AiArraySetFlt(pos,posOffset++,abcPos->get()[i].z);
-        }
-     }
-     else
-     {
-        Alembic::AbcGeom::ISubDSchema::Sample sample2;
-        typedObject.getSchema().get(sample2,sampleInfo.ceilIndex);
-        Alembic::Abc::P3fArraySamplePtr abcPos2 = sample2.getPositions();
-        float alpha = (float)sampleInfo.alpha;
-        float ialpha = 1.0f - alpha;
-        if(!dynamicTopology)
-        {
-           for(size_t i=0;i<abcPos->size();i++)
-           {
-              AiArraySetFlt(pos,posOffset++,abcPos->get()[i].x * ialpha + abcPos2->get()[i].x * alpha);
-              AiArraySetFlt(pos,posOffset++,abcPos->get()[i].y * ialpha + abcPos2->get()[i].y * alpha);
-              AiArraySetFlt(pos,posOffset++,abcPos->get()[i].z * ialpha + abcPos2->get()[i].z * alpha);
-           }
-        }
-        else if(typedObject.getSchema().getPropertyHeader( ".velocities" ) != NULL)
-        {
-           Alembic::Abc::IV3fArrayProperty velocitiesProp = Alembic::Abc::IV3fArrayProperty( typedObject.getSchema(), ".velocities" );
-           SampleInfo velSampleInfo = getSampleInfo(
-              samples[sampleIndex],
-              velocitiesProp.getTimeSampling(),
-              velocitiesProp.getNumSamples()
-           );
-
-           Alembic::Abc::V3fArraySamplePtr abcVel = velocitiesProp.getValue(velSampleInfo.floorIndex);
-           if(abcVel->size() == abcPos->size())
-           {
-              for(size_t i=0;i<abcPos->size();i++)
-              {
-                 AiArraySetFlt(pos,posOffset++,abcPos->get()[i].x + alpha * abcVel->get()[i].x);
-                 AiArraySetFlt(pos,posOffset++,abcPos->get()[i].y + alpha * abcVel->get()[i].y);
-                 AiArraySetFlt(pos,posOffset++,abcPos->get()[i].z + alpha * abcVel->get()[i].z);
-              }
-           }
-           else
-           {
-              for(size_t i=0;i<abcPos->size();i++)
-              {
-                 AiArraySetFlt(pos,posOffset++,abcPos->get()[i].x);
-                 AiArraySetFlt(pos,posOffset++,abcPos->get()[i].y);
-                 AiArraySetFlt(pos,posOffset++,abcPos->get()[i].z);
-              }
-           }
-        }
-        else
-        {
-           for(size_t i=0;i<abcPos->size();i++)
-           {
-              AiArraySetFlt(pos,posOffset++,abcPos->get()[i].x);
-              AiArraySetFlt(pos,posOffset++,abcPos->get()[i].y);
-              AiArraySetFlt(pos,posOffset++,abcPos->get()[i].z);
-           }
-        }
-     }
+    hadToInterpolatePositions(typedObject.getSchema(), sample, pos, posOffset, samples, sampleInfo, dynamicTopology);
   }
   AiNodeSetArray(shapeNode, "vlist", pos);
 
