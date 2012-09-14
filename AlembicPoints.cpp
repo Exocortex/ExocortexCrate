@@ -32,7 +32,7 @@
 #include <Alembic/Util/Murmur3.h>
 #include "AlembicPointsUtils.h"
 #include "AlembicParticles.h"
-
+#include <ImathMatrixAlgo.h>
 
 namespace AbcA = ::Alembic::AbcCoreAbstract::ALEMBIC_VERSION_NS;
 namespace AbcB = ::Alembic::Abc::ALEMBIC_VERSION_NS;
@@ -108,22 +108,42 @@ bool AlembicPoints::Save(double time, bool bLastFrame)
 
 	SaveMetaData(GetRef().node, this);
 
-
-	
-	
 	SimpleParticle* pSimpleParticle = (SimpleParticle*)obj->GetInterface(I_SIMPLEPARTICLEOBJ);
 	IPFSystem* ipfSystem = GetPFSystemInterface(obj);
 	IParticleObjectExt* particlesExt = GetParticleObjectExtInterface(obj);
 	
 #ifdef THINKING_PARTICLES
 	ParticleMat* pThinkingParticleMat = NULL;
+	TP_MasterSystemInterface* pTPMasterSystemInt = NULL;
 	if(obj->CanConvertToType(MATTERWAVES_CLASS_ID))
 	{
 		pThinkingParticleMat = reinterpret_cast<ParticleMat*>(obj->ConvertToType(ticks, MATTERWAVES_CLASS_ID));
+		pTPMasterSystemInt = reinterpret_cast<TP_MasterSystemInterface*>(obj->GetInterface(IID_TP_MASTERSYSTEM));     
+
 	}
 #endif
 
+	const bool bAutomaticInstancing = GetCurrentJob()->GetOption("automaticInstancing");
+
+	if( 
+#ifdef THINKING_PARTICLES
+		!pThinkingParticleMat && 
+#endif
+		!particlesExt && !pSimpleParticle){
+		return false;
+	}
+
+	if(bAutomaticInstancing){
+		SetMaxSceneTime(ticks);
+	}
+
 	int numParticles = 0;
+#ifdef THINKING_PARTICLES
+	if(pThinkingParticleMat){
+		numParticles = pThinkingParticleMat->NumParticles();	
+	}
+	else 
+#endif
 	if(particlesExt){
 		particlesExt->UpdateParticles(GetRef().node, ticks);
 		numParticles = particlesExt->NumParticles();
@@ -132,11 +152,6 @@ bool AlembicPoints::Save(double time, bool bLastFrame)
 		pSimpleParticle->Update(ticks, GetRef().node);
 		numParticles = pSimpleParticle->parts.points.Count();
 	}
-	else{
-		return false;
-	}
-
-	const bool bAutomaticInstancing = GetCurrentJob()->GetOption("automaticInstancing");
 
 	//We have to put the particle system into the renders state so that PFOperatorMaterialFrequency::Proceed will set the materialID channel
 	//Note: settting the render state to true breaks the shape node instancing export
@@ -191,12 +206,9 @@ bool AlembicPoints::Save(double time, bool bLastFrame)
 
 
 
-	if(bAutomaticInstancing){
-		SetMaxSceneTime(ticks);
-	}
+
 	ExoNullView nullView;
 	particleGroupInterface groupInterface(particlesExt, obj, GetRef().node, &nullView);
-
 
 	for (int i = 0; i < numParticles; ++i)
 	{
@@ -216,7 +228,59 @@ bool AlembicPoints::Save(double time, bool bLastFrame)
 		float shapeInstanceTime = (float)time;
 		uint16_t shapeInstanceId = 0;
 
-		if(particlesExt){
+#ifdef THINKING_PARTICLES
+		if(pThinkingParticleMat){
+			if(pTPMasterSystemInt->IsAlive(i) == FALSE){
+				continue;
+			}
+
+			//TimeValue ageValue = particlesExt->GetParticleAgeByIndex(i);
+			TimeValue ageValue = pTPMasterSystemInt->Age(i);
+			if(ageValue == -1){
+				continue;
+			}
+			age = (float)GetSecondsFromTimeValue(ageValue);
+
+			//pos = ConvertMaxPointToAlembicPoint(*particlesExt->GetParticlePositionByIndex(i));
+			pos = ConvertMaxPointToAlembicPoint(pTPMasterSystemInt->Position(i));
+			//vel = ConvertMaxVectorToAlembicVector(*particlesExt->GetParticleSpeedByIndex(i) * TIME_TICKSPERSEC);
+			vel = ConvertMaxVectorToAlembicVector(pTPMasterSystemInt->Velocity(i) * TIME_TICKSPERSEC);
+			scale = ConvertMaxScaleToAlembicScale(pTPMasterSystemInt->Scale(i));
+			scale *= pTPMasterSystemInt->Size(i);
+			
+			//ConvertMaxEulerXYZToAlembicQuat(*particlesExt->GetParticleOrientationByIndex(i), orientation);
+
+			Matrix3 alignmentMatMax = pTPMasterSystemInt->Alignment(i);
+			Alembic::Abc::M44d alignmentMat;
+			ConvertMaxMatrixToAlembicMatrix(alignmentMatMax, alignmentMat);
+			orientation = extractQuat(alignmentMat);
+
+			//ConvertMaxAngAxisToAlembicQuat(*particlesExt->GetParticleSpinByIndex(i), spin);
+			ConvertMaxAngAxisToAlembicQuat(pTPMasterSystemInt->Spin(i), spin);
+
+
+			id = particlesExt->GetParticleBornIndex(i);
+
+			//seems to always return 0
+			//int nPid = pThinkingParticleMat->ParticleID(i);
+					
+			int nMatId = -1;
+			Matrix3 meshTM;
+			meshTM.IdentityMatrix();
+			BOOL bNeedDelete = FALSE;
+			BOOL bChanged = FALSE;
+			Mesh* pMesh = pThinkingParticleMat->GetParticleRenderMesh(ticks, GetRef().node, nullView, bNeedDelete, i, meshTM, bChanged);
+
+			if(pMesh){
+				CacheShapeMesh(pMesh, bNeedDelete, meshTM, nMatId, i, ticks, shapetype, shapeInstanceId, shapeInstanceTime);
+			}
+			else{
+				shapetype = ShapeType_Point;
+			}
+		}
+		else 
+#endif
+		if(particlesExt && ipfSystem){
 
 			TimeValue ageValue = particlesExt->GetParticleAgeByIndex(i);
 			if(ageValue == -1){
@@ -239,20 +303,11 @@ bool AlembicPoints::Save(double time, bool bLastFrame)
 					nMatId = groupInterface.getCurrentMtlId();
 				}
 
-				Mesh* pMesh = NULL;
 				Matrix3 meshTM;
 				meshTM.IdentityMatrix();
 				BOOL bNeedDelete = FALSE;
-#ifdef THINKING_PARTICLES
 				BOOL bChanged = FALSE;
-				if(pThinkingParticleMat){
-					pMesh = pThinkingParticleMat->GetParticleRenderMesh(ticks, GetRef().node, nullView, bNeedDelete, i, meshTM, bChanged);
-				}
-				else
-#endif			
-				{
-					pMesh = particlesExt->GetParticleShapeByIndex(i);
-				}
+				Mesh* pMesh = pMesh = particlesExt->GetParticleShapeByIndex(i);
 
 				if(pMesh){
 					CacheShapeMesh(pMesh, bNeedDelete, meshTM, nMatId, i, ticks, shapetype, shapeInstanceId, shapeInstanceTime);
