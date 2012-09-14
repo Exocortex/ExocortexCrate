@@ -132,6 +132,11 @@ bool particleGroupInterface::setCurrentParticle(TimeValue ticks, int i)
 
 	INode *particleGroupNode = m_pParticlesExt->GetParticleGroup(i);
 
+	if(!particleGroupNode){
+		ESS_LOG_WARNING("Error: cound retrieve particle group.");
+		return false;
+	}
+
 	Object *particleGroupObj = (particleGroupNode != NULL) ? particleGroupNode->EvalWorldState(ticks).obj : NULL;
 	m_pCurrParticleGroup = GetParticleGroupInterface(particleGroupObj);
 

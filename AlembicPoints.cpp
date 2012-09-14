@@ -133,10 +133,6 @@ bool AlembicPoints::Save(double time, bool bLastFrame)
 		return false;
 	}
 
-	if(bAutomaticInstancing){
-		SetMaxSceneTime(ticks);
-	}
-
 	int numParticles = 0;
 #ifdef THINKING_PARTICLES
 	if(pThinkingParticleMat){
@@ -191,6 +187,9 @@ bool AlembicPoints::Save(double time, bool bLastFrame)
 	bool constantColor = true;
 
 
+	if(bAutomaticInstancing){
+		SetMaxSceneTime(ticks);
+	}
 
 	//The MAX interfaces return everything in world coordinates,
 	//so we need to multiply the inverse the node world transform matrix
@@ -299,8 +298,12 @@ bool AlembicPoints::Save(double time, bool bLastFrame)
 
 				int nMatId = -1;
 				if(ipfSystem){
-					groupInterface.setCurrentParticle(ticks, i);
-					nMatId = groupInterface.getCurrentMtlId();
+					if( groupInterface.setCurrentParticle(ticks, i) ){
+						nMatId = groupInterface.getCurrentMtlId();
+					}
+					else{
+						ESS_LOG_WARNING("Error: cound retrieve material ID for particle mesh "<<i);
+					}
 				}
 
 				Matrix3 meshTM;
