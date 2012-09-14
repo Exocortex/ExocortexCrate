@@ -1863,7 +1863,8 @@ int AlembicImport_Points(const std::string &file, Alembic::AbcGeom::IObject& iOb
     // Set the visibility controller
     AlembicImport_SetupVisControl( file.c_str(), identifier.c_str(), iObj, pNode, options);
 
-    if( !isConstant ) 
+    //if( !isConstant )
+	//our isConstant only takes into account point size, but other things such as the shape mesh can change
     {
         GET_MAX_INTERFACE()->SelectNode( pNode );
         char szControllerName[10000];	
