@@ -345,8 +345,8 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
        meshFaceIndices = subDSample.getFaceIndices();
    }
 
-   boost::int32_t const* pMeshFaceCount = ( meshFaceCount.get() != NULL ) ? meshFaceCount->get() : NULL;
-   boost::int32_t const* pMeshFaceIndices = ( meshFaceIndices.get() != NULL ) ? meshFaceIndices->get() : NULL;
+   Alembic::Abc::ALEMBIC_VERSION_NS::int32_t const* pMeshFaceCount = ( meshFaceCount.get() != NULL ) ? meshFaceCount->get() : NULL;
+   Alembic::Abc::ALEMBIC_VERSION_NS::int32_t const* pMeshFaceIndices = ( meshFaceIndices.get() != NULL ) ? meshFaceIndices->get() : NULL;
 
    int numFaces = static_cast<int>(meshFaceCount->size());
    int numIndices = static_cast<int>(meshFaceIndices->size());
@@ -1446,8 +1446,8 @@ bool alembicMeshInfo::hasTopology()
 		meshFaceIndices = subDSample.getFaceIndices();
 	}
 
-	boost::int32_t const* pMeshFaceCount = ( meshFaceCount.get() != NULL ) ? meshFaceCount->get() : NULL;
-	boost::int32_t const* pMeshFaceIndices = ( meshFaceIndices.get() != NULL ) ? meshFaceIndices->get() : NULL;
+	Alembic::Abc::ALEMBIC_VERSION_NS::int32_t const* pMeshFaceCount = ( meshFaceCount.get() != NULL ) ? meshFaceCount->get() : NULL;
+	Alembic::Abc::ALEMBIC_VERSION_NS::int32_t const* pMeshFaceIndices = ( meshFaceIndices.get() != NULL ) ? meshFaceIndices->get() : NULL;
 
 	if(!pMeshFaceCount || !pMeshFaceIndices){
 		return false;

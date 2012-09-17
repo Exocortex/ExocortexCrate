@@ -3,6 +3,7 @@
 #include "AlembicLicensing.h"
 #include "Alembic.h"
 #include <boost/algorithm/string.hpp>
+#include <boost/thread/mutex.hpp>
 
 using namespace std;
 

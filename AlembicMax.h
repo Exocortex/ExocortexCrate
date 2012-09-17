@@ -3,7 +3,7 @@
 
 #include "Foundation.h"
 
-#include <Max.h>
+#include "AlembicDefinitions.h"
 #include <iparamb2.h>
 #include <iparamm2.h>
 
