@@ -46,9 +46,9 @@ static int Init(AtNode *mynode, void **user_ptr)
    }
 
    // empty the procedural's shader
-   //AtArray * emptyShaders = AiArrayAllocate(1,1,AI_TYPE_NODE);
-   //AiArraySetPtr(emptyShaders,0,NULL);
-   //AiNodeSetArray(mynode, "shader", emptyShaders);
+   AtArray * emptyShaders = AiArrayAllocate(1,1,AI_TYPE_NODE);
+   AiArraySetPtr(emptyShaders,0,NULL);
+   AiNodeSetArray(mynode, "shader", emptyShaders);
 
    // set defaults for options
    ud->gCurvesMode = "ribbon";
@@ -62,8 +62,6 @@ static int Init(AtNode *mynode, void **user_ptr)
       AiMsgError("[ExocortexAlembicArnold] No data string specified.");
       return NULL;
    }
-
-   //ESS_LOG_INFO( "ExocortexAlembicArnoldDSO: Init: DataString: " + completeStr );
 
    // split the string using boost
    std::vector<std::string> nameValuePairs;
@@ -811,60 +809,38 @@ static int NumNodes(void *user_ptr)
 static AtNode *GetNode(void *user_ptr, int i)
 {
 	GLOBAL_LOCK;
-
 	userData * ud = (userData*)user_ptr;
-   // check if this is a known object
-   if(i >= (int)ud->gIObjects.size())
-      return NULL;
+  // check if this is a known object
+  if(i >= (int)ud->gIObjects.size())
+    return NULL;
 
-   // now check the camera node for shutter settings
-   //AtNode * cameraNode = AiUniverseGetCamera();
-   //float shutterStart = AiNodeGetFlt(cameraNode,"shutter_start");
-   //float shutterEnd = AiNodeGetFlt(cameraNode,"shutter_end");
+  // now check the camera node for shutter settings
+  //AtNode * cameraNode = AiUniverseGetCamera();
+  //float shutterStart = AiNodeGetFlt(cameraNode,"shutter_start");
+  //float shutterEnd = AiNodeGetFlt(cameraNode,"shutter_end");
 
-   nodeData nodata;
+  nodeData nodata;   // contain basic information common in all types of data!
 
-   // construct the timesamples
-   size_t nbSamples = ud->gMbKeys.size();
+  // construct the timesamples
+  size_t nbSamples = ud->gMbKeys.size();
 
-   std::vector<float> samples = ud->gMbKeys;
-   for(size_t j=0;j<nbSamples;j++)
-      samples[j] += ud->gIObjects[i].centroidTime - ud->gCentroidTime;
-   bool shifted = fabsf(ud->gIObjects[i].centroidTime - ud->gCentroidTime) > 0.001f;
-   bool createdShifted = shifted;
+  nodata.samples = ud->gMbKeys;
+  for(size_t j=0 ; j<nbSamples; ++j)
+    nodata.samples[j] += ud->gIObjects[i].centroidTime - ud->gCentroidTime;
+  nodata.shifted = fabsf(ud->gIObjects[i].centroidTime - ud->gCentroidTime) > 0.001f;
+  nodata.createdShifted = nodata.shifted;
 
-   // DUPLICATE to go with the new structure of data!
-   nodata.samples = ud->gMbKeys;
-   for(size_t j=0 ; j<nbSamples; ++j)
-      nodata.samples[j] += ud->gIObjects[i].centroidTime - ud->gCentroidTime;
-   nodata.shifted = fabsf(ud->gIObjects[i].centroidTime - ud->gCentroidTime) > 0.001f;
-   nodata.createdShifted = nodata.shifted;
+  // create the resulting node
+  AtNode * shapeNode = NULL;
 
-   // create the resulting node
-   AtNode * shapeNode = NULL;
+  // now check if this is supposed to be an instance
+  if(ud->gIObjects[i].instanceID > -1)
+    return createInstanceNode(nodata, ud, i);
 
-   // now check if this is supposed to be an instance
-   if(ud->gIObjects[i].instanceID > -1)
-     return createInstanceNode(nodata, ud, i);
-
-   //*
-   AtArray * shaders = NULL;
-   AtArray * shaderIndices = NULL;
-   bool isPolyMeshNode = false;
-
-   // check what kind of object it is
-   Alembic::Abc::IObject object = ud->gIObjects[i].abc;
-   
-	if(!object.valid()) {
-		 AiMsgError("[ExocortexAlembicArnold] Not a valid Alembic data stream." );
-		return NULL;
-	}
-
-  // DUPLICATE
   nodata.shaders = NULL;
   nodata.shaderIndices = NULL;
   nodata.isPolyMeshNode = false;
-   // check what kind of object it is
+
   nodata.object = ud->gIObjects[i].abc;
 	if(!nodata.object.valid())
   {
@@ -872,519 +848,185 @@ static AtNode *GetNode(void *user_ptr, int i)
 		return NULL;
 	}
 
-   //const Alembic::Abc::MetaData &md = object.getMetaData();
-   // DUPLICATE
-   const Alembic::Abc::MetaData &md = nodata.object.getMetaData();
-   if(Alembic::AbcGeom::IPolyMesh::matches(md))
-     shapeNode = createPolyMeshNode(nodata, ud, samples, i);
-   else if(Alembic::AbcGeom::ISubD::matches(md))
-     shapeNode = createSubDNode(nodata, ud, samples, i);
-   else if(Alembic::AbcGeom::ICurves::matches(md))
-   {
-      //ESS_LOG_INFO( "ExocortexAlembicArnoldDSO: GetNode: ICurves" );
+  const Alembic::Abc::MetaData &md = nodata.object.getMetaData();
+  if(Alembic::AbcGeom::IPolyMesh::matches(md))
+    shapeNode = createPolyMeshNode(nodata, ud, nodata.samples, i);
+  else if(Alembic::AbcGeom::ISubD::matches(md))
+    shapeNode = createSubDNode(nodata, ud, nodata.samples, i);
+  else if(Alembic::AbcGeom::ICurves::matches(md))
+    shapeNode = createCurvesNode(nodata, ud, nodata.samples, i);
+  else if(Alembic::AbcGeom::INuPatch::matches(md))
+    shapeNode = createNurbsNode(nodata, ud, nodata.samples, i);
+  else if(Alembic::AbcGeom::IPoints::matches(md))
+    shapeNode = createPointsNode(nodata, ud, nodata.samples, i);
+  else if(Alembic::AbcGeom::ICamera::matches(md))
+    AiMsgWarning("[ExocortexAlembicArnold] Cameras are not supported.");
+  else
+    AiMsgError("[ExocortexAlembicArnold] This object type is not supported: '%s'.",md.get("schema").c_str());
 
-      // cast to curves
-      Alembic::AbcGeom::ICurves typedObject(object,Alembic::Abc::kWrapExisting);
-      size_t minNumSamples = typedObject.getSchema().getNumSamples() == 1 ? typedObject.getSchema().getNumSamples() : samples.size();
+  // if we have a shape
+  if(shapeNode != NULL)
+  {
+    ud->constructedNodes.push_back(shapeNode);
+    if(nodata.shaders != NULL)
+      ud->shadersToAssign.push_back(AiArrayCopy(nodata.shaders));
+    else if(ud->gProcShaders != NULL)
+      ud->shadersToAssign.push_back(AiArrayCopy(ud->gProcShaders));
+    else
+      ud->shadersToAssign.push_back(NULL);
 
-      // create the arnold node
-      if(shifted)
+    if(nodata.isPolyMeshNode)
+    {
+      if(ud->gProcDispMap != NULL)
       {
-         bool doBreak = false;
-         for(size_t j=0;j<ud->gInstances.size();j++)
-         {
-            for(size_t k=0;k<ud->gInstances[j].groupInfos.size();k++)
-            {
-               for(size_t l=0;k<ud->gInstances[j].groupInfos[k].identifiers.size();l++)
-               {
-                  if(ud->gInstances[j].groupInfos[k].identifiers[l] == object.getFullName())
-                  {
-                     std::map<float,AtNode*>::iterator it = ud->gInstances[j].groupInfos[k].nodes[l].find(ud->gCentroidTime);
-                     if(it != ud->gInstances[j].groupInfos[k].nodes[l].end())
-                     {
-                        if(it->second != NULL)
-                        {
-                           shaders = AiNodeGetArray(it->second, "shader");
-                           //shapeNode = AiNodeClone(it->second);
-                        }
-                     }
-                     doBreak = true;
-                     break;
-                  }
-               }
-               if(doBreak) break;
-            }
-            if(doBreak) break;
-         }
+        AiNodeSetArray(shapeNode,"disp_map",AiArrayCopy(ud->gProcDispMap));
+        if(ud->has_disp_settings)
+        {
+          AiNodeSetFlt(shapeNode, "disp_zero_value", ud->disp_zero_value);
+          AiNodeSetFlt(shapeNode, "disp_height", ud->disp_height);
+          AiNodeSetBool(shapeNode, "disp_autobump", ud->disp_autobump);
+          AiNodeSetFlt(shapeNode, "disp_padding", ud->disp_padding);
+        }
       }
-      if(!shapeNode)
-      {
-         shapeNode = AiNode("curves");
-         createdShifted = false;
-      }
+      if(nodata.shaderIndices != NULL)
+        AiNodeSetArray(shapeNode, "shidxs", nodata.shaderIndices);
 
-      // create arrays to hold the data
-      AtArray * pos = NULL;
+      // do we have subdivision settings
+      if(ud->has_subdiv_settings)
+      {
+        AiNodeSetStr(shapeNode,"subdiv_type",ud->subdiv_type.c_str());
+        AiNodeSetInt(shapeNode,"subdiv_iterations",ud->subdiv_iterations);
+        AiNodeSetFlt(shapeNode,"subdiv_pixel_error",ud->subdiv_pixel_error);
+        if(ud->subdiv_dicing_camera.length() > 0)
+          AiNodeSetStr(shapeNode,"subdiv_dicing_camera",ud->subdiv_dicing_camera.c_str());
+      }
+    }
+
+    // allocate the matrices for arnold and initiate them with identities
+    AtArray * matrices = AiArrayAllocate(1, (AtInt)nbSamples, AI_TYPE_MATRIX);
+    for(AtInt i=0; i<nbSamples; ++i)
+    {
+      AtMatrix matrix;
+      AiM4Identity(matrix);
+      AiArraySetMtx(matrices,i,matrix);
+    }
+
+    // check if we have a parent that is a transform
+    Alembic::Abc::IObject parent = nodata.object.getParent();
+
+    // count the depth
+    int depth = 0;
+    while(Alembic::AbcGeom::IXform::matches(parent.getMetaData()))
+    {
+      ++depth;
+      parent = parent.getParent();
+    }
+
+    // loop until we hit the procedural's depth
+    parent = nodata.object.getParent();
+    while(Alembic::AbcGeom::IXform::matches(parent.getMetaData()) && depth > ud->proceduralDepth)
+    {
+      --depth;
+
+      // cast to a xform
+      Alembic::AbcGeom::IXform parentXform(parent,Alembic::Abc::kWrapExisting);
+      if(parentXform.getSchema().getNumSamples() == 0)
+        break;
 
       // loop over all samples
-      AtULong posOffset = 0;
-      size_t totalNumPoints =  0;
-      size_t totalNumPositions = 0;
-      for(size_t sampleIndex = 0; sampleIndex < minNumSamples; sampleIndex++)
+      for(size_t sampleIndex=0;sampleIndex<nbSamples;sampleIndex++)
       {
-         SampleInfo sampleInfo = getSampleInfo(
-            samples[sampleIndex],
-            typedObject.getSchema().getTimeSampling(),
-            typedObject.getSchema().getNumSamples()
-         );
+        SampleInfo sampleInfo = getSampleInfo
+        (
+          nodata.samples[sampleIndex],
+          parentXform.getSchema().getTimeSampling(),
+          parentXform.getSchema().getNumSamples()
+        );
 
-         // get the floor sample
-         Alembic::AbcGeom::ICurvesSchema::Sample sample;
-         typedObject.getSchema().get(sample,sampleInfo.floorIndex);
+        // get the data and blend it if necessary
+        Alembic::AbcGeom::XformSample sample;
+        parentXform.getSchema().get(sample,sampleInfo.floorIndex);
+        Alembic::Abc::M44d abcMatrix = sample.getMatrix();
+        if(sampleInfo.alpha >= sampleTolerance)
+        {
+          parentXform.getSchema().get(sample,sampleInfo.ceilIndex);
+          Alembic::Abc::M44d ceilAbcMatrix = sample.getMatrix();
+          abcMatrix = (1.0 - sampleInfo.alpha) * abcMatrix + sampleInfo.alpha * ceilAbcMatrix;
+        }
 
-         // access the num points
-         Alembic::Abc::Int32ArraySamplePtr abcNumPoints = sample.getCurvesNumVertices();
+        // now convert to an arnold matrix
+        AtMatrix parentMatrix, childMatrix, globalMatrix;
+        size_t offset = 0;
+        for(size_t row=0; row<4; ++row)
+          for(size_t col=0; col<4; ++col, ++offset)
+            parentMatrix[row][col] = (AtFloat)abcMatrix.getValue()[offset];
 
-         // take care of the topology
-         if(sampleIndex == 0 &&!createdShifted)
-         {
-            // hard coded pixel width, basis and mode
-            AiNodeSetFlt(shapeNode, "min_pixel_width", 0.25f);
-            AiNodeSetStr(shapeNode, "basis", "catmull-rom");
-            AiNodeSetStr(shapeNode, "mode", ud->gCurvesMode.c_str());
-
-            // setup the num_points
-            AtArray * numPoints = AiArrayAllocate((AtInt)abcNumPoints->size(),1,AI_TYPE_UINT);
-            for(size_t i=0;i<abcNumPoints->size();i++)
-            {
-               totalNumPoints += abcNumPoints->get()[i];
-               totalNumPositions += abcNumPoints->get()[i] + 2;
-               AiArraySetUInt(numPoints,(AtULong)i,(AtUInt)(abcNumPoints->get()[i]+2));
-            }
-            AiNodeSetArray(shapeNode,"num_points",numPoints);
-
-            // check if we have a radius
-            Alembic::Abc::IFloatArrayProperty propRadius;
-			   if( getArbGeomParamPropertyAlembic( typedObject, "radius", propRadius ) ) {            
-               Alembic::Abc::FloatArraySamplePtr abcRadius = propRadius.getValue(sampleInfo.floorIndex);
-
-               AtArray * radius = AiArrayAllocate((AtInt)abcRadius->size(),1,AI_TYPE_FLOAT);
-               for(size_t i=0;i<abcRadius->size();i++)
-                  AiArraySetFlt(radius,(AtULong)i,abcRadius->get()[i]);
-               AiNodeSetArray(shapeNode,"radius",radius);
-            }
-
-            // check if we have uvs
-            Alembic::AbcGeom::IV2fGeomParam uvsParam = typedObject.getSchema().getUVsParam();
-            if(uvsParam.valid())
-            {
-               Alembic::Abc::V2fArraySamplePtr abcUvs = uvsParam.getExpandedValue(sampleInfo.floorIndex).getVals();
-               if(AiNodeDeclare(shapeNode, "Texture_Projection", "uniform POINT2"))
-               {
-                  AtArray* uvs = AiArrayAllocate((AtInt)abcUvs->size(), 1, AI_TYPE_POINT2);
-                  AtPoint2 uv;
-                  for(size_t i=0; i<abcUvs->size(); i++)
-                  {
-                     uv.x = abcUvs->get()[i].x;
-                     uv.y = abcUvs->get()[i].y;
-                     AiArraySetPnt2(uvs, (AtULong)i, uv);
-                  }
-                  AiNodeSetArray(shapeNode, "Texture_Projection", uvs);
-               }
-            }
-
-            // check if we have colors
-            Alembic::Abc::IC4fArrayProperty propColor;
-			   if( getArbGeomParamPropertyAlembic( typedObject, "color", propColor ) ) {            
-               Alembic::Abc::C4fArraySamplePtr abcColors = propColor.getValue(sampleInfo.floorIndex);
-               AtBoolean result = false;
-               if(abcColors->size() == 1)
-                  result = AiNodeDeclare(shapeNode, "Color", "constant RGBA");
-               else if(abcColors->size() == abcNumPoints->size())
-                  result = AiNodeDeclare(shapeNode, "Color", "uniform RGBA");
-               else
-                  result = AiNodeDeclare(shapeNode, "Color", "varying RGBA");
-               if(result)
-               {
-                  AtArray * colors = AiArrayAllocate((AtInt)abcColors->size(),1,AI_TYPE_RGBA);
-                  AtRGBA color;
-                  for(size_t i=0; i<abcColors->size(); i++)
-                  {
-                     color.r = abcColors->get()[i].r;
-                     color.g = abcColors->get()[i].g;
-                     color.b = abcColors->get()[i].b;
-                     color.a = abcColors->get()[i].a;
-                     AiArraySetRGBA(colors, (AtULong)i, color);
-                  }
-                  AiNodeSetArray(shapeNode, "Color", colors);
-               }
-            }
-         }
-
-         // access the positions
-         Alembic::Abc::P3fArraySamplePtr abcPos = sample.getPositions();
-         if(pos == NULL)
-            pos = AiArrayAllocate((AtInt)(totalNumPositions * 3),(AtInt)minNumSamples,AI_TYPE_FLOAT);
-
-         // if we have to interpolate
-         bool done = false;
-         if(sampleInfo.alpha > sampleTolerance)
-         {
-            Alembic::AbcGeom::ICurvesSchema::Sample sample2;
-            typedObject.getSchema().get(sample2,sampleInfo.ceilIndex);
-            Alembic::Abc::P3fArraySamplePtr abcPos2 = sample2.getPositions();
-            float alpha = (float)sampleInfo.alpha;
-            float ialpha = 1.0f - alpha;
-            size_t offset = 0;
-            if(abcPos2->size() == abcPos->size())
-            {
-               for(size_t i=0;i<abcNumPoints->size();i++)
-               {
-                  // add the first and last point manually (catmull clark)
-                  for(size_t j=0;j<abcNumPoints->get()[i];j++)
-                  {
-                     AiArraySetFlt(pos,posOffset++,abcPos->get()[offset].x * ialpha + abcPos2->get()[offset].x * alpha);
-                     AiArraySetFlt(pos,posOffset++,abcPos->get()[offset].y * ialpha + abcPos2->get()[offset].y * alpha);
-                     AiArraySetFlt(pos,posOffset++,abcPos->get()[offset].z * ialpha + abcPos2->get()[offset].z * alpha);
-                     if(j==0 || j == abcNumPoints->get()[i]-1)
-                     {
-                        AiArraySetFlt(pos,posOffset++,abcPos->get()[offset].x * ialpha + abcPos2->get()[offset].x * alpha);
-                        AiArraySetFlt(pos,posOffset++,abcPos->get()[offset].y * ialpha + abcPos2->get()[offset].y * alpha);
-                        AiArraySetFlt(pos,posOffset++,abcPos->get()[offset].z * ialpha + abcPos2->get()[offset].z * alpha);
-                     }
-                     offset++;
-                  }
-               }
-               done = true;
-            }
-            else
-            {
-               Alembic::Abc::P3fArraySamplePtr abcVel = sample.getPositions();
-               if(abcVel)
-               {
-                  if(abcVel->size() == abcPos->size())
-                  {
-                     for(size_t i=0;i<abcNumPoints->size();i++)
-                     {
-                        // add the first and last point manually (catmull clark)
-                        for(size_t j=0;j<abcNumPoints->get()[i];j++)
-                        {
-                           AiArraySetFlt(pos,posOffset++,abcPos->get()[offset].x + abcVel->get()[offset].x * alpha);
-                           AiArraySetFlt(pos,posOffset++,abcPos->get()[offset].y + abcVel->get()[offset].y * alpha);
-                           AiArraySetFlt(pos,posOffset++,abcPos->get()[offset].z + abcVel->get()[offset].z * alpha);
-                           if(j==0 || j == abcNumPoints->get()[i]-1)
-                           {
-                              AiArraySetFlt(pos,posOffset++,abcPos->get()[offset].x + abcVel->get()[offset].x * alpha);
-                              AiArraySetFlt(pos,posOffset++,abcPos->get()[offset].y + abcVel->get()[offset].y * alpha);
-                              AiArraySetFlt(pos,posOffset++,abcPos->get()[offset].z + abcVel->get()[offset].z * alpha);
-                           }
-                           offset++;
-                        }
-                     }
-                     done = true;
-                  }
-               }
-            }
-         }
-         if(!done)
-         {
-            size_t offset = 0;
-            for(size_t i=0;i<abcNumPoints->size();i++)
-            {
-               // add the first and last point manually (catmull clark)
-               for(size_t j=0;j<abcNumPoints->get()[i];j++)
-               {
-                  AiArraySetFlt(pos,posOffset++,abcPos->get()[offset].x);
-                  AiArraySetFlt(pos,posOffset++,abcPos->get()[offset].y);
-                  AiArraySetFlt(pos,posOffset++,abcPos->get()[offset].z);
-                  if(j==0 || j == abcNumPoints->get()[i]-1)
-                  {
-                     AiArraySetFlt(pos,posOffset++,abcPos->get()[offset].x);
-                     AiArraySetFlt(pos,posOffset++,abcPos->get()[offset].y);
-                     AiArraySetFlt(pos,posOffset++,abcPos->get()[offset].z);
-                  }
-                  offset++;
-               }
-            }
-         }
+        // multiply the matrices since we want to know where we are in global space
+        AiArrayGetMtx(matrices,(AtULong)sampleIndex,childMatrix);
+        AiM4Mult(globalMatrix,childMatrix,parentMatrix);
+        AiArraySetMtx(matrices,(AtULong)sampleIndex,globalMatrix);
       }
 
-      AiNodeSetArray(shapeNode, "points", pos);
+      // go upwards
+      parent = parent.getParent();
+    }
 
-   } else if(Alembic::AbcGeom::INuPatch::matches(md)) {
-      ESS_LOG_INFO( "ExocortexAlembicArnoldDSO: GetNode: INuPatch" );
-	  AiMsgWarning("[ExocortexAlembicArnold] This object type is not YET implemented: '%s'.",md.get("schema").c_str());
-   } else if(Alembic::AbcGeom::IPoints::matches(md)) {
+    AiNodeSetArray(shapeNode,"matrix",matrices);
+  }
 
-      //ESS_LOG_INFO( "ExocortexAlembicArnoldDSO: GetNode: IPoints" );
-	  
-	  // cast to curves
-      Alembic::AbcGeom::IPoints typedObject(object,Alembic::Abc::kWrapExisting);
-      size_t minNumSamples = typedObject.getSchema().getNumSamples() == 1 ? typedObject.getSchema().getNumSamples() : samples.size();
+  // set the name of the node
+  std::string nameStr = getNameFromIdentifier(nodata.object.getFullName(), ud->gIObjects[i].instanceID, ud->gIObjects[i].instanceGroupID) + ud->gIObjects[i].suffix;
+  if(nodata.shifted)
+    nameStr += ".time"+boost::lexical_cast<std::string>((int)(ud->gIObjects[i].centroidTime*1000.0f+0.5f));
+  if(ud->gIObjects[i].hide)
+    AiNodeSetInt(shapeNode, "visibility", 0);
+  AiNodeSetStr(shapeNode,"name",nameStr.c_str());
 
-      // create the arnold node
-      shapeNode = AiNode("points");
+  // set the pointer inside the map
+  ud->gIObjects[i].node = shapeNode;
 
-      // create arrays to hold the data
-      AtArray * pos = NULL;
-
-      shifted = false;
-
-      // loop over all samples
-      AtULong posOffset = 0;
-      for(size_t sampleIndex = 0; sampleIndex < minNumSamples; sampleIndex++)
+  // now update the instance maps
+  const size_t gInstSize = ud->gInstances.size();
+  const std::string &objFullName = nodata.object.getFullName();
+  for(size_t j=0; j < gInstSize; ++j)
+  {
+    std::vector<instanceGroupInfo> &gInstGrpInfo = ud->gInstances[j].groupInfos;
+    const size_t grpInfoSize = gInstGrpInfo.size();
+    for(size_t k=0; k < grpInfoSize; ++k)
+    {
+      std::vector<std::string> gInstGrpIds = gInstGrpInfo[k].identifiers;
+      const size_t idSize = gInstGrpIds.size();
+      for(size_t l=0; l < idSize; ++l)
       {
-         SampleInfo sampleInfo = getSampleInfo(
-            samples[sampleIndex],
-            typedObject.getSchema().getTimeSampling(),
-            typedObject.getSchema().getNumSamples()
-         );
-
-         // get the floor sample
-         Alembic::AbcGeom::IPointsSchema::Sample sample;
-         typedObject.getSchema().get(sample,sampleInfo.floorIndex);
-
-         // access the points
-         Alembic::Abc::P3fArraySamplePtr abcPos = sample.getPositions();
-
-         // take care of the topology
-         if(sampleIndex == 0)
-         {
-            // hard coded mode
-            if(!ud->gPointsMode.empty())
-               AiNodeSetStr(shapeNode, "mode", ud->gPointsMode.c_str());
-
-            // check if we have a radius
-            Alembic::AbcGeom::IFloatGeomParam widthParam = typedObject.getSchema().getWidthsParam();
-            if(widthParam.valid())
-            {
-               Alembic::Abc::FloatArraySamplePtr abcRadius = widthParam.getExpandedValue(sampleInfo.floorIndex).getVals();
-               AtArray * radius = AiArrayAllocate((AtInt)abcRadius->size(),1,AI_TYPE_FLOAT);
-               for(size_t i=0;i<abcRadius->size();i++)
-                  AiArraySetFlt(radius,(AtULong)i,abcRadius->get()[i]);
-               AiNodeSetArray(shapeNode,"radius",radius);
-            }
-
-            // check if we have colors
-            Alembic::Abc::IC4fArrayProperty propColor;
-			if( getArbGeomParamPropertyAlembic_Permissive( typedObject, "color", propColor ) ) {            
-               Alembic::Abc::C4fArraySamplePtr abcColors = propColor.getValue(sampleInfo.floorIndex);
-               AtBoolean result = false;
-               if(abcColors->size() == 1)
-                  result = AiNodeDeclare(shapeNode, "Color", "constant RGBA");
-               else
-                  result = AiNodeDeclare(shapeNode, "Color", "uniform RGBA");
-               if(result)
-               {
-                  AtArray * colors = AiArrayAllocate((AtInt)abcColors->size(),1,AI_TYPE_RGBA);
-                  AtRGBA color;
-                  for(size_t i=0; i<abcColors->size(); i++)
-                  {
-                     color.r = abcColors->get()[i].r;
-                     color.g = abcColors->get()[i].g;
-                     color.b = abcColors->get()[i].b;
-                     color.a = abcColors->get()[i].a;
-                     AiArraySetRGBA(colors, (AtULong)i, color);
-                  }
-                  AiNodeSetArray(shapeNode, "Color", colors);
-               }
-            }
-         }
-
-         // access the positions
-         if(pos == NULL)
-            pos = AiArrayAllocate((AtInt)(abcPos->size() * 3),(AtInt)minNumSamples,AI_TYPE_FLOAT);
-
-         // if we have to interpolate
-         if(sampleInfo.alpha <= sampleTolerance)
-         {
-            for(size_t i=0;i<abcPos->size();i++)
-            {
-               AiArraySetFlt(pos,posOffset++,abcPos->get()[i].x);
-               AiArraySetFlt(pos,posOffset++,abcPos->get()[i].y);
-               AiArraySetFlt(pos,posOffset++,abcPos->get()[i].z);
-            }
-         }
-         else
-         {
-            float alpha = (float)sampleInfo.alpha;
-            float timeAlpha = (float)(typedObject.getSchema().getTimeSampling()->getSampleTime(sampleInfo.ceilIndex) - 
-                               typedObject.getSchema().getTimeSampling()->getSampleTime(sampleInfo.floorIndex)) * alpha;
-            Alembic::Abc::V3fArraySamplePtr abcVel = sample.getVelocities();
-            for(size_t i=0;i<abcPos->size();i++)
-            {
-               AiArraySetFlt(pos,posOffset++,abcPos->get()[i].x + timeAlpha * abcVel->get()[i].x);
-               AiArraySetFlt(pos,posOffset++,abcPos->get()[i].y + timeAlpha * abcVel->get()[i].y);
-               AiArraySetFlt(pos,posOffset++,abcPos->get()[i].z + timeAlpha * abcVel->get()[i].z);
-            }
-         }
+        if(gInstGrpIds[l] == objFullName)
+        {
+          std::map<float,AtNode*>::iterator it = gInstGrpInfo[k].nodes[l].find(ud->gIObjects[i].centroidTime);
+          if(it != gInstGrpInfo[k].nodes[l].end())
+            it->second = shapeNode;
+          break;
+        }
       }
-
-      AiNodeSetArray(shapeNode, "points", pos);
-
-   } else if(Alembic::AbcGeom::ICamera::matches(md)) {
-      AiMsgWarning("[ExocortexAlembicArnold] Cameras are not supported.");
-   } else {
-      AiMsgError("[ExocortexAlembicArnold] This object type is not supported: '%s'.",md.get("schema").c_str());
-   }
-
-   // if we have a shape
-   if(shapeNode != NULL)
-   {
-      ud->constructedNodes.push_back(shapeNode);
-      if(shaders != NULL)
-         ud->shadersToAssign.push_back(AiArrayCopy(shaders));
-      else if(ud->gProcShaders != NULL)
-         ud->shadersToAssign.push_back(AiArrayCopy(ud->gProcShaders));
-      else
-         ud->shadersToAssign.push_back(NULL);
-
-      if(isPolyMeshNode)
-      {
-         if(ud->gProcDispMap != NULL)
-         {
-            AiNodeSetArray(shapeNode,"disp_map",AiArrayCopy(ud->gProcDispMap));
-            if(ud->has_disp_settings)
-            {
-               AiNodeSetFlt(shapeNode, "disp_zero_value", ud->disp_zero_value);
-               AiNodeSetFlt(shapeNode, "disp_height", ud->disp_height);
-               AiNodeSetBool(shapeNode, "disp_autobump", ud->disp_autobump);
-               AiNodeSetFlt(shapeNode, "disp_padding", ud->disp_padding);
-            }
-         }
-         if(shaderIndices != NULL)
-            AiNodeSetArray(shapeNode, "shidxs", shaderIndices);
-
-         // do we have subdivision settings
-         if(ud->has_subdiv_settings)
-         {
-            AiNodeSetStr(shapeNode,"subdiv_type",ud->subdiv_type.c_str());
-            AiNodeSetInt(shapeNode,"subdiv_iterations",ud->subdiv_iterations);
-            AiNodeSetFlt(shapeNode,"subdiv_pixel_error",ud->subdiv_pixel_error);
-            if(ud->subdiv_dicing_camera.length() > 0)
-               AiNodeSetStr(shapeNode,"subdiv_dicing_camera",ud->subdiv_dicing_camera.c_str());
-         }
-      }
-
-      // allocate the matrices for arnold and initiate them with identities
-      AtArray * matrices = AiArrayAllocate(1,(AtInt)nbSamples,AI_TYPE_MATRIX);
-      for(AtInt i=0;i<nbSamples;i++)
-      {
-         AtMatrix matrix;
-         AiM4Identity(matrix);
-         AiArraySetMtx(matrices,i,matrix);
-      }
-
-      // check if we have a parent that is a transform
-      Alembic::Abc::IObject parent = object.getParent();
-
-      // count the depth
-      int depth = 0;
-      while(Alembic::AbcGeom::IXform::matches(parent.getMetaData()))
-      {
-         depth++;
-         parent = parent.getParent();
-      }
-
-      // loop until we hit the procedural's depth
-      parent = object.getParent();
-      while(Alembic::AbcGeom::IXform::matches(parent.getMetaData()) && depth > ud->proceduralDepth)
-      {
-         depth--;
-
-         // cast to a xform
-         Alembic::AbcGeom::IXform parentXform(parent,Alembic::Abc::kWrapExisting);
-         if(parentXform.getSchema().getNumSamples() == 0)
-            break;
-
-         // loop over all samples
-         for(size_t sampleIndex=0;sampleIndex<nbSamples;sampleIndex++)
-         {
-            SampleInfo sampleInfo = getSampleInfo(
-               samples[sampleIndex],
-               parentXform.getSchema().getTimeSampling(),
-               parentXform.getSchema().getNumSamples()
-            );
-
-            // get the data and blend it if necessary
-            Alembic::AbcGeom::XformSample sample;
-            parentXform.getSchema().get(sample,sampleInfo.floorIndex);
-            Alembic::Abc::M44d abcMatrix = sample.getMatrix();
-            if(sampleInfo.alpha >= sampleTolerance)
-            {
-               parentXform.getSchema().get(sample,sampleInfo.ceilIndex);
-               Alembic::Abc::M44d ceilAbcMatrix = sample.getMatrix();
-               abcMatrix = (1.0 - sampleInfo.alpha) * abcMatrix + sampleInfo.alpha * ceilAbcMatrix;
-            }
-
-            // now convert to an arnold matrix
-            AtMatrix parentMatrix, childMatrix, globalMatrix;
-            size_t offset = 0;
-            for(size_t row=0;row<4;row++)
-               for(size_t col=0;col<4;col++,offset++)
-                  parentMatrix[row][col] = (AtFloat)abcMatrix.getValue()[offset];
-
-            // multiply the matrices since we want to know where we are in global space
-            AiArrayGetMtx(matrices,(AtULong)sampleIndex,childMatrix);
-            AiM4Mult(globalMatrix,childMatrix,parentMatrix);
-            AiArraySetMtx(matrices,(AtULong)sampleIndex,globalMatrix);
-         }
-
-         // go upwards
-         parent = parent.getParent();
-      }
-
-      AiNodeSetArray(shapeNode,"matrix",matrices);
-   }
-
-   // set the name of the node
-   std::string nameStr = getNameFromIdentifier(object.getFullName(),ud->gIObjects[i].instanceID,ud->gIObjects[i].instanceGroupID)+ud->gIObjects[i].suffix;
-   if(shifted)
-      nameStr += ".time"+boost::lexical_cast<std::string>((int)(ud->gIObjects[i].centroidTime*1000.0f+0.5f));
-   if(ud->gIObjects[i].hide)
-      AiNodeSetInt(shapeNode, "visibility", 0);
-   AiNodeSetStr(shapeNode,"name",nameStr.c_str());
-
-   // set the pointer inside the map
-   ud->gIObjects[i].node = shapeNode;
-
-   // now update the instance maps
-   for(size_t j=0;j<ud->gInstances.size();j++)
-   {
-      for(size_t k=0;k<ud->gInstances[j].groupInfos.size();k++)
-      {
-         for(size_t l=0;l<ud->gInstances[j].groupInfos[k].identifiers.size();l++)
-         {
-            if(ud->gInstances[j].groupInfos[k].identifiers[l] == object.getFullName())
-            {
-               std::map<float,AtNode*>::iterator it = ud->gInstances[j].groupInfos[k].nodes[l].find(ud->gIObjects[i].centroidTime);
-               if(it != ud->gInstances[j].groupInfos[k].nodes[l].end())
-                  it->second = shapeNode;
-               break;
-            }
-         }
-      }
-   }
-
-   return shapeNode;
+    }
+  }
+  return shapeNode;
 }
 
 // DSO hook
 #ifdef __cplusplus
-extern "C" {
+extern "C"
+{
 #endif
 
-AI_EXPORT_LIB int ProcLoader(AtProcVtable *vtable) 
-{
-   vtable->Init     = Init;
-   vtable->Cleanup  = Cleanup;
-   vtable->NumNodes = NumNodes;
-   vtable->GetNode  = GetNode;
-   
-   sprintf(vtable->version, AI_VERSION);
+  AI_EXPORT_LIB int ProcLoader(AtProcVtable *vtable) 
+  {
+    vtable->Init     = Init;
+    vtable->Cleanup  = Cleanup;
+    vtable->NumNodes = NumNodes;
+    vtable->GetNode  = GetNode;
 
-   return 1;
-}
+    sprintf(vtable->version, AI_VERSION);
+    return 1;
+  }
 
 #ifdef __cplusplus
 }
