@@ -60,9 +60,10 @@ public:
 
 	interpT interp;
 
-	float fAlpha;
+	float timeAlpha;
+	float sampleAlpha;
 
-	curvePositionSampler(Alembic::AbcGeom::ICurves& obj, SampleInfo& sampleInfo, float fAlpha){
+	curvePositionSampler(Alembic::AbcGeom::ICurves& obj, SampleInfo& sampleInfo, float tAlpha, float sAlpha){
 
 		bool isDynamicTopo = isAlembicSplineTopoDynamic( &obj );
 
@@ -70,8 +71,8 @@ public:
 		obj.getSchema().get(curveSample, sampleInfo.floorIndex);
 		curvePos1 = curveSample.getPositions();
 
-		this->fAlpha = fAlpha;
-
+		this->timeAlpha = tAlpha;
+		this->sampleAlpha = sAlpha;
 		
 		/*Alembic::Abc::V3fArraySamplePtr inTangentSampler; 
 		if ( obj.getSchema().getPropertyHeader( ".inTangent" ) != NULL )
@@ -97,10 +98,7 @@ public:
 
 		if(isDynamicTopo){ //interpolate based on velocity
 			curveVel1 = curveSample.getVelocities();
-			interp = VELOCITY;
-
-			//timeAlpha = (float)(obj.getSchema().getTimeSampling()->getSampleTime(sampleInfo.ceilIndex) - 
- 			//		obj.getSchema().getTimeSampling()->getSampleTime(sampleInfo.floorIndex)) * sampleInfoAlpha;    
+			interp = VELOCITY;  
 		}
 		else{
 			Alembic::AbcGeom::ICurvesSchema::Sample curveSample2;
@@ -117,11 +115,11 @@ public:
 	Imath::V3f operator[](int index){
 
 		Imath::V3f pos1 = curvePos1->get()[index];
-		if(fAlpha != 0.0 && interp == POSITION){
-			return pos1 + ((curvePos2->get()[index] - pos1) * fAlpha);
+		if(sampleAlpha != 0.0 && interp == POSITION){
+			return pos1 + ((curvePos2->get()[index] - pos1) * sampleAlpha);
 		}
-		else if(fAlpha != 0.0 && interp == VELOCITY){
-			return pos1 + (curveVel1->get()[index] * fAlpha);
+		else if(timeAlpha != 0.0 && interp == VELOCITY){
+			return pos1 + (curveVel1->get()[index] * timeAlpha);
 		}
 		else{
 			return pos1;
@@ -203,14 +201,15 @@ void AlembicImport_FillInShape_Internal(alembic_fillshape_options &options)
 
    Alembic::Abc::Int32ArraySamplePtr curveNbVertices = curveSample.getCurvesNumVertices();
 
-   float fAlpha;
+   float fSamplerTimeAlpha;
    if(options.nDataFillFlags & ALEMBIC_DATAFILL_IGNORE_SUBFRAME_SAMPLES){
-       fAlpha = fTimeAlpha;
+       fSamplerTimeAlpha = fTimeAlpha;
    }
    else{ 
-       fAlpha = (float)sampleInfo.alpha;
+       fSamplerTimeAlpha = (float)(obj.getSchema().getTimeSampling()->getSampleTime(sampleInfo.ceilIndex) - 
+ 		obj.getSchema().getTimeSampling()->getSampleTime(sampleInfo.floorIndex)) * (float)sampleInfo.alpha;    
    }
-   curvePositionSampler posSampler(obj, sampleInfo, fAlpha);
+   curvePositionSampler posSampler(obj, sampleInfo, fSamplerTimeAlpha, (float)sampleInfo.alpha);
 
 
    // Prepare the knots
