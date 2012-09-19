@@ -244,6 +244,9 @@ IF( WIN32 )
 	ENDFOREACH(flag_var)
 endif()
 
+add_definitions( -D_WINSOCKAPI_ )
+add_definitions( -D_WINSOCKAPI2_ )
+
 # For multithreaded builds		
 # [mkonyk] Fix ~ these are only valid on Windows platforms.
 IF( WIN32 )
