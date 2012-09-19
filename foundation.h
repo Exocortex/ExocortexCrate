@@ -4,7 +4,8 @@
    #include <boost/smart_ptr.hpp>
    #include <boost/format.hpp>
    #include <boost/variant.hpp>
-
+   #include <boost/cstdint.hpp>
+	
    #include <utility>
    #include <limits>
 

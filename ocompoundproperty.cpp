@@ -143,8 +143,7 @@ PyObject * oCompoundProperty_new(Alembic::Abc::OCompoundProperty compound, std::
       {
          // this property already exists
          Alembic::Abc::OBaseProperty baseProp = compound.getProperty( in_propName );
-         cprop->mBaseCompoundProperty = new Alembic::Abc::OCompoundProperty(
-                                                boost::dynamic_pointer_cast<Alembic::Abc::CompoundPropertyWriter>(baseProp.getPtr()), 
+         cprop->mBaseCompoundProperty = new Alembic::Abc::OCompoundProperty( baseProp.getPtr(), 
                                                 Alembic::Abc::kWrapExisting);
       }
       else

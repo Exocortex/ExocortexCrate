@@ -551,7 +551,7 @@ static PyObject * oProperty_setValues(PyObject * self, PyObject * args)
          _COPY_TUPLE_TO_VECTOR_(unsigned short,unsigned int,"I",1);
          Alembic::Abc::OUInt16ArrayProperty::sample_type sample;
          if(tupleVec.size() > 0)
-            sample = Alembic::Abc::OUInt16ArrayProperty::sample_type(&tupleVec.front(),tupleVec.size());
+            sample = Alembic::Abc::OUInt16ArrayProperty::sample_type(tupleVec);
          prop->mUInt16ArrayProperty->set(sample);
          break;
       }
@@ -560,25 +560,25 @@ static PyObject * oProperty_setValues(PyObject * self, PyObject * args)
          _COPY_TUPLE_TO_VECTOR_(short,int,"i",1);
          Alembic::Abc::OInt16ArrayProperty::sample_type sample;
          if(tupleVec.size() > 0)
-            sample = Alembic::Abc::OInt16ArrayProperty::sample_type(&tupleVec.front(),tupleVec.size());
+            sample = Alembic::Abc::OInt16ArrayProperty::sample_type(tupleVec);
          prop->mInt16ArrayProperty->set(sample);
          break;
       }
       case propertyTP_uint32_array:
       {
-         _COPY_TUPLE_TO_VECTOR_(boost::uint32_t,unsigned long,"k",1);
+         _COPY_TUPLE_TO_VECTOR_(Alembic::Util::ALEMBIC_VERSION_NS::uint32_t,unsigned long,"k",1);
          Alembic::Abc::OUInt32ArrayProperty::sample_type sample;
          if(tupleVec.size() > 0)
-            sample = Alembic::Abc::OUInt32ArrayProperty::sample_type(&tupleVec.front(),tupleVec.size());
+            sample = Alembic::Abc::OUInt32ArrayProperty::sample_type(tupleVec);
          prop->mUInt32ArrayProperty->set(sample);
          break;
       }
       case propertyTP_int32_array:
       {
-         _COPY_TUPLE_TO_VECTOR_(boost::int32_t,long,"l",1);
+		  _COPY_TUPLE_TO_VECTOR_(Alembic::Util::ALEMBIC_VERSION_NS::int32_t,long,"l",1);
          Alembic::Abc::OInt32ArrayProperty::sample_type sample;
          if(tupleVec.size() > 0)
-            sample = Alembic::Abc::OInt32ArrayProperty::sample_type(&tupleVec.front(),tupleVec.size());
+            sample = Alembic::Abc::OInt32ArrayProperty::sample_type(tupleVec);
          prop->mInt32ArrayProperty->set(sample);
          break;
       }
@@ -587,7 +587,7 @@ static PyObject * oProperty_setValues(PyObject * self, PyObject * args)
          _COPY_TUPLE_TO_VECTOR_(boost::uint64_t,unsigned long long,"K",1);
          Alembic::Abc::OUInt64ArrayProperty::sample_type sample;
          if(tupleVec.size() > 0)
-            sample = Alembic::Abc::OUInt64ArrayProperty::sample_type(&tupleVec.front(),tupleVec.size());
+            sample = Alembic::Abc::OUInt64ArrayProperty::sample_type(tupleVec);
          prop->mUInt64ArrayProperty->set(sample);
          break;
       }
@@ -596,7 +596,7 @@ static PyObject * oProperty_setValues(PyObject * self, PyObject * args)
          _COPY_TUPLE_TO_VECTOR_(boost::int64_t,long long,"L",1);
          Alembic::Abc::OInt64ArrayProperty::sample_type sample;
          if(tupleVec.size() > 0)
-            sample = Alembic::Abc::OInt64ArrayProperty::sample_type(&tupleVec.front(),tupleVec.size());
+            sample = Alembic::Abc::OInt64ArrayProperty::sample_type(tupleVec);
          prop->mInt64ArrayProperty->set(sample);
          break;
       }
@@ -605,7 +605,7 @@ static PyObject * oProperty_setValues(PyObject * self, PyObject * args)
          _COPY_TUPLE_TO_VECTOR_(Alembic::Abc::OHalfProperty::value_type,float,"f",1);
          Alembic::Abc::OHalfArrayProperty::sample_type sample;
          if(tupleVec.size() > 0)
-            sample = Alembic::Abc::OHalfArrayProperty::sample_type(&tupleVec.front(),tupleVec.size());
+            sample = Alembic::Abc::OHalfArrayProperty::sample_type(tupleVec);
          prop->mHalfArrayProperty->set(sample);
          break;
       }
@@ -614,7 +614,7 @@ static PyObject * oProperty_setValues(PyObject * self, PyObject * args)
          _COPY_TUPLE_TO_VECTOR_(float,float,"f",1);
          Alembic::Abc::OFloatArrayProperty::sample_type sample;
          if(tupleVec.size() > 0)
-            sample = Alembic::Abc::OFloatArrayProperty::sample_type(&tupleVec.front(),tupleVec.size());
+            sample = Alembic::Abc::OFloatArrayProperty::sample_type(tupleVec);
          prop->mFloatArrayProperty->set(sample);
          break;
       }
@@ -623,7 +623,7 @@ static PyObject * oProperty_setValues(PyObject * self, PyObject * args)
          _COPY_TUPLE_TO_VECTOR_(double,double,"d",1);
          Alembic::Abc::ODoubleArrayProperty::sample_type sample;
          if(tupleVec.size() > 0)
-            sample = Alembic::Abc::ODoubleArrayProperty::sample_type(&tupleVec.front(),tupleVec.size());
+            sample = Alembic::Abc::ODoubleArrayProperty::sample_type(tupleVec);
          prop->mDoubleArrayProperty->set(sample);
          break;
       }
@@ -632,7 +632,7 @@ static PyObject * oProperty_setValues(PyObject * self, PyObject * args)
          _COPY_TUPLE_TO_VECTOR_(std::string,const char *,"s",1);
          Alembic::Abc::OStringArrayProperty::sample_type sample;
          if(tupleVec.size() > 0)
-            sample = Alembic::Abc::OStringArrayProperty::sample_type(&tupleVec.front(),tupleVec.size());
+            sample = Alembic::Abc::OStringArrayProperty::sample_type(tupleVec);
          prop->mStringArrayProperty->set(sample);
          break;
       }
@@ -1326,8 +1326,7 @@ PyObject * oProperty_new(Alembic::Abc::OCompoundProperty compound, std::string c
       else if(baseProp.isArray())
       {
          prop->mIsArray = true;
-         prop->mBaseArrayProperty = new Alembic::Abc::OArrayProperty(
-            boost::dynamic_pointer_cast<Alembic::Abc::ArrayPropertyWriter>(baseProp.getPtr()), 
+         prop->mBaseArrayProperty = new Alembic::Abc::OArrayProperty( baseProp.getPtr(), 
             Alembic::Abc::kWrapExisting
          );
          interpretation = prop->mBaseArrayProperty->getMetaData().get("interpretation");
@@ -1335,8 +1334,7 @@ PyObject * oProperty_new(Alembic::Abc::OCompoundProperty compound, std::string c
       else
       {
          prop->mIsArray = false;
-         prop->mBaseScalarProperty = new Alembic::Abc::OScalarProperty(
-            boost::dynamic_pointer_cast<Alembic::Abc::ScalarPropertyWriter>(baseProp.getPtr()), 
+         prop->mBaseScalarProperty = new Alembic::Abc::OScalarProperty( baseProp.getPtr(), 
             Alembic::Abc::kWrapExisting
          );
          interpretation = prop->mBaseScalarProperty->getMetaData().get("interpretation");
