@@ -182,7 +182,7 @@ MStatus AlembicXformNode::initialize()
    status = uAttr.setKeyable(false);
    status = uAttr.setHidden(false);
 
-   // output translate compound
+   // output rotate compound
    mOutRotateAttr = nAttr.create( "rotate", "r", mOutRotateXAttr, mOutRotateYAttr, mOutRotateZAttr);
    status = nAttr.setStorable(false);
    status = nAttr.setWritable(false);
@@ -211,7 +211,7 @@ MStatus AlembicXformNode::initialize()
    status = nAttr.setKeyable(false);
    status = nAttr.setHidden(false);
 
-   // output translate compound
+   // output scale compound
    mOutScaleAttr = nAttr.create( "scale", "s", mOutScaleXAttr, mOutScaleYAttr, mOutScaleZAttr);
    status = nAttr.setStorable(false);
    status = nAttr.setWritable(false);
@@ -313,13 +313,13 @@ MStatus AlembicXformNode::compute(const MPlug & plug, MDataBlock & dataBlock)
       index--;
 
    Alembic::Abc::M44d matrix;
-   if(fabs(inputTime - mTimes[index]) < 0.001 || index == mTimes.size()-1)
+   if(fabs(inputTime - mTimes[index]) < 0.001 || index == 0 || index == mTimes.size()-1)
    {
       matrix = mMatrices[index];
    }
    else
    {
-      double blend = (inputTime - mTimes[index]) / (mTimes[index+1] - mTimes[index]);
+      const double blend = (inputTime - mTimes[index]) / (mTimes[index+1] - mTimes[index]);
       matrix = (1.0f - blend) * mMatrices[index] + blend * mMatrices[index+1];
    }
    mLastFloor = index;
