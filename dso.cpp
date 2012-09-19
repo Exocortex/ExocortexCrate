@@ -773,24 +773,14 @@ static int Init(AtNode *mynode, void **user_ptr)
 static int Cleanup(void *user_ptr)
 {
 	GLOBAL_LOCK;
-
 	userData * ud = (userData*)user_ptr;
 
-   // assign remaining shaders
-   //for(size_t i=0;i<ud->constructedNodes.size();i++)
-   //{
-   //   if(ud->shadersToAssign[i] == NULL)
-   //      continue;
-   //   AiNodeSetArray(ud->constructedNodes[i],"shader",ud->shadersToAssign[i]);
-   //}
+  ud->gIObjects.clear();
+  ud->gInstances.clear();
+  ud->gMbKeys.clear();
 
-   ud->gIObjects.clear();
-   ud->gInstances.clear();
-   ud->gMbKeys.clear();
-
-   delete(ud);
-
-   return TRUE;
+  delete(ud);
+  return TRUE;
 }
 
 
@@ -804,7 +794,6 @@ static int NumNodes(void *user_ptr)
    return size;
 }
 
-
 // Get the i_th node
 static AtNode *GetNode(void *user_ptr, int i)
 {
@@ -813,11 +802,6 @@ static AtNode *GetNode(void *user_ptr, int i)
   // check if this is a known object
   if(i >= (int)ud->gIObjects.size())
     return NULL;
-
-  // now check the camera node for shutter settings
-  //AtNode * cameraNode = AiUniverseGetCamera();
-  //float shutterStart = AiNodeGetFlt(cameraNode,"shutter_start");
-  //float shutterEnd = AiNodeGetFlt(cameraNode,"shutter_end");
 
   nodeData nodata;   // contain basic information common in all types of data!
 
