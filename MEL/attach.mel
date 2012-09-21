@@ -127,7 +127,7 @@ proc attachSubDDeformer(string $name, string $identifier, string $eaTimeFile[], 
   }
 }
 
-global proc attachToExisting(string $filename, int $importNormals, int $importUvs, int $importFaceSets)
+global proc attachToExisting(string $filename, int $importNormals, int $importUvs, int $importFaceSets, int $overTransforms, int $overDeforms)
 {
   string $identifiers[];
   string $types[];
@@ -135,6 +135,9 @@ global proc attachToExisting(string $filename, int $importNormals, int $importUv
   string $nodes[];
   string $datas[];
   int $nbSamples[];
+
+  if (!$overTransforms && !$overDeforms)
+    return;
 
   extractInfos(`ExocortexAlembic_getInfo -f $filename`, $identifiers, $types, $names, $nodes, $datas, $nbSamples);
 
@@ -155,14 +158,17 @@ global proc attachToExisting(string $filename, int $importNormals, int $importUv
     if (size($eaTimeFile) == 0)  // official, can initialize the time control and file node!
       $eaTimeFile = createTimeControl($filename);
 
-    if($type == "Xform")
+    if($overTransforms && $type == "Xform")
       attachXform($name, $identifiers[$ii], $eaTimeFile);
-    else if($type == "PolyMesh")
-      attachPolyMeshDeformer($name, $identifiers[$ii], $eaTimeFile, $importNormals, $importUvs, $importFaceSets);
-    else if($type == "SubD")
-      attachSubDDeformer($name, $identifiers[$ii], $eaTimeFile, $importUvs, $importFaceSets);
-    else
-      print("Type \"" + $type + "\" not supported yet!");
+    else if ($overDeforms)
+    {
+      if($type == "PolyMesh")
+        attachPolyMeshDeformer($name, $identifiers[$ii], $eaTimeFile, $importNormals, $importUvs, $importFaceSets);
+      else if($type == "SubD")
+        attachSubDDeformer($name, $identifiers[$ii], $eaTimeFile, $importUvs, $importFaceSets);
+      else
+        print("Type \"" + $type + "\" not supported yet!");
+    }
   }
 }
 
@@ -172,6 +178,8 @@ global proc exocortexAlembicAttachGUI(string $filename, string $dialog)
   int $importNormals = `checkBox -q -value normals`;
   int $importUvs = `checkBox -q -value uvs`;
   int $importFaceSets = `checkBox -q -value facesets`;
+  int $overTransforms = `checkBox -q -value otransform`;
+  int $overDeforms = `checkBox -q -value odeform`;
   exocortexCloseDialog($dialog);
   
   // check if the filename is valid
@@ -195,7 +203,7 @@ global proc exocortexAlembicAttachGUI(string $filename, string $dialog)
     return;
   }
   
-  attachToExisting($filename, $importNormals, $importUvs, $importFaceSets);
+  attachToExisting($filename, $importNormals, $importUvs, $importFaceSets, $overTransforms, $overDeforms);
 }
 
 global proc exocortexCloseDialog(string $dialog)
