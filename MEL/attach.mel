@@ -1,0 +1,221 @@
+proc extractInfos(string $infos[], string $identifiers[], string $types[], string $names[], string $nodes[], string $datas[], int $nbSamples[])
+{
+  for($i=0; $i<size($infos); $i=$i+1)
+  {
+    // tokenize the basic arguments
+    string $tokens[];
+    tokenize $infos[$i] "|" $tokens;
+    if(size($tokens) < 4)
+    {
+      print ("Skipping invalid info "+$infos[$i]+".");
+      continue;
+    }
+
+    // extract the information
+    string $identifier = $tokens[0];
+    string $type = $tokens[1];
+    string $name = $tokens[2];
+    string $node = `ExocortexAlembic_getNodeFromIdentifier -i $identifier`;
+    
+    // try to find the identifier in the map
+    int $skip = 0;
+    for($j=0;$j<size($identifiers);$j=$j+1)
+    {
+      if($identifiers[$j] == $identifier)
+      {
+        print("Skipping duplicate identifier "+$identifier+".");
+        $skip = 1;
+        break;
+      }
+    }
+    if($skip)
+      break;
+
+    // push the identifier to our map      
+    $identifiers[size($identifiers)] = $identifier;
+    $types[size($types)] = $type;
+    $names[size($names)] = $tokens[2];
+    $nodes[size($nodes)] = $node;
+    $nbSamples[size($nbSamples)] = $tokens[3];
+    
+    // parse the forth token
+    string $data = "";
+    if(size($tokens)>4)
+      $data = $tokens[4];
+    $datas[size($datas)] = $data;
+  }
+}
+
+proc string[] createTimeControl(string $filename)
+{
+  string $ret[];
+
+  string $timeControl = `createNode "ExocortexAlembicTimeControl"`;
+  connectAttr "time1.outTime" ($timeControl+".inTime");
+  string $fileNode = `createNode "ExocortexAlembicFile"`;
+  setAttr -type "string" ($fileNode+".fileName ") $filename;
+
+  $ret[0] = $timeControl;
+  $ret[1] = $fileNode;
+  return $ret;
+}
+
+proc attachTimeAndFile(string $node, string $eaTimeFile[])
+{
+  connectAttr ($eaTimeFile[0]+".outTime") ($node+".inTime");
+  connectAttr ($eaTimeFile[1]+".outFileName") ($node+".fileName");
+}
+
+proc attachXform(string $name, string $identifier, string $eaTimeFile[])
+{
+  string $newXform = `createNode -name ("Xform" + $name) "ExocortexAlembicXform"`;
+  setAttr -type "string" ($newXform + ".identifier") $identifier;
+
+  connectAttr ($newXform+".translate") ($name+".translate");
+  connectAttr ($newXform+".rotate") ($name+".rotate");
+  connectAttr ($newXform+".scale") ($name+".scale");
+
+  attachTimeAndFile($newXform, $eaTimeFile);
+}
+
+proc attachPolyMeshDeformer(string $name, string $identifier, string $eaTimeFile[], int $importNormals, int $importUvs, int $importFaceSets)
+{
+  // get first the poly object (polyCube, polySphere, ...)
+  string $inMeshConnect = `connectionInfo -sfd ($name + ".inMesh")`;
+  string $polyObj = `plugNode $inMeshConnect`;
+
+  // create deformer, and attach time and file
+  string $newDform[] = `deformer -type "ExocortexAlembicPolyMeshDeform" -name ("dForm_" + $name) $name`;
+  setAttr -type "string" ($newDform[0] + ".identifier") $identifier;
+  attachTimeAndFile($newDform[0], $eaTimeFile);
+
+  // get polyObj new "output" attribute connection
+  string $inMeshConnect2[] = `connectionInfo -dfs ($polyObj + ".output")`;
+  string $originalMesh = `plugNode $inMeshConnect2[0]`;
+
+  // delete the original poly object, create the alembic poly mesh, and attach time and file, and connected it to the original object!
+  delete $polyObj;
+  $polyObj = `createNode -name ("alembicPolyMesh_" + $name) "ExocortexAlembicPolyMesh"`;
+  attachTimeAndFile($polyObj, $eaTimeFile);
+  connectAttr ($polyObj + ".outMesh") ($originalMesh + ".inMesh");
+  setAttr ($polyObj+".normals") $importNormals;
+  setAttr ($polyObj+".uvs") $importUvs;
+  if ($importFaceSets)
+  {
+    string $fname = `getAttr ($eaTimeFile[1]+".outFileName")`;
+    ExocortexAlembic_createFaceSets -f $fname -i $identifier -o $name;
+  }
+}
+
+proc attachSubDDeformer(string $name, string $identifier, string $eaTimeFile[], int $importUvs, int $importFaceSets)
+{
+  // create deformer
+  string $newDform[] = `deformer -type "ExocortexAlembicSubDDeform" -name ("dForm_" + $name) $name`;
+  setAttr -type "string" ($newDform[0] + ".identifier") $identifier;
+  attachTimeAndFile($newDform[0], $eaTimeFile);
+
+  // create alembic subd and connect it to the original object ($name+"Orig" and $name)
+  $subdObj = `createNode -name ("alembicSubD_" + $name) "ExocortexAlembicSubD"`;
+  attachTimeAndFile($subdObj, $eaTimeFile);
+  connectAttr ($subdObj + ".dispResolution") ($name + ".dispResolution");
+  connectAttr ($subdObj + ".outSubdiv") ($name + "Orig.create");
+  setAttr ($subdObj+".uvs") $importUvs;
+  if ($importFaceSets)
+  {
+    string $fname = `getAttr ($eaTimeFile[1]+".outFileName")`;
+    ExocortexAlembic_createFaceSets -f $fname -i $identifier -o $name;
+  }
+}
+
+global proc attachToExisting(string $filename, int $importNormals, int $importUvs, int $importFaceSets)
+{
+  string $identifiers[];
+  string $types[];
+  string $names[];
+  string $nodes[];
+  string $datas[];
+  int $nbSamples[];
+
+  extractInfos(`ExocortexAlembic_getInfo -f $filename`, $identifiers, $types, $names, $nodes, $datas, $nbSamples);
+
+  string $eaTimeFile[];   // will old the TimeControl name and the File Node name
+
+  int $nbIds = size($identifiers);
+  int $ii = 0;
+  for (; $ii < $nbIds; $ii = $ii + 1)
+  {
+    string $name = $names[$ii];
+    if (`objExists $name` == 0)
+    {
+      print("Could not find " + $name);
+      continue;
+    }
+
+    string $type = $types[$ii];
+    if (size($eaTimeFile) == 0)  // official, can initialize the time control and file node!
+      $eaTimeFile = createTimeControl($filename);
+
+    if($type == "Xform")
+      attachXform($name, $identifiers[$ii], $eaTimeFile);
+    else if($type == "PolyMesh")
+      attachPolyMeshDeformer($name, $identifiers[$ii], $eaTimeFile, $importNormals, $importUvs, $importFaceSets);
+    else if($type == "SubD")
+      attachSubDDeformer($name, $identifiers[$ii], $eaTimeFile, $importUvs, $importFaceSets);
+    else
+      print("Type \"" + $type + "\" not supported yet!");
+  }
+}
+
+global proc exocortexAlembicAttachGUI(string $filename, string $dialog)
+{
+  // parse all options
+  int $importNormals = `checkBox -q -value normals`;
+  int $importUvs = `checkBox -q -value uvs`;
+  int $importFaceSets = `checkBox -q -value facesets`;
+  exocortexCloseDialog($dialog);
+  
+  // check if the filename is valid
+  if($filename == "")
+  {
+    $files = `fileDialog2 -ds 2 -cap "Choose the Alembic File To Import" -ff "Alembic Files (*.abc)" -fm 1`;
+    print $files;
+    if(size($files) == 0)
+    {
+      print("Import aborted by user.");
+      return;
+    }
+    $filename = $files[0];
+  }
+  
+  // check if the file exists
+  string $resolvedPath = `ExocortexAlembic_resolvePath -f $filename`;
+  if(!`filetest -r $resolvedPath`)
+  {
+    error ("File "+$filename+" does not exist!");
+    return;
+  }
+  
+  attachToExisting($filename, $importNormals, $importUvs, $importFaceSets);
+}
+
+global proc exocortexCloseDialog(string $dialog)
+{
+  deleteUI -window $dialog;
+}
+
+global proc exocortexChooseFile(string $dialog)
+{
+  exocortexAlembicAttachGUI("",$dialog);
+}
+
+global proc exocortexSetupDialog(string $uiDirectory)
+{
+  global string $dialog;
+  if (`window -exists $dialog`)
+    deleteUI -window $dialog;
+
+  $dialog = `loadUI -uiFile ($uiDirectory+"/ExocortexAlembicAttach.ui")`;
+  windowPref -topEdge 300 -leftEdge 300 $dialog;
+  showWindow $dialog;
+}
+

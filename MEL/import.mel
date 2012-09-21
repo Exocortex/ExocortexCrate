@@ -61,7 +61,7 @@ global proc exocortexAlembicImportGUI(string $filename,string $dialog)
   int $importUvs = `checkBox -q -value uvs`;
   int $importFaceSets = `checkBox -q -value facesets`;
   string $importVisibility = `optionMenu -q -value visibility`;
-  int $importAttach = `checkBox -q -value attach`;
+  int $importAttach = 0;//`checkBox -q -value attach`;
   exocortexCloseDialog($dialog);
   
   // check if the filename is valid
