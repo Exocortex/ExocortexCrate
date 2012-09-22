@@ -12,8 +12,6 @@
 #include "AlembicMax.h"
 #include "Profiler.h"
 
-
-
 bool isAlembicMeshValid( Alembic::AbcGeom::IObject *pIObj ) {
 	ESS_PROFILE_FUNC();
 	Alembic::AbcGeom::IPolyMesh objMesh;

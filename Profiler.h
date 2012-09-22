@@ -127,9 +127,9 @@ struct default_stats_policy
 	static void on_report() {
 		ESS_LOG_WARNING( "PROFILER REPORT >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" );
 		ESS_LOG_WARNING(
-			"profile name" << '\t' 
-			<< "total elapsed" << '\t' 
-			<< "entry count" << '\t'
+			"profile name," << '\t' 
+			<< "total elapsed," << '\t' 
+			<< "entry count," << '\t'
 			<< "average" );
 
 		for (stats_map::iterator i=stats.begin(); i != stats.end(); i++)
@@ -139,9 +139,9 @@ struct default_stats_policy
 			double dTotal = i->second.second;
 			double dAvg = dTotal / nCount; 
 			ESS_LOG_WARNING(  
-				sName << '\t'
-				<< dTotal << '\t'
-				<< nCount << '\t'
+				sName << ",\t"
+				<< dTotal << ",\t"
+				<< nCount << ",\t"
 				<< dAvg );
 		}
 		ESS_LOG_WARNING( "PROFILER REPORT <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<" );
@@ -254,10 +254,10 @@ public:
 		ESS_LOG_WARNING( "PROFILER REPORT >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" );
 		std::stringstream strstream;
 		strstream << std::setw(padding + 6) << std::setiosflags( std::ios::left )
-			<< "profile name" << std::setw(padding) << std::setiosflags( std::ios::right )
-			<< "average" << std::setw(padding)
-			<< "last" << std::setw(padding)
-			<< "total elapsed" << std::setw(padding)
+			<< "profile name," << std::setw(padding) << std::setiosflags( std::ios::right )
+			<< "average," << std::setw(padding)
+			<< "last," << std::setw(padding)
+			<< "total elapsed," << std::setw(padding)
 			<< "entry count" << std::setw(padding);
 
 		ESS_LOG_WARNING(strstream.str().c_str());
@@ -272,10 +272,10 @@ public:
 
 			std::stringstream strstream2;
 			strstream2 << std::setw(padding + 6) << std::setiosflags( std::ios::left )
-				<< sName << std::setw(padding) << std::setiosflags( std::ios::right )
-				<< dAvg << std::setw(padding)
-				<< last << std::setw(padding)
-				<< dTotal << std::setw(padding)
+				<< sName << ","<< std::setw(padding) << std::setiosflags( std::ios::right )
+				<< dAvg << ","<< std::setw(padding)
+				<< last << ","<< std::setw(padding)
+				<< dTotal << ","<< std::setw(padding)
 				<< nCount << std::setw(padding);
 
 			ESS_LOG_WARNING( strstream2.str().c_str());
@@ -294,6 +294,8 @@ HighResolutionTimer
 Profiler;
 
 
+//#define ESS_PROFILING
+ 
 #ifdef ESS_PROFILING
 	#pragma message( "EXOCORTEX: ESS_PROFILING defined, profiling enabled." )
 	#define ESS_PROFILE_SCOPE(a)	 Profiler profiler(a);
