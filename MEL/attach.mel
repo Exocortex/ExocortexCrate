@@ -68,6 +68,21 @@ proc attachTimeAndFile(string $node, string $eaTimeFile[])
 
 proc attachXform(string $name, string $identifier, string $eaTimeFile[])
 {
+  string $cons[] = `listConnections ($name+".translate")`;
+  if (size($cons) > 0)
+  {
+    if (`objectType $cons[0]` == "ExocortexAlembicXform")
+    {
+      string $fileN[] = `listConnections ($cons[0]+".fileName")`;
+      if (size($fileN) > 0)
+        disconnectAttr ($fileN[0]+".outFileName") ($cons[0]+".fileName");
+      connectAttr ($eaTimeFile[1]+".outFileName") ($cons[0]+".fileName");
+    }
+    else
+      print("Cannot attach Xform to " + $name + ", it's attach to a node that is not an \"ExocortexAlembicXform\"");
+    return;
+  }
+
   string $newXform = `createNode -name ("Xform" + $name) "ExocortexAlembicXform"`;
   setAttr -type "string" ($newXform + ".identifier") $identifier;
 
@@ -83,6 +98,16 @@ proc attachPolyMeshDeformer(string $name, string $identifier, string $eaTimeFile
   // get first the poly object (polyCube, polySphere, ...)
   string $inMeshConnect = `connectionInfo -sfd ($name + ".inMesh")`;
   string $polyObj = `plugNode $inMeshConnect`;
+
+  // if it's already attach to a deform, simply change its file reference
+  if (`objectType $polyObj` == "ExocortexAlembicPolyMeshDeform")
+  {
+    string $polyObjFileName = $polyObj + ".fileName";
+    string $fileN = `connectionInfo -sfd $polyObjFileName`;
+    disconnectAttr $fileN $polyObjFileName;
+    connectAttr ($eaTimeFile[1]+".outFileName") $polyObjFileName;
+    return;
+  }
 
   // create deformer, and attach time and file
   string $newDform[] = `deformer -type "ExocortexAlembicPolyMeshDeform" -name ("dForm_" + $name) $name`;
@@ -109,6 +134,25 @@ proc attachPolyMeshDeformer(string $name, string $identifier, string $eaTimeFile
 
 proc attachSubDDeformer(string $name, string $identifier, string $eaTimeFile[], int $importUvs, int $importFaceSets)
 {
+  // get first the potential deform object!
+  string $inCreateConnect = `connectionInfo -sfd ($name + ".create")`;
+  if ($inCreateConnect != "")
+  {
+    string $polyObj = `plugNode $inCreateConnect`;
+
+    // if it's already attach to a deform, simply change its file reference
+    if (`objectType $polyObj` == "ExocortexAlembicSubDDeform")
+    {
+      string $polyObjFileName = $polyObj + ".fileName";
+      string $fileN = `connectionInfo -sfd $polyObjFileName`;
+      disconnectAttr $fileN $polyObjFileName;
+      connectAttr ($eaTimeFile[1]+".outFileName") $polyObjFileName;
+    }
+    else
+      print("Cannot attach to " + $name + ", it's already attach to a deform node that is not an \"ExocortexAlembicSubDDeform\"");
+    return;
+  }
+
   // create deformer
   string $newDform[] = `deformer -type "ExocortexAlembicSubDDeform" -name ("dForm_" + $name) $name`;
   setAttr -type "string" ($newDform[0] + ".identifier") $identifier;
@@ -155,17 +199,29 @@ global proc attachToExisting(string $filename, int $importNormals, int $importUv
     }
 
     string $type = $types[$ii];
-    if (size($eaTimeFile) == 0)  // official, can initialize the time control and file node!
-      $eaTimeFile = createTimeControl($filename);
-
-    if($overTransforms && $type == "Xform")
-      attachXform($name, $identifiers[$ii], $eaTimeFile);
+    if($overTransforms)
+    {
+      if ($type == "Xform")
+      {
+        if (size($eaTimeFile) == 0)
+          $eaTimeFile = createTimeControl($filename);
+        attachXform($name, $identifiers[$ii], $eaTimeFile);
+      }
+    }
     else if ($overDeforms)
     {
       if($type == "PolyMesh")
+      {
+        if (size($eaTimeFile) == 0)
+          $eaTimeFile = createTimeControl($filename);
         attachPolyMeshDeformer($name, $identifiers[$ii], $eaTimeFile, $importNormals, $importUvs, $importFaceSets);
+      }
       else if($type == "SubD")
+      {
+        if (size($eaTimeFile) == 0)
+          $eaTimeFile = createTimeControl($filename);
         attachSubDDeformer($name, $identifiers[$ii], $eaTimeFile, $importUvs, $importFaceSets);
+      }
       else
         print("Type \"" + $type + "\" not supported yet!");
     }
@@ -181,7 +237,7 @@ global proc exocortexAlembicAttachGUI(string $filename, string $dialog)
   int $overTransforms = `checkBox -q -value otransform`;
   int $overDeforms = `checkBox -q -value odeform`;
   exocortexCloseDialog($dialog);
-  
+
   // check if the filename is valid
   if($filename == "")
   {
@@ -202,7 +258,6 @@ global proc exocortexAlembicAttachGUI(string $filename, string $dialog)
     error ("File "+$filename+" does not exist!");
     return;
   }
-  
   attachToExisting($filename, $importNormals, $importUvs, $importFaceSets, $overTransforms, $overDeforms);
 }
 
