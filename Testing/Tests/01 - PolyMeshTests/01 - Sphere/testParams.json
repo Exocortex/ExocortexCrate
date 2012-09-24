@@ -1,0 +1,6 @@
+{
+	"tasks":[
+		{"script":"/3DSMax/scripts/export.ms", "inputs":{"obj":"Sphere001", "app":"max2012"}},
+		{"script":"/3DSMax/scripts/import.ms", "inputs":{"obj":"Sphere001", "app":"max2012"}}
+	]
+}
