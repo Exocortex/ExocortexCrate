@@ -171,6 +171,9 @@ public:
 			stop();
 		}        
 	}
+	bool isTiming() const {
+		return timing;
+	}
 	void stop() {
 		double tmp = t.elapsed();        
 		if (tmp <= t.elapsed_min()) {
@@ -188,12 +191,12 @@ public:
 	void restart() {
 		timing = true;
 		elapsed = 0.0;
-		logging_policy::on_restart(name);
+		//logging_policy::on_restart(name);
 		t.restart();        
 	}
 	void resume() {
 		timing = true;
-		logging_policy::on_resume(name);
+		//logging_policy::on_resume(name);
 		t.restart();
 	}
 	void pause() {
@@ -281,6 +284,7 @@ public:
 			ESS_LOG_WARNING( strstream2.str().c_str());
 		}
 		ESS_LOG_WARNING( "PROFILER REPORT <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<" );
+		default_stats_policy::stats.clear();
 	}
 }; 
 
@@ -294,7 +298,7 @@ HighResolutionTimer
 Profiler;
 
 
-//#define ESS_PROFILING
+#define ESS_PROFILING
  
 #ifdef ESS_PROFILING
 	#pragma message( "EXOCORTEX: ESS_PROFILING defined, profiling enabled." )

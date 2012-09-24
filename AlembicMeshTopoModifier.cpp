@@ -215,6 +215,9 @@ void AlembicMeshTopoModifier::ModifyObject (TimeValue t, ModContext &mc, ObjectS
    }
 
    bool bNeedDelete = false;
+
+   	options.pObject = os->obj;
+
    // Find out if we are modifying a poly object or a tri object
    if (os->obj->ClassID() == Class_ID(POLYOBJ_CLASS_ID, 0) )
    {

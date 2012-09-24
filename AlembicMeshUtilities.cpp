@@ -334,7 +334,6 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
 		 
 		
 		   MNVert* pMeshVerties = options.pMNMesh->V(0);
-		 
 		   for(int i=0;i<vArray.size();i++)
 		   {
 			   if( options.bAdditive ) {

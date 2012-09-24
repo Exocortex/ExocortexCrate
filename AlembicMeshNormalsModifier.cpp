@@ -189,6 +189,8 @@ void AlembicMeshNormalsModifier::ModifyObject (TimeValue t, ModContext &mc, Obje
 		options.nDataFillFlags |= ALEMBIC_DATAFILL_UVS;
    }
   
+	options.pObject = os->obj;
+
   // Find out if we are modifying a poly object or a tri object
    if (os->obj->ClassID() == Class_ID(POLYOBJ_CLASS_ID, 0) )
    {
