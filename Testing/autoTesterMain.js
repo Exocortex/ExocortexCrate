@@ -124,7 +124,46 @@ var readTestDir = function(path, list){
 
 }
 
-readTestDir(testPath);
+
+var cleanTestDir = function(path){
+
+	//console.log('Reading test dir: '+path);
+
+	var files = fs.readdirSync(path);
+
+	var len = files.length;
+	//console.log("numFiles: "+len);
+	for(var i=0; i<len; i++){
+
+		var filePath = [path, '/', files[i]].join('');
+
+		//console.log("reading file: "+filePath);
+
+		var stats = fs.lstatSync(filePath);
+		if(stats.isDirectory()){
+			cleanTestDir(filePath);
+		}
+		else if(stats.isFile()){
+			if(	files[i].search(".ats") != -1 || 
+				files[i].search("_Render") != -1 || 
+				files[i].search(".tabc") != -1 
+				){ //we have found a folder that contains a test
+
+				var res = fs.unlinkSync(filePath);
+				//console.log("deleted " + path + " = " + res);
+			}
+		}
+		else{
+			console.log("Error: not a directory or file");
+		}
+
+	}
+
+}
+
+
+
+
 
 
 // - can call with the entire test folder as path to gather all test results
@@ -362,10 +401,6 @@ tmProto.print = function(){
 
 var testMan = new TestManager("", __dirname+"/3DSMax/includes");
 
-testMan.build(testList);
-//testMan.print();
-
-testMan.runAll();
 
 
 
@@ -378,6 +413,12 @@ app.get('/Results', function(req, res){
 
 });
    
+
+
+cleanTestDir(testPath);
+readTestDir(testPath);
+testMan.build(testList);
+testMan.runAll();
 
 
 

@@ -8,7 +8,7 @@ writeTaskNames tasks
 /* load import.max if present. This is my was cofiguring custom camera settings */
 try ( loadMaxFile "import.max" ) catch()
 
-result = ExocortexAlembic.import (app + "_" + obj + ".abc") true true true true 0
+result = ExocortexAlembic.import (app + "_" + obj + ".tabc") true true true true 0
 setStatus tasks "import" (result == 0)
 
 

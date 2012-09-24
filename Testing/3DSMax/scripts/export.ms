@@ -10,7 +10,7 @@ loadMaxFile "export.max"
 
 select $*
 
-exportParams = exportStr (app + "_" + obj + ".abc")
+exportParams = exportStr (app + "_" + obj + ".tabc")
 result = alembicExport exportParams
 setStatus tasks "export" (result == 0)
 
