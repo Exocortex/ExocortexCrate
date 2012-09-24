@@ -333,14 +333,17 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
 		   }
 		 
 		
-		   MNVert* pMeshVerties = options.pMNMesh->V(0);
+		  // MNVert* pMeshVerties = options.pMNMesh->V(0);
+		   ;
 		   for(int i=0;i<vArray.size();i++)
 		   {
 			   if( options.bAdditive ) {
-				   pMeshVerties[i].p += ConvertAlembicPointToMaxPoint(vArray[i]);
+				   //pMeshVerties[i].p += 
+				   options.pObject->SetPoint( i, options.pObject->GetPoint( i ) + ConvertAlembicPointToMaxPoint(vArray[i]) ); 
 			   }
 			   else {
-				   pMeshVerties[i].p = ConvertAlembicPointToMaxPoint(vArray[i]);
+				   //pMeshVerties[i].p = ConvertAlembicPointToMaxPoint(vArray[i]);
+				   options.pObject->SetPoint( i, ConvertAlembicPointToMaxPoint(vArray[i]) ); 
 			   }
 		   }
 		   validateMeshes( options, "ALEMBIC_DATAFILL_VERTEX" );
@@ -920,13 +923,14 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
    //options.pMNMesh->MNDebugPrint();
    if ( (options.nDataFillFlags & ALEMBIC_DATAFILL_FACELIST) || (options.nDataFillFlags & ALEMBIC_DATAFILL_NORMALS) ) {
 		 ESS_PROFILE_SCOPE("InvalidateTopoCache/InvalidateGeomCache");
-	   options.pMNMesh->InvalidateTopoCache();
-		options.pMNMesh->InvalidateGeomCache();
+	   //options.pMNMesh->InvalidateTopoCache();
+		//options.pMNMesh->InvalidateGeomCache();
 	}
    else {
 	  if( options.nDataFillFlags & ALEMBIC_DATAFILL_VERTEX ) {
 		 ESS_PROFILE_SCOPE("InvalidateGeomCache");
-		  options.pMNMesh->InvalidateGeomCache();
+		 // options.pMNMesh->InvalidateGeomCache();
+		 options.pObject->PointsWereChanged();
 	  }
    }
 }
