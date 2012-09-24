@@ -120,6 +120,9 @@ void AlembicMeshGeomModifier::ModifyObject (TimeValue t, ModContext &mc, ObjectS
 	ESS_CPP_EXCEPTION_REPORTING_START
 	ESS_PROFILE_FUNC();
 
+	static Profiler s_interProfiler( "InterTimer" );
+	s_interProfiler.stop();
+	
 	Interval interval = FOREVER;//os->obj->ObjectValidity(t);
 	//ESS_LOG_INFO( "Interval Start: " << interval.Start() << " End: " << interval.End() );
 
@@ -212,6 +215,8 @@ void AlembicMeshGeomModifier::ModifyObject (TimeValue t, ModContext &mc, ObjectS
 		options.nDataFillFlags |= ALEMBIC_DATAFILL_UVS;
    }
   
+   options.pObject = os->obj;
+
   // Find out if we are modifying a poly object or a tri object
    if (os->obj->ClassID() == Class_ID(POLYOBJ_CLASS_ID, 0) )
    {
@@ -261,6 +266,8 @@ void AlembicMeshGeomModifier::ModifyObject (TimeValue t, ModContext &mc, ObjectS
 		os->obj->UpdateValidity(TEXMAP_CHAN_NUM, interval);
    }
 
+	s_interProfiler.restart();
+	
    	ESS_CPP_EXCEPTION_REPORTING_END
 }
 

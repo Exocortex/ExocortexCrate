@@ -14,6 +14,7 @@ typedef struct _alembic_fillmesh_options
 	std::string fileName;
 	std::string identifier;
 	
+	Object *pObject;
 	MNMesh *pMNMesh;
     TimeValue dTicks;
     AlembicDataFillFlags nDataFillFlags;

@@ -22,6 +22,8 @@ public:
 	}
 
     Alembic::AbcGeom::IObject  *pIObj;
+
+	Object						*pObject;
 	ShapeObject				   *pShapeObject;
     BezierShape                *pBezierShape;
     PolyShape                  *pPolyShape;
