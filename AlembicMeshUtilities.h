@@ -6,7 +6,6 @@
 #include "resource.h"
 #include "AlembicDefinitions.h"
 #include "utility.h"
-
 // Alembic Functions
 
 typedef struct _alembic_fillmesh_options

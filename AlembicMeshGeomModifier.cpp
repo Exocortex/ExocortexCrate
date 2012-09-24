@@ -6,6 +6,7 @@
 #include "utility.h"
 #include "AlembicXForm.h"
 #include "AlembicVisibilityController.h"
+#include "Profiler.h"
 
 
 using namespace MaxSDK::AssetManagement;
@@ -117,6 +118,7 @@ void AlembicMeshGeomModifier::EnumAuxFiles(AssetEnumCallback& nameEnum, DWORD fl
 void AlembicMeshGeomModifier::ModifyObject (TimeValue t, ModContext &mc, ObjectState *os, INode *node) 
 {
 	ESS_CPP_EXCEPTION_REPORTING_START
+	ESS_PROFILE_FUNC();
 
 	Interval interval = FOREVER;//os->obj->ObjectValidity(t);
 	//ESS_LOG_INFO( "Interval Start: " << interval.Start() << " End: " << interval.End() );
@@ -171,6 +173,7 @@ void AlembicMeshGeomModifier::ModifyObject (TimeValue t, ModContext &mc, ObjectS
 
 	Alembic::AbcGeom::IObject iObj;
 	try {
+		ESS_PROFILE_SCOPE("getObjectFromArchive");
 		iObj = getObjectFromArchive(szPath, szIdentifier);
 	} catch( std::exception exp ) {
 		ESS_LOG_ERROR( "Can not open Alembic data stream.  Path: " << szPath << " identifier: " << szIdentifier << " reason: " << exp.what() );
@@ -212,12 +215,14 @@ void AlembicMeshGeomModifier::ModifyObject (TimeValue t, ModContext &mc, ObjectS
   // Find out if we are modifying a poly object or a tri object
    if (os->obj->ClassID() == Class_ID(POLYOBJ_CLASS_ID, 0) )
    {
+		ESS_PROFILE_SCOPE("reinterpret_cast1");
 	   PolyObject *pPolyObj = reinterpret_cast<PolyObject *>(os->obj );
 
 	   options.pMNMesh = &( pPolyObj->GetMesh() );
    }
    else if (os->obj->CanConvertToType(Class_ID(POLYOBJ_CLASS_ID, 0)))
    {
+		ESS_PROFILE_SCOPE("reinterpret_cast2");
 	   PolyObject *pPolyObj = reinterpret_cast<PolyObject *>(os->obj->ConvertToType(t, Class_ID(POLYOBJ_CLASS_ID, 0)));
 
 	   options.pMNMesh = &( pPolyObj->GetMesh() );
@@ -243,13 +248,16 @@ void AlembicMeshGeomModifier::ModifyObject (TimeValue t, ModContext &mc, ObjectS
 
    // update the validity channel
     if( bTopology ) {
+		ESS_PROFILE_SCOPE("UpdateValidity_Topology_Geom");
 		os->obj->UpdateValidity(TOPO_CHAN_NUM, interval);
 		os->obj->UpdateValidity(GEOM_CHAN_NUM, interval);
 	}
     if( bGeometry ) {
+		ESS_PROFILE_SCOPE("UpdateValidity_Geom");
 		os->obj->UpdateValidity(GEOM_CHAN_NUM, interval);
 	}
     if( bUVs ) {
+		ESS_PROFILE_SCOPE("UpdateValidity_UV");
 		os->obj->UpdateValidity(TEXMAP_CHAN_NUM, interval);
    }
 

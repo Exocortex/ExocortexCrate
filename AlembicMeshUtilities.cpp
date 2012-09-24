@@ -10,8 +10,10 @@
 #include "AlembicMAXScript.h" 
 #include "AlembicMetadataUtils.h"
 #include "AlembicMax.h"
+#include "Profiler.h"
 
 bool isAlembicMeshValid( Alembic::AbcGeom::IObject *pIObj ) {
+	ESS_PROFILE_FUNC();
 	Alembic::AbcGeom::IPolyMesh objMesh;
 	Alembic::AbcGeom::ISubD objSubD;
 
@@ -29,6 +31,7 @@ bool isAlembicMeshValid( Alembic::AbcGeom::IObject *pIObj ) {
 }
 
 bool isAlembicMeshNormals( Alembic::AbcGeom::IObject *pIObj, bool& isConstant ) {
+	ESS_PROFILE_FUNC();
 	Alembic::AbcGeom::IPolyMesh objMesh;
 	Alembic::AbcGeom::ISubD objSubD;
 
@@ -49,6 +52,7 @@ bool isAlembicMeshNormals( Alembic::AbcGeom::IObject *pIObj, bool& isConstant ) 
 
 
 bool isAlembicMeshPositions( Alembic::AbcGeom::IObject *pIObj, bool& isConstant ) {
+	ESS_PROFILE_FUNC();
 	Alembic::AbcGeom::IPolyMesh objMesh;
 	Alembic::AbcGeom::ISubD objSubD;
 
@@ -67,6 +71,7 @@ bool isAlembicMeshPositions( Alembic::AbcGeom::IObject *pIObj, bool& isConstant 
 }
 
 bool isAlembicMeshUVWs( Alembic::AbcGeom::IObject *pIObj, bool& isConstant ) {
+	ESS_PROFILE_FUNC();
 	Alembic::AbcGeom::IPolyMesh objMesh;
 	Alembic::AbcGeom::ISubD objSubD;
 
@@ -90,6 +95,7 @@ bool isAlembicMeshUVWs( Alembic::AbcGeom::IObject *pIObj, bool& isConstant ) {
 }
 
 bool isAlembicMeshTopoDynamic( Alembic::AbcGeom::IObject *pIObj ) {
+	ESS_PROFILE_FUNC();
 	Alembic::AbcGeom::IPolyMesh objMesh;
 	Alembic::AbcGeom::ISubD objSubD;
 
@@ -145,6 +151,13 @@ void validateMeshes( alembic_fillmesh_options &options, char* szName ) {
 
 void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
 {
+	static int s_profileCountDown = 1000;
+	if( s_profileCountDown < 0 ) {
+		s_profileCountDown = 1000;
+		logging_stats_policy::generateReport();
+	}
+	s_profileCountDown--;
+   ESS_PROFILE_FUNC();
    Alembic::AbcGeom::IPolyMesh objMesh;
    Alembic::AbcGeom::ISubD objSubD;
 
@@ -165,12 +178,14 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
   double sampleTime = GetSecondsFromTimeValue(nTicks);
 
   SampleInfo sampleInfo;
-   if(objMesh.valid())
+  if(objMesh.valid()) {
+		ESS_PROFILE_SCOPE("getSampleInfo");
       sampleInfo = getSampleInfo(
          sampleTime,
          objMesh.getSchema().getTimeSampling(),
          objMesh.getSchema().getNumSamples()
       );
+  }
    else
       sampleInfo = getSampleInfo(
          sampleTime,
@@ -194,7 +209,8 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
 	   bool hasDynamicTopo = false;
        if(objMesh.valid())
        {
-           meshPos = polyMeshSample.getPositions();
+     		ESS_PROFILE_SCOPE("Mesh getPositions/getVelocities/faceCountProp");
+          meshPos = polyMeshSample.getPositions();
            meshVel = polyMeshSample.getVelocities();
 
            Alembic::Abc::IInt32ArrayProperty faceCountProp = Alembic::Abc::IInt32ArrayProperty(objMesh.getSchema(),".faceCounts");
@@ -203,6 +219,7 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
        }
        else
        {
+     		ESS_PROFILE_SCOPE("SubD getPositions/getVelocities/faceCountProp");
            meshPos = subDSample.getPositions();
            meshVel = subDSample.getVelocities();
 
@@ -216,7 +233,8 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
    if(  ( options.nDataFillFlags & ALEMBIC_DATAFILL_FACELIST ) ||
 	   ( options.nDataFillFlags & ALEMBIC_DATAFILL_VERTEX ) ) {
 		   if (currentNumVerts != meshPos->size() && ! options.pMNMesh->GetFlag( MN_MESH_RATSNEST ) )
-		   {
+ 		   {
+       		ESS_PROFILE_SCOPE("resize and clear vertices");
 			   int numVerts = static_cast<int>(meshPos->size());
 			   
 			   options.pMNMesh->setNumVerts(numVerts);
@@ -232,6 +250,7 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
 
    if ( options.nDataFillFlags & ALEMBIC_DATAFILL_VERTEX )
    {
+       		ESS_PROFILE_SCOPE("ALEMBIC_DATAFILL_VERTEX");
 	   Imath::V3f const* pPositionArray = ( meshPos.get() != NULL ) ? meshPos->get() : NULL;
 	   Imath::V3f const* pVelocityArray = ( meshVel.get() != NULL ) ? meshVel->get() : NULL;
 
@@ -359,6 +378,7 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
 
    if ( options.nDataFillFlags & ALEMBIC_DATAFILL_FACELIST )
    {
+       		ESS_PROFILE_SCOPE("ALEMBIC_DATAFILL_FACELIST");
 	   if(sampleCount == numIndices)
 	   {
 	   
@@ -403,7 +423,11 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
 		
 		if( ! options.pMNMesh->GetFlag( MN_MESH_FILLED_IN ) ) {
 			//HighResolutionTimer tFillInMesh;
-			options.pMNMesh->FillInMesh();
+			{      	
+				ESS_PROFILE_SCOPE("FillInMesh");
+
+				options.pMNMesh->FillInMesh();
+			}
 			//ESS_LOG_WARNING("FillInMesh time: "<<tFillInMesh.elapsed());
 			if( options.pMNMesh->GetFlag(MN_MESH_RATSNEST) ) {
 				ESS_LOG_ERROR( "Mesh is a 'Rat's Nest' (more than 2 faces per edge) and not fully supported, fileName: " << options.fileName << " identifier: " << options.identifier );
@@ -422,7 +446,8 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
 
 	if( ( options.nDataFillFlags & ALEMBIC_DATAFILL_FACELIST ) &&
 	   ( ! ( options.nDataFillFlags & ALEMBIC_DATAFILL_VERTEX ) ) ) {
-			 
+		ESS_PROFILE_SCOPE("Reset mesh vertices to (0,0,0)");
+		 
 		   MNVert* pMeshVerties = options.pMNMesh->V(0);
 		   for(int i=0;i<meshPos->size();i++)
 		   {
@@ -433,6 +458,7 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
 
    if ( objMesh.valid() && ( options.nDataFillFlags & ALEMBIC_DATAFILL_NORMALS ) )
    {
+		ESS_PROFILE_SCOPE("ALEMBIC_DATAFILL_NORMALS");
        Alembic::AbcGeom::IN3fGeomParam meshNormalsParam = objMesh.getSchema().getNormalsParam();
 
 #if MAX_PRODUCT_YEAR_NUMBER < 2011
@@ -657,13 +683,15 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
 
    if( options.nDataFillFlags & ALEMBIC_DATAFILL_ALLOCATE_UV_STORAGE )
    {
-       //we can probably set this to the actual number of channels required if necessary
+      ESS_PROFILE_SCOPE("ALEMBIC_DATAFILL_ALLOCATE_UV_STORAGE");
+	  //we can probably set this to the actual number of channels required if necessary
        options.pMNMesh->SetMapNum(100);
        options.pMNMesh->InitMap(0);
    }
 
    if ( options.nDataFillFlags & ALEMBIC_DATAFILL_UVS )
    {
+      ESS_PROFILE_SCOPE("ALEMBIC_DATAFILL_UVS");
 		std::string strObjectIdentifier = options.identifier;
 		size_t found = strObjectIdentifier.find_last_of(":");
 		strObjectIdentifier = strObjectIdentifier.substr(found+1);
@@ -814,7 +842,8 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
 
    if ( options.nDataFillFlags & ALEMBIC_DATAFILL_MATERIALIDS )
    {
-       Alembic::Abc::IUInt32ArrayProperty materialIds;
+ ESS_PROFILE_SCOPE("ALEMBIC_DATAFILL_MATERIALIDS");
+	      Alembic::Abc::IUInt32ArrayProperty materialIds;
        if(objMesh.valid() && objMesh.getSchema().getPropertyHeader( ".materialids" )) 
            materialIds = Alembic::Abc::IUInt32ArrayProperty(objMesh.getSchema(), ".materialids");
        else if (objSubD.valid() && objSubD.getSchema().getPropertyHeader( ".materialids" ))
@@ -872,20 +901,32 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
    }
  
      if( options.pMNMesh->GetSpecifiedNormals() == NULL ) {
-		//ESS_LOG_ERROR( "Allocating new specified normals." );
+		 {
+		 ESS_PROFILE_SCOPE("SpecifyNormals");
+
 		options.pMNMesh->SpecifyNormals();
+		 }
+		 {
+		 ESS_PROFILE_SCOPE("CheckNormals");
 		options.pMNMesh->GetSpecifiedNormals()->CheckNormals();
+		 }
+		 {
+		 ESS_PROFILE_SCOPE("checkNormals");
+
 	    options.pMNMesh->checkNormals(TRUE);
+			  }
 	}
 
   // This isn't required if we notify 3DS Max properly via the channel flags for vertex changes.
    //options.pMNMesh->MNDebugPrint();
    if ( (options.nDataFillFlags & ALEMBIC_DATAFILL_FACELIST) || (options.nDataFillFlags & ALEMBIC_DATAFILL_NORMALS) ) {
+		 ESS_PROFILE_SCOPE("InvalidateTopoCache/InvalidateGeomCache");
 	   options.pMNMesh->InvalidateTopoCache();
 		options.pMNMesh->InvalidateGeomCache();
 	}
    else {
 	  if( options.nDataFillFlags & ALEMBIC_DATAFILL_VERTEX ) {
+		 ESS_PROFILE_SCOPE("InvalidateGeomCache");
 		  options.pMNMesh->InvalidateGeomCache();
 	  }
    }
