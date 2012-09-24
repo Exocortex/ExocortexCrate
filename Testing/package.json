@@ -1,0 +1,21 @@
+{
+  "author": "Exocortex",
+  "name": "GISChipExplorer",
+  "description": "GIS Chip Explorer",
+  "version": "0.0.1",
+  "private": true,
+  "repository": {
+    "type": "git",
+    "url": " git@github.com:Exocortex/GISChipExplorer.git"
+  },
+  "engines": {
+    "node": "~0.6.3"
+  },
+  "dependencies": {
+    "express": "~2.5.3",
+    "nconf": "~0.5.0",
+    "ejs": "~0.7.1"
+  },
+  "devDependencies": {
+  }
+}
