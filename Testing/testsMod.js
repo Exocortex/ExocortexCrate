@@ -59,6 +59,7 @@ pdProto.execute = function(){
 
 			}
 			console.log('errcode: '+error.code);
+			that.errcode = error.code;
 		}
 
 

@@ -130,8 +130,7 @@ readTestDir(testPath);
 // - can call with the entire test folder as path to gather all test results
 //OR
 // - can call with a single test folder to gather results of a single test
-var buildTestResults = function(path, testResults, atsname){
-
+var buildTestResults = function(path, testResults, atsname, errcode){
 	//console.log('Reading test dir: '+path);
 
 	var files = fs.readdirSync(path);
@@ -183,8 +182,14 @@ var buildTestResults = function(path, testResults, atsname){
 
 							var names = namesToken[1].split(",");
 
+							var crashStr = "POSSIBLE CRASH";
+							//console.log("cec: "+errcode);
+							if(errcode == -1){
+								crashStr = "CRASH";
+							}
+
 							for(var n=0; n<names.length; n++){
-								result.tasks[names[n].trim()] = {status: "POSSIBLE CRASH"};
+								result.tasks[names[n].trim()] = {status: crashStr};
 							}
 
 							//console.log("result: "+JSON.stringify(result)+"\n");
@@ -252,8 +257,7 @@ tmProto.getAtsName = function(){
 
 tmProto.testComplete = function(tDesc){
 
-
-	buildTestResults(this.tests[this.currTestIndex].testdir, this.results, this.getAtsName());
+	buildTestResults(tDesc.testdir, this.results, this.getAtsName(), tDesc.errcode);
 
 	this.currTestIndex++;
 	if(this.currTestIndex < this.tests.length){
@@ -267,22 +271,22 @@ tmProto.testComplete = function(tDesc){
 		this.tests[this.currTestIndex].execute();
 	}
 	else{
-		console.log(JSON.stringify(this.results) + "\n");
+		// console.log(JSON.stringify(this.results) + "\n");
 
-		var results = this.results;
+		// var results = this.results;
 
-		for(var name in results){
-			if(!results.hasOwnProperty(name)) continue;
+		// for(var name in results){
+		// 	if(!results.hasOwnProperty(name)) continue;
 
-			console.log("name: "+name);
+		// 	console.log("name: "+name);
 
-			var tasks = results[name].tasks;
+		// 	var tasks = results[name].tasks;
 
-			for(var t in tasks){
-				console.log(t + ":" + tasks[t].status + "\n");
-			}
+		// 	for(var t in tasks){
+		// 		console.log(t + ":" + tasks[t].status + "\n");
+		// 	}
 
-		}
+		// }
 
 	}
 }
