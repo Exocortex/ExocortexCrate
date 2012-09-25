@@ -12,6 +12,18 @@ result = ExocortexAlembic.import (app + "_" + obj + ".tabc") true true true true
 setStatus tasks "import" (result == 0)
 
 
+
+select $*
+
+sel = selection as array
+for i = 1 to sel.count do (
+	
+	sel[i].wirecolor = [255, 0, 0]
+
+)
+
+
+
 if( result == 0 ) then (
 
 	if genBaseline == "true" then (
