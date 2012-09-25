@@ -10,7 +10,8 @@ AlembicPoints::AlembicPoints(const MObject & in_Ref, AlembicWriteJob * in_Job)
 : AlembicObject(in_Ref, in_Job)
 {
    MFnDependencyNode node(in_Ref);
-   MString name = GetUniqueName(truncateName(node.name()));
+   //MString name = GetUniqueName(truncateName(node.name()));
+   MString name = GetUniqueName(node.name());
    mObject = Alembic::AbcGeom::OPoints(GetParentObject(),name.asChar(),GetJob()->GetAnimatedTs());
 
    mSchema = mObject.getSchema();

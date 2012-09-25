@@ -14,9 +14,11 @@ global proc exocortexAlembicLoadMenu(string $pluginName)
   string $uiDirectory = dirname(`pluginInfo -query -path $pluginName`) + "/../ui";
   string $import_instruction = "source \"import.mel\"; exocortexSetupDialog(\"" + $uiDirectory + "\");";
   string $export_instruction = "source \"export.mel\"; exocortexSetupDialog(\"" + $uiDirectory + "\");";
+  string $attach_instruction = "source \"attach.mel\"; exocortexSetupDialog(\"" + $uiDirectory + "\");";
 
   menuItem -p $showMyMenuCtrl -l "Alembic Import..." -c ($import_instruction);
   menuItem -p $showMyMenuCtrl -l "Alembic Export..." -c ($export_instruction);
+  menuItem -p $showMyMenuCtrl -l "Alembic Attach..." -c ($attach_instruction);
 }
 
 global proc exocortexAlembicUnloadMenu()

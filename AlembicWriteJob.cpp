@@ -349,7 +349,7 @@ MStatus AlembicExportCommand::doIt(const MArgList & args)
       bool normals = true;
       bool uvs = true;
       bool facesets = true;
-	   bool bindpose = true;
+	    bool bindpose = true;
       bool dynamictopology = false;
       bool globalspace = false;
       bool withouthierarchy = false;
@@ -384,17 +384,17 @@ MStatus AlembicExportCommand::doIt(const MArgList & args)
             uvs = valuePair[1].asInt() != 0;
          else if(valuePair[0].toLowerCase() == "facesets")
             facesets = valuePair[1].asInt() != 0;
-		   else if(valuePair[0].toLowerCase() == "bindpose")
+		     else if(valuePair[0].toLowerCase() == "bindpose")
             bindpose = valuePair[1].asInt() != 0;
-		   else if(valuePair[0].toLowerCase() == "purepointcache")
+		     else if(valuePair[0].toLowerCase() == "purepointcache")
             purepointcache = valuePair[1].asInt() != 0;
-		   else if(valuePair[0].toLowerCase() == "dynamictopology")
+		     else if(valuePair[0].toLowerCase() == "dynamictopology")
             dynamictopology = valuePair[1].asInt() != 0;
-		   else if(valuePair[0].toLowerCase() == "globalspace")
+		     else if(valuePair[0].toLowerCase() == "globalspace")
             globalspace = valuePair[1].asInt() != 0;
-		   else if(valuePair[0].toLowerCase() == "withouthierarchy")
+		     else if(valuePair[0].toLowerCase() == "withouthierarchy")
             withouthierarchy = valuePair[1].asInt() != 0;
-		   else if(valuePair[0].toLowerCase() == "transformcache")
+		     else if(valuePair[0].toLowerCase() == "transformcache")
             transformcache = valuePair[1].asInt() != 0;
          else if(valuePair[0].toLowerCase() == "filename")
             filename = valuePair[1];
@@ -531,17 +531,6 @@ MStatus AlembicExportCommand::doIt(const MArgList & args)
       // check if we have a filename
       if(filename.length() == 0)
       {
-         // TODO: show a file dialog
-         //CComAPIHandler toolkit;
-         //toolkit.CreateInstance("XSI.UIToolkit");
-         //CComAPIHandler filebrowser(toolkit.GetProperty("FileBrowser"));
-         //filebrowser.PutProperty("InitialDirectory",Application().GetActiveProject().GetPath());
-         //filebrowser.PutProperty("Filter","Alembic Files(*.abc)|*.abc||");
-         //CValue returnVal;
-         //filebrowser.Call("ShowSave",returnVal);
-         //filename = filebrowser.GetProperty("FilePathName").GetAsText();
-         //if(filename.IsEmpty())
-         //{
          MGlobal::displayError("[ExocortexAlembic] No filename specified.");
          for(size_t k=0;k<jobPtrs.size();k++)
             delete(jobPtrs[k]);
@@ -557,7 +546,7 @@ MStatus AlembicExportCommand::doIt(const MArgList & args)
       job->SetOption("exportNormals",normals ? "1" : "0");
       job->SetOption("exportUVs",uvs ? "1" : "0");
       job->SetOption("exportFaceSets",facesets ? "1" : "0");
-	   job->SetOption("exportBindPose",bindpose ? "1" : "0");
+	    job->SetOption("exportBindPose",bindpose ? "1" : "0");
       job->SetOption("exportPurePointCache",purepointcache ? "1" : "0");
       job->SetOption("exportDynamicTopology",dynamictopology ? "1" : "0");
       job->SetOption("indexedNormals","1");
@@ -582,16 +571,6 @@ MStatus AlembicExportCommand::doIt(const MArgList & args)
    for(size_t i=0;i<jobPtrs.size();i++)
       jobFrameCount += (unsigned int)jobPtrs[i]->GetNbObjects() * (unsigned int)jobPtrs[i]->GetFrames().size();
 
-   // TODO: see if we can have a progress bar
-   //ProgressBar prog;
-   //prog = Application().GetUIToolkit().GetProgressBar();
-   //prog.PutCaption(L"Exporting "+CString(jobCount)+L" object's frames...");
-   //prog.PutMinimum(0);
-   //prog.PutMaximum(jobCount);
-   //prog.PutValue(0);
-   //prog.PutCancelEnabled(true);
-   //prog.PutVisible(true);
-	
    // now, let's run through all frames, and process the jobs
    const double frameRate = MAnimControl::currentTime().value() / MAnimControl::currentTime().as(MTime::kSeconds);
    const double incrSteps = maxSteps / maxSubsteps;
@@ -606,12 +585,7 @@ MStatus AlembicExportCommand::doIt(const MArgList & args)
       for(size_t i=0;i<jobPtrs.size();i++)
       {
          MStatus status = jobPtrs[i]->Process(frame);
-         if(status == MStatus::kSuccess)
-         {
-            // TODO: increment progress bar
-            // prog.Increment((LONG)jobPtrs[i]->GetNbObjects());
-         }
-         else
+         if(status != MStatus::kSuccess)
          {
             MGlobal::displayError("[ExocortexAlembic] Job aborted :"+jobPtrs[i]->GetFileName());
             for(size_t k=0;k<jobPtrs.size();k++)
@@ -620,12 +594,6 @@ MStatus AlembicExportCommand::doIt(const MArgList & args)
             return status;
          }
 
-         // TODO: if progressbar canceled, cancel export
-         //if(prog.IsCancelPressed())
-         //{
-         //   canceled = true;
-         //   break;
-         //}
       }
       if(canceled)
          break;
@@ -633,9 +601,6 @@ MStatus AlembicExportCommand::doIt(const MArgList & args)
 
    // restore the animation start/end time and the current time!
    restoreOldTime(currentAnimStartTime, currentAnimEndTime, oldCurTime, curMinTime, curMaxTime);
-
-   // TODO: hide progressbar
-   //prog.PutVisible(false);
 
    // delete all jobs
    for(size_t k=0;k<jobPtrs.size();k++)
