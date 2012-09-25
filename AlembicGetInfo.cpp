@@ -73,9 +73,10 @@ MStatus AlembicGetInfoCommand::doIt(const MArgList & args)
          if(type.length() == 0)
             continue;
          identifier += "|"+type;
-         MString name = truncateName(child.getName().c_str());
-         if(type != "Xform")
-            name = injectShapeToName(name);
+         //MString name = truncateName(child.getName().c_str());
+         MString name = child.getName().c_str();
+         //if(type != "Xform")
+            //name = injectShapeToName(name);
          identifier += "|"+name;
          MString numSamples;
          numSamples.set((double)getNumSamplesFromObject(child));
@@ -93,7 +94,7 @@ MStatus AlembicGetInfoCommand::doIt(const MArgList & args)
                Alembic::Abc::Int32ArraySamplePtr faceCounts = sample.getFaceCounts();
                if(faceCounts)
                {
-                  if(faceCounts->get()[0] == 0)
+                  if(faceCounts->get() && faceCounts->get()[0] == 0)
                   {
                      // check if this eventually holds only one point
                      Alembic::Abc::P3fArraySamplePtr samplePos = sample.getPositions();
@@ -126,7 +127,7 @@ MStatus AlembicGetInfoCommand::doIt(const MArgList & args)
                Alembic::Abc::Int32ArraySamplePtr faceCounts = sample.getFaceCounts();
                if(faceCounts)
                {
-                  if(faceCounts->get()[0] == 0)
+                  if(faceCounts->get() && faceCounts->get()[0] == 0)
                   {
                      // check if this eventually holds only one point
                      Alembic::Abc::P3fArraySamplePtr samplePos = sample.getPositions();
