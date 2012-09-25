@@ -652,7 +652,12 @@ MStatus AlembicPolyMeshNode::compute(const MPlug & plug, MDataBlock & dataBlock)
                   {
                      currentUVSetName = uvSetNames[uvSetIndex];
                      status = mMesh.createUVSetDataMesh(currentUVSetName);
+					 	   if ( status != MS::kSuccess )
+							cout << "mMesh.createUVSetDataMesh() failed." << endl;
                      status = mMesh.setCurrentUVSetName(currentUVSetName);
+					 	   if ( status != MS::kSuccess )
+							cout << "mMesh.setCurrentUVSetName() failed." << endl;
+               
                   }
                   else if(currentUVSetName != uvSetNames[uvSetIndex])
                   {
@@ -676,7 +681,11 @@ MStatus AlembicPolyMeshNode::compute(const MPlug & plug, MDataBlock & dataBlock)
                         {
                            currentUVSetName = uvSetNames[uvSetIndex];
                            status = mMesh.createUVSetDataMesh(currentUVSetName);
+						   if ( status != MS::kSuccess )
+								cout << "mMesh.createUVSetDataMesh() failed." << endl;
                            status = mMesh.setCurrentUVSetName(currentUVSetName);
+						   if ( status != MS::kSuccess )
+								cout << "mMesh.setCurrentUVSetName() failed." << endl;
                         }
                      }
                   }
@@ -711,8 +720,14 @@ MStatus AlembicPolyMeshNode::compute(const MPlug & plug, MDataBlock & dataBlock)
                      }
 
                      status = mMesh.clearUVs(&uvSetNames[uvSetIndex]);
+					   if ( status != MS::kSuccess )
+							cout << "mMesh.clearUVs() failed." << endl;
                      status = mMesh.setUVs(uValues, vValues, &uvSetNames[uvSetIndex]);
+					   if ( status != MS::kSuccess )
+							cout << "mMesh.setUVs() failed." << endl;
                      status = mMesh.assignUVs(counts, uvIndices, &uvSetNames[uvSetIndex]);
+				   if ( status != MS::kSuccess )
+						cout << "mMesh.assignUVs() failed." << endl;
                   }
                }
             }
