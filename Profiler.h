@@ -298,7 +298,7 @@ HighResolutionTimer
 Profiler;
 
 
-#define ESS_PROFILING
+//#define ESS_PROFILING
  
 #ifdef ESS_PROFILING
 	#pragma message( "EXOCORTEX: ESS_PROFILING defined, profiling enabled." )

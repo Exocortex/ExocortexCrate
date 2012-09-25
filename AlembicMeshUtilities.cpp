@@ -442,7 +442,7 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
 
 	   }//if(sampleCount != numIndices)
 	   else{
-			ESS_LOG_WARNING("faceCount, index array mismatch. Not filling in indices.");
+			ESS_LOG_WARNING("faceCount, index array mismatch. Not filling in indices (did you check 'dynamic topology' when exporting?).");
 	   }
    }
 
@@ -923,8 +923,8 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
    //options.pMNMesh->MNDebugPrint();
    if ( (options.nDataFillFlags & ALEMBIC_DATAFILL_FACELIST) || (options.nDataFillFlags & ALEMBIC_DATAFILL_NORMALS) ) {
 		 ESS_PROFILE_SCOPE("InvalidateTopoCache/InvalidateGeomCache");
-	   //options.pMNMesh->InvalidateTopoCache();
-		//options.pMNMesh->InvalidateGeomCache();
+	     options.pMNMesh->InvalidateTopoCache();
+		 options.pMNMesh->InvalidateGeomCache();
 	}
    else {
 	  if( options.nDataFillFlags & ALEMBIC_DATAFILL_VERTEX ) {
