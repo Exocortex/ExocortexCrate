@@ -798,3 +798,106 @@ Matrix3 TransposeRot(const Matrix3& mat){
 }
 
 
+Point3 SmoothGroupNormals::GetVertexNormal(Mesh *mesh, int faceNo, int faceVertNo)
+{
+	// If we do not a smoothing group, we can't base ourselves on anything else,
+	// so we can just return the face normal.
+	Face *face = &mesh->faces[faceNo];
+	if (face == NULL || face->smGroup == 0)
+	{
+		return mesh->getFaceNormal(faceNo);
+	}
+
+	// Check to see if there is a smoothing group normal
+	int vertIndex = face->v[faceVertNo];
+	Point3 normal = m_MeshSmoothGroupNormals[vertIndex].GetNormal(face->smGroup);
+
+	if (normal.LengthSquared() > 0.0f)
+	{
+		return normal.Normalize();
+	}
+
+	// If we did not find any normals or the normals offset each other for some
+	// reason, let's just let max tell us what it thinks the normal should be.
+	return mesh->getNormal(vertIndex);
+}
+
+Point3 SmoothGroupNormals::GetVertexNormal(MNMesh *mesh, int faceNo, int faceVertNo)
+{
+	// If we do not a smoothing group, we can't base ourselves on anything else,
+	// so we can just return the face normal.
+	MNFace *face = mesh->F(faceNo);
+	if (face == NULL || face->smGroup == 0)
+	{
+		return mesh->GetFaceNormal(faceNo);
+	}
+
+	// Check to see if there is a smoothing group normal
+	int vertIndex = face->vtx[faceVertNo];
+	Point3 normal = m_MeshSmoothGroupNormals[vertIndex].GetNormal(face->smGroup);
+
+	if (normal.LengthSquared() > 0.0f)
+	{
+		return normal.Normalize();
+	}
+
+	// If we did not find any normals or the normals offset each other for some
+	// reason, let's just let max tell us what it thinks the normal should be.
+	return mesh->GetVertexNormal(vertIndex);
+}
+
+void SmoothGroupNormals::BuildMeshSmoothingGroupNormals(Mesh &mesh)
+{
+	m_MeshSmoothGroupNormals.resize(mesh.numVerts);
+    
+	for (int i = 0; i < mesh.numFaces; i++) 
+	{     
+		Face *face = &mesh.faces[i];
+		Point3 faceNormal = mesh.getFaceNormal(i);
+		for (int j=0; j<3; j++) 
+		{       
+			m_MeshSmoothGroupNormals[face->v[j]].AddNormal(faceNormal, face->smGroup);     
+		}     
+	}   
+    
+	for (int i=0; i < mesh.numVerts; i++) 
+	{     
+		m_MeshSmoothGroupNormals[i].Normalize(); 
+	}
+}
+
+void SmoothGroupNormals::BuildMeshSmoothingGroupNormals(MNMesh &mesh)
+{
+	m_MeshSmoothGroupNormals.resize(mesh.numv);
+    
+	for (int i = 0; i < mesh.numf; i++) 
+	{     
+		MNFace *face = &mesh.f[i];
+		Point3 faceNormal = mesh.GetFaceNormal(i);
+		for (int j=0; j<face->deg; j++) 
+		{       
+			m_MeshSmoothGroupNormals[face->vtx[j]].AddNormal(faceNormal, face->smGroup);     
+		}     
+	}   
+    
+	for (int i=0; i < mesh.numv; i++) 
+	{     
+		m_MeshSmoothGroupNormals[i].Normalize();   
+	}
+}
+
+void SmoothGroupNormals::ClearMeshSmoothingGroupNormals()
+{
+	for (int i=0; i < m_MeshSmoothGroupNormals.size(); i++) 
+	{   
+		VNormal *ptr = m_MeshSmoothGroupNormals[i].next;
+		while (ptr)
+		{
+			VNormal *tmp = ptr;
+			ptr = ptr->next;
+			delete tmp;
+		}
+	}
+
+	m_MeshSmoothGroupNormals.clear();  
+}
