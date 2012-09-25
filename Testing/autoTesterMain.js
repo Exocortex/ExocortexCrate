@@ -283,18 +283,18 @@ var equalFiles = function(bpath, rpath){
 
 
 
-	//try{
+	try{
 
 	var bfd = fs.readFileSync(bpath);
 	var rfd = fs.readFileSync(rpath);
 
-	// }
-	// catch(err){
+	}
+	 catch(err){
 
 	 	console.log("bfd: "+bpath);
 	 	console.log("rfd: "+rpath);
-	// 	return false;
-	// }
+	 	return false;
+	}
 
 	if(bfd.length != rfd.length){
 		console.log("lengths not equal");
