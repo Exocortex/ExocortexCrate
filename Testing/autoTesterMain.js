@@ -188,6 +188,11 @@ var buildTestResults = function(path, testResults, atsname, errcode){
 		}
 		else if(stats.isFile()){
 
+			var bReturn = false;
+			if(atsname !== undefined){
+				bReturn = true;
+			}
+
 			atsname = atsname || ".ats";
 
 			if( files[i].search(atsname) !== -1){ //we have found a folder that contains a test
@@ -257,6 +262,10 @@ var buildTestResults = function(path, testResults, atsname, errcode){
 
 					}
 				}
+
+				if(bReturn){
+					return result;
+				}
 			}
 		}
 		else{
@@ -269,12 +278,44 @@ var buildTestResults = function(path, testResults, atsname, errcode){
 
 
 
-// var testList = [
-// 	{testpath: "/SphereToMesh", scriptPath: scripts, scriptName: "sphereToMesh_Export.ms", inputs: {obj: "sphere", app: "max2012"} },
-// 	{testpath: "/SphereToMesh", scriptPath: scripts, scriptName: "sphereToMesh_Import.ms", inputs: {obj: "sphere", app: "max2012"} },
-// 	//{testpath: "/SphereToMesh", scriptPath: scripts, scriptName: "sphereToMesh_Import.ms", inputs: {obj: "sphere"} },//XSI
-// 	//{testpath: "/SphereToMesh", scriptPath: scripts, scriptName: "sphereToMesh_Import.ms", inputs: {obj: "sphere"} },//Maya
-// ]
+
+var equalFiles = function(bpath, rpath){
+
+
+
+	//try{
+
+	var bfd = fs.readFileSync(bpath);
+	var rfd = fs.readFileSync(rpath);
+
+	// }
+	// catch(err){
+
+	 	console.log("bfd: "+bpath);
+	 	console.log("rfd: "+rpath);
+	// 	return false;
+	// }
+
+	if(bfd.length != rfd.length){
+		console.log("lengths not equal");
+		return false;
+	}
+	else{
+
+		for(var i=0; i<bfd.length; i++){
+
+			if(bfd[i] != rfd[i]){
+				console.log("byte not equal");
+				return false;
+			}
+
+		}
+
+		return true;
+	}
+
+
+}
 
 
 var TestManager = function(maxpath, includePath){
@@ -294,9 +335,34 @@ tmProto.getAtsName = function(){
 	return test.app + "_" + name;
 }
 
+tmProto.getRenderedImagePath = function(){
+	var test = this.tests[this.currTestIndex];
+	return [test.testdir, "/", test.app, "_", test.obj, "_Render.jpg"].join('');
+}
+
+tmProto.getBaselineImagePath = function(){
+	var test = this.tests[this.currTestIndex];
+	return [test.testdir, "/", test.app, "_", test.obj, "_Baseline.jpg"].join('');
+}
+
 tmProto.testComplete = function(tDesc){
 
-	buildTestResults(tDesc.testdir, this.results, this.getAtsName(), tDesc.errcode);
+	var result = buildTestResults(tDesc.testdir, this.results, this.getAtsName(), tDesc.errcode);
+
+	if(result !== undefined){
+
+		var rt = result.tasks["render"];
+		if(rt !== undefined){
+
+			if( equalFiles(this.getBaselineImagePath(), this.getRenderedImagePath()) ){
+				rt.status = 'PASS';
+			}
+			else{
+				rt.status = "FAIL";
+			}
+		}
+	}
+
 
 	this.currTestIndex++;
 	if(this.currTestIndex < this.tests.length){
@@ -371,10 +437,12 @@ tmProto.build = function(list){
 		}
 
 		var params = {
+			genBaseline: false,
 			app: list[i].inputs.app,
+			obj: list[i].inputs.obj,
 			exepath: appz[list[i].inputs.app],
 			testdir: list[i].testpath,
-			arguments: '',
+			arguments: '',//-silent',
 			scriptPath: scriptPath,
 			scriptName: scriptName, 
 			runEnvVars: runEnv,
@@ -423,6 +491,19 @@ testMan.runAll();
 
 
 
+
+// var bpath = [__dirname, '/max2012_Sphere001_Baseline.jpg'].join('');
+// var rpath = [__dirname, '/max2012_Sphere001_Render.jpg'].join('');
+
+// if( equalFiles(bpath, rpath) ){
+
+// 	console.log('files are equal');
+
+// }
+// else{
+
+// 	console.log('files are not equal');
+// }
 
 
 

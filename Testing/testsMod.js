@@ -31,7 +31,7 @@ pdProto.execute = function(){
 
 	var script = this.scriptPath + this.scriptName;
 
-	var runStr = ["\"", this.exepath,"\"" , ' ', '-U MAXScript', this.arguments, ' ', script].join('');
+	var runStr = ["\"", this.exepath,"\"" , ' ', '-U MAXScript ', this.arguments, ' ', script].join('');
 
 	console.log('runStr: '+runStr);
 	console.log('wdir: '+this.testdir);
@@ -45,6 +45,7 @@ pdProto.execute = function(){
 	}
 	envVar["testPath"] = this.testdir+"/";
 	envVar["testName"] = this.scriptName.substring(0, this.scriptName.length-3);
+	envVar["genBaseline"] = this.genBaseline;
 
 	//console.log(envVar);
 

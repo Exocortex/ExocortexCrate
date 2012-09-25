@@ -13,7 +13,13 @@ setStatus tasks "import" (result == 0)
 
 
 if( result == 0 ) then (
-	render frame:0 outputwidth:1024 outputheight:768 outputfile:(testPath + app + "_" + obj + "_Render.jpg") vfb:true
+
+	if genBaseline == "true" then (
+		render frame:0 outputwidth:1024 outputheight:768 outputfile:(testPath + app + "_" + obj + "_Baseline.jpg") vfb:true
+	)
+	else (
+		render frame:0 outputwidth:1024 outputheight:768 outputfile:(testPath + app + "_" + obj + "_Render.jpg") vfb:true
+	)
 )
 
 

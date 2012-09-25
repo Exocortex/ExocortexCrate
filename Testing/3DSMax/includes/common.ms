@@ -70,6 +70,7 @@ testPath = systemTools.getEnvVariable("testPath");
 testFile = systemTools.getEnvVariable("testName");
 app = systemTools.getEnvVariable("app");
 obj = systemTools.getEnvVariable("obj");
+genBaseline = systemTools.getEnvVariable("genBaseline");
 
 outFile = createFile (app + "_" + testFile + ".ats")
 
