@@ -45,11 +45,6 @@ static int Init(AtNode *mynode, void **user_ptr)
       ud->disp_padding = AiNodeGetFlt(mynode, "disp_padding");
    }
 
-   // empty the procedural's shader
-   AtArray * emptyShaders = AiArrayAllocate(1,1,AI_TYPE_NODE);
-   AiArraySetPtr(emptyShaders,0,NULL);
-   AiNodeSetArray(mynode, "shader", emptyShaders);
-
    // set defaults for options
    ud->gCurvesMode = "ribbon";
    ud->gPointsMode = "";
