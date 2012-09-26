@@ -139,7 +139,7 @@ template<class OBJTYPE, class DATATYPE>
 bool getArbGeomParamPropertyAlembic( OBJTYPE obj, std::string name, Alembic::Abc::ITypedArrayProperty<DATATYPE> &pOut ) {
 	// look for name with period on it.
 	std::string nameWithDotPrefix = std::string(".") + name;
-	if ( obj.getSchema().getPropertyHeader( nameWithDotPrefix ) != NULL ) {
+	if ( obj.getSchema().valid() && obj.getSchema().getPropertyHeader( nameWithDotPrefix ) != NULL ) {
 		Alembic::Abc::ITypedArrayProperty<DATATYPE> prop = Alembic::Abc::ITypedArrayProperty<DATATYPE>( obj.getSchema(), nameWithDotPrefix );
 		if( prop.valid() && prop.getNumSamples() > 0 ) {
 			pOut = prop;
