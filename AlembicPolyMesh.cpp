@@ -1056,7 +1056,7 @@ MStatus AlembicCreateFaceSetsCommand::doIt(const MArgList & args)
 
       // check if we need to create the attribute
       MString attributeName = "FACESET_";
-      attributeName += faceSetNames[i].c_str();
+      attributeName += removeInvalidCharacter(faceSetNames[i]).c_str();
       MObject attribute = node.attribute(attributeName);
       if(attribute.isNull())
       {
