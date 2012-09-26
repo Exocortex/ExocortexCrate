@@ -4,26 +4,17 @@
 #include "Foundation.h"
 #include "AlembicIntermediatePolyMesh3DSMax.h"
 #include "AlembicLicensing.h"
+#include "CommonUtilities.h"
+
 
 const double ALEMBIC_3DSMAX_TICK_VALUE = 4800;
 
-#define ALEMBIC_SAFE_DELETE(p)  if(p) delete p; p = 0;
 
 class SceneEntry;
 
-struct SampleInfo
-{
-   Alembic::AbcCoreAbstract::index_t floorIndex;
-   Alembic::AbcCoreAbstract::index_t ceilIndex;
-   double alpha;
-};
-
-SampleInfo getSampleInfo(double iFrame,Alembic::AbcCoreAbstract::TimeSamplingPtr iTime, size_t numSamps);
-Alembic::Abc::TimeSamplingPtr getTimeSamplingFromObject(Alembic::Abc::IObject object);
 std::string buildIdentifierFromRef(const SceneEntry &in_Ref);
 //std::string buildModelIdFromXFormId(const std::string &xformId);
 std::string getIdentifierFromRef(const SceneEntry &in_Ref);
-std::string getModelName( const std::string &identifier );
 //std::string getModelFullName( const std::string &identifier );
 double GetSecondsFromTimeValue(TimeValue t); 
 int GetTimeValueFromSeconds( double seconds );
@@ -38,8 +29,6 @@ void AlembicDebug_PrintTransform( Matrix3 &m );
 void ConvertMaxMatrixToAlembicMatrix( const Matrix3 &maxMatrix, Matrix3 &alembicMatrix );
 void ConvertMaxMatrixToAlembicMatrix( const Matrix3 &maxMatrix, Alembic::Abc::M44d& iMatrix);
 void ConvertAlembicMatrixToMaxMatrix( const Matrix3 &alembicMatrix, Matrix3 &maxMatrix );
-
-Imath::M33d extractRotation(Imath::M44d& m);
 
 inline Imath::V3f ConvertMaxPointToAlembicPoint( const Point3 &maxPoint )
 {
@@ -139,7 +128,6 @@ INode* GetNodeFromHierarchyPath(const std::string& path);
 INode* GetNodeFromName(const std::string& name);
 INode* GetChildNodeFromName(const std::string& name, INode* pParent);
 std::string getNodeAlembicPath(const std::string& name, bool bFlatten);
-std::string removeXfoSuffix(const std::string& importName);
 
 Modifier* FindModifier(INode* node, char* name);
 Modifier* FindModifier(INode* node, Class_ID obtype, const char* identifier);
@@ -170,36 +158,6 @@ protected:
 };
 
 
-template<class OBJTYPE, class DATATYPE>
-bool getArbGeomParamPropertyAlembic( OBJTYPE obj, std::string name, Alembic::Abc::ITypedArrayProperty<DATATYPE> &pOut ) {
-	// look for name with period on it.
-	std::string nameWithDotPrefix = std::string(".") + name;
-	if ( obj.getSchema().getPropertyHeader( nameWithDotPrefix ) != NULL ) {
-		Alembic::Abc::ITypedArrayProperty<DATATYPE> prop = Alembic::Abc::ITypedArrayProperty<DATATYPE>( obj.getSchema(), nameWithDotPrefix );
-		if( prop.valid() && prop.getNumSamples() > 0 ) {
-			pOut = prop;
-			return true;
-		}
-	}
-	if( obj.getSchema().getArbGeomParams() != NULL ) {
-		if ( obj.getSchema().getArbGeomParams().getPropertyHeader( name ) != NULL ) {
-			Alembic::Abc::ITypedArrayProperty<DATATYPE> prop = Alembic::Abc::ITypedArrayProperty<DATATYPE>( obj.getSchema().getArbGeomParams(), name );
-			if( prop.valid() && prop.getNumSamples() > 0 ) {
-				pOut = prop;
-				return true;
-			}
-		}
-		if ( obj.getSchema().getArbGeomParams().getPropertyHeader( nameWithDotPrefix ) != NULL ) {
-			Alembic::Abc::ITypedArrayProperty<DATATYPE> prop = Alembic::Abc::ITypedArrayProperty<DATATYPE>( obj.getSchema().getArbGeomParams(), nameWithDotPrefix );
-			if( prop.valid() && prop.getNumSamples() > 0 ) {
-				pOut = prop;
-				return true;
-			}
-		}
-	}
-
-	return false;
-}
 
 
 

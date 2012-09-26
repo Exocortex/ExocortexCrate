@@ -4,27 +4,6 @@
 #include "AlembicObject.h"
 #include "utility.h"
 
-Alembic::Abc::ICompoundProperty getCompoundFromObject(Alembic::Abc::IObject& object)
-{
-   const Alembic::Abc::MetaData &md = object.getMetaData();
-   if(Alembic::AbcGeom::IXform::matches(md)) {
-      return Alembic::AbcGeom::IXform(object,Alembic::Abc::kWrapExisting).getSchema();
-   } else if(Alembic::AbcGeom::IPolyMesh::matches(md)) {
-      return Alembic::AbcGeom::IPolyMesh(object,Alembic::Abc::kWrapExisting).getSchema();
-   } else if(Alembic::AbcGeom::ICurves::matches(md)) {
-      return Alembic::AbcGeom::ICurves(object,Alembic::Abc::kWrapExisting).getSchema();
-   } else if(Alembic::AbcGeom::INuPatch::matches(md)) {
-      return Alembic::AbcGeom::INuPatch(object,Alembic::Abc::kWrapExisting).getSchema();
-   } else if(Alembic::AbcGeom::IPoints::matches(md)) {
-      return Alembic::AbcGeom::IPoints(object,Alembic::Abc::kWrapExisting).getSchema();
-   } else if(Alembic::AbcGeom::ISubD::matches(md)) {
-      return Alembic::AbcGeom::ISubD(object,Alembic::Abc::kWrapExisting).getSchema();
-   } else if(Alembic::AbcGeom::ICamera::matches(md)) {
-      return Alembic::AbcGeom::ICamera(object,Alembic::Abc::kWrapExisting).getSchema();
-   }
-   return Alembic::Abc::ICompoundProperty();
-}
-
 
 void importMetadata(Alembic::AbcGeom::IObject& iObj)
 {

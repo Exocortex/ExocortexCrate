@@ -38,9 +38,4 @@ namespace fs = boost::filesystem;
 #include <Alembic/AbcGeom/All.h>
 #include <Alembic/AbcCoreHDF5/All.h>
 
-
-typedef std::map<std::string,std::string> stringMap;
-typedef std::map<std::string,std::string>::iterator stringMapIt;
-typedef std::pair<std::string,std::string> stringPair;
-
 #endif  // _FOUNDATION_H_
