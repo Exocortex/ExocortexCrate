@@ -4,60 +4,14 @@
 #include "AlembicArchiveStorage.h"
 #include <maya/MFnTransform.h>
 
-SampleInfo getSampleInfo
-(
-   double iFrame,
-   Alembic::AbcCoreAbstract::TimeSamplingPtr iTime,
-   size_t numSamps
-)
-{
-   SampleInfo result;
-   if (numSamps == 0)
-      numSamps = 1;
-
-   std::pair<Alembic::AbcCoreAbstract::index_t, double> floorIndex = iTime->getFloorIndex(iFrame, numSamps);
-
-   result.floorIndex = floorIndex.first;
-   result.ceilIndex = result.floorIndex;
-
-   // check if we have a full license
-   if(!HasAlembicReaderLicense())
-   {
-      if(result.floorIndex > 75)
-      {
-         EC_LOG_ERROR("[ExocortexAlembic] Demo Mode: Cannot open sample indices higher than 75.");
-         result.floorIndex = 75;
-         result.ceilIndex = 75;
-         result.alpha = 0.0;
-         return result;
-      }
-   }
-
-   if (fabs(iFrame - floorIndex.second) < 0.0001) {
-      result.alpha = 0.0f;
-      return result;
-   }
-
-   std::pair<Alembic::AbcCoreAbstract::index_t, double> ceilIndex =
-   iTime->getCeilIndex(iFrame, numSamps);
-
-   if (fabs(iFrame - ceilIndex.second) < 0.0001) {
-      result.floorIndex = ceilIndex.first;
-      result.ceilIndex = result.floorIndex;
-      result.alpha = 0.0f;
-      return result;
-   }
-
-   if (result.floorIndex == ceilIndex.first) {
-      result.alpha = 0.0f;
-      return result;
-   }
-
-   result.ceilIndex = ceilIndex.first;
-
-   result.alpha = (iFrame - floorIndex.second) / (ceilIndex.second - floorIndex.second);
-
-   return result;
+void logError( const char* msg ) {
+	MGlobal::displayError( msg );
+}
+void logWarning( const char* msg ) {
+	MGlobal::displayWarning( msg );
+}
+void logInfo( const char* msg ) {
+	MGlobal::displayInfo( msg );
 }
 
 std::string getIdentifierFromRef(const MObject & in_Ref)
@@ -228,68 +182,6 @@ MString getTypeFromObject(Alembic::Abc::IObject object)
    return "";
 }
 
-Alembic::Abc::ICompoundProperty getCompoundFromObject(Alembic::Abc::IObject object)
-{
-   const Alembic::Abc::MetaData &md = object.getMetaData();
-   if(Alembic::AbcGeom::IXform::matches(md)) {
-      return Alembic::AbcGeom::IXform(object,Alembic::Abc::kWrapExisting).getSchema();
-   } else if(Alembic::AbcGeom::IPolyMesh::matches(md)) {
-      return Alembic::AbcGeom::IPolyMesh(object,Alembic::Abc::kWrapExisting).getSchema();
-   } else if(Alembic::AbcGeom::ICurves::matches(md)) {
-      return Alembic::AbcGeom::ICurves(object,Alembic::Abc::kWrapExisting).getSchema();
-   } else if(Alembic::AbcGeom::INuPatch::matches(md)) {
-      return Alembic::AbcGeom::INuPatch(object,Alembic::Abc::kWrapExisting).getSchema();
-   } else if(Alembic::AbcGeom::IPoints::matches(md)) {
-      return Alembic::AbcGeom::IPoints(object,Alembic::Abc::kWrapExisting).getSchema();
-   } else if(Alembic::AbcGeom::ISubD::matches(md)) {
-      return Alembic::AbcGeom::ISubD(object,Alembic::Abc::kWrapExisting).getSchema();
-   } else if(Alembic::AbcGeom::ICamera::matches(md)) {
-      return Alembic::AbcGeom::ICamera(object,Alembic::Abc::kWrapExisting).getSchema();
-   }
-   return Alembic::Abc::ICompoundProperty();
-}
-
-Alembic::Abc::TimeSamplingPtr getTimeSamplingFromObject(Alembic::Abc::IObject object)
-{
-   const Alembic::Abc::MetaData &md = object.getMetaData();
-   if(Alembic::AbcGeom::IXform::matches(md)) {
-      return Alembic::AbcGeom::IXform(object,Alembic::Abc::kWrapExisting).getSchema().getTimeSampling();
-   } else if(Alembic::AbcGeom::IPolyMesh::matches(md)) {
-      return Alembic::AbcGeom::IPolyMesh(object,Alembic::Abc::kWrapExisting).getSchema().getTimeSampling();
-   } else if(Alembic::AbcGeom::ICurves::matches(md)) {
-      return Alembic::AbcGeom::ICurves(object,Alembic::Abc::kWrapExisting).getSchema().getTimeSampling();
-   } else if(Alembic::AbcGeom::INuPatch::matches(md)) {
-      return Alembic::AbcGeom::INuPatch(object,Alembic::Abc::kWrapExisting).getSchema().getTimeSampling();
-   } else if(Alembic::AbcGeom::IPoints::matches(md)) {
-      return Alembic::AbcGeom::IPoints(object,Alembic::Abc::kWrapExisting).getSchema().getTimeSampling();
-   } else if(Alembic::AbcGeom::ISubD::matches(md)) {
-      return Alembic::AbcGeom::ISubD(object,Alembic::Abc::kWrapExisting).getSchema().getTimeSampling();
-   } else if(Alembic::AbcGeom::ICamera::matches(md)) {
-      return Alembic::AbcGeom::ICamera(object,Alembic::Abc::kWrapExisting).getSchema().getTimeSampling();
-   }
-   return Alembic::Abc::TimeSamplingPtr();
-}
-
-size_t getNumSamplesFromObject(Alembic::Abc::IObject object)
-{
-   const Alembic::Abc::MetaData &md = object.getMetaData();
-   if(Alembic::AbcGeom::IXform::matches(md)) {
-      return Alembic::AbcGeom::IXform(object,Alembic::Abc::kWrapExisting).getSchema().getNumSamples();
-   } else if(Alembic::AbcGeom::IPolyMesh::matches(md)) {
-      return Alembic::AbcGeom::IPolyMesh(object,Alembic::Abc::kWrapExisting).getSchema().getNumSamples();
-   } else if(Alembic::AbcGeom::ICurves::matches(md)) {
-      return Alembic::AbcGeom::ICurves(object,Alembic::Abc::kWrapExisting).getSchema().getNumSamples();
-   } else if(Alembic::AbcGeom::INuPatch::matches(md)) {
-      return Alembic::AbcGeom::INuPatch(object,Alembic::Abc::kWrapExisting).getSchema().getNumSamples();
-   } else if(Alembic::AbcGeom::IPoints::matches(md)) {
-      return Alembic::AbcGeom::IPoints(object,Alembic::Abc::kWrapExisting).getSchema().getNumSamples();
-   } else if(Alembic::AbcGeom::ISubD::matches(md)) {
-      return Alembic::AbcGeom::ISubD(object,Alembic::Abc::kWrapExisting).getSchema().getNumSamples();
-   } else if(Alembic::AbcGeom::ICamera::matches(md)) {
-      return Alembic::AbcGeom::ICamera(object,Alembic::Abc::kWrapExisting).getSchema().getNumSamples();
-   }
-   return 0;
-}
 
 MMatrix GetGlobalMMatrix(const MObject & in_Ref)
 {

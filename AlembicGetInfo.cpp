@@ -94,6 +94,9 @@ MStatus AlembicGetInfoCommand::doIt(const MArgList & args)
                Alembic::Abc::Int32ArraySamplePtr faceCounts = sample.getFaceCounts();
                if(faceCounts)
                {
+                  Alembic::Abc::ICompoundProperty abcCompound = getCompoundFromObject(obj);
+                  Alembic::Abc::IInt32ArrayProperty faceCountProp = Alembic::Abc::IInt32ArrayProperty(abcCompound,".faceCounts");
+
                   if(faceCounts->get() && faceCounts->get()[0] == 0)
                   {
                      // check if this eventually holds only one point
@@ -105,8 +108,6 @@ MStatus AlembicGetInfoCommand::doIt(const MArgList & args)
                   }
                   else
                   {
-                     Alembic::Abc::ICompoundProperty abcCompound = getCompoundFromObject(obj);
-                     Alembic::Abc::IInt32ArrayProperty faceCountProp = Alembic::Abc::IInt32ArrayProperty(abcCompound,".faceCounts");
                      if(faceCountProp.valid())
                      {
                         if(!faceCountProp.isConstant())

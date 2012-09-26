@@ -84,55 +84,55 @@ EC_EXPORT MStatus initializePlugin(MObject obj)
       AlembicCreateFaceSetsCommand::createSyntax);
 
    // nodes
-   status = plugin.registerNode("eaTimeControl",
+   status = plugin.registerNode("ExocortexAlembicTimeControl",
       mTimeControlNodeId,
       &AlembicTimeControlNode::creator,
       &AlembicTimeControlNode::initialize);
-   status = plugin.registerNode("eaFile",
+   status = plugin.registerNode("ExocortexAlembicFile",
       mFileNodeId,
       &AlembicFileNode::creator,
       &AlembicFileNode::initialize);
-   status = plugin.registerNode("eaXform",
+   status = plugin.registerNode("ExocortexAlembicXform",
       mXformNodeId,
       &AlembicXformNode::creator,
       &AlembicXformNode::initialize);
-   status = plugin.registerNode("eaCamera",
+   status = plugin.registerNode("ExocortexAlembicCamera",
       mCameraNodeId,
       &AlembicCameraNode::creator,
       &AlembicCameraNode::initialize);
-   status = plugin.registerNode("eaPolyMesh",
+   status = plugin.registerNode("ExocortexAlembicPolyMesh",
       mPolyMeshNodeId,
       &AlembicPolyMeshNode::creator,
       &AlembicPolyMeshNode::initialize);
-   status = plugin.registerNode("eaSubD",
+   status = plugin.registerNode("ExocortexAlembicSubD",
       mSubDNodeId,
       &AlembicSubDNode::creator,
       &AlembicSubDNode::initialize);
-   status = plugin.registerNode("eaPolyMeshDeform",
+   status = plugin.registerNode("ExocortexAlembicPolyMeshDeform",
       mPolyMeshDeformNodeId,
       &AlembicPolyMeshDeformNode::creator,
       &AlembicPolyMeshDeformNode::initialize,
       MPxNode::kDeformerNode);
-   status = plugin.registerNode("eaSubDDeform",
+   status = plugin.registerNode("ExocortexAlembicSubDDeform",
       mSubDDeformNodeId,
       &AlembicSubDDeformNode::creator,
       &AlembicSubDDeformNode::initialize,
       MPxNode::kDeformerNode);
-   status = plugin.registerNode("eaPoints",
+   status = plugin.registerNode("ExocortexAlembicPoints",
       mPointsNodeId,
       &AlembicPointsNode::creator,
       &AlembicPointsNode::initialize,
       MPxNode::kEmitterNode);
-   status = plugin.registerNode("eaCurves",
+   status = plugin.registerNode("ExocortexAlembicCurves",
       mCurvesNodeId,
       &AlembicCurvesNode::creator,
       &AlembicCurvesNode::initialize);
-   status = plugin.registerNode("eaCurvesDeform",
+   status = plugin.registerNode("ExocortexAlembicCurvesDeform",
       mCurvesDeformNodeId,
       &AlembicCurvesDeformNode::creator,
       &AlembicCurvesDeformNode::initialize,
       MPxNode::kDeformerNode);
-   status = plugin.registerNode("eaCurvesLocator",
+   status = plugin.registerNode("ExocortexAlembicCurvesLocator",
       mCurvesLocatorNodeId,
       &AlembicCurvesLocatorNode::creator,
       &AlembicCurvesLocatorNode::initialize,

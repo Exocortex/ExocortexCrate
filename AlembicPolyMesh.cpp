@@ -4,6 +4,7 @@
 #include <maya/MItMeshPolygon.h>
 #include "MetaData.h"
 #include <sstream>
+#include "CommonMeshUtilities.h"
 
 namespace AbcA = ::Alembic::AbcCoreAbstract::ALEMBIC_VERSION_NS;
 using namespace AbcA;
@@ -483,6 +484,8 @@ MStatus AlembicPolyMeshNode::compute(const MPlug & plug, MDataBlock & dataBlock)
    bool importNormals = dataBlock.inputValue(mNormalsAttr).asBool();
    bool importUvs = dataBlock.inputValue(mUvsAttr).asBool();
 
+   Alembic::Abc::IObject iObj;
+
    // check if we have the file
    if(fileName != mFileName || identifier != mIdentifier)
    {
@@ -496,7 +499,7 @@ MStatus AlembicPolyMeshNode::compute(const MPlug & plug, MDataBlock & dataBlock)
       mIdentifier = identifier;
 
       // get the object from the archive
-      Alembic::Abc::IObject iObj = getObjectFromArchive(mFileName,identifier);
+      iObj = getObjectFromArchive(mFileName,identifier);
       if(!iObj.valid())
       {
          MGlobal::displayWarning("[ExocortexAlembic] Identifier '"+identifier+"' not found in archive '"+mFileName+"'.");
@@ -550,6 +553,11 @@ MStatus AlembicPolyMeshNode::compute(const MPlug & plug, MDataBlock & dataBlock)
    if(sampleCounts->get()[0] == 0)
       return MStatus::kFailure;
 
+   bool isTopologyDynamic = false;
+   if( iObj.valid() ) {
+	   isTopologyDynamic = isAlembicMeshTopoDynamic( &iObj );
+   }
+
    MFloatPointArray points;
    if(samplePos->size() > 0)
    {
@@ -586,7 +594,9 @@ MStatus AlembicPolyMeshNode::compute(const MPlug & plug, MDataBlock & dataBlock)
    // check if we already have the right polygons
    if(mMesh.numVertices() != points.length() || 
       mMesh.numPolygons() != (unsigned int)sampleCounts->size() || 
-      mMesh.numFaceVertices() != (unsigned int)sampleIndices->size())
+      mMesh.numFaceVertices() != (unsigned int)sampleIndices->size() ||
+	  isTopologyDynamic
+	  )
    {
       MIntArray counts;
       MIntArray indices;
