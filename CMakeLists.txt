@@ -262,7 +262,7 @@ include_directories( "ilmbase-1.0.2/Imath" )
 
 ADD_SUBDIRECTORY ( ilmbase-1.0.2 )
 SET( ALEMBIC_ILMBASE_LIBS ilmbase )
-
+ 
 # ZLib
 SET( BUILD_SHARED_LIBS OFF )
 SET( SKIP_INSTALL_ALL ON )
@@ -310,6 +310,10 @@ UNSET(CMAKE_ARCHIVE_OUTPUT_DIRECTORY CACHE)
 include_directories( "alembic-1.0.5" )
 ADD_SUBDIRECTORY ( alembic-1.0.5 )
 SET( ALEMBIC_CORE_LIBS AlembicAbcGeom AlembicAbc AlembicAbcCoreHDF5 AlembicAbcCoreAbstract AlembicUtil )
+
+ADD_SUBDIRECTORY ( "${CMAKE_CURRENT_SOURCE_DIR}/CommonUtils" "${CMAKE_CURRENT_BINARY_DIR}/CommonUtils" )
+
+include_directories( "${CMAKE_CURRENT_SOURCE_DIR}/CommonUtils" )
 
 # Python extension
 IF(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../ExocortexAlembicPython/CMakeLists.txt")
