@@ -160,6 +160,19 @@ protected:
 
 
 
+class SmoothGroupNormals
+{//this class was refactored from AlembicIntermediatePolyMesh3DSMax, the save method still needs to be updated to use the new code
+	std::vector<VNormal> m_MeshSmoothGroupNormals;
+public:
+	Point3 GetVertexNormal(Mesh *mesh, int faceNo, int faceVertNo);
+	Point3 GetVertexNormal(MNMesh *mesh, int faceNo, int faceVertNo);
+	void BuildMeshSmoothingGroupNormals(Mesh &mesh);
+	void BuildMeshSmoothingGroupNormals(MNMesh &mesh);
+	void ClearMeshSmoothingGroupNormals();
+};
+
+
+
 
 class HighResolutionTimer
 {

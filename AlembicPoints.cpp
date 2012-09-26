@@ -133,6 +133,15 @@ bool AlembicPoints::Save(double time, bool bLastFrame)
 		return false;
 	}
 
+
+	//We have to put the particle system into the renders state so that PFOperatorMaterialFrequency::Proceed will set the materialID channel
+	//Note: settting the render state to true breaks the shape node instancing export
+	bool bRenderStateForced = false;
+	if(bAutomaticInstancing && ipfSystem && !ipfSystem->IsRenderState()){
+		ipfSystem->SetRenderState(true);
+		bRenderStateForced = true;
+	}
+
 	int numParticles = 0;
 #ifdef THINKING_PARTICLES
 	if(pThinkingParticleMat){
@@ -149,13 +158,7 @@ bool AlembicPoints::Save(double time, bool bLastFrame)
 		numParticles = pSimpleParticle->parts.points.Count();
 	}
 
-	//We have to put the particle system into the renders state so that PFOperatorMaterialFrequency::Proceed will set the materialID channel
-	//Note: settting the render state to true breaks the shape node instancing export
-	bool bRenderStateForced = false;
-	if(bAutomaticInstancing && ipfSystem && !ipfSystem->IsRenderState()){
-		ipfSystem->SetRenderState(true);
-		bRenderStateForced = true;
-	}
+
 
     // Set the visibility
     float flVisibility = GetRef().node->GetLocalVisibility(ticks);
@@ -204,7 +207,7 @@ bool AlembicPoints::Save(double time, bool bLastFrame)
 	Alembic::Abc::M44d nodeWorldTransInv = nodeWorldTrans.inverse();
 
 
-
+	//ESS_LOG_WARNING("tick: "<<ticks<<"   numParticles: "<<numParticles<<"\n");
 
 	ExoNullView nullView;
 	particleGroupInterface groupInterface(particlesExt, obj, GetRef().node, &nullView);
@@ -958,7 +961,7 @@ void AlembicPoints::CacheShapeMesh(Mesh* pShapeMesh, BOOL bNeedDelete, Matrix3 m
 		mi.nMatId = nMatId;
 		
 		std::stringstream nameStream;
-		nameStream<<GetRef().node->GetName()<<" ";
+		nameStream<< EC_MCHAR_to_UTF8( GetRef().node->GetName() ) <<" ";
 		nameStream<<"InstanceMesh"<<mNumShapeMeshes;
 		mi.name=nameStream.str();
 

@@ -1045,12 +1045,23 @@ Mesh* AlembicParticles::GetRenderMesh(TimeValue t, INode *inode, View &view, BOO
 			}
 		}
 		else{
-			ESS_LOG_WARNING("Particle mesh has invalid normals.");
+
+			//int n = pMesh->getNumVerts()
+
+			SmoothGroupNormals sgNormals;
+			sgNormals.BuildMeshSmoothingGroupNormals(*pMesh);
 			for(int j=0, curIndex=faceOffset; j<curNumFaces; j++, curIndex++){
 				for(int f=0; f<3; f++){
-					pRenderMeshNormalSpec->SetNormal(curIndex, f, Point3(0.0, 0.0, 0.0));
+					pRenderMeshNormalSpec->SetNormal(curIndex, f, sgNormals.GetVertexNormal(pMesh, j, f) * meshTM_I_T);
 				}
 			}
+
+			//ESS_LOG_WARNING("Particle mesh has invalid normals.");
+			//for(int j=0, curIndex=faceOffset; j<curNumFaces; j++, curIndex++){
+			//	for(int f=0; f<3; f++){
+			//		pRenderMeshNormalSpec->SetNormal(curIndex, f, Point3(0.0, 0.0, 0.0));
+			//	}
+			//}
 		}	
 
 		int numMaps = pMesh->getNumMaps();
@@ -1497,6 +1508,7 @@ Mesh *AlembicParticles::BuildBoxMesh(int meshNumber, TimeValue t, INode *node, V
     }
 
     pMesh = m_pBoxMaker->GetRenderMesh(t, node, view, needDelete);
+	//pMesh->buildNormals();
     return pMesh;
 }
 
@@ -1520,6 +1532,7 @@ Mesh *AlembicParticles::BuildSphereMesh(int meshNumber, TimeValue t, INode *node
     }
 
     pMesh = m_pSphereMaker->GetRenderMesh(t, node, view, needDelete);
+	//pMesh->buildNormals();
     return pMesh;
 }
 
@@ -1545,6 +1558,7 @@ Mesh *AlembicParticles::BuildCylinderMesh(int meshNumber, TimeValue t, INode *no
    }
 
    pMesh = m_pCylinderMaker->GetRenderMesh(t, node, view, needDelete);
+   //pMesh->buildNormals();
    return pMesh;
 }
 
@@ -1577,6 +1591,7 @@ Mesh *AlembicParticles::BuildDiscMesh(int meshNumber, TimeValue t, INode *node, 
    }
 
    pMesh = m_pDiskMaker->GetRenderMesh(t, node, view, needDelete);
+   //pMesh->buildNormals();
    return pMesh;
 }
  
@@ -1598,6 +1613,7 @@ Mesh *AlembicParticles::BuildRectangleMesh(int meshNumber, TimeValue t, INode *n
    }
 
    pMesh = m_pRectangleMaker->GetRenderMesh(t, node, view, needDelete);
+   //pMesh->buildNormals();
    return pMesh;
 }
 
