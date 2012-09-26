@@ -5,6 +5,7 @@
 #include "MetaData.h"
 #include <sstream>
 #include "CommonMeshUtilities.h"
+#include "CommonLog.h"
 
 namespace AbcA = ::Alembic::AbcCoreAbstract::ALEMBIC_VERSION_NS;
 using namespace AbcA;
@@ -484,8 +485,7 @@ MStatus AlembicPolyMeshNode::compute(const MPlug & plug, MDataBlock & dataBlock)
    bool importNormals = dataBlock.inputValue(mNormalsAttr).asBool();
    bool importUvs = dataBlock.inputValue(mUvsAttr).asBool();
 
-   Alembic::Abc::IObject iObj;
-
+  
    // check if we have the file
    if(fileName != mFileName || identifier != mIdentifier)
    {
@@ -499,13 +499,13 @@ MStatus AlembicPolyMeshNode::compute(const MPlug & plug, MDataBlock & dataBlock)
       mIdentifier = identifier;
 
       // get the object from the archive
-      iObj = getObjectFromArchive(mFileName,identifier);
-      if(!iObj.valid())
+      mObj = getObjectFromArchive(mFileName,identifier);
+      if(!mObj.valid())
       {
          MGlobal::displayWarning("[ExocortexAlembic] Identifier '"+identifier+"' not found in archive '"+mFileName+"'.");
          return MStatus::kFailure;
       }
-      Alembic::AbcGeom::IPolyMesh obj(iObj,Alembic::Abc::kWrapExisting);
+      Alembic::AbcGeom::IPolyMesh obj(mObj,Alembic::Abc::kWrapExisting);
       if(!obj.valid())
       {
          MGlobal::displayWarning("[ExocortexAlembic] Identifier '"+identifier+"' in archive '"+mFileName+"' is not a PolyMesh.");
@@ -554,8 +554,9 @@ MStatus AlembicPolyMeshNode::compute(const MPlug & plug, MDataBlock & dataBlock)
       return MStatus::kFailure;
 
    bool isTopologyDynamic = false;
-   if( iObj.valid() ) {
-	   isTopologyDynamic = isAlembicMeshTopoDynamic( &iObj );
+   if( mObj.valid() ) {
+	   isTopologyDynamic = isAlembicMeshTopoDynamic( &mObj );
+	   //ESS_LOG_WARNING( "(A) isTopologyDynamic = " << isTopologyDynamic );
    }
 
    MFloatPointArray points;
@@ -566,8 +567,9 @@ MStatus AlembicPolyMeshNode::compute(const MPlug & plug, MDataBlock & dataBlock)
       if(sampleInfo.alpha != 0.0)
       {
          Alembic::Abc::P3fArraySamplePtr samplePos2 = sample2.getPositions();
-         if(points.length() == (unsigned int)samplePos2->size())
+         if(points.length() == (unsigned int)samplePos2->size() && ! isTopologyDynamic )
          {
+            //ESS_LOG_WARNING( "blending vertex positions (1-2) A." );
             float blend = (float)sampleInfo.alpha;
             float iblend = 1.0f - blend;
             for(unsigned int i=0;i<points.length();i++)
@@ -598,6 +600,8 @@ MStatus AlembicPolyMeshNode::compute(const MPlug & plug, MDataBlock & dataBlock)
 	  isTopologyDynamic
 	  )
    {
+	  //ESS_LOG_WARNING( "Updating face topology." );
+
       MIntArray counts;
       MIntArray indices;
       counts.setLength((unsigned int)sampleCounts->size());
@@ -772,9 +776,10 @@ MStatus AlembicPolyMeshNode::compute(const MPlug & plug, MDataBlock & dataBlock)
                if(sampleInfo.alpha != 0.0)
                {
                   Alembic::Abc::N3fArraySamplePtr sampleNormals2 = normalsParam.getExpandedValue(sampleInfo.ceilIndex).getVals();
-                  if(sampleNormals->size() == sampleNormals2->size())
+                  if(sampleNormals->size() == sampleNormals2->size() && ! isTopologyDynamic )
                   {
-                     float blend = (float)sampleInfo.alpha;
+                     //ESS_LOG_WARNING( "blending vertex normals (1-2) A." );
+					 float blend = (float)sampleInfo.alpha;
                      float iblend = 1.0f - blend;
                      MVector normal;
                      for(unsigned int i=0;i<normals.length();i++)
@@ -889,13 +894,13 @@ MStatus AlembicPolyMeshDeformNode::deform(MDataBlock & dataBlock, MItGeometry & 
       mIdentifier = identifier;
 
       // get the object from the archive
-      Alembic::Abc::IObject iObj = getObjectFromArchive(mFileName,identifier);
-      if(!iObj.valid())
+      mObj = getObjectFromArchive(mFileName,identifier);
+      if(!mObj.valid())
       {
          MGlobal::displayWarning("[ExocortexAlembic] Identifier '"+identifier+"' not found in archive '"+mFileName+"'.");
          return MStatus::kFailure;
       }
-      Alembic::AbcGeom::IPolyMesh obj(iObj,Alembic::Abc::kWrapExisting);
+      Alembic::AbcGeom::IPolyMesh obj(mObj,Alembic::Abc::kWrapExisting);
       if(!obj.valid())
       {
          MGlobal::displayWarning("[ExocortexAlembic] Identifier '"+identifier+"' in archive '"+mFileName+"' is not a PolyMesh.");
@@ -913,6 +918,12 @@ MStatus AlembicPolyMeshDeformNode::deform(MDataBlock & dataBlock, MItGeometry & 
       mSchema.getTimeSampling(),
       mSchema.getNumSamples()
    );
+
+   bool isTopologyDynamic = false;
+   if( mObj.valid() ) {
+	   isTopologyDynamic = isAlembicMeshTopoDynamic( &mObj );
+	   //ESS_LOG_WARNING( "isTopologyDynamic = " << isTopologyDynamic );
+   }
 
    mLastSampleInfo = sampleInfo;
 
@@ -948,8 +959,9 @@ MStatus AlembicPolyMeshDeformNode::deform(MDataBlock & dataBlock, MItGeometry & 
       MFloatPoint abcPt;
       if(sampleInfo.alpha != 0.0)
       {
-         if(samplePos2->size() == samplePos->size())
+         if(samplePos2->size() == samplePos->size() && ! isTopologyDynamic )
          {
+			//ESS_LOG_WARNING( "blending vertex positions (1-2) B." );
             pt.x = iweight * pt.x + weight * (samplePos->get()[iter.index()].x * iblend + samplePos2->get()[iter.index()].x * blend);
             pt.y = iweight * pt.y + weight * (samplePos->get()[iter.index()].y * iblend + samplePos2->get()[iter.index()].y * blend);
             pt.z = iweight * pt.z + weight * (samplePos->get()[iter.index()].z * iblend + samplePos2->get()[iter.index()].z * blend);
