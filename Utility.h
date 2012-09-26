@@ -5,6 +5,7 @@
 #include "CommonUtilities.h"
 
 std::string getIdentifierFromRef(const MObject & in_Ref);
+std::string removeInvalidCharacter(const std::string &str);
 MString removeTrailFromName(MString & name);
 MString truncateName(const MString & in_Name);
 MString injectShapeToName(const MString & in_Name);

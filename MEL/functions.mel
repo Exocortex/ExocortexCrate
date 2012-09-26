@@ -287,7 +287,7 @@ global proc exocortexAlembicImport(string $filename, int $importNormals, int $im
         string $locator = exocortexCreateOrReuseNode(($name+"Shape"),"locator",$importAttach,0,0);
         $xform = `listRelatives -p $locator`;
         $shape = $xform[0];
-        $reader = exocortexCreateOrReuseNode($shape+".translate","ExocortexAlembicXform",$importAttach,1,0);
+        $reader = exocortexCreateOrReuseNode($shape+"_translate","ExocortexAlembicXform",$importAttach,1,0);
         exocortexConnectIfUnconnected(($reader+".translate"), ($shape+".translate"));
         exocortexConnectIfUnconnected(($reader+".rotate"), ($shape+".rotate"));
         exocortexConnectIfUnconnected(($reader+".scale"), ($shape+".scale"));
@@ -307,7 +307,7 @@ global proc exocortexAlembicImport(string $filename, int $importNormals, int $im
             if ( $name != "front" && $name != "top" && $name != "side" && $name != "persp" )
             {
               $shape = `rename -ignoreShape $xform[0] $name`;
-              $reader = exocortexCreateOrReuseNode($shape+".translate","ExocortexAlembicXform",$importAttach,1,0);
+              $reader = exocortexCreateOrReuseNode($shape+"_translate","ExocortexAlembicXform",$importAttach,1,0);
               exocortexConnectIfUnconnected(($reader+".translate"), ($shape+".translate"));
               exocortexConnectIfUnconnected(($reader+".rotate"), ($shape+".rotate"));
               exocortexConnectIfUnconnected(($reader+".scale"), ($shape+".scale"));

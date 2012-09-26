@@ -28,6 +28,21 @@ std::string getIdentifierFromRef(const MObject & in_Ref)
    return result;
 }
 
+std::string removeInvalidCharacter(const std::string &str)
+{
+  std::string ret;
+  const int len = str.size();
+  for (int i = 0; i < len; ++i)
+  {
+    const char c = str[i];
+    if (c == ' ' || c == '_')
+      ret.append(1, '_');
+    else if ((c >= '0' && c <= '9') || (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z'))
+      ret.append(1, c);
+  }
+  return ret;
+}
+
 MString removeTrailFromName(MString & name)
 {
    MString trail;
