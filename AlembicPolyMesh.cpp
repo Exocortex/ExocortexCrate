@@ -546,6 +546,8 @@ MStatus AlembicPolyMeshNode::compute(const MPlug & plug, MDataBlock & dataBlock)
    }
 
    Alembic::Abc::P3fArraySamplePtr samplePos = sample.getPositions();
+   Alembic::Abc::V3fArraySamplePtr sampleVel = sample.getVelocities();
+      
    Alembic::Abc::Int32ArraySamplePtr sampleCounts = sample.getFaceCounts();
    Alembic::Abc::Int32ArraySamplePtr sampleIndices = sample.getFaceIndices();
 
@@ -567,7 +569,21 @@ MStatus AlembicPolyMeshNode::compute(const MPlug & plug, MDataBlock & dataBlock)
       if(sampleInfo.alpha != 0.0)
       {
          Alembic::Abc::P3fArraySamplePtr samplePos2 = sample2.getPositions();
-         if(points.length() == (unsigned int)samplePos2->size() && ! isTopologyDynamic )
+		 if( isTopologyDynamic ) {
+			 if( sampleVel != NULL ) {
+				   float timeAlpha = (float)(mSchema.getTimeSampling()->getSampleTime(sampleInfo.ceilIndex) - 
+                            mSchema.getTimeSampling()->getSampleTime(sampleInfo.floorIndex)) * sampleInfo.alpha;
+				   if( sampleVel->size() == samplePos->size() ) {
+					   for(unsigned int i=0;i< sampleVel->size();i++)
+					   {
+						   points[i].x = samplePos->get()[i].x + timeAlpha * sampleVel->get()[i].x;
+						   points[i].y = samplePos->get()[i].y + timeAlpha * sampleVel->get()[i].y;
+						   points[i].z = samplePos->get()[i].z + timeAlpha * sampleVel->get()[i].z;
+						}
+				   }
+			 }
+		 }
+         else if(points.length() == (unsigned int)samplePos2->size() )
          {
             //ESS_LOG_WARNING( "blending vertex positions (1-2) A." );
             float blend = (float)sampleInfo.alpha;
