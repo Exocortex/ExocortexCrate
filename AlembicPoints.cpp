@@ -958,7 +958,7 @@ void AlembicPoints::CacheShapeMesh(Mesh* pShapeMesh, BOOL bNeedDelete, Matrix3 m
 		mi.nMatId = nMatId;
 		
 		std::stringstream nameStream;
-		nameStream<<GetRef().node->GetName()<<" ";
+		nameStream<< EC_MCHAR_to_UTF8( GetRef().node->GetName() ) <<" ";
 		nameStream<<"InstanceMesh"<<mNumShapeMeshes;
 		mi.name=nameStream.str();
 
