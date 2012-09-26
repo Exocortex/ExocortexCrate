@@ -167,15 +167,6 @@ ESS_CALLBACK_START(alembic_export_Init,CRef&)
 	return CStatus::OK;
 ESS_CALLBACK_END
 
-#include <fstream>
-static bool validate_filename_location(const char *filename)
-{
-   std::ofstream fout(filename);
-   if (!fout.is_open())
-      return false;
-   fout.close();
-   return true;
-}
 
 ESS_CALLBACK_START(alembic_export_Execute,CRef&)
 	Context ctxt( in_ctxt );

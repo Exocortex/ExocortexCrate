@@ -33,8 +33,5 @@
 #include "AlembicArchiveStorage.h"
 #include "Utility.h"
 
-typedef std::map<std::string,std::string> stringMap;
-typedef std::map<std::string,std::string>::iterator stringMapIt;
-typedef std::pair<std::string,std::string> stringPair;
 
 #endif  // _FOUNDATION_H_
