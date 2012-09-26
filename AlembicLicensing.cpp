@@ -12,7 +12,7 @@ int gLicenseToken = EC_LICENSE_RESULT_NO_LICENSE;
 	#include "RlmSingletonDeclarations.h"
 #endif // EXOCORTEX_RLM_ONLY
 
-bool HasFullLicense()
+bool HasAlembicReaderLicense()
 {
 	return ( GetLicense() == EC_LICENSE_RESULT_FULL_LICENSE );
 }

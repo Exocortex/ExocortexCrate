@@ -150,7 +150,7 @@ static int Init(AtNode *mynode, void **user_ptr)
    for(size_t pathIndex = 0; pathIndex < paths.size(); pathIndex ++)
    {
       // check if we already know this path
-      if(!HasFullLicense())
+      if(!HasAlembicReaderLicense())
       {
          if(gUsedArchives.size() > 1 && 
             gUsedArchives.find(paths[pathIndex]) == gUsedArchives.end())

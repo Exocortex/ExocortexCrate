@@ -19,11 +19,13 @@
 
 #define PLUGIN_LICENSE_IDS	{ RlmProductID( PLUGIN_LICENSE_NAME, PLUGIN_LICENSE_VERSION ), RlmProductID( "alembic_reader", PLUGIN_LICENSE_VERSION ), RlmProductID( "alembic_softimage", PLUGIN_LICENSE_VERSION ), RlmProductID( "alembic_maya", PLUGIN_LICENSE_VERSION ), RlmProductID( "alembic", PLUGIN_LICENSE_VERSION ) }
 
+#include "CommonLog.h"
+
 #include "ExocortexServicesProxy.h"
 
 extern int gLicenseToken;
 int GetLicense();
-bool HasFullLicense();
+bool HasAlembicReaderLicense();
 
 
 #endif // __ALEMBIC_LICENSING_H
