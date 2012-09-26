@@ -585,7 +585,7 @@ static PyObject * iProperty_getValues(PyObject * self, PyObject * args)
       return NULL;
    }
 
-   if(!HasFullLicense())
+   if(!HasWriterLicense())
    {
       if(sampleIndex > 75)
       {

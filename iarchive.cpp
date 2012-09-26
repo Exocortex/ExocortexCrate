@@ -206,7 +206,7 @@ PyObject * iArchive_new(PyObject * self, PyObject * args)
       return NULL;
    }*/
 
-   if(!HasFullLicense())
+   if(!HasWriterLicense())
    {
       if(getNbIArchives() > 1)
       {

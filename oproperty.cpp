@@ -145,7 +145,7 @@ static PyObject * oProperty_setValues(PyObject * self, PyObject * args)
       }
    }
 
-   if(!HasFullLicense())
+   if(!HasWriterLicense())
    {
       if(numSamples >= 75)
       {

@@ -11,23 +11,7 @@
 #define EC_LICENSE_RESULT_DEMO_LICENSE	(1)
 #define EC_LICENSE_RESULT_FULL_LICENSE	(2)
 
-#define ESS_LOG_ERROR(a) do { std::stringstream s; s << a;  std::cerr << ( s.str().c_str() ) << std::endl; } while(0)
-#define ESS_LOG_WARNING(a) do { std::stringstream s; s << a; std::cout << (s.str().c_str() ) << std::endl; } while(0)
-#define ESS_LOG_INFO(a) do { std::stringstream s; s << a; std::cout << (s.str().c_str() ) << std::endl; } while(0)
 
-
-#ifndef EC_LOG_ERROR
-	#define EC_LOG_ERROR(a)		ESS_LOG_ERROR(a)
-#endif
-#ifndef EC_LOG_WARNING
-	#define EC_LOG_WARNING(a)	ESS_LOG_WARNING(a)
-#endif
-#ifndef EC_LOG_INFO
-	#define EC_LOG_INFO(a)		ESS_LOG_INFO(a)
-#endif
-#ifndef EC_ASSERT
-	#define EC_ASSERT(a)		
-#endif
 
 #if defined( EXOCORTEX_RLM_ONLY )
 
@@ -43,12 +27,6 @@
 	#endif
 
 	//#include <xsi_application.h>
-
-	#if defined( __GNUC__ )
-		#define printf_s(buffer, buffer_size, stringbuffer, ...) ( printf(buffer, stringbuffer, __VA_ARGS__) )
- 		#define sprintf_s(buffer, buffer_size, stringbuffer, ...) ( sprintf(buffer, stringbuffer, __VA_ARGS__) )
- 		#define vsprintf_s(buffer, buffer_size, stringbuffer, ...) ( vsprintf(buffer, stringbuffer, __VA_ARGS__) )
-	#endif
  
 	#include "RlmSingleton.h"
 

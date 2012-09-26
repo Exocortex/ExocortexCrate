@@ -1,5 +1,6 @@
 #include <time.h>
 #include "AlembicLicensing.h"
+#include "CommonLog.h"
 
 #include <string>
 #include <sstream>
@@ -12,7 +13,7 @@ int gLicenseToken = EC_LICENSE_RESULT_NO_LICENSE;
 	#include "RlmSingletonDeclarations.h"
 #endif // EXOCORTEX_RLM_ONLY
 
-bool HasFullLicense()
+bool HasWriterLicense()
 {
 	return ( GetLicense() == EC_LICENSE_RESULT_FULL_LICENSE );
 }
@@ -64,3 +65,12 @@ int GetLicense()
 }
 
 
+void logError( const char* msg ) {
+	std::cerr << msg << std::endl;
+}
+void logWarning( const char* msg ) {
+	std::cout << msg << std::endl;
+}
+void logInfo( const char* msg ) {
+	std::cout << msg << std::endl;
+}
