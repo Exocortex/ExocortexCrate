@@ -77,10 +77,6 @@
 #include "Utility.h"
 #include "AlembicArchiveStorage.h"
 
-typedef std::map<std::string,std::string> stringMap;
-typedef std::map<std::string,std::string>::iterator stringMapIt;
-typedef std::pair<std::string,std::string> stringPair;
-
 #ifndef LONG
 	typedef long LONG;
 #endif

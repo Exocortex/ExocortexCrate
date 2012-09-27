@@ -121,9 +121,9 @@ global proc exocortexAlembicImport(string $filename, int $importNormals, int $im
   }
 
   // let's create the time node and file node
-  $timeControl = exocortexCreateOrReuseNode("eaTimeControl","eaTimeControl",$importAttach,0,0);
+  $timeControl = exocortexCreateOrReuseNode("ExocortexAlembicTimeControl","ExocortexAlembicTimeControl",$importAttach,0,0);
   exocortexConnectIfUnconnected("time1.outTime",($timeControl+".inTime"));
-  $fileNode = exocortexCreateOrReuseNode("eaFile","eaFile",0,0,0);
+  $fileNode = exocortexCreateOrReuseNode("ExocortexAlembicFile","ExocortexAlembicFile",0,0,0);
   setAttr -type "string" ($fileNode+".fileName ") $filename;
   
   print "parsing file...";
@@ -167,14 +167,14 @@ global proc exocortexAlembicImport(string $filename, int $importNormals, int $im
       }
       sets -e -forceElement initialShadingGroup $shape;
       if($dynamictopology == 1)
-        $reader = exocortexCreateOrReuseNode($name+".inMesh","eaPolyMesh",$importAttach,1,1);
+        $reader = exocortexCreateOrReuseNode($name+".inMesh","ExocortexAlembicPolyMesh",$importAttach,1,1);
       else
-        $reader = exocortexCreateOrReuseNode($name+".inMesh","eaPolyMeshDeform",$importAttach,1,1);
+        $reader = exocortexCreateOrReuseNode($name+".inMesh","ExocortexAlembicPolyMeshDeform",$importAttach,1,1);
       if($reader == "")
       {
         if($purepointcache == 0)
         {
-          $topoReader = exocortexCreateOrReuseNode("eaPolyMesh","eaPolyMesh",0,0,0);
+          $topoReader = exocortexCreateOrReuseNode("ExocortexAlembicPolyMesh","ExocortexAlembicPolyMesh",0,0,0);
           exocortexConnectIfUnconnected(($topoReader+".outMesh"), ($shape+".inMesh"));
           exocortexConnectIfUnconnected(($fileNode+".outFileName"), ($topoReader+".fileName"));
           setAttr -type "string" ($topoReader+".identifier") $identifiers[$i];
@@ -187,7 +187,7 @@ global proc exocortexAlembicImport(string $filename, int $importNormals, int $im
         }
         if($reader == "")
         {
-          string $readers[] = `deformer -type "eaPolyMeshDeform" $shape`;
+          string $readers[] = `deformer -type "ExocortexAlembicPolyMeshDeform" $shape`;
           $reader = $readers[0];
         }
       }
@@ -202,14 +202,14 @@ global proc exocortexAlembicImport(string $filename, int $importNormals, int $im
       }
       sets -e -forceElement initialShadingGroup $shape;
       if($dynamictopology == 1)
-        $reader = exocortexCreateOrReuseNode($name+".create","eaSubD",$importAttach,1,1);
+        $reader = exocortexCreateOrReuseNode($name+".create","ExocortexAlembicSubD",$importAttach,1,1);
       else
-        $reader = exocortexCreateOrReuseNode($name+".create","eaSubDDeform",$importAttach,1,1);
+        $reader = exocortexCreateOrReuseNode($name+".create","ExocortexAlembicSubDDeform",$importAttach,1,1);
       if($reader == "")
       {
         if($purepointcache == 0)
         {
-          $topoReader = exocortexCreateOrReuseNode("eaSubD","eaSubD",0,0,0);
+          $topoReader = exocortexCreateOrReuseNode("ExocortexAlembicSubD","ExocortexAlembicSubD",0,0,0);
           exocortexConnectIfUnconnected(($topoReader+".outSubdiv"), ($shape+".create"));
           exocortexConnectIfUnconnected(($topoReader+".dispResolution"), ($shape+".dispResolution"));
           exocortexConnectIfUnconnected(($fileNode+".outFileName"), ($topoReader+".fileName"));
@@ -222,7 +222,7 @@ global proc exocortexAlembicImport(string $filename, int $importNormals, int $im
         }
         if($reader == "")
         {
-          string $readers[] = `deformer -type "eaSubDDeform" $shape`;
+          string $readers[] = `deformer -type "ExocortexAlembicSubDDeform" $shape`;
           $reader = $readers[0];
         }
       }
@@ -232,30 +232,30 @@ global proc exocortexAlembicImport(string $filename, int $importNormals, int $im
       if($hair == 0)
       {
         $shape = exocortexCreateOrReuseNode($name,"nurbsCurve",$importAttach,0,0);
-        $reader = exocortexCreateOrReuseNode($name+".create","eaCurvesDeform",$importAttach,1,1);
+        $reader = exocortexCreateOrReuseNode($name+".create","ExocortexAlembicCurvesDeform",$importAttach,1,1);
         if($reader == "")
         {
-          $topoReader = exocortexCreateOrReuseNode("eaCurves","eaCurves",0,0,0);
+          $topoReader = exocortexCreateOrReuseNode("ExocortexAlembicCurves","ExocortexAlembicCurves",0,0,0);
           exocortexConnectIfUnconnected(($topoReader+".outCurve"), ($shape+".create"));
           exocortexConnectIfUnconnected(($fileNode+".outFileName"), ($topoReader+".fileName"));
           setAttr -type "string" ($topoReader+".identifier") $identifiers[$i];
-          string $readers[] = `deformer -type "eaCurvesDeform" $shape`;
+          string $readers[] = `deformer -type "ExocortexAlembicCurvesDeform" $shape`;
           $reader = $readers[0];
         }
       }
       else
       {
-        $shape = exocortexCreateOrReuseNode($name,"eaCurvesLocator",$importAttach,0,0);
+        $shape = exocortexCreateOrReuseNode($name,"ExocortexAlembicCurvesLocator",$importAttach,0,0);
         $reader = $shape;
       }
     }
     else if($types[$i] == "Points")
     {
       $shape = exocortexCreateOrReuseNode($name,"particle",$importAttach,0,0);
-      $reader = exocortexCreateOrReuseNode($shape+".newParticles[0]","eaPoints",$importAttach,1,1);
+      $reader = exocortexCreateOrReuseNode($shape+".newParticles[0]","ExocortexAlembicPoints",$importAttach,1,1);
       if($reader == "")
       {
-        $reader = exocortexCreateOrReuseNode("eaPoints","eaPoints",$importAttach,0,0);
+        $reader = exocortexCreateOrReuseNode("ExocortexAlembicPoints","ExocortexAlembicPoints",$importAttach,0,0);
         addAttr -ln "rgbPP" -dt vectorArray $shape;
         addAttr -ln "opacityPP" -dt doubleArray $shape;
       }
@@ -266,7 +266,7 @@ global proc exocortexAlembicImport(string $filename, int $importNormals, int $im
     else if($types[$i] == "Camera")
     {
       $shape = exocortexCreateOrReuseNode($name,"camera",$importAttach,0,0);
-      $reader = exocortexCreateOrReuseNode($shape+".focalLength","eaCamera",$importAttach,1,0);
+      $reader = exocortexCreateOrReuseNode($shape+".focalLength","ExocortexAlembicCamera",$importAttach,1,0);
       exocortexConnectIfUnconnected(($reader+".focalLength"), ($shape+".focalLength"));
       exocortexConnectIfUnconnected(($reader+".focusDistance"), ($shape+".focusDistance"));
       exocortexConnectIfUnconnected(($reader+".lensSqueezeRatio"), ($shape+".lensSqueezeRatio"));
@@ -287,7 +287,7 @@ global proc exocortexAlembicImport(string $filename, int $importNormals, int $im
         string $locator = exocortexCreateOrReuseNode(($name+"Shape"),"locator",$importAttach,0,0);
         $xform = `listRelatives -p $locator`;
         $shape = $xform[0];
-        $reader = exocortexCreateOrReuseNode($shape+".translate","eaXform",$importAttach,1,0);
+        $reader = exocortexCreateOrReuseNode($shape+"_translate","ExocortexAlembicXform",$importAttach,1,0);
         exocortexConnectIfUnconnected(($reader+".translate"), ($shape+".translate"));
         exocortexConnectIfUnconnected(($reader+".rotate"), ($shape+".rotate"));
         exocortexConnectIfUnconnected(($reader+".scale"), ($shape+".scale"));
@@ -307,7 +307,7 @@ global proc exocortexAlembicImport(string $filename, int $importNormals, int $im
             if ( $name != "front" && $name != "top" && $name != "side" && $name != "persp" )
             {
               $shape = `rename -ignoreShape $xform[0] $name`;
-              $reader = exocortexCreateOrReuseNode($shape+".translate","eaXform",$importAttach,1,0);
+              $reader = exocortexCreateOrReuseNode($shape+"_translate","ExocortexAlembicXform",$importAttach,1,0);
               exocortexConnectIfUnconnected(($reader+".translate"), ($shape+".translate"));
               exocortexConnectIfUnconnected(($reader+".rotate"), ($shape+".rotate"));
               exocortexConnectIfUnconnected(($reader+".scale"), ($shape+".scale"));
@@ -327,12 +327,12 @@ global proc exocortexAlembicImport(string $filename, int $importNormals, int $im
         string $locator = exocortexCreateOrReuseNode(($name+"Shape"),"locator",$importAttach,0,0);
         $xform = `listRelatives -p $locator`;
         $shape = $xform[0];
-        $reader = exocortexCreateOrReuseNode($shape+".translate","eaXform",$importAttach,1,0);
+        $reader = exocortexCreateOrReuseNode($shape+".translate","ExocortexAlembicXform",$importAttach,1,0);
       }
       else
       {
         $shape = exocortexCreateOrReuseNode($name,"transform",$importAttach,0,0);
-        $reader = exocortexCreateOrReuseNode($shape+".translate","eaXform",$importAttach,1,0);
+        $reader = exocortexCreateOrReuseNode($shape+".translate","ExocortexAlembicXform",$importAttach,1,0);
       }
       exocortexConnectIfUnconnected(($reader+".translate"), ($shape+".translate"));
       exocortexConnectIfUnconnected(($reader+".rotate"), ($shape+".rotate"));

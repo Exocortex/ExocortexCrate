@@ -48,6 +48,7 @@ private:
    static MObject mIdentifierAttr;
    MString mFileName;
    MString mIdentifier;
+   Alembic::Abc::IObject mObj;
    Alembic::AbcGeom::IPolyMeshSchema mSchema;
    static MObject mNormalsAttr;
    static MObject mUvsAttr;
@@ -81,6 +82,7 @@ private:
    static MObject mIdentifierAttr;
    MString mFileName;
    MString mIdentifier;
+   Alembic::Abc::IObject mObj;
    Alembic::AbcGeom::IPolyMeshSchema mSchema;
 
    // members
