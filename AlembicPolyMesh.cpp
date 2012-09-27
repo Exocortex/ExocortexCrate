@@ -600,11 +600,12 @@ MStatus AlembicPolyMeshNode::compute(const MPlug & plug, MDataBlock & dataBlock)
       for(unsigned int i=0;i<counts.length();i++)
       {
          counts[i] = sampleCounts->get()[i];
+		 //std::cout<<"count(i): "<<counts[i]<<std::endl;
          for(int j=0;j<counts[i];j++)
          {
-            MString count,index;
-            count.set((double)counts[i]);
-            index.set((double)sampleIndices->get()[offset+j]);
+            //MString count,index;
+            //count.set((double)counts[i]);
+            //index.set((double)sampleIndices->get()[offset+j]);
             mSampleLookup[offset+counts[i]-j-1] = offset+j;
             indices[offset+j] = sampleIndices->get()[offset+counts[i]-j-1];
 
@@ -617,6 +618,11 @@ MStatus AlembicPolyMeshNode::compute(const MPlug & plug, MDataBlock & dataBlock)
       // create a mesh either with or without uvs
       mMesh.create(points.length(),counts.length(),points,counts,indices,mMeshData);
       mMesh.updateSurface();
+      if(mMesh.numFaceVertices() != indices.length()){
+		  cout<<"Warning: mesh topology has changed. Cannot import UVs or normals."<<endl;
+		  importUvs = false;
+		  importNormals = false;
+      }
 
       // check if we need to import uvs
       if(importUvs)
@@ -641,56 +647,39 @@ MStatus AlembicPolyMeshNode::compute(const MPlug & plug, MDataBlock & dataBlock)
                   for(size_t i=0;i<ptr->size();i++)
                      uvSetNames.append(ptr->get()[i].c_str());
                }
-               else
-                  uvSetNames.append("map1");
 
-               // fill in all of the data
-               for(unsigned int uvSetIndex =0; uvSetIndex < uvSetNames.length(); uvSetIndex++)
+			   if(uvSetNames.length() < 0){
+                  uvSetNames.append("uvset1");
+			   }
+			   //else{
+			   //   //rename the first uv set to the "map1" since maya doesn't seem allow the default uv set to be renamed
+      //            uvSetNames[0] = "map1";
+			   //}
+          
+			   //delete all uvsets other than the default, which is named "map1"   
+			   MStringArray existingUVSets;
+               mMesh.getUVSetNames(existingUVSets);
+               for(unsigned int i=0;i<existingUVSets.length();i++)
                {
-                  MString currentUVSetName;
-                  status = mMesh.getCurrentUVSetName(currentUVSetName);
-                  if ( status != MS::kSuccess )
-                  {
-                     currentUVSetName = uvSetNames[uvSetIndex];
-                     status = mMesh.createUVSetDataMesh(currentUVSetName);
-					 	   if ( status != MS::kSuccess )
-							cout << "mMesh.createUVSetDataMesh() failed." << endl;
-                     status = mMesh.setCurrentUVSetName(currentUVSetName);
-					 	   if ( status != MS::kSuccess )
-							cout << "mMesh.setCurrentUVSetName() failed." << endl;
-               
-                  }
-                  else if(currentUVSetName != uvSetNames[uvSetIndex])
-                  {
-                     // create a uv set if necessary
-                     MStringArray existingUVSets;
-                     mMesh.getUVSetNames(existingUVSets);
-                     bool exists = false;
-                     for(unsigned int i=0;i<existingUVSets.length();i++)
-                     {
-                        if(existingUVSets[i] == uvSetNames[uvSetIndex])
-                        {
-                           exists = true;
-                           break;
-                        }
-                     }
-                     if(!exists)
-                     {
-                        if(uvSetIndex == 0 && uvSetNames.length() == 1 && existingUVSets.length() == 1)
-                           status = mMesh.setCurrentUVSetName(uvSetNames[uvSetIndex]);
-                        else
-                        {
-                           currentUVSetName = uvSetNames[uvSetIndex];
-                           status = mMesh.createUVSetDataMesh(currentUVSetName);
-						   if ( status != MS::kSuccess )
-								cout << "mMesh.createUVSetDataMesh() failed." << endl;
-                           status = mMesh.setCurrentUVSetName(currentUVSetName);
-						   if ( status != MS::kSuccess )
-								cout << "mMesh.setCurrentUVSetName() failed." << endl;
-                        }
-                     }
-                  }
+			      if(existingUVSets[i] == "map1") continue;
+                  status = mMesh.deleteUVSet(existingUVSets[i]);
+				  if ( status != MS::kSuccess ) cout << "mMesh.deleteUVSet(\""<<existingUVSets[i]<<"\") failed: " << endl;
+               }
+			   //status = mMesh.clearUVs(&uvSetNames[0]);
+			   //if ( status != MS::kSuccess ) cout << "mMesh.clearUVs(\"map1\") failed: "<<status.errorString().asChar()<< endl;
+			   
 
+
+			   for(unsigned int uvSetIndex = 0; uvSetIndex < uvSetNames.length(); uvSetIndex++)
+			   {
+                  status = mMesh.createUVSetDataMesh( uvSetNames[uvSetIndex] );
+				  if( status != MS::kSuccess ) cout << "mMesh.createUVSet(\""<<uvSetNames[uvSetIndex]<<"\") failed: "<<status.errorString().asChar()<< endl;
+			   }
+              
+
+
+			   for(unsigned int uvSetIndex =0; uvSetIndex < uvSetNames.length(); uvSetIndex++)
+			   {
                   Alembic::Abc::V2fArraySamplePtr sampleUvs;
                   if(uvSetIndex == 0)
                      sampleUvs = uvsParam.getExpandedValue(sampleInfo.floorIndex).getVals();
@@ -720,17 +709,23 @@ MStatus AlembicPolyMeshNode::compute(const MPlug & plug, MDataBlock & dataBlock)
                         uvIndices[i] = i;
                      }
 
-                     status = mMesh.clearUVs(&uvSetNames[uvSetIndex]);
-					   if ( status != MS::kSuccess )
-							cout << "mMesh.clearUVs() failed." << endl;
+					 MIntArray uvCounts;
+					 uvCounts.setLength(mMesh.numPolygons());
+					 int uvCountsIndex = 0;
+                     for(int f=0;f<mMesh.numPolygons();f++){
+						 int numPolyVertices = mMesh.polygonVertexCount(f);
+                         uvCounts[uvCountsIndex++] = numPolyVertices;
+					 }
+
+					 mMesh.setCurrentUVSetName(uvSetNames[uvSetIndex]);
+
                      status = mMesh.setUVs(uValues, vValues, &uvSetNames[uvSetIndex]);
-					   if ( status != MS::kSuccess )
-							cout << "mMesh.setUVs() failed." << endl;
-                     status = mMesh.assignUVs(counts, uvIndices, &uvSetNames[uvSetIndex]);
-				   if ( status != MS::kSuccess )
-						cout << "mMesh.assignUVs() failed." << endl;
+					 if( status != MS::kSuccess ) cout << "mMesh.setUVs(\""<<uvSetNames[uvSetIndex]<<"\") failed: "<<status.errorString().asChar()<<endl;
+					 status = mMesh.assignUVs(uvCounts, uvIndices, &uvSetNames[uvSetIndex]);
+				     if ( status != MS::kSuccess ) cout << "mMesh.assignUVs(\""<<uvSetNames[uvSetIndex]<<"\") failed: "<<status.errorString().asChar()<<endl;					 
                   }
                }
+
             }
          }
       }
