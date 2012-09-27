@@ -525,9 +525,19 @@ MStatus AlembicPolyMeshNode::compute(const MPlug & plug, MDataBlock & dataBlock)
       mSchema.getNumSamples()
    );
 
+   bool isTopologyDynamic = false;
+   if( mObj.valid() ) {
+	   isTopologyDynamic = isAlembicMeshTopoDynamic( &mObj );
+	   //ESS_LOG_WARNING( "(A) isTopologyDynamic = " << isTopologyDynamic );
+   }
+
    // check if we have to do this at all
-   if(!mMeshData.isNull() && mLastSampleInfo.floorIndex == sampleInfo.floorIndex && mLastSampleInfo.ceilIndex == sampleInfo.ceilIndex)
+   if(!mMeshData.isNull() && 
+	   mLastSampleInfo.floorIndex == sampleInfo.floorIndex && 
+	   mLastSampleInfo.ceilIndex == sampleInfo.ceilIndex && ! isTopologyDynamic ) {
+      //ESS_LOG_WARNING( "not doing this at all." );
       return MStatus::kSuccess;
+   }
 
    mLastSampleInfo = sampleInfo;
 
@@ -555,17 +565,13 @@ MStatus AlembicPolyMeshNode::compute(const MPlug & plug, MDataBlock & dataBlock)
    if(sampleCounts->get()[0] == 0)
       return MStatus::kFailure;
 
-   bool isTopologyDynamic = false;
-   if( mObj.valid() ) {
-	   isTopologyDynamic = isAlembicMeshTopoDynamic( &mObj );
-	   //ESS_LOG_WARNING( "(A) isTopologyDynamic = " << isTopologyDynamic );
-   }
 
    MFloatPointArray points;
    if(samplePos->size() > 0)
    {
       points.setLength((unsigned int)samplePos->size());
       bool done = false;
+      //ESS_LOG_WARNING( "sampleInfo.alpha: " << sampleInfo.alpha );
       if(sampleInfo.alpha != 0.0)
       {
          Alembic::Abc::P3fArraySamplePtr samplePos2 = sample2.getPositions();
@@ -573,6 +579,7 @@ MStatus AlembicPolyMeshNode::compute(const MPlug & plug, MDataBlock & dataBlock)
 			 if( sampleVel != NULL ) {
 				   float timeAlpha = (float)(mSchema.getTimeSampling()->getSampleTime(sampleInfo.ceilIndex) - 
                             mSchema.getTimeSampling()->getSampleTime(sampleInfo.floorIndex)) * sampleInfo.alpha;
+				   //ESS_LOG_WARNING( "timeAlpha: " << timeAlpha );
 				   if( sampleVel->size() == samplePos->size() ) {
 					   for(unsigned int i=0;i< sampleVel->size();i++)
 					   {
@@ -580,6 +587,7 @@ MStatus AlembicPolyMeshNode::compute(const MPlug & plug, MDataBlock & dataBlock)
 						   points[i].y = samplePos->get()[i].y + timeAlpha * sampleVel->get()[i].y;
 						   points[i].z = samplePos->get()[i].z + timeAlpha * sampleVel->get()[i].z;
 						}
+					   done = true;
 				   }
 			 }
 		 }
