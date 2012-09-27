@@ -111,6 +111,9 @@ std::string removeXfoSuffix(const std::string& importName);
 
 template<class OBJTYPE, class DATATYPE>
 bool getArbGeomParamPropertyAlembic( OBJTYPE obj, std::string name, Alembic::Abc::ITypedArrayProperty<DATATYPE> &pOut ) {
+	if( ! obj.valid() || ! obj.getSchema().valid() ) {
+		return false;
+	}
 	// look for name with period on it.
 	std::string nameWithDotPrefix = std::string(".") + name;
 	if ( obj.getSchema().getPropertyHeader( nameWithDotPrefix ) != NULL ) {
@@ -142,6 +145,9 @@ bool getArbGeomParamPropertyAlembic( OBJTYPE obj, std::string name, Alembic::Abc
 
 template<class OBJTYPE, class DATATYPE>
 bool getArbGeomParamPropertyAlembic_Permissive( OBJTYPE obj, std::string name, Alembic::Abc::ITypedArrayProperty<DATATYPE> &pOut ) {
+	if( ! obj.valid() || ! obj.getSchema().valid() ) {
+		return false;
+	}
 	// look for name with period on it.
 	std::string nameWithDotPrefix = std::string(".") + name;
 	if ( obj.getSchema().getPropertyHeader( nameWithDotPrefix ) != NULL ) {
