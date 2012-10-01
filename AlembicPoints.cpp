@@ -33,6 +33,7 @@
 #include "AlembicPointsUtils.h"
 #include "AlembicParticles.h"
 #include <ImathMatrixAlgo.h>
+#include "CommonMeshUtilities.h"
 
 namespace AbcA = ::Alembic::AbcCoreAbstract::ALEMBIC_VERSION_NS;
 namespace AbcB = ::Alembic::Abc::ALEMBIC_VERSION_NS;
@@ -1048,6 +1049,10 @@ void AlembicPoints::saveCurrentFrameMeshes()
 
 			meshSample.setFaceCounts(Alembic::Abc::Int32ArraySample(finalPolyMesh.mFaceCountVec));
 			meshSample.setFaceIndices(Alembic::Abc::Int32ArraySample(finalPolyMesh.mFaceIndicesVec));
+
+			if(mJob->GetOption("validateMeshTopology")){
+				validateAlembicMeshTopo(finalPolyMesh.mFaceCountVec, finalPolyMesh.mFaceIndicesVec, mi->name);
+			}
 
 			if(mJob->GetOption("exportNormals")){
 				Alembic::AbcGeom::ON3fGeomParam::Sample normalSample;

@@ -7,6 +7,7 @@
 #include "AlembicMetadataUtils.h"
 #include "AlembicPointsUtils.h"
 #include "AlembicIntermediatePolyMesh3DSMax.h"
+#include "CommonMeshUtilities.h"
 
 namespace AbcA = ::Alembic::AbcCoreAbstract::ALEMBIC_VERSION_NS;
 namespace AbcB = ::Alembic::Abc::ALEMBIC_VERSION_NS;
@@ -241,6 +242,10 @@ bool AlembicPolyMesh::Save(double time, bool bLastFrame)
         mNumSamples++;
         return true;
     }
+
+	if(mJob->GetOption("validateMeshTopology")){
+		validateAlembicMeshTopo(finalPolyMesh.mFaceCountVec, finalPolyMesh.mFaceIndicesVec, EC_MCHAR_to_UTF8(GetRef().node->GetName()));
+	}
 
 	Alembic::Abc::Int32ArraySample faceCountSample(finalPolyMesh.mFaceCountVec);
 	Alembic::Abc::Int32ArraySample faceIndicesSample(finalPolyMesh.mFaceIndicesVec);

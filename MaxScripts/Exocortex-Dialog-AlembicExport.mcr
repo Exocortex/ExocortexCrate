@@ -1,8 +1,11 @@
 --------------------------------------------------------------------------------------------------------
 -- Custom import/export dialog with settings
 
-rollout AlembicExportSettings "Alembic Export Settings" width:288 height:420
+rollout AlembicExportSettings "Alembic Export Settings" width:288 height:436
 (
+	GroupBox selectGroup "Selection" pos:[8,16] width:272 height:40
+	checkbox exportSelectedCheckbox "Export Selected Objects" pos:[32,32] width:232 height:16 checked:true
+
 	GroupBox animGroup "Animation" pos:[8,64] width:272 height:96
 	label inLabel "Frame In" pos:[16,88] width:128 height:21
 	label outLabel "Frame Out" pos:[16,104] width:128 height:21
@@ -13,7 +16,7 @@ rollout AlembicExportSettings "Alembic Export Settings" width:288 height:420
 	spinner stepsSpinner "" pos:[112,120] width:160 height:16 range:[1,1e+006,1] type:#integer
 	spinner subStepsSpinner "" pos:[112,136] width:160 height:16 range:[1,1e+006,1] type:#integer
     
-	GroupBox geoGroup "Geometry" pos:[8,168] width:272 height:208
+	GroupBox geoGroup "Geometry" pos:[8,168] width:272 height:224
 	
 	dropdownList meshTopologyDropDown "Mesh Topology" pos:[16,192] width:256 height:40 items:#("Just Surfaces (No Normals)", "Point Cache (No Surfaces)", "Surface + Normals (For Interchange)") selection:3
 	
@@ -24,11 +27,10 @@ rollout AlembicExportSettings "Alembic Export Settings" width:288 height:420
 	checkbox materialIdsCheckbox "Material Ids" pos:[32,320] width:107 height:14 checked:true
 	checkbox flattenHierarchyCheckbox "Flatten Hierarchy" pos:[32,336] width:107 height:14 checked:true
 	checkbox transformCacheCheckbox "Transform Cache" pos:[32,352] width:200 height:14 checked:false
+	checkbox validateMeshTopology "Validate Mesh Topology" pos:[32,368]
 
-	button exportButton "Export" pos:[16,386] width:64 height:24
-	button cancelButton "Cancel" pos:[208,386] width:64 height:24
-	GroupBox selectGroup "Selection" pos:[8,16] width:272 height:40
-	checkbox exportSelectedCheckbox "Export Selected Objects" pos:[32,32] width:232 height:16 checked:true
+	button exportButton "Export" pos:[16,402] width:64 height:24
+	button cancelButton "Cancel" pos:[208,402] width:64 height:24
 
 	on exportButton pressed do
 	(
@@ -58,6 +60,8 @@ rollout AlembicExportSettings "Alembic Export Settings" width:288 height:420
 	    	if(particleSystemExportMethod.selection == 2) do jobString += ";particlesystemtomeshconversion=true" 
 	    	jobString += ";transformCache="
 	    	jobString += (transformCacheCheckbox.checked as string)
+	    	jobString += ";validateMeshTopology="
+	    	jobString += (validateMeshTopology.checked as string)
 
 	    	result = ExocortexAlembic.createExportJobs(jobString)
 	        if( result != 0 ) do
