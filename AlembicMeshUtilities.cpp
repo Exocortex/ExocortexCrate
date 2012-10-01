@@ -10,7 +10,7 @@
 #include "AlembicMAXScript.h" 
 #include "AlembicMetadataUtils.h"
 #include "AlembicMax.h"
-#include "Profiler.h"
+#include "CommonProfiler.h"
 #include "CommonMeshUtilities.h"
 
 void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options);
@@ -39,7 +39,7 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
 	static int s_profileCountDown = 1000;
 	if( s_profileCountDown < 0 ) {
 		s_profileCountDown = 1000;
-		logging_stats_policy::generateReport();
+		ESS_PROFILE_REPORT();
 	}
 	s_profileCountDown--;
    ESS_PROFILE_FUNC();
@@ -91,27 +91,19 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
   	   Alembic::Abc::P3fArraySamplePtr meshPos;
        Alembic::Abc::V3fArraySamplePtr meshVel;
 
-	   bool hasDynamicTopo = false;
+	   bool hasDynamicTopo = isAlembicMeshTopoDynamic( options.pIObj );
        if(objMesh.valid())
        {
      		ESS_PROFILE_SCOPE("Mesh getPositions/getVelocities/faceCountProp");
           meshPos = polyMeshSample.getPositions();
            meshVel = polyMeshSample.getVelocities();
-
-           Alembic::Abc::IInt32ArrayProperty faceCountProp = Alembic::Abc::IInt32ArrayProperty(objMesh.getSchema(),".faceCounts");
-           if(faceCountProp.valid())
-               hasDynamicTopo = !faceCountProp.isConstant();
        }
        else
        {
      		ESS_PROFILE_SCOPE("SubD getPositions/getVelocities/faceCountProp");
            meshPos = subDSample.getPositions();
            meshVel = subDSample.getVelocities();
-
-           Alembic::Abc::IInt32ArrayProperty faceCountProp = Alembic::Abc::IInt32ArrayProperty(objSubD.getSchema(),".faceCounts");
-           if(faceCountProp.valid())
-               hasDynamicTopo = !faceCountProp.isConstant();
-       }   
+       }
 
 	//MH: What is this code for? //related to vertex blending
 	//note that the fillInMesh call will crash if the points are not initilaized (tested max 2013)
@@ -307,7 +299,7 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
 		//Tested in 2013, some simples meshes seem to crash, so I'm putting it back in
 
 #if 1//MAX_PRODUCT_YEAR_NUMBER < 2012
-		
+
 		if( ! options.pMNMesh->GetFlag( MN_MESH_FILLED_IN ) ) {
 			//HighResolutionTimer tFillInMesh;
 			{      	

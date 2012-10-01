@@ -12,10 +12,6 @@
 #include "AlembicNames.h"
 #include "AlembicXformUtilities.h"
  
-#include "Profiler.h"
-
-stats_map default_stats_policy::stats;
-
 /*void AlembicImport_SetupChildLinks( Alembic::Abc::IObject &obj, alembic_importoptions &options )
 {
 	std::string pName = obj.getName();

@@ -6,7 +6,7 @@
 #include "utility.h"
 #include "AlembicXForm.h"
 #include "AlembicVisibilityController.h"
-#include "Profiler.h"
+#include "CommonProfiler.h"
 
 
 using namespace MaxSDK::AssetManagement;
@@ -120,8 +120,10 @@ void AlembicMeshGeomModifier::ModifyObject (TimeValue t, ModContext &mc, ObjectS
 	ESS_CPP_EXCEPTION_REPORTING_START
 	ESS_PROFILE_FUNC();
 
+#ifdef ESS_PROFILING
 	static Profiler s_interProfiler( "InterTimer" );
 	s_interProfiler.stop();
+#endif // ESS_PROFILER
 	
 	Interval interval = FOREVER;//os->obj->ObjectValidity(t);
 	//ESS_LOG_INFO( "Interval Start: " << interval.Start() << " End: " << interval.End() );
@@ -266,8 +268,10 @@ void AlembicMeshGeomModifier::ModifyObject (TimeValue t, ModContext &mc, ObjectS
 		os->obj->UpdateValidity(TEXMAP_CHAN_NUM, interval);
    }
 
+#ifdef ESS_PROFILING
 	s_interProfiler.restart();
-	
+#endif // ESS_PROFILER
+
    	ESS_CPP_EXCEPTION_REPORTING_END
 }
 
