@@ -12,7 +12,7 @@
 #include <xsi_ppglayout.h>
 #include <xsi_ppgitem.h>
 #include <xsi_model.h>
-
+#include "CommonProfiler.h"
 using namespace XSI;
 using namespace MATH;
 
@@ -76,6 +76,7 @@ ESS_CALLBACK_START( alembic_xform_DefineLayout, CRef& )
 ESS_CALLBACK_END
 
 ESS_CALLBACK_START( alembic_xform_Update, CRef& )
+   ESS_PROFILE_SCOPE("alembic_xform_Update");
    OperatorContext ctxt( in_ctxt );
 
    if((bool)ctxt.GetParameterValue(L"muted"))
@@ -184,6 +185,7 @@ ESS_CALLBACK_START( alembic_visibility_DefineLayout, CRef& )
 ESS_CALLBACK_END
 
 ESS_CALLBACK_START( alembic_visibility_Update, CRef& )
+   ESS_PROFILE_SCOPE("alembic_visibility_Update");
    OperatorContext ctxt( in_ctxt );
 
    if((bool)ctxt.GetParameterValue(L"muted"))

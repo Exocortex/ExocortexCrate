@@ -20,7 +20,7 @@
 #include <xsi_plugin.h>
 #include <xsi_utils.h>
 #include "AlembicLicensing.h"
-
+#include "CommonProfiler.h"
 using namespace XSI;
 
 
@@ -307,6 +307,7 @@ void nameMapClear()
 
 CStatus alembicOp_Define( CRef& in_ctxt )
 {
+   ESS_PROFILE_SCOPE("alembicOp_Define");
    Context ctxt( in_ctxt );
    CustomOperator oCustomOperator;
 
@@ -337,6 +338,7 @@ CStatus alembicOp_Define( CRef& in_ctxt )
 
 CStatus alembicOp_DefineLayout( CRef& in_ctxt )
 {
+   ESS_PROFILE_SCOPE("alembicOp_DefineLayout");
    Context ctxt( in_ctxt );
    PPGLayout oLayout;
    PPGItem oItem;
