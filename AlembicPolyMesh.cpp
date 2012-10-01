@@ -638,7 +638,6 @@ MStatus AlembicPolyMeshNode::compute(const MPlug & plug, MDataBlock & dataBlock)
       for(unsigned int i=0;i<counts.length();i++)
       {
          counts[i] = sampleCounts->get()[i];
-		 //std::cout<<"count(i): "<<counts[i]<<std::endl;
          for(int j=0;j<counts[i];j++)
          {
             //MString count,index;
@@ -657,9 +656,10 @@ MStatus AlembicPolyMeshNode::compute(const MPlug & plug, MDataBlock & dataBlock)
       mMesh.create(points.length(),counts.length(),points,counts,indices,mMeshData);
       mMesh.updateSurface();
       if(mMesh.numFaceVertices() != indices.length()){
-		  cout<<"Warning: mesh topology has changed. Cannot import UVs or normals."<<endl;
-		  importUvs = false;
-		  importNormals = false;
+		  EC_LOG_ERROR("Error: mesh topology has changed. Cannot import UVs or normals.");
+		  return MStatus::kFailure;
+		  //importUvs = false;
+		  //importNormals = false;
       }
 
       // check if we need to import uvs
@@ -701,7 +701,9 @@ MStatus AlembicPolyMeshNode::compute(const MPlug & plug, MDataBlock & dataBlock)
                {
 			      if(existingUVSets[i] == "map1") continue;
                   status = mMesh.deleteUVSet(existingUVSets[i]);
-				  if ( status != MS::kSuccess ) cout << "mMesh.deleteUVSet(\""<<existingUVSets[i]<<"\") failed: " << endl;
+				  if ( status != MS::kSuccess ){
+					  EC_LOG_ERROR("mMesh.deleteUVSet(\""<<existingUVSets[i]<<"\") failed: "<<status.errorString().asChar());
+				  }
                }
 			   //status = mMesh.clearUVs(&uvSetNames[0]);
 			   //if ( status != MS::kSuccess ) cout << "mMesh.clearUVs(\"map1\") failed: "<<status.errorString().asChar()<< endl;
@@ -711,7 +713,9 @@ MStatus AlembicPolyMeshNode::compute(const MPlug & plug, MDataBlock & dataBlock)
 			   for(unsigned int uvSetIndex = 0; uvSetIndex < uvSetNames.length(); uvSetIndex++)
 			   {
                   status = mMesh.createUVSetDataMesh( uvSetNames[uvSetIndex] );
-				  if( status != MS::kSuccess ) cout << "mMesh.createUVSet(\""<<uvSetNames[uvSetIndex]<<"\") failed: "<<status.errorString().asChar()<< endl;
+				  if( status != MS::kSuccess ){
+					  EC_LOG_ERROR("mMesh.createUVSet(\""<<uvSetNames[uvSetIndex]<<"\") failed: "<<status.errorString().asChar());
+				  }
 			   }
               
 
@@ -758,9 +762,13 @@ MStatus AlembicPolyMeshNode::compute(const MPlug & plug, MDataBlock & dataBlock)
 					 mMesh.setCurrentUVSetName(uvSetNames[uvSetIndex]);
 
                      status = mMesh.setUVs(uValues, vValues, &uvSetNames[uvSetIndex]);
-					 if( status != MS::kSuccess ) cout << "mMesh.setUVs(\""<<uvSetNames[uvSetIndex]<<"\") failed: "<<status.errorString().asChar()<<endl;
+					 if( status != MS::kSuccess ){
+						 EC_LOG_ERROR("mMesh.setUVs(\""<<uvSetNames[uvSetIndex]<<"\") failed: "<<status.errorString().asChar());
+					 }
 					 status = mMesh.assignUVs(uvCounts, uvIndices, &uvSetNames[uvSetIndex]);
-				     if ( status != MS::kSuccess ) cout << "mMesh.assignUVs(\""<<uvSetNames[uvSetIndex]<<"\") failed: "<<status.errorString().asChar()<<endl;					 
+					 if ( status != MS::kSuccess ){
+						 EC_LOG_ERROR("mMesh.assignUVs(\""<<uvSetNames[uvSetIndex]<<"\") failed: "<<status.errorString().asChar());
+					 }
                   }
                }
 
