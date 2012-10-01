@@ -8,4 +8,10 @@ bool isAlembicMeshUVWs( Alembic::AbcGeom::IObject *pIObj, bool& isConstant );
 bool isAlembicMeshTopoDynamic( Alembic::AbcGeom::IObject *pIObj );
 bool isAlembicMeshPointCache( Alembic::AbcGeom::IObject *pIObj );
 
+
+void validateAlembicMeshTopo(std::vector<Alembic::AbcCoreAbstract::ALEMBIC_VERSION_NS::int32_t> faceCounts,
+							std::vector<Alembic::AbcCoreAbstract::ALEMBIC_VERSION_NS::int32_t> faceIndices,
+							const std::string& meshName);
+
+
 #endif // __MESH_UTILITIES_H
