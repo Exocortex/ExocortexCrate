@@ -1,4 +1,5 @@
 #include "AlembicGetInfo.h"
+#include "CommonMeshUtilities.h"
 
 AlembicGetInfoCommand::AlembicGetInfoCommand()
 {
@@ -86,71 +87,20 @@ MStatus AlembicGetInfoCommand::doIt(const MArgList & args)
          MString data;
          if(Alembic::AbcGeom::IPolyMesh::matches(child.getMetaData())) {
             // check if we have topo or not
-            Alembic::AbcGeom::IPolyMesh obj(child,Alembic::Abc::kWrapExisting);
-            if(obj.valid())
-            {
-               Alembic::AbcGeom::IPolyMeshSchema::Sample sample;
-               obj.getSchema().get(sample,0);
-               Alembic::Abc::Int32ArraySamplePtr faceCounts = sample.getFaceCounts();
-               if(faceCounts)
-               {
-                  Alembic::Abc::ICompoundProperty abcCompound = getCompoundFromObject(obj);
-                  Alembic::Abc::IInt32ArrayProperty faceCountProp = Alembic::Abc::IInt32ArrayProperty(abcCompound,".faceCounts");
-
-                  if(faceCounts->get() && faceCounts->get()[0] == 0)
-                  {
-                     // check if this eventually holds only one point
-                     Alembic::Abc::P3fArraySamplePtr samplePos = sample.getPositions();
-                     if(samplePos->size() <= 1)
-                        data += "dynamictopology=1";
-                     else
-                        data += "purepointcache=1";
-                  }
-                  else
-                  {
-                     if(faceCountProp.valid())
-                     {
-                        if(!faceCountProp.isConstant())
-                        {
-                           data += "dynamictopology=1";
-                        }
-                     }
-                  }
-               }
-            }
+            if( isAlembicMeshTopoDynamic( & child ) ) {
+				data += "dynamictopology=1";                 
+			}
+			if( isAlembicMeshPointCache( & child ) ) {
+				data += "purepointcache=1";
+			}
          } else if(Alembic::AbcGeom::ISubD::matches(child.getMetaData())) {
             // check if we have topo or not
-            Alembic::AbcGeom::ISubD obj(child,Alembic::Abc::kWrapExisting);
-            if(obj.valid())
-            {
-               Alembic::AbcGeom::ISubDSchema::Sample sample;
-               obj.getSchema().get(sample,0);
-               Alembic::Abc::Int32ArraySamplePtr faceCounts = sample.getFaceCounts();
-               if(faceCounts)
-               {
-                  if(faceCounts->get() && faceCounts->get()[0] == 0)
-                  {
-                     // check if this eventually holds only one point
-                     Alembic::Abc::P3fArraySamplePtr samplePos = sample.getPositions();
-                     if(samplePos->size() <= 1)
-                        data += "dynamictopology=1";
-                     else
-                        data += "purepointcache=1";
-                  }
-                  else
-                  {
-                     Alembic::Abc::ICompoundProperty abcCompound = getCompoundFromObject(obj);
-                     Alembic::Abc::IInt32ArrayProperty faceCountProp = Alembic::Abc::IInt32ArrayProperty(abcCompound,".faceCounts");
-                     if(faceCountProp.valid())
-                     {
-                        if(!faceCountProp.isConstant())
-                        {
-                           data += "dynamictopology=1";
-                        }
-                     }
-                  }
-               }
-            }
+			if( isAlembicMeshTopoDynamic( & child ) ) {
+				data += "dynamictopology=1";                 
+			}
+			if( isAlembicMeshPointCache( & child ) ) {
+				data += "purepointcache=1";
+			}
          } else if(Alembic::AbcGeom::ICurves::matches(child.getMetaData())) {
             // check if we have topo or not
             Alembic::AbcGeom::ICurves obj(child,Alembic::Abc::kWrapExisting);
