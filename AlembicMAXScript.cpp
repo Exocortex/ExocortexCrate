@@ -624,6 +624,7 @@ int ExocortexAlembicStaticInterface_ExocortexAlembicExportJobs( CONST_2013 MCHAR
 			bool bObjectsParameterExists = false;
 			bool bUiExport = false;
 			bool bAutomaticInstancing = false;
+			bool bValidateMeshTopology = false;
 
 			ObjectList allSceneObjects;
 			
@@ -670,6 +671,9 @@ int ExocortexAlembicStaticInterface_ExocortexAlembicExportJobs( CONST_2013 MCHAR
 				}
 				else if(boost::iequals(valuePair[0], "transformcache")){
 					bTransformCache = parseBool(valuePair[1]);
+				}
+				else if(boost::iequals(valuePair[0], "validateMeshTopology")){
+					bValidateMeshTopology = parseBool(valuePair[1]);
 				}
 				else if(boost::iequals(valuePair[0], "purepointcache")){
 					bPurePointCache = parseBool(valuePair[1]);
@@ -807,6 +811,7 @@ int ExocortexAlembicStaticInterface_ExocortexAlembicExportJobs( CONST_2013 MCHAR
 			job->SetOption("exportParticlesAsMesh", bExportAsSingleMesh);
 			job->SetOption("transformCache", bTransformCache);
 			job->SetOption("automaticInstancing", bAutomaticInstancing);
+			job->SetOption("validateMeshTopology", bValidateMeshTopology);
 
 			if (job->PreProcess() != true)
 			{
