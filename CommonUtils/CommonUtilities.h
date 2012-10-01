@@ -108,7 +108,6 @@ size_t getNumSamplesFromObject(Alembic::Abc::IObject object);
 std::string getModelName( const std::string &identifier );
 std::string removeXfoSuffix(const std::string& importName);
 
-
 template<class OBJTYPE, class DATATYPE>
 bool getArbGeomParamPropertyAlembic( OBJTYPE obj, std::string name, Alembic::Abc::ITypedArrayProperty<DATATYPE> &pOut ) {
 	if( ! obj.valid() || ! obj.getSchema().valid() ) {

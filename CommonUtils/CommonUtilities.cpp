@@ -2,6 +2,11 @@
 #include "CommonUtilities.h"
 #include "CommonLicensing.h"
 #include "CommonLog.h"
+#include "CommonProfiler.h"
+
+#ifdef ESS_PROFILING
+stats_map default_stats_policy::stats;
+#endif // ESS_PROFILER
 
 #include <fstream>
 bool validate_filename_location(const char *filename)
