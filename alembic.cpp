@@ -261,9 +261,23 @@ ESS_CALLBACK_START(alembic_export_Execute,CRef&)
 	      jobString += L";bindpose="+settings.GetParameterValue(L"bindpose").GetAsText();
 	      jobString += L";dynamictopology="+settings.GetParameterValue(L"dtopology").GetAsText();
       }
-      jobString += L";globalspace="+settings.GetParameterValue(L"globalspace").GetAsText();
       jobString += L";guidecurves="+settings.GetParameterValue(L"guidecurves").GetAsText();
  
+      
+      LONG transformMode = settings.GetParameterValue(L"transforms");
+      if( transformMode == 0 ){//flatten hierarchy
+         jobString += L";flattenHierarchy=true";
+         jobString += L";globalspace=false";
+      }
+      else if( transformMode == 1){//full hierarchy
+         jobString += L";flattenHierarchy=false";
+         jobString += L";globalspace=false";
+      }
+      else if( transformMode == 2){//bake in
+         jobString += L";flattenHierarchy=true";
+         jobString += L";globalspace=true";
+      }
+
       Application().ExecuteCommand(L"DeleteObj",inspectArgs,inspectResult);
    }
 
@@ -291,8 +305,11 @@ ESS_CALLBACK_START(alembic_export_Execute,CRef&)
 	   bool bindpose = true;
       bool dynamictopology = false;
       bool globalspace = false;
+      bool flattenhierarchy = true;
       bool guidecurves = false;
-      CRefArray objects;
+      //CRefArray objects;
+
+	  std::vector<AlembicWriteJob::Selectee> objects;
 
       // process all tokens of the job
       CStringArray tokens = jobs[i].Split(L";");
@@ -329,7 +346,9 @@ ESS_CALLBACK_START(alembic_export_Execute,CRef&)
             dynamictopology = (bool)CValue(valuePair[1]);
 		   else if(valuePair[0].IsEqualNoCase(L"globalspace"))
             globalspace = (bool)CValue(valuePair[1]);
-           else if(valuePair[0].IsEqualNoCase(L"guidecurves"))
+		   else if(valuePair[0].IsEqualNoCase(L"flattenhierarchy"))
+            flattenhierarchy = (bool)CValue(valuePair[1]);
+         else if(valuePair[0].IsEqualNoCase(L"guidecurves"))
             guidecurves = (bool)CValue(valuePair[1]);
          else if(valuePair[0].IsEqualNoCase(L"filename"))
             filename = CValue(valuePair[1]).GetAsText();
@@ -346,7 +365,7 @@ ESS_CALLBACK_START(alembic_export_Execute,CRef&)
                   Application().LogMessage(L"[ExocortexAlembic] Skipping object 'L"+objectStrings[k]+"', not found.",siWarningMsg);
                   continue;
                }
-               objects.Add(objRef);
+               objects.push_back(objRef);
 
                // ensure to add models as a flattened list
                Model model(objRef);
@@ -361,7 +380,7 @@ ESS_CALLBACK_START(alembic_export_Execute,CRef&)
                      CRefArray childChildren = child.GetChildren();
                      for(LONG l=0;l<childChildren.GetCount();l++)
                         children.Add(childChildren[l]);
-                     objects.Add(child.GetRef());
+                     objects.push_back(child.GetRef());
                   }
                }
             }
@@ -451,6 +470,7 @@ ESS_CALLBACK_START(alembic_export_Execute,CRef&)
       job->SetOption(L"indexedNormals",true);
       job->SetOption(L"indexedUVs",true);
       job->SetOption(L"globalSpace",globalspace);
+      job->SetOption(L"flattenHierarchy",flattenhierarchy);
       job->SetOption(L"guideCurves",guidecurves);
 
       // check if the job is satifsied
@@ -2417,11 +2437,12 @@ ESS_CALLBACK_START(alembic_export_settings_Define,CRef&)
    oCustomProperty.AddParameter(L"uvs",CValue::siBool,siPersistable,L"",L"",1,0,1,0,1,oParam);
    oCustomProperty.AddParameter(L"facesets",CValue::siBool,siPersistable,L"",L"",1,0,1,0,1,oParam);
    oCustomProperty.AddParameter(L"bindpose",CValue::siBool,siPersistable,L"",L"",1,0,1,0,1,oParam);
-   oCustomProperty.AddParameter(L"globalspace",CValue::siBool,siPersistable,L"",L"",0,0,1,0,1,oParam);
+   //oCustomProperty.AddParameter(L"globalspace",CValue::siBool,siPersistable,L"",L"",0,0,1,0,1,oParam);
    oCustomProperty.AddParameter(L"dtopology",CValue::siBool,siPersistable,L"",L"",0,0,1,0,1,oParam);
    oCustomProperty.AddParameter(L"guidecurves",CValue::siBool,siPersistable,L"",L"",0,0,1,0,1,oParam);
    oCustomProperty.AddParameter(L"transformcache",CValue::siBool,siPersistable,L"",L"",0,0,1,0,1,oParam);
- 
+   oCustomProperty.AddParameter(L"transforms",CValue::siInt4,siPersistable,L"",L"",0,0,10,0,10,oParam);
+
 	return CStatus::OK;
 ESS_CALLBACK_END
 
@@ -2453,9 +2474,18 @@ ESS_CALLBACK_START(alembic_export_settings_DefineLayout,CRef&)
    oLayout.AddItem(L"bindpose",L"Envelope BindPose");
    oLayout.AddItem(L"dtopology",L"Dynamic Topology");
    oLayout.AddItem(L"guidecurves",L"Guide Curves");
-   oLayout.AddItem(L"globalspace",L"Use Global Space");
+   //oLayout.AddItem(L"globalspace",L"Use Global Space");
    oLayout.EndGroup();
-   oLayout.AddItem(L"transformcache",L"Transform Cache");
+   oLayout.AddItem(L"transformcache",L"Cache Transforms Only");
+   
+   CValueArray transformItems(6);
+   transformItems[0] = L"Flatten Hierarchy";
+   transformItems[1] = (LONG) 0;
+   transformItems[2] = L"Full Hierarchy";
+   transformItems[3] = (LONG) 1;
+   transformItems[4] = L"Bake Into Geometry";
+   transformItems[5] = (LONG) 2;
+   oLayout.AddEnumControl(L"transforms", transformItems, L"Transforms");
 
 	return CStatus::OK;
 ESS_CALLBACK_END

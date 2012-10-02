@@ -118,6 +118,41 @@ std::string getIdentifierFromRef(CRef in_Ref, bool includeHierarchy)
    return result;
 }
 
+int getNodeDepthFromRef(XSI::CRef in_Ref)
+{
+   int nDepth = 0;
+   CRef ref = in_Ref;
+   bool has3DObj = false;
+   while(ref.IsValid())
+   {
+      Model model(ref);
+      X3DObject obj(ref);
+      ProjectItem item(ref);
+      if(model.IsValid())
+      {
+         if(model.GetFullName() == Application().GetActiveSceneRoot().GetFullName())
+            break;
+         ref = model.GetModel().GetRef();
+		 nDepth++;
+      }
+      else if(obj.IsValid())
+      {
+         if(!has3DObj)
+         {
+            has3DObj = true;
+         }
+         ref = obj.GetParent3DObject().GetRef();
+		 nDepth++;
+      }
+      else if(item.IsValid())
+      {
+         ref = item.GetParent3DObject().GetRef();
+		 nDepth++;
+      }
+   }
+   return nDepth;
+}
+
 XSI::CString truncateName(const XSI::CString & in_Name)
 {
    CString name = in_Name;

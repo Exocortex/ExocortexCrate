@@ -19,7 +19,7 @@ using namespace MATH;
 namespace AbcA = ::Alembic::AbcCoreAbstract::ALEMBIC_VERSION_NS;
 using namespace AbcA;
 
-void SaveXformSample(XSI::CRef kinestateRef, Alembic::AbcGeom::OXformSchema & schema, Alembic::AbcGeom::XformSample & sample, double time, bool xformCache, bool globalSpace)
+void SaveXformSample(XSI::CRef kinestateRef, Alembic::AbcGeom::OXformSchema & schema, Alembic::AbcGeom::XformSample & sample, double time, bool xformCache, bool globalSpace, bool flattenHierarchy)
 {
    KinematicState kineState(kinestateRef);
 
@@ -47,11 +47,14 @@ void SaveXformSample(XSI::CRef kinestateRef, Alembic::AbcGeom::OXformSchema & sc
          return;
    }
 
-   CTransformation global = kineState.GetTransform(time);
-   if(!xformCache)
+   CTransformation global;
+   if(flattenHierarchy)
    {
-      CTransformation model = kineState.GetParent3DObject().GetModel().GetKinematics().GetGlobal().GetTransform(time);
-      global = MapWorldPoseToObjectSpace(model,global);
+      global = kineState.GetTransform(time);//this is global
+   }
+   else
+   {
+      global = kineState.GetParent3DObject().GetKinematics().GetLocal().GetTransform(time);
    }
 
    // store the transform
