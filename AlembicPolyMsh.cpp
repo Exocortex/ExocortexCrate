@@ -963,7 +963,7 @@ ESS_CALLBACK_START( alembic_polymesh_topo_Update, CRef& )
          LONG offset1 = 0;
          Alembic::Abc::int32_t offset2 = 0;
 
-         EXOCORTEX_XSI_LOG_INFO("face count: " << (unsigned int)meshFaceCount->size());
+         ESS_LOG_INFO("face count: " << (unsigned int)meshFaceCount->size());
 
          for(size_t j=0;j<meshFaceCount->size();j++)
          {
@@ -971,15 +971,15 @@ ESS_CALLBACK_START( alembic_polymesh_topo_Update, CRef& )
             polies[offset1++] = singleFaceCount;
             offset2 += singleFaceCount;
 
-            EXOCORTEX_XSI_LOG_INFO("singleFaceCount: " << (unsigned int)singleFaceCount);
-            EXOCORTEX_XSI_LOG_INFO("offset2: " << (unsigned int)offset2);
-            EXOCORTEX_XSI_LOG_INFO("meshFaceIndices->size(): " << (unsigned int)meshFaceIndices->size());
+            ESS_LOG_INFO("singleFaceCount: " << (unsigned int)singleFaceCount);
+            ESS_LOG_INFO("offset2: " << (unsigned int)offset2);
+            ESS_LOG_INFO("meshFaceIndices->size(): " << (unsigned int)meshFaceIndices->size());
 
             unsigned int meshFIndxSz = (unsigned int)meshFaceIndices->size();
 
             for(size_t k=0;k<singleFaceCount;k++)
             {
-               EXOCORTEX_XSI_LOG_INFO("index: " << (unsigned int)((size_t)offset2 - 1 - k));
+               ESS_LOG_INFO("index: " << (unsigned int)((size_t)offset2 - 1 - k));
                polies[offset1++] = meshFaceIndices->get()[(size_t)offset2 - 1 - k];
             }
          }

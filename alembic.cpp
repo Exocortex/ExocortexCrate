@@ -58,37 +58,6 @@ using namespace MATH;
 #include "CommonProfiler.h"
 #include "CommonMeshUtilities.h"
 
-#ifdef __DEBUG__
-
-   #include <sstream>
-   #ifdef LINUX
-      #include <cstdio>
-      #include <fstream>
-   #endif
-
-   void Exocortex_Debug_Msg(const char *x_msg)
-   {
-      //std::stringstream ss;
-      //ss << "[" << __FILE__ << ":" << __LINE__ << "] " << x_msg;
-
-      //CString final_msg(ss.str().c_str());
-      CString final_msg(x_msg);
-      Application().LogMessage(final_msg, siWarningMsg);
-
-      #ifdef LINUX
-         FILE *console = fopen("/dev/tty", "w");
-         if (console)
-         {
-            //fputs(ss.str().c_str(), console);
-            fputs(x_msg, console);
-            fclose(console);
-         }
-      #else
-
-      #endif
-   }
-
-#endif
 
 SICALLBACK XSILoadPlugin( PluginRegistrar& in_reg )
 {
@@ -140,7 +109,7 @@ SICALLBACK XSILoadPlugin( PluginRegistrar& in_reg )
 		in_reg.RegisterEvent(L"alembic_OnCloseScene",siOnCloseScene);
 	//}
 
-   EXOCORTEX_XSI_LOG_INFO("PLUGIN loaded");
+   ESS_LOG_INFO("PLUGIN loaded");
 
  	return CStatus::OK;
 }
