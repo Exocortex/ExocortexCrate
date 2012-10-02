@@ -87,7 +87,8 @@ XSI::CStatus AlembicPoints::Save(double time)
    // store the transform
    Primitive prim(GetRef());
    bool globalSpace = GetJob()->GetOption(L"globalSpace");
-   SaveXformSample(GetRef(1),mXformSchema,mXformSample,time,false,globalSpace);
+   bool flattenHierarchy = GetJob()->GetOption(L"flattenHierarchy");
+   SaveXformSample(GetRef(1),mXformSchema,mXformSample,time,false,globalSpace,flattenHierarchy);
 
    // query the global space
    CTransformation globalXfo;
