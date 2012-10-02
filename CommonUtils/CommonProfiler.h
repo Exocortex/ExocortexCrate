@@ -359,7 +359,7 @@ HighResolutionTimer
 Profiler;
 
 
-#define ESS_PROFILING
+//#define ESS_PROFILING
 
 #endif // _MSC_VER
 

@@ -1,6 +1,7 @@
 #include "CommonFoundation.h"
 #include "CommonMeshUtilities.h"
 #include "CommonLog.h"
+#include "CommonProfiler.h"
 
 bool isAlembicMeshValid( Alembic::AbcGeom::IObject *pIObj ) {
 	//ESS_PROFILE_FUNC();
@@ -42,7 +43,7 @@ bool isAlembicMeshNormals( Alembic::AbcGeom::IObject *pIObj, bool& isConstant ) 
 
 
 bool isAlembicMeshPositions( Alembic::AbcGeom::IObject *pIObj, bool& isConstant ) {
-	//ESS_PROFILE_FUNC();
+	ESS_PROFILE_SCOPE("isAlembicMeshPositions");
 	Alembic::AbcGeom::IPolyMesh objMesh;
 	Alembic::AbcGeom::ISubD objSubD;
 
@@ -61,7 +62,7 @@ bool isAlembicMeshPositions( Alembic::AbcGeom::IObject *pIObj, bool& isConstant 
 }
 
 bool isAlembicMeshUVWs( Alembic::AbcGeom::IObject *pIObj, bool& isConstant ) {
-	//ESS_PROFILE_FUNC();
+	ESS_PROFILE_SCOPE("isAlembicMeshUVWs");
 	Alembic::AbcGeom::IPolyMesh objMesh;
 	Alembic::AbcGeom::ISubD objSubD;
 
@@ -85,7 +86,7 @@ bool isAlembicMeshUVWs( Alembic::AbcGeom::IObject *pIObj, bool& isConstant ) {
 }
 
 bool isAlembicMeshTopoDynamic( Alembic::AbcGeom::IObject *pIObj ) {
-	//ESS_PROFILE_FUNC();
+	ESS_PROFILE_SCOPE("isAlembicMeshTopoDynamic");
 	Alembic::AbcGeom::IPolyMesh objMesh;
 	Alembic::AbcGeom::ISubD objSubD;
 
@@ -118,7 +119,7 @@ bool isAlembicMeshTopoDynamic( Alembic::AbcGeom::IObject *pIObj ) {
 }
 
 bool isAlembicMeshPointCache( Alembic::AbcGeom::IObject *pIObj ) {
-		//ESS_PROFILE_FUNC();
+	ESS_PROFILE_SCOPE("isAlembicMeshPointCache");
 	Alembic::AbcGeom::IPolyMesh objMesh;
 	Alembic::AbcGeom::ISubD objSubD;
 
@@ -203,7 +204,7 @@ struct edgeData
 };
 
 
-void validateAlembicMeshTopo(std::vector<Alembic::AbcCoreAbstract::ALEMBIC_VERSION_NS::int32_t> faceCounts,
+int validateAlembicMeshTopo(std::vector<Alembic::AbcCoreAbstract::ALEMBIC_VERSION_NS::int32_t> faceCounts,
 							std::vector<Alembic::AbcCoreAbstract::ALEMBIC_VERSION_NS::int32_t> faceIndices,
 							const std::string& meshName)
 {
@@ -212,6 +213,7 @@ void validateAlembicMeshTopo(std::vector<Alembic::AbcCoreAbstract::ALEMBIC_VERSI
 	std::map<edge, edgeData> edgeToCountMap;
 	typedef std::map<edge, edgeData>::iterator iterator;
 
+	int meshErrors = 0;	
 
 	int faceOffset = 0;
 	for(int i=0; i<faceCounts.size(); i++){
@@ -231,6 +233,7 @@ void validateAlembicMeshTopo(std::vector<Alembic::AbcCoreAbstract::ALEMBIC_VERSI
 
 			if(occurences[j] == occurences[j+1]){
 				ESS_LOG_WARNING("Error in mesh \""<<meshName<<"\". Vertex "<<occurences[j]<<" of face "<<i<<" is duplicated.");
+				meshErrors ++;
 			}
 		}
 
@@ -263,11 +266,13 @@ void validateAlembicMeshTopo(std::vector<Alembic::AbcCoreAbstract::ALEMBIC_VERSI
 				if( (eData.bReversed && eData2.bReversed) || (!eData.bReversed && !eData2.bReversed) ){
 					
 					ESS_LOG_WARNING("Error in mesh \""<<meshName<<"\". Edge ("<<e.a<<", "<<e.b<<") is shared between polygons "<<eData.face<<" and "<<eData2.face<<", and these polygons have reversed orderings.");
+					meshErrors ++;
 				}
 			}
 		}
 		
 		faceOffset += count;
 	}
+	return meshErrors;
 
 }

@@ -117,7 +117,8 @@ std::string removeXfoSuffix(const std::string& importName)
 
 Alembic::Abc::ICompoundProperty getCompoundFromObject(Alembic::Abc::IObject object)
 {
-   const Alembic::Abc::MetaData &md = object.getMetaData();
+	ESS_PROFILE_SCOPE("getCompoundFromObject"); 
+    const Alembic::Abc::MetaData &md = object.getMetaData();
    if(Alembic::AbcGeom::IXform::matches(md)) {
       return Alembic::AbcGeom::IXform(object,Alembic::Abc::kWrapExisting).getSchema();
    } else if(Alembic::AbcGeom::IPolyMesh::matches(md)) {
@@ -138,6 +139,7 @@ Alembic::Abc::ICompoundProperty getCompoundFromObject(Alembic::Abc::IObject obje
 
 Alembic::Abc::TimeSamplingPtr getTimeSamplingFromObject(Alembic::Abc::IObject object)
 {
+	ESS_PROFILE_SCOPE("getTimeSamplingFromObject"); 
    const Alembic::Abc::MetaData &md = object.getMetaData();
    if(Alembic::AbcGeom::IXform::matches(md)) {
       return Alembic::AbcGeom::IXform(object,Alembic::Abc::kWrapExisting).getSchema().getTimeSampling();
@@ -159,6 +161,7 @@ Alembic::Abc::TimeSamplingPtr getTimeSamplingFromObject(Alembic::Abc::IObject ob
 
 size_t getNumSamplesFromObject(Alembic::Abc::IObject object)
 {
+	ESS_PROFILE_SCOPE("getNumSamplesFromObject"); 
    const Alembic::Abc::MetaData &md = object.getMetaData();
    if(Alembic::AbcGeom::IXform::matches(md)) {
       return Alembic::AbcGeom::IXform(object,Alembic::Abc::kWrapExisting).getSchema().getNumSamples();
