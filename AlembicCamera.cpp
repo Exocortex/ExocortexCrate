@@ -56,7 +56,8 @@ XSI::CStatus AlembicCamera::Save(double time)
    Primitive prim(GetRef());
 
    // store the transform
-   SaveXformSample(GetRef(1),mXformSchema,mXformSample,time,false,false);
+   bool flattenHierarchy = GetJob()->GetOption(L"flattenHierarchy");
+   SaveXformSample(GetRef(1),mXformSchema,mXformSample,time,false,false,flattenHierarchy);
 
    // set the visibility
    Property visProp;

@@ -71,7 +71,8 @@ XSI::CStatus AlembicPolyMesh::Save(double time)
    // store the transform
    Primitive prim(GetRef());
    bool globalSpace = GetJob()->GetOption(L"globalSpace");
-   SaveXformSample(GetRef(1),mXformSchema,mXformSample,time,false,globalSpace);
+   bool flattenHierarchy = GetJob()->GetOption(L"flattenHierarchy");
+   SaveXformSample(GetRef(1),mXformSchema,mXformSample,time,false,globalSpace,flattenHierarchy);
 
    // query the global space
    CTransformation globalXfo;
@@ -891,7 +892,7 @@ ESS_CALLBACK_START( alembic_polymesh_topo_Update, CRef& )
    if(!objMesh.valid() && !objSubD.valid())
       return CStatus::OK;
 
-   if( isAlembicMeshTopology( & iObj ) ) {
+   if( ! isAlembicMeshTopology( & iObj ) ) {
 	   return CStatus::OK;
    }
 
