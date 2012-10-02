@@ -56,6 +56,7 @@ using namespace MATH;
 #include "AlembicPoints.h"
 #include "AlembicCurves.h"
 #include "CommonProfiler.h"
+#include "CommonMeshUtilities.h"
 
 #ifdef __DEBUG__
 
@@ -876,7 +877,9 @@ CStatus alembic_create_item_Invoke
       default:
          break;
    }
+   }
 
+    { ESS_PROFILE_SCOPE("alembic_create_item_Invoke create_the_operator");
    // now create an operator...?
    switch(itemType)
    {
@@ -2039,12 +2042,8 @@ ESS_CALLBACK_START(alembic_import_Execute, CRef&)
          else
          {
             // only add the point position operator if we don't have dynamic topology
-            bool receivesExpression = false;
-            Alembic::Abc::ICompoundProperty abcCompound = getCompoundFromObject(objects[i]);
-            Alembic::Abc::IInt32ArrayProperty faceCountProp = Alembic::Abc::IInt32ArrayProperty(abcCompound,".faceCounts");
-            if(faceCountProp.valid())
-               receivesExpression = !faceCountProp.isConstant();
-
+            bool receivesExpression = isAlembicMeshTopoDynamic( & ( objects[i] ) );
+            
             if(!receivesExpression)
             {
                Alembic::AbcGeom::IPolyMesh abcMesh = Alembic::AbcGeom::IPolyMesh(objects[i],Alembic::Abc::kWrapExisting);
