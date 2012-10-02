@@ -57,7 +57,7 @@ using namespace MATH;
 #include "AlembicCurves.h"
 #include "CommonProfiler.h"
 #include "CommonMeshUtilities.h"
-
+#include "CommonUtilities.h"
 
 SICALLBACK XSILoadPlugin( PluginRegistrar& in_reg )
 {
@@ -1568,6 +1568,9 @@ CStatus alembic_create_item_Invoke
 	return CStatus::OK;
 }
 
+
+
+
 ESS_CALLBACK_START(alembic_create_item_Execute, CRef&)
 	Context ctxt( in_ctxt );
 	CValueArray args = ctxt.GetAttribute(L"Arguments");
@@ -1584,6 +1587,495 @@ ESS_CALLBACK_START(alembic_create_item_Execute, CRef&)
    ctxt.PutAttribute(L"ReturnValue",returnVal);
    return result;
 ESS_CALLBACK_END
+
+
+//createTransform
+//   if(Alembic::AbcGeom::IXform::matches(objects[i].getMetaData()))
+//   {
+//      // check if this xform has xform children (is is model in this case)
+//      size_t nbTransformChildren = 0;
+//      for(size_t j=0;j<objects[i].getNumChildren();j++)
+//      {
+//         if(Alembic::AbcGeom::IXform::matches(objects[i].getChild(j).getMetaData()))
+//            nbTransformChildren++;
+//      }
+//
+//      if(nbTransformChildren == objects[i].getNumChildren())
+//      {
+//         // first let's check for the parent model
+//         if(Alembic::AbcGeom::IXform::matches(objects[i].getParent().getMetaData()))
+//         {
+//            parentX3DObject = getRefFromIdentifier(objects[i].getParent().getFullName().c_str());
+//            if(!parentX3DObject.IsValid())
+//            {
+//               Application().LogMessage(L"[ExocortexAlembic] Didn't find model for "+CString(objects[i].getParent().getFullName().c_str())+L"', using Scene_Root..",siWarningMsg);
+//               parentX3DObject = Application().GetActiveSceneRoot();
+//            }
+//         }
+//         Model model;
+//         if(attachToExisting)
+//         {
+//		   ESS_PROFILE_SCOPE("attachToExisting");
+//            CRef modelRef;
+//            modelRef.Set(getFullNameFromIdentifier(objects[i].getFullName()));
+//            model = modelRef;
+//
+//            if(!model.GetType().IsEqualNoCase(L"#model"))
+//               model.ResetObject();
+//         }
+//         if(!model.IsValid())
+//         {
+//            CRefArray children;
+//            parentX3DObject.AddModel(children,name,model);
+//            nameMapAdd(objects[i].getFullName().c_str(),model.GetFullName());
+//         }
+//
+//         // load metadata
+//         alembic_create_item_Invoke(L"alembic_metadata",model.GetRef(),filename,objects[i].getFullName().c_str(),attachToExisting,createItemArgs);
+//
+//         // load xform
+//         alembic_create_item_Invoke(L"alembic_xform",model.GetRef(),filename,objects[i].getFullName().c_str(),attachToExisting,createItemArgs);
+//
+//         // load visibility
+//         alembic_create_item_Invoke(L"alembic_visibility",model.GetRef(),filename,objects[i].getFullName().c_str(),attachToExisting,createItemArgs);
+//      }
+//   }
+
+void createShape( Alembic::Abc::IObject& iObj, X3DObject& parentX3DObject, CString& filename, bool attachToExisting, bool importStandins, bool importBboxes, CValueArray& createItemArgs)
+{
+   
+   CString name = truncateName(iObj.getName().c_str());
+   Alembic::Abc::IObject parent = iObj.getParent();
+
+   // after dealing with transforms, let's deal with all shape types
+   if(Alembic::AbcGeom::ICamera::matches(iObj.getMetaData()))
+   {
+      // let's create a camera
+      Camera camera;
+      if(attachToExisting)
+      {
+	   ESS_PROFILE_SCOPE("attachToExisting");
+         CRef cameraRef;
+         cameraRef.Set(getFullNameFromIdentifier(iObj.getFullName()));
+         camera = cameraRef;
+         if(!camera.GetType().IsEqualNoCase(L"camera"))
+            camera.ResetObject();
+      }
+      if(!camera.IsValid())
+      {
+         parentX3DObject.AddCamera(L"Camera",name,camera);
+         nameMapAdd(iObj.getFullName().c_str(),camera.GetFullName());
+      }
+
+      // delete the interest
+      CValueArray deleteArgs(1);
+      deleteArgs[0] = camera.GetInterest().GetFullName();
+      CValue setExprReturn;
+      Application().ExecuteCommand(L"DeleteObj",deleteArgs,setExprReturn);
+
+      // load metadata
+      alembic_create_item_Invoke(L"alembic_metadata",camera.GetRef(),filename,iObj.getFullName().c_str(),attachToExisting,createItemArgs);
+
+      // let's setup the xform op
+      if(Alembic::AbcGeom::IXform::matches(parent.getMetaData()))
+         alembic_create_item_Invoke(L"alembic_xform",camera.GetRef(),filename,parent.getFullName().c_str(),attachToExisting,createItemArgs);
+      
+      // load visibility
+      alembic_create_item_Invoke(L"alembic_visibility",camera.GetRef(),filename,iObj.getFullName().c_str(),attachToExisting,createItemArgs);
+
+      // load camera
+      alembic_create_item_Invoke(L"alembic_camera",camera.GetRef(),filename,iObj.getFullName().c_str(),attachToExisting,createItemArgs);
+   }
+   else if(Alembic::AbcGeom::IPolyMesh::matches(iObj.getMetaData()))
+   {
+      X3DObject meshObj;
+      if(attachToExisting)
+      {
+	   ESS_PROFILE_SCOPE("attachToExisting");
+         CRef meshRef;
+         meshRef.Set(getFullNameFromIdentifier(iObj.getFullName()));
+         meshObj = meshRef;
+
+         if(!meshObj.GetType().IsEqualNoCase(L"PolyMsh"))
+            meshObj.ResetObject();
+      }
+      if(!meshObj.IsValid())
+      {
+         if(importBboxes)
+            parentX3DObject.AddGeometry(L"Cube",L"MeshSurface",name,meshObj);
+         else
+            parentX3DObject.AddPrimitive(L"EmptyPolygonMesh",name,meshObj);
+         nameMapAdd(iObj.getFullName().c_str(),meshObj.GetFullName());
+      }
+
+      // load metadata
+      alembic_create_item_Invoke(L"alembic_metadata",meshObj.GetRef(),filename,iObj.getFullName().c_str(),attachToExisting,createItemArgs);
+
+      // create the topo op
+      CRef returnOpRef;
+      if(!importBboxes)
+      {
+         CValue returnedOpVal;
+         alembic_create_item_Invoke(L"alembic_polymesh_topo",meshObj.GetRef(),filename,iObj.getFullName().c_str(),attachToExisting,createItemArgs,returnedOpVal);
+         returnOpRef = (CRef)returnedOpVal;
+      }
+
+      // load visibility
+      alembic_create_item_Invoke(L"alembic_visibility",meshObj.GetRef(),filename,iObj.getFullName().c_str(),attachToExisting,createItemArgs);
+
+      // let's setup the xform op
+      if(Alembic::AbcGeom::IXform::matches(parent.getMetaData()))
+         alembic_create_item_Invoke(L"alembic_xform",meshObj.GetRef(),filename,parent.getFullName().c_str(),attachToExisting,createItemArgs);
+      
+      // let's setup the positions op
+      if(importBboxes)
+      {
+         CValue returnedOpVal;
+         alembic_create_item_Invoke(L"alembic_bbox",meshObj.GetRef(),filename,iObj.getFullName().c_str(),attachToExisting,createItemArgs,returnedOpVal);
+         returnOpRef = (CRef)returnedOpVal;
+      }
+      else
+      {
+         // only add the point position operator if we don't have dynamic topology
+         bool receivesExpression = isAlembicMeshTopoDynamic( & ( iObj ) );
+         
+         if(!receivesExpression)
+         {
+            Alembic::AbcGeom::IPolyMesh abcMesh = Alembic::AbcGeom::IPolyMesh(iObj,Alembic::Abc::kWrapExisting);
+            CValue returnedOpVal;
+            alembic_create_item_Invoke(L"alembic_polymesh",meshObj.GetRef(),filename,iObj.getFullName().c_str(),attachToExisting,createItemArgs,returnedOpVal);
+            returnOpRef = (CRef)returnedOpVal;
+         }
+      }
+
+      // load standin property
+      if(importStandins && returnOpRef.IsValid())
+         alembic_create_item_Invoke(L"alembic_standin",returnOpRef,filename,iObj.getFullName().c_str(),attachToExisting,createItemArgs);
+   }
+   else if(Alembic::AbcGeom::ISubD::matches(iObj.getMetaData()))
+   {
+      X3DObject meshObj;
+      if(attachToExisting)
+      {
+	   ESS_PROFILE_SCOPE("attachToExisting");
+         CRef meshRef;
+         meshRef.Set(getFullNameFromIdentifier(iObj.getFullName()));
+         meshObj = meshRef;
+
+         if(!meshObj.GetType().IsEqualNoCase(L"PolyMsh"))
+            meshObj.ResetObject();
+      }
+      if(!meshObj.IsValid())
+      {
+         if(importBboxes)
+            parentX3DObject.AddGeometry(L"Cube",L"MeshSurface",name,meshObj);
+         else
+            parentX3DObject.AddPrimitive(L"EmptyPolygonMesh",name,meshObj);
+         nameMapAdd(iObj.getFullName().c_str(),meshObj.GetFullName());
+      }
+
+      // make the geometry approx local
+      CValue makeLocalReturn;
+      CValueArray makeLocalArgs(2);
+      makeLocalArgs[0] = meshObj.GetFullName()+L".geomapprox";
+      makeLocalArgs[1] = siNodePropagation;
+      Application().ExecuteCommand(L"MakeLocal",makeLocalArgs,makeLocalReturn);
+
+      // load metadata
+      alembic_create_item_Invoke(L"alembic_metadata",meshObj.GetRef(),filename,iObj.getFullName().c_str(),attachToExisting,createItemArgs);
+
+      // create the topo op
+      CRef returnOpRef;
+      if(!importBboxes)
+      {
+         CValue returnedOpVal;
+         alembic_create_item_Invoke(L"alembic_polymesh_topo",meshObj.GetRef(),filename,iObj.getFullName().c_str(),attachToExisting,createItemArgs,returnedOpVal);
+         returnOpRef = (CRef)returnedOpVal;
+      }
+
+      // load visibility
+      alembic_create_item_Invoke(L"alembic_visibility",meshObj.GetRef(),filename,iObj.getFullName().c_str(),attachToExisting,createItemArgs);
+
+      // load geometryapprox
+      if(!importBboxes)
+         alembic_create_item_Invoke(L"alembic_geomapprox",meshObj.GetRef(),filename,iObj.getFullName().c_str(),attachToExisting,createItemArgs);
+
+      // let's setup the xform op
+      if(Alembic::AbcGeom::IXform::matches(parent.getMetaData()))
+         alembic_create_item_Invoke(L"alembic_xform",meshObj.GetRef(),filename,parent.getFullName().c_str(),attachToExisting,createItemArgs);
+      
+      // let's setup the positions op
+      if(importBboxes)
+      {
+         CValue returnedOpVal;
+         alembic_create_item_Invoke(L"alembic_bbox",meshObj.GetRef(),filename,iObj.getFullName().c_str(),attachToExisting,createItemArgs,returnedOpVal);
+         returnOpRef = (CRef)returnedOpVal;
+      }
+      else
+      {
+         // only add the point position operator if we don't have dynamic topology
+         Alembic::AbcGeom::ISubD abcSubD = Alembic::AbcGeom::ISubD(iObj,Alembic::Abc::kWrapExisting);
+         CValue returnedOpVal;
+         alembic_create_item_Invoke(L"alembic_polymesh",meshObj.GetRef(),filename,iObj.getFullName().c_str(),attachToExisting,createItemArgs,returnedOpVal);
+         returnOpRef = (CRef)returnedOpVal;
+      }
+
+      // load standin property
+      if(importStandins && returnOpRef.IsValid())
+         alembic_create_item_Invoke(L"alembic_standin",returnOpRef,filename,iObj.getFullName().c_str(),attachToExisting,createItemArgs);
+   }
+   else if(Alembic::AbcGeom::INuPatch::matches(iObj.getMetaData()))
+   {
+      X3DObject nurbsObj;
+      if(attachToExisting)
+      {
+	   ESS_PROFILE_SCOPE("attachToExisting");
+         CRef nurbsRef;
+         nurbsRef.Set(getFullNameFromIdentifier(iObj.getFullName()));
+         nurbsObj = nurbsRef;
+         if(!nurbsObj.GetType().IsEqualNoCase(L"surfmsh"))
+            nurbsObj.ResetObject();
+      }
+      if(!nurbsObj.IsValid())
+      {
+         // warn
+         Application().LogMessage(L"[ExocortexAlembic] Skipping nurbs '"+name+L"', nurbs object not found in scene.",siWarningMsg);
+      }
+      else
+      {
+         // load metadata
+         alembic_create_item_Invoke(L"alembic_metadata",nurbsObj.GetRef(),filename,iObj.getFullName().c_str(),attachToExisting,createItemArgs);
+
+         // let's setup the xform op
+         if(Alembic::AbcGeom::IXform::matches(parent.getMetaData()))
+            alembic_create_item_Invoke(L"alembic_xform",nurbsObj.GetRef(),filename,parent.getFullName().c_str(),attachToExisting,createItemArgs);
+         
+         alembic_create_item_Invoke(L"alembic_nurbs",nurbsObj.GetRef(),filename,iObj.getFullName().c_str(),attachToExisting,createItemArgs);
+      }
+   }
+   else if(Alembic::AbcGeom::ICurves::matches(iObj.getMetaData()))
+   {
+      // let's create a crvlist
+      Alembic::AbcGeom::ICurves curveIObject(iObj,Alembic::Abc::kWrapExisting);
+      Alembic::AbcGeom::ICurvesSchema curveSchema = curveIObject.getSchema();
+      Alembic::AbcGeom::ICurvesSchema::Sample curveSample = curveSchema.getValue();
+
+      // check for valid curve types...!
+      if(curveSample.getType() != Alembic::AbcGeom::ALEMBIC_VERSION_NS::kLinear &&
+         curveSample.getType() != Alembic::AbcGeom::ALEMBIC_VERSION_NS::kCubic)
+      {
+         Application().LogMessage(L"[ExocortexAlembic] Skipping curve '"+name+L"', invalid curve type.",siWarningMsg);
+         return;
+      }
+
+      // now let's check if we are looking at a curves node with color and radii
+
+	 bool useParticles = true;
+	 {
+		 Alembic::Abc::IFloatArrayProperty propRadius;
+		 if( ! getArbGeomParamPropertyAlembic( curveIObject, "radius", propRadius ) ) {
+			 useParticles = false;
+		 }
+		 Alembic::Abc::IC4fArrayProperty propColor;
+		 if( ! getArbGeomParamPropertyAlembic( curveIObject, "color", propColor ) ) {
+			 useParticles = false;
+		 } 
+	 }
+      /*bool useParticles = curveSchema.getPropertyHeader( ".radius" ) != NULL || curveSchema.getPropertyHeader( ".color" ) != NULL;
+      if(useParticles)
+      {
+         if( curveSchema.getPropertyHeader( ".radius" ) != NULL )
+         {
+            Alembic::Abc::IFloatArrayProperty prop = Alembic::Abc::IFloatArrayProperty( curveSchema, ".radius" );
+            if(!prop.valid())
+               useParticles = false;
+            else if(prop.getNumSamples() == 0)
+               useParticles = false;
+         }
+         else if( curveSchema.getPropertyHeader( ".color" ) != NULL )
+         {
+            Alembic::Abc::IC4fArrayProperty prop = Alembic::Abc::IC4fArrayProperty( curveSchema, ".color" );
+            if(!prop.valid())
+               useParticles = false;
+            else if(prop.getNumSamples() == 0)
+               useParticles = false;
+         }
+      }*/
+
+      if (useParticles)
+      {
+         X3DObject pointsObj;
+         if(attachToExisting)
+         {
+ 		   ESS_PROFILE_SCOPE("attachToExisting");
+           CRef pointsRef;
+            pointsRef.Set(getFullNameFromIdentifier(iObj.getFullName()));
+            pointsObj = pointsRef;
+            if(!pointsObj.GetType().IsEqualNoCase(L"pointcloud"))
+               pointsObj.ResetObject();
+         }
+         if(!pointsObj.IsValid())
+         {
+            if(importBboxes)
+               parentX3DObject.AddGeometry(L"Cube",L"MeshSurface",name,pointsObj);
+            else
+               parentX3DObject.AddPrimitive(L"PointCloud",name,pointsObj);
+            nameMapAdd(iObj.getFullName().c_str(),pointsObj.GetFullName());
+         }
+
+         // load metadata
+         alembic_create_item_Invoke(L"alembic_metadata",pointsObj.GetRef(),filename,iObj.getFullName().c_str(),attachToExisting,createItemArgs);
+
+         // load visibility
+         alembic_create_item_Invoke(L"alembic_visibility",pointsObj.GetRef(),filename,iObj.getFullName().c_str(),attachToExisting,createItemArgs);
+
+         // load curves
+         CRef returnOpRef;
+         if(importBboxes)
+         {
+            CValue returnedOpVal;
+            alembic_create_item_Invoke(L"alembic_bbox",pointsObj.GetRef(),filename,iObj.getFullName().c_str(),attachToExisting,createItemArgs,returnedOpVal);
+            returnOpRef = (CRef)returnedOpVal;
+         }
+         else
+         {
+            CValue returnedOpVal;
+            alembic_create_item_Invoke(L"alembic_curves",pointsObj.GetRef(),filename,iObj.getFullName().c_str(),attachToExisting,createItemArgs,returnedOpVal);
+            returnOpRef = (CRef)returnedOpVal;
+         }
+
+         // let's setup the xform op
+         if(Alembic::AbcGeom::IXform::matches(parent.getMetaData()))
+            alembic_create_item_Invoke(L"alembic_xform",pointsObj.GetRef(),filename,parent.getFullName().c_str(),attachToExisting,createItemArgs);
+
+         // load standin property
+         if(importStandins && returnOpRef.IsValid())
+            alembic_create_item_Invoke(L"alembic_standin",returnOpRef,filename,iObj.getFullName().c_str(),attachToExisting,createItemArgs);
+      }
+      else
+      {
+         X3DObject curveObj;
+         if(attachToExisting)
+         {
+           ESS_PROFILE_SCOPE("attachToExisting");
+            CRef curveRef;
+            curveRef.Set(getFullNameFromIdentifier(iObj.getFullName()));
+            curveObj = curveRef;
+            if(!curveObj.GetType().IsEqualNoCase(L"crvlist") && !curveObj.GetType().IsEqualNoCase(L"hair"))
+               curveObj.ResetObject();
+         }
+         if(!curveObj.IsValid())
+         {
+            if(importBboxes)
+               parentX3DObject.AddGeometry(L"Cube",L"MeshSurface",name,curveObj);
+            else
+               parentX3DObject.AddNurbsCurveList(CNurbsCurveDataArray(),siSINurbs,name,curveObj);
+            nameMapAdd(iObj.getFullName().c_str(),curveObj.GetFullName());
+         }
+
+         // load metadata
+         alembic_create_item_Invoke(L"alembic_metadata",curveObj.GetRef(),filename,iObj.getFullName().c_str(),attachToExisting,createItemArgs);
+
+         // load visibility
+         alembic_create_item_Invoke(L"alembic_visibility",curveObj.GetRef(),filename,iObj.getFullName().c_str(),attachToExisting,createItemArgs);
+
+         // load curve topo if it's not hair because that will already have desired topology if it exists
+         if(!importBboxes && !curveObj.GetType().IsEqualNoCase(L"hair"))
+            alembic_create_item_Invoke(L"alembic_crvlist_topo",curveObj.GetRef(),filename,iObj.getFullName().c_str(),attachToExisting,createItemArgs);
+
+         // load curve anim
+         CRef returnOpRef;
+         if(importBboxes)
+         {
+            CValue returnedOpVal;
+            alembic_create_item_Invoke(L"alembic_bbox",curveObj.GetRef(),filename,iObj.getFullName().c_str(),attachToExisting,createItemArgs,returnedOpVal);
+            returnOpRef = (CRef)returnedOpVal;
+         }
+         else
+         {
+            CValue returnedOpVal;
+            alembic_create_item_Invoke(L"alembic_crvlist",curveObj.GetRef(),filename,iObj.getFullName().c_str(),attachToExisting,createItemArgs,returnedOpVal);
+            returnOpRef = (CRef)returnedOpVal;
+         }
+
+         // allow stretching as there may have been dynamics applied to the hair
+         if( curveObj.GetType().IsEqualNoCase(L"hair"))
+         {
+            curveObj.GetActivePrimitive().PutParameterValue(L"AllowStretch", true);
+         }
+
+         // let's setup the xform op
+         if(Alembic::AbcGeom::IXform::matches(parent.getMetaData()))
+            alembic_create_item_Invoke(L"alembic_xform",curveObj.GetRef(),filename,parent.getFullName().c_str(),attachToExisting,createItemArgs);
+
+         // load standin property
+         if(importStandins && returnOpRef.IsValid())
+            alembic_create_item_Invoke(L"alembic_standin",returnOpRef,filename,iObj.getFullName().c_str(),attachToExisting,createItemArgs);
+      }
+   }
+   else if(Alembic::AbcGeom::IPoints::matches(iObj.getMetaData()))
+   {
+      Alembic::AbcGeom::IPoints pointsIObject(iObj,Alembic::Abc::kWrapExisting);
+      Alembic::AbcGeom::IPointsSchema pointsSchema = pointsIObject.getSchema();
+      Alembic::AbcGeom::IPointsSchema::Sample pointsSample = pointsSchema.getValue();
+
+      X3DObject pointsObj;
+      if(attachToExisting)
+      {
+         ESS_PROFILE_SCOPE("attachToExisting");
+         CRef pointsRef;
+         pointsRef.Set(getFullNameFromIdentifier(iObj.getFullName()));
+         pointsObj = pointsRef;
+         if(!pointsObj.GetType().IsEqualNoCase(L"pointcloud"))
+            pointsObj.ResetObject();
+      }
+      if(!pointsObj.IsValid())
+      {
+         if(importBboxes)
+            parentX3DObject.AddGeometry(L"Cube",L"MeshSurface",name,pointsObj);
+         else
+            parentX3DObject.AddPrimitive(L"PointCloud",name,pointsObj);
+         nameMapAdd(iObj.getFullName().c_str(),pointsObj.GetFullName());
+      }
+
+      // load metadata
+      alembic_create_item_Invoke(L"alembic_metadata",pointsObj.GetRef(),filename,iObj.getFullName().c_str(),attachToExisting,createItemArgs);
+
+      // load visibility
+      alembic_create_item_Invoke(L"alembic_visibility",pointsObj.GetRef(),filename,iObj.getFullName().c_str(),attachToExisting,createItemArgs);
+
+      // let's setup the xform op
+      if(Alembic::AbcGeom::IXform::matches(parent.getMetaData()))
+         alembic_create_item_Invoke(L"alembic_xform",pointsObj.GetRef(),filename,parent.getFullName().c_str(),attachToExisting,createItemArgs);
+
+      // apply the ice tree
+      CRef returnOpRef;
+      if(importBboxes) {
+         CValue returnedOpVal;
+         alembic_create_item_Invoke(L"alembic_bbox",pointsObj.GetRef(),filename,iObj.getFullName().c_str(),attachToExisting,createItemArgs,returnedOpVal);
+         returnOpRef = (CRef)returnedOpVal;
+      } else {
+         CValue returnedOpVal;
+         alembic_create_item_Invoke(L"alembic_points",pointsObj.GetRef(),filename,iObj.getFullName().c_str(),attachToExisting,createItemArgs,returnedOpVal);
+         returnOpRef = (CRef)returnedOpVal;
+      }
+
+      // load standin property
+      if(importStandins && returnOpRef.IsValid())
+         alembic_create_item_Invoke(L"alembic_standin",returnOpRef,filename,iObj.getFullName().c_str(),attachToExisting,createItemArgs);
+   }
+}
+
+
+
+struct stackElement
+{
+   Alembic::Abc::IObject iObj;
+   X3DObject* parentX3DObject;
+
+   stackElement(Alembic::Abc::IObject iObj, X3DObject* parent):iObj(iObj), parentX3DObject(parent)
+   {}
+};
 
 ESS_CALLBACK_START(alembic_import_Execute, CRef&)
 	Context ctxt( in_ctxt );
@@ -1738,30 +2230,121 @@ ESS_CALLBACK_START(alembic_import_Execute, CRef&)
    createItemArgs[3] = importUVs;
    createItemArgs[4] = importVisibility;
 
-   // let's figure out which objects we have
+   //// let's figure out which objects we have
    std::vector<Alembic::Abc::IObject> objects;
-   objects.push_back(archive->getTop());
+   //objects.push_back(archive->getTop());
    size_t nbTransforms = 1;
+   //{
+	  // ESS_PROFILE_SCOPE("alembic_import_Execute traverse ABC Hierarchy");
+	  // for(size_t i=0;i<objects.size();i++)
+	  // {
+		 // // first, let's recurse, do the transforms last
+		 // for(size_t j=0;j<objects[i].getNumChildren();j++)
+		 // {
+			// if(!Alembic::AbcGeom::IXform::matches(objects[i].getChild(j).getMetaData()))
+			//	objects.push_back(objects[i].getChild(j));
+		 // }
+		 // for(size_t j=0;j<objects[i].getNumChildren();j++)
+		 // {
+			// if(Alembic::AbcGeom::IXform::matches(objects[i].getChild(j).getMetaData())) 
+			// {
+			//	objects.push_back(objects[i].getChild(j));
+			//	nbTransforms++;
+			// }
+		 // }
+	  // }
+   //}
+
+   std::list<stackElement> sceneStack;
+	Alembic::AbcGeom::IObject root = archive->getTop();
+	for(size_t j=0; j<root.getNumChildren(); j++)
+	{
+      sceneStack.push_back(stackElement(root.getChild(j), NULL));
+	} 
+
+   while( !sceneStack.empty() )
    {
-	   ESS_PROFILE_SCOPE("alembic_import_Execute traverse ABC Hierarchy");
-	   for(size_t i=0;i<objects.size();i++)
+      stackElement sElement = sceneStack.back();
+      sceneStack.pop_back();
+      Alembic::Abc::IObject& iObj = sElement.iObj;
+      X3DObject* parentX3DObject = sElement.parentX3DObject;
+      NodeCategory::type cat = NodeCategory::get(iObj);
+
+
+      bool bCreateNullNode = false;
+      int nMergedGeomNodeIndex = -1;
+		Alembic::AbcGeom::IObject* mergedGeomChild = NULL;
+      if(cat == NodeCategory::XFORM)
+		{	//if a transform node, decide whether or not use a dummy node OR merge this dummy node with geometry node child
+
+			unsigned geomNodeCount = 0;
+         int mergeIndex;
+			for(int j=0; j<(int)iObj.getNumChildren(); j++)
+			{
+            if( NodeCategory::get(iObj.getChild(j)) == NodeCategory::GEOMETRY ){
+					mergedGeomChild = &iObj.getChild(j);
+					mergeIndex = j;
+					geomNodeCount++;
+				}
+			} 
+
+			if(geomNodeCount == 0 ){//create dummy node
+				bCreateNullNode = true;
+			}
+			else if(geomNodeCount == 1){ //create geometry node
+
+				std::string parentName = removeXfoSuffix(iObj.getName());
+				std::string childName = mergedGeomChild->getName();
+				//only merge if the parent and child have the same name after the Xfo suffix has been removed (if present)
+				if(parentName.compare(childName) == 0){
+					nMergedGeomNodeIndex = mergeIndex;
+				}
+				else{
+					bCreateNullNode = true;
+				}
+			}
+			else if(geomNodeCount > 1){ //create dummy node
+				bCreateNullNode = true;
+			}
+		}
+
+      X3DObject* newX3DObject = NULL;
+
+		if(bCreateNullNode){
+
+
+		}
+		else{
+			if(nMergedGeomNodeIndex != -1){//we are merging, so look at the child geometry node
+
+				//createShape( *mergedGeomChild, *parentX3DObject, filename, attachToExisting, importStandins, importBboxes, createItemArgs);
+			}
+			else{ //geometry node(s) under a dummy node (in pParentMaxNode)
+
+				//createShape( iObj, parentX3DObject, filename, attachToExisting, importStandins, importBboxes, createItemArgs);
+			}
+
+		}
+
+		//if(pParentMaxNode && !pExistingNode){
+		//	pParentMaxNode->AttachChild(pMaxNode, keepTM);
+		//}
+
+
+      //push the children as the last step, since we need to who the parent is first (we may have merged)
+	   for(size_t j=0; j<iObj.getNumChildren(); j++)
 	   {
-		  // first, let's recurse, do the transforms last
-		  for(size_t j=0;j<objects[i].getNumChildren();j++)
-		  {
-			 if(!Alembic::AbcGeom::IXform::matches(objects[i].getChild(j).getMetaData()))
-				objects.push_back(objects[i].getChild(j));
-		  }
-		  for(size_t j=0;j<objects[i].getNumChildren();j++)
-		  {
-			 if(Alembic::AbcGeom::IXform::matches(objects[i].getChild(j).getMetaData())) 
-			 {
-				objects.push_back(objects[i].getChild(j));
-				nbTransforms++;
-			 }
-		  }
-	   }
+         if( NodeCategory::get(iObj.getChild(j)) == NodeCategory::UNSUPPORTED ) continue;// skip over unsupported types
+
+         //I assume that the geometry node being merged does not have any children (I believe this case would never happen)
+         //TODO: warning if geometry node has geometry node child
+         if( nMergedGeomNodeIndex != j )
+         {
+            sceneStack.push_back( stackElement(iObj.getChild(j), newX3DObject) );
+         }
+	   } 
    }
+
 
    ProgressBar prog;
    prog = Application().GetUIToolkit().GetProgressBar();
@@ -1878,486 +2461,22 @@ ESS_CALLBACK_START(alembic_import_Execute, CRef&)
       X3DObject parentX3DObject = Application().GetActiveSceneRoot();
 
       // now let's see what we have here
-      if(Alembic::AbcGeom::IXform::matches(objects[i].getMetaData()))
-      {
-         // check if this xform has xform children (is is model in this case)
-         size_t nbTransformChildren = 0;
-         for(size_t j=0;j<objects[i].getNumChildren();j++)
-         {
-            if(Alembic::AbcGeom::IXform::matches(objects[i].getChild(j).getMetaData()))
-               nbTransformChildren++;
-         }
 
-         if(nbTransformChildren == objects[i].getNumChildren())
-         {
-            // first let's check for the parent model
-            if(Alembic::AbcGeom::IXform::matches(objects[i].getParent().getMetaData()))
-            {
-               parentX3DObject = getRefFromIdentifier(objects[i].getParent().getFullName().c_str());
-               if(!parentX3DObject.IsValid())
-               {
-                  Application().LogMessage(L"[ExocortexAlembic] Didn't find model for "+CString(objects[i].getParent().getFullName().c_str())+L"', using Scene_Root..",siWarningMsg);
-                  parentX3DObject = Application().GetActiveSceneRoot();
-               }
-            }
-            Model model;
-            if(attachToExisting)
-            {
-			   ESS_PROFILE_SCOPE("attachToExisting");
-               CRef modelRef;
-               modelRef.Set(getFullNameFromIdentifier(objects[i].getFullName()));
-               model = modelRef;
+      //else if(parent.valid())
+      //{
+      //   // if we are not a transform, check for our model
+      //   if(Alembic::AbcGeom::IXform::matches(parent.getMetaData()))
+      //   {
+      //      // check if the transform has a parent as well!
+      //      if(Alembic::AbcGeom::IXform::matches(parent.getParent().getMetaData()))
+      //      {
+      //         // this is a model, so let's get it
+      //         parentX3DObject = getRefFromIdentifier(parent.getParent().getFullName());
+      //      }
+      //   }
+      //}
 
-               if(!model.GetType().IsEqualNoCase(L"#model"))
-                  model.ResetObject();
-            }
-            if(!model.IsValid())
-            {
-               CRefArray children;
-               parentX3DObject.AddModel(children,name,model);
-               nameMapAdd(objects[i].getFullName().c_str(),model.GetFullName());
-            }
-
-            // load metadata
-            alembic_create_item_Invoke(L"alembic_metadata",model.GetRef(),filename,objects[i].getFullName().c_str(),attachToExisting,createItemArgs);
-
-            // load xform
-            alembic_create_item_Invoke(L"alembic_xform",model.GetRef(),filename,objects[i].getFullName().c_str(),attachToExisting,createItemArgs);
-
-            // load visibility
-            alembic_create_item_Invoke(L"alembic_visibility",model.GetRef(),filename,objects[i].getFullName().c_str(),attachToExisting,createItemArgs);
-         }
-      }
-      else if(parent.valid())
-      {
-         // if we are not a transform, check for our model
-         if(Alembic::AbcGeom::IXform::matches(parent.getMetaData()))
-         {
-            // check if the transform has a parent as well!
-            if(Alembic::AbcGeom::IXform::matches(parent.getParent().getMetaData()))
-            {
-               // this is a model, so let's get it
-               parentX3DObject = getRefFromIdentifier(parent.getParent().getFullName());
-            }
-         }
-      }
-
-      // after dealing with transforms, let's deal with all shape types
-      if(Alembic::AbcGeom::ICamera::matches(objects[i].getMetaData()))
-      {
-         // let's create a camera
-         Camera camera;
-         if(attachToExisting)
-         {
-  		   ESS_PROFILE_SCOPE("attachToExisting");
-            CRef cameraRef;
-            cameraRef.Set(getFullNameFromIdentifier(objects[i].getFullName()));
-            camera = cameraRef;
-            if(!camera.GetType().IsEqualNoCase(L"camera"))
-               camera.ResetObject();
-         }
-         if(!camera.IsValid())
-         {
-            parentX3DObject.AddCamera(L"Camera",name,camera);
-            nameMapAdd(objects[i].getFullName().c_str(),camera.GetFullName());
-         }
-
-         // delete the interest
-         CValueArray deleteArgs(1);
-         deleteArgs[0] = camera.GetInterest().GetFullName();
-         Application().ExecuteCommand(L"DeleteObj",deleteArgs,setExprReturn);
-
-         // load metadata
-         alembic_create_item_Invoke(L"alembic_metadata",camera.GetRef(),filename,objects[i].getFullName().c_str(),attachToExisting,createItemArgs);
-
-         // let's setup the xform op
-         if(Alembic::AbcGeom::IXform::matches(parent.getMetaData()))
-            alembic_create_item_Invoke(L"alembic_xform",camera.GetRef(),filename,parent.getFullName().c_str(),attachToExisting,createItemArgs);
-         
-         // load visibility
-         alembic_create_item_Invoke(L"alembic_visibility",camera.GetRef(),filename,objects[i].getFullName().c_str(),attachToExisting,createItemArgs);
-
-         // load camera
-         alembic_create_item_Invoke(L"alembic_camera",camera.GetRef(),filename,objects[i].getFullName().c_str(),attachToExisting,createItemArgs);
-      }
-      else if(Alembic::AbcGeom::IPolyMesh::matches(objects[i].getMetaData()))
-      {
-         X3DObject meshObj;
-         if(attachToExisting)
-         {
- 		   ESS_PROFILE_SCOPE("attachToExisting");
-            CRef meshRef;
-            meshRef.Set(getFullNameFromIdentifier(objects[i].getFullName()));
-            meshObj = meshRef;
-
-            if(!meshObj.GetType().IsEqualNoCase(L"PolyMsh"))
-               meshObj.ResetObject();
-         }
-         if(!meshObj.IsValid())
-         {
-            if(importBboxes)
-               parentX3DObject.AddGeometry(L"Cube",L"MeshSurface",name,meshObj);
-            else
-               parentX3DObject.AddPrimitive(L"EmptyPolygonMesh",name,meshObj);
-            nameMapAdd(objects[i].getFullName().c_str(),meshObj.GetFullName());
-         }
-
-         // load metadata
-         alembic_create_item_Invoke(L"alembic_metadata",meshObj.GetRef(),filename,objects[i].getFullName().c_str(),attachToExisting,createItemArgs);
-
-         // create the topo op
-         CRef returnOpRef;
-         if(!importBboxes)
-         {
-            CValue returnedOpVal;
-            alembic_create_item_Invoke(L"alembic_polymesh_topo",meshObj.GetRef(),filename,objects[i].getFullName().c_str(),attachToExisting,createItemArgs,returnedOpVal);
-            returnOpRef = (CRef)returnedOpVal;
-         }
-
-         // load visibility
-         alembic_create_item_Invoke(L"alembic_visibility",meshObj.GetRef(),filename,objects[i].getFullName().c_str(),attachToExisting,createItemArgs);
-
-         // let's setup the xform op
-         if(Alembic::AbcGeom::IXform::matches(parent.getMetaData()))
-            alembic_create_item_Invoke(L"alembic_xform",meshObj.GetRef(),filename,parent.getFullName().c_str(),attachToExisting,createItemArgs);
-         
-         // let's setup the positions op
-         if(importBboxes)
-         {
-            CValue returnedOpVal;
-            alembic_create_item_Invoke(L"alembic_bbox",meshObj.GetRef(),filename,objects[i].getFullName().c_str(),attachToExisting,createItemArgs,returnedOpVal);
-            returnOpRef = (CRef)returnedOpVal;
-         }
-         else
-         {
-            // only add the point position operator if we don't have dynamic topology
-            bool receivesExpression = isAlembicMeshTopoDynamic( & ( objects[i] ) );
-            
-            if(!receivesExpression)
-            {
-               Alembic::AbcGeom::IPolyMesh abcMesh = Alembic::AbcGeom::IPolyMesh(objects[i],Alembic::Abc::kWrapExisting);
-               CValue returnedOpVal;
-               alembic_create_item_Invoke(L"alembic_polymesh",meshObj.GetRef(),filename,objects[i].getFullName().c_str(),attachToExisting,createItemArgs,returnedOpVal);
-               returnOpRef = (CRef)returnedOpVal;
-            }
-         }
-
-         // load standin property
-         if(importStandins && returnOpRef.IsValid())
-            alembic_create_item_Invoke(L"alembic_standin",returnOpRef,filename,objects[i].getFullName().c_str(),attachToExisting,createItemArgs);
-      }
-      else if(Alembic::AbcGeom::ISubD::matches(objects[i].getMetaData()))
-      {
-         X3DObject meshObj;
-         if(attachToExisting)
-         {
- 		   ESS_PROFILE_SCOPE("attachToExisting");
-            CRef meshRef;
-            meshRef.Set(getFullNameFromIdentifier(objects[i].getFullName()));
-            meshObj = meshRef;
-
-            if(!meshObj.GetType().IsEqualNoCase(L"PolyMsh"))
-               meshObj.ResetObject();
-         }
-         if(!meshObj.IsValid())
-         {
-            if(importBboxes)
-               parentX3DObject.AddGeometry(L"Cube",L"MeshSurface",name,meshObj);
-            else
-               parentX3DObject.AddPrimitive(L"EmptyPolygonMesh",name,meshObj);
-            nameMapAdd(objects[i].getFullName().c_str(),meshObj.GetFullName());
-         }
-
-         // make the geometry approx local
-         CValue makeLocalReturn;
-         CValueArray makeLocalArgs(2);
-         makeLocalArgs[0] = meshObj.GetFullName()+L".geomapprox";
-         makeLocalArgs[1] = siNodePropagation;
-         Application().ExecuteCommand(L"MakeLocal",makeLocalArgs,makeLocalReturn);
-
-         // load metadata
-         alembic_create_item_Invoke(L"alembic_metadata",meshObj.GetRef(),filename,objects[i].getFullName().c_str(),attachToExisting,createItemArgs);
-
-         // create the topo op
-         CRef returnOpRef;
-         if(!importBboxes)
-         {
-            CValue returnedOpVal;
-            alembic_create_item_Invoke(L"alembic_polymesh_topo",meshObj.GetRef(),filename,objects[i].getFullName().c_str(),attachToExisting,createItemArgs,returnedOpVal);
-            returnOpRef = (CRef)returnedOpVal;
-         }
-
-         // load visibility
-         alembic_create_item_Invoke(L"alembic_visibility",meshObj.GetRef(),filename,objects[i].getFullName().c_str(),attachToExisting,createItemArgs);
-
-         // load geometryapprox
-         if(!importBboxes)
-            alembic_create_item_Invoke(L"alembic_geomapprox",meshObj.GetRef(),filename,objects[i].getFullName().c_str(),attachToExisting,createItemArgs);
-
-         // let's setup the xform op
-         if(Alembic::AbcGeom::IXform::matches(parent.getMetaData()))
-            alembic_create_item_Invoke(L"alembic_xform",meshObj.GetRef(),filename,parent.getFullName().c_str(),attachToExisting,createItemArgs);
-         
-         // let's setup the positions op
-         if(importBboxes)
-         {
-            CValue returnedOpVal;
-            alembic_create_item_Invoke(L"alembic_bbox",meshObj.GetRef(),filename,objects[i].getFullName().c_str(),attachToExisting,createItemArgs,returnedOpVal);
-            returnOpRef = (CRef)returnedOpVal;
-         }
-         else
-         {
-            // only add the point position operator if we don't have dynamic topology
-            Alembic::AbcGeom::ISubD abcSubD = Alembic::AbcGeom::ISubD(objects[i],Alembic::Abc::kWrapExisting);
-            CValue returnedOpVal;
-            alembic_create_item_Invoke(L"alembic_polymesh",meshObj.GetRef(),filename,objects[i].getFullName().c_str(),attachToExisting,createItemArgs,returnedOpVal);
-            returnOpRef = (CRef)returnedOpVal;
-         }
-
-         // load standin property
-         if(importStandins && returnOpRef.IsValid())
-            alembic_create_item_Invoke(L"alembic_standin",returnOpRef,filename,objects[i].getFullName().c_str(),attachToExisting,createItemArgs);
-      }
-      else if(Alembic::AbcGeom::INuPatch::matches(objects[i].getMetaData()))
-      {
-         X3DObject nurbsObj;
-         if(attachToExisting)
-         {
- 		   ESS_PROFILE_SCOPE("attachToExisting");
-            CRef nurbsRef;
-            nurbsRef.Set(getFullNameFromIdentifier(objects[i].getFullName()));
-            nurbsObj = nurbsRef;
-            if(!nurbsObj.GetType().IsEqualNoCase(L"surfmsh"))
-               nurbsObj.ResetObject();
-         }
-         if(!nurbsObj.IsValid())
-         {
-            // warn
-            Application().LogMessage(L"[ExocortexAlembic] Skipping nurbs '"+name+L"', nurbs object not found in scene.",siWarningMsg);
-         }
-         else
-         {
-            // load metadata
-            alembic_create_item_Invoke(L"alembic_metadata",nurbsObj.GetRef(),filename,objects[i].getFullName().c_str(),attachToExisting,createItemArgs);
-
-            // let's setup the xform op
-            if(Alembic::AbcGeom::IXform::matches(parent.getMetaData()))
-               alembic_create_item_Invoke(L"alembic_xform",nurbsObj.GetRef(),filename,parent.getFullName().c_str(),attachToExisting,createItemArgs);
-            
-            alembic_create_item_Invoke(L"alembic_nurbs",nurbsObj.GetRef(),filename,objects[i].getFullName().c_str(),attachToExisting,createItemArgs);
-         }
-      }
-      else if(Alembic::AbcGeom::ICurves::matches(objects[i].getMetaData()))
-      {
-         // let's create a crvlist
-         Alembic::AbcGeom::ICurves curveIObject(objects[i],Alembic::Abc::kWrapExisting);
-         Alembic::AbcGeom::ICurvesSchema curveSchema = curveIObject.getSchema();
-         Alembic::AbcGeom::ICurvesSchema::Sample curveSample = curveSchema.getValue();
-
-         // check for valid curve types...!
-         if(curveSample.getType() != Alembic::AbcGeom::ALEMBIC_VERSION_NS::kLinear &&
-            curveSample.getType() != Alembic::AbcGeom::ALEMBIC_VERSION_NS::kCubic)
-         {
-            Application().LogMessage(L"[ExocortexAlembic] Skipping curve '"+name+L"', invalid curve type.",siWarningMsg);
-            continue;
-         }
-
-         // now let's check if we are looking at a curves node with color and radii
-
-		 bool useParticles = true;
-		 {
-			 Alembic::Abc::IFloatArrayProperty propRadius;
-			 if( ! getArbGeomParamPropertyAlembic( curveIObject, "radius", propRadius ) ) {
-				 useParticles = false;
-			 }
-			 Alembic::Abc::IC4fArrayProperty propColor;
-			 if( ! getArbGeomParamPropertyAlembic( curveIObject, "color", propColor ) ) {
-				 useParticles = false;
-			 } 
-		 }
-         /*bool useParticles = curveSchema.getPropertyHeader( ".radius" ) != NULL || curveSchema.getPropertyHeader( ".color" ) != NULL;
-         if(useParticles)
-         {
-            if( curveSchema.getPropertyHeader( ".radius" ) != NULL )
-            {
-               Alembic::Abc::IFloatArrayProperty prop = Alembic::Abc::IFloatArrayProperty( curveSchema, ".radius" );
-               if(!prop.valid())
-                  useParticles = false;
-               else if(prop.getNumSamples() == 0)
-                  useParticles = false;
-            }
-            else if( curveSchema.getPropertyHeader( ".color" ) != NULL )
-            {
-               Alembic::Abc::IC4fArrayProperty prop = Alembic::Abc::IC4fArrayProperty( curveSchema, ".color" );
-               if(!prop.valid())
-                  useParticles = false;
-               else if(prop.getNumSamples() == 0)
-                  useParticles = false;
-            }
-         }*/
-
-         if (useParticles)
-         {
-            X3DObject pointsObj;
-            if(attachToExisting)
-            {
-    		   ESS_PROFILE_SCOPE("attachToExisting");
-              CRef pointsRef;
-               pointsRef.Set(getFullNameFromIdentifier(objects[i].getFullName()));
-               pointsObj = pointsRef;
-               if(!pointsObj.GetType().IsEqualNoCase(L"pointcloud"))
-                  pointsObj.ResetObject();
-            }
-            if(!pointsObj.IsValid())
-            {
-               if(importBboxes)
-                  parentX3DObject.AddGeometry(L"Cube",L"MeshSurface",name,pointsObj);
-               else
-                  parentX3DObject.AddPrimitive(L"PointCloud",name,pointsObj);
-               nameMapAdd(objects[i].getFullName().c_str(),pointsObj.GetFullName());
-            }
-
-            // load metadata
-            alembic_create_item_Invoke(L"alembic_metadata",pointsObj.GetRef(),filename,objects[i].getFullName().c_str(),attachToExisting,createItemArgs);
-
-            // load visibility
-            alembic_create_item_Invoke(L"alembic_visibility",pointsObj.GetRef(),filename,objects[i].getFullName().c_str(),attachToExisting,createItemArgs);
-
-            // load curves
-            CRef returnOpRef;
-            if(importBboxes)
-            {
-               CValue returnedOpVal;
-               alembic_create_item_Invoke(L"alembic_bbox",pointsObj.GetRef(),filename,objects[i].getFullName().c_str(),attachToExisting,createItemArgs,returnedOpVal);
-               returnOpRef = (CRef)returnedOpVal;
-            }
-            else
-            {
-               CValue returnedOpVal;
-               alembic_create_item_Invoke(L"alembic_curves",pointsObj.GetRef(),filename,objects[i].getFullName().c_str(),attachToExisting,createItemArgs,returnedOpVal);
-               returnOpRef = (CRef)returnedOpVal;
-            }
-
-            // let's setup the xform op
-            if(Alembic::AbcGeom::IXform::matches(parent.getMetaData()))
-               alembic_create_item_Invoke(L"alembic_xform",pointsObj.GetRef(),filename,parent.getFullName().c_str(),attachToExisting,createItemArgs);
-
-            // load standin property
-            if(importStandins && returnOpRef.IsValid())
-               alembic_create_item_Invoke(L"alembic_standin",returnOpRef,filename,objects[i].getFullName().c_str(),attachToExisting,createItemArgs);
-         }
-         else
-         {
-            X3DObject curveObj;
-            if(attachToExisting)
-            {
-	           ESS_PROFILE_SCOPE("attachToExisting");
-               CRef curveRef;
-               curveRef.Set(getFullNameFromIdentifier(objects[i].getFullName()));
-               curveObj = curveRef;
-               if(!curveObj.GetType().IsEqualNoCase(L"crvlist") && !curveObj.GetType().IsEqualNoCase(L"hair"))
-                  curveObj.ResetObject();
-            }
-            if(!curveObj.IsValid())
-            {
-               if(importBboxes)
-                  parentX3DObject.AddGeometry(L"Cube",L"MeshSurface",name,curveObj);
-               else
-                  parentX3DObject.AddNurbsCurveList(CNurbsCurveDataArray(),siSINurbs,name,curveObj);
-               nameMapAdd(objects[i].getFullName().c_str(),curveObj.GetFullName());
-            }
-
-            // load metadata
-            alembic_create_item_Invoke(L"alembic_metadata",curveObj.GetRef(),filename,objects[i].getFullName().c_str(),attachToExisting,createItemArgs);
-
-            // load visibility
-            alembic_create_item_Invoke(L"alembic_visibility",curveObj.GetRef(),filename,objects[i].getFullName().c_str(),attachToExisting,createItemArgs);
-
-            // load curve topo if it's not hair because that will already have desired topology if it exists
-            if(!importBboxes && !curveObj.GetType().IsEqualNoCase(L"hair"))
-               alembic_create_item_Invoke(L"alembic_crvlist_topo",curveObj.GetRef(),filename,objects[i].getFullName().c_str(),attachToExisting,createItemArgs);
-
-            // load curve anim
-            CRef returnOpRef;
-            if(importBboxes)
-            {
-               CValue returnedOpVal;
-               alembic_create_item_Invoke(L"alembic_bbox",curveObj.GetRef(),filename,objects[i].getFullName().c_str(),attachToExisting,createItemArgs,returnedOpVal);
-               returnOpRef = (CRef)returnedOpVal;
-            }
-            else
-            {
-               CValue returnedOpVal;
-               alembic_create_item_Invoke(L"alembic_crvlist",curveObj.GetRef(),filename,objects[i].getFullName().c_str(),attachToExisting,createItemArgs,returnedOpVal);
-               returnOpRef = (CRef)returnedOpVal;
-            }
-
-            // allow stretching as there may have been dynamics applied to the hair
-            if( curveObj.GetType().IsEqualNoCase(L"hair"))
-            {
-               curveObj.GetActivePrimitive().PutParameterValue(L"AllowStretch", true);
-            }
-
-            // let's setup the xform op
-            if(Alembic::AbcGeom::IXform::matches(parent.getMetaData()))
-               alembic_create_item_Invoke(L"alembic_xform",curveObj.GetRef(),filename,parent.getFullName().c_str(),attachToExisting,createItemArgs);
-
-            // load standin property
-            if(importStandins && returnOpRef.IsValid())
-               alembic_create_item_Invoke(L"alembic_standin",returnOpRef,filename,objects[i].getFullName().c_str(),attachToExisting,createItemArgs);
-         }
-      }
-      else if(Alembic::AbcGeom::IPoints::matches(objects[i].getMetaData()))
-      {
-         Alembic::AbcGeom::IPoints pointsIObject(objects[i],Alembic::Abc::kWrapExisting);
-         Alembic::AbcGeom::IPointsSchema pointsSchema = pointsIObject.getSchema();
-         Alembic::AbcGeom::IPointsSchema::Sample pointsSample = pointsSchema.getValue();
-
-         X3DObject pointsObj;
-         if(attachToExisting)
-         {
-            ESS_PROFILE_SCOPE("attachToExisting");
-            CRef pointsRef;
-            pointsRef.Set(getFullNameFromIdentifier(objects[i].getFullName()));
-            pointsObj = pointsRef;
-            if(!pointsObj.GetType().IsEqualNoCase(L"pointcloud"))
-               pointsObj.ResetObject();
-         }
-         if(!pointsObj.IsValid())
-         {
-            if(importBboxes)
-               parentX3DObject.AddGeometry(L"Cube",L"MeshSurface",name,pointsObj);
-            else
-               parentX3DObject.AddPrimitive(L"PointCloud",name,pointsObj);
-            nameMapAdd(objects[i].getFullName().c_str(),pointsObj.GetFullName());
-         }
-
-         // load metadata
-         alembic_create_item_Invoke(L"alembic_metadata",pointsObj.GetRef(),filename,objects[i].getFullName().c_str(),attachToExisting,createItemArgs);
-
-         // load visibility
-         alembic_create_item_Invoke(L"alembic_visibility",pointsObj.GetRef(),filename,objects[i].getFullName().c_str(),attachToExisting,createItemArgs);
-
-         // let's setup the xform op
-         if(Alembic::AbcGeom::IXform::matches(parent.getMetaData()))
-            alembic_create_item_Invoke(L"alembic_xform",pointsObj.GetRef(),filename,parent.getFullName().c_str(),attachToExisting,createItemArgs);
-
-         // apply the ice tree
-         CRef returnOpRef;
-         if(importBboxes) {
-            CValue returnedOpVal;
-            alembic_create_item_Invoke(L"alembic_bbox",pointsObj.GetRef(),filename,objects[i].getFullName().c_str(),attachToExisting,createItemArgs,returnedOpVal);
-            returnOpRef = (CRef)returnedOpVal;
-         } else {
-            CValue returnedOpVal;
-            alembic_create_item_Invoke(L"alembic_points",pointsObj.GetRef(),filename,objects[i].getFullName().c_str(),attachToExisting,createItemArgs,returnedOpVal);
-            returnOpRef = (CRef)returnedOpVal;
-         }
-
-         // load standin property
-         if(importStandins && returnOpRef.IsValid())
-            alembic_create_item_Invoke(L"alembic_standin",returnOpRef,filename,objects[i].getFullName().c_str(),attachToExisting,createItemArgs);
-      }
+      createShape( objects[i], parentX3DObject, filename, attachToExisting, importStandins, importBboxes, createItemArgs);
 
       if(prog.IsCancelPressed())
          break;
