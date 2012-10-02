@@ -1062,13 +1062,13 @@ int AlembicImport_PolyMesh(const std::string &path, Alembic::AbcGeom::IObject& i
 		addAlembicMaterialsModifier(pNode, iObj);
 	}
 
-	alembicMeshInfo meshInfo;
-	meshInfo.open(path, identifier);
-	meshInfo.setSample(0);
+	//alembicMeshInfo meshInfo;
+	//meshInfo.open(path, identifier);
+	//meshInfo.setSample(0);
 
 	//ESS_LOG_INFO( "Node: " << pNode->GetName() );
 	//ESS_LOG_INFO( "isDynamicTopo: " << isDynamicTopo );
-	if(meshInfo.hasTopology())
+	if( isAlembicMeshTopology( &iObj ) )
 	{
 		// Create the polymesh modifier
 		Modifier *pModifier = NULL;
@@ -1302,110 +1302,4 @@ int AlembicImport_PolyMesh(const std::string &path, Alembic::AbcGeom::IObject& i
 
 
 	return 0;
-}
-
-bool alembicMeshInfo::open(const std::string& szPath, const std::string& szIdentifier)
-{
-	Alembic::AbcGeom::IObject iObj;
-	try {
-		iObj = getObjectFromArchive(szPath, szIdentifier);
-	} catch( std::exception exp ) {
-		ESS_LOG_ERROR( "Can not open Alembic data stream.  Path: " << szPath << " identifier: " << szIdentifier << " reason: " << exp.what() );
-		return false;
-	}
-
-	if(!iObj.valid()) {
-		ESS_LOG_ERROR( "Not a valid Alembic data stream.  Path: " << szPath << " identifier: " << szIdentifier );
-		return false;
-	}
-
-	if(Alembic::AbcGeom::IPolyMesh::matches(iObj.getMetaData())){
-		objMesh = Alembic::AbcGeom::IPolyMesh(iObj, Alembic::Abc::kWrapExisting);
-	}
-	else{
-		objSubD = Alembic::AbcGeom::ISubD(iObj, Alembic::Abc::kWrapExisting);
-	}
-	
-	if(!objMesh.valid() && !objSubD.valid()){
-		return false;
-	}
-
-	return true;
-}
-
-void alembicMeshInfo::setSample(TimeValue nTicks)
-{
-	double sampleTime = GetSecondsFromTimeValue(nTicks);
-
-	SampleInfo sampleInfo;
-	if(objMesh.valid()){
-		sampleInfo = getSampleInfo(sampleTime, objMesh.getSchema().getTimeSampling(), objMesh.getSchema().getNumSamples());
-	}
-	else{
-		sampleInfo = getSampleInfo(sampleTime, objSubD.getSchema().getTimeSampling(), objSubD.getSchema().getNumSamples());
-	}
-
-	if(objMesh.valid()){
-		objMesh.getSchema().get(polyMeshSample, sampleInfo.floorIndex);
-	}
-	else{
-		objSubD.getSchema().get(subDSample, sampleInfo.floorIndex);
-	}
-}
-
-bool alembicMeshInfo::hasTopology() 
-{
-	Alembic::Abc::Int32ArraySamplePtr meshFaceCount;
-	Alembic::Abc::Int32ArraySamplePtr meshFaceIndices;
-
-	if (objMesh.valid()){
-		meshFaceCount = polyMeshSample.getFaceCounts();
-		meshFaceIndices = polyMeshSample.getFaceIndices();
-	}
-	else{
-		meshFaceCount = subDSample.getFaceCounts();
-		meshFaceIndices = subDSample.getFaceIndices();
-	}
-
-	boost::int32_t const* pMeshFaceCount = ( meshFaceCount.get() != NULL ) ? meshFaceCount->get() : NULL;
-	boost::int32_t const* pMeshFaceIndices = ( meshFaceIndices.get() != NULL ) ? meshFaceIndices->get() : NULL;
-
-	if(!pMeshFaceCount || !pMeshFaceIndices){
-		return false;
-	}
-
-	int numFaces = static_cast<int>(meshFaceCount->size());
-	int numIndices = static_cast<int>(meshFaceIndices->size());
-
-	if(numFaces == 0 || numIndices == 0){
-		return false;
-	}
-
-	return true;
-}
-
-bool alembicMeshInfo::hasNormals()
-{
-	if(!objMesh.valid()){
-		return false;
-	}
-
-	Alembic::AbcGeom::IN3fGeomParam meshNormalsParam = objMesh.getSchema().getNormalsParam();
-
-	if(!meshNormalsParam.valid()){
-		return false;
-	}
-
-	Alembic::Abc::N3fArraySamplePtr meshNormalsFloor = meshNormalsParam.getExpandedValue(sampleInfo.floorIndex).getVals();
-	Imath::V3f const* pMeshNormalsFloor = ( meshNormalsFloor.get() != NULL ) ? meshNormalsFloor->get() : NULL;
-
-	if(!pMeshNormalsFloor){
-		return false;
-	}
-
-	if(meshNormalsFloor->size() == 0){
-		return false;
-	}
-
-	return true;
 }
