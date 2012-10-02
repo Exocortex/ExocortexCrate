@@ -1051,7 +1051,7 @@ void AlembicPoints::saveCurrentFrameMeshes()
 			meshSample.setFaceIndices(Alembic::Abc::Int32ArraySample(finalPolyMesh.mFaceIndicesVec));
 
 			if(mJob->GetOption("validateMeshTopology")){
-				validateAlembicMeshTopo(finalPolyMesh.mFaceCountVec, finalPolyMesh.mFaceIndicesVec, mi->name);
+				mJob->mMeshErrors += validateAlembicMeshTopo(finalPolyMesh.mFaceCountVec, finalPolyMesh.mFaceIndicesVec, mi->name);
 			}
 
 			if(mJob->GetOption("exportNormals")){

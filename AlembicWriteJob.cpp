@@ -16,6 +16,7 @@ using namespace AbcA;
 AlembicWriteJob::AlembicWriteJob(const std::string &in_FileName, const ObjectList &in_Selection, const std::vector<double> &in_Frames, Interface *i)
 {
     mApplication = i;
+	mMeshErrors = 0;
     mFileName = in_FileName;
     mSelection = in_Selection;
 

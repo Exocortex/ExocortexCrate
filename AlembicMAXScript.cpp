@@ -860,8 +860,10 @@ int ExocortexAlembicStaticInterface_ExocortexAlembicExportJobs( CONST_2013 MCHAR
 
 		//prog.PutVisible(false);
 
+		int meshErrors = 0;
 		// delete all jobs
 		for(size_t k=0;k<jobPtrs.size();k++){
+			meshErrors += jobPtrs[k]->mMeshErrors;
 			deleteArchive(jobPtrs[k]->GetFileName());
 			delete(jobPtrs[k]);
 		}
@@ -870,6 +872,11 @@ int ExocortexAlembicStaticInterface_ExocortexAlembicExportJobs( CONST_2013 MCHAR
 		//deleteAllArchives(); Why do this?
 
 		pMaxInterface->ProgressEnd();
+
+		if( meshErrors > 0 ) {
+			ESS_LOG_ERROR("Mesh validation failed, " << meshErrors << " mesh errors detected." );
+			return alembic_failure;
+		}
 
 		if(!bSuccess){
 			ESS_LOG_ERROR("Encountered error on frame "<<dbErrorFrame<<" of job "<<nErrorJob);

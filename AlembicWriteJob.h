@@ -25,6 +25,7 @@ private:
 public:
 
 	std::map<std::string, bool> mOptions;
+	int mMeshErrors;
 
    AlembicWriteJob(const std::string &in_FileName, const ObjectList &in_Selection, const std::vector<double> &in_Frames, Interface *i);
    ~AlembicWriteJob();

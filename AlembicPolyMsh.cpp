@@ -244,7 +244,7 @@ bool AlembicPolyMesh::Save(double time, bool bLastFrame)
     }
 
 	if(mJob->GetOption("validateMeshTopology")){
-		validateAlembicMeshTopo(finalPolyMesh.mFaceCountVec, finalPolyMesh.mFaceIndicesVec, EC_MCHAR_to_UTF8(GetRef().node->GetName()));
+		mJob->mMeshErrors += validateAlembicMeshTopo(finalPolyMesh.mFaceCountVec, finalPolyMesh.mFaceIndicesVec, EC_MCHAR_to_UTF8(GetRef().node->GetName()));
 	}
 
 	Alembic::Abc::Int32ArraySample faceCountSample(finalPolyMesh.mFaceCountVec);
