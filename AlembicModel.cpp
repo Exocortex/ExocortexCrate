@@ -57,7 +57,8 @@ XSI::CStatus AlembicModel::Save(double time)
    Primitive prim(GetRef());
 
    // store the transform
-   SaveXformSample(GetRef(1),mXformSchema,mXformSample,time,GetJob()->GetOption("transformCache"),GetJob()->GetOption(L"globalSpace"));
+   SaveXformSample(GetRef(1),mXformSchema,mXformSample,time,
+      GetJob()->GetOption("transformCache"),GetJob()->GetOption(L"globalSpace"),GetJob()->GetOption(L"flattenHierarchy"));
 
    // set the visibility
    Property visProp;
