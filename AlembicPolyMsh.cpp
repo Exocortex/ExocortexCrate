@@ -26,6 +26,8 @@
 #include <xsi_materiallibrary.h>
 #include <xsi_iceattribute.h>
 #include <xsi_iceattributedataarray.h>
+#include "CommonProfiler.h"
+#include "CommonMeshUtilities.h"
 
 using namespace XSI;
 using namespace MATH;
@@ -545,6 +547,7 @@ ESS_CALLBACK_END
 
 
 ESS_CALLBACK_START( alembic_polymesh_Update, CRef& )
+   ESS_PROFILE_SCOPE("alembic_polymesh_Update");
    OperatorContext ctxt( in_ctxt );
 
    if((bool)ctxt.GetParameterValue(L"muted"))
@@ -640,6 +643,7 @@ ESS_CALLBACK_END
 
 
 ESS_CALLBACK_START( alembic_normals_Update, CRef& )
+   ESS_PROFILE_SCOPE("alembic_normals_Update");
    OperatorContext ctxt( in_ctxt );
 
    if((bool)ctxt.GetParameterValue(L"muted"))
@@ -739,6 +743,7 @@ ESS_CALLBACK_END
 
 
 ESS_CALLBACK_START( alembic_uvs_Update, CRef& )
+   ESS_PROFILE_SCOPE("alembic_uvs_Update");
    OperatorContext ctxt( in_ctxt );
 
    if((bool)ctxt.GetParameterValue(L"muted"))
@@ -864,9 +869,10 @@ ESS_CALLBACK_END
 
 
 ESS_CALLBACK_START( alembic_polymesh_topo_Update, CRef& )
+   ESS_PROFILE_SCOPE("alembic_polymesh_topo_Update");
    OperatorContext ctxt( in_ctxt );
 
-   ESS_LOG_INFO("ENTER alembic_polymesh_topo_Update");
+   //ESS_LOG_INFO("ENTER alembic_polymesh_topo_Update");
 
    if((bool)ctxt.GetParameterValue(L"muted"))
       return CStatus::OK;
@@ -885,6 +891,10 @@ ESS_CALLBACK_START( alembic_polymesh_topo_Update, CRef& )
       objSubD = Alembic::AbcGeom::ISubD(iObj,Alembic::Abc::kWrapExisting);
    if(!objMesh.valid() && !objSubD.valid())
       return CStatus::OK;
+
+   if( isAlembicMeshPointCache( & iObj ) ) {
+	   return CStatus::OK;
+   }
 
    SampleInfo sampleInfo;
    if(objMesh.valid())
@@ -909,7 +919,7 @@ ESS_CALLBACK_START( alembic_polymesh_topo_Update, CRef& )
    Alembic::Abc::Int32ArraySamplePtr meshFaceCount;
    Alembic::Abc::Int32ArraySamplePtr meshFaceIndices;
 
-   bool hasDynamicTopo = false;
+   bool hasDynamicTopo = isAlembicMeshTopoDynamic( & objMesh );
    if(objMesh.valid())
    {
       Alembic::AbcGeom::IPolyMeshSchema::Sample sample;
@@ -918,10 +928,6 @@ ESS_CALLBACK_START( alembic_polymesh_topo_Update, CRef& )
       meshVel = sample.getVelocities();
       meshFaceCount = sample.getFaceCounts();
       meshFaceIndices = sample.getFaceIndices();
-
-      Alembic::Abc::IInt32ArrayProperty faceCountProp = Alembic::Abc::IInt32ArrayProperty(objMesh.getSchema(),".faceCounts");
-      if(faceCountProp.valid())
-         hasDynamicTopo = !faceCountProp.isConstant();
    }
    else
    {
@@ -931,10 +937,6 @@ ESS_CALLBACK_START( alembic_polymesh_topo_Update, CRef& )
       meshVel = sample.getVelocities();
       meshFaceCount = sample.getFaceCounts();
       meshFaceIndices = sample.getFaceIndices();
-
-      Alembic::Abc::IInt32ArrayProperty faceCountProp = Alembic::Abc::IInt32ArrayProperty(objSubD.getSchema(),".faceCounts");
-      if(faceCountProp.valid())
-         hasDynamicTopo = !faceCountProp.isConstant();
    }
 
    CVector3Array pos((LONG)meshPos->size());
@@ -966,7 +968,7 @@ ESS_CALLBACK_START( alembic_polymesh_topo_Update, CRef& )
          LONG offset1 = 0;
          Alembic::Abc::int32_t offset2 = 0;
 
-         EXOCORTEX_XSI_LOG_INFO("face count: " << (unsigned int)meshFaceCount->size());
+         ESS_LOG_INFO("face count: " << (unsigned int)meshFaceCount->size());
 
          for(size_t j=0;j<meshFaceCount->size();j++)
          {
@@ -974,15 +976,15 @@ ESS_CALLBACK_START( alembic_polymesh_topo_Update, CRef& )
             polies[offset1++] = singleFaceCount;
             offset2 += singleFaceCount;
 
-            EXOCORTEX_XSI_LOG_INFO("singleFaceCount: " << (unsigned int)singleFaceCount);
-            EXOCORTEX_XSI_LOG_INFO("offset2: " << (unsigned int)offset2);
-            EXOCORTEX_XSI_LOG_INFO("meshFaceIndices->size(): " << (unsigned int)meshFaceIndices->size());
+            ESS_LOG_INFO("singleFaceCount: " << (unsigned int)singleFaceCount);
+            ESS_LOG_INFO("offset2: " << (unsigned int)offset2);
+            ESS_LOG_INFO("meshFaceIndices->size(): " << (unsigned int)meshFaceIndices->size());
 
             unsigned int meshFIndxSz = (unsigned int)meshFaceIndices->size();
 
             for(size_t k=0;k<singleFaceCount;k++)
             {
-               EXOCORTEX_XSI_LOG_INFO("index: " << (unsigned int)((size_t)offset2 - 1 - k));
+               ESS_LOG_INFO("index: " << (unsigned int)((size_t)offset2 - 1 - k));
                polies[offset1++] = meshFaceIndices->get()[(size_t)offset2 - 1 - k];
             }
          }
@@ -1037,7 +1039,7 @@ ESS_CALLBACK_START( alembic_polymesh_topo_Update, CRef& )
    PolygonMesh outMesh = Primitive(ctxt.GetOutputTarget()).GetGeometry();
    outMesh.Set(pos,polies);
 
-   ESS_LOG_INFO("EXIT alembic_polymesh_topo_Update");
+   //ESS_LOG_INFO("EXIT alembic_polymesh_topo_Update");
    return CStatus::OK;
 ESS_CALLBACK_END
 

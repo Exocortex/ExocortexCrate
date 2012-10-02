@@ -4,6 +4,7 @@
 #include <xsi_utils.h>
 #include <xsi_time.h>
 #include "AlembicLicensing.h"
+#include "CommonProfiler.h"
 
 struct AlembicArchiveInfo
 {
@@ -29,7 +30,7 @@ XSI::CString resolvePath(XSI::CString path)
 Alembic::Abc::IArchive * getArchiveFromID(XSI::CString path)
 {
    if(path.IsEmpty())
-      return NULL;
+      return NULL; 
 
    XSI::CString resolvedPath = resolvePath(path);
    std::map<std::string,AlembicArchiveInfo>::iterator it;
@@ -94,6 +95,7 @@ void deleteAllArchives()
 
 Alembic::Abc::IObject getObjectFromArchive(XSI::CString path, XSI::CString identifier)
 {
+	ESS_PROFILE_SCOPE("getObjectFromArchive");
    Alembic::Abc::IArchive * archive = getArchiveFromID(path);
    if(archive == NULL)
       return Alembic::Abc::IObject();
