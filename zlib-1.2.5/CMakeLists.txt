@@ -132,6 +132,10 @@ endif(MINGW)
 
 add_library(zlib ${ZLIB_SRCS} ${ZLIB_PUBLIC_HDRS} ${ZLIB_PRIVATE_HDRS})
 
+if( MSVC10 )
+	set_target_properties(zlib PROPERTIES STATIC_LIBRARY_FLAGS "/machine:x64")
+endif()
+
 set_property(TARGET "zlib" PROPERTY FOLDER "${ZlibFolder}")
 
 

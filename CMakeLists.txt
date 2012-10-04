@@ -36,7 +36,7 @@ else()
 		message(FATAL_ERROR "Should not get here")
 	endif()
 endif()
-
+ 
 
 
 INCLUDE(./ExocortexCMakeShared.txt)
@@ -50,7 +50,7 @@ set( AlembicFolder "Externals" )
 SET(DIR_SOFTIMAGEALEBMIC ${CMAKE_CURRENT_SOURCE_DIR})
 
 get_filename_component( LIBRARY_ROOT "${CMAKE_CURRENT_SOURCE_DIR}" PATH )
-set( LIBRARY_VERSION "20120816.01" )
+set( LIBRARY_VERSION "20120919.01" )
 set( LIBRARY_ROOT "${LIBRARY_ROOT}/Libraries.${LIBRARY_VERSION}" )
 if( NOT EXISTS ${LIBRARY_ROOT} )
 	message( "!!!" )
@@ -109,8 +109,14 @@ endif()
 
 if( Exocortex_SERVICES )
 	set( Exocortex_INCLUDE_DIR "${LIBRARY_ROOT}/Exocortex/include" )
-	set( Exocortex_DEBUG_LIBRARYDIR "${LIBRARY_ROOT}/Exocortex/lib/${CPU_NAME}/debug/${OS_NAME}/" )
-	set( Exocortex_RELEASED_LIBRARYDIR "${LIBRARY_ROOT}/Exocortex/lib/${CPU_NAME}/release/${OS_NAME}/" )
+
+	if( MSVC10 ) 
+		set( Exocortex_DEBUG_LIBRARYDIR "${LIBRARY_ROOT}/Exocortex/lib/${CPU_NAME}/debug/${OS_NAME}_vs2010/" )
+		set( Exocortex_RELEASED_LIBRARYDIR "${LIBRARY_ROOT}/Exocortex/lib/${CPU_NAME}/release/${OS_NAME}_vs2010/" )
+	else()
+		set( Exocortex_DEBUG_LIBRARYDIR "${LIBRARY_ROOT}/Exocortex/lib/${CPU_NAME}/debug/${OS_NAME}/" )
+		set( Exocortex_RELEASED_LIBRARYDIR "${LIBRARY_ROOT}/Exocortex/lib/${CPU_NAME}/release/${OS_NAME}/" )
+	endif()
 	
 	set( Exocortex_LIBRARIES
 		debug "${Exocortex_DEBUG_LIBRARYDIR}/LibCore.lib"  optimized "${Exocortex_RELEASED_LIBRARYDIR}/LibCore.lib"
@@ -256,7 +262,7 @@ include_directories( "ilmbase-1.0.2/Imath" )
 
 ADD_SUBDIRECTORY ( ilmbase-1.0.2 )
 SET( ALEMBIC_ILMBASE_LIBS ilmbase )
-
+ 
 # ZLib
 SET( BUILD_SHARED_LIBS OFF )
 SET( SKIP_INSTALL_ALL ON )
@@ -278,7 +284,10 @@ SET( ALEMBIC_ZLIB_LIBS zlib )
 
 # HDF
 SET( ZLIB_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/zlib-1.2.5" )
+SET( H5_HAVE_ZLIB_H ON )
+SET( H5_ZLIB_HEADER "${CMAKE_CURRENT_SOURCE_DIR}/zlib-1.2.5/zlib.h" )
 SET( ZLIB_LIBRARY zlib )
+SET( H5_HAVE_FILTER_DEFLATE ON )
 SET(HDF5_ENABLE_THREADSAFE ON CACHE BOOL "Thread safety")
 SET(HDF5_ENABLE_SZIP_SUPPORT OFF CACHE BOOL "Disable sZip")
 SET(HDF5_BUILD_HL_LIB ON CACHE BOOL "Build high level lib")
@@ -302,29 +311,39 @@ include_directories( "alembic-1.0.5" )
 ADD_SUBDIRECTORY ( alembic-1.0.5 )
 SET( ALEMBIC_CORE_LIBS AlembicAbcGeom AlembicAbc AlembicAbcCoreHDF5 AlembicAbcCoreAbstract AlembicUtil )
 
+ADD_SUBDIRECTORY ( "${CMAKE_CURRENT_SOURCE_DIR}/CommonUtils" "${CMAKE_CURRENT_BINARY_DIR}/CommonUtils" )
+
+include_directories( "${CMAKE_CURRENT_SOURCE_DIR}/CommonUtils" )
+
 # Python extension
 IF(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../ExocortexAlembicPython/CMakeLists.txt")
-	ADD_SUBDIRECTORY ( "${CMAKE_CURRENT_SOURCE_DIR}/../ExocortexAlembicPython/2.6.7" "${CMAKE_CURRENT_BINARY_DIR}/ExocortexAlembicPython/2.6.7" )
-	if( WIN32 )
-		ADD_SUBDIRECTORY ( "${CMAKE_CURRENT_SOURCE_DIR}/../ExocortexAlembicPython/2.7.2" "${CMAKE_CURRENT_BINARY_DIR}/ExocortexAlembicPython/2.7.2" )
+	if( NOT MSVC10 ) 
+		ADD_SUBDIRECTORY ( "${CMAKE_CURRENT_SOURCE_DIR}/../ExocortexAlembicPython/2.6.7" "${CMAKE_CURRENT_BINARY_DIR}/ExocortexAlembicPython/2.6.7" )
+		if( WIN32 )
+			ADD_SUBDIRECTORY ( "${CMAKE_CURRENT_SOURCE_DIR}/../ExocortexAlembicPython/2.7.2" "${CMAKE_CURRENT_BINARY_DIR}/ExocortexAlembicPython/2.7.2" )
+		endif()
 	endif()
 ENDIF()
 
 # Arnold dso
 IF(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../ExocortexAlembicArnold/CMakeLists.txt")
-	ADD_SUBDIRECTORY ( "${CMAKE_CURRENT_SOURCE_DIR}/../ExocortexAlembicArnold" "${CMAKE_CURRENT_BINARY_DIR}/ExocortexAlembicArnold" )
+	if( NOT MSVC10 ) 
+		ADD_SUBDIRECTORY ( "${CMAKE_CURRENT_SOURCE_DIR}/../ExocortexAlembicArnold" "${CMAKE_CURRENT_BINARY_DIR}/ExocortexAlembicArnold" )
+	endif()
 ENDIF()
 
 # softimage plugin
 IF(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../ExocortexAlembicSoftimage/CMakeLists.txt")
-	ADD_SUBDIRECTORY ( "${CMAKE_CURRENT_SOURCE_DIR}/../ExocortexAlembicSoftimage" "${CMAKE_CURRENT_BINARY_DIR}/ExocortexAlembicSoftimage" )
+	if( NOT MSVC10 ) 
+		ADD_SUBDIRECTORY ( "${CMAKE_CURRENT_SOURCE_DIR}/../ExocortexAlembicSoftimage" "${CMAKE_CURRENT_BINARY_DIR}/ExocortexAlembicSoftimage" )
+	endif()
 ENDIF()
 
 # maya plugin
 IF(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../ExocortexAlembicMaya/CMakeLists.txt")
-	ADD_SUBDIRECTORY ( "${CMAKE_CURRENT_SOURCE_DIR}/../ExocortexAlembicMaya/2011" "${CMAKE_CURRENT_BINARY_DIR}/ExocortexAlembicMaya/2011" )
-	ADD_SUBDIRECTORY ( "${CMAKE_CURRENT_SOURCE_DIR}/../ExocortexAlembicMaya/2012" "${CMAKE_CURRENT_BINARY_DIR}/ExocortexAlembicMaya/2012" )
-	#if( ( WIN32 AND MSVC10 ) OR UNIX )
+	if( NOT MSVC10 ) 
+		ADD_SUBDIRECTORY ( "${CMAKE_CURRENT_SOURCE_DIR}/../ExocortexAlembicMaya/2011" "${CMAKE_CURRENT_BINARY_DIR}/ExocortexAlembicMaya/2011" )
+		ADD_SUBDIRECTORY ( "${CMAKE_CURRENT_SOURCE_DIR}/../ExocortexAlembicMaya/2012" "${CMAKE_CURRENT_BINARY_DIR}/ExocortexAlembicMaya/2012" )
 		ADD_SUBDIRECTORY ( "${CMAKE_CURRENT_SOURCE_DIR}/../ExocortexAlembicMaya/2013" "${CMAKE_CURRENT_BINARY_DIR}/ExocortexAlembicMaya/2013" )
 	#endif()
 ENDIF()
@@ -339,10 +358,11 @@ ENDIF()
 # 3dsmax plugin
 if( WIN32 )
 	IF(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../ExocortexAlembic3DSMax/CMakeLists.txt")
-		ADD_SUBDIRECTORY ( "${CMAKE_CURRENT_SOURCE_DIR}/../ExocortexAlembic3DSMax/2010" "${CMAKE_CURRENT_BINARY_DIR}/ExocortexAlembic3DSMax/2010" )
-		ADD_SUBDIRECTORY ( "${CMAKE_CURRENT_SOURCE_DIR}/../ExocortexAlembic3DSMax/2011" "${CMAKE_CURRENT_BINARY_DIR}/ExocortexAlembic3DSMax/2011" )
-		ADD_SUBDIRECTORY ( "${CMAKE_CURRENT_SOURCE_DIR}/../ExocortexAlembic3DSMax/2012" "${CMAKE_CURRENT_BINARY_DIR}/ExocortexAlembic3DSMax/2012" )
-		if( MSVC10 ) 
+		if( NOT MSVC10 ) 
+			ADD_SUBDIRECTORY ( "${CMAKE_CURRENT_SOURCE_DIR}/../ExocortexAlembic3DSMax/2010" "${CMAKE_CURRENT_BINARY_DIR}/ExocortexAlembic3DSMax/2010" )
+			ADD_SUBDIRECTORY ( "${CMAKE_CURRENT_SOURCE_DIR}/../ExocortexAlembic3DSMax/2011" "${CMAKE_CURRENT_BINARY_DIR}/ExocortexAlembic3DSMax/2011" )
+			ADD_SUBDIRECTORY ( "${CMAKE_CURRENT_SOURCE_DIR}/../ExocortexAlembic3DSMax/2012" "${CMAKE_CURRENT_BINARY_DIR}/ExocortexAlembic3DSMax/2012" )
+		else()
 			ADD_SUBDIRECTORY ( "${CMAKE_CURRENT_SOURCE_DIR}/../ExocortexAlembic3DSMax/2013" "${CMAKE_CURRENT_BINARY_DIR}/ExocortexAlembic3DSMax/2013" )
 		endif()
 	ENDIF()
