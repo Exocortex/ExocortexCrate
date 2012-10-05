@@ -9,7 +9,8 @@ void SaveXformSample(
    Alembic::AbcGeom::XformSample & sample, 
    double time, 
    bool xformCache, 
-   bool globalSpace
+   bool globalSpace,
+   bool flattenHierarchy
 );
 
 #endif

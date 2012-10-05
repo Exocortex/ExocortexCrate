@@ -20,64 +20,18 @@
 #include <xsi_plugin.h>
 #include <xsi_utils.h>
 #include "AlembicLicensing.h"
-
+#include "CommonProfiler.h"
 using namespace XSI;
 
-SampleInfo getSampleInfo
-(
-   double iFrame,
-   Alembic::AbcCoreAbstract::TimeSamplingPtr iTime,
-   size_t numSamps
-)
-{
-   SampleInfo result;
-   if (numSamps == 0)
-      numSamps = 1;
 
-   std::pair<Alembic::AbcCoreAbstract::index_t, double> floorIndex =
-   iTime->getFloorIndex(iFrame, numSamps);
-
-   result.floorIndex = floorIndex.first;
-   result.ceilIndex = result.floorIndex;
-
-   // check if we have a full license
-   if(!HasAlembicReaderLicense())
-   {
-      if(result.floorIndex > 75)
-      {
-         EC_LOG_WARNING("[ExocortexAlembic] Reader license not found: Cannot open sample indices higher than 75.");
-         result.floorIndex = 75;
-         result.ceilIndex = 75;
-         result.alpha = 0.0;
-         return result;
-      }
-   }
-
-   if (fabs(iFrame - floorIndex.second) < 0.0001) {
-      result.alpha = 0.0f;
-      return result;
-   }
-
-   std::pair<Alembic::AbcCoreAbstract::index_t, double> ceilIndex =
-   iTime->getCeilIndex(iFrame, numSamps);
-
-   if (fabs(iFrame - ceilIndex.second) < 0.0001) {
-      result.floorIndex = ceilIndex.first;
-      result.ceilIndex = result.floorIndex;
-      result.alpha = 0.0f;
-      return result;
-   }
-
-   if (result.floorIndex == ceilIndex.first) {
-      result.alpha = 0.0f;
-      return result;
-   }
-
-   result.ceilIndex = ceilIndex.first;
-
-   result.alpha = (iFrame - floorIndex.second) / (ceilIndex.second - floorIndex.second);
-
-   return result;
+void logError( const char* msg ) {
+	XSI::Application().LogMessage( msg, XSI::siErrorMsg );
+}
+void logWarning( const char* msg ) {
+	XSI::Application().LogMessage( msg, XSI::siWarningMsg );
+}
+void logInfo( const char* msg ) {
+	XSI::Application().LogMessage( msg, XSI::siInfoMsg );
 }
 
 std::string getIdentifierFromRef(CRef in_Ref, bool includeHierarchy)
@@ -116,6 +70,41 @@ std::string getIdentifierFromRef(CRef in_Ref, bool includeHierarchy)
       }
    }
    return result;
+}
+
+int getNodeDepthFromRef(XSI::CRef in_Ref)
+{
+   int nDepth = 0;
+   CRef ref = in_Ref;
+   bool has3DObj = false;
+   while(ref.IsValid())
+   {
+      Model model(ref);
+      X3DObject obj(ref);
+      ProjectItem item(ref);
+      if(model.IsValid())
+      {
+         if(model.GetFullName() == Application().GetActiveSceneRoot().GetFullName())
+            break;
+         ref = model.GetModel().GetRef();
+		 nDepth++;
+      }
+      else if(obj.IsValid())
+      {
+         if(!has3DObj)
+         {
+            has3DObj = true;
+         }
+         ref = obj.GetParent3DObject().GetRef();
+		 nDepth++;
+      }
+      else if(item.IsValid())
+      {
+         ref = item.GetParent3DObject().GetRef();
+		 nDepth++;
+      }
+   }
+   return nDepth;
 }
 
 XSI::CString truncateName(const XSI::CString & in_Name)
@@ -351,71 +340,9 @@ void nameMapClear()
    gNameMap.clear();
 }
 
-Alembic::Abc::ICompoundProperty getCompoundFromObject(Alembic::Abc::IObject object)
-{
-   const Alembic::Abc::MetaData &md = object.getMetaData();
-   if(Alembic::AbcGeom::IXform::matches(md)) {
-      return Alembic::AbcGeom::IXform(object,Alembic::Abc::kWrapExisting).getSchema();
-   } else if(Alembic::AbcGeom::IPolyMesh::matches(md)) {
-      return Alembic::AbcGeom::IPolyMesh(object,Alembic::Abc::kWrapExisting).getSchema();
-   } else if(Alembic::AbcGeom::ICurves::matches(md)) {
-      return Alembic::AbcGeom::ICurves(object,Alembic::Abc::kWrapExisting).getSchema();
-   } else if(Alembic::AbcGeom::INuPatch::matches(md)) {
-      return Alembic::AbcGeom::INuPatch(object,Alembic::Abc::kWrapExisting).getSchema();
-   } else if(Alembic::AbcGeom::IPoints::matches(md)) {
-      return Alembic::AbcGeom::IPoints(object,Alembic::Abc::kWrapExisting).getSchema();
-   } else if(Alembic::AbcGeom::ISubD::matches(md)) {
-      return Alembic::AbcGeom::ISubD(object,Alembic::Abc::kWrapExisting).getSchema();
-   } else if(Alembic::AbcGeom::ICamera::matches(md)) {
-      return Alembic::AbcGeom::ICamera(object,Alembic::Abc::kWrapExisting).getSchema();
-   }
-   return Alembic::Abc::ICompoundProperty();
-}
-
-Alembic::Abc::TimeSamplingPtr getTimeSamplingFromObject(Alembic::Abc::IObject object)
-{
-   const Alembic::Abc::MetaData &md = object.getMetaData();
-   if(Alembic::AbcGeom::IXform::matches(md)) {
-      return Alembic::AbcGeom::IXform(object,Alembic::Abc::kWrapExisting).getSchema().getTimeSampling();
-   } else if(Alembic::AbcGeom::IPolyMesh::matches(md)) {
-      return Alembic::AbcGeom::IPolyMesh(object,Alembic::Abc::kWrapExisting).getSchema().getTimeSampling();
-   } else if(Alembic::AbcGeom::ICurves::matches(md)) {
-      return Alembic::AbcGeom::ICurves(object,Alembic::Abc::kWrapExisting).getSchema().getTimeSampling();
-   } else if(Alembic::AbcGeom::INuPatch::matches(md)) {
-      return Alembic::AbcGeom::INuPatch(object,Alembic::Abc::kWrapExisting).getSchema().getTimeSampling();
-   } else if(Alembic::AbcGeom::IPoints::matches(md)) {
-      return Alembic::AbcGeom::IPoints(object,Alembic::Abc::kWrapExisting).getSchema().getTimeSampling();
-   } else if(Alembic::AbcGeom::ISubD::matches(md)) {
-      return Alembic::AbcGeom::ISubD(object,Alembic::Abc::kWrapExisting).getSchema().getTimeSampling();
-   } else if(Alembic::AbcGeom::ICamera::matches(md)) {
-      return Alembic::AbcGeom::ICamera(object,Alembic::Abc::kWrapExisting).getSchema().getTimeSampling();
-   }
-   return Alembic::Abc::TimeSamplingPtr();
-}
-
-size_t getNumSamplesFromObject(Alembic::Abc::IObject object)
-{
-   const Alembic::Abc::MetaData &md = object.getMetaData();
-   if(Alembic::AbcGeom::IXform::matches(md)) {
-      return Alembic::AbcGeom::IXform(object,Alembic::Abc::kWrapExisting).getSchema().getNumSamples();
-   } else if(Alembic::AbcGeom::IPolyMesh::matches(md)) {
-      return Alembic::AbcGeom::IPolyMesh(object,Alembic::Abc::kWrapExisting).getSchema().getNumSamples();
-   } else if(Alembic::AbcGeom::ICurves::matches(md)) {
-      return Alembic::AbcGeom::ICurves(object,Alembic::Abc::kWrapExisting).getSchema().getNumSamples();
-   } else if(Alembic::AbcGeom::INuPatch::matches(md)) {
-      return Alembic::AbcGeom::INuPatch(object,Alembic::Abc::kWrapExisting).getSchema().getNumSamples();
-   } else if(Alembic::AbcGeom::IPoints::matches(md)) {
-      return Alembic::AbcGeom::IPoints(object,Alembic::Abc::kWrapExisting).getSchema().getNumSamples();
-   } else if(Alembic::AbcGeom::ISubD::matches(md)) {
-      return Alembic::AbcGeom::ISubD(object,Alembic::Abc::kWrapExisting).getSchema().getNumSamples();
-   } else if(Alembic::AbcGeom::ICamera::matches(md)) {
-      return Alembic::AbcGeom::ICamera(object,Alembic::Abc::kWrapExisting).getSchema().getNumSamples();
-   }
-   return 0;
-}
-
 CStatus alembicOp_Define( CRef& in_ctxt )
 {
+   ESS_PROFILE_SCOPE("alembicOp_Define");
    Context ctxt( in_ctxt );
    CustomOperator oCustomOperator;
 
@@ -446,6 +373,7 @@ CStatus alembicOp_Define( CRef& in_ctxt )
 
 CStatus alembicOp_DefineLayout( CRef& in_ctxt )
 {
+   ESS_PROFILE_SCOPE("alembicOp_DefineLayout");
    Context ctxt( in_ctxt );
    PPGLayout oLayout;
    PPGItem oItem;

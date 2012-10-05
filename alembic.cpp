@@ -55,38 +55,9 @@ using namespace MATH;
 #include "AlembicWriteJob.h"
 #include "AlembicPoints.h"
 #include "AlembicCurves.h"
+#include "CommonProfiler.h"
+#include "CommonMeshUtilities.h"
 
-#ifdef __DEBUG__
-
-   #include <sstream>
-   #ifdef LINUX
-      #include <cstdio>
-      #include <fstream>
-   #endif
-
-   void Exocortex_Debug_Msg(const char *x_msg)
-   {
-      //std::stringstream ss;
-      //ss << "[" << __FILE__ << ":" << __LINE__ << "] " << x_msg;
-
-      //CString final_msg(ss.str().c_str());
-      CString final_msg(x_msg);
-      Application().LogMessage(final_msg, siWarningMsg);
-
-      #ifdef LINUX
-         FILE *console = fopen("/dev/tty", "w");
-         if (console)
-         {
-            //fputs(ss.str().c_str(), console);
-            fputs(x_msg, console);
-            fclose(console);
-         }
-      #else
-
-      #endif
-   }
-
-#endif
 
 SICALLBACK XSILoadPlugin( PluginRegistrar& in_reg )
 {
@@ -138,7 +109,7 @@ SICALLBACK XSILoadPlugin( PluginRegistrar& in_reg )
 		in_reg.RegisterEvent(L"alembic_OnCloseScene",siOnCloseScene);
 	//}
 
-   EXOCORTEX_XSI_LOG_INFO("PLUGIN loaded");
+   ESS_LOG_INFO("PLUGIN loaded");
 
  	return CStatus::OK;
 }
@@ -167,11 +138,13 @@ ESS_CALLBACK_START(alembic_export_Init,CRef&)
 	return CStatus::OK;
 ESS_CALLBACK_END
 
+
 ESS_CALLBACK_START(alembic_export_Execute,CRef&)
 	Context ctxt( in_ctxt );
 	CValueArray args = ctxt.GetAttribute(L"Arguments");
 
 	//FORCE_CRASH_INVALID_ACCESS_VIOLATION; used for testing whether error reporting works.
+	ESS_PROFILE_SCOPE("alembic_export_Execute");
 
    // get all of the jobs, and split them
    CString jobString = args[0].GetAsText();
@@ -251,9 +224,23 @@ ESS_CALLBACK_START(alembic_export_Execute,CRef&)
 	      jobString += L";bindpose="+settings.GetParameterValue(L"bindpose").GetAsText();
 	      jobString += L";dynamictopology="+settings.GetParameterValue(L"dtopology").GetAsText();
       }
-      jobString += L";globalspace="+settings.GetParameterValue(L"globalspace").GetAsText();
       jobString += L";guidecurves="+settings.GetParameterValue(L"guidecurves").GetAsText();
  
+      
+      LONG transformMode = settings.GetParameterValue(L"transforms");
+      if( transformMode == 0 ){//flatten hierarchy
+         jobString += L";flattenHierarchy=true";
+         jobString += L";globalspace=false";
+      }
+      else if( transformMode == 1){//full hierarchy
+         jobString += L";flattenHierarchy=false";
+         jobString += L";globalspace=false";
+      }
+      else if( transformMode == 2){//bake in
+         jobString += L";flattenHierarchy=true";
+         jobString += L";globalspace=true";
+      }
+
       Application().ExecuteCommand(L"DeleteObj",inspectArgs,inspectResult);
    }
 
@@ -281,8 +268,11 @@ ESS_CALLBACK_START(alembic_export_Execute,CRef&)
 	   bool bindpose = true;
       bool dynamictopology = false;
       bool globalspace = false;
+      bool flattenhierarchy = true;
       bool guidecurves = false;
-      CRefArray objects;
+      //CRefArray objects;
+
+	  std::vector<AlembicWriteJob::Selectee> objects;
 
       // process all tokens of the job
       CStringArray tokens = jobs[i].Split(L";");
@@ -319,7 +309,9 @@ ESS_CALLBACK_START(alembic_export_Execute,CRef&)
             dynamictopology = (bool)CValue(valuePair[1]);
 		   else if(valuePair[0].IsEqualNoCase(L"globalspace"))
             globalspace = (bool)CValue(valuePair[1]);
-           else if(valuePair[0].IsEqualNoCase(L"guidecurves"))
+		   else if(valuePair[0].IsEqualNoCase(L"flattenhierarchy"))
+            flattenhierarchy = (bool)CValue(valuePair[1]);
+         else if(valuePair[0].IsEqualNoCase(L"guidecurves"))
             guidecurves = (bool)CValue(valuePair[1]);
          else if(valuePair[0].IsEqualNoCase(L"filename"))
             filename = CValue(valuePair[1]).GetAsText();
@@ -336,7 +328,7 @@ ESS_CALLBACK_START(alembic_export_Execute,CRef&)
                   Application().LogMessage(L"[ExocortexAlembic] Skipping object 'L"+objectStrings[k]+"', not found.",siWarningMsg);
                   continue;
                }
-               objects.Add(objRef);
+               objects.push_back(objRef);
 
                // ensure to add models as a flattened list
                Model model(objRef);
@@ -351,7 +343,7 @@ ESS_CALLBACK_START(alembic_export_Execute,CRef&)
                      CRefArray childChildren = child.GetChildren();
                      for(LONG l=0;l<childChildren.GetCount();l++)
                         children.Add(childChildren[l]);
-                     objects.Add(child.GetRef());
+                     objects.push_back(child.GetRef());
                   }
                }
             }
@@ -406,13 +398,7 @@ ESS_CALLBACK_START(alembic_export_Execute,CRef&)
             filebrowser.PutProperty(L"Filter",L"Alembic Files(*.abc)|*.abc||");
             CValue returnVal;
             filebrowser.Call(L"ShowSave",returnVal);
-            filename = filebrowser.GetProperty(L"FilePathName").GetAsText();
-            if(filename.IsEmpty())
-            {
-               for(size_t k=0;k<jobPtrs.size();k++)
-                  delete(jobPtrs[k]);
-               return CStatus::Abort;
-            }
+            filename = filebrowser.GetProperty(L"FilePathName").GetAsText();            
          }
          else
          {
@@ -421,6 +407,14 @@ ESS_CALLBACK_START(alembic_export_Execute,CRef&)
                delete(jobPtrs[k]);
             return CStatus::InvalidArgument;
          }
+      }
+
+      if(filename.IsEmpty() || !validate_filename_location(filename.GetAsciiString()))
+      {
+         Application().LogMessage(L"[ExocortexAlembic] cannot write file " + filename,siErrorMsg);
+         for(size_t k=0;k<jobPtrs.size();k++)
+            delete(jobPtrs[k]);
+         return CStatus::Abort;
       }
 
       // construct the frames
@@ -439,6 +433,7 @@ ESS_CALLBACK_START(alembic_export_Execute,CRef&)
       job->SetOption(L"indexedNormals",true);
       job->SetOption(L"indexedUVs",true);
       job->SetOption(L"globalSpace",globalspace);
+      job->SetOption(L"flattenHierarchy",flattenhierarchy);
       job->SetOption(L"guideCurves",guidecurves);
 
       // check if the job is satifsied
@@ -605,7 +600,9 @@ CStatus alembic_create_item_Invoke
    CValue & returnVal
 )
 {
-   // fill the map in case it is empty
+	ESS_PROFILE_SCOPE("alembic_create_item_Invoke");
+
+	// fill the map in case it is empty
    if(gItemTypeMap.size() == 0)
    {
       gItemTypeMap.insert(std::pair<std::string,alembicItemType>("alembic_xform",alembicItemType_xform));
@@ -639,6 +636,7 @@ CStatus alembic_create_item_Invoke
 
    // now let's find the real target for this
    CRef realTarget;
+   { ESS_PROFILE_SCOPE("alembic_create_item_Invoke find_real_target");
    switch(itemType)
    {
       case alembicItemType_xform:
@@ -817,10 +815,12 @@ CStatus alembic_create_item_Invoke
          return CStatus::InvalidArgument;
       }
    }
+   }
 
    // now validate the identifier if necessary
    Alembic::Abc::IObject abcObject;
    bool isAnimated = false;
+   { ESS_PROFILE_SCOPE("alembic_create_item_Invoke validate_the_identifier");
    switch(itemType)
    {
       case alembicItemType_xform:
@@ -866,7 +866,9 @@ CStatus alembic_create_item_Invoke
       default:
          break;
    }
+   }
 
+    { ESS_PROFILE_SCOPE("alembic_create_item_Invoke create_the_operator");
    // now create an operator...?
    switch(itemType)
    {
@@ -1315,9 +1317,10 @@ CStatus alembic_create_item_Invoke
          Alembic::AbcGeom::IPoints abcPoints(abcObject,Alembic::Abc::kWrapExisting);
          if(!abcPoints.valid())
             return CStatus::OK;
-         if ( abcPoints.getSchema().getPropertyHeader( ".instancenames" ) != NULL)
+
+		 Alembic::Abc::IStringArrayProperty shapeInstanceNamesProp;
+         if ( getArbGeomParamPropertyAlembic(abcPoints, "instancenames", shapeInstanceNamesProp) )
          {
-            Alembic::Abc::IStringArrayProperty shapeInstanceNamesProp = Alembic::Abc::IStringArrayProperty( abcPoints.getSchema(), ".instancenames" );
             if(shapeInstanceNamesProp.getNumSamples() > 0)
             {
                Alembic::Abc::StringArraySamplePtr shapeInstanceNamesPtr = shapeInstanceNamesProp.getValue(shapeInstanceNamesProp.getNumSamples()-1);
@@ -1340,6 +1343,12 @@ CStatus alembic_create_item_Invoke
                   for(size_t j=0;j<shapeInstanceNamesPtr->size();j++)
                   {
                      std::string instanceIdentifier = shapeInstanceNamesPtr->get()[j];
+					 //replace spaces with underscores
+					 for(int c=0; c<instanceIdentifier.size(); c++){
+						 if(instanceIdentifier[c] == ' '){
+                             instanceIdentifier[c] = '_';
+						 }
+					 }
                      CString fullName = getFullNameFromIdentifier(instanceIdentifier);
                      treeArgs[0] = iceTree.GetFullName()+L".ABC_Instance_Shapes.Reference"+CString((LONG)j);
                      treeArgs[1] = fullName;
@@ -1524,6 +1533,7 @@ CStatus alembic_create_item_Invoke
       default:
          break;
    }
+   }
 
    return CStatus::OK;
 }
@@ -1578,6 +1588,7 @@ ESS_CALLBACK_END
 ESS_CALLBACK_START(alembic_import_Execute, CRef&)
 	Context ctxt( in_ctxt );
 	CValueArray args = ctxt.GetAttribute(L"Arguments");
+	ESS_PROFILE_SCOPE("alembic_import_Execute");
 	
    // take care of the filename
    CString filename = (CString)args[0].GetAsText();
@@ -1731,22 +1742,25 @@ ESS_CALLBACK_START(alembic_import_Execute, CRef&)
    std::vector<Alembic::Abc::IObject> objects;
    objects.push_back(archive->getTop());
    size_t nbTransforms = 1;
-   for(size_t i=0;i<objects.size();i++)
    {
-      // first, let's recurse, do the transforms last
-      for(size_t j=0;j<objects[i].getNumChildren();j++)
-      {
-         if(!Alembic::AbcGeom::IXform::matches(objects[i].getChild(j).getMetaData()))
-            objects.push_back(objects[i].getChild(j));
-      }
-      for(size_t j=0;j<objects[i].getNumChildren();j++)
-      {
-         if(Alembic::AbcGeom::IXform::matches(objects[i].getChild(j).getMetaData())) 
-         {
-            objects.push_back(objects[i].getChild(j));
-            nbTransforms++;
-         }
-      }
+	   ESS_PROFILE_SCOPE("alembic_import_Execute traverse ABC Hierarchy");
+	   for(size_t i=0;i<objects.size();i++)
+	   {
+		  // first, let's recurse, do the transforms last
+		  for(size_t j=0;j<objects[i].getNumChildren();j++)
+		  {
+			 if(!Alembic::AbcGeom::IXform::matches(objects[i].getChild(j).getMetaData()))
+				objects.push_back(objects[i].getChild(j));
+		  }
+		  for(size_t j=0;j<objects[i].getNumChildren();j++)
+		  {
+			 if(Alembic::AbcGeom::IXform::matches(objects[i].getChild(j).getMetaData())) 
+			 {
+				objects.push_back(objects[i].getChild(j));
+				nbTransforms++;
+			 }
+		  }
+	   }
    }
 
    ProgressBar prog;
@@ -1765,6 +1779,7 @@ ESS_CALLBACK_START(alembic_import_Execute, CRef&)
    // clear all alembic user data
    alembic_UD::clearAll();
 
+   int intermittentUpdateInterval = std::max( (int)(objects.size() / 100), (int)1 );
    for(size_t i=1;i<objects.size();i++)
    {
       if(identifierMap.size() > 0)
@@ -1773,7 +1788,9 @@ ESS_CALLBACK_START(alembic_import_Execute, CRef&)
             continue;
       }
 
-      prog.PutCaption(L"Importing "+CString(objects[i].getFullName().c_str())+L" ...");
+	  if( i % intermittentUpdateInterval == 0 ) {
+		prog.PutCaption(L"Importing "+CString(objects[i].getFullName().c_str())+L" ...");
+	  }
 
       // get the parent and the object's name
       CString name = truncateName(objects[i].getName().c_str());
@@ -1790,7 +1807,8 @@ ESS_CALLBACK_START(alembic_import_Execute, CRef&)
             Model model;
             if(attachToExisting)
             {
-               CRef modelRef;
+ 			   ESS_PROFILE_SCOPE("attachToExisting");
+              CRef modelRef;
                modelRef.Set(transformCacheModelName);
                model = modelRef;
 
@@ -1819,6 +1837,7 @@ ESS_CALLBACK_START(alembic_import_Execute, CRef&)
             Null null;
             if(attachToExisting)
             {
+			   ESS_PROFILE_SCOPE("attachToExisting");
                CRef nullRef;
                nullRef.Set(transformCacheModelName+L"."+name);
                null = nullRef;
@@ -1884,6 +1903,7 @@ ESS_CALLBACK_START(alembic_import_Execute, CRef&)
             Model model;
             if(attachToExisting)
             {
+			   ESS_PROFILE_SCOPE("attachToExisting");
                CRef modelRef;
                modelRef.Set(getFullNameFromIdentifier(objects[i].getFullName()));
                model = modelRef;
@@ -1929,6 +1949,7 @@ ESS_CALLBACK_START(alembic_import_Execute, CRef&)
          Camera camera;
          if(attachToExisting)
          {
+  		   ESS_PROFILE_SCOPE("attachToExisting");
             CRef cameraRef;
             cameraRef.Set(getFullNameFromIdentifier(objects[i].getFullName()));
             camera = cameraRef;
@@ -1964,6 +1985,7 @@ ESS_CALLBACK_START(alembic_import_Execute, CRef&)
          X3DObject meshObj;
          if(attachToExisting)
          {
+ 		   ESS_PROFILE_SCOPE("attachToExisting");
             CRef meshRef;
             meshRef.Set(getFullNameFromIdentifier(objects[i].getFullName()));
             meshObj = meshRef;
@@ -2009,12 +2031,8 @@ ESS_CALLBACK_START(alembic_import_Execute, CRef&)
          else
          {
             // only add the point position operator if we don't have dynamic topology
-            bool receivesExpression = false;
-            Alembic::Abc::ICompoundProperty abcCompound = getCompoundFromObject(objects[i]);
-            Alembic::Abc::IInt32ArrayProperty faceCountProp = Alembic::Abc::IInt32ArrayProperty(abcCompound,".faceCounts");
-            if(faceCountProp.valid())
-               receivesExpression = !faceCountProp.isConstant();
-
+            bool receivesExpression = isAlembicMeshTopoDynamic( & ( objects[i] ) );
+            
             if(!receivesExpression)
             {
                Alembic::AbcGeom::IPolyMesh abcMesh = Alembic::AbcGeom::IPolyMesh(objects[i],Alembic::Abc::kWrapExisting);
@@ -2033,6 +2051,7 @@ ESS_CALLBACK_START(alembic_import_Execute, CRef&)
          X3DObject meshObj;
          if(attachToExisting)
          {
+ 		   ESS_PROFILE_SCOPE("attachToExisting");
             CRef meshRef;
             meshRef.Set(getFullNameFromIdentifier(objects[i].getFullName()));
             meshObj = meshRef;
@@ -2104,6 +2123,7 @@ ESS_CALLBACK_START(alembic_import_Execute, CRef&)
          X3DObject nurbsObj;
          if(attachToExisting)
          {
+ 		   ESS_PROFILE_SCOPE("attachToExisting");
             CRef nurbsRef;
             nurbsRef.Set(getFullNameFromIdentifier(objects[i].getFullName()));
             nurbsObj = nurbsRef;
@@ -2143,7 +2163,19 @@ ESS_CALLBACK_START(alembic_import_Execute, CRef&)
          }
 
          // now let's check if we are looking at a curves node with color and radii
-         bool useParticles = curveSchema.getPropertyHeader( ".radius" ) != NULL || curveSchema.getPropertyHeader( ".color" ) != NULL;
+
+		 bool useParticles = true;
+		 {
+			 Alembic::Abc::IFloatArrayProperty propRadius;
+			 if( ! getArbGeomParamPropertyAlembic( curveIObject, "radius", propRadius ) ) {
+				 useParticles = false;
+			 }
+			 Alembic::Abc::IC4fArrayProperty propColor;
+			 if( ! getArbGeomParamPropertyAlembic( curveIObject, "color", propColor ) ) {
+				 useParticles = false;
+			 } 
+		 }
+         /*bool useParticles = curveSchema.getPropertyHeader( ".radius" ) != NULL || curveSchema.getPropertyHeader( ".color" ) != NULL;
          if(useParticles)
          {
             if( curveSchema.getPropertyHeader( ".radius" ) != NULL )
@@ -2162,14 +2194,15 @@ ESS_CALLBACK_START(alembic_import_Execute, CRef&)
                else if(prop.getNumSamples() == 0)
                   useParticles = false;
             }
-         }
+         }*/
 
          if (useParticles)
          {
             X3DObject pointsObj;
             if(attachToExisting)
             {
-               CRef pointsRef;
+    		   ESS_PROFILE_SCOPE("attachToExisting");
+              CRef pointsRef;
                pointsRef.Set(getFullNameFromIdentifier(objects[i].getFullName()));
                pointsObj = pointsRef;
                if(!pointsObj.GetType().IsEqualNoCase(L"pointcloud"))
@@ -2218,6 +2251,7 @@ ESS_CALLBACK_START(alembic_import_Execute, CRef&)
             X3DObject curveObj;
             if(attachToExisting)
             {
+	           ESS_PROFILE_SCOPE("attachToExisting");
                CRef curveRef;
                curveRef.Set(getFullNameFromIdentifier(objects[i].getFullName()));
                curveObj = curveRef;
@@ -2282,6 +2316,7 @@ ESS_CALLBACK_START(alembic_import_Execute, CRef&)
          X3DObject pointsObj;
          if(attachToExisting)
          {
+            ESS_PROFILE_SCOPE("attachToExisting");
             CRef pointsRef;
             pointsRef.Set(getFullNameFromIdentifier(objects[i].getFullName()));
             pointsObj = pointsRef;
@@ -2386,11 +2421,12 @@ ESS_CALLBACK_START(alembic_export_settings_Define,CRef&)
    oCustomProperty.AddParameter(L"uvs",CValue::siBool,siPersistable,L"",L"",1,0,1,0,1,oParam);
    oCustomProperty.AddParameter(L"facesets",CValue::siBool,siPersistable,L"",L"",1,0,1,0,1,oParam);
    oCustomProperty.AddParameter(L"bindpose",CValue::siBool,siPersistable,L"",L"",1,0,1,0,1,oParam);
-   oCustomProperty.AddParameter(L"globalspace",CValue::siBool,siPersistable,L"",L"",0,0,1,0,1,oParam);
+   //oCustomProperty.AddParameter(L"globalspace",CValue::siBool,siPersistable,L"",L"",0,0,1,0,1,oParam);
    oCustomProperty.AddParameter(L"dtopology",CValue::siBool,siPersistable,L"",L"",0,0,1,0,1,oParam);
    oCustomProperty.AddParameter(L"guidecurves",CValue::siBool,siPersistable,L"",L"",0,0,1,0,1,oParam);
    oCustomProperty.AddParameter(L"transformcache",CValue::siBool,siPersistable,L"",L"",0,0,1,0,1,oParam);
- 
+   oCustomProperty.AddParameter(L"transforms",CValue::siInt4,siPersistable,L"",L"",0,0,10,0,10,oParam);
+
 	return CStatus::OK;
 ESS_CALLBACK_END
 
@@ -2422,9 +2458,18 @@ ESS_CALLBACK_START(alembic_export_settings_DefineLayout,CRef&)
    oLayout.AddItem(L"bindpose",L"Envelope BindPose");
    oLayout.AddItem(L"dtopology",L"Dynamic Topology");
    oLayout.AddItem(L"guidecurves",L"Guide Curves");
-   oLayout.AddItem(L"globalspace",L"Use Global Space");
+   //oLayout.AddItem(L"globalspace",L"Use Global Space");
    oLayout.EndGroup();
-   oLayout.AddItem(L"transformcache",L"Transform Cache");
+   oLayout.AddItem(L"transformcache",L"Cache Transforms Only");
+   
+   CValueArray transformItems(6);
+   transformItems[0] = L"Flatten Hierarchy";
+   transformItems[1] = (LONG) 0;
+   transformItems[2] = L"Full Hierarchy";
+   transformItems[3] = (LONG) 1;
+   transformItems[4] = L"Bake Into Geometry";
+   transformItems[5] = (LONG) 2;
+   oLayout.AddEnumControl(L"transforms", transformItems, L"Transforms");
 
 	return CStatus::OK;
 ESS_CALLBACK_END
@@ -2704,6 +2749,8 @@ ESS_CALLBACK_START(alembic_path_manager_Init,CRef&)
 ESS_CALLBACK_END
 
 ESS_CALLBACK_START(alembic_path_manager_Execute, CRef&)
+    ESS_PROFILE_REPORT();
+
 	Context ctxt( in_ctxt );
 	CValueArray args = ctxt.GetAttribute(L"Arguments");
    CString model = args[0];
@@ -2713,6 +2760,7 @@ ESS_CALLBACK_START(alembic_path_manager_Execute, CRef&)
    {
       search = L"*.*.*.alembic_*,*.*.*.ABC_*";
       search += L",*.*.alembic_*,*.*.ABC_*";
+	  search += L",*.*.cls.Texture_Coordinates_AUTO.*.alembic*";
    }
    else
       search = model+L".*.*.alembic_*,"+model+"L.*.*.ABC_*";

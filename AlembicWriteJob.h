@@ -10,7 +10,23 @@ class AlembicWriteJob
 {
 private:
     XSI::CString mFileName;
-    XSI::CRefArray mSelection;
+
+public:
+	struct Selectee{
+		XSI::CRef cRef;
+		int nNodeDepth;
+		Selectee(XSI::CRef r):cRef(r), nNodeDepth(-1)
+		{}
+
+		bool operator<( const Selectee& s2 ) const
+		{
+			return nNodeDepth < s2.nNodeDepth;
+    	}
+	};
+private:
+	std::vector<Selectee> mSelection;
+
+    //XSI::CRefArray mSelection;
     std::vector<double> mFrames;
     Alembic::Abc::OArchive mArchive;
 	Alembic::Abc::OObject mTop;
@@ -22,7 +38,7 @@ private:
 public:
    AlembicWriteJob(
       const XSI::CString & in_FileName,
-      const XSI::CRefArray & in_Selection,
+      const std::vector<Selectee> & in_Selection,
       const XSI::CDoubleArray & in_Frames);
    ~AlembicWriteJob();
 
@@ -35,7 +51,7 @@ public:
    bool HasOption(const XSI::CString & in_Name);
    XSI::CValue GetOption(const XSI::CString & in_Name);
    AlembicObjectPtr GetObject(const XSI::CRef & in_Ref);
-   bool AddObject(AlembicObjectPtr in_Obj);
+   bool AddObjectIfDoesNotExist(AlembicObjectPtr in_Obj);
    size_t GetNbObjects() { return mObjects.size(); }
  
    XSI::CStatus PreProcess();

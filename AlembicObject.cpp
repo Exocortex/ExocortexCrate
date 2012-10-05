@@ -19,23 +19,27 @@ AlembicObject::AlembicObject
    mJob = in_Job;
    mOParent = mJob->GetTop();
 
-   // find the parent
-   std::string identifier = getIdentifierFromRef(GetRef(),mJob->GetOption(L"transformCache"));
-   std::vector<std::string> parts;
-   boost::split(parts, identifier, boost::is_any_of("/"));
+   bool bFlatten = mJob->GetOption("flattenHierarchy");
+   if(!bFlatten){
 
-   for(size_t i=1;i<parts.size();i++)
-   {
-	   int numChildren = mOParent.getNumChildren();
-     // for(size_t j=0;j<numChildren;j++)
-      //{
-		 Alembic::Abc::ObjectHeader const* pChildHeader = mOParent.getChildHeader( parts[i] );
-         if( pChildHeader != NULL )
+      // find the parent
+      std::string identifier = getIdentifierFromRef(GetRef(), true);//mJob->GetOption(L"transformCache"));
+      std::vector<std::string> parts;
+      boost::split(parts, identifier, boost::is_any_of("/"));
+
+      for(size_t i=1;i<parts.size();i++)
+      {
+         int numChildren = mOParent.getNumChildren();
+         for(size_t j=0;j<numChildren;j++)
          {
-            mOParent = mOParent.getChild( parts[i] );
-          //  break;
+            Alembic::Abc::ObjectHeader const* pChildHeader = mOParent.getChildHeader( parts[i] );
+            if( pChildHeader != NULL )
+            {
+               mOParent = mOParent.getChild( parts[i] );
+               break;
+            }
          }
-     // }
+      }
    }
 
    mNumSamples = 0;
