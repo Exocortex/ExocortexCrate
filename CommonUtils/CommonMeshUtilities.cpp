@@ -126,6 +126,49 @@ bool isAlembicMeshTopoDynamic( Alembic::AbcGeom::IObject *pIObj ) {
 	return hasDynamicTopo;
 }
 
+bool isAlembicMeshTopology( Alembic::AbcGeom::IObject *pIObj ) {
+	ESS_PROFILE_SCOPE("isAlembicMeshTopology");
+	Alembic::AbcGeom::IPolyMesh objMesh;
+	Alembic::AbcGeom::ISubD objSubD;
+
+	if(Alembic::AbcGeom::IPolyMesh::matches((*pIObj).getMetaData())) {
+		objMesh = Alembic::AbcGeom::IPolyMesh(*pIObj,Alembic::Abc::kWrapExisting);
+	}
+	else {
+		objSubD = Alembic::AbcGeom::ISubD(*pIObj,Alembic::Abc::kWrapExisting);
+	}
+
+	bool isTopology = true;
+	if(objMesh.valid())
+	{
+		Alembic::Abc::IInt32ArrayProperty faceCountProp = Alembic::Abc::IInt32ArrayProperty(objMesh.getSchema(),".faceCounts");
+		if( ! faceCountProp.valid() ) {
+			isTopology = false;
+		}
+		else if( faceCountProp.isConstant() ) {
+			Alembic::Abc::Int32ArraySamplePtr faceCounts = faceCountProp.getValue();
+			if( faceCounts->size() == 0 || ( faceCounts->size() == 1 && ( faceCounts->get()[0] == 0 ) ) ) {
+				isTopology = false;
+			}
+		}
+	}
+	else if( objSubD.valid() )
+	{
+		Alembic::Abc::IInt32ArrayProperty faceCountProp = Alembic::Abc::IInt32ArrayProperty(objSubD.getSchema(),".faceCounts");
+		if( ! faceCountProp.valid() ) {
+			isTopology = false;
+		}
+		else if( faceCountProp.isConstant() ) {
+			Alembic::Abc::Int32ArraySamplePtr faceCounts = faceCountProp.getValue();
+			if( faceCounts->size() == 0 || ( faceCounts->size() == 1 && ( faceCounts->get()[0] == 0 ) ) ) {
+				isTopology = false;
+			}
+		}
+	}  
+	return isTopology;
+}
+
+
 bool isAlembicMeshPointCache( Alembic::AbcGeom::IObject *pIObj ) {
 	ESS_PROFILE_SCOPE("isAlembicMeshPointCache");
 	Alembic::AbcGeom::IPolyMesh objMesh;
