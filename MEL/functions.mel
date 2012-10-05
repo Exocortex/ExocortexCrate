@@ -260,6 +260,7 @@ global proc exocortexAlembicImport(string $filename, int $importNormals, int $im
         addAttr -ln "opacityPP" -dt doubleArray $shape;
         addAttr -ln "agePP" -dt doubleArray $shape;
         addAttr -ln "shapeInstanceIdPP" -dt doubleArray $shape;
+        addAttr -ln "orientationPP" -dt vectorArray $shape;
       }
       exocortexConnectIfUnconnected(($reader+".output[0]"), ($shape+".newParticles[0]"));
       exocortexConnectIfUnconnected(($timeControl+".outTime"), ($shape+".currentTime"));
@@ -381,5 +382,6 @@ global proc exocortexAlembicImport(string $filename, int $importNormals, int $im
     // setup metadata if we have it
     ExocortexAlembic_createMetaData -f $filename -i $identifiers[$i] -o $shape;
   }
+  ExocortexAlembic_postImportPoints;
 }
 

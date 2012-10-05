@@ -155,14 +155,35 @@ MStatus AlembicPoints::Save(double time)
    return MStatus::kSuccess;
 }
 
+
+static AlembicPointsNodeList alembicPointsNodeList;
+
+void AlembicPointsNode::PostConstructor(void)
+{
+  alembicPointsNodeList.push_front(this);
+  listPosition = alembicPointsNodeList.begin();
+}
+
 void AlembicPointsNode::PreDestruction()
 {
+  try
+  {
+    alembicPointsNodeList.erase(listPosition);
+  }
+  catch(...)
+  {}
+
    mSchema.reset();
    delRefArchive(mFileName);
    mFileName.clear();
 }
 
-AlembicPointsNode::~AlembicPointsNode()
+AlembicPointsNode::AlembicPointsNode(void)
+{
+  PostConstructor();
+}
+
+AlembicPointsNode::~AlembicPointsNode(void)
 {
    PreDestruction();
 }
@@ -209,6 +230,46 @@ MStatus AlembicPointsNode::initialize()
    return status;
 }
 
+MStatus AlembicPointsNode::init(const MString &fileName, const MString &identifier)
+{
+  if(fileName != mFileName || identifier != mIdentifier)
+  {
+    mSchema.reset();
+    if(fileName != mFileName)
+    {
+      delRefArchive(mFileName);
+      mFileName = fileName;
+      addRefArchive(mFileName);
+    }
+    mIdentifier = identifier;
+
+    // get the object from the archive
+    Alembic::Abc::IObject iObj = getObjectFromArchive(mFileName,identifier);
+    if(!iObj.valid())
+    {
+      MGlobal::displayWarning("[ExocortexAlembic] Identifier '"+identifier+"' not found in archive '"+mFileName+"'.");
+      return MStatus::kFailure;
+    }
+    obj = Alembic::AbcGeom::IPoints(iObj,Alembic::Abc::kWrapExisting);
+    if(!obj.valid())
+    {
+      MGlobal::displayWarning("[ExocortexAlembic] Identifier '"+identifier+"' in archive '"+mFileName+"' is not a Points.");
+      return MStatus::kFailure;
+    }
+    mSchema = obj.getSchema();
+
+    if(!mSchema.valid())
+      return MStatus::kFailure;
+  }
+  return MS::kSuccess;
+}
+
+static MVector quaternionToVector(const Imath::Quatf &qf)
+{
+  const float deg = acos(qf.r) * (360.0f / M_PI);
+  Imath::V3f v = qf.v.normalized();
+  return MVector(v.x * deg, v.y * deg, v.z * deg);
+}
 
 MStatus AlembicPointsNode::compute(const MPlug & plug, MDataBlock & dataBlock)
 {
@@ -236,47 +297,19 @@ MStatus AlembicPointsNode::compute(const MPlug & plug, MDataBlock & dataBlock)
 
    // update the frame number to be imported
    double inputTime = dataBlock.inputValue(mTimeAttr).asTime().as(MTime::kSeconds);
-   MString & fileName = dataBlock.inputValue(mFileNameAttr).asString();
-   MString & identifier = dataBlock.inputValue(mIdentifierAttr).asString();
+   const MString &fileName = dataBlock.inputValue(mFileNameAttr).asString();
+   const MString &identifier = dataBlock.inputValue(mIdentifierAttr).asString();
 
    // check if we have the file
-   if(fileName != mFileName || identifier != mIdentifier)
-   {
-      mSchema.reset();
-      if(fileName != mFileName)
-      {
-         delRefArchive(mFileName);
-         mFileName = fileName;;
-         addRefArchive(mFileName);
-      }
-      mIdentifier = identifier;
-
-      // get the object from the archive
-      Alembic::Abc::IObject iObj = getObjectFromArchive(mFileName,identifier);
-      if(!iObj.valid())
-      {
-         MGlobal::displayWarning("[ExocortexAlembic] Identifier '"+identifier+"' not found in archive '"+mFileName+"'.");
-         return MStatus::kFailure;
-      }
-      obj = Alembic::AbcGeom::IPoints(iObj,Alembic::Abc::kWrapExisting);
-      if(!obj.valid())
-      {
-         MGlobal::displayWarning("[ExocortexAlembic] Identifier '"+identifier+"' in archive '"+mFileName+"' is not a Points.");
-         return MStatus::kFailure;
-      }
-      mSchema = obj.getSchema();
-
-      instanceInitialize(obj, part.name());
-   }
-
-   if(!mSchema.valid())
-      return MStatus::kFailure;
+   if (!(status = init(fileName, identifier)))
+     return status;
 
    // get the sample
-   SampleInfo sampleInfo = getSampleInfo(
-      inputTime,
-      mSchema.getTimeSampling(),
-      mSchema.getNumSamples()
+   SampleInfo sampleInfo = getSampleInfo
+   (
+     inputTime,
+     mSchema.getTimeSampling(),
+     mSchema.getNumSamples()
    );
 
    // check if we have to do this at all
@@ -318,6 +351,12 @@ MStatus AlembicPointsNode::compute(const MPlug & plug, MDataBlock & dataBlock)
      if( getArbGeomParamPropertyAlembic( obj, "shapeinstanceid", propShapeInstanceID ) )
        sampleShapeInstanceID = propShapeInstanceID.getValue(sampleInfo.floorIndex);   
    }
+   Alembic::Abc::QuatfArraySamplePtr sampleOrientation;
+   {
+     Alembic::Abc::IQuatfArrayProperty propOrientation;
+     if( getArbGeomParamPropertyAlembic( obj, "orientation", propOrientation ) )
+       sampleOrientation = propOrientation.getValue(sampleInfo.floorIndex);
+   }
 
    // get the current values from the particle cloud
    MIntArray ids;
@@ -336,6 +375,8 @@ MStatus AlembicPointsNode::compute(const MPlug & plug, MDataBlock & dataBlock)
    part.mass(masses);
    MDoubleArray shapeInstId;
    part.getPerParticleAttribute("shapeInstanceIdPP", shapeInstId);
+   MVectorArray orientationPP;
+   part.getPerParticleAttribute("orientationPP", orientationPP);
 
    // check if this is a valid sample
    unsigned int particleCount = (unsigned int)samplePos->size();
@@ -366,6 +407,7 @@ MStatus AlembicPointsNode::compute(const MPlug & plug, MDataBlock & dataBlock)
    ages.setLength(particleCount);
    masses.setLength(particleCount);
    shapeInstId.setLength(particleCount);
+   orientationPP.setLength(particleCount);
 
    // if we need to emit new particles, do that now
    if(particleCount > 0)
@@ -402,9 +444,9 @@ MStatus AlembicPointsNode::compute(const MPlug & plug, MDataBlock & dataBlock)
          }
          
          ages[i] = (sampleAge && sampleAge->get()) ? sampleAge->get()[i] : 0.0;
-
          masses[i] = (sampleMass && sampleMass->get()) ? sampleMass->get()[i] : 1.0;
          shapeInstId[i] = (sampleShapeInstanceID && sampleShapeInstanceID->get()) ? sampleShapeInstanceID->get()[i] : 0.0;
+         orientationPP[i] = (sampleOrientation && sampleOrientation->get()) ? quaternionToVector( sampleOrientation->get()[i] ) : MVector::zero;
       }
    }
 
@@ -416,6 +458,7 @@ MStatus AlembicPointsNode::compute(const MPlug & plug, MDataBlock & dataBlock)
    part.setPerParticleAttribute("agePP", ages);
    part.setPerParticleAttribute("massPP", masses);
    part.setPerParticleAttribute("shapeInstanceIdPP", shapeInstId);
+   part.setPerParticleAttribute("orientationPP", orientationPP);
 
    hOut.set( dOutput );
 	 dataBlock.setClean( plug );
@@ -423,37 +466,83 @@ MStatus AlembicPointsNode::compute(const MPlug & plug, MDataBlock & dataBlock)
    return MStatus::kSuccess;
 }
 
-void AlembicPointsNode::instanceInitialize(Alembic::AbcGeom::IPoints obj, MString particleShapeName)
+void AlembicPointsNode::instanceInitialize(void)
 {
-  if (mInstancerName != "")
   {
-    MGlobal::executeCommand("delete " + mInstancerName);
-    mInstancerName = "";
+    const MString getAttrCmd = "getAttr " + name();
+    MString fileName, identifier;
+
+    MGlobal::executeCommand(getAttrCmd + ".fileName", fileName);
+    MGlobal::executeCommand(getAttrCmd + ".identifier", identifier);
+
+    if (!init(fileName, identifier))
+      return;
   }
 
-  // TODO: check shapetype first to if the value is 7 to continue or not!
+  const size_t lastSample = mSchema.getNumSamples()-1;
   {
     Alembic::Abc::IUInt16ArrayProperty propShapeT;
     if( !getArbGeomParamPropertyAlembic( obj, "shapetype", propShapeT ) )
       return;
 
-    const size_t lastSample = propShapeT.getNumSamples()-1;
     Alembic::Abc::UInt16ArraySamplePtr sampleShapeT = propShapeT.getValue(lastSample);
-    if (!sampleShapeT || sampleShapeT->get() || sampleShapeT->get()[0] != 7)
+    if (!sampleShapeT || sampleShapeT->size() <= 0 || sampleShapeT->get()[0] != 7)
       return;
   }
 
-  // create the particle instancer and assign shapeInstanceIdPP as the object index!
-
-  Alembic::Abc::CharArraySamplePtr instNames;
-  Alembic::Abc::ICharArrayProperty propInstName;
+  // check if there's instance names! If so, load the names!... if there's any!
+  Alembic::Abc::IStringArrayProperty propInstName;
   if(!getArbGeomParamPropertyAlembic( obj, "instancenames", propInstName ) )
     return;
 
-  MGlobal::executeCommand("particleInstancer " + particleShapeName, mInstancerName);
-  MGlobal::executeCommand(("particleInstancer -e -name " + mInstancerName) + (" -objectIndex shapeInstanceIdPP" + particleShapeName));
+  Alembic::Abc::StringArraySamplePtr instNames = propInstName.getValue(lastSample);
+  const int nbNames = instNames->size();
+  if (nbNames < 1)
+    return;
 
-  const size_t lastSample = propInstName.getNumSamples()-1;
-  sampleShapeInstanceID = propInstName.getValue(lastSample);   
+  MString addObjectCmd = " -addObject";
+  {
+    const MString _obj = " -object ";
+    for (int i = 0; i < nbNames; ++i)
+    {
+      const std::string res = instNames->get()[i];
+      if (res.length() > 0)
+        addObjectCmd += _obj + removeInvalidCharacter(res).c_str();
+    }
+    addObjectCmd += " ";
+  }
+
+  // create the particle instancer and assign shapeInstanceIdPP as the object index!
+  MString particleShapeName, mInstancerName;
+  MGlobal::executeCommand("string $___connectInfo[] = `connectionInfo -dfs " + name() + ".output[0]`;\nplugNode $___connectInfo[0];", particleShapeName);
+
+  MGlobal::executeCommand("particleInstancer " + particleShapeName, mInstancerName);
+  const MString partInstCmd = "particleInstancer -e -name " + mInstancerName;
+  MGlobal::executeCommand(partInstCmd + " -rotationUnits Degrees -objectIndex shapeInstanceIdPP -rotation orientationPP " + particleShapeName);
+  MGlobal::executeCommand(partInstCmd + addObjectCmd + particleShapeName);
 }
+
+AlembicPostImportPointsCommand::AlembicPostImportPointsCommand(void)
+{}
+AlembicPostImportPointsCommand::~AlembicPostImportPointsCommand(void)
+{}
+
+MStatus AlembicPostImportPointsCommand::doIt(const MArgList& args)
+{
+  AlembicPointsNodeListIter beg = alembicPointsNodeList.begin(), end = alembicPointsNodeList.end();
+  for (; beg != end; ++beg)
+    (*beg)->instanceInitialize();
+  return MS::kSuccess;
+}
+
+MSyntax AlembicPostImportPointsCommand::createSyntax(void)
+{
+  return MSyntax();
+}
+
+void* AlembicPostImportPointsCommand::creator(void)
+{
+  return new AlembicPostImportPointsCommand();
+}
+
 

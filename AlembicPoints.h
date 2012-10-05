@@ -3,6 +3,7 @@
 
 #include "AlembicObject.h"
 #include <maya/MFnParticleSystem.h>
+#include <list>
 
 class AlembicPoints: public AlembicObject
 {
@@ -38,14 +39,22 @@ public:
    virtual MStatus Save(double time);
 };
 
+class AlembicPointsNode;
+
+typedef std::list<AlembicPointsNode*> AlembicPointsNodeList;
+typedef AlembicPointsNodeList::iterator AlembicPointsNodeListIter;
+
 class AlembicPointsNode : public AlembicObjectEmitterNode
 {
 public:
-  AlembicPointsNode(): mInstancerName("") {}
+  AlembicPointsNode();
    virtual ~AlembicPointsNode();
+
+   void instanceInitialize(void);
 
    // override virtual methods from MPxNode
    virtual void PreDestruction();
+   virtual void PostConstructor(void);
    virtual MStatus compute(const MPlug & plug, MDataBlock & dataBlock);
    static void* creator() { return (new AlembicPointsNode()); }
    static MStatus initialize();
@@ -57,14 +66,27 @@ private:
    static MObject mIdentifierAttr;
    MString mFileName;
    MString mIdentifier;
-   MString mInstancerName;
    Alembic::AbcGeom::IPointsSchema mSchema;
    Alembic::AbcGeom::IPoints obj;
+   AlembicPointsNodeListIter listPosition;
 
-   void instanceInitialize(Alembic::AbcGeom::IPoints obj, MString particleShapeName);
+   MStatus init(const MString &filename, const MString &identifier);
 
    // members
    SampleInfo mLastSampleInfo;
+};
+
+class AlembicPostImportPointsCommand : public MPxCommand
+{
+public:
+  AlembicPostImportPointsCommand(void);
+  virtual ~AlembicPostImportPointsCommand(void);
+
+  virtual bool isUndoable(void) const { return false; }
+  MStatus doIt(const MArgList& args);
+
+  static MSyntax createSyntax(void);
+  static void* creator(void);
 };
 
 #endif
