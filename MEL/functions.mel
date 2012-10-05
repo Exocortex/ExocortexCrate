@@ -258,6 +258,8 @@ global proc exocortexAlembicImport(string $filename, int $importNormals, int $im
         $reader = exocortexCreateOrReuseNode("ExocortexAlembicPoints","ExocortexAlembicPoints",$importAttach,0,0);
         addAttr -ln "rgbPP" -dt vectorArray $shape;
         addAttr -ln "opacityPP" -dt doubleArray $shape;
+        addAttr -ln "agePP" -dt doubleArray $shape;
+        addAttr -ln "shapeInstanceIdPP" -dt doubleArray $shape;
       }
       exocortexConnectIfUnconnected(($reader+".output[0]"), ($shape+".newParticles[0]"));
       exocortexConnectIfUnconnected(($timeControl+".outTime"), ($shape+".currentTime"));

@@ -41,7 +41,7 @@ public:
 class AlembicPointsNode : public AlembicObjectEmitterNode
 {
 public:
-   AlembicPointsNode() {}
+  AlembicPointsNode(): mInstancerName("") {}
    virtual ~AlembicPointsNode();
 
    // override virtual methods from MPxNode
@@ -57,7 +57,11 @@ private:
    static MObject mIdentifierAttr;
    MString mFileName;
    MString mIdentifier;
+   MString mInstancerName;
    Alembic::AbcGeom::IPointsSchema mSchema;
+   Alembic::AbcGeom::IPoints obj;
+
+   void instanceInitialize(Alembic::AbcGeom::IPoints obj, MString particleShapeName);
 
    // members
    SampleInfo mLastSampleInfo;

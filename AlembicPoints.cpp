@@ -239,8 +239,6 @@ MStatus AlembicPointsNode::compute(const MPlug & plug, MDataBlock & dataBlock)
    MString & fileName = dataBlock.inputValue(mFileNameAttr).asString();
    MString & identifier = dataBlock.inputValue(mIdentifierAttr).asString();
 
-    Alembic::AbcGeom::IPoints obj;
-
    // check if we have the file
    if(fileName != mFileName || identifier != mIdentifier)
    {
@@ -267,6 +265,8 @@ MStatus AlembicPointsNode::compute(const MPlug & plug, MDataBlock & dataBlock)
          return MStatus::kFailure;
       }
       mSchema = obj.getSchema();
+
+      instanceInitialize(obj, part.name());
    }
 
    if(!mSchema.valid())
@@ -295,19 +295,28 @@ MStatus AlembicPointsNode::compute(const MPlug & plug, MDataBlock & dataBlock)
    Alembic::Abc::V3fArraySamplePtr sampleVel = sample.getVelocities();
 
    Alembic::Abc::C4fArraySamplePtr sampleColor;
-   Alembic::Abc::IC4fArrayProperty propColor;
-   if( getArbGeomParamPropertyAlembic( obj, "color", propColor ) ) {
-	   sampleColor = propColor.getValue(sampleInfo.floorIndex);
+   {
+     Alembic::Abc::IC4fArrayProperty propColor;
+     if( getArbGeomParamPropertyAlembic( obj, "color", propColor ) )
+	     sampleColor = propColor.getValue(sampleInfo.floorIndex);
    }
    Alembic::Abc::FloatArraySamplePtr sampleAge;
-   Alembic::Abc::IFloatArrayProperty propAge;
-   if( getArbGeomParamPropertyAlembic( obj, "age", propAge ) ) {
-	   sampleAge = propAge.getValue(sampleInfo.floorIndex);
+   {
+     Alembic::Abc::IFloatArrayProperty propAge;
+     if( getArbGeomParamPropertyAlembic( obj, "age", propAge ) )
+	     sampleAge = propAge.getValue(sampleInfo.floorIndex);
    }
    Alembic::Abc::FloatArraySamplePtr sampleMass;
-  Alembic::Abc::IFloatArrayProperty propMass;
-   if( getArbGeomParamPropertyAlembic( obj, "mass", propMass ) ) {
+   {
+     Alembic::Abc::IFloatArrayProperty propMass;
+     if( getArbGeomParamPropertyAlembic( obj, "mass", propMass ) )
        sampleMass = propMass.getValue(sampleInfo.floorIndex);
+   }
+   Alembic::Abc::UInt16ArraySamplePtr sampleShapeInstanceID;
+   {
+     Alembic::Abc::IUInt16ArrayProperty propShapeInstanceID;
+     if( getArbGeomParamPropertyAlembic( obj, "shapeinstanceid", propShapeInstanceID ) )
+       sampleShapeInstanceID = propShapeInstanceID.getValue(sampleInfo.floorIndex);   
    }
 
    // get the current values from the particle cloud
@@ -325,6 +334,8 @@ MStatus AlembicPointsNode::compute(const MPlug & plug, MDataBlock & dataBlock)
    part.age(ages);
    MDoubleArray masses;
    part.mass(masses);
+   MDoubleArray shapeInstId;
+   part.getPerParticleAttribute("shapeInstanceIdPP", shapeInstId);
 
    // check if this is a valid sample
    unsigned int particleCount = (unsigned int)samplePos->size();
@@ -354,6 +365,7 @@ MStatus AlembicPointsNode::compute(const MPlug & plug, MDataBlock & dataBlock)
    opacities.setLength(particleCount);
    ages.setLength(particleCount);
    masses.setLength(particleCount);
+   shapeInstId.setLength(particleCount);
 
    // if we need to emit new particles, do that now
    if(particleCount > 0)
@@ -364,7 +376,7 @@ MStatus AlembicPointsNode::compute(const MPlug & plug, MDataBlock & dataBlock)
          positions[i].y = samplePos->get()[i].y;
          positions[i].z = samplePos->get()[i].z;
 
-         if(sampleVel)
+         if(sampleVel && sampleVel->get())
          {
             velocities[i].x = sampleVel->get()[i].x;
             velocities[i].y = sampleVel->get()[i].y;
@@ -376,7 +388,7 @@ MStatus AlembicPointsNode::compute(const MPlug & plug, MDataBlock & dataBlock)
             positions[i] += velocities[i] * sampleInfo.alpha;
          }
 
-         if(sampleColor)
+         if(sampleColor && sampleColor->get())
          {
             rgbs[i].x = sampleColor->get()[i].r;
             rgbs[i].y = sampleColor->get()[i].g;
@@ -389,25 +401,10 @@ MStatus AlembicPointsNode::compute(const MPlug & plug, MDataBlock & dataBlock)
             opacities[i] = 1.0;
          }
          
-         if(sampleAge)
-         {
-            ages[i] = sampleAge->get()[i];
-         }
-         else
-         {
-            ages[i] = 0.0;
-         }
+         ages[i] = (sampleAge && sampleAge->get()) ? sampleAge->get()[i] : 0.0;
 
-         if(sampleMass)
-         {
-            masses[i] = sampleMass->get()[i];
-            if(masses[i] == 0.0)
-               masses[i] = 0.001;
-         }
-         else
-         {
-            masses[i] = 1.0;
-         }
+         masses[i] = (sampleMass && sampleMass->get()) ? sampleMass->get()[i] : 1.0;
+         shapeInstId[i] = (sampleShapeInstanceID && sampleShapeInstanceID->get()) ? sampleShapeInstanceID->get()[i] : 0.0;
       }
    }
 
@@ -418,9 +415,45 @@ MStatus AlembicPointsNode::compute(const MPlug & plug, MDataBlock & dataBlock)
    part.setPerParticleAttribute("opacityPP", opacities);
    part.setPerParticleAttribute("agePP", ages);
    part.setPerParticleAttribute("massPP", masses);
+   part.setPerParticleAttribute("shapeInstanceIdPP", shapeInstId);
 
    hOut.set( dOutput );
 	 dataBlock.setClean( plug );
 
    return MStatus::kSuccess;
 }
+
+void AlembicPointsNode::instanceInitialize(Alembic::AbcGeom::IPoints obj, MString particleShapeName)
+{
+  if (mInstancerName != "")
+  {
+    MGlobal::executeCommand("delete " + mInstancerName);
+    mInstancerName = "";
+  }
+
+  // TODO: check shapetype first to if the value is 7 to continue or not!
+  {
+    Alembic::Abc::IUInt16ArrayProperty propShapeT;
+    if( !getArbGeomParamPropertyAlembic( obj, "shapetype", propShapeT ) )
+      return;
+
+    const size_t lastSample = propShapeT.getNumSamples()-1;
+    Alembic::Abc::UInt16ArraySamplePtr sampleShapeT = propShapeT.getValue(lastSample);
+    if (!sampleShapeT || sampleShapeT->get() || sampleShapeT->get()[0] != 7)
+      return;
+  }
+
+  // create the particle instancer and assign shapeInstanceIdPP as the object index!
+
+  Alembic::Abc::CharArraySamplePtr instNames;
+  Alembic::Abc::ICharArrayProperty propInstName;
+  if(!getArbGeomParamPropertyAlembic( obj, "instancenames", propInstName ) )
+    return;
+
+  MGlobal::executeCommand("particleInstancer " + particleShapeName, mInstancerName);
+  MGlobal::executeCommand(("particleInstancer -e -name " + mInstancerName) + (" -objectIndex shapeInstanceIdPP" + particleShapeName));
+
+  const size_t lastSample = propInstName.getNumSamples()-1;
+  sampleShapeInstanceID = propInstName.getValue(lastSample);   
+}
+
