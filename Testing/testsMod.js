@@ -38,7 +38,7 @@ pdProto.execute = function(){
 		runStr = ["\"", this.exepath,"\"" , ' -U MAXScript ', this.arguments, ' ', script].join('');
 	}
 	else if(this.app === "xsi"){
-		runStr = ["\"", this.exepath,"\"" , ' -lang Python -script ', script].join('');
+		runStr = ["\"", this.exepath,"\"", ' -continue -lang Python -script ', script].join('');
 	}
 
 	console.log('runStr: '+runStr);
@@ -54,6 +54,7 @@ pdProto.execute = function(){
 	envVar["testPath"] = this.testdir+"/";
 	envVar["testName"] = this.scriptName.substring(0, this.scriptName.length-3);
 	envVar["genBaseline"] = this.genBaseline;
+	envVar["PYTHONPATH"] = "E:/Projects2/ExocortexAlembicShared/Testing/Scripts/Python/common"
 
 	//console.log(envVar);
 
