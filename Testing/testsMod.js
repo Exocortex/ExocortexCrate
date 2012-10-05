@@ -31,7 +31,15 @@ pdProto.execute = function(){
 
 	var script = this.scriptPath + this.scriptName;
 
-	var runStr = ["\"", this.exepath,"\"" , ' ', '-U MAXScript ', this.arguments, ' ', script].join('');
+
+
+	var runStr = "";
+	if(this.app === "max"){
+		runStr = ["\"", this.exepath,"\"" , ' -U MAXScript ', this.arguments, ' ', script].join('');
+	}
+	else if(this.app === "xsi"){
+		runStr = ["\"", this.exepath,"\"" , ' -lang Python -script ', script].join('');
+	}
 
 	console.log('runStr: '+runStr);
 	console.log('wdir: '+this.testdir);
@@ -66,7 +74,6 @@ pdProto.execute = function(){
 
 		console.log('stdout: '+stdout);
 		console.log('stderr: '+stderr);
-		console.log('status: '+envVar.status);
 		that.pid = 0;
 
 		that.completionCallback.call(that.completionContext, that);
