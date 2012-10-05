@@ -384,15 +384,6 @@ XSI::CStatus AlembicCurves::Save(double time)
          }
       }
 
-     // store the vertex indices
-	 vector<long> vertexIndices( emitterPntIndex.GetCount());
-     for(LONG i=0;i<emitterPntIndex.GetCount();i++)
-        vertexIndices[i] = emitterPntIndex[i];
-     mVertexIndexProperty.set(Alembic::Abc::Int32ArraySample(&vertexIndices.front(),vertexIndices.size()));
-
-	 // store the face indices
-     mFaceIndexProperty.set(Alembic::Abc::Int32ArraySample(&faceIndices.front(),faceIndices.size()));
-
       long curveCount = emitterPntIndex.GetCount();
       assert( curveCount == numCurves);
 
@@ -421,7 +412,7 @@ XSI::CStatus AlembicCurves::Save(double time)
       // store the bbox
       mCurvesSample.setSelfBounds(bbox);
 
-      // if we are the first frame then define the curves
+      // if we are the first frame then define the curves and store the indices
       if(mNumSamples == 0)
       {
          const int hairVertCount = 15;
@@ -434,6 +425,15 @@ XSI::CStatus AlembicCurves::Save(double time)
          mCurvesSample.setType(kLinear);
          mCurvesSample.setWrap(kNonPeriodic);
          mCurvesSample.setBasis(kNoBasis);
+
+		// store the vertex indices
+		 vector<long> vertexIndices( emitterPntIndex.GetCount());
+		 for(LONG i=0;i<emitterPntIndex.GetCount();i++)
+			vertexIndices[i] = emitterPntIndex[i];
+		 mVertexIndexProperty.set(Alembic::Abc::Int32ArraySample(&vertexIndices.front(),vertexIndices.size()));
+
+		 // store the face indices
+		 mFaceIndexProperty.set(Alembic::Abc::Int32ArraySample(&faceIndices.front(),faceIndices.size()));
       }
       mCurvesSchema.set(mCurvesSample);
    }
