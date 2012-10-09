@@ -113,7 +113,10 @@ int recurseOnAlembicObject(Alembic::AbcGeom::IObject& iObj, INode *pParentMaxNod
 				std::string parentName = removeXfoSuffix(iObj.getName());
 				std::string childName = mergedGeomChild->getName();
 				//only merge if the parent and child have the same after the Xfo suffix has been removed (if present)
-				if(parentName.compare(childName) == 0){
+            //Also, always merge if we are dealing with a camera
+				if(parentName.compare(childName) == 0 ||
+               Alembic::AbcGeom::ICamera::matches(mergedGeomChild->getMetaData()))
+            {
 					mergedGeomNodeIndex = mergeIndex;
 				}
 				else{
