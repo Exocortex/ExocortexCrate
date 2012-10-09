@@ -577,8 +577,7 @@ MStatus AlembicPolyMeshNode::compute(const MPlug & plug, MDataBlock & dataBlock)
          Alembic::Abc::P3fArraySamplePtr samplePos2 = sample2.getPositions();
 		 if( isTopologyDynamic ) {
 			 if( sampleVel != NULL ) {
-				   float timeAlpha = (float)(mSchema.getTimeSampling()->getSampleTime(sampleInfo.ceilIndex) - 
-                            mSchema.getTimeSampling()->getSampleTime(sampleInfo.floorIndex)) * sampleInfo.alpha;
+					float timeAlpha = getTimeOffsetFromSchema( mSchema, sampleInfo );
 				   //ESS_LOG_WARNING( "timeAlpha: " << timeAlpha );
 				   if( sampleVel->size() == samplePos->size() ) {
 					   for(unsigned int i=0;i< sampleVel->size();i++)
