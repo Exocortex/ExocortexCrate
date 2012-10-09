@@ -1723,7 +1723,7 @@ void createShape( Alembic::Abc::IObject& iObj, CRef& parentNode, CRef& newNode, 
 
       // create the topo op
       CRef returnOpRef;
-      if(!importBboxes)
+      if(!importBboxes && isAlembicMeshTopology(&iObj))
       {
          CValue returnedOpVal;
          alembic_create_item_Invoke(L"alembic_polymesh_topo",meshObj.GetRef(),filename,iObj.getFullName().c_str(),attachToExisting,createItemArgs,returnedOpVal);
