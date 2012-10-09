@@ -28,6 +28,9 @@ var server_port = nconf.get('webServer:port');
 var globals = nconf.get('globals');
 
 
+var bSkipExport = true;
+
+
 
 
 var app = express.createServer();
@@ -113,7 +116,9 @@ var readTestDir = function(path, list){
 	          		for(s=0; s<slen; s++){
 	          			var script = aJSON.tasks[s];
 	          			script.testpath = path;
-	          			testList.push(script);
+	          			if(!bSkipExport || (bSkipExport && script.script.search("export") == -1)){
+	          				testList.push(script);
+	          			}
 	          		}
 
 				}
@@ -149,7 +154,7 @@ var cleanTestDir = function(path){
 		else if(stats.isFile()){
 			if(	files[i].search(".ats") != -1 || 
 				files[i].search("_Render") != -1 || 
-				files[i].search(".tabc") != -1 
+				(!bSkipExport && files[i].search(".tabc") != -1) 
 				){ //we have found a folder that contains a test
 
 				var res = fs.unlinkSync(filePath);
@@ -480,7 +485,8 @@ tmProto.build = function(list){
 		}
 
 		//XSI alembic_import method doesn't like back slashes
-		params.testdir.replace('\\', '/');
+		//params.testdir.replace('\\', '/');
+		//console.log("params.testdir: "+params.testdir);
 
 		this.tests.push( new TestDesc(params) );
 	}

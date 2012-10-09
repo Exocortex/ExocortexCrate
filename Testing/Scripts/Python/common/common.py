@@ -2,19 +2,50 @@
 
 import os
 
+
+def getInput(name, default=None):
+	#print name + os.environ[name]
+	try:
+		return os.environ[name]
+	except:
+		return default
+
+def getIntInput(name, default=None):
+	#print name, int(os.environ[name])
+	try:
+		return int(os.environ[name])
+	except:
+		return default
+
 includePath = os.environ["includePath"];
 testPath = os.environ["testPath"];
 testFile = os.environ["testName"];
 app = os.environ["app"];
 appVer = os.environ["appVer"];
-obj = os.environ["obj"];
 genBaseline = os.environ["genBaseline"];
 
-transformsEO = None
-try:
-	transformsEO = os.environ["transformsEO"]
-except:
-	transformsEO = None
+
+obj = os.environ["obj"];
+
+transformsEO = getInput("transformsEO");
+frameToRender = getIntInput("frameToRender", 0);
+exportStrAppend = getInput("exportStr");
+
+if exportStrAppend != None : print "exportStr was found."
+
+
+#transformsEO
+#try:
+#	transformsEO = os.environ["transformsEO"]
+#except:
+#	transformsEO = None
+
+
+#frameToRender = 0
+#try:
+#	frameToRender = os.environ["frameToRender"]
+#except:
+#	frameToRender = None
 
 class Task:
 	def __init__(self, name, status="UNKNOWN"):

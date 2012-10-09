@@ -1,4 +1,3 @@
-
 from common import *
 
 tasks = TaskList([Task("Import"), Task("Render")], testPath + app + appVer + "_" + testFile + ".ats")
@@ -25,6 +24,7 @@ if result == None:
 	Application.SetValue("Passes.RenderOptions.OutputDir", testPath, "")
 	Application.SetValue("Passes.Default_Pass.Main.Filename", imageName, "")
 	Application.SetValue("Passes.Default_Pass.Main.Format", "jpg", "")
+	#print "frameToRender: "+frameToRender
 	Application.RenderPasses("Passes.Default_Pass", frameToRender, frameToRender)
 
 	#right render includes the images existing and the comparison, but instead split them (we check for the image to exist here, and set to pass if it does)
