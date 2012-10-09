@@ -18,6 +18,7 @@ struct ArchiveInfo
    std::string path;
 };
 
+      
 bool validate_filename_location(const char *filename);
 
 typedef std::map<std::string,std::string> stringMap;
@@ -101,9 +102,22 @@ public:
 Imath::M33d extractRotation(Imath::M44d& m);
 
 SampleInfo getSampleInfo(double iFrame,Alembic::AbcCoreAbstract::TimeSamplingPtr iTime, size_t numSamps);
-Alembic::Abc::TimeSamplingPtr getTimeSamplingFromObject(Alembic::Abc::IObject object);
-Alembic::Abc::ICompoundProperty getCompoundFromObject(Alembic::Abc::IObject object);
-size_t getNumSamplesFromObject(Alembic::Abc::IObject object);
+Alembic::Abc::TimeSamplingPtr getTimeSamplingFromObject(Alembic::Abc::IObject &object);
+Alembic::Abc::ICompoundProperty getCompoundFromObject(Alembic::Abc::IObject &object);
+size_t getNumSamplesFromObject(Alembic::Abc::IObject &object);
+float getTimeOffsetFromObject( Alembic::Abc::IObject &object, SampleInfo const& sampleInfo );
+
+template<typename SCHEMA>
+float getTimeOffsetFromSchema( SCHEMA &schema, SampleInfo const& sampleInfo ) {
+	Alembic::Abc::TimeSamplingPtr timeSampling = schema.getTimeSampling();
+	if( timeSampling.get() == NULL ) {
+		return 0;
+	}
+	else {
+		return ( timeSampling->getSampleTime(sampleInfo.ceilIndex) -
+			timeSampling->getSampleTime(sampleInfo.floorIndex) ) * sampleInfo.alpha;
+	}
+}
 
 std::string getModelName( const std::string &identifier );
 std::string removeXfoSuffix(const std::string& importName);
