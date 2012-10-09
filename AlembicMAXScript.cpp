@@ -843,7 +843,7 @@ int ExocortexAlembicStaticInterface_ExocortexAlembicExportJobs( CONST_2013 MCHAR
 			for(size_t i=0; i<jobPtrs.size(); i++)
 			{
 				bool bStatusOK = jobPtrs[i]->Process(frame);
-				if(bStatusOK){
+				if( bStatusOK && ( pMaxInterface->GetCancel() == FALSE ) ){
 					//TODO: should probably move this block after the loop
 					double dbProgress = (100.0 * frame - dbMinFrame) / (dbMaxFrame - dbMinFrame);
 					pMaxInterface->ProgressUpdate(static_cast<int>(dbProgress));
