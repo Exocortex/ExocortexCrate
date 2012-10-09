@@ -2175,8 +2175,20 @@ ESS_CALLBACK_START(alembic_import_Execute, CRef&)
    }
 
    // let's try to read this
-   CString resolvedPath = CUtils::ResolveTokenString(filename,XSI::CTime(),false);
-   Alembic::Abc::IArchive * archive = new Alembic::Abc::IArchive( Alembic::AbcCoreHDF5::ReadArchive(), resolvedPath.GetAsciiString() );
+   Alembic::Abc::IArchive* archive = NULL;
+   try{
+      CString resolvedPath = CUtils::ResolveTokenString(filename,XSI::CTime(),false);
+      archive = new Alembic::Abc::IArchive( Alembic::AbcCoreHDF5::ReadArchive(), resolvedPath.GetAsciiString() );
+   }
+   catch(Alembic::Util::Exception& e){
+      std::string exc(e.what());
+      ESS_LOG_ERROR("[alembic] Error reading file: "<<e.what());
+      return CStatus::Fail;
+   }
+   catch(...){
+      ESS_LOG_ERROR("[alembic] Error reading file.");
+      return CStatus::Fail;
+   }
 
    // also precap the filename with the project token just in case
    CString projectPath = Application().GetActiveProject().GetPath();
