@@ -115,7 +115,7 @@ std::string removeXfoSuffix(const std::string& importName)
 	return importName;
 }
 
-Alembic::Abc::ICompoundProperty getCompoundFromObject(Alembic::Abc::IObject object)
+Alembic::Abc::ICompoundProperty getCompoundFromObject(Alembic::Abc::IObject &object)
 {
 	ESS_PROFILE_SCOPE("getCompoundFromObject"); 
     const Alembic::Abc::MetaData &md = object.getMetaData();
@@ -137,7 +137,7 @@ Alembic::Abc::ICompoundProperty getCompoundFromObject(Alembic::Abc::IObject obje
    return Alembic::Abc::ICompoundProperty();
 }
 
-Alembic::Abc::TimeSamplingPtr getTimeSamplingFromObject(Alembic::Abc::IObject object)
+Alembic::Abc::TimeSamplingPtr getTimeSamplingFromObject(Alembic::Abc::IObject &object)
 {
 	ESS_PROFILE_SCOPE("getTimeSamplingFromObject"); 
    const Alembic::Abc::MetaData &md = object.getMetaData();
@@ -159,7 +159,7 @@ Alembic::Abc::TimeSamplingPtr getTimeSamplingFromObject(Alembic::Abc::IObject ob
    return Alembic::Abc::TimeSamplingPtr();
 }
 
-size_t getNumSamplesFromObject(Alembic::Abc::IObject object)
+size_t getNumSamplesFromObject(Alembic::Abc::IObject &object)
 {
 	ESS_PROFILE_SCOPE("getNumSamplesFromObject"); 
    const Alembic::Abc::MetaData &md = object.getMetaData();
@@ -181,6 +181,16 @@ size_t getNumSamplesFromObject(Alembic::Abc::IObject object)
    return 0;
 }
 
+float getTimeOffsetFromObject( Alembic::Abc::IObject &object, SampleInfo const& sampleInfo ) {
+	Alembic::Abc::TimeSamplingPtr timeSampling = getTimeSamplingFromObject( object );
+	if( timeSampling.get() == NULL ) {
+		return 0;
+	}
+	else {
+		return (float)( ( timeSampling->getSampleTime(sampleInfo.ceilIndex) -
+			timeSampling->getSampleTime(sampleInfo.floorIndex) ) * sampleInfo.alpha );
+	}
+}
 
 void getMergeInfo( Alembic::AbcGeom::IObject& iObj, bool& bCreateNullNode, int& nMergedGeomNodeIndex, Alembic::AbcGeom::IObject& mergedGeomChild)
 {
@@ -219,6 +229,3 @@ void getMergeInfo( Alembic::AbcGeom::IObject& iObj, bool& bCreateNullNode, int& 
 		}
 	}
 }
-
-
-
