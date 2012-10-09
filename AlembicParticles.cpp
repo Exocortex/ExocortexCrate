@@ -513,17 +513,14 @@ AlembicParticles::GetParticlePositions(Alembic::AbcGeom::IPoints &iPoints, const
 		//Get the velocity if there is an alpha
 		if (sampleInfo.alpha != 0.0f)
 		{
-			double timeAlpha = (double)(iPoints.getSchema().getTimeSampling()->getSampleTime(sampleInfo.ceilIndex) - 
- 						iPoints.getSchema().getTimeSampling()->getSampleTime(sampleInfo.floorIndex)) * sampleInfo.alpha;      
-
-			float alpha = static_cast<float>(timeAlpha);
+			float timeAlpha = getTimeOffsetFromObject( iPoints, sampleInfo );
 
 			Alembic::Abc::V3fArraySamplePtr floorVelocities = floorSample.getVelocities();
 			if( floorVelocities != NULL && floorVelocities->size() > 0 ) {
 				j = 0;
 				jIncrement = floorVelocities->size() == points.Count() ? 1 : 0;
 				for( int i = 0; i < alembicPositions.size(); i ++ ) {
-					alembicPositions[i] += alpha * (*floorVelocities)[j];	 	
+					alembicPositions[i] += timeAlpha * (*floorVelocities)[j];	 	
 					j += jIncrement;
 				}
 			}
@@ -652,11 +649,8 @@ AlembicParticles::GetParticleOrientations(Alembic::AbcGeom::IPoints &iPoints, co
 			{
 				IQuatfArrayProperty angVelProperty ;
 				if( getArbGeomParamPropertyAlembic( iPoints, "angularvelocity", angVelProperty ) ) {
-					double timeAlpha = (double)(iPoints.getSchema().getTimeSampling()->getSampleTime(sampleInfo.ceilIndex) - 
-						iPoints.getSchema().getTimeSampling()->getSampleTime(sampleInfo.floorIndex)) * sampleInfo.alpha;      
-
-					float alpha = static_cast<float>(timeAlpha);
-
+					float timeAlpha = getTimeOffsetFromObject( iPoints, sampleInfo );
+							
 					Alembic::Abc::QuatfArraySamplePtr floorAngVelSamples = angVelProperty.getValue(sampleInfo.floorIndex);
 					if( floorAngVelSamples != NULL && floorAngVelSamples->size() > 0 ) {
 						j = 0;
@@ -665,7 +659,7 @@ AlembicParticles::GetParticleOrientations(Alembic::AbcGeom::IPoints &iPoints, co
 							Quat q = maxOrientations[i];
 							Quat v = ConvertAlembicQuatToMaxQuat( (*floorAngVelSamples)[j], false);
 							j += jIncrement;
-							v = v * alpha;
+							v = v * timeAlpha;
 							if (v.w != 0.0f) {
 								q = v * q;
 							}

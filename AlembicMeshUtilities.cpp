@@ -188,13 +188,8 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
 				  if(options.nDataFillFlags & ALEMBIC_DATAFILL_IGNORE_SUBFRAME_SAMPLES){
 				      timeAlpha = fRoundedTimeAlpha;	
 				  }
-				  else if( objMesh.valid() ) {
-					  timeAlpha = (float)(objMesh.getSchema().getTimeSampling()->getSampleTime(sampleInfo.ceilIndex) - 
-							objMesh.getSchema().getTimeSampling()->getSampleTime(sampleInfo.floorIndex)) * sampleInfoAlpha;
-				  }
 				  else {
-					 timeAlpha = (float)(objSubD.getSchema().getTimeSampling()->getSampleTime(sampleInfo.ceilIndex) - 
-							objSubD.getSchema().getTimeSampling()->getSampleTime(sampleInfo.floorIndex)) * sampleInfoAlpha;
+					  timeAlpha = getTimeOffsetFromObject( *options.pIObj, sampleInfo );
 				  }
 				  for(size_t i=0;i<meshVel->size();i++)
 				  {
@@ -544,9 +539,9 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
 			   //normalSpec->CheckNormals();
 
 
-			   //The following flags are set after the CheckNormals call
-			   //normalSpec->SetFlag(MESH_NORMAL_NORMALS_BUILT);
-			   //normalSpec->SetFlag(MESH_NORMAL_NORMALS_COMPUTED);
+			   // since we commented out check normals above, we need to set these explicitly.
+			   normalSpec->SetFlag(MESH_NORMAL_NORMALS_BUILT, TRUE);
+			   normalSpec->SetFlag(MESH_NORMAL_NORMALS_COMPUTED, TRUE);
 
 			   //Also allocates space for the RVert array which we need for doing any normal vector queries
 			   //options.pMNMesh->checkNormals(TRUE);

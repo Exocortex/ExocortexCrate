@@ -45,7 +45,7 @@ void AlembicImport_FillInShape(alembic_fillshape_options &options)
 }
 
 
-class curvePositionSampler{
+class CurvePositionSampler{
 public:
 
 	Alembic::Abc::P3fArraySamplePtr curvePos1;
@@ -63,7 +63,7 @@ public:
 	float timeAlpha;
 	float sampleAlpha;
 
-	curvePositionSampler(Alembic::AbcGeom::ICurves& obj, SampleInfo& sampleInfo, float tAlpha, float sAlpha){
+	CurvePositionSampler(Alembic::AbcGeom::ICurves& obj, SampleInfo& sampleInfo, float tAlpha, float sAlpha){
 
 		bool isDynamicTopo = isAlembicSplineTopoDynamic( &obj );
 
@@ -206,10 +206,9 @@ void AlembicImport_FillInShape_Internal(alembic_fillshape_options &options)
        fSamplerTimeAlpha = fTimeAlpha;
    }
    else{ 
-       fSamplerTimeAlpha = (float)(obj.getSchema().getTimeSampling()->getSampleTime(sampleInfo.ceilIndex) - 
- 		obj.getSchema().getTimeSampling()->getSampleTime(sampleInfo.floorIndex)) * (float)sampleInfo.alpha;    
+       fSamplerTimeAlpha = getTimeOffsetFromObject( obj, sampleInfo );
    }
-   curvePositionSampler posSampler(obj, sampleInfo, fSamplerTimeAlpha, (float)sampleInfo.alpha);
+   CurvePositionSampler posSampler(obj, sampleInfo, fSamplerTimeAlpha, (float)sampleInfo.alpha);
 
 
    // Prepare the knots
