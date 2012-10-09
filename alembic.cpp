@@ -1617,6 +1617,8 @@ void createTransform( Alembic::Abc::IObject& iObj, CRef& parentNode, CRef& newNo
 
             if(!model.GetType().IsEqualNoCase(L"#model"))
                model.ResetObject();
+
+            newNode.Set(getFullNameFromIdentifier(iObj.getFullName()));
          }
          if(!model.IsValid())
          {
@@ -1658,11 +1660,14 @@ void createShape( Alembic::Abc::IObject& iObj, CRef& parentNode, CRef& newNode, 
          camera = cameraRef;
          if(!camera.GetType().IsEqualNoCase(L"camera"))
             camera.ResetObject();
+
+         newNode.Set(getFullNameFromIdentifier(iObj.getFullName()));
       }
       if(!camera.IsValid())
       {
          parentX3DObject.AddCamera(L"Camera",name,camera);
          nameMapAdd(iObj.getFullName().c_str(),camera.GetFullName());
+         newNode.Set(getFullNameFromIdentifier(iObj.getFullName()));
       }
 
       // delete the interest
@@ -1696,6 +1701,8 @@ void createShape( Alembic::Abc::IObject& iObj, CRef& parentNode, CRef& newNode, 
 
          if(!meshObj.GetType().IsEqualNoCase(L"PolyMsh"))
             meshObj.ResetObject();
+
+         newNode.Set(getFullNameFromIdentifier(iObj.getFullName()));
       }
       if(!meshObj.IsValid())
       {
@@ -1774,6 +1781,8 @@ void createShape( Alembic::Abc::IObject& iObj, CRef& parentNode, CRef& newNode, 
 
          if(!meshObj.GetType().IsEqualNoCase(L"PolyMsh"))
             meshObj.ResetObject();
+
+         newNode.Set(getFullNameFromIdentifier(iObj.getFullName()));
       }
       if(!meshObj.IsValid())
       {
@@ -1846,6 +1855,7 @@ void createShape( Alembic::Abc::IObject& iObj, CRef& parentNode, CRef& newNode, 
          nurbsObj = nurbsRef;
          if(!nurbsObj.GetType().IsEqualNoCase(L"surfmsh"))
             nurbsObj.ResetObject();
+         newNode.Set(getFullNameFromIdentifier(iObj.getFullName()));
       }
       if(!nurbsObj.IsValid())
       {
@@ -1926,6 +1936,8 @@ void createShape( Alembic::Abc::IObject& iObj, CRef& parentNode, CRef& newNode, 
             pointsObj = pointsRef;
             if(!pointsObj.GetType().IsEqualNoCase(L"pointcloud"))
                pointsObj.ResetObject();
+
+            newNode.Set(getFullNameFromIdentifier(iObj.getFullName()));
          }
          if(!pointsObj.IsValid())
          {
@@ -1977,6 +1989,8 @@ void createShape( Alembic::Abc::IObject& iObj, CRef& parentNode, CRef& newNode, 
             curveObj = curveRef;
             if(!curveObj.GetType().IsEqualNoCase(L"crvlist") && !curveObj.GetType().IsEqualNoCase(L"hair"))
                curveObj.ResetObject();
+
+            newNode.Set(getFullNameFromIdentifier(iObj.getFullName()));
          }
          if(!curveObj.IsValid())
          {
@@ -2043,6 +2057,8 @@ void createShape( Alembic::Abc::IObject& iObj, CRef& parentNode, CRef& newNode, 
          pointsObj = pointsRef;
          if(!pointsObj.GetType().IsEqualNoCase(L"pointcloud"))
             pointsObj.ResetObject();
+
+         newNode.Set(getFullNameFromIdentifier(iObj.getFullName()));
       }
       if(!pointsObj.IsValid())
       {
@@ -2100,7 +2116,7 @@ ESS_CALLBACK_START(alembic_import_Execute, CRef&)
 	Context ctxt( in_ctxt );
 	CValueArray args = ctxt.GetAttribute(L"Arguments");
 	ESS_PROFILE_SCOPE("alembic_import_Execute");
-	
+
    // take care of the filename
    CString filename = (CString)args[0].GetAsText();
    if(filename.IsEmpty())
