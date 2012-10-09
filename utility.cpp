@@ -23,6 +23,11 @@
 #include "CommonProfiler.h"
 using namespace XSI;
 
+#include "Alembic\AbcCoreAbstract\TimeSampling.h"
+namespace AbcA = ::Alembic::AbcCoreAbstract::ALEMBIC_VERSION_NS;
+
+using AbcA::TimeSamplingPtr;
+
 
 void logError( const char* msg ) {
 	XSI::Application().LogMessage( msg, XSI::siErrorMsg );
@@ -340,6 +345,28 @@ void nameMapClear()
    gNameMap.clear();
 }
 
+void updateOperatorInfo( XSI::Operator& op, SampleInfo& sampleInfo, TimeSamplingPtr timeSampling, 
+						 int nPointsPrimitive, int nPointsCache)
+{
+	double t0, t1;
+
+	// get time range
+	t0 = timeSampling->getStoredTimes()[0]; 
+	t1 = timeSampling->getStoredTimes()[ timeSampling->getNumStoredTimes()-1];
+	t0 *= (float)CTime().GetFrameRate();
+	t1 *= (float)CTime().GetFrameRate();
+
+	int nSamples = (int) timeSampling->getNumStoredTimes();
+	double sampleRate = (t1 - t0 + 1.0)/(double)nSamples;
+
+	op.PutParameterValue(L"numSamples",(LONG) nSamples);
+	op.PutParameterValue(L"sampleRate", sampleRate);
+	op.PutParameterValue(L"StartTime", t0);
+	op.PutParameterValue(L"EndTime", t1);
+	op.PutParameterValue(L"numPointsPrimitive",(LONG) nPointsPrimitive);
+	op.PutParameterValue(L"numPointsCache",(LONG) nPointsCache);
+}
+
 CStatus alembicOp_Define( CRef& in_ctxt )
 {
    ESS_PROFILE_SCOPE("alembicOp_Define");
@@ -365,6 +392,20 @@ CStatus alembicOp_Define( CRef& in_ctxt )
    oPDef = oFactory.CreateParamDef(L"renderidentifier",CValue::siString,siReadOnly | siPersistable,L"renderidentifier",L"renderidentifier",L"",L"",L"",L"",L"");
    oCustomOperator.AddParameter(oPDef,oParam);
 
+   // Info parameters
+   oPDef = oFactory.CreateParamDef( L"startTime", CValue::siDouble, siReadOnly | siPersistable, L"StartTime", L"", 0.0, -numeric_limits<float>::max(), numeric_limits<float>::max(), -numeric_limits<float>::max(), numeric_limits<float>::max() );
+   oCustomOperator.AddParameter(oPDef,oParam);
+   oPDef = oFactory.CreateParamDef( L"endTime", CValue::siDouble, siReadOnly | siPersistable, L"EndTime", L"", 0.0, -numeric_limits<float>::max(), numeric_limits<float>::max(), -numeric_limits<float>::max(), numeric_limits<float>::max() );
+   oCustomOperator.AddParameter(oPDef,oParam);
+   oPDef = oFactory.CreateParamDef( L"sampleRate", CValue::siDouble, siReadOnly | siPersistable, L"SampleRate", L"", 1.0, -numeric_limits<float>::max(), numeric_limits<float>::max(), -numeric_limits<float>::max(), numeric_limits<float>::max() );
+   oCustomOperator.AddParameter(oPDef,oParam);
+   oPDef = oFactory.CreateParamDef( L"numPointsPrimitive", CValue::siInt4, siReadOnly | siPersistable, L"NumPointsGeo", L"", 0, 0, numeric_limits<int>::max(), 0, numeric_limits<int>::max() );
+   oCustomOperator.AddParameter(oPDef,oParam);
+   oPDef = oFactory.CreateParamDef( L"numPointsCache", CValue::siInt4, siReadOnly | siPersistable, L"NumPointsCache", L"", 0, 0, numeric_limits<int>::max(), 0, numeric_limits<int>::max() );
+   oCustomOperator.AddParameter(oPDef,oParam);
+   oPDef = oFactory.CreateParamDef( L"numSamples", CValue::siInt4, siReadOnly | siPersistable, L"NumSamples", L"", 0, 0, numeric_limits<int>::max(), 0, numeric_limits<int>::max() );
+   oCustomOperator.AddParameter(oPDef,oParam);
+
    oCustomOperator.PutAlwaysEvaluate(false);
    oCustomOperator.PutDebug(0);
 
@@ -379,6 +420,7 @@ CStatus alembicOp_DefineLayout( CRef& in_ctxt )
    PPGItem oItem;
    oLayout = ctxt.GetSource();
    oLayout.Clear();
+   oLayout.AddTab(L"Main");
    oLayout.AddItem(L"muted",L"Muted");
    oLayout.AddItem(L"time",L"Time");
    oLayout.AddGroup(L"Preview");
@@ -389,6 +431,24 @@ CStatus alembicOp_DefineLayout( CRef& in_ctxt )
    oLayout.AddItem(L"renderpath",L"FilePath");
    oLayout.AddItem(L"renderidentifier",L"Identifier");
    oLayout.EndGroup();
+   oLayout.AddTab(L"Info");
+   oLayout.AddGroup(L"Num Points");
+   oLayout.AddItem(L"numPointsPrimitive",L"Primitive").PutAttribute(siUINoSlider, true);
+   oLayout.AddItem(L"numPointsCache",L"Cache").PutAttribute(siUINoSlider, true);
+   oLayout.EndGroup();
+   oLayout.AddGroup(L"Frame Range");
+   oLayout.AddRow();
+   oLayout.AddItem(L"startTime",L"Start Time").PutAttribute(siUINoSlider, true);
+   oLayout.AddItem(L"endTime",L"End Time").PutAttribute(siUINoSlider, true);
+   oLayout.EndRow();
+   oLayout.EndGroup();
+   oLayout.AddGroup(L"Data");
+   oLayout.AddRow();
+   oLayout.AddItem(L"numSamples",L"Samples").PutAttribute(siUINoSlider, true);
+   oLayout.AddItem(L"sampleRate",L"Rate").PutAttribute(siUINoSlider, true);
+   oLayout.EndRow();
+   oLayout.EndGroup();
+
    return CStatus::OK;
 }
 

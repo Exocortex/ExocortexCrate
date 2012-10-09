@@ -568,19 +568,24 @@ ESS_CALLBACK_START( alembic_polymesh_Update, CRef& )
    if(!objMesh.valid() && !objSubD.valid())
       return CStatus::OK;
 
-   SampleInfo sampleInfo;
+   TimeSamplingPtr timeSampling;
+   int nSamples = 0;
    if(objMesh.valid())
-      sampleInfo = getSampleInfo(
-         ctxt.GetParameterValue(L"time"),
-         objMesh.getSchema().getTimeSampling(),
-         objMesh.getSchema().getNumSamples()
-      );
+   {
+      timeSampling = objMesh.getSchema().getTimeSampling();
+	  nSamples = (int) objMesh.getSchema().getNumSamples();
+   }
    else
-      sampleInfo = getSampleInfo(
-         ctxt.GetParameterValue(L"time"),
-         objSubD.getSchema().getTimeSampling(),
-         objSubD.getSchema().getNumSamples()
-      );
+   {
+      timeSampling = objSubD.getSchema().getTimeSampling();
+	  nSamples = (int) objSubD.getSchema().getNumSamples();
+   }
+
+   SampleInfo sampleInfo = getSampleInfo(
+     ctxt.GetParameterValue(L"time"),
+     timeSampling,
+	 nSamples
+   );
 
    Alembic::Abc::P3fArraySamplePtr meshPos;
    if(objMesh.valid())
@@ -598,6 +603,9 @@ ESS_CALLBACK_START( alembic_polymesh_Update, CRef& )
 
    PolygonMesh inMesh = Primitive((CRef)ctxt.GetInputValue(0)).GetGeometry();
    CVector3Array pos = inMesh.GetPoints().GetPositionArray();
+
+   Operator op(ctxt.GetSource());
+   updateOperatorInfo( op, sampleInfo, timeSampling, (int) pos.GetCount(), (int) meshPos->size());
 
    if(pos.GetCount() != meshPos->size())
       return CStatus::OK;
@@ -675,6 +683,11 @@ ESS_CALLBACK_START( alembic_normals_Update, CRef& )
    if(meshNormalsParam.valid())
    {
       Alembic::Abc::N3fArraySamplePtr meshNormals = meshNormalsParam.getExpandedValue(sampleInfo.floorIndex).getVals();
+
+	  Operator op(ctxt.GetSource());
+	  updateOperatorInfo( op, sampleInfo, obj.getSchema().getTimeSampling(),
+						  (int) normalValues.GetCount(), (int) meshNormals->size()*3);
+
       if(meshNormals->size() * 3 == normalValues.GetCount())
       {
          // let's apply it!
@@ -810,6 +823,11 @@ ESS_CALLBACK_START( alembic_uvs_Update, CRef& )
       );
 
       Alembic::Abc::V2fArraySamplePtr meshUVs = meshUvParam.getExpandedValue(sampleInfo.floorIndex).getVals();
+
+	  Operator op(ctxt.GetSource());
+	  updateOperatorInfo( op, sampleInfo, meshUvParam.getTimeSampling(),
+						  (int) meshUVs->size() * 3, (int) uvValues.GetCount());
+
       if(meshUVs->size() * 3 == uvValues.GetCount())
       {
          // create a sample look table
@@ -896,23 +914,24 @@ ESS_CALLBACK_START( alembic_polymesh_topo_Update, CRef& )
 	   return CStatus::OK;
    }
 
-   SampleInfo sampleInfo;
+   TimeSamplingPtr timeSampling;
+   int nSamples = 0;
    if(objMesh.valid())
    {
-      sampleInfo = getSampleInfo(
-         ctxt.GetParameterValue(L"time"),
-         objMesh.getSchema().getTimeSampling(),
-         objMesh.getSchema().getNumSamples()
-      );
+      timeSampling = objMesh.getSchema().getTimeSampling();
+	  nSamples = (int) objMesh.getSchema().getNumSamples();
    }
    else
    {
-      sampleInfo = getSampleInfo(
-         ctxt.GetParameterValue(L"time"),
-         objSubD.getSchema().getTimeSampling(),
-         objSubD.getSchema().getNumSamples()
-      );
+      timeSampling = objSubD.getSchema().getTimeSampling();
+	  nSamples = (int) objSubD.getSchema().getNumSamples();
    }
+
+   SampleInfo sampleInfo = getSampleInfo(
+     ctxt.GetParameterValue(L"time"),
+     timeSampling,
+	 nSamples
+   );
 
    Alembic::Abc::P3fArraySamplePtr meshPos;
    Alembic::Abc::V3fArraySamplePtr meshVel;
@@ -938,6 +957,9 @@ ESS_CALLBACK_START( alembic_polymesh_topo_Update, CRef& )
       meshFaceCount = sample.getFaceCounts();
       meshFaceIndices = sample.getFaceIndices();
    }
+
+   Operator op(ctxt.GetSource());
+   updateOperatorInfo( op, sampleInfo, timeSampling, (int) meshPos->size(), (int) meshPos->size());
 
    CVector3Array pos((LONG)meshPos->size());
    CLongArray polies((LONG)(meshFaceCount->size() + meshFaceIndices->size()));
@@ -1093,7 +1115,9 @@ ESS_CALLBACK_START( alembic_bbox_Update, CRef& )
       return CStatus::OK;
 
    Alembic::Abc::Box3d box;
-
+   SampleInfo sampleInfo;
+   TimeSamplingPtr timeSampling;
+   int nSamples = 0;
    
    // check what kind of object we have
    const Alembic::Abc::MetaData &md = iObj.getMetaData();
@@ -1102,10 +1126,12 @@ ESS_CALLBACK_START( alembic_bbox_Update, CRef& )
       if(!obj.valid())
          return CStatus::OK;
 
-      SampleInfo sampleInfo = getSampleInfo(
+      timeSampling = obj.getSchema().getTimeSampling();
+	  nSamples = (int) obj.getSchema().getNumSamples();
+      sampleInfo = getSampleInfo(
          ctxt.GetParameterValue(L"time"),
-         obj.getSchema().getTimeSampling(),
-         obj.getSchema().getNumSamples()
+         timeSampling,
+         nSamples
       );
 
       Alembic::AbcGeom::IPolyMeshSchema::Sample sample;
@@ -1125,10 +1151,12 @@ ESS_CALLBACK_START( alembic_bbox_Update, CRef& )
       if(!obj.valid())
          return CStatus::OK;
 
-      SampleInfo sampleInfo = getSampleInfo(
+      timeSampling = obj.getSchema().getTimeSampling();
+	  nSamples = (int) obj.getSchema().getNumSamples();
+      sampleInfo = getSampleInfo(
          ctxt.GetParameterValue(L"time"),
-         obj.getSchema().getTimeSampling(),
-         obj.getSchema().getNumSamples()
+         timeSampling,
+         nSamples
       );
 
       Alembic::AbcGeom::ICurvesSchema::Sample sample;
@@ -1148,10 +1176,12 @@ ESS_CALLBACK_START( alembic_bbox_Update, CRef& )
       if(!obj.valid())
          return CStatus::OK;
 
-      SampleInfo sampleInfo = getSampleInfo(
+      timeSampling = obj.getSchema().getTimeSampling();
+	  nSamples = (int) obj.getSchema().getNumSamples();
+      sampleInfo = getSampleInfo(
          ctxt.GetParameterValue(L"time"),
-         obj.getSchema().getTimeSampling(),
-         obj.getSchema().getNumSamples()
+         timeSampling,
+         nSamples
       );
 
       Alembic::AbcGeom::IPointsSchema::Sample sample;
@@ -1171,10 +1201,12 @@ ESS_CALLBACK_START( alembic_bbox_Update, CRef& )
       if(!obj.valid())
          return CStatus::OK;
 
-      SampleInfo sampleInfo = getSampleInfo(
+      timeSampling = obj.getSchema().getTimeSampling();
+	  nSamples = (int) obj.getSchema().getNumSamples();
+      sampleInfo = getSampleInfo(
          ctxt.GetParameterValue(L"time"),
-         obj.getSchema().getTimeSampling(),
-         obj.getSchema().getNumSamples()
+         timeSampling,
+         nSamples
       );
 
       Alembic::AbcGeom::ISubDSchema::Sample sample;
@@ -1193,6 +1225,9 @@ ESS_CALLBACK_START( alembic_bbox_Update, CRef& )
 
    Primitive inPrim((CRef)ctxt.GetInputValue(0));
    CVector3Array pos = inPrim.GetGeometry().GetPoints().GetPositionArray();
+
+   Operator op(ctxt.GetSource());
+   updateOperatorInfo( op, sampleInfo, timeSampling, pos.GetCount(), pos.GetCount());
 
    box.min.x -= extend;
    box.min.y -= extend;

@@ -711,6 +711,7 @@ ESS_CALLBACK_START( alembic_crvlist_Update, CRef& )
       obj.getSchema().getNumSamples()
    );
 
+
    Alembic::AbcGeom::ICurvesSchema::Sample sample;
    obj.getSchema().get(sample,sampleInfo.floorIndex);
 
@@ -730,6 +731,10 @@ ESS_CALLBACK_START( alembic_crvlist_Update, CRef& )
    }
 
    Alembic::Abc::P3fArraySamplePtr curvePos = sample.getPositions();
+
+   Operator op(ctxt.GetSource());
+   updateOperatorInfo( op, sampleInfo, obj.getSchema().getTimeSampling(),
+					   pos.GetCount(), curvePos->size());
 
    if (!isHair)
    {
@@ -1287,6 +1292,11 @@ ESS_CALLBACK_START( alembic_crvlist_topo_Update, CRef& )
 
       curveDatas.Add(curveData);
    }
+   
+   Operator op(ctxt.GetSource());
+   updateOperatorInfo( op, sampleInfo, obj.getSchema().getTimeSampling(),
+	                   offset, offset);
+
    
    NurbsCurveList curves = Primitive(ctxt.GetOutputTarget()).GetGeometry();
    curves.Set(curveDatas);

@@ -117,6 +117,9 @@ ESS_CALLBACK_START( alembic_camera_Update, CRef& )
       obj.getSchema().getTimeSampling(),
       obj.getSchema().getNumSamples()
    );
+   
+   Operator op(ctxt.GetSource());
+   updateOperatorInfo( op, sampleInfo, obj.getSchema().getTimeSampling(), 0, 0);
 
    Alembic::AbcGeom::CameraSample sample;
    obj.getSchema().get(sample,sampleInfo.floorIndex);
