@@ -191,3 +191,41 @@ float getTimeOffsetFromObject( Alembic::Abc::IObject &object, SampleInfo const& 
 			timeSampling->getSampleTime(sampleInfo.floorIndex) ) * sampleInfo.alpha );
 	}
 }
+
+void getMergeInfo( Alembic::AbcGeom::IObject& iObj, bool& bCreateNullNode, int& nMergedGeomNodeIndex, Alembic::AbcGeom::IObject& mergedGeomChild)
+{
+   NodeCategory::type cat = NodeCategory::get(iObj);
+   if(cat == NodeCategory::XFORM)
+	{	//if a transform node, decide whether or not use a dummy node OR merge this dummy node with geometry node child
+
+		unsigned geomNodeCount = 0;
+      int mergeIndex;
+		for(int j=0; j<(int)iObj.getNumChildren(); j++)
+		{
+         if( NodeCategory::get(iObj.getChild(j)) == NodeCategory::GEOMETRY ){
+				mergedGeomChild = iObj.getChild(j);
+				mergeIndex = j;
+				geomNodeCount++;
+			}
+		} 
+
+		if(geomNodeCount == 0 ){//create dummy node
+			bCreateNullNode = true;
+		}
+		else if(geomNodeCount == 1){ //create geometry node
+
+			//std::string parentName = removeXfoSuffix(iObj.getName());
+			//std::string childName = mergedGeomChild->getName();
+			////only merge if the parent and child have the same name after the Xfo suffix has been removed (if present)
+			//if(parentName.compare(childName) == 0){
+				nMergedGeomNodeIndex = mergeIndex;
+		//}
+		//else{
+		//	bCreateNullNode = true;
+		//}
+		}
+		else if(geomNodeCount > 1){ //create dummy node
+			bCreateNullNode = true;
+		}
+	}
+}

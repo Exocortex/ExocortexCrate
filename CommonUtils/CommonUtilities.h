@@ -190,4 +190,36 @@ bool getArbGeomParamPropertyAlembic_Permissive( OBJTYPE obj, std::string name, A
 	return false;
 }
 
+namespace NodeCategory
+{
+   enum type{
+	   GEOMETRY,
+	   XFORM,
+	   UNSUPPORTED
+   };
+
+   inline type get(Alembic::AbcGeom::IObject& iObj)
+   {
+	   if( Alembic::AbcGeom::IPolyMesh::matches(iObj.getMetaData()) ||
+		   Alembic::AbcGeom::ICamera::matches(iObj.getMetaData()) ||
+		   Alembic::AbcGeom::IPoints::matches(iObj.getMetaData()) ||
+		   Alembic::AbcGeom::ICurves::matches(iObj.getMetaData()) ||
+		   Alembic::AbcGeom::ISubD::matches(iObj.getMetaData())) {
+		   return GEOMETRY;
+	   }
+	   else if(Alembic::AbcGeom::IXform::matches(iObj.getMetaData())){
+		   return XFORM;
+	   }
+	   else {
+		   return UNSUPPORTED;
+	   }
+   }
+};
+
+
+void getMergeInfo( Alembic::AbcGeom::IObject& iObj, bool& bCreateNullNode, int& nMergedGeomNodeIndex, Alembic::AbcGeom::IObject& mergedGeomChild);
+
+
+
+
 #endif // __COMMON_UTILITIES_H

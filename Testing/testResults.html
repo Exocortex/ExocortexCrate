@@ -24,10 +24,12 @@
         <% 
 
         results = results || {};
-
+        var i = 0;
         for(var name in results){ 
             if(!results.hasOwnProperty(name)) continue;
-            var tasks = results[name].tasks; %>
+            var tasks = results[name].tasks; 
+            i++;
+            %>
 
             <tr> <td> <%= name %> </td> <tr>
 
@@ -39,7 +41,11 @@
             <% } %>
 
 
-        <% } %>
+        <% } 
+            if( i == 0 ){ %>
+                <tr><td> No test data available. </td></tr>
+            <% }
+        %>
 
         </table>
 

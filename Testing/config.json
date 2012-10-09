@@ -1,9 +1,27 @@
 {
   	"webServer":{"port": 3000},
-  	"3dsmax":{
-    	"path2010": "",
-    	"path2011": "",
-		"path2012": "C:/Program Files/Autodesk/3ds Max 2012/3dsmax.exe"
-	}
+	"testFolderPath":"E:/Projects2/ExocortexAlembicShared/Testing/TestsXSI",
+  	"globals":{
+		"app":{
+		 	"max":{
+				"v2012":{
+					"path":"C:/Program Files/Autodesk/3ds Max 2012/3dsmax.exe"
+				}	
+			},
+			"xsi":{
+				"v2013":{
+					"path":"C:/Program Files/Autodesk/Softimage 2013/Application/bin/XSI.exe"
+				}	
+			},
+			"maya":{
+
+			}
+
+
+		},
+		
+		"exoAbcPath":{
+		}	
+	}	
 }
   
