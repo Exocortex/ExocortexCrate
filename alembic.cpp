@@ -43,7 +43,7 @@
 #include <xsi_customoperator.h>
 #include <xsi_operatorcontext.h>
 #include <xsi_outputport.h>
-#include "arnoldHelpers.h"
+#include "arnoldHelpers.h" 
 
 using namespace XSI; 
 using namespace MATH; 
@@ -1791,6 +1791,7 @@ ESS_CALLBACK_START(alembic_import_Execute, CRef&)
 	  if( i % intermittentUpdateInterval == 0 ) {
 		prog.PutCaption(L"Importing "+CString(objects[i].getFullName().c_str())+L" ...");
 	  }
+      ESS_PROFILE_SCOPE(objects[i].getFullName().c_str());
 
       // get the parent and the object's name
       CString name = truncateName(objects[i].getName().c_str());

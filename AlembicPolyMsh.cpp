@@ -872,8 +872,6 @@ ESS_CALLBACK_START( alembic_polymesh_topo_Update, CRef& )
    ESS_PROFILE_SCOPE("alembic_polymesh_topo_Update");
    OperatorContext ctxt( in_ctxt );
 
-   //ESS_LOG_INFO("ENTER alembic_polymesh_topo_Update");
-
    if((bool)ctxt.GetParameterValue(L"muted"))
       return CStatus::OK;
 
@@ -885,12 +883,19 @@ ESS_CALLBACK_START( alembic_polymesh_topo_Update, CRef& )
       return CStatus::OK;
    Alembic::AbcGeom::IPolyMesh objMesh;
    Alembic::AbcGeom::ISubD objSubD;
-   if(Alembic::AbcGeom::IPolyMesh::matches(iObj.getMetaData()))
+   {
+	ESS_PROFILE_SCOPE("alembic_polymesh_topo_Update type matching");
+	if(Alembic::AbcGeom::IPolyMesh::matches(iObj.getMetaData()))
       objMesh = Alembic::AbcGeom::IPolyMesh(iObj,Alembic::Abc::kWrapExisting);
    else
       objSubD = Alembic::AbcGeom::ISubD(iObj,Alembic::Abc::kWrapExisting);
-   if(!objMesh.valid() && !objSubD.valid())
-      return CStatus::OK;
+   }
+
+   {
+		ESS_PROFILE_SCOPE("alembic_polymesh_topo_Update checking validity");
+	   if(!objMesh.valid() && !objSubD.valid())
+		  return CStatus::OK;
+   }
 
    if( ! isAlembicMeshTopology( & iObj ) ) {
 	   return CStatus::OK;
@@ -899,7 +904,8 @@ ESS_CALLBACK_START( alembic_polymesh_topo_Update, CRef& )
    SampleInfo sampleInfo;
    if(objMesh.valid())
    {
-      sampleInfo = getSampleInfo(
+		ESS_PROFILE_SCOPE("alembic_polymesh_topo_Update getSampleInfo");
+	      sampleInfo = getSampleInfo(
          ctxt.GetParameterValue(L"time"),
          objMesh.getSchema().getTimeSampling(),
          objMesh.getSchema().getNumSamples()
@@ -907,6 +913,7 @@ ESS_CALLBACK_START( alembic_polymesh_topo_Update, CRef& )
    }
    else
    {
+		ESS_PROFILE_SCOPE("alembic_polymesh_topo_Update getSampleInfo");
       sampleInfo = getSampleInfo(
          ctxt.GetParameterValue(L"time"),
          objSubD.getSchema().getTimeSampling(),
@@ -922,6 +929,8 @@ ESS_CALLBACK_START( alembic_polymesh_topo_Update, CRef& )
    bool hasDynamicTopo = isAlembicMeshTopoDynamic( & objMesh );
    if(objMesh.valid())
    {
+      ESS_PROFILE_SCOPE("alembic_polymesh_topo_Update load abc data arrays");
+
       Alembic::AbcGeom::IPolyMeshSchema::Sample sample;
       objMesh.getSchema().get(sample,sampleInfo.floorIndex);
       meshPos = sample.getPositions();
@@ -931,6 +940,7 @@ ESS_CALLBACK_START( alembic_polymesh_topo_Update, CRef& )
    }
    else
    {
+      ESS_PROFILE_SCOPE("alembic_polymesh_topo_Update load abc data arrays");
       Alembic::AbcGeom::ISubDSchema::Sample sample;
       objSubD.getSchema().get(sample,sampleInfo.floorIndex);
       meshPos = sample.getPositions();
@@ -942,13 +952,18 @@ ESS_CALLBACK_START( alembic_polymesh_topo_Update, CRef& )
    CVector3Array pos((LONG)meshPos->size());
    CLongArray polies((LONG)(meshFaceCount->size() + meshFaceIndices->size()));
 
-   for(size_t j=0;j<meshPos->size();j++)
-      pos[(LONG)j].Set(meshPos->get()[j].x,meshPos->get()[j].y,meshPos->get()[j].z);
+   {
+       ESS_PROFILE_SCOPE("alembic_polymesh_topo_Update set positions");
+	   for(size_t j=0;j<meshPos->size();j++) {
+		  pos[(LONG)j].Set(meshPos->get()[j].x,meshPos->get()[j].y,meshPos->get()[j].z);
+	   }
+   }
 
    // check if this is an empty topo object
    if(meshFaceCount->size() > 0)
    {
-      if(meshFaceCount->get()[0] == 0)
+        ESS_PROFILE_SCOPE("alembic_polymesh_topo_Update setup topology");
+		if(meshFaceCount->get()[0] == 0)
       {
          if(!meshVel)
             return CStatus::OK;
@@ -968,7 +983,7 @@ ESS_CALLBACK_START( alembic_polymesh_topo_Update, CRef& )
          LONG offset1 = 0;
          Alembic::Abc::int32_t offset2 = 0;
 
-         ESS_LOG_INFO("face count: " << (unsigned int)meshFaceCount->size());
+         //ESS_LOG_INFO("face count: " << (unsigned int)meshFaceCount->size());
 
          for(size_t j=0;j<meshFaceCount->size();j++)
          {
@@ -976,15 +991,15 @@ ESS_CALLBACK_START( alembic_polymesh_topo_Update, CRef& )
             polies[offset1++] = singleFaceCount;
             offset2 += singleFaceCount;
 
-            ESS_LOG_INFO("singleFaceCount: " << (unsigned int)singleFaceCount);
-            ESS_LOG_INFO("offset2: " << (unsigned int)offset2);
-            ESS_LOG_INFO("meshFaceIndices->size(): " << (unsigned int)meshFaceIndices->size());
+            //ESS_LOG_INFO("singleFaceCount: " << (unsigned int)singleFaceCount);
+            //ESS_LOG_INFO("offset2: " << (unsigned int)offset2);
+            //ESS_LOG_INFO("meshFaceIndices->size(): " << (unsigned int)meshFaceIndices->size());
 
             unsigned int meshFIndxSz = (unsigned int)meshFaceIndices->size();
 
             for(size_t k=0;k<singleFaceCount;k++)
             {
-               ESS_LOG_INFO("index: " << (unsigned int)((size_t)offset2 - 1 - k));
+               //ESS_LOG_INFO("index: " << (unsigned int)((size_t)offset2 - 1 - k));
                polies[offset1++] = meshFaceIndices->get()[(size_t)offset2 - 1 - k];
             }
          }
@@ -994,6 +1009,7 @@ ESS_CALLBACK_START( alembic_polymesh_topo_Update, CRef& )
    // do the positional interpolation if necessary
    if(sampleInfo.alpha != 0.0)
    {
+	  ESS_PROFILE_SCOPE("alembic_polymesh_topo_Update positional interpolation");
       double alpha = sampleInfo.alpha;
       double ialpha = 1.0 - alpha;
 
@@ -1011,8 +1027,10 @@ ESS_CALLBACK_START( alembic_polymesh_topo_Update, CRef& )
          meshPos = sample.getPositions();
       }
 
-      if(meshPos->size() == (size_t)pos.GetCount() && !hasDynamicTopo)
+      if( !hasDynamicTopo)
       {
+		  assert( meshPos->size() == (size_t)pos.GetCount() );
+
          for(LONG i=0;i<(LONG)meshPos->size();i++)
          {
             pos[i].PutX(ialpha * pos[i].GetX() + alpha * meshPos->get()[i].x);
@@ -1022,8 +1040,7 @@ ESS_CALLBACK_START( alembic_polymesh_topo_Update, CRef& )
       }
       else if(meshVel)
       {
-         double timeAlpha = (double)(objMesh.getSchema().getTimeSampling()->getSampleTime(sampleInfo.ceilIndex) - 
-                            objMesh.getSchema().getTimeSampling()->getSampleTime(sampleInfo.floorIndex)) * alpha;
+         float timeAlpha = getTimeOffsetFromObject( iObj, sampleInfo );
          if(meshVel->size() == (size_t)pos.GetCount())
          {
             for(LONG i=0;i<(LONG)meshVel->size();i++)
@@ -1036,8 +1053,17 @@ ESS_CALLBACK_START( alembic_polymesh_topo_Update, CRef& )
       }
    }
 
-   PolygonMesh outMesh = Primitive(ctxt.GetOutputTarget()).GetGeometry();
-   outMesh.Set(pos,polies);
+   {
+	PolygonMesh outMesh;
+	{
+	ESS_PROFILE_SCOPE("alembic_polymesh_topo_Update GetGeometry");
+	outMesh = Primitive(ctxt.GetOutputTarget()).GetGeometry();
+	}
+	{
+	ESS_PROFILE_SCOPE("alembic_polymesh_topo_Update PolygonMesh set");
+	outMesh.Set(pos,polies);
+	}
+   }
 
    //ESS_LOG_INFO("EXIT alembic_polymesh_topo_Update");
    return CStatus::OK;

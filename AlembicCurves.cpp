@@ -87,7 +87,8 @@ XSI::CStatus AlembicCurves::Save(double time)
    // store the transform
    Primitive prim(GetRef());
    bool globalSpace = GetJob()->GetOption(L"globalSpace");
-   SaveXformSample(GetRef(1),mXformSchema,mXformSample,time,false,globalSpace);
+   bool flattenHierarchy = GetJob()->GetOption(L"flattenHierarchy");  
+   SaveXformSample(GetRef(1),mXformSchema,mXformSample,time,false,globalSpace, flattenHierarchy);
 
    // query the global space
    CTransformation globalXfo;
@@ -967,8 +968,7 @@ XSIPLUGINCALLBACK CStatus alembic_curves_Evaluate(ICENodeContext& in_ctxt)
                   Alembic::Abc::V3fArraySamplePtr vel = sample.getVelocities();
                   if(vel->size() == ptr->size())
                   {
-                     float timeAlpha = (float)(obj.getSchema().getTimeSampling()->getSampleTime(sampleInfo.ceilIndex) - 
-                                        obj.getSchema().getTimeSampling()->getSampleTime(sampleInfo.floorIndex)) * alpha;
+                     float timeAlpha = getTimeOffsetFromSchema( obj.getSchema(), sampleInfo );
                      for(ULONG i=0;i<acc.GetCount();i++)
                      {
                         acc[i].Set(
