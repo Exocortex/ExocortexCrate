@@ -457,14 +457,14 @@ int ExocortexAlembicStaticInterface_ExocortexAlembicImportJobs( CONST_2013 MCHAR
 
 
 		// let's figure out which objects we have
-		std::vector<Alembic::Abc::IObject> objects;
-		objects.push_back(pArchive->getTop());
-		for(size_t i=0;i<objects.size();i++)
-		{
-			// first, let's recurse
-			for(size_t j=0;j<objects[i].getNumChildren();j++)
-				objects.push_back(objects[i].getChild(j));
-		}
+		//std::vector<Alembic::Abc::IObject> objects;
+		//objects.push_back(pArchive->getTop());
+		//for(size_t i=0;i<objects.size();i++)
+		//{
+		//	// first, let's recurse
+		//	for(size_t j=0;j<objects[i].getNumChildren();j++)
+		//		objects.push_back(objects[i].getChild(j));
+		//}
 
 		// Get a list of the current objects in the scene
 		MAXInterface *i = GET_MAX_INTERFACE();
@@ -479,17 +479,19 @@ int ExocortexAlembicStaticInterface_ExocortexAlembicImportJobs( CONST_2013 MCHAR
 
 		// Create the max objects as needed, we loop through the list in reverse to create
 		// the children node first and then hook them up to their parents
-		int totalAlembicItems = 0;
-		ESS_LOG_INFO( "Alembic file contents:" );
-		for(int j=(int)objects.size()-1; j>=0 ; j -= 1)
-		{
-			ESS_LOG_INFO( objects[j].getFullName() );
+      Alembic::AbcGeom::IObject root = pArchive->getTop();
+		int totalAlembicItems = getNumberOfNodesToBeImported(root);
+		//ESS_LOG_INFO( "Alembic file contents:" );
+		//for(int j=(int)objects.size()-1; j>=0 ; j -= 1)
+		//{
+		//	ESS_LOG_INFO( objects[j].getFullName() );
 
-			nodeCategory cat = getNodeCategory(objects[j]);
-			if( cat != NODECAT_UNSUPPORTED ){
-				totalAlembicItems++;
-			}
-		}
+		//	nodeCategory cat = getNodeCategory(objects[j]);
+		//	if( cat != NODECAT_UNSUPPORTED ){
+		//		totalAlembicItems++;
+		//	}
+		//}
+
 		char szBuffer[1000];
 		sprintf_s( szBuffer, 1000, "Importing %i Alembic Streams", totalAlembicItems );
 		i->ProgressStart( EC_UTF8_to_TCHAR( szBuffer ), TRUE, DummyProgressFunction, NULL);
@@ -499,12 +501,9 @@ int ExocortexAlembicStaticInterface_ExocortexAlembicImportJobs( CONST_2013 MCHAR
 
 		progressUpdate progress(totalAlembicItems);
 
-		Alembic::AbcGeom::IObject root = pArchive->getTop();
-		for(size_t j=0; j<root.getNumChildren(); j++)
-		{
-			int ret = recurseOnAlembicObject(root.getChild(j), NULL, false, options, file, progress);
-			if( ret != 0 ) return alembic_failure;
-		} 
+      if( importAlembicScene(root, options, file, progress) != 0 ){
+         return alembic_failure;
+      }
 
 		i->ProgressEnd();
 
