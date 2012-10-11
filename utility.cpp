@@ -252,6 +252,7 @@ MSyntax AlembicResolvePathCommand::createSyntax()
 
 MStatus AlembicResolvePathCommand::doIt(const MArgList & args)
 {
+   ESS_PROFILE_SCOPE("AlembicResolvePathCommand::doIt");
    MStatus status = MS::kSuccess;
    MArgParser argData(syntax(), args, &status);
 
@@ -273,6 +274,99 @@ MStatus AlembicResolvePathCommand::doIt(const MArgList & args)
    MString fileName = argData.flagArgumentString("fileNameArg",0);
 
    setResult(resolvePath(fileName));
+
+   return status;
+}
+
+
+MSyntax AlembicProfileBeginCommand::createSyntax()
+{
+   MSyntax syntax;
+   syntax.addFlag("-f", "-fileNameArg", MSyntax::kString);
+   syntax.enableQuery(false);
+   syntax.enableEdit(false);
+
+   return syntax;
+}
+
+std::map<std::string, boost::shared_ptr<Profiler> > nameToProfiler;
+
+MStatus AlembicProfileBeginCommand::doIt(const MArgList& args) {
+   MStatus status = MS::kSuccess;
+   MArgParser argData(syntax(), args, &status);
+
+   if(!argData.isFlagSet("fileNameArg"))
+   {
+      // TODO: display dialog
+      MGlobal::displayError("[ExocortexAlembic] No fileName specified.");
+      return status;
+   }
+
+   // get the filename arg
+   MString fileName = argData.flagArgumentString("fileNameArg",0);
+
+   std::string strFileName( fileName.asChar() );
+
+   if( nameToProfiler.find( strFileName ) == nameToProfiler.end() ) {
+		boost::shared_ptr<Profiler> profiler( new Profiler( strFileName.c_str() ) );
+		nameToProfiler.insert( std::pair<std::string, boost::shared_ptr<Profiler>>( strFileName, profiler ) );
+   }
+   else {
+		nameToProfiler[ strFileName]->resume();
+   }
+   return status;
+}
+
+MSyntax AlembicProfileEndCommand::createSyntax()
+{
+   MSyntax syntax;
+   syntax.addFlag("-f", "-fileNameArg", MSyntax::kString);
+   syntax.enableQuery(false);
+   syntax.enableEdit(false);
+
+   return syntax;
+}
+
+MStatus AlembicProfileEndCommand::doIt(const MArgList& args) {
+
+   MStatus status = MS::kSuccess;
+   MArgParser argData(syntax(), args, &status);
+
+   if(!argData.isFlagSet("fileNameArg"))
+   {
+      // TODO: display dialog
+      MGlobal::displayError("[ExocortexAlembic] No fileName specified.");
+      return status;
+   }
+
+   // get the filename arg
+   MString fileName = argData.flagArgumentString("fileNameArg",0);
+
+    std::string strFileName( fileName.asChar() );
+
+   if( nameToProfiler.find( strFileName ) != nameToProfiler.end() ) {
+		nameToProfiler[ strFileName ]->stop();
+   }
+   return status;
+
+}
+
+
+
+MSyntax AlembicProfileStatsCommand::createSyntax()
+{
+   MSyntax syntax;
+   syntax.enableQuery(false);
+   syntax.enableEdit(false);
+
+   return syntax;
+}
+
+MStatus AlembicProfileStatsCommand::doIt(const MArgList& args) {
+
+   MStatus status = MS::kSuccess;
+   
+   ESS_PROFILE_REPORT();
 
    return status;
 }

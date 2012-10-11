@@ -10,11 +10,6 @@
 #define EC_LICENSE_RESULT_DEMO_LICENSE	(1)
 #define EC_LICENSE_RESULT_FULL_LICENSE	(2)
 
-#define ESS_LOG_ERROR(a) do { std::stringstream s; s << "Alembic: " << a;  MGlobal::displayError( s.str().c_str() ); } while(0)
-#define ESS_LOG_WARNING(a) do { std::stringstream s; s << "Alembic: " << a; MGlobal::displayWarning( s.str().c_str() ); } while(0)
-#define ESS_LOG_INFO(a) do { std::stringstream s; s << "Alembic: " << a; MGlobal::displayInfo( s.str().c_str() ); } while(0)
-
-
 #ifndef EC_LOG_ERROR
 	#define EC_LOG_ERROR(a)		ESS_LOG_ERROR(a)
 #endif

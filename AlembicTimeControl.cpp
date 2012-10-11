@@ -48,6 +48,7 @@ MStatus AlembicTimeControlNode::initialize()
 
 MStatus AlembicTimeControlNode::compute(const MPlug & plug, MDataBlock & dataBlock)
 {
+   ESS_PROFILE_SCOPE("AlembicTimeControlNode::compute");
    MStatus status;
 
    double inputTime = dataBlock.inputValue(mTimeAttr).asTime().as(MTime::kSeconds);

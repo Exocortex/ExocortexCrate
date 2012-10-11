@@ -212,6 +212,7 @@ MStatus AlembicPointsNode::initialize()
 
 MStatus AlembicPointsNode::compute(const MPlug & plug, MDataBlock & dataBlock)
 {
+   ESS_PROFILE_SCOPE("AlembicPointsNode::compute");
    if ( !( plug == mOutput ) )
       return ( MS::kUnknownParameter );
 

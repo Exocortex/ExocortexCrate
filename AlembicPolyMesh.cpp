@@ -476,6 +476,7 @@ MStatus AlembicPolyMeshNode::initialize()
 
 MStatus AlembicPolyMeshNode::compute(const MPlug & plug, MDataBlock & dataBlock)
 {
+   ESS_PROFILE_SCOPE("AlembicPolyMeshNode::compute");
    MStatus status;
 
    // update the frame number to be imported

@@ -241,6 +241,7 @@ MStatus AlembicCameraNode::initialize()
 
 MStatus AlembicCameraNode::compute(const MPlug & plug, MDataBlock & dataBlock)
 {
+   ESS_PROFILE_SCOPE("AlembicCameraNode::compute");
    MStatus status;
 
    // update the frame number to be imported

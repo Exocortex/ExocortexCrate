@@ -26,6 +26,8 @@ void* AlembicGetNodeFromIdentifierCommand::creator()
 
 MStatus AlembicGetNodeFromIdentifierCommand::doIt(const MArgList & args)
 {
+   ESS_PROFILE_SCOPE("AlembicGetNodeFromIdentifierCommand::doIt");
+
    MStatus status = MS::kSuccess;
    MArgParser argData(syntax(), args, &status);
 

@@ -156,6 +156,7 @@ MStatus AlembicCurvesNode::initialize()
 
 MStatus AlembicCurvesNode::compute(const MPlug & plug, MDataBlock & dataBlock)
 {
+   ESS_PROFILE_SCOPE("AlembicCurvesNode::compute");
    MStatus status;
 
    // update the frame number to be imported
