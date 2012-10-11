@@ -243,6 +243,7 @@ AtNode *createPolyMeshNode(nodeData &nodata, userData * ud, std::vector<float> &
   Alembic::Abc::Int32ArraySamplePtr abcFaceCounts;
   Alembic::Abc::Int32ArraySamplePtr abcFaceIndices;
 
+  __indices ind;
   for(size_t sampleIndex = 0; sampleIndex < minNumSamples; ++sampleIndex)
   {
     SampleInfo sampleInfo = getSampleInfo(
@@ -256,7 +257,6 @@ AtNode *createPolyMeshNode(nodeData &nodata, userData * ud, std::vector<float> &
     typedObject.getSchema().get(sample,sampleInfo.floorIndex);
 
     // take care of the topology
-    __indices ind;
     if(sampleIndex == 0)
     {
       abcFaceCounts = sample.getFaceCounts();
@@ -312,12 +312,15 @@ AtNode *createPolyMeshNode(nodeData &nodata, userData * ud, std::vector<float> &
     const bool interpolated = hadToInterpolatePositions(typedObject.getSchema(), sample, pos, posOffset, samples, sampleInfo, dynamicTopology);
     if (abcNor != NULL)
     {
+      if (nor == NULL)
+        nor = AiArrayAllocate((AtInt)abcNor->size(), (AtInt)minNumSamples, AI_TYPE_VECTOR);
+
       if (!interpolated || dynamicTopology)
-        nor = removeNormalsDuplicate(abcNor, sampleInfo, nsIdx, ind.faceIndices);
+        removeNormalsDuplicate(nor, norOffset, abcNor, sampleInfo, nsIdx, ind.faceIndices);
       else
       {
         Alembic::Abc::N3fArraySamplePtr abcNor2 = normalParam.getExpandedValue(sampleInfo.ceilIndex).getVals();
-        nor = removeNormalsDuplicateDynTopology(abcNor, abcNor2, (float)sampleInfo.alpha, sampleInfo, nsIdx, ind.faceIndices);
+        removeNormalsDuplicateDynTopology(nor, norOffset, abcNor, abcNor2, (float)sampleInfo.alpha, sampleInfo, nsIdx, ind.faceIndices);
       }
     }
   }

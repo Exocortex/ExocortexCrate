@@ -104,9 +104,8 @@ public:
 
 typedef std::map<n_mkey, int, n_mkey_less> n_map_mkey_to_int;    // a map from UVs to their respective indices!
 
-static AtArray *fillNormals(const n_map_mkey_to_int &Ns_map)
+static void fillNormals(AtArray *nor, AtULong &norOffset, const n_map_mkey_to_int &Ns_map)
 {
-   AtArray *ns = AiArrayAllocate((AtUInt32)Ns_map.size(), 1, AI_TYPE_VECTOR);
    for (n_map_mkey_to_int::const_iterator beg = Ns_map.begin(); beg != Ns_map.end(); ++beg)
    {
       AtVector norm;
@@ -114,12 +113,12 @@ static AtArray *fillNormals(const n_map_mkey_to_int &Ns_map)
       norm.y = beg->first.n_y;
       norm.z = beg->first.n_z;
 
-      AiArraySetVec(ns, beg->second, norm);
+      AiArraySetVec(nor, norOffset + beg->second, norm);
    }
-   return ns;
+   norOffset += Ns_map.size();
 }
 
-AtArray *removeNormalsDuplicate(Alembic::Abc::N3fArraySamplePtr &abcN, SampleInfo &sampleInfo, AtArray *nIdx, AtArray *faceIndices)
+void removeNormalsDuplicate(AtArray *nor, AtULong &norOffset, Alembic::Abc::N3fArraySamplePtr &abcN, SampleInfo &sampleInfo, AtArray *nIdx, AtArray *faceIndices)
 {
    const int nb_indices = faceIndices->nelements;
    n_map_mkey_to_int Ns_map;
@@ -139,19 +138,19 @@ AtArray *removeNormalsDuplicate(Alembic::Abc::N3fArraySamplePtr &abcN, SampleInf
       if (Ns_map.find(mkey) == Ns_map.end())
       {
          Ns_map[mkey] = new_idx;
-         AiArraySetUInt(nIdx, i, new_idx);
+         if (!norOffset) AiArraySetUInt(nIdx, i, new_idx);
          ++new_idx;
       }
-      else
+      else if (!norOffset)
         AiArraySetUInt(nIdx, i, Ns_map[mkey]);   // replace with the right index
    }
 
    // fill the Ns
-   return fillNormals(Ns_map);
+   fillNormals(nor, norOffset, Ns_map);
 }
 
-AtArray *removeNormalsDuplicateDynTopology(Alembic::Abc::N3fArraySamplePtr &abcN1, Alembic::Abc::N3fArraySamplePtr &abcN2, const float alpha,
-                                           SampleInfo &sampleInfo, AtArray *nIdx, AtArray *faceIndices)
+void removeNormalsDuplicateDynTopology(AtArray *nor, AtULong &norOffset, Alembic::Abc::N3fArraySamplePtr &abcN1, Alembic::Abc::N3fArraySamplePtr &abcN2,
+                                           const float alpha, SampleInfo &sampleInfo, AtArray *nIdx, AtArray *faceIndices)
 {
    const int nb_indices = faceIndices->nelements;
    const float beta = 1.0f - alpha;
@@ -173,15 +172,15 @@ AtArray *removeNormalsDuplicateDynTopology(Alembic::Abc::N3fArraySamplePtr &abcN
       if (Ns_map.find(mkey) == Ns_map.end())
       {
          Ns_map[mkey] = new_idx;
-         AiArraySetUInt(nIdx, i, new_idx);
+         if (!norOffset) AiArraySetUInt(nIdx, i, new_idx);
          ++new_idx;
       }
-      else
+      else if (!norOffset)
         AiArraySetUInt(nIdx, i, Ns_map[mkey]);   // replace with the right index
    }
 
    // fill the Ns
-   return fillNormals(Ns_map);
+   fillNormals(nor, norOffset, Ns_map);
 }
 
 
