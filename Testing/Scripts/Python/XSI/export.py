@@ -33,7 +33,11 @@ elif transformsEO == "bake":
      transformsStr += ";globalspace=true";
 
 
-result = Application.alembic_export("filename=" + testPath + app + appVer + "_" + obj + ".tabc;" + objectsStr + transformsStr)
+
+exportStr = "filename=" + testPath + app + appVer + "_" +  obj + ".tabc;" + objectsStr + transformsStr;
+if exportStrAppend != None: exportStr = exportStr + ";" + exportStrAppend;
+
+result = Application.alembic_export(exportStr)
 tasks.setStatus("Export", result == None)
 
 tasks.writeResults()

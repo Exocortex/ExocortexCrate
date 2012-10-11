@@ -9,6 +9,10 @@ stats_map default_stats_policy::stats;
 #endif // ESS_PROFILER
 
 #include <fstream>
+#include <vector>
+#include <string>
+#include <boost/algorithm/string.hpp>
+
 bool validate_filename_location(const char *filename)
 {
    std::ofstream fout(filename);
@@ -192,7 +196,7 @@ float getTimeOffsetFromObject( Alembic::Abc::IObject &object, SampleInfo const& 
 	}
 }
 
-void getMergeInfo( Alembic::AbcGeom::IObject& iObj, bool& bCreateNullNode, int& nMergedGeomNodeIndex, Alembic::AbcGeom::IObject& mergedGeomChild)
+void getMergeInfo( Alembic::AbcGeom::IObject& iObj, bool& bCreateNullNode, int& nMergedGeomNodeIndex, Alembic::AbcGeom::IObject& mergedGeomChild, bool bAlwaysMerge)
 {
    NodeCategory::type cat = NodeCategory::get(iObj);
    if(cat == NodeCategory::XFORM)
@@ -214,18 +218,143 @@ void getMergeInfo( Alembic::AbcGeom::IObject& iObj, bool& bCreateNullNode, int& 
 		}
 		else if(geomNodeCount == 1){ //create geometry node
 
-			//std::string parentName = removeXfoSuffix(iObj.getName());
-			//std::string childName = mergedGeomChild->getName();
-			////only merge if the parent and child have the same name after the Xfo suffix has been removed (if present)
-			//if(parentName.compare(childName) == 0){
-				nMergedGeomNodeIndex = mergeIndex;
-		//}
-		//else{
-		//	bCreateNullNode = true;
-		//}
+         if(bAlwaysMerge){
+            nMergedGeomNodeIndex = mergeIndex;
+         }
+         else{
+			   std::string parentName = removeXfoSuffix(iObj.getName());
+			   std::string childName = mergedGeomChild.getName();
+			   //only merge if the parent and child have the same after the Xfo suffix has been removed (if present)
+            //Also, always merge if we are dealing with a camera
+			   if(parentName.compare(childName) == 0 ||
+               Alembic::AbcGeom::ICamera::matches(mergedGeomChild.getMetaData()))
+            {
+				   nMergedGeomNodeIndex = mergeIndex;
+			   }
+			   else{
+				   bCreateNullNode = true;
+			   }
+         }
 		}
 		else if(geomNodeCount > 1){ //create dummy node
 			bCreateNullNode = true;
 		}
 	}
 }
+
+//int getNumberOfNodesToBeImported(Alembic::AbcGeom::IObject root)
+//{
+//   std::list<Alembic::Abc::IObject> sceneStack;
+//
+//	for(size_t j=0; j<root.getNumChildren(); j++){
+//      sceneStack.push_back(root.getChild(j));
+//	} 
+//
+//   int nNumNodes = 0;
+//   while( !sceneStack.empty() )
+//   {
+//      Alembic::Abc::IObject iObj = sceneStack.back();
+//      sceneStack.pop_back();
+//      
+//      nNumNodes++;
+//
+//      bool bCreateNullNode = false;
+//      int nMergedGeomNodeIndex = -1;
+//		Alembic::AbcGeom::IObject mergedGeomChild;
+//      getMergeInfo(iObj, bCreateNullNode, nMergedGeomNodeIndex, mergedGeomChild);
+//      
+//      //push the children as the last step, since we need to who the parent is first (we may have merged)
+//      for(size_t j=0; j<iObj.getNumChildren(); j++)
+//      {
+//         NodeCategory::type childCat = NodeCategory::get(iObj.getChild(j));
+//         if( childCat == NodeCategory::UNSUPPORTED ) continue;// skip over unsupported types
+//
+//         //I assume that geometry nodes are always leaf nodes. Thus, if we merged a geometry node will its parent transform, we don't
+//         //need to push that geometry node to the stack.
+//         //A geometry node can't be combined with its transform node, the transform node has other tranform nodes as children. These
+//         //nodes must be pushed.
+//         if( nMergedGeomNodeIndex != j ){
+//            sceneStack.push_back(iObj.getChild(j));
+//         }
+//      }  
+//   }
+//
+//   return nNumNodes;
+//}
+
+
+
+//returns the number of nodes
+int prescanAlembicHierarchy(Alembic::AbcGeom::IObject root, std::vector<std::string>& nodes, std::map<std::string, bool>& map)
+{
+   for(int i=0; i<nodes.size(); i++){
+      boost::to_upper(nodes[i]);
+   }
+
+   std::vector<Alembic::Abc::IObject> sceneStack;
+   sceneStack.reserve(200);
+
+	for(size_t j=0; j<root.getNumChildren(); j++){
+      sceneStack.push_back(root.getChild(j));
+	} 
+
+   int nNumNodes = 0;
+   while( !sceneStack.empty() )
+   {
+      Alembic::Abc::IObject iObj = sceneStack.back();
+      sceneStack.pop_back();
+      
+      nNumNodes++;
+
+      bool bCreateNullNode = false;
+      int nMergedGeomNodeIndex = -1;
+		Alembic::AbcGeom::IObject mergedGeomChild;
+      getMergeInfo(iObj, bCreateNullNode, nMergedGeomNodeIndex, mergedGeomChild);
+      
+      std::string name;
+      std::string fullname;
+
+	   if(nMergedGeomNodeIndex != -1){//we are merging
+         name = mergedGeomChild.getName();
+         fullname = mergedGeomChild.getFullName();
+	   }
+	   else{ //geometry node(s) under a dummy node (in pParentMaxNode)
+         name = iObj.getName();
+         fullname = iObj.getFullName();
+      }
+
+      boost::to_upper(name);
+
+      for(int i=0; i<nodes.size(); i++){
+         if( name.find( nodes[i] ) != std::string::npos ){
+            std::vector<std::string> parts;
+		      boost::split(parts, fullname, boost::is_any_of("/"));
+
+            std::string nodeName;
+            for(int j=1; j<parts.size(); j++){
+               nodeName += "/";
+               nodeName += parts[j];
+               map[nodeName] = true;
+            }
+         }
+      }
+	   
+      //push the children as the last step, since we need to who the parent is first (we may have merged)
+      for(size_t j=0; j<iObj.getNumChildren(); j++)
+      {
+         NodeCategory::type childCat = NodeCategory::get(iObj.getChild(j));
+         if( childCat == NodeCategory::UNSUPPORTED ) continue;// skip over unsupported types
+
+         //I assume that geometry nodes are always leaf nodes. Thus, if we merged a geometry node will its parent transform, we don't
+         //need to push that geometry node to the stack.
+         //A geometry node can't be combined with its transform node, the transform node has other tranform nodes as children. These
+         //nodes must be pushed.
+         if( nMergedGeomNodeIndex != j ){
+            sceneStack.push_back(iObj.getChild(j));
+         }
+      }  
+   }
+   
+   return nNumNodes;
+}
+

@@ -27,6 +27,10 @@ pdProto.toString = function(){
 }
 
 
+var bDebugXSI = true;//open XSI in non-batchmode with environmental variables set. Then load the test script manually.
+
+
+
 pdProto.execute = function(){
 
 	var script = this.scriptPath + this.scriptName;
@@ -38,11 +42,17 @@ pdProto.execute = function(){
 		runStr = ["\"", this.exepath,"\"" , ' -U MAXScript ', this.arguments, ' ', script].join('');
 	}
 	else if(this.app === "xsi"){
-		runStr = ["\"", this.exepath,"\"", ' -continue -lang Python -script ', script].join('');
+		if(bDebugXSI){
+			runStr = ["\"", this.exepath,"\""].join('');
+		}
+		else{
+			runStr = ["\"", this.exepath,"\"", ' -continue -lang Python -script ', script].join('');
+		}
 	}
 
 	console.log('runStr: '+runStr);
 	console.log('wdir: '+this.testdir);
+	console.log('script: '+script);
 
 	var envVar = process.env;
 	
