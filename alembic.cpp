@@ -331,6 +331,7 @@ ESS_CALLBACK_START(alembic_export_Execute,CRef&)
                objects.push_back(objRef);
 
                // ensure to add models as a flattened list
+               // don't want to add all children automatically for now
                Model model(objRef);
                if(model.IsValid())
                {
@@ -2305,47 +2306,13 @@ ESS_CALLBACK_START(alembic_import_Execute, CRef&)
 
 
 
-   std::list<stackElement> sceneStack;
+   
 
    Alembic::AbcGeom::IObject root = archive->getTop();
-	for(size_t j=0; j<root.getNumChildren(); j++)
-	{
-      sceneStack.push_back(stackElement(root.getChild(j), Application().GetActiveSceneRoot()));
-	} 
 
-   int nNumNodes = 0;
-   while( !sceneStack.empty() )
-   {
-      stackElement sElement = sceneStack.back();
-      sceneStack.pop_back();
-      Alembic::Abc::IObject& iObj = sElement.iObj;
-      CRef parentNode(sElement.parentNode);
-
-      nNumNodes++;
-
-      bool bCreateNullNode = false;
-      int nMergedGeomNodeIndex = -1;
-		Alembic::AbcGeom::IObject mergedGeomChild;
-      getMergeInfo(iObj, bCreateNullNode, nMergedGeomNodeIndex, mergedGeomChild);
-      
-      //push the children as the last step, since we need to who the parent is first (we may have merged)
-      for(size_t j=0; j<iObj.getNumChildren(); j++)
-      {
-         NodeCategory::type childCat = NodeCategory::get(iObj.getChild(j));
-         if( childCat == NodeCategory::UNSUPPORTED ) continue;// skip over unsupported types
-
-         //I assume that geometry nodes are always leaf nodes. Thus, if we merged a geometry node will its parent transform, we don't
-         //need to push it to the stack.
-         //A geometry node can't be combined with its transform node, the transform node has other tranform nodes as children. These
-         //nodes must be pushed.
-         if( nMergedGeomNodeIndex != j )
-         {
-            sceneStack.push_back( stackElement(iObj.getChild(j)) );
-         }
-      }
-      
-   }
-
+   std::vector<std::string> nodesToImport;
+   std::map<std::string, bool> map;
+	int nNumNodes = prescanAlembicHierarchy(root, nodesToImport, map);
 
 
    ProgressBar prog;
@@ -2364,7 +2331,7 @@ ESS_CALLBACK_START(alembic_import_Execute, CRef&)
    // clear all alembic user data
    alembic_UD::clearAll();
 
-
+   std::list<stackElement> sceneStack;
 	for(size_t j=0; j<root.getNumChildren(); j++)
 	{
       sceneStack.push_back(stackElement(root.getChild(j), Application().GetActiveSceneRoot()));
@@ -2384,6 +2351,8 @@ ESS_CALLBACK_START(alembic_import_Execute, CRef&)
          prog.PutCaption(L"Importing "+CString(iObj.getFullName().c_str())+L" ...");
       }
       i++;
+
+      ESS_LOG_WARNING("Importing "<<iObj.getFullName().c_str()<<" ...");
 
       bool bCreateNullNode = false;
       int nMergedGeomNodeIndex = -1;
