@@ -53,6 +53,8 @@ global proc exocortexAlembicImport(string $filename, int $importNormals, int $im
   string $nodes[];
   string $datas[];
   int $nbSamples[];
+  int $parentID[];
+  int $childID[];
   for($i=0; $i<size($infos); $i=$i+1)
   {
     // tokenize the basic arguments
@@ -96,11 +98,13 @@ global proc exocortexAlembicImport(string $filename, int $importNormals, int $im
     $names[size($names)] = $tokens[2];
     $nodes[size($nodes)] = $node;
     $nbSamples[size($nbSamples)] = $tokens[3];
+    $parentID[size($parentID)] = $tokens[4];
+    $childID[size($childID)] = $tokens[5];
     
     // parse the forth token
     string $data = "";
-    if(size($tokens)>4)
-      $data = $tokens[4];
+    if(size($tokens)>6)
+      $data = $tokens[6];
     $datas[size($datas)] = $data;
   }
   
@@ -109,24 +113,6 @@ global proc exocortexAlembicImport(string $filename, int $importNormals, int $im
   // below them. for that we can loop on all identifiers
   // and find any identifier below it of type xform
   ExocortexAlembic_profileBegin -f MEL_exocortexAlembicImport_B;
-  for($i=0; $i<size($identifiers); $i=$i+1)
-  {
-    if($types[$i] != "Xform")
-      continue;
-    for($j=$i+1;$j<size($identifiers); $j=$j+1)
-    {
-      if($types[$j] != "Xform")
-        continue;
-      if(size($identifiers[$i]) >= size($identifiers[$j]))
-        continue;
-      string $substring = `substring $identifiers[$j] 1 (size($identifiers[$i])+1)`;
-      if($substring == ($identifiers[$i]+"/"))
-      {
-        $types[$i] = "Group";
-        break;
-      }
-    }
-  }
   ExocortexAlembic_profileEnd -f MEL_exocortexAlembicImport_B;
 
   // let's create the time node and file node
@@ -267,6 +253,9 @@ global proc exocortexAlembicImport(string $filename, int $importNormals, int $im
         $reader = exocortexCreateOrReuseNode("ExocortexAlembicPoints","ExocortexAlembicPoints",$importAttach,0,0);
         addAttr -ln "rgbPP" -dt vectorArray $shape;
         addAttr -ln "opacityPP" -dt doubleArray $shape;
+        addAttr -ln "agePP" -dt doubleArray $shape;
+        addAttr -ln "shapeInstanceIdPP" -dt doubleArray $shape;
+        addAttr -ln "orientationPP" -dt vectorArray $shape;
       }
       exocortexConnectIfUnconnected(($reader+".output[0]"), ($shape+".newParticles[0]"));
       exocortexConnectIfUnconnected(($timeControl+".outTime"), ($shape+".currentTime"));
@@ -304,25 +293,21 @@ global proc exocortexAlembicImport(string $filename, int $importNormals, int $im
       else
       {
         // let's look for the next element in the list
-        // and access its parent
+        // and access its children
         $reader = "";
         ExocortexAlembic_profileBegin -f MEL_exocortexAlembicImport_C;
-        for($j=$i+1;$j<size($identifiers);$j=$j+1)
+        int $cID = $childID[$i];
+        if ($cID > 0)
         {
-          string $substring = `substring $identifiers[$j] 1 (size($identifiers[$i])+1)`;
-          if($substring == ($identifiers[$i]+"/"))
+          $shape = $objects[$cID-1];
+          $xform = `listRelatives -p $shape`;
+          if ( $name != "front" && $name != "top" && $name != "side" && $name != "persp" )
           {
-            $shape = $objects[$j];
-            $xform = `listRelatives -p $shape`;
-            if ( $name != "front" && $name != "top" && $name != "side" && $name != "persp" )
-            {
-              $shape = `rename -ignoreShape $xform[0] $name`;
-              $reader = exocortexCreateOrReuseNode($shape+"_translate","ExocortexAlembicXform",$importAttach,1,0);
-              exocortexConnectIfUnconnected(($reader+".translate"), ($shape+".translate"));
-              exocortexConnectIfUnconnected(($reader+".rotate"), ($shape+".rotate"));
-              exocortexConnectIfUnconnected(($reader+".scale"), ($shape+".scale"));
-            }
-            break;
+            $shape = `rename -ignoreShape $xform[0] $name`;
+            $reader = exocortexCreateOrReuseNode($shape+"_translate","ExocortexAlembicXform",$importAttach,1,0);
+            exocortexConnectIfUnconnected(($reader+".translate"), ($shape+".translate"));
+            exocortexConnectIfUnconnected(($reader+".rotate"), ($shape+".rotate"));
+            exocortexConnectIfUnconnected(($reader+".scale"), ($shape+".scale"));
           }
         }
         ExocortexAlembic_profileEnd -f MEL_exocortexAlembicImport_C;
@@ -362,10 +347,8 @@ global proc exocortexAlembicImport(string $filename, int $importNormals, int $im
         string $identifierB = "";
         for($k=0;$k<size($parts);$k=$k+1)
         {
-          $identifierA = $identifierA + "/";
-          $identifierB = $identifierB + "/";
-          $identifierA = $identifierA + $parts[$k];
-          $identifierB = $identifierB + $childParts[$k];
+          $identifierA = $identifierA + "/" + $parts[$k];
+          $identifierB = $identifierB + "/" + $childParts[$k];
         }
         if($identifierA != $identifierB)
           continue;
@@ -392,6 +375,8 @@ global proc exocortexAlembicImport(string $filename, int $importNormals, int $im
     // setup metadata if we have it
     ExocortexAlembic_createMetaData -f $filename -i $identifiers[$i] -o $shape;
   }
+
+  ExocortexAlembic_postImportPoints;
   ExocortexAlembic_profileEnd -f MEL_exocortexAlembicImport;
 }
 

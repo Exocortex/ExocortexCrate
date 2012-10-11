@@ -1,6 +1,10 @@
 #include "AlembicGetInfo.h"
 #include "CommonMeshUtilities.h"
 
+#include <sstream>
+
+using namespace std;
+
 AlembicGetInfoCommand::AlembicGetInfoCommand()
 {
 }
@@ -24,6 +28,32 @@ void* AlembicGetInfoCommand::creator()
 {
    return new AlembicGetInfoCommand();
 }
+
+struct infoTuple
+{
+  bool valid;
+  MString identifier;
+  MString type;
+  MString name;
+  int nbSample;
+  int parentID;
+  int childID;
+  MString data;
+
+  infoTuple(void): valid(false), identifier(""), type("Root"), name(""), nbSample(0), parentID(-1), childID(-1), data("") {}
+
+  MString toInfo(void) const
+  {
+    stringstream str;
+    str << "|" << nbSample << "|" << parentID << "|" << childID;
+
+    MString ret = identifier + "|" + type + "|" + name;
+    ret += str.str().c_str();
+    if (data.length() > 0)
+      ret += "|" + data;
+    return ret;
+  }
+};
 
 MStatus AlembicGetInfoCommand::doIt(const MArgList & args)
 {
@@ -59,49 +89,54 @@ MStatus AlembicGetInfoCommand::doIt(const MArgList & args)
 
    // get the root object
    std::vector<Alembic::Abc::IObject> objects;
+   std::vector<infoTuple> infoVector;
    objects.push_back(archive->getTop());
+   infoVector.push_back(infoTuple());
 
    // loop over all children and collect identifiers
    MStringArray identifiers;
-   for(size_t i=0;i<objects.size();i++)
+   for(size_t i=0; i<objects.size(); ++i)
    {
-      for(size_t j=0;j<objects[i].getNumChildren();j++)
+     const int nbChild = objects[i].getNumChildren();
+      for(size_t j=0; j<nbChild; ++j)
       {
          Alembic::Abc::IObject child = objects[i].getChild(j);
          objects.push_back(child);
+         infoVector.push_back(infoTuple());
 
-         MString identifier = child.getFullName().c_str();
-         MString type = getTypeFromObject(child);
-         if(type.length() == 0)
-            continue;
-         identifier += "|"+type;
-         //MString name = truncateName(child.getName().c_str());
-         MString name = child.getName().c_str();
-         //if(type != "Xform")
-            //name = injectShapeToName(name);
-         identifier += "|"+name;
-         MString numSamples;
-         numSamples.set((double)getNumSamplesFromObject(child));
-         identifier += "|"+numSamples;
+         infoTuple &iTuple = infoVector[infoVector.size()-1];
+
+         iTuple.identifier = child.getFullName().c_str();
+         iTuple.type = getTypeFromObject(child);
+         iTuple.name = child.getName().c_str();
+         iTuple.nbSample = getNumSamplesFromObject(child);
+         iTuple.parentID = i;
+
+         if (iTuple.type == "Xform")
+         {
+           if (infoVector[i].type == "Xform")
+             infoVector[i].type = "Group";             
+         }
+         infoVector[i].childID = objects.size()-1;
 
          // additional data fields
          MString data;
          if(Alembic::AbcGeom::IPolyMesh::matches(child.getMetaData())) {
             // check if we have topo or not
             if( isAlembicMeshTopoDynamic( & child ) ) {
-				data += "dynamictopology=1";                 
-			}
-			if( isAlembicMeshPointCache( & child ) ) {
-				data += "purepointcache=1";
-			}
+				      data += "dynamictopology=1";                 
+	          }
+	          if( isAlembicMeshPointCache( & child ) ) {
+		          data += "purepointcache=1";
+	          }
          } else if(Alembic::AbcGeom::ISubD::matches(child.getMetaData())) {
             // check if we have topo or not
-			if( isAlembicMeshTopoDynamic( & child ) ) {
-				data += "dynamictopology=1";                 
-			}
-			if( isAlembicMeshPointCache( & child ) ) {
-				data += "purepointcache=1";
-			}
+		        if( isAlembicMeshTopoDynamic( & child ) ) {
+			        data += "dynamictopology=1";                 
+		        }
+		        if( isAlembicMeshPointCache( & child ) ) {
+			        data += "purepointcache=1";
+		        }
          } else if(Alembic::AbcGeom::ICurves::matches(child.getMetaData())) {
             // check if we have topo or not
             Alembic::AbcGeom::ICurves obj(child,Alembic::Abc::kWrapExisting);
@@ -120,17 +155,22 @@ MStatus AlembicGetInfoCommand::doIt(const MArgList & args)
             }
          }
          if(data.length() > 0)
-            identifier += "|"+data;
-
-         identifiers.append(identifier);
+           iTuple.data = data;
+         iTuple.valid = true;
       }
    }
 
    // remove the ref of the archive
    delRefArchive(fileName);
+   for (std::vector<infoTuple>::const_iterator beg = infoVector.begin(); beg != infoVector.end(); ++beg)
+   {
+     if (beg->valid)
+      identifiers.append(beg->toInfo());
+   }
 
    // set the return value
    setResult(identifiers);
-
    return status;
 }
+
+
