@@ -5,6 +5,7 @@
 
 #include <windows.h>
 
+#include "CommonLog.h"
 
 
 class HighResolutionTimer
