@@ -18,12 +18,11 @@ rollout AlembicExportSettings "Alembic Export Settings" width:288 height:436
     
 	GroupBox geoGroup "Geometry" pos:[8,168] width:272 height:224
 	
-	dropdownList meshTopologyDropDown "Mesh Topology" pos:[16,192] width:256 height:40 items:#("Just Surfaces (No Normals)", "Point Cache (No Surfaces)", "Surface + Normals (For Interchange)") selection:3
+	dropdownList meshTopologyDropDown "Mesh Topology" pos:[16,192] width:256 height:40 items:#("Just Surfaces (No Normals)", "Point Cache (No Surfaces)", "Surface + Normals (Everything)") selection:3
 	
 	dropdownList particleSystemExportMethod "Particle System Export Method" pos:[16,240] width:256 height:40 items:#("Automatic Instancing", "Merged Mesh", "Shape Node Instancing (deprecated)") selection:1
 
 	checkbox uvCheckbox "UVs" pos:[32,288] width:128 height:15 checked:true
-	checkbox envelopeCheckbox "Envelope BindPose" pos:[32,304] width:150 height:15 checked:true
 	checkbox materialIdsCheckbox "Material Ids" pos:[32,320] width:107 height:14 checked:true
 	checkbox flattenHierarchyCheckbox "Flatten Hierarchy" pos:[32,336] width:107 height:14 checked:true
 	checkbox transformCacheCheckbox "Transform Cache" pos:[32,352] width:200 height:14 checked:false
@@ -50,8 +49,6 @@ rollout AlembicExportSettings "Alembic Export Settings" width:288 height:436
 	    	jobString += (uvCheckbox.checked as string)
 	    	jobString += ";materialids=" 
 	    	jobString += (materialIdsCheckbox.checked as string)
-	    	jobString += ";bindpose=" 
-	    	jobString += (envelopeCheckbox.checked as string)
 	    	jobString += ";exportselected=" 
 	    	jobString += (exportSelectedCheckbox.checked as string)
 	    	jobString += ";flattenhierarchy=" 
