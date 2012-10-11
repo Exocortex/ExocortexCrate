@@ -19,7 +19,17 @@ rollout AlembicImportSettings "Alembic Import Settings" width:288 height:150
 
 	on importButton pressed do
 	(
-	    result = ExocortexAlembic.import filename normalCheckbox.checked uvCheckbox.checked materialIdsCheckbox.checked attachCheckbox.checked 0
+    	jobString = "filename=" + (filename as string)
+    	jobString += ";normals=" 
+    	jobString += (normalCheckbox.checked as string)
+    	jobString += ";uvs=" 
+    	jobString += (uvCheckbox.checked as string)
+    	jobString += ";attachToExisting=" 
+    	jobString += (attachCheckbox.checked as string)
+
+    	result = ExocortexAlembic.createImportJob(jobString)
+
+	    --result = ExocortexAlembic.import filename normalCheckbox.checked uvCheckbox.checked materialIdsCheckbox.checked attachCheckbox.checked 0
 	    if( result != 0 ) do
 	    (
 	    	messageBox "Failure - See Maxscript Listener for details." title:"Exocortex Alembic Import"

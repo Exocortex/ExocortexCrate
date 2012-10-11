@@ -62,12 +62,10 @@ struct stackElement
 
 };
 
-
-
-
-int importAlembicScene(Alembic::AbcGeom::IObject& root, alembic_importoptions &options, std::string& file, progressUpdate& progress)
+int importAlembicScene(Alembic::AbcGeom::IObject& root, alembic_importoptions &options, std::string& file, progressUpdate& progress, std::map<std::string, bool>& nodeFullPaths)
 {
-   std::list<stackElement> sceneStack;
+   std::vector<stackElement> sceneStack;
+   sceneStack.reserve(200);
 	for(size_t j=0; j<root.getNumChildren(); j++)
 	{
       sceneStack.push_back(stackElement(root.getChild(j)));
@@ -97,86 +95,98 @@ int importAlembicScene(Alembic::AbcGeom::IObject& root, alembic_importoptions &o
       getMergeInfo(iObj, bCreateDummyNode, mergedGeomNodeIndex, mergedGeomChild, false);
 
       INode* pMaxNode = NULL;// the newly create node, which may be a merged node
-	   
-	   int keepTM = 1;//I don't remember why this needed to be set in some cases.
-	   INode* pExistingNode = NULL;
-	   if(bCreateDummyNode){
+      INode* pExistingNode = NULL;
+      int keepTM = 1;//I don't remember why this needed to be set in some cases.
 
-		   std::string importName = removeXfoSuffix(iObj.getName());
+      bool bCreateNode = true;
 
-		   pExistingNode = GetChildNodeFromName(importName, pParentMaxNode);
-		   if(options.attachToExisting && pExistingNode){
-			   pMaxNode = pExistingNode;
+      if(!nodeFullPaths.empty()){
+         bCreateNode = nodeFullPaths[fullname];         
+      }
 
-			   //see if a controller already exists, and then delete it
-				
-			   int ret = AlembicImport_XForm(pParentMaxNode, pMaxNode, iObj, NULL, file, options);
-			   if(ret != 0) return ret;
-		   }//only create node if either attachToExisting is false or it is true and the object does not already exist
-		   else{
-			   int ret = AlembicImport_DummyNode(iObj, options, &pMaxNode, importName);
-			   if(ret != 0) return ret;
+      if(bCreateNode){
 
-			   ret = AlembicImport_XForm(pParentMaxNode, pMaxNode, iObj, NULL, file, options);
-			   if(ret != 0) return ret;
-		   }
+	      if(bCreateDummyNode){
+
+		      std::string importName = removeXfoSuffix(iObj.getName());
+
+		      pExistingNode = GetChildNodeFromName(importName, pParentMaxNode);
+		      if(options.attachToExisting && pExistingNode){
+			      pMaxNode = pExistingNode;
+
+			      //see if a controller already exists, and then delete it
+   				
+			      int ret = AlembicImport_XForm(pParentMaxNode, pMaxNode, iObj, NULL, file, options);
+			      if(ret != 0) return ret;
+		      }//only create node if either attachToExisting is false or it is true and the object does not already exist
+		      else{
+			      int ret = AlembicImport_DummyNode(iObj, options, &pMaxNode, importName);
+			      if(ret != 0) return ret;
+
+			      ret = AlembicImport_XForm(pParentMaxNode, pMaxNode, iObj, NULL, file, options);
+			      if(ret != 0) return ret;
+		      }
+	      }
+	      else{
+		      if(mergedGeomNodeIndex != -1){//we are merging, so look at the child geometry node
+			      pExistingNode = GetChildNodeFromName(mergedGeomChild.getName(), pParentMaxNode);
+			      if(options.attachToExisting && pExistingNode){
+				      pMaxNode = pExistingNode;
+			      }//only create node if either attachToExisting is false or it is true and the object does not already exist
+   				
+			      int ret = createAlembicObject(mergedGeomChild, &pMaxNode, options, file);
+			      if(ret != 0) return ret;
+			      ret = AlembicImport_XForm(pParentMaxNode, pMaxNode, iObj, &mergedGeomChild, file, options);
+			      if(ret != 0) return ret;
+   				
+		      }
+		      else{ //geometry node(s) under a dummy node (in pParentMaxNode)
+			      pExistingNode = GetChildNodeFromName(iObj.getName(), pParentMaxNode);
+			      if(options.attachToExisting && pExistingNode){
+				      pMaxNode = pExistingNode;
+			      }//only create node if either attachToExisting is false or it is true and the object does not already exist
+   				
+			      int ret = createAlembicObject(iObj, &pMaxNode, options, file);
+			      if(ret != 0) return ret;
+
+			      //since the transform is the identity, should position relative to parent
+			      keepTM = 0;
+
+			      //import identity matrix, since more than goemetry node share the same transform
+			      //Should we just list MAX put a default position/scale/rotation controller on?
+
+			      //	int ret = AlembicImport_XForm(pMaxNode, *piParentObj, file, options);
+   				
+		      }
+
+		      if(!pMaxNode){
+			      return alembic_failure;
+		      }
+         }
+
 	   }
-	   else{
-		   if(mergedGeomNodeIndex != -1){//we are merging, so look at the child geometry node
-			   pExistingNode = GetChildNodeFromName(mergedGeomChild.getName(), pParentMaxNode);
-			   if(options.attachToExisting && pExistingNode){
-				   pMaxNode = pExistingNode;
-			   }//only create node if either attachToExisting is false or it is true and the object does not already exist
-				
-			   int ret = createAlembicObject(mergedGeomChild, &pMaxNode, options, file);
-			   if(ret != 0) return ret;
-			   ret = AlembicImport_XForm(pParentMaxNode, pMaxNode, iObj, &mergedGeomChild, file, options);
-			   if(ret != 0) return ret;
-				
-		   }
-		   else{ //geometry node(s) under a dummy node (in pParentMaxNode)
-			   pExistingNode = GetChildNodeFromName(iObj.getName(), pParentMaxNode);
-			   if(options.attachToExisting && pExistingNode){
-				   pMaxNode = pExistingNode;
-			   }//only create node if either attachToExisting is false or it is true and the object does not already exist
-				
-			   int ret = createAlembicObject(iObj, &pMaxNode, options, file);
-			   if(ret != 0) return ret;
 
-			   //since the transform is the identity, should position relative to parent
-			   keepTM = 0;
-
-			   //import identity matrix, since more than goemetry node share the same transform
-			   //Should we just list MAX put a default position/scale/rotation controller on?
-
-			   //	int ret = AlembicImport_XForm(pMaxNode, *piParentObj, file, options);
-				
-		   }
-
-		   if(!pMaxNode){
-			   return alembic_failure;
-		   }
-
-		   if(pParentMaxNode && !pExistingNode){
-			   pParentMaxNode->AttachChild(pMaxNode, keepTM);
-		   }
+	   if(pMaxNode && pParentMaxNode && !pExistingNode){
+		   pParentMaxNode->AttachChild(pMaxNode, keepTM);
 	   }
 
 	   progress.increment();
 	   progress.update();
 
-	   for(size_t j=0; j<iObj.getNumChildren(); j++)
-	   {
-		   if( NodeCategory::get(iObj.getChild(j)) == NodeCategory::UNSUPPORTED ) continue;// skip over unsupported types
+      if(pMaxNode){
+	      for(size_t j=0; j<iObj.getNumChildren(); j++)
+	      {
+		      if( NodeCategory::get(iObj.getChild(j)) == NodeCategory::UNSUPPORTED ) continue;// skip over unsupported types
 
-         //I assume that geometry nodes are always leaf nodes. Thus, if we merged a geometry node will its parent transform, we don't
-         //need to push it to the stack.
-         //A geometry node can't be combined with its transform node, the transform node has other tranform nodes as children. These
-         //nodes must be pushed.
-         if( mergedGeomNodeIndex != j ){
-            sceneStack.push_back( stackElement(iObj.getChild(j), pMaxNode) );
-         }
-	   } 
+            //I assume that geometry nodes are always leaf nodes. Thus, if we merged a geometry node will its parent transform, we don't
+            //need to push it to the stack.
+            //A geometry node can't be combined with its transform node, the transform node has other tranform nodes as children. These
+            //nodes must be pushed.
+            if( mergedGeomNodeIndex != j ){
+               sceneStack.push_back( stackElement(iObj.getChild(j), pMaxNode) );
+            }
+	      } 
+      }
    }
 
 	return alembic_success;
