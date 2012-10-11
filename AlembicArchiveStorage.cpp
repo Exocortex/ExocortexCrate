@@ -4,22 +4,14 @@
 #include "AlembicLicensing.h"
 #include <maya/MFileIO.h>
 
-struct AlembicArchiveInfo
-{
-   Alembic::Abc::IArchive * archive;
-   int refCount;
 
-   AlembicArchiveInfo()
-   {
-      archive = NULL;
-      refCount = 0;
-   }
-};
-std::map<std::string,AlembicArchiveInfo> gArchives;
 
-MString resolvePath(MString path)
+std::string resolvePath_Internal(std::string originalPath)
 {
    ESS_PROFILE_SCOPE("resolvePath");
+
+   MString path( originalPath.c_str() );
+
    // for each token
    int openPos = path.index('[');
    while(openPos > -1)
@@ -27,26 +19,26 @@ MString resolvePath(MString path)
       int closePos = path.index(']');
       if(closePos < openPos || closePos == openPos + 1)
       {
-         MGlobal::displayError("[ExocortexAlembic] Invalid token bracketing in path: "+path);
-         return path;
+		  EC_LOG_ERROR("[ExocortexAlembic] Invalid token bracketing in path: " << path.asChar());
+		  return std::string( path.asChar() );
       }
       MString prefix = (openPos > 0) ? path.substring(0,openPos-1) : "";
-      MString suffix = (closePos < path.length() - 1) ? path.substring(closePos+1,path.length()-1) : "";
+      MString suffix = (closePos < ((int)path.length() - 1)) ? path.substring(closePos+1,path.length()-1) : "";
       MString token = path.substring(openPos+1,closePos-1);
       MStringArray tokens;
       token.split(' ',tokens);
       if(tokens.length() != 2)
       {
-         MGlobal::displayError("[ExocortexAlembic] Invalid token '"+token+"' in path: "+path);
-         return path;
+		  EC_LOG_ERROR("[ExocortexAlembic] Invalid token '" << token.asChar() << "' in path: " << path.asChar());
+		  return std::string( path.asChar() );
       }
       if(tokens[0].toLowerCase() == "env")
       {
          MString value = getenv(tokens[1].asChar());
          if(value.length() == 0)
          {
-            MGlobal::displayError("[ExocortexAlembic] Environment variable '"+tokens[1]+"' not found!");
-            return path;
+			 EC_LOG_ERROR("[ExocortexAlembic] Environment variable '" << tokens[1].asChar() << "' not found!");
+			  return std::string( path.asChar() );
          }
          path = prefix + value + suffix;
       }
@@ -65,8 +57,8 @@ MString resolvePath(MString path)
       }
       else
       {
-         MGlobal::displayError("[ExocortexAlembic] Invalid token '"+token+"' in path: "+path);
-         return path;
+         EC_LOG_ERROR("[ExocortexAlembic] Invalid token '" << token.asChar() << "' in path: " << path.asChar());
+		  return std::string( path.asChar() );
       }
       openPos = path.index('[');
    }
@@ -75,134 +67,5 @@ MString resolvePath(MString path)
    file.setRawFullName(path);
    path = file.resolvedFullName();
 
-   return path;
-}
-
-Alembic::Abc::IArchive * getArchiveFromID(MString path)
-{
-   ESS_PROFILE_SCOPE("getArchiveFromID");
-   MString resolvedPath = resolvePath(path);
-   std::map<std::string,AlembicArchiveInfo>::iterator it;
-   it = gArchives.find(resolvedPath.asChar());
-   if(it == gArchives.end())
-   {
-      // check if we can open more archives
-      if( ! HasAlembicReaderLicense() )
-      {
-         if(gArchives.size() == 2)
-         {
-            EC_LOG_ERROR("[ExocortexAlembic] Demo Mode: Only two open archives at a time allowed!");
-            return NULL;
-         }
-      }
-
-      // check if the file exists
-      FILE * file = fopen(resolvedPath.asChar(),"rb");
-      if(file != NULL)
-      {
-         fclose(file);
-         addArchive(new Alembic::Abc::IArchive( Alembic::AbcCoreHDF5::ReadArchive(), resolvedPath.asChar()));
-         return getArchiveFromID(resolvedPath);
-      }
-      return NULL;
-   }
-   return it->second.archive;
-}
-
-MString addArchive(Alembic::Abc::IArchive * archive)
-{
-   AlembicArchiveInfo info;
-   info.archive = archive;
-   gArchives.insert(std::pair<std::string,AlembicArchiveInfo>(archive->getName(),info));
-   return archive->getName().c_str();
-}
-
-void deleteArchive(MString path)
-{
-   MString resolvedPath = resolvePath(path);
-   std::map<std::string,AlembicArchiveInfo>::iterator it;
-   it = gArchives.find(resolvedPath.asChar());
-   if(it == gArchives.end())
-      return;
-   it->second.archive->reset();
-   delete(it->second.archive);
-   gArchives.erase(it);
-}
-
-void deleteAllArchives()
-{
-   std::map<std::string,AlembicArchiveInfo>::iterator it;
-   for(it = gArchives.begin(); it != gArchives.end(); it++)
-   {
-      it->second.archive->reset();
-      delete(it->second.archive);
-   }
-   gArchives.clear();
-}
-
-Alembic::Abc::IObject getObjectFromArchive(MString path, MString identifier)
-{
-   ESS_PROFILE_SCOPE("getObjectFromArchive");
-   Alembic::Abc::IArchive * archive = getArchiveFromID(path);
-   if(archive == NULL)
-      return Alembic::Abc::IObject();
-
-   // split the path
-   std::string stdIdentifier(identifier.asChar());
-   std::vector<std::string> parts;
-   boost::split(parts, stdIdentifier, boost::is_any_of("/"));
-
-   // recurse to find it
-   Alembic::Abc::IObject obj = archive->getTop();
-   for(size_t i=1;i<parts.size();i++)
-   {
-      Alembic::Abc::IObject child(obj,parts[i]);
-      obj = child;
-      if(!obj)
-         break;
-   }
-
-   return obj;
-}
-
-int addRefArchive(MString path)
-{
-   if(path.length() == 0)
-      return -1;
-   MString resolvedPath = resolvePath(path);
-
-   // call get archive to ensure to create it!
-   getArchiveFromID(path);
-   std::map<std::string,AlembicArchiveInfo>::iterator it;
-   it = gArchives.find(resolvedPath.asChar());
-   if(it == gArchives.end())
-      return -1;
-   it->second.refCount++;
-   return it->second.refCount;
-}
-
-int delRefArchive(MString path)
-{
-   MString resolvedPath = resolvePath(path);
-   std::map<std::string,AlembicArchiveInfo>::iterator it;
-   it = gArchives.find(resolvedPath.asChar());
-   if(it == gArchives.end())
-      return -1;
-   it->second.refCount--;
-   if(it->second.refCount==0)
-   {
-      deleteArchive(resolvedPath);
-      return 0;
-   }
-   return it->second.refCount;
-}
-
-int getRefArchive(MString path)
-{
-   MString resolvedPath = resolvePath(path);
-   std::map<std::string,AlembicArchiveInfo>::iterator it;
-   it = gArchives.find(resolvedPath.asChar());
-   if(it == gArchives.end())
-      return -1;
-   return it->second.refCount;
+   return std::string( path.asChar() );
 }

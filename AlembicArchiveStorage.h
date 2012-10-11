@@ -2,19 +2,36 @@
 #define _ALEMBIC_ARCHIVE_STORAGE_H_
 
 #include "Foundation.h"
+#include "CommonUtilities.h"
+
 #include <map>
 #include <maya/MString.h>
 
-Alembic::Abc::IArchive * getArchiveFromID(MString path);
-MString addArchive(Alembic::Abc::IArchive * archive);
-void deleteArchive(MString path);
-void deleteAllArchives();
-Alembic::Abc::IObject getObjectFromArchive(MString path, MString identifier);
-MString resolvePath(MString path);
+inline Alembic::Abc::IArchive * getArchiveFromID(MString path) {
+	return getArchiveFromID( std::string( path.asChar() ) );
+}
+//MString addArchive(Alembic::Abc::IArchive * archive) {
+//
+//}
+inline void deleteArchive(MString path) {
+	deleteArchive( std::string( path.asChar() ) );
+}
+inline Alembic::Abc::IObject getObjectFromArchive(MString path, MString identifier) {
+	return getObjectFromArchive( std::string( path.asChar() ), std::string( identifier.asChar() ) );
+}
+inline MString resolvePath(MString path) {
+	return MString( resolvePath( std::string( path.asChar() ) ).c_str() );
+}
 
 // ref counting
-int addRefArchive(MString path);
-int delRefArchive(MString path);
-int getRefArchive(MString path);
+inline int addRefArchive(MString path) {
+	return addRefArchive( std::string( path.asChar() ) );
+}
+inline int delRefArchive(MString path) {
+	return delRefArchive( std::string( path.asChar() ) );
+}
+inline int getRefArchive(MString path) {
+	return getRefArchive( std::string( path.asChar() ) );
+}
 
 #endif
