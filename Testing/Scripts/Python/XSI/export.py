@@ -3,42 +3,47 @@
 
 from common import *
 
-tasks = TaskList([Task("Export")], testPath + app + appVer + "_" + testFile + ".ats")
+tasks = TaskList([Task(iTestFile)], genPath(iTestFile + ".ats"))
 
 
-Application.OpenScene(testPath+"export.scn", False, False)
+Application.OpenScene(iTestPath+"export.scn", False, False)
 
 
-Application.SelectObj("*")
+iNodeToSelect = getInput("nodeToSelect");
+
+if iNodeToSelect != None: Application.SelectObj(iNodeToSelect)
+else: Application.SelectObj("*")
 
 
 sel = Application.Selection;
 
 
+
+
+
 objectsStr = "objects="
 for i in range(0, len(sel)-1):
-	objectsStr += sel(i).Name
+	objectsStr += sel[i].FullName
 	objectsStr +=","
-objectsStr += sel(len(sel)-1).Name
+objectsStr += sel[len(sel)-1].FullName
 
 transformsStr = ""
-if transformsEO == "flat": 
-     transformsStr += ";flattenHierarchy=true";
-     transformsStr += ";globalspace=false";
-elif transformsEO == "full":
+if iTransformsEO == "full":
      transformsStr += ";flattenHierarchy=false";
      transformsStr += ";globalspace=false";
-elif transformsEO == "bake":
+elif iTransformsEO == "bake":
      transformsStr += ";flattenHierarchy=true";
      transformsStr += ";globalspace=true";
+else: #iTransformsEO == "flat": 
+     transformsStr += ";flattenHierarchy=true";
+     transformsStr += ";globalspace=false";
 
 
-
-exportStr = "filename=" + testPath + app + appVer + "_" +  obj + ".tabc;" + objectsStr + transformsStr;
-if exportStrAppend != None: exportStr = exportStr + ";" + exportStrAppend;
+exportStr = "filename=" + genPath(iObj + ".tabc") + ";" + objectsStr + transformsStr;
+if iExportStrAppend != None: exportStr = exportStr + ";" + iExportStrAppend;
 
 result = Application.alembic_export(exportStr)
-tasks.setStatus("Export", result == None)
+tasks.setStatus(iTestFile, result == None)
 
 tasks.writeResults()
 

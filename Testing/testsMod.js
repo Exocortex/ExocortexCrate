@@ -27,7 +27,7 @@ pdProto.toString = function(){
 }
 
 
-var bDebugXSI = true;//open XSI in non-batchmode with environmental variables set. Then load the test script manually.
+var bDebugXSI = false;//open XSI in non-batchmode with environmental variables set. Then load the test script manually.
 
 
 
@@ -42,12 +42,12 @@ pdProto.execute = function(){
 		runStr = ["\"", this.exepath,"\"" , ' -U MAXScript ', this.arguments, ' ', script].join('');
 	}
 	else if(this.app === "xsi"){
-		if(bDebugXSI){
-			runStr = ["\"", this.exepath,"\""].join('');
-		}
-		else{
+		//if(bDebugXSI){
+			//runStr = ["\"", this.exepath,"\""].join('');
+		//}
+		//else{
 			runStr = ["\"", this.exepath,"\"", ' -continue -lang Python -script ', script].join('');
-		}
+		//}
 	}
 
 	console.log('runStr: '+runStr);
@@ -62,7 +62,7 @@ pdProto.execute = function(){
 		envVar[v] = this.runEnvVars[v];
 	}
 	envVar["testPath"] = this.testdir+"/";
-	envVar["testName"] = this.scriptName.substring(0, this.scriptName.length-3);
+	envVar["testName"] = this.testName;
 	envVar["genBaseline"] = this.genBaseline;
 	envVar["PYTHONPATH"] = "E:/Projects2/ExocortexAlembicShared/Testing/Scripts/Python/common"
 

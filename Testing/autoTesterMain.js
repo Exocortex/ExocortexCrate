@@ -28,7 +28,7 @@ var server_port = nconf.get('webServer:port');
 var globals = nconf.get('globals');
 
 
-var bSkipExport = true;
+var bSkipExport = false;
 
 
 
@@ -341,9 +341,9 @@ var tmProto = TestManager.prototype;
 
 tmProto.getAtsName = function(){
 	var test = this.tests[this.currTestIndex];
-	var name = test.scriptName.replace(".ms", ".ats");
-	name = test.scriptName.replace(".py", ".ats");
-	return test.app + test.appVer + "_" + name;
+	atsname = test.app + test.appVer + "_" + test.testName + ".ats";
+	//console.log("atsname: "+atsname);
+	return atsname;
 }
 
 tmProto.getRenderedImagePath = function(){
@@ -463,6 +463,10 @@ tmProto.build = function(list){
 			scriptName = pf.file;
 		}
 
+		if(list[i].name === undefined){
+			list[i].name = scriptName.substring(0, scriptName.length-3);
+		}
+
 		var testAppSettings = globals.app[list[i].inputs.app];
 		var testAppVersionSettings = testAppSettings[list[i].inputs.appVer];
 
@@ -478,11 +482,14 @@ tmProto.build = function(list){
 			testdir: list[i].testpath,
 			arguments: '',//-silent',
 			scriptPath: scriptPath,
-			scriptName: scriptName, 
+			scriptName: scriptName,
+			testName: list[i].name, 
 			runEnvVars: runEnv,
 			completionContext: this,
 			completionCallback: this.testComplete
 		}
+
+		console.log("testName: "+params.testName);
 
 		//XSI alembic_import method doesn't like back slashes
 		//params.testdir.replace('\\', '/');

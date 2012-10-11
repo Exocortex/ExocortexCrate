@@ -17,35 +17,24 @@ def getIntInput(name, default=None):
 	except:
 		return default
 
-includePath = os.environ["includePath"];
-testPath = os.environ["testPath"];
-testFile = os.environ["testName"];
-app = os.environ["app"];
-appVer = os.environ["appVer"];
-genBaseline = os.environ["genBaseline"];
+#includePath = os.environ["includePath"];
+iTestPath = os.environ["testPath"];
+iTestFile = os.environ["testName"];
+iApp = os.environ["app"];
+iAppVer = os.environ["appVer"];
+iGenBaseline = os.environ["genBaseline"];
 
 
-obj = os.environ["obj"];
+iObj = getInput("obj");
 
-transformsEO = getInput("transformsEO");
-frameToRender = getIntInput("frameToRender", 0);
-exportStrAppend = getInput("exportStr");
-
-if exportStrAppend != None : print "exportStr was found."
+iTransformsEO = getInput("transformsEO");
+iFrameToRender = getIntInput("frameToRender", 0);
+iExportStrAppend = getInput("exportStr");
 
 
-#transformsEO
-#try:
-#	transformsEO = os.environ["transformsEO"]
-#except:
-#	transformsEO = None
+def genPath(filename):
+	return iTestPath + iApp + iAppVer + "_" + filename
 
-
-#frameToRender = 0
-#try:
-#	frameToRender = os.environ["frameToRender"]
-#except:
-#	frameToRender = None
 
 class Task:
 	def __init__(self, name, status="UNKNOWN"):
@@ -87,3 +76,18 @@ class TaskList:
 			self.file.write(x.name + ":" + x.status + "\n")
 
 		self.file.close()
+
+
+def renderScene(app, name):
+	imageName = iApp + iAppVer + "_" + name
+	if iGenBaseline == "true": imageName += "_Baseline"
+	else: imageName += "_Render"
+
+	app.SetValue("Passes.RenderOptions.OutputDir", iTestPath, "")
+	app.SetValue("Passes.Default_Pass.Main.Filename", imageName, "")
+	app.SetValue("Passes.Default_Pass.Main.Format", "jpg", "")
+	#print "iFrameToRender: "+iFrameToRender
+	app.RenderPasses("Passes.Default_Pass", iFrameToRender, iFrameToRender)
+
+	#right render includes the images existing and the comparison, but instead split them (we check for the image to exist here, and set to pass if it does)
+	#tasks.setStatus("Render", True)
