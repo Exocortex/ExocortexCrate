@@ -166,16 +166,18 @@ void AlembicPointsNode::PostConstructor(void)
 
 void AlembicPointsNode::PreDestruction()
 {
-  try
+  for (AlembicPointsNodeListIter beg = alembicPointsNodeList.begin(); beg != alembicPointsNodeList.end(); ++beg)
   {
-    alembicPointsNodeList.erase(listPosition);
+    if (beg == listPosition)
+    {
+      alembicPointsNodeList.erase(listPosition);
+      break;
+    }
   }
-  catch(...)
-  {}
 
-   mSchema.reset();
-   delRefArchive(mFileName);
-   mFileName.clear();
+  mSchema.reset();
+  delRefArchive(mFileName);
+  mFileName.clear();
 }
 
 AlembicPointsNode::AlembicPointsNode(void)
