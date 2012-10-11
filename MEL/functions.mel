@@ -113,26 +113,6 @@ global proc exocortexAlembicImport(string $filename, int $importNormals, int $im
   // below them. for that we can loop on all identifiers
   // and find any identifier below it of type xform
   ExocortexAlembic_profileBegin -f MEL_exocortexAlembicImport_B;
-  /*
-  for($i=0; $i<size($identifiers); $i=$i+1)
-  {
-    if($types[$i] != "Xform")
-      continue;
-    for($j=$i+1;$j<size($identifiers); $j=$j+1)
-    {
-      if($types[$j] != "Xform")
-        continue;
-      if(size($identifiers[$i]) >= size($identifiers[$j]))
-        continue;
-      string $substring = `substring $identifiers[$j] 1 (size($identifiers[$i])+1)`;
-      if($substring == ($identifiers[$i]+"/"))
-      {
-        $types[$i] = "Group";
-        break;
-      }
-    }
-  }
-  //*/
   ExocortexAlembic_profileEnd -f MEL_exocortexAlembicImport_B;
 
   // let's create the time node and file node
@@ -313,7 +293,7 @@ global proc exocortexAlembicImport(string $filename, int $importNormals, int $im
       else
       {
         // let's look for the next element in the list
-        // and access its parent
+        // and access its children
         $reader = "";
         ExocortexAlembic_profileBegin -f MEL_exocortexAlembicImport_C;
         int $cID = $childID[$i];
@@ -367,10 +347,8 @@ global proc exocortexAlembicImport(string $filename, int $importNormals, int $im
         string $identifierB = "";
         for($k=0;$k<size($parts);$k=$k+1)
         {
-          $identifierA = $identifierA + "/";
-          $identifierB = $identifierB + "/";
-          $identifierA = $identifierA + $parts[$k];
-          $identifierB = $identifierB + $childParts[$k];
+          $identifierA = $identifierA + "/" + $parts[$k];
+          $identifierB = $identifierB + "/" + $childParts[$k];
         }
         if($identifierA != $identifierB)
           continue;
