@@ -165,7 +165,10 @@ bool isAlembicMeshTopology( Alembic::AbcGeom::IObject *pIObj ) {
 				isTopology = false;
 			}
 		}
-	}  
+	}
+	else {
+		isTopology = false;
+	}
 	return isTopology;
 }
 
