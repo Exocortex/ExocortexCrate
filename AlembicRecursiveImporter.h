@@ -29,15 +29,6 @@ public:
 	}
 };
 
-enum nodeCategory{
-	NODECAT_GEOMETRY,
-	NODECAT_XFORM,
-	NODECAT_UNSUPPORTED
-};
-
-nodeCategory getNodeCategory(Alembic::AbcGeom::IObject& iObj);
-
-int recurseOnAlembicObject(Alembic::AbcGeom::IObject& iObj, INode *pParentMaxNode, 
-						   bool bNodeWasMerged, alembic_importoptions &options, std::string& file, progressUpdate& progress);
+int importAlembicScene(Alembic::AbcGeom::IObject& root, alembic_importoptions &options, std::string& file, progressUpdate& progress, std::map<std::string, bool>& nodeFullPaths);
 
 #endif

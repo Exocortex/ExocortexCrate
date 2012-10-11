@@ -12,9 +12,10 @@
 #include "AlembicWriteJob.h"
 #include "AlembicRecursiveImporter.h"
 #include "Utility.h"
-#include <boost/algorithm/string/split.hpp>
-#include <boost/algorithm/string/predicate.hpp>
-#include <boost/algorithm/string/classification.hpp>
+//#include <boost/algorithm/string/split.hpp>
+//#include <boost/algorithm/string/predicate.hpp>
+//#include <boost/algorithm/string/classification.hpp>
+#include <boost/algorithm/string.hpp>
 
 // Dummy function for progress bar
 DWORD WINAPI DummyProgressFunction(LPVOID arg)
@@ -195,7 +196,7 @@ public:
 
 		AppendFunction(
 			exocortexAlembicImportJobs,	//* function ID * /
-			_M("createImportJobs"),           //* internal name * /
+			_M("createImportJob"),           //* internal name * /
 			0,                      //* function name string resource name * / 
 			TYPE_INT,               //* Return type * /
 			0,                      //* Flags  * /
@@ -349,52 +350,90 @@ int ExocortexAlembicStaticInterface::ExocortexGetLicenseStatus()
 	return 0;
 }
 
+
+bool parseBool(std::string value){
+	//std::istringstream(valuePair[1]) >> bExportSelected;
+
+	if( value.find("true") != std::string::npos || value.find("1") != std::string::npos ){
+		return true;
+	}
+	else{
+		return false;
+	}
+}
+
 int ExocortexAlembicStaticInterface_ExocortexAlembicImportJobs( CONST_2013 MCHAR* jobString );
 int ExocortexAlembicStaticInterface::ExocortexAlembicImportJobs( CONST_2013 MCHAR* jobString )
 {
-
-	//ESS_STRUCTURED_EXCEPTION_REPORTING_START
-
-	//	return ExocortexAlembicStaticInterface_ExocortexAlembicImport( strPath, bImportNormals, bImportUVs, bImportMaterialIds, bAttachToExisting, iVisOption);
-
-	//ESS_STRUCTURED_EXCEPTION_REPORTING_END
-
-	//return alembic_failure;
-	return 0;
-}
-
-
-int ExocortexAlembicStaticInterface_ExocortexAlembicImport( CONST_2013 MCHAR* strPath, BOOL bImportNormals, BOOL bImportUVs, BOOL bImportMaterialIds, BOOL bAttachToExisting, int iVisOption);
-
-int ExocortexAlembicStaticInterface::ExocortexAlembicImport( CONST_2013 MCHAR* strPath, BOOL bImportNormals, BOOL bImportUVs, BOOL bImportMaterialIds, BOOL bAttachToExisting, int iVisOption)
-{
 	ESS_STRUCTURED_EXCEPTION_REPORTING_START
 
-		return ExocortexAlembicStaticInterface_ExocortexAlembicImport( strPath, bImportNormals, bImportUVs, bImportMaterialIds, bAttachToExisting, iVisOption);
+		return ExocortexAlembicStaticInterface_ExocortexAlembicImportJobs( jobString );
 
 	ESS_STRUCTURED_EXCEPTION_REPORTING_END
 
 	return alembic_failure;
 }
 
-int ExocortexAlembicStaticInterface_ExocortexAlembicImport( CONST_2013 MCHAR* strPath, BOOL bImportNormals, BOOL bImportUVs, BOOL bImportMaterialIds, BOOL bAttachToExisting, int iVisOption)
+int ExocortexAlembicStaticInterface_ExocortexAlembicImportJobs( CONST_2013 MCHAR* jobString )
 {
 	try {
 
-		ESS_LOG_INFO( "ExocortexAlembicImport( strPath=" << strPath <<
-			", bImportNormals=" << bImportNormals << ", bImportUVs=" << bImportUVs <<
-			", bImportMaterialIds=" << bImportMaterialIds << ", bAttachToExisting=" << bAttachToExisting <<
-			", iVisOption=" << iVisOption << " )" );
+      //CONST_2013 MCHAR* strPath, 
+      //BOOL bImportNormals, 
+      //BOOL bImportUVs, 
+      //BOOL bImportMaterialIds, 
+      //BOOL bAttachToExisting, 
+      //int iVisOption
+
+		//ESS_LOG_INFO( "ExocortexAlembicImport( strPath=" << strPath <<
+		//	", bImportNormals=" << bImportNormals << ", bImportUVs=" << bImportUVs <<
+		//	", bImportMaterialIds=" << bImportMaterialIds << ", bAttachToExisting=" << bAttachToExisting <<
+		//	", iVisOption=" << iVisOption << " )" );
+
+      ESS_LOG_WARNING( "Processing import job: "<<jobString);
 
 		alembic_importoptions options;
-		options.importNormals = (bImportNormals != FALSE);
-		options.importUVs = (bImportUVs != FALSE);
-		options.importMaterialIds = (bImportMaterialIds != FALSE);
-		options.attachToExisting = (bAttachToExisting != FALSE);
-		options.importVisibility = static_cast<VisImportOption>(iVisOption);
 
-		std::string file = EC_MCHAR_to_UTF8( strPath );
+		std::string file;// = EC_MCHAR_to_UTF8( strPath );
 	
+      std::vector<std::string> nodesToImport;
+
+		std::vector<std::string> tokens;
+		boost::split(tokens, jobString, boost::is_any_of(";"));
+		for(int j=0; j<tokens.size(); j++){
+
+			std::vector<std::string> valuePair;
+			boost::split(valuePair, tokens[j], boost::is_any_of("="));
+			if(valuePair.size() != 2){
+				ESS_LOG_WARNING("Skipping invalid token: "<<tokens[j]);
+				continue;
+			}
+
+			if(boost::iequals(valuePair[0], "filename")){
+				file = valuePair[1];
+			}
+			else if(boost::iequals(valuePair[0], "normals")){
+				options.importNormals = parseBool(valuePair[1]);
+			}
+			else if(boost::iequals(valuePair[0], "uvs")){
+				options.importUVs = parseBool(valuePair[1]);
+			}
+			else if(boost::iequals(valuePair[0], "materialIds")){
+            options.importMaterialIds = parseBool(valuePair[1]);
+			}
+         else if(boost::iequals(valuePair[0], "attachToExisting")){
+            options.attachToExisting = parseBool(valuePair[1]);
+			}
+         else if(boost::iequals(valuePair[0], "filters")){  
+		      boost::split(nodesToImport, valuePair[1], boost::is_any_of(","));
+			}
+			else
+			{
+				ESS_LOG_INFO("Skipping invalid token: "<<tokens[j]);
+				continue;
+			}
+		}
+
 	// If no filename, then return an error code
 		if(file.size() == 0) {
 			ESS_LOG_ERROR( "No filename specified." );
@@ -418,18 +457,6 @@ int ExocortexAlembicStaticInterface_ExocortexAlembicImport( CONST_2013 MCHAR* st
         // Since the archive is valid, add a reference to it
         addRefArchive(file);
 
-
-
-		// let's figure out which objects we have
-		std::vector<Alembic::Abc::IObject> objects;
-		objects.push_back(pArchive->getTop());
-		for(size_t i=0;i<objects.size();i++)
-		{
-			// first, let's recurse
-			for(size_t j=0;j<objects[i].getNumChildren();j++)
-				objects.push_back(objects[i].getChild(j));
-		}
-
 		// Get a list of the current objects in the scene
 		MAXInterface *i = GET_MAX_INTERFACE();
 
@@ -440,20 +467,15 @@ int ExocortexAlembicStaticInterface_ExocortexAlembicImport( CONST_2013 MCHAR* st
 				
 		AlembicImport_TimeControl( options );
 
+      Alembic::AbcGeom::IObject root = pArchive->getTop();
 
-		// Create the max objects as needed, we loop through the list in reverse to create
-		// the children node first and then hook them up to their parents
-		int totalAlembicItems = 0;
-		ESS_LOG_INFO( "Alembic file contents:" );
-		for(int j=(int)objects.size()-1; j>=0 ; j -= 1)
-		{
-			ESS_LOG_INFO( objects[j].getFullName() );
+      
 
-			nodeCategory cat = getNodeCategory(objects[j]);
-			if( cat != NODECAT_UNSUPPORTED ){
-				totalAlembicItems++;
-			}
-		}
+      //nodesToImport.push_back(std::string("Sphere 001"));
+
+      std::map<std::string, bool> nodeFullPaths;
+		int totalAlembicItems = prescanAlembicHierarchy(root, nodesToImport, nodeFullPaths);
+
 		char szBuffer[1000];
 		sprintf_s( szBuffer, 1000, "Importing %i Alembic Streams", totalAlembicItems );
 		i->ProgressStart( EC_UTF8_to_TCHAR( szBuffer ), TRUE, DummyProgressFunction, NULL);
@@ -463,12 +485,9 @@ int ExocortexAlembicStaticInterface_ExocortexAlembicImport( CONST_2013 MCHAR* st
 
 		progressUpdate progress(totalAlembicItems);
 
-		Alembic::AbcGeom::IObject root = pArchive->getTop();
-		for(size_t j=0; j<root.getNumChildren(); j++)
-		{
-			int ret = recurseOnAlembicObject(root.getChild(j), NULL, false, options, file, progress);
-			if( ret != 0 ) return alembic_failure;
-		} 
+      if( importAlembicScene(root, options, file, progress, nodeFullPaths) != 0 ){
+         return alembic_failure;
+      }
 
 		i->ProgressEnd();
 
@@ -506,6 +525,31 @@ int ExocortexAlembicStaticInterface_ExocortexAlembicImport( CONST_2013 MCHAR* st
 	}
 
 	return alembic_success;
+}
+
+
+int ExocortexAlembicStaticInterface_ExocortexAlembicImport( CONST_2013 MCHAR* strPath, BOOL bImportNormals, BOOL bImportUVs, BOOL bImportMaterialIds, BOOL bAttachToExisting, int iVisOption);
+
+int ExocortexAlembicStaticInterface::ExocortexAlembicImport( CONST_2013 MCHAR* strPath, BOOL bImportNormals, BOOL bImportUVs, BOOL bImportMaterialIds, BOOL bAttachToExisting, int iVisOption)
+{
+	ESS_STRUCTURED_EXCEPTION_REPORTING_START
+
+		return ExocortexAlembicStaticInterface_ExocortexAlembicImport( strPath, bImportNormals, bImportUVs, bImportMaterialIds, bAttachToExisting, iVisOption);
+
+	ESS_STRUCTURED_EXCEPTION_REPORTING_END
+
+	return alembic_failure;
+}
+
+int ExocortexAlembicStaticInterface_ExocortexAlembicImport( CONST_2013 MCHAR* strPath, BOOL bImportNormals, BOOL bImportUVs, BOOL bImportMaterialIds, BOOL bAttachToExisting, int iVisOption)
+{
+	std::stringstream jobStream;
+	jobStream<<"filename="<<strPath<<";normals="<<bImportNormals<<";uvs="<<bImportUVs<<";materialIds="<<bImportMaterialIds<<";attachToExisting="<<bAttachToExisting;
+	
+	TSTR tStr = EC_UTF8_to_TSTR( jobStream.str().c_str() );
+	return ExocortexAlembicStaticInterface_ExocortexAlembicImportJobs( tStr.data() );
+
+	return 0;
 }
 
 
@@ -553,17 +597,6 @@ int parseObjectsParameter(const std::string& objectsString, ObjectList& allScene
 	return alembic_success;
 }
 
-bool parseBool(std::string value){
-	//std::istringstream(valuePair[1]) >> bExportSelected;
-
-	if( value.find("true") != std::string::npos || value.find("1") != std::string::npos ){
-		return true;
-	}
-	else{
-		return false;
-	}
-}
-
 int ExocortexAlembicStaticInterface_ExocortexAlembicExportJobs( CONST_2013 MCHAR* jobString );
 int ExocortexAlembicStaticInterface::ExocortexAlembicExportJobs( CONST_2013 MCHAR* jobString )
 {
@@ -580,7 +613,7 @@ int ExocortexAlembicStaticInterface_ExocortexAlembicExportJobs( CONST_2013 MCHAR
 {
 	try {
 
-		ESS_LOG_INFO( "Processing export jobs: "<<jobString);
+		ESS_LOG_WARNING( "Processing export jobs: "<<jobString);
 
 		MAXInterface *pMaxInterface = GET_MAX_INTERFACE();
 		pMaxInterface->ProgressStart( _T( "Exporting Alembic File" ), TRUE, DummyProgressFunction, NULL);
