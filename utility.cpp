@@ -34,8 +34,7 @@ SampleInfo getSampleInfo
    if (numSamps == 0)
       numSamps = 1;
 
-   std::pair<Alembic::AbcCoreAbstract::index_t, double> floorIndex =
-   iTime->getFloorIndex(iFrame, numSamps);
+   std::pair<Alembic::AbcCoreAbstract::index_t, double> floorIndex = iTime->getFloorIndex(iFrame, numSamps);
 
    result.floorIndex = floorIndex.first;
    result.ceilIndex = result.floorIndex;
