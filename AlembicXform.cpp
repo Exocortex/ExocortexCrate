@@ -254,6 +254,7 @@ MStatus AlembicXformNode::initialize()
 
 MStatus AlembicXformNode::compute(const MPlug & plug, MDataBlock & dataBlock)
 {
+   ESS_PROFILE_SCOPE("AlembicXformNode::compute");
    MStatus status;
 
    // update the frame number to be imported

@@ -309,6 +309,7 @@ MStatus AlembicSubDNode::initialize()
 
 MStatus AlembicSubDNode::compute(const MPlug & plug, MDataBlock & dataBlock)
 {
+   ESS_PROFILE_SCOPE("AlembicSubDNode::compute");
    MStatus status;
 
    // update the frame number to be imported

@@ -53,6 +53,7 @@ MSyntax AlembicCreateMetaDataCommand::createSyntax()
 
 MStatus AlembicCreateMetaDataCommand::doIt(const MArgList & args)
 {
+   ESS_PROFILE_SCOPE("AlembicCreateMetaDataCommand::doIt");
    MStatus status = MS::kSuccess;
    MArgParser argData(syntax(), args, &status);
 

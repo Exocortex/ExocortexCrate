@@ -19,6 +19,7 @@ std::map<std::string,AlembicArchiveInfo> gArchives;
 
 MString resolvePath(MString path)
 {
+   ESS_PROFILE_SCOPE("resolvePath");
    // for each token
    int openPos = path.index('[');
    while(openPos > -1)
@@ -79,6 +80,7 @@ MString resolvePath(MString path)
 
 Alembic::Abc::IArchive * getArchiveFromID(MString path)
 {
+   ESS_PROFILE_SCOPE("getArchiveFromID");
    MString resolvedPath = resolvePath(path);
    std::map<std::string,AlembicArchiveInfo>::iterator it;
    it = gArchives.find(resolvedPath.asChar());
@@ -140,6 +142,7 @@ void deleteAllArchives()
 
 Alembic::Abc::IObject getObjectFromArchive(MString path, MString identifier)
 {
+   ESS_PROFILE_SCOPE("getObjectFromArchive");
    Alembic::Abc::IArchive * archive = getArchiveFromID(path);
    if(archive == NULL)
       return Alembic::Abc::IObject();

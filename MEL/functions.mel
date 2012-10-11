@@ -6,6 +6,7 @@ global proc exocortexAlembicExport(string $filename,         string $exported_ob
                                    int $exportDynamicTopo,   int $exportGlobalSpace,     int $exportWithoutHierarchy,
                                    int $exportTransformCache)
 {
+  ExocortexAlembic_profileBegin -f MEL_exocortexAlembicExport;
   // construct the job string
   string $job = ("in="+$exportInframe+";out="+$exportOutframe+";step="+$exportStepframe+";substep="+$exportSubstepframe+";filename="+$filename+";objects=");
   for($i=0;$i<size($exported_objects);$i++)
@@ -41,6 +42,8 @@ global proc exocortexAlembicExport(string $filename,         string $exported_ob
 
 global proc exocortexAlembicImport(string $filename, int $importNormals, int $importUvs, int $importFaceSets, string $importVisibility, int $importAttach)
 {
+  ExocortexAlembic_profileBegin -f MEL_exocortexAlembicImport;
+
   // query the content of the file
   string $infos[] = `ExocortexAlembic_getInfo -f $filename`;
   string $identifiers[];
@@ -69,6 +72,8 @@ global proc exocortexAlembicImport(string $filename, int $importNormals, int $im
     string $name = $tokens[2];
     string $node = `ExocortexAlembic_getNodeFromIdentifier -i $identifier`;
     
+    ExocortexAlembic_profileBegin -f MEL_exocortexAlembicImport_A;
+
     // try to find the identifier in the map
     int $skip = 0;
     for($j=0;$j<size($identifiers);$j=$j+1)
@@ -80,6 +85,8 @@ global proc exocortexAlembicImport(string $filename, int $importNormals, int $im
         break;
       }
     }
+    ExocortexAlembic_profileEnd -f MEL_exocortexAlembicImport_A;
+
     if($skip)
       break;
 
@@ -101,6 +108,7 @@ global proc exocortexAlembicImport(string $filename, int $importNormals, int $im
   // group are alembic are xforms which have xforms
   // below them. for that we can loop on all identifiers
   // and find any identifier below it of type xform
+  ExocortexAlembic_profileBegin -f MEL_exocortexAlembicImport_B;
   for($i=0; $i<size($identifiers); $i=$i+1)
   {
     if($types[$i] != "Xform")
@@ -119,6 +127,7 @@ global proc exocortexAlembicImport(string $filename, int $importNormals, int $im
       }
     }
   }
+  ExocortexAlembic_profileEnd -f MEL_exocortexAlembicImport_B;
 
   // let's create the time node and file node
   $timeControl = exocortexCreateOrReuseNode("ExocortexAlembicTimeControl","ExocortexAlembicTimeControl",$importAttach,0,0);
@@ -300,6 +309,7 @@ global proc exocortexAlembicImport(string $filename, int $importNormals, int $im
         // let's look for the next element in the list
         // and access its parent
         $reader = "";
+        ExocortexAlembic_profileBegin -f MEL_exocortexAlembicImport_C;
         for($j=$i+1;$j<size($identifiers);$j=$j+1)
         {
           string $substring = `substring $identifiers[$j] 1 (size($identifiers[$i])+1)`;
@@ -318,6 +328,7 @@ global proc exocortexAlembicImport(string $filename, int $importNormals, int $im
             break;
           }
         }
+        ExocortexAlembic_profileEnd -f MEL_exocortexAlembicImport_C;
       }
       if($reader == "")
         continue;
@@ -341,6 +352,7 @@ global proc exocortexAlembicImport(string $filename, int $importNormals, int $im
       exocortexConnectIfUnconnected(($reader+".rotate"), ($shape+".rotate"));
       exocortexConnectIfUnconnected(($reader+".scale"), ($shape+".scale"));
 
+      ExocortexAlembic_profileBegin -f MEL_exocortexAlembicImport_D;
       for($j=$i+1;$j<size($identifiers);$j=$j+1)
       {
         if(($types[$j] != "Xform") && ($types[$j] != "Group"))
@@ -365,6 +377,7 @@ global proc exocortexAlembicImport(string $filename, int $importNormals, int $im
           parent $objects[$j] $shape;
         }
       }
+      ExocortexAlembic_profileEnd -f MEL_exocortexAlembicImport_D;
     }
     else
     {
@@ -382,6 +395,8 @@ global proc exocortexAlembicImport(string $filename, int $importNormals, int $im
     // setup metadata if we have it
     ExocortexAlembic_createMetaData -f $filename -i $identifiers[$i] -o $shape;
   }
+
   ExocortexAlembic_postImportPoints;
+  ExocortexAlembic_profileEnd -f MEL_exocortexAlembicImport;
 }
 

@@ -295,6 +295,8 @@ static void restoreOldTime(MTime &start, MTime &end, MTime &curr, MTime &minT, M
 
 MStatus AlembicExportCommand::doIt(const MArgList & args)
 {
+   ESS_PROFILE_SCOPE("AlembicExportCommand::doIt");
+
    MStatus status = MS::kFailure;
 
    MTime currentAnimStartTime = MAnimControl::animationStartTime(),

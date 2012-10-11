@@ -82,9 +82,19 @@ EC_EXPORT MStatus initializePlugin(MObject obj)
    status = plugin.registerCommand("ExocortexAlembic_createFaceSets",
       AlembicCreateFaceSetsCommand::creator,
       AlembicCreateFaceSetsCommand::createSyntax);
+
    status = plugin.registerCommand("ExocortexAlembic_postImportPoints",
       AlembicPostImportPointsCommand::creator,
       AlembicPostImportPointsCommand::createSyntax);
+   status = plugin.registerCommand("ExocortexAlembic_profileBegin",
+	  AlembicProfileBeginCommand::creator,
+      AlembicProfileBeginCommand::createSyntax);
+   status = plugin.registerCommand("ExocortexAlembic_profileEnd",
+	  AlembicProfileEndCommand::creator,
+      AlembicProfileEndCommand::createSyntax);
+   status = plugin.registerCommand("ExocortexAlembic_profileStats",
+	  AlembicProfileStatsCommand::creator,
+      AlembicProfileStatsCommand::createSyntax);
 
    // nodes
    status = plugin.registerNode("ExocortexAlembicTimeControl",

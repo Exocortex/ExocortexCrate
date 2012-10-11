@@ -275,6 +275,7 @@ static MVector quaternionToVector(const Imath::Quatf &qf)
 
 MStatus AlembicPointsNode::compute(const MPlug & plug, MDataBlock & dataBlock)
 {
+   ESS_PROFILE_SCOPE("AlembicPointsNode::compute");
    if ( !( plug == mOutput ) )
       return ( MS::kUnknownParameter );
 

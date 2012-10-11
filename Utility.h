@@ -3,6 +3,7 @@
 
 #include "Foundation.h"
 #include "CommonUtilities.h"
+#include "CommonProfiler.h"
 
 std::string getIdentifierFromRef(const MObject & in_Ref);
 std::string removeInvalidCharacter(const std::string &str);
@@ -45,5 +46,44 @@ class AlembicResolvePathCommand : public MPxCommand
     static void* creator() { return new AlembicResolvePathCommand(); }
 };
 
+class AlembicProfileBeginCommand : public MPxCommand
+{
+  public:
+    AlembicProfileBeginCommand() {}
+    virtual ~AlembicProfileBeginCommand()  {}
+
+    virtual bool isUndoable() const { return false; }
+    MStatus doIt(const MArgList& args);
+
+    static MSyntax createSyntax();
+    static void* creator() { return new AlembicProfileBeginCommand(); }
+};
+
+class AlembicProfileEndCommand : public MPxCommand
+{
+  public:
+    AlembicProfileEndCommand() {}
+    virtual ~AlembicProfileEndCommand()  {}
+
+    virtual bool isUndoable() const { return false; }
+    MStatus doIt(const MArgList& args);
+
+    static MSyntax createSyntax();
+    static void* creator() { return new AlembicProfileEndCommand(); }
+};
+
+
+class AlembicProfileStatsCommand : public MPxCommand
+{
+  public:
+    AlembicProfileStatsCommand() {}
+    virtual ~AlembicProfileStatsCommand()  {}
+
+    virtual bool isUndoable() const { return false; }
+    MStatus doIt(const MArgList& args);
+
+    static MSyntax createSyntax();
+    static void* creator() { return new AlembicProfileStatsCommand(); }
+};
 
 #endif  // _FOUNDATION_H_

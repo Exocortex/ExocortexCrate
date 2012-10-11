@@ -27,6 +27,7 @@ void* AlembicGetInfoCommand::creator()
 
 MStatus AlembicGetInfoCommand::doIt(const MArgList & args)
 {
+   ESS_PROFILE_SCOPE("AlembicGetInfoCommand::doIt");
    MStatus status = MS::kSuccess;
    MArgParser argData(syntax(), args, &status);
 
