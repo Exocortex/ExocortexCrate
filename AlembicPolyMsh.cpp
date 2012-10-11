@@ -892,7 +892,7 @@ ESS_CALLBACK_START( alembic_polymesh_topo_Update, CRef& )
    if(!objMesh.valid() && !objSubD.valid())
       return CStatus::OK;
 
-   if( isAlembicMeshPointCache( & iObj ) ) {
+   if( ! isAlembicMeshTopology( & iObj ) ) {
 	   return CStatus::OK;
    }
 
