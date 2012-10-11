@@ -78,7 +78,8 @@ AtNode *createInstanceNode(nodeData &nodata, userData * ud, int i)
     }
     else
     {
-      const float timeAlpha = (float)(typedObject.getSchema().getTimeSampling()->getSampleTime(sampleInfo.ceilIndex) - typedObject.getSchema().getTimeSampling()->getSampleTime(sampleInfo.floorIndex)) * (float)sampleInfo.alpha;
+      const float timeAlpha = getTimeOffsetFromObject( typedObject, sampleInfo );
+
       matrixAbc.setTranslation(info->pos[floorIndex]->get()[id < info->pos[floorIndex]->size() ? id : info->pos[floorIndex]->size() - 1] + 
                                info->vel[floorIndex]->get()[id < info->vel[floorIndex]->size() ? id : info->vel[floorIndex]->size() - 1] * timeAlpha);
     }

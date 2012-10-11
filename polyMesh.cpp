@@ -194,7 +194,8 @@ static bool hadToInterpolatePositions(SCHEMA &schema, SCHEMA_SAMPLE &sample, AtA
       Alembic::Abc::V3fArraySamplePtr abcVel = sample.getVelocities();
       if(abcVel && abcVel->size() == abcPos->size())
       {
-        const float timeAlpha = (float)(schema.getTimeSampling()->getSampleTime(sampleInfo.ceilIndex) - schema.getTimeSampling()->getSampleTime(sampleInfo.floorIndex)) * alpha;
+		const float timeAlpha = getTimeOffsetFromSchema( schema, sampleInfo );
+
         for(size_t i=0;i<abcPos->size();i++)
         {
           AtPoint pt;
