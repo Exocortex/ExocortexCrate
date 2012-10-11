@@ -13,19 +13,23 @@ var TestDesc = testsMod.TestDesc;
 
 nconf.argv().env().file({file: __dirname+'/config.json'});
 
-nconf.defaults({
-    "webServer":{"port": 3000},
-    "appz":{
-    	"max2010": "",
-    	"max2011": "",
-		"max2012": "C:/Program Files/Autodesk/3ds Max 2012/3dsmax.exe"
-	}
-});
+// nconf.defaults({
+//     "webServer":{"port": 3000},
+//     "appz":{
+//     	"max2010": "",
+//     	"max2011": "",
+// 		"max2012": "C:/Program Files/Autodesk/3ds Max 2012/3dsmax.exe"
+// 	}
+// });
 
 
 var server_port = nconf.get('webServer:port');
 
-var appz = nconf.get('appz');
+var globals = nconf.get('globals');
+
+
+var bSkipExport = true;
+
 
 
 
@@ -62,16 +66,18 @@ console.log( "listening on port: "+server_port);
 
 
 
+var testPath = [__dirname, "/Tests"].join('');
+
+if( nconf.get('testFolderPath') !== ""){
+	testPath = nconf.get('testFolderPath');
+	console.log('Reading tests at '+testPath);
+}
+
 
 var getTestFullPath = function(path){
-	return [__dirname, '/Tests', path].join('');
+	return [testPath, path].join('');
 };
 
-
-
-
-
-var testPath = [__dirname, "/Tests"].join('');
 
 
 var testList = [];
@@ -110,7 +116,9 @@ var readTestDir = function(path, list){
 	          		for(s=0; s<slen; s++){
 	          			var script = aJSON.tasks[s];
 	          			script.testpath = path;
-	          			testList.push(script);
+	          			if(!bSkipExport || (bSkipExport && script.script.search("export") == -1)){
+	          				testList.push(script);
+	          			}
 	          		}
 
 				}
@@ -146,7 +154,7 @@ var cleanTestDir = function(path){
 		else if(stats.isFile()){
 			if(	files[i].search(".ats") != -1 || 
 				files[i].search("_Render") != -1 || 
-				files[i].search(".tabc") != -1 
+				(!bSkipExport && files[i].search(".tabc") != -1) 
 				){ //we have found a folder that contains a test
 
 				var res = fs.unlinkSync(filePath);
@@ -195,6 +203,8 @@ var buildTestResults = function(path, testResults, atsname, errcode){
 
 			atsname = atsname || ".ats";
 
+			//console.log("Searching for ats file: "+atsname);
+
 			if( files[i].search(atsname) !== -1){ //we have found a folder that contains a test
 
 				var testName = path.substring(__dirname.length + 6);
@@ -226,11 +236,11 @@ var buildTestResults = function(path, testResults, atsname, errcode){
 
 							var names = namesToken[1].split(",");
 
-							var crashStr = "POSSIBLE CRASH";
+							var crashStr = "INCOMPLETE";
 							//console.log("cec: "+errcode);
-							if(errcode == -1){
-								crashStr = "CRASH";
-							}
+							// if(errcode == -1){
+							// 	crashStr = "CRASH";
+							// }
 
 							for(var n=0; n<names.length; n++){
 								result.tasks[names[n].trim()] = {status: crashStr};
@@ -332,17 +342,18 @@ var tmProto = TestManager.prototype;
 tmProto.getAtsName = function(){
 	var test = this.tests[this.currTestIndex];
 	var name = test.scriptName.replace(".ms", ".ats");
-	return test.app + "_" + name;
+	name = test.scriptName.replace(".py", ".ats");
+	return test.app + test.appVer + "_" + name;
 }
 
 tmProto.getRenderedImagePath = function(){
 	var test = this.tests[this.currTestIndex];
-	return [test.testdir, "/", test.app, "_", test.obj, "_Render.jpg"].join('');
+	return [test.testdir, "/", test.app, test.appVer, "_", test.obj, "_Render.0.jpg"].join('');
 }
 
 tmProto.getBaselineImagePath = function(){
 	var test = this.tests[this.currTestIndex];
-	return [test.testdir, "/", test.app, "_", test.obj, "_Baseline.jpg"].join('');
+	return [test.testdir, "/", test.app, test.appVer, "_", test.obj, "_Baseline.0.jpg"].join('');
 }
 
 tmProto.testComplete = function(tDesc){
@@ -352,6 +363,9 @@ tmProto.testComplete = function(tDesc){
 	if(result !== undefined){
 
 		var rt = result.tasks["render"];
+		if( rt == undefined){
+			rt = result.tasks["Render"];
+		}
 		if(rt !== undefined){
 
 			if( equalFiles(this.getBaselineImagePath(), this.getRenderedImagePath()) ){
@@ -411,6 +425,19 @@ var splitPathAndFile = function(pathfile){
 }
 
 
+var resolveGlobal = function(inputStr, globalTable){
+
+	if (inputStr.substring(0,2) === "g_"){
+
+		var globalName = inputStr.substring(2);
+		return globalTable[globalName];
+	} 
+	else{
+		return inputStr;
+	}
+
+}
+
 tmProto.build = function(list){
 
 	for(i=0; i<list.length; i++){
@@ -427,7 +454,7 @@ tmProto.build = function(list){
 		var script = list[i].script;
 		var scriptPath = '';
 		var scriptName = '';
-		if(script.indexOf('/') === -1 && scripts.indexOf('\\') === -1){//the script file is in the local directory
+		if(script.indexOf('/') === -1 && script.indexOf('\\') === -1){//the script file is in the local directory
 			scriptName = script; 
 		}
 		else{
@@ -436,11 +463,18 @@ tmProto.build = function(list){
 			scriptName = pf.file;
 		}
 
+		var testAppSettings = globals.app[list[i].inputs.app];
+		var testAppVersionSettings = testAppSettings[list[i].inputs.appVer];
+
+		//console.log(JSON.stringify(testAppSettings));
+		//console.log(JSON.stringify(testAppVersionSettings));
+		
 		var params = {
 			genBaseline: false,
 			app: list[i].inputs.app,
+			appVer: list[i].inputs.appVer,
 			obj: list[i].inputs.obj,
-			exepath: appz[list[i].inputs.app],
+			exepath: testAppVersionSettings.path,//"C:/Program Files/Autodesk/Softimage 2013/Application/bin/XSI.exe",
 			testdir: list[i].testpath,
 			arguments: '',//-silent',
 			scriptPath: scriptPath,
@@ -449,6 +483,10 @@ tmProto.build = function(list){
 			completionContext: this,
 			completionCallback: this.testComplete
 		}
+
+		//XSI alembic_import method doesn't like back slashes
+		//params.testdir.replace('\\', '/');
+		//console.log("params.testdir: "+params.testdir);
 
 		this.tests.push( new TestDesc(params) );
 	}

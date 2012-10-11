@@ -112,15 +112,16 @@ bool isAlembicMeshTopoDynamic( Alembic::AbcGeom::IObject *pIObj ) {
 	if(objMesh.valid())
 	{
 		Alembic::Abc::IInt32ArrayProperty faceCountProp = Alembic::Abc::IInt32ArrayProperty(objMesh.getSchema(),".faceCounts");
-		if(faceCountProp.valid()) {
-			hasDynamicTopo = !faceCountProp.isConstant();
+		if(faceCountProp.valid() && ! faceCountProp.isConstant() ) {
+			hasDynamicTopo = true;
 		}
+
 	}
 	else if( subDSample.valid() )
 	{
 		Alembic::Abc::IInt32ArrayProperty faceCountProp = Alembic::Abc::IInt32ArrayProperty(objSubD.getSchema(),".faceCounts");
-		if(faceCountProp.valid()) {
-			hasDynamicTopo = !faceCountProp.isConstant();
+		if(faceCountProp.valid() && ! faceCountProp.isConstant() ) {
+			hasDynamicTopo = true;
 		}
 	}  
 	return hasDynamicTopo;
@@ -164,7 +165,10 @@ bool isAlembicMeshTopology( Alembic::AbcGeom::IObject *pIObj ) {
 				isTopology = false;
 			}
 		}
-	}  
+	}
+	else {
+		isTopology = false;
+	}
 	return isTopology;
 }
 

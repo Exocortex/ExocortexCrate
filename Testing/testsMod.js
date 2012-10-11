@@ -27,14 +27,32 @@ pdProto.toString = function(){
 }
 
 
+var bDebugXSI = true;//open XSI in non-batchmode with environmental variables set. Then load the test script manually.
+
+
+
 pdProto.execute = function(){
 
 	var script = this.scriptPath + this.scriptName;
 
-	var runStr = ["\"", this.exepath,"\"" , ' ', '-U MAXScript ', this.arguments, ' ', script].join('');
+
+
+	var runStr = "";
+	if(this.app === "max"){
+		runStr = ["\"", this.exepath,"\"" , ' -U MAXScript ', this.arguments, ' ', script].join('');
+	}
+	else if(this.app === "xsi"){
+		if(bDebugXSI){
+			runStr = ["\"", this.exepath,"\""].join('');
+		}
+		else{
+			runStr = ["\"", this.exepath,"\"", ' -continue -lang Python -script ', script].join('');
+		}
+	}
 
 	console.log('runStr: '+runStr);
 	console.log('wdir: '+this.testdir);
+	console.log('script: '+script);
 
 	var envVar = process.env;
 	
@@ -46,6 +64,7 @@ pdProto.execute = function(){
 	envVar["testPath"] = this.testdir+"/";
 	envVar["testName"] = this.scriptName.substring(0, this.scriptName.length-3);
 	envVar["genBaseline"] = this.genBaseline;
+	envVar["PYTHONPATH"] = "E:/Projects2/ExocortexAlembicShared/Testing/Scripts/Python/common"
 
 	//console.log(envVar);
 
@@ -66,7 +85,6 @@ pdProto.execute = function(){
 
 		console.log('stdout: '+stdout);
 		console.log('stderr: '+stderr);
-		console.log('status: '+envVar.status);
 		that.pid = 0;
 
 		that.completionCallback.call(that.completionContext, that);

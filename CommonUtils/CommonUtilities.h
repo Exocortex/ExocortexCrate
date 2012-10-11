@@ -18,6 +18,7 @@ struct ArchiveInfo
    std::string path;
 };
 
+      
 bool validate_filename_location(const char *filename);
 
 typedef std::map<std::string,std::string> stringMap;
@@ -101,9 +102,22 @@ public:
 Imath::M33d extractRotation(Imath::M44d& m);
 
 SampleInfo getSampleInfo(double iFrame,Alembic::AbcCoreAbstract::TimeSamplingPtr iTime, size_t numSamps);
-Alembic::Abc::TimeSamplingPtr getTimeSamplingFromObject(Alembic::Abc::IObject object);
-Alembic::Abc::ICompoundProperty getCompoundFromObject(Alembic::Abc::IObject object);
-size_t getNumSamplesFromObject(Alembic::Abc::IObject object);
+Alembic::Abc::TimeSamplingPtr getTimeSamplingFromObject(Alembic::Abc::IObject &object);
+Alembic::Abc::ICompoundProperty getCompoundFromObject(Alembic::Abc::IObject &object);
+size_t getNumSamplesFromObject(Alembic::Abc::IObject &object);
+float getTimeOffsetFromObject( Alembic::Abc::IObject &object, SampleInfo const& sampleInfo );
+
+template<typename SCHEMA>
+float getTimeOffsetFromSchema( SCHEMA &schema, SampleInfo const& sampleInfo ) {
+	Alembic::Abc::TimeSamplingPtr timeSampling = schema.getTimeSampling();
+	if( timeSampling.get() == NULL ) {
+		return 0;
+	}
+	else {
+		return ( timeSampling->getSampleTime(sampleInfo.ceilIndex) -
+			timeSampling->getSampleTime(sampleInfo.floorIndex) ) * sampleInfo.alpha;
+	}
+}
 
 std::string getModelName( const std::string &identifier );
 std::string removeXfoSuffix(const std::string& importName);
@@ -175,5 +189,36 @@ bool getArbGeomParamPropertyAlembic_Permissive( OBJTYPE obj, std::string name, A
 
 	return false;
 }
+
+namespace NodeCategory
+{
+   enum type{
+	   GEOMETRY,
+	   XFORM,
+	   UNSUPPORTED
+   };
+
+   inline type get(Alembic::AbcGeom::IObject& iObj)
+   {
+	   if( Alembic::AbcGeom::IPolyMesh::matches(iObj.getMetaData()) ||
+		   Alembic::AbcGeom::ICamera::matches(iObj.getMetaData()) ||
+		   Alembic::AbcGeom::IPoints::matches(iObj.getMetaData()) ||
+		   Alembic::AbcGeom::ICurves::matches(iObj.getMetaData()) ||
+		   Alembic::AbcGeom::ISubD::matches(iObj.getMetaData())) {
+		   return GEOMETRY;
+	   }
+	   else if(Alembic::AbcGeom::IXform::matches(iObj.getMetaData())){
+		   return XFORM;
+	   }
+	   else {
+		   return UNSUPPORTED;
+	   }
+   }
+};
+
+
+void getMergeInfo( Alembic::AbcGeom::IObject& iObj, bool& bCreateNullNode, int& nMergedGeomNodeIndex, Alembic::AbcGeom::IObject& mergedGeomChild, bool bAlwaysMerge=true);
+
+int prescanAlembicHierarchy(Alembic::AbcGeom::IObject root, std::vector<std::string>& nodes, std::map<std::string, bool>& map);
 
 #endif // __COMMON_UTILITIES_H
