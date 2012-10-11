@@ -1177,7 +1177,7 @@ XSIPLUGINCALLBACK CStatus alembic_curves_Term(CRef& in_ctxt)
    ArchiveInfo * p = (ArchiveInfo*)(CValue::siPtrType)udVal;
    if(p != NULL)
    {
-      delRefArchive(p->path.c_str());
+      delRefArchive(p->path);
       delete(p);
    }
    return CStatus::OK;

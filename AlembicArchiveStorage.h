@@ -2,19 +2,30 @@
 #define _ALEMBIC_ARCHIVE_STORAGE_H_
 
 #include "Foundation.h"
-
+#include "CommonUtilities.h"
 #include <map>
 #include <xsi_string.h>
 
-Alembic::Abc::IArchive * getArchiveFromID(XSI::CString path);
-XSI::CString addArchive(Alembic::Abc::IArchive * archive);
-void deleteArchive(XSI::CString path);
-void deleteAllArchives();
-Alembic::Abc::IObject getObjectFromArchive(XSI::CString path, XSI::CString identifier);
+inline Alembic::Abc::IArchive * getArchiveFromID(XSI::CString path) {
+	return getArchiveFromID( std::string( path.GetAsciiString() ) );
+}
+//XSI::CString addArchive(Alembic::Abc::IArchive * archive);
+inline void deleteArchive(XSI::CString path) {
+	deleteArchive( std::string( path.GetAsciiString() ) );
+}
+inline Alembic::Abc::IObject getObjectFromArchive(XSI::CString path, XSI::CString identifier) {
+	return getObjectFromArchive( std::string( path.GetAsciiString() ), std::string( identifier.GetAsciiString() ) );
+}
 
 // ref counting
-int addRefArchive(XSI::CString path);
-int delRefArchive(XSI::CString path);
-int getRefArchive(XSI::CString path);
+inline int addRefArchive(XSI::CString path) {
+	return addRefArchive( std::string( path.GetAsciiString() ) );
+}
+inline int delRefArchive(XSI::CString path) {
+	return delRefArchive( std::string( path.GetAsciiString() ) );
+}
+inline int getRefArchive(XSI::CString path) {
+	return getRefArchive( std::string( path.GetAsciiString() ) );
+}
 
 #endif
