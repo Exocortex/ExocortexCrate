@@ -87,8 +87,9 @@ XSI::CStatus AlembicCurves::Save(double time)
    // store the transform
    Primitive prim(GetRef());
    bool globalSpace = GetJob()->GetOption(L"globalSpace");
-   bool flattenHierarchy = GetJob()->GetOption(L"flattenHierarchy");  
-   SaveXformSample(GetRef(1),mXformSchema,mXformSample,time,false,globalSpace, flattenHierarchy);
+
+   bool flattenHierarchy = GetJob()->GetOption(L"flattenHierarchy");
+   SaveXformSample(GetRef(1),mXformSchema,mXformSample,time,false,globalSpace,flattenHierarchy);
 
    // query the global space
    CTransformation globalXfo;
@@ -210,11 +211,7 @@ XSI::CStatus AlembicCurves::Save(double time)
          }
       }
 
-      // check for an empty position vector
-      if(posVec.size() == 0)
-	    mCurvesSample.setPositions(Alembic::Abc::P3fArraySample());
-      else
-        mCurvesSample.setPositions(Alembic::Abc::P3fArraySample(&posVec.front(),posVec.size()));
+      mCurvesSample.setPositions(Alembic::Abc::P3fArraySample(posVec));
 
       // store the bbox
       mCurvesSample.setSelfBounds(bbox);
@@ -227,7 +224,7 @@ XSI::CStatus AlembicCurves::Save(double time)
          mNbVertices.resize((size_t)hairCount.GetCount());
          for(LONG i=0;i<hairCount.GetCount();i++)
             mNbVertices[i] = (int32_t)hairCount[i];
-         mCurvesSample.setCurvesNumVertices(Alembic::Abc::Int32ArraySample(&mNbVertices.front(),mNbVertices.size()));
+         mCurvesSample.setCurvesNumVertices(Alembic::Abc::Int32ArraySample(mNbVertices));
          hairCount.Clear();
 
          // set the type + wrapping
@@ -241,7 +238,7 @@ XSI::CStatus AlembicCurves::Save(double time)
          mRadiusVec.resize((size_t)hairRadius.GetCount());
          for(LONG i=0;i<hairRadius.GetCount();i++)
             mRadiusVec[i] = hairRadius[i];
-         mRadiusProperty.set(Alembic::Abc::FloatArraySample(&mRadiusVec.front(),mRadiusVec.size()));
+         mRadiusProperty.set(Alembic::Abc::FloatArraySample(mRadiusVec));
          hairRadius.Clear();
 
          // store the hair color (if any)
@@ -258,7 +255,7 @@ XSI::CStatus AlembicCurves::Save(double time)
                mColorVec[i].b = hairColor[offset++];
                mColorVec[i].a = hairColor[offset++];
             }
-            mColorProperty.set(Alembic::Abc::C4fArraySample(&mColorVec.front(),mColorVec.size()));
+            mColorProperty.set(Alembic::Abc::C4fArraySample(mColorVec));
             hairColor.Clear();
          }
 
@@ -275,7 +272,7 @@ XSI::CStatus AlembicCurves::Save(double time)
                mUvVec[i].y = 1.0f - hairUV[offset++];
                offset++;
             }
-            mCurvesSample.setUVs(Alembic::AbcGeom::OV2fGeomParam::Sample(Alembic::Abc::V2fArraySample(&mUvVec.front(),mUvVec.size()),Alembic::AbcGeom::kVertexScope));
+            mCurvesSample.setUVs(Alembic::AbcGeom::OV2fGeomParam::Sample(mUvVec,Alembic::AbcGeom::kVertexScope));
             hairUV.Clear();
          }
       }
@@ -391,7 +388,7 @@ XSI::CStatus AlembicCurves::Save(double time)
          posVecIndex += 15;
       }
 
-      mCurvesSample.setPositions(Alembic::Abc::P3fArraySample(&posVec.front(),posVec.size()));
+      mCurvesSample.setPositions(Alembic::Abc::P3fArraySample(posVec));
 
       // caclulate bbox
       for ( LONG i=0; i<curveCount*15; i++)
@@ -407,7 +404,7 @@ XSI::CStatus AlembicCurves::Save(double time)
 
          mNbVertices.clear();
          mNbVertices.resize(numCurves, hairVertCount);
-         mCurvesSample.setCurvesNumVertices(Alembic::Abc::Int32ArraySample(&mNbVertices.front(),mNbVertices.size()));
+         mCurvesSample.setCurvesNumVertices(Alembic::Abc::Int32ArraySample(mNbVertices));
 
          // set the type + wrapping
          mCurvesSample.setType(kLinear);
