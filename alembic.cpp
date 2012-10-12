@@ -78,6 +78,7 @@ SICALLBACK XSILoadPlugin( PluginRegistrar& in_reg )
 		in_reg.RegisterCommand(L"alembic_attach_metadata",L"alembic_attach_metadata");
 		in_reg.RegisterCommand(L"alembic_create_item",L"alembic_create_item");
 		in_reg.RegisterCommand(L"alembic_path_manager",L"alembic_path_manager");
+		in_reg.RegisterCommand(L"alembic_profile_stats",L"alembic_profile_stats");
 
 		in_reg.RegisterOperator(L"alembic_xform");
 		in_reg.RegisterOperator(L"alembic_camera");
@@ -95,6 +96,7 @@ SICALLBACK XSILoadPlugin( PluginRegistrar& in_reg )
 
 		in_reg.RegisterMenu(siMenuMainFileImportID,L"alembic_MenuImport",false,false);
 		in_reg.RegisterMenu(siMenuMainFileProjectID,L"alembic_MenuPathManager",false,false);
+		in_reg.RegisterMenu(siMenuMainFileProjectID,L"alembic_ProfileStats",false,false);
 		in_reg.RegisterMenu(siMenuTbGetPropertyID,L"alembic_MenuMetaData",false,false);
 
 		in_reg.RegisterProperty(L"alembic_import_settings");
@@ -868,6 +870,19 @@ CStatus alembic_create_item_Invoke
    }
    }
 
+    // check if we have a timecontrol in the args
+    CustomProperty timeControlProp;
+    CRef timeControlRef;
+    if(args.GetCount() > 0)
+       timeControlRef = args[0];
+    timeControlProp = timeControlRef;
+	CValue setExprReturn;
+    CValueArray setExprArgs(2);   
+    if(timeControlProp.IsValid())
+    {
+       setExprArgs[1] = timeControlProp.GetFullName()+L".current * "+timeControlProp.GetFullName()+L".factor + "+timeControlProp.GetFullName()+L".offset";
+    }
+
     { ESS_PROFILE_SCOPE("alembic_create_item_Invoke create_the_operator");
    // now create an operator...?
    switch(itemType)
@@ -883,7 +898,8 @@ CStatus alembic_create_item_Invoke
       case alembicItemType_crvlist:
       case alembicItemType_nurbs:
       {
-         // for visibility, let's see if we should create an operator
+         ESS_PROFILE_SCOPE("alembic_create_item_Invoke create_the_operator alembicItemType_xxx");
+		// for visibility, let's see if we should create an operator
          if(itemType == alembicItemType_visibility)
          {
             bool importVis = args[4];
@@ -935,6 +951,7 @@ CStatus alembic_create_item_Invoke
          }
          if(!op.IsValid())
          {
+			 ESS_PROFILE_SCOPE("alembic_create_item_Invoke create_the_operator CreateObject");
 		    op = Application().GetFactory().CreateObject(realType);
             op.AddOutputPort(realTarget);
             op.AddInputPort(realTarget);
@@ -954,7 +971,6 @@ CStatus alembic_create_item_Invoke
          returnVal = op.GetRef();
 
          // if we are not a topo op, let's connect to the timecontrol
-         CustomProperty timeControlProp;
          bool receivesExpression = isAnimated;
          if(itemType == alembicItemType_crvlist_topo)
             receivesExpression = false;
@@ -971,24 +987,21 @@ CStatus alembic_create_item_Invoke
 
          if(receivesExpression)
          {
+			 ESS_PROFILE_SCOPE("alembic_create_item_Invoke create_the_operator receivesExpression");
+
             // check if we have a timecontrol in the args
-            CRef timeControlRef;
-            if(args.GetCount() > 0)
-               timeControlRef = args[0];
-            timeControlProp = timeControlRef;
-            if(timeControlProp.IsValid())
+             if(timeControlProp.IsValid())
             {
-               CValue setExprReturn;
-               CValueArray setExprArgs(2);
-               setExprArgs[0] = op.GetFullName()+L".time";
-               setExprArgs[1] = timeControlProp.GetFullName()+L".current * "+timeControlProp.GetFullName()+L".factor + "+timeControlProp.GetFullName()+L".offset";
-               Application().ExecuteCommand(L"SetExpr",setExprArgs,setExprReturn);
+				 setExprArgs[0] = op.GetFullName()+L".time";
+				Application().ExecuteCommand(L"SetExpr",setExprArgs,setExprReturn);
             }
          }
 
          // if we are a polygon mesh topo op, oh dear
          if(itemType == alembicItemType_polymesh_topo && args.GetCount() > 3)
          {
+			 ESS_PROFILE_SCOPE("alembic_create_item_Invoke create_the_operator polymesh_topo");
+
             bool importClusters = args[1];
             bool importNormals = args[2];
             bool importUvs = args[3];
@@ -1005,7 +1018,8 @@ CStatus alembic_create_item_Invoke
             PolygonMesh meshGeo = Primitive(realTarget).GetGeometry();
             if(importClusters)
             {
-               std::vector<std::string> faceSetNames;
+        	  ESS_PROFILE_SCOPE("alembic_create_item_Invoke create_the_operator polymesh_topo importClusters");
+		       std::vector<std::string> faceSetNames;
                if(abcMesh.valid())
                   abcMesh.getSchema().getFaceSetNames(faceSetNames);
                else
@@ -1033,7 +1047,8 @@ CStatus alembic_create_item_Invoke
             }
             if(importNormals && abcMesh.valid())
             {
-               Alembic::AbcGeom::IN3fGeomParam meshNormalsParam = abcMesh.getSchema().getNormalsParam();
+              ESS_PROFILE_SCOPE("alembic_create_item_Invoke create_the_operator polymesh_topo importNormals");
+		       Alembic::AbcGeom::IN3fGeomParam meshNormalsParam = abcMesh.getSchema().getNormalsParam();
                if(meshNormalsParam.valid())
                {
                   Alembic::Abc::N3fArraySamplePtr meshNormals = meshNormalsParam.getExpandedValue(0).getVals();
@@ -1110,7 +1125,8 @@ CStatus alembic_create_item_Invoke
             }
             if(importUvs)
             {
-               Alembic::AbcGeom::IV2fGeomParam meshUVsParam;
+                ESS_PROFILE_SCOPE("alembic_create_item_Invoke create_the_operator polymesh_topo importUvs");
+				Alembic::AbcGeom::IV2fGeomParam meshUVsParam;
                if(abcMesh.valid())
                   meshUVsParam = abcMesh.getSchema().getUVsParam();
                else
@@ -1263,7 +1279,8 @@ CStatus alembic_create_item_Invoke
       }
       case alembicItemType_curves:
       {
-         // let's setup the ICE tree to load it
+         ESS_PROFILE_SCOPE("alembic_create_item_Invoke create_the_operator alembicItemType_curves");
+		// let's setup the ICE tree to load it
          ICETree iceTree;
          CValueArray treeArgs(2);
          CValue treeReturnVal;
@@ -1308,7 +1325,8 @@ CStatus alembic_create_item_Invoke
       }
       case alembicItemType_points:
       {
-         // let's setup the ICE tree to load it
+         ESS_PROFILE_SCOPE("alembic_create_item_Invoke create_the_operator alembicItemType_points");
+				// let's setup the ICE tree to load it
          ICETree iceTree;
          CValueArray treeArgs(2);
          CValue treeReturnVal;
@@ -1424,7 +1442,8 @@ CStatus alembic_create_item_Invoke
       }
       case alembicItemType_metadata:
       {
-         Alembic::Abc::ICompoundProperty abcCompound = getCompoundFromObject(abcObject);
+			ESS_PROFILE_SCOPE("alembic_create_item_Invoke create_the_operator alembicItemType_metadata");
+		Alembic::Abc::ICompoundProperty abcCompound = getCompoundFromObject(abcObject);
          if ( abcCompound.getPropertyHeader( ".metadata" ) == NULL )
             break;
 
@@ -1463,7 +1482,8 @@ CStatus alembic_create_item_Invoke
       }
       case alembicItemType_timecontrol:
       {
-         CValueArray setExprArgs(2);
+         ESS_PROFILE_SCOPE("alembic_create_item_Invoke create_the_operator alembicItemType_timecontrol");
+		 CValueArray setExprArgs(2);
          CValue setExprReturn;
          CustomProperty timeControl = (CustomProperty) x3d.AddProperty(L"alembic_timecontrol");
 
@@ -1478,7 +1498,8 @@ CStatus alembic_create_item_Invoke
       }
       case alembicItemType_standin:
       {
-         // create an arnold property on the x3d if we don't have it yet!
+         ESS_PROFILE_SCOPE("alembic_create_item_Invoke create_the_operator alembicItemType_standin");
+		 // create an arnold property on the x3d if we don't have it yet!
          if(!hasStandinSupport())
          {
             Application().LogMessage(L"[ExocortexAlembic] There is no standin support. Please use a renderer supported standins.",siErrorMsg);
@@ -1791,7 +1812,7 @@ ESS_CALLBACK_START(alembic_import_Execute, CRef&)
 	  if( i % intermittentUpdateInterval == 0 ) {
 		prog.PutCaption(L"Importing "+CString(objects[i].getFullName().c_str())+L" ...");
 	  }
-      ESS_PROFILE_SCOPE(objects[i].getFullName().c_str());
+      //ESS_PROFILE_SCOPE("Import);
 
       // get the parent and the object's name
       CString name = truncateName(objects[i].getName().c_str());
@@ -2400,6 +2421,15 @@ ESS_CALLBACK_START(alembic_MenuPathManager_Init,CRef&)
 	return CStatus::OK;
 ESS_CALLBACK_END
 
+ESS_CALLBACK_START(alembic_ProfileStats_Init,CRef&)
+	Context ctxt( in_ctxt );
+	Menu oMenu;
+	oMenu = ctxt.GetSource();
+	MenuItem oNewItem;
+	oMenu.AddCommandItem(L"Alembic Profile Stats",L"alembic_profile_stats",oNewItem);
+	return CStatus::OK;
+ESS_CALLBACK_END
+
 ESS_CALLBACK_START(alembic_export_settings_Define,CRef&)
 	Context ctxt( in_ctxt );
 	CustomProperty oCustomProperty;
@@ -2734,6 +2764,22 @@ ESS_CALLBACK_START(alembic_standinop_Update, CRef&)
    //prop.PutParameterValue(L"deferredLoading",true);
 
    return CStatus::OK;
+ESS_CALLBACK_END
+
+
+ESS_CALLBACK_START(alembic_profile_stats_Init,CRef&)
+	Context ctxt( in_ctxt );
+	Command oCmd;
+	oCmd = ctxt.GetSource();
+	oCmd.PutDescription(L"");
+	oCmd.EnableReturnValue(true);
+
+	return CStatus::OK;
+ESS_CALLBACK_END
+
+ESS_CALLBACK_START(alembic_profile_stats_Execute, CRef&)
+    ESS_PROFILE_REPORT();
+	return CStatus::OK;
 ESS_CALLBACK_END
 
 ESS_CALLBACK_START(alembic_path_manager_Init,CRef&)
