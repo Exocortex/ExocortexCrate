@@ -9,9 +9,9 @@ tasks = TaskList([Task(iTestFile)], genPath(iTestFile + ".ats"))
 Application.OpenScene(iTestPath+"export.scn", False, False)
 
 
-iNodeToSelect = getInput("nodeToSelect");
+iNodesToSelect = getInput("nodesToSelect");
 
-if iNodeToSelect != None: Application.SelectObj(iNodeToSelect)
+if iNodesToSelect != None: Application.SelectObj(iNodesToSelect)
 else: Application.SelectObj("*")
 
 
