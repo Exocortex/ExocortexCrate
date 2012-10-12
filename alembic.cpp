@@ -20,6 +20,7 @@
 #include <xsi_null.h>
 #include <xsi_camera.h>
 #include <xsi_customoperator.h>
+#include <xsi_expression.h>
 #include <xsi_kinematics.h>
 #include <xsi_kinematicstate.h>
 #include <xsi_factory.h>
@@ -877,10 +878,12 @@ CStatus alembic_create_item_Invoke
        timeControlRef = args[0];
     timeControlProp = timeControlRef;
 	CValue setExprReturn;
-    CValueArray setExprArgs(2);   
+    CValueArray setExprArgs(2);  
+	CString expressionString;
     if(timeControlProp.IsValid())
     {
        setExprArgs[1] = timeControlProp.GetFullName()+L".current * "+timeControlProp.GetFullName()+L".factor + "+timeControlProp.GetFullName()+L".offset";
+	   expressionString = timeControlProp.GetFullName()+L".current * "+timeControlProp.GetFullName()+L".factor + "+timeControlProp.GetFullName()+L".offset";
     }
 
     { ESS_PROFILE_SCOPE("alembic_create_item_Invoke create_the_operator");
@@ -951,17 +954,33 @@ CStatus alembic_create_item_Invoke
          }
          if(!op.IsValid())
          {
+			 {
 			 ESS_PROFILE_SCOPE("alembic_create_item_Invoke create_the_operator CreateObject");
 		    op = Application().GetFactory().CreateObject(realType);
+			 }
+
+		/*	 		// Duplicate arc 4 times and translate in y
+		args.Resize(19);
+		args[0] = arc;					// source object
+		args[1] = (LONG)4;				// number of copies
+		args[9] = (LONG)siApplyRepeatXForm;	// Xform
+		args[18] = (double)1;			// Ty
+		app.ExecuteCommand( L"Duplicate", args, outArg );*/
+			 
+			 { ESS_PROFILE_SCOPE("alembic_create_item_Invoke create_the_operator AddPorts");
             op.AddOutputPort(realTarget);
             op.AddInputPort(realTarget);
+			 }
 
             siConstructionMode consMode = siConstructionModeModeling;
             if(itemType != alembicItemType_crvlist_topo && itemType != alembicItemType_polymesh_topo)
                consMode = siConstructionModeAnimation;
-            op.Connect(consMode);
+			 { ESS_PROFILE_SCOPE("alembic_create_item_Invoke create_the_operator Connect");
+			
+				op.Connect(consMode);
+			 }
          }
-
+ 
          // setup the operator
          addRefArchive(file);
          op.PutParameterValue(L"path",file);
@@ -992,8 +1011,9 @@ CStatus alembic_create_item_Invoke
             // check if we have a timecontrol in the args
              if(timeControlProp.IsValid())
             {
-				 setExprArgs[0] = op.GetFullName()+L".time";
-				Application().ExecuteCommand(L"SetExpr",setExprArgs,setExprReturn);
+				 //setExprArgs[0] = op.GetFullName()+L".time";
+				 op.GetParameter("time").AddExpression( expressionString );
+				//Application().ExecuteCommand(L"SetExpr",setExprArgs,setExprReturn);
             }
          }
 
