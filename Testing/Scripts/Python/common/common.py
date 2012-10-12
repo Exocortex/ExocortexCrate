@@ -30,7 +30,7 @@ iObj = getInput("obj");
 iTransformsEO = getInput("transformsEO");
 iFrameToRender = getIntInput("frameToRender", 0);
 iExportStrAppend = getInput("exportStr");
-
+iAlembicFileExt = getInput("alembicFileExt", ".tabc");
 
 def genPath(filename):
 	return iTestPath + iApp + iAppVer + "_" + filename

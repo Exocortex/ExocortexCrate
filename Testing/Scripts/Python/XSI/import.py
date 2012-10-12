@@ -11,7 +11,16 @@ bboxes = False
 attach = False
 identifiers = ""
 
-result = Application.alembic_import(genPath(iObj + ".tabc"), normals, uvs, clusters, visibility, standins, bboxes, attach, identifiers)
+iDirectImport = getInput("directImport", "false");
+
+path = ""
+
+if iDirectImport != "true": 
+	path = genPath(iObj + iAlembicFileExt)
+else:
+	path = iTestPath + iObj + iAlembicFileExt
+
+result = Application.alembic_import(path , normals, uvs, clusters, visibility, standins, bboxes, attach, identifiers)
 tasks.setStatus("Import", result == None)
 
 if result == None: renderScene(Application, iObj)
