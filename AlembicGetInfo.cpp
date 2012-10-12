@@ -2,6 +2,7 @@
 #include "CommonMeshUtilities.h"
 
 #include <sstream>
+#include <set>
 
 using namespace std;
 
@@ -100,6 +101,8 @@ MStatus AlembicGetInfoCommand::doIt(const MArgList & args)
    // get the root object
    std::vector<Alembic::Abc::IObject> objects;
    std::vector<infoTuple> infoVector;
+   std::set<std::string> uniqueIdentifiers;
+
    objects.push_back(archive->getTop());
    infoVector.push_back(infoTuple());
 
@@ -113,10 +116,17 @@ MStatus AlembicGetInfoCommand::doIt(const MArgList & args)
          Alembic::Abc::IObject child = objects[i].getChild(j);
          objects.push_back(child);
          infoVector.push_back(infoTuple());
-
          infoTuple &iTuple = infoVector[infoVector.size()-1];
 
-         iTuple.identifier = child.getFullName().c_str();
+         // check if the name is unique!
+         std::string fullName = child.getFullName();
+         if (uniqueIdentifiers.find(fullName) != uniqueIdentifiers.end())
+           iTuple.identifier = "";
+         else
+         {
+           uniqueIdentifiers.insert(fullName);
+           iTuple.identifier = fullName.c_str();
+         }
          iTuple.type = getTypeFromObject(child);
          iTuple.name = child.getName().c_str();
          iTuple.nbSample = getNumSamplesFromObject(child);

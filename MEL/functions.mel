@@ -73,29 +73,11 @@ global proc exocortexAlembicImport(string $filename, int $importNormals, int $im
       $nbTransforms = $nbTransforms + 1;
     string $name = $tokens[2];
     string $node = `ExocortexAlembic_getNodeFromIdentifier -i $identifier`;
-    
-    ExocortexAlembic_profileBegin -f MEL_exocortexAlembicImport_A;
-
-    // try to find the identifier in the map
-    int $skip = 0;
-    for($j=0;$j<size($identifiers);$j=$j+1)
-    {
-      if($identifiers[$j] == $identifier)
-      {
-        print("Skipping duplicate identifier "+$identifier+".");
-        $skip = 1;
-        break;
-      }
-    }
-    ExocortexAlembic_profileEnd -f MEL_exocortexAlembicImport_A;
-
-    if($skip)
-      break;
 
     // push the identifier to our map      
     $identifiers[size($identifiers)] = $identifier;
     $types[size($types)] = $type;
-    $names[size($names)] = $tokens[2];
+    $names[size($names)] = `ExocortexAlembic_createValidName -i $tokens[2]`;
     $nodes[size($nodes)] = $node;
     $nbSamples[size($nbSamples)] = $tokens[3];
     $parentID[size($parentID)] = $tokens[4];
@@ -107,13 +89,6 @@ global proc exocortexAlembicImport(string $filename, int $importNormals, int $im
       $data = $tokens[6];
     $datas[size($datas)] = $data;
   }
-  
-  // now we need to determine the group types
-  // group are alembic are xforms which have xforms
-  // below them. for that we can loop on all identifiers
-  // and find any identifier below it of type xform
-  ExocortexAlembic_profileBegin -f MEL_exocortexAlembicImport_B;
-  ExocortexAlembic_profileEnd -f MEL_exocortexAlembicImport_B;
 
   // let's create the time node and file node
   $timeControl = exocortexCreateOrReuseNode("ExocortexAlembicTimeControl","ExocortexAlembicTimeControl",$importAttach,0,0);
@@ -129,6 +104,8 @@ global proc exocortexAlembicImport(string $filename, int $importNormals, int $im
     $objects[$i] = "";
   for($i=(size($identifiers)-1);$i>=0;$i=$i-1)
   {
+    if ($identifiers[$i] == "")
+      continue;
     string $parts[];
     tokenize $identifiers[$i] "/" $parts;
     string $name = $names[$i];
@@ -339,28 +316,6 @@ global proc exocortexAlembicImport(string $filename, int $importNormals, int $im
       ExocortexAlembic_profileBegin -f MEL_exocortexAlembicImport_D;   
       string $ids[];
       tokenize $childIDs[$i] "." $ids;
-      /*for($j=$i+1;$j<size($identifiers);$j=$j+1)
-      {
-        if(($types[$j] != "Xform") && ($types[$j] != "Group"))
-          continue;
-        string $childParts[];
-        tokenize $identifiers[$j] "/" $childParts;
-        if(size($childParts) != (size($parts)+1))
-          continue;
-        string $identifierA = "";
-        string $identifierB = "";
-        for($k=0;$k<size($parts);$k=$k+1)
-        {
-          $identifierA = $identifierA + "/" + $parts[$k];
-          $identifierB = $identifierB + "/" + $childParts[$k];
-        }
-        if($identifierA != $identifierB)
-          continue;
-
-        if($objects[$j] != "" && $objects[$j] != $shape) {
-          parent $objects[$j] $shape;
-        }
-      }*/
       for ($j = 0; $j < size($ids); $j = $j + 1)
       {
         int $cID = $ids[$j];
