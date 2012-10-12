@@ -18,6 +18,21 @@ struct ArchiveInfo
    std::string path;
 };
 
+
+Alembic::Abc::IArchive * getArchiveFromID(std::string path);
+std::string addArchive(Alembic::Abc::IArchive * archive);
+void deleteArchive(std::string path);
+void deleteAllArchives();
+Alembic::Abc::IObject getObjectFromArchive(std::string path, std::string identifier);
+std::string resolvePath(std::string path); 
+std::string resolvePath_Internal(std::string path); // must be defined in binding applications.
+
+// ref counting
+bool archiveExists(std::string path);
+int addRefArchive(std::string path);
+int delRefArchive(std::string path);
+int getRefArchive(std::string path);
+
       
 bool validate_filename_location(const char *filename);
 
