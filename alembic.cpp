@@ -1922,7 +1922,7 @@ ESS_CALLBACK_START(alembic_import_Execute, CRef&)
       // now let's see what we have here
       if(Alembic::AbcGeom::IXform::matches(objects[i].getMetaData()))
       {
-         // check if this xform has xform children (is is model in this case)
+         // check if this xform has xform children (it is model in this case)
          size_t nbTransformChildren = 0;
          for(size_t j=0;j<objects[i].getNumChildren();j++)
          {
@@ -1953,13 +1953,18 @@ ESS_CALLBACK_START(alembic_import_Execute, CRef&)
                if(!model.GetType().IsEqualNoCase(L"#model"))
                   model.ResetObject();
             }
+			CRef nodeRef;
             if(!model.IsValid())
             {
-               CRefArray children;
-               parentX3DObject.AddModel(children,name,model);
-               nameMapAdd(objects[i].getFullName().c_str(),model.GetFullName());
+				Null null;
+               CRef nullRef;
+               nullRef.Set(transformCacheModelName+L"."+name);
+			   null = nullRef;
+               parentX3DObject.AddNull(name,null);
+               nameMapAdd(objects[i].getFullName().c_str(),null.GetFullName());
+			   nodeRef = null.GetRef();
             }
-
+		
             // load metadata
             alembic_create_item_Invoke(L"alembic_metadata",model.GetRef(),filename,objects[i].getFullName().c_str(),attachToExisting,createItemArgs);
 
@@ -2564,7 +2569,7 @@ ESS_CALLBACK_START(alembic_import_settings_Define, CRef&)
    {
       oCustomProperty.AddParameter(L"standins",CValue::siInt4,siPersistable,L"",L"",0,0,10,0,10,oParam);
    }
-   oCustomProperty.AddParameter(L"attach",CValue::siBool,siPersistable,L"",L"",1,0,1,0,1,oParam);
+   oCustomProperty.AddParameter(L"attach",CValue::siBool,siPersistable,L"",L"",0,0,1,0,1,oParam);
 	return CStatus::OK;
 ESS_CALLBACK_END
 
