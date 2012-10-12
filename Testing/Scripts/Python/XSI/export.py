@@ -39,7 +39,7 @@ else: #iTransformsEO == "flat":
      transformsStr += ";globalspace=false";
 
 
-exportStr = "filename=" + genPath(iObj + ".tabc") + ";" + objectsStr + transformsStr;
+exportStr = "filename=" + genPath(iObj + iAlembicFileExt) + ";" + objectsStr + transformsStr;
 if iExportStrAppend != None: exportStr = exportStr + ";" + iExportStrAppend;
 
 result = Application.alembic_export(exportStr)
