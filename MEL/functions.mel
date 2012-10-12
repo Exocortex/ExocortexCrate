@@ -54,7 +54,7 @@ global proc exocortexAlembicImport(string $filename, int $importNormals, int $im
   string $datas[];
   int $nbSamples[];
   int $parentID[];
-  int $childID[];
+  string $childIDs[];
   for($i=0; $i<size($infos); $i=$i+1)
   {
     // tokenize the basic arguments
@@ -99,7 +99,7 @@ global proc exocortexAlembicImport(string $filename, int $importNormals, int $im
     $nodes[size($nodes)] = $node;
     $nbSamples[size($nbSamples)] = $tokens[3];
     $parentID[size($parentID)] = $tokens[4];
-    $childID[size($childID)] = $tokens[5];
+    $childIDs[size($childIDs)] = $tokens[5];
     
     // parse the forth token
     string $data = "";
@@ -295,8 +295,10 @@ global proc exocortexAlembicImport(string $filename, int $importNormals, int $im
         // let's look for the next element in the list
         // and access its children
         $reader = "";
-        ExocortexAlembic_profileBegin -f MEL_exocortexAlembicImport_C;
-        int $cID = $childID[$i];
+        ExocortexAlembic_profileBegin -f MEL_exocortexAlembicImport_C;    
+        string $ids[];
+        tokenize $childIDs[$i] "." $ids;
+        int $cID = $ids[0];
         if ($cID > 0)
         {
           $shape = $objects[$cID-1];
@@ -334,8 +336,10 @@ global proc exocortexAlembicImport(string $filename, int $importNormals, int $im
       exocortexConnectIfUnconnected(($reader+".rotate"), ($shape+".rotate"));
       exocortexConnectIfUnconnected(($reader+".scale"), ($shape+".scale"));
 
-      ExocortexAlembic_profileBegin -f MEL_exocortexAlembicImport_D;
-      for($j=$i+1;$j<size($identifiers);$j=$j+1)
+      ExocortexAlembic_profileBegin -f MEL_exocortexAlembicImport_D;   
+      string $ids[];
+      tokenize $childIDs[$i] "." $ids;
+      /*for($j=$i+1;$j<size($identifiers);$j=$j+1)
       {
         if(($types[$j] != "Xform") && ($types[$j] != "Group"))
           continue;
@@ -356,6 +360,17 @@ global proc exocortexAlembicImport(string $filename, int $importNormals, int $im
         if($objects[$j] != "" && $objects[$j] != $shape) {
           parent $objects[$j] $shape;
         }
+      }*/
+      for ($j = 0; $j < size($ids); $j = $j + 1)
+      {
+        int $cID = $ids[$j];
+        $cID = $cID - 1;
+        if ($objects[$cID] == "" || $objects[$cID] == $shape)
+          continue;
+        if ($types[$cID] == "Xform" || $types[$cID] == "Group")
+          parent $objects[$cID] $shape;
+        else
+          parent -s $objects[$cID] $shape;
       }
       ExocortexAlembic_profileEnd -f MEL_exocortexAlembicImport_D;
     }

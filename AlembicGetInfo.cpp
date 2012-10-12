@@ -37,15 +37,25 @@ struct infoTuple
   MString name;
   int nbSample;
   int parentID;
-  int childID;
+  std::vector<int> childID;
   MString data;
 
-  infoTuple(void): valid(false), identifier(""), type("Root"), name(""), nbSample(0), parentID(-1), childID(-1), data("") {}
+  infoTuple(void): valid(false), identifier(""), type("Root"), name(""), nbSample(0), parentID(-1), childID(), data("") {}
 
   MString toInfo(void) const
   {
     stringstream str;
-    str << "|" << nbSample << "|" << parentID << "|" << childID;
+    str << "|" << nbSample << "|" << parentID << "|";
+
+    if (childID.empty())
+      str << "-1";
+    else
+    {
+      std::vector<int>::const_iterator beg = childID.begin();
+      str << (*beg);
+      for (++beg; beg != childID.end(); ++beg)
+        str << "." << (*beg);
+    }
 
     MString ret = identifier + "|" + type + "|" + name;
     ret += str.str().c_str();
@@ -117,7 +127,7 @@ MStatus AlembicGetInfoCommand::doIt(const MArgList & args)
            if (infoVector[i].type == "Xform")
              infoVector[i].type = "Group";             
          }
-         infoVector[i].childID = objects.size()-1;
+         infoVector[i].childID.push_back(objects.size()-1);
 
          // additional data fields
          MString data;
