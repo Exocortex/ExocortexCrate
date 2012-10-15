@@ -334,6 +334,7 @@ ESS_CALLBACK_START(alembic_export_Execute,CRef&)
                objects.push_back(objRef);
 
                // ensure to add models as a flattened list
+               // don't want to add all children automatically for now
                Model model(objRef);
                if(model.IsValid())
                {
@@ -1699,6 +1700,7 @@ void createShape( Alembic::Abc::IObject& iObj, CRef& parentNode, CRef& newNode, 
    // after dealing with transforms, let's deal with all shape types
    if(Alembic::AbcGeom::ICamera::matches(iObj.getMetaData()))
    {
+      //ESS_LOG_WARNING("Import ICamera");
       // let's create a camera
       Camera camera;
       if(attachToExisting)
@@ -1740,6 +1742,8 @@ void createShape( Alembic::Abc::IObject& iObj, CRef& parentNode, CRef& newNode, 
    }
    else if(Alembic::AbcGeom::IPolyMesh::matches(iObj.getMetaData()))
    {
+      //ESS_LOG_WARNING("Import IPolyMesh");
+
       X3DObject meshObj;
       if(attachToExisting)
       {
@@ -1820,6 +1824,7 @@ void createShape( Alembic::Abc::IObject& iObj, CRef& parentNode, CRef& newNode, 
    }
    else if(Alembic::AbcGeom::ISubD::matches(iObj.getMetaData()))
    {
+      //ESS_LOG_WARNING("Import ISubD");
       X3DObject meshObj;
       if(attachToExisting)
       {
@@ -1895,6 +1900,7 @@ void createShape( Alembic::Abc::IObject& iObj, CRef& parentNode, CRef& newNode, 
    }
    else if(Alembic::AbcGeom::INuPatch::matches(iObj.getMetaData()))
    {
+      //ESS_LOG_WARNING("Import INuPatch");
       X3DObject nurbsObj;
       if(attachToExisting)
       {
@@ -1927,6 +1933,7 @@ void createShape( Alembic::Abc::IObject& iObj, CRef& parentNode, CRef& newNode, 
    }
    else if(Alembic::AbcGeom::ICurves::matches(iObj.getMetaData()))
    {
+      //ESS_LOG_WARNING("Import ICurves");
       // let's create a crvlist
       Alembic::AbcGeom::ICurves curveIObject(iObj,Alembic::Abc::kWrapExisting);
       Alembic::AbcGeom::ICurvesSchema curveSchema = curveIObject.getSchema();
@@ -2093,6 +2100,7 @@ void createShape( Alembic::Abc::IObject& iObj, CRef& parentNode, CRef& newNode, 
    }
    else if(Alembic::AbcGeom::IPoints::matches(iObj.getMetaData()))
    {
+      //ESS_LOG_WARNING("Import IPoints");
       Alembic::AbcGeom::IPoints pointsIObject(iObj,Alembic::Abc::kWrapExisting);
       Alembic::AbcGeom::IPointsSchema pointsSchema = pointsIObject.getSchema();
       Alembic::AbcGeom::IPointsSchema::Sample pointsSample = pointsSchema.getValue();
@@ -2144,6 +2152,9 @@ void createShape( Alembic::Abc::IObject& iObj, CRef& parentNode, CRef& newNode, 
       // load standin property
       if(importStandins && returnOpRef.IsValid())
          alembic_create_item_Invoke(L"alembic_standin",returnOpRef,filename,iObj.getFullName().c_str(),attachToExisting,createItemArgs);
+   }
+   else{
+      ESS_LOG_WARNING("Unsupported type.");
    }
 }
 
@@ -2326,76 +2337,13 @@ ESS_CALLBACK_START(alembic_import_Execute, CRef&)
    createItemArgs[3] = importUVs;
    createItemArgs[4] = importVisibility;
 
-   //// let's figure out which objects we have
-   //std::vector<Alembic::Abc::IObject> objects;
-   ////objects.push_back(archive->getTop());
-   //size_t nbTransforms = 1;
-   //{
-	  // ESS_PROFILE_SCOPE("alembic_import_Execute traverse ABC Hierarchy");
-	  // for(size_t i=0;i<objects.size();i++)
-	  // {
-		 // // first, let's recurse, do the transforms last
-		 // for(size_t j=0;j<objects[i].getNumChildren();j++)
-		 // {
-			// if(!Alembic::AbcGeom::IXform::matches(objects[i].getChild(j).getMetaData()))
-			//	objects.push_back(objects[i].getChild(j));
-		 // }
-		 // for(size_t j=0;j<objects[i].getNumChildren();j++)
-		 // {
-			// if(Alembic::AbcGeom::IXform::matches(objects[i].getChild(j).getMetaData())) 
-			// {
-			//	objects.push_back(objects[i].getChild(j));
-			//	nbTransforms++;
-			// }
-		 // }
-	  // }
-   //}
-
-
-
-
-   std::list<stackElement> sceneStack;
 
    Alembic::AbcGeom::IObject root = archive->getTop();
-	for(size_t j=0; j<root.getNumChildren(); j++)
-	{
-      sceneStack.push_back(stackElement(root.getChild(j), Application().GetActiveSceneRoot()));
-	} 
 
-   int nNumNodes = 0;
-   while( !sceneStack.empty() )
-   {
-      stackElement sElement = sceneStack.back();
-      sceneStack.pop_back();
-      Alembic::Abc::IObject& iObj = sElement.iObj;
-      CRef parentNode(sElement.parentNode);
 
-      nNumNodes++;
-
-      bool bCreateNullNode = false;
-      int nMergedGeomNodeIndex = -1;
-		Alembic::AbcGeom::IObject mergedGeomChild;
-      getMergeInfo(iObj, bCreateNullNode, nMergedGeomNodeIndex, mergedGeomChild);
-      
-      //push the children as the last step, since we need to who the parent is first (we may have merged)
-      for(size_t j=0; j<iObj.getNumChildren(); j++)
-      {
-         Alembic::AbcGeom::IObject childObj = iObj.getChild(j);
-         NodeCategory::type childCat = NodeCategory::get(childObj);
-         if( childCat == NodeCategory::UNSUPPORTED ) continue;// skip over unsupported types
-
-         //I assume that geometry nodes are always leaf nodes. Thus, if we merged a geometry node will its parent transform, we don't
-         //need to push it to the stack.
-         //A geometry node can't be combined with its transform node, the transform node has other tranform nodes as children. These
-         //nodes must be pushed.
-         if( nMergedGeomNodeIndex != j )
-         {
-            sceneStack.push_back( stackElement( childObj ) );
-         }
-      }
-      
-   }
-
+   std::vector<std::string> nodesToImport;
+   std::map<std::string, bool> map;
+	int nNumNodes = prescanAlembicHierarchy(root, nodesToImport, map);
 
 
    ProgressBar prog;
@@ -2414,7 +2362,7 @@ ESS_CALLBACK_START(alembic_import_Execute, CRef&)
    // clear all alembic user data
    alembic_UD::clearAll();
 
-
+   std::list<stackElement> sceneStack;
 	for(size_t j=0; j<root.getNumChildren(); j++)
 	{
       sceneStack.push_back(stackElement(root.getChild(j), Application().GetActiveSceneRoot()));
@@ -2426,14 +2374,16 @@ ESS_CALLBACK_START(alembic_import_Execute, CRef&)
    while( !sceneStack.empty() )
    {
       stackElement sElement = sceneStack.back();
-      sceneStack.pop_back();
-      Alembic::Abc::IObject& iObj = sElement.iObj;
+      Alembic::Abc::IObject iObj = sElement.iObj;
       CRef parentNode(sElement.parentNode);
+      sceneStack.pop_back();
 
       if( i % intermittentUpdateInterval == 0 ) {
          prog.PutCaption(L"Importing "+CString(iObj.getFullName().c_str())+L" ...");
       }
       i++;
+
+      ESS_LOG_WARNING("Importing "<<iObj.getFullName().c_str()<<" ...");
 
       bool bCreateNullNode = false;
       int nMergedGeomNodeIndex = -1;
@@ -2481,7 +2431,7 @@ ESS_CALLBACK_START(alembic_import_Execute, CRef&)
 	      }
       }
       else{
-  		 EC_LOG_ERROR( "[ExocortexAlembic] newNode.isValid() is false" );
+         EC_LOG_WARNING("Warning: newNode CRef is not valid.");
          return CStatus::Abort;
       }
 
