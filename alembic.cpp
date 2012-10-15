@@ -1698,6 +1698,7 @@ void createShape( Alembic::Abc::IObject& iObj, CRef& parentNode, CRef& newNode, 
    // after dealing with transforms, let's deal with all shape types
    if(Alembic::AbcGeom::ICamera::matches(iObj.getMetaData()))
    {
+      //ESS_LOG_WARNING("Import ICamera");
       // let's create a camera
       Camera camera;
       if(attachToExisting)
@@ -1739,6 +1740,8 @@ void createShape( Alembic::Abc::IObject& iObj, CRef& parentNode, CRef& newNode, 
    }
    else if(Alembic::AbcGeom::IPolyMesh::matches(iObj.getMetaData()))
    {
+      //ESS_LOG_WARNING("Import IPolyMesh");
+
       X3DObject meshObj;
       if(attachToExisting)
       {
@@ -1819,6 +1822,7 @@ void createShape( Alembic::Abc::IObject& iObj, CRef& parentNode, CRef& newNode, 
    }
    else if(Alembic::AbcGeom::ISubD::matches(iObj.getMetaData()))
    {
+      //ESS_LOG_WARNING("Import ISubD");
       X3DObject meshObj;
       if(attachToExisting)
       {
@@ -1894,6 +1898,7 @@ void createShape( Alembic::Abc::IObject& iObj, CRef& parentNode, CRef& newNode, 
    }
    else if(Alembic::AbcGeom::INuPatch::matches(iObj.getMetaData()))
    {
+      //ESS_LOG_WARNING("Import INuPatch");
       X3DObject nurbsObj;
       if(attachToExisting)
       {
@@ -1926,6 +1931,7 @@ void createShape( Alembic::Abc::IObject& iObj, CRef& parentNode, CRef& newNode, 
    }
    else if(Alembic::AbcGeom::ICurves::matches(iObj.getMetaData()))
    {
+      //ESS_LOG_WARNING("Import ICurves");
       // let's create a crvlist
       Alembic::AbcGeom::ICurves curveIObject(iObj,Alembic::Abc::kWrapExisting);
       Alembic::AbcGeom::ICurvesSchema curveSchema = curveIObject.getSchema();
@@ -2092,6 +2098,7 @@ void createShape( Alembic::Abc::IObject& iObj, CRef& parentNode, CRef& newNode, 
    }
    else if(Alembic::AbcGeom::IPoints::matches(iObj.getMetaData()))
    {
+      //ESS_LOG_WARNING("Import IPoints");
       Alembic::AbcGeom::IPoints pointsIObject(iObj,Alembic::Abc::kWrapExisting);
       Alembic::AbcGeom::IPointsSchema pointsSchema = pointsIObject.getSchema();
       Alembic::AbcGeom::IPointsSchema::Sample pointsSample = pointsSchema.getValue();
@@ -2143,6 +2150,9 @@ void createShape( Alembic::Abc::IObject& iObj, CRef& parentNode, CRef& newNode, 
       // load standin property
       if(importStandins && returnOpRef.IsValid())
          alembic_create_item_Invoke(L"alembic_standin",returnOpRef,filename,iObj.getFullName().c_str(),attachToExisting,createItemArgs);
+   }
+   else{
+      ESS_LOG_WARNING("Unsupported type.");
    }
 }
 
@@ -2390,9 +2400,9 @@ ESS_CALLBACK_START(alembic_import_Execute, CRef&)
    while( !sceneStack.empty() )
    {
       stackElement sElement = sceneStack.back();
-      sceneStack.pop_back();
-      Alembic::Abc::IObject& iObj = sElement.iObj;
+      Alembic::Abc::IObject iObj = sElement.iObj;
       CRef parentNode(sElement.parentNode);
+      sceneStack.pop_back();
 
       if( i % intermittentUpdateInterval == 0 ) {
          prog.PutCaption(L"Importing "+CString(iObj.getFullName().c_str())+L" ...");
@@ -2445,6 +2455,7 @@ ESS_CALLBACK_START(alembic_import_Execute, CRef&)
 	      }
       }
       else{
+         ESS_LOG_WARNING("Warning: newNode CRef is not valid.");
          return CStatus::Abort;
       }
 
