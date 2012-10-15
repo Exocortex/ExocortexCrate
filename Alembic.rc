@@ -356,6 +356,52 @@ BEGIN
     LTEXT           "Property:",-1,1,45,32,8
 END
 
+IDD_ALEMBIC_CAMERA_PARAMS DIALOGEX 0, 0, 108, 428
+STYLE DS_SETFONT | WS_CHILD | WS_VISIBLE
+FONT 8, "MS Sans Serif", 0, 0, 0x1
+BEGIN
+    CONTROL         "Custom1",IDC_PATH_EDIT,"CustEdit",WS_TABSTOP,0,8,107,13
+    LTEXT           "Path:",-1,0,0,32,8
+    CONTROL         "Custom1",IDC_IDENTIFIER_EDIT,"CustEdit",WS_TABSTOP,0,29,107,12
+    LTEXT           "Identifier:",-1,0,21,32,8
+    CONTROL         "Custom1",IDC_HFOV_EDIT,"CustEdit",WS_TABSTOP,0,49,107,12
+    LTEXT           "Horizontal FOV:",-1,0,41,54,8
+    CONTROL         "Custom1",IDC_VFOV_EDIT,"CustEdit",WS_TABSTOP,0,71,107,12
+    LTEXT           "Vertical FOV:",-1,0,62,54,8
+    CONTROL         "Custom1",IDC_FOCAL_LENGTH_EDIT,"CustEdit",WS_TABSTOP,0,92,107,12
+    LTEXT           "Focal Length:",-1,0,84,54,8
+    CONTROL         "Custom1",IDC_HAPERATURE_EDIT,"CustEdit",WS_TABSTOP,0,114,107,12
+    LTEXT           "Horizontal Aperature:",-1,0,106,83,8
+    CONTROL         "Custom1",IDC_VAPERATURE_EDIT2,"CustEdit",WS_TABSTOP,0,135,107,12
+    LTEXT           "Vertical Aperature:",-1,0,127,83,8
+    CONTROL         "Custom1",IDC_HFILMOFFSET_EDIT,"CustEdit",WS_TABSTOP,0,155,107,12
+    LTEXT           "Horizontal Film Offset:",-1,0,147,83,8
+    CONTROL         "Custom1",IDC_VFILMOFFSET_EDIT,"CustEdit",WS_TABSTOP,0,176,107,12
+    LTEXT           "Vertical Film Offset:",-1,0,168,83,8
+    CONTROL         "Custom1",IDC_LSRATIO_EDIT,"CustEdit",WS_TABSTOP,0,196,107,12
+    LTEXT           "Lens Sqeeze Ratio:",-1,0,188,83,8
+    CONTROL         "Custom1",IDC_OVERSCANL_EDIT,"CustEdit",WS_TABSTOP,0,217,107,12
+    LTEXT           "Overscan Left:",-1,0,209,83,8
+    CONTROL         "Custom1",IDC_OVERSCANR_EDIT,"CustEdit",WS_TABSTOP,0,238,107,12
+    LTEXT           "Overscan Right:",-1,0,230,83,8
+    CONTROL         "Custom1",IDC_OVERSCANT_EDIT,"CustEdit",WS_TABSTOP,0,260,107,12
+    LTEXT           "Overscan Top:",-1,0,251,83,8
+    CONTROL         "Custom1",IDC_OVERSCANB_EDIT,"CustEdit",WS_TABSTOP,0,282,107,12
+    LTEXT           "Overscan Bottom:",-1,0,274,83,8
+    CONTROL         "Custom1",IDC_FSTOP_EDIT,"CustEdit",WS_TABSTOP,0,303,107,12
+    LTEXT           "FStop:",-1,0,295,83,8
+    CONTROL         "Custom1",IDC_FOCUSDIST_EDIT,"CustEdit",WS_TABSTOP,0,324,107,12
+    LTEXT           "Focus Distance:",-1,0,316,83,8
+    CONTROL         "Custom1",IDC_SHUTTEROPEN_EDIT,"CustEdit",WS_TABSTOP,0,345,107,12
+    LTEXT           "Shutter Open:",-1,0,337,83,8
+    CONTROL         "Custom1",IDC_SHUTTERCLOSE_EDIT,"CustEdit",WS_TABSTOP,0,366,107,12
+    LTEXT           "Shutter Close:",-1,1,358,83,8
+    CONTROL         "Custom1",IDC_NEARCLIPPINGPLANE_EDIT,"CustEdit",WS_TABSTOP,0,387,107,12
+    LTEXT           "Near Clipping Plane:",-1,0,379,83,8
+    CONTROL         "Custom1",IDC_FAR_CLIPPING_PLANE_EDIT,"CustEdit",WS_TABSTOP,0,408,107,12
+    LTEXT           "Far Clipping Plane:",-1,0,400,83,8
+END
+
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -383,6 +429,11 @@ BEGIN
     IDD_ALEMBIC_FLOAT_CTRL_PARAMS, DIALOG
     BEGIN
         BOTTOMMARGIN, 100
+    END
+
+    IDD_ALEMBIC_CAMERA_PARAMS, DIALOG
+    BEGIN
+        BOTTOMMARGIN, 422
     END
 END
 #endif    // APSTUDIO_INVOKED

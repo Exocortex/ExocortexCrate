@@ -65,30 +65,30 @@ static ParamBlockDesc2 AlembicFloatControllerParams(
 	p_end
 );
 
-bool iequals(const char* a, const char* b)
-{
-    size_t sa = strlen(a);
-	size_t sb = strlen(b);
-	if (sa != sb){
-        return false;
-	}
-
-	size_t minsize = sa;
-	if(sb < minsize) minsize = sb;
-
-	for (size_t i = 0; i < minsize; ++i){
-		if (tolower(a[i]) != tolower(b[i])){
-            return false;
-		}
-	}
-    return true;
-}
+//bool iequals(const char* a, const char* b)
+//{
+//    size_t sa = strlen(a);
+//	size_t sb = strlen(b);
+//	if (sa != sb){
+//        return false;
+//	}
+//
+//	size_t minsize = sa;
+//	if(sb < minsize) minsize = sb;
+//
+//	for (size_t i = 0; i < minsize; ++i){
+//		if (tolower(a[i]) != tolower(b[i])){
+//            return false;
+//		}
+//	}
+//    return true;
+//}
 
 bool getCameraSampleVal(Alembic::AbcGeom::ICamera& objCamera, SampleInfo& sampleInfo, Alembic::AbcGeom::CameraSample sample, const char* name, double& sampleVal)
 {
     objCamera.getSchema().get(sample, sampleInfo.floorIndex);
 
-	if(iequals(name, "horizontalFOV")){
+	if(boost::iequals(name, "horizontalFOV")){
 		double aperature = sample.getHorizontalAperture()*10.0; //convert from cm to mm
 		double focalLength = sample.getFocalLength();
 		if(focalLength < 0.000001){
@@ -96,7 +96,7 @@ bool getCameraSampleVal(Alembic::AbcGeom::ICamera& objCamera, SampleInfo& sample
 		}
 		sampleVal = 2.0 * atan(aperature/(2.0*focalLength));
 	}
-	else if(iequals(name, "verticalFOV")){
+	else if(boost::iequals(name, "verticalFOV")){
 		double aperature = sample.getVerticalAperture()*10.0; //convert from cm to mm	
 		double focalLength = sample.getFocalLength();
 		if(focalLength < 0.000001){
@@ -104,52 +104,52 @@ bool getCameraSampleVal(Alembic::AbcGeom::ICamera& objCamera, SampleInfo& sample
 		}
 		sampleVal = 2.0 * atan(aperature/(2.0*focalLength));
 	}
-	else if(iequals(name, "FocalLength")){
+	else if(boost::iequals(name, "FocalLength")){
 		sampleVal = sample.getFocalLength();
 	}
-	else if(iequals(name, "HorizontalAperture")){
+	else if(boost::iequals(name, "HorizontalAperture")){
 		sampleVal = sample.getHorizontalAperture();
 	}
-	else if(iequals(name, "HorizontalFilmOffset")){
+	else if(boost::iequals(name, "HorizontalFilmOffset")){
 		sampleVal = sample.getHorizontalFilmOffset();
 	}
-	else if(iequals(name, "VerticalAperture")){
+	else if(boost::iequals(name, "VerticalAperture")){
 		sampleVal = sample.getVerticalAperture();
 	}
-	else if(iequals(name, "VerticalFilmOffset")){
+	else if(boost::iequals(name, "VerticalFilmOffset")){
 		sampleVal = sample.getVerticalFilmOffset();
 	}
-	else if(iequals(name, "LensSqueezeRatio")){
+	else if(boost::iequals(name, "LensSqueezeRatio")){
 		sampleVal = sample.getLensSqueezeRatio();
 	}
-	else if(iequals(name, "OverScanLeft")){
+	else if(boost::iequals(name, "OverScanLeft")){
 		sampleVal = sample.getOverScanLeft();
 	}
-	else if(iequals(name, "OverScanRight")){
+	else if(boost::iequals(name, "OverScanRight")){
 		sampleVal = sample.getOverScanRight();
 	}
-	else if(iequals(name, "OverScanTop")){
+	else if(boost::iequals(name, "OverScanTop")){
 		sampleVal = sample.getOverScanTop(); 
 	}
-	else if(iequals(name, "OverScanBottom")){
+	else if(boost::iequals(name, "OverScanBottom")){
 		sampleVal = sample.getOverScanBottom();
 	}
-	else if(iequals(name, "FStop")){
+	else if(boost::iequals(name, "FStop")){
 		sampleVal = sample.getFStop();
 	}
-	else if(iequals(name, "FocusDistance")){
+	else if(boost::iequals(name, "FocusDistance")){
 		sampleVal = sample.getFocusDistance();
 	}
-	else if(iequals(name, "ShutterOpen")){
+	else if(boost::iequals(name, "ShutterOpen")){
 		sampleVal = sample.getShutterOpen();
 	}
-	else if(iequals(name, "ShutterClose")){
+	else if(boost::iequals(name, "ShutterClose")){
 		sampleVal = sample.getShutterClose();
 	}
-	else if(iequals(name, "NearClippingPlane")){
+	else if(boost::iequals(name, "NearClippingPlane")){
 		sampleVal = sample.getNearClippingPlane();
 	}
-	else if(iequals(name, "FarClippingPlane")){
+	else if(boost::iequals(name, "FarClippingPlane")){
 		sampleVal = sample.getFarClippingPlane();
 	}
 	else{
