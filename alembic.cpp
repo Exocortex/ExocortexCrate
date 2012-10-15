@@ -20,6 +20,7 @@
 #include <xsi_null.h>
 #include <xsi_camera.h>
 #include <xsi_customoperator.h>
+#include <xsi_expression.h>
 #include <xsi_kinematics.h>
 #include <xsi_kinematicstate.h>
 #include <xsi_factory.h>
@@ -43,7 +44,7 @@
 #include <xsi_customoperator.h>
 #include <xsi_operatorcontext.h>
 #include <xsi_outputport.h>
-#include "arnoldHelpers.h"
+#include "arnoldHelpers.h" 
 
 using namespace XSI; 
 using namespace MATH; 
@@ -78,6 +79,7 @@ SICALLBACK XSILoadPlugin( PluginRegistrar& in_reg )
 		in_reg.RegisterCommand(L"alembic_attach_metadata",L"alembic_attach_metadata");
 		in_reg.RegisterCommand(L"alembic_create_item",L"alembic_create_item");
 		in_reg.RegisterCommand(L"alembic_path_manager",L"alembic_path_manager");
+		in_reg.RegisterCommand(L"alembic_profile_stats",L"alembic_profile_stats");
 
 		in_reg.RegisterOperator(L"alembic_xform");
 		in_reg.RegisterOperator(L"alembic_camera");
@@ -95,6 +97,7 @@ SICALLBACK XSILoadPlugin( PluginRegistrar& in_reg )
 
 		in_reg.RegisterMenu(siMenuMainFileImportID,L"alembic_MenuImport",false,false);
 		in_reg.RegisterMenu(siMenuMainFileProjectID,L"alembic_MenuPathManager",false,false);
+		in_reg.RegisterMenu(siMenuMainFileProjectID,L"alembic_ProfileStats",false,false);
 		in_reg.RegisterMenu(siMenuTbGetPropertyID,L"alembic_MenuMetaData",false,false);
 
 		in_reg.RegisterProperty(L"alembic_import_settings");
@@ -869,6 +872,21 @@ CStatus alembic_create_item_Invoke
    }
    }
 
+    // check if we have a timecontrol in the args
+    CustomProperty timeControlProp;
+    CRef timeControlRef;
+    if(args.GetCount() > 0)
+       timeControlRef = args[0];
+    timeControlProp = timeControlRef;
+	CValue setExprReturn;
+    CValueArray setExprArgs(2);  
+	CString expressionString;
+    if(timeControlProp.IsValid())
+    {
+       setExprArgs[1] = timeControlProp.GetFullName()+L".current * "+timeControlProp.GetFullName()+L".factor + "+timeControlProp.GetFullName()+L".offset";
+	   expressionString = timeControlProp.GetFullName()+L".current * "+timeControlProp.GetFullName()+L".factor + "+timeControlProp.GetFullName()+L".offset";
+    }
+
     { ESS_PROFILE_SCOPE("alembic_create_item_Invoke create_the_operator");
    // now create an operator...?
    switch(itemType)
@@ -884,7 +902,8 @@ CStatus alembic_create_item_Invoke
       case alembicItemType_crvlist:
       case alembicItemType_nurbs:
       {
-         // for visibility, let's see if we should create an operator
+         ESS_PROFILE_SCOPE("alembic_create_item_Invoke create_the_operator alembicItemType_xxx");
+		// for visibility, let's see if we should create an operator
          if(itemType == alembicItemType_visibility)
          {
             bool importVis = args[4];
@@ -936,16 +955,33 @@ CStatus alembic_create_item_Invoke
          }
          if(!op.IsValid())
          {
+			 {
+			 ESS_PROFILE_SCOPE("alembic_create_item_Invoke create_the_operator CreateObject");
 		    op = Application().GetFactory().CreateObject(realType);
+			 }
+
+		/*	 		// Duplicate arc 4 times and translate in y
+		args.Resize(19);
+		args[0] = arc;					// source object
+		args[1] = (LONG)4;				// number of copies
+		args[9] = (LONG)siApplyRepeatXForm;	// Xform
+		args[18] = (double)1;			// Ty
+		app.ExecuteCommand( L"Duplicate", args, outArg );*/
+			 
+			 { ESS_PROFILE_SCOPE("alembic_create_item_Invoke create_the_operator AddPorts");
             op.AddOutputPort(realTarget);
             op.AddInputPort(realTarget);
+			 }
 
             siConstructionMode consMode = siConstructionModeModeling;
             if(itemType != alembicItemType_crvlist_topo && itemType != alembicItemType_polymesh_topo)
                consMode = siConstructionModeAnimation;
-            op.Connect(consMode);
+			 { ESS_PROFILE_SCOPE("alembic_create_item_Invoke create_the_operator Connect");
+			
+				op.Connect(consMode);
+			 }
          }
-
+ 
          // setup the operator
          addRefArchive(file);
          op.PutParameterValue(L"path",file);
@@ -955,7 +991,6 @@ CStatus alembic_create_item_Invoke
          returnVal = op.GetRef();
 
          // if we are not a topo op, let's connect to the timecontrol
-         CustomProperty timeControlProp;
          bool receivesExpression = isAnimated;
          if(itemType == alembicItemType_crvlist_topo)
             receivesExpression = false;
@@ -972,24 +1007,22 @@ CStatus alembic_create_item_Invoke
 
          if(receivesExpression)
          {
+			 ESS_PROFILE_SCOPE("alembic_create_item_Invoke create_the_operator receivesExpression");
+
             // check if we have a timecontrol in the args
-            CRef timeControlRef;
-            if(args.GetCount() > 0)
-               timeControlRef = args[0];
-            timeControlProp = timeControlRef;
-            if(timeControlProp.IsValid())
+             if(timeControlProp.IsValid())
             {
-               CValue setExprReturn;
-               CValueArray setExprArgs(2);
-               setExprArgs[0] = op.GetFullName()+L".time";
-               setExprArgs[1] = timeControlProp.GetFullName()+L".current * "+timeControlProp.GetFullName()+L".factor + "+timeControlProp.GetFullName()+L".offset";
-               Application().ExecuteCommand(L"SetExpr",setExprArgs,setExprReturn);
+				 //setExprArgs[0] = op.GetFullName()+L".time";
+				 op.GetParameter("time").AddExpression( expressionString );
+				//Application().ExecuteCommand(L"SetExpr",setExprArgs,setExprReturn);
             }
          }
 
          // if we are a polygon mesh topo op, oh dear
          if(itemType == alembicItemType_polymesh_topo && args.GetCount() > 3)
          {
+			 ESS_PROFILE_SCOPE("alembic_create_item_Invoke create_the_operator polymesh_topo");
+
             bool importClusters = args[1];
             bool importNormals = args[2];
             bool importUvs = args[3];
@@ -1006,7 +1039,8 @@ CStatus alembic_create_item_Invoke
             PolygonMesh meshGeo = Primitive(realTarget).GetGeometry();
             if(importClusters)
             {
-               std::vector<std::string> faceSetNames;
+        	  ESS_PROFILE_SCOPE("alembic_create_item_Invoke create_the_operator polymesh_topo importClusters");
+		       std::vector<std::string> faceSetNames;
                if(abcMesh.valid())
                   abcMesh.getSchema().getFaceSetNames(faceSetNames);
                else
@@ -1034,7 +1068,8 @@ CStatus alembic_create_item_Invoke
             }
             if(importNormals && abcMesh.valid())
             {
-               Alembic::AbcGeom::IN3fGeomParam meshNormalsParam = abcMesh.getSchema().getNormalsParam();
+              ESS_PROFILE_SCOPE("alembic_create_item_Invoke create_the_operator polymesh_topo importNormals");
+		       Alembic::AbcGeom::IN3fGeomParam meshNormalsParam = abcMesh.getSchema().getNormalsParam();
                if(meshNormalsParam.valid())
                {
                   Alembic::Abc::N3fArraySamplePtr meshNormals = meshNormalsParam.getExpandedValue(0).getVals();
@@ -1111,7 +1146,8 @@ CStatus alembic_create_item_Invoke
             }
             if(importUvs)
             {
-               Alembic::AbcGeom::IV2fGeomParam meshUVsParam;
+                ESS_PROFILE_SCOPE("alembic_create_item_Invoke create_the_operator polymesh_topo importUvs");
+				Alembic::AbcGeom::IV2fGeomParam meshUVsParam;
                if(abcMesh.valid())
                   meshUVsParam = abcMesh.getSchema().getUVsParam();
                else
@@ -1264,7 +1300,8 @@ CStatus alembic_create_item_Invoke
       }
       case alembicItemType_curves:
       {
-         // let's setup the ICE tree to load it
+         ESS_PROFILE_SCOPE("alembic_create_item_Invoke create_the_operator alembicItemType_curves");
+		// let's setup the ICE tree to load it
          ICETree iceTree;
          CValueArray treeArgs(2);
          CValue treeReturnVal;
@@ -1309,7 +1346,8 @@ CStatus alembic_create_item_Invoke
       }
       case alembicItemType_points:
       {
-         // let's setup the ICE tree to load it
+         ESS_PROFILE_SCOPE("alembic_create_item_Invoke create_the_operator alembicItemType_points");
+				// let's setup the ICE tree to load it
          ICETree iceTree;
          CValueArray treeArgs(2);
          CValue treeReturnVal;
@@ -1425,7 +1463,8 @@ CStatus alembic_create_item_Invoke
       }
       case alembicItemType_metadata:
       {
-         Alembic::Abc::ICompoundProperty abcCompound = getCompoundFromObject(abcObject);
+			ESS_PROFILE_SCOPE("alembic_create_item_Invoke create_the_operator alembicItemType_metadata");
+		Alembic::Abc::ICompoundProperty abcCompound = getCompoundFromObject(abcObject);
          if ( abcCompound.getPropertyHeader( ".metadata" ) == NULL )
             break;
 
@@ -1464,7 +1503,8 @@ CStatus alembic_create_item_Invoke
       }
       case alembicItemType_timecontrol:
       {
-         CValueArray setExprArgs(2);
+         ESS_PROFILE_SCOPE("alembic_create_item_Invoke create_the_operator alembicItemType_timecontrol");
+		 CValueArray setExprArgs(2);
          CValue setExprReturn;
          CustomProperty timeControl = (CustomProperty) x3d.AddProperty(L"alembic_timecontrol");
 
@@ -1479,7 +1519,8 @@ CStatus alembic_create_item_Invoke
       }
       case alembicItemType_standin:
       {
-         // create an arnold property on the x3d if we don't have it yet!
+         ESS_PROFILE_SCOPE("alembic_create_item_Invoke create_the_operator alembicItemType_standin");
+		 // create an arnold property on the x3d if we don't have it yet!
          if(!hasStandinSupport())
          {
             Application().LogMessage(L"[ExocortexAlembic] There is no standin support. Please use a renderer supported standins.",siErrorMsg);
@@ -1607,11 +1648,11 @@ void createTransform( Alembic::Abc::IObject& iObj, CRef& parentNode, CRef& newNo
 
       if(nbTransformChildren == iObj.getNumChildren())
       {
-
-         Model model;
+	     Model model;
+		 CRef nodeRef;
          if(attachToExisting)
          {
-		      ESS_PROFILE_SCOPE("attachToExisting");
+		   ESS_PROFILE_SCOPE("attachToExisting");
             CRef modelRef;
             modelRef.Set(getFullNameFromIdentifier(iObj.getFullName()));
             model = modelRef;
@@ -1620,24 +1661,30 @@ void createTransform( Alembic::Abc::IObject& iObj, CRef& parentNode, CRef& newNo
                model.ResetObject();
 
             newNode.Set(getFullNameFromIdentifier(iObj.getFullName()));
+
+			nodeRef = model.GetRef();
          }
          if(!model.IsValid())
          {
-            CRefArray children;
-            parentX3DObject.AddModel(children,name,model);
-            nameMapAdd(iObj.getFullName().c_str(),model.GetFullName());
+			 Null null;
+			 CRef nullRef;
+			 nullRef.Set(getFullNameFromIdentifier(iObj.getFullName()));
+			null = nullRef;
+            parentX3DObject.AddNull(name,null);
+            nameMapAdd(iObj.getFullName().c_str(),null.GetFullName());
             //newNode = model.GetActivePrimitive().GetRef();
             newNode.Set(getFullNameFromIdentifier(iObj.getFullName()));
+			nodeRef = null.GetRef();
          }
 
          // load metadata
-         alembic_create_item_Invoke(L"alembic_metadata",model.GetRef(),filename,iObj.getFullName().c_str(),attachToExisting,createItemArgs);
+         alembic_create_item_Invoke(L"alembic_metadata",nodeRef,filename,iObj.getFullName().c_str(),attachToExisting,createItemArgs);
 
          // load xform
-         alembic_create_item_Invoke(L"alembic_xform",model.GetRef(),filename,iObj.getFullName().c_str(),attachToExisting,createItemArgs);
+         alembic_create_item_Invoke(L"alembic_xform",nodeRef,filename,iObj.getFullName().c_str(),attachToExisting,createItemArgs);
          
          // load visibility
-         alembic_create_item_Invoke(L"alembic_visibility",model.GetRef(),filename,iObj.getFullName().c_str(),attachToExisting,createItemArgs);
+         alembic_create_item_Invoke(L"alembic_visibility",nodeRef,filename,iObj.getFullName().c_str(),attachToExisting,createItemArgs);
       }
    }
 }
@@ -2409,128 +2456,6 @@ ESS_CALLBACK_START(alembic_import_Execute, CRef&)
    prog.PutVisible(false);
 
 
-  // int intermittentUpdateInterval = std::max( (int)(objects.size() / 100), (int)1 );
-  // for(size_t i=1;i<objects.size();i++)
-  // {
-  //    if(identifierMap.size() > 0)
-  //    {
-  //       if(identifierMap.find(objects[i].getFullName()) == identifierMap.end())
-  //          continue;
-  //    }
-
-	 // if( i % intermittentUpdateInterval == 0 ) {
-		//prog.PutCaption(L"Importing "+CString(objects[i].getFullName().c_str())+L" ...");
-	 // }
-
-  //    // get the parent and the object's name
-  //    CString name = truncateName(objects[i].getName().c_str());
-  //    Alembic::Abc::IObject parent = objects[i].getParent();
-
-  //    // check if we are looking at a transformcache file
-  //    if(nbTransforms == objects.size())
-  //    {
-  //       // determine if we are a top level object
-  //       if(!Alembic::AbcGeom::IXform::matches(parent.getMetaData()))
-  //       {
-  //          // this is a model
-  //          transformCacheModelName = name;
-  //          Model model;
-  //          if(attachToExisting)
-  //          {
- 	//		   ESS_PROFILE_SCOPE("attachToExisting");
-  //            CRef modelRef;
-  //             modelRef.Set(transformCacheModelName);
-  //             model = modelRef;
-
-  //             if(!model.GetType().IsEqualNoCase(L"#model"))
-  //                model.ResetObject();
-  //          }
-  //          if(!model.IsValid())
-  //          {
-  //             CRefArray children;
-  //             Application().GetActiveSceneRoot().AddModel(children,transformCacheModelName,model);
-  //             nameMapAdd(objects[i].getFullName().c_str(),model.GetFullName());
-  //          }
-  //          transformCacheModel = model;
-
-  //          // load metadata
-  //          alembic_create_item_Invoke(L"alembic_metadata",model.GetRef(),filename,objects[i].getFullName().c_str(),attachToExisting,createItemArgs);
-
-  //          // load xform
-  //          alembic_create_item_Invoke(L"alembic_xform",model.GetRef(),filename,objects[i].getFullName().c_str(),attachToExisting,createItemArgs);
-
-  //          // load visibility
-  //          alembic_create_item_Invoke(L"alembic_visibility",model.GetRef(),filename,objects[i].getFullName().c_str(),attachToExisting,createItemArgs);
-  //       }
-  //       else
-  //       {
-  //          Null null;
-  //          if(attachToExisting)
-  //          {
-		//	   ESS_PROFILE_SCOPE("attachToExisting");
-  //             CRef nullRef;
-  //             nullRef.Set(transformCacheModelName+L"."+name);
-  //             null = nullRef;
-  //          }
-  //          if(!null.IsValid())
-  //          {
-  //             // try to get the parent
-  //             CString parentName = truncateName(parent.getName().c_str());
-  //             if(parentName == transformCacheModelName)
-  //                transformCacheModel.AddNull(name,null);
-  //             else
-  //             {
-  //                CRef parentRef;
-  //                parentRef.Set(transformCacheModelName+L"."+parentName);
-  //                Application().LogMessage(name+L" -> "+transformCacheModelName+L"."+parentName);
-  //                X3DObject parentObj = parentRef;
-  //                if(parentObj.IsValid())
-  //                   parentObj.AddNull(name,null);
-  //                else
-  //                   transformCacheModel.AddNull(name,null);
-  //             }
-  //             nameMapAdd(objects[i].getFullName().c_str(),null.GetFullName());
-  //          }
-
-  //          // load metadata
-  //          alembic_create_item_Invoke(L"alembic_metadata",null.GetRef(),filename,objects[i].getFullName().c_str(),attachToExisting,createItemArgs);
-
-  //          // load xform
-  //          alembic_create_item_Invoke(L"alembic_xform",null.GetRef(),filename,objects[i].getFullName().c_str(),attachToExisting,createItemArgs);
-
-  //          // load visibility
-  //          alembic_create_item_Invoke(L"alembic_visibility",null.GetRef(),filename,objects[i].getFullName().c_str(),attachToExisting,createItemArgs);
-  //       }
-  //       continue;
-  //    }
-
-  //    // access the model to create content in!
-  //    X3DObject parentX3DObject = Application().GetActiveSceneRoot();
-
-  //    // now let's see what we have here
-
-  //    //else if(parent.valid())
-  //    //{
-  //    //   // if we are not a transform, check for our model
-  //    //   if(Alembic::AbcGeom::IXform::matches(parent.getMetaData()))
-  //    //   {
-  //    //      // check if the transform has a parent as well!
-  //    //      if(Alembic::AbcGeom::IXform::matches(parent.getParent().getMetaData()))
-  //    //      {
-  //    //         // this is a model, so let's get it
-  //    //         parentX3DObject = getRefFromIdentifier(parent.getParent().getFullName());
-  //    //      }
-  //    //   }
-  //    //}
-
-  //    //createShape( objects[i], parentX3DObject, filename, attachToExisting, importStandins, importBboxes, createItemArgs);
-
-  //    if(prog.IsCancelPressed())
-  //       break;
-  //    prog.Increment();
-  // }
-
-  // prog.PutVisible(false);
 
    delete(archive);
 
@@ -2562,6 +2487,15 @@ ESS_CALLBACK_START(alembic_MenuPathManager_Init,CRef&)
 	oMenu = ctxt.GetSource();
 	MenuItem oNewItem;
 	oMenu.AddCommandItem(L"Alembic Path Manager",L"alembic_path_manager",oNewItem);
+	return CStatus::OK;
+ESS_CALLBACK_END
+
+ESS_CALLBACK_START(alembic_ProfileStats_Init,CRef&)
+	Context ctxt( in_ctxt );
+	Menu oMenu;
+	oMenu = ctxt.GetSource();
+	MenuItem oNewItem;
+	oMenu.AddCommandItem(L"Alembic Profile Stats",L"alembic_profile_stats",oNewItem);
 	return CStatus::OK;
 ESS_CALLBACK_END
 
@@ -2679,7 +2613,7 @@ ESS_CALLBACK_START(alembic_import_settings_Define, CRef&)
    {
       oCustomProperty.AddParameter(L"standins",CValue::siInt4,siPersistable,L"",L"",0,0,10,0,10,oParam);
    }
-   oCustomProperty.AddParameter(L"attach",CValue::siBool,siPersistable,L"",L"",1,0,1,0,1,oParam);
+   oCustomProperty.AddParameter(L"attach",CValue::siBool,siPersistable,L"",L"",0,0,1,0,1,oParam);
 	return CStatus::OK;
 ESS_CALLBACK_END
 
@@ -2899,6 +2833,22 @@ ESS_CALLBACK_START(alembic_standinop_Update, CRef&)
    //prop.PutParameterValue(L"deferredLoading",true);
 
    return CStatus::OK;
+ESS_CALLBACK_END
+
+
+ESS_CALLBACK_START(alembic_profile_stats_Init,CRef&)
+	Context ctxt( in_ctxt );
+	Command oCmd;
+	oCmd = ctxt.GetSource();
+	oCmd.PutDescription(L"");
+	oCmd.EnableReturnValue(true);
+
+	return CStatus::OK;
+ESS_CALLBACK_END
+
+ESS_CALLBACK_START(alembic_profile_stats_Execute, CRef&)
+    ESS_PROFILE_REPORT();
+	return CStatus::OK;
 ESS_CALLBACK_END
 
 ESS_CALLBACK_START(alembic_path_manager_Init,CRef&)

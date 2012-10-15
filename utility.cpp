@@ -347,23 +347,33 @@ CStatus alembicOp_Define( CRef& in_ctxt )
    CustomOperator oCustomOperator;
 
    Parameter oParam;
-   CRef oPDef;
+   static CRef oPDef0;
+   static CRef oPDef1;
+   static CRef oPDef2;
+   static CRef oPDef3;
+   static CRef oPDef4;
+   static CRef oPDef5;
+   static CRef oPDef6;
+	static bool s_initialized = false;
 
    Factory oFactory = Application().GetFactory();
    oCustomOperator = ctxt.GetSource();
 
-   oPDef = oFactory.CreateParamDef(L"muted",CValue::siBool,siAnimatable | siPersistable,L"muted",L"muted",0,0,1,0,1);
-   oCustomOperator.AddParameter(oPDef,oParam);
-   oPDef = oFactory.CreateParamDef(L"time",CValue::siFloat,siAnimatable | siPersistable,L"time",L"time",1,-100000,100000,0,1);
-   oCustomOperator.AddParameter(oPDef,oParam);
-   oPDef = oFactory.CreateParamDef(L"path",CValue::siString,siReadOnly | siPersistable,L"path",L"path",L"",L"",L"",L"",L"");
-   oCustomOperator.AddParameter(oPDef,oParam);
-   oPDef = oFactory.CreateParamDef(L"identifier",CValue::siString,siReadOnly | siPersistable,L"identifier",L"identifier",L"",L"",L"",L"",L"");
-   oCustomOperator.AddParameter(oPDef,oParam);
-   oPDef = oFactory.CreateParamDef(L"renderpath",CValue::siString,siReadOnly | siPersistable,L"renderpath",L"renderpath",L"",L"",L"",L"",L"");
-   oCustomOperator.AddParameter(oPDef,oParam);
-   oPDef = oFactory.CreateParamDef(L"renderidentifier",CValue::siString,siReadOnly | siPersistable,L"renderidentifier",L"renderidentifier",L"",L"",L"",L"",L"");
-   oCustomOperator.AddParameter(oPDef,oParam);
+   if( ! s_initialized ) {
+	   oPDef0 = oFactory.CreateParamDef(L"muted",CValue::siBool,siAnimatable | siPersistable,L"muted",L"muted",0,0,1,0,1);
+	   oPDef1 = oFactory.CreateParamDef(L"time",CValue::siFloat,siAnimatable | siPersistable,L"time",L"time",1,-100000,100000,0,1);
+	   oPDef2 = oFactory.CreateParamDef(L"path",CValue::siString,siReadOnly | siPersistable,L"path",L"path",L"",L"",L"",L"",L"");
+	   oPDef3 = oFactory.CreateParamDef(L"identifier",CValue::siString,siReadOnly | siPersistable,L"identifier",L"identifier",L"",L"",L"",L"",L"");
+	   oPDef4 = oFactory.CreateParamDef(L"renderpath",CValue::siString,siReadOnly | siPersistable,L"renderpath",L"renderpath",L"",L"",L"",L"",L"");
+	   oPDef5 = oFactory.CreateParamDef(L"renderidentifier",CValue::siString,siReadOnly | siPersistable,L"renderidentifier",L"renderidentifier",L"",L"",L"",L"",L"");
+   }
+
+   oCustomOperator.AddParameter(oPDef0,oParam);
+   oCustomOperator.AddParameter(oPDef1,oParam);
+   oCustomOperator.AddParameter(oPDef2,oParam);
+   oCustomOperator.AddParameter(oPDef3,oParam);
+   oCustomOperator.AddParameter(oPDef4,oParam);
+   oCustomOperator.AddParameter(oPDef5,oParam);
 
    oCustomOperator.PutAlwaysEvaluate(false);
    oCustomOperator.PutDebug(0);
@@ -376,9 +386,8 @@ CStatus alembicOp_DefineLayout( CRef& in_ctxt )
    ESS_PROFILE_SCOPE("alembicOp_DefineLayout");
    Context ctxt( in_ctxt );
    PPGLayout oLayout;
-   PPGItem oItem;
+   //PPGItem oItem;
    oLayout = ctxt.GetSource();
-   oLayout.Clear();
    oLayout.AddItem(L"muted",L"Muted");
    oLayout.AddItem(L"time",L"Time");
    oLayout.AddGroup(L"Preview");
