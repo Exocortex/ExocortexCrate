@@ -25,13 +25,25 @@ using namespace XSI;
 
 
 void logError( const char* msg ) {
+#ifdef __EXOCORTEX_CORE_SERVICES_API_H
+	Exocortex::essLogError( msg );
+#else
 	XSI::Application().LogMessage( msg, XSI::siErrorMsg );
+#endif
 }
 void logWarning( const char* msg ) {
+#ifdef __EXOCORTEX_CORE_SERVICES_API_H
+	Exocortex::essLogWarning( msg );
+#else
 	XSI::Application().LogMessage( msg, XSI::siWarningMsg );
+#endif
 }
 void logInfo( const char* msg ) {
+#ifdef __EXOCORTEX_CORE_SERVICES_API_H
+	Exocortex::essLogInfo( msg );
+#else
 	XSI::Application().LogMessage( msg, XSI::siInfoMsg );
+#endif
 }
 
 std::string getIdentifierFromRef(CRef in_Ref, bool includeHierarchy)

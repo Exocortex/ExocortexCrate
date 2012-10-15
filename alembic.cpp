@@ -1645,25 +1645,25 @@ void createTransform( Alembic::Abc::IObject& iObj, CRef& parentNode, CRef& newNo
             nbTransformChildren++;
       }
 
-      if(nbTransformChildren == iObj.getNumChildren())
-      {
-	     Model model;
+      //if(nbTransformChildren == iObj.getNumChildren())
+     // {
+	     X3DObject x3dobject;
 		 CRef nodeRef;
          if(attachToExisting)
          {
 		   ESS_PROFILE_SCOPE("attachToExisting");
             CRef modelRef;
             modelRef.Set(getFullNameFromIdentifier(iObj.getFullName()));
-            model = modelRef;
+            x3dobject = modelRef;
 
-            if(!model.GetType().IsEqualNoCase(L"#model"))
-               model.ResetObject();
+            if(!x3dobject.GetType().IsEqualNoCase(L"#model"))
+               x3dobject.ResetObject();
 
             newNode.Set(getFullNameFromIdentifier(iObj.getFullName()));
 
-			nodeRef = model.GetRef();
+			nodeRef = x3dobject.GetRef();
          }
-         if(!model.IsValid())
+         if(!x3dobject.IsValid())
          {
 			 Null null;
 			 CRef nullRef;
@@ -1684,7 +1684,7 @@ void createTransform( Alembic::Abc::IObject& iObj, CRef& parentNode, CRef& newNo
          
          // load visibility
          alembic_create_item_Invoke(L"alembic_visibility",nodeRef,filename,iObj.getFullName().c_str(),attachToExisting,createItemArgs);
-      }
+      //}
    }
 }
 
@@ -1693,6 +1693,8 @@ void createShape( Alembic::Abc::IObject& iObj, CRef& parentNode, CRef& newNode, 
    X3DObject parentX3DObject(parentNode);
    CString name = truncateName(iObj.getName().c_str());
    Alembic::Abc::IObject parent = iObj.getParent();
+
+   //EC_LOG_INFO( "Object name: " << name.GetAsciiString() );
 
    // after dealing with transforms, let's deal with all shape types
    if(Alembic::AbcGeom::ICamera::matches(iObj.getMetaData()))
@@ -1907,7 +1909,7 @@ void createShape( Alembic::Abc::IObject& iObj, CRef& parentNode, CRef& newNode, 
       if(!nurbsObj.IsValid())
       {
          // warn
-         Application().LogMessage(L"[ExocortexAlembic] Skipping nurbs '"+name+L"', nurbs object not found in scene.",siWarningMsg);
+		  EC_LOG_ERROR("[ExocortexAlembic] Encountered Nurbs Surface '" << name.GetAsciiString() << "', new nurbs surfaces are not supported, only attach to existing works with Nurbs.");
       }
       else
       {
@@ -1934,7 +1936,7 @@ void createShape( Alembic::Abc::IObject& iObj, CRef& parentNode, CRef& newNode, 
       if(curveSample.getType() != Alembic::AbcGeom::ALEMBIC_VERSION_NS::kLinear &&
          curveSample.getType() != Alembic::AbcGeom::ALEMBIC_VERSION_NS::kCubic)
       {
-         Application().LogMessage(L"[ExocortexAlembic] Skipping curve '"+name+L"', invalid curve type.",siWarningMsg);
+         EC_LOG_ERROR("[ExocortexAlembic] Encounted curve '" << name.GetAsciiString() << "' that is not linear and not cubic, not supported.");
          return;
       }
 
@@ -2442,7 +2444,7 @@ ESS_CALLBACK_START(alembic_import_Execute, CRef&)
       CRef newNode;
 		if(bCreateNullNode){
 
-         createTransform( iObj, parentNode, newNode, filename, attachToExisting, createItemArgs);
+            createTransform( iObj, parentNode, newNode, filename, attachToExisting, createItemArgs);
 		}
 		else{
 			if(nMergedGeomNodeIndex != -1){//we are merging, so look at the child geometry node
@@ -2452,8 +2454,9 @@ ESS_CALLBACK_START(alembic_import_Execute, CRef&)
 			else{ //geometry node(s) under a dummy node 
 
             //TODO: not sure if I handle the transforms correctly in this case
-            return CStatus::Abort;
-				//createShape( iObj, parentNode, newNode, filename, attachToExisting, importStandins, importBboxes, false, createItemArgs);
+			//EC_LOG_ERROR( "[ExocortexAlembic] Merged geometry node index not -1" );
+            //return CStatus::Abort;
+				createShape( iObj, parentNode, newNode, filename, attachToExisting, importStandins, importBboxes, false, createItemArgs);
 			}
 
 		}
@@ -2478,6 +2481,7 @@ ESS_CALLBACK_START(alembic_import_Execute, CRef&)
 	      }
       }
       else{
+  		 EC_LOG_ERROR( "[ExocortexAlembic] newNode.isValid() is false" );
          return CStatus::Abort;
       }
 
