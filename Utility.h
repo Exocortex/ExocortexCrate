@@ -86,4 +86,17 @@ class AlembicProfileStatsCommand : public MPxCommand
     static void* creator() { return new AlembicProfileStatsCommand(); }
 };
 
+class AlembicProfileResetCommand: public MPxCommand
+{
+  public:
+    AlembicProfileResetCommand() {}
+    virtual ~AlembicProfileResetCommand()  {}
+
+    virtual bool isUndoable() const { return false; }
+    MStatus doIt(const MArgList& args);
+
+    static MSyntax createSyntax();
+    static void* creator() { return new AlembicProfileResetCommand(); }
+};
+
 #endif  // _FOUNDATION_H_

@@ -19,6 +19,7 @@ global proc exocortexAlembicLoadMenu(string $pluginName)
   menuItem -p $showMyMenuCtrl -l "Alembic Import..." -c ($import_instruction);
   menuItem -p $showMyMenuCtrl -l "Alembic Export..." -c ($export_instruction);
   menuItem -p $showMyMenuCtrl -l "Alembic Attach..." -c ($attach_instruction);
+  menuItem -p $showMyMenuCtrl -l "Print Profiler Statistics" -c ExocortexAlembic_profileStats;
 }
 
 global proc exocortexAlembicUnloadMenu()

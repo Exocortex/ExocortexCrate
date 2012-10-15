@@ -43,6 +43,7 @@ global proc exocortexAlembicExport(string $filename,         string $exported_ob
 
 global proc exocortexAlembicImport(string $filename, int $importNormals, int $importUvs, int $importFaceSets, string $importVisibility, int $importAttach)
 {
+  ExocortexAlembic_profileReset;
   ExocortexAlembic_profileBegin -f MEL_exocortexAlembicImport;
 
   // query the content of the file

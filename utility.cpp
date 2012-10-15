@@ -296,6 +296,7 @@ std::map<std::string, boost::shared_ptr<Profiler> > nameToProfiler;
 
 MStatus AlembicProfileBeginCommand::doIt(const MArgList& args) {
    MStatus status = MS::kSuccess;
+#ifdef ESS_PROFILING
    MArgParser argData(syntax(), args, &status);
 
    if(!argData.isFlagSet("fileNameArg"))
@@ -309,7 +310,6 @@ MStatus AlembicProfileBeginCommand::doIt(const MArgList& args) {
    MString fileName = argData.flagArgumentString("fileNameArg",0);
 
    std::string strFileName( fileName.asChar() );
-#ifdef ESS_PROFILING
 
    if( nameToProfiler.find( strFileName ) == nameToProfiler.end() ) {
 		boost::shared_ptr<Profiler> profiler( new Profiler( strFileName.c_str() ) );
@@ -335,6 +335,7 @@ MSyntax AlembicProfileEndCommand::createSyntax()
 MStatus AlembicProfileEndCommand::doIt(const MArgList& args) {
 
    MStatus status = MS::kSuccess;
+#ifdef ESS_PROFILING
    MArgParser argData(syntax(), args, &status);
 
    if(!argData.isFlagSet("fileNameArg"))
@@ -348,7 +349,6 @@ MStatus AlembicProfileEndCommand::doIt(const MArgList& args) {
    MString fileName = argData.flagArgumentString("fileNameArg",0);
 
     std::string strFileName( fileName.asChar() );
-#ifdef ESS_PROFILING
    if( nameToProfiler.find( strFileName ) != nameToProfiler.end() ) {
 		nameToProfiler[ strFileName ]->stop();
    }
@@ -357,8 +357,6 @@ MStatus AlembicProfileEndCommand::doIt(const MArgList& args) {
    return status;
 
 }
-
-
 
 MSyntax AlembicProfileStatsCommand::createSyntax()
 {
@@ -376,4 +374,22 @@ MStatus AlembicProfileStatsCommand::doIt(const MArgList& args) {
    ESS_PROFILE_REPORT();
 
    return status;
+}
+
+
+MSyntax AlembicProfileResetCommand::createSyntax()
+{
+   MSyntax syntax;
+   syntax.enableQuery(false);
+   syntax.enableEdit(false);
+
+   return syntax;
+}
+
+MStatus AlembicProfileResetCommand::doIt(const MArgList& args)
+{
+#ifdef ESS_PROFILING
+   nameToProfiler.clear();
+#endif
+   return MS::kSuccess;
 }
