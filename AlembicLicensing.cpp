@@ -21,6 +21,19 @@ int GetAlembicLicense() {
 		return s_alembicLicense;
 	}
 
+#if defined( EXOCORTEX_BETA_EXPIRY_DATE )
+		{
+			#pragma message( "Exocortex Licensing mode: Fixed expiry date" )
+			time_t now = time(NULL);
+			if( now <= EXOCORTEX_BETA_EXPIRY_DATE ) {  //http://unixtime-converter.com/
+				static string pluginName(PLUGIN_NAME);
+				ESS_LOG_WARNING( "Expiry date licensing is being used for " << pluginName );
+				s_alembicLicense = ALEMBIC_WRITER_LICENSE;
+				return s_alembicLicense;
+			}
+		}
+#endif // Exocortex_BETA_EXPIRY_DATE
+
 	bool isWriterLicense = true;//XSI::Application().IsInteractive();
 
 	bool isForceReader = ( getenv("EXOCORTEX_ALEMBIC_FORCE_READER") != NULL );

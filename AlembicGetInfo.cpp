@@ -2,6 +2,7 @@
 #include "CommonMeshUtilities.h"
 
 #include <sstream>
+#include <set>
 
 using namespace std;
 
@@ -37,15 +38,25 @@ struct infoTuple
   MString name;
   int nbSample;
   int parentID;
-  int childID;
+  std::vector<int> childID;
   MString data;
 
-  infoTuple(void): valid(false), identifier(""), type("Root"), name(""), nbSample(0), parentID(-1), childID(-1), data("") {}
+  infoTuple(void): valid(false), identifier(""), type("Root"), name(""), nbSample(0), parentID(-1), childID(), data("") {}
 
   MString toInfo(void) const
   {
     stringstream str;
-    str << "|" << nbSample << "|" << parentID << "|" << childID;
+    str << "|" << nbSample << "|" << parentID << "|";
+
+    if (childID.empty())
+      str << "-1";
+    else
+    {
+      std::vector<int>::const_iterator beg = childID.begin();
+      str << (*beg);
+      for (++beg; beg != childID.end(); ++beg)
+        str << "." << (*beg);
+    }
 
     MString ret = identifier + "|" + type + "|" + name;
     ret += str.str().c_str();
@@ -90,6 +101,8 @@ MStatus AlembicGetInfoCommand::doIt(const MArgList & args)
    // get the root object
    std::vector<Alembic::Abc::IObject> objects;
    std::vector<infoTuple> infoVector;
+   std::set<std::string> uniqueIdentifiers;
+
    objects.push_back(archive->getTop());
    infoVector.push_back(infoTuple());
 
@@ -103,10 +116,17 @@ MStatus AlembicGetInfoCommand::doIt(const MArgList & args)
          Alembic::Abc::IObject child = objects[i].getChild(j);
          objects.push_back(child);
          infoVector.push_back(infoTuple());
-
          infoTuple &iTuple = infoVector[infoVector.size()-1];
 
-         iTuple.identifier = child.getFullName().c_str();
+         // check if the name is unique!
+         std::string fullName = child.getFullName();
+         if (uniqueIdentifiers.find(fullName) != uniqueIdentifiers.end())
+           iTuple.identifier = "";
+         else
+         {
+           uniqueIdentifiers.insert(fullName);
+           iTuple.identifier = fullName.c_str();
+         }
          iTuple.type = getTypeFromObject(child);
          iTuple.name = child.getName().c_str();
          iTuple.nbSample = getNumSamplesFromObject(child);
@@ -117,7 +137,7 @@ MStatus AlembicGetInfoCommand::doIt(const MArgList & args)
            if (infoVector[i].type == "Xform")
              infoVector[i].type = "Group";             
          }
-         infoVector[i].childID = objects.size()-1;
+         infoVector[i].childID.push_back(objects.size()-1);
 
          // additional data fields
          MString data;

@@ -45,6 +45,8 @@ global proc exocortexAlembicImport(string $filename, int $importNormals, int $im
   ExocortexAlembic_profileBegin -f MEL_exocortexAlembicImport;
 
   // query the content of the file
+  ExocortexAlembic_profileBegin -f MEL_exocortexAlembicImport_Init;
+
   string $infos[] = `ExocortexAlembic_getInfo -f $filename`;
   string $identifiers[];
   string $types[];
@@ -54,7 +56,7 @@ global proc exocortexAlembicImport(string $filename, int $importNormals, int $im
   string $datas[];
   int $nbSamples[];
   int $parentID[];
-  int $childID[];
+  string $childIDs[];
   for($i=0; $i<size($infos); $i=$i+1)
   {
     // tokenize the basic arguments
@@ -73,33 +75,15 @@ global proc exocortexAlembicImport(string $filename, int $importNormals, int $im
       $nbTransforms = $nbTransforms + 1;
     string $name = $tokens[2];
     string $node = `ExocortexAlembic_getNodeFromIdentifier -i $identifier`;
-    
-    ExocortexAlembic_profileBegin -f MEL_exocortexAlembicImport_A;
-
-    // try to find the identifier in the map
-    int $skip = 0;
-    for($j=0;$j<size($identifiers);$j=$j+1)
-    {
-      if($identifiers[$j] == $identifier)
-      {
-        print("Skipping duplicate identifier "+$identifier+".");
-        $skip = 1;
-        break;
-      }
-    }
-    ExocortexAlembic_profileEnd -f MEL_exocortexAlembicImport_A;
-
-    if($skip)
-      break;
 
     // push the identifier to our map      
     $identifiers[size($identifiers)] = $identifier;
     $types[size($types)] = $type;
-    $names[size($names)] = $tokens[2];
+    $names[size($names)] = `ExocortexAlembic_createValidName -i $tokens[2]`;
     $nodes[size($nodes)] = $node;
     $nbSamples[size($nbSamples)] = $tokens[3];
     $parentID[size($parentID)] = $tokens[4];
-    $childID[size($childID)] = $tokens[5];
+    $childIDs[size($childIDs)] = $tokens[5];
     
     // parse the forth token
     string $data = "";
@@ -107,13 +91,8 @@ global proc exocortexAlembicImport(string $filename, int $importNormals, int $im
       $data = $tokens[6];
     $datas[size($datas)] = $data;
   }
-  
-  // now we need to determine the group types
-  // group are alembic are xforms which have xforms
-  // below them. for that we can loop on all identifiers
-  // and find any identifier below it of type xform
-  ExocortexAlembic_profileBegin -f MEL_exocortexAlembicImport_B;
-  ExocortexAlembic_profileEnd -f MEL_exocortexAlembicImport_B;
+
+  ExocortexAlembic_profileEnd -f MEL_exocortexAlembicImport_Init;
 
   // let's create the time node and file node
   $timeControl = exocortexCreateOrReuseNode("ExocortexAlembicTimeControl","ExocortexAlembicTimeControl",$importAttach,0,0);
@@ -129,6 +108,8 @@ global proc exocortexAlembicImport(string $filename, int $importNormals, int $im
     $objects[$i] = "";
   for($i=(size($identifiers)-1);$i>=0;$i=$i-1)
   {
+    if ($identifiers[$i] == "")
+      continue;
     string $parts[];
     tokenize $identifiers[$i] "/" $parts;
     string $name = $names[$i];
@@ -154,6 +135,7 @@ global proc exocortexAlembicImport(string $filename, int $importNormals, int $im
 
     if($types[$i] == "PolyMesh")
     {
+      ExocortexAlembic_profileBegin -f MEL_exocortexAlembicImport_PolyMesh;
       $shape = exocortexCreateOrReuseNode($name,"mesh",$importAttach,0,$purepointcache);
       if($shape == "")
       {
@@ -186,9 +168,11 @@ global proc exocortexAlembicImport(string $filename, int $importNormals, int $im
           $reader = $readers[0];
         }
       }
+      ExocortexAlembic_profileEnd -f MEL_exocortexAlembicImport_PolyMesh;
     }
     else if($types[$i] == "SubD")
     {
+      ExocortexAlembic_profileBegin -f MEL_exocortexAlembicImport_SubD;
       $shape = exocortexCreateOrReuseNode($name,"subdiv",$importAttach,0,$purepointcache);
       if($shape == "")
       {
@@ -221,9 +205,11 @@ global proc exocortexAlembicImport(string $filename, int $importNormals, int $im
           $reader = $readers[0];
         }
       }
+      ExocortexAlembic_profileEnd -f MEL_exocortexAlembicImport_SubD;
     }
     else if($types[$i] == "Curves")
     {
+      ExocortexAlembic_profileBegin -f MEL_exocortexAlembicImport_Curves;
       if($hair == 0)
       {
         $shape = exocortexCreateOrReuseNode($name,"nurbsCurve",$importAttach,0,0);
@@ -243,9 +229,11 @@ global proc exocortexAlembicImport(string $filename, int $importNormals, int $im
         $shape = exocortexCreateOrReuseNode($name,"ExocortexAlembicCurvesLocator",$importAttach,0,0);
         $reader = $shape;
       }
+      ExocortexAlembic_profileEnd -f MEL_exocortexAlembicImport_Curves;
     }
     else if($types[$i] == "Points")
     {
+      ExocortexAlembic_profileBegin -f MEL_exocortexAlembicImport_Points;
       $shape = exocortexCreateOrReuseNode($name,"particle",$importAttach,0,0);
       $reader = exocortexCreateOrReuseNode($shape+".newParticles[0]","ExocortexAlembicPoints",$importAttach,1,1);
       if($reader == "")
@@ -260,9 +248,11 @@ global proc exocortexAlembicImport(string $filename, int $importNormals, int $im
       exocortexConnectIfUnconnected(($reader+".output[0]"), ($shape+".newParticles[0]"));
       exocortexConnectIfUnconnected(($timeControl+".outTime"), ($shape+".currentTime"));
       setAttr ($shape+".conserve") 0;
+      ExocortexAlembic_profileEnd -f MEL_exocortexAlembicImport_Points;
     }
     else if($types[$i] == "Camera")
     {
+      ExocortexAlembic_profileBegin -f MEL_exocortexAlembicImport_Camera;
       $shape = exocortexCreateOrReuseNode($name,"camera",$importAttach,0,0);
       $reader = exocortexCreateOrReuseNode($shape+".focalLength","ExocortexAlembicCamera",$importAttach,1,0);
       exocortexConnectIfUnconnected(($reader+".focalLength"), ($shape+".focalLength"));
@@ -276,9 +266,11 @@ global proc exocortexAlembicImport(string $filename, int $importNormals, int $im
       //exocortexConnectIfUnconnected(($reader+".farClippingPlane"), ($shape+".farClippingPlane"));
       exocortexConnectIfUnconnected(($reader+".fStop"), ($shape+".fStop"));
       exocortexConnectIfUnconnected(($reader+".shutterAngle"), ($shape+".shutterAngle"));
+      ExocortexAlembic_profileEnd -f MEL_exocortexAlembicImport_Camera;
     }
     else if($types[$i] == "Xform")
     {
+      ExocortexAlembic_profileBegin -f MEL_exocortexAlembicImport_Xform;
       // if we have only transforms in the alembic file, this is a transform cache!
       if($nbTransforms == size($types))
       {
@@ -295,8 +287,9 @@ global proc exocortexAlembicImport(string $filename, int $importNormals, int $im
         // let's look for the next element in the list
         // and access its children
         $reader = "";
-        ExocortexAlembic_profileBegin -f MEL_exocortexAlembicImport_C;
-        int $cID = $childID[$i];
+        string $ids[];
+        tokenize $childIDs[$i] "." $ids;
+        int $cID = $ids[0];
         if ($cID > 0)
         {
           $shape = $objects[$cID-1];
@@ -310,13 +303,14 @@ global proc exocortexAlembicImport(string $filename, int $importNormals, int $im
             exocortexConnectIfUnconnected(($reader+".scale"), ($shape+".scale"));
           }
         }
-        ExocortexAlembic_profileEnd -f MEL_exocortexAlembicImport_C;
       }
       if($reader == "")
         continue;
+      ExocortexAlembic_profileEnd -f MEL_exocortexAlembicImport_Xform;
     }
     else if($types[$i] == "Group")
     {
+      ExocortexAlembic_profileBegin -f MEL_exocortexAlembicImport_Group;
       // find all xforms below this
       if($nbTransforms == size($types))
       {
@@ -334,43 +328,36 @@ global proc exocortexAlembicImport(string $filename, int $importNormals, int $im
       exocortexConnectIfUnconnected(($reader+".rotate"), ($shape+".rotate"));
       exocortexConnectIfUnconnected(($reader+".scale"), ($shape+".scale"));
 
-      ExocortexAlembic_profileBegin -f MEL_exocortexAlembicImport_D;
-      for($j=$i+1;$j<size($identifiers);$j=$j+1)
+      ExocortexAlembic_profileBegin -f MEL_exocortexAlembicImport_D;   
+      string $ids[];
+      tokenize $childIDs[$i] "." $ids;
+      for ($j = 0; $j < size($ids); $j = $j + 1)
       {
-        if(($types[$j] != "Xform") && ($types[$j] != "Group"))
+        int $cID = $ids[$j];
+        $cID = $cID - 1;
+        if ($objects[$cID] == "" || $objects[$cID] == $shape)
           continue;
-        string $childParts[];
-        tokenize $identifiers[$j] "/" $childParts;
-        if(size($childParts) != (size($parts)+1))
-          continue;
-        string $identifierA = "";
-        string $identifierB = "";
-        for($k=0;$k<size($parts);$k=$k+1)
-        {
-          $identifierA = $identifierA + "/" + $parts[$k];
-          $identifierB = $identifierB + "/" + $childParts[$k];
-        }
-        if($identifierA != $identifierB)
-          continue;
-
-        if($objects[$j] != "" && $objects[$j] != $shape) {
-          parent $objects[$j] $shape;
-        }
+        if ($types[$cID] == "Xform" || $types[$cID] == "Group")
+          parent $objects[$cID] $shape;
+        else
+          parent -s $objects[$cID] $shape;
       }
-      ExocortexAlembic_profileEnd -f MEL_exocortexAlembicImport_D;
+      ExocortexAlembic_profileEnd -f MEL_exocortexAlembicImport_Group;
     }
     else
     {
       print("Invalid object type "+$types[$i]+"\n");
       continue;
     }
-    
+
+    ExocortexAlembic_profileBegin -f MEL_exocortexAlembicImport_FinalizeObject;
     // connect the standard ports
     if($nbSamples[$i] > 1)
       exocortexConnectIfUnconnected(($timeControl+".outTime"), ($reader+".inTime"));
     exocortexConnectIfUnconnected(($fileNode+".outFileName"), ($reader+".fileName"));
     setAttr -type "string" ($reader+".identifier") $identifiers[$i];
     $objects[$i] = $shape;
+    ExocortexAlembic_profileEnd -f MEL_exocortexAlembicImport_FinalizeObject;
     
     // setup metadata if we have it
     ExocortexAlembic_createMetaData -f $filename -i $identifiers[$i] -o $shape;

@@ -178,6 +178,7 @@ void nameMapClear()
 
 MString getTypeFromObject(Alembic::Abc::IObject object)
 {
+  ESS_PROFILE_SCOPE("getTypeFromObject"); 
    const Alembic::Abc::MetaData &md = object.getMetaData();
    if(Alembic::AbcGeom::IXform::matches(md)) {
       return "Xform";

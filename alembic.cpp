@@ -12,6 +12,7 @@
 #include "AlembicCurves.h"
 //#include "AlembicNurbs.h"
 #include "MetaData.h"
+#include "AlembicValidateNameCmd.h"
 
 #include <maya/MFnPlugin.h>
 #include <maya/MSceneMessage.h>
@@ -95,6 +96,10 @@ EC_EXPORT MStatus initializePlugin(MObject obj)
    status = plugin.registerCommand("ExocortexAlembic_profileStats",
 	  AlembicProfileStatsCommand::creator,
       AlembicProfileStatsCommand::createSyntax);
+
+   status = plugin.registerCommand("ExocortexAlembic_createValidName",
+	    AlembicValidateNameCommand::creator,
+      AlembicValidateNameCommand::createSyntax);
 
    // nodes
    status = plugin.registerNode("ExocortexAlembicTimeControl",
