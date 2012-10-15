@@ -98,6 +98,10 @@ bool isAlembicMeshTopoDynamic( Alembic::AbcGeom::IObject *pIObj ) {
 	Alembic::AbcGeom::IPolyMesh objMesh;
 	Alembic::AbcGeom::ISubD objSubD;
 
+	if( ! pIObj->valid() ) {
+		return false;
+	}
+
 	if(Alembic::AbcGeom::IPolyMesh::matches((*pIObj).getMetaData())) {
 		objMesh = Alembic::AbcGeom::IPolyMesh(*pIObj,Alembic::Abc::kWrapExisting);
 	}
@@ -131,6 +135,10 @@ bool isAlembicMeshTopology( Alembic::AbcGeom::IObject *pIObj ) {
 	ESS_PROFILE_SCOPE("isAlembicMeshTopology");
 	Alembic::AbcGeom::IPolyMesh objMesh;
 	Alembic::AbcGeom::ISubD objSubD;
+
+	if( ! pIObj->valid() ) {
+		return false;
+	}
 
 	if(Alembic::AbcGeom::IPolyMesh::matches((*pIObj).getMetaData())) {
 		objMesh = Alembic::AbcGeom::IPolyMesh(*pIObj,Alembic::Abc::kWrapExisting);
