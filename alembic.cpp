@@ -2378,7 +2378,8 @@ ESS_CALLBACK_START(alembic_import_Execute, CRef&)
       //push the children as the last step, since we need to who the parent is first (we may have merged)
       for(size_t j=0; j<iObj.getNumChildren(); j++)
       {
-         NodeCategory::type childCat = NodeCategory::get(iObj.getChild(j));
+         Alembic::AbcGeom::IObject childObj = iObj.getChild(j);
+         NodeCategory::type childCat = NodeCategory::get(childObj);
          if( childCat == NodeCategory::UNSUPPORTED ) continue;// skip over unsupported types
 
          //I assume that geometry nodes are always leaf nodes. Thus, if we merged a geometry node will its parent transform, we don't
@@ -2387,7 +2388,7 @@ ESS_CALLBACK_START(alembic_import_Execute, CRef&)
          //nodes must be pushed.
          if( nMergedGeomNodeIndex != j )
          {
-            sceneStack.push_back( stackElement(iObj.getChild(j)) );
+            sceneStack.push_back( stackElement( childObj ) );
          }
       }
       
@@ -2463,7 +2464,8 @@ ESS_CALLBACK_START(alembic_import_Execute, CRef&)
          //push the children as the last step, since we need to who the parent is first (we may have merged)
 	      for(size_t j=0; j<iObj.getNumChildren(); j++)
 	      {
-            if( NodeCategory::get(iObj.getChild(j)) == NodeCategory::UNSUPPORTED ) continue;// skip over unsupported types
+            Alembic::AbcGeom::IObject childObj = iObj.getChild(j);
+            if( NodeCategory::get(childObj) == NodeCategory::UNSUPPORTED ) continue;// skip over unsupported types
 
             //I assume that geometry nodes are always leaf nodes. Thus, if we merged a geometry node will its parent transform, we don't
             //need to push it to the stack.
@@ -2471,7 +2473,7 @@ ESS_CALLBACK_START(alembic_import_Execute, CRef&)
             //nodes must be pushed.
             if( nMergedGeomNodeIndex != j )
             {
-               sceneStack.push_back( stackElement(iObj.getChild(j), newNode) );
+               sceneStack.push_back( stackElement(childObj, newNode) );
             }
 	      }
       }
