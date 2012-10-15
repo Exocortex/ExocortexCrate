@@ -219,7 +219,8 @@ namespace NodeCategory
 		   Alembic::AbcGeom::ICamera::matches(iObj.getMetaData()) ||
 		   Alembic::AbcGeom::IPoints::matches(iObj.getMetaData()) ||
 		   Alembic::AbcGeom::ICurves::matches(iObj.getMetaData()) ||
-		   Alembic::AbcGeom::ISubD::matches(iObj.getMetaData())) {
+		   Alembic::AbcGeom::ISubD::matches(iObj.getMetaData())||
+		   Alembic::AbcGeom::INuPatch::matches(iObj.getMetaData())) {
 		   return GEOMETRY;
 	   }
 	   else if(Alembic::AbcGeom::IXform::matches(iObj.getMetaData())){
