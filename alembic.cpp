@@ -1770,8 +1770,6 @@ void createShape( Alembic::Abc::IObject& iObj, CRef& parentNode, CRef& newNode, 
             ESS_LOG_ERROR(status.GetDescription().GetAsciiString());
          }
 
-         ESS_LOG_WARNING(iObj.getFullName());
-         ESS_LOG_WARNING(getFullNameFromIdentifier(iObj.getFullName()).GetAsciiString());
          status = newNode.Set(getFullNameFromIdentifier(iObj.getFullName()));
          if(!status.Succeeded()){
             ESS_LOG_WARNING(status.GetDescription().GetAsciiString());
@@ -2340,7 +2338,7 @@ ESS_CALLBACK_START(alembic_import_Execute, CRef&)
 
    Alembic::AbcGeom::IObject root = archive->getTop();
 
-
+ 
    std::vector<std::string> nodesToImport;
    std::map<std::string, bool> map;
 	int nNumNodes = prescanAlembicHierarchy(root, nodesToImport, map);
@@ -2383,7 +2381,7 @@ ESS_CALLBACK_START(alembic_import_Execute, CRef&)
       }
       i++;
 
-      ESS_LOG_WARNING("Importing "<<iObj.getFullName().c_str()<<" ...");
+      //ESS_LOG_WARNING("Importing "<<iObj.getFullName().c_str()<<" ...");
 
       bool bCreateNullNode = false;
       int nMergedGeomNodeIndex = -1;
