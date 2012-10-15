@@ -9,9 +9,9 @@ tasks = TaskList([Task(iTestFile)], genPath(iTestFile + ".ats"))
 Application.OpenScene(iTestPath+"export.scn", False, False)
 
 
-iNodeToSelect = getInput("nodeToSelect");
+iNodesToSelect = getInput("nodesToSelect");
 
-if iNodeToSelect != None: Application.SelectObj(iNodeToSelect)
+if iNodesToSelect != None: Application.SelectObj(iNodesToSelect)
 else: Application.SelectObj("*")
 
 
@@ -39,7 +39,7 @@ else: #iTransformsEO == "flat":
      transformsStr += ";globalspace=false";
 
 
-exportStr = "filename=" + genPath(iObj + ".tabc") + ";" + objectsStr + transformsStr;
+exportStr = "filename=" + genPath(iObj + iAlembicFileExt) + ";" + objectsStr + transformsStr;
 if iExportStrAppend != None: exportStr = exportStr + ";" + iExportStrAppend;
 
 result = Application.alembic_export(exportStr)

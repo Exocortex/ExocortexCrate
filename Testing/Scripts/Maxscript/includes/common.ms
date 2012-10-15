@@ -69,10 +69,11 @@ testFile = getFilenameFile(getSourceFileName());
 testPath = systemTools.getEnvVariable("testPath");
 testFile = systemTools.getEnvVariable("testName");
 app = systemTools.getEnvVariable("app");
+appVer = systemTools.getEnvVariable("appVer");
 obj = systemTools.getEnvVariable("obj");
 genBaseline = systemTools.getEnvVariable("genBaseline");
 
-outFile = createFile (app + "_" + testFile + ".ats")
+outFile = createFile (app + appVer + "_" + testFile + ".ats")
 
 
 function writeTaskNames tasks = (
@@ -86,7 +87,7 @@ function writeTaskNames tasks = (
 	format "%\n" "" to:outFile
 
 	close outFile
-	outFile = openFile (app + "_" + testFile + ".ats") mode:"a"
+	outFile = openFile (app + appVer + "_" + testFile + ".ats") mode:"a"
 )
 
 function writeTaskFile tasks = (

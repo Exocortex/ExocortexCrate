@@ -512,7 +512,7 @@ tmProto.print = function(){
 	}
 }
 
-var testMan = new TestManager("", __dirname+"/3DSMax/includes");
+var testMan = new TestManager("", __dirname+"/Scripts/Maxscript/includes");
 
 
 
