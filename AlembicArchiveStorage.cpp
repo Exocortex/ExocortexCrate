@@ -3,6 +3,7 @@
 #include <boost/algorithm/string.hpp>
 #include "AlembicLicensing.h"
 #include <maya/MFileIO.h>
+#include "CommonLog.h"
 
 
 

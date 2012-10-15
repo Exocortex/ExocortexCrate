@@ -8,6 +8,7 @@
 #include "AlembicPoints.h"
 #include "AlembicCurves.h"
 #include "AlembicHair.h"
+#include "CommonLog.h"
 //#include "AlembicNurbs.h"
 
 #include <maya/MAnimControl.h>
