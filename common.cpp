@@ -1,5 +1,12 @@
 #include "common.h"
 
+
+std::string resolvePath_Internal(std::string path)
+{
+	return path;
+}
+
+
 // ----------------------------------------------------------------------------------------------------
 // objectInfo constructor
 objectInfo::objectInfo(float in_centroidTime):
