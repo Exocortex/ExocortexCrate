@@ -427,8 +427,9 @@ void getMergeInfo( Alembic::AbcGeom::IObject& iObj, bool& bCreateNullNode, int& 
       int mergeIndex;
 		for(int j=0; j<(int)iObj.getNumChildren(); j++)
 		{
-         if( NodeCategory::get(iObj.getChild(j)) == NodeCategory::GEOMETRY ){
-				mergedGeomChild = iObj.getChild(j);
+         Alembic::AbcGeom::IObject childObj = iObj.getChild(j);
+         if( NodeCategory::get( childObj ) == NodeCategory::GEOMETRY ){
+				mergedGeomChild = childObj;
 				mergeIndex = j;
 				geomNodeCount++;
 			}
@@ -563,7 +564,8 @@ int prescanAlembicHierarchy(Alembic::AbcGeom::IObject root, std::vector<std::str
       //push the children as the last step, since we need to who the parent is first (we may have merged)
       for(size_t j=0; j<iObj.getNumChildren(); j++)
       {
-         NodeCategory::type childCat = NodeCategory::get(iObj.getChild(j));
+         Alembic::AbcGeom::IObject childObj = iObj.getChild(j);
+         NodeCategory::type childCat = NodeCategory::get(childObj);
          if( childCat == NodeCategory::UNSUPPORTED ) continue;// skip over unsupported types
 
          //I assume that geometry nodes are always leaf nodes. Thus, if we merged a geometry node will its parent transform, we don't
@@ -571,7 +573,7 @@ int prescanAlembicHierarchy(Alembic::AbcGeom::IObject root, std::vector<std::str
          //A geometry node can't be combined with its transform node, the transform node has other tranform nodes as children. These
          //nodes must be pushed.
          if( nMergedGeomNodeIndex != j ){
-            sceneStack.push_back(iObj.getChild(j));
+            sceneStack.push_back(childObj);
          }
       }  
    }
