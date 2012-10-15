@@ -5,13 +5,25 @@
 #include <maya/MFnTransform.h>
 
 void logError( const char* msg ) {
+#ifdef __EXOCORTEX_CORE_SERVICES_API_H
+	Exocortex::essLogError( msg );
+#else
 	MGlobal::displayError( msg );
+#endif
 }
 void logWarning( const char* msg ) {
+#ifdef __EXOCORTEX_CORE_SERVICES_API_H
+	Exocortex::essLogWarning( msg );
+#else
 	MGlobal::displayWarning( msg );
+#endif
 }
 void logInfo( const char* msg ) {
+#ifdef __EXOCORTEX_CORE_SERVICES_API_H
+	Exocortex::essLogInfo( msg );
+#else
 	MGlobal::displayInfo( msg );
+#endif
 }
 
 std::string getIdentifierFromRef(const MObject & in_Ref)
