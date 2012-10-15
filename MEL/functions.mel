@@ -38,6 +38,7 @@ global proc exocortexAlembicExport(string $filename,         string $exported_ob
   $job += ";transformcache="+$exportTransformCache;
   print $job;
   ExocortexAlembic_export -j $job;
+  ExocortexAlembic_profileEnd -f MEL_exocortexAlembicExport;
 }
 
 global proc exocortexAlembicImport(string $filename, int $importNormals, int $importUvs, int $importFaceSets, string $importVisibility, int $importAttach)
