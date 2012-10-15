@@ -1631,7 +1631,7 @@ ESS_CALLBACK_START(alembic_create_item_Execute, CRef&)
 ESS_CALLBACK_END
 
 
-void createTransform( Alembic::Abc::IObject& iObj, CRef& parentNode, CRef& newNode, CString& filename, bool attachToExisting, CValueArray& createItemArgs)
+void createTransform( Alembic::Abc::IObject& iObj, CRef& parentNode, CRef& newNodeRef, CString& filename, bool attachToExisting, CValueArray& createItemArgs)
 {
    X3DObject parentX3DObject(parentNode);
    CString name = truncateName(iObj.getName().c_str());
@@ -1648,32 +1648,32 @@ void createTransform( Alembic::Abc::IObject& iObj, CRef& parentNode, CRef& newNo
 
       //if(nbTransformChildren == iObj.getNumChildren())
      // {
-	     X3DObject x3dobject;
-		 CRef nodeRef;
+		  X3DObject x3dobject;
+          CRef nodeRef;
          if(attachToExisting)
          {
 		   ESS_PROFILE_SCOPE("attachToExisting");
-            CRef modelRef;
+		    CRef modelRef;
             modelRef.Set(getFullNameFromIdentifier(iObj.getFullName()));
             x3dobject = modelRef;
 
-            if(!x3dobject.GetType().IsEqualNoCase(L"#model"))
+            if(!x3dobject.GetType().IsEqualNoCase(L"#model") && x3dobject.GetType().IsEqualNoCase(L"null"))
                x3dobject.ResetObject();
 
-            newNode.Set(getFullNameFromIdentifier(iObj.getFullName()));
+            newNodeRef.Set(getFullNameFromIdentifier(iObj.getFullName()));
 
 			nodeRef = x3dobject.GetRef();
          }
          if(!x3dobject.IsValid())
          {
-			 Null null;
-			 CRef nullRef;
-			 nullRef.Set(getFullNameFromIdentifier(iObj.getFullName()));
+			Null null;
+			CRef nullRef;
+			nullRef.Set(getFullNameFromIdentifier(iObj.getFullName()));
 			null = nullRef;
             parentX3DObject.AddNull(name,null);
             nameMapAdd(iObj.getFullName().c_str(),null.GetFullName());
-            //newNode = model.GetActivePrimitive().GetRef();
-            newNode.Set(getFullNameFromIdentifier(iObj.getFullName()));
+            //newNodeRef = model.GetActivePrimitive().GetRef();
+            newNodeRef.Set(getFullNameFromIdentifier(iObj.getFullName()));
 			nodeRef = null.GetRef();
          }
 
@@ -1689,7 +1689,7 @@ void createTransform( Alembic::Abc::IObject& iObj, CRef& parentNode, CRef& newNo
    }
 }
 
-void createShape( Alembic::Abc::IObject& iObj, CRef& parentNode, CRef& newNode, CString& filename, bool attachToExisting, bool importStandins, bool importBboxes, bool wasMerged, CValueArray& createItemArgs)
+void createShape( Alembic::Abc::IObject& iObj, CRef& parentNode, CRef& newNodeRef, CString& filename, bool attachToExisting, bool importStandins, bool importBboxes, bool wasMerged, CValueArray& createItemArgs)
 {
    X3DObject parentX3DObject(parentNode);
    CString name = truncateName(iObj.getName().c_str());
@@ -1711,15 +1711,13 @@ void createShape( Alembic::Abc::IObject& iObj, CRef& parentNode, CRef& newNode, 
          camera = cameraRef;
          if(!camera.GetType().IsEqualNoCase(L"camera"))
             camera.ResetObject();
-
-         newNode.Set(getFullNameFromIdentifier(iObj.getFullName()));
       }
       if(!camera.IsValid())
       {
          parentX3DObject.AddCamera(L"Camera",name,camera);
          nameMapAdd(iObj.getFullName().c_str(),camera.GetFullName());
-         newNode.Set(getFullNameFromIdentifier(iObj.getFullName()));
       }
+	  newNodeRef = camera.GetRef();
 
       // delete the interest
       CValueArray deleteArgs(1);
@@ -1754,8 +1752,6 @@ void createShape( Alembic::Abc::IObject& iObj, CRef& parentNode, CRef& newNode, 
 
          if(!meshObj.GetType().IsEqualNoCase(L"PolyMsh"))
             meshObj.ResetObject();
-
-         newNode.Set(getFullNameFromIdentifier(iObj.getFullName()));
       }
       if(!meshObj.IsValid())
       {
@@ -1765,16 +1761,8 @@ void createShape( Alembic::Abc::IObject& iObj, CRef& parentNode, CRef& newNode, 
          else
             status = parentX3DObject.AddPrimitive(L"EmptyPolygonMesh",name,meshObj);
          nameMapAdd(iObj.getFullName().c_str(),meshObj.GetFullName());
-
-         if(!status.Succeeded()){
-            ESS_LOG_ERROR(status.GetDescription().GetAsciiString());
-         }
-
-         status = newNode.Set(getFullNameFromIdentifier(iObj.getFullName()));
-         if(!status.Succeeded()){
-            ESS_LOG_WARNING(status.GetDescription().GetAsciiString());
-         }
       }
+      newNodeRef = meshObj.GetRef();
 
       // load metadata
       alembic_create_item_Invoke(L"alembic_metadata",meshObj.GetRef(),filename,iObj.getFullName().c_str(),attachToExisting,createItemArgs);
@@ -1833,8 +1821,6 @@ void createShape( Alembic::Abc::IObject& iObj, CRef& parentNode, CRef& newNode, 
 
          if(!meshObj.GetType().IsEqualNoCase(L"PolyMsh"))
             meshObj.ResetObject();
-
-         newNode.Set(getFullNameFromIdentifier(iObj.getFullName()));
       }
       if(!meshObj.IsValid())
       {
@@ -1843,8 +1829,8 @@ void createShape( Alembic::Abc::IObject& iObj, CRef& parentNode, CRef& newNode, 
          else
             parentX3DObject.AddPrimitive(L"EmptyPolygonMesh",name,meshObj);
          nameMapAdd(iObj.getFullName().c_str(),meshObj.GetFullName());
-         newNode.Set(getFullNameFromIdentifier(iObj.getFullName()));
       }
+	  newNodeRef = meshObj.GetRef();
 
       // make the geometry approx local
       CValue makeLocalReturn;
@@ -1908,7 +1894,7 @@ void createShape( Alembic::Abc::IObject& iObj, CRef& parentNode, CRef& newNode, 
          nurbsObj = nurbsRef;
          if(!nurbsObj.GetType().IsEqualNoCase(L"surfmsh"))
             nurbsObj.ResetObject();
-         newNode.Set(getFullNameFromIdentifier(iObj.getFullName()));
+         newNodeRef = nurbsObj.GetRef();
       }
       if(!nurbsObj.IsValid())
       {
@@ -1926,7 +1912,7 @@ void createShape( Alembic::Abc::IObject& iObj, CRef& parentNode, CRef& newNode, 
          
          alembic_create_item_Invoke(L"alembic_nurbs",nurbsObj.GetRef(),filename,iObj.getFullName().c_str(),attachToExisting,createItemArgs);
 
-         newNode.Set(getFullNameFromIdentifier(iObj.getFullName()));
+         newNodeRef.Set(getFullNameFromIdentifier(iObj.getFullName()));
       }
    }
    else if(Alembic::AbcGeom::ICurves::matches(iObj.getMetaData()))
@@ -1990,8 +1976,6 @@ void createShape( Alembic::Abc::IObject& iObj, CRef& parentNode, CRef& newNode, 
             pointsObj = pointsRef;
             if(!pointsObj.GetType().IsEqualNoCase(L"pointcloud"))
                pointsObj.ResetObject();
-
-            newNode.Set(getFullNameFromIdentifier(iObj.getFullName()));
          }
          if(!pointsObj.IsValid())
          {
@@ -2000,9 +1984,9 @@ void createShape( Alembic::Abc::IObject& iObj, CRef& parentNode, CRef& newNode, 
             else
                parentX3DObject.AddPrimitive(L"PointCloud",name,pointsObj);
             nameMapAdd(iObj.getFullName().c_str(),pointsObj.GetFullName());
-            newNode.Set(getFullNameFromIdentifier(iObj.getFullName()));
          }
-
+         newNodeRef = pointsObj.GetRef();
+    
          // load metadata
          alembic_create_item_Invoke(L"alembic_metadata",pointsObj.GetRef(),filename,iObj.getFullName().c_str(),attachToExisting,createItemArgs);
 
@@ -2043,8 +2027,6 @@ void createShape( Alembic::Abc::IObject& iObj, CRef& parentNode, CRef& newNode, 
             curveObj = curveRef;
             if(!curveObj.GetType().IsEqualNoCase(L"crvlist") && !curveObj.GetType().IsEqualNoCase(L"hair"))
                curveObj.ResetObject();
-
-            newNode.Set(getFullNameFromIdentifier(iObj.getFullName()));
          }
          if(!curveObj.IsValid())
          {
@@ -2053,8 +2035,8 @@ void createShape( Alembic::Abc::IObject& iObj, CRef& parentNode, CRef& newNode, 
             else
                parentX3DObject.AddNurbsCurveList(CNurbsCurveDataArray(),siSINurbs,name,curveObj);
             nameMapAdd(iObj.getFullName().c_str(),curveObj.GetFullName());
-            newNode.Set(getFullNameFromIdentifier(iObj.getFullName()));
          }
+         newNodeRef = parentX3DObject.GetRef();
 
          // load metadata
          alembic_create_item_Invoke(L"alembic_metadata",curveObj.GetRef(),filename,iObj.getFullName().c_str(),attachToExisting,createItemArgs);
@@ -2112,8 +2094,6 @@ void createShape( Alembic::Abc::IObject& iObj, CRef& parentNode, CRef& newNode, 
          pointsObj = pointsRef;
          if(!pointsObj.GetType().IsEqualNoCase(L"pointcloud"))
             pointsObj.ResetObject();
-
-         newNode.Set(getFullNameFromIdentifier(iObj.getFullName()));
       }
       if(!pointsObj.IsValid())
       {
@@ -2122,8 +2102,8 @@ void createShape( Alembic::Abc::IObject& iObj, CRef& parentNode, CRef& newNode, 
          else
             parentX3DObject.AddPrimitive(L"PointCloud",name,pointsObj);
          nameMapAdd(iObj.getFullName().c_str(),pointsObj.GetFullName());
-         newNode.Set(getFullNameFromIdentifier(iObj.getFullName()));
       }
+      newNodeRef = pointsObj.GetRef();
 
       // load metadata
       alembic_create_item_Invoke(L"alembic_metadata",pointsObj.GetRef(),filename,iObj.getFullName().c_str(),attachToExisting,createItemArgs);
@@ -2389,28 +2369,28 @@ ESS_CALLBACK_START(alembic_import_Execute, CRef&)
 
       getMergeInfo(iObj, bCreateNullNode, nMergedGeomNodeIndex, mergedGeomChild);
 
-      CRef newNode;
+      CRef newNodeRef;
 		if(bCreateNullNode){
 
-            createTransform( iObj, parentNode, newNode, filename, attachToExisting, createItemArgs);
+            createTransform( iObj, parentNode, newNodeRef, filename, attachToExisting, createItemArgs);
 		}
 		else{
 			if(nMergedGeomNodeIndex != -1){//we are merging, so look at the child geometry node
 
-				createShape( mergedGeomChild, parentNode, newNode, filename, attachToExisting, importStandins, importBboxes, true, createItemArgs);
+				createShape( mergedGeomChild, parentNode, newNodeRef, filename, attachToExisting, importStandins, importBboxes, true, createItemArgs);
 			}
 			else{ //geometry node(s) under a dummy node 
 
             //TODO: not sure if I handle the transforms correctly in this case
 			//EC_LOG_ERROR( "[ExocortexAlembic] Merged geometry node index not -1" );
             //return CStatus::Abort;
-				createShape( iObj, parentNode, newNode, filename, attachToExisting, importStandins, importBboxes, false, createItemArgs);
+				createShape( iObj, parentNode, newNodeRef, filename, attachToExisting, importStandins, importBboxes, false, createItemArgs);
 			}
 
 		}
       
-      //newNode will not be valid if we cannot attach children to it
-      if(newNode.IsValid()){
+      //newNodeRef will not be valid if we cannot attach children to it
+      if(newNodeRef.IsValid()){
 
          //push the children as the last step, since we need to who the parent is first (we may have merged)
 	      for(size_t j=0; j<iObj.getNumChildren(); j++)
@@ -2424,12 +2404,12 @@ ESS_CALLBACK_START(alembic_import_Execute, CRef&)
             //nodes must be pushed.
             if( nMergedGeomNodeIndex != j )
             {
-               sceneStack.push_back( stackElement(childObj, newNode) );
+               sceneStack.push_back( stackElement(childObj, newNodeRef) );
             }
 	      }
       }
       else{
-         EC_LOG_WARNING("Warning: newNode CRef is not valid.");
+         EC_LOG_WARNING("Warning: newNodeRef CRef is not valid.");
          return CStatus::Abort;
       }
 
