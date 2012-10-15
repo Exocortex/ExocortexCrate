@@ -54,9 +54,9 @@ public:
 	void EnumAuxFiles(AssetEnumCallback& nameEnum, DWORD flags);
 
 	// From Modifier
-	ChannelMask ChannelsUsed()  { return 0; }
-	ChannelMask ChannelsChanged() { return 0; }
-	Class_ID InputType() { return polyObjectClassID; }
+	ChannelMask ChannelsUsed()  { return DISP_ATTRIB_CHANNEL; }
+	ChannelMask ChannelsChanged() { return DISP_ATTRIB_CHANNEL; }
+	Class_ID InputType() { return defObjectClassID;	 }
 	void ModifyObject (TimeValue t, ModContext &mc, ObjectState *os, INode *node);
 	//Interval LocalValidity(TimeValue t) { return GetValidity(t); }
 	//Interval GetValidity (TimeValue t);

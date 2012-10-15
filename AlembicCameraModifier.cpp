@@ -31,7 +31,7 @@ static ParamBlockDesc2 AlembicCameraModifierParams(
 	0,
 
 	// rollout description 
-	IDD_ALEMBIC_MESH_GEOM_PARAMS, IDS_ALEMBIC, 0, 0, NULL,
+	IDD_ALEMBIC_CAMERA_PARAMS, IDS_ALEMBIC, 0, 0, NULL,
 
     // params
 	AlembicCameraModifier::ID_PATH, _T("path"), TYPE_FILENAME, P_RESET_DEFAULT, IDS_PATH,

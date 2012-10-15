@@ -299,20 +299,20 @@ int AlembicImport_Camera(const std::string &path, Alembic::AbcGeom::IObject& iOb
 	//}	
 
 	////Create the Camera modifier
-	//Modifier *pModifier = static_cast<Modifier*>
-	//	(GET_MAX_INTERFACE()->CreateInstance(OSM_CLASS_ID, ALEMBIC_CAMERA_MODIFIER_CLASSID));
+	Modifier *pModifier = static_cast<Modifier*>
+		(GET_MAX_INTERFACE()->CreateInstance(OSM_CLASS_ID, ALEMBIC_CAMERA_MODIFIER_CLASSID));
 
-	//TimeValue now =  GET_MAX_INTERFACE()->GetTime();
+	TimeValue now =  GET_MAX_INTERFACE()->GetTime();
 
-	////Set the alembic id
-	//pModifier->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pModifier, 0, "path" ), now, path.c_str());
-	//pModifier->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pModifier, 0, "identifier" ), now, identifier.c_str() );
-	//
-	////Set the alembic id
-	////pModifier->SetCamera(pCameraObj);
+	//Set the alembic id
+	pModifier->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pModifier, 0, "path" ), now, path.c_str());
+	pModifier->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pModifier, 0, "identifier" ), now, identifier.c_str() );
+	
+	//Set the alembic id
+	//pModifier->SetCamera(pCameraObj);
 
-	////Add the modifier to the node
-	//GET_MAX_INTERFACE()->AddModifier(*pNode, *pModifier);
+	//Add the modifier to the node
+	GET_MAX_INTERFACE()->AddModifier(*pNode, *pModifier);
 
     // Add the new inode to our current scene list
     SceneEntry *pEntry = options.sceneEnumProc.Append(pNode, pCameraObj, OBTYPE_CAMERA, &std::string(iObj.getFullName())); 
