@@ -9,6 +9,7 @@
 #include "AlembicMAXScript.h"
 #include <cmath>
 #include <boost/algorithm/string.hpp>
+#include "AlembicCameraUtilities.h"
 
 // This function returns a pointer to a class descriptor for our Utility
 // This is the function that informs max that our plug-in exists and is 
@@ -64,100 +65,6 @@ static ParamBlockDesc2 AlembicFloatControllerParams(
 
 	p_end
 );
-
-//bool iequals(const char* a, const char* b)
-//{
-//    size_t sa = strlen(a);
-//	size_t sb = strlen(b);
-//	if (sa != sb){
-//        return false;
-//	}
-//
-//	size_t minsize = sa;
-//	if(sb < minsize) minsize = sb;
-//
-//	for (size_t i = 0; i < minsize; ++i){
-//		if (tolower(a[i]) != tolower(b[i])){
-//            return false;
-//		}
-//	}
-//    return true;
-//}
-
-bool getCameraSampleVal(Alembic::AbcGeom::ICamera& objCamera, SampleInfo& sampleInfo, Alembic::AbcGeom::CameraSample sample, const char* name, double& sampleVal)
-{
-    objCamera.getSchema().get(sample, sampleInfo.floorIndex);
-
-	if(boost::iequals(name, "horizontalFOV")){
-		double aperature = sample.getHorizontalAperture()*10.0; //convert from cm to mm
-		double focalLength = sample.getFocalLength();
-		if(focalLength < 0.000001){
-			focalLength = 1.0;
-		}
-		sampleVal = 2.0 * atan(aperature/(2.0*focalLength));
-	}
-	else if(boost::iequals(name, "verticalFOV")){
-		double aperature = sample.getVerticalAperture()*10.0; //convert from cm to mm	
-		double focalLength = sample.getFocalLength();
-		if(focalLength < 0.000001){
-			focalLength = 1.0;
-		}
-		sampleVal = 2.0 * atan(aperature/(2.0*focalLength));
-	}
-	else if(boost::iequals(name, "FocalLength")){
-		sampleVal = sample.getFocalLength();
-	}
-	else if(boost::iequals(name, "HorizontalAperture")){
-		sampleVal = sample.getHorizontalAperture();
-	}
-	else if(boost::iequals(name, "HorizontalFilmOffset")){
-		sampleVal = sample.getHorizontalFilmOffset();
-	}
-	else if(boost::iequals(name, "VerticalAperture")){
-		sampleVal = sample.getVerticalAperture();
-	}
-	else if(boost::iequals(name, "VerticalFilmOffset")){
-		sampleVal = sample.getVerticalFilmOffset();
-	}
-	else if(boost::iequals(name, "LensSqueezeRatio")){
-		sampleVal = sample.getLensSqueezeRatio();
-	}
-	else if(boost::iequals(name, "OverScanLeft")){
-		sampleVal = sample.getOverScanLeft();
-	}
-	else if(boost::iequals(name, "OverScanRight")){
-		sampleVal = sample.getOverScanRight();
-	}
-	else if(boost::iequals(name, "OverScanTop")){
-		sampleVal = sample.getOverScanTop(); 
-	}
-	else if(boost::iequals(name, "OverScanBottom")){
-		sampleVal = sample.getOverScanBottom();
-	}
-	else if(boost::iequals(name, "FStop")){
-		sampleVal = sample.getFStop();
-	}
-	else if(boost::iequals(name, "FocusDistance")){
-		sampleVal = sample.getFocusDistance();
-	}
-	else if(boost::iequals(name, "ShutterOpen")){
-		sampleVal = sample.getShutterOpen();
-	}
-	else if(boost::iequals(name, "ShutterClose")){
-		sampleVal = sample.getShutterClose();
-	}
-	else if(boost::iequals(name, "NearClippingPlane")){
-		sampleVal = sample.getNearClippingPlane();
-	}
-	else if(boost::iequals(name, "FarClippingPlane")){
-		sampleVal = sample.getFarClippingPlane();
-	}
-	else{
-		return false;
-	}
-
-	return true;
-}
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // AlembicFloatController Methods

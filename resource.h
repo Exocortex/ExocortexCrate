@@ -31,6 +31,24 @@
 #define IDS_IGNORE_SUBFRAME_SAMPLES     118
 #define IDS_RENDER_AS_TICKS             119
 #define IDS_VIEWPORT_PERCENT            120
+#define IDS_HFOV                        121
+#define IDS_VFOV                        122
+#define IDS_FOCAL_LENGTH                123
+#define IDS_HAPERATURE                  124
+#define IDS_VAPERATURE                  125
+#define IDS_HFILMOFFSET                 126
+#define IDS_VFILMOFFSET                 127
+#define IDS_LSRATIO                     128
+#define IDS_OVERSCANL                   129
+#define IDS_OVERSCANR                   130
+#define IDS_OVERSCANT                   131
+#define IDS_OVERSCANB                   132
+#define IDS_FSTOP                       133
+#define IDS_FOCUSDIST                   134
+#define IDS_SHUTTEROPEN                 135
+#define IDS_SHUTTERCLOSE                136
+#define IDS_NEARCLIPPINGPLANE           137
+#define IDS_FARCLIPPINGPLANE            138
 #define IDD_GSPHERE1                    179
 #define IDD_GSPHERE2                    180
 #define IDD_GSPHERE3                    181
@@ -73,8 +91,10 @@
 #define IDC_EDIT_SUB_STEP               1011
 #define IDC_CUSTOM3                     1015
 #define IDC_EDIT_TIME                   1015
+#define IDC_VFOV_SPIN                   1015
 #define IDC_CUSTOM4                     1016
 #define IDC_SPIN_TIME                   1016
+#define IDC_FOCAL_LENGTH_SPIN           1016
 #define IDC_EDIT_TIME_OFFSET            1017
 #define IDC_SPIN_TIME_OFFSET            1018
 #define IDC_EDIT_SCALE                  1019
@@ -92,6 +112,23 @@
 #define IDC_NORMALS_CHECKBOX            1024
 #define IDC_GEOALPHA_SPIN               1027
 #define IDC_GEOALPHA_EDIT               1028
+#define IDC_HFOV_SPIN                   1030
+#define IDC_HAPERATURE_SPIN             1031
+#define IDC_VAPERATURE_SPIN             1032
+#define IDC_HFILMOFFSET_SPIN            1033
+#define IDC_VFILMOFFSET_SPIN            1034
+#define IDC_LSRATIO_SPIN                1035
+#define IDC_OVERSCANL_SPIN              1036
+#define IDC_OVERSCANR_SPIN              1037
+#define IDC_OVERSCANT_SPIN              1038
+#define IDC_OVERSCANB_SPIN              1039
+#define IDC_FSTOP_SPIN                  1040
+#define IDC_FOCUSDIST_SPIN              1041
+#define IDC_SHUTTEROPEN_SPIN            1042
+#define IDC_SHUTTERCLOSE_SPIN           1043
+#define IDC_NEARCLIPPINGPLANE_SPIN      1044
+#define IDC_CUSTOM19                    1045
+#define IDC_FARCLIPPINGPLANE_SPIN       1045
 #define IDC_LIMIT_SIZE                  1276
 #define IDC_KEEP_CONVEX                 1277
 #define IDC_TI_POSX                     3019
@@ -211,7 +248,6 @@
 #define IDC_SHUTTEROPEN_EDIT            40019
 #define IDC_SHUTTERCLOSE_EDIT           40020
 #define IDC_NEARCLIPPINGPLANE_EDIT      40021
-#define IDC_SHUTTEROPEN_EDIT2           40022
 #define IDC_FAR_CLIPPING_PLANE_EDIT     40022
 #define IDC_THRESH_LABEL                65535
 #define IDC_MAX_SIZE_LABEL              65535
@@ -221,9 +257,9 @@
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        108
+#define _APS_NEXT_RESOURCE_VALUE        132
 #define _APS_NEXT_COMMAND_VALUE         40001
-#define _APS_NEXT_CONTROL_VALUE         1023
+#define _APS_NEXT_CONTROL_VALUE         1046
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif
