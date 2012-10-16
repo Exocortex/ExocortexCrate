@@ -60,6 +60,8 @@ using namespace MATH;
 #include "CommonMeshUtilities.h"
 #include "CommonUtilities.h"
 
+SICALLBACK XSILoadPlugin_2( PluginRegistrar& in_reg ) ;
+
 SICALLBACK XSILoadPlugin( PluginRegistrar& in_reg )
 {
 	in_reg.PutAuthor(L"Helge Mathee");
@@ -107,6 +109,8 @@ SICALLBACK XSILoadPlugin( PluginRegistrar& in_reg )
 		// register ICE nodes
 		Register_alembic_curves(in_reg);
 		Register_alembic_points(in_reg);
+
+		//XSILoadPlugin_2( in_reg );
 
 		// register events
 		in_reg.RegisterEvent(L"alembic_OnCloseScene",siOnCloseScene);
