@@ -179,23 +179,22 @@ void nameMapClear()
 ALEMBIC_TYPE getAlembicTypeFromObject(Alembic::Abc::IObject object)
 {
   ESS_PROFILE_SCOPE("getAlembicTypeFromObject"); 
-   const Alembic::Abc::MetaData &md = object.getMetaData();
-   if(Alembic::AbcGeom::IXform::matches(md)) {
-      return AT_Xform;
-   } else if(Alembic::AbcGeom::IPolyMesh::matches(md)) {
-      return AT_PolyMesh;
-   } else if(Alembic::AbcGeom::ICurves::matches(md)) {
-      return AT_Curves;
-   } else if(Alembic::AbcGeom::INuPatch::matches(md)) {
-      return AT_NuPatch;
-   } else if(Alembic::AbcGeom::IPoints::matches(md)) {
-      return AT_Points;
-   } else if(Alembic::AbcGeom::ISubD::matches(md)) {
-      return AT_SubD;
-   } else if(Alembic::AbcGeom::ICamera::matches(md)) {
-      return AT_Camera;
-   }
-   return AT_UNKNOWN;
+  const Alembic::Abc::MetaData &md = object.getMetaData();
+  if(Alembic::AbcGeom::IXform::matches(md))
+    return AT_Xform;
+  else if(Alembic::AbcGeom::IPolyMesh::matches(md))
+    return AT_PolyMesh;
+  else if(Alembic::AbcGeom::ICurves::matches(md))
+    return AT_Curves;
+  else if(Alembic::AbcGeom::INuPatch::matches(md))
+    return AT_NuPatch;
+  else if(Alembic::AbcGeom::IPoints::matches(md))
+    return AT_Points;
+  else if(Alembic::AbcGeom::ISubD::matches(md))
+    return AT_SubD;
+  else if(Alembic::AbcGeom::ICamera::matches(md))
+    return AT_Camera;
+  return AT_UNKNOWN;
 }
 
 std::string alembicTypeToString(ALEMBIC_TYPE at)
@@ -229,7 +228,6 @@ MString getTypeFromObject(Alembic::Abc::IObject object)
 {
   return MString( alembicTypeToString( getAlembicTypeFromObject(object) ).c_str() );
 }
-
 
 MMatrix GetGlobalMMatrix(const MObject & in_Ref)
 {
