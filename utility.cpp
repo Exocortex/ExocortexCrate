@@ -374,10 +374,10 @@ CStatus alembicOp_Define( CRef& in_ctxt )
    if( ! s_initialized ) {
 	   oPDef0 = oFactory.CreateParamDef(L"muted",CValue::siBool,siAnimatable | siPersistable,L"muted",L"muted",0,0,1,0,1);
 	   oPDef1 = oFactory.CreateParamDef(L"time",CValue::siFloat,siAnimatable | siPersistable,L"time",L"time",1,-100000,100000,0,1);
-	   oPDef2 = oFactory.CreateParamDef(L"path",CValue::siString,siReadOnly | siPersistable,L"path",L"path",L"",L"",L"",L"",L"");
-	   oPDef3 = oFactory.CreateParamDef(L"identifier",CValue::siString,siReadOnly | siPersistable,L"identifier",L"identifier",L"",L"",L"",L"",L"");
-	   oPDef4 = oFactory.CreateParamDef(L"renderpath",CValue::siString,siReadOnly | siPersistable,L"renderpath",L"renderpath",L"",L"",L"",L"",L"");
-	   oPDef5 = oFactory.CreateParamDef(L"renderidentifier",CValue::siString,siReadOnly | siPersistable,L"renderidentifier",L"renderidentifier",L"",L"",L"",L"",L"");
+	   oPDef2 = oFactory.CreateParamDef(L"path",CValue::siString, 0, L"path",L"path",L"",L"",L"",L"",L"");
+	   oPDef3 = oFactory.CreateParamDef(L"identifier",CValue::siString, 0, L"identifier",L"identifier",L"",L"",L"",L"",L"");
+	   oPDef4 = oFactory.CreateParamDef(L"renderpath",CValue::siString, 0, L"renderpath",L"renderpath",L"",L"",L"",L"",L"");
+	   oPDef5 = oFactory.CreateParamDef(L"renderidentifier",CValue::siString, 0, L"renderidentifier",L"renderidentifier",L"",L"",L"",L"",L"");
    }
 
    oCustomOperator.AddParameter(oPDef0,oParam);
