@@ -34,14 +34,14 @@ struct infoTuple
 {
   bool valid;
   MString identifier;
-  MString type;
+  ALEMBIC_TYPE type;
   MString name;
   int nbSample;
   int parentID;
   std::vector<int> childID;
   MString data;
 
-  infoTuple(void): valid(false), identifier(""), type("Root"), name(""), nbSample(0), parentID(-1), childID(), data("") {}
+  infoTuple(void): valid(false), identifier(""), type(AT_UNKNOWN), name(""), nbSample(0), parentID(-1), childID(), data("") {}
 
   MString toInfo(void) const
   {
@@ -58,7 +58,7 @@ struct infoTuple
         str << "." << (*beg);
     }
 
-    MString ret = identifier + "|" + type + "|" + name;
+    MString ret = ((identifier + "|") + alembicTypeToString(type).c_str()) + "|" + name;
     ret += str.str().c_str();
     if (data.length() > 0)
       ret += "|" + data;
@@ -127,15 +127,15 @@ MStatus AlembicGetInfoCommand::doIt(const MArgList & args)
            uniqueIdentifiers.insert(fullName);
            iTuple.identifier = fullName.c_str();
          }
-         iTuple.type = getTypeFromObject(child);
+         iTuple.type = getAlembicTypeFromObject(child);
          iTuple.name = child.getName().c_str();
          iTuple.nbSample = getNumSamplesFromObject(child);
          iTuple.parentID = i;
 
-         if (iTuple.type == "Xform")
+         if (iTuple.type == AT_Xform)
          {
-           if (infoVector[i].type == "Xform")
-             infoVector[i].type = "Group";             
+           if (infoVector[i].type == AT_Xform)
+             infoVector[i].type = AT_Group;             
          }
          infoVector[i].childID.push_back(objects.size()-1);
 

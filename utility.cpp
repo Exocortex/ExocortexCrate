@@ -176,26 +176,58 @@ void nameMapClear()
    gNameMap.clear();
 }
 
-MString getTypeFromObject(Alembic::Abc::IObject object)
+ALEMBIC_TYPE getAlembicTypeFromObject(Alembic::Abc::IObject object)
 {
-  ESS_PROFILE_SCOPE("getTypeFromObject"); 
+  ESS_PROFILE_SCOPE("getAlembicTypeFromObject"); 
    const Alembic::Abc::MetaData &md = object.getMetaData();
    if(Alembic::AbcGeom::IXform::matches(md)) {
-      return "Xform";
+      return AT_Xform;
    } else if(Alembic::AbcGeom::IPolyMesh::matches(md)) {
-      return "PolyMesh";
+      return AT_PolyMesh;
    } else if(Alembic::AbcGeom::ICurves::matches(md)) {
-      return "Curves";
+      return AT_Curves;
    } else if(Alembic::AbcGeom::INuPatch::matches(md)) {
-      return "NuPatch";
+      return AT_NuPatch;
    } else if(Alembic::AbcGeom::IPoints::matches(md)) {
-      return "Points";
+      return AT_Points;
    } else if(Alembic::AbcGeom::ISubD::matches(md)) {
-      return "SubD";
+      return AT_SubD;
    } else if(Alembic::AbcGeom::ICamera::matches(md)) {
-      return "Camera";
+      return AT_Camera;
    }
-   return "";
+   return AT_UNKNOWN;
+}
+
+std::string alembicTypeToString(ALEMBIC_TYPE at)
+{
+  switch(at)
+  {
+  case AT_Xform:
+    return "Xform";
+  case AT_PolyMesh:
+    return "PolyMesh";
+  case AT_Curves:
+    return "Curves";
+  case AT_NuPatch:
+    return "NuPatch";
+  case AT_Points:
+    return "Points";
+  case AT_SubD:
+    return "SubD";
+  case AT_Camera:
+    return "Camera";
+  case AT_Group:
+    return "Group";
+  default:
+  case AT_UNKNOWN:
+    return "";
+  };
+  return "";
+}
+
+MString getTypeFromObject(Alembic::Abc::IObject object)
+{
+  return MString( alembicTypeToString( getAlembicTypeFromObject(object) ).c_str() );
 }
 
 
