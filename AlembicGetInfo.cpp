@@ -110,7 +110,7 @@ MStatus AlembicGetInfoCommand::doIt(const MArgList & args)
    MStringArray identifiers;
    for(size_t i=0; i<objects.size(); ++i)
    {
-     const int nbChild = objects[i].getNumChildren();
+      const int nbChild = objects[i].getNumChildren();
       for(size_t j=0; j<nbChild; ++j)
       {
          Alembic::Abc::IObject child = objects[i].getChild(j);
