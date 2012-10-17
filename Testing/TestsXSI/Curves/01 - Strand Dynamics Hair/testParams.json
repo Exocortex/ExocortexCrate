@@ -8,7 +8,7 @@
 	"obj":"hair", 
 	"transformsEO":"flat", 
 	"exportStr":"in=0;out=600",
-	"sceneToLoad":"/Assets/XSI/rainOfShapes.scn",
+	"sceneToLoad":"/Assets/XSI/strandDynamicHair.scn",
 	"nodesToSelect":"fillerhairs,guidehairs"
 }},
 {"script":"/Scripts/Python/XSI/import.py",

@@ -24,7 +24,7 @@ iApp = os.environ["app"];
 iAppVer = os.environ["appVer"];
 iGenBaseline = os.environ["genBaseline"];
 iScript = os.environ["script"];
-
+iFrameworkRoot = os.environ["frameworkRoot"];
 
 iObj = getInput("obj");
 

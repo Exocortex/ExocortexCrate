@@ -66,6 +66,7 @@ pdProto.execute = function(){
 	envVar["genBaseline"] = this.genBaseline;
 	envVar["PYTHONPATH"] = __dirname+"/Scripts/Python/common";
 	envVar["script"] = script;
+	envVar["frameworkRoot"] = __dirname;
 
 	console.log(script);
 

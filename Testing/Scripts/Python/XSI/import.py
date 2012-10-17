@@ -14,7 +14,9 @@ identifiers = ""
 
 iAbcToImport = getInput("abcToImport");
 if iAbcToImport == None: 
-	iAbcToImport = genPath(iObj + ".abc")
+	iAbcToImport = genPath(iObj + ".tabc")
+else:
+	iAbcToImport = iFrameworkRoot + iAbcToImport
 
 result = Application.alembic_import(iAbcToImport, normals, uvs, clusters, visibility, standins, bboxes, attach, identifiers)
 tasks.setStatus("Import", result == None)

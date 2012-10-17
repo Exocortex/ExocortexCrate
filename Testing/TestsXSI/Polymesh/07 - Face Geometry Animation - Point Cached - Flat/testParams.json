@@ -11,6 +11,7 @@
 	"sceneToLoad":"/Assets/XSI/faceGeometryAnimation.scn",
 	"nodesToSelect":"Head.Face"
 }},
+
 {"script":"/Scripts/Python/XSI/export.py", 
 "name":"ExportPointCache",
 "inputs":{
@@ -22,6 +23,7 @@
 	"sceneToLoad":"/Assets/XSI/faceGeometryAnimation.scn",
 	"nodesToSelect":"Head.Face"
 }},
+
 {"script":"/Scripts/Python/XSI/importATE.py", 
 "inputs":{
 	"app":"xsi", 

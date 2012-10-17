@@ -8,7 +8,7 @@ tasks = TaskList([Task(iTestFile)], genPath(iTestFile + ".ats"))
 
 iSceneToLoad = getInput("sceneToLoad");
 
-Application.OpenScene(iTestPath + iSceneToLoad, False, False)
+Application.OpenScene(iFrameworkRoot + iSceneToLoad, False, False)
 
 
 iNodesToSelect = getInput("nodesToSelect");

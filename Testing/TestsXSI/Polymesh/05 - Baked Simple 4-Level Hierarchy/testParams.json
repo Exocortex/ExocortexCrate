@@ -5,8 +5,8 @@
 	"app":"xsi", 
 	"appVer":"v2013", 
 	"obj":"Hierarchy4", 
-	"transformsEO":"baked"
-	"sceneToLoad":"/Assets/XSI/simple4LevelHierarchy.scn",
+	"transformsEO":"baked",
+	"sceneToLoad":"/Assets/XSI/simple4LevelHierarchy.scn"
 }},
 
 {"script":"/Scripts/Python/XSI/import.py", 

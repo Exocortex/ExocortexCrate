@@ -8,6 +8,7 @@
 	"obj":"rainOfShapes", 
 	"transformsEO":"flat", 
 	"exportStr":"in=0;out=100",
+	"sceneToLoad":"/Assets/XSI/rainOfShapes.scn",
 	"nodesToSelect":"Fury_Rain.PointCloud,tetrahedron"
 }},
 {"script":"/Scripts/Python/XSI/import.py",

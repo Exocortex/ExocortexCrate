@@ -6,7 +6,7 @@
 	"appVer":"v2013", 
 	"obj":"faceAni", 
 	"exportStr":"in=0;out=100",
-	"sceneToLoad":"/Assets/XSI/faceGeometryAnimation.scn",
+	"sceneToLoad":"/Assets/XSI/faceGeometryAnimation.scn"
 }},
 
 {"script":"/Scripts/Python/XSI/import.py", 

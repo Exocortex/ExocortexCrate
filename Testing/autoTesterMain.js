@@ -103,7 +103,7 @@ var readTestDir = function(path, list){
 		else if(stats.isFile()){
 			if(files[i] === 'testParams.json'){ //we have found a folder that contains a test
 
-				//console.log("reading "+filePath)
+				console.log("reading "+filePath)
 
 				var data = fs.readFileSync(filePath);
 
