@@ -336,7 +336,7 @@ XSI::CStatus AlembicCurves::Save(double time)
       CPointRefArray emitterPointRefArray(emitterGeo.GetPoints());
       CLongArray emitterPntIndex;
 
-	  vector<long> faceIndices;
+	  vector<int32_t> faceIndices;
 
       if( !SIObject(emitterPrimRef).GetType().IsEqualNoCase(L"polymsh"))
       {
@@ -424,13 +424,13 @@ XSI::CStatus AlembicCurves::Save(double time)
          mCurvesSample.setBasis(kNoBasis);
 
 		// store the vertex indices
-		 vector<long> vertexIndices( emitterPntIndex.GetCount());
+		 vector<int32_t> vertexIndices( emitterPntIndex.GetCount());
 		 for(LONG i=0;i<emitterPntIndex.GetCount();i++)
 			vertexIndices[i] = emitterPntIndex[i];
-		 mVertexIndexProperty.set(Alembic::Abc::Int32ArraySample(&vertexIndices.front(),vertexIndices.size()));
+		 mVertexIndexProperty.set(Alembic::Abc::Int32ArraySample(vertexIndices));
 
 		 // store the face indices
-		 mFaceIndexProperty.set(Alembic::Abc::Int32ArraySample(&faceIndices.front(),faceIndices.size()));
+		 mFaceIndexProperty.set(Alembic::Abc::Int32ArraySample(faceIndices));
       }
       mCurvesSchema.set(mCurvesSample);
    }
