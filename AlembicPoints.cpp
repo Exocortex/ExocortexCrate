@@ -4,7 +4,11 @@
 
 #ifdef THINKING_PARTICLES
 #define IDS_CLASS_NAME 3
+#define max(a,b)            (((a) > (b)) ? (a) : (b))
+#define min(a,b)            (((a) < (b)) ? (a) : (b))
 #include <matterwaves.h>
+#undef max
+#undef min
 #endif
 
 #include "Alembic.h"
