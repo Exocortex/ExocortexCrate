@@ -158,7 +158,7 @@ MStatus AlembicWriteJob::PreProcess()
       }
 
       double timePerCycle = frames[frames.size()-1] - frames[0];
-      AbcA::TimeSamplingType samplingType((boost::uint32_t)frames.size(),timePerCycle);
+	  AbcA::TimeSamplingType samplingType((Alembic::Abc::ALEMBIC_VERSION_NS::uint32_t)frames.size(),timePerCycle);
       AbcA::TimeSampling sampling(samplingType,frames);
       mTs = mArchive.addTimeSampling(sampling);
    }
