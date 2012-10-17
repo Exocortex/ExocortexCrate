@@ -12,7 +12,7 @@ ENDIF()
 IF (UNIX AND NOT APPLE )
 	ADD_DEFINITIONS(-DLINUX)
 ENDIF()
-
+ 
 set( Exocortex_INSTALL_BASE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/install" )
 
 if( HDF5_ENABLE_THREADSAFE )
@@ -27,7 +27,7 @@ if( HDF5_ENABLE_THREADSAFE )
 		ENDIF()
 	else()
 		message(FATAL_ERROR "Should not get here")
-	endif()
+	endif()  
 else()
 	project( ExocortexAlembic_WinXP )
 	if( WIN32 )
@@ -62,7 +62,7 @@ endif()
  
 # Configuration
 SET( alembic_MAJOR_VERSION "1" )
-SET( alembic_MINOR_VERSION "0" ) 
+SET( alembic_MINOR_VERSION "1" ) 
 SET( alembic_VERSION "${alembic_MAJOR_VERSION}.${alembic_MINOR_VERSION}" )
 
 add_definitions( "-Dalembic_MAJOR_VERSION=${alembic_MAJOR_VERSION}" )
@@ -244,6 +244,9 @@ IF( WIN32 )
 	ENDFOREACH(flag_var)
 endif()
 
+add_definitions( -D_WINSOCKAPI_ )
+add_definitions( -D_WINSOCKAPI2_ )
+
 # For multithreaded builds		
 # [mkonyk] Fix ~ these are only valid on Windows platforms.
 IF( WIN32 )
@@ -307,8 +310,9 @@ UNSET(CMAKE_LIBRARY_OUTPUT_DIRECTORY CACHE)
 UNSET(CMAKE_ARCHIVE_OUTPUT_DIRECTORY CACHE)
 
 # Alembic
-include_directories( "alembic-1.0.5" )
-ADD_SUBDIRECTORY ( alembic-1.0.5 )
+add_definitions( -DNOMINMAX )	 # disable min/max macros from <windows.h>.
+include_directories( "alembic-1.1.0" )
+ADD_SUBDIRECTORY ( alembic-1.1.0 )
 SET( ALEMBIC_CORE_LIBS AlembicAbcGeom AlembicAbc AlembicAbcCoreHDF5 AlembicAbcCoreAbstract AlembicUtil )
 
 ADD_SUBDIRECTORY ( "${CMAKE_CURRENT_SOURCE_DIR}/CommonUtils" "${CMAKE_CURRENT_BINARY_DIR}/CommonUtils" )
