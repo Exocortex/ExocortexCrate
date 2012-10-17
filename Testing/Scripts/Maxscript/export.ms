@@ -6,7 +6,7 @@ execute("include\"" + includes + "\common.ms\"");
 tasks = #(task("export"))
 writeTaskNames tasks
 
-loadMaxFile "export.max"
+execute("loadMaxFile \"" + iFrameworkRoot + iSceneToLoad + "\"")
 
 select $*
 
@@ -18,4 +18,4 @@ writeTaskFile tasks
 
 
 
-quitMax #noPrompt
+/*quitMax #noPrompt*/

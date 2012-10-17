@@ -72,6 +72,8 @@ app = systemTools.getEnvVariable("app");
 appVer = systemTools.getEnvVariable("appVer");
 obj = systemTools.getEnvVariable("obj");
 genBaseline = systemTools.getEnvVariable("genBaseline");
+iSceneToLoad = systemTools.getEnvVariable("sceneToLoad");
+iFrameworkRoot = systemTools.getEnvVariable("frameworkRoot");
 
 outFile = createFile (app + appVer + "_" + testFile + ".ats")
 
