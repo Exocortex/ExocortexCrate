@@ -77,6 +77,7 @@ ESS_CALLBACK_START(alembic_import_Init,CRef&)
    oArgs.Add(L"standins");
    oArgs.Add(L"bboxes");
    oArgs.Add(L"attach");
+   oArgs.Add(L"failOnUnsupported");
    oArgs.Add(L"identifiers");
 	return CStatus::OK;
 ESS_CALLBACK_END
@@ -1169,7 +1170,7 @@ ESS_CALLBACK_START(alembic_create_item_Execute, CRef&)
 ESS_CALLBACK_END
 
 
-void createTransform( Alembic::Abc::IObject& iObj, CRef& parentNode, CRef& newNodeRef, CString& filename, bool attachToExisting, CValueArray& createItemArgs)
+CStatus createTransform( Alembic::Abc::IObject& iObj, CRef& parentNode, CRef& newNodeRef, CString& filename, bool attachToExisting, CValueArray& createItemArgs)
 {
    X3DObject parentX3DObject(parentNode);
    CString name = truncateName(iObj.getName().c_str());
@@ -1225,9 +1226,10 @@ void createTransform( Alembic::Abc::IObject& iObj, CRef& parentNode, CRef& newNo
          alembic_create_item_Invoke(L"alembic_visibility",nodeRef,filename,iObj.getFullName().c_str(),attachToExisting,createItemArgs);
       //}
    }
+   return CStatus( CStatus::OK );
 }
 
-void createShape( Alembic::Abc::IObject& iObj, CRef& parentNode, CRef& newNodeRef, CString& filename, bool attachToExisting, bool importStandins, bool importBboxes, bool wasMerged, CValueArray& createItemArgs)
+CStatus createShape( Alembic::Abc::IObject& iObj, CRef& parentNode, CRef& newNodeRef, CString& filename, bool attachToExisting, bool importStandins, bool importBboxes, bool wasMerged, bool failOnUnsupported, CValueArray& createItemArgs)
 {
    X3DObject parentX3DObject(parentNode);
    CString name = truncateName(iObj.getName().c_str());
@@ -1436,22 +1438,25 @@ void createShape( Alembic::Abc::IObject& iObj, CRef& parentNode, CRef& newNodeRe
       }
       if(!nurbsObj.IsValid())
       {
-         // warn
-		  EC_LOG_ERROR("[ExocortexAlembic] Encountered Nurbs Surface '" << name.GetAsciiString() << "', new nurbs surfaces are not supported, only attach to existing works with Nurbs.");
-      }
-      else
-      {
-         // load metadata
-         alembic_create_item_Invoke(L"alembic_metadata",nurbsObj.GetRef(),filename,iObj.getFullName().c_str(),attachToExisting,createItemArgs);
+		 std::stringstream s;
+		s << "Can't create new Nurb surfaces, can only attach.  Unsupported Alembic type: " << iObj.getFullName().c_str();
+		if( failOnUnsupported ) {
+			ESS_LOG_ERROR( s.str().c_str() );
+			return CStatus( CStatus::Fail );
+		}
+		ESS_LOG_WARNING( s.str().c_str() );
+	
+	  }
+     // load metadata
+     alembic_create_item_Invoke(L"alembic_metadata",nurbsObj.GetRef(),filename,iObj.getFullName().c_str(),attachToExisting,createItemArgs);
 
-         // let's setup the xform op
-         if(Alembic::AbcGeom::IXform::matches(parent.getMetaData()) && wasMerged)
-            alembic_create_item_Invoke(L"alembic_xform",nurbsObj.GetRef(),filename,parent.getFullName().c_str(),attachToExisting,createItemArgs);
-         
-         alembic_create_item_Invoke(L"alembic_nurbs",nurbsObj.GetRef(),filename,iObj.getFullName().c_str(),attachToExisting,createItemArgs);
+     // let's setup the xform op
+     if(Alembic::AbcGeom::IXform::matches(parent.getMetaData()) && wasMerged)
+        alembic_create_item_Invoke(L"alembic_xform",nurbsObj.GetRef(),filename,parent.getFullName().c_str(),attachToExisting,createItemArgs);
+     
+     alembic_create_item_Invoke(L"alembic_nurbs",nurbsObj.GetRef(),filename,iObj.getFullName().c_str(),attachToExisting,createItemArgs);
 
-         newNodeRef.Set(getFullNameFromIdentifier(iObj.getFullName()));
-      }
+     newNodeRef.Set(getFullNameFromIdentifier(iObj.getFullName()));
    }
    else if(Alembic::AbcGeom::ICurves::matches(iObj.getMetaData()))
    {
@@ -1465,9 +1470,14 @@ void createShape( Alembic::Abc::IObject& iObj, CRef& parentNode, CRef& newNodeRe
       if(curveSample.getType() != Alembic::AbcGeom::ALEMBIC_VERSION_NS::kLinear &&
          curveSample.getType() != Alembic::AbcGeom::ALEMBIC_VERSION_NS::kCubic)
       {
-         EC_LOG_ERROR("[ExocortexAlembic] Encounted curve '" << name.GetAsciiString() << "' that is not linear and not cubic, not supported.");
-         return;
-      }
+        std::stringstream s;
+		s << "Can't create non-linear/non-cubic Curves.  Unsupported Alembic type: " << iObj.getFullName().c_str();
+		if( failOnUnsupported ) {
+			ESS_LOG_ERROR( s.str().c_str() );
+			return CStatus( CStatus::Fail );
+		}
+		ESS_LOG_WARNING( s.str().c_str() );
+	  }
 
       // now let's check if we are looking at a curves node with color and radii
 
@@ -1669,9 +1679,16 @@ void createShape( Alembic::Abc::IObject& iObj, CRef& parentNode, CRef& newNodeRe
       if(importStandins && returnOpRef.IsValid())
          alembic_create_item_Invoke(L"alembic_standin",returnOpRef,filename,iObj.getFullName().c_str(),attachToExisting,createItemArgs);
    }
-   else{
-      ESS_LOG_WARNING("Unsupported type.");
+   else { 
+		std::stringstream s;
+		s << "Unsupported Alembic type: " << iObj.getFullName().c_str();
+		if( failOnUnsupported ) {
+			ESS_LOG_ERROR( s.str().c_str() );
+			return CStatus( CStatus::Fail );
+		}
+		ESS_LOG_WARNING( s.str().c_str() );
    }
+   return CStatus( CStatus::OK );
 }
 
 
@@ -1717,7 +1734,6 @@ ESS_CALLBACK_START(alembic_import_Execute, CRef&)
          return CStatus::InvalidArgument;
       }
    }
-   Application().LogMessage(L"[ExocortexAlembic] filename used: "+filename);
 
    // check if we have arguments
    if(args[1].GetAsText().IsEmpty())
@@ -1762,6 +1778,7 @@ ESS_CALLBACK_START(alembic_import_Execute, CRef&)
          args[6] = false;
       }
       args[7] = settings.GetParameterValue(L"attach");
+	  args[8] = settings.GetParameterValue(L"failOnUnsupported");
 
       Application().ExecuteCommand(L"DeleteObj",inspectArgs,inspectResult);
    }
@@ -1806,9 +1823,10 @@ ESS_CALLBACK_START(alembic_import_Execute, CRef&)
    bool importStandins = (bool)args[5];
    bool importBboxes = (bool)args[6];
    bool attachToExisting = (bool)args[7];
+   bool failOnUnsupported = (bool)args[8];
 
    // let's check the identifier list
-   CString identifierListStr = args[8].GetAsText();
+   CString identifierListStr = args[9].GetAsText();
    std::map<std::string,bool> identifierMap;
    if(!identifierListStr.IsEmpty())
    {
@@ -1915,14 +1933,20 @@ ESS_CALLBACK_START(alembic_import_Execute, CRef&)
 		else{
 			if(nMergedGeomNodeIndex != -1){//we are merging, so look at the child geometry node
 
-				createShape( mergedGeomChild, parentNode, newNodeRef, filename, attachToExisting, importStandins, importBboxes, true, createItemArgs);
+				CStatus localStatus = createShape( mergedGeomChild, parentNode, newNodeRef, filename, attachToExisting, importStandins, importBboxes, true, failOnUnsupported, createItemArgs);
+				if( ! localStatus.Succeeded() ) {
+					return localStatus;
+				}
 			}
 			else{ //geometry node(s) under a dummy node 
 
             //TODO: not sure if I handle the transforms correctly in this case
 			//EC_LOG_ERROR( "[ExocortexAlembic] Merged geometry node index not -1" );
             //return CStatus::Abort;
-				createShape( iObj, parentNode, newNodeRef, filename, attachToExisting, importStandins, importBboxes, false, createItemArgs);
+				CStatus localStatus = createShape( iObj, parentNode, newNodeRef, filename, attachToExisting, importStandins, importBboxes, false, failOnUnsupported, createItemArgs);
+				if( ! localStatus.Succeeded() ) {
+					return localStatus;
+				}
 			}
 
 		}
@@ -1947,8 +1971,9 @@ ESS_CALLBACK_START(alembic_import_Execute, CRef&)
 	      }
       }
       else{
-         EC_LOG_WARNING("Warning: newNodeRef CRef is not valid.");
-         return CStatus::Abort;
+		  if( iObj.getNumChildren() > 0 ) {
+			  EC_LOG_WARNING("Unsupported node: " << iObj.getFullName().c_str() << " has children that have not been imported." );
+		  }
       }
 
       if(prog.IsCancelPressed())
@@ -1982,6 +2007,7 @@ ESS_CALLBACK_START(alembic_import_settings_Define, CRef&)
       oCustomProperty.AddParameter(L"standins",CValue::siInt4,siPersistable,L"",L"",0,0,10,0,10,oParam);
    }
    oCustomProperty.AddParameter(L"attach",CValue::siBool,siPersistable,L"",L"",0,0,1,0,1,oParam);
+   oCustomProperty.AddParameter(L"failOnUnsupported",CValue::siBool,siPersistable,L"",L"",0,0,1,0,1,oParam);
 	return CStatus::OK;
 ESS_CALLBACK_END
 
@@ -2016,6 +2042,7 @@ ESS_CALLBACK_START(alembic_import_settings_DefineLayout, CRef&)
       oLayout.AddEnumControl(L"standins",items,L"Standins");
    }
    oLayout.AddItem(L"attach",L"Attach to existing objects");
+   oLayout.AddItem(L"failOnUnsupported",L"Fail Upon Unsupported Alembic Types");
    oLayout.EndGroup();
 
 	return CStatus::OK;
