@@ -373,20 +373,3 @@ global proc exocortexAlembicImport(string $filename, int $importNormals, int $im
   ExocortexAlembic_profileEnd -f MEL_exocortexAlembicImport;
 }
 
-global proc __exocortexAlembicAssignMaterialFromFaceSet(string $shape, int $faceIDs[], string $materialNode)
-{
-  // Create a new set for this shader
-  string $sSet = `sets -r true -nss true -em -n ($materialNode+"Set")`;
-  connectAttr -f ($materialNode + ".outColor") ($sSet + ".surfaceShader");
-
-  // Add each face to the set
-  for ($faceID in $faceIDs)
-    sets -fe $sSet ($shape+".f["+$faceID+"]");
-}
-
-global proc exocortexAlembicAssignMaterial(string $shape, string $faceSetAttribute, string $materialNode)
-{
-  int $faceSet[] = `getAttr ($shape+"."+$faceSetAttribute)`;
-  __exocortexAlembicAssignMaterialFromFaceSet($shape, $faceSet, $materialNode);
-}
-

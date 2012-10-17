@@ -138,7 +138,6 @@ MStatus AlembicGetInfoCommand::doIt(const MArgList & args)
          iTuple.name = child.getName().c_str();
          iTuple.nbSample = getNumSamplesFromObject(child);
          iTuple.parentID = i;
-
          {
            infoTuple &parentTuple = infoVector[i];
            if (iTuple.type == AT_Xform && parentTuple.type == AT_Xform)
