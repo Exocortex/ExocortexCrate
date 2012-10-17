@@ -188,28 +188,58 @@ void nameMapClear()
    gNameMap.clear();
 }
 
-MString getTypeFromObject(Alembic::Abc::IObject object)
+ALEMBIC_TYPE getAlembicTypeFromObject(Alembic::Abc::IObject object)
 {
-  ESS_PROFILE_SCOPE("getTypeFromObject"); 
-   const Alembic::Abc::MetaData &md = object.getMetaData();
-   if(Alembic::AbcGeom::IXform::matches(md)) {
-      return "Xform";
-   } else if(Alembic::AbcGeom::IPolyMesh::matches(md)) {
-      return "PolyMesh";
-   } else if(Alembic::AbcGeom::ICurves::matches(md)) {
-      return "Curves";
-   } else if(Alembic::AbcGeom::INuPatch::matches(md)) {
-      return "NuPatch";
-   } else if(Alembic::AbcGeom::IPoints::matches(md)) {
-      return "Points";
-   } else if(Alembic::AbcGeom::ISubD::matches(md)) {
-      return "SubD";
-   } else if(Alembic::AbcGeom::ICamera::matches(md)) {
-      return "Camera";
-   }
-   return "";
+  ESS_PROFILE_SCOPE("getAlembicTypeFromObject"); 
+  const Alembic::Abc::MetaData &md = object.getMetaData();
+  if(Alembic::AbcGeom::IXform::matches(md))
+    return AT_Xform;
+  else if(Alembic::AbcGeom::IPolyMesh::matches(md))
+    return AT_PolyMesh;
+  else if(Alembic::AbcGeom::ICurves::matches(md))
+    return AT_Curves;
+  else if(Alembic::AbcGeom::INuPatch::matches(md))
+    return AT_NuPatch;
+  else if(Alembic::AbcGeom::IPoints::matches(md))
+    return AT_Points;
+  else if(Alembic::AbcGeom::ISubD::matches(md))
+    return AT_SubD;
+  else if(Alembic::AbcGeom::ICamera::matches(md))
+    return AT_Camera;
+  return AT_UNKNOWN;
 }
 
+std::string alembicTypeToString(ALEMBIC_TYPE at)
+{
+  switch(at)
+  {
+  case AT_Xform:
+    return "Xform";
+  case AT_PolyMesh:
+    return "PolyMesh";
+  case AT_Curves:
+    return "Curves";
+  case AT_NuPatch:
+    return "NuPatch";
+  case AT_Points:
+    return "Points";
+  case AT_SubD:
+    return "SubD";
+  case AT_Camera:
+    return "Camera";
+  case AT_Group:
+    return "Group";
+  default:
+  case AT_UNKNOWN:
+    return "";
+  };
+  return "";
+}
+
+MString getTypeFromObject(Alembic::Abc::IObject object)
+{
+  return MString( alembicTypeToString( getAlembicTypeFromObject(object) ).c_str() );
+}
 
 MMatrix GetGlobalMMatrix(const MObject & in_Ref)
 {
@@ -308,6 +338,7 @@ std::map<std::string, boost::shared_ptr<Profiler> > nameToProfiler;
 
 MStatus AlembicProfileBeginCommand::doIt(const MArgList& args) {
    MStatus status = MS::kSuccess;
+#ifdef ESS_PROFILING
    MArgParser argData(syntax(), args, &status);
 
    if(!argData.isFlagSet("fileNameArg"))
@@ -321,7 +352,6 @@ MStatus AlembicProfileBeginCommand::doIt(const MArgList& args) {
    MString fileName = argData.flagArgumentString("fileNameArg",0);
 
    std::string strFileName( fileName.asChar() );
-#ifdef ESS_PROFILING
 
    if( nameToProfiler.find( strFileName ) == nameToProfiler.end() ) {
 		boost::shared_ptr<Profiler> profiler( new Profiler( strFileName.c_str() ) );
@@ -347,6 +377,7 @@ MSyntax AlembicProfileEndCommand::createSyntax()
 MStatus AlembicProfileEndCommand::doIt(const MArgList& args) {
 
    MStatus status = MS::kSuccess;
+#ifdef ESS_PROFILING
    MArgParser argData(syntax(), args, &status);
 
    if(!argData.isFlagSet("fileNameArg"))
@@ -360,7 +391,6 @@ MStatus AlembicProfileEndCommand::doIt(const MArgList& args) {
    MString fileName = argData.flagArgumentString("fileNameArg",0);
 
     std::string strFileName( fileName.asChar() );
-#ifdef ESS_PROFILING
    if( nameToProfiler.find( strFileName ) != nameToProfiler.end() ) {
 		nameToProfiler[ strFileName ]->stop();
    }
@@ -369,8 +399,6 @@ MStatus AlembicProfileEndCommand::doIt(const MArgList& args) {
    return status;
 
 }
-
-
 
 MSyntax AlembicProfileStatsCommand::createSyntax()
 {
@@ -388,4 +416,22 @@ MStatus AlembicProfileStatsCommand::doIt(const MArgList& args) {
    ESS_PROFILE_REPORT();
 
    return status;
+}
+
+
+MSyntax AlembicProfileResetCommand::createSyntax()
+{
+   MSyntax syntax;
+   syntax.enableQuery(false);
+   syntax.enableEdit(false);
+
+   return syntax;
+}
+
+MStatus AlembicProfileResetCommand::doIt(const MArgList& args)
+{
+#ifdef ESS_PROFILING
+   nameToProfiler.clear();
+#endif
+   return MS::kSuccess;
 }

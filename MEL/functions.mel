@@ -38,10 +38,12 @@ global proc exocortexAlembicExport(string $filename,         string $exported_ob
   $job += ";transformcache="+$exportTransformCache;
   print $job;
   ExocortexAlembic_export -j $job;
+  ExocortexAlembic_profileEnd -f MEL_exocortexAlembicExport;
 }
 
 global proc exocortexAlembicImport(string $filename, int $importNormals, int $importUvs, int $importFaceSets, string $importVisibility, int $importAttach)
 {
+  ExocortexAlembic_profileReset;
   ExocortexAlembic_profileBegin -f MEL_exocortexAlembicImport;
 
   // query the content of the file
@@ -343,6 +345,10 @@ global proc exocortexAlembicImport(string $filename, int $importNormals, int $im
           parent -s $objects[$cID] $shape;
       }
       ExocortexAlembic_profileEnd -f MEL_exocortexAlembicImport_Group;
+    }
+    else if ($types[$i] == "")
+    {
+      continue;
     }
     else
     {

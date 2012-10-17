@@ -9,7 +9,7 @@ global proc string exocortexCreateOrReuseNode(string $name, string $type, int $i
 {
   ExocortexAlembic_profileBegin -f MEL_exocortexCreateOrReuseNode;
 
-  $name = `ExocortexAlembic_createValidName -i $name`;
+  //$name = `ExocortexAlembic_createValidName -i $name`;
 
   string $result;
   $result = "";

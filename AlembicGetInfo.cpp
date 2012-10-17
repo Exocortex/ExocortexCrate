@@ -3,6 +3,7 @@
 
 #include <sstream>
 #include <set>
+#include <deque>
 
 using namespace std;
 
@@ -34,14 +35,14 @@ struct infoTuple
 {
   bool valid;
   MString identifier;
-  MString type;
+  ALEMBIC_TYPE type;
   MString name;
   int nbSample;
   int parentID;
   std::vector<int> childID;
   MString data;
 
-  infoTuple(void): valid(false), identifier(""), type("Root"), name(""), nbSample(0), parentID(-1), childID(), data("") {}
+  infoTuple(void): valid(false), identifier(""), type(AT_UNKNOWN), name(""), nbSample(0), parentID(-1), childID(), data("") {}
 
   MString toInfo(void) const
   {
@@ -58,7 +59,7 @@ struct infoTuple
         str << "." << (*beg);
     }
 
-    MString ret = identifier + "|" + type + "|" + name;
+    MString ret = ((identifier + "|") + alembicTypeToString(type).c_str()) + "|" + name;
     ret += str.str().c_str();
     if (data.length() > 0)
       ret += "|" + data;
@@ -99,45 +100,50 @@ MStatus AlembicGetInfoCommand::doIt(const MArgList & args)
    }
 
    // get the root object
-   std::vector<Alembic::Abc::IObject> objects;
-   std::vector<infoTuple> infoVector;
+   std::deque<Alembic::Abc::IObject> objects;
+   std::deque<infoTuple> infoVector;
    std::set<std::string> uniqueIdentifiers;
 
    objects.push_back(archive->getTop());
    infoVector.push_back(infoTuple());
 
    // loop over all children and collect identifiers
+   int idx = 0;
    MStringArray identifiers;
-   for(size_t i=0; i<objects.size(); ++i)
+   for(size_t i=0; !objects.empty(); ++i)
    {
-     const int nbChild = objects[i].getNumChildren();
+      Alembic::Abc::IObject iObj = objects.front();
+      objects.pop_front();
+      const int nbChild = iObj.getNumChildren();
       for(size_t j=0; j<nbChild; ++j)
       {
-         Alembic::Abc::IObject child = objects[i].getChild(j);
+         Alembic::Abc::IObject child = iObj.getChild(j);
          objects.push_back(child);
+         ++idx;
          infoVector.push_back(infoTuple());
-         infoTuple &iTuple = infoVector[infoVector.size()-1];
+         infoTuple &iTuple = infoVector.back();
 
          // check if the name is unique!
-         std::string fullName = child.getFullName();
-         if (uniqueIdentifiers.find(fullName) != uniqueIdentifiers.end())
-           iTuple.identifier = "";
-         else
          {
-           uniqueIdentifiers.insert(fullName);
-           iTuple.identifier = fullName.c_str();
+           const std::string &fullName = child.getFullName();
+           if (uniqueIdentifiers.find(fullName) != uniqueIdentifiers.end())
+             iTuple.identifier = "";
+           else
+           {
+             uniqueIdentifiers.insert(fullName);
+             iTuple.identifier = fullName.c_str();
+           }
          }
-         iTuple.type = getTypeFromObject(child);
+         iTuple.type = getAlembicTypeFromObject(child);
          iTuple.name = child.getName().c_str();
          iTuple.nbSample = getNumSamplesFromObject(child);
          iTuple.parentID = i;
-
-         if (iTuple.type == "Xform")
          {
-           if (infoVector[i].type == "Xform")
-             infoVector[i].type = "Group";             
+           infoTuple &parentTuple = infoVector[i];
+           if (iTuple.type == AT_Xform && parentTuple.type == AT_Xform)
+             parentTuple.type = AT_Group;
+           parentTuple.childID.push_back(idx);
          }
-         infoVector[i].childID.push_back(objects.size()-1);
 
          // additional data fields
          MString data;
@@ -182,7 +188,7 @@ MStatus AlembicGetInfoCommand::doIt(const MArgList & args)
 
    // remove the ref of the archive
    delRefArchive(fileName);
-   for (std::vector<infoTuple>::const_iterator beg = infoVector.begin(); beg != infoVector.end(); ++beg)
+   for (std::deque<infoTuple>::const_iterator beg = infoVector.begin(); beg != infoVector.end(); ++beg)
    {
      if (beg->valid)
       identifiers.append(beg->toInfo());

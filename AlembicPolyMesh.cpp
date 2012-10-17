@@ -1101,7 +1101,6 @@ MStatus AlembicCreateFaceSetsCommand::doIt(const MArgList & args)
       subd.getSchema().getFaceSetNames(faceSetNames);
 
    MFnTypedAttribute tAttr;
-
    for(size_t i=0;i<faceSetNames.size();i++)
    {
       // access the face set
@@ -1114,20 +1113,23 @@ MStatus AlembicCreateFaceSetsCommand::doIt(const MArgList & args)
 
       // create the int data
       MFnIntArrayData fnData;
-      MIntArray arr((int *)faceSetSample.getFaces()->getData(),
-                    static_cast<unsigned int>(faceSetSample.getFaces()->size()));
+      MIntArray arr((int *)faceSetSample.getFaces()->getData(), static_cast<unsigned int>(faceSetSample.getFaces()->size()));
       MObject attrObj = fnData.create(arr);
 
       // check if we need to create the attribute
       MString attributeName = "FACESET_";
       attributeName += removeInvalidCharacter(faceSetNames[i]).c_str();
-      MObject attribute = node.attribute(attributeName);
-      if(attribute.isNull())
+      MObject attribute = node.attribute(attributeName, &status);
+      if(!status || attribute.isNull())
       {
-         attribute = tAttr.create(attributeName, attributeName, MFnData::kIntArray, attrObj);
-         tAttr.setStorable(true);
-         tAttr.setKeyable(false);
-         node.addAttribute(attribute);
+         attribute = tAttr.create(attributeName, attributeName, MFnData::kIntArray, attrObj, &status);
+         if (!status) { MGlobal::displayError(status.errorString()); break; }
+         status = tAttr.setStorable(true);
+         if (!status) { MGlobal::displayError(status.errorString()); break; }
+         status = tAttr.setKeyable(false);
+         if (!status) { MGlobal::displayError(status.errorString()); break; }
+         status = node.addAttribute(attribute);
+         if (!status) { MGlobal::displayError(status.errorString()); break; }
       }
       else
       {

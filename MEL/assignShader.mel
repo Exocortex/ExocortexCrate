@@ -1,0 +1,146 @@
+
+global proc __exocortexAlembicAssignMaterialFromFaceSet(string $shape, int $faceIDs[], string $materialNode)
+{
+  // Create a new set for this shader
+  string $sSet = `sets -r true -nss true -em -n ($materialNode+"Set")`;
+  connectAttr -f ($materialNode + ".outColor") ($sSet + ".surfaceShader");
+
+  // Add each face to the set
+  for ($faceID in $faceIDs)
+    sets -fe $sSet ($shape+".f["+$faceID+"]");
+}
+
+global proc exocortexAlembicAssignMaterial(string $shape, string $faceSetAttribute, string $materialNode)
+{
+  int $faceSet[] = `getAttr ($shape+"."+$faceSetAttribute)`;
+  __exocortexAlembicAssignMaterialFromFaceSet($shape, $faceSet, $materialNode);
+}
+
+global proc exocortexAlembicAssignMaterialOfType(string $shape, string $faceSetAttribute, string $materialType)
+{
+  string $matNode = `shadingNode -asShader $materialType`;
+  exocortexAlembicAssignMaterial($shape, $faceSetAttribute, $matNode);
+}
+
+global proc __executeAssignShader(string $shape, string $optFaceSet, string $optShaders)
+{
+  string $attr = "FACESET_" + (`optionMenu -query -value $optFaceSet`);
+  string $shad = `optionMenu -query -value $optShaders`;
+
+  waitCursor -state on;
+  exocortexAlembicAssignMaterial($shape, $attr, $shad);
+  waitCursor -state off;
+}
+
+global proc __createAssignShaderDialog(string $shape, string $faceSets[], string $shaderList[])
+{
+  string $window = `window -title "Assign Shader" -iconName "Assign Shader" -resizeToFitChildren true -sizeable false`;
+
+    columnLayout -adjustableColumn true;
+
+      frameLayout -collapsable false -label "Options";
+        $optFaceSet = `optionMenu -label "Face Sets:"`;
+        for ($fs in $faceSets)
+          menuItem -label $fs;
+
+        $optShaders = `optionMenu -label "Shaders:"`;
+        for ($sl in $shaderList)
+          menuItem -label $sl;
+      setParent ..;
+
+      button -label "Assign" -command ("__executeAssignShader(\"" + $shape + "\", \"" + $optFaceSet + "\", \"" + $optShaders + "\"); deleteUI -window " + $window + ";");
+      button -label "Cancel" -command ("deleteUI -window " + $window);
+    setParent ..;
+
+  showWindow $window;
+}
+
+global proc exocortexAlembicAssignShaderDialog()
+{
+  // get the selected node
+  string $shape;
+  {
+    string $sel[] = `ls -sl`;
+    if (size($sel) != 1)
+    {
+      error("Only one object must be selected to assign shader to it with FACESETs");
+      return;
+    }
+    $shape = $sel[0];
+  }
+
+  // if it's a transform, get the first shape attached to it
+  if (`objectType $shape` == "transform")
+  {
+    string $shapes[] = `listRelatives -shapes $shape`;
+    $shape = $shapes[0];
+  }
+
+  // check if the shape is a mesh or subdiv... otherwise, cannot do anything with it!
+  {
+    string $type = `objectType $shape`;
+    if ($type != "mesh" && $type != "subdiv")
+    {
+      error("Selected node is not a \"mesh\" or \"subdiv\". Only those nodes can have FACESETs");
+      return;
+    }
+  }
+
+  // list FACESET attributes!
+  string $faceSets[];
+  {
+    string $attr[] = `listAttr $shape`;
+    for ($at in $attr)
+    {
+      if (startsWith($at, "FACESET_"))
+      {
+        int $beg = size("FACESET_")+1;
+        int $end = size($at);
+        string $sub = `substring $at $beg $end`;
+        $faceSets[size($faceSets)] = $sub;
+      }
+    }
+
+    if (size($faceSets) == 0)
+    {
+      error("No FACESET attribute exists on node " + $shape);
+      return;
+    }
+  }
+
+  // list all shaders
+  string $shaderList[];
+  {
+    string $SEng[] = `ls -type shadingEngine`;
+    for ($se in $SEng)
+    {
+      string $shaders[] = `listConnections ($se+".surfaceShader")`;
+      for ($sh in $shaders)
+      {
+        int $unique = 1;
+        for ($tmp in $shaderList)
+        {
+          if ($sh == $tmp)
+          {
+            $unique = 0;
+            break;
+          }
+        }
+
+        if ($unique)
+          $shaderList[size($shaderList)] = $sh;
+      }
+    }
+
+    if (size($shaderList) == 0)
+    {
+      error("No shaders found");
+      return;
+    }
+  }
+
+  __createAssignShaderDialog($shape, $faceSets, $shaderList);
+}
+
+
+

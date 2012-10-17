@@ -24,6 +24,22 @@ MString nameMapGet(MString identifier);
 void nameMapClear();
 
 // utility mappings
+enum ALEMBIC_TYPE
+{
+  AT_Xform,
+  AT_PolyMesh,
+  AT_Curves,
+  AT_NuPatch,
+  AT_Points,
+  AT_SubD,
+  AT_Camera,
+  AT_Group,
+  AT_UNKNOWN,
+
+  AT_NB_ALEMBIC_TYPES
+};
+ALEMBIC_TYPE getAlembicTypeFromObject(Alembic::Abc::IObject object);
+std::string alembicTypeToString(ALEMBIC_TYPE at);
 MString getTypeFromObject(Alembic::Abc::IObject object);
 
 // transform wranglers
@@ -84,6 +100,19 @@ class AlembicProfileStatsCommand : public MPxCommand
 
     static MSyntax createSyntax();
     static void* creator() { return new AlembicProfileStatsCommand(); }
+};
+
+class AlembicProfileResetCommand: public MPxCommand
+{
+  public:
+    AlembicProfileResetCommand() {}
+    virtual ~AlembicProfileResetCommand()  {}
+
+    virtual bool isUndoable() const { return false; }
+    MStatus doIt(const MArgList& args);
+
+    static MSyntax createSyntax();
+    static void* creator() { return new AlembicProfileResetCommand(); }
 };
 
 #endif  // _FOUNDATION_H_
