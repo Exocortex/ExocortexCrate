@@ -4,6 +4,7 @@
 #include <xsi_application.h>
 #include <xsi_x3dobject.h>
 #include <xsi_primitive.h>
+#include <xsi_polygonface.h>
 #include <xsi_geometry.h>
 #include <xsi_sample.h>
 #include <xsi_knot.h>
@@ -68,6 +69,8 @@ AlembicCurves::AlembicCurves(const XSI::CRef & in_Ref, AlembicWriteJob * in_Job)
    // create all properties
    mRadiusProperty = OFloatArrayProperty(mCurvesSchema.getArbGeomParams(), ".radius", mCurvesSchema.getMetaData(), GetJob()->GetAnimatedTs() );
    mColorProperty = OC4fArrayProperty(mCurvesSchema.getArbGeomParams(), ".color", mCurvesSchema.getMetaData(), GetJob()->GetAnimatedTs() );
+   mFaceIndexProperty = OInt32ArrayProperty(mCurvesSchema.getArbGeomParams(), ".face_index", mCurvesSchema.getMetaData(), GetJob()->GetAnimatedTs() );
+   mVertexIndexProperty = OInt32ArrayProperty(mCurvesSchema.getArbGeomParams(), ".vertex_index", mCurvesSchema.getMetaData(), GetJob()->GetAnimatedTs() );
 }
 
 AlembicCurves::~AlembicCurves()
@@ -87,7 +90,6 @@ XSI::CStatus AlembicCurves::Save(double time)
    // store the transform
    Primitive prim(GetRef());
    bool globalSpace = GetJob()->GetOption(L"globalSpace");
-
    bool flattenHierarchy = GetJob()->GetOption(L"flattenHierarchy");
    SaveXformSample(GetRef(1),mXformSchema,mXformSample,time,false,globalSpace,flattenHierarchy);
 
@@ -334,6 +336,8 @@ XSI::CStatus AlembicCurves::Save(double time)
       CPointRefArray emitterPointRefArray(emitterGeo.GetPoints());
       CLongArray emitterPntIndex;
 
+	  vector<long> faceIndices;
+
       if( !SIObject(emitterPrimRef).GetType().IsEqualNoCase(L"polymsh"))
       {
          Application().LogMessage(L"Error: The hair needs to be emitted from a polygon",siWarningMsg);
@@ -341,11 +345,17 @@ XSI::CStatus AlembicCurves::Save(double time)
       }
       else if ( !SIObject(emitterClusterRef).GetType().IsEqualNoCase(L"poly"))
       {
-         // assume that there is a guide cuve per vertex in the emitter geometry
+         // assume that there is a guide curve per vertex in the emitter geometry
          // hence the base points should correspond to point ids
          assert( numCurves==emitterPointRefArray.GetCount());
          for(long i=0;i<numCurves;i++)
             emitterPntIndex.Add(i);
+
+		 // add all the faces to the face indices
+		 int numPolys = emitterGeo.GetPolygons().GetCount();
+		 faceIndices.resize( numPolys);
+		 for ( int i=0; i<numPolys; i++)
+			faceIndices[i] = i;
       }
       else
       {
@@ -354,9 +364,11 @@ XSI::CStatus AlembicCurves::Save(double time)
          CLongArray clusterElements = emitterCluster.GetElements().GetArray();
          CLongArray emitterPntUsed(emitterPointRefArray.GetCount());
 
+		 faceIndices.resize( clusterElements.GetCount());
          CLongArray facetIndex;
          for(long i=0;i<clusterElements.GetCount();i++)
          {
+			faceIndices[i] = clusterElements[i];
             facetIndex = Facet(emitterGeo.GetFacets().GetItem(clusterElements[i])).GetPoints().GetIndexArray();
             for(long j=0;j<facetIndex.GetCount();j++)
             {
@@ -397,7 +409,7 @@ XSI::CStatus AlembicCurves::Save(double time)
       // store the bbox
       mCurvesSample.setSelfBounds(bbox);
 
-      // if we are the first frame then define the curves
+      // if we are the first frame then define the curves and store the indices
       if(mNumSamples == 0)
       {
          const int hairVertCount = 15;
@@ -410,6 +422,15 @@ XSI::CStatus AlembicCurves::Save(double time)
          mCurvesSample.setType(kLinear);
          mCurvesSample.setWrap(kNonPeriodic);
          mCurvesSample.setBasis(kNoBasis);
+
+		// store the vertex indices
+		 vector<long> vertexIndices( emitterPntIndex.GetCount());
+		 for(LONG i=0;i<emitterPntIndex.GetCount();i++)
+			vertexIndices[i] = emitterPntIndex[i];
+		 mVertexIndexProperty.set(Alembic::Abc::Int32ArraySample(&vertexIndices.front(),vertexIndices.size()));
+
+		 // store the face indices
+		 mFaceIndexProperty.set(Alembic::Abc::Int32ArraySample(&faceIndices.front(),faceIndices.size()));
       }
       mCurvesSchema.set(mCurvesSample);
    }
@@ -686,6 +707,7 @@ ESS_CALLBACK_START( alembic_crvlist_Update, CRef& )
       obj.getSchema().getNumSamples()
    );
 
+
    Alembic::AbcGeom::ICurvesSchema::Sample sample;
    obj.getSchema().get(sample,sampleInfo.floorIndex);
 
@@ -705,6 +727,10 @@ ESS_CALLBACK_START( alembic_crvlist_Update, CRef& )
    }
 
    Alembic::Abc::P3fArraySamplePtr curvePos = sample.getPositions();
+
+   Operator op(ctxt.GetSource());
+   updateOperatorInfo( op, sampleInfo, obj.getSchema().getTimeSampling(),
+					   pos.GetCount(), curvePos->size());
 
    if (!isHair)
    {
@@ -992,12 +1018,7 @@ XSIPLUGINCALLBACK CStatus alembic_curves_Evaluate(ICENodeContext& in_ctxt)
          CDataArray2DVector3f outData( in_ctxt );
          CDataArray2DVector3f::Accessor acc;
 
-		  IV3fArrayProperty prop;
-		  if( ! getArbGeomParamPropertyAlembic( obj, "velocity", prop ) ) {
-            acc = outData.Resize(0,0);
-            return CStatus::OK;
-         }
-		  /*if ( obj.getSchema().getPropertyHeader( ".velocity" ) == NULL )
+         if ( obj.getSchema().getPropertyHeader( ".velocity" ) == NULL )
          {
             acc = outData.Resize(0,0);
             return CStatus::OK;
@@ -1012,7 +1033,7 @@ XSIPLUGINCALLBACK CStatus alembic_curves_Evaluate(ICENodeContext& in_ctxt)
          {
             acc = outData.Resize(0,0);
             return CStatus::OK;
-         }*/
+         }
          Alembic::Abc::V3fArraySamplePtr ptr = prop.getValue(sampleInfo.floorIndex);
          if(ptr == NULL)
             acc = outData.Resize(0,0);
@@ -1048,13 +1069,7 @@ XSIPLUGINCALLBACK CStatus alembic_curves_Evaluate(ICENodeContext& in_ctxt)
          CDataArray2DFloat outData( in_ctxt );
          CDataArray2DFloat ::Accessor acc;
 
-          IFloatArrayProperty prop;
-		  if( ! getArbGeomParamPropertyAlembic( obj, "radius", prop ) ) {
-            acc = outData.Resize(0,0);
-            return CStatus::OK;
-         }
-		  
-		 /* if ( obj.getSchema().getPropertyHeader( ".radius" ) == NULL )
+         if ( obj.getSchema().getPropertyHeader( ".radius" ) == NULL )
          {
             acc = outData.Resize(0,0);
             return CStatus::OK;
@@ -1069,7 +1084,7 @@ XSIPLUGINCALLBACK CStatus alembic_curves_Evaluate(ICENodeContext& in_ctxt)
          {
             acc = outData.Resize(0,0);
             return CStatus::OK;
-         }*/
+         }
          Alembic::Abc::FloatArraySamplePtr ptr = prop.getValue(sampleInfo.floorIndex);
          if(ptr == NULL)
             acc = outData.Resize(0,0);
@@ -1091,13 +1106,7 @@ XSIPLUGINCALLBACK CStatus alembic_curves_Evaluate(ICENodeContext& in_ctxt)
          CDataArray2DColor4f outData( in_ctxt );
          CDataArray2DColor4f::Accessor acc;
 
-         IC4fArrayProperty prop;
-		  if( ! getArbGeomParamPropertyAlembic( obj, "color", prop ) ) {
-            acc = outData.Resize(0,0);
-            return CStatus::OK;
-         }
-		  /*
-		  if ( obj.getSchema().getPropertyHeader( ".color" ) == NULL )
+         if ( obj.getSchema().getPropertyHeader( ".color" ) == NULL )
          {
             acc = outData.Resize(0,0);
             return CStatus::OK;
@@ -1112,7 +1121,7 @@ XSIPLUGINCALLBACK CStatus alembic_curves_Evaluate(ICENodeContext& in_ctxt)
          {
             acc = outData.Resize(0,0);
             return CStatus::OK;
-         }*/
+         }
          Alembic::Abc::C4fArraySamplePtr ptr = prop.getValue(sampleInfo.floorIndex);
          if(ptr == NULL)
             acc = outData.Resize(0,0);
@@ -1278,6 +1287,11 @@ ESS_CALLBACK_START( alembic_crvlist_topo_Update, CRef& )
 
       curveDatas.Add(curveData);
    }
+   
+   Operator op(ctxt.GetSource());
+   updateOperatorInfo( op, sampleInfo, obj.getSchema().getTimeSampling(),
+	                   offset, offset);
+
    
    NurbsCurveList curves = Primitive(ctxt.GetOutputTarget()).GetGeometry();
    curves.Set(curveDatas);

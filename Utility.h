@@ -3,7 +3,15 @@
 
 #include "Foundation.h"
 #include "CommonUtilities.h"
+
 #include <xsi_ref.h>
+#include <xsi_operator.h>
+
+#include "Alembic\AbcCoreAbstract\TimeSampling.h"
+
+namespace AbcA = ::Alembic::AbcCoreAbstract::ALEMBIC_VERSION_NS;
+using AbcA::TimeSamplingPtr;
+
 
 XSI::CStatus alembicOp_Define( XSI::CRef& in_ctxt );
 XSI::CStatus alembicOp_DefineLayout( XSI::CRef& in_ctxt );
@@ -18,6 +26,7 @@ XSI::CRefArray getOperators( XSI::CRef in_Ref);
 bool isRefAnimated(const XSI::CRef & in_Ref, bool xformCache = false, bool globalSpace = false);
 bool returnIsRefAnimated(const XSI::CRef & in_Ref, bool animated);
 void clearIsRefAnimatedCache();
+void updateOperatorInfo( XSI::Operator& op, SampleInfo& sampleInfo, TimeSamplingPtr timeSamplingPtr, int nPointsPrimitive, int nPointsCache);
 
 // remapping imported names
 void nameMapAdd(XSI::CString identifier, XSI::CString name);
