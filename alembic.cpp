@@ -96,6 +96,7 @@ EC_EXPORT MStatus initializePlugin(MObject obj)
    status = plugin.registerCommand("ExocortexAlembic_profileStats",
 	  AlembicProfileStatsCommand::creator,
       AlembicProfileStatsCommand::createSyntax);
+
    status = plugin.registerCommand("ExocortexAlembic_createValidName",
 	    AlembicValidateNameCommand::creator,
       AlembicValidateNameCommand::createSyntax);
