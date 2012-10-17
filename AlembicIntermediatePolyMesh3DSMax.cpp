@@ -264,13 +264,13 @@ void IntermediatePolyMesh3DSMax::Save(std::map<std::string, bool>& mOptions, Mes
             {
                 it = normalMap.find(normalVec[i]);
 				if(it != normalMap.end()){//the normal was found in the map, so store the index to normal
-                    normalIndexVec.push_back((uint32_t)it->second);
+                    normalIndexVec.push_back((::uint32_t)it->second);
 					normalIndexCount++;
 				}
                 else {
-                    normalIndexVec.push_back((uint32_t)sortedNormalCount);
+                    normalIndexVec.push_back((::uint32_t)sortedNormalCount);
 					normalIndexCount++;
-                    normalMap.insert(std::pair<Alembic::Abc::V3f,size_t>(normalVec[i],(uint32_t)sortedNormalCount));
+                    normalMap.insert(std::pair<Alembic::Abc::V3f,size_t>(normalVec[i],(::uint32_t)sortedNormalCount));
                     sortedNormalVec.push_back(normalVec[i]);
 					sortedNormalCount++;
                 }
@@ -449,14 +449,14 @@ void IntermediatePolyMesh3DSMax::Save(std::map<std::string, bool>& mOptions, Mes
 					{
 					  it = uvMap.find(mUvVec[i][j]);
 					  if(it != uvMap.end()){
-						  mUvIndexVec[i].push_back((uint32_t)it->second);
+						  mUvIndexVec[i].push_back((::uint32_t)it->second);
 						  uvIndexCount++;
 					  }
 					  else
 					  {
-						  mUvIndexVec[i].push_back((uint32_t)sortedUVCount);
+						  mUvIndexVec[i].push_back((::uint32_t)sortedUVCount);
 						  uvIndexCount++;
-						  uvMap.insert(std::pair<Alembic::Abc::V2f,size_t>(mUvVec[i][j],(uint32_t)sortedUVCount));
+						  uvMap.insert(std::pair<Alembic::Abc::V2f,size_t>(mUvVec[i][j],(::uint32_t)sortedUVCount));
 						  sortedUVVec.push_back(mUvVec[i][j]);
 						  sortedUVCount++;
 					  }
@@ -505,7 +505,7 @@ void IntermediatePolyMesh3DSMax::Save(std::map<std::string, bool>& mOptions, Mes
 			  if (it == mFaceSetsMap.end())
 			  {
 				  faceSetStr faceSet;
-				  faceSet.faceIds = std::vector<int32_t>();
+				  faceSet.faceIds = std::vector<::int32_t>();
 				  faceSet.originalMatId = originalMatId;
 				  facesetmap_ret_pair ret = mFaceSetsMap.insert( facesetmap_insert_pair(matId, faceSet) );
 				  it = ret.first;

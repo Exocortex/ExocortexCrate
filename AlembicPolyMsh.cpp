@@ -327,7 +327,7 @@ bool AlembicPolyMesh::Save(double time, bool bLastFrame)
 				int nMaterialId = it->first+1;
 				nameStream<<it->second.name<<"_"<<nMaterialId;
 
-				std::vector<int32_t>& faceSetVec = it->second.faceIds;
+				std::vector<::int32_t>& faceSetVec = it->second.faceIds;
 
 				Alembic::AbcGeom::OFaceSet faceSet = mMeshSchema.createFaceSet(nameStream.str());
 				Alembic::AbcGeom::OFaceSetSchema::Sample faceSetSample(Alembic::Abc::Int32ArraySample(&faceSetVec.front(), faceSetVec.size()));
