@@ -1,0 +1,22 @@
+{"tasks":[
+
+{"script":"/Scripts/Python/XSI/export.py", 
+"name":"Export",
+"inputs":{
+	"app":"xsi", 
+	"appVer":"v2013", 
+	"obj":"rainOfShapes", 
+	"transformsEO":"flat", 
+	"exportStr":"in=0;out=100",
+	"nodesToSelect":"Fury_Rain.PointCloud,tetrahedron"
+}},
+{"script":"/Scripts/Python/XSI/import.py",
+"name":"Import", 
+"inputs":{
+	"app":"xsi", 
+	"appVer":"v2013", 
+	"obj":"rainOfShapes", 
+	"frameToRender":20
+}}
+
+]}

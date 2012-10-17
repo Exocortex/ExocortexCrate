@@ -483,6 +483,7 @@ tmProto.build = function(list){
 			arguments: '',//-silent',
 			scriptPath: scriptPath,
 			scriptName: scriptName,
+			scriptNameNE: scriptName.substring(0, scriptName.length-3),
 			testName: list[i].name, 
 			runEnvVars: runEnv,
 			completionContext: this,

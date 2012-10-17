@@ -1,0 +1,14 @@
+{"tasks":[
+
+
+{"script":"/Scripts/Python/XSI/import.py", 
+"inputs":{
+	"app":"xsi", 
+	"appVer":"v2013", 
+	"obj":"robot_cub_rig",
+	"alembicFileExt":".abc",
+	"abcToImport":"/Assets/XSI/robot_cub_rig.abc",
+	"frameToRender":20
+}}
+
+]}

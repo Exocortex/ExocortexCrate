@@ -43,10 +43,10 @@ pdProto.execute = function(){
 	}
 	else if(this.app === "xsi"){
 		//if(bDebugXSI){
-			//runStr = ["\"", this.exepath,"\""].join('');
+			runStr = ["\"", this.exepath,"\""].join('');
 		//}
 		//else{
-			runStr = ["\"", this.exepath,"\"", ' -continue -lang Python -script ', script].join('');
+		//	runStr = ["\"", this.exepath,"\"", ' -continue -lang Python -script ', script].join('');
 		//}
 	}
 
@@ -64,9 +64,10 @@ pdProto.execute = function(){
 	envVar["testPath"] = this.testdir+"/";
 	envVar["testName"] = this.testName;
 	envVar["genBaseline"] = this.genBaseline;
-	envVar["PYTHONPATH"] = "E:/Projects2/ExocortexAlembicShared/Testing/Scripts/Python/common"
+	envVar["PYTHONPATH"] = __dirname+"/Scripts/Python/common";
+	envVar["script"] = script;
 
-	//console.log(envVar);
+	console.log(script);
 
 	var that = this;
 	this.child = childp.exec(runStr, {cwd: this.testdir, env:envVar }, function (error, stdout, stderr) {

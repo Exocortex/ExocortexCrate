@@ -1,0 +1,18 @@
+{"tasks":[
+		
+{"script":"/Scripts/Python/XSI/export.py", 
+"inputs":{
+	"app":"xsi", 
+	"appVer":"v2013", 
+	"obj":"Sphere001"
+	"sceneToLoad":"/Assets/XSI/spherePolymesh.scn",
+}},
+
+{"script":"/Scripts/Python/XSI/import.py", 
+"inputs":{
+	"app":"xsi", 
+	"appVer":"v2013", 
+	"obj":"Sphere001", 	"frameToRender":0
+}}
+
+]}

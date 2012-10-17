@@ -1,0 +1,34 @@
+{"tasks":[
+
+{"script":"/Scripts/Python/XSI/export.py", 
+"name":"ExportBase",
+"inputs":{
+	"app":"xsi", 
+	"appVer":"v2013", 
+	"obj":"faceBase", 
+	"transformsEO":"flat", 
+	"exportStr":"in=0;out=1",
+	"sceneToLoad":"/Assets/XSI/faceGeometryAnimation.scn",
+	"nodesToSelect":"Head.Face"
+}},
+{"script":"/Scripts/Python/XSI/export.py", 
+"name":"ExportPointCache",
+"inputs":{
+	"app":"xsi", 
+	"appVer":"v2013", 
+	"obj":"facePointCache", 
+	"transformsEO":"flat", 
+	"exportStr":"in=0;out=100;purepointcache=true;uvs=false;facesets=false;bindpose=false",
+	"sceneToLoad":"/Assets/XSI/faceGeometryAnimation.scn",
+	"nodesToSelect":"Head.Face"
+}},
+{"script":"/Scripts/Python/XSI/importATE.py", 
+"inputs":{
+	"app":"xsi", 
+	"appVer":"v2013", 
+	"base":"faceBase", 
+	"pointCache":"facePointCache", 
+	"frameToRender":48
+}}
+
+]}

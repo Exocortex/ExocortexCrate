@@ -23,6 +23,7 @@ iTestFile = os.environ["testName"];
 iApp = os.environ["app"];
 iAppVer = os.environ["appVer"];
 iGenBaseline = os.environ["genBaseline"];
+iScript = os.environ["script"];
 
 
 iObj = getInput("obj");
