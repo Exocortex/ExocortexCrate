@@ -5,9 +5,9 @@ void logError( const char* msg );
 void logWarning( const char* msg );
 void logInfo( const char* msg );
 
-#define ESS_LOG_ERROR(a) do { std::stringstream s; s << "Alembic: " << a; logError( s.str().c_str() ); } while(0)
-#define ESS_LOG_WARNING(a) do { std::stringstream s; s << "Alembic: " << a; logWarning( s.str().c_str() ); } while(0)
-#define ESS_LOG_INFO(a) do { std::stringstream s; s << "Alembic: " << a; logInfo( s.str().c_str() ); } while(0)
+#define ESS_LOG_ERROR(a) do { std::stringstream __s; __s << "Alembic: " << a; logError( __s.str().c_str() ); } while(0)
+#define ESS_LOG_WARNING(a) do { std::stringstream __s; __s << "Alembic: " << a; logWarning(__s.str().c_str() ); } while(0)
+#define ESS_LOG_INFO(a) do { std::stringstream __s; __s << "Alembic: " << a; logInfo( __s.str().c_str() ); } while(0)
 
 #ifndef EC_LOG_ERROR
 	#define EC_LOG_ERROR(a)		ESS_LOG_ERROR(a)
