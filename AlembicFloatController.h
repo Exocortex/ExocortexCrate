@@ -140,4 +140,6 @@ public:
     HINSTANCE		HInstance() { return hInstance; }			// returns owning module handle
 };
 
+bool getCameraSampleVal(Alembic::AbcGeom::ICamera& objCamera, SampleInfo& sampleInfo, Alembic::AbcGeom::CameraSample sample, const char* name, double& sampleVal);
+
 #endif // __ALEMBIC_FLOAT_CONTROLLER_H__

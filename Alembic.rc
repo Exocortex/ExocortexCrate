@@ -356,6 +356,70 @@ BEGIN
     LTEXT           "Property:",-1,1,45,32,8
 END
 
+IDD_ALEMBIC_CAMERA_PARAMS DIALOGEX 0, 0, 114, 428
+STYLE DS_SETFONT | WS_CHILD | WS_VISIBLE
+FONT 8, "MS Sans Serif", 0, 0, 0x1
+BEGIN
+    CONTROL         "Custom1",IDC_PATH_EDIT,"CustEdit",WS_TABSTOP,0,8,109,13
+    LTEXT           "Path:",-1,0,0,32,8
+    CONTROL         "Custom1",IDC_IDENTIFIER_EDIT,"CustEdit",WS_TABSTOP,0,29,109,12
+    LTEXT           "Identifier:",-1,0,21,32,8
+    CONTROL         "Custom1",IDC_HFOV_EDIT,"CustEdit",WS_DISABLED | WS_TABSTOP,0,49,102,12
+    LTEXT           "Horizontal FOV:",-1,1,42,57,8
+    CONTROL         "Custom1",IDC_VFOV_EDIT,"CustEdit",WS_DISABLED | WS_TABSTOP,0,70,102,12
+    LTEXT           "Vertical FOV:",-1,0,62,54,8
+    CONTROL         "Custom1",IDC_FOCAL_LENGTH_EDIT,"CustEdit",WS_DISABLED | WS_TABSTOP,0,91,102,12
+    LTEXT           "Focal Length:",-1,1,83,54,8
+    CONTROL         "Custom1",IDC_HAPERATURE_EDIT,"CustEdit",WS_DISABLED | WS_TABSTOP,0,114,101,12
+    LTEXT           "Horizontal Aperature:",-1,0,106,83,8
+    CONTROL         "Custom1",IDC_VAPERATURE_EDIT2,"CustEdit",WS_DISABLED | WS_TABSTOP,0,135,101,12
+    LTEXT           "Vertical Aperature:",-1,0,127,83,8
+    CONTROL         "Custom1",IDC_HFILMOFFSET_EDIT,"CustEdit",WS_DISABLED | WS_TABSTOP,0,155,102,12
+    LTEXT           "Horizontal Film Offset:",-1,0,147,83,8
+    CONTROL         "Custom1",IDC_VFILMOFFSET_EDIT,"CustEdit",WS_DISABLED | WS_TABSTOP,0,176,102,12
+    LTEXT           "Vertical Film Offset:",-1,0,168,83,8
+    CONTROL         "Custom1",IDC_LSRATIO_EDIT,"CustEdit",WS_DISABLED | WS_TABSTOP,0,196,102,12
+    LTEXT           "Lens Sqeeze Ratio:",-1,0,188,83,8
+    CONTROL         "Custom1",IDC_OVERSCANL_EDIT,"CustEdit",WS_DISABLED | WS_TABSTOP,0,217,102,12
+    LTEXT           "Overscan Left:",-1,0,209,83,8
+    CONTROL         "Custom1",IDC_OVERSCANR_EDIT,"CustEdit",WS_DISABLED | WS_TABSTOP,0,238,102,12
+    LTEXT           "Overscan Right:",-1,0,230,83,8
+    CONTROL         "Custom1",IDC_OVERSCANT_EDIT,"CustEdit",WS_DISABLED | WS_TABSTOP,0,260,102,12
+    LTEXT           "Overscan Top:",-1,0,251,83,8
+    CONTROL         "Custom1",IDC_OVERSCANB_EDIT,"CustEdit",WS_DISABLED | WS_TABSTOP,0,282,102,12
+    LTEXT           "Overscan Bottom:",-1,0,274,83,8
+    CONTROL         "Custom1",IDC_FSTOP_EDIT,"CustEdit",WS_DISABLED | WS_TABSTOP,0,303,102,12
+    LTEXT           "FStop:",-1,0,295,83,8
+    CONTROL         "Custom1",IDC_FOCUSDIST_EDIT,"CustEdit",WS_DISABLED | WS_TABSTOP,0,324,102,12
+    LTEXT           "Focus Distance:",-1,0,316,83,8
+    CONTROL         "Custom1",IDC_SHUTTEROPEN_EDIT,"CustEdit",WS_DISABLED | WS_TABSTOP,0,345,101,12
+    LTEXT           "Shutter Open:",-1,0,337,83,8
+    CONTROL         "Custom1",IDC_SHUTTERCLOSE_EDIT,"CustEdit",WS_DISABLED | WS_TABSTOP,0,366,102,12
+    LTEXT           "Shutter Close:",-1,1,358,83,8
+    CONTROL         "Custom1",IDC_NEARCLIPPINGPLANE_EDIT,"CustEdit",WS_DISABLED | WS_TABSTOP,0,387,101,12
+    LTEXT           "Near Clipping Plane:",-1,0,379,83,8
+    CONTROL         "Custom1",IDC_FAR_CLIPPING_PLANE_EDIT,"CustEdit",WS_DISABLED | WS_TABSTOP,0,408,102,12
+    LTEXT           "Far Clipping Plane:",-1,0,400,83,8
+    CONTROL         "Custom2",IDC_HFOV_SPIN,"SpinnerControl",WS_TABSTOP,103,48,7,14
+    CONTROL         "Custom3",IDC_VFOV_SPIN,"SpinnerControl",WS_TABSTOP,103,70,7,14
+    CONTROL         "Custom4",IDC_FOCAL_LENGTH_SPIN,"SpinnerControl",WS_TABSTOP,103,91,7,14
+    CONTROL         "Custom5",IDC_HAPERATURE_SPIN,"SpinnerControl",WS_TABSTOP,103,113,7,14
+    CONTROL         "Custom6",IDC_VAPERATURE_SPIN,"SpinnerControl",WS_TABSTOP,103,134,7,14
+    CONTROL         "Custom7",IDC_HFILMOFFSET_SPIN,"SpinnerControl",WS_TABSTOP,103,154,7,14
+    CONTROL         "Custom8",IDC_VFILMOFFSET_SPIN,"SpinnerControl",WS_TABSTOP,103,175,7,14
+    CONTROL         "Custom9",IDC_LSRATIO_SPIN,"SpinnerControl",WS_TABSTOP,103,195,7,14
+    CONTROL         "Custom10",IDC_OVERSCANL_SPIN,"SpinnerControl",WS_TABSTOP,103,216,7,14
+    CONTROL         "Custom11",IDC_OVERSCANR_SPIN,"SpinnerControl",WS_TABSTOP,103,238,7,14
+    CONTROL         "Custom12",IDC_OVERSCANT_SPIN,"SpinnerControl",WS_TABSTOP,103,259,7,14
+    CONTROL         "Custom13",IDC_OVERSCANB_SPIN,"SpinnerControl",WS_TABSTOP,103,281,7,14
+    CONTROL         "Custom14",IDC_FSTOP_SPIN,"SpinnerControl",WS_TABSTOP,103,303,7,14
+    CONTROL         "Custom15",IDC_FOCUSDIST_SPIN,"SpinnerControl",WS_TABSTOP,103,323,7,14
+    CONTROL         "Custom16",IDC_SHUTTEROPEN_SPIN,"SpinnerControl",WS_TABSTOP,102,344,8,14
+    CONTROL         "Custom17",IDC_SHUTTERCLOSE_SPIN,"SpinnerControl",WS_TABSTOP,103,366,7,14
+    CONTROL         "Custom18",IDC_NEARCLIPPINGPLANE_SPIN,"SpinnerControl",WS_TABSTOP,103,386,7,14
+    CONTROL         "Custom19",IDC_FARCLIPPINGPLANE_SPIN,"SpinnerControl",WS_TABSTOP,103,407,7,14
+END
+
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -383,6 +447,11 @@ BEGIN
     IDD_ALEMBIC_FLOAT_CTRL_PARAMS, DIALOG
     BEGIN
         BOTTOMMARGIN, 100
+    END
+
+    IDD_ALEMBIC_CAMERA_PARAMS, DIALOG
+    BEGIN
+        RIGHTMARGIN, 110
     END
 END
 #endif    // APSTUDIO_INVOKED
@@ -429,6 +498,13 @@ BEGIN
     IDS_IGNORE_SUBFRAME_SAMPLES "Ignore subframe geometry"
     IDS_RENDER_AS_TICKS     "Render as ticks"
     IDS_VIEWPORT_PERCENT    "Viewport %"
+    IDS_HFOV                "Horizontal FOV"
+    IDS_VFOV                "Vertical FOV"
+    IDS_FOCAL_LENGTH        "Focal Length"
+    IDS_HAPERATURE          "Horizontal Aperature"
+    IDS_VAPERATURE          "Vertical Aperature"
+    IDS_HFILMOFFSET         "Horizontal Film Offset"
+    IDS_VFILMOFFSET         "Vertical Film Offset"
 END
 
 STRINGTABLE 
@@ -464,6 +540,21 @@ BEGIN
     IDS_LIBDESCRIPTION      "Convert Modifiers (Autodesk)"
     IDS_PARAMETERS          "Parameters"
     IDS_ABC_ARCHIVE         "Alembic Archive"
+END
+
+STRINGTABLE 
+BEGIN
+    IDS_LSRATIO             "Lense Squeeze Ratio"
+    IDS_OVERSCANL           "Left Overscan"
+    IDS_OVERSCANR           "Right Overscan"
+    IDS_OVERSCANT           "Top Overscan"
+    IDS_OVERSCANB           "Bottom Overscan"
+    IDS_FSTOP               "Fstop"
+    IDS_FOCUSDIST           "Focus Distance"
+    IDS_SHUTTEROPEN         "Shutter Open"
+    IDS_SHUTTERCLOSE        "Shutter Close"
+    IDS_NEARCLIPPINGPLANE   "Near Clipping Plane"
+    IDS_FARCLIPPINGPLANE    "Far Clipping Plane"
 END
 
 #endif    // English (U.S.) resources

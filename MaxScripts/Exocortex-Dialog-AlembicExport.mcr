@@ -43,8 +43,21 @@ rollout AlembicExportSettings "Alembic Export Settings" width:288 height:436
 	    	jobString += ";out=" + (outSpinner.value as string)
 	    	jobString += ";step=" + (stepsSpinner.value as string)
 	    	jobString += ";substep=" + (subStepsSpinner.value as string)
-	    	if(meshTopologyDropDown.selection == 2) do jobString += ";purepointcache=true"
-	    	if(meshTopologyDropDown.selection == 3) do jobString += ";normals=true"
+	    	if(meshTopologyDropDown.selection == 1) do
+	    	(
+	    		jobString += ";normals=false"
+	    		jobString += ";purepointcache=false"
+	    	)
+	    	if(meshTopologyDropDown.selection == 2) do
+	    	(
+	    		jobString += ";normals=false"
+	    		jobString += ";purepointcache=true"
+	    	)
+	    	if(meshTopologyDropDown.selection == 3) do 
+	    	(
+	    		jobString += ";purepointcache=false"
+	    		jobString += ";normals=true"
+	    	)
 	    	jobString += ";uvs=" 
 	    	jobString += (uvCheckbox.checked as string)
 	    	jobString += ";materialids=" 

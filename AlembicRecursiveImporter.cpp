@@ -46,6 +46,10 @@ int createAlembicObject(Alembic::AbcGeom::IObject& iObj, INode **pMaxNode, alemb
 		ESS_LOG_INFO( "AlembicImport_Shape: " << iObj.getFullName() );
 		ret = AlembicImport_Shape(file, iObj, options, pMaxNode);
 	}
+   else if (Alembic::AbcGeom::INuPatch::matches(iObj.getMetaData())) // NURBS
+	{
+		ESS_LOG_INFO( "AlembicImport_Shape: " << iObj.getFullName() );
+	}
 	return ret;
 }
 
