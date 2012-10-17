@@ -90,7 +90,7 @@ SICALLBACK exocortex_run_test_Execute( CRef& in_ctxt )
 	CRef sceneRoot = Application().GetActiveSceneRoot().GetRef();
 	int numNodes = CreateSubTreeWithNopCubes( sceneRoot,
 		CString( L"test_root" ), CString( L"c:\fakepath.abc" ), CString( L"/path/to/my/object" ),
-		5, 5, 2 );
+		4, 5, 2 );
 	
 	time (&end);
 	double dif = difftime (end,start);
