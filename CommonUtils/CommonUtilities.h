@@ -241,7 +241,7 @@ int prescanAlembicHierarchy(Alembic::AbcGeom::IObject root, std::vector<std::str
 //SortableV3f
 template <class T, class S> void createIndexedArray(const std::vector<T>& inputVec, std::vector<T>& outputVec, std::vector<Alembic::Abc::uint32_t>& outputIndices)
 {   
-   std::map<S> normalMap;
+   std::map<S, size_t> normalMap;
    std::map<S, size_t>::const_iterator it;
 
    outputIndices.reserve(inputVec.size());
@@ -256,7 +256,7 @@ template <class T, class S> void createIndexedArray(const std::vector<T>& inputV
       }
       else {
          outputIndices.push_back((Alembic::Abc::uint32_t)outputVec.size());
-         normalMap.insert(std::pair<Alembic::Abc::V3f,size_t>(inputVec[i], (Alembic::Abc::uint32_t)outputVec.size()));
+         normalMap.insert(std::pair<S, size_t>(inputVec[i], (Alembic::Abc::uint32_t)outputVec.size()));
          outputVec.push_back(inputVec[i]);
       }
    }
