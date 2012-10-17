@@ -261,7 +261,6 @@ template <class T, class S> void createIndexedArray(const std::vector<T>& inputV
       }
    }
 
-   outputVec.clear();
 }
 
 
