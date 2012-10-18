@@ -249,52 +249,9 @@ void IntermediatePolyMesh3DSMax::Save(std::map<std::string, bool>& mOptions, Mes
 
         // AlembicPrintFaceData(objectMesh);
 
-        // now let's sort the normals 
-        if(GetOption(mOptions, "indexedNormals")) 
-        {
-            std::map<SortableV3f,size_t> normalMap;
-            std::map<SortableV3f,size_t>::const_iterator it;
-            size_t sortedNormalCount = 0;
-            std::vector<Alembic::Abc::V3f> sortedNormalVec;
-            normalIndexVec.reserve(normalVec.size());
-            sortedNormalVec.reserve(normalVec.size());
-
-            // loop over all normals
-            for(size_t i=0;i<normalVec.size();i++)
-            {
-                it = normalMap.find(normalVec[i]);
-				if(it != normalMap.end()){//the normal was found in the map, so store the index to normal
-                    normalIndexVec.push_back((::uint32_t)it->second);
-					normalIndexCount++;
-				}
-                else {
-                    normalIndexVec.push_back((::uint32_t)sortedNormalCount);
-					normalIndexCount++;
-                    normalMap.insert(std::pair<Alembic::Abc::V3f,size_t>(normalVec[i],(::uint32_t)sortedNormalCount));
-                    sortedNormalVec.push_back(normalVec[i]);
-					sortedNormalCount++;
-                }
-            }
-
-			  //mhahn: disabled this code for now since it makes merging more difficult
-			  //we could in the future do this step when saving the final mesh
-
-            // use indexed normals if they use less space
-            //if(sortedNormalCount * sizeof(Alembic::Abc::V3f) + 
-            //    normalIndexCount * sizeof(uint32_t) < 
-            //    sizeof(Alembic::Abc::V3f) * normalVec.size())
-            //{
-                normalVec = sortedNormalVec;
-                //normalCount = sortedNormalCount;
-            //}
-            //else
-            //{
-            //    //normalIndexCount = 0;
-            //    normalIndexVec.clear();
-            //}
-            //sortedNormalCount = 0;
-            sortedNormalVec.clear();
-        }
+        std::vector<Alembic::Abc::N3f> indexedNormals;
+        createIndexedArray<Alembic::Abc::N3f, SortableV3f>(normalVec, indexedNormals, normalIndexVec);
+        normalVec = indexedNormals;
 
         ClearMeshSmoothingGroupNormals();
     }
@@ -418,55 +375,18 @@ void IntermediatePolyMesh3DSMax::Save(std::map<std::string, bool>& mOptions, Mes
    //       }
       }
 
+		mUvIndexVec.resize(mUvVec.size());
 
-
-		if(GetOption(mOptions, "indexedUVs")) 
-		{
-			mUvIndexVec.resize(mUvVec.size());
-
-			for(int i=0; i<mUvVec.size(); i++){
-
-				if (mUvVec[i].size() != sampleCount){
-					ESS_LOG_INFO("Warning: missing texture coord samples in channel "<<i);
-				}
-				else{
-
-					// now let's sort the uvs 
-					size_t uvCount = mUvVec[i].size();
-					size_t uvIndexCount = 0;
-
-					mUvIndexVec[i].reserve(uvCount);
-
-					std::map<SortableV2f,size_t> uvMap;
-					std::map<SortableV2f,size_t>::const_iterator it;
-
-					size_t sortedUVCount = 0;
-					std::vector<Alembic::Abc::V2f> sortedUVVec;
-					sortedUVVec.reserve(uvCount);
-
-					// loop over all uvs
-					for(size_t j=0; j<mUvVec[i].size(); j++)
-					{
-					  it = uvMap.find(mUvVec[i][j]);
-					  if(it != uvMap.end()){
-						  mUvIndexVec[i].push_back((::uint32_t)it->second);
-						  uvIndexCount++;
-					  }
-					  else
-					  {
-						  mUvIndexVec[i].push_back((::uint32_t)sortedUVCount);
-						  uvIndexCount++;
-						  uvMap.insert(std::pair<Alembic::Abc::V2f,size_t>(mUvVec[i][j],(::uint32_t)sortedUVCount));
-						  sortedUVVec.push_back(mUvVec[i][j]);
-						  sortedUVCount++;
-					  }
-					}
-					mUvVec[i] = sortedUVVec;
-					sortedUVVec.clear();
-					
-				}
+		for(int i=0; i<mUvVec.size(); i++){
+			if (mUvVec[i].size() != sampleCount){
+				ESS_LOG_INFO("Warning: missing texture coord samples in channel "<<i);
+            continue;
 			}
+			std::vector<Alembic::Abc::V2f> uvVecIndexed;
+         createIndexedArray<Alembic::Abc::V2f, SortableV2f>(mUvVec[i], uvVecIndexed, mUvIndexVec[i]);
+         mUvVec[i] = uvVecIndexed;
 		}
+		
 	}
 
 	// sweet, now let's have a look at face sets (really only for first sample)
