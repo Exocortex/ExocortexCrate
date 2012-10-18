@@ -5,7 +5,9 @@
 #include "ixformproperty.h"
 #include "foundation.h"
 #include <boost/lexical_cast.hpp>
+#include "CommonUtilities.h"
 
+/*
 Alembic::Abc::ICompoundProperty getCompoundFromIObject(Alembic::Abc::IObject object)
 {
    ALEMBIC_TRY_STATEMENT
@@ -85,7 +87,7 @@ size_t getNumSamplesFromObject(Alembic::Abc::IObject object)
    }
    return 0;
    ALEMBIC_VALUE_CATCH_STATEMENT(0)
-}
+}*/
 
 static PyObject * iObject_getIdentifier(PyObject * self, PyObject * args)
 {
@@ -107,7 +109,7 @@ static PyObject * iObject_getSampleTimes(PyObject * self, PyObject * args)
 {
    ALEMBIC_TRY_STATEMENT
    iObject * object = (iObject*)self;
-   Alembic::Abc::TimeSamplingPtr ts = getTimeSamplingFromObject(*object->mObject);
+   Alembic::Abc::TimeSamplingPtr ts = getTimeSamplingFromObject(*(object->mObject));
    if(ts)
    {
       const std::vector <Alembic::Abc::chrono_t> & times = ts->getStoredTimes();
@@ -124,7 +126,7 @@ static PyObject * iObject_getNbStoredSamples(PyObject * self, PyObject * args)
 {
    ALEMBIC_TRY_STATEMENT
    iObject * object = (iObject*)self;
-   return Py_BuildValue("i",(int)getNumSamplesFromObject(*object->mObject));
+   return Py_BuildValue("i",(int)getNumSamplesFromObject(*(object->mObject)) );
    ALEMBIC_PYOBJECT_CATCH_STATEMENT
 }
 
@@ -132,7 +134,7 @@ static PyObject * iObject_getMetaData(PyObject * self, PyObject * args)
 {
    ALEMBIC_TRY_STATEMENT
       iObject * object = (iObject*)self;
-      Alembic::Abc::ICompoundProperty compound = getCompoundFromIObject(*object->mObject);
+      Alembic::Abc::ICompoundProperty compound = getCompoundFromObject(*object->mObject);
       if (!compound.valid() || compound.getPropertyHeader( ".metadata" ) == NULL )  // create an empty Meta Data with empty strings
       {
          PyObject * tuple = PyTuple_New(20);
@@ -160,7 +162,7 @@ static PyObject * iObject_getPropertyNames(PyObject * self, PyObject * args)
 {
    ALEMBIC_TRY_STATEMENT
    iObject * object = (iObject*)self;
-   Alembic::Abc::ICompoundProperty compound = getCompoundFromIObject(*object->mObject);
+   Alembic::Abc::ICompoundProperty compound = getCompoundFromObject(*object->mObject);
    if(!compound.valid())
       return PyTuple_New(0);
 
@@ -197,7 +199,7 @@ static PyObject * iObject_getProperty(PyObject * self, PyObject * args)
 {
    ALEMBIC_TRY_STATEMENT
    iObject * object = (iObject*)self;
-   Alembic::Abc::ICompoundProperty compound = getCompoundFromIObject(*object->mObject);
+   Alembic::Abc::ICompoundProperty compound = getCompoundFromObject(*object->mObject);
    if(!compound.valid())
       return PyTuple_New(0);
 
@@ -239,7 +241,7 @@ static PyObject * iObject_getTsIndex(PyObject * self, PyObject * args)
    if (obj->tsIndex == -1)
    {
       ALEMBIC_TRY_STATEMENT
-         Alembic::Abc::TimeSamplingPtr ts_ptr = getTimeSamplingFromObject(*(obj->mObject));
+         Alembic::Abc::TimeSamplingPtr ts_ptr = getTimeSamplingFromObject(*obj->mObject);
          const int nb_ts = ((iArchive*)obj->mArchive)->mArchive->getNumTimeSamplings();
          for (int i = 0; i < nb_ts; ++i)
          {

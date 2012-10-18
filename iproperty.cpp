@@ -3,6 +3,7 @@
 #include "icompoundproperty.h"   // to call iCompoundProperty_new in iProperty_new if it's an iCompoundProperty
 #include "iobject.h"
 #include "AlembicLicensing.h"
+#include "CommonUtilities.h"
 
 #ifdef __cplusplus__
 extern "C"
@@ -2869,7 +2870,7 @@ PyObject * iProperty_new(Alembic::Abc::ICompoundProperty &compound, char * in_pr
 PyObject * iProperty_new(Alembic::Abc::IObject in_Object, char * in_propName)
 {
    ALEMBIC_TRY_STATEMENT
-   Alembic::Abc::ICompoundProperty compound = getCompoundFromIObject(in_Object);
+   Alembic::Abc::ICompoundProperty compound = getCompoundFromObject(in_Object);
    if (compound.getPropertyHeader( in_propName ) == NULL )
    {
       std::string msg;

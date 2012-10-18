@@ -6,6 +6,7 @@
 //#include "ixformproperty.h"
 #include "foundation.h"
 #include <boost/lexical_cast.hpp>
+#include "CommonUtilities.h"
 
 Alembic::Abc::OCompoundProperty getCompoundFromOObject(oObjectPtr in_Casted)
 {
@@ -34,7 +35,7 @@ Alembic::Abc::OCompoundProperty getCompoundFromOObject(oObjectPtr in_Casted)
    return Alembic::Abc::OCompoundProperty();
    ALEMBIC_VALUE_CATCH_STATEMENT(Alembic::Abc::OCompoundProperty())
 }
-
+/*
 Alembic::Abc::TimeSamplingPtr getTimeSamplingFromObject(Alembic::Abc::OObject object)
 {
    ALEMBIC_TRY_STATEMENT
@@ -87,7 +88,7 @@ size_t getNumSamplesFromObject(Alembic::Abc::OObject object)
    }
    return 0;
    ALEMBIC_VALUE_CATCH_STATEMENT(0)
-}
+}*/
 
 static PyObject * oObject_getIdentifier(PyObject * self, PyObject * args)
 {

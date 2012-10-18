@@ -3,7 +3,7 @@
 
 #include "foundation.h"
 
-Alembic::Abc::ICompoundProperty getCompoundFromIObject(Alembic::Abc::IObject object);
+//Alembic::Abc::ICompoundProperty getCompoundFromIObject(Alembic::Abc::IObject object);
 
 typedef struct {
   PyObject_HEAD
