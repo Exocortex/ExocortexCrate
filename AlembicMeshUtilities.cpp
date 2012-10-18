@@ -452,14 +452,14 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
        if(meshNormalsParam.valid())
        {
 		   std::vector<Imath::V3f> normalValuesFloor, normalValuesCeil;
-		   std::vector<AbcA::int32_t> normalIndicesFloor, normalIndicesCeil;
+		   std::vector<AbcA::uint32_t> normalIndicesFloor, normalIndicesCeil;
 
 			bool normalsFloor = getIndexAndValues( meshFaceIndices, meshNormalsParam, sampleInfo.floorIndex,
 					   normalValuesFloor, normalIndicesFloor );
 			bool normalsCeil = getIndexAndValues( meshFaceIndices, meshNormalsParam, sampleInfo.ceilIndex,
 					   normalValuesCeil, normalIndicesCeil );
 
-		   if( ! normalsFloor || ! normalsCeil || normalsFloor->size() != sampleCount) {
+		   if( ! normalsFloor || ! normalsCeil || normalValuesFloor.size() != sampleCount) {
 			   //The last check ensures that we will not exceed the array bounds of PMeshNormalsFloor
 			   ESS_LOG_WARNING( "Mesh normals are in an invalid state in Alembic file, ignoring." );
 		   }
@@ -474,19 +474,19 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
 			   //NOTE: options.pMNMesh->ClearSpecifiedNormals() will make getSpecifiedNormals return NULL again
   			   MNNormalSpec *normalSpec = options.pMNMesh->GetSpecifiedNormals();
 			   normalSpec->SetParent( options.pMNMesh );
-			   if( normalSpec->GetNumFaces() != numFaces || normalSpec->GetNumNormals() != sampleCount){
+			   if( normalSpec->GetNumFaces() != numFaces || normalSpec->GetNumNormals() != sampleCount) {
 					//normalSpec->ClearAndFree();
 				  // ESS_LOG_ERROR( "Setting new faces and normal counts for specified normals." );
 				    normalSpec->SetNumFaces(numFaces);
-					normalSpec->SetNumNormals((int)meshNormalsFloor->size());
+					normalSpec->SetNumNormals((int)normalValuesFloor.size());
 			   }
 			   normalSpec->SetFlag(MESH_NORMAL_MODIFIER_SUPPORT, true);
 			   normalSpec->SetAllExplicit(true); //this call is probably more efficient than the per vertex one since 3DS Max uses bit flags
 
 			   // set normal values
-			    if (sampleInfo.alpha != 0.0f && normalValuesFloor->size() == normalValuesCeil->size())
+			    if (sampleInfo.alpha != 0.0f && normalValuesFloor.size() == normalValuesCeil.size())
 			   {
-				   for (int i = 0, i < normalValuesFloor.size(); i ++ ) {
+				   for (int i = 0; i < normalValuesFloor.size(); i ++ ) {
 					   Imath::V3f interpolatedNormal = normalValuesFloor[i] + (normalValuesCeil[i] - normalValuesFloor[i]) * float(sampleInfo.alpha);
 			           interpolatedNormal *= options.fVertexAlpha;
 					   normalSpec->Normal(i) = ConvertAlembicNormalToMaxNormal_Normalized( interpolatedNormal );
@@ -494,7 +494,7 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
 			   }
 			   else
 			   {
-				   for (int i = 0, i < normalValuesFloor.size(); i ++ ) {
+				   for (int i = 0; i < normalValuesFloor.size(); i ++ ) {
 					   Imath::V3f interpolatedNormal = normalValuesFloor[i];
 			           interpolatedNormal *= options.fVertexAlpha;
 					   normalSpec->Normal(i) = ConvertAlembicNormalToMaxNormal_Normalized( interpolatedNormal );
@@ -509,7 +509,7 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
 					   MNNormalFace &normalFace = normalSpec->Face(i);
 					   normalFace.SetDegree(degree);
 					   for (int j = 0; j < degree; j ++ ) {
-						   normalFace.SetNormalID( j, normalIndiciesFloor[offset] );
+						   normalFace.SetNormalID( degree - j - 1, (int) normalIndicesFloor[offset] );
 						   offset ++;
 					   }
 				   }
@@ -593,23 +593,21 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
                meshUvParam.getNumSamples()
                );
 
-		    std::vector<Imath::V3f> uvValuesFloor, uvValuesCeil;
-		    std::vector<AbcA::int32_t> uvIndicesFloor, uvIndicesCeil;
+		    std::vector<Imath::V2f> uvValuesFloor, uvValuesCeil;
+		    std::vector<AbcA::uint32_t> uvIndicesFloor, uvIndicesCeil;
 
 			bool uvFloor = getIndexAndValues( meshFaceIndices, meshUvParam, sampleInfo.floorIndex,
 					   uvValuesFloor, uvIndicesFloor );
 			bool uvCeil = getIndexAndValues( meshFaceIndices, meshUvParam, sampleInfo.ceilIndex,
 					   uvValuesCeil, uvIndicesCeil );
 
-		   if( !uvFloor || !uvCeil || uvValuesFloor->size() == 0) {
+		   if( !uvFloor || !uvCeil || uvValuesFloor.size() == 0) {
 			   ESS_LOG_WARNING( "Mesh UVs are in an invalid state in Alembic file, ignoring." );
 		   }
 		   else {
 			   // Set up the default texture map channel
 				if(options.pMNMesh->MNum() > uvI)
 				{
-				   int numVertices = static_cast<int>(uvsToSet.size());
-
 				   options.pMNMesh->InitMap(uvI);
 				   MNMap *map = options.pMNMesh->M(uvI);
 				   map->setNumVerts(uvValuesFloor.size());
@@ -617,17 +615,19 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
 
 				   // set values
 				   Point3* mapV = map->v;
-				   if (sampleInfo.alpha != 0.0f && meshUVsFloor->size() == meshUVsCeil->size())
+				   if (sampleInfo.alpha != 0.0f && uvValuesFloor.size() == uvValuesCeil.size())
 				   {
 						for (int i = 0; i < uvValuesFloor.size(); i ++ )
 					   {
-						   mapV[i] = uvValuesFloor[i] + ( uvValuesCeil[i] - uvValuesFloor[i] ) * float(sampleInfo.alpha);
+						   Imath::V2f uv = uvValuesFloor[i] + ( uvValuesCeil[i] - uvValuesFloor[i] ) * float(sampleInfo.alpha);
+						   mapV[i] = Point3( uv.x, uv.y, 0.0f );
 					   }
 				   }
 				   else {
 					   for (int i = 0; i < uvValuesFloor.size(); i ++ )
 					   {
-						   mapV[i] = uvValuesFloor[i];
+						   Imath::V2f uv =  uvValuesFloor[i];
+						   mapV[i] = Point3( uv.x, uv.y, 0.0f );
 					   }
 				   }
 
@@ -643,7 +643,7 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
 					   mapF[i].SetSize(degree);
 					   for (int j = 0; j < degree; j ++)
 					   {
-						   mapF[i].tv[j] = uvValuesCeil[ offset ];
+						   mapF[i].tv[degree - j - 1] = (int) uvIndicesFloor[ offset ];
 						   ++offset;
 					   }
 				   }
