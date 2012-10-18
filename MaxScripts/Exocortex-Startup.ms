@@ -4,6 +4,18 @@ include "Exocortex-Helper-AlembicTimeControl_Mesh.mcr"
 include "Exocortex-Helper-AlembicTimeControl.mcr"
 include "Exocortex-Metadata.mcr"
 
+
+macroScript AlembicProfileStats
+    category:"Alembic" 
+    buttonText:"Profile Stats"
+    tooltip:"Output profiling statistics to the log window"
+(
+    on execute do 
+    (
+		ExocortexAlembic.profileStats()
+    )
+)
+
 ---------------------------------------------------------------------------------------------------------
 -- Function to create the menu items in the main menu bar
 fn initializeAlembicMenus =
@@ -27,11 +39,15 @@ fn initializeAlembicMenus =
 
     -- Create a menu item that add Metadata display modifier to selected objects
     alembicAddMetadata = menuMan.createActionItem "AlembicCreateMetadataModifier" "Alembic"
+
+    -- Create a menu item that add Metadata display modifier to selected objects
+    alembicProfileStats = menuMan.createActionItem "AlembicProfileStats" "Alembic"
 	
     -- Add the items to the menu
     alembicMenu.addItem alembicImportItem 1
     alembicMenu.addItem alembicExportItem 2
     alembicMenu.addItem alembicAddMetadata 3
+    alembicMenu.addItem alembicProfileStats 4
 
     -- Create a new menu item with the menu as it's sub-menu
     alembicMainMenuItem = menuMan.createSubMenuItem "Alembic" alembicMenu

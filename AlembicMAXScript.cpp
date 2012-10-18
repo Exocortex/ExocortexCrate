@@ -16,6 +16,7 @@
 //#include <boost/algorithm/string/predicate.hpp>
 //#include <boost/algorithm/string/classification.hpp>
 #include <boost/algorithm/string.hpp>
+#include "CommonProfiler.h"
 
 // Dummy function for progress bar
 DWORD WINAPI DummyProgressFunction(LPVOID arg)
@@ -76,7 +77,8 @@ public:
 		exocortexMemoryDiagnostics,
 		exocortexGetLicenseStatus,
 		exocortexAlembicImportJobs,
-		exocortexAlembicExportJobs
+		exocortexAlembicExportJobs,
+		exocortexProfileStats
 	};
 
 	ExocortexAlembicStaticInterface()
@@ -217,6 +219,15 @@ public:
 			0,                  //* argument localizable name string resource id * /
 			TYPE_STRING,      //* arg type * /
 			p_end); 
+
+		AppendFunction(
+			exocortexProfileStats,	//* function ID * /
+			_M("profileStats"),           //* internal name * /
+			0,                      //* function name string resource name * / 
+			TYPE_INT,               //* Return type * /
+			0,                      //* Flags  * /
+			0,                      //* Number  of arguments * /
+			p_end); 
   }
 
 	static int ExocortexAlembicImport(
@@ -236,6 +247,8 @@ public:
      	
 	static int ExocortexGetBinVersion();
 
+	static int ExocortexProfileStats();
+	
 	static int ExocortexMemoryDiagnostics();
 
 	static int ExocortexGetLicenseStatus();
@@ -253,6 +266,7 @@ public:
 		FN_0(exocortexGetLicenseStatus, TYPE_INT, ExocortexGetLicenseStatus)
 		FN_1(exocortexAlembicImportJobs, TYPE_INT, ExocortexAlembicImportJobs, TYPE_STRING)
 		FN_1(exocortexAlembicExportJobs, TYPE_INT, ExocortexAlembicExportJobs, TYPE_STRING)
+		FN_0(exocortexProfileStats, TYPE_INT, ExocortexProfileStats)
 	END_FUNCTION_MAP
 };
 
@@ -329,6 +343,14 @@ int ExocortexAlembicStaticInterface::ExocortexGetBinVersion()
 {
 	return PLUGIN_MAJOR_VERSION * 1000 + PLUGIN_MINOR_VERSION;
 }
+
+
+int ExocortexAlembicStaticInterface::ExocortexProfileStats()
+{
+	ESS_PROFILE_REPORT();
+	return 0;
+}
+
 
 int ExocortexAlembicStaticInterface::ExocortexMemoryDiagnostics()
 {

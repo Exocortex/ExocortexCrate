@@ -36,12 +36,6 @@ void validateMeshes( alembic_fillmesh_options &options, char* szName ) {
 
 void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
 {
-	static int s_profileCountDown = 1000;
-	if( s_profileCountDown < 0 ) {
-		s_profileCountDown = 1000;
-		ESS_PROFILE_REPORT();
-	}
-	s_profileCountDown--;
    ESS_PROFILE_FUNC();
    Alembic::AbcGeom::IPolyMesh objMesh;
    Alembic::AbcGeom::ISubD objSubD;
