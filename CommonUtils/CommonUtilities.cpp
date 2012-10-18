@@ -12,6 +12,9 @@ stats_map default_stats_policy::stats;
 #include <vector>
 #include <string>
 #include <boost/algorithm/string.hpp>
+#include <boost/filesystem.hpp>
+#include <boost/filesystem/operations.hpp>
+#include <boost/filesystem/path.hpp>
 
 struct AlembicObjectInfo
 {
@@ -80,6 +83,11 @@ Alembic::Abc::IArchive * getArchiveFromID(std::string path)
          }
       }
    
+		if( ! boost::filesystem::exists( resolvedPath.c_str() ) ) {
+			ESS_LOG_ERROR( "Can't find Alembic file.  Path: " << path << "  Resolved path: " << resolvedPath );
+			return  NULL;
+		}
+
 	  FILE * file = fopen(resolvedPath.c_str(),"rb");
       if(file != NULL)
       {
@@ -138,6 +146,16 @@ void deleteAllArchives()
 AlembicObjectInfo* getObjectInfoFromArchive(std::string path, std::string identifier)
 {
    ESS_PROFILE_SCOPE("getObjectInfoFromArchive");
+
+   if( path.size() == 0 ) {
+	   ESS_LOG_ERROR( "No path specified." );
+	   return NULL;
+	}
+	if( identifier.size() == 0 ) {
+	   ESS_LOG_ERROR( "No identifier specified." );
+	   return  NULL;
+	}
+
    Alembic::Abc::IArchive * archive = getArchiveFromID(path);
    if(archive == NULL)
       return NULL;
