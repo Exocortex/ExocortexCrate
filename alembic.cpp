@@ -110,7 +110,7 @@ SICALLBACK XSILoadPlugin( PluginRegistrar& in_reg )
 		Register_alembic_curves(in_reg);
 		Register_alembic_points(in_reg);
 
-		XSILoadPlugin_2( in_reg );
+		//XSILoadPlugin_2( in_reg );
 
 		// register events
 		in_reg.RegisterEvent(L"alembic_OnCloseScene",siOnCloseScene);
