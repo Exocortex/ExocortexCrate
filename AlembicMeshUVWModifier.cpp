@@ -132,20 +132,6 @@ void AlembicMeshUVWModifier::ModifyObject (TimeValue t, ModContext &mc, ObjectSt
 	std::string szPath = EC_MCHAR_to_UTF8( strPath );
 	std::string szIdentifier = EC_MCHAR_to_UTF8( strIdentifier );
 
-	if( szPath.size() == 0 ) {
-	   ESS_LOG_ERROR( "No filename specified." );
-	   return;
-	}
-	if( szIdentifier.size() == 0 ) {
-	   ESS_LOG_ERROR( "No path specified." );
-	   return;
-	}
-
-	if( ! fs::exists( szPath.c_str() ) ) {
-		ESS_LOG_ERROR( "Can't find Alembic file.  Path: " << strPath );
-		return;
-	}
-
 	//we need the path to the alembic mesh object, so we need to remove the channel name part of the identifier
 	std::string strObjectIdentifier = szIdentifier;
 	size_t found = strObjectIdentifier.find_last_of(":");

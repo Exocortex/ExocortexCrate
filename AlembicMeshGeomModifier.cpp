@@ -162,20 +162,6 @@ void AlembicMeshGeomModifier::ModifyObject (TimeValue t, ModContext &mc, ObjectS
 	std::string szPath = EC_MCHAR_to_UTF8( strPath );
 	std::string szIdentifier = EC_MCHAR_to_UTF8( strIdentifier );
 	
-	if( szPath.size() == 0 ) {
-	   ESS_LOG_ERROR( "No filename specified." );
-	   return;
-	}
-	if( szIdentifier.size() == 0 ) {
-	   ESS_LOG_ERROR( "No path specified." );
-	   return;
-	}
-
-	if( ! fs::exists( szPath.c_str() ) ) {
-		ESS_LOG_ERROR( "Can't find Alembic file.  Path: " << szPath );
-		return;
-	}
-
 	Alembic::AbcGeom::IObject iObj;
 	try {
 		ESS_PROFILE_SCOPE("getObjectFromArchive");

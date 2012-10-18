@@ -186,20 +186,6 @@ void AlembicParticles::UpdateParticles(TimeValue t, INode *node)
 
 	this->pblock2->GetValue( AlembicParticles::ID_VIEWPORT_PERCENT, t, m_fViewportPercent, interval);
 
-	if( szPath.size() == 0 ) {
-	   ESS_LOG_ERROR( "No filename specified." );
-	   return;
-	}
-	if( szIdentifier.size() == 0 ) {
-	   ESS_LOG_ERROR( "No path specified." );
-	   return;
-	}
-
-	if( ! fs::exists( szPath.c_str() ) ) {
-		ESS_LOG_ERROR( "Can't find Alembic file.  Path: " << strPath );
-		return;
-	}
-
 	//Alembic::AbcGeom::IPoints iPoints;
     if (!GetAlembicIPoints(m_iPoints, szPath, szIdentifier))
     {
