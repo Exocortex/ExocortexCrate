@@ -141,7 +141,7 @@ ESS_CALLBACK_START(alembic_MenuExport_Init,CRef&)
 	Menu oMenu;
 	oMenu = ctxt.GetSource();
 	MenuItem oNewItem;
-	oMenu.AddCommandItem(L"Alembic 1.0",L"alembic_export",oNewItem);
+	oMenu.AddCommandItem(L"Alembic 1.1",L"alembic_export",oNewItem);
 	return CStatus::OK;
 ESS_CALLBACK_END
 
@@ -150,7 +150,7 @@ ESS_CALLBACK_START(alembic_MenuImport_Init,CRef&)
 	Menu oMenu;
 	oMenu = ctxt.GetSource();
 	MenuItem oNewItem;
-	oMenu.AddCommandItem(L"Alembic 1.0",L"alembic_import",oNewItem);
+	oMenu.AddCommandItem(L"Alembic 1.1",L"alembic_import",oNewItem);
 	return CStatus::OK;
 ESS_CALLBACK_END
 
