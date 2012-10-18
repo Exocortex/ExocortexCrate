@@ -8,7 +8,7 @@ writeTaskNames tasks
 /* load import.max if present. This is my was cofiguring custom camera settings */
 try ( loadMaxFile "import.max" ) catch()
 
-result = ExocortexAlembic.import (app + "_" + obj + ".tabc") true true true true 0
+result = ExocortexAlembic.import (app + appVer + "_" + obj + ".tabc") true true true true 0
 setStatus tasks "import" (result == 0)
 
 
@@ -27,10 +27,10 @@ for i = 1 to sel.count do (
 if( result == 0 ) then (
 
 	if genBaseline == "true" then (
-		render frame:0 outputwidth:1024 outputheight:768 outputfile:(testPath + app + "_" + obj + "_Baseline.jpg") vfb:true
+		render frame:0 outputwidth:1024 outputheight:768 outputfile:(testPath + app + appVer + "_" + obj + "_Baseline.jpg") vfb:true
 	)
 	else (
-		render frame:0 outputwidth:1024 outputheight:768 outputfile:(testPath + app + "_" + obj + "_Render.jpg") vfb:true
+		render frame:0 outputwidth:1024 outputheight:768 outputfile:(testPath + app + appVer + "_" + obj + "_Render.jpg") vfb:true
 	)
 )
 
@@ -38,7 +38,7 @@ if( result == 0 ) then (
 writeTaskFile tasks
 
 
-quitMax #noPrompt
+/*quitMax #noPrompt*/
 
 
 

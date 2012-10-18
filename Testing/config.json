@@ -1,6 +1,6 @@
 {
   	"webServer":{"port": 3000},
-	"testFolderPath":"E:/Projects2/ExocortexAlembicShared/Testing/TestsXSI/Polymesh/06 - Face Geometry Animation",
+	"testFolderPath":"E:/Projects2/ExocortexAlembicShared/Testing/Tests",
   	"globals":{
 		"app":{
 		 	"max":{

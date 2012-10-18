@@ -6,7 +6,9 @@ from common import *
 tasks = TaskList([Task(iTestFile)], genPath(iTestFile + ".ats"))
 
 
-Application.OpenScene(iTestPath+"export.scn", False, False)
+iSceneToLoad = getInput("sceneToLoad");
+
+Application.OpenScene(iFrameworkRoot + iSceneToLoad, False, False)
 
 
 iNodesToSelect = getInput("nodesToSelect");
@@ -39,7 +41,7 @@ else: #iTransformsEO == "flat":
      transformsStr += ";globalspace=false";
 
 
-exportStr = "filename=" + genPath(iObj + ".tabc") + ";" + objectsStr + transformsStr;
+exportStr = "filename=" + genPath(iObj + iAlembicFileExt) + ";" + objectsStr + transformsStr;
 if iExportStrAppend != None: exportStr = exportStr + ";" + iExportStrAppend;
 
 result = Application.alembic_export(exportStr)

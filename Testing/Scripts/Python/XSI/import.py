@@ -11,7 +11,14 @@ bboxes = False
 attach = False
 identifiers = ""
 
-result = Application.alembic_import(genPath(iObj + ".tabc"), normals, uvs, clusters, visibility, standins, bboxes, attach, identifiers)
+
+iAbcToImport = getInput("abcToImport");
+if iAbcToImport == None: 
+	iAbcToImport = genPath(iObj + ".tabc")
+else:
+	iAbcToImport = iFrameworkRoot + iAbcToImport
+
+result = Application.alembic_import(iAbcToImport, normals, uvs, clusters, visibility, standins, bboxes, attach, identifiers)
 tasks.setStatus("Import", result == None)
 
 if result == None: renderScene(Application, iObj)

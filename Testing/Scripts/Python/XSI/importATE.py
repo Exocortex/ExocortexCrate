@@ -14,13 +14,13 @@ bboxes = False
 attach = False
 identifiers = ""
 
-result = Application.alembic_import(genPath(iBase + ".tabc"), normals, uvs, clusters, visibility, standins, bboxes, attach, identifiers)
+result = Application.alembic_import(genPath(iBase + iAlembicFileExt), normals, uvs, clusters, visibility, standins, bboxes, attach, identifiers)
 tasks.setStatus("ImportBase", result == None)
 
 normals = False
 attach = True
 
-result = Application.alembic_import(genPath(iPointCache + ".tabc"), normals, uvs, clusters, visibility, standins, bboxes, attach, identifiers)
+result = Application.alembic_import(genPath(iPointCache + iAlembicFileExt), normals, uvs, clusters, visibility, standins, bboxes, attach, identifiers)
 tasks.setStatus("ImportPointCache", result == None)
 
 

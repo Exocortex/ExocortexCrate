@@ -219,7 +219,8 @@ namespace NodeCategory
 		   Alembic::AbcGeom::ICamera::matches(iObj.getMetaData()) ||
 		   Alembic::AbcGeom::IPoints::matches(iObj.getMetaData()) ||
 		   Alembic::AbcGeom::ICurves::matches(iObj.getMetaData()) ||
-		   Alembic::AbcGeom::ISubD::matches(iObj.getMetaData())) {
+		   Alembic::AbcGeom::ISubD::matches(iObj.getMetaData())||
+		   Alembic::AbcGeom::INuPatch::matches(iObj.getMetaData())) {
 		   return GEOMETRY;
 	   }
 	   else if(Alembic::AbcGeom::IXform::matches(iObj.getMetaData())){
@@ -235,5 +236,32 @@ namespace NodeCategory
 void getMergeInfo( Alembic::AbcGeom::IObject& iObj, bool& bCreateNullNode, int& nMergedGeomNodeIndex, Alembic::AbcGeom::IObject& mergedGeomChild, bool bAlwaysMerge=true);
 
 int prescanAlembicHierarchy(Alembic::AbcGeom::IObject root, std::vector<std::string>& nodes, std::map<std::string, bool>& map);
+
+//Alembic::Abc::N3f
+//SortableV3f
+template <class T, class S> void createIndexedArray(const std::vector<T>& inputVec, std::vector<T>& outputVec, std::vector<Alembic::Abc::uint32_t>& outputIndices)
+{   
+   std::map<S, size_t> normalMap;
+   std::map<S, size_t>::const_iterator it;
+
+   outputIndices.reserve(inputVec.size());
+   outputVec.reserve(inputVec.size());
+
+   // loop over all normals
+   for(size_t i=0;i<inputVec.size();i++)
+   {
+      it = normalMap.find(inputVec[i]);
+      if(it != normalMap.end()){//the normal was found in the map, so store the index to normal
+         outputIndices.push_back((Alembic::Abc::uint32_t)it->second);
+      }
+      else {
+         outputIndices.push_back((Alembic::Abc::uint32_t)outputVec.size());
+         normalMap.insert(std::pair<S, size_t>(inputVec[i], (Alembic::Abc::uint32_t)outputVec.size()));
+         outputVec.push_back(inputVec[i]);
+      }
+   }
+
+}
+
 
 #endif // __COMMON_UTILITIES_H

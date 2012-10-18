@@ -5,8 +5,8 @@
 "inputs":{
 	"app":"max",
 	"appVer":"v2012",
-	"obj":"Sphere001",
-	"sceneToLoad":"/Assets/3DSMax/sphere.max"
+	"obj":"Box001",
+	"sceneToLoad":"/Assets/3DSMax/box.max"
 }},
 
 {"script":"/Scripts/Maxscript/import.ms", 
@@ -14,7 +14,7 @@
 "inputs":{
 	"app":"max",
 	"appVer":"v2012",
-	"obj":"Sphere001"
+	"obj":"Box001"
 }}
 
 ]}

@@ -23,14 +23,15 @@ iTestFile = os.environ["testName"];
 iApp = os.environ["app"];
 iAppVer = os.environ["appVer"];
 iGenBaseline = os.environ["genBaseline"];
-
+iScript = os.environ["script"];
+iFrameworkRoot = os.environ["frameworkRoot"];
 
 iObj = getInput("obj");
 
 iTransformsEO = getInput("transformsEO");
 iFrameToRender = getIntInput("frameToRender", 0);
 iExportStrAppend = getInput("exportStr");
-
+iAlembicFileExt = getInput("alembicFileExt", ".tabc");
 
 def genPath(filename):
 	return iTestPath + iApp + iAppVer + "_" + filename
