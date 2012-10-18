@@ -103,7 +103,7 @@ var readTestDir = function(path, list){
 		else if(stats.isFile()){
 			if(files[i] === 'testParams.json'){ //we have found a folder that contains a test
 
-				//console.log("reading "+filePath)
+				console.log("reading "+filePath)
 
 				var data = fs.readFileSync(filePath);
 
@@ -483,6 +483,7 @@ tmProto.build = function(list){
 			arguments: '',//-silent',
 			scriptPath: scriptPath,
 			scriptName: scriptName,
+			scriptNameNE: scriptName.substring(0, scriptName.length-3),
 			testName: list[i].name, 
 			runEnvVars: runEnv,
 			completionContext: this,

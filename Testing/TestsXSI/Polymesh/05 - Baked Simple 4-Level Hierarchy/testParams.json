@@ -1,0 +1,20 @@
+{"tasks":[
+
+{"script":"/Scripts/Python/XSI/export.py", 
+"inputs":{
+	"app":"xsi", 
+	"appVer":"v2013", 
+	"obj":"Hierarchy4", 
+	"transformsEO":"baked",
+	"sceneToLoad":"/Assets/XSI/simple4LevelHierarchy.scn"
+}},
+
+{"script":"/Scripts/Python/XSI/import.py", 
+"inputs":{
+	"app":"xsi", 
+	"appVer":"v2013", 
+	"obj":"Hierarchy4", 
+	"frameToRender":0
+}}
+
+]}

@@ -6,7 +6,9 @@ from common import *
 tasks = TaskList([Task(iTestFile)], genPath(iTestFile + ".ats"))
 
 
-Application.OpenScene(iTestPath+"export.scn", False, False)
+iSceneToLoad = getInput("sceneToLoad");
+
+Application.OpenScene(iFrameworkRoot + iSceneToLoad, False, False)
 
 
 iNodesToSelect = getInput("nodesToSelect");

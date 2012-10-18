@@ -38,7 +38,7 @@ if( result == 0 ) then (
 writeTaskFile tasks
 
 
-quitMax #noPrompt
+/*quitMax #noPrompt*/
 
 
 
