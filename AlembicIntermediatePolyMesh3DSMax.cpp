@@ -188,6 +188,26 @@ void IntermediatePolyMesh3DSMax::Save(std::map<std::string, bool>& mOptions, Mes
         sampleCount += degree;
 	}
 
+	// we also need to store the face counts as well as face indices
+
+     mFaceCountVec.resize(faceCount);
+     mFaceIndicesVec.resize(sampleCount);
+
+     int offset = 0;
+     for(LONG f=0;f<faceCount;f++)
+     {
+        int degree = (polyMesh != NULL) ? polyMesh->F(f)->deg : 3;
+        mFaceCountVec[f] = degree;
+		for (int i = degree-1; i >= 0; i -= 1)
+        {
+            int vertIndex = (polyMesh != NULL) ? polyMesh->F(f)->vtx[i]
+                                              : triMesh->faces[f].v[i];
+			mFaceIndicesVec[offset++] = vertIndex;
+        }
+     }
+ 
+
+
     // let's check if we have user normals
     if(GetOption(mOptions, "exportNormals"))
     {
@@ -250,32 +270,14 @@ void IntermediatePolyMesh3DSMax::Save(std::map<std::string, bool>& mOptions, Mes
         // AlembicPrintFaceData(objectMesh);
 
         std::vector<Alembic::Abc::N3f> indexedNormals;
-        createIndexedArray<Alembic::Abc::N3f, SortableV3f>(normalVec, indexedNormals, normalIndexVec);
+        createIndexedArray<Alembic::Abc::N3f, SortableV3f>(mFaceIndicesVec, normalVec, indexedNormals, normalIndexVec);
         normalVec = indexedNormals;
 
         ClearMeshSmoothingGroupNormals();
     }
 
-	// we also need to store the face counts as well as face indices
 
-     mFaceCountVec.resize(faceCount);
-     mFaceIndicesVec.resize(sampleCount);
-
-     int offset = 0;
-     for(LONG f=0;f<faceCount;f++)
-     {
-        int degree = (polyMesh != NULL) ? polyMesh->F(f)->deg : 3;
-        mFaceCountVec[f] = degree;
-		for (int i = degree-1; i >= 0; i -= 1)
-        {
-            int vertIndex = (polyMesh != NULL) ? polyMesh->F(f)->vtx[i]
-                                              : triMesh->faces[f].v[i];
-			mFaceIndicesVec[offset++] = vertIndex;
-        }
-     }
- 
-   
-
+  
    //write out the UVs
    if(GetOption(mOptions, "exportUVs"))
    {
@@ -383,7 +385,7 @@ void IntermediatePolyMesh3DSMax::Save(std::map<std::string, bool>& mOptions, Mes
             continue;
 			}
 			std::vector<Alembic::Abc::V2f> uvVecIndexed;
-         createIndexedArray<Alembic::Abc::V2f, SortableV2f>(mUvVec[i], uvVecIndexed, mUvIndexVec[i]);
+         createIndexedArray<Alembic::Abc::V2f, SortableV2f>(mFaceIndicesVec, mUvVec[i], uvVecIndexed, mUvIndexVec[i]);
          mUvVec[i] = uvVecIndexed;
 		}
 		
