@@ -75,7 +75,6 @@ ESS_CALLBACK_START(alembic_path_manager_Init,CRef&)
 ESS_CALLBACK_END
 
 ESS_CALLBACK_START(alembic_path_manager_Execute, CRef&)
-    ESS_PROFILE_REPORT();
 
 	Context ctxt( in_ctxt );
 	CValueArray args = ctxt.GetAttribute(L"Arguments");
