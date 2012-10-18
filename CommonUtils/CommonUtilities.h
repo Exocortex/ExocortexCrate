@@ -265,7 +265,7 @@ template <class T, class S> void createIndexedArray(const std::vector<Alembic::A
   outputIndices.resize(inputVec.size());
   outputVec.clear();
 
-  // loop over all normals
+  // loop over all data
   for(size_t i=0; i<inputVec.size(); ++i)
   {
     map_key mkey(faceIndicesVec[i], inputVec[i]);
