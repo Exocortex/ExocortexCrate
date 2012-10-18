@@ -379,8 +379,8 @@ int AlembicImport_Camera(const std::string &path, Alembic::AbcGeom::IObject& iOb
 	TimeValue now =  GET_MAX_INTERFACE()->GetTime();
 
 	//Set the alembic id
-	pModifier->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pModifier, 0, "path" ), now, path.c_str());
-	pModifier->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pModifier, 0, "identifier" ), now, identifier.c_str() );
+	pModifier->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pModifier, 0, "path" ), now, EC_UTF8_to_TCHAR( path.c_str() ) );
+	pModifier->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pModifier, 0, "identifier" ), now, EC_UTF8_to_TCHAR( identifier.c_str() ) );
 	
 	//Set the alembic id
 	//pModifier->SetCamera(pCameraObj);

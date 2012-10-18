@@ -294,9 +294,9 @@ void AlembicImport_FillInShape_Internal(alembic_fillshape_options &options)
 					   out = ConvertAlembicPointToMaxPoint(posSampler[startVertex + min( j + 1, knots - 1 )]);                
 				   }
 				   else {*/
-					   in = ConvertAlembicPointToMaxPoint(posSampler[startVertex + max( j - 1, 0 )]); 
+				   in = ConvertAlembicPointToMaxPoint(posSampler[startVertex + std::max( j - 1, 0 )]); 
 					   p = ConvertAlembicPointToMaxPoint(posSampler[startVertex + j]); 
-					   out = ConvertAlembicPointToMaxPoint(posSampler[startVertex + min( j + 1, knots - 1 )]);					
+					   out = ConvertAlembicPointToMaxPoint(posSampler[startVertex + std::min( j + 1, knots - 1 )]);					
                
 					   if( pSpline->Closed() ) {
 						   if (j == 0 )

@@ -4,7 +4,11 @@
 
 #ifdef THINKING_PARTICLES
 #define IDS_CLASS_NAME 3
+#define max(a,b)            (((a) > (b)) ? (a) : (b))
+#define min(a,b)            (((a) < (b)) ? (a) : (b))
 #include <matterwaves.h>
+#undef max
+#undef min
 #endif
 
 #include "Alembic.h"
@@ -173,9 +177,9 @@ bool AlembicPoints::Save(double time, bool bLastFrame)
     std::vector<float> ageVec;
     std::vector<float> massVec;
     std::vector<float> shapeTimeVec;
-    std::vector<uint64_t> idVec;
-    std::vector<uint16_t> shapeTypeVec;
-    std::vector<uint16_t> shapeInstanceIDVec;
+    std::vector<::uint64_t> idVec;
+    std::vector<::uint16_t> shapeTypeVec;
+    std::vector<::uint16_t> shapeInstanceIDVec;
     std::vector<Alembic::Abc::Quatf> orientationVec;
     std::vector<Alembic::Abc::Quatf> angularVelocityVec;
     std::vector<Alembic::Abc::C4f> colorVec;
@@ -220,7 +224,7 @@ bool AlembicPoints::Save(double time, bool bLastFrame)
 		Imath::V3f scale(1.0);
 		Imath::C4f color(0.5, 0.5, 0.5, 1.0);
 		float age = 0;
-		uint64_t id = 0;
+		::uint64_t id = 0;
 	    Alembic::Abc::Quatd orientation(0.0, 0.0, 1.0, 0.0);
 		Alembic::Abc::Quatd spin(0.0, 0.0, 1.0, 0.0);
 		// Particle size is a uniform scale multiplier in XSI.  In Max, I need to learn where to get this 
@@ -229,7 +233,7 @@ bool AlembicPoints::Save(double time, bool bLastFrame)
 
 		ShapeType shapetype = ShapeType_Point;
 		float shapeInstanceTime = (float)time;
-		uint16_t shapeInstanceId = 0;
+		::uint16_t shapeInstanceId = 0;
 
 #ifdef THINKING_PARTICLES
 		if(pThinkingParticleMat){
@@ -543,7 +547,7 @@ Alembic::Abc::C4f AlembicPoints::GetColor(IParticleObjectExt *pExt, int particle
 	return color;
 }
 
-void AlembicPoints::ReadShapeFromOperator( IParticleGroup *particleGroup, PFSimpleOperator *pSimpleOperator, int particleId, TimeValue ticks, ShapeType &type, uint16_t &instanceId, float &animationTime)
+void AlembicPoints::ReadShapeFromOperator( IParticleGroup *particleGroup, PFSimpleOperator *pSimpleOperator, int particleId, TimeValue ticks, ShapeType &type, ::uint16_t &instanceId, float &animationTime)
 {
 	if(!pSimpleOperator){
 		return;
@@ -641,7 +645,7 @@ void AlembicPoints::ReadShapeFromOperator( IParticleGroup *particleGroup, PFSimp
         if (instanceId == USHRT_MAX)
         {
 			mInstanceNames.push_back(nodePath);
-            instanceId = (uint16_t)mInstanceNames.size()-1;
+            instanceId = (::uint16_t)mInstanceNames.size()-1;
         }
 
         // Determine if we have an animated shape
@@ -753,7 +757,7 @@ void AlembicPoints::ReadShapeFromOperator( IParticleGroup *particleGroup, PFSimp
 
 }
 
-void AlembicPoints::GetShapeType(IParticleObjectExt *pExt, int particleId, TimeValue ticks, ShapeType &type, uint16_t &instanceId, float &animationTime)
+void AlembicPoints::GetShapeType(IParticleObjectExt *pExt, int particleId, TimeValue ticks, ShapeType &type, ::uint16_t &instanceId, float &animationTime)
 {
     // Set up initial values
     type = ShapeType_Point;
@@ -890,7 +894,7 @@ void AlembicPoints::GetShapeType(IParticleObjectExt *pExt, int particleId, TimeV
 			if (instanceId == USHRT_MAX)
 			{
 				mInstanceNames.push_back(sInfo.instanceName);
-				instanceId = (uint16_t)mInstanceNames.size()-1;
+				instanceId = (::uint16_t)mInstanceNames.size()-1;
 			}
 			type = sInfo.type;
 		}
@@ -902,7 +906,7 @@ void AlembicPoints::GetShapeType(IParticleObjectExt *pExt, int particleId, TimeV
 	}
 }
 
-uint16_t AlembicPoints::FindInstanceName(const std::string& name)
+::uint16_t AlembicPoints::FindInstanceName(const std::string& name)
 {
 	for ( int i = 0; i < mInstanceNames.size(); i += 1){
 		if (strcmp(mInstanceNames[i].c_str(), name.c_str()) == 0){
@@ -914,7 +918,7 @@ uint16_t AlembicPoints::FindInstanceName(const std::string& name)
 
 
 
-void AlembicPoints::CacheShapeMesh(Mesh* pShapeMesh, BOOL bNeedDelete, Matrix3 meshTM, int nMatId, int particleId, TimeValue ticks, ShapeType &type, uint16_t &instanceId, float &animationTime)
+void AlembicPoints::CacheShapeMesh(Mesh* pShapeMesh, BOOL bNeedDelete, Matrix3 meshTM, int nMatId, int particleId, TimeValue ticks, ShapeType &type, ::uint16_t &instanceId, float &animationTime)
 {
 	type = ShapeType_Instance;
 	//animationTime = 0;
@@ -984,7 +988,7 @@ void AlembicPoints::CacheShapeMesh(Mesh* pShapeMesh, BOOL bNeedDelete, Matrix3 m
 	instanceId = FindInstanceName(pathName);
 	if (instanceId == USHRT_MAX){
 		mInstanceNames.push_back(pathName);
-		instanceId = (uint16_t)mInstanceNames.size()-1;
+		instanceId = (::uint16_t)mInstanceNames.size()-1;
 	}
 }
 
@@ -1075,7 +1079,7 @@ void AlembicPoints::saveCurrentFrameMeshes()
 					int nMaterialId = it->first+1;
 					nameStream<<it->second.name<<"_"<<nMaterialId;
 
-					std::vector<int32_t>& faceSetVec = it->second.faceIds;
+					std::vector<::int32_t>& faceSetVec = it->second.faceIds;
 
 					Alembic::AbcGeom::OFaceSet faceSet = meshSchema.createFaceSet(nameStream.str());
 					Alembic::AbcGeom::OFaceSetSchema::Sample faceSetSample(Alembic::Abc::Int32ArraySample(&faceSetVec.front(), faceSetVec.size()));

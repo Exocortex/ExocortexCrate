@@ -1222,7 +1222,7 @@ INode* AlembicParticles::GetParticleMeshNode(int meshNumber, INode *displayNode)
         if (meshNumber > m_InstanceShapeIds.size())
             return displayNode;
 
-        uint16_t shapeid = m_InstanceShapeIds[meshNumber];
+        ::uint16_t shapeid = m_InstanceShapeIds[meshNumber];
 
         if (shapeid > m_InstanceShapeINodes.size())
             return displayNode;
@@ -1657,7 +1657,7 @@ Mesh *AlembicParticles::BuildInstanceMesh(int meshNumber, TimeValue t, INode *no
 		return NULL;
 	}
 
-	uint16_t shapeid = m_InstanceShapeIds[meshNumber];
+	::uint16_t shapeid = m_InstanceShapeIds[meshNumber];
 
 	if (shapeid >= m_InstanceShapeINodes.size()){
 	   return NULL;

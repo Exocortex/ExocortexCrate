@@ -378,7 +378,6 @@ void IntermediatePolyMesh3DSMax::Save(std::map<std::string, bool>& mOptions, Mes
 		mUvIndexVec.resize(mUvVec.size());
 
 		for(int i=0; i<mUvVec.size(); i++){
-
 			if (mUvVec[i].size() != sampleCount){
 				ESS_LOG_INFO("Warning: missing texture coord samples in channel "<<i);
             continue;
@@ -426,7 +425,7 @@ void IntermediatePolyMesh3DSMax::Save(std::map<std::string, bool>& mOptions, Mes
 			  if (it == mFaceSetsMap.end())
 			  {
 				  faceSetStr faceSet;
-				  faceSet.faceIds = std::vector<int32_t>();
+				  faceSet.faceIds = std::vector<::int32_t>();
 				  faceSet.originalMatId = originalMatId;
 				  facesetmap_ret_pair ret = mFaceSetsMap.insert( facesetmap_insert_pair(matId, faceSet) );
 				  it = ret.first;
