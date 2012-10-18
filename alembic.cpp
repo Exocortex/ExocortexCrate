@@ -64,8 +64,10 @@ SICALLBACK XSILoadPlugin_2( PluginRegistrar& in_reg ) ;
 
 SICALLBACK XSILoadPlugin( PluginRegistrar& in_reg )
 {
-	in_reg.PutAuthor(L"Helge Mathee");
+	in_reg.PutAuthor(L"Exocortex Technologies, Inc and Helge Mathee");
 	in_reg.PutName(L"ExocortexAlembicSoftimage");
+	in_reg.PutEmail(L"support@exocortex.com");
+	in_reg.PutURL(L"http://www.exocortex.com/alembic");
 	in_reg.PutVersion(1,0);
 
 	//if( HasAlembicWriterLicense() ) {
