@@ -21,6 +21,11 @@
 #include <xsi_utils.h>
 #include "AlembicLicensing.h"
 #include "CommonProfiler.h"
+
+#include <boost/filesystem.hpp>
+#include <boost/filesystem/operations.hpp>
+#include <boost/filesystem/path.hpp>
+
 using namespace XSI;
 
 #include "Alembic\AbcCoreAbstract\TimeSampling.h"
@@ -516,18 +521,20 @@ CString getDSOPath()
       for(LONG i=0;i<plugins.GetCount();i++)
       {
          Plugin plugin(plugins[i]);
-         if(plugin.GetName().IsEqualNoCase(L"ExocortexAlembicSoftimage"))
-         {
-            CString path = plugin.GetFilename();
-            path = path.GetSubString(0,path.ReverseFindString(CUtils::Slash()));
-            path = path.GetSubString(0,path.ReverseFindString(CUtils::Slash()));
+
+        CString path = plugin.GetFilename();
+        path = path.GetSubString(0,path.ReverseFindString(CUtils::Slash()));
+        path = path.GetSubString(0,path.ReverseFindString(CUtils::Slash()));
 #ifdef _WIN32
-            path = CUtils::BuildPath(path,L"DSO",L"ExocortexAlembicArnold.dll");
+        path = CUtils::BuildPath(path,L"DSO",L"ExocortexAlembicArnold.dll");
 #else
-            path = CUtils::BuildPath(path,L"DSO",L"libExocortexAlembicArnold.so");
+        path = CUtils::BuildPath(path,L"DSO",L"libExocortexAlembicArnold.so");
 #endif
-            result = path;
-         }
+		boost::filesystem::path boostPath = path.GetAsciiString();
+		if( boost::filesystem::exists( boostPath ) ) {
+			result = path;
+			break;
+		}
       }
    }
 
