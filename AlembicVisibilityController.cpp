@@ -94,20 +94,6 @@ void AlembicVisibilityController::GetValueLocalTime(TimeValue t, void *ptr, Inte
 	std::string szPath = EC_MCHAR_to_UTF8( strPath );
 	std::string szIdentifier = EC_MCHAR_to_UTF8( strIdentifier );
 
-	if( szPath.size() == 0 ) {
-	   ESS_LOG_ERROR( "No filename specified." );
-	   return;
-	}
-	if( szIdentifier.size() == 0 ) {
-	   ESS_LOG_ERROR( "No path specified." );
-	   return;
-	}
-
-	if( ! fs::exists( szPath.c_str() ) ) {
-		ESS_LOG_ERROR( "Can't find Alembic file.  Path: " << strPath );
-		return;
-	}
-
 	Alembic::AbcGeom::IObject iObj = getObjectFromArchive(szPath, szIdentifier);
     
 	if(!iObj.valid()) {

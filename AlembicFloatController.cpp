@@ -114,21 +114,9 @@ void AlembicFloatController::GetValueLocalTime(TimeValue t, void *ptr, Interval 
 	std::string szIdentifier = EC_MCHAR_to_UTF8( strIdentifier );
 	std::string szProperty = EC_MCHAR_to_UTF8( strProperty );	
 
-	if( szPath.size() == 0 ) {
-	   ESS_LOG_ERROR( "No filename specified." );
-	   return;
-	}
-	if( szIdentifier.size() == 0 ) {
-	   ESS_LOG_ERROR( "No path specified." );
-	   return;
-	}
 	if( szProperty.size() == 0 ) {
 	   ESS_LOG_ERROR( "No property specified." );
 	   return;
-	}
-	if( ! fs::exists( szPath.c_str() ) ) {
-		ESS_LOG_ERROR( "Can't find Alembic file.  Path: " << szPath );
-		return;
 	}
 
 
