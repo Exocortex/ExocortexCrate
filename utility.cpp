@@ -394,13 +394,13 @@ CStatus alembicOp_Define( CRef& in_ctxt )
 	oCustomOperator.AddParameter(oPDef,oParam);
 	oPDef = oFactory.CreateParamDef(L"time",CValue::siFloat,siAnimatable | siPersistable,L"time",L"time",1,-100000,100000,0,1);
 	oCustomOperator.AddParameter(oPDef,oParam);
-	oPDef = oFactory.CreateParamDef(L"path",CValue::siString, 0, L"path",L"path",L"",L"",L"",L"",L"");
+	oPDef = oFactory.CreateParamDef(L"path",CValue::siString, siPersistable, L"path",L"path",L"",L"",L"",L"",L"");
 	oCustomOperator.AddParameter(oPDef,oParam);
-	oPDef = oFactory.CreateParamDef(L"identifier",CValue::siString, 0, L"identifier",L"identifier",L"",L"",L"",L"",L"");
+	oPDef = oFactory.CreateParamDef(L"identifier",CValue::siString, siPersistable, L"identifier",L"identifier",L"",L"",L"",L"",L"");
 	oCustomOperator.AddParameter(oPDef,oParam);
-	oPDef = oFactory.CreateParamDef(L"renderpath",CValue::siString, 0, L"renderpath",L"renderpath",L"",L"",L"",L"",L"");
+	oPDef = oFactory.CreateParamDef(L"renderpath",CValue::siString, siPersistable, L"renderpath",L"renderpath",L"",L"",L"",L"",L"");
 	oCustomOperator.AddParameter(oPDef,oParam);
-	oPDef = oFactory.CreateParamDef(L"renderidentifier",CValue::siString, 0, L"renderidentifier",L"renderidentifier",L"",L"",L"",L"",L"");
+	oPDef = oFactory.CreateParamDef(L"renderidentifier",CValue::siString, siPersistable, L"renderidentifier",L"renderidentifier",L"",L"",L"",L"",L"");
 	oCustomOperator.AddParameter(oPDef,oParam);
 
    // Info parameters
