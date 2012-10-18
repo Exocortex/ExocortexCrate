@@ -117,9 +117,12 @@ public:
 Imath::M33d extractRotation(Imath::M44d& m);
 
 SampleInfo getSampleInfo(double iFrame,Alembic::AbcCoreAbstract::TimeSamplingPtr iTime, size_t numSamps);
-Alembic::Abc::TimeSamplingPtr getTimeSamplingFromObject(Alembic::Abc::IObject &object);
 Alembic::Abc::ICompoundProperty getCompoundFromObject(Alembic::Abc::IObject &object);
+Alembic::Abc::TimeSamplingPtr getTimeSamplingFromObject(Alembic::Abc::IObject &object);
+Alembic::Abc::TimeSamplingPtr getTimeSamplingFromObject(Alembic::Abc::OObject *object);
 size_t getNumSamplesFromObject(Alembic::Abc::IObject &object);
+size_t getNumSamplesFromObject(Alembic::Abc::OObject *object);
+
 float getTimeOffsetFromObject( Alembic::Abc::IObject &object, SampleInfo const& sampleInfo );
 
 template<typename SCHEMA>

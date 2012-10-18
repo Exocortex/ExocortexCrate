@@ -12,6 +12,9 @@ stats_map default_stats_policy::stats;
 #include <vector>
 #include <string>
 #include <boost/algorithm/string.hpp>
+#include <boost/filesystem.hpp>
+#include <boost/filesystem/operations.hpp>
+#include <boost/filesystem/path.hpp>
 
 struct AlembicObjectInfo
 {
@@ -80,6 +83,11 @@ Alembic::Abc::IArchive * getArchiveFromID(std::string path)
          }
       }
    
+		if( ! boost::filesystem::exists( resolvedPath.c_str() ) ) {
+			ESS_LOG_ERROR( "Can't find Alembic file.  Path: " << path << "  Resolved path: " << resolvedPath );
+			return  NULL;
+		}
+
 	  FILE * file = fopen(resolvedPath.c_str(),"rb");
       if(file != NULL)
       {
@@ -138,6 +146,16 @@ void deleteAllArchives()
 AlembicObjectInfo* getObjectInfoFromArchive(std::string path, std::string identifier)
 {
    ESS_PROFILE_SCOPE("getObjectInfoFromArchive");
+
+   if( path.size() == 0 ) {
+	   ESS_LOG_ERROR( "No path specified." );
+	   return NULL;
+	}
+	if( identifier.size() == 0 ) {
+	   ESS_LOG_ERROR( "No identifier specified." );
+	   return  NULL;
+	}
+
    Alembic::Abc::IArchive * archive = getArchiveFromID(path);
    if(archive == NULL)
       return NULL;
@@ -358,9 +376,12 @@ Alembic::Abc::ICompoundProperty getCompoundFromObject(Alembic::Abc::IObject &obj
       return Alembic::AbcGeom::ISubD(object,Alembic::Abc::kWrapExisting).getSchema();
    } else if(Alembic::AbcGeom::ICamera::matches(md)) {
       return Alembic::AbcGeom::ICamera(object,Alembic::Abc::kWrapExisting).getSchema();
+   } else if(Alembic::AbcGeom::IFaceSet::matches(md)) {
+      return Alembic::AbcGeom::IFaceSet(object,Alembic::Abc::kWrapExisting).getSchema();
    }
    return Alembic::Abc::ICompoundProperty();
 }
+
 
 Alembic::Abc::TimeSamplingPtr getTimeSamplingFromObject(Alembic::Abc::IObject &object)
 {
@@ -380,6 +401,32 @@ Alembic::Abc::TimeSamplingPtr getTimeSamplingFromObject(Alembic::Abc::IObject &o
       return Alembic::AbcGeom::ISubD(object,Alembic::Abc::kWrapExisting).getSchema().getTimeSampling();
    } else if(Alembic::AbcGeom::ICamera::matches(md)) {
       return Alembic::AbcGeom::ICamera(object,Alembic::Abc::kWrapExisting).getSchema().getTimeSampling();
+   } else if(Alembic::AbcGeom::IFaceSet::matches(md)) {
+      return Alembic::AbcGeom::IFaceSet(object,Alembic::Abc::kWrapExisting).getSchema().getTimeSampling();
+   }
+   return Alembic::Abc::TimeSamplingPtr();
+}
+
+Alembic::Abc::TimeSamplingPtr getTimeSamplingFromObject(Alembic::Abc::OObject *object)
+{
+	ESS_PROFILE_SCOPE("getTimeSamplingFromObject"); 
+   const Alembic::Abc::MetaData &md = object->getMetaData();
+   if(Alembic::AbcGeom::OXform::matches(md)) {
+      return ((Alembic::AbcGeom::OXform*)(&object))->getSchema().getTimeSampling();
+   } else if(Alembic::AbcGeom::OPolyMesh::matches(md)) {
+      return ((Alembic::AbcGeom::OPolyMesh*)(&object))->getSchema().getTimeSampling();
+   } else if(Alembic::AbcGeom::OCurves::matches(md)) {
+      return ((Alembic::AbcGeom::OCurves*)(&object))->getSchema().getTimeSampling();
+   } else if(Alembic::AbcGeom::ONuPatch::matches(md)) {
+      return ((Alembic::AbcGeom::ONuPatch*)(&object))->getSchema().getTimeSampling();
+   } else if(Alembic::AbcGeom::OPoints::matches(md)) {
+      return ((Alembic::AbcGeom::OPoints*)(&object))->getSchema().getTimeSampling();
+   } else if(Alembic::AbcGeom::OSubD::matches(md)) {
+      return ((Alembic::AbcGeom::OSubD*)(&object))->getSchema().getTimeSampling();
+   } else if(Alembic::AbcGeom::OCamera::matches(md)) {
+      return ((Alembic::AbcGeom::OCamera*)(&object))->getSchema().getTimeSampling();
+   } else if(Alembic::AbcGeom::OFaceSet::matches(md)) {
+      return ((Alembic::AbcGeom::OFaceSet*)(&object))->getSchema().getTimeSampling();
    }
    return Alembic::Abc::TimeSamplingPtr();
 }
@@ -402,6 +449,32 @@ size_t getNumSamplesFromObject(Alembic::Abc::IObject &object)
       return Alembic::AbcGeom::ISubD(object,Alembic::Abc::kWrapExisting).getSchema().getNumSamples();
    } else if(Alembic::AbcGeom::ICamera::matches(md)) {
       return Alembic::AbcGeom::ICamera(object,Alembic::Abc::kWrapExisting).getSchema().getNumSamples();
+   } else if(Alembic::AbcGeom::IFaceSet::matches(md)) {
+      return Alembic::AbcGeom::IFaceSet(object,Alembic::Abc::kWrapExisting).getSchema().getNumSamples();
+   }
+   return 0;
+}
+
+size_t getNumSamplesFromObject(Alembic::Abc::OObject *object)
+{
+	ESS_PROFILE_SCOPE("getNumSamplesFromObject"); 
+   const Alembic::Abc::MetaData &md = object->getMetaData();
+   if(Alembic::AbcGeom::OXform::matches(md)) {
+      return  ((Alembic::AbcGeom::OXform*)(&object))->getSchema().getNumSamples();
+   } else if(Alembic::AbcGeom::OPolyMesh::matches(md)) {
+      return ((Alembic::AbcGeom::OPolyMesh*)(&object))->getSchema().getNumSamples();
+   } else if(Alembic::AbcGeom::OCurves::matches(md)) {
+      return ((Alembic::AbcGeom::OCurves*)(&object))->getSchema().getNumSamples();
+   } else if(Alembic::AbcGeom::ONuPatch::matches(md)) {
+      return ((Alembic::AbcGeom::ONuPatch*)(&object))->getSchema().getNumSamples();
+   } else if(Alembic::AbcGeom::OPoints::matches(md)) {
+      return ((Alembic::AbcGeom::OPoints*)(&object))->getSchema().getNumSamples();
+   } else if(Alembic::AbcGeom::OSubD::matches(md)) {
+      return ((Alembic::AbcGeom::OSubD*)(&object))->getSchema().getNumSamples();
+   } else if(Alembic::AbcGeom::OCamera::matches(md)) {
+      return ((Alembic::AbcGeom::OCamera*)(&object))->getSchema().getNumSamples();
+   } else if(Alembic::AbcGeom::OFaceSet::matches(md)) {
+	   return ((Alembic::AbcGeom::OFaceSet*)(&object))->getSchema().getNumSamples();
    }
    return 0;
 }
