@@ -268,7 +268,7 @@ MStatus AlembicPointsNode::init(const MString &fileName, const MString &identifi
 
 static MVector quaternionToVector(const Imath::Quatf &qf)
 {
-  const float deg = acos(qf.r) * (360.0f / M_PI);
+  const float deg = (float)( acos(qf.r) * (360.0f / M_PI) );
   Imath::V3f v = qf.v.normalized();
   return MVector(v.x * deg, v.y * deg, v.z * deg);
 }
@@ -499,7 +499,7 @@ void AlembicPointsNode::instanceInitialize(void)
     return;
 
   Alembic::Abc::StringArraySamplePtr instNames = propInstName.getValue(lastSample);
-  const int nbNames = instNames->size();
+  const int nbNames = (int) instNames->size();
   if (nbNames < 1)
     return;
 

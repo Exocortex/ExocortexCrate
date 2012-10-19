@@ -43,7 +43,7 @@ std::string getIdentifierFromRef(const MObject & in_Ref)
 std::string removeInvalidCharacter(const std::string &str)
 {
   std::string ret;
-  const int len = str.size();
+  const int len = (int) str.size();
   for (int i = 0; i < len; ++i)
   {
     const char c = str[i];
