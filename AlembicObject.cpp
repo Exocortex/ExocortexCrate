@@ -29,7 +29,7 @@ AlembicObject::AlembicObject
 
       for(size_t i=1;i<parts.size();i++)
       {
-         int numChildren = mOParent.getNumChildren();
+         int numChildren = (int) mOParent.getNumChildren();
          for(size_t j=0;j<numChildren;j++)
          {
             Alembic::Abc::ObjectHeader const* pChildHeader = mOParent.getChildHeader( parts[i] );

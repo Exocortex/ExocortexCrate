@@ -730,7 +730,7 @@ ESS_CALLBACK_START( alembic_crvlist_Update, CRef& )
 
    Operator op(ctxt.GetSource());
    updateOperatorInfo( op, sampleInfo, obj.getSchema().getTimeSampling(),
-					   pos.GetCount(), curvePos->size());
+					   pos.GetCount(), (int) curvePos->size());
 
    if (!isHair)
    {
@@ -1290,7 +1290,7 @@ ESS_CALLBACK_START( alembic_crvlist_topo_Update, CRef& )
    
    Operator op(ctxt.GetSource());
    updateOperatorInfo( op, sampleInfo, obj.getSchema().getTimeSampling(),
-	                   offset, offset);
+	                  (int)  offset, (int) offset);
 
    
    NurbsCurveList curves = Primitive(ctxt.GetOutputTarget()).GetGeometry();

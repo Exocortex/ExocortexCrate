@@ -785,7 +785,7 @@ XSIPLUGINCALLBACK CStatus alembic_points_Evaluate(ICENodeContext& in_ctxt)
    {
 		Alembic::Abc::P3fArraySamplePtr ptr = sample.getPositions();
 		if(ptr != NULL) {
-			pointCount = ptr->size();
+			pointCount = (int) ptr->size();
 		}
        
    }

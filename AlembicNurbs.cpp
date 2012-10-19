@@ -166,7 +166,7 @@ ESS_CALLBACK_START( alembic_nurbs_Update, CRef& )
 
    Operator op(ctxt.GetSource());
    updateOperatorInfo( op, sampleInfo, objNurbs.getSchema().getTimeSampling(), 
-					   pos.GetCount(), nurbsPos->size());
+					   pos.GetCount(), (int) nurbsPos->size());
 
    for(size_t i=0;i<nurbsPos->size();i++)
       pos[(LONG)i].Set(nurbsPos->get()[i].x,nurbsPos->get()[i].y,nurbsPos->get()[i].z);
