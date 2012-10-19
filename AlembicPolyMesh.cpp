@@ -792,19 +792,19 @@ MStatus AlembicPolyMeshNode::compute(const MPlug & plug, MDataBlock & dataBlock)
                }
 
 			    MIntArray normalIndices( ( int) normalIndicesFloor.size() );
-				for( int i = 0; i < normalIndicesFloor.size(); i ++) {
+				for( int i = 0; i < (int) normalIndicesFloor.size(); i ++) {
 					normalIndices[i] = normalIndicesFloor[ mSampleLookup[i] ];
 				}
 
 				MVectorArray normalExpanded(( int)normalIndicesFloor.size());
-				for( int i = 0; i < normalExpanded.length(); i ++ ) {
+				for( int i = 0; i < (int) normalExpanded.length(); i ++ ) {
 					normalExpanded[i] = normals[ normalIndicesFloor[ i ] ];
 				}
 
 				MIntArray faceList(( int)normalIndicesFloor.size());
 	            MIntArray vertexList(( int)normalIndicesFloor.size());
 
-				 MIntArray normalCounts( normalIndicesFloor.size() );
+				 MIntArray normalCounts( (int)normalIndicesFloor.size() );
 			  int numFaces = mMesh.numPolygons();
 				int nIndex = 0;
 				for (int faceIndex = 0; faceIndex < numFaces; faceIndex++)
