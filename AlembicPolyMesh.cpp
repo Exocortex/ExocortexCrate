@@ -685,7 +685,7 @@ MStatus AlembicPolyMeshNode::compute(const MPlug & plug, MDataBlock & dataBlock)
                      uvSetNames.append(ptr->get()[i].c_str());
                }
 
-			   if(uvSetNames.length() < 0){
+			   if(uvSetNames.length() <= 0){
                   uvSetNames.append("uvset1");
 			   }
 			   //else{
@@ -721,9 +721,17 @@ MStatus AlembicPolyMeshNode::compute(const MPlug & plug, MDataBlock & dataBlock)
 
 			   for(unsigned int uvSetIndex =0; uvSetIndex < uvSetNames.length(); uvSetIndex++)
 			   {
-                  Alembic::Abc::V2fArraySamplePtr sampleUvs;
-                  if(uvSetIndex == 0)
-                     sampleUvs = uvsParam.getExpandedValue(sampleInfo.floorIndex).getVals();
+				  std::vector<Imath::V2f> uvValuesFloor;//, uvValuesCeil;
+				  std::vector<AbcA::uint32_t> uvIndicesFloor;//, uvIndicesCeil;
+					bool uvFloor = false, uvCeil = false;
+				  if(uvSetIndex == 0) {
+                     //sampleUvs = uvsParam.getExpandedValue(sampleInfo.floorIndex).getVals();
+
+					uvFloor = getIndexAndValues( sampleIndices, uvsParam, sampleInfo.floorIndex,
+					   uvValuesFloor, uvIndicesFloor );
+					//uvCeil = getIndexAndValues( sampleIndices, uvsParam, sampleInfo.ceilIndex,
+					//   uvValuesCeil, uvIndicesCeil );
+				  }
                   else
                   {
                      MString storedUvSetName;
@@ -731,35 +739,46 @@ MStatus AlembicPolyMeshNode::compute(const MPlug & plug, MDataBlock & dataBlock)
                      storedUvSetName = MString("uv") + storedUvSetName;
                      if(mSchema.getPropertyHeader( storedUvSetName.asChar() ) == NULL)
                         continue;
-                     sampleUvs = Alembic::AbcGeom::IV2fGeomParam( mSchema, storedUvSetName.asChar() ).getExpandedValue(sampleInfo.floorIndex).getVals();
+                     Alembic::AbcGeom::IV2fGeomParam uvParamExtended = Alembic::AbcGeom::IV2fGeomParam( mSchema, storedUvSetName.asChar() );
+					 uvFloor = getIndexAndValues( sampleIndices, uvParamExtended, sampleInfo.floorIndex,
+					   uvValuesFloor, uvIndicesFloor );
+					//uvCeil = getIndexAndValues( sampleIndices, uvParamExtended, sampleInfo.ceilIndex,
+					//   uvValuesCeil, uvIndicesCeil );
                   }
 
-                  if(sampleUvs->size() == (size_t)indices.length())
+                  if(uvIndicesFloor.size() == (size_t)indices.length())
                   {
-                     MFloatArray uValues,vValues;
-                     uValues.setLength((unsigned int)sampleUvs->size());
-                     vValues.setLength((unsigned int)sampleUvs->size());
-
-                     MIntArray uvIndices;
-                     uvIndices.setLength(uValues.length());
-
-                     for(unsigned int i=0;i<uValues.length();i++)
+                     MFloatArray uValues((unsigned int)uvValuesFloor.size()), vValues((unsigned int)uvValuesFloor.size());
+                     for(unsigned int i=0;i<uvValuesFloor.size();i++)
                      {
-                        uValues[mSampleLookup[i]] = sampleUvs->get()[i].x;
-                        vValues[mSampleLookup[i]] = sampleUvs->get()[i].y;
-                        uvIndices[i] = i;
-                     }
-
-					 MIntArray uvCounts;
-					 uvCounts.setLength(mMesh.numPolygons());
-					 int uvCountsIndex = 0;
-                     for(int f=0;f<mMesh.numPolygons();f++){
-						 int numPolyVertices = mMesh.polygonVertexCount(f);
-                         uvCounts[uvCountsIndex++] = numPolyVertices;
+                        uValues[i] = uvValuesFloor[i].x;
+                        vValues[i] = uvValuesFloor[i].y;
 					 }
 
-					 mMesh.setCurrentUVSetName(uvSetNames[uvSetIndex]);
 
+                     MIntArray uvIndices( (unsigned int) uvIndicesFloor.size() );
+                     for(unsigned int i=0;i<uvIndicesFloor.size();i++)
+                     {
+                        uvIndices[i] = uvIndicesFloor[mSampleLookup[i]];
+                     }
+					 MIntArray uvCounts( mMesh.numPolygons() );
+					 int uvCountsIndex = 0;
+					 //int nextUVIndex = 0;
+                     for(int f=0;f<mMesh.numPolygons();f++){
+						 int numPolyVertices = mMesh.polygonVertexCount(f);
+                         uvCounts[f] = numPolyVertices;
+						 /*for(unsigned int j=0;j<numPolyVertices;j++)
+		                 {
+	                        uvIndices[nextUVIndex+j] = uvIndicesFloor[nextUVIndex+numPolyVertices-j-1];
+							
+						 }	
+						 nextUVIndex += numPolyVertices;*/
+					 }
+
+					 status = mMesh.setCurrentUVSetName(uvSetNames[uvSetIndex]);
+					 if( status != MS::kSuccess ){
+						 EC_LOG_ERROR("mMesh.setCurrentUVSetName(\""<<uvSetNames[uvSetIndex]<<"\") failed: "<<status.errorString().asChar());
+					 }
                      status = mMesh.setUVs(uValues, vValues, &uvSetNames[uvSetIndex]);
 					 if( status != MS::kSuccess ){
 						 EC_LOG_ERROR("mMesh.setUVs(\""<<uvSetNames[uvSetIndex]<<"\") failed: "<<status.errorString().asChar());
