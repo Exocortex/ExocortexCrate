@@ -9,16 +9,9 @@ class AlembicPolyMesh: public AlembicObject
 private:
    Alembic::AbcGeom::OPolyMesh mObject;
    Alembic::AbcGeom::OPolyMeshSchema mSchema;
-   Alembic::AbcGeom::OPolyMeshSchema::Sample mSample;
-   std::vector<Alembic::Abc::V3f> mPosVec;
-   std::vector<Alembic::Abc::N3f> mNormalVec;
-   std::vector<Alembic::Abc::uint32_t> mNormalIndexVec;
-   std::vector<Alembic::Abc::int32_t> mFaceCountVec;
-   std::vector<Alembic::Abc::int32_t> mFaceIndicesVec;
-   std::vector<std::vector<Alembic::Abc::V2f> > mUvVec;
-   std::vector<std::vector<Alembic::Abc::uint32_t> > mUvIndexVec;
-   std::vector<Alembic::AbcGeom::OV2fGeomParam> mUvParams;
+   int mPointCountLastFrame;
    std::vector<unsigned int> mSampleLookup;
+
 
 public:
    AlembicPolyMesh(const MObject & in_Ref, AlembicWriteJob * in_Job);

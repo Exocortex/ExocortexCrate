@@ -34,6 +34,10 @@ MStatus AlembicPolyMesh::Save(double time)
    node.getPath(path);
 
    // save the metadata
+   Alembic::AbcGeom::OPolyMeshSchema::Sample mSample;
+   std::vector<Alembic::Abc::V3f> mPosVec;
+   std::vector<Alembic::AbcGeom::OV2fGeomParam> mUvParams;
+
    SaveMetaData(this);
 
    // prepare the bounding box
@@ -53,13 +57,14 @@ MStatus AlembicPolyMesh::Save(double time)
    bool dynamicTopology = GetJob()->GetOption(L"exportDynamicTopology").asInt() > 0;
    if(!dynamicTopology && mNumSamples > 0)
    {
-      if(mPosVec.size() != (size_t)points.length())
+      if(mPointCountLastFrame  != (size_t)points.length())
       {
          MString fullName = MFnDagNode(GetRef()).fullPathName();
-         MGlobal::displayError("[ExocortexAlembic] Object '"+fullName+"' contains dynamic topology. Not exporting sample.");
+		 EC_LOG_ERROR( "Object '" << fullName.asChar() << "' contains dynamic topology (original vertex count " << mPointCountLastFrame  << " and new vertex count " << points.length() << "). Not exporting sample.");
          return MStatus::kFailure;
       }
    }
+   mPointCountLastFrame = points.length();
 
    mPosVec.resize(points.length());
    for(unsigned int i=0;i<points.length();i++)
@@ -77,6 +82,8 @@ MStatus AlembicPolyMesh::Save(double time)
    mSample.setSelfBounds(bbox);
 
    // check if we are doing pure pointcache
+   std::vector<Alembic::Abc::int32_t> mFaceCountVec;
+   std::vector<Alembic::Abc::int32_t> mFaceIndicesVec;
    if(GetJob()->GetOption(L"exportPurePointCache").asInt() > 0)
    {
       if(mNumSamples == 0)
@@ -94,6 +101,8 @@ MStatus AlembicPolyMesh::Save(double time)
       return MStatus::kSuccess;
    }
 
+   std::vector<std::vector<Alembic::Abc::V2f> > mUvVec;
+   std::vector<std::vector<Alembic::Abc::uint32_t> > mUvIndexVec;
    if(mNumSamples == 0 || dynamicTopology)
    {
       MIntArray counts,indices;
@@ -103,19 +112,20 @@ MStatus AlembicPolyMesh::Save(double time)
       mFaceIndicesVec.resize(indices.length());
       mSampleLookup.resize(indices.length());
       unsigned int offset = 0;
-      for(unsigned int i=0;i<counts.length();i++)
+      for(unsigned int i=0, k = 0; i<counts.length(); ++i)
       {
-         mFaceCountVec[i] = counts[i];
-         for(unsigned int j=0;j<(unsigned int)counts[i];j++)
+         const unsigned int cnt = (mFaceCountVec[i] = counts[i]);
+         for(unsigned int j=0; j<cnt; ++j, ++k)
          {
-            mSampleLookup[offset+counts[i]-j-1] = offset+j;
-            mFaceIndicesVec[offset+counts[i]-j-1] = indices[offset+j];
+            const int offPos = offset + cnt - (j+1);
+            mSampleLookup[offPos] = offset+j;
+            mFaceIndicesVec[offPos] = indices[offset+j];
          }
-         offset += counts[i];
+         offset += cnt;
       }
 
-      Alembic::Abc::Int32ArraySample faceCountSample(&mFaceCountVec.front(),mFaceCountVec.size());
-      Alembic::Abc::Int32ArraySample faceIndicesSample(&mFaceIndicesVec.front(),mFaceIndicesVec.size());
+      Alembic::Abc::Int32ArraySample faceCountSample(mFaceCountVec);
+      Alembic::Abc::Int32ArraySample faceIndicesSample(mFaceIndicesVec);
       mSample.setFaceCounts(faceCountSample);
       mSample.setFaceIndices(faceIndicesSample);
 
@@ -137,77 +147,43 @@ MStatus AlembicPolyMesh::Save(double time)
             uvSetNamesProperty.set(uvSetNamesSample);
          }
 
-         mUvVec.resize(uvSetNames.length());
-         mUvIndexVec.resize(uvSetNames.length());
-
+         int actualUvSetIndex = 0;
          for(unsigned int uvSetIndex = 0; uvSetIndex < uvSetNames.length(); uvSetIndex++)
          {
-            if (uvSetNames[uvSetIndex] != MString(""))
+            const MString &uvSetName = uvSetNames[uvSetIndex];
+            if (uvSetName != MString(""))
             {
                MFloatArray uValues, vValues;
-               status = node.getUVs(uValues, vValues, &uvSetNames[uvSetIndex]);
+               status = node.getUVs(uValues, vValues, &uvSetName);
                if ( uValues.length() == vValues.length() )
                {
                   MIntArray uvCounts, uvIds;
-                  status = node.getAssignedUVs(uvCounts, uvIds, &uvSetNames[uvSetIndex]);
+                  status = node.getAssignedUVs(uvCounts, uvIds, &uvSetName);
                   unsigned int uvCount = (unsigned int)mSampleLookup.size();
                   if(uvIds.length() == uvCount)
                   {
-                     mUvVec[uvSetIndex].resize(uvCount);
-                     unsigned int offset = 0;
-                     for (unsigned int i=0;i<uvIds.length();i++)
+                     mUvVec.push_back(std::vector<Alembic::Abc::V2f>());
+                     std::vector<Alembic::Abc::V2f> &uvVecIndexed = mUvVec.back();
+                     mUvIndexVec.push_back(std::vector<Alembic::Abc::uint32_t>());
+                     std::vector<Alembic::Abc::uint32_t> &uvIndexVec = mUvIndexVec.back();
+
+                     uvVecIndexed.resize(uValues.length());
+                     for (int i = 0; i < uvVecIndexed.size(); ++i)
                      {
-                        mUvVec[uvSetIndex][mSampleLookup[offset]].x = uValues[uvIds[i]];
-                        mUvVec[uvSetIndex][mSampleLookup[offset]].y = vValues[uvIds[i]];
-                        offset++;
+                       Alembic::Abc::V2f &curUV = uvVecIndexed[i];
+                       curUV.x = uValues[i];
+                       curUV.y = vValues[i];
                      }
 
-                     // now let's sort the normals 
-                     unsigned int uvIndexCount = 0;
-                     if(GetJob()->GetOption(L"indexedUVs").asInt() > 0) {
-                        std::map<SortableV2f,size_t> uvMap;
-                        std::map<SortableV2f,size_t>::const_iterator it;
-                        unsigned int sortedUVCount = 0;
-                        std::vector<Alembic::Abc::V2f> sortedUVVec;
-                        mUvIndexVec[uvSetIndex].resize(mUvVec[uvSetIndex].size());
-                        sortedUVVec.resize(mUvVec[uvSetIndex].size());
+                     uvIndexVec.resize(uvIds.length());
+                     for (int i = 0; i < uvIndexVec.size(); ++i)
+                       uvIndexVec[mSampleLookup[i]] = uvIds[i];
 
-                        // loop over all uvs
-                        for(size_t i=0;i<mUvVec[uvSetIndex].size();i++)
-                        {
-                           it = uvMap.find(mUvVec[uvSetIndex][i]);
-                           if(it != uvMap.end())
-                              mUvIndexVec[uvSetIndex][uvIndexCount++] = (uint32_t)it->second;
-                           else
-                           {
-                              mUvIndexVec[uvSetIndex][uvIndexCount++] = (uint32_t)sortedUVCount;
-                              uvMap.insert(std::pair<Alembic::Abc::V2f,size_t>(mUvVec[uvSetIndex][i],(uint32_t)sortedUVCount));
-                              sortedUVVec[sortedUVCount++] = mUvVec[uvSetIndex][i];
-                           }
-                        }
+                     Alembic::AbcGeom::OV2fGeomParam::Sample uvSample(Alembic::Abc::V2fArraySample(uvVecIndexed),Alembic::AbcGeom::kFacevaryingScope);
+                     if(uvIndexVec.size() > 0)
+                        uvSample.setIndices(Alembic::Abc::UInt32ArraySample(uvIndexVec));
 
-                        // use indexed uvs if they use less space
-                        if(sortedUVCount * sizeof(Alembic::Abc::V2f) + 
-                           uvIndexCount * sizeof(uint32_t) < 
-                           sizeof(Alembic::Abc::V2f) * mUvVec[uvSetIndex].size())
-                        {
-                           mUvVec[uvSetIndex] = sortedUVVec;
-                           uvCount = sortedUVCount;
-                        }
-                        else
-                        {
-                           uvIndexCount = 0;
-                           mUvIndexVec[uvSetIndex].clear();
-                        }
-                        sortedUVCount = 0;
-                        sortedUVVec.clear();
-                     }
-
-                     Alembic::AbcGeom::OV2fGeomParam::Sample uvSample(Alembic::Abc::V2fArraySample(&mUvVec[uvSetIndex].front(),uvCount),Alembic::AbcGeom::kFacevaryingScope);
-                     if(mUvIndexVec[uvSetIndex].size() > 0 && uvIndexCount > 0)
-                        uvSample.setIndices(Alembic::Abc::UInt32ArraySample(&mUvIndexVec[uvSetIndex].front(),uvIndexCount));
-
-                     if(uvSetIndex == 0)
+                     if(actualUvSetIndex == 0)
                      {
                         mSample.setUVs(uvSample);
                      }
@@ -216,181 +192,145 @@ MStatus AlembicPolyMesh::Save(double time)
                         if(mNumSamples == 0)
                         {
                            MString storedUvSetName;
-                           storedUvSetName.set((double)uvSetIndex);
+                           storedUvSetName.set((double)actualUvSetIndex);
                            storedUvSetName = MString("uv") + storedUvSetName;
-                           mUvParams.push_back(Alembic::AbcGeom::OV2fGeomParam( mSchema, storedUvSetName.asChar(), uvIndexCount > 0,
-                                               Alembic::AbcGeom::kFacevaryingScope, 1, mSchema.getTimeSampling()));
+                           mUvParams.push_back(Alembic::AbcGeom::OV2fGeomParam( mSchema, storedUvSetName.asChar(), uvIndexVec.size() > 0, Alembic::AbcGeom::kFacevaryingScope, 1, mSchema.getTimeSampling()));
                         }
-                        mUvParams[uvSetIndex-1].set(uvSample);
+                        mUvParams.back().set(uvSample);
                      }
+                     ++actualUvSetIndex;
                   }
                }
             }
          }
       }
 
-      // loop for facesets
-      std::map<std::string,unsigned int> setNameMap;
-      std::size_t attrCount = node.attributeCount();
-      for (unsigned int i = 0; i < attrCount; ++i)
+      if(GetJob()->GetOption(L"exportFaceSets").asInt() > 0)
       {
-         MObject attr = node.attribute(i);
-         MFnAttribute mfnAttr(attr);
-         MPlug plug = node.findPlug(attr, true);
+        // loop for facesets
+        std::map<std::string,unsigned int> setNameMap;
+        std::size_t attrCount = node.attributeCount();
+        for (unsigned int i = 0; i < attrCount; ++i)
+        {
+           MObject attr = node.attribute(i);
+           MFnAttribute mfnAttr(attr);
+           MPlug plug = node.findPlug(attr, true);
 
-         // if it is not readable, then bail without any more checking
-         if (!mfnAttr.isReadable() || plug.isNull())
-            continue;
+           // if it is not readable, then bail without any more checking
+           if (!mfnAttr.isReadable() || plug.isNull())
+              continue;
 
+           MString propName = plug.partialName(0, 0, 0, 0, 0, 1);
+           std::string propStr = propName.asChar();
+           if (propStr.substr(0, 8) == "FACESET_")
+           {
+              MStatus status;
+              MFnIntArrayData arr(plug.asMObject(), &status);
+              if (status != MS::kSuccess)
+                  continue;
 
-         MString propName = plug.partialName(0, 0, 0, 0, 0, 1);
-         std::string propStr = propName.asChar();
-         if (propStr.substr(0, 8) == "FACESET_")
-         {
-            MStatus status;
-            MFnIntArrayData arr(plug.asMObject(), &status);
-            if (status != MS::kSuccess)
-                continue;
+              // ensure the faceSetName is unique
+              std::string faceSetName = propStr.substr(8);
+              int suffixId = 1;
+              std::string suffix;
+              while(setNameMap.find(faceSetName+suffix) != setNameMap.end()) {
+                 std::stringstream out;
+                 out << suffixId;
+                 suffix = out.str();
+                 suffixId++;
+              }
+              faceSetName += suffix;
+              setNameMap.insert(std::pair<std::string, unsigned int>(faceSetName, (unsigned int)setNameMap.size()));
 
-            // ensure the faceSetName is unique
-            std::string faceSetName = propStr.substr(8);
-            int suffixId = 1;
-            std::string suffix;
-            while(setNameMap.find(faceSetName+suffix) != setNameMap.end()) {
-               std::stringstream out;
-               out << suffixId;
-               suffix = out.str();
-               suffixId++;
-            }
-            faceSetName += suffix;
-            setNameMap.insert(std::pair<std::string, unsigned int>(faceSetName, (unsigned int)setNameMap.size()));
+              std::size_t numData = arr.length();
+              std::vector<Alembic::Util::int32_t> faceVals(numData);
+              for (unsigned int j = 0; j < numData; ++j)
+                  faceVals[j] = arr[j];
 
-            std::size_t numData = arr.length();
-            std::vector<Alembic::Util::int32_t> faceVals(numData);
-            for (unsigned int j = 0; j < numData; ++j)
-                faceVals[j] = arr[j];
+              Alembic::AbcGeom::OFaceSet faceSet = mSchema.createFaceSet(faceSetName);
+              Alembic::AbcGeom::OFaceSetSchema::Sample faceSetSample;
+              faceSetSample.setFaces(Alembic::Abc::Int32ArraySample(faceVals));
+              faceSet.getSchema().set(faceSetSample);
+           }
+        }
 
-            Alembic::AbcGeom::OFaceSet faceSet = mSchema.createFaceSet(faceSetName);
-            Alembic::AbcGeom::OFaceSetSchema::Sample faceSetSample;
-            faceSetSample.setFaces(Alembic::Abc::Int32ArraySample(faceVals));
-            faceSet.getSchema().set(faceSetSample);
-         }
-      }
+        // more face sets, based on the material assignments
+        MObjectArray sets, comps;
+        unsigned int instanceNumber = path.instanceNumber();
+        node.getConnectedSetsAndMembers( instanceNumber, sets, comps, 1 );
+        for ( unsigned int i = 0; i < sets.length() ; i++ )
+        {
+           MFnSet setFn ( sets[i] );
+           MItMeshPolygon tempFaceIt ( path, comps[i] ); 
+           std::vector<Alembic::Util::int32_t> faceVals(tempFaceIt.count());
+           unsigned int j=0;
+           for ( ;!tempFaceIt.isDone() ; tempFaceIt.next() )
+              faceVals[j++] = tempFaceIt.index();
 
-      // more face sets, based on the material assignments
-      MObjectArray sets, comps;
-      unsigned int instanceNumber = path.instanceNumber();
-      node.getConnectedSetsAndMembers( instanceNumber, sets, comps, 1 );
-      for ( unsigned int i = 0; i < sets.length() ; i++ )
-      {
-         MFnSet setFn ( sets[i] );
-         MItMeshPolygon tempFaceIt ( path, comps[i] ); 
-         std::vector<Alembic::Util::int32_t> faceVals(tempFaceIt.count());
-         unsigned int j=0;
-         for ( ;!tempFaceIt.isDone() ; tempFaceIt.next() )
-            faceVals[j++] = tempFaceIt.index();
+           // ensure the faceSetName is unique
+           std::string faceSetName = setFn.name().asChar();
+           int suffixId = 1;
+           std::string suffix;
+           while(setNameMap.find(faceSetName+suffix) != setNameMap.end()) {
+              std::stringstream out;
+              out << suffixId;
+              suffix = out.str();
+              suffixId++;
+           }
+           faceSetName += suffix;
+           setNameMap.insert(std::pair<std::string, unsigned int>(faceSetName, (unsigned int)setNameMap.size()));
 
-         // ensure the faceSetName is unique
-         std::string faceSetName = setFn.name().asChar();
-         int suffixId = 1;
-         std::string suffix;
-         while(setNameMap.find(faceSetName+suffix) != setNameMap.end()) {
-            std::stringstream out;
-            out << suffixId;
-            suffix = out.str();
-            suffixId++;
-         }
-         faceSetName += suffix;
-         setNameMap.insert(std::pair<std::string, unsigned int>(faceSetName, (unsigned int)setNameMap.size()));
-
-         Alembic::AbcGeom::OFaceSet faceSet = mSchema.createFaceSet(faceSetName);
-         Alembic::AbcGeom::OFaceSetSchema::Sample faceSetSample;
-         faceSetSample.setFaces(Alembic::Abc::Int32ArraySample(faceVals));
-         faceSet.getSchema().set(faceSetSample);
+           Alembic::AbcGeom::OFaceSet faceSet = mSchema.createFaceSet(faceSetName);
+           Alembic::AbcGeom::OFaceSetSchema::Sample faceSetSample;
+           faceSetSample.setFaces(Alembic::Abc::Int32ArraySample(faceVals));
+           faceSet.getSchema().set(faceSetSample);
+        }
       }
    }
 
    // now do the normals
    // let's check if we have user normals
-   unsigned int normalCount = 0;
-   unsigned int normalIndexCount = 0;
+   int normalCount = 0;
+   std::vector<Alembic::Abc::N3f> indexedNormalsValues;
+   std::vector<unsigned int> indexedNormalsIndices;
    if(GetJob()->GetOption(L"exportNormals").asInt() > 0)
    {
-      MFloatVectorArray normals;
-      node.getNormals(normals);
-      mNormalVec.resize(mSampleLookup.size());
-      normalCount = (unsigned int)mSampleLookup.size();
-      MIntArray normalIDs;
-      unsigned int offset = 0;
-      for(unsigned int i=0;i<(unsigned int)node.numPolygons();i++)
-      {
-         node.getFaceNormalIds(i,normalIDs);
-         for(unsigned int j=0;j<normalIDs.length();j++)
-         {
-            mNormalVec[mSampleLookup[offset]].x = normals[normalIDs[j]].x;
-            mNormalVec[mSampleLookup[offset]].y = normals[normalIDs[j]].y;
-            mNormalVec[mSampleLookup[offset]].z = normals[normalIDs[j]].z;
-            if(globalCache)
-               globalXfo.multDirMatrix(mNormalVec[mSampleLookup[offset]],mNormalVec[mSampleLookup[offset]]);
-            offset++;
-         }
-      }
+     {
+       MFloatVectorArray normalsArray;
+       node.getNormals(normalsArray);
 
-      // now let's sort the normals 
-      if(GetJob()->GetOption(L"indexedNormals").asInt() > 0) {
-         std::map<SortableV3f,size_t> normalMap;
-         std::map<SortableV3f,size_t>::const_iterator it;
-         unsigned int sortedNormalCount = 0;
-         std::vector<Alembic::Abc::V3f> sortedNormalVec;
-         mNormalIndexVec.resize(mNormalVec.size());
-         sortedNormalVec.resize(mNormalVec.size());
+       indexedNormalsValues.resize(normalsArray.length());
+       for (int i = 0; i < indexedNormalsValues.size(); ++i)
+       {
+         const MFloatVector &nOut = normalsArray[i];
+         Alembic::Abc::N3f  &nIn  = indexedNormalsValues[i];
 
-         // loop over all normals
-         for(size_t i=0;i<mNormalVec.size();i++)
-         {
-            it = normalMap.find(mNormalVec[i]);
-            if(it != normalMap.end())
-               mNormalIndexVec[normalIndexCount++] = (uint32_t)it->second;
-            else
-            {
-               mNormalIndexVec[normalIndexCount++] = (uint32_t)sortedNormalCount;
-               normalMap.insert(std::pair<Alembic::Abc::V3f,size_t>(mNormalVec[i],(uint32_t)sortedNormalCount));
-               sortedNormalVec[sortedNormalCount++] = mNormalVec[i];
-            }
-         }
+         nIn.x = nOut.x;
+         nIn.y = nOut.y;
+         nIn.z = nOut.z;
+       }
+     }
 
-         // use indexed normals if they use less space
-         if(sortedNormalCount * sizeof(Alembic::Abc::V3f) + 
-            normalIndexCount * sizeof(uint32_t) < 
-            sizeof(Alembic::Abc::V3f) * mNormalVec.size())
-         {
-            mNormalVec = sortedNormalVec;
-            normalCount = sortedNormalCount;
-         }
-         else
-         {
-            normalIndexCount = 0;
-            mNormalIndexVec.clear();
-         }
-         sortedNormalCount = 0;
-         sortedNormalVec.clear();
-      }
+     {
+       MIntArray normPerFaceArray;
+       MIntArray normalIDsArray;
+       node.getNormalIds(normPerFaceArray, normalIDsArray);
 
-      Alembic::AbcGeom::ON3fGeomParam::Sample normalSample;
-      if(mNormalVec.size() > 0 && normalCount > 0)
-      {
-         normalSample.setScope(Alembic::AbcGeom::kFacevaryingScope);
-         normalSample.setVals(Alembic::Abc::N3fArraySample(&mNormalVec.front(),normalCount));
-         if(normalIndexCount > 0)
-            normalSample.setIndices(Alembic::Abc::UInt32ArraySample(&mNormalIndexVec.front(),normalIndexCount));
-         mSample.setNormals(normalSample);
-      }
+       indexedNormalsIndices.resize(normalIDsArray.length());
+       for (int i = 0; i < indexedNormalsIndices.size(); ++i)
+         indexedNormalsIndices[mSampleLookup[i]] = normalIDsArray[i];
+     }
+
+     Alembic::AbcGeom::ON3fGeomParam::Sample normalSample;
+     normalSample.setScope(Alembic::AbcGeom::kFacevaryingScope);
+     normalSample.setVals(Alembic::Abc::N3fArraySample(indexedNormalsValues));
+     normalSample.setIndices(Alembic::Abc::UInt32ArraySample(indexedNormalsIndices));
+     mSample.setNormals(normalSample);
    }
 
    // save the sample
    mSchema.set(mSample);
    mNumSamples++;
-
    return MStatus::kSuccess;
 }
 
@@ -856,7 +796,33 @@ MStatus AlembicPolyMeshNode::compute(const MPlug & plug, MDataBlock & dataBlock)
 					normalIndices[i] = normalIndicesFloor[ mSampleLookup[i] ];
 				}
 
-				mMesh.setVertexNormals( normals, normalIndices );
+				MVectorArray normalExpanded((unsigned int)normalIndicesFloor.size());
+				for( int i = 0; i < normalExpanded.length(); i ++ ) {
+					normalExpanded[i] = normals[ normalIndicesFloor[ mSampleLookup[i] ] ];
+				}
+
+				MIntArray faceList((unsigned int)normalIndicesFloor.size());
+	            MIntArray vertexList((unsigned int)normalIndicesFloor.size());
+
+				 MIntArray normalCounts( normalIndicesFloor.size() );
+			  int numFaces = mMesh.numPolygons();
+				int nIndex = 0;
+				for (int faceIndex = 0; faceIndex < numFaces; faceIndex++)
+				{
+					MIntArray polyVerts;
+					mMesh.getPolygonVertices(faceIndex, polyVerts);
+					int numVertices = polyVerts.length();
+					for (int v = numVertices - 1; v >= 0; v--, ++nIndex)
+					{
+						faceList[nIndex] = faceIndex;
+						vertexList[nIndex] = polyVerts[v];
+					}
+				}
+
+				status = mMesh.setFaceVertexNormals( normalExpanded, faceList, vertexList );
+				if ( status != MS::kSuccess ){
+						 EC_LOG_ERROR("mMesh.setFaceVertexNormals - failed: "<<status.errorString().asChar());
+				}
 			}
          }
       }
