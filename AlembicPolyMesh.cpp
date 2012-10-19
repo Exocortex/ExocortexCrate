@@ -721,16 +721,14 @@ MStatus AlembicPolyMeshNode::compute(const MPlug & plug, MDataBlock & dataBlock)
 
 			   for(unsigned int uvSetIndex =0; uvSetIndex < uvSetNames.length(); uvSetIndex++)
 			   {
-				  std::vector<Imath::V2f> uvValuesFloor;//, uvValuesCeil;
-				  std::vector<AbcA::uint32_t> uvIndicesFloor;//, uvIndicesCeil;
+				  std::vector<Imath::V2f> uvValuesFloor, uvValuesCeil;
+				  std::vector<AbcA::uint32_t> uvIndicesFloor, uvIndicesCeil;
 					bool uvFloor = false, uvCeil = false;
 				  if(uvSetIndex == 0) {
-                     //sampleUvs = uvsParam.getExpandedValue(sampleInfo.floorIndex).getVals();
-
 					uvFloor = getIndexAndValues( sampleIndices, uvsParam, sampleInfo.floorIndex,
 					   uvValuesFloor, uvIndicesFloor );
-					//uvCeil = getIndexAndValues( sampleIndices, uvsParam, sampleInfo.ceilIndex,
-					//   uvValuesCeil, uvIndicesCeil );
+					uvCeil = getIndexAndValues( sampleIndices, uvsParam, sampleInfo.ceilIndex,
+					   uvValuesCeil, uvIndicesCeil );
 				  }
                   else
                   {
@@ -742,19 +740,30 @@ MStatus AlembicPolyMeshNode::compute(const MPlug & plug, MDataBlock & dataBlock)
                      Alembic::AbcGeom::IV2fGeomParam uvParamExtended = Alembic::AbcGeom::IV2fGeomParam( mSchema, storedUvSetName.asChar() );
 					 uvFloor = getIndexAndValues( sampleIndices, uvParamExtended, sampleInfo.floorIndex,
 					   uvValuesFloor, uvIndicesFloor );
-					//uvCeil = getIndexAndValues( sampleIndices, uvParamExtended, sampleInfo.ceilIndex,
-					//   uvValuesCeil, uvIndicesCeil );
+					 uvCeil = getIndexAndValues( sampleIndices, uvParamExtended, sampleInfo.ceilIndex,
+					   uvValuesCeil, uvIndicesCeil );
                   }
 
                   if(uvIndicesFloor.size() == (size_t)indices.length())
                   {
                      MFloatArray uValues((unsigned int)uvValuesFloor.size()), vValues((unsigned int)uvValuesFloor.size());
-                     for(unsigned int i=0;i<uvValuesFloor.size();i++)
-                     {
-                        uValues[i] = uvValuesFloor[i].x;
-                        vValues[i] = uvValuesFloor[i].y;
-					 }
-
+                      if((sampleInfo.alpha != 0.0)&& uvCeil && uvIndicesFloor.size() == uvIndicesCeil.size() && ! isTopologyDynamic )
+					  {
+						 float blend = (float)sampleInfo.alpha;
+						 float iblend = 1.0f - blend;
+						 for(unsigned int i=0;i<uvValuesFloor.size();i++)
+						 {
+							uValues[i] = uvValuesFloor[i].x * iblend + uvValuesCeil[i].x * blend;
+							vValues[i] = uvValuesFloor[i].y * iblend + uvValuesCeil[i].y * blend;
+						 }	                 
+				   }
+				   else {
+						 for(unsigned int i=0;i<uvValuesFloor.size();i++)
+						 {
+							uValues[i] = uvValuesFloor[i].x;
+							vValues[i] = uvValuesFloor[i].y;
+						 }
+					}
 
                      MIntArray uvIndices( (unsigned int) uvIndicesFloor.size() );
                      for(unsigned int i=0;i<uvIndicesFloor.size();i++)
@@ -762,23 +771,16 @@ MStatus AlembicPolyMeshNode::compute(const MPlug & plug, MDataBlock & dataBlock)
                         uvIndices[i] = uvIndicesFloor[mSampleLookup[i]];
                      }
 					 MIntArray uvCounts( mMesh.numPolygons() );
-					 int uvCountsIndex = 0;
-					 //int nextUVIndex = 0;
                      for(int f=0;f<mMesh.numPolygons();f++){
-						 int numPolyVertices = mMesh.polygonVertexCount(f);
-                         uvCounts[f] = numPolyVertices;
-						 /*for(unsigned int j=0;j<numPolyVertices;j++)
-		                 {
-	                        uvIndices[nextUVIndex+j] = uvIndicesFloor[nextUVIndex+numPolyVertices-j-1];
-							
-						 }	
-						 nextUVIndex += numPolyVertices;*/
+                         uvCounts[f] = mMesh.polygonVertexCount(f);
 					 }
 
 					 status = mMesh.setCurrentUVSetName(uvSetNames[uvSetIndex]);
+					 /*
+						-- this tends to error out but it actually works. Ben.
 					 if( status != MS::kSuccess ){
 						 EC_LOG_ERROR("mMesh.setCurrentUVSetName(\""<<uvSetNames[uvSetIndex]<<"\") failed: "<<status.errorString().asChar());
-					 }
+					 }*/
                      status = mMesh.setUVs(uValues, vValues, &uvSetNames[uvSetIndex]);
 					 if( status != MS::kSuccess ){
 						 EC_LOG_ERROR("mMesh.setUVs(\""<<uvSetNames[uvSetIndex]<<"\") failed: "<<status.errorString().asChar());
@@ -812,7 +814,7 @@ MStatus AlembicPolyMeshNode::compute(const MPlug & plug, MDataBlock & dataBlock)
             );
 
 			 std::vector<Imath::V3f> normalValuesFloor, normalValuesCeil;
-		  std::vector<AbcA::uint32_t> normalIndicesFloor, normalIndicesCeil;
+			 std::vector<AbcA::uint32_t> normalIndicesFloor, normalIndicesCeil;
 			bool normalFloor = false, normalCeil = false;
 		  
 			normalFloor = getIndexAndValues( sampleIndices, normalsParam, sampleInfo.floorIndex,
