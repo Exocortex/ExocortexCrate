@@ -459,9 +459,12 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
 			bool normalsCeil = getIndexAndValues( meshFaceIndices, meshNormalsParam, sampleInfo.ceilIndex,
 					   normalValuesCeil, normalIndicesCeil );
 
-		   if( ! normalsFloor || ! normalsCeil || normalValuesFloor.size() != sampleCount) {
+			if( ! normalsFloor ) {
+			   ESS_LOG_ERROR( "Mesh normals are not set because they are not valid." );
+			}
+			else if( normalIndicesFloor.size() != sampleCount) {
 			   //The last check ensures that we will not exceed the array bounds of PMeshNormalsFloor
-			   ESS_LOG_WARNING( "Mesh normals are in an invalid state in Alembic file, ignoring." );
+			   ESS_LOG_ERROR( "Mesh normals are not set because their index count (" << normalIndicesFloor.size() << ") doesn't match the face index count (" << sampleCount << ")" );
 		   }
 		   else {
 
@@ -474,7 +477,7 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
 			   //NOTE: options.pMNMesh->ClearSpecifiedNormals() will make getSpecifiedNormals return NULL again
   			   MNNormalSpec *normalSpec = options.pMNMesh->GetSpecifiedNormals();
 			   normalSpec->SetParent( options.pMNMesh );
-			   if( normalSpec->GetNumFaces() != numFaces || normalSpec->GetNumNormals() != sampleCount) {
+			   if( normalSpec->GetNumFaces() != numFaces || normalSpec->GetNumNormals() != (int)normalValuesFloor.size()) {
 					//normalSpec->ClearAndFree();
 				  // ESS_LOG_ERROR( "Setting new faces and normal counts for specified normals." );
 				    normalSpec->SetNumFaces(numFaces);
@@ -484,11 +487,11 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
 			   normalSpec->SetAllExplicit(true); //this call is probably more efficient than the per vertex one since 3DS Max uses bit flags
 
 			   // set normal values
-			    if (sampleInfo.alpha != 0.0f && normalValuesFloor.size() == normalValuesCeil.size())
+			    if (sampleInfo.alpha != 0.0f && normalsCeil && normalValuesFloor.size() == normalValuesCeil.size())
 			   {
 				   for (int i = 0; i < normalValuesFloor.size(); i ++ ) {
 					   Imath::V3f interpolatedNormal = normalValuesFloor[i] + (normalValuesCeil[i] - normalValuesFloor[i]) * float(sampleInfo.alpha);
-			           interpolatedNormal *= options.fVertexAlpha;
+			           //interpolatedNormal *= options.fVertexAlpha;
 					   normalSpec->Normal(i) = ConvertAlembicNormalToMaxNormal_Normalized( interpolatedNormal );
 				   }
 			   }
@@ -496,10 +499,14 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
 			   {
 				   for (int i = 0; i < normalValuesFloor.size(); i ++ ) {
 					   Imath::V3f interpolatedNormal = normalValuesFloor[i];
-			           interpolatedNormal *= options.fVertexAlpha;
+			           //interpolatedNormal *= options.fVertexAlpha;
 					   normalSpec->Normal(i) = ConvertAlembicNormalToMaxNormal_Normalized( interpolatedNormal );
 				   }
 			   }
+
+				//for( int i = 0; i < normalSpec->GetNumNormals(); i ++ ) {
+				//	EC_LOG_INFO( "normal #" << i << " is " << normalSpec->Normal(i).x << " " << normalSpec->Normal(i).y << " " << normalSpec->Normal(i).z );
+				//}
 
 			   // set normal indices
 				{
@@ -509,11 +516,21 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
 					   MNNormalFace &normalFace = normalSpec->Face(i);
 					   normalFace.SetDegree(degree);
 					   for (int j = 0; j < degree; j ++ ) {
-						   normalFace.SetNormalID( degree - j - 1, (int) normalIndicesFloor[offset] );
+						  /* if( i < numFaces / 2 ) {
+							normalFace.SetNormalID( j, (int) normalIndicesFloor[offset] );
+						   }
+						   else {*/
+							normalFace.SetNormalID( degree - j - 1, (int) normalIndicesFloor[offset] );
+						   //}
 						   offset ++;
 					   }
 				   }
 			   }
+
+				//for( int i = 0; i < normalSpec->GetNumFaces(); i ++ ) {
+				//	EC_LOG_INFO( "face #" << i << " is " << normalSpec->Face(i).GetNormalID( 0 ) << " " << normalSpec->Face(i).GetNormalID( 1 ) << " " << normalSpec->Face(i).GetNormalID( 2 ) );
+				//}
+
 
 			   //3DS Max documentation on MNMesh::checkNormals() - checks our flags and calls BuildNormals, ComputeNormals as needed. 
 			   //MHahn: Probably not necessary since we explicility setting every normals
