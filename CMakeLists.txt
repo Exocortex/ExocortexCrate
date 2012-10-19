@@ -42,8 +42,8 @@ ENDIF()
 
 SET( Maya_LIBRARIES Foundation OpenMaya OpenMayaAnim OpenMayaFX OpenMayaRender OpenMayaUI )		
 
-MESSAGE( "Maya_DIR_LIBRARY: ${Maya_DIR_LIBRARY}" )
-MESSAGE( "Maya_LIBRARIES: ${Maya_LIBRARIES}" )
+#MESSAGE( "Maya_DIR_LIBRARY: ${Maya_DIR_LIBRARY}" )
+#MESSAGE( "Maya_LIBRARIES: ${Maya_LIBRARIES}" )
 
 if( Exocortex_SERVICES )
 	add_definitions( "-DEXOCORTEX_SERVICES" )
