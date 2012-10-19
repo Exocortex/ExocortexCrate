@@ -17,6 +17,7 @@
 #define PLUGIN_LICENSE_NAME				"alembic_maya"
 #define PLUGIN_LICENSE_VERSION			(alembic_MAJOR_VERSION*10)
 
+#include "CommonLog.h"
 #include "ExocortexServicesProxy.h"
 
 #define ALEMBIC_WRITER_LICENSE_IDS	{ RlmProductID( "alembic_maya", 10 ), RlmProductID( "alembic", 10 ) }

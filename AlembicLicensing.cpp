@@ -3,7 +3,6 @@
 #include <sstream>
 #include "Foundation.h"
 #include "AlembicLicensing.h"
-#include "CommonLog.h"
 
 using namespace std;
 

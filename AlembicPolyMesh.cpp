@@ -5,7 +5,6 @@
 #include "MetaData.h"
 #include <sstream>
 #include "CommonMeshUtilities.h"
-#include "CommonLog.h"
 
 namespace AbcA = ::Alembic::AbcCoreAbstract::ALEMBIC_VERSION_NS;
 using namespace AbcA;
