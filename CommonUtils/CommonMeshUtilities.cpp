@@ -2,6 +2,7 @@
 #include "CommonMeshUtilities.h"
 #include "CommonLog.h"
 #include "CommonProfiler.h"
+#include "CommonUtilities.h"
 
 bool isAlembicMeshValid( Alembic::AbcGeom::IObject *pIObj ) {
 	//ESS_PROFILE_FUNC();
@@ -335,4 +336,63 @@ int validateAlembicMeshTopo(std::vector<Alembic::AbcCoreAbstract::ALEMBIC_VERSIO
 	}
 	return meshErrors;
 
+}
+
+bool getIndexAndValues( Alembic::Abc::Int32ArraySamplePtr faceIndices, Alembic::AbcGeom::IV2fGeomParam& param,
+					   AbcA::index_t sampleIndex, std::vector<Imath::V2f>& outputValues, std::vector<AbcA::uint32_t>& outputIndices ) {
+
+	if( param.getIndexProperty().valid() && param.getValueProperty().valid() ) {		
+		Alembic::Abc::V2fArraySamplePtr valueSampler = param.getValueProperty().getValue( sampleIndex );
+		for( int i = 0; i < valueSampler->size(); i ++ ) {
+			outputValues.push_back( (*valueSampler)[i] );
+		}
+		Alembic::Abc::UInt32ArraySamplePtr indexSampler = param.getIndexProperty().getValue( sampleIndex );
+		for( int i = 0; i < indexSampler->size(); i ++ ) {
+			outputIndices.push_back( (*indexSampler)[i] );
+		}
+		return true;
+	}
+	else if( param.getValueProperty().valid() ) {
+		Alembic::Abc::V2fArraySamplePtr valueSampler = param.getValueProperty().getValue( sampleIndex );
+		std::vector<Imath::V2f> tempValues;
+		for( int i = 0; i < valueSampler->size(); i ++ ) {
+			tempValues.push_back( (*valueSampler)[i] );
+		}
+		std::vector<Alembic::Abc::int32_t> tempIndices;
+		for( int i = 0; i < faceIndices->size(); i ++ ) {
+			tempIndices.push_back( (*faceIndices)[i] );
+		}
+		createIndexedArray<Imath::V2f,SortableV2f>( tempIndices, tempValues, outputValues, outputIndices );
+		return true;
+	}
+	return false;
+}
+
+bool getIndexAndValues( Alembic::Abc::Int32ArraySamplePtr faceIndices, Alembic::AbcGeom::IN3fGeomParam& param,
+					   AbcA::index_t sampleIndex, std::vector<Imath::V3f>& outputValues, std::vector<AbcA::uint32_t>& outputIndices ) {
+	if( param.getIndexProperty().valid() && param.getValueProperty().valid() ) {		
+		Alembic::Abc::N3fArraySamplePtr valueSampler = param.getValueProperty().getValue( sampleIndex );
+		for( int i = 0; i < valueSampler->size(); i ++ ) {
+			outputValues.push_back( (*valueSampler)[i] );
+		}
+		Alembic::Abc::UInt32ArraySamplePtr indexSampler = param.getIndexProperty().getValue( sampleIndex );
+		for( int i = 0; i < indexSampler->size(); i ++ ) {
+			outputIndices.push_back( (*indexSampler)[i] );
+		}
+		return true;
+	}
+	else if( param.getValueProperty().valid() ) {
+		Alembic::Abc::N3fArraySamplePtr valueSampler = param.getValueProperty().getValue( sampleIndex );
+		std::vector<Imath::V3f> tempValues;
+		for( int i = 0; i < valueSampler->size(); i ++ ) {
+			tempValues.push_back( (*valueSampler)[i] );
+		}
+		std::vector<Alembic::Abc::int32_t> tempIndices;
+		for( int i = 0; i < faceIndices->size(); i ++ ) {
+			tempIndices.push_back( (*faceIndices)[i] );
+		}
+		createIndexedArray<Imath::V3f,SortableV3f>( tempIndices, tempValues, outputValues, outputIndices );
+		return true;
+	}
+	return false;
 }

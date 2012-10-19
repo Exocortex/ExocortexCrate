@@ -271,7 +271,7 @@ template <class T, class S> void createIndexedArray(const std::vector<Alembic::A
     map_key mkey(faceIndicesVec[i], inputVec[i]);
     it = normalMap.find(mkey);
     if (it != normalMap.end())    // the pair <vertexId, S> was found, let reuse it's index!
-      outputIndices[i] = it->second;
+      outputIndices[i] = (Alembic::Abc::uint32_t) it->second;
     else
     {
       const int map_size = normalMap.size();

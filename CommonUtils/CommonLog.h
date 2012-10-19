@@ -1,9 +1,14 @@
 #ifndef __COMMON_LOG_H
 #define __COMMON_LOG_H
 
+#include <string>
+#include <sstream>
+
 void logError( const char* msg );
 void logWarning( const char* msg );
 void logInfo( const char* msg );
+
+#define NO_DEFAULT_ESS_LOG_DEFINES
 
 #define ESS_LOG_ERROR(a) do { std::stringstream __s; __s << "Alembic: " << a; logError( __s.str().c_str() ); } while(0)
 #define ESS_LOG_WARNING(a) do { std::stringstream __s; __s << "Alembic: " << a; logWarning(__s.str().c_str() ); } while(0)
@@ -21,16 +26,5 @@ void logInfo( const char* msg );
 #ifndef EC_ASSERT
 	#define EC_ASSERT(a)		
 #endif
-
-/*
-void logError( const char* msg ) {
-	MGlobal::displayError( msg );
-}
-void logWarning( const char* msg ) {
-	MGlobal::displayWarning( msg );
-}
-void logInfo( const char* msg ) {
-	MGlobal::displayInfo( msg );
-}*/
 
 #endif // __COMMON_LOG_H
