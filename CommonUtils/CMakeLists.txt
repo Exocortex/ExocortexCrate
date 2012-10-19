@@ -17,3 +17,10 @@ TARGET_LINK_LIBRARIES( ${PROJECT_NAME}
 	${ALEMBIC_HDF5_LIBS} ) 
 	
 ADD_DEPENDENCIES(${PROJECT_NAME} AlembicAbcGeom)
+
+
+SET( DocSource_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../Doc )
+SET( DocInstall_DIR ${Exocortex_INSTALL_BASE_DIR}/Doc )
+
+remove_dir( ${DocInstall_DIR} )
+copy_directory( ${DocSource_DIR} ${DocInstall_DIR} ) 

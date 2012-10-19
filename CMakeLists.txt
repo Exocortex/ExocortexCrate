@@ -372,10 +372,3 @@ if( WIN32 )
 		endif()
 	ENDIF()
 endif()
-
-
-SET( DocSource_DIR ${CMAKE_CURRENT_SOURCE_DIR}/Doc )
-SET( DocInstall_DIR ${Exocortex_INSTALL_BASE_DIR}/Doc )
-
-remove_dir( ${DocInstall_DIR} )
-copy_directory( ${DocSource_DIR} ${DocInstall_DIR} )
