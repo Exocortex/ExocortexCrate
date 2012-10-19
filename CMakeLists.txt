@@ -15,6 +15,7 @@ ENDIF()
  
 set( Exocortex_INSTALL_BASE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/install" )
 
+
 if( HDF5_ENABLE_THREADSAFE )
 	project( ExocortexAlembic )
 	if( WIN32 )
@@ -371,3 +372,10 @@ if( WIN32 )
 		endif()
 	ENDIF()
 endif()
+
+
+SET( DocSource_DIR ${CMAKE_CURRENT_SOURCE_DIR}/Doc )
+SET( DocInstall_DIR ${Exocortex_INSTALL_BASE_DIR}/Doc )
+
+remove_dir( ${DocInstall_DIR} )
+copy_directory( ${DocSource_DIR} ${DocInstall_DIR} )

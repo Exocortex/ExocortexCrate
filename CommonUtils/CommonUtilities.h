@@ -274,7 +274,7 @@ template <class T, class S> void createIndexedArray(const std::vector<Alembic::A
       outputIndices[i] = (Alembic::Abc::uint32_t) it->second;
     else
     {
-      const int map_size = normalMap.size();
+      const int map_size = (int) normalMap.size();
       outputVec.push_back(inputVec[i]);
       outputIndices[i] = map_size;
       normalMap[mkey] = map_size;
