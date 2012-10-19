@@ -114,7 +114,7 @@ MStatus AlembicGetInfoCommand::doIt(const MArgList & args)
    {
       Alembic::Abc::IObject iObj = objects.front();
       objects.pop_front();
-      const int nbChild = iObj.getNumChildren();
+      const int nbChild = (int) iObj.getNumChildren();
       for(size_t j=0; j<nbChild; ++j)
       {
          Alembic::Abc::IObject child = iObj.getChild(j);
@@ -136,8 +136,8 @@ MStatus AlembicGetInfoCommand::doIt(const MArgList & args)
          }
          iTuple.type = getAlembicTypeFromObject(child);
          iTuple.name = child.getName().c_str();
-         iTuple.nbSample = getNumSamplesFromObject(child);
-         iTuple.parentID = i;
+         iTuple.nbSample = (int) getNumSamplesFromObject(child);
+         iTuple.parentID = (int) i;
          {
            infoTuple &parentTuple = infoVector[i];
            if (iTuple.type == AT_Xform && parentTuple.type == AT_Xform)
