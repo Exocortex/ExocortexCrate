@@ -132,8 +132,8 @@ float getTimeOffsetFromSchema( SCHEMA &schema, SampleInfo const& sampleInfo ) {
 		return 0;
 	}
 	else {
-		return ( timeSampling->getSampleTime(sampleInfo.ceilIndex) -
-			timeSampling->getSampleTime(sampleInfo.floorIndex) ) * sampleInfo.alpha;
+		return (float)( ( timeSampling->getSampleTime(sampleInfo.ceilIndex) -
+			timeSampling->getSampleTime(sampleInfo.floorIndex) ) * sampleInfo.alpha );
 	}
 }
 
