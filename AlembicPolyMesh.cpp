@@ -13,7 +13,6 @@ AlembicPolyMesh::AlembicPolyMesh(const MObject & in_Ref, AlembicWriteJob * in_Jo
 : AlembicObject(in_Ref, in_Job)
 {
    MFnDependencyNode node(in_Ref);
-   //MString name = GetUniqueName(truncateName(node.name()));
    MString name = GetUniqueName(node.name());
    mObject = Alembic::AbcGeom::OPolyMesh(GetParentObject(),name.asChar(),GetJob()->GetAnimatedTs());
 
@@ -28,6 +27,7 @@ AlembicPolyMesh::~AlembicPolyMesh()
 
 MStatus AlembicPolyMesh::Save(double time)
 {
+  ESS_PROFILE_SCOPE("AlembicPolyMesh::Save");
    // access the geometry
    MFnMesh node(GetRef());
    MDagPath path;

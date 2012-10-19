@@ -42,6 +42,7 @@ AlembicPoints::~AlembicPoints()
 
 MStatus AlembicPoints::Save(double time)
 {
+  ESS_PROFILE_SCOPE("AlembicPoints::Save");
    // access the geometry
    MFnParticleSystem node(GetRef());
 

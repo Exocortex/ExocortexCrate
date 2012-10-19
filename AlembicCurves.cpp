@@ -29,6 +29,7 @@ AlembicCurves::~AlembicCurves()
 
 MStatus AlembicCurves::Save(double time)
 {
+  ESS_PROFILE_SCOPE("AlembicCurves::Save");
    // access the geometry
    MFnNurbsCurve node(GetRef());
 

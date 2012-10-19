@@ -25,6 +25,7 @@ AlembicCamera::~AlembicCamera()
 
 MStatus AlembicCamera::Save(double time)
 {
+  ESS_PROFILE_SCOPE("AlembicCamera::Save");
    // access the camera
    MFnCamera node(GetRef());
 

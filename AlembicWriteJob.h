@@ -4,6 +4,8 @@
 #include "Foundation.h"
 #include "AlembicObject.h"
 
+#include <map>
+
 class AlembicWriteJob
 {
 private:
@@ -13,7 +15,8 @@ private:
     Alembic::Abc::OArchive mArchive;
     unsigned int mTs;
     std::map<std::string,std::string> mOptions;
-    std::vector<AlembicObjectPtr> mObjects;
+    //std::vector<AlembicObjectPtr> mObjects;
+    std::map<std::string, AlembicObjectPtr> mapObjects;
     double mFrameRate;
 public:
    AlembicWriteJob(
@@ -31,7 +34,7 @@ public:
    MString GetOption(const MString & in_Name);
    AlembicObjectPtr GetObject(const MObject & in_Ref);
    bool AddObject(AlembicObjectPtr in_Obj);
-   size_t GetNbObjects() { return mObjects.size(); }
+   size_t GetNbObjects() { return mapObjects.size(); }
  
    MStatus PreProcess();
    MStatus Process(double frame);

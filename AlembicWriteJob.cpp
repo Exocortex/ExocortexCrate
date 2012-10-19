@@ -42,6 +42,7 @@ AlembicWriteJob::~AlembicWriteJob()
 
 void AlembicWriteJob::SetOption(const MString & in_Name, const MString & in_Value)
 {
+  ESS_PROFILE_SCOPE("AlembicWriteJob::SetOption");
    std::map<std::string,std::string>::iterator it = mOptions.find(in_Name.asChar());
    if(it == mOptions.end())
       mOptions.insert(std::pair<std::string,std::string>(in_Name.asChar(),in_Value.asChar()));
@@ -65,31 +66,34 @@ MString AlembicWriteJob::GetOption(const MString & in_Name)
 
 AlembicObjectPtr AlembicWriteJob::GetObject(const MObject & in_Ref)
 {
-   MString refString = getFullNameFromRef(in_Ref);
-   for(size_t i=0;i<mObjects.size();i++)
-   {
-      if(getFullNameFromRef(mObjects[i]->GetRef()) == refString)
-         return mObjects[i];
-   }
-   return AlembicObjectPtr();
+  ESS_PROFILE_SCOPE("AlembicWriteJob::GetObject");
+   std::string fullName(getFullNameFromRef(in_Ref).asChar());
+   std::map<std::string, AlembicObjectPtr>::const_iterator it = mapObjects.find(fullName);
+   if (it == mapObjects.end())
+     return AlembicObjectPtr();
+   return it->second;
 }
 
 bool AlembicWriteJob::AddObject(AlembicObjectPtr in_Obj)
 {
+  ESS_PROFILE_SCOPE("AlembicWriteJob::AddObject");
    if(!in_Obj)
       return false;
    if(in_Obj->GetRef().isNull())
       return false;
-   AlembicObjectPtr existing = GetObject(in_Obj->GetRef());
+   const MObject &in_Ref = in_Obj->GetRef();
+   AlembicObjectPtr existing = GetObject(in_Ref);
    if(existing != NULL)
       return false;
-   mObjects.push_back(in_Obj);
+   std::string fullName(getFullNameFromRef(in_Ref).asChar());
+   mapObjects[fullName] = in_Obj;
    return true;
 }
 
 
 MStatus AlembicWriteJob::PreProcess()
 {
+  ESS_PROFILE_SCOPE("AlembicWriteJob::PreProcess");
    // check filenames
    if(mFileName.length() == 0)
    {
@@ -178,50 +182,60 @@ MStatus AlembicWriteJob::PreProcess()
          continue;
 
       // take care of all other types
-      MString mType = mObj.apiTypeStr();
-      if(mType == "kCamera")
+      MFn::Type mType = mObj.apiType();
+      switch(mType)
       {
-         AlembicObjectPtr ptr;
-         ptr.reset(new AlembicCamera(mObj,this));
-         AddObject(ptr);
-      }
-      else if(mType == "kMesh")
-      {
-         AlembicObjectPtr ptr;
-         ptr.reset(new AlembicPolyMesh(mObj,this));
-         AddObject(ptr);
-      }
-      else if(mType == "kSubdiv")
-      {
-         AlembicObjectPtr ptr;
-         ptr.reset(new AlembicSubD(mObj,this));
-         AddObject(ptr);
-      }
-      else if(mType == "kNurbsCurve")
-      {
-         AlembicObjectPtr ptr;
-         ptr.reset(new AlembicCurves(mObj,this));
-         AddObject(ptr);
-      }
-      else if(mType == "kParticle")
-      {
-         AlembicObjectPtr ptr;
-         ptr.reset(new AlembicPoints(mObj,this));
-         AddObject(ptr);
-      }
-      else if(mType == "kPfxHair")
-      {
-         AlembicObjectPtr ptr;
-         ptr.reset(new AlembicHair(mObj,this));
-         AddObject(ptr);
-      }
-      else
-      {
-         if(!(mType == "kTransform"))
-            MGlobal::displayInfo("[ExocortexAlembic] Exporting "+mType+" node as kTransform.\n");
-         AlembicObjectPtr ptr;
-         ptr.reset(new AlembicXform(mObj,this));
-         AddObject(ptr);
+      case MFn::kCamera:
+        {
+           AlembicObjectPtr ptr;
+           ptr.reset(new AlembicCamera(mObj,this));
+           AddObject(ptr);
+        }
+        break;
+      case MFn::kMesh:
+        {
+           AlembicObjectPtr ptr;
+           ptr.reset(new AlembicPolyMesh(mObj,this));
+           AddObject(ptr);
+        }
+        break;
+      case MFn::kSubdiv:
+        {
+           AlembicObjectPtr ptr;
+           ptr.reset(new AlembicSubD(mObj,this));
+           AddObject(ptr);
+        }
+        break;
+      case MFn::kNurbsCurve:
+        {
+           AlembicObjectPtr ptr;
+           ptr.reset(new AlembicCurves(mObj,this));
+           AddObject(ptr);
+        }
+        break;
+      case MFn::kParticle:
+        {
+           AlembicObjectPtr ptr;
+           ptr.reset(new AlembicPoints(mObj,this));
+           AddObject(ptr);
+        }
+        break;
+      case MFn::kPfxHair:
+        {
+           AlembicObjectPtr ptr;
+           ptr.reset(new AlembicHair(mObj,this));
+           AddObject(ptr);
+        }
+        break;
+      default:
+        {
+           if(mType != MFn::kTransform)
+              MGlobal::displayInfo("[ExocortexAlembic] Exporting "+MString(mObj.apiTypeStr())+" node as kTransform.\n");
+           AlembicObjectPtr ptr;
+           ptr.reset(new AlembicXform(mObj,this));
+           AddObject(ptr);
+        }
+        break;
       }
    }
 
@@ -230,6 +244,7 @@ MStatus AlembicWriteJob::PreProcess()
 
 MStatus AlembicWriteJob::Process(double frame)
 {
+   ESS_PROFILE_SCOPE("AlembicWriteJob::Process");
    MStatus result = MStatus::kSuccess;
 
    for(size_t i=0;i<mFrames.size();i++)
@@ -239,9 +254,10 @@ MStatus AlembicWriteJob::Process(double frame)
          continue;
 
       // run the export for all objects
-      for(size_t j=0;j<mObjects.size();j++)
+      //for(size_t j=0;j<mObjects.size();j++)
+      for (std::map<std::string, AlembicObjectPtr>::iterator it = mapObjects.begin(); it != mapObjects.end(); ++it)
       {
-         MStatus status = mObjects[j]->Save(mFrames[i]);
+         MStatus status = it->second->Save(mFrames[i]);
          if(status != MStatus::kSuccess)
             return status;
          result = status;

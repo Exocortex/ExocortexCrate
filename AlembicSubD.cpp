@@ -28,6 +28,7 @@ AlembicSubD::~AlembicSubD()
 
 MStatus AlembicSubD::Save(double time)
 {
+  ESS_PROFILE_SCOPE("AlembicSubD::Save");
    // access the geometry
    MFnSubd node(GetRef());
 

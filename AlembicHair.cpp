@@ -30,6 +30,7 @@ AlembicHair::~AlembicHair()
 
 MStatus AlembicHair::Save(double time)
 {
+  ESS_PROFILE_SCOPE("AlembicHair::Save");
    MStatus status;
 
    // access the geometry
