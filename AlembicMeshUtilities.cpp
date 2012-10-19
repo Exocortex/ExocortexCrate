@@ -610,7 +610,7 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
 				{
 				   options.pMNMesh->InitMap(uvI);
 				   MNMap *map = options.pMNMesh->M(uvI);
-				   map->setNumVerts(uvValuesFloor.size());
+				   map->setNumVerts((int)uvValuesFloor.size());
 				   map->setNumFaces(numFaces);
 
 				   // set values
