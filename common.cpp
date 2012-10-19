@@ -42,16 +42,16 @@ std::string getNameFromIdentifier(const std::string &identifier, long id, long g
 
 bool shiftedProcessing(nodeData &nodata, userData * ud)
 {
-  const int gInsSize = ud->gInstances.size();
+  const int gInsSize = (int) ud->gInstances.size();
   std::string objFullName = nodata.object.getFullName();
   for(size_t j=0; j < gInsSize; ++j)
   {
     instanceCloudInfo &gInst = ud->gInstances[j];
-    const int jInstanceInfoSize = gInst.groupInfos.size();
+    const int jInstanceInfoSize = (int) gInst.groupInfos.size();
     for(size_t k=0; k < jInstanceInfoSize; ++k)
     {
       instanceGroupInfo &gInfo = gInst.groupInfos[k];
-      const int kInfIdSize = gInfo.identifiers.size();
+      const int kInfIdSize = (int) gInfo.identifiers.size();
       for(size_t l=0; k < kInfIdSize; ++l)
       {
         if(gInfo.identifiers[l] == objFullName)

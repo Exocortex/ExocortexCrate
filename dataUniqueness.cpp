@@ -115,7 +115,7 @@ static void fillNormals(AtArray *nor, AtULong &norOffset, const n_map_mkey_to_in
 
       AiArraySetVec(nor, norOffset + beg->second, norm);
    }
-   norOffset += Ns_map.size();
+   norOffset += (AtULong) Ns_map.size();
 }
 
 void removeNormalsDuplicate(AtArray *nor, AtULong &norOffset, Alembic::Abc::N3fArraySamplePtr &abcN, SampleInfo &sampleInfo, AtArray *nIdx, AtArray *faceIndices)

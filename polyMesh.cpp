@@ -132,7 +132,7 @@ static void postShaderProcess(SCHEMA &schema, nodeData &nodata, userData *ud, Al
 
 static void plainPositionCopy(AtArray *pos, Alembic::Abc::P3fArraySamplePtr &abcPos, AtULong &posOffset)
 {
-  const int nbPos = abcPos->size();
+  const int nbPos = (int) abcPos->size();
   for(size_t i=0; i < nbPos; ++i)
   {
     AtPoint pt;
