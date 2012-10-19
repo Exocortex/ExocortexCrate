@@ -798,7 +798,7 @@ MStatus AlembicPolyMeshNode::compute(const MPlug & plug, MDataBlock & dataBlock)
       mMesh.setPoints(points);
 
    // import the normals
-   if(importNormals)
+   if(importNormals) 
    {
       Alembic::AbcGeom::IN3fGeomParam normalsParam = mSchema.getNormalsParam();
       if(normalsParam.valid())
@@ -811,43 +811,51 @@ MStatus AlembicPolyMeshNode::compute(const MPlug & plug, MDataBlock & dataBlock)
                normalsParam.getNumSamples()
             );
 
-            Alembic::Abc::N3fArraySamplePtr sampleNormals = normalsParam.getExpandedValue(sampleInfo.floorIndex).getVals();
-            if(sampleNormals->size() == mSampleLookup.size())
+			 std::vector<Imath::V3f> normalValuesFloor, normalValuesCeil;
+		  std::vector<AbcA::uint32_t> normalIndicesFloor, normalIndicesCeil;
+			bool normalFloor = false, normalCeil = false;
+		  
+			normalFloor = getIndexAndValues( sampleIndices, normalsParam, sampleInfo.floorIndex,
+			   normalValuesFloor, normalIndicesFloor );
+			normalCeil = getIndexAndValues( sampleIndices, normalsParam, sampleInfo.floorIndex,
+			   normalValuesCeil, normalIndicesCeil );
+
+            if(normalIndicesFloor.size() == mSampleLookup.size())
             {
-               MVectorArray normals;
-               normals.setLength((unsigned int)sampleNormals->size());
+               MVectorArray normals((unsigned int)normalValuesFloor.size());
 
                bool done = false;
-               if(sampleInfo.alpha != 0.0)
-               {
-                  Alembic::Abc::N3fArraySamplePtr sampleNormals2 = normalsParam.getExpandedValue(sampleInfo.ceilIndex).getVals();
-                  if(sampleNormals->size() == sampleNormals2->size() && ! isTopologyDynamic )
+               if((sampleInfo.alpha != 0.0)&& normalCeil && normalIndicesFloor.size() == normalIndicesCeil.size() && ! isTopologyDynamic )
                   {
                      //ESS_LOG_WARNING( "blending vertex normals (1-2) A." );
 					 float blend = (float)sampleInfo.alpha;
                      float iblend = 1.0f - blend;
                      MVector normal;
-                     for(unsigned int i=0;i<normals.length();i++)
+                     for(unsigned int i=0;i<normalValuesFloor.size();i++)
                      {
-                        normal.x = sampleNormals->get()[i].x * iblend + sampleNormals2->get()[i].x * blend;
-                        normal.y = sampleNormals->get()[i].y * iblend + sampleNormals2->get()[i].y * blend;
-                        normal.z = sampleNormals->get()[i].z * iblend + sampleNormals2->get()[i].z * blend;
-                        normals[mSampleLookup[i]] = normal.normal();
+                        normal.x = normalValuesFloor[i].x * iblend + normalValuesCeil[i].x * blend;
+                        normal.y = normalValuesFloor[i].y * iblend + normalValuesCeil[i].y * blend;
+                        normal.z = normalValuesFloor[i].z * iblend + normalValuesCeil[i].z * blend;
+                        normals[i] = normal.normal();
                      }
-                     done = true;
-                  }
+                 
                }
-               if(!done)
-               {
-                  for(unsigned int i=0;i<normals.length();i++)
+			   else {
+                  for(unsigned int i=0;i<normalValuesFloor.size();i++)
                   {
-                     normals[mSampleLookup[i]].x = sampleNormals->get()[i].x;
-                     normals[mSampleLookup[i]].y = sampleNormals->get()[i].y;
-                     normals[mSampleLookup[i]].z = sampleNormals->get()[i].z;
+                     normals[i].x = normalValuesFloor[i].x;
+                     normals[i].y = normalValuesFloor[i].y;
+                     normals[i].z = normalValuesFloor[i].z;
                   }
                }
-               mMesh.setFaceVertexNormals(normals,mNormalFaces,mNormalVertices);             
-            }
+
+			    MIntArray normalIndices( (unsigned int) normalIndicesFloor.size() );
+				for( int i = 0; i < normalIndicesFloor.size(); i ++) {
+					normalIndices[i] = normalIndicesFloor[ mSampleLookup[i] ];
+				}
+
+				mMesh.setVertexNormals( normals, normalIndices );
+			}
          }
       }
    }
