@@ -791,18 +791,18 @@ MStatus AlembicPolyMeshNode::compute(const MPlug & plug, MDataBlock & dataBlock)
                   }
                }
 
-			    MIntArray normalIndices( (unsigned int) normalIndicesFloor.size() );
+			    MIntArray normalIndices( ( int) normalIndicesFloor.size() );
 				for( int i = 0; i < normalIndicesFloor.size(); i ++) {
 					normalIndices[i] = normalIndicesFloor[ mSampleLookup[i] ];
 				}
 
-				MVectorArray normalExpanded((unsigned int)normalIndicesFloor.size());
+				MVectorArray normalExpanded(( int)normalIndicesFloor.size());
 				for( int i = 0; i < normalExpanded.length(); i ++ ) {
 					normalExpanded[i] = normals[ normalIndicesFloor[ i ] ];
 				}
 
-				MIntArray faceList((unsigned int)normalIndicesFloor.size());
-	            MIntArray vertexList((unsigned int)normalIndicesFloor.size());
+				MIntArray faceList(( int)normalIndicesFloor.size());
+	            MIntArray vertexList(( int)normalIndicesFloor.size());
 
 				 MIntArray normalCounts( normalIndicesFloor.size() );
 			  int numFaces = mMesh.numPolygons();
