@@ -22,8 +22,14 @@ include_directories( ${BASE_DIR}/src )
 file(GLOB_RECURSE Sources ${BASE_DIR}/*.cpp)
 file(GLOB_RECURSE Includes ${BASE_DIR}/*.h)
 
+file(GLOB_RECURSE Scripts ${BASE_DIR}/MEL/*.*)
+file(GLOB_RECURSE UI ${BASE_DIR}/UI/*.*)
+
 SOURCE_GROUP("Source Files" FILES ${Sources})   
 SOURCE_GROUP("Header Files" FILES ${Includes})
+SOURCE_GROUP("_MEL" FILES ${Scripts})
+SOURCE_GROUP("_UI" FILES ${UI})
+
 
 IF( WIN32 )
 
@@ -58,7 +64,7 @@ if( Exocortex_SERVICES OR Exocortex_RLM_ONLY )
 endif()
 
 
-add_library( ${PROJECT_NAME} SHARED ${Sources} ${Includes} ${LOCAL_CMAKE_FILE_NAME} )
+add_library( ${PROJECT_NAME} SHARED ${Sources} ${Includes} ${LOCAL_CMAKE_FILE_NAME} ${Scripts} ${UI} )
 
 if (WIN32)
 	add_definitions( -DNT_PLUGIN )
