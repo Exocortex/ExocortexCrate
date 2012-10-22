@@ -6,20 +6,20 @@
 class AlembicPolyMesh: public AlembicObject
 {
 private:
-  AbcG::OXformSchema mXformSchema;
-  AbcG::OPolyMeshSchema mMeshSchema;
-  AbcG::XformSample mXformSample;
-  AbcG::OPolyMeshSchema::Sample mMeshSample;
-   std::vector<AbcA::int32_t> mFaceCountVec;
-   std::vector<AbcA::int32_t> mFaceIndicesVec;
-   std::vector<Abc::V3f> mBindPoseVec;
-   std::vector<Abc::V3f> mVelocitiesVec;
-   std::vector<std::vector<Abc::V2f> > mUvVec;
-   std::vector<std::vector<Abc::uint32_t> > mUvIndexVec;
-   std::vector<AbcG::OV2fGeomParam> mUvParams;
-   std::vector<std::vector<AbcA::int32_t> > mFaceSetsVec;
-   Abc::OV3fArrayProperty mBindPoseProperty;
-   Abc::OFloatArrayProperty mUvOptionsProperty;
+   Alembic::AbcGeom::OXformSchema mXformSchema;
+   Alembic::AbcGeom::OPolyMeshSchema mMeshSchema;
+   Alembic::AbcGeom::XformSample mXformSample;
+   Alembic::AbcGeom::OPolyMeshSchema::Sample mMeshSample;
+   std::vector<Alembic::AbcCoreAbstract::ALEMBIC_VERSION_NS::int32_t> mFaceCountVec;
+   std::vector<Alembic::AbcCoreAbstract::ALEMBIC_VERSION_NS::int32_t> mFaceIndicesVec;
+   std::vector<Alembic::Abc::V3f> mBindPoseVec;
+   std::vector<Alembic::Abc::V3f> mVelocitiesVec;
+   //std::vector<std::vector<Alembic::Abc::V2f> > mUvVec;
+   //std::vector<std::vector<Alembic::Abc::uint32_t> > mUvIndexVec;
+   std::vector<Alembic::AbcGeom::OV2fGeomParam> mUvParams;
+   std::vector<std::vector<Alembic::AbcCoreAbstract::ALEMBIC_VERSION_NS::int32_t> > mFaceSetsVec;
+   Alembic::Abc::ALEMBIC_VERSION_NS::OV3fArrayProperty mBindPoseProperty;
+   Alembic::Abc::ALEMBIC_VERSION_NS::OFloatArrayProperty mUvOptionsProperty;
    std::vector<float> mUvOptionsVec;
 
 public:
