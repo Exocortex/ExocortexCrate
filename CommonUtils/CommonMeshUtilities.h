@@ -1,8 +1,7 @@
 #ifndef __MESH_UTILITIES_H
 #define __MESH_UTILITIES_H
 
-
-namespace AbcA = ::Alembic::AbcCoreAbstract::ALEMBIC_VERSION_NS;
+#include "CommonAlembic.h"
 
 bool isAlembicMeshValid( Alembic::AbcGeom::IObject *pIObj );
 bool isAlembicMeshNormals( Alembic::AbcGeom::IObject *pIObj, bool& isConstant );
