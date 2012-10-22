@@ -284,7 +284,6 @@ void IntermediatePolyMesh3DSMax::Save(std::map<std::string, bool>& mOptions, Mes
 	  if (polyMesh != NULL)
 	  {
 			std::vector<int> usedChannels;
-			usedChannels.reserve(100);//max channels can range from 0 to 99
 			int numMaps = polyMesh->MNum();
 			//start at 1 because channel 0 is reserve for vertex colors
 			for(int mp=1; mp<numMaps; mp++){
@@ -299,11 +298,15 @@ void IntermediatePolyMesh3DSMax::Save(std::map<std::string, bool>& mOptions, Mes
 			}
 
 			mUvVec.resize(usedChannels.size());
-			mUvSetNames.reserve(usedChannels.size());
 			
 			for(int i=0; i<usedChannels.size(); i++){
 				int chanNum = usedChannels[i];
 				MNMap *map = polyMesh->M(chanNum);
+
+				if( map->FNum() != faceCount ) {
+					ESS_LOG_INFO("Warning: Can't export PolyMesh UV Channel #" << chanNum << " as its map face count (" << map->FNum() << ") doesn't match face count of mesh (" << faceCount << ")" );							
+					continue;
+				}
 
 				std::stringstream nameStream;
 				nameStream<<"Channel_"<<chanNum;
@@ -314,7 +317,7 @@ void IntermediatePolyMesh3DSMax::Save(std::map<std::string, bool>& mOptions, Mes
 					int degree = polyMesh->F(f)->deg;
 					for (int j = degree-1; j >= 0; j -= 1)
 					{
-						if (f < map->FNum() && j < map->F(f)->deg)
+						if ( j < map->F(f)->deg)
 						{
 							int vertIndex = map->F(f)->tv[j];
 							UVVert texCoord = map->V(vertIndex);
@@ -333,7 +336,43 @@ void IntermediatePolyMesh3DSMax::Save(std::map<std::string, bool>& mOptions, Mes
       }
       else if (triMesh != NULL)
       {
-		  ESS_LOG_INFO("Warning: uv channel export not implemented for trimesh.");
+			std::vector<int> usedChannels;
+			int numMaps = triMesh->getNumMaps();
+			//start at 1 because channel 0 is reserve for vertex colors
+			for(int mp=1; mp<numMaps; mp++){
+				MeshMap& map = triMesh->Map( mp);
+				if(map.vnum <= 0 || map.fnum <= 0){
+					continue;
+				}
+				usedChannels.push_back(mp);
+			}
+
+			mUvVec.resize(usedChannels.size());
+			
+			for(int i=0; i<usedChannels.size(); i++){
+				int chanNum = usedChannels[i];
+				MeshMap& map = triMesh->Map(chanNum);
+
+				if( map.getNumFaces() != faceCount ) {
+					ESS_LOG_INFO("Warning: Can't export TriMesh UV Channel #" << chanNum << " as its map face count (" << map.getNumFaces() << ") doesn't match face count of mesh (" << faceCount << ")" );							
+					continue;
+				}
+
+				std::stringstream nameStream;
+				nameStream<<"Channel_"<<chanNum;
+				mUvSetNames.push_back(nameStream.str());
+
+				for (int f=0; f< faceCount; f++) 
+				{
+					for (int j = 2; j >= 0; j -= 1)
+					{
+						int vertIndex = map.tf[f].t[j];
+						UVVert& texCoord = map.tv[vertIndex];
+						Alembic::Abc::V2f alembicUV(texCoord.x, texCoord.y);
+						mUvVec[i].push_back(alembicUV);					
+					}
+				}
+			}
 
 			//int numMaps = triMesh->getNumMaps();
 			//for(int mp=0; mp<numMaps; mp++) {
