@@ -7,16 +7,16 @@
 #include <map>
 #include <maya/MString.h>
 
-inline Alembic::Abc::IArchive * getArchiveFromID(MString path) {
+inline Abc::IArchive * getArchiveFromID(MString path) {
 	return getArchiveFromID( std::string( path.asChar() ) );
 }
-//MString addArchive(Alembic::Abc::IArchive * archive) {
+//MString addArchive(Abc::IArchive * archive) {
 //
 //}
 inline void deleteArchive(MString path) {
 	deleteArchive( std::string( path.asChar() ) );
 }
-inline Alembic::Abc::IObject getObjectFromArchive(MString path, MString identifier) {
+inline Abc::IObject getObjectFromArchive(MString path, MString identifier) {
 	return getObjectFromArchive( std::string( path.asChar() ), std::string( identifier.asChar() ) );
 }
 inline MString resolvePath(MString path) {

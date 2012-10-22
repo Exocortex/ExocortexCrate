@@ -38,12 +38,12 @@ enum ALEMBIC_TYPE
 
   AT_NB_ALEMBIC_TYPES
 };
-ALEMBIC_TYPE getAlembicTypeFromObject(Alembic::Abc::IObject object);
+ALEMBIC_TYPE getAlembicTypeFromObject(Abc::IObject object);
 std::string alembicTypeToString(ALEMBIC_TYPE at);
-MString getTypeFromObject(Alembic::Abc::IObject object);
+MString getTypeFromObject(Abc::IObject object);
 
 // transform wranglers
-Alembic::Abc::M44f GetGlobalMatrix(const MObject & in_Ref);
+Abc::M44f GetGlobalMatrix(const MObject & in_Ref);
 
 // metadata related
 class AlembicObject;

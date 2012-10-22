@@ -8,22 +8,22 @@
 class AlembicSubD: public AlembicObject
 {
 private:
-   Alembic::AbcGeom::OSubD mObject;
-   Alembic::AbcGeom::OSubDSchema mSchema;
-   Alembic::AbcGeom::OSubDSchema::Sample mSample;
-   std::vector<Alembic::Abc::V3f> mPosVec;
-   std::vector<Alembic::Abc::int32_t> mFaceCountVec;
-   std::vector<Alembic::Abc::int32_t> mFaceIndicesVec;
-   std::vector<Alembic::Abc::V2f> mUvVec;
-   std::vector<Alembic::Abc::uint32_t> mUvIndexVec;
+   AbcG::OSubD mObject;
+   AbcG::OSubDSchema mSchema;
+   AbcG::OSubDSchema::Sample mSample;
+   std::vector<Abc::V3f> mPosVec;
+   std::vector<Abc::int32_t> mFaceCountVec;
+   std::vector<Abc::int32_t> mFaceIndicesVec;
+   std::vector<Abc::V2f> mUvVec;
+   std::vector<Abc::uint32_t> mUvIndexVec;
    std::vector<unsigned int> mSampleLookup;
 
 public:
    AlembicSubD(const MObject & in_Ref, AlembicWriteJob * in_Job);
    ~AlembicSubD();
 
-   virtual Alembic::Abc::OObject GetObject() { return mObject; }
-   virtual Alembic::Abc::OCompoundProperty GetCompound() { return mSchema; }
+   virtual Abc::OObject GetObject() { return mObject; }
+   virtual Abc::OCompoundProperty GetCompound() { return mSchema; }
    virtual MStatus Save(double time);
 };
 
@@ -46,7 +46,7 @@ private:
    static MObject mIdentifierAttr;
    MString mFileName;
    MString mIdentifier;
-   Alembic::AbcGeom::ISubDSchema mSchema;
+   AbcG::ISubDSchema mSchema;
    static MObject mUvsAttr;
 
    // output attributes
@@ -78,7 +78,7 @@ private:
    static MObject mIdentifierAttr;
    MString mFileName;
    MString mIdentifier;
-   Alembic::AbcGeom::ISubDSchema mSchema;
+   AbcG::ISubDSchema mSchema;
    std::vector<unsigned int> mVertexLookup;
 
    // members

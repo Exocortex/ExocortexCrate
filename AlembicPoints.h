@@ -8,34 +8,34 @@
 class AlembicPoints: public AlembicObject
 {
 private:
-   Alembic::AbcGeom::OPoints mObject;
-   Alembic::AbcGeom::OPointsSchema mSchema;
-   Alembic::AbcGeom::OPointsSchema::Sample mSample;
+   AbcG::OPoints mObject;
+   AbcG::OPointsSchema mSchema;
+   AbcG::OPointsSchema::Sample mSample;
 
-   Alembic::Abc::ALEMBIC_VERSION_NS::OFloatArrayProperty mAgeProperty;
-   Alembic::Abc::ALEMBIC_VERSION_NS::OFloatArrayProperty mMassProperty;
-   Alembic::Abc::ALEMBIC_VERSION_NS::OC4fArrayProperty mColorProperty;
+   Abc::OFloatArrayProperty mAgeProperty;
+   Abc::OFloatArrayProperty mMassProperty;
+   Abc::OC4fArrayProperty mColorProperty;
 
    /*
    // instance lookups
-   Alembic::Abc::ALEMBIC_VERSION_NS::OStringArrayProperty mInstancenamesProperty;
+   Abc::OStringArrayProperty mInstancenamesProperty;
    std::vector<std::string> mInstanceNames;
    std::map<unsigned long,size_t> mInstanceMap;
 
-   Alembic::Abc::ALEMBIC_VERSION_NS::OV3fArrayProperty mScaleProperty;
-   Alembic::Abc::ALEMBIC_VERSION_NS::OQuatfArrayProperty mOrientationProperty;
-   Alembic::Abc::ALEMBIC_VERSION_NS::OQuatfArrayProperty mAngularVelocityProperty;
-   Alembic::Abc::ALEMBIC_VERSION_NS::OUInt16ArrayProperty mShapeTypeProperty;
-   Alembic::Abc::ALEMBIC_VERSION_NS::OFloatArrayProperty mShapeTimeProperty;
-   Alembic::Abc::ALEMBIC_VERSION_NS::OUInt16ArrayProperty mShapeInstanceIDProperty;
+   Abc::OV3fArrayProperty mScaleProperty;
+   Abc::OQuatfArrayProperty mOrientationProperty;
+   Abc::OQuatfArrayProperty mAngularVelocityProperty;
+   Abc::OUInt16ArrayProperty mShapeTypeProperty;
+   Abc::OFloatArrayProperty mShapeTimeProperty;
+   Abc::OUInt16ArrayProperty mShapeInstanceIDProperty;
    */
 
 public:
    AlembicPoints(const MObject & in_Ref, AlembicWriteJob * in_Job);
    ~AlembicPoints();
 
-   virtual Alembic::Abc::OObject GetObject() { return mObject; }
-   virtual Alembic::Abc::OCompoundProperty GetCompound() { return mSchema; }
+   virtual Abc::OObject GetObject() { return mObject; }
+   virtual Abc::OCompoundProperty GetCompound() { return mSchema; }
    virtual MStatus Save(double time);
 };
 
@@ -66,8 +66,8 @@ private:
    static MObject mIdentifierAttr;
    MString mFileName;
    MString mIdentifier;
-   Alembic::AbcGeom::IPointsSchema mSchema;
-   Alembic::AbcGeom::IPoints obj;
+   AbcG::IPointsSchema mSchema;
+   AbcG::IPoints obj;
    AlembicPointsNodeListIter listPosition;
 
    MStatus init(const MString &filename, const MString &identifier);

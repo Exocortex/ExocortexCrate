@@ -13,9 +13,6 @@
 
 #include <maya/MAnimControl.h>
 
-namespace AbcA = ::Alembic::AbcCoreAbstract::ALEMBIC_VERSION_NS;
-using namespace AbcA;
-
 AlembicWriteJob::AlembicWriteJob
 (
    const MString & in_FileName,
@@ -133,9 +130,9 @@ MStatus AlembicWriteJob::PreProcess()
             mFileName.asChar(),
             "Softimage Alembic Plugin",
             sceneFileName.asChar(),
-            Alembic::Abc::ErrorHandler::kThrowPolicy);
+            Abc::ErrorHandler::kThrowPolicy);
    }
-   catch(Alembic::Util::Exception& e)
+   catch(AbcU::Exception& e)
    {
       MString exc(e.what());
       MGlobal::displayError("[ExocortexAlembic] Error writing to file '"+mFileName+"' ("+exc+"). Do you still have it opened?");
@@ -144,7 +141,7 @@ MStatus AlembicWriteJob::PreProcess()
 
    // get the frame rate
    mFrameRate = MAnimControl::currentTime().value() / MAnimControl::currentTime().as(MTime::kSeconds);
-   std::vector<Alembic::AbcCoreAbstract::chrono_t> frames;
+   std::vector<AbcA::chrono_t> frames;
    for(LONG i=0;i<mFrames.size();i++)
       frames.push_back(mFrames[i] / mFrameRate);
 
@@ -162,7 +159,7 @@ MStatus AlembicWriteJob::PreProcess()
       }
 
       double timePerCycle = frames[frames.size()-1] - frames[0];
-	  AbcA::TimeSamplingType samplingType((Alembic::Abc::ALEMBIC_VERSION_NS::uint32_t)frames.size(),timePerCycle);
+	  AbcA::TimeSamplingType samplingType((Abc::uint32_t)frames.size(),timePerCycle);
       AbcA::TimeSampling sampling(samplingType,frames);
       mTs = mArchive.addTimeSampling(sampling);
    }
@@ -172,7 +169,7 @@ MStatus AlembicWriteJob::PreProcess()
       mTs = mArchive.addTimeSampling(sampling);
    }
 
-   Alembic::Abc::OBox3dProperty boxProp = Alembic::AbcGeom::CreateOArchiveBounds(mArchive,mTs);
+   Abc::OBox3dProperty boxProp = AbcG::CreateOArchiveBounds(mArchive,mTs);
 
    // create object for each
    for(unsigned int i=0;i<mSelection.length();i++)

@@ -8,28 +8,28 @@
 class AlembicHair: public AlembicObject
 {
 private:
-   Alembic::AbcGeom::OCurves mObject;
-   Alembic::AbcGeom::OCurvesSchema mSchema;
-   Alembic::AbcGeom::OCurvesSchema::Sample mSample;
+   AbcG::OCurves mObject;
+   AbcG::OCurvesSchema mSchema;
+   AbcG::OCurvesSchema::Sample mSample;
 
-   std::vector<Alembic::Abc::V3f> mPosVec;
-   std::vector<Alembic::AbcCoreAbstract::ALEMBIC_VERSION_NS::int32_t> mNbVertices;
+   std::vector<Abc::V3f> mPosVec;
+   std::vector<AbcA::int32_t> mNbVertices;
 
-   Alembic::Abc::ALEMBIC_VERSION_NS::OV3fArrayProperty mVelocityProperty;
-   Alembic::Abc::ALEMBIC_VERSION_NS::OFloatArrayProperty mRadiusProperty;
-   Alembic::Abc::ALEMBIC_VERSION_NS::OC4fArrayProperty mColorProperty;
+   Abc::OV3fArrayProperty mVelocityProperty;
+   Abc::OFloatArrayProperty mRadiusProperty;
+   Abc::OC4fArrayProperty mColorProperty;
 
    std::vector<float> mRadiusVec;
-   std::vector<Alembic::Abc::V2f> mUvVec;
-   std::vector<Alembic::Abc::C4f> mColorVec;
-   std::vector<Alembic::Abc::V3f> mVelVec;
+   std::vector<Abc::V2f> mUvVec;
+   std::vector<Abc::C4f> mColorVec;
+   std::vector<Abc::V3f> mVelVec;
 
 public:
    AlembicHair(const MObject & in_Ref, AlembicWriteJob * in_Job);
    ~AlembicHair();
 
-   virtual Alembic::Abc::OObject GetObject() { return mObject; }
-   virtual Alembic::Abc::OCompoundProperty GetCompound() { return mSchema; }
+   virtual Abc::OObject GetObject() { return mObject; }
+   virtual Abc::OCompoundProperty GetCompound() { return mSchema; }
    virtual MStatus Save(double time);
 };
 
@@ -53,7 +53,7 @@ private:
    static MObject mIdentifierAttr;
    MString mFileName;
    MString mIdentifier;
-   Alembic::AbcGeom::ICurvesSchema mSchema;
+   AbcG::ICurvesSchema mSchema;
 
    // output attributes
    static MObject mOutGeometryAttr;
@@ -81,7 +81,7 @@ private:
    static MObject mIdentifierAttr;
    MString mFileName;
    MString mIdentifier;
-   Alembic::AbcGeom::ICurvesSchema mSchema;
+   AbcG::ICurvesSchema mSchema;
 
    // members
    SampleInfo mLastSampleInfo;

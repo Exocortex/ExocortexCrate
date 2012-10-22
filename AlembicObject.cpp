@@ -1,8 +1,6 @@
 #include "AlembicObject.h"
 #include <boost/algorithm/string.hpp>
 
-namespace AbcA = ::Alembic::AbcCoreAbstract::ALEMBIC_VERSION_NS;
-using namespace AbcA;
 
 AlembicObject::AlembicObject
 (
@@ -36,7 +34,7 @@ AlembicObject::~AlembicObject()
 {
 }
 
-Alembic::Abc::OObject AlembicObject::GetParentObject()
+Abc::OObject AlembicObject::GetParentObject()
 {
    if(mParent)
       return mParent->GetObject();
@@ -45,7 +43,7 @@ Alembic::Abc::OObject AlembicObject::GetParentObject()
 
 MString AlembicObject::GetUniqueName(const MString & in_Name)
 {
-   Alembic::Abc::OObject parent = GetParentObject();
+   Abc::OObject parent = GetParentObject();
    bool unique = false;
    MString name = in_Name;
    unsigned int index = 0;

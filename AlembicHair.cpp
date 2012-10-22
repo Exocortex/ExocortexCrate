@@ -4,22 +4,19 @@
 #include <maya/MRenderLine.h>
 #include <maya/MRenderLineArray.h>
 
-namespace AbcA = ::Alembic::AbcCoreAbstract::ALEMBIC_VERSION_NS;
-using namespace AbcA;
-
 AlembicHair::AlembicHair(const MObject & in_Ref, AlembicWriteJob * in_Job)
 : AlembicObject(in_Ref, in_Job)
 {
    MFnDependencyNode node(in_Ref);
    //MString name = GetUniqueName(truncateName(node.name()));
    MString name = GetUniqueName(node.name());
-   mObject = Alembic::AbcGeom::OCurves(GetParentObject(),name.asChar(),GetJob()->GetAnimatedTs());
+   mObject = AbcG::OCurves(GetParentObject(),name.asChar(),GetJob()->GetAnimatedTs());
 
    mSchema = mObject.getSchema();
 
    // create all properties
-   mRadiusProperty = Alembic::Abc::OFloatArrayProperty(mSchema, ".radius", mSchema.getMetaData(), GetJob()->GetAnimatedTs() );
-   mColorProperty = Alembic::Abc::OC4fArrayProperty(mSchema, ".color", mSchema.getMetaData(), GetJob()->GetAnimatedTs() );
+   mRadiusProperty = Abc::OFloatArrayProperty(mSchema, ".radius", mSchema.getMetaData(), GetJob()->GetAnimatedTs() );
+   mColorProperty = Abc::OC4fArrayProperty(mSchema, ".color", mSchema.getMetaData(), GetJob()->GetAnimatedTs() );
 }
 
 AlembicHair::~AlembicHair()
@@ -40,7 +37,7 @@ MStatus AlembicHair::Save(double time)
    SaveMetaData(this);
 
    // prepare the bounding box
-   Alembic::Abc::Box3d bbox;
+   Abc::Box3d bbox;
 
    // check if we have the global cache option
    bool globalCache = GetJob()->GetOption(L"exportInGlobalSpace").asInt() > 0;
@@ -100,17 +97,17 @@ MStatus AlembicHair::Save(double time)
    }
 
    // store the positions to the samples
-   mSample.setPositions(Alembic::Abc::P3fArraySample(&mPosVec.front(),mPosVec.size()));
+   mSample.setPositions(Abc::P3fArraySample(&mPosVec.front(),mPosVec.size()));
    mSample.setSelfBounds(bbox);
 
    if(mNumSamples == 0)
    {
-      mSample.setCurvesNumVertices(Alembic::Abc::Int32ArraySample(mNbVertices));
-      mSample.setWrap(Alembic::AbcGeom::kNonPeriodic);
-      mSample.setType(Alembic::AbcGeom::kLinear);
+      mSample.setCurvesNumVertices(Abc::Int32ArraySample(mNbVertices));
+      mSample.setWrap(AbcG::kNonPeriodic);
+      mSample.setType(AbcG::kLinear);
 
-      mRadiusProperty.set(Alembic::Abc::FloatArraySample(&mRadiusVec.front(),mRadiusVec.size()));
-      mColorProperty.set(Alembic::Abc::C4fArraySample(&mColorVec.front(),mColorVec.size()));
+      mRadiusProperty.set(Abc::FloatArraySample(&mRadiusVec.front(),mRadiusVec.size()));
+      mColorProperty.set(Abc::C4fArraySample(&mColorVec.front(),mColorVec.size()));
    }
 
    // save the sample
@@ -205,13 +202,13 @@ MStatus AlembicHairNode::compute(const MPlug & plug, MDataBlock & dataBlock)
       mIdentifier = identifier;
 
       // get the object from the archive
-      Alembic::Abc::IObject iObj = getObjectFromArchive(mFileName,identifier);
+      Abc::IObject iObj = getObjectFromArchive(mFileName,identifier);
       if(!iObj.valid())
       {
          MGlobal::displayWarning("[ExocortexAlembic] Identifier '"+identifier+"' not found in archive '"+mFileName+"'.");
          return MStatus::kFailure;
       }
-      Alembic::AbcGeom::ICurves obj(iObj,Alembic::Abc::kWrapExisting);
+      AbcG::ICurves obj(iObj,Abc::kWrapExisting);
       if(!obj.valid())
       {
          MGlobal::displayWarning("[ExocortexAlembic] Identifier '"+identifier+"' in archive '"+mFileName+"' is not a Curves.");
@@ -238,8 +235,8 @@ MStatus AlembicHairNode::compute(const MPlug & plug, MDataBlock & dataBlock)
    mLastSampleInfo = sampleInfo;
 
    // access the camera values
-   Alembic::AbcGeom::ICurvesSchema::Sample sample;
-   Alembic::AbcGeom::ICurvesSchema::Sample sample2;
+   AbcG::ICurvesSchema::Sample sample;
+   AbcG::ICurvesSchema::Sample sample2;
    mSchema.get(sample,sampleInfo.floorIndex);
    if(sampleInfo.alpha != 0.0)
       mSchema.get(sample2,sampleInfo.ceilIndex);
@@ -251,19 +248,19 @@ MStatus AlembicHairNode::compute(const MPlug & plug, MDataBlock & dataBlock)
       mCurvesData = curveDataFn.create();
    }
 
-   Alembic::Abc::P3fArraySamplePtr samplePos = sample.getPositions();
+   Abc::P3fArraySamplePtr samplePos = sample.getPositions();
    if(sample.getNumCurves() > 1)
    {
       MGlobal::displayWarning("[ExocortexAlembic] Identifier '"+identifier+"' in archive '"+mFileName+"' contains more than one curve.");
       return MStatus::kFailure;
    }
 
-   Alembic::Abc::Int32ArraySamplePtr nbVertices = sample.getCurvesNumVertices();
+   Abc::Int32ArraySamplePtr nbVertices = sample.getCurvesNumVertices();
    unsigned int nbCVs = (unsigned int)nbVertices->get()[0];
    int degree = 1;
-   if(sample.getType() == Alembic::AbcGeom::kCubic)
+   if(sample.getType() == AbcG::kCubic)
       degree = 3;
-   bool closed = sample.getWrap() == Alembic::AbcGeom::kPeriodic;
+   bool closed = sample.getWrap() == AbcG::kPeriodic;
    int nbSpans = (int)nbCVs - degree;
 
    MDoubleArray knots;
@@ -284,7 +281,7 @@ MStatus AlembicHairNode::compute(const MPlug & plug, MDataBlock & dataBlock)
       bool done = false;
       if(sampleInfo.alpha != 0.0)
       {
-         Alembic::Abc::P3fArraySamplePtr samplePos2 = sample2.getPositions();
+         Abc::P3fArraySamplePtr samplePos2 = sample2.getPositions();
          if(points.length() == (unsigned int)samplePos2->size())
          {
             float blend = (float)sampleInfo.alpha;
@@ -398,13 +395,13 @@ MStatus AlembicHairDeformNode::deform(MDataBlock & dataBlock, MItGeometry & iter
       mIdentifier = identifier;
 
       // get the object from the archive
-      Alembic::Abc::IObject iObj = getObjectFromArchive(mFileName,identifier);
+      Abc::IObject iObj = getObjectFromArchive(mFileName,identifier);
       if(!iObj.valid())
       {
          MGlobal::displayWarning("[ExocortexAlembic] Identifier '"+identifier+"' not found in archive '"+mFileName+"'.");
          return MStatus::kFailure;
       }
-      Alembic::AbcGeom::ICurves obj(iObj,Alembic::Abc::kWrapExisting);
+      AbcG::ICurves obj(iObj,Abc::kWrapExisting);
       if(!obj.valid())
       {
          MGlobal::displayWarning("[ExocortexAlembic] Identifier '"+identifier+"' in archive '"+mFileName+"' is not a Curves.");
@@ -430,14 +427,14 @@ MStatus AlembicHairDeformNode::deform(MDataBlock & dataBlock, MItGeometry & iter
    mLastSampleInfo = sampleInfo;
 
    // access the camera values
-   Alembic::AbcGeom::ICurvesSchema::Sample sample;
-   Alembic::AbcGeom::ICurvesSchema::Sample sample2;
+   AbcG::ICurvesSchema::Sample sample;
+   AbcG::ICurvesSchema::Sample sample2;
    mSchema.get(sample,sampleInfo.floorIndex);
    if(sampleInfo.alpha != 0.0)
       mSchema.get(sample2,sampleInfo.ceilIndex);
 
-   Alembic::Abc::P3fArraySamplePtr samplePos = sample.getPositions();
-   Alembic::Abc::P3fArraySamplePtr samplePos2;
+   Abc::P3fArraySamplePtr samplePos = sample.getPositions();
+   Abc::P3fArraySamplePtr samplePos2;
    if(sampleInfo.alpha != 0.0)
       samplePos2 = sample2.getPositions();
 

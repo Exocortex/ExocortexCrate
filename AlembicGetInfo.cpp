@@ -92,7 +92,7 @@ MStatus AlembicGetInfoCommand::doIt(const MArgList & args)
 
    // create an archive and get it
    addRefArchive(fileName);
-   Alembic::Abc::IArchive * archive = getArchiveFromID(fileName);
+   Abc::IArchive * archive = getArchiveFromID(fileName);
    if(archive == NULL)
    {
       MGlobal::displayError("[ExocortexAlembic] FileName specified. '"+fileName+"' does not exist.");
@@ -100,7 +100,7 @@ MStatus AlembicGetInfoCommand::doIt(const MArgList & args)
    }
 
    // get the root object
-   std::deque<Alembic::Abc::IObject> objects;
+   std::deque<Abc::IObject> objects;
    std::deque<infoTuple> infoVector;
    std::set<std::string> uniqueIdentifiers;
 
@@ -112,12 +112,12 @@ MStatus AlembicGetInfoCommand::doIt(const MArgList & args)
    MStringArray identifiers;
    for(size_t i=0; !objects.empty(); ++i)
    {
-      Alembic::Abc::IObject iObj = objects.front();
+      Abc::IObject iObj = objects.front();
       objects.pop_front();
       const int nbChild = (int) iObj.getNumChildren();
       for(size_t j=0; j<nbChild; ++j)
       {
-         Alembic::Abc::IObject child = iObj.getChild(j);
+         Abc::IObject child = iObj.getChild(j);
          objects.push_back(child);
          ++idx;
          infoVector.push_back(infoTuple());
@@ -147,7 +147,7 @@ MStatus AlembicGetInfoCommand::doIt(const MArgList & args)
 
          // additional data fields
          MString data;
-         if(Alembic::AbcGeom::IPolyMesh::matches(child.getMetaData())) {
+         if(AbcG::IPolyMesh::matches(child.getMetaData())) {
             // check if we have topo or not
             if( isAlembicMeshTopoDynamic( & child ) ) {
 				      data += "dynamictopology=1";                 
@@ -155,7 +155,7 @@ MStatus AlembicGetInfoCommand::doIt(const MArgList & args)
 	          if( isAlembicMeshPointCache( & child ) ) {
 		          data += "purepointcache=1";
 	          }
-         } else if(Alembic::AbcGeom::ISubD::matches(child.getMetaData())) {
+         } else if(AbcG::ISubD::matches(child.getMetaData())) {
             // check if we have topo or not
 		        if( isAlembicMeshTopoDynamic( & child ) ) {
 			        data += "dynamictopology=1";                 
@@ -163,12 +163,12 @@ MStatus AlembicGetInfoCommand::doIt(const MArgList & args)
 		        if( isAlembicMeshPointCache( & child ) ) {
 			        data += "purepointcache=1";
 		        }
-         } else if(Alembic::AbcGeom::ICurves::matches(child.getMetaData())) {
+         } else if(AbcG::ICurves::matches(child.getMetaData())) {
             // check if we have topo or not
-            Alembic::AbcGeom::ICurves obj(child,Alembic::Abc::kWrapExisting);
+            AbcG::ICurves obj(child,Abc::kWrapExisting);
             if(obj.valid())
             {
-               Alembic::AbcGeom::ICurvesSchema::Sample sample;
+               AbcG::ICurvesSchema::Sample sample;
                for(size_t k=0;k<obj.getSchema().getNumSamples();k++)
                {
                   obj.getSchema().get(sample,k);

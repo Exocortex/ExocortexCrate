@@ -7,8 +7,8 @@
 class AlembicPolyMesh: public AlembicObject
 {
 private:
-   Alembic::AbcGeom::OPolyMesh mObject;
-   Alembic::AbcGeom::OPolyMeshSchema mSchema;
+   AbcG::OPolyMesh mObject;
+   AbcG::OPolyMeshSchema mSchema;
    int mPointCountLastFrame;
    std::vector<unsigned int> mSampleLookup;
 
@@ -17,8 +17,8 @@ public:
    AlembicPolyMesh(const MObject & in_Ref, AlembicWriteJob * in_Job);
    ~AlembicPolyMesh();
 
-   virtual Alembic::Abc::OObject GetObject() { return mObject; }
-   virtual Alembic::Abc::OCompoundProperty GetCompound() { return mSchema; }
+   virtual Abc::OObject GetObject() { return mObject; }
+   virtual Abc::OCompoundProperty GetCompound() { return mSchema; }
    virtual MStatus Save(double time);
 };
 
@@ -41,8 +41,8 @@ private:
    static MObject mIdentifierAttr;
    MString mFileName;
    MString mIdentifier;
-   Alembic::Abc::IObject mObj;
-   Alembic::AbcGeom::IPolyMeshSchema mSchema;
+   Abc::IObject mObj;
+   AbcG::IPolyMeshSchema mSchema;
    static MObject mNormalsAttr;
    static MObject mUvsAttr;
 
@@ -75,8 +75,8 @@ private:
    static MObject mIdentifierAttr;
    MString mFileName;
    MString mIdentifier;
-   Alembic::Abc::IObject mObj;
-   Alembic::AbcGeom::IPolyMeshSchema mSchema;
+   Abc::IObject mObj;
+   AbcG::IPolyMeshSchema mSchema;
 
    // members
    SampleInfo mLastSampleInfo;

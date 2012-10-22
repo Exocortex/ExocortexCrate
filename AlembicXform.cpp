@@ -3,8 +3,6 @@
 
 #include <maya/MFnTransform.h>
 
-namespace AbcA = ::Alembic::AbcCoreAbstract::ALEMBIC_VERSION_NS;
-using namespace AbcA;
 
 AlembicXform::AlembicXform(const MObject & in_Ref, AlembicWriteJob * in_Job)
 : AlembicObject(in_Ref, in_Job)
@@ -12,7 +10,7 @@ AlembicXform::AlembicXform(const MObject & in_Ref, AlembicWriteJob * in_Job)
    MFnDependencyNode node(in_Ref);
    //MString name = GetUniqueName(truncateName(node.name())+"Xfo");
    MString name = GetUniqueName(node.name());
-   mObject = Alembic::AbcGeom::OXform(GetParentObject(),name.asChar(),GetJob()->GetAnimatedTs());
+   mObject = AbcG::OXform(GetParentObject(),name.asChar(),GetJob()->GetAnimatedTs());
 
    mSchema = mObject.getSchema();
 }
@@ -37,9 +35,9 @@ MStatus AlembicXform::Save(double time)
          return MStatus::kSuccess;
 
       // store identity matrix
-      mSample.setTranslation(Imath::V3d(0.0,0.0,0.0));
-      mSample.setRotation(Imath::V3d(1.0,0.0,0.0),0.0);
-      mSample.setScale(Imath::V3d(1.0,1.0,1.0));
+      mSample.setTranslation(Abc::V3d(0.0,0.0,0.0));
+      mSample.setRotation(Abc::V3d(1.0,0.0,0.0),0.0);
+      mSample.setScale(Abc::V3d(1.0,1.0,1.0));
    }
    else
    {
@@ -54,7 +52,7 @@ MStatus AlembicXform::Save(double time)
       dagNode.getAllPaths(dagPaths);
       MDagPath path = dagPaths[0];
 
-      Alembic::Abc::M44d abcMatrix;
+      Abc::M44d abcMatrix;
 
       // decide if we need to project to local
       if(IsParentedToRoot())
@@ -276,13 +274,13 @@ MStatus AlembicXformNode::compute(const MPlug & plug, MDataBlock & dataBlock)
       mIdentifier = identifier;
 
       // get the object from the archive
-      Alembic::Abc::IObject iObj = getObjectFromArchive(mFileName,identifier);
+      Abc::IObject iObj = getObjectFromArchive(mFileName,identifier);
       if(!iObj.valid())
       {
          MGlobal::displayWarning("[ExocortexAlembic] Identifier '"+identifier+"' not found in archive '"+mFileName+"'.");
          return MStatus::kFailure;
       }
-      Alembic::AbcGeom::IXform obj(iObj,Alembic::Abc::kWrapExisting);
+      AbcG::IXform obj(iObj,Abc::kWrapExisting);
       if(!obj.valid())
       {
          MGlobal::displayWarning("[ExocortexAlembic] Identifier '"+identifier+"' in archive '"+mFileName+"' is not a Xform.");
@@ -293,7 +291,7 @@ MStatus AlembicXformNode::compute(const MPlug & plug, MDataBlock & dataBlock)
       if(!mSchema.valid())
          return MStatus::kFailure;
 
-      Alembic::AbcGeom::XformSample sample;
+      AbcG::XformSample sample;
       mLastFloor = 0;
       mTimes.clear();
       mMatrices.clear();
@@ -315,7 +313,7 @@ MStatus AlembicXformNode::compute(const MPlug & plug, MDataBlock & dataBlock)
    while(inputTime < mTimes[index] && index > 0)
       index--;
 
-   Alembic::Abc::M44d matrix;
+   Abc::M44d matrix;
    if(fabs(inputTime - mTimes[index]) < 0.001 || index == 0 || index == mTimes.size()-1)
    {
       matrix = mMatrices[index];
