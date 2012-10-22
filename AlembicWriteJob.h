@@ -5,26 +5,14 @@
 #include <xsi_ref.h>
 #include <xsi_doublearray.h>
 #include "AlembicObject.h"
+#include "CommonSceneGraph.h"
 
 class AlembicWriteJob
 {
 private:
     XSI::CString mFileName;
-
-public:
-	struct Selectee{
-		XSI::CRef cRef;
-		int nNodeDepth;
-		Selectee(XSI::CRef r):cRef(r), nNodeDepth(-1)
-		{}
-
-		bool operator<( const Selectee& s2 ) const
-		{
-			return nNodeDepth < s2.nNodeDepth;
-    	}
-	};
-private:
-	std::vector<Selectee> mSelection;
+   
+    exoNode::SelectionMap mSelection;
 
     //XSI::CRefArray mSelection;
     std::vector<double> mFrames;
@@ -38,7 +26,7 @@ private:
 public:
    AlembicWriteJob(
       const XSI::CString & in_FileName,
-      const std::vector<Selectee> & in_Selection,
+      const exoNode::SelectionMap& in_Selection,
       const XSI::CDoubleArray & in_Frames);
    ~AlembicWriteJob();
 
@@ -50,8 +38,8 @@ public:
    void SetOption(const XSI::CString & in_Name, const XSI::CValue & in_Value);
    bool HasOption(const XSI::CString & in_Name);
    XSI::CValue GetOption(const XSI::CString & in_Name);
-   AlembicObjectPtr GetObject(const XSI::CRef & in_Ref);
-   bool AddObjectIfDoesNotExist(AlembicObjectPtr in_Obj);
+   //AlembicObjectPtr GetObject(const XSI::CRef & in_Ref);
+   bool AddObject(AlembicObjectPtr in_Obj);
    size_t GetNbObjects() { return mObjects.size(); }
  
    XSI::CStatus PreProcess();

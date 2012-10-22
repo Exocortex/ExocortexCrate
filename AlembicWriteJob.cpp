@@ -27,6 +27,7 @@
 #include <xsi_model.h>
 #include <xsi_utils.h>
 
+#include "sceneGraph.h"
 
 using namespace XSI;
 using namespace MATH;
@@ -37,7 +38,7 @@ using namespace AbcA;
 AlembicWriteJob::AlembicWriteJob
 (
    const CString & in_FileName,
-   const std::vector<Selectee> & in_Selection,
+   const exoNode::SelectionMap& in_Selection,
    const CDoubleArray & in_Frames
 )
 {
@@ -78,29 +79,25 @@ CValue AlembicWriteJob::GetOption(const CString & in_Name)
    return CValue(false);
 }
 
-AlembicObjectPtr AlembicWriteJob::GetObject(const XSI::CRef & in_Ref)
-{
- 	std::string key = std::string( in_Ref.GetAsText().GetAsciiString() );
+//AlembicObjectPtr AlembicWriteJob::GetObject(const XSI::CRef & in_Ref)
+//{
+// 	std::string key = std::string( in_Ref.GetAsText().GetAsciiString() );
+//
+//	std::map<std::string,AlembicObjectPtr>::const_iterator it = mObjectsNames.find( key );
+//
+//	if (it != mObjectsNames.end()) {
+//		return it->second;
+//	}
+//	return AlembicObjectPtr();
+//}
 
-	std::map<std::string,AlembicObjectPtr>::const_iterator it = mObjectsNames.find( key );
-
-	if (it != mObjectsNames.end()) {
-		return it->second;
-	}
-	return AlembicObjectPtr();
-}
-
-bool AlembicWriteJob::AddObjectIfDoesNotExist(AlembicObjectPtr in_Obj)
+bool AlembicWriteJob::AddObject(AlembicObjectPtr in_Obj)
 {
    if(!in_Obj)
       return false;
    if(!in_Obj->GetRef().IsValid())
       return false;
-   AlembicObjectPtr existing = GetObject(in_Obj->GetRef());
-   if(existing != NULL)
-      return false;
    mObjects.push_back(in_Obj);
-   mObjectsNames.insert( std::map<std::string,AlembicObjectPtr>::value_type( std::string( in_Obj->GetRef().GetAsText().GetAsciiString() ), in_Obj ) );
    return true;
 }
 
@@ -194,6 +191,97 @@ CStatus AlembicWriteJob::PreProcess()
    }
 
 
+   exoNodePtr exoSceneRoot = buildCommonSceneGraph(Application().GetActiveSceneRoot());
+   
+   ::selectParentsAndChildren(exoSceneRoot, mSelection);
+
+   //::printSceneGraph(exoSceneRoot);
+
+   struct stackElement
+   {
+      exoNodePtr eNode;
+      Alembic::Abc::OObject oParent;
+
+      stackElement(exoNodePtr enode, Alembic::Abc::OObject parent):eNode(enode), oParent(parent)
+      {}
+   };
+   std::list<stackElement> sceneStack;
+   
+   sceneStack.push_back(stackElement(exoSceneRoot, GetTop()));
+
+   //TODO: handle transform cache and flattening in common code
+
+   while( !sceneStack.empty() )
+   {
+
+      stackElement sElement = sceneStack.back();
+      exoNodePtr eNode = sElement.eNode;
+      sceneStack.pop_back();
+      
+      CRef nodeRef;
+      nodeRef.Set(eNode->dccIdentifier.c_str());
+      X3DObject xObj(nodeRef);
+	   CRef xObj_GetActivePrimitive_GetRef = xObj.GetActivePrimitive().GetRef();
+
+      Alembic::Abc::OObject oParent;
+
+      if(eNode->type == exoNode::SCENE_ROOT){
+         //we do not want to export the Scene_Root (the alembic archive has one already)
+      }
+      else if(eNode->type == exoNode::EMPTY){
+         AlembicObjectPtr ptr;
+         ptr.reset(new AlembicModel(xObj_GetActivePrimitive_GetRef, this));
+         AddObject(ptr);
+      }
+      else if(eNode->type == exoNode::CAMERA){
+         AlembicObjectPtr ptr;
+         ptr.reset(new AlembicCamera(xObj_GetActivePrimitive_GetRef,this));
+         AddObject(ptr);
+      }
+      else if(eNode->type == exoNode::POLYMESH){
+         AlembicObjectPtr ptr;
+         ptr.reset(new AlembicPolyMesh(xObj_GetActivePrimitive_GetRef,this));
+         AddObject(ptr);
+      }
+      else if(eNode->type == exoNode::SUBD){
+         AlembicObjectPtr ptr;
+         ptr.reset(new AlembicSubD(xObj_GetActivePrimitive_GetRef,this));
+         AddObject(ptr);
+      }
+      else if(eNode->type == exoNode::SURFACE){
+         AlembicObjectPtr ptr;
+         ptr.reset(new AlembicNurbs(xObj_GetActivePrimitive_GetRef,this));
+         AddObject(ptr);
+      }
+      else if(eNode->type == exoNode::CURVES){
+         AlembicObjectPtr ptr;
+         ptr.reset(new AlembicCurves(xObj_GetActivePrimitive_GetRef,this));
+         AddObject(ptr);
+      }
+      else if(eNode->type == exoNode::PARTICLES){
+         AlembicObjectPtr ptr;
+         ptr.reset(new AlembicPoints(xObj_GetActivePrimitive_GetRef,this));
+         AddObject(ptr);
+      }
+      else{
+         ESS_LOG_WARNING("Unknown type: not exporting "<<eNode->name);
+      }
+
+      if(oParent.valid()){
+         for( std::list<exoNodePtr>::iterator it = eNode->children.begin(); it != eNode->children.end(); it++){
+            sceneStack.push_back(stackElement(*it, oParent));
+         }
+      }
+      else{
+         ESS_LOG_ERROR("Do no have refernce to parent");
+         //TODO: this should be an error.
+      }
+   }
+
+
+
+#if 0
+
    for(LONG i=0; i<mSelection.size(); i++)
    {
       mSelection[i].nNodeDepth = getNodeDepthFromRef(mSelection[i].cRef);
@@ -206,10 +294,9 @@ CStatus AlembicWriteJob::PreProcess()
    // create object for each
    for(LONG i=0;i<mSelection.size();i++)
    {
-	  X3DObject xObj(mSelection[i].cRef);
-	  CRef xObj_GetActivePrimitive_GetRef = xObj.GetActivePrimitive().GetRef();
-      if(GetObject(xObj_GetActivePrimitive_GetRef) != NULL)
-         continue;
+	   X3DObject xObj(mSelection[i].cRef);
+	   CRef xObj_GetActivePrimitive_GetRef = xObj.GetActivePrimitive().GetRef();
+      //if(GetObject(xObj_GetActivePrimitive_GetRef) != NULL) continue;
 
       // push all models up the hierarchy
 	  
@@ -220,16 +307,17 @@ CStatus AlembicWriteJob::PreProcess()
       //Model model(xObj.GetRef());
       //if(!model.IsValid())
       //   model = xObj.GetModel();
-      //CRefArray modelRefs;
+      CRefArray modelRefs;
       //if((bool)GetOption(L"transformCache"))
-      //{
-      //   X3DObject parent = xObj.GetParent3DObject();
-      //   while(parent.IsValid() && !parent.GetFullName().IsEqualNoCase( activeSceneRoot_GetFullName ))
-      //   {
-      //      modelRefs.Add(parent.GetActivePrimitive().GetRef());
-      //      parent = parent.GetParent3DObject();
-      //   }
-      //}
+      if((bool)GetOption(L"flattenHierarchy") == false)
+      {
+         X3DObject parent = xObj.GetParent3DObject();
+         while(parent.IsValid() && !parent.GetFullName().IsEqualNoCase( activeSceneRoot_GetFullName ))
+         {
+            modelRefs.Add(parent.GetActivePrimitive().GetRef());
+            parent = parent.GetParent3DObject();
+         }
+      }
       //else
       //{
       //   while(model.IsValid() && !model.GetFullName().IsEqualNoCase( activeSceneRoot_GetFullName ))
@@ -238,15 +326,15 @@ CStatus AlembicWriteJob::PreProcess()
       //      model = model.GetModel();
       //   }
       //}
-      //for(LONG j=modelRefs.GetCount()-1;j>=0;j--)
-      //{
-      //   if(GetObject(modelRefs[j]) == NULL)
-      //   {
-      //      AlembicObjectPtr ptr;
-      //      ptr.reset(new AlembicModel(modelRefs[j],this));
-      //      AddObjectIfDoesNotExist(ptr);
-      //   }
-      //}
+      for(LONG j=modelRefs.GetCount()-1;j>=0;j--)
+      {
+         //if(GetObject(modelRefs[j]) == NULL)
+         {
+            AlembicObjectPtr ptr;
+            ptr.reset(new AlembicModel(modelRefs[j],this));
+            //AddObjectIfDoesNotExist(ptr);
+         }
+      }
 
   
       if((bool)GetOption(L"transformCache"))
@@ -255,7 +343,7 @@ CStatus AlembicWriteJob::PreProcess()
 
          AlembicObjectPtr ptr;
          ptr.reset(new AlembicModel(xObj_GetActivePrimitive_GetRef,this));
-         AddObjectIfDoesNotExist(ptr);
+         //AddObjectIfDoesNotExist(ptr);
 
          continue;// only do models (tranforms) if we perform pure transformcache
       }
@@ -266,13 +354,13 @@ CStatus AlembicWriteJob::PreProcess()
 	  {
          AlembicObjectPtr ptr;
          ptr.reset(new AlembicModel(xObj_GetActivePrimitive_GetRef, this));
-         AddObjectIfDoesNotExist(ptr);
+         //AddObjectIfDoesNotExist(ptr);
 	  }
       else if(xObj_GetType.IsEqualNoCase(L"camera"))
       {
          AlembicObjectPtr ptr;
          ptr.reset(new AlembicCamera(xObj_GetActivePrimitive_GetRef,this));
-         AddObjectIfDoesNotExist(ptr);
+         //AddObjectIfDoesNotExist(ptr);
       }
       else if(xObj_GetType.IsEqualNoCase(L"polymsh"))
       {
@@ -283,32 +371,32 @@ CStatus AlembicWriteJob::PreProcess()
          {
             AlembicObjectPtr ptr;
             ptr.reset(new AlembicSubD(xObj_GetActivePrimitive_GetRef,this));
-            AddObjectIfDoesNotExist(ptr);
+            //AddObjectIfDoesNotExist(ptr);
          }
          else
          {
             AlembicObjectPtr ptr;
             ptr.reset(new AlembicPolyMesh(xObj_GetActivePrimitive_GetRef,this));
-            AddObjectIfDoesNotExist(ptr);
+            //AddObjectIfDoesNotExist(ptr);
          }
       }
       else if(xObj_GetType.IsEqualNoCase(L"surfmsh"))
       {
          AlembicObjectPtr ptr;
          ptr.reset(new AlembicNurbs(xObj_GetActivePrimitive_GetRef,this));
-         AddObjectIfDoesNotExist(ptr);
+         //AddObjectIfDoesNotExist(ptr);
       }
       else if(xObj_GetType.IsEqualNoCase(L"crvlist"))
       {
          AlembicObjectPtr ptr;
          ptr.reset(new AlembicCurves(xObj_GetActivePrimitive_GetRef,this));
-         AddObjectIfDoesNotExist(ptr);
+         //AddObjectIfDoesNotExist(ptr);
       }
       else if(xObj_GetType.IsEqualNoCase(L"hair"))
       {
          AlembicObjectPtr ptr;
          ptr.reset(new AlembicCurves(xObj_GetActivePrimitive_GetRef,this));
-         AddObjectIfDoesNotExist(ptr);
+         //AddObjectIfDoesNotExist(ptr);
       }
       else if(xObj_GetType.IsEqualNoCase(L"pointcloud"))
       {
@@ -318,9 +406,11 @@ CStatus AlembicWriteJob::PreProcess()
             ptr.reset(new AlembicCurves(xObj_GetActivePrimitive_GetRef,this));
          else
             ptr.reset(new AlembicPoints(xObj_GetActivePrimitive_GetRef,this));
-         AddObjectIfDoesNotExist(ptr);
+         //AddObjectIfDoesNotExist(ptr);
       }
    }
+
+#endif
 
    return CStatus::OK;
 }

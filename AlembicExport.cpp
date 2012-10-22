@@ -59,6 +59,7 @@ using namespace MATH;
 #include "CommonProfiler.h"
 #include "CommonMeshUtilities.h"
 #include "CommonUtilities.h"
+#include "CommonSceneGraph.h"
 
 ESS_CALLBACK_START(alembic_export_Init,CRef&)
 
@@ -208,7 +209,7 @@ ESS_CALLBACK_START(alembic_export_Execute,CRef&)
       bool guidecurves = false;
       //CRefArray objects;
 
-	  std::vector<AlembicWriteJob::Selectee> objects;
+      exoNode::SelectionMap objects;
 
       // process all tokens of the job
       CStringArray tokens = jobs[i].Split(L";");
@@ -264,25 +265,24 @@ ESS_CALLBACK_START(alembic_export_Execute,CRef&)
                   Application().LogMessage(L"[ExocortexAlembic] Skipping object 'L"+objectStrings[k]+"', not found.",siWarningMsg);
                   continue;
                }
-               objects.push_back(objRef);
+               objects[objectStrings[k].GetAsciiString()] = true;
 
                // ensure to add models as a flattened list
-               // don't want to add all children automatically for now
-               Model model(objRef);
-               if(model.IsValid())
-               {
-                  CRefArray children = model.GetChildren();
-                  for(LONG j=0;j<children.GetCount();j++)
-                  {
-                     X3DObject child(children[j]);
-                     if(!child.IsValid())
-                        continue;
-                     CRefArray childChildren = child.GetChildren();
-                     for(LONG l=0;l<childChildren.GetCount();l++)
-                        children.Add(childChildren[l]);
-                     objects.push_back(child.GetRef());
-                  }
-               }
+               //Model model(objRef);
+               //if(model.IsValid())
+               //{
+               //   CRefArray children = model.GetChildren();
+               //   for(LONG j=0;j<children.GetCount();j++)
+               //   {
+               //      X3DObject child(children[j]);
+               //      if(!child.IsValid())
+               //         continue;
+               //      CRefArray childChildren = child.GetChildren();
+               //      for(LONG l=0;l<childChildren.GetCount();l++)
+               //         children.Add(childChildren[l]);
+               //      objects.push_back(child.GetRef());
+               //   }
+               //}
             }
          }
          else
@@ -359,7 +359,7 @@ ESS_CALLBACK_START(alembic_export_Execute,CRef&)
       for(double frame=frameIn; frame<=frameOut; frame+=frameSteps / frameSubSteps)
          frames.Add(frame);
 
-      AlembicWriteJob * job = new AlembicWriteJob(filename,objects,frames);
+      AlembicWriteJob * job = new AlembicWriteJob(filename, objects, frames);
       job->SetOption(L"transformCache",transformCache);
       job->SetOption(L"exportNormals",normals);
       job->SetOption(L"exportUVs",uvs);
