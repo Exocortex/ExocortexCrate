@@ -31,19 +31,14 @@
 using namespace XSI;
 using namespace MATH;
 
-namespace AbcA = ::Alembic::AbcCoreAbstract::ALEMBIC_VERSION_NS;
-namespace AbcB = ::Alembic::Abc::ALEMBIC_VERSION_NS;
-using namespace AbcA;
-using namespace AbcB;
-
 AlembicSubD::AlembicSubD(const XSI::CRef & in_Ref, AlembicWriteJob * in_Job)
 : AlembicObject(in_Ref, in_Job)
 {
    Primitive prim(GetRef());
    CString subDName(prim.GetParent3DObject().GetName());
    CString xformName(subDName+L"Xfo");
-   Alembic::AbcGeom::OXform xform(GetOParent(),xformName.GetAsciiString(),GetJob()->GetAnimatedTs());
-   Alembic::AbcGeom::OSubD subD(xform,subDName.GetAsciiString(),GetJob()->GetAnimatedTs());
+  AbcG::OXform xform(GetOParent(),xformName.GetAsciiString(),GetJob()->GetAnimatedTs());
+  AbcG::OSubD subD(xform,subDName.GetAsciiString(),GetJob()->GetAnimatedTs());
    AddRef(prim.GetParent3DObject().GetKinematics().GetGlobal().GetRef());
 
    mXformSchema = xform.getSchema();
@@ -60,7 +55,7 @@ AlembicSubD::~AlembicSubD()
    mOVisibility.reset();
 }
 
-Alembic::Abc::OCompoundProperty AlembicSubD::GetCompound()
+Abc::OCompoundProperty AlembicSubD::GetCompound()
 {
    return mSubDSchema;
 }
@@ -89,7 +84,7 @@ XSI::CStatus AlembicSubD::Save(double time)
    if(isRefAnimated(visProp.GetRef()) || mNumSamples == 0)
    {
       bool visibility = visProp.GetParameterValue(L"rendvis",time);
-      mOVisibility.set(visibility ? Alembic::AbcGeom::kVisibilityVisible : Alembic::AbcGeom::kVisibilityHidden);
+      mOVisibility.set(visibility ?AbcG::kVisibilityVisible :AbcG::kVisibilityHidden);
    }
 
    // check if the mesh is animated
@@ -107,10 +102,10 @@ XSI::CStatus AlembicSubD::Save(double time)
    LONG vertCount = pos.GetCount();
 
    // prepare the bounding box
-   Alembic::Abc::Box3d bbox;
+   Abc::Box3d bbox;
 
    // allocate the points and normals
-   std::vector<Alembic::Abc::V3f> posVec(vertCount);
+   std::vector<Abc::V3f> posVec(vertCount);
    for(LONG i=0;i<vertCount;i++)
    {
       if(globalSpace)
@@ -124,10 +119,10 @@ XSI::CStatus AlembicSubD::Save(double time)
    // allocate the sample for the points
    if(posVec.size() == 0)
    {
-      bbox.extendBy(Alembic::Abc::V3f(0,0,0));
-      posVec.push_back(Alembic::Abc::V3f(FLT_MAX,FLT_MAX,FLT_MAX));
+      bbox.extendBy(Abc::V3f(0,0,0));
+      posVec.push_back(Abc::V3f(FLT_MAX,FLT_MAX,FLT_MAX));
    }
-   Alembic::Abc::P3fArraySample posSample(&posVec.front(),posVec.size());
+   Abc::P3fArraySample posSample(&posVec.front(),posVec.size());
 
    // store the positions && bbox
    mSubDSample.setPositions(posSample);
@@ -141,8 +136,8 @@ XSI::CStatus AlembicSubD::Save(double time)
          // store a dummy empty topology
          mFaceCountVec.push_back(0);
          mFaceIndicesVec.push_back(0);
-         Alembic::Abc::Int32ArraySample faceCountSample(&mFaceCountVec.front(),mFaceCountVec.size());
-         Alembic::Abc::Int32ArraySample faceIndicesSample(&mFaceIndicesVec.front(),mFaceIndicesVec.size());
+         Abc::Int32ArraySample faceCountSample(&mFaceCountVec.front(),mFaceCountVec.size());
+         Abc::Int32ArraySample faceIndicesSample(&mFaceIndicesVec.front(),mFaceIndicesVec.size());
          mSubDSample.setFaceCounts(faceCountSample);
          mSubDSample.setFaceIndices(faceIndicesSample);
       }
@@ -194,8 +189,8 @@ XSI::CStatus AlembicSubD::Save(double time)
          }
 
          if(mVelocitiesVec.size() == 0)
-            mVelocitiesVec.push_back(Alembic::Abc::V3f(0,0,0));
-         Alembic::Abc::V3fArraySample sample = Alembic::Abc::V3fArraySample(&mVelocitiesVec.front(),mVelocitiesVec.size());
+            mVelocitiesVec.push_back(Abc::V3f(0,0,0));
+         Abc::V3fArraySample sample = Abc::V3fArraySample(&mVelocitiesVec.front(),mVelocitiesVec.size());
          mSubDSample.setVelocities(sample);
       }
    }
@@ -224,8 +219,8 @@ XSI::CStatus AlembicSubD::Save(double time)
             mFaceCountVec.push_back(0);
             mFaceIndicesVec.push_back(0);
          }
-         Alembic::Abc::Int32ArraySample faceCountSample(&mFaceCountVec.front(),mFaceCountVec.size());
-         Alembic::Abc::Int32ArraySample faceIndicesSample(&mFaceIndicesVec.front(),mFaceIndicesVec.size());
+         Abc::Int32ArraySample faceCountSample(&mFaceCountVec.front(),mFaceCountVec.size());
+         Abc::Int32ArraySample faceIndicesSample(&mFaceIndicesVec.front(),mFaceIndicesVec.size());
 
          mSubDSample.setFaceCounts(faceCountSample);
          mSubDSample.setFaceIndices(faceIndicesSample);
@@ -258,9 +253,9 @@ XSI::CStatus AlembicSubD::Save(double time)
                for(LONG i=0;i< uvPropRefs.GetCount();i++)
                   uvSetNames.push_back(ClusterProperty(uvPropRefs[i]).GetName().GetAsciiString());
 
-               Alembic::Abc::OStringArrayProperty uvSetNamesProperty = Alembic::Abc::OStringArrayProperty(
+               Abc::OStringArrayProperty uvSetNamesProperty = Abc::OStringArrayProperty(
                   mSubDSchema, ".uvSetNames", mSubDSchema.getMetaData(), GetJob()->GetAnimatedTs() );
-               Alembic::Abc::StringArraySample uvSetNamesSample(&uvSetNames.front(),uvSetNames.size());
+               Abc::StringArraySample uvSetNamesSample(&uvSetNames.front(),uvSetNames.size());
                uvSetNamesProperty.set(uvSetNamesSample);
             }
 
@@ -283,7 +278,7 @@ XSI::CStatus AlembicSubD::Save(double time)
                   std::map<SortableV2f,size_t> uvMap;
                   std::map<SortableV2f,size_t>::const_iterator it;
                   size_t sortedUVCount = 0;
-                  std::vector<Alembic::Abc::V2f> sortedUVVec;
+                  std::vector<Abc::V2f> sortedUVVec;
                   mUvIndexVec[uvI].resize(mUvVec[uvI].size());
                   sortedUVVec.resize(mUvVec[uvI].size());
 
@@ -292,11 +287,11 @@ XSI::CStatus AlembicSubD::Save(double time)
                   {
                      it = uvMap.find(mUvVec[uvI][i]);
                      if(it != uvMap.end())
-                        mUvIndexVec[uvI][uvIndexCount++] = (uint32_t)it->second;
+                        mUvIndexVec[uvI][uvIndexCount++] = (Abc::uint32_t)it->second;
                      else
                      {
-                        mUvIndexVec[uvI][uvIndexCount++] = (uint32_t)sortedUVCount;
-                        uvMap.insert(std::pair<Alembic::Abc::V2f,size_t>(mUvVec[uvI][i],(uint32_t)sortedUVCount));
+                        mUvIndexVec[uvI][uvIndexCount++] = (Abc::uint32_t)sortedUVCount;
+                        uvMap.insert(std::pair<Abc::V2f,size_t>(mUvVec[uvI][i],(Abc::uint32_t)sortedUVCount));
                         sortedUVVec[sortedUVCount++] = mUvVec[uvI][i];
                      }
                   }
@@ -309,9 +304,9 @@ XSI::CStatus AlembicSubD::Save(double time)
                   sortedUVVec.clear();
                }
 
-               Alembic::AbcGeom::OV2fGeomParam::Sample uvSample(Alembic::Abc::V2fArraySample(&mUvVec[uvI].front(),uvCount),Alembic::AbcGeom::kFacevaryingScope);
+              AbcG::OV2fGeomParam::Sample uvSample(Abc::V2fArraySample(&mUvVec[uvI].front(),uvCount),AbcG::kFacevaryingScope);
                if(mUvIndexVec.size() > 0 && uvIndexCount > 0)
-                  uvSample.setIndices(Alembic::Abc::UInt32ArraySample(&mUvIndexVec[uvI].front(),uvIndexCount));
+                  uvSample.setIndices(Abc::UInt32ArraySample(&mUvIndexVec[uvI].front(),uvIndexCount));
 
                if(uvI == 0)
                {
@@ -323,8 +318,8 @@ XSI::CStatus AlembicSubD::Save(double time)
                   if(mNumSamples == 0)
                   {
                      CString storedUvSetName = CString(L"uv") + CString(uvI);
-                     mUvParams.push_back(Alembic::AbcGeom::OV2fGeomParam( mSubDSchema, storedUvSetName.GetAsciiString(), uvIndexCount > 0,
-                                         Alembic::AbcGeom::kFacevaryingScope, 1, GetJob()->GetAnimatedTs()));
+                     mUvParams.push_back(AbcG::OV2fGeomParam( mSubDSchema, storedUvSetName.GetAsciiString(), uvIndexCount > 0,
+                                        AbcG::kFacevaryingScope, 1, GetJob()->GetAnimatedTs()));
                   }
                   mUvParams[uvI-1].set(uvSample);
                }
@@ -333,7 +328,7 @@ XSI::CStatus AlembicSubD::Save(double time)
             // create the uv options
             if(mUvOptionsVec.size() == 0)
             {
-               mUvOptionsProperty = OFloatArrayProperty(mSubDSchema, ".uvOptions", mSubDSchema.getMetaData(), GetJob()->GetAnimatedTs() );
+				mUvOptionsProperty = Abc::OFloatArrayProperty(mSubDSchema, ".uvOptions", mSubDSchema.getMetaData(), GetJob()->GetAnimatedTs() );
 
                for(LONG uvI=0;uvI<uvPropRefs.GetCount();uvI++)
                {
@@ -368,7 +363,7 @@ XSI::CStatus AlembicSubD::Save(double time)
                   mUvOptionsVec.push_back(vWrap ? 1.0f : 0.0f);
 				  mUvOptionsVec.push_back(subdsmooth ? 1.0f : 0.0f);
                }
-               mUvOptionsProperty.set(Alembic::Abc::FloatArraySample(&mUvOptionsVec.front(),mUvOptionsVec.size()));
+               mUvOptionsProperty.set(Abc::FloatArraySample(&mUvOptionsVec.front(),mUvOptionsVec.size()));
             }
          }
       }
@@ -388,15 +383,15 @@ XSI::CStatus AlembicSubD::Save(double time)
 
             std::string name(cluster.GetName().GetAsciiString());
 
-            mFaceSetsVec.push_back(std::vector<int32_t>());
-            std::vector<int32_t> & faceSetVec = mFaceSetsVec.back();
+            mFaceSetsVec.push_back(std::vector<Abc::int32_t>());
+            std::vector<Abc::int32_t> & faceSetVec = mFaceSetsVec.back();
             for(LONG j=0;j<elements.GetCount();j++)
                faceSetVec.push_back(elements[j]);
 
             if(faceSetVec.size() > 0)
             {
-               Alembic::AbcGeom::OFaceSet faceSet = mSubDSchema.createFaceSet(name);
-               Alembic::AbcGeom::OFaceSetSchema::Sample faceSetSample(Alembic::Abc::Int32ArraySample(&faceSetVec.front(),faceSetVec.size()));
+              AbcG::OFaceSet faceSet = mSubDSchema.createFaceSet(name);
+              AbcG::OFaceSetSchema::Sample faceSetSample(Abc::Int32ArraySample(&faceSetVec.front(),faceSetVec.size()));
                faceSet.getSchema().set(faceSetSample);
             }
          }
@@ -408,7 +403,7 @@ XSI::CStatus AlembicSubD::Save(double time)
       // check if we need to export the bindpose
       if(GetJob()->GetOption(L"exportBindPose") && prim.GetParent3DObject().GetEnvelopes().GetCount() > 0 && mNumSamples == 0)
       {
-         mBindPoseProperty = OV3fArrayProperty(mSubDSchema, ".bindpose", mSubDSchema.getMetaData(), GetJob()->GetAnimatedTs());
+         mBindPoseProperty = Abc::OV3fArrayProperty(mSubDSchema, ".bindpose", mSubDSchema.getMetaData(), GetJob()->GetAnimatedTs());
 
          // store the positions of the modeling stack into here
          PolygonMesh bindPoseGeo = prim.GetGeometry(time, siConstructionModeModeling);
@@ -421,9 +416,9 @@ XSI::CStatus AlembicSubD::Save(double time)
             mBindPoseVec[i].z = (float)bindPosePos[i].GetZ();
          }
 
-         Alembic::Abc::V3fArraySample sample;
+         Abc::V3fArraySample sample;
          if(mBindPoseVec.size() > 0)
-            sample = Alembic::Abc::V3fArraySample(&mBindPoseVec.front(),mBindPoseVec.size());
+            sample = Abc::V3fArraySample(&mBindPoseVec.front(),mBindPoseVec.size());
          mBindPoseProperty.set(sample);
       }   
    }
@@ -454,15 +449,15 @@ ESS_CALLBACK_START( alembic_geomapprox_Update, CRef& )
    CString path = ctxt.GetParameterValue(L"path");
    CString identifier = ctxt.GetParameterValue(L"identifier");
 
-   Alembic::AbcGeom::IObject iObj = getObjectFromArchive(path,identifier);
+  AbcG::IObject iObj = getObjectFromArchive(path,identifier);
    if(!iObj.valid())
       return CStatus::OK;
 
-   Alembic::AbcGeom::ISubD obj(iObj,Alembic::Abc::kWrapExisting);
+  AbcG::ISubD obj(iObj,Abc::kWrapExisting);
    if(!obj.valid())
       return CStatus::OK;
 
-   Alembic::AbcGeom::ISubDSchema::Sample sample;
+  AbcG::ISubDSchema::Sample sample;
    obj.getSchema().get(sample,0);
 
    Property prop(ctxt.GetOutputTarget());

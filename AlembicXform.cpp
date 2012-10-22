@@ -13,13 +13,12 @@
 #include <xsi_ppgitem.h>
 #include <xsi_model.h>
 #include "CommonProfiler.h"
+
 using namespace XSI;
 using namespace MATH;
 
-namespace AbcA = ::Alembic::AbcCoreAbstract::ALEMBIC_VERSION_NS;
-using namespace AbcA;
 
-void SaveXformSample(XSI::CRef kinestateRef, Alembic::AbcGeom::OXformSchema & schema, Alembic::AbcGeom::XformSample & sample, double time, bool xformCache, bool globalSpace, bool flattenHierarchy)
+void SaveXformSample(XSI::CRef kinestateRef,AbcG::OXformSchema & schema,AbcG::XformSample & sample, double time, bool xformCache, bool globalSpace, bool flattenHierarchy)
 {
    KinematicState kineState(kinestateRef);
 
@@ -96,14 +95,14 @@ ESS_CALLBACK_START( alembic_xform_Update, CRef& )
       CString path = ctxt.GetParameterValue(L"path");
       CString identifier = ctxt.GetParameterValue(L"identifier");
 
-      Alembic::AbcGeom::IObject iObj = getObjectFromArchive(path,identifier);
+     AbcG::IObject iObj = getObjectFromArchive(path,identifier);
       if(!iObj.valid())
          return CStatus::OK;
-      Alembic::AbcGeom::IXform obj(iObj,Alembic::Abc::kWrapExisting);
+     AbcG::IXform obj(iObj,Abc::kWrapExisting);
       if(!obj.valid())
          return CStatus::OK;
 
-      Alembic::AbcGeom::XformSample sample;
+     AbcG::XformSample sample;
 
       for(size_t i=0;i<obj.getSchema().getNumSamples();i++)
       {
@@ -113,7 +112,7 @@ ESS_CALLBACK_START( alembic_xform_Update, CRef& )
       }
    }
 
-   Alembic::Abc::M44d matrix;	// constructor creates an identity matrix
+   Abc::M44d matrix;	// constructor creates an identity matrix
 
    // if no time samples, default to identity matrix
    if( p->times.size() > 0 ) {
@@ -197,12 +196,12 @@ ESS_CALLBACK_START( alembic_visibility_Update, CRef& )
    CString path = ctxt.GetParameterValue(L"path");
    CString identifier = ctxt.GetParameterValue(L"identifier");
 
-   Alembic::AbcGeom::IObject obj = getObjectFromArchive(path,identifier);
+  AbcG::IObject obj = getObjectFromArchive(path,identifier);
    if(!obj.valid())
       return CStatus::OK;
 
-   Alembic::AbcGeom::IVisibilityProperty visibilityProperty = 
-      Alembic::AbcGeom::GetVisibilityProperty(obj);
+  AbcG::IVisibilityProperty visibilityProperty = 
+     AbcG::GetVisibilityProperty(obj);
    if(!visibilityProperty.valid())
       return CStatus::OK;
 
@@ -212,19 +211,19 @@ ESS_CALLBACK_START( alembic_visibility_Update, CRef& )
       visibilityProperty.getNumSamples()
    );
 
-   int8_t rawVisibilityValue = visibilityProperty.getValue ( sampleInfo.floorIndex );
-   Alembic::AbcGeom::ObjectVisibility visibilityValue = Alembic::AbcGeom::ObjectVisibility ( rawVisibilityValue );
+   AbcA::int8_t rawVisibilityValue = visibilityProperty.getValue ( sampleInfo.floorIndex );
+  AbcG::ObjectVisibility visibilityValue =AbcG::ObjectVisibility ( rawVisibilityValue );
 
    Property prop(ctxt.GetOutputTarget());
    switch(visibilityValue)
    {
-      case Alembic::AbcGeom::kVisibilityVisible:
+      case AbcG::kVisibilityVisible:
       {
          prop.PutParameterValue(L"viewvis",true);
          prop.PutParameterValue(L"rendvis",true);
          break;
       }
-      case Alembic::AbcGeom::kVisibilityHidden:
+      case AbcG::kVisibilityHidden:
       {
          prop.PutParameterValue(L"viewvis",false);
          prop.PutParameterValue(L"rendvis",false);

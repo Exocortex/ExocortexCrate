@@ -6,14 +6,14 @@
 #include <map>
 #include <xsi_string.h>
 
-inline Alembic::Abc::IArchive * getArchiveFromID(XSI::CString path) {
+inline Abc::IArchive * getArchiveFromID(XSI::CString path) {
 	return getArchiveFromID( std::string( path.GetAsciiString() ) );
 }
-//XSI::CString addArchive(Alembic::Abc::IArchive * archive);
+//XSI::CString addArchive(Abc::IArchive * archive);
 inline void deleteArchive(XSI::CString path) {
 	deleteArchive( std::string( path.GetAsciiString() ) );
 }
-inline Alembic::Abc::IObject getObjectFromArchive(XSI::CString path, XSI::CString identifier) {
+inline Abc::IObject getObjectFromArchive(XSI::CString path, XSI::CString identifier) {
 	return getObjectFromArchive( std::string( path.GetAsciiString() ), std::string( identifier.GetAsciiString() ) );
 }
 

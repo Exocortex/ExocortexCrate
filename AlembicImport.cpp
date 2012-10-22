@@ -83,7 +83,7 @@ ESS_CALLBACK_START(alembic_import_Init,CRef&)
 ESS_CALLBACK_END
 
 
-bool hasMultipleSamples(Alembic::Abc::IObject object)
+bool hasMultipleSamples(Abc::IObject object)
 {
    return getNumSamplesFromObject(object) > 1;
 }
@@ -361,7 +361,7 @@ CStatus alembic_create_item_Invoke
    }
 
    // now validate the identifier if necessary
-   Alembic::Abc::IObject abcObject;
+   Abc::IObject abcObject;
    bool isAnimated = false;
    { ESS_PROFILE_SCOPE("alembic_create_item_Invoke validate_the_identifier");
    switch(itemType)
@@ -396,8 +396,8 @@ CStatus alembic_create_item_Invoke
             Application().LogMessage(L"[ExocortexAlembic] Identifier '"+identifier+L"' is not valid for given filename.",siErrorMsg);
             return CStatus::InvalidArgument;
          }
-         Alembic::AbcGeom::IVisibilityProperty visibilityProperty = 
-            Alembic::AbcGeom::GetVisibilityProperty(abcObject);
+         AbcG::IVisibilityProperty visibilityProperty = 
+            AbcG::GetVisibilityProperty(abcObject);
          if(!visibilityProperty.valid())
          {
             return CStatus::InvalidArgument;
@@ -449,23 +449,23 @@ CStatus alembic_create_item_Invoke
             if(!importVis)
             {
                // this means skip the creation of the operator
-               Alembic::AbcGeom::IVisibilityProperty visibilityProperty = 
-                  Alembic::AbcGeom::GetVisibilityProperty(abcObject);
+               AbcG::IVisibilityProperty visibilityProperty = 
+                  AbcG::GetVisibilityProperty(abcObject);
                if(visibilityProperty.valid())
                {
                   int rawVisibilityValue = visibilityProperty.getValue ( size_t(0) );
-                  Alembic::AbcGeom::ObjectVisibility visibilityValue = Alembic::AbcGeom::ObjectVisibility ( rawVisibilityValue );
+                  AbcG::ObjectVisibility visibilityValue = AbcG::ObjectVisibility ( rawVisibilityValue );
 
                   Property prop(realTarget);
                   switch(visibilityValue)
                   {
-                     case Alembic::AbcGeom::kVisibilityVisible:
+                     case AbcG::kVisibilityVisible:
                      {
                         prop.PutParameterValue(L"viewvis",true);
                         prop.PutParameterValue(L"rendvis",true);
                         break;
                      }
-                     case Alembic::AbcGeom::kVisibilityHidden:
+                     case AbcG::kVisibilityHidden:
                      {
                         prop.PutParameterValue(L"viewvis",false);
                         prop.PutParameterValue(L"rendvis",false);
@@ -536,8 +536,8 @@ CStatus alembic_create_item_Invoke
          else if(itemType == alembicItemType_polymesh_topo)
          {
             // check if the compound has more than one sample on its facecounts
-            Alembic::Abc::ICompoundProperty abcCompound = getCompoundFromObject(abcObject);
-            Alembic::Abc::IInt32ArrayProperty faceCountProp = Alembic::Abc::IInt32ArrayProperty(abcCompound,".faceCounts");
+            Abc::ICompoundProperty abcCompound = getCompoundFromObject(abcObject);
+            Abc::IInt32ArrayProperty faceCountProp = Abc::IInt32ArrayProperty(abcCompound,".faceCounts");
             if(faceCountProp.valid())
                receivesExpression = !faceCountProp.isConstant();
             else
@@ -566,12 +566,12 @@ CStatus alembic_create_item_Invoke
             bool importNormals = args[2];
             bool importUvs = args[3];
 
-            Alembic::AbcGeom::IPolyMesh abcMesh;
-            Alembic::AbcGeom::ISubD abcSubD;
-            if(Alembic::AbcGeom::IPolyMesh::matches(abcObject.getMetaData()))
-               abcMesh = Alembic::AbcGeom::IPolyMesh(abcObject,Alembic::Abc::kWrapExisting);
+            AbcG::IPolyMesh abcMesh;
+            AbcG::ISubD abcSubD;
+            if(AbcG::IPolyMesh::matches(abcObject.getMetaData()))
+               abcMesh = AbcG::IPolyMesh(abcObject,Abc::kWrapExisting);
             else
-               abcSubD = Alembic::AbcGeom::ISubD(abcObject,Alembic::Abc::kWrapExisting);
+               abcSubD = AbcG::ISubD(abcObject,Abc::kWrapExisting);
             if(!abcMesh.valid() && !abcSubD.valid())
                return CStatus::OK;
 
@@ -591,13 +591,13 @@ CStatus alembic_create_item_Invoke
                      if(meshGeo.GetClusters().GetItem(CString(faceSetNames[j].c_str())).IsValid())
                         continue;
                   }
-                  Alembic::AbcGeom::IFaceSetSchema faceSet;
+                  AbcG::IFaceSetSchema faceSet;
                   if(abcMesh.valid())
                      faceSet = abcMesh.getSchema().getFaceSet(faceSetNames[j]).getSchema();
                   else
                      faceSet = abcSubD.getSchema().getFaceSet(faceSetNames[j]).getSchema();
-                  Alembic::AbcGeom::IFaceSetSchema::Sample faceSetSample = faceSet.getValue();
-                  Alembic::Abc::Int32ArraySamplePtr faces = faceSetSample.getFaces();
+                  AbcG::IFaceSetSchema::Sample faceSetSample = faceSet.getValue();
+                  Abc::Int32ArraySamplePtr faces = faceSetSample.getFaces();
                   CLongArray elements((LONG)faces->size());
                   for(size_t k=0;k<faces->size();k++)
                      elements[(LONG)k] = (LONG)faces->get()[k];
@@ -608,10 +608,10 @@ CStatus alembic_create_item_Invoke
             if(importNormals && abcMesh.valid())
             {
               ESS_PROFILE_SCOPE("alembic_create_item_Invoke create_the_operator polymesh_topo importNormals");
-		       Alembic::AbcGeom::IN3fGeomParam meshNormalsParam = abcMesh.getSchema().getNormalsParam();
+		       AbcG::IN3fGeomParam meshNormalsParam = abcMesh.getSchema().getNormalsParam();
                if(meshNormalsParam.valid())
                {
-                  Alembic::Abc::N3fArraySamplePtr meshNormals = meshNormalsParam.getExpandedValue(0).getVals();
+                  Abc::N3fArraySamplePtr meshNormals = meshNormalsParam.getExpandedValue(0).getVals();
 
                   CRef clusterPropRef;
                   if(attachToExisting)
@@ -686,7 +686,7 @@ CStatus alembic_create_item_Invoke
             if(importUvs)
             {
                 ESS_PROFILE_SCOPE("alembic_create_item_Invoke create_the_operator polymesh_topo importUvs");
-				Alembic::AbcGeom::IV2fGeomParam meshUVsParam;
+				AbcG::IV2fGeomParam meshUVsParam;
                if(abcMesh.valid())
                   meshUVsParam = abcMesh.getSchema().getUVsParam();
                else
@@ -694,7 +694,7 @@ CStatus alembic_create_item_Invoke
                if(meshUVsParam.valid())
                {
                   size_t numUVSamples = meshUVsParam.getNumSamples();
-                  Alembic::Abc::V2fArraySamplePtr meshUVs = meshUVsParam.getExpandedValue(0).getVals();
+                  Abc::V2fArraySamplePtr meshUVs = meshUVsParam.getExpandedValue(0).getVals();
                   if(meshUVs->size() > 0)
                   {
                      // check if we have a uv set names prop
@@ -703,8 +703,8 @@ CStatus alembic_create_item_Invoke
                      {
                         if ( abcMesh.getSchema().getPropertyHeader( ".uvSetNames" ) != NULL )
                         {
-                           Alembic::Abc::IStringArrayProperty uvSetNamesProp = Alembic::Abc::IStringArrayProperty( abcMesh.getSchema(), ".uvSetNames" );
-                           Alembic::Abc::StringArraySamplePtr ptr = uvSetNamesProp.getValue(0);
+                           Abc::IStringArrayProperty uvSetNamesProp = Abc::IStringArrayProperty( abcMesh.getSchema(), ".uvSetNames" );
+                           Abc::StringArraySamplePtr ptr = uvSetNamesProp.getValue(0);
                            for(size_t i=0;i<ptr->size();i++)
                               uvSetNames.Add(CString(ptr->get()[i].c_str()));
                         }
@@ -713,8 +713,8 @@ CStatus alembic_create_item_Invoke
                      {
                         if ( abcSubD.getSchema().getPropertyHeader( ".uvSetNames" ) != NULL )
                         {
-                           Alembic::Abc::IStringArrayProperty uvSetNamesProp = Alembic::Abc::IStringArrayProperty( abcSubD.getSchema(), ".uvSetNames" );
-                           Alembic::Abc::StringArraySamplePtr ptr = uvSetNamesProp.getValue(0);
+                           Abc::IStringArrayProperty uvSetNamesProp = Abc::IStringArrayProperty( abcSubD.getSchema(), ".uvSetNames" );
+                           Abc::StringArraySamplePtr ptr = uvSetNamesProp.getValue(0);
                            for(size_t i=0;i<ptr->size();i++)
                               uvSetNames.Add(CString(ptr->get()[i].c_str()));
                         }
@@ -770,16 +770,16 @@ CStatus alembic_create_item_Invoke
                               hasUvOptions = abcSubD.getSchema().getPropertyHeader( ".uvOptions" ) != NULL;
                            if(hasUvOptions)
                            {
-                              Alembic::Abc::IFloatArrayProperty prop;
+                              Abc::IFloatArrayProperty prop;
                               if(abcMesh.valid())
-                                 prop = Alembic::Abc::IFloatArrayProperty( abcMesh.getSchema(), ".uvOptions" );
+                                 prop = Abc::IFloatArrayProperty( abcMesh.getSchema(), ".uvOptions" );
                               else
-                                 prop = Alembic::Abc::IFloatArrayProperty( abcSubD.getSchema(), ".uvOptions" );
+                                 prop = Abc::IFloatArrayProperty( abcSubD.getSchema(), ".uvOptions" );
 
                               // if the prop stores any data
                               if(prop.getNumSamples() > 0)
                               {
-                                 Alembic::Abc::FloatArraySamplePtr ptr = prop.getValue(0);
+                                 Abc::FloatArraySamplePtr ptr = prop.getValue(0);
                                  if(ptr->size() > 2 * uvI + 1)
                                  {
                                     bool uWrap = ptr->get()[uvI * 2 + 0] != 0.0f;
@@ -892,16 +892,16 @@ CStatus alembic_create_item_Invoke
          CValue treeReturnVal;
 
          // we need to check if we have instances....
-         Alembic::AbcGeom::IPoints abcPoints(abcObject,Alembic::Abc::kWrapExisting);
+         AbcG::IPoints abcPoints(abcObject,Abc::kWrapExisting);
          if(!abcPoints.valid())
             return CStatus::OK;
 
-		 Alembic::Abc::IStringArrayProperty shapeInstanceNamesProp;
+		 Abc::IStringArrayProperty shapeInstanceNamesProp;
          if ( getArbGeomParamPropertyAlembic(abcPoints, "instancenames", shapeInstanceNamesProp) )
          {
             if(shapeInstanceNamesProp.getNumSamples() > 0)
             {
-               Alembic::Abc::StringArraySamplePtr shapeInstanceNamesPtr = shapeInstanceNamesProp.getValue(shapeInstanceNamesProp.getNumSamples()-1);
+               Abc::StringArraySamplePtr shapeInstanceNamesPtr = shapeInstanceNamesProp.getValue(shapeInstanceNamesProp.getNumSamples()-1);
                if(shapeInstanceNamesPtr->size() > 0)
                {
                   if(attachToExisting)
@@ -1003,12 +1003,12 @@ CStatus alembic_create_item_Invoke
       case alembicItemType_metadata:
       {
 			ESS_PROFILE_SCOPE("alembic_create_item_Invoke create_the_operator alembicItemType_metadata");
-		Alembic::Abc::ICompoundProperty abcCompound = getCompoundFromObject(abcObject);
+		Abc::ICompoundProperty abcCompound = getCompoundFromObject(abcObject);
          if ( abcCompound.getPropertyHeader( ".metadata" ) == NULL )
             break;
 
-         Alembic::Abc::IStringArrayProperty metaDataProp = Alembic::Abc::IStringArrayProperty( abcCompound, ".metadata" );
-         Alembic::Abc::StringArraySamplePtr metaDataPtr = metaDataProp.getValue(0);
+         Abc::IStringArrayProperty metaDataProp = Abc::IStringArrayProperty( abcCompound, ".metadata" );
+         Abc::StringArraySamplePtr metaDataPtr = metaDataProp.getValue(0);
          if(metaDataPtr->size() != 20)
             break;
 
@@ -1170,18 +1170,18 @@ ESS_CALLBACK_START(alembic_create_item_Execute, CRef&)
 ESS_CALLBACK_END
 
 
-CStatus createTransform( Alembic::Abc::IObject& iObj, CRef& parentNode, CRef& newNodeRef, CString& filename, bool attachToExisting, CValueArray& createItemArgs)
+CStatus createTransform( Abc::IObject& iObj, CRef& parentNode, CRef& newNodeRef, CString& filename, bool attachToExisting, CValueArray& createItemArgs)
 {
    X3DObject parentX3DObject(parentNode);
    CString name = truncateName(iObj.getName().c_str());
 
-   if(Alembic::AbcGeom::IXform::matches(iObj.getMetaData()))
+   if(AbcG::IXform::matches(iObj.getMetaData()))
    {
       // check if this xform has xform children (is is model in this case)
       size_t nbTransformChildren = 0;
       for(size_t j=0;j<iObj.getNumChildren();j++)
       {
-         if(Alembic::AbcGeom::IXform::matches(iObj.getChild(j).getMetaData()))
+         if(AbcG::IXform::matches(iObj.getChild(j).getMetaData()))
             nbTransformChildren++;
       }
 
@@ -1229,16 +1229,16 @@ CStatus createTransform( Alembic::Abc::IObject& iObj, CRef& parentNode, CRef& ne
    return CStatus( CStatus::OK );
 }
 
-CStatus createShape( Alembic::Abc::IObject& iObj, CRef& parentNode, CRef& newNodeRef, CString& filename, bool attachToExisting, bool importStandins, bool importBboxes, bool wasMerged, bool failOnUnsupported, CValueArray& createItemArgs)
+CStatus createShape( Abc::IObject& iObj, CRef& parentNode, CRef& newNodeRef, CString& filename, bool attachToExisting, bool importStandins, bool importBboxes, bool wasMerged, bool failOnUnsupported, CValueArray& createItemArgs)
 {
    X3DObject parentX3DObject(parentNode);
    CString name = truncateName(iObj.getName().c_str());
-   Alembic::Abc::IObject parent = iObj.getParent();
+   Abc::IObject parent = iObj.getParent();
 
    //EC_LOG_INFO( "Object name: " << name.GetAsciiString() );
 
    // after dealing with transforms, let's deal with all shape types
-   if(Alembic::AbcGeom::ICamera::matches(iObj.getMetaData()))
+   if(AbcG::ICamera::matches(iObj.getMetaData()))
    {
       //ESS_LOG_WARNING("Import ICamera");
       // let's create a camera
@@ -1269,7 +1269,7 @@ CStatus createShape( Alembic::Abc::IObject& iObj, CRef& parentNode, CRef& newNod
       alembic_create_item_Invoke(L"alembic_metadata",camera.GetRef(),filename,iObj.getFullName().c_str(),attachToExisting,createItemArgs);
 
       // let's setup the xform op
-      if(Alembic::AbcGeom::IXform::matches(parent.getMetaData()) && wasMerged)
+      if(AbcG::IXform::matches(parent.getMetaData()) && wasMerged)
          alembic_create_item_Invoke(L"alembic_xform",camera.GetRef(),filename,parent.getFullName().c_str(),attachToExisting,createItemArgs);
       
       // load visibility
@@ -1278,7 +1278,7 @@ CStatus createShape( Alembic::Abc::IObject& iObj, CRef& parentNode, CRef& newNod
       // load camera
       alembic_create_item_Invoke(L"alembic_camera",camera.GetRef(),filename,iObj.getFullName().c_str(),attachToExisting,createItemArgs);
    }
-   else if(Alembic::AbcGeom::IPolyMesh::matches(iObj.getMetaData()))
+   else if(AbcG::IPolyMesh::matches(iObj.getMetaData()))
    {
       //ESS_LOG_WARNING("Import IPolyMesh");
 
@@ -1320,7 +1320,7 @@ CStatus createShape( Alembic::Abc::IObject& iObj, CRef& parentNode, CRef& newNod
       alembic_create_item_Invoke(L"alembic_visibility",meshObj.GetRef(),filename,iObj.getFullName().c_str(),attachToExisting,createItemArgs);
 
       // let's setup the xform op
-      if(Alembic::AbcGeom::IXform::matches(parent.getMetaData()) && wasMerged)
+      if(AbcG::IXform::matches(parent.getMetaData()) && wasMerged)
          alembic_create_item_Invoke(L"alembic_xform",meshObj.GetRef(),filename,parent.getFullName().c_str(),attachToExisting,createItemArgs);
       
       // let's setup the positions op
@@ -1337,7 +1337,7 @@ CStatus createShape( Alembic::Abc::IObject& iObj, CRef& parentNode, CRef& newNod
          
          if(!receivesExpression)
          {
-            Alembic::AbcGeom::IPolyMesh abcMesh = Alembic::AbcGeom::IPolyMesh(iObj,Alembic::Abc::kWrapExisting);
+            AbcG::IPolyMesh abcMesh = AbcG::IPolyMesh(iObj,Abc::kWrapExisting);
             CValue returnedOpVal;
             alembic_create_item_Invoke(L"alembic_polymesh",meshObj.GetRef(),filename,iObj.getFullName().c_str(),attachToExisting,createItemArgs,returnedOpVal);
             returnOpRef = (CRef)returnedOpVal;
@@ -1348,7 +1348,7 @@ CStatus createShape( Alembic::Abc::IObject& iObj, CRef& parentNode, CRef& newNod
       if(importStandins && returnOpRef.IsValid())
          alembic_create_item_Invoke(L"alembic_standin",returnOpRef,filename,iObj.getFullName().c_str(),attachToExisting,createItemArgs);
    }
-   else if(Alembic::AbcGeom::ISubD::matches(iObj.getMetaData()))
+   else if(AbcG::ISubD::matches(iObj.getMetaData()))
    {
       //ESS_LOG_WARNING("Import ISubD");
       X3DObject meshObj;
@@ -1399,7 +1399,7 @@ CStatus createShape( Alembic::Abc::IObject& iObj, CRef& parentNode, CRef& newNod
          alembic_create_item_Invoke(L"alembic_geomapprox",meshObj.GetRef(),filename,iObj.getFullName().c_str(),attachToExisting,createItemArgs);
 
       // let's setup the xform op
-      if(Alembic::AbcGeom::IXform::matches(parent.getMetaData()) && wasMerged)
+      if(AbcG::IXform::matches(parent.getMetaData()) && wasMerged)
          alembic_create_item_Invoke(L"alembic_xform",meshObj.GetRef(),filename,parent.getFullName().c_str(),attachToExisting,createItemArgs);
       
       // let's setup the positions op
@@ -1412,7 +1412,7 @@ CStatus createShape( Alembic::Abc::IObject& iObj, CRef& parentNode, CRef& newNod
       else
       {
          // only add the point position operator if we don't have dynamic topology
-         Alembic::AbcGeom::ISubD abcSubD = Alembic::AbcGeom::ISubD(iObj,Alembic::Abc::kWrapExisting);
+         AbcG::ISubD abcSubD = AbcG::ISubD(iObj,Abc::kWrapExisting);
          CValue returnedOpVal;
          alembic_create_item_Invoke(L"alembic_polymesh",meshObj.GetRef(),filename,iObj.getFullName().c_str(),attachToExisting,createItemArgs,returnedOpVal);
          returnOpRef = (CRef)returnedOpVal;
@@ -1422,7 +1422,7 @@ CStatus createShape( Alembic::Abc::IObject& iObj, CRef& parentNode, CRef& newNod
       if(importStandins && returnOpRef.IsValid())
          alembic_create_item_Invoke(L"alembic_standin",returnOpRef,filename,iObj.getFullName().c_str(),attachToExisting,createItemArgs);
    }
-   else if(Alembic::AbcGeom::INuPatch::matches(iObj.getMetaData()))
+   else if(AbcG::INuPatch::matches(iObj.getMetaData()))
    {
       //ESS_LOG_WARNING("Import INuPatch");
       X3DObject nurbsObj;
@@ -1451,24 +1451,24 @@ CStatus createShape( Alembic::Abc::IObject& iObj, CRef& parentNode, CRef& newNod
      alembic_create_item_Invoke(L"alembic_metadata",nurbsObj.GetRef(),filename,iObj.getFullName().c_str(),attachToExisting,createItemArgs);
 
      // let's setup the xform op
-     if(Alembic::AbcGeom::IXform::matches(parent.getMetaData()) && wasMerged)
+     if(AbcG::IXform::matches(parent.getMetaData()) && wasMerged)
         alembic_create_item_Invoke(L"alembic_xform",nurbsObj.GetRef(),filename,parent.getFullName().c_str(),attachToExisting,createItemArgs);
      
      alembic_create_item_Invoke(L"alembic_nurbs",nurbsObj.GetRef(),filename,iObj.getFullName().c_str(),attachToExisting,createItemArgs);
 
      newNodeRef.Set(getFullNameFromIdentifier(iObj.getFullName()));
    }
-   else if(Alembic::AbcGeom::ICurves::matches(iObj.getMetaData()))
+   else if(AbcG::ICurves::matches(iObj.getMetaData()))
    {
       //ESS_LOG_WARNING("Import ICurves");
       // let's create a crvlist
-      Alembic::AbcGeom::ICurves curveIObject(iObj,Alembic::Abc::kWrapExisting);
-      Alembic::AbcGeom::ICurvesSchema curveSchema = curveIObject.getSchema();
-      Alembic::AbcGeom::ICurvesSchema::Sample curveSample = curveSchema.getValue();
+      AbcG::ICurves curveIObject(iObj,Abc::kWrapExisting);
+      AbcG::ICurvesSchema curveSchema = curveIObject.getSchema();
+      AbcG::ICurvesSchema::Sample curveSample = curveSchema.getValue();
 
       // check for valid curve types...!
-      if(curveSample.getType() != Alembic::AbcGeom::ALEMBIC_VERSION_NS::kLinear &&
-         curveSample.getType() != Alembic::AbcGeom::ALEMBIC_VERSION_NS::kCubic)
+      if(curveSample.getType() != AbcG::kLinear &&
+         curveSample.getType() != AbcG::kCubic)
       {
         std::stringstream s;
 		s << "Can't create non-linear/non-cubic Curves.  Unsupported Alembic type: " << iObj.getFullName().c_str();
@@ -1483,11 +1483,11 @@ CStatus createShape( Alembic::Abc::IObject& iObj, CRef& parentNode, CRef& newNod
 
 	 bool useParticles = true;
 	 {
-		 Alembic::Abc::IFloatArrayProperty propRadius;
+		 Abc::IFloatArrayProperty propRadius;
 		 if( ! getArbGeomParamPropertyAlembic( curveIObject, "radius", propRadius ) ) {
 			 useParticles = false;
 		 }
-		 Alembic::Abc::IC4fArrayProperty propColor;
+		 Abc::IC4fArrayProperty propColor;
 		 if( ! getArbGeomParamPropertyAlembic( curveIObject, "color", propColor ) ) {
 			 useParticles = false;
 		 } 
@@ -1497,7 +1497,7 @@ CStatus createShape( Alembic::Abc::IObject& iObj, CRef& parentNode, CRef& newNod
       {
          if( curveSchema.getPropertyHeader( ".radius" ) != NULL )
          {
-            Alembic::Abc::IFloatArrayProperty prop = Alembic::Abc::IFloatArrayProperty( curveSchema, ".radius" );
+            Abc::IFloatArrayProperty prop = Abc::IFloatArrayProperty( curveSchema, ".radius" );
             if(!prop.valid())
                useParticles = false;
             else if(prop.getNumSamples() == 0)
@@ -1505,7 +1505,7 @@ CStatus createShape( Alembic::Abc::IObject& iObj, CRef& parentNode, CRef& newNod
          }
          else if( curveSchema.getPropertyHeader( ".color" ) != NULL )
          {
-            Alembic::Abc::IC4fArrayProperty prop = Alembic::Abc::IC4fArrayProperty( curveSchema, ".color" );
+            Abc::IC4fArrayProperty prop = Abc::IC4fArrayProperty( curveSchema, ".color" );
             if(!prop.valid())
                useParticles = false;
             else if(prop.getNumSamples() == 0)
@@ -1557,7 +1557,7 @@ CStatus createShape( Alembic::Abc::IObject& iObj, CRef& parentNode, CRef& newNod
          }
 
          // let's setup the xform op
-         if(Alembic::AbcGeom::IXform::matches(parent.getMetaData()) && wasMerged)
+         if(AbcG::IXform::matches(parent.getMetaData()) && wasMerged)
             alembic_create_item_Invoke(L"alembic_xform",pointsObj.GetRef(),filename,parent.getFullName().c_str(),attachToExisting,createItemArgs);
 
          // load standin property
@@ -1618,7 +1618,7 @@ CStatus createShape( Alembic::Abc::IObject& iObj, CRef& parentNode, CRef& newNod
          }
 
          // let's setup the xform op
-         if(Alembic::AbcGeom::IXform::matches(parent.getMetaData()) && wasMerged)
+         if(AbcG::IXform::matches(parent.getMetaData()) && wasMerged)
             alembic_create_item_Invoke(L"alembic_xform",curveObj.GetRef(),filename,parent.getFullName().c_str(),attachToExisting,createItemArgs);
 
          // load standin property
@@ -1626,12 +1626,12 @@ CStatus createShape( Alembic::Abc::IObject& iObj, CRef& parentNode, CRef& newNod
             alembic_create_item_Invoke(L"alembic_standin",returnOpRef,filename,iObj.getFullName().c_str(),attachToExisting,createItemArgs);
       }
    }
-   else if(Alembic::AbcGeom::IPoints::matches(iObj.getMetaData()))
+   else if(AbcG::IPoints::matches(iObj.getMetaData()))
    {
       //ESS_LOG_WARNING("Import IPoints");
-      Alembic::AbcGeom::IPoints pointsIObject(iObj,Alembic::Abc::kWrapExisting);
-      Alembic::AbcGeom::IPointsSchema pointsSchema = pointsIObject.getSchema();
-      Alembic::AbcGeom::IPointsSchema::Sample pointsSample = pointsSchema.getValue();
+      AbcG::IPoints pointsIObject(iObj,Abc::kWrapExisting);
+      AbcG::IPointsSchema pointsSchema = pointsIObject.getSchema();
+      AbcG::IPointsSchema::Sample pointsSample = pointsSchema.getValue();
 
       X3DObject pointsObj;
       if(attachToExisting)
@@ -1660,7 +1660,7 @@ CStatus createShape( Alembic::Abc::IObject& iObj, CRef& parentNode, CRef& newNod
       alembic_create_item_Invoke(L"alembic_visibility",pointsObj.GetRef(),filename,iObj.getFullName().c_str(),attachToExisting,createItemArgs);
 
       // let's setup the xform op
-      if(Alembic::AbcGeom::IXform::matches(parent.getMetaData()) && wasMerged)
+      if(AbcG::IXform::matches(parent.getMetaData()) && wasMerged)
          alembic_create_item_Invoke(L"alembic_xform",pointsObj.GetRef(),filename,parent.getFullName().c_str(),attachToExisting,createItemArgs);
 
       // apply the ice tree
@@ -1695,12 +1695,12 @@ CStatus createShape( Alembic::Abc::IObject& iObj, CRef& parentNode, CRef& newNod
 
 struct stackElement
 {
-   Alembic::Abc::IObject iObj;
+   Abc::IObject iObj;
    CRef parentNode;
 
-   stackElement(Alembic::Abc::IObject iObj):iObj(iObj)
+   stackElement(Abc::IObject iObj):iObj(iObj)
    {}
-   stackElement(Alembic::Abc::IObject iObj, CRef parent):iObj(iObj), parentNode(parent)
+   stackElement(Abc::IObject iObj, CRef parent):iObj(iObj), parentNode(parent)
    {}
 
 };
@@ -1784,10 +1784,10 @@ ESS_CALLBACK_START(alembic_import_Execute, CRef&)
    }
 
    // let's try to read this
-   Alembic::Abc::IArchive* archive = NULL;
+   Abc::IArchive* archive = NULL;
    try{
       CString resolvedPath = CUtils::ResolveTokenString(filename,XSI::CTime(),false);
-      archive = new Alembic::Abc::IArchive( Alembic::AbcCoreHDF5::ReadArchive(), resolvedPath.GetAsciiString() );
+      archive = new Abc::IArchive( Alembic::AbcCoreHDF5::ReadArchive(), resolvedPath.GetAsciiString() );
    }
    catch(Alembic::Util::Exception& e){
       std::string exc(e.what());
@@ -1872,7 +1872,7 @@ ESS_CALLBACK_START(alembic_import_Execute, CRef&)
    createItemArgs[4] = importVisibility;
 
 
-   Alembic::AbcGeom::IObject root = archive->getTop();
+   AbcG::IObject root = archive->getTop();
 
  
    std::vector<std::string> nodesToImport;
@@ -1908,7 +1908,7 @@ ESS_CALLBACK_START(alembic_import_Execute, CRef&)
    while( !sceneStack.empty() )
    {
       stackElement sElement = sceneStack.back();
-      Alembic::Abc::IObject iObj = sElement.iObj;
+      Abc::IObject iObj = sElement.iObj;
       CRef parentNode(sElement.parentNode);
       sceneStack.pop_back();
 
@@ -1921,7 +1921,7 @@ ESS_CALLBACK_START(alembic_import_Execute, CRef&)
 
       bool bCreateNullNode = false;
       int nMergedGeomNodeIndex = -1;
-		Alembic::AbcGeom::IObject mergedGeomChild;
+		AbcG::IObject mergedGeomChild;
 
       getMergeInfo(iObj, bCreateNullNode, nMergedGeomNodeIndex, mergedGeomChild);
 
@@ -1957,7 +1957,7 @@ ESS_CALLBACK_START(alembic_import_Execute, CRef&)
          //push the children as the last step, since we need to who the parent is first (we may have merged)
 	      for(size_t j=0; j<iObj.getNumChildren(); j++)
 	      {
-            Alembic::AbcGeom::IObject childObj = iObj.getChild(j);
+            AbcG::IObject childObj = iObj.getChild(j);
             if( NodeCategory::get(childObj) == NodeCategory::UNSUPPORTED ) continue;// skip over unsupported types
 
             //I assume that geometry nodes are always leaf nodes. Thus, if we merged a geometry node will its parent transform, we don't

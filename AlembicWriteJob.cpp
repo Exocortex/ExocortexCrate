@@ -31,8 +31,6 @@
 using namespace XSI;
 using namespace MATH;
 
-namespace AbcA = ::Alembic::AbcCoreAbstract::ALEMBIC_VERSION_NS;
-using namespace AbcA;
 
 AlembicWriteJob::AlembicWriteJob
 (
@@ -144,7 +142,7 @@ CStatus AlembicWriteJob::PreProcess()
             mFileName.GetAsciiString(),
             "Softimage Alembic Plugin",
             sceneFileName.GetAsciiString(),
-            Alembic::Abc::ErrorHandler::kThrowPolicy);
+            Abc::ErrorHandler::kThrowPolicy);
    }
    catch(Alembic::Util::Exception& e)
    {
@@ -183,7 +181,7 @@ CStatus AlembicWriteJob::PreProcess()
       }
 
       double timePerCycle = frames[frames.size()-1] - frames[0];
-      AbcA::TimeSamplingType samplingType((uint32_t)frames.size(),timePerCycle);
+	  AbcA::TimeSamplingType samplingType((Abc::uint32_t)frames.size(),timePerCycle);
       AbcA::TimeSampling sampling(samplingType,frames);
       mTs = mArchive.addTimeSampling(sampling);
    }
@@ -200,7 +198,7 @@ CStatus AlembicWriteJob::PreProcess()
    }
    std::sort(mSelection.begin(), mSelection.end());
 
-   Alembic::Abc::OBox3dProperty boxProp = Alembic::AbcGeom::CreateOArchiveBounds(mArchive,mTs);
+   Abc::OBox3dProperty boxProp =AbcG::CreateOArchiveBounds(mArchive,mTs);
 
    CString activeSceneRoot_GetFullName = Application().GetActiveSceneRoot().GetFullName();
    // create object for each

@@ -32,10 +32,6 @@
 using namespace XSI;
 using namespace MATH;
 
-namespace AbcA = ::Alembic::AbcCoreAbstract::ALEMBIC_VERSION_NS;
-namespace AbcB = ::Alembic::Abc::ALEMBIC_VERSION_NS;
-using namespace AbcA;
-using namespace AbcB;
 
 AlembicPolyMesh::AlembicPolyMesh(const XSI::CRef & in_Ref, AlembicWriteJob * in_Job)
 : AlembicObject(in_Ref, in_Job)
@@ -43,8 +39,8 @@ AlembicPolyMesh::AlembicPolyMesh(const XSI::CRef & in_Ref, AlembicWriteJob * in_
    Primitive prim(GetRef());
    CString meshName(prim.GetParent3DObject().GetName());
    CString xformName(meshName+L"Xfo");
-   Alembic::AbcGeom::OXform xform(GetOParent(),xformName.GetAsciiString(),GetJob()->GetAnimatedTs());
-   Alembic::AbcGeom::OPolyMesh mesh(xform,meshName.GetAsciiString(),GetJob()->GetAnimatedTs());
+  AbcG::OXform xform(GetOParent(),xformName.GetAsciiString(),GetJob()->GetAnimatedTs());
+  AbcG::OPolyMesh mesh(xform,meshName.GetAsciiString(),GetJob()->GetAnimatedTs());
    AddRef(prim.GetParent3DObject().GetKinematics().GetGlobal().GetRef());
 
    mXformSchema = xform.getSchema();
@@ -61,7 +57,7 @@ AlembicPolyMesh::~AlembicPolyMesh()
    mOVisibility.reset();
 }
 
-Alembic::Abc::OCompoundProperty AlembicPolyMesh::GetCompound()
+Abc::OCompoundProperty AlembicPolyMesh::GetCompound()
 {
    return mMeshSchema;
 }
@@ -90,7 +86,7 @@ XSI::CStatus AlembicPolyMesh::Save(double time)
    if(isRefAnimated(visProp.GetRef()) || mNumSamples == 0)
    {
       bool visibility = visProp.GetParameterValue(L"rendvis",time);
-      mOVisibility.set(visibility ? Alembic::AbcGeom::kVisibilityVisible : Alembic::AbcGeom::kVisibilityHidden);
+      mOVisibility.set(visibility ?AbcG::kVisibilityVisible :AbcG::kVisibilityHidden);
    }
 
    // check if the mesh is animated
@@ -103,9 +99,9 @@ XSI::CStatus AlembicPolyMesh::Save(double time)
    bool purePointCache = (bool)GetJob()->GetOption(L"exportPurePointCache");
 
    // define additional vectors, necessary for this task
-   std::vector<Alembic::Abc::V3f> posVec;
-   std::vector<Alembic::Abc::N3f> normalVec;
-   std::vector<uint32_t> normalIndexVec;
+   std::vector<Abc::V3f> posVec;
+   std::vector<Abc::N3f> normalVec;
+   std::vector<Abc::uint32_t> normalIndexVec;
 
    // access the mesh
    PolygonMesh mesh = prim.GetGeometry(time);
@@ -113,7 +109,7 @@ XSI::CStatus AlembicPolyMesh::Save(double time)
    LONG vertCount = pos.GetCount();
 
    // prepare the bounding box
-   Alembic::Abc::Box3d bbox;
+   Abc::Box3d bbox;
 
    // allocate the points and normals
    posVec.resize(vertCount);
@@ -130,10 +126,10 @@ XSI::CStatus AlembicPolyMesh::Save(double time)
    // allocate the sample for the points
    if(posVec.size() == 0)
    {
-      bbox.extendBy(Alembic::Abc::V3f(0,0,0));
-      posVec.push_back(Alembic::Abc::V3f(FLT_MAX,FLT_MAX,FLT_MAX));
+      bbox.extendBy(Abc::V3f(0,0,0));
+      posVec.push_back(Abc::V3f(FLT_MAX,FLT_MAX,FLT_MAX));
    }
-   Alembic::Abc::P3fArraySample posSample(&posVec.front(),posVec.size());
+   Abc::P3fArraySample posSample(&posVec.front(),posVec.size());
 
    // store the positions && bbox
    mMeshSample.setPositions(posSample);
@@ -145,8 +141,8 @@ XSI::CStatus AlembicPolyMesh::Save(double time)
       if(mNumSamples == 0)
       {
          // store a dummy empty topology
-         mMeshSample.setFaceCounts(Alembic::Abc::Int32ArraySample(NULL, 0));
-         mMeshSample.setFaceIndices(Alembic::Abc::Int32ArraySample(NULL, 0));
+         mMeshSample.setFaceCounts(Abc::Int32ArraySample(NULL, 0));
+         mMeshSample.setFaceIndices(Abc::Int32ArraySample(NULL, 0));
       }
 
       mMeshSchema.set(mMeshSample);
@@ -226,7 +222,7 @@ XSI::CStatus AlembicPolyMesh::Save(double time)
          std::map<SortableV3f,size_t> normalMap;
          std::map<SortableV3f,size_t>::const_iterator it;
          size_t sortedNormalCount = 0;
-         std::vector<Alembic::Abc::V3f> sortedNormalVec;
+         std::vector<Abc::V3f> sortedNormalVec;
          normalIndexVec.resize(normalVec.size());
          sortedNormalVec.resize(normalVec.size());
 
@@ -235,11 +231,11 @@ XSI::CStatus AlembicPolyMesh::Save(double time)
          {
             it = normalMap.find(normalVec[i]);
             if(it != normalMap.end())
-               normalIndexVec[normalIndexCount++] = (uint32_t)it->second;
+               normalIndexVec[normalIndexCount++] = (Abc::uint32_t)it->second;
             else
             {
-               normalIndexVec[normalIndexCount++] = (uint32_t)sortedNormalCount;
-               normalMap.insert(std::pair<Alembic::Abc::V3f,size_t>(normalVec[i],(uint32_t)sortedNormalCount));
+               normalIndexVec[normalIndexCount++] = (Abc::uint32_t)sortedNormalCount;
+               normalMap.insert(std::pair<Abc::V3f,size_t>(normalVec[i],(Abc::uint32_t)sortedNormalCount));
                sortedNormalVec[sortedNormalCount++] = normalVec[i];
             }
          }
@@ -277,10 +273,10 @@ XSI::CStatus AlembicPolyMesh::Save(double time)
          }
 
          if(mVelocitiesVec.size() == 0)
-            mVelocitiesVec.push_back(Alembic::Abc::V3f(0,0,0));
+            mVelocitiesVec.push_back(Abc::V3f(0,0,0));
 
 
-         Alembic::Abc::V3fArraySample sample = Alembic::Abc::V3fArraySample(&mVelocitiesVec.front(),mVelocitiesVec.size());
+         Abc::V3fArraySample sample = Abc::V3fArraySample(&mVelocitiesVec.front(),mVelocitiesVec.size());
          mMeshSample.setVelocities(sample);
       }
    }
@@ -307,26 +303,26 @@ XSI::CStatus AlembicPolyMesh::Save(double time)
          mFaceCountVec.push_back(0);
          mFaceIndicesVec.push_back(0);
       }
-      Alembic::Abc::Int32ArraySample faceCountSample(&mFaceCountVec.front(),mFaceCountVec.size());
-      Alembic::Abc::Int32ArraySample faceIndicesSample(&mFaceIndicesVec.front(),mFaceIndicesVec.size());
+      Abc::Int32ArraySample faceCountSample(&mFaceCountVec.front(),mFaceCountVec.size());
+      Abc::Int32ArraySample faceIndicesSample(&mFaceIndicesVec.front(),mFaceIndicesVec.size());
 
       mMeshSample.setFaceCounts(faceCountSample);
       mMeshSample.setFaceIndices(faceIndicesSample);
 
-      Alembic::AbcGeom::ON3fGeomParam::Sample normalSample;
+     AbcG::ON3fGeomParam::Sample normalSample;
       if((normalVec.size() == 0 || normalCount == 0) && exportNormals && dynamicTopology)
       {
-         normalVec.push_back(Alembic::Abc::V3f(FLT_MAX,FLT_MAX,FLT_MAX));
+         normalVec.push_back(Abc::V3f(FLT_MAX,FLT_MAX,FLT_MAX));
          normalCount = 1;
          normalIndexVec.push_back(0);
          normalIndexCount = 1;
       }
       if(normalVec.size() > 0 && normalCount > 0)
       {
-         normalSample.setScope(Alembic::AbcGeom::kFacevaryingScope);
-         normalSample.setVals(Alembic::Abc::N3fArraySample(&normalVec.front(),normalCount));
+         normalSample.setScope(AbcG::kFacevaryingScope);
+         normalSample.setVals(Abc::N3fArraySample(&normalVec.front(),normalCount));
          if(normalIndexCount > 0)
-            normalSample.setIndices(Alembic::Abc::UInt32ArraySample(&normalIndexVec.front(),normalIndexCount));
+            normalSample.setIndices(Abc::UInt32ArraySample(&normalIndexVec.front(),normalIndexCount));
          mMeshSample.setNormals(normalSample);
       }
 
@@ -352,9 +348,9 @@ XSI::CStatus AlembicPolyMesh::Save(double time)
                for(LONG i=0;i< uvPropRefs.GetCount();i++)
                   uvSetNames.push_back(ClusterProperty(uvPropRefs[i]).GetName().GetAsciiString());
 
-               Alembic::Abc::OStringArrayProperty uvSetNamesProperty = Alembic::Abc::OStringArrayProperty(
+               Abc::OStringArrayProperty uvSetNamesProperty = Abc::OStringArrayProperty(
                   mMeshSchema, ".uvSetNames", mMeshSchema.getMetaData(), GetJob()->GetAnimatedTs() );
-               Alembic::Abc::StringArraySample uvSetNamesSample(&uvSetNames.front(),uvSetNames.size());
+               Abc::StringArraySample uvSetNamesSample(&uvSetNames.front(),uvSetNames.size());
                uvSetNamesProperty.set(uvSetNamesSample);
             }
 
@@ -377,7 +373,7 @@ XSI::CStatus AlembicPolyMesh::Save(double time)
                   std::map<SortableV2f,size_t> uvMap;
                   std::map<SortableV2f,size_t>::const_iterator it;
                   size_t sortedUVCount = 0;
-                  std::vector<Alembic::Abc::V2f> sortedUVVec;
+                  std::vector<Abc::V2f> sortedUVVec;
                   mUvIndexVec[uvI].resize(mUvVec[uvI].size());
                   sortedUVVec.resize(mUvVec[uvI].size());
 
@@ -386,11 +382,11 @@ XSI::CStatus AlembicPolyMesh::Save(double time)
                   {
                      it = uvMap.find(mUvVec[uvI][i]);
                      if(it != uvMap.end())
-                        mUvIndexVec[uvI][uvIndexCount++] = (uint32_t)it->second;
+                        mUvIndexVec[uvI][uvIndexCount++] = (Abc::uint32_t)it->second;
                      else
                      {
-                        mUvIndexVec[uvI][uvIndexCount++] = (uint32_t)sortedUVCount;
-                        uvMap.insert(std::pair<Alembic::Abc::V2f,size_t>(mUvVec[uvI][i],(uint32_t)sortedUVCount));
+                        mUvIndexVec[uvI][uvIndexCount++] = (Abc::uint32_t)sortedUVCount;
+                        uvMap.insert(std::pair<Abc::V2f,size_t>(mUvVec[uvI][i],(Abc::uint32_t)sortedUVCount));
                         sortedUVVec[sortedUVCount++] = mUvVec[uvI][i];
                      }
                   }
@@ -403,9 +399,9 @@ XSI::CStatus AlembicPolyMesh::Save(double time)
                   sortedUVVec.clear();
                }
 
-               Alembic::AbcGeom::OV2fGeomParam::Sample uvSample(Alembic::Abc::V2fArraySample(&mUvVec[uvI].front(),uvCount),Alembic::AbcGeom::kFacevaryingScope);
+              AbcG::OV2fGeomParam::Sample uvSample(Abc::V2fArraySample(&mUvVec[uvI].front(),uvCount),AbcG::kFacevaryingScope);
                if(mUvIndexVec.size() > 0 && uvIndexCount > 0)
-                  uvSample.setIndices(Alembic::Abc::UInt32ArraySample(&mUvIndexVec[uvI].front(),uvIndexCount));
+                  uvSample.setIndices(Abc::UInt32ArraySample(&mUvIndexVec[uvI].front(),uvIndexCount));
 
                if(uvI == 0)
                {
@@ -417,8 +413,8 @@ XSI::CStatus AlembicPolyMesh::Save(double time)
                   if(mNumSamples == 0)
                   {
                      CString storedUvSetName = CString(L"uv") + CString(uvI);
-                     mUvParams.push_back(Alembic::AbcGeom::OV2fGeomParam( mMeshSchema, storedUvSetName.GetAsciiString(), uvIndexCount > 0,
-                                         Alembic::AbcGeom::kFacevaryingScope, 1, GetJob()->GetAnimatedTs()));
+                     mUvParams.push_back(AbcG::OV2fGeomParam( mMeshSchema, storedUvSetName.GetAsciiString(), uvIndexCount > 0,
+                                        AbcG::kFacevaryingScope, 1, GetJob()->GetAnimatedTs()));
                   }
                   mUvParams[uvI-1].set(uvSample);
                }
@@ -427,7 +423,7 @@ XSI::CStatus AlembicPolyMesh::Save(double time)
             // create the uv options
             if(mUvOptionsVec.size() == 0)
             {
-               mUvOptionsProperty = OFloatArrayProperty(mMeshSchema, ".uvOptions", mMeshSchema.getMetaData(), GetJob()->GetAnimatedTs() );
+				mUvOptionsProperty = Abc::OFloatArrayProperty(mMeshSchema, ".uvOptions", mMeshSchema.getMetaData(), GetJob()->GetAnimatedTs() );
 
                for(LONG uvI=0;uvI<uvPropRefs.GetCount();uvI++)
                {
@@ -459,7 +455,7 @@ XSI::CStatus AlembicPolyMesh::Save(double time)
                   mUvOptionsVec.push_back(vWrap ? 1.0f : 0.0f);
 				  mUvOptionsVec.push_back(subdsmooth ? 1.0f : 0.0f);
                }
-               mUvOptionsProperty.set(Alembic::Abc::FloatArraySample(&mUvOptionsVec.front(),mUvOptionsVec.size()));
+               mUvOptionsProperty.set(Abc::FloatArraySample(&mUvOptionsVec.front(),mUvOptionsVec.size()));
             }
          }
       }
@@ -479,15 +475,15 @@ XSI::CStatus AlembicPolyMesh::Save(double time)
 
             std::string name(cluster.GetName().GetAsciiString());
 
-            mFaceSetsVec.push_back(std::vector<int32_t>());
-            std::vector<int32_t> & faceSetVec = mFaceSetsVec.back();
+            mFaceSetsVec.push_back(std::vector<Abc::int32_t>());
+            std::vector<Abc::int32_t> & faceSetVec = mFaceSetsVec.back();
             for(LONG j=0;j<elements.GetCount();j++)
                faceSetVec.push_back(elements[j]);
 
             if(faceSetVec.size() > 0)
             {
-               Alembic::AbcGeom::OFaceSet faceSet = mMeshSchema.createFaceSet(name);
-               Alembic::AbcGeom::OFaceSetSchema::Sample faceSetSample(Alembic::Abc::Int32ArraySample(&faceSetVec.front(),faceSetVec.size()));
+              AbcG::OFaceSet faceSet = mMeshSchema.createFaceSet(name);
+              AbcG::OFaceSetSchema::Sample faceSetSample(Abc::Int32ArraySample(&faceSetVec.front(),faceSetVec.size()));
                faceSet.getSchema().set(faceSetSample);
             }
          }
@@ -499,7 +495,7 @@ XSI::CStatus AlembicPolyMesh::Save(double time)
       // check if we need to export the bindpose (also only for first frame)
       if(GetJob()->GetOption(L"exportBindPose") && prim.GetParent3DObject().GetEnvelopes().GetCount() > 0 && mNumSamples == 0)
       {
-         mBindPoseProperty = OV3fArrayProperty(mMeshSchema, ".bindpose", mMeshSchema.getMetaData(), GetJob()->GetAnimatedTs());
+         mBindPoseProperty = Abc::OV3fArrayProperty(mMeshSchema, ".bindpose", mMeshSchema.getMetaData(), GetJob()->GetAnimatedTs());
 
          // store the positions of the modeling stack into here
          PolygonMesh bindPoseGeo = prim.GetGeometry(time, siConstructionModeModeling);
@@ -512,21 +508,21 @@ XSI::CStatus AlembicPolyMesh::Save(double time)
             mBindPoseVec[i].z = (float)bindPosePos[i].GetZ();
          }
 
-         Alembic::Abc::V3fArraySample sample;
+         Abc::V3fArraySample sample;
          if(mBindPoseVec.size() > 0)
-            sample = Alembic::Abc::V3fArraySample(&mBindPoseVec.front(),mBindPoseVec.size());
+            sample = Abc::V3fArraySample(&mBindPoseVec.front(),mBindPoseVec.size());
          mBindPoseProperty.set(sample);
       }   
    }
    else
    {
-      Alembic::AbcGeom::ON3fGeomParam::Sample normalSample;
+     AbcG::ON3fGeomParam::Sample normalSample;
       if(normalVec.size() > 0 && normalCount > 0)
       {
-         normalSample.setScope(Alembic::AbcGeom::kFacevaryingScope);
-         normalSample.setVals(Alembic::Abc::N3fArraySample(&normalVec.front(),normalCount));
+         normalSample.setScope(AbcG::kFacevaryingScope);
+         normalSample.setVals(Abc::N3fArraySample(&normalVec.front(),normalCount));
          if(normalIndexCount > 0)
-            normalSample.setIndices(Alembic::Abc::UInt32ArraySample(&normalIndexVec.front(),normalIndexCount));
+            normalSample.setIndices(Abc::UInt32ArraySample(&normalIndexVec.front(),normalIndexCount));
          mMeshSample.setNormals(normalSample);
       }
       mMeshSchema.set(mMeshSample);
@@ -556,15 +552,15 @@ ESS_CALLBACK_START( alembic_polymesh_Update, CRef& )
    CString path = ctxt.GetParameterValue(L"path");
    CString identifier = ctxt.GetParameterValue(L"identifier");
 
-   Alembic::AbcGeom::IObject iObj = getObjectFromArchive(path,identifier);
+  AbcG::IObject iObj = getObjectFromArchive(path,identifier);
    if(!iObj.valid())
       return CStatus::OK;
-   Alembic::AbcGeom::IPolyMesh objMesh;
-   Alembic::AbcGeom::ISubD objSubD;
-   if(Alembic::AbcGeom::IPolyMesh::matches(iObj.getMetaData()))
-      objMesh = Alembic::AbcGeom::IPolyMesh(iObj,Alembic::Abc::kWrapExisting);
+  AbcG::IPolyMesh objMesh;
+  AbcG::ISubD objSubD;
+   if(AbcG::IPolyMesh::matches(iObj.getMetaData()))
+      objMesh =AbcG::IPolyMesh(iObj,Abc::kWrapExisting);
    else
-      objSubD = Alembic::AbcGeom::ISubD(iObj,Alembic::Abc::kWrapExisting);
+      objSubD =AbcG::ISubD(iObj,Abc::kWrapExisting);
    if(!objMesh.valid() && !objSubD.valid())
       return CStatus::OK;
 
@@ -587,16 +583,16 @@ ESS_CALLBACK_START( alembic_polymesh_Update, CRef& )
 	 nSamples
    );
 
-   Alembic::Abc::P3fArraySamplePtr meshPos;
+   Abc::P3fArraySamplePtr meshPos;
    if(objMesh.valid())
    {
-      Alembic::AbcGeom::IPolyMeshSchema::Sample sample;
+     AbcG::IPolyMeshSchema::Sample sample;
       objMesh.getSchema().get(sample,sampleInfo.floorIndex);
       meshPos = sample.getPositions();
    }
    else
    {
-      Alembic::AbcGeom::ISubDSchema::Sample sample;
+     AbcG::ISubDSchema::Sample sample;
       objSubD.getSchema().get(sample,sampleInfo.floorIndex);
       meshPos = sample.getPositions();
    }
@@ -618,13 +614,13 @@ ESS_CALLBACK_START( alembic_polymesh_Update, CRef& )
    {
       if(objMesh.valid())
       {
-         Alembic::AbcGeom::IPolyMeshSchema::Sample sample;
+        AbcG::IPolyMeshSchema::Sample sample;
          objMesh.getSchema().get(sample,sampleInfo.ceilIndex);
          meshPos = sample.getPositions();
       }
       else
       {
-         Alembic::AbcGeom::ISubDSchema::Sample sample;
+        AbcG::ISubDSchema::Sample sample;
          objSubD.getSchema().get(sample,sampleInfo.ceilIndex);
          meshPos = sample.getPositions();
       }
@@ -660,10 +656,10 @@ ESS_CALLBACK_START( alembic_normals_Update, CRef& )
    CString path = ctxt.GetParameterValue(L"path");
    CString identifier = ctxt.GetParameterValue(L"identifier");
 
-   Alembic::AbcGeom::IObject iObj = getObjectFromArchive(path,identifier);
+  AbcG::IObject iObj = getObjectFromArchive(path,identifier);
    if(!iObj.valid())
       return CStatus::OK;
-   Alembic::AbcGeom::IPolyMesh obj(iObj,Alembic::Abc::kWrapExisting);
+  AbcG::IPolyMesh obj(iObj,Abc::kWrapExisting);
    if(!obj.valid())
       return CStatus::OK;
 
@@ -679,10 +675,10 @@ ESS_CALLBACK_START( alembic_normals_Update, CRef& )
    CLongArray counts;
    accessor.GetPolygonVerticesCount(counts);
 
-   Alembic::AbcGeom::IN3fGeomParam meshNormalsParam = obj.getSchema().getNormalsParam();
+  AbcG::IN3fGeomParam meshNormalsParam = obj.getSchema().getNormalsParam();
    if(meshNormalsParam.valid())
    {
-      Alembic::Abc::N3fArraySamplePtr meshNormals = meshNormalsParam.getExpandedValue(sampleInfo.floorIndex).getVals();
+      Abc::N3fArraySamplePtr meshNormals = meshNormalsParam.getExpandedValue(sampleInfo.floorIndex).getVals();
 
 	  Operator op(ctxt.GetSource());
 	  updateOperatorInfo( op, sampleInfo, obj.getSchema().getTimeSampling(),
@@ -769,15 +765,15 @@ ESS_CALLBACK_START( alembic_uvs_Update, CRef& )
    if(identifierAndIndex.GetCount() > 1)
       uvI = (LONG)CValue(identifierAndIndex[1]);
 
-   Alembic::AbcGeom::IObject iObj = getObjectFromArchive(path,identifier);
+  AbcG::IObject iObj = getObjectFromArchive(path,identifier);
    if(!iObj.valid())
       return CStatus::OK;
-   Alembic::AbcGeom::IPolyMesh objMesh;
-   Alembic::AbcGeom::ISubD objSubD;
-   if(Alembic::AbcGeom::IPolyMesh::matches(iObj.getMetaData()))
-      objMesh = Alembic::AbcGeom::IPolyMesh(iObj,Alembic::Abc::kWrapExisting);
+  AbcG::IPolyMesh objMesh;
+  AbcG::ISubD objSubD;
+   if(AbcG::IPolyMesh::matches(iObj.getMetaData()))
+      objMesh =AbcG::IPolyMesh(iObj,Abc::kWrapExisting);
    else
-      objSubD = Alembic::AbcGeom::ISubD(iObj,Alembic::Abc::kWrapExisting);
+      objSubD =AbcG::ISubD(iObj,Abc::kWrapExisting);
    if(!objMesh.valid() && !objSubD.valid())
       return CStatus::OK;
 
@@ -788,7 +784,7 @@ ESS_CALLBACK_START( alembic_uvs_Update, CRef& )
    CLongArray counts;
    accessor.GetPolygonVerticesCount(counts);
 
-   Alembic::AbcGeom::IV2fGeomParam meshUvParam;
+  AbcG::IV2fGeomParam meshUvParam;
    if(objMesh.valid())
    {
       if(uvI == 0)
@@ -798,7 +794,7 @@ ESS_CALLBACK_START( alembic_uvs_Update, CRef& )
          CString storedUVName = CString(L"uv")+CString(uvI);
          if(objMesh.getSchema().getPropertyHeader( storedUVName.GetAsciiString() ) == NULL)
             return CStatus::OK;
-         meshUvParam = Alembic::AbcGeom::IV2fGeomParam( objMesh.getSchema(), storedUVName.GetAsciiString());
+         meshUvParam =AbcG::IV2fGeomParam( objMesh.getSchema(), storedUVName.GetAsciiString());
       }
    }
    else
@@ -810,7 +806,7 @@ ESS_CALLBACK_START( alembic_uvs_Update, CRef& )
          CString storedUVName = CString(L"uv")+CString(uvI);
          if(objSubD.getSchema().getPropertyHeader( storedUVName.GetAsciiString() ) == NULL)
             return CStatus::OK;
-         meshUvParam = Alembic::AbcGeom::IV2fGeomParam( objSubD.getSchema(), storedUVName.GetAsciiString());
+         meshUvParam =AbcG::IV2fGeomParam( objSubD.getSchema(), storedUVName.GetAsciiString());
       }
    }
 
@@ -822,7 +818,7 @@ ESS_CALLBACK_START( alembic_uvs_Update, CRef& )
          meshUvParam.getNumSamples()
       );
 
-      Alembic::Abc::V2fArraySamplePtr meshUVs = meshUvParam.getExpandedValue(sampleInfo.floorIndex).getVals();
+      Abc::V2fArraySamplePtr meshUVs = meshUvParam.getExpandedValue(sampleInfo.floorIndex).getVals();
 
 	  Operator op(ctxt.GetSource());
 	  updateOperatorInfo( op, sampleInfo, meshUvParam.getTimeSampling(),
@@ -896,17 +892,17 @@ ESS_CALLBACK_START( alembic_polymesh_topo_Update, CRef& )
    CString path = ctxt.GetParameterValue(L"path");
    CString identifier = ctxt.GetParameterValue(L"identifier");
 
-   Alembic::AbcGeom::IObject iObj = getObjectFromArchive(path,identifier);
+  AbcG::IObject iObj = getObjectFromArchive(path,identifier);
    if(!iObj.valid())
       return CStatus::OK;
-   Alembic::AbcGeom::IPolyMesh objMesh;
-   Alembic::AbcGeom::ISubD objSubD;
+  AbcG::IPolyMesh objMesh;
+  AbcG::ISubD objSubD;
    {
 	ESS_PROFILE_SCOPE("alembic_polymesh_topo_Update type matching");
-	if(Alembic::AbcGeom::IPolyMesh::matches(iObj.getMetaData()))
-      objMesh = Alembic::AbcGeom::IPolyMesh(iObj,Alembic::Abc::kWrapExisting);
+	if(AbcG::IPolyMesh::matches(iObj.getMetaData()))
+      objMesh =AbcG::IPolyMesh(iObj,Abc::kWrapExisting);
    else
-      objSubD = Alembic::AbcGeom::ISubD(iObj,Alembic::Abc::kWrapExisting);
+      objSubD =AbcG::ISubD(iObj,Abc::kWrapExisting);
    }
 
    {
@@ -944,17 +940,17 @@ ESS_CALLBACK_START( alembic_polymesh_topo_Update, CRef& )
 	   );
    }
 
-   Alembic::Abc::P3fArraySamplePtr meshPos;
-   Alembic::Abc::V3fArraySamplePtr meshVel;
-   Alembic::Abc::Int32ArraySamplePtr meshFaceCount;
-   Alembic::Abc::Int32ArraySamplePtr meshFaceIndices;
+   Abc::P3fArraySamplePtr meshPos;
+   Abc::V3fArraySamplePtr meshVel;
+   Abc::Int32ArraySamplePtr meshFaceCount;
+   Abc::Int32ArraySamplePtr meshFaceIndices;
 
    bool hasDynamicTopo = isAlembicMeshTopoDynamic( & objMesh );
    if(objMesh.valid())
    {
       ESS_PROFILE_SCOPE("alembic_polymesh_topo_Update load abc data arrays");
 
-      Alembic::AbcGeom::IPolyMeshSchema::Sample sample;
+     AbcG::IPolyMeshSchema::Sample sample;
       objMesh.getSchema().get(sample,sampleInfo.floorIndex);
       meshPos = sample.getPositions();
       meshVel = sample.getVelocities();
@@ -964,7 +960,7 @@ ESS_CALLBACK_START( alembic_polymesh_topo_Update, CRef& )
    else
    {
       ESS_PROFILE_SCOPE("alembic_polymesh_topo_Update load abc data arrays");
-      Alembic::AbcGeom::ISubDSchema::Sample sample;
+     AbcG::ISubDSchema::Sample sample;
       objSubD.getSchema().get(sample,sampleInfo.floorIndex);
       meshPos = sample.getPositions();
       meshVel = sample.getVelocities();
@@ -1007,13 +1003,13 @@ ESS_CALLBACK_START( alembic_polymesh_topo_Update, CRef& )
       {
 
          LONG offset1 = 0;
-         Alembic::Abc::int32_t offset2 = 0;
+         Abc::int32_t offset2 = 0;
 
          //ESS_LOG_INFO("face count: " << (unsigned int)meshFaceCount->size());
 
          for(size_t j=0;j<meshFaceCount->size();j++)
          {
-            Alembic::Abc::int32_t singleFaceCount = meshFaceCount->get()[j];
+            Abc::int32_t singleFaceCount = meshFaceCount->get()[j];
             polies[offset1++] = singleFaceCount;
             offset2 += singleFaceCount;
 
@@ -1042,13 +1038,13 @@ ESS_CALLBACK_START( alembic_polymesh_topo_Update, CRef& )
       // first check if the next frame has the same point count
       if(objMesh.valid())
       {
-         Alembic::AbcGeom::IPolyMeshSchema::Sample sample;
+        AbcG::IPolyMeshSchema::Sample sample;
          objMesh.getSchema().get(sample,sampleInfo.ceilIndex);
          meshPos = sample.getPositions();
       }
       else
       {
-         Alembic::AbcGeom::ISubDSchema::Sample sample;
+        AbcG::ISubDSchema::Sample sample;
          objSubD.getSchema().get(sample,sampleInfo.floorIndex);
          meshPos = sample.getPositions();
       }
@@ -1140,19 +1136,19 @@ ESS_CALLBACK_START( alembic_bbox_Update, CRef& )
    CString identifier = ctxt.GetParameterValue(L"identifier");
    float extend = ctxt.GetParameterValue(L"extend");
 
-   Alembic::AbcGeom::IObject iObj = getObjectFromArchive(path,identifier);
+  AbcG::IObject iObj = getObjectFromArchive(path,identifier);
    if(!iObj.valid())
       return CStatus::OK;
 
-   Alembic::Abc::Box3d box;
+   Abc::Box3d box;
    SampleInfo sampleInfo;
    TimeSamplingPtr timeSampling;
    int nSamples = 0;
    
    // check what kind of object we have
-   const Alembic::Abc::MetaData &md = iObj.getMetaData();
-   if(Alembic::AbcGeom::IPolyMesh::matches(md)) {
-      Alembic::AbcGeom::IPolyMesh obj(iObj,Alembic::Abc::kWrapExisting);
+   const Abc::MetaData &md = iObj.getMetaData();
+   if(AbcG::IPolyMesh::matches(md)) {
+     AbcG::IPolyMesh obj(iObj,Abc::kWrapExisting);
       if(!obj.valid())
          return CStatus::OK;
 
@@ -1164,20 +1160,20 @@ ESS_CALLBACK_START( alembic_bbox_Update, CRef& )
          nSamples
       );
 
-      Alembic::AbcGeom::IPolyMeshSchema::Sample sample;
+     AbcG::IPolyMeshSchema::Sample sample;
       obj.getSchema().get(sample,sampleInfo.floorIndex);
       box = sample.getSelfBounds();
 
       if(sampleInfo.alpha > 0.0)
       {
          obj.getSchema().get(sample,sampleInfo.ceilIndex);
-         Alembic::Abc::Box3d box2 = sample.getSelfBounds();
+         Abc::Box3d box2 = sample.getSelfBounds();
 
          box.min = (1.0 - sampleInfo.alpha) * box.min + sampleInfo.alpha * box2.min;
          box.max = (1.0 - sampleInfo.alpha) * box.max + sampleInfo.alpha * box2.max;
       }
-   } else if(Alembic::AbcGeom::ICurves::matches(md)) {
-      Alembic::AbcGeom::ICurves obj(iObj,Alembic::Abc::kWrapExisting);
+   } else if(AbcG::ICurves::matches(md)) {
+     AbcG::ICurves obj(iObj,Abc::kWrapExisting);
       if(!obj.valid())
          return CStatus::OK;
 
@@ -1189,20 +1185,20 @@ ESS_CALLBACK_START( alembic_bbox_Update, CRef& )
          nSamples
       );
 
-      Alembic::AbcGeom::ICurvesSchema::Sample sample;
+     AbcG::ICurvesSchema::Sample sample;
       obj.getSchema().get(sample,sampleInfo.floorIndex);
       box = sample.getSelfBounds();
 
       if(sampleInfo.alpha > 0.0)
       {
          obj.getSchema().get(sample,sampleInfo.ceilIndex);
-         Alembic::Abc::Box3d box2 = sample.getSelfBounds();
+         Abc::Box3d box2 = sample.getSelfBounds();
 
          box.min = (1.0 - sampleInfo.alpha) * box.min + sampleInfo.alpha * box2.min;
          box.max = (1.0 - sampleInfo.alpha) * box.max + sampleInfo.alpha * box2.max;
       }
-   } else if(Alembic::AbcGeom::IPoints::matches(md)) {
-      Alembic::AbcGeom::IPoints obj(iObj,Alembic::Abc::kWrapExisting);
+   } else if(AbcG::IPoints::matches(md)) {
+     AbcG::IPoints obj(iObj,Abc::kWrapExisting);
       if(!obj.valid())
          return CStatus::OK;
 
@@ -1214,20 +1210,20 @@ ESS_CALLBACK_START( alembic_bbox_Update, CRef& )
          nSamples
       );
 
-      Alembic::AbcGeom::IPointsSchema::Sample sample;
+     AbcG::IPointsSchema::Sample sample;
       obj.getSchema().get(sample,sampleInfo.floorIndex);
       box = sample.getSelfBounds();
 
       if(sampleInfo.alpha > 0.0)
       {
          obj.getSchema().get(sample,sampleInfo.ceilIndex);
-         Alembic::Abc::Box3d box2 = sample.getSelfBounds();
+         Abc::Box3d box2 = sample.getSelfBounds();
 
          box.min = (1.0 - sampleInfo.alpha) * box.min + sampleInfo.alpha * box2.min;
          box.max = (1.0 - sampleInfo.alpha) * box.max + sampleInfo.alpha * box2.max;
       }
-   } else if(Alembic::AbcGeom::ISubD::matches(md)) {
-      Alembic::AbcGeom::ISubD obj(iObj,Alembic::Abc::kWrapExisting);
+   } else if(AbcG::ISubD::matches(md)) {
+     AbcG::ISubD obj(iObj,Abc::kWrapExisting);
       if(!obj.valid())
          return CStatus::OK;
 
@@ -1239,14 +1235,14 @@ ESS_CALLBACK_START( alembic_bbox_Update, CRef& )
          nSamples
       );
 
-      Alembic::AbcGeom::ISubDSchema::Sample sample;
+     AbcG::ISubDSchema::Sample sample;
       obj.getSchema().get(sample,sampleInfo.floorIndex);
       box = sample.getSelfBounds();
 
       if(sampleInfo.alpha > 0.0)
       {
          obj.getSchema().get(sample,sampleInfo.ceilIndex);
-         Alembic::Abc::Box3d box2 = sample.getSelfBounds();
+         Abc::Box3d box2 = sample.getSelfBounds();
 
          box.min = (1.0 - sampleInfo.alpha) * box.min + sampleInfo.alpha * box2.min;
          box.max = (1.0 - sampleInfo.alpha) * box.max + sampleInfo.alpha * box2.max;

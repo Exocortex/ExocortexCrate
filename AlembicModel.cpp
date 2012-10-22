@@ -18,16 +18,13 @@
 using namespace XSI;
 using namespace MATH;
 
-namespace AbcA = ::Alembic::AbcCoreAbstract::ALEMBIC_VERSION_NS;
-using namespace AbcA;
-
 AlembicModel::AlembicModel(const XSI::CRef & in_Ref, AlembicWriteJob * in_Job)
 : AlembicObject(in_Ref, in_Job)
 {
    Primitive prim(GetRef());
    CString modelName(prim.GetParent3DObject().GetName());
    CString xformName(modelName+L"Xfo");
-   Alembic::AbcGeom::OXform xform(GetOParent(),xformName.GetAsciiString(),GetJob()->GetAnimatedTs());
+  AbcG::OXform xform(GetOParent(),xformName.GetAsciiString(),GetJob()->GetAnimatedTs());
    if((bool)in_Job->GetOption(L"transformCache"))
       AddRef(prim.GetParent3DObject().GetKinematics().GetLocal().GetRef());
    else
@@ -46,7 +43,7 @@ AlembicModel::~AlembicModel()
    mOVisibility.reset();
 }
 
-Alembic::Abc::OCompoundProperty AlembicModel::GetCompound()
+Abc::OCompoundProperty AlembicModel::GetCompound()
 {
    return mXformSchema;
 }
@@ -66,7 +63,7 @@ XSI::CStatus AlembicModel::Save(double time)
    if(isRefAnimated(visProp.GetRef()) || mNumSamples == 0)
    {
       bool visibility = visProp.GetParameterValue(L"rendvis",time);
-      mOVisibility.set(visibility ? Alembic::AbcGeom::kVisibilityVisible : Alembic::AbcGeom::kVisibilityHidden);
+      mOVisibility.set(visibility ?AbcG::kVisibilityVisible :AbcG::kVisibilityHidden);
    }
 
    // store the metadata

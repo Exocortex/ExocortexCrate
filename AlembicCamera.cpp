@@ -18,17 +18,14 @@
 using namespace XSI;
 using namespace MATH;
 
-namespace AbcA = ::Alembic::AbcCoreAbstract::ALEMBIC_VERSION_NS;
-using namespace AbcA;
-
 AlembicCamera::AlembicCamera(const XSI::CRef & in_Ref, AlembicWriteJob * in_Job)
 : AlembicObject(in_Ref, in_Job)
 {
    Primitive prim(GetRef());
    CString cameraName(prim.GetParent3DObject().GetName());
    CString xformName(cameraName+L"Xfo");
-   Alembic::AbcGeom::OXform xform(GetOParent(),xformName.GetAsciiString(),GetJob()->GetAnimatedTs());
-   Alembic::AbcGeom::OCamera camera(xform,cameraName.GetAsciiString(),GetJob()->GetAnimatedTs());
+  AbcG::OXform xform(GetOParent(),xformName.GetAsciiString(),GetJob()->GetAnimatedTs());
+  AbcG::OCamera camera(xform,cameraName.GetAsciiString(),GetJob()->GetAnimatedTs());
    AddRef(prim.GetParent3DObject().GetKinematics().GetGlobal().GetRef());
 
    // create the generic properties
@@ -45,7 +42,7 @@ AlembicCamera::~AlembicCamera()
    mOVisibility.reset();
 }
 
-Alembic::Abc::OCompoundProperty AlembicCamera::GetCompound()
+Abc::OCompoundProperty AlembicCamera::GetCompound()
 {
    return mCameraSchema;
 }
@@ -65,7 +62,7 @@ XSI::CStatus AlembicCamera::Save(double time)
    if(isRefAnimated(visProp.GetRef()) || mNumSamples == 0)
    {
       bool visibility = visProp.GetParameterValue(L"rendvis",time);
-      mOVisibility.set(visibility ? Alembic::AbcGeom::kVisibilityVisible : Alembic::AbcGeom::kVisibilityHidden);
+      mOVisibility.set(visibility ?AbcG::kVisibilityVisible :AbcG::kVisibilityHidden);
    }
 
    // store the metadata
@@ -105,10 +102,10 @@ ESS_CALLBACK_START( alembic_camera_Update, CRef& )
    CString path = ctxt.GetParameterValue(L"path");
    CString identifier = ctxt.GetParameterValue(L"identifier");
 
-   Alembic::AbcGeom::IObject iObj = getObjectFromArchive(path,identifier);
+  AbcG::IObject iObj = getObjectFromArchive(path,identifier);
    if(!iObj.valid())
       return CStatus::OK;
-   Alembic::AbcGeom::ICamera obj(iObj,Alembic::Abc::kWrapExisting);
+  AbcG::ICamera obj(iObj,Abc::kWrapExisting);
    if(!obj.valid())
       return CStatus::OK;
 
@@ -121,7 +118,7 @@ ESS_CALLBACK_START( alembic_camera_Update, CRef& )
    Operator op(ctxt.GetSource());
    updateOperatorInfo( op, sampleInfo, obj.getSchema().getTimeSampling(), 0, 0);
 
-   Alembic::AbcGeom::CameraSample sample;
+  AbcG::CameraSample sample;
    obj.getSchema().get(sample,sampleInfo.floorIndex);
 
    // values

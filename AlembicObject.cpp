@@ -3,9 +3,6 @@
 #include <xsi_value.h>
 #include <boost/algorithm/string.hpp>
 
-namespace AbcA = ::Alembic::AbcCoreAbstract::ALEMBIC_VERSION_NS;
-using namespace AbcA;
-
 #pragma warning( disable: 4996 )
 
 
@@ -32,7 +29,7 @@ AlembicObject::AlembicObject
          int numChildren = (int) mOParent.getNumChildren();
          for(size_t j=0;j<numChildren;j++)
          {
-            Alembic::Abc::ObjectHeader const* pChildHeader = mOParent.getChildHeader( parts[i] );
+            Abc::ObjectHeader const* pChildHeader = mOParent.getChildHeader( parts[i] );
             if( pChildHeader != NULL )
             {
                mOParent = mOParent.getChild( parts[i] );

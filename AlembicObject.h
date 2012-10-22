@@ -16,10 +16,10 @@ class AlembicObject
 private:
    XSI::CRefArray mRefs;
    AlembicWriteJob * mJob;
-   Alembic::Abc::OObject mOParent;
+   Abc::OObject mOParent;
 protected:
    int mNumSamples;
-   Alembic::AbcGeom::OVisibilityProperty mOVisibility;
+  AbcG::OVisibilityProperty mOVisibility;
 
 public:
    AlembicObject(const XSI::CRef & in_Ref, AlembicWriteJob * in_Job);
@@ -29,8 +29,8 @@ public:
    const XSI::CRef & GetRef(ULONG index = 0) { return mRefs[index]; }
    ULONG GetRefCount() { return mRefs.GetCount(); }
    void AddRef(const XSI::CRef & in_Ref) { mRefs.Add(in_Ref); }
-   Alembic::Abc::OObject GetOParent() { return mOParent; }
-   virtual Alembic::Abc::OCompoundProperty GetCompound() = 0;
+   Abc::OObject GetOParent() { return mOParent; }
+   virtual Abc::OCompoundProperty GetCompound() = 0;
    int GetNumSamples() { return mNumSamples; }
 
    virtual XSI::CStatus Save(double time) = 0;
@@ -48,7 +48,7 @@ public:
    double lastTime;
 
    std::vector<double> times;
-   std::vector<Alembic::Abc::M44d> matrices;
+   std::vector<Abc::M44d> matrices;
 
    static void clearAll();
 

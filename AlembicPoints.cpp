@@ -36,11 +36,6 @@
 using namespace XSI;
 using namespace MATH;
 
-namespace AbcA = ::Alembic::AbcCoreAbstract::ALEMBIC_VERSION_NS;
-namespace AbcB = ::Alembic::Abc::ALEMBIC_VERSION_NS;
-using namespace AbcA;
-using namespace AbcB;
-
 
 AlembicPoints::AlembicPoints(const XSI::CRef & in_Ref, AlembicWriteJob * in_Job)
 : AlembicObject(in_Ref, in_Job)
@@ -48,8 +43,8 @@ AlembicPoints::AlembicPoints(const XSI::CRef & in_Ref, AlembicWriteJob * in_Job)
    Primitive prim(GetRef());
    CString iceName(prim.GetParent3DObject().GetName());
    CString xformName(iceName+L"Xfo");
-   Alembic::AbcGeom::OXform xform(GetOParent(),xformName.GetAsciiString(),GetJob()->GetAnimatedTs());
-   Alembic::AbcGeom::OPoints points(xform,iceName.GetAsciiString(),GetJob()->GetAnimatedTs());
+  AbcG::OXform xform(GetOParent(),xformName.GetAsciiString(),GetJob()->GetAnimatedTs());
+  AbcG::OPoints points(xform,iceName.GetAsciiString(),GetJob()->GetAnimatedTs());
    AddRef(prim.GetParent3DObject().GetKinematics().GetGlobal().GetRef());
 
    // create the generic properties
@@ -58,16 +53,16 @@ AlembicPoints::AlembicPoints(const XSI::CRef & in_Ref, AlembicWriteJob * in_Job)
    mXformSchema = xform.getSchema();
    mPointsSchema = points.getSchema();
 
-   OCompoundProperty argGeomParams = mPointsSchema.getArbGeomParams();
+   Abc::OCompoundProperty argGeomParams = mPointsSchema.getArbGeomParams();
 
    // particle attributes
-   mScaleProperty = OV3fArrayProperty(argGeomParams, ".scale", mPointsSchema.getMetaData(), GetJob()->GetAnimatedTs() );
-   mOrientationProperty = OQuatfArrayProperty(argGeomParams, ".orientation", mPointsSchema.getMetaData(), GetJob()->GetAnimatedTs() );
-   mAngularVelocityProperty = OQuatfArrayProperty(argGeomParams, ".angularvelocity", mPointsSchema.getMetaData(), GetJob()->GetAnimatedTs() );
-   mAgeProperty = OFloatArrayProperty(argGeomParams, ".age", mPointsSchema.getMetaData(), GetJob()->GetAnimatedTs() );
-   mMassProperty = OFloatArrayProperty(argGeomParams, ".mass", mPointsSchema.getMetaData(), GetJob()->GetAnimatedTs() );
-   mShapeTypeProperty = OUInt16ArrayProperty(argGeomParams, ".shapetype", mPointsSchema.getMetaData(), GetJob()->GetAnimatedTs() );
-   mColorProperty = OC4fArrayProperty(argGeomParams, ".color", mPointsSchema.getMetaData(), GetJob()->GetAnimatedTs() );
+   mScaleProperty = Abc::OV3fArrayProperty(argGeomParams, ".scale", mPointsSchema.getMetaData(), GetJob()->GetAnimatedTs() );
+   mOrientationProperty = Abc::OQuatfArrayProperty(argGeomParams, ".orientation", mPointsSchema.getMetaData(), GetJob()->GetAnimatedTs() );
+   mAngularVelocityProperty = Abc::OQuatfArrayProperty(argGeomParams, ".angularvelocity", mPointsSchema.getMetaData(), GetJob()->GetAnimatedTs() );
+   mAgeProperty = Abc::OFloatArrayProperty(argGeomParams, ".age", mPointsSchema.getMetaData(), GetJob()->GetAnimatedTs() );
+   mMassProperty = Abc::OFloatArrayProperty(argGeomParams, ".mass", mPointsSchema.getMetaData(), GetJob()->GetAnimatedTs() );
+   mShapeTypeProperty = Abc::OUInt16ArrayProperty(argGeomParams, ".shapetype", mPointsSchema.getMetaData(), GetJob()->GetAnimatedTs() );
+   mColorProperty = Abc::OC4fArrayProperty(argGeomParams, ".color", mPointsSchema.getMetaData(), GetJob()->GetAnimatedTs() );
 }
 
 AlembicPoints::~AlembicPoints()
@@ -77,7 +72,7 @@ AlembicPoints::~AlembicPoints()
    mOVisibility.reset();
 }
 
-Alembic::Abc::OCompoundProperty AlembicPoints::GetCompound()
+Abc::OCompoundProperty AlembicPoints::GetCompound()
 {
    return mPointsSchema;
 }
@@ -106,7 +101,7 @@ XSI::CStatus AlembicPoints::Save(double time)
    if(isRefAnimated(visProp.GetRef()) || mNumSamples == 0)
    {
       bool visibility = visProp.GetParameterValue(L"rendvis",time);
-      mOVisibility.set(visibility ? Alembic::AbcGeom::kVisibilityVisible : Alembic::AbcGeom::kVisibilityHidden);
+      mOVisibility.set(visibility ?AbcG::kVisibilityVisible :AbcG::kVisibilityHidden);
    }
 
    // check if the pointcloud is animated
@@ -121,10 +116,10 @@ XSI::CStatus AlembicPoints::Save(double time)
    // deal with each attribute. we scope here do free memory instantly
    {
       // position == PointPosition
-      std::vector<Alembic::Abc::V3f> positionVec;
+      std::vector<Abc::V3f> positionVec;
       {
          // prepare the bounding box
-         Alembic::Abc::Box3d bbox;
+         Abc::Box3d bbox;
 
          ICEAttribute attr = geo.GetICEAttributeFromName(L"PointPosition");
          if(attr.IsDefined() && attr.IsValid())
@@ -144,10 +139,10 @@ XSI::CStatus AlembicPoints::Save(double time)
          mPointsSample.setSelfBounds(bbox);
       }
 
-      Alembic::Abc::P3fArraySample positionSample = Alembic::Abc::P3fArraySample(positionVec);
+      Abc::P3fArraySample positionSample = Abc::P3fArraySample(positionVec);
 
       // velocity == PointVelocity
-      std::vector<Alembic::Abc::V3f> velocityVec;
+      std::vector<Abc::V3f> velocityVec;
       {
          ICEAttribute attr = geo.GetICEAttributeFromName(L"PointVelocity");
          if(attr.IsDefined() && attr.IsValid())
@@ -172,7 +167,7 @@ XSI::CStatus AlembicPoints::Save(double time)
          }
       }
 
-      Alembic::Abc::V3fArraySample velocitySample = Alembic::Abc::V3fArraySample(velocityVec);
+      Abc::V3fArraySample velocitySample = Abc::V3fArraySample(velocityVec);
 
       // width == Size
       std::vector<float> widthVec;
@@ -200,10 +195,10 @@ XSI::CStatus AlembicPoints::Save(double time)
          }
       }
 
-      Alembic::Abc::FloatArraySample widthSample = Alembic::Abc::FloatArraySample(widthVec);
+      Abc::FloatArraySample widthSample = Abc::FloatArraySample(widthVec);
 
       // id == ID
-      std::vector<uint64_t> idVec;
+      std::vector<Abc::uint64_t> idVec;
       {
          ICEAttribute attr = geo.GetICEAttributeFromName(L"ID");
          if(attr.IsDefined() && attr.IsValid())
@@ -218,7 +213,7 @@ XSI::CStatus AlembicPoints::Save(double time)
                LONG firstVal = data[0];
                for(ULONG i=0;i<count;i++)
                {
-                  idVec[i] = (uint64_t)data[i];
+                  idVec[i] = (Abc::uint64_t)data[i];
                   if(isConstant)
                      isConstant = firstVal == data[i];
                }
@@ -228,12 +223,12 @@ XSI::CStatus AlembicPoints::Save(double time)
          }
       }
 
-      Alembic::Abc::UInt64ArraySample idSample(idVec);
+      Abc::UInt64ArraySample idSample(idVec);
 
       // store the Points sample
       mPointsSample.setPositions(positionSample);
       mPointsSample.setVelocities(velocitySample);
-      mPointsSample.setWidths(Alembic::AbcGeom::OFloatGeomParam::Sample(widthSample,Alembic::AbcGeom::kVertexScope));
+      mPointsSample.setWidths(AbcG::OFloatGeomParam::Sample(widthSample,AbcG::kVertexScope));
       mPointsSample.setIds(idSample);
       mPointsSchema.set(mPointsSample);
    }
@@ -241,7 +236,7 @@ XSI::CStatus AlembicPoints::Save(double time)
    // scale
    {
       ICEAttribute attr = geo.GetICEAttributeFromName(L"Scale");
-      std::vector<Alembic::Abc::V3f> vec;
+      std::vector<Abc::V3f> vec;
       if(attr.IsDefined() && attr.IsValid() && attr.GetElementCount() > 0)
       {
          {
@@ -265,7 +260,7 @@ XSI::CStatus AlembicPoints::Save(double time)
          }
 
       }
-      Alembic::Abc::V3fArraySample sample = Alembic::Abc::V3fArraySample(vec);
+      Abc::V3fArraySample sample = Abc::V3fArraySample(vec);
       mScaleProperty.set(sample);
    }
 
@@ -273,7 +268,7 @@ XSI::CStatus AlembicPoints::Save(double time)
    for(int attrIndex = 0;attrIndex < 2; attrIndex++)
    {
       ICEAttribute attr = geo.GetICEAttributeFromName(attrIndex == 0 ? L"Orientation" : L"AngularVelocity");
-      std::vector<Alembic::Abc::Quatf> vec;
+      std::vector<Abc::Quatf> vec;
       if(attr.IsDefined() && attr.IsValid() && attr.GetElementCount() > 0)
       {
          {
@@ -284,7 +279,7 @@ XSI::CStatus AlembicPoints::Save(double time)
             if(count > 0)
             {
                bool isConstant = true;
-               Alembic::Abc::Quatf firstVal;
+               Abc::Quatf firstVal;
                for(ULONG i=0;i<count;i++)
                {
                   if(data[i].GetRepresentation() == CRotationf::siAxisAngleRot)
@@ -330,7 +325,7 @@ XSI::CStatus AlembicPoints::Save(double time)
 
       }
 
-      Alembic::Abc::QuatfArraySample sample(vec);
+      Abc::QuatfArraySample sample(vec);
       if(attrIndex == 0)
          mOrientationProperty.set(sample);
       else
@@ -363,7 +358,7 @@ XSI::CStatus AlembicPoints::Save(double time)
             }
          }
       }
-      Alembic::Abc::FloatArraySample sample(vec);
+      Abc::FloatArraySample sample(vec);
       mAgeProperty.set(sample);
    }
 
@@ -393,7 +388,7 @@ XSI::CStatus AlembicPoints::Save(double time)
             }
          }
       }
-      Alembic::Abc::FloatArraySample sample(vec);
+      Abc::FloatArraySample sample(vec);
       mMassProperty.set(sample);
    }
 
@@ -401,7 +396,7 @@ XSI::CStatus AlembicPoints::Save(double time)
    bool usesInstances = false;
    {
       ICEAttribute attr = geo.GetICEAttributeFromName(L"Shape");
-      std::vector<uint16_t> vec;
+      std::vector<Abc::uint16_t> vec;
       if(attr.IsDefined() && attr.IsValid() && attr.GetElementCount() > 0)
       {
          {
@@ -474,14 +469,14 @@ XSI::CStatus AlembicPoints::Save(double time)
          }
 
       }
-      Alembic::Abc::UInt16ArraySample sample(vec);
+      Abc::UInt16ArraySample sample(vec);
       mShapeTypeProperty.set(sample);
    }
 
    // shapeInstanceID
    {
       ICEAttribute attr = geo.GetICEAttributeFromName(L"Shape");
-      std::vector<uint16_t> vec;
+      std::vector<Abc::uint16_t> vec;
       if(attr.IsDefined() && attr.IsValid())
       {
          if(attr.GetElementCount() > 0)
@@ -496,7 +491,7 @@ XSI::CStatus AlembicPoints::Save(double time)
                if(count > 0)
                {
                   bool isConstant = true;
-                  uint16_t firstVal;
+                  Abc::uint16_t firstVal;
                   for(ULONG i=0;i<count;i++)
                   {
                      CShape shape = data[i];
@@ -538,28 +533,28 @@ XSI::CStatus AlembicPoints::Save(double time)
             if(mInstanceNames.size() > 0)
             {
                if(!mInstancenamesProperty)
-                  mInstancenamesProperty = OStringArrayProperty(mPointsSchema.getArbGeomParams(), "instancenames", mPointsSchema.getMetaData(), GetJob()->GetAnimatedTs() );
+				   mInstancenamesProperty = Abc::OStringArrayProperty(mPointsSchema.getArbGeomParams(), "instancenames", mPointsSchema.getMetaData(), GetJob()->GetAnimatedTs() );
 
                std::vector<std::string> preRollVec(1,"");
-               Alembic::Abc::StringArraySample preRollSample(preRollVec);
+               Abc::StringArraySample preRollSample(preRollVec);
                for(size_t i=mInstancenamesProperty.getNumSamples();i<mNumSamples;i++)
                   mInstancenamesProperty.set(preRollSample);
 
 
-               Alembic::Abc::StringArraySample sample(mInstanceNames);
+               Abc::StringArraySample sample(mInstanceNames);
                mInstancenamesProperty.set(sample);
 
                if(vec.size() > 0)
                {
                   if(!mShapeInstanceIDProperty)
-                     mShapeInstanceIDProperty = OUInt16ArrayProperty(mPointsSchema.getArbGeomParams(), "shapeinstanceid", mPointsSchema.getMetaData(), GetJob()->GetAnimatedTs() );
+					  mShapeInstanceIDProperty = Abc::OUInt16ArrayProperty(mPointsSchema.getArbGeomParams(), "shapeinstanceid", mPointsSchema.getMetaData(), GetJob()->GetAnimatedTs() );
 
-                  std::vector<uint16_t> preRollVec(1,0);
-                  Alembic::Abc::UInt16ArraySample preRollSample(preRollVec);
+                  std::vector<Abc::uint16_t> preRollVec(1,0);
+                  Abc::UInt16ArraySample preRollSample(preRollVec);
                   for(size_t i=mShapeInstanceIDProperty.getNumSamples();i<mNumSamples;i++)
                      mShapeInstanceIDProperty.set(preRollSample);
 
-                  Alembic::Abc::UInt16ArraySample sample(vec);
+                  Abc::UInt16ArraySample sample(vec);
                   mShapeInstanceIDProperty.set(sample);
                }
             }
@@ -574,7 +569,7 @@ XSI::CStatus AlembicPoints::Save(double time)
       if(attr.IsDefined() && attr.IsValid())
       {
          if(mNumSamples == 0)
-            mShapeTimeProperty = OFloatArrayProperty(mPointsSchema.getArbGeomParams(), "shapetime", mPointsSchema.getMetaData(), GetJob()->GetAnimatedTs() );
+            mShapeTimeProperty = Abc::OFloatArrayProperty(mPointsSchema.getArbGeomParams(), "shapetime", mPointsSchema.getMetaData(), GetJob()->GetAnimatedTs() );
 
          if(attr.GetElementCount() > 0)
          {
@@ -598,7 +593,7 @@ XSI::CStatus AlembicPoints::Save(double time)
                }
             }
          }
-         Alembic::Abc::FloatArraySample sample(vec);
+         Abc::FloatArraySample sample(vec);
          mShapeTimeProperty.set(sample);
       }
    }
@@ -606,7 +601,7 @@ XSI::CStatus AlembicPoints::Save(double time)
    // color
    {
       ICEAttribute attr = geo.GetICEAttributeFromName(L"Color");
-      std::vector<Alembic::Abc::C4f> vec;
+      std::vector<Abc::C4f> vec;
       if(attr.IsDefined() && attr.IsValid() && attr.GetElementCount() > 0)
       {
          {
@@ -617,7 +612,7 @@ XSI::CStatus AlembicPoints::Save(double time)
             if(count > 0)
             {
                bool isConstant = true;
-               Alembic::Abc::C4f firstVal;
+               Abc::C4f firstVal;
                for(ULONG i=0;i<count;i++)
                {
                   vec[i].r = data[i].GetR();
@@ -634,7 +629,7 @@ XSI::CStatus AlembicPoints::Save(double time)
             }
          }
       }
-      Alembic::Abc::C4fArraySample sample(vec);
+      Abc::C4fArraySample sample(vec);
       mColorProperty.set(sample);
    }
 
@@ -760,10 +755,10 @@ XSIPLUGINCALLBACK CStatus alembic_points_Evaluate(ICENodeContext& in_ctxt)
       in_ctxt.PutUserData( val ) ;
    }
 
-   Alembic::AbcGeom::IObject iObj = getObjectFromArchive(path,identifier);
+  AbcG::IObject iObj = getObjectFromArchive(path,identifier);
    if(!iObj.valid())
       return CStatus::OK;
-   Alembic::AbcGeom::IPoints obj(iObj,Alembic::Abc::kWrapExisting);
+  AbcG::IPoints obj(iObj,Abc::kWrapExisting);
    if(!obj.valid())
       return CStatus::OK;
 
@@ -778,12 +773,12 @@ XSIPLUGINCALLBACK CStatus alembic_points_Evaluate(ICENodeContext& in_ctxt)
       obj.getSchema().getTimeSampling(),
       obj.getSchema().getNumSamples()
    );
-   Alembic::AbcGeom::IPointsSchema::Sample sample;
+  AbcG::IPointsSchema::Sample sample;
    obj.getSchema().get(sample,sampleInfo.floorIndex);
 
    int pointCount = 0;
    {
-		Alembic::Abc::P3fArraySamplePtr ptr = sample.getPositions();
+		Abc::P3fArraySamplePtr ptr = sample.getPositions();
 		if(ptr != NULL) {
 			pointCount = (int) ptr->size();
 		}
@@ -798,7 +793,7 @@ XSIPLUGINCALLBACK CStatus alembic_points_Evaluate(ICENodeContext& in_ctxt)
          CDataArray2DVector3f outData( in_ctxt );
          CDataArray2DVector3f::Accessor acc;
 
-         Alembic::Abc::P3fArraySamplePtr ptr = sample.getPositions();
+         Abc::P3fArraySamplePtr ptr = sample.getPositions();
          if(ptr == NULL)
             acc = outData.Resize(0,0);
          else if(ptr->size() == 0)
@@ -813,7 +808,7 @@ XSIPLUGINCALLBACK CStatus alembic_points_Evaluate(ICENodeContext& in_ctxt)
             {
                float alpha = (float)sampleInfo.alpha;
 
-               Alembic::Abc::V3fArraySamplePtr velPtr = sample.getVelocities();
+               Abc::V3fArraySamplePtr velPtr = sample.getVelocities();
                if(velPtr == NULL)
                   done = false;
                else if(velPtr->size() == 0)
@@ -843,7 +838,7 @@ XSIPLUGINCALLBACK CStatus alembic_points_Evaluate(ICENodeContext& in_ctxt)
          CDataArray2DVector3f outData( in_ctxt );
          CDataArray2DVector3f::Accessor acc;
 
-         Alembic::Abc::V3fArraySamplePtr ptr = sample.getVelocities();
+         Abc::V3fArraySamplePtr ptr = sample.getVelocities();
 		 if(ptr == NULL || ptr->size() == 0) {
            	acc = outData.Resize( 0, pointCount );
 			for(ULONG i=0;i<acc.GetCount();i++)
@@ -865,7 +860,7 @@ XSIPLUGINCALLBACK CStatus alembic_points_Evaluate(ICENodeContext& in_ctxt)
          CDataArray2DLong outData( in_ctxt );
          CDataArray2DLong::Accessor acc;
 
-         Alembic::Abc::UInt64ArraySamplePtr ptr = sample.getIds();
+         Abc::UInt64ArraySamplePtr ptr = sample.getIds();
 		 if(ptr == NULL || ptr->size() == 0) {
            	acc = outData.Resize( 0, pointCount );
 			for(ULONG i=0;i<acc.GetCount();i++)
@@ -887,7 +882,7 @@ XSIPLUGINCALLBACK CStatus alembic_points_Evaluate(ICENodeContext& in_ctxt)
          CDataArray2DFloat outData( in_ctxt );
          CDataArray2DFloat::Accessor acc;
 
-         Alembic::AbcGeom::IFloatGeomParam widthParam = obj.getSchema().getWidthsParam();
+        AbcG::IFloatGeomParam widthParam = obj.getSchema().getWidthsParam();
          if(!widthParam || widthParam.getNumSamples() == 0)
          {
             acc = outData.Resize( 0, pointCount );
@@ -898,7 +893,7 @@ XSIPLUGINCALLBACK CStatus alembic_points_Evaluate(ICENodeContext& in_ctxt)
 			return CStatus::OK;
          }         
 
-         Alembic::Abc::FloatArraySamplePtr ptr = widthParam.getExpandedValue(sampleInfo.floorIndex).getVals();
+         Abc::FloatArraySamplePtr ptr = widthParam.getExpandedValue(sampleInfo.floorIndex).getVals();
 		 if(ptr == NULL || ptr->size() == 0) {
             acc = outData.Resize( 0, pointCount );
 			for(ULONG i=0;i<acc.GetCount();i++)
@@ -920,7 +915,7 @@ XSIPLUGINCALLBACK CStatus alembic_points_Evaluate(ICENodeContext& in_ctxt)
          CDataArray2DVector3f outData( in_ctxt );
          CDataArray2DVector3f::Accessor acc;
 
-		 IV3fArrayProperty prop;
+		 Abc::IV3fArrayProperty prop;
 		 if( ! getArbGeomParamPropertyAlembic( obj, "scale", prop ) ) {
 
 			acc = outData.Resize( 0, pointCount );
@@ -937,7 +932,7 @@ XSIPLUGINCALLBACK CStatus alembic_points_Evaluate(ICENodeContext& in_ctxt)
             acc = outData.Resize(0,0);
             return CStatus::OK;
          }
-         IV3fArrayProperty prop = Alembic::Abc::IV3fArrayProperty( obj.getSchema(), ".scale" );
+         IV3fArrayProperty prop = Abc::IV3fArrayProperty( obj.getSchema(), ".scale" );
          if(!prop.valid())
          {
             acc = outData.Resize(0,0);
@@ -948,7 +943,7 @@ XSIPLUGINCALLBACK CStatus alembic_points_Evaluate(ICENodeContext& in_ctxt)
             acc = outData.Resize(0,0);
             return CStatus::OK;
          }*/
-         Alembic::Abc::V3fArraySamplePtr ptr = prop.getValue(sampleInfo.floorIndex);
+         Abc::V3fArraySamplePtr ptr = prop.getValue(sampleInfo.floorIndex);
 		 if(ptr == NULL || ptr->size() == 0) {
              acc = outData.Resize( 0, pointCount );
 			for(ULONG i=0;i<acc.GetCount();i++)
@@ -970,7 +965,7 @@ XSIPLUGINCALLBACK CStatus alembic_points_Evaluate(ICENodeContext& in_ctxt)
          CDataArray2DRotationf outData( in_ctxt );
          CDataArray2DRotationf::Accessor acc;
 
-         IQuatfArrayProperty prop;
+         Abc::IQuatfArrayProperty prop;
 		 if( ! getArbGeomParamPropertyAlembic( obj, "orientation", prop ) ) {
              acc = outData.Resize( 0, pointCount );
 			 CQuaternionf identityQuat;
@@ -986,7 +981,7 @@ XSIPLUGINCALLBACK CStatus alembic_points_Evaluate(ICENodeContext& in_ctxt)
             acc = outData.Resize(0,0);
             return CStatus::OK;
          }
-         IQuatfArrayProperty prop = Alembic::Abc::IQuatfArrayProperty( obj.getSchema(), ".orientation" );
+         IQuatfArrayProperty prop = Abc::IQuatfArrayProperty( obj.getSchema(), ".orientation" );
          if(!prop.valid())
          {
             acc = outData.Resize(0,0);
@@ -997,7 +992,7 @@ XSIPLUGINCALLBACK CStatus alembic_points_Evaluate(ICENodeContext& in_ctxt)
             acc = outData.Resize(0,0);
             return CStatus::OK;
          }*/
-         Alembic::Abc::QuatfArraySamplePtr ptr = prop.getValue(sampleInfo.floorIndex);
+         Abc::QuatfArraySamplePtr ptr = prop.getValue(sampleInfo.floorIndex);
 		 if(ptr == NULL || ptr->size() == 0) {
 		     acc = outData.Resize( 0, pointCount );
 			CRotationf identityQuat = CQuaternionf();
@@ -1014,10 +1009,10 @@ XSIPLUGINCALLBACK CStatus alembic_points_Evaluate(ICENodeContext& in_ctxt)
             {
                float alpha = (float)sampleInfo.alpha;
 
-	            IQuatfArrayProperty velProp;
+	            Abc::IQuatfArrayProperty velProp;
 				 if( getArbGeomParamPropertyAlembic( obj, "angularvelocity", velProp ) ) {
 					
-				   Alembic::Abc::QuatfArraySamplePtr velPtr = velProp.getValue(sampleInfo.floorIndex);
+				   Abc::QuatfArraySamplePtr velPtr = velProp.getValue(sampleInfo.floorIndex);
 				   if( ! ( velPtr == NULL || velPtr->size() == 0) ) {
 					  CQuaternionf quat,vel;
 					  for(ULONG i=0;i<acc.GetCount();i++)
@@ -1060,7 +1055,7 @@ XSIPLUGINCALLBACK CStatus alembic_points_Evaluate(ICENodeContext& in_ctxt)
          CDataArray2DRotationf outData( in_ctxt );
          CDataArray2DRotationf::Accessor acc;
 
-         IQuatfArrayProperty prop;
+         Abc::IQuatfArrayProperty prop;
 		 if( ! getArbGeomParamPropertyAlembic( obj, "angularvelocity", prop ) ) {
 		    acc = outData.Resize( 0, pointCount );
 			CRotationf identityQuat = CQuaternionf();
@@ -1077,7 +1072,7 @@ XSIPLUGINCALLBACK CStatus alembic_points_Evaluate(ICENodeContext& in_ctxt)
             acc = outData.Resize(0,0);
             return CStatus::OK;
          }
-         IQuatfArrayProperty prop = Alembic::Abc::IQuatfArrayProperty( obj.getSchema(), ".angularvelocity" );
+         IQuatfArrayProperty prop = Abc::IQuatfArrayProperty( obj.getSchema(), ".angularvelocity" );
          if(!prop.valid())
          {
             acc = outData.Resize(0,0);
@@ -1088,7 +1083,7 @@ XSIPLUGINCALLBACK CStatus alembic_points_Evaluate(ICENodeContext& in_ctxt)
             acc = outData.Resize(0,0);
             return CStatus::OK;
          }*/
-         Alembic::Abc::QuatfArraySamplePtr ptr = prop.getValue(sampleInfo.floorIndex);
+         Abc::QuatfArraySamplePtr ptr = prop.getValue(sampleInfo.floorIndex);
 		 if(ptr == NULL || ptr->size() == 0) {
              acc = outData.Resize( 0, pointCount );
 			CRotationf identityQuat = CQuaternionf();
@@ -1115,7 +1110,7 @@ XSIPLUGINCALLBACK CStatus alembic_points_Evaluate(ICENodeContext& in_ctxt)
          CDataArray2DFloat outData( in_ctxt );
          CDataArray2DFloat ::Accessor acc;
 
-         IFloatArrayProperty prop;
+         Abc::IFloatArrayProperty prop;
 		 if( ! getArbGeomParamPropertyAlembic( obj, "age", prop ) ) {
      	     acc = outData.Resize( 0, pointCount );
 			for(ULONG i=0;i<acc.GetCount();i++)
@@ -1129,7 +1124,7 @@ XSIPLUGINCALLBACK CStatus alembic_points_Evaluate(ICENodeContext& in_ctxt)
             acc = outData.Resize(0,0);
             return CStatus::OK;
          }
-         IFloatArrayProperty prop = Alembic::Abc::IFloatArrayProperty( obj.getSchema(), ".age" );
+         IFloatArrayProperty prop = Abc::IFloatArrayProperty( obj.getSchema(), ".age" );
          if(!prop.valid())
          {
             acc = outData.Resize(0,0);
@@ -1140,7 +1135,7 @@ XSIPLUGINCALLBACK CStatus alembic_points_Evaluate(ICENodeContext& in_ctxt)
             acc = outData.Resize(0,0);
             return CStatus::OK;
          }*/
-         Alembic::Abc::FloatArraySamplePtr ptr = prop.getValue(sampleInfo.floorIndex);
+         Abc::FloatArraySamplePtr ptr = prop.getValue(sampleInfo.floorIndex);
 		 if(ptr == NULL || ptr->size() == 0) {
              acc = outData.Resize( 0, pointCount );
 			for(ULONG i=0;i<acc.GetCount();i++)
@@ -1164,7 +1159,7 @@ XSIPLUGINCALLBACK CStatus alembic_points_Evaluate(ICENodeContext& in_ctxt)
          CDataArray2DFloat outData( in_ctxt );
          CDataArray2DFloat ::Accessor acc;
 
-         IFloatArrayProperty prop;
+         Abc::IFloatArrayProperty prop;
 		 if( ! getArbGeomParamPropertyAlembic( obj, "mass", prop ) ) {
 		    acc = outData.Resize(0,0);
 			return CStatus::OK;
@@ -1174,7 +1169,7 @@ XSIPLUGINCALLBACK CStatus alembic_points_Evaluate(ICENodeContext& in_ctxt)
             acc = outData.Resize(0,0);
             return CStatus::OK;
          }
-         IFloatArrayProperty prop = Alembic::Abc::IFloatArrayProperty( obj.getSchema(), ".mass" );
+         IFloatArrayProperty prop = Abc::IFloatArrayProperty( obj.getSchema(), ".mass" );
          if(!prop.valid())
          {
             acc = outData.Resize(0,0);
@@ -1185,7 +1180,7 @@ XSIPLUGINCALLBACK CStatus alembic_points_Evaluate(ICENodeContext& in_ctxt)
             acc = outData.Resize(0,0);
             return CStatus::OK;
          }*/
-         Alembic::Abc::FloatArraySamplePtr ptr = prop.getValue(sampleInfo.floorIndex);
+         Abc::FloatArraySamplePtr ptr = prop.getValue(sampleInfo.floorIndex);
          if(ptr == NULL)
             acc = outData.Resize(0,0);
          else if(ptr->size() == 0)
@@ -1206,7 +1201,7 @@ XSIPLUGINCALLBACK CStatus alembic_points_Evaluate(ICENodeContext& in_ctxt)
          CDataArray2DShape outData( in_ctxt );
          CDataArray2DShape::Accessor acc;
 
-         IUInt16ArrayProperty shapeTypeProp;
+         Abc::IUInt16ArrayProperty shapeTypeProp;
 		 if( ! getArbGeomParamPropertyAlembic( obj, "shapetype", shapeTypeProp ) ) {
 			acc = outData.Resize(0,(ULONG)sample.getPositions()->size());
 			for(ULONG i=0;i<acc.GetCount();i++) {
@@ -1220,12 +1215,12 @@ XSIPLUGINCALLBACK CStatus alembic_points_Evaluate(ICENodeContext& in_ctxt)
             acc = outData.Resize(0,0);
             return CStatus::OK;
          }
-         IUInt16ArrayProperty shapeTypeProp = Alembic::Abc::IUInt16ArrayProperty( obj.getSchema(), ".shapetype" );
+         IUInt16ArrayProperty shapeTypeProp = Abc::IUInt16ArrayProperty( obj.getSchema(), ".shapetype" );
          /*
-         IUInt16ArrayProperty shapeInstanceIDProp = Alembic::Abc::IUInt16ArrayProperty( obj.getSchema(), ".shapeinstanceid" );
-         IStringArrayProperty shapeInstanceNamesProp = Alembic::Abc::IStringArrayProperty( obj.getSchema(), ".instancenames" );
-         Alembic::Abc::UInt16ArraySamplePtr shapeInstanceIDPtr = shapeInstanceIDProp.getValue(sampleInfo.floorIndex);
-         Alembic::Abc::StringArraySamplePtr shapeInstanceNamesPtr = shapeInstanceNamesProp.getValue(sampleInfo.floorIndex);
+         IUInt16ArrayProperty shapeInstanceIDProp = Abc::IUInt16ArrayProperty( obj.getSchema(), ".shapeinstanceid" );
+         IStringArrayProperty shapeInstanceNamesProp = Abc::IStringArrayProperty( obj.getSchema(), ".instancenames" );
+         Abc::UInt16ArraySamplePtr shapeInstanceIDPtr = shapeInstanceIDProp.getValue(sampleInfo.floorIndex);
+         Abc::StringArraySamplePtr shapeInstanceNamesPtr = shapeInstanceNamesProp.getValue(sampleInfo.floorIndex);
          * /
          if(!shapeTypeProp.valid())
          {
@@ -1237,7 +1232,7 @@ XSIPLUGINCALLBACK CStatus alembic_points_Evaluate(ICENodeContext& in_ctxt)
             acc = outData.Resize(0,0);
             return CStatus::OK;
          }*/
-         Alembic::Abc::UInt16ArraySamplePtr shapeTypePtr = shapeTypeProp.getValue(sampleInfo.floorIndex);
+         Abc::UInt16ArraySamplePtr shapeTypePtr = shapeTypeProp.getValue(sampleInfo.floorIndex);
          if(shapeTypePtr == NULL)
             acc = outData.Resize(0,0);
          else if(shapeTypePtr->size() == 0)
@@ -1300,12 +1295,12 @@ XSIPLUGINCALLBACK CStatus alembic_points_Evaluate(ICENodeContext& in_ctxt)
          CDataArray2DLong outData( in_ctxt );
          CDataArray2DLong::Accessor acc;
 
-		 IUInt16ArrayProperty shapeTypeProp;
+		 Abc::IUInt16ArrayProperty shapeTypeProp;
 		 if( ! getArbGeomParamPropertyAlembic( obj, "shapetype", shapeTypeProp ) ) {
 		    acc = outData.Resize(0,0);
 			return CStatus::OK;
 		 }
-		 IUInt16ArrayProperty shapeInstanceIDProp;
+		 Abc::IUInt16ArrayProperty shapeInstanceIDProp;
 		 if( ! getArbGeomParamPropertyAlembic( obj, "shapeinstanceid", shapeInstanceIDProp ) ) {
 		    acc = outData.Resize(0,0);
 			return CStatus::OK;
@@ -1316,8 +1311,8 @@ XSIPLUGINCALLBACK CStatus alembic_points_Evaluate(ICENodeContext& in_ctxt)
             acc = outData.Resize(0,0);
             return CStatus::OK;
          }
-         IUInt16ArrayProperty shapeTypeProp = Alembic::Abc::IUInt16ArrayProperty( obj.getSchema(), ".shapetype" );
-         IUInt16ArrayProperty shapeInstanceIDProp = Alembic::Abc::IUInt16ArrayProperty( obj.getSchema(), ".shapeinstanceid" );
+         IUInt16ArrayProperty shapeTypeProp = Abc::IUInt16ArrayProperty( obj.getSchema(), ".shapetype" );
+         IUInt16ArrayProperty shapeInstanceIDProp = Abc::IUInt16ArrayProperty( obj.getSchema(), ".shapeinstanceid" );
 
          if(!shapeTypeProp.valid() || !shapeInstanceIDProp.valid())
          {
@@ -1330,8 +1325,8 @@ XSIPLUGINCALLBACK CStatus alembic_points_Evaluate(ICENodeContext& in_ctxt)
             return CStatus::OK;
          }*/
 
-         Alembic::Abc::UInt16ArraySamplePtr shapeTypePtr = shapeTypeProp.getValue(sampleInfo.floorIndex);
-         Alembic::Abc::UInt16ArraySamplePtr shapeInstanceIDPtr = shapeInstanceIDProp.getValue(sampleInfo.floorIndex);
+         Abc::UInt16ArraySamplePtr shapeTypePtr = shapeTypeProp.getValue(sampleInfo.floorIndex);
+         Abc::UInt16ArraySamplePtr shapeInstanceIDPtr = shapeInstanceIDProp.getValue(sampleInfo.floorIndex);
          if(shapeTypePtr == NULL || shapeInstanceIDPtr == NULL)
             acc = outData.Resize(0,0);
          else if(shapeTypePtr->size() == 0 || shapeInstanceIDPtr->size() == 0)
@@ -1365,7 +1360,7 @@ XSIPLUGINCALLBACK CStatus alembic_points_Evaluate(ICENodeContext& in_ctxt)
          CDataArray2DFloat outData( in_ctxt );
          CDataArray2DFloat ::Accessor acc;
 
- 		 IFloatArrayProperty prop;
+ 		 Abc::IFloatArrayProperty prop;
 		 if( ! getArbGeomParamPropertyAlembic( obj, "shapetime", prop ) ) {
 		    acc = outData.Resize(0,0);
 			return CStatus::OK;
@@ -1376,7 +1371,7 @@ XSIPLUGINCALLBACK CStatus alembic_points_Evaluate(ICENodeContext& in_ctxt)
             acc = outData.Resize(0,0);
             return CStatus::OK;
          }
-         IFloatArrayProperty prop = Alembic::Abc::IFloatArrayProperty( obj.getSchema(), ".shapetime" );
+         IFloatArrayProperty prop = Abc::IFloatArrayProperty( obj.getSchema(), ".shapetime" );
          if(!prop.valid())
          {
             acc = outData.Resize(0,0);
@@ -1387,7 +1382,7 @@ XSIPLUGINCALLBACK CStatus alembic_points_Evaluate(ICENodeContext& in_ctxt)
             acc = outData.Resize(0,0);
             return CStatus::OK;
          }*/
-         Alembic::Abc::FloatArraySamplePtr ptr = prop.getValue(sampleInfo.floorIndex);
+         Abc::FloatArraySamplePtr ptr = prop.getValue(sampleInfo.floorIndex);
          if(ptr == NULL)
             acc = outData.Resize(0,0);
          else if(ptr->size() == 0)
@@ -1408,7 +1403,7 @@ XSIPLUGINCALLBACK CStatus alembic_points_Evaluate(ICENodeContext& in_ctxt)
          CDataArray2DColor4f outData( in_ctxt );
          CDataArray2DColor4f::Accessor acc;
 
-  		 IC4fArrayProperty prop;
+  		 Abc::IC4fArrayProperty prop;
 		 if( ! getArbGeomParamPropertyAlembic( obj, "color", prop ) ) {
 			acc = outData.Resize(0,(ULONG)sample.getPositions()->size());
 			for(ULONG i=0;i<acc.GetCount();i++) {
@@ -1423,7 +1418,7 @@ XSIPLUGINCALLBACK CStatus alembic_points_Evaluate(ICENodeContext& in_ctxt)
             acc = outData.Resize(0,0);
             return CStatus::OK;
          }
-         IC4fArrayProperty prop = Alembic::Abc::IC4fArrayProperty( obj.getSchema(), ".color" );
+         IC4fArrayProperty prop = Abc::IC4fArrayProperty( obj.getSchema(), ".color" );
          if(!prop.valid())
          {
             acc = outData.Resize(0,0);
@@ -1434,7 +1429,7 @@ XSIPLUGINCALLBACK CStatus alembic_points_Evaluate(ICENodeContext& in_ctxt)
             acc = outData.Resize(0,0);
             return CStatus::OK;
          }*/
-         Alembic::Abc::C4fArraySamplePtr ptr = prop.getValue(sampleInfo.floorIndex);
+         Abc::C4fArraySamplePtr ptr = prop.getValue(sampleInfo.floorIndex);
          if(ptr == NULL)
             acc = outData.Resize(0,0);
          else if(ptr->size() == 0)
