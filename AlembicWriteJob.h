@@ -6,6 +6,8 @@
 
 #include <map>
 
+typedef std::map<long, AlembicObjectPtr> MapLongAlembicObject;
+
 class AlembicWriteJob
 {
 private:
@@ -16,7 +18,7 @@ private:
     unsigned int mTs;
     std::map<std::string,std::string> mOptions;
     //std::vector<AlembicObjectPtr> mObjects;
-    std::map<std::string, AlembicObjectPtr> mapObjects;
+    MapLongAlembicObject mapObjects;
     double mFrameRate;
 public:
    AlembicWriteJob(

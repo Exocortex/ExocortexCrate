@@ -2,6 +2,7 @@
 
 bool SaveMetaData(AlembicObject * obj)
 {
+  ESS_PROFILE_SCOPE("SaveMetaData");
    if(obj->GetNumSamples() > 0)
       return false;
 

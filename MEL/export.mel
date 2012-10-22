@@ -15,6 +15,7 @@ global proc exocortexAlembicExportGUI(string $filename, string $dialog)
   int $exportTopology = `optionMenu -q -select topology`;
   int $exportUVs = `checkBox -q -value uvs`;
   int $exportFaceSets = `checkBox -q -value facesets`;
+  int $exportUseInitShadGrp = `checkBox -q -value shadingGroup`;
   int $exportDynamicTopo = `checkBox -q -value dynamictopology`;
   int $exportGlobalSpace = `checkBox -q -value globalspace`;
   int $exportWithoutHierarchy = `checkBox -q -value withouthierarchy`;
@@ -53,7 +54,11 @@ global proc exocortexAlembicExportGUI(string $filename, string $dialog)
     fclose $__file;
   }
   $filename = `ExocortexAlembic_resolvePath -f $filename`;
-  exocortexAlembicExport($filename, $selection, $exportInframe, $exportOutframe, $exportStepframe, $exportSubstepframe, $exportTopology, $exportUVs, $exportFaceSets, $exportDynamicTopo, $exportGlobalSpace, $exportWithoutHierarchy, $exportTransformCache);
+  exocortexAlembicExport($filename, $selection, $exportInframe,
+                         $exportOutframe, $exportStepframe, $exportSubstepframe,
+                         $exportTopology, $exportUVs, $exportFaceSets,
+                         $exportDynamicTopo, $exportGlobalSpace, $exportWithoutHierarchy,
+                         $exportTransformCache, $exportUseInitShadGrp);
 }
 
 global proc exocortexCloseDialog(string $dialog)

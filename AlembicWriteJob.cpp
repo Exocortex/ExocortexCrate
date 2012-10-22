@@ -12,9 +12,29 @@
 //#include "AlembicNurbs.h"
 
 #include <maya/MAnimControl.h>
+#include <locale>
 
 namespace AbcA = ::Alembic::AbcCoreAbstract::ALEMBIC_VERSION_NS;
 using namespace AbcA;
+
+namespace ExoHashing
+{
+  std::locale loc;
+
+  const std::collate<char> &coll = std::use_facet<std::collate<char> >(loc);
+
+  long hash(const std::string &str)
+  {
+    const char *c = str.c_str();
+    return coll.hash(c, c + str.size());
+  }
+
+  long hash(const MString &str)
+  {
+    const char *c = str.asChar();
+    return coll.hash(c, c + str.length());
+  }
+}
 
 AlembicWriteJob::AlembicWriteJob
 (
@@ -67,8 +87,9 @@ MString AlembicWriteJob::GetOption(const MString & in_Name)
 AlembicObjectPtr AlembicWriteJob::GetObject(const MObject & in_Ref)
 {
   ESS_PROFILE_SCOPE("AlembicWriteJob::GetObject");
-   std::string fullName(getFullNameFromRef(in_Ref).asChar());
-   std::map<std::string, AlembicObjectPtr>::const_iterator it = mapObjects.find(fullName);
+
+   long hsh = ExoHashing::hash(getFullNameFromRef(in_Ref));
+   MapLongAlembicObject::const_iterator it = mapObjects.find(hsh);
    if (it == mapObjects.end())
      return AlembicObjectPtr();
    return it->second;
@@ -79,17 +100,16 @@ bool AlembicWriteJob::AddObject(AlembicObjectPtr in_Obj)
   ESS_PROFILE_SCOPE("AlembicWriteJob::AddObject");
    if(!in_Obj)
       return false;
-   if(in_Obj->GetRef().isNull())
-      return false;
    const MObject &in_Ref = in_Obj->GetRef();
+   if(in_Ref.isNull())
+      return false;
    AlembicObjectPtr existing = GetObject(in_Ref);
    if(existing != NULL)
       return false;
-   std::string fullName(getFullNameFromRef(in_Ref).asChar());
-   mapObjects[fullName] = in_Obj;
+   long hsh = ExoHashing::hash(getFullNameFromRef(in_Ref));
+   mapObjects[hsh] = in_Obj;
    return true;
 }
-
 
 MStatus AlembicWriteJob::PreProcess()
 {
@@ -162,7 +182,7 @@ MStatus AlembicWriteJob::PreProcess()
       }
 
       double timePerCycle = frames[frames.size()-1] - frames[0];
-	  AbcA::TimeSamplingType samplingType((Alembic::Abc::ALEMBIC_VERSION_NS::uint32_t)frames.size(),timePerCycle);
+	    AbcA::TimeSamplingType samplingType((Alembic::Abc::ALEMBIC_VERSION_NS::uint32_t)frames.size(),timePerCycle);
       AbcA::TimeSampling sampling(samplingType,frames);
       mTs = mArchive.addTimeSampling(sampling);
    }
@@ -183,62 +203,35 @@ MStatus AlembicWriteJob::PreProcess()
 
       // take care of all other types
       MFn::Type mType = mObj.apiType();
+      AlembicObjectPtr ptr;
       switch(mType)
       {
       case MFn::kCamera:
-        {
-           AlembicObjectPtr ptr;
-           ptr.reset(new AlembicCamera(mObj,this));
-           AddObject(ptr);
-        }
+        ptr.reset(new AlembicCamera(mObj,this));
         break;
       case MFn::kMesh:
-        {
-           AlembicObjectPtr ptr;
-           ptr.reset(new AlembicPolyMesh(mObj,this));
-           AddObject(ptr);
-        }
+        ptr.reset(new AlembicPolyMesh(mObj,this));
         break;
       case MFn::kSubdiv:
-        {
-           AlembicObjectPtr ptr;
-           ptr.reset(new AlembicSubD(mObj,this));
-           AddObject(ptr);
-        }
+        ptr.reset(new AlembicSubD(mObj,this));
         break;
       case MFn::kNurbsCurve:
-        {
-           AlembicObjectPtr ptr;
-           ptr.reset(new AlembicCurves(mObj,this));
-           AddObject(ptr);
-        }
+        ptr.reset(new AlembicCurves(mObj,this));
         break;
       case MFn::kParticle:
-        {
-           AlembicObjectPtr ptr;
-           ptr.reset(new AlembicPoints(mObj,this));
-           AddObject(ptr);
-        }
+        ptr.reset(new AlembicPoints(mObj,this));
         break;
       case MFn::kPfxHair:
-        {
-           AlembicObjectPtr ptr;
-           ptr.reset(new AlembicHair(mObj,this));
-           AddObject(ptr);
-        }
+        ptr.reset(new AlembicHair(mObj,this));
         break;
-      default:
-        {
-           if(mType != MFn::kTransform)
-              MGlobal::displayInfo("[ExocortexAlembic] Exporting "+MString(mObj.apiTypeStr())+" node as kTransform.\n");
-           AlembicObjectPtr ptr;
-           ptr.reset(new AlembicXform(mObj,this));
-           AddObject(ptr);
-        }
+      default:  // NO BREAK... DON'T ADD ONE!!!!
+        MGlobal::displayInfo("[ExocortexAlembic] Exporting "+MString(mObj.apiTypeStr())+" node as kTransform.\n");  // NO BREAK, it's normal!
+      case MFn::kTransform:
+        ptr.reset(new AlembicXform(mObj,this));
         break;
       }
+      AddObject(ptr);
    }
-
    return MStatus::kSuccess;
 }
 
@@ -254,8 +247,7 @@ MStatus AlembicWriteJob::Process(double frame)
          continue;
 
       // run the export for all objects
-      //for(size_t j=0;j<mObjects.size();j++)
-      for (std::map<std::string, AlembicObjectPtr>::iterator it = mapObjects.begin(); it != mapObjects.end(); ++it)
+      for (MapLongAlembicObject::iterator it = mapObjects.begin(); it != mapObjects.end(); ++it)
       {
          MStatus status = it->second->Save(mFrames[i]);
          if(status != MStatus::kSuccess)
@@ -263,7 +255,6 @@ MStatus AlembicWriteJob::Process(double frame)
          result = status;
       }
    }
-
    return result;
 }
 
@@ -373,6 +364,7 @@ MStatus AlembicExportCommand::doIt(const MArgList & args)
       bool globalspace = false;
       bool withouthierarchy = false;
       bool transformcache = false;
+      bool useInitShadGrp = false;
       MStringArray objectStrings;
       MObjectArray objects;
 
@@ -422,6 +414,8 @@ MStatus AlembicExportCommand::doIt(const MArgList & args)
             // try to find each object
             valuePair[1].split(',',objectStrings);
          }
+         else if(valuePair[0].toLowerCase() == "useinitshadgrp")
+            useInitShadGrp = valuePair[1].asInt() != 0;
          else
          {
             MGlobal::displayWarning("[ExocortexAlembic] Skipping invalid token: "+tokens[j]);
@@ -565,6 +559,7 @@ MStatus AlembicExportCommand::doIt(const MArgList & args)
       job->SetOption("exportNormals",normals ? "1" : "0");
       job->SetOption("exportUVs",uvs ? "1" : "0");
       job->SetOption("exportFaceSets",facesets ? "1" : "0");
+      job->SetOption("exportInitShadGrp",useInitShadGrp ? "1" : "0");
 	    job->SetOption("exportBindPose",bindpose ? "1" : "0");
       job->SetOption("exportPurePointCache",purepointcache ? "1" : "0");
       job->SetOption("exportDynamicTopology",dynamictopology ? "1" : "0");

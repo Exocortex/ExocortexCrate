@@ -45,40 +45,52 @@ MStatus AlembicPolyMesh::Save(double time)
 
    // access the points
    MFloatPointArray points;
-   node.getPoints(points);
+   {
+      ESS_PROFILE_SCOPE("AlembicPolyMesh::Save get node points");
+      node.getPoints(points);
+   }
 
    // check if we have the global cache option
    bool globalCache = GetJob()->GetOption(L"exportInGlobalSpace").asInt() > 0;
    Alembic::Abc::M44f globalXfo;
-   if(globalCache)
+   if(globalCache) {
+      ESS_PROFILE_SCOPE("AlembicPolyMesh::Save get global xfo");
       globalXfo = GetGlobalMatrix(GetRef());
+   }
 
    // ensure to keep the same topology if dynamic topology is disabled
    bool dynamicTopology = GetJob()->GetOption(L"exportDynamicTopology").asInt() > 0;
    if(!dynamicTopology && mNumSamples > 0)
    {
+      ESS_PROFILE_SCOPE("AlembicPolyMesh::Save non-dynamic top verification");
       if(mPointCountLastFrame  != (size_t)points.length())
       {
          MString fullName = MFnDagNode(GetRef()).fullPathName();
-		 EC_LOG_ERROR( "Object '" << fullName.asChar() << "' contains dynamic topology (original vertex count " << mPointCountLastFrame  << " and new vertex count " << points.length() << "). Not exporting sample.");
+		     EC_LOG_ERROR( "Object '" << fullName.asChar() << "' contains dynamic topology (original vertex count " << mPointCountLastFrame  << " and new vertex count " << points.length() << "). Not exporting sample.");
          return MStatus::kFailure;
       }
    }
    mPointCountLastFrame = points.length();
 
-   mPosVec.resize(points.length());
-   for(unsigned int i=0;i<points.length();i++)
    {
-      mPosVec[i].x = points[i].x;
-      mPosVec[i].y = points[i].y;
-      mPosVec[i].z = points[i].z;
-      if(globalCache)
-         globalXfo.multVecMatrix(mPosVec[i],mPosVec[i]);
-      bbox.extendBy(mPosVec[i]);
+      ESS_PROFILE_SCOPE("AlembicPolyMesh::Save poitn copy, bbox extend, gspace");
+
+     mPosVec.resize(points.length());
+     for(unsigned int i=0;i<points.length();i++)
+     {
+        const MFloatVector &ptOut = points[i];
+        Alembic::Abc::V3f &ptIn = mPosVec[i];
+        ptIn.x = ptOut.x;
+        ptIn.y = ptOut.y;
+        ptIn.z = ptOut.z;
+        if(globalCache)
+           globalXfo.multVecMatrix(ptIn, ptIn);
+        bbox.extendBy(ptIn);
+     }
    }
 
    // store the positions to the samples
-   mSample.setPositions(Alembic::Abc::P3fArraySample(&mPosVec.front(),mPosVec.size()));
+   mSample.setPositions(Alembic::Abc::P3fArraySample(mPosVec));
    mSample.setSelfBounds(bbox);
 
    // check if we are doing pure pointcache
@@ -86,13 +98,12 @@ MStatus AlembicPolyMesh::Save(double time)
    std::vector<Alembic::Abc::int32_t> mFaceIndicesVec;
    if(GetJob()->GetOption(L"exportPurePointCache").asInt() > 0)
    {
-      if(mNumSamples == 0)
+      ESS_PROFILE_SCOPE("AlembicPolyMesh::Save exportPurePointCache");
+     if(mNumSamples == 0)
       {
          // store a dummy empty topology
-         mFaceCountVec.push_back(0);
-         mFaceIndicesVec.push_back(0);
-         Alembic::Abc::Int32ArraySample faceCountSample(&mFaceCountVec.front(),mFaceCountVec.size());
-         Alembic::Abc::Int32ArraySample faceIndicesSample(&mFaceIndicesVec.front(),mFaceIndicesVec.size());
+         Alembic::Abc::Int32ArraySample faceCountSample(mFaceCountVec);
+         Alembic::Abc::Int32ArraySample faceIndicesSample(mFaceIndicesVec);
          mSample.setFaceCounts(faceCountSample);
          mSample.setFaceIndices(faceIndicesSample);
       }
@@ -105,6 +116,7 @@ MStatus AlembicPolyMesh::Save(double time)
    std::vector<std::vector<Alembic::Abc::uint32_t> > mUvIndexVec;
    if(mNumSamples == 0 || dynamicTopology)
    {
+     ESS_PROFILE_SCOPE("AlembicPolyMesh::Save mNumSamples == 0 || dynamicTopology");
       MIntArray counts,indices;
       node.getVertices(counts,indices);
 
@@ -132,6 +144,7 @@ MStatus AlembicPolyMesh::Save(double time)
       // check if we need to export uvs
       if(GetJob()->GetOption(L"exportUVs").asInt() > 0)
       {
+        ESS_PROFILE_SCOPE("AlembicPolyMesh::Save UV");
          MStatus status;
          MStringArray uvSetNames;
          node.getUVSetNames(uvSetNames);
@@ -207,83 +220,104 @@ MStatus AlembicPolyMesh::Save(double time)
 
       if(GetJob()->GetOption(L"exportFaceSets").asInt() > 0)
       {
+        ESS_PROFILE_SCOPE("AlembicPolyMesh::Save FaceSets");
         // loop for facesets
         std::map<std::string,unsigned int> setNameMap;
-        std::size_t attrCount = node.attributeCount();
-        for (unsigned int i = 0; i < attrCount; ++i)
         {
-           MObject attr = node.attribute(i);
-           MFnAttribute mfnAttr(attr);
-           MPlug plug = node.findPlug(attr, true);
+          ESS_PROFILE_SCOPE("AlembicPolyMesh::Save FaceSets FACESET_ attribute");
+          MStringArray pluginsAttributes;
+          MGlobal::executeCommand("listAttr -fp " + node.name(), pluginsAttributes);    // only list attribute created by plugins! "FACESET_" are some of them!
+          for (unsigned int i = 0; i < pluginsAttributes.length(); ++i)
+          {
+             const MString &propName = pluginsAttributes[i];
+             MObject attr = node.attribute(propName);
+             MFnAttribute mfnAttr(attr);
+             MPlug plug = node.findPlug(attr, true);
 
-           // if it is not readable, then bail without any more checking
-           if (!mfnAttr.isReadable() || plug.isNull())
-              continue;
+             // if it is not readable or not an array of integer, then bail without any more checking
+             if (!mfnAttr.isReadable() || mfnAttr.type() != MFn::kIntArrayData || plug.isNull())
+                continue;
 
-           MString propName = plug.partialName(0, 0, 0, 0, 0, 1);
-           std::string propStr = propName.asChar();
-           if (propStr.substr(0, 8) == "FACESET_")
-           {
-              MStatus status;
-              MFnIntArrayData arr(plug.asMObject(), &status);
-              if (status != MS::kSuccess)
-                  continue;
+             std::string propStr = propName.asChar();
+             if (propStr.substr(0, 8) == "FACESET_")
+             {
+                MStatus status;
+                MFnIntArrayData arr(plug.asMObject(), &status);
+                if (status != MS::kSuccess)
+                    continue;
 
-              // ensure the faceSetName is unique
-              std::string faceSetName = propStr.substr(8);
-              int suffixId = 1;
-              std::string suffix;
-              while(setNameMap.find(faceSetName+suffix) != setNameMap.end()) {
-                 std::stringstream out;
-                 out << suffixId;
-                 suffix = out.str();
-                 suffixId++;
-              }
-              faceSetName += suffix;
-              setNameMap.insert(std::pair<std::string, unsigned int>(faceSetName, (unsigned int)setNameMap.size()));
+                // ensure the faceSetName is unique
+                std::string faceSetName = propStr.substr(8);
+                int suffixId = 1;
+                std::string suffix;
+                while(setNameMap.find(faceSetName+suffix) != setNameMap.end()) {
+                   std::stringstream out;
+                   out << suffixId;
+                   suffix = out.str();
+                   suffixId++;
+                }
+                faceSetName += suffix;
+                setNameMap.insert(std::pair<std::string, unsigned int>(faceSetName, (unsigned int)setNameMap.size()));
 
-              std::size_t numData = arr.length();
-              std::vector<Alembic::Util::int32_t> faceVals(numData);
-              for (unsigned int j = 0; j < numData; ++j)
-                  faceVals[j] = arr[j];
+                std::size_t numData = arr.length();
+                std::vector<Alembic::Util::int32_t> faceVals(numData);
+                for (unsigned int j = 0; j < numData; ++j)
+                    faceVals[j] = arr[j];
 
-              Alembic::AbcGeom::OFaceSet faceSet = mSchema.createFaceSet(faceSetName);
-              Alembic::AbcGeom::OFaceSetSchema::Sample faceSetSample;
-              faceSetSample.setFaces(Alembic::Abc::Int32ArraySample(faceVals));
-              faceSet.getSchema().set(faceSetSample);
-           }
+                Alembic::AbcGeom::OFaceSet faceSet = mSchema.createFaceSet(faceSetName);
+                Alembic::AbcGeom::OFaceSetSchema::Sample faceSetSample;
+                faceSetSample.setFaces(Alembic::Abc::Int32ArraySample(faceVals));
+                faceSet.getSchema().set(faceSetSample);
+             }
+          }
         }
 
         // more face sets, based on the material assignments
-        MObjectArray sets, comps;
-        unsigned int instanceNumber = path.instanceNumber();
-        node.getConnectedSetsAndMembers( instanceNumber, sets, comps, 1 );
-        for ( unsigned int i = 0; i < sets.length() ; i++ )
         {
-           MFnSet setFn ( sets[i] );
-           MItMeshPolygon tempFaceIt ( path, comps[i] ); 
-           std::vector<Alembic::Util::int32_t> faceVals(tempFaceIt.count());
-           unsigned int j=0;
-           for ( ;!tempFaceIt.isDone() ; tempFaceIt.next() )
-              faceVals[j++] = tempFaceIt.index();
+          ESS_PROFILE_SCOPE("AlembicPolyMesh::Save FaceSets mnore facesets");
+          const bool useInitShadGrp = GetJob()->GetOption(L"exportInitShadGrp").asInt() > 0;
+          MObjectArray sets, comps;
+          unsigned int instanceNumber = path.instanceNumber();
+          node.getConnectedSetsAndMembers( instanceNumber, sets, comps, 1 );  // no need to profile, not slow!
+          for ( unsigned int i = 0; i < sets.length() ; i++ )
+          {
+             MFnSet setFn ( sets[i] );
+             if (!useInitShadGrp && setFn.name() == "initialShadingGroup")
+               continue;
+             MItMeshPolygon tempFaceIt ( path, comps[i] ); 
+             std::vector<Alembic::Util::int32_t> faceVals(tempFaceIt.count());
+             {
+               ESS_PROFILE_SCOPE("AlembicPolyMesh::Save FaceSets mnore facesets tempFaceIt iteration");
+               unsigned int j=0;
+               for ( ;!tempFaceIt.isDone() ; tempFaceIt.next() )
+                 faceVals[j++] = tempFaceIt.index();
+             }
 
-           // ensure the faceSetName is unique
-           std::string faceSetName = setFn.name().asChar();
-           int suffixId = 1;
-           std::string suffix;
-           while(setNameMap.find(faceSetName+suffix) != setNameMap.end()) {
-              std::stringstream out;
-              out << suffixId;
-              suffix = out.str();
-              suffixId++;
-           }
-           faceSetName += suffix;
-           setNameMap.insert(std::pair<std::string, unsigned int>(faceSetName, (unsigned int)setNameMap.size()));
+             // ensure the faceSetName is unique
+             std::string faceSetName = setFn.name().asChar();
+             {
+               ESS_PROFILE_SCOPE("AlembicPolyMesh::Save FaceSets mnore facesets name unique");
+               int suffixId = 1;
+               std::string suffix;
+               while(setNameMap.find(faceSetName+suffix) != setNameMap.end()) {
+                  std::stringstream out;
+                  out << suffixId;
+                  suffix = out.str();
+                  suffixId++;
+               }
+               faceSetName += suffix;
+               setNameMap.insert(std::pair<std::string, unsigned int>(faceSetName, (unsigned int)setNameMap.size()));
+             }
 
-           Alembic::AbcGeom::OFaceSet faceSet = mSchema.createFaceSet(faceSetName);
-           Alembic::AbcGeom::OFaceSetSchema::Sample faceSetSample;
-           faceSetSample.setFaces(Alembic::Abc::Int32ArraySample(faceVals));
-           faceSet.getSchema().set(faceSetSample);
+             {
+               ESS_PROFILE_SCOPE("AlembicPolyMesh::Save FaceSets mnore facesets set");
+               Alembic::AbcGeom::OFaceSet faceSet = mSchema.createFaceSet(faceSetName);
+               Alembic::AbcGeom::OFaceSetSchema::Sample faceSetSample;
+               faceSetSample.setFaces(Alembic::Abc::Int32ArraySample(faceVals));
+               faceSet.getSchema().set(faceSetSample);
+             }
+
+          }
         }
       }
    }
@@ -295,6 +329,7 @@ MStatus AlembicPolyMesh::Save(double time)
    std::vector<unsigned int> indexedNormalsIndices;
    if(GetJob()->GetOption(L"exportNormals").asInt() > 0)
    {
+     ESS_PROFILE_SCOPE("AlembicPolyMesh::Save Normals");
      {
        MFloatVectorArray normalsArray;
        node.getNormals(normalsArray);
@@ -329,7 +364,10 @@ MStatus AlembicPolyMesh::Save(double time)
    }
 
    // save the sample
-   mSchema.set(mSample);
+   {
+      ESS_PROFILE_SCOPE("AlembicPolyMesh::Save mScheme.set(sample)");
+      mSchema.set(mSample);
+   }
    mNumSamples++;
    return MStatus::kSuccess;
 }

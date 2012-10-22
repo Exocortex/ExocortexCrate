@@ -4,7 +4,7 @@ global proc exocortexAlembicExport(string $filename,         string $exported_ob
                                    int $exportOutframe,      int $exportStepframe,       int $exportSubstepframe,
                                    int $exportTopology,      int $exportUVs,             int $exportFaceSets,
                                    int $exportDynamicTopo,   int $exportGlobalSpace,     int $exportWithoutHierarchy,
-                                   int $exportTransformCache)
+                                   int $exportTransformCache,int $exportUseInitShadGrp)
 {
   ExocortexAlembic_profileBegin -f MEL_exocortexAlembicExport;
   // construct the job string
@@ -25,12 +25,16 @@ global proc exocortexAlembicExport(string $filename,         string $exported_ob
     $job += ";purepointcache=0;normals=0;dynamictopology=0";
     $job += ";uvs="+$exportUVs;
     $job += ";facesets="+$exportFaceSets;
+    if ($exportFaceSets)
+      $job += ";useInitShadGrp=" + $exportUseInitShadGrp;
   }
   else if($exportTopology == 3)    
   {
     $job += ";purepointcache=0;normals=1";
     $job += ";uvs="+$exportUVs;
     $job += ";facesets="+$exportFaceSets;
+    if ($exportFaceSets)
+      $job += ";useInitShadGrp=" + $exportUseInitShadGrp;
     $job += ";dynamictopology="+$exportDynamicTopo;
   }
   $job += ";globalspace="+$exportGlobalSpace;

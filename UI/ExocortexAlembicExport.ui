@@ -19,7 +19,7 @@
   <property name="maximumSize">
    <size>
     <width>350</width>
-    <height>400</height>
+    <height>440</height>
    </size>
   </property>
   <property name="windowTitle">
@@ -155,26 +155,6 @@
       </property>
      </widget>
     </item>
-    <item row="6" column="1">
-     <widget class="QCheckBox" name="facesets">
-      <property name="text">
-       <string/>
-      </property>
-      <property name="checked">
-       <bool>true</bool>
-      </property>
-     </widget>
-    </item>
-    <item row="7" column="1">
-     <widget class="QCheckBox" name="dynamictopology">
-      <property name="text">
-       <string/>
-      </property>
-      <property name="checked">
-       <bool>false</bool>
-      </property>
-     </widget>
-    </item>
     <item row="6" column="0">
      <widget class="QLabel" name="label_9">
       <property name="text">
@@ -185,7 +165,40 @@
       </property>
      </widget>
     </item>
+    <item row="6" column="1">
+     <widget class="QCheckBox" name="facesets">
+      <property name="text">
+       <string/>
+      </property>
+      <property name="checked">
+       <bool>true</bool>
+      </property>
+     </widget>
+    </item>
+
     <item row="7" column="0">
+     <widget class="QLabel" name="label_9">
+      <property name="text">
+       <string>Use Initial Shading Group:</string>
+      </property>
+      <property name="alignment">
+       <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+      </property>
+     </widget>
+    </item>
+    <item row="7" column="1">
+     <widget class="QCheckBox" name="shadingGroup">
+      <property name="text">
+       <string/>
+      </property>
+      <property name="checked">
+       <bool>false</bool>
+      </property>
+     </widget>
+    </item>
+
+
+    <item row="8" column="0">
      <widget class="QLabel" name="label_10">
       <property name="text">
        <string>Dynamic Topology:</string>
@@ -195,7 +208,17 @@
       </property>
      </widget>
     </item>
-     <item row="8" column="0">
+    <item row="8" column="1">
+     <widget class="QCheckBox" name="dynamictopology">
+      <property name="text">
+       <string/>
+      </property>
+      <property name="checked">
+       <bool>false</bool>
+      </property>
+     </widget>
+    </item>
+     <item row="9" column="0">
        <widget class="QLabel" name="label_11">
          <property name="text">
            <string>Global Space:</string>
@@ -205,28 +228,8 @@
          </property>
        </widget>
      </item>
-     <item row="8" column="1">
-       <widget class="QCheckBox" name="globalspace">
-         <property name="text">
-           <string/>
-         </property>
-         <property name="checked">
-           <bool>false</bool>
-         </property>
-       </widget>
-     </item>
-     <item row="9" column="0">
-       <widget class="QLabel" name="label_12">
-         <property name="text">
-           <string>Without Hierarchy:</string>
-         </property>
-         <property name="alignment">
-           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-         </property>
-       </widget>
-     </item>
      <item row="9" column="1">
-       <widget class="QCheckBox" name="withouthierarchy">
+       <widget class="QCheckBox" name="globalspace">
          <property name="text">
            <string/>
          </property>
@@ -238,7 +241,7 @@
      <item row="10" column="0">
        <widget class="QLabel" name="label_12">
          <property name="text">
-           <string>Transform Cache:</string>
+           <string>Without Hierarchy:</string>
          </property>
          <property name="alignment">
            <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -246,6 +249,26 @@
        </widget>
      </item>
      <item row="10" column="1">
+       <widget class="QCheckBox" name="withouthierarchy">
+         <property name="text">
+           <string/>
+         </property>
+         <property name="checked">
+           <bool>false</bool>
+         </property>
+       </widget>
+     </item>
+     <item row="11" column="0">
+       <widget class="QLabel" name="label_12">
+         <property name="text">
+           <string>Transform Cache:</string>
+         </property>
+         <property name="alignment">
+           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+         </property>
+       </widget>
+     </item>
+     <item row="11" column="1">
        <widget class="QCheckBox" name="transformcache">
          <property name="text">
            <string/>
@@ -257,6 +280,7 @@
      </item>
    </layout>
   </widget>
+
   <widget class="QWidget" name="horizontalLayoutWidget">
    <property name="geometry">
     <rect>

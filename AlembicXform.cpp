@@ -46,31 +46,39 @@ MStatus AlembicXform::Save(double time)
       MMatrix matrix;
       matrix.setToIdentity();
 
-      MString typeStr = GetRef().apiTypeStr();
-
       // iterate all dagpaths 
-      MFnDagNode dagNode(GetRef());
-      MDagPathArray dagPaths;
-      dagNode.getAllPaths(dagPaths);
-      MDagPath path = dagPaths[0];
+      MDagPath path;
+      {  
+        ESS_PROFILE_SCOPE("AlembicXform::Save dagNode");
+        MFnDagNode dagNode(GetRef());
+        MDagPathArray dagPaths;
+        dagNode.getAllPaths(dagPaths);
+        path = dagPaths[0];
+      }
 
-      Alembic::Abc::M44d abcMatrix;
+      {
+        ESS_PROFILE_SCOPE("AlembicXform::Save matrix");
+        Alembic::Abc::M44d abcMatrix;
 
-      // decide if we need to project to local
-      if(IsParentedToRoot())
-         matrix = path.inclusiveMatrix();
-      else
-         matrix.setToProduct(path.inclusiveMatrix(), path.exclusiveMatrixInverse());
+        // decide if we need to project to local
+        if(IsParentedToRoot())
+           matrix = path.inclusiveMatrix();
+        else
+           matrix.setToProduct(path.inclusiveMatrix(), path.exclusiveMatrixInverse());
 
-      matrix = MTransformationMatrix(matrix).asMatrix();
+        matrix = MTransformationMatrix(matrix).asMatrix();
 
-      matrix.get(abcMatrix.x);
-      mSample.setMatrix(abcMatrix);
-      mSample.setInheritsXforms(true);
+        matrix.get(abcMatrix.x);
+        mSample.setMatrix(abcMatrix);
+        mSample.setInheritsXforms(true);
+      }
    }
 
    // save the sample
-   mSchema.set(mSample);
+   {
+     ESS_PROFILE_SCOPE("AlembicXform::Save mSchema.set(mSample)");
+     mSchema.set(mSample);
+   }
    mNumSamples++;
 
    return MStatus::kSuccess;
