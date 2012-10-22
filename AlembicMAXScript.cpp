@@ -859,8 +859,6 @@ int ExocortexAlembicStaticInterface_ExocortexAlembicExportJobs( CONST_2013 MCHAR
 			job->SetOption("exportBindPose", bBindPose);
 			job->SetOption("exportMaterialIds", bMaterialIds);
 			job->SetOption("exportDynamicTopology", bDynamicTopology);
-			job->SetOption("indexedNormals", true);
-			job->SetOption("indexedUVs", true);
 			job->SetOption("exportSelected", bExportSelected);
 			job->SetOption("flattenHierarchy", bFlattenHierarchy);
 			job->SetOption("exportParticlesAsMesh", bExportAsSingleMesh);

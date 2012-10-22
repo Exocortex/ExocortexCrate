@@ -252,10 +252,8 @@ bool AlembicPolyMesh::Save(double time, bool bLastFrame)
 	if(mJob->GetOption("exportNormals")){
 		AbcG::ON3fGeomParam::Sample normalSample;
 		normalSample.setScope(AbcG::kFacevaryingScope);
-		normalSample.setVals(Abc::N3fArraySample(finalPolyMesh.normalVec));
-		if(mJob->GetOption("indexedNormals")){
-			normalSample.setIndices(Abc::UInt32ArraySample(finalPolyMesh.normalIndexVec));
-		}
+		normalSample.setVals(Abc::N3fArraySample(finalPolyMesh.mIndexedNormals.values));
+		normalSample.setIndices(Abc::UInt32ArraySample(finalPolyMesh.mIndexedNormals.indices));
 		mMeshSample.setNormals(normalSample);
 	}
 

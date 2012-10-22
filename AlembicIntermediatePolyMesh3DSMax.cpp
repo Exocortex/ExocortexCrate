@@ -132,6 +132,78 @@ bool GetOption(std::map<std::string, bool>& mOptions, const std::string& in_Name
     return false;
 }
 
+void GetPolyMeshSpecifiedNormals( MNMesh* polyMesh, Matrix3 &meshTM_I_T, IndexedValues &indexedNormals ) {
+	EC_ASSERT( polyMesh != NULL );
+	MNNormalSpec *normalSpec = polyMesh->GetSpecifiedNormals();
+	EC_ASSERT( normalSpec && normalSpec->GetNumNormals() > 0 && normalSpec->GetNumFaces() > 0 );
+
+	indexedNormals.name = "normals";
+	indexedNormals.indices.clear();
+	indexedNormals.values.clear();
+	for( int f = 0; f < normalSpec->GetNumFaces(); f ++ ) {
+		MNNormalFace *pNormalFace = normalSpec->GetFaceArray();
+        for (int v = pNormalFace->GetDegree()-1; v >= 0; v--)
+        {
+			indexedNormals.indices.push_back( pNormalFace->GetNormalID( v ) );
+		}		
+	}
+
+	Point3 *pNormalArray = normalSpec->GetNormalArray();
+	for( int v = 0; v < normalSpec->GetNumNormals(); v ++ ) {
+		Point3 normal = pNormalArray[v];
+		normal = normal * meshTM_I_T;
+		indexedNormals.values.push_back( ConvertMaxNormalToAlembicNormal( normal ) );
+	}
+}
+
+void GetPolyMeshSmoothingGroupNormals( MNMesh* polyMesh, Matrix3 &meshTM_I_T, IndexedValues &indexedNormals ) {
+	EC_ASSERT( polyMesh != NULL );
+	MNNormalSpec *normalSpec = polyMesh->GetSpecifiedNormals();
+	EC_ASSERT( normalSpec == NULL );
+
+	indexedNormals.name = "normals";
+	indexedNormals.indices.clear();
+	indexedNormals.values.clear();
+	for( int f = 0; f < normalSpec->GetNumFaces(); f ++ ) {
+		MNNormalFace *pNormalFace = normalSpec->GetFaceArray();
+        for (int v = pNormalFace->GetDegree()-1; v >= 0; v--)
+        {
+			indexedNormals.indices.push_back( pNormalFace->GetNormalID( v ) );
+		}		
+	}
+
+	Point3 *pNormalArray = normalSpec->GetNormalArray();
+	for( int v = 0; v < normalSpec->GetNumNormals(); v ++ ) {
+		Point3 normal = pNormalArray[v];
+		normal = normal * meshTM_I_T;
+		indexedNormals.values.push_back( ConvertMaxNormalToAlembicNormal( normal ) );
+	}
+}
+
+void GetTriMeshSpecifiedNormals( Mesh *triMesh, Matrix3 &meshTM_I_T, IndexedValues &indexedNormals ) {
+	EC_ASSERT( triMesh != NULL );
+	MeshNormalSpec *normalSpec = triMesh->GetSpecifiedNormals();
+	EC_ASSERT( normalSpec && normalSpec->GetNumNormals() > 0 && normalSpec->GetNumFaces() > 0 );
+
+	indexedNormals.name = "normals";
+	indexedNormals.indices.clear();
+	indexedNormals.values.clear();
+	for( int f = 0; f < normalSpec->GetNumFaces(); f ++ ) {
+		MeshNormalFace *pNormalFace = normalSpec->GetFaceArray();
+        for (int v = 3-1; v >= 0; v--)
+        {
+			indexedNormals.indices.push_back( pNormalFace->GetNormalID( v ) );
+		}		
+	}
+
+	Point3 *pNormalArray = normalSpec->GetNormalArray();
+	for( int v = 0; v < normalSpec->GetNumNormals(); v ++ ) {
+		Point3 normal = pNormalArray[v];
+		normal = normal * meshTM_I_T;
+		indexedNormals.values.push_back( ConvertMaxNormalToAlembicNormal( normal ) );
+	}
+}
+
 void IntermediatePolyMesh3DSMax::Save(std::map<std::string, bool>& mOptions, Mesh *triMesh, MNMesh* polyMesh, Matrix3& meshTM, Mtl* pMtl, int nMatId, bool bFirstFrame, materialsMergeStr* pMatMerge)
 {
 	//for transforming the normals
@@ -217,9 +289,27 @@ void IntermediatePolyMesh3DSMax::Save(std::map<std::string, bool>& mOptions, Mes
             BuildMeshSmoothingGroupNormals(*triMesh);
         }
 
-        normalVec.reserve(sampleCount);
-
-        // Face and vertex normals.
+		if( polyMesh != NULL ) {
+			MNNormalSpec *normalSpec = polyMesh->GetSpecifiedNormals();
+            if (normalSpec && normalSpec->GetNumNormals() > 0 && normalSpec->GetNumFaces() > 0)
+            {
+				GetPolyMeshSpecifiedNormals( polyMesh, meshTM_I_T, mIndexedNormals );
+			}
+			else {
+				EC_LOG_ERROR( "Indexed Normals from PolyMesh Smoothing Groups Not implemented" );
+			}
+		}
+		if( triMesh != NULL ) {
+			MeshNormalSpec *normalSpec = triMesh->GetSpecifiedNormals();
+			if (normalSpec && normalSpec->GetNumNormals() > 0 && normalSpec->GetNumFaces() > 0)
+            {
+				GetTriMeshSpecifiedNormals( triMesh, meshTM_I_T, mIndexedNormals );
+			}
+			else {
+				EC_LOG_ERROR( "Indexed Normals from TriMesh Smoothing Groups Not implemented" );
+			}
+		}
+		// Face and vertex normals.
         // In MAX a vertex can have more than one normal (but doesn't always have it).
         for (int i = 0; i < faceCount; i++) 
         {
@@ -289,9 +379,12 @@ void IntermediatePolyMesh3DSMax::Save(std::map<std::string, bool>& mOptions, Mes
 				usedChannels.push_back(mp);
 			}
 
-			mUvVec.resize(usedChannels.size());
+			mIndexedUVSet.resize(usedChannels.size());
 			
 			for(int i=0; i<usedChannels.size(); i++){
+
+				IndexedValues &indexedUVs = mIndexedUVSet[i];
+
 				int chanNum = usedChannels[i];
 				MNMap *map = polyMesh->M(chanNum);
 
@@ -302,7 +395,12 @@ void IntermediatePolyMesh3DSMax::Save(std::map<std::string, bool>& mOptions, Mes
 
 				std::stringstream nameStream;
 				nameStream<<"Channel_"<<chanNum;
-				mUvSetNames.push_back(nameStream.str());
+				indexedUVs.name = nameStream.str();
+
+				for( int v = 0; v < map->VNum(); v ++ ) {
+					UVVert &texCoord = map->V( v );
+					indexedUVs.values.push_back( Abc::V2f(texCoord.x, texCoord.y) );
+				}
 
 				for (int f=0; f<faceCount; f++) 
 				{
@@ -311,16 +409,12 @@ void IntermediatePolyMesh3DSMax::Save(std::map<std::string, bool>& mOptions, Mes
 					{
 						if ( j < map->F(f)->deg)
 						{
-							int vertIndex = map->F(f)->tv[j];
-							UVVert texCoord = map->V(vertIndex);
-							Abc::V2f alembicUV(texCoord.x, texCoord.y);
-							mUvVec[i].push_back(alembicUV);
+							indexedUVs.indices.push_back( map->F(f)->tv[j] );
 						}
 						else
 						{
 							ESS_LOG_INFO("Warning: vertex is missing uv coordinate.");
-							Abc::V2f alembicUV(0.0f, 0.0f);
-							mUvVec[i].push_back(alembicUV);
+							indexedUVs.indices.push_back( 0 );
 						}
 					}
 				}
@@ -339,9 +433,11 @@ void IntermediatePolyMesh3DSMax::Save(std::map<std::string, bool>& mOptions, Mes
 				usedChannels.push_back(mp);
 			}
 
-			mUvVec.resize(usedChannels.size());
+			mIndexedUVSet.resize(usedChannels.size());
 			
 			for(int i=0; i<usedChannels.size(); i++){
+				IndexedValues &indexedUVs = mIndexedUVSet[i];
+
 				int chanNum = usedChannels[i];
 				MeshMap& map = triMesh->Map(chanNum);
 
@@ -352,63 +448,23 @@ void IntermediatePolyMesh3DSMax::Save(std::map<std::string, bool>& mOptions, Mes
 
 				std::stringstream nameStream;
 				nameStream<<"Channel_"<<chanNum;
-				mUvSetNames.push_back(nameStream.str());
+				indexedUVs.name = nameStream.str();
 
 				for (int f=0; f< faceCount; f++) 
 				{
 					for (int j = 2; j >= 0; j -= 1)
 					{
-						int vertIndex = map.tf[f].t[j];
-						UVVert& texCoord = map.tv[vertIndex];
-						Abc::V2f alembicUV(texCoord.x, texCoord.y);
-						mUvVec[i].push_back(alembicUV);					
+						indexedUVs.indices.push_back( map.tf[f].t[j] );					
 					}
 				}
+				for (int v=0; f< map.getNumVerts(); v++ ){
+					UVVert& texCoord = map.tv[v];
+					indexedUVs.values.push_back( Abc::V2f( texCoord.x, texCoord.y ) );					
+				}
 			}
+		}
 
-			//int numMaps = triMesh->getNumMaps();
-			//for(int mp=0; mp<numMaps; mp++) {
-			//	int tvertsToAdd = triMesh->mapSupport(mp) ? triMesh->getNumMapVerts(mp) : 0;
-			//	if (tvertsToAdd == 0) {
-			//		continue;
-			//	}
-			//	ESS_LOG_INFO("map channel: "<<mp);
-			//}
-
-   //       if (CheckForFaceMap(pMtl, triMesh)) 
-   //       {
-   //           for (int i=0; i<faceCount; i++) 
-   //           {
-   //               Point3 tv[3];
-   //               Face* f = &triMesh->faces[i];
-   //               make_face_uv(f, tv);
-
-   //               for (int j=2; j>=0; j-=1)
-   //               {
-   //                   Abc::V2f alembicUV(tv[j].x, tv[j].y);
-   //                   mUvVec.push_back(alembicUV);
-   //               }
-   //           }
-   //       }
-   //       else if (triMesh->mapSupport(1))
-   //       {
-   //           MeshMap &map = triMesh->Map(1);
-
-   //           for (int findex =0; findex < map.fnum; findex += 1)
-   //           {
-   //               TVFace &texFace = map.tf[findex];
-   //               for (int vindex = 2; vindex >= 0; vindex -= 1)
-   //               {
-   //                   int vertexid = texFace.t[vindex];
-   //                   UVVert uvVert = map.tv[vertexid];
-   //                   Abc::V2f alembicUV(uvVert.x, uvVert.y);
-   //                   mUvVec.push_back(alembicUV);
-   //               }
-   //           }
-   //       }
-      }
-
-		mUvIndexVec.resize(mUvVec.size());
+		/*mUvIndexVec.resize(mUvVec.size());
 
 		for(int i=0; i<mUvVec.size(); i++){
 			if (mUvVec[i].size() != sampleCount){
@@ -418,7 +474,7 @@ void IntermediatePolyMesh3DSMax::Save(std::map<std::string, bool>& mOptions, Mes
 			std::vector<Abc::V2f> uvVecIndexed;
          createIndexedArray<Abc::V2f, SortableV2f>(mFaceIndicesVec, mUvVec[i], uvVecIndexed, mUvIndexVec[i]);
          mUvVec[i] = uvVecIndexed;
-		}
+		}*/
 		
 	}
 

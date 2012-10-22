@@ -1004,7 +1004,6 @@ void AlembicPoints::saveCurrentFrameMeshes()
 
 			std::map<std::string, bool> options;
 			options["exportNormals"] = mJob->GetOption("exportNormals");
-			options["indexedNormals"] = mJob->GetOption("indexedNormals");
 			options["exportMaterialIds"] = mJob->GetOption("exportMaterialIds");
 
 			//gather the mesh data
@@ -1056,10 +1055,8 @@ void AlembicPoints::saveCurrentFrameMeshes()
 			if(mJob->GetOption("exportNormals")){
 				AbcG::ON3fGeomParam::Sample normalSample;
 				normalSample.setScope(AbcG::kFacevaryingScope);
-				normalSample.setVals(Abc::N3fArraySample(finalPolyMesh.normalVec));
-				if(mJob->GetOption("indexedNormals")){
-					normalSample.setIndices(Abc::UInt32ArraySample(finalPolyMesh.normalIndexVec));
-				}
+				normalSample.setVals(Abc::N3fArraySample(finalPolyMesh.mIndexedNormals.values));
+				normalSample.setIndices(Abc::UInt32ArraySample(finalPolyMesh.mIndexedNormals.indices));
 				meshSample.setNormals(normalSample);
 			}
 
