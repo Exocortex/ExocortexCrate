@@ -73,8 +73,7 @@ MStatus AlembicPolyMesh::Save(double time)
    mPointCountLastFrame = points.length();
 
    {
-      ESS_PROFILE_SCOPE("AlembicPolyMesh::Save poitn copy, bbox extend, gspace");
-
+     ESS_PROFILE_SCOPE("AlembicPolyMesh::Save poitn copy, bbox extend, gspace");
      mPosVec.resize(points.length());
      for(unsigned int i=0;i<points.length();i++)
      {
@@ -220,13 +219,13 @@ MStatus AlembicPolyMesh::Save(double time)
 
       if(GetJob()->GetOption(L"exportFaceSets").asInt() > 0)
       {
-        ESS_PROFILE_SCOPE("AlembicPolyMesh::Save FaceSets");
         // loop for facesets
+        ESS_PROFILE_SCOPE("AlembicPolyMesh::Save FaceSets");
         std::map<std::string,unsigned int> setNameMap;
         {
           ESS_PROFILE_SCOPE("AlembicPolyMesh::Save FaceSets FACESET_ attribute");
           MStringArray pluginsAttributes;
-          MGlobal::executeCommand("listAttr -fp " + node.name(), pluginsAttributes);    // only list attribute created by plugins! "FACESET_" are some of them!
+          MGlobal::executeCommand("listAttr -ud " + node.name(), pluginsAttributes);    // only list attribute created by plugins! "FACESET_" are some of them!
           for (unsigned int i = 0; i < pluginsAttributes.length(); ++i)
           {
              const MString &propName = pluginsAttributes[i];
@@ -241,6 +240,7 @@ MStatus AlembicPolyMesh::Save(double time)
              std::string propStr = propName.asChar();
              if (propStr.substr(0, 8) == "FACESET_")
              {
+                ESS_PROFILE_SCOPE("AlembicPolyMesh::Save FaceSets FACESET_ attribute found");
                 MStatus status;
                 MFnIntArrayData arr(plug.asMObject(), &status);
                 if (status != MS::kSuccess)
@@ -274,29 +274,31 @@ MStatus AlembicPolyMesh::Save(double time)
 
         // more face sets, based on the material assignments
         {
-          ESS_PROFILE_SCOPE("AlembicPolyMesh::Save FaceSets mnore facesets");
+          ESS_PROFILE_SCOPE("AlembicPolyMesh::Save FaceSets more");
           const bool useInitShadGrp = GetJob()->GetOption(L"exportInitShadGrp").asInt() > 0;
-          MObjectArray sets, comps;
+          MObjectArray sets;
+          MIntArray indices;
           unsigned int instanceNumber = path.instanceNumber();
-          node.getConnectedSetsAndMembers( instanceNumber, sets, comps, 1 );  // no need to profile, not slow!
+          node.getConnectedShaders(instanceNumber, sets, indices);
           for ( unsigned int i = 0; i < sets.length() ; i++ )
           {
              MFnSet setFn ( sets[i] );
              if (!useInitShadGrp && setFn.name() == "initialShadingGroup")
                continue;
-             MItMeshPolygon tempFaceIt ( path, comps[i] ); 
-             std::vector<Alembic::Util::int32_t> faceVals(tempFaceIt.count());
+             std::vector<Alembic::Util::int32_t> faceVals;//(indices.length());
              {
-               ESS_PROFILE_SCOPE("AlembicPolyMesh::Save FaceSets mnore facesets tempFaceIt iteration");
-               unsigned int j=0;
-               for ( ;!tempFaceIt.isDone() ; tempFaceIt.next() )
-                 faceVals[j++] = tempFaceIt.index();
+               ESS_PROFILE_SCOPE("AlembicPolyMesh::Save FaceSets more tempFaceIt iteration");
+               for (unsigned int j = 0; j < indices.length(); ++j)
+               {
+                 if (indices[j] > 0)
+                   faceVals.push_back(j);
+               }
              }
 
              // ensure the faceSetName is unique
              std::string faceSetName = setFn.name().asChar();
              {
-               ESS_PROFILE_SCOPE("AlembicPolyMesh::Save FaceSets mnore facesets name unique");
+               ESS_PROFILE_SCOPE("AlembicPolyMesh::Save FaceSets more name unique");
                int suffixId = 1;
                std::string suffix;
                while(setNameMap.find(faceSetName+suffix) != setNameMap.end()) {
@@ -310,7 +312,7 @@ MStatus AlembicPolyMesh::Save(double time)
              }
 
              {
-               ESS_PROFILE_SCOPE("AlembicPolyMesh::Save FaceSets mnore facesets set");
+               ESS_PROFILE_SCOPE("AlembicPolyMesh::Save FaceSets more set");
                Alembic::AbcGeom::OFaceSet faceSet = mSchema.createFaceSet(faceSetName);
                Alembic::AbcGeom::OFaceSetSchema::Sample faceSetSample;
                faceSetSample.setFaces(Alembic::Abc::Int32ArraySample(faceVals));
