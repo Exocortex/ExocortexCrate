@@ -12,10 +12,10 @@ class AlembicObject
 {
 private:
     std::vector<const SceneEntry*> mRefs;
-    Alembic::Abc::OObject mOParent;
+    Abc::OObject mOParent;
 protected:
     int mNumSamples;
-    Alembic::AbcGeom::OVisibilityProperty mOVisibility;
+    AbcG::OVisibilityProperty mOVisibility;
     AlembicWriteJob * mJob;
 	bool bForever;
 public:
@@ -26,8 +26,8 @@ public:
     const SceneEntry & GetRef(unsigned long index = 0);
     int GetRefCount();
     void AddRef(const SceneEntry & in_Ref);
-    Alembic::Abc::OObject GetOParent();
-    virtual Alembic::Abc::OCompoundProperty GetCompound() = 0;
+    Abc::OObject GetOParent();
+    virtual Abc::OCompoundProperty GetCompound() = 0;
     int GetNumSamples();
 
     virtual bool Save(double time, bool bLastFrame) = 0;

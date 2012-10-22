@@ -470,7 +470,7 @@ int ExocortexAlembicStaticInterface_ExocortexAlembicImportJobs( CONST_2013 MCHAR
 		//std::string file(szPath);
 
 		// Try opening up the archive
-		Alembic::Abc::IArchive *pArchive = getArchiveFromID(file);
+		Abc::IArchive *pArchive = getArchiveFromID(file);
 		if (!pArchive) {
 			ESS_LOG_ERROR( "Unable to open Alembic file: " << file  );
 			return alembic_failure;
@@ -489,7 +489,7 @@ int ExocortexAlembicStaticInterface_ExocortexAlembicImportJobs( CONST_2013 MCHAR
 				
 		AlembicImport_TimeControl( options );
 
-      Alembic::AbcGeom::IObject root = pArchive->getTop();
+      AbcG::IObject root = pArchive->getTop();
 
       
 

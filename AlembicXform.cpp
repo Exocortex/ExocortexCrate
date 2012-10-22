@@ -7,9 +7,6 @@
 #include "AlembicMetadataUtils.h"
 
 
-// namespace AbcA = ::Alembic::AbcCoreAbstract::ALEMBIC_VERSION_NS;
-// using namespace AbcA;
-
 void GetObjectMatrix(TimeValue ticks, INode *node, Matrix3 &out, bool bFlattenHierarchy)
 {
     out = node->GetObjTMAfterWSM(ticks);
@@ -25,7 +22,7 @@ void GetObjectMatrix(TimeValue ticks, INode *node, Matrix3 &out, bool bFlattenHi
     }
 }
 
-void SaveXformSample(const SceneEntry &in_Ref, Alembic::AbcGeom::OXformSchema &schema, Alembic::AbcGeom::XformSample &sample, double time, bool bFlattenHierarchy)
+void SaveXformSample(const SceneEntry &in_Ref, AbcG::OXformSchema &schema, AbcG::XformSample &sample, double time, bool bFlattenHierarchy)
 {
 	// check if the transform is animated
     if(schema.getNumSamples() > 0)
@@ -47,7 +44,7 @@ void SaveXformSample(const SceneEntry &in_Ref, Alembic::AbcGeom::OXformSchema &s
     // Convert the max transform to alembic
     Matrix3 alembicMatrix;
     ConvertMaxMatrixToAlembicMatrix(transformation, alembicMatrix);
-    Alembic::Abc::M44d iMatrix( alembicMatrix.GetRow(0).x,  alembicMatrix.GetRow(0).y,  alembicMatrix.GetRow(0).z,  0,
+    Abc::M44d iMatrix( alembicMatrix.GetRow(0).x,  alembicMatrix.GetRow(0).y,  alembicMatrix.GetRow(0).z,  0,
                                 alembicMatrix.GetRow(1).x,  alembicMatrix.GetRow(1).y,  alembicMatrix.GetRow(1).z,  0,
                                 alembicMatrix.GetRow(2).x,  alembicMatrix.GetRow(2).y,  alembicMatrix.GetRow(2).z,  0,
                                 alembicMatrix.GetRow(3).x,  alembicMatrix.GetRow(3).y,  alembicMatrix.GetRow(3).z,  1);
@@ -57,7 +54,7 @@ void SaveXformSample(const SceneEntry &in_Ref, Alembic::AbcGeom::OXformSchema &s
     schema.set(sample);
 }
 
-void SaveCameraXformSample(const SceneEntry &in_Ref, Alembic::AbcGeom::OXformSchema &schema, Alembic::AbcGeom::XformSample &sample, double time, bool bFlatten)
+void SaveCameraXformSample(const SceneEntry &in_Ref, AbcG::OXformSchema &schema, AbcG::XformSample &sample, double time, bool bFlatten)
 {
    // check if the transform is animated
     if(schema.getNumSamples() > 0)
@@ -84,7 +81,7 @@ void SaveCameraXformSample(const SceneEntry &in_Ref, Alembic::AbcGeom::OXformSch
     // Convert the max transform to alembic
     Matrix3 alembicMatrix;
     ConvertMaxMatrixToAlembicMatrix(transformation, alembicMatrix);
-    Alembic::Abc::M44d iMatrix( alembicMatrix.GetRow(0).x,  alembicMatrix.GetRow(0).y,  alembicMatrix.GetRow(0).z,  0,
+    Abc::M44d iMatrix( alembicMatrix.GetRow(0).x,  alembicMatrix.GetRow(0).y,  alembicMatrix.GetRow(0).z,  0,
                                 alembicMatrix.GetRow(1).x,  alembicMatrix.GetRow(1).y,  alembicMatrix.GetRow(1).z,  0,
                                 alembicMatrix.GetRow(2).x,  alembicMatrix.GetRow(2).y,  alembicMatrix.GetRow(2).z,  0,
                                 alembicMatrix.GetRow(3).x,  alembicMatrix.GetRow(3).y,  alembicMatrix.GetRow(3).z,  1);
@@ -98,7 +95,7 @@ AlembicXForm::AlembicXForm(const SceneEntry &in_Ref, AlembicWriteJob *in_Job) : 
 {
     std::string xformName = std::string( EC_MCHAR_to_UTF8( in_Ref.node->GetName() ) ) + "Xfo";
 
-    Alembic::AbcGeom::OXform xform(GetOParent(), xformName.c_str(), GetCurrentJob()->GetAnimatedTs());
+    AbcG::OXform xform(GetOParent(), xformName.c_str(), GetCurrentJob()->GetAnimatedTs());
 
     mXformSchema = xform.getSchema();
 }
@@ -112,9 +109,9 @@ bool AlembicXForm::Save(double time, bool bLastFrame)
     // Set the bounding box to be used to draw the dummy object on import
     DummyObject *pDummyObject = static_cast<DummyObject*>(GetRef().obj);
     Box3 maxBox = pDummyObject->GetBox();
-    Alembic::Abc::V3d minpoint(maxBox.pmin.x, maxBox.pmin.y, maxBox.pmin.z);
-    Alembic::Abc::V3d maxpoint(maxBox.pmax.x, maxBox.pmax.y, maxBox.pmax.z);
-    mXformSample.setChildBounds(Alembic::Abc::Box3d(minpoint, maxpoint));
+    Abc::V3d minpoint(maxBox.pmin.x, maxBox.pmin.y, maxBox.pmin.z);
+    Abc::V3d maxpoint(maxBox.pmax.x, maxBox.pmax.y, maxBox.pmax.z);
+    mXformSample.setChildBounds(Abc::Box3d(minpoint, maxpoint));
 
     if(mXformSchema.getNumSamples() == 0)
     {
@@ -127,7 +124,7 @@ bool AlembicXForm::Save(double time, bool bLastFrame)
     return true;
 }
 
-Alembic::Abc::OCompoundProperty AlembicXForm::GetCompound()
+Abc::OCompoundProperty AlembicXForm::GetCompound()
 {
     return mXformSchema;
 }
@@ -155,10 +152,10 @@ bool alembic_xform_Update( CRef& in_ctxt )
     CString path = ctxt.GetParameterValue(L"path");
     CString identifier = ctxt.GetParameterValue(L"identifier");
 
-    Alembic::AbcGeom::IObject iObj = getObjectFromArchive(path,identifier);
+    AbcG::IObject iObj = getObjectFromArchive(path,identifier);
     if(!iObj.valid())
         return CStatus::OK;
-    Alembic::AbcGeom::IXform obj(iObj,Alembic::Abc::kWrapExisting);
+    AbcG::IXform obj(iObj,Abc::kWrapExisting);
     if(!obj.valid())
         return CStatus::OK;
 
@@ -168,15 +165,15 @@ bool alembic_xform_Update( CRef& in_ctxt )
         obj.getSchema().getNumSamples()
         );
 
-    Alembic::AbcGeom::XformSample sample;
+    AbcG::XformSample sample;
     obj.getSchema().get(sample,sampleInfo.floorIndex);
-    Alembic::Abc::M44d matrix = sample.getMatrix();
+    Abc::M44d matrix = sample.getMatrix();
 
     // blend
     if(sampleInfo.alpha != 0.0)
     {
         obj.getSchema().get(sample,sampleInfo.ceilIndex);
-        Alembic::Abc::M44d ceilMatrix = sample.getMatrix();
+        Abc::M44d ceilMatrix = sample.getMatrix();
         matrix = (1.0 - sampleInfo.alpha) * matrix + sampleInfo.alpha * ceilMatrix;
     }
 
@@ -223,12 +220,12 @@ bool alembic_visibility_Update( CRef& in_ctxt )
     CString path = ctxt.GetParameterValue(L"path");
     CString identifier = ctxt.GetParameterValue(L"identifier");
 
-    Alembic::AbcGeom::IObject obj = getObjectFromArchive(path,identifier);
+    AbcG::IObject obj = getObjectFromArchive(path,identifier);
     if(!obj.valid())
         return CStatus::OK;
 
-    Alembic::AbcGeom::IVisibilityProperty visibilityProperty = 
-        Alembic::AbcGeom::GetVisibilityProperty(obj);
+    AbcG::IVisibilityProperty visibilityProperty = 
+        AbcG::GetVisibilityProperty(obj);
     if(!visibilityProperty.valid())
         return CStatus::OK;
 
@@ -239,18 +236,18 @@ bool alembic_visibility_Update( CRef& in_ctxt )
         );
 
     int8_t rawVisibilityValue = visibilityProperty.getValue ( sampleInfo.floorIndex );
-    Alembic::AbcGeom::ObjectVisibility visibilityValue = Alembic::AbcGeom::ObjectVisibility ( rawVisibilityValue );
+    AbcG::ObjectVisibility visibilityValue = AbcG::ObjectVisibility ( rawVisibilityValue );
 
     Property prop(ctxt.GetOutputTarget());
     switch(visibilityValue)
     {
-    case Alembic::AbcGeom::kVisibilityVisible:
+    case AbcG::kVisibilityVisible:
         {
             prop.PutParameterValue(L"viewvis",true);
             prop.PutParameterValue(L"rendvis",true);
             break;
         }
-    case Alembic::AbcGeom::kVisibilityHidden:
+    case AbcG::kVisibilityHidden:
         {
             prop.PutParameterValue(L"viewvis",false);
             prop.PutParameterValue(L"rendvis",false);

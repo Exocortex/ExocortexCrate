@@ -12,7 +12,7 @@
 #include "AlembicNames.h"
 #include "AlembicXformUtilities.h"
  
-/*void AlembicImport_SetupChildLinks( Alembic::Abc::IObject &obj, alembic_importoptions &options )
+/*void AlembicImport_SetupChildLinks( Abc::IObject &obj, alembic_importoptions &options )
 {
 	std::string pName = obj.getName();
     INode *pParentNode = options.currentSceneList.FindNodeWithName(pName, false);
@@ -23,10 +23,10 @@
 
         for (size_t i = 0; i < obj.getNumChildren(); i += 1)
         {
-            Alembic::Abc::IObject childObj = obj.getChild(i);
+            Abc::IObject childObj = obj.getChild(i);
 
 
-			if(childObj.getNumChildren() == 1 && !Alembic::AbcGeom::IXform::matches(childObj.getChild(0).getMetaData()))
+			if(childObj.getNumChildren() == 1 && !AbcG::IXform::matches(childObj.getChild(0).getMetaData()))
 			{
 				name = childObj.getChild(0).getName();
 			}

@@ -209,7 +209,7 @@ void AlembicCameraModifier::EnumAuxFiles(AssetEnumCallback& nameEnum, DWORD flag
 	ReferenceTarget::EnumAuxFiles(nameEnum, flags);
 } 
 
-extern bool getCameraSampleVal(Alembic::AbcGeom::ICamera& objCamera, SampleInfo& sampleInfo, Alembic::AbcGeom::CameraSample sample, const char* name, double& sampleVal);
+extern bool getCameraSampleVal(AbcG::ICamera& objCamera, SampleInfo& sampleInfo, AbcG::CameraSample sample, const char* name, double& sampleVal);
 
 void AlembicCameraModifier::ModifyObject (TimeValue t, ModContext &mc, ObjectState *os, INode *node) 
 {
@@ -236,13 +236,13 @@ void AlembicCameraModifier::ModifyObject (TimeValue t, ModContext &mc, ObjectSta
 	//   return;
 	//}
 
- //  Alembic::AbcGeom::IObject iObj = getObjectFromArchive(szPath, szIdentifier);
+ //  AbcG::IObject iObj = getObjectFromArchive(szPath, szIdentifier);
 
- //  if(!iObj.valid() || !Alembic::AbcGeom::ICamera::matches(iObj.getMetaData())) {
+ //  if(!iObj.valid() || !AbcG::ICamera::matches(iObj.getMetaData())) {
  //     return;
  //  }
 
- //  Alembic::AbcGeom::ICamera objCamera = Alembic::AbcGeom::ICamera(iObj, Alembic::Abc::kWrapExisting);
+ //  AbcG::ICamera objCamera = AbcG::ICamera(iObj, Abc::kWrapExisting);
 
  //  TimeValue dTicks = GetTimeValueFromSeconds( fTime );
  //  double sampleTime = GetSecondsFromTimeValue(dTicks);
@@ -250,7 +250,7 @@ void AlembicCameraModifier::ModifyObject (TimeValue t, ModContext &mc, ObjectSta
  //  SampleInfo sampleInfo = getSampleInfo(sampleTime,
  //                             objCamera.getSchema().getTimeSampling(),
  //                             objCamera.getSchema().getNumSamples());
- //  Alembic::AbcGeom::CameraSample sample;
+ //  AbcG::CameraSample sample;
  //  objCamera.getSchema().get(sample, sampleInfo.floorIndex);
 
  //  double sampleVal = 0.0;

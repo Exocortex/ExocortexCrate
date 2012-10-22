@@ -27,66 +27,66 @@ void AlembicDebug_PrintTransform( Matrix3 &m );
 
 // Conversion functions to Alembic Standards
 void ConvertMaxMatrixToAlembicMatrix( const Matrix3 &maxMatrix, Matrix3 &alembicMatrix );
-void ConvertMaxMatrixToAlembicMatrix( const Matrix3 &maxMatrix, Alembic::Abc::M44d& iMatrix);
+void ConvertMaxMatrixToAlembicMatrix( const Matrix3 &maxMatrix, Abc::M44d& iMatrix);
 void ConvertAlembicMatrixToMaxMatrix( const Matrix3 &alembicMatrix, Matrix3 &maxMatrix );
 
-inline Imath::V3f ConvertMaxPointToAlembicPoint( const Point3 &maxPoint )
+inline Abc::V3f ConvertMaxPointToAlembicPoint( const Point3 &maxPoint )
 {
-	return Imath::V3f(maxPoint.x, maxPoint.z, -maxPoint.y);
+	return Abc::V3f(maxPoint.x, maxPoint.z, -maxPoint.y);
 }
 
-inline Imath::V4f ConvertMaxPointToAlembicPoint4( const Point3 &maxPoint )
+inline Abc::V4f ConvertMaxPointToAlembicPoint4( const Point3 &maxPoint )
 {
-	return Imath::V4f(maxPoint.x, maxPoint.z, -maxPoint.y, 1.0);
+	return Abc::V4f(maxPoint.x, maxPoint.z, -maxPoint.y, 1.0);
 }
 
-inline Point3 ConvertAlembicPointToMaxPoint( const Imath::V3f &alembicPoint )
-{
-	return Point3(alembicPoint.x, -alembicPoint.z, alembicPoint.y);
-}
-
-inline Imath::V3f ConvertMaxVectorToAlembicVector( const Point3 &maxPoint )
-{
-	return Imath::V3f(maxPoint.x, maxPoint.z, -maxPoint.y);
-}
-
-inline Imath::V4f ConvertMaxVectorToAlembicVector4( const Point3 &maxPoint )
-{
-	return Imath::V4f(maxPoint.x, maxPoint.z, -maxPoint.y, 0.0);
-}
-
-inline Point3 ConvertAlembicVectorToMaxVector( const Imath::V3f &alembicPoint )
+inline Point3 ConvertAlembicPointToMaxPoint( const Abc::V3f &alembicPoint )
 {
 	return Point3(alembicPoint.x, -alembicPoint.z, alembicPoint.y);
 }
 
-inline Imath::V3f ConvertMaxNormalToAlembicNormal( const Point3 &maxPoint )
+inline Abc::V3f ConvertMaxVectorToAlembicVector( const Point3 &maxPoint )
+{
+	return Abc::V3f(maxPoint.x, maxPoint.z, -maxPoint.y);
+}
+
+inline Abc::V4f ConvertMaxVectorToAlembicVector4( const Point3 &maxPoint )
+{
+	return Abc::V4f(maxPoint.x, maxPoint.z, -maxPoint.y, 0.0);
+}
+
+inline Point3 ConvertAlembicVectorToMaxVector( const Abc::V3f &alembicPoint )
+{
+	return Point3(alembicPoint.x, -alembicPoint.z, alembicPoint.y);
+}
+
+inline Abc::V3f ConvertMaxNormalToAlembicNormal( const Point3 &maxPoint )
 {
      Point3 maxPointNormalized = maxPoint.Normalize();
-	 return Imath::V3f( maxPoint.x, maxPoint.z, -maxPoint.y);
+	 return Abc::V3f( maxPoint.x, maxPoint.z, -maxPoint.y);
 }
 
-inline Point3 ConvertAlembicNormalToMaxNormal( const Imath::V3f &alembicPoint )
+inline Point3 ConvertAlembicNormalToMaxNormal( const Abc::V3f &alembicPoint )
 {
 	return Point3( alembicPoint.x, -alembicPoint.z, alembicPoint.y );
 }
 
-inline Point3 ConvertAlembicNormalToMaxNormal_Normalized( const Imath::V3f &alembicPoint )
+inline Point3 ConvertAlembicNormalToMaxNormal_Normalized( const Abc::V3f &alembicPoint )
 {
 	return ConvertAlembicNormalToMaxNormal(alembicPoint).Normalize();
 }
 
-inline Imath::V3f ConvertMaxScaleToAlembicScale( const Point3 &maxScale )
+inline Abc::V3f ConvertMaxScaleToAlembicScale( const Point3 &maxScale )
 {
-	return Imath::V3f(maxScale.x, maxScale.z, maxScale.y);
+	return Abc::V3f(maxScale.x, maxScale.z, maxScale.y);
 }
 
-inline Point3 ConvertAlembicScaleToMaxScale( const Imath::V3f &alembicScale )
+inline Point3 ConvertAlembicScaleToMaxScale( const Abc::V3f &alembicScale )
 {
 	return Point3(alembicScale.x, alembicScale.z, alembicScale.y);
 }
 
-inline Quat ConvertAlembicQuatToMaxQuat( const Imath::Quatf &alembicQuat, bool bNormalize)
+inline Quat ConvertAlembicQuatToMaxQuat( const Abc::Quatf &alembicQuat, bool bNormalize)
 {
     Quat q(alembicQuat.v.x, -alembicQuat.v.z, alembicQuat.v.y, -alembicQuat.r);
 
@@ -96,9 +96,9 @@ inline Quat ConvertAlembicQuatToMaxQuat( const Imath::Quatf &alembicQuat, bool b
     return q;
 }
 
-inline Imath::Quatf ConvertMaxQuatToAlembicQuat( const Imath::Quatf &alembicQuat, bool bNormalize)
+inline Abc::Quatf ConvertMaxQuatToAlembicQuat( const Abc::Quatf &alembicQuat, bool bNormalize)
 {
-	Imath::Quatf q(alembicQuat.v.x, alembicQuat.v.z, -alembicQuat.v.y, -alembicQuat.r);
+	Abc::Quatf q(alembicQuat.v.x, alembicQuat.v.z, -alembicQuat.v.y, -alembicQuat.r);
 
     if (bNormalize)
 		q.normalize();
@@ -106,9 +106,9 @@ inline Imath::Quatf ConvertMaxQuatToAlembicQuat( const Imath::Quatf &alembicQuat
     return q;
 }
 
-inline void ConvertMaxAngAxisToAlembicQuat(const AngAxis &angAxis, Alembic::Abc::Quatd &quat)
+inline void ConvertMaxAngAxisToAlembicQuat(const AngAxis &angAxis, Abc::Quatd &quat)
 {
-    Imath::V3f alembicAxis = ConvertMaxNormalToAlembicNormal(angAxis.axis);
+    Abc::V3f alembicAxis = ConvertMaxNormalToAlembicNormal(angAxis.axis);
     quat.setAxisAngle(alembicAxis, angAxis.angle);
     quat.normalize();
 }

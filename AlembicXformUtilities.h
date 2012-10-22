@@ -16,7 +16,7 @@
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 typedef struct _alembic_fillxform_options
 {
-    Alembic::AbcGeom::IObject *pIObj;
+    AbcG::IObject *pIObj;
     Matrix3 maxMatrix;
     Box3    maxBoundingBox;
     TimeValue dTicks;
@@ -33,9 +33,9 @@ typedef struct _alembic_fillxform_options
 
 
 void AlembicImport_FillInXForm(alembic_fillxform_options &options);
-int AlembicImport_XForm(INode* pParentNode, INode* pMaxNode, Alembic::AbcGeom::IObject& iObjXform, Alembic::AbcGeom::IObject* p_iObjGeom, const std::string &file, alembic_importoptions &options);
-int AlembicImport_DummyNode(Alembic::AbcGeom::IObject& iObj, alembic_importoptions &options, INode** pMaxNode, const std::string& importName);
+int AlembicImport_XForm(INode* pParentNode, INode* pMaxNode, AbcG::IObject& iObjXform, AbcG::IObject* p_iObjGeom, const std::string &file, alembic_importoptions &options);
+int AlembicImport_DummyNode(AbcG::IObject& iObj, alembic_importoptions &options, INode** pMaxNode, const std::string& importName);
 
-size_t getNumXformChildren( Alembic::AbcGeom::IObject& iObj );
+size_t getNumXformChildren( AbcG::IObject& iObj );
 
 #endif	// __ALEMBIC_TRANSFORM_UTILITIES_H

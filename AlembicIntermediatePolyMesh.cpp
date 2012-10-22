@@ -23,14 +23,14 @@ bool AlembicIntermediatePolyMesh::mergeWith(const AlembicIntermediatePolyMesh& s
 
 	destMesh.bbox.extendBy(srcMesh.bbox);
 
-	Alembic::Abc::uint32_t amountToOffsetSrcPosIndicesBy = (Alembic::Abc::uint32_t)destMesh.posVec.size();
+	Abc::uint32_t amountToOffsetSrcPosIndicesBy = (Abc::uint32_t)destMesh.posVec.size();
 
 	for(int i=0; i<srcMesh.posVec.size(); i++){
 		destMesh.posVec.push_back( srcMesh.posVec[i] );
 	}
 
 
-	Alembic::Abc::uint32_t amountToOffsetSrcNormalIndicesBy = (Alembic::Abc::uint32_t)destMesh.normalVec.size();
+	Abc::uint32_t amountToOffsetSrcNormalIndicesBy = (Abc::uint32_t)destMesh.normalVec.size();
 
 	for(int i=0; i<srcMesh.normalVec.size(); i++){
 		destMesh.normalVec.push_back( srcMesh.normalVec[i] );
@@ -50,7 +50,7 @@ bool AlembicIntermediatePolyMesh::mergeWith(const AlembicIntermediatePolyMesh& s
 	}
 
 
-	Alembic::Abc::uint32_t amountToOffsetSrcUvIndicesBy = (Alembic::Abc::uint32_t)destMesh.mUvVec.size();
+	Abc::uint32_t amountToOffsetSrcUvIndicesBy = (Abc::uint32_t)destMesh.mUvVec.size();
 
 	//for(int i=0; i<srcMesh.mUvVec.size(); i++){
 	//	destMesh.mUvVec.push_back( srcMesh.mUvVec[i] ); 

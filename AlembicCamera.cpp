@@ -6,10 +6,6 @@
 #include "Utility.h"
 #include "AlembicMetadataUtils.h"
 
-namespace AbcA = ::Alembic::AbcCoreAbstract::ALEMBIC_VERSION_NS;
-namespace AbcB = ::Alembic::Abc::ALEMBIC_VERSION_NS;
-using namespace AbcA;
-using namespace AbcB;
 
 AlembicCamera::AlembicCamera(const SceneEntry &in_Ref, AlembicWriteJob *in_Job)
 : AlembicObject(in_Ref, in_Job)
@@ -17,8 +13,8 @@ AlembicCamera::AlembicCamera(const SceneEntry &in_Ref, AlembicWriteJob *in_Job)
     std::string cameraName = EC_MCHAR_to_UTF8( in_Ref.node->GetName() );
     std::string xformName = cameraName + "Xfo";
 
-    Alembic::AbcGeom::OXform xform(GetOParent(), xformName.c_str(), GetCurrentJob()->GetAnimatedTs());
-    Alembic::AbcGeom::OCamera camera(xform, cameraName.c_str(), GetCurrentJob()->GetAnimatedTs());
+    AbcG::OXform xform(GetOParent(), xformName.c_str(), GetCurrentJob()->GetAnimatedTs());
+    AbcG::OCamera camera(xform, cameraName.c_str(), GetCurrentJob()->GetAnimatedTs());
 
     // create the generic properties
     mOVisibility = CreateVisibilityProperty(camera,GetCurrentJob()->GetAnimatedTs());
@@ -33,7 +29,7 @@ AlembicCamera::~AlembicCamera()
     mOVisibility.reset();
 }
 
-Alembic::Abc::OCompoundProperty AlembicCamera::GetCompound()
+Abc::OCompoundProperty AlembicCamera::GetCompound()
 {
     return mCameraSchema;
 }
@@ -66,7 +62,7 @@ bool AlembicCamera::Save(double time, bool bLastFrame)
     if (mJob)
     {
         Point3 worldMaxPoint = wm.GetTrans();
-        Alembic::Abc::V3f alembicWorldPoint = ConvertMaxPointToAlembicPoint(worldMaxPoint);
+        Abc::V3f alembicWorldPoint = ConvertMaxPointToAlembicPoint(worldMaxPoint);
         mJob->GetArchiveBBox().extendBy(alembicWorldPoint);
     }
 
@@ -78,7 +74,7 @@ bool AlembicCamera::Save(double time, bool bLastFrame)
     // set the visibility
     if(!bForever || mNumSamples == 0)
     {
-        mOVisibility.set(GetRef().node->GetLocalVisibility(ticks) > 0 ? Alembic::AbcGeom::kVisibilityVisible : Alembic::AbcGeom::kVisibilityHidden);
+        mOVisibility.set(GetRef().node->GetLocalVisibility(ticks) > 0 ? AbcG::kVisibilityVisible : AbcG::kVisibilityHidden);
     }
 
     // check if the camera is animated

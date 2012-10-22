@@ -4,13 +4,13 @@
 #include "AlembicMetadataUtils.h"
 
 
-bool isAlembicXform( Alembic::AbcGeom::IObject *pIObj, bool& isConstant ) {
-	Alembic::AbcGeom::IXform objXfrm;
+bool isAlembicXform( AbcG::IObject *pIObj, bool& isConstant ) {
+	AbcG::IXform objXfrm;
 
 	isConstant = true; 
 
-	if(Alembic::AbcGeom::IXform::matches((*pIObj).getMetaData())) {
-		objXfrm = Alembic::AbcGeom::IXform(*pIObj,Alembic::Abc::kWrapExisting);
+	if(AbcG::IXform::matches((*pIObj).getMetaData())) {
+		objXfrm = AbcG::IXform(*pIObj,Abc::kWrapExisting);
 		if( objXfrm.valid() ) {
 			isConstant = objXfrm.getSchema().isConstant();
 		} 
@@ -19,13 +19,13 @@ bool isAlembicXform( Alembic::AbcGeom::IObject *pIObj, bool& isConstant ) {
 	return objXfrm.valid();
 }
 
-size_t getNumXformChildren( Alembic::AbcGeom::IObject& iObj )
+size_t getNumXformChildren( AbcG::IObject& iObj )
 {
 	size_t xFormChildCount = 0;
 	// An XForm with xForm(s) with an xForm child will require a dummy node (and a single xform can be attached it child geometry node)
 	for(size_t j=0; j<iObj.getNumChildren(); j++)
 	{
-		if(Alembic::AbcGeom::IXform::matches(iObj.getChild(j).getMetaData()))
+		if(AbcG::IXform::matches(iObj.getChild(j).getMetaData()))
 		{
 			xFormChildCount++;
 		}
@@ -47,8 +47,8 @@ void AlembicImport_FillInXForm_Internal(alembic_fillxform_options &options)
    if(!options.pIObj->valid())
         return;
     
-    // Alembic::AbcGeom::IXform obj;
-    Alembic::AbcGeom::IXform obj(*(options.pIObj), Alembic::Abc::kWrapExisting);
+    // AbcG::IXform obj;
+    AbcG::IXform obj(*(options.pIObj), Abc::kWrapExisting);
 
     if(!obj.valid())
         return;
@@ -57,7 +57,7 @@ void AlembicImport_FillInXForm_Internal(alembic_fillxform_options &options)
 
 	double SampleTime = GetSecondsFromTimeValue(options.dTicks);
 
-	 Alembic::Abc::M44d matrix;	// constructor creates an identity matrix
+	 Abc::M44d matrix;	// constructor creates an identity matrix
 
 	if(g_bVerboseLogging){
 		ESS_LOG_INFO("dTicks: "<<options.dTicks<<" sampleTime: "<<SampleTime);
@@ -75,11 +75,11 @@ void AlembicImport_FillInXForm_Internal(alembic_fillxform_options &options)
 			ESS_LOG_INFO("SampleInfo.alpha: "<<sampleInfo.alpha<< "SampleInfo(fi, ci): "<<sampleInfo.floorIndex<<", "<<sampleInfo.ceilIndex);
 		}
 
-		Alembic::AbcGeom::XformSample sample;
+		AbcG::XformSample sample;
 		obj.getSchema().get(sample,sampleInfo.floorIndex);
 		matrix = sample.getMatrix();
 
-		const Alembic::Abc::Box3d &box3d = sample.getChildBounds();
+		const Abc::Box3d &box3d = sample.getChildBounds();
 
 		options.maxBoundingBox = Box3(Point3(box3d.min.x, box3d.min.y, box3d.min.z), 
 			Point3(box3d.max.x, box3d.max.y, box3d.max.z));
@@ -88,7 +88,7 @@ void AlembicImport_FillInXForm_Internal(alembic_fillxform_options &options)
 		if(sampleInfo.alpha != 0.0)
 		{
 			obj.getSchema().get(sample,sampleInfo.ceilIndex);
-			Alembic::Abc::M44d ceilMatrix = sample.getMatrix();
+			Abc::M44d ceilMatrix = sample.getMatrix();
 			matrix = (1.0 - sampleInfo.alpha) * matrix + sampleInfo.alpha * ceilMatrix;
 		}
    }
@@ -126,7 +126,7 @@ void AlembicImport_FillInXForm_Internal(alembic_fillxform_options &options)
 	}
 }
 
-int AlembicImport_DummyNode(Alembic::AbcGeom::IObject& iObj, alembic_importoptions &options, INode** pMaxNode, const std::string& importName)
+int AlembicImport_DummyNode(AbcG::IObject& iObj, alembic_importoptions &options, INode** pMaxNode, const std::string& importName)
 {
     Object* dObj = static_cast<Object*>(CreateInstance(HELPER_CLASS_ID, Class_ID(DUMMY_CLASS_ID,0)));
 	if (!dObj){
@@ -141,7 +141,7 @@ int AlembicImport_DummyNode(Alembic::AbcGeom::IObject& iObj, alembic_importoptio
 
     double SampleTime = GetSecondsFromTimeValue( GET_MAX_INTERFACE()->GetTime() );
 
-    Alembic::AbcGeom::IXform obj(iObj, Alembic::Abc::kWrapExisting);
+    AbcG::IXform obj(iObj, Abc::kWrapExisting);
 
 	if(!obj.valid()){
 		return alembic_failure;
@@ -153,11 +153,11 @@ int AlembicImport_DummyNode(Alembic::AbcGeom::IObject& iObj, alembic_importoptio
         obj.getSchema().getNumSamples()
         );
 
-    Alembic::AbcGeom::XformSample sample;
+    AbcG::XformSample sample;
     obj.getSchema().get(sample,sampleInfo.floorIndex);
-    Alembic::Abc::M44d matrix = sample.getMatrix();
+    Abc::M44d matrix = sample.getMatrix();
 
-    const Alembic::Abc::Box3d &box3d = sample.getChildBounds();
+    const Abc::Box3d &box3d = sample.getChildBounds();
 
 	pDummy->SetBox( Box3(Point3(box3d.min.x, box3d.min.y, box3d.min.z), Point3(box3d.max.x, box3d.max.y, box3d.max.z)) );
 
@@ -176,7 +176,7 @@ int AlembicImport_DummyNode(Alembic::AbcGeom::IObject& iObj, alembic_importoptio
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // AlembicImport_XForm
 ///////////////////////////////////////////////////////////////////////////////////////////////////
-int AlembicImport_XForm(INode* pParentNode, INode* pMaxNode, Alembic::AbcGeom::IObject& iObjXform, Alembic::AbcGeom::IObject* p_iObjGeom, const std::string &file, alembic_importoptions &options)
+int AlembicImport_XForm(INode* pParentNode, INode* pMaxNode, AbcG::IObject& iObjXform, AbcG::IObject* p_iObjGeom, const std::string &file, alembic_importoptions &options)
 {
 	const std::string &identifier = iObjXform.getFullName();
 
@@ -185,7 +185,7 @@ int AlembicImport_XForm(INode* pParentNode, INode* pMaxNode, Alembic::AbcGeom::I
 		return alembic_failure;
 	}
 
-	bool bIsCamera = p_iObjGeom && p_iObjGeom->valid() && Alembic::AbcGeom::ICamera::matches(p_iObjGeom->getMetaData());
+	bool bIsCamera = p_iObjGeom && p_iObjGeom->valid() && AbcG::ICamera::matches(p_iObjGeom->getMetaData());
 	
 	TimeValue zero(0);
 	if(!isConstant) {

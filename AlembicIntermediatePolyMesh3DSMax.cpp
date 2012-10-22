@@ -1,15 +1,7 @@
 #include "AlembicIntermediatePolyMesh3DSMax.h"
-//#include "SceneEnumProc.h"
 #include "Utility.h"
-//#include "AlembicMetadataUtils.h"
-//#include "AlembicPointsUtils.h"
 #include "AlembicWriteJob.h"
 #include <algorithm>
-
-namespace AbcA = ::Alembic::AbcCoreAbstract::ALEMBIC_VERSION_NS;
-namespace AbcB = ::Alembic::Abc::ALEMBIC_VERSION_NS;
-using namespace AbcA;
-using namespace AbcB;
 
 // From the SDK
 // How to calculate UV's for face mapped materials.
@@ -164,7 +156,7 @@ void IntermediatePolyMesh3DSMax::Save(std::map<std::string, bool>& mOptions, Mes
 		
         posVec[i] = ConvertMaxPointToAlembicPoint( maxPoint * meshTM );
         bbox.extendBy(posVec[i]);
-		//Alembic::Abc::Box3d& box = bbox;
+		//Abc::Box3d& box = bbox;
 		//ESS_LOG_INFO( "Archive bbox: min("<<box.min.x<<", "<<box.min.y<<", "<<box.min.z<<") max("<<box.max.x<<", "<<box.max.y<<", "<<box.max.z<<")" );
     }
 
@@ -269,8 +261,8 @@ void IntermediatePolyMesh3DSMax::Save(std::map<std::string, bool>& mOptions, Mes
 
         // AlembicPrintFaceData(objectMesh);
 
-        std::vector<Alembic::Abc::N3f> indexedNormals;
-        createIndexedArray<Alembic::Abc::N3f, SortableV3f>(mFaceIndicesVec, normalVec, indexedNormals, normalIndexVec);
+        std::vector<Abc::N3f> indexedNormals;
+        createIndexedArray<Abc::N3f, SortableV3f>(mFaceIndicesVec, normalVec, indexedNormals, normalIndexVec);
         normalVec = indexedNormals;
 
         ClearMeshSmoothingGroupNormals();
@@ -321,13 +313,13 @@ void IntermediatePolyMesh3DSMax::Save(std::map<std::string, bool>& mOptions, Mes
 						{
 							int vertIndex = map->F(f)->tv[j];
 							UVVert texCoord = map->V(vertIndex);
-							Alembic::Abc::V2f alembicUV(texCoord.x, texCoord.y);
+							Abc::V2f alembicUV(texCoord.x, texCoord.y);
 							mUvVec[i].push_back(alembicUV);
 						}
 						else
 						{
 							ESS_LOG_INFO("Warning: vertex is missing uv coordinate.");
-							Alembic::Abc::V2f alembicUV(0.0f, 0.0f);
+							Abc::V2f alembicUV(0.0f, 0.0f);
 							mUvVec[i].push_back(alembicUV);
 						}
 					}
@@ -368,7 +360,7 @@ void IntermediatePolyMesh3DSMax::Save(std::map<std::string, bool>& mOptions, Mes
 					{
 						int vertIndex = map.tf[f].t[j];
 						UVVert& texCoord = map.tv[vertIndex];
-						Alembic::Abc::V2f alembicUV(texCoord.x, texCoord.y);
+						Abc::V2f alembicUV(texCoord.x, texCoord.y);
 						mUvVec[i].push_back(alembicUV);					
 					}
 				}
@@ -393,7 +385,7 @@ void IntermediatePolyMesh3DSMax::Save(std::map<std::string, bool>& mOptions, Mes
 
    //               for (int j=2; j>=0; j-=1)
    //               {
-   //                   Alembic::Abc::V2f alembicUV(tv[j].x, tv[j].y);
+   //                   Abc::V2f alembicUV(tv[j].x, tv[j].y);
    //                   mUvVec.push_back(alembicUV);
    //               }
    //           }
@@ -409,7 +401,7 @@ void IntermediatePolyMesh3DSMax::Save(std::map<std::string, bool>& mOptions, Mes
    //               {
    //                   int vertexid = texFace.t[vindex];
    //                   UVVert uvVert = map.tv[vertexid];
-   //                   Alembic::Abc::V2f alembicUV(uvVert.x, uvVert.y);
+   //                   Abc::V2f alembicUV(uvVert.x, uvVert.y);
    //                   mUvVec.push_back(alembicUV);
    //               }
    //           }
@@ -423,8 +415,8 @@ void IntermediatePolyMesh3DSMax::Save(std::map<std::string, bool>& mOptions, Mes
 				ESS_LOG_INFO("Warning: missing texture coord samples in channel "<<i);
             continue;
 			}
-			std::vector<Alembic::Abc::V2f> uvVecIndexed;
-         createIndexedArray<Alembic::Abc::V2f, SortableV2f>(mFaceIndicesVec, mUvVec[i], uvVecIndexed, mUvIndexVec[i]);
+			std::vector<Abc::V2f> uvVecIndexed;
+         createIndexedArray<Abc::V2f, SortableV2f>(mFaceIndicesVec, mUvVec[i], uvVecIndexed, mUvIndexVec[i]);
          mUvVec[i] = uvVecIndexed;
 		}
 		
@@ -466,7 +458,7 @@ void IntermediatePolyMesh3DSMax::Save(std::map<std::string, bool>& mOptions, Mes
 			  if (it == mFaceSetsMap.end())
 			  {
 				  faceSetStr faceSet;
-				  faceSet.faceIds = std::vector<::int32_t>();
+				  faceSet.faceIds = std::vector<Abc::int32_t>();
 				  faceSet.originalMatId = originalMatId;
 				  facesetmap_ret_pair ret = mFaceSetsMap.insert( facesetmap_insert_pair(matId, faceSet) );
 				  it = ret.first;
@@ -531,9 +523,9 @@ void IntermediatePolyMesh3DSMax::Save(std::map<std::string, bool>& mOptions, Mes
             mBindPoseVec[i].z = (float)bindPosePos[i].GetZ();
          }
 
-         Alembic::Abc::V3fArraySample sample;
+         Abc::V3fArraySample sample;
          if(mBindPoseVec.size() > 0)
-            sample = Alembic::Abc::V3fArraySample(&mBindPoseVec.front(),mBindPoseVec.size());
+            sample = Abc::V3fArraySample(&mBindPoseVec.front(),mBindPoseVec.size());
          mBindPoseProperty.set(sample);
       }
    }
@@ -560,8 +552,8 @@ void IntermediatePolyMesh3DSMax::Save(std::map<std::string, bool>& mOptions, Mes
          }
 
          if(mVelocitiesVec.size() == 0)
-            mVelocitiesVec.push_back(Alembic::Abc::V3f(0,0,0));
-         Alembic::Abc::V3fArraySample sample = Alembic::Abc::V3fArraySample(&mVelocitiesVec.front(),mVelocitiesVec.size());
+            mVelocitiesVec.push_back(Abc::V3f(0,0,0));
+         Abc::V3fArraySample sample = Abc::V3fArraySample(&mVelocitiesVec.front(),mVelocitiesVec.size());
          mVelocityProperty.set(sample);
       }
    }

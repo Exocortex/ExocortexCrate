@@ -17,36 +17,36 @@
 
 
 
-int createAlembicObject(Alembic::AbcGeom::IObject& iObj, INode **pMaxNode, alembic_importoptions &options, std::string& file)
+int createAlembicObject(AbcG::IObject& iObj, INode **pMaxNode, alembic_importoptions &options, std::string& file)
 {
 	int ret = alembic_success;
-	//if(Alembic::AbcGeom::IXform::matches(iObj.getMetaData())) //Transform
+	//if(AbcG::IXform::matches(iObj.getMetaData())) //Transform
 	//{
 	//	ESS_LOG_INFO( "AlembicImport_XForm: " << objects[j].getFullName() );
 	//	int ret = AlembicImport_PolyMesh(file, iObj, options, pMaxNode); 
 	//} 	
-	if (Alembic::AbcGeom::IPolyMesh::matches(iObj.getMetaData()) || 
-		Alembic::AbcGeom::ISubD::matches(iObj.getMetaData()) ) // PolyMesh / SubD
+	if (AbcG::IPolyMesh::matches(iObj.getMetaData()) || 
+		AbcG::ISubD::matches(iObj.getMetaData()) ) // PolyMesh / SubD
 	{
 		ESS_LOG_INFO( "AlembicImport_PolyMesh: " << iObj.getFullName() );
 		ret = AlembicImport_PolyMesh(file, iObj, options, pMaxNode); 
 	}
-	else if (Alembic::AbcGeom::ICamera::matches(iObj.getMetaData())) // Camera
+	else if (AbcG::ICamera::matches(iObj.getMetaData())) // Camera
 	{
 		ESS_LOG_INFO( "AlembicImport_Camera: " << iObj.getFullName() );
 		ret = AlembicImport_Camera(file, iObj, options, pMaxNode);
 	}
-	else if (Alembic::AbcGeom::IPoints::matches(iObj.getMetaData())) // Points
+	else if (AbcG::IPoints::matches(iObj.getMetaData())) // Points
 	{
 		ESS_LOG_INFO( "AlembicImport_Points: " << iObj.getFullName() );
 		ret = AlembicImport_Points(file, iObj, options, pMaxNode);
 	}
-	else if (Alembic::AbcGeom::ICurves::matches(iObj.getMetaData())) // Curves
+	else if (AbcG::ICurves::matches(iObj.getMetaData())) // Curves
 	{
 		ESS_LOG_INFO( "AlembicImport_Shape: " << iObj.getFullName() );
 		ret = AlembicImport_Shape(file, iObj, options, pMaxNode);
 	}
-   else if (Alembic::AbcGeom::INuPatch::matches(iObj.getMetaData())) // NURBS
+   else if (AbcG::INuPatch::matches(iObj.getMetaData())) // NURBS
 	{
 		ESS_LOG_INFO( "AlembicImport_Shape: " << iObj.getFullName() );
 	}
@@ -55,18 +55,18 @@ int createAlembicObject(Alembic::AbcGeom::IObject& iObj, INode **pMaxNode, alemb
 
 struct stackElement
 {
-   Alembic::Abc::IObject iObj;
+   Abc::IObject iObj;
    INode *pParentMaxNode;
 
-   stackElement(Alembic::Abc::IObject iObj):iObj(iObj), pParentMaxNode(NULL)
+   stackElement(Abc::IObject iObj):iObj(iObj), pParentMaxNode(NULL)
    {}
-   stackElement(Alembic::Abc::IObject iObj, INode* parent):iObj(iObj), pParentMaxNode(parent)
+   stackElement(Abc::IObject iObj, INode* parent):iObj(iObj), pParentMaxNode(parent)
    {}
 
 
 };
 
-int importAlembicScene(Alembic::AbcGeom::IObject& root, alembic_importoptions &options, std::string& file, progressUpdate& progress, std::map<std::string, bool>& nodeFullPaths)
+int importAlembicScene(AbcG::IObject& root, alembic_importoptions &options, std::string& file, progressUpdate& progress, std::map<std::string, bool>& nodeFullPaths)
 {
    std::vector<stackElement> sceneStack;
    sceneStack.reserve(200);
@@ -79,7 +79,7 @@ int importAlembicScene(Alembic::AbcGeom::IObject& root, alembic_importoptions &o
    {
       stackElement sElement = sceneStack.back();
       sceneStack.pop_back();
-      Alembic::Abc::IObject& iObj = sElement.iObj;
+      Abc::IObject& iObj = sElement.iObj;
       INode *pParentMaxNode = sElement.pParentMaxNode;
 
 	   if(!iObj.valid()){
@@ -94,7 +94,7 @@ int importAlembicScene(Alembic::AbcGeom::IObject& root, alembic_importoptions &o
 
       bool bCreateDummyNode = false;
       int mergedGeomNodeIndex = -1;
-		Alembic::AbcGeom::IObject mergedGeomChild;
+		AbcG::IObject mergedGeomChild;
 
       getMergeInfo(iObj, bCreateDummyNode, mergedGeomNodeIndex, mergedGeomChild, false);
 

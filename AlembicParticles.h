@@ -41,7 +41,7 @@ static ParticleMtl particleMtl;
 
 // Alembic functions to create the simple particle object
 typedef struct _alembic_importoptions alembic_importoptions;
-extern int AlembicImport_Points(const std::string &file, Alembic::AbcGeom::IObject& iObj, alembic_importoptions &options, INode** pMaxNode);
+extern int AlembicImport_Points(const std::string &file, AbcG::IObject& iObj, alembic_importoptions &options, INode** pMaxNode);
 
 class AlembicParticles;
 
@@ -135,22 +135,22 @@ public:
 	virtual BaseInterface* GetInterface(Interface_ID id);
 
 private:
-    bool            GetAlembicIPoints(Alembic::AbcGeom::IPoints &iPoints, std::string strFile, std::string strIdentifier);
-    SampleInfo      GetSampleAtTime(Alembic::AbcGeom::IPoints &iPoints, TimeValue t, Alembic::AbcGeom::IPointsSchema::Sample &floorSample, Alembic::AbcGeom::IPointsSchema::Sample &ceilSample) const;
-    int             GetNumParticles(const Alembic::AbcGeom::IPointsSchema::Sample &floorSample) const;
+    bool            GetAlembicIPoints(AbcG::IPoints &iPoints, std::string strFile, std::string strIdentifier);
+    SampleInfo      GetSampleAtTime(AbcG::IPoints &iPoints, TimeValue t, AbcG::IPointsSchema::Sample &floorSample, AbcG::IPointsSchema::Sample &ceilSample) const;
+    int             GetNumParticles(const AbcG::IPointsSchema::Sample &floorSample) const;
 
-	void	GetParticlePositions(Alembic::AbcGeom::IPoints &iPoints, const Alembic::AbcGeom::IPointsSchema::Sample &floorSample, const Alembic::AbcGeom::IPointsSchema::Sample &ceilSample, const SampleInfo &sampleInfo, const Matrix3& objToWorld, Tab<Point3>& points) const;
-    void	GetParticleVelocities(const Alembic::AbcGeom::IPointsSchema::Sample &floorSample, const Alembic::AbcGeom::IPointsSchema::Sample &ceilSample, const SampleInfo &sampleInfo, Matrix3 objToWorld, Tab<Point3>& vels) const;
-    void	GetParticleRadii(Alembic::AbcGeom::IPoints &iPoints, const SampleInfo &sampleInfo, Tab<float>& radius) const;
-    void	GetParticleAges(Alembic::AbcGeom::IPoints &iPoints, const SampleInfo &sampleInfo, Tab<TimeValue>& ages) const;
-	void	GetParticleOrientations(Alembic::AbcGeom::IPoints &iPoints, const SampleInfo &sampleInfo, Matrix3 objToWorld, std::vector<Quat>& particleOrientations) const;
-    void	GetParticleScales(Alembic::AbcGeom::IPoints &iPoints, const SampleInfo &sampleInfo, const Matrix3& objToWorld, std::vector<Point3>& particleScales) const;
-	void	GetParticleColors(Alembic::AbcGeom::IPoints &iPoints, const SampleInfo &sampleInfo, std::vector<VertColor>& colors ) const;
-    void	GetParticleShapeTypes(Alembic::AbcGeom::IPoints &iPoints, const SampleInfo &sampleInfo, std::vector<AlembicPoints::ShapeType>& instanceShapeType) const;
-    void	GetParticleShapeInstanceIds(Alembic::AbcGeom::IPoints &iPoints, const SampleInfo &sampleInfo, std::vector<unsigned short>& instanceShapeIds) const;
-    void	GetParticleShapeInstanceTimes(Alembic::AbcGeom::IPoints &iPoints, const SampleInfo &sampleInfo, std::vector<TimeValue>& instanceShapeTimes) const;
+	void	GetParticlePositions(AbcG::IPoints &iPoints, const AbcG::IPointsSchema::Sample &floorSample, const AbcG::IPointsSchema::Sample &ceilSample, const SampleInfo &sampleInfo, const Matrix3& objToWorld, Tab<Point3>& points) const;
+    void	GetParticleVelocities(const AbcG::IPointsSchema::Sample &floorSample, const AbcG::IPointsSchema::Sample &ceilSample, const SampleInfo &sampleInfo, Matrix3 objToWorld, Tab<Point3>& vels) const;
+    void	GetParticleRadii(AbcG::IPoints &iPoints, const SampleInfo &sampleInfo, Tab<float>& radius) const;
+    void	GetParticleAges(AbcG::IPoints &iPoints, const SampleInfo &sampleInfo, Tab<TimeValue>& ages) const;
+	void	GetParticleOrientations(AbcG::IPoints &iPoints, const SampleInfo &sampleInfo, Matrix3 objToWorld, std::vector<Quat>& particleOrientations) const;
+    void	GetParticleScales(AbcG::IPoints &iPoints, const SampleInfo &sampleInfo, const Matrix3& objToWorld, std::vector<Point3>& particleScales) const;
+	void	GetParticleColors(AbcG::IPoints &iPoints, const SampleInfo &sampleInfo, std::vector<VertColor>& colors ) const;
+    void	GetParticleShapeTypes(AbcG::IPoints &iPoints, const SampleInfo &sampleInfo, std::vector<AlembicPoints::ShapeType>& instanceShapeType) const;
+    void	GetParticleShapeInstanceIds(AbcG::IPoints &iPoints, const SampleInfo &sampleInfo, std::vector<unsigned short>& instanceShapeIds) const;
+    void	GetParticleShapeInstanceTimes(AbcG::IPoints &iPoints, const SampleInfo &sampleInfo, std::vector<TimeValue>& instanceShapeTimes) const;
 
-	void            FillParticleShapeNodes(Alembic::AbcGeom::IPoints &iPoints, const SampleInfo &sampleInfo);
+	void            FillParticleShapeNodes(AbcG::IPoints &iPoints, const SampleInfo &sampleInfo);
     INode*          GetParticleMeshNode(int meshNumber, INode *displayNode);
   //  void            ClearCurrentViewportMeshes();
 	void	ClearMeshCache();
@@ -171,7 +171,7 @@ private:
     std::vector<AlembicPoints::ShapeType> m_InstanceShapeType;
     std::vector<unsigned short> m_InstanceShapeIds;
     std::vector<TimeValue> m_InstanceShapeTimes;
-    Alembic::Abc::StringArraySamplePtr m_InstanceShapeNames;
+    Abc::StringArraySamplePtr m_InstanceShapeNames;
     std::vector<INode*> m_InstanceShapeINodes;
 	std::vector<VertColor> m_VCArray;
 
@@ -197,7 +197,7 @@ private:
 	GenCylinder *m_pDiskMaker;
 	GenBoxObject* m_pRectangleMaker;
 	Matrix3  m_objToWorld;
-	Alembic::AbcGeom::IPoints m_iPoints;
+	AbcG::IPoints m_iPoints;
 	TimeValue m_currTick;
 
 	bool m_outputOrientationMotionBlurWarning;

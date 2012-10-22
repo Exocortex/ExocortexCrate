@@ -39,11 +39,6 @@
 #include <ImathMatrixAlgo.h>
 #include "CommonMeshUtilities.h"
 
-namespace AbcA = ::Alembic::AbcCoreAbstract::ALEMBIC_VERSION_NS;
-namespace AbcB = ::Alembic::Abc::ALEMBIC_VERSION_NS;
-using namespace AbcA;
-using namespace AbcB;
-
 #define PARTICLECHANNELLOCALOFFSETR_INTERFACE Interface_ID(0x12ec5d1d, 0x1eb34500) 
 #define GetParticleChannelLocalOffsetRInterface(obj) ((IParticleChannelIntR*)obj->GetInterface(PARTICLECHANNELLOCALOFFSETR_INTERFACE)) 
 
@@ -57,8 +52,8 @@ AlembicPoints::AlembicPoints(const SceneEntry &in_Ref, AlembicWriteJob *in_Job)
     std::string pointsName = EC_MCHAR_to_UTF8(  in_Ref.node->GetName() );
     std::string xformName = pointsName + "Xfo";
 
-    Alembic::AbcGeom::OXform xform(GetOParent(), xformName.c_str(), GetCurrentJob()->GetAnimatedTs());
-    Alembic::AbcGeom::OPoints points(xform, pointsName.c_str(), GetCurrentJob()->GetAnimatedTs());
+    AbcG::OXform xform(GetOParent(), xformName.c_str(), GetCurrentJob()->GetAnimatedTs());
+    AbcG::OPoints points(xform, pointsName.c_str(), GetCurrentJob()->GetAnimatedTs());
 
     // create the generic properties
     mOVisibility = CreateVisibilityProperty(points, GetCurrentJob()->GetAnimatedTs());
@@ -66,21 +61,21 @@ AlembicPoints::AlembicPoints(const SceneEntry &in_Ref, AlembicWriteJob *in_Job)
     mXformSchema = xform.getSchema();
     mPointsSchema = points.getSchema();
 
-	OCompoundProperty argGeomParams = mPointsSchema.getArbGeomParams();
+	Abc::OCompoundProperty argGeomParams = mPointsSchema.getArbGeomParams();
 
     // create all properties
-    mInstanceNamesProperty = OStringArrayProperty(argGeomParams, ".instancenames", mPointsSchema.getMetaData(), GetCurrentJob()->GetAnimatedTs() );
+    mInstanceNamesProperty = Abc::OStringArrayProperty(argGeomParams, ".instancenames", mPointsSchema.getMetaData(), GetCurrentJob()->GetAnimatedTs() );
 
     // particle attributes
-    mScaleProperty = OV3fArrayProperty(argGeomParams, ".scale", mPointsSchema.getMetaData(), GetCurrentJob()->GetAnimatedTs() );
-    mOrientationProperty = OQuatfArrayProperty(argGeomParams, ".orientation", mPointsSchema.getMetaData(), GetCurrentJob()->GetAnimatedTs() );
-    mAngularVelocityProperty = OQuatfArrayProperty(argGeomParams, ".angularvelocity", mPointsSchema.getMetaData(), GetCurrentJob()->GetAnimatedTs() );
-    mAgeProperty = OFloatArrayProperty(argGeomParams, ".age", mPointsSchema.getMetaData(), GetCurrentJob()->GetAnimatedTs() );
-    mMassProperty = OFloatArrayProperty(argGeomParams, ".mass", mPointsSchema.getMetaData(), GetCurrentJob()->GetAnimatedTs() );
-    mShapeTypeProperty = OUInt16ArrayProperty(argGeomParams, ".shapetype", mPointsSchema.getMetaData(), GetCurrentJob()->GetAnimatedTs() );
-    mShapeTimeProperty = OFloatArrayProperty(argGeomParams, ".shapetime", mPointsSchema.getMetaData(), GetCurrentJob()->GetAnimatedTs() );
-    mShapeInstanceIDProperty = OUInt16ArrayProperty(argGeomParams, ".shapeinstanceid", mPointsSchema.getMetaData(), GetCurrentJob()->GetAnimatedTs() );
-    mColorProperty = OC4fArrayProperty(argGeomParams, ".color", mPointsSchema.getMetaData(), GetCurrentJob()->GetAnimatedTs() );
+    mScaleProperty = Abc::OV3fArrayProperty(argGeomParams, ".scale", mPointsSchema.getMetaData(), GetCurrentJob()->GetAnimatedTs() );
+    mOrientationProperty = Abc::OQuatfArrayProperty(argGeomParams, ".orientation", mPointsSchema.getMetaData(), GetCurrentJob()->GetAnimatedTs() );
+    mAngularVelocityProperty = Abc::OQuatfArrayProperty(argGeomParams, ".angularvelocity", mPointsSchema.getMetaData(), GetCurrentJob()->GetAnimatedTs() );
+    mAgeProperty = Abc::OFloatArrayProperty(argGeomParams, ".age", mPointsSchema.getMetaData(), GetCurrentJob()->GetAnimatedTs() );
+    mMassProperty = Abc::OFloatArrayProperty(argGeomParams, ".mass", mPointsSchema.getMetaData(), GetCurrentJob()->GetAnimatedTs() );
+    mShapeTypeProperty = Abc::OUInt16ArrayProperty(argGeomParams, ".shapetype", mPointsSchema.getMetaData(), GetCurrentJob()->GetAnimatedTs() );
+    mShapeTimeProperty = Abc::OFloatArrayProperty(argGeomParams, ".shapetime", mPointsSchema.getMetaData(), GetCurrentJob()->GetAnimatedTs() );
+    mShapeInstanceIDProperty = Abc::OUInt16ArrayProperty(argGeomParams, ".shapeinstanceid", mPointsSchema.getMetaData(), GetCurrentJob()->GetAnimatedTs() );
+    mColorProperty = Abc::OC4fArrayProperty(argGeomParams, ".color", mPointsSchema.getMetaData(), GetCurrentJob()->GetAnimatedTs() );
 }
 
 AlembicPoints::~AlembicPoints()
@@ -89,7 +84,7 @@ AlembicPoints::~AlembicPoints()
     mOVisibility.reset();
 }
 
-Alembic::Abc::OCompoundProperty AlembicPoints::GetCompound()
+Abc::OCompoundProperty AlembicPoints::GetCompound()
 {
     return mPointsSchema;
 }
@@ -167,24 +162,24 @@ bool AlembicPoints::Save(double time, bool bLastFrame)
 
     // Set the visibility
     float flVisibility = GetRef().node->GetLocalVisibility(ticks);
-    mOVisibility.set(flVisibility > 0 ? Alembic::AbcGeom::kVisibilityVisible : Alembic::AbcGeom::kVisibilityHidden);
+    mOVisibility.set(flVisibility > 0 ? AbcG::kVisibilityVisible : AbcG::kVisibilityHidden);
 
     // Store positions, velocity, width/size, scale, id, bounding box
-    std::vector<Alembic::Abc::V3f> positionVec;
-    std::vector<Alembic::Abc::V3f> velocityVec;
-    std::vector<Alembic::Abc::V3f> scaleVec;
+    std::vector<Abc::V3f> positionVec;
+    std::vector<Abc::V3f> velocityVec;
+    std::vector<Abc::V3f> scaleVec;
     std::vector<float> widthVec;
     std::vector<float> ageVec;
     std::vector<float> massVec;
     std::vector<float> shapeTimeVec;
-    std::vector<::uint64_t> idVec;
-    std::vector<::uint16_t> shapeTypeVec;
-    std::vector<::uint16_t> shapeInstanceIDVec;
-    std::vector<Alembic::Abc::Quatf> orientationVec;
-    std::vector<Alembic::Abc::Quatf> angularVelocityVec;
-    std::vector<Alembic::Abc::C4f> colorVec;
+    std::vector<Abc::uint64_t> idVec;
+    std::vector<Abc::uint16_t> shapeTypeVec;
+    std::vector<Abc::uint16_t> shapeInstanceIDVec;
+    std::vector<Abc::Quatf> orientationVec;
+    std::vector<Abc::Quatf> angularVelocityVec;
+    std::vector<Abc::C4f> colorVec;
     //std::vector<std::string> instanceNamesVec;
-    Alembic::Abc::Box3d bbox;
+    Abc::Box3d bbox;
     bool constantPos = true;
     bool constantVel = true;
     bool constantScale = true;
@@ -205,11 +200,11 @@ bool AlembicPoints::Save(double time, bool bLastFrame)
     // Convert the max transform to alembic
     Matrix3 alembicMatrix;
     ConvertMaxMatrixToAlembicMatrix(nodeWorldTM, alembicMatrix);
-    Alembic::Abc::M44d nodeWorldTrans(	alembicMatrix.GetRow(0).x,  alembicMatrix.GetRow(0).y,  alembicMatrix.GetRow(0).z,  0,
+    Abc::M44d nodeWorldTrans(	alembicMatrix.GetRow(0).x,  alembicMatrix.GetRow(0).y,  alembicMatrix.GetRow(0).z,  0,
 										alembicMatrix.GetRow(1).x,  alembicMatrix.GetRow(1).y,  alembicMatrix.GetRow(1).z,  0,
 										alembicMatrix.GetRow(2).x,  alembicMatrix.GetRow(2).y,  alembicMatrix.GetRow(2).z,  0,
 										alembicMatrix.GetRow(3).x,  alembicMatrix.GetRow(3).y,  alembicMatrix.GetRow(3).z,  1);
-	Alembic::Abc::M44d nodeWorldTransInv = nodeWorldTrans.inverse();
+	Abc::M44d nodeWorldTransInv = nodeWorldTrans.inverse();
 
 
 	//ESS_LOG_WARNING("tick: "<<ticks<<"   numParticles: "<<numParticles<<"\n");
@@ -219,21 +214,21 @@ bool AlembicPoints::Save(double time, bool bLastFrame)
 
 	for (int i = 0; i < numParticles; ++i)
 	{
-		Imath::V3f pos(0.0);
-		Imath::V3f vel(0.0);
-		Imath::V3f scale(1.0);
-		Imath::C4f color(0.5, 0.5, 0.5, 1.0);
+		Abc::V3f pos(0.0);
+		Abc::V3f vel(0.0);
+		Abc::V3f scale(1.0);
+		Abc::C4f color(0.5, 0.5, 0.5, 1.0);
 		float age = 0;
-		::uint64_t id = 0;
-	    Alembic::Abc::Quatd orientation(0.0, 0.0, 1.0, 0.0);
-		Alembic::Abc::Quatd spin(0.0, 0.0, 1.0, 0.0);
+		Abc::uint64_t id = 0;
+	    Abc::Quatd orientation(0.0, 0.0, 1.0, 0.0);
+		Abc::Quatd spin(0.0, 0.0, 1.0, 0.0);
 		// Particle size is a uniform scale multiplier in XSI.  In Max, I need to learn where to get this 
 		// For now, we'll just default to 1
 		float width = 1.0f;
 
 		ShapeType shapetype = ShapeType_Point;
 		float shapeInstanceTime = (float)time;
-		::uint16_t shapeInstanceId = 0;
+		Abc::uint16_t shapeInstanceId = 0;
 
 #ifdef THINKING_PARTICLES
 		if(pThinkingParticleMat){
@@ -258,9 +253,9 @@ bool AlembicPoints::Save(double time, bool bLastFrame)
 			//ConvertMaxEulerXYZToAlembicQuat(*particlesExt->GetParticleOrientationByIndex(i), orientation);
 
 			Matrix3 alignmentMatMax = pTPMasterSystemInt->Alignment(i);
-			Alembic::Abc::M44d alignmentMat;
+			Abc::M44d alignmentMat;
 			ConvertMaxMatrixToAlembicMatrix(alignmentMatMax, alignmentMat);
-			/*alignmentMat = Alembic::Abc::M44d( alignmentMatMax.GetRow(0).x,  alignmentMatMax.GetRow(0).y,  alignmentMatMax.GetRow(0).z,  0,
+			/*alignmentMat = Abc::M44d( alignmentMatMax.GetRow(0).x,  alignmentMatMax.GetRow(0).y,  alignmentMatMax.GetRow(0).z,  0,
                                  alignmentMatMax.GetRow(1).x,  alignmentMatMax.GetRow(1).y,  alignmentMatMax.GetRow(1).z,  0,
                                  alignmentMatMax.GetRow(2).x,  alignmentMatMax.GetRow(2).y,  alignmentMatMax.GetRow(2).z,  0,
                                  alignmentMatMax.GetRow(3).x,  alignmentMatMax.GetRow(3).y,  alignmentMatMax.GetRow(3).z,  1);*/
@@ -356,13 +351,13 @@ bool AlembicPoints::Save(double time, bool bLastFrame)
 		//move everything from world space to local space
 		pos = pos * nodeWorldTransInv;
 
-		Imath::V4f vel4(vel.x, vel.y, vel.z, 0.0);
+		Abc::V4f vel4(vel.x, vel.y, vel.z, 0.0);
 		vel4 = vel4 * nodeWorldTransInv;
 		vel.setValue(vel4.x, vel4.y, vel4.z);
 
 		//scale = scale * nodeWorldTransInv;
-		//orientation = Imath::extractQuat(orientation.toMatrix44() * nodeWorldTransInv);
-		//spin = Imath::extractQuat(spin.toMatrix44() * nodeWorldTransInv);
+		//orientation = Abc::extractQuat(orientation.toMatrix44() * nodeWorldTransInv);
+		//spin = Abc::extractQuat(spin.toMatrix44() * nodeWorldTransInv);
 
 		bbox.extendBy( pos );
 
@@ -412,19 +407,19 @@ bool AlembicPoints::Save(double time, bool bLastFrame)
     }
 
     // Store the information into our properties and points schema
-    Alembic::Abc::P3fArraySample positionSample( positionVec);
-    Alembic::Abc::P3fArraySample velocitySample(velocityVec);
-    Alembic::Abc::P3fArraySample scaleSample(scaleVec);
-    Alembic::Abc::FloatArraySample widthSample(widthVec);
-    Alembic::Abc::FloatArraySample ageSample(ageVec);
-    Alembic::Abc::FloatArraySample massSample(massVec);
-    Alembic::Abc::FloatArraySample shapeTimeSample(shapeTimeVec);
-    Alembic::Abc::UInt64ArraySample idSample(idVec);
-    Alembic::Abc::UInt16ArraySample shapeTypeSample(shapeTypeVec);
-    Alembic::Abc::UInt16ArraySample shapeInstanceIDSample(shapeInstanceIDVec);
-    Alembic::Abc::QuatfArraySample orientationSample(orientationVec);
-    Alembic::Abc::QuatfArraySample angularVelocitySample(angularVelocityVec);
-    Alembic::Abc::C4fArraySample colorSample(colorVec);
+    Abc::P3fArraySample positionSample( positionVec);
+    Abc::P3fArraySample velocitySample(velocityVec);
+    Abc::P3fArraySample scaleSample(scaleVec);
+    Abc::FloatArraySample widthSample(widthVec);
+    Abc::FloatArraySample ageSample(ageVec);
+    Abc::FloatArraySample massSample(massVec);
+    Abc::FloatArraySample shapeTimeSample(shapeTimeVec);
+    Abc::UInt64ArraySample idSample(idVec);
+    Abc::UInt16ArraySample shapeTypeSample(shapeTypeVec);
+    Abc::UInt16ArraySample shapeInstanceIDSample(shapeInstanceIDVec);
+    Abc::QuatfArraySample orientationSample(orientationVec);
+    Abc::QuatfArraySample angularVelocitySample(angularVelocityVec);
+    Abc::C4fArraySample colorSample(colorVec);
 
 	//if(instanceNamesVec.size() == 1){
 	//for some reason the .dims property is not written when there is exactly one entry if we don't push an empty string
@@ -432,7 +427,7 @@ bool AlembicPoints::Save(double time, bool bLastFrame)
 	mInstanceNames.push_back("");
 	//}
 
-    Alembic::Abc::StringArraySample instanceNamesSample(mInstanceNames);
+    Abc::StringArraySample instanceNamesSample(mInstanceNames);
 
     mScaleProperty.set(scaleSample);
     mAgeProperty.set(ageSample);
@@ -447,7 +442,7 @@ bool AlembicPoints::Save(double time, bool bLastFrame)
 
     mPointsSample.setPositions(positionSample);
     mPointsSample.setVelocities(velocitySample);
-    mPointsSample.setWidths(Alembic::AbcGeom::OFloatGeomParam::Sample(widthSample, Alembic::AbcGeom::kVertexScope));
+    mPointsSample.setWidths(AbcG::OFloatGeomParam::Sample(widthSample, AbcG::kVertexScope));
     mPointsSample.setIds(idSample);
     mPointsSample.setSelfBounds(bbox);
 	mPointsSample.setChildBounds(bbox);
@@ -470,7 +465,7 @@ bool AlembicPoints::Save(double time, bool bLastFrame)
 }
 
 // static
-void AlembicPoints::ConvertMaxEulerXYZToAlembicQuat(const Point3 &degrees, Alembic::Abc::Quatd &quat)
+void AlembicPoints::ConvertMaxEulerXYZToAlembicQuat(const Point3 &degrees, Abc::Quatd &quat)
 {
     // Get the angles as a float vector of radians - strangeley they already are even though the documentation says degrees
     float angles[] = { degrees.x, degrees.y, degrees.z };
@@ -487,17 +482,17 @@ void AlembicPoints::ConvertMaxEulerXYZToAlembicQuat(const Point3 &degrees, Alemb
 }
 
 // static
-void AlembicPoints::ConvertMaxAngAxisToAlembicQuat(const AngAxis &angAxis, Alembic::Abc::Quatd &quat)
+void AlembicPoints::ConvertMaxAngAxisToAlembicQuat(const AngAxis &angAxis, Abc::Quatd &quat)
 {
-    Imath::V3f alembicAxis = ConvertMaxNormalToAlembicNormal(angAxis.axis);
+    Abc::V3f alembicAxis = ConvertMaxNormalToAlembicNormal(angAxis.axis);
     quat.setAxisAngle(alembicAxis, angAxis.angle);
     quat.normalize();
 }
 
 
-Alembic::Abc::C4f AlembicPoints::GetColor(IParticleObjectExt *pExt, int particleId, TimeValue ticks)
+Abc::C4f AlembicPoints::GetColor(IParticleObjectExt *pExt, int particleId, TimeValue ticks)
 {
-	Alembic::Abc::C4f color(0.5, 0.5, 0.5, 1.0);
+	Abc::C4f color(0.5, 0.5, 0.5, 1.0);
 
     // Go into the particle's action list
     INode *particleGroupNode = pExt->GetParticleGroup(particleId);
@@ -547,7 +542,7 @@ Alembic::Abc::C4f AlembicPoints::GetColor(IParticleObjectExt *pExt, int particle
 	return color;
 }
 
-void AlembicPoints::ReadShapeFromOperator( IParticleGroup *particleGroup, PFSimpleOperator *pSimpleOperator, int particleId, TimeValue ticks, ShapeType &type, ::uint16_t &instanceId, float &animationTime)
+void AlembicPoints::ReadShapeFromOperator( IParticleGroup *particleGroup, PFSimpleOperator *pSimpleOperator, int particleId, TimeValue ticks, ShapeType &type, Abc::uint16_t &instanceId, float &animationTime)
 {
 	if(!pSimpleOperator){
 		return;
@@ -645,7 +640,7 @@ void AlembicPoints::ReadShapeFromOperator( IParticleGroup *particleGroup, PFSimp
         if (instanceId == USHRT_MAX)
         {
 			mInstanceNames.push_back(nodePath);
-            instanceId = (::uint16_t)mInstanceNames.size()-1;
+            instanceId = (Abc::uint16_t)mInstanceNames.size()-1;
         }
 
         // Determine if we have an animated shape
@@ -757,7 +752,7 @@ void AlembicPoints::ReadShapeFromOperator( IParticleGroup *particleGroup, PFSimp
 
 }
 
-void AlembicPoints::GetShapeType(IParticleObjectExt *pExt, int particleId, TimeValue ticks, ShapeType &type, ::uint16_t &instanceId, float &animationTime)
+void AlembicPoints::GetShapeType(IParticleObjectExt *pExt, int particleId, TimeValue ticks, ShapeType &type, Abc::uint16_t &instanceId, float &animationTime)
 {
     // Set up initial values
     type = ShapeType_Point;
@@ -894,7 +889,7 @@ void AlembicPoints::GetShapeType(IParticleObjectExt *pExt, int particleId, TimeV
 			if (instanceId == USHRT_MAX)
 			{
 				mInstanceNames.push_back(sInfo.instanceName);
-				instanceId = (::uint16_t)mInstanceNames.size()-1;
+				instanceId = (Abc::uint16_t)mInstanceNames.size()-1;
 			}
 			type = sInfo.type;
 		}
@@ -906,7 +901,7 @@ void AlembicPoints::GetShapeType(IParticleObjectExt *pExt, int particleId, TimeV
 	}
 }
 
-::uint16_t AlembicPoints::FindInstanceName(const std::string& name)
+Abc::uint16_t AlembicPoints::FindInstanceName(const std::string& name)
 {
 	for ( int i = 0; i < mInstanceNames.size(); i += 1){
 		if (strcmp(mInstanceNames[i].c_str(), name.c_str()) == 0){
@@ -918,7 +913,7 @@ void AlembicPoints::GetShapeType(IParticleObjectExt *pExt, int particleId, TimeV
 
 
 
-void AlembicPoints::CacheShapeMesh(Mesh* pShapeMesh, BOOL bNeedDelete, Matrix3 meshTM, int nMatId, int particleId, TimeValue ticks, ShapeType &type, ::uint16_t &instanceId, float &animationTime)
+void AlembicPoints::CacheShapeMesh(Mesh* pShapeMesh, BOOL bNeedDelete, Matrix3 meshTM, int nMatId, int particleId, TimeValue ticks, ShapeType &type, Abc::uint16_t &instanceId, float &animationTime)
 {
 	type = ShapeType_Instance;
 	//animationTime = 0;
@@ -930,8 +925,8 @@ void AlembicPoints::CacheShapeMesh(Mesh* pShapeMesh, BOOL bNeedDelete, Matrix3 m
 	}
 
 	meshDigests digests;
-	MurmurHash3_x64_128( pShapeMesh->verts, pShapeMesh->numVerts * sizeof(Point3), sizeof(Point3), digests.Vertices.words );
-	MurmurHash3_x64_128( pShapeMesh->faces, pShapeMesh->numFaces * sizeof(Face), sizeof(Face), digests.Faces.words );
+	AbcU::MurmurHash3_x64_128( pShapeMesh->verts, pShapeMesh->numVerts * sizeof(Point3), sizeof(Point3), digests.Vertices.words );
+	AbcU::MurmurHash3_x64_128( pShapeMesh->faces, pShapeMesh->numFaces * sizeof(Face), sizeof(Face), digests.Faces.words );
 	if(mJob->GetOption("exportMaterialIds")){
 
 		std::vector<MtlID> matIds;
@@ -946,7 +941,7 @@ void AlembicPoints::CacheShapeMesh(Mesh* pShapeMesh, BOOL bNeedDelete, Matrix3 m
 			matIds.push_back(nMatId);
 		}
 
-		MurmurHash3_x64_128( &matIds[0], matIds.size() * sizeof(MtlID), sizeof(MtlID), digests.MatIds.words );
+		AbcU::MurmurHash3_x64_128( &matIds[0], matIds.size() * sizeof(MtlID), sizeof(MtlID), digests.MatIds.words );
 	}
 	if(mJob->GetOption("exportUVs")){
 		//TODO...
@@ -988,7 +983,7 @@ void AlembicPoints::CacheShapeMesh(Mesh* pShapeMesh, BOOL bNeedDelete, Matrix3 m
 	instanceId = FindInstanceName(pathName);
 	if (instanceId == USHRT_MAX){
 		mInstanceNames.push_back(pathName);
-		instanceId = (::uint16_t)mInstanceNames.size()-1;
+		instanceId = (Abc::uint16_t)mInstanceNames.size()-1;
 	}
 }
 
@@ -1020,58 +1015,58 @@ void AlembicPoints::saveCurrentFrameMeshes()
 			//save out the mesh xForm
 		
 			std::string xformName = mi->name + "Xfo";
-			Alembic::AbcGeom::OXform xform(mJob->GetArchive().getTop(), xformName.c_str(), GetCurrentJob()->GetAnimatedTs());
-			Alembic::AbcGeom::OXformSchema& xformSchema = xform.getSchema();//mi->xformSchema;
+			AbcG::OXform xform(mJob->GetArchive().getTop(), xformName.c_str(), GetCurrentJob()->GetAnimatedTs());
+			AbcG::OXformSchema& xformSchema = xform.getSchema();//mi->xformSchema;
 
-			Alembic::AbcGeom::OPolyMesh mesh(xform, mi->name.c_str(), GetCurrentJob()->GetAnimatedTs());
-			Alembic::AbcGeom::OPolyMeshSchema& meshSchema = mesh.getSchema();
+			AbcG::OPolyMesh mesh(xform, mi->name.c_str(), GetCurrentJob()->GetAnimatedTs());
+			AbcG::OPolyMeshSchema& meshSchema = mesh.getSchema();
 
-			Alembic::AbcGeom::XformSample xformSample;
+			AbcG::XformSample xformSample;
 
 			Matrix3 alembicMatrix;
 			alembicMatrix.IdentityMatrix();
 			alembicMatrix.SetTrans(Point3(-10000.0f, -10000.0f, -10000.0f));
-			Alembic::Abc::M44d iMatrix;
+			Abc::M44d iMatrix;
 			ConvertMaxMatrixToAlembicMatrix(alembicMatrix, iMatrix);
 
 			xformSample.setMatrix(iMatrix);
 			xformSchema.set(xformSample);
 
 			//update the archive bounding box
-			Alembic::Abc::Box3d bbox;
+			Abc::Box3d bbox;
 			bbox.min = finalPolyMesh.bbox.min * iMatrix;
 			bbox.max = finalPolyMesh.bbox.max * iMatrix;
 
 			mJob->GetArchiveBBox().extendBy(bbox);
 
 			//save out the mesh data			
-			Alembic::AbcGeom::OPolyMeshSchema::Sample meshSample;
+			AbcG::OPolyMeshSchema::Sample meshSample;
 
-			meshSample.setPositions(Alembic::Abc::P3fArraySample(finalPolyMesh.posVec));
+			meshSample.setPositions(Abc::P3fArraySample(finalPolyMesh.posVec));
 			meshSample.setSelfBounds(finalPolyMesh.bbox);
 			meshSample.setChildBounds(finalPolyMesh.bbox);
 
-			meshSample.setFaceCounts(Alembic::Abc::Int32ArraySample(finalPolyMesh.mFaceCountVec));
-			meshSample.setFaceIndices(Alembic::Abc::Int32ArraySample(finalPolyMesh.mFaceIndicesVec));
+			meshSample.setFaceCounts(Abc::Int32ArraySample(finalPolyMesh.mFaceCountVec));
+			meshSample.setFaceIndices(Abc::Int32ArraySample(finalPolyMesh.mFaceIndicesVec));
 
 			if(mJob->GetOption("validateMeshTopology")){
 				mJob->mMeshErrors += validateAlembicMeshTopo(finalPolyMesh.mFaceCountVec, finalPolyMesh.mFaceIndicesVec, mi->name);
 			}
 
 			if(mJob->GetOption("exportNormals")){
-				Alembic::AbcGeom::ON3fGeomParam::Sample normalSample;
-				normalSample.setScope(Alembic::AbcGeom::kFacevaryingScope);
-				normalSample.setVals(Alembic::Abc::N3fArraySample(finalPolyMesh.normalVec));
+				AbcG::ON3fGeomParam::Sample normalSample;
+				normalSample.setScope(AbcG::kFacevaryingScope);
+				normalSample.setVals(Abc::N3fArraySample(finalPolyMesh.normalVec));
 				if(mJob->GetOption("indexedNormals")){
-					normalSample.setIndices(Alembic::Abc::UInt32ArraySample(finalPolyMesh.normalIndexVec));
+					normalSample.setIndices(Abc::UInt32ArraySample(finalPolyMesh.normalIndexVec));
 				}
 				meshSample.setNormals(normalSample);
 			}
 
 			if(mJob->GetOption("exportMaterialIds")){
-				Alembic::Abc::ALEMBIC_VERSION_NS::OUInt32ArrayProperty mMatIdProperty = 
-					OUInt32ArrayProperty(meshSchema, ".materialids", meshSchema.getMetaData(), mJob->GetAnimatedTs());
-				mMatIdProperty.set(Alembic::Abc::UInt32ArraySample(finalPolyMesh.mMatIdIndexVec));
+				Abc::OUInt32ArrayProperty mMatIdProperty = 
+					Abc::OUInt32ArrayProperty(meshSchema, ".materialids", meshSchema.getMetaData(), mJob->GetAnimatedTs());
+				mMatIdProperty.set(Abc::UInt32ArraySample(finalPolyMesh.mMatIdIndexVec));
 
 				for ( facesetmap_it it=finalPolyMesh.mFaceSetsMap.begin(); it != finalPolyMesh.mFaceSetsMap.end(); it++)
 				{
@@ -1079,10 +1074,10 @@ void AlembicPoints::saveCurrentFrameMeshes()
 					int nMaterialId = it->first+1;
 					nameStream<<it->second.name<<"_"<<nMaterialId;
 
-					std::vector<::int32_t>& faceSetVec = it->second.faceIds;
+					std::vector<Abc::int32_t>& faceSetVec = it->second.faceIds;
 
-					Alembic::AbcGeom::OFaceSet faceSet = meshSchema.createFaceSet(nameStream.str());
-					Alembic::AbcGeom::OFaceSetSchema::Sample faceSetSample(Alembic::Abc::Int32ArraySample(&faceSetVec.front(), faceSetVec.size()));
+					AbcG::OFaceSet faceSet = meshSchema.createFaceSet(nameStream.str());
+					AbcG::OFaceSetSchema::Sample faceSetSample(Abc::Int32ArraySample(&faceSetVec.front(), faceSetVec.size()));
 					faceSet.getSchema().set(faceSetSample);
 				}
 			}

@@ -162,7 +162,7 @@ void AlembicMeshGeomModifier::ModifyObject (TimeValue t, ModContext &mc, ObjectS
 	std::string szPath = EC_MCHAR_to_UTF8( strPath );
 	std::string szIdentifier = EC_MCHAR_to_UTF8( strIdentifier );
 	
-	Alembic::AbcGeom::IObject iObj;
+	AbcG::IObject iObj;
 	try {
 		ESS_PROFILE_SCOPE("getObjectFromArchive");
 		iObj = getObjectFromArchive(szPath, szIdentifier);

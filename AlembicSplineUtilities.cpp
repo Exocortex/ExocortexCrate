@@ -11,11 +11,11 @@
 #include "AlembicMetadataUtils.h"
 
 
-bool isAlembicSplinePositions( Alembic::AbcGeom::IObject *pIObj, bool& isConstant ) {
-	Alembic::AbcGeom::ICurves objCurves;
+bool isAlembicSplinePositions( AbcG::IObject *pIObj, bool& isConstant ) {
+	AbcG::ICurves objCurves;
 
-	if(Alembic::AbcGeom::ICurves::matches((*pIObj).getMetaData())) {
-		objCurves = Alembic::AbcGeom::ICurves(*pIObj,Alembic::Abc::kWrapExisting);
+	if(AbcG::ICurves::matches((*pIObj).getMetaData())) {
+		objCurves = AbcG::ICurves(*pIObj,Abc::kWrapExisting);
 		isConstant = objCurves.getSchema().getPositionsProperty().isConstant();
 		return true;
 	}
@@ -24,11 +24,11 @@ bool isAlembicSplinePositions( Alembic::AbcGeom::IObject *pIObj, bool& isConstan
 	return false;
 }
 
-bool isAlembicSplineTopoDynamic( Alembic::AbcGeom::IObject *pIObj ) {
-	Alembic::AbcGeom::ICurves objCurves;
+bool isAlembicSplineTopoDynamic( AbcG::IObject *pIObj ) {
+	AbcG::ICurves objCurves;
 
-	if(Alembic::AbcGeom::ICurves::matches((*pIObj).getMetaData())) {
-		objCurves = Alembic::AbcGeom::ICurves(*pIObj,Alembic::Abc::kWrapExisting);
+	if(AbcG::ICurves::matches((*pIObj).getMetaData())) {
+		objCurves = AbcG::ICurves(*pIObj,Abc::kWrapExisting);
 		return ! objCurves.getSchema().getNumVerticesProperty().isConstant();
 	}
 	return false;
@@ -48,9 +48,9 @@ void AlembicImport_FillInShape(alembic_fillshape_options &options)
 class CurvePositionSampler{
 public:
 
-	Alembic::Abc::P3fArraySamplePtr curvePos1;
-	Alembic::Abc::V3fArraySamplePtr curveVel1;
-	Alembic::Abc::P3fArraySamplePtr curvePos2;
+	Abc::P3fArraySamplePtr curvePos1;
+	Abc::V3fArraySamplePtr curveVel1;
+	Abc::P3fArraySamplePtr curvePos2;
 
 	enum interpT{
 		NONE,
@@ -63,45 +63,23 @@ public:
 	float timeAlpha;
 	float sampleAlpha;
 
-	CurvePositionSampler(Alembic::AbcGeom::ICurves& obj, SampleInfo& sampleInfo, float tAlpha, float sAlpha){
+	CurvePositionSampler(AbcG::ICurves& obj, SampleInfo& sampleInfo, float tAlpha, float sAlpha){
 
 		bool isDynamicTopo = isAlembicSplineTopoDynamic( &obj );
 
-		Alembic::AbcGeom::ICurvesSchema::Sample curveSample;
+		AbcG::ICurvesSchema::Sample curveSample;
 		obj.getSchema().get(curveSample, sampleInfo.floorIndex);
 		curvePos1 = curveSample.getPositions();
 
 		this->timeAlpha = tAlpha;
 		this->sampleAlpha = sAlpha;
-		
-		/*Alembic::Abc::V3fArraySamplePtr inTangentSampler; 
-		if ( obj.getSchema().getPropertyHeader( ".inTangent" ) != NULL )
-			 IV3fArrayProperty prop = Alembic::Abc::IV3fArrayProperty( obj.getSchema(), ".inTangent" );
-			 if(prop.valid()) {
-				 if(prop.getNumSamples() > 0)
-				 {
-					 inTangentSampler = prop.getValue(sampleInfo.floorIndex);
-					 if( inTangentSampler.get()->size() == posSampler.curvePos1.get()->size() );
-				}
-			 }
-		}
-		Alembic::Abc::V3fArraySamplePtr outTangentSampler; 
-		if ( obj.getSchema().getPropertyHeader( ".outTangent" ) != NULL )
-			 IV3fArrayProperty prop = Alembic::Abc::IV3fArrayProperty( obj.getSchema(), ".outTangent" );
-			 if(prop.valid()) {
-				 if(prop.getNumSamples() > 0)
-				 {
-					 outTangentSampler = prop.getValue(sampleInfo.floorIndex);
-				}
-			 }
-		}*/
 
 		if(isDynamicTopo){ //interpolate based on velocity
 			curveVel1 = curveSample.getVelocities();
 			interp = VELOCITY;  
 		}
 		else{
-			Alembic::AbcGeom::ICurvesSchema::Sample curveSample2;
+			AbcG::ICurvesSchema::Sample curveSample2;
 			obj.getSchema().get(curveSample2, sampleInfo.ceilIndex);
 			curvePos2 = curveSample2.getPositions();
 
@@ -112,9 +90,9 @@ public:
 
 	}
 
-	Imath::V3f operator[](int index){
+	Abc::V3f operator[](int index){
 
-		Imath::V3f pos1 = curvePos1->get()[index];
+		Abc::V3f pos1 = curvePos1->get()[index];
 		if(sampleAlpha != 0.0 && interp == POSITION){
 			return pos1 + ((curvePos2->get()[index] - pos1) * sampleAlpha);
 		}
@@ -131,7 +109,7 @@ public:
 
 void AlembicImport_FillInShape_Internal(alembic_fillshape_options &options)
 {
-	Alembic::AbcGeom::ICurves obj(*options.pIObj,Alembic::Abc::kWrapExisting);
+	AbcG::ICurves obj(*options.pIObj,Abc::kWrapExisting);
 
    if(!obj.valid())
    {
@@ -172,12 +150,12 @@ void AlembicImport_FillInShape_Internal(alembic_fillshape_options &options)
        }
    }*/
 
-   Alembic::AbcGeom::ICurvesSchema::Sample curveSample;
+   AbcG::ICurvesSchema::Sample curveSample;
    obj.getSchema().get(curveSample,sampleInfo.floorIndex);
 
    // check for valid curve types...!
-   if(curveSample.getType() != Alembic::AbcGeom::ALEMBIC_VERSION_NS::kLinear &&
-      curveSample.getType() != Alembic::AbcGeom::ALEMBIC_VERSION_NS::kCubic)
+   if(curveSample.getType() != AbcG::kLinear &&
+      curveSample.getType() != AbcG::kCubic)
    {
 	   ESS_LOG_ERROR( "Skipping curve '" << options.pIObj->getFullName() << "', invalid curve type." );
       return;
@@ -187,19 +165,19 @@ void AlembicImport_FillInShape_Internal(alembic_fillshape_options &options)
    int cornerType = KTYPE_BEZIER_CORNER;
    int lineType = LTYPE_CURVE;
 
-  /* if (curveSample.getType() == Alembic::AbcGeom::ALEMBIC_VERSION_NS::kCubic && !options.pBezierShape)
+  /* if (curveSample.getType() == AbcG::kCubic && !options.pBezierShape)
    {
        return;
    }*/
 
-   if (curveSample.getType() == Alembic::AbcGeom::ALEMBIC_VERSION_NS::kLinear )
+   if (curveSample.getType() == AbcG::kLinear )
    {
 	   curveType = KTYPE_CORNER;
 	   cornerType = KTYPE_CORNER;
        lineType = LTYPE_LINE;
    }
 
-   Alembic::Abc::Int32ArraySamplePtr curveNbVertices = curveSample.getCurvesNumVertices();
+   Abc::Int32ArraySamplePtr curveNbVertices = curveSample.getCurvesNumVertices();
 
    float fSamplerTimeAlpha;
    if(options.nDataFillFlags & ALEMBIC_DATAFILL_IGNORE_SUBFRAME_SAMPLES){
@@ -214,7 +192,7 @@ void AlembicImport_FillInShape_Internal(alembic_fillshape_options &options)
    // Prepare the knots
    if (options.nDataFillFlags & ALEMBIC_DATAFILL_SPLINE_KNOTS)
    {
-       Alembic::Abc::Int32ArraySamplePtr curveNbVertices = curveSample.getCurvesNumVertices();
+       Abc::Int32ArraySamplePtr curveNbVertices = curveSample.getCurvesNumVertices();
 
        if (options.pBezierShape)
        {
@@ -224,12 +202,12 @@ void AlembicImport_FillInShape_Internal(alembic_fillshape_options &options)
            {
                Spline3D *pSpline = options.pBezierShape->NewSpline();
                
-               if (curveSample.getWrap() == Alembic::AbcGeom::ALEMBIC_VERSION_NS::kPeriodic)
+               if (curveSample.getWrap() == AbcG::kPeriodic)
                    pSpline->SetClosed();
 			
                SplineKnot knot( curveType, lineType, Point3(0,0,0), Point3(0,0,0), Point3(0,0,0) );
 			   int nNumKnots = curveNbVertices->get()[i];
-			   /*if (curveSample.getType() == Alembic::AbcGeom::ALEMBIC_VERSION_NS::kCubic ) {
+			   /*if (curveSample.getType() == AbcG::kCubic ) {
 					assert( ( nNumKnots % 3 ) == 0 );
 				   nNumKnots /= 3;
 			   }			   
@@ -269,7 +247,7 @@ void AlembicImport_FillInShape_Internal(alembic_fillshape_options &options)
 
 			   Spline3D *pSpline = options.pBezierShape->GetSpline(i);
                int knots = pSpline->KnotCount();
-			  /* if (curveSample.getType() == Alembic::AbcGeom::ALEMBIC_VERSION_NS::kCubic ) {
+			  /* if (curveSample.getType() == AbcG::kCubic ) {
 				   assert( 3*knots == vertexCount );
 			   }
 			   else {
@@ -282,7 +260,7 @@ void AlembicImport_FillInShape_Internal(alembic_fillshape_options &options)
 
                    Point3 in, p, out;
 
-				  /*if (curveSample.getType() == Alembic::AbcGeom::ALEMBIC_VERSION_NS::kCubic ) {
+				  /*if (curveSample.getType() == AbcG::kCubic ) {
 					   /*int k = j * 3;
 					   in = ConvertAlembicPointToMaxPoint(posSampler[startVertex + k ]); 
 					   p = ConvertAlembicPointToMaxPoint(posSampler[startVertex + k + 1 ]); 
@@ -380,7 +358,7 @@ void AlembicImport_FillInShape_Internal(alembic_fillshape_options &options)
 int AlembicImport_Shape(const std::string &file, const std::string &identifier, alembic_importoptions &options)
 {
     // Find the object in the archive
-	Alembic::AbcGeom::IObject iObj = getObjectFromArchive(file,identifier);
+	AbcG::IObject iObj = getObjectFromArchive(file,identifier);
 	if(!iObj.valid())
 		return alembic_failure;
 
@@ -388,21 +366,21 @@ int AlembicImport_Shape(const std::string &file, const std::string &identifier, 
     AlembicSimpleSpline *pAlembicSpline = NULL;
     LinearShape *pAlembicShape = NULL;
 
-    if (!Alembic::AbcGeom::ICurves::matches(iObj.getMetaData()))
+    if (!AbcG::ICurves::matches(iObj.getMetaData()))
     {
         return alembic_failure;
     }
 
-    Alembic::AbcGeom::ICurves objCurves = Alembic::AbcGeom::ICurves(iObj, Alembic::Abc::kWrapExisting);
+    AbcG::ICurves objCurves = AbcG::ICurves(iObj, Abc::kWrapExisting);
     if (!objCurves.valid())
     {
         return alembic_failure;
     }
 
-    Alembic::AbcGeom::ICurvesSchema::Sample curveSample;
+    AbcG::ICurvesSchema::Sample curveSample;
     objCurves.getSchema().get(curveSample, 0);
 
-    if (curveSample.getType() == Alembic::AbcGeom::ALEMBIC_VERSION_NS::kCubic)
+    if (curveSample.getType() == AbcG::kCubic)
     {
         pAlembicSpline = static_cast<AlembicSimpleSpline*>(GET_MAX_INTERFACE()->CreateInstance(SHAPE_CLASS_ID, ALEMBIC_SIMPLE_SPLINE_CLASSID));
 	    newObject = pAlembicSpline;
@@ -454,17 +432,17 @@ int AlembicImport_Shape(const std::string &file, const std::string &identifier, 
 }*/
 
 
-int AlembicImport_Shape(const std::string &path, Alembic::AbcGeom::IObject& iObj, alembic_importoptions &options, INode** pMaxNode)
+int AlembicImport_Shape(const std::string &path, AbcG::IObject& iObj, alembic_importoptions &options, INode** pMaxNode)
 {
    
 	const std::string &identifier = iObj.getFullName();
 
-    if (!Alembic::AbcGeom::ICurves::matches(iObj.getMetaData()))
+    if (!AbcG::ICurves::matches(iObj.getMetaData()))
     {
         return alembic_failure;
     }
 
-    Alembic::AbcGeom::ICurves objCurves = Alembic::AbcGeom::ICurves(iObj, Alembic::Abc::kWrapExisting);
+    AbcG::ICurves objCurves = AbcG::ICurves(iObj, Abc::kWrapExisting);
     if (!objCurves.valid())
     {
         return alembic_failure;
@@ -475,7 +453,7 @@ int AlembicImport_Shape(const std::string &path, Alembic::AbcGeom::IObject& iObj
         return alembic_failure;
 	}
 
-    Alembic::AbcGeom::ICurvesSchema::Sample curveSample;
+    AbcG::ICurvesSchema::Sample curveSample;
     objCurves.getSchema().get(curveSample, 0);
 
 

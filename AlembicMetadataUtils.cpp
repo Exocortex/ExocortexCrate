@@ -5,20 +5,20 @@
 #include "utility.h"
 
 
-void importMetadata(Alembic::AbcGeom::IObject& iObj)
+void importMetadata(AbcG::IObject& iObj)
 {
-	Alembic::AbcGeom::IObject* metadataChild = NULL;
+	AbcG::IObject* metadataChild = NULL;
 
 
 	if(getCompoundFromObject(iObj).getPropertyHeader(".metadata") == NULL){
 		return;
 	}
 
-	Alembic::Abc::IStringArrayProperty metaDataProp = Alembic::Abc::IStringArrayProperty( getCompoundFromObject(iObj), ".metadata" );
-	Alembic::Abc::StringArraySamplePtr ptr = metaDataProp.getValue(0);
+	Abc::IStringArrayProperty metaDataProp = Abc::IStringArrayProperty( getCompoundFromObject(iObj), ".metadata" );
+	Abc::StringArraySamplePtr ptr = metaDataProp.getValue(0);
 	//for(unsigned int i=0;i<ptr->size();i++){
 	//	const char* name = ptr->get()[i].c_str();
-	//	Alembic::Abc::StringArraySamplePtr ptr = metaDataProp.getValue(0);
+	//	Abc::StringArraySamplePtr ptr = metaDataProp.getValue(0);
 	//
 	//}
 
@@ -113,9 +113,9 @@ void SaveMetaData(INode* node, AlembicObject* object)
 	}
 
 	if(metaData.size() > 0){
-		Alembic::Abc::OStringArrayProperty metaDataProperty = Alembic::Abc::OStringArrayProperty(
+		Abc::OStringArrayProperty metaDataProperty = Abc::OStringArrayProperty(
 		 object->GetCompound(), ".metadata", object->GetCompound().getMetaData(), object->GetCurrentJob()->GetAnimatedTs() );
-		Alembic::Abc::StringArraySample metaDataSample(&metaData.front(),metaData.size());
+		Abc::StringArraySample metaDataSample(&metaData.front(),metaData.size());
 		metaDataProperty.set(metaDataSample);
 	}
 }

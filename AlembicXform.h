@@ -5,19 +5,19 @@
 #include "AlembicObject.h"
 // #include "Point3.h"
 
-void SaveXformSample(const SceneEntry &in_Ref, Alembic::AbcGeom::OXformSchema &schema, Alembic::AbcGeom::XformSample &sample, double time, bool bFlatten);
-void SaveCameraXformSample(const SceneEntry &in_Ref, Alembic::AbcGeom::OXformSchema &schema, Alembic::AbcGeom::XformSample &sample, double time, bool bFlatten);
+void SaveXformSample(const SceneEntry &in_Ref, AbcG::OXformSchema &schema, AbcG::XformSample &sample, double time, bool bFlatten);
+void SaveCameraXformSample(const SceneEntry &in_Ref, AbcG::OXformSchema &schema, AbcG::XformSample &sample, double time, bool bFlatten);
 
 class AlembicXForm : public AlembicObject
 {
 private:
-   Alembic::AbcGeom::OXformSchema mXformSchema;
-   Alembic::AbcGeom::XformSample mXformSample;
+   AbcG::OXformSchema mXformSchema;
+   AbcG::XformSample mXformSample;
 public:
    AlembicXForm(const SceneEntry &in_Ref, AlembicWriteJob *in_Job);
    ~AlembicXForm();
    virtual bool Save(double time, bool bLastFrame);
-   virtual Alembic::Abc::OCompoundProperty GetCompound();
+   virtual Abc::OCompoundProperty GetCompound();
 };
 
 #endif

@@ -37,13 +37,13 @@ void validateMeshes( alembic_fillmesh_options &options, char* szName ) {
 void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
 {
    ESS_PROFILE_FUNC();
-   Alembic::AbcGeom::IPolyMesh objMesh;
-   Alembic::AbcGeom::ISubD objSubD;
+   AbcG::IPolyMesh objMesh;
+   AbcG::ISubD objSubD;
 
-   if(Alembic::AbcGeom::IPolyMesh::matches((*options.pIObj).getMetaData()))
-       objMesh = Alembic::AbcGeom::IPolyMesh(*options.pIObj,Alembic::Abc::kWrapExisting);
+   if(AbcG::IPolyMesh::matches((*options.pIObj).getMetaData()))
+       objMesh = AbcG::IPolyMesh(*options.pIObj,Abc::kWrapExisting);
    else
-       objSubD = Alembic::AbcGeom::ISubD(*options.pIObj,Alembic::Abc::kWrapExisting);
+       objSubD = AbcG::ISubD(*options.pIObj,Abc::kWrapExisting);
 
    if(!objMesh.valid() && !objSubD.valid())
        return;
@@ -72,8 +72,8 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
          objSubD.getSchema().getNumSamples()
       );
 
-   Alembic::AbcGeom::IPolyMeshSchema::Sample polyMeshSample;
-   Alembic::AbcGeom::ISubDSchema::Sample subDSample;
+   AbcG::IPolyMeshSchema::Sample polyMeshSample;
+   AbcG::ISubDSchema::Sample subDSample;
 
    if(objMesh.valid())
        objMesh.getSchema().get(polyMeshSample,sampleInfo.floorIndex);
@@ -82,8 +82,8 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
 
    int currentNumVerts = options.pMNMesh->numv;
 
-  	   Alembic::Abc::P3fArraySamplePtr meshPos;
-       Alembic::Abc::V3fArraySamplePtr meshVel;
+  	   Abc::P3fArraySamplePtr meshPos;
+       Abc::V3fArraySamplePtr meshVel;
 
 	   bool hasDynamicTopo = isAlembicMeshTopoDynamic( options.pIObj );
        if(objMesh.valid())
@@ -122,12 +122,12 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
    if ( options.nDataFillFlags & ALEMBIC_DATAFILL_VERTEX )
    {
        		ESS_PROFILE_SCOPE("ALEMBIC_DATAFILL_VERTEX");
-	   Imath::V3f const* pPositionArray = ( meshPos.get() != NULL ) ? meshPos->get() : NULL;
-	   Imath::V3f const* pVelocityArray = ( meshVel.get() != NULL ) ? meshVel->get() : NULL;
+	   Abc::V3f const* pPositionArray = ( meshPos.get() != NULL ) ? meshPos->get() : NULL;
+	   Abc::V3f const* pVelocityArray = ( meshVel.get() != NULL ) ? meshVel->get() : NULL;
 
 	   if( pPositionArray ){
 	
-		   std::vector<Imath::V3f> vArray;
+		   std::vector<Abc::V3f> vArray;
 		   vArray.reserve(meshPos->size());
 		   //P3fArraySample* pPositionArray = meshPos->get();
 		   for(size_t i=0;i<meshPos->size();i++) {
@@ -143,7 +143,7 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
 
 			  if(objMesh.valid())
 			  {
-				  Alembic::AbcGeom::IPolyMeshSchema::Sample polyMeshSample2;
+				  AbcG::IPolyMeshSchema::Sample polyMeshSample2;
 				  objMesh.getSchema().get(polyMeshSample2,sampleInfo.ceilIndex);
 				  meshPos = polyMeshSample2.getPositions();
 
@@ -157,7 +157,7 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
 			  }
 			  else
 			  {
-				  Alembic::AbcGeom::ISubDSchema::Sample subDSample2;
+				  AbcG::ISubDSchema::Sample subDSample2;
 				  objSubD.getSchema().get(subDSample2,sampleInfo.ceilIndex);
 				  meshPos = subDSample2.getPositions();
 				  bSampleInterpolate = true;
@@ -218,8 +218,8 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
 
   
 
-   Alembic::Abc::Int32ArraySamplePtr meshFaceCount;
-   Alembic::Abc::Int32ArraySamplePtr meshFaceIndices;
+   Abc::Int32ArraySamplePtr meshFaceCount;
+   Abc::Int32ArraySamplePtr meshFaceIndices;
 
    if (objMesh.valid())
    {
@@ -232,8 +232,8 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
        meshFaceIndices = subDSample.getFaceIndices();
    }
 
-   Alembic::Abc::ALEMBIC_VERSION_NS::int32_t const* pMeshFaceCount = ( meshFaceCount.get() != NULL ) ? meshFaceCount->get() : NULL;
-   Alembic::Abc::ALEMBIC_VERSION_NS::int32_t const* pMeshFaceIndices = ( meshFaceIndices.get() != NULL ) ? meshFaceIndices->get() : NULL;
+   Abc::int32_t const* pMeshFaceCount = ( meshFaceCount.get() != NULL ) ? meshFaceCount->get() : NULL;
+   Abc::int32_t const* pMeshFaceIndices = ( meshFaceIndices.get() != NULL ) ? meshFaceIndices->get() : NULL;
 
    int numFaces = static_cast<int>(meshFaceCount->size());
    int numIndices = static_cast<int>(meshFaceIndices->size());
@@ -327,10 +327,10 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
    if ( objMesh.valid() && ( options.nDataFillFlags & ALEMBIC_DATAFILL_NORMALS ) )
    {
 		ESS_PROFILE_SCOPE("ALEMBIC_DATAFILL_NORMALS");
-       Alembic::AbcGeom::IN3fGeomParam meshNormalsParam = objMesh.getSchema().getNormalsParam();
+       AbcG::IN3fGeomParam meshNormalsParam = objMesh.getSchema().getNormalsParam();
        if(meshNormalsParam.valid())
        {
-		   std::vector<Imath::V3f> normalValuesFloor, normalValuesCeil;
+		   std::vector<Abc::V3f> normalValuesFloor, normalValuesCeil;
 		   std::vector<AbcA::uint32_t> normalIndicesFloor, normalIndicesCeil;
 
 			bool normalsFloor = getIndexAndValues( meshFaceIndices, meshNormalsParam, sampleInfo.floorIndex,
@@ -367,7 +367,7 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
 			    if (sampleInfo.alpha != 0.0f && normalsCeil && normalValuesFloor.size() == normalValuesCeil.size())
 			   {
 				   for (int i = 0; i < normalValuesFloor.size(); i ++ ) {
-					   Imath::V3f interpolatedNormal = normalValuesFloor[i] + (normalValuesCeil[i] - normalValuesFloor[i]) * float(sampleInfo.alpha);
+					   Abc::V3f interpolatedNormal = normalValuesFloor[i] + (normalValuesCeil[i] - normalValuesFloor[i]) * float(sampleInfo.alpha);
 			           interpolatedNormal *= options.fVertexAlpha;
 					   normalSpec->Normal(i) = ConvertAlembicNormalToMaxNormal_Normalized( interpolatedNormal );
 				   }
@@ -375,7 +375,7 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
 			   else
 			   {
 				   for (int i = 0; i < normalValuesFloor.size(); i ++ ) {
-					   Imath::V3f interpolatedNormal = normalValuesFloor[i];
+					   Abc::V3f interpolatedNormal = normalValuesFloor[i];
 			           interpolatedNormal *= options.fVertexAlpha;
 					   normalSpec->Normal(i) = ConvertAlembicNormalToMaxNormal_Normalized( interpolatedNormal );
 				   }
@@ -436,7 +436,7 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
 
 		uvI--;
 
-		Alembic::AbcGeom::IV2fGeomParam meshUvParam;
+		AbcG::IV2fGeomParam meshUvParam;
 		if(objMesh.valid()){
 			if(uvI == 0){
 				meshUvParam = objMesh.getSchema().getUVsParam();
@@ -445,7 +445,7 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
 				std::stringstream storedUVNameStream;
 				storedUVNameStream<<"uv"<<uvI;
 				if(objMesh.getSchema().getPropertyHeader( storedUVNameStream.str() ) != NULL){
-					meshUvParam = Alembic::AbcGeom::IV2fGeomParam( objMesh.getSchema(), storedUVNameStream.str());
+					meshUvParam = AbcG::IV2fGeomParam( objMesh.getSchema(), storedUVNameStream.str());
 				}
 			}
 		}
@@ -457,7 +457,7 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
 				std::stringstream storedUVNameStream;
 				storedUVNameStream<<"uv"<<uvI;
 				if(objSubD.getSchema().getPropertyHeader( storedUVNameStream.str() ) != NULL){
-					meshUvParam = Alembic::AbcGeom::IV2fGeomParam( objSubD.getSchema(), storedUVNameStream.str());
+					meshUvParam = AbcG::IV2fGeomParam( objSubD.getSchema(), storedUVNameStream.str());
 				}
 			}
 		}
@@ -473,7 +473,7 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
                meshUvParam.getNumSamples()
                );
 
-		    std::vector<Imath::V2f> uvValuesFloor, uvValuesCeil;
+		    std::vector<Abc::V2f> uvValuesFloor, uvValuesCeil;
 		    std::vector<AbcA::uint32_t> uvIndicesFloor, uvIndicesCeil;
 
 			bool uvFloor = getIndexAndValues( meshFaceIndices, meshUvParam, sampleInfo.floorIndex,
@@ -499,14 +499,14 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
 				   {
 						for (int i = 0; i < uvValuesFloor.size(); i ++ )
 					   {
-						   Imath::V2f uv = uvValuesFloor[i] + ( uvValuesCeil[i] - uvValuesFloor[i] ) * float(sampleInfo.alpha);
+						   Abc::V2f uv = uvValuesFloor[i] + ( uvValuesCeil[i] - uvValuesFloor[i] ) * float(sampleInfo.alpha);
 						   mapV[i] = Point3( uv.x, uv.y, 0.0f );
 					   }
 				   }
 				   else {
 					   for (int i = 0; i < uvValuesFloor.size(); i ++ )
 					   {
-						   Imath::V2f uv =  uvValuesFloor[i];
+						   Abc::V2f uv =  uvValuesFloor[i];
 						   mapV[i] = Point3( uv.x, uv.y, 0.0f );
 					   }
 				   }
@@ -540,17 +540,17 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
    if ( options.nDataFillFlags & ALEMBIC_DATAFILL_MATERIALIDS )
    {
  ESS_PROFILE_SCOPE("ALEMBIC_DATAFILL_MATERIALIDS");
-	      Alembic::Abc::IUInt32ArrayProperty materialIds;
+	      Abc::IUInt32ArrayProperty materialIds;
        if(objMesh.valid() && objMesh.getSchema().getPropertyHeader( ".materialids" )) 
-           materialIds = Alembic::Abc::IUInt32ArrayProperty(objMesh.getSchema(), ".materialids");
+           materialIds = Abc::IUInt32ArrayProperty(objMesh.getSchema(), ".materialids");
        else if (objSubD.valid() && objSubD.getSchema().getPropertyHeader( ".materialids" ))
-           materialIds = Alembic::Abc::IUInt32ArrayProperty(objSubD.getSchema(), ".materialids");
+           materialIds = Abc::IUInt32ArrayProperty(objSubD.getSchema(), ".materialids");
 
        // If we don't detect a material id property then we try the facesets.  The order in the face set array is assumed
        // to be the material id
        if (materialIds.valid() && materialIds.getNumSamples() > 0)
        {
-            Alembic::Abc::UInt32ArraySamplePtr materialIdsPtr = materialIds.getValue(sampleInfo.floorIndex);
+            Abc::UInt32ArraySamplePtr materialIdsPtr = materialIds.getValue(sampleInfo.floorIndex);
 
             if (materialIdsPtr->size() == numFaces)
             {
@@ -574,14 +574,14 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
 
            for(size_t j=0;j<faceSetNames.size();j++)
            {
-               Alembic::AbcGeom::IFaceSetSchema faceSet;
+               AbcG::IFaceSetSchema faceSet;
                if(objMesh.valid())
                    faceSet = objMesh.getSchema().getFaceSet(faceSetNames[j]).getSchema();
                else
                    faceSet = objSubD.getSchema().getFaceSet(faceSetNames[j]).getSchema();
  
-               Alembic::AbcGeom::IFaceSetSchema::Sample faceSetSample = faceSet.getValue();
-               Alembic::Abc::Int32ArraySamplePtr faces = faceSetSample.getFaces();
+               AbcG::IFaceSetSchema::Sample faceSetSample = faceSet.getValue();
+               Abc::Int32ArraySamplePtr faces = faceSetSample.getFaces();
 
                int nMatId = (int)j;
                for(size_t k=0;k<faces->size();k++)
@@ -630,9 +630,9 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
    }
 }
 
-bool AlembicImport_IsPolyObject(Alembic::AbcGeom::IPolyMeshSchema::Sample &polyMeshSample)
+bool AlembicImport_IsPolyObject(AbcG::IPolyMeshSchema::Sample &polyMeshSample)
 {
-    Alembic::Abc::Int32ArraySamplePtr meshFaceCount = polyMeshSample.getFaceCounts();
+    Abc::Int32ArraySamplePtr meshFaceCount = polyMeshSample.getFaceCounts();
 
     // Go through each face and check the number of vertices.  If a face does not have 3 vertices,
     // we consider it to be a polymesh, otherwise it is a triangle mesh
@@ -648,19 +648,19 @@ bool AlembicImport_IsPolyObject(Alembic::AbcGeom::IPolyMeshSchema::Sample &polyM
     return false;
 }
 
-void addAlembicMaterialsModifier(INode *pNode, Alembic::AbcGeom::IObject& iObj)
+void addAlembicMaterialsModifier(INode *pNode, AbcG::IObject& iObj)
 {
 
-	Alembic::AbcGeom::IPolyMesh objMesh;
-	Alembic::AbcGeom::ISubD objSubD;
+	AbcG::IPolyMesh objMesh;
+	AbcG::ISubD objSubD;
 	int nLastSample = 0;
 
-	if(Alembic::AbcGeom::IPolyMesh::matches(iObj.getMetaData())){
-	   objMesh = Alembic::AbcGeom::IPolyMesh(iObj,Alembic::Abc::kWrapExisting);
+	if(AbcG::IPolyMesh::matches(iObj.getMetaData())){
+	   objMesh = AbcG::IPolyMesh(iObj,Abc::kWrapExisting);
 	   nLastSample = (int)objMesh.getSchema().getNumSamples()-1;
 	}
 	else{
-	   objSubD = Alembic::AbcGeom::ISubD(iObj,Alembic::Abc::kWrapExisting);
+	   objSubD = AbcG::ISubD(iObj,Abc::kWrapExisting);
 	   nLastSample = (int)objSubD.getSchema().getNumSamples()-1;
 	}
 
@@ -676,12 +676,12 @@ void addAlembicMaterialsModifier(INode *pNode, Alembic::AbcGeom::IObject& iObj)
 		sampleInfo = getSampleInfo(nLastSample, objSubD.getSchema().getTimeSampling(), objSubD.getSchema().getNumSamples());
 	}
 
-	Alembic::Abc::IStringArrayProperty matNamesProperty;
+	Abc::IStringArrayProperty matNamesProperty;
 	if(objMesh.valid() && objMesh.getSchema().getPropertyHeader(".materialnames")){
-		matNamesProperty = Alembic::Abc::IStringArrayProperty(objMesh.getSchema(), ".materialnames");
+		matNamesProperty = Abc::IStringArrayProperty(objMesh.getSchema(), ".materialnames");
 	}
 	else if(objSubD.valid() && objSubD.getSchema().getPropertyHeader(".materialnames")){
-		matNamesProperty = Alembic::Abc::IStringArrayProperty(objSubD.getSchema(), ".materialnames");
+		matNamesProperty = Abc::IStringArrayProperty(objSubD.getSchema(), ".materialnames");
 	}
 
 	std::vector<std::string> faceSetNames;
@@ -704,7 +704,7 @@ void addAlembicMaterialsModifier(INode *pNode, Alembic::AbcGeom::IObject& iObj)
 	}
 	else{
 
-		Alembic::Abc::StringArraySamplePtr matNamesSamplePtr = matNamesProperty.getValue(sampleInfo.floorIndex);
+		Abc::StringArraySamplePtr matNamesSamplePtr = matNamesProperty.getValue(sampleInfo.floorIndex);
 		size_t len = matNamesSamplePtr->size();
 
 		for(size_t i=0; i<len; i++){
@@ -766,7 +766,7 @@ void addAlembicMaterialsModifier(INode *pNode, Alembic::AbcGeom::IObject& iObj)
 	delete[] szBuffer;
 }
 
-int AlembicImport_PolyMesh(const std::string &path, Alembic::AbcGeom::IObject& iObj, alembic_importoptions &options, INode** pMaxNode)
+int AlembicImport_PolyMesh(const std::string &path, AbcG::IObject& iObj, alembic_importoptions &options, INode** pMaxNode)
 {
 	const std::string& identifier = iObj.getFullName();
 
@@ -785,12 +785,12 @@ int AlembicImport_PolyMesh(const std::string &path, Alembic::AbcGeom::IObject& i
     // Create the poly or tri object and place it in the scene
     // Need to use the attach to existing import flag here 
 	Object *newObject = NULL;
-	Alembic::AbcGeom::IPolyMesh objMesh;
-	Alembic::AbcGeom::ISubD objSubD;
+	AbcG::IPolyMesh objMesh;
+	AbcG::ISubD objSubD;
 
-	if( Alembic::AbcGeom::IPolyMesh::matches(iObj.getMetaData()) ) {
+	if( AbcG::IPolyMesh::matches(iObj.getMetaData()) ) {
 
-		objMesh = Alembic::AbcGeom::IPolyMesh(iObj, Alembic::Abc::kWrapExisting);
+		objMesh = AbcG::IPolyMesh(iObj, Abc::kWrapExisting);
 		if (!objMesh.valid())
 		{
 			return alembic_failure;
@@ -801,7 +801,7 @@ int AlembicImport_PolyMesh(const std::string &path, Alembic::AbcGeom::IObject& i
 			return alembic_failure;
 		}
 
-		//Alembic::AbcGeom::IPolyMeshSchema::Sample polyMeshSample;
+		//AbcG::IPolyMeshSchema::Sample polyMeshSample;
 		//objMesh.getSchema().get(polyMeshSample, 0);
 
 		//if (AlembicImport_IsPolyObject(polyMeshSample))
@@ -818,9 +818,9 @@ int AlembicImport_PolyMesh(const std::string &path, Alembic::AbcGeom::IObject& i
 			newObject = pTriObj;
 		}*/
 	}
-	else if( Alembic::AbcGeom::ISubD::matches(iObj.getMetaData()) )
+	else if( AbcG::ISubD::matches(iObj.getMetaData()) )
 	{
-		objSubD = Alembic::AbcGeom::ISubD(iObj, Alembic::Abc::kWrapExisting);
+		objSubD = AbcG::ISubD(iObj, Abc::kWrapExisting);
 		if (!objSubD.valid())
 		{
 			return alembic_failure;
@@ -831,7 +831,7 @@ int AlembicImport_PolyMesh(const std::string &path, Alembic::AbcGeom::IObject& i
 			return alembic_failure;
 		}
 
-		//Alembic::AbcGeom::ISubDSchema::Sample subDSample;
+		//AbcG::ISubDSchema::Sample subDSample;
 		//objSubD.getSchema().get(subDSample, 0);
 
 		//PolyObject *pPolyObject = (PolyObject *) GetPolyObjDescriptor()->Create();
@@ -938,7 +938,7 @@ int AlembicImport_PolyMesh(const std::string &path, Alembic::AbcGeom::IObject& i
 	if( /*!isDynamicTopo &&*/ options.importUVs && isAlembicMeshUVWs( &iObj, isUVWContant ) ) {
 		//ESS_LOG_INFO( "isUVWContant: " << isUVWContant );
 
-		Alembic::AbcGeom::IV2fGeomParam meshUVsParam;
+		AbcG::IV2fGeomParam meshUVsParam;
 		if(objMesh.valid()){
 			meshUVsParam = objMesh.getSchema().getUVsParam();
 		}
@@ -949,21 +949,21 @@ int AlembicImport_PolyMesh(const std::string &path, Alembic::AbcGeom::IObject& i
 		if(meshUVsParam.valid())
 		{
 			size_t numUVSamples = meshUVsParam.getNumSamples();
-			Alembic::Abc::V2fArraySamplePtr meshUVs = meshUVsParam.getExpandedValue(0).getVals();
+			Abc::V2fArraySamplePtr meshUVs = meshUVsParam.getExpandedValue(0).getVals();
 			if(meshUVs->size() > 0)
 			{
 				// check if we have a uv set names prop
 				std::vector<std::string> uvSetNames;
 				if(objMesh.valid() && objMesh.getSchema().getPropertyHeader( ".uvSetNames" ) != NULL ){
-					Alembic::Abc::IStringArrayProperty uvSetNamesProp = Alembic::Abc::IStringArrayProperty( objMesh.getSchema(), ".uvSetNames" );
-					Alembic::Abc::StringArraySamplePtr ptr = uvSetNamesProp.getValue(0);
+					Abc::IStringArrayProperty uvSetNamesProp = Abc::IStringArrayProperty( objMesh.getSchema(), ".uvSetNames" );
+					Abc::StringArraySamplePtr ptr = uvSetNamesProp.getValue(0);
 					for(size_t i=0;i<ptr->size();i++){
 						uvSetNames.push_back(ptr->get()[i].c_str());
 					}
 				}
 				else if ( objSubD.valid() && objSubD.getSchema().getPropertyHeader( ".uvSetNames" ) != NULL ){
-					Alembic::Abc::IStringArrayProperty uvSetNamesProp = Alembic::Abc::IStringArrayProperty( objSubD.getSchema(), ".uvSetNames" );
-					Alembic::Abc::StringArraySamplePtr ptr = uvSetNamesProp.getValue(0);
+					Abc::IStringArrayProperty uvSetNamesProp = Abc::IStringArrayProperty( objSubD.getSchema(), ".uvSetNames" );
+					Abc::StringArraySamplePtr ptr = uvSetNamesProp.getValue(0);
 					for(size_t i=0;i<ptr->size();i++){
 						uvSetNames.push_back(ptr->get()[i].c_str());
 					}
@@ -1097,7 +1097,7 @@ int AlembicImport_PolyMesh(const std::string &path, Alembic::AbcGeom::IObject& i
 		}
 	}
 
-	if( Alembic::AbcGeom::ISubD::matches(iObj.getMetaData()) )
+	if( AbcG::ISubD::matches(iObj.getMetaData()) )
 	{
 		GET_MAX_INTERFACE()->SelectNode( pNode );
 

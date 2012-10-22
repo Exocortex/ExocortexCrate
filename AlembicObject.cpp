@@ -4,9 +4,6 @@
 #include "utility.h"
 #include <boost/algorithm/string.hpp>
 
-namespace AbcA = ::Alembic::AbcCoreAbstract::ALEMBIC_VERSION_NS;
-using namespace AbcA;
-
 #pragma warning( disable: 4996 )
 
 
@@ -28,7 +25,7 @@ AlembicObject::AlembicObject (const SceneEntry & in_Ref, AlembicWriteJob * in_Jo
 		{
 		  for(size_t j=0;j<mOParent.getNumChildren();j++)
 		  {
-			 Alembic::Abc::OObject child = mOParent.getChild(j);
+			 Abc::OObject child = mOParent.getChild(j);
 			 if(child.getName() == parts[i])
 			 {
 				mOParent = child;
@@ -70,7 +67,7 @@ void AlembicObject::AddRef(const SceneEntry & in_Ref)
     mRefs.push_back(&in_Ref); 
 }
 
-Alembic::Abc::OObject AlembicObject::GetOParent() 
+Abc::OObject AlembicObject::GetOParent() 
 { 
     return mOParent; 
 }

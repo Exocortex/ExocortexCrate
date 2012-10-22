@@ -111,7 +111,7 @@ void AlembicXformController::GetValueLocalTime(TimeValue t, void *ptr, Interval 
 	 std::string szPath = EC_MCHAR_to_UTF8( strPath );
 	std::string szIdentifier = EC_MCHAR_to_UTF8( strIdentifier );
 
-	Alembic::AbcGeom::IObject iObj;
+	AbcG::IObject iObj;
 	try {
 		iObj = getObjectFromArchive(szPath, szIdentifier);
 	} catch( std::exception exp ) {

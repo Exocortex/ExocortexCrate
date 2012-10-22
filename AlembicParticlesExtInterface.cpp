@@ -25,8 +25,8 @@ bool IAlembicParticlesExt::GetRenderMeshVertexSpeed(TimeValue t, INode *inode, V
 	else{
 		int iSampleTime = GetTimeValueFromSeconds(t);
 
-		Alembic::AbcGeom::IPointsSchema::Sample floorSample;
-		Alembic::AbcGeom::IPointsSchema::Sample ceilSample;
+		AbcG::IPointsSchema::Sample floorSample;
+		AbcG::IPointsSchema::Sample ceilSample;
 		SampleInfo sampleInfo = m_pAlembicParticles->GetSampleAtTime(m_pAlembicParticles->m_iPoints, iSampleTime, floorSample, ceilSample);
 
 		numParticles = m_pAlembicParticles->GetNumParticles(floorSample);
@@ -37,9 +37,9 @@ bool IAlembicParticlesExt::GetRenderMeshVertexSpeed(TimeValue t, INode *inode, V
 	}
 
  //   Matrix3 nodeWorldTM = inode->GetObjTMAfterWSM(t);
- //   Alembic::Abc::M44d nodeWorldTrans;
+ //   Abc::M44d nodeWorldTrans;
  //   ConvertMaxMatrixToAlembicMatrix(nodeWorldTM, nodeWorldTrans);
-	//Alembic::Abc::M44d nodeWorldTransInv = nodeWorldTrans.inverse();
+	//Abc::M44d nodeWorldTransInv = nodeWorldTrans.inverse();
 
 	ExoNullView nullView;
 

@@ -120,9 +120,9 @@ void AlembicFloatController::GetValueLocalTime(TimeValue t, void *ptr, Interval 
 	}
 
 
-	Alembic::AbcGeom::IObject iObj = getObjectFromArchive(szPath, szIdentifier);
+	AbcG::IObject iObj = getObjectFromArchive(szPath, szIdentifier);
     
-	if(!iObj.valid() || !Alembic::AbcGeom::ICamera::matches(iObj.getMetaData())) {
+	if(!iObj.valid() || !AbcG::ICamera::matches(iObj.getMetaData())) {
         return;
 	}
 
@@ -130,7 +130,7 @@ void AlembicFloatController::GetValueLocalTime(TimeValue t, void *ptr, Interval 
 		ESS_LOG_INFO("Camera object found.");
 	}
 
-    Alembic::AbcGeom::ICamera objCamera = Alembic::AbcGeom::ICamera(iObj, Alembic::Abc::kWrapExisting);
+    AbcG::ICamera objCamera = AbcG::ICamera(iObj, Abc::kWrapExisting);
 
 	TimeValue dTicks = GetTimeValueFromSeconds( fTime );
     double sampleTime = GetSecondsFromTimeValue(dTicks);
@@ -138,7 +138,7 @@ void AlembicFloatController::GetValueLocalTime(TimeValue t, void *ptr, Interval 
 	SampleInfo sampleInfo = getSampleInfo(sampleTime,
                                           objCamera.getSchema().getTimeSampling(),
                                           objCamera.getSchema().getNumSamples());
-    Alembic::AbcGeom::CameraSample sample;
+    AbcG::CameraSample sample;
     objCamera.getSchema().get(sample, sampleInfo.floorIndex);
 
 	if(g_bVerboseLogging){

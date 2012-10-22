@@ -137,7 +137,7 @@ void AlembicMeshUVWModifier::ModifyObject (TimeValue t, ModContext &mc, ObjectSt
 	size_t found = strObjectIdentifier.find_last_of(":");
 	strObjectIdentifier = strObjectIdentifier.substr(0, found);
 		
-	Alembic::AbcGeom::IObject iObj;
+	AbcG::IObject iObj;
 	try {
 		iObj = getObjectFromArchive(szPath, strObjectIdentifier);
 	} catch( std::exception exp ) {

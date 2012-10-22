@@ -10,10 +10,6 @@
 #include <color.h>
 #include "AlembicParticlesExtInterface.h"
 
-namespace AbcA = ::Alembic::AbcCoreAbstract::ALEMBIC_VERSION_NS;
-namespace AbcB = ::Alembic::Abc::ALEMBIC_VERSION_NS;
-using namespace AbcA;
-using namespace AbcB;
 
 static AlembicParticlesClassDesc s_AlembicParticlesClassDesc;
 ClassDesc2 *GetAlembicParticlesClassDesc() { return &s_AlembicParticlesClassDesc; }
@@ -186,7 +182,7 @@ void AlembicParticles::UpdateParticles(TimeValue t, INode *node)
 
 	this->pblock2->GetValue( AlembicParticles::ID_VIEWPORT_PERCENT, t, m_fViewportPercent, interval);
 
-	//Alembic::AbcGeom::IPoints iPoints;
+	//AbcG::IPoints iPoints;
     if (!GetAlembicIPoints(m_iPoints, szPath, szIdentifier))
     {
         valid = FALSE;
@@ -204,8 +200,8 @@ void AlembicParticles::UpdateParticles(TimeValue t, INode *node)
 
 	m_outputOrientationMotionBlurWarning = true;
 
-    Alembic::AbcGeom::IPointsSchema::Sample floorSample;
-    Alembic::AbcGeom::IPointsSchema::Sample ceilSample;
+    AbcG::IPointsSchema::Sample floorSample;
+    AbcG::IPointsSchema::Sample ceilSample;
     SampleInfo sampleInfo = GetSampleAtTime(m_iPoints, iSampleTime, floorSample, ceilSample);
 
     int numParticles = GetNumParticles(floorSample);
@@ -267,20 +263,20 @@ void AlembicParticles::BuildEmitter(TimeValue t, Mesh &mesh)
 	MCHAR const* strIdentifier = NULL;
 	this->pblock2->GetValue( AlembicParticles::ID_IDENTIFIER, t, strIdentifier, interval);
 
-    Alembic::AbcGeom::IPoints iPoints;
+    AbcG::IPoints iPoints;
     if (!GetAlembicIPoints(iPoints, strPath, strIdentifier))
     {
         return;
     }
 
-    Alembic::AbcGeom::IPointsSchema::Sample floorSample;
-    Alembic::AbcGeom::IPointsSchema::Sample ceilSample;
+    AbcG::IPointsSchema::Sample floorSample;
+    AbcG::IPointsSchema::Sample ceilSample;
     GetSampleAtTime(iPoints, t, floorSample, ceilSample);
 
     // Create a box the size of the bounding box
-    Alembic::Abc::Box3d bbox = floorSample.getSelfBounds();
-    Imath::V3f alembicMinPt(float(bbox.min.x), float(bbox.min.y), float(bbox.min.z));
-    Imath::V3f alembicMaxPt(float(bbox.max.x), float(bbox.max.y), float(bbox.max.z));
+    Abc::Box3d bbox = floorSample.getSelfBounds();
+    Abc::V3f alembicMinPt(float(bbox.min.x), float(bbox.min.y), float(bbox.min.z));
+    Abc::V3f alembicMaxPt(float(bbox.max.x), float(bbox.max.y), float(bbox.max.z));
     Point3 maxMinPt;
     Point3 maxMaxPt;
     maxMinPt = ConvertAlembicPointToMaxPoint(alembicMinPt);
@@ -446,16 +442,16 @@ TimeValue AlembicParticles::ParticleLife(TimeValue t, int i) {
 	return -1;
 }
 
-bool AlembicParticles::GetAlembicIPoints(Alembic::AbcGeom::IPoints &iPoints, std::string strFile, std::string strIdentifier)
+bool AlembicParticles::GetAlembicIPoints(AbcG::IPoints &iPoints, std::string strFile, std::string strIdentifier)
 {
     // Find the object in the archive
-    Alembic::AbcGeom::IObject iObj = getObjectFromArchive(strFile, strIdentifier);
+    AbcG::IObject iObj = getObjectFromArchive(strFile, strIdentifier);
 	if (!iObj.valid())
     {
 		return false;
     }
 
-    iPoints = Alembic::AbcGeom::IPoints(iObj, Alembic::Abc::kWrapExisting);
+    iPoints = AbcG::IPoints(iObj, Abc::kWrapExisting);
     if (!iPoints.valid())
     {
         return false;
@@ -464,7 +460,7 @@ bool AlembicParticles::GetAlembicIPoints(Alembic::AbcGeom::IPoints &iPoints, std
     return true;
 }
 
-SampleInfo AlembicParticles::GetSampleAtTime(Alembic::AbcGeom::IPoints &iPoints, TimeValue t, Alembic::AbcGeom::IPointsSchema::Sample &floorSample, Alembic::AbcGeom::IPointsSchema::Sample &ceilSample) const
+SampleInfo AlembicParticles::GetSampleAtTime(AbcG::IPoints &iPoints, TimeValue t, AbcG::IPointsSchema::Sample &floorSample, AbcG::IPointsSchema::Sample &ceilSample) const
 {
     double sampleTime = GetSecondsFromTimeValue(t);
     SampleInfo sampleInfo = getSampleInfo(sampleTime,
@@ -477,17 +473,17 @@ SampleInfo AlembicParticles::GetSampleAtTime(Alembic::AbcGeom::IPoints &iPoints,
     return sampleInfo;
 }
 
-int AlembicParticles::GetNumParticles(const Alembic::AbcGeom::IPointsSchema::Sample &floorSample) const
+int AlembicParticles::GetNumParticles(const AbcG::IPointsSchema::Sample &floorSample) const
 {
     // We assume that the number of position items is the number of particles
     return static_cast<int>(floorSample.getPositions()->size());
 }
 
 void
-AlembicParticles::GetParticlePositions(Alembic::AbcGeom::IPoints &iPoints, const Alembic::AbcGeom::IPointsSchema::Sample &floorSample, const Alembic::AbcGeom::IPointsSchema::Sample &ceilSample, const SampleInfo &sampleInfo, const Matrix3& objToWorld, Tab<Point3>& points) const {
-	Alembic::Abc::P3fArraySamplePtr floorPositions = floorSample.getPositions();
+AlembicParticles::GetParticlePositions(AbcG::IPoints &iPoints, const AbcG::IPointsSchema::Sample &floorSample, const AbcG::IPointsSchema::Sample &ceilSample, const SampleInfo &sampleInfo, const Matrix3& objToWorld, Tab<Point3>& points) const {
+	Abc::P3fArraySamplePtr floorPositions = floorSample.getPositions();
 	if( floorPositions != NULL && floorPositions->valid() && floorPositions->size() > 0 ) {
-		std::vector<Imath::V3f> alembicPositions( points.Count() );
+		std::vector<Abc::V3f> alembicPositions( points.Count() );
 		int j = 0;
 		int jIncrement = floorPositions->size() == points.Count() ? 1 : 0;
 		for( int i = 0; i < floorPositions->size(); i ++ ) {
@@ -501,7 +497,7 @@ AlembicParticles::GetParticlePositions(Alembic::AbcGeom::IPoints &iPoints, const
 		{
 			float timeAlpha = getTimeOffsetFromObject( iPoints, sampleInfo );
 
-			Alembic::Abc::V3fArraySamplePtr floorVelocities = floorSample.getVelocities();
+			Abc::V3fArraySamplePtr floorVelocities = floorSample.getVelocities();
 			if( floorVelocities != NULL && floorVelocities->size() > 0 ) {
 				j = 0;
 				jIncrement = floorVelocities->size() == points.Count() ? 1 : 0;
@@ -538,13 +534,13 @@ AlembicParticles::GetParticlePositions(Alembic::AbcGeom::IPoints &iPoints, const
 	}
 }
 void
-AlembicParticles::GetParticleVelocities(const Alembic::AbcGeom::IPointsSchema::Sample &floorSample, const Alembic::AbcGeom::IPointsSchema::Sample &ceilSample, const SampleInfo &sampleInfo, Matrix3 objToWorld, Tab<Point3>& vels) const {
+AlembicParticles::GetParticleVelocities(const AbcG::IPointsSchema::Sample &floorSample, const AbcG::IPointsSchema::Sample &ceilSample, const SampleInfo &sampleInfo, Matrix3 objToWorld, Tab<Point3>& vels) const {
 	//ESS_LOG_WARNING( "Particle velocities are not transformed into world space." );
 
 	objToWorld.SetTrans(Point3(0.0, 0.0, 0.0));
 
 	bool useDefaultValues = true;
-	Alembic::Abc::V3fArraySamplePtr floorVelocities = floorSample.getVelocities();
+	Abc::V3fArraySamplePtr floorVelocities = floorSample.getVelocities();
 	if( floorVelocities != NULL && floorVelocities->valid() && floorVelocities->size() > 0 ) {
 		int j = 0;
 		int jIncrement = floorVelocities->size() == vels.Count() ? 1 : 0;
@@ -563,11 +559,11 @@ AlembicParticles::GetParticleVelocities(const Alembic::AbcGeom::IPointsSchema::S
 
 
 void
-AlembicParticles::GetParticleRadii(Alembic::AbcGeom::IPoints &iPoints, const SampleInfo &sampleInfo, Tab<float>& radius) const {
+AlembicParticles::GetParticleRadii(AbcG::IPoints &iPoints, const SampleInfo &sampleInfo, Tab<float>& radius) const {
 	bool useDefaultValues = true;
-    Alembic::AbcGeom::IFloatGeomParam widthsParam = iPoints.getSchema().getWidthsParam();
+    AbcG::IFloatGeomParam widthsParam = iPoints.getSchema().getWidthsParam();
    if( widthsParam != NULL && widthsParam.getNumSamples() > 0 ) {
-		Alembic::Abc::FloatArraySamplePtr floorSamples = widthsParam.getExpandedValue(sampleInfo.floorIndex).getVals();
+		Abc::FloatArraySamplePtr floorSamples = widthsParam.getExpandedValue(sampleInfo.floorIndex).getVals();
 		if( floorSamples != NULL && floorSamples->valid() && floorSamples->size() > 0 ) {
 			int j = 0;
 			int jIncrement = floorSamples->size() == radius.Count() ? 1 : 0;
@@ -586,11 +582,11 @@ AlembicParticles::GetParticleRadii(Alembic::AbcGeom::IPoints &iPoints, const Sam
 }
 
 void
-AlembicParticles::GetParticleAges(Alembic::AbcGeom::IPoints &iPoints, const SampleInfo &sampleInfo, Tab<TimeValue>& ages) const {
+AlembicParticles::GetParticleAges(AbcG::IPoints &iPoints, const SampleInfo &sampleInfo, Tab<TimeValue>& ages) const {
 	bool useDefaultValues = true;
-	IFloatArrayProperty prop;
+	Abc::IFloatArrayProperty prop;
 	if( getArbGeomParamPropertyAlembic( iPoints, "age", prop ) ) {
-	    Alembic::Abc::FloatArraySamplePtr floorSamples = prop.getValue(sampleInfo.floorIndex);
+	    Abc::FloatArraySamplePtr floorSamples = prop.getValue(sampleInfo.floorIndex);
 		if( floorSamples != NULL && floorSamples->size() > 0  && floorSamples->size() == ages.Count() ) {
 			int j = 0;
 			int jIncrement = floorSamples->size() == ages.Count() ? 1 : 0;
@@ -609,15 +605,15 @@ AlembicParticles::GetParticleAges(Alembic::AbcGeom::IPoints &iPoints, const Samp
 }
 
 void
-AlembicParticles::GetParticleOrientations(Alembic::AbcGeom::IPoints &iPoints, const SampleInfo &sampleInfo, Matrix3 objToWorld, std::vector<Quat>& particleOrientations) const {
+AlembicParticles::GetParticleOrientations(AbcG::IPoints &iPoints, const SampleInfo &sampleInfo, Matrix3 objToWorld, std::vector<Quat>& particleOrientations) const {
 	//ESS_LOG_WARNING( "Particle orientations are not transformed into world space." );
 	bool useDefaultValues = true;
 
 	objToWorld.SetTrans(Point3(0.0, 0.0, 0.0));
 
-	IQuatfArrayProperty orientProperty;
+	Abc::IQuatfArrayProperty orientProperty;
 	if( getArbGeomParamPropertyAlembic( iPoints, "orientation", orientProperty ) ) {
-		Alembic::Abc::QuatfArraySamplePtr floorSamples = orientProperty.getValue(sampleInfo.floorIndex);
+		Abc::QuatfArraySamplePtr floorSamples = orientProperty.getValue(sampleInfo.floorIndex);
 		if( floorSamples != NULL && floorSamples->valid() && floorSamples->size() > 0 ) {
 
 			std::vector<Quat> maxOrientations( particleOrientations.size() );
@@ -633,11 +629,11 @@ AlembicParticles::GetParticleOrientations(Alembic::AbcGeom::IPoints &iPoints, co
 			//Get the velocity if there is an alpha
 			if (sampleInfo.alpha != 0.0f)
 			{
-				IQuatfArrayProperty angVelProperty ;
+				Abc::IQuatfArrayProperty angVelProperty ;
 				if( getArbGeomParamPropertyAlembic( iPoints, "angularvelocity", angVelProperty ) ) {
 					float timeAlpha = getTimeOffsetFromObject( iPoints, sampleInfo );
 							
-					Alembic::Abc::QuatfArraySamplePtr floorAngVelSamples = angVelProperty.getValue(sampleInfo.floorIndex);
+					Abc::QuatfArraySamplePtr floorAngVelSamples = angVelProperty.getValue(sampleInfo.floorIndex);
 					if( floorAngVelSamples != NULL && floorAngVelSamples->size() > 0 ) {
 						j = 0;
 						jIncrement = floorAngVelSamples->size() == particleOrientations.size() ? 1 : 0;
@@ -670,12 +666,12 @@ AlembicParticles::GetParticleOrientations(Alembic::AbcGeom::IPoints &iPoints, co
 }
 
 void
-AlembicParticles::GetParticleScales(Alembic::AbcGeom::IPoints &iPoints, const SampleInfo &sampleInfo, const Matrix3& objToWorld, std::vector<Point3>& scales) const {
+AlembicParticles::GetParticleScales(AbcG::IPoints &iPoints, const SampleInfo &sampleInfo, const Matrix3& objToWorld, std::vector<Point3>& scales) const {
 	//ESS_LOG_WARNING( "Particle scales are not transformed into world space ??" );
 	bool useDefaultValues = true;
-	IV3fArrayProperty prop;
+	Abc::IV3fArrayProperty prop;
 	if( getArbGeomParamPropertyAlembic( iPoints, "scale", prop ) ) {
-	    Alembic::Abc::V3fArraySamplePtr floorSamples = prop.getValue(sampleInfo.floorIndex);
+	    Abc::V3fArraySamplePtr floorSamples = prop.getValue(sampleInfo.floorIndex);
 		if( floorSamples != NULL && floorSamples->size() > 0 ) {
 			int j = 0;
 			int jIncrement = floorSamples->size() == scales.size() ? 1 : 0;
@@ -695,11 +691,11 @@ AlembicParticles::GetParticleScales(Alembic::AbcGeom::IPoints &iPoints, const Sa
 
 
 void
-AlembicParticles::GetParticleShapeTypes(Alembic::AbcGeom::IPoints &iPoints, const SampleInfo &sampleInfo, std::vector<AlembicPoints::ShapeType>& instanceShapeType ) const {
+AlembicParticles::GetParticleShapeTypes(AbcG::IPoints &iPoints, const SampleInfo &sampleInfo, std::vector<AlembicPoints::ShapeType>& instanceShapeType ) const {
 	bool useDefaultValues = true;
-	IUInt16ArrayProperty shapeTypeProperty;
+	Abc::IUInt16ArrayProperty shapeTypeProperty;
 	if( getArbGeomParamPropertyAlembic( iPoints, "shapetype", shapeTypeProperty ) ) {
-	    Alembic::Abc::UInt16ArraySamplePtr floorSamples = shapeTypeProperty.getValue(sampleInfo.floorIndex);
+	    Abc::UInt16ArraySamplePtr floorSamples = shapeTypeProperty.getValue(sampleInfo.floorIndex);
 		if( floorSamples != NULL && floorSamples->size() > 0 ) {
 			int j = 0;
 			int jIncrement = floorSamples->size() == instanceShapeType.size() ? 1 : 0;
@@ -719,13 +715,13 @@ AlembicParticles::GetParticleShapeTypes(Alembic::AbcGeom::IPoints &iPoints, cons
 
 
 void
-AlembicParticles::GetParticleShapeInstanceIds(Alembic::AbcGeom::IPoints &iPoints, const SampleInfo &sampleInfo, std::vector<unsigned short>& instanceShapeIds ) const {
+AlembicParticles::GetParticleShapeInstanceIds(AbcG::IPoints &iPoints, const SampleInfo &sampleInfo, std::vector<unsigned short>& instanceShapeIds ) const {
 	bool useDefaultValues = true;
-	IUInt16ArrayProperty shapeIdProperty;
+	Abc::IUInt16ArrayProperty shapeIdProperty;
 	if( getArbGeomParamPropertyAlembic( iPoints, "shapeinstanceid", shapeIdProperty ) ) {
-		IStringArrayProperty shapeNameProperty;
+		Abc::IStringArrayProperty shapeNameProperty;
 		if( getArbGeomParamPropertyAlembic( iPoints, "instancenames", shapeNameProperty ) ) {	
-			Alembic::Abc::UInt16ArraySamplePtr floorSamples = shapeIdProperty.getValue(sampleInfo.floorIndex);
+			Abc::UInt16ArraySamplePtr floorSamples = shapeIdProperty.getValue(sampleInfo.floorIndex);
 			if( floorSamples != NULL && floorSamples->size() > 0 ) {
 				int j = 0;
 				int jIncrement = floorSamples->size() == instanceShapeIds.size() ? 1 : 0;
@@ -745,13 +741,13 @@ AlembicParticles::GetParticleShapeInstanceIds(Alembic::AbcGeom::IPoints &iPoints
 }
 
 
-void AlembicParticles::FillParticleShapeNodes(Alembic::AbcGeom::IPoints &iPoints, const SampleInfo &sampleInfo)
+void AlembicParticles::FillParticleShapeNodes(AbcG::IPoints &iPoints, const SampleInfo &sampleInfo)
 {
     //m_TotalShapesToEnumerate = 0;
     m_InstanceShapeINodes.clear();
 	ClearMeshCache();
 
-	IStringArrayProperty shapeInstanceNameProperty;
+	Abc::IStringArrayProperty shapeInstanceNameProperty;
 	if( getArbGeomParamPropertyAlembic( iPoints, "instancenames", shapeInstanceNameProperty ) ) {		
 		const size_t sIndex = shapeInstanceNameProperty.getNumSamples()-1;
 		m_InstanceShapeNames = shapeInstanceNameProperty.getValue(sIndex);//sampleInfo.floorIndex);
@@ -774,11 +770,11 @@ void AlembicParticles::FillParticleShapeNodes(Alembic::AbcGeom::IPoints &iPoints
 
 
 void
-AlembicParticles::GetParticleShapeInstanceTimes(Alembic::AbcGeom::IPoints &iPoints, const SampleInfo &sampleInfo, std::vector<TimeValue>& instanceShapeTimes) const {
+AlembicParticles::GetParticleShapeInstanceTimes(AbcG::IPoints &iPoints, const SampleInfo &sampleInfo, std::vector<TimeValue>& instanceShapeTimes) const {
 	bool useDefaultValues = true;
-	IFloatArrayProperty shapeTimeProperty;
+	Abc::IFloatArrayProperty shapeTimeProperty;
 	if( getArbGeomParamPropertyAlembic( iPoints, "shapetime", shapeTimeProperty ) ) {
-	    Alembic::Abc::FloatArraySamplePtr floorSamples = shapeTimeProperty.getValue(sampleInfo.floorIndex);
+	    Abc::FloatArraySamplePtr floorSamples = shapeTimeProperty.getValue(sampleInfo.floorIndex);
 		if( floorSamples != NULL && floorSamples->size() > 0 ) {
 			int j = 0;
 			int jIncrement = floorSamples->size() == instanceShapeTimes.size() ? 1 : 0;
@@ -797,16 +793,16 @@ AlembicParticles::GetParticleShapeInstanceTimes(Alembic::AbcGeom::IPoints &iPoin
 }
 
 void
-AlembicParticles::GetParticleColors(Alembic::AbcGeom::IPoints &iPoints, const SampleInfo &sampleInfo, std::vector<VertColor>& colors ) const {
+AlembicParticles::GetParticleColors(AbcG::IPoints &iPoints, const SampleInfo &sampleInfo, std::vector<VertColor>& colors ) const {
 	bool useDefaultValues = true;
-	IC4fArrayProperty colorProperty;
+	Abc::IC4fArrayProperty colorProperty;
 	if( getArbGeomParamPropertyAlembic( iPoints, "color", colorProperty ) ) {
-	    Alembic::Abc::C4fArraySamplePtr floorSamples = colorProperty.getValue(sampleInfo.floorIndex);
+	    Abc::C4fArraySamplePtr floorSamples = colorProperty.getValue(sampleInfo.floorIndex);
 		if( floorSamples != NULL && floorSamples->size() > 0 ) {
 			int j = 0;
 			int jIncrement = floorSamples->size() == colors.size() ? 1 : 0;
 			for( int i = 0; i < colors.size(); i ++ ) {
-				C4f color = (*floorSamples)[j];					
+				Abc::C4f color = (*floorSamples)[j];					
 				j += jIncrement;
 				colors[i] = VertColor( color.r, color.g, color.b );
 			}
@@ -1098,7 +1094,7 @@ void AlembicParticles::GetMultipleRenderMeshTM(TimeValue  t, INode *inode, View 
 {
 	MSTR rendererName;
 	GET_MAX_INTERFACE()->GetCurrentRenderer()->GetClassName( rendererName );
-	string renderer( EC_MSTR_to_UTF8( rendererName ) );
+	std::string renderer( EC_MSTR_to_UTF8( rendererName ) );
 
 	if(LOG){
 		ESS_LOG_WARNING("GetMultipleRenderMeshTM_Internal at time = "<<t<<", mesh #:"<<meshNumber<<", numOfParticles: "<<parts.Count());
@@ -1111,18 +1107,18 @@ void AlembicParticles::GetMultipleRenderMeshTM(TimeValue  t, INode *inode, View 
 
 	Matrix3 objectToWorld = inode->GetObjectTM( t );
 
-	if( renderer.find( string( "mental ray Renderer" ) ) !=string::npos ) {
+	if( renderer.find( std::string( "mental ray Renderer" ) ) !=std::string::npos ) {
 		//ESS_LOG_INFO( "MR renderer mode" );
 		
 		meshTM = meshTM * Inverse( objectToWorld );
 	}
-	else if( renderer.find( string( "iray" ) ) !=string::npos ) {
+	else if( renderer.find( std::string( "iray" ) ) !=std::string::npos ) {
 		//ESS_LOG_INFO( "MR renderer mode" );
 		meshTM = meshTM * Inverse( objectToWorld );
 	}
-	else if(( renderer.find( string( "vray" ) ) != string::npos )||
-		( renderer.find( string( "Vray" ) ) != string::npos )||
-		( renderer.find( string( "VRay" ) ) != string::npos ) ) {
+	else if(( renderer.find( std::string( "vray" ) ) != std::string::npos )||
+		( renderer.find( std::string( "Vray" ) ) != std::string::npos )||
+		( renderer.find( std::string( "VRay" ) ) != std::string::npos ) ) {
 		//ESS_LOG_INFO( "Vray renderer mode" );
 		meshTM = meshTM * Inverse( objectToWorld );
 	} 
@@ -1208,7 +1204,7 @@ INode* AlembicParticles::GetParticleMeshNode(int meshNumber, INode *displayNode)
         if (meshNumber > m_InstanceShapeIds.size())
             return displayNode;
 
-        ::uint16_t shapeid = m_InstanceShapeIds[meshNumber];
+        Abc::uint16_t shapeid = m_InstanceShapeIds[meshNumber];
 
         if (shapeid > m_InstanceShapeINodes.size())
             return displayNode;
@@ -1643,7 +1639,7 @@ Mesh *AlembicParticles::BuildInstanceMesh(int meshNumber, TimeValue t, INode *no
 		return NULL;
 	}
 
-	::uint16_t shapeid = m_InstanceShapeIds[meshNumber];
+	Abc::uint16_t shapeid = m_InstanceShapeIds[meshNumber];
 
 	if (shapeid >= m_InstanceShapeINodes.size()){
 	   return NULL;
@@ -1802,14 +1798,14 @@ BOOL AlembicParticles::OKtoDisplay( TimeValue t)
     return !bMuted;
 }
 
-bool isAlembicPoints( Alembic::AbcGeom::IObject *pIObj, bool& isConstant ) 
+bool isAlembicPoints( AbcG::IObject *pIObj, bool& isConstant ) 
 {
-	Alembic::AbcGeom::IPoints objPoints;
+	AbcG::IPoints objPoints;
 
 	isConstant = true; 
 
-	if(Alembic::AbcGeom::IPoints::matches((*pIObj).getMetaData())) {
-		objPoints = Alembic::AbcGeom::IPoints(*pIObj,Alembic::Abc::kWrapExisting);
+	if(AbcG::IPoints::matches((*pIObj).getMetaData())) {
+		objPoints = AbcG::IPoints(*pIObj,Abc::kWrapExisting);
 		if( objPoints.valid() ) {
 			isConstant = objPoints.getSchema().isConstant();
 		}
@@ -1818,7 +1814,7 @@ bool isAlembicPoints( Alembic::AbcGeom::IObject *pIObj, bool& isConstant )
 	return objPoints.valid();
 }
 
-int AlembicImport_Points(const std::string &file, Alembic::AbcGeom::IObject& iObj, alembic_importoptions &options, INode** pMaxNode)
+int AlembicImport_Points(const std::string &file, AbcG::IObject& iObj, alembic_importoptions &options, INode** pMaxNode)
 {
 	const std::string &identifier = iObj.getFullName();
 

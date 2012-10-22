@@ -13,7 +13,7 @@
 
 ClassDesc2* GetAlembicVisibilityControllerClassDesc();
 
-void AlembicImport_SetupVisControl( const std::string &file, const std::string &identifier, Alembic::AbcGeom::IObject &obj, INode *pNode, alembic_importoptions &options );
+void AlembicImport_SetupVisControl( const std::string &file, const std::string &identifier, AbcG::IObject &obj, INode *pNode, alembic_importoptions &options );
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -21,7 +21,7 @@ void AlembicImport_SetupVisControl( const std::string &file, const std::string &
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 typedef struct _alembic_fillvis_options
 {
-    Alembic::AbcGeom::IObject *pIObj;
+    AbcG::IObject *pIObj;
     TimeValue dTicks;
     bool bVisibility;
     bool bOldVisibility;

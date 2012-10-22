@@ -29,6 +29,6 @@ public:
 	}
 };
 
-int importAlembicScene(Alembic::AbcGeom::IObject& root, alembic_importoptions &options, std::string& file, progressUpdate& progress, std::map<std::string, bool>& nodeFullPaths);
+int importAlembicScene(AbcG::IObject& root, alembic_importoptions &options, std::string& file, progressUpdate& progress, std::map<std::string, bool>& nodeFullPaths);
 
 #endif

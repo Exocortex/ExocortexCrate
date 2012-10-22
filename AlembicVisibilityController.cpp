@@ -94,7 +94,7 @@ void AlembicVisibilityController::GetValueLocalTime(TimeValue t, void *ptr, Inte
 	std::string szPath = EC_MCHAR_to_UTF8( strPath );
 	std::string szIdentifier = EC_MCHAR_to_UTF8( strIdentifier );
 
-	Alembic::AbcGeom::IObject iObj = getObjectFromArchive(szPath, szIdentifier);
+	AbcG::IObject iObj = getObjectFromArchive(szPath, szIdentifier);
     
 	if(!iObj.valid()) {
         return;
@@ -320,8 +320,8 @@ void AlembicImport_FillInVis_Internal(alembic_fillvis_options &options)
         return;
     }
 
-    Alembic::AbcGeom::IVisibilityProperty visibilityProperty = 
-        Alembic::AbcGeom::GetVisibilityProperty(*options.pIObj);
+    AbcG::IVisibilityProperty visibilityProperty = 
+        AbcG::GetVisibilityProperty(*options.pIObj);
     
     if(!visibilityProperty.valid())
     {
@@ -337,16 +337,16 @@ void AlembicImport_FillInVis_Internal(alembic_fillvis_options &options)
         );
 
     boost::int8_t rawVisibilityValue = visibilityProperty.getValue ( sampleInfo.floorIndex );
-    Alembic::AbcGeom::ObjectVisibility visibilityValue = Alembic::AbcGeom::ObjectVisibility ( rawVisibilityValue );
+    AbcG::ObjectVisibility visibilityValue = AbcG::ObjectVisibility ( rawVisibilityValue );
 
     switch(visibilityValue)
     {
-    case Alembic::AbcGeom::kVisibilityVisible:
+    case AbcG::kVisibilityVisible:
         {
             options.bVisibility = true;
             break;
         }
-    case Alembic::AbcGeom::kVisibilityHidden:
+    case AbcG::kVisibilityHidden:
         {
             options.bVisibility = false;
             break;
@@ -362,12 +362,12 @@ void AlembicImport_FillInVis_Internal(alembic_fillvis_options &options)
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // AlembicImport_vis
 ///////////////////////////////////////////////////////////////////////////////////////////////////
-void AlembicImport_SetupVisControl( std::string const& file, std::string const& identifier, Alembic::AbcGeom::IObject &obj, INode *pNode, alembic_importoptions &options )
+void AlembicImport_SetupVisControl( std::string const& file, std::string const& identifier, AbcG::IObject &obj, INode *pNode, alembic_importoptions &options )
 {
     if (!pNode)
         return;
 
-	Alembic::AbcGeom::IVisibilityProperty visibilityProperty = Alembic::AbcGeom::GetVisibilityProperty(obj);
+	AbcG::IVisibilityProperty visibilityProperty = AbcG::GetVisibilityProperty(obj);
 
 	bool isConstant = true;
 	if( visibilityProperty.valid() ) {

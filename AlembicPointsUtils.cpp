@@ -202,9 +202,9 @@ bool getParticleSystemMesh(TimeValue ticks, Object* obj, INode* node, Intermedia
 	static const bool ENABLE_VELOCITY_EXPORT = true;
 
     Matrix3 nodeWorldTM = node->GetObjTMAfterWSM(ticks);
-    Alembic::Abc::M44d nodeWorldTrans;
+    Abc::M44d nodeWorldTrans;
     ConvertMaxMatrixToAlembicMatrix(nodeWorldTM, nodeWorldTrans);
-	Alembic::Abc::M44d nodeWorldTransInv = nodeWorldTrans.inverse();
+	Abc::M44d nodeWorldTransInv = nodeWorldTrans.inverse();
 
 	ParticleObject* pParticleObject = (ParticleObject*)obj->GetInterface(I_PARTICLEOBJ);
 	//SimpleParticle* pSimpleParticle = (SimpleParticle*)obj->GetInterface(I_SIMPLEPARTICLEOBJ);
@@ -277,9 +277,9 @@ bool getParticleSystemMesh(TimeValue ticks, Object* obj, INode* node, Intermedia
 
 					mesh->mVelocitiesVec.reserve(perVertexVelocities.Count());
 					for(int j=0; j<perVertexVelocities.Count(); j++){
-						Imath::V4f pVelocity4 = ConvertMaxVectorToAlembicVector4(perVertexVelocities[j] * TIME_TICKSPERSEC); 
+						Abc::V4f pVelocity4 = ConvertMaxVectorToAlembicVector4(perVertexVelocities[j] * TIME_TICKSPERSEC); 
 						pVelocity4 = pVelocity4 * nodeWorldTransInv;
-						mesh->mVelocitiesVec.push_back(Imath::V3f(pVelocity4.x, pVelocity4.y, pVelocity4.z));
+						mesh->mVelocitiesVec.push_back(Abc::V3f(pVelocity4.x, pVelocity4.y, pVelocity4.z));
 					}
 				}
 				else{
@@ -338,22 +338,22 @@ bool getParticleSystemMesh(TimeValue ticks, Object* obj, INode* node, Intermedia
 		if(ENABLE_VELOCITY_EXPORT){
 #if 1
 			//float fps = (float)GetFrameRate();
-			Imath::V4f pPosition4 = ConvertMaxPointToAlembicPoint4(*particlesExt->GetParticlePositionByIndex(i));
-			Imath::V4f pVelocity4 = ConvertMaxVectorToAlembicVector4(*particlesExt->GetParticleSpeedByIndex(i) * TIME_TICKSPERSEC); 
+			Abc::V4f pPosition4 = ConvertMaxPointToAlembicPoint4(*particlesExt->GetParticlePositionByIndex(i));
+			Abc::V4f pVelocity4 = ConvertMaxVectorToAlembicVector4(*particlesExt->GetParticleSpeedByIndex(i) * TIME_TICKSPERSEC); 
 
-			//Imath::V4f pVel = pPosition4 - prevPos;
-			//Imath::V4f pVels = pVelocity4 * fps;
+			//Abc::V4f pVel = pPosition4 - prevPos;
+			//Abc::V4f pVels = pVelocity4 * fps;
 			//float factor = pVel.y / pVelocity4.y;
 			//prevPos = pPosition4;
 
-			Alembic::Abc::Quatd pAngularVelocity(0.0, 0.0, 1.0, 0.0);
+			Abc::Quatd pAngularVelocity(0.0, 0.0, 1.0, 0.0);
 			AngAxis particleSpin = *particlesExt->GetParticleSpinByIndex(i);
 			particleSpin.angle *= TIME_TICKSPERSEC;
 			ConvertMaxAngAxisToAlembicQuat(particleSpin, pAngularVelocity);
-			Imath::M44d mAngularVelocity44 = pAngularVelocity.toMatrix44();
+			Abc::M44d mAngularVelocity44 = pAngularVelocity.toMatrix44();
 
 			//AngAxis angAxis = *particlesExt->GetParticleSpinByIndex(i);
-			//Imath::V3f pAngularVelocity = ConvertMaxNormalToAlembicNormal(angAxis.axis);
+			//Abc::V3f pAngularVelocity = ConvertMaxNormalToAlembicNormal(angAxis.axis);
 			//pAngularVelocity = pAngularVelocity * angAxis.angle * 200;
 
 			//the values are returned in world space, so move them to particle space
@@ -362,17 +362,17 @@ bool getParticleSystemMesh(TimeValue ticks, Object* obj, INode* node, Intermedia
 			mAngularVelocity44 = mAngularVelocity44 * nodeWorldTransInv;
 			//pAngularVelocity = pAngularVelocity * nodeWorldTransInv;
 
-			Imath::V3f pPosition = Imath::V3f(pPosition4.x, pPosition4.y, pPosition4.z);
-			Imath::V3f pVelocity = Imath::V3f(pVelocity4.x, pVelocity4.y, pVelocity4.z);
-			Imath::M33d mAngularVelocity = extractRotation(mAngularVelocity44);
-			Imath::M33d mIdentity;
+			Abc::V3f pPosition = Abc::V3f(pPosition4.x, pPosition4.y, pPosition4.z);
+			Abc::V3f pVelocity = Abc::V3f(pVelocity4.x, pVelocity4.y, pVelocity4.z);
+			Abc::M33d mAngularVelocity = extractRotation(mAngularVelocity44);
+			Abc::M33d mIdentity;
 			mIdentity.makeIdentity();
 			mAngularVelocity -= mIdentity;
 
 			mesh->mVelocitiesVec.reserve(pMesh->getNumVerts());
 			for(int j=0; j<pMesh->getNumVerts(); j++){
-				Imath::V3f meshVertex = ConvertMaxPointToAlembicPoint(pMesh->getVert(j) * meshTM);//the mesh vertex in particle system space
-				Imath::V3f vVelocity = meshVertex * mAngularVelocity;
+				Abc::V3f meshVertex = ConvertMaxPointToAlembicPoint(pMesh->getVert(j) * meshTM);//the mesh vertex in particle system space
+				Abc::V3f vVelocity = meshVertex * mAngularVelocity;
 				mesh->mVelocitiesVec.push_back(pVelocity /*+ vVelocity*/);
 			}
 #else
@@ -387,9 +387,9 @@ bool getParticleSystemMesh(TimeValue ticks, Object* obj, INode* node, Intermedia
 
 			mesh->mVelocitiesVec.reserve(perVertexVelocities.Count());
 			for(int j=0; j<perVertexVelocities.Count(); j++){
-				Imath::V4f pVelocity4 = ConvertMaxVectorToAlembicVector4(perVertexVelocities[j] * TIME_TICKSPERSEC); 
+				Abc::V4f pVelocity4 = ConvertMaxVectorToAlembicVector4(perVertexVelocities[j] * TIME_TICKSPERSEC); 
 				pVelocity4 = pVelocity4 * nodeWorldTransInv;
-				mesh->mVelocitiesVec.push_back(Imath::V3f(pVelocity4.x, pVelocity4.y, pVelocity4.z));
+				mesh->mVelocitiesVec.push_back(Abc::V3f(pVelocity4.x, pVelocity4.y, pVelocity4.z));
 			}
 #endif
 		}

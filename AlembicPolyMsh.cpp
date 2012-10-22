@@ -9,10 +9,7 @@
 #include "AlembicIntermediatePolyMesh3DSMax.h"
 #include "CommonMeshUtilities.h"
 
-namespace AbcA = ::Alembic::AbcCoreAbstract::ALEMBIC_VERSION_NS;
-namespace AbcB = ::Alembic::Abc::ALEMBIC_VERSION_NS;
-using namespace AbcA;
-using namespace AbcB;
+
 
 // From the SDK
 // How to calculate UV's for face mapped materials.
@@ -32,8 +29,8 @@ AlembicPolyMesh::AlembicPolyMesh(const SceneEntry &in_Ref, AlembicWriteJob *in_J
     std::string meshName = EC_MCHAR_to_UTF8( in_Ref.node->GetName() );
     std::string xformName = meshName + "Xfo";
 
-    Alembic::AbcGeom::OXform xform(GetOParent(), xformName.c_str(), GetCurrentJob()->GetAnimatedTs());
-    Alembic::AbcGeom::OPolyMesh mesh(xform, meshName.c_str(), GetCurrentJob()->GetAnimatedTs());
+    AbcG::OXform xform(GetOParent(), xformName.c_str(), GetCurrentJob()->GetAnimatedTs());
+    AbcG::OPolyMesh mesh(xform, meshName.c_str(), GetCurrentJob()->GetAnimatedTs());
 
     // JSS - I'm not sure if this is require under 3DSMAx
     // AddRef(prim.GetParent3DObject().GetKinematics().GetGlobal().GetRef());
@@ -51,7 +48,7 @@ AlembicPolyMesh::~AlembicPolyMesh()
     mOVisibility.reset();
 }
 
-Alembic::Abc::OCompoundProperty AlembicPolyMesh::GetCompound()
+Abc::OCompoundProperty AlembicPolyMesh::GetCompound()
 {
     return mMeshSchema;
 }
@@ -78,9 +75,9 @@ void AlembicPolyMesh::SaveMaterialsProperty(bool bFirstFrame, bool bLastFrame)
 		if(materialNames.size() > 0){
 			if(!mMatNamesProperty.valid())
 			{
-				mMatNamesProperty = OStringArrayProperty(mMeshSchema, ".materialnames", mMeshSchema.getMetaData(), GetCurrentJob()->GetAnimatedTs());
+				mMatNamesProperty = Abc::OStringArrayProperty(mMeshSchema, ".materialnames", mMeshSchema.getMetaData(), GetCurrentJob()->GetAnimatedTs());
 			}
-			Alembic::Abc::StringArraySample sample = Alembic::Abc::StringArraySample(materialNames);
+			Abc::StringArraySample sample = Abc::StringArraySample(materialNames);
 			mMatNamesProperty.set(sample);
 		}
 	}
@@ -131,7 +128,7 @@ bool AlembicPolyMesh::Save(double time, bool bLastFrame)
     if(!bForever || mNumSamples == 0)
     {
         float flVisibility = GetRef().node->GetLocalVisibility(ticks);
-        mOVisibility.set(flVisibility > 0 ? Alembic::AbcGeom::kVisibilityVisible : Alembic::AbcGeom::kVisibilityHidden);
+        mOVisibility.set(flVisibility > 0 ? AbcG::kVisibilityVisible : AbcG::kVisibilityHidden);
     }
 
     // check if the mesh is animated (Otherwise, no need to export)
@@ -205,10 +202,10 @@ bool AlembicPolyMesh::Save(double time, bool bLastFrame)
 	
 	// Extend the archive bounding box
 	if (mJob){
-		Alembic::Abc::M44d wm;
+		Abc::M44d wm;
 		ConvertMaxMatrixToAlembicMatrix(GetRef().node->GetObjTMAfterWSM(ticks), wm);
 
-		Alembic::Abc::Box3d bbox = finalPolyMesh.bbox;
+		Abc::Box3d bbox = finalPolyMesh.bbox;
 
 		//ESS_LOG_INFO( "Archive bbox: min("<<bbox.min.x<<", "<<bbox.min.y<<", "<<bbox.min.z<<") max("<<bbox.max.x<<", "<<bbox.max.y<<", "<<bbox.max.z<<")" );
 
@@ -219,11 +216,11 @@ bool AlembicPolyMesh::Save(double time, bool bLastFrame)
 
 		mJob->GetArchiveBBox().extendBy(bbox);
 
-		Alembic::Abc::Box3d box = mJob->GetArchiveBBox();
+		Abc::Box3d box = mJob->GetArchiveBBox();
 		//ESS_LOG_INFO( "Archive bbox: min("<<box.min.x<<", "<<box.min.y<<", "<<box.min.z<<") max("<<box.max.x<<", "<<box.max.y<<", "<<box.max.z<<")" );
 	}
 
-	mMeshSample.setPositions(Alembic::Abc::P3fArraySample(finalPolyMesh.posVec));
+	mMeshSample.setPositions(Abc::P3fArraySample(finalPolyMesh.posVec));
 
 	mMeshSample.setSelfBounds(finalPolyMesh.bbox);
 	mMeshSample.setChildBounds(finalPolyMesh.bbox);
@@ -234,8 +231,8 @@ bool AlembicPolyMesh::Save(double time, bool bLastFrame)
         if(mNumSamples == 0)
         {
             // store a dummy empty topology
-			mMeshSample.setFaceCounts(Alembic::Abc::Int32ArraySample(NULL, 0));
-			mMeshSample.setFaceIndices(Alembic::Abc::Int32ArraySample(NULL, 0));
+			mMeshSample.setFaceCounts(Abc::Int32ArraySample(NULL, 0));
+			mMeshSample.setFaceIndices(Abc::Int32ArraySample(NULL, 0));
         }
 
         mMeshSchema.set(mMeshSample);
@@ -247,17 +244,17 @@ bool AlembicPolyMesh::Save(double time, bool bLastFrame)
 		mJob->mMeshErrors += validateAlembicMeshTopo(finalPolyMesh.mFaceCountVec, finalPolyMesh.mFaceIndicesVec, EC_MCHAR_to_UTF8(GetRef().node->GetName()));
 	}
 
-	Alembic::Abc::Int32ArraySample faceCountSample(finalPolyMesh.mFaceCountVec);
-	Alembic::Abc::Int32ArraySample faceIndicesSample(finalPolyMesh.mFaceIndicesVec);
+	Abc::Int32ArraySample faceCountSample(finalPolyMesh.mFaceCountVec);
+	Abc::Int32ArraySample faceIndicesSample(finalPolyMesh.mFaceIndicesVec);
 	mMeshSample.setFaceCounts(faceCountSample);
 	mMeshSample.setFaceIndices(faceIndicesSample);
 
 	if(mJob->GetOption("exportNormals")){
-		Alembic::AbcGeom::ON3fGeomParam::Sample normalSample;
-		normalSample.setScope(Alembic::AbcGeom::kFacevaryingScope);
-		normalSample.setVals(Alembic::Abc::N3fArraySample(finalPolyMesh.normalVec));
+		AbcG::ON3fGeomParam::Sample normalSample;
+		normalSample.setScope(AbcG::kFacevaryingScope);
+		normalSample.setVals(Abc::N3fArraySample(finalPolyMesh.normalVec));
 		if(mJob->GetOption("indexedNormals")){
-			normalSample.setIndices(Alembic::Abc::UInt32ArraySample(finalPolyMesh.normalIndexVec));
+			normalSample.setIndices(Abc::UInt32ArraySample(finalPolyMesh.normalIndexVec));
 		}
 		mMeshSample.setNormals(normalSample);
 	}
@@ -267,22 +264,22 @@ bool AlembicPolyMesh::Save(double time, bool bLastFrame)
 	{
 
 		if(mNumSamples == 0 && finalPolyMesh.mUvSetNames.size() > 0){
-			Alembic::Abc::OStringArrayProperty uvSetNamesProperty = Alembic::Abc::OStringArrayProperty(
+			Abc::OStringArrayProperty uvSetNamesProperty = Abc::OStringArrayProperty(
 				mMeshSchema, ".uvSetNames", mMeshSchema.getMetaData(), mJob->GetAnimatedTs() );
-			Alembic::Abc::StringArraySample uvSetNamesSample(&finalPolyMesh.mUvSetNames.front(), finalPolyMesh.mUvSetNames.size());
+			Abc::StringArraySample uvSetNamesSample(&finalPolyMesh.mUvSetNames.front(), finalPolyMesh.mUvSetNames.size());
 			uvSetNamesProperty.set(uvSetNamesSample);
 		}
 
 		for(int i=0; i<finalPolyMesh.mUvVec.size(); i++){
-			std::vector<Alembic::Abc::V2f>& uvVec = finalPolyMesh.mUvVec[i];
-			std::vector<Alembic::Abc::uint32_t>& uvIndexVec = finalPolyMesh.mUvIndexVec[i];
+			std::vector<Abc::V2f>& uvVec = finalPolyMesh.mUvVec[i];
+			std::vector<Abc::uint32_t>& uvIndexVec = finalPolyMesh.mUvIndexVec[i];
 
 			int uvIndexSize = 0;
-			Alembic::AbcGeom::OV2fGeomParam::Sample uvSample = 
-				Alembic::AbcGeom::OV2fGeomParam::Sample(Alembic::Abc::V2fArraySample(uvVec), Alembic::AbcGeom::kFacevaryingScope);
+			AbcG::OV2fGeomParam::Sample uvSample = 
+				AbcG::OV2fGeomParam::Sample(Abc::V2fArraySample(uvVec), AbcG::kFacevaryingScope);
 			if(mJob->GetOption("indexedUVs")){
 				uvIndexSize = (int)uvIndexVec.size();
-				uvSample.setIndices(Alembic::Abc::UInt32ArraySample(uvIndexVec));
+				uvSample.setIndices(Abc::UInt32ArraySample(uvIndexVec));
 			}
 
 			if(i == 0){
@@ -294,8 +291,8 @@ bool AlembicPolyMesh::Save(double time, bool bLastFrame)
 				{
 					std::stringstream storedUVSetNameStream;
 					storedUVSetNameStream<<"uv"<<i;
-					mUvParams.push_back(Alembic::AbcGeom::OV2fGeomParam( mMeshSchema, storedUVSetNameStream.str().c_str(), uvIndexSize > 0,
-									 Alembic::AbcGeom::kFacevaryingScope, 1, mJob->GetAnimatedTs()));
+					mUvParams.push_back(AbcG::OV2fGeomParam( mMeshSchema, storedUVSetNameStream.str().c_str(), uvIndexSize > 0,
+									 AbcG::kFacevaryingScope, 1, mJob->GetAnimatedTs()));
 				}
 				mUvParams[i-1].set(uvSample);
 			}
@@ -309,10 +306,10 @@ bool AlembicPolyMesh::Save(double time, bool bLastFrame)
 	{
 		if(!mMatIdProperty.valid())
 		{
-			mMatIdProperty = OUInt32ArrayProperty(mMeshSchema, ".materialids", mMeshSchema.getMetaData(), GetCurrentJob()->GetAnimatedTs());
+			mMatIdProperty = Abc::OUInt32ArrayProperty(mMeshSchema, ".materialids", mMeshSchema.getMetaData(), GetCurrentJob()->GetAnimatedTs());
 		}
 
-		Alembic::Abc::UInt32ArraySample sample = Alembic::Abc::UInt32ArraySample(finalPolyMesh.mMatIdIndexVec);
+		Abc::UInt32ArraySample sample = Abc::UInt32ArraySample(finalPolyMesh.mMatIdIndexVec);
 		mMatIdProperty.set(sample);
 
 		SaveMaterialsProperty(bFirstFrame, bLastFrame || bForever);
@@ -327,10 +324,10 @@ bool AlembicPolyMesh::Save(double time, bool bLastFrame)
 				int nMaterialId = it->first+1;
 				nameStream<<it->second.name<<"_"<<nMaterialId;
 
-				std::vector<::int32_t>& faceSetVec = it->second.faceIds;
+				std::vector<Abc::int32_t>& faceSetVec = it->second.faceIds;
 
-				Alembic::AbcGeom::OFaceSet faceSet = mMeshSchema.createFaceSet(nameStream.str());
-				Alembic::AbcGeom::OFaceSetSchema::Sample faceSetSample(Alembic::Abc::Int32ArraySample(&faceSetVec.front(), faceSetVec.size()));
+				AbcG::OFaceSet faceSet = mMeshSchema.createFaceSet(nameStream.str());
+				AbcG::OFaceSetSchema::Sample faceSetSample(Abc::Int32ArraySample(&faceSetVec.front(), faceSetVec.size()));
 				faceSet.getSchema().set(faceSetSample);
 			}
 		}
@@ -356,9 +353,9 @@ bool AlembicPolyMesh::Save(double time, bool bLastFrame)
             mBindPoseVec[i].z = (float)bindPosePos[i].GetZ();
          }
 
-         Alembic::Abc::V3fArraySample sample;
+         Abc::V3fArraySample sample;
          if(mBindPoseVec.size() > 0)
-            sample = Alembic::Abc::V3fArraySample(&mBindPoseVec.front(),mBindPoseVec.size());
+            sample = Abc::V3fArraySample(&mBindPoseVec.front(),mBindPoseVec.size());
          mBindPoseProperty.set(sample);
       }
       
@@ -373,7 +370,7 @@ bool AlembicPolyMesh::Save(double time, bool bLastFrame)
 		if(finalPolyMesh.posVec.size() != finalPolyMesh.mVelocitiesVec.size()){
 			ESS_LOG_INFO("mVelocitiesVec has wrong size.");
 		}
-		mMeshSample.setVelocities(Alembic::Abc::V3fArraySample(finalPolyMesh.mVelocitiesVec));
+		mMeshSample.setVelocities(Abc::V3fArraySample(finalPolyMesh.mVelocitiesVec));
 	}
 
 

@@ -155,8 +155,8 @@ private:
 		Mesh* pMesh;
 		std::string name;
 		int nMatId;
-		//Alembic::AbcGeom::OXformSchema xformSchema;
-		//Alembic::AbcGeom::OPolyMeshSchema meshSchema;
+		//AbcG::OXformSchema xformSchema;
+		//AbcG::OPolyMeshSchema meshSchema;
 
 		BOOL bNeedDelete;
 		Matrix3 meshTM;
@@ -164,12 +164,12 @@ private:
 		meshInfo(): pMesh(NULL), nMatId(-1), bNeedDelete(FALSE) 
 		{}
 	};
-	//typedef std::pair<Alembic::Util::ALEMBIC_VERSION_NS::Digest, Alembic::Util::ALEMBIC_VERSION_NS::Digest> faceVertexHashPair;
+	//typedef std::pair<Alembic::Util::Digest, Alembic::Util::Digest> faceVertexHashPair;
 	struct meshDigests{
-		Alembic::Util::ALEMBIC_VERSION_NS::Digest Vertices;
-		Alembic::Util::ALEMBIC_VERSION_NS::Digest Faces;
-		Alembic::Util::ALEMBIC_VERSION_NS::Digest MatIds;
-		Alembic::Util::ALEMBIC_VERSION_NS::Digest UVWs;
+		Alembic::Util::Digest Vertices;
+		Alembic::Util::Digest Faces;
+		Alembic::Util::Digest MatIds;
+		Alembic::Util::Digest UVWs;
 
 		
 		bool operator<( const meshDigests &iRhs ) const
@@ -195,44 +195,44 @@ private:
 
 	std::vector<meshInfo*> mMeshesToSaveForCurrentFrame;
 
-    static void AlembicPoints::ConvertMaxEulerXYZToAlembicQuat(const Point3 &degrees, Alembic::Abc::Quatd &quat);
-    static void AlembicPoints::ConvertMaxAngAxisToAlembicQuat(const AngAxis &angAxis, Alembic::Abc::Quatd &quat);
+    static void AlembicPoints::ConvertMaxEulerXYZToAlembicQuat(const Point3 &degrees, Abc::Quatd &quat);
+    static void AlembicPoints::ConvertMaxAngAxisToAlembicQuat(const AngAxis &angAxis, Abc::Quatd &quat);
     void AlembicPoints::GetShapeType(IParticleObjectExt *pExt, int particleId, TimeValue ticks, ShapeType &type, unsigned short &instanceId, float &animationTime);
 	void AlembicPoints::ReadShapeFromOperator( IParticleGroup *particleGroup, PFSimpleOperator *pSimpleOperator, int particleId, TimeValue ticks, ShapeType &type, unsigned short &instanceId, float &animationTime);
-	Alembic::Abc::C4f AlembicPoints::GetColor(IParticleObjectExt *pExt, int particleId, TimeValue ticks);
+	Abc::C4f AlembicPoints::GetColor(IParticleObjectExt *pExt, int particleId, TimeValue ticks);
 	unsigned short FindInstanceName(const std::string& name);
 
 	void CacheShapeMesh(Mesh* pShapeMesh, BOOL bNeedDelete, Matrix3 meshTM, int nMatId, int particleId, TimeValue ticks, ShapeType &type, unsigned short &instanceId, float &animationTime);
 
 	void saveCurrentFrameMeshes();
 
-    Alembic::AbcGeom::OXformSchema mXformSchema;
-    Alembic::AbcGeom::OPointsSchema mPointsSchema;
-    Alembic::AbcGeom::XformSample mXformSample;
-    Alembic::AbcGeom::OPointsSchema::Sample mPointsSample;
+    AbcG::OXformSchema mXformSchema;
+    AbcG::OPointsSchema mPointsSchema;
+    AbcG::XformSample mXformSample;
+    AbcG::OPointsSchema::Sample mPointsSample;
 
     // instance lookups
-    Alembic::Abc::ALEMBIC_VERSION_NS::OStringArrayProperty mInstanceNamesProperty;
+    Abc::OStringArrayProperty mInstanceNamesProperty;
     std::vector<std::string> mInstanceNames;
     //std::map<unsigned long, size_t> mInstanceMap;
 	perActionListShapeMap mPerActionListShapeMap;
 
     // Additional particle attributes
-    Alembic::Abc::ALEMBIC_VERSION_NS::OV3fArrayProperty mScaleProperty;
-    Alembic::Abc::ALEMBIC_VERSION_NS::OQuatfArrayProperty mOrientationProperty;
-    Alembic::Abc::ALEMBIC_VERSION_NS::OQuatfArrayProperty mAngularVelocityProperty;
-    Alembic::Abc::ALEMBIC_VERSION_NS::OFloatArrayProperty mAgeProperty;
-    Alembic::Abc::ALEMBIC_VERSION_NS::OFloatArrayProperty mMassProperty;
-    Alembic::Abc::ALEMBIC_VERSION_NS::OUInt16ArrayProperty mShapeTypeProperty;
-    Alembic::Abc::ALEMBIC_VERSION_NS::OFloatArrayProperty mShapeTimeProperty;
-    Alembic::Abc::ALEMBIC_VERSION_NS::OUInt16ArrayProperty mShapeInstanceIDProperty;
-    Alembic::Abc::ALEMBIC_VERSION_NS::OC4fArrayProperty mColorProperty;
+    Abc::OV3fArrayProperty mScaleProperty;
+    Abc::OQuatfArrayProperty mOrientationProperty;
+    Abc::OQuatfArrayProperty mAngularVelocityProperty;
+    Abc::OFloatArrayProperty mAgeProperty;
+    Abc::OFloatArrayProperty mMassProperty;
+    Abc::OUInt16ArrayProperty mShapeTypeProperty;
+    Abc::OFloatArrayProperty mShapeTimeProperty;
+    Abc::OUInt16ArrayProperty mShapeInstanceIDProperty;
+    Abc::OC4fArrayProperty mColorProperty;
 
 public:
     AlembicPoints(const SceneEntry & in_Ref, AlembicWriteJob * in_Job);
     ~AlembicPoints();
 
-    virtual Alembic::Abc::OCompoundProperty GetCompound();
+    virtual Abc::OCompoundProperty GetCompound();
     virtual bool Save(double time, bool bLastFrame);
 };
 

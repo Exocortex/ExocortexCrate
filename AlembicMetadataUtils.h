@@ -8,7 +8,7 @@
 
 class AlembicObject;
 
-void importMetadata(Alembic::AbcGeom::IObject& iObj);
+void importMetadata(AbcG::IObject& iObj);
 void SaveMetaData(INode* node, AlembicObject* object);
 
 #endif

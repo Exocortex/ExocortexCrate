@@ -10,8 +10,6 @@
 #include "AlembicPoints.h"
 #include "AlembicCurves.h"
 
-namespace AbcA = ::Alembic::AbcCoreAbstract::ALEMBIC_VERSION_NS;
-using namespace AbcA;
 
 AlembicWriteJob::AlembicWriteJob(const std::string &in_FileName, const ObjectList &in_Selection, const std::vector<double> &in_Frames, Interface *i)
 {
@@ -87,7 +85,7 @@ bool AlembicWriteJob::PreProcess()
     sceneFileName.append( EC_MSTR_to_UTF8( mApplication->GetCurFilePath() ) );
     try
     {
-        mArchive = CreateArchiveWithInfo(Alembic::AbcCoreHDF5::WriteArchive(), mFileName.c_str(), "Max Alembic Plugin", sceneFileName.c_str(), Alembic::Abc::ErrorHandler::kThrowPolicy);
+        mArchive = CreateArchiveWithInfo(Alembic::AbcCoreHDF5::WriteArchive(), mFileName.c_str(), "Max Alembic Plugin", sceneFileName.c_str(), Abc::ErrorHandler::kThrowPolicy);
     }
     catch(Alembic::Util::Exception& e)
     {
@@ -103,7 +101,7 @@ bool AlembicWriteJob::PreProcess()
         mFrameRate = 25.0f;
     }
 
-    std::vector<Alembic::AbcCoreAbstract::chrono_t> frames;
+    std::vector<AbcA::chrono_t> frames;
     for(LONG i=0;i<mFrames.size();i++)
     {
         frames.push_back(mFrames[i] / mFrameRate);
@@ -133,7 +131,7 @@ bool AlembicWriteJob::PreProcess()
         mTs = mArchive.addTimeSampling(sampling);
     }
 
-    m_ArchiveBoxProp = Alembic::AbcGeom::CreateOArchiveBounds(mArchive,mTs);
+    m_ArchiveBoxProp = AbcG::CreateOArchiveBounds(mArchive,mTs);
 
 	
 	const bool bParticleMesh = GetOption("exportParticlesAsMesh");

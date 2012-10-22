@@ -18,7 +18,7 @@ typedef struct _alembic_fillcamera_options
 public:
     _alembic_fillcamera_options();
 
-    Alembic::AbcGeom::IObject  *pIObj;
+    AbcG::IObject  *pIObj;
     GenCamera				*pCameraObj;
     TimeValue                   dTicks;
 }
@@ -35,7 +35,7 @@ _alembic_fillcamera_options::_alembic_fillcamera_options()
 //////////////////////////////////////////////////////////////////////////////////////////
 // Functions
 
-bool getCameraSampleVal(Alembic::AbcGeom::ICamera& objCamera, SampleInfo& sampleInfo, Alembic::AbcGeom::CameraSample sample, const char* name, double& sampleVal)
+bool getCameraSampleVal(AbcG::ICamera& objCamera, SampleInfo& sampleInfo, AbcG::CameraSample sample, const char* name, double& sampleVal)
 {
     objCamera.getSchema().get(sample, sampleInfo.floorIndex);
 
@@ -117,12 +117,12 @@ void AlembicImport_FillInCamera(alembic_fillcamera_options &options)
 	ESS_LOG_INFO( "AlembicImport_FillInCamera" );
 
 	if (options.pCameraObj == NULL ||
-        !Alembic::AbcGeom::ICamera::matches((*options.pIObj).getMetaData()))
+        !AbcG::ICamera::matches((*options.pIObj).getMetaData()))
     {
         return;
     }
 
-    Alembic::AbcGeom::ICamera objCamera = Alembic::AbcGeom::ICamera(*options.pIObj, Alembic::Abc::kWrapExisting);
+    AbcG::ICamera objCamera = AbcG::ICamera(*options.pIObj, Abc::kWrapExisting);
     if (!objCamera.valid())
     {
         return;
@@ -132,7 +132,7 @@ void AlembicImport_FillInCamera(alembic_fillcamera_options &options)
     SampleInfo sampleInfo = getSampleInfo(sampleTime,
                                           objCamera.getSchema().getTimeSampling(),
                                           objCamera.getSchema().getNumSamples());
-    Alembic::AbcGeom::CameraSample sample;
+    AbcG::CameraSample sample;
     objCamera.getSchema().get(sample, sampleInfo.floorIndex);
 
     // Extract the camera values from the sample
@@ -252,14 +252,14 @@ bool assignController(Animatable* controller, Animatable* pObj, int i, int j, in
 
 
 
-int AlembicImport_Camera(const std::string &path, Alembic::AbcGeom::IObject& iObj, alembic_importoptions &options, INode** pMaxNode)
+int AlembicImport_Camera(const std::string &path, AbcG::IObject& iObj, alembic_importoptions &options, INode** pMaxNode)
 {
 	const std::string &identifier = iObj.getFullName();
 
-	if (!Alembic::AbcGeom::ICamera::matches(iObj.getMetaData())){
+	if (!AbcG::ICamera::matches(iObj.getMetaData())){
         return alembic_failure;
     }
-    Alembic::AbcGeom::ICamera objCamera = Alembic::AbcGeom::ICamera(iObj, Alembic::Abc::kWrapExisting);
+    AbcG::ICamera objCamera = AbcG::ICamera(iObj, Abc::kWrapExisting);
     if (!objCamera.valid()){
         return alembic_failure;
     }

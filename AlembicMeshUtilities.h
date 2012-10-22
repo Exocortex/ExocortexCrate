@@ -10,7 +10,7 @@
 
 typedef struct _alembic_fillmesh_options
 {
-    Alembic::AbcGeom::IObject *pIObj;
+    AbcG::IObject *pIObj;
 	std::string fileName;
 	std::string identifier;
 	
@@ -33,18 +33,18 @@ typedef struct _alembic_fillmesh_options
 } alembic_fillmesh_options;
 
 void	AlembicImport_FillInPolyMesh(alembic_fillmesh_options &options);
-int AlembicImport_PolyMesh(const std::string &path, Alembic::AbcGeom::IObject& iObj, alembic_importoptions &options, INode** pMaxNode);
-bool	AlembicImport_IsPolyObject(Alembic::AbcGeom::IPolyMeshSchema::Sample &polyMeshSample);
+int AlembicImport_PolyMesh(const std::string &path, AbcG::IObject& iObj, alembic_importoptions &options, INode** pMaxNode);
+bool	AlembicImport_IsPolyObject(AbcG::IPolyMeshSchema::Sample &polyMeshSample);
 
 
 class alembicMeshInfo
 {
 public:
 
-	Alembic::AbcGeom::IPolyMesh objMesh;
-	Alembic::AbcGeom::ISubD objSubD;
-	Alembic::AbcGeom::IPolyMeshSchema::Sample polyMeshSample;
-	Alembic::AbcGeom::ISubDSchema::Sample subDSample;
+	AbcG::IPolyMesh objMesh;
+	AbcG::ISubD objSubD;
+	AbcG::IPolyMeshSchema::Sample polyMeshSample;
+	AbcG::ISubDSchema::Sample subDSample;
 	SampleInfo sampleInfo;
 
 	bool open(const std::string& szPath, const std::string& szIdentifier);

@@ -6,12 +6,6 @@
 #include "ExocortexCoreServicesAPI.h"
 #include "AlembicMetadataUtils.h"
 
-namespace AbcA = ::Alembic::AbcCoreAbstract::ALEMBIC_VERSION_NS;
-namespace AbcB = ::Alembic::Abc::ALEMBIC_VERSION_NS;
-namespace AbcC = ::Alembic::AbcGeom::ALEMBIC_VERSION_NS;
-using namespace AbcA;
-using namespace AbcB;
-using namespace AbcC;
 
 enum SplineExportType
 {
@@ -27,8 +21,8 @@ AlembicCurves::AlembicCurves(const SceneEntry &in_Ref, AlembicWriteJob * in_Job)
    std::string curveName = EC_MCHAR_to_UTF8( in_Ref.node->GetName() );
    std::string xformName = curveName + "Xfo";
 
-   Alembic::AbcGeom::OXform xform(GetOParent(),xformName,GetCurrentJob()->GetAnimatedTs());
-   Alembic::AbcGeom::OCurves curves(xform,curveName,GetCurrentJob()->GetAnimatedTs());
+   AbcG::OXform xform(GetOParent(),xformName,GetCurrentJob()->GetAnimatedTs());
+   AbcG::OCurves curves(xform,curveName,GetCurrentJob()->GetAnimatedTs());
 
    // create the generic properties
    mOVisibility = CreateVisibilityProperty(curves,GetCurrentJob()->GetAnimatedTs());
@@ -50,7 +44,7 @@ AlembicCurves::~AlembicCurves()
    mOVisibility.reset();
 }
 
-Alembic::Abc::OCompoundProperty AlembicCurves::GetCompound()
+Abc::OCompoundProperty AlembicCurves::GetCompound()
 {
    return mCurvesSchema;
 }
@@ -82,7 +76,7 @@ bool AlembicCurves::Save(double time, bool bLastFrame)
     if(!bForever || mNumSamples == 0)
     {
         float flVisibility = GetRef().node->GetLocalVisibility(ticks);
-        mOVisibility.set(flVisibility > 0 ? Alembic::AbcGeom::kVisibilityVisible : Alembic::AbcGeom::kVisibilityHidden);
+        mOVisibility.set(flVisibility > 0 ? AbcG::kVisibilityVisible : AbcG::kVisibilityHidden);
     }
 
     // check if the spline is animated
@@ -125,7 +119,7 @@ bool AlembicCurves::Save(double time, bool bLastFrame)
     }
 
     // Get the control points
-	std::vector<Alembic::AbcCoreAbstract::ALEMBIC_VERSION_NS::int32_t> nbVertices;
+	std::vector<AbcA::int32_t> nbVertices;
     std::vector<Point3> vertices;
     std::vector<Point3> inTangents;
 	std::vector<Point3> outTangents;
@@ -169,10 +163,10 @@ bool AlembicCurves::Save(double time, bool bLastFrame)
     int vertCount = (int)vertices.size();
 
     // prepare the bounding box
-    Alembic::Abc::Box3d bbox;
+    Abc::Box3d bbox;
 
     // allocate the points and normals
-    std::vector<Alembic::Abc::V3f> posVec(vertCount);
+    std::vector<Abc::V3f> posVec(vertCount);
    Matrix3 wm = GetRef().node->GetObjTMAfterWSM(ticks);
 
     for(int i=0;i<vertCount;i++)
@@ -184,7 +178,7 @@ bool AlembicCurves::Save(double time, bool bLastFrame)
         if (mJob)
         {
             Point3 worldMaxPoint = wm * vertices[i];
-            Alembic::Abc::V3f alembicWorldPoint = ConvertMaxPointToAlembicPoint(worldMaxPoint);
+            Abc::V3f alembicWorldPoint = ConvertMaxPointToAlembicPoint(worldMaxPoint);
             mJob->GetArchiveBBox().extendBy(alembicWorldPoint);
         }
     }
@@ -195,16 +189,16 @@ bool AlembicCurves::Save(double time, bool bLastFrame)
 
  
     // if we are the first frame!
-    Alembic::Abc::Int32ArraySample nbVerticesSample(&nbVertices.front(),nbVertices.size());
+    Abc::Int32ArraySample nbVerticesSample(&nbVertices.front(),nbVertices.size());
     mCurvesSample.setCurvesNumVertices(nbVerticesSample);
 
     // set the type + wrapping
-    mCurvesSample.setType(bBezier ? kCubic : kLinear);
-    mCurvesSample.setWrap(pShapeObject->CurveClosed(ticks, 0) ? kPeriodic : kNonPeriodic);
-    mCurvesSample.setBasis(kNoBasis);
+	mCurvesSample.setType(bBezier ? AbcG::kCubic : AbcG::kLinear);
+    mCurvesSample.setWrap(pShapeObject->CurveClosed(ticks, 0) ? AbcG::kPeriodic : AbcG::kNonPeriodic);
+    mCurvesSample.setBasis(AbcG::kNoBasis);
  
     // allocate for the points and normals
-    Alembic::Abc::P3fArraySample posSample(&posVec.front(),posVec.size());
+    Abc::P3fArraySample posSample(&posVec.front(),posVec.size());
 	mCurvesSample.setPositions(posSample);
 
 

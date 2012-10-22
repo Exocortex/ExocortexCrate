@@ -21,7 +21,7 @@ public:
 		dTicks = 0;
 	}
 
-    Alembic::AbcGeom::IObject  *pIObj;
+    AbcG::IObject  *pIObj;
 
 	Object						*pObject;
 	ShapeObject				   *pShapeObject;
@@ -38,6 +38,6 @@ void AlembicImport_FillInShape(alembic_fillshape_options &options);
 
 typedef struct _alembic_importoptions alembic_importoptions;
 
-extern int AlembicImport_Shape(const std::string &path, Alembic::AbcGeom::IObject& iObj, alembic_importoptions &options, INode** pMaxNode);
+extern int AlembicImport_Shape(const std::string &path, AbcG::IObject& iObj, alembic_importoptions &options, INode** pMaxNode);
 
 #endif // __ALEMBIC_SPLINE_UTILITIES_H
