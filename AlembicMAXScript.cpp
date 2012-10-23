@@ -446,6 +446,9 @@ int ExocortexAlembicStaticInterface_ExocortexAlembicImportJobs( CONST_2013 MCHAR
          else if(boost::iequals(valuePair[0], "attachToExisting")){
             options.attachToExisting = parseBool(valuePair[1]);
 			}
+		  else if(boost::iequals(valuePair[0], "failOnUnsupported")){
+            options.failOnUnsupported = parseBool(valuePair[1]);
+			}
          else if(boost::iequals(valuePair[0], "filters")){  
 		      boost::split(nodesToImport, valuePair[1], boost::is_any_of(","));
 			}

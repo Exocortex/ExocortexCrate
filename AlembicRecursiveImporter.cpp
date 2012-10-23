@@ -46,9 +46,15 @@ int createAlembicObject(AbcG::IObject& iObj, INode **pMaxNode, alembic_importopt
 		ESS_LOG_INFO( "AlembicImport_Shape: " << iObj.getFullName() );
 		ret = AlembicImport_Shape(file, iObj, options, pMaxNode);
 	}
-   else if (AbcG::INuPatch::matches(iObj.getMetaData())) // NURBS
+   else // NURBS
 	{
-		ESS_LOG_INFO( "AlembicImport_Shape: " << iObj.getFullName() );
+		if( options.failOnUnsupported ) {
+			ESS_LOG_ERROR( "Alembic data type not supported: " << iObj.getFullName() );
+			return alembic_failure;
+		}
+		else {
+			ESS_LOG_WARNING( "Alembic data type not supported: " << iObj.getFullName() );
+		}
 	}
 	return ret;
 }
@@ -140,8 +146,10 @@ int importAlembicScene(AbcG::IObject& root, alembic_importoptions &options, std:
    				
 			      int ret = createAlembicObject(mergedGeomChild, &pMaxNode, options, file);
 			      if(ret != 0) return ret;
-			      ret = AlembicImport_XForm(pParentMaxNode, pMaxNode, iObj, &mergedGeomChild, file, options);
-			      if(ret != 0) return ret;
+				  if( pMaxNode != NULL ) {
+					ret = AlembicImport_XForm(pParentMaxNode, pMaxNode, iObj, &mergedGeomChild, file, options);
+					if(ret != 0) return ret;
+				  }
    				
 		      }
 		      else{ //geometry node(s) under a dummy node (in pParentMaxNode)
@@ -163,9 +171,11 @@ int importAlembicScene(AbcG::IObject& root, alembic_importoptions &options, std:
    				
 		      }
 
-		      if(!pMaxNode){
-			      return alembic_failure;
-		      }
+			  if(options.failOnUnsupported ) {
+				  if(!pMaxNode){
+					  return alembic_failure;
+				  }
+			  }
          }
 
 	   }
