@@ -50,11 +50,67 @@ bool AlembicIntermediatePolyMesh::mergeWith(const AlembicIntermediatePolyMesh& s
 	}
 
 
-	//Abc::uint32_t amountToOffsetSrcUvIndicesBy = (Abc::uint32_t)destMesh.mUvVec.size();
+	std::map<std::string,int> uniqueUVNamesMap;
+	std::vector<std::string> uniqueUVNames;
+	for( int i = 0; i < destMesh.mIndexedUVSet.size(); i ++ ) {
+		std::string name = destMesh.mIndexedUVSet[i].name;
+		if( uniqueUVNamesMap.find( name ) == uniqueUVNamesMap.end() ) {
+			uniqueUVNamesMap.insert( std::map<std::string,int>::value_type( name, 1 ) );
+			uniqueUVNames.push_back( name );
+		}
+	}
+	for( int i = 0; i < srcMesh.mIndexedUVSet.size(); i ++ ) {
+		std::string name = srcMesh.mIndexedUVSet[i].name;
+		if( uniqueUVNamesMap.find( name ) == uniqueUVNamesMap.end() ) {
+			uniqueUVNamesMap.insert( std::map<std::string,int>::value_type( name, 1 ) );
+			uniqueUVNames.push_back( name );
+		}
+	}
 
+	for( int i = 0; i < uniqueUVNames.size(); i ++ ) {
+		IndexedUVs *pDestIndexedUVs = NULL;
+		IndexedUVs const * pSrcIndexedUVs = NULL;
+		std::string name = uniqueUVNames[i];
+		for( int j = 0; j < srcMesh.mIndexedUVSet.size(); j ++ ) {
+			if( name.compare( srcMesh.mIndexedUVSet[i].name ) == 0 ) {
+				pSrcIndexedUVs = &(srcMesh.mIndexedUVSet[i]);
+			}
+		}
+		for( int j = 0; j < destMesh.mIndexedUVSet.size(); j ++ ) {
+			if( name.compare( destMesh.mIndexedUVSet[i].name ) == 0 ) {
+				pDestIndexedUVs = &(destMesh.mIndexedUVSet[i]);
+			}
+		}
+		if( pDestIndexedUVs == NULL ) {
+			IndexedUVs newUVs;
+			newUVs.name = name;
+			destMesh.mIndexedUVSet.push_back( newUVs );
+			pDestIndexedUVs = &( destMesh.mIndexedUVSet[ destMesh.mIndexedUVSet.size() - 1] );
+			for( int k = 0; k < destMesh.mFaceIndicesVec.size(); k ++ ) {
+				pDestIndexedUVs->indices.push_back( 0 );
+			}
+		}
+		if( pSrcIndexedUVs != NULL ) {
+			int sourceUVOffset = (int) pDestIndexedUVs->values.size();
+			for( int k = 0; k < pSrcIndexedUVs->indices.size(); k ++ ) {
+				pDestIndexedUVs->indices.push_back( pSrcIndexedUVs->indices[k] + sourceUVOffset );
+			}
+			for( int k = 0; k < pSrcIndexedUVs->values.size(); k ++ ) {
+				pDestIndexedUVs->values.push_back( pSrcIndexedUVs->values[k] );
+			}
+		}
+		else {
+			for( int k = 0; k < srcMesh.mFaceIndicesVec.size(); k ++ ) {
+				pDestIndexedUVs->indices.push_back( 0 );
+			}
+		}
+	}
+
+	//Abc::uint32_t amountToOffsetSrcUvIndicesBy = (Abc::uint32_t)destMesh.mUvVec.size();
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              
 	//for(int i=0; i<srcMesh.mUvVec.size(); i++){
 	//	destMesh.mUvVec.push_back( srcMesh.mUvVec[i] ); 
-	//}
+	//}                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          
 
 	//for(int i=0; i<srcMesh.mUvIndexVec.size(); i++){
 	//	destMesh.mUvIndexVec.push_back( srcMesh.mUvIndexVec[i] + amountToOffsetSrcUvIndicesBy );
