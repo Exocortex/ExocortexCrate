@@ -191,6 +191,7 @@ CStatus AlembicWriteJob::PreProcess()
    }
 
 
+   //TODO: eventually this should be a replaced with an equivalent virtual method, and the exporter will be shared
    exoNodePtr exoSceneRoot = buildCommonSceneGraph(Application().GetActiveSceneRoot());
    
    ::selectParentsAndChildren(exoSceneRoot, mSelection);
@@ -209,7 +210,8 @@ CStatus AlembicWriteJob::PreProcess()
    
    sceneStack.push_back(stackElement(exoSceneRoot, GetTop()));
 
-   //TODO: handle transform cache and flattening in common code
+   const bool bTransformCache = (bool)GetOption(L"transformCache");
+   const bool bFlattenHierarchy = (bool)GetOption(L"flattenHierarchy");
 
    while( !sceneStack.empty() )
    {
@@ -221,52 +223,87 @@ CStatus AlembicWriteJob::PreProcess()
       Alembic::Abc::OObject oParent = sElement.oParent;
       Alembic::Abc::OObject oNewParent;
 
+      AlembicObjectPtr pNewObject;
+
       if(eNode->selected)
       {
          CRef nodeRef;
          nodeRef.Set(eNode->dccIdentifier.c_str());
          X3DObject xObj(nodeRef);
 	      CRef xObj_GetActivePrimitive_GetRef = xObj.GetActivePrimitive().GetRef();
-
-         AlembicObjectPtr pNewObject;
-
+            
          if(eNode->type == exoNode::SCENE_ROOT){
             //we do not want to export the Scene_Root (the alembic archive has one already)
-            oNewParent = GetTop();
          }
          else if(eNode->type == exoNode::EMPTY){
-            pNewObject.reset(new AlembicModel(xObj_GetActivePrimitive_GetRef, this, oParent));
+            if(!bFlattenHierarchy || bTransformCache){
+               pNewObject.reset(new AlembicModel(xObj_GetActivePrimitive_GetRef, this, oParent));
+            }
          }
          else if(eNode->type == exoNode::CAMERA){
-            pNewObject.reset(new AlembicCamera(xObj_GetActivePrimitive_GetRef, this, oParent));
+            if(!bTransformCache){
+               pNewObject.reset(new AlembicCamera(xObj_GetActivePrimitive_GetRef, this, oParent));
+            }
+            else{
+               pNewObject.reset(new AlembicModel(xObj_GetActivePrimitive_GetRef, this, oParent));
+            }
          }
          else if(eNode->type == exoNode::POLYMESH){
-            pNewObject.reset(new AlembicPolyMesh(xObj_GetActivePrimitive_GetRef, this, oParent));
+            if(!bTransformCache){
+               pNewObject.reset(new AlembicPolyMesh(xObj_GetActivePrimitive_GetRef, this, oParent));
+            }
+            else{
+               pNewObject.reset(new AlembicModel(xObj_GetActivePrimitive_GetRef, this, oParent));
+            }
          }
          else if(eNode->type == exoNode::SUBD){
-            pNewObject.reset(new AlembicSubD(xObj_GetActivePrimitive_GetRef, this, oParent));
+            if(!bTransformCache){
+               pNewObject.reset(new AlembicSubD(xObj_GetActivePrimitive_GetRef, this, oParent));
+            }
+            else{
+               pNewObject.reset(new AlembicModel(xObj_GetActivePrimitive_GetRef, this, oParent));
+            }
          }
          else if(eNode->type == exoNode::SURFACE){
-            pNewObject.reset(new AlembicNurbs(xObj_GetActivePrimitive_GetRef, this, oParent));
+            if(!bTransformCache){
+               pNewObject.reset(new AlembicNurbs(xObj_GetActivePrimitive_GetRef, this, oParent));
+            }
+            else{
+               pNewObject.reset(new AlembicModel(xObj_GetActivePrimitive_GetRef, this, oParent));
+            }
          }
          else if(eNode->type == exoNode::CURVES){
-            pNewObject.reset(new AlembicCurves(xObj_GetActivePrimitive_GetRef, this, oParent));
+            if(!bTransformCache){
+               pNewObject.reset(new AlembicCurves(xObj_GetActivePrimitive_GetRef, this, oParent));
+            }
+            else{
+               pNewObject.reset(new AlembicModel(xObj_GetActivePrimitive_GetRef, this, oParent));
+            }
          }
          else if(eNode->type == exoNode::PARTICLES){
-            pNewObject.reset(new AlembicPoints(xObj_GetActivePrimitive_GetRef, this, oParent));
+            if(!bTransformCache){
+               pNewObject.reset(new AlembicPoints(xObj_GetActivePrimitive_GetRef, this, oParent));
+            }
+            else{
+               pNewObject.reset(new AlembicModel(xObj_GetActivePrimitive_GetRef, this, oParent));
+            }
          }
          else{
             ESS_LOG_WARNING("Unknown type: not exporting "<<eNode->name);//Export as transform, and give warning?
             
-            //if we skip node A, we parent node A's children to the parent of A
+         }
+      }
+
+      if(pNewObject){
+
+         if(bFlattenHierarchy){
             oNewParent = oParent;
          }
-
-         if(pNewObject){
-             std::string xfoName = pNewObject->GetXfoName();
-             oNewParent = oParent.getChild(xfoName);
-             AddObject(pNewObject);
+         else{
+            std::string xfoName = pNewObject->GetXfoName();
+            oNewParent = oParent.getChild(xfoName);
          }
+         AddObject(pNewObject);
       }
       else{
          //if we skip node A, we parent node A's children to the parent of A
