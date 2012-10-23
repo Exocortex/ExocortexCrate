@@ -2,6 +2,8 @@
 #include <xsi_ref.h>
 #include <xsi_value.h>
 #include <boost/algorithm/string.hpp>
+#include <xsi_primitive.h>
+#include <xsi_x3dobject.h>
 
 namespace AbcA = ::Alembic::AbcCoreAbstract::ALEMBIC_VERSION_NS;
 using namespace AbcA;
@@ -12,41 +14,25 @@ using namespace AbcA;
 AlembicObject::AlembicObject
 (
    const XSI::CRef & in_Ref,
-   AlembicWriteJob * in_Job
+   AlembicWriteJob * in_Job,
+   Alembic::Abc::OObject oParent
 )
 {
    AddRef(in_Ref);
    mJob = in_Job;
-   mOParent = mJob->GetTop();
-
-   bool bFlatten = mJob->GetOption("flattenHierarchy");
-   if(!bFlatten){
-
-      // find the parent
-      std::string identifier = getIdentifierFromRef(GetRef(), true);//mJob->GetOption(L"transformCache"));
-      std::vector<std::string> parts;
-      boost::split(parts, identifier, boost::is_any_of("/"));
-
-      for(size_t i=1;i<parts.size();i++)
-      {
-         int numChildren = (int) mOParent.getNumChildren();
-         for(size_t j=0;j<numChildren;j++)
-         {
-            Alembic::Abc::ObjectHeader const* pChildHeader = mOParent.getChildHeader( parts[i] );
-            if( pChildHeader != NULL )
-            {
-               mOParent = mOParent.getChild( parts[i] );
-               break;
-            }
-         }
-      }
-   }
-
+   mMyParent = oParent;
    mNumSamples = 0;
 }
 
 AlembicObject::~AlembicObject()
 {
+}
+
+std::string AlembicObject::GetXfoName()
+{
+   XSI::Primitive prim(GetRef());
+   std::string modelName(prim.GetParent3DObject().GetName().GetAsciiString());
+   return std::string(modelName+"Xfo");
 }
 
 std::map<ULONG,alembic_UD*> alembic_UD::gAlembicUDs;

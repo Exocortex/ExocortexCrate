@@ -13,7 +13,7 @@ private:
 
 public:
 
-   AlembicNurbs(const XSI::CRef & in_Ref, AlembicWriteJob * in_Job);
+   AlembicNurbs(const XSI::CRef & in_Ref, AlembicWriteJob * in_Job, Alembic::Abc::OObject oParent);
    ~AlembicNurbs();
 
    virtual Alembic::Abc::OCompoundProperty GetCompound();

@@ -24,7 +24,7 @@ private:
 
 public:
 
-   AlembicPolyMesh(const XSI::CRef & in_Ref, AlembicWriteJob * in_Job);
+   AlembicPolyMesh(const XSI::CRef & in_Ref, AlembicWriteJob * in_Job, Alembic::Abc::OObject oParent);
    ~AlembicPolyMesh();
 
    virtual Alembic::Abc::OCompoundProperty GetCompound();

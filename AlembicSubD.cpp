@@ -36,13 +36,13 @@ namespace AbcB = ::Alembic::Abc::ALEMBIC_VERSION_NS;
 using namespace AbcA;
 using namespace AbcB;
 
-AlembicSubD::AlembicSubD(const XSI::CRef & in_Ref, AlembicWriteJob * in_Job)
-: AlembicObject(in_Ref, in_Job)
+AlembicSubD::AlembicSubD(const XSI::CRef & in_Ref, AlembicWriteJob * in_Job, Alembic::Abc::OObject oParent)
+: AlembicObject(in_Ref, in_Job, oParent)
 {
    Primitive prim(GetRef());
    CString subDName(prim.GetParent3DObject().GetName());
    CString xformName(subDName+L"Xfo");
-   Alembic::AbcGeom::OXform xform(GetOParent(),xformName.GetAsciiString(),GetJob()->GetAnimatedTs());
+   Alembic::AbcGeom::OXform xform(GetMyParent(),xformName.GetAsciiString(),GetJob()->GetAnimatedTs());
    Alembic::AbcGeom::OSubD subD(xform,subDName.GetAsciiString(),GetJob()->GetAnimatedTs());
    AddRef(prim.GetParent3DObject().GetKinematics().GetGlobal().GetRef());
 

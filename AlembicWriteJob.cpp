@@ -218,63 +218,69 @@ CStatus AlembicWriteJob::PreProcess()
       exoNodePtr eNode = sElement.eNode;
       sceneStack.pop_back();
       
-      CRef nodeRef;
-      nodeRef.Set(eNode->dccIdentifier.c_str());
-      X3DObject xObj(nodeRef);
-	   CRef xObj_GetActivePrimitive_GetRef = xObj.GetActivePrimitive().GetRef();
+      Alembic::Abc::OObject oParent = sElement.oParent;
+      Alembic::Abc::OObject oNewParent;
 
-      Alembic::Abc::OObject oParent;
+      if(eNode->selected)
+      {
+         CRef nodeRef;
+         nodeRef.Set(eNode->dccIdentifier.c_str());
+         X3DObject xObj(nodeRef);
+	      CRef xObj_GetActivePrimitive_GetRef = xObj.GetActivePrimitive().GetRef();
 
-      if(eNode->type == exoNode::SCENE_ROOT){
-         //we do not want to export the Scene_Root (the alembic archive has one already)
-      }
-      else if(eNode->type == exoNode::EMPTY){
-         AlembicObjectPtr ptr;
-         ptr.reset(new AlembicModel(xObj_GetActivePrimitive_GetRef, this));
-         AddObject(ptr);
-      }
-      else if(eNode->type == exoNode::CAMERA){
-         AlembicObjectPtr ptr;
-         ptr.reset(new AlembicCamera(xObj_GetActivePrimitive_GetRef,this));
-         AddObject(ptr);
-      }
-      else if(eNode->type == exoNode::POLYMESH){
-         AlembicObjectPtr ptr;
-         ptr.reset(new AlembicPolyMesh(xObj_GetActivePrimitive_GetRef,this));
-         AddObject(ptr);
-      }
-      else if(eNode->type == exoNode::SUBD){
-         AlembicObjectPtr ptr;
-         ptr.reset(new AlembicSubD(xObj_GetActivePrimitive_GetRef,this));
-         AddObject(ptr);
-      }
-      else if(eNode->type == exoNode::SURFACE){
-         AlembicObjectPtr ptr;
-         ptr.reset(new AlembicNurbs(xObj_GetActivePrimitive_GetRef,this));
-         AddObject(ptr);
-      }
-      else if(eNode->type == exoNode::CURVES){
-         AlembicObjectPtr ptr;
-         ptr.reset(new AlembicCurves(xObj_GetActivePrimitive_GetRef,this));
-         AddObject(ptr);
-      }
-      else if(eNode->type == exoNode::PARTICLES){
-         AlembicObjectPtr ptr;
-         ptr.reset(new AlembicPoints(xObj_GetActivePrimitive_GetRef,this));
-         AddObject(ptr);
-      }
-      else{
-         ESS_LOG_WARNING("Unknown type: not exporting "<<eNode->name);
-      }
+         AlembicObjectPtr pNewObject;
 
-      if(oParent.valid()){
-         for( std::list<exoNodePtr>::iterator it = eNode->children.begin(); it != eNode->children.end(); it++){
-            sceneStack.push_back(stackElement(*it, oParent));
+         if(eNode->type == exoNode::SCENE_ROOT){
+            //we do not want to export the Scene_Root (the alembic archive has one already)
+            oNewParent = GetTop();
+         }
+         else if(eNode->type == exoNode::EMPTY){
+            pNewObject.reset(new AlembicModel(xObj_GetActivePrimitive_GetRef, this, oParent));
+         }
+         else if(eNode->type == exoNode::CAMERA){
+            pNewObject.reset(new AlembicCamera(xObj_GetActivePrimitive_GetRef, this, oParent));
+         }
+         else if(eNode->type == exoNode::POLYMESH){
+            pNewObject.reset(new AlembicPolyMesh(xObj_GetActivePrimitive_GetRef, this, oParent));
+         }
+         else if(eNode->type == exoNode::SUBD){
+            pNewObject.reset(new AlembicSubD(xObj_GetActivePrimitive_GetRef, this, oParent));
+         }
+         else if(eNode->type == exoNode::SURFACE){
+            pNewObject.reset(new AlembicNurbs(xObj_GetActivePrimitive_GetRef, this, oParent));
+         }
+         else if(eNode->type == exoNode::CURVES){
+            pNewObject.reset(new AlembicCurves(xObj_GetActivePrimitive_GetRef, this, oParent));
+         }
+         else if(eNode->type == exoNode::PARTICLES){
+            pNewObject.reset(new AlembicPoints(xObj_GetActivePrimitive_GetRef, this, oParent));
+         }
+         else{
+            ESS_LOG_WARNING("Unknown type: not exporting "<<eNode->name);//Export as transform, and give warning?
+            
+            //if we skip node A, we parent node A's children to the parent of A
+            oNewParent = oParent;
+         }
+
+         if(pNewObject){
+             std::string xfoName = pNewObject->GetXfoName();
+             oNewParent = oParent.getChild(xfoName);
+             AddObject(pNewObject);
          }
       }
       else{
-         ESS_LOG_ERROR("Do no have refernce to parent");
-         //TODO: this should be an error.
+         //if we skip node A, we parent node A's children to the parent of A
+         oNewParent = oParent;
+      }
+
+      if(oNewParent.valid()){
+         for( std::list<exoNodePtr>::iterator it = eNode->children.begin(); it != eNode->children.end(); it++){
+            sceneStack.push_back(stackElement(*it, oNewParent));
+         }
+      }
+      else{
+         ESS_LOG_ERROR("Do not have refernce to parent.");
+         return CStatus::Fail;
       }
    }
 

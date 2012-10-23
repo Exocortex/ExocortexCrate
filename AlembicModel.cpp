@@ -21,13 +21,13 @@ using namespace MATH;
 namespace AbcA = ::Alembic::AbcCoreAbstract::ALEMBIC_VERSION_NS;
 using namespace AbcA;
 
-AlembicModel::AlembicModel(const XSI::CRef & in_Ref, AlembicWriteJob * in_Job)
-: AlembicObject(in_Ref, in_Job)
+AlembicModel::AlembicModel(const XSI::CRef & in_Ref, AlembicWriteJob * in_Job, Alembic::Abc::OObject oParent)
+: AlembicObject(in_Ref, in_Job, oParent)
 {
    Primitive prim(GetRef());
    CString modelName(prim.GetParent3DObject().GetName());
    CString xformName(modelName+L"Xfo");
-   Alembic::AbcGeom::OXform xform(GetOParent(),xformName.GetAsciiString(),GetJob()->GetAnimatedTs());
+   Alembic::AbcGeom::OXform xform(GetMyParent(),xformName.GetAsciiString(),GetJob()->GetAnimatedTs());
    if((bool)in_Job->GetOption(L"transformCache"))
       AddRef(prim.GetParent3DObject().GetKinematics().GetLocal().GetRef());
    else

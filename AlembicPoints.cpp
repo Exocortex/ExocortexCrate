@@ -42,13 +42,13 @@ using namespace AbcA;
 using namespace AbcB;
 
 
-AlembicPoints::AlembicPoints(const XSI::CRef & in_Ref, AlembicWriteJob * in_Job)
-: AlembicObject(in_Ref, in_Job)
+AlembicPoints::AlembicPoints(const XSI::CRef & in_Ref, AlembicWriteJob * in_Job, Alembic::Abc::OObject oParent)
+: AlembicObject(in_Ref, in_Job, oParent)
 {
    Primitive prim(GetRef());
    CString iceName(prim.GetParent3DObject().GetName());
    CString xformName(iceName+L"Xfo");
-   Alembic::AbcGeom::OXform xform(GetOParent(),xformName.GetAsciiString(),GetJob()->GetAnimatedTs());
+   Alembic::AbcGeom::OXform xform(GetMyParent(),xformName.GetAsciiString(),GetJob()->GetAnimatedTs());
    Alembic::AbcGeom::OPoints points(xform,iceName.GetAsciiString(),GetJob()->GetAnimatedTs());
    AddRef(prim.GetParent3DObject().GetKinematics().GetGlobal().GetRef());
 

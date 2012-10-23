@@ -24,7 +24,7 @@ private:
 
 public:
 
-   AlembicSubD(const XSI::CRef & in_Ref, AlembicWriteJob * in_Job);
+   AlembicSubD(const XSI::CRef & in_Ref, AlembicWriteJob * in_Job, Alembic::Abc::OObject oParent);
    ~AlembicSubD();
 
    virtual Alembic::Abc::OCompoundProperty GetCompound();

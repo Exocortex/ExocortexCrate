@@ -42,7 +42,7 @@ public:
       ShapeType_NbElements
    };
 
-   AlembicPoints(const XSI::CRef & in_Ref, AlembicWriteJob * in_Job);
+   AlembicPoints(const XSI::CRef & in_Ref, AlembicWriteJob * in_Job, Alembic::Abc::OObject oParent);
    ~AlembicPoints();
 
    virtual Alembic::Abc::OCompoundProperty GetCompound();

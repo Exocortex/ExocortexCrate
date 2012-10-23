@@ -26,7 +26,7 @@ private:
 
 public:
 
-   AlembicCurves(const XSI::CRef & in_Ref, AlembicWriteJob * in_Job);
+   AlembicCurves(const XSI::CRef & in_Ref, AlembicWriteJob * in_Job, Alembic::Abc::OObject oParent);
    ~AlembicCurves();
 
    virtual Alembic::Abc::OCompoundProperty GetCompound();

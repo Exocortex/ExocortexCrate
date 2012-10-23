@@ -12,7 +12,7 @@ private:
    Alembic::AbcGeom::CameraSample mCameraSample;
 public:
 
-   AlembicCamera(const XSI::CRef & in_Ref, AlembicWriteJob * in_Job);
+   AlembicCamera(const XSI::CRef & in_Ref, AlembicWriteJob * in_Job, Alembic::Abc::OObject oParent);
    ~AlembicCamera();
 
    virtual Alembic::Abc::OCompoundProperty GetCompound();
