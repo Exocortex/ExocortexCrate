@@ -3,6 +3,24 @@
 
 #include "CommonAlembic.h"
 
+template<class T>
+class IndexedValues {
+public:
+	std::string							name;
+	std::vector<T>						values;
+	std::vector<AbcA::uint32_t>	indices;
+
+	typedef AbcA::uint32_t index_type;
+	typedef T value_type;
+
+	IndexedValues() {
+	}
+};
+
+typedef IndexedValues<Abc::N3f> IndexedNormals;
+typedef IndexedValues<Abc::V2f> IndexedUVs;
+
+
 bool isAlembicMeshValid( Alembic::AbcGeom::IObject *pIObj );
 bool isAlembicMeshNormals( Alembic::AbcGeom::IObject *pIObj, bool& isConstant );
 bool isAlembicMeshPositions( Alembic::AbcGeom::IObject *pIObj, bool& isConstant );
