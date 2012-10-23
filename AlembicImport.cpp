@@ -1896,6 +1896,19 @@ ESS_CALLBACK_START(alembic_import_Execute, CRef&)
    // clear all alembic user data
    alembic_UD::clearAll();
 
+
+   struct stackElement
+   {
+      Alembic::Abc::IObject iObj;
+      CRef parentNode;
+
+      stackElement(Alembic::Abc::IObject iObj):iObj(iObj)
+      {}
+      stackElement(Alembic::Abc::IObject iObj, CRef parent):iObj(iObj), parentNode(parent)
+      {}
+
+   };
+
    std::list<stackElement> sceneStack;
 	for(size_t j=0; j<root.getNumChildren(); j++)
 	{
