@@ -137,7 +137,7 @@ XSI::CString truncateName(const XSI::CString & in_Name)
    return name;
 }
 
-CString getFullNameFromIdentifier(std::string in_Identifier)
+CString getFullNameFromIdentifier(XSI::CRef importRootNode, std::string in_Identifier)
 {
    if(in_Identifier.length() == 0)
       return CString();
@@ -145,7 +145,7 @@ CString getFullNameFromIdentifier(std::string in_Identifier)
    if(!mapped.IsEmpty())
       return mapped;
    CStringArray parts = CString(in_Identifier.c_str()).Split(L"/");
-   CString modelName = L"Scene_Root";
+   CString modelName = importRootNode.GetAsText();
    CString objName = truncateName(parts[parts.GetCount()-1]);
    if(!objName.IsEqualNoCase(parts[parts.GetCount()-1]))
       return objName;
@@ -154,10 +154,10 @@ CString getFullNameFromIdentifier(std::string in_Identifier)
    return modelName+L"."+objName;
 }
 
-CRef getRefFromIdentifier(std::string in_Identifier)
+CRef getRefFromIdentifier(XSI::CRef importRootNode, std::string in_Identifier)
 {
    CRef result;
-   result.Set(getFullNameFromIdentifier(in_Identifier));
+   result.Set(getFullNameFromIdentifier(importRootNode,in_Identifier));
    return result;
 }
 
