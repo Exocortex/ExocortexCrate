@@ -261,25 +261,27 @@ bool AlembicPolyMesh::Save(double time, bool bLastFrame)
 	if(mJob->GetOption("exportUVs"))
 	{
 
-		if(mNumSamples == 0 && finalPolyMesh.mUvSetNames.size() > 0){
+		if(mNumSamples == 0 && finalPolyMesh.mIndexedUVSet.size() > 0){
 			Abc::OStringArrayProperty uvSetNamesProperty = Abc::OStringArrayProperty(
 				mMeshSchema, ".uvSetNames", mMeshSchema.getMetaData(), mJob->GetAnimatedTs() );
-			Abc::StringArraySample uvSetNamesSample(&finalPolyMesh.mUvSetNames.front(), finalPolyMesh.mUvSetNames.size());
+			finalPolyMesh.mIndexedUVNames.clear();
+			for( int i = 0; i < finalPolyMesh.mIndexedUVSet.size(); i ++ ) {
+				finalPolyMesh.mIndexedUVNames.push_back( finalPolyMesh.mIndexedUVSet[i].name );
+			}
+			Abc::StringArraySample uvSetNamesSample( finalPolyMesh.mIndexedUVNames );
 			uvSetNamesProperty.set(uvSetNamesSample);
 		}
 
-		for(int i=0; i<finalPolyMesh.mUvVec.size(); i++){
-			std::vector<Abc::V2f>& uvVec = finalPolyMesh.mUvVec[i];
-			std::vector<Abc::uint32_t>& uvIndexVec = finalPolyMesh.mUvIndexVec[i];
+		for(int i=0; i<finalPolyMesh.mIndexedUVSet.size(); i++){
+			std::vector<Abc::V2f>& uvVec = finalPolyMesh.mIndexedUVSet[i].values;
+			std::vector<Abc::uint32_t>& uvIndexVec = finalPolyMesh.mIndexedUVSet[i].indices;
 
 			int uvIndexSize = 0;
 			AbcG::OV2fGeomParam::Sample uvSample = 
 				AbcG::OV2fGeomParam::Sample(Abc::V2fArraySample(uvVec), AbcG::kFacevaryingScope);
-			if(mJob->GetOption("indexedUVs")){
-				uvIndexSize = (int)uvIndexVec.size();
-				uvSample.setIndices(Abc::UInt32ArraySample(uvIndexVec));
-			}
-
+			uvIndexSize = (int)uvIndexVec.size();
+			uvSample.setIndices(Abc::UInt32ArraySample(uvIndexVec));
+	
 			if(i == 0){
 				mMeshSample.setUVs(uvSample);
 			}

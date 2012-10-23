@@ -54,18 +54,129 @@ struct materialsMergeStr
 
 class AlembicWriteJob;
 
+
+class MeshSmoothingGroupNormals {
+private:
+	std::vector<VNormal> mNormals;
+	Mesh *mpMesh;
+	MNMesh *mpPolyMesh;
+
+public:
+	MeshSmoothingGroupNormals( Mesh *pMesh ) : mpMesh(pMesh ), mpPolyMesh( NULL ){
+		mNormals.resize(pMesh->numVerts);	    
+		for (int i = 0; i < pMesh->numFaces; i++) 
+		{     
+			Face *face = &pMesh->faces[i];
+			Point3 faceNormal = pMesh->getFaceNormal(i);
+			for (int j=0; j<3; j++) 
+			{       
+				mNormals[face->v[j]].AddNormal(faceNormal, face->smGroup);     
+			}     
+		}   
+	    
+		for (int i=0; i < pMesh->numVerts; i++) 
+		{     
+			mNormals[i].Normalize(); 
+		}
+	} 
+
+	MeshSmoothingGroupNormals(MNMesh *pMesh) : mpMesh(NULL ), mpPolyMesh( pMesh ){
+		mNormals.resize(pMesh->numv);
+		for (int i = 0; i < pMesh->numf; i++) 
+		{     
+			MNFace *face = &pMesh->f[i];
+			Point3 faceNormal = pMesh->GetFaceNormal(i);
+			for (int j=0; j<face->deg; j++) 
+			{       
+				mNormals[face->vtx[j]].AddNormal(faceNormal, face->smGroup);     
+			}     
+		}   
+	    
+		for (int i=0; i < pMesh->numv; i++) 
+		{     
+			mNormals[i].Normalize();   
+		}
+	}
+
+	~MeshSmoothingGroupNormals() {
+		for (int i=0; i < mNormals.size(); i++) 
+		{   
+			VNormal *ptr = mNormals[i].next;
+			while (ptr)
+			{
+				VNormal *tmp = ptr;
+				ptr = ptr->next;
+				delete tmp;
+			}
+		}
+		mNormals.clear();  
+	}
+	
+	Point3 GetVNormal(int faceNo, int faceVertNo )
+	{
+		if( mpMesh != NULL ) {
+			// If we do not a smoothing group, we can't base ourselves on anything else,
+			// so we can just return the face normal.
+			Face *face = &mpMesh->faces[faceNo];
+			if (face == NULL || face->smGroup == 0)
+			{
+				return mpMesh->getFaceNormal(faceNo);
+			}
+
+			// Check to see if there is a smoothing group normal
+			int vertIndex = face->v[faceVertNo];
+			Point3 normal = mNormals[vertIndex].GetNormal(face->smGroup);
+
+			if (normal.LengthSquared() > 0.0f)
+			{
+				return normal.Normalize();
+			}
+
+			// If we did not find any normals or the normals offset each other for some
+			// reason, let's just let max tell us what it thinks the normal should be.
+			return mpMesh->getNormal(vertIndex);
+		}
+		else {
+			// If we do not a smoothing group, we can't base ourselves on anything else,
+			// so we can just return the face normal.
+			MNFace *face = mpPolyMesh->F(faceNo);
+			if (face == NULL || face->smGroup == 0)
+			{
+				return mpPolyMesh->GetFaceNormal(faceNo);
+			}
+
+			// Check to see if there is a smoothing group normal
+			int vertIndex = face->vtx[faceVertNo];
+			Point3 normal = mNormals[vertIndex].GetNormal(face->smGroup);
+
+			if (normal.LengthSquared() > 0.0f)
+			{
+				return normal.Normalize();
+			}
+
+			// If we did not find any normals or the normals offset each other for some
+			// reason, let's just let max tell us what it thinks the normal should be.
+			return mpPolyMesh->GetVertexNormal(vertIndex);
+		}
+	}
+};
+
+
+
 class IntermediatePolyMesh3DSMax : public AlembicIntermediatePolyMesh
 {
-	std::vector<VNormal> m_MeshSmoothGroupNormals;
-
-
 private:
-    void BuildMeshSmoothingGroupNormals(Mesh &mesh);
-    void BuildMeshSmoothingGroupNormals(MNMesh &mesh);
-    void ClearMeshSmoothingGroupNormals();
+	void GetIndexedNormalsFromSpecifiedNormals( MNMesh* polyMesh, Matrix3 &meshTM_I_T, IndexedNormals &indexedNormals );
+	void GetIndexedNormalsFromSpecifiedNormals( Mesh *triMesh, Matrix3 &meshTM_I_T, IndexedNormals &indexedNormals );
+
+	void GetIndexedNormalsFromSmoothingGroups( MNMesh* polyMesh, Matrix3 &meshTM_I_T, std::vector<Abc::int32_t> &faceIndices, IndexedNormals &indexedNormals );
+	void GetIndexedNormalsFromSmoothingGroups( Mesh *triMesh, Matrix3 &meshTM_I_T, std::vector<Abc::int32_t> &faceIndices, IndexedNormals &indexedNormals );
+
+	void GetIndexedUVsFromChannel( MNMesh *polyMesh, int chanNum, IndexedUVs &indexedUVs );
+	void GetIndexedUVsFromChannel( Mesh *triMesh, int chanNum, IndexedUVs &indexedUVs );
+
 public:
-    static Point3 GetVertexNormal(Mesh* mesh, int faceNo, int faceVertNo, std::vector<VNormal> &sgVertexNormals);
-    static Point3 GetVertexNormal(MNMesh *mesh, int faceNo, int faceVertNo, std::vector<VNormal> &sgVertexNormals);
+
     static void make_face_uv(Face *f, Point3 *tv);
     static BOOL CheckForFaceMap(Mtl* mtl, Mesh* mesh);
 

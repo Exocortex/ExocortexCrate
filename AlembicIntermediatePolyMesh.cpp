@@ -30,14 +30,14 @@ bool AlembicIntermediatePolyMesh::mergeWith(const AlembicIntermediatePolyMesh& s
 	}
 
 
-	Abc::uint32_t amountToOffsetSrcNormalIndicesBy = (Abc::uint32_t)destMesh.normalVec.size();
+	Abc::uint32_t amountToOffsetSrcNormalIndicesBy = (Abc::uint32_t)destMesh.mIndexedNormals.indices.size();
 
-	for(int i=0; i<srcMesh.normalVec.size(); i++){
-		destMesh.normalVec.push_back( srcMesh.normalVec[i] );
+	for(int i=0; i<srcMesh.mIndexedNormals.values.size(); i++){
+		destMesh.mIndexedNormals.values.push_back( srcMesh.mIndexedNormals.values[i] );
 	}
 
-	for(int i=0; i<srcMesh.normalIndexVec.size(); i++){
-		destMesh.normalIndexVec.push_back( srcMesh.normalIndexVec[i] + amountToOffsetSrcNormalIndicesBy );
+	for(int i=0; i<srcMesh.mIndexedNormals.indices.size(); i++){
+		destMesh.mIndexedNormals.indices.push_back( srcMesh.mIndexedNormals.indices[i] + amountToOffsetSrcNormalIndicesBy );
 	}
 
 
@@ -50,7 +50,7 @@ bool AlembicIntermediatePolyMesh::mergeWith(const AlembicIntermediatePolyMesh& s
 	}
 
 
-	Abc::uint32_t amountToOffsetSrcUvIndicesBy = (Abc::uint32_t)destMesh.mUvVec.size();
+	//Abc::uint32_t amountToOffsetSrcUvIndicesBy = (Abc::uint32_t)destMesh.mUvVec.size();
 
 	//for(int i=0; i<srcMesh.mUvVec.size(); i++){
 	//	destMesh.mUvVec.push_back( srcMesh.mUvVec[i] ); 

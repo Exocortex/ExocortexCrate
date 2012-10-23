@@ -105,6 +105,7 @@ int GetTimeValueFromFrame( double frame )
     return (int)floor(ticks + 0.5f);
 }
 
+/*
 void AlembicDebug_PrintMeshData( Mesh &mesh, std::vector<VNormal> &sgVertexNormals )
 {
     for (int i=0; i<mesh.getNumFaces(); i++) 
@@ -127,7 +128,7 @@ void AlembicDebug_PrintMeshData( Mesh &mesh, std::vector<VNormal> &sgVertexNorma
         }
         ESS_LOG_INFO("");
     }
-}
+}*/
 
 void AlembicDebug_PrintTransform(Matrix3 &m)
 {
