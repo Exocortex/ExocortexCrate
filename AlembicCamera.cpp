@@ -21,20 +21,15 @@ using namespace MATH;
 namespace AbcA = ::Alembic::AbcCoreAbstract::ALEMBIC_VERSION_NS;
 using namespace AbcA;
 
-AlembicCamera::AlembicCamera(const XSI::CRef & in_Ref, AlembicWriteJob * in_Job, Alembic::Abc::OObject oParent)
-: AlembicObject(in_Ref, in_Job, oParent)
+AlembicCamera::AlembicCamera(exoNodePtr eNode, AlembicWriteJob * in_Job, Alembic::Abc::OObject oParent)
+: AlembicObject(eNode, in_Job, oParent)
 {
    Primitive prim(GetRef());
-   CString cameraName(prim.GetParent3DObject().GetName());
-   CString xformName(cameraName+L"Xfo");
-   Alembic::AbcGeom::OXform xform(GetMyParent(),xformName.GetAsciiString(),GetJob()->GetAnimatedTs());
-   Alembic::AbcGeom::OCamera camera(xform,cameraName.GetAsciiString(),GetJob()->GetAnimatedTs());
-   AddRef(prim.GetParent3DObject().GetKinematics().GetGlobal().GetRef());
+   Alembic::AbcGeom::OCamera camera(GetMyParent(), eNode->name, GetJob()->GetAnimatedTs());
 
    // create the generic properties
    mOVisibility = CreateVisibilityProperty(camera,GetJob()->GetAnimatedTs());
 
-   mXformSchema = xform.getSchema();
    mCameraSchema = camera.getSchema();
 }
 
@@ -54,10 +49,6 @@ XSI::CStatus AlembicCamera::Save(double time)
 {
    // access the camera
    Primitive prim(GetRef());
-
-   // store the transform
-   bool flattenHierarchy = GetJob()->GetOption(L"flattenHierarchy");
-   SaveXformSample(GetRef(1),mXformSchema,mXformSample,time,false,false,flattenHierarchy);
 
    // set the visibility
    Property visProp;

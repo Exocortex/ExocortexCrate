@@ -50,20 +50,15 @@ using namespace AbcA;
 using namespace AbcB;
 using namespace AbcC;
 
-AlembicCurves::AlembicCurves(const XSI::CRef & in_Ref, AlembicWriteJob * in_Job, Alembic::Abc::OObject oParent)
-: AlembicObject(in_Ref, in_Job, oParent)
+AlembicCurves::AlembicCurves(exoNodePtr eNode, AlembicWriteJob * in_Job, Alembic::Abc::OObject oParent)
+: AlembicObject(eNode, in_Job, oParent)
 {
    Primitive prim(GetRef());
-   CString curveName(prim.GetParent3DObject().GetName());
-   CString xformName(curveName+L"Xfo");
-   Alembic::AbcGeom::OXform xform(GetMyParent(),xformName.GetAsciiString(),GetJob()->GetAnimatedTs());
-   Alembic::AbcGeom::OCurves curves(xform,curveName.GetAsciiString(),GetJob()->GetAnimatedTs());
-   AddRef(prim.GetParent3DObject().GetKinematics().GetGlobal().GetRef());
+   Alembic::AbcGeom::OCurves curves(GetMyParent(), eNode->name, GetJob()->GetAnimatedTs());
 
    // create the generic properties
    mOVisibility = CreateVisibilityProperty(curves,GetJob()->GetAnimatedTs());
 
-   mXformSchema = xform.getSchema();
    mCurvesSchema = curves.getSchema();
 
    // create all properties
@@ -90,8 +85,6 @@ XSI::CStatus AlembicCurves::Save(double time)
    // store the transform
    Primitive prim(GetRef());
    bool globalSpace = GetJob()->GetOption(L"globalSpace");
-   bool flattenHierarchy = GetJob()->GetOption(L"flattenHierarchy");
-   SaveXformSample(GetRef(1),mXformSchema,mXformSample,time,false,globalSpace,flattenHierarchy);
 
    // query the global space
    CTransformation globalXfo;

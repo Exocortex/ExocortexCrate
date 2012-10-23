@@ -21,17 +21,17 @@ using namespace MATH;
 namespace AbcA = ::Alembic::AbcCoreAbstract::ALEMBIC_VERSION_NS;
 using namespace AbcA;
 
-AlembicModel::AlembicModel(const XSI::CRef & in_Ref, AlembicWriteJob * in_Job, Alembic::Abc::OObject oParent)
-: AlembicObject(in_Ref, in_Job, oParent)
+AlembicModel::AlembicModel(exoNodePtr eNode, AlembicWriteJob * in_Job, Alembic::Abc::OObject oParent)
+: AlembicObject(eNode, in_Job, oParent)
 {
    Primitive prim(GetRef());
-   CString modelName(prim.GetParent3DObject().GetName());
-   CString xformName(modelName+L"Xfo");
-   Alembic::AbcGeom::OXform xform(GetMyParent(),xformName.GetAsciiString(),GetJob()->GetAnimatedTs());
-   if((bool)in_Job->GetOption(L"transformCache"))
-      AddRef(prim.GetParent3DObject().GetKinematics().GetLocal().GetRef());
-   else
+   Alembic::AbcGeom::OXform xform(GetMyParent(), eNode->name, GetJob()->GetAnimatedTs());
+   if((bool)in_Job->GetOption(L"flattenHierarchy")){
       AddRef(prim.GetParent3DObject().GetKinematics().GetGlobal().GetRef());
+   }
+   else{
+      AddRef(prim.GetParent3DObject().GetKinematics().GetLocal().GetRef());
+   }
 
    // create the generic properties
    mOVisibility = CreateVisibilityProperty(xform,GetJob()->GetAnimatedTs());

@@ -47,21 +47,13 @@ void SaveXformSample(XSI::CRef kinestateRef, Alembic::AbcGeom::OXformSchema & sc
          return;
    }
 
-   CTransformation global;
-   if(flattenHierarchy)
-   {
-      global = kineState.GetTransform(time);//this is global
-   }
-   else
-   {
-      global = kineState.GetParent3DObject().GetKinematics().GetLocal().GetTransform(time);
-   }
+   CTransformation transform = kineState.GetTransform(time);
 
    // store the transform
-   CVector3 trans = global.GetTranslation();
+   CVector3 trans = transform.GetTranslation();
    CVector3 axis;
-   double angle = global.GetRotationAxisAngle(axis);
-   CVector3 scale = global.GetScaling();
+   double angle = transform.GetRotationAxisAngle(axis);
+   CVector3 scale = transform.GetScaling();
    sample.setTranslation(Imath::V3d(trans.GetX(),trans.GetY(),trans.GetZ()));
    sample.setRotation(Imath::V3d(axis.GetX(),axis.GetY(),axis.GetZ()),RadiansToDegrees(angle));
    sample.setScale(Imath::V3d(scale.GetX(),scale.GetY(),scale.GetZ()));

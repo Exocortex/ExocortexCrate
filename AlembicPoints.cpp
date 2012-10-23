@@ -42,20 +42,16 @@ using namespace AbcA;
 using namespace AbcB;
 
 
-AlembicPoints::AlembicPoints(const XSI::CRef & in_Ref, AlembicWriteJob * in_Job, Alembic::Abc::OObject oParent)
-: AlembicObject(in_Ref, in_Job, oParent)
+AlembicPoints::AlembicPoints(exoNodePtr eNode, AlembicWriteJob * in_Job, Alembic::Abc::OObject oParent)
+: AlembicObject(eNode, in_Job, oParent)
 {
    Primitive prim(GetRef());
-   CString iceName(prim.GetParent3DObject().GetName());
-   CString xformName(iceName+L"Xfo");
-   Alembic::AbcGeom::OXform xform(GetMyParent(),xformName.GetAsciiString(),GetJob()->GetAnimatedTs());
-   Alembic::AbcGeom::OPoints points(xform,iceName.GetAsciiString(),GetJob()->GetAnimatedTs());
-   AddRef(prim.GetParent3DObject().GetKinematics().GetGlobal().GetRef());
+
+   Alembic::AbcGeom::OPoints points(GetMyParent(), eNode->name, GetJob()->GetAnimatedTs());
 
    // create the generic properties
    mOVisibility = CreateVisibilityProperty(points,GetJob()->GetAnimatedTs());
 
-   mXformSchema = xform.getSchema();
    mPointsSchema = points.getSchema();
 
    OCompoundProperty argGeomParams = mPointsSchema.getArbGeomParams();
@@ -87,8 +83,6 @@ XSI::CStatus AlembicPoints::Save(double time)
    // store the transform
    Primitive prim(GetRef());
    bool globalSpace = GetJob()->GetOption(L"globalSpace");
-   bool flattenHierarchy = GetJob()->GetOption(L"flattenHierarchy");
-   SaveXformSample(GetRef(1),mXformSchema,mXformSample,time,false,globalSpace,flattenHierarchy);
 
    // query the global space
    CTransformation globalXfo;

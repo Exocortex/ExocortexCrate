@@ -7,9 +7,7 @@
 class AlembicPoints: public AlembicObject
 {
 private:
-   Alembic::AbcGeom::OXformSchema mXformSchema;
    Alembic::AbcGeom::OPointsSchema mPointsSchema;
-   Alembic::AbcGeom::XformSample mXformSample;
    Alembic::AbcGeom::OPointsSchema::Sample mPointsSample;
 
    // instance lookups
@@ -42,7 +40,7 @@ public:
       ShapeType_NbElements
    };
 
-   AlembicPoints(const XSI::CRef & in_Ref, AlembicWriteJob * in_Job, Alembic::Abc::OObject oParent);
+   AlembicPoints(exoNodePtr eNode, AlembicWriteJob * in_Job, Alembic::Abc::OObject oParent);
    ~AlembicPoints();
 
    virtual Alembic::Abc::OCompoundProperty GetCompound();

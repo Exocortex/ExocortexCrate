@@ -6,9 +6,7 @@
 class AlembicSubD: public AlembicObject
 {
 private:
-   Alembic::AbcGeom::OXformSchema mXformSchema;
    Alembic::AbcGeom::OSubDSchema mSubDSchema;
-   Alembic::AbcGeom::XformSample mXformSample;
    Alembic::AbcGeom::OSubDSchema::Sample mSubDSample;
    std::vector<Alembic::AbcCoreAbstract::ALEMBIC_VERSION_NS::int32_t> mFaceCountVec;
    std::vector<Alembic::AbcCoreAbstract::ALEMBIC_VERSION_NS::int32_t> mFaceIndicesVec;
@@ -24,7 +22,7 @@ private:
 
 public:
 
-   AlembicSubD(const XSI::CRef & in_Ref, AlembicWriteJob * in_Job, Alembic::Abc::OObject oParent);
+   AlembicSubD(exoNodePtr eNode, AlembicWriteJob * in_Job, Alembic::Abc::OObject oParent);
    ~AlembicSubD();
 
    virtual Alembic::Abc::OCompoundProperty GetCompound();

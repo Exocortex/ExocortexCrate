@@ -8,6 +8,7 @@
 #include <boost/exception/all.hpp>
 #include "AlembicLicensing.h"
 #include "AlembicMetaData.h"
+#include "CommonSceneGraph.h"
 
 class AlembicWriteJob;
 
@@ -17,12 +18,13 @@ private:
    XSI::CRefArray mRefs;
    AlembicWriteJob * mJob;
    Alembic::Abc::OObject mMyParent;
+   exoNodePtr mExoSceneNode;
 protected:
    int mNumSamples;
    Alembic::AbcGeom::OVisibilityProperty mOVisibility;
 
 public:
-   AlembicObject(const XSI::CRef & in_Ref, AlembicWriteJob * in_Job, Alembic::Abc::OObject oParent);
+   AlembicObject(exoNodePtr eNode, AlembicWriteJob * in_Job, Alembic::Abc::OObject oParent);
    ~AlembicObject();
 
    AlembicWriteJob * GetJob() { return mJob; }

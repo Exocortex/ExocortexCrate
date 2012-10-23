@@ -213,6 +213,7 @@ CStatus AlembicWriteJob::PreProcess()
    const bool bTransformCache = (bool)GetOption(L"transformCache");
    const bool bFlattenHierarchy = (bool)GetOption(L"flattenHierarchy");
 
+
    while( !sceneStack.empty() )
    {
 
@@ -227,82 +228,65 @@ CStatus AlembicWriteJob::PreProcess()
 
       if(eNode->selected)
       {
-         CRef nodeRef;
-         nodeRef.Set(eNode->dccIdentifier.c_str());
-         X3DObject xObj(nodeRef);
-	      CRef xObj_GetActivePrimitive_GetRef = xObj.GetActivePrimitive().GetRef();
-            
          if(eNode->type == exoNode::SCENE_ROOT){
             //we do not want to export the Scene_Root (the alembic archive has one already)
          }
-         else if(eNode->type == exoNode::EMPTY){
+         else if(eNode->type == exoNode::TRANSFORM){
             if(!bFlattenHierarchy || bTransformCache){
-               pNewObject.reset(new AlembicModel(xObj_GetActivePrimitive_GetRef, this, oParent));
+               pNewObject.reset(new AlembicModel(eNode, this, oParent));
             }
+         }
+         else if(eNode->type == exoNode::TRANSFORM_GEO){
+            pNewObject.reset(new AlembicModel(eNode, this, oParent));
          }
          else if(eNode->type == exoNode::CAMERA){
             if(!bTransformCache){
-               pNewObject.reset(new AlembicCamera(xObj_GetActivePrimitive_GetRef, this, oParent));
-            }
-            else{
-               pNewObject.reset(new AlembicModel(xObj_GetActivePrimitive_GetRef, this, oParent));
+               pNewObject.reset(new AlembicCamera(eNode, this, oParent));
             }
          }
          else if(eNode->type == exoNode::POLYMESH){
             if(!bTransformCache){
-               pNewObject.reset(new AlembicPolyMesh(xObj_GetActivePrimitive_GetRef, this, oParent));
-            }
-            else{
-               pNewObject.reset(new AlembicModel(xObj_GetActivePrimitive_GetRef, this, oParent));
+               pNewObject.reset(new AlembicPolyMesh(eNode, this, oParent));
             }
          }
          else if(eNode->type == exoNode::SUBD){
             if(!bTransformCache){
-               pNewObject.reset(new AlembicSubD(xObj_GetActivePrimitive_GetRef, this, oParent));
-            }
-            else{
-               pNewObject.reset(new AlembicModel(xObj_GetActivePrimitive_GetRef, this, oParent));
+               pNewObject.reset(new AlembicSubD(eNode, this, oParent));
             }
          }
          else if(eNode->type == exoNode::SURFACE){
             if(!bTransformCache){
-               pNewObject.reset(new AlembicNurbs(xObj_GetActivePrimitive_GetRef, this, oParent));
-            }
-            else{
-               pNewObject.reset(new AlembicModel(xObj_GetActivePrimitive_GetRef, this, oParent));
+               pNewObject.reset(new AlembicNurbs(eNode, this, oParent));
             }
          }
          else if(eNode->type == exoNode::CURVES){
             if(!bTransformCache){
-               pNewObject.reset(new AlembicCurves(xObj_GetActivePrimitive_GetRef, this, oParent));
-            }
-            else{
-               pNewObject.reset(new AlembicModel(xObj_GetActivePrimitive_GetRef, this, oParent));
+               pNewObject.reset(new AlembicCurves(eNode, this, oParent));
             }
          }
          else if(eNode->type == exoNode::PARTICLES){
             if(!bTransformCache){
-               pNewObject.reset(new AlembicPoints(xObj_GetActivePrimitive_GetRef, this, oParent));
-            }
-            else{
-               pNewObject.reset(new AlembicModel(xObj_GetActivePrimitive_GetRef, this, oParent));
+               pNewObject.reset(new AlembicPoints(eNode, this, oParent));
             }
          }
          else{
             ESS_LOG_WARNING("Unknown type: not exporting "<<eNode->name);//Export as transform, and give warning?
-            
          }
       }
 
       if(pNewObject){
 
+         //setup the next parent
          if(bFlattenHierarchy){
             oNewParent = oParent;
          }
          else{
-            std::string xfoName = pNewObject->GetXfoName();
-            oNewParent = oParent.getChild(xfoName);
+            //ESS_LOG_WARNING("parent: "<<oParent.getName());
+            //ESS_LOG_WARNING("child: "<<eNode->name);
+
+            oNewParent = oParent.getChild(eNode->name);
          }
+         //add the alembic object to the export list
          AddObject(pNewObject);
       }
       else{
@@ -320,7 +304,6 @@ CStatus AlembicWriteJob::PreProcess()
          return CStatus::Fail;
       }
    }
-
 
 
 #if 0

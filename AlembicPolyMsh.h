@@ -6,9 +6,7 @@
 class AlembicPolyMesh: public AlembicObject
 {
 private:
-   Alembic::AbcGeom::OXformSchema mXformSchema;
    Alembic::AbcGeom::OPolyMeshSchema mMeshSchema;
-   Alembic::AbcGeom::XformSample mXformSample;
    Alembic::AbcGeom::OPolyMeshSchema::Sample mMeshSample;
    std::vector<Alembic::AbcCoreAbstract::ALEMBIC_VERSION_NS::int32_t> mFaceCountVec;
    std::vector<Alembic::AbcCoreAbstract::ALEMBIC_VERSION_NS::int32_t> mFaceIndicesVec;
@@ -24,7 +22,7 @@ private:
 
 public:
 
-   AlembicPolyMesh(const XSI::CRef & in_Ref, AlembicWriteJob * in_Job, Alembic::Abc::OObject oParent);
+   AlembicPolyMesh(exoNodePtr eNode, AlembicWriteJob * in_Job, Alembic::Abc::OObject oParent);
    ~AlembicPolyMesh();
 
    virtual Alembic::Abc::OCompoundProperty GetCompound();

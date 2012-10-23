@@ -7,9 +7,7 @@
 class AlembicCurves: public AlembicObject
 {
 private:
-   Alembic::AbcGeom::OXformSchema mXformSchema;
    Alembic::AbcGeom::OCurvesSchema mCurvesSchema;
-   Alembic::AbcGeom::XformSample mXformSample;
    Alembic::AbcGeom::OCurvesSchema::Sample mCurvesSample;
    std::vector<Alembic::AbcCoreAbstract::ALEMBIC_VERSION_NS::int32_t> mNbVertices;
 
@@ -26,7 +24,7 @@ private:
 
 public:
 
-   AlembicCurves(const XSI::CRef & in_Ref, AlembicWriteJob * in_Job, Alembic::Abc::OObject oParent);
+   AlembicCurves(exoNodePtr eNode, AlembicWriteJob * in_Job, Alembic::Abc::OObject oParent);
    ~AlembicCurves();
 
    virtual Alembic::Abc::OCompoundProperty GetCompound();

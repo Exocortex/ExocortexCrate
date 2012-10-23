@@ -10,7 +10,7 @@ private:
    Alembic::AbcGeom::XformSample mXformSample;
 public:
 
-   AlembicModel(const XSI::CRef & in_Ref, AlembicWriteJob * in_Job, Alembic::Abc::OObject oParent);
+   AlembicModel(exoNodePtr eNode, AlembicWriteJob * in_Job, Alembic::Abc::OObject oParent);
    ~AlembicModel();
 
    virtual Alembic::Abc::OCompoundProperty GetCompound();

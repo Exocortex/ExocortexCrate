@@ -37,17 +37,13 @@ namespace AbcB = ::Alembic::Abc::ALEMBIC_VERSION_NS;
 using namespace AbcA;
 using namespace AbcB;
 
-AlembicPolyMesh::AlembicPolyMesh(const XSI::CRef & in_Ref, AlembicWriteJob * in_Job, Alembic::Abc::OObject oParent)
-: AlembicObject(in_Ref, in_Job, oParent)
+AlembicPolyMesh::AlembicPolyMesh(exoNodePtr eNode, AlembicWriteJob * in_Job, Alembic::Abc::OObject oParent)
+: AlembicObject(eNode, in_Job, oParent)
 {
-   Primitive prim(GetRef());
-   CString meshName(prim.GetParent3DObject().GetName());
-   CString xformName(meshName+L"Xfo");
-   Alembic::AbcGeom::OXform xform(GetMyParent(),xformName.GetAsciiString(),GetJob()->GetAnimatedTs());
-   Alembic::AbcGeom::OPolyMesh mesh(xform,meshName.GetAsciiString(),GetJob()->GetAnimatedTs());
-   AddRef(prim.GetParent3DObject().GetKinematics().GetGlobal().GetRef());
+   Primitive prim(GetRef());\
 
-   mXformSchema = xform.getSchema();
+   Alembic::AbcGeom::OPolyMesh mesh(GetMyParent(), eNode->name, GetJob()->GetAnimatedTs());
+
    mMeshSchema = mesh.getSchema();
 
    // create the generic properties
@@ -71,8 +67,6 @@ XSI::CStatus AlembicPolyMesh::Save(double time)
    // store the transform
    Primitive prim(GetRef());
    bool globalSpace = GetJob()->GetOption(L"globalSpace");
-   bool flattenHierarchy = GetJob()->GetOption(L"flattenHierarchy");
-   SaveXformSample(GetRef(1),mXformSchema,mXformSample,time,false,globalSpace,flattenHierarchy);
 
    // query the global space
    CTransformation globalXfo;

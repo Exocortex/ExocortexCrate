@@ -13,12 +13,19 @@ using namespace AbcA;
 
 AlembicObject::AlembicObject
 (
-   const XSI::CRef & in_Ref,
+   exoNodePtr eNode,
    AlembicWriteJob * in_Job,
    Alembic::Abc::OObject oParent
 )
 {
-   AddRef(in_Ref);
+   exoNodePtr mExoSceneNode = eNode;
+
+   XSI::CRef nodeRef;
+   nodeRef.Set(mExoSceneNode->dccIdentifier.c_str());
+   XSI::X3DObject xObj(nodeRef);
+   XSI::CRef primRef = xObj.GetActivePrimitive().GetRef();
+   AddRef(primRef);
+
    mJob = in_Job;
    mMyParent = oParent;
    mNumSamples = 0;
