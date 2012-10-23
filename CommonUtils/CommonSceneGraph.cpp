@@ -36,7 +36,8 @@ void printSceneGraph(exoNodePtr root)
 }
 
 
-void selectParentsAndChildren(exoNodePtr root, exoNode::SelectionMap selectionMap)
+
+void selectNodes(exoNodePtr root, exoNode::SelectionMap selectionMap, bool bParents, bool bChildren, bool bExcludeITransforms, bool bExcludeNonTransforms)
 {
    struct stackElement
    {
@@ -45,6 +46,32 @@ void selectParentsAndChildren(exoNodePtr root, exoNode::SelectionMap selectionMa
       stackElement(exoNodePtr enode, bool selectChildren):eNode(enode), bSelectChildren(selectChildren)
       {}
    };
+
+   struct NodeSelector
+   {
+      bool bExcludeITransforms;
+      bool bExcludeNonTransforms;
+
+      NodeSelector(bool eit, bool nt):bExcludeITransforms(eit), bExcludeNonTransforms(nt)
+      {}
+
+      void operator()(exoNodePtr node)
+      {
+         node->selected = true;
+
+         if(bExcludeITransforms && node->type == exoNode::ITRANSFORM){
+            node->selected = false;
+         }
+
+         if(bExcludeNonTransforms && 
+            (node->type != exoNode::ITRANSFORM || node->type != exoNode::ETRANSFORM || node->type != exoNode::UNKNOWN)
+         ){
+            node->selected = false;
+         }
+      }
+   };
+
+   NodeSelector selector(bExcludeITransforms, bExcludeNonTransforms);
 
 
    std::list<stackElement> sceneStack;
@@ -60,16 +87,25 @@ void selectParentsAndChildren(exoNodePtr root, exoNode::SelectionMap selectionMa
 
       bool bSelected = false;
       if(selectionMap.find(eNode->name) != selectionMap.end()){
-         bSelected = true;
-         exoNodePtr currNode = eNode;
-         while(currNode){
-            currNode->selected = true;
-            currNode = currNode->parent;
+         
+         //this node's name matches one of the names from the selection map, so select it
+         selector(eNode);
+
+         if(bParents){// select the parent nodes
+            exoNodePtr currNode = eNode->parent;
+            while(currNode){
+               selector(currNode);
+               currNode = currNode->parent;
+            }
+         }
+
+         if(bChildren){// select the children
+            bSelected = true;
          }
       }
       if(sElement.bSelectChildren){
          bSelected = true;
-         eNode->selected = true;
+         selector(eNode);
       }
 
       for( std::list<exoNodePtr>::iterator it = eNode->children.begin(); it != eNode->children.end(); it++){

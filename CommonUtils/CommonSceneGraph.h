@@ -17,14 +17,15 @@ public:
 
    enum nodeTypeE{
       SCENE_ROOT,
-      TRANSFORM,
-      TRANSFORM_GEO,
+      ETRANSFORM,// external transform (a parent of a geometry node)
+      ITRANSFORM,// internal transform (all other transforms)
       CAMERA,
       POLYMESH,
       SUBD,
       SURFACE,
       CURVES,
       PARTICLES,
+      UNKNOWN,
       NUM_NODE_TYPES
    };
 
@@ -47,8 +48,7 @@ public:
 
 void printSceneGraph(exoNodePtr root);
 
-void selectParentsAndChildren(exoNodePtr root, exoNode::SelectionMap selectionMap);
-
+void selectNodes(exoNodePtr root, exoNode::SelectionMap selectionMap, bool bParents, bool bChildren, bool bExcludeITransforms, bool bIncludeNonTransforms);
 
 
 
