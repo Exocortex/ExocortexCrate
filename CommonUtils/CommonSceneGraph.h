@@ -17,7 +17,8 @@ public:
 
    enum nodeTypeE{
       SCENE_ROOT,
-      EMPTY,
+      TRANSFORM,
+      TRANSFORM_GEO,
       CAMERA,
       POLYMESH,
       SUBD,
