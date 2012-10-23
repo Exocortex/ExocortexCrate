@@ -190,13 +190,19 @@ CStatus AlembicWriteJob::PreProcess()
       mTs = mArchive.addTimeSampling(sampling);
    }
 
+   const bool bSelectParents = true;
+   const bool bSelectChildren = true;
+   const bool bTransformCache = (bool)GetOption(L"transformCache");
+   const bool bFlattenHierarchy = (bool)GetOption(L"flattenHierarchy");
 
    //TODO: eventually this should be a replaced with an equivalent virtual method, and the exporter will be shared
    exoNodePtr exoSceneRoot = buildCommonSceneGraph(Application().GetActiveSceneRoot());
    
-   ::selectParentsAndChildren(exoSceneRoot, mSelection);
+   selectNodes(exoSceneRoot, mSelection, bSelectParents, bSelectChildren, bTransformCache ? false : bFlattenHierarchy, bTransformCache);
 
-   //::printSceneGraph(exoSceneRoot);
+   ::printSceneGraph(exoSceneRoot);
+
+   return CStatus::OK;
 
    struct stackElement
    {
@@ -209,10 +215,6 @@ CStatus AlembicWriteJob::PreProcess()
    std::list<stackElement> sceneStack;
    
    sceneStack.push_back(stackElement(exoSceneRoot, GetTop()));
-
-   const bool bTransformCache = (bool)GetOption(L"transformCache");
-   const bool bFlattenHierarchy = (bool)GetOption(L"flattenHierarchy");
-
 
    while( !sceneStack.empty() )
    {
@@ -231,43 +233,26 @@ CStatus AlembicWriteJob::PreProcess()
          if(eNode->type == exoNode::SCENE_ROOT){
             //we do not want to export the Scene_Root (the alembic archive has one already)
          }
-         else if(eNode->type == exoNode::TRANSFORM){
-            if(!bFlattenHierarchy || bTransformCache){
-               pNewObject.reset(new AlembicModel(eNode, this, oParent));
-            }
-         }
-         else if(eNode->type == exoNode::TRANSFORM_GEO){
+         else if(eNode->type == exoNode::ITRANSFORM || eNode->type == exoNode::ETRANSFORM){
             pNewObject.reset(new AlembicModel(eNode, this, oParent));
          }
          else if(eNode->type == exoNode::CAMERA){
-            if(!bTransformCache){
-               pNewObject.reset(new AlembicCamera(eNode, this, oParent));
-            }
+            pNewObject.reset(new AlembicCamera(eNode, this, oParent));
          }
          else if(eNode->type == exoNode::POLYMESH){
-            if(!bTransformCache){
-               pNewObject.reset(new AlembicPolyMesh(eNode, this, oParent));
-            }
+            pNewObject.reset(new AlembicPolyMesh(eNode, this, oParent));
          }
          else if(eNode->type == exoNode::SUBD){
-            if(!bTransformCache){
-               pNewObject.reset(new AlembicSubD(eNode, this, oParent));
-            }
+            pNewObject.reset(new AlembicSubD(eNode, this, oParent));
          }
          else if(eNode->type == exoNode::SURFACE){
-            if(!bTransformCache){
-               pNewObject.reset(new AlembicNurbs(eNode, this, oParent));
-            }
+            pNewObject.reset(new AlembicNurbs(eNode, this, oParent));
          }
          else if(eNode->type == exoNode::CURVES){
-            if(!bTransformCache){
-               pNewObject.reset(new AlembicCurves(eNode, this, oParent));
-            }
+            pNewObject.reset(new AlembicCurves(eNode, this, oParent));
          }
          else if(eNode->type == exoNode::PARTICLES){
-            if(!bTransformCache){
-               pNewObject.reset(new AlembicPoints(eNode, this, oParent));
-            }
+            pNewObject.reset(new AlembicPoints(eNode, this, oParent));
          }
          else{
             ESS_LOG_WARNING("Unknown type: not exporting "<<eNode->name);//Export as transform, and give warning?
@@ -277,15 +262,8 @@ CStatus AlembicWriteJob::PreProcess()
       if(pNewObject){
 
          //setup the next parent
-         if(bFlattenHierarchy){
-            oNewParent = oParent;
-         }
-         else{
-            //ESS_LOG_WARNING("parent: "<<oParent.getName());
-            //ESS_LOG_WARNING("child: "<<eNode->name);
-
-            oNewParent = oParent.getChild(eNode->name);
-         }
+         oNewParent = oParent.getChild(eNode->name);
+         
          //add the alembic object to the export list
          AddObject(pNewObject);
       }

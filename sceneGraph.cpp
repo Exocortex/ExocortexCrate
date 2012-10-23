@@ -18,12 +18,12 @@ exoNode::nodeTypeE getNodeType(X3DObject& xObj)
    //   return exoNode::SCENE_ROOT;
    //}
 
-   ESS_LOG_WARNING("name: "<<xObj.GetName().GetAsciiString());
-   ESS_LOG_WARNING("type: "<<xObj.GetType().GetAsciiString());
+   //ESS_LOG_WARNING("name: "<<xObj.GetName().GetAsciiString());
+   //ESS_LOG_WARNING("type: "<<xObj.GetType().GetAsciiString());
 
    CString xObj_GetType = xObj.GetType();
    if(xObj_GetType.IsEqualNoCase(L"null")){
-      return  exoNode::TRANSFORM;
+      return  exoNode::ITRANSFORM;
    }
    else if(xObj_GetType.IsEqualNoCase(L"camera"))
    {
@@ -61,7 +61,8 @@ exoNode::nodeTypeE getNodeType(X3DObject& xObj)
          return exoNode::PARTICLES;
       }
    }
-   return exoNode::NUM_NODE_TYPES;//unknown type
+
+   return exoNode::UNKNOWN;
 }
 
 bool hasExtractableTransform( exoNode::nodeTypeE type )
@@ -131,7 +132,7 @@ exoNodePtr buildCommonSceneGraph(XSI::X3DObject xsiRoot)
             exoChild->parent = eNode;
             exoChild->name = child.GetName().GetAsciiString();
             exoChild->name += "Xfo";
-            exoChild->type = exoNode::TRANSFORM_GEO;
+            exoChild->type = exoNode::ETRANSFORM;
             exoChild->dccIdentifier = child.GetUniqueName().GetAsciiString();
 
             geoChild->parent = exoChild;
