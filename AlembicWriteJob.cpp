@@ -198,11 +198,12 @@ CStatus AlembicWriteJob::PreProcess()
    //TODO: eventually this should be a replaced with an equivalent virtual method, and the exporter will be shared
    exoNodePtr exoSceneRoot = buildCommonSceneGraph(Application().GetActiveSceneRoot());
    
-   selectNodes(exoSceneRoot, mSelection, bSelectParents, bSelectChildren, bTransformCache ? false : bFlattenHierarchy, bTransformCache);
+   selectNodes(exoSceneRoot, mSelection, bSelectParents, bSelectChildren);
+   filterNodeSelection(exoSceneRoot, bTransformCache ? false : bFlattenHierarchy, bTransformCache);
 
    ::printSceneGraph(exoSceneRoot);
 
-   return CStatus::OK;
+   //return CStatus::OK;
 
    struct stackElement
    {
@@ -260,10 +261,8 @@ CStatus AlembicWriteJob::PreProcess()
       }
 
       if(pNewObject){
-
          //setup the next parent
          oNewParent = oParent.getChild(eNode->name);
-         
          //add the alembic object to the export list
          AddObject(pNewObject);
       }
