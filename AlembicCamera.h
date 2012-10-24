@@ -6,8 +6,8 @@
 class AlembicCamera: public AlembicObject
 {
 private:
-   AbcG::OCameraSchema mCameraSchema;
-   AbcG::CameraSample mCameraSample;
+  AbcG::OCameraSchema mCameraSchema;
+  AbcG::CameraSample mCameraSample;
 public:
 
    AlembicCamera(exoNodePtr eNode, AlembicWriteJob * in_Job, Abc::OObject oParent);

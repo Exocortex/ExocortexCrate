@@ -6,8 +6,8 @@
 class AlembicModel: public AlembicObject
 {
 private:
-   AbcG::OXformSchema mXformSchema;
-   AbcG::XformSample mXformSample;
+  AbcG::OXformSchema mXformSchema;
+  AbcG::XformSample mXformSample;
 public:
 
    AlembicModel(exoNodePtr eNode, AlembicWriteJob * in_Job, Abc::OObject oParent);

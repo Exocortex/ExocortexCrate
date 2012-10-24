@@ -43,7 +43,7 @@ AlembicPoints::AlembicPoints(exoNodePtr eNode, AlembicWriteJob * in_Job, Abc::OO
 {
    Primitive prim(GetRef());
 
-   AbcG::OPoints points(GetMyParent(), eNode->name, GetJob()->GetAnimatedTs());
+  AbcG::OPoints points(GetMyParent(), eNode->name, GetJob()->GetAnimatedTs());
 
    // create the generic properties
    mOVisibility = CreateVisibilityProperty(points,GetJob()->GetAnimatedTs());
@@ -53,13 +53,13 @@ AlembicPoints::AlembicPoints(exoNodePtr eNode, AlembicWriteJob * in_Job, Abc::OO
    OCompoundProperty argGeomParams = mPointsSchema.getArbGeomParams();
 
    // particle attributes
-   mScaleProperty = OV3fArrayProperty(argGeomParams, ".scale", mPointsSchema.getMetaData(), GetJob()->GetAnimatedTs() );
-   mOrientationProperty = OQuatfArrayProperty(argGeomParams, ".orientation", mPointsSchema.getMetaData(), GetJob()->GetAnimatedTs() );
-   mAngularVelocityProperty = OQuatfArrayProperty(argGeomParams, ".angularvelocity", mPointsSchema.getMetaData(), GetJob()->GetAnimatedTs() );
-   mAgeProperty = OFloatArrayProperty(argGeomParams, ".age", mPointsSchema.getMetaData(), GetJob()->GetAnimatedTs() );
-   mMassProperty = OFloatArrayProperty(argGeomParams, ".mass", mPointsSchema.getMetaData(), GetJob()->GetAnimatedTs() );
-   mShapeTypeProperty = OUInt16ArrayProperty(argGeomParams, ".shapetype", mPointsSchema.getMetaData(), GetJob()->GetAnimatedTs() );
-   mColorProperty = OC4fArrayProperty(argGeomParams, ".color", mPointsSchema.getMetaData(), GetJob()->GetAnimatedTs() );
+   mScaleProperty = Abc::OV3fArrayProperty(argGeomParams, ".scale", mPointsSchema.getMetaData(), GetJob()->GetAnimatedTs() );
+   mOrientationProperty = Abc::OQuatfArrayProperty(argGeomParams, ".orientation", mPointsSchema.getMetaData(), GetJob()->GetAnimatedTs() );
+   mAngularVelocityProperty = Abc::OQuatfArrayProperty(argGeomParams, ".angularvelocity", mPointsSchema.getMetaData(), GetJob()->GetAnimatedTs() );
+   mAgeProperty = Abc::OFloatArrayProperty(argGeomParams, ".age", mPointsSchema.getMetaData(), GetJob()->GetAnimatedTs() );
+   mMassProperty = Abc::OFloatArrayProperty(argGeomParams, ".mass", mPointsSchema.getMetaData(), GetJob()->GetAnimatedTs() );
+   mShapeTypeProperty = Abc::OUInt16ArrayProperty(argGeomParams, ".shapetype", mPointsSchema.getMetaData(), GetJob()->GetAnimatedTs() );
+   mColorProperty = Abc::OC4fArrayProperty(argGeomParams, ".color", mPointsSchema.getMetaData(), GetJob()->GetAnimatedTs() );
 }
 
 AlembicPoints::~AlembicPoints()
@@ -96,7 +96,7 @@ XSI::CStatus AlembicPoints::Save(double time)
    if(isRefAnimated(visProp.GetRef()) || mNumSamples == 0)
    {
       bool visibility = visProp.GetParameterValue(L"rendvis",time);
-      mOVisibility.set(visibility ? AbcG::kVisibilityVisible : AbcG::kVisibilityHidden);
+      mOVisibility.set(visibility ?AbcG::kVisibilityVisible :AbcG::kVisibilityHidden);
    }
 
    // check if the pointcloud is animated
@@ -750,10 +750,10 @@ XSIPLUGINCALLBACK CStatus alembic_points_Evaluate(ICENodeContext& in_ctxt)
       in_ctxt.PutUserData( val ) ;
    }
 
-   AbcG::IObject iObj = getObjectFromArchive(path,identifier);
+  AbcG::IObject iObj = getObjectFromArchive(path,identifier);
    if(!iObj.valid())
       return CStatus::OK;
-   AbcG::IPoints obj(iObj,Abc::kWrapExisting);
+  AbcG::IPoints obj(iObj,Abc::kWrapExisting);
    if(!obj.valid())
       return CStatus::OK;
 
@@ -768,7 +768,7 @@ XSIPLUGINCALLBACK CStatus alembic_points_Evaluate(ICENodeContext& in_ctxt)
       obj.getSchema().getTimeSampling(),
       obj.getSchema().getNumSamples()
    );
-   AbcG::IPointsSchema::Sample sample;
+  AbcG::IPointsSchema::Sample sample;
    obj.getSchema().get(sample,sampleInfo.floorIndex);
 
    int pointCount = 0;
@@ -877,7 +877,7 @@ XSIPLUGINCALLBACK CStatus alembic_points_Evaluate(ICENodeContext& in_ctxt)
          CDataArray2DFloat outData( in_ctxt );
          CDataArray2DFloat::Accessor acc;
 
-         AbcG::IFloatGeomParam widthParam = obj.getSchema().getWidthsParam();
+        AbcG::IFloatGeomParam widthParam = obj.getSchema().getWidthsParam();
          if(!widthParam || widthParam.getNumSamples() == 0)
          {
             acc = outData.Resize( 0, pointCount );

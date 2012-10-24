@@ -5,8 +5,8 @@
 
 void SaveXformSample(
    XSI::CRef kinestateRef, 
-   AbcG::OXformSchema & schema, 
-   AbcG::XformSample & sample, 
+ AbcG::OXformSchema & schema, 
+ AbcG::XformSample & sample, 
    double time, 
    bool xformCache, 
    bool globalSpace,

@@ -23,7 +23,7 @@ AlembicModel::AlembicModel(exoNodePtr eNode, AlembicWriteJob * in_Job, Abc::OObj
 : AlembicObject(eNode, in_Job, oParent)
 {
    Primitive prim(GetRef());
-   AbcG::OXform xform(GetMyParent(), eNode->name, GetJob()->GetAnimatedTs());
+  AbcG::OXform xform(GetMyParent(), eNode->name, GetJob()->GetAnimatedTs());
    if((bool)in_Job->GetOption(L"flattenHierarchy")){
       AddRef(prim.GetParent3DObject().GetKinematics().GetGlobal().GetRef());
    }
@@ -64,7 +64,7 @@ XSI::CStatus AlembicModel::Save(double time)
    if(isRefAnimated(visProp.GetRef()) || mNumSamples == 0)
    {
       bool visibility = visProp.GetParameterValue(L"rendvis",time);
-      mOVisibility.set(visibility ? AbcG::kVisibilityVisible : AbcG::kVisibilityHidden);
+      mOVisibility.set(visibility ?AbcG::kVisibilityVisible :AbcG::kVisibilityHidden);
    }
 
    // store the metadata

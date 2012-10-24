@@ -6,8 +6,8 @@
 class AlembicNurbs: public AlembicObject
 {
 private:
-   AbcG::ONuPatchSchema mNurbsSchema;
-   AbcG::ONuPatchSchema::Sample mNurbsSample;
+  AbcG::ONuPatchSchema mNurbsSchema;
+  AbcG::ONuPatchSchema::Sample mNurbsSample;
 
 public:
 

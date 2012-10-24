@@ -6,8 +6,8 @@
 class AlembicSubD: public AlembicObject
 {
 private:
-   AbcG::OSubDSchema mSubDSchema;
-   AbcG::OSubDSchema::Sample mSubDSample;
+  AbcG::OSubDSchema mSubDSchema;
+  AbcG::OSubDSchema::Sample mSubDSample;
    std::vector<AbcA::int32_t> mFaceCountVec;
    std::vector<AbcA::int32_t> mFaceIndicesVec;
    std::vector<std::vector<AbcA::int32_t> > mFaceSetsVec;

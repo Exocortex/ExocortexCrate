@@ -36,7 +36,7 @@ AlembicSubD::AlembicSubD(exoNodePtr eNode, AlembicWriteJob * in_Job, Abc::OObjec
 {
    Primitive prim(GetRef());
 
-   AbcG::OSubD subD(GetMyParent(), eNode->name, GetJob()->GetAnimatedTs());
+  AbcG::OSubD subD(GetMyParent(), eNode->name, GetJob()->GetAnimatedTs());
 
    mSubDSchema = subD.getSchema();
 
@@ -78,7 +78,7 @@ XSI::CStatus AlembicSubD::Save(double time)
    if(isRefAnimated(visProp.GetRef()) || mNumSamples == 0)
    {
       bool visibility = visProp.GetParameterValue(L"rendvis",time);
-      mOVisibility.set(visibility ? AbcG::kVisibilityVisible : AbcG::kVisibilityHidden);
+      mOVisibility.set(visibility ?AbcG::kVisibilityVisible :AbcG::kVisibilityHidden);
    }
 
    // check if the mesh is animated
@@ -281,11 +281,11 @@ XSI::CStatus AlembicSubD::Save(double time)
                   {
                      it = uvMap.find(mUvVec[uvI][i]);
                      if(it != uvMap.end())
-                        mUvIndexVec[uvI][uvIndexCount++] = (uint32_t)it->second;
+                        mUvIndexVec[uvI][uvIndexCount++] = (Abc::uint32_t)it->second;
                      else
                      {
-                        mUvIndexVec[uvI][uvIndexCount++] = (uint32_t)sortedUVCount;
-                        uvMap.insert(std::pair<Abc::V2f,size_t>(mUvVec[uvI][i],(uint32_t)sortedUVCount));
+                        mUvIndexVec[uvI][uvIndexCount++] = (Abc::uint32_t)sortedUVCount;
+                        uvMap.insert(std::pair<Abc::V2f,size_t>(mUvVec[uvI][i],(Abc::uint32_t)sortedUVCount));
                         sortedUVVec[sortedUVCount++] = mUvVec[uvI][i];
                      }
                   }
@@ -298,7 +298,7 @@ XSI::CStatus AlembicSubD::Save(double time)
                   sortedUVVec.clear();
                }
 
-               AbcG::OV2fGeomParam::Sample uvSample(Abc::V2fArraySample(&mUvVec[uvI].front(),uvCount),AbcG::kFacevaryingScope);
+              AbcG::OV2fGeomParam::Sample uvSample(Abc::V2fArraySample(&mUvVec[uvI].front(),uvCount),AbcG::kFacevaryingScope);
                if(mUvIndexVec.size() > 0 && uvIndexCount > 0)
                   uvSample.setIndices(Abc::UInt32ArraySample(&mUvIndexVec[uvI].front(),uvIndexCount));
 
@@ -313,7 +313,7 @@ XSI::CStatus AlembicSubD::Save(double time)
                   {
                      CString storedUvSetName = CString(L"uv") + CString(uvI);
                      mUvParams.push_back(AbcG::OV2fGeomParam( mSubDSchema, storedUvSetName.GetAsciiString(), uvIndexCount > 0,
-                                         AbcG::kFacevaryingScope, 1, GetJob()->GetAnimatedTs()));
+                                        AbcG::kFacevaryingScope, 1, GetJob()->GetAnimatedTs()));
                   }
                   mUvParams[uvI-1].set(uvSample);
                }
@@ -384,8 +384,8 @@ XSI::CStatus AlembicSubD::Save(double time)
 
             if(faceSetVec.size() > 0)
             {
-               AbcG::OFaceSet faceSet = mSubDSchema.createFaceSet(name);
-               AbcG::OFaceSetSchema::Sample faceSetSample(Abc::Int32ArraySample(&faceSetVec.front(),faceSetVec.size()));
+              AbcG::OFaceSet faceSet = mSubDSchema.createFaceSet(name);
+              AbcG::OFaceSetSchema::Sample faceSetSample(Abc::Int32ArraySample(&faceSetVec.front(),faceSetVec.size()));
                faceSet.getSchema().set(faceSetSample);
             }
          }
@@ -443,15 +443,15 @@ ESS_CALLBACK_START( alembic_geomapprox_Update, CRef& )
    CString path = ctxt.GetParameterValue(L"path");
    CString identifier = ctxt.GetParameterValue(L"identifier");
 
-   AbcG::IObject iObj = getObjectFromArchive(path,identifier);
+  AbcG::IObject iObj = getObjectFromArchive(path,identifier);
    if(!iObj.valid())
       return CStatus::OK;
 
-   AbcG::ISubD obj(iObj,Abc::kWrapExisting);
+  AbcG::ISubD obj(iObj,Abc::kWrapExisting);
    if(!obj.valid())
       return CStatus::OK;
 
-   AbcG::ISubDSchema::Sample sample;
+  AbcG::ISubDSchema::Sample sample;
    obj.getSchema().get(sample,0);
 
    Property prop(ctxt.GetOutputTarget());

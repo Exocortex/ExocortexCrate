@@ -18,7 +18,7 @@ using namespace MATH;
 
 
 
-void SaveXformSample(XSI::CRef kinestateRef, AbcG::OXformSchema & schema, AbcG::XformSample & sample, double time, bool xformCache, bool globalSpace, bool flattenHierarchy)
+void SaveXformSample(XSI::CRef kinestateRef,AbcG::OXformSchema & schema,AbcG::XformSample & sample, double time, bool xformCache, bool globalSpace, bool flattenHierarchy)
 {
    KinematicState kineState(kinestateRef);
 
@@ -87,14 +87,14 @@ ESS_CALLBACK_START( alembic_xform_Update, CRef& )
       CString path = ctxt.GetParameterValue(L"path");
       CString identifier = ctxt.GetParameterValue(L"identifier");
 
-      AbcG::IObject iObj = getObjectFromArchive(path,identifier);
+     AbcG::IObject iObj = getObjectFromArchive(path,identifier);
       if(!iObj.valid())
          return CStatus::OK;
-      AbcG::IXform obj(iObj,Abc::kWrapExisting);
+     AbcG::IXform obj(iObj,Abc::kWrapExisting);
       if(!obj.valid())
          return CStatus::OK;
 
-      AbcG::XformSample sample;
+     AbcG::XformSample sample;
 
       for(size_t i=0;i<obj.getSchema().getNumSamples();i++)
       {
@@ -188,12 +188,12 @@ ESS_CALLBACK_START( alembic_visibility_Update, CRef& )
    CString path = ctxt.GetParameterValue(L"path");
    CString identifier = ctxt.GetParameterValue(L"identifier");
 
-   AbcG::IObject obj = getObjectFromArchive(path,identifier);
+  AbcG::IObject obj = getObjectFromArchive(path,identifier);
    if(!obj.valid())
       return CStatus::OK;
 
-   AbcG::IVisibilityProperty visibilityProperty = 
-      AbcG::GetVisibilityProperty(obj);
+  AbcG::IVisibilityProperty visibilityProperty = 
+     AbcG::GetVisibilityProperty(obj);
    if(!visibilityProperty.valid())
       return CStatus::OK;
 
@@ -204,18 +204,18 @@ ESS_CALLBACK_START( alembic_visibility_Update, CRef& )
    );
 
    int8_t rawVisibilityValue = visibilityProperty.getValue ( sampleInfo.floorIndex );
-   AbcG::ObjectVisibility visibilityValue = AbcG::ObjectVisibility ( rawVisibilityValue );
+  AbcG::ObjectVisibility visibilityValue =AbcG::ObjectVisibility ( rawVisibilityValue );
 
    Property prop(ctxt.GetOutputTarget());
    switch(visibilityValue)
    {
-      case AbcG::kVisibilityVisible:
+      caseAbcG::kVisibilityVisible:
       {
          prop.PutParameterValue(L"viewvis",true);
          prop.PutParameterValue(L"rendvis",true);
          break;
       }
-      case AbcG::kVisibilityHidden:
+      caseAbcG::kVisibilityHidden:
       {
          prop.PutParameterValue(L"viewvis",false);
          prop.PutParameterValue(L"rendvis",false);

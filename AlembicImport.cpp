@@ -396,8 +396,8 @@ CStatus alembic_create_item_Invoke
             Application().LogMessage(L"[ExocortexAlembic] Identifier '"+identifier+L"' is not valid for given filename.",siErrorMsg);
             return CStatus::InvalidArgument;
          }
-         AbcG::IVisibilityProperty visibilityProperty = 
-            AbcG::GetVisibilityProperty(abcObject);
+        AbcG::IVisibilityProperty visibilityProperty = 
+           AbcG::GetVisibilityProperty(abcObject);
          if(!visibilityProperty.valid())
          {
             return CStatus::InvalidArgument;
@@ -449,23 +449,23 @@ CStatus alembic_create_item_Invoke
             if(!importVis)
             {
                // this means skip the creation of the operator
-               AbcG::IVisibilityProperty visibilityProperty = 
-                  AbcG::GetVisibilityProperty(abcObject);
+              AbcG::IVisibilityProperty visibilityProperty = 
+                 AbcG::GetVisibilityProperty(abcObject);
                if(visibilityProperty.valid())
                {
                   int rawVisibilityValue = visibilityProperty.getValue ( size_t(0) );
-                  AbcG::ObjectVisibility visibilityValue = AbcG::ObjectVisibility ( rawVisibilityValue );
+                 AbcG::ObjectVisibility visibilityValue =AbcG::ObjectVisibility ( rawVisibilityValue );
 
                   Property prop(realTarget);
                   switch(visibilityValue)
                   {
-                     case AbcG::kVisibilityVisible:
+                     caseAbcG::kVisibilityVisible:
                      {
                         prop.PutParameterValue(L"viewvis",true);
                         prop.PutParameterValue(L"rendvis",true);
                         break;
                      }
-                     case AbcG::kVisibilityHidden:
+                     caseAbcG::kVisibilityHidden:
                      {
                         prop.PutParameterValue(L"viewvis",false);
                         prop.PutParameterValue(L"rendvis",false);
@@ -566,12 +566,12 @@ CStatus alembic_create_item_Invoke
             bool importNormals = args[2];
             bool importUvs = args[3];
 
-            AbcG::IPolyMesh abcMesh;
-            AbcG::ISubD abcSubD;
+           AbcG::IPolyMesh abcMesh;
+           AbcG::ISubD abcSubD;
             if(AbcG::IPolyMesh::matches(abcObject.getMetaData()))
-               abcMesh = AbcG::IPolyMesh(abcObject,Abc::kWrapExisting);
+               abcMesh =AbcG::IPolyMesh(abcObject,Abc::kWrapExisting);
             else
-               abcSubD = AbcG::ISubD(abcObject,Abc::kWrapExisting);
+               abcSubD =AbcG::ISubD(abcObject,Abc::kWrapExisting);
             if(!abcMesh.valid() && !abcSubD.valid())
                return CStatus::OK;
 
@@ -591,12 +591,12 @@ CStatus alembic_create_item_Invoke
                      if(meshGeo.GetClusters().GetItem(CString(faceSetNames[j].c_str())).IsValid())
                         continue;
                   }
-                  AbcG::IFaceSetSchema faceSet;
+                 AbcG::IFaceSetSchema faceSet;
                   if(abcMesh.valid())
                      faceSet = abcMesh.getSchema().getFaceSet(faceSetNames[j]).getSchema();
                   else
                      faceSet = abcSubD.getSchema().getFaceSet(faceSetNames[j]).getSchema();
-                  AbcG::IFaceSetSchema::Sample faceSetSample = faceSet.getValue();
+                 AbcG::IFaceSetSchema::Sample faceSetSample = faceSet.getValue();
                   Abc::Int32ArraySamplePtr faces = faceSetSample.getFaces();
                   CLongArray elements((LONG)faces->size());
                   for(size_t k=0;k<faces->size();k++)
@@ -608,7 +608,7 @@ CStatus alembic_create_item_Invoke
             if(importNormals && abcMesh.valid())
             {
               ESS_PROFILE_SCOPE("alembic_create_item_Invoke create_the_operator polymesh_topo importNormals");
-		       AbcG::IN3fGeomParam meshNormalsParam = abcMesh.getSchema().getNormalsParam();
+		      AbcG::IN3fGeomParam meshNormalsParam = abcMesh.getSchema().getNormalsParam();
                if(meshNormalsParam.valid())
                {
                   Abc::N3fArraySamplePtr meshNormals = meshNormalsParam.getExpandedValue(0).getVals();
@@ -892,7 +892,7 @@ CStatus alembic_create_item_Invoke
          CValue treeReturnVal;
 
          // we need to check if we have instances....
-         AbcG::IPoints abcPoints(abcObject,Abc::kWrapExisting);
+        AbcG::IPoints abcPoints(abcObject,Abc::kWrapExisting);
          if(!abcPoints.valid())
             return CStatus::OK;
 
@@ -1337,7 +1337,7 @@ CStatus createShape( Abc::IObject& iObj, CRef& parentNode, CRef& newNodeRef, CSt
          
          if(!receivesExpression)
          {
-            AbcG::IPolyMesh abcMesh = AbcG::IPolyMesh(iObj,Abc::kWrapExisting);
+           AbcG::IPolyMesh abcMesh =AbcG::IPolyMesh(iObj,Abc::kWrapExisting);
             CValue returnedOpVal;
             alembic_create_item_Invoke(L"alembic_polymesh",meshObj.GetRef(),filename,iObj.getFullName().c_str(),attachToExisting,createItemArgs,returnedOpVal);
             returnOpRef = (CRef)returnedOpVal;
@@ -1412,7 +1412,7 @@ CStatus createShape( Abc::IObject& iObj, CRef& parentNode, CRef& newNodeRef, CSt
       else
       {
          // only add the point position operator if we don't have dynamic topology
-         AbcG::ISubD abcSubD = AbcG::ISubD(iObj,Abc::kWrapExisting);
+        AbcG::ISubD abcSubD =AbcG::ISubD(iObj,Abc::kWrapExisting);
          CValue returnedOpVal;
          alembic_create_item_Invoke(L"alembic_polymesh",meshObj.GetRef(),filename,iObj.getFullName().c_str(),attachToExisting,createItemArgs,returnedOpVal);
          returnOpRef = (CRef)returnedOpVal;
@@ -1462,13 +1462,13 @@ CStatus createShape( Abc::IObject& iObj, CRef& parentNode, CRef& newNodeRef, CSt
    {
       //ESS_LOG_WARNING("Import ICurves");
       // let's create a crvlist
-      AbcG::ICurves curveIObject(iObj,Abc::kWrapExisting);
-      AbcG::ICurvesSchema curveSchema = curveIObject.getSchema();
-      AbcG::ICurvesSchema::Sample curveSample = curveSchema.getValue();
+     AbcG::ICurves curveIObject(iObj,Abc::kWrapExisting);
+     AbcG::ICurvesSchema curveSchema = curveIObject.getSchema();
+     AbcG::ICurvesSchema::Sample curveSample = curveSchema.getValue();
 
       // check for valid curve types...!
-      if(curveSample.getType() != AbcG::ALEMBIC_VERSION_NS::kLinear &&
-         curveSample.getType() != AbcG::ALEMBIC_VERSION_NS::kCubic)
+      if(curveSample.getType() !=AbcG::ALEMBIC_VERSION_NS::kLinear &&
+         curveSample.getType() !=AbcG::ALEMBIC_VERSION_NS::kCubic)
       {
         std::stringstream s;
 		s << "Can't create non-linear/non-cubic Curves.  Unsupported Alembic type: " << iObj.getFullName().c_str();
@@ -1629,9 +1629,9 @@ CStatus createShape( Abc::IObject& iObj, CRef& parentNode, CRef& newNodeRef, CSt
    else if(AbcG::IPoints::matches(iObj.getMetaData()))
    {
       //ESS_LOG_WARNING("Import IPoints");
-      AbcG::IPoints pointsIObject(iObj,Abc::kWrapExisting);
-      AbcG::IPointsSchema pointsSchema = pointsIObject.getSchema();
-      AbcG::IPointsSchema::Sample pointsSample = pointsSchema.getValue();
+     AbcG::IPoints pointsIObject(iObj,Abc::kWrapExisting);
+     AbcG::IPointsSchema pointsSchema = pointsIObject.getSchema();
+     AbcG::IPointsSchema::Sample pointsSample = pointsSchema.getValue();
 
       X3DObject pointsObj;
       if(attachToExisting)
@@ -1872,7 +1872,7 @@ ESS_CALLBACK_START(alembic_import_Execute, CRef&)
    createItemArgs[4] = importVisibility;
 
 
-   AbcG::IObject root = archive->getTop();
+  AbcG::IObject root = archive->getTop();
 
  
    std::vector<std::string> nodesToImport;
@@ -1970,7 +1970,7 @@ ESS_CALLBACK_START(alembic_import_Execute, CRef&)
          //push the children as the last step, since we need to who the parent is first (we may have merged)
 	      for(size_t j=0; j<iObj.getNumChildren(); j++)
 	      {
-            AbcG::IObject childObj = iObj.getChild(j);
+           AbcG::IObject childObj = iObj.getChild(j);
             if( NodeCategory::get(childObj) == NodeCategory::UNSUPPORTED ) continue;// skip over unsupported types
 
             //I assume that geometry nodes are always leaf nodes. Thus, if we merged a geometry node will its parent transform, we don't

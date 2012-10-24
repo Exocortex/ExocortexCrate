@@ -19,12 +19,13 @@
 #include <xsi_kinematics.h>
 #include <xsi_kinematicstate.h>
 
+using namespace XSI;
 
 AlembicNurbs::AlembicNurbs(exoNodePtr eNode, AlembicWriteJob * in_Job, Abc::OObject oParent)
 : AlembicObject(eNode, in_Job, oParent)
 {
    Primitive prim(GetRef());
-   AbcG::ONuPatch nurbs(GetMyParent(), eNode->name, GetJob()->GetAnimatedTs());
+  AbcG::ONuPatch nurbs(GetMyParent(), eNode->name, GetJob()->GetAnimatedTs());
 
    mNurbsSchema = nurbs.getSchema();
 }
@@ -127,10 +128,10 @@ ESS_CALLBACK_START( alembic_nurbs_Update, CRef& )
    CString path = ctxt.GetParameterValue(L"path");
    CString identifier = ctxt.GetParameterValue(L"identifier");
 
-   AbcG::IObject iObj = getObjectFromArchive(path,identifier);
+  AbcG::IObject iObj = getObjectFromArchive(path,identifier);
    if(!iObj.valid())
       return CStatus::OK;
-   AbcG::INuPatch objNurbs(iObj,Abc::kWrapExisting);
+  AbcG::INuPatch objNurbs(iObj,Abc::kWrapExisting);
    if(!objNurbs.valid())
       return CStatus::OK;
 
@@ -140,7 +141,7 @@ ESS_CALLBACK_START( alembic_nurbs_Update, CRef& )
       objNurbs.getSchema().getNumSamples()
    );
 
-   AbcG::INuPatchSchema::Sample sample;
+  AbcG::INuPatchSchema::Sample sample;
    objNurbs.getSchema().get(sample,sampleInfo.floorIndex);
    Abc::P3fArraySamplePtr nurbsPos = sample.getPositions();
 

@@ -135,7 +135,7 @@ CStatus AlembicWriteJob::PreProcess()
    try
    {
       mArchive = CreateArchiveWithInfo(
-            AbcCoreHDF5::WriteArchive(),
+		  Alembic::AbcCoreHDF5::WriteArchive(),
             mFileName.GetAsciiString(),
             "Softimage Alembic Plugin",
             sceneFileName.GetAsciiString(),
@@ -160,7 +160,7 @@ CStatus AlembicWriteJob::PreProcess()
    if(mFrameRate == 0.0)
       mFrameRate = 25.0;
 
-   std::vector<AbcCoreAbstract::chrono_t> frames;
+   std::vector<AbcA::chrono_t> frames;
    for(LONG i=0;i<mFrames.size();i++)
       frames.push_back(mFrames[i] / mFrameRate);
 
@@ -178,7 +178,7 @@ CStatus AlembicWriteJob::PreProcess()
       }
 
       double timePerCycle = frames[frames.size()-1] - frames[0];
-      AbcA::TimeSamplingType samplingType((uint32_t)frames.size(),timePerCycle);
+      AbcA::TimeSamplingType samplingType((Abc::uint32_t)frames.size(),timePerCycle);
       AbcA::TimeSampling sampling(samplingType,frames);
       mTs = mArchive.addTimeSampling(sampling);
    }
@@ -303,7 +303,7 @@ CStatus AlembicWriteJob::PreProcess()
    }
    std::sort(mSelection.begin(), mSelection.end());
 
-   Abc::OBox3dProperty boxProp = AbcG::CreateOArchiveBounds(mArchive,mTs);
+   Abc::OBox3dProperty boxProp =AbcG::CreateOArchiveBounds(mArchive,mTs);
 
    CString activeSceneRoot_GetFullName = Application().GetActiveSceneRoot().GetFullName();
    // create object for each

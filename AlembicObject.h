@@ -21,7 +21,7 @@ private:
    exoNodePtr mExoSceneNode;
 protected:
    int mNumSamples;
-   AbcG::OVisibilityProperty mOVisibility;
+  AbcG::OVisibilityProperty mOVisibility;
 
 public:
    AlembicObject(exoNodePtr eNode, AlembicWriteJob * in_Job, Abc::OObject oParent);

@@ -6,8 +6,8 @@
 class AlembicPolyMesh: public AlembicObject
 {
 private:
-   AbcG::OPolyMeshSchema mMeshSchema;
-   AbcG::OPolyMeshSchema::Sample mMeshSample;
+  AbcG::OPolyMeshSchema mMeshSchema;
+  AbcG::OPolyMeshSchema::Sample mMeshSample;
    std::vector<AbcA::int32_t> mFaceCountVec;
    std::vector<AbcA::int32_t> mFaceIndicesVec;
    std::vector<Abc::V3f> mBindPoseVec;

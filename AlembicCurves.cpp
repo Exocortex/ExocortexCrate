@@ -54,7 +54,7 @@ AlembicCurves::AlembicCurves(exoNodePtr eNode, AlembicWriteJob * in_Job, Abc::OO
 : AlembicObject(eNode, in_Job, oParent)
 {
    Primitive prim(GetRef());
-   AbcG::OCurves curves(GetMyParent(), eNode->name, GetJob()->GetAnimatedTs());
+  AbcG::OCurves curves(GetMyParent(), eNode->name, GetJob()->GetAnimatedTs());
 
    // create the generic properties
    mOVisibility = CreateVisibilityProperty(curves,GetJob()->GetAnimatedTs());
@@ -99,7 +99,7 @@ XSI::CStatus AlembicCurves::Save(double time)
    if(isRefAnimated(visProp.GetRef()) || mNumSamples == 0)
    {
       bool visibility = visProp.GetParameterValue(L"rendvis",time);
-      mOVisibility.set(visibility ? AbcG::kVisibilityVisible : AbcG::kVisibilityHidden);
+      mOVisibility.set(visibility ?AbcG::kVisibilityVisible :AbcG::kVisibilityHidden);
    }
 
    // store the metadata
@@ -158,7 +158,7 @@ XSI::CStatus AlembicCurves::Save(double time)
          // set the type + wrapping
          CNurbsCurveData curveData;
          NurbsCurve(curves[0]).Get(siSINurbs,curveData);
-         mCurvesSample.setType(curveData.m_lDegree == 3 ? kCubic : kLinear);
+         mCurvesSample.setType(curveData.m_lDegree == 3 ?AbcG::kCubic :AbcG::kLinear);
          mCurvesSample.setWrap(curveData.m_bClosed ? kPeriodic : kNonPeriodic);
          mCurvesSample.setBasis(kNoBasis);
 
@@ -687,10 +687,10 @@ ESS_CALLBACK_START( alembic_crvlist_Update, CRef& )
    CString path = ctxt.GetParameterValue(L"path");
    CString identifier = ctxt.GetParameterValue(L"identifier");
 
-   AbcG::IObject iObj = getObjectFromArchive(path,identifier);
+  AbcG::IObject iObj = getObjectFromArchive(path,identifier);
    if(!iObj.valid())
       return CStatus::OK;
-   AbcG::ICurves obj(iObj,Abc::kWrapExisting);
+  AbcG::ICurves obj(iObj,Abc::kWrapExisting);
    if(!obj.valid())
       return CStatus::OK;
 
@@ -701,7 +701,7 @@ ESS_CALLBACK_START( alembic_crvlist_Update, CRef& )
    );
 
 
-   AbcG::ICurvesSchema::Sample sample;
+  AbcG::ICurvesSchema::Sample sample;
    obj.getSchema().get(sample,sampleInfo.floorIndex);
 
    CVector3Array pos;
@@ -874,10 +874,10 @@ XSIPLUGINCALLBACK CStatus alembic_curves_Evaluate(ICENodeContext& in_ctxt)
       in_ctxt.PutUserData( val ) ;
    }
 
-   AbcG::IObject iObj = getObjectFromArchive(path,identifier);
+  AbcG::IObject iObj = getObjectFromArchive(path,identifier);
    if(!iObj.valid())
       return CStatus::OK;
-   AbcG::ICurves obj(iObj,Abc::kWrapExisting);
+  AbcG::ICurves obj(iObj,Abc::kWrapExisting);
    if(!obj.valid())
       return CStatus::OK;
 
@@ -889,7 +889,7 @@ XSIPLUGINCALLBACK CStatus alembic_curves_Evaluate(ICENodeContext& in_ctxt)
       obj.getSchema().getTimeSampling(),
       obj.getSchema().getNumSamples()
    );
-   AbcG::ICurvesSchema::Sample sample;
+  AbcG::ICurvesSchema::Sample sample;
    obj.getSchema().get(sample,sampleInfo.floorIndex);
 
 	switch( out_portID )
@@ -1136,7 +1136,7 @@ XSIPLUGINCALLBACK CStatus alembic_curves_Evaluate(ICENodeContext& in_ctxt)
          CDataArray2DVector2f outData( in_ctxt );
          CDataArray2DVector2f::Accessor acc;
 
-         AbcG::IV2fGeomParam uvsParam = obj.getSchema().getUVsParam();
+        AbcG::IV2fGeomParam uvsParam = obj.getSchema().getUVsParam();
          if(!uvsParam)
          {
             acc = outData.Resize(0,0);
@@ -1199,10 +1199,10 @@ ESS_CALLBACK_START( alembic_crvlist_topo_Update, CRef& )
    CString path = ctxt.GetParameterValue(L"path");
    CString identifier = ctxt.GetParameterValue(L"identifier");
 
-   AbcG::IObject iObj = getObjectFromArchive(path,identifier);
+  AbcG::IObject iObj = getObjectFromArchive(path,identifier);
    if(!iObj.valid())
       return CStatus::OK;
-   AbcG::ICurves obj(iObj,Abc::kWrapExisting);
+  AbcG::ICurves obj(iObj,Abc::kWrapExisting);
    if(!obj.valid())
       return CStatus::OK;
 
@@ -1212,12 +1212,12 @@ ESS_CALLBACK_START( alembic_crvlist_topo_Update, CRef& )
       obj.getSchema().getNumSamples()
    );
 
-   AbcG::ICurvesSchema::Sample curveSample;
+  AbcG::ICurvesSchema::Sample curveSample;
    obj.getSchema().get(curveSample,sampleInfo.floorIndex);
 
    // check for valid curve types...!
-   if(curveSample.getType() != AbcG::ALEMBIC_VERSION_NS::kLinear &&
-      curveSample.getType() != AbcG::ALEMBIC_VERSION_NS::kCubic)
+   if(curveSample.getType() !=AbcG::ALEMBIC_VERSION_NS::kLinear &&
+      curveSample.getType() !=AbcG::ALEMBIC_VERSION_NS::kCubic)
    {
       Application().LogMessage(L"[ExocortexAlembic] Skipping curve '"+identifier+L"', invalid curve type.",siWarningMsg);
       return CStatus::Fail;
@@ -1244,8 +1244,8 @@ ESS_CALLBACK_START( alembic_crvlist_topo_Update, CRef& )
       curveData.m_aControlPoints.Resize(nbVertices);
       curveData.m_aKnots.Resize(nbVertices);
       curveData.m_siParameterization = siUniformParameterization;
-      curveData.m_bClosed = curveSample.getWrap() == AbcG::kPeriodic;
-      curveData.m_lDegree = curveSample.getType() == AbcG::ALEMBIC_VERSION_NS::kLinear ? 1 : 3;
+      curveData.m_bClosed = curveSample.getWrap() ==AbcG::kPeriodic;
+      curveData.m_lDegree = curveSample.getType() ==AbcG::ALEMBIC_VERSION_NS::kLinear ? 1 : 3;
 
       for(LONG k=0;k<nbVertices;k++)
       {
@@ -1258,7 +1258,7 @@ ESS_CALLBACK_START( alembic_crvlist_topo_Update, CRef& )
       }
 
       // based on curve type, we do this for linear or closed cubic curves
-      if(curveSample.getType() == AbcG::ALEMBIC_VERSION_NS::kLinear || curveData.m_bClosed )
+      if(curveSample.getType() ==AbcG::ALEMBIC_VERSION_NS::kLinear || curveData.m_bClosed )
       { 
          curveData.m_aKnots.Resize(nbVertices);
 		 for(LONG k=0;k<nbVertices;k++) {

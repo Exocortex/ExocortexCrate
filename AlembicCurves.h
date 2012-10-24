@@ -7,8 +7,8 @@
 class AlembicCurves: public AlembicObject
 {
 private:
-   AbcG::OCurvesSchema mCurvesSchema;
-   AbcG::OCurvesSchema::Sample mCurvesSample;
+  AbcG::OCurvesSchema mCurvesSchema;
+  AbcG::OCurvesSchema::Sample mCurvesSample;
    std::vector<AbcA::int32_t> mNbVertices;
 
    Abc::OV3fArrayProperty mVelocityProperty;

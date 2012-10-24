@@ -7,8 +7,8 @@
 class AlembicPoints: public AlembicObject
 {
 private:
-   AbcG::OPointsSchema mPointsSchema;
-   AbcG::OPointsSchema::Sample mPointsSample;
+  AbcG::OPointsSchema mPointsSchema;
+  AbcG::OPointsSchema::Sample mPointsSample;
 
    // instance lookups
    Abc::OStringArrayProperty mInstancenamesProperty;
