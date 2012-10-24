@@ -261,10 +261,12 @@ CStatus AlembicWriteJob::PreProcess()
       }
 
       if(pNewObject){
-         //setup the next parent
-         oNewParent = oParent.getChild(eNode->name);
-         //add the alembic object to the export list
+         //add the AlembicObject to export list if it is not being skipped
          AddObject(pNewObject);
+      }
+
+      if(pNewObject){
+         oNewParent = oParent.getChild(eNode->name);
       }
       else{
          //if we skip node A, we parent node A's children to the parent of A
@@ -273,7 +275,18 @@ CStatus AlembicWriteJob::PreProcess()
 
       if(oNewParent.valid()){
          for( std::list<exoNodePtr>::iterator it = eNode->children.begin(); it != eNode->children.end(); it++){
-            sceneStack.push_back(stackElement(*it, oNewParent));
+
+            if( !bFlattenHierarchy || (bFlattenHierarchy && eNode->type == exoNode::ETRANSFORM && hasExtractableTransform((*it)->type)) ){
+               //If flattening the hierarchy, we want to attach each external transform to its corresponding geometry node.
+               //All internal transforms should be skipped. Geometry nodes will never have children (If and XSI geonode is parented
+               //to another geonode, each will be parented to its extracted transform node, and one node will be parented to the 
+               //transform of the other.
+               sceneStack.push_back(stackElement(*it, oNewParent));
+            }
+            else{
+               //if we skip node A, we parent node A's children to the parent of A
+               sceneStack.push_back(stackElement(*it, oParent));
+            }
          }
       }
       else{
@@ -281,6 +294,7 @@ CStatus AlembicWriteJob::PreProcess()
          return CStatus::Fail;
       }
    }
+
 
 
 #if 0
