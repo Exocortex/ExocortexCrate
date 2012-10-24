@@ -68,7 +68,7 @@ exoNode::nodeTypeE getNodeType(X3DObject& xObj)
 bool hasExtractableTransform( exoNode::nodeTypeE type )
 {
    return 
-      //type == exoNode::CAMERA ||//the camera seems to already have a transform node
+      type == exoNode::CAMERA ||//the camera seems to already have a transform node
       type == exoNode::POLYMESH ||
       type == exoNode::SUBD ||
       type == exoNode::SURFACE ||
