@@ -178,12 +178,15 @@ XSI::CStatus AlembicPolyMesh::Save(double time)
       mMeshSample.setFaceIndices(faceIndicesSample);
    }
 
+   //these three variables must be scope when the schema set call occurs
+   AbcG::ON3fGeomParam::Sample normalSample;
+   std::vector<Abc::N3f> indexedNormals;
+	std::vector<Abc::uint32_t> normalIndexVec;
+
    bool exportNormals = GetJob()->GetOption(L"exportNormals");
    if(exportNormals)
    {
       std::vector<Abc::N3f> normalVec;
-	  std::vector<Abc::uint32_t> normalIndexVec;
-
       CVector3Array normals = mesh.GetVertices().GetNormalArray();
 
       CGeometryAccessor accessor = mesh.GetGeometryAccessor(siConstructionModeSecondaryShape);
@@ -225,11 +228,10 @@ XSI::CStatus AlembicPolyMesh::Save(double time)
          normalVec[i].z = (float)normal.GetZ();
       }
 
-      std::vector<Abc::N3f> indexedNormals;
       createIndexedArray<Abc::N3f, SortableV3f>(mFaceIndicesVec, normalVec, indexedNormals, normalIndexVec);
 
-      AbcG::ON3fGeomParam::Sample normalSample;
       normalSample.setScope(AbcG::kFacevaryingScope);
+      
       normalSample.setVals(Abc::N3fArraySample(indexedNormals));
       if(normalIndexVec.size() > 0){
          normalSample.setIndices(Abc::UInt32ArraySample(normalIndexVec));
