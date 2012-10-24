@@ -36,7 +36,7 @@ void printSceneGraph(exoNodePtr root)
 }
 
 
-void selectNodes(exoNodePtr root, exoNode::SelectionMap selectionMap, bool bParents, bool bChildren)
+void selectNodes(exoNodePtr root, SceneNode::SelectionMap selectionMap, bool bParents, bool bChildren)
 {
    struct stackElement
    {
@@ -107,12 +107,12 @@ void filterNodeSelection(exoNodePtr root, bool bExcludeITransforms, bool bExclud
       exoNodePtr eNode = sElement.eNode;
       sceneStack.pop_back();
 
-      if(bExcludeITransforms && eNode->type == exoNode::ITRANSFORM){
+      if(bExcludeITransforms && eNode->type == SceneNode::ITRANSFORM){
          eNode->selected = false;
       }
 
       if(bExcludeNonTransforms && 
-         (eNode->type != exoNode::ITRANSFORM && eNode->type != exoNode::ETRANSFORM && eNode->type != exoNode::UNKNOWN)
+         (eNode->type != SceneNode::ITRANSFORM && eNode->type != SceneNode::ETRANSFORM && eNode->type != SceneNode::UNKNOWN)
       ){
          eNode->selected = false;
       }

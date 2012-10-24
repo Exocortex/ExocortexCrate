@@ -7,10 +7,10 @@
 #include <string>
 #include <map>
 
-class exoNode;
-typedef boost::shared_ptr<exoNode> exoNodePtr;
+class SceneNode;
+typedef boost::shared_ptr<SceneNode> exoNodePtr;
 
-class exoNode
+class SceneNode
 {
 public:
    typedef std::map<std::string, bool> SelectionMap;
@@ -37,10 +37,10 @@ public:
    std::string dccIdentifier;
    bool selected;
 
-   exoNode():type(NUM_NODE_TYPES), selected(false)
+   SceneNode():type(NUM_NODE_TYPES), selected(false)
    {}
 
-   exoNode(nodeTypeE type, std::string name, std::string identifier):type(type), name(name), dccIdentifier(identifier)
+   SceneNode(nodeTypeE type, std::string name, std::string identifier):type(type), name(name), dccIdentifier(identifier)
    {}
 
 
@@ -48,7 +48,7 @@ public:
 
 void printSceneGraph(exoNodePtr root);
 
-void selectNodes(exoNodePtr root, exoNode::SelectionMap selectionMap, bool bParents, bool bChildren);
+void selectNodes(exoNodePtr root, SceneNode::SelectionMap selectionMap, bool bParents, bool bChildren);
 
 void filterNodeSelection(exoNodePtr root, bool bExcludeITransforms, bool bExcludeNonTransforms);
 
