@@ -8,6 +8,6 @@
 
 exoNodePtr buildCommonSceneGraph(XSI::X3DObject xsiRoot);
 
-bool hasExtractableTransform( exoNode::nodeTypeE type );
+bool hasExtractableTransform( SceneNode::nodeTypeE type );
 
 #endif

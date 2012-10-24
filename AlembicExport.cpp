@@ -210,7 +210,7 @@ ESS_CALLBACK_START(alembic_export_Execute,CRef&)
 	  bool geomApproxSubD = false;
       //CRefArray objects;
 
-      exoNode::SelectionMap objects;
+      SceneNode::SelectionMap objects;
 
       // process all tokens of the job
       CStringArray tokens = jobs[i].Split(L";");

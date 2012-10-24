@@ -10,12 +10,12 @@
 
 using namespace XSI;
 
-exoNode::nodeTypeE getNodeType(X3DObject& xObj)
+SceneNode::nodeTypeE getNodeType(X3DObject& xObj)
 {
  
    //CString sceneRootName = Application().GetActiveSceneRoot().GetFullName();
    //if( xObj.GetFullName().IsEqualNoCase(sceneRootName) ){
-   //   return exoNode::SCENE_ROOT;
+   //   return SceneNode::SCENE_ROOT;
    //}
 
    //ESS_LOG_WARNING("name: "<<xObj.GetName().GetAsciiString());
@@ -23,57 +23,57 @@ exoNode::nodeTypeE getNodeType(X3DObject& xObj)
 
    CString xObj_GetType = xObj.GetType();
    if(xObj_GetType.IsEqualNoCase(L"null")){
-      return  exoNode::ITRANSFORM;
+      return  SceneNode::ITRANSFORM;
    }
    else if(xObj_GetType.IsEqualNoCase(L"camera"))
    {
-      return exoNode::CAMERA;
+      return SceneNode::CAMERA;
    }
    else if(xObj_GetType.IsEqualNoCase(L"polymsh")){
       Property geomProp;
       xObj.GetPropertyFromName(L"geomapprox",geomProp);
       LONG subDivLevel = geomProp.GetParameterValue(L"gapproxmordrsl");
       if(subDivLevel > 0){
-         return exoNode::SUBD;
+         return SceneNode::SUBD;
       }
       else{
-         return exoNode::POLYMESH;
+         return SceneNode::POLYMESH;
       }
    }
    else if(xObj_GetType.IsEqualNoCase(L"surfmsh")){
-      return exoNode::SURFACE;
+      return SceneNode::SURFACE;
    }
    else if(xObj_GetType.IsEqualNoCase(L"crvlist"))
    {
-      return exoNode::CURVES;
+      return SceneNode::CURVES;
    }
    else if(xObj_GetType.IsEqualNoCase(L"hair"))
    {
-      return exoNode::CURVES;
+      return SceneNode::CURVES;
    }
    else if(xObj_GetType.IsEqualNoCase(L"pointcloud"))
    {
       ICEAttribute strandPosition = xObj.GetActivePrimitive().GetGeometry().GetICEAttributeFromName(L"StrandPosition");
       if(strandPosition.IsDefined() && strandPosition.IsValid()){
-         return exoNode::CURVES;
+         return SceneNode::CURVES;
       }
       else{
-         return exoNode::PARTICLES;
+         return SceneNode::PARTICLES;
       }
    }
 
-   return exoNode::UNKNOWN;
+   return SceneNode::UNKNOWN;
 }
 
-bool hasExtractableTransform( exoNode::nodeTypeE type )
+bool hasExtractableTransform( SceneNode::nodeTypeE type )
 {
    return 
-      type == exoNode::CAMERA ||//the camera seems to already have a transform node
-      type == exoNode::POLYMESH ||
-      type == exoNode::SUBD ||
-      type == exoNode::SURFACE ||
-      type == exoNode::CURVES ||
-      type == exoNode::PARTICLES;
+      type == SceneNode::CAMERA ||
+      type == SceneNode::POLYMESH ||
+      type == SceneNode::SUBD ||
+      type == SceneNode::SURFACE ||
+      type == SceneNode::CURVES ||
+      type == SceneNode::PARTICLES;
 }
 
 exoNodePtr buildCommonSceneGraph(XSI::X3DObject xsiRoot)
@@ -91,9 +91,9 @@ exoNodePtr buildCommonSceneGraph(XSI::X3DObject xsiRoot)
 
    std::list<stackElement> sceneStack;
    
-   exoNodePtr exoRoot(new exoNode());
+   exoNodePtr exoRoot(new SceneNode());
    exoRoot->name = xsiRoot.GetName().GetAsciiString();
-   exoRoot->type = exoNode::SCENE_ROOT;
+   exoRoot->type = SceneNode::SCENE_ROOT;
    exoRoot->dccIdentifier = xsiRoot.GetFullName().GetAsciiString();
 
    sceneStack.push_back(stackElement(xsiRoot, exoRoot));
@@ -113,9 +113,9 @@ exoNodePtr buildCommonSceneGraph(XSI::X3DObject xsiRoot)
          X3DObject child(children[j]);
          if(!child.IsValid()) continue;
 
-         exoNodePtr exoChild(new exoNode());
+         exoNodePtr exoChild(new SceneNode());
 
-         exoNode::nodeTypeE type = getNodeType(child);
+         SceneNode::nodeTypeE type = getNodeType(child);
          
 
          if(!hasExtractableTransform(type))
@@ -126,13 +126,13 @@ exoNodePtr buildCommonSceneGraph(XSI::X3DObject xsiRoot)
             exoChild->dccIdentifier = child.GetUniqueName().GetAsciiString();
          }
          else{
-            //XSI Geometry nodes should split into two nodes: a transform node, and a pure geometry node
-            exoNodePtr geoChild(new exoNode());
+            //XSI shape nodes should split into two nodes: a transform node, and a pure shape node
+            exoNodePtr geoChild(new SceneNode());
 
             exoChild->parent = eNode;
             exoChild->name = child.GetName().GetAsciiString();
             exoChild->name += "Xfo";
-            exoChild->type = exoNode::ETRANSFORM;
+            exoChild->type = SceneNode::ETRANSFORM;
             exoChild->dccIdentifier = child.GetUniqueName().GetAsciiString();
 
             geoChild->parent = exoChild;

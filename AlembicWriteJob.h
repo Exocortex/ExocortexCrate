@@ -12,7 +12,7 @@ class AlembicWriteJob
 private:
     XSI::CString mFileName;
    
-    exoNode::SelectionMap mSelection;
+    SceneNode::SelectionMap mSelection;
 
     //XSI::CRefArray mSelection;
     std::vector<double> mFrames;
@@ -26,7 +26,7 @@ private:
 public:
    AlembicWriteJob(
       const XSI::CString & in_FileName,
-      const exoNode::SelectionMap& in_Selection,
+      const SceneNode::SelectionMap& in_Selection,
       const XSI::CDoubleArray & in_Frames);
    ~AlembicWriteJob();
 

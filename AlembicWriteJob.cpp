@@ -36,7 +36,7 @@ using namespace MATH;
 AlembicWriteJob::AlembicWriteJob
 (
    const CString & in_FileName,
-   const exoNode::SelectionMap& in_Selection,
+   const SceneNode::SelectionMap& in_Selection,
    const CDoubleArray & in_Frames
 )
 {
@@ -229,28 +229,28 @@ CStatus AlembicWriteJob::PreProcess()
 
       if(eNode->selected)
       {
-         if(eNode->type == exoNode::SCENE_ROOT){
+         if(eNode->type == SceneNode::SCENE_ROOT){
             //we do not want to export the Scene_Root (the alembic archive has one already)
          }
-         else if(eNode->type == exoNode::ITRANSFORM || eNode->type == exoNode::ETRANSFORM){
+         else if(eNode->type == SceneNode::ITRANSFORM || eNode->type == SceneNode::ETRANSFORM){
             pNewObject.reset(new AlembicModel(eNode, this, oParent));
          }
-         else if(eNode->type == exoNode::CAMERA){
+         else if(eNode->type == SceneNode::CAMERA){
             pNewObject.reset(new AlembicCamera(eNode, this, oParent));
          }
-         else if(eNode->type == exoNode::POLYMESH){
+         else if(eNode->type == SceneNode::POLYMESH){
             pNewObject.reset(new AlembicPolyMesh(eNode, this, oParent));
          }
-         else if(eNode->type == exoNode::SUBD){
+         else if(eNode->type == SceneNode::SUBD){
             pNewObject.reset(new AlembicSubD(eNode, this, oParent));
          }
-         else if(eNode->type == exoNode::SURFACE){
+         else if(eNode->type == SceneNode::SURFACE){
             pNewObject.reset(new AlembicNurbs(eNode, this, oParent));
          }
-         else if(eNode->type == exoNode::CURVES){
+         else if(eNode->type == SceneNode::CURVES){
             pNewObject.reset(new AlembicCurves(eNode, this, oParent));
          }
-         else if(eNode->type == exoNode::PARTICLES){
+         else if(eNode->type == SceneNode::PARTICLES){
             pNewObject.reset(new AlembicPoints(eNode, this, oParent));
          }
          else{
@@ -274,7 +274,7 @@ CStatus AlembicWriteJob::PreProcess()
       if(oNewParent.valid()){
          for( std::list<exoNodePtr>::iterator it = eNode->children.begin(); it != eNode->children.end(); it++){
 
-            if( !bFlattenHierarchy || (bFlattenHierarchy && eNode->type == exoNode::ETRANSFORM && hasExtractableTransform((*it)->type)) ){
+            if( !bFlattenHierarchy || (bFlattenHierarchy && eNode->type == SceneNode::ETRANSFORM && hasExtractableTransform((*it)->type)) ){
                //If flattening the hierarchy, we want to attach each external transform to its corresponding geometry node.
                //All internal transforms should be skipped. Geometry nodes will never have children (If and XSI geonode is parented
                //to another geonode, each will be parented to its extracted transform node, and one node will be parented to the 
