@@ -9,9 +9,6 @@
 
 #include "Alembic\AbcCoreAbstract\TimeSampling.h"
 
-namespace AbcA = ::AbcA;
-using AbcA::TimeSamplingPtr;
-
 
 XSI::CStatus alembicOp_Define( XSI::CRef& in_ctxt );
 XSI::CStatus alembicOp_DefineLayout( XSI::CRef& in_ctxt );
@@ -19,14 +16,14 @@ XSI::CStatus alembicOp_Term( XSI::CRef& in_ctxt );
 
 std::string getIdentifierFromRef(XSI::CRef in_Ref, bool includeHierarchy = false);
 XSI::CString truncateName(const XSI::CString & in_Name);
-XSI::CString getFullNameFromIdentifier(std::string in_Identifier);
-XSI::CRef getRefFromIdentifier(std::string in_Identifier);
+XSI::CString getFullNameFromIdentifier(XSI::CRef importRootNode, std::string in_Identifier);
+XSI::CRef getRefFromIdentifier(XSI::CRef importRootNode, std::string in_Identifier);
 int getNodeDepthFromRef(XSI::CRef in_Ref);
 XSI::CRefArray getOperators( XSI::CRef in_Ref);
 bool isRefAnimated(const XSI::CRef & in_Ref, bool xformCache = false, bool globalSpace = false);
 bool returnIsRefAnimated(const XSI::CRef & in_Ref, bool animated);
 void clearIsRefAnimatedCache();
-void updateOperatorInfo( XSI::Operator& op, SampleInfo& sampleInfo, TimeSamplingPtr timeSamplingPtr, int nPointsPrimitive, int nPointsCache);
+void updateOperatorInfo( XSI::Operator& op, SampleInfo& sampleInfo, AbcA::TimeSamplingPtr timeSamplingPtr, int nPointsPrimitive, int nPointsCache);
 
 // remapping imported names
 void nameMapAdd(XSI::CString identifier, XSI::CString name);

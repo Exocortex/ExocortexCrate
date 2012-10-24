@@ -178,7 +178,7 @@ CStatus AlembicWriteJob::PreProcess()
       }
 
       double timePerCycle = frames[frames.size()-1] - frames[0];
-      AbcA::TimeSamplingType samplingType((Abc::uint32_t)frames.size(),timePerCycle);
+	  AbcA::TimeSamplingType samplingType((Abc::uint32_t)frames.size(),timePerCycle);
       AbcA::TimeSampling sampling(samplingType,frames);
       mTs = mArchive.addTimeSampling(sampling);
    }
@@ -382,7 +382,7 @@ CStatus AlembicWriteJob::PreProcess()
          Property geomProp;
          xObj.GetPropertyFromName(L"geomapprox",geomProp);
          LONG subDivLevel = geomProp.GetParameterValue(L"gapproxmordrsl");
-         if(subDivLevel > 0)
+         if(subDivLevel > 0 && GetOption(L"geomApproxSubD") )
          {
             AlembicObjectPtr ptr;
             ptr.reset(new AlembicSubD(xObj_GetActivePrimitive_GetRef,this));

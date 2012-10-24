@@ -18,6 +18,8 @@ private:
    std::vector<std::vector<AbcA::int32_t> > mFaceSetsVec;
    Abc::OV3fArrayProperty mBindPoseProperty;
    Abc::OFloatArrayProperty mUvOptionsProperty;
+   Abc::OInt32Property mFaceVaryingInterpolateBoundaryProperty;
+
    std::vector<float> mUvOptionsVec;
 
 public:

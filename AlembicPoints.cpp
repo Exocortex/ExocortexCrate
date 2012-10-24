@@ -37,7 +37,6 @@ using namespace XSI;
 using namespace MATH;
 
 
-
 AlembicPoints::AlembicPoints(exoNodePtr eNode, AlembicWriteJob * in_Job, Abc::OObject oParent)
 : AlembicObject(eNode, in_Job, oParent)
 {
@@ -50,7 +49,7 @@ AlembicPoints::AlembicPoints(exoNodePtr eNode, AlembicWriteJob * in_Job, Abc::OO
 
    mPointsSchema = points.getSchema();
 
-   OCompoundProperty argGeomParams = mPointsSchema.getArbGeomParams();
+   Abc::OCompoundProperty argGeomParams = mPointsSchema.getArbGeomParams();
 
    // particle attributes
    mScaleProperty = Abc::OV3fArrayProperty(argGeomParams, ".scale", mPointsSchema.getMetaData(), GetJob()->GetAnimatedTs() );
@@ -193,7 +192,7 @@ XSI::CStatus AlembicPoints::Save(double time)
       Abc::FloatArraySample widthSample = Abc::FloatArraySample(widthVec);
 
       // id == ID
-      std::vector<uint64_t> idVec;
+      std::vector<Abc::uint64_t> idVec;
       {
          ICEAttribute attr = geo.GetICEAttributeFromName(L"ID");
          if(attr.IsDefined() && attr.IsValid())
@@ -208,7 +207,7 @@ XSI::CStatus AlembicPoints::Save(double time)
                LONG firstVal = data[0];
                for(ULONG i=0;i<count;i++)
                {
-                  idVec[i] = (uint64_t)data[i];
+                  idVec[i] = (Abc::uint64_t)data[i];
                   if(isConstant)
                      isConstant = firstVal == data[i];
                }
@@ -391,7 +390,7 @@ XSI::CStatus AlembicPoints::Save(double time)
    bool usesInstances = false;
    {
       ICEAttribute attr = geo.GetICEAttributeFromName(L"Shape");
-      std::vector<uint16_t> vec;
+      std::vector<Abc::uint16_t> vec;
       if(attr.IsDefined() && attr.IsValid() && attr.GetElementCount() > 0)
       {
          {
@@ -471,7 +470,7 @@ XSI::CStatus AlembicPoints::Save(double time)
    // shapeInstanceID
    {
       ICEAttribute attr = geo.GetICEAttributeFromName(L"Shape");
-      std::vector<uint16_t> vec;
+      std::vector<Abc::uint16_t> vec;
       if(attr.IsDefined() && attr.IsValid())
       {
          if(attr.GetElementCount() > 0)
@@ -486,7 +485,7 @@ XSI::CStatus AlembicPoints::Save(double time)
                if(count > 0)
                {
                   bool isConstant = true;
-                  uint16_t firstVal;
+                  Abc::uint16_t firstVal;
                   for(ULONG i=0;i<count;i++)
                   {
                      CShape shape = data[i];
@@ -528,7 +527,7 @@ XSI::CStatus AlembicPoints::Save(double time)
             if(mInstanceNames.size() > 0)
             {
                if(!mInstancenamesProperty)
-                  mInstancenamesProperty = OStringArrayProperty(mPointsSchema.getArbGeomParams(), "instancenames", mPointsSchema.getMetaData(), GetJob()->GetAnimatedTs() );
+				   mInstancenamesProperty = Abc::OStringArrayProperty(mPointsSchema.getArbGeomParams(), "instancenames", mPointsSchema.getMetaData(), GetJob()->GetAnimatedTs() );
 
                std::vector<std::string> preRollVec(1,"");
                Abc::StringArraySample preRollSample(preRollVec);
@@ -542,9 +541,9 @@ XSI::CStatus AlembicPoints::Save(double time)
                if(vec.size() > 0)
                {
                   if(!mShapeInstanceIDProperty)
-                     mShapeInstanceIDProperty = OUInt16ArrayProperty(mPointsSchema.getArbGeomParams(), "shapeinstanceid", mPointsSchema.getMetaData(), GetJob()->GetAnimatedTs() );
+					  mShapeInstanceIDProperty = Abc::OUInt16ArrayProperty(mPointsSchema.getArbGeomParams(), "shapeinstanceid", mPointsSchema.getMetaData(), GetJob()->GetAnimatedTs() );
 
-                  std::vector<uint16_t> preRollVec(1,0);
+                  std::vector<Abc::uint16_t> preRollVec(1,0);
                   Abc::UInt16ArraySample preRollSample(preRollVec);
                   for(size_t i=mShapeInstanceIDProperty.getNumSamples();i<mNumSamples;i++)
                      mShapeInstanceIDProperty.set(preRollSample);
@@ -564,7 +563,7 @@ XSI::CStatus AlembicPoints::Save(double time)
       if(attr.IsDefined() && attr.IsValid())
       {
          if(mNumSamples == 0)
-            mShapeTimeProperty = OFloatArrayProperty(mPointsSchema.getArbGeomParams(), "shapetime", mPointsSchema.getMetaData(), GetJob()->GetAnimatedTs() );
+            mShapeTimeProperty = Abc::OFloatArrayProperty(mPointsSchema.getArbGeomParams(), "shapetime", mPointsSchema.getMetaData(), GetJob()->GetAnimatedTs() );
 
          if(attr.GetElementCount() > 0)
          {
@@ -910,7 +909,7 @@ XSIPLUGINCALLBACK CStatus alembic_points_Evaluate(ICENodeContext& in_ctxt)
          CDataArray2DVector3f outData( in_ctxt );
          CDataArray2DVector3f::Accessor acc;
 
-		 IV3fArrayProperty prop;
+		 Abc::IV3fArrayProperty prop;
 		 if( ! getArbGeomParamPropertyAlembic( obj, "scale", prop ) ) {
 
 			acc = outData.Resize( 0, pointCount );
@@ -960,7 +959,7 @@ XSIPLUGINCALLBACK CStatus alembic_points_Evaluate(ICENodeContext& in_ctxt)
          CDataArray2DRotationf outData( in_ctxt );
          CDataArray2DRotationf::Accessor acc;
 
-         IQuatfArrayProperty prop;
+         Abc::IQuatfArrayProperty prop;
 		 if( ! getArbGeomParamPropertyAlembic( obj, "orientation", prop ) ) {
              acc = outData.Resize( 0, pointCount );
 			 CQuaternionf identityQuat;
@@ -1004,7 +1003,7 @@ XSIPLUGINCALLBACK CStatus alembic_points_Evaluate(ICENodeContext& in_ctxt)
             {
                float alpha = (float)sampleInfo.alpha;
 
-	            IQuatfArrayProperty velProp;
+	            Abc::IQuatfArrayProperty velProp;
 				 if( getArbGeomParamPropertyAlembic( obj, "angularvelocity", velProp ) ) {
 					
 				   Abc::QuatfArraySamplePtr velPtr = velProp.getValue(sampleInfo.floorIndex);
@@ -1050,7 +1049,7 @@ XSIPLUGINCALLBACK CStatus alembic_points_Evaluate(ICENodeContext& in_ctxt)
          CDataArray2DRotationf outData( in_ctxt );
          CDataArray2DRotationf::Accessor acc;
 
-         IQuatfArrayProperty prop;
+         Abc::IQuatfArrayProperty prop;
 		 if( ! getArbGeomParamPropertyAlembic( obj, "angularvelocity", prop ) ) {
 		    acc = outData.Resize( 0, pointCount );
 			CRotationf identityQuat = CQuaternionf();
@@ -1105,7 +1104,7 @@ XSIPLUGINCALLBACK CStatus alembic_points_Evaluate(ICENodeContext& in_ctxt)
          CDataArray2DFloat outData( in_ctxt );
          CDataArray2DFloat ::Accessor acc;
 
-         IFloatArrayProperty prop;
+         Abc::IFloatArrayProperty prop;
 		 if( ! getArbGeomParamPropertyAlembic( obj, "age", prop ) ) {
      	     acc = outData.Resize( 0, pointCount );
 			for(ULONG i=0;i<acc.GetCount();i++)
@@ -1154,7 +1153,7 @@ XSIPLUGINCALLBACK CStatus alembic_points_Evaluate(ICENodeContext& in_ctxt)
          CDataArray2DFloat outData( in_ctxt );
          CDataArray2DFloat ::Accessor acc;
 
-         IFloatArrayProperty prop;
+         Abc::IFloatArrayProperty prop;
 		 if( ! getArbGeomParamPropertyAlembic( obj, "mass", prop ) ) {
 		    acc = outData.Resize(0,0);
 			return CStatus::OK;
@@ -1196,7 +1195,7 @@ XSIPLUGINCALLBACK CStatus alembic_points_Evaluate(ICENodeContext& in_ctxt)
          CDataArray2DShape outData( in_ctxt );
          CDataArray2DShape::Accessor acc;
 
-         IUInt16ArrayProperty shapeTypeProp;
+         Abc::IUInt16ArrayProperty shapeTypeProp;
 		 if( ! getArbGeomParamPropertyAlembic( obj, "shapetype", shapeTypeProp ) ) {
 			acc = outData.Resize(0,(ULONG)sample.getPositions()->size());
 			for(ULONG i=0;i<acc.GetCount();i++) {
@@ -1290,12 +1289,12 @@ XSIPLUGINCALLBACK CStatus alembic_points_Evaluate(ICENodeContext& in_ctxt)
          CDataArray2DLong outData( in_ctxt );
          CDataArray2DLong::Accessor acc;
 
-		 IUInt16ArrayProperty shapeTypeProp;
+		 Abc::IUInt16ArrayProperty shapeTypeProp;
 		 if( ! getArbGeomParamPropertyAlembic( obj, "shapetype", shapeTypeProp ) ) {
 		    acc = outData.Resize(0,0);
 			return CStatus::OK;
 		 }
-		 IUInt16ArrayProperty shapeInstanceIDProp;
+		 Abc::IUInt16ArrayProperty shapeInstanceIDProp;
 		 if( ! getArbGeomParamPropertyAlembic( obj, "shapeinstanceid", shapeInstanceIDProp ) ) {
 		    acc = outData.Resize(0,0);
 			return CStatus::OK;
@@ -1355,7 +1354,7 @@ XSIPLUGINCALLBACK CStatus alembic_points_Evaluate(ICENodeContext& in_ctxt)
          CDataArray2DFloat outData( in_ctxt );
          CDataArray2DFloat ::Accessor acc;
 
- 		 IFloatArrayProperty prop;
+ 		 Abc::IFloatArrayProperty prop;
 		 if( ! getArbGeomParamPropertyAlembic( obj, "shapetime", prop ) ) {
 		    acc = outData.Resize(0,0);
 			return CStatus::OK;
@@ -1398,7 +1397,7 @@ XSIPLUGINCALLBACK CStatus alembic_points_Evaluate(ICENodeContext& in_ctxt)
          CDataArray2DColor4f outData( in_ctxt );
          CDataArray2DColor4f::Accessor acc;
 
-  		 IC4fArrayProperty prop;
+  		 Abc::IC4fArrayProperty prop;
 		 if( ! getArbGeomParamPropertyAlembic( obj, "color", prop ) ) {
 			acc = outData.Resize(0,(ULONG)sample.getPositions()->size());
 			for(ULONG i=0;i<acc.GetCount();i++) {

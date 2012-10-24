@@ -13,6 +13,7 @@
 #include <xsi_ppgitem.h>
 #include <xsi_model.h>
 #include "CommonProfiler.h"
+
 using namespace XSI;
 using namespace MATH;
 
@@ -203,19 +204,19 @@ ESS_CALLBACK_START( alembic_visibility_Update, CRef& )
       visibilityProperty.getNumSamples()
    );
 
-   int8_t rawVisibilityValue = visibilityProperty.getValue ( sampleInfo.floorIndex );
+   AbcA::int8_t rawVisibilityValue = visibilityProperty.getValue ( sampleInfo.floorIndex );
   AbcG::ObjectVisibility visibilityValue =AbcG::ObjectVisibility ( rawVisibilityValue );
 
    Property prop(ctxt.GetOutputTarget());
    switch(visibilityValue)
    {
-      caseAbcG::kVisibilityVisible:
+      case AbcG::kVisibilityVisible:
       {
          prop.PutParameterValue(L"viewvis",true);
          prop.PutParameterValue(L"rendvis",true);
          break;
       }
-      caseAbcG::kVisibilityHidden:
+      case AbcG::kVisibilityHidden:
       {
          prop.PutParameterValue(L"viewvis",false);
          prop.PutParameterValue(L"rendvis",false);

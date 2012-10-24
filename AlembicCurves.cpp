@@ -43,12 +43,6 @@
 using namespace XSI;
 using namespace MATH;
 
-namespace AbcA = ::AbcA;
-namespace AbcB = ::Abc;
-namespace AbcC = ::AbcG::ALEMBIC_VERSION_NS;
-using namespace AbcA;
-using namespace AbcB;
-using namespace AbcC;
 
 AlembicCurves::AlembicCurves(exoNodePtr eNode, AlembicWriteJob * in_Job, Abc::OObject oParent)
 : AlembicObject(eNode, in_Job, oParent)
@@ -62,10 +56,10 @@ AlembicCurves::AlembicCurves(exoNodePtr eNode, AlembicWriteJob * in_Job, Abc::OO
    mCurvesSchema = curves.getSchema();
 
    // create all properties
-   mRadiusProperty = OFloatArrayProperty(mCurvesSchema.getArbGeomParams(), ".radius", mCurvesSchema.getMetaData(), GetJob()->GetAnimatedTs() );
-   mColorProperty = OC4fArrayProperty(mCurvesSchema.getArbGeomParams(), ".color", mCurvesSchema.getMetaData(), GetJob()->GetAnimatedTs() );
-   mFaceIndexProperty = OInt32ArrayProperty(mCurvesSchema.getArbGeomParams(), ".face_index", mCurvesSchema.getMetaData(), GetJob()->GetAnimatedTs() );
-   mVertexIndexProperty = OInt32ArrayProperty(mCurvesSchema.getArbGeomParams(), ".vertex_index", mCurvesSchema.getMetaData(), GetJob()->GetAnimatedTs() );
+   mRadiusProperty = Abc::OFloatArrayProperty(mCurvesSchema.getArbGeomParams(), ".radius", mCurvesSchema.getMetaData(), GetJob()->GetAnimatedTs() );
+   mColorProperty = Abc::OC4fArrayProperty(mCurvesSchema.getArbGeomParams(), ".color", mCurvesSchema.getMetaData(), GetJob()->GetAnimatedTs() );
+   mFaceIndexProperty = Abc::OInt32ArrayProperty(mCurvesSchema.getArbGeomParams(), ".face_index", mCurvesSchema.getMetaData(), GetJob()->GetAnimatedTs() );
+   mVertexIndexProperty = Abc::OInt32ArrayProperty(mCurvesSchema.getArbGeomParams(), ".vertex_index", mCurvesSchema.getMetaData(), GetJob()->GetAnimatedTs() );
 }
 
 AlembicCurves::~AlembicCurves()
@@ -148,7 +142,7 @@ XSI::CStatus AlembicCurves::Save(double time)
          CNurbsCurveRefArray curves = crvlist.GetCurves();
          mNbVertices.resize((size_t)curves.GetCount());
          for(LONG i=0;i<curves.GetCount();i++)
-            mNbVertices[i] = (int32_t)NurbsCurve(curves[i]).GetControlPoints().GetCount();
+			 mNbVertices[i] = (Abc::int32_t)NurbsCurve(curves[i]).GetControlPoints().GetCount();
 
          Abc::Int32ArraySample nbVerticesSample(&mNbVertices.front(),mNbVertices.size());
 
@@ -159,8 +153,8 @@ XSI::CStatus AlembicCurves::Save(double time)
          CNurbsCurveData curveData;
          NurbsCurve(curves[0]).Get(siSINurbs,curveData);
          mCurvesSample.setType(curveData.m_lDegree == 3 ?AbcG::kCubic :AbcG::kLinear);
-         mCurvesSample.setWrap(curveData.m_bClosed ? kPeriodic : kNonPeriodic);
-         mCurvesSample.setBasis(kNoBasis);
+         mCurvesSample.setWrap(curveData.m_bClosed ? AbcG::kPeriodic : AbcG::kNonPeriodic);
+         mCurvesSample.setBasis(AbcG::kNoBasis);
 
          // save the sample
          mCurvesSchema.set(mCurvesSample);
@@ -218,14 +212,14 @@ XSI::CStatus AlembicCurves::Save(double time)
          accessor.GetVerticesCount(hairCount);
          mNbVertices.resize((size_t)hairCount.GetCount());
          for(LONG i=0;i<hairCount.GetCount();i++)
-            mNbVertices[i] = (int32_t)hairCount[i];
+            mNbVertices[i] = (Abc::int32_t)hairCount[i];
          mCurvesSample.setCurvesNumVertices(Abc::Int32ArraySample(mNbVertices));
          hairCount.Clear();
 
          // set the type + wrapping
-         mCurvesSample.setType(kLinear);
-         mCurvesSample.setWrap(kNonPeriodic);
-         mCurvesSample.setBasis(kNoBasis);
+         mCurvesSample.setType(AbcG::kLinear);
+         mCurvesSample.setWrap(AbcG::kNonPeriodic);
+         mCurvesSample.setBasis(AbcG::kNoBasis);
 
          // store the hair radius
          CFloatArray hairRadius;
@@ -329,7 +323,7 @@ XSI::CStatus AlembicCurves::Save(double time)
       CPointRefArray emitterPointRefArray(emitterGeo.GetPoints());
       CLongArray emitterPntIndex;
 
-	  vector<int32_t> faceIndices;
+	  vector<Abc::int32_t> faceIndices;
 
       if( !SIObject(emitterPrimRef).GetType().IsEqualNoCase(L"polymsh"))
       {
@@ -412,12 +406,12 @@ XSI::CStatus AlembicCurves::Save(double time)
          mCurvesSample.setCurvesNumVertices(Abc::Int32ArraySample(mNbVertices));
 
          // set the type + wrapping
-         mCurvesSample.setType(kLinear);
-         mCurvesSample.setWrap(kNonPeriodic);
-         mCurvesSample.setBasis(kNoBasis);
+         mCurvesSample.setType(AbcG::kLinear);
+         mCurvesSample.setWrap(AbcG::kNonPeriodic);
+         mCurvesSample.setBasis(AbcG::kNoBasis);
 
 		// store the vertex indices
-		 vector<int32_t> vertexIndices( emitterPntIndex.GetCount());
+		 vector<Abc::int32_t> vertexIndices( emitterPntIndex.GetCount());
 		 for(LONG i=0;i<emitterPntIndex.GetCount();i++)
 			vertexIndices[i] = emitterPntIndex[i];
 		 mVertexIndexProperty.set(Abc::Int32ArraySample(vertexIndices));
@@ -447,14 +441,14 @@ XSI::CStatus AlembicCurves::Save(double time)
          {
             data.GetSubArray(i,sub);
             vertexCount += sub.GetCount();
-            mNbVertices[i] = (int32_t)sub.GetCount();
+            mNbVertices[i] = (Abc::int32_t)sub.GetCount();
          }
          mCurvesSample.setCurvesNumVertices(Abc::Int32ArraySample(&mNbVertices.front(),mNbVertices.size()));
 
          // set wrap parameters
-         mCurvesSample.setType(kLinear);
-         mCurvesSample.setWrap(kNonPeriodic);
-         mCurvesSample.setBasis(kNoBasis);
+         mCurvesSample.setType(AbcG::kLinear);
+         mCurvesSample.setWrap(AbcG::kNonPeriodic);
+		 mCurvesSample.setBasis(AbcG::kNoBasis);
 
          posVec.resize(vertexCount);
          size_t offset = 0;
@@ -1016,7 +1010,7 @@ XSIPLUGINCALLBACK CStatus alembic_curves_Evaluate(ICENodeContext& in_ctxt)
             acc = outData.Resize(0,0);
             return CStatus::OK;
          }
-         IV3fArrayProperty prop = Abc::IV3fArrayProperty( obj.getSchema(), ".velocity" );
+         Abc::IV3fArrayProperty prop = Abc::IV3fArrayProperty( obj.getSchema(), ".velocity" );
          if(!prop.valid())
          {
             acc = outData.Resize(0,0);
@@ -1067,7 +1061,7 @@ XSIPLUGINCALLBACK CStatus alembic_curves_Evaluate(ICENodeContext& in_ctxt)
             acc = outData.Resize(0,0);
             return CStatus::OK;
          }
-         IFloatArrayProperty prop = Abc::IFloatArrayProperty( obj.getSchema(), ".radius" );
+         Abc::IFloatArrayProperty prop = Abc::IFloatArrayProperty( obj.getSchema(), ".radius" );
          if(!prop.valid())
          {
             acc = outData.Resize(0,0);
@@ -1104,7 +1098,7 @@ XSIPLUGINCALLBACK CStatus alembic_curves_Evaluate(ICENodeContext& in_ctxt)
             acc = outData.Resize(0,0);
             return CStatus::OK;
          }
-         IC4fArrayProperty prop = Abc::IC4fArrayProperty( obj.getSchema(), ".color" );
+         Abc::IC4fArrayProperty prop = Abc::IC4fArrayProperty( obj.getSchema(), ".color" );
          if(!prop.valid())
          {
             acc = outData.Resize(0,0);
@@ -1216,8 +1210,8 @@ ESS_CALLBACK_START( alembic_crvlist_topo_Update, CRef& )
    obj.getSchema().get(curveSample,sampleInfo.floorIndex);
 
    // check for valid curve types...!
-   if(curveSample.getType() !=AbcG::ALEMBIC_VERSION_NS::kLinear &&
-      curveSample.getType() !=AbcG::ALEMBIC_VERSION_NS::kCubic)
+   if(curveSample.getType() !=AbcG::kLinear &&
+      curveSample.getType() !=AbcG::kCubic)
    {
       Application().LogMessage(L"[ExocortexAlembic] Skipping curve '"+identifier+L"', invalid curve type.",siWarningMsg);
       return CStatus::Fail;
@@ -1245,7 +1239,7 @@ ESS_CALLBACK_START( alembic_crvlist_topo_Update, CRef& )
       curveData.m_aKnots.Resize(nbVertices);
       curveData.m_siParameterization = siUniformParameterization;
       curveData.m_bClosed = curveSample.getWrap() ==AbcG::kPeriodic;
-      curveData.m_lDegree = curveSample.getType() ==AbcG::ALEMBIC_VERSION_NS::kLinear ? 1 : 3;
+      curveData.m_lDegree = curveSample.getType() ==AbcG::kLinear ? 1 : 3;
 
       for(LONG k=0;k<nbVertices;k++)
       {
@@ -1258,7 +1252,7 @@ ESS_CALLBACK_START( alembic_crvlist_topo_Update, CRef& )
       }
 
       // based on curve type, we do this for linear or closed cubic curves
-      if(curveSample.getType() ==AbcG::ALEMBIC_VERSION_NS::kLinear || curveData.m_bClosed )
+      if(curveSample.getType() ==AbcG::kLinear || curveData.m_bClosed )
       { 
          curveData.m_aKnots.Resize(nbVertices);
 		 for(LONG k=0;k<nbVertices;k++) {

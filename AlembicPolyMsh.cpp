@@ -35,14 +35,16 @@ using namespace MATH;
 AlembicPolyMesh::AlembicPolyMesh(exoNodePtr eNode, AlembicWriteJob * in_Job, Abc::OObject oParent)
 : AlembicObject(eNode, in_Job, oParent)
 {
-   Primitive prim(GetRef());\
+   Primitive prim(GetRef());
 
   AbcG::OPolyMesh mesh(GetMyParent(), eNode->name, GetJob()->GetAnimatedTs());
-
    mMeshSchema = mesh.getSchema();
 
    // create the generic properties
    mOVisibility = CreateVisibilityProperty(mesh,GetJob()->GetAnimatedTs());
+
+   mFaceVaryingInterpolateBoundaryProperty =
+        Abc::OInt32Property( mMeshSchema, ".faceVaryingInterpolateBoundary", mMeshSchema.getMetaData(), GetJob()->GetAnimatedTs() );
 }
 
 AlembicPolyMesh::~AlembicPolyMesh()
@@ -182,7 +184,7 @@ XSI::CStatus AlembicPolyMesh::Save(double time)
    if(exportNormals)
    {
       std::vector<Abc::N3f> normalVec;
-      std::vector<uint32_t> normalIndexVec;
+	  std::vector<Abc::uint32_t> normalIndexVec;
 
       CVector3Array normals = mesh.GetVertices().GetNormalArray();
 
@@ -228,7 +230,7 @@ XSI::CStatus AlembicPolyMesh::Save(double time)
       std::vector<Abc::N3f> indexedNormals;
       createIndexedArray<Abc::N3f, SortableV3f>(mFaceIndicesVec, normalVec, indexedNormals, normalIndexVec);
 
-     AbcG::ON3fGeomParam::Sample normalSample;
+      AbcG::ON3fGeomParam::Sample normalSample;
       normalSample.setScope(AbcG::kFacevaryingScope);
       normalSample.setVals(Abc::N3fArraySample(indexedNormals));
       if(normalIndexVec.size() > 0){
@@ -268,6 +270,7 @@ XSI::CStatus AlembicPolyMesh::Save(double time)
    // if we are the first frame!
    if(mNumSamples == 0 || (dynamicTopology))
    {
+
       // also check if we need to store UV
       CRefArray clusters = mesh.GetClusters();
       if((bool)GetJob()->GetOption(L"exportUVs"))
@@ -336,7 +339,7 @@ XSI::CStatus AlembicPolyMesh::Save(double time)
             // create the uv options
             if(mUvOptionsVec.size() == 0)
             {
-               mUvOptionsProperty = OFloatArrayProperty(mMeshSchema, ".uvOptions", mMeshSchema.getMetaData(), GetJob()->GetAnimatedTs() );
+				mUvOptionsProperty = Abc::OFloatArrayProperty(mMeshSchema, ".uvOptions", mMeshSchema.getMetaData(), GetJob()->GetAnimatedTs() );
 
                for(LONG uvI=0;uvI<uvPropRefs.GetCount();uvI++)
                {
@@ -372,6 +375,11 @@ XSI::CStatus AlembicPolyMesh::Save(double time)
             }
          }
       }
+	  
+      // set the subd level
+      Property geomApproxProp;
+      prim.GetParent3DObject().GetPropertyFromName(L"geomapprox",geomApproxProp);
+	  mFaceVaryingInterpolateBoundaryProperty.set( (Abc::int32_t) geomApproxProp.GetParameterValue(L"gapproxmordrsl") );
 
       // sweet, now let's have a look at face sets (really only for first sample)
       if(GetJob()->GetOption(L"exportFaceSets") && mNumSamples == 0)
@@ -388,8 +396,8 @@ XSI::CStatus AlembicPolyMesh::Save(double time)
 
             std::string name(cluster.GetName().GetAsciiString());
 
-            mFaceSetsVec.push_back(std::vector<int32_t>());
-            std::vector<int32_t> & faceSetVec = mFaceSetsVec.back();
+            mFaceSetsVec.push_back(std::vector<Abc::int32_t>());
+            std::vector<Abc::int32_t> & faceSetVec = mFaceSetsVec.back();
             for(LONG j=0;j<elements.GetCount();j++)
                faceSetVec.push_back(elements[j]);
 
@@ -405,7 +413,7 @@ XSI::CStatus AlembicPolyMesh::Save(double time)
       // check if we need to export the bindpose (also only for first frame)
       if(GetJob()->GetOption(L"exportBindPose") && prim.GetParent3DObject().GetEnvelopes().GetCount() > 0 && mNumSamples == 0)
       {
-         mBindPoseProperty = OV3fArrayProperty(mMeshSchema, ".bindpose", mMeshSchema.getMetaData(), GetJob()->GetAnimatedTs());
+         mBindPoseProperty = Abc::OV3fArrayProperty(mMeshSchema, ".bindpose", mMeshSchema.getMetaData(), GetJob()->GetAnimatedTs());
 
          // store the positions of the modeling stack into here
          PolygonMesh bindPoseGeo = prim.GetGeometry(time, siConstructionModeModeling);
@@ -424,6 +432,7 @@ XSI::CStatus AlembicPolyMesh::Save(double time)
          mBindPoseProperty.set(sample);
       }   
    }
+
 
    mMeshSchema.set(mMeshSample);
 
@@ -463,7 +472,7 @@ ESS_CALLBACK_START( alembic_polymesh_Update, CRef& )
    if(!objMesh.valid() && !objSubD.valid())
       return CStatus::OK;
 
-   TimeSamplingPtr timeSampling;
+   AbcA::TimeSamplingPtr timeSampling;
    int nSamples = 0;
    if(objMesh.valid())
    {
@@ -814,7 +823,7 @@ ESS_CALLBACK_START( alembic_polymesh_topo_Update, CRef& )
 	   return CStatus::OK;
    }
 
-   TimeSamplingPtr timeSampling;
+   AbcA::TimeSamplingPtr timeSampling;
    int nSamples = 0;
    if(objMesh.valid())
    {
@@ -1041,7 +1050,7 @@ ESS_CALLBACK_START( alembic_bbox_Update, CRef& )
 
    Abc::Box3d box;
    SampleInfo sampleInfo;
-   TimeSamplingPtr timeSampling;
+   AbcA::TimeSamplingPtr timeSampling;
    int nSamples = 0;
    
    // check what kind of object we have

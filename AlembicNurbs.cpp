@@ -62,7 +62,7 @@ XSI::CStatus AlembicNurbs::Save(double time)
    // define additional vectors, necessary for this task
    std::vector<Abc::V3f> posVec;
    std::vector<Abc::N3f> normalVec;
-   std::vector<uint32_t> normalIndexVec;
+   std::vector<AbcA::uint32_t> normalIndexVec;
 
    // access the mesh
    NurbsSurfaceMesh nurbs = prim.GetGeometry(time);

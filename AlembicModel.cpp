@@ -18,7 +18,6 @@
 using namespace XSI;
 using namespace MATH;
 
-
 AlembicModel::AlembicModel(exoNodePtr eNode, AlembicWriteJob * in_Job, Abc::OObject oParent)
 : AlembicObject(eNode, in_Job, oParent)
 {

@@ -322,7 +322,7 @@ XSI::CStatus AlembicSubD::Save(double time)
             // create the uv options
             if(mUvOptionsVec.size() == 0)
             {
-               mUvOptionsProperty = OFloatArrayProperty(mSubDSchema, ".uvOptions", mSubDSchema.getMetaData(), GetJob()->GetAnimatedTs() );
+				mUvOptionsProperty = Abc::OFloatArrayProperty(mSubDSchema, ".uvOptions", mSubDSchema.getMetaData(), GetJob()->GetAnimatedTs() );
 
                for(LONG uvI=0;uvI<uvPropRefs.GetCount();uvI++)
                {
@@ -377,8 +377,8 @@ XSI::CStatus AlembicSubD::Save(double time)
 
             std::string name(cluster.GetName().GetAsciiString());
 
-            mFaceSetsVec.push_back(std::vector<int32_t>());
-            std::vector<int32_t> & faceSetVec = mFaceSetsVec.back();
+            mFaceSetsVec.push_back(std::vector<Abc::int32_t>());
+            std::vector<Abc::int32_t> & faceSetVec = mFaceSetsVec.back();
             for(LONG j=0;j<elements.GetCount();j++)
                faceSetVec.push_back(elements[j]);
 
@@ -397,7 +397,7 @@ XSI::CStatus AlembicSubD::Save(double time)
       // check if we need to export the bindpose
       if(GetJob()->GetOption(L"exportBindPose") && prim.GetParent3DObject().GetEnvelopes().GetCount() > 0 && mNumSamples == 0)
       {
-         mBindPoseProperty = OV3fArrayProperty(mSubDSchema, ".bindpose", mSubDSchema.getMetaData(), GetJob()->GetAnimatedTs());
+         mBindPoseProperty = Abc::OV3fArrayProperty(mSubDSchema, ".bindpose", mSubDSchema.getMetaData(), GetJob()->GetAnimatedTs());
 
          // store the positions of the modeling stack into here
          PolygonMesh bindPoseGeo = prim.GetGeometry(time, siConstructionModeModeling);
@@ -447,17 +447,28 @@ ESS_CALLBACK_START( alembic_geomapprox_Update, CRef& )
    if(!iObj.valid())
       return CStatus::OK;
 
-  AbcG::ISubD obj(iObj,Abc::kWrapExisting);
-   if(!obj.valid())
-      return CStatus::OK;
 
-  AbcG::ISubDSchema::Sample sample;
-   obj.getSchema().get(sample,0);
+  Property prop(ctxt.GetOutputTarget());
+	
+  AbcG::ISubD objSubD(iObj,Abc::kWrapExisting);
+  if(objSubD.valid()) {
+	   AbcG::ISubDSchema::Sample sample;
+	   objSubD.getSchema().get(sample,0);
 
-   Property prop(ctxt.GetOutputTarget());
-   LONG subDLevel = sample.getFaceVaryingInterpolateBoundary();
-   prop.PutParameterValue(L"gapproxmosl",subDLevel);
-   prop.PutParameterValue(L"gapproxmordrsl",subDLevel);
+	   LONG subDLevel = sample.getFaceVaryingInterpolateBoundary();
+	   prop.PutParameterValue(L"gapproxmosl",subDLevel);
+	   prop.PutParameterValue(L"gapproxmordrsl",subDLevel);
+  }
+  else {
+	AbcG::IPolyMesh objMesh( iObj, Abc::kWrapExisting );
+	if(objMesh.valid() && objMesh.getSchema().getPropertyHeader( ".faceVaryingInterpolateBoundary" ) != NULL ){
+		Abc::IInt32Property faceVaryingInterpolateBoundary = Abc::IInt32Property( objMesh.getSchema(), ".faceVaryingInterpolateBoundary" );
+		Abc::int32_t subDLevel;
+		faceVaryingInterpolateBoundary.get( subDLevel, 0 );
+		prop.PutParameterValue(L"gapproxmosl", (LONG) subDLevel);
+		prop.PutParameterValue(L"gapproxmordrsl", (LONG) subDLevel);
+	}
+  }
 
    return CStatus::OK;
 ESS_CALLBACK_END

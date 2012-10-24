@@ -5,7 +5,6 @@
 #include <xsi_primitive.h>
 #include <xsi_x3dobject.h>
 
-
 #pragma warning( disable: 4996 )
 
 
