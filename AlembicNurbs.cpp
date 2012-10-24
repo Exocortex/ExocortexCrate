@@ -20,11 +20,11 @@
 #include <xsi_kinematicstate.h>
 
 using namespace XSI;
+using namespace MATH;
 
 AlembicNurbs::AlembicNurbs(exoNodePtr eNode, AlembicWriteJob * in_Job, Abc::OObject oParent)
 : AlembicObject(eNode, in_Job, oParent)
 {
-   Primitive prim(GetRef());
   AbcG::ONuPatch nurbs(GetMyParent(), eNode->name, GetJob()->GetAnimatedTs());
 
    mNurbsSchema = nurbs.getSchema();

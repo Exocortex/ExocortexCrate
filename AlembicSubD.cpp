@@ -34,8 +34,6 @@ using namespace MATH;
 AlembicSubD::AlembicSubD(exoNodePtr eNode, AlembicWriteJob * in_Job, Abc::OObject oParent)
 : AlembicObject(eNode, in_Job, oParent)
 {
-   Primitive prim(GetRef());
-
   AbcG::OSubD subD(GetMyParent(), eNode->name, GetJob()->GetAnimatedTs());
 
    mSubDSchema = subD.getSchema();

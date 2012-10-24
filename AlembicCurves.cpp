@@ -47,8 +47,7 @@ using namespace MATH;
 AlembicCurves::AlembicCurves(exoNodePtr eNode, AlembicWriteJob * in_Job, Abc::OObject oParent)
 : AlembicObject(eNode, in_Job, oParent)
 {
-   Primitive prim(GetRef());
-  AbcG::OCurves curves(GetMyParent(), eNode->name, GetJob()->GetAnimatedTs());
+	AbcG::OCurves curves(GetMyParent(), eNode->name, GetJob()->GetAnimatedTs());
 
    // create the generic properties
    mOVisibility = CreateVisibilityProperty(curves,GetJob()->GetAnimatedTs());

@@ -21,7 +21,6 @@ using namespace MATH;
 AlembicCamera::AlembicCamera(exoNodePtr eNode, AlembicWriteJob * in_Job, Abc::OObject oParent)
 : AlembicObject(eNode, in_Job, oParent)
 {
-   Primitive prim(GetRef());
   AbcG::OCamera camera(GetMyParent(), eNode->name, GetJob()->GetAnimatedTs());
 
    // create the generic properties

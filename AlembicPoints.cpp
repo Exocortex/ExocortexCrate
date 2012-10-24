@@ -40,8 +40,6 @@ using namespace MATH;
 AlembicPoints::AlembicPoints(exoNodePtr eNode, AlembicWriteJob * in_Job, Abc::OObject oParent)
 : AlembicObject(eNode, in_Job, oParent)
 {
-   Primitive prim(GetRef());
-
   AbcG::OPoints points(GetMyParent(), eNode->name, GetJob()->GetAnimatedTs());
 
    // create the generic properties
