@@ -7,24 +7,24 @@
 class AlembicPoints: public AlembicObject
 {
 private:
-   Alembic::AbcGeom::OPointsSchema mPointsSchema;
-   Alembic::AbcGeom::OPointsSchema::Sample mPointsSample;
+   AbcG::OPointsSchema mPointsSchema;
+   AbcG::OPointsSchema::Sample mPointsSample;
 
    // instance lookups
-   Alembic::Abc::ALEMBIC_VERSION_NS::OStringArrayProperty mInstancenamesProperty;
+   Abc::OStringArrayProperty mInstancenamesProperty;
    std::vector<std::string> mInstanceNames;
    std::map<unsigned long,size_t> mInstanceMap;
 
    // particle attributes (velocity == Pointvelocity, width == size in the schema)
-   Alembic::Abc::ALEMBIC_VERSION_NS::OV3fArrayProperty mScaleProperty;
-   Alembic::Abc::ALEMBIC_VERSION_NS::OQuatfArrayProperty mOrientationProperty;
-   Alembic::Abc::ALEMBIC_VERSION_NS::OQuatfArrayProperty mAngularVelocityProperty;
-   Alembic::Abc::ALEMBIC_VERSION_NS::OFloatArrayProperty mAgeProperty;
-   Alembic::Abc::ALEMBIC_VERSION_NS::OFloatArrayProperty mMassProperty;
-   Alembic::Abc::ALEMBIC_VERSION_NS::OUInt16ArrayProperty mShapeTypeProperty;
-   Alembic::Abc::ALEMBIC_VERSION_NS::OFloatArrayProperty mShapeTimeProperty;
-   Alembic::Abc::ALEMBIC_VERSION_NS::OUInt16ArrayProperty mShapeInstanceIDProperty;
-   Alembic::Abc::ALEMBIC_VERSION_NS::OC4fArrayProperty mColorProperty;
+   Abc::OV3fArrayProperty mScaleProperty;
+   Abc::OQuatfArrayProperty mOrientationProperty;
+   Abc::OQuatfArrayProperty mAngularVelocityProperty;
+   Abc::OFloatArrayProperty mAgeProperty;
+   Abc::OFloatArrayProperty mMassProperty;
+   Abc::OUInt16ArrayProperty mShapeTypeProperty;
+   Abc::OFloatArrayProperty mShapeTimeProperty;
+   Abc::OUInt16ArrayProperty mShapeInstanceIDProperty;
+   Abc::OC4fArrayProperty mColorProperty;
 
 public:
 
@@ -40,10 +40,10 @@ public:
       ShapeType_NbElements
    };
 
-   AlembicPoints(exoNodePtr eNode, AlembicWriteJob * in_Job, Alembic::Abc::OObject oParent);
+   AlembicPoints(exoNodePtr eNode, AlembicWriteJob * in_Job, Abc::OObject oParent);
    ~AlembicPoints();
 
-   virtual Alembic::Abc::OCompoundProperty GetCompound();
+   virtual Abc::OCompoundProperty GetCompound();
    virtual XSI::CStatus Save(double time);
 };
 

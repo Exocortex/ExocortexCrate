@@ -32,8 +32,6 @@
 using namespace XSI;
 using namespace MATH;
 
-namespace AbcA = ::Alembic::AbcCoreAbstract::ALEMBIC_VERSION_NS;
-using namespace AbcA;
 
 AlembicWriteJob::AlembicWriteJob
 (
@@ -137,11 +135,11 @@ CStatus AlembicWriteJob::PreProcess()
    try
    {
       mArchive = CreateArchiveWithInfo(
-            Alembic::AbcCoreHDF5::WriteArchive(),
+            AbcCoreHDF5::WriteArchive(),
             mFileName.GetAsciiString(),
             "Softimage Alembic Plugin",
             sceneFileName.GetAsciiString(),
-            Alembic::Abc::ErrorHandler::kThrowPolicy);
+            Abc::ErrorHandler::kThrowPolicy);
    }
    catch(Alembic::Util::Exception& e)
    {
@@ -162,7 +160,7 @@ CStatus AlembicWriteJob::PreProcess()
    if(mFrameRate == 0.0)
       mFrameRate = 25.0;
 
-   std::vector<Alembic::AbcCoreAbstract::chrono_t> frames;
+   std::vector<AbcCoreAbstract::chrono_t> frames;
    for(LONG i=0;i<mFrames.size();i++)
       frames.push_back(mFrames[i] / mFrameRate);
 
@@ -208,9 +206,9 @@ CStatus AlembicWriteJob::PreProcess()
    struct stackElement
    {
       exoNodePtr eNode;
-      Alembic::Abc::OObject oParent;
+      Abc::OObject oParent;
 
-      stackElement(exoNodePtr enode, Alembic::Abc::OObject parent):eNode(enode), oParent(parent)
+      stackElement(exoNodePtr enode, Abc::OObject parent):eNode(enode), oParent(parent)
       {}
    };
    std::list<stackElement> sceneStack;
@@ -224,8 +222,8 @@ CStatus AlembicWriteJob::PreProcess()
       exoNodePtr eNode = sElement.eNode;
       sceneStack.pop_back();
       
-      Alembic::Abc::OObject oParent = sElement.oParent;
-      Alembic::Abc::OObject oNewParent;
+      Abc::OObject oParent = sElement.oParent;
+      Abc::OObject oNewParent;
 
       AlembicObjectPtr pNewObject;
 
@@ -305,7 +303,7 @@ CStatus AlembicWriteJob::PreProcess()
    }
    std::sort(mSelection.begin(), mSelection.end());
 
-   Alembic::Abc::OBox3dProperty boxProp = Alembic::AbcGeom::CreateOArchiveBounds(mArchive,mTs);
+   Abc::OBox3dProperty boxProp = AbcG::CreateOArchiveBounds(mArchive,mTs);
 
    CString activeSceneRoot_GetFullName = Application().GetActiveSceneRoot().GetFullName();
    // create object for each

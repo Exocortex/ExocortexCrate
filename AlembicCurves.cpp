@@ -43,18 +43,18 @@
 using namespace XSI;
 using namespace MATH;
 
-namespace AbcA = ::Alembic::AbcCoreAbstract::ALEMBIC_VERSION_NS;
-namespace AbcB = ::Alembic::Abc::ALEMBIC_VERSION_NS;
-namespace AbcC = ::Alembic::AbcGeom::ALEMBIC_VERSION_NS;
+namespace AbcA = ::AbcA;
+namespace AbcB = ::Abc;
+namespace AbcC = ::AbcG::ALEMBIC_VERSION_NS;
 using namespace AbcA;
 using namespace AbcB;
 using namespace AbcC;
 
-AlembicCurves::AlembicCurves(exoNodePtr eNode, AlembicWriteJob * in_Job, Alembic::Abc::OObject oParent)
+AlembicCurves::AlembicCurves(exoNodePtr eNode, AlembicWriteJob * in_Job, Abc::OObject oParent)
 : AlembicObject(eNode, in_Job, oParent)
 {
    Primitive prim(GetRef());
-   Alembic::AbcGeom::OCurves curves(GetMyParent(), eNode->name, GetJob()->GetAnimatedTs());
+   AbcG::OCurves curves(GetMyParent(), eNode->name, GetJob()->GetAnimatedTs());
 
    // create the generic properties
    mOVisibility = CreateVisibilityProperty(curves,GetJob()->GetAnimatedTs());
@@ -75,7 +75,7 @@ AlembicCurves::~AlembicCurves()
    mOVisibility.reset();
 }
 
-Alembic::Abc::OCompoundProperty AlembicCurves::GetCompound()
+Abc::OCompoundProperty AlembicCurves::GetCompound()
 {
    return mCurvesSchema;
 }
@@ -99,7 +99,7 @@ XSI::CStatus AlembicCurves::Save(double time)
    if(isRefAnimated(visProp.GetRef()) || mNumSamples == 0)
    {
       bool visibility = visProp.GetParameterValue(L"rendvis",time);
-      mOVisibility.set(visibility ? Alembic::AbcGeom::kVisibilityVisible : Alembic::AbcGeom::kVisibilityHidden);
+      mOVisibility.set(visibility ? AbcG::kVisibilityVisible : AbcG::kVisibilityHidden);
    }
 
    // store the metadata
@@ -121,10 +121,10 @@ XSI::CStatus AlembicCurves::Save(double time)
       ULONG vertCount = pos.GetCount();
 
       // prepare the bounding box
-      Alembic::Abc::Box3d bbox;
+      Abc::Box3d bbox;
 
       // allocate the points and normals
-      std::vector<Alembic::Abc::V3f> posVec(vertCount);
+      std::vector<Abc::V3f> posVec(vertCount);
       for(ULONG i=0;i<vertCount;i++)
       {
          if(globalSpace)
@@ -139,7 +139,7 @@ XSI::CStatus AlembicCurves::Save(double time)
       mCurvesSample.setSelfBounds(bbox);
 
       // allocate for the points and normals
-      Alembic::Abc::P3fArraySample posSample(&posVec.front(),posVec.size());
+      Abc::P3fArraySample posSample(&posVec.front(),posVec.size());
 
       // if we are the first frame!
       if(mNumSamples == 0)
@@ -150,7 +150,7 @@ XSI::CStatus AlembicCurves::Save(double time)
          for(LONG i=0;i<curves.GetCount();i++)
             mNbVertices[i] = (int32_t)NurbsCurve(curves[i]).GetControlPoints().GetCount();
 
-         Alembic::Abc::Int32ArraySample nbVerticesSample(&mNbVertices.front(),mNbVertices.size());
+         Abc::Int32ArraySample nbVerticesSample(&mNbVertices.front(),mNbVertices.size());
 
          mCurvesSample.setPositions(posSample);
          mCurvesSample.setCurvesNumVertices(nbVerticesSample);
@@ -179,8 +179,8 @@ XSI::CStatus AlembicCurves::Save(double time)
       CRenderHairAccessor accessor = hairPrim.GetRenderHairAccessor(totalHairs,10000,time);
 
       // prepare the bounding box
-      Alembic::Abc::Box3d bbox;
-      std::vector<Alembic::Abc::V3f> posVec;
+      Abc::Box3d bbox;
+      std::vector<Abc::V3f> posVec;
 
       while(accessor.Next())
       {
@@ -206,7 +206,7 @@ XSI::CStatus AlembicCurves::Save(double time)
          }
       }
 
-      mCurvesSample.setPositions(Alembic::Abc::P3fArraySample(posVec));
+      mCurvesSample.setPositions(Abc::P3fArraySample(posVec));
 
       // store the bbox
       mCurvesSample.setSelfBounds(bbox);
@@ -219,7 +219,7 @@ XSI::CStatus AlembicCurves::Save(double time)
          mNbVertices.resize((size_t)hairCount.GetCount());
          for(LONG i=0;i<hairCount.GetCount();i++)
             mNbVertices[i] = (int32_t)hairCount[i];
-         mCurvesSample.setCurvesNumVertices(Alembic::Abc::Int32ArraySample(mNbVertices));
+         mCurvesSample.setCurvesNumVertices(Abc::Int32ArraySample(mNbVertices));
          hairCount.Clear();
 
          // set the type + wrapping
@@ -233,7 +233,7 @@ XSI::CStatus AlembicCurves::Save(double time)
          mRadiusVec.resize((size_t)hairRadius.GetCount());
          for(LONG i=0;i<hairRadius.GetCount();i++)
             mRadiusVec[i] = hairRadius[i];
-         mRadiusProperty.set(Alembic::Abc::FloatArraySample(mRadiusVec));
+         mRadiusProperty.set(Abc::FloatArraySample(mRadiusVec));
          hairRadius.Clear();
 
          // store the hair color (if any)
@@ -250,7 +250,7 @@ XSI::CStatus AlembicCurves::Save(double time)
                mColorVec[i].b = hairColor[offset++];
                mColorVec[i].a = hairColor[offset++];
             }
-            mColorProperty.set(Alembic::Abc::C4fArraySample(mColorVec));
+            mColorProperty.set(Abc::C4fArraySample(mColorVec));
             hairColor.Clear();
          }
 
@@ -267,7 +267,7 @@ XSI::CStatus AlembicCurves::Save(double time)
                mUvVec[i].y = 1.0f - hairUV[offset++];
                offset++;
             }
-            mCurvesSample.setUVs(Alembic::AbcGeom::OV2fGeomParam::Sample(mUvVec,Alembic::AbcGeom::kVertexScope));
+            mCurvesSample.setUVs(AbcG::OV2fGeomParam::Sample(mUvVec,AbcG::kVertexScope));
             hairUV.Clear();
          }
       }
@@ -282,8 +282,8 @@ XSI::CStatus AlembicCurves::Save(double time)
       LONG vertCount = pos.GetCount();
 
       // prepare the bounding box
-      Alembic::Abc::Box3d bbox;
-      std::vector<Alembic::Abc::V3f> posVec;
+      Abc::Box3d bbox;
+      std::vector<Abc::V3f> posVec;
 
       LONG numCurves = vertCount/14;
       posVec.resize(numCurves*15); // include base points
@@ -393,7 +393,7 @@ XSI::CStatus AlembicCurves::Save(double time)
          posVecIndex += 15;
       }
 
-      mCurvesSample.setPositions(Alembic::Abc::P3fArraySample(posVec));
+      mCurvesSample.setPositions(Abc::P3fArraySample(posVec));
 
       // caclulate bbox
       for ( LONG i=0; i<curveCount*15; i++)
@@ -409,7 +409,7 @@ XSI::CStatus AlembicCurves::Save(double time)
 
          mNbVertices.clear();
          mNbVertices.resize(numCurves, hairVertCount);
-         mCurvesSample.setCurvesNumVertices(Alembic::Abc::Int32ArraySample(mNbVertices));
+         mCurvesSample.setCurvesNumVertices(Abc::Int32ArraySample(mNbVertices));
 
          // set the type + wrapping
          mCurvesSample.setType(kLinear);
@@ -420,22 +420,22 @@ XSI::CStatus AlembicCurves::Save(double time)
 		 vector<int32_t> vertexIndices( emitterPntIndex.GetCount());
 		 for(LONG i=0;i<emitterPntIndex.GetCount();i++)
 			vertexIndices[i] = emitterPntIndex[i];
-		 mVertexIndexProperty.set(Alembic::Abc::Int32ArraySample(vertexIndices));
+		 mVertexIndexProperty.set(Abc::Int32ArraySample(vertexIndices));
 
 		 // store the face indices
-		 mFaceIndexProperty.set(Alembic::Abc::Int32ArraySample(faceIndices));
+		 mFaceIndexProperty.set(Abc::Int32ArraySample(faceIndices));
       }
       mCurvesSchema.set(mCurvesSample);
    }
    else if(prim.GetType().IsEqualNoCase(L"pointcloud"))
    {
       // prepare the bounding box
-      Alembic::Abc::Box3d bbox;
+      Abc::Box3d bbox;
 
       Geometry geo = prim.GetGeometry(time);
       ICEAttribute attr = geo.GetICEAttributeFromName(L"StrandPosition");
       size_t vertexCount = 0;
-      std::vector<Alembic::Abc::V3f> posVec;
+      std::vector<Abc::V3f> posVec;
       if(attr.IsDefined() && attr.IsValid())
       {
          CICEAttributeDataArray2DVector3f data;
@@ -449,7 +449,7 @@ XSI::CStatus AlembicCurves::Save(double time)
             vertexCount += sub.GetCount();
             mNbVertices[i] = (int32_t)sub.GetCount();
          }
-         mCurvesSample.setCurvesNumVertices(Alembic::Abc::Int32ArraySample(&mNbVertices.front(),mNbVertices.size()));
+         mCurvesSample.setCurvesNumVertices(Abc::Int32ArraySample(&mNbVertices.front(),mNbVertices.size()));
 
          // set wrap parameters
          mCurvesSample.setType(kLinear);
@@ -478,9 +478,9 @@ XSI::CStatus AlembicCurves::Save(double time)
          }
 
          if(vertexCount > 0)
-            mCurvesSample.setPositions(Alembic::Abc::P3fArraySample(&posVec.front(),posVec.size()));
+            mCurvesSample.setPositions(Abc::P3fArraySample(&posVec.front(),posVec.size()));
          else
-            mCurvesSample.setPositions(Alembic::Abc::P3fArraySample());
+            mCurvesSample.setPositions(Abc::P3fArraySample());
       }
 
       // store the bbox
@@ -504,7 +504,7 @@ XSI::CStatus AlembicCurves::Save(double time)
                for(ULONG j=0;j<sub.GetCount();j++)
                   mRadiusVec[offset++] = (float)sub[j];
             }
-            mRadiusProperty.set(Alembic::Abc::FloatArraySample(&mRadiusVec.front(),mRadiusVec.size()));
+            mRadiusProperty.set(Abc::FloatArraySample(&mRadiusVec.front(),mRadiusVec.size()));
          }
          else
          {
@@ -517,7 +517,7 @@ XSI::CStatus AlembicCurves::Save(double time)
                mRadiusVec.resize(data.GetCount());
                for(ULONG i=0;i<data.GetCount();i++)
                   mRadiusVec[i] = (float)data[data.IsConstant() ? 0 : i];
-               mRadiusProperty.set(Alembic::Abc::FloatArraySample(&mRadiusVec.front(),mRadiusVec.size()));
+               mRadiusProperty.set(Abc::FloatArraySample(&mRadiusVec.front(),mRadiusVec.size()));
             }
          }
 
@@ -543,7 +543,7 @@ XSI::CStatus AlembicCurves::Save(double time)
                   offset++;
                }
             }
-            mColorProperty.set(Alembic::Abc::C4fArraySample(&mColorVec.front(),mColorVec.size()));
+            mColorProperty.set(Abc::C4fArraySample(&mColorVec.front(),mColorVec.size()));
          }
          else
          {
@@ -561,7 +561,7 @@ XSI::CStatus AlembicCurves::Save(double time)
                   mColorVec[i].b = (float)data[i].GetB();
                   mColorVec[i].a = (float)data[i].GetA();
                }
-               mColorProperty.set(Alembic::Abc::C4fArraySample(&mColorVec.front(),mColorVec.size()));
+               mColorProperty.set(Abc::C4fArraySample(&mColorVec.front(),mColorVec.size()));
             }
          }
 
@@ -585,7 +585,7 @@ XSI::CStatus AlembicCurves::Save(double time)
                   offset++;
                }
             }
-            mCurvesSample.setUVs(Alembic::AbcGeom::OV2fGeomParam::Sample(Alembic::Abc::V2fArraySample(&mUvVec.front(),mUvVec.size()),Alembic::AbcGeom::kVertexScope));
+            mCurvesSample.setUVs(AbcG::OV2fGeomParam::Sample(Abc::V2fArraySample(&mUvVec.front(),mUvVec.size()),AbcG::kVertexScope));
          }
          else
          {
@@ -601,7 +601,7 @@ XSI::CStatus AlembicCurves::Save(double time)
                   mUvVec[i].x = (float)data[i].GetX();
                   mUvVec[i].y = (float)data[i].GetY();
                }
-               mCurvesSample.setUVs(Alembic::AbcGeom::OV2fGeomParam::Sample(Alembic::Abc::V2fArraySample(&mUvVec.front(),mUvVec.size()),Alembic::AbcGeom::kVertexScope));
+               mCurvesSample.setUVs(AbcG::OV2fGeomParam::Sample(Abc::V2fArraySample(&mUvVec.front(),mUvVec.size()),AbcG::kVertexScope));
             }
          }
 
@@ -632,7 +632,7 @@ XSI::CStatus AlembicCurves::Save(double time)
                   offset++;
                }
             }
-            mCurvesSample.setVelocities(Alembic::Abc::V3fArraySample(&mVelVec.front(),mVelVec.size()));
+            mCurvesSample.setVelocities(Abc::V3fArraySample(&mVelVec.front(),mVelVec.size()));
          }
          else
          {
@@ -655,7 +655,7 @@ XSI::CStatus AlembicCurves::Save(double time)
                   mVelVec[i].y = (float)vel.GetY();
                   mVelVec[i].z = (float)vel.GetZ();
                }
-               mCurvesSample.setVelocities(Alembic::Abc::V3fArraySample(&mVelVec.front(),mVelVec.size()));
+               mCurvesSample.setVelocities(Abc::V3fArraySample(&mVelVec.front(),mVelVec.size()));
             }
          }
       }
@@ -687,10 +687,10 @@ ESS_CALLBACK_START( alembic_crvlist_Update, CRef& )
    CString path = ctxt.GetParameterValue(L"path");
    CString identifier = ctxt.GetParameterValue(L"identifier");
 
-   Alembic::AbcGeom::IObject iObj = getObjectFromArchive(path,identifier);
+   AbcG::IObject iObj = getObjectFromArchive(path,identifier);
    if(!iObj.valid())
       return CStatus::OK;
-   Alembic::AbcGeom::ICurves obj(iObj,Alembic::Abc::kWrapExisting);
+   AbcG::ICurves obj(iObj,Abc::kWrapExisting);
    if(!obj.valid())
       return CStatus::OK;
 
@@ -701,7 +701,7 @@ ESS_CALLBACK_START( alembic_crvlist_Update, CRef& )
    );
 
 
-   Alembic::AbcGeom::ICurvesSchema::Sample sample;
+   AbcG::ICurvesSchema::Sample sample;
    obj.getSchema().get(sample,sampleInfo.floorIndex);
 
    CVector3Array pos;
@@ -719,7 +719,7 @@ ESS_CALLBACK_START( alembic_crvlist_Update, CRef& )
       pos = curves.GetPoints().GetPositionArray();
    }
 
-   Alembic::Abc::P3fArraySamplePtr curvePos = sample.getPositions();
+   Abc::P3fArraySamplePtr curvePos = sample.getPositions();
 
    Operator op(ctxt.GetSource());
    updateOperatorInfo( op, sampleInfo, obj.getSchema().getTimeSampling(),
@@ -874,10 +874,10 @@ XSIPLUGINCALLBACK CStatus alembic_curves_Evaluate(ICENodeContext& in_ctxt)
       in_ctxt.PutUserData( val ) ;
    }
 
-   Alembic::AbcGeom::IObject iObj = getObjectFromArchive(path,identifier);
+   AbcG::IObject iObj = getObjectFromArchive(path,identifier);
    if(!iObj.valid())
       return CStatus::OK;
-   Alembic::AbcGeom::ICurves obj(iObj,Alembic::Abc::kWrapExisting);
+   AbcG::ICurves obj(iObj,Abc::kWrapExisting);
    if(!obj.valid())
       return CStatus::OK;
 
@@ -889,7 +889,7 @@ XSIPLUGINCALLBACK CStatus alembic_curves_Evaluate(ICENodeContext& in_ctxt)
       obj.getSchema().getTimeSampling(),
       obj.getSchema().getNumSamples()
    );
-   Alembic::AbcGeom::ICurvesSchema::Sample sample;
+   AbcG::ICurvesSchema::Sample sample;
    obj.getSchema().get(sample,sampleInfo.floorIndex);
 
 	switch( out_portID )
@@ -907,7 +907,7 @@ XSIPLUGINCALLBACK CStatus alembic_curves_Evaluate(ICENodeContext& in_ctxt)
          CDataArray2DLong outData( in_ctxt );
          CDataArray2DLong::Accessor acc;
 
-         Alembic::Abc::Int32ArraySamplePtr ptr = sample.getCurvesNumVertices();
+         Abc::Int32ArraySamplePtr ptr = sample.getCurvesNumVertices();
          if(ptr == NULL)
             acc = outData.Resize(0,0);
          else if(ptr->size() == 0)
@@ -928,7 +928,7 @@ XSIPLUGINCALLBACK CStatus alembic_curves_Evaluate(ICENodeContext& in_ctxt)
          CDataArray2DLong outData( in_ctxt );
          CDataArray2DLong::Accessor acc;
 
-         Alembic::Abc::Int32ArraySamplePtr ptr = sample.getCurvesNumVertices();
+         Abc::Int32ArraySamplePtr ptr = sample.getCurvesNumVertices();
          if(ptr == NULL)
             acc = outData.Resize(0,0);
          else if(ptr->size() == 0)
@@ -951,7 +951,7 @@ XSIPLUGINCALLBACK CStatus alembic_curves_Evaluate(ICENodeContext& in_ctxt)
          CDataArray2DVector3f outData( in_ctxt );
          CDataArray2DVector3f::Accessor acc;
 
-         Alembic::Abc::P3fArraySamplePtr ptr = sample.getPositions();
+         Abc::P3fArraySamplePtr ptr = sample.getPositions();
          if(ptr == NULL)
             acc = outData.Resize(0,0);
          else if(ptr->size() == 0)
@@ -965,7 +965,7 @@ XSIPLUGINCALLBACK CStatus alembic_curves_Evaluate(ICENodeContext& in_ctxt)
 
             if(sampleInfo.alpha != 0.0)
             {
-               Alembic::Abc::P3fArraySamplePtr ptr2 = obj.getSchema().getValue(sampleInfo.ceilIndex).getPositions();
+               Abc::P3fArraySamplePtr ptr2 = obj.getSchema().getValue(sampleInfo.ceilIndex).getPositions();
                float alpha = (float)sampleInfo.alpha;
                float ialpha = 1.0f - alpha;
                if(ptr2->size() == ptr->size())
@@ -981,7 +981,7 @@ XSIPLUGINCALLBACK CStatus alembic_curves_Evaluate(ICENodeContext& in_ctxt)
                }
                else
                {
-                  Alembic::Abc::V3fArraySamplePtr vel = sample.getVelocities();
+                  Abc::V3fArraySamplePtr vel = sample.getVelocities();
                   if(vel->size() == ptr->size())
                   {
                      float timeAlpha = getTimeOffsetFromSchema( obj.getSchema(), sampleInfo );
@@ -1016,7 +1016,7 @@ XSIPLUGINCALLBACK CStatus alembic_curves_Evaluate(ICENodeContext& in_ctxt)
             acc = outData.Resize(0,0);
             return CStatus::OK;
          }
-         IV3fArrayProperty prop = Alembic::Abc::IV3fArrayProperty( obj.getSchema(), ".velocity" );
+         IV3fArrayProperty prop = Abc::IV3fArrayProperty( obj.getSchema(), ".velocity" );
          if(!prop.valid())
          {
             acc = outData.Resize(0,0);
@@ -1027,7 +1027,7 @@ XSIPLUGINCALLBACK CStatus alembic_curves_Evaluate(ICENodeContext& in_ctxt)
             acc = outData.Resize(0,0);
             return CStatus::OK;
          }
-         Alembic::Abc::V3fArraySamplePtr ptr = prop.getValue(sampleInfo.floorIndex);
+         Abc::V3fArraySamplePtr ptr = prop.getValue(sampleInfo.floorIndex);
          if(ptr == NULL)
             acc = outData.Resize(0,0);
          else if(ptr->size() == 0)
@@ -1037,7 +1037,7 @@ XSIPLUGINCALLBACK CStatus alembic_curves_Evaluate(ICENodeContext& in_ctxt)
             acc = outData.Resize(0,(ULONG)ptr->size());
             if(sampleInfo.alpha != 0.0)
             {
-               Alembic::Abc::V3fArraySamplePtr ptr2 = prop.getValue(sampleInfo.ceilIndex);
+               Abc::V3fArraySamplePtr ptr2 = prop.getValue(sampleInfo.ceilIndex);
                float alpha = (float)sampleInfo.alpha;
                float ialpha = 1.0f - alpha;
                for(ULONG i=0;i<acc.GetCount();i++)
@@ -1067,7 +1067,7 @@ XSIPLUGINCALLBACK CStatus alembic_curves_Evaluate(ICENodeContext& in_ctxt)
             acc = outData.Resize(0,0);
             return CStatus::OK;
          }
-         IFloatArrayProperty prop = Alembic::Abc::IFloatArrayProperty( obj.getSchema(), ".radius" );
+         IFloatArrayProperty prop = Abc::IFloatArrayProperty( obj.getSchema(), ".radius" );
          if(!prop.valid())
          {
             acc = outData.Resize(0,0);
@@ -1078,7 +1078,7 @@ XSIPLUGINCALLBACK CStatus alembic_curves_Evaluate(ICENodeContext& in_ctxt)
             acc = outData.Resize(0,0);
             return CStatus::OK;
          }
-         Alembic::Abc::FloatArraySamplePtr ptr = prop.getValue(sampleInfo.floorIndex);
+         Abc::FloatArraySamplePtr ptr = prop.getValue(sampleInfo.floorIndex);
          if(ptr == NULL)
             acc = outData.Resize(0,0);
          else if(ptr->size() == 0)
@@ -1104,7 +1104,7 @@ XSIPLUGINCALLBACK CStatus alembic_curves_Evaluate(ICENodeContext& in_ctxt)
             acc = outData.Resize(0,0);
             return CStatus::OK;
          }
-         IC4fArrayProperty prop = Alembic::Abc::IC4fArrayProperty( obj.getSchema(), ".color" );
+         IC4fArrayProperty prop = Abc::IC4fArrayProperty( obj.getSchema(), ".color" );
          if(!prop.valid())
          {
             acc = outData.Resize(0,0);
@@ -1115,7 +1115,7 @@ XSIPLUGINCALLBACK CStatus alembic_curves_Evaluate(ICENodeContext& in_ctxt)
             acc = outData.Resize(0,0);
             return CStatus::OK;
          }
-         Alembic::Abc::C4fArraySamplePtr ptr = prop.getValue(sampleInfo.floorIndex);
+         Abc::C4fArraySamplePtr ptr = prop.getValue(sampleInfo.floorIndex);
          if(ptr == NULL)
             acc = outData.Resize(0,0);
          else if(ptr->size() == 0)
@@ -1136,7 +1136,7 @@ XSIPLUGINCALLBACK CStatus alembic_curves_Evaluate(ICENodeContext& in_ctxt)
          CDataArray2DVector2f outData( in_ctxt );
          CDataArray2DVector2f::Accessor acc;
 
-         Alembic::AbcGeom::IV2fGeomParam uvsParam = obj.getSchema().getUVsParam();
+         AbcG::IV2fGeomParam uvsParam = obj.getSchema().getUVsParam();
          if(!uvsParam)
          {
             acc = outData.Resize(0,0);
@@ -1147,7 +1147,7 @@ XSIPLUGINCALLBACK CStatus alembic_curves_Evaluate(ICENodeContext& in_ctxt)
             acc = outData.Resize(0,0);
             return CStatus::OK;
          }
-         Alembic::Abc::V2fArraySamplePtr ptr = uvsParam.getExpandedValue(sampleInfo.floorIndex).getVals();
+         Abc::V2fArraySamplePtr ptr = uvsParam.getExpandedValue(sampleInfo.floorIndex).getVals();
          if(ptr == NULL)
             acc = outData.Resize(0,0);
          else if(ptr->size() == 0)
@@ -1199,10 +1199,10 @@ ESS_CALLBACK_START( alembic_crvlist_topo_Update, CRef& )
    CString path = ctxt.GetParameterValue(L"path");
    CString identifier = ctxt.GetParameterValue(L"identifier");
 
-   Alembic::AbcGeom::IObject iObj = getObjectFromArchive(path,identifier);
+   AbcG::IObject iObj = getObjectFromArchive(path,identifier);
    if(!iObj.valid())
       return CStatus::OK;
-   Alembic::AbcGeom::ICurves obj(iObj,Alembic::Abc::kWrapExisting);
+   AbcG::ICurves obj(iObj,Abc::kWrapExisting);
    if(!obj.valid())
       return CStatus::OK;
 
@@ -1212,20 +1212,20 @@ ESS_CALLBACK_START( alembic_crvlist_topo_Update, CRef& )
       obj.getSchema().getNumSamples()
    );
 
-   Alembic::AbcGeom::ICurvesSchema::Sample curveSample;
+   AbcG::ICurvesSchema::Sample curveSample;
    obj.getSchema().get(curveSample,sampleInfo.floorIndex);
 
    // check for valid curve types...!
-   if(curveSample.getType() != Alembic::AbcGeom::ALEMBIC_VERSION_NS::kLinear &&
-      curveSample.getType() != Alembic::AbcGeom::ALEMBIC_VERSION_NS::kCubic)
+   if(curveSample.getType() != AbcG::ALEMBIC_VERSION_NS::kLinear &&
+      curveSample.getType() != AbcG::ALEMBIC_VERSION_NS::kCubic)
    {
       Application().LogMessage(L"[ExocortexAlembic] Skipping curve '"+identifier+L"', invalid curve type.",siWarningMsg);
       return CStatus::Fail;
    } 
 
    // prepare the curves 
-   Alembic::Abc::P3fArraySamplePtr curvePos = curveSample.getPositions();
-   Alembic::Abc::Int32ArraySamplePtr curveNbVertices = curveSample.getCurvesNumVertices();
+   Abc::P3fArraySamplePtr curvePos = curveSample.getPositions();
+   Abc::Int32ArraySamplePtr curveNbVertices = curveSample.getCurvesNumVertices();
 
    CVector3Array pos((LONG)curvePos->size());
 
@@ -1244,8 +1244,8 @@ ESS_CALLBACK_START( alembic_crvlist_topo_Update, CRef& )
       curveData.m_aControlPoints.Resize(nbVertices);
       curveData.m_aKnots.Resize(nbVertices);
       curveData.m_siParameterization = siUniformParameterization;
-      curveData.m_bClosed = curveSample.getWrap() == Alembic::AbcGeom::kPeriodic;
-      curveData.m_lDegree = curveSample.getType() == Alembic::AbcGeom::ALEMBIC_VERSION_NS::kLinear ? 1 : 3;
+      curveData.m_bClosed = curveSample.getWrap() == AbcG::kPeriodic;
+      curveData.m_lDegree = curveSample.getType() == AbcG::ALEMBIC_VERSION_NS::kLinear ? 1 : 3;
 
       for(LONG k=0;k<nbVertices;k++)
       {
@@ -1258,7 +1258,7 @@ ESS_CALLBACK_START( alembic_crvlist_topo_Update, CRef& )
       }
 
       // based on curve type, we do this for linear or closed cubic curves
-      if(curveSample.getType() == Alembic::AbcGeom::ALEMBIC_VERSION_NS::kLinear || curveData.m_bClosed )
+      if(curveSample.getType() == AbcG::ALEMBIC_VERSION_NS::kLinear || curveData.m_bClosed )
       { 
          curveData.m_aKnots.Resize(nbVertices);
 		 for(LONG k=0;k<nbVertices;k++) {

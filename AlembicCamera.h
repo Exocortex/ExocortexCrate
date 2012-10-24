@@ -6,14 +6,14 @@
 class AlembicCamera: public AlembicObject
 {
 private:
-   Alembic::AbcGeom::OCameraSchema mCameraSchema;
-   Alembic::AbcGeom::CameraSample mCameraSample;
+   AbcG::OCameraSchema mCameraSchema;
+   AbcG::CameraSample mCameraSample;
 public:
 
-   AlembicCamera(exoNodePtr eNode, AlembicWriteJob * in_Job, Alembic::Abc::OObject oParent);
+   AlembicCamera(exoNodePtr eNode, AlembicWriteJob * in_Job, Abc::OObject oParent);
    ~AlembicCamera();
 
-   virtual Alembic::Abc::OCompoundProperty GetCompound();
+   virtual Abc::OCompoundProperty GetCompound();
    virtual XSI::CStatus Save(double time);
 };
 

@@ -18,14 +18,12 @@
 using namespace XSI;
 using namespace MATH;
 
-namespace AbcA = ::Alembic::AbcCoreAbstract::ALEMBIC_VERSION_NS;
-using namespace AbcA;
 
-AlembicModel::AlembicModel(exoNodePtr eNode, AlembicWriteJob * in_Job, Alembic::Abc::OObject oParent)
+AlembicModel::AlembicModel(exoNodePtr eNode, AlembicWriteJob * in_Job, Abc::OObject oParent)
 : AlembicObject(eNode, in_Job, oParent)
 {
    Primitive prim(GetRef());
-   Alembic::AbcGeom::OXform xform(GetMyParent(), eNode->name, GetJob()->GetAnimatedTs());
+   AbcG::OXform xform(GetMyParent(), eNode->name, GetJob()->GetAnimatedTs());
    if((bool)in_Job->GetOption(L"flattenHierarchy")){
       AddRef(prim.GetParent3DObject().GetKinematics().GetGlobal().GetRef());
    }
@@ -46,7 +44,7 @@ AlembicModel::~AlembicModel()
    mOVisibility.reset();
 }
 
-Alembic::Abc::OCompoundProperty AlembicModel::GetCompound()
+Abc::OCompoundProperty AlembicModel::GetCompound()
 {
    return mXformSchema;
 }
@@ -66,7 +64,7 @@ XSI::CStatus AlembicModel::Save(double time)
    if(isRefAnimated(visProp.GetRef()) || mNumSamples == 0)
    {
       bool visibility = visProp.GetParameterValue(L"rendvis",time);
-      mOVisibility.set(visibility ? Alembic::AbcGeom::kVisibilityVisible : Alembic::AbcGeom::kVisibilityHidden);
+      mOVisibility.set(visibility ? AbcG::kVisibilityVisible : AbcG::kVisibilityHidden);
    }
 
    // store the metadata

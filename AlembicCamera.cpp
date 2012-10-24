@@ -18,14 +18,11 @@
 using namespace XSI;
 using namespace MATH;
 
-namespace AbcA = ::Alembic::AbcCoreAbstract::ALEMBIC_VERSION_NS;
-using namespace AbcA;
-
-AlembicCamera::AlembicCamera(exoNodePtr eNode, AlembicWriteJob * in_Job, Alembic::Abc::OObject oParent)
+AlembicCamera::AlembicCamera(exoNodePtr eNode, AlembicWriteJob * in_Job, Abc::OObject oParent)
 : AlembicObject(eNode, in_Job, oParent)
 {
    Primitive prim(GetRef());
-   Alembic::AbcGeom::OCamera camera(GetMyParent(), eNode->name, GetJob()->GetAnimatedTs());
+   AbcG::OCamera camera(GetMyParent(), eNode->name, GetJob()->GetAnimatedTs());
 
    // create the generic properties
    mOVisibility = CreateVisibilityProperty(camera,GetJob()->GetAnimatedTs());
@@ -40,7 +37,7 @@ AlembicCamera::~AlembicCamera()
    mOVisibility.reset();
 }
 
-Alembic::Abc::OCompoundProperty AlembicCamera::GetCompound()
+Abc::OCompoundProperty AlembicCamera::GetCompound()
 {
    return mCameraSchema;
 }
@@ -56,7 +53,7 @@ XSI::CStatus AlembicCamera::Save(double time)
    if(isRefAnimated(visProp.GetRef()) || mNumSamples == 0)
    {
       bool visibility = visProp.GetParameterValue(L"rendvis",time);
-      mOVisibility.set(visibility ? Alembic::AbcGeom::kVisibilityVisible : Alembic::AbcGeom::kVisibilityHidden);
+      mOVisibility.set(visibility ? AbcG::kVisibilityVisible : AbcG::kVisibilityHidden);
    }
 
    // store the metadata
@@ -96,10 +93,10 @@ ESS_CALLBACK_START( alembic_camera_Update, CRef& )
    CString path = ctxt.GetParameterValue(L"path");
    CString identifier = ctxt.GetParameterValue(L"identifier");
 
-   Alembic::AbcGeom::IObject iObj = getObjectFromArchive(path,identifier);
+   AbcG::IObject iObj = getObjectFromArchive(path,identifier);
    if(!iObj.valid())
       return CStatus::OK;
-   Alembic::AbcGeom::ICamera obj(iObj,Alembic::Abc::kWrapExisting);
+   AbcG::ICamera obj(iObj,Abc::kWrapExisting);
    if(!obj.valid())
       return CStatus::OK;
 
@@ -112,7 +109,7 @@ ESS_CALLBACK_START( alembic_camera_Update, CRef& )
    Operator op(ctxt.GetSource());
    updateOperatorInfo( op, sampleInfo, obj.getSchema().getTimeSampling(), 0, 0);
 
-   Alembic::AbcGeom::CameraSample sample;
+   AbcG::CameraSample sample;
    obj.getSchema().get(sample,sampleInfo.floorIndex);
 
    // values

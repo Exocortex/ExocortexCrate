@@ -9,7 +9,7 @@
 
 #include "Alembic\AbcCoreAbstract\TimeSampling.h"
 
-namespace AbcA = ::Alembic::AbcCoreAbstract::ALEMBIC_VERSION_NS;
+namespace AbcA = ::AbcA;
 using AbcA::TimeSamplingPtr;
 
 

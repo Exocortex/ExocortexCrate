@@ -5,8 +5,6 @@
 #include <xsi_primitive.h>
 #include <xsi_x3dobject.h>
 
-namespace AbcA = ::Alembic::AbcCoreAbstract::ALEMBIC_VERSION_NS;
-using namespace AbcA;
 
 #pragma warning( disable: 4996 )
 
@@ -15,7 +13,7 @@ AlembicObject::AlembicObject
 (
    exoNodePtr eNode,
    AlembicWriteJob * in_Job,
-   Alembic::Abc::OObject oParent
+   Abc::OObject oParent
 )
 {
    exoNodePtr mExoSceneNode = eNode;

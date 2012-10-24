@@ -29,9 +29,7 @@
 using namespace XSI;
 
 #include "Alembic\AbcCoreAbstract\TimeSampling.h"
-namespace AbcA = ::Alembic::AbcCoreAbstract::ALEMBIC_VERSION_NS;
 
-using AbcA::TimeSamplingPtr;
 
 
 void logError( const char* msg ) {

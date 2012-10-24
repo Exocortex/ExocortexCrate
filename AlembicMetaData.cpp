@@ -18,9 +18,6 @@
 using namespace XSI;
 using namespace MATH;
 
-namespace AbcA = ::Alembic::AbcCoreAbstract::ALEMBIC_VERSION_NS;
-using namespace AbcA;
-
 void SaveMetaData(XSI::CRef x3dRef, AlembicObject * object)
 {
    if(object == NULL)
@@ -42,7 +39,7 @@ void SaveMetaData(XSI::CRef x3dRef, AlembicObject * object)
          continue;
       
       // we found a metadata property
-      Alembic::Abc::OStringArrayProperty metaDataProperty = Alembic::Abc::OStringArrayProperty(
+      Abc::OStringArrayProperty metaDataProperty = Abc::OStringArrayProperty(
          object->GetCompound(), ".metadata", object->GetCompound().getMetaData(), object->GetJob()->GetAnimatedTs() );
 
       std::vector<std::string> metaData(20);
@@ -53,7 +50,7 @@ void SaveMetaData(XSI::CRef x3dRef, AlembicObject * object)
          metaData[offset++] = prop.GetParameterValue(L"value"+CString(j)).GetAsText().GetAsciiString();
       }
 
-      Alembic::Abc::StringArraySample metaDataSample(&metaData.front(),metaData.size());
+      Abc::StringArraySample metaDataSample(&metaData.front(),metaData.size());
       metaDataProperty.set(metaDataSample);
       break;
    }

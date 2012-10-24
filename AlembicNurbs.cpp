@@ -19,19 +19,12 @@
 #include <xsi_kinematics.h>
 #include <xsi_kinematicstate.h>
 
-using namespace XSI;
-using namespace MATH;
 
-namespace AbcA = ::Alembic::AbcCoreAbstract::ALEMBIC_VERSION_NS;
-namespace AbcB = ::Alembic::Abc::ALEMBIC_VERSION_NS;
-using namespace AbcA;
-using namespace AbcB;
-
-AlembicNurbs::AlembicNurbs(exoNodePtr eNode, AlembicWriteJob * in_Job, Alembic::Abc::OObject oParent)
+AlembicNurbs::AlembicNurbs(exoNodePtr eNode, AlembicWriteJob * in_Job, Abc::OObject oParent)
 : AlembicObject(eNode, in_Job, oParent)
 {
    Primitive prim(GetRef());
-   Alembic::AbcGeom::ONuPatch nurbs(GetMyParent(), eNode->name, GetJob()->GetAnimatedTs());
+   AbcG::ONuPatch nurbs(GetMyParent(), eNode->name, GetJob()->GetAnimatedTs());
 
    mNurbsSchema = nurbs.getSchema();
 }
@@ -40,7 +33,7 @@ AlembicNurbs::~AlembicNurbs()
 {
 }
 
-Alembic::Abc::OCompoundProperty AlembicNurbs::GetCompound()
+Abc::OCompoundProperty AlembicNurbs::GetCompound()
 {
    return mNurbsSchema;
 }
@@ -66,8 +59,8 @@ XSI::CStatus AlembicNurbs::Save(double time)
    }
 
    // define additional vectors, necessary for this task
-   std::vector<Alembic::Abc::V3f> posVec;
-   std::vector<Alembic::Abc::N3f> normalVec;
+   std::vector<Abc::V3f> posVec;
+   std::vector<Abc::N3f> normalVec;
    std::vector<uint32_t> normalIndexVec;
 
    // access the mesh
@@ -76,7 +69,7 @@ XSI::CStatus AlembicNurbs::Save(double time)
    LONG vertCount = pos.GetCount();
 
    // prepare the bounding box
-   Alembic::Abc::Box3d bbox;
+   Abc::Box3d bbox;
 
    // allocate the points and normals
    posVec.resize(vertCount);
@@ -93,10 +86,10 @@ XSI::CStatus AlembicNurbs::Save(double time)
    // allocate the sample for the points
    if(posVec.size() == 0)
    {
-      bbox.extendBy(Alembic::Abc::V3f(0,0,0));
-      posVec.push_back(Alembic::Abc::V3f(FLT_MAX,FLT_MAX,FLT_MAX));
+      bbox.extendBy(Abc::V3f(0,0,0));
+      posVec.push_back(Abc::V3f(FLT_MAX,FLT_MAX,FLT_MAX));
    }
-   Alembic::Abc::P3fArraySample posSample(&posVec.front(),posVec.size());
+   Abc::P3fArraySample posSample(&posVec.front(),posVec.size());
 
    // store the positions && bbox
    if(mNumSamples == 0)
@@ -104,8 +97,8 @@ XSI::CStatus AlembicNurbs::Save(double time)
       std::vector<float> knots(1);
       knots[0] = 0.0f;
 
-      mNurbsSample.setUKnot(Alembic::Abc::FloatArraySample(&knots.front(),knots.size()));
-      mNurbsSample.setVKnot(Alembic::Abc::FloatArraySample(&knots.front(),knots.size()));
+      mNurbsSample.setUKnot(Abc::FloatArraySample(&knots.front(),knots.size()));
+      mNurbsSample.setVKnot(Abc::FloatArraySample(&knots.front(),knots.size()));
    }
    mNurbsSample.setPositions(posSample);
    mNurbsSample.setSelfBounds(bbox);
@@ -134,10 +127,10 @@ ESS_CALLBACK_START( alembic_nurbs_Update, CRef& )
    CString path = ctxt.GetParameterValue(L"path");
    CString identifier = ctxt.GetParameterValue(L"identifier");
 
-   Alembic::AbcGeom::IObject iObj = getObjectFromArchive(path,identifier);
+   AbcG::IObject iObj = getObjectFromArchive(path,identifier);
    if(!iObj.valid())
       return CStatus::OK;
-   Alembic::AbcGeom::INuPatch objNurbs(iObj,Alembic::Abc::kWrapExisting);
+   AbcG::INuPatch objNurbs(iObj,Abc::kWrapExisting);
    if(!objNurbs.valid())
       return CStatus::OK;
 
@@ -147,9 +140,9 @@ ESS_CALLBACK_START( alembic_nurbs_Update, CRef& )
       objNurbs.getSchema().getNumSamples()
    );
 
-   Alembic::AbcGeom::INuPatchSchema::Sample sample;
+   AbcG::INuPatchSchema::Sample sample;
    objNurbs.getSchema().get(sample,sampleInfo.floorIndex);
-   Alembic::Abc::P3fArraySamplePtr nurbsPos = sample.getPositions();
+   Abc::P3fArraySamplePtr nurbsPos = sample.getPositions();
 
    NurbsSurfaceMesh inNurbs = Primitive((CRef)ctxt.GetInputValue(0)).GetGeometry();
    CVector3Array pos = inNurbs.GetPoints().GetPositionArray();

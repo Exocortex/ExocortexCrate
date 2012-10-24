@@ -16,8 +16,8 @@ private:
 
     //XSI::CRefArray mSelection;
     std::vector<double> mFrames;
-    Alembic::Abc::OArchive mArchive;
-	Alembic::Abc::OObject mTop;
+    Abc::OArchive mArchive;
+	Abc::OObject mTop;
     unsigned int mTs;
     std::map<XSI::CString,XSI::CValue> mOptions;
     std::vector<AlembicObjectPtr> mObjects;
@@ -30,8 +30,8 @@ public:
       const XSI::CDoubleArray & in_Frames);
    ~AlembicWriteJob();
 
-   Alembic::Abc::OArchive GetArchive() { return mArchive; }
-   Alembic::Abc::OObject GetTop() { return mTop; }
+   Abc::OArchive GetArchive() { return mArchive; }
+   Abc::OObject GetTop() { return mTop; }
    const std::vector<double> & GetFrames() { return mFrames; }
    const XSI::CString & GetFileName() { return mFileName; }
    unsigned int GetAnimatedTs() { return mTs; }

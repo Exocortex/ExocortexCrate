@@ -6,15 +6,15 @@
 class AlembicNurbs: public AlembicObject
 {
 private:
-   Alembic::AbcGeom::ONuPatchSchema mNurbsSchema;
-   Alembic::AbcGeom::ONuPatchSchema::Sample mNurbsSample;
+   AbcG::ONuPatchSchema mNurbsSchema;
+   AbcG::ONuPatchSchema::Sample mNurbsSample;
 
 public:
 
-   AlembicNurbs(exoNodePtr eNode, AlembicWriteJob * in_Job, Alembic::Abc::OObject oParent);
+   AlembicNurbs(exoNodePtr eNode, AlembicWriteJob * in_Job, Abc::OObject oParent);
    ~AlembicNurbs();
 
-   virtual Alembic::Abc::OCompoundProperty GetCompound();
+   virtual Abc::OCompoundProperty GetCompound();
    virtual XSI::CStatus Save(double time);
 };
 

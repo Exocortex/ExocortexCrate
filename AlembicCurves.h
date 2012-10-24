@@ -7,27 +7,27 @@
 class AlembicCurves: public AlembicObject
 {
 private:
-   Alembic::AbcGeom::OCurvesSchema mCurvesSchema;
-   Alembic::AbcGeom::OCurvesSchema::Sample mCurvesSample;
-   std::vector<Alembic::AbcCoreAbstract::ALEMBIC_VERSION_NS::int32_t> mNbVertices;
+   AbcG::OCurvesSchema mCurvesSchema;
+   AbcG::OCurvesSchema::Sample mCurvesSample;
+   std::vector<AbcA::int32_t> mNbVertices;
 
-   Alembic::Abc::ALEMBIC_VERSION_NS::OV3fArrayProperty mVelocityProperty;
-   Alembic::Abc::ALEMBIC_VERSION_NS::OFloatArrayProperty mRadiusProperty;
-   Alembic::Abc::ALEMBIC_VERSION_NS::OC4fArrayProperty mColorProperty;
-   Alembic::Abc::ALEMBIC_VERSION_NS::OInt32ArrayProperty mFaceIndexProperty;
-   Alembic::Abc::ALEMBIC_VERSION_NS::OInt32ArrayProperty mVertexIndexProperty;
+   Abc::OV3fArrayProperty mVelocityProperty;
+   Abc::OFloatArrayProperty mRadiusProperty;
+   Abc::OC4fArrayProperty mColorProperty;
+   Abc::OInt32ArrayProperty mFaceIndexProperty;
+   Abc::OInt32ArrayProperty mVertexIndexProperty;
    
    std::vector<float> mRadiusVec;
-   std::vector<Alembic::Abc::V2f> mUvVec;
-   std::vector<Alembic::Abc::C4f> mColorVec;
-   std::vector<Alembic::Abc::V3f> mVelVec;
+   std::vector<Abc::V2f> mUvVec;
+   std::vector<Abc::C4f> mColorVec;
+   std::vector<Abc::V3f> mVelVec;
 
 public:
 
-   AlembicCurves(exoNodePtr eNode, AlembicWriteJob * in_Job, Alembic::Abc::OObject oParent);
+   AlembicCurves(exoNodePtr eNode, AlembicWriteJob * in_Job, Abc::OObject oParent);
    ~AlembicCurves();
 
-   virtual Alembic::Abc::OCompoundProperty GetCompound();
+   virtual Abc::OCompoundProperty GetCompound();
    virtual XSI::CStatus Save(double time);
 };
 

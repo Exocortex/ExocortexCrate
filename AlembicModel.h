@@ -6,14 +6,14 @@
 class AlembicModel: public AlembicObject
 {
 private:
-   Alembic::AbcGeom::OXformSchema mXformSchema;
-   Alembic::AbcGeom::XformSample mXformSample;
+   AbcG::OXformSchema mXformSchema;
+   AbcG::XformSample mXformSample;
 public:
 
-   AlembicModel(exoNodePtr eNode, AlembicWriteJob * in_Job, Alembic::Abc::OObject oParent);
+   AlembicModel(exoNodePtr eNode, AlembicWriteJob * in_Job, Abc::OObject oParent);
    ~AlembicModel();
 
-   virtual Alembic::Abc::OCompoundProperty GetCompound();
+   virtual Abc::OCompoundProperty GetCompound();
    virtual XSI::CStatus Save(double time);
 };
 
