@@ -51,7 +51,7 @@ MStatus AlembicPolyMesh::Save(double time)
    }
 
    // check if we have the global cache option
-   bool globalCache = GetJob()->GetOption(L"exportInGlobalSpace").asInt() > 0;
+   const bool globalCache = GetJob()->GetOption(L"exportInGlobalSpace").asInt() > 0;
    Alembic::Abc::M44f globalXfo;
    if(globalCache) {
       ESS_PROFILE_SCOPE("AlembicPolyMesh::Save get global xfo");
@@ -59,7 +59,7 @@ MStatus AlembicPolyMesh::Save(double time)
    }
 
    // ensure to keep the same topology if dynamic topology is disabled
-   bool dynamicTopology = GetJob()->GetOption(L"exportDynamicTopology").asInt() > 0;
+   const bool dynamicTopology = GetJob()->GetOption(L"exportDynamicTopology").asInt() > 0;
    if(!dynamicTopology && mNumSamples > 0)
    {
       ESS_PROFILE_SCOPE("AlembicPolyMesh::Save non-dynamic top verification");
@@ -285,7 +285,7 @@ MStatus AlembicPolyMesh::Save(double time)
              MFnSet setFn ( sets[i] );
              if (!useInitShadGrp && setFn.name() == "initialShadingGroup")
                continue;
-             std::vector<Alembic::Util::int32_t> faceVals;//(indices.length());
+             std::vector<Alembic::Util::int32_t> faceVals;
              {
                ESS_PROFILE_SCOPE("AlembicPolyMesh::Save FaceSets more tempFaceIt iteration");
                for (unsigned int j = 0; j < indices.length(); ++j)
@@ -603,178 +603,176 @@ MStatus AlembicPolyMeshNode::compute(const MPlug & plug, MDataBlock & dataBlock)
 	  isTopologyDynamic
 	  )
    {
-	  //ESS_LOG_WARNING( "Updating face topology." );
+     //ESS_LOG_WARNING( "Updating face topology." );
 
-      MIntArray counts;
-      MIntArray indices;
-      counts.setLength((unsigned int)sampleCounts->size());
-      indices.setLength((unsigned int)sampleIndices->size());
-      mSampleLookup.resize(indices.length());
-      mNormalFaces.setLength(indices.length());
-      mNormalVertices.setLength(indices.length());
+     MIntArray counts;
+     MIntArray indices;
+     counts.setLength((unsigned int)sampleCounts->size());
+     indices.setLength((unsigned int)sampleIndices->size());
+     mSampleLookup.resize(indices.length());
+     mNormalFaces.setLength(indices.length());
+     mNormalVertices.setLength(indices.length());
 
-      unsigned int offset = 0;
-      for(unsigned int i=0;i<counts.length();i++)
-      {
-         counts[i] = sampleCounts->get()[i];
-         for(int j=0;j<counts[i];j++)
+     unsigned int offset = 0;
+     for(unsigned int i=0;i<counts.length();i++)
+     {
+       counts[i] = sampleCounts->get()[i];
+       for(int j=0;j<counts[i];j++)
+       {
+         //MString count,index;
+         //count.set((double)counts[i]);
+         //index.set((double)sampleIndices->get()[offset+j]);
+         mSampleLookup[offset+counts[i]-j-1] = offset+j;
+         indices[offset+j] = sampleIndices->get()[offset+counts[i]-j-1];
+
+         mNormalFaces[offset+j] = i;
+         mNormalVertices[offset+j] = indices[offset+j];
+       }
+       offset += counts[i];
+     }
+
+     // create a mesh either with or without uvs
+     mMesh.create(points.length(),counts.length(),points,counts,indices,mMeshData);
+     mMesh.updateSurface();
+     if(mMesh.numFaceVertices() != indices.length()){
+       EC_LOG_ERROR("Error: mesh topology has changed. Cannot import UVs or normals.");
+       return MStatus::kFailure;
+       //importUvs = false;
+       //importNormals = false;
+     }
+
+     // check if we need to import uvs
+     if(importUvs)
+     {
+       Alembic::AbcGeom::IV2fGeomParam uvsParam = mSchema.getUVsParam();
+       if(uvsParam.valid())
+       {
+         if(uvsParam.getNumSamples() > 0)
          {
-            //MString count,index;
-            //count.set((double)counts[i]);
-            //index.set((double)sampleIndices->get()[offset+j]);
-            mSampleLookup[offset+counts[i]-j-1] = offset+j;
-            indices[offset+j] = sampleIndices->get()[offset+counts[i]-j-1];
+           sampleInfo = getSampleInfo(
+             inputTime,
+             uvsParam.getTimeSampling(),
+             uvsParam.getNumSamples()
+             );
 
-            mNormalFaces[offset+j] = i;
-            mNormalVertices[offset+j] = indices[offset+j];
-         }
-         offset += counts[i];
-      }
+           // check if we have uvSetNames
+           MStringArray uvSetNames;
+           if ( mSchema.getPropertyHeader( ".uvSetNames" ) != NULL )
+           {
+             Alembic::Abc::IStringArrayProperty uvSetNamesProp = Alembic::Abc::IStringArrayProperty( mSchema, ".uvSetNames" );
+             Alembic::Abc::StringArraySamplePtr ptr = uvSetNamesProp.getValue(0);
+             for(size_t i=0;i<ptr->size();i++)
+             {
+               std::string uvName = ptr->get()[i];
+               size_t pos = uvName.find("Channel_");
+               if (pos == 0)
+                 uvName = uvName.replace(0, 8, "map");
+               uvSetNames.append(uvName.c_str());
+             }
+           }
 
-      // create a mesh either with or without uvs
-      mMesh.create(points.length(),counts.length(),points,counts,indices,mMeshData);
-      mMesh.updateSurface();
-      if(mMesh.numFaceVertices() != indices.length()){
-		  EC_LOG_ERROR("Error: mesh topology has changed. Cannot import UVs or normals.");
-		  return MStatus::kFailure;
-		  //importUvs = false;
-		  //importNormals = false;
-      }
+           if(uvSetNames.length() <= 0){
+             uvSetNames.append("map1");
+           }
 
-      // check if we need to import uvs
-      if(importUvs)
-      {
-         Alembic::AbcGeom::IV2fGeomParam uvsParam = mSchema.getUVsParam();
-         if(uvsParam.valid())
-         {
-            if(uvsParam.getNumSamples() > 0)
-            {
-               sampleInfo = getSampleInfo(
-                  inputTime,
-                  uvsParam.getTimeSampling(),
-                  uvsParam.getNumSamples()
-               );
+           //delete all uvsets other than the default, which is named "map1"   
+           MStringArray existingUVSets;
+           mMesh.getUVSetNames(existingUVSets);
+           for(unsigned int i=0;i<existingUVSets.length();i++)
+           {
+             if(existingUVSets[i] == "map1") continue;
+             status = mMesh.deleteUVSet(existingUVSets[i]);
+             if ( status != MS::kSuccess ){
+               EC_LOG_ERROR("mMesh.deleteUVSet(\""<<existingUVSets[i]<<"\") failed: "<<status.errorString().asChar());
+             }
+           }
+           //status = mMesh.clearUVs(&uvSetNames[0]);
+           //if ( status != MS::kSuccess ) cout << "mMesh.clearUVs(\"map1\") failed: "<<status.errorString().asChar()<< endl;
 
-               // check if we have uvSetNames
-               MStringArray uvSetNames;
-               if ( mSchema.getPropertyHeader( ".uvSetNames" ) != NULL )
+           for(unsigned int uvSetIndex = 0; uvSetIndex < uvSetNames.length(); uvSetIndex++)
+           {
+             status = mMesh.createUVSetDataMesh( uvSetNames[uvSetIndex] );
+             if( status != MS::kSuccess ){
+               EC_LOG_ERROR("mMesh.createUVSet(\""<<uvSetNames[uvSetIndex]<<"\") failed: "<<status.errorString().asChar());
+             }
+           }
+
+           for(unsigned int uvSetIndex =0; uvSetIndex < uvSetNames.length(); uvSetIndex++)
+           {
+             std::vector<Imath::V2f> uvValuesFloor, uvValuesCeil;
+             std::vector<AbcA::uint32_t> uvIndicesFloor, uvIndicesCeil;
+             bool uvFloor = false, uvCeil = false;
+             if(uvSetIndex == 0) {
+               uvFloor = getIndexAndValues( sampleIndices, uvsParam, sampleInfo.floorIndex,
+                 uvValuesFloor, uvIndicesFloor );
+               uvCeil = getIndexAndValues( sampleIndices, uvsParam, sampleInfo.ceilIndex,
+                 uvValuesCeil, uvIndicesCeil );
+             }
+             else
+             {
+               MString storedUvSetName;
+               storedUvSetName.set((double)uvSetIndex);
+               storedUvSetName = MString("uv") + storedUvSetName;
+               if(mSchema.getPropertyHeader( storedUvSetName.asChar() ) == NULL)
+                 continue;
+               Alembic::AbcGeom::IV2fGeomParam uvParamExtended = Alembic::AbcGeom::IV2fGeomParam( mSchema, storedUvSetName.asChar() );
+               uvFloor = getIndexAndValues( sampleIndices, uvParamExtended, sampleInfo.floorIndex,
+                 uvValuesFloor, uvIndicesFloor );
+               uvCeil = getIndexAndValues( sampleIndices, uvParamExtended, sampleInfo.ceilIndex,
+                 uvValuesCeil, uvIndicesCeil );
+             }
+
+             if(uvIndicesFloor.size() == (size_t)indices.length())
+             {
+               MFloatArray uValues((unsigned int)uvValuesFloor.size()), vValues((unsigned int)uvValuesFloor.size());
+               if((sampleInfo.alpha != 0.0)&& uvCeil && uvIndicesFloor.size() == uvIndicesCeil.size() && ! isTopologyDynamic )
                {
-                  Alembic::Abc::IStringArrayProperty uvSetNamesProp = Alembic::Abc::IStringArrayProperty( mSchema, ".uvSetNames" );
-                  Alembic::Abc::StringArraySamplePtr ptr = uvSetNamesProp.getValue(0);
-                  for(size_t i=0;i<ptr->size();i++)
-                     uvSetNames.append(ptr->get()[i].c_str());
+                 float blend = (float)sampleInfo.alpha;
+                 float iblend = 1.0f - blend;
+                 for(unsigned int i=0;i<uvValuesFloor.size();i++)
+                 {
+                   uValues[i] = uvValuesFloor[i].x * iblend + uvValuesCeil[i].x * blend;
+                   vValues[i] = uvValuesFloor[i].y * iblend + uvValuesCeil[i].y * blend;
+                 }	                 
+               }
+               else {
+                 for(unsigned int i=0;i<uvValuesFloor.size();i++)
+                 {
+                   uValues[i] = uvValuesFloor[i].x;
+                   vValues[i] = uvValuesFloor[i].y;
+                 }
                }
 
-			   if(uvSetNames.length() <= 0){
-                  uvSetNames.append("uvset1");
-			   }
-			   //else{
-			   //   //rename the first uv set to the "map1" since maya doesn't seem allow the default uv set to be renamed
-      //            uvSetNames[0] = "map1";
-			   //}
-          
-			   //delete all uvsets other than the default, which is named "map1"   
-			   MStringArray existingUVSets;
-               mMesh.getUVSetNames(existingUVSets);
-               for(unsigned int i=0;i<existingUVSets.length();i++)
+               MIntArray uvIndices( (unsigned int) uvIndicesFloor.size() );
+               for(unsigned int i=0;i<uvIndicesFloor.size();i++)
                {
-			      if(existingUVSets[i] == "map1") continue;
-                  status = mMesh.deleteUVSet(existingUVSets[i]);
-				  if ( status != MS::kSuccess ){
-					  EC_LOG_ERROR("mMesh.deleteUVSet(\""<<existingUVSets[i]<<"\") failed: "<<status.errorString().asChar());
-				  }
+                 uvIndices[i] = uvIndicesFloor[mSampleLookup[i]];
                }
-			   //status = mMesh.clearUVs(&uvSetNames[0]);
-			   //if ( status != MS::kSuccess ) cout << "mMesh.clearUVs(\"map1\") failed: "<<status.errorString().asChar()<< endl;
-			   
-
-
-			   for(unsigned int uvSetIndex = 0; uvSetIndex < uvSetNames.length(); uvSetIndex++)
-			   {
-                  status = mMesh.createUVSetDataMesh( uvSetNames[uvSetIndex] );
-				  if( status != MS::kSuccess ){
-					  EC_LOG_ERROR("mMesh.createUVSet(\""<<uvSetNames[uvSetIndex]<<"\") failed: "<<status.errorString().asChar());
-				  }
-			   }
-              
-
-
-			   for(unsigned int uvSetIndex =0; uvSetIndex < uvSetNames.length(); uvSetIndex++)
-			   {
-				  std::vector<Imath::V2f> uvValuesFloor, uvValuesCeil;
-				  std::vector<AbcA::uint32_t> uvIndicesFloor, uvIndicesCeil;
-					bool uvFloor = false, uvCeil = false;
-				  if(uvSetIndex == 0) {
-					uvFloor = getIndexAndValues( sampleIndices, uvsParam, sampleInfo.floorIndex,
-					   uvValuesFloor, uvIndicesFloor );
-					uvCeil = getIndexAndValues( sampleIndices, uvsParam, sampleInfo.ceilIndex,
-					   uvValuesCeil, uvIndicesCeil );
-				  }
-                  else
-                  {
-                     MString storedUvSetName;
-                     storedUvSetName.set((double)uvSetIndex);
-                     storedUvSetName = MString("uv") + storedUvSetName;
-                     if(mSchema.getPropertyHeader( storedUvSetName.asChar() ) == NULL)
-                        continue;
-                     Alembic::AbcGeom::IV2fGeomParam uvParamExtended = Alembic::AbcGeom::IV2fGeomParam( mSchema, storedUvSetName.asChar() );
-					 uvFloor = getIndexAndValues( sampleIndices, uvParamExtended, sampleInfo.floorIndex,
-					   uvValuesFloor, uvIndicesFloor );
-					 uvCeil = getIndexAndValues( sampleIndices, uvParamExtended, sampleInfo.ceilIndex,
-					   uvValuesCeil, uvIndicesCeil );
-                  }
-
-                  if(uvIndicesFloor.size() == (size_t)indices.length())
-                  {
-                     MFloatArray uValues((unsigned int)uvValuesFloor.size()), vValues((unsigned int)uvValuesFloor.size());
-                      if((sampleInfo.alpha != 0.0)&& uvCeil && uvIndicesFloor.size() == uvIndicesCeil.size() && ! isTopologyDynamic )
-					  {
-						 float blend = (float)sampleInfo.alpha;
-						 float iblend = 1.0f - blend;
-						 for(unsigned int i=0;i<uvValuesFloor.size();i++)
-						 {
-							uValues[i] = uvValuesFloor[i].x * iblend + uvValuesCeil[i].x * blend;
-							vValues[i] = uvValuesFloor[i].y * iblend + uvValuesCeil[i].y * blend;
-						 }	                 
-				   }
-				   else {
-						 for(unsigned int i=0;i<uvValuesFloor.size();i++)
-						 {
-							uValues[i] = uvValuesFloor[i].x;
-							vValues[i] = uvValuesFloor[i].y;
-						 }
-					}
-
-                     MIntArray uvIndices( (unsigned int) uvIndicesFloor.size() );
-                     for(unsigned int i=0;i<uvIndicesFloor.size();i++)
-                     {
-                        uvIndices[i] = uvIndicesFloor[mSampleLookup[i]];
-                     }
-					 MIntArray uvCounts( mMesh.numPolygons() );
-                     for(int f=0;f<mMesh.numPolygons();f++){
-                         uvCounts[f] = mMesh.polygonVertexCount(f);
-					 }
-
-					 status = mMesh.setCurrentUVSetName(uvSetNames[uvSetIndex]);
-					 /*
-						-- this tends to error out but it actually works. Ben.
-					 if( status != MS::kSuccess ){
-						 EC_LOG_ERROR("mMesh.setCurrentUVSetName(\""<<uvSetNames[uvSetIndex]<<"\") failed: "<<status.errorString().asChar());
-					 }*/
-                     status = mMesh.setUVs(uValues, vValues, &uvSetNames[uvSetIndex]);
-					 if( status != MS::kSuccess ){
-						 EC_LOG_ERROR("mMesh.setUVs(\""<<uvSetNames[uvSetIndex]<<"\") failed: "<<status.errorString().asChar());
-					 }
-					 status = mMesh.assignUVs(uvCounts, uvIndices, &uvSetNames[uvSetIndex]);
-					 if ( status != MS::kSuccess ){
-						 EC_LOG_ERROR("mMesh.assignUVs(\""<<uvSetNames[uvSetIndex]<<"\") failed: "<<status.errorString().asChar());
-					 }
-                  }
+               MIntArray uvCounts( mMesh.numPolygons() );
+               for(int f=0;f<mMesh.numPolygons();f++){
+                 uvCounts[f] = mMesh.polygonVertexCount(f);
                }
 
-            }
+               status = mMesh.setCurrentUVSetName(uvSetNames[uvSetIndex]);
+               /*
+               -- this tends to error out but it actually works. Ben.
+               if( status != MS::kSuccess ){
+               EC_LOG_ERROR("mMesh.setCurrentUVSetName(\""<<uvSetNames[uvSetIndex]<<"\") failed: "<<status.errorString().asChar());
+               }*/
+               status = mMesh.setUVs(uValues, vValues, &uvSetNames[uvSetIndex]);
+               if( status != MS::kSuccess ){
+                 EC_LOG_ERROR("mMesh.setUVs(\""<<uvSetNames[uvSetIndex]<<"\") failed: "<<status.errorString().asChar());
+               }
+               status = mMesh.assignUVs(uvCounts, uvIndices, &uvSetNames[uvSetIndex]);
+               if ( status != MS::kSuccess ){
+                 EC_LOG_ERROR("mMesh.assignUVs(\""<<uvSetNames[uvSetIndex]<<"\") failed: "<<status.errorString().asChar());
+               }
+             }
+           }
+
          }
-      }
+       }
+     }
    }
    else if(mMesh.numVertices() == points.length())
       mMesh.setPoints(points);
