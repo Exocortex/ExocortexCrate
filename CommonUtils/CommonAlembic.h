@@ -23,6 +23,7 @@
 #include <assert.h>
 #include <map>
 
+#include <boost/algorithm/string.hpp>
 #include <boost/cstdint.hpp>
 #include <boost/smart_ptr.hpp>
 #include <boost/format.hpp>
