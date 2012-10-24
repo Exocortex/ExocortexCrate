@@ -273,6 +273,16 @@ AtNode *createPolyMeshNode(nodeData &nodata, userData * ud, std::vector<float> &
           AiArraySetUInt(nsIdx, ii, AiArrayGetUInt(ind.indices, ii));
       }
 
+	  if( typedObject.getSchema().getPropertyHeader( ".faceVaryingInterpolateBoundary" ) != NULL ) {
+	 		Abc::IInt32Property faceVaryingInterpolateBoundary = Abc::IInt32Property( typedObject.getSchema(), ".faceVaryingInterpolateBoundary" );
+			Abc::int32_t subDLevel;
+			faceVaryingInterpolateBoundary.get( subDLevel, 0 );
+			AiNodeSetStr(shapeNode, "subdiv_type", "catclark");
+			AiNodeSetInt(shapeNode, "subdiv_iterations", (AtInt)subDLevel);
+			AiNodeSetFlt(shapeNode, "subdiv_pixel_error", 0.0f);
+	  }
+
+
       // check if we have UVs in the alembic file
       Alembic::AbcGeom::IV2fGeomParam uvParam = typedObject.getSchema().getUVsParam();
       if(uvParam.valid())
