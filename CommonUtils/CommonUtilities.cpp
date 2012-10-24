@@ -148,11 +148,11 @@ AlembicObjectInfo* getObjectInfoFromArchive(std::string path, std::string identi
    ESS_PROFILE_SCOPE("getObjectInfoFromArchive");
 
    if( path.size() == 0 ) {
-	   ESS_LOG_ERROR( "No path specified." );
+	   ESS_LOG_WARNING( "No path specified (path: " << path <<" identifier:" << identifier << ")");
 	   return NULL;
 	}
 	if( identifier.size() == 0 ) {
-	   ESS_LOG_ERROR( "No identifier specified." );
+		ESS_LOG_WARNING( "No identifier specified (path: " << path <<" identifier:" << identifier << ")" );
 	   return  NULL;
 	}
 
