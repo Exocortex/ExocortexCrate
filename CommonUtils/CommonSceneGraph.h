@@ -48,10 +48,9 @@ public:
 
 void printSceneGraph(exoNodePtr root);
 
-void selectNodes(exoNodePtr root, exoNode::SelectionMap selectionMap, bool bParents, bool bChildren, bool bExcludeITransforms, bool bIncludeNonTransforms);
+void selectNodes(exoNodePtr root, exoNode::SelectionMap selectionMap, bool bParents, bool bChildren);
 
-
-
+void filterNodeSelection(exoNodePtr root, bool bExcludeITransforms, bool bExcludeNonTransforms);
 
 
 #endif

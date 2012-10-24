@@ -36,8 +36,7 @@ void printSceneGraph(exoNodePtr root)
 }
 
 
-
-void selectNodes(exoNodePtr root, exoNode::SelectionMap selectionMap, bool bParents, bool bChildren, bool bExcludeITransforms, bool bExcludeNonTransforms)
+void selectNodes(exoNodePtr root, exoNode::SelectionMap selectionMap, bool bParents, bool bChildren)
 {
    struct stackElement
    {
@@ -47,40 +46,12 @@ void selectNodes(exoNodePtr root, exoNode::SelectionMap selectionMap, bool bPare
       {}
    };
 
-   struct NodeSelector
-   {
-      bool bExcludeITransforms;
-      bool bExcludeNonTransforms;
-
-      NodeSelector(bool eit, bool nt):bExcludeITransforms(eit), bExcludeNonTransforms(nt)
-      {}
-
-      void operator()(exoNodePtr node)
-      {
-         node->selected = true;
-
-         if(bExcludeITransforms && node->type == exoNode::ITRANSFORM){
-            node->selected = false;
-         }
-
-         if(bExcludeNonTransforms && 
-            (node->type != exoNode::ITRANSFORM || node->type != exoNode::ETRANSFORM || node->type != exoNode::UNKNOWN)
-         ){
-            node->selected = false;
-         }
-      }
-   };
-
-   NodeSelector selector(bExcludeITransforms, bExcludeNonTransforms);
-
-
    std::list<stackElement> sceneStack;
    
    sceneStack.push_back(stackElement(root, false));
 
    while( !sceneStack.empty() )
    {
-
       stackElement sElement = sceneStack.back();
       exoNodePtr eNode = sElement.eNode;
       sceneStack.pop_back();
@@ -89,12 +60,12 @@ void selectNodes(exoNodePtr root, exoNode::SelectionMap selectionMap, bool bPare
       if(selectionMap.find(eNode->name) != selectionMap.end()){
          
          //this node's name matches one of the names from the selection map, so select it
-         selector(eNode);
+         eNode->selected = true;
 
          if(bParents){// select the parent nodes
             exoNodePtr currNode = eNode->parent;
             while(currNode){
-               selector(currNode);
+               currNode->selected = true;
                currNode = currNode->parent;
             }
          }
@@ -105,7 +76,7 @@ void selectNodes(exoNodePtr root, exoNode::SelectionMap selectionMap, bool bPare
       }
       if(sElement.bSelectChildren){
          bSelected = true;
-         selector(eNode);
+         eNode->selected = true;
       }
 
       for( std::list<exoNodePtr>::iterator it = eNode->children.begin(); it != eNode->children.end(); it++){
@@ -113,6 +84,43 @@ void selectNodes(exoNodePtr root, exoNode::SelectionMap selectionMap, bool bPare
       }
    }
 
+   root->selected = true;
+}
 
 
+void filterNodeSelection(exoNodePtr root, bool bExcludeITransforms, bool bExcludeNonTransforms)
+{
+   struct stackElement
+   {
+      exoNodePtr eNode;
+      stackElement(exoNodePtr enode):eNode(enode)
+      {}
+   };
+
+   std::list<stackElement> sceneStack;
+   
+   sceneStack.push_back(stackElement(root));
+
+   while( !sceneStack.empty() )
+   {
+      stackElement sElement = sceneStack.back();
+      exoNodePtr eNode = sElement.eNode;
+      sceneStack.pop_back();
+
+      if(bExcludeITransforms && eNode->type == exoNode::ITRANSFORM){
+         eNode->selected = false;
+      }
+
+      if(bExcludeNonTransforms && 
+         (eNode->type != exoNode::ITRANSFORM && eNode->type != exoNode::ETRANSFORM && eNode->type != exoNode::UNKNOWN)
+      ){
+         eNode->selected = false;
+      }
+
+      for( std::list<exoNodePtr>::iterator it = eNode->children.begin(); it != eNode->children.end(); it++){
+         sceneStack.push_back(stackElement(*it));
+      }
+   }
+
+   root->selected = true;
 }
