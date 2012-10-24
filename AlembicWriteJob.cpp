@@ -163,7 +163,7 @@ CStatus AlembicWriteJob::PreProcess()
    if(mFrameRate == 0.0)
       mFrameRate = 25.0;
 
-   std::vector<Alembic::AbcCoreAbstract::chrono_t> frames;
+   std::vector<AbcA::chrono_t> frames;
    for(LONG i=0;i<mFrames.size();i++)
       frames.push_back(mFrames[i] / mFrameRate);
 
@@ -277,7 +277,7 @@ CStatus AlembicWriteJob::PreProcess()
          Property geomProp;
          xObj.GetPropertyFromName(L"geomapprox",geomProp);
          LONG subDivLevel = geomProp.GetParameterValue(L"gapproxmordrsl");
-         if(subDivLevel > 0)
+         if(subDivLevel > 0 && GetOption(L"geomApproxSubD") )
          {
             AlembicObjectPtr ptr;
             ptr.reset(new AlembicSubD(xObj_GetActivePrimitive_GetRef,this));

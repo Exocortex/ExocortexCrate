@@ -18,9 +18,6 @@
 using namespace XSI;
 using namespace MATH;
 
-namespace AbcA = ::Alembic::AbcCoreAbstract::ALEMBIC_VERSION_NS;
-using namespace AbcA;
-
 void SaveMetaData(XSI::CRef x3dRef, AlembicObject * object)
 {
    if(object == NULL)

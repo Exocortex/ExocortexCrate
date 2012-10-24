@@ -29,10 +29,6 @@
 using namespace XSI;
 
 #include "Alembic\AbcCoreAbstract\TimeSampling.h"
-namespace AbcA = ::Alembic::AbcCoreAbstract::ALEMBIC_VERSION_NS;
-
-using AbcA::TimeSamplingPtr;
-
 
 void logError( const char* msg ) {
 #ifdef __EXOCORTEX_CORE_SERVICES_API_H
@@ -362,7 +358,7 @@ void nameMapClear()
    gNameMap.clear();
 }
 
-void updateOperatorInfo( XSI::Operator& op, SampleInfo& sampleInfo, TimeSamplingPtr timeSampling, 
+void updateOperatorInfo( XSI::Operator& op, SampleInfo& sampleInfo, AbcA::TimeSamplingPtr timeSampling, 
 						 int nPointsPrimitive, int nPointsCache)
 {
 	double t0, t1;

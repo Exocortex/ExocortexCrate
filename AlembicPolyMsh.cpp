@@ -48,6 +48,9 @@ AlembicPolyMesh::AlembicPolyMesh(const XSI::CRef & in_Ref, AlembicWriteJob * in_
 
    // create the generic properties
    mOVisibility = CreateVisibilityProperty(mesh,GetJob()->GetAnimatedTs());
+
+   mFaceVaryingInterpolateBoundaryProperty =
+        Abc::OInt32Property( mMeshSchema, ".faceVaryingInterpolateBoundary", mMeshSchema.getMetaData(), GetJob()->GetAnimatedTs() );
 }
 
 AlembicPolyMesh::~AlembicPolyMesh()
@@ -235,8 +238,8 @@ XSI::CStatus AlembicPolyMesh::Save(double time)
       std::vector<Abc::N3f> indexedNormals;
       createIndexedArray<Abc::N3f, SortableV3f>(mFaceIndicesVec, normalVec, indexedNormals, normalIndexVec);
 
-      Alembic::AbcGeom::ON3fGeomParam::Sample normalSample;
-      normalSample.setScope(Alembic::AbcGeom::kFacevaryingScope);
+      AbcG::ON3fGeomParam::Sample normalSample;
+      normalSample.setScope(AbcG::kFacevaryingScope);
       normalSample.setVals(Alembic::Abc::N3fArraySample(indexedNormals));
       if(normalIndexVec.size() > 0){
          normalSample.setIndices(Alembic::Abc::UInt32ArraySample(normalIndexVec));
@@ -381,6 +384,11 @@ XSI::CStatus AlembicPolyMesh::Save(double time)
             }
          }
       }
+	  
+      // set the subd level
+      Property geomApproxProp;
+      prim.GetParent3DObject().GetPropertyFromName(L"geomapprox",geomApproxProp);
+	  mFaceVaryingInterpolateBoundaryProperty.set( (Abc::int32_t) geomApproxProp.GetParameterValue(L"gapproxmordrsl") );
 
       // sweet, now let's have a look at face sets (really only for first sample)
       if(GetJob()->GetOption(L"exportFaceSets") && mNumSamples == 0)
@@ -473,7 +481,7 @@ ESS_CALLBACK_START( alembic_polymesh_Update, CRef& )
    if(!objMesh.valid() && !objSubD.valid())
       return CStatus::OK;
 
-   TimeSamplingPtr timeSampling;
+   AbcA::TimeSamplingPtr timeSampling;
    int nSamples = 0;
    if(objMesh.valid())
    {
@@ -824,7 +832,7 @@ ESS_CALLBACK_START( alembic_polymesh_topo_Update, CRef& )
 	   return CStatus::OK;
    }
 
-   TimeSamplingPtr timeSampling;
+   AbcA::TimeSamplingPtr timeSampling;
    int nSamples = 0;
    if(objMesh.valid())
    {
@@ -1051,7 +1059,7 @@ ESS_CALLBACK_START( alembic_bbox_Update, CRef& )
 
    Abc::Box3d box;
    SampleInfo sampleInfo;
-   TimeSamplingPtr timeSampling;
+   AbcA::TimeSamplingPtr timeSampling;
    int nSamples = 0;
    
    // check what kind of object we have

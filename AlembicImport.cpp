@@ -1320,10 +1320,16 @@ CStatus createShape( Abc::IObject& iObj, CRef& importRootNode, CRef& parentNode,
          returnOpRef = (CRef)returnedOpVal;
       }
 
+	  AbcG::IPolyMesh abcMesh = AbcG::IPolyMesh(iObj,Abc::kWrapExisting);
+         
       // load visibility
       alembic_create_item_Invoke(L"alembic_visibility",importRootNode,meshObj.GetRef(),filename,iObj.getFullName().c_str(),attachToExisting,createItemArgs);
 
-      // let's setup the xform op
+     // load geometryapprox
+	 if( ! importBboxes && abcMesh.getSchema().getPropertyHeader( ".faceVaryingInterpolateBoundary" ) != NULL )
+		alembic_create_item_Invoke(L"alembic_geomapprox",importRootNode,meshObj.GetRef(),filename,iObj.getFullName().c_str(),attachToExisting,createItemArgs);
+
+	  // let's setup the xform op
       if(AbcG::IXform::matches(parent.getMetaData()) && wasMerged)
          alembic_create_item_Invoke(L"alembic_xform",importRootNode,meshObj.GetRef(),filename,parent.getFullName().c_str(),attachToExisting,createItemArgs);
       

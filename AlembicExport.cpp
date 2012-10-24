@@ -206,6 +206,7 @@ ESS_CALLBACK_START(alembic_export_Execute,CRef&)
       bool globalspace = false;
       bool flattenhierarchy = true;
       bool guidecurves = false;
+	  bool geomApproxSubD = false;
       //CRefArray objects;
 
 	  std::vector<AlembicWriteJob::Selectee> objects;
@@ -251,6 +252,8 @@ ESS_CALLBACK_START(alembic_export_Execute,CRef&)
             guidecurves = (bool)CValue(valuePair[1]);
          else if(valuePair[0].IsEqualNoCase(L"filename"))
             filename = CValue(valuePair[1]).GetAsText();
+        else if(valuePair[0].IsEqualNoCase(L"geomApproxSubD"))
+            geomApproxSubD = (bool)CValue(valuePair[1]);
          else if(valuePair[0].IsEqualNoCase(L"objects"))
          {
             // try to find each object
@@ -372,6 +375,7 @@ ESS_CALLBACK_START(alembic_export_Execute,CRef&)
       job->SetOption(L"globalSpace",globalspace);
       job->SetOption(L"flattenHierarchy",flattenhierarchy);
       job->SetOption(L"guideCurves",guidecurves);
+	  job->SetOption(L"geomApproxSubD",geomApproxSubD);
 
       // check if the job is satifsied
       if(job->PreProcess() != CStatus::OK)
