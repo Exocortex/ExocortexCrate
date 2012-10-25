@@ -210,7 +210,7 @@ ESS_CALLBACK_START(alembic_export_Execute,CRef&)
 	  bool geomApproxSubD = false;
       //CRefArray objects;
 
-      SceneNode::SelectionMap objects;
+     std::vector<std::string> objects;
 
       // process all tokens of the job
       CStringArray tokens = jobs[i].Split(L";");
@@ -268,7 +268,7 @@ ESS_CALLBACK_START(alembic_export_Execute,CRef&)
                   Application().LogMessage(L"[ExocortexAlembic] Skipping object 'L"+objectStrings[k]+"', not found.",siWarningMsg);
                   continue;
                }
-               objects[objectStrings[k].GetAsciiString()] = true;
+               objects.push_back(objectStrings[k].GetAsciiString());
 
                // ensure to add models as a flattened list
                //Model model(objRef);

@@ -36,7 +36,7 @@ using namespace MATH;
 AlembicWriteJob::AlembicWriteJob
 (
    const CString & in_FileName,
-   const SceneNode::SelectionMap& in_Selection,
+   const std::vector<std::string>& in_Selection,
    const CDoubleArray & in_Frames
 )
 {
@@ -196,7 +196,16 @@ CStatus AlembicWriteJob::PreProcess()
    //TODO: eventually this should be a replaced with an equivalent virtual method, and the exporter will be shared
    exoNodePtr exoSceneRoot = buildCommonSceneGraph(Application().GetActiveSceneRoot());
    
-   selectNodes(exoSceneRoot, mSelection, bSelectParents, bSelectChildren);
+   std::map<std::string, bool> selectionMap;
+
+   for(int i=0; i<mSelection.size(); i++){
+      XSI::CRef nodeRef;
+      nodeRef.Set(mSelection[i].c_str());
+      XSI::X3DObject xObj(nodeRef);
+      selectionMap[xObj.GetFullName().GetAsciiString()] = true;
+   }
+
+   selectNodes(exoSceneRoot, selectionMap, bSelectParents, bSelectChildren);
    filterNodeSelection(exoSceneRoot, bTransformCache ? false : bFlattenHierarchy, bTransformCache);
 
    ::printSceneGraph(exoSceneRoot);

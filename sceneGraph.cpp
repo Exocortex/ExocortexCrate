@@ -22,8 +22,11 @@ SceneNode::nodeTypeE getNodeType(X3DObject& xObj)
    //ESS_LOG_WARNING("type: "<<xObj.GetType().GetAsciiString());
 
    CString xObj_GetType = xObj.GetType();
+   if(xObj_GetType.IsEqualNoCase(L"#model")){
+      return SceneNode::ITRANSFORM;
+   }
    if(xObj_GetType.IsEqualNoCase(L"null")){
-      return  SceneNode::ITRANSFORM;
+      return SceneNode::ITRANSFORM;
    }
    else if(xObj_GetType.IsEqualNoCase(L"camera"))
    {
@@ -133,12 +136,12 @@ exoNodePtr buildCommonSceneGraph(XSI::X3DObject xsiRoot)
             exoChild->name = child.GetName().GetAsciiString();
             exoChild->name += "Xfo";
             exoChild->type = SceneNode::ETRANSFORM;
-            exoChild->dccIdentifier = child.GetUniqueName().GetAsciiString();
+            exoChild->dccIdentifier = child.GetFullName().GetAsciiString();
 
             geoChild->parent = exoChild;
             geoChild->name = child.GetName().GetAsciiString();
             geoChild->type = type;
-            geoChild->dccIdentifier = child.GetUniqueName().GetAsciiString();
+            geoChild->dccIdentifier = child.GetFullName().GetAsciiString();
 
             exoChild->children.push_back(geoChild);
          }
