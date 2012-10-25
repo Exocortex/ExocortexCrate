@@ -223,7 +223,7 @@ bool AlembicPolyMesh::Save(double time, bool bLastFrame)
 	mMeshSample.setPositions(Abc::P3fArraySample(finalPolyMesh.posVec));
 
 	mMeshSample.setSelfBounds(finalPolyMesh.bbox);
-	mMeshSample.setChildBounds(finalPolyMesh.bbox);
+	mMeshSchema.getChildBoundsProperty().set(finalPolyMesh.bbox);
 	
     // abort here if we are just storing points
     if(mJob->GetOption("exportPurePointCache"))

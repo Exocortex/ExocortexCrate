@@ -111,7 +111,7 @@ bool AlembicXForm::Save(double time, bool bLastFrame)
     Box3 maxBox = pDummyObject->GetBox();
     Abc::V3d minpoint(maxBox.pmin.x, maxBox.pmin.y, maxBox.pmin.z);
     Abc::V3d maxpoint(maxBox.pmax.x, maxBox.pmax.y, maxBox.pmax.z);
-    mXformSample.setChildBounds(Abc::Box3d(minpoint, maxpoint));
+	mXformSchema.getChildBoundsProperty().set( Abc::Box3d(minpoint, maxpoint) );
 
     if(mXformSchema.getNumSamples() == 0)
     {

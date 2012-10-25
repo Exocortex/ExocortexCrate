@@ -445,7 +445,7 @@ bool AlembicPoints::Save(double time, bool bLastFrame)
     mPointsSample.setWidths(AbcG::OFloatGeomParam::Sample(widthSample, AbcG::kVertexScope));
     mPointsSample.setIds(idSample);
     mPointsSample.setSelfBounds(bbox);
-	mPointsSample.setChildBounds(bbox);
+	mPointsSchema.getChildBoundsProperty().set( bbox);
 
     mPointsSchema.set(mPointsSample);
 
@@ -1043,7 +1043,7 @@ void AlembicPoints::saveCurrentFrameMeshes()
 
 			meshSample.setPositions(Abc::P3fArraySample(finalPolyMesh.posVec));
 			meshSample.setSelfBounds(finalPolyMesh.bbox);
-			meshSample.setChildBounds(finalPolyMesh.bbox);
+			meshSchema.getChildBoundsProperty().set(finalPolyMesh.bbox);
 
 			meshSample.setFaceCounts(Abc::Int32ArraySample(finalPolyMesh.mFaceCountVec));
 			meshSample.setFaceIndices(Abc::Int32ArraySample(finalPolyMesh.mFaceIndicesVec));

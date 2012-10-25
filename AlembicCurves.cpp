@@ -185,7 +185,7 @@ bool AlembicCurves::Save(double time, bool bLastFrame)
 
     // store the bbox
     mCurvesSample.setSelfBounds(bbox);
-	mCurvesSample.setChildBounds(bbox);
+	mCurvesSchema.getChildBoundsProperty().set(bbox);
 
  
     // if we are the first frame!
