@@ -13,7 +13,7 @@ typedef boost::shared_ptr<SceneNode> exoNodePtr;
 class SceneNode
 {
 public:
-   typedef std::map<std::string, bool> SelectionMap;
+   typedef std::map<std::string, bool> SelectionT;
 
    enum nodeTypeE{
       SCENE_ROOT,
@@ -48,7 +48,7 @@ public:
 
 void printSceneGraph(exoNodePtr root);
 
-void selectNodes(exoNodePtr root, SceneNode::SelectionMap selectionMap, bool bParents, bool bChildren);
+void selectNodes(exoNodePtr root, SceneNode::SelectionT selectionMap, bool bParents, bool bChildren);
 
 void filterNodeSelection(exoNodePtr root, bool bExcludeITransforms, bool bExcludeNonTransforms);
 

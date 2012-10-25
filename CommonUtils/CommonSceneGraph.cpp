@@ -24,7 +24,7 @@ void printSceneGraph(exoNodePtr root)
       exoNodePtr eNode = sElement.eNode;
       sceneStack.pop_back();
 
-      ESS_LOG_WARNING("Level: "<<sElement.level<<" - Name: "<<eNode->name<<" - Selected: "<<(eNode->selected)?"true":"false");
+      ESS_LOG_WARNING("Level: "<<sElement.level<<" - Name: "<<eNode->name<<" - Selected: "<<(eNode->selected?"true":"false")<<" - path: "<<eNode->dccIdentifier);
          //<<" - identifer: "<<eNode->dccIdentifier);
 
       for( std::list<exoNodePtr>::iterator it = eNode->children.begin(); it != eNode->children.end(); it++){
@@ -36,7 +36,7 @@ void printSceneGraph(exoNodePtr root)
 }
 
 
-void selectNodes(exoNodePtr root, SceneNode::SelectionMap selectionMap, bool bParents, bool bChildren)
+void selectNodes(exoNodePtr root, SceneNode::SelectionT selectionMap, bool bParents, bool bChildren)
 {
    struct stackElement
    {
@@ -57,7 +57,7 @@ void selectNodes(exoNodePtr root, SceneNode::SelectionMap selectionMap, bool bPa
       sceneStack.pop_back();
 
       bool bSelected = false;
-      if(selectionMap.find(eNode->name) != selectionMap.end()){
+      if(selectionMap.find(eNode->dccIdentifier) != selectionMap.end()){
          
          //this node's name matches one of the names from the selection map, so select it
          eNode->selected = true;
