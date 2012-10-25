@@ -94,6 +94,7 @@ SET( SOURCE_FILES ${CXX_FILES} ${H_FILES} )
 
 ADD_LIBRARY( AlembicAbcCoreAbstract ${SOURCE_FILES} )
 
+SET_TARGET_PROPERTIES (AlembicAbcCoreAbstract PROPERTIES FOLDER Alembic )
 INSTALL( TARGETS AlembicAbcCoreAbstract
          LIBRARY DESTINATION lib
          ARCHIVE DESTINATION lib/static )
