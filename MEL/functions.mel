@@ -47,6 +47,8 @@ global proc exocortexAlembicExport(string $filename,         string $exported_ob
 
 global proc exocortexAlembicImport(string $filename, int $importNormals, int $importUvs, int $importFaceSets, string $importVisibility, int $importAttach)
 {
+  global string $gMainProgressBar;
+
   ExocortexAlembic_profileReset;
   ExocortexAlembic_profileBegin -f MEL_exocortexAlembicImport;
 
@@ -108,12 +110,20 @@ global proc exocortexAlembicImport(string $filename, int $importNormals, int $im
   
   print "parsing file...";
   
+  int $barSize = size($identifiers);
+  progressBar -e -bp -ii 1 -max $barSize $gMainProgressBar;
+
   // now let's create all items
   string $objects[];
   for($i=0;$i<size($identifiers);$i=$i+1)
     $objects[$i] = "";
   for($i=(size($identifiers)-1);$i>=0;$i=$i-1)
   {
+    // check if the progress bar has been interrupted or not!
+    if(`progressBar -q -ic $gMainProgressBar`)
+      break;
+    progressBar -e -s 1 $gMainProgressBar;
+
     if ($identifiers[$i] == "")
       continue;
     string $parts[];
@@ -368,10 +378,11 @@ global proc exocortexAlembicImport(string $filename, int $importNormals, int $im
     setAttr -type "string" ($reader+".identifier") $identifiers[$i];
     $objects[$i] = $shape;
     ExocortexAlembic_profileEnd -f MEL_exocortexAlembicImport_FinalizeObject;
-    
+
     // setup metadata if we have it
     ExocortexAlembic_createMetaData -f $filename -i $identifiers[$i] -o $shape;
   }
+  progressBar -e -endProgress $gMainProgressBar;
 
   ExocortexAlembic_postImportPoints;
   ExocortexAlembic_profileEnd -f MEL_exocortexAlembicImport;
