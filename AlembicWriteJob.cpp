@@ -16,25 +16,6 @@
 
 
 
-namespace ExoHashing
-{
-  std::locale loc;
-
-  const std::collate<char> &coll = std::use_facet<std::collate<char> >(loc);
-
-  long hash(const std::string &str)
-  {
-    const char *c = str.c_str();
-    return coll.hash(c, c + str.size());
-  }
-
-  long hash(const MString &str)
-  {
-    const char *c = str.asChar();
-    return coll.hash(c, c + str.length());
-  }
-}
-
 AlembicWriteJob::AlembicWriteJob
 (
    const MString & in_FileName,
@@ -87,9 +68,9 @@ AlembicObjectPtr AlembicWriteJob::GetObject(const MObject & in_Ref)
 {
   ESS_PROFILE_SCOPE("AlembicWriteJob::GetObject");
 
-   long hsh = ExoHashing::hash(getFullNameFromRef(in_Ref));
-   MapLongAlembicObject::const_iterator it = mapObjects.find(hsh);
-   if (it == mapObjects.end())
+    std::string fullName(getFullNameFromRef(in_Ref).asChar());
+	std::map<std::string, AlembicObjectPtr>::const_iterator it = mapObjects.find(fullName);
+	if (it == mapObjects.end())
      return AlembicObjectPtr();
    return it->second;
 }
@@ -105,8 +86,8 @@ bool AlembicWriteJob::AddObject(AlembicObjectPtr in_Obj)
    AlembicObjectPtr existing = GetObject(in_Ref);
    if(existing != NULL)
       return false;
-   long hsh = ExoHashing::hash(getFullNameFromRef(in_Ref));
-   mapObjects[hsh] = in_Obj;
+  std::string fullName(getFullNameFromRef(in_Ref).asChar());
+	mapObjects[fullName] = in_Obj;
    return true;
 }
 
@@ -246,8 +227,8 @@ MStatus AlembicWriteJob::Process(double frame)
          continue;
 
       // run the export for all objects
-      for (MapLongAlembicObject::iterator it = mapObjects.begin(); it != mapObjects.end(); ++it)
-      {
+	  for (std::map<std::string, AlembicObjectPtr>::iterator it = mapObjects.begin(); it != mapObjects.end(); ++it)
+	  {
          MStatus status = it->second->Save(mFrames[i]);
          if(status != MStatus::kSuccess)
             return status;

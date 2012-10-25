@@ -18,8 +18,8 @@ private:
     unsigned int mTs;
     std::map<std::string,std::string> mOptions;
     //std::vector<AlembicObjectPtr> mObjects;
-    MapLongAlembicObject mapObjects;
-    double mFrameRate;
+    std::map<std::string, AlembicObjectPtr> mapObjects;
+	double mFrameRate;
 public:
    AlembicWriteJob(
       const MString & in_FileName,
