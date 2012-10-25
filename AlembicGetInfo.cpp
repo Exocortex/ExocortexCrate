@@ -1,9 +1,7 @@
+#include "stdafx.h"
 #include "AlembicGetInfo.h"
 #include "CommonMeshUtilities.h"
 
-#include <sstream>
-#include <set>
-#include <deque>
 
 using namespace std;
 

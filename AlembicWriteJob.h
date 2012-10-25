@@ -1,12 +1,7 @@
 #ifndef _ALEMBIC_WRITE_JOB_H_
 #define _ALEMBIC_WRITE_JOB_H_
 
-#include "Foundation.h"
 #include "AlembicObject.h"
-
-#include <map>
-
-typedef std::map<long, AlembicObjectPtr> MapLongAlembicObject;
 
 class AlembicWriteJob
 {

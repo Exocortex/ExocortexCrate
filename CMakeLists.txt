@@ -28,8 +28,9 @@ file(GLOB_RECURSE UI ${BASE_DIR}/UI/*.*)
 SOURCE_GROUP("Source Files" FILES ${Sources})   
 SOURCE_GROUP("Header Files" FILES ${Includes})
 SOURCE_GROUP("_MEL" FILES ${Scripts})
-SOURCE_GROUP("_UI" FILES ${UI})
+SOURCE_GROUP("_UI" FILES ${UI}) 
 
+setup_precompiled_header( ${BASE_DIR} ${Sources} )
 
 IF( WIN32 )
 

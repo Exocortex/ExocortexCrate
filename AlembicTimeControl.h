@@ -1,7 +1,6 @@
 #ifndef _ALEMBIC_TIMECONTROL_H_
 #define _ALEMBIC_TIMECONTROL_H_
 
-#include "Foundation.h"
 #include "AlembicObject.h"
 
 class AlembicTimeControlNode: public AlembicObjectNode

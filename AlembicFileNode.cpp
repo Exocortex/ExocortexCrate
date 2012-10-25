@@ -1,3 +1,4 @@
+#include "stdafx.h"
 #include "AlembicFileNode.h"
 
 MObject AlembicFileNode::mFileNameAttr;

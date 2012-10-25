@@ -1,7 +1,7 @@
+#include "stdafx.h"
 #include "AlembicXform.h"
 #include "MetaData.h"
 
-#include <maya/MFnTransform.h>
 
 
 AlembicXform::AlembicXform(const MObject & in_Ref, AlembicWriteJob * in_Job)

@@ -1,3 +1,4 @@
+#include "stdafx.h"
 #include "AlembicLicensing.h"
 #include "AlembicWriteJob.h"
 #include "AlembicObject.h"
@@ -11,8 +12,6 @@
 #include "CommonLog.h"
 //#include "AlembicNurbs.h"
 
-#include <maya/MAnimControl.h>
-#include <locale>
 
 
 

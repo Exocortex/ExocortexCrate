@@ -1,9 +1,6 @@
+#include "stdafx.h"
 #include "AlembicPolyMesh.h"
-#include <maya/MFnMeshData.h>
-#include <maya/MFnSet.h>
-#include <maya/MItMeshPolygon.h>
 #include "MetaData.h"
-#include <sstream>
 #include "CommonMeshUtilities.h"
 
 

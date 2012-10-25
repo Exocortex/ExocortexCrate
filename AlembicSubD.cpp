@@ -1,10 +1,7 @@
+#include "stdafx.h"
 #include "AlembicSubD.h"
-#include <maya/MFnSubdData.h>
 #include "MetaData.h"
-#include <maya/MPoint.h>
-#include <maya/MPointArray.h>
-#include <maya/MFnSubdNames.h>
-#include <maya/MItSubdVertex.h>
+
 
 
 AlembicSubD::AlembicSubD(const MObject & in_Ref, AlembicWriteJob * in_Job)

@@ -1,7 +1,7 @@
+#include "stdafx.h"
 #include "AlembicPoints.h"
 #include "MetaData.h"
-#include <maya/MVectorArray.h>
-#include <maya/MFnArrayAttrsData.h>
+
 
 AlembicPoints::AlembicPoints(const MObject & in_Ref, AlembicWriteJob * in_Job)
 : AlembicObject(in_Ref, in_Job)

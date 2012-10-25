@@ -1,8 +1,8 @@
+#include "stdafx.h"
 #include "Utility.h"
 #include "AlembicObject.h"
 #include "AlembicLicensing.h"
 #include "AlembicArchiveStorage.h"
-#include <maya/MFnTransform.h>
 
 void logError( const char* msg ) {
 #ifdef __EXOCORTEX_CORE_SERVICES_API_H
