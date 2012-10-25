@@ -1,7 +1,7 @@
 #ifndef _UTILITY_H_
 #define _UTILITY_H_
 
-#include "Foundation.h"
+
 #include "AlembicIntermediatePolyMesh3DSMax.h"
 #include "AlembicLicensing.h"
 #include "CommonUtilities.h"

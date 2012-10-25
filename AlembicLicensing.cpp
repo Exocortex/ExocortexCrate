@@ -1,9 +1,6 @@
-#include "Foundation.h"
-#include "AlembicMax.h"
+#include "stdafx.h"
 #include "AlembicLicensing.h"
 #include "Alembic.h"
-#include <boost/algorithm/string.hpp>
-#include <boost/thread/mutex.hpp>
 
 using namespace std;
 

@@ -2,7 +2,7 @@
 #define __ALEMBIC_INTERMEDIATE_POLYMESH_3DSMax_H__
 
 
-#include "AlembicMax.h"
+
 #include "AlembicIntermediatePolyMesh.h"
 
 class VNormal

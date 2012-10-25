@@ -1,3 +1,4 @@
+#include "stdafx.h"
 #include "MaxSceneTimeManager.h"
 
 static TimeValue g_currTick = -1;

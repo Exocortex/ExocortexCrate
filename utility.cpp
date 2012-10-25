@@ -1,10 +1,8 @@
+#include "stdafx.h"
 #include "Alembic.h"
-#include "AlembicMax.h"
 #include "Utility.h"
 #include "SceneEnumProc.h"
 #include "AlembicIntermediatePolyMesh3DSMax.h"
-#include <boost/algorithm/string.hpp>
-
 
 void logError( const char* msg ) {
 	Exocortex::essLogError( msg );

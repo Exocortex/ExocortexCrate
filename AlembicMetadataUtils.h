@@ -4,7 +4,7 @@
 #include <Alembic/Abc/All.h>
 #include <Alembic/AbcGeom/All.h>
 #include <Alembic/AbcCoreHDF5/All.h>
-#include "AlembicMax.h"
+
 
 class AlembicObject;
 

@@ -1,5 +1,6 @@
+#include "stdafx.h"
 #include "Alembic.h"
-#include "AlembicMax.h"
+
 #include "AlembicWriteJob.h"
 #include "ObjectList.h"
 

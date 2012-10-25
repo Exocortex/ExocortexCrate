@@ -1,5 +1,5 @@
+#include "stdafx.h"
 #include "Alembic.h"
-#include "AlembicMax.h"
 #include "AlembicDefinitions.h"
 #include "AlembicCameraUtilities.h"
 #include "AlembicArchiveStorage.h"
@@ -9,7 +9,6 @@
 #include "AlembicFloatController.h"
 #include "AlembicMAXScript.h"
 #include "AlembicMetadataUtils.h"
-#include <boost/algorithm/string.hpp>
  
 //////////////////////////////////////////////////////////////////////////////////////////
 // Import options struct containing the information necessary to fill the camera object

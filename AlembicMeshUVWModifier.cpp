@@ -1,5 +1,5 @@
+#include "stdafx.h"
 #include "Alembic.h"
-#include "AlembicMax.h"
 #include "AlembicDefinitions.h"
 #include "AlembicMeshUVWModifier.h"
 #include "AlembicArchiveStorage.h"

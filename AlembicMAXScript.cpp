@@ -1,5 +1,5 @@
+#include "stdafx.h"
 #include "Alembic.h"
-#include "AlembicMax.h"
 #include "AlembicArchiveStorage.h"
 #include "AlembicMeshUtilities.h"
 #include "AlembicSplineUtilities.h"
@@ -12,10 +12,6 @@
 #include "AlembicWriteJob.h"
 #include "AlembicRecursiveImporter.h"
 #include "Utility.h"
-//#include <boost/algorithm/string/split.hpp>
-//#include <boost/algorithm/string/predicate.hpp>
-//#include <boost/algorithm/string/classification.hpp>
-#include <boost/algorithm/string.hpp>
 #include "CommonProfiler.h"
 
 // Dummy function for progress bar

@@ -1,6 +1,5 @@
+#include "stdafx.h"
 #include "AlembicMetadataUtils.h"
-#include <icustattribcontainer.h> 
-#include <custattrib.h> 
 #include "AlembicObject.h"
 #include "utility.h"
 

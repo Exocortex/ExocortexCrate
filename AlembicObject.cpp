@@ -1,8 +1,7 @@
-#include "AlembicMax.h"
+#include "stdafx.h"
 #include "Alembic.h"
 #include "AlembicObject.h"
 #include "utility.h"
-#include <boost/algorithm/string.hpp>
 
 #pragma warning( disable: 4996 )
 

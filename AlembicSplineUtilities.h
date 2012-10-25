@@ -1,8 +1,8 @@
 #ifndef __ALEMBIC_SPLINE_UTILITIES_H
 #define __ALEMBIC_SPLINE_UTILITIES_H
 
-#include "Foundation.h"
-#include "AlembicMax.h"
+
+
 #include "resource.h"
 #include "AlembicDefinitions.h"
 

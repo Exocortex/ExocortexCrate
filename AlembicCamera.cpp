@@ -1,5 +1,5 @@
+#include "stdafx.h"
 #include "Alembic.h"
-#include "AlembicMax.h"
 #include "AlembicCamera.h"
 #include "AlembicXForm.h"
 #include "SceneEnumProc.h"

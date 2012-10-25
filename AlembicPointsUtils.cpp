@@ -1,20 +1,5 @@
-
+#include "stdafx.h"
 #include "AlembicPointsUtils.h"
-#include <IParticleObjectExt.h>
-#include <ParticleFlow/IParticleChannelID.h>
-#include <ParticleFlow/IParticleChannelShape.h>
-#include <ParticleFlow/IParticleContainer.h>
-#include <ParticleFlow/IParticleGroup.h>
-#include <ParticleFlow/IPFSystem.h>
-#include <ParticleFlow/IPFActionList.h>
-#include <ParticleFlow/PFSimpleOperator.h>
-#include <ParticleFlow/IParticleChannels.h>
-#include <ParticleFlow/IChannelContainer.h>
-#include <ParticleFlow/IParticleChannelLifespan.h>
-#include <ParticleFlow/IPFRender.h>
-#include <ParticleFlow/IChannelContainer.h>
-#include <map>
-#include <vector>
 #include "AlembicParticles.h"
 #include "AlembicIntermediatePolyMesh3DSMax.h" 
 #include "AlembicWriteJob.h"

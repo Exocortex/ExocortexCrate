@@ -1,42 +1,14 @@
-
-
-#include "Foundation.h"
-
-#ifdef THINKING_PARTICLES
-#define IDS_CLASS_NAME 3
-#define max(a,b)            (((a) > (b)) ? (a) : (b))
-#define min(a,b)            (((a) < (b)) ? (a) : (b))
-#include <matterwaves.h>
-#undef max
-#undef min
-#endif
-
+#include "stdafx.h"
 #include "Alembic.h"
-#include "AlembicMax.h"
 #include "AlembicPoints.h"
 #include "AlembicXform.h"
 #include "SceneEnumProc.h"
 #include "Utility.h"
-#include <IParticleObjectExt.h>
-#include <ParticleFlow/IParticleChannelID.h>
-#include <ParticleFlow/IParticleChannelShape.h>
-#include <ParticleFlow/IParticleContainer.h>
-#include <ParticleFlow/IParticleGroup.h>
-#include <ParticleFlow/IPFSystem.h>
-#include <ParticleFlow/IPFActionList.h>
-#include <ParticleFlow/PFSimpleOperator.h>
-#include <ParticleFlow/IParticleChannels.h>
-#include <ParticleFlow/IChannelContainer.h>
-#include <ParticleFlow/IParticleChannelLifespan.h>
-#include <ParticleFlow/IPFTest.h>
-#include <ifnpub.h>
-#include <ImathMatrixAlgo.h>
+
 #include "AlembicMetadataUtils.h"
 #include "MaxSceneTimeManager.h"
-#include <Alembic/Util/Murmur3.h>
 #include "AlembicPointsUtils.h"
 #include "AlembicParticles.h"
-#include <ImathMatrixAlgo.h>
 #include "CommonMeshUtilities.h"
 
 #define PARTICLECHANNELLOCALOFFSETR_INTERFACE Interface_ID(0x12ec5d1d, 0x1eb34500) 

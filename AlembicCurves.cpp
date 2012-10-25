@@ -1,4 +1,4 @@
-#include "AlembicMax.h"
+#include "stdafx.h"
 #include "AlembicCurves.h"
 #include "AlembicXform.h"
 #include "SceneEnumProc.h"

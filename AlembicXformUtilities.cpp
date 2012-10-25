@@ -1,4 +1,4 @@
-#include "AlembicMax.h"
+#include "stdafx.h"
 #include "AlembicXformUtilities.h"
 #include "AlembicMAXScript.h"
 #include "AlembicMetadataUtils.h"

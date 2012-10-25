@@ -1,7 +1,7 @@
 #ifndef __ALEMBIC_INTERMEDIATE_POLYMESH_H__
 #define __ALEMBIC_INTERMEDIATE_POLYMESH_H__
 
-//#include "Foundation.h"
+//
 #include "Alembic.h"
 #include "CommonMeshUtilities.h"
 

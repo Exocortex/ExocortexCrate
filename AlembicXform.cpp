@@ -1,8 +1,8 @@
+#include "stdafx.h"
 #include "Alembic.h"
-#include "AlembicMax.h"
+
 #include "SceneEnumProc.h"
 #include "AlembicXform.h"
-#include "ImathVec.h"
 #include "Utility.h"
 #include "AlembicMetadataUtils.h"
 

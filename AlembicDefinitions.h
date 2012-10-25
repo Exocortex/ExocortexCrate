@@ -1,13 +1,6 @@
 #ifndef __ALEMBICDEFINITIONS_H__
 #define __ALEMBICDEFINITIONS_H__
 
-#define max(a,b)            (((a) > (b)) ? (a) : (b))
-#define min(a,b)            (((a) < (b)) ? (a) : (b))
-#include <Max.h>
-#undef max
-#undef min
-
-#include <Object.h>
 #include "SceneEnumProc.h"
 #include "ObjectList.h"
 

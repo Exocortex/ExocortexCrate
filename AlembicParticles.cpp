@@ -1,5 +1,5 @@
+#include "stdafx.h"
 #include "Alembic.h"
-#include "AlembicMax.h"
 #include "AlembicDefinitions.h"
 #include "AlembicParticles.h"
 #include "AlembicArchiveStorage.h"
@@ -7,7 +7,6 @@
 #include "utility.h"
 #include "AlembicMAXScript.h"
 #include "AlembicMetadataUtils.h"
-#include <color.h>
 #include "AlembicParticlesExtInterface.h"
 
 

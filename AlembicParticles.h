@@ -1,7 +1,7 @@
 #ifndef __ALEMBIC_SIMPLE_PARTICLE__H
 #define __ALEMBIC_SIMPLE_PARTICLE__H
 
-#include "Foundation.h"
+
 #include "AlembicDefinitions.h"
 #include "Utility.h"
 #include <simpobj.h>

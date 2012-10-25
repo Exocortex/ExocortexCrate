@@ -1,5 +1,5 @@
+#include "stdafx.h"
 #include "Alembic.h"
-#include "AlembicMax.h"
 #include "AlembicArchiveStorage.h"
 #include "AlembicDefinitions.h"
 #include "AlembicFloatController.h"
@@ -7,8 +7,6 @@
 #include "AlembicNames.h"
 #include "resource.h"
 #include "AlembicMAXScript.h"
-#include <cmath>
-#include <boost/algorithm/string.hpp>
 #include "AlembicCameraUtilities.h"
 
 // This function returns a pointer to a class descriptor for our Utility

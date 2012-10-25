@@ -1,7 +1,7 @@
 #ifndef _ALEMBIC_POINTSUTILS_H_
 #define _ALEMBIC_POINTSUTILS_H_
 
-#include "AlembicMax.h"
+
 #include <vector>
 
 struct particleMeshData{

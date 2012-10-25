@@ -1,4 +1,4 @@
-#include "AlembicMax.h"
+#include "stdafx.h"
 #include "EmptyPolyLineObject.h"
 #include "AlembicArchiveStorage.h"
 #include "AlembicVisibilityController.h"

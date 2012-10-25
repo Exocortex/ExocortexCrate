@@ -1,7 +1,7 @@
 #ifndef __ALEMBIC_NAMES_H__
 #define __ALEMBIC_NAMES_H__
 
-#include "AlembicMax.h"
+
 
 #define EXOCORTEX_ALEMBIC_CATEGORY _T("Alembic")
 

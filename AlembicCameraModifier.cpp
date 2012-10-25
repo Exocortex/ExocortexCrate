@@ -1,6 +1,5 @@
-//#include "Alembic.h"
+#include "stdafx.h"
 #include "AlembicCameraModifier.h"
-#include "AlembicMax.h"
 #include "AlembicDefinitions.h"
 #include "AlembicArchiveStorage.h"
 #include "utility.h"

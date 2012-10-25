@@ -1,8 +1,8 @@
 #ifndef __ALEMBIC_MESH_GEOM_MODIFIER__H
 #define __ALEMBIC_MESH_GEOM_MODIFIER__H
 
-#include "Foundation.h"  
-#include "AlembicMax.h"
+  
+
 #include "resource.h"
 #include "AlembicDefinitions.h"
 #include "AlembicMeshUtilities.h"

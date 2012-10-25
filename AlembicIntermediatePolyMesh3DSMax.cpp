@@ -1,7 +1,7 @@
+#include "stdafx.h"
 #include "AlembicIntermediatePolyMesh3DSMax.h"
 #include "Utility.h"
 #include "AlembicWriteJob.h"
-#include <algorithm>
 #include "CommonLog.h"
 
 // From the SDK

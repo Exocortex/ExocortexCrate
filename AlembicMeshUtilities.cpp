@@ -1,5 +1,5 @@
+#include "stdafx.h"
 #include "Alembic.h"
-#include "AlembicMax.h"
 #include "AlembicDefinitions.h"
 #include "AlembicArchiveStorage.h"
 #include "utility.h"
@@ -9,7 +9,7 @@
 #include "AlembicMeshUtilities.h"
 #include "AlembicMAXScript.h" 
 #include "AlembicMetadataUtils.h"
-#include "AlembicMax.h"
+
 #include "CommonProfiler.h"
 #include "CommonMeshUtilities.h"
 

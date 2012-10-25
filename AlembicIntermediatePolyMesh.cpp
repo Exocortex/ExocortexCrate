@@ -1,3 +1,4 @@
+#include "stdafx.h"
 #include "AlembicIntermediatePolyMesh.h"
 #include "ExocortexCoreServicesAPI.h"
 

@@ -1,8 +1,8 @@
 #ifndef __EMPTY_POLYLINE_OBJECT__H
 #define __EMPTY_POLYLINE_OBJECT__H
 
-#include "Foundation.h"
-#include "AlembicMax.h"
+
+
 #include "resource.h"
 #include "AlembicDefinitions.h"
 #include "AlembicNames.h"

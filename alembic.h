@@ -1,7 +1,6 @@
 #ifndef _ALEMBIC_H_
 #define _ALEMBIC_H_
 
-#include "Foundation.h"
 #include "ExocortexCoreServicesAPI.h"
 #include "AlembicDefinitions.h"
 #include "AlembicLicensing.h"

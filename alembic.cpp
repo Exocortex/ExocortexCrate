@@ -1,6 +1,6 @@
-// alembicPlugin
+#include "stdafx.h"
 #include "Alembic.h"
-#include "AlembicMax.h"
+
 #include "AlembicDefinitions.h"
 #include "AlembicWriteJob.h"
 //#include "MeshMtlList.h"
