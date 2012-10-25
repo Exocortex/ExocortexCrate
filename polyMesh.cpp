@@ -1,3 +1,4 @@
+#include "stdafx.h"
 #include "polyMesh.h"
 
 struct __indices

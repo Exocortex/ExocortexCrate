@@ -1,3 +1,4 @@
+#include "stdafx.h"
 #include "common.h"
 #include "instance.h"
 #include "polyMesh.h"

@@ -1,3 +1,4 @@
+#include "stdafx.h"
 #include "instance.h"
 
 AtNode *createInstanceNode(nodeData &nodata, userData * ud, int i)
