@@ -1,7 +1,7 @@
 #ifndef __COMMON_UTILITIES_H
 #define __COMMON_UTILITIES_H
 
-#include "CommonFoundation.h"
+#include "CommonAlembic.h"
 
 #define ALEMBIC_SAFE_DELETE(p)  if(p) delete p; p = 0;
 

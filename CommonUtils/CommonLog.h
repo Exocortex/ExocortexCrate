@@ -1,8 +1,7 @@
 #ifndef __COMMON_LOG_H
 #define __COMMON_LOG_H
 
-#include <string>
-#include <sstream>
+#include "CommonAlembic.h"
 
 void logError( const char* msg );
 void logWarning( const char* msg );

@@ -1,4 +1,4 @@
-#include "CommonFoundation.h"
+#include "CommonAlembic.h"
 #include "CommonUtilities.h"
 #include "CommonLicensing.h"
 #include "CommonLog.h"
@@ -8,13 +8,6 @@
 stats_map default_stats_policy::stats;
 #endif // ESS_PROFILER
 
-#include <fstream>
-#include <vector>
-#include <string>
-#include <boost/algorithm/string.hpp>
-#include <boost/filesystem.hpp>
-#include <boost/filesystem/operations.hpp>
-#include <boost/filesystem/path.hpp>
 
 struct AlembicObjectInfo
 {

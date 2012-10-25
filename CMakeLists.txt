@@ -14,7 +14,7 @@ IF (UNIX AND NOT APPLE )
 ENDIF()
  
 set( Exocortex_INSTALL_BASE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/install" )
-
+   
 
 if( HDF5_ENABLE_THREADSAFE )
 	project( ExocortexAlembic )
