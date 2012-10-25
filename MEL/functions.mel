@@ -53,9 +53,12 @@ global proc exocortexAlembicImport(string $filename, int $importNormals, int $im
   ExocortexAlembic_profileBegin -f MEL_exocortexAlembicImport;
 
   // query the content of the file
-  ExocortexAlembic_profileBegin -f MEL_exocortexAlembicImport_Init;
 
   string $infos[] = `ExocortexAlembic_getInfo -f $filename`;
+  if (size($infos) < 1)
+    return;
+
+  ExocortexAlembic_profileBegin -f MEL_exocortexAlembicImport_Init;
   string $identifiers[];
   string $types[];
   int $nbTransforms = 0;
