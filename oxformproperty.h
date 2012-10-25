@@ -1,13 +1,12 @@
 #ifndef _PYTHON_ALEMBIC_OXFORMPROPERTY_H_
 #define _PYTHON_ALEMBIC_OXFORMPROPERTY_H_
 
-#include "foundation.h"
 #include "iproperty.h"
 #include "oobject.h"
 
 struct oXformMembers{
-   Alembic::AbcGeom::OXformSchema mXformSchema;
-   Alembic::AbcGeom::XformSample mSample;
+   AbcG::OXformSchema mXformSchema;
+   AbcG::XformSample mSample;
 };
 
 typedef struct {

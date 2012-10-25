@@ -1,14 +1,13 @@
+#include "stdafx.h"
 #include "extension.h"
 #include "oarchive.h"
 #include "oobject.h"
 #include "oproperty.h"
 #include "ocompoundproperty.h"
 //#include "ixformproperty.h"
-#include "foundation.h"
-#include <boost/lexical_cast.hpp>
 #include "CommonUtilities.h"
 
-Alembic::Abc::OCompoundProperty getCompoundFromOObject(oObjectPtr in_Casted)
+Abc::OCompoundProperty getCompoundFromOObject(oObjectPtr in_Casted)
 {
    ALEMBIC_TRY_STATEMENT
    switch(in_Casted.mType)
@@ -32,59 +31,59 @@ Alembic::Abc::OCompoundProperty getCompoundFromOObject(oObjectPtr in_Casted)
       case oObjectType_NuPatch:
          return in_Casted.mNuPatch->getSchema();
    }
-   return Alembic::Abc::OCompoundProperty();
-   ALEMBIC_VALUE_CATCH_STATEMENT(Alembic::Abc::OCompoundProperty())
+   return Abc::OCompoundProperty();
+   ALEMBIC_VALUE_CATCH_STATEMENT(Abc::OCompoundProperty())
 }
 /*
-Alembic::Abc::TimeSamplingPtr getTimeSamplingFromObject(Alembic::Abc::OObject object)
+Abc::TimeSamplingPtr getTimeSamplingFromObject(Abc::OObject object)
 {
    ALEMBIC_TRY_STATEMENT
-   const Alembic::Abc::MetaData &md = object.getMetaData();
-   if(Alembic::AbcGeom::OXform::matches(md)) {
-      return Alembic::AbcGeom::OXform(object,Alembic::Abc::kWrapExisting).getSchema().getTimeSampling();
-   } else if(Alembic::AbcGeom::OPolyMesh::matches(md)) {
-      return Alembic::AbcGeom::OPolyMesh(object,Alembic::Abc::kWrapExisting).getSchema().getTimeSampling();
-   } else if(Alembic::AbcGeom::OCurves::matches(md)) {
-      return Alembic::AbcGeom::OCurves(object,Alembic::Abc::kWrapExisting).getSchema().getTimeSampling();
-   } else if(Alembic::AbcGeom::ONuPatch::matches(md)) {
-      return Alembic::AbcGeom::ONuPatch(object,Alembic::Abc::kWrapExisting).getSchema().getTimeSampling();
-   } else if(Alembic::AbcGeom::OPoints::matches(md)) {
-      return Alembic::AbcGeom::OPoints(object,Alembic::Abc::kWrapExisting).getSchema().getTimeSampling();
-   } else if(Alembic::AbcGeom::OSubD::matches(md)) {
-      return Alembic::AbcGeom::OSubD(object,Alembic::Abc::kWrapExisting).getSchema().getTimeSampling();
-   } else if(Alembic::AbcGeom::OCamera::matches(md)) {
-      return Alembic::AbcGeom::OCamera(object,Alembic::Abc::kWrapExisting).getSchema().getTimeSampling();
+   const Abc::MetaData &md = object.getMetaData();
+   if(AbcG::OXform::matches(md)) {
+      return AbcG::OXform(object,Abc::kWrapExisting).getSchema().getTimeSampling();
+   } else if(AbcG::OPolyMesh::matches(md)) {
+      return AbcG::OPolyMesh(object,Abc::kWrapExisting).getSchema().getTimeSampling();
+   } else if(AbcG::OCurves::matches(md)) {
+      return AbcG::OCurves(object,Abc::kWrapExisting).getSchema().getTimeSampling();
+   } else if(AbcG::ONuPatch::matches(md)) {
+      return AbcG::ONuPatch(object,Abc::kWrapExisting).getSchema().getTimeSampling();
+   } else if(AbcG::OPoints::matches(md)) {
+      return AbcG::OPoints(object,Abc::kWrapExisting).getSchema().getTimeSampling();
+   } else if(AbcG::OSubD::matches(md)) {
+      return AbcG::OSubD(object,Abc::kWrapExisting).getSchema().getTimeSampling();
+   } else if(AbcG::OCamera::matches(md)) {
+      return AbcG::OCamera(object,Abc::kWrapExisting).getSchema().getTimeSampling();
 
    // NEW
-   } else if(Alembic::AbcGeom::OFaceSet::matches(md)) {
-      return Alembic::AbcGeom::OFaceSet(object,Alembic::Abc::kWrapExisting).getSchema().getTimeSampling();
+   } else if(AbcG::OFaceSet::matches(md)) {
+      return AbcG::OFaceSet(object,Abc::kWrapExisting).getSchema().getTimeSampling();
    }
-   return Alembic::Abc::TimeSamplingPtr();
-   ALEMBIC_VALUE_CATCH_STATEMENT(Alembic::Abc::TimeSamplingPtr())
+   return Abc::TimeSamplingPtr();
+   ALEMBIC_VALUE_CATCH_STATEMENT(Abc::TimeSamplingPtr())
 }
 
-size_t getNumSamplesFromObject(Alembic::Abc::OObject object)
+size_t getNumSamplesFromObject(Abc::OObject object)
 {
    ALEMBIC_TRY_STATEMENT
-   const Alembic::Abc::MetaData &md = object.getMetaData();
-   if(Alembic::AbcGeom::OXform::matches(md)) {
-      return Alembic::AbcGeom::OXform(object,Alembic::Abc::kWrapExisting).getSchema().getNumSamples();
-   } else if(Alembic::AbcGeom::OPolyMesh::matches(md)) {
-      return Alembic::AbcGeom::OPolyMesh(object,Alembic::Abc::kWrapExisting).getSchema().getNumSamples();
-   } else if(Alembic::AbcGeom::OCurves::matches(md)) {
-      return Alembic::AbcGeom::OCurves(object,Alembic::Abc::kWrapExisting).getSchema().getNumSamples();
-   } else if(Alembic::AbcGeom::ONuPatch::matches(md)) {
-      return Alembic::AbcGeom::ONuPatch(object,Alembic::Abc::kWrapExisting).getSchema().getNumSamples();
-   } else if(Alembic::AbcGeom::OPoints::matches(md)) {
-      return Alembic::AbcGeom::OPoints(object,Alembic::Abc::kWrapExisting).getSchema().getNumSamples();
-   } else if(Alembic::AbcGeom::OSubD::matches(md)) {
-      return Alembic::AbcGeom::OSubD(object,Alembic::Abc::kWrapExisting).getSchema().getNumSamples();
-   } else if(Alembic::AbcGeom::OCamera::matches(md)) {
-      return Alembic::AbcGeom::OCamera(object,Alembic::Abc::kWrapExisting).getSchema().getNumSamples();
+   const Abc::MetaData &md = object.getMetaData();
+   if(AbcG::OXform::matches(md)) {
+      return AbcG::OXform(object,Abc::kWrapExisting).getSchema().getNumSamples();
+   } else if(AbcG::OPolyMesh::matches(md)) {
+      return AbcG::OPolyMesh(object,Abc::kWrapExisting).getSchema().getNumSamples();
+   } else if(AbcG::OCurves::matches(md)) {
+      return AbcG::OCurves(object,Abc::kWrapExisting).getSchema().getNumSamples();
+   } else if(AbcG::ONuPatch::matches(md)) {
+      return AbcG::ONuPatch(object,Abc::kWrapExisting).getSchema().getNumSamples();
+   } else if(AbcG::OPoints::matches(md)) {
+      return AbcG::OPoints(object,Abc::kWrapExisting).getSchema().getNumSamples();
+   } else if(AbcG::OSubD::matches(md)) {
+      return AbcG::OSubD(object,Abc::kWrapExisting).getSchema().getNumSamples();
+   } else if(AbcG::OCamera::matches(md)) {
+      return AbcG::OCamera(object,Abc::kWrapExisting).getSchema().getNumSamples();
 
    // NEW
-   } else if(Alembic::AbcGeom::OFaceSet::matches(md)) {
-      return Alembic::AbcGeom::OFaceSet(object,Alembic::Abc::kWrapExisting).getSchema().getNumSamples();
+   } else if(AbcG::OFaceSet::matches(md)) {
+      return AbcG::OFaceSet(object,Abc::kWrapExisting).getSchema().getNumSamples();
    }
    return 0;
    ALEMBIC_VALUE_CATCH_STATEMENT(0)
@@ -175,7 +174,7 @@ static PyObject * oObject_setMetaData(PyObject * self, PyObject * args)
    printf("object name is: %s\n",object->mObject->getFullName().c_str());
 #endif
 
-   Alembic::Abc::OCompoundProperty compound = getCompoundFromOObject(object->mCasted);
+   Abc::OCompoundProperty compound = getCompoundFromOObject(object->mCasted);
 #ifdef PYTHON_DEBUG
    printf("ocompound retrieved.\n");
 #endif
@@ -192,18 +191,18 @@ static PyObject * oObject_setMetaData(PyObject * self, PyObject * args)
       return NULL;
    }
 
-   Alembic::Abc::OStringArrayProperty metaDataProperty = Alembic::Abc::OStringArrayProperty(compound, ".metadata", compound.getMetaData(), compound.getTimeSampling() );
+   Abc::OStringArrayProperty metaDataProperty = Abc::OStringArrayProperty(compound, ".metadata", compound.getMetaData(), compound.getTimeSampling() );
 
 #ifdef PYTHON_DEBUG
    printf("metadata property created.\n");
 #endif
 
-   Alembic::Abc::StringArraySample metaDataSample(&metaData.front(),metaData.size());
+   Abc::StringArraySample metaDataSample(&metaData.front(),metaData.size());
    metaDataProperty.set(metaDataSample);
 
    //todo existing properties
-   //Alembic::Abc::ArrayPropertyWriterPtr arrayPtr =  boost::static_pointer_cast<Alembic::Abc::ArrayPropertyWriter>(compound.getProperty( ".metadata" ).getPtr());
-   //metaDataProperty = Alembic::Abc::OStringArrayProperty(arrayPtr, Alembic::Abc::kWrapExisting);
+   //Abc::ArrayPropertyWriterPtr arrayPtr =  boost::static_pointer_cast<Abc::ArrayPropertyWriter>(compound.getProperty( ".metadata" ).getPtr());
+   //metaDataProperty = Abc::OStringArrayProperty(arrayPtr, Abc::kWrapExisting);
 
    return Py_BuildValue("i",1);
    ALEMBIC_PYOBJECT_CATCH_STATEMENT
@@ -229,7 +228,7 @@ static PyObject * oObject_getProperty(PyObject * self, PyObject * args)
    }
 
    // special case xform prop
-   if(Alembic::AbcGeom::OXform::matches(object->mObject->getMetaData()))
+   if(AbcG::OXform::matches(object->mObject->getMetaData()))
    {
       std::string propNameStr(propName);
       if(propNameStr == ".xform" || propNameStr == ".vals")
@@ -370,7 +369,7 @@ static PyTypeObject oObject_Type = {
   oObject_methods,             /* tp_methods */
 };
 
-PyObject * oObject_new(Alembic::Abc::OObject in_Object, oObjectPtr in_Casted, void * in_Archive, int tsIndex)
+PyObject * oObject_new(Abc::OObject in_Object, oObjectPtr in_Casted, void * in_Archive, int tsIndex)
 {
    ALEMBIC_TRY_STATEMENT
    oObject * object = PyObject_NEW(oObject, &oObject_Type);
@@ -379,7 +378,7 @@ PyObject * oObject_new(Alembic::Abc::OObject in_Object, oObjectPtr in_Casted, vo
 #ifdef PYTHON_DEBUG
       printf("creating new oObject from OObject: '%s'\n",in_Object.getFullName().c_str());
 #endif
-      object->mObject = new Alembic::Abc::OObject(in_Object,Alembic::Abc::kWrapExisting);
+      object->mObject = new Abc::OObject(in_Object,Abc::kWrapExisting);
       object->mCasted = in_Casted;
       object->mArchive = in_Archive;
       object->tsIndex = tsIndex;

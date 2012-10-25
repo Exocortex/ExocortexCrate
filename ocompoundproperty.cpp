@@ -1,8 +1,7 @@
+#include "stdafx.h"
 #include "extension.h"
 #include "oarchive.h"
 #include "ocompoundproperty.h"
-#include <Alembic/Abc/All.h>
-#include <Alembic/AbcCoreAbstract/All.h>
 
 static PyObject * oCompoundProperty_getName(PyObject * self, PyObject * args)
 {
@@ -112,7 +111,7 @@ static PyTypeObject oCompoundProperty_Type =
   oCompoundProperty_methods,             /* tp_methods */
 };
 
-PyObject * oCompoundProperty_new(Alembic::Abc::OCompoundProperty compound, std::string compoundFullName, const char * in_propName, int tsIndex, void * in_Archive)
+PyObject * oCompoundProperty_new(Abc::OCompoundProperty compound, std::string compoundFullName, const char * in_propName, int tsIndex, void * in_Archive)
 {
    ALEMBIC_TRY_STATEMENT
 
@@ -138,9 +137,9 @@ PyObject * oCompoundProperty_new(Alembic::Abc::OCompoundProperty compound, std::
       cprop->mFullName = new std::string(identifier);
       cprop->tsIndex = tsIndex;
 
-      const Alembic::Abc::PropertyHeader * propHeader = compound.getPropertyHeader( in_propName );
+      const Abc::PropertyHeader * propHeader = compound.getPropertyHeader( in_propName );
      std::string propName(in_propName);
-     cprop->mBaseCompoundProperty = new Alembic::Abc::OCompoundProperty(compound.getPtr(), propName);
+     cprop->mBaseCompoundProperty = new Abc::OCompoundProperty(compound.getPtr(), propName);
 
       return (PyObject *)cprop;
    ALEMBIC_PYOBJECT_CATCH_STATEMENT

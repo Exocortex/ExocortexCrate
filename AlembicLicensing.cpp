@@ -1,9 +1,6 @@
-#include <time.h>
+#include "stdafx.h"
 #include "AlembicLicensing.h"
 #include "CommonLog.h"
-
-#include <string>
-#include <sstream>
 
 using namespace std;
 
@@ -70,13 +67,20 @@ int GetLicense()
 	return gLicenseToken;
 }
 
-
 void logError( const char* msg ) {
-	std::cerr << msg << std::endl;
+	std::cerr << "ExocortexAlembic Error: " << msg << std::endl;
 }
 void logWarning( const char* msg ) {
-	std::cout << msg << std::endl;
+#ifdef _DEBUG
+	std::cerr << "ExocortexAlembic Warning: " << msg << std::endl;
+#else
+	std::cout << "ExocortexAlembic Warning: " << msg << std::endl;
+#endif
 }
 void logInfo( const char* msg ) {
-	std::cout << msg << std::endl;
+#ifdef _DEBUG
+	std::cerr << "ExocortexAlembic Info: " << msg << std::endl;
+#else
+	std::cout << "ExocortexAlembic Info: " << msg << std::endl;
+#endif
 }

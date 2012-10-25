@@ -1,7 +1,6 @@
 #ifndef _PYTHON_ALEMBIC_OARCHIVE_H_
 #define _PYTHON_ALEMBIC_OARCHIVE_H_
 
-#include "foundation.h"
 #include "oobject.h"
 #include "oproperty.h"
 #include "ocompoundproperty.h"
@@ -20,7 +19,7 @@ typedef std::vector<oArchiveElement> oArchiveElementVec;
 
 typedef struct {
   PyObject_HEAD
-  Alembic::Abc::OArchive * mArchive;
+  Abc::OArchive * mArchive;
   oArchiveElementVec * mElements;
 } oArchive;
 

@@ -1,3 +1,4 @@
+#include "stdafx.h"
 #include "extension.h"
 #include "oproperty.h"
 #include "ocompoundproperty.h"
@@ -513,12 +514,12 @@ static PyObject * oProperty_setValues(PyObject * self, PyObject * args)
       case propertyTP_boolean_array:
       {
          _COPY_TUPLE_TO_VECTOR_(int,int,"i",1);
-         std::vector<Alembic::Abc::bool_t> values(nbItems);
+         std::vector<Abc::bool_t> values(nbItems);
          for(size_t i=0;i<nbItems;i++)
             values[i] = tupleVec[i] > 0;
-         Alembic::Abc::OBoolArrayProperty::sample_type sample;
+         Abc::OBoolArrayProperty::sample_type sample;
          if(values.size() > 0)
-            sample = Alembic::Abc::OBoolArrayProperty::sample_type(&values.front(),values.size());
+            sample = Abc::OBoolArrayProperty::sample_type(&values.front(),values.size());
          prop->mBoolArrayProperty->set(sample);
          break;
       }
@@ -528,9 +529,9 @@ static PyObject * oProperty_setValues(PyObject * self, PyObject * args)
          std::vector<unsigned char> values(nbItems);
          for(size_t i=0;i<nbItems;i++)
             values[i] = tupleVec[i] > 0;
-         Alembic::Abc::OUcharArrayProperty::sample_type sample;
+         Abc::OUcharArrayProperty::sample_type sample;
          if(values.size() > 0)
-            sample = Alembic::Abc::OUcharArrayProperty::sample_type(&values.front(),values.size());
+            sample = Abc::OUcharArrayProperty::sample_type(&values.front(),values.size());
          prop->mUcharArrayProperty->set(sample);
          break;
       }
@@ -540,99 +541,99 @@ static PyObject * oProperty_setValues(PyObject * self, PyObject * args)
          std::vector<signed char> values(nbItems);
          for(size_t i=0;i<nbItems;i++)
             values[i] = tupleVec[i] > 0;
-         Alembic::Abc::OCharArrayProperty::sample_type sample;
+         Abc::OCharArrayProperty::sample_type sample;
          if(values.size() > 0)
-            sample = Alembic::Abc::OCharArrayProperty::sample_type(&values.front(),values.size());
+            sample = Abc::OCharArrayProperty::sample_type(&values.front(),values.size());
          prop->mCharArrayProperty->set(sample);
          break;
       }
       case propertyTP_uint16_array:
       {
          _COPY_TUPLE_TO_VECTOR_(unsigned short,unsigned int,"I",1);
-         Alembic::Abc::OUInt16ArrayProperty::sample_type sample;
+         Abc::OUInt16ArrayProperty::sample_type sample;
          if(tupleVec.size() > 0)
-            sample = Alembic::Abc::OUInt16ArrayProperty::sample_type(tupleVec);
+            sample = Abc::OUInt16ArrayProperty::sample_type(tupleVec);
          prop->mUInt16ArrayProperty->set(sample);
          break;
       }
       case propertyTP_int16_array:
       {
          _COPY_TUPLE_TO_VECTOR_(short,int,"i",1);
-         Alembic::Abc::OInt16ArrayProperty::sample_type sample;
+         Abc::OInt16ArrayProperty::sample_type sample;
          if(tupleVec.size() > 0)
-            sample = Alembic::Abc::OInt16ArrayProperty::sample_type(tupleVec);
+            sample = Abc::OInt16ArrayProperty::sample_type(tupleVec);
          prop->mInt16ArrayProperty->set(sample);
          break;
       }
       case propertyTP_uint32_array:
       {
          _COPY_TUPLE_TO_VECTOR_(Alembic::Util::ALEMBIC_VERSION_NS::uint32_t,unsigned long,"k",1);
-         Alembic::Abc::OUInt32ArrayProperty::sample_type sample;
+         Abc::OUInt32ArrayProperty::sample_type sample;
          if(tupleVec.size() > 0)
-            sample = Alembic::Abc::OUInt32ArrayProperty::sample_type(tupleVec);
+            sample = Abc::OUInt32ArrayProperty::sample_type(tupleVec);
          prop->mUInt32ArrayProperty->set(sample);
          break;
       }
       case propertyTP_int32_array:
       {
 		  _COPY_TUPLE_TO_VECTOR_(Alembic::Util::ALEMBIC_VERSION_NS::int32_t,long,"l",1);
-         Alembic::Abc::OInt32ArrayProperty::sample_type sample;
+         Abc::OInt32ArrayProperty::sample_type sample;
          if(tupleVec.size() > 0)
-            sample = Alembic::Abc::OInt32ArrayProperty::sample_type(tupleVec);
+            sample = Abc::OInt32ArrayProperty::sample_type(tupleVec);
          prop->mInt32ArrayProperty->set(sample);
          break;
       }
       case propertyTP_uint64_array:
       {
          _COPY_TUPLE_TO_VECTOR_(boost::uint64_t,unsigned long long,"K",1);
-         Alembic::Abc::OUInt64ArrayProperty::sample_type sample;
+         Abc::OUInt64ArrayProperty::sample_type sample;
          if(tupleVec.size() > 0)
-            sample = Alembic::Abc::OUInt64ArrayProperty::sample_type(tupleVec);
+            sample = Abc::OUInt64ArrayProperty::sample_type(tupleVec);
          prop->mUInt64ArrayProperty->set(sample);
          break;
       }
       case propertyTP_int64_array:
       {
          _COPY_TUPLE_TO_VECTOR_(boost::int64_t,long long,"L",1);
-         Alembic::Abc::OInt64ArrayProperty::sample_type sample;
+         Abc::OInt64ArrayProperty::sample_type sample;
          if(tupleVec.size() > 0)
-            sample = Alembic::Abc::OInt64ArrayProperty::sample_type(tupleVec);
+            sample = Abc::OInt64ArrayProperty::sample_type(tupleVec);
          prop->mInt64ArrayProperty->set(sample);
          break;
       }
       case propertyTP_half_array:
       {
-         _COPY_TUPLE_TO_VECTOR_(Alembic::Abc::OHalfProperty::value_type,float,"f",1);
-         Alembic::Abc::OHalfArrayProperty::sample_type sample;
+         _COPY_TUPLE_TO_VECTOR_(Abc::OHalfProperty::value_type,float,"f",1);
+         Abc::OHalfArrayProperty::sample_type sample;
          if(tupleVec.size() > 0)
-            sample = Alembic::Abc::OHalfArrayProperty::sample_type(tupleVec);
+            sample = Abc::OHalfArrayProperty::sample_type(tupleVec);
          prop->mHalfArrayProperty->set(sample);
          break;
       }
       case propertyTP_float_array:
       {
          _COPY_TUPLE_TO_VECTOR_(float,float,"f",1);
-         Alembic::Abc::OFloatArrayProperty::sample_type sample;
+         Abc::OFloatArrayProperty::sample_type sample;
          if(tupleVec.size() > 0)
-            sample = Alembic::Abc::OFloatArrayProperty::sample_type(tupleVec);
+            sample = Abc::OFloatArrayProperty::sample_type(tupleVec);
          prop->mFloatArrayProperty->set(sample);
          break;
       }
       case propertyTP_double_array:
       {
          _COPY_TUPLE_TO_VECTOR_(double,double,"d",1);
-         Alembic::Abc::ODoubleArrayProperty::sample_type sample;
+         Abc::ODoubleArrayProperty::sample_type sample;
          if(tupleVec.size() > 0)
-            sample = Alembic::Abc::ODoubleArrayProperty::sample_type(tupleVec);
+            sample = Abc::ODoubleArrayProperty::sample_type(tupleVec);
          prop->mDoubleArrayProperty->set(sample);
          break;
       }
       case propertyTP_string_array:
       {
          _COPY_TUPLE_TO_VECTOR_(std::string,const char *,"s",1);
-         Alembic::Abc::OStringArrayProperty::sample_type sample;
+         Abc::OStringArrayProperty::sample_type sample;
          if(tupleVec.size() > 0)
-            sample = Alembic::Abc::OStringArrayProperty::sample_type(tupleVec);
+            sample = Abc::OStringArrayProperty::sample_type(tupleVec);
          prop->mStringArrayProperty->set(sample);
          break;
       }
@@ -642,368 +643,368 @@ static PyObject * oProperty_setValues(PyObject * self, PyObject * args)
          std::vector<std::wstring> values(nbItems);
          for(size_t i=0;i<nbItems;i++)
             values[i] = tupleVec[i];
-         Alembic::Abc::OWstringArrayProperty::sample_type sample;
+         Abc::OWstringArrayProperty::sample_type sample;
          if(values.size() > 0)
-            sample = Alembic::Abc::OWstringArrayProperty::sample_type(&values.front(),values.size());
+            sample = Abc::OWstringArrayProperty::sample_type(&values.front(),values.size());
          prop->mWstringArrayProperty->set(sample);
       }
       case propertyTP_v2s_array:
       {
          _COPY_TUPLE_TO_VECTOR_AND_CONVERT_(Imath::V2s,short,int,"i",2);
-         Alembic::Abc::OV2sArrayProperty::sample_type sample;
+         Abc::OV2sArrayProperty::sample_type sample;
          if(values.size() > 0)
-            sample = Alembic::Abc::OV2sArrayProperty::sample_type(&values.front(),values.size());
+            sample = Abc::OV2sArrayProperty::sample_type(&values.front(),values.size());
          prop->mV2sArrayProperty->set(sample);
          break;
       }
       case propertyTP_v2i_array:
       {
          _COPY_TUPLE_TO_VECTOR_AND_CONVERT_(Imath::V2i,int,int,"i",2);
-         Alembic::Abc::OV2iArrayProperty::sample_type sample;
+         Abc::OV2iArrayProperty::sample_type sample;
          if(values.size() > 0)
-            sample = Alembic::Abc::OV2iArrayProperty::sample_type(&values.front(),values.size());
+            sample = Abc::OV2iArrayProperty::sample_type(&values.front(),values.size());
          prop->mV2iArrayProperty->set(sample);
          break;
       }
       case propertyTP_v2f_array:
       {
          _COPY_TUPLE_TO_VECTOR_AND_CONVERT_(Imath::V2f,float,float,"f",2);
-         Alembic::Abc::OV2fArrayProperty::sample_type sample;
+         Abc::OV2fArrayProperty::sample_type sample;
          if(values.size() > 0)
-            sample = Alembic::Abc::OV2fArrayProperty::sample_type(&values.front(),values.size());
+            sample = Abc::OV2fArrayProperty::sample_type(&values.front(),values.size());
          prop->mV2fArrayProperty->set(sample);
          break;
       }
       case propertyTP_v2d_array:
       {
          _COPY_TUPLE_TO_VECTOR_AND_CONVERT_(Imath::V2d,double,double,"d",2);
-         Alembic::Abc::OV2dArrayProperty::sample_type sample;
+         Abc::OV2dArrayProperty::sample_type sample;
          if(values.size() > 0)
-            sample = Alembic::Abc::OV2dArrayProperty::sample_type(&values.front(),values.size());
+            sample = Abc::OV2dArrayProperty::sample_type(&values.front(),values.size());
          prop->mV2dArrayProperty->set(sample);
          break;
       }
       case propertyTP_v3s_array:
       {
          _COPY_TUPLE_TO_VECTOR_AND_CONVERT_(Imath::V3s,short,int,"i",3);
-         Alembic::Abc::OV3sArrayProperty::sample_type sample;
+         Abc::OV3sArrayProperty::sample_type sample;
          if(values.size() > 0)
-            sample = Alembic::Abc::OV3sArrayProperty::sample_type(&values.front(),values.size());
+            sample = Abc::OV3sArrayProperty::sample_type(&values.front(),values.size());
          prop->mV3sArrayProperty->set(sample);
          break;
       }
       case propertyTP_v3i_array:
       {
          _COPY_TUPLE_TO_VECTOR_AND_CONVERT_(Imath::V3i,int,int,"i",3);
-         Alembic::Abc::OV3iArrayProperty::sample_type sample;
+         Abc::OV3iArrayProperty::sample_type sample;
          if(values.size() > 0)
-            sample = Alembic::Abc::OV3iArrayProperty::sample_type(&values.front(),values.size());
+            sample = Abc::OV3iArrayProperty::sample_type(&values.front(),values.size());
          prop->mV3iArrayProperty->set(sample);
          break;
       }
       case propertyTP_v3f_array:
       {
          _COPY_TUPLE_TO_VECTOR_AND_CONVERT_(Imath::V3f,float,float,"f",3);
-         Alembic::Abc::OV3fArrayProperty::sample_type sample;
+         Abc::OV3fArrayProperty::sample_type sample;
          if(values.size() > 0)
-            sample = Alembic::Abc::OV3fArrayProperty::sample_type(&values.front(),values.size());
+            sample = Abc::OV3fArrayProperty::sample_type(&values.front(),values.size());
          prop->mV3fArrayProperty->set(sample);
          break;
       }
       case propertyTP_v3d_array:
       {
          _COPY_TUPLE_TO_VECTOR_AND_CONVERT_(Imath::V3d,double,double,"d",3);
-         Alembic::Abc::OV3dArrayProperty::sample_type sample;
+         Abc::OV3dArrayProperty::sample_type sample;
          if(values.size() > 0)
-            sample = Alembic::Abc::OV3dArrayProperty::sample_type(&values.front(),values.size());
+            sample = Abc::OV3dArrayProperty::sample_type(&values.front(),values.size());
          prop->mV3dArrayProperty->set(sample);
          break;
       }
       case propertyTP_p2s_array:
       {
          _COPY_TUPLE_TO_VECTOR_AND_CONVERT_(Imath::V2s,short,int,"i",2);
-         Alembic::Abc::OP2sArrayProperty::sample_type sample;
+         Abc::OP2sArrayProperty::sample_type sample;
          if(values.size() > 0)
-            sample = Alembic::Abc::OP2sArrayProperty::sample_type(&values.front(),values.size());
+            sample = Abc::OP2sArrayProperty::sample_type(&values.front(),values.size());
          prop->mP2sArrayProperty->set(sample);
          break;
       }
       case propertyTP_p2i_array:
       {
          _COPY_TUPLE_TO_VECTOR_AND_CONVERT_(Imath::V2i,int,int,"i",2);
-         Alembic::Abc::OP2iArrayProperty::sample_type sample;
+         Abc::OP2iArrayProperty::sample_type sample;
          if(values.size() > 0)
-            sample = Alembic::Abc::OP2iArrayProperty::sample_type(&values.front(),values.size());
+            sample = Abc::OP2iArrayProperty::sample_type(&values.front(),values.size());
          prop->mP2iArrayProperty->set(sample);
          break;
       }
       case propertyTP_p2f_array:
       {
          _COPY_TUPLE_TO_VECTOR_AND_CONVERT_(Imath::V2f,float,float,"f",2);
-         Alembic::Abc::OP2fArrayProperty::sample_type sample;
+         Abc::OP2fArrayProperty::sample_type sample;
          if(values.size() > 0)
-            sample = Alembic::Abc::OP2fArrayProperty::sample_type(&values.front(),values.size());
+            sample = Abc::OP2fArrayProperty::sample_type(&values.front(),values.size());
          prop->mP2fArrayProperty->set(sample);
          break;
       }
       case propertyTP_p2d_array:
       {
          _COPY_TUPLE_TO_VECTOR_AND_CONVERT_(Imath::V2d,double,double,"d",2);
-         Alembic::Abc::OP2dArrayProperty::sample_type sample;
+         Abc::OP2dArrayProperty::sample_type sample;
          if(values.size() > 0)
-            sample = Alembic::Abc::OP2dArrayProperty::sample_type(&values.front(),values.size());
+            sample = Abc::OP2dArrayProperty::sample_type(&values.front(),values.size());
          prop->mP2dArrayProperty->set(sample);
          break;
       }
       case propertyTP_p3s_array:
       {
          _COPY_TUPLE_TO_VECTOR_AND_CONVERT_(Imath::V3s,short,int,"i",3);
-         Alembic::Abc::OP3sArrayProperty::sample_type sample;
+         Abc::OP3sArrayProperty::sample_type sample;
          if(values.size() > 0)
-            sample = Alembic::Abc::OP3sArrayProperty::sample_type(&values.front(),values.size());
+            sample = Abc::OP3sArrayProperty::sample_type(&values.front(),values.size());
          prop->mP3sArrayProperty->set(sample);
          break;
       }
       case propertyTP_p3i_array:
       {
          _COPY_TUPLE_TO_VECTOR_AND_CONVERT_(Imath::V3i,int,int,"i",3);
-         Alembic::Abc::OP3iArrayProperty::sample_type sample;
+         Abc::OP3iArrayProperty::sample_type sample;
          if(values.size() > 0)
-            sample = Alembic::Abc::OP3iArrayProperty::sample_type(&values.front(),values.size());
+            sample = Abc::OP3iArrayProperty::sample_type(&values.front(),values.size());
          prop->mP3iArrayProperty->set(sample);
          break;
       }
       case propertyTP_p3f_array:
       {
          _COPY_TUPLE_TO_VECTOR_AND_CONVERT_(Imath::V3f,float,float,"f",3);
-         Alembic::Abc::OP3fArrayProperty::sample_type sample;
+         Abc::OP3fArrayProperty::sample_type sample;
          if(values.size() > 0)
-            sample = Alembic::Abc::OP3fArrayProperty::sample_type(&values.front(),values.size());
+            sample = Abc::OP3fArrayProperty::sample_type(&values.front(),values.size());
          prop->mP3fArrayProperty->set(sample);
          break;
       }
       case propertyTP_p3d_array:
       {
          _COPY_TUPLE_TO_VECTOR_AND_CONVERT_(Imath::V3d,double,double,"d",3);
-         Alembic::Abc::OP3dArrayProperty::sample_type sample;
+         Abc::OP3dArrayProperty::sample_type sample;
          if(values.size() > 0)
-            sample = Alembic::Abc::OP3dArrayProperty::sample_type(&values.front(),values.size());
+            sample = Abc::OP3dArrayProperty::sample_type(&values.front(),values.size());
          prop->mP3dArrayProperty->set(sample);
          break;
       }
       case propertyTP_box2s_array:
       {
          _COPY_TUPLE_TO_VECTOR_AND_CONVERT_(Imath::Box2s,short,int,"i",4);
-         Alembic::Abc::OBox2sArrayProperty::sample_type sample;
+         Abc::OBox2sArrayProperty::sample_type sample;
          if(values.size() > 0)
-            sample = Alembic::Abc::OBox2sArrayProperty::sample_type(&values.front(),values.size());
+            sample = Abc::OBox2sArrayProperty::sample_type(&values.front(),values.size());
          prop->mBox2sArrayProperty->set(sample);
          break;
       }
       case propertyTP_box2i_array:
       {
          _COPY_TUPLE_TO_VECTOR_AND_CONVERT_(Imath::Box2i,int,int,"i",4);
-         Alembic::Abc::OBox2iArrayProperty::sample_type sample;
+         Abc::OBox2iArrayProperty::sample_type sample;
          if(values.size() > 0)
-            sample = Alembic::Abc::OBox2iArrayProperty::sample_type(&values.front(),values.size());
+            sample = Abc::OBox2iArrayProperty::sample_type(&values.front(),values.size());
          prop->mBox2iArrayProperty->set(sample);
          break;
       }
       case propertyTP_box2f_array:
       {
          _COPY_TUPLE_TO_VECTOR_AND_CONVERT_(Imath::Box2f,float,float,"f",4);
-         Alembic::Abc::OBox2fArrayProperty::sample_type sample;
+         Abc::OBox2fArrayProperty::sample_type sample;
          if(values.size() > 0)
-            sample = Alembic::Abc::OBox2fArrayProperty::sample_type(&values.front(),values.size());
+            sample = Abc::OBox2fArrayProperty::sample_type(&values.front(),values.size());
          prop->mBox2fArrayProperty->set(sample);
          break;
       }
       case propertyTP_box2d_array:
       {
          _COPY_TUPLE_TO_VECTOR_AND_CONVERT_(Imath::Box2d,double,double,"d",4);
-         Alembic::Abc::OBox2dArrayProperty::sample_type sample;
+         Abc::OBox2dArrayProperty::sample_type sample;
          if(values.size() > 0)
-            sample = Alembic::Abc::OBox2dArrayProperty::sample_type(&values.front(),values.size());
+            sample = Abc::OBox2dArrayProperty::sample_type(&values.front(),values.size());
          prop->mBox2dArrayProperty->set(sample);
          break;
       }
       case propertyTP_box3s_array:
       {
          _COPY_TUPLE_TO_VECTOR_AND_CONVERT_(Imath::Box3s,short,int,"i",6);
-         Alembic::Abc::OBox3sArrayProperty::sample_type sample;
+         Abc::OBox3sArrayProperty::sample_type sample;
          if(values.size() > 0)
-            sample = Alembic::Abc::OBox3sArrayProperty::sample_type(&values.front(),values.size());
+            sample = Abc::OBox3sArrayProperty::sample_type(&values.front(),values.size());
          prop->mBox3sArrayProperty->set(sample);
          break;
       }
       case propertyTP_box3i_array:
       {
          _COPY_TUPLE_TO_VECTOR_AND_CONVERT_(Imath::Box3i,int,int,"i",6);
-         Alembic::Abc::OBox3iArrayProperty::sample_type sample;
+         Abc::OBox3iArrayProperty::sample_type sample;
          if(values.size() > 0)
-            sample = Alembic::Abc::OBox3iArrayProperty::sample_type(&values.front(),values.size());
+            sample = Abc::OBox3iArrayProperty::sample_type(&values.front(),values.size());
          prop->mBox3iArrayProperty->set(sample);
          break;
       }
       case propertyTP_box3f_array:
       {
          _COPY_TUPLE_TO_VECTOR_AND_CONVERT_(Imath::Box3f,float,float,"f",6);
-         Alembic::Abc::OBox3fArrayProperty::sample_type sample;
+         Abc::OBox3fArrayProperty::sample_type sample;
          if(values.size() > 0)
-            sample = Alembic::Abc::OBox3fArrayProperty::sample_type(&values.front(),values.size());
+            sample = Abc::OBox3fArrayProperty::sample_type(&values.front(),values.size());
          prop->mBox3fArrayProperty->set(sample);
          break;
       }
       case propertyTP_box3d_array:
       {
          _COPY_TUPLE_TO_VECTOR_AND_CONVERT_(Imath::Box3d,double,double,"d",6);
-         Alembic::Abc::OBox3dArrayProperty::sample_type sample;
+         Abc::OBox3dArrayProperty::sample_type sample;
          if(values.size() > 0)
-            sample = Alembic::Abc::OBox3dArrayProperty::sample_type(&values.front(),values.size());
+            sample = Abc::OBox3dArrayProperty::sample_type(&values.front(),values.size());
          prop->mBox3dArrayProperty->set(sample);
          break;
       }
       case propertyTP_m33f_array:
       {
          _COPY_TUPLE_TO_VECTOR_AND_CONVERT_(Imath::M33f,float,float,"f",9);
-         Alembic::Abc::OM33fArrayProperty::sample_type sample;
+         Abc::OM33fArrayProperty::sample_type sample;
          if(values.size() > 0)
-            sample = Alembic::Abc::OM33fArrayProperty::sample_type(&values.front(),values.size());
+            sample = Abc::OM33fArrayProperty::sample_type(&values.front(),values.size());
          prop->mM33fArrayProperty->set(sample);
          break;
       }
       case propertyTP_m33d_array:
       {
          _COPY_TUPLE_TO_VECTOR_AND_CONVERT_(Imath::M33d,double,double,"d",9);
-         Alembic::Abc::OM33dArrayProperty::sample_type sample;
+         Abc::OM33dArrayProperty::sample_type sample;
          if(values.size() > 0)
-            sample = Alembic::Abc::OM33dArrayProperty::sample_type(&values.front(),values.size());
+            sample = Abc::OM33dArrayProperty::sample_type(&values.front(),values.size());
          prop->mM33dArrayProperty->set(sample);
          break;
       }
       case propertyTP_m44f_array:
       {
          _COPY_TUPLE_TO_VECTOR_AND_CONVERT_(Imath::M44f,float,float,"f",16);
-         Alembic::Abc::OM44fArrayProperty::sample_type sample;
+         Abc::OM44fArrayProperty::sample_type sample;
          if(values.size() > 0)
-            sample = Alembic::Abc::OM44fArrayProperty::sample_type(&values.front(),values.size());
+            sample = Abc::OM44fArrayProperty::sample_type(&values.front(),values.size());
          prop->mM44fArrayProperty->set(sample);
          break;
       }
       case propertyTP_m44d_array:
       {
          _COPY_TUPLE_TO_VECTOR_AND_CONVERT_(Imath::M44d,double,double,"d",16);
-         Alembic::Abc::OM44dArrayProperty::sample_type sample;
+         Abc::OM44dArrayProperty::sample_type sample;
          if(values.size() > 0)
-            sample = Alembic::Abc::OM44dArrayProperty::sample_type(&values.front(),values.size());
+            sample = Abc::OM44dArrayProperty::sample_type(&values.front(),values.size());
          prop->mM44dArrayProperty->set(sample);
          break;
       }
       case propertyTP_quatf_array:
       {
          _COPY_TUPLE_TO_VECTOR_AND_CONVERT_(Imath::Quatf,float,float,"f",4);
-         Alembic::Abc::OQuatfArrayProperty::sample_type sample;
+         Abc::OQuatfArrayProperty::sample_type sample;
          if(values.size() > 0)
-            sample = Alembic::Abc::OQuatfArrayProperty::sample_type(&values.front(),values.size());
+            sample = Abc::OQuatfArrayProperty::sample_type(&values.front(),values.size());
          prop->mQuatfArrayProperty->set(sample);
          break;
       }
       case propertyTP_quatd_array:
       {
          _COPY_TUPLE_TO_VECTOR_AND_CONVERT_(Imath::Quatd,double,double,"d",4);
-         Alembic::Abc::OQuatdArrayProperty::sample_type sample;
+         Abc::OQuatdArrayProperty::sample_type sample;
          if(values.size() > 0)
-            sample = Alembic::Abc::OQuatdArrayProperty::sample_type(&values.front(),values.size());
+            sample = Abc::OQuatdArrayProperty::sample_type(&values.front(),values.size());
          prop->mQuatdArrayProperty->set(sample);
          break;
       }
       case propertyTP_c3h_array:
       {
          _COPY_TUPLE_TO_VECTOR_AND_CONVERT_(Imath::C3h,half,float,"f",3);
-         Alembic::Abc::OC3hArrayProperty::sample_type sample;
+         Abc::OC3hArrayProperty::sample_type sample;
          if(values.size() > 0)
-            sample = Alembic::Abc::OC3hArrayProperty::sample_type(&values.front(),values.size());
+            sample = Abc::OC3hArrayProperty::sample_type(&values.front(),values.size());
          prop->mC3hArrayProperty->set(sample);
          break;
       }
       case propertyTP_c3f_array:
       {
          _COPY_TUPLE_TO_VECTOR_AND_CONVERT_(Imath::C3f,float,float,"f",3);
-         Alembic::Abc::OC3fArrayProperty::sample_type sample;
+         Abc::OC3fArrayProperty::sample_type sample;
          if(values.size() > 0)
-            sample = Alembic::Abc::OC3fArrayProperty::sample_type(&values.front(),values.size());
+            sample = Abc::OC3fArrayProperty::sample_type(&values.front(),values.size());
          prop->mC3fArrayProperty->set(sample);
          break;
       }
       case propertyTP_c3c_array:
       {
          _COPY_TUPLE_TO_VECTOR_AND_CONVERT_(Imath::C3c,unsigned char,int,"i",3);
-         Alembic::Abc::OC3cArrayProperty::sample_type sample;
+         Abc::OC3cArrayProperty::sample_type sample;
          if(values.size() > 0)
-            sample = Alembic::Abc::OC3cArrayProperty::sample_type(&values.front(),values.size());
+            sample = Abc::OC3cArrayProperty::sample_type(&values.front(),values.size());
          prop->mC3cArrayProperty->set(sample);
          break;
       }
       case propertyTP_c4h_array:
       {
          _COPY_TUPLE_TO_VECTOR_AND_CONVERT_(Imath::C4h,half,float,"f",4);
-         Alembic::Abc::OC4hArrayProperty::sample_type sample;
+         Abc::OC4hArrayProperty::sample_type sample;
          if(values.size() > 0)
-            sample = Alembic::Abc::OC4hArrayProperty::sample_type(&values.front(),values.size());
+            sample = Abc::OC4hArrayProperty::sample_type(&values.front(),values.size());
          prop->mC4hArrayProperty->set(sample);
          break;
       }
       case propertyTP_c4f_array:
       {
          _COPY_TUPLE_TO_VECTOR_AND_CONVERT_(Imath::C4f,float,float,"f",4);
-         Alembic::Abc::OC4fArrayProperty::sample_type sample;
+         Abc::OC4fArrayProperty::sample_type sample;
          if(values.size() > 0)
-            sample = Alembic::Abc::OC4fArrayProperty::sample_type(&values.front(),values.size());
+            sample = Abc::OC4fArrayProperty::sample_type(&values.front(),values.size());
          prop->mC4fArrayProperty->set(sample);
          break;
       }
       case propertyTP_c4c_array:
       {
          _COPY_TUPLE_TO_VECTOR_AND_CONVERT_(Imath::C4c,unsigned char,int,"i",4);
-         Alembic::Abc::OC4cArrayProperty::sample_type sample;
+         Abc::OC4cArrayProperty::sample_type sample;
          if(values.size() > 0)
-            sample = Alembic::Abc::OC4cArrayProperty::sample_type(&values.front(),values.size());
+            sample = Abc::OC4cArrayProperty::sample_type(&values.front(),values.size());
          prop->mC4cArrayProperty->set(sample);
          break;
       }
       case propertyTP_n2f_array:
       {
          _COPY_TUPLE_TO_VECTOR_AND_CONVERT_(Imath::V2f,float,float,"f",2);
-         Alembic::Abc::ON2fArrayProperty::sample_type sample;
+         Abc::ON2fArrayProperty::sample_type sample;
          if(values.size() > 0)
-            sample = Alembic::Abc::ON2fArrayProperty::sample_type(&values.front(),values.size());
+            sample = Abc::ON2fArrayProperty::sample_type(&values.front(),values.size());
          prop->mN2fArrayProperty->set(sample);
          break;
       }
       case propertyTP_n2d_array:
       {
          _COPY_TUPLE_TO_VECTOR_AND_CONVERT_(Imath::V2d,double,double,"d",2);
-         Alembic::Abc::ON2dArrayProperty::sample_type sample;
+         Abc::ON2dArrayProperty::sample_type sample;
          if(values.size() > 0)
-            sample = Alembic::Abc::ON2dArrayProperty::sample_type(&values.front(),values.size());
+            sample = Abc::ON2dArrayProperty::sample_type(&values.front(),values.size());
          prop->mN2dArrayProperty->set(sample);
          break;
       }
       case propertyTP_n3f_array:
       {
          _COPY_TUPLE_TO_VECTOR_AND_CONVERT_(Imath::V3f,float,float,"f",3);
-         Alembic::Abc::ON3fArrayProperty::sample_type sample;
+         Abc::ON3fArrayProperty::sample_type sample;
          if(values.size() > 0)
-            sample = Alembic::Abc::ON3fArrayProperty::sample_type(&values.front(),values.size());
+            sample = Abc::ON3fArrayProperty::sample_type(&values.front(),values.size());
          prop->mN3fArrayProperty->set(sample);
          break;
       }
       case propertyTP_n3d_array:
       {
          _COPY_TUPLE_TO_VECTOR_AND_CONVERT_(Imath::V3d,double,double,"d",3);
-         Alembic::Abc::ON3dArrayProperty::sample_type sample;
+         Abc::ON3dArrayProperty::sample_type sample;
          if(values.size() > 0)
-            sample = Alembic::Abc::ON3dArrayProperty::sample_type(&values.front(),values.size());
+            sample = Abc::ON3dArrayProperty::sample_type(&values.front(),values.size());
          prop->mN3dArrayProperty->set(sample);
          break;
       }
@@ -1215,16 +1216,16 @@ static PyTypeObject oProperty_Type = {
    if(prop->mIsArray) \
    { \
       prop->mPropType = (propertyTP)(tp - propertyTP_boolean + propertyTP_boolean_array); \
-      prop->m##base##arrayprop = new Alembic::Abc::O##base##arrayprop( prop->mBaseArrayProperty->getPtr(),Alembic::Abc::kWrapExisting);\
+      prop->m##base##arrayprop = new Abc::O##base##arrayprop( prop->mBaseArrayProperty->getPtr(),Abc::kWrapExisting);\
    } \
    else \
    { \
       prop->mPropType = tp; \
-      prop->m##base##singleprop = new Alembic::Abc::O##base##singleprop( prop->mBaseScalarProperty->getPtr(),Alembic::Abc::kWrapExisting);\
+      prop->m##base##singleprop = new Abc::O##base##singleprop( prop->mBaseScalarProperty->getPtr(),Abc::kWrapExisting);\
    }
 #define _NEW_PROP_(tp,base) _NEW_PROP_IMPL_(tp,base,Property,ArrayProperty,Writer)
 #define _NEW_PROP_CASE_IMPL_(pod,tp,base,singleprop,arrayprop,writer) \
-   case Alembic::Abc::pod: \
+   case Abc::pod: \
    { \
       _NEW_PROP_IMPL_(tp,base,singleprop,arrayprop,writer) \
       break; \
@@ -1237,24 +1238,24 @@ static PyTypeObject oProperty_Type = {
       if(prop->mIsArray) \
       { \
          prop->mPropType = (propertyTP)(tp - propertyTP_boolean + propertyTP_boolean_array); \
-         prop->m##base##arrayprop = new Alembic::Abc::O##base##arrayprop(compound,in_propName,compound.getMetaData(),tsIndex); \
-         prop->mBaseArrayProperty = new Alembic::Abc::OArrayProperty( prop->m##base##arrayprop->getPtr(),Alembic::Abc::kWrapExisting);\
+         prop->m##base##arrayprop = new Abc::O##base##arrayprop(compound,in_propName,compound.getMetaData(),tsIndex); \
+         prop->mBaseArrayProperty = new Abc::OArrayProperty( prop->m##base##arrayprop->getPtr(),Abc::kWrapExisting);\
       } \
       else \
       { \
          prop->mPropType = tp; \
-         prop->m##base##singleprop = new Alembic::Abc::O##base##singleprop(compound,in_propName,compound.getMetaData(),tsIndex); \
-         prop->mBaseScalarProperty = new Alembic::Abc::OScalarProperty( prop->m##base##singleprop->getPtr(),Alembic::Abc::kWrapExisting);\
+         prop->m##base##singleprop = new Abc::O##base##singleprop(compound,in_propName,compound.getMetaData(),tsIndex); \
+         prop->mBaseScalarProperty = new Abc::OScalarProperty( prop->m##base##singleprop->getPtr(),Abc::kWrapExisting);\
       } \
    }
 #define _IF_CREATE_PROP_(tp,base,str) _IF_CREATE_PROP_IMPL_(tp,base,str,Property,ArrayProperty)
 
-PyObject * oProperty_new(Alembic::Abc::OCompoundProperty compound, std::string compoundFullName, char * in_propName, char * in_propType, int tsIndex, void * in_Archive)
+PyObject * oProperty_new(Abc::OCompoundProperty compound, std::string compoundFullName, char * in_propName, char * in_propType, int tsIndex, void * in_Archive)
 {
    ALEMBIC_TRY_STATEMENT
 
    // check if we already have this property somewhere
-   //Alembic::Abc::OCompoundProperty compound = getCompoundFromOObject(in_casted);
+   //Abc::OCompoundProperty compound = getCompoundFromOObject(in_casted);
    std::string identifier = compoundFullName;
    identifier.append("/");
    identifier.append(in_propName);
@@ -1306,15 +1307,15 @@ PyObject * oProperty_new(Alembic::Abc::OCompoundProperty compound, std::string c
    }
 
    // get the compound property writer
-   Alembic::Abc::CompoundPropertyWriterPtr compoundWriter = GetCompoundPropertyWriterPtr(compound);      // this variable is unused!
-   const Alembic::Abc::PropertyHeader * propHeader = compound.getPropertyHeader( in_propName );
+   Abc::CompoundPropertyWriterPtr compoundWriter = GetCompoundPropertyWriterPtr(compound);      // this variable is unused!
+   const Abc::PropertyHeader * propHeader = compound.getPropertyHeader( in_propName );
 
    if(propHeader != NULL)
    {
       prop->intent = propHeader->getDataType().getExtent(); // NEW
 
       // this property already exists
-      Alembic::Abc::OBaseProperty baseProp = compound.getProperty( in_propName );
+      Abc::OBaseProperty baseProp = compound.getProperty( in_propName );
       std::string interpretation;
       if(baseProp.isCompound())
       {
@@ -1326,13 +1327,13 @@ PyObject * oProperty_new(Alembic::Abc::OCompoundProperty compound, std::string c
       else if(baseProp.isArray())
       {
          prop->mIsArray = true;
-		 prop->mBaseArrayProperty = new Alembic::Abc::OArrayProperty( compoundWriter, in_propName, baseProp.getDataType() );
+		 prop->mBaseArrayProperty = new Abc::OArrayProperty( compoundWriter, in_propName, baseProp.getDataType() );
          interpretation = prop->mBaseArrayProperty->getMetaData().get("interpretation");
       }
       else
       {
          prop->mIsArray = false;
-         prop->mBaseScalarProperty = new Alembic::Abc::OScalarProperty( compoundWriter, in_propName, baseProp.getDataType() );
+         prop->mBaseScalarProperty = new Abc::OScalarProperty( compoundWriter, in_propName, baseProp.getDataType() );
          interpretation = prop->mBaseScalarProperty->getMetaData().get("interpretation");
       }
 

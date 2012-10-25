@@ -17,6 +17,8 @@ file(GLOB Includes ${BASE_DIR}/*.h)
 SOURCE_GROUP("Source Files" FILES ${Sources})
 SOURCE_GROUP("Header Files" FILES ${Includes})
 
+setup_precompiled_header( ${BASE_DIR} ${Sources} )
+
 if( Exocortex_SERVICES OR Exocortex_RLM_ONLY )
 	include_directories( ${Rlm_INCLUDE_DIR} )
 	include_directories( ${Exocortex_INCLUDE_DIR} )

@@ -1,7 +1,7 @@
+#include "stdafx.h"
 #include "extension.h"
 #include "icompoundproperty.h"
 #include "iobject.h"
-#include <boost/lexical_cast.hpp>
 #include "AlembicLicensing.h"
 
 #undef iProperty
@@ -46,7 +46,7 @@ static PyObject * iCompoundProperty_getValues(PyObject * self, PyObject * args)
 static PyObject * iCompoundProperty_getPropertyNames(PyObject * self, PyObject * args)
 {
    ALEMBIC_TRY_STATEMENT
-      Alembic::Abc::ICompoundProperty *icprop = ((iCompoundProperty*)self)->mBaseCompoundProperty;
+      Abc::ICompoundProperty *icprop = ((iCompoundProperty*)self)->mBaseCompoundProperty;
       const int nb_prop = icprop->getNumProperties();
 
       PyObject *tuple = PyTuple_New(nb_prop);
@@ -140,11 +140,11 @@ static PyTypeObject iCompoundProperty_Type =
 }
 #endif
 
-PyObject * iCompoundProperty_new(Alembic::Abc::ICompoundProperty in_cprop, char *in_propName)
+PyObject * iCompoundProperty_new(Abc::ICompoundProperty in_cprop, char *in_propName)
 {
    ALEMBIC_TRY_STATEMENT
       iCompoundProperty * prop = PyObject_NEW(iCompoundProperty, &iCompoundProperty_Type);
-      prop->mBaseCompoundProperty = new Alembic::Abc::ICompoundProperty(in_cprop, in_propName);
+      prop->mBaseCompoundProperty = new Abc::ICompoundProperty(in_cprop, in_propName);
       return (PyObject*)prop;
    ALEMBIC_PYOBJECT_CATCH_STATEMENT
 }

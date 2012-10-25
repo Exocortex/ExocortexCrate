@@ -1,3 +1,4 @@
+#include "stdafx.h"
 #include "extension.h"
 #include "iproperty.h"
 #include "icompoundproperty.h"   // to call iCompoundProperty_new in iProperty_new if it's an iCompoundProperty
@@ -406,7 +407,7 @@ static PyObject * iProperty_getSampleTimes(PyObject * self, PyObject * args)
    ALEMBIC_TRY_STATEMENT
    iProperty * prop = (iProperty*)self;
  
-   Alembic::Abc::TimeSamplingPtr ts;
+   Abc::TimeSamplingPtr ts;
    if(prop->mIsArray)
       ts = prop->mBaseArrayProperty->getTimeSampling();
    else
@@ -414,7 +415,7 @@ static PyObject * iProperty_getSampleTimes(PyObject * self, PyObject * args)
 
    if(ts)
    {
-      const std::vector <Alembic::Abc::chrono_t> & times = ts->getStoredTimes();
+      const std::vector <Abc::chrono_t> & times = ts->getStoredTimes();
       PyObject * tuple = PyTuple_New(times.size());
       for(size_t i=0;i<times.size();i++)
          PyTuple_SetItem(tuple,i,Py_BuildValue("f",(float)times[i]));
@@ -448,7 +449,7 @@ static PyObject * iProperty_getNbStoredSamples(PyObject * self, PyObject * args)
 #define _GET_SIZE_CASE_IMPL_(tp,base,arrayprop) \
    case tp: \
    { \
-      Alembic::Abc::I##base##arrayprop::sample_ptr_type sample; \
+      Abc::I##base##arrayprop::sample_ptr_type sample; \
       prop->m##base##arrayprop->get(sample,sampleIndex); \
       return Py_BuildValue("I",(unsigned int)sample->size()); \
    }
@@ -600,10 +601,10 @@ static PyObject * iProperty_getValues(PyObject * self, PyObject * args)
    {
       case propertyTP_boolean:
       {
-         _GET_VALUE_INTENT(mBoolProperty, Alembic::Abc::bool_t, "i", bool);
+         _GET_VALUE_INTENT(mBoolProperty, Abc::bool_t, "i", bool);
          /*
          tuple = PyTuple_New(1);
-         Alembic::Abc::bool_t value;
+         Abc::bool_t value;
          prop->mBoolProperty->get(value,sampleIndex);
          PyTuple_SetItem(tuple,0,Py_BuildValue("i",value ? 1 : 0));
          */
@@ -633,10 +634,10 @@ static PyObject * iProperty_getValues(PyObject * self, PyObject * args)
       }
       case propertyTP_uint16:
       {
-         _GET_VALUE_INTENT(mUInt16Property, Alembic::Abc::uint16_t, "I", unsigned int);
+         _GET_VALUE_INTENT(mUInt16Property, Abc::uint16_t, "I", unsigned int);
          /*
          tuple = PyTuple_New(1);
-         Alembic::Abc::uint16_t value;
+         Abc::uint16_t value;
          prop->mUInt16Property->get(value,sampleIndex);
          PyTuple_SetItem(tuple,0,Py_BuildValue("I",(unsigned int)value));
          */
@@ -644,10 +645,10 @@ static PyObject * iProperty_getValues(PyObject * self, PyObject * args)
       }
       case propertyTP_int16:
       {
-         _GET_VALUE_INTENT(mInt16Property, Alembic::Abc::int16_t, "i", int);
+         _GET_VALUE_INTENT(mInt16Property, Abc::int16_t, "i", int);
          /*
          tuple = PyTuple_New(1);
-         Alembic::Abc::int16_t value;
+         Abc::int16_t value;
          prop->mInt16Property->get(value,sampleIndex);
          PyTuple_SetItem(tuple,0,Py_BuildValue("i",(int)value));
          */
@@ -655,10 +656,10 @@ static PyObject * iProperty_getValues(PyObject * self, PyObject * args)
       }
       case propertyTP_uint32:
       {
-         _GET_VALUE_INTENT(mUInt32Property, Alembic::Abc::uint32_t, "k", unsigned long);
+         _GET_VALUE_INTENT(mUInt32Property, Abc::uint32_t, "k", unsigned long);
          /*
          tuple = PyTuple_New(1);
-         Alembic::Abc::uint32_t value;
+         Abc::uint32_t value;
          prop->mUInt32Property->get(value,sampleIndex);
          PyTuple_SetItem(tuple,0,Py_BuildValue("k",(unsigned long)value));
          */
@@ -666,10 +667,10 @@ static PyObject * iProperty_getValues(PyObject * self, PyObject * args)
       }
       case propertyTP_int32:
       {
-         _GET_VALUE_INTENT(mInt32Property, Alembic::Abc::int32_t, "l", long);
+         _GET_VALUE_INTENT(mInt32Property, Abc::int32_t, "l", long);
          /*
          tuple = PyTuple_New(1);
-         Alembic::Abc::int32_t value;
+         Abc::int32_t value;
          prop->mInt32Property->get(value,sampleIndex);
          PyTuple_SetItem(tuple,0,Py_BuildValue("l",(long)value));
          */
@@ -677,10 +678,10 @@ static PyObject * iProperty_getValues(PyObject * self, PyObject * args)
       }
       case propertyTP_uint64:
       {
-         _GET_VALUE_INTENT(mUInt64Property, Alembic::Abc::uint64_t, "K", unsigned long long);
+         _GET_VALUE_INTENT(mUInt64Property, Abc::uint64_t, "K", unsigned long long);
          /*
          tuple = PyTuple_New(1);
-         Alembic::Abc::uint64_t value;
+         Abc::uint64_t value;
          prop->mUInt64Property->get(value,sampleIndex);
          PyTuple_SetItem(tuple,0,Py_BuildValue("K",(unsigned long long)value));
          */
@@ -688,10 +689,10 @@ static PyObject * iProperty_getValues(PyObject * self, PyObject * args)
       }
       case propertyTP_int64:
       {
-         _GET_VALUE_INTENT(mInt64Property, Alembic::Abc::int64_t, "L", long long);
+         _GET_VALUE_INTENT(mInt64Property, Abc::int64_t, "L", long long);
          /*
          tuple = PyTuple_New(1);
-         Alembic::Abc::int64_t value;
+         Abc::int64_t value;
          prop->mInt64Property->get(value,sampleIndex);
          PyTuple_SetItem(tuple,0,Py_BuildValue("L",(long long)value));
          */
@@ -699,10 +700,10 @@ static PyObject * iProperty_getValues(PyObject * self, PyObject * args)
       }
       case propertyTP_half:
       {
-         _GET_VALUE_INTENT(mHalfProperty, Alembic::Abc::float16_t, "f", float);
+         _GET_VALUE_INTENT(mHalfProperty, Abc::float16_t, "f", float);
          /*
          tuple = PyTuple_New(1);
-         Alembic::Abc::float16_t value;
+         Abc::float16_t value;
          prop->mHalfProperty->get(value,sampleIndex);
          PyTuple_SetItem(tuple,0,Py_BuildValue("f",(float)value));
          */
@@ -710,10 +711,10 @@ static PyObject * iProperty_getValues(PyObject * self, PyObject * args)
       }
       case propertyTP_float:
       {
-         _GET_VALUE_INTENT(mFloatProperty, Alembic::Abc::float32_t, "f", float);
+         _GET_VALUE_INTENT(mFloatProperty, Abc::float32_t, "f", float);
          /*
          tuple = PyTuple_New(1);
-         Alembic::Abc::float32_t value;
+         Abc::float32_t value;
          prop->mFloatProperty->get(value,sampleIndex);
          PyTuple_SetItem(tuple,0,Py_BuildValue("f",(float)value));
          */
@@ -721,7 +722,7 @@ static PyObject * iProperty_getValues(PyObject * self, PyObject * args)
       }
       case propertyTP_double:
       {
-         _GET_VALUE_INTENT(mDoubleProperty, Alembic::Abc::float64_t, "d", double);
+         _GET_VALUE_INTENT(mDoubleProperty, Abc::float64_t, "d", double);
          break;
       }
       case propertyTP_string:
@@ -743,7 +744,7 @@ static PyObject * iProperty_getValues(PyObject * self, PyObject * args)
       case propertyTP_v2s:
       {
          tuple = PyTuple_New(2);
-         Alembic::Abc::IV2sProperty::value_type value;
+         Abc::IV2sProperty::value_type value;
          prop->mV2sProperty->get(value,sampleIndex);
          PyTuple_SetItem(tuple,0,Py_BuildValue("i",(int)value.x));
          PyTuple_SetItem(tuple,1,Py_BuildValue("i",(int)value.y));
@@ -752,7 +753,7 @@ static PyObject * iProperty_getValues(PyObject * self, PyObject * args)
       case propertyTP_v2i:
       {
          tuple = PyTuple_New(2);
-         Alembic::Abc::IV2iProperty::value_type value;
+         Abc::IV2iProperty::value_type value;
          prop->mV2iProperty->get(value,sampleIndex);
          PyTuple_SetItem(tuple,0,Py_BuildValue("i",(int)value.x));
          PyTuple_SetItem(tuple,1,Py_BuildValue("i",(int)value.y));
@@ -761,7 +762,7 @@ static PyObject * iProperty_getValues(PyObject * self, PyObject * args)
       case propertyTP_v2f:
       {
          tuple = PyTuple_New(2);
-         Alembic::Abc::IV2fProperty::value_type value;
+         Abc::IV2fProperty::value_type value;
          prop->mV2fProperty->get(value,sampleIndex);
          PyTuple_SetItem(tuple,0,Py_BuildValue("f",value.x));
          PyTuple_SetItem(tuple,1,Py_BuildValue("f",value.y));
@@ -770,7 +771,7 @@ static PyObject * iProperty_getValues(PyObject * self, PyObject * args)
       case propertyTP_v2d:
       {
          tuple = PyTuple_New(2);
-         Alembic::Abc::IV2dProperty::value_type value;
+         Abc::IV2dProperty::value_type value;
          prop->mV2dProperty->get(value,sampleIndex);
          PyTuple_SetItem(tuple,0,Py_BuildValue("d",value.x));
          PyTuple_SetItem(tuple,1,Py_BuildValue("d",value.y));
@@ -779,7 +780,7 @@ static PyObject * iProperty_getValues(PyObject * self, PyObject * args)
       case propertyTP_v3s:
       {
          tuple = PyTuple_New(3);
-         Alembic::Abc::IV3sProperty::value_type value;
+         Abc::IV3sProperty::value_type value;
          prop->mV3sProperty->get(value,sampleIndex);
          PyTuple_SetItem(tuple,0,Py_BuildValue("i",(int)value.x));
          PyTuple_SetItem(tuple,1,Py_BuildValue("i",(int)value.y));
@@ -789,7 +790,7 @@ static PyObject * iProperty_getValues(PyObject * self, PyObject * args)
       case propertyTP_v3i:
       {
          tuple = PyTuple_New(3);
-         Alembic::Abc::IV3iProperty::value_type value;
+         Abc::IV3iProperty::value_type value;
          prop->mV3iProperty->get(value,sampleIndex);
          PyTuple_SetItem(tuple,0,Py_BuildValue("i",(int)value.x));
          PyTuple_SetItem(tuple,1,Py_BuildValue("i",(int)value.y));
@@ -799,7 +800,7 @@ static PyObject * iProperty_getValues(PyObject * self, PyObject * args)
       case propertyTP_v3f:
       {
          tuple = PyTuple_New(3);
-         Alembic::Abc::IV3fProperty::value_type value;
+         Abc::IV3fProperty::value_type value;
          prop->mV3fProperty->get(value,sampleIndex);
          PyTuple_SetItem(tuple,0,Py_BuildValue("f",value.x));
          PyTuple_SetItem(tuple,1,Py_BuildValue("f",value.y));
@@ -809,7 +810,7 @@ static PyObject * iProperty_getValues(PyObject * self, PyObject * args)
       case propertyTP_v3d:
       {
          tuple = PyTuple_New(3);
-         Alembic::Abc::IV3dProperty::value_type value;
+         Abc::IV3dProperty::value_type value;
          prop->mV3dProperty->get(value,sampleIndex);
          PyTuple_SetItem(tuple,0,Py_BuildValue("d",value.x));
          PyTuple_SetItem(tuple,1,Py_BuildValue("d",value.y));
@@ -819,7 +820,7 @@ static PyObject * iProperty_getValues(PyObject * self, PyObject * args)
       case propertyTP_p2s:
       {
          tuple = PyTuple_New(2);
-         Alembic::Abc::IP2sProperty::value_type value;
+         Abc::IP2sProperty::value_type value;
          prop->mP2sProperty->get(value,sampleIndex);
          PyTuple_SetItem(tuple,0,Py_BuildValue("i",(int)value.x));
          PyTuple_SetItem(tuple,1,Py_BuildValue("i",(int)value.y));
@@ -828,7 +829,7 @@ static PyObject * iProperty_getValues(PyObject * self, PyObject * args)
       case propertyTP_p2i:
       {
          tuple = PyTuple_New(2);
-         Alembic::Abc::IP2iProperty::value_type value;
+         Abc::IP2iProperty::value_type value;
          prop->mP2iProperty->get(value,sampleIndex);
          PyTuple_SetItem(tuple,0,Py_BuildValue("i",(int)value.x));
          PyTuple_SetItem(tuple,1,Py_BuildValue("i",(int)value.y));
@@ -837,7 +838,7 @@ static PyObject * iProperty_getValues(PyObject * self, PyObject * args)
       case propertyTP_p2f:
       {
          tuple = PyTuple_New(2);
-         Alembic::Abc::IP2fProperty::value_type value;
+         Abc::IP2fProperty::value_type value;
          prop->mP2fProperty->get(value,sampleIndex);
          PyTuple_SetItem(tuple,0,Py_BuildValue("f",value.x));
          PyTuple_SetItem(tuple,1,Py_BuildValue("f",value.y));
@@ -846,7 +847,7 @@ static PyObject * iProperty_getValues(PyObject * self, PyObject * args)
       case propertyTP_p2d:
       {
          tuple = PyTuple_New(2);
-         Alembic::Abc::IP2dProperty::value_type value;
+         Abc::IP2dProperty::value_type value;
          prop->mP2dProperty->get(value,sampleIndex);
          PyTuple_SetItem(tuple,0,Py_BuildValue("d",value.x));
          PyTuple_SetItem(tuple,1,Py_BuildValue("d",value.y));
@@ -855,7 +856,7 @@ static PyObject * iProperty_getValues(PyObject * self, PyObject * args)
       case propertyTP_p3s:
       {
          tuple = PyTuple_New(3);
-         Alembic::Abc::IP3sProperty::value_type value;
+         Abc::IP3sProperty::value_type value;
          prop->mP3sProperty->get(value,sampleIndex);
          PyTuple_SetItem(tuple,0,Py_BuildValue("i",(int)value.x));
          PyTuple_SetItem(tuple,1,Py_BuildValue("i",(int)value.y));
@@ -865,7 +866,7 @@ static PyObject * iProperty_getValues(PyObject * self, PyObject * args)
       case propertyTP_p3i:
       {
          tuple = PyTuple_New(3);
-         Alembic::Abc::IP3iProperty::value_type value;
+         Abc::IP3iProperty::value_type value;
          prop->mP3iProperty->get(value,sampleIndex);
          PyTuple_SetItem(tuple,0,Py_BuildValue("i",(int)value.x));
          PyTuple_SetItem(tuple,1,Py_BuildValue("i",(int)value.y));
@@ -875,7 +876,7 @@ static PyObject * iProperty_getValues(PyObject * self, PyObject * args)
       case propertyTP_p3f:
       {
          tuple = PyTuple_New(3);
-         Alembic::Abc::IP3fProperty::value_type value;
+         Abc::IP3fProperty::value_type value;
          prop->mP3fProperty->get(value,sampleIndex);
          PyTuple_SetItem(tuple,0,Py_BuildValue("f",value.x));
          PyTuple_SetItem(tuple,1,Py_BuildValue("f",value.y));
@@ -885,7 +886,7 @@ static PyObject * iProperty_getValues(PyObject * self, PyObject * args)
       case propertyTP_p3d:
       {
          tuple = PyTuple_New(3);
-         Alembic::Abc::IP3dProperty::value_type value;
+         Abc::IP3dProperty::value_type value;
          prop->mP3dProperty->get(value,sampleIndex);
          PyTuple_SetItem(tuple,0,Py_BuildValue("d",value.x));
          PyTuple_SetItem(tuple,1,Py_BuildValue("d",value.y));
@@ -895,7 +896,7 @@ static PyObject * iProperty_getValues(PyObject * self, PyObject * args)
       case propertyTP_box2s:
       {
          tuple = PyTuple_New(4);
-         Alembic::Abc::IBox2sProperty::value_type value;
+         Abc::IBox2sProperty::value_type value;
          prop->mBox2sProperty->get(value,sampleIndex);
          PyTuple_SetItem(tuple,0,Py_BuildValue("i",(int)value.min.x));
          PyTuple_SetItem(tuple,1,Py_BuildValue("i",(int)value.min.y));
@@ -906,7 +907,7 @@ static PyObject * iProperty_getValues(PyObject * self, PyObject * args)
       case propertyTP_box2i:
       {
          tuple = PyTuple_New(4);
-         Alembic::Abc::IBox2iProperty::value_type value;
+         Abc::IBox2iProperty::value_type value;
          prop->mBox2iProperty->get(value,sampleIndex);
          PyTuple_SetItem(tuple,0,Py_BuildValue("i",(int)value.min.x));
          PyTuple_SetItem(tuple,1,Py_BuildValue("i",(int)value.min.y));
@@ -917,7 +918,7 @@ static PyObject * iProperty_getValues(PyObject * self, PyObject * args)
       case propertyTP_box2f:
       {
          tuple = PyTuple_New(4);
-         Alembic::Abc::IBox2fProperty::value_type value;
+         Abc::IBox2fProperty::value_type value;
          prop->mBox2fProperty->get(value,sampleIndex);
          PyTuple_SetItem(tuple,0,Py_BuildValue("f",value.min.x));
          PyTuple_SetItem(tuple,1,Py_BuildValue("f",value.min.y));
@@ -928,7 +929,7 @@ static PyObject * iProperty_getValues(PyObject * self, PyObject * args)
       case propertyTP_box2d:
       {
          tuple = PyTuple_New(4);
-         Alembic::Abc::IBox2dProperty::value_type value;
+         Abc::IBox2dProperty::value_type value;
          prop->mBox2dProperty->get(value,sampleIndex);
          PyTuple_SetItem(tuple,0,Py_BuildValue("d",value.min.x));
          PyTuple_SetItem(tuple,1,Py_BuildValue("d",value.min.y));
@@ -939,7 +940,7 @@ static PyObject * iProperty_getValues(PyObject * self, PyObject * args)
       case propertyTP_box3s:
       {
          tuple = PyTuple_New(6);
-         Alembic::Abc::IBox3sProperty::value_type value;
+         Abc::IBox3sProperty::value_type value;
          prop->mBox3sProperty->get(value,sampleIndex);
          PyTuple_SetItem(tuple,0,Py_BuildValue("i",(int)value.min.x));
          PyTuple_SetItem(tuple,1,Py_BuildValue("i",(int)value.min.y));
@@ -952,7 +953,7 @@ static PyObject * iProperty_getValues(PyObject * self, PyObject * args)
       case propertyTP_box3i:
       {
          tuple = PyTuple_New(6);
-         Alembic::Abc::IBox3iProperty::value_type value;
+         Abc::IBox3iProperty::value_type value;
          prop->mBox3iProperty->get(value,sampleIndex);
          PyTuple_SetItem(tuple,0,Py_BuildValue("i",(int)value.min.x));
          PyTuple_SetItem(tuple,1,Py_BuildValue("i",(int)value.min.y));
@@ -965,7 +966,7 @@ static PyObject * iProperty_getValues(PyObject * self, PyObject * args)
       case propertyTP_box3f:
       {
          tuple = PyTuple_New(6);
-         Alembic::Abc::IBox3fProperty::value_type value;
+         Abc::IBox3fProperty::value_type value;
          prop->mBox3fProperty->get(value,sampleIndex);
          PyTuple_SetItem(tuple,0,Py_BuildValue("f",value.min.x));
          PyTuple_SetItem(tuple,1,Py_BuildValue("f",value.min.y));
@@ -978,7 +979,7 @@ static PyObject * iProperty_getValues(PyObject * self, PyObject * args)
       case propertyTP_box3d:
       {
          tuple = PyTuple_New(6);
-         Alembic::Abc::IBox3dProperty::value_type value;
+         Abc::IBox3dProperty::value_type value;
          prop->mBox3dProperty->get(value,sampleIndex);
          PyTuple_SetItem(tuple,0,Py_BuildValue("d",value.min.x));
          PyTuple_SetItem(tuple,1,Py_BuildValue("d",value.min.y));
@@ -991,7 +992,7 @@ static PyObject * iProperty_getValues(PyObject * self, PyObject * args)
       case propertyTP_m33f:
       {
          tuple = PyTuple_New(9);
-         Alembic::Abc::IM33fProperty::value_type value;
+         Abc::IM33fProperty::value_type value;
          prop->mM33fProperty->get(value,sampleIndex);
          PyTuple_SetItem(tuple,0,Py_BuildValue("f",value.x[0][0]));
          PyTuple_SetItem(tuple,1,Py_BuildValue("f",value.x[0][1]));
@@ -1007,7 +1008,7 @@ static PyObject * iProperty_getValues(PyObject * self, PyObject * args)
       case propertyTP_m33d:
       {
          tuple = PyTuple_New(9);
-         Alembic::Abc::IM33dProperty::value_type value;
+         Abc::IM33dProperty::value_type value;
          prop->mM33dProperty->get(value,sampleIndex);
          PyTuple_SetItem(tuple,0,Py_BuildValue("d",value.x[0][0]));
          PyTuple_SetItem(tuple,1,Py_BuildValue("d",value.x[0][1]));
@@ -1023,7 +1024,7 @@ static PyObject * iProperty_getValues(PyObject * self, PyObject * args)
       case propertyTP_m44f:
       {
          tuple = PyTuple_New(16);
-         Alembic::Abc::IM44fProperty::value_type value;
+         Abc::IM44fProperty::value_type value;
          prop->mM44fProperty->get(value,sampleIndex);
          PyTuple_SetItem(tuple,0,Py_BuildValue("f",value.x[0][0]));
          PyTuple_SetItem(tuple,1,Py_BuildValue("f",value.x[0][1]));
@@ -1046,7 +1047,7 @@ static PyObject * iProperty_getValues(PyObject * self, PyObject * args)
       case propertyTP_m44d:
       {
          tuple = PyTuple_New(16);
-         Alembic::Abc::IM44dProperty::value_type value;
+         Abc::IM44dProperty::value_type value;
          prop->mM44dProperty->get(value,sampleIndex);
          PyTuple_SetItem(tuple,0,Py_BuildValue("d",value.x[0][0]));
          PyTuple_SetItem(tuple,1,Py_BuildValue("d",value.x[0][1]));
@@ -1069,7 +1070,7 @@ static PyObject * iProperty_getValues(PyObject * self, PyObject * args)
       case propertyTP_quatf:
       {
          tuple = PyTuple_New(4);
-         Alembic::Abc::IQuatfProperty::value_type value;
+         Abc::IQuatfProperty::value_type value;
          prop->mQuatfProperty->get(value,sampleIndex);
          PyTuple_SetItem(tuple,0,Py_BuildValue("f",value.r));
          PyTuple_SetItem(tuple,1,Py_BuildValue("f",value.v.x));
@@ -1080,7 +1081,7 @@ static PyObject * iProperty_getValues(PyObject * self, PyObject * args)
       case propertyTP_quatd:
       {
          tuple = PyTuple_New(4);
-         Alembic::Abc::IQuatdProperty::value_type value;
+         Abc::IQuatdProperty::value_type value;
          prop->mQuatdProperty->get(value,sampleIndex);
          PyTuple_SetItem(tuple,0,Py_BuildValue("d",value.r));
          PyTuple_SetItem(tuple,1,Py_BuildValue("d",value.v.x));
@@ -1091,7 +1092,7 @@ static PyObject * iProperty_getValues(PyObject * self, PyObject * args)
       case propertyTP_c3h:
       {
          tuple = PyTuple_New(3);
-         Alembic::Abc::IC3hProperty::value_type value;
+         Abc::IC3hProperty::value_type value;
          prop->mC3hProperty->get(value,sampleIndex);
          PyTuple_SetItem(tuple,0,Py_BuildValue("f",(float)value.x));
          PyTuple_SetItem(tuple,1,Py_BuildValue("f",(float)value.y));
@@ -1101,7 +1102,7 @@ static PyObject * iProperty_getValues(PyObject * self, PyObject * args)
       case propertyTP_c3f:
       {
          tuple = PyTuple_New(3);
-         Alembic::Abc::IC3fProperty::value_type value;
+         Abc::IC3fProperty::value_type value;
          prop->mC3fProperty->get(value,sampleIndex);
          PyTuple_SetItem(tuple,0,Py_BuildValue("f",value.x));
          PyTuple_SetItem(tuple,1,Py_BuildValue("f",value.y));
@@ -1111,7 +1112,7 @@ static PyObject * iProperty_getValues(PyObject * self, PyObject * args)
       case propertyTP_c3c:
       {
          tuple = PyTuple_New(3);
-         Alembic::Abc::IC3cProperty::value_type value;
+         Abc::IC3cProperty::value_type value;
          prop->mC3cProperty->get(value,sampleIndex);
          PyTuple_SetItem(tuple,0,Py_BuildValue("I",(unsigned int)value.x));
          PyTuple_SetItem(tuple,1,Py_BuildValue("I",(unsigned int)value.y));
@@ -1121,7 +1122,7 @@ static PyObject * iProperty_getValues(PyObject * self, PyObject * args)
       case propertyTP_c4h:
       {
          tuple = PyTuple_New(4);
-         Alembic::Abc::IC4hProperty::value_type value;
+         Abc::IC4hProperty::value_type value;
          prop->mC4hProperty->get(value,sampleIndex);
          PyTuple_SetItem(tuple,0,Py_BuildValue("f",(float)value.r));
          PyTuple_SetItem(tuple,1,Py_BuildValue("f",(float)value.g));
@@ -1132,7 +1133,7 @@ static PyObject * iProperty_getValues(PyObject * self, PyObject * args)
       case propertyTP_c4f:
       {
          tuple = PyTuple_New(4);
-         Alembic::Abc::IC4fProperty::value_type value;
+         Abc::IC4fProperty::value_type value;
          prop->mC4fProperty->get(value,sampleIndex);
          PyTuple_SetItem(tuple,0,Py_BuildValue("f",value.r));
          PyTuple_SetItem(tuple,1,Py_BuildValue("f",value.g));
@@ -1143,7 +1144,7 @@ static PyObject * iProperty_getValues(PyObject * self, PyObject * args)
       case propertyTP_c4c:
       {
          tuple = PyTuple_New(4);
-         Alembic::Abc::IC4cProperty::value_type value;
+         Abc::IC4cProperty::value_type value;
          prop->mC4cProperty->get(value,sampleIndex);
          PyTuple_SetItem(tuple,0,Py_BuildValue("I",(unsigned int)value.r));
          PyTuple_SetItem(tuple,1,Py_BuildValue("I",(unsigned int)value.g));
@@ -1154,7 +1155,7 @@ static PyObject * iProperty_getValues(PyObject * self, PyObject * args)
       case propertyTP_n2f:
       {
          tuple = PyTuple_New(2);
-         Alembic::Abc::IN2fProperty::value_type value;
+         Abc::IN2fProperty::value_type value;
          prop->mN2fProperty->get(value,sampleIndex);
          PyTuple_SetItem(tuple,0,Py_BuildValue("f",value.x));
          PyTuple_SetItem(tuple,1,Py_BuildValue("f",value.y));
@@ -1163,7 +1164,7 @@ static PyObject * iProperty_getValues(PyObject * self, PyObject * args)
       case propertyTP_n2d:
       {
          tuple = PyTuple_New(2);
-         Alembic::Abc::IN2dProperty::value_type value;
+         Abc::IN2dProperty::value_type value;
          prop->mN2dProperty->get(value,sampleIndex);
          PyTuple_SetItem(tuple,0,Py_BuildValue("d",value.x));
          PyTuple_SetItem(tuple,1,Py_BuildValue("d",value.y));
@@ -1172,7 +1173,7 @@ static PyObject * iProperty_getValues(PyObject * self, PyObject * args)
       case propertyTP_n3f:
       {
          tuple = PyTuple_New(3);
-         Alembic::Abc::IN3fProperty::value_type value;
+         Abc::IN3fProperty::value_type value;
          prop->mN3fProperty->get(value,sampleIndex);
          PyTuple_SetItem(tuple,0,Py_BuildValue("f",value.x));
          PyTuple_SetItem(tuple,1,Py_BuildValue("f",value.y));
@@ -1182,7 +1183,7 @@ static PyObject * iProperty_getValues(PyObject * self, PyObject * args)
       case propertyTP_n3d:
       {
          tuple = PyTuple_New(3);
-         Alembic::Abc::IN3dProperty::value_type value;
+         Abc::IN3dProperty::value_type value;
          prop->mN3dProperty->get(value,sampleIndex);
          PyTuple_SetItem(tuple,0,Py_BuildValue("d",value.x));
          PyTuple_SetItem(tuple,1,Py_BuildValue("d",value.y));
@@ -1191,8 +1192,8 @@ static PyObject * iProperty_getValues(PyObject * self, PyObject * args)
       }
       case propertyTP_boolean_array:
       {
-         Alembic::Abc::IBoolArrayProperty::sample_ptr_type sample;
-         Alembic::Abc::IBoolArrayProperty::value_type value;
+         Abc::IBoolArrayProperty::sample_ptr_type sample;
+         Abc::IBoolArrayProperty::value_type value;
          prop->mBoolArrayProperty->get(sample,sampleIndex);
          if(start >= sample->size())
             tuple = PyTuple_New(0);
@@ -1211,8 +1212,8 @@ static PyObject * iProperty_getValues(PyObject * self, PyObject * args)
       }
       case propertyTP_uchar_array:
       {
-         Alembic::Abc::IUcharArrayProperty::sample_ptr_type sample;
-         Alembic::Abc::IUcharArrayProperty::value_type value;
+         Abc::IUcharArrayProperty::sample_ptr_type sample;
+         Abc::IUcharArrayProperty::value_type value;
          prop->mUcharArrayProperty->get(sample,sampleIndex);
          if(start >= sample->size())
             tuple = PyTuple_New(0);
@@ -1231,8 +1232,8 @@ static PyObject * iProperty_getValues(PyObject * self, PyObject * args)
       }
       case propertyTP_char_array:
       {
-         Alembic::Abc::ICharArrayProperty::sample_ptr_type sample;
-         Alembic::Abc::ICharArrayProperty::value_type value;
+         Abc::ICharArrayProperty::sample_ptr_type sample;
+         Abc::ICharArrayProperty::value_type value;
          prop->mCharArrayProperty->get(sample,sampleIndex);
          if(start >= sample->size())
             tuple = PyTuple_New(0);
@@ -1251,8 +1252,8 @@ static PyObject * iProperty_getValues(PyObject * self, PyObject * args)
       }
       case propertyTP_uint16_array:
       {
-         Alembic::Abc::IUInt16ArrayProperty::sample_ptr_type sample;
-         Alembic::Abc::IUInt16ArrayProperty::value_type value;
+         Abc::IUInt16ArrayProperty::sample_ptr_type sample;
+         Abc::IUInt16ArrayProperty::value_type value;
          prop->mUInt16ArrayProperty->get(sample,sampleIndex);
          if(start >= sample->size())
             tuple = PyTuple_New(0);
@@ -1271,8 +1272,8 @@ static PyObject * iProperty_getValues(PyObject * self, PyObject * args)
       }
       case propertyTP_int16_array:
       {
-         Alembic::Abc::IInt16ArrayProperty::sample_ptr_type sample;
-         Alembic::Abc::IInt16ArrayProperty::value_type value;
+         Abc::IInt16ArrayProperty::sample_ptr_type sample;
+         Abc::IInt16ArrayProperty::value_type value;
          prop->mInt16ArrayProperty->get(sample,sampleIndex);
          if(start >= sample->size())
             tuple = PyTuple_New(0);
@@ -1291,8 +1292,8 @@ static PyObject * iProperty_getValues(PyObject * self, PyObject * args)
       }
       case propertyTP_uint32_array:
       {
-         Alembic::Abc::IUInt32ArrayProperty::sample_ptr_type sample;
-         Alembic::Abc::IUInt32ArrayProperty::value_type value;
+         Abc::IUInt32ArrayProperty::sample_ptr_type sample;
+         Abc::IUInt32ArrayProperty::value_type value;
          prop->mUInt32ArrayProperty->get(sample,sampleIndex);
          if(start >= sample->size())
             tuple = PyTuple_New(0);
@@ -1311,8 +1312,8 @@ static PyObject * iProperty_getValues(PyObject * self, PyObject * args)
       }
       case propertyTP_int32_array:
       {
-         Alembic::Abc::IInt32ArrayProperty::sample_ptr_type sample;
-         Alembic::Abc::IInt32ArrayProperty::value_type value;
+         Abc::IInt32ArrayProperty::sample_ptr_type sample;
+         Abc::IInt32ArrayProperty::value_type value;
          prop->mInt32ArrayProperty->get(sample,sampleIndex);
          if(start >= sample->size())
             tuple = PyTuple_New(0);
@@ -1331,8 +1332,8 @@ static PyObject * iProperty_getValues(PyObject * self, PyObject * args)
       }
       case propertyTP_uint64_array:
       {
-         Alembic::Abc::IUInt64ArrayProperty::sample_ptr_type sample;
-         Alembic::Abc::IUInt64ArrayProperty::value_type value;
+         Abc::IUInt64ArrayProperty::sample_ptr_type sample;
+         Abc::IUInt64ArrayProperty::value_type value;
          prop->mUInt64ArrayProperty->get(sample,sampleIndex);
          if(start >= sample->size())
             tuple = PyTuple_New(0);
@@ -1351,8 +1352,8 @@ static PyObject * iProperty_getValues(PyObject * self, PyObject * args)
       }
       case propertyTP_int64_array:
       {
-         Alembic::Abc::IInt64ArrayProperty::sample_ptr_type sample;
-         Alembic::Abc::IInt64ArrayProperty::value_type value;
+         Abc::IInt64ArrayProperty::sample_ptr_type sample;
+         Abc::IInt64ArrayProperty::value_type value;
          prop->mInt64ArrayProperty->get(sample,sampleIndex);
          if(start >= sample->size())
             tuple = PyTuple_New(0);
@@ -1371,8 +1372,8 @@ static PyObject * iProperty_getValues(PyObject * self, PyObject * args)
       }
       case propertyTP_half_array:
       {
-         Alembic::Abc::IHalfArrayProperty::sample_ptr_type sample;
-         Alembic::Abc::IHalfArrayProperty::value_type value;
+         Abc::IHalfArrayProperty::sample_ptr_type sample;
+         Abc::IHalfArrayProperty::value_type value;
          prop->mHalfArrayProperty->get(sample,sampleIndex);
          if(start >= sample->size())
             tuple = PyTuple_New(0);
@@ -1391,8 +1392,8 @@ static PyObject * iProperty_getValues(PyObject * self, PyObject * args)
       }
       case propertyTP_float_array:
       {
-         Alembic::Abc::IFloatArrayProperty::sample_ptr_type sample;
-         Alembic::Abc::IFloatArrayProperty::value_type value;
+         Abc::IFloatArrayProperty::sample_ptr_type sample;
+         Abc::IFloatArrayProperty::value_type value;
          prop->mFloatArrayProperty->get(sample,sampleIndex);
          if(start >= sample->size())
             tuple = PyTuple_New(0);
@@ -1411,8 +1412,8 @@ static PyObject * iProperty_getValues(PyObject * self, PyObject * args)
       }
       case propertyTP_double_array:
       {
-         Alembic::Abc::IDoubleArrayProperty::sample_ptr_type sample;
-         Alembic::Abc::IDoubleArrayProperty::value_type value;
+         Abc::IDoubleArrayProperty::sample_ptr_type sample;
+         Abc::IDoubleArrayProperty::value_type value;
          prop->mDoubleArrayProperty->get(sample,sampleIndex);
          if(start >= sample->size())
             tuple = PyTuple_New(0);
@@ -1431,8 +1432,8 @@ static PyObject * iProperty_getValues(PyObject * self, PyObject * args)
       }
       case propertyTP_string_array:
       {
-         Alembic::Abc::IStringArrayProperty::sample_ptr_type sample;
-         Alembic::Abc::IStringArrayProperty::value_type value;
+         Abc::IStringArrayProperty::sample_ptr_type sample;
+         Abc::IStringArrayProperty::value_type value;
          prop->mStringArrayProperty->get(sample,sampleIndex);
          if(start >= sample->size())
             tuple = PyTuple_New(0);
@@ -1451,8 +1452,8 @@ static PyObject * iProperty_getValues(PyObject * self, PyObject * args)
       }
       case propertyTP_wstring_array:
       {
-         Alembic::Abc::IWstringArrayProperty::sample_ptr_type sample;
-         Alembic::Abc::IWstringArrayProperty::value_type value;
+         Abc::IWstringArrayProperty::sample_ptr_type sample;
+         Abc::IWstringArrayProperty::value_type value;
          prop->mWstringArrayProperty->get(sample,sampleIndex);
          if(start >= sample->size())
             tuple = PyTuple_New(0);
@@ -1471,8 +1472,8 @@ static PyObject * iProperty_getValues(PyObject * self, PyObject * args)
       }
       case propertyTP_v2s_array:
       {
-         Alembic::Abc::IV2sArrayProperty::sample_ptr_type sample;
-         Alembic::Abc::IV2sArrayProperty::value_type value;
+         Abc::IV2sArrayProperty::sample_ptr_type sample;
+         Abc::IV2sArrayProperty::value_type value;
          prop->mV2sArrayProperty->get(sample,sampleIndex);
          if(start >= sample->size())
             tuple = PyTuple_New(0);
@@ -1492,8 +1493,8 @@ static PyObject * iProperty_getValues(PyObject * self, PyObject * args)
       }
       case propertyTP_v2i_array:
       {
-         Alembic::Abc::IV2iArrayProperty::sample_ptr_type sample;
-         Alembic::Abc::IV2iArrayProperty::value_type value;
+         Abc::IV2iArrayProperty::sample_ptr_type sample;
+         Abc::IV2iArrayProperty::value_type value;
          prop->mV2iArrayProperty->get(sample,sampleIndex);
          if(start >= sample->size())
             tuple = PyTuple_New(0);
@@ -1513,8 +1514,8 @@ static PyObject * iProperty_getValues(PyObject * self, PyObject * args)
       }
       case propertyTP_v2f_array:
       {
-         Alembic::Abc::IV2fArrayProperty::sample_ptr_type sample;
-         Alembic::Abc::IV2fArrayProperty::value_type value;
+         Abc::IV2fArrayProperty::sample_ptr_type sample;
+         Abc::IV2fArrayProperty::value_type value;
          prop->mV2fArrayProperty->get(sample,sampleIndex);
          if(start >= sample->size())
             tuple = PyTuple_New(0);
@@ -1534,8 +1535,8 @@ static PyObject * iProperty_getValues(PyObject * self, PyObject * args)
       }
       case propertyTP_v2d_array:
       {
-         Alembic::Abc::IV2dArrayProperty::sample_ptr_type sample;
-         Alembic::Abc::IV2dArrayProperty::value_type value;
+         Abc::IV2dArrayProperty::sample_ptr_type sample;
+         Abc::IV2dArrayProperty::value_type value;
          prop->mV2dArrayProperty->get(sample,sampleIndex);
          if(start >= sample->size())
             tuple = PyTuple_New(0);
@@ -1555,8 +1556,8 @@ static PyObject * iProperty_getValues(PyObject * self, PyObject * args)
       }
       case propertyTP_v3s_array:
       {
-         Alembic::Abc::IV3sArrayProperty::sample_ptr_type sample;
-         Alembic::Abc::IV3sArrayProperty::value_type value;
+         Abc::IV3sArrayProperty::sample_ptr_type sample;
+         Abc::IV3sArrayProperty::value_type value;
          prop->mV3sArrayProperty->get(sample,sampleIndex);
          if(start >= sample->size())
             tuple = PyTuple_New(0);
@@ -1577,8 +1578,8 @@ static PyObject * iProperty_getValues(PyObject * self, PyObject * args)
       }
       case propertyTP_v3i_array:
       {
-         Alembic::Abc::IV3iArrayProperty::sample_ptr_type sample;
-         Alembic::Abc::IV3iArrayProperty::value_type value;
+         Abc::IV3iArrayProperty::sample_ptr_type sample;
+         Abc::IV3iArrayProperty::value_type value;
          prop->mV3iArrayProperty->get(sample,sampleIndex);
          if(start >= sample->size())
             tuple = PyTuple_New(0);
@@ -1599,8 +1600,8 @@ static PyObject * iProperty_getValues(PyObject * self, PyObject * args)
       }
       case propertyTP_v3f_array:
       {
-         Alembic::Abc::IV3fArrayProperty::sample_ptr_type sample;
-         Alembic::Abc::IV3fArrayProperty::value_type value;
+         Abc::IV3fArrayProperty::sample_ptr_type sample;
+         Abc::IV3fArrayProperty::value_type value;
          prop->mV3fArrayProperty->get(sample,sampleIndex);
          if(start >= sample->size())
             tuple = PyTuple_New(0);
@@ -1621,8 +1622,8 @@ static PyObject * iProperty_getValues(PyObject * self, PyObject * args)
       }
       case propertyTP_v3d_array:
       {
-         Alembic::Abc::IV3dArrayProperty::sample_ptr_type sample;
-         Alembic::Abc::IV3dArrayProperty::value_type value;
+         Abc::IV3dArrayProperty::sample_ptr_type sample;
+         Abc::IV3dArrayProperty::value_type value;
          prop->mV3dArrayProperty->get(sample,sampleIndex);
          if(start >= sample->size())
             tuple = PyTuple_New(0);
@@ -1643,8 +1644,8 @@ static PyObject * iProperty_getValues(PyObject * self, PyObject * args)
       }
       case propertyTP_p2s_array:
       {
-         Alembic::Abc::IP2sArrayProperty::sample_ptr_type sample;
-         Alembic::Abc::IP2sArrayProperty::value_type value;
+         Abc::IP2sArrayProperty::sample_ptr_type sample;
+         Abc::IP2sArrayProperty::value_type value;
          prop->mP2sArrayProperty->get(sample,sampleIndex);
          if(start >= sample->size())
             tuple = PyTuple_New(0);
@@ -1664,8 +1665,8 @@ static PyObject * iProperty_getValues(PyObject * self, PyObject * args)
       }
       case propertyTP_p2i_array:
       {
-         Alembic::Abc::IP2iArrayProperty::sample_ptr_type sample;
-         Alembic::Abc::IP2iArrayProperty::value_type value;
+         Abc::IP2iArrayProperty::sample_ptr_type sample;
+         Abc::IP2iArrayProperty::value_type value;
          prop->mP2iArrayProperty->get(sample,sampleIndex);
          if(start >= sample->size())
             tuple = PyTuple_New(0);
@@ -1685,8 +1686,8 @@ static PyObject * iProperty_getValues(PyObject * self, PyObject * args)
       }
       case propertyTP_p2f_array:
       {
-         Alembic::Abc::IP2fArrayProperty::sample_ptr_type sample;
-         Alembic::Abc::IP2fArrayProperty::value_type value;
+         Abc::IP2fArrayProperty::sample_ptr_type sample;
+         Abc::IP2fArrayProperty::value_type value;
          prop->mP2fArrayProperty->get(sample,sampleIndex);
          if(start >= sample->size())
             tuple = PyTuple_New(0);
@@ -1706,8 +1707,8 @@ static PyObject * iProperty_getValues(PyObject * self, PyObject * args)
       }
       case propertyTP_p2d_array:
       {
-         Alembic::Abc::IP2dArrayProperty::sample_ptr_type sample;
-         Alembic::Abc::IP2dArrayProperty::value_type value;
+         Abc::IP2dArrayProperty::sample_ptr_type sample;
+         Abc::IP2dArrayProperty::value_type value;
          prop->mP2dArrayProperty->get(sample,sampleIndex);
          if(start >= sample->size())
             tuple = PyTuple_New(0);
@@ -1727,8 +1728,8 @@ static PyObject * iProperty_getValues(PyObject * self, PyObject * args)
       }
       case propertyTP_p3s_array:
       {
-         Alembic::Abc::IP3sArrayProperty::sample_ptr_type sample;
-         Alembic::Abc::IP3sArrayProperty::value_type value;
+         Abc::IP3sArrayProperty::sample_ptr_type sample;
+         Abc::IP3sArrayProperty::value_type value;
          prop->mP3sArrayProperty->get(sample,sampleIndex);
          if(start >= sample->size())
             tuple = PyTuple_New(0);
@@ -1749,8 +1750,8 @@ static PyObject * iProperty_getValues(PyObject * self, PyObject * args)
       }
       case propertyTP_p3i_array:
       {
-         Alembic::Abc::IP3iArrayProperty::sample_ptr_type sample;
-         Alembic::Abc::IP3iArrayProperty::value_type value;
+         Abc::IP3iArrayProperty::sample_ptr_type sample;
+         Abc::IP3iArrayProperty::value_type value;
          prop->mP3iArrayProperty->get(sample,sampleIndex);
          if(start >= sample->size())
             tuple = PyTuple_New(0);
@@ -1771,8 +1772,8 @@ static PyObject * iProperty_getValues(PyObject * self, PyObject * args)
       }
       case propertyTP_p3f_array:
       {
-         Alembic::Abc::IP3fArrayProperty::sample_ptr_type sample;
-         Alembic::Abc::IP3fArrayProperty::value_type value;
+         Abc::IP3fArrayProperty::sample_ptr_type sample;
+         Abc::IP3fArrayProperty::value_type value;
          prop->mP3fArrayProperty->get(sample,sampleIndex);
          if(start >= sample->size())
             tuple = PyTuple_New(0);
@@ -1793,8 +1794,8 @@ static PyObject * iProperty_getValues(PyObject * self, PyObject * args)
       }
       case propertyTP_p3d_array:
       {
-         Alembic::Abc::IP3dArrayProperty::sample_ptr_type sample;
-         Alembic::Abc::IP3dArrayProperty::value_type value;
+         Abc::IP3dArrayProperty::sample_ptr_type sample;
+         Abc::IP3dArrayProperty::value_type value;
          prop->mP3dArrayProperty->get(sample,sampleIndex);
          if(start >= sample->size())
             tuple = PyTuple_New(0);
@@ -1815,8 +1816,8 @@ static PyObject * iProperty_getValues(PyObject * self, PyObject * args)
       }
       case propertyTP_box2s_array:
       {
-         Alembic::Abc::IBox2sArrayProperty::sample_ptr_type sample;
-         Alembic::Abc::IBox2sArrayProperty::value_type value;
+         Abc::IBox2sArrayProperty::sample_ptr_type sample;
+         Abc::IBox2sArrayProperty::value_type value;
          prop->mBox2sArrayProperty->get(sample,sampleIndex);
          if(start >= sample->size())
             tuple = PyTuple_New(0);
@@ -1838,8 +1839,8 @@ static PyObject * iProperty_getValues(PyObject * self, PyObject * args)
       }
       case propertyTP_box2i_array:
       {
-         Alembic::Abc::IBox2iArrayProperty::sample_ptr_type sample;
-         Alembic::Abc::IBox2iArrayProperty::value_type value;
+         Abc::IBox2iArrayProperty::sample_ptr_type sample;
+         Abc::IBox2iArrayProperty::value_type value;
          prop->mBox2iArrayProperty->get(sample,sampleIndex);
          if(start >= sample->size())
             tuple = PyTuple_New(0);
@@ -1861,8 +1862,8 @@ static PyObject * iProperty_getValues(PyObject * self, PyObject * args)
       }
       case propertyTP_box2f_array:
       {
-         Alembic::Abc::IBox2fArrayProperty::sample_ptr_type sample;
-         Alembic::Abc::IBox2fArrayProperty::value_type value;
+         Abc::IBox2fArrayProperty::sample_ptr_type sample;
+         Abc::IBox2fArrayProperty::value_type value;
          prop->mBox2fArrayProperty->get(sample,sampleIndex);
          if(start >= sample->size())
             tuple = PyTuple_New(0);
@@ -1884,8 +1885,8 @@ static PyObject * iProperty_getValues(PyObject * self, PyObject * args)
       }
       case propertyTP_box2d_array:
       {
-         Alembic::Abc::IBox2dArrayProperty::sample_ptr_type sample;
-         Alembic::Abc::IBox2dArrayProperty::value_type value;
+         Abc::IBox2dArrayProperty::sample_ptr_type sample;
+         Abc::IBox2dArrayProperty::value_type value;
          prop->mBox2dArrayProperty->get(sample,sampleIndex);
          if(start >= sample->size())
             tuple = PyTuple_New(0);
@@ -1907,8 +1908,8 @@ static PyObject * iProperty_getValues(PyObject * self, PyObject * args)
       }
       case propertyTP_box3s_array:
       {
-         Alembic::Abc::IBox3sArrayProperty::sample_ptr_type sample;
-         Alembic::Abc::IBox3sArrayProperty::value_type value;
+         Abc::IBox3sArrayProperty::sample_ptr_type sample;
+         Abc::IBox3sArrayProperty::value_type value;
          prop->mBox3sArrayProperty->get(sample,sampleIndex);
          if(start >= sample->size())
             tuple = PyTuple_New(0);
@@ -1932,8 +1933,8 @@ static PyObject * iProperty_getValues(PyObject * self, PyObject * args)
       }
       case propertyTP_box3i_array:
       {
-         Alembic::Abc::IBox3iArrayProperty::sample_ptr_type sample;
-         Alembic::Abc::IBox3iArrayProperty::value_type value;
+         Abc::IBox3iArrayProperty::sample_ptr_type sample;
+         Abc::IBox3iArrayProperty::value_type value;
          prop->mBox3iArrayProperty->get(sample,sampleIndex);
          if(start >= sample->size())
             tuple = PyTuple_New(0);
@@ -1957,8 +1958,8 @@ static PyObject * iProperty_getValues(PyObject * self, PyObject * args)
       }
       case propertyTP_box3f_array:
       {
-         Alembic::Abc::IBox3fArrayProperty::sample_ptr_type sample;
-         Alembic::Abc::IBox3fArrayProperty::value_type value;
+         Abc::IBox3fArrayProperty::sample_ptr_type sample;
+         Abc::IBox3fArrayProperty::value_type value;
          prop->mBox3fArrayProperty->get(sample,sampleIndex);
          if(start >= sample->size())
             tuple = PyTuple_New(0);
@@ -1982,8 +1983,8 @@ static PyObject * iProperty_getValues(PyObject * self, PyObject * args)
       }
       case propertyTP_box3d_array:
       {
-         Alembic::Abc::IBox3dArrayProperty::sample_ptr_type sample;
-         Alembic::Abc::IBox3dArrayProperty::value_type value;
+         Abc::IBox3dArrayProperty::sample_ptr_type sample;
+         Abc::IBox3dArrayProperty::value_type value;
          prop->mBox3dArrayProperty->get(sample,sampleIndex);
          if(start >= sample->size())
             tuple = PyTuple_New(0);
@@ -2007,8 +2008,8 @@ static PyObject * iProperty_getValues(PyObject * self, PyObject * args)
       }
       case propertyTP_m33f_array:
       {
-         Alembic::Abc::IM33fArrayProperty::sample_ptr_type sample;
-         Alembic::Abc::IM33fArrayProperty::value_type value;
+         Abc::IM33fArrayProperty::sample_ptr_type sample;
+         Abc::IM33fArrayProperty::value_type value;
          prop->mM33fArrayProperty->get(sample,sampleIndex);
          if(start >= sample->size())
             tuple = PyTuple_New(0);
@@ -2035,8 +2036,8 @@ static PyObject * iProperty_getValues(PyObject * self, PyObject * args)
       }
       case propertyTP_m33d_array:
       {
-         Alembic::Abc::IM33dArrayProperty::sample_ptr_type sample;
-         Alembic::Abc::IM33dArrayProperty::value_type value;
+         Abc::IM33dArrayProperty::sample_ptr_type sample;
+         Abc::IM33dArrayProperty::value_type value;
          prop->mM33dArrayProperty->get(sample,sampleIndex);
          if(start >= sample->size())
             tuple = PyTuple_New(0);
@@ -2063,8 +2064,8 @@ static PyObject * iProperty_getValues(PyObject * self, PyObject * args)
       }
       case propertyTP_m44f_array:
       {
-         Alembic::Abc::IM44fArrayProperty::sample_ptr_type sample;
-         Alembic::Abc::IM44fArrayProperty::value_type value;
+         Abc::IM44fArrayProperty::sample_ptr_type sample;
+         Abc::IM44fArrayProperty::value_type value;
          prop->mM44fArrayProperty->get(sample,sampleIndex);
          if(start >= sample->size())
             tuple = PyTuple_New(0);
@@ -2098,8 +2099,8 @@ static PyObject * iProperty_getValues(PyObject * self, PyObject * args)
       }
       case propertyTP_m44d_array:
       {
-         Alembic::Abc::IM44dArrayProperty::sample_ptr_type sample;
-         Alembic::Abc::IM44dArrayProperty::value_type value;
+         Abc::IM44dArrayProperty::sample_ptr_type sample;
+         Abc::IM44dArrayProperty::value_type value;
          prop->mM44dArrayProperty->get(sample,sampleIndex);
          if(start >= sample->size())
             tuple = PyTuple_New(0);
@@ -2133,8 +2134,8 @@ static PyObject * iProperty_getValues(PyObject * self, PyObject * args)
       }
       case propertyTP_quatf_array:
       {
-         Alembic::Abc::IQuatfArrayProperty::sample_ptr_type sample;
-         Alembic::Abc::IQuatfArrayProperty::value_type value;
+         Abc::IQuatfArrayProperty::sample_ptr_type sample;
+         Abc::IQuatfArrayProperty::value_type value;
          prop->mQuatfArrayProperty->get(sample,sampleIndex);
          if(start >= sample->size())
             tuple = PyTuple_New(0);
@@ -2156,8 +2157,8 @@ static PyObject * iProperty_getValues(PyObject * self, PyObject * args)
       }
       case propertyTP_quatd_array:
       {
-         Alembic::Abc::IQuatdArrayProperty::sample_ptr_type sample;
-         Alembic::Abc::IQuatdArrayProperty::value_type value;
+         Abc::IQuatdArrayProperty::sample_ptr_type sample;
+         Abc::IQuatdArrayProperty::value_type value;
          prop->mQuatdArrayProperty->get(sample,sampleIndex);
          if(start >= sample->size())
             tuple = PyTuple_New(0);
@@ -2179,8 +2180,8 @@ static PyObject * iProperty_getValues(PyObject * self, PyObject * args)
       }
       case propertyTP_c3h_array:
       {
-         Alembic::Abc::IC3hArrayProperty::sample_ptr_type sample;
-         Alembic::Abc::IC3hArrayProperty::value_type value;
+         Abc::IC3hArrayProperty::sample_ptr_type sample;
+         Abc::IC3hArrayProperty::value_type value;
          prop->mC3hArrayProperty->get(sample,sampleIndex);
          if(start >= sample->size())
             tuple = PyTuple_New(0);
@@ -2201,8 +2202,8 @@ static PyObject * iProperty_getValues(PyObject * self, PyObject * args)
       }
       case propertyTP_c3f_array:
       {
-         Alembic::Abc::IC3fArrayProperty::sample_ptr_type sample;
-         Alembic::Abc::IC3fArrayProperty::value_type value;
+         Abc::IC3fArrayProperty::sample_ptr_type sample;
+         Abc::IC3fArrayProperty::value_type value;
          prop->mC3fArrayProperty->get(sample,sampleIndex);
          if(start >= sample->size())
             tuple = PyTuple_New(0);
@@ -2223,8 +2224,8 @@ static PyObject * iProperty_getValues(PyObject * self, PyObject * args)
       }
       case propertyTP_c3c_array:
       {
-         Alembic::Abc::IC3cArrayProperty::sample_ptr_type sample;
-         Alembic::Abc::IC3cArrayProperty::value_type value;
+         Abc::IC3cArrayProperty::sample_ptr_type sample;
+         Abc::IC3cArrayProperty::value_type value;
          prop->mC3cArrayProperty->get(sample,sampleIndex);
          if(start >= sample->size())
             tuple = PyTuple_New(0);
@@ -2245,8 +2246,8 @@ static PyObject * iProperty_getValues(PyObject * self, PyObject * args)
       }
       case propertyTP_c4h_array:
       {
-         Alembic::Abc::IC4hArrayProperty::sample_ptr_type sample;
-         Alembic::Abc::IC4hArrayProperty::value_type value;
+         Abc::IC4hArrayProperty::sample_ptr_type sample;
+         Abc::IC4hArrayProperty::value_type value;
          prop->mC4hArrayProperty->get(sample,sampleIndex);
          if(start >= sample->size())
             tuple = PyTuple_New(0);
@@ -2268,8 +2269,8 @@ static PyObject * iProperty_getValues(PyObject * self, PyObject * args)
       }
       case propertyTP_c4f_array:
       {
-         Alembic::Abc::IC4fArrayProperty::sample_ptr_type sample;
-         Alembic::Abc::IC4fArrayProperty::value_type value;
+         Abc::IC4fArrayProperty::sample_ptr_type sample;
+         Abc::IC4fArrayProperty::value_type value;
          prop->mC4fArrayProperty->get(sample,sampleIndex);
          if(start >= sample->size())
             tuple = PyTuple_New(0);
@@ -2291,8 +2292,8 @@ static PyObject * iProperty_getValues(PyObject * self, PyObject * args)
       }
       case propertyTP_c4c_array:
       {
-         Alembic::Abc::IC4cArrayProperty::sample_ptr_type sample;
-         Alembic::Abc::IC4cArrayProperty::value_type value;
+         Abc::IC4cArrayProperty::sample_ptr_type sample;
+         Abc::IC4cArrayProperty::value_type value;
          prop->mC4cArrayProperty->get(sample,sampleIndex);
          if(start >= sample->size())
             tuple = PyTuple_New(0);
@@ -2314,8 +2315,8 @@ static PyObject * iProperty_getValues(PyObject * self, PyObject * args)
       }
       case propertyTP_n2f_array:
       {
-         Alembic::Abc::IN2fArrayProperty::sample_ptr_type sample;
-         Alembic::Abc::IN2fArrayProperty::value_type value;
+         Abc::IN2fArrayProperty::sample_ptr_type sample;
+         Abc::IN2fArrayProperty::value_type value;
          prop->mN2fArrayProperty->get(sample,sampleIndex);
          if(start >= sample->size())
             tuple = PyTuple_New(0);
@@ -2335,8 +2336,8 @@ static PyObject * iProperty_getValues(PyObject * self, PyObject * args)
       }
       case propertyTP_n2d_array:
       {
-         Alembic::Abc::IN2dArrayProperty::sample_ptr_type sample;
-         Alembic::Abc::IN2dArrayProperty::value_type value;
+         Abc::IN2dArrayProperty::sample_ptr_type sample;
+         Abc::IN2dArrayProperty::value_type value;
          prop->mN2dArrayProperty->get(sample,sampleIndex);
          if(start >= sample->size())
             tuple = PyTuple_New(0);
@@ -2356,8 +2357,8 @@ static PyObject * iProperty_getValues(PyObject * self, PyObject * args)
       }
       case propertyTP_n3f_array:
       {
-         Alembic::Abc::IN3fArrayProperty::sample_ptr_type sample;
-         Alembic::Abc::IN3fArrayProperty::value_type value;
+         Abc::IN3fArrayProperty::sample_ptr_type sample;
+         Abc::IN3fArrayProperty::value_type value;
          prop->mN3fArrayProperty->get(sample,sampleIndex);
          if(start >= sample->size())
             tuple = PyTuple_New(0);
@@ -2378,8 +2379,8 @@ static PyObject * iProperty_getValues(PyObject * self, PyObject * args)
       }
       case propertyTP_n3d_array:
       {
-         Alembic::Abc::IN3dArrayProperty::sample_ptr_type sample;
-         Alembic::Abc::IN3dArrayProperty::value_type value;
+         Abc::IN3dArrayProperty::sample_ptr_type sample;
+         Abc::IN3dArrayProperty::value_type value;
          prop->mN3dArrayProperty->get(sample,sampleIndex);
          if(start >= sample->size())
             tuple = PyTuple_New(0);
@@ -2598,25 +2599,25 @@ static PyTypeObject iProperty_Type = {
    if(prop->mIsArray) \
    { \
       prop->mPropType = (propertyTP)(tp - propertyTP_boolean + propertyTP_boolean_array); \
-      prop->m##base##arrayprop = new Alembic::Abc::I##base##arrayprop(compound,in_propName); \
+      prop->m##base##arrayprop = new Abc::I##base##arrayprop(compound,in_propName); \
    } \
    else \
    { \
       prop->mPropType = tp; \
-      prop->m##base##singleprop = new Alembic::Abc::I##base##singleprop(compound,in_propName); \
+      prop->m##base##singleprop = new Abc::I##base##singleprop(compound,in_propName); \
    }
 #define _NEW_PROP_(tp,base) _NEW_PROP_IMPL_(tp,base,Property,ArrayProperty)
 #define _NEW_PROP_CASE_IMPL_(pod,tp,base,singleprop,arrayprop) \
-   case Alembic::Abc::pod: \
+   case Abc::pod: \
    { \
       _NEW_PROP_IMPL_(tp,base,singleprop,arrayprop) \
       break; \
    }
 #define _NEW_PROP_CASE_(pod,tp,base) _NEW_PROP_CASE_IMPL_(pod,tp,base,Property,ArrayProperty)
 
-PyObject * iProperty_new(Alembic::Abc::ICompoundProperty &compound, char * in_propName)
+PyObject * iProperty_new(Abc::ICompoundProperty &compound, char * in_propName)
 {
-   const Alembic::Abc::PropertyHeader * propHeader = compound.getPropertyHeader( in_propName );
+   const Abc::PropertyHeader * propHeader = compound.getPropertyHeader( in_propName );
    iProperty * prop = PyObject_NEW(iProperty, &iProperty_Type);
    //INFO_MSG(in_propName << " of type " << propHeader->getDataType());
    if (prop != NULL)
@@ -2634,15 +2635,15 @@ PyObject * iProperty_new(Alembic::Abc::ICompoundProperty &compound, char * in_pr
          if(prop->mIsArray)
          {
             prop->intent = 0;
-            prop->mBaseArrayProperty = new Alembic::Abc::IArrayProperty(compound,in_propName);
+            prop->mBaseArrayProperty = new Abc::IArrayProperty(compound,in_propName);
             interpretation = prop->mBaseArrayProperty->getMetaData().get("interpretation");
          }
          else
          {
-            prop->mBaseScalarProperty = new Alembic::Abc::IScalarProperty(compound,in_propName);
+            prop->mBaseScalarProperty = new Abc::IScalarProperty(compound,in_propName);
             interpretation = prop->mBaseScalarProperty->getMetaData().get("interpretation");
 
-            Alembic::Abc::MetaData md = prop->mBaseScalarProperty->getMetaData();
+            Abc::MetaData md = prop->mBaseScalarProperty->getMetaData();
          }
 
          if(interpretation.empty())
@@ -2867,10 +2868,10 @@ PyObject * iProperty_new(Alembic::Abc::ICompoundProperty &compound, char * in_pr
    return (PyObject *)prop;
 }
 
-PyObject * iProperty_new(Alembic::Abc::IObject in_Object, char * in_propName)
+PyObject * iProperty_new(Abc::IObject in_Object, char * in_propName)
 {
    ALEMBIC_TRY_STATEMENT
-   Alembic::Abc::ICompoundProperty compound = getCompoundFromObject(in_Object);
+   Abc::ICompoundProperty compound = getCompoundFromObject(in_Object);
    if (compound.getPropertyHeader( in_propName ) == NULL )
    {
       std::string msg;

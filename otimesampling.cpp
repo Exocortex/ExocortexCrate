@@ -1,4 +1,4 @@
-#include "foundation.h"
+#include "stdafx.h"
 #include "extension.h"
 #include "otimesampling.h"
 
@@ -17,7 +17,7 @@ static PyObject * oTimeSampling_getAttr(PyObject * self, char * attrName)
 static void oTimeSampling_delete(PyObject * self)
 {
    ALEMBIC_TRY_STATEMENT //--- nothing from alembic here!
-      ((oTimeSampling *)self)->ts.~__TimeSampling();  // but sure to clean up everything!
+      ((oTimeSampling *)self)->ts.~TimeSampling();  // but sure to clean up everything!
       PyObject_FREE(self);
    ALEMBIC_VOID_CATCH_STATEMENT
 }
@@ -122,13 +122,13 @@ static PyTypeObject oTimeSampling_Type =
 
 };
 
-PyObject * oTimeSampling_new(Alembic::Abc::TimeSamplingPtr ts_ptr)
+PyObject * oTimeSampling_new(Abc::TimeSamplingPtr ts_ptr)
 {
    ALEMBIC_TRY_STATEMENT
       oTimeSampling * ts = PyObject_NEW(oTimeSampling, &oTimeSampling_Type);
       if (ts != NULL)
       {
-         new(&(ts->ts)) __TimeSampling(*ts_ptr);
+         new(&(ts->ts)) Abc::TimeSampling(*ts_ptr);
       }
       return (PyObject*)ts;
    ALEMBIC_PYOBJECT_CATCH_STATEMENT
@@ -153,7 +153,7 @@ PyObject * oTimeSampling_new(PyObject *time_list)
    }
 
    const size_t nbTimes = is_list ? PyList_Size(time_list) : PyTuple_Size(time_list);
-   std::vector<Alembic::Abc::chrono_t> ts_vector(nbTimes);
+   std::vector<Abc::chrono_t> ts_vector(nbTimes);
 
    float prev = -1.0f;
    bool not_first = false;
@@ -186,12 +186,12 @@ PyObject * oTimeSampling_new(PyObject *time_list)
          if (sz > 1)
          {
             const double timePerCycle = ts_vector[sz-1] - ts_vector[0];
-            Alembic::Abc::TimeSamplingType samplingType(sz,timePerCycle);
-            new(&(ts->ts)) __TimeSampling(samplingType, ts_vector);      // The same TS type previously used by the Python API
+            Abc::TimeSamplingType samplingType(sz,timePerCycle);
+            new(&(ts->ts)) Abc::TimeSampling(samplingType, ts_vector);      // The same TS type previously used by the Python API
          }
          else
          {
-            new(&(ts->ts)) __TimeSampling(1.0, ts_vector[0]);
+            new(&(ts->ts)) Abc::TimeSampling(1.0, ts_vector[0]);
          }
       }
       return (PyObject*)ts;

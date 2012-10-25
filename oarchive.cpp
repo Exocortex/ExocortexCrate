@@ -1,3 +1,4 @@
+#include "stdafx.h"
 #include "extension.h"
 #include "oarchive.h"
 #include "iarchive.h"
@@ -5,15 +6,10 @@
 #include "oproperty.h"
 #include "ocompoundproperty.h"
 #include "oxformproperty.h"
-#include "foundation.h"
 #include "AlembicLicensing.h"
 #include "otimesampling.h"
 #include "itimesampling.h"
 
-#include <boost/algorithm/string.hpp>
-#include <cstring>
-#include <iostream>
-#include <set>
 
 typedef std::set<std::string> str_set;
 
@@ -168,7 +164,7 @@ static PyObject * oArchive_createObject(PyObject * self, PyObject * args)
    }
 
    // recurse to find it
-   Alembic::Abc::OObject parent = archive->mArchive->getTop();
+   Abc::OObject parent = archive->mArchive->getTop();
    if(parts.size() > 2)
    {
       // look for the parent in our map
@@ -187,12 +183,12 @@ static PyObject * oArchive_createObject(PyObject * self, PyObject * args)
    // now validate the type
    std::string typeStr(type);
    oObjectPtr casted;
-   Alembic::Abc::OObject obj;
+   Abc::OObject obj;
    if(typeStr.substr(0,14) == "AbcGeom_Xform_")
    {
       casted.mType = oObjectType_Xform;
-      casted.mXform = new Alembic::AbcGeom::OXform(parent,parts[parts.size()-1],tsIndex);
-      obj = Alembic::Abc::OObject(*casted.mXform,Alembic::Abc::kWrapExisting);
+      casted.mXform = new AbcG::OXform(parent,parts[parts.size()-1],tsIndex);
+      obj = Abc::OObject(*casted.mXform,Abc::kWrapExisting);
    }
    else
    {
@@ -210,46 +206,46 @@ static PyObject * oArchive_createObject(PyObject * self, PyObject * args)
       if(typeStr.substr(0,15) == "AbcGeom_Camera_")
       {
          casted.mType = oObjectType_Camera;
-         casted.mCamera = new Alembic::AbcGeom::OCamera(parent,parts[parts.size()-1],tsIndex);
-         obj = Alembic::Abc::OObject(*casted.mCamera,Alembic::Abc::kWrapExisting);
+         casted.mCamera = new AbcG::OCamera(parent,parts[parts.size()-1],tsIndex);
+         obj = Abc::OObject(*casted.mCamera,Abc::kWrapExisting);
       }
       else if(typeStr.substr(0,17) == "AbcGeom_PolyMesh_")
       {
          casted.mType = oObjectType_PolyMesh;
-         casted.mPolyMesh = new Alembic::AbcGeom::OPolyMesh(parent,parts[parts.size()-1],tsIndex);
-         obj = Alembic::Abc::OObject(*casted.mPolyMesh,Alembic::Abc::kWrapExisting);
+         casted.mPolyMesh = new AbcG::OPolyMesh(parent,parts[parts.size()-1],tsIndex);
+         obj = Abc::OObject(*casted.mPolyMesh,Abc::kWrapExisting);
       }
       else if(typeStr.substr(0,13) == "AbcGeom_SubD_")
       {
          casted.mType = oObjectType_SubD;
-         casted.mSubD = new Alembic::AbcGeom::OSubD(parent,parts[parts.size()-1],tsIndex);
-         obj = Alembic::Abc::OObject(*casted.mSubD,Alembic::Abc::kWrapExisting);
+         casted.mSubD = new AbcG::OSubD(parent,parts[parts.size()-1],tsIndex);
+         obj = Abc::OObject(*casted.mSubD,Abc::kWrapExisting);
       }
       else if(typeStr.substr(0,14) == "AbcGeom_Curve_")
       {
          casted.mType = oObjectType_Curves;
-         casted.mCurves = new Alembic::AbcGeom::OCurves(parent,parts[parts.size()-1],tsIndex);
-         obj = Alembic::Abc::OObject(*casted.mCurves,Alembic::Abc::kWrapExisting);
+         casted.mCurves = new AbcG::OCurves(parent,parts[parts.size()-1],tsIndex);
+         obj = Abc::OObject(*casted.mCurves,Abc::kWrapExisting);
       }
       else if(typeStr.substr(0,15) == "AbcGeom_Points_")
       {
          casted.mType = oObjectType_Points;
-         casted.mPoints = new Alembic::AbcGeom::OPoints(parent,parts[parts.size()-1],tsIndex);
-         obj = Alembic::Abc::OObject(*casted.mPoints,Alembic::Abc::kWrapExisting);
+         casted.mPoints = new AbcG::OPoints(parent,parts[parts.size()-1],tsIndex);
+         obj = Abc::OObject(*casted.mPoints,Abc::kWrapExisting);
       }
 
       // **** NEW
       else if(typeStr.substr(0,16) == "AbcGeom_FaceSet_")
       {
          casted.mType = oObjectType_FaceSet;
-         casted.mFaceSet = new Alembic::AbcGeom::OFaceSet(parent,parts[parts.size()-1],tsIndex);
-         obj = Alembic::Abc::OObject(*casted.mFaceSet,Alembic::Abc::kWrapExisting);
+         casted.mFaceSet = new AbcG::OFaceSet(parent,parts[parts.size()-1],tsIndex);
+         obj = Abc::OObject(*casted.mFaceSet,Abc::kWrapExisting);
       }
       else if(typeStr.substr(0,16) == "AbcGeom_NuPatch_")
       {
          casted.mType = oObjectType_NuPatch;
-         casted.mNuPatch = new Alembic::AbcGeom::ONuPatch(parent,parts[parts.size()-1],tsIndex);
-         obj = Alembic::Abc::OObject(*casted.mNuPatch,Alembic::Abc::kWrapExisting);
+         casted.mNuPatch = new AbcG::ONuPatch(parent,parts[parts.size()-1],tsIndex);
+         obj = Abc::OObject(*casted.mNuPatch,Abc::kWrapExisting);
       }
 
       // moved at the end!! let see if it works
@@ -423,14 +419,14 @@ PyObject * oArchive_new(PyObject * self, PyObject * args)
    oArchive * object = PyObject_NEW(oArchive, &oArchive_Type);
    if (object != NULL)
    {
-      object->mArchive = new Alembic::Abc::OArchive();
+      object->mArchive = new Abc::OArchive();
       *object->mArchive = CreateArchiveWithInfo(
          Alembic::AbcCoreHDF5::WriteArchive(),
          fileName,
          "ExocortexPythonAlembic",
          "Orchestrated by Python",
-         Alembic::Abc::ErrorHandler::kThrowPolicy);
-      Alembic::AbcGeom::CreateOArchiveBounds(*object->mArchive,0);
+         Abc::ErrorHandler::kThrowPolicy);
+      AbcG::CreateOArchiveBounds(*object->mArchive,0);
 
       object->mElements = new oArchiveElementVec();
       setOArchiveOpened(fileName);

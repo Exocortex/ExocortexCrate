@@ -23,8 +23,7 @@
    }
 
    #ifdef _DEBUG
-      #include <iostream>
-      #define INFO_MSG(msg)    std::cerr << "INFO [" << __FILE__ << ":" << __LINE__ << "] " << msg << std::endl
+      #define INFO_MSG(msg)    EC_LOG_INFO( "[" << __FILE__ << ":" << __LINE__ << "] " << msg );
    #else
       #define INFO_MSG(msg)
    #endif   

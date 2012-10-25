@@ -1,7 +1,7 @@
+#include "stdafx.h"
 #include "extension.h"
 #include "ixformproperty.h"
 #include "iobject.h"
-#include <boost/lexical_cast.hpp>
 
 static std::string iXformProperty_getName_func()
 {
@@ -26,8 +26,8 @@ static PyObject * iXformProperty_getSampleTimes(PyObject * self, PyObject * args
 {
    ALEMBIC_TRY_STATEMENT
    iXformProperty * prop = (iXformProperty*)self;
-   Alembic::Abc::TimeSamplingPtr ts = prop->mXformSchema->getTimeSampling();
-   const std::vector <Alembic::Abc::chrono_t> & times = ts->getStoredTimes();
+   Abc::TimeSamplingPtr ts = prop->mXformSchema->getTimeSampling();
+   const std::vector <Abc::chrono_t> & times = ts->getStoredTimes();
    PyObject * tuple = PyTuple_New(times.size());
    for(size_t i=0;i<times.size();i++)
       PyTuple_SetItem(tuple,i,Py_BuildValue("f",(float)times[i]));
@@ -81,9 +81,9 @@ static PyObject * iXformProperty_getValues(PyObject * self, PyObject * args)
    PyObject * tuple = NULL;
    tuple = PyTuple_New(16);
 
-   Alembic::AbcGeom::XformSample sample;
+   AbcG::XformSample sample;
    prop->mXformSchema->get(sample,sampleIndex);
-   Alembic::Abc::M44d value = sample.getMatrix();
+   Abc::M44d value = sample.getMatrix();
 
    PyTuple_SetItem(tuple,0,Py_BuildValue("d",value.x[0][0]));
    PyTuple_SetItem(tuple,1,Py_BuildValue("d",value.x[0][1]));
@@ -172,10 +172,10 @@ static PyTypeObject iXformProperty_Type = {
   iXformProperty_methods,             /* tp_methods */
 };
 
-PyObject * iXformProperty_new(Alembic::Abc::IObject in_Object)
+PyObject * iXformProperty_new(Abc::IObject in_Object)
 {
    ALEMBIC_TRY_STATEMENT
-   if(!Alembic::AbcGeom::IXform::matches(in_Object.getMetaData()))
+   if(!AbcG::IXform::matches(in_Object.getMetaData()))
    {
       std::string msg;
       msg.append("Object '");
@@ -185,10 +185,10 @@ PyObject * iXformProperty_new(Alembic::Abc::IObject in_Object)
       return NULL;
    }
 
-   Alembic::AbcGeom::IXform xform(in_Object,Alembic::Abc::kWrapExisting);
+   AbcG::IXform xform(in_Object,Abc::kWrapExisting);
 
    iXformProperty * prop = PyObject_NEW(iXformProperty, &iXformProperty_Type);
-   prop->mXformSchema = new Alembic::AbcGeom::IXformSchema(xform.getSchema());
+   prop->mXformSchema = new AbcG::IXformSchema(xform.getSchema());
    return (PyObject *)prop;
    ALEMBIC_PYOBJECT_CATCH_STATEMENT
 }

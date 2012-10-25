@@ -1,8 +1,8 @@
+#include "stdafx.h"
 #include "extension.h"
 #include "oxformproperty.h"
 #include "oobject.h"
 #include "oarchive.h"
-#include <boost/lexical_cast.hpp>
 
 static std::string oXformProperty_getName_func()
 {
@@ -174,8 +174,8 @@ PyObject * oXformProperty_new(oObjectPtr in_casted, void * in_Archive, boost::ui
    prop->mMaxNbSamples = archive->mArchive->getTimeSampling(tsIndex)->getNumStoredTimes();
    prop->mMembers = new oXformMembers();
    prop->mMembers->mXformSchema = in_casted.mXform->getSchema();
-   //prop->mXformSchema = new Alembic::AbcGeom::OXformSchema(in_casted.mXform->getSchema().getPtr(),Alembic::Abc::kWrapExisting);
-   //prop->mSample = new Alembic::AbcGeom::XformSample();
+   //prop->mXformSchema = new AbcG::OXformSchema(in_casted.mXform->getSchema().getPtr(),Abc::kWrapExisting);
+   //prop->mSample = new AbcG::XformSample();
    prop->mArchive = in_Archive;
    oArchive_registerXformElement(archive,identifier,prop);
 

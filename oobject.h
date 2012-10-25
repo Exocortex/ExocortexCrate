@@ -1,8 +1,6 @@
 #ifndef _PYTHON_ALEMBIC_OOBJECT_H_
 #define _PYTHON_ALEMBIC_OOBJECT_H_
 
-#include "foundation.h"
-
 enum oObjectType
 {
    oObjectType_Xform,
@@ -20,28 +18,28 @@ typedef struct
    oObjectType mType; 
    union
    {
-     Alembic::AbcGeom::OXform * mXform;
-     Alembic::AbcGeom::OCamera * mCamera;
-     Alembic::AbcGeom::OPolyMesh * mPolyMesh;
-     Alembic::AbcGeom::OCurves * mCurves;
-     Alembic::AbcGeom::OPoints * mPoints;
-     Alembic::AbcGeom::OSubD * mSubD;
-     Alembic::AbcGeom::OFaceSet * mFaceSet;  // new
-     Alembic::AbcGeom::ONuPatch * mNuPatch;  // new
+     AbcG::OXform * mXform;
+     AbcG::OCamera * mCamera;
+     AbcG::OPolyMesh * mPolyMesh;
+     AbcG::OCurves * mCurves;
+     AbcG::OPoints * mPoints;
+     AbcG::OSubD * mSubD;
+     AbcG::OFaceSet * mFaceSet;  // new
+     AbcG::ONuPatch * mNuPatch;  // new
    };
 } oObjectPtr;
 
-Alembic::Abc::OCompoundProperty getCompoundFromOObject(oObjectPtr in_Casted);
+Abc::OCompoundProperty getCompoundFromOObject(oObjectPtr in_Casted);
 
 typedef struct {
   PyObject_HEAD
-  Alembic::Abc::OObject * mObject;
+  Abc::OObject * mObject;
   oObjectPtr mCasted;
   void * mArchive;
    int tsIndex;   // new, for quick access!
 } oObject;
 
-PyObject * oObject_new(Alembic::Abc::OObject in_Object, oObjectPtr in_Casted, void * in_Archive, int tsIndex);
+PyObject * oObject_new(Abc::OObject in_Object, oObjectPtr in_Casted, void * in_Archive, int tsIndex);
 void oObject_deletePointers(oObject * object);
 
 bool register_object_oObject(PyObject *module);

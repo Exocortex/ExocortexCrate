@@ -1,14 +1,12 @@
 #ifndef _PYTHON_ALEMBIC_IXFORMPROPERTY_H_
 #define _PYTHON_ALEMBIC_IXFORMPROPERTY_H_
 
-#include "foundation.h"
-
 typedef struct {
    PyObject_HEAD
-   Alembic::AbcGeom::IXformSchema * mXformSchema;
+   AbcG::IXformSchema * mXformSchema;
 } iXformProperty;
 
-PyObject * iXformProperty_new(Alembic::Abc::IObject in_Object);
+PyObject * iXformProperty_new(Abc::IObject in_Object);
 
 bool register_object_iXformProperty(PyObject *module);
 

@@ -1,4 +1,4 @@
-#include "foundation.h"
+#include "stdafx.h"
 #include "extension.h"
 #include "itimesampling.h"
 #include "otimesampling.h"
@@ -7,10 +7,10 @@ static PyObject * iTimeSampling_getSampleTimes(PyObject * self, PyObject * args)
 {
    ALEMBIC_TRY_STATEMENT
       iTimeSampling *ts = (iTimeSampling *)self;
-      const std::vector<Alembic::Abc::chrono_t> & times = ts->ts_ptr->getStoredTimes();
+      const std::vector<Abc::chrono_t> & times = ts->ts_ptr->getStoredTimes();
       PyObject* ts_list = PyList_New(times.size());
       int ii = 0;
-      for (std::vector<Alembic::Abc::chrono_t>::const_iterator beg = times.begin(); beg != times.end(); ++beg, ++ii)
+      for (std::vector<Abc::chrono_t>::const_iterator beg = times.begin(); beg != times.end(); ++beg, ++ii)
          PyList_SetItem(ts_list, ii, Py_BuildValue("f",(float)*beg));
       return ts_list;
    ALEMBIC_PYOBJECT_CATCH_STATEMENT
@@ -81,7 +81,7 @@ static PyTypeObject iTimeSampling_Type =
   iTimeSampling_methods,             /* tp_methods */
 };
 
-PyObject * iTimeSampling_new(Alembic::Abc::TimeSamplingPtr ts_ptr, int tsIndex)
+PyObject * iTimeSampling_new(Abc::TimeSamplingPtr ts_ptr, int tsIndex)
 {
    ALEMBIC_TRY_STATEMENT
       iTimeSampling * ts = PyObject_NEW(iTimeSampling, &iTimeSampling_Type);

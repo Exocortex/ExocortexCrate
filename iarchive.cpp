@@ -1,13 +1,10 @@
+#include "stdafx.h"
 #include "extension.h"
 #include "iarchive.h"
 #include "oarchive.h"
 #include "iobject.h"
-#include "foundation.h"
 #include "itimesampling.h"
 #include "AlembicLicensing.h"
-
-#include <boost/algorithm/string.hpp>
-#include <set>
 
 typedef std::set<std::string> str_set;
 
@@ -51,7 +48,7 @@ static PyObject * iArchive_getIdentifiers(PyObject * self, PyObject * args)
    ALEMBIC_TRY_STATEMENT
    iArchive * archive = (iArchive *)self;
 
-   std::vector<Alembic::Abc::IObject> objects;
+   std::vector<Abc::IObject> objects;
    objects.push_back(archive->mArchive->getTop());
    for(size_t i=0;i<objects.size();i++)
    {
@@ -94,10 +91,10 @@ static PyObject * iArchive_getObject(PyObject * self, PyObject * args)
 
    // recurse to find it
    iArchive * archive = (iArchive *)self;
-   Alembic::Abc::IObject obj = archive->mArchive->getTop();
+   Abc::IObject obj = archive->mArchive->getTop();
    for(size_t i=1;i<parts.size();i++)
    {
-      Alembic::Abc::IObject child(obj,parts[i]);
+      Abc::IObject child(obj,parts[i]);
       obj = child;
       if(!obj)
       {
@@ -114,7 +111,7 @@ static PyObject * iArchive_getSampleTimes(PyObject * self, PyObject * args)
 {
    ALEMBIC_TRY_STATEMENT
       iArchive * archive = (iArchive *)self;
-      Alembic::Abc::IArchive *iarchive = archive->mArchive;
+      Abc::IArchive *iarchive = archive->mArchive;
       const int nb_ts = iarchive->getNumTimeSamplings();
 
       PyObject *_list = PyList_New(nb_ts);
@@ -124,10 +121,10 @@ static PyObject * iArchive_getSampleTimes(PyObject * self, PyObject * args)
          //PyObject *ts = iTimeSampling_new(archive->mArchive->getTimeSampling((boost::uint32_t)i), i);
          //PyList_SetItem(_list, i, ts);
 
-         const std::vector<Alembic::Abc::chrono_t> & times = iarchive->getTimeSampling((boost::uint32_t)i)->getStoredTimes();
+         const std::vector<Abc::chrono_t> & times = iarchive->getTimeSampling((boost::uint32_t)i)->getStoredTimes();
          PyObject* ts_list = PyList_New(times.size());
          int ii = 0;
-         for (std::vector<Alembic::Abc::chrono_t>::const_iterator beg = times.begin(); beg != times.end(); ++beg, ++ii)
+         for (std::vector<Abc::chrono_t>::const_iterator beg = times.begin(); beg != times.end(); ++beg, ++ii)
             PyList_SetItem(ts_list, ii, Py_BuildValue("f",(float)*beg));
          PyList_SetItem(_list, i, ts_list);
       }
@@ -242,7 +239,7 @@ PyObject * iArchive_new(PyObject * self, PyObject * args)
    iArchive * object = PyObject_NEW(iArchive, &iArchive_Type);
    if (object != NULL)
    {
-      object->mArchive = new Alembic::Abc::IArchive( Alembic::AbcCoreHDF5::ReadArchive(), fileName);
+      object->mArchive = new Abc::IArchive( Alembic::AbcCoreHDF5::ReadArchive(), fileName);
       setIArchiveOpened(fileName);
       gNbIArchives++;
    }
