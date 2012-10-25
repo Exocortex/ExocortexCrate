@@ -34,7 +34,7 @@ bool isAlembicMeshNormals( Alembic::AbcGeom::IObject *pIObj, bool& isConstant ) 
 				isConstant = objMesh.getSchema().getNormalsParam().isConstant();
 				return true;
 			}
-		}
+		} 
 	}
 
 
