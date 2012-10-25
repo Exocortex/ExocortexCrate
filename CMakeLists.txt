@@ -9,7 +9,7 @@ if( UNIX )
 	ENDIF()	
 ENDIF()
 
-IF (UNIX AND NOT APPLE )
+IF (UNIX AND NOT APPLE ) 
 	ADD_DEFINITIONS(-DLINUX)
 ENDIF()
  
@@ -312,8 +312,8 @@ UNSET(CMAKE_ARCHIVE_OUTPUT_DIRECTORY CACHE)
 
 # Alembic
 add_definitions( -DNOMINMAX )	 # disable min/max macros from <windows.h>.
-include_directories( "alembic-1.1.0" )
-ADD_SUBDIRECTORY ( alembic-1.1.0 )
+include_directories( "alembic-1.1.2" )
+ADD_SUBDIRECTORY ( alembic-1.1.2 )
 SET( ALEMBIC_CORE_LIBS AlembicAbcGeom AlembicAbc AlembicAbcCoreHDF5 AlembicAbcCoreAbstract AlembicUtil )
 
 ADD_SUBDIRECTORY ( "${CMAKE_CURRENT_SOURCE_DIR}/CommonUtils" "${CMAKE_CURRENT_BINARY_DIR}/CommonUtils" )
