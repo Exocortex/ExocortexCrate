@@ -12,6 +12,7 @@
 //#include "AlembicNurbs.h"
 
 #include <maya/MAnimControl.h>
+#include <maya/MProgressWindow.h>
 #include <locale>
 
 
@@ -171,20 +172,37 @@ MStatus AlembicWriteJob::PreProcess()
       AbcA::TimeSampling sampling(1.0,frames[0]);
       mTs = mArchive.addTimeSampling(sampling);
    }
-
    Abc::OBox3dProperty boxProp = AbcG::CreateOArchiveBounds(mArchive,mTs);
 
    // create object for each
-   for(unsigned int i=0;i<mSelection.length();i++)
+   MProgressWindow::reserve();
+   MProgressWindow::setTitle("Alembic Export: Listing objects");
+   MProgressWindow::setInterruptable(true);
+   MProgressWindow::setProgressRange(0, mSelection.length());
+   MProgressWindow::setProgress(0);
+
+   MProgressWindow::startProgress();
+   int interrupt = 20;
+   bool processStopped = false;
+   for(unsigned int i=0;i<mSelection.length(); ++i, --interrupt)
    {
+      if (interrupt == 0)
+      {
+        interrupt = 20;
+        if (MProgressWindow::isCancelled())
+        {
+          processStopped = true;
+          break;
+        }
+      }
+      MProgressWindow::advanceProgress(1);
       MObject mObj = mSelection[i];
       if(GetObject(mObj) != NULL)
          continue;
 
       // take care of all other types
-      MFn::Type mType = mObj.apiType();
       AlembicObjectPtr ptr;
-      switch(mType)
+      switch(mObj.apiType())
       {
       case MFn::kCamera:
         ptr.reset(new AlembicCamera(mObj,this));
@@ -212,30 +230,44 @@ MStatus AlembicWriteJob::PreProcess()
       }
       AddObject(ptr);
    }
-   return MStatus::kSuccess;
+   MProgressWindow::endProgress();
+   return processStopped ? MStatus::kEndOfFile : MStatus::kSuccess;
 }
 
 MStatus AlembicWriteJob::Process(double frame)
 {
    ESS_PROFILE_SCOPE("AlembicWriteJob::Process");
-   MStatus result = MStatus::kSuccess;
+   MProgressWindow::reserve();
+   MProgressWindow::setTitle("Alembic Export: <each frame/each object>");
+   MProgressWindow::setInterruptable(true);
+   MProgressWindow::setProgressRange(0, mFrames.size() * mapObjects.size());
+   MProgressWindow::setProgress(0);
 
-   for(size_t i=0;i<mFrames.size();i++)
+   MProgressWindow::startProgress();
+   for(size_t i=0; i<mFrames.size(); ++i)
    {
       // compare the frames
       if(abs(mFrames[i] - frame) > 0.001)
          continue;
 
       // run the export for all objects
-	  for (std::map<std::string, AlembicObjectPtr>::iterator it = mapObjects.begin(); it != mapObjects.end(); ++it)
-	  {
+      int interrupt = 20;
+	    for (std::map<std::string, AlembicObjectPtr>::iterator it = mapObjects.begin(); it != mapObjects.end(); ++it, --interrupt)
+	    {
+         if (interrupt == 0)
+         {
+           interrupt = 20;
+           if (MProgressWindow::isCancelled())
+             break;
+         }
+         MProgressWindow::advanceProgress(1);
          MStatus status = it->second->Save(mFrames[i]);
          if(status != MStatus::kSuccess)
             return status;
-         result = status;
       }
    }
-   return result;
+   MProgressWindow::endProgress();
+   return MStatus::kSuccess;
 }
 
 AlembicExportCommand::AlembicExportCommand()
