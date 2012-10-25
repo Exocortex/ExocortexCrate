@@ -12,13 +12,8 @@ private:
    int mPointCountLastFrame;
    std::vector<unsigned int> mSampleLookup;
 
-   /*
    AbcG::OPolyMeshSchema::Sample mSample;
-   std::vector<Abc::V3f> mPosVec;
    std::vector<AbcG::OV2fGeomParam> mUvParams;
-   std::vector<std::vector<Abc::V2f> > mUvVec;
-   std::vector<std::vector<Abc::uint32_t> > mUvIndexVec;
-   //*/
 
 public:
    AlembicPolyMesh(const MObject & in_Ref, AlembicWriteJob * in_Job);

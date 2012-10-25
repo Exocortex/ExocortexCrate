@@ -7,8 +7,6 @@
 #include <maya/MItSubdVertex.h>
 
 
-
-
 AlembicSubD::AlembicSubD(const MObject & in_Ref, AlembicWriteJob * in_Job)
 : AlembicObject(in_Ref, in_Job)
 {
@@ -145,18 +143,18 @@ MStatus AlembicSubD::Save(double time)
                {
                   it = uvMap.find(mUvVec[i]);
                   if(it != uvMap.end())
-                     mUvIndexVec[uvIndexCount++] = (uint32_t)it->second;
+					  mUvIndexVec[uvIndexCount++] = (Abc::uint32_t)it->second;
                   else
                   {
-                     mUvIndexVec[uvIndexCount++] = (uint32_t)sortedUVCount;
-                     uvMap.insert(std::pair<Abc::V2f,size_t>(mUvVec[i],(uint32_t)sortedUVCount));
+                     mUvIndexVec[uvIndexCount++] = (Abc::uint32_t)sortedUVCount;
+                     uvMap.insert(std::pair<Abc::V2f,size_t>(mUvVec[i],(Abc::uint32_t)sortedUVCount));
                      sortedUVVec[sortedUVCount++] = mUvVec[i];
                   }
                }
 
                // use indexed uvs if they use less space
                if(sortedUVCount * sizeof(Abc::V2f) + 
-                  uvIndexCount * sizeof(uint32_t) < 
+                  uvIndexCount * sizeof(Abc::uint32_t) < 
                   sizeof(Abc::V2f) * mUvVec.size())
                {
                   mUvVec = sortedUVVec;
@@ -201,7 +199,7 @@ MStatus AlembicSubD::Save(double time)
 
             std::string faceSetName = propStr.substr(8);
             std::size_t numData = arr.length();
-            std::vector<Alembic::Util::int32_t> faceVals(numData);
+            std::vector<AbcU::int32_t> faceVals(numData);
             for (unsigned int j = 0; j < numData; ++j)
                 faceVals[j] = arr[j];
 

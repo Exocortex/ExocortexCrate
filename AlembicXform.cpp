@@ -4,8 +4,6 @@
 #include <maya/MFnTransform.h>
 
 
-
-
 AlembicXform::AlembicXform(const MObject & in_Ref, AlembicWriteJob * in_Job)
 : AlembicObject(in_Ref, in_Job)
 {
@@ -37,9 +35,9 @@ MStatus AlembicXform::Save(double time)
          return MStatus::kSuccess;
 
       // store identity matrix
-      mSample.setTranslation(Imath::V3d(0.0,0.0,0.0));
-      mSample.setRotation(Imath::V3d(1.0,0.0,0.0),0.0);
-      mSample.setScale(Imath::V3d(1.0,1.0,1.0));
+      mSample.setTranslation(Abc::V3d(0.0,0.0,0.0));
+      mSample.setRotation(Abc::V3d(1.0,0.0,0.0),0.0);
+      mSample.setScale(Abc::V3d(1.0,1.0,1.0));
    }
    else
    {
@@ -56,9 +54,10 @@ MStatus AlembicXform::Save(double time)
         path = dagPaths[0];
       }
 
+	  Abc::M44d abcMatrix;
+
       {
         ESS_PROFILE_SCOPE("AlembicXform::Save matrix");
-        Abc::M44d abcMatrix;
 
         // decide if we need to project to local
         if(IsParentedToRoot())

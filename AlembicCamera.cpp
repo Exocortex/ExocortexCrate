@@ -5,7 +5,6 @@
 
 
 
-
 AlembicCamera::AlembicCamera(const MObject & in_Ref, AlembicWriteJob * in_Job)
 : AlembicObject(in_Ref, in_Job)
 {

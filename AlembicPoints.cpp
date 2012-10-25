@@ -3,9 +3,6 @@
 #include <maya/MVectorArray.h>
 #include <maya/MFnArrayAttrsData.h>
 
-
-
-
 AlembicPoints::AlembicPoints(const MObject & in_Ref, AlembicWriteJob * in_Job)
 : AlembicObject(in_Ref, in_Job)
 {
@@ -98,11 +95,11 @@ MStatus AlembicPoints::Save(double time)
    doubles.clear();
 
    // get the ids
-   std::vector<uint64_t> idVec(particleCount);
+   std::vector<Abc::uint64_t> idVec(particleCount);
    MIntArray ints;
    node.particleIds(ints);
    for(unsigned int i=0;i<ints.length();i++)
-      idVec[i] = (uint64_t)ints[i];
+      idVec[i] = (Abc::uint64_t)ints[i];
    ints.clear();
 
    // get the age
@@ -267,10 +264,10 @@ MStatus AlembicPointsNode::init(const MString &fileName, const MString &identifi
   return MS::kSuccess;
 }
 
-static MVector quaternionToVector(const Imath::Quatf &qf)
+static MVector quaternionToVector(const Abc::Quatf &qf)
 {
   const float deg = (float)( acos(qf.r) * (360.0f / M_PI) );
-  Imath::V3f v = qf.v.normalized();
+  Abc::V3f v = qf.v.normalized();
   return MVector(v.x * deg, v.y * deg, v.z * deg);
 }
 
@@ -386,7 +383,7 @@ MStatus AlembicPointsNode::compute(const MPlug & plug, MDataBlock & dataBlock)
    unsigned int particleCount = (unsigned int)samplePos->size();
    if(sampleIds->size() == 1)
    {
-      if(sampleIds->get()[0] == (uint64_t)-1)
+      if(sampleIds->get()[0] == (Abc::uint64_t)-1)
       {
          particleCount = 0;
       }

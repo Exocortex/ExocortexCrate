@@ -16,7 +16,6 @@
 
 
 
-
 namespace ExoHashing
 {
   std::locale loc;
@@ -155,7 +154,7 @@ MStatus AlembicWriteJob::PreProcess()
             sceneFileName.asChar(),
             Abc::ErrorHandler::kThrowPolicy);
    }
-   catch(Alembic::Util::Exception& e)
+   catch(AbcU::Exception& e)
    {
       MString exc(e.what());
       MGlobal::displayError("[ExocortexAlembic] Error writing to file '"+mFileName+"' ("+exc+"). Do you still have it opened?");

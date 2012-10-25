@@ -7,8 +7,6 @@
 #include "CommonMeshUtilities.h"
 
 
-
-
 AlembicPolyMesh::AlembicPolyMesh(const MObject & in_Ref, AlembicWriteJob * in_Job)
 : AlembicObject(in_Ref, in_Job)
 {
@@ -34,9 +32,9 @@ MStatus AlembicPolyMesh::Save(double time)
    node.getPath(path);
 
    // save the metadata
-   AbcG::OPolyMeshSchema::Sample mSample;
    std::vector<Abc::V3f> mPosVec;
-   std::vector<AbcG::OV2fGeomParam> mUvParams;
+
+   mSample.reset();
 
    SaveMetaData(this);
 
@@ -101,10 +99,8 @@ MStatus AlembicPolyMesh::Save(double time)
      if(mNumSamples == 0)
       {
          // store a dummy empty topology
-         Abc::Int32ArraySample faceCountSample(mFaceCountVec);
-         Abc::Int32ArraySample faceIndicesSample(mFaceIndicesVec);
-         mSample.setFaceCounts(faceCountSample);
-         mSample.setFaceIndices(faceIndicesSample);
+         mSample.setFaceCounts( Abc::Int32ArraySample( mFaceCountVec ) );
+         mSample.setFaceIndices( Abc::Int32ArraySample( mFaceIndicesVec ) );
       }
       mSchema.set(mSample);
       mNumSamples++;
@@ -113,6 +109,10 @@ MStatus AlembicPolyMesh::Save(double time)
 
    std::vector<std::vector<Abc::V2f> > mUvVec;
    std::vector<std::vector<Abc::uint32_t> > mUvIndexVec;
+
+  AbcG::OV2fGeomParam::Sample uvSample;
+   std::vector<IndexedUVs> indexedUVSet;
+ 
    if(mNumSamples == 0 || dynamicTopology)
    {
      ESS_PROFILE_SCOPE("AlembicPolyMesh::Save mNumSamples == 0 || dynamicTopology");
@@ -140,6 +140,7 @@ MStatus AlembicPolyMesh::Save(double time)
       mSample.setFaceCounts(faceCountSample);
       mSample.setFaceIndices(faceIndicesSample);
 
+ 
       // check if we need to export uvs
       if(GetJob()->GetOption(L"exportUVs").asInt() > 0)
       {
@@ -148,74 +149,59 @@ MStatus AlembicPolyMesh::Save(double time)
          MStringArray uvSetNames;
          node.getUVSetNames(uvSetNames);
 
-         if(mNumSamples == 0)
-         {
-            std::vector<std::string> cUvSetNames;
-            for(unsigned int uvSetIndex = 0; uvSetIndex < uvSetNames.length(); uvSetIndex++)
-               cUvSetNames.push_back(uvSetNames[uvSetIndex].asChar());
-            Abc::OStringArrayProperty uvSetNamesProperty = Abc::OStringArrayProperty(
-               GetCompound(), ".uvSetNames", GetCompound().getMetaData(), GetJob()->GetAnimatedTs() );
-            Abc::StringArraySample uvSetNamesSample(&cUvSetNames.front(),cUvSetNames.size());
-            uvSetNamesProperty.set(uvSetNamesSample);
-         }
-
-         int actualUvSetIndex = 0;
          for(unsigned int uvSetIndex = 0; uvSetIndex < uvSetNames.length(); uvSetIndex++)
          {
-            const MString &uvSetName = uvSetNames[uvSetIndex];
-            if (uvSetName != MString(""))
-            {
-               MFloatArray uValues, vValues;
-               status = node.getUVs(uValues, vValues, &uvSetName);
-               if ( uValues.length() == vValues.length() )
-               {
-                  MIntArray uvCounts, uvIds;
-                  status = node.getAssignedUVs(uvCounts, uvIds, &uvSetName);
-                  unsigned int uvCount = (unsigned int)mSampleLookup.size();
-                  if(uvIds.length() == uvCount)
-                  {
-                     mUvVec.push_back(std::vector<Abc::V2f>());
-                     std::vector<Abc::V2f> &uvVecIndexed = mUvVec.back();
-                     mUvIndexVec.push_back(std::vector<Abc::uint32_t>());
-                     std::vector<Abc::uint32_t> &uvIndexVec = mUvIndexVec.back();
+			const MString &uvSetName = uvSetNames[uvSetIndex];
+			if (uvSetName == MString(""))  {
+				EC_LOG_ERROR( "Skipping uv set as name is empty" );
+				continue;
+			}
 
-                     uvVecIndexed.resize(uValues.length());
-                     for (int i = 0; i < uvVecIndexed.size(); ++i)
-                     {
-                       Abc::V2f &curUV = uvVecIndexed[i];
-                       curUV.x = uValues[i];
-                       curUV.y = vValues[i];
-                     }
+			MFloatArray uValues, vValues;
+			status = node.getUVs(uValues, vValues, &uvSetName );
+			if (status != MS::kSuccess) {
+				EC_LOG_ERROR( "Skipping uv set named " << uvSetName.asChar() << " as node.getUVs() failed" );
+				continue;
+			}
 
-                     uvIndexVec.resize(uvIds.length());
-                     for (int i = 0; i < uvIndexVec.size(); ++i)
-                       uvIndexVec[mSampleLookup[i]] = uvIds[i];
+			if ( uValues.length() != vValues.length() ) {
+				EC_LOG_ERROR( "Skipping uv set named " << uvSetName.asChar() << " as uValues.length() != vValues.length() failed" );
+				continue;
+			}
 
-                     AbcG::OV2fGeomParam::Sample uvSample(Abc::V2fArraySample(uvVecIndexed),AbcG::kFacevaryingScope);
-                     if(uvIndexVec.size() > 0)
-                        uvSample.setIndices(Abc::UInt32ArraySample(uvIndexVec));
+			if ( uValues.length() == 0 ) {
+				EC_LOG_ERROR( "Skipping uv set named " << uvSetName.asChar() << " as uValues.length() == 0" );
+				continue;
+			}
 
-                     if(actualUvSetIndex == 0)
-                     {
-                        mSample.setUVs(uvSample);
-                     }
-                     else
-                     {
-                        if(mNumSamples == 0)
-                        {
-                           MString storedUvSetName;
-                           storedUvSetName.set((double)actualUvSetIndex);
-                           storedUvSetName = MString("uv") + storedUvSetName;
-                           mUvParams.push_back(AbcG::OV2fGeomParam( mSchema, storedUvSetName.asChar(), uvIndexVec.size() > 0, AbcG::kFacevaryingScope, 1, mSchema.getTimeSampling()));
-                        }
-                        mUvParams.back().set(uvSample);
-                     }
-                     ++actualUvSetIndex;
-                  }
-               }
-            }
-         }
-      }
+			MIntArray uvCounts, uvIds;
+			status = node.getAssignedUVs(uvCounts, uvIds, &uvSetName);
+			if (status != MS::kSuccess) {
+				EC_LOG_ERROR( "Skipping uv set named " << uvSetName.asChar() << " as node.getAssignedUVs() failed" );
+				continue;
+			}
+
+			unsigned int faceVertexCount = (unsigned int)mSampleLookup.size();
+			if(uvIds.length() != faceVertexCount) {
+				EC_LOG_ERROR( "Skipping uv set named " << uvSetName.asChar() << " as uvIds.length() != faceVertexCount failed" );
+				continue;
+			}
+
+			indexedUVSet.push_back( IndexedUVs() );
+			IndexedUVs &indexedUVs = indexedUVSet.back();
+
+			indexedUVs.name = std::string( uvSetName.asChar() );
+			for (int i = 0; i < (int) uValues.length(); ++i)
+				indexedUVs.values.push_back( Abc::V2f( uValues[i], vValues[i] ) );
+
+			indexedUVs.indices.resize(uvIds.length());
+			for (int i = 0; i < (int) uvIds.length(); ++i)
+			   indexedUVs.indices[mSampleLookup[i]] = uvIds[i];
+		 }
+
+ 		 saveIndexedUVs( mSchema, mSample, uvSample, mUvParams, GetJob()->GetAnimatedTs(), mNumSamples, indexedUVSet );
+
+	  }
 
       if(GetJob()->GetOption(L"exportFaceSets").asInt() > 0)
       {
@@ -791,7 +777,7 @@ MStatus AlembicPolyMeshNode::compute(const MPlug & plug, MDataBlock & dataBlock)
                normalsParam.getNumSamples()
             );
 
-			 std::vector<Imath::V3f> normalValuesFloor, normalValuesCeil;
+			 std::vector<Abc::V3f> normalValuesFloor, normalValuesCeil;
 			 std::vector<AbcA::uint32_t> normalIndicesFloor, normalIndicesCeil;
 			bool normalFloor = false, normalCeil = false;
 		  

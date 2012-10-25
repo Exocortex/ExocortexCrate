@@ -2,8 +2,6 @@
 #include <boost/algorithm/string.hpp>
 
 
-
-
 AlembicObject::AlembicObject
 (
    const MObject & in_Ref,

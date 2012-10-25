@@ -4,9 +4,6 @@
 #include <maya/MRenderLine.h>
 #include <maya/MRenderLineArray.h>
 
-
-
-
 AlembicHair::AlembicHair(const MObject & in_Ref, AlembicWriteJob * in_Job)
 : AlembicObject(in_Ref, in_Job)
 {
