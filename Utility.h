@@ -16,8 +16,8 @@ XSI::CStatus alembicOp_Term( XSI::CRef& in_ctxt );
 
 std::string getIdentifierFromRef(XSI::CRef in_Ref, bool includeHierarchy = false);
 XSI::CString truncateName(const XSI::CString & in_Name);
-XSI::CString getFullNameFromIdentifier(XSI::CRef importRootNode, std::string in_Identifier);
-XSI::CRef getRefFromIdentifier(XSI::CRef importRootNode, std::string in_Identifier);
+XSI::CString getFullNameFromIdentifier(XSI::CRef importRootNode, std::string in_Identifier, bool bMergedLeaf=true);
+//XSI::CRef getRefFromIdentifier(XSI::CRef importRootNode, std::string in_Identifier, bool bMergedLeaf);
 int getNodeDepthFromRef(XSI::CRef in_Ref);
 XSI::CRefArray getOperators( XSI::CRef in_Ref);
 bool isRefAnimated(const XSI::CRef & in_Ref, bool xformCache = false, bool globalSpace = false);

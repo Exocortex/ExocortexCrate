@@ -134,29 +134,45 @@ XSI::CString truncateName(const XSI::CString & in_Name)
    return name;
 }
 
-CString getFullNameFromIdentifier(XSI::CRef importRootNode, std::string in_Identifier)
+CString getFullNameFromIdentifier(XSI::CRef importRootNode, std::string in_Identifier, bool bMergedLeaf)
 {
    if(in_Identifier.length() == 0)
       return CString();
+
    CString mapped = nameMapGet(in_Identifier.c_str());
    if(!mapped.IsEmpty())
       return mapped;
+
+   //ESS_LOG_WARNING("Identifier: "<<in_Identifier.c_str());
+
    CStringArray parts = CString(in_Identifier.c_str()).Split(L"/");
-   CString modelName = importRootNode.GetAsText();
-   CString objName = truncateName(parts[parts.GetCount()-1]);
-   if(!objName.IsEqualNoCase(parts[parts.GetCount()-1]))
-      return objName;
-   if(parts.GetCount() > 2)
-      modelName = truncateName(parts[parts.GetCount()-3]);
-   return modelName+L"."+objName;
+
+   LONG count = parts.GetCount();
+   if(bMergedLeaf && parts.GetCount() >= 2){
+      parts[parts.GetCount()-2] = truncateName(parts[parts.GetCount()-2]);
+      count--;
+   }
+
+   CString pathName = importRootNode.GetAsText();
+
+   //ESS_LOG_WARNING("root: "<<pathName.GetAsciiString());
+
+   for(int i=0; i<count; i++){
+      pathName += ".";
+      pathName += parts[i];
+   }
+
+   //ESS_LOG_WARNING("FullNameFromIdentifier: "<<pathName.GetAsciiString());
+
+   return pathName;
 }
 
-CRef getRefFromIdentifier(XSI::CRef importRootNode, std::string in_Identifier)
-{
-   CRef result;
-   result.Set(getFullNameFromIdentifier(importRootNode,in_Identifier));
-   return result;
-}
+//CRef getRefFromIdentifier(XSI::CRef importRootNode, std::string in_Identifier, bool bMergedLeaf)
+//{
+//   CRef result;
+//   result.Set(getFullNameFromIdentifier(importRootNode,in_Identifier));
+//   return result;
+//}
 
 CRefArray getOperators( CRef in_Ref)
 {

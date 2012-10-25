@@ -1188,7 +1188,7 @@ CStatus createTransform( Abc::IObject& iObj, CRef& importRootNode, CRef& parentN
       {
 	      ESS_PROFILE_SCOPE("attachToExisting");
 	      CRef modelRef;
-         modelRef.Set(getFullNameFromIdentifier(importRootNode,iObj.getFullName()));
+         modelRef.Set(getFullNameFromIdentifier(importRootNode, iObj.getFullName(), false));
          x3dobject = modelRef;
 
          if(!x3dobject.GetType().IsEqualNoCase(L"#model") && !x3dobject.GetType().IsEqualNoCase(L"null")){
@@ -1201,7 +1201,7 @@ CStatus createTransform( Abc::IObject& iObj, CRef& importRootNode, CRef& parentN
       {
 		   Null null;
 		   CRef nullRef;
-		   nullRef.Set(getFullNameFromIdentifier(importRootNode,iObj.getFullName()));
+		   nullRef.Set(getFullNameFromIdentifier(importRootNode, iObj.getFullName(), false));
 		   null = nullRef;
 
          parentX3DObject.AddNull(name, null);
@@ -1226,8 +1226,8 @@ CStatus createTransform( Abc::IObject& iObj, CRef& importRootNode, CRef& parentN
 CStatus createShape( Abc::IObject& iObj, CRef& importRootNode, CRef& parentNode, CRef& newNodeRef, CString& filename, bool attachToExisting, bool importStandins, bool importBboxes, bool wasMerged, bool failOnUnsupported, CValueArray& createItemArgs)
 {
    X3DObject parentX3DObject(parentNode);
-   CString name = truncateName(iObj.getName().c_str());
    Abc::IObject parent = iObj.getParent();
+   CString name = truncateName(iObj.getName().c_str());
 
    //EC_LOG_INFO( "Object name: " << name.GetAsciiString() );
 
@@ -1917,7 +1917,8 @@ ESS_CALLBACK_START(alembic_import_Execute, CRef&)
    if(selectedObjects.GetCount() == 1)
    {
       importRootNode = selectedObjects[0];
-      importRootNode = X3DObject( importRootNode ).GetParent3DObject().GetRef();
+      //importRootNode = X3DObject( importRootNode ).GetParent3DObject().GetRef();
+      importRootNode = X3DObject( importRootNode ).GetRef();
    }
 
    std::list<stackElement> sceneStack;
