@@ -6,16 +6,16 @@
 class AlembicCamera: public AlembicObject
 {
 private:
-   Alembic::AbcGeom::OCamera mObject;
-   Alembic::AbcGeom::OCameraSchema mSchema;
-   Alembic::AbcGeom::CameraSample mSample;
+   AbcG::OCamera mObject;
+   AbcG::OCameraSchema mSchema;
+   AbcG::CameraSample mSample;
 public:
 
    AlembicCamera(const MObject & in_Ref, AlembicWriteJob * in_Job);
    ~AlembicCamera();
 
-   virtual Alembic::Abc::OObject GetObject() { return mObject; }
-   virtual Alembic::Abc::OCompoundProperty GetCompound() { return mSchema; }
+   virtual Abc::OObject GetObject() { return mObject; }
+   virtual Abc::OCompoundProperty GetCompound() { return mSchema; }
    virtual MStatus Save(double time);
 };
 
@@ -38,7 +38,7 @@ private:
    static MObject mIdentifierAttr;
    MString mFileName;
    MString mIdentifier;
-   Alembic::AbcGeom::ICameraSchema mSchema;
+   AbcG::ICameraSchema mSchema;
 
    // output attributes
    static MObject mOutFocalLengthAttr;

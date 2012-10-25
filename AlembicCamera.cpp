@@ -3,8 +3,8 @@
 
 #include <maya/MFnCamera.h>
 
-namespace AbcA = ::Alembic::AbcCoreAbstract::ALEMBIC_VERSION_NS;
-using namespace AbcA;
+
+
 
 AlembicCamera::AlembicCamera(const MObject & in_Ref, AlembicWriteJob * in_Job)
 : AlembicObject(in_Ref, in_Job)
@@ -12,7 +12,7 @@ AlembicCamera::AlembicCamera(const MObject & in_Ref, AlembicWriteJob * in_Job)
    MFnDependencyNode node(in_Ref);
    //MString name = truncateName(node.name());
    MString name = node.name();
-   mObject = Alembic::AbcGeom::OCamera(GetParentObject(),name.asChar(),GetJob()->GetAnimatedTs());
+   mObject = AbcG::OCamera(GetParentObject(),name.asChar(),GetJob()->GetAnimatedTs());
 
    mSchema = mObject.getSchema();
 }
@@ -45,7 +45,7 @@ MStatus AlembicCamera::Save(double time)
    mSample.setShutterOpen(0.0);
 
    // special case shutter angle
-   mSample.setShutterClose(MTime(1.0, MTime::kSeconds).as(MTime::uiUnit()) * Alembic::AbcGeom::RadiansToDegrees(node.shutterAngle()) / 360.0 );
+   mSample.setShutterClose(MTime(1.0, MTime::kSeconds).as(MTime::uiUnit()) * AbcG::RadiansToDegrees(node.shutterAngle()) / 360.0 );
 
    // save the sample
    mSchema.set(mSample);
@@ -263,13 +263,13 @@ MStatus AlembicCameraNode::compute(const MPlug & plug, MDataBlock & dataBlock)
       mIdentifier = identifier;
 
       // get the object from the archive
-      Alembic::Abc::IObject iObj = getObjectFromArchive(mFileName,identifier);
+      Abc::IObject iObj = getObjectFromArchive(mFileName,identifier);
       if(!iObj.valid())
       {
          MGlobal::displayWarning("[ExocortexAlembic] Identifier '"+identifier+"' not found in archive '"+mFileName+"'.");
          return MStatus::kFailure;
       }
-      Alembic::AbcGeom::ICamera obj(iObj,Alembic::Abc::kWrapExisting);
+      AbcG::ICamera obj(iObj,Abc::kWrapExisting);
       if(!obj.valid())
       {
          MGlobal::displayWarning("[ExocortexAlembic] Identifier '"+identifier+"' in archive '"+mFileName+"' is not a Camera.");
@@ -289,7 +289,7 @@ MStatus AlembicCameraNode::compute(const MPlug & plug, MDataBlock & dataBlock)
    );
 
    // access the camera values
-   Alembic::AbcGeom::CameraSample sample;
+   AbcG::CameraSample sample;
    mSchema.get(sample,sampleInfo.floorIndex);
    double focalLength = sample.getFocalLength();
    double focusDistance = sample.getFocusDistance();

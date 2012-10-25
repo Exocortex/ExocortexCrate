@@ -4,8 +4,8 @@
 #include <maya/MPoint.h>
 #include <maya/MPointArray.h>
 
-namespace AbcA = ::Alembic::AbcCoreAbstract::ALEMBIC_VERSION_NS;
-using namespace AbcA;
+
+
 
 AlembicCurves::AlembicCurves(const MObject & in_Ref, AlembicWriteJob * in_Job)
 : AlembicObject(in_Ref, in_Job)
@@ -13,12 +13,12 @@ AlembicCurves::AlembicCurves(const MObject & in_Ref, AlembicWriteJob * in_Job)
    MFnDependencyNode node(in_Ref);
    //MString name = GetUniqueName(truncateName(node.name()));
    MString name = GetUniqueName(node.name());
-   mObject = Alembic::AbcGeom::OCurves(GetParentObject(),name.asChar(),GetJob()->GetAnimatedTs());
+   mObject = AbcG::OCurves(GetParentObject(),name.asChar(),GetJob()->GetAnimatedTs());
 
    mSchema = mObject.getSchema();
 
    // create all properties
-   mRadiusProperty = Alembic::Abc::OFloatArrayProperty(mSchema.getArbGeomParams(), ".radius", mSchema.getMetaData(), GetJob()->GetAnimatedTs() );
+   mRadiusProperty = Abc::OFloatArrayProperty(mSchema.getArbGeomParams(), ".radius", mSchema.getMetaData(), GetJob()->GetAnimatedTs() );
 }
 
 AlembicCurves::~AlembicCurves()
@@ -37,11 +37,11 @@ MStatus AlembicCurves::Save(double time)
    SaveMetaData(this);
 
    // prepare the bounding box
-   Alembic::Abc::Box3d bbox;
+   Abc::Box3d bbox;
 
    // check if we have the global cache option
    bool globalCache = GetJob()->GetOption(L"exportInGlobalSpace").asInt() > 0;
-   Alembic::Abc::M44f globalXfo;
+   Abc::M44f globalXfo;
    if(globalCache)
       globalXfo = GetGlobalMatrix(GetRef());
 
@@ -60,22 +60,22 @@ MStatus AlembicCurves::Save(double time)
    }
 
    // store the positions to the samples
-   mSample.setPositions(Alembic::Abc::P3fArraySample(&mPosVec.front(),mPosVec.size()));
+   mSample.setPositions(Abc::P3fArraySample(&mPosVec.front(),mPosVec.size()));
    mSample.setSelfBounds(bbox);
 
    if(mNumSamples == 0)
    {
       mNbVertices.push_back(node.numCVs());
-      mSample.setCurvesNumVertices(Alembic::Abc::Int32ArraySample(mNbVertices));
+      mSample.setCurvesNumVertices(Abc::Int32ArraySample(mNbVertices));
 
       if (node.form() == MFnNurbsCurve::kOpen)
-         mSample.setWrap(Alembic::AbcGeom::kNonPeriodic);
+         mSample.setWrap(AbcG::kNonPeriodic);
       else
-         mSample.setWrap(Alembic::AbcGeom::kPeriodic);
+         mSample.setWrap(AbcG::kPeriodic);
       if (node.degree() == 3)
-         mSample.setType(Alembic::AbcGeom::kCubic);
+         mSample.setType(AbcG::kCubic);
       else
-         mSample.setType(Alembic::AbcGeom::kLinear);
+         mSample.setType(AbcG::kLinear);
 
       MPlug widthPlug = node.findPlug("width");
       if (!widthPlug.isNull())
@@ -83,7 +83,7 @@ MStatus AlembicCurves::Save(double time)
       else
          mRadiusVec.push_back(1.0);
 
-      mRadiusProperty.set(Alembic::Abc::FloatArraySample(&mRadiusVec.front(),mRadiusVec.size()));
+      mRadiusProperty.set(Abc::FloatArraySample(&mRadiusVec.front(),mRadiusVec.size()));
    }
 
    // save the sample
@@ -178,13 +178,13 @@ MStatus AlembicCurvesNode::compute(const MPlug & plug, MDataBlock & dataBlock)
       mIdentifier = identifier;
 
       // get the object from the archive
-      Alembic::Abc::IObject iObj = getObjectFromArchive(mFileName,identifier);
+      Abc::IObject iObj = getObjectFromArchive(mFileName,identifier);
       if(!iObj.valid())
       {
          MGlobal::displayWarning("[ExocortexAlembic] Identifier '"+identifier+"' not found in archive '"+mFileName+"'.");
          return MStatus::kFailure;
       }
-      Alembic::AbcGeom::ICurves obj(iObj,Alembic::Abc::kWrapExisting);
+      AbcG::ICurves obj(iObj,Abc::kWrapExisting);
       if(!obj.valid())
       {
          MGlobal::displayWarning("[ExocortexAlembic] Identifier '"+identifier+"' in archive '"+mFileName+"' is not a Curves.");
@@ -211,8 +211,8 @@ MStatus AlembicCurvesNode::compute(const MPlug & plug, MDataBlock & dataBlock)
    mLastSampleInfo = sampleInfo;
 
    // access the camera values
-   Alembic::AbcGeom::ICurvesSchema::Sample sample;
-   Alembic::AbcGeom::ICurvesSchema::Sample sample2;
+   AbcG::ICurvesSchema::Sample sample;
+   AbcG::ICurvesSchema::Sample sample2;
    mSchema.get(sample,sampleInfo.floorIndex);
    if(sampleInfo.alpha != 0.0)
       mSchema.get(sample2,sampleInfo.ceilIndex);
@@ -224,19 +224,19 @@ MStatus AlembicCurvesNode::compute(const MPlug & plug, MDataBlock & dataBlock)
       mCurvesData = curveDataFn.create();
    }
 
-   Alembic::Abc::P3fArraySamplePtr samplePos = sample.getPositions();
+   Abc::P3fArraySamplePtr samplePos = sample.getPositions();
    if(sample.getNumCurves() > 1)
    {
       MGlobal::displayWarning("[ExocortexAlembic] Identifier '"+identifier+"' in archive '"+mFileName+"' contains more than one curve.");
       return MStatus::kFailure;
    }
 
-   Alembic::Abc::Int32ArraySamplePtr nbVertices = sample.getCurvesNumVertices();
+   Abc::Int32ArraySamplePtr nbVertices = sample.getCurvesNumVertices();
    unsigned int nbCVs = (unsigned int)nbVertices->get()[0];
    int degree = 1;
-   if(sample.getType() == Alembic::AbcGeom::kCubic)
+   if(sample.getType() == AbcG::kCubic)
       degree = 3;
-   bool closed = sample.getWrap() == Alembic::AbcGeom::kPeriodic;
+   bool closed = sample.getWrap() == AbcG::kPeriodic;
    int nbSpans = (int)nbCVs - degree;
 
    MDoubleArray knots;
@@ -257,7 +257,7 @@ MStatus AlembicCurvesNode::compute(const MPlug & plug, MDataBlock & dataBlock)
       bool done = false;
       if(sampleInfo.alpha != 0.0)
       {
-         Alembic::Abc::P3fArraySamplePtr samplePos2 = sample2.getPositions();
+         Abc::P3fArraySamplePtr samplePos2 = sample2.getPositions();
          if(points.length() == (unsigned int)samplePos2->size())
          {
             float blend = (float)sampleInfo.alpha;
@@ -371,13 +371,13 @@ MStatus AlembicCurvesDeformNode::deform(MDataBlock & dataBlock, MItGeometry & it
       mIdentifier = identifier;
 
       // get the object from the archive
-      Alembic::Abc::IObject iObj = getObjectFromArchive(mFileName,identifier);
+      Abc::IObject iObj = getObjectFromArchive(mFileName,identifier);
       if(!iObj.valid())
       {
          MGlobal::displayWarning("[ExocortexAlembic] Identifier '"+identifier+"' not found in archive '"+mFileName+"'.");
          return MStatus::kFailure;
       }
-      Alembic::AbcGeom::ICurves obj(iObj,Alembic::Abc::kWrapExisting);
+      AbcG::ICurves obj(iObj,Abc::kWrapExisting);
       if(!obj.valid())
       {
          MGlobal::displayWarning("[ExocortexAlembic] Identifier '"+identifier+"' in archive '"+mFileName+"' is not a Curves.");
@@ -403,14 +403,14 @@ MStatus AlembicCurvesDeformNode::deform(MDataBlock & dataBlock, MItGeometry & it
    mLastSampleInfo = sampleInfo;
 
    // access the camera values
-   Alembic::AbcGeom::ICurvesSchema::Sample sample;
-   Alembic::AbcGeom::ICurvesSchema::Sample sample2;
+   AbcG::ICurvesSchema::Sample sample;
+   AbcG::ICurvesSchema::Sample sample2;
    mSchema.get(sample,sampleInfo.floorIndex);
    if(sampleInfo.alpha != 0.0)
       mSchema.get(sample2,sampleInfo.ceilIndex);
 
-   Alembic::Abc::P3fArraySamplePtr samplePos = sample.getPositions();
-   Alembic::Abc::P3fArraySamplePtr samplePos2;
+   Abc::P3fArraySamplePtr samplePos = sample.getPositions();
+   Abc::P3fArraySamplePtr samplePos2;
    if(sampleInfo.alpha != 0.0)
       samplePos2 = sample2.getPositions();
 
@@ -532,7 +532,7 @@ MStatus AlembicCurvesLocatorNode::compute(const MPlug & plug, MDataBlock & dataB
    MString & fileName = dataBlock.inputValue(mFileNameAttr).asString();
    MString & identifier = dataBlock.inputValue(mIdentifierAttr).asString();
 
-   Alembic::AbcGeom::ICurves obj;
+   AbcG::ICurves obj;
 
    // check if we have the file
    if(fileName != mFileName || identifier != mIdentifier)
@@ -547,13 +547,13 @@ MStatus AlembicCurvesLocatorNode::compute(const MPlug & plug, MDataBlock & dataB
       mIdentifier = identifier;
 
       // get the object from the archive
-      Alembic::Abc::IObject iObj = getObjectFromArchive(mFileName,identifier);
+      Abc::IObject iObj = getObjectFromArchive(mFileName,identifier);
       if(!iObj.valid())
       {
          MGlobal::displayWarning("[ExocortexAlembic] Identifier '"+identifier+"' not found in archive '"+mFileName+"'.");
          return MStatus::kFailure;
       }
-      obj = Alembic::AbcGeom::ICurves(iObj,Alembic::Abc::kWrapExisting);
+      obj = AbcG::ICurves(iObj,Abc::kWrapExisting);
       if(!obj.valid())
       {
          MGlobal::displayWarning("[ExocortexAlembic] Identifier '"+identifier+"' in archive '"+mFileName+"' is not a Curves.");
@@ -575,20 +575,20 @@ MStatus AlembicCurvesLocatorNode::compute(const MPlug & plug, MDataBlock & dataB
    // check if we have to do this at all
    if(mNbCurves == 0 || mLastSampleInfo.floorIndex != sampleInfo.floorIndex || mLastSampleInfo.ceilIndex != sampleInfo.ceilIndex)
    {
-      Alembic::AbcGeom::ICurvesSchema::Sample sample;
-      Alembic::AbcGeom::ICurvesSchema::Sample sample2;
+      AbcG::ICurvesSchema::Sample sample;
+      AbcG::ICurvesSchema::Sample sample2;
       mSchema.get(sample,sampleInfo.floorIndex);
       if(sampleInfo.alpha != 0.0)
          mSchema.get(sample2,sampleInfo.ceilIndex);
 
       // update the indices
-      Alembic::Abc::P3fArraySamplePtr samplePos = sample.getPositions();
+      Abc::P3fArraySamplePtr samplePos = sample.getPositions();
       if(mNbCurves != sample.getNumCurves() || mNbVertices != samplePos->size())
       {
          mNbCurves = (unsigned int)sample.getNumCurves();
          mNbVertices = (unsigned int)samplePos->size();
          
-         Alembic::Abc::Int32ArraySamplePtr nbVertices = sample.getCurvesNumVertices();
+         Abc::Int32ArraySamplePtr nbVertices = sample.getCurvesNumVertices();
          mIndices.clear();
          unsigned int offset = 0;
          for(unsigned int i=0;i<mNbCurves;i++)
@@ -612,7 +612,7 @@ MStatus AlembicCurvesLocatorNode::compute(const MPlug & plug, MDataBlock & dataB
       mBoundingBox.clear();
       if(sampleInfo.alpha != 0.0)
       {
-         Alembic::Abc::P3fArraySamplePtr samplePos2 = sample2.getPositions();
+         Abc::P3fArraySamplePtr samplePos2 = sample2.getPositions();
          if(samplePos->size() == samplePos2->size())
          {
             float alpha = float(sampleInfo.alpha);
@@ -642,12 +642,12 @@ MStatus AlembicCurvesLocatorNode::compute(const MPlug & plug, MDataBlock & dataB
      // get the colors
      //mColors.clear();
 
-	   Alembic::Abc::IC4fArrayProperty propColor;
+	   Abc::IC4fArrayProperty propColor;
      if( getArbGeomParamPropertyAlembic( obj, "color", propColor ) )
      {
        mColors.clear();
 		   SampleInfo colorSampleInfo = getSampleInfo(inputTime,propColor.getTimeSampling(),propColor.getNumSamples());
-		   Alembic::Abc::C4fArraySamplePtr sampleColor = propColor.getValue(colorSampleInfo.floorIndex);
+		   Abc::C4fArraySamplePtr sampleColor = propColor.getValue(colorSampleInfo.floorIndex);
 		   mColors.resize(mPositions.size());
 		   if(sampleColor->size() == 1)
 		   {
@@ -671,7 +671,7 @@ MStatus AlembicCurvesLocatorNode::compute(const MPlug & plug, MDataBlock & dataB
 		   }
 		   else if(sampleColor->size() == mNbCurves)
 		   {
-			  Alembic::Abc::Int32ArraySamplePtr nbVertices = sample.getCurvesNumVertices();
+			  Abc::Int32ArraySamplePtr nbVertices = sample.getCurvesNumVertices();
 			  unsigned int offset = 0;
 			  for(unsigned int i=0;i<nbVertices->size();i++)
 			  {
@@ -739,9 +739,9 @@ void AlembicCurvesLocatorNode::draw( M3dView & view, const MDagPath & path, M3dV
    {
       for(size_t i=0;i<mIndices.size();i++)
       {
-         Alembic::Abc::C4f & color = mColors[mIndices[i]];
+         Abc::C4f & color = mColors[mIndices[i]];
          glColor4f(color.r,color.g,color.b,color.a);
-         Alembic::Abc::V3f & pos = mPositions[mIndices[i]];
+         Abc::V3f & pos = mPositions[mIndices[i]];
          glVertex3f(pos.x,pos.y,pos.z);
       }
    }
@@ -750,7 +750,7 @@ void AlembicCurvesLocatorNode::draw( M3dView & view, const MDagPath & path, M3dV
       glColor4f(0.0,0.0,0.0,1.0);
       for(size_t i=0;i<mIndices.size();i++)
       {
-         Alembic::Abc::V3f & pos = mPositions[mIndices[i]];
+         Abc::V3f & pos = mPositions[mIndices[i]];
          glVertex3f(pos.x,pos.y,pos.z);
       }
    }

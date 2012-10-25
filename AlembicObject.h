@@ -16,7 +16,7 @@ private:
    AlembicObjectPtr mParent;
 protected:
    int mNumSamples;
-   Alembic::AbcGeom::OVisibilityProperty mOVisibility;
+   AbcG::OVisibilityProperty mOVisibility;
 
 public:
    AlembicObject(const MObject & in_Ref, AlembicWriteJob * in_Job);
@@ -26,10 +26,10 @@ public:
    const MObject & GetRef(ULONG index = 0) { return mRefs[index]; }
    ULONG GetRefCount() { return mRefs.length(); }
    void AddRef(const MObject & in_Ref) { mRefs.append(in_Ref); }
-   virtual Alembic::Abc::OObject GetObject() = 0;
-   Alembic::Abc::OObject GetParentObject();
+   virtual Abc::OObject GetObject() = 0;
+   Abc::OObject GetParentObject();
    bool IsParentedToRoot() const { return !mParent; }
-   virtual Alembic::Abc::OCompoundProperty GetCompound() = 0;
+   virtual Abc::OCompoundProperty GetCompound() = 0;
    int GetNumSamples() { return mNumSamples; }
    MString GetUniqueName(const MString & in_Name);
 

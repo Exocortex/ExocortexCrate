@@ -6,16 +6,16 @@
 class AlembicXform: public AlembicObject
 {
 private:
-   Alembic::AbcGeom::OXform mObject;
-   Alembic::AbcGeom::OXformSchema mSchema;
-   Alembic::AbcGeom::XformSample mSample;
+   AbcG::OXform mObject;
+   AbcG::OXformSchema mSchema;
+   AbcG::XformSample mSample;
 public:
 
    AlembicXform(const MObject & in_Ref, AlembicWriteJob * in_Job);
    ~AlembicXform();
 
-   virtual Alembic::Abc::OObject GetObject() { return mObject; }
-   virtual Alembic::Abc::OCompoundProperty GetCompound() { return mSchema; }
+   virtual Abc::OObject GetObject() { return mObject; }
+   virtual Abc::OCompoundProperty GetCompound() { return mSchema; }
    virtual MStatus Save(double time);
 };
 
@@ -38,10 +38,10 @@ private:
    static MObject mIdentifierAttr;
    MString mFileName;
    MString mIdentifier;
-   Alembic::AbcGeom::IXformSchema mSchema;
+   AbcG::IXformSchema mSchema;
    std::vector<double> mTimes;
    size_t mLastFloor;
-   std::vector<Alembic::Abc::M44d> mMatrices;
+   std::vector<Abc::M44d> mMatrices;
 
    // output attributes
    static MObject mOutTranslateXAttr;

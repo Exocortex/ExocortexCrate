@@ -30,10 +30,10 @@ bool SaveMetaData(AlembicObject * obj)
    }
 
    // let's create the metadata property
-   Alembic::Abc::OStringArrayProperty metaDataProperty = Alembic::Abc::OStringArrayProperty(
+   Abc::OStringArrayProperty metaDataProperty = Abc::OStringArrayProperty(
       obj->GetCompound(), ".metadata", obj->GetCompound().getMetaData(), obj->GetJob()->GetAnimatedTs() );
 
-   Alembic::Abc::StringArraySample metaDataSample(&metaData.front(),metaData.size());
+   Abc::StringArraySample metaDataSample(&metaData.front(),metaData.size());
    metaDataProperty.set(metaDataSample);
 
    return true;
@@ -95,7 +95,7 @@ MStatus AlembicCreateMetaDataCommand::doIt(const MArgList & args)
    if(fileName.length() > 0 && identifier.length() > 0)
    {
       addRefArchive(fileName);
-      Alembic::Abc::IObject object = getObjectFromArchive(fileName,identifier);
+      Abc::IObject object = getObjectFromArchive(fileName,identifier);
       if(!object.valid())
       {
          MGlobal::displayError("[ExocortexAlembic] Invalid fileName or identifier specified.");
@@ -106,8 +106,8 @@ MStatus AlembicCreateMetaDataCommand::doIt(const MArgList & args)
       // check the metadata
       if(getCompoundFromObject(object).getPropertyHeader(".metadata") != NULL)
       {
-         Alembic::Abc::IStringArrayProperty metaDataProp = Alembic::Abc::IStringArrayProperty( getCompoundFromObject(object), ".metadata" );
-         Alembic::Abc::StringArraySamplePtr ptr = metaDataProp.getValue(0);
+         Abc::IStringArrayProperty metaDataProp = Abc::IStringArrayProperty( getCompoundFromObject(object), ".metadata" );
+         Abc::StringArraySamplePtr ptr = metaDataProp.getValue(0);
          metadata.setLength((unsigned int)ptr->size());
          for(unsigned int i=0;i<metadata.length();i++)
             metadata[i] = ptr->get()[i].c_str();

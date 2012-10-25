@@ -8,21 +8,21 @@
 class AlembicCurves: public AlembicObject
 {
 private:
-   Alembic::AbcGeom::OCurves mObject;
-   Alembic::AbcGeom::OCurvesSchema mSchema;
-   Alembic::AbcGeom::OCurvesSchema::Sample mSample;
+   AbcG::OCurves mObject;
+   AbcG::OCurvesSchema mSchema;
+   AbcG::OCurvesSchema::Sample mSample;
 
-   std::vector<Alembic::Abc::V3f> mPosVec;
-   std::vector<Alembic::AbcCoreAbstract::ALEMBIC_VERSION_NS::int32_t> mNbVertices;
-   Alembic::Abc::ALEMBIC_VERSION_NS::OFloatArrayProperty mRadiusProperty;
+   std::vector<Abc::V3f> mPosVec;
+   std::vector<AbcA::int32_t> mNbVertices;
+   Abc::OFloatArrayProperty mRadiusProperty;
    std::vector<float> mRadiusVec;
 
 public:
    AlembicCurves(const MObject & in_Ref, AlembicWriteJob * in_Job);
    ~AlembicCurves();
 
-   virtual Alembic::Abc::OObject GetObject() { return mObject; }
-   virtual Alembic::Abc::OCompoundProperty GetCompound() { return mSchema; }
+   virtual Abc::OObject GetObject() { return mObject; }
+   virtual Abc::OCompoundProperty GetCompound() { return mSchema; }
    virtual MStatus Save(double time);
 };
 
@@ -45,7 +45,7 @@ private:
    static MObject mIdentifierAttr;
    MString mFileName;
    MString mIdentifier;
-   Alembic::AbcGeom::ICurvesSchema mSchema;
+   AbcG::ICurvesSchema mSchema;
 
    // output attributes
    static MObject mOutGeometryAttr;
@@ -73,7 +73,7 @@ private:
    static MObject mIdentifierAttr;
    MString mFileName;
    MString mIdentifier;
-   Alembic::AbcGeom::ICurvesSchema mSchema;
+   AbcG::ICurvesSchema mSchema;
 
    // members
    SampleInfo mLastSampleInfo;
@@ -105,13 +105,13 @@ private:
    static MObject mSentinelAttr;
    MString mFileName;
    MString mIdentifier;
-   Alembic::AbcGeom::ICurvesSchema mSchema;
+   AbcG::ICurvesSchema mSchema;
    int mSent;
    unsigned int mNbCurves;
    unsigned int mNbVertices;
    std::vector<unsigned int> mIndices;
-   std::vector<Alembic::Abc::V3f> mPositions;
-   std::vector<Alembic::Abc::C4f> mColors;
+   std::vector<Abc::V3f> mPositions;
+   std::vector<Abc::C4f> mColors;
    MBoundingBox mBoundingBox;
 
    // members

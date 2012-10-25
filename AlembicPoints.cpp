@@ -3,8 +3,8 @@
 #include <maya/MVectorArray.h>
 #include <maya/MFnArrayAttrsData.h>
 
-namespace AbcA = ::Alembic::AbcCoreAbstract::ALEMBIC_VERSION_NS;
-using namespace AbcA;
+
+
 
 AlembicPoints::AlembicPoints(const MObject & in_Ref, AlembicWriteJob * in_Job)
 : AlembicObject(in_Ref, in_Job)
@@ -12,13 +12,13 @@ AlembicPoints::AlembicPoints(const MObject & in_Ref, AlembicWriteJob * in_Job)
    MFnDependencyNode node(in_Ref);
    //MString name = GetUniqueName(truncateName(node.name()));
    MString name = GetUniqueName(node.name());
-   mObject = Alembic::AbcGeom::OPoints(GetParentObject(),name.asChar(),GetJob()->GetAnimatedTs());
+   mObject = AbcG::OPoints(GetParentObject(),name.asChar(),GetJob()->GetAnimatedTs());
 
    mSchema = mObject.getSchema();
 
-   mAgeProperty = Alembic::Abc::OFloatArrayProperty(mSchema.getArbGeomParams(), ".age", mSchema.getMetaData(), GetJob()->GetAnimatedTs() );
-   mMassProperty = Alembic::Abc::OFloatArrayProperty(mSchema.getArbGeomParams(), ".mass", mSchema.getMetaData(), GetJob()->GetAnimatedTs() );
-   mColorProperty = Alembic::Abc::OC4fArrayProperty(mSchema.getArbGeomParams(), ".color", mSchema.getMetaData(), GetJob()->GetAnimatedTs() );
+   mAgeProperty = Abc::OFloatArrayProperty(mSchema.getArbGeomParams(), ".age", mSchema.getMetaData(), GetJob()->GetAnimatedTs() );
+   mMassProperty = Abc::OFloatArrayProperty(mSchema.getArbGeomParams(), ".mass", mSchema.getMetaData(), GetJob()->GetAnimatedTs() );
+   mColorProperty = Abc::OC4fArrayProperty(mSchema.getArbGeomParams(), ".color", mSchema.getMetaData(), GetJob()->GetAnimatedTs() );
 
    /*
    // create all properties
@@ -50,7 +50,7 @@ MStatus AlembicPoints::Save(double time)
    SaveMetaData(this);
 
    // prepare the bounding box
-   Alembic::Abc::Box3d bbox;
+   Abc::Box3d bbox;
 
    // access the points
    MVectorArray vectors;
@@ -58,13 +58,13 @@ MStatus AlembicPoints::Save(double time)
 
    // check if we have the global cache option
    bool globalCache = GetJob()->GetOption(L"exportInGlobalSpace").asInt() > 0;
-   Alembic::Abc::M44f globalXfo;
+   Abc::M44f globalXfo;
    if(globalCache)
       globalXfo = GetGlobalMatrix(GetRef());
 
    // push the positions to the bbox
    size_t particleCount = vectors.length();
-   std::vector<Alembic::Abc::V3f> posVec(particleCount);
+   std::vector<Abc::V3f> posVec(particleCount);
    for(unsigned int i=0;i<vectors.length();i++)
    {
       posVec[i].x = (float)vectors[i].x;
@@ -78,7 +78,7 @@ MStatus AlembicPoints::Save(double time)
 
    // get the velocities
    node.velocity(vectors);
-   std::vector<Alembic::Abc::V3f> velVec(particleCount);
+   std::vector<Abc::V3f> velVec(particleCount);
    for(unsigned int i=0;i<vectors.length();i++)
    {
       velVec[i].x = (float)vectors[i].x;
@@ -120,7 +120,7 @@ MStatus AlembicPoints::Save(double time)
    doubles.clear();
 
    // get the color
-   std::vector<Alembic::Abc::C4f> colorVec;
+   std::vector<Abc::C4f> colorVec;
    if(node.hasOpacity() || node.hasRgb())
    {
       colorVec.resize(particleCount);
@@ -141,13 +141,13 @@ MStatus AlembicPoints::Save(double time)
    mSample.setSelfBounds(bbox);
 
    // setup the sample
-   mSample.setPositions(Alembic::Abc::P3fArraySample(posVec));
-   mSample.setVelocities(Alembic::Abc::V3fArraySample(velVec));
-   mSample.setWidths(Alembic::AbcGeom::OFloatGeomParam::Sample(Alembic::Abc::FloatArraySample(widthVec), Alembic::AbcGeom::kVertexScope));
-   mSample.setIds(Alembic::Abc::UInt64ArraySample(idVec));
-   mAgeProperty.set(Alembic::Abc::FloatArraySample(ageVec));
-   mMassProperty.set(Alembic::Abc::FloatArraySample(massVec));
-   mColorProperty.set(Alembic::Abc::C4fArraySample(colorVec));
+   mSample.setPositions(Abc::P3fArraySample(posVec));
+   mSample.setVelocities(Abc::V3fArraySample(velVec));
+   mSample.setWidths(AbcG::OFloatGeomParam::Sample(Abc::FloatArraySample(widthVec), AbcG::kVertexScope));
+   mSample.setIds(Abc::UInt64ArraySample(idVec));
+   mAgeProperty.set(Abc::FloatArraySample(ageVec));
+   mMassProperty.set(Abc::FloatArraySample(massVec));
+   mColorProperty.set(Abc::C4fArraySample(colorVec));
 
    // save the sample
    mSchema.set(mSample);
@@ -247,13 +247,13 @@ MStatus AlembicPointsNode::init(const MString &fileName, const MString &identifi
     mIdentifier = identifier;
 
     // get the object from the archive
-    Alembic::Abc::IObject iObj = getObjectFromArchive(mFileName,identifier);
+    Abc::IObject iObj = getObjectFromArchive(mFileName,identifier);
     if(!iObj.valid())
     {
       MGlobal::displayWarning("[ExocortexAlembic] Identifier '"+identifier+"' not found in archive '"+mFileName+"'.");
       return MStatus::kFailure;
     }
-    obj = Alembic::AbcGeom::IPoints(iObj,Alembic::Abc::kWrapExisting);
+    obj = AbcG::IPoints(iObj,Abc::kWrapExisting);
     if(!obj.valid())
     {
       MGlobal::displayWarning("[ExocortexAlembic] Identifier '"+identifier+"' in archive '"+mFileName+"' is not a Points.");
@@ -323,41 +323,41 @@ MStatus AlembicPointsNode::compute(const MPlug & plug, MDataBlock & dataBlock)
    mLastSampleInfo = sampleInfo;
 
    // access the points values
-   Alembic::AbcGeom::IPointsSchema::Sample sample;
+   AbcG::IPointsSchema::Sample sample;
    mSchema.get(sample,sampleInfo.floorIndex);
 
    // get all of the data from alembic
-   Alembic::Abc::UInt64ArraySamplePtr sampleIds = sample.getIds();
-   Alembic::Abc::P3fArraySamplePtr samplePos = sample.getPositions();
-   Alembic::Abc::V3fArraySamplePtr sampleVel = sample.getVelocities();
+   Abc::UInt64ArraySamplePtr sampleIds = sample.getIds();
+   Abc::P3fArraySamplePtr samplePos = sample.getPositions();
+   Abc::V3fArraySamplePtr sampleVel = sample.getVelocities();
 
-   Alembic::Abc::C4fArraySamplePtr sampleColor;
+   Abc::C4fArraySamplePtr sampleColor;
    {
-     Alembic::Abc::IC4fArrayProperty propColor;
+     Abc::IC4fArrayProperty propColor;
      if( getArbGeomParamPropertyAlembic( obj, "color", propColor ) )
 	     sampleColor = propColor.getValue(sampleInfo.floorIndex);
    }
-   Alembic::Abc::FloatArraySamplePtr sampleAge;
+   Abc::FloatArraySamplePtr sampleAge;
    {
-     Alembic::Abc::IFloatArrayProperty propAge;
+     Abc::IFloatArrayProperty propAge;
      if( getArbGeomParamPropertyAlembic( obj, "age", propAge ) )
 	     sampleAge = propAge.getValue(sampleInfo.floorIndex);
    }
-   Alembic::Abc::FloatArraySamplePtr sampleMass;
+   Abc::FloatArraySamplePtr sampleMass;
    {
-     Alembic::Abc::IFloatArrayProperty propMass;
+     Abc::IFloatArrayProperty propMass;
      if( getArbGeomParamPropertyAlembic( obj, "mass", propMass ) )
        sampleMass = propMass.getValue(sampleInfo.floorIndex);
    }
-   Alembic::Abc::UInt16ArraySamplePtr sampleShapeInstanceID;
+   Abc::UInt16ArraySamplePtr sampleShapeInstanceID;
    {
-     Alembic::Abc::IUInt16ArrayProperty propShapeInstanceID;
+     Abc::IUInt16ArrayProperty propShapeInstanceID;
      if( getArbGeomParamPropertyAlembic( obj, "shapeinstanceid", propShapeInstanceID ) )
        sampleShapeInstanceID = propShapeInstanceID.getValue(sampleInfo.floorIndex);   
    }
-   Alembic::Abc::QuatfArraySamplePtr sampleOrientation;
+   Abc::QuatfArraySamplePtr sampleOrientation;
    {
-     Alembic::Abc::IQuatfArrayProperty propOrientation;
+     Abc::IQuatfArrayProperty propOrientation;
      if( getArbGeomParamPropertyAlembic( obj, "orientation", propOrientation ) )
        sampleOrientation = propOrientation.getValue(sampleInfo.floorIndex);
    }
@@ -485,21 +485,21 @@ void AlembicPointsNode::instanceInitialize(void)
 
   const size_t lastSample = mSchema.getNumSamples()-1;
   {
-    Alembic::Abc::IUInt16ArrayProperty propShapeT;
+    Abc::IUInt16ArrayProperty propShapeT;
     if( !getArbGeomParamPropertyAlembic( obj, "shapetype", propShapeT ) )
       return;
 
-    Alembic::Abc::UInt16ArraySamplePtr sampleShapeT = propShapeT.getValue(lastSample);
+    Abc::UInt16ArraySamplePtr sampleShapeT = propShapeT.getValue(lastSample);
     if (!sampleShapeT || sampleShapeT->size() <= 0 || sampleShapeT->get()[0] != 7)
       return;
   }
 
   // check if there's instance names! If so, load the names!... if there's any!
-  Alembic::Abc::IStringArrayProperty propInstName;
+  Abc::IStringArrayProperty propInstName;
   if(!getArbGeomParamPropertyAlembic( obj, "instancenames", propInstName ) )
     return;
 
-  Alembic::Abc::StringArraySamplePtr instNames = propInstName.getValue(lastSample);
+  Abc::StringArraySamplePtr instNames = propInstName.getValue(lastSample);
   const int nbNames = (int) instNames->size();
   if (nbNames < 1)
     return;

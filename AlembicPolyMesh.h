@@ -7,25 +7,25 @@
 class AlembicPolyMesh: public AlembicObject
 {
 private:
-   Alembic::AbcGeom::OPolyMesh mObject;
-   Alembic::AbcGeom::OPolyMeshSchema mSchema;
+   AbcG::OPolyMesh mObject;
+   AbcG::OPolyMeshSchema mSchema;
    int mPointCountLastFrame;
    std::vector<unsigned int> mSampleLookup;
 
    /*
-   Alembic::AbcGeom::OPolyMeshSchema::Sample mSample;
-   std::vector<Alembic::Abc::V3f> mPosVec;
-   std::vector<Alembic::AbcGeom::OV2fGeomParam> mUvParams;
-   std::vector<std::vector<Alembic::Abc::V2f> > mUvVec;
-   std::vector<std::vector<Alembic::Abc::uint32_t> > mUvIndexVec;
+   AbcG::OPolyMeshSchema::Sample mSample;
+   std::vector<Abc::V3f> mPosVec;
+   std::vector<AbcG::OV2fGeomParam> mUvParams;
+   std::vector<std::vector<Abc::V2f> > mUvVec;
+   std::vector<std::vector<Abc::uint32_t> > mUvIndexVec;
    //*/
 
 public:
    AlembicPolyMesh(const MObject & in_Ref, AlembicWriteJob * in_Job);
    ~AlembicPolyMesh();
 
-   virtual Alembic::Abc::OObject GetObject() { return mObject; }
-   virtual Alembic::Abc::OCompoundProperty GetCompound() { return mSchema; }
+   virtual Abc::OObject GetObject() { return mObject; }
+   virtual Abc::OCompoundProperty GetCompound() { return mSchema; }
    virtual MStatus Save(double time);
 };
 
@@ -48,8 +48,8 @@ private:
    static MObject mIdentifierAttr;
    MString mFileName;
    MString mIdentifier;
-   Alembic::Abc::IObject mObj;
-   Alembic::AbcGeom::IPolyMeshSchema mSchema;
+   Abc::IObject mObj;
+   AbcG::IPolyMeshSchema mSchema;
    static MObject mNormalsAttr;
    static MObject mUvsAttr;
 
@@ -82,8 +82,8 @@ private:
    static MObject mIdentifierAttr;
    MString mFileName;
    MString mIdentifier;
-   Alembic::Abc::IObject mObj;
-   Alembic::AbcGeom::IPolyMeshSchema mSchema;
+   Abc::IObject mObj;
+   AbcG::IPolyMeshSchema mSchema;
 
    // members
    SampleInfo mLastSampleInfo;

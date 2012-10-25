@@ -6,8 +6,8 @@
 #include <maya/MFnSubdNames.h>
 #include <maya/MItSubdVertex.h>
 
-namespace AbcA = ::Alembic::AbcCoreAbstract::ALEMBIC_VERSION_NS;
-using namespace AbcA;
+
+
 
 AlembicSubD::AlembicSubD(const MObject & in_Ref, AlembicWriteJob * in_Job)
 : AlembicObject(in_Ref, in_Job)
@@ -15,7 +15,7 @@ AlembicSubD::AlembicSubD(const MObject & in_Ref, AlembicWriteJob * in_Job)
    MFnDependencyNode node(in_Ref);
    //MString name = GetUniqueName(truncateName(node.name()));
    MString name = GetUniqueName(node.name());
-   mObject = Alembic::AbcGeom::OSubD(GetParentObject(),name.asChar(),GetJob()->GetAnimatedTs());
+   mObject = AbcG::OSubD(GetParentObject(),name.asChar(),GetJob()->GetAnimatedTs());
 
    mSchema = mObject.getSchema();
 }
@@ -36,11 +36,11 @@ MStatus AlembicSubD::Save(double time)
    SaveMetaData(this);
 
    // prepare the bounding box
-   Alembic::Abc::Box3d bbox;
+   Abc::Box3d bbox;
 
    // check if we have the global cache option
    bool globalCache = GetJob()->GetOption(L"exportInGlobalSpace").asInt() > 0;
-   Alembic::Abc::M44f globalXfo;
+   Abc::M44f globalXfo;
    if(globalCache)
       globalXfo = GetGlobalMatrix(GetRef());
 
@@ -59,7 +59,7 @@ MStatus AlembicSubD::Save(double time)
    }
 
    // store the positions to the samples
-   mSample.setPositions(Alembic::Abc::P3fArraySample(&mPosVec.front(),mPosVec.size()));
+   mSample.setPositions(Abc::P3fArraySample(&mPosVec.front(),mPosVec.size()));
    mSample.setSelfBounds(bbox);
 
    // check if we are doing pure pointcache
@@ -70,8 +70,8 @@ MStatus AlembicSubD::Save(double time)
          // store a dummy empty topology
          mFaceCountVec.push_back(0);
          mFaceIndicesVec.push_back(0);
-         Alembic::Abc::Int32ArraySample faceCountSample(&mFaceCountVec.front(),mFaceCountVec.size());
-         Alembic::Abc::Int32ArraySample faceIndicesSample(&mFaceIndicesVec.front(),mFaceIndicesVec.size());
+         Abc::Int32ArraySample faceCountSample(&mFaceCountVec.front(),mFaceCountVec.size());
+         Abc::Int32ArraySample faceIndicesSample(&mFaceIndicesVec.front(),mFaceIndicesVec.size());
          mSample.setFaceCounts(faceCountSample);
          mSample.setFaceIndices(faceIndicesSample);
       }
@@ -103,8 +103,8 @@ MStatus AlembicSubD::Save(double time)
          offset += count;
       }
 
-      Alembic::Abc::Int32ArraySample faceCountSample(&mFaceCountVec.front(),mFaceCountVec.size());
-      Alembic::Abc::Int32ArraySample faceIndicesSample(&mFaceIndicesVec.front(),mFaceIndicesVec.size());
+      Abc::Int32ArraySample faceCountSample(&mFaceCountVec.front(),mFaceCountVec.size());
+      Abc::Int32ArraySample faceIndicesSample(&mFaceIndicesVec.front(),mFaceIndicesVec.size());
       mSample.setFaceCounts(faceCountSample);
       mSample.setFaceIndices(faceIndicesSample);
 
@@ -136,7 +136,7 @@ MStatus AlembicSubD::Save(double time)
                std::map<SortableV2f,size_t> uvMap;
                std::map<SortableV2f,size_t>::const_iterator it;
                unsigned int sortedUVCount = 0;
-               std::vector<Alembic::Abc::V2f> sortedUVVec;
+               std::vector<Abc::V2f> sortedUVVec;
                mUvIndexVec.resize(mUvVec.size());
                sortedUVVec.resize(mUvVec.size());
 
@@ -149,15 +149,15 @@ MStatus AlembicSubD::Save(double time)
                   else
                   {
                      mUvIndexVec[uvIndexCount++] = (uint32_t)sortedUVCount;
-                     uvMap.insert(std::pair<Alembic::Abc::V2f,size_t>(mUvVec[i],(uint32_t)sortedUVCount));
+                     uvMap.insert(std::pair<Abc::V2f,size_t>(mUvVec[i],(uint32_t)sortedUVCount));
                      sortedUVVec[sortedUVCount++] = mUvVec[i];
                   }
                }
 
                // use indexed uvs if they use less space
-               if(sortedUVCount * sizeof(Alembic::Abc::V2f) + 
+               if(sortedUVCount * sizeof(Abc::V2f) + 
                   uvIndexCount * sizeof(uint32_t) < 
-                  sizeof(Alembic::Abc::V2f) * mUvVec.size())
+                  sizeof(Abc::V2f) * mUvVec.size())
                {
                   mUvVec = sortedUVVec;
                   uvCount = sortedUVCount;
@@ -171,9 +171,9 @@ MStatus AlembicSubD::Save(double time)
                sortedUVVec.clear();
             }
 
-            Alembic::AbcGeom::OV2fGeomParam::Sample uvSample(Alembic::Abc::V2fArraySample(&mUvVec.front(),uvCount),Alembic::AbcGeom::kFacevaryingScope);
+            AbcG::OV2fGeomParam::Sample uvSample(Abc::V2fArraySample(&mUvVec.front(),uvCount),AbcG::kFacevaryingScope);
             if(mUvIndexVec.size() > 0 && uvIndexCount > 0)
-               uvSample.setIndices(Alembic::Abc::UInt32ArraySample(&mUvIndexVec.front(),uvIndexCount));
+               uvSample.setIndices(Abc::UInt32ArraySample(&mUvIndexVec.front(),uvIndexCount));
             mSample.setUVs(uvSample);
          }
       }
@@ -205,9 +205,9 @@ MStatus AlembicSubD::Save(double time)
             for (unsigned int j = 0; j < numData; ++j)
                 faceVals[j] = arr[j];
 
-            Alembic::AbcGeom::OFaceSet faceSet = mSchema.createFaceSet(faceSetName);
-            Alembic::AbcGeom::OFaceSetSchema::Sample faceSetSample;
-            faceSetSample.setFaces(Alembic::Abc::Int32ArraySample(faceVals));
+            AbcG::OFaceSet faceSet = mSchema.createFaceSet(faceSetName);
+            AbcG::OFaceSetSchema::Sample faceSetSample;
+            faceSetSample.setFaces(Abc::Int32ArraySample(faceVals));
             faceSet.getSchema().set(faceSetSample);
          }
       }
@@ -332,13 +332,13 @@ MStatus AlembicSubDNode::compute(const MPlug & plug, MDataBlock & dataBlock)
       mIdentifier = identifier;
 
       // get the object from the archive
-      Alembic::Abc::IObject iObj = getObjectFromArchive(mFileName,identifier);
+      Abc::IObject iObj = getObjectFromArchive(mFileName,identifier);
       if(!iObj.valid())
       {
          MGlobal::displayWarning("[ExocortexAlembic] Identifier '"+identifier+"' not found in archive '"+mFileName+"'.");
          return MStatus::kFailure;
       }
-      Alembic::AbcGeom::ISubD obj(iObj,Alembic::Abc::kWrapExisting);
+      AbcG::ISubD obj(iObj,Abc::kWrapExisting);
       if(!obj.valid())
       {
          MGlobal::displayWarning("[ExocortexAlembic] Identifier '"+identifier+"' in archive '"+mFileName+"' is not a SubD.");
@@ -365,8 +365,8 @@ MStatus AlembicSubDNode::compute(const MPlug & plug, MDataBlock & dataBlock)
    mLastSampleInfo = sampleInfo;
 
    // access the camera values
-   Alembic::AbcGeom::ISubDSchema::Sample sample;
-   Alembic::AbcGeom::ISubDSchema::Sample sample2;
+   AbcG::ISubDSchema::Sample sample;
+   AbcG::ISubDSchema::Sample sample2;
    mSchema.get(sample,sampleInfo.floorIndex);
    if(sampleInfo.alpha != 0.0)
       mSchema.get(sample2,sampleInfo.ceilIndex);
@@ -378,9 +378,9 @@ MStatus AlembicSubDNode::compute(const MPlug & plug, MDataBlock & dataBlock)
       mSubDData = subdDataFn.create();
    }
 
-   Alembic::Abc::P3fArraySamplePtr samplePos = sample.getPositions();
-   Alembic::Abc::Int32ArraySamplePtr sampleCounts = sample.getFaceCounts();
-   Alembic::Abc::Int32ArraySamplePtr sampleIndices = sample.getFaceIndices();
+   Abc::P3fArraySamplePtr samplePos = sample.getPositions();
+   Abc::Int32ArraySamplePtr sampleCounts = sample.getFaceCounts();
+   Abc::Int32ArraySamplePtr sampleIndices = sample.getFaceIndices();
 
    // ensure that we are not running on a purepoint cache mesh
    if(sampleCounts->get()[0] == 0)
@@ -393,7 +393,7 @@ MStatus AlembicSubDNode::compute(const MPlug & plug, MDataBlock & dataBlock)
       bool done = false;
       if(sampleInfo.alpha != 0.0)
       {
-         Alembic::Abc::P3fArraySamplePtr samplePos2 = sample2.getPositions();
+         Abc::P3fArraySamplePtr samplePos2 = sample2.getPositions();
          if(points.length() == (unsigned int)samplePos2->size())
          {
             float blend = (float)sampleInfo.alpha;
@@ -447,7 +447,7 @@ MStatus AlembicSubDNode::compute(const MPlug & plug, MDataBlock & dataBlock)
    // check if we need to import uvs
    if(importUvs)
    {
-      Alembic::AbcGeom::IV2fGeomParam uvsParam = mSchema.getUVsParam();
+      AbcG::IV2fGeomParam uvsParam = mSchema.getUVsParam();
       if(uvsParam.valid())
       {
          if(uvsParam.getNumSamples() > 0)
@@ -458,7 +458,7 @@ MStatus AlembicSubDNode::compute(const MPlug & plug, MDataBlock & dataBlock)
                uvsParam.getNumSamples()
             );
 
-            Alembic::Abc::V2fArraySamplePtr sampleUvs = uvsParam.getExpandedValue(sampleInfo.floorIndex).getVals();
+            Abc::V2fArraySamplePtr sampleUvs = uvsParam.getExpandedValue(sampleInfo.floorIndex).getVals();
             if(sampleUvs->size() == (size_t)indices.length())
             {
                unsigned int offset = 0;
@@ -607,13 +607,13 @@ MStatus AlembicSubDDeformNode::deform(MDataBlock & dataBlock, MItGeometry & iter
       mIdentifier = identifier;
 
       // get the object from the archive
-      Alembic::Abc::IObject iObj = getObjectFromArchive(mFileName,identifier);
+      Abc::IObject iObj = getObjectFromArchive(mFileName,identifier);
       if(!iObj.valid())
       {
          MGlobal::displayWarning("[ExocortexAlembic] Identifier '"+identifier+"' not found in archive '"+mFileName+"'.");
          return MStatus::kFailure;
       }
-      Alembic::AbcGeom::ISubD obj(iObj,Alembic::Abc::kWrapExisting);
+      AbcG::ISubD obj(iObj,Abc::kWrapExisting);
       if(!obj.valid())
       {
          MGlobal::displayWarning("[ExocortexAlembic] Identifier '"+identifier+"' in archive '"+mFileName+"' is not a SubD.");
@@ -639,14 +639,14 @@ MStatus AlembicSubDDeformNode::deform(MDataBlock & dataBlock, MItGeometry & iter
    mLastSampleInfo = sampleInfo;
 
    // access the camera values
-   Alembic::AbcGeom::ISubDSchema::Sample sample;
-   Alembic::AbcGeom::ISubDSchema::Sample sample2;
+   AbcG::ISubDSchema::Sample sample;
+   AbcG::ISubDSchema::Sample sample2;
    mSchema.get(sample,sampleInfo.floorIndex);
    if(sampleInfo.alpha != 0.0)
       mSchema.get(sample2,sampleInfo.ceilIndex);
 
-   Alembic::Abc::P3fArraySamplePtr samplePos = sample.getPositions();
-   Alembic::Abc::P3fArraySamplePtr samplePos2;
+   Abc::P3fArraySamplePtr samplePos = sample.getPositions();
+   Abc::P3fArraySamplePtr samplePos2;
    if(sampleInfo.alpha != 0.0)
       samplePos2 = sample2.getPositions();
 

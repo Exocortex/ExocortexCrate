@@ -14,7 +14,7 @@ private:
     MString mFileName;
     MObjectArray mSelection;
     std::vector<double> mFrames;
-    Alembic::Abc::OArchive mArchive;
+    Abc::OArchive mArchive;
     unsigned int mTs;
     std::map<std::string,std::string> mOptions;
     //std::vector<AlembicObjectPtr> mObjects;
@@ -27,7 +27,7 @@ public:
       const MDoubleArray & in_Frames);
    ~AlembicWriteJob();
 
-   Alembic::Abc::OArchive GetArchive() { return mArchive; }
+   Abc::OArchive GetArchive() { return mArchive; }
    const std::vector<double> & GetFrames() { return mFrames; }
    const MString & GetFileName() { return mFileName; }
    unsigned int GetAnimatedTs() { return mTs; }
