@@ -1,37 +1,7 @@
+#include "stdafx.h"
 #include "AlembicPoints.h"
 #include "AlembicXform.h"
 
-#include <xsi_application.h>
-#include <xsi_x3dobject.h>
-#include <xsi_primitive.h>
-#include <xsi_geometry.h>
-#include <xsi_polygonmesh.h>
-#include <xsi_vertex.h>
-#include <xsi_polygonface.h>
-#include <xsi_sample.h>
-#include <xsi_math.h>
-#include <xsi_context.h>
-#include <xsi_operatorcontext.h>
-#include <xsi_customoperator.h>
-#include <xsi_factory.h>
-#include <xsi_parameter.h>
-#include <xsi_ppglayout.h>
-#include <xsi_ppgitem.h>
-#include <xsi_kinematics.h>
-#include <xsi_kinematicstate.h>
-#include <xsi_clusterproperty.h>
-#include <xsi_cluster.h>
-#include <xsi_geometryaccessor.h>
-#include <xsi_material.h>
-#include <xsi_materiallibrary.h>
-#include <xsi_iceattribute.h>
-#include <xsi_iceattributedataarray.h>
-#include <xsi_shape.h>
-#include <xsi_icenode.h>
-#include <xsi_icenodeinputport.h>
-#include <xsi_icenodedef.h>
-#include <xsi_dataarray.h>
-#include <xsi_dataarray2D.h>
 
 using namespace XSI;
 using namespace MATH;

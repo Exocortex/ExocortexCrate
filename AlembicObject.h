@@ -1,11 +1,6 @@
 #ifndef _ALEMBIC_OBJECT_H_
 #define _ALEMBIC_OBJECT_H_
 
-#include "Foundation.h"
-#include <xsi_ref.h>
-#include <xsi_doublearray.h>
-#include <vector>
-#include <boost/exception/all.hpp>
 #include "AlembicLicensing.h"
 #include "AlembicMetaData.h"
 #include "CommonSceneGraph.h"

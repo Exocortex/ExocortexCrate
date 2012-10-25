@@ -1,3 +1,4 @@
+#include "stdafx.h"
 #include "AlembicLicensing.h"
 #include "AlembicWriteJob.h"
 #include "AlembicObject.h"
@@ -10,23 +11,6 @@
 #include "AlembicSubD.h"
 #include "AlembicNurbs.h"
 #include "Utility.h"
-
-#include <xsi_application.h>
-#include <xsi_time.h>
-#include <xsi_project.h>
-#include <xsi_scene.h>
-#include <xsi_property.h>
-#include <xsi_parameter.h>
-#include <xsi_x3dobject.h>
-#include <xsi_primitive.h>
-#include <xsi_kinematics.h>
-#include <xsi_kinematicstate.h>
-#include <xsi_uitoolkit.h>
-#include <xsi_geometry.h>
-#include <xsi_iceattribute.h>
-#include <xsi_model.h>
-#include <xsi_utils.h>
-
 #include "sceneGraph.h"
 
 using namespace XSI;

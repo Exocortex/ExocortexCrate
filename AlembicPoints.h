@@ -2,7 +2,6 @@
 #define _ALEMBIC_POINTS_H_
 
 #include "AlembicObject.h"
-#include <xsi_pluginregistrar.h>
 
 class AlembicPoints: public AlembicObject
 {

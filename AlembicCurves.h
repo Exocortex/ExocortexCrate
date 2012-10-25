@@ -2,7 +2,6 @@
 #define _ALEMBIC_CURVES_H_
 
 #include "AlembicObject.h"
-#include <xsi_pluginregistrar.h>
 
 class AlembicCurves: public AlembicObject
 {

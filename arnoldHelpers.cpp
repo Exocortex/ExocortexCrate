@@ -1,9 +1,5 @@
+#include "stdafx.h"
 #include "arnoldHelpers.h"
-#include <xsi_application.h>
-#include <xsi_property.h>
-#include <xsi_pass.h>
-#include <xsi_scene.h>
-#include <xsi_project.h>
 
 using namespace XSI; 
 using namespace MATH; 

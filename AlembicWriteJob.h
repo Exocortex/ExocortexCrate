@@ -1,9 +1,6 @@
 #ifndef _ALEMBIC_WRITE_JOB_H_
 #define _ALEMBIC_WRITE_JOB_H_
 
-#include "Foundation.h"
-#include <xsi_ref.h>
-#include <xsi_doublearray.h>
 #include "AlembicObject.h"
 #include "CommonSceneGraph.h"
 

@@ -1,9 +1,6 @@
-#include <time.h>
-#include "xsi_application.h"
+#include "stdafx.h"
 #include "AlembicLicensing.h"
 
-#include <string>
-#include <sstream>
 
 using namespace std;
 

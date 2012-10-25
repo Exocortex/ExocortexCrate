@@ -1,10 +1,5 @@
+#include "stdafx.h"
 #include "sceneGraph.h"
-
-#include <xsi_iceattribute.h>
-#include <xsi_primitive.h>
-#include <xsi_geometry.h>
-#include <xsi_application.h>
-#include <xsi_model.h>
 
 #include "CommonLog.h"
 

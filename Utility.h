@@ -1,13 +1,7 @@
 #ifndef _UTILITY_H_
 #define _UTILITY_H_
 
-#include "Foundation.h"
 #include "CommonUtilities.h"
-
-#include <xsi_ref.h>
-#include <xsi_operator.h>
-
-#include "Alembic\AbcCoreAbstract\TimeSampling.h"
 
 
 XSI::CStatus alembicOp_Define( XSI::CRef& in_ctxt );

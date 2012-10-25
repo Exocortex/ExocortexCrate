@@ -1,18 +1,5 @@
+#include "stdafx.h"
 #include "AlembicMetaData.h"
-#include <xsi_application.h>
-#include <xsi_selection.h>
-#include <xsi_x3dobject.h>
-#include <xsi_math.h>
-#include <xsi_context.h>
-#include <xsi_operatorcontext.h>
-#include <xsi_factory.h>
-#include <xsi_parameter.h>
-#include <xsi_ppglayout.h>
-#include <xsi_ppgitem.h>
-#include <xsi_customproperty.h>
-#include <xsi_menu.h>
-#include <xsi_command.h>
-#include <xsi_argument.h>
 #include "AlembicObject.h"
 
 using namespace XSI;
@@ -27,7 +14,7 @@ void SaveMetaData(XSI::CRef x3dRef, AlembicObject * object)
    X3DObject x3d(x3dRef);
    if(!x3d.IsValid())
       return;
-
+ 
    // search for properties
    CRefArray props = x3d.GetLocalProperties();
    for(LONG i=0;i<props.GetCount();i++)

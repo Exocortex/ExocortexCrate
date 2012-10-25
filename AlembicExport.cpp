@@ -4,52 +4,11 @@
 // 
 // Tip: You need to compile the generated code before you can load the plug-in.
 // After you compile the plug-in, you can load it by clicking Update All in the Plugin Manager.
-#include <xsi_application.h>
-#include <xsi_context.h> 
-#include <xsi_pluginregistrar.h>
-#include <xsi_status.h>
-#include <xsi_argument.h>
-#include <xsi_command.h>
-#include <xsi_menu.h>
-#include <xsi_uitoolkit.h> 
-#include <xsi_progressbar.h>
-#include <xsi_comapihandler.h>
-#include <xsi_project.h>
-#include <xsi_selection.h>
-#include <xsi_model.h>
-#include <xsi_null.h>
-#include <xsi_camera.h>
-#include <xsi_customoperator.h>
-#include <xsi_expression.h>
-#include <xsi_kinematics.h>
-#include <xsi_kinematicstate.h>
-#include <xsi_factory.h>
-#include <xsi_primitive.h> 
-#include <xsi_math.h>
-#include <xsi_cluster.h>
-#include <xsi_clusterproperty.h>
-#include <xsi_primitive.h>
-#include <xsi_geometry.h>
-#include <xsi_polygonmesh.h>
-#include <xsi_ppglayout.h>
-#include <xsi_ppgitem.h>
-#include <xsi_ppgeventcontext.h>
-#include <xsi_icetree.h>
-#include <xsi_icenode.h>
-#include <xsi_icenodeinputport.h>
-#include <xsi_icecompoundnode.h>
-#include <xsi_utils.h>
-#include <xsi_time.h>
-#include <time.h>
-#include <xsi_customoperator.h>
-#include <xsi_operatorcontext.h>
-#include <xsi_outputport.h>
+#include "stdafx.h"
 #include "arnoldHelpers.h" 
 
 using namespace XSI; 
 using namespace MATH; 
-
-#include <boost/exception/all.hpp>
 
 #include "AlembicLicensing.h"
 

@@ -3,9 +3,6 @@
 
 #include "CommonSceneGraph.h"
 
-#include <xsi_application.h>
-#include <xsi_x3dobject.h>
-
 exoNodePtr buildCommonSceneGraph(XSI::X3DObject xsiRoot);
 
 bool hasExtractableTransform( SceneNode::nodeTypeE type );

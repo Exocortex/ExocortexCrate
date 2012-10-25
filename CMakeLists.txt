@@ -11,12 +11,14 @@ endif()
 
 SET( Softimage_DIR_ROOT ${LIBRARY_ROOT}/Softimage/2012SP1 )
 SET( Softimage_DIR_INCLUDE ${Softimage_DIR_ROOT}/include )
-
+  
 file(GLOB Sources ${CMAKE_CURRENT_SOURCE_DIR}/*.cpp)
 file(GLOB Includes ${CMAKE_CURRENT_SOURCE_DIR}/*.h)
 
 SOURCE_GROUP("Source Files" FILES ${Sources})
 SOURCE_GROUP("Header Files" FILES ${Includes})
+ 
+setup_precompiled_header( ${CMAKE_CURRENT_SOURCE_DIR} ${Sources} )
 
 IF( WIN32 )
 	IF( ${ALEMBIC64} )

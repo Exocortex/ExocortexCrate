@@ -1,24 +1,4 @@
-#include <xsi_application.h>
-#include <xsi_context.h> 
-#include <xsi_pluginregistrar.h>
-#include <xsi_status.h>
-#include <xsi_argument.h>
-#include <xsi_command.h>
-#include <xsi_menu.h>
-#include <xsi_model.h>
-#include <xsi_null.h>
-#include <xsi_customoperator.h>
-#include <xsi_ppglayout.h>
-#include <xsi_ppgitem.h>
-#include <xsi_customoperator.h>
-#include <xsi_operatorcontext.h>
-#include <xsi_primitive.h> 
-#include <xsi_factory.h>
-#include <xsi_time.h>
-
-#include <string>
-#include <sstream>
-#include <time.h>
+#include "stdafx.h"
 
 using namespace XSI; 
 

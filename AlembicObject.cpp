@@ -1,9 +1,5 @@
+#include "stdafx.h"
 #include "AlembicObject.h"
-#include <xsi_ref.h>
-#include <xsi_value.h>
-#include <boost/algorithm/string.hpp>
-#include <xsi_primitive.h>
-#include <xsi_x3dobject.h>
 
 #pragma warning( disable: 4996 )
 

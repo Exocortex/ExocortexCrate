@@ -1,17 +1,5 @@
+#include "stdafx.h"
 #include "AlembicXform.h"
-#include <xsi_application.h>
-#include <xsi_kinematics.h>
-#include <xsi_kinematicstate.h>
-#include <xsi_x3dobject.h>
-#include <xsi_math.h>
-#include <xsi_context.h>
-#include <xsi_operatorcontext.h>
-#include <xsi_customoperator.h>
-#include <xsi_factory.h>
-#include <xsi_parameter.h>
-#include <xsi_ppglayout.h>
-#include <xsi_ppgitem.h>
-#include <xsi_model.h>
 #include "CommonProfiler.h"
 
 using namespace XSI;

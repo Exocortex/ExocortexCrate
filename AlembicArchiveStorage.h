@@ -1,10 +1,7 @@
 #ifndef _ALEMBIC_ARCHIVE_STORAGE_H_
 #define _ALEMBIC_ARCHIVE_STORAGE_H_
 
-#include "Foundation.h"
 #include "CommonUtilities.h"
-#include <map>
-#include <xsi_string.h>
 
 inline Abc::IArchive * getArchiveFromID(XSI::CString path) {
 	return getArchiveFromID( std::string( path.GetAsciiString() ) );

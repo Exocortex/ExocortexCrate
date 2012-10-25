@@ -1,34 +1,10 @@
+#include "stdafx.h"
 #include "Utility.h"
-#include <xsi_application.h>
-#include <xsi_x3dobject.h>
-#include <xsi_model.h>
-#include <xsi_operator.h>
-#include <xsi_primitive.h>
-#include <xsi_kinematicstate.h>
-#include <xsi_kinematics.h>
-#include <xsi_comapihandler.h>
-#include <xsi_inputport.h>
-#include <xsi_outputport.h>
-#include <xsi_context.h>
-#include <xsi_operatorcontext.h>
-#include <xsi_customoperator.h>
-#include <xsi_factory.h>
-#include <xsi_parameter.h>
-#include <xsi_ppglayout.h>
-#include <xsi_ppgitem.h>
-#include <xsi_shapekey.h>
-#include <xsi_plugin.h>
-#include <xsi_utils.h>
 #include "AlembicLicensing.h"
 #include "CommonProfiler.h"
 
-#include <boost/filesystem.hpp>
-#include <boost/filesystem/operations.hpp>
-#include <boost/filesystem/path.hpp>
-
 using namespace XSI;
 
-#include "Alembic\AbcCoreAbstract\TimeSampling.h"
 
 
 void logError( const char* msg ) {

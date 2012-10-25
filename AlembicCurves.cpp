@@ -1,44 +1,6 @@
+#include "stdafx.h"
 #include "AlembicCurves.h"
 #include "AlembicXform.h"
-
-#include <xsi_application.h>
-#include <xsi_x3dobject.h>
-#include <xsi_primitive.h>
-#include <xsi_polygonface.h>
-#include <xsi_geometry.h>
-#include <xsi_sample.h>
-#include <xsi_knot.h>
-#include <xsi_polygonmesh.h>
-#include <xsi_facet.h>
-#include <xsi_controlpoint.h>
-#include <xsi_math.h>
-#include <xsi_context.h>
-#include <xsi_operatorcontext.h>
-#include <xsi_customoperator.h>
-#include <xsi_factory.h>
-#include <xsi_parameter.h>
-#include <xsi_ppglayout.h>
-#include <xsi_ppgitem.h>
-#include <xsi_kinematics.h>
-#include <xsi_kinematicstate.h>
-#include <xsi_clusterproperty.h>
-#include <xsi_cluster.h>
-#include <xsi_geometryaccessor.h>
-#include <xsi_material.h>
-#include <xsi_materiallibrary.h>
-#include <xsi_nurbscurvelist.h>
-#include <xsi_nurbscurve.h>
-#include <xsi_hairprimitive.h>
-#include <xsi_renderhairaccessor.h>
-#include <xsi_icenode.h>
-#include <xsi_icenodeinputport.h>
-#include <xsi_icenodedef.h>
-#include <xsi_dataarray.h>
-#include <xsi_dataarray2D.h>
-#include <xsi_inputport.h>
-#include <xsi_iceattribute.h>
-#include <xsi_iceattributedataarray.h>
-#include <xsi_iceattributedataarray2D.h>
  
 using namespace XSI;
 using namespace MATH;
