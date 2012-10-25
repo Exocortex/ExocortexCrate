@@ -586,7 +586,7 @@ static PyObject * iProperty_getValues(PyObject * self, PyObject * args)
       return NULL;
    }
 
-   if(!HasWriterLicense())
+   if(!HasAlembicWriterLicense())
    {
       if(sampleIndex > 75)
       {

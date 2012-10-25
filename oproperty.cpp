@@ -145,7 +145,7 @@ static PyObject * oProperty_setValues(PyObject * self, PyObject * args)
       }
    }
 
-   if(!HasWriterLicense())
+   if(!HasAlembicWriterLicense())
    {
       if(numSamples >= 75)
       {

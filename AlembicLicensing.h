@@ -1,6 +1,7 @@
 #ifndef __ALEMBIC_LICENSING_H
 #define __ALEMBIC_LICENSING_H
 
+#include "CommonLicensing.h"
 
 #define _EC_WSTR( s ) L ## s
 #define EC_WSTR( s ) _EC_WSTR( s )
@@ -25,7 +26,6 @@
 
 extern int gLicenseToken;
 int GetLicense();
-bool HasWriterLicense();
 
 
 #endif // __ALEMBIC_LICENSING_H

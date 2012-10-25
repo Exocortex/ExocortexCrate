@@ -404,7 +404,7 @@ PyObject * oArchive_new(PyObject * self, PyObject * args)
       return NULL;
    }
 
-   if(!HasWriterLicense())
+   if(!HasAlembicWriterLicense())
    {
       if(getNbOArchives() > 1)
       {

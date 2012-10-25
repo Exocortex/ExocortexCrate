@@ -14,6 +14,12 @@
 #include "otimesampling.h"
 #include <time.h>
 
+
+std::string resolvePath_Internal(std::string path)
+{
+	return path;
+}
+
 static PyObject * extension_error = NULL;
 PyObject * getError() { return extension_error; }
 
