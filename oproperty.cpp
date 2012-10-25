@@ -1326,17 +1326,13 @@ PyObject * oProperty_new(Alembic::Abc::OCompoundProperty compound, std::string c
       else if(baseProp.isArray())
       {
          prop->mIsArray = true;
-         prop->mBaseArrayProperty = new Alembic::Abc::OArrayProperty( baseProp.getPtr(), 
-            Alembic::Abc::kWrapExisting
-         );
+		 prop->mBaseArrayProperty = new Alembic::Abc::OArrayProperty( compoundWriter, in_propName, baseProp.getDataType() );
          interpretation = prop->mBaseArrayProperty->getMetaData().get("interpretation");
       }
       else
       {
          prop->mIsArray = false;
-         prop->mBaseScalarProperty = new Alembic::Abc::OScalarProperty( baseProp.getPtr(), 
-            Alembic::Abc::kWrapExisting
-         );
+         prop->mBaseScalarProperty = new Alembic::Abc::OScalarProperty( compoundWriter, in_propName, baseProp.getDataType() );
          interpretation = prop->mBaseScalarProperty->getMetaData().get("interpretation");
       }
 

@@ -32,7 +32,7 @@ LINK_LIBRARIES( ${ALEMBIC_CORE_LIBS}
 			  ${Python_LIBS}
 			  ${Boost_LIBRARIES}
 			  ${ALEMBIC_ILMBASE_LIBS}
-			  ${ZLIB_LIBRARIES} ${Rlm_LIBRARIES} )
+			  ${ZLIB_LIBRARIES} ${Rlm_LIBRARIES} CommonUtils )
 
 SET( Python_BASE_DIR ${LIBRARY_ROOT}/python/${Python_VERSION} )
 if( NOT EXISTS ${Python_BASE_DIR} )

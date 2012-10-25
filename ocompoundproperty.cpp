@@ -139,22 +139,8 @@ PyObject * oCompoundProperty_new(Alembic::Abc::OCompoundProperty compound, std::
       cprop->tsIndex = tsIndex;
 
       const Alembic::Abc::PropertyHeader * propHeader = compound.getPropertyHeader( in_propName );
-      if(propHeader != NULL)
-      {
-         // this property already exists
-         Alembic::Abc::OBaseProperty baseProp = compound.getProperty( in_propName );
-         cprop->mBaseCompoundProperty = new Alembic::Abc::OCompoundProperty( baseProp.getPtr(), 
-                                                Alembic::Abc::kWrapExisting);
-      }
-      else
-      {
-         std::string propName(in_propName);
-         cprop->mBaseCompoundProperty = new Alembic::Abc::OCompoundProperty(compound.getPtr(), propName);
-
-         /* helge: this is buggy. there is a bug in alembic which doesn't use the right name
-            for created compound properties. they do use the right header though. so checking
-            for a name here doesn't actually work */
-      }
+     std::string propName(in_propName);
+     cprop->mBaseCompoundProperty = new Alembic::Abc::OCompoundProperty(compound.getPtr(), propName);
 
       return (PyObject *)cprop;
    ALEMBIC_PYOBJECT_CATCH_STATEMENT
