@@ -10,6 +10,7 @@
 #include "AlembicCamera.h"
 #include "AlembicPoints.h"
 #include "AlembicCurves.h"
+#include "CommonUtilities.h"
 
 
 AlembicWriteJob::AlembicWriteJob(const std::string &in_FileName, const ObjectList &in_Selection, const std::vector<double> &in_Frames, Interface *i)
@@ -82,11 +83,16 @@ bool AlembicWriteJob::PreProcess()
     }
 
     // init archive (use a locally scoped archive)
-    std::string sceneFileName = "Exported from: ";
+    std::string sceneFileName = "";
     sceneFileName.append( EC_MSTR_to_UTF8( mApplication->GetCurFilePath() ) );
     try
     {
-        mArchive = CreateArchiveWithInfo(Alembic::AbcCoreHDF5::WriteArchive(), mFileName.c_str(), "Max Alembic Plugin", sceneFileName.c_str(), Abc::ErrorHandler::kThrowPolicy);
+        mArchive = CreateArchiveWithInfo(
+			Alembic::AbcCoreHDF5::WriteArchive(), 
+			mFileName.c_str(),
+			getExporterName( "3DS Max " EC_QUOTE( crate_Max_Version ) ).c_str(),
+			getExporterFileName( sceneFileName ).c_str(),
+			Abc::ErrorHandler::kThrowPolicy);
     }
     catch(Alembic::Util::Exception& e)
     {

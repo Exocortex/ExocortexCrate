@@ -1,6 +1,6 @@
 #cmake_minimum_required (VERSION 2.6) 
 
-project ( Max${Max_VERSION}ExocortexAlembic${alembic_VERSION} ) 
+project ( Max${Max_VERSION}ExocortexAlembic${crate_VERSION} ) 
 
 INCLUDE(../../ExocortexAlembicShared/ExocortexCMakeShared.txt) 
   
@@ -16,6 +16,7 @@ endif()
 #add_definitions( "-DEXOCORTEX_BETA_EXPIRY_DATE=1343692800" )	# 1343692800 - July 31, 2012
 add_definitions( -D_SCL_SECURE_NO_WARNINGS ) 
 add_definitions( -D_CRT_SECURE_NO_WARNINGS )
+add_definitions( -Dcrate_Max_Version=${Max_VERSION} )
 
 if( Max_VERSION MATCHES "2013" )
 	add_definitions( -D_UNICODE ) 
