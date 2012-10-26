@@ -1876,8 +1876,8 @@ ESS_CALLBACK_START(alembic_import_Execute, CRef&)
    if(selectedObjects.GetCount() == 1)
    {
       importRootNode = selectedObjects[0];
-      //importRootNode = X3DObject( importRootNode ).GetParent3DObject().GetRef();
-      importRootNode = X3DObject( importRootNode ).GetRef();
+      importRootNode = X3DObject( importRootNode ).GetParent3DObject().GetRef();
+      //importRootNode = X3DObject( importRootNode ).GetRef();
    }
 
    std::list<stackElement> sceneStack;
