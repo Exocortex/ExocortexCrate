@@ -8,9 +8,12 @@ using namespace MATH;
 AlembicNurbs::AlembicNurbs(exoNodePtr eNode, AlembicWriteJob * in_Job, Abc::OObject oParent)
 : AlembicObject(eNode, in_Job, oParent)
 {
-  AbcG::ONuPatch nurbs(GetMyParent(), eNode->name, GetJob()->GetAnimatedTs());
+   AbcG::ONuPatch nurbs(GetMyParent(), eNode->name, GetJob()->GetAnimatedTs());
 
    mNurbsSchema = nurbs.getSchema();
+
+   Primitive prim(GetRef());
+   AddRef(prim.GetParent3DObject().GetKinematics().GetGlobal().GetRef());
 }
 
 AlembicNurbs::~AlembicNurbs()

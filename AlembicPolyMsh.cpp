@@ -11,9 +11,12 @@ using namespace MATH;
 AlembicPolyMesh::AlembicPolyMesh(exoNodePtr eNode, AlembicWriteJob * in_Job, Abc::OObject oParent)
 : AlembicObject(eNode, in_Job, oParent)
 {
-  AbcG::OPolyMesh mesh(GetMyParent(), eNode->name, GetJob()->GetAnimatedTs());
+   AbcG::OPolyMesh mesh(GetMyParent(), eNode->name, GetJob()->GetAnimatedTs());
    mMeshSchema = mesh.getSchema();
 
+   Primitive prim(GetRef());
+   AddRef(prim.GetParent3DObject().GetKinematics().GetGlobal().GetRef());
+   
    // create the generic properties
    mOVisibility = CreateVisibilityProperty(mesh,GetJob()->GetAnimatedTs());
 }
@@ -91,6 +94,13 @@ XSI::CStatus AlembicPolyMesh::Save(double time)
    // store the positions && bbox
    mMeshSample.setPositions(Abc::P3fArraySample(posVec));
    mMeshSample.setSelfBounds(bbox);
+
+   ESS_LOG_WARNING("Begin position dump: ");
+   for(int i=0; i<posVec.size(); i++){
+      ESS_LOG_WARNING("posVec["<<i<<"]="<<posVec[i]);  
+   
+   }
+   ESS_LOG_WARNING("End position dump: ");
 
    // abort here if we are just storing points
    if(purePointCache)

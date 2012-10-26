@@ -21,6 +21,9 @@ AlembicCurves::AlembicCurves(exoNodePtr eNode, AlembicWriteJob * in_Job, Abc::OO
    mColorProperty = Abc::OC4fArrayProperty(mCurvesSchema.getArbGeomParams(), ".color", mCurvesSchema.getMetaData(), GetJob()->GetAnimatedTs() );
    mFaceIndexProperty = Abc::OInt32ArrayProperty(mCurvesSchema.getArbGeomParams(), ".face_index", mCurvesSchema.getMetaData(), GetJob()->GetAnimatedTs() );
    mVertexIndexProperty = Abc::OInt32ArrayProperty(mCurvesSchema.getArbGeomParams(), ".vertex_index", mCurvesSchema.getMetaData(), GetJob()->GetAnimatedTs() );
+
+   Primitive prim(GetRef());
+   AddRef(prim.GetParent3DObject().GetKinematics().GetGlobal().GetRef());
 }
 
 AlembicCurves::~AlembicCurves()

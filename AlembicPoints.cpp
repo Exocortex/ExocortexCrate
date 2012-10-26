@@ -27,6 +27,9 @@ AlembicPoints::AlembicPoints(exoNodePtr eNode, AlembicWriteJob * in_Job, Abc::OO
    mMassProperty = Abc::OFloatArrayProperty(argGeomParams, ".mass", mPointsSchema.getMetaData(), GetJob()->GetAnimatedTs() );
    mShapeTypeProperty = Abc::OUInt16ArrayProperty(argGeomParams, ".shapetype", mPointsSchema.getMetaData(), GetJob()->GetAnimatedTs() );
    mColorProperty = Abc::OC4fArrayProperty(argGeomParams, ".color", mPointsSchema.getMetaData(), GetJob()->GetAnimatedTs() );
+
+   Primitive prim(GetRef());
+   AddRef(prim.GetParent3DObject().GetKinematics().GetGlobal().GetRef());
 }
 
 AlembicPoints::~AlembicPoints()

@@ -16,6 +16,9 @@ AlembicSubD::AlembicSubD(exoNodePtr eNode, AlembicWriteJob * in_Job, Abc::OObjec
 
    // create the generic properties
    mOVisibility = CreateVisibilityProperty(subD,GetJob()->GetAnimatedTs());
+
+   Primitive prim(GetRef());
+   AddRef(prim.GetParent3DObject().GetKinematics().GetGlobal().GetRef());
 }
 
 AlembicSubD::~AlembicSubD()

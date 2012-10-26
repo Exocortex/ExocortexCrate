@@ -10,7 +10,7 @@ AlembicModel::AlembicModel(exoNodePtr eNode, AlembicWriteJob * in_Job, Abc::OObj
 : AlembicObject(eNode, in_Job, oParent)
 {
    Primitive prim(GetRef());
-  AbcG::OXform xform(GetMyParent(), eNode->name, GetJob()->GetAnimatedTs());
+   AbcG::OXform xform(GetMyParent(), eNode->name, GetJob()->GetAnimatedTs());
    if((bool)in_Job->GetOption(L"flattenHierarchy")){
       AddRef(prim.GetParent3DObject().GetKinematics().GetGlobal().GetRef());
    }
