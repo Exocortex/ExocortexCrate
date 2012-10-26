@@ -9,6 +9,7 @@ SOURCE_GROUP("Source Files" FILES ${Sources})
 SOURCE_GROUP("Header Files" FILES ${Includes})
 
 add_definitions( "-DEXOCORTEX_BETA_EXPIRY_DATE=1350670231" )	# 1350670231 - October 19, 2012
+setup_precompiled_header( ${CMAKE_CURRENT_SOURCE_DIR} ${Sources} )
 
 if( Exocortex_SERVICES OR Exocortex_RLM_ONLY )
 	include_directories( ${Rlm_INCLUDE_DIR} )

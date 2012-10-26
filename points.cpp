@@ -1,3 +1,4 @@
+#include "stdafx.h"
 #include "points.h"
 
 AtNode *createPointsNode(nodeData &nodata, userData * ud, std::vector<float> &samples, int i)
@@ -92,8 +93,7 @@ AtNode *createPointsNode(nodeData &nodata, userData * ud, std::vector<float> &sa
     }
     else
     {
-      float alpha = (float)sampleInfo.alpha;
-      float timeAlpha = (float)(typedObject.getSchema().getTimeSampling()->getSampleTime(sampleInfo.ceilIndex) - typedObject.getSchema().getTimeSampling()->getSampleTime(sampleInfo.floorIndex)) * alpha;
+	  float timeAlpha = getTimeOffsetFromObject( typedObject, sampleInfo );
 
       Alembic::Abc::V3fArraySamplePtr abcVel = sample.getVelocities();
       for(size_t i=0; i<abcPos->size(); ++i)

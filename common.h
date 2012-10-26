@@ -1,13 +1,8 @@
 #ifndef _ARNOLD_ALEMBIC_COMMMON_H_
 #define _ARNOLD_ALEMBIC_COMMMON_H_
 
-  #include "foundation.h"
   #include "utility.h"
   #include "dataUniqueness.h"
-  #include <time.h>
-  #include <boost/lexical_cast.hpp>
-  #include <map>
-  #include <boost/thread/mutex.hpp>
 
   /**
    * Declaration of data structures, constants and other used in multiple places!

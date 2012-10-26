@@ -1,3 +1,4 @@
+#include "stdafx.h"
 #include "dataUniqueness.h"
 
 // --------------------------------------------------------------------------------------------------
@@ -42,7 +43,7 @@ AtArray *removeUvsDuplicate(Alembic::AbcGeom::IV2fGeomParam &uvParam, SampleInfo
       uv_mkey mkey;
       mkey.vertexId = AiArrayGetUInt(faceIndices, i);
       unsigned int uvs_id = AiArrayGetUInt(uvsIdx, i);
-      const Alembic::Abc::V2fArraySamplePtr::value_type::value_type &UV = abcUvs->get()[uvs_id];
+      const Alembic::Abc::V2f &UV = abcUvs->get()[uvs_id];
       mkey.uv_x = UV.x;
       mkey.uv_y = UV.y;
 
@@ -115,7 +116,7 @@ static void fillNormals(AtArray *nor, AtULong &norOffset, const n_map_mkey_to_in
 
       AiArraySetVec(nor, norOffset + beg->second, norm);
    }
-   norOffset += Ns_map.size();
+   norOffset += (AtULong) Ns_map.size();
 }
 
 void removeNormalsDuplicate(AtArray *nor, AtULong &norOffset, Alembic::Abc::N3fArraySamplePtr &abcN, SampleInfo &sampleInfo, AtArray *nIdx, AtArray *faceIndices)
@@ -130,7 +131,7 @@ void removeNormalsDuplicate(AtArray *nor, AtULong &norOffset, Alembic::Abc::N3fA
       n_mkey mkey;
       mkey.vertexId = AiArrayGetUInt(faceIndices, i);
       unsigned int n_id = AiArrayGetUInt(nIdx, i);
-      const Alembic::Abc::N3fArraySamplePtr::value_type::value_type &N1 = abcN->get()[n_id];
+      const Alembic::Abc::N3f &N1 = abcN->get()[n_id];
       mkey.n_x = N1.x;
       mkey.n_y = N1.y;
       mkey.n_z = N1.z;
@@ -163,7 +164,7 @@ void removeNormalsDuplicateDynTopology(AtArray *nor, AtULong &norOffset, Alembic
       n_mkey mkey;
       mkey.vertexId = AiArrayGetUInt(faceIndices, i);
       unsigned int n_id = AiArrayGetUInt(nIdx, i);
-      const Alembic::Abc::N3fArraySamplePtr::value_type::value_type &N1 = abcN1->get()[n_id],
+	  const Alembic::Abc::N3f &N1 = abcN1->get()[n_id],
                                                                     &N2 = abcN2->get()[n_id];
       mkey.n_x = abcN1.x * beta + abcN2.x * alpha;
       mkey.n_y = abcN1.y * beta + abcN2.y * alpha;

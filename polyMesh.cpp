@@ -1,3 +1,4 @@
+#include "stdafx.h"
 #include "polyMesh.h"
 
 struct __indices
@@ -132,7 +133,7 @@ static void postShaderProcess(SCHEMA &schema, nodeData &nodata, userData *ud, Al
 
 static void plainPositionCopy(AtArray *pos, Alembic::Abc::P3fArraySamplePtr &abcPos, AtULong &posOffset)
 {
-  const int nbPos = abcPos->size();
+  const int nbPos = (int) abcPos->size();
   for(size_t i=0; i < nbPos; ++i)
   {
     AtPoint pt;
@@ -194,7 +195,8 @@ static bool hadToInterpolatePositions(SCHEMA &schema, SCHEMA_SAMPLE &sample, AtA
       Alembic::Abc::V3fArraySamplePtr abcVel = sample.getVelocities();
       if(abcVel && abcVel->size() == abcPos->size())
       {
-        const float timeAlpha = (float)(schema.getTimeSampling()->getSampleTime(sampleInfo.ceilIndex) - schema.getTimeSampling()->getSampleTime(sampleInfo.floorIndex)) * alpha;
+		const float timeAlpha = getTimeOffsetFromSchema( schema, sampleInfo );
+
         for(size_t i=0;i<abcPos->size();i++)
         {
           AtPoint pt;
@@ -271,6 +273,16 @@ AtNode *createPolyMeshNode(nodeData &nodata, userData * ud, std::vector<float> &
         for (int ii = 0; ii < nbElem; ++ii)
           AiArraySetUInt(nsIdx, ii, AiArrayGetUInt(ind.indices, ii));
       }
+
+	  if( typedObject.getSchema().getPropertyHeader( ".faceVaryingInterpolateBoundary" ) != NULL ) {
+	 		Abc::IInt32Property faceVaryingInterpolateBoundary = Abc::IInt32Property( typedObject.getSchema(), ".faceVaryingInterpolateBoundary" );
+			Abc::int32_t subDLevel;
+			faceVaryingInterpolateBoundary.get( subDLevel, 0 );
+			AiNodeSetStr(shapeNode, "subdiv_type", "catclark");
+			AiNodeSetInt(shapeNode, "subdiv_iterations", (AtInt)subDLevel);
+			AiNodeSetFlt(shapeNode, "subdiv_pixel_error", 0.0f);
+	  }
+
 
       // check if we have UVs in the alembic file
       Alembic::AbcGeom::IV2fGeomParam uvParam = typedObject.getSchema().getUVsParam();
