@@ -18,6 +18,8 @@ struct ArchiveInfo
    std::string path;
 };
 
+std::string getExporterName( std::string shortName );
+std::string getExporterFileName( std::string fileName );
 
 Alembic::Abc::IArchive * getArchiveFromID(std::string path);
 std::string addArchive(Alembic::Abc::IArchive * archive);

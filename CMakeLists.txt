@@ -62,12 +62,12 @@ if( NOT EXISTS ${LIBRARY_ROOT} )
 endif()
  
 # Configuration
-SET( alembic_MAJOR_VERSION "1" )
-SET( alembic_MINOR_VERSION "1" ) 
-SET( alembic_VERSION "${alembic_MAJOR_VERSION}.${alembic_MINOR_VERSION}" )
+SET( crate_MAJOR_VERSION "1" )
+SET( crate_MINOR_VERSION "1" ) 
+SET( crate_VERSION "${crate_MAJOR_VERSION}.${crate_MINOR_VERSION}" )
 
-add_definitions( "-Dalembic_MAJOR_VERSION=${alembic_MAJOR_VERSION}" )
-add_definitions( "-Dalembic_MINOR_VERSION=${alembic_MINOR_VERSION}" )
+add_definitions( "-Dcrate_MAJOR_VERSION=${crate_MAJOR_VERSION}" )
+add_definitions( "-Dcrate_MINOR_VERSION=${crate_MINOR_VERSION}" )
 
 if( WIN32 )
 	set( Exocortex_SERVICES ON )
@@ -262,6 +262,10 @@ SET( ILMBASE_ROOT_DIR ilmbase-1.0.2 )
 SET( ZLIB_ROOT_DIR zlib-1.2.5 )
 SET( HDF_ROOT_DIR hdf5-1.8.9 )
 SET( ALEMBIC_ROOT_DIR alembic-1.1.2 )
+
+add_definitions( -Dalembic_ver=${ALEMBIC_ROOT_DIR} )
+add_definitions( -Dhdf_ver=${HDF_ROOT_DIR} )
+add_definitions( -Dcrate_ver=crate-${crate_VERSION} )
 
 # ILM Math
 include_directories( "${ILMBASE_ROOT_DIR}/Half" )
