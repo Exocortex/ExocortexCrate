@@ -188,11 +188,11 @@ CStatus AlembicWriteJob::PreProcess()
       XSI::X3DObject xObj(nodeRef);
       selectionMap[xObj.GetFullName().GetAsciiString()] = true;
    }
-
-   selectNodes(exoSceneRoot, selectionMap, bSelectParents, bSelectChildren);
-   filterNodeSelection(exoSceneRoot, bTransformCache ? false : bFlattenHierarchy, bTransformCache);
+   
+   selectNodes(exoSceneRoot, selectionMap, !bFlattenHierarchy || bTransformCache, bSelectChildren, !bTransformCache);
 
    ::printSceneGraph(exoSceneRoot);
+
 
    //return CStatus::OK;
 

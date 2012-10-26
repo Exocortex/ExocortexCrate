@@ -63,17 +63,6 @@ SceneNode::nodeTypeE getNodeType(X3DObject& xObj)
    return SceneNode::UNKNOWN;
 }
 
-bool hasExtractableTransform( SceneNode::nodeTypeE type )
-{
-   return 
-      type == SceneNode::CAMERA ||
-      type == SceneNode::POLYMESH ||
-      type == SceneNode::SUBD ||
-      type == SceneNode::SURFACE ||
-      type == SceneNode::CURVES ||
-      type == SceneNode::PARTICLES;
-}
-
 exoNodePtr buildCommonSceneGraph(XSI::X3DObject xsiRoot)
 {
    struct stackElement
