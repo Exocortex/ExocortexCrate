@@ -165,9 +165,9 @@ void removeNormalsDuplicateDynTopology(AtArray *nor, AtULong &norOffset, Alembic
       unsigned int n_id = AiArrayGetUInt(nIdx, i);
       const Alembic::Abc::N3fArraySamplePtr::value_type::value_type &N1 = abcN1->get()[n_id],
                                                                     &N2 = abcN2->get()[n_id];
-      mkey.n_x = N1.x * beta + N2.x * alpha;
-      mkey.n_y = N1.y * beta + N2.y * alpha;
-      mkey.n_z = N1.z * beta + N2.z * alpha;
+      mkey.n_x = abcN1.x * beta + abcN2.x * alpha;
+      mkey.n_y = abcN1.y * beta + abcN2.y * alpha;
+      mkey.n_z = abcN1.z * beta + abcN2.z * alpha;
 
       if (Ns_map.find(mkey) == Ns_map.end())
       {
