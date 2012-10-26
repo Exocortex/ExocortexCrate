@@ -102,7 +102,7 @@ int importAlembicScene(AbcG::IObject& root, alembic_importoptions &options, std:
       int mergedGeomNodeIndex = -1;
 		AbcG::IObject mergedGeomChild;
 
-      getMergeInfo(iObj, bCreateDummyNode, mergedGeomNodeIndex, mergedGeomChild, false);
+      getMergeInfo(iObj, bCreateDummyNode, mergedGeomNodeIndex, mergedGeomChild);
 
       INode* pMaxNode = NULL;// the newly create node, which may be a merged node
       INode* pExistingNode = NULL;
@@ -139,7 +139,8 @@ int importAlembicScene(AbcG::IObject& root, alembic_importoptions &options, std:
 	      }
 	      else{
 		      if(mergedGeomNodeIndex != -1){//we are merging, so look at the child geometry node
-			      pExistingNode = GetChildNodeFromName(mergedGeomChild.getName(), pParentMaxNode);
+               std::string importName = removeXfoSuffix(iObj.getName());
+			      pExistingNode = GetChildNodeFromName(importName, pParentMaxNode);
 			      if(options.attachToExisting && pExistingNode){
 				      pMaxNode = pExistingNode;
 			      }//only create node if either attachToExisting is false or it is true and the object does not already exist

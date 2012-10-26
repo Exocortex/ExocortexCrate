@@ -1840,7 +1840,9 @@ int AlembicImport_Points(const std::string &file, AbcG::IObject& iObj, alembic_i
 	pParticleObj->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pParticleObj, 0, "muted" ), zero, FALSE );
 
     // Create the object node
-	INode *pNode = GET_MAX_INTERFACE()->CreateObjectNode(pParticleObj, EC_UTF8_to_TCHAR( iObj.getName().c_str() ));
+   Abc::IObject parent = iObj.getParent();
+   std::string name = removeXfoSuffix(iObj.getName().c_str());
+	INode *pNode = GET_MAX_INTERFACE()->CreateObjectNode(pParticleObj, EC_UTF8_to_TCHAR( name.c_str() ));
 	if (pNode == NULL)
     {
 		return alembic_failure;
