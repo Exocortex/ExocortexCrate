@@ -95,13 +95,6 @@ XSI::CStatus AlembicPolyMesh::Save(double time)
    mMeshSample.setPositions(Abc::P3fArraySample(posVec));
    mMeshSample.setSelfBounds(bbox);
 
-   ESS_LOG_WARNING("Begin position dump: ");
-   for(int i=0; i<posVec.size(); i++){
-      ESS_LOG_WARNING("posVec["<<i<<"]="<<posVec[i]);  
-   
-   }
-   ESS_LOG_WARNING("End position dump: ");
-
    // abort here if we are just storing points
    if(purePointCache)
    {
