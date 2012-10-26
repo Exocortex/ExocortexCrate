@@ -10,7 +10,7 @@
 #include "AlembicCurves.h"
 #include "AlembicHair.h"
 #include "CommonLog.h"
-//#include "AlembicNurbs.h"
+#include "CommonUtilities.h"
 
 
 
@@ -130,8 +130,8 @@ MStatus AlembicWriteJob::PreProcess()
       mArchive = CreateArchiveWithInfo(
             Alembic::AbcCoreHDF5::WriteArchive(),
             mFileName.asChar(),
-            "Softimage Alembic Plugin",
-            sceneFileName.asChar(),
+            getExporterName( "Maya " EC_QUOTE( crate_Maya_Version ) ).c_str(),
+			getExporterFileName( sceneFileName.asChar() ).c_str(),
             Abc::ErrorHandler::kThrowPolicy);
    }
    catch(AbcU::Exception& e)

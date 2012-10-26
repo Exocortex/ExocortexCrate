@@ -1,5 +1,5 @@
 
-project ( Maya${Maya_VERSION}ExocortexAlembic${alembic_VERSION} ) 
+project ( Maya${Maya_VERSION}ExocortexAlembic${crate_VERSION} ) 
 
 INCLUDE(../../ExocortexAlembicShared/ExocortexCMakeShared.txt)
 
@@ -8,6 +8,7 @@ if( Exocortex_SERVICES OR Exocortex_RLM_ONLY )
 	include_directories( ${Exocortex_INCLUDE_DIR} )
 endif()
 
+add_definitions( -Dcrate_Maya_Version=${Maya_VERSION} )
 add_definitions( "-DEXOCORTEX_BETA_EXPIRY_DATE=1350670231" )	# 1350670231 - October 19, 2012
 
 SET( Maya_DIR_ROOT ${LIBRARY_ROOT}/Maya/${Maya_VERSION} )

@@ -11,11 +11,11 @@
 
 
 // IMPORTANT, we are not using wide characters here.
-#define PLUGIN_NAME						"ExocortexAlembicMaya" EC_QUOTE( alembic_MAJOR_VERSION ) "." EC_QUOTE( alembic_MINOR_VERSION )
-#define PLUGIN_MAJOR_VERSION			alembic_MAJOR_VERSION
-#define PLUGIN_MINOR_VERSION			alembic_MINOR_VERSION
+#define PLUGIN_NAME						"ExocortexAlembicMaya" EC_QUOTE( crate_MAJOR_VERSION ) "." EC_QUOTE( crate_MINOR_VERSION )
+#define PLUGIN_MAJOR_VERSION			crate_MAJOR_VERSION
+#define PLUGIN_MINOR_VERSION			crate_MINOR_VERSION
 #define PLUGIN_LICENSE_NAME				"alembic_maya"
-#define PLUGIN_LICENSE_VERSION			(alembic_MAJOR_VERSION*10)
+#define PLUGIN_LICENSE_VERSION			(crate_MAJOR_VERSION*10)
 
 #include "CommonLog.h"
 #include "ExocortexServicesProxy.h"
