@@ -93,7 +93,7 @@ void SaveCameraXformSample(const SceneEntry &in_Ref, AbcG::OXformSchema &schema,
 
 AlembicXForm::AlembicXForm(const SceneEntry &in_Ref, AlembicWriteJob *in_Job) : AlembicObject(in_Ref, in_Job)
 {
-    std::string xformName = std::string( EC_MCHAR_to_UTF8( in_Ref.node->GetName() ) ) + "Xfo";
+    std::string xformName = std::string( EC_MCHAR_to_UTF8( in_Ref.node->GetName() ) );
 
     AbcG::OXform xform(GetOParent(), xformName.c_str(), GetCurrentJob()->GetAnimatedTs());
 
