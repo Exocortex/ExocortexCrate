@@ -321,6 +321,10 @@ ESS_CALLBACK_START(alembic_export_Execute,CRef&)
       for(double frame=frameIn; frame<=frameOut; frame+=frameSteps / frameSubSteps)
          frames.Add(frame);
 
+      if(globalspace){
+         flattenhierarchy = true;
+      }
+
       AlembicWriteJob * job = new AlembicWriteJob(filename, objects, frames);
       job->SetOption(L"transformCache",transformCache);
       job->SetOption(L"exportNormals",normals);
