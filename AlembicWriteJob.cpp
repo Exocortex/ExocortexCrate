@@ -173,7 +173,7 @@ CStatus AlembicWriteJob::PreProcess()
    }
 
    const bool bSelectParents = true;
-   const bool bSelectChildren = true;
+   const bool bSelectChildren = false;
    const bool bTransformCache = (bool)GetOption(L"transformCache");
    const bool bFlattenHierarchy = (bool)GetOption(L"flattenHierarchy");
 
