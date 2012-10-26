@@ -1,5 +1,5 @@
 
-project ( Python${Python_SHORTNAME}ExocortexAlembic${alembic_VERSION} ) 
+project ( Python${Python_SHORTNAME}ExocortexAlembic${crate_VERSION} ) 
 
 
 if(WIN32) 
@@ -7,6 +7,7 @@ if(WIN32)
 else()
   SET( Python_LIBS ${Python_Linux_LIBS} )
 endif()
+add_definitions( -Dcrate_Python_Version=${Python_SHORTNAME} )
 
 get_filename_component( BASE_DIR "${CMAKE_CURRENT_SOURCE_DIR}" PATH )
 set( LOCAL_CMAKE_FILE_NAME "${BASE_DIR}/CMakeLists.txt" )

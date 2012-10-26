@@ -9,7 +9,7 @@
 #include "AlembicLicensing.h"
 #include "otimesampling.h"
 #include "itimesampling.h"
-
+#include "CommonUtilities.h"
 
 typedef std::set<std::string> str_set;
 
@@ -423,8 +423,8 @@ PyObject * oArchive_new(PyObject * self, PyObject * args)
       *object->mArchive = CreateArchiveWithInfo(
          Alembic::AbcCoreHDF5::WriteArchive(),
          fileName,
-         "ExocortexPythonAlembic",
-         "Orchestrated by Python",
+         getExporterName( "Python " EC_QUOTE( crate_Python_Version ) ).c_str(),
+		 getExporterFileName( "Unknown" ).c_str(),
          Abc::ErrorHandler::kThrowPolicy);
       AbcG::CreateOArchiveBounds(*object->mArchive,0);
 
