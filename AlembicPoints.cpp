@@ -2,12 +2,64 @@
 #include "MetaData.h"
 #include <maya/MVectorArray.h>
 #include <maya/MFnArrayAttrsData.h>
+#include <maya/MSelectionList.h>
+#include <maya/MMatrixArray.h>
+
+#include <sstream>
+
+MFnInstancer AlembicPoints::getInstancer(void) const
+{
+  MSelectionList sl;
+  sl.add(instName);
+
+  MDagPath dagp;
+  sl.getDagPath(0, dagp);
+
+  return MFnInstancer(dagp);
+}
+
+bool AlembicPoints::listIntanceNames(std::vector<std::string> &names)
+{
+  MDagPathArray allPaths;
+  {
+    MMatrixArray allMatrices;
+    MIntArray pathIndices;
+    MIntArray pathStartIndices;
+    
+    getInstancer().allInstances( allPaths, allMatrices, pathStartIndices, pathIndices );
+  }
+
+  names.resize(allPaths.length());
+  for (int i = 0; i < allPaths.length(); ++i)
+  {
+    std::stringstream ss;
+    ss << "/" << allPaths[i].partialPathName();
+    names[i] = ss.str();
+  }
+  mInstanceNamesProperty.set(Abc::StringArraySample(names));
+  return true;
+}
+
+bool AlembicPoints::sampleInstanceProperties( std::vector<Abc::Quatf> angularVel,    std::vector<Abc::Quatf> orientation,
+                                              std::vector<Abc::v4::int16_t> shapeId, std::vector<Abc::v4::int16_t> shapeType,
+                                              std::vector<Abc::float32_t> shapeTime);
+{
+  MMatrixArray allMatrices;
+  MIntArray pathIndices;
+  MIntArray pathStartIndices;
+  {
+    MDagPathArray allPaths;
+    getInstancer().allInstances( allPaths, allMatrices, pathStartIndices, pathIndices );
+  }
+
+
+  return true;
+}
 
 AlembicPoints::AlembicPoints(const MObject & in_Ref, AlembicWriteJob * in_Job)
-: AlembicObject(in_Ref, in_Job)
+: AlembicObject(in_Ref, in_Job), hasInstancer(false), instName("")
 {
    MFnDependencyNode node(in_Ref);
-   //MString name = GetUniqueName(truncateName(node.name()));
    MString name = GetUniqueName(node.name());
    mObject = AbcG::OPoints(GetParentObject(),name.asChar(),GetJob()->GetAnimatedTs());
 
@@ -17,18 +69,21 @@ AlembicPoints::AlembicPoints(const MObject & in_Ref, AlembicWriteJob * in_Job)
    mMassProperty = Abc::OFloatArrayProperty(mSchema.getArbGeomParams(), ".mass", mSchema.getMetaData(), GetJob()->GetAnimatedTs() );
    mColorProperty = Abc::OC4fArrayProperty(mSchema.getArbGeomParams(), ".color", mSchema.getMetaData(), GetJob()->GetAnimatedTs() );
 
-   /*
-   // create all properties
-   mInstancenamesProperty = OStringArrayProperty(mSchema.getArbGeomParams(), ".instancenames", mSchema.getMetaData(), GetJob()->GetAnimatedTs() );
+   mAngularVelocityProperty = Abc::OQuatfArrayProperty  (mSchema.getArbGeomParams(), ".angularvelocity", mSchema.getMetaData(), GetJob()->GetAnimatedTs() );
+   mInstanceNamesProperty   = Abc::OStringArrayProperty (mSchema.getArbGeomParams(), ".instancenames", mSchema.getMetaData(), GetJob()->GetAnimatedTs() );
+   mOrientationProperty     = Abc::OQuatfArrayProperty  (mSchema.getArbGeomParams(), ".orientation", mSchema.getMetaData(), GetJob()->GetAnimatedTs() );
+   mScaleProperty           = Abc::OV3fArrayProperty    (mSchema.getArbGeomParams(), ".scale", mSchema.getMetaData(), GetJob()->GetAnimatedTs() );
+   mShapeInstanceIdProperty = Abc::OInt16ArrayProperty  (mSchema.getArbGeomParams(), ".shapeinstanceid", mSchema.getMetaData(), GetJob()->GetAnimatedTs() );
+   mShapeTimeProperty       = Abc::OFloatArrayProperty  (mSchema.getArbGeomParams(), ".shapetime", mSchema.getMetaData(), GetJob()->GetAnimatedTs() );
+   mShapeTypeProperty       = Abc::OInt16ArrayProperty  (mSchema.getArbGeomParams(), ".shapetype", mSchema.getMetaData(), GetJob()->GetAnimatedTs() );
 
-   // particle attributes
-   mScaleProperty = OV3fArrayProperty(mSchema.getArbGeomParams(), ".scale", mSchema.getMetaData(), GetJob()->GetAnimatedTs() );
-   mOrientationProperty = OQuatfArrayProperty(mSchema.getArbGeomParams(), ".orientation", mSchema.getMetaData(), GetJob()->GetAnimatedTs() );
-   mAngularVelocityProperty = OQuatfArrayProperty(mSchema.getArbGeomParams(), ".angularvelocity", mSchema.getMetaData(), GetJob()->GetAnimatedTs() );
-   mShapeTypeProperty = OUInt16ArrayProperty(mSchema.getArbGeomParams(), ".shapetype", mSchema.getMetaData(), GetJob()->GetAnimatedTs() );
-   mShapeTimeProperty = OFloatArrayProperty(mSchema.getArbGeomParams(), ".shapetime", mSchema.getMetaData(), GetJob()->GetAnimatedTs() );
-   mShapeInstanceIDProperty = OUInt16ArrayProperty(mSchema.getArbGeomParams(), ".shapeinstanceid", mSchema.getMetaData(), GetJob()->GetAnimatedTs() );
-   */
+   MStringArray instancers;
+   MGlobal::executeCommand("listConnections -t instancer " + node.name(), instancers);
+   if (instancers.length() == 1)
+   {
+     hasInstancer = true;
+     instName = instancers[0];
+   }
 }
 
 AlembicPoints::~AlembicPoints()
@@ -58,6 +113,17 @@ MStatus AlembicPoints::Save(double time)
    Abc::M44f globalXfo;
    if(globalCache)
       globalXfo = GetGlobalMatrix(GetRef());
+
+   // instance names, scale,
+   std::vector<Abc::V3f> scales;
+   std::vector<std::string> instanceNames;
+   if (hasInstancer && mNumSamples == 0)
+   {
+     scales.push_back(Abc::V3f(1.0f, 1.0f, 1.0f));
+     mScaleProperty.set(Abc::V3fArraySample(scales));
+
+     listIntanceNames(instanceNames);
+   }
 
    // push the positions to the bbox
    size_t particleCount = vectors.length();
@@ -150,6 +216,13 @@ MStatus AlembicPoints::Save(double time)
    mAgeProperty.set(Abc::FloatArraySample(ageVec));
    mMassProperty.set(Abc::FloatArraySample(massVec));
    mColorProperty.set(Abc::C4fArraySample(colorVec));
+
+   //--- instancing!!
+   std::vector<Abc::Quatf> angularVel, orientation;
+   std::vector<Abc::v4::int16_t> shapeId, shapeType;
+   std::vector<Abc::float32_t> shapeTime;
+   if (hasInstancer)
+     sampleInstanceProperties(angularVel, orientation, shapeId, shapeType, shapeTime);
 
    // save the sample
    mSchema.set(mSample);
