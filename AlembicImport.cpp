@@ -1140,63 +1140,53 @@ CStatus createTransform( Abc::IObject& iObj, CRef& importRootNode, CRef& parentN
 
    if(AbcG::IXform::matches(iObj.getMetaData()))
    {
-      // check if this xform has xform children (is is model in this case)
-      size_t nbTransformChildren = 0;
-      for(size_t j=0;j<iObj.getNumChildren();j++)
+
+	   X3DObject x3dobject;
+      //CRef nodeRef;
+      if(attachToExisting)
       {
-         if(AbcG::IXform::matches(iObj.getChild(j).getMetaData()))
-            nbTransformChildren++;
+	      ESS_PROFILE_SCOPE("attachToExisting");
+	      CRef modelRef;
+         modelRef.Set(getFullNameFromIdentifier(importRootNode, iObj.getFullName(), false));
+         x3dobject = modelRef;
+
+         if(!x3dobject.GetType().IsEqualNoCase(L"#model") && !x3dobject.GetType().IsEqualNoCase(L"null")){
+            x3dobject.ResetObject();
+         }
+         newNodeRef = x3dobject.GetRef();
       }
 
-      //if(nbTransformChildren == iObj.getNumChildren())
-     // {
-		  X3DObject x3dobject;
-          CRef nodeRef;
-         if(attachToExisting)
-         {
-		   ESS_PROFILE_SCOPE("attachToExisting");
-		    CRef modelRef;
-            modelRef.Set(getFullNameFromIdentifier(importRootNode,iObj.getFullName()));
-            x3dobject = modelRef;
+      if(!x3dobject.IsValid())
+      {
+		   Null null;
+		   CRef nullRef;
+		   nullRef.Set(getFullNameFromIdentifier(importRootNode, iObj.getFullName(), false));
+		   null = nullRef;
 
-            if(!x3dobject.GetType().IsEqualNoCase(L"#model") && x3dobject.GetType().IsEqualNoCase(L"null"))
-               x3dobject.ResetObject();
+         parentX3DObject.AddNull(name, null);
+         nameMapAdd(iObj.getFullName().c_str(),null.GetFullName());
+         newNodeRef = null.GetRef();
+      }
 
-            newNodeRef.Set(getFullNameFromIdentifier(importRootNode,iObj.getFullName()));
+      // load metadata
+      alembic_create_item_Invoke(L"alembic_metadata",importRootNode,newNodeRef,filename,iObj.getFullName().c_str(),attachToExisting,createItemArgs);
 
-			nodeRef = x3dobject.GetRef();
-         }
-         if(!x3dobject.IsValid())
-         {
-			Null null;
-			CRef nullRef;
-			nullRef.Set(getFullNameFromIdentifier(importRootNode,iObj.getFullName()));
-			null = nullRef;
-            parentX3DObject.AddNull(name,null);
-            nameMapAdd(iObj.getFullName().c_str(),null.GetFullName());
-            //newNodeRef = model.GetActivePrimitive().GetRef();
-            newNodeRef.Set(getFullNameFromIdentifier(importRootNode,iObj.getFullName()));
-			nodeRef = null.GetRef();
-         }
-
-         // load metadata
-         alembic_create_item_Invoke(L"alembic_metadata",importRootNode,nodeRef,filename,iObj.getFullName().c_str(),attachToExisting,createItemArgs);
-
-         // load xform
-         alembic_create_item_Invoke(L"alembic_xform",importRootNode,nodeRef,filename,iObj.getFullName().c_str(),attachToExisting,createItemArgs);
-         
-         // load visibility
-         alembic_create_item_Invoke(L"alembic_visibility",importRootNode,nodeRef,filename,iObj.getFullName().c_str(),attachToExisting,createItemArgs);
-      //}
+      // load xform
+      alembic_create_item_Invoke(L"alembic_xform",importRootNode,newNodeRef,filename,iObj.getFullName().c_str(),attachToExisting,createItemArgs);
+      
+      // load visibility
+      alembic_create_item_Invoke(L"alembic_visibility",importRootNode,newNodeRef,filename,iObj.getFullName().c_str(),attachToExisting,createItemArgs);
+      
    }
+
    return CStatus( CStatus::OK );
 }
 
 CStatus createShape( Abc::IObject& iObj, CRef& importRootNode, CRef& parentNode, CRef& newNodeRef, CString& filename, bool attachToExisting, bool importStandins, bool importBboxes, bool wasMerged, bool failOnUnsupported, CValueArray& createItemArgs)
 {
    X3DObject parentX3DObject(parentNode);
-   CString name = truncateName(iObj.getName().c_str());
    Abc::IObject parent = iObj.getParent();
+   CString name = truncateName(iObj.getName().c_str());
 
    //EC_LOG_INFO( "Object name: " << name.GetAsciiString() );
 
@@ -1883,11 +1873,12 @@ ESS_CALLBACK_START(alembic_import_Execute, CRef&)
    };
 
    CRef importRootNode = Application().GetActiveSceneRoot().GetRef();
-     if(selectedObjects.GetCount() == 1)
-     {
-		 importRootNode = selectedObjects[0];
-		 importRootNode = X3DObject( importRootNode ).GetParent3DObject().GetRef();
-	 }
+   if(selectedObjects.GetCount() == 1)
+   {
+      importRootNode = selectedObjects[0];
+      //importRootNode = X3DObject( importRootNode ).GetParent3DObject().GetRef();
+      importRootNode = X3DObject( importRootNode ).GetRef();
+   }
 
    std::list<stackElement> sceneStack;
 	for(size_t j=0; j<root.getNumChildren(); j++)
@@ -1921,7 +1912,7 @@ ESS_CALLBACK_START(alembic_import_Execute, CRef&)
       CRef newNodeRef;
 		if(bCreateNullNode){
 
-            createTransform( iObj, importRootNode,parentNode, newNodeRef, filename, attachToExisting, createItemArgs);
+            createTransform( iObj, importRootNode, parentNode, newNodeRef, filename, attachToExisting, createItemArgs);
 		}
 		else{
 			if(nMergedGeomNodeIndex != -1){//we are merging, so look at the child geometry node

@@ -417,32 +417,34 @@ ESS_CALLBACK_START( alembic_geomapprox_Update, CRef& )
    CString path = ctxt.GetParameterValue(L"path");
    CString identifier = ctxt.GetParameterValue(L"identifier");
 
-  AbcG::IObject iObj = getObjectFromArchive(path,identifier);
-   if(!iObj.valid())
-      return CStatus::OK;
+   AbcG::IObject iObj = getObjectFromArchive(path,identifier);
+   if(!iObj.valid()) return CStatus::OK;
 
-
-  Property prop(ctxt.GetOutputTarget());
+   Property prop(ctxt.GetOutputTarget());
 	
-  AbcG::ISubD objSubD(iObj,Abc::kWrapExisting);
-  if(objSubD.valid()) {
-	   AbcG::ISubDSchema::Sample sample;
-	   objSubD.getSchema().get(sample,0);
+   if(AbcG::IPolyMesh::matches(iObj.getMetaData())) {
+      AbcG::IPolyMesh objMesh( iObj, Abc::kWrapExisting );
+      if(objMesh.valid() && objMesh.getSchema().getPropertyHeader( ".faceVaryingInterpolateBoundary" ) != NULL ){
+         Abc::IInt32Property faceVaryingInterpolateBoundary = Abc::IInt32Property( objMesh.getSchema(), ".faceVaryingInterpolateBoundary" );
+         if(faceVaryingInterpolateBoundary.getNumSamples() > 0){
+            Abc::int32_t subDLevel;
+            faceVaryingInterpolateBoundary.get( subDLevel, 0 );
+            prop.PutParameterValue(L"gapproxmosl", (LONG) subDLevel);
+            prop.PutParameterValue(L"gapproxmordrsl", (LONG) subDLevel);
+         }
+      }
+   }
+   else {
+      AbcG::ISubD objSubD(iObj,Abc::kWrapExisting);
+      if(objSubD.valid()){
+         AbcG::ISubDSchema::Sample sample;
+         objSubD.getSchema().get(sample,0);
 
-	   LONG subDLevel = sample.getFaceVaryingInterpolateBoundary();
-	   prop.PutParameterValue(L"gapproxmosl",subDLevel);
-	   prop.PutParameterValue(L"gapproxmordrsl",subDLevel);
-  }
-  else {
-	AbcG::IPolyMesh objMesh( iObj, Abc::kWrapExisting );
-	if(objMesh.valid() && objMesh.getSchema().getPropertyHeader( ".faceVaryingInterpolateBoundary" ) != NULL ){
-		Abc::IInt32Property faceVaryingInterpolateBoundary = Abc::IInt32Property( objMesh.getSchema(), ".faceVaryingInterpolateBoundary" );
-		Abc::int32_t subDLevel;
-		faceVaryingInterpolateBoundary.get( subDLevel, 0 );
-		prop.PutParameterValue(L"gapproxmosl", (LONG) subDLevel);
-		prop.PutParameterValue(L"gapproxmordrsl", (LONG) subDLevel);
-	}
-  }
+         LONG subDLevel = sample.getFaceVaryingInterpolateBoundary();
+         prop.PutParameterValue(L"gapproxmosl",subDLevel);
+         prop.PutParameterValue(L"gapproxmordrsl",subDLevel);
+      }
+   }
 
    return CStatus::OK;
 ESS_CALLBACK_END

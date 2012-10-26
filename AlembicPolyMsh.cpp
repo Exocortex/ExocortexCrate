@@ -16,9 +16,6 @@ AlembicPolyMesh::AlembicPolyMesh(exoNodePtr eNode, AlembicWriteJob * in_Job, Abc
 
    // create the generic properties
    mOVisibility = CreateVisibilityProperty(mesh,GetJob()->GetAnimatedTs());
-
-   mFaceVaryingInterpolateBoundaryProperty =
-        Abc::OInt32Property( mMeshSchema, ".faceVaryingInterpolateBoundary", mMeshSchema.getMetaData(), GetJob()->GetAnimatedTs() );
 }
 
 AlembicPolyMesh::~AlembicPolyMesh()
@@ -352,10 +349,17 @@ XSI::CStatus AlembicPolyMesh::Save(double time)
          }
       }
 	  
+
       // set the subd level
       Property geomApproxProp;
       prim.GetParent3DObject().GetPropertyFromName(L"geomapprox",geomApproxProp);
-	  mFaceVaryingInterpolateBoundaryProperty.set( (Abc::int32_t) geomApproxProp.GetParameterValue(L"gapproxmordrsl") );
+
+      if(!mFaceVaryingInterpolateBoundaryProperty){
+         mFaceVaryingInterpolateBoundaryProperty =
+            Abc::OInt32Property( mMeshSchema, ".faceVaryingInterpolateBoundary", mMeshSchema.getMetaData(), GetJob()->GetAnimatedTs() );
+      }
+
+	   mFaceVaryingInterpolateBoundaryProperty.set( (Abc::int32_t) geomApproxProp.GetParameterValue(L"gapproxmordrsl") );
 
       // sweet, now let's have a look at face sets (really only for first sample)
       if(GetJob()->GetOption(L"exportFaceSets") && mNumSamples == 0)
