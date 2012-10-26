@@ -79,10 +79,10 @@ void AlembicImport_FillInXForm_Internal(alembic_fillxform_options &options)
 		obj.getSchema().get(sample,sampleInfo.floorIndex);
 		matrix = sample.getMatrix();
 
-		const Abc::Box3d &box3d = obj.getSchema().getChildBoundsProperty().getValue( sampleInfo.floorIndex );
+		//const Abc::Box3d &box3d = obj.getSchema().getChildBoundsProperty().getValue( sampleInfo.floorIndex );
 
-		options.maxBoundingBox = Box3(Point3(box3d.min.x, box3d.min.y, box3d.min.z), 
-			Point3(box3d.max.x, box3d.max.y, box3d.max.z));
+		//options.maxBoundingBox = Box3(Point3(box3d.min.x, box3d.min.y, box3d.min.z), 
+		//	Point3(box3d.max.x, box3d.max.y, box3d.max.z));
 
 		// blend 
 		if(sampleInfo.alpha != 0.0)

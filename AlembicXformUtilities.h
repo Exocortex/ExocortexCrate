@@ -18,7 +18,7 @@ typedef struct _alembic_fillxform_options
 {
     AbcG::IObject *pIObj;
     Matrix3 maxMatrix;
-    Box3    maxBoundingBox;
+    //Box3    maxBoundingBox;
     TimeValue dTicks;
     bool bIsCameraTransform;
 
