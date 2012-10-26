@@ -18,6 +18,28 @@ function(setup_cpu_name)
 	endif()
 endfunction()
 
+
+function(setup_precompiled_header LocalSourceDir)
+	if (MSVC)
+		set( LOCAL_SOURCE_DIR ${LocalSourceDir} )
+		
+		list( REMOVE_ITEM ARGN "${LOCAL_SOURCE_DIR}/stdafx.cpp" )
+		list( REMOVE_ITEM ARGN "${LOCAL_SOURCE_DIR}/stdafx.h" )
+
+		foreach( src_file ${ARGN} )
+			set_source_files_properties(
+				${src_file}
+				PROPERTIES
+				COMPILE_FLAGS "/Yustdafx.h"
+			)
+		endforeach()
+		set_source_files_properties("${LOCAL_SOURCE_DIR}/stdafx.cpp"
+			PROPERTIES
+			COMPILE_FLAGS "/Ycstdafx.h"
+			)
+	endif()
+endfunction()
+
 function(setup_exocortex_output_postfix)
 	SET( EXOCORTEX_OUTPUT_POSTFIX "" )
 
@@ -105,25 +127,6 @@ function(setup_project Sources Includes)
 	create_source_group("Source Files" "${CMAKE_CURRENT_SOURCE_DIR}/src" ${Sources}) 
 	create_source_group("Header Files" "${CMAKE_CURRENT_SOURCE_DIR}/include" ${Includes})
 endfunction(setup_project)
-
-function(setup_precompiled_header )
-	if (MSVC)
-		list( REMOVE_ITEM ARGN "${CMAKE_CURRENT_SOURCE_DIR}/src/stdafx.cpp" )
-		list( REMOVE_ITEM ARGN "${CMAKE_CURRENT_SOURCE_DIR}/src/stdafx.h" )
-		foreach( src_file ${ARGN} )
-			#MESSAGE( ${src_file} )
-			set_source_files_properties(
-				${src_file}
-				PROPERTIES
-				COMPILE_FLAGS "/Yustdafx.h"
-			)
-		endforeach( src_file )
-		set_source_files_properties(src/stdafx.cpp
-			PROPERTIES
-			COMPILE_FLAGS "/Ycstdafx.h"
-			)
-	endif (MSVC)
-endfunction(setup_precompiled_header)	
 
 function(setup_tbb)
 	if( WIN32 )

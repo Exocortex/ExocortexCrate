@@ -1,4 +1,4 @@
-#include "CommonFoundation.h"
+#include "CommonAlembic.h"
 #include "CommonMeshUtilities.h"
 #include "CommonLog.h"
 #include "CommonProfiler.h"
@@ -395,4 +395,43 @@ bool getIndexAndValues( Alembic::Abc::Int32ArraySamplePtr faceIndices, Alembic::
 		return true;
 	}
 	return false;
+}
+
+
+void saveIndexedUVs( 
+					AbcG::OPolyMeshSchema& meshSchema, AbcG::OPolyMeshSchema::Sample& meshSample,
+					AbcG::OV2fGeomParam::Sample &uvSample, std::vector<AbcG::OV2fGeomParam>& uvParams,
+					unsigned int animatedTs, int numSamples, std::vector<IndexedUVs>& indexUVSet ) {
+	if(numSamples == 0 && indexUVSet.size() > 0 ){
+		std::vector<std::string> names;
+		for( int i = 0; i < indexUVSet.size(); i ++ ) {
+			names.push_back( indexUVSet[i].name );
+		}
+
+		Abc::OStringArrayProperty uvSetNamesProperty = Abc::OStringArrayProperty( meshSchema, ".uvSetNames", meshSchema.getMetaData(), animatedTs );
+		uvSetNamesProperty.set( Abc::StringArraySample( names ) );
+	}
+
+	for( int i = 0; i < indexUVSet.size(); i++ ){
+		EC_LOG_WARNING( "indexUVSet[i].values: " << indexUVSet[i].values.size() << " indexUVSet[i].indices: " << indexUVSet[i].indices.size() );
+		Abc::V2fArraySample valuesSample( indexUVSet[i].values );
+		Abc::UInt32ArraySample indicesSample(indexUVSet[i].indices );
+		
+		uvSample = AbcG::OV2fGeomParam::Sample( valuesSample, AbcG::kFacevaryingScope);
+		uvSample.setIndices( indicesSample );
+
+		if( i == 0 ){
+			meshSample.setUVs( uvSample );
+		}
+		else{
+			// create the uv param if required
+			if( numSamples == 0 ) {
+				std::stringstream alembicName;
+				alembicName << "uv" << i;
+				uvParams.push_back( AbcG::OV2fGeomParam( meshSchema, alembicName.str().c_str(), indexUVSet[i].indices.size() > 0,
+								 AbcG::kFacevaryingScope, 1, animatedTs ) );
+			}
+			uvParams[i-1].set( uvSample );
+		}
+	}
 }

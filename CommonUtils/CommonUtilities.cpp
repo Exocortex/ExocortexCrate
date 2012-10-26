@@ -1,4 +1,4 @@
-#include "CommonFoundation.h"
+#include "CommonAlembic.h"
 #include "CommonUtilities.h"
 #include "CommonLicensing.h"
 #include "CommonLog.h"
@@ -8,13 +8,6 @@
 stats_map default_stats_policy::stats;
 #endif // ESS_PROFILER
 
-#include <fstream>
-#include <vector>
-#include <string>
-#include <boost/algorithm/string.hpp>
-#include <boost/filesystem.hpp>
-#include <boost/filesystem/operations.hpp>
-#include <boost/filesystem/path.hpp>
 
 struct AlembicObjectInfo
 {
@@ -47,6 +40,35 @@ struct AlembicArchiveInfo
 
    StringObjectInfoMap identifierToObjectInfo;
 };
+
+void replaceString(std::string& str, const std::string& oldStr, const std::string& newStr)
+{
+  size_t pos = 0;
+  while((pos = str.find(oldStr, pos)) != std::string::npos)
+  {
+     str.replace(pos, oldStr.length(), newStr);
+     pos += newStr.length();
+  }
+}
+#define _EC_QUOTE( x ) #x
+#define EC_QUOTE( x ) _EC_QUOTE( x )
+
+
+std::string getExporterName( std::string shortName ) {
+	std::stringstream exporterName;
+	exporterName << "Exocortex Crate for " << shortName << "," << EC_QUOTE(crate_ver) << "," << EC_QUOTE(alembic_ver) << "," << EC_QUOTE(hdf5_ver);
+	return exporterName.str();
+}
+
+std::string getExporterFileName( std::string fileName ) {
+	std::string sourceName = "Exported from: ";
+	sourceName += fileName;
+
+	// these symbols can't be in the meta data
+	replaceString( sourceName, "=", "_" );
+	replaceString( sourceName, ";", "_" );
+	return sourceName;
+}
 
 std::map<std::string,AlembicArchiveInfo> gArchives;
 

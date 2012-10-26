@@ -7,14 +7,14 @@ if( UNIX )
 	ELSE()
 		ADD_DEFINITIONS(-DNDEBUG)
 	ENDIF()	
-ENDIF()
+ENDIF() 
 
-IF (UNIX AND NOT APPLE )
+IF (UNIX AND NOT APPLE ) 
 	ADD_DEFINITIONS(-DLINUX)
 ENDIF()
  
 set( Exocortex_INSTALL_BASE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/install" )
-
+   
 
 if( HDF5_ENABLE_THREADSAFE )
 	project( ExocortexAlembic )
@@ -43,10 +43,10 @@ endif()
 INCLUDE(./ExocortexCMakeShared.txt)
 
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
-set( HDF5Folder "Externals" )
-set( ZlibFolder "Externals" )
-set( IlmBaseFolder "Externals" )
-set( AlembicFolder "Externals" )
+set( HDF5Folder "HDF5" )
+set( ZlibFolder "HDF5" )
+set( IlmBaseFolder "Alembic" )
+set( AlembicFolder "Alembic" )
 
 SET(DIR_SOFTIMAGEALEBMIC ${CMAKE_CURRENT_SOURCE_DIR})
 
@@ -62,12 +62,12 @@ if( NOT EXISTS ${LIBRARY_ROOT} )
 endif()
  
 # Configuration
-SET( alembic_MAJOR_VERSION "1" )
-SET( alembic_MINOR_VERSION "1" ) 
-SET( alembic_VERSION "${alembic_MAJOR_VERSION}.${alembic_MINOR_VERSION}" )
+SET( crate_MAJOR_VERSION "1" )
+SET( crate_MINOR_VERSION "1" ) 
+SET( crate_VERSION "${crate_MAJOR_VERSION}.${crate_MINOR_VERSION}" )
 
-add_definitions( "-Dalembic_MAJOR_VERSION=${alembic_MAJOR_VERSION}" )
-add_definitions( "-Dalembic_MINOR_VERSION=${alembic_MINOR_VERSION}" )
+add_definitions( "-Dcrate_MAJOR_VERSION=${crate_MAJOR_VERSION}" )
+add_definitions( "-Dcrate_MINOR_VERSION=${crate_MINOR_VERSION}" )
 
 if( WIN32 )
 	set( Exocortex_SERVICES ON )
@@ -258,13 +258,22 @@ IF( WIN32 )
 	SET( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /DPLATFORM_WINDOWS" )
 ENDIF( WIN32 )
 
-# ILM Math
-include_directories( "ilmbase-1.0.2/Half" )
-include_directories( "ilmbase-1.0.2/Iex" )
-include_directories( "ilmbase-1.0.2/IlmThread" )
-include_directories( "ilmbase-1.0.2/Imath" )
+SET( ILMBASE_ROOT_DIR ilmbase-1.0.2 )
+SET( ZLIB_ROOT_DIR zlib-1.2.5 )
+SET( HDF_ROOT_DIR hdf5-1.8.9 )
+SET( ALEMBIC_ROOT_DIR alembic-1.1.2 )
 
-ADD_SUBDIRECTORY ( ilmbase-1.0.2 )
+add_definitions( -Dalembic_ver=${ALEMBIC_ROOT_DIR} )
+add_definitions( -Dhdf_ver=${HDF_ROOT_DIR} )
+add_definitions( -Dcrate_ver=crate-${crate_VERSION} )
+
+# ILM Math
+include_directories( "${ILMBASE_ROOT_DIR}/Half" )
+include_directories( "${ILMBASE_ROOT_DIR}/Iex" )
+include_directories( "${ILMBASE_ROOT_DIR}/IlmThread" )
+include_directories( "${ILMBASE_ROOT_DIR}/Imath" )
+
+ADD_SUBDIRECTORY ( ${ILMBASE_ROOT_DIR} )
 SET( ALEMBIC_ILMBASE_LIBS ilmbase )
  
 # ZLib
@@ -280,29 +289,32 @@ IF( WIN32 )
 	SET( CMAKE_C_FLAGS_MINSIZEREL "${CMAKE_C_FLAGS_MINSIZEREL} /MT" )
 ENDIF()
 
-include_directories( "zlib-1.2.5" )
-include_directories("${CMAKE_CURRENT_BINARY_DIR}/zlib-1.2.5")
 
-ADD_SUBDIRECTORY ( zlib-1.2.5 )
+
+include_directories( ${ZLIB_ROOT_DIR} )
+include_directories("${CMAKE_CURRENT_BINARY_DIR}/${ZLIB_ROOT_DIR}" )
+
+ADD_SUBDIRECTORY ( ${ZLIB_ROOT_DIR} )
 SET( ALEMBIC_ZLIB_LIBS zlib )
 
 # HDF
-SET( ZLIB_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/zlib-1.2.5" )
+SET( ZLIB_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/${ZLIB_ROOT_DIR}" )
 SET( H5_HAVE_ZLIB_H ON )
-SET( H5_ZLIB_HEADER "${CMAKE_CURRENT_SOURCE_DIR}/zlib-1.2.5/zlib.h" )
+SET( H5_ZLIB_HEADER "${CMAKE_CURRENT_SOURCE_DIR}/${ZLIB_ROOT_DIR}/zlib.h" )
 SET( ZLIB_LIBRARY zlib )
 SET( H5_HAVE_FILTER_DEFLATE ON )
 SET(HDF5_ENABLE_THREADSAFE ON CACHE BOOL "Thread safety")
 SET(HDF5_ENABLE_SZIP_SUPPORT OFF CACHE BOOL "Disable sZip")
 SET(HDF5_BUILD_HL_LIB ON CACHE BOOL "Build high level lib")
-ADD_SUBDIRECTORY ( hdf5-1.8.7 )
-include_directories( "hdf5-1.8.7/src" )
-include_directories( "hdf5-1.8.7/hl/src" )
+
+ADD_SUBDIRECTORY ( ${HDF_ROOT_DIR} )
+include_directories( "${HDF_ROOT_DIR}/src" )
+include_directories( "${HDF_ROOT_DIR}/hl/src" )
 IF( "${CMAKE_SYSTEM_NAME}" MATCHES "Windows" )
-	include_directories( "hdf5-1.8.7/windows/src" )
+	include_directories( "${HDF_ROOT_DIR}/windows/src" )
 ENDIF()
-include_directories( "hdf5-1.8.7/c++/src" )
-include_directories( "hdf5-1.8.7/hl/c++/src" )
+include_directories( "${HDF_ROOT_DIR}/c++/src" )
+include_directories( "${HDF_ROOT_DIR}/hl/c++/src" )
 SET( ALEMBIC_HDF5_LIBS hdf5 hdf5_hl )
 
 # reset the output directories
@@ -312,8 +324,8 @@ UNSET(CMAKE_ARCHIVE_OUTPUT_DIRECTORY CACHE)
 
 # Alembic
 add_definitions( -DNOMINMAX )	 # disable min/max macros from <windows.h>.
-include_directories( "alembic-1.1.0" )
-ADD_SUBDIRECTORY ( alembic-1.1.0 )
+include_directories( ${ALEMBIC_ROOT_DIR} )
+ADD_SUBDIRECTORY ( ${ALEMBIC_ROOT_DIR} )
 SET( ALEMBIC_CORE_LIBS AlembicAbcGeom AlembicAbc AlembicAbcCoreHDF5 AlembicAbcCoreAbstract AlembicUtil )
 
 ADD_SUBDIRECTORY ( "${CMAKE_CURRENT_SOURCE_DIR}/CommonUtils" "${CMAKE_CURRENT_BINARY_DIR}/CommonUtils" )

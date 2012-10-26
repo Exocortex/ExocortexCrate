@@ -1,6 +1,8 @@
 #ifndef __COMMON_PROFILER_H
 #define __COMMON_PROFILER_H
 
+#include "CommonAlembic.h"
+
 #ifdef _MSC_VER
 
 #include <windows.h>
