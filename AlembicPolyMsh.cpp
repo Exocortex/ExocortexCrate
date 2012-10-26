@@ -246,6 +246,7 @@ XSI::CStatus AlembicPolyMesh::Save(double time)
    }
 
    std::vector<std::vector<Abc::V2f>> uvVecs;
+   std::vector<std::vector<Abc::uint32_t>> uvIndicesVecs;
    // if we are the first frame!
    if(mNumSamples == 0 || (dynamicTopology))
    {
@@ -261,6 +262,7 @@ XSI::CStatus AlembicPolyMesh::Save(double time)
          if(uvPropRefs.GetCount() > 0)
          {
             uvVecs.resize(uvPropRefs.GetCount());
+            uvIndicesVecs.resize(uvPropRefs.GetCount());
 
             // ok, great, we found UVs, let's set them up
             if(mNumSamples == 0)
@@ -279,7 +281,7 @@ XSI::CStatus AlembicPolyMesh::Save(double time)
             // loop over all uvsets
             for(LONG uvI=0; uvI<uvPropRefs.GetCount(); uvI++)
             {
-               std::vector<Abc::V2f>& uvVec = uvVecs[uvI];
+               std::vector<Abc::V2f> uvVec;
                uvVec.resize(sampleCount);
                
                CDoubleArray uvValues = ClusterProperty(uvPropRefs[uvI]).GetElements().GetArray();
@@ -290,14 +292,11 @@ XSI::CStatus AlembicPolyMesh::Save(double time)
                   uvVec[i].y = (float)uvValues[sampleLookup[i] * 3 + 1];
                }
 
-               std::vector<Abc::V2f> uvValuesVec;
-               std::vector<Abc::uint32_t> uvIndicesVec;
-               uvIndicesVec.reserve(sampleCount);
-               createIndexedArray<Abc::V2f, SortableV2f>(mFaceIndicesVec, uvVec, uvValuesVec, uvIndicesVec);
+               createIndexedArray<Abc::V2f, SortableV2f>(mFaceIndicesVec, uvVec, uvVecs[uvI], uvIndicesVecs[uvI]);
 
-              AbcG::OV2fGeomParam::Sample uvSample(Abc::V2fArraySample(uvValuesVec),AbcG::kFacevaryingScope);
-               if(uvIndicesVec.size() > 0){
-                  uvSample.setIndices(Abc::UInt32ArraySample(uvIndicesVec));
+               AbcG::OV2fGeomParam::Sample uvSample(Abc::V2fArraySample(uvVecs[uvI]),AbcG::kFacevaryingScope);
+               if(uvIndicesVecs[uvI].size() > 0){
+                  uvSample.setIndices(Abc::UInt32ArraySample(uvIndicesVecs[uvI]));
                }
 
                if(uvI == 0)
@@ -310,7 +309,7 @@ XSI::CStatus AlembicPolyMesh::Save(double time)
                   if(mNumSamples == 0)
                   {
                      CString storedUvSetName = CString(L"uv") + CString(uvI);
-                     mUvParams.push_back(AbcG::OV2fGeomParam( mMeshSchema, storedUvSetName.GetAsciiString(), uvIndicesVec.size() > 0,
+                     mUvParams.push_back(AbcG::OV2fGeomParam( mMeshSchema, storedUvSetName.GetAsciiString(), uvIndicesVecs[uvI].size() > 0,
                                         AbcG::kFacevaryingScope, 1, GetJob()->GetAnimatedTs()));
                   }
                   mUvParams[uvI-1].set(uvSample);
