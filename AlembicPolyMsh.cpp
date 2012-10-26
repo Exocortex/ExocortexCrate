@@ -35,6 +35,8 @@ Abc::OCompoundProperty AlembicPolyMesh::GetCompound()
 
 XSI::CStatus AlembicPolyMesh::Save(double time)
 {
+   mMeshSample.reset();
+
    // store the transform
    Primitive prim(GetRef());
    bool globalSpace = GetJob()->GetOption(L"globalSpace");
@@ -243,6 +245,7 @@ XSI::CStatus AlembicPolyMesh::Save(double time)
       }
    }
 
+   std::vector<std::vector<Abc::V2f>> uvVecs;
    // if we are the first frame!
    if(mNumSamples == 0 || (dynamicTopology))
    {
@@ -257,6 +260,8 @@ XSI::CStatus AlembicPolyMesh::Save(double time)
          // if we now finally found a valid uvprop
          if(uvPropRefs.GetCount() > 0)
          {
+            uvVecs.resize(uvPropRefs.GetCount());
+
             // ok, great, we found UVs, let's set them up
             if(mNumSamples == 0)
             {
@@ -274,7 +279,7 @@ XSI::CStatus AlembicPolyMesh::Save(double time)
             // loop over all uvsets
             for(LONG uvI=0; uvI<uvPropRefs.GetCount(); uvI++)
             {
-               std::vector<Abc::V2f> uvVec;
+               std::vector<Abc::V2f>& uvVec = uvVecs[uvI];
                uvVec.resize(sampleCount);
                
                CDoubleArray uvValues = ClusterProperty(uvPropRefs[uvI]).GetElements().GetArray();
