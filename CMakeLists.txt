@@ -1,6 +1,6 @@
 cmake_minimum_required (VERSION 2.6) 
 
-project ( SoftimageExocortexAlembic${alembic_VERSION} ) 
+project ( SoftimageExocortexAlembic${crate_VERSION} ) 
 
 INCLUDE(../ExocortexAlembicShared/ExocortexCMakeShared.txt)
 
@@ -9,6 +9,8 @@ if( Exocortex_SERVICES OR Exocortex_RLM_ONLY )
 	include_directories( ${Exocortex_INCLUDE_DIR} )
 endif()
 
+
+add_definitions( -Dcrate_Softimage_Version="2012SP1" )
 SET( Softimage_DIR_ROOT ${LIBRARY_ROOT}/Softimage/2012SP1 )
 SET( Softimage_DIR_INCLUDE ${Softimage_DIR_ROOT}/include )
   

@@ -121,8 +121,8 @@ CStatus AlembicWriteJob::PreProcess()
       mArchive = CreateArchiveWithInfo(
 		  Alembic::AbcCoreHDF5::WriteArchive(),
             mFileName.GetAsciiString(),
-            "Softimage Alembic Plugin",
-            sceneFileName.GetAsciiString(),
+            getExporterName( "Softimage " EC_QUOTE( crate_Softimage_Version ) ).c_str(),
+			getExporterFileName( sceneFileName.GetAsciiString() ).c_str(),
             Abc::ErrorHandler::kThrowPolicy);
    }
    catch(Alembic::Util::Exception& e)
