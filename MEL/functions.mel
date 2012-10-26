@@ -111,7 +111,7 @@ global proc exocortexAlembicImport(string $filename, int $importNormals, int $im
   $fileNode = exocortexCreateOrReuseNode("ExocortexAlembicFile","ExocortexAlembicFile",0,0,0);
   setAttr -type "string" ($fileNode+".fileName ") $filename;
   
-  print "parsing file...";
+  print "parsing file...\n";
   
   int $barSize = size($identifiers);
   progressBar -e -bp -ii 1 -max $barSize $gMainProgressBar;
@@ -363,13 +363,13 @@ global proc exocortexAlembicImport(string $filename, int $importNormals, int $im
       }
       ExocortexAlembic_profileEnd -f MEL_exocortexAlembicImport_Group;
     }
-    else if ($types[$i] == "")
+    else if ($types[$i] == "Unknown")
     {
       continue;
     }
     else
     {
-      print("Invalid object type "+$types[$i]+"\n");
+      print("Invalid object type for object "+$names[$i]+"\n");
       continue;
     }
 

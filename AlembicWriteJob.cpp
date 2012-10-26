@@ -87,8 +87,8 @@ bool AlembicWriteJob::AddObject(AlembicObjectPtr in_Obj)
    AlembicObjectPtr existing = GetObject(in_Ref);
    if(existing != NULL)
       return false;
-  std::string fullName(getFullNameFromRef(in_Ref).asChar());
-	mapObjects[fullName] = in_Obj;
+   std::string fullName(getFullNameFromRef(in_Ref).asChar());
+	 mapObjects[fullName] = in_Obj;
    return true;
 }
 
@@ -132,7 +132,7 @@ MStatus AlembicWriteJob::PreProcess()
       mArchive = CreateArchiveWithInfo(
             Alembic::AbcCoreHDF5::WriteArchive(),
             mFileName.asChar(),
-            "Softimage Alembic Plugin",
+            "Maya Alembic Plugin",
             sceneFileName.asChar(),
             Abc::ErrorHandler::kThrowPolicy);
    }

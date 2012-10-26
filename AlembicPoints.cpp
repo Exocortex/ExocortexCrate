@@ -64,12 +64,14 @@ MStatus AlembicPoints::Save(double time)
    std::vector<Abc::V3f> posVec(particleCount);
    for(unsigned int i=0;i<vectors.length();i++)
    {
-      posVec[i].x = (float)vectors[i].x;
-      posVec[i].y = (float)vectors[i].y;
-      posVec[i].z = (float)vectors[i].z;
+      const MVector &out = vectors[i];
+      Alembic::Abc::v4::V3f  &in  = posVec[i];
+      in.x = (float)out.x;
+      in.y = (float)out.y;
+      in.z = (float)out.z;
       if(globalCache)
-         globalXfo.multVecMatrix(posVec[i],posVec[i]);
-      bbox.extendBy(posVec[i]);
+         globalXfo.multVecMatrix(in, in);
+      bbox.extendBy(in);
    }
    vectors.clear();
 
@@ -78,11 +80,13 @@ MStatus AlembicPoints::Save(double time)
    std::vector<Abc::V3f> velVec(particleCount);
    for(unsigned int i=0;i<vectors.length();i++)
    {
-      velVec[i].x = (float)vectors[i].x;
-      velVec[i].y = (float)vectors[i].y;
-      velVec[i].z = (float)vectors[i].z;
+      const MVector &out = vectors[i];
+      Alembic::Abc::v4::V3f  &in  = velVec[i];
+      in.x = (float)out.x;
+      in.y = (float)out.y;
+      in.z = (float)out.z;
       if(globalCache)
-         globalXfo.multDirMatrix(velVec[i],velVec[i]);
+         globalXfo.multDirMatrix(in, in);
    }
    vectors.clear();
 
@@ -125,12 +129,13 @@ MStatus AlembicPoints::Save(double time)
       node.opacity(doubles);
       for(unsigned int i=0;i<doubles.length();i++)
       {
-         colorVec[i].r = (float)vectors[i].x;
-         colorVec[i].g = (float)vectors[i].y;
-         colorVec[i].b = (float)vectors[i].z;
-         colorVec[i].a = (float)doubles[i];
+         const MVector &out = vectors[i];
+         Imath::C4f &in = colorVec[i];
+         in.r = (float)out.x;
+         in.g = (float)out.y;
+         in.b = (float)out.z;
+         in.a = (float)doubles[i];
       }
-
       vectors.clear();
       doubles.clear();
    }
@@ -280,12 +285,12 @@ MStatus AlembicPointsNode::compute(const MPlug & plug, MDataBlock & dataBlock)
    MStatus status;
 
    // from the maya api examples (ownerEmitter.cpp)
-	int multiIndex = plug.logicalIndex( &status );
-	MArrayDataHandle hOutArray = dataBlock.outputArrayValue( mOutput, &status);
-	MArrayDataBuilder bOutArray = hOutArray.builder( &status );
-	MDataHandle hOut = bOutArray.addElement(multiIndex, &status);
-	MFnArrayAttrsData fnOutput;
-	MObject dOutput = fnOutput.create ( &status );
+	 int multiIndex = plug.logicalIndex( &status );
+	 MArrayDataHandle hOutArray = dataBlock.outputArrayValue( mOutput, &status);
+	 MArrayDataBuilder bOutArray = hOutArray.builder( &status );
+	 MDataHandle hOut = bOutArray.addElement(multiIndex, &status);
+	 MFnArrayAttrsData fnOutput;
+	 MObject dOutput = fnOutput.create ( &status );
 
    MPlugArray  connectionArray;
    plug.connectedTo(connectionArray, false, true, &status);
@@ -413,41 +418,53 @@ MStatus AlembicPointsNode::compute(const MPlug & plug, MDataBlock & dataBlock)
    // if we need to emit new particles, do that now
    if(particleCount > 0)
    {
+      const bool validVel = sampleVel && sampleVel->get();
+      const bool validCol = sampleColor && sampleColor->get();
+      const bool validAge = sampleAge && sampleAge->get();
+      const bool validMas = sampleMass && sampleMass->get();
+      const bool validSid = sampleShapeInstanceID && sampleShapeInstanceID->get();
+      const bool validOri = sampleOrientation && sampleOrientation->get();
       for(unsigned int i=0;i<particleCount;i++)
       {
-         positions[i].x = samplePos->get()[i].x;
-         positions[i].y = samplePos->get()[i].y;
-         positions[i].z = samplePos->get()[i].z;
-
-         if(sampleVel && sampleVel->get())
          {
-            velocities[i].x = sampleVel->get()[i].x;
-            velocities[i].y = sampleVel->get()[i].y;
-            velocities[i].z = sampleVel->get()[i].z;
+           const Alembic::Abc::V3f &out = samplePos->get()[i];
+           MVector &in = positions[i];
+           in.x = out.x;
+           in.y = out.y;
+           in.z = out.z;
+         }
+
+         if(validVel)
+         {
+            const Alembic::Abc::V3f &out = sampleVel->get()[i];
+            MVector &in = velocities[i];
+            in.x = out.x;
+            in.y = out.y;
+            in.z = out.z;
          }
 
          if(sampleInfo.alpha != 0.0)
-         {
             positions[i] += velocities[i] * sampleInfo.alpha;
-         }
 
-         if(sampleColor && sampleColor->get())
+         if(validCol)
          {
-            rgbs[i].x = sampleColor->get()[i].r;
-            rgbs[i].y = sampleColor->get()[i].g;
-            rgbs[i].z = sampleColor->get()[i].b;
-            opacities[i] = sampleColor->get()[i].a;
+            const Alembic::Abc::C4f &out = sampleColor->get()[i];
+            MVector &in = rgbs[i];
+            in.x = out.r;
+            in.y = out.g;
+            in.z = out.b;
+            opacities[i] = out.a;
          }
          else
          {
             rgbs[i] = MVector(0.0,0.0,0.0);
             opacities[i] = 1.0;
          }
-         
-         ages[i] = (sampleAge && sampleAge->get()) ? sampleAge->get()[i] : 0.0;
-         masses[i] = (sampleMass && sampleMass->get()) ? sampleMass->get()[i] : 1.0;
-         shapeInstId[i] = (sampleShapeInstanceID && sampleShapeInstanceID->get()) ? sampleShapeInstanceID->get()[i] : 0.0;
-         orientationPP[i] = (sampleOrientation && sampleOrientation->get()) ? quaternionToVector( sampleOrientation->get()[i] ) : MVector::zero;
+
+         ages[i]          = validAge ? sampleAge->get()[i] : 0.0;
+         masses[i]        = validMas ? sampleMass->get()[i] : 1.0;
+         shapeInstId[i]   = validSid ? sampleShapeInstanceID->get()[i] : 0.0;
+         orientationPP[i] = validOri ? quaternionToVector( sampleOrientation->get()[i] ) : MVector::zero;
       }
    }
 

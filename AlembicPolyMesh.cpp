@@ -110,9 +110,9 @@ MStatus AlembicPolyMesh::Save(double time)
    std::vector<std::vector<Abc::V2f> > mUvVec;
    std::vector<std::vector<Abc::uint32_t> > mUvIndexVec;
 
-  AbcG::OV2fGeomParam::Sample uvSample;
+   AbcG::OV2fGeomParam::Sample uvSample;
    std::vector<IndexedUVs> indexedUVSet;
- 
+
    if(mNumSamples == 0 || dynamicTopology)
    {
      ESS_PROFILE_SCOPE("AlembicPolyMesh::Save mNumSamples == 0 || dynamicTopology");

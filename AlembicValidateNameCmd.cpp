@@ -35,3 +35,4 @@ MStatus AlembicValidateNameCommand::doIt(const MArgList& args)
   setResult(identifier.c_str());
   return MS::kSuccess;
 }
+

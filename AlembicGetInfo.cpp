@@ -119,20 +119,23 @@ MStatus AlembicGetInfoCommand::doIt(const MArgList & args)
    MStringArray identifiers;
    bool processStopped = false;
    MProgressWindow::startProgress();
-   for(size_t i=0; !objects.empty(); ++i)
+   for(size_t i=0; !processStopped && !objects.empty(); ++i)
    {
-      if (MProgressWindow::isCancelled())
-      {
-        processStopped = true;
-        break;
-      }
-      MProgressWindow::advanceProgress(1);
-
       Abc::IObject iObj = objects.front();
       objects.pop_front();
       const int nbChild = (int) iObj.getNumChildren();
       for(size_t j=0; j<nbChild; ++j)
       {
+         if (idx % 50 == 0)
+         {
+           if (MProgressWindow::isCancelled())
+           {
+             processStopped = true;
+             break;
+           }
+           MProgressWindow::advanceProgress(50);
+         }
+
          Abc::IObject child = iObj.getChild(j);
          objects.push_back(child);
          ++idx;
