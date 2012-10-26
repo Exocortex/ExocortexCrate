@@ -1150,9 +1150,9 @@ CStatus createTransform( Abc::IObject& iObj, CRef& importRootNode, CRef& parentN
          modelRef.Set(getFullNameFromIdentifier(importRootNode, iObj.getFullName(), false));
          x3dobject = modelRef;
 
-         if(!x3dobject.GetType().IsEqualNoCase(L"#model") && !x3dobject.GetType().IsEqualNoCase(L"null")){
-            x3dobject.ResetObject();
-         }
+         //if(!x3dobject.GetType().IsEqualNoCase(L"#model") && !x3dobject.GetType().IsEqualNoCase(L"null")){
+         //   x3dobject.ResetObject();
+         //}
          newNodeRef = x3dobject.GetRef();
       }
 
