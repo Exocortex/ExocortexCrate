@@ -48,9 +48,11 @@ public:
 
 void printSceneGraph(exoNodePtr root);
 
-void selectNodes(exoNodePtr root, SceneNode::SelectionT selectionMap, bool bParents, bool bChildren);
+bool hasExtractableTransform( SceneNode::nodeTypeE type );
 
-void filterNodeSelection(exoNodePtr root, bool bExcludeITransforms, bool bExcludeNonTransforms);
+void selectNodes(exoNodePtr root, SceneNode::SelectionT selectionMap, bool bSelectParents, bool bChildren, bool bSelectShapeNodes);
+
+//void filterNodeSelection(exoNodePtr root, bool bExcludeNonTransforms);
 
 
 #endif
