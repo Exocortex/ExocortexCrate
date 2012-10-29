@@ -398,7 +398,7 @@ MStatus AlembicPointsNode::compute(const MPlug & plug, MDataBlock & dataBlock)
 
    // update the frame number to be imported
    double inputTime = dataBlock.inputValue(mTimeAttr).asTime().as(MTime::kSeconds);
-   const MString &fileName = dataBlock.inputValue(mFileNameAttr).asString();
+   const MString &fileName   = dataBlock.inputValue(mFileNameAttr).asString();
    const MString &identifier = dataBlock.inputValue(mIdentifierAttr).asString();
 
    // check if we have the file
