@@ -41,18 +41,41 @@ bool AlembicPoints::listIntanceNames(std::vector<std::string> &names)
 }
 
 bool AlembicPoints::sampleInstanceProperties( std::vector<Abc::Quatf> angularVel,    std::vector<Abc::Quatf> orientation,
-                                              std::vector<Abc::v4::int16_t> shapeId, std::vector<Abc::v4::int16_t> shapeType,
-                                              std::vector<Abc::float32_t> shapeTime);
+                                              std::vector<Abc::v4::uint16_t> shapeId, std::vector<Abc::v4::uint16_t> shapeType,
+                                              std::vector<Abc::float32_t> shapeTime)
 {
   MMatrixArray allMatrices;
   MIntArray pathIndices;
   MIntArray pathStartIndices;
+  int nbParticles;
   {
     MDagPathArray allPaths;
-    getInstancer().allInstances( allPaths, allMatrices, pathStartIndices, pathIndices );
+    MFnInstancer inst = getInstancer();
+    inst.allInstances( allPaths, allMatrices, pathStartIndices, pathIndices );
+    nbParticles = inst.particleCount();
   }
 
+  // resize vectors!
+  angularVel.resize(nbParticles);
+  orientation.resize(nbParticles);
+  shapeId.resize(nbParticles);
+  shapeType.resize(nbParticles, 7);
+  shapeTime.resize(nbParticles, mNumSamples);
 
+  MQuaternion quat;
+  for (int i = 0; i < nbParticles; ++i)
+  {
+    angularVel[i] = Abc::Quatf();     // don't know how to access this one yet!
+    quat = allMatrices[i];
+    orientation[i] = Abc::Quatf(quat.w, quat.x, quat.y, quat.z);
+    shapeId[i] = pathIndices[pathStartIndices[i]];  // only keep the first one...
+  }
+
+  mAngularVelocityProperty.set(Abc::QuatfArraySample(angularVel));
+  mOrientationProperty.set(Abc::QuatfArraySample(orientation));
+  mShapeInstanceIdProperty.set(Abc::UInt16ArraySample(shapeId));
+  mShapeTimeProperty.set(Abc::FloatArraySample(shapeTime));
+  mShapeTypeProperty.set(Abc::UInt16ArraySample(shapeType));
   return true;
 }
 
@@ -73,9 +96,9 @@ AlembicPoints::AlembicPoints(const MObject & in_Ref, AlembicWriteJob * in_Job)
    mInstanceNamesProperty   = Abc::OStringArrayProperty (mSchema.getArbGeomParams(), ".instancenames", mSchema.getMetaData(), GetJob()->GetAnimatedTs() );
    mOrientationProperty     = Abc::OQuatfArrayProperty  (mSchema.getArbGeomParams(), ".orientation", mSchema.getMetaData(), GetJob()->GetAnimatedTs() );
    mScaleProperty           = Abc::OV3fArrayProperty    (mSchema.getArbGeomParams(), ".scale", mSchema.getMetaData(), GetJob()->GetAnimatedTs() );
-   mShapeInstanceIdProperty = Abc::OInt16ArrayProperty  (mSchema.getArbGeomParams(), ".shapeinstanceid", mSchema.getMetaData(), GetJob()->GetAnimatedTs() );
+   mShapeInstanceIdProperty = Abc::OUInt16ArrayProperty (mSchema.getArbGeomParams(), ".shapeinstanceid", mSchema.getMetaData(), GetJob()->GetAnimatedTs() );
    mShapeTimeProperty       = Abc::OFloatArrayProperty  (mSchema.getArbGeomParams(), ".shapetime", mSchema.getMetaData(), GetJob()->GetAnimatedTs() );
-   mShapeTypeProperty       = Abc::OInt16ArrayProperty  (mSchema.getArbGeomParams(), ".shapetype", mSchema.getMetaData(), GetJob()->GetAnimatedTs() );
+   mShapeTypeProperty       = Abc::OUInt16ArrayProperty (mSchema.getArbGeomParams(), ".shapetype", mSchema.getMetaData(), GetJob()->GetAnimatedTs() );
 
    MStringArray instancers;
    MGlobal::executeCommand("listConnections -t instancer " + node.name(), instancers);
@@ -219,7 +242,7 @@ MStatus AlembicPoints::Save(double time)
 
    //--- instancing!!
    std::vector<Abc::Quatf> angularVel, orientation;
-   std::vector<Abc::v4::int16_t> shapeId, shapeType;
+   std::vector<Abc::v4::uint16_t> shapeId, shapeType;
    std::vector<Abc::float32_t> shapeTime;
    if (hasInstancer)
      sampleInstanceProperties(angularVel, orientation, shapeId, shapeType, shapeTime);
@@ -230,7 +253,6 @@ MStatus AlembicPoints::Save(double time)
 
    return MStatus::kSuccess;
 }
-
 
 static AlembicPointsNodeList alembicPointsNodeList;
 
@@ -570,13 +592,12 @@ void AlembicPointsNode::instanceInitialize(void)
       return;
   }
 
-  const size_t lastSample = mSchema.getNumSamples()-1;
   {
     Abc::IUInt16ArrayProperty propShapeT;
     if( !getArbGeomParamPropertyAlembic( obj, "shapetype", propShapeT ) )
       return;
 
-    Abc::UInt16ArraySamplePtr sampleShapeT = propShapeT.getValue(lastSample);
+    Abc::UInt16ArraySamplePtr sampleShapeT = propShapeT.getValue(propShapeT.getNumSamples()-1);
     if (!sampleShapeT || sampleShapeT->size() <= 0 || sampleShapeT->get()[0] != 7)
       return;
   }
@@ -586,7 +607,7 @@ void AlembicPointsNode::instanceInitialize(void)
   if(!getArbGeomParamPropertyAlembic( obj, "instancenames", propInstName ) )
     return;
 
-  Abc::StringArraySamplePtr instNames = propInstName.getValue(lastSample);
+  Abc::StringArraySamplePtr instNames = propInstName.getValue(propInstName.getNumSamples()-1);
   const int nbNames = (int) instNames->size();
   if (nbNames < 1)
     return;

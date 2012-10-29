@@ -24,14 +24,14 @@ private:
    Abc::OStringArrayProperty mInstanceNamesProperty;    // only written once, when mNumSample == 0
    Abc::OQuatfArrayProperty mOrientationProperty;
    Abc::OV3fArrayProperty mScaleProperty;
-   Abc::OInt16ArrayProperty mShapeInstanceIdProperty; 
+   Abc::OUInt16ArrayProperty mShapeInstanceIdProperty; 
    Abc::OFloatArrayProperty mShapeTimeProperty;
-   Abc::OInt16ArrayProperty mShapeTypeProperty;
+   Abc::OUInt16ArrayProperty mShapeTypeProperty;
 
    // instancing functions
    MFnInstancer getInstancer(void) const;
    bool listIntanceNames(std::vector<std::string> &names);
-   bool sampleInstanceProperties(std::vector<Abc::Quatf> angularVel, std::vector<Abc::Quatf> orientation, std::vector<Abc::v4::int16_t> shapeId, std::vector<Abc::v4::int16_t> shapeType, std::vector<Abc::float32_t> shapeTime);
+   bool sampleInstanceProperties(std::vector<Abc::Quatf> angularVel, std::vector<Abc::Quatf> orientation, std::vector<Abc::v4::uint16_t> shapeId, std::vector<Abc::v4::uint16_t> shapeType, std::vector<Abc::float32_t> shapeTime);
 
 public:
    AlembicPoints(const MObject & in_Ref, AlembicWriteJob * in_Job);
