@@ -245,9 +245,6 @@ IF( WIN32 )
 	ENDFOREACH(flag_var)
 endif()
 
-add_definitions( -D_WINSOCKAPI_ )
-add_definitions( -D_WINSOCKAPI2_ )
-
 # For multithreaded builds		
 # [mkonyk] Fix ~ these are only valid on Windows platforms.
 IF( WIN32 )
@@ -331,6 +328,11 @@ SET( ALEMBIC_CORE_LIBS AlembicAbcGeom AlembicAbc AlembicAbcCoreHDF5 AlembicAbcCo
 ADD_SUBDIRECTORY ( "${CMAKE_CURRENT_SOURCE_DIR}/CommonUtils" "${CMAKE_CURRENT_BINARY_DIR}/CommonUtils" )
 
 include_directories( "${CMAKE_CURRENT_SOURCE_DIR}/CommonUtils" )
+
+
+add_definitions( -D_WINSOCKAPI_ )
+add_definitions( -D_WINSOCKAPI2_ )
+
 
 # Python extension
 IF(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../ExocortexAlembicPython/CMakeLists.txt")
