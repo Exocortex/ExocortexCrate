@@ -307,11 +307,9 @@ SET(HDF5_BUILD_HL_LIB ON CACHE BOOL "Build high level lib")
 ADD_SUBDIRECTORY ( ${HDF_ROOT_DIR} )
 include_directories( "${HDF_ROOT_DIR}/src" )
 include_directories( "${HDF_ROOT_DIR}/hl/src" )
-IF( "${CMAKE_SYSTEM_NAME}" MATCHES "Windows" )
-	include_directories( "${HDF_ROOT_DIR}/windows/src" )
-ENDIF()
 include_directories( "${HDF_ROOT_DIR}/c++/src" )
 include_directories( "${HDF_ROOT_DIR}/hl/c++/src" )
+include_directories( "${CMAKE_CURRENT_BINARY_DIR}/${HDF_ROOT_DIR}" )
 SET( ALEMBIC_HDF5_LIBS hdf5 hdf5_hl )
 
 # reset the output directories
