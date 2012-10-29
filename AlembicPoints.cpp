@@ -14,7 +14,7 @@ bool AlembicPoints::listIntanceNames(std::vector<std::string> &names)
     MMatrixArray allMatrices;
     MIntArray pathIndices;
     MIntArray pathStartIndices;
-    
+
     MSelectionList sl;
     sl.add(instName);
 

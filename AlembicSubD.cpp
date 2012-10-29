@@ -48,16 +48,18 @@ MStatus AlembicSubD::Save(double time)
    node.vertexBaseMeshGet(positions);
    for(unsigned int i=0;i<node.vertexCount();i++)
    {
-      mPosVec[i].x = (float)positions[i].x;
-      mPosVec[i].y = (float)positions[i].y;
-      mPosVec[i].z = (float)positions[i].z;
+      const MPoint &out = positions[i];
+      Imath::V3f &in = mPosVec[i];
+      in.x = (float)out.x;
+      in.y = (float)out.y;
+      in.z = (float)out.z;
       if(globalCache)
-         globalXfo.multVecMatrix(mPosVec[i],mPosVec[i]);
-      bbox.extendBy(mPosVec[i]);
+         globalXfo.multVecMatrix(in, in);
+      bbox.extendBy(in);
    }
 
    // store the positions to the samples
-   mSample.setPositions(Abc::P3fArraySample(&mPosVec.front(),mPosVec.size()));
+   mSample.setPositions(Abc::P3fArraySample(mPosVec));
    mSample.setSelfBounds(bbox);
 
    // check if we are doing pure pointcache
@@ -65,20 +67,15 @@ MStatus AlembicSubD::Save(double time)
    {
       if(mNumSamples == 0)
       {
-         // store a dummy empty topology
-         mFaceCountVec.push_back(0);
-         mFaceIndicesVec.push_back(0);
-         Abc::Int32ArraySample faceCountSample(&mFaceCountVec.front(),mFaceCountVec.size());
-         Abc::Int32ArraySample faceIndicesSample(&mFaceIndicesVec.front(),mFaceIndicesVec.size());
-         mSample.setFaceCounts(faceCountSample);
-         mSample.setFaceIndices(faceIndicesSample);
+         mSample.setFaceCounts(Abc::Int32ArraySample(mFaceCountVec));
+         mSample.setFaceIndices(Abc::Int32ArraySample(mFaceIndicesVec));
       }
       mSchema.set(mSample);
       mNumSamples++;
       return MStatus::kSuccess;
    }
 
-   bool dynamicTopology = GetJob()->GetOption(L"exportDynamicTopology").asInt() > 0;
+   const bool dynamicTopology = GetJob()->GetOption(L"exportDynamicTopology").asInt() > 0;
    if(mNumSamples == 0 || dynamicTopology)
    {
       unsigned int polyCount = node.polygonCount();
@@ -101,8 +98,8 @@ MStatus AlembicSubD::Save(double time)
          offset += count;
       }
 
-      Abc::Int32ArraySample faceCountSample(&mFaceCountVec.front(),mFaceCountVec.size());
-      Abc::Int32ArraySample faceIndicesSample(&mFaceIndicesVec.front(),mFaceIndicesVec.size());
+      Abc::Int32ArraySample faceCountSample(mFaceCountVec);
+      Abc::Int32ArraySample faceIndicesSample(mFaceIndicesVec);
       mSample.setFaceCounts(faceCountSample);
       mSample.setFaceIndices(faceIndicesSample);
 
@@ -120,11 +117,11 @@ MStatus AlembicSubD::Save(double time)
                MDoubleArray vValues;
                unsigned int count = node.polygonVertexCount(MFnSubdNames::baseFaceIdFromIndex(i));
                node.polygonGetVertexUVs(MFnSubdNames::baseFaceIdFromIndex(i),uValues,vValues);
-               for(unsigned j=0;j<count;j++)
+               for(unsigned j=0; j<count; ++j, ++offset)
                {
-                  mUvVec[mSampleLookup[offset]].x = (float)uValues[j];
-                  mUvVec[mSampleLookup[offset]].y = (float)vValues[j];
-                  offset++;
+                  const unsigned int sLookUp = mSampleLookup[offset];
+                  mUvVec[sLookUp].x = (float)uValues[j];
+                  mUvVec[sLookUp].y = (float)vValues[j];
                }
             }
 
@@ -143,7 +140,7 @@ MStatus AlembicSubD::Save(double time)
                {
                   it = uvMap.find(mUvVec[i]);
                   if(it != uvMap.end())
-					  mUvIndexVec[uvIndexCount++] = (Abc::uint32_t)it->second;
+					          mUvIndexVec[uvIndexCount++] = (Abc::uint32_t)it->second;
                   else
                   {
                      mUvIndexVec[uvIndexCount++] = (Abc::uint32_t)sortedUVCount;
@@ -169,9 +166,9 @@ MStatus AlembicSubD::Save(double time)
                sortedUVVec.clear();
             }
 
-            AbcG::OV2fGeomParam::Sample uvSample(Abc::V2fArraySample(&mUvVec.front(),uvCount),AbcG::kFacevaryingScope);
+            AbcG::OV2fGeomParam::Sample uvSample(Abc::V2fArraySample(mUvVec),AbcG::kFacevaryingScope);
             if(mUvIndexVec.size() > 0 && uvIndexCount > 0)
-               uvSample.setIndices(Abc::UInt32ArraySample(&mUvIndexVec.front(),uvIndexCount));
+               uvSample.setIndices(Abc::UInt32ArraySample(mUvIndexVec));
             mSample.setUVs(uvSample);
          }
       }
