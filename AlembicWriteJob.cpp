@@ -200,7 +200,7 @@ CStatus AlembicWriteJob::PreProcess()
    
    selectNodes(exoSceneRoot, selectionMap, !bFlattenHierarchy || bTransformCache, bSelectChildren, !bTransformCache);
 
-   ::printSceneGraph(exoSceneRoot);
+   //::printSceneGraph(exoSceneRoot);
 
 
    //return CStatus::OK;
