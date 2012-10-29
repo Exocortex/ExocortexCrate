@@ -977,8 +977,17 @@ int AlembicImport_PolyMesh(const std::string &path, AbcG::IObject& iObj, alembic
 
 				for(int i=0; i<uvSetNames.size(); i++){
 
-					std::stringstream identifierStream;
-					identifierStream<<identifier<<":"<<(i+1);
+					int channelNumber = 0;
+					std::string uvName = uvSetNames[i];
+					if( ! parseTrailingNumber( uvName, "map", channelNumber ) ) {
+						if( ! parseTrailingNumber( uvName, "channel_", channelNumber ) ) {
+							if( ! parseTrailingNumber( uvName, "Channel_", channelNumber ) ) {
+								channelNumber = (i+1);
+							}
+						}
+					}
+					std::stringstream identifierStream;					
+					identifierStream<<identifier<<":"<<channelNumber;
 
 					// Create the polymesh modifier
 					Modifier *pModifier = NULL;
