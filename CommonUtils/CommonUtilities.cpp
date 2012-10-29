@@ -512,7 +512,7 @@ float getTimeOffsetFromObject( Alembic::Abc::IObject &object, SampleInfo const& 
 	}
 }
 
-void getMergeInfo( Alembic::AbcGeom::IObject& iObj, bool& bCreateNullNode, int& nMergedGeomNodeIndex, Alembic::AbcGeom::IObject& mergedGeomChild, bool bAlwaysMerge)
+void getMergeInfo( Alembic::AbcGeom::IObject& iObj, bool& bCreateNullNode, int& nMergedGeomNodeIndex, Alembic::AbcGeom::IObject& mergedGeomChild)
 {
    NodeCategory::type cat = NodeCategory::get(iObj);
    if(cat == NodeCategory::XFORM)
@@ -534,24 +534,7 @@ void getMergeInfo( Alembic::AbcGeom::IObject& iObj, bool& bCreateNullNode, int& 
 			bCreateNullNode = true;
 		}
 		else if(geomNodeCount == 1){ //create geometry node
-
-         if(bAlwaysMerge){
-            nMergedGeomNodeIndex = mergeIndex;
-         }
-         else{
-			   std::string parentName = removeXfoSuffix(iObj.getName());
-			   std::string childName = mergedGeomChild.getName();
-			   //only merge if the parent and child have the same after the Xfo suffix has been removed (if present)
-            //Also, always merge if we are dealing with a camera
-			   if(parentName.compare(childName) == 0 ||
-               Alembic::AbcGeom::ICamera::matches(mergedGeomChild.getMetaData()))
-            {
-				   nMergedGeomNodeIndex = mergeIndex;
-			   }
-			   else{
-				   bCreateNullNode = true;
-			   }
-         }
+         nMergedGeomNodeIndex = mergeIndex;
 		}
 		else if(geomNodeCount > 1){ //create dummy node
 			bCreateNullNode = true;
