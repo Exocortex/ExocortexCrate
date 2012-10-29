@@ -847,7 +847,7 @@ CStatus alembic_create_item_Invoke
       {
          ESS_PROFILE_SCOPE("alembic_create_item_Invoke create_the_operator alembicItemType_points");
 				// let's setup the ICE tree to load it
-         ICETree iceTree;
+         
          CValueArray treeArgs(2);
          CValue treeReturnVal;
 
@@ -856,7 +856,7 @@ CStatus alembic_create_item_Invoke
          if(!abcPoints.valid())
             return CStatus::OK;
 
-		 Abc::IStringArrayProperty shapeInstanceNamesProp;
+		   Abc::IStringArrayProperty shapeInstanceNamesProp;
          if ( getArbGeomParamPropertyAlembic(abcPoints, "instancenames", shapeInstanceNamesProp) )
          {
             if(shapeInstanceNamesProp.getNumSamples() > 0)
@@ -864,6 +864,7 @@ CStatus alembic_create_item_Invoke
                Abc::StringArraySamplePtr shapeInstanceNamesPtr = shapeInstanceNamesProp.getValue(shapeInstanceNamesProp.getNumSamples()-1);
                if(shapeInstanceNamesPtr->size() > 0)
                {
+                  ICETree iceTree;
                   if(attachToExisting)
                   {
                      CRef treeRef;
@@ -881,16 +882,18 @@ CStatus alembic_create_item_Invoke
                   for(size_t j=0;j<shapeInstanceNamesPtr->size();j++)
                   {
                      std::string instanceIdentifier = shapeInstanceNamesPtr->get()[j];
-					 //replace spaces with underscores
-					 for(int c=0; c<instanceIdentifier.size(); c++){
-						 if(instanceIdentifier[c] == ' '){
-                             instanceIdentifier[c] = '_';
-						 }
-					 }
+                     //replace spaces with underscores
+                     for(int c=0; c<instanceIdentifier.size(); c++){
+                        if(instanceIdentifier[c] == ' '){
+                           instanceIdentifier[c] = '_';
+                        }
+                     }
+
                      CString fullName = getFullNameFromIdentifier(importRootNode,instanceIdentifier);
                      treeArgs[0] = iceTree.GetFullName()+L".ABC_Instance_Shapes.Reference"+CString((LONG)j);
                      treeArgs[1] = fullName;
-                     Application().ExecuteCommand(L"SetValue",treeArgs,treeReturnVal);
+                     CStatus status = Application().ExecuteCommand(L"SetValue",treeArgs,treeReturnVal);
+                     if( status != CStatus::OK ) ESS_LOG_WARNING("Failed set ABC_Instance_Shapes.Reference");
 
                      // also check if we have this object in the scene
                      if(hasStandinSupport())
@@ -907,7 +910,7 @@ CStatus alembic_create_item_Invoke
                            if(prop.IsValid())
                               prop.PutParameterValue(L"deferredLoading",false);
 
-						   // enable hiding the instance masters
+						         // enable hiding the instance masters
                            CRef visPropRef;
                            visPropRef.Set(fullName+L".visibility");
                            prop = Property(visPropRef);
@@ -920,6 +923,7 @@ CStatus alembic_create_item_Invoke
             }
          }
 
+         ICETree iceTree;
          if(attachToExisting)
          {
             CRef treeRef;
@@ -930,14 +934,20 @@ CStatus alembic_create_item_Invoke
          {
             treeArgs[0] = L"ABC Load Points";
             treeArgs[1] = Primitive(realTarget).GetParent3DObject().GetFullName();
-            Application().ExecuteCommand(L"ApplyICEOp",treeArgs,treeReturnVal);
+            CStatus status = Application().ExecuteCommand(L"ApplyICEOp",treeArgs,treeReturnVal);\
+            if( status != CStatus::OK ) ESS_LOG_WARNING("Failed to ApplyICEOp ABC_Load_Points");
             iceTree = (CRef)treeReturnVal;
          }
 
          ICECompoundNode node = iceTree.GetCompoundNodes()[0];
          treeArgs[0] = node.GetFullName()+L".path_string";
          treeArgs[1] = file;
-         Application().ExecuteCommand(L"SetValue",treeArgs,treeReturnVal);
+         CStatus status = Application().ExecuteCommand(L"SetValue",treeArgs,treeReturnVal);
+         if( status != CStatus::OK ){
+            ESS_LOG_WARNING("Failed set SetValue of path_string");
+            ESS_LOG_WARNING("nodeFullName: "<<node.GetFullName().GetAsciiString());
+         }
+
          treeArgs[0] = node.GetFullName()+L".identifier_string";
          treeArgs[1] = identifier;
          Application().ExecuteCommand(L"SetValue",treeArgs,treeReturnVal);
