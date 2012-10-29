@@ -245,8 +245,8 @@ XSI::CStatus AlembicPolyMesh::Save(double time)
       }
    }
 
-   std::vector<std::vector<Abc::V2f>> uvVecs;
-   std::vector<std::vector<Abc::uint32_t>> uvIndicesVecs;
+   std::vector<std::vector<Abc::V2f> > uvVecs;
+   std::vector<std::vector<Abc::uint32_t> > uvIndicesVecs;
    // if we are the first frame!
    if(mNumSamples == 0 || (dynamicTopology))
    {

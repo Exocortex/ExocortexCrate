@@ -63,32 +63,34 @@ SceneNode::nodeTypeE getNodeType(X3DObject& xObj)
    return SceneNode::UNKNOWN;
 }
 
+struct CSGStackElement
+{
+   XSI::CRef xNode;
+   exoNodePtr eNode;
+
+   CSGStackElement(XSI::CRef xnode):xNode(xnode)
+   {}
+   CSGStackElement(XSI::CRef xnode, exoNodePtr enode):xNode(xnode), eNode(enode)
+   {}
+};
+
 exoNodePtr buildCommonSceneGraph(XSI::X3DObject xsiRoot)
 {
-   struct stackElement
-   {
-      XSI::CRef xNode;
-      exoNodePtr eNode;
+ 
 
-      stackElement(XSI::CRef xnode):xNode(xnode)
-      {}
-      stackElement(XSI::CRef xnode, exoNodePtr enode):xNode(xnode), eNode(enode)
-      {}
-   };
-
-   std::list<stackElement> sceneStack;
+   std::list<CSGStackElement> sceneStack;
    
    exoNodePtr exoRoot(new SceneNode());
    exoRoot->name = xsiRoot.GetName().GetAsciiString();
    exoRoot->type = SceneNode::SCENE_ROOT;
    exoRoot->dccIdentifier = xsiRoot.GetFullName().GetAsciiString();
 
-   sceneStack.push_back(stackElement(xsiRoot, exoRoot));
+   sceneStack.push_back(CSGStackElement(xsiRoot, exoRoot));
 
    while( !sceneStack.empty() )
    {
 
-      stackElement sElement = sceneStack.back();
+      CSGStackElement sElement = sceneStack.back();
       X3DObject xNode(sElement.xNode);
       exoNodePtr eNode = sElement.eNode;
       sceneStack.pop_back();
@@ -131,7 +133,7 @@ exoNodePtr buildCommonSceneGraph(XSI::X3DObject xsiRoot)
  
          eNode->children.push_back(exoChild);
 
-         sceneStack.push_back(stackElement(children[j], exoChild));
+         sceneStack.push_back(CSGStackElement(children[j], exoChild));
       }
 
    }

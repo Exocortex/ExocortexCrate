@@ -398,17 +398,17 @@ CStatus alembicOp_Define( CRef& in_ctxt )
 	oCustomOperator.AddParameter(oPDef,oParam);
 
    // Info parameters
-   oPDef = oFactory.CreateParamDef( L"startTime", CValue::siDouble, siReadOnly | siPersistable, L"StartTime", L"", 0.0, -numeric_limits<float>::max(), numeric_limits<float>::max(), -numeric_limits<float>::max(), numeric_limits<float>::max() );
+   oPDef = oFactory.CreateParamDef( L"startTime", CValue::siDouble, siReadOnly | siPersistable, L"StartTime", L"", 0.0,-std::numeric_limits<float>::max(),std::numeric_limits<float>::max(), -std::numeric_limits<float>::max(),std::numeric_limits<float>::max() );
    oCustomOperator.AddParameter(oPDef,oParam);
-   oPDef = oFactory.CreateParamDef( L"endTime", CValue::siDouble, siReadOnly | siPersistable, L"EndTime", L"", 0.0, -numeric_limits<float>::max(), numeric_limits<float>::max(), -numeric_limits<float>::max(), numeric_limits<float>::max() );
+   oPDef = oFactory.CreateParamDef( L"endTime", CValue::siDouble, siReadOnly | siPersistable, L"EndTime", L"", 0.0,-std::numeric_limits<float>::max(),std::numeric_limits<float>::max(),-std::numeric_limits<float>::max(),std::numeric_limits<float>::max() );
    oCustomOperator.AddParameter(oPDef,oParam);
-   oPDef = oFactory.CreateParamDef( L"sampleRate", CValue::siDouble, siReadOnly | siPersistable, L"SampleRate", L"", 1.0, -numeric_limits<float>::max(), numeric_limits<float>::max(), -numeric_limits<float>::max(), numeric_limits<float>::max() );
+   oPDef = oFactory.CreateParamDef( L"sampleRate", CValue::siDouble, siReadOnly | siPersistable, L"SampleRate", L"", 1.0,-std::numeric_limits<float>::max(),std::numeric_limits<float>::max(),-std::numeric_limits<float>::max(),std::numeric_limits<float>::max() );
    oCustomOperator.AddParameter(oPDef,oParam);
-   oPDef = oFactory.CreateParamDef( L"numPointsPrimitive", CValue::siInt4, siReadOnly | siPersistable, L"NumPointsGeo", L"", 0, 0, numeric_limits<int>::max(), 0, numeric_limits<int>::max() );
+   oPDef = oFactory.CreateParamDef( L"numPointsPrimitive", CValue::siInt4, siReadOnly | siPersistable, L"NumPointsGeo", L"", 0, 0,std::numeric_limits<int>::max(), 0,std::numeric_limits<int>::max() );
    oCustomOperator.AddParameter(oPDef,oParam);
-   oPDef = oFactory.CreateParamDef( L"numPointsCache", CValue::siInt4, siReadOnly | siPersistable, L"NumPointsCache", L"", 0, 0, numeric_limits<int>::max(), 0, numeric_limits<int>::max() );
+   oPDef = oFactory.CreateParamDef( L"numPointsCache", CValue::siInt4, siReadOnly | siPersistable, L"NumPointsCache", L"", 0, 0,std::numeric_limits<int>::max(), 0,std::numeric_limits<int>::max() );
    oCustomOperator.AddParameter(oPDef,oParam);
-   oPDef = oFactory.CreateParamDef( L"numSamples", CValue::siInt4, siReadOnly | siPersistable, L"NumSamples", L"", 0, 0, numeric_limits<int>::max(), 0, numeric_limits<int>::max() );
+   oPDef = oFactory.CreateParamDef( L"numSamples", CValue::siInt4, siReadOnly | siPersistable, L"NumSamples", L"", 0, 0,std::numeric_limits<int>::max(), 0,std::numeric_limits<int>::max() );
    oCustomOperator.AddParameter(oPDef,oParam);
 
    oCustomOperator.PutAlwaysEvaluate(false);
