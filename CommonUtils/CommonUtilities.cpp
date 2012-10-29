@@ -70,6 +70,22 @@ std::string getExporterFileName( std::string fileName ) {
 	return sourceName;
 }
 
+bool parseTrailingNumber( std::string const& text, std::string const& requiredPrefix, int& number ) {
+	number = 0;
+	size_t prefixLength = requiredPrefix.size();
+	if( text.size() <= prefixLength ) {
+		return false;
+	}
+	std::string prefixText = text.substr( 0, prefixLength );
+	if( prefixText.compare( requiredPrefix ) != 0 ) {
+		return false;
+	}
+	std::string numberText = text.substr( prefixLength );
+
+	number = atoi( numberText.c_str() );
+	return true;
+}
+
 std::map<std::string,AlembicArchiveInfo> gArchives;
 
 std::string resolvePath( std::string originalPath ) {

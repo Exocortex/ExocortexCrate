@@ -35,6 +35,7 @@ int addRefArchive(std::string path);
 int delRefArchive(std::string path);
 int getRefArchive(std::string path);
 
+bool parseTrailingNumber( std::string const& text, std::string const& requiredPrefix, int& number );
       
 bool validate_filename_location(const char *filename);
 
