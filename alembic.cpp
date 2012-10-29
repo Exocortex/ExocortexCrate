@@ -13,7 +13,7 @@
 //#include "AlembicNurbs.h"
 #include "MetaData.h"
 #include "AlembicValidateNameCmd.h"
-
+#include <maya/MFnPlugin.h>
 
 // IDs issues for this plugin are: 
 // 0x0011A100 - 0x0011A1FF
