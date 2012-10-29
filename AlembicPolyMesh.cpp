@@ -677,7 +677,9 @@ MStatus AlembicPolyMeshNode::compute(const MPlug & plug, MDataBlock & dataBlock)
 
            for(unsigned int uvSetIndex = 0; uvSetIndex < uvSetNames.length(); uvSetIndex++)
            {
-             status = mMesh.createUVSetDataMesh( uvSetNames[uvSetIndex] );
+             MString &uvSetName = uvSetNames[uvSetIndex];
+             if (uvSetName == "map1") continue; // already exists, do not re-create!
+             status = mMesh.createUVSetDataMesh( uvSetName );
              if( status != MS::kSuccess ){
                EC_LOG_ERROR("mMesh.createUVSet(\""<<uvSetNames[uvSetIndex]<<"\") failed: "<<status.errorString().asChar());
              }
