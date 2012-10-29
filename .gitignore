@@ -1,6 +1,4 @@
-install/Windows7
-install/WindowsXP
-install/Linux
+install
 Testing/node_modules
 build/vs*
 build/unix*
