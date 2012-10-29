@@ -2,13 +2,11 @@
 #define __COMMON_PROFILER_H
 
 #include "CommonAlembic.h"
+#include "CommonLog.h"
 
 #ifdef _MSC_VER
 
 #include <windows.h>
-
-#include "CommonLog.h"
-
 
 class HighResolutionTimer
 {

@@ -1,5 +1,5 @@
+#include "CommonAlembic.h"
 #include "CommonSceneGraph.h"
-#include "CommonLog.h"
 
 void printSceneGraph(exoNodePtr root)
 {
