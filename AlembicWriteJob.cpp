@@ -84,6 +84,15 @@ bool AlembicWriteJob::AddObject(AlembicObjectPtr in_Obj)
 }
 
 
+struct PreProcessStackElement
+{
+   exoNodePtr eNode;
+   Abc::OObject oParent;
+
+   PreProcessStackElement(exoNodePtr enode, Abc::OObject parent):eNode(enode), oParent(parent)
+   {}
+};
+
 CStatus AlembicWriteJob::PreProcess()
 {
    // check filenames
@@ -196,22 +205,14 @@ CStatus AlembicWriteJob::PreProcess()
 
    //return CStatus::OK;
 
-   struct stackElement
-   {
-      exoNodePtr eNode;
-      Abc::OObject oParent;
-
-      stackElement(exoNodePtr enode, Abc::OObject parent):eNode(enode), oParent(parent)
-      {}
-   };
-   std::list<stackElement> sceneStack;
+   std::list<PreProcessStackElement> sceneStack;
    
-   sceneStack.push_back(stackElement(exoSceneRoot, GetTop()));
+   sceneStack.push_back(PreProcessStackElement(exoSceneRoot, GetTop()));
 
    while( !sceneStack.empty() )
    {
 
-      stackElement sElement = sceneStack.back();
+      PreProcessStackElement sElement = sceneStack.back();
       exoNodePtr eNode = sElement.eNode;
       sceneStack.pop_back();
       
@@ -272,11 +273,11 @@ CStatus AlembicWriteJob::PreProcess()
                //All internal transforms should be skipped. Geometry nodes will never have children (If and XSI geonode is parented
                //to another geonode, each will be parented to its extracted transform node, and one node will be parented to the 
                //transform of the other.
-               sceneStack.push_back(stackElement(*it, oNewParent));
+               sceneStack.push_back(PreProcessStackElement(*it, oNewParent));
             }
             else{
                //if we skip node A, we parent node A's children to the parent of A
-               sceneStack.push_back(stackElement(*it, oParent));
+               sceneStack.push_back(PreProcessStackElement(*it, oParent));
             }
          }
       }

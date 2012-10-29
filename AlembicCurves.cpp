@@ -375,7 +375,7 @@ XSI::CStatus AlembicCurves::Save(double time)
          mCurvesSample.setBasis(AbcG::kNoBasis);
 
 		// store the vertex indices
-		 vector<Abc::int32_t> vertexIndices( emitterPntIndex.GetCount());
+		 std::vector<Abc::int32_t> vertexIndices( emitterPntIndex.GetCount());
 		 for(LONG i=0;i<emitterPntIndex.GetCount();i++)
 			vertexIndices[i] = emitterPntIndex[i];
 		 mVertexIndexProperty.set(Abc::Int32ArraySample(vertexIndices));

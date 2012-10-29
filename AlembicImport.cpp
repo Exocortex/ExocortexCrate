@@ -1664,6 +1664,19 @@ struct stackElement
 
 };
 
+
+struct ImportStackElement
+{
+   Abc::IObject iObj;
+   CRef parentNode;
+
+   ImportStackElement(Abc::IObject iObj):iObj(iObj)
+   {}
+   ImportStackElement(Abc::IObject iObj, CRef parent):iObj(iObj), parentNode(parent)
+   {}
+
+};
+
 ESS_CALLBACK_START(alembic_import_Execute, CRef&)
 	Context ctxt( in_ctxt );
 	CValueArray args = ctxt.GetAttribute(L"Arguments");
@@ -1860,17 +1873,6 @@ ESS_CALLBACK_START(alembic_import_Execute, CRef&)
    // clear all alembic user data
    alembic_UD::clearAll();
 
-   struct stackElement
-   {
-      Abc::IObject iObj;
-      CRef parentNode;
-
-      stackElement(Abc::IObject iObj):iObj(iObj)
-      {}
-      stackElement(Abc::IObject iObj, CRef parent):iObj(iObj), parentNode(parent)
-      {}
-
-   };
 
    CRef importRootNode = Application().GetActiveSceneRoot().GetRef();
    if(selectedObjects.GetCount() == 1)
@@ -1880,10 +1882,10 @@ ESS_CALLBACK_START(alembic_import_Execute, CRef&)
       //importRootNode = X3DObject( importRootNode ).GetRef();
    }
 
-   std::list<stackElement> sceneStack;
+   std::list<ImportStackElement> sceneStack;
 	for(size_t j=0; j<root.getNumChildren(); j++)
 	{
-      sceneStack.push_back(stackElement(root.getChild(j), importRootNode));
+      sceneStack.push_back(ImportStackElement(root.getChild(j), importRootNode));
 	} 
 
 
@@ -1891,7 +1893,7 @@ ESS_CALLBACK_START(alembic_import_Execute, CRef&)
    int i = 0;
    while( !sceneStack.empty() )
    {
-      stackElement sElement = sceneStack.back();
+      ImportStackElement sElement = sceneStack.back();
       Abc::IObject iObj = sElement.iObj;
       CRef parentNode(sElement.parentNode);
       sceneStack.pop_back();
@@ -1950,7 +1952,7 @@ ESS_CALLBACK_START(alembic_import_Execute, CRef&)
             //nodes must be pushed.
             if( nMergedGeomNodeIndex != j )
             {
-               sceneStack.push_back( stackElement(childObj, newNodeRef) );
+               sceneStack.push_back( ImportStackElement(childObj, newNodeRef) );
             }
 	      }
       }

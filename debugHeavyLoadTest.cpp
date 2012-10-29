@@ -68,8 +68,12 @@ SICALLBACK exocortex_run_test_Execute( CRef& in_ctxt )
 	time (&start);
 
 	CRef sceneRoot = Application().GetActiveSceneRoot().GetRef();
+
+   CString name = CString( L"test_root" );
+   CString path = CString( L"c:\fakepath.abc" );
+   CString identifier = CString( L"/path/to/my/object" );
 	int numNodes = CreateSubTreeWithNopCubes( sceneRoot,
-		CString( L"test_root" ), CString( L"c:\fakepath.abc" ), CString( L"/path/to/my/object" ),
+		name, path, identifier,
 		4, 5, 2 );
 	
 	time (&end);
