@@ -287,7 +287,7 @@ XSI::CStatus AlembicCurves::Save(double time)
       CPointRefArray emitterPointRefArray(emitterGeo.GetPoints());
       CLongArray emitterPntIndex;
 
-	  vector<Abc::int32_t> faceIndices;
+	  std::vector<Abc::int32_t> faceIndices;
 
       if( !SIObject(emitterPrimRef).GetType().IsEqualNoCase(L"polymsh"))
       {
