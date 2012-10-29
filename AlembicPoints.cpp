@@ -7,17 +7,6 @@
 
 #include <sstream>
 
-MFnInstancer AlembicPoints::getInstancer(void) const
-{
-  MSelectionList sl;
-  sl.add(instName);
-
-  MDagPath dagp;
-  sl.getDagPath(0, dagp);
-
-  return MFnInstancer(dagp);
-}
-
 bool AlembicPoints::listIntanceNames(std::vector<std::string> &names)
 {
   MDagPathArray allPaths;
@@ -26,7 +15,13 @@ bool AlembicPoints::listIntanceNames(std::vector<std::string> &names)
     MIntArray pathIndices;
     MIntArray pathStartIndices;
     
-    getInstancer().allInstances( allPaths, allMatrices, pathStartIndices, pathIndices );
+    MSelectionList sl;
+    sl.add(instName);
+
+    MDagPath dagp;
+    sl.getDagPath(0, dagp);
+
+    MFnInstancer(dagp).allInstances( allPaths, allMatrices, pathStartIndices, pathIndices );
   }
 
   names.resize(allPaths.length());
@@ -50,7 +45,14 @@ bool AlembicPoints::sampleInstanceProperties( std::vector<Abc::Quatf> angularVel
   int nbParticles;
   {
     MDagPathArray allPaths;
-    MFnInstancer inst = getInstancer();
+
+    MSelectionList sl;
+    sl.add(instName);
+
+    MDagPath dagp;
+    sl.getDagPath(0, dagp);
+
+    MFnInstancer inst(dagp);
     inst.allInstances( allPaths, allMatrices, pathStartIndices, pathIndices );
     nbParticles = inst.particleCount();
   }
@@ -366,7 +368,9 @@ MStatus AlembicPointsNode::init(const MString &fileName, const MString &identifi
 
 static MVector quaternionToVector(const Abc::Quatf &qf)
 {
-  const float deg = (float)( acos(qf.r) * (360.0f / M_PI) );
+  const float deg = (float)( acos(qf.r) * (360.0 / M_PI) );
+  if (deg < 0.1f)
+    return MVector::zero;
   Abc::V3f v = qf.v.normalized();
   return MVector(v.x * deg, v.y * deg, v.z * deg);
 }
