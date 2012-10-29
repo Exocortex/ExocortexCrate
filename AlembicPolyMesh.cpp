@@ -148,55 +148,55 @@ MStatus AlembicPolyMesh::Save(double time)
 
          for(unsigned int uvSetIndex = 0; uvSetIndex < uvSetNames.length(); uvSetIndex++)
          {
-			const MString &uvSetName = uvSetNames[uvSetIndex];
-			if (uvSetName == MString(""))  {
-				EC_LOG_ERROR( "Skipping uv set as name is empty" );
-				continue;
-			}
+			    const MString &uvSetName = uvSetNames[uvSetIndex];
+			    if (uvSetName == MString(""))  {
+				    EC_LOG_ERROR( "Skipping uv set as name is empty" );
+				    continue;
+			    }
 
-			MFloatArray uValues, vValues;
-			status = node.getUVs(uValues, vValues, &uvSetName );
-			if (status != MS::kSuccess) {
-				EC_LOG_ERROR( "Skipping uv set named " << uvSetName.asChar() << " as node.getUVs() failed" );
-				continue;
-			}
+			    MFloatArray uValues, vValues;
+			    status = node.getUVs(uValues, vValues, &uvSetName );
+			    if (status != MS::kSuccess) {
+				    EC_LOG_ERROR( "Skipping uv set named " << uvSetName.asChar() << " as node.getUVs() failed" );
+				    continue;
+			    }
 
-			if ( uValues.length() != vValues.length() ) {
-				EC_LOG_ERROR( "Skipping uv set named " << uvSetName.asChar() << " as uValues.length() != vValues.length() failed" );
-				continue;
-			}
+			    if ( uValues.length() != vValues.length() ) {
+				    EC_LOG_ERROR( "Skipping uv set named " << uvSetName.asChar() << " as uValues.length() != vValues.length() failed" );
+				    continue;
+			    }
 
-			if ( uValues.length() == 0 ) {
-				EC_LOG_ERROR( "Skipping uv set named " << uvSetName.asChar() << " as uValues.length() == 0" );
-				continue;
-			}
+			    if ( uValues.length() == 0 ) {
+				    EC_LOG_ERROR( "Skipping uv set named " << uvSetName.asChar() << " as uValues.length() == 0" );
+				    continue;
+			    }
 
-			MIntArray uvCounts, uvIds;
-			status = node.getAssignedUVs(uvCounts, uvIds, &uvSetName);
-			if (status != MS::kSuccess) {
-				EC_LOG_ERROR( "Skipping uv set named " << uvSetName.asChar() << " as node.getAssignedUVs() failed" );
-				continue;
-			}
+			    MIntArray uvCounts, uvIds;
+			    status = node.getAssignedUVs(uvCounts, uvIds, &uvSetName);
+			    if (status != MS::kSuccess) {
+				    EC_LOG_ERROR( "Skipping uv set named " << uvSetName.asChar() << " as node.getAssignedUVs() failed" );
+				    continue;
+			    }
 
-			unsigned int faceVertexCount = (unsigned int)mSampleLookup.size();
-			if(uvIds.length() != faceVertexCount) {
-				EC_LOG_ERROR( "Skipping uv set named " << uvSetName.asChar() << " as uvIds.length() != faceVertexCount failed" );
-				continue;
-			}
+			    unsigned int faceVertexCount = (unsigned int)mSampleLookup.size();
+			    if(uvIds.length() != faceVertexCount) {
+				    EC_LOG_ERROR( "Skipping uv set named " << uvSetName.asChar() << " as uvIds.length() != faceVertexCount failed" );
+				    continue;
+			    }
 
-			indexedUVSet.push_back( IndexedUVs() );
-			IndexedUVs &indexedUVs = indexedUVSet.back();
+			    indexedUVSet.push_back( IndexedUVs() );
+			    IndexedUVs &indexedUVs = indexedUVSet.back();
 
-			indexedUVs.name = std::string( uvSetName.asChar() );
-			for (int i = 0; i < (int) uValues.length(); ++i)
-				indexedUVs.values.push_back( Abc::V2f( uValues[i], vValues[i] ) );
+			    indexedUVs.name = std::string( uvSetName.asChar() );
+			    for (int i = 0; i < (int) uValues.length(); ++i)
+				    indexedUVs.values.push_back( Abc::V2f( uValues[i], vValues[i] ) );
 
-			indexedUVs.indices.resize(uvIds.length());
-			for (int i = 0; i < (int) uvIds.length(); ++i)
-			   indexedUVs.indices[mSampleLookup[i]] = uvIds[i];
-		 }
+			    indexedUVs.indices.resize(uvIds.length());
+			    for (int i = 0; i < (int) uvIds.length(); ++i)
+			       indexedUVs.indices[mSampleLookup[i]] = uvIds[i];
+		    }
 
- 		 saveIndexedUVs( mSchema, mSample, uvSample, mUvParams, GetJob()->GetAnimatedTs(), mNumSamples, indexedUVSet );
+ 		  saveIndexedUVs( mSchema, mSample, uvSample, mUvParams, GetJob()->GetAnimatedTs(), mNumSamples, indexedUVSet );
 
 	  }
 
