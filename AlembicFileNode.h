@@ -1,7 +1,6 @@
 #ifndef _ALEMBIC_FILENODE_H_
 #define _ALEMBIC_FILENODE_H_
 
-#include "Foundation.h"
 #include "AlembicObject.h"
 
 class AlembicFileNode: public AlembicObjectNode

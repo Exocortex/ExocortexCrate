@@ -1,3 +1,4 @@
+#include "stdafx.h"
 #include "AlembicGetNodeFromIdentifier.h"
 
 AlembicGetNodeFromIdentifierCommand::AlembicGetNodeFromIdentifierCommand()

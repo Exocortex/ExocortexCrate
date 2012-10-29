@@ -1,5 +1,5 @@
 
-project ( Maya${Maya_VERSION}ExocortexAlembic${alembic_VERSION} ) 
+project ( Maya${Maya_VERSION}ExocortexAlembic${crate_VERSION} ) 
 
 INCLUDE(../../ExocortexAlembicShared/ExocortexCMakeShared.txt)
 
@@ -8,6 +8,7 @@ if( Exocortex_SERVICES OR Exocortex_RLM_ONLY )
 	include_directories( ${Exocortex_INCLUDE_DIR} )
 endif()
 
+add_definitions( -Dcrate_Maya_Version=${Maya_VERSION} )
 add_definitions( "-DEXOCORTEX_BETA_EXPIRY_DATE=1350670231" )	# 1350670231 - October 19, 2012
 
 SET( Maya_DIR_ROOT ${LIBRARY_ROOT}/Maya/${Maya_VERSION} )
@@ -28,8 +29,9 @@ file(GLOB_RECURSE UI ${BASE_DIR}/UI/*.*)
 SOURCE_GROUP("Source Files" FILES ${Sources})   
 SOURCE_GROUP("Header Files" FILES ${Includes})
 SOURCE_GROUP("_MEL" FILES ${Scripts})
-SOURCE_GROUP("_UI" FILES ${UI})
+SOURCE_GROUP("_UI" FILES ${UI}) 
 
+setup_precompiled_header( ${BASE_DIR} ${Sources} )
 
 IF( WIN32 )
 

@@ -1,8 +1,6 @@
 #ifndef _ALEMBIC_GETINFO_H_
 #define _ALEMBIC_GETINFO_H_
 
-#include "Foundation.h"
-
 class AlembicGetInfoCommand : public MPxCommand
 {
   public:

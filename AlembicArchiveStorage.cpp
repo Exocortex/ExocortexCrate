@@ -1,10 +1,7 @@
+#include "stdafx.h"
 #include "AlembicArchiveStorage.h"
-#include <map>
-#include <boost/algorithm/string.hpp>
 #include "AlembicLicensing.h"
-#include <maya/MFileIO.h>
 #include "CommonLog.h"
-
 
 
 std::string resolvePath_Internal(std::string originalPath)

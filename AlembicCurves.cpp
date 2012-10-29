@@ -1,9 +1,7 @@
+#include "stdafx.h"
 #include "AlembicCurves.h"
-#include <maya/MFnNurbsCurveData.h>
-#include "MetaData.h"
-#include <maya/MPoint.h>
-#include <maya/MPointArray.h>
 
+#include "MetaData.h"
 
 
 AlembicCurves::AlembicCurves(const MObject & in_Ref, AlembicWriteJob * in_Job)

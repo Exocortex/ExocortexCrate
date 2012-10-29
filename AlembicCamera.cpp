@@ -1,7 +1,7 @@
+#include "stdafx.h"
 #include "AlembicCamera.h"
 #include "MetaData.h"
 
-#include <maya/MFnCamera.h>
 
 
 

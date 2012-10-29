@@ -1,3 +1,4 @@
+#include "stdafx.h"
 #include "AlembicTimeControl.h"
 
 MObject AlembicTimeControlNode::mTimeAttr;

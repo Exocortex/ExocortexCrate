@@ -1,8 +1,6 @@
 #ifndef _ALEMBIC_GETNODEFROMIDENTIFIER_H_
 #define _ALEMBIC_GETNODEFROMIDENTIFIER_H_
 
-#include "Foundation.h"
-
 class AlembicGetNodeFromIdentifierCommand : public MPxCommand
 {
   public:

@@ -1,8 +1,6 @@
 #ifndef _ALEMBIC_OBJECT_H_
 #define _ALEMBIC_OBJECT_H_
 
-#include "Foundation.h"
-
 class AlembicWriteJob;
 class AlembicObject;
 

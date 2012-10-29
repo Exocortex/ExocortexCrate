@@ -1,4 +1,4 @@
-#include "Foundation.h"
+#include "stdafx.h"
 #include "AlembicWriteJob.h"
 #include "AlembicGetInfo.h"
 #include "AlembicGetNodeFromIdentifier.h"
@@ -14,10 +14,6 @@
 #include "MetaData.h"
 #include "AlembicValidateNameCmd.h"
 
-#include <maya/MFnPlugin.h>
-#include <maya/MSceneMessage.h>
-
-#include <sstream>
 
 // IDs issues for this plugin are: 
 // 0x0011A100 - 0x0011A1FF

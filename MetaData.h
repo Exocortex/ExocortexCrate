@@ -1,7 +1,6 @@
 #ifndef _METADATA_H_
 #define _METADATA_H_
 
-#include "Foundation.h"
 #include "AlembicObject.h"
 
 bool SaveMetaData(AlembicObject * obj);

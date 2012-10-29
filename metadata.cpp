@@ -1,3 +1,4 @@
+#include "stdafx.h"
 #include "MetaData.h"
 
 bool SaveMetaData(AlembicObject * obj)

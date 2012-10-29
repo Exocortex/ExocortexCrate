@@ -1,5 +1,5 @@
+#include "stdafx.h"
 #include "AlembicObject.h"
-#include <boost/algorithm/string.hpp>
 
 
 AlembicObject::AlembicObject

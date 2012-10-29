@@ -1,8 +1,6 @@
-#include <time.h>
-#include <string>
-#include <sstream>
-#include "Foundation.h"
+#include "stdafx.h"
 #include "AlembicLicensing.h"
+
 
 using namespace std;
 
