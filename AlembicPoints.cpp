@@ -1,11 +1,6 @@
+#include "stdafx.h"
 #include "AlembicPoints.h"
 #include "MetaData.h"
-#include <maya/MVectorArray.h>
-#include <maya/MFnArrayAttrsData.h>
-#include <maya/MSelectionList.h>
-#include <maya/MMatrixArray.h>
-
-#include <sstream>
 
 bool AlembicPoints::listIntanceNames(std::vector<std::string> &names)
 {
