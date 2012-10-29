@@ -62,12 +62,12 @@ bool AlembicPoints::sampleInstanceProperties( std::vector<Abc::Quatf> angularVel
   shapeType.resize(nbParticles, 7);
   shapeTime.resize(nbParticles, mNumSamples);
 
-  MQuaternion quat;
+  float matrix_data[4][4];
   for (int i = 0; i < nbParticles; ++i)
   {
     angularVel[i] = Abc::Quatf();     // don't know how to access this one yet!
-    quat = allMatrices[i];
-    orientation[i] = Abc::Quatf(quat.w, quat.x, quat.y, quat.z);
+    allMatrices[i].get(matrix_data);
+    orientation[i] = Imath::extractQuat(Imath::M44f(matrix_data));
     shapeId[i] = pathIndices[pathStartIndices[i]];  // only keep the first one...
   }
 
