@@ -167,7 +167,7 @@ MStatus AlembicPoints::Save(double time)
    for(unsigned int i=0;i<vectors.length();i++)
    {
       const MVector &out = vectors[i];
-      Alembic::Abc::v4::V3f  &in  = velVec[i];
+      Alembic::Abc::v4::V3f &in  = velVec[i];
       in.x = (float)out.x;
       in.y = (float)out.y;
       in.z = (float)out.z;
