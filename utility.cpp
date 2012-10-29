@@ -231,9 +231,9 @@ std::string alembicTypeToString(ALEMBIC_TYPE at)
     return "Group";
   default:
   case AT_UNKNOWN:
-    return "";
+    return "Unknown";
   };
-  return "";
+  return "Unknown";
 }
 
 MString getTypeFromObject(Abc::IObject object)

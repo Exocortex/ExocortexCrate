@@ -25,6 +25,7 @@
 #include <maya/MFnDagNode.h>
 #include <maya/MFnDependencyNode.h>
 #include <maya/MFnGenericAttribute.h>
+#include <maya/MFnInstancer.h>
 #include <maya/MFnIntArrayData.h>
 #include <maya/MFnMatrixData.h>
 #include <maya/MFnMeshData.h>
@@ -44,12 +45,14 @@
 #include <maya/MItMeshPolygon.h>
 #include <maya/MItSubdVertex.h>
 #include <maya/MMatrix.h>
+#include <maya/MMatrixArray.h>
 #include <maya/MObject.h>
 #include <maya/MObjectArray.h>
 #include <maya/MPlug.h>
 #include <maya/MPlugArray.h>
 #include <maya/MPoint.h>
 #include <maya/MPointArray.h>
+#include <maya/MProgressWindow.h>
 #include <maya/MPxCommand.h>
 #include <maya/MPxDeformerNode.h>
 #include <maya/MPxEmitterNode.h>
@@ -66,7 +69,6 @@
 #include <maya/MTransformationMatrix.h>
 #include <maya/MVector.h>
 #include <maya/MVectorArray.h>
-
 
 
 #include "Utility.h"

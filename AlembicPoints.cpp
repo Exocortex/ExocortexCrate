@@ -2,12 +2,82 @@
 #include "AlembicPoints.h"
 #include "MetaData.h"
 
+MFnInstancer AlembicPoints::getInstancer(void) const
+{
+  MSelectionList sl;
+  sl.add(instName);
+
+  MDagPath dagp;
+  sl.getDagPath(0, dagp);
+
+  return MFnInstancer(dagp);
+}
+
+bool AlembicPoints::listIntanceNames(std::vector<std::string> &names)
+{
+  MDagPathArray allPaths;
+  {
+    MMatrixArray allMatrices;
+    MIntArray pathIndices;
+    MIntArray pathStartIndices;
+    
+    getInstancer().allInstances( allPaths, allMatrices, pathStartIndices, pathIndices );
+  }
+
+  names.resize(allPaths.length());
+  for (int i = 0; i < allPaths.length(); ++i)
+  {
+    std::stringstream ss;
+    ss << "/" << allPaths[i].partialPathName();
+    names[i] = ss.str();
+  }
+  mInstanceNamesProperty.set(Abc::StringArraySample(names));
+  return true;
+}
+
+bool AlembicPoints::sampleInstanceProperties( std::vector<Abc::Quatf> angularVel,    std::vector<Abc::Quatf> orientation,
+                                              std::vector<Abc::v4::uint16_t> shapeId, std::vector<Abc::v4::uint16_t> shapeType,
+                                              std::vector<Abc::float32_t> shapeTime)
+{
+  MMatrixArray allMatrices;
+  MIntArray pathIndices;
+  MIntArray pathStartIndices;
+  int nbParticles;
+  {
+    MDagPathArray allPaths;
+    MFnInstancer inst = getInstancer();
+    inst.allInstances( allPaths, allMatrices, pathStartIndices, pathIndices );
+    nbParticles = inst.particleCount();
+  }
+
+  // resize vectors!
+  angularVel.resize(nbParticles);
+  orientation.resize(nbParticles);
+  shapeId.resize(nbParticles);
+  shapeType.resize(nbParticles, 7);
+  shapeTime.resize(nbParticles, mNumSamples);
+
+  float matrix_data[4][4];
+  for (int i = 0; i < nbParticles; ++i)
+  {
+    angularVel[i] = Abc::Quatf();     // don't know how to access this one yet!
+    allMatrices[i].get(matrix_data);
+    orientation[i] = Imath::extractQuat(Imath::M44f(matrix_data));
+    shapeId[i] = pathIndices[pathStartIndices[i]];  // only keep the first one...
+  }
+
+  mAngularVelocityProperty.set(Abc::QuatfArraySample(angularVel));
+  mOrientationProperty.set(Abc::QuatfArraySample(orientation));
+  mShapeInstanceIdProperty.set(Abc::UInt16ArraySample(shapeId));
+  mShapeTimeProperty.set(Abc::FloatArraySample(shapeTime));
+  mShapeTypeProperty.set(Abc::UInt16ArraySample(shapeType));
+  return true;
+}
 
 AlembicPoints::AlembicPoints(const MObject & in_Ref, AlembicWriteJob * in_Job)
-: AlembicObject(in_Ref, in_Job)
+: AlembicObject(in_Ref, in_Job), hasInstancer(false), instName("")
 {
    MFnDependencyNode node(in_Ref);
-   //MString name = GetUniqueName(truncateName(node.name()));
    MString name = GetUniqueName(node.name());
    mObject = AbcG::OPoints(GetParentObject(),name.asChar(),GetJob()->GetAnimatedTs());
 
@@ -17,18 +87,21 @@ AlembicPoints::AlembicPoints(const MObject & in_Ref, AlembicWriteJob * in_Job)
    mMassProperty = Abc::OFloatArrayProperty(mSchema.getArbGeomParams(), ".mass", mSchema.getMetaData(), GetJob()->GetAnimatedTs() );
    mColorProperty = Abc::OC4fArrayProperty(mSchema.getArbGeomParams(), ".color", mSchema.getMetaData(), GetJob()->GetAnimatedTs() );
 
-   /*
-   // create all properties
-   mInstancenamesProperty = OStringArrayProperty(mSchema.getArbGeomParams(), ".instancenames", mSchema.getMetaData(), GetJob()->GetAnimatedTs() );
+   mAngularVelocityProperty = Abc::OQuatfArrayProperty  (mSchema.getArbGeomParams(), ".angularvelocity", mSchema.getMetaData(), GetJob()->GetAnimatedTs() );
+   mInstanceNamesProperty   = Abc::OStringArrayProperty (mSchema.getArbGeomParams(), ".instancenames", mSchema.getMetaData(), GetJob()->GetAnimatedTs() );
+   mOrientationProperty     = Abc::OQuatfArrayProperty  (mSchema.getArbGeomParams(), ".orientation", mSchema.getMetaData(), GetJob()->GetAnimatedTs() );
+   mScaleProperty           = Abc::OV3fArrayProperty    (mSchema.getArbGeomParams(), ".scale", mSchema.getMetaData(), GetJob()->GetAnimatedTs() );
+   mShapeInstanceIdProperty = Abc::OUInt16ArrayProperty (mSchema.getArbGeomParams(), ".shapeinstanceid", mSchema.getMetaData(), GetJob()->GetAnimatedTs() );
+   mShapeTimeProperty       = Abc::OFloatArrayProperty  (mSchema.getArbGeomParams(), ".shapetime", mSchema.getMetaData(), GetJob()->GetAnimatedTs() );
+   mShapeTypeProperty       = Abc::OUInt16ArrayProperty (mSchema.getArbGeomParams(), ".shapetype", mSchema.getMetaData(), GetJob()->GetAnimatedTs() );
 
-   // particle attributes
-   mScaleProperty = OV3fArrayProperty(mSchema.getArbGeomParams(), ".scale", mSchema.getMetaData(), GetJob()->GetAnimatedTs() );
-   mOrientationProperty = OQuatfArrayProperty(mSchema.getArbGeomParams(), ".orientation", mSchema.getMetaData(), GetJob()->GetAnimatedTs() );
-   mAngularVelocityProperty = OQuatfArrayProperty(mSchema.getArbGeomParams(), ".angularvelocity", mSchema.getMetaData(), GetJob()->GetAnimatedTs() );
-   mShapeTypeProperty = OUInt16ArrayProperty(mSchema.getArbGeomParams(), ".shapetype", mSchema.getMetaData(), GetJob()->GetAnimatedTs() );
-   mShapeTimeProperty = OFloatArrayProperty(mSchema.getArbGeomParams(), ".shapetime", mSchema.getMetaData(), GetJob()->GetAnimatedTs() );
-   mShapeInstanceIDProperty = OUInt16ArrayProperty(mSchema.getArbGeomParams(), ".shapeinstanceid", mSchema.getMetaData(), GetJob()->GetAnimatedTs() );
-   */
+   MStringArray instancers;
+   MGlobal::executeCommand("listConnections -t instancer " + node.name(), instancers);
+   if (instancers.length() == 1)
+   {
+     hasInstancer = true;
+     instName = instancers[0];
+   }
 }
 
 AlembicPoints::~AlembicPoints()
@@ -59,17 +132,30 @@ MStatus AlembicPoints::Save(double time)
    if(globalCache)
       globalXfo = GetGlobalMatrix(GetRef());
 
+   // instance names, scale,
+   std::vector<Abc::V3f> scales;
+   std::vector<std::string> instanceNames;
+   if (hasInstancer && mNumSamples == 0)
+   {
+     scales.push_back(Abc::V3f(1.0f, 1.0f, 1.0f));
+     mScaleProperty.set(Abc::V3fArraySample(scales));
+
+     listIntanceNames(instanceNames);
+   }
+
    // push the positions to the bbox
    size_t particleCount = vectors.length();
    std::vector<Abc::V3f> posVec(particleCount);
    for(unsigned int i=0;i<vectors.length();i++)
    {
-      posVec[i].x = (float)vectors[i].x;
-      posVec[i].y = (float)vectors[i].y;
-      posVec[i].z = (float)vectors[i].z;
+      const MVector &out = vectors[i];
+      Alembic::Abc::v4::V3f  &in  = posVec[i];
+      in.x = (float)out.x;
+      in.y = (float)out.y;
+      in.z = (float)out.z;
       if(globalCache)
-         globalXfo.multVecMatrix(posVec[i],posVec[i]);
-      bbox.extendBy(posVec[i]);
+         globalXfo.multVecMatrix(in, in);
+      bbox.extendBy(in);
    }
    vectors.clear();
 
@@ -78,11 +164,13 @@ MStatus AlembicPoints::Save(double time)
    std::vector<Abc::V3f> velVec(particleCount);
    for(unsigned int i=0;i<vectors.length();i++)
    {
-      velVec[i].x = (float)vectors[i].x;
-      velVec[i].y = (float)vectors[i].y;
-      velVec[i].z = (float)vectors[i].z;
+      const MVector &out = vectors[i];
+      Alembic::Abc::v4::V3f  &in  = velVec[i];
+      in.x = (float)out.x;
+      in.y = (float)out.y;
+      in.z = (float)out.z;
       if(globalCache)
-         globalXfo.multDirMatrix(velVec[i],velVec[i]);
+         globalXfo.multDirMatrix(in, in);
    }
    vectors.clear();
 
@@ -125,12 +213,13 @@ MStatus AlembicPoints::Save(double time)
       node.opacity(doubles);
       for(unsigned int i=0;i<doubles.length();i++)
       {
-         colorVec[i].r = (float)vectors[i].x;
-         colorVec[i].g = (float)vectors[i].y;
-         colorVec[i].b = (float)vectors[i].z;
-         colorVec[i].a = (float)doubles[i];
+         const MVector &out = vectors[i];
+         Imath::C4f &in = colorVec[i];
+         in.r = (float)out.x;
+         in.g = (float)out.y;
+         in.b = (float)out.z;
+         in.a = (float)doubles[i];
       }
-
       vectors.clear();
       doubles.clear();
    }
@@ -146,13 +235,19 @@ MStatus AlembicPoints::Save(double time)
    mMassProperty.set(Abc::FloatArraySample(massVec));
    mColorProperty.set(Abc::C4fArraySample(colorVec));
 
+   //--- instancing!!
+   std::vector<Abc::Quatf> angularVel, orientation;
+   std::vector<Abc::v4::uint16_t> shapeId, shapeType;
+   std::vector<Abc::float32_t> shapeTime;
+   if (hasInstancer)
+     sampleInstanceProperties(angularVel, orientation, shapeId, shapeType, shapeTime);
+
    // save the sample
    mSchema.set(mSample);
    mNumSamples++;
 
    return MStatus::kSuccess;
 }
-
 
 static AlembicPointsNodeList alembicPointsNodeList;
 
@@ -280,12 +375,12 @@ MStatus AlembicPointsNode::compute(const MPlug & plug, MDataBlock & dataBlock)
    MStatus status;
 
    // from the maya api examples (ownerEmitter.cpp)
-	int multiIndex = plug.logicalIndex( &status );
-	MArrayDataHandle hOutArray = dataBlock.outputArrayValue( mOutput, &status);
-	MArrayDataBuilder bOutArray = hOutArray.builder( &status );
-	MDataHandle hOut = bOutArray.addElement(multiIndex, &status);
-	MFnArrayAttrsData fnOutput;
-	MObject dOutput = fnOutput.create ( &status );
+	 int multiIndex = plug.logicalIndex( &status );
+	 MArrayDataHandle hOutArray = dataBlock.outputArrayValue( mOutput, &status);
+	 MArrayDataBuilder bOutArray = hOutArray.builder( &status );
+	 MDataHandle hOut = bOutArray.addElement(multiIndex, &status);
+	 MFnArrayAttrsData fnOutput;
+	 MObject dOutput = fnOutput.create ( &status );
 
    MPlugArray  connectionArray;
    plug.connectedTo(connectionArray, false, true, &status);
@@ -298,7 +393,7 @@ MStatus AlembicPointsNode::compute(const MPlug & plug, MDataBlock & dataBlock)
 
    // update the frame number to be imported
    double inputTime = dataBlock.inputValue(mTimeAttr).asTime().as(MTime::kSeconds);
-   const MString &fileName = dataBlock.inputValue(mFileNameAttr).asString();
+   const MString &fileName   = dataBlock.inputValue(mFileNameAttr).asString();
    const MString &identifier = dataBlock.inputValue(mIdentifierAttr).asString();
 
    // check if we have the file
@@ -413,41 +508,53 @@ MStatus AlembicPointsNode::compute(const MPlug & plug, MDataBlock & dataBlock)
    // if we need to emit new particles, do that now
    if(particleCount > 0)
    {
+      const bool validVel = sampleVel && sampleVel->get();
+      const bool validCol = sampleColor && sampleColor->get();
+      const bool validAge = sampleAge && sampleAge->get();
+      const bool validMas = sampleMass && sampleMass->get();
+      const bool validSid = sampleShapeInstanceID && sampleShapeInstanceID->get();
+      const bool validOri = sampleOrientation && sampleOrientation->get();
       for(unsigned int i=0;i<particleCount;i++)
       {
-         positions[i].x = samplePos->get()[i].x;
-         positions[i].y = samplePos->get()[i].y;
-         positions[i].z = samplePos->get()[i].z;
-
-         if(sampleVel && sampleVel->get())
          {
-            velocities[i].x = sampleVel->get()[i].x;
-            velocities[i].y = sampleVel->get()[i].y;
-            velocities[i].z = sampleVel->get()[i].z;
+           const Alembic::Abc::V3f &out = samplePos->get()[i];
+           MVector &in = positions[i];
+           in.x = out.x;
+           in.y = out.y;
+           in.z = out.z;
+         }
+
+         if(validVel)
+         {
+            const Alembic::Abc::V3f &out = sampleVel->get()[i];
+            MVector &in = velocities[i];
+            in.x = out.x;
+            in.y = out.y;
+            in.z = out.z;
          }
 
          if(sampleInfo.alpha != 0.0)
-         {
             positions[i] += velocities[i] * sampleInfo.alpha;
-         }
 
-         if(sampleColor && sampleColor->get())
+         if(validCol)
          {
-            rgbs[i].x = sampleColor->get()[i].r;
-            rgbs[i].y = sampleColor->get()[i].g;
-            rgbs[i].z = sampleColor->get()[i].b;
-            opacities[i] = sampleColor->get()[i].a;
+            const Alembic::Abc::C4f &out = sampleColor->get()[i];
+            MVector &in = rgbs[i];
+            in.x = out.r;
+            in.y = out.g;
+            in.z = out.b;
+            opacities[i] = out.a;
          }
          else
          {
             rgbs[i] = MVector(0.0,0.0,0.0);
             opacities[i] = 1.0;
          }
-         
-         ages[i] = (sampleAge && sampleAge->get()) ? sampleAge->get()[i] : 0.0;
-         masses[i] = (sampleMass && sampleMass->get()) ? sampleMass->get()[i] : 1.0;
-         shapeInstId[i] = (sampleShapeInstanceID && sampleShapeInstanceID->get()) ? sampleShapeInstanceID->get()[i] : 0.0;
-         orientationPP[i] = (sampleOrientation && sampleOrientation->get()) ? quaternionToVector( sampleOrientation->get()[i] ) : MVector::zero;
+
+         ages[i]          = validAge ? sampleAge->get()[i] : 0.0;
+         masses[i]        = validMas ? sampleMass->get()[i] : 1.0;
+         shapeInstId[i]   = validSid ? sampleShapeInstanceID->get()[i] : 0.0;
+         orientationPP[i] = validOri ? quaternionToVector( sampleOrientation->get()[i] ) : MVector::zero;
       }
    }
 
@@ -480,13 +587,12 @@ void AlembicPointsNode::instanceInitialize(void)
       return;
   }
 
-  const size_t lastSample = mSchema.getNumSamples()-1;
   {
     Abc::IUInt16ArrayProperty propShapeT;
     if( !getArbGeomParamPropertyAlembic( obj, "shapetype", propShapeT ) )
       return;
 
-    Abc::UInt16ArraySamplePtr sampleShapeT = propShapeT.getValue(lastSample);
+    Abc::UInt16ArraySamplePtr sampleShapeT = propShapeT.getValue(propShapeT.getNumSamples()-1);
     if (!sampleShapeT || sampleShapeT->size() <= 0 || sampleShapeT->get()[0] != 7)
       return;
   }
@@ -496,7 +602,7 @@ void AlembicPointsNode::instanceInitialize(void)
   if(!getArbGeomParamPropertyAlembic( obj, "instancenames", propInstName ) )
     return;
 
-  Abc::StringArraySamplePtr instNames = propInstName.getValue(lastSample);
+  Abc::StringArraySamplePtr instNames = propInstName.getValue(propInstName.getNumSamples()-1);
   const int nbNames = (int) instNames->size();
   if (nbNames < 1)
     return;

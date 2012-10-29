@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "AlembicGetInfo.h"
 #include "CommonMeshUtilities.h"
+#include <maya/MProgressWindow.h>
 
 
 using namespace std;
@@ -105,16 +106,34 @@ MStatus AlembicGetInfoCommand::doIt(const MArgList & args)
    objects.push_back(archive->getTop());
    infoVector.push_back(infoTuple());
 
+   MProgressWindow::reserve();
+   MProgressWindow::setTitle("AlembicGetInfo");
+   MProgressWindow::setInterruptable(true);
+   MProgressWindow::setProgressRange(0, 500000);
+   MProgressWindow::setProgress(0);
+
    // loop over all children and collect identifiers
    int idx = 0;
    MStringArray identifiers;
-   for(size_t i=0; !objects.empty(); ++i)
+   bool processStopped = false;
+   MProgressWindow::startProgress();
+   for(size_t i=0; !processStopped && !objects.empty(); ++i)
    {
       Abc::IObject iObj = objects.front();
       objects.pop_front();
       const int nbChild = (int) iObj.getNumChildren();
       for(size_t j=0; j<nbChild; ++j)
       {
+         if (idx % 50 == 0)
+         {
+           if (MProgressWindow::isCancelled())
+           {
+             processStopped = true;
+             break;
+           }
+           MProgressWindow::advanceProgress(50);
+         }
+
          Abc::IObject child = iObj.getChild(j);
          objects.push_back(child);
          ++idx;
@@ -184,13 +203,34 @@ MStatus AlembicGetInfoCommand::doIt(const MArgList & args)
       }
    }
 
-   // remove the ref of the archive
-   delRefArchive(fileName);
-   for (std::deque<infoTuple>::const_iterator beg = infoVector.begin(); beg != infoVector.end(); ++beg)
+   if (!processStopped)
    {
-     if (beg->valid)
-      identifiers.append(beg->toInfo());
+     // remove the ref of the archive
+     delRefArchive(fileName);
+     int interrupt = 20;
+     for (std::deque<infoTuple>::const_iterator beg = infoVector.begin(); beg != infoVector.end(); ++beg, --interrupt)
+     {
+       if (interrupt == 0)
+       {
+         interrupt = 20;
+         if (MProgressWindow::isCancelled())
+         {
+           processStopped = true;
+           break;
+         }
+       }
+       MProgressWindow::advanceProgress(1);
+       if (beg->valid)
+         identifiers.append(beg->toInfo());
+     }
    }
+
+   if (processStopped)
+   {
+     MGlobal::displayInfo("Alembic import halted!");
+     identifiers.clear();
+   }
+   MProgressWindow::endProgress();
 
    // set the return value
    setResult(identifiers);

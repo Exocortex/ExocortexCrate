@@ -3,11 +3,15 @@
 
 #include "AlembicObject.h"
 #include <maya/MFnParticleSystem.h>
+#include <maya/MFnInstancer.h>
 #include <list>
 
 class AlembicPoints: public AlembicObject
 {
 private:
+   bool hasInstancer;
+   MString instName;
+
    AbcG::OPoints mObject;
    AbcG::OPointsSchema mSchema;
    AbcG::OPointsSchema::Sample mSample;
@@ -16,19 +20,18 @@ private:
    Abc::OFloatArrayProperty mMassProperty;
    Abc::OC4fArrayProperty mColorProperty;
 
-   /*
-   // instance lookups
-   Abc::OStringArrayProperty mInstancenamesProperty;
-   std::vector<std::string> mInstanceNames;
-   std::map<unsigned long,size_t> mInstanceMap;
-
-   Abc::OV3fArrayProperty mScaleProperty;
-   Abc::OQuatfArrayProperty mOrientationProperty;
    Abc::OQuatfArrayProperty mAngularVelocityProperty;
-   Abc::OUInt16ArrayProperty mShapeTypeProperty;
+   Abc::OStringArrayProperty mInstanceNamesProperty;    // only written once, when mNumSample == 0
+   Abc::OQuatfArrayProperty mOrientationProperty;
+   Abc::OV3fArrayProperty mScaleProperty;
+   Abc::OUInt16ArrayProperty mShapeInstanceIdProperty; 
    Abc::OFloatArrayProperty mShapeTimeProperty;
-   Abc::OUInt16ArrayProperty mShapeInstanceIDProperty;
-   */
+   Abc::OUInt16ArrayProperty mShapeTypeProperty;
+
+   // instancing functions
+   MFnInstancer getInstancer(void) const;
+   bool listIntanceNames(std::vector<std::string> &names);
+   bool sampleInstanceProperties(std::vector<Abc::Quatf> angularVel, std::vector<Abc::Quatf> orientation, std::vector<Abc::v4::uint16_t> shapeId, std::vector<Abc::v4::uint16_t> shapeType, std::vector<Abc::float32_t> shapeTime);
 
 public:
    AlembicPoints(const MObject & in_Ref, AlembicWriteJob * in_Job);

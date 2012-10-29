@@ -43,15 +43,24 @@ global proc string exocortexCreateOrReuseNode(string $name, string $type, int $i
       }
     }
   }
-  
+
   if($result == "" && $onlyReuse == 0)
   {
     //print ("creating new node "+$name+" of type "+$type+"\n");
     $result = `createNode -name $name $type`;
+    string $res[];
+    tokenize $result "|" $res;
+    if (size($res) == 1)
+    {
+      string $pp[] = `listRelatives -p $result`;
+      if (size($pp) > 0)
+        $result = ($pp[0] + "|") + $result;   // make sure to have a full name. So it won't be confused with other node with the same name!!
+    }
+    ExocortexAlembic_profileEnd -f MEL_exocortexCreateOrReuseNode;
+    return $result;
   }
-    
-  ExocortexAlembic_profileEnd -f MEL_exocortexCreateOrReuseNode;
 
+  ExocortexAlembic_profileEnd -f MEL_exocortexCreateOrReuseNode;
   return $result;
 }
 
