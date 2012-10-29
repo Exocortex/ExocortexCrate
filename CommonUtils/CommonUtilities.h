@@ -243,27 +243,27 @@ void getMergeInfo( Alembic::AbcGeom::IObject& iObj, bool& bCreateNullNode, int& 
 
 int prescanAlembicHierarchy(Alembic::AbcGeom::IObject root, std::vector<std::string>& nodes, std::map<std::string, bool>& map);
 
+template<class S>
+struct cia_map_key
+{
+ Alembic::Abc::int32_t vid;
+ S data;
+
+ cia_map_key(const Alembic::Abc::int32_t &_vid, const S &_data): vid(_vid), data(_data) {}
+
+ bool operator < ( const cia_map_key & other) const
+ {
+   if (vid == other.vid)
+     return data < other.data;
+   return vid < other.vid;
+ }
+};
+
 //Alembic::Abc::N3f
 //SortableV3f
 template <class T, class S> void createIndexedArray(const std::vector<Alembic::Abc::int32_t> &faceIndicesVec, const std::vector<T>& inputVec, std::vector<T>& outputVec, std::vector<Alembic::Abc::uint32_t>& outputIndices)
 {  
-  struct map_key
-  {
-    Alembic::Abc::int32_t vid;
-    S data;
-
-    map_key(const Alembic::Abc::int32_t &_vid, const S &_data): vid(_vid), data(_data) {}
-
-    bool operator < ( const map_key & other) const
-    {
-      if (vid == other.vid)
-        return data < other.data;
-      return vid < other.vid;
-    }
-  };
-
-  std::map<map_key, size_t> normalMap;
-  std::map<map_key, size_t>::const_iterator it;
+  std::map<cia_map_key<S>, size_t> normalMap;
 
   outputIndices.resize(inputVec.size());
   outputVec.clear();
@@ -271,10 +271,9 @@ template <class T, class S> void createIndexedArray(const std::vector<Alembic::A
   // loop over all data
   for(size_t i=0; i<inputVec.size(); ++i)
   {
-    map_key mkey(faceIndicesVec[i], inputVec[i]);
-    it = normalMap.find(mkey);
-    if (it != normalMap.end())    // the pair <vertexId, S> was found, let reuse it's index!
-      outputIndices[i] = (Alembic::Abc::uint32_t) it->second;
+    cia_map_key<S> mkey(faceIndicesVec[i], inputVec[i]);
+    if (normalMap.find(mkey) != normalMap.end())    // the pair <vertexId, S> was found, let reuse it's index!
+      outputIndices[i] = (Alembic::Abc::uint32_t) normalMap.find(mkey)->second;
     else
     {
       const int map_size = (int) normalMap.size();

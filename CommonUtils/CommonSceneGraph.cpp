@@ -1,26 +1,28 @@
 #include "CommonSceneGraph.h"
 #include "CommonLog.h"
 
+struct PrintStackElement
+{
+   exoNodePtr eNode;
+   int level;
+   PrintStackElement(exoNodePtr enode, int l):eNode(enode), level(l)
+   {}
+};
+
 void printSceneGraph(exoNodePtr root)
 {
-   struct stackElement
-   {
-      exoNodePtr eNode;
-      int level;
-      stackElement(exoNodePtr enode, int l):eNode(enode), level(l)
-      {}
-   };
+ 
 
    ESS_LOG_WARNING("ExoSceneGraph Begin");
 
-   std::list<stackElement> sceneStack;
+   std::list<PrintStackElement> sceneStack;
    
-   sceneStack.push_back(stackElement(root, 0));
+   sceneStack.push_back(PrintStackElement(root, 0));
 
    while( !sceneStack.empty() )
    {
 
-      stackElement sElement = sceneStack.back();
+      PrintStackElement sElement = sceneStack.back();
       exoNodePtr eNode = sElement.eNode;
       sceneStack.pop_back();
 
@@ -28,7 +30,7 @@ void printSceneGraph(exoNodePtr root)
          //<<" - identifer: "<<eNode->dccIdentifier);
 
       for( std::list<exoNodePtr>::iterator it = eNode->children.begin(); it != eNode->children.end(); it++){
-         sceneStack.push_back(stackElement(*it, sElement.level+1));
+         sceneStack.push_back(PrintStackElement(*it, sElement.level+1));
       }
    }
 
@@ -46,23 +48,24 @@ bool hasExtractableTransform( SceneNode::nodeTypeE type )
       type == SceneNode::PARTICLES;
 }
 
+struct SelectChildrenStackElement
+{
+   exoNodePtr eNode;
+   bool bSelectChildren;
+   SelectChildrenStackElement(exoNodePtr enode, bool selectChildren):eNode(enode), bSelectChildren(selectChildren)
+   {}
+};
 void selectNodes(exoNodePtr root, SceneNode::SelectionT selectionMap, bool bSelectParents, bool bChildren, bool bSelectShapeNodes)
 {
-   struct stackElement
-   {
-      exoNodePtr eNode;
-      bool bSelectChildren;
-      stackElement(exoNodePtr enode, bool selectChildren):eNode(enode), bSelectChildren(selectChildren)
-      {}
-   };
 
-   std::list<stackElement> sceneStack;
+
+   std::list<SelectChildrenStackElement> sceneStack;
    
-   sceneStack.push_back(stackElement(root, false));
+   sceneStack.push_back(SelectChildrenStackElement(root, false));
 
    while( !sceneStack.empty() )
    {
-      stackElement sElement = sceneStack.back();
+      SelectChildrenStackElement sElement = sceneStack.back();
       exoNodePtr eNode = sElement.eNode;
       sceneStack.pop_back();
 
@@ -100,7 +103,7 @@ void selectNodes(exoNodePtr root, SceneNode::SelectionT selectionMap, bool bSele
       }
 
       for( std::list<exoNodePtr>::iterator it = eNode->children.begin(); it != eNode->children.end(); it++){
-         sceneStack.push_back(stackElement(*it, bSelected));
+         sceneStack.push_back(SelectChildrenStackElement(*it, bSelected));
       }
    }
 

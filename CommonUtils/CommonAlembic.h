@@ -68,4 +68,8 @@ namespace Abc = ::Alembic::Abc::ALEMBIC_VERSION_NS;
 namespace AbcG = ::Alembic::AbcGeom::ALEMBIC_VERSION_NS;
 namespace AbcU = ::Alembic::Util::ALEMBIC_VERSION_NS;
 
+#include "CommonOS.h"
+#include "CommonLog.h"
+#include "CommonProfiler.h"
+
 #endif // __COMMON_ALEMBIC_H
