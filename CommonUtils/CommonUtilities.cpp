@@ -599,27 +599,37 @@ void getMergeInfo( Alembic::AbcGeom::IObject& iObj, bool& bCreateNullNode, int& 
 //}
 
 
+struct AlembicSelectionStackElement
+{
+   Alembic::Abc::IObject iObj;
+   bool bSelected;
+
+   AlembicSelectionStackElement(Alembic::Abc::IObject obj, bool selected):iObj(obj), bSelected(selected)
+   {}
+};
+
 
 //returns the number of nodes
-int prescanAlembicHierarchy(Alembic::AbcGeom::IObject root, std::vector<std::string>& nodes, std::map<std::string, bool>& map)
+int prescanAlembicHierarchy(Alembic::AbcGeom::IObject root, std::vector<std::string>& nodes, std::map<std::string, bool>& map, bool bIncludeChildren)
 {
    for(int i=0; i<nodes.size(); i++){
       boost::to_upper(nodes[i]);
    }
 
-   std::vector<Alembic::Abc::IObject> sceneStack;
-   sceneStack.reserve(200);
+   std::list<AlembicSelectionStackElement> sceneStack;
 
 	for(size_t j=0; j<root.getNumChildren(); j++){
-      sceneStack.push_back(root.getChild(j));
+      sceneStack.push_back(AlembicSelectionStackElement(root.getChild(j), false));
 	} 
 
    int nNumNodes = 0;
    while( !sceneStack.empty() )
    {
-      Alembic::Abc::IObject iObj = sceneStack.back();
+      AlembicSelectionStackElement sElement = sceneStack.back();
+      Alembic::Abc::IObject iObj = sElement.iObj;
+      bool bSelected = sElement.bSelected;
       sceneStack.pop_back();
-      
+
       nNumNodes++;
 
       bool bCreateNullNode = false;
@@ -639,22 +649,39 @@ int prescanAlembicHierarchy(Alembic::AbcGeom::IObject root, std::vector<std::str
          fullname = iObj.getFullName();
       }
 
-      boost::to_upper(name);
+     
 
-      for(int i=0; i<nodes.size(); i++){
-         if( name.find( nodes[i] ) != std::string::npos ){
-            std::vector<std::string> parts;
-		      boost::split(parts, fullname, boost::is_any_of("/"));
+      bool bSelectChildren = false;
 
-            std::string nodeName;
-            for(int j=1; j<parts.size(); j++){
-               nodeName += "/";
-               nodeName += parts[j];
-               map[nodeName] = true;
+      if(bSelected){
+         map[fullname] = true;
+         bSelectChildren = true;
+      }
+      else{
+          boost::to_upper(name);
+         for(int i=0; i<nodes.size(); i++){
+            
+            const char* cstrName = name.c_str();
+            const char* cstrNode = nodes[i].c_str(); 
+
+            if( name.find( nodes[i] ) != std::string::npos ){
+               if(bIncludeChildren){
+                  bSelectChildren = true;              
+               }
+
+               std::vector<std::string> parts;
+		         boost::split(parts, fullname, boost::is_any_of("/"));
+
+               std::string nodeName;
+               for(int j=1; j<parts.size(); j++){
+                  nodeName += "/";
+                  nodeName += parts[j];
+                  map[nodeName] = true;
+               }
             }
          }
       }
-	   
+
       //push the children as the last step, since we need to who the parent is first (we may have merged)
       for(size_t j=0; j<iObj.getNumChildren(); j++)
       {
@@ -667,7 +694,7 @@ int prescanAlembicHierarchy(Alembic::AbcGeom::IObject root, std::vector<std::str
          //A geometry node can't be combined with its transform node, the transform node has other tranform nodes as children. These
          //nodes must be pushed.
          if( nMergedGeomNodeIndex != j ){
-            sceneStack.push_back(childObj);
+            sceneStack.push_back(AlembicSelectionStackElement(childObj, bSelectChildren));
          }
       }  
    }
