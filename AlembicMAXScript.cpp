@@ -492,10 +492,10 @@ int ExocortexAlembicStaticInterface_ExocortexAlembicImportJobs( CONST_2013 MCHAR
 
       
 
-      //nodesToImport.push_back(std::string("Sphere 001"));
+      //nodesToImport.push_back(std::string("null1"));
 
       std::map<std::string, bool> nodeFullPaths;
-		int totalAlembicItems = prescanAlembicHierarchy(root, nodesToImport, nodeFullPaths);
+		int totalAlembicItems = prescanAlembicHierarchy(root, nodesToImport, nodeFullPaths, false);
 
 		char szBuffer[1000];
 		sprintf_s( szBuffer, 1000, "Importing %i Alembic Streams", totalAlembicItems );

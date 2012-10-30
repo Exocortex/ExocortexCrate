@@ -111,7 +111,12 @@ int importAlembicScene(AbcG::IObject& root, alembic_importoptions &options, std:
       bool bCreateNode = true;
 
       if(!nodeFullPaths.empty()){
-         bCreateNode = nodeFullPaths[fullname];         
+         if(mergedGeomNodeIndex != -1){
+            bCreateNode = nodeFullPaths.find(mergedGeomChild.getFullName()) != nodeFullPaths.end(); 
+         }
+         else{
+            bCreateNode = nodeFullPaths.find(fullname) != nodeFullPaths.end(); 
+         }
       }
 
       if(bCreateNode){
