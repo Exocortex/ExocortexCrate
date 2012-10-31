@@ -16,20 +16,6 @@ proc extractInfos(string $infos[], string $identifiers[], string $types[], strin
     string $type = $tokens[1];
     string $name = $tokens[2];
     string $node = `ExocortexAlembic_getNodeFromIdentifier -i $identifier`;
-    
-    // try to find the identifier in the map
-    int $skip = 0;
-    for($j=0;$j<size($identifiers);$j=$j+1)
-    {
-      if($identifiers[$j] == $identifier)
-      {
-        print("Skipping duplicate identifier "+$identifier+".");
-        $skip = 1;
-        break;
-      }
-    }
-    if($skip)
-      break;
 
     // push the identifier to our map      
     $identifiers[size($identifiers)] = $identifier;

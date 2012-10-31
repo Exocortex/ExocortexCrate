@@ -49,7 +49,7 @@ global proc string exocortexCreateOrReuseNode(string $name, string $type, int $i
     // be sure that all the namespaces exist!
     string $nspaces[];
     tokenize $name ":" $nspaces;
-    if (size($nspace) > 1)
+    if (size($nspaces) > 1)
     {
       // first one...
       string $accum = $nspaces[0];
