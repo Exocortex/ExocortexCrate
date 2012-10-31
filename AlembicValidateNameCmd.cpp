@@ -37,7 +37,7 @@ MStatus AlembicValidateNameCommand::doIt(const MArgList& args)
 
   MString id = argData.flagArgumentString("identifier",0);
   std::string identifier(id.asChar());
-  identifier = removeInvalidCharacter(identifier);
+  identifier = removeInvalidCharacter(identifier, true);
   setResult(identifier.c_str());
   return MS::kSuccess;
 }

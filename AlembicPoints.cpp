@@ -616,7 +616,7 @@ void AlembicPointsNode::instanceInitialize(void)
     {
       const std::string res = instNames->get()[i];
       if (res.length() > 0)
-        addObjectCmd += _obj + removeInvalidCharacter(res).c_str();
+        addObjectCmd += _obj + removeInvalidCharacter(res, true).c_str();
     }
     addObjectCmd += " ";
   }

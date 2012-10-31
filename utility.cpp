@@ -40,7 +40,7 @@ std::string getIdentifierFromRef(const MObject & in_Ref)
    return result;
 }
 
-std::string removeInvalidCharacter(const std::string &str)
+std::string removeInvalidCharacter(const std::string &str, bool keepSemi)
 {
   std::string ret;
   const int len = (int) str.size();
@@ -49,7 +49,7 @@ std::string removeInvalidCharacter(const std::string &str)
     const char c = str[i];
     if (c == ' ' || c == '_')
       ret.append(1, '_');
-    else if ((c >= '0' && c <= '9') || (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z'))
+    else if ((c >= '0' && c <= '9') || (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || (keepSemi && c == ':'))
       ret.append(1, c);
   }
   return ret;

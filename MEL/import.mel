@@ -46,7 +46,28 @@ global proc string exocortexCreateOrReuseNode(string $name, string $type, int $i
 
   if($result == "" && $onlyReuse == 0)
   {
-    //print ("creating new node "+$name+" of type "+$type+"\n");
+    // be sure that all the namespaces exist!
+    string $nspaces[];
+    tokenize $name ":" $nspaces;
+    if (size($nspace) > 1)
+    {
+      // first one...
+      string $accum = $nspaces[0];
+      if (`namespace -exists $accum` == 0)
+        namespace -add $accum;
+
+      // create the remaining ones!
+      string $accum = $nspaces[0];
+      for ($i = 1; $i < size($nspaces)-1; $i = $i + 1)
+      {
+        string $curAccum = $accum + ":" + $nspaces[$i];
+        if (`namespace -exists $curAccum` == 0)
+          namespace -add $nspaces[$i] -p $accum;
+        $accum = $curAccum;
+      }
+    }
+
+    // create the node!
     $result = `createNode -name $name $type`;
     string $res[];
     tokenize $result "|" $res;
