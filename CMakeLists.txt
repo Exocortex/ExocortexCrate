@@ -37,8 +37,11 @@ link_directories( "${Arnold_BASE_DIR}/lib" )
 
 add_library( ${PROJECT_NAME} SHARED ${Sources} ${Includes})
 TARGET_LINK_LIBRARIES( ${PROJECT_NAME}
-	${ALEMBIC_CORE_LIBS} ${ALEMBIC_ILMBASE_LIBS} ${ALEMBIC_ZLIB_LIBS} ${ALEMBIC_HDF5_LIBS}
-	${Boost_LIBRARIES} ${Rlm_LIBRARIES} ${Arnold_LIBRARIES} CommonUtils )
+	CommonUtils
+	${Rlm_LIBRARIES}
+   ${Arnold_LIBRARIES}
+   ${ALL_ALEMBIC_LIBS}
+   )
 	
 ADD_DEPENDENCIES(${PROJECT_NAME} AlembicAbcGeom)
 
