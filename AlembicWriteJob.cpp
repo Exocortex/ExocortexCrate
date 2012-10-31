@@ -128,7 +128,7 @@ CStatus AlembicWriteJob::PreProcess()
    try
    {
       mArchive = CreateArchiveWithInfo(
-		  Alembic::AbcCoreHDF5::WriteArchive(),
+		  Alembic::AbcCoreHDF5::WriteArchive( true ),
             mFileName.GetAsciiString(),
             getExporterName( "Softimage " EC_QUOTE( crate_Softimage_Version ) ).c_str(),
 			getExporterFileName( sceneFileName.GetAsciiString() ).c_str(),
