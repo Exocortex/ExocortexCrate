@@ -421,7 +421,7 @@ PyObject * oArchive_new(PyObject * self, PyObject * args)
    {
       object->mArchive = new Abc::OArchive();
       *object->mArchive = CreateArchiveWithInfo(
-         Alembic::AbcCoreHDF5::WriteArchive(),
+         Alembic::AbcCoreHDF5::WriteArchive(  true ),
          fileName,
          getExporterName( "Python " EC_QUOTE( crate_Python_Version ) ).c_str(),
 		 getExporterFileName( "Unknown" ).c_str(),
