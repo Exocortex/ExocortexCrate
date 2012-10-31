@@ -217,7 +217,7 @@ MStatus AlembicPolyMesh::Save(double time)
              MPlug plug = node.findPlug(attr, true);
 
              // if it is not readable or not an array of integer, then bail without any more checking
-             if (!mfnAttr.isReadable() || mfnAttr.type() != MFn::kIntArrayData || plug.isNull())
+             if (!mfnAttr.isReadable() || /*mfnAttr.type() != MFn::kIntArrayData ||*/ plug.isNull())
                 continue;
 
              std::string propStr = propName.asChar();

@@ -16,4 +16,17 @@
     static void* creator() { return new AlembicValidateNameCommand(); }
   };
 
+  class AlembicAssignFacesetCommand : public MPxCommand
+  {
+  public:
+    AlembicAssignFacesetCommand() {}
+    virtual ~AlembicAssignFacesetCommand()  {}
+
+    virtual bool isUndoable() const { return false; }
+    MStatus doIt(const MArgList& args);
+
+    static MSyntax createSyntax();
+    static void* creator() { return new AlembicAssignFacesetCommand(); }
+  };
+
 #endif

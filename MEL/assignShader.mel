@@ -12,8 +12,14 @@ global proc __exocortexAlembicAssignMaterialFromFaceSet(string $shape, int $face
 
 global proc exocortexAlembicAssignMaterial(string $shape, string $faceSetAttribute, string $materialNode)
 {
+  //*
   int $faceSet[] = `getAttr ($shape+"."+$faceSetAttribute)`;
   __exocortexAlembicAssignMaterialFromFaceSet($shape, $faceSet, $materialNode);
+  /*/
+  string $sSet = `ExocortexAlembic_assignFaceSets -attribute $faceSetAttribute -mesh $shape`;
+  print("create set \"" + $sSet + "\n");
+  connectAttr -f ($materialNode + ".outColor") ($sSet + ".surfaceShader");
+  //*/
 }
 
 global proc exocortexAlembicAssignMaterialOfType(string $shape, string $faceSetAttribute, string $materialType)
