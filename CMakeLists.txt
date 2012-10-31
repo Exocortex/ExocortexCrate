@@ -54,9 +54,12 @@ endif()
 add_library( ${PROJECT_NAME} SHARED ${Sources} ${Includes})
 
 TARGET_LINK_LIBRARIES( ${PROJECT_NAME}
-	${ALEMBIC_CORE_LIBS} ${BOOST_LIBS} ${ALEMBIC_ILMBASE_LIBS} ${ALEMBIC_ZLIB_LIBS}
-	${ALEMBIC_HDF5_LIBS} ${Softimage_LIBRARIES} ${ExocortexSoftimage_LIBRARIES} ${Rlm_LIBRARIES} CommonUtils )
-	
+   CommonUtils 
+   ${Rlm_LIBRARIES}
+   ${Softimage_LIBRARIES}
+   ${ALL_ALEMBIC_LIBS}
+   )
+
 ADD_DEPENDENCIES(${PROJECT_NAME} AlembicAbcGeom)
 
 if( WIN32 )
