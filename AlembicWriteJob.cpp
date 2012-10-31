@@ -88,7 +88,7 @@ bool AlembicWriteJob::PreProcess()
     try
     {
         mArchive = CreateArchiveWithInfo(
-			Alembic::AbcCoreHDF5::WriteArchive(), 
+			Alembic::AbcCoreHDF5::WriteArchive( true ), 
 			mFileName.c_str(),
 			getExporterName( "3DS Max " EC_QUOTE( crate_Max_Version ) ).c_str(),
 			getExporterFileName( sceneFileName ).c_str(),
