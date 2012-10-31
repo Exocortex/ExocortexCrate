@@ -29,13 +29,12 @@ if( Exocortex_SERVICES OR Exocortex_RLM_ONLY )
 	link_directories( ${Rlm_LIBRARYDIR} )
 endif()
 
-LINK_LIBRARIES( ${ALEMBIC_CORE_LIBS}
-			  ${ALEMBIC_HDF5_LIBS}
-			  ${ALEMBIC_ZLIB_LIBS}
-			  ${Python_LIBS}
-			  ${Boost_LIBRARIES}
-			  ${ALEMBIC_ILMBASE_LIBS}
-			  ${ZLIB_LIBRARIES} ${Rlm_LIBRARIES} CommonUtils )
+LINK_LIBRARIES( CommonUtils
+   ${ALL_ALEMBIC_LIBS}
+   ${Python_LIBS}
+   ${Rlm_LIBRARIES}
+   ${ALL_ALEMBIC_LIBS}
+   )
 
 SET( Python_BASE_DIR ${LIBRARY_ROOT}/python/${Python_VERSION} )
 if( NOT EXISTS ${Python_BASE_DIR} )
