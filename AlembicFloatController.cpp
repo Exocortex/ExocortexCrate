@@ -76,7 +76,7 @@ void AlembicFloatController::GetValueLocalTime(TimeValue t, void *ptr, Interval 
 
 	Interval interval = FOREVER;
 
-    MCHAR const* strPath = NULL;
+   MCHAR const* strPath = NULL;
 	this->pblock->GetValue( AlembicFloatController::ID_PATH, t, strPath, interval);
 
 	MCHAR const* strIdentifier = NULL;
@@ -103,10 +103,9 @@ void AlembicFloatController::GetValueLocalTime(TimeValue t, void *ptr, Interval 
 		ESS_LOG_INFO("Param block end -------------");
 	}
 
-    if (bMuted || !strProperty)
-    {
-        return;
-    }
+   if (bMuted || !strProperty){
+      return;
+   }
 	
 	std::string szPath = EC_MCHAR_to_UTF8( strPath );
 	std::string szIdentifier = EC_MCHAR_to_UTF8( strIdentifier );
@@ -128,16 +127,16 @@ void AlembicFloatController::GetValueLocalTime(TimeValue t, void *ptr, Interval 
 		ESS_LOG_INFO("Camera object found.");
 	}
 
-    AbcG::ICamera objCamera = AbcG::ICamera(iObj, Abc::kWrapExisting);
+   AbcG::ICamera objCamera = AbcG::ICamera(iObj, Abc::kWrapExisting);
 
 	TimeValue dTicks = GetTimeValueFromSeconds( fTime );
-    double sampleTime = GetSecondsFromTimeValue(dTicks);
+   double sampleTime = GetSecondsFromTimeValue(dTicks);
 
 	SampleInfo sampleInfo = getSampleInfo(sampleTime,
                                           objCamera.getSchema().getTimeSampling(),
                                           objCamera.getSchema().getNumSamples());
-    AbcG::CameraSample sample;
-    objCamera.getSchema().get(sample, sampleInfo.floorIndex);
+   AbcG::CameraSample sample;
+   objCamera.getSchema().get(sample, sampleInfo.floorIndex);
 
 	if(g_bVerboseLogging){
 		ESS_LOG_INFO("dTicks: "<<dTicks<<" sampleTime: "<<sampleTime);
@@ -149,15 +148,15 @@ void AlembicFloatController::GetValueLocalTime(TimeValue t, void *ptr, Interval 
 		return;
 	}
 
-    // Blend the camera values, if necessary
-    if (sampleInfo.alpha != 0.0)
-    {
-        objCamera.getSchema().get(sample, sampleInfo.ceilIndex);
-		double sampleVal2 = 0.0;
-		if(getCameraSampleVal(objCamera, sampleInfo, sample, szProperty.c_str(), sampleVal2)){
-			sampleVal = (1.0 - sampleInfo.alpha) * sampleVal + sampleInfo.alpha * sampleVal2;
-		}
-    }
+   // Blend the camera values, if necessary
+   if (sampleInfo.alpha != 0.0)
+   {
+      objCamera.getSchema().get(sample, sampleInfo.ceilIndex);
+      double sampleVal2 = 0.0;
+      if(getCameraSampleVal(objCamera, sampleInfo, sample, szProperty.c_str(), sampleVal2)){
+         sampleVal = (1.0 - sampleInfo.alpha) * sampleVal + sampleInfo.alpha * sampleVal2;
+      }
+   }
 
 	const float fSampleVal = (float)sampleVal;
 
