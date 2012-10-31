@@ -55,6 +55,7 @@ add_library( ${PROJECT_NAME} SHARED ${Sources} ${Includes})
 
 TARGET_LINK_LIBRARIES( ${PROJECT_NAME}
    CommonUtils 
+   ${ExocortexSoftimage_LIBRARIES}
    ${Rlm_LIBRARIES}
    ${Softimage_LIBRARIES}
    ${ALL_ALEMBIC_LIBS}
