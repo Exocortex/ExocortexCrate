@@ -130,7 +130,7 @@ MStatus AlembicWriteJob::PreProcess()
             Alembic::AbcCoreHDF5::WriteArchive(  true  ),
             mFileName.asChar(),
             getExporterName( "Maya " EC_QUOTE( crate_Maya_Version ) ).c_str(),
-			getExporterFileName( sceneFileName.asChar() ).c_str(),
+			      getExporterFileName( sceneFileName.asChar() ).c_str(),
             Abc::ErrorHandler::kThrowPolicy);
    }
    catch(AbcU::Exception& e)

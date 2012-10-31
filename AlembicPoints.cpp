@@ -30,7 +30,7 @@ bool AlembicPoints::listIntanceNames(std::vector<std::string> &names)
   return true;
 }
 
-bool AlembicPoints::sampleInstanceProperties( std::vector<Abc::Quatf> angularVel,    std::vector<Abc::Quatf> orientation,
+bool AlembicPoints::sampleInstanceProperties( std::vector<Abc::Quatf> angularVel,     std::vector<Abc::Quatf> orientation,
                                               std::vector<Abc::v4::uint16_t> shapeId, std::vector<Abc::v4::uint16_t> shapeType,
                                               std::vector<Abc::float32_t> shapeTime)
 {
@@ -85,9 +85,9 @@ AlembicPoints::AlembicPoints(const MObject & in_Ref, AlembicWriteJob * in_Job)
 
    mSchema = mObject.getSchema();
 
-   mAgeProperty = Abc::OFloatArrayProperty(mSchema.getArbGeomParams(), ".age", mSchema.getMetaData(), GetJob()->GetAnimatedTs() );
-   mMassProperty = Abc::OFloatArrayProperty(mSchema.getArbGeomParams(), ".mass", mSchema.getMetaData(), GetJob()->GetAnimatedTs() );
-   mColorProperty = Abc::OC4fArrayProperty(mSchema.getArbGeomParams(), ".color", mSchema.getMetaData(), GetJob()->GetAnimatedTs() );
+   mAgeProperty   = Abc::OFloatArrayProperty(mSchema.getArbGeomParams(), ".age", mSchema.getMetaData(), GetJob()->GetAnimatedTs() );
+   mMassProperty  = Abc::OFloatArrayProperty(mSchema.getArbGeomParams(), ".mass", mSchema.getMetaData(), GetJob()->GetAnimatedTs() );
+   mColorProperty = Abc::OC4fArrayProperty  (mSchema.getArbGeomParams(), ".color", mSchema.getMetaData(), GetJob()->GetAnimatedTs() );
 
    mAngularVelocityProperty = Abc::OQuatfArrayProperty  (mSchema.getArbGeomParams(), ".angularvelocity", mSchema.getMetaData(), GetJob()->GetAnimatedTs() );
    mInstanceNamesProperty   = Abc::OStringArrayProperty (mSchema.getArbGeomParams(), ".instancenames", mSchema.getMetaData(), GetJob()->GetAnimatedTs() );
@@ -167,7 +167,7 @@ MStatus AlembicPoints::Save(double time)
    for(unsigned int i=0;i<vectors.length();i++)
    {
       const MVector &out = vectors[i];
-      Alembic::Abc::v4::V3f  &in  = velVec[i];
+      Alembic::Abc::v4::V3f &in  = velVec[i];
       in.x = (float)out.x;
       in.y = (float)out.y;
       in.z = (float)out.z;
@@ -363,10 +363,8 @@ MStatus AlembicPointsNode::init(const MString &fileName, const MString &identifi
 
 static MVector quaternionToVector(const Abc::Quatf &qf)
 {
-  const float deg = (float)( acos(qf.r) * (360.0 / M_PI) );
-  if (deg < 0.1f)
-    return MVector::zero;
-  Abc::V3f v = qf.v.normalized();
+  const float deg = qf.angle();
+  Abc::V3f v = qf.axis();
   return MVector(v.x * deg, v.y * deg, v.z * deg);
 }
 
@@ -379,7 +377,7 @@ MStatus AlembicPointsNode::compute(const MPlug & plug, MDataBlock & dataBlock)
    MStatus status;
 
    // from the maya api examples (ownerEmitter.cpp)
-	 int multiIndex = plug.logicalIndex( &status );
+	 const int multiIndex = plug.logicalIndex( &status );
 	 MArrayDataHandle hOutArray = dataBlock.outputArrayValue( mOutput, &status);
 	 MArrayDataBuilder bOutArray = hOutArray.builder( &status );
 	 MDataHandle hOut = bOutArray.addElement(multiIndex, &status);
@@ -618,7 +616,7 @@ void AlembicPointsNode::instanceInitialize(void)
     {
       const std::string res = instNames->get()[i];
       if (res.length() > 0)
-        addObjectCmd += _obj + removeInvalidCharacter(res).c_str();
+        addObjectCmd += _obj + removeInvalidCharacter(res, true).c_str();
     }
     addObjectCmd += " ";
   }
@@ -629,7 +627,7 @@ void AlembicPointsNode::instanceInitialize(void)
 
   MGlobal::executeCommand("particleInstancer " + particleShapeName, mInstancerName);
   const MString partInstCmd = "particleInstancer -e -name " + mInstancerName;
-  MGlobal::executeCommand(partInstCmd + " -rotationUnits Degrees -objectIndex shapeInstanceIdPP -rotation orientationPP " + particleShapeName);
+  MGlobal::executeCommand(partInstCmd + " -rotationUnits Radians -objectIndex shapeInstanceIdPP -rotation orientationPP " + particleShapeName);
   MGlobal::executeCommand(partInstCmd + addObjectCmd + particleShapeName);
 }
 
