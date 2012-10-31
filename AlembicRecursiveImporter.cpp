@@ -6,6 +6,7 @@
 #include "AlembicXformUtilities.h"
 #include "AlembicXformController.h"
 #include "AlembicCameraUtilities.h"
+#include "AlembicLightUtilities.h"
 #include "AlembicParticles.h"
 #include "SceneEnumProc.h"
 #include "AlembicDefinitions.h"
@@ -45,6 +46,11 @@ int createAlembicObject(AbcG::IObject& iObj, INode **pMaxNode, alembic_importopt
 	{
 		ESS_LOG_INFO( "AlembicImport_Shape: " << iObj.getFullName() );
 		ret = AlembicImport_Shape(file, iObj, options, pMaxNode);
+	}
+	else if (AbcG::ILight::matches(iObj.getMetaData())) // Light
+	{
+		ESS_LOG_INFO( "AlembicImport_Light: " << iObj.getFullName() );
+		ret = AlembicImport_Light(file, iObj, options, pMaxNode);
 	}
    else // NURBS
 	{
