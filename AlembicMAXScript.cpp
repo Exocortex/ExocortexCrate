@@ -416,6 +416,8 @@ int ExocortexAlembicStaticInterface_ExocortexAlembicImportJobs( CONST_2013 MCHAR
 	
       std::vector<std::string> nodesToImport;
 
+      bool bIncludeChildren = false;
+
 		std::vector<std::string> tokens;
 		boost::split(tokens, jobString, boost::is_any_of(";"));
 		for(int j=0; j<tokens.size(); j++){
@@ -447,6 +449,9 @@ int ExocortexAlembicStaticInterface_ExocortexAlembicImportJobs( CONST_2013 MCHAR
 			}
          else if(boost::iequals(valuePair[0], "filters")){  
 		      boost::split(nodesToImport, valuePair[1], boost::is_any_of(","));
+			}
+		   else if(boost::iequals(valuePair[0], "includeChildren")){
+            bIncludeChildren = parseBool(valuePair[1]);
 			}
 			else
 			{
@@ -495,7 +500,7 @@ int ExocortexAlembicStaticInterface_ExocortexAlembicImportJobs( CONST_2013 MCHAR
       //nodesToImport.push_back(std::string("null1"));
 
       std::map<std::string, bool> nodeFullPaths;
-		int totalAlembicItems = prescanAlembicHierarchy(root, nodesToImport, nodeFullPaths, false);
+		int totalAlembicItems = prescanAlembicHierarchy(root, nodesToImport, nodeFullPaths, bIncludeChildren);
 
 		char szBuffer[1000];
 		sprintf_s( szBuffer, 1000, "Importing %i Alembic Streams", totalAlembicItems );
