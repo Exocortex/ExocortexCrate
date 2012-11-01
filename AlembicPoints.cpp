@@ -638,6 +638,7 @@ AlembicPostImportPointsCommand::~AlembicPostImportPointsCommand(void)
 
 MStatus AlembicPostImportPointsCommand::doIt(const MArgList& args)
 {
+  ESS_PROFILE_SCOPE("AlembicPostImportPointsCommand::doIt");
   AlembicPointsNodeListIter beg = alembicPointsNodeList.begin(), end = alembicPointsNodeList.end();
   for (; beg != end; ++beg)
     (*beg)->instanceInitialize();

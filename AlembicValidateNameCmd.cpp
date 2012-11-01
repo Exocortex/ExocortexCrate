@@ -19,6 +19,8 @@ MSyntax AlembicValidateNameCommand::createSyntax()
 
 MStatus AlembicValidateNameCommand::doIt(const MArgList& args)
 {
+  ESS_PROFILE_SCOPE("AlembicValidateNameCommand::doIt");
+
   MStatus status;
   MArgParser argData(syntax(), args, &status);
 
@@ -58,6 +60,8 @@ MSyntax AlembicAssignFacesetCommand::createSyntax()
 
 MStatus AlembicAssignFacesetCommand::doIt(const MArgList& args)
 {
+  ESS_PROFILE_SCOPE("AlembicAssignFacesetCommand::doIt");
+
   MStatus status;
   MArgParser argData(syntax(), args, &status);
 
