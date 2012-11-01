@@ -159,14 +159,14 @@ global proc exocortexAlembicImport(string $filename, int $importNormals, int $im
       if($shape == "")
       {
         error ("Mesh '"+$name+"' not found for purepointcache alembic import.");
-	    ExocortexAlembic_profileEnd -f MEL_exocortexAlembicImport_PolyMesh;
+	      ExocortexAlembic_profileEnd -f MEL_exocortexAlembicImport_PolyMesh;
         return;
       }
       {
-		  ExocortexAlembic_profileBegin -f MEL_exocortexAlembicImport_PolyMesh_initialShadingGroup;
-	      sets -e -forceElement initialShadingGroup $shape;
-          ExocortexAlembic_profileEnd -f MEL_exocortexAlembicImport_PolyMesh_initialShadingGroup;
-	  }
+		    ExocortexAlembic_profileBegin -f MEL_exocortexAlembicImport_PolyMesh_initialShadingGroup;
+        sets -e -forceElement initialShadingGroup $shape;
+        ExocortexAlembic_profileEnd -f MEL_exocortexAlembicImport_PolyMesh_initialShadingGroup;
+	    }
       if($dynamictopology == 1)
         $reader = exocortexCreateOrReuseNode($name+".inMesh","ExocortexAlembicPolyMesh",$importAttach,1,1);
       else

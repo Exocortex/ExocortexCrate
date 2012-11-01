@@ -211,18 +211,18 @@ MStatus AlembicAssignInitialSGCommand::doIt(const MArgList& args)
 
   if (getObjectByName("initialShadingGroup", initShader) == MS::kSuccess && getDagPathByName(argData.flagArgumentString("mesh", 0), dagPath) == MS::kSuccess)
   {
+    ESS_PROFILE_SCOPE("AlembicAssignInitialSGCommand::doIt::MFnSet");
     MFnSet set(initShader);
     set.addMember(dagPath);
   }
   else
   {
     MString theError("Error getting adding ");
-    theError += dagNodeName;
+    theError += argData.flagArgumentString("mesh", 0);
     theError += MString(" to initalShadingGroup.");
     MGlobal::displayError(theError);
     return MS::kFailure;
   }
-
   return MS::kSuccess;
 }
 
