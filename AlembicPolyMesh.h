@@ -45,6 +45,7 @@ private:
    MString mIdentifier;
    Abc::IObject mObj;
    AbcG::IPolyMeshSchema mSchema;
+   bool mDynamicTopology;
    static MObject mNormalsAttr;
    static MObject mUvsAttr;
 
@@ -79,6 +80,7 @@ private:
    MString mIdentifier;
    Abc::IObject mObj;
    AbcG::IPolyMeshSchema mSchema;
+   bool mDynamicTopology;
 
    // members
    SampleInfo mLastSampleInfo;
