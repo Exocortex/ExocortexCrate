@@ -22,14 +22,14 @@ std::string buildIdentifierFromRef(const SceneEntry &in_Ref)
 
    // Build the base string
    result = std::string("/")+ std::string( EC_MCHAR_to_UTF8( pNode->GetName() ) ) + result;
-   result = std::string("/")+ std::string( EC_MCHAR_to_UTF8( pNode->GetName() ) ) + result;
+   result = std::string("/")+ std::string( EC_MCHAR_to_UTF8( pNode->GetName() ) ) + std::string("Xfo") + result;
 
    // Look for any nodes that we might add to the alembic hiearchy
    pNode = pNode->GetParentNode();
    while(pNode && !pNode->IsRootNode())
    {
        if (IsModelTransformNode(pNode))
-           result = std::string("/")+ std::string( EC_MCHAR_to_UTF8( pNode->GetName() ) ) + result;
+           result = std::string("/")+ std::string( EC_MCHAR_to_UTF8( pNode->GetName() ) ) + std::string("Xfo") + result;
        
        pNode = pNode->GetParentNode();
    }
@@ -470,6 +470,7 @@ public:
 				for(int i=nStart; i>=0; i--){
 					path+="/";
 					path+=pathNodeNames[i];
+					path+="Xfo";
 				}
 
 				path+="/";
