@@ -516,15 +516,14 @@ MStatus AlembicPointsNode::compute(const MPlug & plug, MDataBlock & dataBlock)
       const bool validMas = sampleMass && sampleMass->get();
       const bool validSid = sampleShapeInstanceID && sampleShapeInstanceID->get();
       const bool validOri = sampleOrientation && sampleOrientation->get();
+      const float timeAlpha = getTimeOffsetFromSchema( mSchema, sampleInfo );
       for(unsigned int i=0;i<particleCount;i++)
       {
-         {
-           const Alembic::Abc::V3f &out = samplePos->get()[i];
-           MVector &in = positions[i];
-           in.x = out.x;
-           in.y = out.y;
-           in.z = out.z;
-         }
+         const Alembic::Abc::V3f &pout = samplePos->get()[i];
+         MVector &pin = positions[i];
+         pin.x = pout.x;
+         pin.y = pout.y;
+         pin.z = pout.z;
 
          if(validVel)
          {
@@ -533,10 +532,9 @@ MStatus AlembicPointsNode::compute(const MPlug & plug, MDataBlock & dataBlock)
             in.x = out.x;
             in.y = out.y;
             in.z = out.z;
-         }
 
-         if(sampleInfo.alpha != 0.0)
-            positions[i] += velocities[i] * sampleInfo.alpha;
+            pin += in * timeAlpha;
+         }
 
          if(validCol)
          {
