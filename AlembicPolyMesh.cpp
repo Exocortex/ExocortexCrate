@@ -539,16 +539,20 @@ MStatus AlembicPolyMeshNode::compute(const MPlug & plug, MDataBlock & dataBlock)
       if(sampleInfo.alpha != 0.0)
       {
          Abc::P3fArraySamplePtr samplePos2 = sample2.getPositions();
-		 if( isTopologyDynamic ) {
-			 if( sampleVel != NULL ) {
-					float timeAlpha = getTimeOffsetFromSchema( mSchema, sampleInfo );
+		     if( isTopologyDynamic ) {
+			     if( sampleVel != NULL ) {
+					 const float timeAlpha = getTimeOffsetFromSchema( mSchema, sampleInfo );
 				   //ESS_LOG_WARNING( "timeAlpha: " << timeAlpha );
-				   if( sampleVel->size() == samplePos->size() ) {
+				   if( sampleVel->size() == samplePos->size() )
+           {
 					   for(unsigned int i=0;i< sampleVel->size();i++)
 					   {
-						   points[i].x = samplePos->get()[i].x + timeAlpha * sampleVel->get()[i].x;
-						   points[i].y = samplePos->get()[i].y + timeAlpha * sampleVel->get()[i].y;
-						   points[i].z = samplePos->get()[i].z + timeAlpha * sampleVel->get()[i].z;
+               MFloatPoint &point = points[i];
+               const Alembic::Abc::v4::V3f &pos = samplePos->get()[i];
+               const Alembic::Abc::v4::V3f &vel = sampleVel->get()[i];
+						   point.x = pos.x + timeAlpha * vel.x;
+						   point.y = pos.y + timeAlpha * vel.y;
+						   point.z = pos.z + timeAlpha * vel.z;
 						}
 					   done = true;
 				   }
@@ -561,9 +565,12 @@ MStatus AlembicPolyMeshNode::compute(const MPlug & plug, MDataBlock & dataBlock)
             float iblend = 1.0f - blend;
             for(unsigned int i=0;i<points.length();i++)
             {
-               points[i].x = samplePos->get()[i].x * iblend + samplePos2->get()[i].x * blend;
-               points[i].y = samplePos->get()[i].y * iblend + samplePos2->get()[i].y * blend;
-               points[i].z = samplePos->get()[i].z * iblend + samplePos2->get()[i].z * blend;
+               MFloatPoint &point = points[i];
+               const Alembic::Abc::v4::V3f &pos1 = samplePos->get()[i];
+               const Alembic::Abc::v4::V3f &pos2 = samplePos2->get()[i];
+               point.x = pos1.x * iblend + pos2.x * blend;
+               point.y = pos1.y * iblend + pos2.y * blend;
+               point.z = pos1.z * iblend + pos2.z * blend;
             }
             done = true;
          }
@@ -573,9 +580,11 @@ MStatus AlembicPolyMeshNode::compute(const MPlug & plug, MDataBlock & dataBlock)
       {
          for(unsigned int i=0;i<points.length();i++)
          {
-            points[i].x = samplePos->get()[i].x;
-            points[i].y = samplePos->get()[i].y;
-            points[i].z = samplePos->get()[i].z;
+            MFloatPoint &point = points[i];
+            const Alembic::Abc::v4::V3f &pos = samplePos->get()[i];
+            point.x = pos.x;
+            point.y = pos.y;
+            point.z = pos.z;
          }
       }
    }
@@ -606,8 +615,9 @@ MStatus AlembicPolyMeshNode::compute(const MPlug & plug, MDataBlock & dataBlock)
          //MString count,index;
          //count.set((double)counts[i]);
          //index.set((double)sampleIndices->get()[offset+j]);
-         mSampleLookup[offset+counts[i]-j-1] = offset+j;
-         indices[offset+j] = sampleIndices->get()[offset+counts[i]-j-1];
+         const int smpIdx = offset+counts[i]-j-1;
+         mSampleLookup[smpIdx] = offset+j;
+         indices[offset+j] = sampleIndices->get()[smpIdx];
 
          mNormalFaces[offset+j] = i;
          mNormalVertices[offset+j] = indices[offset+j];
