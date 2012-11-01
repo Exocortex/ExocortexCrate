@@ -194,7 +194,8 @@ global proc attachToExisting(string $filename, int $importNormals, int $importUv
         attachXform($name, $identifiers[$ii], $eaTimeFile);
       }
     }
-    else if ($overDeforms)
+
+    if ($overDeforms)
     {
       if($type == "PolyMesh")
       {
