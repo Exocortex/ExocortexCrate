@@ -13,9 +13,6 @@ SceneNode::nodeTypeE getNodeType(X3DObject& xObj)
    //   return SceneNode::SCENE_ROOT;
    //}
 
-   //ESS_LOG_WARNING("name: "<<xObj.GetName().GetAsciiString());
-   //ESS_LOG_WARNING("type: "<<xObj.GetType().GetAsciiString());
-
    CString xObj_GetType = xObj.GetType();
    if(xObj_GetType.IsEqualNoCase(L"#model")){
       return SceneNode::ITRANSFORM;
@@ -59,7 +56,8 @@ SceneNode::nodeTypeE getNodeType(X3DObject& xObj)
          return SceneNode::PARTICLES;
       }
    }
-
+   
+   ESS_LOG_WARNING("Unknown type of XSI node, name: "<<xObj.GetName().GetAsciiString()<<", type: "<<xObj.GetType().GetAsciiString());
    return SceneNode::UNKNOWN;
 }
 
