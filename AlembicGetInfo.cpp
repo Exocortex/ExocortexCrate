@@ -116,6 +116,7 @@ MStatus AlembicGetInfoCommand::doIt(const MArgList & args)
    int idx = 0;
    MStringArray identifiers;
    bool processStopped = false;
+   bool nameWarningShowed = false;
    MProgressWindow::startProgress();
    for(size_t i=0; !processStopped && !objects.empty(); ++i)
    {
@@ -161,6 +162,26 @@ MStatus AlembicGetInfoCommand::doIt(const MArgList & args)
              parentTuple.type = AT_Group;
            parentTuple.childID.push_back(idx);
          }
+
+         // check identifier names to be unique in hierarchy
+         bool nameChanged = false;
+         do
+         {
+           nameChanged = false;
+           int pid = i;
+           while (pid >= 0)
+           {
+             const infoTuple &parent = infoVector[pid];
+             if (parent.name == iTuple.name)
+             {
+               nameChanged = true;
+               iTuple.name += "Shape";
+               break;
+             }
+             pid = parent.parentID;
+           }
+         }
+         while (nameChanged);    // each time there's a confusion in the name, the process will repeat again to be sure everything is unique!
 
          // additional data fields
          MString data;
