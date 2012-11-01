@@ -31,7 +31,6 @@
 #include <maya/MFnMeshData.h>
 #include <maya/MFnNumericAttribute.h>
 #include <maya/MFnNurbsCurveData.h>
-#include <maya/MFnPlugin.h>
 #include <maya/MFnSet.h>
 #include <maya/MFnStringData.h>
 #include <maya/MFnSubdData.h>

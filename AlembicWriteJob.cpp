@@ -127,7 +127,7 @@ MStatus AlembicWriteJob::PreProcess()
    try
    {
       mArchive = CreateArchiveWithInfo(
-            Alembic::AbcCoreHDF5::WriteArchive(),
+            Alembic::AbcCoreHDF5::WriteArchive(  true  ),
             mFileName.asChar(),
             getExporterName( "Maya " EC_QUOTE( crate_Maya_Version ) ).c_str(),
 			      getExporterFileName( sceneFileName.asChar() ).c_str(),

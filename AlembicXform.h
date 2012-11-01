@@ -41,7 +41,7 @@ private:
    AbcG::IXformSchema mSchema;
    std::vector<double> mTimes;
    size_t mLastFloor;
-   std::vector<Abc::M44d> mMatrices;
+   std::map<int,Abc::M44d> mSampleIndicesToMatrices;
 
    // output attributes
    static MObject mOutTranslateXAttr;

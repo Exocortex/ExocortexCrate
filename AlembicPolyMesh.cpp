@@ -378,6 +378,7 @@ MObject AlembicPolyMeshNode::mOutGeometryAttr;
 
 MStatus AlembicPolyMeshNode::initialize()
 {
+   ESS_PROFILE_SCOPE("AlembicPolyMeshNode::initialize");
    MStatus status;
 
    MFnUnitAttribute uAttr;
@@ -885,6 +886,7 @@ MObject AlembicPolyMeshDeformNode::mIdentifierAttr;
 
 MStatus AlembicPolyMeshDeformNode::initialize()
 {
+   ESS_PROFILE_SCOPE("AlembicPolyMeshDeformNode::initialize");
    MStatus status;
 
    MFnUnitAttribute uAttr;
@@ -923,6 +925,7 @@ MStatus AlembicPolyMeshDeformNode::initialize()
 
 MStatus AlembicPolyMeshDeformNode::deform(MDataBlock & dataBlock, MItGeometry & iter, const MMatrix & localToWorld, unsigned int geomIndex)
 {
+   ESS_PROFILE_SCOPE("AlembicPolyMeshDeformNode::deform");
    MStatus status;
 
    // get the envelope data
@@ -1049,6 +1052,7 @@ MSyntax AlembicCreateFaceSetsCommand::createSyntax()
 
 MStatus AlembicCreateFaceSetsCommand::doIt(const MArgList & args)
 {
+   ESS_PROFILE_SCOPE("AlembicCreateFaceSetsCommand::doIt");
    MStatus status = MS::kSuccess;
    MArgParser argData(syntax(), args, &status);
 

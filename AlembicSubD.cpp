@@ -538,6 +538,7 @@ MStatus AlembicSubDDeformNode::initialize()
 
 MStatus AlembicSubDDeformNode::compute(const MPlug& plug, MDataBlock& dataBlock)
 {
+   ESS_PROFILE_SCOPE("AlembicSubDDeformNode::compute");
    if (plug.attribute() == outputGeom && mVertexLookup.size() == 0)
    {
       unsigned int index = plug.logicalIndex();
@@ -576,6 +577,7 @@ MStatus AlembicSubDDeformNode::compute(const MPlug& plug, MDataBlock& dataBlock)
 
 MStatus AlembicSubDDeformNode::deform(MDataBlock & dataBlock, MItGeometry & iter, const MMatrix & localToWorld, unsigned int geomIndex)
 {
+   ESS_PROFILE_SCOPE("AlembicSubDDeformNode::deform");
    // get the envelope data
    float env = dataBlock.inputValue( envelope ).asFloat();
    if(env == 0.0f) // deformer turned off

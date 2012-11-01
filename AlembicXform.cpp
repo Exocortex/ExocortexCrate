@@ -258,7 +258,7 @@ MStatus AlembicXformNode::initialize()
    status = attributeAffects(mIdentifierAttr, mOutScaleZAttr);
 
    return status;
-}
+} 
 
 MStatus AlembicXformNode::compute(const MPlug & plug, MDataBlock & dataBlock)
 {
@@ -273,6 +273,7 @@ MStatus AlembicXformNode::compute(const MPlug & plug, MDataBlock & dataBlock)
    // check if we have the file
    if(fileName != mFileName || identifier != mIdentifier)
    {
+	  ESS_PROFILE_SCOPE("AlembicXformNode::compute load ABC file");
       mSchema.reset();
       if(fileName != mFileName)
       {
@@ -289,13 +290,20 @@ MStatus AlembicXformNode::compute(const MPlug & plug, MDataBlock & dataBlock)
          MGlobal::displayWarning("[ExocortexAlembic] Identifier '"+identifier+"' not found in archive '"+mFileName+"'.");
          return MStatus::kFailure;
       }
-      AbcG::IXform obj(iObj,Abc::kWrapExisting);
+      AbcG::IXform obj;
+	  {
+		ESS_PROFILE_SCOPE("AlembicXformNode::compute AbcG::IXform()");
+		obj = AbcG::IXform(iObj,Abc::kWrapExisting);
+	  }
       if(!obj.valid())
       {
          MGlobal::displayWarning("[ExocortexAlembic] Identifier '"+identifier+"' in archive '"+mFileName+"' is not a Xform.");
          return MStatus::kFailure;
       }
-      mSchema = obj.getSchema();
+	  {
+		ESS_PROFILE_SCOPE("AlembicXformNode::compute obj.getSchema");
+	      mSchema = obj.getSchema();
+	  }
 
       if(!mSchema.valid())
          return MStatus::kFailure;
@@ -303,13 +311,15 @@ MStatus AlembicXformNode::compute(const MPlug & plug, MDataBlock & dataBlock)
       AbcG::XformSample sample;
       mLastFloor = 0;
       mTimes.clear();
-      mMatrices.clear();
-      for(size_t i=0;i<mSchema.getNumSamples();i++)
-      {
-         mTimes.push_back((double)mSchema.getTimeSampling()->getSampleTime(i));
-         mSchema.get(sample,i);
-         mMatrices.push_back(sample.getMatrix());
-      }
+      mSampleIndicesToMatrices.clear();
+	  {
+		ESS_PROFILE_SCOPE("AlembicXformNode::compute pre-load matrices");
+
+		  for(size_t i=0;i<mSchema.getNumSamples();i++)
+		  {
+			 mTimes.push_back((double)mSchema.getTimeSampling()->getSampleTime(i));
+		  }
+	  }
    }
 
    if(mTimes.size() == 0)
@@ -322,15 +332,37 @@ MStatus AlembicXformNode::compute(const MPlug & plug, MDataBlock & dataBlock)
    while(inputTime < mTimes[index] && index > 0)
       index--;
 
+   Abc::M44d matrixAtI;
+   Abc::M44d matrixAtIPlus1;
+
+   if( mSampleIndicesToMatrices.find(index) == mSampleIndicesToMatrices.end() ) {
+	    AbcG::XformSample sample;
+  		mSchema.get(sample,index);
+		matrixAtI = sample.getMatrix();
+		mSampleIndicesToMatrices.insert( std::map<int,Abc::M44d>::value_type( index, matrixAtI ) );		
+   }
+   else {
+	   matrixAtI = mSampleIndicesToMatrices[ index ];
+   }
+   if( ( index < mTimes.size() - 1 ) && mSampleIndicesToMatrices.find(index+ 1) == mSampleIndicesToMatrices.end() ) {
+	    AbcG::XformSample sample;
+  		mSchema.get(sample,index+ 1);
+		matrixAtIPlus1 = sample.getMatrix();
+		mSampleIndicesToMatrices.insert( std::map<int,Abc::M44d>::value_type( index+ 1, matrixAtIPlus1 ) );
+   }
+   else {
+		matrixAtIPlus1 = mSampleIndicesToMatrices[ index + 1 ];
+   }
+
    Abc::M44d matrix;
    if(fabs(inputTime - mTimes[index]) < 0.001 || index == 0 || index == mTimes.size()-1)
    {
-      matrix = mMatrices[index];
+      matrix = matrixAtI;
    }
    else
    {
       const double blend = (inputTime - mTimes[index]) / (mTimes[index+1] - mTimes[index]);
-      matrix = (1.0f - blend) * mMatrices[index] + blend * mMatrices[index+1];
+      matrix = (1.0f - blend) * matrixAtI + blend * matrixAtIPlus1;
    }
    mLastFloor = index;
 
@@ -346,16 +378,19 @@ MStatus AlembicXformNode::compute(const MPlug & plug, MDataBlock & dataBlock)
    double scale[3];
    transform.getScale(scale,MSpace::kTransform);
 
-   // output all channels
-   dataBlock.outputValue(mOutTranslateXAttr).setDouble(translation.x);
-   dataBlock.outputValue(mOutTranslateYAttr).setDouble(translation.y);
-   dataBlock.outputValue(mOutTranslateZAttr).setDouble(translation.z);
-   dataBlock.outputValue(mOutRotateXAttr).setMAngle(MAngle(rotation[0],MAngle::kRadians));
-   dataBlock.outputValue(mOutRotateYAttr).setMAngle(MAngle(rotation[1],MAngle::kRadians));
-   dataBlock.outputValue(mOutRotateZAttr).setMAngle(MAngle(rotation[2],MAngle::kRadians));
-   dataBlock.outputValue(mOutScaleXAttr).setDouble(scale[0]);
-   dataBlock.outputValue(mOutScaleYAttr).setDouble(scale[1]);
-   dataBlock.outputValue(mOutScaleZAttr).setDouble(scale[2]);
+   {
+		ESS_PROFILE_SCOPE("AlembicXformNode::compute outputValues");
+	   // output all channels
+	   dataBlock.outputValue(mOutTranslateXAttr).setDouble(translation.x);
+	   dataBlock.outputValue(mOutTranslateYAttr).setDouble(translation.y);
+	   dataBlock.outputValue(mOutTranslateZAttr).setDouble(translation.z);
+	   dataBlock.outputValue(mOutRotateXAttr).setMAngle(MAngle(rotation[0],MAngle::kRadians));
+	   dataBlock.outputValue(mOutRotateYAttr).setMAngle(MAngle(rotation[1],MAngle::kRadians));
+	   dataBlock.outputValue(mOutRotateZAttr).setMAngle(MAngle(rotation[2],MAngle::kRadians));
+	   dataBlock.outputValue(mOutScaleXAttr).setDouble(scale[0]);
+	   dataBlock.outputValue(mOutScaleYAttr).setDouble(scale[1]);
+	   dataBlock.outputValue(mOutScaleZAttr).setDouble(scale[2]);
+   }
 
    return status;
 }
