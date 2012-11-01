@@ -48,7 +48,13 @@ proc string[] createTimeControl(string $filename)
 
 proc attachTimeAndFile(string $node, string $eaTimeFile[])
 {
-  connectAttr ($eaTimeFile[0]+".outTime") ($node+".inTime");
+  string $connAttr = `connectionInfo -sfd ($node+".inTime")`;
+  if ($connAttr == "")
+    connectAttr ($eaTimeFile[0]+".outTime") ($node+".inTime");
+
+  $connAttr = `connectionInfo -sfd ($node+".fileName")`;
+  if ($connAttr != "")
+    disconnectAttr $connAttr ($node+".fileName");
   connectAttr ($eaTimeFile[1]+".outFileName") ($node+".fileName");
 }
 
@@ -88,10 +94,7 @@ proc attachPolyMeshDeformer(string $name, string $identifier, string $eaTimeFile
   // if it's already attach to a deform, simply change its file reference
   if (`objectType $polyObj` == "ExocortexAlembicPolyMeshDeform")
   {
-    string $polyObjFileName = $polyObj + ".fileName";
-    string $fileN = `connectionInfo -sfd $polyObjFileName`;
-    disconnectAttr $fileN $polyObjFileName;
-    connectAttr ($eaTimeFile[1]+".outFileName") $polyObjFileName;
+    attachTimeAndFile($polyObj, $eaTimeFile);
     return;
   }
 
@@ -129,10 +132,7 @@ proc attachSubDDeformer(string $name, string $identifier, string $eaTimeFile[], 
     // if it's already attach to a deform, simply change its file reference
     if (`objectType $polyObj` == "ExocortexAlembicSubDDeform")
     {
-      string $polyObjFileName = $polyObj + ".fileName";
-      string $fileN = `connectionInfo -sfd $polyObjFileName`;
-      disconnectAttr $fileN $polyObjFileName;
-      connectAttr ($eaTimeFile[1]+".outFileName") $polyObjFileName;
+      attachTimeAndFile($polyObj, $eaTimeFile);
     }
     else
       print("Cannot attach to " + $name + ", it's already attach to a deform node that is not an \"ExocortexAlembicSubDDeform\"");
@@ -209,7 +209,7 @@ global proc attachToExisting(string $filename, int $importNormals, int $importUv
           $eaTimeFile = createTimeControl($filename);
         attachSubDDeformer($name, $identifiers[$ii], $eaTimeFile, $importUvs, $importFaceSets);
       }
-      else
+      else if ($type != "Xform")
         print("Type \"" + $type + "\" not supported yet!");
     }
   }
