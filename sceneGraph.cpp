@@ -120,6 +120,7 @@ exoNodePtr buildCommonSceneGraph(XSI::X3DObject xsiRoot)
 
             exoChild->parent = eNode;
             exoChild->name = child.GetName().GetAsciiString();
+            exoChild->name += "Xfo";
             exoChild->type = SceneNode::ETRANSFORM;
             exoChild->dccIdentifier = child.GetFullName().GetAsciiString();
 

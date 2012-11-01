@@ -32,7 +32,7 @@ std::string AlembicObject::GetXfoName()
 {
    XSI::Primitive prim(GetRef());
    std::string modelName(prim.GetParent3DObject().GetName().GetAsciiString());
-   return std::string(modelName);
+   return std::string(modelName+"Xfo");
 }
 
 std::map<ULONG,alembic_UD*> alembic_UD::gAlembicUDs;
