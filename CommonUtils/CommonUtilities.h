@@ -13,6 +13,22 @@ struct SampleInfo
    double alpha;
 };
 
+
+struct AlembicObjectInfo
+{
+	AlembicObjectInfo() {
+		numSamples = -1;
+		isMeshPointCache = -1;
+		isMeshTopoDynamic = -1;
+	}
+
+	Alembic::Abc::IObject obj;
+	int numSamples;
+	int isMeshPointCache;
+	int isMeshTopoDynamic;
+	std::vector<std::string> childIdentifiers;
+};
+
 struct ArchiveInfo
 {
    std::string path;
@@ -20,6 +36,8 @@ struct ArchiveInfo
 
 std::string getExporterName( std::string shortName );
 std::string getExporterFileName( std::string fileName );
+
+AlembicObjectInfo* getObjectInfoFromArchive(std::string path, std::string identifier);
 
 Alembic::Abc::IArchive * getArchiveFromID(std::string path);
 std::string addArchive(Alembic::Abc::IArchive * archive);
@@ -125,6 +143,7 @@ Alembic::Abc::TimeSamplingPtr getTimeSamplingFromObject(Alembic::Abc::IObject &o
 Alembic::Abc::TimeSamplingPtr getTimeSamplingFromObject(Alembic::Abc::OObject *object);
 size_t getNumSamplesFromObject(Alembic::Abc::IObject &object);
 size_t getNumSamplesFromObject(Alembic::Abc::OObject *object);
+bool isObjectConstant(Alembic::Abc::IObject &object );
 
 float getTimeOffsetFromObject( Alembic::Abc::IObject &object, SampleInfo const& sampleInfo );
 
