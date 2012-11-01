@@ -171,7 +171,7 @@ public:
 	void ClearMeshSmoothingGroupNormals();
 };
 
-
+void createPropertiesDisplayModifier(std::string modname, std::vector<std::pair<std::string, std::string>>& nameValuePairs);
 
 
 
