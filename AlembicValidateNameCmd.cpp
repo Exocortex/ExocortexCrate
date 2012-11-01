@@ -151,3 +151,74 @@ MStatus AlembicAssignFacesetCommand::doIt(const MArgList& args)
   return MS::kSuccess;
 }
 
+/// AlembicAssignFacesetCommand
+
+static MStatus getObjectByName(const MString & name, MObject & object)
+{
+  object = MObject::kNullObj;
+
+  MSelectionList sList;
+  MStatus status = sList.add(name);
+  if (status == MS::kSuccess)
+    status = sList.getDependNode(0, object);
+  return status;
+}
+
+static MStatus getDagPathByName(const MString & name, MDagPath & dagPath)
+{
+  MSelectionList sList;
+  MStatus status = sList.add(name);
+  if (status == MS::kSuccess)
+    status = sList.getDagPath(0, dagPath);
+  return status;
+}
+
+MSyntax AlembicAssignInitialSGCommand::createSyntax()
+{
+   MSyntax syntax;
+   syntax.addFlag("-h", "-help");
+   syntax.addFlag("-m", "-mesh", MSyntax::kString);
+   syntax.enableQuery(false);
+   syntax.enableEdit(false);
+
+   return syntax;
+}
+
+MStatus AlembicAssignInitialSGCommand::doIt(const MArgList& args)
+{
+  MStatus status;
+  MArgParser argData(syntax(), args, &status);
+
+  if (argData.isFlagSet("help"))
+  {
+    MGlobal::displayInfo("[ExocortexAlembic]: ExocortexAlembic_assignFaceset command:");
+    MGlobal::displayInfo("                    -m : mesh to assign the initialShadingGroup on");
+    return MS::kSuccess;
+  }
+
+  if (!argData.isFlagSet("mesh"))
+  {
+    MGlobal::displayError("No mesh/subdiv specified!");
+    return MS::kFailure;
+  }
+
+  MObject initShader;
+  MDagPath dagPath;
+
+  if (getObjectByName("initialShadingGroup", initShader) == MS::kSuccess && getDagPathByName(argData.flagArgumentString("mesh", 0), dagPath) == MS::kSuccess)
+  {
+    MFnSet set(initShader);
+    set.addMember(dagPath);
+  }
+  else
+  {
+    MString theError("Error getting adding ");
+    theError += dagNodeName;
+    theError += MString(" to initalShadingGroup.");
+    MGlobal::displayError(theError);
+    return MS::kFailure;
+  }
+
+  return MS::kSuccess;
+}
+

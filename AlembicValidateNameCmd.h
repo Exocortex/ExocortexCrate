@@ -29,4 +29,17 @@
     static void* creator() { return new AlembicAssignFacesetCommand(); }
   };
 
+  class AlembicAssignInitialSGCommand : public MPxCommand
+  {
+  public:
+    AlembicAssignInitialSGCommand() {}
+    virtual ~AlembicAssignInitialSGCommand()  {}
+
+    virtual bool isUndoable() const { return false; }
+    MStatus doIt(const MArgList& args);
+
+    static MSyntax createSyntax();
+    static void* creator() { return new AlembicAssignInitialSGCommand(); }
+  };
+
 #endif
