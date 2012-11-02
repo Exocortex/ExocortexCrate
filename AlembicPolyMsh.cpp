@@ -14,9 +14,6 @@ AlembicPolyMesh::AlembicPolyMesh(exoNodePtr eNode, AlembicWriteJob * in_Job, Abc
    AbcG::OPolyMesh mesh(GetMyParent(), eNode->name, GetJob()->GetAnimatedTs());
    mMeshSchema = mesh.getSchema();
 
-   Primitive prim(GetRef());
-   AddRef(prim.GetParent3DObject().GetKinematics().GetGlobal().GetRef());
-   
    // create the generic properties
    mOVisibility = CreateVisibilityProperty(mesh,GetJob()->GetAnimatedTs());
 }
@@ -38,18 +35,18 @@ XSI::CStatus AlembicPolyMesh::Save(double time)
    mMeshSample.reset();
 
    // store the transform
-   Primitive prim(GetRef());
+   Primitive prim(GetRef(REF_PRIMITIVE));
    bool globalSpace = GetJob()->GetOption(L"globalSpace");
 
    // query the global space
    CTransformation globalXfo;
    if(globalSpace)
-      globalXfo = Kinematics(KinematicState(GetRef(1)).GetParent()).GetGlobal().GetTransform(time);
+      globalXfo = KinematicState(GetRef(REF_GLOBAL_TRANS)).GetTransform(time);
    CTransformation globalRotation;
    globalRotation.SetRotation(globalXfo.GetRotation());
 
    // store the metadata
-   SaveMetaData(prim.GetParent3DObject().GetRef(),this);
+   SaveMetaData(GetRef(REF_NODE),this);
 
    // set the visibility
    Property visProp;
@@ -62,7 +59,7 @@ XSI::CStatus AlembicPolyMesh::Save(double time)
 
    // check if the mesh is animated
    //if(mNumSamples > 0) {
-   //   if(!isRefAnimated(GetRef(),false,globalSpace))
+   //   if(!isRefAnimated(GetRef(REF_PRIMITIVE),false,globalSpace))
    //      return CStatus::OK;
    //}
 

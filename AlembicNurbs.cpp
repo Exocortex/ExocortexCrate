@@ -12,8 +12,6 @@ AlembicNurbs::AlembicNurbs(exoNodePtr eNode, AlembicWriteJob * in_Job, Abc::OObj
 
    mNurbsSchema = nurbs.getSchema();
 
-   Primitive prim(GetRef());
-   AddRef(prim.GetParent3DObject().GetKinematics().GetGlobal().GetRef());
 }
 
 AlembicNurbs::~AlembicNurbs()
@@ -28,20 +26,20 @@ Abc::OCompoundProperty AlembicNurbs::GetCompound()
 XSI::CStatus AlembicNurbs::Save(double time)
 {
    // store the transform
-   Primitive prim(GetRef());
+   Primitive prim(GetRef(REF_PRIMITIVE));
    bool globalSpace = GetJob()->GetOption(L"globalSpace");
 
    // query the global space
    CTransformation globalXfo;
    if(globalSpace)
-      globalXfo = Kinematics(KinematicState(GetRef(1)).GetParent()).GetGlobal().GetTransform(time);
+      globalXfo = KinematicState(GetRef(REF_GLOBAL_TRANS)).GetTransform(time);
 
    // store the metadata
-   SaveMetaData(prim.GetParent3DObject().GetRef(),this);
+   SaveMetaData(GetRef(REF_NODE),this);
 
    // check if the nurbs is animated
    if(mNumSamples > 0) {
-      if(!isRefAnimated(GetRef()))
+      if(!isRefAnimated(GetRef(REF_PRIMITIVE)))
          return CStatus::OK;
    }
 

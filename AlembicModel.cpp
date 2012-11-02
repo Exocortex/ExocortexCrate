@@ -9,19 +9,32 @@ using namespace MATH;
 AlembicModel::AlembicModel(exoNodePtr eNode, AlembicWriteJob * in_Job, Abc::OObject oParent)
 : AlembicObject(eNode, in_Job, oParent)
 {
-   Primitive prim(GetRef());
    AbcG::OXform xform(GetMyParent(), eNode->name, GetJob()->GetAnimatedTs());
-   if((bool)in_Job->GetOption(L"flattenHierarchy")){
-      AddRef(prim.GetParent3DObject().GetKinematics().GetGlobal().GetRef());
-   }
-   else{
-      AddRef(prim.GetParent3DObject().GetKinematics().GetLocal().GetRef());
-   }
 
    // create the generic properties
    mOVisibility = CreateVisibilityProperty(xform,GetJob()->GetAnimatedTs());
 
    mXformSchema = xform.getSchema();
+
+   XSI::CRef parentGlobalTransRef;
+
+   exoNodePtr parent = mExoSceneNode->parent;
+
+   while(parent){
+      if(parent->selected){
+         break;
+      }
+      parent = parent->parent;
+   }
+
+   if(parent){
+      XSI::CRef nodeRef;
+      nodeRef.Set(mExoSceneNode->parent->dccIdentifier.c_str());
+      XSI::X3DObject xObj(nodeRef);
+      parentGlobalTransRef = xObj.GetKinematics().GetGlobal().GetRef();
+   }
+
+   AddRef(parentGlobalTransRef);//global transform of parent - ref 3
 }
 
 AlembicModel::~AlembicModel()
@@ -39,10 +52,10 @@ Abc::OCompoundProperty AlembicModel::GetCompound()
 XSI::CStatus AlembicModel::Save(double time)
 {
    // access the model
-   Primitive prim(GetRef());
+   Primitive prim(GetRef(REF_PRIMITIVE));
 
    // store the transform
-   SaveXformSample(GetRef(1),mXformSchema,mXformSample,time,
+   SaveXformSample(GetRef(REF_PARENT_GLOBAL_TRANS), GetRef(REF_GLOBAL_TRANS),mXformSchema, mXformSample, time,
       GetJob()->GetOption("transformCache"),GetJob()->GetOption(L"globalSpace"),GetJob()->GetOption(L"flattenHierarchy"));
 
    // set the visibility
@@ -55,7 +68,7 @@ XSI::CStatus AlembicModel::Save(double time)
    }
 
    // store the metadata
-   SaveMetaData(prim.GetParent3DObject().GetRef(),this);
+   SaveMetaData(GetRef(REF_NODE),this);
    mNumSamples++;
 
    return CStatus::OK;

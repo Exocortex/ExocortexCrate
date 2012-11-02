@@ -11,13 +11,16 @@ AlembicObject::AlembicObject
    Abc::OObject oParent
 )
 {
-   exoNodePtr mExoSceneNode = eNode;
+   mExoSceneNode = eNode;
 
    XSI::CRef nodeRef;
    nodeRef.Set(mExoSceneNode->dccIdentifier.c_str());
    XSI::X3DObject xObj(nodeRef);
-   XSI::CRef primRef = xObj.GetActivePrimitive().GetRef();
-   AddRef(primRef);
+   AddRef(nodeRef);//main node - ref 0
+
+   AddRef(xObj.GetActivePrimitive().GetRef());//active primitive - ref 1
+
+   AddRef(xObj.GetKinematics().GetGlobal().GetRef());//global transform - ref 2
 
    mJob = in_Job;
    mMyParent = oParent;
@@ -30,8 +33,8 @@ AlembicObject::~AlembicObject()
 
 std::string AlembicObject::GetXfoName()
 {
-   XSI::Primitive prim(GetRef());
-   std::string modelName(prim.GetParent3DObject().GetName().GetAsciiString());
+   XSI::X3DObject node(GetRef());
+   std::string modelName(node.GetName().GetAsciiString());
    return std::string(modelName+"Xfo");
 }
 

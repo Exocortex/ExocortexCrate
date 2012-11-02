@@ -27,9 +27,6 @@ AlembicPoints::AlembicPoints(exoNodePtr eNode, AlembicWriteJob * in_Job, Abc::OO
    mMassProperty = Abc::OFloatArrayProperty(argGeomParams, ".mass", mPointsSchema.getMetaData(), GetJob()->GetAnimatedTs() );
    mShapeTypeProperty = Abc::OUInt16ArrayProperty(argGeomParams, ".shapetype", mPointsSchema.getMetaData(), GetJob()->GetAnimatedTs() );
    mColorProperty = Abc::OC4fArrayProperty(argGeomParams, ".color", mPointsSchema.getMetaData(), GetJob()->GetAnimatedTs() );
-
-   Primitive prim(GetRef());
-   AddRef(prim.GetParent3DObject().GetKinematics().GetGlobal().GetRef());
 }
 
 AlembicPoints::~AlembicPoints()
@@ -47,18 +44,18 @@ Abc::OCompoundProperty AlembicPoints::GetCompound()
 XSI::CStatus AlembicPoints::Save(double time)
 {
    // store the transform
-   Primitive prim(GetRef());
+   Primitive prim(GetRef(REF_PRIMITIVE));
    bool globalSpace = GetJob()->GetOption(L"globalSpace");
 
    // query the global space
    CTransformation globalXfo;
    if(globalSpace)
-      globalXfo = Kinematics(KinematicState(GetRef(1)).GetParent()).GetGlobal().GetTransform(time);
+      globalXfo = KinematicState(GetRef(REF_GLOBAL_TRANS)).GetTransform(time);
    CTransformation globalRotation;
    globalRotation.SetRotation(globalXfo.GetRotation());
 
    // store the metadata
-   SaveMetaData(prim.GetParent3DObject().GetRef(),this);
+   SaveMetaData(GetRef(REF_NODE),this);
 
    // set the visibility
    Property visProp;
@@ -71,7 +68,7 @@ XSI::CStatus AlembicPoints::Save(double time)
 
    // check if the pointcloud is animated
    if(mNumSamples > 0) {
-      if(!isRefAnimated(GetRef(),false,globalSpace))
+      if(!isRefAnimated(GetRef(REF_PRIMITIVE),false,globalSpace))
          return CStatus::OK;
    }
 

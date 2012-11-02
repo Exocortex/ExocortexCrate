@@ -21,9 +21,6 @@ AlembicCurves::AlembicCurves(exoNodePtr eNode, AlembicWriteJob * in_Job, Abc::OO
    mColorProperty = Abc::OC4fArrayProperty(mCurvesSchema.getArbGeomParams(), ".color", mCurvesSchema.getMetaData(), GetJob()->GetAnimatedTs() );
    mFaceIndexProperty = Abc::OInt32ArrayProperty(mCurvesSchema.getArbGeomParams(), ".face_index", mCurvesSchema.getMetaData(), GetJob()->GetAnimatedTs() );
    mVertexIndexProperty = Abc::OInt32ArrayProperty(mCurvesSchema.getArbGeomParams(), ".vertex_index", mCurvesSchema.getMetaData(), GetJob()->GetAnimatedTs() );
-
-   Primitive prim(GetRef());
-   AddRef(prim.GetParent3DObject().GetKinematics().GetGlobal().GetRef());
 }
 
 AlembicCurves::~AlembicCurves()
@@ -41,13 +38,13 @@ Abc::OCompoundProperty AlembicCurves::GetCompound()
 XSI::CStatus AlembicCurves::Save(double time)
 {
    // store the transform
-   Primitive prim(GetRef());
+   Primitive prim(GetRef(REF_PRIMITIVE));
    bool globalSpace = GetJob()->GetOption(L"globalSpace");
 
    // query the global space
    CTransformation globalXfo;
    if(globalSpace)
-      globalXfo = Kinematics(KinematicState(GetRef(1)).GetParent()).GetGlobal().GetTransform(time);
+      globalXfo = KinematicState(GetRef(REF_GLOBAL_TRANS)).GetTransform(time);
    CTransformation globalRotation;
    globalRotation.SetRotation(globalXfo.GetRotation());
 
@@ -61,11 +58,11 @@ XSI::CStatus AlembicCurves::Save(double time)
    }
 
    // store the metadata
-   SaveMetaData(prim.GetParent3DObject().GetRef(),this);
+   SaveMetaData(GetRef(REF_NODE),this);
 
    // check if the crvlist is animated
    if(mNumSamples > 0) {
-      if(!isRefAnimated(GetRef(),false,globalSpace))
+      if(!isRefAnimated(GetRef(REF_PRIMITIVE),false,globalSpace))
          return CStatus::OK;
    }
 
@@ -131,7 +128,7 @@ XSI::CStatus AlembicCurves::Save(double time)
    }
    else if(prim.GetType().IsEqualNoCase(L"hair") && !guideCurves)
    {
-      HairPrimitive hairPrim(GetRef());
+      HairPrimitive hairPrim(GetRef(REF_PRIMITIVE));
       LONG totalHairs = prim.GetParameterValue(L"TotalHairs");
       totalHairs *= (LONG)prim.GetParameterValue(L"StrandMult");
       CRenderHairAccessor accessor = hairPrim.GetRenderHairAccessor(totalHairs,10000,time);
@@ -269,7 +266,7 @@ XSI::CStatus AlembicCurves::Save(double time)
       // and iterate the faces in the cluster. the guide hairs are order by cloickwise first hit face vertex
       // Also note that the base point is not on the subdiv surface currently.
       CRef hairGenOpRef;
-      hairGenOpRef.Set(GetRef().GetAsText()+L".hairGenOp");
+      hairGenOpRef.Set(GetRef(REF_PRIMITIVE).GetAsText()+L".hairGenOp");
       if(hairGenOpRef.GetAsText().IsEmpty())
       {
          Application().LogMessage(L"Fatal error: The hair doesn't have a hairGenOperator!",siWarningMsg);

@@ -7,9 +7,9 @@ using namespace MATH;
 
 
 
-void SaveXformSample(XSI::CRef kinestateRef,AbcG::OXformSchema & schema,AbcG::XformSample & sample, double time, bool xformCache, bool globalSpace, bool flattenHierarchy)
+void SaveXformSample(XSI::CRef parentKineStateRef, XSI::CRef kineStateRef, AbcG::OXformSchema & schema,AbcG::XformSample & sample, double time, bool xformCache, bool globalSpace, bool flattenHierarchy)
 {
-   KinematicState kineState(kinestateRef);
+   
 
    // check if we are exporting in global space
    if(globalSpace)
@@ -35,7 +35,21 @@ void SaveXformSample(XSI::CRef kinestateRef,AbcG::OXformSchema & schema,AbcG::Xf
    //      return;
    //}
 
-   CTransformation transform = kineState.GetTransform(time);
+   KinematicState kineState(kineStateRef);
+   CTransformation globalTransform = kineState.GetTransform(time);
+   CTransformation transform;
+
+   if(flattenHierarchy){
+      transform = globalTransform;
+   }
+   else{
+      KinematicState parentKineState(parentKineStateRef);
+      CMatrix4 parentGlobalTransform4 = parentKineState.GetTransform(time).GetMatrix4();
+      CMatrix4 transform4 = globalTransform.GetMatrix4();
+      parentGlobalTransform4.InvertInPlace();
+      transform4.MulInPlace(parentGlobalTransform4);
+      transform.SetMatrix4(transform4);
+   }
 
    // store the transform
    CVector3 trans = transform.GetTranslation();

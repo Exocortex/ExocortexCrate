@@ -13,10 +13,19 @@ private:
    XSI::CRefArray mRefs;
    AlembicWriteJob * mJob;
    Abc::OObject mMyParent;
-   exoNodePtr mExoSceneNode;
 protected:
+
+   exoNodePtr mExoSceneNode;
+
    int mNumSamples;
   AbcG::OVisibilityProperty mOVisibility;
+
+  enum refType{
+     REF_NODE,
+     REF_PRIMITIVE,
+     REF_GLOBAL_TRANS,
+     REF_PARENT_GLOBAL_TRANS
+  };
 
 public:
    AlembicObject(exoNodePtr eNode, AlembicWriteJob * in_Job, Abc::OObject oParent);

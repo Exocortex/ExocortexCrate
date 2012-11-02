@@ -31,7 +31,7 @@ Abc::OCompoundProperty AlembicCamera::GetCompound()
 XSI::CStatus AlembicCamera::Save(double time)
 {
    // access the camera
-   Primitive prim(GetRef());
+   Primitive prim(GetRef(REF_PRIMITIVE));
 
    // set the visibility
    Property visProp;
@@ -43,7 +43,7 @@ XSI::CStatus AlembicCamera::Save(double time)
    }
 
    // store the metadata
-   SaveMetaData(prim.GetParent3DObject().GetRef(),this);
+   SaveMetaData(GetRef(REF_NODE),this);
 
    // store the camera data
    mCameraSample.setFocusDistance(prim.GetParameterValue(L"interestdist",time));
