@@ -13,6 +13,71 @@ struct SampleInfo
    double alpha;
 };
 
+template<class Key, class Data>
+class MRUCache {
+private:
+	struct MRUCacheEntry {
+		Key key;
+		Data data;
+		Abc::uint64_t lastAccess;
+	};
+	std::vector<MRUCacheEntry> entries;
+	Abc::uint64_t nextAccess;
+	int maxEntries;
+
+public:
+	MRUCache( int maxEntries = 2 ) {
+		this.nextAccess = 0;
+		this.maxEntries = maxEntries;
+	}
+
+	bool contains( Key const& key ) const {
+		for( int i = 0; i < entries.size(); i ++ ) {
+			if( entries[i].key == key ) {
+				return true;
+			}
+		}
+		return false;
+	}
+	void touch( Key const& key ) {
+		for( int i = 0; i < entries.size(); i ++ ) {
+			if( entries[i].key == key ) {
+				entries[i].lastAccess = nextAccess;
+				nextAccess ++;
+			}
+		}
+	}
+	Data& get( Key const& key ) {
+		for( int i = 0; i < entries.size(); i ++ ) {
+			if( entries[i].key == key ) {
+				entries[i].lastAccess = nextAccess;
+				return entries[i].data;
+			}
+		}
+	}
+	void insert( Key const& key, Data& data ) {
+		if( entries.size() >= maxEntries ) {
+			int oldestIndex = -1;
+			uint64_t oldestLastAccess;
+			for( int i = 0; i < entries.size(); i ++ ) {
+				uint64_t lastAccess = entries[i].lastAccess;
+				if( oldestIndex == -1 || lastAccess < oldestLastAccess ) {
+					oldestLastAccess = lastAccess;
+					oldestIndex = i;
+				}
+			}
+			if( oldestIndex >= 0 ) {
+				entries.erase( myvector.begin() + oldestIndex );
+			}
+		}
+		MRUCacheEntry entry;
+		entry.key = key;
+		entry.data = data;
+		entry.lastAccess = nextAccess;
+		entries.push_back( entry );
+		nextAccess ++;
+	}
+};
 
 struct AlembicObjectInfo
 {
