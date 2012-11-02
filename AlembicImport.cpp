@@ -1553,7 +1553,7 @@ CStatus createShape( Abc::IObject& iObj, CRef& importRootNode, CRef& parentNode,
                parentX3DObject.AddNurbsCurveList(CNurbsCurveDataArray(),siSINurbs,name,curveObj);
             nameMapAdd(iObj.getFullName().c_str(),curveObj.GetFullName());
          }
-         newNodeRef = parentX3DObject.GetRef();
+         newNodeRef = curveObj.GetRef();
 
          // load metadata
          alembic_create_item_Invoke(L"alembic_metadata",importRootNode,curveObj.GetRef(),filename,iObj.getFullName().c_str(),attachToExisting,createItemArgs);
