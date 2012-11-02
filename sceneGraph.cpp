@@ -17,7 +17,10 @@ SceneNode::nodeTypeE getNodeType(X3DObject& xObj)
    if(xObj_GetType.IsEqualNoCase(L"#model")){
       return SceneNode::ITRANSFORM;
    }
-   if(xObj_GetType.IsEqualNoCase(L"null")){
+   else if(xObj_GetType.IsEqualNoCase(L"null")){
+      return SceneNode::ITRANSFORM;
+   }
+   else if(xObj_GetType.IsEqualNoCase(L"bone")){
       return SceneNode::ITRANSFORM;
    }
    else if(xObj_GetType.IsEqualNoCase(L"camera"))
@@ -57,8 +60,32 @@ SceneNode::nodeTypeE getNodeType(X3DObject& xObj)
       }
    }
    
-   ESS_LOG_WARNING("Unknown type of XSI node, name: "<<xObj.GetName().GetAsciiString()<<", type: "<<xObj.GetType().GetAsciiString());
-   return SceneNode::UNKNOWN;
+   //ESS_LOG_WARNING("Unknown type of XSI node, name: "<<xObj.GetName().GetAsciiString()<<", type: "<<xObj.GetType().GetAsciiString());
+   //
+   //if(xObj_GetType.IsEqualNoCase(L"light")){
+   //   
+   //}
+   //else if(xObj_GetType.IsEqualNoCase(L"sphere")){
+
+   //}
+   //else if(xObj_GetType.IsEqualNoCase(L"cube")){
+
+   //}
+   //else if(xObj_GetType.IsEqualNoCase(L"tetrahedron")){
+
+   //}
+   //else if(xObj_GetType.IsEqualNoCase(L"icosahedron")){
+
+   //}
+   //else if(xObj_GetType.IsEqualNoCase(L"CameraInterest")){
+
+   //}
+   //else if(xObj_GetType.IsEqualNoCase(L"eff")){
+
+   //}
+
+   return SceneNode::ITRANSFORM;
+   //return SceneNode::UNKNOWN;
 }
 
 struct CSGStackElement
@@ -71,6 +98,7 @@ struct CSGStackElement
    CSGStackElement(XSI::CRef xnode, exoNodePtr enode):xNode(xnode), eNode(enode)
    {}
 };
+
 
 exoNodePtr buildCommonSceneGraph(XSI::X3DObject xsiRoot)
 {
