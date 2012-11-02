@@ -108,16 +108,21 @@ proc attachPolyMeshDeformer(string $name, string $identifier, string $eaTimeFile
   attachTimeAndFile($newDform[0], $eaTimeFile, $constant);
 
   // get polyObj new "output" attribute connection
-  string $inMeshConnect2[] = `connectionInfo -dfs ($polyObj + ".output")`;
-  string $originalMesh = `plugNode $inMeshConnect2[0]`;
+  string $originalMesh = $name;
+  if ($polyObj != "" && (`objectType $polyObj` != "ExocortexAlembicPolyMesh"))
+  {
+    string $inMeshConnect2[] = `connectionInfo -dfs ($polyObj + ".output")`;
+    $originalMesh = `plugNode $inMeshConnect2[0]`;
 
-  // delete the original poly object, create the alembic poly mesh, and attach time and file, and connected it to the original object!
-  delete $polyObj;
-  $polyObj = `createNode -name ("alembicPolyMesh_" + $name) "ExocortexAlembicPolyMesh"`;
-  attachTimeAndFile($polyObj, $eaTimeFile, $constant);
-  connectAttr ($polyObj + ".outMesh") ($originalMesh + ".inMesh");
-  setAttr ($polyObj+".normals") $importNormals;
-  setAttr ($polyObj+".uvs") $importUvs;
+    // delete the original poly object, create the alembic poly mesh, and attach time and file, and connected it to the original object!
+    delete $polyObj;
+    $polyObj = `createNode -name ("alembicPolyMesh_" + $name) "ExocortexAlembicPolyMesh"`;
+    attachTimeAndFile($polyObj, $eaTimeFile, $constant);
+    connectAttr ($polyObj + ".outMesh") ($originalMesh + ".inMesh");
+    setAttr ($polyObj+".normals") $importNormals;
+    setAttr ($polyObj+".uvs") $importUvs;
+  }
+
   if ($importFaceSets)
   {
     string $fname = `getAttr ($eaTimeFile[1]+".outFileName")`;

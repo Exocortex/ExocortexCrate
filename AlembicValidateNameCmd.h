@@ -42,4 +42,17 @@
     static void* creator() { return new AlembicAssignInitialSGCommand(); }
   };
 
+  class AlembicFileRefCountCommand : public MPxCommand
+  {
+  public:
+    AlembicFileRefCountCommand() {}
+    virtual ~AlembicFileRefCountCommand()  {}
+
+    virtual bool isUndoable() const { return false; }
+    MStatus doIt(const MArgList& args);
+
+    static MSyntax createSyntax();
+    static void* creator() { return new AlembicFileRefCountCommand(); }
+  };
+
 #endif
