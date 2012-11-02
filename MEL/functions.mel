@@ -52,12 +52,11 @@ global proc exocortexAlembicImport(string $filename, int $importNormals, int $im
   ExocortexAlembic_profileReset;
   ExocortexAlembic_profileBegin -f MEL_exocortexAlembicImport;
 
-  // query the content of the file
-
   string $infos[] = `ExocortexAlembic_getInfo -f $filename`;
   if (size($infos) < 1)
     return;
 
+  // query the content of the file
   ExocortexAlembic_profileBegin -f MEL_exocortexAlembicImport_Init;
   string $identifiers[];
   string $types[];
@@ -66,6 +65,7 @@ global proc exocortexAlembicImport(string $filename, int $importNormals, int $im
   string $nodes[];
   string $datas[];
   int $nbSamples[];
+  int $constants[];
   int $parentID[];
   string $childIDs[];
   for($i=0; $i<size($infos); $i=$i+1)
@@ -95,11 +95,12 @@ global proc exocortexAlembicImport(string $filename, int $importNormals, int $im
     $nbSamples[size($nbSamples)] = $tokens[3];
     $parentID[size($parentID)] = $tokens[4];
     $childIDs[size($childIDs)] = $tokens[5];
+    $constants[size($constants)] = $tokens[6];
     
     // parse the forth token
     string $data = "";
-    if(size($tokens)>6)
-      $data = $tokens[6];
+    if(size($tokens)>7)
+      $data = $tokens[7];
     $datas[size($datas)] = $data;
   }
 
@@ -381,7 +382,7 @@ global proc exocortexAlembicImport(string $filename, int $importNormals, int $im
 
     ExocortexAlembic_profileBegin -f MEL_exocortexAlembicImport_FinalizeObject;
     // connect the standard ports
-    if($nbSamples[$i] > 1)
+    if($constants[$i] == 0)
       exocortexConnectIfUnconnected(($timeControl+".outTime"), ($reader+".inTime"));
     exocortexConnectIfUnconnected(($fileNode+".outFileName"), ($reader+".fileName"));
     setAttr -type "string" ($reader+".identifier") $identifiers[$i];

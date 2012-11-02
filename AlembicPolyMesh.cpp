@@ -929,126 +929,124 @@ MStatus AlembicPolyMeshDeformNode::initialize()
 
 MStatus AlembicPolyMeshDeformNode::deform(MDataBlock & dataBlock, MItGeometry & iter, const MMatrix & localToWorld, unsigned int geomIndex)
 {
-   ESS_PROFILE_SCOPE("AlembicPolyMeshDeformNode::deform");
-   MStatus status;
+  ESS_PROFILE_SCOPE("AlembicPolyMeshDeformNode::deform");
+  MStatus status;
 
-   // get the envelope data
-   float env = dataBlock.inputValue( envelope ).asFloat();
-   if(env == 0.0f) // deformer turned off
-      return MStatus::kSuccess;
+  // get the envelope data
+  float env = dataBlock.inputValue( envelope ).asFloat();
+  if(env == 0.0f) // deformer turned off
+    return MStatus::kSuccess;
 
-   // update the frame number to be imported
-   double inputTime = dataBlock.inputValue(mTimeAttr).asTime().as(MTime::kSeconds);
-   MString & fileName = dataBlock.inputValue(mFileNameAttr).asString();
-   MString & identifier = dataBlock.inputValue(mIdentifierAttr).asString();
+  // update the frame number to be imported
+  double inputTime = dataBlock.inputValue(mTimeAttr).asTime().as(MTime::kSeconds);
+  MString & fileName = dataBlock.inputValue(mFileNameAttr).asString();
+  MString & identifier = dataBlock.inputValue(mIdentifierAttr).asString();
 
- 	AlembicObjectInfo* pObjectInfo = NULL;
+  AlembicObjectInfo* pObjectInfo = NULL;
 
-   // check if we have the file
-   if(fileName != mFileName || identifier != mIdentifier)
-   {
-      mSchema.reset();
-      if(fileName != mFileName)
-      {
-         delRefArchive(mFileName);
-         mFileName = fileName;
-         addRefArchive(mFileName);
-      }
-      mIdentifier = identifier;
+  // check if we have the file
+  if(fileName != mFileName || identifier != mIdentifier)
+  {
+    mSchema.reset();
+    if(fileName != mFileName)
+    {
+      delRefArchive(mFileName);
+      mFileName = fileName;
+      addRefArchive(mFileName);
+    }
+    mIdentifier = identifier;
 
-	  pObjectInfo = getObjectInfoFromArchive( std::string( mFileName.asChar() ), std::string( identifier.asChar() ) );
-	  if( pObjectInfo != NULL ) {
-		  mObj = pObjectInfo->obj;
-	  }
-      // get the object from the archive
-      //mObj = getObjectFromArchive(mFileName,identifier);
-      if(!mObj.valid())
-      {
-         MGlobal::displayWarning("[ExocortexAlembic] Identifier '"+identifier+"' not found in archive '"+mFileName+"'.");
-         return MStatus::kFailure;
-      }
-      AbcG::IPolyMesh obj(mObj,Abc::kWrapExisting);
-      if(!obj.valid())
-      {
-         MGlobal::displayWarning("[ExocortexAlembic] Identifier '"+identifier+"' in archive '"+mFileName+"' is not a PolyMesh.");
-         return MStatus::kFailure;
-      }
-      mSchema = obj.getSchema();
-
-	  if( pObjectInfo->isMeshTopoDynamic == -1 ) {
-		pObjectInfo->isMeshTopoDynamic = isAlembicMeshTopoDynamic( &mObj ) ? 1 : 0;
-	  }
-		mDynamicTopology = ( pObjectInfo->isMeshTopoDynamic == 1 );
-   }
-
-   if(!mSchema.valid())
+    pObjectInfo = getObjectInfoFromArchive( std::string( mFileName.asChar() ), std::string( identifier.asChar() ) );
+    if( pObjectInfo != NULL ) {
+      mObj = pObjectInfo->obj;
+    }
+    // get the object from the archive
+    //mObj = getObjectFromArchive(mFileName,identifier);
+    if(!mObj.valid())
+    {
+      MGlobal::displayWarning("[ExocortexAlembic] Identifier '"+identifier+"' not found in archive '"+mFileName+"'.");
       return MStatus::kFailure;
+    }
+    AbcG::IPolyMesh obj(mObj,Abc::kWrapExisting);
+    if(!obj.valid())
+    {
+      MGlobal::displayWarning("[ExocortexAlembic] Identifier '"+identifier+"' in archive '"+mFileName+"' is not a PolyMesh.");
+      return MStatus::kFailure;
+    }
+    mSchema = obj.getSchema();
 
-   // get the sample
-   SampleInfo sampleInfo;
-   {
-	  ESS_PROFILE_SCOPE("AlembicPolyMeshDeformNode::deform sampleInfo");
-	   sampleInfo = getSampleInfo(
-		  inputTime,
-		  mSchema.getTimeSampling(),
-		  mSchema.getNumSamples()
-		);
-   }
+    if( pObjectInfo->isMeshTopoDynamic == -1 ) {
+      pObjectInfo->isMeshTopoDynamic = isAlembicMeshTopoDynamic( &mObj ) ? 1 : 0;
+    }
+    mDynamicTopology = ( pObjectInfo->isMeshTopoDynamic == 1 );
+  }
 
-   mLastSampleInfo = sampleInfo;
+  if(!mSchema.valid())
+    return MStatus::kFailure;
 
-   Abc::P3fArraySamplePtr samplePos;
-   Abc::P3fArraySamplePtr samplePos2;
-   {
-   	  ESS_PROFILE_SCOPE("AlembicPolyMeshDeformNode::deform get position samples");
-	  mSchema.getPositionsProperty().get( samplePos, sampleInfo.floorIndex );
-	  if(sampleInfo.alpha != 0.0) {
-		  mSchema.getPositionsProperty().get( samplePos2, sampleInfo.ceilIndex );
-	  }
-   }
+  // get the sample
+  SampleInfo sampleInfo;
+  {
+    ESS_PROFILE_SCOPE("AlembicPolyMeshDeformNode::deform sampleInfo");
+    sampleInfo = getSampleInfo(
+      inputTime,
+      mSchema.getTimeSampling(),
+      mSchema.getNumSamples()
+      );
+  }
 
-   // iteration should not be necessary. the iteration is only 
-   // required if the same mesh is attached to the same deformer
-   // several times
-   float blend = (float)sampleInfo.alpha;
-   float iblend = 1.0f - blend;
-   {
-   	  ESS_PROFILE_SCOPE("AlembicPolyMeshDeformNode::deform position iterator");
+  mLastSampleInfo = sampleInfo;
 
-	   for(iter.reset(); !iter.isDone(); iter.next())
-	   {
-		  float weight = weightValue(dataBlock,geomIndex,iter.index()) * env;
-		  if(weight == 0.0f)
-			 continue;
-		  float iweight = 1.0f - weight;
-		  if(iter.index() >= samplePos->size())
-			 continue;
-		  bool done = false;
-    	  MPoint pt = iter.position();
+  Abc::P3fArraySamplePtr samplePos;
+  Abc::P3fArraySamplePtr samplePos2;
+  {
+    ESS_PROFILE_SCOPE("AlembicPolyMeshDeformNode::deform get position samples");
+    mSchema.getPositionsProperty().get( samplePos, sampleInfo.floorIndex );
+    if(sampleInfo.alpha != 0.0) {
+      mSchema.getPositionsProperty().get( samplePos2, sampleInfo.ceilIndex );
+    }
+  }
 
-		  MFloatPoint abcPt;
-		  if(sampleInfo.alpha != 0.0)
-		  {
-			 if(samplePos2->size() == samplePos->size() && ! mDynamicTopology )
-			 {
-				//ESS_LOG_WARNING( "blending vertex positions (1-2) B." );
-				pt.x = iweight * pt.x + weight * (samplePos->get()[iter.index()].x * iblend + samplePos2->get()[iter.index()].x * blend);
-				pt.y = iweight * pt.y + weight * (samplePos->get()[iter.index()].y * iblend + samplePos2->get()[iter.index()].y * blend);
-				pt.z = iweight * pt.z + weight * (samplePos->get()[iter.index()].z * iblend + samplePos2->get()[iter.index()].z * blend);
-				done = true;
-			 }
-		  }
-		  if(!done)
-		  {
-			 pt.x = iweight * pt.x + weight * samplePos->get()[iter.index()].x;
-			 pt.y = iweight * pt.y + weight * samplePos->get()[iter.index()].y;
-			 pt.z = iweight * pt.z + weight * samplePos->get()[iter.index()].z;
-		  }
-		  iter.setPosition(pt);
-	   }
-   }
+  // iteration should not be necessary. the iteration is only 
+  // required if the same mesh is attached to the same deformer
+  // several times
+  float blend = (float)sampleInfo.alpha;
+  float iblend = 1.0f - blend;
+  {
+    ESS_PROFILE_SCOPE("AlembicPolyMeshDeformNode::deform position iterator");
 
-   return MStatus::kSuccess;
+    for(iter.reset(); !iter.isDone(); iter.next())
+    {
+      float weight = weightValue(dataBlock,geomIndex,iter.index()) * env;
+      if(weight == 0.0f)
+        continue;
+      float iweight = 1.0f - weight;
+      if(iter.index() >= samplePos->size())
+        continue;
+      //bool done = false;
+      MPoint &pt = iter.position();
+
+      MFloatPoint abcPt;
+      const Alembic::Abc::v4::V3f &pos1 = samplePos->get()[iter.index()];
+      if(sampleInfo.alpha != 0.0 && samplePos2->size() == samplePos->size() && ! mDynamicTopology )
+      {
+        //ESS_LOG_WARNING( "blending vertex positions (1-2) B." );
+        const Alembic::Abc::v4::V3f &pos2 = samplePos2->get()[iter.index()];
+        pt.x = iweight * pt.x + weight * (pos1.x * iblend + pos2.x * blend);
+        pt.y = iweight * pt.y + weight * (pos1.y * iblend + pos2.y * blend);
+        pt.z = iweight * pt.z + weight * (pos1.z * iblend + pos2.z * blend);
+        //done = true;
+      }
+      else //if(!done)
+      {
+        pt.x = iweight * pt.x + weight * pos1.x;
+        pt.y = iweight * pt.y + weight * pos1.y;
+        pt.z = iweight * pt.z + weight * pos1.z;
+      }
+      iter.setPosition(pt);
+    }
+  }
+  return MStatus::kSuccess;
 }
 
 MSyntax AlembicCreateFaceSetsCommand::createSyntax()

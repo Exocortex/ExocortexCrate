@@ -37,11 +37,12 @@ struct infoTuple
   ALEMBIC_TYPE type;
   MString name;
   int nbSample;
+  bool isConstant;
   int parentID;
   std::vector<int> childID;
   MString data;
 
-  infoTuple(void): valid(false), identifier(""), type(AT_UNKNOWN), name(""), nbSample(0), parentID(-1), childID(), data("") {}
+  infoTuple(void): valid(false), identifier(""), type(AT_UNKNOWN), name(""), nbSample(0), isConstant(false), parentID(-1), childID(), data("") {}
 
   MString toInfo(void) const
   {
@@ -57,6 +58,7 @@ struct infoTuple
       for (++beg; beg != childID.end(); ++beg)
         str << "." << (*beg);
     }
+    str << "|" << (isConstant ? "1" : "0");
 
     MString ret = ((identifier + "|") + alembicTypeToString(type).c_str()) + "|" + name;
     ret += str.str().c_str();
@@ -155,6 +157,7 @@ MStatus AlembicGetInfoCommand::doIt(const MArgList & args)
          iTuple.type = getAlembicTypeFromObject(child);
          iTuple.name = child.getName().c_str();
          iTuple.nbSample = (int) getNumSamplesFromObject(child);
+         iTuple.isConstant = isObjectConstant(child);
          iTuple.parentID = (int) i;
          {
            infoTuple &parentTuple = infoVector[i];

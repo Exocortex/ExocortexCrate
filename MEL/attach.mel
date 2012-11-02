@@ -1,4 +1,4 @@
-proc extractInfos(string $infos[], string $identifiers[], string $types[], string $names[], string $nodes[], string $datas[], int $nbSamples[])
+proc extractInfos(string $infos[], string $identifiers[], string $types[], string $names[], string $nodes[], string $datas[], int $nbSamples[], int $constants[])
 {
   for($i=0; $i<size($infos); $i=$i+1)
   {
@@ -23,11 +23,12 @@ proc extractInfos(string $infos[], string $identifiers[], string $types[], strin
     $names[size($names)] = $tokens[2];
     $nodes[size($nodes)] = $node;
     $nbSamples[size($nbSamples)] = $tokens[3];
+    $constants[size($constants)] = $tokens[6];
     
     // parse the forth token
     string $data = "";
-    if(size($tokens)>4)
-      $data = $tokens[4];
+    if(size($tokens)>7)
+      $data = $tokens[7];
     $datas[size($datas)] = $data;
   }
 }
@@ -46,10 +47,10 @@ proc string[] createTimeControl(string $filename)
   return $ret;
 }
 
-proc attachTimeAndFile(string $node, string $eaTimeFile[])
+proc attachTimeAndFile(string $node, string $eaTimeFile[], int $constant)
 {
   string $connAttr = `connectionInfo -sfd ($node+".inTime")`;
-  if ($connAttr == "")
+  if ($connAttr == "" && $constant == 0)
     connectAttr ($eaTimeFile[0]+".outTime") ($node+".inTime");
 
   $connAttr = `connectionInfo -sfd ($node+".fileName")`;
@@ -58,8 +59,9 @@ proc attachTimeAndFile(string $node, string $eaTimeFile[])
   connectAttr ($eaTimeFile[1]+".outFileName") ($node+".fileName");
 }
 
-proc attachXform(string $name, string $identifier, string $eaTimeFile[])
+proc attachXform(string $name, string $identifier, string $eaTimeFile[], int $constant)
 {
+  ExocortexAlembic_profileBegin -f MEL_exocortexAlembic_attachXform;
   string $cons[] = `listConnections ($name+".translate")`;
   if (size($cons) > 0)
   {
@@ -82,11 +84,13 @@ proc attachXform(string $name, string $identifier, string $eaTimeFile[])
   connectAttr ($newXform+".rotate") ($name+".rotate");
   connectAttr ($newXform+".scale") ($name+".scale");
 
-  attachTimeAndFile($newXform, $eaTimeFile);
+  attachTimeAndFile($newXform, $eaTimeFile, $constant);
+  ExocortexAlembic_profileEnd -f MEL_exocortexAlembic_attachXform;
 }
 
-proc attachPolyMeshDeformer(string $name, string $identifier, string $eaTimeFile[], int $importNormals, int $importUvs, int $importFaceSets)
+proc attachPolyMeshDeformer(string $name, string $identifier, string $eaTimeFile[], int $importNormals, int $importUvs, int $importFaceSets, int $constant)
 {
+  ExocortexAlembic_profileBegin -f MEL_exocortexAlembic_attachPolyMeshDeformer;
   // get first the poly object (polyCube, polySphere, ...)
   string $inMeshConnect = `connectionInfo -sfd ($name + ".inMesh")`;
   string $polyObj = `plugNode $inMeshConnect`;
@@ -94,14 +98,14 @@ proc attachPolyMeshDeformer(string $name, string $identifier, string $eaTimeFile
   // if it's already attach to a deform, simply change its file reference
   if (`objectType $polyObj` == "ExocortexAlembicPolyMeshDeform")
   {
-    attachTimeAndFile($polyObj, $eaTimeFile);
+    attachTimeAndFile($polyObj, $eaTimeFile, $constant);
     return;
   }
 
   // create deformer, and attach time and file
   string $newDform[] = `deformer -type "ExocortexAlembicPolyMeshDeform" -name ("dForm_" + $name) $name`;
   setAttr -type "string" ($newDform[0] + ".identifier") $identifier;
-  attachTimeAndFile($newDform[0], $eaTimeFile);
+  attachTimeAndFile($newDform[0], $eaTimeFile, $constant);
 
   // get polyObj new "output" attribute connection
   string $inMeshConnect2[] = `connectionInfo -dfs ($polyObj + ".output")`;
@@ -110,7 +114,7 @@ proc attachPolyMeshDeformer(string $name, string $identifier, string $eaTimeFile
   // delete the original poly object, create the alembic poly mesh, and attach time and file, and connected it to the original object!
   delete $polyObj;
   $polyObj = `createNode -name ("alembicPolyMesh_" + $name) "ExocortexAlembicPolyMesh"`;
-  attachTimeAndFile($polyObj, $eaTimeFile);
+  attachTimeAndFile($polyObj, $eaTimeFile, $constant);
   connectAttr ($polyObj + ".outMesh") ($originalMesh + ".inMesh");
   setAttr ($polyObj+".normals") $importNormals;
   setAttr ($polyObj+".uvs") $importUvs;
@@ -119,10 +123,12 @@ proc attachPolyMeshDeformer(string $name, string $identifier, string $eaTimeFile
     string $fname = `getAttr ($eaTimeFile[1]+".outFileName")`;
     ExocortexAlembic_createFaceSets -f $fname -i $identifier -o $name;
   }
+  ExocortexAlembic_profileEnd -f MEL_exocortexAlembic_attachPolyMeshDeformer;
 }
 
-proc attachSubDDeformer(string $name, string $identifier, string $eaTimeFile[], int $importUvs, int $importFaceSets)
+proc attachSubDDeformer(string $name, string $identifier, string $eaTimeFile[], int $importUvs, int $importFaceSets, int $constant)
 {
+  ExocortexAlembic_profileBegin -f MEL_exocortexAlembic_attachSubDDeformer;
   // get first the potential deform object!
   string $inCreateConnect = `connectionInfo -sfd ($name + ".create")`;
   if ($inCreateConnect != "")
@@ -132,7 +138,7 @@ proc attachSubDDeformer(string $name, string $identifier, string $eaTimeFile[], 
     // if it's already attach to a deform, simply change its file reference
     if (`objectType $polyObj` == "ExocortexAlembicSubDDeform")
     {
-      attachTimeAndFile($polyObj, $eaTimeFile);
+      attachTimeAndFile($polyObj, $eaTimeFile, $constant);
     }
     else
       print("Cannot attach to " + $name + ", it's already attach to a deform node that is not an \"ExocortexAlembicSubDDeform\"");
@@ -142,11 +148,11 @@ proc attachSubDDeformer(string $name, string $identifier, string $eaTimeFile[], 
   // create deformer
   string $newDform[] = `deformer -type "ExocortexAlembicSubDDeform" -name ("dForm_" + $name) $name`;
   setAttr -type "string" ($newDform[0] + ".identifier") $identifier;
-  attachTimeAndFile($newDform[0], $eaTimeFile);
+  attachTimeAndFile($newDform[0], $eaTimeFile, $constant);
 
   // create alembic subd and connect it to the original object ($name+"Orig" and $name)
   $subdObj = `createNode -name ("alembicSubD_" + $name) "ExocortexAlembicSubD"`;
-  attachTimeAndFile($subdObj, $eaTimeFile);
+  attachTimeAndFile($subdObj, $eaTimeFile, $constant);
   connectAttr ($subdObj + ".dispResolution") ($name + ".dispResolution");
   connectAttr ($subdObj + ".outSubdiv") ($name + "Orig.create");
   setAttr ($subdObj+".uvs") $importUvs;
@@ -155,21 +161,24 @@ proc attachSubDDeformer(string $name, string $identifier, string $eaTimeFile[], 
     string $fname = `getAttr ($eaTimeFile[1]+".outFileName")`;
     ExocortexAlembic_createFaceSets -f $fname -i $identifier -o $name;
   }
+  ExocortexAlembic_profileEnd -f MEL_exocortexAlembic_attachSubDDeformer;
 }
 
 global proc attachToExisting(string $filename, int $importNormals, int $importUvs, int $importFaceSets, int $overTransforms, int $overDeforms)
 {
+  ExocortexAlembic_profileBegin -f MEL_exocortexAlembic_attachToExisting;
   string $identifiers[];
   string $types[];
   string $names[];
   string $nodes[];
   string $datas[];
   int $nbSamples[];
+  int $constants[];
 
   if (!$overTransforms && !$overDeforms)
     return;
 
-  extractInfos(`ExocortexAlembic_getInfo -f $filename`, $identifiers, $types, $names, $nodes, $datas, $nbSamples);
+  extractInfos(`ExocortexAlembic_getInfo -f $filename`, $identifiers, $types, $names, $nodes, $datas, $nbSamples, $constants);
 
   string $eaTimeFile[];   // will old the TimeControl name and the File Node name
 
@@ -185,13 +194,14 @@ global proc attachToExisting(string $filename, int $importNormals, int $importUv
     }
 
     string $type = $types[$ii];
+    int $constant = $constants[$ii];
     if($overTransforms)
     {
       if ($type == "Xform")
       {
         if (size($eaTimeFile) == 0)
           $eaTimeFile = createTimeControl($filename);
-        attachXform($name, $identifiers[$ii], $eaTimeFile);
+        attachXform($name, $identifiers[$ii], $eaTimeFile, $constant);
       }
     }
 
@@ -201,18 +211,19 @@ global proc attachToExisting(string $filename, int $importNormals, int $importUv
       {
         if (size($eaTimeFile) == 0)
           $eaTimeFile = createTimeControl($filename);
-        attachPolyMeshDeformer($name, $identifiers[$ii], $eaTimeFile, $importNormals, $importUvs, $importFaceSets);
+        attachPolyMeshDeformer($name, $identifiers[$ii], $eaTimeFile, $importNormals, $importUvs, $importFaceSets, $constant);
       }
       else if($type == "SubD")
       {
         if (size($eaTimeFile) == 0)
           $eaTimeFile = createTimeControl($filename);
-        attachSubDDeformer($name, $identifiers[$ii], $eaTimeFile, $importUvs, $importFaceSets);
+        attachSubDDeformer($name, $identifiers[$ii], $eaTimeFile, $importUvs, $importFaceSets, $constant);
       }
       else if ($type != "Xform")
-        print("Type \"" + $type + "\" not supported yet!");
+        print("Type \"" + $type + "\" not supported yet to attach!");
     }
   }
+  ExocortexAlembic_profileEnd -f MEL_exocortexAlembic_attachToExisting;
 }
 
 global proc exocortexAlembicAttachGUI(string $filename, string $dialog)
