@@ -22,7 +22,7 @@ public:
 class AlembicXformNode : public AlembicObjectNode
 {
 public:
-   AlembicXformNode() {}
+  AlembicXformNode(): mLastMatrix() {}
    virtual ~AlembicXformNode();
 
    // override virtual methods from MPxNode
@@ -42,6 +42,7 @@ private:
    std::vector<double> mTimes;
    size_t mLastFloor;
    std::map<int,Abc::M44d> mSampleIndicesToMatrices;
+   Abc::M44d mLastMatrix;
 
    // output attributes
    static MObject mOutTranslateXAttr;
