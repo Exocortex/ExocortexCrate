@@ -449,6 +449,7 @@ MStatus AlembicPolyMeshNode::compute(const MPlug & plug, MDataBlock & dataBlock)
    bool importNormals = dataBlock.inputValue(mNormalsAttr).asBool();
    bool importUvs = dataBlock.inputValue(mUvsAttr).asBool();
 
+ 	AlembicObjectInfo* pObjectInfo = NULL;
   
    // check if we have the file
    if(fileName != mFileName || identifier != mIdentifier)
@@ -463,7 +464,10 @@ MStatus AlembicPolyMeshNode::compute(const MPlug & plug, MDataBlock & dataBlock)
       mIdentifier = identifier;
 
       // get the object from the archive
-      mObj = getObjectFromArchive(mFileName,identifier);
+	  pObjectInfo = getObjectInfoFromArchive( std::string( mFileName.asChar() ), std::string( identifier.asChar() ) );
+	  if( pObjectInfo != NULL ) {
+		  mObj = pObjectInfo->obj;
+	  }
       if(!mObj.valid())
       {
          MGlobal::displayWarning("[ExocortexAlembic] Identifier '"+identifier+"' not found in archive '"+mFileName+"'.");
@@ -477,6 +481,11 @@ MStatus AlembicPolyMeshNode::compute(const MPlug & plug, MDataBlock & dataBlock)
       }
       mSchema = obj.getSchema();
       mMeshData = MObject::kNullObj;
+	  if( pObjectInfo->isMeshTopoDynamic == -1 ) {
+		pObjectInfo->isMeshTopoDynamic = isAlembicMeshTopoDynamic( &mObj ) ? 1 : 0;
+	  }
+	  mDynamicTopology = ( pObjectInfo->isMeshTopoDynamic == 1 );
+
    }
 
    if(!mSchema.valid())
@@ -489,16 +498,11 @@ MStatus AlembicPolyMeshNode::compute(const MPlug & plug, MDataBlock & dataBlock)
       mSchema.getNumSamples()
    );
 
-   bool isTopologyDynamic = false;
-   if( mObj.valid() ) {
-	   isTopologyDynamic = isAlembicMeshTopoDynamic( &mObj );
-	   //ESS_LOG_WARNING( "(A) isTopologyDynamic = " << isTopologyDynamic );
-   }
 
    // check if we have to do this at all
    if(!mMeshData.isNull() && 
 	   mLastSampleInfo.floorIndex == sampleInfo.floorIndex && 
-	   mLastSampleInfo.ceilIndex == sampleInfo.ceilIndex && ! isTopologyDynamic ) {
+	   mLastSampleInfo.ceilIndex == sampleInfo.ceilIndex && ! mDynamicTopology ) {
       //ESS_LOG_WARNING( "not doing this at all." );
       return MStatus::kSuccess;
    }
@@ -539,7 +543,7 @@ MStatus AlembicPolyMeshNode::compute(const MPlug & plug, MDataBlock & dataBlock)
       if(sampleInfo.alpha != 0.0)
       {
          Abc::P3fArraySamplePtr samplePos2 = sample2.getPositions();
-		     if( isTopologyDynamic ) {
+		     if( mDynamicTopology ) {
 			     if( sampleVel != NULL ) {
 					 const float timeAlpha = getTimeOffsetFromSchema( mSchema, sampleInfo );
 				   //ESS_LOG_WARNING( "timeAlpha: " << timeAlpha );
@@ -593,7 +597,7 @@ MStatus AlembicPolyMeshNode::compute(const MPlug & plug, MDataBlock & dataBlock)
    if(mMesh.numVertices() != points.length() || 
       mMesh.numPolygons() != (unsigned int)sampleCounts->size() || 
       mMesh.numFaceVertices() != (unsigned int)sampleIndices->size() ||
-	  isTopologyDynamic
+	  mDynamicTopology
 	  )
    {
      //ESS_LOG_WARNING( "Updating face topology." );
@@ -721,7 +725,7 @@ MStatus AlembicPolyMeshNode::compute(const MPlug & plug, MDataBlock & dataBlock)
              if(uvIndicesFloor.size() == (size_t)indices.length())
              {
                MFloatArray uValues((unsigned int)uvValuesFloor.size()), vValues((unsigned int)uvValuesFloor.size());
-               if((sampleInfo.alpha != 0.0)&& uvCeil && uvIndicesFloor.size() == uvIndicesCeil.size() && ! isTopologyDynamic )
+			   if((sampleInfo.alpha != 0.0)&& uvCeil && uvIndicesFloor.size() == uvIndicesCeil.size() && ! mDynamicTopology )
                {
                  float blend = (float)sampleInfo.alpha;
                  float iblend = 1.0f - blend;
@@ -801,7 +805,7 @@ MStatus AlembicPolyMeshNode::compute(const MPlug & plug, MDataBlock & dataBlock)
                MVectorArray normals((unsigned int)normalValuesFloor.size());
 
                bool done = false;
-               if((sampleInfo.alpha != 0.0)&& normalCeil && normalIndicesFloor.size() == normalIndicesCeil.size() && ! isTopologyDynamic )
+               if((sampleInfo.alpha != 0.0)&& normalCeil && normalIndicesFloor.size() == normalIndicesCeil.size() && ! mDynamicTopology )
                   {
                      //ESS_LOG_WARNING( "blending vertex normals (1-2) A." );
 					 float blend = (float)sampleInfo.alpha;
@@ -938,6 +942,8 @@ MStatus AlembicPolyMeshDeformNode::deform(MDataBlock & dataBlock, MItGeometry & 
    MString & fileName = dataBlock.inputValue(mFileNameAttr).asString();
    MString & identifier = dataBlock.inputValue(mIdentifierAttr).asString();
 
+ 	AlembicObjectInfo* pObjectInfo = NULL;
+
    // check if we have the file
    if(fileName != mFileName || identifier != mIdentifier)
    {
@@ -950,8 +956,12 @@ MStatus AlembicPolyMeshDeformNode::deform(MDataBlock & dataBlock, MItGeometry & 
       }
       mIdentifier = identifier;
 
+	  pObjectInfo = getObjectInfoFromArchive( std::string( mFileName.asChar() ), std::string( identifier.asChar() ) );
+	  if( pObjectInfo != NULL ) {
+		  mObj = pObjectInfo->obj;
+	  }
       // get the object from the archive
-      mObj = getObjectFromArchive(mFileName,identifier);
+      //mObj = getObjectFromArchive(mFileName,identifier);
       if(!mObj.valid())
       {
          MGlobal::displayWarning("[ExocortexAlembic] Identifier '"+identifier+"' not found in archive '"+mFileName+"'.");
@@ -964,74 +974,78 @@ MStatus AlembicPolyMeshDeformNode::deform(MDataBlock & dataBlock, MItGeometry & 
          return MStatus::kFailure;
       }
       mSchema = obj.getSchema();
+
+	  if( pObjectInfo->isMeshTopoDynamic == -1 ) {
+		pObjectInfo->isMeshTopoDynamic = isAlembicMeshTopoDynamic( &mObj ) ? 1 : 0;
+	  }
+		mDynamicTopology = ( pObjectInfo->isMeshTopoDynamic == 1 );
    }
 
    if(!mSchema.valid())
       return MStatus::kFailure;
 
    // get the sample
-   SampleInfo sampleInfo = getSampleInfo(
-      inputTime,
-      mSchema.getTimeSampling(),
-      mSchema.getNumSamples()
-   );
-
-   bool isTopologyDynamic = false;
-   if( mObj.valid() ) {
-	   isTopologyDynamic = isAlembicMeshTopoDynamic( &mObj );
-	   //ESS_LOG_WARNING( "isTopologyDynamic = " << isTopologyDynamic );
+   SampleInfo sampleInfo;
+   {
+	  ESS_PROFILE_SCOPE("AlembicPolyMeshDeformNode::deform sampleInfo");
+	   sampleInfo = getSampleInfo(
+		  inputTime,
+		  mSchema.getTimeSampling(),
+		  mSchema.getNumSamples()
+		);
    }
 
    mLastSampleInfo = sampleInfo;
 
-   // access the camera values
-   AbcG::IPolyMeshSchema::Sample sample;
-   AbcG::IPolyMeshSchema::Sample sample2;
-   mSchema.get(sample,sampleInfo.floorIndex);
-   if(sampleInfo.alpha != 0.0)
-      mSchema.get(sample2,sampleInfo.ceilIndex);
-
-   Abc::P3fArraySamplePtr samplePos = sample.getPositions();
+   Abc::P3fArraySamplePtr samplePos;
    Abc::P3fArraySamplePtr samplePos2;
-   if(sampleInfo.alpha != 0.0)
-      samplePos2 = sample2.getPositions();
+   {
+   	  ESS_PROFILE_SCOPE("AlembicPolyMeshDeformNode::deform get position samples");
+	  mSchema.getPositionsProperty().get( samplePos, sampleInfo.floorIndex );
+	  if(sampleInfo.alpha != 0.0) {
+		  mSchema.getPositionsProperty().get( samplePos2, sampleInfo.ceilIndex );
+	  }
+   }
 
    // iteration should not be necessary. the iteration is only 
    // required if the same mesh is attached to the same deformer
    // several times
    float blend = (float)sampleInfo.alpha;
    float iblend = 1.0f - blend;
-   for(iter.reset(); !iter.isDone(); iter.next())
    {
-      float weight = weightValue(dataBlock,geomIndex,iter.index()) * env;
-      if(weight == 0.0f)
-         continue;
-      float iweight = 1.0f - weight;
-      if(iter.index() >= samplePos->size())
-         continue;
-      bool done = false;
-      //MFloatPoint pt = iter.position();
-      MPoint pt = iter.position();
+   	  ESS_PROFILE_SCOPE("AlembicPolyMeshDeformNode::deform position iterator");
 
-      MFloatPoint abcPt;
-      if(sampleInfo.alpha != 0.0)
-      {
-         if(samplePos2->size() == samplePos->size() && ! isTopologyDynamic )
-         {
-			//ESS_LOG_WARNING( "blending vertex positions (1-2) B." );
-            pt.x = iweight * pt.x + weight * (samplePos->get()[iter.index()].x * iblend + samplePos2->get()[iter.index()].x * blend);
-            pt.y = iweight * pt.y + weight * (samplePos->get()[iter.index()].y * iblend + samplePos2->get()[iter.index()].y * blend);
-            pt.z = iweight * pt.z + weight * (samplePos->get()[iter.index()].z * iblend + samplePos2->get()[iter.index()].z * blend);
-            done = true;
-         }
-      }
-      if(!done)
-      {
-         pt.x = iweight * pt.x + weight * samplePos->get()[iter.index()].x;
-         pt.y = iweight * pt.y + weight * samplePos->get()[iter.index()].y;
-         pt.z = iweight * pt.z + weight * samplePos->get()[iter.index()].z;
-      }
-      iter.setPosition(pt);
+	   for(iter.reset(); !iter.isDone(); iter.next())
+	   {
+		  float weight = weightValue(dataBlock,geomIndex,iter.index()) * env;
+		  if(weight == 0.0f)
+			 continue;
+		  float iweight = 1.0f - weight;
+		  if(iter.index() >= samplePos->size())
+			 continue;
+		  bool done = false;
+    	  MPoint pt = iter.position();
+
+		  MFloatPoint abcPt;
+		  if(sampleInfo.alpha != 0.0)
+		  {
+			 if(samplePos2->size() == samplePos->size() && ! mDynamicTopology )
+			 {
+				//ESS_LOG_WARNING( "blending vertex positions (1-2) B." );
+				pt.x = iweight * pt.x + weight * (samplePos->get()[iter.index()].x * iblend + samplePos2->get()[iter.index()].x * blend);
+				pt.y = iweight * pt.y + weight * (samplePos->get()[iter.index()].y * iblend + samplePos2->get()[iter.index()].y * blend);
+				pt.z = iweight * pt.z + weight * (samplePos->get()[iter.index()].z * iblend + samplePos2->get()[iter.index()].z * blend);
+				done = true;
+			 }
+		  }
+		  if(!done)
+		  {
+			 pt.x = iweight * pt.x + weight * samplePos->get()[iter.index()].x;
+			 pt.y = iweight * pt.y + weight * samplePos->get()[iter.index()].y;
+			 pt.z = iweight * pt.z + weight * samplePos->get()[iter.index()].z;
+		  }
+		  iter.setPosition(pt);
+	   }
    }
 
    return MStatus::kSuccess;
