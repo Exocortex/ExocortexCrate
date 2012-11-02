@@ -61,10 +61,10 @@ XSI::CStatus AlembicPolyMesh::Save(double time)
    }
 
    // check if the mesh is animated
-   if(mNumSamples > 0) {
-      if(!isRefAnimated(GetRef(),false,globalSpace))
-         return CStatus::OK;
-   }
+   //if(mNumSamples > 0) {
+   //   if(!isRefAnimated(GetRef(),false,globalSpace))
+   //      return CStatus::OK;
+   //}
 
    // check if we just have a pure pointcache (no surface)
    bool purePointCache = (bool)GetJob()->GetOption(L"exportPurePointCache");

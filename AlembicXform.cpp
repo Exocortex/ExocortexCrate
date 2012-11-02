@@ -28,12 +28,12 @@ void SaveXformSample(XSI::CRef kinestateRef,AbcG::OXformSchema & schema,AbcG::Xf
    }
 
    // check if the transform is animated
-   if(schema.getNumSamples() > 0)
-   {
-      X3DObject parent(kineState.GetParent3DObject());
-      if(!isRefAnimated(kineState.GetParent3DObject().GetRef(),xformCache))
-         return;
-   }
+   //if(schema.getNumSamples() > 0)
+   //{
+   //   X3DObject parent(kineState.GetParent3DObject());
+   //   if(!isRefAnimated(kineState.GetParent3DObject().GetRef(),xformCache))
+   //      return;
+   //}
 
    CTransformation transform = kineState.GetTransform(time);
 
@@ -45,6 +45,8 @@ void SaveXformSample(XSI::CRef kinestateRef,AbcG::OXformSchema & schema,AbcG::Xf
    sample.setTranslation(Imath::V3d(trans.GetX(),trans.GetY(),trans.GetZ()));
    sample.setRotation(Imath::V3d(axis.GetX(),axis.GetY(),axis.GetZ()),RadiansToDegrees(angle));
    sample.setScale(Imath::V3d(scale.GetX(),scale.GetY(),scale.GetZ()));
+
+   //ESS_LOG_WARNING("time: "<<time<<" trans: ("<<trans.GetX()<<", "<<trans.GetY()<<", "<<trans.GetZ()<<") angle: "<<angle<<" axis: ("<<axis.GetX()<<", "<<axis.GetY()<<", "<<axis.GetZ());
 
    // save the sample
    schema.set(sample);
