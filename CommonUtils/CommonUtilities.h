@@ -67,7 +67,7 @@ public:
 				}
 			}
 			if( oldestIndex >= 0 ) {
-				entries.erase( myvector.begin() + oldestIndex );
+				entries.erase( entries.begin() + oldestIndex );
 			}
 		}
 		MRUCacheEntry entry;
