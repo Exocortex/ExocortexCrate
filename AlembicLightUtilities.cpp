@@ -4,35 +4,44 @@
 #include "utility.h"
 #include <Alembic/AbcCoreAbstract/CompoundPropertyReader.h>
 #include <Alembic/AbcCoreAbstract/ForwardDeclarations.h>
+//#include <Alembic/Abc/IScalarProperty.h>
 
 //template<class T> printProperty(
 
-//
-//void printInputProperties( Abc::ICompoundProperty prop )
-//{
-//   if(!prop){
-//      return;
-//   }
-//
-//   for(size_t i=0; prop.getNumProperties(); i++){
-//      AbcA::PropertyHeader pheader = prop.getPropertyHeader(i);
-//      AbcA::PropertyType propType = pheader.getPropertyType();
-//      if( propType == AbcA::kCompoundProperty ){
-//         printInputProperties(Abc::ICompoundProperty(prop, pheader.getName()));
-//      }
-//      else if( propType == AbcA::kScalarProperty ){
-//
-//         ESS_LOG_WARNING("Scaler property: "<<prop.getName());
-//      }
-//      else if( propType == AbcA::kArrayProperty ){
-//         ESS_LOG_WARNING("Unsupported array property: "<<prop.getName());
-//      }
-//      else{
-//         ESS_LOG_WARNING("Unsupported input property: "<<prop.getName());
-//      }
-//
-//   }
-//}
+
+void printInputProperties( Abc::ICompoundProperty prop )
+{
+   if(!prop){
+      return;
+   }
+
+   for(size_t i=0; i<prop.getNumProperties(); i++){
+      AbcA::PropertyHeader pheader = prop.getPropertyHeader(i);
+      AbcA::PropertyType propType = pheader.getPropertyType();
+
+      
+
+      if( propType == AbcA::kCompoundProperty ){
+         //printInputProperties(Abc::ICompoundProperty(prop, pheader.getName()));
+      }
+      else if( propType == AbcA::kScalarProperty ){
+
+         ESS_LOG_WARNING("Scaler property: "<<pheader.getName());
+         
+         if(Abc::IBoolProperty::matches(pheader)){
+            Abc::IBoolProperty boolProp(prop, pheader.getName());
+            
+         }
+      }
+      else if( propType == AbcA::kArrayProperty ){
+         ESS_LOG_WARNING("Unsupported array property: "<<pheader.getName());
+      }
+      else{
+         ESS_LOG_WARNING("Unsupported input property: "<<pheader.getName());
+      }
+
+   }
+}
 
 
 
@@ -83,11 +92,14 @@ int AlembicImport_Light(const std::string &path, AbcG::IObject& iObj, alembic_im
                matSchema.getShader(targetNames[j], shaderTypeNames[k], shaderName);
 
                ESS_LOG_WARNING("shaderName: "<<shaderName);
+
+               Abc::ICompoundProperty propk = matSchema.getShaderParameters(targetNames[j], shaderTypeNames[k]);
+
+               ESS_LOG_WARNING("propertyName: "<<propk.getName());
+               
+               printInputProperties(propk);
             }
          }
-
-
-
          break;
          
       }
