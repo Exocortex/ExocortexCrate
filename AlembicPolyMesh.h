@@ -63,7 +63,10 @@ private:
 
 class AlembicPolyMeshDeformNode : public AlembicObjectDeformNode
 {
+private:
+   typedef MRUCache<Alembic::AbcCoreAbstract::index_t, Abc::P3fArraySamplePtr> mruP3fArraySamplePtr;
 public:
+   AlembicPolyMeshDeformNode(void): cachePosition(3) {}
    virtual ~AlembicPolyMeshDeformNode();
    // override virtual methods from MPxDeformerNode
    virtual void PreDestruction();
@@ -84,6 +87,7 @@ private:
 
    // members
    SampleInfo mLastSampleInfo;
+   mruP3fArraySamplePtr cachePosition;
 };
 
 class AlembicCreateFaceSetsCommand : public MPxCommand
