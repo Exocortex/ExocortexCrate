@@ -84,28 +84,29 @@ ESS_CALLBACK_START( alembic_xform_Update, CRef& )
    CValue udVal = ctxt.GetUserData();
    alembic_UD * p = (alembic_UD*)(CValue::siPtrType)udVal;
 
+	CString path = ctxt.GetParameterValue(L"path");
+	CString identifier = ctxt.GetParameterValue(L"identifier");
+
+	AbcG::IObject iObj = getObjectFromArchive(path,identifier);
+	if(!iObj.valid())
+		return CStatus::OK;
+	AbcG::IXform obj(iObj,Abc::kWrapExisting);
+	if(!obj.valid())
+		return CStatus::OK;
+
    double time = ctxt.GetParameterValue(L"time");
    if(p->times.size() == 0 || abs(p->lastTime - time) < 0.001)
    {
       p->times.clear();
 
-      CString path = ctxt.GetParameterValue(L"path");
-      CString identifier = ctxt.GetParameterValue(L"identifier");
-
-     AbcG::IObject iObj = getObjectFromArchive(path,identifier);
-      if(!iObj.valid())
-         return CStatus::OK;
-     AbcG::IXform obj(iObj,Abc::kWrapExisting);
-      if(!obj.valid())
-         return CStatus::OK;
 
      AbcG::XformSample sample;
 
       for(size_t i=0;i<obj.getSchema().getNumSamples();i++)
       {
 		   p->times.push_back((double)obj.getSchema().getTimeSampling()->getSampleTime( i ));
-		   obj.getSchema().get(sample,i);				 
-         p->matrices.push_back(sample.getMatrix());
+		   //obj.getSchema().get(sample,i);				 
+			//p->matrices.push_back(sample.getMatrix());
       }
    }
 
@@ -113,22 +114,45 @@ ESS_CALLBACK_START( alembic_xform_Update, CRef& )
 
    // if no time samples, default to identity matrix
    if( p->times.size() > 0 ) {
-	   // find the index
+	  // find the index
 	   size_t index = p->lastFloor;
 	   while(time > p->times[index] && index < p->times.size()-1)
 		  index++;
 	   while(time < p->times[index] && index > 0)
 		  index--;
 
-	   if(fabs(time - p->times[index]) < 0.001 || index == p->times.size()-1)
-	   {
-		  matrix = p->matrices[index];
-	   }
-	   else
-	   {
-		  double blend = (time - p->times[index]) / (p->times[index+1] - p->times[index]);
-		  matrix = (1.0f - blend) * p->matrices[index] + blend * p->matrices[index+1];
-	   }
+	  Abc::M44d matrixAtI;
+	  Abc::M44d matrixAtIPlus1;
+
+	  if( p->indexToMatrices.find(index) == p->indexToMatrices.end() ) {
+		AbcG::XformSample sample;
+		obj.getSchema().get(sample,index);
+		matrixAtI = sample.getMatrix();
+		p->indexToMatrices.insert( std::map<int,Abc::M44d>::value_type( index, matrixAtI ) );		
+	  }
+	  else {
+		matrixAtI = p->indexToMatrices[ index ];
+	  }
+	  if( ( index < p->times.size() - 1 ) && p->indexToMatrices.find(index+ 1) == p->indexToMatrices.end() ) {
+		AbcG::XformSample sample;
+		obj.getSchema().get(sample,index+ 1);
+		matrixAtIPlus1 = sample.getMatrix();
+		p->indexToMatrices.insert( std::map<int,Abc::M44d>::value_type( index+ 1, matrixAtIPlus1 ) );
+	  }
+	  else {
+		matrixAtIPlus1 = p->indexToMatrices[ index + 1 ];
+	  }
+
+	  Abc::M44d matrix;
+	  if(fabs(time - p->times[index]) < 0.001 || index == 0 || index == p->times.size()-1)
+	  {
+		matrix = matrixAtI;
+	  }
+	  else
+	  {
+		const double blend = (time - p->times[index]) / (p->times[index+1] - p->times[index]);
+		matrix = (1.0f - blend) * matrixAtI + blend * matrixAtIPlus1;
+	  }
 	   p->lastFloor = index;
    }
    p->lastTime = time;

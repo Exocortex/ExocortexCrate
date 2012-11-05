@@ -66,6 +66,6 @@ void alembic_UD::clearAll()
    for(;it!=gAlembicUDs.end();it++)
    {
       it->second->times.clear();
-      it->second->matrices.clear();
+      it->second->indexToMatrices.clear();
    }
 }
