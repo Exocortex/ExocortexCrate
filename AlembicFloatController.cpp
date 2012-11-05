@@ -123,39 +123,52 @@ void AlembicFloatController::GetValueLocalTime(TimeValue t, void *ptr, Interval 
         return;
 	}
 
-	if(g_bVerboseLogging){
-		ESS_LOG_INFO("Camera object found.");
+	if(!iObj.valid() 
+      || !Alembic::AbcGeom::ICamera::matches(iObj.getMetaData())
+      || !Alembic::AbcGeom::ILight::matches(iObj.getMetaData())){
+      return;
 	}
 
-   AbcG::ICamera objCamera = AbcG::ICamera(iObj, Abc::kWrapExisting);
-
-	TimeValue dTicks = GetTimeValueFromSeconds( fTime );
+   TimeValue dTicks = GetTimeValueFromSeconds( fTime );
    double sampleTime = GetSecondsFromTimeValue(dTicks);
 
-	SampleInfo sampleInfo = getSampleInfo(sampleTime,
-                                          objCamera.getSchema().getTimeSampling(),
-                                          objCamera.getSchema().getNumSamples());
-   AbcG::CameraSample sample;
-   objCamera.getSchema().get(sample, sampleInfo.floorIndex);
+   double sampleVal = 0.0;
+   if(Alembic::AbcGeom::ICamera::matches(iObj.getMetaData())){
 
-	if(g_bVerboseLogging){
-		ESS_LOG_INFO("dTicks: "<<dTicks<<" sampleTime: "<<sampleTime);
-		ESS_LOG_INFO("SampleInfo.alpha: "<<sampleInfo.alpha<< "SampleInfo(fi, ci): "<<sampleInfo.floorIndex<<", "<<sampleInfo.ceilIndex);
-	}
+      Alembic::AbcGeom::ICamera objCamera = Alembic::AbcGeom::ICamera(iObj, Alembic::Abc::kWrapExisting);
 
-	double sampleVal = 0.0;
-	if(!getCameraSampleVal(objCamera, sampleInfo, sample, szProperty.c_str(), sampleVal)){
-		return;
-	}
+	   SampleInfo sampleInfo = getSampleInfo(sampleTime,
+                                             objCamera.getSchema().getTimeSampling(),
+                                             objCamera.getSchema().getNumSamples());
+      Alembic::AbcGeom::CameraSample sample;
+      objCamera.getSchema().get(sample, sampleInfo.floorIndex);
 
-   // Blend the camera values, if necessary
-   if (sampleInfo.alpha != 0.0)
-   {
-      objCamera.getSchema().get(sample, sampleInfo.ceilIndex);
-      double sampleVal2 = 0.0;
-      if(getCameraSampleVal(objCamera, sampleInfo, sample, szProperty.c_str(), sampleVal2)){
-         sampleVal = (1.0 - sampleInfo.alpha) * sampleVal + sampleInfo.alpha * sampleVal2;
+	   if(!getCameraSampleVal(objCamera, sampleInfo, sample, strProperty, sampleVal)){
+		   return;
+	   }
+
+      // Blend the camera values, if necessary
+      if (sampleInfo.alpha != 0.0)
+      {
+         objCamera.getSchema().get(sample, sampleInfo.ceilIndex);
+		   double sampleVal2 = 0.0;
+		   if(getCameraSampleVal(objCamera, sampleInfo, sample, strProperty, sampleVal2)){
+			   sampleVal = (1.0 - sampleInfo.alpha) * sampleVal + sampleInfo.alpha * sampleVal2;
+		   }
       }
+   }
+   else if(Alembic::AbcGeom::ILight::matches(iObj.getMetaData())){
+
+      Alembic::AbcGeom::ILight objLight = Alembic::AbcGeom::ILight(iObj, Alembic::Abc::kWrapExisting);
+
+/*	   SampleInfo sampleInfo = getSampleInfo(sampleTime,
+                                             objLight.getSchema().getTimeSampling(),
+                                             objLight.getSchema().getNumSamples());
+      Alembic::AbcGeo::LightSample sample;
+      objLight.getSchema().get(sample, sampleInfo.floorIndex); */     
+
+
+
    }
 
 	const float fSampleVal = (float)sampleVal;
