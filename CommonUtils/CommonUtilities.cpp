@@ -91,10 +91,10 @@ std::string resolvePath( std::string originalPath ) {
 
 Alembic::Abc::IArchive * getArchiveFromID(std::string path)
 {
-   ESS_PROFILE_SCOPE("getArchiveFromID");
-   std::string resolvedPath = resolvePath(path);
-   std::map<std::string,AlembicArchiveInfo>::iterator it;
-   it = gArchives.find(resolvedPath);
+	ESS_PROFILE_SCOPE("getArchiveFromID-1");
+	std::map<std::string,AlembicArchiveInfo>::iterator it;
+	std::string resolvedPath = resolvePath(path);
+	it = gArchives.find(resolvedPath);
    if(it == gArchives.end())
    {
      // check if the file exists
@@ -117,7 +117,7 @@ Alembic::Abc::IArchive * getArchiveFromID(std::string path)
       {
          fclose(file);
          addArchive(new Alembic::Abc::IArchive( Alembic::AbcCoreHDF5::ReadArchive(), resolvedPath));
-         return getArchiveFromID(resolvedPath);
+         gArchives.find(resolvedPath)->second.archive;
       }
       return NULL;
    }
@@ -169,59 +169,82 @@ void deleteAllArchives()
 
 AlembicObjectInfo* getObjectInfoFromArchive(std::string path, std::string identifier)
 {
-   ESS_PROFILE_SCOPE("getObjectInfoFromArchive");
+	std::string resolvedPath = resolvePath(path);
 
-   if( path.size() == 0 ) {
-	   ESS_LOG_WARNING( "No path specified (path: " << path <<" identifier:" << identifier << ")");
-	   return NULL;
+	std::map<std::string,AlembicArchiveInfo>::iterator it;
+	it = gArchives.find(resolvedPath);
+
+	StringObjectInfoMap &identifierToObjectInfo = (*it).second.identifierToObjectInfo;
+
+	{
+	   ESS_PROFILE_SCOPE("getObjectInfoFromArchive - 1");
+
+	   if( identifierToObjectInfo.find( identifier ) != identifierToObjectInfo.end() ) {
+		   return &(identifierToObjectInfo[identifier]);
+	   }
 	}
-	if( identifier.size() == 0 ) {
-		ESS_LOG_WARNING( "No identifier specified (path: " << path <<" identifier:" << identifier << ")" );
-	   return  NULL;
-	}
 
-   Alembic::Abc::IArchive * archive = getArchiveFromID(path);
-   if(archive == NULL)
-      return NULL;
+	{
+	   ESS_PROFILE_SCOPE("getObjectInfoFromArchive - 2");
 
-   if(identifier[0] != '/'){
+		if( identifier.size() == 0 ) {
+			ESS_LOG_WARNING( "No identifier specified (path: " << path <<" identifier:" << identifier << ")" );
+		   return  NULL;
+		}
+
+
+	   // split the path
+	   std::vector<std::string> parts;
+	   boost::split(parts, identifier, boost::is_any_of("/"));
+
+	   Alembic::Abc::IObject obj;
+
+	   if( parts.size() > 1 ) {
+		   std::string parentIdentifier = "/";
+		   for( int i = 0; i < parts.size() - 2; i ++ ) {
+			   parentIdentifier += parts[i];
+		   }
+		   parentIdentifier += parts[parts.size() - 2];
+
+		   AlembicObjectInfo *parent = getObjectInfoFromArchive( path, parentIdentifier );
+		   if( parent == NULL ) {
+			   return NULL;
+		   }
+
+		   obj = Alembic::Abc::IObject( parent->obj, parts[parts.size() -1 ] );
+	   }
+	   else {
+		   if( path.size() == 0 ) {
+			   ESS_LOG_WARNING( "No path specified (path: " << path <<" identifier:" << identifier << ")");
+			   return NULL;
+			}
+
+		   Alembic::Abc::IArchive * archive = getArchiveFromID(path);
+		   if(archive == NULL)
+			  return NULL;
+
+		   if(identifier[0] != '/'){
+				return NULL;
+		   }
+
+			// recurse to find it
+			obj = archive->getTop();
+	   }
+
+	  if( !obj )
+	  {
 		return NULL;
-   }
+	  }
 
-   std::string resolvedPath = resolvePath(path);
+		AlembicObjectInfo objectInfo;
+	   objectInfo.obj = obj;
 
-   std::map<std::string,AlembicArchiveInfo>::iterator it;
-   it = gArchives.find(resolvedPath);
+	   identifierToObjectInfo.insert( StringObjectInfoPair( identifier, objectInfo ) );
 
-   StringObjectInfoMap &identifierToObjectInfo = (*it).second.identifierToObjectInfo;
-   if( identifierToObjectInfo.find( identifier ) != identifierToObjectInfo.end() ) {
 	   return &(identifierToObjectInfo[identifier]);
-   }
-
-   // split the path
-   std::vector<std::string> parts;
-   boost::split(parts, identifier, boost::is_any_of("/"));
-
-   // recurse to find it
-   Alembic::Abc::IObject obj = archive->getTop();
-   for(size_t i=1;i<parts.size();i++)
-   {
-      Alembic::Abc::IObject child(obj,parts[i]);
-      obj = child;
-      if(!obj)
-      {
-         obj = Alembic::Abc::IObject();
-         break;
-      }
-   }
-
-   AlembicObjectInfo objectInfo;
-   objectInfo.obj = obj;
-
-   identifierToObjectInfo.insert( StringObjectInfoPair( identifier, objectInfo ) );
-
-   return &(identifierToObjectInfo[identifier]);
+	}
 }
+
 Alembic::Abc::IObject getObjectFromArchive(std::string path, std::string identifier)
 {
 	AlembicObjectInfo* objectInfo = getObjectInfoFromArchive(path,identifier );
