@@ -167,86 +167,73 @@ void deleteAllArchives()
    gArchives.clear();
 }
 
+
 AlembicObjectInfo* getObjectInfoFromArchive(std::string path, std::string identifier)
 {
 	std::string resolvedPath = resolvePath(path);
 
 	std::map<std::string,AlembicArchiveInfo>::iterator it;
 	it = gArchives.find(resolvedPath);
+	if( it == gArchives.end() ) {
+		getArchiveFromID(path);
+		it = gArchives.find(resolvedPath);
+		if( it == gArchives.end() ) {
+			return NULL;
+		}  
+	}
 
 	StringObjectInfoMap &identifierToObjectInfo = (*it).second.identifierToObjectInfo;
-
-	{
-	   ESS_PROFILE_SCOPE("getObjectInfoFromArchive - 1");
-
-	   if( identifierToObjectInfo.find( identifier ) != identifierToObjectInfo.end() ) {
-		   return &(identifierToObjectInfo[identifier]);
-	   }
-	}
-
-	{
-	   ESS_PROFILE_SCOPE("getObjectInfoFromArchive - 2");
-
-		if( identifier.size() == 0 ) {
-			ESS_LOG_WARNING( "No identifier specified (path: " << path <<" identifier:" << identifier << ")" );
-		   return  NULL;
+	
+	if( identifierToObjectInfo.find( identifier ) == identifierToObjectInfo.end() ) {
+ 
+		// split the path
+		std::vector<std::string> parts;
+		boost::split(parts, identifier, boost::is_any_of("/"));
+	  
+		// recurse to find it
+		std::string parentIdentifier;
+		std::string childIdentifier;
+		std::string childIdentifierPostfix;
+		for(size_t i=1;i<parts.size();i++)
+		{
+			if( parts[i].size() > 0 ) { 
+				parentIdentifier = childIdentifier;
+				childIdentifier += "/";
+				childIdentifier += parts[i];
+				childIdentifierPostfix = parts[i];
+			}
 		}
+		Alembic::Abc::IObject objParent;
+		if( parentIdentifier.size() == 0 ) {
+			ESS_PROFILE_SCOPE("getObjectInfoFromArchive - 1");
+			objParent = (*it).second.archive->getTop();
+		}
+		else {
+			AlembicObjectInfo* parentObjectInfo = getObjectInfoFromArchive( path, parentIdentifier );
 
-
-	   // split the path
-	   std::vector<std::string> parts;
-	   boost::split(parts, identifier, boost::is_any_of("/"));
-
-	   Alembic::Abc::IObject obj;
-
-	   if( parts.size() > 1 ) {
-		   std::string parentIdentifier = "/";
-		   for( int i = 0; i < parts.size() - 2; i ++ ) {
-			   parentIdentifier += parts[i];
-		   }
-		   parentIdentifier += parts[parts.size() - 2];
-
-		   AlembicObjectInfo *parent = getObjectInfoFromArchive( path, parentIdentifier );
-		   if( parent == NULL ) {
-			   return NULL;
-		   }
-
-		   obj = Alembic::Abc::IObject( parent->obj, parts[parts.size() -1 ] );
-	   }
-	   else {
-		   if( path.size() == 0 ) {
-			   ESS_LOG_WARNING( "No path specified (path: " << path <<" identifier:" << identifier << ")");
-			   return NULL;
+			if( parentObjectInfo == NULL ) {
+				return NULL;
+			}
+			objParent = parentObjectInfo->obj;
+		}
+		{
+			ESS_PROFILE_SCOPE("getObjectInfoFromArchive - 2");
+			Alembic::Abc::IObject child(objParent,childIdentifierPostfix);
+			if( ! child.valid() ) {
+				return NULL;
 			}
 
-		   Alembic::Abc::IArchive * archive = getArchiveFromID(path);
-		   if(archive == NULL)
-			  return NULL;
-
-		   if(identifier[0] != '/'){
-				return NULL;
-		   }
-
-			// recurse to find it
-			obj = archive->getTop();
-	   }
-
-	  if( !obj )
-	  {
-		return NULL;
-	  }
-
-		AlembicObjectInfo objectInfo;
-	   objectInfo.obj = obj;
-
-	   identifierToObjectInfo.insert( StringObjectInfoPair( identifier, objectInfo ) );
-
-	   return &(identifierToObjectInfo[identifier]);
+			AlembicObjectInfo objectInfo;
+			objectInfo.obj = child;
+			identifierToObjectInfo.insert( StringObjectInfoPair( identifier, objectInfo ) );
+		}
 	}
+	return &(identifierToObjectInfo[identifier]);
 }
 
 Alembic::Abc::IObject getObjectFromArchive(std::string path, std::string identifier)
 {
+   ESS_PROFILE_SCOPE("getObjectFromArchive");
 	AlembicObjectInfo* objectInfo = getObjectInfoFromArchive(path,identifier );
 	if( objectInfo == NULL ) {
 		return Alembic::Abc::IObject();
@@ -529,7 +516,7 @@ bool isObjectSchemaConstant( AbcG::IFaceSetSchema& schema ) {
 
 
 bool isObjectConstant(Alembic::Abc::IObject &object ) {
-   ESS_PROFILE_SCOPE("isObjectConstant"); 
+   ESS_PROFILE_SCOPE("isObjectConstant");  
    const Alembic::Abc::MetaData &md = object.getMetaData();
    if(Alembic::AbcGeom::IXform::matches(md)) {
 	   return isObjectSchemaConstant( Alembic::AbcGeom::IXform(object,Alembic::Abc::kWrapExisting).getSchema() );
