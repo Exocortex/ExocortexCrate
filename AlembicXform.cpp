@@ -75,101 +75,89 @@ ESS_CALLBACK_START( alembic_xform_DefineLayout, CRef& )
 ESS_CALLBACK_END
 
 ESS_CALLBACK_START( alembic_xform_Update, CRef& )
-   ESS_PROFILE_SCOPE("alembic_xform_Update");
-   OperatorContext ctxt( in_ctxt );
+	ESS_PROFILE_SCOPE("alembic_xform_Update");
+	OperatorContext ctxt( in_ctxt );
 
-   if((bool)ctxt.GetParameterValue(L"muted"))
-      return CStatus::OK;
+	if((bool)ctxt.GetParameterValue(L"muted"))
+		return CStatus::OK;
 
-   CValue udVal = ctxt.GetUserData();
-   alembic_UD * p = (alembic_UD*)(CValue::siPtrType)udVal;
+	CValue udVal = ctxt.GetUserData();
+	alembic_UD * p = (alembic_UD*)(CValue::siPtrType)udVal;
 
 	CString path = ctxt.GetParameterValue(L"path");
 	CString identifier = ctxt.GetParameterValue(L"identifier");
 
 	AbcG::IObject iObj = getObjectFromArchive(path,identifier);
-	if(!iObj.valid())
+	if(!iObj.valid()) {
 		return CStatus::OK;
+	}
 	AbcG::IXform obj(iObj,Abc::kWrapExisting);
-	if(!obj.valid())
+	if(!obj.valid()) {
 		return CStatus::OK;
+	}
 
-   double time = ctxt.GetParameterValue(L"time");
-   if(p->times.size() == 0 || abs(p->lastTime - time) < 0.001)
-   {
-      p->times.clear();
+	double time = ctxt.GetParameterValue(L"time");
+	if(p->times.size() == 0 || abs(p->lastTime - time) < 0.001)
+	{
+		p->times.clear();
+		for(size_t i=0;i<obj.getSchema().getNumSamples();i++)
+		{
+			p->times.push_back((double)obj.getSchema().getTimeSampling()->getSampleTime( i ));
+		}
+	}
 
+	Abc::M44d matrix;	// constructor creates an identity matrix
 
-     AbcG::XformSample sample;
+	// if no time samples, default to identity matrix
+	if( p->times.size() > 0 ) {
+		// find the index
+		size_t index = p->lastFloor;
+		while(time > p->times[index] && index < p->times.size()-1){
+			index++;
+		}
+		while(time < p->times[index] && index > 0) {
+			index--;
+		}
 
-      for(size_t i=0;i<obj.getSchema().getNumSamples();i++)
-      {
-		   p->times.push_back((double)obj.getSchema().getTimeSampling()->getSampleTime( i ));
-		   //obj.getSchema().get(sample,i);				 
-			//p->matrices.push_back(sample.getMatrix());
-      }
-   }
+		if( p->indexToMatrices.find(index) == p->indexToMatrices.end() ) {
+			AbcG::XformSample sample;
+			obj.getSchema().get(sample,index); 
+			p->indexToMatrices.insert( std::map<size_t,Abc::M44d>::value_type( index, sample.getMatrix() ) );		
+		}
+		if( index < p->times.size() - 1 ) {
+			if( p->indexToMatrices.find(index+ 1) == p->indexToMatrices.end() ) {
+				AbcG::XformSample sample;
+				obj.getSchema().get(sample,index+ 1);
+				p->indexToMatrices.insert( std::map<size_t,Abc::M44d>::value_type( index+ 1, sample.getMatrix() ) );
+			}
+		}
 
-   Abc::M44d matrix;	// constructor creates an identity matrix
+		if(fabs(time - p->times[index]) < 0.001 || index == 0 || index == p->times.size()-1)
+		{
+			matrix = p->indexToMatrices[ index ];
+		}
+		else
+		{
+			const double blend = (time - p->times[index]) / (p->times[index+1] - p->times[index]);
+			matrix = (1.0f - blend) * p->indexToMatrices[ index ] + blend * p->indexToMatrices[ index + 1 ];
+		}
+		p->lastFloor = index;
+	}
+	p->lastTime = time;
 
-   // if no time samples, default to identity matrix
-   if( p->times.size() > 0 ) {
-	  // find the index
-	   size_t index = p->lastFloor;
-	   while(time > p->times[index] && index < p->times.size()-1)
-		  index++;
-	   while(time < p->times[index] && index > 0)
-		  index--;
+	CMatrix4 xsiMatrix;
+	xsiMatrix.Set(
+			  matrix.getValue()[0],matrix.getValue()[1],matrix.getValue()[2],matrix.getValue()[3],
+			  matrix.getValue()[4],matrix.getValue()[5],matrix.getValue()[6],matrix.getValue()[7],
+			  matrix.getValue()[8],matrix.getValue()[9],matrix.getValue()[10],matrix.getValue()[11],
+			  matrix.getValue()[12],matrix.getValue()[13],matrix.getValue()[14],matrix.getValue()[15]);
+	CTransformation xsiTransform;
+	xsiTransform.SetMatrix4(xsiMatrix);
 
-	  Abc::M44d matrixAtI;
-	  Abc::M44d matrixAtIPlus1;
+	KinematicState state(ctxt.GetOutputTarget());
+	state.PutTransform(xsiTransform);
 
-	  if( p->indexToMatrices.find(index) == p->indexToMatrices.end() ) {
-		AbcG::XformSample sample;
-		obj.getSchema().get(sample,index);
-		matrixAtI = sample.getMatrix();
-		p->indexToMatrices.insert( std::map<int,Abc::M44d>::value_type( index, matrixAtI ) );		
-	  }
-	  else {
-		matrixAtI = p->indexToMatrices[ index ];
-	  }
-	  if( ( index < p->times.size() - 1 ) && p->indexToMatrices.find(index+ 1) == p->indexToMatrices.end() ) {
-		AbcG::XformSample sample;
-		obj.getSchema().get(sample,index+ 1);
-		matrixAtIPlus1 = sample.getMatrix();
-		p->indexToMatrices.insert( std::map<int,Abc::M44d>::value_type( index+ 1, matrixAtIPlus1 ) );
-	  }
-	  else {
-		matrixAtIPlus1 = p->indexToMatrices[ index + 1 ];
-	  }
-
-	  Abc::M44d matrix;
-	  if(fabs(time - p->times[index]) < 0.001 || index == 0 || index == p->times.size()-1)
-	  {
-		matrix = matrixAtI;
-	  }
-	  else
-	  {
-		const double blend = (time - p->times[index]) / (p->times[index+1] - p->times[index]);
-		matrix = (1.0f - blend) * matrixAtI + blend * matrixAtIPlus1;
-	  }
-	   p->lastFloor = index;
-   }
-   p->lastTime = time;
-   
-   CMatrix4 xsiMatrix;
-   xsiMatrix.Set(
-      matrix.getValue()[0],matrix.getValue()[1],matrix.getValue()[2],matrix.getValue()[3],
-      matrix.getValue()[4],matrix.getValue()[5],matrix.getValue()[6],matrix.getValue()[7],
-      matrix.getValue()[8],matrix.getValue()[9],matrix.getValue()[10],matrix.getValue()[11],
-      matrix.getValue()[12],matrix.getValue()[13],matrix.getValue()[14],matrix.getValue()[15]);
-   CTransformation xsiTransform;
-   xsiTransform.SetMatrix4(xsiMatrix);
-
-   KinematicState state(ctxt.GetOutputTarget());
-   state.PutTransform(xsiTransform);
-
-   return CStatus::OK;
+	return CStatus::OK;
 ESS_CALLBACK_END
 
 

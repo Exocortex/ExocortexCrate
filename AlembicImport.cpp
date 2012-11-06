@@ -42,11 +42,6 @@ ESS_CALLBACK_START(alembic_import_Init,CRef&)
 ESS_CALLBACK_END
 
 
-bool hasMultipleSamples(Abc::IObject object)
-{
-   return getNumSamplesFromObject(object) > 1;
-}
-
 ESS_CALLBACK_START(alembic_create_item_Init,CRef&)
 	Context ctxt( in_ctxt );
 	Command oCmd;
@@ -345,7 +340,7 @@ CStatus alembic_create_item_Invoke
             Application().LogMessage(L"[ExocortexAlembic] Identifier '"+identifier+L"' is not valid for given filename.",siErrorMsg);
             return CStatus::InvalidArgument;
          }
-         isAnimated = (itemType == alembicItemType_bbox) || (hasMultipleSamples(abcObject) && itemType != alembicItemType_geomapprox);
+         isAnimated = (itemType == alembicItemType_bbox) || (! isObjectConstant(abcObject) && itemType != alembicItemType_geomapprox);
          break;
       }
       case alembicItemType_visibility:
@@ -653,142 +648,137 @@ CStatus alembic_create_item_Invoke
                   meshUVsParam = abcSubD.getSchema().getUVsParam();
                if(meshUVsParam.valid())
                {
-                  size_t numUVSamples = meshUVsParam.getNumSamples();
-                  Abc::V2fArraySamplePtr meshUVs = meshUVsParam.getExpandedValue(0).getVals();
-                  if(meshUVs->size() > 0)
-                  {
-                     // check if we have a uv set names prop
-                     CStringArray uvSetNames;
-                     if(abcMesh.valid())
-                     {
-                        if ( abcMesh.getSchema().getPropertyHeader( ".uvSetNames" ) != NULL )
-                        {
-                           Abc::IStringArrayProperty uvSetNamesProp = Abc::IStringArrayProperty( abcMesh.getSchema(), ".uvSetNames" );
-                           Abc::StringArraySamplePtr ptr = uvSetNamesProp.getValue(0);
-                           for(size_t i=0;i<ptr->size();i++)
-                              uvSetNames.Add(CString(ptr->get()[i].c_str()));
-                        }
-                     }
-                     else
-                     {
-                        if ( abcSubD.getSchema().getPropertyHeader( ".uvSetNames" ) != NULL )
-                        {
-                           Abc::IStringArrayProperty uvSetNamesProp = Abc::IStringArrayProperty( abcSubD.getSchema(), ".uvSetNames" );
-                           Abc::StringArraySamplePtr ptr = uvSetNamesProp.getValue(0);
-                           for(size_t i=0;i<ptr->size();i++)
-                              uvSetNames.Add(CString(ptr->get()[i].c_str()));
-                        }
-                     }
-                     if(uvSetNames.GetCount() == 0)
-                        uvSetNames.Add(L"Texture_Projection");
+                 // check if we have a uv set names prop
+                 CStringArray uvSetNames;
+                 if(abcMesh.valid())
+                 {
+                    if ( abcMesh.getSchema().getPropertyHeader( ".uvSetNames" ) != NULL )
+                    {
+                       Abc::IStringArrayProperty uvSetNamesProp = Abc::IStringArrayProperty( abcMesh.getSchema(), ".uvSetNames" );
+                       Abc::StringArraySamplePtr ptr = uvSetNamesProp.getValue(0);
+                       for(size_t i=0;i<ptr->size();i++)
+                          uvSetNames.Add(CString(ptr->get()[i].c_str()));
+                    }
+                 }
+                 else
+                 {
+                    if ( abcSubD.getSchema().getPropertyHeader( ".uvSetNames" ) != NULL )
+                    {
+                       Abc::IStringArrayProperty uvSetNamesProp = Abc::IStringArrayProperty( abcSubD.getSchema(), ".uvSetNames" );
+                       Abc::StringArraySamplePtr ptr = uvSetNamesProp.getValue(0);
+                       for(size_t i=0;i<ptr->size();i++)
+                          uvSetNames.Add(CString(ptr->get()[i].c_str()));
+                    }
+                 }
+                 if(uvSetNames.GetCount() == 0)
+                    uvSetNames.Add(L"Texture_Projection");
 
-                     // for each uv set name
-                     for(LONG uvI=0; uvI < uvSetNames.GetCount(); uvI++)
-                     {
-                        CRef clusterPropRef;
-                        if(attachToExisting)
-                           clusterPropRef.Set(realTarget.GetAsText()+L".cls.Texture_Coordinates_AUTO."+uvSetNames[uvI]);
-                        if(!clusterPropRef.IsValid())
-                        {
-                           // create user normals
-                           CValue createProjectionReturnVal;
-                           CValueArray createProjectionArgs(5);
-                           createProjectionArgs[0] = Primitive(realTarget).GetParent3DObject().GetFullName();
-                           createProjectionArgs[1] = siTxtPureImplicit;
-                           createProjectionArgs[2] = siTxtDefaultPlanarXY;
-                           createProjectionArgs[3] = L"";
-                           createProjectionArgs[4] = uvSetNames[uvI];
-                           Application().ExecuteCommand(L"CreateProjection",createProjectionArgs,createProjectionReturnVal);
-                        }
-                        ClusterProperty uvProp;
-                        CRefArray clusters = meshGeo.GetClusters();
-                        for(LONG j=0;j<clusters.GetCount();j++)
-                        {
-                           Cluster cluster(clusters[j]);
-                           if(!cluster.GetType().IsEqualNoCase(L"sample"))
-                              continue;
-                           CRefArray props(cluster.GetLocalProperties());
-                           for(LONG k=0;k<props.GetCount();k++)
-                           {
-                              ClusterProperty prop(props[k]);
-                              if(prop.GetType().IsEqualNoCase(L"uvspace") && prop.GetName().IsEqualNoCase(uvSetNames[uvI]))
-                              {
-                                 uvProp = props[k];
-                                 break;
-                              }
-                           }
-                           if(uvProp.IsValid())
-                              break;
-                        }
-                        if(uvProp.IsValid())
-                        {
-                           // check if this alembic file has a uv options property
-                           bool hasUvOptions = false;
-                           if(abcMesh.valid())
-                              hasUvOptions = abcMesh.getSchema().getPropertyHeader( ".uvOptions" ) != NULL;
-                           else
-                              hasUvOptions = abcSubD.getSchema().getPropertyHeader( ".uvOptions" ) != NULL;
-                           if(hasUvOptions)
-                           {
-                              Abc::IFloatArrayProperty prop;
-                              if(abcMesh.valid())
-                                 prop = Abc::IFloatArrayProperty( abcMesh.getSchema(), ".uvOptions" );
-                              else
-                                 prop = Abc::IFloatArrayProperty( abcSubD.getSchema(), ".uvOptions" );
+                 // for each uv set name
+                 for(LONG uvI=0; uvI < uvSetNames.GetCount(); uvI++)
+                 {
+                    CRef clusterPropRef;
+                    if(attachToExisting)
+                       clusterPropRef.Set(realTarget.GetAsText()+L".cls.Texture_Coordinates_AUTO."+uvSetNames[uvI]);
+                    if(!clusterPropRef.IsValid())
+                    {
+                       // create user normals
+                       CValue createProjectionReturnVal;
+                       CValueArray createProjectionArgs(5);
+                       createProjectionArgs[0] = Primitive(realTarget).GetParent3DObject().GetFullName();
+                       createProjectionArgs[1] = siTxtPureImplicit;
+                       createProjectionArgs[2] = siTxtDefaultPlanarXY;
+                       createProjectionArgs[3] = L"";
+                       createProjectionArgs[4] = uvSetNames[uvI];
+                       Application().ExecuteCommand(L"CreateProjection",createProjectionArgs,createProjectionReturnVal);
+                    }
+                    ClusterProperty uvProp;
+                    CRefArray clusters = meshGeo.GetClusters();
+                    for(LONG j=0;j<clusters.GetCount();j++)
+                    {
+                       Cluster cluster(clusters[j]);
+                       if(!cluster.GetType().IsEqualNoCase(L"sample"))
+                          continue;
+                       CRefArray props(cluster.GetLocalProperties());
+                       for(LONG k=0;k<props.GetCount();k++)
+                       {
+                          ClusterProperty prop(props[k]);
+                          if(prop.GetType().IsEqualNoCase(L"uvspace") && prop.GetName().IsEqualNoCase(uvSetNames[uvI]))
+                          {
+                             uvProp = props[k];
+                             break;
+                          }
+                       }
+                       if(uvProp.IsValid())
+                          break;
+                    }
+                    if(uvProp.IsValid())
+                    {
+                       // check if this alembic file has a uv options property
+                       bool hasUvOptions = false;
+                       if(abcMesh.valid())
+                          hasUvOptions = abcMesh.getSchema().getPropertyHeader( ".uvOptions" ) != NULL;
+                       else
+                          hasUvOptions = abcSubD.getSchema().getPropertyHeader( ".uvOptions" ) != NULL;
+                       if(hasUvOptions)
+                       {
+                          Abc::IFloatArrayProperty prop;
+                          if(abcMesh.valid())
+                             prop = Abc::IFloatArrayProperty( abcMesh.getSchema(), ".uvOptions" );
+                          else
+                             prop = Abc::IFloatArrayProperty( abcSubD.getSchema(), ".uvOptions" );
 
-                              // if the prop stores any data
-                              if(prop.getNumSamples() > 0)
-                              {
-                                 Abc::FloatArraySamplePtr ptr = prop.getValue(0);
-                                 if(ptr->size() > 2 * uvI + 1)
-                                 {
-                                    bool uWrap = ptr->get()[uvI * 2 + 0] != 0.0f;
-                                    bool vWrap = ptr->get()[uvI * 2 + 1] != 0.0f;
+                          // if the prop stores any data
+                          if(prop.getNumSamples() > 0)
+                          {
+                             Abc::FloatArraySamplePtr ptr = prop.getValue(0);
+                             if(ptr->size() > 2 * uvI + 1)
+                             {
+                                bool uWrap = ptr->get()[uvI * 2 + 0] != 0.0f;
+                                bool vWrap = ptr->get()[uvI * 2 + 1] != 0.0f;
 
-                                    CRefArray children = uvProp.GetNestedObjects();
-                                    for(LONG i=0; i<children.GetCount(); i++)
-                                    {
-                                       ProjectItem child(children.GetItem(i));
-                                       CString type = child.GetType();
-                                       if(type == L"uvprojdef")
-                                       {
-                                          child.GetParameter(L"wrap_u").PutValue(uWrap);
-                                          child.GetParameter(L"wrap_v").PutValue(vWrap);
-                                          break;
-                                       }
-                                    }
-                                 }
-                              }
-                           }
+                                CRefArray children = uvProp.GetNestedObjects();
+                                for(LONG i=0; i<children.GetCount(); i++)
+                                {
+                                   ProjectItem child(children.GetItem(i));
+                                   CString type = child.GetType();
+                                   if(type == L"uvprojdef")
+                                   {
+                                      child.GetParameter(L"wrap_u").PutValue(uWrap);
+                                      child.GetParameter(L"wrap_v").PutValue(vWrap);
+                                      break;
+                                   }
+                                }
+                             }
+                          }
+                       }
 
-                           // we found it, and we need to attach the op
-                           CustomOperator op;
-                           if(attachToExisting)
-                           {
-                              CRef opRef;
-                              opRef.Set(uvProp.GetFullName()+L".alembic_uvs");
-                              op = opRef;
-                           }
-                           if(!op.IsValid())
-                           {
-                              op = Application().GetFactory().CreateObject(L"alembic_uvs");
-                              op.AddOutputPort(uvProp.GetRef());
-                              op.AddInputPort(uvProp.GetRef());
-                              op.AddInputPort(realTarget);
-                              op.Connect();
-                           }
-                           addRefArchive(file);
-                           op.PutParameterValue(L"path",file);
-                           op.PutParameterValue(L"identifier",identifier+CString(L":")+CString(uvI));
-                           if(numUVSamples > 1)
-                           {
-                              CValue setExprReturn;
-                              CValueArray setExprArgs(2);
-                              setExprArgs[0] = op.GetFullName()+L".time";
-                              setExprArgs[1] = timeControlProp.GetFullName()+L".current * "+timeControlProp.GetFullName()+L".factor + "+timeControlProp.GetFullName()+L".offset";
-                              Application().ExecuteCommand(L"SetExpr",setExprArgs,setExprReturn);
-                           }
-                        }
+                       // we found it, and we need to attach the op
+                       CustomOperator op;
+                       if(attachToExisting)
+                       {
+                          CRef opRef;
+                          opRef.Set(uvProp.GetFullName()+L".alembic_uvs");
+                          op = opRef;
+                       }
+                       if(!op.IsValid())
+                       {
+                          op = Application().GetFactory().CreateObject(L"alembic_uvs");
+                          op.AddOutputPort(uvProp.GetRef());
+                          op.AddInputPort(uvProp.GetRef());
+                          op.AddInputPort(realTarget);
+                          op.Connect();
+                       }
+                       addRefArchive(file);
+                       op.PutParameterValue(L"path",file);
+                       op.PutParameterValue(L"identifier",identifier+CString(L":")+CString(uvI));
+                       if(meshUVsParam.getNumSamples() > 1)
+                       {
+                          CValue setExprReturn;
+                          CValueArray setExprArgs(2);
+                          setExprArgs[0] = op.GetFullName()+L".time";
+                          setExprArgs[1] = timeControlProp.GetFullName()+L".current * "+timeControlProp.GetFullName()+L".factor + "+timeControlProp.GetFullName()+L".offset";
+                          Application().ExecuteCommand(L"SetExpr",setExprArgs,setExprReturn);
+                       }
                      }
                   }
                }

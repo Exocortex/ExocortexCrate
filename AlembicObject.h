@@ -56,7 +56,7 @@ public:
    double lastTime;
 
    std::vector<double> times;
-   std::map<int,Abc::M44d> indexToMatrices;
+   std::map<size_t,Abc::M44d> indexToMatrices;
 
    static void clearAll();
 
