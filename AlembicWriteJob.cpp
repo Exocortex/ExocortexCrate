@@ -297,12 +297,18 @@ static void restoreOldTime(MTime &start, MTime &end, MTime &curr, MTime &minT, M
 {
   const double st = start.as(start.unit()),
                en = end.as(end.unit()),
-               cu = curr.as(curr.unit());
+               cu = curr.as(curr.unit()),
+               mi = minT.as(minT.unit()),
+               ma = maxT.as(maxT.unit());
 
-  MString inst = "playbackOptions -min ";
+  MString inst = "playbackOptions -ast ";
   inst += st;
-  inst += " -max ";
+  inst += " -aet ";
   inst += en;
+  inst += " -min ";
+  inst += mi;
+  inst += " -max ";
+  inst += ma;
   inst += ";\ncurrentTime ";
   inst += cu;
   inst += ";";
@@ -621,6 +627,7 @@ MStatus AlembicExportCommand::doIt(const MArgList & args)
       if(canceled)
          break;
    }
+   MAnimControl::stop();
 
    // restore the animation start/end time and the current time!
    restoreOldTime(currentAnimStartTime, currentAnimEndTime, oldCurTime, curMinTime, curMaxTime);

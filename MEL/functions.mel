@@ -15,7 +15,7 @@ global proc exocortexAlembicExport(string $filename,         string $exported_ob
       $job += ",";
     $job += $exported_objects[$i];
   }
-  print $exportTopology;
+  //print $exportTopology;
   if($exportTopology == 1)    
   {
     $job += ";purepointcache=1;dynamictopology=0;normals=0;uvs=0;facesets=0";
@@ -40,7 +40,7 @@ global proc exocortexAlembicExport(string $filename,         string $exported_ob
   $job += ";globalspace="+$exportGlobalSpace;
   $job += ";withouthierarchy="+$exportWithoutHierarchy;
   $job += ";transformcache="+$exportTransformCache;
-  print $job;
+  //print $job;
   ExocortexAlembic_export -j $job;
   ExocortexAlembic_profileEnd -f MEL_exocortexAlembicExport;
 }

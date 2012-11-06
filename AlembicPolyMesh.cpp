@@ -439,437 +439,437 @@ MStatus AlembicPolyMeshNode::initialize()
 
 MStatus AlembicPolyMeshNode::compute(const MPlug & plug, MDataBlock & dataBlock)
 {
-   ESS_PROFILE_SCOPE("AlembicPolyMeshNode::compute");
-   MStatus status;
+  ESS_PROFILE_SCOPE("AlembicPolyMeshNode::compute");
+  MStatus status;
 
-   // update the frame number to be imported
-   double inputTime = dataBlock.inputValue(mTimeAttr).asTime().as(MTime::kSeconds);
-   MString & fileName = dataBlock.inputValue(mFileNameAttr).asString();
-   MString & identifier = dataBlock.inputValue(mIdentifierAttr).asString();
-   bool importNormals = dataBlock.inputValue(mNormalsAttr).asBool();
-   bool importUvs = dataBlock.inputValue(mUvsAttr).asBool();
+  // update the frame number to be imported
+  double inputTime = dataBlock.inputValue(mTimeAttr).asTime().as(MTime::kSeconds);
+  MString & fileName = dataBlock.inputValue(mFileNameAttr).asString();
+  MString & identifier = dataBlock.inputValue(mIdentifierAttr).asString();
+  bool importNormals = dataBlock.inputValue(mNormalsAttr).asBool();
+  bool importUvs = dataBlock.inputValue(mUvsAttr).asBool();
 
- 	AlembicObjectInfo* pObjectInfo = NULL;
-  
-   // check if we have the file
-   if(fileName != mFileName || identifier != mIdentifier)
-   {
-      mSchema.reset();
-      if(fileName != mFileName)
-      {
-         delRefArchive(mFileName);
-         mFileName = fileName;
-         addRefArchive(mFileName);
-      }
-      mIdentifier = identifier;
+  AlembicObjectInfo* pObjectInfo = NULL;
 
-      // get the object from the archive
-	    pObjectInfo = getObjectInfoFromArchive( std::string( mFileName.asChar() ), std::string( identifier.asChar() ) );
-	    if( pObjectInfo != NULL ) {
-		    mObj = pObjectInfo->obj;
-	    }
-      if(!mObj.valid())
-      {
-         MGlobal::displayWarning("[ExocortexAlembic] Identifier '"+identifier+"' not found in archive '"+mFileName+"'.");
-         return MStatus::kFailure;
-      }
-      AbcG::IPolyMesh obj(mObj,Abc::kWrapExisting);
-      if(!obj.valid())
-      {
-         MGlobal::displayWarning("[ExocortexAlembic] Identifier '"+identifier+"' in archive '"+mFileName+"' is not a PolyMesh.");
-         return MStatus::kFailure;
-      }
-      mSchema = obj.getSchema();
-      mMeshData = MObject::kNullObj;
-	    if( pObjectInfo->isMeshTopoDynamic == -1 ) {
-		    pObjectInfo->isMeshTopoDynamic = isAlembicMeshTopoDynamic( &mObj ) ? 1 : 0;
-	    }
-	    mDynamicTopology = ( pObjectInfo->isMeshTopoDynamic == 1 );
+  // check if we have the file
+  if(fileName != mFileName || identifier != mIdentifier)
+  {
+    mSchema.reset();
+    if(fileName != mFileName)
+    {
+      delRefArchive(mFileName);
+      mFileName = fileName;
+      addRefArchive(mFileName);
+    }
+    mIdentifier = identifier;
 
-   }
-
-   if(!mSchema.valid())
+    // get the object from the archive
+    pObjectInfo = getObjectInfoFromArchive( std::string( mFileName.asChar() ), std::string( identifier.asChar() ) );
+    if( pObjectInfo != NULL ) {
+      mObj = pObjectInfo->obj;
+    }
+    if(!mObj.valid())
+    {
+      MGlobal::displayWarning("[ExocortexAlembic] Identifier '"+identifier+"' not found in archive '"+mFileName+"'.");
       return MStatus::kFailure;
+    }
+    AbcG::IPolyMesh obj(mObj,Abc::kWrapExisting);
+    if(!obj.valid())
+    {
+      MGlobal::displayWarning("[ExocortexAlembic] Identifier '"+identifier+"' in archive '"+mFileName+"' is not a PolyMesh.");
+      return MStatus::kFailure;
+    }
+    mSchema = obj.getSchema();
+    mMeshData = MObject::kNullObj;
+    if( pObjectInfo->isMeshTopoDynamic == -1 ) {
+      pObjectInfo->isMeshTopoDynamic = isAlembicMeshTopoDynamic( &mObj ) ? 1 : 0;
+    }
+    mDynamicTopology = ( pObjectInfo->isMeshTopoDynamic == 1 );
 
-   // get the sample
-   SampleInfo sampleInfo = getSampleInfo(
-      inputTime,
-      mSchema.getTimeSampling(),
-      mSchema.getNumSamples()
-   );
+  }
+
+  if(!mSchema.valid())
+    return MStatus::kFailure;
+
+  // get the sample
+  SampleInfo sampleInfo = getSampleInfo(
+    inputTime,
+    mSchema.getTimeSampling(),
+    mSchema.getNumSamples()
+    );
 
 
-   // check if we have to do this at all
-   if(!mMeshData.isNull() && 
-	   mLastSampleInfo.floorIndex == sampleInfo.floorIndex && 
-	   mLastSampleInfo.ceilIndex == sampleInfo.ceilIndex && ! mDynamicTopology ) {
+  // check if we have to do this at all
+  if(!mMeshData.isNull() && 
+    mLastSampleInfo.floorIndex == sampleInfo.floorIndex && 
+    mLastSampleInfo.ceilIndex == sampleInfo.ceilIndex && ! mDynamicTopology ) {
       //ESS_LOG_WARNING( "not doing this at all." );
       return MStatus::kSuccess;
-   }
+  }
 
-   mLastSampleInfo = sampleInfo;
+  mLastSampleInfo = sampleInfo;
 
-   // access the camera values
-   AbcG::IPolyMeshSchema::Sample sample;
-   AbcG::IPolyMeshSchema::Sample sample2;
-   mSchema.get(sample,sampleInfo.floorIndex);
-   if(sampleInfo.alpha != 0.0)
-      mSchema.get(sample2,sampleInfo.ceilIndex);
+  // access the camera values
+  AbcG::IPolyMeshSchema::Sample sample;
+  AbcG::IPolyMeshSchema::Sample sample2;
+  mSchema.get(sample,sampleInfo.floorIndex);
+  if(sampleInfo.alpha != 0.0)
+    mSchema.get(sample2,sampleInfo.ceilIndex);
 
-   // create the output mesh
-   if(mMeshData.isNull())
-   {
-      MFnMeshData meshDataFn;
-      mMeshData = meshDataFn.create();
-   }
+  // create the output mesh
+  if(mMeshData.isNull())
+  {
+    MFnMeshData meshDataFn;
+    mMeshData = meshDataFn.create();
+  }
 
-   Abc::P3fArraySamplePtr samplePos = sample.getPositions();
-   Abc::V3fArraySamplePtr sampleVel = sample.getVelocities();
-      
-   Abc::Int32ArraySamplePtr sampleCounts = sample.getFaceCounts();
-   Abc::Int32ArraySamplePtr sampleIndices = sample.getFaceIndices();
+  Abc::P3fArraySamplePtr samplePos = sample.getPositions();
+  Abc::V3fArraySamplePtr sampleVel = sample.getVelocities();
 
-   // ensure that we are not running on a purepoint cache mesh
-   if(sampleCounts->get()[0] == 0)
-      return MStatus::kFailure;
+  Abc::Int32ArraySamplePtr sampleCounts = sample.getFaceCounts();
+  Abc::Int32ArraySamplePtr sampleIndices = sample.getFaceIndices();
+
+  // ensure that we are not running on a purepoint cache mesh
+  if(sampleCounts->get()[0] == 0)
+    return MStatus::kFailure;
 
 
-   MFloatPointArray points;
-   if(samplePos->size() > 0)
-   {
-      points.setLength((unsigned int)samplePos->size());
-      bool done = false;
-      //ESS_LOG_WARNING( "sampleInfo.alpha: " << sampleInfo.alpha );
-      if(sampleInfo.alpha != 0.0)
-      {
-         Abc::P3fArraySamplePtr samplePos2 = sample2.getPositions();
-		     if( mDynamicTopology ) {
-			     if( sampleVel != NULL ) {
-					 const float timeAlpha = getTimeOffsetFromSchema( mSchema, sampleInfo );
-				   //ESS_LOG_WARNING( "timeAlpha: " << timeAlpha );
-				   if( sampleVel->size() == samplePos->size() )
-           {
-					   for(unsigned int i=0;i< sampleVel->size();i++)
-					   {
-               MFloatPoint &point = points[i];
-               const Alembic::Abc::v4::V3f &pos = samplePos->get()[i];
-               const Alembic::Abc::v4::V3f &vel = sampleVel->get()[i];
-						   point.x = pos.x + timeAlpha * vel.x;
-						   point.y = pos.y + timeAlpha * vel.y;
-						   point.z = pos.z + timeAlpha * vel.z;
-						}
-					   done = true;
-				   }
-			 }
-		 }
-         else if(points.length() == (unsigned int)samplePos2->size() )
-         {
-            //ESS_LOG_WARNING( "blending vertex positions (1-2) A." );
-            float blend = (float)sampleInfo.alpha;
-            float iblend = 1.0f - blend;
-            for(unsigned int i=0;i<points.length();i++)
+  MFloatPointArray points;
+  if(samplePos->size() > 0)
+  {
+    points.setLength((unsigned int)samplePos->size());
+    bool done = false;
+    //ESS_LOG_WARNING( "sampleInfo.alpha: " << sampleInfo.alpha );
+    if(sampleInfo.alpha != 0.0)
+    {
+      Abc::P3fArraySamplePtr samplePos2 = sample2.getPositions();
+      if( mDynamicTopology ) {
+        if( sampleVel != NULL ) {
+          const float timeAlpha = getTimeOffsetFromSchema( mSchema, sampleInfo );
+          //ESS_LOG_WARNING( "timeAlpha: " << timeAlpha );
+          if( sampleVel->size() == samplePos->size() )
+          {
+            for(unsigned int i=0;i< sampleVel->size();i++)
             {
-               MFloatPoint &point = points[i];
-               const Alembic::Abc::v4::V3f &pos1 = samplePos->get()[i];
-               const Alembic::Abc::v4::V3f &pos2 = samplePos2->get()[i];
-               point.x = pos1.x * iblend + pos2.x * blend;
-               point.y = pos1.y * iblend + pos2.y * blend;
-               point.z = pos1.z * iblend + pos2.z * blend;
+              MFloatPoint &point = points[i];
+              const Alembic::Abc::v4::V3f &pos = samplePos->get()[i];
+              const Alembic::Abc::v4::V3f &vel = sampleVel->get()[i];
+              point.x = pos.x + timeAlpha * vel.x;
+              point.y = pos.y + timeAlpha * vel.y;
+              point.z = pos.z + timeAlpha * vel.z;
             }
             done = true;
-         }
+          }
+        }
       }
-
-      if(!done)
+      else if(points.length() == (unsigned int)samplePos2->size() )
       {
-         for(unsigned int i=0;i<points.length();i++)
-         {
-            MFloatPoint &point = points[i];
-            const Alembic::Abc::v4::V3f &pos = samplePos->get()[i];
-            point.x = pos.x;
-            point.y = pos.y;
-            point.z = pos.z;
-         }
+        //ESS_LOG_WARNING( "blending vertex positions (1-2) A." );
+        float blend = (float)sampleInfo.alpha;
+        float iblend = 1.0f - blend;
+        for(unsigned int i=0;i<points.length();i++)
+        {
+          MFloatPoint &point = points[i];
+          const Alembic::Abc::v4::V3f &pos1 = samplePos->get()[i];
+          const Alembic::Abc::v4::V3f &pos2 = samplePos2->get()[i];
+          point.x = pos1.x * iblend + pos2.x * blend;
+          point.y = pos1.y * iblend + pos2.y * blend;
+          point.z = pos1.z * iblend + pos2.z * blend;
+        }
+        done = true;
       }
-   }
+    }
 
-   // check if we already have the right polygons
-   if(mMesh.numVertices() != points.length() || 
-      mMesh.numPolygons() != (unsigned int)sampleCounts->size() || 
-      mMesh.numFaceVertices() != (unsigned int)sampleIndices->size() ||
-	  mDynamicTopology
-	  )
-   {
-     //ESS_LOG_WARNING( "Updating face topology." );
-
-     MIntArray counts;
-     MIntArray indices;
-     counts.setLength((unsigned int)sampleCounts->size());
-     indices.setLength((unsigned int)sampleIndices->size());
-     mSampleLookup.resize(indices.length());
-     mNormalFaces.setLength(indices.length());
-     mNormalVertices.setLength(indices.length());
-
-     unsigned int offset = 0;
-     for(unsigned int i=0;i<counts.length();i++)
-     {
-       counts[i] = sampleCounts->get()[i];
-       for(int j=0;j<counts[i];j++)
-       {
-         //MString count,index;
-         //count.set((double)counts[i]);
-         //index.set((double)sampleIndices->get()[offset+j]);
-         const int smpIdx = offset+counts[i]-j-1;
-         mSampleLookup[smpIdx] = offset+j;
-         indices[offset+j] = sampleIndices->get()[smpIdx];
-
-         mNormalFaces[offset+j] = i;
-         mNormalVertices[offset+j] = indices[offset+j];
-       }
-       offset += counts[i];
-     }
-
-     // create a mesh either with or without uvs
-     mMesh.create(points.length(),counts.length(),points,counts,indices,mMeshData);
-     mMesh.updateSurface();
-     if(mMesh.numFaceVertices() != indices.length()){
-       EC_LOG_ERROR("Error: mesh topology has changed. Cannot import UVs or normals.");
-       return MStatus::kFailure;
-       //importUvs = false;
-       //importNormals = false;
-     }
-
-     // check if we need to import uvs
-     if(importUvs)
-     {
-       AbcG::IV2fGeomParam uvsParam = mSchema.getUVsParam();
-       if(uvsParam.valid())
-       {
-         if(uvsParam.getNumSamples() > 0)
-         {
-           sampleInfo = getSampleInfo(
-             inputTime,
-             uvsParam.getTimeSampling(),
-             uvsParam.getNumSamples()
-             );
-
-           // check if we have uvSetNames
-           MStringArray uvSetNames;
-           if ( mSchema.getPropertyHeader( ".uvSetNames" ) != NULL )
-           {
-             Abc::IStringArrayProperty uvSetNamesProp = Abc::IStringArrayProperty( mSchema, ".uvSetNames" );
-             Abc::StringArraySamplePtr ptr = uvSetNamesProp.getValue(0);
-             for(size_t i=0;i<ptr->size();i++)
-             {
-               std::string uvName = ptr->get()[i];
-               size_t pos = uvName.find("Channel_");
-               if (pos == 0)
-                 uvName = uvName.replace(0, 8, "map");
-               uvSetNames.append(uvName.c_str());
-             }
-           }
-
-           if(uvSetNames.length() <= 0){
-             uvSetNames.append("map1");
-           }
-
-           //delete all uvsets other than the default, which is named "map1"   
-           MStringArray existingUVSets;
-           mMesh.getUVSetNames(existingUVSets);
-           for(unsigned int i=0;i<existingUVSets.length();i++)
-           {
-             if(existingUVSets[i] == "map1") continue;
-             status = mMesh.deleteUVSet(existingUVSets[i]);
-             if ( status != MS::kSuccess ){
-               EC_LOG_ERROR("mMesh.deleteUVSet(\""<<existingUVSets[i]<<"\") failed: "<<status.errorString().asChar());
-             }
-           }
-           //status = mMesh.clearUVs(&uvSetNames[0]);
-           //if ( status != MS::kSuccess ) cout << "mMesh.clearUVs(\"map1\") failed: "<<status.errorString().asChar()<< endl;
-
-           for(unsigned int uvSetIndex = 0; uvSetIndex < uvSetNames.length(); uvSetIndex++)
-           {
-             MString &uvSetName = uvSetNames[uvSetIndex];
-             if (uvSetName == "map1") continue; // already exists, do not re-create!
-             status = mMesh.createUVSetDataMesh( uvSetName );
-             if( status != MS::kSuccess ){
-               EC_LOG_ERROR("mMesh.createUVSet(\""<<uvSetNames[uvSetIndex]<<"\") failed: "<<status.errorString().asChar());
-             }
-           }
-
-           for(unsigned int uvSetIndex =0; uvSetIndex < uvSetNames.length(); uvSetIndex++)
-           {
-             std::vector<Imath::V2f> uvValuesFloor, uvValuesCeil;
-             std::vector<AbcA::uint32_t> uvIndicesFloor, uvIndicesCeil;
-             bool uvFloor = false, uvCeil = false;
-             if(uvSetIndex == 0) {
-               uvFloor = getIndexAndValues( sampleIndices, uvsParam, sampleInfo.floorIndex,
-                 uvValuesFloor, uvIndicesFloor );
-               uvCeil = getIndexAndValues( sampleIndices, uvsParam, sampleInfo.ceilIndex,
-                 uvValuesCeil, uvIndicesCeil );
-             }
-             else
-             {
-               MString storedUvSetName;
-               storedUvSetName.set((double)uvSetIndex);
-               storedUvSetName = MString("uv") + storedUvSetName;
-               if(mSchema.getPropertyHeader( storedUvSetName.asChar() ) == NULL)
-                 continue;
-               AbcG::IV2fGeomParam uvParamExtended = AbcG::IV2fGeomParam( mSchema, storedUvSetName.asChar() );
-               uvFloor = getIndexAndValues( sampleIndices, uvParamExtended, sampleInfo.floorIndex,
-                 uvValuesFloor, uvIndicesFloor );
-               uvCeil = getIndexAndValues( sampleIndices, uvParamExtended, sampleInfo.ceilIndex,
-                 uvValuesCeil, uvIndicesCeil );
-             }
-
-             if(uvIndicesFloor.size() == (size_t)indices.length())
-             {
-               MFloatArray uValues((unsigned int)uvValuesFloor.size()), vValues((unsigned int)uvValuesFloor.size());
-			   if((sampleInfo.alpha != 0.0)&& uvCeil && uvIndicesFloor.size() == uvIndicesCeil.size() && ! mDynamicTopology )
-               {
-                 float blend = (float)sampleInfo.alpha;
-                 float iblend = 1.0f - blend;
-                 for(unsigned int i=0;i<uvValuesFloor.size();i++)
-                 {
-                   uValues[i] = uvValuesFloor[i].x * iblend + uvValuesCeil[i].x * blend;
-                   vValues[i] = uvValuesFloor[i].y * iblend + uvValuesCeil[i].y * blend;
-                 }	                 
-               }
-               else {
-                 for(unsigned int i=0;i<uvValuesFloor.size();i++)
-                 {
-                   uValues[i] = uvValuesFloor[i].x;
-                   vValues[i] = uvValuesFloor[i].y;
-                 }
-               }
-
-               MIntArray uvIndices( (unsigned int) uvIndicesFloor.size() );
-               for(unsigned int i=0;i<uvIndicesFloor.size();i++)
-               {
-                 uvIndices[i] = uvIndicesFloor[mSampleLookup[i]];
-               }
-               MIntArray uvCounts( mMesh.numPolygons() );
-               for(int f=0;f<mMesh.numPolygons();f++){
-                 uvCounts[f] = mMesh.polygonVertexCount(f);
-               }
-
-               status = mMesh.setCurrentUVSetName(uvSetNames[uvSetIndex]);
-               /*
-               -- this tends to error out but it actually works. Ben.
-               if( status != MS::kSuccess ){
-               EC_LOG_ERROR("mMesh.setCurrentUVSetName(\""<<uvSetNames[uvSetIndex]<<"\") failed: "<<status.errorString().asChar());
-               }*/
-               status = mMesh.setUVs(uValues, vValues, &uvSetNames[uvSetIndex]);
-               if( status != MS::kSuccess ){
-                 EC_LOG_ERROR("mMesh.setUVs(\""<<uvSetNames[uvSetIndex]<<"\") failed: "<<status.errorString().asChar());
-               }
-               status = mMesh.assignUVs(uvCounts, uvIndices, &uvSetNames[uvSetIndex]);
-               if ( status != MS::kSuccess ){
-                 EC_LOG_ERROR("mMesh.assignUVs(\""<<uvSetNames[uvSetIndex]<<"\") failed: "<<status.errorString().asChar());
-               }
-             }
-           }
-
-         }
-       }
-     }
-   }
-   else if(mMesh.numVertices() == points.length())
-      mMesh.setPoints(points);
-
-   // import the normals
-   if(importNormals) 
-   {
-      AbcG::IN3fGeomParam normalsParam = mSchema.getNormalsParam();
-      if(normalsParam.valid())
+    if(!done)
+    {
+      for(unsigned int i=0;i<points.length();i++)
       {
-         if(normalsParam.getNumSamples() > 0)
-         {
-            sampleInfo = getSampleInfo(
-               inputTime,
-               normalsParam.getTimeSampling(),
-               normalsParam.getNumSamples()
+        MFloatPoint &point = points[i];
+        const Alembic::Abc::v4::V3f &pos = samplePos->get()[i];
+        point.x = pos.x;
+        point.y = pos.y;
+        point.z = pos.z;
+      }
+    }
+  }
+
+  // check if we already have the right polygons
+  if(mMesh.numVertices() != points.length() || 
+    mMesh.numPolygons() != (unsigned int)sampleCounts->size() || 
+    mMesh.numFaceVertices() != (unsigned int)sampleIndices->size() ||
+    mDynamicTopology
+    )
+  {
+    //ESS_LOG_WARNING( "Updating face topology." );
+
+    MIntArray counts;
+    MIntArray indices;
+    counts.setLength((unsigned int)sampleCounts->size());
+    indices.setLength((unsigned int)sampleIndices->size());
+    mSampleLookup.resize(indices.length());
+    mNormalFaces.setLength(indices.length());
+    mNormalVertices.setLength(indices.length());
+
+    unsigned int offset = 0;
+    for(unsigned int i=0;i<counts.length();i++)
+    {
+      counts[i] = sampleCounts->get()[i];
+      for(int j=0;j<counts[i];j++)
+      {
+        //MString count,index;
+        //count.set((double)counts[i]);
+        //index.set((double)sampleIndices->get()[offset+j]);
+        const int smpIdx = offset+counts[i]-j-1;
+        mSampleLookup[smpIdx] = offset+j;
+        indices[offset+j] = sampleIndices->get()[smpIdx];
+
+        mNormalFaces[offset+j] = i;
+        mNormalVertices[offset+j] = indices[offset+j];
+      }
+      offset += counts[i];
+    }
+
+    // create a mesh either with or without uvs
+    mMesh.create(points.length(),counts.length(),points,counts,indices,mMeshData);
+    mMesh.updateSurface();
+    if(mMesh.numFaceVertices() != indices.length()){
+      EC_LOG_ERROR("Error: mesh topology has changed. Cannot import UVs or normals.");
+      return MStatus::kFailure;
+      //importUvs = false;
+      //importNormals = false;
+    }
+
+    // check if we need to import uvs
+    if(importUvs)
+    {
+      AbcG::IV2fGeomParam uvsParam = mSchema.getUVsParam();
+      if(uvsParam.valid())
+      {
+        if(uvsParam.getNumSamples() > 0)
+        {
+          sampleInfo = getSampleInfo(
+            inputTime,
+            uvsParam.getTimeSampling(),
+            uvsParam.getNumSamples()
             );
 
-			 std::vector<Abc::V3f> normalValuesFloor, normalValuesCeil;
-			 std::vector<AbcA::uint32_t> normalIndicesFloor, normalIndicesCeil;
-			bool normalFloor = false, normalCeil = false;
-		  
-			normalFloor = getIndexAndValues( sampleIndices, normalsParam, sampleInfo.floorIndex,
-			   normalValuesFloor, normalIndicesFloor );
-			normalCeil = getIndexAndValues( sampleIndices, normalsParam, sampleInfo.floorIndex,
-			   normalValuesCeil, normalIndicesCeil );
-
-            if(normalIndicesFloor.size() == mSampleLookup.size())
+          // check if we have uvSetNames
+          MStringArray uvSetNames;
+          if ( mSchema.getPropertyHeader( ".uvSetNames" ) != NULL )
+          {
+            Abc::IStringArrayProperty uvSetNamesProp = Abc::IStringArrayProperty( mSchema, ".uvSetNames" );
+            Abc::StringArraySamplePtr ptr = uvSetNamesProp.getValue(0);
+            for(size_t i=0;i<ptr->size();i++)
             {
-               MVectorArray normals((unsigned int)normalValuesFloor.size());
+              std::string uvName = ptr->get()[i];
+              size_t pos = uvName.find("Channel_");
+              if (pos == 0)
+                uvName = uvName.replace(0, 8, "map");
+              uvSetNames.append(uvName.c_str());
+            }
+          }
 
-               bool done = false;
-               if((sampleInfo.alpha != 0.0)&& normalCeil && normalIndicesFloor.size() == normalIndicesCeil.size() && ! mDynamicTopology )
-                  {
-                     //ESS_LOG_WARNING( "blending vertex normals (1-2) A." );
-					 float blend = (float)sampleInfo.alpha;
-                     float iblend = 1.0f - blend;
-                     MVector normal;
-                     for(unsigned int i=0;i<normalValuesFloor.size();i++)
-                     {
-                        normal.x = normalValuesFloor[i].x * iblend + normalValuesCeil[i].x * blend;
-                        normal.y = normalValuesFloor[i].y * iblend + normalValuesCeil[i].y * blend;
-                        normal.z = normalValuesFloor[i].z * iblend + normalValuesCeil[i].z * blend;
-                        normals[i] = normal.normal();
-                     }
-                 
-               }
-			   else {
-                  for(unsigned int i=0;i<normalValuesFloor.size();i++)
-                  {
-                     normals[i].x = normalValuesFloor[i].x;
-                     normals[i].y = normalValuesFloor[i].y;
-                     normals[i].z = normalValuesFloor[i].z;
-                  }
-               }
+          if(uvSetNames.length() <= 0){
+            uvSetNames.append("map1");
+          }
 
-			    MIntArray normalIndices( ( int) normalIndicesFloor.size() );
-				for( int i = 0; i < (int) normalIndicesFloor.size(); i ++) {
-					normalIndices[i] = normalIndicesFloor[ mSampleLookup[i] ];
-				}
+          //delete all uvsets other than the default, which is named "map1"   
+          MStringArray existingUVSets;
+          mMesh.getUVSetNames(existingUVSets);
+          for(unsigned int i=0;i<existingUVSets.length();i++)
+          {
+            if(existingUVSets[i] == "map1") continue;
+            status = mMesh.deleteUVSet(existingUVSets[i]);
+            if ( status != MS::kSuccess ){
+              EC_LOG_ERROR("mMesh.deleteUVSet(\""<<existingUVSets[i]<<"\") failed: "<<status.errorString().asChar());
+            }
+          }
+          //status = mMesh.clearUVs(&uvSetNames[0]);
+          //if ( status != MS::kSuccess ) cout << "mMesh.clearUVs(\"map1\") failed: "<<status.errorString().asChar()<< endl;
 
-				MVectorArray normalExpanded(( int)normalIndicesFloor.size());
-				for( int i = 0; i < (int) normalExpanded.length(); i ++ ) {
-					normalExpanded[i] = normals[ normalIndicesFloor[ i ] ];
-				}
+          for(unsigned int uvSetIndex = 0; uvSetIndex < uvSetNames.length(); uvSetIndex++)
+          {
+            MString &uvSetName = uvSetNames[uvSetIndex];
+            if (uvSetName == "map1") continue; // already exists, do not re-create!
+            status = mMesh.createUVSetDataMesh( uvSetName );
+            if( status != MS::kSuccess ){
+              EC_LOG_ERROR("mMesh.createUVSet(\""<<uvSetNames[uvSetIndex]<<"\") failed: "<<status.errorString().asChar());
+            }
+          }
 
-				MIntArray faceList(( int)normalIndicesFloor.size());
-	            MIntArray vertexList(( int)normalIndicesFloor.size());
+          for(unsigned int uvSetIndex =0; uvSetIndex < uvSetNames.length(); uvSetIndex++)
+          {
+            std::vector<Imath::V2f> uvValuesFloor, uvValuesCeil;
+            std::vector<AbcA::uint32_t> uvIndicesFloor, uvIndicesCeil;
+            bool uvFloor = false, uvCeil = false;
+            if(uvSetIndex == 0) {
+              uvFloor = getIndexAndValues( sampleIndices, uvsParam, sampleInfo.floorIndex,
+                uvValuesFloor, uvIndicesFloor );
+              uvCeil = getIndexAndValues( sampleIndices, uvsParam, sampleInfo.ceilIndex,
+                uvValuesCeil, uvIndicesCeil );
+            }
+            else
+            {
+              MString storedUvSetName;
+              storedUvSetName.set((double)uvSetIndex);
+              storedUvSetName = MString("uv") + storedUvSetName;
+              if(mSchema.getPropertyHeader( storedUvSetName.asChar() ) == NULL)
+                continue;
+              AbcG::IV2fGeomParam uvParamExtended = AbcG::IV2fGeomParam( mSchema, storedUvSetName.asChar() );
+              uvFloor = getIndexAndValues( sampleIndices, uvParamExtended, sampleInfo.floorIndex,
+                uvValuesFloor, uvIndicesFloor );
+              uvCeil = getIndexAndValues( sampleIndices, uvParamExtended, sampleInfo.ceilIndex,
+                uvValuesCeil, uvIndicesCeil );
+            }
 
-				 MIntArray normalCounts( (int)normalIndicesFloor.size() );
-			  int numFaces = mMesh.numPolygons();
-				int nIndex = 0;
-				for (int faceIndex = 0; faceIndex < numFaces; faceIndex++)
-				{
-					MIntArray polyVerts;
-					mMesh.getPolygonVertices(faceIndex, polyVerts);
-					int numVertices = polyVerts.length();
-					for (int v = numVertices - 1; v >= 0; v--, ++nIndex)
-					{
-						faceList[nIndex] = faceIndex;
-						vertexList[nIndex] = polyVerts[v];
-					}
-				}
+            if(uvIndicesFloor.size() == (size_t)indices.length())
+            {
+              MFloatArray uValues((unsigned int)uvValuesFloor.size()), vValues((unsigned int)uvValuesFloor.size());
+              if((sampleInfo.alpha != 0.0)&& uvCeil && uvIndicesFloor.size() == uvIndicesCeil.size() && ! mDynamicTopology )
+              {
+                float blend = (float)sampleInfo.alpha;
+                float iblend = 1.0f - blend;
+                for(unsigned int i=0;i<uvValuesFloor.size();i++)
+                {
+                  uValues[i] = uvValuesFloor[i].x * iblend + uvValuesCeil[i].x * blend;
+                  vValues[i] = uvValuesFloor[i].y * iblend + uvValuesCeil[i].y * blend;
+                }	                 
+              }
+              else {
+                for(unsigned int i=0;i<uvValuesFloor.size();i++)
+                {
+                  uValues[i] = uvValuesFloor[i].x;
+                  vValues[i] = uvValuesFloor[i].y;
+                }
+              }
 
-				status = mMesh.setFaceVertexNormals( normalExpanded, faceList, vertexList );
-				if ( status != MS::kSuccess ){
-						 EC_LOG_ERROR("mMesh.setFaceVertexNormals - failed: "<<status.errorString().asChar());
-				}
-			}
-         }
+              MIntArray uvIndices( (unsigned int) uvIndicesFloor.size() );
+              for(unsigned int i=0;i<uvIndicesFloor.size();i++)
+              {
+                uvIndices[i] = uvIndicesFloor[mSampleLookup[i]];
+              }
+              MIntArray uvCounts( mMesh.numPolygons() );
+              for(int f=0;f<mMesh.numPolygons();f++){
+                uvCounts[f] = mMesh.polygonVertexCount(f);
+              }
+
+              status = mMesh.setCurrentUVSetName(uvSetNames[uvSetIndex]);
+              /*
+              -- this tends to error out but it actually works. Ben.
+              if( status != MS::kSuccess ){
+              EC_LOG_ERROR("mMesh.setCurrentUVSetName(\""<<uvSetNames[uvSetIndex]<<"\") failed: "<<status.errorString().asChar());
+              }*/
+              status = mMesh.setUVs(uValues, vValues, &uvSetNames[uvSetIndex]);
+              if( status != MS::kSuccess ){
+                EC_LOG_ERROR("mMesh.setUVs(\""<<uvSetNames[uvSetIndex]<<"\") failed: "<<status.errorString().asChar());
+              }
+              status = mMesh.assignUVs(uvCounts, uvIndices, &uvSetNames[uvSetIndex]);
+              if ( status != MS::kSuccess ){
+                EC_LOG_ERROR("mMesh.assignUVs(\""<<uvSetNames[uvSetIndex]<<"\") failed: "<<status.errorString().asChar());
+              }
+            }
+          }
+
+        }
       }
-   }
+    }
+  }
+  else if(mMesh.numVertices() == points.length())
+    mMesh.setPoints(points);
 
-   // output all channels
-   dataBlock.outputValue(mOutGeometryAttr).set(mMeshData);
+  // import the normals
+  if(importNormals) 
+  {
+    AbcG::IN3fGeomParam normalsParam = mSchema.getNormalsParam();
+    if(normalsParam.valid())
+    {
+      if(normalsParam.getNumSamples() > 0)
+      {
+        sampleInfo = getSampleInfo(
+          inputTime,
+          normalsParam.getTimeSampling(),
+          normalsParam.getNumSamples()
+          );
 
-   return MStatus::kSuccess;
+        std::vector<Abc::V3f> normalValuesFloor, normalValuesCeil;
+        std::vector<AbcA::uint32_t> normalIndicesFloor, normalIndicesCeil;
+        bool normalFloor = false, normalCeil = false;
+
+        normalFloor = getIndexAndValues( sampleIndices, normalsParam, sampleInfo.floorIndex,
+          normalValuesFloor, normalIndicesFloor );
+        normalCeil = getIndexAndValues( sampleIndices, normalsParam, sampleInfo.floorIndex,
+          normalValuesCeil, normalIndicesCeil );
+
+        if(normalIndicesFloor.size() == mSampleLookup.size())
+        {
+          MVectorArray normals((unsigned int)normalValuesFloor.size());
+
+          bool done = false;
+          if((sampleInfo.alpha != 0.0)&& normalCeil && normalIndicesFloor.size() == normalIndicesCeil.size() && ! mDynamicTopology )
+          {
+            //ESS_LOG_WARNING( "blending vertex normals (1-2) A." );
+            float blend = (float)sampleInfo.alpha;
+            float iblend = 1.0f - blend;
+            MVector normal;
+            for(unsigned int i=0;i<normalValuesFloor.size();i++)
+            {
+              normal.x = normalValuesFloor[i].x * iblend + normalValuesCeil[i].x * blend;
+              normal.y = normalValuesFloor[i].y * iblend + normalValuesCeil[i].y * blend;
+              normal.z = normalValuesFloor[i].z * iblend + normalValuesCeil[i].z * blend;
+              normals[i] = normal.normal();
+            }
+
+          }
+          else {
+            for(unsigned int i=0;i<normalValuesFloor.size();i++)
+            {
+              normals[i].x = normalValuesFloor[i].x;
+              normals[i].y = normalValuesFloor[i].y;
+              normals[i].z = normalValuesFloor[i].z;
+            }
+          }
+
+          MIntArray normalIndices( ( int) normalIndicesFloor.size() );
+          for( int i = 0; i < (int) normalIndicesFloor.size(); i ++) {
+            normalIndices[i] = normalIndicesFloor[ mSampleLookup[i] ];
+          }
+
+          MVectorArray normalExpanded(( int)normalIndicesFloor.size());
+          for( int i = 0; i < (int) normalExpanded.length(); i ++ ) {
+            normalExpanded[i] = normals[ normalIndicesFloor[ i ] ];
+          }
+
+          MIntArray faceList(( int)normalIndicesFloor.size());
+          MIntArray vertexList(( int)normalIndicesFloor.size());
+
+          MIntArray normalCounts( (int)normalIndicesFloor.size() );
+          int numFaces = mMesh.numPolygons();
+          int nIndex = 0;
+          for (int faceIndex = 0; faceIndex < numFaces; faceIndex++)
+          {
+            MIntArray polyVerts;
+            mMesh.getPolygonVertices(faceIndex, polyVerts);
+            int numVertices = polyVerts.length();
+            for (int v = numVertices - 1; v >= 0; v--, ++nIndex)
+            {
+              faceList[nIndex] = faceIndex;
+              vertexList[nIndex] = polyVerts[v];
+            }
+          }
+
+          status = mMesh.setFaceVertexNormals( normalExpanded, faceList, vertexList );
+          if ( status != MS::kSuccess ){
+            EC_LOG_ERROR("mMesh.setFaceVertexNormals - failed: "<<status.errorString().asChar());
+          }
+        }
+      }
+    }
+  }
+
+  // output all channels
+  dataBlock.outputValue(mOutGeometryAttr).set(mMeshData);
+
+  return MStatus::kSuccess;
 }
 
 void AlembicPolyMeshDeformNode::PreDestruction()
@@ -1037,7 +1037,6 @@ MStatus AlembicPolyMeshDeformNode::deform(MDataBlock & dataBlock, MItGeometry & 
       float iweight = 1.0f - weight;
       if(iter.index() >= samplePos->size())
         continue;
-      //bool done = false;
       MPoint &pt = iter.position();
 
       MFloatPoint abcPt;
@@ -1049,9 +1048,8 @@ MStatus AlembicPolyMeshDeformNode::deform(MDataBlock & dataBlock, MItGeometry & 
         pt.x = iweight * pt.x + weight * (pos1.x * iblend + pos2.x * blend);
         pt.y = iweight * pt.y + weight * (pos1.y * iblend + pos2.y * blend);
         pt.z = iweight * pt.z + weight * (pos1.z * iblend + pos2.z * blend);
-        //done = true;
       }
-      else //if(!done)
+      else
       {
         pt.x = iweight * pt.x + weight * pos1.x;
         pt.y = iweight * pt.y + weight * pos1.y;
