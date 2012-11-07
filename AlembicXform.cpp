@@ -309,7 +309,6 @@ MStatus AlembicXformNode::compute(const MPlug & plug, MDataBlock & dataBlock)
       return MStatus::kFailure;
 
     AbcG::XformSample sample;
-    mLastFloor = 0;
     mTimes.clear();
     mSampleIndicesToMatrices.clear();
     {
@@ -325,46 +324,43 @@ MStatus AlembicXformNode::compute(const MPlug & plug, MDataBlock & dataBlock)
   if(mTimes.size() == 0)
     return MStatus::kFailure;
 
-  // find the index
-  size_t index = mLastFloor;
-  while(inputTime > mTimes[index] && index < mTimes.size()-1)
-    index++;
-  while(inputTime < mTimes[index] && index > 0)
-    index--;
+  SampleInfo sampleInfo = getSampleInfo(
+			inputTime,
+			mSchema.getTimeSampling(),
+			mSchema.getNumSamples()
+			);
 
   Abc::M44d matrixAtI;
   Abc::M44d matrixAtIPlus1;
 
-  if( mSampleIndicesToMatrices.find(index) == mSampleIndicesToMatrices.end() ) {
+  if( mSampleIndicesToMatrices.find(sampleInfo.floorIndex) == mSampleIndicesToMatrices.end() ) {
     AbcG::XformSample sample;
-    mSchema.get(sample,index);
+    mSchema.get(sample,sampleInfo.floorIndex);
     matrixAtI = sample.getMatrix();
-    mSampleIndicesToMatrices.insert( std::map<int,Abc::M44d>::value_type( index, matrixAtI ) );		
+    mSampleIndicesToMatrices.insert( std::map<AbcA::index_t,Abc::M44d>::value_type( sampleInfo.floorIndex, matrixAtI ) );		
   }
   else {
-    matrixAtI = mSampleIndicesToMatrices[ index ];
+	  matrixAtI = mSampleIndicesToMatrices[ sampleInfo.floorIndex ];
   }
-  if( ( index < mTimes.size() - 1 ) && mSampleIndicesToMatrices.find(index+ 1) == mSampleIndicesToMatrices.end() ) {
+  if( ( sampleInfo.ceilIndex < mTimes.size() ) && mSampleIndicesToMatrices.find(sampleInfo.ceilIndex) == mSampleIndicesToMatrices.end() ) {
     AbcG::XformSample sample;
-    mSchema.get(sample,index+ 1);
+    mSchema.get(sample,sampleInfo.ceilIndex);
     matrixAtIPlus1 = sample.getMatrix();
-    mSampleIndicesToMatrices.insert( std::map<int,Abc::M44d>::value_type( index+ 1, matrixAtIPlus1 ) );
+    mSampleIndicesToMatrices.insert( std::map<AbcA::index_t,Abc::M44d>::value_type( sampleInfo.ceilIndex, matrixAtIPlus1 ) );
   }
   else {
-    matrixAtIPlus1 = mSampleIndicesToMatrices[ index + 1 ];
+    matrixAtIPlus1 = mSampleIndicesToMatrices[ sampleInfo.ceilIndex ];
   }
 
   Abc::M44d matrix;
-  if(fabs(inputTime - mTimes[index]) < 0.001 || index == 0 || index == mTimes.size()-1)
+  if(sampleInfo.alpha == 1.0f )
   {
     matrix = matrixAtI;
   }
   else
   {
-    const double blend = (inputTime - mTimes[index]) / (mTimes[index+1] - mTimes[index]);
-    matrix = (1.0f - blend) * matrixAtI + blend * matrixAtIPlus1;
+    matrix = matrixAtI * sampleInfo.alpha + matrixAtIPlus1 * (1 - sampleInfo.alpha );
   }
-  mLastFloor = index;
 
   if (mLastMatrix == matrix)
     return MS::kSuccess;  // if the current matrix and the previous matrix are identical!
