@@ -359,7 +359,7 @@ MStatus AlembicXformNode::compute(const MPlug & plug, MDataBlock & dataBlock)
   }
   else
   {
-    matrix = matrixAtI * sampleInfo.alpha + matrixAtIPlus1 * (1 - sampleInfo.alpha );
+    matrix = matrixAtIPlus1 + sampleInfo.alpha * (matrixAtI - matrixAtIPlus1);		// saving one multiplication
   }
 
   if (mLastMatrix == matrix)

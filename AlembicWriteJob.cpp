@@ -152,7 +152,7 @@ MStatus AlembicWriteJob::PreProcess()
 			 }
 		  }
 
-		  double timePerCycle = frames[frames.size()-1] - frames[0];
+		  const double timePerCycle = frames[frames.size()-1] - frames[0];
 			AbcA::TimeSamplingType samplingType((Abc::uint32_t)frames.size(),timePerCycle);
 		  AbcA::TimeSampling sampling(samplingType,frames);
 		  mTs = mArchive.addTimeSampling(sampling);
@@ -228,7 +228,6 @@ MStatus AlembicWriteJob::PreProcess()
 	   this->forceCloseArchive();
       MString exc(e.what());
       MGlobal::displayError("[ExocortexAlembic] Error writing to file '"+mFileName+"' ("+exc+"). Do you still have it opened?");
-      return MStatus::kInvalidParameter;
    }
 
    return MS::kFailure;
