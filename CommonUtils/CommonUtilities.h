@@ -14,6 +14,10 @@ struct SampleInfo
    double alpha;
 };
 
+#ifndef uint64_t
+  typedef boost::uint64_t uint64_t;
+#endif
+
 template<class Key, class Data>
 class MRUCache {
 private:
@@ -27,10 +31,7 @@ private:
 	int maxEntries;
 
 public:
-	MRUCache( int maxEntries = 2 ) {
-		this.nextAccess = 0;
-		this.maxEntries = maxEntries;
-	}
+  MRUCache( int _maxEntries = 2 ): maxEntries(_maxEntries), nextAccess(0) {}
 
 	bool contains( Key const& key ) const {
 		for( int i = 0; i < entries.size(); i ++ ) {
