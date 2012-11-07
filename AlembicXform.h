@@ -40,8 +40,7 @@ private:
    MString mIdentifier;
    AbcG::IXformSchema mSchema;
    std::vector<double> mTimes;
-   size_t mLastFloor;
-   std::map<int,Abc::M44d> mSampleIndicesToMatrices;
+   std::map<AbcA::index_t,Abc::M44d> mSampleIndicesToMatrices;
    Abc::M44d mLastMatrix;
 
    // output attributes
