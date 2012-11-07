@@ -4,10 +4,50 @@
 #include "utility.h"
 #include <Alembic/AbcCoreAbstract/CompoundPropertyReader.h>
 #include <Alembic/AbcCoreAbstract/ForwardDeclarations.h>
+#include <Alembic/Util/PlainOldDataType.h>
 //#include <Alembic/Abc/IScalarProperty.h>
 #include "AlembicPropertyUtils.h"
 
 //template<class T> printProperty(
+
+template<class PT, class FT> bool readPropExt1(const Abc::ICompoundProperty& prop, const AbcA::PropertyHeader& pheader, std::string& val, bool& isConstant)
+{
+   if(PT::matches(pheader))
+   {
+      PT aProp(prop, pheader.getName());
+
+      FT val1;
+      aProp.get(val1);
+
+      std::stringstream valStream;
+      valStream<<val1;
+      val = valStream.str();
+
+      isConstant = aProp.isConstant();
+
+      return true;
+   }
+   return false;
+}
+
+template<class PT, class FT> bool readPropExt3(const Abc::ICompoundProperty& prop, const AbcA::PropertyHeader& pheader, std::string& val, bool& isConstant)
+{
+   if(PT::matches(pheader))
+   {
+      PT aProp(prop, pheader.getName());
+
+      FT val3;
+      aProp.get(val3);
+
+      std::stringstream valStream;
+      valStream<<val3.x<<","<<val3.y<<","<<val3.z;
+      val = valStream.str();
+
+      return true;
+   }
+   return false;
+}
+
 
 
 void readInputProperties( Abc::ICompoundProperty prop, std::vector<AbcProp>& props )
@@ -28,18 +68,39 @@ void readInputProperties( Abc::ICompoundProperty prop, std::vector<AbcProp>& pro
       }
       else if( propType == AbcA::kScalarProperty ){
 
-         props.push_back(AbcProp(pheader.getName(), std::string("val")));
-
          //ESS_LOG_WARNING("Scaler property: "<<pheader.getName());
          //
-         //if(Abc::IBoolProperty::matches(pheader)){
 
-         //   //I need to know the name and type only if animated; an appropriate controller will handle reading the data.
-         //   //If not animated, the value will set directly on the light and/or display modifier
+         std::string displayVal;
+         bool bConstant = true;
 
-         //   //Abc::IBoolProperty boolProp(prop, pheader.getName());
-         //   
-         //}
+         if(Abc::IBoolProperty::matches(pheader)){
+
+            //I need to know the name and type only if animated; an appropriate controller will handle reading the data.
+            //If not animated, the value will set directly on the light and/or display modifier
+
+            Abc::IBoolProperty boolProp(prop, pheader.getName());
+            /*if(boolProp.isConstant()){*/
+               AbcU::bool_t bVal = false;
+               boolProp.get(bVal);
+               if(bVal == true) displayVal = "true";
+               else displayVal = "false";
+            //}
+            //else{
+            //  
+            //}
+         }
+         else if(readPropExt1<Abc::IFloatProperty, float>(prop, pheader, displayVal, bConstant));
+         else if(readPropExt3<Abc::IC3fProperty, Abc::C3f>(prop, pheader, displayVal, bConstant));
+         else if(readPropExt3<Abc::IV3fProperty, Abc::V3f>(prop, pheader, displayVal, bConstant));
+         else if(readPropExt3<Abc::IN3fProperty, Abc::N3f>(prop, pheader, displayVal, bConstant));
+         else if(Abc::IStringProperty::matches(pheader)){
+            
+            Abc::IStringProperty stringProp(prop, pheader.getName());
+            stringProp.get(displayVal);
+         }
+
+         props.push_back(AbcProp(pheader.getName(), displayVal, pheader, bConstant));
       }
       else if( propType == AbcA::kArrayProperty ){
          ESS_LOG_WARNING("Unsupported array property: "<<pheader.getName());
@@ -162,7 +223,7 @@ int AlembicImport_Light(const std::string &path, AbcG::IObject& iObj, alembic_im
    GET_MAX_INTERFACE()->SelectNode(*pMaxNode);
 
    for(int i=0; i<shaders.size(); i++){
-      createDisplayModifier(shaders[i].name, shaders[i].props);
+      createDisplayModifier("properties", shaders[i].name, shaders[i].props);
    }
 
 
