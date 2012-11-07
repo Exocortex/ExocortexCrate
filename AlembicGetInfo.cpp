@@ -101,11 +101,13 @@ MStatus AlembicGetInfoCommand::doIt(const MArgList & args)
    }
 
    // get the root object
-   std::deque<Abc::IObject> objects;
+   std::deque<AbcObjectCache*> objects;
    std::deque<infoTuple> infoVector;
    std::set<std::string> uniqueIdentifiers;
 
-   objects.push_back(archive->getTop());
+   AbcArchiveCache *pArchiveCache = getArchiveCache( fileName.asChar() );
+
+   objects.push_back( &(pArchiveCache->find("/")->second) );
    infoVector.push_back(infoTuple());
 
    MProgressWindow::reserve();
@@ -113,6 +115,7 @@ MStatus AlembicGetInfoCommand::doIt(const MArgList & args)
    MProgressWindow::setInterruptable(true);
    MProgressWindow::setProgressRange(0, 500000);
    MProgressWindow::setProgress(0);
+
 
    // loop over all children and collect identifiers
    int idx = 0;
@@ -122,9 +125,9 @@ MStatus AlembicGetInfoCommand::doIt(const MArgList & args)
    MProgressWindow::startProgress();
    for(size_t i=0; !processStopped && !objects.empty(); ++i)
    {
-      Abc::IObject iObj = objects.front();
+      AbcObjectCache *pObjectCache = objects.front();
       objects.pop_front();
-      const int nbChild = (int) iObj.getNumChildren();
+	  const int nbChild = (int) pObjectCache->childIdentifiers.size();//iObj.getNumChildren();
       for(size_t j=0; j<nbChild; ++j)
       {
          if (idx % 50 == 0)
@@ -136,16 +139,17 @@ MStatus AlembicGetInfoCommand::doIt(const MArgList & args)
            }
            MProgressWindow::advanceProgress(50);
          }
-
-         Abc::IObject child = iObj.getChild(j);
-         objects.push_back(child);
+		 std::string childIdentifier = pObjectCache->childIdentifiers[j];
+		 AbcObjectCache *pChildObjectCache = &(pArchiveCache->find( childIdentifier )->second);
+         Abc::IObject child = pChildObjectCache->obj;
+         objects.push_back(pChildObjectCache);
          ++idx;
          infoVector.push_back(infoTuple());
          infoTuple &iTuple = infoVector.back();
 
          // check if the name is unique!
          {
-           const std::string &fullName = child.getFullName();
+           const std::string &fullName = pChildObjectCache->fullName;
            if (uniqueIdentifiers.find(fullName) != uniqueIdentifiers.end())
              iTuple.identifier = "";
            else
@@ -156,8 +160,8 @@ MStatus AlembicGetInfoCommand::doIt(const MArgList & args)
          }
          iTuple.type = getAlembicTypeFromObject(child);
          iTuple.name = child.getName().c_str();
-         iTuple.nbSample = (int) getNumSamplesFromObject(child);
-         iTuple.isConstant = isObjectConstant(child);
+         iTuple.nbSample = (int) pChildObjectCache->numSamples;
+		 iTuple.isConstant = pChildObjectCache->isConstant;//isObjectConstant(child);
          iTuple.parentID = (int) i;
          {
            infoTuple &parentTuple = infoVector[i];
@@ -188,29 +192,19 @@ MStatus AlembicGetInfoCommand::doIt(const MArgList & args)
 
          // additional data fields
          MString data;
-         if(AbcG::IPolyMesh::matches(child.getMetaData())) {
-            // check if we have topo or not
-            if( isAlembicMeshTopoDynamic( & child ) ) {
-				      data += "dynamictopology=1";                 
-	          }
-	          if( isAlembicMeshPointCache( & child ) ) {
-		          data += "purepointcache=1";
-	          }
-         } else if(AbcG::ISubD::matches(child.getMetaData())) {
-            // check if we have topo or not
-		        if( isAlembicMeshTopoDynamic( & child ) ) {
-			        data += "dynamictopology=1";                 
-		        }
-		        if( isAlembicMeshPointCache( & child ) ) {
-			        data += "purepointcache=1";
-		        }
-         } else if(AbcG::ICurves::matches(child.getMetaData())) {
+		 if( pChildObjectCache->isMeshTopoDynamic ) {
+			data += "dynamictopology=1";                 
+	     }
+		 if( pChildObjectCache->isMeshPointCache ) {
+			data += "purepointcache=1";
+		}
+         if(AbcG::ICurves::matches(child.getMetaData())) {
             // check if we have topo or not
             AbcG::ICurves obj(child,Abc::kWrapExisting);
             if(obj.valid())
             {
                AbcG::ICurvesSchema::Sample sample;
-               for(size_t k=0;k<obj.getSchema().getNumSamples();k++)
+			   for(size_t k=0;k<pChildObjectCache->numSamples;k++)
                {
                   obj.getSchema().get(sample,k);
                   if(sample.getNumCurves() != 1)

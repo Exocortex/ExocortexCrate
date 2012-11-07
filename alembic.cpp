@@ -20,7 +20,7 @@
 const MTypeId mTimeControlNodeId(0x0011A100);
 const MTypeId mFileNodeId(0x0011A101);
 const MTypeId mXformNodeId(0x0011A102);
-const MTypeId mCameraNodeId(0x0011A103);
+const MTypeId mCameraNodeId(0x0011A103); 
 const MTypeId mPolyMeshNodeId(0x0011A104);
 const MTypeId mSubDNodeId(0x0011A105);
 const MTypeId mPolyMeshDeformNodeId(0x0011A106);

@@ -449,7 +449,7 @@ MStatus AlembicPolyMeshNode::compute(const MPlug & plug, MDataBlock & dataBlock)
    bool importNormals = dataBlock.inputValue(mNormalsAttr).asBool();
    bool importUvs = dataBlock.inputValue(mUvsAttr).asBool();
 
- 	AlembicObjectInfo* pObjectInfo = NULL;
+ 	AbcObjectCache* pObjectInfo = NULL;
   
    // check if we have the file
    if(fileName != mFileName || identifier != mIdentifier)
@@ -464,7 +464,7 @@ MStatus AlembicPolyMeshNode::compute(const MPlug & plug, MDataBlock & dataBlock)
       mIdentifier = identifier;
 
       // get the object from the archive
-	  pObjectInfo = getObjectInfoFromArchive( std::string( mFileName.asChar() ), std::string( identifier.asChar() ) );
+	  pObjectInfo = getObjectCacheFromArchive( std::string( mFileName.asChar() ), std::string( identifier.asChar() ) );
 	  if( pObjectInfo != NULL ) {
 		  mObj = pObjectInfo->obj;
 	  }
@@ -481,10 +481,7 @@ MStatus AlembicPolyMeshNode::compute(const MPlug & plug, MDataBlock & dataBlock)
       }
       mSchema = obj.getSchema();
       mMeshData = MObject::kNullObj;
-	  if( pObjectInfo->isMeshTopoDynamic == -1 ) {
-		pObjectInfo->isMeshTopoDynamic = isAlembicMeshTopoDynamic( &mObj ) ? 1 : 0;
-	  }
-	  mDynamicTopology = ( pObjectInfo->isMeshTopoDynamic == 1 );
+	  mDynamicTopology = pObjectInfo->isMeshTopoDynamic;
 
    }
 
@@ -942,7 +939,7 @@ MStatus AlembicPolyMeshDeformNode::deform(MDataBlock & dataBlock, MItGeometry & 
   MString & fileName = dataBlock.inputValue(mFileNameAttr).asString();
   MString & identifier = dataBlock.inputValue(mIdentifierAttr).asString();
 
-  AlembicObjectInfo* pObjectInfo = NULL;
+  AbcObjectCache* pObjectCache = NULL;
 
   // check if we have the file
   if(fileName != mFileName || identifier != mIdentifier)
@@ -956,9 +953,9 @@ MStatus AlembicPolyMeshDeformNode::deform(MDataBlock & dataBlock, MItGeometry & 
     }
     mIdentifier = identifier;
 
-    pObjectInfo = getObjectInfoFromArchive( std::string( mFileName.asChar() ), std::string( identifier.asChar() ) );
-    if( pObjectInfo != NULL ) {
-      mObj = pObjectInfo->obj;
+    pObjectCache = getObjectCacheFromArchive( std::string( mFileName.asChar() ), std::string( identifier.asChar() ) );
+    if( pObjectCache != NULL ) {
+      mObj = pObjectCache->obj;
     }
     // get the object from the archive
     //mObj = getObjectFromArchive(mFileName,identifier);
@@ -975,10 +972,7 @@ MStatus AlembicPolyMeshDeformNode::deform(MDataBlock & dataBlock, MItGeometry & 
     }
     mSchema = obj.getSchema();
 
-    if( pObjectInfo->isMeshTopoDynamic == -1 ) {
-      pObjectInfo->isMeshTopoDynamic = isAlembicMeshTopoDynamic( &mObj ) ? 1 : 0;
-    }
-    mDynamicTopology = ( pObjectInfo->isMeshTopoDynamic == 1 );
+	mDynamicTopology = pObjectCache->isMeshTopoDynamic;
   }
 
   if(!mSchema.valid())
