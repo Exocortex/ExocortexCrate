@@ -132,104 +132,106 @@ MStatus AlembicWriteJob::PreProcess()
             getExporterName( "Maya " EC_QUOTE( crate_Maya_Version ) ).c_str(),
 			      getExporterFileName( sceneFileName.asChar() ).c_str(),
             Abc::ErrorHandler::kThrowPolicy);
+
+	   // get the frame rate
+	   mFrameRate = MTime(1.0, MTime::kSeconds).as(MTime::uiUnit());
+	   const double timePerSample = 1.0 / mFrameRate;
+	   std::vector<AbcA::chrono_t> frames;
+	   for(LONG i=0;i<mFrames.size();i++)
+		  frames.push_back(mFrames[i] * timePerSample);
+
+	   // create the sampling
+	   if(frames.size() > 1)
+	   {
+		  if( ! HasAlembicWriterLicense() )
+		  {
+			 if(frames.size() > 75)
+			 {           
+				frames.resize(75);
+				EC_LOG_WARNING("[ExocortexAlembic] Demo Mode: Maximum exportable samplecount is 75!");
+			 }
+		  }
+
+		  double timePerCycle = frames[frames.size()-1] - frames[0];
+			AbcA::TimeSamplingType samplingType((Abc::uint32_t)frames.size(),timePerCycle);
+		  AbcA::TimeSampling sampling(samplingType,frames);
+		  mTs = mArchive.addTimeSampling(sampling);
+	   }
+	   else
+	   {
+		  AbcA::TimeSampling sampling(1.0,frames[0]);
+		  mTs = mArchive.addTimeSampling(sampling);
+	   }
+	   Abc::OBox3dProperty boxProp = AbcG::CreateOArchiveBounds(mArchive,mTs);
+
+	   // create object for each
+	   MProgressWindow::reserve();
+	   MProgressWindow::setTitle("Alembic Export: Listing objects");
+	   MProgressWindow::setInterruptable(true);
+	   MProgressWindow::setProgressRange(0, mSelection.length());
+	   MProgressWindow::setProgress(0);
+
+	   MProgressWindow::startProgress();
+	   int interrupt = 20;
+	   bool processStopped = false;
+	   for(unsigned int i=0;i<mSelection.length(); ++i, --interrupt)
+	   {
+		  if (interrupt == 0)
+		  {
+			interrupt = 20;
+			if (MProgressWindow::isCancelled())
+			{
+			  processStopped = true;
+			  break;
+			}
+		  }
+		  MProgressWindow::advanceProgress(1);
+		  MObject mObj = mSelection[i];
+		  if(GetObject(mObj) != NULL)
+			 continue;
+
+		  // take care of all other types
+		  AlembicObjectPtr ptr;
+		  switch(mObj.apiType())
+		  {
+		  case MFn::kCamera:
+			ptr.reset(new AlembicCamera(mObj,this));
+			break;
+		  case MFn::kMesh:
+			ptr.reset(new AlembicPolyMesh(mObj,this));
+			break;
+		  case MFn::kSubdiv:
+			ptr.reset(new AlembicSubD(mObj,this));
+			break;
+		  case MFn::kNurbsCurve:
+			ptr.reset(new AlembicCurves(mObj,this));
+			break;
+		  case MFn::kParticle:
+			ptr.reset(new AlembicPoints(mObj,this));
+			break;
+		  case MFn::kPfxHair:
+			ptr.reset(new AlembicHair(mObj,this));
+			break;
+		  default:  // NO BREAK... DON'T ADD ONE!!!!
+			MGlobal::displayInfo("[ExocortexAlembic] Exporting "+MString(mObj.apiTypeStr())+" node as kTransform.\n");  // NO BREAK, it's normal!
+		  case MFn::kTransform:
+			ptr.reset(new AlembicXform(mObj,this));
+			break;
+		  }
+		  AddObject(ptr);
+	   }
+	   MProgressWindow::endProgress();
+	   return processStopped ? MStatus::kEndOfFile : MStatus::kSuccess;
    }
    catch(AbcU::Exception& e)
    {
+	   this->forceCloseArchive();
       MString exc(e.what());
       MGlobal::displayError("[ExocortexAlembic] Error writing to file '"+mFileName+"' ("+exc+"). Do you still have it opened?");
       return MStatus::kInvalidParameter;
    }
 
-   // get the frame rate
-   //mFrameRate = MAnimControl::currentTime().value() / MAnimControl::currentTime().as(MTime::kSeconds);
-   mFrameRate = MTime(1.0, MTime::kSeconds).as(MTime::uiUnit());
-   std::vector<AbcA::chrono_t> frames;
-   for(LONG i=0;i<mFrames.size();i++)
-      frames.push_back(mFrames[i] / mFrameRate);
-
-   // create the sampling
-   double timePerSample = 1.0 / mFrameRate;
-   if(frames.size() > 1)
-   {
-      if( ! HasAlembicWriterLicense() )
-      {
-         if(frames.size() > 75)
-         {           
-            frames.resize(75);
-            EC_LOG_WARNING("[ExocortexAlembic] Demo Mode: Maximum exportable samplecount is 75!");
-         }
-      }
-
-      double timePerCycle = frames[frames.size()-1] - frames[0];
-	    AbcA::TimeSamplingType samplingType((Abc::uint32_t)frames.size(),timePerCycle);
-      AbcA::TimeSampling sampling(samplingType,frames);
-      mTs = mArchive.addTimeSampling(sampling);
-   }
-   else
-   {
-      AbcA::TimeSampling sampling(1.0,frames[0]);
-      mTs = mArchive.addTimeSampling(sampling);
-   }
-   Abc::OBox3dProperty boxProp = AbcG::CreateOArchiveBounds(mArchive,mTs);
-
-   // create object for each
-   MProgressWindow::reserve();
-   MProgressWindow::setTitle("Alembic Export: Listing objects");
-   MProgressWindow::setInterruptable(true);
-   MProgressWindow::setProgressRange(0, mSelection.length());
-   MProgressWindow::setProgress(0);
-
-   MProgressWindow::startProgress();
-   int interrupt = 20;
-   bool processStopped = false;
-   for(unsigned int i=0;i<mSelection.length(); ++i, --interrupt)
-   {
-      if (interrupt == 0)
-      {
-        interrupt = 20;
-        if (MProgressWindow::isCancelled())
-        {
-          processStopped = true;
-          break;
-        }
-      }
-      MProgressWindow::advanceProgress(1);
-      MObject mObj = mSelection[i];
-      if(GetObject(mObj) != NULL)
-         continue;
-
-      // take care of all other types
-      AlembicObjectPtr ptr;
-      switch(mObj.apiType())
-      {
-      case MFn::kCamera:
-        ptr.reset(new AlembicCamera(mObj,this));
-        break;
-      case MFn::kMesh:
-        ptr.reset(new AlembicPolyMesh(mObj,this));
-        break;
-      case MFn::kSubdiv:
-        ptr.reset(new AlembicSubD(mObj,this));
-        break;
-      case MFn::kNurbsCurve:
-        ptr.reset(new AlembicCurves(mObj,this));
-        break;
-      case MFn::kParticle:
-        ptr.reset(new AlembicPoints(mObj,this));
-        break;
-      case MFn::kPfxHair:
-        ptr.reset(new AlembicHair(mObj,this));
-        break;
-      default:  // NO BREAK... DON'T ADD ONE!!!!
-        MGlobal::displayInfo("[ExocortexAlembic] Exporting "+MString(mObj.apiTypeStr())+" node as kTransform.\n");  // NO BREAK, it's normal!
-      case MFn::kTransform:
-        ptr.reset(new AlembicXform(mObj,this));
-        break;
-      }
-      AddObject(ptr);
-   }
-   MProgressWindow::endProgress();
-   return processStopped ? MStatus::kEndOfFile : MStatus::kSuccess;
+   return MS::kFailure;
 }
 
 MStatus AlembicWriteJob::Process(double frame)
@@ -266,6 +268,13 @@ MStatus AlembicWriteJob::Process(double frame)
    }
    MProgressWindow::endProgress();
    return MStatus::kSuccess;
+}
+
+bool AlembicWriteJob::forceCloseArchive(void)
+{
+	if (mArchive.valid())
+		mArchive.reset();
+	return true;
 }
 
 AlembicExportCommand::AlembicExportCommand()
@@ -363,272 +372,284 @@ MStatus AlembicExportCommand::doIt(const MArgList & args)
    double maxSteps = 1;
    double maxSubsteps = 1;
 
-   // for each job, check the arguments
-   for(unsigned int i=0;i<jobStrings.length();i++)
+   try
    {
-      double frameIn = 1.0;
-      double frameOut = 1.0;
-      double frameSteps = 1.0;
-      double frameSubSteps = 1.0;
-      MString filename;
-      bool purepointcache = false;
-      bool normals = true;
-      bool uvs = true;
-      bool facesets = true;
-	    bool bindpose = true;
-      bool dynamictopology = false;
-      bool globalspace = false;
-      bool withouthierarchy = false;
-      bool transformcache = false;
-      bool useInitShadGrp = false;
-      MStringArray objectStrings;
-      MObjectArray objects;
+	   // for each job, check the arguments
+	   for(unsigned int i=0;i<jobStrings.length();i++)
+	   {
+		  double frameIn = 1.0;
+		  double frameOut = 1.0;
+		  double frameSteps = 1.0;
+		  double frameSubSteps = 1.0;
+		  MString filename;
+		  bool purepointcache = false;
+		  bool normals = true;
+		  bool uvs = true;
+		  bool facesets = true;
+			bool bindpose = true;
+		  bool dynamictopology = false;
+		  bool globalspace = false;
+		  bool withouthierarchy = false;
+		  bool transformcache = false;
+		  bool useInitShadGrp = false;
+		  MStringArray objectStrings;
+		  MObjectArray objects;
 
-      // process all tokens of the job
-      MStringArray tokens;
-      jobStrings[i].split(';',tokens);
-      for(unsigned int j=0;j<tokens.length();j++)
-      {
-         MStringArray valuePair;
-         tokens[j].split('=',valuePair);
-         if(valuePair.length()!=2)
-         {
-            MGlobal::displayWarning("[ExocortexAlembic] Skipping invalid token: "+tokens[j]);
-            continue;
-         }
+		  // process all tokens of the job
+		  MStringArray tokens;
+		  jobStrings[i].split(';',tokens);
+		  for(unsigned int j=0;j<tokens.length();j++)
+		  {
+			 MStringArray valuePair;
+			 tokens[j].split('=',valuePair);
+			 if(valuePair.length()!=2)
+			 {
+				MGlobal::displayWarning("[ExocortexAlembic] Skipping invalid token: "+tokens[j]);
+				continue;
+			 }
 
-         if(valuePair[0].toLowerCase() == "in")
-            frameIn = valuePair[1].asDouble();
-         else if(valuePair[0].toLowerCase() == "out")
-            frameOut = valuePair[1].asDouble();
-         else if(valuePair[0].toLowerCase() == "step")
-            frameSteps = valuePair[1].asDouble();
-         else if(valuePair[0].toLowerCase() == "substep")
-            frameSubSteps = valuePair[1].asDouble();
-         else if(valuePair[0].toLowerCase() == "normals")
-            normals = valuePair[1].asInt() != 0;
-         else if(valuePair[0].toLowerCase() == "uvs")
-            uvs = valuePair[1].asInt() != 0;
-         else if(valuePair[0].toLowerCase() == "facesets")
-            facesets = valuePair[1].asInt() != 0;
-		     else if(valuePair[0].toLowerCase() == "bindpose")
-            bindpose = valuePair[1].asInt() != 0;
-		     else if(valuePair[0].toLowerCase() == "purepointcache")
-            purepointcache = valuePair[1].asInt() != 0;
-		     else if(valuePair[0].toLowerCase() == "dynamictopology")
-            dynamictopology = valuePair[1].asInt() != 0;
-		     else if(valuePair[0].toLowerCase() == "globalspace")
-            globalspace = valuePair[1].asInt() != 0;
-		     else if(valuePair[0].toLowerCase() == "withouthierarchy")
-            withouthierarchy = valuePair[1].asInt() != 0;
-		     else if(valuePair[0].toLowerCase() == "transformcache")
-            transformcache = valuePair[1].asInt() != 0;
-         else if(valuePair[0].toLowerCase() == "filename")
-            filename = valuePair[1];
-         else if(valuePair[0].toLowerCase() == "objects")
-         {
-            // try to find each object
-            valuePair[1].split(',',objectStrings);
-         }
-         else if(valuePair[0].toLowerCase() == "useinitshadgrp")
-            useInitShadGrp = valuePair[1].asInt() != 0;
-         else
-         {
-            MGlobal::displayWarning("[ExocortexAlembic] Skipping invalid token: "+tokens[j]);
-            continue;
-         }
-      }
+			 if(valuePair[0].toLowerCase() == "in")
+				frameIn = valuePair[1].asDouble();
+			 else if(valuePair[0].toLowerCase() == "out")
+				frameOut = valuePair[1].asDouble();
+			 else if(valuePair[0].toLowerCase() == "step")
+				frameSteps = valuePair[1].asDouble();
+			 else if(valuePair[0].toLowerCase() == "substep")
+				frameSubSteps = valuePair[1].asDouble();
+			 else if(valuePair[0].toLowerCase() == "normals")
+				normals = valuePair[1].asInt() != 0;
+			 else if(valuePair[0].toLowerCase() == "uvs")
+				uvs = valuePair[1].asInt() != 0;
+			 else if(valuePair[0].toLowerCase() == "facesets")
+				facesets = valuePair[1].asInt() != 0;
+				 else if(valuePair[0].toLowerCase() == "bindpose")
+				bindpose = valuePair[1].asInt() != 0;
+				 else if(valuePair[0].toLowerCase() == "purepointcache")
+				purepointcache = valuePair[1].asInt() != 0;
+				 else if(valuePair[0].toLowerCase() == "dynamictopology")
+				dynamictopology = valuePair[1].asInt() != 0;
+				 else if(valuePair[0].toLowerCase() == "globalspace")
+				globalspace = valuePair[1].asInt() != 0;
+				 else if(valuePair[0].toLowerCase() == "withouthierarchy")
+				withouthierarchy = valuePair[1].asInt() != 0;
+				 else if(valuePair[0].toLowerCase() == "transformcache")
+				transformcache = valuePair[1].asInt() != 0;
+			 else if(valuePair[0].toLowerCase() == "filename")
+				filename = valuePair[1];
+			 else if(valuePair[0].toLowerCase() == "objects")
+			 {
+				// try to find each object
+				valuePair[1].split(',',objectStrings);
+			 }
+			 else if(valuePair[0].toLowerCase() == "useinitshadgrp")
+				useInitShadGrp = valuePair[1].asInt() != 0;
+			 else
+			 {
+				MGlobal::displayWarning("[ExocortexAlembic] Skipping invalid token: "+tokens[j]);
+				continue;
+			 }
+		  }
 
-      // now check the object strings
-      for(unsigned int k=0;k<objectStrings.length();k++)
-      {
-         MSelectionList sl;
-         MString objectString = objectStrings[k];
-         sl.add(objectString);
-         MDagPath dag;
-         for(unsigned int l=0;l<sl.length();l++)
-         {
-            sl.getDagPath(l,dag);
-            MObject objRef = dag.node();
-            if(objRef.isNull())
-            {
-               MGlobal::displayWarning("[ExocortexAlembic] Skipping object '"+objectStrings[k]+"', not found.");
-               break;
-            }
+		  // now check the object strings
+		  for(unsigned int k=0;k<objectStrings.length();k++)
+		  {
+			 MSelectionList sl;
+			 MString objectString = objectStrings[k];
+			 sl.add(objectString);
+			 MDagPath dag;
+			 for(unsigned int l=0;l<sl.length();l++)
+			 {
+				sl.getDagPath(l,dag);
+				MObject objRef = dag.node();
+				if(objRef.isNull())
+				{
+				   MGlobal::displayWarning("[ExocortexAlembic] Skipping object '"+objectStrings[k]+"', not found.");
+				   break;
+				}
 
-            // get all parents
-            MObjectArray parents;
-            MString typeStr = dag.node().apiTypeStr();
+				// get all parents
+				MObjectArray parents;
+				MString typeStr = dag.node().apiTypeStr();
 
-            // check if this is a camera
-            bool isCamera = false;
-            for(unsigned int m=0;m<dag.childCount();m++)
-            {
-               MFnDagNode child(dag.child(m));
-               MString cameraTypeStr = child.object().apiTypeStr();
-               if(cameraTypeStr == "kCamera")
-               {
-                  isCamera = true;
-                  break;
-               }
-            }
+				// check if this is a camera
+				bool isCamera = false;
+				for(unsigned int m=0;m<dag.childCount();m++)
+				{
+				   MFnDagNode child(dag.child(m));
+				   MString cameraTypeStr = child.object().apiTypeStr();
+				   if(cameraTypeStr == "kCamera")
+				   {
+					  isCamera = true;
+					  break;
+				   }
+				}
 
-            if(typeStr == "kTransform" && !isCamera && !globalspace && !withouthierarchy)
-            {
-               MDagPath ppath = dag;
-               while(!ppath.node().isNull() && ppath.length() > 0 && ppath.isValid())
-               {
-                  parents.append(ppath.node());
-                  MStatus status = ppath.pop();
-                  if(status != MStatus::kSuccess)
-                     break;
-               }
-            }
-            else
-            {
-               parents.append(dag.node());
-            }
+				if(typeStr == "kTransform" && !isCamera && !globalspace && !withouthierarchy)
+				{
+				   MDagPath ppath = dag;
+				   while(!ppath.node().isNull() && ppath.length() > 0 && ppath.isValid())
+				   {
+					  parents.append(ppath.node());
+					  MStatus status = ppath.pop();
+					  if(status != MStatus::kSuccess)
+						 break;
+				   }
+				}
+				else
+				{
+				   parents.append(dag.node());
+				}
 
-            // push all parents in
-            while(parents.length() > 0)
-            {
-               bool found = false;
-               for(unsigned int m=0;m<objects.length();m++)
-               {
-                  if(objects[m] == parents[parents.length()-1])
-                  {
-                     found = true;
-                     break;
-                  }
-               }
-               if(!found)
-                  objects.append(parents[parents.length()-1]);
-               parents.remove(parents.length()-1);
-            }
+				// push all parents in
+				while(parents.length() > 0)
+				{
+				   bool found = false;
+				   for(unsigned int m=0;m<objects.length();m++)
+				   {
+					  if(objects[m] == parents[parents.length()-1])
+					  {
+						 found = true;
+						 break;
+					  }
+				   }
+				   if(!found)
+					  objects.append(parents[parents.length()-1]);
+				   parents.remove(parents.length()-1);
+				}
 
-            // check all of the shapes below
-            if(!transformcache)
-            {
-               sl.getDagPath(l,dag);
-               for(unsigned int m=0;m<dag.childCount();m++)
-               {
-                  MFnDagNode child(dag.child(m));
-                  if(child.isIntermediateObject())
-                     continue;
-                  objects.append(child.object());
-               }
-            }
-         }
-      }
+				// check all of the shapes below
+				if(!transformcache)
+				{
+				   sl.getDagPath(l,dag);
+				   for(unsigned int m=0;m<dag.childCount();m++)
+				   {
+					  MFnDagNode child(dag.child(m));
+					  if(child.isIntermediateObject())
+						 continue;
+					  objects.append(child.object());
+				   }
+				}
+			 }
+		  }
 
-      // check if we have incompatible subframes
-      if(maxSubsteps > 1.0 && frameSubSteps > 1.0)
-      {
-         if(maxSubsteps > frameSubSteps)
-         {
-            double part = maxSubsteps / frameSubSteps;
-            if(abs(part - floor(part)) > 0.001)
-            {
-               MString frameSubStepsStr,maxSubstepsStr;
-               frameSubStepsStr.set(frameSubSteps);
-               maxSubstepsStr.set(maxSubsteps);
-               MGlobal::displayError("[ExocortexAlembic] You cannot combine substeps "+frameSubStepsStr+" and "+maxSubstepsStr+" in one export. Aborting.");
-               return MStatus::kInvalidParameter;
-            }
-         }
-         else if(frameSubSteps > maxSubsteps )
-         {
-            double part = frameSubSteps / maxSubsteps;
-            if(abs(part - floor(part)) > 0.001)
-            {
-               MString frameSubStepsStr,maxSubstepsStr;
-               frameSubStepsStr.set(frameSubSteps);
-               maxSubstepsStr.set(maxSubsteps);
-               MGlobal::displayError("[ExocortexAlembic] You cannot combine substeps "+frameSubStepsStr+" and "+maxSubstepsStr+" in one export. Aborting.");
-               return MStatus::kInvalidParameter;
-            }
-         }
-      }
+		  // check if we have incompatible subframes
+		  if(maxSubsteps > 1.0 && frameSubSteps > 1.0)
+		  {
+			 if(maxSubsteps > frameSubSteps)
+			 {
+				double part = maxSubsteps / frameSubSteps;
+				if(abs(part - floor(part)) > 0.001)
+				{
+				   MString frameSubStepsStr,maxSubstepsStr;
+				   frameSubStepsStr.set(frameSubSteps);
+				   maxSubstepsStr.set(maxSubsteps);
+				   MGlobal::displayError("[ExocortexAlembic] You cannot combine substeps "+frameSubStepsStr+" and "+maxSubstepsStr+" in one export. Aborting.");
+				   return MStatus::kInvalidParameter;
+				}
+			 }
+			 else if(frameSubSteps > maxSubsteps )
+			 {
+				double part = frameSubSteps / maxSubsteps;
+				if(abs(part - floor(part)) > 0.001)
+				{
+				   MString frameSubStepsStr,maxSubstepsStr;
+				   frameSubStepsStr.set(frameSubSteps);
+				   maxSubstepsStr.set(maxSubsteps);
+				   MGlobal::displayError("[ExocortexAlembic] You cannot combine substeps "+frameSubStepsStr+" and "+maxSubstepsStr+" in one export. Aborting.");
+				   return MStatus::kInvalidParameter;
+				}
+			 }
+		  }
 
-      // remember the min and max values for the frames
-      if(frameIn < minFrame) minFrame = frameIn;
-      if(frameOut > maxFrame) maxFrame = frameOut;
-      if(frameSteps > maxSteps) maxSteps = frameSteps;
-      if(frameSteps > 1.0) frameSubSteps = 1.0;
-      if(frameSubSteps > maxSubsteps) maxSubsteps = frameSubSteps;
+		  // remember the min and max values for the frames
+		  if(frameIn < minFrame) minFrame = frameIn;
+		  if(frameOut > maxFrame) maxFrame = frameOut;
+		  if(frameSteps > maxSteps) maxSteps = frameSteps;
+		  if(frameSteps > 1.0) frameSubSteps = 1.0;
+		  if(frameSubSteps > maxSubsteps) maxSubsteps = frameSubSteps;
 
-      // check if we have a filename
-      if(filename.length() == 0)
-      {
-         MGlobal::displayError("[ExocortexAlembic] No filename specified.");
-         for(size_t k=0;k<jobPtrs.size();k++)
-            delete(jobPtrs[k]);
-         return MStatus::kFailure;
-      }
+		  // check if we have a filename
+		  if(filename.length() == 0)
+		  {
+			 MGlobal::displayError("[ExocortexAlembic] No filename specified.");
+			 for(size_t k=0;k<jobPtrs.size();k++)
+				delete(jobPtrs[k]);
+			 return MStatus::kFailure;
+		  }
 
-      // construct the frames
-      MDoubleArray frames;
-      for(double frame=frameIn; frame<=frameOut; frame+=frameSteps / frameSubSteps)
-         frames.append(frame);
+		  // construct the frames
+		  MDoubleArray frames;
+		  for(double frame=frameIn; frame<=frameOut; frame+=frameSteps / frameSubSteps)
+			 frames.append(frame);
 
-      AlembicWriteJob * job = new AlembicWriteJob(filename,objects,frames);
-      job->SetOption("exportNormals",normals ? "1" : "0");
-      job->SetOption("exportUVs",uvs ? "1" : "0");
-      job->SetOption("exportFaceSets",facesets ? "1" : "0");
-      job->SetOption("exportInitShadGrp",useInitShadGrp ? "1" : "0");
-	    job->SetOption("exportBindPose",bindpose ? "1" : "0");
-      job->SetOption("exportPurePointCache",purepointcache ? "1" : "0");
-      job->SetOption("exportDynamicTopology",dynamictopology ? "1" : "0");
-      job->SetOption("indexedNormals","1");
-      job->SetOption("indexedUVs","1");
-      job->SetOption("exportInGlobalSpace",globalspace ? "1" : "0");
+		  AlembicWriteJob * job = new AlembicWriteJob(filename,objects,frames);
+		  job->SetOption("exportNormals",normals ? "1" : "0");
+		  job->SetOption("exportUVs",uvs ? "1" : "0");
+		  job->SetOption("exportFaceSets",facesets ? "1" : "0");
+		  job->SetOption("exportInitShadGrp",useInitShadGrp ? "1" : "0");
+			job->SetOption("exportBindPose",bindpose ? "1" : "0");
+		  job->SetOption("exportPurePointCache",purepointcache ? "1" : "0");
+		  job->SetOption("exportDynamicTopology",dynamictopology ? "1" : "0");
+		  job->SetOption("indexedNormals","1");
+		  job->SetOption("indexedUVs","1");
+		  job->SetOption("exportInGlobalSpace",globalspace ? "1" : "0");
 
-      // check if the job is satifsied
-      if(job->PreProcess() != MStatus::kSuccess)
-      {
-         MGlobal::displayError("[ExocortexAlembic] Job skipped. Not satisfied.");
-         delete(job);
-         continue;
-      }
+		  // check if the job is satifsied
+		  if(job->PreProcess() != MStatus::kSuccess)
+		  {
+			 MGlobal::displayError("[ExocortexAlembic] Job skipped. Not satisfied.");
+			 delete(job);
+			 continue;
+		  }
 
-      // push the job to our registry
-      MGlobal::displayInfo("[ExocortexAlembic] Using WriteJob:"+jobStrings[i]);
-      jobPtrs.push_back(job);
+		  // push the job to our registry
+		  MGlobal::displayInfo("[ExocortexAlembic] Using WriteJob:"+jobStrings[i]);
+		  jobPtrs.push_back(job);
+	   }
+
+	   // compute the job count
+	   unsigned int jobFrameCount = 0;
+	   for(size_t i=0;i<jobPtrs.size();i++)
+		  jobFrameCount += (unsigned int)jobPtrs[i]->GetNbObjects() * (unsigned int)jobPtrs[i]->GetFrames().size();
+
+	   // now, let's run through all frames, and process the jobs
+	   const double frameRate = MTime(1.0, MTime::kSeconds).as(MTime::uiUnit());
+	   const double incrSteps = maxSteps / maxSubsteps;
+	   double prevFrame = minFrame - incrSteps;
+
+	   for(double frame = minFrame; frame<=maxFrame; frame += incrSteps, prevFrame += incrSteps)
+	   {
+		  MAnimControl::setCurrentTime(MTime(prevFrame/frameRate,MTime::kSeconds));
+		  MAnimControl::setAnimationEndTime( MTime(frame/frameRate,MTime::kSeconds) );
+		  MAnimControl::playForward();  // this way, it forces Maya to play exactly one frame! and particles are updated!
+
+		  bool canceled = false;
+		  for(size_t i=0;i<jobPtrs.size();i++)
+		  {
+			 MStatus status = jobPtrs[i]->Process(frame);
+			 if(status != MStatus::kSuccess)
+			 {
+				MGlobal::displayError("[ExocortexAlembic] Job aborted :"+jobPtrs[i]->GetFileName());
+				for(size_t k=0;k<jobPtrs.size();k++)
+				   delete(jobPtrs[k]);
+				restoreOldTime(currentAnimStartTime, currentAnimEndTime, oldCurTime, curMinTime, curMaxTime);
+				return status;
+			 }
+
+		  }
+		  if(canceled)
+			 break;
+	   }
    }
-
-   // compute the job count
-   unsigned int jobFrameCount = 0;
-   for(size_t i=0;i<jobPtrs.size();i++)
-      jobFrameCount += (unsigned int)jobPtrs[i]->GetNbObjects() * (unsigned int)jobPtrs[i]->GetFrames().size();
-
-   // now, let's run through all frames, and process the jobs
-   const double frameRate = MTime(1.0, MTime::kSeconds).as(MTime::uiUnit());
-   const double incrSteps = maxSteps / maxSubsteps;
-   double prevFrame = minFrame - incrSteps;
-   for(double frame = minFrame; frame<=maxFrame; frame += incrSteps, prevFrame += incrSteps)
+   catch(...)
    {
-      MAnimControl::setCurrentTime(MTime(prevFrame/frameRate,MTime::kSeconds));
-      MAnimControl::setAnimationEndTime( MTime(frame/frameRate,MTime::kSeconds) );
-      MAnimControl::playForward();  // this way, it forces Maya to play exactly one frame! and particles are updated!
-
-      bool canceled = false;
-      for(size_t i=0;i<jobPtrs.size();i++)
-      {
-         MStatus status = jobPtrs[i]->Process(frame);
-         if(status != MStatus::kSuccess)
-         {
-            MGlobal::displayError("[ExocortexAlembic] Job aborted :"+jobPtrs[i]->GetFileName());
-            for(size_t k=0;k<jobPtrs.size();k++)
-               delete(jobPtrs[k]);
-            restoreOldTime(currentAnimStartTime, currentAnimEndTime, oldCurTime, curMinTime, curMaxTime);
-            return status;
-         }
-
-      }
-      if(canceled)
-         break;
+		MGlobal::displayError("[ExocortexAlembic] Jobs aborted, force closing all archives!");
+		for (std::vector<AlembicWriteJob*>::iterator beg = jobPtrs.begin(); beg != jobPtrs.end(); ++beg)
+			(*beg)->forceCloseArchive();
+		restoreOldTime(currentAnimStartTime, currentAnimEndTime, oldCurTime, curMinTime, curMaxTime);
+		status = MS::kFailure;
    }
-   MAnimControl::stop();
+	MAnimControl::stop();
 
    // restore the animation start/end time and the current time!
    restoreOldTime(currentAnimStartTime, currentAnimEndTime, oldCurTime, curMinTime, curMaxTime);

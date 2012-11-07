@@ -35,6 +35,7 @@ public:
  
    MStatus PreProcess();
    MStatus Process(double frame);
+   bool forceCloseArchive(void);
 };
 
 class AlembicExportCommand : public MPxCommand
