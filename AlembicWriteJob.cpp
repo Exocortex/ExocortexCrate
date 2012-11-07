@@ -141,7 +141,8 @@ MStatus AlembicWriteJob::PreProcess()
    }
 
    // get the frame rate
-   mFrameRate = MAnimControl::currentTime().value() / MAnimControl::currentTime().as(MTime::kSeconds);
+   //mFrameRate = MAnimControl::currentTime().value() / MAnimControl::currentTime().as(MTime::kSeconds);
+   mFrameRate = MTime(1.0, MTime::kSeconds).as(MTime::uiUnit());
    std::vector<AbcA::chrono_t> frames;
    for(LONG i=0;i<mFrames.size();i++)
       frames.push_back(mFrames[i] / mFrameRate);
@@ -601,7 +602,7 @@ MStatus AlembicExportCommand::doIt(const MArgList & args)
       jobFrameCount += (unsigned int)jobPtrs[i]->GetNbObjects() * (unsigned int)jobPtrs[i]->GetFrames().size();
 
    // now, let's run through all frames, and process the jobs
-   const double frameRate = MAnimControl::currentTime().value() / MAnimControl::currentTime().as(MTime::kSeconds);
+   const double frameRate = MTime(1.0, MTime::kSeconds).as(MTime::uiUnit());
    const double incrSteps = maxSteps / maxSubsteps;
    double prevFrame = minFrame - incrSteps;
    for(double frame = minFrame; frame<=maxFrame; frame += incrSteps, prevFrame += incrSteps)
