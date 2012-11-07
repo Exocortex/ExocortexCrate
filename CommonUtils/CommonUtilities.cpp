@@ -136,7 +136,7 @@ bool archiveExists(std::string path)
 std::string addArchive(Alembic::Abc::IArchive * archive)
 {
     ESS_PROFILE_SCOPE("addArchive");
-  AlembicArchiveInfo info;
+   AlembicArchiveInfo info;
    info.archive = archive;
    gArchives.insert(std::pair<std::string,AlembicArchiveInfo>(archive->getName(),info));
    return archive->getName().c_str();
@@ -145,7 +145,7 @@ std::string addArchive(Alembic::Abc::IArchive * archive)
 void deleteArchive(std::string path)
 {
    ESS_PROFILE_SCOPE("deleteArchive");
-  std::string resolvedPath = resolvePath(path);
+   std::string resolvedPath = resolvePath(path);
    std::map<std::string,AlembicArchiveInfo>::iterator it;
    it = gArchives.find(resolvedPath);
    if(it == gArchives.end())
@@ -158,8 +158,7 @@ void deleteArchive(std::string path)
 void deleteAllArchives()
 {
    ESS_PROFILE_SCOPE("deleteAllArchives");
- std::map<std::string,AlembicArchiveInfo>::iterator it;
-   for(it = gArchives.begin(); it != gArchives.end(); it++)
+   for(std::map<std::string,AlembicArchiveInfo>::iterator it = gArchives.begin(); it != gArchives.end(); ++it)
    {
       it->second.archive->reset();
       delete(it->second.archive);
