@@ -29,7 +29,6 @@ bool isAlembicMeshTopoDynamic( Alembic::AbcGeom::IObject *pIObj );
 bool isAlembicMeshTopology( Alembic::AbcGeom::IObject *pIObj );
 bool isAlembicMeshPointCache( Alembic::AbcGeom::IObject *pIObj );
 
-
 int validateAlembicMeshTopo(std::vector<Alembic::AbcCoreAbstract::ALEMBIC_VERSION_NS::int32_t> faceCounts,
 							std::vector<Alembic::AbcCoreAbstract::ALEMBIC_VERSION_NS::int32_t> faceIndices,
 							const std::string& meshName);

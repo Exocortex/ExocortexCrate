@@ -3,15 +3,12 @@
 #include "CommonLicensing.h"
 #include "CommonLog.h"
 #include "CommonProfiler.h"
+#include "CommonAbcCache.h"
 
 #ifdef ESS_PROFILING
 stats_map default_stats_policy::stats;
 #endif // ESS_PROFILER
 
-
-
-typedef std::map<std::string,AlembicObjectInfo> StringObjectInfoMap;
-typedef std::pair<std::string,AlembicObjectInfo> StringObjectInfoPair;
 
 struct AlembicArchiveInfo
 {
@@ -24,7 +21,7 @@ struct AlembicArchiveInfo
       refCount = 0;
    }
 
-   StringObjectInfoMap identifierToObjectInfo;
+   AbcArchiveCache archiveCache;
 };
 
 void replaceString(std::string& str, const std::string& oldStr, const std::string& newStr)
@@ -133,10 +130,25 @@ bool archiveExists(std::string path)
    return it != gArchives.end();
 }
 
+AbcArchiveCache* getArchiveCache( std::string path ) {
+	ESS_PROFILE_SCOPE("getArchiveCache");
+	std::string resolvedPath = resolvePath(path);
+    std::map<std::string,AlembicArchiveInfo>::iterator it;
+    it = gArchives.find(resolvedPath);
+    if(it == gArchives.end())
+      return NULL;
+
+	// compute cache if required.
+	if( it->second.archiveCache.size() == 0 ) {
+		createAbcArchiveCache( it->second.archive, &(it->second.archiveCache) );
+	}
+	return &(it->second.archiveCache);
+};
+
 std::string addArchive(Alembic::Abc::IArchive * archive)
 {
     ESS_PROFILE_SCOPE("addArchive");
-  AlembicArchiveInfo info;
+   AlembicArchiveInfo info;
    info.archive = archive;
    gArchives.insert(std::pair<std::string,AlembicArchiveInfo>(archive->getName(),info));
    return archive->getName().c_str();
@@ -168,77 +180,27 @@ void deleteAllArchives()
 }
 
 
-AlembicObjectInfo* getObjectInfoFromArchive(std::string path, std::string identifier)
+AbcObjectCache* getObjectCacheFromArchive(std::string path, std::string identifier)
 {
-	std::string resolvedPath = resolvePath(path);
-
-	std::map<std::string,AlembicArchiveInfo>::iterator it;
-	it = gArchives.find(resolvedPath);
-	if( it == gArchives.end() ) {
-		getArchiveFromID(path);
-		it = gArchives.find(resolvedPath);
-		if( it == gArchives.end() ) {
-			return NULL;
-		}  
+	AbcArchiveCache* abcArchiveCache = getArchiveCache( resolvePath( path ) );
+	if( abcArchiveCache == NULL ) {
+		return NULL;
 	}
-
-	StringObjectInfoMap &identifierToObjectInfo = (*it).second.identifierToObjectInfo;
-	
-	if( identifierToObjectInfo.find( identifier ) == identifierToObjectInfo.end() ) {
- 
-		// split the path
-		std::vector<std::string> parts;
-		boost::split(parts, identifier, boost::is_any_of("/"));
-	  
-		// recurse to find it
-		std::string parentIdentifier;
-		std::string childIdentifier;
-		std::string childIdentifierPostfix;
-		for(size_t i=1;i<parts.size();i++)
-		{
-			if( parts[i].size() > 0 ) { 
-				parentIdentifier = childIdentifier;
-				childIdentifier += "/";
-				childIdentifier += parts[i];
-				childIdentifierPostfix = parts[i];
-			}
-		}
-		Alembic::Abc::IObject objParent;
-		if( parentIdentifier.size() == 0 ) {
-			ESS_PROFILE_SCOPE("getObjectInfoFromArchive - 1");
-			objParent = (*it).second.archive->getTop();
-		}
-		else {
-			AlembicObjectInfo* parentObjectInfo = getObjectInfoFromArchive( path, parentIdentifier );
-
-			if( parentObjectInfo == NULL ) {
-				return NULL;
-			}
-			objParent = parentObjectInfo->obj;
-		}
-		{
-			ESS_PROFILE_SCOPE("getObjectInfoFromArchive - 2");
-			Alembic::Abc::IObject child(objParent,childIdentifierPostfix);
-			if( ! child.valid() ) {
-				return NULL;
-			}
-
-			AlembicObjectInfo objectInfo;
-			objectInfo.obj = child;
-			identifierToObjectInfo.insert( StringObjectInfoPair( identifier, objectInfo ) );
-		}
+	AbcArchiveCache::iterator it = abcArchiveCache->find( identifier );
+	if( it == abcArchiveCache->end() ) {
+		return NULL;
 	}
-	return &(identifierToObjectInfo[identifier]);
+	return &(it->second);
 }
 
-Alembic::Abc::IObject getObjectFromArchive(std::string path, std::string identifier)
+Abc::IObject getObjectFromArchive(std::string path, std::string identifier)
 {
    ESS_PROFILE_SCOPE("getObjectFromArchive");
-	AlembicObjectInfo* objectInfo = getObjectInfoFromArchive(path,identifier );
-	if( objectInfo == NULL ) {
+	AbcObjectCache* objectCache = getObjectCacheFromArchive(path,identifier );
+	if( objectCache == NULL ) {
 		return Alembic::Abc::IObject();
 	}
-	return objectInfo->obj;
+	return objectCache->obj;
 }
 int addRefArchive(std::string path)
 {
