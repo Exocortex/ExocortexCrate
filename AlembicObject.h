@@ -52,7 +52,6 @@ public:
    alembic_UD(ULONG in_id);
    ~alembic_UD();
 
-   size_t lastFloor;
    double lastTime;
 
    std::vector<double> times;

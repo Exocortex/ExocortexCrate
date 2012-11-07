@@ -43,7 +43,6 @@ std::map<ULONG,alembic_UD*> alembic_UD::gAlembicUDs;
 alembic_UD::alembic_UD(ULONG in_id)
 {
    id = in_id;
-   lastFloor = 0;
 
    std::map<ULONG,alembic_UD*>::iterator it = gAlembicUDs.find(id);
    if(it == gAlembicUDs.end())

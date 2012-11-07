@@ -110,38 +110,34 @@ ESS_CALLBACK_START( alembic_xform_Update, CRef& )
 
 	// if no time samples, default to identity matrix
 	if( p->times.size() > 0 ) {
-		// find the index
-		size_t index = p->lastFloor;
-		while(time > p->times[index] && index < p->times.size()-1){
-			index++;
-		}
-		while(time < p->times[index] && index > 0) {
-			index--;
-		}
 
-		if( p->indexToMatrices.find(index) == p->indexToMatrices.end() ) {
+    SampleInfo sampleInfo = getSampleInfo(
+			  time,
+			  obj.getSchema().getTimeSampling(),
+			  obj.getSchema().getNumSamples()
+			  );
+
+		if( p->indexToMatrices.find(sampleInfo.floorIndex) == p->indexToMatrices.end() ) {
 			AbcG::XformSample sample;
-			obj.getSchema().get(sample,index); 
-			p->indexToMatrices.insert( std::map<size_t,Abc::M44d>::value_type( index, sample.getMatrix() ) );		
+			obj.getSchema().get(sample,sampleInfo.floorIndex); 
+			p->indexToMatrices.insert( std::map<size_t,Abc::M44d>::value_type( sampleInfo.floorIndex, sample.getMatrix() ) );		
 		}
-		if( index < p->times.size() - 1 ) {
-			if( p->indexToMatrices.find(index+ 1) == p->indexToMatrices.end() ) {
+		if( sampleInfo.ceilIndex < p->times.size() ) {
+			if( p->indexToMatrices.find(sampleInfo.ceilIndex) == p->indexToMatrices.end() ) {
 				AbcG::XformSample sample;
-				obj.getSchema().get(sample,index+ 1);
-				p->indexToMatrices.insert( std::map<size_t,Abc::M44d>::value_type( index+ 1, sample.getMatrix() ) );
+				obj.getSchema().get(sample,sampleInfo.ceilIndex);
+				p->indexToMatrices.insert( std::map<size_t,Abc::M44d>::value_type( sampleInfo.ceilIndex, sample.getMatrix() ) );
 			}
 		}
 
-		if(fabs(time - p->times[index]) < 0.001 || index == 0 || index == p->times.size()-1)
+		if( sampleInfo.alpha == 1.0f )
 		{
-			matrix = p->indexToMatrices[ index ];
+			matrix = p->indexToMatrices[ sampleInfo.floorIndex ];
 		}
 		else
 		{
-			const double blend = (time - p->times[index]) / (p->times[index+1] - p->times[index]);
-			matrix = (1.0f - blend) * p->indexToMatrices[ index ] + blend * p->indexToMatrices[ index + 1 ];
+			matrix = p->indexToMatrices[ sampleInfo.floorIndex ] * sampleInfo.alpha + p->indexToMatrices[ sampleInfo.ceilIndex ] * ( 1 - sampleInfo.alpha );
 		}
-		p->lastFloor = index;
 	}
 	p->lastTime = time;
 
