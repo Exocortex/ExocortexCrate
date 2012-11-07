@@ -1764,17 +1764,20 @@ ESS_CALLBACK_START(alembic_import_Execute, CRef&)
 
    // let's try to read this
    Abc::IArchive* archive = NULL;
+   CString resolvedPath = CUtils::ResolveTokenString(filename,XSI::CTime(),false);
    try{
-      CString resolvedPath = CUtils::ResolveTokenString(filename,XSI::CTime(),false);
       archive = new Abc::IArchive( Alembic::AbcCoreHDF5::ReadArchive(), resolvedPath.GetAsciiString() );
+      addRefArchive( std::string( resolvedPath.GetAsciiString() ) );
    }
    catch(Alembic::Util::Exception& e){
       std::string exc(e.what());
       ESS_LOG_ERROR("[alembic] Error reading file: "<<e.what());
+      delRefArchive( std::string( resolvedPath.GetAsciiString() ) );
       return CStatus::Fail;
    }
    catch(...){
       ESS_LOG_ERROR("[alembic] Error reading file.");
+      delRefArchive( std::string( resolvedPath.GetAsciiString() ) );
       return CStatus::Fail;
    }
 
@@ -1921,6 +1924,7 @@ ESS_CALLBACK_START(alembic_import_Execute, CRef&)
 
 				CStatus localStatus = createShape( mergedGeomChild, importRootNode,parentNode, newNodeRef, filename, attachToExisting, importStandins, importBboxes, true, failOnUnsupported, createItemArgs);
 				if( ! localStatus.Succeeded() ) {
+         delRefArchive( std::string( resolvedPath.GetAsciiString() ) );
 					return localStatus;
 				}
 			}
@@ -1931,6 +1935,7 @@ ESS_CALLBACK_START(alembic_import_Execute, CRef&)
             //return CStatus::Abort;
 				CStatus localStatus = createShape( iObj, importRootNode, parentNode, newNodeRef, filename, attachToExisting, importStandins, importBboxes, false, failOnUnsupported, createItemArgs);
 				if( ! localStatus.Succeeded() ) {
+         delRefArchive( std::string( resolvedPath.GetAsciiString() ) );
 					return localStatus;
 				}
 			}
@@ -1969,7 +1974,7 @@ ESS_CALLBACK_START(alembic_import_Execute, CRef&)
 
    prog.PutVisible(false);
 
-
+   delRefArchive( std::string( resolvedPath.GetAsciiString() ) );
 
    delete(archive);
 
