@@ -464,10 +464,10 @@ MStatus AlembicPolyMeshNode::compute(const MPlug & plug, MDataBlock & dataBlock)
       mIdentifier = identifier;
 
       // get the object from the archive
-	  pObjectInfo = getObjectCacheFromArchive( std::string( mFileName.asChar() ), std::string( identifier.asChar() ) );
-	  if( pObjectInfo != NULL ) {
-		  mObj = pObjectInfo->obj;
-	  }
+	    pObjectInfo = getObjectCacheFromArchive( std::string( mFileName.asChar() ), std::string( identifier.asChar() ) );
+	    if( pObjectInfo != NULL ) {
+		    mObj = pObjectInfo->obj;
+	    }
       if(!mObj.valid())
       {
          MGlobal::displayWarning("[ExocortexAlembic] Identifier '"+identifier+"' not found in archive '"+mFileName+"'.");
@@ -481,8 +481,7 @@ MStatus AlembicPolyMeshNode::compute(const MPlug & plug, MDataBlock & dataBlock)
       }
       mSchema = obj.getSchema();
       mMeshData = MObject::kNullObj;
-	  mDynamicTopology = pObjectInfo->isMeshTopoDynamic;
-
+	    mDynamicTopology = pObjectInfo->isMeshTopoDynamic;
    }
 
    if(!mSchema.valid())
@@ -994,10 +993,24 @@ MStatus AlembicPolyMeshDeformNode::deform(MDataBlock & dataBlock, MItGeometry & 
   Abc::P3fArraySamplePtr samplePos;
   Abc::P3fArraySamplePtr samplePos2;
   {
+    // now using the cache to save the most recent queries!
     ESS_PROFILE_SCOPE("AlembicPolyMeshDeformNode::deform get position samples");
-    mSchema.getPositionsProperty().get( samplePos, sampleInfo.floorIndex );
-    if(sampleInfo.alpha != 0.0) {
-      mSchema.getPositionsProperty().get( samplePos2, sampleInfo.ceilIndex );
+    if (cachePosition.contains(sampleInfo.floorIndex))
+      samplePos = cachePosition.get(sampleInfo.floorIndex);
+    else
+    {
+      mSchema.getPositionsProperty().get( samplePos, sampleInfo.floorIndex );
+      cachePosition.insert(sampleInfo.floorIndex, samplePos);
+    }
+    if(sampleInfo.alpha != 0.0)
+    {
+      if (cachePosition.contains(sampleInfo.ceilIndex))
+        samplePos2 = cachePosition.get(sampleInfo.ceilIndex);
+      else
+      {
+        mSchema.getPositionsProperty().get( samplePos2, sampleInfo.ceilIndex );
+        cachePosition.insert(sampleInfo.ceilIndex, samplePos);
+      }
     }
   }
 

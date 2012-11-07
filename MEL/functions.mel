@@ -52,6 +52,7 @@ global proc exocortexAlembicImport(string $filename, int $importNormals, int $im
   ExocortexAlembic_profileReset;
   ExocortexAlembic_profileBegin -f MEL_exocortexAlembicImport;
 
+  ExocortexAlembic_fileRefCount -i $filename;
   string $infos[] = `ExocortexAlembic_getInfo -f $filename`;
   if (size($infos) < 1)
     return;
@@ -170,7 +171,7 @@ global proc exocortexAlembicImport(string $filename, int $importNormals, int $im
 	    }
       if($dynamictopology == 1)
         $reader = exocortexCreateOrReuseNode($name+".inMesh","ExocortexAlembicPolyMesh",$importAttach,1,1);
-      else
+      else if ($constants[$i] == 0)
         $reader = exocortexCreateOrReuseNode($name+".inMesh","ExocortexAlembicPolyMeshDeform",$importAttach,1,1);
       if($reader == "")
       {
@@ -188,7 +189,7 @@ global proc exocortexAlembicImport(string $filename, int $importNormals, int $im
           if($dynamictopology == 1)
             $reader = $topoReader;
         }
-        if($reader == "")
+        if($reader == "" && $constants[$i] == 0)
         {
           string $readers[] = `deformer -type "ExocortexAlembicPolyMeshDeform" $shape`;
           $reader = $readers[0];
@@ -208,7 +209,7 @@ global proc exocortexAlembicImport(string $filename, int $importNormals, int $im
       sets -e -forceElement initialShadingGroup $shape;
       if($dynamictopology == 1)
         $reader = exocortexCreateOrReuseNode($name+".create","ExocortexAlembicSubD",$importAttach,1,1);
-      else
+      else if ($constants[$i] == 0)
         $reader = exocortexCreateOrReuseNode($name+".create","ExocortexAlembicSubDDeform",$importAttach,1,1);
       if($reader == "")
       {
@@ -225,7 +226,7 @@ global proc exocortexAlembicImport(string $filename, int $importNormals, int $im
           if($dynamictopology == 1)
             $reader = $topoReader;
         }
-        if($reader == "")
+        if($reader == "" && $constants[$i] == 0)
         {
           string $readers[] = `deformer -type "ExocortexAlembicSubDDeform" $shape`;
           $reader = $readers[0];
@@ -380,12 +381,15 @@ global proc exocortexAlembicImport(string $filename, int $importNormals, int $im
       continue;
     }
 
-    ExocortexAlembic_profileBegin -f MEL_exocortexAlembicImport_FinalizeObject;
     // connect the standard ports
-    if($constants[$i] == 0)
-      exocortexConnectIfUnconnected(($timeControl+".outTime"), ($reader+".inTime"));
-    exocortexConnectIfUnconnected(($fileNode+".outFileName"), ($reader+".fileName"));
-    setAttr -type "string" ($reader+".identifier") $identifiers[$i];
+    ExocortexAlembic_profileBegin -f MEL_exocortexAlembicImport_FinalizeObject;
+    if ($reader != "")
+    {
+      if ($constants[$i] == 0)
+        exocortexConnectIfUnconnected(($timeControl+".outTime"), ($reader+".inTime"));
+      exocortexConnectIfUnconnected(($fileNode+".outFileName"), ($reader+".fileName"));
+      setAttr -type "string" ($reader+".identifier") $identifiers[$i];
+    }
     $objects[$i] = $shape;
     ExocortexAlembic_profileEnd -f MEL_exocortexAlembicImport_FinalizeObject;
 
@@ -395,6 +399,7 @@ global proc exocortexAlembicImport(string $filename, int $importNormals, int $im
   progressBar -e -endProgress $gMainProgressBar;
 
   ExocortexAlembic_postImportPoints;
+  ExocortexAlembic_fileRefCount -d $filename;
   ExocortexAlembic_profileEnd -f MEL_exocortexAlembicImport;
 }
 

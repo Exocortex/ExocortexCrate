@@ -226,3 +226,44 @@ MStatus AlembicAssignInitialSGCommand::doIt(const MArgList& args)
   return MS::kSuccess;
 }
 
+MSyntax AlembicFileRefCountCommand::createSyntax()
+{
+   MSyntax syntax;
+   syntax.addFlag("-h", "-help");
+   syntax.addFlag("-i", "-incr", MSyntax::kString);
+   syntax.addFlag("-d", "-decr", MSyntax::kString);
+   syntax.enableQuery(false);
+   syntax.enableEdit(false);
+
+   return syntax;
+}
+
+MStatus AlembicFileRefCountCommand::doIt(const MArgList& args)
+{
+  MStatus status;
+  MArgParser argData(syntax(), args, &status);
+
+  if (argData.isFlagSet("help"))
+  {
+    MGlobal::displayInfo("[ExocortexAlembic]: ExocortexAlembic_fileRefCound command:");
+    MGlobal::displayInfo("                    -i : increment the file reference count");
+    MGlobal::displayInfo("                    -d : decrement the file reference count");
+    return MS::kSuccess;
+  }
+
+  const bool incr = argData.isFlagSet("incr"),
+             decr = argData.isFlagSet("decr");
+  if (incr ? decr : !decr)  // if both are sets or both are missing!
+  {
+    MGlobal::displayError("Only one option can be activated!");
+    return MS::kFailure;
+  }
+
+  if (incr)
+    addRefArchive(argData.flagArgumentString("incr", 0));
+  else
+    delRefArchive(argData.flagArgumentString("decr", 0));
+  return MS::kSuccess;
+}
+
+

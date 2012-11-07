@@ -105,6 +105,9 @@ EC_EXPORT MStatus initializePlugin(MObject obj)
    status = plugin.registerCommand("ExocortexAlembic_assignInitialSG",
 	    AlembicAssignInitialSGCommand::creator,
       AlembicAssignInitialSGCommand::createSyntax);
+   status = plugin.registerCommand("ExocortexAlembic_fileRefCount",
+	    AlembicFileRefCountCommand::creator,
+      AlembicFileRefCountCommand::createSyntax);
 
    // nodes
    status = plugin.registerNode("ExocortexAlembicTimeControl",
