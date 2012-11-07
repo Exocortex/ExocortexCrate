@@ -110,13 +110,14 @@ Alembic::Abc::IArchive * getArchiveFromID(std::string path)
 		}
 
 	  FILE * file = fopen(resolvedPath.c_str(),"rb");
-      if(file != NULL)
-      {
+    if(file == NULL) {
+        return NULL;
+      }
+   else {
          fclose(file);
          addArchive(new Alembic::Abc::IArchive( Alembic::AbcCoreHDF5::ReadArchive(), resolvedPath));
-         gArchives.find(resolvedPath)->second.archive;
+         return gArchives.find(resolvedPath)->second.archive;
       }
-      return NULL;
    }
    return it->second.archive;
 }
