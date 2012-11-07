@@ -61,31 +61,31 @@ int createAlembicObject(AbcG::IObject& iObj, INode **pMaxNode, alembic_importopt
 
 struct stackElement
 {
-   Abc::IObject iObj;
+   AbcObjectCache *pObjectCache;
    INode *pParentMaxNode;
 
-   stackElement(Abc::IObject iObj):iObj(iObj), pParentMaxNode(NULL)
+   stackElement(AbcObjectCache *pMyObjectCache):pObjectCache(pMyObjectCache), pParentMaxNode(NULL)
    {}
-   stackElement(Abc::IObject iObj, INode* parent):iObj(iObj), pParentMaxNode(parent)
+   stackElement(AbcObjectCache *pMyObjectCache, INode* parent):pObjectCache(pMyObjectCache), pParentMaxNode(parent)
    {}
 
 
 };
 
-int importAlembicScene(AbcG::IObject& root, alembic_importoptions &options, std::string& file, progressUpdate& progress, std::map<std::string, bool>& nodeFullPaths)
+int importAlembicScene(AbcArchiveCache *pArchiveCache, AbcObjectCache *pRootObjectCache, alembic_importoptions &options, std::string& file, progressUpdate& progress, std::map<std::string, bool>& nodeFullPaths)
 {
    std::vector<stackElement> sceneStack;
    sceneStack.reserve(200);
-	for(size_t j=0; j<root.getNumChildren(); j++)
+	for(size_t j=0; j<pRootObjectCache->childIdentifiers.size(); j++)
 	{
-      sceneStack.push_back(stackElement(root.getChild(j)));
+      sceneStack.push_back(stackElement( &( pArchiveCache->find( pRootObjectCache->childIdentifiers[j] )->second ) ));
 	} 
 
    while( !sceneStack.empty() )
    {
       stackElement sElement = sceneStack.back();
       sceneStack.pop_back();
-      Abc::IObject& iObj = sElement.iObj;
+      Abc::IObject& iObj = sElement.pObjectCache->obj;
       INode *pParentMaxNode = sElement.pParentMaxNode;
 
 	   if(!iObj.valid()){
@@ -100,9 +100,8 @@ int importAlembicScene(AbcG::IObject& root, alembic_importoptions &options, std:
 
       bool bCreateDummyNode = false;
       int mergedGeomNodeIndex = -1;
-		AbcG::IObject mergedGeomChild;
-
-      getMergeInfo(iObj, bCreateDummyNode, mergedGeomNodeIndex, mergedGeomChild);
+      AbcObjectCache *pMergedObjectCache = NULL;
+      getMergeInfo(pArchiveCache, sElement.pObjectCache, bCreateDummyNode, mergedGeomNodeIndex, &pMergedObjectCache);
 
       INode* pMaxNode = NULL;// the newly create node, which may be a merged node
       INode* pExistingNode = NULL;
@@ -112,7 +111,8 @@ int importAlembicScene(AbcG::IObject& root, alembic_importoptions &options, std:
 
       if(!nodeFullPaths.empty()){
          if(mergedGeomNodeIndex != -1){
-            bCreateNode = nodeFullPaths.find(mergedGeomChild.getFullName()) != nodeFullPaths.end(); 
+        	AbcG::IObject mergedGeomChild = pMergedObjectCache->obj;
+          bCreateNode = nodeFullPaths.find(mergedGeomChild.getFullName()) != nodeFullPaths.end(); 
          }
          else{
             bCreateNode = nodeFullPaths.find(fullname) != nodeFullPaths.end(); 
@@ -144,7 +144,8 @@ int importAlembicScene(AbcG::IObject& root, alembic_importoptions &options, std:
 	      }
 	      else{
 		      if(mergedGeomNodeIndex != -1){//we are merging, so look at the child geometry node
-               std::string importName = removeXfoSuffix(iObj.getName());
+             	AbcG::IObject mergedGeomChild = pMergedObjectCache->obj;
+          std::string importName = removeXfoSuffix(iObj.getName());
 			      pExistingNode = GetChildNodeFromName(importName, pParentMaxNode);
 			      if(options.attachToExisting && pExistingNode){
 				      pMaxNode = pExistingNode;
@@ -194,16 +195,17 @@ int importAlembicScene(AbcG::IObject& root, alembic_importoptions &options, std:
 	   progress.update();
 
       if(pMaxNode){
-	      for(size_t j=0; j<iObj.getNumChildren(); j++)
+	      for(size_t j=0; j<sElement.pObjectCache->childIdentifiers.size(); j++)
 	      {
-		      if( NodeCategory::get(iObj.getChild(j)) == NodeCategory::UNSUPPORTED ) continue;// skip over unsupported types
+          AbcObjectCache *pChildObjectCache = &( pArchiveCache->find( sElement.pObjectCache->childIdentifiers[j] )->second );
+		      if( NodeCategory::get( pChildObjectCache->obj ) == NodeCategory::UNSUPPORTED ) continue;// skip over unsupported types
 
             //I assume that geometry nodes are always leaf nodes. Thus, if we merged a geometry node will its parent transform, we don't
             //need to push it to the stack.
             //A geometry node can't be combined with its transform node, the transform node has other tranform nodes as children. These
             //nodes must be pushed.
             if( mergedGeomNodeIndex != j ){
-               sceneStack.push_back( stackElement(iObj.getChild(j), pMaxNode) );
+              sceneStack.push_back( stackElement( pChildObjectCache, pMaxNode) );
             }
 	      } 
       }

@@ -482,6 +482,7 @@ int ExocortexAlembicStaticInterface_ExocortexAlembicImportJobs( CONST_2013 MCHAR
 
         // Since the archive is valid, add a reference to it
         addRefArchive(file);
+   AbcArchiveCache *pArchiveCache = getArchiveCache( file );
 
 		// Get a list of the current objects in the scene
 		MAXInterface *i = GET_MAX_INTERFACE();
@@ -500,7 +501,7 @@ int ExocortexAlembicStaticInterface_ExocortexAlembicImportJobs( CONST_2013 MCHAR
       //nodesToImport.push_back(std::string("null1"));
 
       std::map<std::string, bool> nodeFullPaths;
-		int totalAlembicItems = prescanAlembicHierarchy(root, nodesToImport, nodeFullPaths, bIncludeChildren);
+		int totalAlembicItems = prescanAlembicHierarchy( pArchiveCache, &( pArchiveCache->find( "/" )->second ), nodesToImport, nodeFullPaths, bIncludeChildren);
 
 		char szBuffer[1000];
 		sprintf_s( szBuffer, 1000, "Importing %i Alembic Streams", totalAlembicItems );
@@ -511,7 +512,7 @@ int ExocortexAlembicStaticInterface_ExocortexAlembicImportJobs( CONST_2013 MCHAR
 
 		progressUpdate progress(totalAlembicItems);
 
-      if( importAlembicScene(root, options, file, progress, nodeFullPaths) != 0 ){
+      if( importAlembicScene(pArchiveCache, &( pArchiveCache->find( "/" )->second ), options, file, progress, nodeFullPaths) != 0 ){
          return alembic_failure;
       }
 
