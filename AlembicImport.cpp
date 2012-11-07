@@ -18,6 +18,7 @@ using namespace MATH;
 #include "CommonProfiler.h"
 #include "CommonMeshUtilities.h"
 #include "CommonUtilities.h"
+#include "CommonAbcCache.h"
 
 ESS_CALLBACK_START(alembic_import_Init,CRef&)
 	Context ctxt( in_ctxt );
@@ -317,6 +318,7 @@ CStatus alembic_create_item_Invoke
 
    // now validate the identifier if necessary
    Abc::IObject abcObject;
+   AbcObjectCache *pObjectCache = NULL;
    bool isAnimated = false;
    { ESS_PROFILE_SCOPE("alembic_create_item_Invoke validate_the_identifier");
    switch(itemType)
@@ -334,18 +336,20 @@ CStatus alembic_create_item_Invoke
       case alembicItemType_geomapprox:
       case alembicItemType_nurbs:
       {
-         abcObject = getObjectFromArchive(file,identifier);
+        pObjectCache = getObjectCacheFromArchive( std::string( file.GetAsciiString() ), std::string( identifier.GetAsciiString() ) );
+         abcObject = pObjectCache->obj;
          if(!abcObject.valid())
          {
             Application().LogMessage(L"[ExocortexAlembic] Identifier '"+identifier+L"' is not valid for given filename.",siErrorMsg);
             return CStatus::InvalidArgument;
          }
-         isAnimated = (itemType == alembicItemType_bbox) || (! isObjectConstant(abcObject) && itemType != alembicItemType_geomapprox);
+         isAnimated = (itemType == alembicItemType_bbox) || (! pObjectCache->isConstant && itemType != alembicItemType_geomapprox);
          break;
       }
       case alembicItemType_visibility:
       {
-         abcObject = getObjectFromArchive(file,identifier);
+        pObjectCache = getObjectCacheFromArchive( std::string( file.GetAsciiString() ), std::string( identifier.GetAsciiString() ) );
+         abcObject = pObjectCache->obj;
          if(!abcObject.valid())
          {
             Application().LogMessage(L"[ExocortexAlembic] Identifier '"+identifier+L"' is not valid for given filename.",siErrorMsg);
@@ -1133,9 +1137,10 @@ ESS_CALLBACK_START(alembic_create_item_Execute, CRef&)
 ESS_CALLBACK_END
 
 
-CStatus createTransform( Abc::IObject& iObj, CRef& importRootNode, CRef& parentNode, CRef& newNodeRef, CString& filename, bool attachToExisting, CValueArray& createItemArgs)
+CStatus createTransform( AbcObjectCache *pObjectCache, CRef& importRootNode, CRef& parentNode, CRef& newNodeRef, CString& filename, bool attachToExisting, CValueArray& createItemArgs)
 {
    X3DObject parentX3DObject(parentNode);
+   Abc::IObject& iObj = pObjectCache->obj;
    CString name = truncateName(iObj.getName().c_str());
 
    if(AbcG::IXform::matches(iObj.getMetaData()))
@@ -1182,9 +1187,10 @@ CStatus createTransform( Abc::IObject& iObj, CRef& importRootNode, CRef& parentN
    return CStatus( CStatus::OK );
 }
 
-CStatus createShape( Abc::IObject& iObj, CRef& importRootNode, CRef& parentNode, CRef& newNodeRef, CString& filename, bool attachToExisting, bool importStandins, bool importBboxes, bool wasMerged, bool failOnUnsupported, CValueArray& createItemArgs)
+CStatus createShape( AbcObjectCache *pObjectCache, CRef& importRootNode, CRef& parentNode, CRef& newNodeRef, CString& filename, bool attachToExisting, bool importStandins, bool importBboxes, bool wasMerged, bool failOnUnsupported, CValueArray& createItemArgs)
 {
    X3DObject parentX3DObject(parentNode);
+    Abc::IObject& iObj = pObjectCache->obj;
    Abc::IObject parent = iObj.getParent();
    CString name = truncateName(iObj.getName().c_str());
 
@@ -1262,7 +1268,7 @@ CStatus createShape( Abc::IObject& iObj, CRef& importRootNode, CRef& parentNode,
 
       // create the topo op
       CRef returnOpRef;
-      if(!importBboxes && isAlembicMeshTopology(&iObj))
+      if(!importBboxes && ! pObjectCache->isMeshPointCache)
       {
          CValue returnedOpVal;
          alembic_create_item_Invoke(L"alembic_polymesh_topo",importRootNode,meshObj.GetRef(),filename,iObj.getFullName().c_str(),attachToExisting,createItemArgs,returnedOpVal);
@@ -1292,7 +1298,7 @@ CStatus createShape( Abc::IObject& iObj, CRef& importRootNode, CRef& parentNode,
       else
       {
          // only add the point position operator if we don't have dynamic topology
-         bool receivesExpression = isAlembicMeshTopoDynamic( & ( iObj ) );
+        bool receivesExpression = pObjectCache->isMeshTopoDynamic;
          
          if(!receivesExpression)
          {
@@ -1435,7 +1441,7 @@ CStatus createShape( Abc::IObject& iObj, CRef& importRootNode, CRef& parentNode,
 			ESS_LOG_ERROR( s.str().c_str() );
 			return CStatus( CStatus::Fail );
 		}
-		ESS_LOG_WARNING( s.str().c_str() );
+		//ESS_LOG_WARNING( s.str().c_str() );
 	  }
 
       // now let's check if we are looking at a curves node with color and radii
@@ -1667,12 +1673,12 @@ struct stackElement
 
 struct ImportStackElement
 {
-   Abc::IObject iObj;
+   AbcObjectCache *pObjectCache;
    CRef parentNode;
 
-   ImportStackElement(Abc::IObject iObj):iObj(iObj)
+   ImportStackElement(AbcObjectCache *pMyObjectCache):pObjectCache(pMyObjectCache)
    {}
-   ImportStackElement(Abc::IObject iObj, CRef parent):iObj(iObj), parentNode(parent)
+   ImportStackElement(AbcObjectCache *pMyObjectCache, CRef parent):pObjectCache(pMyObjectCache), parentNode(parent)
    {}
 
 };
@@ -1767,19 +1773,18 @@ ESS_CALLBACK_START(alembic_import_Execute, CRef&)
    CString resolvedPath = CUtils::ResolveTokenString(filename,XSI::CTime(),false);
    try{
       archive = new Abc::IArchive( Alembic::AbcCoreHDF5::ReadArchive(), resolvedPath.GetAsciiString() );
-      addRefArchive( std::string( resolvedPath.GetAsciiString() ) );
    }
    catch(Alembic::Util::Exception& e){
       std::string exc(e.what());
       ESS_LOG_ERROR("[alembic] Error reading file: "<<e.what());
-      delRefArchive( std::string( resolvedPath.GetAsciiString() ) );
       return CStatus::Fail;
    }
    catch(...){
       ESS_LOG_ERROR("[alembic] Error reading file.");
-      delRefArchive( std::string( resolvedPath.GetAsciiString() ) );
       return CStatus::Fail;
    }
+   addRefArchive( std::string( resolvedPath.GetAsciiString() ) );
+   AbcArchiveCache *pArchiveCache = getArchiveCache( std::string( resolvedPath.GetAsciiString() ) );
 
    // also precap the filename with the project token just in case
    CString projectPath = Application().GetActiveProject().GetPath();
@@ -1857,7 +1862,10 @@ ESS_CALLBACK_START(alembic_import_Execute, CRef&)
  
    std::vector<std::string> nodesToImport;
    std::map<std::string, bool> map;
-	int nNumNodes = prescanAlembicHierarchy(root, nodesToImport, map);
+
+   AbcObjectCache *pRootObjectCache = &( pArchiveCache->find( "/" )->second );
+
+  int nNumNodes = prescanAlembicHierarchy( pArchiveCache, pRootObjectCache, nodesToImport, map);
 
 
    ProgressBar prog;
@@ -1886,9 +1894,11 @@ ESS_CALLBACK_START(alembic_import_Execute, CRef&)
    }
 
    std::list<ImportStackElement> sceneStack;
-	for(size_t j=0; j<root.getNumChildren(); j++)
+
+	for(size_t j=0; j < pRootObjectCache->childIdentifiers.size(); j++)
 	{
-      sceneStack.push_back(ImportStackElement(root.getChild(j), importRootNode));
+      AbcObjectCache *pChildObjectCache = &( pArchiveCache->find( pRootObjectCache->childIdentifiers[j] )->second );
+      sceneStack.push_back(ImportStackElement(pChildObjectCache, importRootNode));
 	} 
 
 
@@ -1897,7 +1907,7 @@ ESS_CALLBACK_START(alembic_import_Execute, CRef&)
    while( !sceneStack.empty() )
    {
       ImportStackElement sElement = sceneStack.back();
-      Abc::IObject iObj = sElement.iObj;
+      Abc::IObject iObj = sElement.pObjectCache->obj;
       CRef parentNode(sElement.parentNode);
       sceneStack.pop_back();
 
@@ -1910,19 +1920,19 @@ ESS_CALLBACK_START(alembic_import_Execute, CRef&)
 
       bool bCreateNullNode = false;
       int nMergedGeomNodeIndex = -1;
-		AbcG::IObject mergedGeomChild;
-
-      getMergeInfo(iObj, bCreateNullNode, nMergedGeomNodeIndex, mergedGeomChild);
+    AbcObjectCache *pMergedGeomChildObjectCache = NULL;
+      getMergeInfo( pArchiveCache, sElement.pObjectCache, bCreateNullNode, nMergedGeomNodeIndex, & pMergedGeomChildObjectCache );
 
       CRef newNodeRef;
 		if(bCreateNullNode){
 
-            createTransform( iObj, importRootNode, parentNode, newNodeRef, filename, attachToExisting, createItemArgs);
+            createTransform( sElement.pObjectCache, importRootNode, parentNode, newNodeRef, filename, attachToExisting, createItemArgs);
 		}
 		else{
 			if(nMergedGeomNodeIndex != -1){//we are merging, so look at the child geometry node
+    	AbcG::IObject mergedGeomChild = pMergedGeomChildObjectCache->obj;
 
-				CStatus localStatus = createShape( mergedGeomChild, importRootNode,parentNode, newNodeRef, filename, attachToExisting, importStandins, importBboxes, true, failOnUnsupported, createItemArgs);
+				CStatus localStatus = createShape( pMergedGeomChildObjectCache, importRootNode,parentNode, newNodeRef, filename, attachToExisting, importStandins, importBboxes, true, failOnUnsupported, createItemArgs);
 				if( ! localStatus.Succeeded() ) {
          delRefArchive( std::string( resolvedPath.GetAsciiString() ) );
 					return localStatus;
@@ -1933,7 +1943,7 @@ ESS_CALLBACK_START(alembic_import_Execute, CRef&)
             //TODO: not sure if I handle the transforms correctly in this case
 			//EC_LOG_ERROR( "[ExocortexAlembic] Merged geometry node index not -1" );
             //return CStatus::Abort;
-				CStatus localStatus = createShape( iObj, importRootNode, parentNode, newNodeRef, filename, attachToExisting, importStandins, importBboxes, false, failOnUnsupported, createItemArgs);
+				CStatus localStatus = createShape( sElement.pObjectCache, importRootNode, parentNode, newNodeRef, filename, attachToExisting, importStandins, importBboxes, false, failOnUnsupported, createItemArgs);
 				if( ! localStatus.Succeeded() ) {
          delRefArchive( std::string( resolvedPath.GetAsciiString() ) );
 					return localStatus;
@@ -1946,9 +1956,10 @@ ESS_CALLBACK_START(alembic_import_Execute, CRef&)
       if(newNodeRef.IsValid()){
 
          //push the children as the last step, since we need to who the parent is first (we may have merged)
-	      for(size_t j=0; j<iObj.getNumChildren(); j++)
+	      for(size_t j=0; j<sElement.pObjectCache->childIdentifiers.size(); j++)
 	      {
-            AbcG::IObject childObj = iObj.getChild(j);
+            AbcObjectCache *pChildObjectCache = &( pArchiveCache->find( sElement.pObjectCache->childIdentifiers[j] )->second );
+            AbcG::IObject childObj = pChildObjectCache->obj;
             if( NodeCategory::get(childObj) == NodeCategory::UNSUPPORTED ) continue;// skip over unsupported types
 
             //I assume that geometry nodes are always leaf nodes. Thus, if we merged a geometry node will its parent transform, we don't
@@ -1957,12 +1968,12 @@ ESS_CALLBACK_START(alembic_import_Execute, CRef&)
             //nodes must be pushed.
             if( nMergedGeomNodeIndex != j )
             {
-               sceneStack.push_back( ImportStackElement(childObj, newNodeRef) );
+               sceneStack.push_back( ImportStackElement( pChildObjectCache, newNodeRef ) );
             }
 	      }
       }
       else{
-		  if( iObj.getNumChildren() > 0 ) {
+		  if( sElement.pObjectCache->childIdentifiers.size() > 0 ) {
 			  EC_LOG_WARNING("Unsupported node: " << iObj.getFullName().c_str() << " has children that have not been imported." );
 		  }
       }
