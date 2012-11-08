@@ -227,7 +227,7 @@ set(Boost_USE_MULTITHREADED ON)
 set(Boost_DETAILED_FAILURE_MSG ON )
 set(Boost_USE_STATIC_RUNTIME ON)
 set(Boost_NO_SYSTEM_PATHS true )
-set(BOOST_COMPONENTS date_time program_options thread iostreams python unit_test_framework )
+set(BOOST_COMPONENTS date_time program_options thread iostreams python filesystem system unit_test_framework )
 find_package( Boost 1.44.0 COMPONENTS REQUIRED ${BOOST_COMPONENTS} )
 
 include_directories( ${Boost_INCLUDE_DIRS} )
@@ -322,6 +322,9 @@ add_definitions( -DNOMINMAX )	 # disable min/max macros from <windows.h>.
 include_directories( ${ALEMBIC_ROOT_DIR} )
 ADD_SUBDIRECTORY ( ${ALEMBIC_ROOT_DIR} )
 SET( ALEMBIC_CORE_LIBS AlembicAbcMaterial AlembicAbcGeom AlembicAbc AlembicAbcCoreHDF5 AlembicAbcCoreAbstract AlembicUtil )
+
+SET( ALL_ALEMBIC_LIBS ${ALEMBIC_CORE_LIBS} ${ALEMBIC_HDF5_LIBS} ${ALEMBIC_ZLIB_LIBS}
+	  ${ALEMBIC_ILMBASE_LIBS} ${ZLIB_LIBRARIES} ${Boost_LIBRARIES} )
 
 ADD_SUBDIRECTORY ( "${CMAKE_CURRENT_SOURCE_DIR}/CommonUtils" "${CMAKE_CURRENT_BINARY_DIR}/CommonUtils" )
 

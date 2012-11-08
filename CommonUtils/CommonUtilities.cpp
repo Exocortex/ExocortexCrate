@@ -9,20 +9,6 @@ stats_map default_stats_policy::stats;
 #endif // ESS_PROFILER
 
 
-struct AlembicObjectInfo
-{
-	AlembicObjectInfo() {
-		numSamples = -1;
-		isMeshPointCache = -1;
-		isMeshTopoDynamic = -1;
-	}
-
-	Alembic::Abc::IObject obj;
-	int numSamples;
-	int isMeshPointCache;
-	int isMeshTopoDynamic;
-	std::vector<std::string> childIdentifiers;
-};
 
 typedef std::map<std::string,AlembicObjectInfo> StringObjectInfoMap;
 typedef std::pair<std::string,AlembicObjectInfo> StringObjectInfoPair;
@@ -491,6 +477,55 @@ size_t getNumSamplesFromObject(Alembic::Abc::IObject &object)
       return Alembic::AbcGeom::IFaceSet(object,Alembic::Abc::kWrapExisting).getSchema().getNumSamples();
    }
    return 0;
+}
+
+bool isObjectSchemaConstant( AbcG::IPolyMeshSchema& schema ) {
+	return schema.isConstant();
+}
+bool isObjectSchemaConstant( AbcG::IXformSchema& schema ) {
+	return schema.isConstant();
+}
+bool isObjectSchemaConstant( AbcG::ICurvesSchema& schema ) {
+	return schema.isConstant();
+}
+bool isObjectSchemaConstant( AbcG::INuPatchSchema& schema ) {
+	return schema.isConstant();
+}
+bool isObjectSchemaConstant( AbcG::IPointsSchema& schema ) {
+	return schema.isConstant();
+}
+bool isObjectSchemaConstant( AbcG::ISubDSchema& schema ) {
+	return schema.isConstant();
+}
+bool isObjectSchemaConstant( AbcG::ICameraSchema& schema ) {
+	return schema.isConstant();
+}
+bool isObjectSchemaConstant( AbcG::IFaceSetSchema& schema ) {
+	return schema.isConstant();
+}
+
+
+bool isObjectConstant(Alembic::Abc::IObject &object ) {
+   ESS_PROFILE_SCOPE("isObjectConstant"); 
+   const Alembic::Abc::MetaData &md = object.getMetaData();
+   if(Alembic::AbcGeom::IXform::matches(md)) {
+	   return isObjectSchemaConstant( Alembic::AbcGeom::IXform(object,Alembic::Abc::kWrapExisting).getSchema() );
+   } else if(Alembic::AbcGeom::IPolyMesh::matches(md)) {
+      return isObjectSchemaConstant( Alembic::AbcGeom::IPolyMesh(object,Alembic::Abc::kWrapExisting).getSchema() );
+   } else if(Alembic::AbcGeom::ICurves::matches(md)) {
+      return isObjectSchemaConstant( Alembic::AbcGeom::ICurves(object,Alembic::Abc::kWrapExisting).getSchema() );
+   } else if(Alembic::AbcGeom::INuPatch::matches(md)) {
+      return isObjectSchemaConstant( Alembic::AbcGeom::INuPatch(object,Alembic::Abc::kWrapExisting).getSchema() );
+   } else if(Alembic::AbcGeom::IPoints::matches(md)) {
+      return isObjectSchemaConstant( Alembic::AbcGeom::IPoints(object,Alembic::Abc::kWrapExisting).getSchema() );
+   } else if(Alembic::AbcGeom::ISubD::matches(md)) {
+      return isObjectSchemaConstant( Alembic::AbcGeom::ISubD(object,Alembic::Abc::kWrapExisting).getSchema() );
+   } else if(Alembic::AbcGeom::ICamera::matches(md)) {
+      return isObjectSchemaConstant( Alembic::AbcGeom::ICamera(object,Alembic::Abc::kWrapExisting).getSchema() );
+   } else if(Alembic::AbcGeom::IFaceSet::matches(md)) {
+      return isObjectSchemaConstant( Alembic::AbcGeom::IFaceSet(object,Alembic::Abc::kWrapExisting).getSchema() );
+   }
+   return true;
 }
 
 size_t getNumSamplesFromObject(Alembic::Abc::OObject *object)
