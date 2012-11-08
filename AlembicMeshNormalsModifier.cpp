@@ -106,7 +106,8 @@ void AlembicMeshNormalsModifier::EnumAuxFiles(AssetEnumCallback& nameEnum, DWORD
 void AlembicMeshNormalsModifier::ModifyObject (TimeValue t, ModContext &mc, ObjectState *os, INode *node) 
 {
 	ESS_CPP_EXCEPTION_REPORTING_START
-
+ESS_PROFILE_FUNC();
+	
 	Interval interval = FOREVER;//os->obj->ObjectValidity(t);
 	//ESS_LOG_INFO( "Interval Start: " << interval.Start() << " End: " << interval.End() );
 
@@ -156,6 +157,7 @@ void AlembicMeshNormalsModifier::ModifyObject (TimeValue t, ModContext &mc, Obje
 
    alembic_fillmesh_options options;
    options.fileName = szPath;
+   options.pObjectCache = getObjectCacheFromArchive(szPath, szIdentifier);
    options.identifier = szIdentifier;
    options.pIObj = &iObj;
    options.dTicks = GetTimeValueFromSeconds( fTime );

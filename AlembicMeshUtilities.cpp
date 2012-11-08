@@ -85,7 +85,7 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
   	   Abc::P3fArraySamplePtr meshPos;
        Abc::V3fArraySamplePtr meshVel;
 
-	   bool hasDynamicTopo = isAlembicMeshTopoDynamic( options.pIObj );
+       bool hasDynamicTopo = options.pObjectCache->isMeshTopoDynamic;//isAlembicMeshTopoDynamic( options.pIObj );
        if(objMesh.valid())
        {
      		ESS_PROFILE_SCOPE("Mesh getPositions/getVelocities/faceCountProp");
@@ -288,19 +288,18 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
 		//Tested in 2013, some simples meshes seem to crash, so I'm putting it back in
 
 #if 1//MAX_PRODUCT_YEAR_NUMBER < 2012
+  	  if( ! options.pMNMesh->GetFlag( MN_MESH_FILLED_IN ) ) {
+			  //HighResolutionTimer tFillInMesh;
+			  {      	
+				  ESS_PROFILE_SCOPE("FillInMesh");
 
-		if( ! options.pMNMesh->GetFlag( MN_MESH_FILLED_IN ) ) {
-			//HighResolutionTimer tFillInMesh;
-			{      	
-				ESS_PROFILE_SCOPE("FillInMesh");
-
-				options.pMNMesh->FillInMesh();
-			}
-			//ESS_LOG_WARNING("FillInMesh time: "<<tFillInMesh.elapsed());
-			if( options.pMNMesh->GetFlag(MN_MESH_RATSNEST) ) {
-				ESS_LOG_ERROR( "Mesh is a 'Rat's Nest' (more than 2 faces per edge) and not fully supported, fileName: " << options.fileName << " identifier: " << options.identifier );
-			}
-		}
+				  options.pMNMesh->FillInMesh();
+			  }
+			  //ESS_LOG_WARNING("FillInMesh time: "<<tFillInMesh.elapsed());
+			  if( options.pMNMesh->GetFlag(MN_MESH_RATSNEST) ) {
+				  ESS_LOG_ERROR( "Mesh is a 'Rat's Nest' (more than 2 faces per edge) and not fully supported, fileName: " << options.fileName << " identifier: " << options.identifier );
+			  }
+		  }
 
 #endif
 	
@@ -597,7 +596,7 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
 	   validateMeshes( options, "ALEMBIC_DATAFILL_MATERIALIDS" );
    }
  
-     if( options.pMNMesh->GetSpecifiedNormals() == NULL ) {
+ /*   if( options.pMNMesh->GetSpecifiedNormals() == NULL ) {
 		 {
 		 ESS_PROFILE_SCOPE("SpecifyNormals");
 
@@ -608,11 +607,11 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
 		options.pMNMesh->GetSpecifiedNormals()->CheckNormals();
 		 }
 		 {
-		 ESS_PROFILE_SCOPE("checkNormals");
+		 ESS_PROFILE_SCOPE("CheckNormals");
 
 	    options.pMNMesh->checkNormals(TRUE);
 			  }
-	}
+	}*/
 
   // This isn't required if we notify 3DS Max properly via the channel flags for vertex changes.
    //options.pMNMesh->MNDebugPrint();

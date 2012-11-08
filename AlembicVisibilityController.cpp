@@ -71,8 +71,9 @@ AlembicVisibilityController *AlembicVisibilityController::editMod = NULL;
 void AlembicVisibilityController::GetValueLocalTime(TimeValue t, void *ptr, Interval &valid, GetSetMethod method)
 {
  	ESS_CPP_EXCEPTION_REPORTING_START
+  ESS_PROFILE_FUNC();
 
-	Interval interval = FOREVER;
+  Interval interval = FOREVER;
 
     MCHAR const* strPath = NULL;
 	this->pblock->GetValue( AlembicVisibilityController::ID_PATH, t, strPath, interval);
