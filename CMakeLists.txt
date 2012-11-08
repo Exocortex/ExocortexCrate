@@ -321,7 +321,7 @@ UNSET(CMAKE_ARCHIVE_OUTPUT_DIRECTORY CACHE)
 add_definitions( -DNOMINMAX )	 # disable min/max macros from <windows.h>.
 include_directories( ${ALEMBIC_ROOT_DIR} )
 ADD_SUBDIRECTORY ( ${ALEMBIC_ROOT_DIR} )
-SET( ALEMBIC_CORE_LIBS AlembicAbcGeom AlembicAbc AlembicAbcCoreHDF5 AlembicAbcCoreAbstract AlembicUtil )
+SET( ALEMBIC_CORE_LIBS AlembicAbcMaterial AlembicAbcGeom AlembicAbc AlembicAbcCoreHDF5 AlembicAbcCoreAbstract AlembicUtil )
 
 ADD_SUBDIRECTORY ( "${CMAKE_CURRENT_SOURCE_DIR}/CommonUtils" "${CMAKE_CURRENT_BINARY_DIR}/CommonUtils" )
 

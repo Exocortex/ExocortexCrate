@@ -46,7 +46,7 @@ public:
 
 };
 
-void printSceneGraph(exoNodePtr root);
+void printSceneGraph(exoNodePtr root, bool bOnlyPrintSelected);
 
 bool hasExtractableTransform( SceneNode::nodeTypeE type );
 

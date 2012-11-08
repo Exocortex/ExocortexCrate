@@ -9,7 +9,7 @@ struct PrintStackElement
    {}
 };
 
-void printSceneGraph(exoNodePtr root)
+void printSceneGraph(exoNodePtr root, bool bOnlyPrintSelected)
 {
  
 
@@ -26,8 +26,10 @@ void printSceneGraph(exoNodePtr root)
       exoNodePtr eNode = sElement.eNode;
       sceneStack.pop_back();
 
-      ESS_LOG_WARNING("Level: "<<sElement.level<<" - Name: "<<eNode->name<<" - Selected: "<<(eNode->selected?"true":"false")<<" - path: "<<eNode->dccIdentifier);
-         //<<" - identifer: "<<eNode->dccIdentifier);
+      if(!bOnlyPrintSelected || (bOnlyPrintSelected && eNode->selected)){
+         ESS_LOG_WARNING("Level: "<<sElement.level<<" - Name: "<<eNode->name<<" - Selected: "<<(eNode->selected?"true":"false")<<" - path: "<<eNode->dccIdentifier);
+            //<<" - identifer: "<<eNode->dccIdentifier);
+      }
 
       for( std::list<exoNodePtr>::iterator it = eNode->children.begin(); it != eNode->children.end(); it++){
          sceneStack.push_back(PrintStackElement(*it, sElement.level+1));
