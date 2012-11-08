@@ -115,8 +115,10 @@ Alembic::Abc::IArchive * getArchiveFromID(std::string path)
       }
    else {
          fclose(file);
-         addArchive(new Alembic::Abc::IArchive( Alembic::AbcCoreHDF5::ReadArchive(), resolvedPath));
-         return gArchives.find(resolvedPath)->second.archive;
+         addArchive(new Abc::IArchive( Alembic::AbcCoreHDF5::ReadArchive(), resolvedPath));
+         Abc::IArchive *pArchive = gArchives.find(resolvedPath)->second.archive;
+         EC_LOG_INFO( "Opening Abc Archive: " << pArchive->getName() );
+         return pArchive;
       }
    }
    return it->second.archive;
@@ -163,6 +165,8 @@ void deleteArchive(std::string path)
    it = gArchives.find(resolvedPath);
    if(it == gArchives.end())
       return;
+
+   EC_LOG_INFO( "Closing Abc Archive: " << it->second.archive->getName() );
    it->second.archive->reset();
    delete(it->second.archive);
    gArchives.erase(it);
