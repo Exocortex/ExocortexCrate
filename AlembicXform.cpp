@@ -97,49 +97,39 @@ ESS_CALLBACK_START( alembic_xform_Update, CRef& )
 	}
 
 	double time = ctxt.GetParameterValue(L"time");
-	if(p->times.size() == 0 || abs(p->lastTime - time) < 0.001)
-	{
-		p->times.clear();
-		for(size_t i=0;i<obj.getSchema().getNumSamples();i++)
-		{
-			p->times.push_back((double)obj.getSchema().getTimeSampling()->getSampleTime( i ));
-		}
-	}
-
 	Abc::M44d matrix;	// constructor creates an identity matrix
 
 	// if no time samples, default to identity matrix
-	if( p->times.size() > 0 ) {
+  if( obj.getSchema().getNumSamples() > 0 ) {
 
     SampleInfo sampleInfo = getSampleInfo(
-			  time,
-			  obj.getSchema().getTimeSampling(),
-			  obj.getSchema().getNumSamples()
-			  );
+		    time,
+		    obj.getSchema().getTimeSampling(),
+		    obj.getSchema().getNumSamples()
+		    );
 
-		if( p->indexToMatrices.find(sampleInfo.floorIndex) == p->indexToMatrices.end() ) {
-			AbcG::XformSample sample;
-			obj.getSchema().get(sample,sampleInfo.floorIndex); 
-			p->indexToMatrices.insert( std::map<size_t,Abc::M44d>::value_type( sampleInfo.floorIndex, sample.getMatrix() ) );		
-		}
-		if( sampleInfo.ceilIndex < p->times.size() ) {
-			if( p->indexToMatrices.find(sampleInfo.ceilIndex) == p->indexToMatrices.end() ) {
-				AbcG::XformSample sample;
-				obj.getSchema().get(sample,sampleInfo.ceilIndex);
-				p->indexToMatrices.insert( std::map<size_t,Abc::M44d>::value_type( sampleInfo.ceilIndex, sample.getMatrix() ) );
-			}
-		}
+	  if( p->indexToMatrices.find(sampleInfo.floorIndex) == p->indexToMatrices.end() ) {
+		  AbcG::XformSample sample;
+		  obj.getSchema().get(sample,sampleInfo.floorIndex); 
+		  p->indexToMatrices.insert( std::map<size_t,Abc::M44d>::value_type( sampleInfo.floorIndex, sample.getMatrix() ) );		
+	  }
+	  if( sampleInfo.ceilIndex < obj.getSchema().getNumSamples() ) {
+		  if( p->indexToMatrices.find(sampleInfo.ceilIndex) == p->indexToMatrices.end() ) {
+			  AbcG::XformSample sample;
+			  obj.getSchema().get(sample,sampleInfo.ceilIndex);
+			  p->indexToMatrices.insert( std::map<size_t,Abc::M44d>::value_type( sampleInfo.ceilIndex, sample.getMatrix() ) );
+		  }
+	  }
 
-		if( sampleInfo.alpha == 1.0f )
-		{
-			matrix = p->indexToMatrices[ sampleInfo.floorIndex ];
-		}
-		else
-		{
-			matrix = p->indexToMatrices[ sampleInfo.floorIndex ] * sampleInfo.alpha + p->indexToMatrices[ sampleInfo.ceilIndex ] * ( 1 - sampleInfo.alpha );
-		}
-	}
-	p->lastTime = time;
+	  if( sampleInfo.alpha == 1.0f )
+	  {
+		  matrix = p->indexToMatrices[ sampleInfo.floorIndex ];
+	  }
+	  else
+	  {
+		  matrix = p->indexToMatrices[ sampleInfo.floorIndex ] * sampleInfo.alpha + p->indexToMatrices[ sampleInfo.ceilIndex ] * ( 1 - sampleInfo.alpha );
+	  }
+  }
 
 	CMatrix4 xsiMatrix;
 	xsiMatrix.Set(
