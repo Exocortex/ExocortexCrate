@@ -3,15 +3,12 @@
 #include "CommonLicensing.h"
 #include "CommonLog.h"
 #include "CommonProfiler.h"
+#include "CommonAbcCache.h"
 
 #ifdef ESS_PROFILING
 stats_map default_stats_policy::stats;
 #endif // ESS_PROFILER
 
-
-
-typedef std::map<std::string,AlembicObjectInfo> StringObjectInfoMap;
-typedef std::pair<std::string,AlembicObjectInfo> StringObjectInfoPair;
 
 struct AlembicArchiveInfo
 {
@@ -24,7 +21,7 @@ struct AlembicArchiveInfo
       refCount = 0;
    }
 
-   StringObjectInfoMap identifierToObjectInfo;
+   AbcArchiveCache archiveCache;
 };
 
 void replaceString(std::string& str, const std::string& oldStr, const std::string& newStr)
@@ -91,10 +88,10 @@ std::string resolvePath( std::string originalPath ) {
 
 Alembic::Abc::IArchive * getArchiveFromID(std::string path)
 {
-   ESS_PROFILE_SCOPE("getArchiveFromID");
-   std::string resolvedPath = resolvePath(path);
-   std::map<std::string,AlembicArchiveInfo>::iterator it;
-   it = gArchives.find(resolvedPath);
+	ESS_PROFILE_SCOPE("getArchiveFromID-1");
+	std::map<std::string,AlembicArchiveInfo>::iterator it;
+	std::string resolvedPath = resolvePath(path);
+	it = gArchives.find(resolvedPath);
    if(it == gArchives.end())
    {
      // check if the file exists
@@ -113,13 +110,14 @@ Alembic::Abc::IArchive * getArchiveFromID(std::string path)
 		}
 
 	  FILE * file = fopen(resolvedPath.c_str(),"rb");
-      if(file != NULL)
-      {
+    if(file == NULL) {
+        return NULL;
+      }
+   else {
          fclose(file);
          addArchive(new Alembic::Abc::IArchive( Alembic::AbcCoreHDF5::ReadArchive(), resolvedPath));
-         return getArchiveFromID(resolvedPath);
+         return gArchives.find(resolvedPath)->second.archive;
       }
-      return NULL;
    }
    return it->second.archive;
 }
@@ -133,10 +131,25 @@ bool archiveExists(std::string path)
    return it != gArchives.end();
 }
 
+AbcArchiveCache* getArchiveCache( std::string path ) {
+	ESS_PROFILE_SCOPE("getArchiveCache");
+	std::string resolvedPath = resolvePath(path);
+    std::map<std::string,AlembicArchiveInfo>::iterator it;
+    it = gArchives.find(resolvedPath);
+    if(it == gArchives.end())
+      return NULL;
+
+	// compute cache if required.
+	if( it->second.archiveCache.size() == 0 ) {
+		createAbcArchiveCache( it->second.archive, &(it->second.archiveCache) );
+	}
+	return &(it->second.archiveCache);
+};
+
 std::string addArchive(Alembic::Abc::IArchive * archive)
 {
     ESS_PROFILE_SCOPE("addArchive");
-  AlembicArchiveInfo info;
+   AlembicArchiveInfo info;
    info.archive = archive;
    gArchives.insert(std::pair<std::string,AlembicArchiveInfo>(archive->getName(),info));
    return archive->getName().c_str();
@@ -167,68 +180,28 @@ void deleteAllArchives()
    gArchives.clear();
 }
 
-AlembicObjectInfo* getObjectInfoFromArchive(std::string path, std::string identifier)
+
+AbcObjectCache* getObjectCacheFromArchive(std::string path, std::string identifier)
 {
-   ESS_PROFILE_SCOPE("getObjectInfoFromArchive");
-
-   if( path.size() == 0 ) {
-	   ESS_LOG_WARNING( "No path specified (path: " << path <<" identifier:" << identifier << ")");
-	   return NULL;
-	}
-	if( identifier.size() == 0 ) {
-		ESS_LOG_WARNING( "No identifier specified (path: " << path <<" identifier:" << identifier << ")" );
-	   return  NULL;
-	}
-
-   Alembic::Abc::IArchive * archive = getArchiveFromID(path);
-   if(archive == NULL)
-      return NULL;
-
-   if(identifier[0] != '/'){
+	AbcArchiveCache* abcArchiveCache = getArchiveCache( resolvePath( path ) );
+	if( abcArchiveCache == NULL ) {
 		return NULL;
-   }
-
-   std::string resolvedPath = resolvePath(path);
-
-   std::map<std::string,AlembicArchiveInfo>::iterator it;
-   it = gArchives.find(resolvedPath);
-
-   StringObjectInfoMap &identifierToObjectInfo = (*it).second.identifierToObjectInfo;
-   if( identifierToObjectInfo.find( identifier ) != identifierToObjectInfo.end() ) {
-	   return &(identifierToObjectInfo[identifier]);
-   }
-
-   // split the path
-   std::vector<std::string> parts;
-   boost::split(parts, identifier, boost::is_any_of("/"));
-
-   // recurse to find it
-   Alembic::Abc::IObject obj = archive->getTop();
-   for(size_t i=1;i<parts.size();i++)
-   {
-      Alembic::Abc::IObject child(obj,parts[i]);
-      obj = child;
-      if(!obj)
-      {
-         obj = Alembic::Abc::IObject();
-         break;
-      }
-   }
-
-   AlembicObjectInfo objectInfo;
-   objectInfo.obj = obj;
-
-   identifierToObjectInfo.insert( StringObjectInfoPair( identifier, objectInfo ) );
-
-   return &(identifierToObjectInfo[identifier]);
+	}
+	AbcArchiveCache::iterator it = abcArchiveCache->find( identifier );
+	if( it == abcArchiveCache->end() ) {
+		return NULL;
+	}
+	return &(it->second);
 }
-Alembic::Abc::IObject getObjectFromArchive(std::string path, std::string identifier)
+
+Abc::IObject getObjectFromArchive(std::string path, std::string identifier)
 {
-	AlembicObjectInfo* objectInfo = getObjectInfoFromArchive(path,identifier );
-	if( objectInfo == NULL ) {
+   ESS_PROFILE_SCOPE("getObjectFromArchive");
+	AbcObjectCache* objectCache = getObjectCacheFromArchive(path,identifier );
+	if( objectCache == NULL ) {
 		return Alembic::Abc::IObject();
 	}
-	return objectInfo->obj;
+	return objectCache->obj;
 }
 int addRefArchive(std::string path)
 {
@@ -506,7 +479,7 @@ bool isObjectSchemaConstant( AbcG::IFaceSetSchema& schema ) {
 
 
 bool isObjectConstant(Alembic::Abc::IObject &object ) {
-   ESS_PROFILE_SCOPE("isObjectConstant"); 
+   ESS_PROFILE_SCOPE("isObjectConstant");  
    const Alembic::Abc::MetaData &md = object.getMetaData();
    if(Alembic::AbcGeom::IXform::matches(md)) {
 	   return isObjectSchemaConstant( Alembic::AbcGeom::IXform(object,Alembic::Abc::kWrapExisting).getSchema() );
@@ -563,19 +536,20 @@ float getTimeOffsetFromObject( Alembic::Abc::IObject &object, SampleInfo const& 
 	}
 }
 
-void getMergeInfo( Alembic::AbcGeom::IObject& iObj, bool& bCreateNullNode, int& nMergedGeomNodeIndex, Alembic::AbcGeom::IObject& mergedGeomChild)
+void getMergeInfo( AbcArchiveCache *pArchiveCache, AbcObjectCache *pObjectCache, bool& bCreateNullNode, int& nMergedGeomNodeIndex, AbcObjectCache **ppMergedChildObjectCache)
 {
-   NodeCategory::type cat = NodeCategory::get(iObj);
+   NodeCategory::type cat = NodeCategory::get(pObjectCache->obj);
    if(cat == NodeCategory::XFORM)
 	{	//if a transform node, decide whether or not use a dummy node OR merge this dummy node with geometry node child
 
 		unsigned geomNodeCount = 0;
       int mergeIndex;
-		for(int j=0; j<(int)iObj.getNumChildren(); j++)
+      for(int j=0; j<(int)pObjectCache->childIdentifiers.size(); j++)
 		{
-         Alembic::AbcGeom::IObject childObj = iObj.getChild(j);
+      AbcObjectCache *pChildObjectCache = &( pArchiveCache->find( pObjectCache->childIdentifiers[j] )->second );
+         Alembic::AbcGeom::IObject childObj = pChildObjectCache->obj;
          if( NodeCategory::get( childObj ) == NodeCategory::GEOMETRY ){
-				mergedGeomChild = childObj;
+				(*ppMergedChildObjectCache) = pChildObjectCache;
 				mergeIndex = j;
 				geomNodeCount++;
 			}
@@ -636,16 +610,16 @@ void getMergeInfo( Alembic::AbcGeom::IObject& iObj, bool& bCreateNullNode, int& 
 
 struct AlembicSelectionStackElement
 {
-   Alembic::Abc::IObject iObj;
+   AbcObjectCache *pObjectCache;
    bool bSelected;
 
-   AlembicSelectionStackElement(Alembic::Abc::IObject obj, bool selected):iObj(obj), bSelected(selected)
+   AlembicSelectionStackElement(AbcObjectCache *pMyObjectCache, bool selected):pObjectCache(pMyObjectCache), bSelected(selected)
    {}
 };
 
 
 //returns the number of nodes
-int prescanAlembicHierarchy(Alembic::AbcGeom::IObject root, std::vector<std::string>& nodes, std::map<std::string, bool>& map, bool bIncludeChildren)
+int prescanAlembicHierarchy(AbcArchiveCache *pArchiveCache, AbcObjectCache *pRootObjectCache, std::vector<std::string>& nodes, std::map<std::string, bool>& map, bool bIncludeChildren)
 {
    for(int i=0; i<nodes.size(); i++){
       boost::to_upper(nodes[i]);
@@ -653,15 +627,16 @@ int prescanAlembicHierarchy(Alembic::AbcGeom::IObject root, std::vector<std::str
 
    std::list<AlembicSelectionStackElement> sceneStack;
 
-	for(size_t j=0; j<root.getNumChildren(); j++){
-      sceneStack.push_back(AlembicSelectionStackElement(root.getChild(j), false));
+  for(size_t j=0; j<pRootObjectCache->childIdentifiers.size(); j++){
+      AbcObjectCache *pChildObjectCache = &( pArchiveCache->find( pRootObjectCache->childIdentifiers[j] )->second );
+      sceneStack.push_back(AlembicSelectionStackElement(pChildObjectCache, false));
 	} 
 
    int nNumNodes = 0;
    while( !sceneStack.empty() )
    {
       AlembicSelectionStackElement sElement = sceneStack.back();
-      Alembic::Abc::IObject iObj = sElement.iObj;
+      Alembic::Abc::IObject iObj = sElement.pObjectCache->obj;
       bool bSelected = sElement.bSelected;
       sceneStack.pop_back();
 
@@ -669,13 +644,14 @@ int prescanAlembicHierarchy(Alembic::AbcGeom::IObject root, std::vector<std::str
 
       bool bCreateNullNode = false;
       int nMergedGeomNodeIndex = -1;
-		Alembic::AbcGeom::IObject mergedGeomChild;
-      getMergeInfo(iObj, bCreateNullNode, nMergedGeomNodeIndex, mergedGeomChild);
+    AbcObjectCache *pMergedChildObjectCache = NULL;
+      getMergeInfo(pArchiveCache, sElement.pObjectCache, bCreateNullNode, nMergedGeomNodeIndex, &pMergedChildObjectCache);
       
       std::string name;
       std::string fullname;
 
 	   if(nMergedGeomNodeIndex != -1){//we are merging
+    		Alembic::AbcGeom::IObject mergedGeomChild = pMergedChildObjectCache->obj;
          name = mergedGeomChild.getName();
          fullname = mergedGeomChild.getFullName();
 	   }
@@ -718,9 +694,10 @@ int prescanAlembicHierarchy(Alembic::AbcGeom::IObject root, std::vector<std::str
       }
 
       //push the children as the last step, since we need to who the parent is first (we may have merged)
-      for(size_t j=0; j<iObj.getNumChildren(); j++)
+      for(size_t j=0; j<sElement.pObjectCache->childIdentifiers.size(); j++)
       {
-         Alembic::AbcGeom::IObject childObj = iObj.getChild(j);
+         AbcObjectCache *pChildObjectCache = &( pArchiveCache->find( sElement.pObjectCache->childIdentifiers[j] )->second );
+        Alembic::AbcGeom::IObject childObj = pChildObjectCache->obj;
          NodeCategory::type childCat = NodeCategory::get(childObj);
          if( childCat == NodeCategory::UNSUPPORTED ) continue;// skip over unsupported types
 
@@ -729,7 +706,7 @@ int prescanAlembicHierarchy(Alembic::AbcGeom::IObject root, std::vector<std::str
          //A geometry node can't be combined with its transform node, the transform node has other tranform nodes as children. These
          //nodes must be pushed.
          if( nMergedGeomNodeIndex != j ){
-            sceneStack.push_back(AlembicSelectionStackElement(childObj, bSelectChildren));
+            sceneStack.push_back(AlembicSelectionStackElement(pChildObjectCache, bSelectChildren));
          }
       }  
    }

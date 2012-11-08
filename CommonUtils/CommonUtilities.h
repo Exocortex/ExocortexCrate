@@ -2,6 +2,7 @@
 #define __COMMON_UTILITIES_H
 
 #include "CommonAlembic.h"
+#include "CommonAbcCache.h"
 
 #define ALEMBIC_SAFE_DELETE(p)  if(p) delete p; p = 0;
 
@@ -12,6 +13,10 @@ struct SampleInfo
    Alembic::AbcCoreAbstract::index_t ceilIndex;
    double alpha;
 };
+
+#ifndef uint64_t
+  typedef boost::uint64_t uint64_t;
+#endif
 
 template<class Key, class Data>
 class MRUCache {
@@ -26,10 +31,7 @@ private:
 	int maxEntries;
 
 public:
-	MRUCache( int maxEntries = 2 ) {
-		this.nextAccess = 0;
-		this.maxEntries = maxEntries;
-	}
+  MRUCache( int _maxEntries = 2 ): maxEntries(_maxEntries), nextAccess(0) {}
 
 	bool contains( Key const& key ) const {
 		for( int i = 0; i < entries.size(); i ++ ) {
@@ -79,21 +81,6 @@ public:
 	}
 };
 
-struct AlembicObjectInfo
-{
-	AlembicObjectInfo() {
-		numSamples = -1;
-		isMeshPointCache = -1;
-		isMeshTopoDynamic = -1;
-	}
-
-	Alembic::Abc::IObject obj;
-	int numSamples;
-	int isMeshPointCache;
-	int isMeshTopoDynamic;
-	std::vector<std::string> childIdentifiers;
-};
-
 struct ArchiveInfo
 {
    std::string path;
@@ -102,7 +89,9 @@ struct ArchiveInfo
 std::string getExporterName( std::string shortName );
 std::string getExporterFileName( std::string fileName );
 
-AlembicObjectInfo* getObjectInfoFromArchive(std::string path, std::string identifier);
+AbcArchiveCache* getArchiveCache( std::string path );
+
+AbcObjectCache* getObjectCacheFromArchive(std::string path, std::string identifier);
 
 Alembic::Abc::IArchive * getArchiveFromID(std::string path);
 std::string addArchive(Alembic::Abc::IArchive * archive);
@@ -325,9 +314,9 @@ namespace NodeCategory
 };
 
 
-void getMergeInfo( Alembic::AbcGeom::IObject& iObj, bool& bCreateNullNode, int& nMergedGeomNodeIndex, Alembic::AbcGeom::IObject& mergedGeomChild);
+void getMergeInfo( AbcArchiveCache *pArchiveCache, AbcObjectCache *pObjectCache, bool& bCreateNullNode, int& nMergedGeomNodeIndex, AbcObjectCache **ppMergedObjectCache );
 
-int prescanAlembicHierarchy(Alembic::AbcGeom::IObject root, std::vector<std::string>& nodes, std::map<std::string, bool>& map, bool bIncludeChildren=false);
+int prescanAlembicHierarchy(AbcArchiveCache *pArchiveCache, AbcObjectCache *pRootObjectCache, std::vector<std::string>& nodes, std::map<std::string, bool>& map, bool bIncludeChildren=false);
 
 template<class S>
 struct cia_map_key
