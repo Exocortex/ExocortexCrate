@@ -73,15 +73,15 @@ std::map<std::string,AlembicArchiveInfo> gArchives;
 
 std::string resolvePath( std::string originalPath ) {
    ESS_PROFILE_SCOPE("resolvePath");
-   static std::map<std::string,std::string> s_originalToResolvedPath;
+/*   static std::map<std::string,std::string> s_originalToResolvedPath;
 
    if( s_originalToResolvedPath.find( originalPath ) != s_originalToResolvedPath.end() ) {
 	   return s_originalToResolvedPath[ originalPath ];
-   }
+   }*/
 
    std::string resolvedPath = resolvePath_Internal( originalPath );
 
-   s_originalToResolvedPath.insert( std::pair<std::string,std::string>( originalPath, resolvedPath ) );
+   //s_originalToResolvedPath.insert( std::pair<std::string,std::string>( originalPath, resolvedPath ) );
 
    return resolvedPath;
 }
