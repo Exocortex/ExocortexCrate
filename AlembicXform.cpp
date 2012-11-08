@@ -8,7 +8,6 @@ AlembicXform::AlembicXform(const MObject & in_Ref, AlembicWriteJob * in_Job)
 : AlembicObject(in_Ref, in_Job)
 {
    MFnDependencyNode node(in_Ref);
-   //MString name = GetUniqueName(truncateName(node.name())+"Xfo");
    MString name = GetUniqueName(node.name());
    mObject = AbcG::OXform(GetParentObject(),name.asChar(),GetJob()->GetAnimatedTs());
 
