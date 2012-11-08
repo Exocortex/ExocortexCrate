@@ -73,15 +73,15 @@ std::map<std::string,AlembicArchiveInfo> gArchives;
 
 std::string resolvePath( std::string originalPath ) {
    ESS_PROFILE_SCOPE("resolvePath");
-   static std::map<std::string,std::string> s_originalToResolvedPath;
+/*   static std::map<std::string,std::string> s_originalToResolvedPath;
 
    if( s_originalToResolvedPath.find( originalPath ) != s_originalToResolvedPath.end() ) {
 	   return s_originalToResolvedPath[ originalPath ];
-   }
+   }*/
 
    std::string resolvedPath = resolvePath_Internal( originalPath );
 
-   s_originalToResolvedPath.insert( std::pair<std::string,std::string>( originalPath, resolvedPath ) );
+   //s_originalToResolvedPath.insert( std::pair<std::string,std::string>( originalPath, resolvedPath ) );
 
    return resolvedPath;
 }
@@ -115,8 +115,10 @@ Alembic::Abc::IArchive * getArchiveFromID(std::string path)
       }
    else {
          fclose(file);
-         addArchive(new Alembic::Abc::IArchive( Alembic::AbcCoreHDF5::ReadArchive(), resolvedPath));
-         return gArchives.find(resolvedPath)->second.archive;
+         addArchive(new Abc::IArchive( Alembic::AbcCoreHDF5::ReadArchive(), resolvedPath));
+         Abc::IArchive *pArchive = gArchives.find(resolvedPath)->second.archive;
+         EC_LOG_INFO( "Opening Abc Archive: " << pArchive->getName() );
+         return pArchive;
       }
    }
    return it->second.archive;
@@ -163,6 +165,8 @@ void deleteArchive(std::string path)
    it = gArchives.find(resolvedPath);
    if(it == gArchives.end())
       return;
+
+   EC_LOG_INFO( "Closing Abc Archive: " << it->second.archive->getName() );
    it->second.archive->reset();
    delete(it->second.archive);
    gArchives.erase(it);
