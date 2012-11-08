@@ -86,7 +86,7 @@ void createDisplayModifier(std::string modkey, std::string modname, std::vector<
             evalStream<<name<<" type:#color ui:e"<<name<<" default:(["<<val<<"] as color)"; 
          }
          else{
-            evalStream<<name<<" type:#point3 ui:e"<<name<<" default:(["<<val<<"] as color)"; 
+            evalStream<<name<<" type:#point3 ui:e"<<name<<" ["<<val<<"]"; 
          }
       }
       else{
