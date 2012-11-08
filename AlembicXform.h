@@ -39,7 +39,6 @@ private:
    MString mFileName;
    MString mIdentifier;
    AbcG::IXformSchema mSchema;
-   std::vector<double> mTimes;
    std::map<AbcA::index_t,Abc::M44d> mSampleIndicesToMatrices;
    Abc::M44d mLastMatrix;
 
