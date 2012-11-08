@@ -19,7 +19,7 @@ AlembicCurves::AlembicCurves(const SceneEntry &in_Ref, AlembicWriteJob * in_Job)
 : AlembicObject(in_Ref, in_Job)
 {
    std::string curveName = EC_MCHAR_to_UTF8( in_Ref.node->GetName() );
-   std::string xformName = curveName;
+   std::string xformName = curveName + "Xfo";
 
    AbcG::OXform xform(GetOParent(),xformName,GetCurrentJob()->GetAnimatedTs());
    AbcG::OCurves curves(xform,curveName,GetCurrentJob()->GetAnimatedTs());

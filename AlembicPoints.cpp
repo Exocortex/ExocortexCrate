@@ -22,7 +22,7 @@ AlembicPoints::AlembicPoints(const SceneEntry &in_Ref, AlembicWriteJob *in_Job)
 	//mTimeSamplesCount = 0;
 
     std::string pointsName = EC_MCHAR_to_UTF8(  in_Ref.node->GetName() );
-    std::string xformName = pointsName;
+    std::string xformName = pointsName + "Xfo";
 
     AbcG::OXform xform(GetOParent(), xformName.c_str(), GetCurrentJob()->GetAnimatedTs());
     AbcG::OPoints points(xform, pointsName.c_str(), GetCurrentJob()->GetAnimatedTs());
@@ -985,7 +985,7 @@ void AlembicPoints::saveCurrentFrameMeshes()
 
 			//save out the mesh xForm
 		
-			std::string xformName = mi->name;
+			std::string xformName = mi->name + "Xfo";
 			AbcG::OXform xform(mJob->GetArchive().getTop(), xformName.c_str(), GetCurrentJob()->GetAnimatedTs());
 			AbcG::OXformSchema& xformSchema = xform.getSchema();//mi->xformSchema;
 
