@@ -31,6 +31,7 @@ SICALLBACK XSILoadPlugin( PluginRegistrar& in_reg )
 
 	//if( HasAlembicWriterLicense() ) {
 		in_reg.RegisterCommand(L"alembic_export",L"alembic_export");
+      in_reg.RegisterCommand(L"alembic_export_jobs",L"alembic_export_jobs");
 
 		in_reg.RegisterMenu(siMenuMainFileExportID,L"alembic_MenuExport",false,false);
 
@@ -39,6 +40,7 @@ SICALLBACK XSILoadPlugin( PluginRegistrar& in_reg )
 
 	//if( HasAlembicReaderLicense() ) {
 		in_reg.RegisterCommand(L"alembic_import",L"alembic_import");
+      in_reg.RegisterCommand(L"alembic_import_jobs",L"alembic_import_jobs");
 		in_reg.RegisterCommand(L"alembic_attach_metadata",L"alembic_attach_metadata");
 		in_reg.RegisterCommand(L"alembic_create_item",L"alembic_create_item");
 		in_reg.RegisterCommand(L"alembic_path_manager",L"alembic_path_manager");
@@ -100,7 +102,7 @@ ESS_CALLBACK_START(alembic_MenuExport_Init,CRef&)
 	Menu oMenu;
 	oMenu = ctxt.GetSource();
 	MenuItem oNewItem;
-	oMenu.AddCommandItem(L"Alembic 1.1",L"alembic_export",oNewItem);
+	oMenu.AddCommandItem(L"Alembic 1.1",L"alembic_export_jobs",oNewItem);
 	return CStatus::OK;
 ESS_CALLBACK_END
 
@@ -109,7 +111,7 @@ ESS_CALLBACK_START(alembic_MenuImport_Init,CRef&)
 	Menu oMenu;
 	oMenu = ctxt.GetSource();
 	MenuItem oNewItem;
-	oMenu.AddCommandItem(L"Alembic 1.1",L"alembic_import",oNewItem);
+	oMenu.AddCommandItem(L"Alembic 1.1",L"alembic_import_jobs",oNewItem);
 	return CStatus::OK;
 ESS_CALLBACK_END
 

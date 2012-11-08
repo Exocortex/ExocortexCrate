@@ -20,6 +20,26 @@ using namespace MATH;
 #include "CommonUtilities.h"
 #include "CommonSceneGraph.h"
 
+CStatus exportCommandImp( CRef& in_ctxt );
+
+ESS_CALLBACK_START(alembic_export_jobs_Init,CRef&)
+
+	Context ctxt( in_ctxt );
+	Command oCmd;
+	oCmd = ctxt.GetSource();
+	oCmd.PutDescription(L"");
+	oCmd.EnableReturnValue(true);
+
+	ArgumentArray oArgs;
+	oArgs = oCmd.GetArguments();
+	oArgs.Add(L"exportjobs");
+	return CStatus::OK;
+ESS_CALLBACK_END
+
+ESS_CALLBACK_START(alembic_export_jobs_Execute,CRef&)
+   return exportCommandImp(in_ctxt);
+ESS_CALLBACK_END
+
 ESS_CALLBACK_START(alembic_export_Init,CRef&)
 
 	Context ctxt( in_ctxt );
@@ -36,7 +56,12 @@ ESS_CALLBACK_END
 
 
 ESS_CALLBACK_START(alembic_export_Execute,CRef&)
-	Context ctxt( in_ctxt );
+   return exportCommandImp(in_ctxt);
+ESS_CALLBACK_END
+
+CStatus exportCommandImp( CRef& in_ctxt )
+{
+   Context ctxt( in_ctxt );
 	CValueArray args = ctxt.GetAttribute(L"Arguments");
 
 	//FORCE_CRASH_INVALID_ACCESS_VIOLATION; used for testing whether error reporting works.
@@ -419,7 +444,7 @@ ESS_CALLBACK_START(alembic_export_Execute,CRef&)
    deleteAllArchives();
 
    return CStatus::OK;
-ESS_CALLBACK_END
+}
 
 
 ESS_CALLBACK_START(alembic_export_settings_Define,CRef&)

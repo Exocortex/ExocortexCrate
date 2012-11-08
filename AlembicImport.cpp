@@ -19,6 +19,7 @@ using namespace MATH;
 #include "CommonMeshUtilities.h"
 #include "CommonUtilities.h"
 #include "CommonAbcCache.h"
+#include "CommonImport.h"
 
 ESS_CALLBACK_START(alembic_import_Init,CRef&)
 	Context ctxt( in_ctxt );
@@ -39,6 +40,21 @@ ESS_CALLBACK_START(alembic_import_Init,CRef&)
    oArgs.Add(L"attach");
    oArgs.Add(L"failOnUnsupported");
    oArgs.Add(L"identifiers");
+	return CStatus::OK;
+ESS_CALLBACK_END
+
+
+ESS_CALLBACK_START(alembic_import_jobs_Init,CRef&)
+
+	Context ctxt( in_ctxt );
+	Command oCmd;
+	oCmd = ctxt.GetSource();
+	oCmd.PutDescription(L"");
+	oCmd.EnableReturnValue(true);
+
+	ArgumentArray oArgs;
+	oArgs = oCmd.GetArguments();
+	oArgs.Add(L"importjobs");
 	return CStatus::OK;
 ESS_CALLBACK_END
 
@@ -1657,20 +1673,6 @@ CStatus createShape( AbcObjectCache *pObjectCache, CRef& importRootNode, CRef& p
 }
 
 
-
-struct stackElement
-{
-   Abc::IObject iObj;
-   CRef parentNode;
-
-   stackElement(Abc::IObject iObj):iObj(iObj)
-   {}
-   stackElement(Abc::IObject iObj, CRef parent):iObj(iObj), parentNode(parent)
-   {}
-
-};
-
-
 struct ImportStackElement
 {
    AbcObjectCache *pObjectCache;
@@ -1684,20 +1686,74 @@ struct ImportStackElement
 };
 
 ESS_CALLBACK_START(alembic_import_Execute, CRef&)
+
+	Context ctxt( in_ctxt );
+	CValueArray args = ctxt.GetAttribute(L"Arguments");
+
+   // inspect it
+   CValueArray importJobArgs(1);
+   CValue importJobResult;
+
+   //CString filename = args[0];
+   //bool importNormals = (bool)args[1];
+   //bool importUVs = (bool)args[2];
+   //bool importClusters = (bool)args[3];
+   //bool importVisibility = (bool)args[4];
+   //bool importStandins = (bool)args[5];
+   //bool importBboxes = (bool)args[6];
+   //bool attachToExisting = (bool)args[7];
+   //bool failOnUnsupported = (bool)args[8];
+   //CString identifierListStr = args[9].GetAsText();
+
+   CString str("");
+   str += "filename=";
+   str += args[0].GetAsText();
+   str += "normals=";
+   str += args[1];
+   str += "uvs=";
+   str += args[2];
+   str += "facesets=";
+   str += args[3];
+   str += "visibility=";
+   str += args[4];
+   str += "importStandinProperties=";
+   str += args[5];
+   str += "importBoundingBoxes=";
+   str += args[6];
+   str += "attachToExisting=";
+   str += args[7];
+   str += "failOnUnsupported=";
+   str += args[8];
+   str += "identifiers=";
+   str += args[9].GetAsText();
+
+   importJobArgs[0] = str;
+   Application().ExecuteCommand(L"alembic_import_jobs", importJobArgs, importJobResult);
+
+   if((bool)importJobResult){
+      return CStatus::OK;
+   }
+   return CStatus::Abort;
+ESS_CALLBACK_END
+
+ESS_CALLBACK_START(alembic_import_jobs_Execute, CRef&)
 	Context ctxt( in_ctxt );
 	CValueArray args = ctxt.GetAttribute(L"Arguments");
 	ESS_PROFILE_SCOPE("alembic_import_Execute");
 
-    CRefArray selectedObjects = Application().GetSelection().GetArray();
-     if(selectedObjects.GetCount() > 1)
-     {
-        Application().LogMessage(L"[ExocortexAlembic] Too many objects selected, for re-basing root of import, you should only select a single object.",siErrorMsg);
-        return CStatus::InvalidArgument;
-     }
+   CRefArray selectedObjects = Application().GetSelection().GetArray();
+   if(selectedObjects.GetCount() > 1)
+   {
+      Application().LogMessage(L"[ExocortexAlembic] Too many objects selected, for re-basing root of import, you should only select a single object.",siErrorMsg);
+      return CStatus::InvalidArgument;
+   }
 
+   IJobStringParser jobParser;
+   CString jobString = args[0].GetAsText();
+   bool bParseSuccess = jobParser.parse(jobString.GetAsciiString());
+  
    // take care of the filename
-   CString filename = (CString)args[0].GetAsText();
-   if(filename.IsEmpty())
+   if(jobParser.filename.empty())
    {
 	  // let's see if we are in interactive mode
       if(Application().IsInteractive())
@@ -1709,9 +1765,10 @@ ESS_CALLBACK_START(alembic_import_Execute, CRef&)
          filebrowser.PutProperty(L"Filter",L"Alembic Files(*.abc)|*.abc||");
          CValue returnVal;
          filebrowser.Call(L"ShowOpen",returnVal);
-         filename = filebrowser.GetProperty(L"FilePathName").GetAsText();
-         if(filename.IsEmpty())
+         jobParser.filename = filebrowser.GetProperty(L"FilePathName").GetAsText().GetAsciiString();
+         if(jobParser.filename.empty()){
             return CStatus::Abort;
+         }
       }
       else
       {
@@ -1721,7 +1778,7 @@ ESS_CALLBACK_START(alembic_import_Execute, CRef&)
    }
 
    // check if we have arguments
-   if(args[1].GetAsText().IsEmpty())
+   if(!bParseSuccess)
    {
       // let's setup the property
       CustomProperty settings;
@@ -1747,30 +1804,32 @@ ESS_CALLBACK_START(alembic_import_Execute, CRef&)
       }
 
       // retrieve the options
-      args[1] = settings.GetParameterValue(L"normals");
-      args[2] = settings.GetParameterValue(L"uvs");
-      args[3] = settings.GetParameterValue(L"facesets");
-      args[4] = settings.GetParameterValue(L"visibility");
+      jobParser.importNormals = settings.GetParameterValue(L"normals");
+      jobParser.importUVs = settings.GetParameterValue(L"uvs");
+      jobParser.importFacesets = settings.GetParameterValue(L"facesets");
+      jobParser.importVisibilityControllers = (bool)settings.GetParameterValue(L"visibility");
       if(hasStandinSupport())
       {
          LONG standinsValue = settings.GetParameterValue(L"standins");
-         args[5] = standinsValue > 0;
-         args[6] = standinsValue == 2;
+         jobParser.importStandinProperties = standinsValue > 0;
+         jobParser.importBoundingBoxes = standinsValue == 2;
       }
       else
       {
-         args[5] = false;
-         args[6] = false;
+         jobParser.importStandinProperties = false;
+         jobParser.importStandinProperties = false;
       }
-      args[7] = settings.GetParameterValue(L"attach");
-	  args[8] = settings.GetParameterValue(L"failOnUnsupported");
+      jobParser.attachToExisting = settings.GetParameterValue(L"attach");
+	   jobParser.failOnUnsupported = settings.GetParameterValue(L"failOnUnsupported");
 
       Application().ExecuteCommand(L"DeleteObj",inspectArgs,inspectResult);
    }
 
+
    // let's try to read this
    Abc::IArchive* archive = NULL;
-   CString resolvedPath = CUtils::ResolveTokenString(filename,XSI::CTime(),false);
+   CString filenameCStr(jobParser.filename.c_str());
+   CString resolvedPath = CUtils::ResolveTokenString(filenameCStr, XSI::CTime(), false);
    try{
       archive = new Abc::IArchive( Alembic::AbcCoreHDF5::ReadArchive(), resolvedPath.GetAsciiString() );
    }
@@ -1786,31 +1845,23 @@ ESS_CALLBACK_START(alembic_import_Execute, CRef&)
    addRefArchive( std::string( resolvedPath.GetAsciiString() ) );
    AbcArchiveCache *pArchiveCache = getArchiveCache( std::string( resolvedPath.GetAsciiString() ) );
 
-   // also precap the filename with the project token just in case
+   // also precap the jobParser.filename with the project token just in case
    CString projectPath = Application().GetActiveProject().GetPath();
-   for(ULONG i=0;i<filename.Length();i++)
+   for(ULONG i=0;i<filenameCStr.Length();i++)
    {
-      if(filename.GetAt(i) == '\\')
-         filename = filename.GetSubString(0,i)+L"/"+filename.GetSubString(i+1,10000);
+      if(filenameCStr.GetAt(i) == '\\')
+         filenameCStr = filenameCStr.GetSubString(0,i)+L"/"+filenameCStr.GetSubString(i+1,10000);
    }
    for(ULONG i=0;i<projectPath.Length();i++)
    {
       if(projectPath.GetAt(i) == '\\')
          projectPath = projectPath.GetSubString(0,i)+L"/"+projectPath.GetSubString(i+1,10000);
    }
-   if(filename.GetSubString(0,projectPath.Length()) == projectPath)
+   if(filenameCStr.GetSubString(0,projectPath.Length()) == projectPath)
    {
-      filename = L"[project path]"+filename.GetSubString(projectPath.Length(),10000);
+      filenameCStr = L"[project path]"+filenameCStr.GetSubString(projectPath.Length(),10000);
    }
 
-   bool importNormals = (bool)args[1];
-   bool importUVs = (bool)args[2];
-   bool importClusters = (bool)args[3];
-   bool importVisibility = (bool)args[4];
-   bool importStandins = (bool)args[5];
-   bool importBboxes = (bool)args[6];
-   bool attachToExisting = (bool)args[7];
-   bool failOnUnsupported = (bool)args[8];
 
    // let's check the identifier list
    CString identifierListStr = args[9].GetAsText();
@@ -1830,7 +1881,7 @@ ESS_CALLBACK_START(alembic_import_Execute, CRef&)
 
    // create the timecontrol
    CustomProperty timeControl;
-   if(attachToExisting)
+   if(jobParser.attachToExisting)
    {
       CRef timeRef;
       timeRef.Set(L"alembic_timecontrol");
@@ -1853,10 +1904,10 @@ ESS_CALLBACK_START(alembic_import_Execute, CRef&)
    // store the time control in a value array
    CValueArray createItemArgs(5);
    createItemArgs[0] = timeControl.GetRef();
-   createItemArgs[1] = importClusters;
-   createItemArgs[2] = importNormals;
-   createItemArgs[3] = importUVs;
-   createItemArgs[4] = importVisibility;
+   createItemArgs[1] = jobParser.importFacesets;
+   createItemArgs[2] = jobParser.importNormals;
+   createItemArgs[3] = jobParser.importUVs;
+   createItemArgs[4] = jobParser.importVisibilityControllers;
 
    AbcG::IObject root = archive->getTop();
  
@@ -1926,13 +1977,14 @@ ESS_CALLBACK_START(alembic_import_Execute, CRef&)
       CRef newNodeRef;
 		if(bCreateNullNode){
 
-            createTransform( sElement.pObjectCache, importRootNode, parentNode, newNodeRef, filename, attachToExisting, createItemArgs);
+            createTransform( sElement.pObjectCache, importRootNode, parentNode, newNodeRef, filenameCStr, jobParser.attachToExisting, createItemArgs);
 		}
 		else{
 			if(nMergedGeomNodeIndex != -1){//we are merging, so look at the child geometry node
     	AbcG::IObject mergedGeomChild = pMergedGeomChildObjectCache->obj;
 
-				CStatus localStatus = createShape( pMergedGeomChildObjectCache, importRootNode,parentNode, newNodeRef, filename, attachToExisting, importStandins, importBboxes, true, failOnUnsupported, createItemArgs);
+				CStatus localStatus = createShape( pMergedGeomChildObjectCache, importRootNode, parentNode, newNodeRef, filenameCStr, 
+               jobParser.attachToExisting, jobParser.importStandinProperties, jobParser.importBoundingBoxes, true, jobParser.failOnUnsupported, createItemArgs);
 				if( ! localStatus.Succeeded() ) {
          delRefArchive( std::string( resolvedPath.GetAsciiString() ) );
 					return localStatus;
@@ -1943,7 +1995,8 @@ ESS_CALLBACK_START(alembic_import_Execute, CRef&)
             //TODO: not sure if I handle the transforms correctly in this case
 			//EC_LOG_ERROR( "[ExocortexAlembic] Merged geometry node index not -1" );
             //return CStatus::Abort;
-				CStatus localStatus = createShape( sElement.pObjectCache, importRootNode, parentNode, newNodeRef, filename, attachToExisting, importStandins, importBboxes, false, failOnUnsupported, createItemArgs);
+				CStatus localStatus = createShape( sElement.pObjectCache, importRootNode, parentNode, newNodeRef, filenameCStr, 
+               jobParser.attachToExisting, jobParser.importStandinProperties, jobParser.importBoundingBoxes, false, jobParser.failOnUnsupported, createItemArgs);
 				if( ! localStatus.Succeeded() ) {
          delRefArchive( std::string( resolvedPath.GetAsciiString() ) );
 					return localStatus;
