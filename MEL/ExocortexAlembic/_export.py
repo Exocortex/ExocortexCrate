@@ -1,6 +1,11 @@
 import maya.cmds as cmds
 
+""" Export module of Exocortex Crate """
+
 def doIt(filename, exInframe, exOutframe, exObjects=None, exStepframe=1, exSubstepframe=1, exTopology=3, exUVs=True, exFaceSets=True, exDynTopo=False, exGlobSpace=False, exWithoutHierarchy=False, exXformCache=False, exUseInitShadGrp=False):
+	"""
+	Set up the string parameter for ExocortexAlembic_export
+	"""
 	def doIt_listExportObjects(exObjects):
 		objs = str(exObjects[0])
 		for obj in exObjects[1:]:
