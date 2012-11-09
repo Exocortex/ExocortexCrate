@@ -12,11 +12,76 @@ def fillAlembicInfoList(filename):
 	cmds.ExocortexAlembic_profileEnd(f="Python.ExocortexAlembic._import.fillAlembicInfoList")
 	return alembicInfos
 
+def connectShapeAndReader(shape, reader):
+	cmds.connectAttr(reader+".translate", 	shape+".translate")
+	cmds.connectAttr(reader+".rotate", 		shape+".rotate")
+	cmds.connectAttr(reader+".scale", 		shape+".scale")
+
+def doPolyMesh(curObj, purepointcache, dynamictopology, doItParam, fileNode):
+	""" import a polymesh object """
+	cmds.ExocortexAlembic_profileBegin(f="Python.ExocortexAlembic._import.doPolyMesh")
+	reader = ""
+	topoReader = ""
+	shape = fnt.alembicCreateNode(curObj.name, "mesh")
+	cmds.sets(shape, e=True, forceElement="initialShadingGroup")
+	if dynamictopology:
+		reader = fnt.alembicCreateNode(curObj.name+".inMesh","ExocortexAlembicPolyMesh")
+	elif not curObj.constant:
+		reader = fnt.alembicCreateNode(curObj.name+".inMesh","ExocortexAlembicPolyMeshDeform")
+
+	if reader == "":
+		if not purepointcache:
+			topoReader = cmds.createNode("ExocortexAlembicPolyMesh")
+			fnt.alembicConnectAttr(topoReader+".outMesh", shape+".inMesh")
+			fnt.alembicConnectAttr(fileNode+".outFileName", topoReader+".fileName")
+			cmd.setAttr(topoReader+".identifier", curObj.identifier, type="string")
+	        cmd.setAttr(topoReader+".normals", doItParam[1])
+	        cmd.setAttr(topoReader+".uvs", doItParam[2])
+	        if doItParam[3]:
+	        	cmds.ExocortexAlembic_createFaceSets(o=shape, f=doItParam[0], i=curObj.identifier)
+	        if dynamictopology:
+	        	reader = topoReader
+
+		if reader == "" and curObj.constant:
+			reader = cmds.deformer(shape, type="ExocortexAlembicPolyMeshDeform")[0]
+
+	cmds.ExocortexAlembic_profileEnd(f="Python.ExocortexAlembic._import.doPolyMesh")
+	return reader, topoReader, shape
+
+def doXform(curObj, alembicInfos, doItParam, fileNode):
+	""" import an Xform """
+	cmds.ExocortexAlembic_profileBegin(f="Python.ExocortexAlembic._import.doXform")
+	reader = ""
+	shape = ""
+	if len(alembicInfos) == fnt.AlembicInfo.nbTransforms:
+		locator = fnt.alembicCreateNode(curObj.name+"Shape","locator")
+		shape = cmds.listRelatives(locator, p=True)[0]
+		reader = cmds.createNode("ExocortexAlembicXform")
+		connectShapeAndReader(shape, reader)
+	else:
+		cID = int(curObj.childIDs.split(".")[0])
+		if cID > 0:
+			childObj = alembicInfos[cID-1]
+			xform = cmds.listRelatives(childObj.object, p=True)
+			name = curObj.name
+			if name != "front" and name != "top" and name != "side" and name != "persp":
+				shape 	= cmds.rename(xform, name, ignoreShape=True)
+				reader 	= fnt.alembicCreateNode(shape+"_translate","ExocortexAlembicXform")
+				connectShapeAndReader(shape, reader)
+
+	cmds.ExocortexAlembic_profileEnd(f="Python.ExocortexAlembic._import.doXform")
+	return reader, shape
+
+def doGroup(curObj, alembicInfos, doItParam, fileNode):
+	""" import an Xform with other Xforms as children """
+	pass
+
 def doIt(filename, importNormals=False, importUvs=True, importFaceSets=True):
 	"""
 	Creates the right nodes for each object in the Alembic file!
 	"""
 	gMainProgressBar = "MayaWindow|toolBar3|MainHelpLineLayout|helpLineFrame|formLayout16|mainProgressBar"
+	doItParam = (filename, importNormals, importUvs, importFaceSets)
 
 	# initialization!
 	cmds.ExocortexAlembic_profileBegin(f="Python.ExocortexAlembic._import.doIt")
@@ -64,10 +129,10 @@ def doIt(filename, importNormals=False, importUvs=True, importFaceSets=True):
       		else if dt =="hair=1":
         		hair = True
 
-        if curObj.type == "PolyMesh":
-        	pass
-        elif curObj.type == "Xform":
-        	pass
+        if curObj.type == "Xform":
+        	reader, shape = doXform(curObj, alembicInfos, doItParam, fileNode)
+        elif curObj.type == "PolyMesh":
+        	reader, topoReader, shape = doPolyMesh(curObj, purepointcache, dynamictopology, doItParam, fileNode)
         elif curObj.type == "Group":
         	pass
         elif curObj.type == "SubD":
@@ -105,4 +170,5 @@ def doIt(filename, importNormals=False, importUvs=True, importFaceSets=True):
 	cmds.ExocortexAlembic_fileRefCount(d=filename)
 	cmds.ExocortexAlembic_profileEnd(f="Python.ExocortexAlembic._import.doIt")
 	pass
+
 
