@@ -6,7 +6,7 @@ using namespace XSI;
 using namespace MATH;
 
 
-AlembicModel::AlembicModel(exoNodePtr eNode, AlembicWriteJob * in_Job, Abc::OObject oParent)
+AlembicModel::AlembicModel(SceneNodePtr eNode, AlembicWriteJob * in_Job, Abc::OObject oParent)
 : AlembicObject(eNode, in_Job, oParent)
 {
    AbcG::OXform xform(GetMyParent(), eNode->name, GetJob()->GetAnimatedTs());
@@ -18,7 +18,7 @@ AlembicModel::AlembicModel(exoNodePtr eNode, AlembicWriteJob * in_Job, Abc::OObj
 
    XSI::CRef parentGlobalTransRef;
 
-   exoNodePtr parent = mExoSceneNode->parent;
+   SceneNodePtr parent = mExoSceneNode->parent;
 
    while(parent){
       if(parent->selected){

@@ -91,22 +91,22 @@ SceneNode::nodeTypeE getNodeType(X3DObject& xObj)
 struct CSGStackElement
 {
    XSI::CRef xNode;
-   exoNodePtr eNode;
+   SceneNodePtr eNode;
 
    CSGStackElement(XSI::CRef xnode):xNode(xnode)
    {}
-   CSGStackElement(XSI::CRef xnode, exoNodePtr enode):xNode(xnode), eNode(enode)
+   CSGStackElement(XSI::CRef xnode, SceneNodePtr enode):xNode(xnode), eNode(enode)
    {}
 };
 
 
-exoNodePtr buildCommonSceneGraph(XSI::X3DObject xsiRoot)
+SceneNodePtr buildCommonSceneGraph(XSI::X3DObject xsiRoot)
 {
  
 
    std::list<CSGStackElement> sceneStack;
    
-   exoNodePtr exoRoot(new SceneNode());
+   SceneNodePtr exoRoot(new SceneNode());
    exoRoot->name = xsiRoot.GetName().GetAsciiString();
    exoRoot->type = SceneNode::SCENE_ROOT;
    exoRoot->dccIdentifier = xsiRoot.GetFullName().GetAsciiString();
@@ -118,7 +118,7 @@ exoNodePtr buildCommonSceneGraph(XSI::X3DObject xsiRoot)
 
       CSGStackElement sElement = sceneStack.back();
       X3DObject xNode(sElement.xNode);
-      exoNodePtr eNode = sElement.eNode;
+      SceneNodePtr eNode = sElement.eNode;
       sceneStack.pop_back();
 
       CRefArray children = xNode.GetChildren();
@@ -128,7 +128,7 @@ exoNodePtr buildCommonSceneGraph(XSI::X3DObject xsiRoot)
          X3DObject child(children[j]);
          if(!child.IsValid()) continue;
 
-         exoNodePtr exoChild(new SceneNode());
+         SceneNodePtr exoChild(new SceneNode());
 
          SceneNode::nodeTypeE type = getNodeType(child);
          
@@ -142,7 +142,7 @@ exoNodePtr buildCommonSceneGraph(XSI::X3DObject xsiRoot)
          }
          else{
             //XSI shape nodes should split into two nodes: a transform node, and a pure shape node
-            exoNodePtr geoChild(new SceneNode());
+            SceneNodePtr geoChild(new SceneNode());
 
             exoChild->parent = eNode;
             exoChild->name = child.GetName().GetAsciiString();

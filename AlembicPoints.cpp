@@ -7,7 +7,7 @@ using namespace XSI;
 using namespace MATH;
 
 
-AlembicPoints::AlembicPoints(exoNodePtr eNode, AlembicWriteJob * in_Job, Abc::OObject oParent)
+AlembicPoints::AlembicPoints(SceneNodePtr eNode, AlembicWriteJob * in_Job, Abc::OObject oParent)
 : AlembicObject(eNode, in_Job, oParent)
 {
   AbcG::OPoints points(GetMyParent(), eNode->name, GetJob()->GetAnimatedTs());

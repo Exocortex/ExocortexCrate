@@ -10,7 +10,7 @@ private:
   AbcG::XformSample mXformSample;
 public:
 
-   AlembicModel(exoNodePtr eNode, AlembicWriteJob * in_Job, Abc::OObject oParent);
+   AlembicModel(SceneNodePtr eNode, AlembicWriteJob * in_Job, Abc::OObject oParent);
    ~AlembicModel();
 
    virtual Abc::OCompoundProperty GetCompound();

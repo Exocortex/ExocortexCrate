@@ -6,7 +6,7 @@ using namespace XSI;
 using namespace MATH;
 
 
-AlembicCurves::AlembicCurves(exoNodePtr eNode, AlembicWriteJob * in_Job, Abc::OObject oParent)
+AlembicCurves::AlembicCurves(SceneNodePtr eNode, AlembicWriteJob * in_Job, Abc::OObject oParent)
 : AlembicObject(eNode, in_Job, oParent)
 {
 	AbcG::OCurves curves(GetMyParent(), eNode->name, GetJob()->GetAnimatedTs());

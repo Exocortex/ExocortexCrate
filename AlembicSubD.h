@@ -22,7 +22,7 @@ private:
 
 public:
 
-   AlembicSubD(exoNodePtr eNode, AlembicWriteJob * in_Job, Abc::OObject oParent);
+   AlembicSubD(SceneNodePtr eNode, AlembicWriteJob * in_Job, Abc::OObject oParent);
    ~AlembicSubD();
 
    virtual Abc::OCompoundProperty GetCompound();

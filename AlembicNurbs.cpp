@@ -5,7 +5,7 @@
 using namespace XSI;
 using namespace MATH;
 
-AlembicNurbs::AlembicNurbs(exoNodePtr eNode, AlembicWriteJob * in_Job, Abc::OObject oParent)
+AlembicNurbs::AlembicNurbs(SceneNodePtr eNode, AlembicWriteJob * in_Job, Abc::OObject oParent)
 : AlembicObject(eNode, in_Job, oParent)
 {
    AbcG::ONuPatch nurbs(GetMyParent(), eNode->name, GetJob()->GetAnimatedTs());

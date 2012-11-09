@@ -3,7 +3,7 @@
 
 #include "CommonSceneGraph.h"
 
-exoNodePtr buildCommonSceneGraph(XSI::X3DObject xsiRoot);
+SceneNodePtr buildCommonSceneGraph(XSI::X3DObject xsiRoot);
 
 bool hasExtractableTransform( SceneNode::nodeTypeE type );
 

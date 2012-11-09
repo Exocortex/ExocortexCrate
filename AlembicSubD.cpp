@@ -7,7 +7,7 @@
 using namespace XSI;
 using namespace MATH;
 
-AlembicSubD::AlembicSubD(exoNodePtr eNode, AlembicWriteJob * in_Job, Abc::OObject oParent)
+AlembicSubD::AlembicSubD(SceneNodePtr eNode, AlembicWriteJob * in_Job, Abc::OObject oParent)
 : AlembicObject(eNode, in_Job, oParent)
 {
   AbcG::OSubD subD(GetMyParent(), eNode->name, GetJob()->GetAnimatedTs());

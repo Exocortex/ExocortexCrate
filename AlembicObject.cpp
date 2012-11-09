@@ -6,7 +6,7 @@
 
 AlembicObject::AlembicObject
 (
-   exoNodePtr eNode,
+   SceneNodePtr eNode,
    AlembicWriteJob * in_Job,
    Abc::OObject oParent
 )

@@ -15,7 +15,7 @@ private:
    Abc::OObject mMyParent;
 protected:
 
-   exoNodePtr mExoSceneNode;
+   SceneNodePtr mExoSceneNode;
 
    int mNumSamples;
   AbcG::OVisibilityProperty mOVisibility;
@@ -28,7 +28,7 @@ protected:
   };
 
 public:
-   AlembicObject(exoNodePtr eNode, AlembicWriteJob * in_Job, Abc::OObject oParent);
+   AlembicObject(SceneNodePtr eNode, AlembicWriteJob * in_Job, Abc::OObject oParent);
    ~AlembicObject();
 
    AlembicWriteJob * GetJob() { return mJob; }

@@ -11,7 +11,7 @@ private:
 
 public:
 
-   AlembicNurbs(exoNodePtr eNode, AlembicWriteJob * in_Job, Abc::OObject oParent);
+   AlembicNurbs(SceneNodePtr eNode, AlembicWriteJob * in_Job, Abc::OObject oParent);
    ~AlembicNurbs();
 
    virtual Abc::OCompoundProperty GetCompound();

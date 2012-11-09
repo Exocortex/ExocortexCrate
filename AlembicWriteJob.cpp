@@ -86,10 +86,10 @@ bool AlembicWriteJob::AddObject(AlembicObjectPtr in_Obj)
 
 struct PreProcessStackElement
 {
-   exoNodePtr eNode;
+   SceneNodePtr eNode;
    Abc::OObject oParent;
 
-   PreProcessStackElement(exoNodePtr enode, Abc::OObject parent):eNode(enode), oParent(parent)
+   PreProcessStackElement(SceneNodePtr enode, Abc::OObject parent):eNode(enode), oParent(parent)
    {}
 };
 
@@ -187,7 +187,7 @@ CStatus AlembicWriteJob::PreProcess()
    const bool bFlattenHierarchy = (bool)GetOption(L"flattenHierarchy");
 
    //TODO: eventually this should be a replaced with an equivalent virtual method, and the exporter will be shared
-   exoNodePtr exoSceneRoot = buildCommonSceneGraph(Application().GetActiveSceneRoot());
+   SceneNodePtr exoSceneRoot = buildCommonSceneGraph(Application().GetActiveSceneRoot());
    
    std::map<std::string, bool> selectionMap;
 
@@ -213,7 +213,7 @@ CStatus AlembicWriteJob::PreProcess()
    {
 
       PreProcessStackElement sElement = sceneStack.back();
-      exoNodePtr eNode = sElement.eNode;
+      SceneNodePtr eNode = sElement.eNode;
       sceneStack.pop_back();
       
       Abc::OObject oParent = sElement.oParent;
@@ -266,7 +266,7 @@ CStatus AlembicWriteJob::PreProcess()
       }
 
       if(oNewParent.valid()){
-         for( std::list<exoNodePtr>::iterator it = eNode->children.begin(); it != eNode->children.end(); it++){
+         for( std::list<SceneNodePtr>::iterator it = eNode->children.begin(); it != eNode->children.end(); it++){
 
             if( !bFlattenHierarchy || (bFlattenHierarchy && eNode->type == SceneNode::ETRANSFORM && hasExtractableTransform((*it)->type)) ){
                //If flattening the hierarchy, we want to attach each external transform to its corresponding geometry node.

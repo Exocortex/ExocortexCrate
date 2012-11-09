@@ -24,7 +24,7 @@ private:
 
 public:
 
-   AlembicPolyMesh(exoNodePtr eNode, AlembicWriteJob * in_Job, Abc::OObject oParent);
+   AlembicPolyMesh(SceneNodePtr eNode, AlembicWriteJob * in_Job, Abc::OObject oParent);
    ~AlembicPolyMesh();
 
    virtual Abc::OCompoundProperty GetCompound();

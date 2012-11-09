@@ -5,7 +5,7 @@
 using namespace XSI;
 using namespace MATH;
 
-AlembicCamera::AlembicCamera(exoNodePtr eNode, AlembicWriteJob * in_Job, Abc::OObject oParent)
+AlembicCamera::AlembicCamera(SceneNodePtr eNode, AlembicWriteJob * in_Job, Abc::OObject oParent)
 : AlembicObject(eNode, in_Job, oParent)
 {
   AbcG::OCamera camera(GetMyParent(), eNode->name, GetJob()->GetAnimatedTs());

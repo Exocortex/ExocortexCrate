@@ -39,7 +39,7 @@ public:
       ShapeType_NbElements
    };
 
-   AlembicPoints(exoNodePtr eNode, AlembicWriteJob * in_Job, Abc::OObject oParent);
+   AlembicPoints(SceneNodePtr eNode, AlembicWriteJob * in_Job, Abc::OObject oParent);
    ~AlembicPoints();
 
    virtual Abc::OCompoundProperty GetCompound();

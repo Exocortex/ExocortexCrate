@@ -23,7 +23,7 @@ private:
 
 public:
 
-   AlembicCurves(exoNodePtr eNode, AlembicWriteJob * in_Job, Abc::OObject oParent);
+   AlembicCurves(SceneNodePtr eNode, AlembicWriteJob * in_Job, Abc::OObject oParent);
    ~AlembicCurves();
 
    virtual Abc::OCompoundProperty GetCompound();

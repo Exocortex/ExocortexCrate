@@ -8,7 +8,7 @@
 using namespace XSI;
 using namespace MATH;
 
-AlembicPolyMesh::AlembicPolyMesh(exoNodePtr eNode, AlembicWriteJob * in_Job, Abc::OObject oParent)
+AlembicPolyMesh::AlembicPolyMesh(SceneNodePtr eNode, AlembicWriteJob * in_Job, Abc::OObject oParent)
 : AlembicObject(eNode, in_Job, oParent)
 {
    AbcG::OPolyMesh mesh(GetMyParent(), eNode->name, GetJob()->GetAnimatedTs());

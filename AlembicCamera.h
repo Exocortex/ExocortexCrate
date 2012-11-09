@@ -10,7 +10,7 @@ private:
   AbcG::CameraSample mCameraSample;
 public:
 
-   AlembicCamera(exoNodePtr eNode, AlembicWriteJob * in_Job, Abc::OObject oParent);
+   AlembicCamera(SceneNodePtr eNode, AlembicWriteJob * in_Job, Abc::OObject oParent);
    ~AlembicCamera();
 
    virtual Abc::OCompoundProperty GetCompound();
