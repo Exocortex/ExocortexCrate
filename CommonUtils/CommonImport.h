@@ -38,6 +38,8 @@ public:
    {}
 
    bool parse(const std::string& jobString);
+
+   std::string buildJobString();
 };
 
 #endif

@@ -2,6 +2,7 @@
 
 
 #include <boost/algorithm/string.hpp>
+#include <sstream>
 
 
 bool parseBool(std::string value){
@@ -21,9 +22,9 @@ bool IJobStringParser::parse(const std::string& jobString)
 	std::vector<std::string> tokens;
 	boost::split(tokens, jobString, boost::is_any_of(";"));
 
-   if(tokens.empty()){
-      return false;
-   }
+   //if(tokens.empty()){
+   //   return false;
+   //}
 
 	for(int j=0; j<tokens.size(); j++){
 
@@ -58,7 +59,7 @@ bool IJobStringParser::parse(const std::string& jobString)
       else if(boost::iequals(valuePair[0], "importBoundingBoxes")){
          importBoundingBoxes = parseBool(valuePair[1]);
       }
-      else if(boost::iequals(valuePair[0], "visibility")){
+      else if(boost::iequals(valuePair[0], "importVisibilityControllers")){
          importVisibilityControllers = parseBool(valuePair[1]);
 		}
 	   else if(boost::iequals(valuePair[0], "failOnUnsupported")){
@@ -78,4 +79,30 @@ bool IJobStringParser::parse(const std::string& jobString)
 	}
 
    return true;
+}
+
+std::string IJobStringParser::buildJobString()
+{
+   ////Note: there are currently some minor differences between the apps. This function is somewhat XSI specific.
+   std::stringstream stream;
+
+   if(!filename.empty()){
+      stream<<"filename="<<filename<<";";
+   }
+
+   stream<<"normals="<<importNormals<<";uvs="<<importUVs<<";facesets="<<importFacesets;
+   stream<<";importVisibilityControllers="<<importVisibilityControllers<<";importStandinProperties="<<importStandinProperties;
+   stream<<";importBoundingBoxes="<<importBoundingBoxes<<";attachToExisting="<<attachToExisting<<";failOnUnsupported="<<failOnUnsupported;
+   
+   if(!nodesToImport.empty()){
+      stream<<";identifiers=";
+      for(int i=0; i<nodesToImport.size(); i++){
+         stream<<nodesToImport[i];
+         if(i != nodesToImport.size()-1){
+            stream<<",";
+         }
+      }
+   }
+   
+   return stream.str();
 }
