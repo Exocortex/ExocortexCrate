@@ -8,7 +8,7 @@
 #include <map>
 
 class SceneNode;
-typedef boost::shared_ptr<SceneNode> exoNodePtr;
+typedef boost::shared_ptr<SceneNode> SceneNodePtr;
 
 class SceneNode
 {
@@ -29,8 +29,8 @@ public:
       NUM_NODE_TYPES
    };
 
-   exoNodePtr parent;
-   std::list<exoNodePtr> children;
+   SceneNodePtr parent;
+   std::list<SceneNodePtr> children;
 
    nodeTypeE type;
    std::string name;
@@ -46,13 +46,13 @@ public:
 
 };
 
-void printSceneGraph(exoNodePtr root, bool bOnlyPrintSelected);
+void printSceneGraph(SceneNodePtr root, bool bOnlyPrintSelected);
 
 bool hasExtractableTransform( SceneNode::nodeTypeE type );
 
-void selectNodes(exoNodePtr root, SceneNode::SelectionT selectionMap, bool bSelectParents, bool bChildren, bool bSelectShapeNodes);
+void selectNodes(SceneNodePtr root, SceneNode::SelectionT selectionMap, bool bSelectParents, bool bChildren, bool bSelectShapeNodes);
 
-//void filterNodeSelection(exoNodePtr root, bool bExcludeNonTransforms);
+//void filterNodeSelection(SceneNodePtr root, bool bExcludeNonTransforms);
 
 
 #endif

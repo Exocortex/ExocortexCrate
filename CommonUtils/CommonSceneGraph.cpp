@@ -3,13 +3,13 @@
 
 struct PrintStackElement
 {
-   exoNodePtr eNode;
+   SceneNodePtr eNode;
    int level;
-   PrintStackElement(exoNodePtr enode, int l):eNode(enode), level(l)
+   PrintStackElement(SceneNodePtr enode, int l):eNode(enode), level(l)
    {}
 };
 
-void printSceneGraph(exoNodePtr root, bool bOnlyPrintSelected)
+void printSceneGraph(SceneNodePtr root, bool bOnlyPrintSelected)
 {
  
 
@@ -23,7 +23,7 @@ void printSceneGraph(exoNodePtr root, bool bOnlyPrintSelected)
    {
 
       PrintStackElement sElement = sceneStack.back();
-      exoNodePtr eNode = sElement.eNode;
+      SceneNodePtr eNode = sElement.eNode;
       sceneStack.pop_back();
 
       if(!bOnlyPrintSelected || (bOnlyPrintSelected && eNode->selected)){
@@ -31,7 +31,7 @@ void printSceneGraph(exoNodePtr root, bool bOnlyPrintSelected)
             //<<" - identifer: "<<eNode->dccIdentifier);
       }
 
-      for( std::list<exoNodePtr>::iterator it = eNode->children.begin(); it != eNode->children.end(); it++){
+      for( std::list<SceneNodePtr>::iterator it = eNode->children.begin(); it != eNode->children.end(); it++){
          sceneStack.push_back(PrintStackElement(*it, sElement.level+1));
       }
    }
@@ -52,12 +52,12 @@ bool hasExtractableTransform( SceneNode::nodeTypeE type )
 
 struct SelectChildrenStackElement
 {
-   exoNodePtr eNode;
+   SceneNodePtr eNode;
    bool bSelectChildren;
-   SelectChildrenStackElement(exoNodePtr enode, bool selectChildren):eNode(enode), bSelectChildren(selectChildren)
+   SelectChildrenStackElement(SceneNodePtr enode, bool selectChildren):eNode(enode), bSelectChildren(selectChildren)
    {}
 };
-void selectNodes(exoNodePtr root, SceneNode::SelectionT selectionMap, bool bSelectParents, bool bChildren, bool bSelectShapeNodes)
+void selectNodes(SceneNodePtr root, SceneNode::SelectionT selectionMap, bool bSelectParents, bool bChildren, bool bSelectShapeNodes)
 {
 
 
@@ -68,7 +68,7 @@ void selectNodes(exoNodePtr root, SceneNode::SelectionT selectionMap, bool bSele
    while( !sceneStack.empty() )
    {
       SelectChildrenStackElement sElement = sceneStack.back();
-      exoNodePtr eNode = sElement.eNode;
+      SceneNodePtr eNode = sElement.eNode;
       sceneStack.pop_back();
 
       bool bSelected = false;
@@ -79,7 +79,7 @@ void selectNodes(exoNodePtr root, SceneNode::SelectionT selectionMap, bool bSele
          eNode->selected = true;
 
          if(eNode->type == SceneNode::ETRANSFORM && bSelectShapeNodes){
-            for(std::list<exoNodePtr>::iterator it=eNode->children.begin(); it != eNode->children.end(); it++){
+            for(std::list<SceneNodePtr>::iterator it=eNode->children.begin(); it != eNode->children.end(); it++){
                if(::hasExtractableTransform((*it)->type)){
                   (*it)->selected = true;
                   break;
@@ -88,7 +88,7 @@ void selectNodes(exoNodePtr root, SceneNode::SelectionT selectionMap, bool bSele
          }
 
          if(bSelectParents){// select all parent nodes
-            exoNodePtr currNode = eNode->parent;
+            SceneNodePtr currNode = eNode->parent;
             while(currNode){
                currNode->selected = true;
                currNode = currNode->parent;
@@ -104,7 +104,7 @@ void selectNodes(exoNodePtr root, SceneNode::SelectionT selectionMap, bool bSele
          eNode->selected = true;
       }
 
-      for( std::list<exoNodePtr>::iterator it = eNode->children.begin(); it != eNode->children.end(); it++){
+      for( std::list<SceneNodePtr>::iterator it = eNode->children.begin(); it != eNode->children.end(); it++){
          sceneStack.push_back(SelectChildrenStackElement(*it, bSelected));
       }
    }
@@ -113,12 +113,12 @@ void selectNodes(exoNodePtr root, SceneNode::SelectionT selectionMap, bool bSele
 }
 
 
-//void filterNodeSelection(exoNodePtr root, bool bExcludeNonTransforms)
+//void filterNodeSelection(SceneNodePtr root, bool bExcludeNonTransforms)
 //{
 //   struct stackElement
 //   {
-//      exoNodePtr eNode;
-//      stackElement(exoNodePtr enode):eNode(enode)
+//      SceneNodePtr eNode;
+//      stackElement(SceneNodePtr enode):eNode(enode)
 //      {}
 //   };
 //
@@ -129,7 +129,7 @@ void selectNodes(exoNodePtr root, SceneNode::SelectionT selectionMap, bool bSele
 //   while( !sceneStack.empty() )
 //   {
 //      stackElement sElement = sceneStack.back();
-//      exoNodePtr eNode = sElement.eNode;
+//      SceneNodePtr eNode = sElement.eNode;
 //      sceneStack.pop_back();
 //
 //      if(bExcludeNonTransforms && 
@@ -138,7 +138,7 @@ void selectNodes(exoNodePtr root, SceneNode::SelectionT selectionMap, bool bSele
 //         eNode->selected = false;
 //      }
 //
-//      for( std::list<exoNodePtr>::iterator it = eNode->children.begin(); it != eNode->children.end(); it++){
+//      for( std::list<SceneNodePtr>::iterator it = eNode->children.begin(); it != eNode->children.end(); it++){
 //         sceneStack.push_back(stackElement(*it));
 //      }
 //   }
