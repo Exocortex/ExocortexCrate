@@ -56,6 +56,7 @@ ESS_CALLBACK_END
 
 
 ESS_CALLBACK_START(alembic_export_Execute,CRef&)
+   ESS_LOG_WARNING("The alembic_export command is deprecated. Please use alembic_export_jobs instead.");
    return exportCommandImp(in_ctxt);
 ESS_CALLBACK_END
 

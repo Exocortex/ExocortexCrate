@@ -1714,7 +1714,7 @@ ESS_CALLBACK_START(alembic_import_Execute, CRef&)
    str += args[2];
    str += "facesets=";
    str += args[3];
-   str += "visibility=";
+   str += "importVisibilityControllers=";
    str += args[4];
    str += "importStandinProperties=";
    str += args[5];
@@ -1726,6 +1726,8 @@ ESS_CALLBACK_START(alembic_import_Execute, CRef&)
    str += args[8];
    str += "identifiers=";
    str += args[9].GetAsText();
+
+   ESS_LOG_WARNING("The alembic_import command is deprecated. Please use alembic_import_jobs instead.");
 
    importJobArgs[0] = str;
    Application().ExecuteCommand(L"alembic_import_jobs", importJobArgs, importJobResult);
@@ -1749,37 +1751,10 @@ ESS_CALLBACK_START(alembic_import_jobs_Execute, CRef&)
    }
 
    IJobStringParser jobParser;
-   CString jobString = args[0].GetAsText();
-   bool bParseSuccess = jobParser.parse(jobString.GetAsciiString());
-  
-   // take care of the filename
-   if(jobParser.filename.empty())
-   {
-	  // let's see if we are in interactive mode
-      if(Application().IsInteractive())
-      {
-         CComAPIHandler toolkit;
-         toolkit.CreateInstance(L"XSI.UIToolkit");
-         CComAPIHandler filebrowser(toolkit.GetProperty(L"FileBrowser"));
-         filebrowser.PutProperty(L"InitialDirectory",Application().GetActiveProject().GetPath());
-         filebrowser.PutProperty(L"Filter",L"Alembic Files(*.abc)|*.abc||");
-         CValue returnVal;
-         filebrowser.Call(L"ShowOpen",returnVal);
-         jobParser.filename = filebrowser.GetProperty(L"FilePathName").GetAsText().GetAsciiString();
-         if(jobParser.filename.empty()){
-            return CStatus::Abort;
-         }
-      }
-      else
-      {
-         Application().LogMessage(L"[ExocortexAlembic] No filename specified.",siErrorMsg);
-         return CStatus::InvalidArgument;
-      }
-   }
+   std::string jobString = args[0].GetAsText().GetAsciiString();
 
-   // check if we have arguments
-   if(!bParseSuccess)
-   {
+   if(jobString.empty()){
+
       // let's setup the property
       CustomProperty settings;
       settings = Application().GetActiveSceneRoot().AddProperty(L"alembic_import_settings");
@@ -1822,9 +1797,43 @@ ESS_CALLBACK_START(alembic_import_jobs_Execute, CRef&)
       jobParser.attachToExisting = settings.GetParameterValue(L"attach");
 	   jobParser.failOnUnsupported = settings.GetParameterValue(L"failOnUnsupported");
 
+      Application().LogMessage(CString(L"[ExocortexAlembic] Using WriteJob:") + jobParser.buildJobString().c_str());
+
       Application().ExecuteCommand(L"DeleteObj",inspectArgs,inspectResult);
    }
+   else{
+      bool bParseSuccess = jobParser.parse(jobString);
+      if(!bParseSuccess){
+         ESS_LOG_ERROR("[alembic] Error parsing import job string.");
+         return CStatus::Abort;
+      }
+      Application().LogMessage(CString(L"[ExocortexAlembic] Using WriteJob:") + jobString.c_str());
+   }
 
+   // take care of the filename
+   if(jobParser.filename.empty())
+   {
+	  // let's see if we are in interactive mode
+      if(Application().IsInteractive())
+      {
+         CComAPIHandler toolkit;
+         toolkit.CreateInstance(L"XSI.UIToolkit");
+         CComAPIHandler filebrowser(toolkit.GetProperty(L"FileBrowser"));
+         filebrowser.PutProperty(L"InitialDirectory",Application().GetActiveProject().GetPath());
+         filebrowser.PutProperty(L"Filter",L"Alembic Files(*.abc)|*.abc||");
+         CValue returnVal;
+         filebrowser.Call(L"ShowOpen",returnVal);
+         jobParser.filename = filebrowser.GetProperty(L"FilePathName").GetAsText().GetAsciiString();
+         if(jobParser.filename.empty()){
+            return CStatus::Abort;
+         }
+      }
+      else
+      {
+         Application().LogMessage(L"[ExocortexAlembic] No filename specified.",siErrorMsg);
+         return CStatus::InvalidArgument;
+      }
+   }
 
    // let's try to read this
    Abc::IArchive* archive = NULL;
