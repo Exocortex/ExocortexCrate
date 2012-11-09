@@ -353,24 +353,24 @@ CStatus alembic_create_item_Invoke
       case alembicItemType_nurbs:
       {
         pObjectCache = getObjectCacheFromArchive( std::string( file.GetAsciiString() ), std::string( identifier.GetAsciiString() ) );
-         abcObject = pObjectCache->obj;
-         if(!abcObject.valid())
+         if(pObjectCache == NULL || !pObjectCache->obj.valid())
          {
-            Application().LogMessage(L"[ExocortexAlembic] Identifier '"+identifier+L"' is not valid for given filename.",siErrorMsg);
+           EC_LOG_ERROR("[ExocortexAlembic] Identifier '" << identifier.GetAsciiString() << "' is not valid for given filename: " << file.GetAsciiString() );
             return CStatus::InvalidArgument;
          }
+         abcObject = pObjectCache->obj;
          isAnimated = (itemType == alembicItemType_bbox) || (! pObjectCache->isConstant && itemType != alembicItemType_geomapprox);
          break;
       }
       case alembicItemType_visibility:
       {
         pObjectCache = getObjectCacheFromArchive( std::string( file.GetAsciiString() ), std::string( identifier.GetAsciiString() ) );
-         abcObject = pObjectCache->obj;
-         if(!abcObject.valid())
+         if(pObjectCache == NULL || !pObjectCache->obj.valid())
          {
-            Application().LogMessage(L"[ExocortexAlembic] Identifier '"+identifier+L"' is not valid for given filename.",siErrorMsg);
+           EC_LOG_ERROR("[ExocortexAlembic] Identifier '" << identifier.GetAsciiString() << "' is not valid for given filename: " << file.GetAsciiString() );
             return CStatus::InvalidArgument;
          }
+         abcObject = pObjectCache->obj;
          AbcG::IVisibilityProperty visibilityProperty = 
             AbcG::GetVisibilityProperty(abcObject);
          if(!visibilityProperty.valid())
@@ -1797,7 +1797,7 @@ ESS_CALLBACK_START(alembic_import_jobs_Execute, CRef&)
       // prepare for deletion
       inspectArgs.Resize(1);
       inspectArgs[0] = settings.GetFullName();
-      if((bool)inspectResult)
+      if((bool)inspectResult) 
       {
          Application().ExecuteCommand(L"DeleteObj",inspectArgs,inspectResult);
          return CStatus::Abort;
@@ -1828,10 +1828,8 @@ ESS_CALLBACK_START(alembic_import_jobs_Execute, CRef&)
 
    // let's try to read this
    Abc::IArchive* archive = NULL;
-   CString filenameCStr(jobParser.filename.c_str());
-   CString resolvedPath = CUtils::ResolveTokenString(filenameCStr, XSI::CTime(), false);
    try{
-      archive = new Abc::IArchive( Alembic::AbcCoreHDF5::ReadArchive(), resolvedPath.GetAsciiString() );
+      archive = getArchiveFromID( jobParser.filename );
    }
    catch(Alembic::Util::Exception& e){
       std::string exc(e.what());
@@ -1842,8 +1840,10 @@ ESS_CALLBACK_START(alembic_import_jobs_Execute, CRef&)
       ESS_LOG_ERROR("[alembic] Error reading file.");
       return CStatus::Fail;
    }
-   addRefArchive( std::string( resolvedPath.GetAsciiString() ) );
-   AbcArchiveCache *pArchiveCache = getArchiveCache( std::string( resolvedPath.GetAsciiString() ) );
+   addRefArchive( jobParser.filename );
+   AbcArchiveCache *pArchiveCache = getArchiveCache( jobParser.filename );
+
+   CString filenameCStr(jobParser.filename.c_str());
 
    // also precap the jobParser.filename with the project token just in case
    CString projectPath = Application().GetActiveProject().GetPath();
@@ -1986,7 +1986,7 @@ ESS_CALLBACK_START(alembic_import_jobs_Execute, CRef&)
 				CStatus localStatus = createShape( pMergedGeomChildObjectCache, importRootNode, parentNode, newNodeRef, filenameCStr, 
                jobParser.attachToExisting, jobParser.importStandinProperties, jobParser.importBoundingBoxes, true, jobParser.failOnUnsupported, createItemArgs);
 				if( ! localStatus.Succeeded() ) {
-         delRefArchive( std::string( resolvedPath.GetAsciiString() ) );
+         delRefArchive( jobParser.filename );
 					return localStatus;
 				}
 			}
@@ -1998,7 +1998,7 @@ ESS_CALLBACK_START(alembic_import_jobs_Execute, CRef&)
 				CStatus localStatus = createShape( sElement.pObjectCache, importRootNode, parentNode, newNodeRef, filenameCStr, 
                jobParser.attachToExisting, jobParser.importStandinProperties, jobParser.importBoundingBoxes, false, jobParser.failOnUnsupported, createItemArgs);
 				if( ! localStatus.Succeeded() ) {
-         delRefArchive( std::string( resolvedPath.GetAsciiString() ) );
+         delRefArchive( jobParser.filename  );
 					return localStatus;
 				}
 			}
@@ -2038,9 +2038,7 @@ ESS_CALLBACK_START(alembic_import_jobs_Execute, CRef&)
 
    prog.PutVisible(false);
 
-   delRefArchive( std::string( resolvedPath.GetAsciiString() ) );
-
-   delete(archive);
+   delRefArchive( jobParser.filename );
 
    return CStatus::OK;
 ESS_CALLBACK_END
