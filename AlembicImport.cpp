@@ -1746,7 +1746,7 @@ ESS_CALLBACK_START(alembic_import_jobs_Execute, CRef&)
    CRefArray selectedObjects = Application().GetSelection().GetArray();
    if(selectedObjects.GetCount() > 1)
    {
-      Application().LogMessage(L"[ExocortexAlembic] Too many objects selected, for re-basing root of import, you should only select a single object.",siErrorMsg);
+      Application().LogMessage(L"[ExocortexAlembic] Too many objects selected, you can select at most one attachment root.",siErrorMsg);
       return CStatus::InvalidArgument;
    }
 
@@ -1951,6 +1951,7 @@ ESS_CALLBACK_START(alembic_import_jobs_Execute, CRef&)
       importRootNode = selectedObjects[0];
       importRootNode = X3DObject( importRootNode ).GetParent3DObject().GetRef();
       //importRootNode = X3DObject( importRootNode ).GetRef();
+      ESS_LOG_WARNING("Attachment root is "<<importRootNode.GetAsText().GetAsciiString());
    }
 
    std::list<ImportStackElement> sceneStack;
