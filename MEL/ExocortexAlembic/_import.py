@@ -6,9 +6,11 @@ import _functions as fnt
 def fillAlembicInfoList(filename):
 	alembicInfos = []
 	cmds.ExocortexAlembic_profileBegin(f="Python.ExocortexAlembic._import.fillAlembicInfoList")
-	AlembicInfo.nbTransforms = 0
+	fnt.AlembicInfo.nbTransforms = 0
 	for info in cmds.ExocortexAlembic_getInfo(f=filename):
-		alembicInfos.append(fnt.AlembicInfo(info.split("|")))
+		ai = fnt.AlembicInfo(info.split("|"))
+		alembicInfos.append(ai)
+		print("\timport: " + str(ai))
 	cmds.ExocortexAlembic_profileEnd(f="Python.ExocortexAlembic._import.fillAlembicInfoList")
 	return alembicInfos
 
@@ -17,8 +19,9 @@ def connectShapeAndReader(shape, reader):
 	cmds.connectAttr(reader+".rotate", 		shape+".rotate")
 	cmds.connectAttr(reader+".scale", 		shape+".scale")
 
-def doPolyMesh(curObj, purepointcache, dynamictopology, doItParam, fileNode):
+def doPolyMesh(curObj, dynamictopology, doItParam, fileNode):
 	""" import a polymesh object """
+	print("doPolyMesh with " + str(curObj))
 	cmds.ExocortexAlembic_profileBegin(f="Python.ExocortexAlembic._import.doPolyMesh")
 	reader = ""
 	topoReader = ""
@@ -30,19 +33,18 @@ def doPolyMesh(curObj, purepointcache, dynamictopology, doItParam, fileNode):
 		reader = fnt.alembicCreateNode(curObj.name+".inMesh","ExocortexAlembicPolyMeshDeform")
 
 	if reader == "":
-		if not purepointcache:
-			topoReader = cmds.createNode("ExocortexAlembicPolyMesh")
-			fnt.alembicConnectAttr(topoReader+".outMesh", shape+".inMesh")
-			fnt.alembicConnectAttr(fileNode+".outFileName", topoReader+".fileName")
-			cmd.setAttr(topoReader+".identifier", curObj.identifier, type="string")
-	        cmd.setAttr(topoReader+".normals", doItParam[1])
-	        cmd.setAttr(topoReader+".uvs", doItParam[2])
-	        if doItParam[3]:
-	        	cmds.ExocortexAlembic_createFaceSets(o=shape, f=doItParam[0], i=curObj.identifier)
-	        if dynamictopology:
-	        	reader = topoReader
+		topoReader = cmds.createNode("ExocortexAlembicPolyMesh")
+		fnt.alembicConnectAttr(topoReader+".outMesh", shape+".inMesh")
+		fnt.alembicConnectAttr(fileNode+".outFileName", topoReader+".fileName")
+		cmds.setAttr(topoReader+".identifier", curObj.identifier, type="string")
+        cmds.setAttr(topoReader+".normals", doItParam[1])
+        cmds.setAttr(topoReader+".uvs", doItParam[2])
+        if doItParam[3]:
+        	cmds.ExocortexAlembic_createFaceSets(o=shape, f=doItParam[0], i=curObj.identifier)
+        if dynamictopology:
+        	reader = topoReader
 
-		if reader == "" and curObj.constant:
+		if reader == "" and not curObj.constant:
 			reader = cmds.deformer(shape, type="ExocortexAlembicPolyMeshDeform")[0]
 
 	cmds.ExocortexAlembic_profileEnd(f="Python.ExocortexAlembic._import.doPolyMesh")
@@ -50,11 +52,12 @@ def doPolyMesh(curObj, purepointcache, dynamictopology, doItParam, fileNode):
 
 def doXform(curObj, alembicInfos, doItParam, fileNode):
 	""" import an Xform """
+	print("doXform with " + str(curObj))
 	cmds.ExocortexAlembic_profileBegin(f="Python.ExocortexAlembic._import.doXform")
 	reader = ""
 	shape = ""
 	if len(alembicInfos) == fnt.AlembicInfo.nbTransforms:
-		locator = fnt.alembicCreateNode(curObj.name+"Shape","locator")
+		locator = cmds.createNode("locator")
 		shape = cmds.listRelatives(locator, p=True)[0]
 		reader = cmds.createNode("ExocortexAlembicXform")
 		connectShapeAndReader(shape, reader)
@@ -74,7 +77,30 @@ def doXform(curObj, alembicInfos, doItParam, fileNode):
 
 def doGroup(curObj, alembicInfos, doItParam, fileNode):
 	""" import an Xform with other Xforms as children """
-	pass
+	print("doGroup with " + str(curObj))
+	cmds.ExocortexAlembic_profileBegin(f="Python.ExocortexAlembic._import.doGroup")
+	reader = ""
+	shape = ""
+	if len(alembicInfos) == fnt.AlembicInfo.nbTransforms:
+		shape = cmds.listRelatives(cmds.createNode("locator"), p=True)[0]
+		shape = cmds.rename(shape, curObj.name, ignoreShape=True)
+		reader = cmds.createNode("ExocortexAlembicXform")
+	else:
+		shape = fnt.alembicCreateNode(curObj.name, "transform")
+        reader = cmds.createNode("ExocortexAlembicXform")
+	connectShapeAndReader(shape, reader)
+
+	for scID in curObj.childIDs.split("."):
+		childObj = alembicInfos[int(scID)-1]
+		cObj = childObj.object
+		if cObj == "" or cObj == shape:
+			continue
+		if childObj.type == "Xform" or childObj.type == "Group":
+			cmds.parent(cObj, shape)
+		else:
+			cmds.parent(cObj, shape, shape=True)
+	cmds.ExocortexAlembic_profileEnd(f="Python.ExocortexAlembic._import.doGroup")
+	return reader, shape
 
 def doIt(filename, importNormals=False, importUvs=True, importFaceSets=True):
 	"""
@@ -88,20 +114,14 @@ def doIt(filename, importNormals=False, importUvs=True, importFaceSets=True):
 	cmds.ExocortexAlembic_profileReset()
 	cmds.ExocortexAlembic_fileRefCount(i=filename)
 
-	# fill the lists
+	# fill the list
+	print("fill the list")
 	alembicInfos = fillAlembicInfoList(filename)
-	
-	# time control/file node
-	timeControl = "AlembicTimeControl"
-	if not cmds.objExists(timeControl):
-		timeControl = cmds.createNode("ExocortexAlembicTimeControl", name=timeControl)
-		fnt.alembicConnectAttr("time1.outTime", timeControl+".inTime")
-	fileNode = cmds.createNode("ExocortexAlembicFile")
-	cmds.setAttr(fileNode+".fileName", filename, type="string")
-
+	fileNode = fnt.alembicTimeAndFileNode(filename)
 	cmds.progressBar(gMainProgressBar, e=True, bp=True, ii=1, max=len(alembicInfos))
 
 	# for each each, starting with the last one!
+	print("going through all objects")
 	for ii in xrange(len(alembicInfos)-1, -1, -1):
 		if cmds.progressBar(gMainProgressBar, q=True, ic=True):
 			print("Import interrupted by the user")
@@ -109,9 +129,7 @@ def doIt(filename, importNormals=False, importUvs=True, importFaceSets=True):
 		cmds.progressBar(gMainProgressBar, e=True, s=1)
 
 		curObj = alembicInfos[ii]
-		if curObj.identifier == "":
-			continue
-		parts = curObj.identifier.split("/")
+		print("Treating object " + str(curObj))
 		reader = ""
 		topoReader = ""
 		shape = ""
@@ -120,53 +138,51 @@ def doIt(filename, importNormals=False, importUvs=True, importFaceSets=True):
 		purepointcache = False
 		dynamictopology = False
 		hair = False
-		data = curObj.data.split(";")
-		for dt in data:
+		for dt in curObj.data.split(";"):
 			if dt == "purepointcache=1":
-        		purepointcache = True
-      		else if dt =="dynamictopology=1":
-        		dynamictopology = True
-      		else if dt =="hair=1":
-        		hair = True
+				purepointcache = True
+			elif dt =="dynamictopology=1":
+				dynamictopology = True
+			elif dt =="hair=1":
+				hair = True
 
-        if curObj.type == "Xform":
-        	reader, shape = doXform(curObj, alembicInfos, doItParam, fileNode)
-        elif curObj.type == "PolyMesh":
-        	reader, topoReader, shape = doPolyMesh(curObj, purepointcache, dynamictopology, doItParam, fileNode)
-        elif curObj.type == "Group":
-        	pass
-        elif curObj.type == "SubD":
-        	pass
-        elif curObj.type == "Curves":
-        	pass
-        elif curObj.type == "Points":
-        	pass
-        elif curObj.type == "Camera":
-        	pass
-        elif curObj.type == "Unknown":
-        	pass
-        else:
-        	print("Invalid object type for object "+ curObj.name +"\n")
-      		continue
+		# import according to the type
+		if curObj.type == "Xform":
+			reader, shape = doXform(curObj, alembicInfos, doItParam, fileNode)
+		elif curObj.type == "PolyMesh":
+			reader, topoReader, shape = doPolyMesh(curObj, dynamictopology, doItParam, fileNode)
+		elif curObj.type == "Group":
+			reader, shape = doGroup(curObj, alembicInfos, doItParam, fileNode)
+		elif curObj.type == "SubD":
+			print("Type " + curObj.type + " not supported yet!")
+		elif curObj.type == "Curves":
+			print("Type " + curObj.type + " not supported yet!")
+		elif curObj.type == "Points":
+			print("Type " + curObj.type + " not supported yet!")
+		elif curObj.type == "Camera":
+			print("Type " + curObj.type + " not supported yet!")
+		elif curObj.type == "Unknown":
+			pass
+		else:
+			print("Invalid object type for object "+ curObj.name +"\n")
+			continue
 
-      	# finalize
-      	cmds.ExocortexAlembic_profileBegin(f="Python.ExocortexAlembic._import.doIt:finalize")
-	    if ($reader != "")
-	    {
-	      if (curObj.constant)
-	        fnt.alembicConnectAttr(timeControl+".outTime", reader+".inTime")
-	      fnt.alembicConnectAttr($fileNode+".outFileName", $reader+".fileName")
-	      cmds.setAttr($reader+".identifier", curObj.identifier, type="string")
-	    }
-	    curObj.object = shape
-      	cmds.ExocortexAlembic_profileEnd(f="Python.ExocortexAlembic._import.doIt:finalize")
+		# finalize
+		cmds.ExocortexAlembic_profileBegin(f="Python.ExocortexAlembic._import.doIt:finalize")
+		if reader != "":
+			if curObj.constant:
+				fnt.alembicConnectAttr(timeControl+".outTime", reader+".inTime")
+			fnt.alembicConnectAttr(fileNode+".outFileName", reader+".fileName")
+			cmds.setAttr(reader+".identifier", curObj.identifier, type="string")
+		curObj.object = shape
+		cmds.ExocortexAlembic_profileEnd(f="Python.ExocortexAlembic._import.doIt:finalize")
 
-	    # setup metadata if we have it
-	    cmds.ExocortexAlembic_createMetaData(f=filename, i=curObj.identifier, o=shape)
+		# setup metadata if we have it
+		cmds.ExocortexAlembic_createMetaData(f=filename, i=curObj.identifier, o=shape)
 
 	# finalization!
 	cmds.progressBar(gMainProgressBar, e=True, endProgress=True)
-  	cmds.ExocortexAlembic_postImportPoints()
+	cmds.ExocortexAlembic_postImportPoints()
 	cmds.ExocortexAlembic_fileRefCount(d=filename)
 	cmds.ExocortexAlembic_profileEnd(f="Python.ExocortexAlembic._import.doIt")
 	pass

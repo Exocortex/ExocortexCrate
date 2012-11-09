@@ -6,7 +6,7 @@ class AlembicInfo:
 	""" A structure to hold information about all objects in the file! """
 	nbTransforms = 0
 	def __init__(self, infoTokens):
-		self.identifier = cmds.ExocortexAlembic_getNodeFromIdentifier(i=infoTokens[0])
+		self.identifier = infoTokens[0]
 		self.type = infoTokens[1]
 		if self.type == "Xform":
 			AlembicInfo.nbTransforms = AlembicInfo.nbTransforms + 1
@@ -20,9 +20,28 @@ class AlembicInfo:
 			self.data = infoTokens[7]
 		self.object = ""
 
+	def __str__(self):
+		return "AI[i:" + str(self.identifier) + ", t:" + str(self.type) + ", n:" + str(self.name) + "]"
+
+	def __repr__(self):
+		return str(self)
+
+def alembicTimeAndFileNode(filename):
+	cmds.ExocortexAlembic_profileBegin(f="Python.ExocortexAlembic._functions.alembicTimeAndFileNode")
+	print("time control")
+	timeControl = "AlembicTimeControl"
+	if not cmds.objExists(timeControl):
+		timeControl = cmds.createNode("ExocortexAlembicTimeControl", name=timeControl)
+		alembicConnectAttr("time1.outTime", timeControl+".inTime")
+	print("file node")
+	fileNode = cmds.createNode("ExocortexAlembicFile")
+	cmds.setAttr(fileNode+".fileName", filename, type="string")
+	cmds.ExocortexAlembic_profileEnd(f="Python.ExocortexAlembic._functions.alembicTimeAndFileNode")
+	return fileNode
+
 def alembicCreateNode(name, type):
 	""" create a node and make sure to return a full name and create namespaces if necessary! """
-	cmds.ExocortexAlembic_profileBegin(f="Python.ExocortexAlembic._import.createAlembicNode")
+	cmds.ExocortexAlembic_profileBegin(f="Python.ExocortexAlembic._functions.createAlembicNode")
 
 	# create namespaces if necessary!
 	tokens = name.split(":")
@@ -46,15 +65,16 @@ def alembicCreateNode(name, type):
 		if len(pp) > 0:
 			result = pp[0] + "|" + result
 
-	cmds.ExocortexAlembic_profileEnd(f="Python.ExocortexAlembic._import.createAlembicNode")
+	cmds.ExocortexAlembic_profileEnd(f="Python.ExocortexAlembic._functions.createAlembicNode")
 	return result
 
 def alembicConnectAttr(source, target):
 	""" make sure nothing is connected the target and then connect the source to the target """
-	cmds.ExocortexAlembic_profileBegin(f="Python.ExocortexAlembic._import.alembicConnectIfUnconnected")
-	currentSource = cmds.connectionInfo("pSphereShape1.inMesh", sfd=True)
+	cmds.ExocortexAlembic_profileBegin(f="Python.ExocortexAlembic._functions.alembicConnectIfUnconnected")
+	currentSource = cmds.connectionInfo(target, sfd=True)
 	if currentSource != "" and currentSource != source:
 		cmds.disconnectAttr(currentSource, target)
 	cmds.connectAttr(source, target)
-	cmds.ExocortexAlembic_profileEnd(f="Python.ExocortexAlembic._import.alembicConnectIfUnconnected")
+	cmds.ExocortexAlembic_profileEnd(f="Python.ExocortexAlembic._functions.alembicConnectIfUnconnected")
 	pass
+
