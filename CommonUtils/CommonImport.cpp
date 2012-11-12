@@ -1,5 +1,7 @@
 #include "CommonImport.h"
 
+#include "CommonUtilities.h"
+#include "CommonAlembic.h"
 
 #include <boost/algorithm/string.hpp>
 #include <sstream>
@@ -106,3 +108,121 @@ std::string IJobStringParser::buildJobString()
    
    return stream.str();
 }
+
+
+SceneNode::nodeTypeE getNodeType(Alembic::Abc::IObject iObj)
+{
+   AbcG::MetaData metadata = iObj.getMetaData();
+   if(AbcG::IXform::matches(metadata)){
+      return SceneNode::ITRANSFORM;
+      //Note: this method assumes everything is an ITRANSFORM, this is corrected later on in the the method that builds the common scene graph
+   }
+	else if(AbcG::IPolyMesh::matches(metadata) || 
+		AbcG::ISubD::matches(metadata) ){
+      return SceneNode::POLYMESH;
+	}
+	else if(AbcG::ICamera::matches(metadata)){
+      return SceneNode::CAMERA;
+	}
+	else if(AbcG::IPoints::matches(metadata)){
+      return SceneNode::PARTICLES;
+	}
+	else if(AbcG::ICurves::matches(metadata)){
+      return SceneNode::CURVES;
+	}
+	else if(AbcG::ILight::matches(metadata)){
+      return SceneNode::LIGHT;
+	}
+   else if(AbcG::INuPatch::matches(metadata)){
+      return SceneNode::SURFACE;
+	}
+   return SceneNode::UNKNOWN;
+}
+
+struct AlembicISceneBuildElement
+{
+   AbcObjectCache *pObjectCache;
+   SceneNodePtr parentNode;
+
+   AlembicISceneBuildElement(AbcObjectCache *pMyObjectCache, SceneNodePtr node):pObjectCache(pMyObjectCache), parentNode(node)
+   {}
+};
+
+
+SceneNodePtr buildCommonSceneGraph(AbcArchiveCache *pArchiveCache, AbcObjectCache *pRootObjectCache, int& nNumNodes)
+{
+   std::list<AlembicISceneBuildElement> sceneStack;
+
+   Alembic::Abc::IObject rootObj = pRootObjectCache->obj;
+
+   SceneNodePtr sceneRoot(new SceneNode());
+   sceneRoot->name = rootObj.getName();
+   sceneRoot->dccIdentifier = rootObj.getFullName();
+   sceneRoot->type = SceneNode::SCENE_ROOT;
+
+   for(size_t j=0; j<pRootObjectCache->childIdentifiers.size(); j++)
+   {
+      AbcObjectCache *pChildObjectCache = &( pArchiveCache->find( pRootObjectCache->childIdentifiers[j] )->second );
+      Alembic::AbcGeom::IObject childObj = pChildObjectCache->obj;
+      NodeCategory::type childCat = NodeCategory::get(childObj);
+      //we should change this to explicity check which node types are not support (e.g. facesets), so that we can still give out warnings
+      if( childCat == NodeCategory::UNSUPPORTED ) continue;// skip over unsupported types
+
+      sceneStack.push_back(AlembicISceneBuildElement(pChildObjectCache, sceneRoot));
+   }  
+
+   //sceneStack.push_back(AlembicISceneBuildElement(pRootObjectCache, NULL));
+
+   int numNodes = 0;
+
+   while( !sceneStack.empty() )
+   {
+      AlembicISceneBuildElement sElement = sceneStack.back();
+      Alembic::Abc::IObject iObj = sElement.pObjectCache->obj;
+      SceneNodePtr parentNode = sElement.parentNode;
+      sceneStack.pop_back();
+
+      numNodes++;
+
+      SceneNodePtr newNode(new SceneNode());
+
+      newNode->name = iObj.getName();
+      newNode->dccIdentifier = iObj.getFullName();
+      newNode->type = getNodeType(iObj);
+      //select every node by default
+      //newNode->selected = true;
+      
+      if(parentNode){ //create bi-direction link if there is a parent
+         newNode->parent = parentNode;
+         parentNode->children.push_back(newNode);
+
+         //the parent transforms of geometry nodes should be to be external transforms 
+         //(we don't a transform's type until we have seen what type(s) of child it has)
+         if( NodeCategory::get(iObj) == NodeCategory::GEOMETRY ){
+            if(parentNode->type == SceneNode::ITRANSFORM){
+               parentNode->type = SceneNode::ETRANSFORM;
+            }
+            else{
+               ESS_LOG_WARNING("node "<<iObj.getFullName()<<" does not have a parent transform.");
+            }
+         }
+      }
+
+      //push the children as the last step, since we need to who the parent is first (we may have merged)
+      for(size_t j=0; j<sElement.pObjectCache->childIdentifiers.size(); j++)
+      {
+         AbcObjectCache *pChildObjectCache = &( pArchiveCache->find( sElement.pObjectCache->childIdentifiers[j] )->second );
+         Alembic::AbcGeom::IObject childObj = pChildObjectCache->obj;
+         NodeCategory::type childCat = NodeCategory::get(childObj);
+         //we should change this to explicity check which node types are not support (e.g. facesets), so that we can still give out warnings
+         if( childCat == NodeCategory::UNSUPPORTED ) continue;// skip over unsupported types
+
+         sceneStack.push_back(AlembicISceneBuildElement(pChildObjectCache, newNode));
+      }  
+   }
+
+   nNumNodes = numNodes;
+   
+   return sceneRoot;
+}
+

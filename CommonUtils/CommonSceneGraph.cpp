@@ -97,7 +97,7 @@ void selectNodes(SceneNodePtr root, SceneNode::SelectionT selectionMap, bool bSe
 
          if(bChildren){// select the children
             bSelected = true;
-         }
+         } 
       }
       if(sElement.bSelectChildren){
          bSelected = true;

@@ -4,6 +4,10 @@
 #include <string>
 #include <vector>
 
+#include "CommonSceneGraph.h"
+#include "CommonAlembic.h"
+#include "CommonAbcCache.h"
+
 class IJobStringParser
 {
 public:
@@ -41,5 +45,7 @@ public:
 
    std::string buildJobString();
 };
+
+SceneNodePtr buildCommonSceneGraph(AbcArchiveCache *pArchiveCache, AbcObjectCache *pRootObjectCache, int& nNumNodes);
 
 #endif
