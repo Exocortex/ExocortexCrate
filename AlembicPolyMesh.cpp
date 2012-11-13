@@ -3,15 +3,11 @@
 #include "MetaData.h"
 #include "CommonMeshUtilities.h"
 
-
-AlembicPolyMesh::AlembicPolyMesh(const MObject & in_Ref, AlembicWriteJob * in_Job)
-: AlembicObject(in_Ref, in_Job)
+AlembicPolyMesh::AlembicPolyMesh(SceneNodePtr eNode, AlembicWriteJob * in_Job, Abc::OObject oParent)
+	: AlembicObject(eNode, in_Job, oParent)
 {
-   MFnDependencyNode node(in_Ref);
-   MString name = GetUniqueName(node.name());
-   mObject = AbcG::OPolyMesh(GetParentObject(),name.asChar(),GetJob()->GetAnimatedTs());
-
-   mSchema = mObject.getSchema();
+	mObject = AbcG::OPolyMesh(GetMyParent(), eNode->name, GetJob()->GetAnimatedTs());
+	mSchema = mObject.getSchema();
 }
 
 AlembicPolyMesh::~AlembicPolyMesh()

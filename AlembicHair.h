@@ -25,7 +25,7 @@ private:
    std::vector<Abc::V3f> mVelVec;
 
 public:
-   AlembicHair(const MObject & in_Ref, AlembicWriteJob * in_Job);
+   AlembicHair(SceneNodePtr eNode, AlembicWriteJob * in_Job, Abc::OObject oParent);
    ~AlembicHair();
 
    virtual Abc::OObject GetObject() { return mObject; }

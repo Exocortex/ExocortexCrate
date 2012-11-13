@@ -11,7 +11,7 @@ private:
    AbcG::CameraSample mSample;
 public:
 
-   AlembicCamera(const MObject & in_Ref, AlembicWriteJob * in_Job);
+   AlembicCamera(SceneNodePtr eNode, AlembicWriteJob * in_Job, Abc::OObject oParent);
    ~AlembicCamera();
 
    virtual Abc::OObject GetObject() { return mObject; }

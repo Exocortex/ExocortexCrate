@@ -1,49 +1,15 @@
 #include "stdafx.h"
 #include "AlembicObject.h"
 
-
-AlembicObject::AlembicObject
-(
-   const MObject & in_Ref,
-   AlembicWriteJob * in_Job
-)
-{
-   AddRef(in_Ref);
-   mJob = in_Job;
-
-   // find the parent
-   if(mParent == NULL)
-   {
-      MFnDagNode dag(in_Ref);
-      for(unsigned int i=0;i<dag.parentCount();i++)
-      {
-         MObject parentRef = dag.parent(i);
-         if(!parentRef.isNull())
-         {
-            mParent = mJob->GetObject(parentRef);
-            if(mParent)
-               break;
-         }
-      }
-   }
-
-   mNumSamples = 0;
-}
-
 AlembicObject::AlembicObject(SceneNodePtr eNode, AlembicWriteJob * in_Job, Abc::OObject oParent)
 		: mExoSceneNode(eNode), mJob(in_Job), mMyParent(oParent), mNumSamples(0)
 {
 	MSelectionList sl;
-	MString nodeName = eNode->dccIdentifier;
+	MString nodeName(eNode->dccIdentifier.c_str());
 	sl.add(nodeName);
 	MDagPath dagPath;
 	sl.getDagPath(0, dagPath);
-	AddRef(dagPath.node())
-
-	if (mParent == NULL)
-	{
-		// ??
-	}
+	AddRef(dagPath.node());
 }
 
 AlembicObject::~AlembicObject()

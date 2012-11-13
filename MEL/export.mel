@@ -26,13 +26,11 @@ global proc exocortexAlembicExportGUI(string $filename, string $dialog)
   $maxTime = `playbackOptions -q -max`;
 
   // check selection
+  string $selection[] = `ls -sl`;
+  if(size($selection) == 0)
   {
-    string $selection[] = `ls -sl`;
-    if(size($selection) == 0)
-    {
-      error("Nothing selected!");
-      return;
-    }
+    error("Nothing selected!");
+    return;
   }
   
   // check filename

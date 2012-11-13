@@ -18,7 +18,7 @@ private:
    std::vector<float> mRadiusVec;
 
 public:
-   AlembicCurves(const MObject & in_Ref, AlembicWriteJob * in_Job);
+   AlembicCurves(SceneNodePtr eNode, AlembicWriteJob * in_Job, Abc::OObject oParent);
    ~AlembicCurves();
 
    virtual Abc::OObject GetObject() { return mObject; }

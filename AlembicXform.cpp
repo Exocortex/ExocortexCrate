@@ -3,17 +3,6 @@
 #include "MetaData.h"
 
 
-
-AlembicXform::AlembicXform(const MObject & in_Ref, AlembicWriteJob * in_Job)
-: AlembicObject(in_Ref, in_Job)
-{
-   MFnDependencyNode node(in_Ref);
-   MString name = GetUniqueName(node.name());
-   mObject = AbcG::OXform(GetParentObject(),name.asChar(),GetJob()->GetAnimatedTs());
-
-   mSchema = mObject.getSchema();
-}
-
 AlembicXform::AlembicXform(SceneNodePtr eNode, AlembicWriteJob * in_Job, Abc::OObject oParent)
 	: AlembicObject(eNode, in_Job, oParent)
 {
@@ -32,8 +21,6 @@ MStatus AlembicXform::Save(double time)
   ESS_PROFILE_SCOPE("AlembicXform::Save");
    // save the metadata
    SaveMetaData(this);
-
-   AbcG::XformSample mSample;
 
    // check if we have the global cache option
    if(GetJob()->GetOption(L"exportInGlobalSpace").asInt() > 0)

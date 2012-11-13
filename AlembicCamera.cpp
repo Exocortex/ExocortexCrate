@@ -3,16 +3,10 @@
 #include "MetaData.h"
 
 
-
-
-AlembicCamera::AlembicCamera(const MObject & in_Ref, AlembicWriteJob * in_Job)
-: AlembicObject(in_Ref, in_Job)
+AlembicCamera::AlembicCamera(SceneNodePtr eNode, AlembicWriteJob * in_Job, Abc::OObject oParent)
+	: AlembicObject(eNode, in_Job, oParent)
 {
-   MFnDependencyNode node(in_Ref);
-   //MString name = truncateName(node.name());
-   MString name = node.name();
-   mObject = AbcG::OCamera(GetParentObject(),name.asChar(),GetJob()->GetAnimatedTs());
-
+   mObject = AbcG::OCamera(GetMyParent(), eNode->name, GetJob()->GetAnimatedTs());
    mSchema = mObject.getSchema();
 }
 

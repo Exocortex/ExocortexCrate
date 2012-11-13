@@ -19,7 +19,7 @@ private:
    std::vector<unsigned int> mSampleLookup;
 
 public:
-   AlembicSubD(const MObject & in_Ref, AlembicWriteJob * in_Job);
+   AlembicSubD(SceneNodePtr eNode, AlembicWriteJob * in_Job, Abc::OObject oParent);
    ~AlembicSubD();
 
    virtual Abc::OObject GetObject() { return mObject; }

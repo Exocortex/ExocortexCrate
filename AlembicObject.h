@@ -22,7 +22,6 @@ protected:
    AbcG::OVisibilityProperty mOVisibility;
 
 public:
-   AlembicObject(const MObject & in_Ref, AlembicWriteJob * in_Job);
    AlembicObject(SceneNodePtr eNode, AlembicWriteJob * in_Job, Abc::OObject oParent);
    ~AlembicObject();
 

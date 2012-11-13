@@ -8,10 +8,9 @@ class AlembicXform: public AlembicObject
 private:
    AbcG::OXform mObject;
    AbcG::OXformSchema mSchema;
-   //AbcG::XformSample mSample;
+   AbcG::XformSample mSample;
 public:
 
-   AlembicXform(const MObject & in_Ref, AlembicWriteJob * in_Job);
    AlembicXform(SceneNodePtr eNode, AlembicWriteJob * in_Job, Abc::OObject oParent);
    ~AlembicXform();
 

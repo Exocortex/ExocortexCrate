@@ -33,7 +33,7 @@ private:
    bool sampleInstanceProperties(std::vector<Abc::Quatf> angularVel, std::vector<Abc::Quatf> orientation, std::vector<Abc::v4::uint16_t> shapeId, std::vector<Abc::v4::uint16_t> shapeType, std::vector<Abc::float32_t> shapeTime);
 
 public:
-   AlembicPoints(const MObject & in_Ref, AlembicWriteJob * in_Job);
+   AlembicPoints(SceneNodePtr eNode, AlembicWriteJob * in_Job, Abc::OObject oParent);
    ~AlembicPoints();
 
    virtual Abc::OObject GetObject() { return mObject; }

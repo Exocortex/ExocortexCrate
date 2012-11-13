@@ -76,34 +76,31 @@ bool AlembicPoints::sampleInstanceProperties( std::vector<Abc::Quatf> angularVel
   return true;
 }
 
-AlembicPoints::AlembicPoints(const MObject & in_Ref, AlembicWriteJob * in_Job)
-: AlembicObject(in_Ref, in_Job), hasInstancer(false), instName("")
+AlembicPoints::AlembicPoints(SceneNodePtr eNode, AlembicWriteJob * in_Job, Abc::OObject oParent)
+	: AlembicObject(eNode, in_Job, oParent)
 {
-   MFnDependencyNode node(in_Ref);
-   MString name = GetUniqueName(node.name());
-   mObject = AbcG::OPoints(GetParentObject(),name.asChar(),GetJob()->GetAnimatedTs());
+	mObject = AbcG::OPoints(GetMyParent(), eNode->name, GetJob()->GetAnimatedTs());
+	mSchema = mObject.getSchema();
 
-   mSchema = mObject.getSchema();
+	mAgeProperty   = Abc::OFloatArrayProperty(mSchema.getArbGeomParams(), ".age", mSchema.getMetaData(), GetJob()->GetAnimatedTs() );
+	mMassProperty  = Abc::OFloatArrayProperty(mSchema.getArbGeomParams(), ".mass", mSchema.getMetaData(), GetJob()->GetAnimatedTs() );
+	mColorProperty = Abc::OC4fArrayProperty  (mSchema.getArbGeomParams(), ".color", mSchema.getMetaData(), GetJob()->GetAnimatedTs() );
 
-   mAgeProperty   = Abc::OFloatArrayProperty(mSchema.getArbGeomParams(), ".age", mSchema.getMetaData(), GetJob()->GetAnimatedTs() );
-   mMassProperty  = Abc::OFloatArrayProperty(mSchema.getArbGeomParams(), ".mass", mSchema.getMetaData(), GetJob()->GetAnimatedTs() );
-   mColorProperty = Abc::OC4fArrayProperty  (mSchema.getArbGeomParams(), ".color", mSchema.getMetaData(), GetJob()->GetAnimatedTs() );
+	mAngularVelocityProperty = Abc::OQuatfArrayProperty  (mSchema.getArbGeomParams(), ".angularvelocity", mSchema.getMetaData(), GetJob()->GetAnimatedTs() );
+	mInstanceNamesProperty   = Abc::OStringArrayProperty (mSchema.getArbGeomParams(), ".instancenames", mSchema.getMetaData(), GetJob()->GetAnimatedTs() );
+	mOrientationProperty     = Abc::OQuatfArrayProperty  (mSchema.getArbGeomParams(), ".orientation", mSchema.getMetaData(), GetJob()->GetAnimatedTs() );
+	mScaleProperty           = Abc::OV3fArrayProperty    (mSchema.getArbGeomParams(), ".scale", mSchema.getMetaData(), GetJob()->GetAnimatedTs() );
+	mShapeInstanceIdProperty = Abc::OUInt16ArrayProperty (mSchema.getArbGeomParams(), ".shapeinstanceid", mSchema.getMetaData(), GetJob()->GetAnimatedTs() );
+	mShapeTimeProperty       = Abc::OFloatArrayProperty  (mSchema.getArbGeomParams(), ".shapetime", mSchema.getMetaData(), GetJob()->GetAnimatedTs() );
+	mShapeTypeProperty       = Abc::OUInt16ArrayProperty (mSchema.getArbGeomParams(), ".shapetype", mSchema.getMetaData(), GetJob()->GetAnimatedTs() );
 
-   mAngularVelocityProperty = Abc::OQuatfArrayProperty  (mSchema.getArbGeomParams(), ".angularvelocity", mSchema.getMetaData(), GetJob()->GetAnimatedTs() );
-   mInstanceNamesProperty   = Abc::OStringArrayProperty (mSchema.getArbGeomParams(), ".instancenames", mSchema.getMetaData(), GetJob()->GetAnimatedTs() );
-   mOrientationProperty     = Abc::OQuatfArrayProperty  (mSchema.getArbGeomParams(), ".orientation", mSchema.getMetaData(), GetJob()->GetAnimatedTs() );
-   mScaleProperty           = Abc::OV3fArrayProperty    (mSchema.getArbGeomParams(), ".scale", mSchema.getMetaData(), GetJob()->GetAnimatedTs() );
-   mShapeInstanceIdProperty = Abc::OUInt16ArrayProperty (mSchema.getArbGeomParams(), ".shapeinstanceid", mSchema.getMetaData(), GetJob()->GetAnimatedTs() );
-   mShapeTimeProperty       = Abc::OFloatArrayProperty  (mSchema.getArbGeomParams(), ".shapetime", mSchema.getMetaData(), GetJob()->GetAnimatedTs() );
-   mShapeTypeProperty       = Abc::OUInt16ArrayProperty (mSchema.getArbGeomParams(), ".shapetype", mSchema.getMetaData(), GetJob()->GetAnimatedTs() );
-
-   MStringArray instancers;
-   MGlobal::executeCommand("listConnections -t instancer " + node.name(), instancers);
-   if (instancers.length() == 1)
-   {
-     hasInstancer = true;
-     instName = instancers[0];
-   }
+	MStringArray instancers;
+	MGlobal::executeCommand(("listConnections -t instancer " + eNode->name).c_str(), instancers);
+	if (instancers.length() == 1)
+	{
+		hasInstancer = true;
+		instName = instancers[0];
+	}
 }
 
 AlembicPoints::~AlembicPoints()
