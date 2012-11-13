@@ -12,6 +12,8 @@
 #include "CommonLog.h"
 #include "CommonUtilities.h"
 
+#include "sceneGraph.h"
+#include <maya/MItDag.h>
 
 
 AlembicWriteJob::AlembicWriteJob
@@ -163,6 +165,24 @@ MStatus AlembicWriteJob::PreProcess()
 		  mTs = mArchive.addTimeSampling(sampling);
 	   }
 	   Abc::OBox3dProperty boxProp = AbcG::CreateOArchiveBounds(mArchive,mTs);
+
+	    MDagPath dagPath;
+		{ MItDag().getPath(dagPath); }
+		exoNodePtr exoSceneRoot = buildCommonSceneGraph(dagPath);
+		{
+			std::map<std::string, bool> selectionMap;
+			for(int i=0; i<mSelection.length(); ++i)
+			{
+				const MObject &mObj = mSelection[i];
+				MFnDagNode dagNode(mObj);
+				selectionMap[dagNode.fullPathName().asChar()] = true;
+			}
+			const bool bFlattenHierarchy = GetOption("flattenHierarchy") == "1";
+			const bool bSelectChildren = false;
+			const bool bTransformCache = GetOption("transformCache") == "1";
+			selectNodes(exoSceneRoot, selectionMap, !bFlattenHierarchy || bTransformCache, bSelectChildren, !bTransformCache);
+		}
+		printSceneGraph(exoSceneRoot);
 
 	   // create object for each
 	   MProgressWindow::reserve();
@@ -592,6 +612,8 @@ MStatus AlembicExportCommand::doIt(const MArgList & args)
 		  job->SetOption("indexedNormals","1");
 		  job->SetOption("indexedUVs","1");
 		  job->SetOption("exportInGlobalSpace",globalspace ? "1" : "0");
+		  job->SetOption("flattenHierarchy", withouthierarchy ? "1": "0");
+		  job->SetOption("transformCache", transformcache ? "1" : "0");
 
 		  // check if the job is satifsied
 		  if(job->PreProcess() != MStatus::kSuccess)

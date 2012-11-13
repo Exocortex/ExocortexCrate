@@ -37,7 +37,7 @@ def alembicTimeAndFileNode(filename):
 	fileNode = cmds.createNode("ExocortexAlembicFile")
 	cmds.setAttr(fileNode+".fileName", filename, type="string")
 	cmds.ExocortexAlembic_profileEnd(f="Python.ExocortexAlembic._functions.alembicTimeAndFileNode")
-	return fileNode
+	return fileNode, timeControl
 
 def alembicCreateNode(name, type):
 	""" create a node and make sure to return a full name and create namespaces if necessary! """

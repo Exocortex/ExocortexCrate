@@ -8,9 +8,7 @@ def fillAlembicInfoList(filename):
 	cmds.ExocortexAlembic_profileBegin(f="Python.ExocortexAlembic._import.fillAlembicInfoList")
 	fnt.AlembicInfo.nbTransforms = 0
 	for info in cmds.ExocortexAlembic_getInfo(f=filename):
-		ai = fnt.AlembicInfo(info.split("|"))
-		alembicInfos.append(ai)
-		print("\timport: " + str(ai))
+		alembicInfos.append(fnt.AlembicInfo(info.split("|")))
 	cmds.ExocortexAlembic_profileEnd(f="Python.ExocortexAlembic._import.fillAlembicInfoList")
 	return alembicInfos
 
@@ -21,7 +19,6 @@ def connectShapeAndReader(shape, reader):
 
 def doPolyMesh(curObj, dynamictopology, doItParam, fileNode):
 	""" import a polymesh object """
-	print("doPolyMesh with " + str(curObj))
 	cmds.ExocortexAlembic_profileBegin(f="Python.ExocortexAlembic._import.doPolyMesh")
 	reader = ""
 	topoReader = ""
@@ -39,8 +36,8 @@ def doPolyMesh(curObj, dynamictopology, doItParam, fileNode):
 		cmds.setAttr(topoReader+".identifier", curObj.identifier, type="string")
         cmds.setAttr(topoReader+".normals", doItParam[1])
         cmds.setAttr(topoReader+".uvs", doItParam[2])
-        if doItParam[3]:
-        	cmds.ExocortexAlembic_createFaceSets(o=shape, f=doItParam[0], i=curObj.identifier)
+        #if doItParam[3]:
+        	#cmds.ExocortexAlembic_createFaceSets(o=shape, f=doItParam[0], i=curObj.identifier)
         if dynamictopology:
         	reader = topoReader
 
@@ -52,7 +49,6 @@ def doPolyMesh(curObj, dynamictopology, doItParam, fileNode):
 
 def doXform(curObj, alembicInfos, doItParam, fileNode):
 	""" import an Xform """
-	print("doXform with " + str(curObj))
 	cmds.ExocortexAlembic_profileBegin(f="Python.ExocortexAlembic._import.doXform")
 	reader = ""
 	shape = ""
@@ -62,14 +58,14 @@ def doXform(curObj, alembicInfos, doItParam, fileNode):
 		reader = cmds.createNode("ExocortexAlembicXform")
 		connectShapeAndReader(shape, reader)
 	else:
-		cID = int(curObj.childIDs.split(".")[0])
-		if cID > 0:
-			childObj = alembicInfos[cID-1]
-			xform = cmds.listRelatives(childObj.object, p=True)
+		cID = int(curObj.childIDs.split(".")[0])-1
+		if cID >= 0:
+			childObj = alembicInfos[cID]
 			name = curObj.name
 			if name != "front" and name != "top" and name != "side" and name != "persp":
+				xform = cmds.listRelatives(childObj.object, p=True)
 				shape 	= cmds.rename(xform, name, ignoreShape=True)
-				reader 	= fnt.alembicCreateNode(shape+"_translate","ExocortexAlembicXform")
+				reader 	= cmds.createNode("ExocortexAlembicXform")
 				connectShapeAndReader(shape, reader)
 
 	cmds.ExocortexAlembic_profileEnd(f="Python.ExocortexAlembic._import.doXform")
@@ -77,7 +73,6 @@ def doXform(curObj, alembicInfos, doItParam, fileNode):
 
 def doGroup(curObj, alembicInfos, doItParam, fileNode):
 	""" import an Xform with other Xforms as children """
-	print("doGroup with " + str(curObj))
 	cmds.ExocortexAlembic_profileBegin(f="Python.ExocortexAlembic._import.doGroup")
 	reader = ""
 	shape = ""
@@ -115,13 +110,11 @@ def doIt(filename, importNormals=False, importUvs=True, importFaceSets=True):
 	cmds.ExocortexAlembic_fileRefCount(i=filename)
 
 	# fill the list
-	print("fill the list")
 	alembicInfos = fillAlembicInfoList(filename)
-	fileNode = fnt.alembicTimeAndFileNode(filename)
+	fileNode, timeControl = fnt.alembicTimeAndFileNode(filename)
 	cmds.progressBar(gMainProgressBar, e=True, bp=True, ii=1, max=len(alembicInfos))
 
 	# for each each, starting with the last one!
-	print("going through all objects")
 	for ii in xrange(len(alembicInfos)-1, -1, -1):
 		if cmds.progressBar(gMainProgressBar, q=True, ic=True):
 			print("Import interrupted by the user")
@@ -129,7 +122,6 @@ def doIt(filename, importNormals=False, importUvs=True, importFaceSets=True):
 		cmds.progressBar(gMainProgressBar, e=True, s=1)
 
 		curObj = alembicInfos[ii]
-		print("Treating object " + str(curObj))
 		reader = ""
 		topoReader = ""
 		shape = ""
@@ -178,7 +170,7 @@ def doIt(filename, importNormals=False, importUvs=True, importFaceSets=True):
 		cmds.ExocortexAlembic_profileEnd(f="Python.ExocortexAlembic._import.doIt:finalize")
 
 		# setup metadata if we have it
-		cmds.ExocortexAlembic_createMetaData(f=filename, i=curObj.identifier, o=shape)
+		#cmds.ExocortexAlembic_createMetaData(f=filename, i=curObj.identifier, o=shape)
 
 	# finalization!
 	cmds.progressBar(gMainProgressBar, e=True, endProgress=True)
