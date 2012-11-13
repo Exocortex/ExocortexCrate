@@ -1675,12 +1675,12 @@ CStatus createShape( AbcObjectCache *pObjectCache, CRef& importRootNode, CRef& p
 
 struct ImportStackElement
 {
-   AbcObjectCache *pObjectCache;
+   SceneNodePtr sceneNode;
    CRef parentNode;
 
-   ImportStackElement(AbcObjectCache *pMyObjectCache):pObjectCache(pMyObjectCache)
+   ImportStackElement(SceneNodePtr node):sceneNode(node)
    {}
-   ImportStackElement(AbcObjectCache *pMyObjectCache, CRef parent):pObjectCache(pMyObjectCache), parentNode(parent)
+   ImportStackElement(SceneNodePtr node, CRef parent):sceneNode(node), parentNode(parent)
    {}
 
 };
@@ -1925,8 +1925,10 @@ ESS_CALLBACK_START(alembic_import_jobs_Execute, CRef&)
 
    AbcObjectCache *pRootObjectCache = &( pArchiveCache->find( "/" )->second );
 
-  int nNumNodes = prescanAlembicHierarchy( pArchiveCache, pRootObjectCache, nodesToImport, map);
+   int nNumNodes = 0;
+   SceneNodePtr sceneRoot = buildCommonSceneGraph(pArchiveCache, pRootObjectCache, nNumNodes);
 
+   printSceneGraph(sceneRoot, false);
 
    ProgressBar prog;
    prog = Application().GetUIToolkit().GetProgressBar();
@@ -1954,97 +1956,111 @@ ESS_CALLBACK_START(alembic_import_jobs_Execute, CRef&)
       ESS_LOG_WARNING("Attachment root is "<<importRootNode.GetAsText().GetAsciiString());
    }
 
-   std::list<ImportStackElement> sceneStack;
-
-	for(size_t j=0; j < pRootObjectCache->childIdentifiers.size(); j++)
-	{
-      AbcObjectCache *pChildObjectCache = &( pArchiveCache->find( pRootObjectCache->childIdentifiers[j] )->second );
-      sceneStack.push_back(ImportStackElement(pChildObjectCache, importRootNode));
-	} 
-
-
-   int intermittentUpdateInterval = std::max( (int)(nNumNodes / 100), (int)1 );
-   int i = 0;
-   while( !sceneStack.empty() )
+   if(jobParser.attachToExisting)
    {
-      ImportStackElement sElement = sceneStack.back();
-      Abc::IObject iObj = sElement.pObjectCache->obj;
-      CRef parentNode(sElement.parentNode);
-      sceneStack.pop_back();
 
-      if( i % intermittentUpdateInterval == 0 ) {
-         prog.PutCaption(L"Importing "+CString(iObj.getFullName().c_str())+L" ...");
-      }
-      i++;
+   }
+   else
+   {
+      std::list<ImportStackElement> sceneStack;
 
-      //ESS_LOG_WARNING("Importing "<<iObj.getFullName().c_str()<<" ...");
+      for(SceneChildIterator it = sceneRoot->children.begin(); it != sceneRoot->children.end(); it++){
+         sceneStack.push_back(ImportStackElement(*it, importRootNode));
+	   }
 
-      bool bCreateNullNode = false;
-      int nMergedGeomNodeIndex = -1;
-    AbcObjectCache *pMergedGeomChildObjectCache = NULL;
-      getMergeInfo( pArchiveCache, sElement.pObjectCache, bCreateNullNode, nMergedGeomNodeIndex, & pMergedGeomChildObjectCache );
+      int intermittentUpdateInterval = std::max( (int)(nNumNodes / 100), (int)1 );
+      int i = 0;
+      while( !sceneStack.empty() )
+      {
+         ImportStackElement sElement = sceneStack.back();
+         AbcObjectCache *pObjectCache = &( pArchiveCache->find(sElement.sceneNode->dccIdentifier)->second );
+         Abc::IObject iObj = pObjectCache->obj;
+         SceneNodePtr sceneNode = sElement.sceneNode;
+         CRef parentNode(sElement.parentNode);
 
-      CRef newNodeRef;
-		if(bCreateNullNode){
+         sceneStack.pop_back();
 
-            createTransform( sElement.pObjectCache, importRootNode, parentNode, newNodeRef, filenameCStr, jobParser.attachToExisting, createItemArgs);
-		}
-		else{
-			if(nMergedGeomNodeIndex != -1){//we are merging, so look at the child geometry node
-    	AbcG::IObject mergedGeomChild = pMergedGeomChildObjectCache->obj;
+         if( i % intermittentUpdateInterval == 0 ) {
+            prog.PutCaption(L"Importing "+CString(iObj.getFullName().c_str())+L" ...");
+         }
+         i++;
 
-				CStatus localStatus = createShape( pMergedGeomChildObjectCache, importRootNode, parentNode, newNodeRef, filenameCStr, 
-               jobParser.attachToExisting, jobParser.importStandinProperties, jobParser.importBoundingBoxes, true, jobParser.failOnUnsupported, createItemArgs);
-				if( ! localStatus.Succeeded() ) {
-         delRefArchive( jobParser.filename );
-					return localStatus;
-				}
-			}
-			else{ //geometry node(s) under a dummy node 
+        // bool bTransform = sceneNode->type == SceneNode::ITRANSFORM || sceneNode->type == SceneNode::ETRANSFORM; 
+         //bool bMergeableTransform = sceneNode->type == SceneNode::ETRANSFORM;
+         //bool bMergeableTransform = sceneNode->children.size() == 1 && hasExtractableTransform(sceneNode->children[0]->type);
 
-            //TODO: not sure if I handle the transforms correctly in this case
-			//EC_LOG_ERROR( "[ExocortexAlembic] Merged geometry node index not -1" );
-            //return CStatus::Abort;
-				CStatus localStatus = createShape( sElement.pObjectCache, importRootNode, parentNode, newNodeRef, filenameCStr, 
-               jobParser.attachToExisting, jobParser.importStandinProperties, jobParser.importBoundingBoxes, false, jobParser.failOnUnsupported, createItemArgs);
-				if( ! localStatus.Succeeded() ) {
-         delRefArchive( jobParser.filename  );
-					return localStatus;
-				}
-			}
+         // ESS_LOG_WARNING("Processing "<<iObj.getFullName()<<" mergeable: "<<(bMergeableTransform?"true":"false")<<" transform: "<<(bTransform?"true":"false")  );
 
-		}
-      
-      //newNodeRef will not be valid if we cannot attach children to it
-      if(newNodeRef.IsValid()){
+         bool bCreateNullNode = false;
+         int nMergedGeomNodeIndex = -1;
+         AbcObjectCache *pMergedGeomChildObjectCache = NULL;
+         getMergeInfo( pArchiveCache, pObjectCache, bCreateNullNode, nMergedGeomNodeIndex, &pMergedGeomChildObjectCache );
 
-         //push the children as the last step, since we need to who the parent is first (we may have merged)
-	      for(size_t j=0; j<sElement.pObjectCache->childIdentifiers.size(); j++)
-	      {
-            AbcObjectCache *pChildObjectCache = &( pArchiveCache->find( sElement.pObjectCache->childIdentifiers[j] )->second );
-            AbcG::IObject childObj = pChildObjectCache->obj;
-            if( NodeCategory::get(childObj) == NodeCategory::UNSUPPORTED ) continue;// skip over unsupported types
+
+         CRef newNodeRef;
+         if(bCreateNullNode){
+            createTransform( pObjectCache, importRootNode, parentNode, newNodeRef, filenameCStr, jobParser.attachToExisting, createItemArgs);
+		   }
+		   else{// multiple geometry nodes share the same parent. a shape node with the identity as it transform will be created.
+
+            if(nMergedGeomNodeIndex != -1){ // create a shape node, and assign the parent xform as its transform
+               pMergedGeomChildObjectCache = &( pArchiveCache->find(sceneNode->children.front()->dccIdentifier)->second );
+
+				   CStatus localStatus = createShape( pMergedGeomChildObjectCache, importRootNode, parentNode, newNodeRef, filenameCStr, 
+                  jobParser.attachToExisting, jobParser.importStandinProperties, jobParser.importBoundingBoxes, true, jobParser.failOnUnsupported, createItemArgs);
+				   if( ! localStatus.Succeeded() ) {
+                  delRefArchive( jobParser.filename );
+					   return localStatus;
+				   }
+            }
+            else{
+			      CStatus localStatus = createShape( pObjectCache, importRootNode, parentNode, newNodeRef, filenameCStr, 
+                  jobParser.attachToExisting, jobParser.importStandinProperties, jobParser.importBoundingBoxes, false, jobParser.failOnUnsupported, createItemArgs);
+			      if( ! localStatus.Succeeded() ) {
+                  delRefArchive( jobParser.filename  );
+				      return localStatus;
+			      }
+            }
+		   }
+         
+         //newNodeRef will not be valid if we cannot attach children to it
+         if(newNodeRef.IsValid()){
 
             //I assume that geometry nodes are always leaf nodes. Thus, if we merged a geometry node will its parent transform, we don't
             //need to push it to the stack.
             //A geometry node can't be combined with its transform node, the transform node has other tranform nodes as children. These
             //nodes must be pushed.
-            if( nMergedGeomNodeIndex != j )
-            {
-               sceneStack.push_back( ImportStackElement( pChildObjectCache, newNodeRef ) );
+
+            
+
+            //push the children as the last step, since we need to who the parent is first (we may have merged)
+            for(SceneChildIterator it = sceneNode->children.begin(); it != sceneNode->children.end(); it++){
+            
+               AbcObjectCache *pChildObjectCache = &( pArchiveCache->find( (*it)->dccIdentifier )->second );
+               AbcG::IObject childObj = pChildObjectCache->obj;
+               if( NodeCategory::get(childObj) == NodeCategory::UNSUPPORTED ) continue;// skip over unsupported types
+   
+               if( pMergedGeomChildObjectCache == pChildObjectCache ) continue;
+
+               sceneStack.push_back( ImportStackElement( *it, newNodeRef ) );
             }
-	      }
-      }
-      else{
-		  if( sElement.pObjectCache->childIdentifiers.size() > 0 ) {
-			  EC_LOG_WARNING("Unsupported node: " << iObj.getFullName().c_str() << " has children that have not been imported." );
-		  }
+            
+         }
+         else{
+		      if( pObjectCache->childIdentifiers.size() > 0 ) {
+			      EC_LOG_WARNING("Unsupported node: " << iObj.getFullName().c_str() << " has children that have not been imported." );
+		      }
+         }
+
+         if(prog.IsCancelPressed()){
+            break;
+         }
+         prog.Increment();
       }
 
-      if(prog.IsCancelPressed())
-         break;
-      prog.Increment();
    }
+
+
 
    prog.PutVisible(false);
 

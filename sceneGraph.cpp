@@ -135,7 +135,7 @@ SceneNodePtr buildCommonSceneGraph(XSI::X3DObject xsiRoot)
 
          if(!hasExtractableTransform(type))
          {
-            exoChild->parent = eNode;
+            exoChild->parent = eNode.get();
             exoChild->name = child.GetName().GetAsciiString();
             exoChild->type = type;
             exoChild->dccIdentifier = child.GetUniqueName().GetAsciiString();
@@ -144,13 +144,13 @@ SceneNodePtr buildCommonSceneGraph(XSI::X3DObject xsiRoot)
             //XSI shape nodes should split into two nodes: a transform node, and a pure shape node
             SceneNodePtr geoChild(new SceneNode());
 
-            exoChild->parent = eNode;
+            exoChild->parent = eNode.get();
             exoChild->name = child.GetName().GetAsciiString();
             exoChild->name += "Xfo";
             exoChild->type = SceneNode::ETRANSFORM;
             exoChild->dccIdentifier = child.GetFullName().GetAsciiString();
 
-            geoChild->parent = exoChild;
+            geoChild->parent = exoChild.get();
             geoChild->name = child.GetName().GetAsciiString();
             geoChild->type = type;
             geoChild->dccIdentifier = child.GetFullName().GetAsciiString();
