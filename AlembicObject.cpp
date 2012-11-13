@@ -30,6 +30,15 @@ AlembicObject::AlembicObject
    mNumSamples = 0;
 }
 
+AlembicObject::AlembicObject(SceneNodePtr eNode, AlembicWriteJob * in_Job, Abc::OObject oParent)
+		: mExoSceneNode(eNode), mJob(in_Job), mMyParent(oParent), mNumSamples(0)
+{
+	if (mParent == NULL)
+	{
+		// ??
+	}
+}
+
 AlembicObject::~AlembicObject()
 {
 }

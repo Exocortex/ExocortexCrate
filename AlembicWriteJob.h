@@ -3,6 +3,7 @@
 
 #include "AlembicObject.h"
 
+
 class AlembicWriteJob
 {
 private:
@@ -10,6 +11,7 @@ private:
     MObjectArray mSelection;
     std::vector<double> mFrames;
     Abc::OArchive mArchive;
+	Abc::OObject mTop;
     unsigned int mTs;
     std::map<std::string,std::string> mOptions;
     //std::vector<AlembicObjectPtr> mObjects;
@@ -23,6 +25,7 @@ public:
    ~AlembicWriteJob();
 
    Abc::OArchive GetArchive() { return mArchive; }
+   Abc::OObject GetTop() { return mTop; }
    const std::vector<double> & GetFrames() { return mFrames; }
    const MString & GetFileName() { return mFileName; }
    unsigned int GetAnimatedTs() { return mTs; }

@@ -56,7 +56,7 @@ global proc exocortexAlembicExportGUI(string $filename, string $dialog)
     fclose $__file;
   }
   $filename = `ExocortexAlembic_resolvePath -f $filename`;
-  //*
+  /*
   exocortexAlembicExport($filename, $selection, $exportInframe,
                          $exportOutframe, $exportStepframe, $exportSubstepframe,
                          $exportTopology, $exportUVs, $exportFaceSets,

@@ -6,13 +6,11 @@
 #include <maya/MItDag.h>
 #include <maya/MFnDagNode.h>
 
-static bool visitChild(const MFnDagNode &dagNode, SceneNodePtr &parent)
+static bool visitChild(const MObject &mObj, SceneNodePtr &parent)
 {
 	// check if it's a valid type of node first!
 	SceneNodePtr exoChild(new SceneNode());
-	exoChild->dccIdentifier = dagNode.fullPathName().asChar();
-	exoChild->name = dagNode.partialPathName().asChar();
-	switch(dagNode.type())
+	switch(mObj.apiType())
 	{
 	case MFn::kCamera:
 		exoChild->type = SceneNode::CAMERA;
@@ -42,12 +40,11 @@ static bool visitChild(const MFnDagNode &dagNode, SceneNodePtr &parent)
 	parent->children.push_back(exoChild);
 	exoChild->parent = parent.get();
 
+	MFnDagNode dagNode(mObj);
+	exoChild->dccIdentifier = dagNode.fullPathName().asChar();
+	exoChild->name = dagNode.partialPathName().asChar();
 	for (int i = 0; i < dagNode.childCount(); ++i)
-	{
-		MObject kid = dagNode.child(i);
-		MFnDagNode dagNode(kid);
-		visitChild(dagNode, exoChild);
-	}
+		visitChild(dagNode.child(i), exoChild);
 	return true;
 }
 
@@ -58,11 +55,7 @@ SceneNodePtr buildCommonSceneGraph(const MDagPath &dagPath)
 	exoRoot->dccIdentifier = dagPath.fullPathName().asChar();
 	exoRoot->name = dagPath.partialPathName().asChar();
 	for (int i = 0; i < dagPath.childCount(); ++i)
-	{
-		MObject kid = dagPath.child(i);
-		MFnDagNode dagNode(kid);
-		visitChild(dagNode, exoRoot);
-	}
+		visitChild(dagPath.child(i), exoRoot);
 	return exoRoot;
 }
 

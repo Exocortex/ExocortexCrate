@@ -16,6 +16,15 @@
 #include <maya/MItDag.h>
 
 
+struct PreProcessStackElement
+{
+   SceneNodePtr eNode;
+   Abc::OObject oParent;
+
+   PreProcessStackElement(SceneNodePtr enode, Abc::OObject parent):eNode(enode), oParent(parent)
+   {}
+};
+
 AlembicWriteJob::AlembicWriteJob
 (
    const MString & in_FileName,
@@ -135,6 +144,8 @@ MStatus AlembicWriteJob::PreProcess()
 			      getExporterFileName( sceneFileName.asChar() ).c_str(),
             Abc::ErrorHandler::kThrowPolicy);
 
+	  mTop = mArchive.getTop();
+
 	   // get the frame rate
 	   mFrameRate = MTime(1.0, MTime::kSeconds).as(MTime::uiUnit());
 	   const double timePerSample = 1.0 / mFrameRate;
@@ -168,7 +179,10 @@ MStatus AlembicWriteJob::PreProcess()
 
 	    MDagPath dagPath;
 		{ MItDag().getPath(dagPath); }
-		exoNodePtr exoSceneRoot = buildCommonSceneGraph(dagPath);
+		SceneNodePtr exoSceneRoot = buildCommonSceneGraph(dagPath);
+		const bool bFlattenHierarchy = GetOption("flattenHierarchy") == "1";
+		const bool bSelectChildren = false;
+		const bool bTransformCache = GetOption("transformCache") == "1";
 		{
 			std::map<std::string, bool> selectionMap;
 			for(int i=0; i<mSelection.length(); ++i)
@@ -177,12 +191,8 @@ MStatus AlembicWriteJob::PreProcess()
 				MFnDagNode dagNode(mObj);
 				selectionMap[dagNode.fullPathName().asChar()] = true;
 			}
-			const bool bFlattenHierarchy = GetOption("flattenHierarchy") == "1";
-			const bool bSelectChildren = false;
-			const bool bTransformCache = GetOption("transformCache") == "1";
 			selectNodes(exoSceneRoot, selectionMap, !bFlattenHierarchy || bTransformCache, bSelectChildren, !bTransformCache);
 		}
-		printSceneGraph(exoSceneRoot);
 
 	   // create object for each
 	   MProgressWindow::reserve();
@@ -194,52 +204,97 @@ MStatus AlembicWriteJob::PreProcess()
 	   MProgressWindow::startProgress();
 	   int interrupt = 20;
 	   bool processStopped = false;
-	   for(unsigned int i=0;i<mSelection.length(); ++i, --interrupt)
-	   {
-		  if (interrupt == 0)
-		  {
-			interrupt = 20;
-			if (MProgressWindow::isCancelled())
-			{
-			  processStopped = true;
-			  break;
-			}
-		  }
-		  MProgressWindow::advanceProgress(1);
-		  MObject mObj = mSelection[i];
-		  if(GetObject(mObj) != NULL)
-			 continue;
+		std::list<PreProcessStackElement> sceneStack;
 
-		  // take care of all other types
-		  AlembicObjectPtr ptr;
-		  switch(mObj.apiType())
-		  {
-		  case MFn::kCamera:
-			ptr.reset(new AlembicCamera(mObj,this));
-			break;
-		  case MFn::kMesh:
-			ptr.reset(new AlembicPolyMesh(mObj,this));
-			break;
-		  case MFn::kSubdiv:
-			ptr.reset(new AlembicSubD(mObj,this));
-			break;
-		  case MFn::kNurbsCurve:
-			ptr.reset(new AlembicCurves(mObj,this));
-			break;
-		  case MFn::kParticle:
-			ptr.reset(new AlembicPoints(mObj,this));
-			break;
-		  case MFn::kPfxHair:
-			ptr.reset(new AlembicHair(mObj,this));
-			break;
-		  default:  // NO BREAK... DON'T ADD ONE!!!!
-			MGlobal::displayInfo("[ExocortexAlembic] Exporting "+MString(mObj.apiTypeStr())+" node as kTransform.\n");  // NO BREAK, it's normal!
-		  case MFn::kTransform:
-			ptr.reset(new AlembicXform(mObj,this));
-			break;
-		  }
-		  AddObject(ptr);
-	   }
+		sceneStack.push_back(PreProcessStackElement(exoSceneRoot, mTop));
+
+		while( !sceneStack.empty() )
+		{
+			if (--interrupt == 0)
+			{
+				interrupt = 20;
+				if (MProgressWindow::isCancelled())
+				{
+					processStopped = true;
+					break;
+				}
+			}
+
+			PreProcessStackElement &sElement = sceneStack.back();
+			SceneNodePtr eNode = sElement.eNode;
+			sceneStack.pop_back();
+
+			Abc::OObject oParent = sElement.oParent;
+			Abc::OObject oNewParent;
+
+			AlembicObjectPtr pNewObject;
+			if(eNode->selected)
+			{
+				switch(eNode->type)
+				{
+				case SceneNode::SCENE_ROOT:
+					break;
+				case SceneNode::ITRANSFORM:
+				case SceneNode::ETRANSFORM:
+					pNewObject.reset(new AlembicXform(eNode, this, oParent));
+					break;
+				case SceneNode::CAMERA:
+					pNewObject.reset(new AlembicCamera(eNode, this, oParent));
+					break;
+				case SceneNode::POLYMESH:
+					pNewObject.reset(new AlembicPolyMesh(eNode, this, oParent));
+					break;
+				case SceneNode::SUBD:
+					pNewObject.reset(new AlembicSubD(eNode, this, oParent));
+					break;
+				case SceneNode::CURVES:
+					pNewObject.reset(new AlembicCurves(eNode, this, oParent));
+					break;
+				case SceneNode::PARTICLES:
+					pNewObject.reset(new AlembicPoints(eNode, this, oParent));
+					break;
+				case SceneNode::HAIR:
+					pNewObject.reset(new AlembicHair(eNode, this, oParent));
+					break;
+				default:
+					ESS_LOG_WARNING("Unknown type: not exporting "<<eNode->name);
+				}
+			}
+
+			if(pNewObject)
+			{
+				AddObject(pNewObject);
+				oNewParent = oParent.getChild(eNode->name);
+			}
+			else
+				oNewParent = oParent;
+
+			if(oNewParent.valid())
+			{
+				for( std::list<SceneNodePtr>::iterator it = eNode->children.begin(); it != eNode->children.end(); ++it)
+				{
+					if( !bFlattenHierarchy || (bFlattenHierarchy && eNode->type == SceneNode::ETRANSFORM && hasExtractableTransform((*it)->type)) )
+					{
+						//If flattening the hierarchy, we want to attach each external transform to its corresponding geometry node.
+						//All internal transforms should be skipped. Geometry nodes will never have children (If and XSI geonode is parented
+						//to another geonode, each will be parented to its extracted transform node, and one node will be parented to the 
+						//transform of the other.
+						sceneStack.push_back(PreProcessStackElement(*it, oNewParent));
+					}
+					else
+					{
+						//if we skip node A, we parent node A's children to the parent of A
+						sceneStack.push_back(PreProcessStackElement(*it, oParent));
+					}
+				}
+			}
+			else
+			{
+				ESS_LOG_ERROR("Do not have reference to parent.");
+				return CStatus::Fail;
+			}
+		}
+
 	   MProgressWindow::endProgress();
 	   return processStopped ? MStatus::kEndOfFile : MStatus::kSuccess;
    }

@@ -1,6 +1,8 @@
 #ifndef _ALEMBIC_OBJECT_H_
 #define _ALEMBIC_OBJECT_H_
 
+#include "CommonSceneGraph.h"
+
 class AlembicWriteJob;
 class AlembicObject;
 
@@ -12,12 +14,16 @@ private:
    MObjectArray mRefs;
    AlembicWriteJob * mJob;
    AlembicObjectPtr mParent;
+   Abc::OObject mMyParent;
+
 protected:
+   SceneNodePtr mExoSceneNode;
    int mNumSamples;
    AbcG::OVisibilityProperty mOVisibility;
 
 public:
    AlembicObject(const MObject & in_Ref, AlembicWriteJob * in_Job);
+   AlembicObject(SceneNodePtr eNode, AlembicWriteJob * in_Job, Abc::OObject oParent);
    ~AlembicObject();
 
    AlembicWriteJob * GetJob() { return mJob; }
