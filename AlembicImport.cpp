@@ -1708,34 +1708,30 @@ ESS_CALLBACK_START(alembic_import_Execute, CRef&)
    CString str("");
    str += "filename=";
    str += args[0].GetAsText();
-   str += "normals=";
+   str += ";normals=";
    str += args[1];
-   str += "uvs=";
+   str += ";uvs=";
    str += args[2];
-   str += "facesets=";
+   str += ";facesets=";
    str += args[3];
-   str += "importVisibilityControllers=";
+   str += ";importVisibilityControllers=";
    str += args[4];
-   str += "importStandinProperties=";
+   str += ";importStandinProperties=";
    str += args[5];
-   str += "importBoundingBoxes=";
+   str += ";importBoundingBoxes=";
    str += args[6];
-   str += "attachToExisting=";
+   str += ";attachToExisting=";
    str += args[7];
-   str += "failOnUnsupported=";
+   str += ";failOnUnsupported=";
    str += args[8];
-   str += "identifiers=";
+   str += ";identifiers=";
    str += args[9].GetAsText();
 
    ESS_LOG_WARNING("The alembic_import command is deprecated. Please use alembic_import_jobs instead.");
 
    importJobArgs[0] = str;
-   Application().ExecuteCommand(L"alembic_import_jobs", importJobArgs, importJobResult);
+   return Application().ExecuteCommand(L"alembic_import_jobs", importJobArgs, importJobResult);
 
-   if((bool)importJobResult){
-      return CStatus::OK;
-   }
-   return CStatus::Abort;
 ESS_CALLBACK_END
 
 ESS_CALLBACK_START(alembic_import_jobs_Execute, CRef&)
