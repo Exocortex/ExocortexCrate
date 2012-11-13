@@ -1705,31 +1705,22 @@ ESS_CALLBACK_START(alembic_import_Execute, CRef&)
    //bool failOnUnsupported = (bool)args[8];
    //CString identifierListStr = args[9].GetAsText();
 
-   CString str("");
-   str += "filename=";
-   str += args[0].GetAsText();
-   str += ";normals=";
-   str += args[1];
-   str += ";uvs=";
-   str += args[2];
-   str += ";facesets=";
-   str += args[3];
-   str += ";importVisibilityControllers=";
-   str += args[4];
-   str += ";importStandinProperties=";
-   str += args[5];
-   str += ";importBoundingBoxes=";
-   str += args[6];
-   str += ";attachToExisting=";
-   str += args[7];
-   str += ";failOnUnsupported=";
-   str += args[8];
-   str += ";identifiers=";
-   str += args[9].GetAsText();
+   std::stringstream sstream;
+
+   if(!args[0].GetAsText().IsEmpty()){
+      sstream<<"filename="<<args[0].GetAsText().GetAsciiString()<<";";
+   }
+   sstream<<"normals="<<(LONG)args[1]<<";uvs="<<(LONG)args[2]<<";facesets="<<(LONG)args[3]<<";importVisibilityControllers="<<(LONG)args[4];
+   sstream<<";importStandinProperties="<<(LONG)args[5]<<";importBoundingBoxes="<<(LONG)args[6]<<";attachToExisting="<<(LONG)args[7];
+   sstream<<";failOnUnsupported="<<(LONG)args[8];
+   if(!args[9].GetAsText().IsEmpty()){
+      sstream<<";identifiers=";
+      sstream<<args[9].GetAsText().GetAsciiString();
+   }
 
    ESS_LOG_WARNING("The alembic_import command is deprecated. Please use alembic_import_jobs instead.");
 
-   importJobArgs[0] = str;
+   importJobArgs[0] = CString(sstream.str().c_str());
    return Application().ExecuteCommand(L"alembic_import_jobs", importJobArgs, importJobResult);
 
 ESS_CALLBACK_END
