@@ -287,7 +287,7 @@ bool getArbGeomParamPropertyAlembic_Permissive( OBJTYPE obj, std::string name, A
 namespace NodeCategory
 {
    enum type{
-	   GEOMETRY,
+	   GEOMETRY,//probably should be called MERGEABLE
 	   XFORM,
 	   UNSUPPORTED
    };
@@ -298,8 +298,10 @@ namespace NodeCategory
 		   Alembic::AbcGeom::ICamera::matches(iObj.getMetaData()) ||
 		   Alembic::AbcGeom::IPoints::matches(iObj.getMetaData()) ||
 		   Alembic::AbcGeom::ICurves::matches(iObj.getMetaData()) ||
-		   Alembic::AbcGeom::ISubD::matches(iObj.getMetaData())||
-		   Alembic::AbcGeom::INuPatch::matches(iObj.getMetaData())) {
+		   Alembic::AbcGeom::ISubD::matches(iObj.getMetaData()) ||
+		   Alembic::AbcGeom::INuPatch::matches(iObj.getMetaData()) ||
+         Alembic::AbcGeom::ILight::matches(iObj.getMetaData())
+         ) {
 		   return GEOMETRY;
 	   }
 	   else if(Alembic::AbcGeom::IXform::matches(iObj.getMetaData())){
@@ -312,9 +314,9 @@ namespace NodeCategory
 };
 
 
-void getMergeInfo( Alembic::AbcGeom::IObject& iObj, bool& bCreateNullNode, int& nMergedGeomNodeIndex, Alembic::AbcGeom::IObject& mergedGeomChild);
+void getMergeInfo( AbcArchiveCache *pArchiveCache, AbcObjectCache *pObjectCache, bool& bCreateNullNode, int& nMergedGeomNodeIndex, AbcObjectCache **ppMergedObjectCache );
 
-int prescanAlembicHierarchy(Alembic::AbcGeom::IObject root, std::vector<std::string>& nodes, std::map<std::string, bool>& map, bool bIncludeChildren=false);
+int prescanAlembicHierarchy(AbcArchiveCache *pArchiveCache, AbcObjectCache *pRootObjectCache, std::vector<std::string>& nodes, std::map<std::string, bool>& map, bool bIncludeChildren=false);
 
 template<class S>
 struct cia_map_key
