@@ -33,6 +33,13 @@ AlembicObject::AlembicObject
 AlembicObject::AlembicObject(SceneNodePtr eNode, AlembicWriteJob * in_Job, Abc::OObject oParent)
 		: mExoSceneNode(eNode), mJob(in_Job), mMyParent(oParent), mNumSamples(0)
 {
+	MSelectionList sl;
+	MString nodeName = eNode->dccIdentifier;
+	sl.add(nodeName);
+	MDagPath dagPath;
+	sl.getDagPath(0, dagPath);
+	AddRef(dagPath.node())
+
 	if (mParent == NULL)
 	{
 		// ??
@@ -45,9 +52,10 @@ AlembicObject::~AlembicObject()
 
 Abc::OObject AlembicObject::GetParentObject()
 {
-   if(mParent)
+   /*if(mParent)
       return mParent->GetObject();
-   return mJob->GetArchive().getTop();
+   return mJob->GetArchive().getTop();*/
+	return mMyParent;
 }
 
 MString AlembicObject::GetUniqueName(const MString & in_Name)

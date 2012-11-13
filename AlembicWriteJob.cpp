@@ -204,7 +204,7 @@ MStatus AlembicWriteJob::PreProcess()
 	   MProgressWindow::startProgress();
 	   int interrupt = 20;
 	   bool processStopped = false;
-		std::list<PreProcessStackElement> sceneStack;
+		std::deque<PreProcessStackElement> sceneStack;
 
 		sceneStack.push_back(PreProcessStackElement(exoSceneRoot, mTop));
 

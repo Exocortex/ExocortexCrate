@@ -50,6 +50,7 @@ static bool visitChild(const MObject &mObj, SceneNodePtr &parent)
 
 SceneNodePtr buildCommonSceneGraph(const MDagPath &dagPath)
 {
+	ESS_PROFILE_SCOPE("buildCommonSceneGraph");
 	SceneNodePtr exoRoot(new SceneNode());
 	exoRoot->type = SceneNode::SCENE_ROOT;
 	exoRoot->dccIdentifier = dagPath.fullPathName().asChar();
