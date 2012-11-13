@@ -86,7 +86,7 @@ void selectNodes(exoNodePtr root, SceneNode::SelectionT selectionMap, bool bSele
          }
 
          if(bSelectParents){// select all parent nodes
-            exoNodePtr currNode = eNode->parent;
+            SceneNode *currNode = eNode->parent;
             while(currNode){
                currNode->selected = true;
                currNode = currNode->parent;

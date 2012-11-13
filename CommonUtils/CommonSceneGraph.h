@@ -25,11 +25,12 @@ public:
       SURFACE,
       CURVES,
       PARTICLES,
+	  HAIR,
       UNKNOWN,
       NUM_NODE_TYPES
    };
 
-   exoNodePtr parent;
+   SceneNode *parent;
    std::list<exoNodePtr> children;
 
    nodeTypeE type;
@@ -37,10 +38,10 @@ public:
    std::string dccIdentifier;
    bool selected;
 
-   SceneNode():type(NUM_NODE_TYPES), selected(false)
+   SceneNode():type(NUM_NODE_TYPES), selected(false), parent(0)
    {}
 
-   SceneNode(nodeTypeE type, std::string name, std::string identifier):type(type), name(name), dccIdentifier(identifier)
+   SceneNode(nodeTypeE type, std::string name, std::string identifier):type(type), name(name), dccIdentifier(identifier), parent(0)
    {}
 
 
