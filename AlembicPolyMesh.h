@@ -66,7 +66,7 @@ class AlembicPolyMeshDeformNode : public AlembicObjectDeformNode
 private:
    typedef MRUCache<Alembic::AbcCoreAbstract::index_t, Abc::P3fArraySamplePtr> mruP3fArraySamplePtr;
 public:
-   AlembicPolyMeshDeformNode(void): cachePosition(3) {}
+   AlembicPolyMeshDeformNode(void): cachePosition() {}
    virtual ~AlembicPolyMeshDeformNode();
    // override virtual methods from MPxDeformerNode
    virtual void PreDestruction();

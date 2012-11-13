@@ -994,7 +994,7 @@ MStatus AlembicPolyMeshDeformNode::deform(MDataBlock & dataBlock, MItGeometry & 
   Abc::P3fArraySamplePtr samplePos2;
   {
     // now using the cache to save the most recent queries!
-    ESS_PROFILE_SCOPE("AlembicPolyMeshDeformNode::deform get position samples");
+	ESS_PROFILE_SCOPE("AlembicPolyMeshDeformNode::deform get position samples");
     if (cachePosition.contains(sampleInfo.floorIndex))
       samplePos = cachePosition.get(sampleInfo.floorIndex);
     else
@@ -1009,7 +1009,7 @@ MStatus AlembicPolyMeshDeformNode::deform(MDataBlock & dataBlock, MItGeometry & 
       else
       {
         mSchema.getPositionsProperty().get( samplePos2, sampleInfo.ceilIndex );
-        cachePosition.insert(sampleInfo.ceilIndex, samplePos);
+        cachePosition.insert(sampleInfo.ceilIndex, samplePos2);
       }
     }
   }

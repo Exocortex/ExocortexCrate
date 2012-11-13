@@ -105,11 +105,6 @@ MStatus AlembicGetInfoCommand::doIt(const MArgList & args)
    std::deque<infoTuple> infoVector;
    std::set<std::string> uniqueIdentifiers;
 
-   AbcArchiveCache *pArchiveCache = getArchiveCache( fileName.asChar() );
-
-   objects.push_back( &(pArchiveCache->find("/")->second) );
-   infoVector.push_back(infoTuple());
-
    MProgressWindow::reserve();
    MProgressWindow::setTitle("AlembicGetInfo");
    MProgressWindow::setInterruptable(true);
@@ -124,6 +119,12 @@ MStatus AlembicGetInfoCommand::doIt(const MArgList & args)
    bool nameWarningShowed = false;
    MProgressWindow::startProgress();
    MProgressWindow::advanceProgress(1);
+   
+   AbcArchiveCache *pArchiveCache = getArchiveCache( fileName.asChar() );
+
+   objects.push_back( &(pArchiveCache->find("/")->second) );
+   infoVector.push_back(infoTuple());
+
    for(size_t i=0; !processStopped && !objects.empty(); ++i)
    {
       AbcObjectCache *pObjectCache = objects.front();
