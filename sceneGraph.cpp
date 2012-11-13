@@ -6,10 +6,10 @@
 #include <maya/MItDag.h>
 #include <maya/MFnDagNode.h>
 
-static bool visitChild(const MFnDagNode &dagNode, exoNodePtr &parent)
+static bool visitChild(const MFnDagNode &dagNode, SceneNodePtr &parent)
 {
 	// check if it's a valid type of node first!
-	exoNodePtr exoChild(new SceneNode());
+	SceneNodePtr exoChild(new SceneNode());
 	exoChild->dccIdentifier = dagNode.fullPathName().asChar();
 	exoChild->name = dagNode.partialPathName().asChar();
 	switch(dagNode.type())
@@ -51,9 +51,9 @@ static bool visitChild(const MFnDagNode &dagNode, exoNodePtr &parent)
 	return true;
 }
 
-exoNodePtr buildCommonSceneGraph(const MDagPath &dagPath)
+SceneNodePtr buildCommonSceneGraph(const MDagPath &dagPath)
 {
-	exoNodePtr exoRoot(new SceneNode());
+	SceneNodePtr exoRoot(new SceneNode());
 	exoRoot->type = SceneNode::SCENE_ROOT;
 	exoRoot->dccIdentifier = dagPath.fullPathName().asChar();
 	exoRoot->name = dagPath.partialPathName().asChar();
