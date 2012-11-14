@@ -228,24 +228,6 @@ SceneNodePtr buildCommonSceneGraph(AbcArchiveCache *pArchiveCache, AbcObjectCach
 
 
 
-
-
-Abc::IObject SceneNodeAlembic::getObject()
-{
-   return iObj;
-}
-
-bool SceneNodeAlembic::wasMerged()
-{
-   return bWasMerged;
-}
-
-void SceneNodeAlembic::setMerged(bool bMerged)
-{
-   bWasMerged = bMerged;
-}
-
-
 struct ImportStackElement
 {
    SceneNodePtr currFileNode;

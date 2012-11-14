@@ -7,6 +7,23 @@
 //   ESS_LOG_WARNING("deleting node");
 //}
 
+
+Abc::IObject SceneNodeAlembic::getObject()
+{
+   return iObj;
+}
+
+bool SceneNodeAlembic::wasMerged()
+{
+   return bWasMerged;
+}
+
+void SceneNodeAlembic::setMerged(bool bMerged)
+{
+   bWasMerged = bMerged;
+}
+
+
 struct PrintStackElement
 {
    SceneNodePtr eNode;
