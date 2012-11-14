@@ -18,7 +18,7 @@ AlembicModel::AlembicModel(SceneNodePtr eNode, AlembicWriteJob * in_Job, Abc::OO
 
    XSI::CRef parentGlobalTransRef;
 
-   WeakSceneNodePtr parent = mExoSceneNode->parent;
+   SceneNode* parent = mExoSceneNode->parent;
 
    while(parent){
       if(parent->selected){
