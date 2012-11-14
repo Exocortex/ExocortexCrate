@@ -50,8 +50,8 @@ public:
 
 SceneNodePtr buildCommonSceneGraph(AbcArchiveCache *pArchiveCache, AbcObjectCache *pRootObjectCache, int& nNumNodes);
 
-bool ImportSceneFile(const IJobStringParser& jobParams, SceneNodePtr fileRoot, SceneNodePtr appRoot);
-bool AttachSceneFile(const IJobStringParser& jobParams, SceneNodePtr fileRoot, SceneNodePtr appRoot);
+bool ImportSceneFile(SceneNodePtr fileRoot, SceneNodePtr appRoot, const IJobStringParser& jobParams);
+bool AttachSceneFile(SceneNodePtr fileRoot, SceneNodePtr appRoot, const IJobStringParser& jobParams);
 
 
 

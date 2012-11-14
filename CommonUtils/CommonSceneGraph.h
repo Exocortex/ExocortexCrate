@@ -56,8 +56,10 @@ public:
 
    //for alembic scene graph
    virtual Abc::IObject getObject(){ return Abc::IObject(); }
-   virtual bool wasMerged(){ return false; }
+   virtual bool isMerged(){ return false; }
    virtual void setMerged(bool bMerged=true){ }
+   virtual bool isAttached(){ return false; }
+   virtual void setAttached(bool bAttached=true){ }
 };
 
 
@@ -66,10 +68,8 @@ class SceneNodeAlembic;
 class SceneNodeApp : public SceneNode
 {
 public:
-
    virtual bool replaceData(SceneNodePtr fileNode, const IJobStringParser& jobParams){ return false; }
    virtual bool addChild(SceneNodePtr fileNode, const IJobStringParser& jobParams, SceneNodePtr newAppNode){ return false; }
-
 };
 
 class SceneNodeAlembic : public SceneNode
@@ -77,14 +77,18 @@ class SceneNodeAlembic : public SceneNode
 public:
    Abc::IObject iObj;
    bool bWasMerged;
+   bool bWasAttached;
 
    SceneNodeAlembic(Abc::IObject& obj):iObj(obj), bWasMerged(false)
    {}
 
    virtual Abc::IObject getObject();
 
-   virtual bool wasMerged();
+   virtual bool isMerged();
    virtual void setMerged(bool bMerged=true);
+
+   virtual bool isAttached();
+   virtual void setAttached(bool bAttached=true);
 };
 
 void printSceneGraph(SceneNodePtr root, bool bOnlyPrintSelected);

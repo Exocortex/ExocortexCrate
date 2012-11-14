@@ -13,7 +13,7 @@ Abc::IObject SceneNodeAlembic::getObject()
    return iObj;
 }
 
-bool SceneNodeAlembic::wasMerged()
+bool SceneNodeAlembic::isMerged()
 {
    return bWasMerged;
 }
@@ -23,6 +23,15 @@ void SceneNodeAlembic::setMerged(bool bMerged)
    bWasMerged = bMerged;
 }
 
+bool SceneNodeAlembic::isAttached()
+{
+   return bWasAttached;
+}
+
+void SceneNodeAlembic::setAttached(bool bAttached)
+{
+   bWasAttached = bAttached;
+}
 
 struct PrintStackElement
 {
