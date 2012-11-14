@@ -46,6 +46,45 @@ public:
    std::string buildJobString();
 };
 
+
+
+
+
+class SceneNodeAlembic;
+class SceneNodeApp : public SceneNode
+{
+public:
+
+   virtual bool replaceData(SceneNodePtr fileNode, const IJobStringParser& jobParams){ return false; }
+   virtual bool addChild(SceneNodePtr fileNode, const IJobStringParser& jobParams, SceneNodePtr newAppNode){ return false; }
+
+};
+
+class SceneNodeAlembic : public SceneNode
+{
+public:
+   Abc::IObject iObj;
+   bool bWasMerged;
+
+   SceneNodeAlembic(Abc::IObject& obj):iObj(obj), bWasMerged(false)
+   {}
+
+   virtual Abc::IObject getObject();
+
+   virtual bool wasMerged();
+   virtual void setMerged(bool bMerged=true);
+};
+
+
+
+
 SceneNodePtr buildCommonSceneGraph(AbcArchiveCache *pArchiveCache, AbcObjectCache *pRootObjectCache, int& nNumNodes);
+
+
+
+bool ImportSceneFile(const IJobStringParser& jobParams, SceneNodePtr fileRoot, SceneNodePtr appRoot);
+bool AttachSceneFile(const IJobStringParser& jobParams, SceneNodePtr fileRoot, SceneNodePtr appRoot);
+
+
 
 #endif

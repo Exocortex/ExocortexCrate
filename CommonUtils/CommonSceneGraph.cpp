@@ -1,6 +1,12 @@
 #include "CommonAlembic.h"
 #include "CommonSceneGraph.h"
 
+
+//SceneNode::~SceneNode()
+//{
+//   ESS_LOG_WARNING("deleting node");
+//}
+
 struct PrintStackElement
 {
    SceneNodePtr eNode;
@@ -12,6 +18,20 @@ struct PrintStackElement
 void printSceneGraph(SceneNodePtr root, bool bOnlyPrintSelected)
 {
  
+   char* table[]={
+      "SCENE_ROOT",
+      "ETRANSFORM",// external transform (a parent of a geometry node)
+      "ITRANSFORM",// internal transform (all other transforms)
+      "CAMERA",
+      "POLYMESH",
+      "SUBD",
+      "SURFACE",
+      "CURVES",
+      "PARTICLES",
+      "LIGHT",
+      "UNKNOWN",
+      "NUM_NODE_TYPES"
+   };
 
    ESS_LOG_WARNING("ExoSceneGraph Begin");
 
@@ -27,9 +47,12 @@ void printSceneGraph(SceneNodePtr root, bool bOnlyPrintSelected)
       sceneStack.pop_back();
 
       if(!bOnlyPrintSelected || (bOnlyPrintSelected && eNode->selected)){
-         ESS_LOG_WARNING("Level: "<<sElement.level<<" - Name: "<<eNode->name<<" - Selected: "<<(eNode->selected?"true":"false")<<" - path: "<<eNode->dccIdentifier);
+         ESS_LOG_WARNING("Level: "<<sElement.level<<" - Name: "<<eNode->name<<" - Selected: "<<(eNode->selected?"true":"false")<<" - path: "<<eNode->dccIdentifier<<" - type: "<<table[eNode->type]);
             //<<" - identifer: "<<eNode->dccIdentifier);
+        
       }
+
+    
 
       for( std::list<SceneNodePtr>::iterator it = eNode->children.begin(); it != eNode->children.end(); it++){
          sceneStack.push_back(PrintStackElement(*it, sElement.level+1));

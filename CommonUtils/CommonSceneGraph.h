@@ -6,11 +6,14 @@
 #include <list>
 #include <string>
 #include <map>
+#include "CommonAlembic.h"
 
 class SceneNode;
 typedef boost::shared_ptr<SceneNode> SceneNodePtr;
 
 typedef std::list<SceneNodePtr>::iterator SceneChildIterator;
+
+class IJobStringParser;
 
 class SceneNode
 {
@@ -33,7 +36,7 @@ public:
       NUM_NODE_TYPES
    };
 
-   SceneNode *parent;
+   SceneNode* parent;
    std::list<SceneNodePtr> children;
 
    nodeTypeE type;
@@ -46,9 +49,20 @@ public:
 
    SceneNode(nodeTypeE type, std::string name, std::string identifier):type(type), name(name), dccIdentifier(identifier), parent(0)
    {}
+   //~SceneNode();
 
+   //for application scene graph
+   virtual bool replaceData(SceneNodePtr fileNode, const IJobStringParser& jobParams){ return false; }
+   virtual bool addChild(SceneNodePtr fileNode, const IJobStringParser& jobParams, SceneNodePtr newAppNode){ return false; }
 
+   //for alembic scene graph
+   virtual Abc::IObject getObject(){ return Abc::IObject(); }
+   virtual bool wasMerged(){ return false; }
+   virtual void setMerged(bool bMerged=true){ }
 };
+
+
+
 
 void printSceneGraph(SceneNodePtr root, bool bOnlyPrintSelected);
 

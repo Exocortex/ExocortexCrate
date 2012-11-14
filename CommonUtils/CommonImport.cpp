@@ -33,7 +33,7 @@ bool IJobStringParser::parse(const std::string& jobString)
 		std::vector<std::string> valuePair;
 		boost::split(valuePair, tokens[j], boost::is_any_of("="));
 		if(valuePair.size() != 2){
-			//ESS_LOG_WARNING("Skipping invalid token: "<<tokens[j]);
+			ESS_LOG_WARNING("Skipping invalid token: "<<tokens[j]);
 			continue;
 		}
 
@@ -75,7 +75,7 @@ bool IJobStringParser::parse(const std::string& jobString)
 		}
 		else
 		{
-			//ESS_LOG_WARNING("Skipping invalid token: "<<tokens[j]);
+			ESS_LOG_WARNING("Skipping invalid token: "<<tokens[j]);
 			continue;
 		}
 	}
@@ -184,13 +184,13 @@ SceneNodePtr buildCommonSceneGraph(AbcArchiveCache *pArchiveCache, AbcObjectCach
 
       numNodes++;
 
-      SceneNodePtr newNode(new SceneNode());
+      SceneNodePtr newNode(new SceneNodeAlembic(iObj));
 
       newNode->name = iObj.getName();
       newNode->dccIdentifier = iObj.getFullName();
       newNode->type = getNodeType(iObj);
       //select every node by default
-      //newNode->selected = true;
+      newNode->selected = true;
       
       if(parentNode){ //create bi-direction link if there is a parent
          newNode->parent = parentNode.get();
@@ -226,3 +226,96 @@ SceneNodePtr buildCommonSceneGraph(AbcArchiveCache *pArchiveCache, AbcObjectCach
    return sceneRoot;
 }
 
+
+
+
+
+Abc::IObject SceneNodeAlembic::getObject()
+{
+   return iObj;
+}
+
+bool SceneNodeAlembic::wasMerged()
+{
+   return bWasMerged;
+}
+
+void SceneNodeAlembic::setMerged(bool bMerged)
+{
+   bWasMerged = bMerged;
+}
+
+
+struct ImportStackElement
+{
+   SceneNodePtr currFileNode;
+   SceneNodePtr parentAppNode;
+
+   ImportStackElement(SceneNodePtr node, SceneNodePtr parent):currFileNode(node), parentAppNode(parent)
+   {}
+
+};
+
+
+
+bool ImportSceneFile(const IJobStringParser& jobParams, SceneNodePtr fileRoot, SceneNodePtr appRoot)
+{
+   //compare to application scene graph to see if we need to rename nodes (or maybe we might throw an error)
+
+   std::list<ImportStackElement> sceneStack;
+
+   for(SceneChildIterator it = fileRoot->children.begin(); it != fileRoot->children.end(); it++){
+      sceneStack.push_back(ImportStackElement(*it, appRoot));
+   }
+
+   //TODO: abstract progress
+
+   //int intermittentUpdateInterval = std::max( (int)(nNumNodes / 100), (int)1 );
+   //int i = 0;
+   while( !sceneStack.empty() )
+   {
+      ImportStackElement sElement = sceneStack.back();
+      SceneNodePtr currFileNode = sElement.currFileNode;
+      SceneNodePtr parentAppNode = sElement.parentAppNode;
+      sceneStack.pop_back();
+
+      //if( i % intermittentUpdateInterval == 0 ) {
+      //   prog.PutCaption(L"Importing "+CString(iObj.getFullName().c_str())+L" ...");
+      //}
+      //i++;
+
+       
+      SceneNodePtr newAppNode;
+      bool bChildAdded = parentAppNode->addChild(currFileNode, jobParams, newAppNode);
+
+      if(bChildAdded){
+
+         //push the children as the last step, since we need to who the parent is first (we may have merged)
+         for(SceneChildIterator it = currFileNode->children.begin(); it != currFileNode->children.end(); it++){
+            AbcG::IObject childObj = (*it)->getObject();
+            if( NodeCategory::get(childObj) == NodeCategory::UNSUPPORTED ) continue;// skip over unsupported types
+
+            if( (*it)->wasMerged() ){
+               sceneStack.push_back( ImportStackElement( *it, parentAppNode ) );
+               
+            }
+            else{//selected was set false (because of a merge)
+               sceneStack.push_back( ImportStackElement( *it, newAppNode ) );
+            }
+         }
+         
+      }
+      else{
+	      if( currFileNode->children.empty() == false ) {
+		      EC_LOG_WARNING("Unsupported node: " << currFileNode->name << " has children that have not been imported." );
+	      }
+      }
+
+      //if(prog.IsCancelPressed()){
+      //   break;
+      //}
+      //prog.Increment();
+   }
+
+   return true;
+}
