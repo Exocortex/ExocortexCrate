@@ -5,6 +5,19 @@
 
 using namespace XSI;
 
+
+
+bool SceneNodeXSI::replaceData(SceneNodePtr fileNode, const IJobStringParser& jobParams)
+{
+   return true;
+}
+
+bool SceneNodeXSI::addChild(SceneNodePtr fileNode, const IJobStringParser& jobParams, SceneNodePtr newAppNode)
+{
+   return true;
+}
+
+
 SceneNode::nodeTypeE getNodeType(X3DObject& xObj)
 {
  
@@ -106,7 +119,7 @@ SceneNodePtr buildCommonSceneGraph(XSI::X3DObject xsiRoot)
 
    std::list<CSGStackElement> sceneStack;
    
-   SceneNodePtr exoRoot(new SceneNode());
+   SceneNodePtr exoRoot(new SceneNodeXSI(xsiRoot.GetRef()));
    exoRoot->name = xsiRoot.GetName().GetAsciiString();
    exoRoot->type = SceneNode::SCENE_ROOT;
    exoRoot->dccIdentifier = xsiRoot.GetFullName().GetAsciiString();
@@ -128,13 +141,13 @@ SceneNodePtr buildCommonSceneGraph(XSI::X3DObject xsiRoot)
          X3DObject child(children[j]);
          if(!child.IsValid()) continue;
 
-         SceneNodePtr exoChild(new SceneNode());
-
          SceneNode::nodeTypeE type = getNodeType(child);
          
+         SceneNodePtr exoChild(new SceneNodeXSI(child.GetRef()));
 
          if(!hasExtractableTransform(type))
          {
+            SceneNodePtr exoChild(new SceneNodeXSI(child.GetRef()));
             exoChild->parent = eNode.get();
             exoChild->name = child.GetName().GetAsciiString();
             exoChild->type = type;
@@ -142,27 +155,24 @@ SceneNodePtr buildCommonSceneGraph(XSI::X3DObject xsiRoot)
          }
          else{
             //XSI shape nodes should split into two nodes: a transform node, and a pure shape node
-            SceneNodePtr geoChild(new SceneNode());
-
-            exoChild->parent = eNode.get();
-            exoChild->name = child.GetName().GetAsciiString();
-            exoChild->name += "Xfo";
-            exoChild->type = SceneNode::ETRANSFORM;
-            exoChild->dccIdentifier = child.GetFullName().GetAsciiString();
-
+            SceneNodePtr geoChild(new SceneNodeXSI(child.GetRef()));
             geoChild->parent = exoChild.get();
             geoChild->name = child.GetName().GetAsciiString();
             geoChild->type = type;
             geoChild->dccIdentifier = child.GetFullName().GetAsciiString();
 
+            
+            exoChild->parent = eNode.get();
+            exoChild->name = child.GetName().GetAsciiString();
+            exoChild->name += "Xfo";
+            exoChild->type = SceneNode::ETRANSFORM;
+            exoChild->dccIdentifier = child.GetFullName().GetAsciiString();
             exoChild->children.push_back(geoChild);
          }
- 
-         eNode->children.push_back(exoChild);
 
+         eNode->children.push_back(exoChild);
          sceneStack.push_back(CSGStackElement(children[j], exoChild));
       }
-
    }
 
    return exoRoot;
