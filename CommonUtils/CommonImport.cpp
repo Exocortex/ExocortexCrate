@@ -296,8 +296,13 @@ bool ImportSceneFile(const IJobStringParser& jobParams, SceneNodePtr fileRoot, S
             if( NodeCategory::get(childObj) == NodeCategory::UNSUPPORTED ) continue;// skip over unsupported types
 
             if( (*it)->wasMerged() ){
-               sceneStack.push_back( ImportStackElement( *it, parentAppNode ) );
-               
+               //The child node was merged with its parent, so skip this child, and add its children
+               //(Although this case is technically possible, I think it will not be common)
+               SceneNodePtr& mergedChild = *it;
+
+               for(SceneChildIterator cit = mergedChild->children.begin(); cit != mergedChild->children.end(); cit++){
+                  sceneStack.push_back( ImportStackElement( *cit, parentAppNode ) );
+               }
             }
             else{//selected was set false (because of a merge)
                sceneStack.push_back( ImportStackElement( *it, newAppNode ) );

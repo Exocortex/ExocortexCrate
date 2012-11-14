@@ -111,7 +111,7 @@ void selectNodes(SceneNodePtr root, SceneNode::SelectionT selectionMap, bool bSe
          }
 
          if(bSelectParents){// select all parent nodes
-            WeakSceneNodePtr currNode = eNode->parent;
+            SceneNode* currNode = eNode->parent;
             while(currNode){
                currNode->selected = true;
                currNode = currNode->parent;
