@@ -193,7 +193,7 @@ SceneNodePtr buildCommonSceneGraph(AbcArchiveCache *pArchiveCache, AbcObjectCach
       //newNode->selected = true;
       
       if(parentNode){ //create bi-direction link if there is a parent
-         newNode->parent = parentNode;
+         newNode->parent = parentNode.get();
          parentNode->children.push_back(newNode);
 
          //the parent transforms of geometry nodes should be to be external transforms 
