@@ -18,9 +18,6 @@ AlembicObject::~AlembicObject()
 
 Abc::OObject AlembicObject::GetParentObject()
 {
-   /*if(mParent)
-      return mParent->GetObject();
-   return mJob->GetArchive().getTop();*/
 	return mMyParent;
 }
 

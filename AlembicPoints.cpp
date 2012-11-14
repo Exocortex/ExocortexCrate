@@ -4,6 +4,7 @@
 
 bool AlembicPoints::listIntanceNames(std::vector<std::string> &names)
 {
+	MStatus status;
   MDagPathArray allPaths;
   {
     MMatrixArray allMatrices;
@@ -16,7 +17,12 @@ bool AlembicPoints::listIntanceNames(std::vector<std::string> &names)
     MDagPath dagp;
     sl.getDagPath(0, dagp);
 
-    MFnInstancer(dagp).allInstances( allPaths, allMatrices, pathStartIndices, pathIndices );
+    status = MFnInstancer(dagp).allInstances( allPaths, allMatrices, pathStartIndices, pathIndices );
+	if (status != MS::kSuccess)
+	{
+		MGlobal::displayWarning("[ExocortexAlembic] Instancer error: " + status.errorString());
+		return false;
+	}
   }
 
   names.resize(allPaths.length());
@@ -77,7 +83,7 @@ bool AlembicPoints::sampleInstanceProperties( std::vector<Abc::Quatf> angularVel
 }
 
 AlembicPoints::AlembicPoints(SceneNodePtr eNode, AlembicWriteJob * in_Job, Abc::OObject oParent)
-	: AlembicObject(eNode, in_Job, oParent)
+	: AlembicObject(eNode, in_Job, oParent), hasInstancer(false)
 {
 	mObject = AbcG::OPoints(GetMyParent(), eNode->name, GetJob()->GetAnimatedTs());
 	mSchema = mObject.getSchema();
@@ -96,10 +102,17 @@ AlembicPoints::AlembicPoints(SceneNodePtr eNode, AlembicWriteJob * in_Job, Abc::
 
 	MStringArray instancers;
 	MGlobal::executeCommand(("listConnections -t instancer " + eNode->name).c_str(), instancers);
-	if (instancers.length() == 1)
+	switch(instancers.length())
 	{
+	case 0:
+		break;
+	case 1:
 		hasInstancer = true;
 		instName = instancers[0];
+		break;
+	default:
+		MGlobal::displayWarning(("[ExocortexAlembic] More than one instancer associated to " + eNode->name + ", can only use one.\nParticle instancing ignore.").c_str());
+		break;
 	}
 }
 
