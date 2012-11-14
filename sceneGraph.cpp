@@ -2,6 +2,8 @@
 #include "sceneGraph.h"
 
 #include "CommonLog.h"
+#include "CommonImport.h"
+#include "AlembicImport.h"
 
 using namespace XSI;
 
@@ -9,12 +11,20 @@ using namespace XSI;
 
 bool SceneNodeXSI::replaceData(SceneNodePtr fileNode, const IJobStringParser& jobParams)
 {
-   return true;
+   if(!jobParams.attachToExisting){
+      return false;
+   }
+   SceneNodePtr newAppNode;
+   return createNodes(this, fileNode.get(), jobParams, newAppNode);
 }
 
 bool SceneNodeXSI::addChild(SceneNodePtr fileNode, const IJobStringParser& jobParams, SceneNodePtr newAppNode)
 {
-   return true;
+   if(jobParams.attachToExisting){
+      return false;
+   }
+
+   return createNodes(this, fileNode.get(), jobParams, newAppNode);
 }
 
 
@@ -113,16 +123,16 @@ struct CSGStackElement
 };
 
 
-SceneNodePtr buildCommonSceneGraph(XSI::X3DObject xsiRoot)
+SceneNodePtr buildCommonSceneGraph(XSI::CRef xsiRoot)
 {
- 
+   X3DObject xsiRootObj(xsiRoot);
 
    std::list<CSGStackElement> sceneStack;
    
-   SceneNodePtr exoRoot(new SceneNodeXSI(xsiRoot.GetRef()));
-   exoRoot->name = xsiRoot.GetName().GetAsciiString();
+   SceneNodePtr exoRoot(new SceneNodeXSI(xsiRoot));
+   exoRoot->name = xsiRootObj.GetName().GetAsciiString();
    exoRoot->type = SceneNode::SCENE_ROOT;
-   exoRoot->dccIdentifier = xsiRoot.GetFullName().GetAsciiString();
+   exoRoot->dccIdentifier = xsiRootObj.GetFullName().GetAsciiString();
 
    sceneStack.push_back(CSGStackElement(xsiRoot, exoRoot));
 

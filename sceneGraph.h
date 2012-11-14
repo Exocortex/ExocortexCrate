@@ -18,7 +18,7 @@ public:
 };
 
 
-SceneNodePtr buildCommonSceneGraph(XSI::X3DObject xsiRoot);
+SceneNodePtr buildCommonSceneGraph(XSI::CRef xsiRoot);
 
 bool hasExtractableTransform( SceneNode::nodeTypeE type );
 

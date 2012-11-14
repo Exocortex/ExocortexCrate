@@ -20,6 +20,7 @@ using namespace MATH;
 #include "CommonUtilities.h"
 #include "CommonAbcCache.h"
 #include "CommonImport.h"
+#include "sceneGraph.h"
 
 ESS_CALLBACK_START(alembic_import_Init,CRef&)
 	Context ctxt( in_ctxt );
@@ -1153,86 +1154,172 @@ ESS_CALLBACK_START(alembic_create_item_Execute, CRef&)
 ESS_CALLBACK_END
 
 
-CStatus createTransform( AbcObjectCache *pObjectCache, CRef& importRootNode, CRef& parentNode, CRef& newNodeRef, CString& filename, bool attachToExisting, CValueArray& createItemArgs)
+
+
+
+//TODO: do either attach existing or create a new node, but not both
+
+bool createNodes(SceneNodeXSI* const appParentNode, SceneNode* const fileNode, const IJobStringParser& jobParams, SceneNodePtr newAppNode)
 {
-   X3DObject parentX3DObject(parentNode);
-   Abc::IObject& iObj = pObjectCache->obj;
+
+   //Todo: call createNode if not merging, and createNodeWithMerge otherwise
+
+   return true;
+}
+
+//the last parameter is ignored if attach to exising is active (since we are not creating a new node)
+bool createNode(SceneNodeXSI& appParentNode, SceneNode& fileNode, const IJobStringParser& jobParams, SceneNodePtr newAppNode)
+{  
+   XSI::CRef importRootNode;//This is used for building renference paths to particle system instance
+   //TODO: will need to think about how this should work
+
+
+   CString filename = CString(jobParams.filename.c_str());
+   const bool& attachToExisting = jobParams.attachToExisting;
+   //const bool& importStandins = jobParams.importStandinProperties;
+   //const bool& importBboxes = jobParams.importBoundingBoxes;
+   //const bool& failOnUnsupported = jobParams.failOnUnsupported;
+
+   CRef timeRef;
+   timeRef.Set(L"alembic_timecontrol");
+   //CustomProperty timeControl = timeRef;
+   CValueArray createItemArgs(5);
+   createItemArgs[0] = timeRef;
+   createItemArgs[1] = jobParams.importFacesets;
+   createItemArgs[2] = jobParams.importNormals;
+   createItemArgs[3] = jobParams.importUVs;
+   createItemArgs[4] = jobParams.importVisibilityControllers;
+
+   //the transform
+   
+   Abc::IObject& iObj = fileNode.getObject();
    CString name = truncateName(iObj.getName().c_str());
 
    if(AbcG::IXform::matches(iObj.getMetaData()))
    {
-
-	   X3DObject x3dobject;
-      //CRef nodeRef;
-      if(attachToExisting)
-      {
+      CRef nodeRef;
+      if(attachToExisting){
 	      ESS_PROFILE_SCOPE("attachToExisting");
-	      CRef modelRef;
-         modelRef.Set(getFullNameFromIdentifier(importRootNode, iObj.getFullName(), false));
-         x3dobject = modelRef;
-
+         nodeRef = appParentNode.nodeRef;
+        
          //if(!x3dobject.GetType().IsEqualNoCase(L"#model") && !x3dobject.GetType().IsEqualNoCase(L"null")){
          //   x3dobject.ResetObject();
          //}
-         newNodeRef = x3dobject.GetRef();
+
+         if(!nodeRef.IsValid()){
+            ESS_LOG_ERROR("Could not attach xform "<<iObj.getFullName());
+         }
       }
-
-      if(!x3dobject.IsValid())
-      {
-		   Null null;
-		   CRef nullRef;
-		   nullRef.Set(getFullNameFromIdentifier(importRootNode, iObj.getFullName(), false));
-		   null = nullRef;
-
+      else{
+         X3DObject parentX3DObject(appParentNode.nodeRef);
+         Null null;
          parentX3DObject.AddNull(name, null);
+         nodeRef = null.GetRef();
+
+         if(!nodeRef.IsValid()){
+             ESS_LOG_ERROR("Could not create xform "<<iObj.getFullName());
+         }
+
+         SceneNodePtr appNode(new SceneNodeXSI(null.GetRef()));
+         newAppNode = appNode;
+
+         //we possibly won't need the name map anymore
          nameMapAdd(iObj.getFullName().c_str(),null.GetFullName());
-         newNodeRef = null.GetRef();
       }
 
       // load metadata
-      alembic_create_item_Invoke(L"alembic_metadata",importRootNode,newNodeRef,filename,iObj.getFullName().c_str(),attachToExisting,createItemArgs);
+      alembic_create_item_Invoke(L"alembic_metadata", importRootNode, nodeRef, filename, iObj.getFullName().c_str(), attachToExisting, createItemArgs);
 
       // load xform
-      alembic_create_item_Invoke(L"alembic_xform",importRootNode,newNodeRef,filename,iObj.getFullName().c_str(),attachToExisting,createItemArgs);
+      alembic_create_item_Invoke(L"alembic_xform", importRootNode, nodeRef, filename, iObj.getFullName().c_str(), attachToExisting, createItemArgs);
       
       // load visibility
-      alembic_create_item_Invoke(L"alembic_visibility",importRootNode,newNodeRef,filename,iObj.getFullName().c_str(),attachToExisting,createItemArgs);
+      alembic_create_item_Invoke(L"alembic_visibility", importRootNode, nodeRef, filename, iObj.getFullName().c_str(), attachToExisting, createItemArgs);
       
    }
+   else 
+   {
+		std::stringstream s;
+		s << "Unsupported Alembic type: " << iObj.getFullName().c_str();
+		if( jobParams.failOnUnsupported ) {
+			ESS_LOG_ERROR( s.str().c_str() );
+			return false;
+		}
+		ESS_LOG_WARNING( s.str().c_str() );
+   }
 
-   return CStatus( CStatus::OK );
+   return true;
 }
 
-CStatus createShape( AbcObjectCache *pObjectCache, CRef& importRootNode, CRef& parentNode, CRef& newNodeRef, CString& filename, bool attachToExisting, bool importStandins, bool importBboxes, bool wasMerged, bool failOnUnsupported, CValueArray& createItemArgs)
+
+bool createNodeFromMerge(SceneNodeXSI* const appParentNode, SceneNode* const fileXformNode, SceneNode* const fileShapeNode, const IJobStringParser& jobParams, SceneNodePtr newAppNode)
 {
-   X3DObject parentX3DObject(parentNode);
-    Abc::IObject& iObj = pObjectCache->obj;
-   Abc::IObject parent = iObj.getParent();
-   CString name = truncateName(iObj.getName().c_str());
+   XSI::CRef importRootNode;//This is used for building renference paths to particle system instance
+   //TODO: will need to think about how this should work
 
-   //EC_LOG_INFO( "Object name: " << name.GetAsciiString() );
+   //AbcObjectCache *pObjectCache, 
 
-   // after dealing with transforms, let's deal with all shape types
-   if(AbcG::ICamera::matches(iObj.getMetaData()))
+   //CRef& importRootNode, 
+   //CRef& parentNode, 
+   //CRef& newNodeRef,
+
+   CString& filename = CString(jobParams.filename.c_str());
+   const bool& attachToExisting = jobParams.attachToExisting;
+   const bool& importStandins = jobParams.importStandinProperties;
+   const bool& importBboxes = jobParams.importBoundingBoxes;
+   const bool& failOnUnsupported = jobParams.failOnUnsupported;
+
+  
+   CRef timeRef;
+   timeRef.Set(L"alembic_timecontrol");
+   //CustomProperty timeControl = timeRef;
+   
+   // store the time control in a value array
+   CValueArray createItemArgs(5);
+   createItemArgs[0] = timeRef;
+   createItemArgs[1] = jobParams.importFacesets;
+   createItemArgs[2] = jobParams.importNormals;
+   createItemArgs[3] = jobParams.importUVs;
+   createItemArgs[4] = jobParams.importVisibilityControllers;
+
+   //bool wasMerged = false; // was merged with parent transform
+
+   X3DObject parentX3DObject(appParentNode->nodeRef);
+
+   Abc::IObject shapeObj = fileShapeNode->getObject();
+
+   CString newAppNodeName;
+   if(fileXformNode){
+      newAppNodeName = truncateName(fileXformNode->getObject().getName().c_str());
+   }
+   else{
+      newAppNodeName = truncateName(shapeObj.getName().c_str());
+   }
+   //EC_LOG_INFO( "Object name: " << newAppNodeName.GetAsciiString() );
+
+   
+#if 0
+   if(AbcG::ICamera::matches(shapeObj.getMetaData()))
    {
       //ESS_LOG_WARNING("Import ICamera");
       // let's create a camera
+      CRef nodeRef;
       Camera camera;
       if(attachToExisting)
       {
-	   ESS_PROFILE_SCOPE("attachToExisting");
+	      ESS_PROFILE_SCOPE("attachToExisting");
          CRef cameraRef;
-         cameraRef.Set(getFullNameFromIdentifier(importRootNode,iObj.getFullName()));
+         cameraRef.Set(getFullNameFromIdentifier(importRootNode,shapeObj.getFullName()));
          camera = cameraRef;
          if(!camera.GetType().IsEqualNoCase(L"camera"))
             camera.ResetObject();
       }
-      if(!camera.IsValid())
+      else 
       {
-         parentX3DObject.AddCamera(L"Camera",name,camera);
-         nameMapAdd(iObj.getFullName().c_str(),camera.GetFullName());
+         parentX3DObject.AddCamera(L"Camera",newAppNodeName,camera);
+         nameMapAdd(shapeObj.getFullName().c_str(),camera.GetFullName());
       }
-	  newNodeRef = camera.GetRef();
+	   newNodeRef = camera.GetRef();
 
       // delete the interest
       CValueArray deleteArgs(1);
@@ -1241,19 +1328,20 @@ CStatus createShape( AbcObjectCache *pObjectCache, CRef& importRootNode, CRef& p
       Application().ExecuteCommand(L"DeleteObj",deleteArgs,setExprReturn);
 
       // load metadata
-      alembic_create_item_Invoke(L"alembic_metadata",importRootNode,camera.GetRef(),filename,iObj.getFullName().c_str(),attachToExisting,createItemArgs);
+      alembic_create_item_Invoke(L"alembic_metadata",importRootNode,camera.GetRef(),filename,shapeObj.getFullName().c_str(),attachToExisting,createItemArgs);
 
       // let's setup the xform op
-      if(AbcG::IXform::matches(parent.getMetaData()) && wasMerged)
-         alembic_create_item_Invoke(L"alembic_xform",importRootNode,camera.GetRef(),filename,parent.getFullName().c_str(),attachToExisting,createItemArgs);
+      if(AbcG::IXform::matches(parentObj.getMetaData()) && wasMerged)
+         alembic_create_item_Invoke(L"alembic_xform",importRootNode,camera.GetRef(),filename,parentObj.getFullName().c_str(),attachToExisting,createItemArgs);
       
       // load visibility
-      alembic_create_item_Invoke(L"alembic_visibility",importRootNode,camera.GetRef(),filename,iObj.getFullName().c_str(),attachToExisting,createItemArgs);
+      alembic_create_item_Invoke(L"alembic_visibility",importRootNode,camera.GetRef(),filename,shapeObj.getFullName().c_str(),attachToExisting,createItemArgs);
 
       // load camera
-      alembic_create_item_Invoke(L"alembic_camera",importRootNode,camera.GetRef(),filename,iObj.getFullName().c_str(),attachToExisting,createItemArgs);
+      alembic_create_item_Invoke(L"alembic_camera",importRootNode,camera.GetRef(),filename,shapeObj.getFullName().c_str(),attachToExisting,createItemArgs);
    }
-   else if(AbcG::IPolyMesh::matches(iObj.getMetaData()))
+//#if 0
+   else if(AbcG::IPolyMesh::matches(shapeObj.getMetaData()))
    {
       //ESS_LOG_WARNING("Import IPolyMesh");
 
@@ -1262,7 +1350,7 @@ CStatus createShape( AbcObjectCache *pObjectCache, CRef& importRootNode, CRef& p
       {
 	   ESS_PROFILE_SCOPE("attachToExisting");
          CRef meshRef;
-         meshRef.Set(getFullNameFromIdentifier(importRootNode,iObj.getFullName()));
+         meshRef.Set(getFullNameFromIdentifier(importRootNode,shapeObj.getFullName()));
          meshObj = meshRef;
 
          if(!meshObj.GetType().IsEqualNoCase(L"PolyMsh"))
@@ -1272,43 +1360,43 @@ CStatus createShape( AbcObjectCache *pObjectCache, CRef& importRootNode, CRef& p
       {
          XSI::CStatus status;
          if(importBboxes)
-            status = parentX3DObject.AddGeometry(L"Cube",L"MeshSurface",name,meshObj);
+            status = parentX3DObject.AddGeometry(L"Cube",L"MeshSurface",newAppNodeName,meshObj);
          else
-            status = parentX3DObject.AddPrimitive(L"EmptyPolygonMesh",name,meshObj);
-         nameMapAdd(iObj.getFullName().c_str(),meshObj.GetFullName());
+            status = parentX3DObject.AddPrimitive(L"EmptyPolygonMesh",newAppNodeName,meshObj);
+         nameMapAdd(shapeObj.getFullName().c_str(),meshObj.GetFullName());
       }
       newNodeRef = meshObj.GetRef();
 
       // load metadata
-      alembic_create_item_Invoke(L"alembic_metadata",importRootNode,meshObj.GetRef(),filename,iObj.getFullName().c_str(),attachToExisting,createItemArgs);
+      alembic_create_item_Invoke(L"alembic_metadata",importRootNode,meshObj.GetRef(),filename,shapeObj.getFullName().c_str(),attachToExisting,createItemArgs);
 
       // create the topo op
       CRef returnOpRef;
       if(!importBboxes && ! pObjectCache->isMeshPointCache)
       {
          CValue returnedOpVal;
-         alembic_create_item_Invoke(L"alembic_polymesh_topo",importRootNode,meshObj.GetRef(),filename,iObj.getFullName().c_str(),attachToExisting,createItemArgs,returnedOpVal);
+         alembic_create_item_Invoke(L"alembic_polymesh_topo",importRootNode,meshObj.GetRef(),filename,shapeObj.getFullName().c_str(),attachToExisting,createItemArgs,returnedOpVal);
          returnOpRef = (CRef)returnedOpVal;
       }
 
-	  AbcG::IPolyMesh abcMesh = AbcG::IPolyMesh(iObj,Abc::kWrapExisting);
+	  AbcG::IPolyMesh abcMesh = AbcG::IPolyMesh(shapeObj,Abc::kWrapExisting);
          
       // load visibility
-      alembic_create_item_Invoke(L"alembic_visibility",importRootNode,meshObj.GetRef(),filename,iObj.getFullName().c_str(),attachToExisting,createItemArgs);
+      alembic_create_item_Invoke(L"alembic_visibility",importRootNode,meshObj.GetRef(),filename,shapeObj.getFullName().c_str(),attachToExisting,createItemArgs);
 
      // load geometryapprox
 	 if( ! importBboxes && abcMesh.getSchema().getPropertyHeader( ".faceVaryingInterpolateBoundary" ) != NULL )
-		alembic_create_item_Invoke(L"alembic_geomapprox",importRootNode,meshObj.GetRef(),filename,iObj.getFullName().c_str(),attachToExisting,createItemArgs);
+		alembic_create_item_Invoke(L"alembic_geomapprox",importRootNode,meshObj.GetRef(),filename,shapeObj.getFullName().c_str(),attachToExisting,createItemArgs);
 
 	  // let's setup the xform op
-      if(AbcG::IXform::matches(parent.getMetaData()) && wasMerged)
-         alembic_create_item_Invoke(L"alembic_xform",importRootNode,meshObj.GetRef(),filename,parent.getFullName().c_str(),attachToExisting,createItemArgs);
+      if(AbcG::IXform::matches(parentObj.getMetaData()) && wasMerged)
+         alembic_create_item_Invoke(L"alembic_xform",importRootNode,meshObj.GetRef(),filename,parentObj.getFullName().c_str(),attachToExisting,createItemArgs);
       
       // let's setup the positions op
       if(importBboxes)
       {
          CValue returnedOpVal;
-         alembic_create_item_Invoke(L"alembic_bbox",importRootNode,meshObj.GetRef(),filename,iObj.getFullName().c_str(),attachToExisting,createItemArgs,returnedOpVal);
+         alembic_create_item_Invoke(L"alembic_bbox",importRootNode,meshObj.GetRef(),filename,shapeObj.getFullName().c_str(),attachToExisting,createItemArgs,returnedOpVal);
          returnOpRef = (CRef)returnedOpVal;
       }
       else
@@ -1318,18 +1406,18 @@ CStatus createShape( AbcObjectCache *pObjectCache, CRef& importRootNode, CRef& p
          
          if(!receivesExpression)
          {
-            AbcG::IPolyMesh abcMesh = AbcG::IPolyMesh(iObj,Abc::kWrapExisting);
+            AbcG::IPolyMesh abcMesh = AbcG::IPolyMesh(shapeObj,Abc::kWrapExisting);
             CValue returnedOpVal;
-            alembic_create_item_Invoke(L"alembic_polymesh",importRootNode,meshObj.GetRef(),filename,iObj.getFullName().c_str(),attachToExisting,createItemArgs,returnedOpVal);
+            alembic_create_item_Invoke(L"alembic_polymesh",importRootNode,meshObj.GetRef(),filename,shapeObj.getFullName().c_str(),attachToExisting,createItemArgs,returnedOpVal);
             returnOpRef = (CRef)returnedOpVal;
          }
       }
 
       // load standin property
       if(importStandins && returnOpRef.IsValid())
-         alembic_create_item_Invoke(L"alembic_standin",importRootNode,returnOpRef,filename,iObj.getFullName().c_str(),attachToExisting,createItemArgs);
+         alembic_create_item_Invoke(L"alembic_standin",importRootNode,returnOpRef,filename,shapeObj.getFullName().c_str(),attachToExisting,createItemArgs);
    }
-   else if(AbcG::ISubD::matches(iObj.getMetaData()))
+   else if(AbcG::ISubD::matches(shapeObj.getMetaData()))
    {
       //ESS_LOG_WARNING("Import ISubD");
       X3DObject meshObj;
@@ -1337,7 +1425,7 @@ CStatus createShape( AbcObjectCache *pObjectCache, CRef& importRootNode, CRef& p
       {
 	   ESS_PROFILE_SCOPE("attachToExisting");
          CRef meshRef;
-         meshRef.Set(getFullNameFromIdentifier(importRootNode,iObj.getFullName()));
+         meshRef.Set(getFullNameFromIdentifier(importRootNode,shapeObj.getFullName()));
          meshObj = meshRef;
 
          if(!meshObj.GetType().IsEqualNoCase(L"PolyMsh"))
@@ -1346,10 +1434,10 @@ CStatus createShape( AbcObjectCache *pObjectCache, CRef& importRootNode, CRef& p
       if(!meshObj.IsValid())
       {
          if(importBboxes)
-            parentX3DObject.AddGeometry(L"Cube",L"MeshSurface",name,meshObj);
+            parentX3DObject.AddGeometry(L"Cube",L"MeshSurface",newAppNodeName,meshObj);
          else
-            parentX3DObject.AddPrimitive(L"EmptyPolygonMesh",name,meshObj);
-         nameMapAdd(iObj.getFullName().c_str(),meshObj.GetFullName());
+            parentX3DObject.AddPrimitive(L"EmptyPolygonMesh",newAppNodeName,meshObj);
+         nameMapAdd(shapeObj.getFullName().c_str(),meshObj.GetFullName());
       }
 	  newNodeRef = meshObj.GetRef();
 
@@ -1361,49 +1449,49 @@ CStatus createShape( AbcObjectCache *pObjectCache, CRef& importRootNode, CRef& p
       Application().ExecuteCommand(L"MakeLocal",makeLocalArgs,makeLocalReturn);
 
       // load metadata
-      alembic_create_item_Invoke(L"alembic_metadata",importRootNode,meshObj.GetRef(),filename,iObj.getFullName().c_str(),attachToExisting,createItemArgs);
+      alembic_create_item_Invoke(L"alembic_metadata",importRootNode,meshObj.GetRef(),filename,shapeObj.getFullName().c_str(),attachToExisting,createItemArgs);
 
       // create the topo op
       CRef returnOpRef;
       if(!importBboxes)
       {
          CValue returnedOpVal;
-         alembic_create_item_Invoke(L"alembic_polymesh_topo",importRootNode,meshObj.GetRef(),filename,iObj.getFullName().c_str(),attachToExisting,createItemArgs,returnedOpVal);
+         alembic_create_item_Invoke(L"alembic_polymesh_topo",importRootNode,meshObj.GetRef(),filename,shapeObj.getFullName().c_str(),attachToExisting,createItemArgs,returnedOpVal);
          returnOpRef = (CRef)returnedOpVal;
       }
 
       // load visibility
-      alembic_create_item_Invoke(L"alembic_visibility",importRootNode,meshObj.GetRef(),filename,iObj.getFullName().c_str(),attachToExisting,createItemArgs);
+      alembic_create_item_Invoke(L"alembic_visibility",importRootNode,meshObj.GetRef(),filename,shapeObj.getFullName().c_str(),attachToExisting,createItemArgs);
 
       // load geometryapprox
       if(!importBboxes)
-         alembic_create_item_Invoke(L"alembic_geomapprox",importRootNode,meshObj.GetRef(),filename,iObj.getFullName().c_str(),attachToExisting,createItemArgs);
+         alembic_create_item_Invoke(L"alembic_geomapprox",importRootNode,meshObj.GetRef(),filename,shapeObj.getFullName().c_str(),attachToExisting,createItemArgs);
 
       // let's setup the xform op
-      if(AbcG::IXform::matches(parent.getMetaData()) && wasMerged)
-         alembic_create_item_Invoke(L"alembic_xform",importRootNode,meshObj.GetRef(),filename,parent.getFullName().c_str(),attachToExisting,createItemArgs);
+      if(AbcG::IXform::matches(parentObj.getMetaData()) && wasMerged)
+         alembic_create_item_Invoke(L"alembic_xform",importRootNode,meshObj.GetRef(),filename,parentObj.getFullName().c_str(),attachToExisting,createItemArgs);
       
       // let's setup the positions op
       if(importBboxes)
       {
          CValue returnedOpVal;
-         alembic_create_item_Invoke(L"alembic_bbox",importRootNode,meshObj.GetRef(),filename,iObj.getFullName().c_str(),attachToExisting,createItemArgs,returnedOpVal);
+         alembic_create_item_Invoke(L"alembic_bbox",importRootNode,meshObj.GetRef(),filename,shapeObj.getFullName().c_str(),attachToExisting,createItemArgs,returnedOpVal);
          returnOpRef = (CRef)returnedOpVal;
       }
       else
       {
          // only add the point position operator if we don't have dynamic topology
-         AbcG::ISubD abcSubD = AbcG::ISubD(iObj,Abc::kWrapExisting);
+         AbcG::ISubD abcSubD = AbcG::ISubD(shapeObj,Abc::kWrapExisting);
          CValue returnedOpVal;
-         alembic_create_item_Invoke(L"alembic_polymesh",importRootNode,meshObj.GetRef(),filename,iObj.getFullName().c_str(),attachToExisting,createItemArgs,returnedOpVal);
+         alembic_create_item_Invoke(L"alembic_polymesh",importRootNode,meshObj.GetRef(),filename,shapeObj.getFullName().c_str(),attachToExisting,createItemArgs,returnedOpVal);
          returnOpRef = (CRef)returnedOpVal;
       }
 
       // load standin property
       if(importStandins && returnOpRef.IsValid())
-         alembic_create_item_Invoke(L"alembic_standin",importRootNode,returnOpRef,filename,iObj.getFullName().c_str(),attachToExisting,createItemArgs);
+         alembic_create_item_Invoke(L"alembic_standin",importRootNode,returnOpRef,filename,shapeObj.getFullName().c_str(),attachToExisting,createItemArgs);
    }
-   else if(AbcG::INuPatch::matches(iObj.getMetaData()))
+   else if(AbcG::INuPatch::matches(shapeObj.getMetaData()))
    {
       //ESS_LOG_WARNING("Import INuPatch");
       X3DObject nurbsObj;
@@ -1411,7 +1499,7 @@ CStatus createShape( AbcObjectCache *pObjectCache, CRef& importRootNode, CRef& p
       {
 	   ESS_PROFILE_SCOPE("attachToExisting");
          CRef nurbsRef;
-         nurbsRef.Set(getFullNameFromIdentifier(importRootNode,iObj.getFullName()));
+         nurbsRef.Set(getFullNameFromIdentifier(importRootNode,shapeObj.getFullName()));
          nurbsObj = nurbsRef;
          if(!nurbsObj.GetType().IsEqualNoCase(L"surfmsh"))
             nurbsObj.ResetObject();
@@ -1420,30 +1508,30 @@ CStatus createShape( AbcObjectCache *pObjectCache, CRef& importRootNode, CRef& p
       if(!nurbsObj.IsValid())
       {
 		 std::stringstream s;
-		s << "Can't create new Nurb surfaces, can only attach.  Unsupported Alembic type: " << iObj.getFullName().c_str();
+		s << "Can't create new Nurb surfaces, can only attach.  Unsupported Alembic type: " << shapeObj.getFullName().c_str();
 		if( failOnUnsupported ) {
 			ESS_LOG_ERROR( s.str().c_str() );
-			return CStatus( CStatus::Fail );
+			return false;
 		}
 		ESS_LOG_WARNING( s.str().c_str() );
 	
 	  }
      // load metadata
-     alembic_create_item_Invoke(L"alembic_metadata",importRootNode,nurbsObj.GetRef(),filename,iObj.getFullName().c_str(),attachToExisting,createItemArgs);
+     alembic_create_item_Invoke(L"alembic_metadata",importRootNode,nurbsObj.GetRef(),filename,shapeObj.getFullName().c_str(),attachToExisting,createItemArgs);
 
      // let's setup the xform op
-     if(AbcG::IXform::matches(parent.getMetaData()) && wasMerged)
-        alembic_create_item_Invoke(L"alembic_xform",importRootNode,nurbsObj.GetRef(),filename,parent.getFullName().c_str(),attachToExisting,createItemArgs);
+     if(AbcG::IXform::matches(parentObj.getMetaData()) && wasMerged)
+        alembic_create_item_Invoke(L"alembic_xform",importRootNode,nurbsObj.GetRef(),filename,parentObj.getFullName().c_str(),attachToExisting,createItemArgs);
      
-     alembic_create_item_Invoke(L"alembic_nurbs",importRootNode,nurbsObj.GetRef(),filename,iObj.getFullName().c_str(),attachToExisting,createItemArgs);
+     alembic_create_item_Invoke(L"alembic_nurbs",importRootNode,nurbsObj.GetRef(),filename,shapeObj.getFullName().c_str(),attachToExisting,createItemArgs);
 
-     newNodeRef.Set(getFullNameFromIdentifier(importRootNode,iObj.getFullName()));
+     newNodeRef.Set(getFullNameFromIdentifier(importRootNode,shapeObj.getFullName()));
    }
-   else if(AbcG::ICurves::matches(iObj.getMetaData()))
+   else if(AbcG::ICurves::matches(shapeObj.getMetaData()))
    {
       //ESS_LOG_WARNING("Import ICurves");
       // let's create a crvlist
-      AbcG::ICurves curveIObject(iObj,Abc::kWrapExisting);
+      AbcG::ICurves curveIObject(shapeObj,Abc::kWrapExisting);
       AbcG::ICurvesSchema curveSchema = curveIObject.getSchema();
       AbcG::ICurvesSchema::Sample curveSample = curveSchema.getValue();
 
@@ -1452,10 +1540,10 @@ CStatus createShape( AbcObjectCache *pObjectCache, CRef& importRootNode, CRef& p
          curveSample.getType() != AbcG::kCubic)
       {
         std::stringstream s;
-		s << "Can't create non-linear/non-cubic Curves.  Unsupported Alembic type: " << iObj.getFullName().c_str();
+		s << "Can't create non-linear/non-cubic Curves.  Unsupported Alembic type: " << shapeObj.getFullName().c_str();
 		if( failOnUnsupported ) {
 			ESS_LOG_ERROR( s.str().c_str() );
-			return CStatus( CStatus::Fail );
+			return false;
 		}
 		//ESS_LOG_WARNING( s.str().c_str() );
 	  }
@@ -1501,7 +1589,7 @@ CStatus createShape( AbcObjectCache *pObjectCache, CRef& importRootNode, CRef& p
          {
  		   ESS_PROFILE_SCOPE("attachToExisting");
            CRef pointsRef;
-            pointsRef.Set(getFullNameFromIdentifier(importRootNode,iObj.getFullName()));
+            pointsRef.Set(getFullNameFromIdentifier(importRootNode,shapeObj.getFullName()));
             pointsObj = pointsRef;
             if(!pointsObj.GetType().IsEqualNoCase(L"pointcloud"))
                pointsObj.ResetObject();
@@ -1509,41 +1597,41 @@ CStatus createShape( AbcObjectCache *pObjectCache, CRef& importRootNode, CRef& p
          if(!pointsObj.IsValid())
          {
             if(importBboxes)
-               parentX3DObject.AddGeometry(L"Cube",L"MeshSurface",name,pointsObj);
+               parentX3DObject.AddGeometry(L"Cube",L"MeshSurface",newAppNodeName,pointsObj);
             else
-               parentX3DObject.AddPrimitive(L"PointCloud",name,pointsObj);
-            nameMapAdd(iObj.getFullName().c_str(),pointsObj.GetFullName());
+               parentX3DObject.AddPrimitive(L"PointCloud",newAppNodeName,pointsObj);
+            nameMapAdd(shapeObj.getFullName().c_str(),pointsObj.GetFullName());
          }
          newNodeRef = pointsObj.GetRef();
     
          // load metadata
-         alembic_create_item_Invoke(L"alembic_metadata",importRootNode,pointsObj.GetRef(),filename,iObj.getFullName().c_str(),attachToExisting,createItemArgs);
+         alembic_create_item_Invoke(L"alembic_metadata",importRootNode,pointsObj.GetRef(),filename,shapeObj.getFullName().c_str(),attachToExisting,createItemArgs);
 
          // load visibility
-         alembic_create_item_Invoke(L"alembic_visibility",importRootNode,pointsObj.GetRef(),filename,iObj.getFullName().c_str(),attachToExisting,createItemArgs);
+         alembic_create_item_Invoke(L"alembic_visibility",importRootNode,pointsObj.GetRef(),filename,shapeObj.getFullName().c_str(),attachToExisting,createItemArgs);
 
          // load curves
          CRef returnOpRef;
          if(importBboxes)
          {
             CValue returnedOpVal;
-            alembic_create_item_Invoke(L"alembic_bbox",importRootNode,pointsObj.GetRef(),filename,iObj.getFullName().c_str(),attachToExisting,createItemArgs,returnedOpVal);
+            alembic_create_item_Invoke(L"alembic_bbox",importRootNode,pointsObj.GetRef(),filename,shapeObj.getFullName().c_str(),attachToExisting,createItemArgs,returnedOpVal);
             returnOpRef = (CRef)returnedOpVal;
          }
          else
          {
             CValue returnedOpVal;
-            alembic_create_item_Invoke(L"alembic_curves",importRootNode,pointsObj.GetRef(),filename,iObj.getFullName().c_str(),attachToExisting,createItemArgs,returnedOpVal);
+            alembic_create_item_Invoke(L"alembic_curves",importRootNode,pointsObj.GetRef(),filename,shapeObj.getFullName().c_str(),attachToExisting,createItemArgs,returnedOpVal);
             returnOpRef = (CRef)returnedOpVal;
          }
 
          // let's setup the xform op
-         if(AbcG::IXform::matches(parent.getMetaData()) && wasMerged)
-            alembic_create_item_Invoke(L"alembic_xform",importRootNode,pointsObj.GetRef(),filename,parent.getFullName().c_str(),attachToExisting,createItemArgs);
+         if(AbcG::IXform::matches(parentObj.getMetaData()) && wasMerged)
+            alembic_create_item_Invoke(L"alembic_xform",importRootNode,pointsObj.GetRef(),filename,parentObj.getFullName().c_str(),attachToExisting,createItemArgs);
 
          // load standin property
          if(importStandins && returnOpRef.IsValid())
-            alembic_create_item_Invoke(L"alembic_standin",importRootNode,returnOpRef,filename,iObj.getFullName().c_str(),attachToExisting,createItemArgs);
+            alembic_create_item_Invoke(L"alembic_standin",importRootNode,returnOpRef,filename,shapeObj.getFullName().c_str(),attachToExisting,createItemArgs);
       }
       else
       {
@@ -1552,7 +1640,7 @@ CStatus createShape( AbcObjectCache *pObjectCache, CRef& importRootNode, CRef& p
          {
            ESS_PROFILE_SCOPE("attachToExisting");
             CRef curveRef;
-            curveRef.Set(getFullNameFromIdentifier(importRootNode,iObj.getFullName()));
+            curveRef.Set(getFullNameFromIdentifier(importRootNode,shapeObj.getFullName()));
             curveObj = curveRef;
             if(!curveObj.GetType().IsEqualNoCase(L"crvlist") && !curveObj.GetType().IsEqualNoCase(L"hair"))
                curveObj.ResetObject();
@@ -1560,35 +1648,35 @@ CStatus createShape( AbcObjectCache *pObjectCache, CRef& importRootNode, CRef& p
          if(!curveObj.IsValid())
          {
             if(importBboxes)
-               parentX3DObject.AddGeometry(L"Cube",L"MeshSurface",name,curveObj);
+               parentX3DObject.AddGeometry(L"Cube",L"MeshSurface",newAppNodeName,curveObj);
             else
-               parentX3DObject.AddNurbsCurveList(CNurbsCurveDataArray(),siSINurbs,name,curveObj);
-            nameMapAdd(iObj.getFullName().c_str(),curveObj.GetFullName());
+               parentX3DObject.AddNurbsCurveList(CNurbsCurveDataArray(),siSINurbs,newAppNodeName,curveObj);
+            nameMapAdd(shapeObj.getFullName().c_str(),curveObj.GetFullName());
          }
          newNodeRef = curveObj.GetRef();
 
          // load metadata
-         alembic_create_item_Invoke(L"alembic_metadata",importRootNode,curveObj.GetRef(),filename,iObj.getFullName().c_str(),attachToExisting,createItemArgs);
+         alembic_create_item_Invoke(L"alembic_metadata",importRootNode,curveObj.GetRef(),filename,shapeObj.getFullName().c_str(),attachToExisting,createItemArgs);
 
          // load visibility
-         alembic_create_item_Invoke(L"alembic_visibility",importRootNode,curveObj.GetRef(),filename,iObj.getFullName().c_str(),attachToExisting,createItemArgs);
+         alembic_create_item_Invoke(L"alembic_visibility",importRootNode,curveObj.GetRef(),filename,shapeObj.getFullName().c_str(),attachToExisting,createItemArgs);
 
          // load curve topo if it's not hair because that will already have desired topology if it exists
          if(!importBboxes && !curveObj.GetType().IsEqualNoCase(L"hair"))
-            alembic_create_item_Invoke(L"alembic_crvlist_topo",importRootNode,curveObj.GetRef(),filename,iObj.getFullName().c_str(),attachToExisting,createItemArgs);
+            alembic_create_item_Invoke(L"alembic_crvlist_topo",importRootNode,curveObj.GetRef(),filename,shapeObj.getFullName().c_str(),attachToExisting,createItemArgs);
 
          // load curve anim
          CRef returnOpRef;
          if(importBboxes)
          {
             CValue returnedOpVal;
-            alembic_create_item_Invoke(L"alembic_bbox",importRootNode,curveObj.GetRef(),filename,iObj.getFullName().c_str(),attachToExisting,createItemArgs,returnedOpVal);
+            alembic_create_item_Invoke(L"alembic_bbox",importRootNode,curveObj.GetRef(),filename,shapeObj.getFullName().c_str(),attachToExisting,createItemArgs,returnedOpVal);
             returnOpRef = (CRef)returnedOpVal;
          }
          else
          {
             CValue returnedOpVal;
-            alembic_create_item_Invoke(L"alembic_crvlist",importRootNode,curveObj.GetRef(),filename,iObj.getFullName().c_str(),attachToExisting,createItemArgs,returnedOpVal);
+            alembic_create_item_Invoke(L"alembic_crvlist",importRootNode,curveObj.GetRef(),filename,shapeObj.getFullName().c_str(),attachToExisting,createItemArgs,returnedOpVal);
             returnOpRef = (CRef)returnedOpVal;
          }
 
@@ -1599,18 +1687,18 @@ CStatus createShape( AbcObjectCache *pObjectCache, CRef& importRootNode, CRef& p
          }
 
          // let's setup the xform op
-         if(AbcG::IXform::matches(parent.getMetaData()) && wasMerged)
-            alembic_create_item_Invoke(L"alembic_xform",importRootNode,curveObj.GetRef(),filename,parent.getFullName().c_str(),attachToExisting,createItemArgs);
+         if(AbcG::IXform::matches(parentObj.getMetaData()) && wasMerged)
+            alembic_create_item_Invoke(L"alembic_xform",importRootNode,curveObj.GetRef(),filename,parentObj.getFullName().c_str(),attachToExisting,createItemArgs);
 
          // load standin property
          if(importStandins && returnOpRef.IsValid())
-            alembic_create_item_Invoke(L"alembic_standin",importRootNode,returnOpRef,filename,iObj.getFullName().c_str(),attachToExisting,createItemArgs);
+            alembic_create_item_Invoke(L"alembic_standin",importRootNode,returnOpRef,filename,shapeObj.getFullName().c_str(),attachToExisting,createItemArgs);
       }
    }
-   else if(AbcG::IPoints::matches(iObj.getMetaData()))
+   else if(AbcG::IPoints::matches(shapeObj.getMetaData()))
    {
       //ESS_LOG_WARNING("Import IPoints");
-      AbcG::IPoints pointsIObject(iObj,Abc::kWrapExisting);
+      AbcG::IPoints pointsIObject(shapeObj,Abc::kWrapExisting);
       AbcG::IPointsSchema pointsSchema = pointsIObject.getSchema();
       AbcG::IPointsSchema::Sample pointsSample = pointsSchema.getValue();
 
@@ -1619,7 +1707,7 @@ CStatus createShape( AbcObjectCache *pObjectCache, CRef& importRootNode, CRef& p
       {
          ESS_PROFILE_SCOPE("attachToExisting");
          CRef pointsRef;
-         pointsRef.Set(getFullNameFromIdentifier(importRootNode,iObj.getFullName()));
+         pointsRef.Set(getFullNameFromIdentifier(importRootNode,shapeObj.getFullName()));
          pointsObj = pointsRef;
          if(!pointsObj.GetType().IsEqualNoCase(L"pointcloud"))
             pointsObj.ResetObject();
@@ -1627,50 +1715,53 @@ CStatus createShape( AbcObjectCache *pObjectCache, CRef& importRootNode, CRef& p
       if(!pointsObj.IsValid())
       {
          if(importBboxes)
-            parentX3DObject.AddGeometry(L"Cube",L"MeshSurface",name,pointsObj);
+            parentX3DObject.AddGeometry(L"Cube",L"MeshSurface",newAppNodeName,pointsObj);
          else
-            parentX3DObject.AddPrimitive(L"PointCloud",name,pointsObj);
-         nameMapAdd(iObj.getFullName().c_str(),pointsObj.GetFullName());
+            parentX3DObject.AddPrimitive(L"PointCloud",newAppNodeName,pointsObj);
+         nameMapAdd(shapeObj.getFullName().c_str(),pointsObj.GetFullName());
       }
       newNodeRef = pointsObj.GetRef();
 
       // load metadata
-      alembic_create_item_Invoke(L"alembic_metadata",importRootNode,pointsObj.GetRef(),filename,iObj.getFullName().c_str(),attachToExisting,createItemArgs);
+      alembic_create_item_Invoke(L"alembic_metadata",importRootNode,pointsObj.GetRef(),filename,shapeObj.getFullName().c_str(),attachToExisting,createItemArgs);
 
       // load visibility
-      alembic_create_item_Invoke(L"alembic_visibility",importRootNode,pointsObj.GetRef(),filename,iObj.getFullName().c_str(),attachToExisting,createItemArgs);
+      alembic_create_item_Invoke(L"alembic_visibility",importRootNode,pointsObj.GetRef(),filename,shapeObj.getFullName().c_str(),attachToExisting,createItemArgs);
 
       // let's setup the xform op
-      if(AbcG::IXform::matches(parent.getMetaData()) && wasMerged)
-         alembic_create_item_Invoke(L"alembic_xform",importRootNode,pointsObj.GetRef(),filename,parent.getFullName().c_str(),attachToExisting,createItemArgs);
+      if(AbcG::IXform::matches(parentObj.getMetaData()) && wasMerged)
+         alembic_create_item_Invoke(L"alembic_xform",importRootNode,pointsObj.GetRef(),filename,parentObj.getFullName().c_str(),attachToExisting,createItemArgs);
 
       // apply the ice tree
       CRef returnOpRef;
       if(importBboxes) {
          CValue returnedOpVal;
-         alembic_create_item_Invoke(L"alembic_bbox",importRootNode,pointsObj.GetRef(),filename,iObj.getFullName().c_str(),attachToExisting,createItemArgs,returnedOpVal);
+         alembic_create_item_Invoke(L"alembic_bbox",importRootNode,pointsObj.GetRef(),filename,shapeObj.getFullName().c_str(),attachToExisting,createItemArgs,returnedOpVal);
          returnOpRef = (CRef)returnedOpVal;
       } else {
          CValue returnedOpVal;
-         alembic_create_item_Invoke(L"alembic_points",importRootNode,pointsObj.GetRef(),filename,iObj.getFullName().c_str(),attachToExisting,createItemArgs,returnedOpVal);
+         alembic_create_item_Invoke(L"alembic_points",importRootNode,pointsObj.GetRef(),filename,shapeObj.getFullName().c_str(),attachToExisting,createItemArgs,returnedOpVal);
          returnOpRef = (CRef)returnedOpVal;
       }
 
       // load standin property
       if(importStandins && returnOpRef.IsValid())
-         alembic_create_item_Invoke(L"alembic_standin",importRootNode,returnOpRef,filename,iObj.getFullName().c_str(),attachToExisting,createItemArgs);
+         alembic_create_item_Invoke(L"alembic_standin",importRootNode,returnOpRef,filename,shapeObj.getFullName().c_str(),attachToExisting,createItemArgs);
    }
    else { 
 		std::stringstream s;
-		s << "Unsupported Alembic type: " << iObj.getFullName().c_str();
+		s << "Unsupported Alembic type: " << shapeObj.getFullName().c_str();
 		if( failOnUnsupported ) {
 			ESS_LOG_ERROR( s.str().c_str() );
-			return CStatus( CStatus::Fail );
+			return false;
 		}
 		ESS_LOG_WARNING( s.str().c_str() );
    }
-   return CStatus( CStatus::OK );
+#endif
+
+   return true;
 }
+
 
 
 struct ImportStackElement
@@ -1910,13 +2001,13 @@ ESS_CALLBACK_START(alembic_import_jobs_Execute, CRef&)
    // now update the args to use the timecontrol instead
    setExprArgs[1] = timeControl.GetFullName()+L".current * "+timeControl.GetFullName()+L".factor + "+timeControl.GetFullName()+L".offset";
 
-   // store the time control in a value array
-   CValueArray createItemArgs(5);
-   createItemArgs[0] = timeControl.GetRef();
-   createItemArgs[1] = jobParser.importFacesets;
-   createItemArgs[2] = jobParser.importNormals;
-   createItemArgs[3] = jobParser.importUVs;
-   createItemArgs[4] = jobParser.importVisibilityControllers;
+   //// store the time control in a value array
+   //CValueArray createItemArgs(5);
+   //createItemArgs[0] = timeControl.GetRef();
+   //createItemArgs[1] = jobParser.importFacesets;
+   //createItemArgs[2] = jobParser.importNormals;
+   //createItemArgs[3] = jobParser.importUVs;
+   //createItemArgs[4] = jobParser.importVisibilityControllers;
 
    AbcG::IObject root = archive->getTop();
  
@@ -1925,10 +2016,12 @@ ESS_CALLBACK_START(alembic_import_jobs_Execute, CRef&)
 
    AbcObjectCache *pRootObjectCache = &( pArchiveCache->find( "/" )->second );
 
-   int nNumNodes = 0;
-   SceneNodePtr sceneRoot = buildCommonSceneGraph(pArchiveCache, pRootObjectCache, nNumNodes);
 
-   printSceneGraph(sceneRoot, false);
+   int nNumNodes = 0;
+   SceneNodePtr fileRoot = buildCommonSceneGraph(pArchiveCache, pRootObjectCache, nNumNodes);
+
+   printSceneGraph(fileRoot, false);
+
 
    ProgressBar prog;
    prog = Application().GetUIToolkit().GetProgressBar();
@@ -1956,107 +2049,124 @@ ESS_CALLBACK_START(alembic_import_jobs_Execute, CRef&)
       ESS_LOG_WARNING("Attachment root is "<<importRootNode.GetAsText().GetAsciiString());
    }
 
+
    if(jobParser.attachToExisting)
    {
+      SceneNodePtr appRoot = buildCommonSceneGraph(importRootNode);
 
+      bool bAttachSuccess = ImportSceneFile(fileRoot, appRoot, jobParser);
+
+      if(!bAttachSuccess){
+         return CStatus::Fail;
+      }
    }
    else
    {
-      std::list<ImportStackElement> sceneStack;
+      //should build a full scene graph when start doing name checking
+      SceneNodePtr appRoot(new SceneNodeXSI(importRootNode));
 
-      for(SceneChildIterator it = sceneRoot->children.begin(); it != sceneRoot->children.end(); it++){
-         sceneStack.push_back(ImportStackElement(*it, importRootNode));
-	   }
-
-      int intermittentUpdateInterval = std::max( (int)(nNumNodes / 100), (int)1 );
-      int i = 0;
-      while( !sceneStack.empty() )
-      {
-         ImportStackElement sElement = sceneStack.back();
-         AbcObjectCache *pObjectCache = &( pArchiveCache->find(sElement.sceneNode->dccIdentifier)->second );
-         Abc::IObject iObj = pObjectCache->obj;
-         SceneNodePtr sceneNode = sElement.sceneNode;
-         CRef parentNode(sElement.parentNode);
-
-         sceneStack.pop_back();
-
-         if( i % intermittentUpdateInterval == 0 ) {
-            prog.PutCaption(L"Importing "+CString(iObj.getFullName().c_str())+L" ...");
-         }
-         i++;
-
-        // bool bTransform = sceneNode->type == SceneNode::ITRANSFORM || sceneNode->type == SceneNode::ETRANSFORM; 
-         //bool bMergeableTransform = sceneNode->type == SceneNode::ETRANSFORM;
-         //bool bMergeableTransform = sceneNode->children.size() == 1 && hasExtractableTransform(sceneNode->children[0]->type);
-
-         // ESS_LOG_WARNING("Processing "<<iObj.getFullName()<<" mergeable: "<<(bMergeableTransform?"true":"false")<<" transform: "<<(bTransform?"true":"false")  );
-
-         bool bCreateNullNode = false;
-         int nMergedGeomNodeIndex = -1;
-         AbcObjectCache *pMergedGeomChildObjectCache = NULL;
-         getMergeInfo( pArchiveCache, pObjectCache, bCreateNullNode, nMergedGeomNodeIndex, &pMergedGeomChildObjectCache );
-
-
-         CRef newNodeRef;
-         if(bCreateNullNode){
-            createTransform( pObjectCache, importRootNode, parentNode, newNodeRef, filenameCStr, jobParser.attachToExisting, createItemArgs);
-		   }
-		   else{// multiple geometry nodes share the same parent. a shape node with the identity as it transform will be created.
-
-            if(nMergedGeomNodeIndex != -1){ // create a shape node, and assign the parent xform as its transform
-               pMergedGeomChildObjectCache = &( pArchiveCache->find(sceneNode->children.front()->dccIdentifier)->second );
-
-				   CStatus localStatus = createShape( pMergedGeomChildObjectCache, importRootNode, parentNode, newNodeRef, filenameCStr, 
-                  jobParser.attachToExisting, jobParser.importStandinProperties, jobParser.importBoundingBoxes, true, jobParser.failOnUnsupported, createItemArgs);
-				   if( ! localStatus.Succeeded() ) {
-                  delRefArchive( jobParser.filename );
-					   return localStatus;
-				   }
-            }
-            else{
-			      CStatus localStatus = createShape( pObjectCache, importRootNode, parentNode, newNodeRef, filenameCStr, 
-                  jobParser.attachToExisting, jobParser.importStandinProperties, jobParser.importBoundingBoxes, false, jobParser.failOnUnsupported, createItemArgs);
-			      if( ! localStatus.Succeeded() ) {
-                  delRefArchive( jobParser.filename  );
-				      return localStatus;
-			      }
-            }
-		   }
-         
-         //newNodeRef will not be valid if we cannot attach children to it
-         if(newNodeRef.IsValid()){
-
-            //I assume that geometry nodes are always leaf nodes. Thus, if we merged a geometry node will its parent transform, we don't
-            //need to push it to the stack.
-            //A geometry node can't be combined with its transform node, the transform node has other tranform nodes as children. These
-            //nodes must be pushed.
-
-            
-
-            //push the children as the last step, since we need to who the parent is first (we may have merged)
-            for(SceneChildIterator it = sceneNode->children.begin(); it != sceneNode->children.end(); it++){
-            
-               AbcObjectCache *pChildObjectCache = &( pArchiveCache->find( (*it)->dccIdentifier )->second );
-               AbcG::IObject childObj = pChildObjectCache->obj;
-               if( NodeCategory::get(childObj) == NodeCategory::UNSUPPORTED ) continue;// skip over unsupported types
-   
-               if( pMergedGeomChildObjectCache == pChildObjectCache ) continue;
-
-               sceneStack.push_back( ImportStackElement( *it, newNodeRef ) );
-            }
-            
-         }
-         else{
-		      if( pObjectCache->childIdentifiers.size() > 0 ) {
-			      EC_LOG_WARNING("Unsupported node: " << iObj.getFullName().c_str() << " has children that have not been imported." );
-		      }
-         }
-
-         if(prog.IsCancelPressed()){
-            break;
-         }
-         prog.Increment();
+      bool bImportSuccess = ImportSceneFile(fileRoot, appRoot, jobParser);
+      
+      if(!bImportSuccess){
+         return CStatus::Fail;
       }
+
+
+    //  std::list<ImportStackElement> sceneStack;
+
+    //  for(SceneChildIterator it = sceneRoot->children.begin(); it != sceneRoot->children.end(); it++){
+    //     sceneStack.push_back(ImportStackElement(*it, importRootNode));
+	   //}
+
+    //  int intermittentUpdateInterval = std::max( (int)(nNumNodes / 100), (int)1 );
+    //  int i = 0;
+    //  while( !sceneStack.empty() )
+    //  {
+    //     ImportStackElement sElement = sceneStack.back();
+    //     AbcObjectCache *pObjectCache = &( pArchiveCache->find(sElement.sceneNode->dccIdentifier)->second );
+    //     Abc::IObject iObj = pObjectCache->obj;
+    //     SceneNodePtr sceneNode = sElement.sceneNode;
+    //     CRef parentNode(sElement.parentNode);
+
+    //     sceneStack.pop_back();
+
+    //     if( i % intermittentUpdateInterval == 0 ) {
+    //        prog.PutCaption(L"Importing "+CString(iObj.getFullName().c_str())+L" ...");
+    //     }
+    //     i++;
+
+    //    // bool bTransform = sceneNode->type == SceneNode::ITRANSFORM || sceneNode->type == SceneNode::ETRANSFORM; 
+    //     //bool bMergeableTransform = sceneNode->type == SceneNode::ETRANSFORM;
+    //     //bool bMergeableTransform = sceneNode->children.size() == 1 && hasExtractableTransform(sceneNode->children[0]->type);
+
+    //     // ESS_LOG_WARNING("Processing "<<iObj.getFullName()<<" mergeable: "<<(bMergeableTransform?"true":"false")<<" transform: "<<(bTransform?"true":"false")  );
+
+    //     bool bCreateNullNode = false;
+    //     int nMergedGeomNodeIndex = -1;
+    //     AbcObjectCache *pMergedGeomChildObjectCache = NULL;
+    //     getMergeInfo( pArchiveCache, pObjectCache, bCreateNullNode, nMergedGeomNodeIndex, &pMergedGeomChildObjectCache );
+
+
+    //     CRef newNodeRef;
+    //     if(bCreateNullNode){
+    //        createTransform( pObjectCache, importRootNode, parentNode, newNodeRef, filenameCStr, jobParser.attachToExisting, createItemArgs);
+		  // }
+		  // else{// multiple geometry nodes share the same parent. a shape node with the identity as it transform will be created.
+
+    //        if(nMergedGeomNodeIndex != -1){ // create a shape node, and assign the parent xform as its transform
+    //           pMergedGeomChildObjectCache = &( pArchiveCache->find(sceneNode->children.front()->dccIdentifier)->second );
+
+				//   CStatus localStatus = createShape( pMergedGeomChildObjectCache, importRootNode, parentNode, newNodeRef, filenameCStr, 
+    //              jobParser.attachToExisting, jobParser.importStandinProperties, jobParser.importBoundingBoxes, true, jobParser.failOnUnsupported, createItemArgs);
+				//   if( ! localStatus.Succeeded() ) {
+    //              delRefArchive( jobParser.filename );
+				//	   return localStatus;
+				//   }
+    //        }
+    //        else{
+			 //     CStatus localStatus = createShape( pObjectCache, importRootNode, parentNode, newNodeRef, filenameCStr, 
+    //              jobParser.attachToExisting, jobParser.importStandinProperties, jobParser.importBoundingBoxes, false, jobParser.failOnUnsupported, createItemArgs);
+			 //     if( ! localStatus.Succeeded() ) {
+    //              delRefArchive( jobParser.filename  );
+				//      return localStatus;
+			 //     }
+    //        }
+		  // }
+    //     
+    //     //newNodeRef will not be valid if we cannot attach children to it
+    //     if(newNodeRef.IsValid()){
+
+    //        //I assume that geometry nodes are always leaf nodes. Thus, if we merged a geometry node will its parent transform, we don't
+    //        //need to push it to the stack.
+    //        //A geometry node can't be combined with its transform node, the transform node has other tranform nodes as children. These
+    //        //nodes must be pushed.
+
+    //        
+
+    //        //push the children as the last step, since we need to who the parent is first (we may have merged)
+    //        for(SceneChildIterator it = sceneNode->children.begin(); it != sceneNode->children.end(); it++){
+    //        
+    //           AbcObjectCache *pChildObjectCache = &( pArchiveCache->find( (*it)->dccIdentifier )->second );
+    //           AbcG::IObject childObj = pChildObjectCache->obj;
+    //           if( NodeCategory::get(childObj) == NodeCategory::UNSUPPORTED ) continue;// skip over unsupported types
+   
+    //           if( pMergedGeomChildObjectCache == pChildObjectCache ) continue;
+
+    //           sceneStack.push_back( ImportStackElement( *it, newNodeRef ) );
+    //        }
+    //        
+    //     }
+    //     else{
+		  //    if( pObjectCache->childIdentifiers.size() > 0 ) {
+			 //     EC_LOG_WARNING("Unsupported node: " << iObj.getFullName().c_str() << " has children that have not been imported." );
+		  //    }
+    //     }
+
+    //     if(prog.IsCancelPressed()){
+    //        break;
+    //     }
+    //     prog.Increment();
+    //  }
 
    }
 
