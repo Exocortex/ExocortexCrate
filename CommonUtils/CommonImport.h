@@ -46,6 +46,45 @@ public:
    std::string buildJobString();
 };
 
+
+
+
+
+class SceneNodeAlembic;
+class SceneNodeApp : public SceneNode
+{
+public:
+
+   virtual bool replaceData(SceneNodePtr node, const IJobStringParser& jobParams);
+   SceneNodePtr attachChild(SceneNodePtr node, const IJobStringParser& jobParams);
+   //the method can check if its node can be merged with one of its children (for XSI and MAX)
+   //the the merged childs selected flag will be set to false, so that we know to skip over it
+};
+
+class SceneNodeAlembic : public SceneNode
+{
+public:
+   Abc::IObject iObj;
+
+   SceneNodeAlembic(Abc::IObject& obj):iObj(obj)
+   {}
+
+   virtual Abc::IObject getObject();
+
+   //all alembic nodes will start out as selected
+   //will set the selected flag to false if the node was merged
+};
+
+
+
+
 SceneNodePtr buildCommonSceneGraph(AbcArchiveCache *pArchiveCache, AbcObjectCache *pRootObjectCache, int& nNumNodes);
+
+
+
+bool ImportSceneFile(const IJobStringParser& jobParams, SceneNodePtr fileRoot);
+bool AttachSceneFile(const IJobStringParser& jobParams, SceneNodePtr fileRoot, SceneNodePtr appRoot);
+
+
 
 #endif
