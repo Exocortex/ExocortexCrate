@@ -10,7 +10,6 @@
 
 class SceneNode;
 typedef boost::shared_ptr<SceneNode> SceneNodePtr;
-typedef SceneNode* WeakSceneNodePtr;
 
 typedef std::list<SceneNodePtr>::iterator SceneChildIterator;
 
@@ -36,7 +35,7 @@ public:
       NUM_NODE_TYPES
    };
 
-   WeakSceneNodePtr parent;
+   SceneNode* parent;
    std::list<SceneNodePtr> children;
 
    nodeTypeE type;
@@ -52,11 +51,13 @@ public:
    //~SceneNode();
 
    //for application scene graph
-   virtual bool replaceData(SceneNodePtr node, const IJobStringParser& jobParams){ return false; }
-   virtual bool attachChild(SceneNodePtr node, const IJobStringParser& jobParams){ return false; }
+   virtual bool replaceData(SceneNodePtr fileNode, const IJobStringParser& jobParams){ return false; }
+   virtual bool addChild(SceneNodePtr fileNode, const IJobStringParser& jobParams, SceneNodePtr newAppNode){ return false; }
 
    //for alembic scene graph
    virtual Abc::IObject getObject(){ return Abc::IObject(); }
+   virtual bool wasMerged(){ return false; }
+   virtual void setMerged(bool bMerged=true){ }
 };
 
 
