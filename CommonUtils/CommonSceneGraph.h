@@ -64,6 +64,7 @@ public:
    //~SceneNode();
 
    virtual SceneNodeClass::typeE getClassType() = 0;
+   virtual void print() = 0;
 };
 
 
@@ -75,6 +76,7 @@ public:
    virtual bool replaceData(SceneNodePtr fileNode, const IJobStringParser& jobParams){ return false; }
    virtual bool addChild(SceneNodePtr fileNode, const IJobStringParser& jobParams, SceneNodePtr newAppNode){ return false; }
    virtual SceneNodeClass::typeE getClassType() = 0;
+   virtual void print() = 0;
 };
 
 class SceneNodeFile : public SceneNode
@@ -92,6 +94,7 @@ public:
    virtual bool isAttached();
    virtual void setAttached(bool bAttached);
    virtual bool isSupported() = 0;
+   virtual void print() = 0;
 };
 
 class SceneNodeAlembic : public SceneNodeFile
@@ -111,6 +114,7 @@ public:
    virtual SceneNodeClass::typeE getClassType();
    virtual bool isSupported();
    virtual Abc::IObject getObject();
+   virtual void print();
 };
 
 void printSceneGraph(SceneNodePtr root, bool bOnlyPrintSelected);

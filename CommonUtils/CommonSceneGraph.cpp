@@ -36,6 +36,10 @@ Abc::IObject SceneNodeAlembic::getObject()
    return iObj;
 }
 
+void SceneNodeAlembic::print()
+{
+   ESS_LOG_WARNING("AlembicNodeObjectFullName: "<<iObj.getFullName());
+}
 
 bool SceneNodeFile::isMerged()
 {
@@ -68,8 +72,16 @@ struct PrintStackElement
 
 void printSceneGraph(SceneNodePtr root, bool bOnlyPrintSelected)
 {
+   const char* classType[]={
+      "FILE",
+      "FILE_ALEMBIC",
+      "APP",
+      "APP_MAX",
+      "APP_MAYA",
+      "APP_XSI"
+   };
  
-   char* table[]={
+   const char* table[]={
       "SCENE_ROOT",
       "ETRANSFORM",// external transform (a parent of a geometry node)
       "ITRANSFORM",// internal transform (all other transforms)
@@ -84,7 +96,7 @@ void printSceneGraph(SceneNodePtr root, bool bOnlyPrintSelected)
       "NUM_NODE_TYPES"
    };
 
-   ESS_LOG_WARNING("ExoSceneGraph Begin");
+   ESS_LOG_WARNING("ExoSceneGraph Begin - ClassType: "<<classType[root->getClassType()]);
 
    std::list<PrintStackElement> sceneStack;
    
@@ -100,7 +112,7 @@ void printSceneGraph(SceneNodePtr root, bool bOnlyPrintSelected)
       if(!bOnlyPrintSelected || (bOnlyPrintSelected && eNode->selected)){
          ESS_LOG_WARNING("Level: "<<sElement.level<<" - Name: "<<eNode->name<<" - Selected: "<<(eNode->selected?"true":"false")<<" - path: "<<eNode->dccIdentifier<<" - type: "<<table[eNode->type]);
             //<<" - identifer: "<<eNode->dccIdentifier);
-        
+        eNode->print();
       }
 
     
