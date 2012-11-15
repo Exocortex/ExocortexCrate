@@ -15,6 +15,19 @@ typedef std::list<SceneNodePtr>::iterator SceneChildIterator;
 
 class IJobStringParser;
 
+//for runtime type identification
+namespace SceneNodeClass
+{
+   enum typeE{
+      FILE,
+      FILE_ALEMBIC,
+      APP,
+      APP_MAX,
+      APP_MAYA,
+      APP_XSI
+   };
+};
+
 class SceneNode
 {
 public:
@@ -50,16 +63,7 @@ public:
    {}
    //~SceneNode();
 
-   //for application scene graph
-   virtual bool replaceData(SceneNodePtr fileNode, const IJobStringParser& jobParams){ return false; }
-   virtual bool addChild(SceneNodePtr fileNode, const IJobStringParser& jobParams, SceneNodePtr newAppNode){ return false; }
-
-   //for alembic scene graph
-   virtual Abc::IObject getObject(){ return Abc::IObject(); }
-   virtual bool isMerged(){ return false; }
-   virtual void setMerged(bool bMerged=true){ }
-   virtual bool isAttached(){ return false; }
-   virtual void setAttached(bool bAttached=true){ }
+   virtual SceneNodeClass::typeE getClassType() = 0;
 };
 
 
@@ -70,25 +74,42 @@ class SceneNodeApp : public SceneNode
 public:
    virtual bool replaceData(SceneNodePtr fileNode, const IJobStringParser& jobParams){ return false; }
    virtual bool addChild(SceneNodePtr fileNode, const IJobStringParser& jobParams, SceneNodePtr newAppNode){ return false; }
+   virtual SceneNodeClass::typeE getClassType() = 0;
 };
 
-class SceneNodeAlembic : public SceneNode
+class SceneNodeFile : public SceneNode
 {
+   bool isMergedIntoAppNode;
+   bool isAttachedToAppNode;
 public:
-   Abc::IObject iObj;
-   bool bWasMerged;
-   bool bWasAttached;
 
-   SceneNodeAlembic(Abc::IObject& obj):iObj(obj), bWasMerged(false)
+   SceneNodeFile(): isMergedIntoAppNode(false), isAttachedToAppNode(false)
    {}
 
-   virtual Abc::IObject getObject();
-
+   virtual SceneNodeClass::typeE getClassType() = 0;
    virtual bool isMerged();
-   virtual void setMerged(bool bMerged=true);
-
+   virtual void setMerged(bool bMerged);
    virtual bool isAttached();
-   virtual void setAttached(bool bAttached=true);
+   virtual void setAttached(bool bAttached);
+   virtual bool isSupported();
+};
+
+class SceneNodeAlembic : public SceneNodeFile
+{
+   Abc::IObject iObj;
+
+	int numSamples;
+	bool isConstant;
+	bool isMeshPointCache;
+	bool isMeshTopoDynamic;
+
+public:
+
+   SceneNodeAlembic(Abc::IObject& obj):iObj(obj), numSamples(0), isConstant(false), isMeshPointCache(false), isMeshTopoDynamic(false)
+   {}
+
+   virtual SceneNodeClass::typeE getClassType();
+   virtual bool isSupported();
 };
 
 void printSceneGraph(SceneNodePtr root, bool bOnlyPrintSelected);

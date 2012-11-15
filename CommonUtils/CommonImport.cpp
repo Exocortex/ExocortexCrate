@@ -149,13 +149,13 @@ struct AlembicISceneBuildElement
 };
 
 
-SceneNodePtr buildCommonSceneGraph(AbcArchiveCache *pArchiveCache, AbcObjectCache *pRootObjectCache, int& nNumNodes)
+SceneNodePtr buildAlembicSceneGraph(AbcArchiveCache *pArchiveCache, AbcObjectCache *pRootObjectCache, int& nNumNodes)
 {
    std::list<AlembicISceneBuildElement> sceneStack;
 
    Alembic::Abc::IObject rootObj = pRootObjectCache->obj;
 
-   SceneNodePtr sceneRoot(new SceneNode());
+   SceneNodePtr sceneRoot(new SceneNodeAlembic(rootObj));
    sceneRoot->name = rootObj.getName();
    sceneRoot->dccIdentifier = rootObj.getFullName();
    sceneRoot->type = SceneNode::SCENE_ROOT;
@@ -240,6 +240,13 @@ struct AttachStackElement
 
 bool AttachSceneFile(SceneNodePtr fileRoot, SceneNodePtr appRoot, const IJobStringParser& jobParams)
 {
+   if(fileRoot->getClassType() != SceneNodeClass::FILE){
+      return false;
+   }
+   if(appRoot->getClassType() != SceneNodeClass::APP){
+      return false;
+   }
+
    //TODO: how to account for filtering?
    //it would break the sibling namespace assumption. Perhaps we should require that all parent nodes of selected are imported.
    //We would then not traverse unselected children
@@ -272,14 +279,16 @@ bool AttachSceneFile(SceneNodePtr fileRoot, SceneNodePtr appRoot, const IJobStri
       //This is not true for 3DS Max scene graphs, so we check for such conflicts using the "attached appNode flag"
       bool bChildAttached = false;
       for(SceneChildIterator it = currFileNode->children.begin(); it != currFileNode->children.end(); it++){
-         if((*it)->name == currFileNode->name){
-            if(currAppNode->isAttached()){
+         SceneNodeFile* pFileNode = (SceneNodeFile*)(*it).get(); //this is safe (we checked the root)
+         if((*it)->name == pFileNode->name){
+            if(pFileNode->isAttached()){
                ESS_LOG_ERROR("More than one match for node "<<(*it)->name);
                return false;
             }
             else{
                newFileNode = *it;
-               bChildAttached = currAppNode->replaceData(*it, jobParams);
+               SceneNodeApp* pCurrAppNode = (SceneNodeApp*)currAppNode.get(); //this is safe (we checked the root)
+               bChildAttached = pCurrAppNode->replaceData(*it, jobParams);
             }
          }
       }
@@ -287,24 +296,9 @@ bool AttachSceneFile(SceneNodePtr fileRoot, SceneNodePtr appRoot, const IJobStri
       if(bChildAttached){
 
          //push the children as the last step, since we need to who the parent is first (we may have merged)
-         for(SceneChildIterator it = currFileNode->children.begin(); it != currFileNode->children.end(); it++){
-            AbcG::IObject childObj = (*it)->getObject();
-            if( NodeCategory::get(childObj) == NodeCategory::UNSUPPORTED ) continue;// skip over unsupported types
-
-            if( (*it)->isMerged() ){
-               //The child node was merged with its parent, so skip this child, and add its children
-               //(Although this case is technically possible, I think it will not be common)
-               SceneNodePtr& mergedChild = *it;
-
-               for(SceneChildIterator cit = mergedChild->children.begin(); cit != mergedChild->children.end(); cit++){
-                  sceneStack.push_back( AttachStackElement( *cit, newFileNode ) );
-               }
-            }
-            else{
-               sceneStack.push_back( AttachStackElement( *it, newFileNode ) );
-            }
+         for(SceneChildIterator it = currAppNode->children.begin(); it != currAppNode->children.end(); it++){
+            sceneStack.push_back( AttachStackElement( *it, newFileNode ) );
          }
-         
       }
       else{
 	      if( currFileNode->children.empty() == false ) {
@@ -335,6 +329,13 @@ struct ImportStackElement
 
 bool ImportSceneFile(SceneNodePtr fileRoot, SceneNodePtr appRoot, const IJobStringParser& jobParams)
 {
+   if(fileRoot->getClassType() != SceneNodeClass::FILE){
+      return false;
+   }
+   if(appRoot->getClassType() != SceneNodeClass::APP){
+      return false;
+   }
+
    //TODO skip unselected children, if thats we how we do filtering.
 
    //compare to application scene graph to see if we need to rename nodes (or maybe we might throw an error)
@@ -363,16 +364,19 @@ bool ImportSceneFile(SceneNodePtr fileRoot, SceneNodePtr appRoot, const IJobStri
 
        
       SceneNodePtr newAppNode;
-      bool bChildAdded = parentAppNode->addChild(currFileNode, jobParams, newAppNode);
+      SceneNodeApp* pParentAppNode = (SceneNodeApp*)parentAppNode.get();
+      bool bChildAdded = pParentAppNode->addChild(currFileNode, jobParams, newAppNode);
+
+      ESS_LOG_WARNING("newAppNode: "<<newAppNode->name<<" useCount: "<<newAppNode.use_count());
 
       if(bChildAdded){
 
          //push the children as the last step, since we need to who the parent is first (we may have merged)
          for(SceneChildIterator it = currFileNode->children.begin(); it != currFileNode->children.end(); it++){
-            AbcG::IObject childObj = (*it)->getObject();
-            if( NodeCategory::get(childObj) == NodeCategory::UNSUPPORTED ) continue;// skip over unsupported types
+            SceneNodeFile *pFileNode = (SceneNodeFile*)(*it).get();
+            if(!pFileNode->isSupported()) continue;
 
-            if( (*it)->isMerged() ){
+            if( pFileNode->isMerged() ){
                //The child node was merged with its parent, so skip this child, and add its children
                //(Although this case is technically possible, I think it will not be common)
                SceneNodePtr& mergedChild = *it;

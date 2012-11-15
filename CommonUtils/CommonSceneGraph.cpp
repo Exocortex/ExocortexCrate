@@ -1,6 +1,7 @@
 #include "CommonAlembic.h"
 #include "CommonSceneGraph.h"
 
+#include "CommonUtilities.h"
 
 //SceneNode::~SceneNode()
 //{
@@ -8,30 +9,49 @@
 //}
 
 
-Abc::IObject SceneNodeAlembic::getObject()
+
+
+SceneNodeClass::typeE SceneNodeApp::getClassType()
 {
-   return iObj;
+   return SceneNodeClass::APP;
 }
 
-bool SceneNodeAlembic::isMerged()
+SceneNodeClass::typeE SceneNodeFile::getClassType()
 {
-   return bWasMerged;
+   return SceneNodeClass::FILE;
 }
 
-void SceneNodeAlembic::setMerged(bool bMerged)
+SceneNodeClass::typeE SceneNodeAlembic::getClassType()
 {
-   bWasMerged = bMerged;
+   return SceneNodeClass::FILE_ALEMBIC;
 }
 
-bool SceneNodeAlembic::isAttached()
+bool SceneNodeAlembic::isSupported()
 {
-   return bWasAttached;
+    return NodeCategory::get(iObj) != NodeCategory::UNSUPPORTED;
 }
 
-void SceneNodeAlembic::setAttached(bool bAttached)
+
+bool SceneNodeFile::isMerged()
 {
-   bWasAttached = bAttached;
+   return isMergedIntoAppNode;
 }
+
+void SceneNodeFile::setMerged(bool bMerged)
+{
+   isMergedIntoAppNode = bMerged;
+}
+
+bool SceneNodeFile::isAttached()
+{
+   return isAttachedToAppNode;
+}
+
+void SceneNodeFile::setAttached(bool bAttached)
+{
+   isAttachedToAppNode = bAttached;
+}
+
 
 struct PrintStackElement
 {
