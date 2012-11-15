@@ -44,6 +44,8 @@ void AlembicImport_FillInXForm(alembic_fillxform_options &options)
 
 void AlembicImport_FillInXForm_Internal(alembic_fillxform_options &options)
 {
+  ESS_PROFILE_FUNC();
+
    if(!options.pIObj->valid())
         return;
     
@@ -64,11 +66,11 @@ void AlembicImport_FillInXForm_Internal(alembic_fillxform_options &options)
 	}
 
    // if no time samples, default to identity matrix
-   if( obj.getSchema().getNumSamples() > 0 ) {
+  if( options.pObjectCache->numSamples > 0 ) {
 		SampleInfo sampleInfo = getSampleInfo(
 			SampleTime,
 			obj.getSchema().getTimeSampling(),
-			obj.getSchema().getNumSamples()
+			options.pObjectCache->numSamples
 			);
 
 		if(g_bVerboseLogging){
@@ -128,7 +130,8 @@ void AlembicImport_FillInXForm_Internal(alembic_fillxform_options &options)
 
 int AlembicImport_DummyNode(AbcG::IObject& iObj, alembic_importoptions &options, INode** pMaxNode, const std::string& importName)
 {
-    Object* dObj = static_cast<Object*>(CreateInstance(HELPER_CLASS_ID, Class_ID(DUMMY_CLASS_ID,0)));
+ ESS_PROFILE_FUNC();
+   Object* dObj = static_cast<Object*>(CreateInstance(HELPER_CLASS_ID, Class_ID(DUMMY_CLASS_ID,0)));
 	if (!dObj){
 		return alembic_failure;
 	}
@@ -179,6 +182,7 @@ int AlembicImport_DummyNode(AbcG::IObject& iObj, alembic_importoptions &options,
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 int AlembicImport_XForm(INode* pParentNode, INode* pMaxNode, AbcG::IObject& iObjXform, AbcG::IObject* p_iObjGeom, const std::string &file, alembic_importoptions &options)
 {
+  ESS_PROFILE_FUNC();
 	const std::string &identifier = iObjXform.getFullName();
 
 	bool isConstant = false;
@@ -215,11 +219,12 @@ int AlembicImport_XForm(INode* pParentNode, INode* pMaxNode, AbcG::IObject& iObj
 		pControl->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pControl, 0, "identifier" ), zero, EC_UTF8_to_TCHAR( identifier.c_str() ) );
 
 		if(bCreatedController){
+      ESS_PROFILE_SCOPE("AlembicImport_XForm - Setting Control Values");
 
 			pControl->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pControl, 0, "path" ), zero, EC_UTF8_to_TCHAR( file.c_str() ) );
 			pControl->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pControl, 0, "time" ), zero, 0.0f );
 			pControl->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pControl, 0, "camera" ), zero, ( bIsCamera ? TRUE : FALSE ) );
-			pControl->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pControl, 0, "muted" ), zero, FALSE );
+    	pControl->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pControl, 0, "muted" ), zero, TRUE );
 
    			// Add the modifier to the node
 			pMaxNode->SetTMController(pControl);
@@ -228,9 +233,12 @@ int AlembicImport_XForm(INode* pParentNode, INode* pMaxNode, AbcG::IObject& iObj
 			char szControllerName[10000];	
 			sprintf_s( szControllerName, 10000, "$.transform.controller.time" );
 			AlembicImport_ConnectTimeControl( szControllerName, options );
+
+    	pControl->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pControl, 0, "muted" ), zero, FALSE );
 		}
 	}
 	else{//if the transform is not animated, do not use a controller. Thus, the user will be able to adjust the object position, orientation and so on.
+      ESS_PROFILE_SCOPE("AlembicImport_XForm - Setting Non-Animated Value");
 		
 		//check if the xform controlller exists, and then delete it
 		
@@ -255,6 +263,8 @@ int AlembicImport_XForm(INode* pParentNode, INode* pMaxNode, AbcG::IObject& iObj
 		xformOptions.pIObj = &iObjXform;
 		xformOptions.dTicks = 0;
 		xformOptions.bIsCameraTransform = bIsCamera;
+    xformOptions.pObjectCache = getObjectCacheFromArchive( file, identifier );
+  
 
 		AlembicImport_FillInXForm(xformOptions);
 
@@ -265,7 +275,7 @@ int AlembicImport_XForm(INode* pParentNode, INode* pMaxNode, AbcG::IObject& iObj
 			pMaxNode->SetNodeTM(zero, xformOptions.maxMatrix);
 		}
 	}
-    pMaxNode->InvalidateTreeTM();
+    //pMaxNode->InvalidateTreeTM();
 	
 	if(!isConstant){
 		// Lock the transform
