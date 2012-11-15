@@ -7,24 +7,27 @@
 
 using namespace XSI;
 
-
+SceneNodeClass::typeE SceneNodeXSI::getClassType()
+{
+   return SceneNodeClass::APP_XSI;
+}
 
 bool SceneNodeXSI::replaceData(SceneNodePtr fileNode, const IJobStringParser& jobParams)
 {
-   if(!jobParams.attachToExisting){
+   if(fileNode->getClassType() != SceneNodeClass::FILE_ALEMBIC || !jobParams.attachToExisting){
       return false;
    }
    SceneNodePtr newAppNode;
-   return createNodes(this, fileNode.get(), jobParams, newAppNode);
+   return createNodes(this, (SceneNodeAlembic*)fileNode.get(), jobParams, newAppNode);
 }
 
 bool SceneNodeXSI::addChild(SceneNodePtr fileNode, const IJobStringParser& jobParams, SceneNodePtr newAppNode)
 {
-   if(jobParams.attachToExisting){
+   if(fileNode->getClassType() != SceneNodeClass::FILE_ALEMBIC || jobParams.attachToExisting){
       return false;
    }
 
-   return createNodes(this, fileNode.get(), jobParams, newAppNode);
+   return createNodes(this, (SceneNodeAlembic*)fileNode.get(), jobParams, newAppNode);
 }
 
 

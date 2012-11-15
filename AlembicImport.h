@@ -2,7 +2,7 @@
 #define _ALEMBIC_IMPORT_H_
 
 
-bool createNodes(SceneNodeXSI* const appParentNode, SceneNode* const fileNode, const IJobStringParser& jobParams, SceneNodePtr newAppNode);
+bool createNodes(SceneNodeXSI* const appParentNode, SceneNodeAlembic* const alembicNode, const IJobStringParser& jobParams, SceneNodePtr newAppNode);
 
 
 
