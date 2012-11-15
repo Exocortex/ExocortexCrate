@@ -10,6 +10,8 @@
 class SceneNode;
 typedef boost::shared_ptr<SceneNode> SceneNodePtr;
 
+typedef std::list<SceneNodePtr>::iterator SceneChildIterator;
+
 class SceneNode
 {
 public:
@@ -25,6 +27,7 @@ public:
       SURFACE,
       CURVES,
       PARTICLES,
+      LIGHT,
       UNKNOWN,
       NUM_NODE_TYPES
    };
@@ -36,6 +39,8 @@ public:
    std::string name;
    std::string dccIdentifier;
    bool selected;
+
+
 
    SceneNode():type(NUM_NODE_TYPES), selected(false)
    {}
