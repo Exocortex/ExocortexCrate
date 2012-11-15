@@ -91,7 +91,7 @@ public:
    virtual void setMerged(bool bMerged);
    virtual bool isAttached();
    virtual void setAttached(bool bAttached);
-   virtual bool isSupported();
+   virtual bool isSupported() = 0;
 };
 
 class SceneNodeAlembic : public SceneNodeFile
