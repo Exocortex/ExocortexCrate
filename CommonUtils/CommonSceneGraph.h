@@ -110,6 +110,7 @@ public:
 
    virtual SceneNodeClass::typeE getClassType();
    virtual bool isSupported();
+   virtual Abc::IObject getObject();
 };
 
 void printSceneGraph(SceneNodePtr root, bool bOnlyPrintSelected);
