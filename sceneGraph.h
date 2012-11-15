@@ -16,6 +16,7 @@ public:
    virtual SceneNodeClass::typeE getClassType();
    virtual bool replaceData(SceneNodePtr fileNode, const IJobStringParser& jobParams);
    virtual bool addChild(SceneNodePtr fileNode, const IJobStringParser& jobParams, SceneNodePtr newAppNode);
+   virtual void print();
 };
 
 

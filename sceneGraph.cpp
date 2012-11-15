@@ -30,6 +30,11 @@ bool SceneNodeXSI::addChild(SceneNodePtr fileNode, const IJobStringParser& jobPa
    return createNodes(this, (SceneNodeAlembic*)fileNode.get(), jobParams, newAppNode);
 }
 
+void SceneNodeXSI::print()
+{
+   ESS_LOG_WARNING("XSINodeObjectCRef: "<<nodeRef.GetAsText());
+}
+
 
 SceneNode::nodeTypeE getNodeType(X3DObject& xObj)
 {
