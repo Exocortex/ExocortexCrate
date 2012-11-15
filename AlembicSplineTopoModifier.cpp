@@ -119,6 +119,7 @@ void AlembicSplineTopoModifier::EnumAuxFiles(AssetEnumCallback& nameEnum, DWORD 
 void AlembicSplineTopoModifier::ModifyObject (TimeValue t, ModContext &mc, ObjectState *os, INode *node) 
 {
 	ESS_CPP_EXCEPTION_REPORTING_START
+ESS_PROFILE_FUNC();
 
 	Interval interval = FOREVER;//os->obj->ObjectValidity(t);
 	//ESS_LOG_INFO( "Interval Start: " << interval.Start() << " End: " << interval.End() );

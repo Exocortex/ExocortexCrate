@@ -767,6 +767,7 @@ void addAlembicMaterialsModifier(INode *pNode, AbcG::IObject& iObj)
 
 int AlembicImport_PolyMesh(const std::string &path, AbcG::IObject& iObj, alembic_importoptions &options, INode** pMaxNode)
 {
+  ESS_PROFILE_FUNC();
 	const std::string& identifier = iObj.getFullName();
 
 	// Fill in the mesh
