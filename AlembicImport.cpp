@@ -2099,14 +2099,17 @@ ESS_CALLBACK_START(alembic_import_jobs_Execute, CRef&)
 
    printSceneGraph(fileRoot, false);
 
+   //return CStatus::Fail;
 
-   ProgressBar prog;
-   prog = Application().GetUIToolkit().GetProgressBar();
-   prog.PutMinimum(0);
-   prog.PutMaximum(nNumNodes);//(identifierMap.size() == 0 ? (LONG)objects.size() : (LONG)identifierMap.size());
-   prog.PutValue(0);
-   prog.PutCancelEnabled(true);
-   prog.PutVisible(true);
+   //TODO need progress bar
+
+   //ProgressBar prog;
+   //prog = Application().GetUIToolkit().GetProgressBar();
+   //prog.PutMinimum(0);
+   //prog.PutMaximum(nNumNodes);//(identifierMap.size() == 0 ? (LONG)objects.size() : (LONG)identifierMap.size());
+   //prog.PutValue(0);
+   //prog.PutCancelEnabled(true);
+   //prog.PutVisible(true);
 
    // clear the imported names!
    nameMapClear();
@@ -2130,6 +2133,8 @@ ESS_CALLBACK_START(alembic_import_jobs_Execute, CRef&)
    if(jobParser.attachToExisting)
    {
       SceneNodePtr appRoot = buildCommonSceneGraph(importRootNode);
+
+      printSceneGraph(appRoot, false);
 
       bool bAttachSuccess = ImportSceneFile(fileRoot, appRoot, jobParser);
 
@@ -2249,7 +2254,7 @@ ESS_CALLBACK_START(alembic_import_jobs_Execute, CRef&)
 
 
 
-   prog.PutVisible(false);
+   //prog.PutVisible(false);
 
    delRefArchive( jobParser.filename );
 
