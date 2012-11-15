@@ -144,14 +144,18 @@ void ConvertMaxMatrixToAlembicMatrix( const Matrix3 &maxMatrix, Matrix3 &result)
 {
     // Rotate the max matrix into an alembic reference frame, a right handed co-ordinate system
     // We set up an alembic reference frame relative to Max's coordinate system
-    Matrix3 AlembicRefFrame(Point3(1,0,0), Point3(0,0,1), Point3(0,-1,0), Point3(0,0,0));
-    Matrix3 AlembicRefFrameInverse = AlembicRefFrame;
-    AlembicRefFrameInverse.Invert();
+    static Matrix3 AlembicRefFrame(Point3(1,0,0), Point3(0,0,1), Point3(0,-1,0), Point3(0,0,0));
+    static Matrix3 AlembicRefFrameInverse = AlembicRefFrame;
+    static bool isMatrixInverted = false;
+    if( ! isMatrixInverted ) {
+      AlembicRefFrameInverse.Invert();
+      isMatrixInverted = true;
+    }
     result = AlembicRefFrame * maxMatrix * AlembicRefFrameInverse;
 
     // Scale the translation
-    Point3 meterTrans = result.GetTrans();
-    result.SetTrans(meterTrans);
+    //Point3 meterTrans = result.GetTrans();
+    //result.SetTrans(meterTrans);
 }
 void ConvertMaxMatrixToAlembicMatrix( const Matrix3 &maxMatrix, Abc::M44d& iMatrix )
 {
@@ -167,14 +171,18 @@ void ConvertAlembicMatrixToMaxMatrix( const Matrix3 &alembicMatrix, Matrix3 &res
 {
     // Rotate the max matrix into an alembic reference frame, a right handed co-ordinate system
     // We set up an alembic reference frame relative to Max's coordinate system
-    Matrix3 AlembicRefFrame(Point3(1,0,0), Point3(0,0,1), Point3(0,-1,0), Point3(0,0,0));
-    Matrix3 AlembicRefFrameInverse = AlembicRefFrame;
-    AlembicRefFrameInverse.Invert();
+    static Matrix3 AlembicRefFrame(Point3(1,0,0), Point3(0,0,1), Point3(0,-1,0), Point3(0,0,0));
+    static Matrix3 AlembicRefFrameInverse = AlembicRefFrame;
+    static bool isMatrixInverted = false;
+    if( ! isMatrixInverted ) {
+      AlembicRefFrameInverse.Invert();
+      isMatrixInverted = true;
+    }
     result = AlembicRefFrameInverse * alembicMatrix * AlembicRefFrame;
 
     // Scale the translation
-    Point3 inchesTrans = result.GetTrans();
-    result.SetTrans(inchesTrans);
+    //Point3 inchesTrans = result.GetTrans();
+    //result.SetTrans(inchesTrans);
 }
 
 
