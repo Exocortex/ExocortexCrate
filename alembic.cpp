@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "AlembicWriteJob.h"
+#include "AlembicImport.h"
 #include "AlembicGetInfo.h"
 #include "AlembicGetNodeFromIdentifier.h"
 #include "AlembicTimeControl.h"
@@ -64,6 +65,9 @@ EC_EXPORT MStatus initializePlugin(MObject obj)
    status = plugin.registerCommand("ExocortexAlembic_export",
       AlembicExportCommand::creator,
       AlembicExportCommand::createSyntax);
+   status = plugin.registerCommand("ExocortexAlembic_import",
+      AlembicImportCommand::creator,
+      AlembicImportCommand::createSyntax);
    status = plugin.registerCommand("ExocortexAlembic_getInfo",
       AlembicGetInfoCommand::creator,
       AlembicGetInfoCommand::createSyntax);
@@ -171,6 +175,8 @@ EC_EXPORT MStatus initializePlugin(MObject obj)
    {
 	  //EC_LOG_ERROR("FAILED TO SOURCE ../scripts/menu.mel: " << commandStatus.errorString());
    }
+
+   MGlobal::executePythonCommand("import ExocortexAlembic as ExoAlembic");
    return status;
 }
 

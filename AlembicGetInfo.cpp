@@ -111,7 +111,6 @@ MStatus AlembicGetInfoCommand::doIt(const MArgList & args)
    MProgressWindow::setProgressRange(0, 500000);
    MProgressWindow::setProgress(0);
 
-
    // loop over all children and collect identifiers
    int idx = 0;
    MStringArray identifiers;
@@ -119,7 +118,7 @@ MStatus AlembicGetInfoCommand::doIt(const MArgList & args)
    bool nameWarningShowed = false;
    MProgressWindow::startProgress();
    MProgressWindow::advanceProgress(1);
-   
+
    AbcArchiveCache *pArchiveCache = getArchiveCache( fileName.asChar() );
 
    objects.push_back( &(pArchiveCache->find("/")->second) );

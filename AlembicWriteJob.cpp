@@ -179,7 +179,7 @@ MStatus AlembicWriteJob::PreProcess()
 
 	    MDagPath dagPath;
 		{ MItDag().getPath(dagPath); }
-		SceneNodePtr exoSceneRoot = buildCommonSceneGraph(dagPath);
+		SceneNodePtr exoSceneRoot = buildMayaSceneGraph(dagPath);
 		const bool bFlattenHierarchy = GetOption("flattenHierarchy") == "1";
 		const bool bSelectChildren = false;
 		const bool bTransformCache = GetOption("transformCache") == "1";
