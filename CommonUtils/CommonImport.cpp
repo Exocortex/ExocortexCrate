@@ -1,6 +1,7 @@
 #include "CommonImport.h"
 
 #include "CommonUtilities.h"
+#include "CommonMeshUtilities.h"
 #include "CommonAlembic.h"
 
 #include <boost/algorithm/string.hpp>
@@ -185,6 +186,18 @@ SceneNodePtr buildAlembicSceneGraph(AbcArchiveCache *pArchiveCache, AbcObjectCac
       numNodes++;
 
       SceneNodePtr newNode(new SceneNodeAlembic(iObj));
+
+      SceneNodeAlembic* const pNode = (SceneNodeAlembic* const)newNode.get();
+	   pNode->numSamples = (int)getNumSamplesFromObject(iObj);
+	   pNode->isConstant = isObjectConstant(iObj);
+	   pNode->isMeshTopoDynamic = false;
+	   pNode->isMeshPointCache = false;
+	   if( AbcG::IPolyMesh::matches(iObj.getMetaData()) || AbcG::ISubD::matches(iObj.getMetaData()) ) {
+	      if( !pNode->isConstant ) {
+		      pNode->isMeshTopoDynamic = isAlembicMeshTopoDynamic( &iObj );
+	      }
+	      pNode->isMeshPointCache = isAlembicMeshPointCache( &iObj );
+      }
 
       newNode->name = iObj.getName();
       newNode->dccIdentifier = iObj.getFullName();

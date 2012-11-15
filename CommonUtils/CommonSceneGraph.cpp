@@ -31,7 +31,7 @@ bool SceneNodeAlembic::isSupported()
     return NodeCategory::get(iObj) != NodeCategory::UNSUPPORTED;
 }
 
-virtual Abc::IObject SceneNodeAlembic::getObject()
+Abc::IObject SceneNodeAlembic::getObject()
 {
    return iObj;
 }

@@ -96,14 +96,14 @@ public:
 
 class SceneNodeAlembic : public SceneNodeFile
 {
+public:
+
    Abc::IObject iObj;
 
 	int numSamples;
 	bool isConstant;
 	bool isMeshPointCache;
 	bool isMeshTopoDynamic;
-
-public:
 
    SceneNodeAlembic(Abc::IObject& obj):iObj(obj), numSamples(0), isConstant(false), isMeshPointCache(false), isMeshTopoDynamic(false)
    {}
