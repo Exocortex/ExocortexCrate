@@ -63,7 +63,8 @@ public:
    {}
    //~SceneNode();
 
-   virtual SceneNodeClass::typeE getClassType() = 0;
+   virtual SceneNodeClass::typeE getClass() = 0;
+   virtual bool isClass(SceneNodeClass::typeE type) = 0;
    virtual void print() = 0;
 };
 
@@ -74,21 +75,23 @@ class SceneNodeApp : public SceneNode
 {
 public:
    virtual bool replaceData(SceneNodePtr fileNode, const IJobStringParser& jobParams){ return false; }
-   virtual bool addChild(SceneNodePtr fileNode, const IJobStringParser& jobParams, SceneNodePtr newAppNode){ return false; }
-   virtual SceneNodeClass::typeE getClassType() = 0;
+   virtual bool addChild(SceneNodePtr fileNode, const IJobStringParser& jobParams, SceneNodePtr& newAppNode){ return false; }
+   virtual SceneNodeClass::typeE getClass() = 0;
+   virtual bool isClass(SceneNodeClass::typeE type);
    virtual void print() = 0;
 };
 
 class SceneNodeFile : public SceneNode
 {
+public:
    bool isMergedIntoAppNode;
    bool isAttachedToAppNode;
-public:
 
    SceneNodeFile(): isMergedIntoAppNode(false), isAttachedToAppNode(false)
    {}
 
-   virtual SceneNodeClass::typeE getClassType() = 0;
+   virtual SceneNodeClass::typeE getClass() = 0;
+   virtual bool isClass(SceneNodeClass::typeE type);
    virtual bool isMerged();
    virtual void setMerged(bool bMerged);
    virtual bool isAttached();
@@ -111,7 +114,8 @@ public:
    SceneNodeAlembic(Abc::IObject& obj):iObj(obj), numSamples(0), isConstant(false), isMeshPointCache(false), isMeshTopoDynamic(false)
    {}
 
-   virtual SceneNodeClass::typeE getClassType();
+   virtual SceneNodeClass::typeE getClass();
+   virtual bool isClass(SceneNodeClass::typeE type);
    virtual bool isSupported();
    virtual Abc::IObject getObject();
    virtual void print();

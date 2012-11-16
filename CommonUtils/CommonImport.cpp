@@ -253,10 +253,10 @@ struct AttachStackElement
 
 bool AttachSceneFile(SceneNodePtr fileRoot, SceneNodePtr appRoot, const IJobStringParser& jobParams)
 {
-   if(fileRoot->getClassType() != SceneNodeClass::FILE){
+   if(!fileRoot->isClass(SceneNodeClass::FILE)){
       return false;
    }
-   if(appRoot->getClassType() != SceneNodeClass::APP){
+   if(!appRoot->isClass(SceneNodeClass::APP)){
       return false;
    }
 
@@ -342,10 +342,10 @@ struct ImportStackElement
 
 bool ImportSceneFile(SceneNodePtr fileRoot, SceneNodePtr appRoot, const IJobStringParser& jobParams)
 {
-   if(fileRoot->getClassType() != SceneNodeClass::FILE){
+   if(!fileRoot->isClass(SceneNodeClass::FILE)){
       return false;
    }
-   if(appRoot->getClassType() != SceneNodeClass::APP){
+   if(!appRoot->isClass(SceneNodeClass::APP)){
       return false;
    }
 
@@ -374,15 +374,17 @@ bool ImportSceneFile(SceneNodePtr fileRoot, SceneNodePtr appRoot, const IJobStri
       //   prog.PutCaption(L"Importing "+CString(iObj.getFullName().c_str())+L" ...");
       //}
       //i++;
-
        
       SceneNodePtr newAppNode;
       SceneNodeApp* pParentAppNode = (SceneNodeApp*)parentAppNode.get();
-      bool bChildAdded = pParentAppNode->addChild(currFileNode, jobParams, newAppNode);
+      bool bContinue = pParentAppNode->addChild(currFileNode, jobParams, newAppNode);
 
-      ESS_LOG_WARNING("newAppNode: "<<newAppNode->name<<" useCount: "<<newAppNode.use_count());
+      if(!bContinue){
+         return false;
+      }
 
-      if(bChildAdded){
+      if(newAppNode){
+         ESS_LOG_WARNING("newAppNode: "<<newAppNode->name<<" useCount: "<<newAppNode.use_count());
 
          //push the children as the last step, since we need to who the parent is first (we may have merged)
          for(SceneChildIterator it = currFileNode->children.begin(); it != currFileNode->children.end(); it++){
@@ -405,6 +407,7 @@ bool ImportSceneFile(SceneNodePtr fileRoot, SceneNodePtr appRoot, const IJobStri
          
       }
       else{
+         ESS_LOG_WARNING("newAppNode useCount: "<<newAppNode.use_count());
 	      if( currFileNode->children.empty() == false ) {
 		      EC_LOG_WARNING("Unsupported node: " << currFileNode->name << " has children that have not been imported." );
 	      }

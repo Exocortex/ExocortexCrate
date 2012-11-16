@@ -11,19 +11,54 @@
 
 
 
-SceneNodeClass::typeE SceneNodeApp::getClassType()
+SceneNodeClass::typeE SceneNodeApp::getClass()
 {
    return SceneNodeClass::APP;
 }
 
-SceneNodeClass::typeE SceneNodeFile::getClassType()
+bool SceneNodeApp::isClass(SceneNodeClass::typeE type)
+{
+   return type == SceneNodeClass::APP;
+}
+
+SceneNodeClass::typeE SceneNodeFile::getClass()
 {
    return SceneNodeClass::FILE;
 }
 
-SceneNodeClass::typeE SceneNodeAlembic::getClassType()
+bool SceneNodeFile::isClass(SceneNodeClass::typeE type)
+{
+   return type == SceneNodeClass::FILE;
+}
+
+SceneNodeClass::typeE SceneNodeAlembic::getClass()
 {
    return SceneNodeClass::FILE_ALEMBIC;
+}
+
+bool SceneNodeAlembic::isClass(SceneNodeClass::typeE type)
+{
+   return SceneNodeFile::isClass(type) || type == SceneNodeClass::FILE_ALEMBIC;
+}
+
+void SceneNodeFile::setMerged(bool bMerged)
+{
+   isMergedIntoAppNode = bMerged;
+}
+
+bool SceneNodeFile::isAttached()
+{
+   return isAttachedToAppNode;
+}
+
+void SceneNodeFile::setAttached(bool bAttached)
+{
+   isAttachedToAppNode = bAttached;
+}
+
+bool SceneNodeFile::isMerged()
+{
+   return isMergedIntoAppNode;
 }
 
 bool SceneNodeAlembic::isSupported()
@@ -41,25 +76,9 @@ void SceneNodeAlembic::print()
    ESS_LOG_WARNING("AlembicNodeObjectFullName: "<<iObj.getFullName());
 }
 
-bool SceneNodeFile::isMerged()
-{
-   return isMergedIntoAppNode;
-}
 
-void SceneNodeFile::setMerged(bool bMerged)
-{
-   isMergedIntoAppNode = bMerged;
-}
 
-bool SceneNodeFile::isAttached()
-{
-   return isAttachedToAppNode;
-}
 
-void SceneNodeFile::setAttached(bool bAttached)
-{
-   isAttachedToAppNode = bAttached;
-}
 
 
 struct PrintStackElement
@@ -96,7 +115,7 @@ void printSceneGraph(SceneNodePtr root, bool bOnlyPrintSelected)
       "NUM_NODE_TYPES"
    };
 
-   ESS_LOG_WARNING("ExoSceneGraph Begin - ClassType: "<<classType[root->getClassType()]);
+   ESS_LOG_WARNING("ExoSceneGraph Begin - ClassType: "<<classType[root->getClass()]);
 
    std::list<PrintStackElement> sceneStack;
    
@@ -112,7 +131,7 @@ void printSceneGraph(SceneNodePtr root, bool bOnlyPrintSelected)
       if(!bOnlyPrintSelected || (bOnlyPrintSelected && eNode->selected)){
          ESS_LOG_WARNING("Level: "<<sElement.level<<" - Name: "<<eNode->name<<" - Selected: "<<(eNode->selected?"true":"false")<<" - path: "<<eNode->dccIdentifier<<" - type: "<<table[eNode->type]);
             //<<" - identifer: "<<eNode->dccIdentifier);
-        eNode->print();
+         eNode->print();
       }
 
     
