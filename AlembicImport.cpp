@@ -1156,7 +1156,7 @@ ESS_CALLBACK_END
 
 
 //the last parameter is ignored if attach to exising is active (since we are not creating a new node)
-bool createNode(SceneNodeXSI* const appNode, SceneNodeAlembic* const fileNode, const IJobStringParser& jobParams, SceneNodePtr& newAppNode)
+bool createNode(SceneNodeXSI* appNode, SceneNodeAlembicPtr fileNode, const IJobStringParser& jobParams, SceneNodePtr& returnNode)
 {  
     //the appNode parameter is either the parent if adding a new node to the scene, or the node to replace if doing attach to existing
 
@@ -1206,6 +1206,8 @@ bool createNode(SceneNodeXSI* const appNode, SceneNodeAlembic* const fileNode, c
             ESS_LOG_ERROR("Could not attach xform "<<iObj.getFullName());
             return false;
          }
+
+         returnNode = SceneNodePtr(new SceneNodeXSI(nodeRef));
       }
       else{
          X3DObject parentX3DObject(appNode->nodeRef);
@@ -1218,7 +1220,7 @@ bool createNode(SceneNodeXSI* const appNode, SceneNodeAlembic* const fileNode, c
              return false;
          }
 
-         newAppNode = SceneNodePtr(new SceneNodeXSI(nodeRef));
+         returnNode = SceneNodePtr(new SceneNodeXSI(nodeRef));
 
          //we possibly won't need the name map anymore
          nameMapAdd(iObj.getFullName().c_str(),null.GetFullName());
@@ -1249,7 +1251,7 @@ bool createNode(SceneNodeXSI* const appNode, SceneNodeAlembic* const fileNode, c
 }
 
 
-bool createMergeableNode(SceneNodeXSI* const appNode, SceneNodeAlembic* const fileXformNode, SceneNodeAlembic* const fileShapeNode, const IJobStringParser& jobParams, SceneNodePtr& newAppNode)
+bool createMergeableNode(SceneNodeXSI* appNode, SceneNodeAlembicPtr fileXformNode, SceneNodeAlembicPtr fileShapeNode, const IJobStringParser& jobParams, SceneNodePtr& returnNode)
 {
    //the appNode parameter is either the parent if adding a new node to the scene, or the node to replace if doing attach to existing
 
@@ -1291,14 +1293,20 @@ bool createMergeableNode(SceneNodeXSI* const appNode, SceneNodeAlembic* const fi
       //(not the shape). This is done to avoid namespace conflicts.
       xformFullName = fileXformNode->getObject().getFullName().c_str();
       newAppNodeName = truncateName(fileXformNode->getObject().getName().c_str());
+
+      fileXformNode->setMerged(true);
       fileShapeNode->setMerged(true);
+
+      ESS_LOG_WARNING("xformName: "<<xformFullName<<" - shapeName: "<<shapeFullName);
    }
    else{
       newAppNodeName = truncateName(shapeObj.getName().c_str());
+
+      ESS_LOG_WARNING("shapeName: "<<shapeFullName);
    }
    //EC_LOG_INFO( "Object name: " << newAppNodeName.GetAsciiString() );
 
-   ESS_LOG_WARNING("xformName: "<<xformFullName<<" - shapeName: "<<shapeFullName);
+   
    
    if(AbcG::ICamera::matches(shapeObj.getMetaData()))
    {
@@ -1335,7 +1343,7 @@ bool createMergeableNode(SceneNodeXSI* const appNode, SceneNodeAlembic* const fi
             return false;
          }
 
-         newAppNode = SceneNodePtr(new SceneNodeXSI(camera.GetRef()));
+         returnNode = SceneNodePtr(new SceneNodeXSI(camera.GetRef()));
 
          nameMapAdd(shapeObj.getFullName().c_str(),camera.GetFullName());
       }
@@ -1400,7 +1408,7 @@ bool createMergeableNode(SceneNodeXSI* const appNode, SceneNodeAlembic* const fi
             ESS_LOG_ERROR("Could not create polymesh "<<shapeObj.getFullName());
          }
 
-         newAppNode = SceneNodePtr(new SceneNodeXSI(meshObj.GetRef()));
+         returnNode = SceneNodePtr(new SceneNodeXSI(meshObj.GetRef()));
 
          nameMapAdd(shapeObj.getFullName().c_str(),meshObj.GetFullName());
       }
@@ -1609,7 +1617,7 @@ bool createMergeableNode(SceneNodeXSI* const appNode, SceneNodeAlembic* const fi
             if(!nodeRef.IsValid()){
                ESS_LOG_ERROR("Could not create curve "<<shapeObj.getFullName());
             }
-            newAppNode = SceneNodePtr(new SceneNodeXSI(nodeRef));
+            returnNode = SceneNodePtr(new SceneNodeXSI(nodeRef));
             
             nameMapAdd(shapeObj.getFullName().c_str(), pointsObj.GetFullName());
          }
@@ -1680,7 +1688,7 @@ bool createMergeableNode(SceneNodeXSI* const appNode, SceneNodeAlembic* const fi
                ESS_LOG_ERROR("Could not create curve "<<shapeObj.getFullName());
             }
 
-            newAppNode = SceneNodePtr(new SceneNodeXSI(nodeRef));
+            returnNode = SceneNodePtr(new SceneNodeXSI(nodeRef));
 
             nameMapAdd(shapeObj.getFullName().c_str(), curveObj.GetFullName());
          }
@@ -1765,7 +1773,7 @@ bool createMergeableNode(SceneNodeXSI* const appNode, SceneNodeAlembic* const fi
             ESS_LOG_ERROR("Could not create points "<<shapeObj.getFullName());
          }
 
-         newAppNode = SceneNodePtr(new SceneNodeXSI(nodeRef));
+         returnNode = SceneNodePtr(new SceneNodeXSI(nodeRef));
 
          nameMapAdd(shapeObj.getFullName().c_str(), pointsObj.GetFullName());
       }
@@ -1812,21 +1820,20 @@ bool createMergeableNode(SceneNodeXSI* const appNode, SceneNodeAlembic* const fi
 }
 
 
-
-bool createNodes(SceneNodeXSI* const appNode, SceneNodeAlembic* const fileNode, const IJobStringParser& jobParams, SceneNodePtr& newAppNode)
+bool createNodes(SceneNodeXSI* const appNode, SceneNodeAlembicPtr fileNode, const IJobStringParser& jobParams, SceneNodePtr& returnNode)
 {
 
    if( fileNode->type == SceneNode::ETRANSFORM ){//we have a transform with only one shape node child, so we can merge
 
-      SceneNodeAlembic* shapeNode = NULL;
+      SceneNodeAlembicPtr shapeNode;
       for(SceneChildIterator it = fileNode->children.begin(); it != fileNode->children.end(); it++){
          if( hasExtractableTransform((*it)->type) ){
-            shapeNode = (SceneNodeAlembic*)(*it).get();
+            shapeNode = reinterpret<SceneNode, SceneNodeAlembic>(*it);
             break;
          }
       }
       if(shapeNode){
-         return createMergeableNode(appNode, fileNode, shapeNode, jobParams, newAppNode);
+         return createMergeableNode(appNode, fileNode, shapeNode, jobParams, returnNode);
       }
       else{
          ESS_LOG_ERROR("Could not find shape node.");
@@ -1834,10 +1841,11 @@ bool createNodes(SceneNodeXSI* const appNode, SceneNodeAlembic* const fileNode, 
       }
    }
    else if( fileNode->type == SceneNode::ITRANSFORM ){// null nodes
-      return createNode(appNode, fileNode, jobParams, newAppNode);
+      return createNode(appNode, fileNode, jobParams, returnNode);
    }
    //this shape node has the same parent transform as one or more other shape nodes
-   return createMergeableNode(appNode, NULL, fileNode, jobParams, newAppNode);
+   SceneNodeAlembicPtr shapeNode;
+   return createMergeableNode(appNode, shapeNode, fileNode, jobParams, returnNode);
 }
 
 
@@ -2083,7 +2091,7 @@ ESS_CALLBACK_START(alembic_import_jobs_Execute, CRef&)
 
 
    int nNumNodes = 0;
-   SceneNodePtr fileRoot = buildAlembicSceneGraph(pArchiveCache, pRootObjectCache, nNumNodes);
+   SceneNodeAlembicPtr fileRoot = buildAlembicSceneGraph(pArchiveCache, pRootObjectCache, nNumNodes);
 
    printSceneGraph(fileRoot, false);
 
@@ -2121,11 +2129,11 @@ ESS_CALLBACK_START(alembic_import_jobs_Execute, CRef&)
 
    if(jobParser.attachToExisting)
    {
-      SceneNodePtr appRoot = buildCommonSceneGraph(importRootNode);
+      SceneNodeXSIPtr appRoot = buildCommonSceneGraph(importRootNode);
 
       printSceneGraph(appRoot, false);
-
-      bool bAttachSuccess = ImportSceneFile(fileRoot, appRoot, jobParser);
+      
+      bool bAttachSuccess = AttachSceneFile(fileRoot, appRoot, jobParser);
 
       if(!bAttachSuccess){
          return CStatus::Fail;
@@ -2134,7 +2142,7 @@ ESS_CALLBACK_START(alembic_import_jobs_Execute, CRef&)
    else
    {
       //should build a full scene graph when start doing name checking
-      SceneNodePtr appRoot(new SceneNodeXSI(importRootNode));
+      SceneNodeXSIPtr appRoot(new SceneNodeXSI(importRootNode));
 
       bool bImportSuccess = ImportSceneFile(fileRoot, appRoot, jobParser);
       
