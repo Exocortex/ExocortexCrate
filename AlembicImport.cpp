@@ -1156,7 +1156,7 @@ ESS_CALLBACK_END
 
 
 //the last parameter is ignored if attach to exising is active (since we are not creating a new node)
-bool createNode(SceneNodeXSI* const appNode, SceneNodeAlembic* const fileNode, const IJobStringParser& jobParams, SceneNodePtr newAppNode)
+bool createNode(SceneNodeXSI* const appNode, SceneNodeAlembic* const fileNode, const IJobStringParser& jobParams, SceneNodePtr& newAppNode)
 {  
     //the appNode parameter is either the parent if adding a new node to the scene, or the node to replace if doing attach to existing
 
@@ -1249,7 +1249,7 @@ bool createNode(SceneNodeXSI* const appNode, SceneNodeAlembic* const fileNode, c
 }
 
 
-bool createMergeableNode(SceneNodeXSI* const appNode, SceneNodeAlembic* const fileXformNode, SceneNodeAlembic* const fileShapeNode, const IJobStringParser& jobParams, SceneNodePtr newAppNode)
+bool createMergeableNode(SceneNodeXSI* const appNode, SceneNodeAlembic* const fileXformNode, SceneNodeAlembic* const fileShapeNode, const IJobStringParser& jobParams, SceneNodePtr& newAppNode)
 {
    //the appNode parameter is either the parent if adding a new node to the scene, or the node to replace if doing attach to existing
 
@@ -1289,16 +1289,17 @@ bool createMergeableNode(SceneNodeXSI* const appNode, SceneNodeAlembic* const fi
    if(fileXformNode){
       //if we will merge will the shape node with its parent transform, we use the name of the transform node 
       //(not the shape). This is done to avoid namespace conflicts.
-      xformFullName = fileXformNode->getObject().getName().c_str();
-      newAppNodeName = truncateName(xformFullName);
+      xformFullName = fileXformNode->getObject().getFullName().c_str();
+      newAppNodeName = truncateName(fileXformNode->getObject().getName().c_str());
+      fileShapeNode->setMerged(true);
    }
    else{
       newAppNodeName = truncateName(shapeObj.getName().c_str());
    }
    //EC_LOG_INFO( "Object name: " << newAppNodeName.GetAsciiString() );
 
+   ESS_LOG_WARNING("xformName: "<<xformFullName<<" - shapeName: "<<shapeFullName);
    
-
    if(AbcG::ICamera::matches(shapeObj.getMetaData()))
    {
       //ESS_LOG_WARNING("Import ICamera");
@@ -1812,7 +1813,7 @@ bool createMergeableNode(SceneNodeXSI* const appNode, SceneNodeAlembic* const fi
 
 
 
-bool createNodes(SceneNodeXSI* const appNode, SceneNodeAlembic* const fileNode, const IJobStringParser& jobParams, SceneNodePtr newAppNode)
+bool createNodes(SceneNodeXSI* const appNode, SceneNodeAlembic* const fileNode, const IJobStringParser& jobParams, SceneNodePtr& newAppNode)
 {
 
    if( fileNode->type == SceneNode::ETRANSFORM ){//we have a transform with only one shape node child, so we can merge
@@ -1825,7 +1826,7 @@ bool createNodes(SceneNodeXSI* const appNode, SceneNodeAlembic* const fileNode, 
          }
       }
       if(shapeNode){
-         return createMergeableNode(appNode, shapeNode, fileNode, jobParams, newAppNode);
+         return createMergeableNode(appNode, fileNode, shapeNode, jobParams, newAppNode);
       }
       else{
          ESS_LOG_ERROR("Could not find shape node.");
@@ -2129,6 +2130,7 @@ ESS_CALLBACK_START(alembic_import_jobs_Execute, CRef&)
       ESS_LOG_WARNING("Attachment root is "<<importRootNode.GetAsText().GetAsciiString());
    }
 
+   //return CStatus::Fail;
 
    if(jobParser.attachToExisting)
    {

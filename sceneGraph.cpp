@@ -7,23 +7,28 @@
 
 using namespace XSI;
 
-SceneNodeClass::typeE SceneNodeXSI::getClassType()
+SceneNodeClass::typeE SceneNodeXSI::getClass()
 {
    return SceneNodeClass::APP_XSI;
 }
 
+bool SceneNodeXSI::isClass(SceneNodeClass::typeE type)
+{
+   return SceneNodeApp::isClass(type) || type == SceneNodeClass::APP_XSI;
+}
+
 bool SceneNodeXSI::replaceData(SceneNodePtr fileNode, const IJobStringParser& jobParams)
 {
-   if(fileNode->getClassType() != SceneNodeClass::FILE_ALEMBIC || !jobParams.attachToExisting){
+   if(!fileNode->isClass(SceneNodeClass::FILE_ALEMBIC) || !jobParams.attachToExisting){
       return false;
    }
    SceneNodePtr newAppNode;
    return createNodes(this, (SceneNodeAlembic*)fileNode.get(), jobParams, newAppNode);
 }
 
-bool SceneNodeXSI::addChild(SceneNodePtr fileNode, const IJobStringParser& jobParams, SceneNodePtr newAppNode)
+bool SceneNodeXSI::addChild(SceneNodePtr fileNode, const IJobStringParser& jobParams, SceneNodePtr& newAppNode)
 {
-   if(fileNode->getClassType() != SceneNodeClass::FILE_ALEMBIC || jobParams.attachToExisting){
+   if(!fileNode->isClass(SceneNodeClass::FILE_ALEMBIC) || jobParams.attachToExisting){
       return false;
    }
 
@@ -32,7 +37,7 @@ bool SceneNodeXSI::addChild(SceneNodePtr fileNode, const IJobStringParser& jobPa
 
 void SceneNodeXSI::print()
 {
-   ESS_LOG_WARNING("XSINodeObjectCRef: "<<nodeRef.GetAsText());
+   ESS_LOG_WARNING("XSINodeObjectCRef: "<<nodeRef.GetAsText().GetAsciiString());
 }
 
 
