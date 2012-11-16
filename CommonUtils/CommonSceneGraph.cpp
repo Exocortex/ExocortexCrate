@@ -129,8 +129,10 @@ void printSceneGraph(SceneNodePtr root, bool bOnlyPrintSelected)
       sceneStack.pop_back();
 
       if(!bOnlyPrintSelected || (bOnlyPrintSelected && eNode->selected)){
-         ESS_LOG_WARNING("Level: "<<sElement.level<<" - Name: "<<eNode->name<<" - Selected: "<<(eNode->selected?"true":"false")<<" - path: "<<eNode->dccIdentifier<<" - type: "<<table[eNode->type]);
-            //<<" - identifer: "<<eNode->dccIdentifier);
+         ESS_LOG_WARNING("Level: "<<sElement.level<<" - Name: "<<eNode->name<<" - Selected: "<<(eNode->selected?"true":"false")<<" - type: "<<table[eNode->type]);
+         if(eNode->parent){
+            ESS_LOG_WARNING("Parent: "<<eNode->parent->name);
+         }
          eNode->print();
       }
 

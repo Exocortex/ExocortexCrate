@@ -56,10 +56,10 @@ public:
    std::string dccIdentifier;
    bool selected;
 
-   SceneNode():type(NUM_NODE_TYPES), selected(false)
+   SceneNode():parent(NULL), type(NUM_NODE_TYPES), selected(false)
    {}
 
-   SceneNode(nodeTypeE type, std::string name, std::string identifier):type(type), name(name), dccIdentifier(identifier)
+   SceneNode(nodeTypeE type, std::string name, std::string identifier):parent(NULL), type(type), name(name), dccIdentifier(identifier)
    {}
    //~SceneNode();
 
