@@ -48,10 +48,10 @@ public:
 };
 
 
-SceneNodePtr buildAlembicSceneGraph(AbcArchiveCache *pArchiveCache, AbcObjectCache *pRootObjectCache, int& nNumNodes);
+SceneNodeAlembicPtr buildAlembicSceneGraph(AbcArchiveCache *pArchiveCache, AbcObjectCache *pRootObjectCache, int& nNumNodes);
 
-bool ImportSceneFile(SceneNodePtr fileRoot, SceneNodePtr appRoot, const IJobStringParser& jobParams);
-bool AttachSceneFile(SceneNodePtr fileRoot, SceneNodePtr appRoot, const IJobStringParser& jobParams);
+bool ImportSceneFile(SceneNodeAlembicPtr fileRoot, SceneNodeAppPtr appRoot, const IJobStringParser& jobParams);
+bool AttachSceneFile(SceneNodeAlembicPtr fileRoot, SceneNodeAppPtr appRoot, const IJobStringParser& jobParams);
 
 
 

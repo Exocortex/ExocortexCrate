@@ -150,13 +150,13 @@ struct AlembicISceneBuildElement
 };
 
 
-SceneNodePtr buildAlembicSceneGraph(AbcArchiveCache *pArchiveCache, AbcObjectCache *pRootObjectCache, int& nNumNodes)
+SceneNodeAlembicPtr buildAlembicSceneGraph(AbcArchiveCache *pArchiveCache, AbcObjectCache *pRootObjectCache, int& nNumNodes)
 {
    std::list<AlembicISceneBuildElement> sceneStack;
 
    Alembic::Abc::IObject rootObj = pRootObjectCache->obj;
 
-   SceneNodePtr sceneRoot(new SceneNodeAlembic(rootObj));
+   SceneNodeAlembicPtr sceneRoot(new SceneNodeAlembic(rootObj));
    sceneRoot->name = rootObj.getName();
    sceneRoot->dccIdentifier = rootObj.getFullName();
    sceneRoot->type = SceneNode::SCENE_ROOT;
@@ -243,23 +243,16 @@ SceneNodePtr buildAlembicSceneGraph(AbcArchiveCache *pArchiveCache, AbcObjectCac
 
 struct AttachStackElement
 {
-   SceneNodePtr currAppNode;
-   SceneNodePtr currFileNode;
+   SceneNodeAppPtr currAppNode;
+   SceneNodeAlembicPtr currFileNode;
 
-   AttachStackElement(SceneNodePtr appNode, SceneNodePtr fileNode): currAppNode(appNode), currFileNode(fileNode)
+   AttachStackElement(SceneNodeAppPtr appNode, SceneNodeAlembicPtr fileNode): currAppNode(appNode), currFileNode(fileNode)
    {}
 
 };
 
-bool AttachSceneFile(SceneNodePtr fileRoot, SceneNodePtr appRoot, const IJobStringParser& jobParams)
+bool AttachSceneFile(SceneNodeAlembicPtr fileRoot, SceneNodeAppPtr appRoot, const IJobStringParser& jobParams)
 {
-   if(!fileRoot->isClass(SceneNodeClass::FILE)){
-      return false;
-   }
-   if(!appRoot->isClass(SceneNodeClass::APP)){
-      return false;
-   }
-
    //TODO: how to account for filtering?
    //it would break the sibling namespace assumption. Perhaps we should require that all parent nodes of selected are imported.
    //We would then not traverse unselected children
@@ -268,7 +261,8 @@ bool AttachSceneFile(SceneNodePtr fileRoot, SceneNodePtr appRoot, const IJobStri
 
 
    for(SceneChildIterator it = appRoot->children.begin(); it != appRoot->children.end(); it++){
-      sceneStack.push_back(AttachStackElement(*it, fileRoot));
+      SceneNodeAppPtr appNode = reinterpret<SceneNode, SceneNodeApp>(*it);
+      sceneStack.push_back(AttachStackElement(appNode, fileRoot));
    }
 
    //TODO: abstract progress
@@ -278,8 +272,8 @@ bool AttachSceneFile(SceneNodePtr fileRoot, SceneNodePtr appRoot, const IJobStri
    while( !sceneStack.empty() )
    {
       AttachStackElement sElement = sceneStack.back();
-      SceneNodePtr currAppNode = sElement.currAppNode;
-      SceneNodePtr currFileNode = sElement.currFileNode;
+      SceneNodeAppPtr currAppNode = sElement.currAppNode;
+      SceneNodeAlembicPtr currFileNode = sElement.currFileNode;
       sceneStack.pop_back();
 
       //if( i % intermittentUpdateInterval == 0 ) {
@@ -287,37 +281,28 @@ bool AttachSceneFile(SceneNodePtr fileRoot, SceneNodePtr appRoot, const IJobStri
       //}
       //i++;
 
-      SceneNodePtr newFileNode = currFileNode;
+      SceneNodeAlembicPtr newFileNode = currFileNode;
       //Each set of siblings names in an Alembic file exist within a namespace
       //This is not true for 3DS Max scene graphs, so we check for such conflicts using the "attached appNode flag"
       bool bChildAttached = false;
       for(SceneChildIterator it = currFileNode->children.begin(); it != currFileNode->children.end(); it++){
-         SceneNodeFile* pFileNode = (SceneNodeFile*)(*it).get(); //this is safe (we checked the root)
-         if((*it)->name == pFileNode->name){
-            if(pFileNode->isAttached()){
+         SceneNodeAlembicPtr fileNode = reinterpret<SceneNode, SceneNodeAlembic>(*it);
+         if(currAppNode->name == fileNode->name){
+            ESS_LOG_WARNING("nodeMatch: "<<(*it)->name<<" = "<<fileNode->name);
+            if(fileNode->isAttached()){
                ESS_LOG_ERROR("More than one match for node "<<(*it)->name);
                return false;
             }
             else{
-               newFileNode = *it;
-               SceneNodeApp* pCurrAppNode = (SceneNodeApp*)currAppNode.get(); //this is safe (we checked the root)
-               bChildAttached = pCurrAppNode->replaceData(*it, jobParams);
+               bChildAttached = currAppNode->replaceData(fileNode, jobParams, newFileNode);
             }
          }
       }
 
-      if(bChildAttached){
-
-         //push the children as the last step, since we need to who the parent is first (we may have merged)
-         for(SceneChildIterator it = currAppNode->children.begin(); it != currAppNode->children.end(); it++){
-            sceneStack.push_back( AttachStackElement( *it, newFileNode ) );
-         }
-      }
-      else{
-	      if( currFileNode->children.empty() == false ) {
-		      EC_LOG_WARNING("Unsupported node: " << currFileNode->name << " has children that have not been attached." );
-            //TODO: throw error here?
-	      }
+      //push the children as the last step, since we need to who the parent is first (we may have merged)
+      for(SceneChildIterator it = currAppNode->children.begin(); it != currAppNode->children.end(); it++){
+         SceneNodeAppPtr appNode = reinterpret<SceneNode, SceneNodeApp>(*it);
+         sceneStack.push_back( AttachStackElement( appNode, newFileNode ) );
       }
 
       //if(prog.IsCancelPressed()){
@@ -332,23 +317,16 @@ bool AttachSceneFile(SceneNodePtr fileRoot, SceneNodePtr appRoot, const IJobStri
 
 struct ImportStackElement
 {
-   SceneNodePtr currFileNode;
-   SceneNodePtr parentAppNode;
+   SceneNodeAlembicPtr currFileNode;
+   SceneNodeAppPtr parentAppNode;
 
-   ImportStackElement(SceneNodePtr node, SceneNodePtr parent):currFileNode(node), parentAppNode(parent)
+   ImportStackElement(SceneNodeAlembicPtr node, SceneNodeAppPtr parent):currFileNode(node), parentAppNode(parent)
    {}
 
 };
 
-bool ImportSceneFile(SceneNodePtr fileRoot, SceneNodePtr appRoot, const IJobStringParser& jobParams)
+bool ImportSceneFile(SceneNodeAlembicPtr fileRoot, SceneNodeAppPtr appRoot, const IJobStringParser& jobParams)
 {
-   if(!fileRoot->isClass(SceneNodeClass::FILE)){
-      return false;
-   }
-   if(!appRoot->isClass(SceneNodeClass::APP)){
-      return false;
-   }
-
    //TODO skip unselected children, if thats we how we do filtering.
 
    //compare to application scene graph to see if we need to rename nodes (or maybe we might throw an error)
@@ -356,7 +334,8 @@ bool ImportSceneFile(SceneNodePtr fileRoot, SceneNodePtr appRoot, const IJobStri
    std::list<ImportStackElement> sceneStack;
 
    for(SceneChildIterator it = fileRoot->children.begin(); it != fileRoot->children.end(); it++){
-      sceneStack.push_back(ImportStackElement(*it, appRoot));
+      SceneNodeAlembicPtr fileNode = reinterpret<SceneNode, SceneNodeAlembic>(*it);
+      sceneStack.push_back(ImportStackElement(fileNode, appRoot));
    }
 
    //TODO: abstract progress
@@ -366,8 +345,8 @@ bool ImportSceneFile(SceneNodePtr fileRoot, SceneNodePtr appRoot, const IJobStri
    while( !sceneStack.empty() )
    {
       ImportStackElement sElement = sceneStack.back();
-      SceneNodePtr currFileNode = sElement.currFileNode;
-      SceneNodePtr parentAppNode = sElement.parentAppNode;
+      SceneNodeAlembicPtr currFileNode = sElement.currFileNode;
+      SceneNodeAppPtr parentAppNode = sElement.parentAppNode;
       sceneStack.pop_back();
 
       //if( i % intermittentUpdateInterval == 0 ) {
@@ -375,9 +354,8 @@ bool ImportSceneFile(SceneNodePtr fileRoot, SceneNodePtr appRoot, const IJobStri
       //}
       //i++;
        
-      SceneNodePtr newAppNode;
-      SceneNodeApp* pParentAppNode = (SceneNodeApp*)parentAppNode.get();
-      bool bContinue = pParentAppNode->addChild(currFileNode, jobParams, newAppNode);
+      SceneNodeAppPtr newAppNode;
+      bool bContinue = parentAppNode->addChild(currFileNode, jobParams, newAppNode);
 
       if(!bContinue){
          return false;
@@ -388,20 +366,21 @@ bool ImportSceneFile(SceneNodePtr fileRoot, SceneNodePtr appRoot, const IJobStri
 
          //push the children as the last step, since we need to who the parent is first (we may have merged)
          for(SceneChildIterator it = currFileNode->children.begin(); it != currFileNode->children.end(); it++){
-            SceneNodeFile *pFileNode = (SceneNodeFile*)(*it).get();
-            if(!pFileNode->isSupported()) continue;
+            SceneNodeAlembicPtr fileNode = reinterpret<SceneNode, SceneNodeAlembic>(*it);
+            if(!fileNode->isSupported()) continue;
 
-            if( pFileNode->isMerged() ){
+            if( fileNode->isMerged() ){
                //The child node was merged with its parent, so skip this child, and add its children
                //(Although this case is technically possible, I think it will not be common)
                SceneNodePtr& mergedChild = *it;
 
                for(SceneChildIterator cit = mergedChild->children.begin(); cit != mergedChild->children.end(); cit++){
-                  sceneStack.push_back( ImportStackElement( *cit, newAppNode ) );
+                  SceneNodeAlembicPtr cfileNode = reinterpret<SceneNode, SceneNodeAlembic>(*cit);
+                  sceneStack.push_back( ImportStackElement( cfileNode, newAppNode ) );
                }
             }
             else{
-               sceneStack.push_back( ImportStackElement( *it, newAppNode ) );
+               sceneStack.push_back( ImportStackElement( fileNode, newAppNode ) );
             }
          }
          

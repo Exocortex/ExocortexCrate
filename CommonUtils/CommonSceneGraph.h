@@ -9,24 +9,26 @@
 #include "CommonAlembic.h"
 
 class SceneNode;
+class SceneNodeApp;
+class SceneNodeFile;
+class SceneNodeAlembic;
+
 typedef boost::shared_ptr<SceneNode> SceneNodePtr;
+typedef boost::shared_ptr<SceneNodeApp> SceneNodeAppPtr;
+typedef boost::shared_ptr<SceneNodeFile> SceneNodeFilePtr;
+typedef boost::shared_ptr<SceneNodeAlembic> SceneNodeAlembicPtr;
+
+
+template<class T, class U> 
+boost::shared_ptr<U> reinterpret( boost::shared_ptr<T> original ) {
+   return *((boost::shared_ptr<U>*)((void*)&original));
+}
 
 typedef std::list<SceneNodePtr>::iterator SceneChildIterator;
 
 class IJobStringParser;
 
-//for runtime type identification
-namespace SceneNodeClass
-{
-   enum typeE{
-      FILE,
-      FILE_ALEMBIC,
-      APP,
-      APP_MAX,
-      APP_MAYA,
-      APP_XSI
-   };
-};
+
 
 class SceneNode
 {
@@ -49,8 +51,9 @@ public:
    };
 
    SceneNode* parent;
-   std::list<SceneNodePtr> children;
 
+   std::list<SceneNodePtr> children;
+   
    nodeTypeE type;
    std::string name;
    std::string dccIdentifier;
@@ -63,8 +66,6 @@ public:
    {}
    //~SceneNode();
 
-   virtual SceneNodeClass::typeE getClass() = 0;
-   virtual bool isClass(SceneNodeClass::typeE type) = 0;
    virtual void print() = 0;
 };
 
@@ -74,10 +75,8 @@ class SceneNodeAlembic;
 class SceneNodeApp : public SceneNode
 {
 public:
-   virtual bool replaceData(SceneNodePtr fileNode, const IJobStringParser& jobParams){ return false; }
-   virtual bool addChild(SceneNodePtr fileNode, const IJobStringParser& jobParams, SceneNodePtr& newAppNode){ return false; }
-   virtual SceneNodeClass::typeE getClass() = 0;
-   virtual bool isClass(SceneNodeClass::typeE type);
+   virtual bool replaceData(SceneNodeAlembicPtr fileNode, const IJobStringParser& jobParams, SceneNodeAlembicPtr& nextFileNode){ return false; }
+   virtual bool addChild(SceneNodeAlembicPtr fileNode, const IJobStringParser& jobParams, SceneNodeAppPtr& newAppNode){ return false; }
    virtual void print() = 0;
 };
 
@@ -90,8 +89,6 @@ public:
    SceneNodeFile(): isMergedIntoAppNode(false), isAttachedToAppNode(false)
    {}
 
-   virtual SceneNodeClass::typeE getClass() = 0;
-   virtual bool isClass(SceneNodeClass::typeE type);
    virtual bool isMerged();
    virtual void setMerged(bool bMerged);
    virtual bool isAttached();
@@ -114,8 +111,6 @@ public:
    SceneNodeAlembic(Abc::IObject& obj):iObj(obj), numSamples(0), isConstant(false), isMeshPointCache(false), isMeshTopoDynamic(false)
    {}
 
-   virtual SceneNodeClass::typeE getClass();
-   virtual bool isClass(SceneNodeClass::typeE type);
    virtual bool isSupported();
    virtual Abc::IObject getObject();
    virtual void print();

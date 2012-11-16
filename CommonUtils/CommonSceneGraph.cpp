@@ -11,36 +11,6 @@
 
 
 
-SceneNodeClass::typeE SceneNodeApp::getClass()
-{
-   return SceneNodeClass::APP;
-}
-
-bool SceneNodeApp::isClass(SceneNodeClass::typeE type)
-{
-   return type == SceneNodeClass::APP;
-}
-
-SceneNodeClass::typeE SceneNodeFile::getClass()
-{
-   return SceneNodeClass::FILE;
-}
-
-bool SceneNodeFile::isClass(SceneNodeClass::typeE type)
-{
-   return type == SceneNodeClass::FILE;
-}
-
-SceneNodeClass::typeE SceneNodeAlembic::getClass()
-{
-   return SceneNodeClass::FILE_ALEMBIC;
-}
-
-bool SceneNodeAlembic::isClass(SceneNodeClass::typeE type)
-{
-   return SceneNodeFile::isClass(type) || type == SceneNodeClass::FILE_ALEMBIC;
-}
-
 void SceneNodeFile::setMerged(bool bMerged)
 {
    isMergedIntoAppNode = bMerged;
@@ -115,7 +85,7 @@ void printSceneGraph(SceneNodePtr root, bool bOnlyPrintSelected)
       "NUM_NODE_TYPES"
    };
 
-   ESS_LOG_WARNING("ExoSceneGraph Begin - ClassType: "<<classType[root->getClass()]);
+   //ESS_LOG_WARNING("ExoSceneGraph Begin - ClassType: "<<classType[root->getClass()]);
 
    std::list<PrintStackElement> sceneStack;
    
