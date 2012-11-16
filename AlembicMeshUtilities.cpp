@@ -292,7 +292,7 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
 			  //HighResolutionTimer tFillInMesh;
 			  {      	
 				  ESS_PROFILE_SCOPE("FillInMesh");
-
+ 
 				  options.pMNMesh->FillInMesh();
 			  }
 			  //ESS_LOG_WARNING("FillInMesh time: "<<tFillInMesh.elapsed());
@@ -363,7 +363,7 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
 			   normalSpec->SetAllExplicit(true); //this call is probably more efficient than the per vertex one since 3DS Max uses bit flags
 
 			   // set normal values
-			    if (sampleInfo.alpha != 0.0f && normalsCeil && normalValuesFloor.size() == normalValuesCeil.size())
+			    if (sampleInfo.alpha != 0.0f && normalsCeil && normalValuesFloor.size() == normalValuesCeil.size() && !hasDynamicTopo )
 			   {
 				   for (int i = 0; i < normalValuesFloor.size(); i ++ ) {
 					   Abc::V3f interpolatedNormal = normalValuesFloor[i] + (normalValuesCeil[i] - normalValuesFloor[i]) * float(sampleInfo.alpha);
