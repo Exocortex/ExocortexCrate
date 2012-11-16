@@ -1207,7 +1207,7 @@ bool createNode(SceneNodeXSI* appNode, SceneNodeAlembicPtr fileNode, const IJobS
             return false;
          }
 
-         returnNode = SceneNodePtr(new SceneNodeXSI(nodeRef));
+         returnNode = fileNode;
       }
       else{
          X3DObject parentX3DObject(appNode->nodeRef);
@@ -1305,8 +1305,6 @@ bool createMergeableNode(SceneNodeXSI* appNode, SceneNodeAlembicPtr fileXformNod
       ESS_LOG_WARNING("shapeName: "<<shapeFullName);
    }
    //EC_LOG_INFO( "Object name: " << newAppNodeName.GetAsciiString() );
-
-   
    
    if(AbcG::ICamera::matches(shapeObj.getMetaData()))
    {
@@ -1331,6 +1329,8 @@ bool createMergeableNode(SceneNodeXSI* appNode, SceneNodeAlembicPtr fileXformNod
             return false;
          }
          camera = nodeRef;
+
+         returnNode = fileShapeNode;
       }
       else 
       {
@@ -1343,8 +1343,8 @@ bool createMergeableNode(SceneNodeXSI* appNode, SceneNodeAlembicPtr fileXformNod
             return false;
          }
 
-         returnNode = SceneNodePtr(new SceneNodeXSI(camera.GetRef()));
-
+         returnNode = SceneNodePtr(new SceneNodeXSI(nodeRef));
+      
          nameMapAdd(shapeObj.getFullName().c_str(),camera.GetFullName());
       }
 
@@ -1390,6 +1390,8 @@ bool createMergeableNode(SceneNodeXSI* appNode, SceneNodeAlembicPtr fileXformNod
          }
 
          meshObj = nodeRef;
+
+         returnNode = fileShapeNode;
       }
       else
       {
@@ -1505,6 +1507,8 @@ bool createMergeableNode(SceneNodeXSI* appNode, SceneNodeAlembicPtr fileXformNod
             return false;
          }
          nurbsObj = nodeRef;
+
+         returnNode = fileShapeNode;
       }
 
       if(!nurbsObj.IsValid())
@@ -1601,6 +1605,8 @@ bool createMergeableNode(SceneNodeXSI* appNode, SceneNodeAlembicPtr fileXformNod
                ESS_LOG_ERROR("Can only attach "<<shapeObj.getFullName()<<" to a pointcloud node.");
                return false;
             }
+
+            returnNode = fileShapeNode;
          }
          else
          {
@@ -1672,6 +1678,8 @@ bool createMergeableNode(SceneNodeXSI* appNode, SceneNodeAlembicPtr fileXformNod
                return false;
             }
             curveObj = nodeRef;
+
+            returnNode = fileShapeNode;
          }
          else
          {
@@ -1756,6 +1764,8 @@ bool createMergeableNode(SceneNodeXSI* appNode, SceneNodeAlembicPtr fileXformNod
             ESS_LOG_ERROR("Can only attach "<<shapeObj.getFullName()<<" to a  pointcloud node.");
             return false;
          }
+
+         returnNode = fileShapeNode;
       }
       else
       {

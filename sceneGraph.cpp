@@ -10,7 +10,7 @@ using namespace XSI;
 
 bool SceneNodeXSI::replaceData(SceneNodeAlembicPtr fileNode, const IJobStringParser& jobParams, SceneNodeAlembicPtr& nextFileNode)
 {
-   if(jobParams.attachToExisting){
+   if(!jobParams.attachToExisting){
       return false;
    }
    
