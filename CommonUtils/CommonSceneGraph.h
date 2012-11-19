@@ -9,11 +9,26 @@
 #include "CommonAlembic.h"
 
 class SceneNode;
+class SceneNodeApp;
+class SceneNodeFile;
+class SceneNodeAlembic;
+
 typedef boost::shared_ptr<SceneNode> SceneNodePtr;
+typedef boost::shared_ptr<SceneNodeApp> SceneNodeAppPtr;
+typedef boost::shared_ptr<SceneNodeFile> SceneNodeFilePtr;
+typedef boost::shared_ptr<SceneNodeAlembic> SceneNodeAlembicPtr;
+
+
+template<class T, class U> 
+boost::shared_ptr<U> reinterpret( boost::shared_ptr<T> original ) {
+   return *((boost::shared_ptr<U>*)((void*)&original));
+}
 
 typedef std::list<SceneNodePtr>::iterator SceneChildIterator;
 
 class IJobStringParser;
+
+
 
 class SceneNode
 {
@@ -37,32 +52,70 @@ public:
    };
 
    SceneNode* parent;
-   std::list<SceneNodePtr> children;
 
+   std::list<SceneNodePtr> children;
+   
    nodeTypeE type;
    std::string name;
    std::string dccIdentifier;
    bool selected;
 
-   SceneNode():type(NUM_NODE_TYPES), selected(false), parent(0)
+   SceneNode():parent(NULL), type(NUM_NODE_TYPES), selected(false)
    {}
 
-   SceneNode(nodeTypeE type, std::string name, std::string identifier):type(type), name(name), dccIdentifier(identifier), parent(0)
+   SceneNode(nodeTypeE type, std::string name, std::string identifier):parent(NULL), type(type), name(name), dccIdentifier(identifier)
    {}
    //~SceneNode();
 
-   //for application scene graph
-   virtual bool replaceData(SceneNodePtr fileNode, const IJobStringParser& jobParams){ return false; }
-   virtual bool addChild(SceneNodePtr fileNode, const IJobStringParser& jobParams, SceneNodePtr newAppNode){ return false; }
-
-   //for alembic scene graph
-   virtual Abc::IObject getObject(){ return Abc::IObject(); }
-   virtual bool wasMerged(){ return false; }
-   virtual void setMerged(bool bMerged=true){ }
+   virtual void print() = 0;
 };
 
 
+class IJobStringParser;
+class SceneNodeAlembic;
+class SceneNodeApp : public SceneNode
+{
+public:
+   virtual bool replaceData(SceneNodeAlembicPtr fileNode, const IJobStringParser& jobParams, SceneNodeAlembicPtr& nextFileNode){ return false; }
+   virtual bool addChild(SceneNodeAlembicPtr fileNode, const IJobStringParser& jobParams, SceneNodeAppPtr& newAppNode){ return false; }
+   virtual void print() = 0;
+};
 
+class SceneNodeFile : public SceneNode
+{
+public:
+   bool isMergedIntoAppNode;
+   bool isAttachedToAppNode;
+
+   SceneNodeFile(): isMergedIntoAppNode(false), isAttachedToAppNode(false)
+   {}
+
+   virtual bool isMerged();
+   virtual void setMerged(bool bMerged);
+   virtual bool isAttached();
+   virtual void setAttached(bool bAttached);
+   virtual bool isSupported() = 0;
+   virtual void print() = 0;
+};
+
+class SceneNodeAlembic : public SceneNodeFile
+{
+public:
+
+   Abc::IObject iObj;
+
+	int numSamples;
+	bool isConstant;
+	bool isMeshPointCache;
+	bool isMeshTopoDynamic;
+
+   SceneNodeAlembic(Abc::IObject& obj):iObj(obj), numSamples(0), isConstant(false), isMeshPointCache(false), isMeshTopoDynamic(false)
+   {}
+
+   virtual bool isSupported();
+   virtual Abc::IObject getObject();
+   virtual void print();
+};
 
 void printSceneGraph(SceneNodePtr root, bool bOnlyPrintSelected);
 

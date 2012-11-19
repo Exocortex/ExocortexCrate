@@ -1,11 +1,55 @@
 #include "CommonAlembic.h"
 #include "CommonSceneGraph.h"
 
+#include "CommonUtilities.h"
 
 //SceneNode::~SceneNode()
 //{
 //   ESS_LOG_WARNING("deleting node");
 //}
+
+
+
+
+void SceneNodeFile::setMerged(bool bMerged)
+{
+   isMergedIntoAppNode = bMerged;
+}
+
+bool SceneNodeFile::isAttached()
+{
+   return isAttachedToAppNode;
+}
+
+void SceneNodeFile::setAttached(bool bAttached)
+{
+   isAttachedToAppNode = bAttached;
+}
+
+bool SceneNodeFile::isMerged()
+{
+   return isMergedIntoAppNode;
+}
+
+bool SceneNodeAlembic::isSupported()
+{
+    return NodeCategory::get(iObj) != NodeCategory::UNSUPPORTED;
+}
+
+Abc::IObject SceneNodeAlembic::getObject()
+{
+   return iObj;
+}
+
+void SceneNodeAlembic::print()
+{
+   ESS_LOG_WARNING("AlembicNodeObjectFullName: "<<iObj.getFullName());
+}
+
+
+
+
+
 
 struct PrintStackElement
 {
@@ -17,8 +61,16 @@ struct PrintStackElement
 
 void printSceneGraph(SceneNodePtr root, bool bOnlyPrintSelected)
 {
+   const char* classType[]={
+      "FILE",
+      "FILE_ALEMBIC",
+      "APP",
+      "APP_MAX",
+      "APP_MAYA",
+      "APP_XSI"
+   };
  
-   char* table[]={
+   const char* table[]={
       "SCENE_ROOT",
       "ETRANSFORM",// external transform (a parent of a geometry node)
       "ITRANSFORM",// internal transform (all other transforms)
@@ -33,7 +85,7 @@ void printSceneGraph(SceneNodePtr root, bool bOnlyPrintSelected)
       "NUM_NODE_TYPES"
    };
 
-   ESS_LOG_WARNING("ExoSceneGraph Begin");
+   //ESS_LOG_WARNING("ExoSceneGraph Begin - ClassType: "<<classType[root->getClass()]);
 
    std::list<PrintStackElement> sceneStack;
    
@@ -47,9 +99,11 @@ void printSceneGraph(SceneNodePtr root, bool bOnlyPrintSelected)
       sceneStack.pop_back();
 
       if(!bOnlyPrintSelected || (bOnlyPrintSelected && eNode->selected)){
-         ESS_LOG_WARNING("Level: "<<sElement.level<<" - Name: "<<eNode->name<<" - Selected: "<<(eNode->selected?"true":"false")<<" - path: "<<eNode->dccIdentifier<<" - type: "<<table[eNode->type]);
-            //<<" - identifer: "<<eNode->dccIdentifier);
-        
+         ESS_LOG_WARNING("Level: "<<sElement.level<<" - Name: "<<eNode->name<<" - Selected: "<<(eNode->selected?"true":"false")<<" - type: "<<table[eNode->type]);
+         if(eNode->parent){
+            ESS_LOG_WARNING("Parent: "<<eNode->parent->name);
+         }
+         eNode->print();
       }
 
     
@@ -111,7 +165,7 @@ void selectNodes(SceneNodePtr root, SceneNode::SelectionT selectionMap, bool bSe
          }
 
          if(bSelectParents){// select all parent nodes
-            SceneNode *currNode = eNode->parent;
+            SceneNode* currNode = eNode->parent;
             while(currNode){
                currNode->selected = true;
                currNode = currNode->parent;
