@@ -76,6 +76,9 @@ class SceneNodeAlembic;
 class SceneNodeApp : public SceneNode
 {
 public:
+	SceneNodeApp(void): SceneNode() {}
+	SceneNodeApp(nodeTypeE type, std::string name, std::string identifier): SceneNode(type, name, identifier) {}
+
    virtual bool replaceData(SceneNodeAlembicPtr fileNode, const IJobStringParser& jobParams, SceneNodeAlembicPtr& nextFileNode){ return false; }
    virtual bool addChild(SceneNodeAlembicPtr fileNode, const IJobStringParser& jobParams, SceneNodeAppPtr& newAppNode){ return false; }
    virtual void print() = 0;

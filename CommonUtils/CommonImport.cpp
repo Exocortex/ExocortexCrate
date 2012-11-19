@@ -212,7 +212,7 @@ SceneNodeAlembicPtr buildAlembicSceneGraph(AbcArchiveCache *pArchiveCache, AbcOb
          //the parent transforms of geometry nodes should be to be external transforms 
          //(we don't a transform's type until we have seen what type(s) of child it has)
          if( NodeCategory::get(iObj) == NodeCategory::GEOMETRY ){
-            if(parentNode->type == SceneNode::ITRANSFORM){
+			 if(parentNode->type == SceneNode::ITRANSFORM){
                parentNode->type = SceneNode::ETRANSFORM;
             }
             else{
