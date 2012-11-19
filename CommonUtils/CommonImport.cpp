@@ -156,7 +156,7 @@ SceneNodeAlembicPtr buildAlembicSceneGraph(AbcArchiveCache *pArchiveCache, AbcOb
 
    Alembic::Abc::IObject rootObj = pRootObjectCache->obj;
 
-   SceneNodeAlembicPtr sceneRoot(new SceneNodeAlembic(rootObj));
+   SceneNodeAlembicPtr sceneRoot(new SceneNodeAlembic(pRootObjectCache));
    sceneRoot->name = rootObj.getName();
    sceneRoot->dccIdentifier = rootObj.getFullName();
    sceneRoot->type = SceneNode::SCENE_ROOT;
@@ -185,19 +185,7 @@ SceneNodeAlembicPtr buildAlembicSceneGraph(AbcArchiveCache *pArchiveCache, AbcOb
 
       numNodes++;
 
-      SceneNodePtr newNode(new SceneNodeAlembic(iObj));
-
-      SceneNodeAlembic* const pNode = (SceneNodeAlembic* const)newNode.get();
-	   pNode->numSamples = (int)getNumSamplesFromObject(iObj);
-	   pNode->isConstant = isObjectConstant(iObj);
-	   pNode->isMeshTopoDynamic = false;
-	   pNode->isMeshPointCache = false;
-	   if( AbcG::IPolyMesh::matches(iObj.getMetaData()) || AbcG::ISubD::matches(iObj.getMetaData()) ) {
-	      if( !pNode->isConstant ) {
-		      pNode->isMeshTopoDynamic = isAlembicMeshTopoDynamic( &iObj );
-	      }
-	      pNode->isMeshPointCache = isAlembicMeshPointCache( &iObj );
-      }
+      SceneNodeAlembicPtr newNode(new SceneNodeAlembic(sElement.pObjectCache));
 
       newNode->name = iObj.getName();
       newNode->dccIdentifier = iObj.getFullName();

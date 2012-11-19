@@ -97,24 +97,21 @@ public:
    virtual void print() = 0;
 };
 
+class AbcObjectCache;
 class SceneNodeAlembic : public SceneNodeFile
 {
 public:
 
-   Abc::IObject iObj;
+   AbcObjectCache *pObjCache;
 
-	int numSamples;
-	bool isConstant;
-	bool isMeshPointCache;
-	bool isMeshTopoDynamic;
-
-   SceneNodeAlembic(Abc::IObject& obj):iObj(obj), numSamples(0), isConstant(false), isMeshPointCache(false), isMeshTopoDynamic(false)
+   SceneNodeAlembic(AbcObjectCache *pObjectCache):pObjCache(pObjectCache)
    {}
 
    virtual bool isSupported();
    virtual Abc::IObject getObject();
    virtual void print();
 };
+
 
 void printSceneGraph(SceneNodePtr root, bool bOnlyPrintSelected);
 
