@@ -1,6 +1,6 @@
 #include "CommonAlembic.h"
 #include "CommonSceneGraph.h"
-
+#include "CommonAbcCache.h"
 #include "CommonUtilities.h"
 
 //SceneNode::~SceneNode()
@@ -33,17 +33,17 @@ bool SceneNodeFile::isMerged()
 
 bool SceneNodeAlembic::isSupported()
 {
-    return NodeCategory::get(iObj) != NodeCategory::UNSUPPORTED;
+    return NodeCategory::get(pObjCache->obj) != NodeCategory::UNSUPPORTED;
 }
 
 Abc::IObject SceneNodeAlembic::getObject()
 {
-   return iObj;
+   return pObjCache->obj;
 }
 
 void SceneNodeAlembic::print()
 {
-   ESS_LOG_WARNING("AlembicNodeObjectFullName: "<<iObj.getFullName());
+   ESS_LOG_WARNING("AlembicNodeObjectFullName: "<<pObjCache->obj.getFullName());
 }
 
 
