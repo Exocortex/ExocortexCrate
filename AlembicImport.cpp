@@ -1429,7 +1429,7 @@ bool createMergeableNode(SceneNodeXSI* appNode, SceneNodeAlembicPtr fileXformNod
 
       // create the topo op
       CRef returnOpRef;
-      if(!importBboxes && !fileShapeNode->isMeshPointCache)
+      if(!importBboxes && !fileShapeNode->pObjCache->isMeshPointCache)
       {
          CValue returnedOpVal;
          alembic_create_item_Invoke(L"alembic_polymesh_topo", importRootNode, nodeRef, filename, shapeFullName, attachToExisting, createItemArgs, returnedOpVal);
@@ -1470,7 +1470,7 @@ bool createMergeableNode(SceneNodeXSI* appNode, SceneNodeAlembicPtr fileXformNod
       {
          //TODO: what is check for? what should be done in the case of SUBD
          // only add the point position operator if we don't have dynamic topology
-        bool receivesExpression = fileShapeNode->isMeshTopoDynamic;
+        bool receivesExpression = fileShapeNode->pObjCache->isMeshTopoDynamic;
          
          if(!receivesExpression)
          {
