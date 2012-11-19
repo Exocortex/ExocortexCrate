@@ -13,12 +13,14 @@ public:
    SceneNodeXSI(XSI::CRef ref):nodeRef(ref)
    {}
 
-   virtual bool replaceData(SceneNodePtr fileNode, const IJobStringParser& jobParams);
-   virtual bool addChild(SceneNodePtr fileNode, const IJobStringParser& jobParams, SceneNodePtr newAppNode);
+   virtual bool replaceData(SceneNodeAlembicPtr fileNode, const IJobStringParser& jobParams, SceneNodeAlembicPtr& nextFileNode);
+   virtual bool addChild(SceneNodeAlembicPtr fileNode, const IJobStringParser& jobParams, SceneNodeAppPtr& newAppNode);
+   virtual void print();
 };
 
+typedef boost::shared_ptr<SceneNodeXSI> SceneNodeXSIPtr;
 
-SceneNodePtr buildCommonSceneGraph(XSI::CRef xsiRoot);
+SceneNodeXSIPtr buildCommonSceneGraph(XSI::CRef xsiRoot);
 
 bool hasExtractableTransform( SceneNode::nodeTypeE type );
 

@@ -8,23 +8,33 @@
 using namespace XSI;
 
 
-
-bool SceneNodeXSI::replaceData(SceneNodePtr fileNode, const IJobStringParser& jobParams)
+bool SceneNodeXSI::replaceData(SceneNodeAlembicPtr fileNode, const IJobStringParser& jobParams, SceneNodeAlembicPtr& nextFileNode)
 {
    if(!jobParams.attachToExisting){
       return false;
    }
-   SceneNodePtr newAppNode;
-   return createNodes(this, fileNode.get(), jobParams, newAppNode);
+   
+   SceneNodePtr returnNode;
+   bool bSuccess = createNodes(this, fileNode, jobParams, returnNode);
+   nextFileNode = reinterpret<SceneNode, SceneNodeAlembic>(returnNode);
+   return bSuccess;
 }
 
-bool SceneNodeXSI::addChild(SceneNodePtr fileNode, const IJobStringParser& jobParams, SceneNodePtr newAppNode)
+bool SceneNodeXSI::addChild(SceneNodeAlembicPtr fileNode, const IJobStringParser& jobParams, SceneNodeAppPtr& newAppNode)
 {
    if(jobParams.attachToExisting){
       return false;
    }
 
-   return createNodes(this, fileNode.get(), jobParams, newAppNode);
+   SceneNodePtr returnNode;
+   bool bSuccess = createNodes(this, fileNode, jobParams, returnNode);
+   newAppNode = reinterpret<SceneNode, SceneNodeApp>(returnNode);
+   return bSuccess;
+}
+
+void SceneNodeXSI::print()
+{
+   ESS_LOG_WARNING("XSINodeObjectCRef: "<<nodeRef.GetAsText().GetAsciiString());
 }
 
 
@@ -123,13 +133,13 @@ struct CSGStackElement
 };
 
 
-SceneNodePtr buildCommonSceneGraph(XSI::CRef xsiRoot)
+SceneNodeXSIPtr buildCommonSceneGraph(XSI::CRef xsiRoot)
 {
    X3DObject xsiRootObj(xsiRoot);
 
    std::list<CSGStackElement> sceneStack;
    
-   SceneNodePtr exoRoot(new SceneNodeXSI(xsiRoot));
+   SceneNodeXSIPtr exoRoot(new SceneNodeXSI(xsiRoot));
    exoRoot->name = xsiRootObj.GetName().GetAsciiString();
    exoRoot->type = SceneNode::SCENE_ROOT;
    exoRoot->dccIdentifier = xsiRootObj.GetFullName().GetAsciiString();
