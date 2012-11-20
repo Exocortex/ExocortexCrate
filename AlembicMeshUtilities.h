@@ -13,7 +13,7 @@ typedef struct _alembic_fillmesh_options
     AbcG::IObject *pIObj;
 	std::string fileName;
 	std::string identifier;
-	
+	AbcObjectCache *pObjectCache;
 	Object *pObject;
 	MNMesh *pMNMesh;
     TimeValue dTicks;

@@ -394,6 +394,7 @@ int ExocortexAlembicStaticInterface::ExocortexAlembicImportJobs( CONST_2013 MCHA
 
 int ExocortexAlembicStaticInterface_ExocortexAlembicImportJobs( CONST_2013 MCHAR* jobString )
 {
+  ESS_PROFILE_FUNC();
 	try {
 
       //CONST_2013 MCHAR* strPath, 
@@ -638,6 +639,7 @@ int ExocortexAlembicStaticInterface::ExocortexAlembicExportJobs( CONST_2013 MCHA
 
 int ExocortexAlembicStaticInterface_ExocortexAlembicExportJobs( CONST_2013 MCHAR* jobString )
 {
+  ESS_PROFILE_FUNC();
 	try {
 
 		ESS_LOG_WARNING( "Processing export jobs: "<<jobString);
@@ -994,6 +996,7 @@ int ExocortexAlembicStaticInterface_ExocortexAlembicExport(CONST_2013 MCHAR * st
 															BOOL bExportUV, BOOL bExportMaterialIds, BOOL bExportEnvelopeBindPose, BOOL bExportDynamicTopology,
 															BOOL bExportSelected, BOOL bFlattenHierarchy, BOOL bExportAsSingleMesh)
 {
+  ESS_PROFILE_FUNC();
 
 	std::stringstream jobStream;
 	jobStream<<"filename="<<strPath<<";in="<<iFrameIn<<";out="<<iFrameOut<<";step="<<iFrameSteps<<";substep="<<iFrameSubSteps;

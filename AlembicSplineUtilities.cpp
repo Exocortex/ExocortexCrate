@@ -109,6 +109,7 @@ public:
 
 void AlembicImport_FillInShape_Internal(alembic_fillshape_options &options)
 {
+  ESS_PROFILE_FUNC();
 	AbcG::ICurves obj(*options.pIObj,Abc::kWrapExisting);
 
    if(!obj.valid())
@@ -299,8 +300,8 @@ void AlembicImport_FillInShape_Internal(alembic_fillshape_options &options)
 				  // }
 
 					   if( curveType == KTYPE_BEZIER ) {
-						   Point3 inNew = ( in - out ) * 0.5f + p;
-						   Point3 outNew = ( out - in ) * 0.5f + p;
+						   Point3 inNew = ( in - out ) * 0.1f + p;
+						   Point3 outNew = ( out - in ) * 0.1f + p;
 						   in = inNew;
 						   out = outNew;
 					   }

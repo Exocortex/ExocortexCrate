@@ -85,7 +85,7 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
   	   Abc::P3fArraySamplePtr meshPos;
        Abc::V3fArraySamplePtr meshVel;
 
-	   bool hasDynamicTopo = isAlembicMeshTopoDynamic( options.pIObj );
+       bool hasDynamicTopo = options.pObjectCache->isMeshTopoDynamic;//isAlembicMeshTopoDynamic( options.pIObj );
        if(objMesh.valid())
        {
      		ESS_PROFILE_SCOPE("Mesh getPositions/getVelocities/faceCountProp");
@@ -288,19 +288,18 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
 		//Tested in 2013, some simples meshes seem to crash, so I'm putting it back in
 
 #if 1//MAX_PRODUCT_YEAR_NUMBER < 2012
-
-		if( ! options.pMNMesh->GetFlag( MN_MESH_FILLED_IN ) ) {
-			//HighResolutionTimer tFillInMesh;
-			{      	
-				ESS_PROFILE_SCOPE("FillInMesh");
-
-				options.pMNMesh->FillInMesh();
-			}
-			//ESS_LOG_WARNING("FillInMesh time: "<<tFillInMesh.elapsed());
-			if( options.pMNMesh->GetFlag(MN_MESH_RATSNEST) ) {
-				ESS_LOG_ERROR( "Mesh is a 'Rat's Nest' (more than 2 faces per edge) and not fully supported, fileName: " << options.fileName << " identifier: " << options.identifier );
-			}
-		}
+  	  if( ! options.pMNMesh->GetFlag( MN_MESH_FILLED_IN ) ) {
+			  //HighResolutionTimer tFillInMesh;
+			  {      	
+				  ESS_PROFILE_SCOPE("FillInMesh");
+ 
+				  options.pMNMesh->FillInMesh();
+			  }
+			  //ESS_LOG_WARNING("FillInMesh time: "<<tFillInMesh.elapsed());
+			  if( options.pMNMesh->GetFlag(MN_MESH_RATSNEST) ) {
+				  ESS_LOG_ERROR( "Mesh is a 'Rat's Nest' (more than 2 faces per edge) and not fully supported, fileName: " << options.fileName << " identifier: " << options.identifier );
+			  }
+		  }
 
 #endif
 	
@@ -364,7 +363,7 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
 			   normalSpec->SetAllExplicit(true); //this call is probably more efficient than the per vertex one since 3DS Max uses bit flags
 
 			   // set normal values
-			    if (sampleInfo.alpha != 0.0f && normalsCeil && normalValuesFloor.size() == normalValuesCeil.size())
+			    if (sampleInfo.alpha != 0.0f && normalsCeil && normalValuesFloor.size() == normalValuesCeil.size() && !hasDynamicTopo )
 			   {
 				   for (int i = 0; i < normalValuesFloor.size(); i ++ ) {
 					   Abc::V3f interpolatedNormal = normalValuesFloor[i] + (normalValuesCeil[i] - normalValuesFloor[i]) * float(sampleInfo.alpha);
@@ -597,7 +596,7 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
 	   validateMeshes( options, "ALEMBIC_DATAFILL_MATERIALIDS" );
    }
  
-     if( options.pMNMesh->GetSpecifiedNormals() == NULL ) {
+ /*   if( options.pMNMesh->GetSpecifiedNormals() == NULL ) {
 		 {
 		 ESS_PROFILE_SCOPE("SpecifyNormals");
 
@@ -608,11 +607,11 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
 		options.pMNMesh->GetSpecifiedNormals()->CheckNormals();
 		 }
 		 {
-		 ESS_PROFILE_SCOPE("checkNormals");
+		 ESS_PROFILE_SCOPE("CheckNormals");
 
 	    options.pMNMesh->checkNormals(TRUE);
 			  }
-	}
+	}*/
 
   // This isn't required if we notify 3DS Max properly via the channel flags for vertex changes.
    //options.pMNMesh->MNDebugPrint();
@@ -768,6 +767,7 @@ void addAlembicMaterialsModifier(INode *pNode, AbcG::IObject& iObj)
 
 int AlembicImport_PolyMesh(const std::string &path, AbcG::IObject& iObj, alembic_importoptions &options, INode** pMaxNode)
 {
+  ESS_PROFILE_FUNC();
 	const std::string& identifier = iObj.getFullName();
 
 	// Fill in the mesh

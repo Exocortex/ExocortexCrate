@@ -72,7 +72,8 @@ AlembicXformController *AlembicXformController::editMod = NULL;
 void AlembicXformController::GetValueLocalTime(TimeValue t, void *ptr, Interval &valid, GetSetMethod method)
 {
 	ESS_CPP_EXCEPTION_REPORTING_START
-
+  ESS_PROFILE_FUNC();
+	
 	Interval interval = FOREVER;//os->obj->ObjectValidity(t);
 	//ESS_LOG_INFO( "Interval Start: " << interval.Start() << " End: " << interval.End() );
 
@@ -111,9 +112,13 @@ void AlembicXformController::GetValueLocalTime(TimeValue t, void *ptr, Interval 
 	 std::string szPath = EC_MCHAR_to_UTF8( strPath );
 	std::string szIdentifier = EC_MCHAR_to_UTF8( strIdentifier );
 
+  AbcObjectCache *pObjectCache = NULL;
 	AbcG::IObject iObj;
 	try {
-		iObj = getObjectFromArchive(szPath, szIdentifier);
+		pObjectCache = getObjectCacheFromArchive(szPath, szIdentifier);
+    if( pObjectCache != NULL ) {
+      iObj = pObjectCache->obj;
+    }
 	} catch( std::exception exp ) {
 		ESS_LOG_ERROR( "Can not open Alembic data stream.  Path: " << szPath << " identifier: " << szIdentifier << " reason: " << exp.what() );
 		return;
@@ -130,6 +135,7 @@ void AlembicXformController::GetValueLocalTime(TimeValue t, void *ptr, Interval 
 
     alembic_fillxform_options xformOptions;
     xformOptions.pIObj = &iObj;
+    xformOptions.pObjectCache = pObjectCache;
     xformOptions.dTicks = GetTimeValueFromSeconds( fTime );
 	xformOptions.bIsCameraTransform = ( bCamera ? true : false );
 
@@ -224,6 +230,7 @@ void AlembicXformController::Extrapolate(Interval range, TimeValue t, void *val,
 #define LOCK_CHUNK		0x2535  //the lock value
 IOResult AlembicXformController::Save(ISave *isave)
 {
+   ESS_PROFILE_FUNC();
 	Control::Save(isave);
 
 	// note: if you add chunks, it must follow the LOCK_CHUNK chunk due to Renoir error in 
@@ -239,6 +246,7 @@ IOResult AlembicXformController::Save(ISave *isave)
 
 IOResult AlembicXformController::Load(ILoad *iload)
 {
+   ESS_PROFILE_FUNC();
 	ULONG nb;
 	IOResult res;
 
@@ -274,6 +282,7 @@ RefResult AlembicXformController::NotifyRefChanged(
     PartID& partID, 
     RefMessage msg) 
 {
+   ESS_PROFILE_FUNC();
     switch (msg) 
     {
         case REFMSG_CHANGE:

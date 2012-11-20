@@ -118,12 +118,7 @@ void AlembicMeshGeomModifier::EnumAuxFiles(AssetEnumCallback& nameEnum, DWORD fl
 void AlembicMeshGeomModifier::ModifyObject (TimeValue t, ModContext &mc, ObjectState *os, INode *node) 
 {
 	ESS_CPP_EXCEPTION_REPORTING_START
-	ESS_PROFILE_FUNC();
-
-#ifdef ESS_PROFILING
-	static Profiler s_interProfiler( "InterTimer" );
-	s_interProfiler.stop();
-#endif // ESS_PROFILER
+  ESS_PROFILE_FUNC();
 	
 	Interval interval = FOREVER;//os->obj->ObjectValidity(t);
 	//ESS_LOG_INFO( "Interval Start: " << interval.Start() << " End: " << interval.End() );
@@ -178,6 +173,7 @@ void AlembicMeshGeomModifier::ModifyObject (TimeValue t, ModContext &mc, ObjectS
 
    alembic_fillmesh_options options;
    options.fileName = szPath;
+   options.pObjectCache = getObjectCacheFromArchive(szPath, szIdentifier);
    options.identifier = szIdentifier;
    options.pIObj = &iObj;
    options.dTicks = GetTimeValueFromSeconds( fTime );
@@ -253,10 +249,6 @@ void AlembicMeshGeomModifier::ModifyObject (TimeValue t, ModContext &mc, ObjectS
 		ESS_PROFILE_SCOPE("UpdateValidity_UV");
 		os->obj->UpdateValidity(TEXMAP_CHAN_NUM, interval);
    }
-
-#ifdef ESS_PROFILING
-	s_interProfiler.restart();
-#endif // ESS_PROFILER
 
    	ESS_CPP_EXCEPTION_REPORTING_END
 }

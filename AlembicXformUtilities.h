@@ -16,6 +16,7 @@
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 typedef struct _alembic_fillxform_options
 {
+	  AbcObjectCache *pObjectCache;
     AbcG::IObject *pIObj;
     Matrix3 maxMatrix;
     //Box3    maxBoundingBox;
