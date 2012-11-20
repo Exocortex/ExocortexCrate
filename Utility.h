@@ -125,9 +125,12 @@ TriObject* GetTriObjectFromNode(INode *iNode, const TimeValue t, bool &deleteIt)
 
 
 INode* GetNodeFromHierarchyPath(const std::string& path);
-INode* GetNodeFromName(const std::string& name);
+//INode* GetNodeFromName(const std::string& name);
 INode* GetChildNodeFromName(const std::string& name, INode* pParent);
 std::string getNodeAlembicPath(const std::string& name, bool bFlatten);
+
+typedef std::map<std::string, INode*> INodeMap;
+void buildINodeMap(INodeMap& nodeMap);
 
 Modifier* FindModifier(INode* node, char* name);
 Modifier* FindModifier(INode* node, Class_ID obtype, const char* identifier);
@@ -170,7 +173,6 @@ public:
 	void BuildMeshSmoothingGroupNormals(MNMesh &mesh);
 	void ClearMeshSmoothingGroupNormals();
 };
-
 
 
 

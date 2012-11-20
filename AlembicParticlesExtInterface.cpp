@@ -13,6 +13,7 @@ IAlembicParticlesExt::IAlembicParticlesExt(AlembicParticles* pAlembicParticles)
 
 bool IAlembicParticlesExt::GetRenderMeshVertexSpeed(TimeValue t, INode *inode, View& view, Tab<Point3>& speed)  
 { 
+   ESS_PROFILE_FUNC();
 	ESS_LOG_INFO("IAlembicParticlesExt::GetRenderMeshVertexSpeed() - t: "<<t<<"  currTick: "<<m_pAlembicParticles->m_currTick);
 
 	int numParticles = 0;
