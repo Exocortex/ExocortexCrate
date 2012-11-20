@@ -921,7 +921,9 @@ Mesh* AlembicParticles::GetMultipleRenderMesh_Internal(TimeValue  t,  INode *ino
 
 Mesh* AlembicParticles::GetRenderMesh(TimeValue t, INode *inode, View &view, BOOL &needDelete)
 {
-   ESS_PROFILE_FUNC();
+    ESS_LOG_WARNING("GetRenderMesh called.");
+
+    ESS_PROFILE_FUNC();
 	if (m_currTick != t){
 		Update(t,inode);
 	}
@@ -981,10 +983,8 @@ Mesh* AlembicParticles::GetRenderMesh(TimeValue t, INode *inode, View &view, BOO
 
 	pRenderMeshNormalSpec->SetAllExplicit(true);
 	pRenderMeshNormalSpec->SetNumFaces(faceNum);
-	pRenderMeshNormalSpec->SetNumNormals(faceNum);
-	//pRenderMeshNormalSpec->SetNumNormals(1);
-	//pRenderMeshNormalSpec->Normal(0) = Point3(0.0, 0.0, 0.0);
-
+	pRenderMeshNormalSpec->SetNumNormals(vertNum);
+    pRenderMeshNormalSpec->Initialize();
     }
 
 	//the mesh should be relative to the particle frame
@@ -1055,19 +1055,22 @@ Mesh* AlembicParticles::GetRenderMesh(TimeValue t, INode *inode, View &view, BOO
 		meshTM_I_T = TransposeRot(meshTM_I_T);
 
         {
-        ESS_PROFILE_SCOPE("GetRenderMesh Build and set normals");
+        ESS_PROFILE_SCOPE("GetRenderMesh - Build and set normals");
 
 		MeshNormalSpec *pNormalSpec = pMesh->GetSpecifiedNormals();
 		if(pNormalSpec && curNumFaces == pNormalSpec->GetNumFaces() ){
-			for(int j=0, curIndex=faceOffset; j<curNumFaces; j++, curIndex++){
-				for(int f=0; f<3; f++){
-					pRenderMeshNormalSpec->SetNormal(curIndex, f, pNormalSpec->GetNormal(j, f) * meshTM_I_T);
-				}
-			}
+            ESS_PROFILE_SCOPE("GetRenderMesh - Build and set normals - copy normals from normal spec");
+			//for(int j=0, curIndex=faceOffset; j<curNumFaces; j++, curIndex++){
+			//	//pRenderMeshNormalSpec->SetNormal(curIndex, 0, pNormalSpec->GetNormal(j, 0) * meshTM_I_T);
+			//	//pRenderMeshNormalSpec->SetNormal(curIndex, 1, pNormalSpec->GetNormal(j, 1) * meshTM_I_T);
+			//	//pRenderMeshNormalSpec->SetNormal(curIndex, 2, pNormalSpec->GetNormal(j, 2) * meshTM_I_T);
+			//}
+            pRenderMeshNormalSpec->AppendAllChannels(pNormalSpec);
 		}
 		else{
 
 			//int n = pMesh->getNumVerts()
+            ESS_PROFILE_SCOPE("GetRenderMesh - Build and set normals - compute from smoothing groups");
 
 			SmoothGroupNormals sgNormals;
 			sgNormals.BuildMeshSmoothingGroupNormals(*pMesh);
@@ -1139,7 +1142,10 @@ Mesh* AlembicParticles::GetRenderMesh(TimeValue t, INode *inode, View &view, BOO
 	}
 
 	//pRenderMeshNormalSpec->CheckNormals();
+    {
+    ESS_PROFILE_SCOPE("GetRenderMesh renderMesh->buildNormals");
 	renderMesh->buildNormals();
+    }
 
 	return renderMesh;
 }
@@ -1964,7 +1970,7 @@ int AlembicImport_Points(const std::string &file, AbcG::IObject& iObj, alembic_i
 BaseInterface* AlembicParticles::GetInterface(Interface_ID id)
 { 
 	if(id == PARTICLEOBJECTEXT_INTERFACE){
-		ESS_LOG_WARNING("ParticleObject Extended interface being retrieved.");
+		//ESS_LOG_WARNING("ParticleObject Extended interface being retrieved.");
 		return m_pAlembicParticlesExt;
 		//return NULL;
 	}
