@@ -935,6 +935,10 @@ Mesh* AlembicParticles::GetRenderMesh(TimeValue t, INode *inode, View &view, BOO
 	int vertNum = 0;
 	int faceNum = 0;
 
+    {
+
+    ESS_PROFILE_SCOPE("GetRenderMesh vertNum and faceNum");
+
 	for(int i=0; i<NumberOfRenderMeshes(); i++)
 	{
 		BOOL curNeedDelete = FALSE;
@@ -957,6 +961,8 @@ Mesh* AlembicParticles::GetRenderMesh(TimeValue t, INode *inode, View &view, BOO
 		faceNum += pMesh->getNumFaces();
 	}
 
+    }
+
 	if(!renderMesh->setNumVerts(vertNum)){
 		return renderMesh;
 	}
@@ -965,9 +971,12 @@ Mesh* AlembicParticles::GetRenderMesh(TimeValue t, INode *inode, View &view, BOO
 	}
 
 	//MeshNormalSpec* pMeshNormalSpec = renderMesh->GetSpecifiedNormals();
+    MeshNormalSpec* pRenderMeshNormalSpec = NULL;
+    {
+    ESS_PROFILE_SCOPE("GetRenderMesh specifyNormals");
 
 	renderMesh->SpecifyNormals();
-	MeshNormalSpec* pRenderMeshNormalSpec = renderMesh->GetSpecifiedNormals();
+	pRenderMeshNormalSpec = renderMesh->GetSpecifiedNormals();
 	pRenderMeshNormalSpec->SetParent(renderMesh);
 
 	pRenderMeshNormalSpec->SetAllExplicit(true);
@@ -976,7 +985,7 @@ Mesh* AlembicParticles::GetRenderMesh(TimeValue t, INode *inode, View &view, BOO
 	//pRenderMeshNormalSpec->SetNumNormals(1);
 	//pRenderMeshNormalSpec->Normal(0) = Point3(0.0, 0.0, 0.0);
 
-
+    }
 
 	//the mesh should be relative to the particle frame
 	Matrix3 inverseTM = Inverse(inode->GetObjectTM(t));
@@ -1003,6 +1012,7 @@ Mesh* AlembicParticles::GetRenderMesh(TimeValue t, INode *inode, View &view, BOO
 
 		int curNumVerts = pMesh->getNumVerts();
 		if(curNumVerts == 0){
+            ESS_PROFILE_SCOPE("GetRenderMesh currNumVerts == 0");
 			if (curNeedDelete) {
 				pMesh->FreeAll();
 				delete pMesh;
@@ -1015,7 +1025,13 @@ Mesh* AlembicParticles::GetRenderMesh(TimeValue t, INode *inode, View &view, BOO
 		Matrix3 meshTM;
 		meshTM.IdentityMatrix();
 		Interval meshTMValid = FOREVER;
+        {
+        ESS_PROFILE_SCOPE("GetRenderMesh::GetMultipleRenderMesh");
 		GetMultipleRenderMeshTM_Internal(t, inode, nullView, i, meshTM, meshTMValid);
+        }
+
+        {
+           ESS_PROFILE_SCOPE("GetRenderMesh init verts and faces");
 
 		for(int j=0, curIndex=vertOffset; j<curNumVerts; j++, curIndex++) {
 			renderMesh->verts[curIndex] = pMesh->verts[j] * meshTM * inverseTM;
@@ -1029,12 +1045,17 @@ Mesh* AlembicParticles::GetRenderMesh(TimeValue t, INode *inode, View &view, BOO
 			}
 		}
 
+        }
+
 		//for transforming the normals
 		Matrix3 meshTM_I_T = meshTM * inverseTM;
 		meshTM_I_T.SetTrans(Point3(0.0, 0.0, 0.0));
 		//the following two steps are necessary because meshTM can contain a scale factor
 		meshTM_I_T = Inverse(meshTM_I_T);
 		meshTM_I_T = TransposeRot(meshTM_I_T);
+
+        {
+        ESS_PROFILE_SCOPE("GetRenderMesh Build and set normals");
 
 		MeshNormalSpec *pNormalSpec = pMesh->GetSpecifiedNormals();
 		if(pNormalSpec && curNumFaces == pNormalSpec->GetNumFaces() ){
@@ -1062,7 +1083,13 @@ Mesh* AlembicParticles::GetRenderMesh(TimeValue t, INode *inode, View &view, BOO
 			//		pRenderMeshNormalSpec->SetNormal(curIndex, f, Point3(0.0, 0.0, 0.0));
 			//	}
 			//}
-		}	
+		}
+
+        }
+
+
+        {
+        ESS_PROFILE_SCOPE("GetRenderMesh copy over mapping channels");
 
 		int numMaps = pMesh->getNumMaps();
 		for(int mp=0; mp<numMaps; mp++) {
@@ -1098,8 +1125,11 @@ Mesh* AlembicParticles::GetRenderMesh(TimeValue t, INode *inode, View &view, BOO
 			}
 			tvertOffset[mp] += tvertsToAdd;
 		}
+
+        }
 		
 		if (curNeedDelete) {
+            ESS_PROFILE_SCOPE("GetRenderMesh free after copying");
 			pMesh->FreeAll();
 			delete pMesh;
 		}
