@@ -78,6 +78,10 @@ private:
    SampleInfo mLastSampleInfo;
 };
 
+MStatus AlembicPostImportPoints(void);
+
+
+// TODO: remove this command! from the this cpp and alembic.cpp too!
 class AlembicPostImportPointsCommand : public MPxCommand
 {
 public:

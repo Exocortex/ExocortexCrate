@@ -639,6 +639,15 @@ void AlembicPointsNode::instanceInitialize(void)
   MGlobal::executeCommand(partInstCmd + addObjectCmd + particleShapeName);
 }
 
+MStatus AlembicPostImportPoints(void)
+{
+  ESS_PROFILE_SCOPE("AlembicPostImportPoints");
+  AlembicPointsNodeListIter beg = alembicPointsNodeList.begin(), end = alembicPointsNodeList.end();
+  for (; beg != end; ++beg)
+    (*beg)->instanceInitialize();
+  return MS::kSuccess;
+}
+
 AlembicPostImportPointsCommand::AlembicPostImportPointsCommand(void)
 {}
 AlembicPostImportPointsCommand::~AlembicPostImportPointsCommand(void)
@@ -646,11 +655,7 @@ AlembicPostImportPointsCommand::~AlembicPostImportPointsCommand(void)
 
 MStatus AlembicPostImportPointsCommand::doIt(const MArgList& args)
 {
-  ESS_PROFILE_SCOPE("AlembicPostImportPointsCommand::doIt");
-  AlembicPointsNodeListIter beg = alembicPointsNodeList.begin(), end = alembicPointsNodeList.end();
-  for (; beg != end; ++beg)
-    (*beg)->instanceInitialize();
-  return MS::kSuccess;
+  return AlembicPostImportPoints();
 }
 
 MSyntax AlembicPostImportPointsCommand::createSyntax(void)

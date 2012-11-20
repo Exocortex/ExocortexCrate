@@ -78,9 +78,24 @@ bool SceneNodeMaya::addXformChild(SceneNodeAlembicPtr fileNode, const IJobString
 	return true;
 }
 
+bool SceneNodeMaya::addCameraChild(SceneNodeAlembicPtr fileNode, const IJobStringParser& jobParams, SceneNodeAppPtr& newAppNode)
+{
+	static const MString format("ExoAlembic._functions.importCamera(r\"^1s\", r\"^2s\", ^3s, r\"^4s\", ^5s)");
+
+	ESS_PROFILE_SCOPE("SceneNodeMaya::addCameraChild");
+	MString cmd;
+	cmd.format(format, fileNode->name.c_str(), fileNode->dccIdentifier.c_str(), fileAndTime->variable(), dccIdentifier.c_str(), PythonBool(fileNode->pObjCache->isConstant));
+
+	MString result;
+	MGlobal::executePythonCommand(cmd, result);
+	newAppNode->dccIdentifier = result.asChar();
+	newAppNode->name = newAppNode->dccIdentifier;
+	return true;
+}
+
 bool SceneNodeMaya::addPolyMeshChild(SceneNodeAlembicPtr fileNode, const IJobStringParser& jobParams, SceneNodeAppPtr& newAppNode)
 {
-	static const MString extraParam("\"^1s\", ^2s, ^3s, ^4s, ^5s, ^6s");
+	static const MString extraParam("r\"^1s\", ^2s, ^3s, ^4s, ^5s, ^6s");
 	static const MString format("ExoAlembic._functions.importPolyMesh(r\"^1s\", r\"^2s\", ^3s, ^4s)");
 
 	ESS_PROFILE_SCOPE("SceneNodeMaya::addPolyMeshChild");
@@ -93,6 +108,21 @@ bool SceneNodeMaya::addPolyMeshChild(SceneNodeAlembicPtr fileNode, const IJobStr
 
 	MString cmd;
 	cmd.format(format, fileNode->name.c_str(), fileNode->dccIdentifier.c_str(), fileAndTime->variable(), eParam);
+
+	MString result;
+	MGlobal::executePythonCommand(cmd, result);
+	newAppNode->dccIdentifier = result.asChar();
+	newAppNode->name = newAppNode->dccIdentifier;
+	return true;
+}
+
+bool SceneNodeMaya::addPointsChild(SceneNodeAlembicPtr fileNode, const IJobStringParser& jobParams, SceneNodeAppPtr& newAppNode)
+{
+	static const MString format("ExoAlembic._functions.importPoints(r\"^1s\", r\"^2s\", ^3s, r\"^4s\", ^5s)");
+
+	ESS_PROFILE_SCOPE("SceneNodeMaya::addPointsChild");
+	MString cmd;
+	cmd.format(format, fileNode->name.c_str(), fileNode->dccIdentifier.c_str(), fileAndTime->variable(), dccIdentifier.c_str(), PythonBool(fileNode->pObjCache->isConstant));
 
 	MString result;
 	MGlobal::executePythonCommand(cmd, result);
@@ -114,14 +144,14 @@ bool SceneNodeMaya::addChild(SceneNodeAlembicPtr fileNode, const IJobStringParse
 	case ITRANSFORM:
 		return addXformChild(fileNode, jobParams, newAppNode);
 	case CAMERA:
-		break;
+		return addCameraChild(fileNode, jobParams, newAppNode);
 	case POLYMESH:
 	case SUBD:
 		return addPolyMeshChild(fileNode, jobParams, newAppNode);
 	case CURVES:
 		break;
 	case PARTICLES:
-		break;
+		return addPointsChild(fileNode, jobParams, newAppNode);
 	case HAIR:
 		break;
 	//case SURFACE:	// handle as default for now

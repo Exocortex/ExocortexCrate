@@ -64,7 +64,7 @@ def alembicCreateNode(name, type, parentXform=None):
 	result = cmds.createNode(type, n=name, p=parentXform)
 	if parentXform != None:
 		result = parentXform + "|" + result
-	print("alembicCreateNode(" + str(name) + ", " + str(type) + ", " + str(parentXform) + ") -> " + str(result))
+	#print("alembicCreateNode(" + str(name) + ", " + str(type) + ", " + str(parentXform) + ") -> " + str(result))
 	cmds.ExocortexAlembic_profileEnd(f="Python.ExocortexAlembic._functions.createAlembicNode")
 	return result
 
@@ -103,7 +103,7 @@ def importXform(name, identifier, fileTimeCtrl, parentXform=None, isConstant=Fal
 	reader 	= cmds.createNode("ExocortexAlembicXform")
 	connectShapeAndReader(shape, reader)
 	setupReaderAttribute(reader, identifier, isConstant, fileTimeCtrl)
-	print("importXform(" + str(name) + ", " + str(identifier) + ", " + str(fileTimeCtrl) + ", " + str(parentXform) + ", " + str(isConstant) + ") -> " + str(shape))
+	#print("importXform(" + str(name) + ", " + str(identifier) + ", " + str(fileTimeCtrl) + ", " + str(parentXform) + ", " + str(isConstant) + ") -> " + str(shape))
 	cmds.ExocortexAlembic_profileEnd(f="Python.ExocortexAlembic._functions.importXform")
 	return shape
 
@@ -133,7 +133,7 @@ def importPolyMesh(name, identifier, fileTimeCtrl, parentXform=None, isConstant=
 			reader = cmds.deformer(shape, type="ExocortexAlembicPolyMeshDeform")[0]
 
 	setupReaderAttribute(reader, identifier, isConstant, fileTimeCtrl)
-	print("importPolyMesh(" + str(name) + ", " + str(identifier) + ", " + str(fileTimeCtrl) + ", " + str(parentXform) + ", " + str(isConstant) + ", " + str(useDynTopo) + ", " + str(useFaceSets) + ", " + str(useNormals) + ", " + str(useUVs) + ") -> " + str(shape))
+	#print("importPolyMesh(" + str(name) + ", " + str(identifier) + ", " + str(fileTimeCtrl) + ", " + str(parentXform) + ", " + str(isConstant) + ", " + str(useDynTopo) + ", " + str(useFaceSets) + ", " + str(useNormals) + ", " + str(useUVs) + ") -> " + str(shape))
 	cmds.ExocortexAlembic_profileEnd(f="Python.ExocortexAlembic._functions.importPolyMesh")
 	return shape
 
@@ -142,21 +142,37 @@ def importCamera(name, identifier, fileTimeCtrl, parentXform=None, isConstant=Fa
 	shape 	= alembicCreateNode(name, "camera", parentXform)
 	reader 	= cmds.createNode("ExocortexAlembicCamera")
 
-	cmds.connectAttr((reader+".focalLength"), ($shape+".focalLength"))
-	cmds.connectAttr((reader+".focusDistance"), ($shape+".focusDistance"))
-	cmds.connectAttr((reader+".lensSqueezeRatio"), ($shape+".lensSqueezeRatio"))
-	cmds.connectAttr((reader+".horizontalFilmAperture"), ($shape+".horizontalFilmAperture"))
-	cmds.connectAttr((reader+".verticalFilmAperture"), ($shape+".verticalFilmAperture"))
-	cmds.connectAttr((reader+".horizontalFilmOffset"), ($shape+".horizontalFilmOffset"))
-	cmds.connectAttr((reader+".verticalFilmOffset"), ($shape+".verticalFilmOffset"))
-	cmds.connectAttr((reader+".nearClippingPlane"), ($shape+".nearClippingPlane"))
-	cmds.connectAttr((reader+".farClippingPlane"), ($shape+".farClippingPlane"))
-	cmds.connectAttr((reader+".fStop"), ($shape+".fStop"))
-	cmds.connectAttr((reader+".shutterAngle"), ($shape+".shutterAngle"))
+	cmds.connectAttr((reader+".focalLength"), (shape+".focalLength"))
+	cmds.connectAttr((reader+".focusDistance"), (shape+".focusDistance"))
+	cmds.connectAttr((reader+".lensSqueezeRatio"), (shape+".lensSqueezeRatio"))
+	cmds.connectAttr((reader+".horizontalFilmAperture"), (shape+".horizontalFilmAperture"))
+	cmds.connectAttr((reader+".verticalFilmAperture"), (shape+".verticalFilmAperture"))
+	cmds.connectAttr((reader+".horizontalFilmOffset"), (shape+".horizontalFilmOffset"))
+	cmds.connectAttr((reader+".verticalFilmOffset"), (shape+".verticalFilmOffset"))
+	cmds.connectAttr((reader+".fStop"), (shape+".fStop"))
+	cmds.connectAttr((reader+".shutterAngle"), (shape+".shutterAngle"))
 
 	setupReaderAttribute(reader, identifier, isConstant, fileTimeCtrl)
-	print("importCamera(" + str(name) + ", " + str(identifier) + ", " + str(fileTimeCtrl) + ", " + str(parentXform) + ", " + str(isConstant) + ") -> " + str(shape))
+	#print("importCamera(" + str(name) + ", " + str(identifier) + ", " + str(fileTimeCtrl) + ", " + str(parentXform) + ", " + str(isConstant) + ") -> " + str(shape))
 	cmds.ExocortexAlembic_profileEnd(f="Python.ExocortexAlembic._functions.importCamera")
 	return shape
 
+def importPoints(name, identifier, fileTimeCtrl, parentXform=None, isConstant=False):
+	cmds.ExocortexAlembic_profileBegin(f="Python.ExocortexAlembic._functions.importPoints")
+	shape = alembicCreateNode(name, "particle", parentXform)
+	reader = cmds.createNode("ExocortexAlembicPoints")
+
+	cmds.addAttr(shape, ln="rgbPP", dt="vectorArray")
+	cmds.addAttr(shape, ln="opacityPP", dt="doubleArray")
+	cmds.addAttr(shape, ln="agePP", dt="doubleArray")
+	cmds.addAttr(shape, ln="shapeInstanceIdPP", dt="doubleArray")
+	cmds.addAttr(shape, ln="orientationPP", dt="vectorArray")
+	cmds.connectAttr((reader+".output[0]"), (shape+".newParticles[0]"))
+	cmds.connectAttr((fileTimeCtrl[1]+".outTime"), (shape+".currentTime"))
+	cmds.setAttr(shape+".conserve", 0)
+
+	setupReaderAttribute(reader, identifier, isConstant, fileTimeCtrl)
+	#print("importPoints(" + str(name) + ", " + str(identifier) + ", " + str(fileTimeCtrl) + ", " + str(parentXform) + ", " + str(isConstant) + ") -> " + str(shape))
+	cmds.ExocortexAlembic_profileEnd(f="Python.ExocortexAlembic._functions.importPoints")
+	return shape
 

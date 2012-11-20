@@ -101,6 +101,7 @@ MStatus AlembicImportCommand::importSingleJob(const MString &job, int jobNumber)
 		SceneNodeAppPtr appRoot(new SceneNodeMaya(fileTimeCtrl));
 		if (!ImportSceneFile(fileRoot, appRoot, jobParser))
 			return MS::kFailure;
+		AlembicPostImportPoints();
 	}
 	return status;
 }
