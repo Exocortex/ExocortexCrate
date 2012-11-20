@@ -28,7 +28,7 @@ MSyntax AlembicImportCommand::createSyntax(void)
 {
 	MSyntax syntax;
 		syntax.addFlag("-h", "-help");
-		syntax.addFlag("-j", "-job", MSyntax::kString);
+		syntax.addFlag("-j", "-jobArg", MSyntax::kString);
 		syntax.makeFlagMultiUse("-j");
 		syntax.enableQuery(false);
 		syntax.enableEdit(false);
@@ -40,7 +40,7 @@ void* AlembicImportCommand::creator(void)
 	return new AlembicImportCommand();
 }
 
-MStatus AlembicImportCommand::importSingleJob(MString job, int jobNumber)
+MStatus AlembicImportCommand::importSingleJob(const MString &job, int jobNumber)
 {
 	ESS_PROFILE_SCOPE("AlembicImportCommand::importSingleJob");
 	MStatus status;
@@ -77,22 +77,29 @@ MStatus AlembicImportCommand::importSingleJob(MString job, int jobNumber)
 	AbcArchiveCache *pArchiveCache = getArchiveCache( jobParser.filename );
 
 	int nNumNodes = 0;
-	SceneNodePtr fileRoot = buildCommonSceneGraph(pArchiveCache, &( pArchiveCache->find( "/" )->second ), nNumNodes);
+	AbcObjectCache *objCache = &( pArchiveCache->find( "/" )->second );
+	SceneNodeAlembicPtr fileRoot = buildAlembicSceneGraph(pArchiveCache, objCache, nNumNodes);
 
 	// create time control
 	AlembicFileAndTimeControlPtr fileTimeCtrl = AlembicFileAndTimeControl::createControl(jobParser.filename);
+	if (!fileTimeCtrl.get())
+	{
+		ESS_LOG_ERROR("[ExocortexAlembic] Unable to create file node and/or time control.");
+		return MS::kFailure;
+	}
+
 	if(jobParser.attachToExisting)
 	{
 		MDagPath dagPath;
-		{ MItDag().getPath(dagPath); }
-		SceneNodePtr appRoot = buildMayaSceneGraph(dagPath, fileTimeCtrl);
-		if (!ImportSceneFile(jobParser, fileRoot, appRoot))
+		MItDag().getPath(dagPath);
+		SceneNodeAppPtr appRoot = buildMayaSceneGraph(dagPath, fileTimeCtrl);
+		if (!AttachSceneFile(fileRoot, appRoot, jobParser))
 			return MS::kFailure;
 	}
 	else
 	{
-		SceneNodePtr appRoot(new SceneNodeMaya(fileTimeCtrl));
-		if (!ImportSceneFile(jobParser, fileRoot, appRoot))
+		SceneNodeAppPtr appRoot(new SceneNodeMaya(fileTimeCtrl));
+		if (!ImportSceneFile(fileRoot, appRoot, jobParser))
 			return MS::kFailure;
 	}
 	return status;
@@ -103,14 +110,14 @@ MStatus AlembicImportCommand::doIt(const MArgList & args)
 	ESS_PROFILE_SCOPE("AlembicImportCommand::doIt");
 	MStatus status;
 	MArgParser argData(syntax(), args, &status);
-	if (argData.isFlagSet("help"))
+	if (status != MS::kSuccess || argData.isFlagSet("help"))
 	{
 		MGlobal::displayInfo("[ExocortexAlembic]: ExocortexAlembic_import command:");
 		MGlobal::displayInfo("                    -j : import jobs (multiple flag can be used)");
 		return MS::kSuccess;
 	}
 
-	const unsigned int jobCount = argData.numberOfFlagUses("job");
+	const unsigned int jobCount = argData.numberOfFlagUses("jobArg");
 	if (jobCount == 0)
 	{
 		MGlobal::displayError("[ExocortexAlembic] No jobs specified.");
@@ -120,7 +127,7 @@ MStatus AlembicImportCommand::doIt(const MArgList & args)
 	for(unsigned int i=0; i<jobCount;)	// 'i' is increment below!
 	{
 		MArgList jobArgList;
-		argData.getFlagArgumentList("job", i, jobArgList);
+		argData.getFlagArgumentList("jobArg", i, jobArgList);
 		status = importSingleJob(jobArgList.asString(0), ++i);
 		if (status != MS::kSuccess)
 			break;

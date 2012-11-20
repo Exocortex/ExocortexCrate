@@ -6,7 +6,7 @@
 	class AlembicImportCommand : public MPxCommand
 	{
 	private:
-		MStatus importSingleJob(MString job, int jobNumber);
+		MStatus importSingleJob(const MString &job, int jobNumber);
 	public:
 		AlembicImportCommand(void);
 		virtual ~AlembicImportCommand(void);

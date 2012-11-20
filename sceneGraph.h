@@ -27,12 +27,16 @@
 	{
 	private:
 		AlembicFileAndTimeControlPtr fileAndTime;
+
+		bool addXformChild(SceneNodeAlembicPtr fileNode, const IJobStringParser& jobParams, SceneNodeAppPtr& newAppNode);
+		bool addPolyMeshChild(SceneNodeAlembicPtr fileNode, const IJobStringParser& jobParams, SceneNodeAppPtr& newAppNode);
 	public:
 		SceneNodeMaya(const AlembicFileAndTimeControlPtr alembicFileAndTimeControl = AlembicFileAndTimeControlPtr()): fileAndTime(alembicFileAndTimeControl)
 		{}
 
-		virtual bool replaceData(SceneNodePtr fileNode, const IJobStringParser& jobParams);
-		virtual bool addChild(SceneNodePtr fileNode, const IJobStringParser& jobParams, SceneNodePtr newAppNode);
+		virtual bool replaceData(SceneNodeAlembicPtr fileNode, const IJobStringParser& jobParams, SceneNodeAlembicPtr& nextFileNode);
+		virtual bool addChild(SceneNodeAlembicPtr fileNode, const IJobStringParser& jobParams, SceneNodeAppPtr& newAppNode);
+		virtual void print(void);
 	};
 
 	/*
@@ -40,6 +44,6 @@
 	 * @param dagPath - The dag node of the root
 	 * @param alembicFileAndTimeControl - an optional file and time controller!
 	 */
-	SceneNodePtr buildMayaSceneGraph(const MDagPath &dagPath, const AlembicFileAndTimeControlPtr alembicFileAndTimeControl = AlembicFileAndTimeControlPtr());
+	SceneNodeAppPtr buildMayaSceneGraph(const MDagPath &dagPath, const AlembicFileAndTimeControlPtr alembicFileAndTimeControl = AlembicFileAndTimeControlPtr());
 
 #endif

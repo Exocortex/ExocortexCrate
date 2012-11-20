@@ -176,7 +176,9 @@ EC_EXPORT MStatus initializePlugin(MObject obj)
 	  //EC_LOG_ERROR("FAILED TO SOURCE ../scripts/menu.mel: " << commandStatus.errorString());
    }
 
-   MGlobal::executePythonCommand("import ExocortexAlembic as ExoAlembic");
+   commandStatus = MGlobal::executePythonCommand("import ExocortexAlembic as ExoAlembic\n");
+   if (commandStatus != MStatus::kSuccess)
+	   MGlobal::displayError("Unable to import ExocortexAlembic");
    return status;
 }
 
