@@ -86,58 +86,71 @@ def connectShapeAndReader(shape, reader):
 	cmds.ExocortexAlembic_profileEnd(f="Python.ExocortexAlembic._functions.connectShapeAndReader")
 
 ############################################################################################################
+# import classes
+############################################################################################################
+class IJobInfo:
+	def __init__(self, _filename, useNormals=False, useUVs=True, useFaceSets=True):
+		fileTime = alembicTimeAndFileNode(_filename)
+		self.filename = _filename
+		self.filenode = fileTime[0]
+		self.timeCtrl = fileTime[1]
+		self.useNormals = useNormals
+		self.useUVs = useUVs
+		self.useFaceSets = useFaceSets
+		pass
+
+############################################################################################################
 # import functions
 ############################################################################################################
-def setupReaderAttribute(reader, identifier, isConstant, fileTimeCtrl):
+def setupReaderAttribute(reader, identifier, isConstant, jobInfo):
 	cmds.ExocortexAlembic_profileBegin(f="Python.ExocortexAlembic._functions.setupReaderAttribute")
 	if reader != "":
 		if not isConstant:
-			alembicConnectAttr(fileTimeCtrl[1]+".outTime", reader+".inTime")
-		alembicConnectAttr(fileTimeCtrl[0]+".outFileName", reader+".fileName")
+			alembicConnectAttr(jobInfo.timeCtrl+".outTime", reader+".inTime")
+		alembicConnectAttr(jobInfo.filenode+".outFileName", reader+".fileName")
 		cmds.setAttr(reader+".identifier", identifier, type="string")
 	cmds.ExocortexAlembic_profileEnd(f="Python.ExocortexAlembic._functions.setupReaderAttribute")
 
-def importXform(name, identifier, fileTimeCtrl, parentXform=None, isConstant=False):
+def importXform(name, identifier, jobInfo, parentXform=None, isConstant=False):
 	cmds.ExocortexAlembic_profileBegin(f="Python.ExocortexAlembic._functions.importXform")
-	shape 	= alembicCreateNode(name, "transform", parentXform)
-	reader 	= cmds.createNode("ExocortexAlembicXform")
+	shape  = alembicCreateNode(name, "transform", parentXform)
+	reader = cmds.createNode("ExocortexAlembicXform")
 	connectShapeAndReader(shape, reader)
-	setupReaderAttribute(reader, identifier, isConstant, fileTimeCtrl)
-	#print("importXform(" + str(name) + ", " + str(identifier) + ", " + str(fileTimeCtrl) + ", " + str(parentXform) + ", " + str(isConstant) + ") -> " + str(shape))
+	setupReaderAttribute(reader, identifier, isConstant, jobInfo)
+	#print("importXform(" + str(name) + ", " + str(identifier) + ", " + str(jobInfo) + ", " + str(parentXform) + ", " + str(isConstant) + ") -> " + str(shape))
 	cmds.ExocortexAlembic_profileEnd(f="Python.ExocortexAlembic._functions.importXform")
 	return shape
 
-def importPolyMesh(name, identifier, fileTimeCtrl, parentXform=None, isConstant=False, useDynTopo=False, useFaceSets=False, useNormals=False, useUVs=False):
+def importPolyMesh(name, identifier, jobInfo, parentXform=None, isConstant=False, useDynTopo=False):
 	cmds.ExocortexAlembic_profileBegin(f="Python.ExocortexAlembic._functions.importPolyMesh")
 	reader = ""
-	shape = alembicCreateNode(name, "mesh", parentXform)
+	shape  = alembicCreateNode(name, "mesh", parentXform)
 	cmds.sets(shape, e=True, forceElement="initialShadingGroup")
+	#if useDynTopo:
+	#	reader = alembicCreateNode(name+".inMesh","ExocortexAlembicPolyMesh")
+	#elif not isConstant:
+	#	reader = alembicCreateNode(name+".inMesh","ExocortexAlembicPolyMeshDeform")
+
+	#if reader == "":
+	topoReader = cmds.createNode("ExocortexAlembicPolyMesh")
+	cmds.connectAttr(topoReader+".outMesh", shape+".inMesh")
+	cmds.connectAttr(jobInfo.filenode+".outFileName", topoReader+".fileName")
+	cmds.setAttr(topoReader+".identifier", identifier, type="string")
+	cmds.setAttr(topoReader+".normals", jobInfo.useNormals)
+	cmds.setAttr(topoReader+".uvs", jobInfo.useUVs)
+	if jobInfo.useFaceSets:
+		cmds.ExocortexAlembic_createFaceSets(o=shape, f=jobInfo.filename, i=identifier)
 	if useDynTopo:
-		reader = alembicCreateNode(name+".inMesh","ExocortexAlembicPolyMesh")
+		reader = topoReader
 	elif not isConstant:
-		reader = alembicCreateNode(name+".inMesh","ExocortexAlembicPolyMeshDeform")
+		reader = cmds.deformer(shape, type="ExocortexAlembicPolyMeshDeform")[0]
 
-	if reader == "":
-		topoReader = cmds.createNode("ExocortexAlembicPolyMesh")
-		cmds.connectAttr(topoReader+".outMesh", shape+".inMesh")
-		cmds.connectAttr(fileTimeCtrl[0]+".outFileName", topoReader+".fileName")
-		cmds.setAttr(topoReader+".identifier", identifier, type="string")
-		cmds.setAttr(topoReader+".normals", useNormals)
-		cmds.setAttr(topoReader+".uvs", useUVs)
-		if useFaceSets:
-			fileName = cmds.getAttr(fileTimeCtrl[0]+".outFileName")
-			cmds.ExocortexAlembic_createFaceSets(o=shape, f=fileName, i=identifier)
-		if useDynTopo:
-			reader = topoReader
-		elif not isConstant:
-			reader = cmds.deformer(shape, type="ExocortexAlembicPolyMeshDeform")[0]
-
-	setupReaderAttribute(reader, identifier, isConstant, fileTimeCtrl)
-	#print("importPolyMesh(" + str(name) + ", " + str(identifier) + ", " + str(fileTimeCtrl) + ", " + str(parentXform) + ", " + str(isConstant) + ", " + str(useDynTopo) + ", " + str(useFaceSets) + ", " + str(useNormals) + ", " + str(useUVs) + ") -> " + str(shape))
+	setupReaderAttribute(reader, identifier, isConstant, jobInfo)
+	#print("importPolyMesh(" + str(name) + ", " + str(identifier) + ", " + str(jobInfo) + ", " + str(parentXform) + ", " + str(isConstant) + ", " + str(useDynTopo) + ", " + str(useFaceSets) + ", " + str(useNormals) + ", " + str(useUVs) + ") -> " + str(shape))
 	cmds.ExocortexAlembic_profileEnd(f="Python.ExocortexAlembic._functions.importPolyMesh")
 	return shape
 
-def importCamera(name, identifier, fileTimeCtrl, parentXform=None, isConstant=False):
+def importCamera(name, identifier, jobInfo, parentXform=None, isConstant=False):
 	cmds.ExocortexAlembic_profileBegin(f="Python.ExocortexAlembic._functions.importCamera")
 	shape 	= alembicCreateNode(name, "camera", parentXform)
 	reader 	= cmds.createNode("ExocortexAlembicCamera")
@@ -152,14 +165,14 @@ def importCamera(name, identifier, fileTimeCtrl, parentXform=None, isConstant=Fa
 	cmds.connectAttr((reader+".fStop"), (shape+".fStop"))
 	cmds.connectAttr((reader+".shutterAngle"), (shape+".shutterAngle"))
 
-	setupReaderAttribute(reader, identifier, isConstant, fileTimeCtrl)
-	#print("importCamera(" + str(name) + ", " + str(identifier) + ", " + str(fileTimeCtrl) + ", " + str(parentXform) + ", " + str(isConstant) + ") -> " + str(shape))
+	setupReaderAttribute(reader, identifier, isConstant, jobInfo)
+	#print("importCamera(" + str(name) + ", " + str(identifier) + ", " + str(jobInfo) + ", " + str(parentXform) + ", " + str(isConstant) + ") -> " + str(shape))
 	cmds.ExocortexAlembic_profileEnd(f="Python.ExocortexAlembic._functions.importCamera")
 	return shape
 
-def importPoints(name, identifier, fileTimeCtrl, parentXform=None, isConstant=False):
+def importPoints(name, identifier, jobInfo, parentXform=None, isConstant=False):
 	cmds.ExocortexAlembic_profileBegin(f="Python.ExocortexAlembic._functions.importPoints")
-	shape = alembicCreateNode(name, "particle", parentXform)
+	shape  = alembicCreateNode(name, "particle", parentXform)
 	reader = cmds.createNode("ExocortexAlembicPoints")
 
 	cmds.addAttr(shape, ln="rgbPP", dt="vectorArray")
@@ -168,11 +181,12 @@ def importPoints(name, identifier, fileTimeCtrl, parentXform=None, isConstant=Fa
 	cmds.addAttr(shape, ln="shapeInstanceIdPP", dt="doubleArray")
 	cmds.addAttr(shape, ln="orientationPP", dt="vectorArray")
 	cmds.connectAttr((reader+".output[0]"), (shape+".newParticles[0]"))
-	cmds.connectAttr((fileTimeCtrl[1]+".outTime"), (shape+".currentTime"))
+	cmds.connectAttr((jobInfo.timeCtrl+".outTime"), (shape+".currentTime"))
 	cmds.setAttr(shape+".conserve", 0)
 
-	setupReaderAttribute(reader, identifier, isConstant, fileTimeCtrl)
-	#print("importPoints(" + str(name) + ", " + str(identifier) + ", " + str(fileTimeCtrl) + ", " + str(parentXform) + ", " + str(isConstant) + ") -> " + str(shape))
+	setupReaderAttribute(reader, identifier, isConstant, jobInfo)
+	#print("importPoints(" + str(name) + ", " + str(identifier) + ", " + str(jobInfo) + ", " + str(parentXform) + ", " + str(isConstant) + ") -> " + str(shape))
 	cmds.ExocortexAlembic_profileEnd(f="Python.ExocortexAlembic._functions.importPoints")
 	return shape
+
 

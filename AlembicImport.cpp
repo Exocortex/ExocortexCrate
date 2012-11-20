@@ -81,7 +81,7 @@ MStatus AlembicImportCommand::importSingleJob(const MString &job, int jobNumber)
 	SceneNodeAlembicPtr fileRoot = buildAlembicSceneGraph(pArchiveCache, objCache, nNumNodes);
 
 	// create time control
-	AlembicFileAndTimeControlPtr fileTimeCtrl = AlembicFileAndTimeControl::createControl(jobParser.filename);
+	AlembicFileAndTimeControlPtr fileTimeCtrl = AlembicFileAndTimeControl::createControl(jobParser);
 	if (!fileTimeCtrl.get())
 	{
 		ESS_LOG_ERROR("[ExocortexAlembic] Unable to create file node and/or time control.");

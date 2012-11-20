@@ -7,6 +7,7 @@
 	class AlembicFileAndTimeControl;
 	typedef boost::shared_ptr<AlembicFileAndTimeControl> AlembicFileAndTimeControlPtr;
 
+	// Will also hold all the informations about the IJobString necessary!
 	class AlembicFileAndTimeControl
 	{
 	private:
@@ -20,7 +21,7 @@
 		{
 			return var;
 		}
-		static AlembicFileAndTimeControlPtr createControl(const std::string &filename);
+		static AlembicFileAndTimeControlPtr createControl(const IJobStringParser& jobParams);
 	};
 
 	class SceneNodeMaya : public SceneNodeApp
@@ -28,10 +29,10 @@
 	private:
 		AlembicFileAndTimeControlPtr fileAndTime;
 
-		bool addXformChild(SceneNodeAlembicPtr fileNode, const IJobStringParser& jobParams, SceneNodeAppPtr& newAppNode);
-		bool addCameraChild(SceneNodeAlembicPtr fileNode, const IJobStringParser& jobParams, SceneNodeAppPtr& newAppNode);
-		bool addPolyMeshChild(SceneNodeAlembicPtr fileNode, const IJobStringParser& jobParams, SceneNodeAppPtr& newAppNode);
-		bool addPointsChild(SceneNodeAlembicPtr fileNode, const IJobStringParser& jobParams, SceneNodeAppPtr& newAppNode);
+		bool addXformChild(SceneNodeAlembicPtr fileNode, SceneNodeAppPtr& newAppNode);
+		bool addCameraChild(SceneNodeAlembicPtr fileNode, SceneNodeAppPtr& newAppNode);
+		bool addPolyMeshChild(SceneNodeAlembicPtr fileNode, SceneNodeAppPtr& newAppNode);
+		bool addPointsChild(SceneNodeAlembicPtr fileNode, SceneNodeAppPtr& newAppNode);
 	public:
 		SceneNodeMaya(const AlembicFileAndTimeControlPtr alembicFileAndTimeControl = AlembicFileAndTimeControlPtr()): fileAndTime(alembicFileAndTimeControl)
 		{}
