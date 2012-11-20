@@ -21,6 +21,7 @@ AlembicFileAndTimeControlPtr AlembicFileAndTimeControl::createControl(const std:
 	static unsigned int numberOfControlCreated = 0;
 	static const MString format("^1s = ExoAlembic._functions.alembicTimeAndFileNode(r\"^2s\")\n");
 
+	ESS_PROFILE_SCOPE("AlembicFileAndTimeControl::createControl");
 	MString var("__alembic_file_and_time_control_tuple_");
 	var += (++numberOfControlCreated);
 
@@ -37,6 +38,7 @@ AlembicFileAndTimeControlPtr AlembicFileAndTimeControl::createControl(const std:
 
 bool SceneNodeMaya::replaceData(SceneNodeAlembicPtr fileNode, const IJobStringParser& jobParams, SceneNodeAlembicPtr& nextFileNode)
 {
+	ESS_PROFILE_SCOPE("SceneNodeMaya::replaceData");
 	if(!jobParams.attachToExisting)
 		return false;
 
@@ -54,6 +56,7 @@ bool SceneNodeMaya::addXformChild(SceneNodeAlembicPtr fileNode, const IJobString
 {
 	static const MString format("ExoAlembic._functions.importXform(r\"^1s\", r\"^2s\", ^3s, ^4s, ^5s)");
 
+	ESS_PROFILE_SCOPE("SceneNodeMaya::addXformChild");
 	MString parent;
 	switch(type)
 	{
@@ -77,39 +80,30 @@ bool SceneNodeMaya::addXformChild(SceneNodeAlembicPtr fileNode, const IJobString
 
 bool SceneNodeMaya::addPolyMeshChild(SceneNodeAlembicPtr fileNode, const IJobStringParser& jobParams, SceneNodeAppPtr& newAppNode)
 {
-	static const MString extraParam("^1s, ^2s, ^3s, ^4s, ^5s, ^6s");
+	static const MString extraParam("\"^1s\", ^2s, ^3s, ^4s, ^5s, ^6s");
 	static const MString format("ExoAlembic._functions.importPolyMesh(r\"^1s\", r\"^2s\", ^3s, ^4s)");
 
-	MString parent;
-	switch(type)
-	{
-	case ETRANSFORM:
-	case ITRANSFORM:
-		parent.format("\"^1s\"", dccIdentifier.c_str());
-		break;
-	default:
-		parent = "None";
-		break;
-	}
-
+	ESS_PROFILE_SCOPE("SceneNodeMaya::addPolyMeshChild");
 	MString eParam;
 	eParam.format
 	(
-		extraParam,	parent,									PythonBool(fileNode->pObjCache->isConstant),	PythonBool(fileNode->pObjCache->isMeshTopoDynamic),
+		extraParam,	dccIdentifier.c_str(),					PythonBool(fileNode->pObjCache->isConstant),	PythonBool(fileNode->pObjCache->isMeshTopoDynamic),
 					PythonBool(jobParams.importFacesets),	PythonBool(jobParams.importNormals),			PythonBool(jobParams.importUVs)
 	);
 
 	MString cmd;
 	cmd.format(format, fileNode->name.c_str(), fileNode->dccIdentifier.c_str(), fileAndTime->variable(), eParam);
 
-	MGlobal::executePythonCommand(cmd, parent);
-	newAppNode->dccIdentifier = parent.asChar();
+	MString result;
+	MGlobal::executePythonCommand(cmd, result);
+	newAppNode->dccIdentifier = result.asChar();
 	newAppNode->name = newAppNode->dccIdentifier;
 	return true;
 }
 
 bool SceneNodeMaya::addChild(SceneNodeAlembicPtr fileNode, const IJobStringParser& jobParams, SceneNodeAppPtr& newAppNode)
 {
+	ESS_PROFILE_SCOPE("SceneNodeMaya::addChild");
 	if(jobParams.attachToExisting)
 		return false;
 
@@ -122,9 +116,8 @@ bool SceneNodeMaya::addChild(SceneNodeAlembicPtr fileNode, const IJobStringParse
 	case CAMERA:
 		break;
 	case POLYMESH:
-		return addPolyMeshChild(fileNode, jobParams, newAppNode);
 	case SUBD:
-		break;
+		return addPolyMeshChild(fileNode, jobParams, newAppNode);
 	case CURVES:
 		break;
 	case PARTICLES:

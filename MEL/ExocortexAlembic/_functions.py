@@ -62,13 +62,9 @@ def alembicCreateNode(name, type, parentXform=None):
 
 	# create the node
 	result = cmds.createNode(type, n=name, p=parentXform)
-	#tokens = result.split("|")
-	#if len(tokens) == 1:
-	#	pp = cmds.listRelatives(result, p=True)
-	#	if len(pp) > 0:
-	#		result = pp[0] + "|" + result
 	if parentXform != None:
 		result = parentXform + "|" + result
+	print("alembicCreateNode(" + str(name) + ", " + str(type) + ", " + str(parentXform) + ") -> " + str(result))
 	cmds.ExocortexAlembic_profileEnd(f="Python.ExocortexAlembic._functions.createAlembicNode")
 	return result
 
@@ -83,27 +79,36 @@ def alembicConnectAttr(source, target):
 	pass
 
 def connectShapeAndReader(shape, reader):
+	cmds.ExocortexAlembic_profileBegin(f="Python.ExocortexAlembic._functions.connectShapeAndReader")
 	cmds.connectAttr(reader+".translate", 	shape+".translate")
 	cmds.connectAttr(reader+".rotate", 		shape+".rotate")
 	cmds.connectAttr(reader+".scale", 		shape+".scale")
+	cmds.ExocortexAlembic_profileEnd(f="Python.ExocortexAlembic._functions.connectShapeAndReader")
 
 ############################################################################################################
 # import functions
 ############################################################################################################
 def setupReaderAttribute(reader, identifier, isConstant, fileTimeCtrl):
-	if not isConstant:
-		alembicConnectAttr(fileTimeCtrl[1]+".outTime", reader+".inTime")
-	alembicConnectAttr(fileTimeCtrl[0]+".outFileName", reader+".fileName")
-	cmds.setAttr(reader+".identifier", identifier, type="string")
+	cmds.ExocortexAlembic_profileBegin(f="Python.ExocortexAlembic._functions.setupReaderAttribute")
+	if reader != "":
+		if not isConstant:
+			alembicConnectAttr(fileTimeCtrl[1]+".outTime", reader+".inTime")
+		alembicConnectAttr(fileTimeCtrl[0]+".outFileName", reader+".fileName")
+		cmds.setAttr(reader+".identifier", identifier, type="string")
+	cmds.ExocortexAlembic_profileEnd(f="Python.ExocortexAlembic._functions.setupReaderAttribute")
 
 def importXform(name, identifier, fileTimeCtrl, parentXform=None, isConstant=False):
+	cmds.ExocortexAlembic_profileBegin(f="Python.ExocortexAlembic._functions.importXform")
 	shape 	= alembicCreateNode(name, "transform", parentXform)
 	reader 	= cmds.createNode("ExocortexAlembicXform")
 	connectShapeAndReader(shape, reader)
 	setupReaderAttribute(reader, identifier, isConstant, fileTimeCtrl)
+	print("importXform(" + str(name) + ", " + str(identifier) + ", " + str(fileTimeCtrl) + ", " + str(parentXform) + ", " + str(isConstant) + ") -> " + str(shape))
+	cmds.ExocortexAlembic_profileEnd(f="Python.ExocortexAlembic._functions.importXform")
 	return shape
 
 def importPolyMesh(name, identifier, fileTimeCtrl, parentXform=None, isConstant=False, useDynTopo=False, useFaceSets=False, useNormals=False, useUVs=False):
+	cmds.ExocortexAlembic_profileBegin(f="Python.ExocortexAlembic._functions.importPolyMesh")
 	reader = ""
 	shape = alembicCreateNode(name, "mesh", parentXform)
 	cmds.sets(shape, e=True, forceElement="initialShadingGroup")
@@ -114,22 +119,44 @@ def importPolyMesh(name, identifier, fileTimeCtrl, parentXform=None, isConstant=
 
 	if reader == "":
 		topoReader = cmds.createNode("ExocortexAlembicPolyMesh")
-		fnt.alembicConnectAttr(topoReader+".outMesh", shape+".inMesh")
-		fnt.alembicConnectAttr(fileTimeCtrl[0]+".outFileName", topoReader+".fileName")
+		cmds.connectAttr(topoReader+".outMesh", shape+".inMesh")
+		cmds.connectAttr(fileTimeCtrl[0]+".outFileName", topoReader+".fileName")
 		cmds.setAttr(topoReader+".identifier", identifier, type="string")
-        cmds.setAttr(topoReader+".normals", useNormals)
-        cmds.setAttr(topoReader+".uvs", useUVs)
-        if useFaceSets:
-        	cmds.ExocortexAlembic_createFaceSets(o=shape, f=fileTimeCtrl[0], i=identifier)
-
+		cmds.setAttr(topoReader+".normals", useNormals)
+		cmds.setAttr(topoReader+".uvs", useUVs)
+		if useFaceSets:
+			fileName = cmds.getAttr(fileTimeCtrl[0]+".outFileName")
+			cmds.ExocortexAlembic_createFaceSets(o=shape, f=fileName, i=identifier)
 		if useDynTopo:
 			reader = topoReader
 		elif not isConstant:
 			reader = cmds.deformer(shape, type="ExocortexAlembicPolyMeshDeform")[0]
 
 	setupReaderAttribute(reader, identifier, isConstant, fileTimeCtrl)
+	print("importPolyMesh(" + str(name) + ", " + str(identifier) + ", " + str(fileTimeCtrl) + ", " + str(parentXform) + ", " + str(isConstant) + ", " + str(useDynTopo) + ", " + str(useFaceSets) + ", " + str(useNormals) + ", " + str(useUVs) + ") -> " + str(shape))
+	cmds.ExocortexAlembic_profileEnd(f="Python.ExocortexAlembic._functions.importPolyMesh")
 	return shape
 
+def importCamera(name, identifier, fileTimeCtrl, parentXform=None, isConstant=False):
+	cmds.ExocortexAlembic_profileBegin(f="Python.ExocortexAlembic._functions.importCamera")
+	shape 	= alembicCreateNode(name, "camera", parentXform)
+	reader 	= cmds.createNode("ExocortexAlembicCamera")
 
+	cmds.connectAttr((reader+".focalLength"), ($shape+".focalLength"))
+	cmds.connectAttr((reader+".focusDistance"), ($shape+".focusDistance"))
+	cmds.connectAttr((reader+".lensSqueezeRatio"), ($shape+".lensSqueezeRatio"))
+	cmds.connectAttr((reader+".horizontalFilmAperture"), ($shape+".horizontalFilmAperture"))
+	cmds.connectAttr((reader+".verticalFilmAperture"), ($shape+".verticalFilmAperture"))
+	cmds.connectAttr((reader+".horizontalFilmOffset"), ($shape+".horizontalFilmOffset"))
+	cmds.connectAttr((reader+".verticalFilmOffset"), ($shape+".verticalFilmOffset"))
+	cmds.connectAttr((reader+".nearClippingPlane"), ($shape+".nearClippingPlane"))
+	cmds.connectAttr((reader+".farClippingPlane"), ($shape+".farClippingPlane"))
+	cmds.connectAttr((reader+".fStop"), ($shape+".fStop"))
+	cmds.connectAttr((reader+".shutterAngle"), ($shape+".shutterAngle"))
+
+	setupReaderAttribute(reader, identifier, isConstant, fileTimeCtrl)
+	print("importCamera(" + str(name) + ", " + str(identifier) + ", " + str(fileTimeCtrl) + ", " + str(parentXform) + ", " + str(isConstant) + ") -> " + str(shape))
+	cmds.ExocortexAlembic_profileEnd(f="Python.ExocortexAlembic._functions.importCamera")
+	return shape
 
 
