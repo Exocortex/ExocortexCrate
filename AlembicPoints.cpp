@@ -137,19 +137,20 @@ bool AlembicPoints::Save(double time, bool bLastFrame)
     mOVisibility.set(flVisibility > 0 ? AbcG::kVisibilityVisible : AbcG::kVisibilityHidden);
 
     // Store positions, velocity, width/size, scale, id, bounding box
-    std::vector<Abc::V3f> positionVec;
-    std::vector<Abc::V3f> velocityVec;
-    std::vector<Abc::V3f> scaleVec;
-    std::vector<float> widthVec;
-    std::vector<float> ageVec;
-    std::vector<float> massVec;
-    std::vector<float> shapeTimeVec;
-    std::vector<Abc::uint64_t> idVec;
-    std::vector<Abc::uint16_t> shapeTypeVec;
-    std::vector<Abc::uint16_t> shapeInstanceIDVec;
-    std::vector<Abc::Quatf> orientationVec;
-    std::vector<Abc::Quatf> angularVelocityVec;
-    std::vector<Abc::C4f> colorVec;
+    std::vector<Abc::V3f> positionVec(numParticles);
+    std::vector<Abc::V3f> velocityVec(numParticles);
+    std::vector<Abc::V3f> scaleVec(numParticles);
+    std::vector<float> widthVec(numParticles);
+    std::vector<float> ageVec(numParticles);
+    std::vector<float> massVec(numParticles);
+    std::vector<float> shapeTimeVec(numParticles);
+    std::vector<Abc::uint64_t> idVec(numParticles);
+    std::vector<Abc::uint16_t> shapeTypeVec(numParticles);
+    std::vector<Abc::uint16_t> shapeInstanceIDVec(numParticles);
+    std::vector<Abc::Quatf> orientationVec(numParticles);
+    std::vector<Abc::Quatf> angularVelocityVec(numParticles);
+    std::vector<Abc::C4f> colorVec(numParticles);
+
     //std::vector<std::string> instanceNamesVec;
     Abc::Box3d bbox;
     bool constantPos = true;
