@@ -1423,6 +1423,11 @@ int AlembicParticles::Display(TimeValue t, INode* inode, ViewExp *vpt, int flags
 				   ESS_PROFILE_SCOPE("Display::mesh->render");
 				  mesh->render(gw, mtls, (flags&USE_DAMAGE_RECT) ? &vpt->GetDammageRect() : NULL, COMP_ALL, numMtls);
 				}
+
+                if(deleteMesh){
+                    //ESS_LOG_WARNING("deleting mesh");
+                    delete mesh;
+                }
 			}
 			else
 			{
@@ -1534,6 +1539,11 @@ int AlembicParticles::HitTest(TimeValue t, INode *inode, int type, int crossing,
 			gw->clearHitCode();
 			break;
 		}
+
+        if(deleteMesh){
+            //ESS_LOG_WARNING("deleting mesh.");
+            delete mesh;
+        }
    }
 
    gw->setRndLimits(savedLimits);
@@ -1695,7 +1705,7 @@ void AlembicParticles::ClearMeshCache()
 	meshCacheMap.clear();
 }
 
-Mesh* GetMeshFromNode(INode *iNode, const TimeValue t, BOOL bNeedDelete)
+Mesh* GetMeshFromNode(INode *iNode, const TimeValue t, BOOL& bNeedDelete)
 {
    ESS_PROFILE_FUNC();
 	bNeedDelete = FALSE;
@@ -1713,6 +1723,7 @@ Mesh* GetMeshFromNode(INode *iNode, const TimeValue t, BOOL bNeedDelete)
 		ExoNullView nullView;
 		GeomObject* geomObject = (GeomObject*)obj;
 		Mesh* pMesh = geomObject->GetRenderMesh(t, iNode, nullView, bNeedDelete);
+        //ESS_LOG_WARNING("Allocating mesh.");
 		return pMesh;
 	}
 	else{
@@ -1738,16 +1749,19 @@ Mesh *AlembicParticles::BuildInstanceMesh(int meshNumber, TimeValue t, INode *no
 	INode *pNode = m_InstanceShapeINodes[shapeid];
 	TimeValue shapet = m_InstanceShapeTimes[meshNumber];
 
-	nodeAndTimeToMeshMap::iterator it = meshCacheMap.find(nodeTimePair(pNode, shapet));
-	if( it != meshCacheMap.end() ){
-		meshInfo& mi = it->second;
-		return mi.pMesh;
-	}
-	else{
-		meshInfo& mi = meshCacheMap[nodeTimePair(pNode, shapet)];
-		mi.pMesh = GetMeshFromNode(pNode, shapet, mi.bMeshNeedDelete);
-		return mi.pMesh;
-	}
+    return GetMeshFromNode(pNode, shapet, needDelete);
+
+	//nodeAndTimeToMeshMap::iterator it = meshCacheMap.find(nodeTimePair(pNode, shapet));
+	//if( it != meshCacheMap.end() ){
+	//	meshInfo& mi = it->second;
+	//	return mi.pMesh;
+	//}
+	//else{
+	//	meshInfo& mi = meshCacheMap[nodeTimePair(pNode, shapet)];
+	//	mi.pMesh = GetMeshFromNode(pNode, shapet, mi.bMeshNeedDelete);
+	//	return mi.pMesh;
+	//}
+
 
  //  bool deleteTriObj = false;
  //  TriObject *triObj = GetTriObjectFromNode(pNode, shapet, deleteTriObj);
