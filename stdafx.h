@@ -2,7 +2,13 @@
    #define _PYTHON_ALEMBIC_FOUNDATION_H_
 
 	#include "CommonAlembic.h"
-	#include <Python.h>
+	#ifdef _DEBUG
+		#undef _DEBUG	// so python won't try to use pythonXX_d.dll!
+		#include <Python.h>
+		#define _DEBUG
+	#else
+		#include <Python.h>
+	#endif
 
    using namespace std;
 
