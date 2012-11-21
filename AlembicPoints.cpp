@@ -917,8 +917,6 @@ void AlembicPoints::GetShapeType(IParticleObjectExt *pExt, int particleId, TimeV
 //	return USHRT_MAX;
 //}
 
-
-
 void AlembicPoints::CacheShapeMesh(Mesh* pShapeMesh, BOOL bNeedDelete, Matrix3 meshTM, int nMatId, int particleId, TimeValue ticks, ShapeType &type, Abc::uint16_t &instanceId, float &animationTime)
 {
     ESS_PROFILE_FUNC();
@@ -963,8 +961,7 @@ void AlembicPoints::CacheShapeMesh(Mesh* pShapeMesh, BOOL bNeedDelete, Matrix3 m
 	meshInfo currShapeInfo;
 	faceVertexHashToShapeMap::iterator it = mShapeMeshCache.find(digests);
 	if( it != mShapeMeshCache.end() ){
-		meshInfo& mi = it->second;
-		currShapeInfo = mi;
+		currShapeInfo = it->second;
 	}
 	else{
 		meshInfo& mi = mShapeMeshCache[digests];
@@ -972,7 +969,7 @@ void AlembicPoints::CacheShapeMesh(Mesh* pShapeMesh, BOOL bNeedDelete, Matrix3 m
 		mi.nMatId = nMatId;
 		
 		std::stringstream nameStream;
-		nameStream<< EC_MCHAR_to_UTF8( GetRef().node->GetName() ) <<" ";
+		nameStream<< EC_MCHAR_to_UTF8( GetRef().node->GetName() ) <<"_";
 		nameStream<<"InstanceMesh"<<mNumShapeMeshes;
 		mi.name=nameStream.str();
 
