@@ -196,13 +196,6 @@ static PyObject * oArchive_createObject(PyObject * self, PyObject * args)
       //INFO_MSG("parent.getMetaData().get(\"schema\") = " << parent.getMetaData().get("schema"));
       //INFO_MSG("type string = " << typeStr);
 
-      // check if there is already a child below this transform
-      if(parent.getNumChildren() > 0)
-      {
-         PyErr_SetString(getError(), "There can only be a single child below a xform object!");
-         return NULL;
-      }
-
       if(typeStr.substr(0,15) == "AbcGeom_Camera_")
       {
          casted.mType = oObjectType_Camera;
