@@ -152,6 +152,7 @@ struct AlembicISceneBuildElement
 
 SceneNodeAlembicPtr buildAlembicSceneGraph(AbcArchiveCache *pArchiveCache, AbcObjectCache *pRootObjectCache, int& nNumNodes)
 {
+	ESS_PROFILE_SCOPE("buildAlembicSceneGraph");
    std::list<AlembicISceneBuildElement> sceneStack;
 
    Alembic::Abc::IObject rootObj = pRootObjectCache->obj;
@@ -315,6 +316,7 @@ struct ImportStackElement
 
 bool ImportSceneFile(SceneNodeAlembicPtr fileRoot, SceneNodeAppPtr appRoot, const IJobStringParser& jobParams)
 {
+	ESS_PROFILE_SCOPE("ImportSceneFile");
    //TODO skip unselected children, if thats we how we do filtering.
 
    //compare to application scene graph to see if we need to rename nodes (or maybe we might throw an error)
@@ -350,7 +352,7 @@ bool ImportSceneFile(SceneNodeAlembicPtr fileRoot, SceneNodeAppPtr appRoot, cons
       }
 
       if(newAppNode){
-         ESS_LOG_WARNING("newAppNode: "<<newAppNode->name<<" useCount: "<<newAppNode.use_count());
+         //ESS_LOG_WARNING("newAppNode: "<<newAppNode->name<<" useCount: "<<newAppNode.use_count());
 
          //push the children as the last step, since we need to who the parent is first (we may have merged)
          for(SceneChildIterator it = currFileNode->children.begin(); it != currFileNode->children.end(); it++){
@@ -374,7 +376,7 @@ bool ImportSceneFile(SceneNodeAlembicPtr fileRoot, SceneNodeAppPtr appRoot, cons
          
       }
       else{
-         ESS_LOG_WARNING("newAppNode useCount: "<<newAppNode.use_count());
+         //ESS_LOG_WARNING("newAppNode useCount: "<<newAppNode.use_count());
 	      if( currFileNode->children.empty() == false ) {
 		      EC_LOG_WARNING("Unsupported node: " << currFileNode->name << " has children that have not been imported." );
 	      }
