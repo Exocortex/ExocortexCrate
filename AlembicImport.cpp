@@ -1297,12 +1297,12 @@ bool createMergeableNode(SceneNodeXSI* appNode, SceneNodeAlembicPtr fileXformNod
       fileXformNode->setMerged(true);
       fileShapeNode->setMerged(true);
 
-      ESS_LOG_WARNING("xformName: "<<xformFullName<<" - shapeName: "<<shapeFullName);
+      //ESS_LOG_WARNING("xformName: "<<xformFullName<<" - shapeName: "<<shapeFullName);
    }
    else{
       newAppNodeName = truncateName(shapeObj.getName().c_str());
 
-      ESS_LOG_WARNING("shapeName: "<<shapeFullName);
+      //ESS_LOG_WARNING("shapeName: "<<shapeFullName);
    }
    //EC_LOG_INFO( "Object name: " << newAppNodeName.GetAsciiString() );
    
@@ -2103,7 +2103,7 @@ ESS_CALLBACK_START(alembic_import_jobs_Execute, CRef&)
    int nNumNodes = 0;
    SceneNodeAlembicPtr fileRoot = buildAlembicSceneGraph(pArchiveCache, pRootObjectCache, nNumNodes);
 
-   printSceneGraph(fileRoot, false);
+   //printSceneGraph(fileRoot, false);
 
    //return CStatus::Fail;
 
@@ -2141,7 +2141,7 @@ ESS_CALLBACK_START(alembic_import_jobs_Execute, CRef&)
    {
       SceneNodeXSIPtr appRoot = buildCommonSceneGraph(importRootNode);
 
-      printSceneGraph(appRoot, false);
+      //printSceneGraph(appRoot, false);
       
       bool bAttachSuccess = AttachSceneFile(fileRoot, appRoot, jobParser);
 
