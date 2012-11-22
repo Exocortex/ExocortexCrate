@@ -341,6 +341,8 @@ bool ImportSceneFile(SceneNodeAlembicPtr fileRoot, SceneNodeAppPtr appRoot, cons
       //   prog.PutCaption(L"Importing "+CString(iObj.getFullName().c_str())+L" ...");
       //}
       //i++;
+      
+      ESS_LOG_WARNING("Importing "<<currFileNode->pObjCache->obj.getFullName());
        
       SceneNodeAppPtr newAppNode;
       bool bContinue = parentAppNode->addChild(currFileNode, jobParams, newAppNode);
@@ -350,7 +352,7 @@ bool ImportSceneFile(SceneNodeAlembicPtr fileRoot, SceneNodeAppPtr appRoot, cons
       }
 
       if(newAppNode){
-         ESS_LOG_WARNING("newAppNode: "<<newAppNode->name<<" useCount: "<<newAppNode.use_count());
+         //ESS_LOG_WARNING("newAppNode: "<<newAppNode->name<<" useCount: "<<newAppNode.use_count());
 
          //push the children as the last step, since we need to who the parent is first (we may have merged)
          for(SceneChildIterator it = currFileNode->children.begin(); it != currFileNode->children.end(); it++){
@@ -374,7 +376,7 @@ bool ImportSceneFile(SceneNodeAlembicPtr fileRoot, SceneNodeAppPtr appRoot, cons
          
       }
       else{
-         ESS_LOG_WARNING("newAppNode useCount: "<<newAppNode.use_count());
+         //ESS_LOG_WARNING("newAppNode useCount: "<<newAppNode.use_count());
 	      if( currFileNode->children.empty() == false ) {
 		      EC_LOG_WARNING("Unsupported node: " << currFileNode->name << " has children that have not been imported." );
 	      }

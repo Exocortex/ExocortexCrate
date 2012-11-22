@@ -4,7 +4,7 @@
 #include "CommonAbcCache.h"
 
 AbcObjectCache::AbcObjectCache( Alembic::Abc::IObject & objToCache ) : obj( objToCache ) {
-	//EC_LOG_WARNING( "fullname: " << objToCache.getFullName() );
+	//EC_LOG_WARNING( "Caching fullname: " << objToCache.getFullName() );
 	fullName = objToCache.getFullName();
 	numSamples = getNumSamplesFromObject( objToCache );
 	isConstant = isObjectConstant( objToCache );
