@@ -131,6 +131,8 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
 			  vArray.push_back(pPositionArray[i]);
 		   }
 
+           Abc::P3fArraySamplePtr meshPos2;
+
 		   // blend - either between samples or using point velocities
 		   if( ((options.nDataFillFlags & ~ALEMBIC_DATAFILL_IGNORE_SUBFRAME_SAMPLES) && sampleInfo.alpha != 0.0f ) || 
 			   ((options.nDataFillFlags & ALEMBIC_DATAFILL_IGNORE_SUBFRAME_SAMPLES) && fRoundedTimeAlpha != 0.0f ) )
@@ -142,12 +144,12 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
 			  {
 				  AbcG::IPolyMeshSchema::Sample polyMeshSample2;
 				  objMesh.getSchema().get(polyMeshSample2,sampleInfo.ceilIndex);
-				  meshPos = polyMeshSample2.getPositions();
+				  meshPos2 = polyMeshSample2.getPositions();
 
-				  const int posSize = meshPos ? (const int)meshPos->size() : 0;
+				  const int posSize = meshPos2 ? (const int)meshPos2->size() : 0;
 				  const int velSize = meshVel ? (const int)meshVel->size() : 0;
 	             
-				  if(meshPos->size() == vArray.size() && !hasDynamicTopo)
+				  if(meshPos2->size() == vArray.size() && !hasDynamicTopo)
 					  bSampleInterpolate = true;
 				  else if(meshVel && meshVel->size() == vArray.size())
 					  bVelInterpolate = true;
@@ -156,16 +158,16 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
 			  {
 				  AbcG::ISubDSchema::Sample subDSample2;
 				  objSubD.getSchema().get(subDSample2,sampleInfo.ceilIndex);
-				  meshPos = subDSample2.getPositions();
+				  meshPos2 = subDSample2.getPositions();
 				  bSampleInterpolate = true;
 			  }
 
 			  float sampleInfoAlpha = (float)sampleInfo.alpha; 
 			  if (bSampleInterpolate)
 			  {
-				  pPositionArray = meshPos->get();
+				  pPositionArray = meshPos2->get();
 
-				  for(size_t i=0;i<meshPos->size();i++)
+				  for(size_t i=0;i<meshPos2->size();i++)
 				  {	
 					  vArray[i] += (pPositionArray[i] - vArray[i]) * sampleInfoAlpha; 
 				  }
