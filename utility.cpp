@@ -3,6 +3,7 @@
 #include "Utility.h"
 #include "SceneEnumProc.h"
 #include "AlembicIntermediatePolyMesh3DSMax.h"
+#include <hash_map>
 
 void logError( const char* msg ) {
 	Exocortex::essLogError( msg );
@@ -299,95 +300,81 @@ TriObject* GetTriObjectFromNode(INode *iNode, const TimeValue t, bool &deleteIt)
 	}
 }
 
-class HierarchyPathResolver : public ITreeEnumProc
-{
-public:
-
-	std::vector<std::string> parts;
-	INode* pRetNode;
-
-	HierarchyPathResolver(const std::string& path):pRetNode(NULL)
-	{
-		boost::split(parts, path, boost::is_any_of("/"));
-		
-		if(parts.size() > 2){
-			//delete the parent transform of the leaf node, since these nodes were merged on import
-			parts[parts.size()-2] = parts[parts.size()-1];
-			parts.pop_back();
-		}
-
-		if(parts.size() >= 2){
-			for(int i=0; i<parts.size()-1; i++){
-				parts[i] = removeXfoSuffix(parts[i]);
-			}
-		}
-	}
-
-	void walkToChild(INode* node, int& childIndex)
-	{
-		if(!node){
-			//ESS_LOG_INFO("walkToChild: node is null.");
-			return;
-		}
-
-		if(childIndex >= parts.size()){
-			return;
-		}
-		std::string childName = parts[childIndex];
-		
-		for(int i=0; i<node->NumberOfChildren(); i++){
-
-			INode* childNode = node->GetChildNode(i);
-
-			if (strcmp( EC_MCHAR_to_UTF8( childNode->GetName() ).c_str(), childName.c_str()) == 0){
-				childIndex++;
-				pRetNode = childNode;
-				walkToChild(childNode, childIndex);		
-			}
-		}
-	}
-
-	int callback( INode* node )
-	{
-		int enumCode = TREE_CONTINUE;
-
-		if(!node){
-			//ESS_LOG_INFO("callback: node is null.");
-			return TREE_ABORT;
-		}
-
-		if(parts.size() <= 1){
-			return TREE_ABORT;
-		}
-
-		//skip the first entry because we split based on slash, and the path starts with a a slash,
-		//so the first entry is an empty string
-		std::string name = EC_MCHAR_to_UTF8( node->GetName() );
-		INode* pParent = node->GetParentNode();
-		if (pParent && pParent->IsRootNode() && strcmp( name.c_str(), parts[1].c_str()) == 0)
-		{
-			int partIndex = 2;
-			pRetNode = node;
-			walkToChild(node, partIndex);
-			return TREE_ABORT;
-		}        
-
-		return TREE_CONTINUE;
-	}
-
-};
-
 INode* GetNodeFromHierarchyPath(const std::string& path)
 {
-	HierarchyPathResolver resolver(path);
-    IScene *pScene = GET_MAX_INTERFACE()->GetScene();
-	if(!pScene){
-		//ESS_LOG_INFO("pScene is null.");
-		return NULL;
+	std::vector<std::string> parts;
+	
+	boost::split(parts, path, boost::is_any_of("/"));
+	
+	if(parts.size() > 2){
+		//delete the parent transform of the leaf node, since these nodes were merged on import
+		parts[parts.size()-2] = parts[parts.size()-1];
+		parts.pop_back();
 	}
-    pScene->EnumTree(&resolver);
-	return resolver.pRetNode;
+
+	if(parts.size() >= 2){
+		for(int i=0; i<parts.size()-1; i++){
+			parts[i] = removeXfoSuffix(parts[i]);
+		}
+	}
+
+    INode* pNode = GET_MAX_INTERFACE()->GetRootNode();
+
+    if(!pNode){
+      return NULL;
+    }
+
+	for(int p=parts.size()-1; p>=1; p--){
+
+	  std::string childName = parts[p];
+
+      bool bFound = false;
+	  for(int i=0; i<pNode->NumberOfChildren(); i++){
+
+	     INode* childNode = pNode->GetChildNode(i);
+         const char* cName = childNode->GetName();
+
+	     if (strcmp( EC_MCHAR_to_UTF8( childNode->GetName() ).c_str(), childName.c_str()) == 0){
+		     bFound = true;
+		     pNode = childNode;
+	     }
+	  } 
+      if(!bFound){
+         return NULL;
+      }
+	}
+      
+   return pNode;
 }
+
+
+
+
+typedef std::map<std::string, INode*> INodeMap;
+
+void buildINodeMapForChild(INodeMap& nodeMap, INode* node, std::string path)
+{
+   nodeMap[path] = node;
+
+   //ESS_LOG_WARNING("caching INode "<<path);
+
+   path += "/";
+   for(int i=0; i<node->NumberOfChildren(); i++){
+      INode* childNode = node->GetChildNode(i);
+      buildINodeMapForChild(nodeMap, childNode, path + childNode->GetName());
+   }
+}
+
+void buildINodeMap(INodeMap& nodeMap)
+{
+   INode* node = GET_MAX_INTERFACE()->GetRootNode();
+   std::string path("/");
+   for(int i=0; i<node->NumberOfChildren(); i++){
+      INode* childNode = node->GetChildNode(i);
+      buildINodeMapForChild(nodeMap, childNode, path + childNode->GetName());
+   }
+}
+
 
 class NodeFindByName : public ITreeEnumProc
 {
@@ -415,34 +402,30 @@ public:
 
 };
 
-INode* GetNodeFromName(const std::string& name)
-{
-	NodeFindByName resolver(name);
-    IScene *pScene = GET_MAX_INTERFACE()->GetScene();
-    pScene->EnumTree(&resolver);
-	return resolver.pRetNode;
-}
-
+//INode* GetNodeFromName(const std::string& name)
+//{
+//	NodeFindByName resolver(name);
+//    IScene *pScene = GET_MAX_INTERFACE()->GetScene();
+//    pScene->EnumTree(&resolver);
+//	return resolver.pRetNode;
+//}
+//
 INode* GetChildNodeFromName(const std::string& name, INode* pParent)
 {
-	if(pParent){
-		std::string pname = EC_MCHAR_to_UTF8( pParent->GetName() );
-		for(int i=0; i<pParent->NumberOfChildren(); i++){
-			INode* childNode = pParent->GetChildNode(i);
-			std::string cname = EC_MCHAR_to_UTF8( childNode->GetName() );
+   if(!pParent){
+	  pParent = GET_MAX_INTERFACE()->GetRootNode();
+   }
 
-			if (strcmp(cname.c_str(), name.c_str()) == 0){
-				return childNode;	
-			}
+	std::string pname = EC_MCHAR_to_UTF8( pParent->GetName() );
+	for(int i=0; i<pParent->NumberOfChildren(); i++){
+		INode* childNode = pParent->GetChildNode(i);
+		std::string cname = EC_MCHAR_to_UTF8( childNode->GetName() );
+
+		if (strcmp(cname.c_str(), name.c_str()) == 0){
+			return childNode;	
 		}
-		return NULL;
 	}
-	else{ //in this case, the node will have root node as parent, which is only exposed indirectly in max via EnumTree interface
-		HierarchyPathResolver resolver(std::string("/") + name);
-		IScene *pScene = GET_MAX_INTERFACE()->GetScene();
-		pScene->EnumTree(&resolver);
-		return resolver.pRetNode;
-	}
+	return NULL;
 }
 
 

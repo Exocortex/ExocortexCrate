@@ -13,6 +13,7 @@ IAlembicParticlesExt::IAlembicParticlesExt(AlembicParticles* pAlembicParticles)
 
 bool IAlembicParticlesExt::GetRenderMeshVertexSpeed(TimeValue t, INode *inode, View& view, Tab<Point3>& speed)  
 { 
+   ESS_PROFILE_FUNC();
 	ESS_LOG_INFO("IAlembicParticlesExt::GetRenderMeshVertexSpeed() - t: "<<t<<"  currTick: "<<m_pAlembicParticles->m_currTick);
 
 	int numParticles = 0;
@@ -103,7 +104,7 @@ bool IAlembicParticlesExt::GetRenderMeshVertexSpeed(TimeValue t, INode *inode, V
 }
 
 int IAlembicParticlesExt::NumberOfRenderMeshes(TimeValue t, INode *inode, View& view) { 
-	ESS_LOG_WARNING("IAlembicParticlesExt::NumberOfRenderMeshes");
+	//ESS_LOG_WARNING("IAlembicParticlesExt::NumberOfRenderMeshes");
 	//return m_pAlembicParticles->NumberOfRenderMeshes();
 	return 0;
 }
@@ -112,7 +113,7 @@ int IAlembicParticlesExt::NumberOfRenderMeshes(TimeValue t, INode *inode, View& 
 // The method returns how many particles are currently in the particle system. 
 // Some of these particles may be dead or not born yet (indicated by GetAge(..) method =-1). 
 int IAlembicParticlesExt::NumParticles(){
-	ESS_LOG_WARNING("IAlembicParticlesExt::NumParticles");
+	//ESS_LOG_WARNING("IAlembicParticlesExt::NumParticles");
 	return m_pAlembicParticles->NumberOfRenderMeshes();
 	//return 0;
 }

@@ -161,7 +161,9 @@ private:
 		BOOL bNeedDelete;
 		Matrix3 meshTM;
 
-		meshInfo(): pMesh(NULL), nMatId(-1), bNeedDelete(FALSE) 
+        int nMeshInstanceId;
+
+		meshInfo(): pMesh(NULL), nMatId(-1), bNeedDelete(FALSE), nMeshInstanceId(-1)
 		{}
 	};
 	//typedef std::pair<Alembic::Util::Digest, Alembic::Util::Digest> faceVertexHashPair;
@@ -200,7 +202,7 @@ private:
     void AlembicPoints::GetShapeType(IParticleObjectExt *pExt, int particleId, TimeValue ticks, ShapeType &type, unsigned short &instanceId, float &animationTime);
 	void AlembicPoints::ReadShapeFromOperator( IParticleGroup *particleGroup, PFSimpleOperator *pSimpleOperator, int particleId, TimeValue ticks, ShapeType &type, unsigned short &instanceId, float &animationTime);
 	Abc::C4f AlembicPoints::GetColor(IParticleObjectExt *pExt, int particleId, TimeValue ticks);
-	unsigned short FindInstanceName(const std::string& name);
+	//unsigned short FindInstanceName(const std::string& name);
 
 	void CacheShapeMesh(Mesh* pShapeMesh, BOOL bNeedDelete, Matrix3 meshTM, int nMatId, int particleId, TimeValue ticks, ShapeType &type, unsigned short &instanceId, float &animationTime);
 
@@ -213,7 +215,7 @@ private:
 
     // instance lookups
     Abc::OStringArrayProperty mInstanceNamesProperty;
-    std::vector<std::string> mInstanceNames;
+    //std::vector<std::string> mInstanceNames;
     //std::map<unsigned long, size_t> mInstanceMap;
 	perActionListShapeMap mPerActionListShapeMap;
 

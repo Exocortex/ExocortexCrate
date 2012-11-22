@@ -147,6 +147,8 @@ void AlembicParticles::UpdateParticles(TimeValue t, INode *node)
 {
 	ESS_CPP_EXCEPTION_REPORTING_START
 
+   ESS_PROFILE_FUNC();
+
 	if(LOG){
 		ESS_LOG_WARNING("UpdateParticles at time = "<<t);
 	}
@@ -443,9 +445,10 @@ TimeValue AlembicParticles::ParticleLife(TimeValue t, int i) {
 
 bool AlembicParticles::GetAlembicIPoints(AbcG::IPoints &iPoints, std::string strFile, std::string strIdentifier)
 {
+    ESS_PROFILE_FUNC();
     // Find the object in the archive
     AbcG::IObject iObj = getObjectFromArchive(strFile, strIdentifier);
-	if (!iObj.valid())
+	 if (!iObj.valid())
     {
 		return false;
     }
@@ -461,6 +464,7 @@ bool AlembicParticles::GetAlembicIPoints(AbcG::IPoints &iPoints, std::string str
 
 SampleInfo AlembicParticles::GetSampleAtTime(AbcG::IPoints &iPoints, TimeValue t, AbcG::IPointsSchema::Sample &floorSample, AbcG::IPointsSchema::Sample &ceilSample) const
 {
+    ESS_PROFILE_FUNC();
     double sampleTime = GetSecondsFromTimeValue(t);
     SampleInfo sampleInfo = getSampleInfo(sampleTime,
                                           iPoints.getSchema().getTimeSampling(),
@@ -480,7 +484,8 @@ int AlembicParticles::GetNumParticles(const AbcG::IPointsSchema::Sample &floorSa
 
 void
 AlembicParticles::GetParticlePositions(AbcG::IPoints &iPoints, const AbcG::IPointsSchema::Sample &floorSample, const AbcG::IPointsSchema::Sample &ceilSample, const SampleInfo &sampleInfo, const Matrix3& objToWorld, Tab<Point3>& points) const {
-	Abc::P3fArraySamplePtr floorPositions = floorSample.getPositions();
+	ESS_PROFILE_FUNC();
+    Abc::P3fArraySamplePtr floorPositions = floorSample.getPositions();
 	if( floorPositions != NULL && floorPositions->valid() && floorPositions->size() > 0 ) {
 		std::vector<Abc::V3f> alembicPositions( points.Count() );
 		int j = 0;
@@ -535,7 +540,7 @@ AlembicParticles::GetParticlePositions(AbcG::IPoints &iPoints, const AbcG::IPoin
 void
 AlembicParticles::GetParticleVelocities(const AbcG::IPointsSchema::Sample &floorSample, const AbcG::IPointsSchema::Sample &ceilSample, const SampleInfo &sampleInfo, Matrix3 objToWorld, Tab<Point3>& vels) const {
 	//ESS_LOG_WARNING( "Particle velocities are not transformed into world space." );
-
+    ESS_PROFILE_FUNC();
 	objToWorld.SetTrans(Point3(0.0, 0.0, 0.0));
 
 	bool useDefaultValues = true;
@@ -559,6 +564,7 @@ AlembicParticles::GetParticleVelocities(const AbcG::IPointsSchema::Sample &floor
 
 void
 AlembicParticles::GetParticleRadii(AbcG::IPoints &iPoints, const SampleInfo &sampleInfo, Tab<float>& radius) const {
+   ESS_PROFILE_FUNC();
 	bool useDefaultValues = true;
     AbcG::IFloatGeomParam widthsParam = iPoints.getSchema().getWidthsParam();
    if( widthsParam != NULL && widthsParam.getNumSamples() > 0 ) {
@@ -582,6 +588,7 @@ AlembicParticles::GetParticleRadii(AbcG::IPoints &iPoints, const SampleInfo &sam
 
 void
 AlembicParticles::GetParticleAges(AbcG::IPoints &iPoints, const SampleInfo &sampleInfo, Tab<TimeValue>& ages) const {
+    ESS_PROFILE_FUNC();
 	bool useDefaultValues = true;
 	Abc::IFloatArrayProperty prop;
 	if( getArbGeomParamPropertyAlembic( iPoints, "age", prop ) ) {
@@ -605,6 +612,7 @@ AlembicParticles::GetParticleAges(AbcG::IPoints &iPoints, const SampleInfo &samp
 
 void
 AlembicParticles::GetParticleOrientations(AbcG::IPoints &iPoints, const SampleInfo &sampleInfo, Matrix3 objToWorld, std::vector<Quat>& particleOrientations) const {
+   ESS_PROFILE_FUNC();
 	//ESS_LOG_WARNING( "Particle orientations are not transformed into world space." );
 	bool useDefaultValues = true;
 
@@ -666,6 +674,7 @@ AlembicParticles::GetParticleOrientations(AbcG::IPoints &iPoints, const SampleIn
 
 void
 AlembicParticles::GetParticleScales(AbcG::IPoints &iPoints, const SampleInfo &sampleInfo, const Matrix3& objToWorld, std::vector<Point3>& scales) const {
+   ESS_PROFILE_FUNC();
 	//ESS_LOG_WARNING( "Particle scales are not transformed into world space ??" );
 	bool useDefaultValues = true;
 	Abc::IV3fArrayProperty prop;
@@ -691,6 +700,7 @@ AlembicParticles::GetParticleScales(AbcG::IPoints &iPoints, const SampleInfo &sa
 
 void
 AlembicParticles::GetParticleShapeTypes(AbcG::IPoints &iPoints, const SampleInfo &sampleInfo, std::vector<AlembicPoints::ShapeType>& instanceShapeType ) const {
+   ESS_PROFILE_FUNC();
 	bool useDefaultValues = true;
 	Abc::IUInt16ArrayProperty shapeTypeProperty;
 	if( getArbGeomParamPropertyAlembic( iPoints, "shapetype", shapeTypeProperty ) ) {
@@ -715,6 +725,7 @@ AlembicParticles::GetParticleShapeTypes(AbcG::IPoints &iPoints, const SampleInfo
 
 void
 AlembicParticles::GetParticleShapeInstanceIds(AbcG::IPoints &iPoints, const SampleInfo &sampleInfo, std::vector<unsigned short>& instanceShapeIds ) const {
+   ESS_PROFILE_FUNC();
 	bool useDefaultValues = true;
 	Abc::IUInt16ArrayProperty shapeIdProperty;
 	if( getArbGeomParamPropertyAlembic( iPoints, "shapeinstanceid", shapeIdProperty ) ) {
@@ -739,9 +750,11 @@ AlembicParticles::GetParticleShapeInstanceIds(AbcG::IPoints &iPoints, const Samp
 	}
 }
 
+ 
 
 void AlembicParticles::FillParticleShapeNodes(AbcG::IPoints &iPoints, const SampleInfo &sampleInfo)
 {
+   ESS_PROFILE_FUNC();
     //m_TotalShapesToEnumerate = 0;
     m_InstanceShapeINodes.clear();
 	ClearMeshCache();
@@ -759,10 +772,18 @@ void AlembicParticles::FillParticleShapeNodes(AbcG::IPoints &iPoints, const Samp
 		//m_TotalShapesToEnumerate = m_InstanceShapeNames->size();
 		m_InstanceShapeINodes.resize(m_InstanceShapeNames->size());
 	    
+        INodeMap nodeMap;
+        buildINodeMap(nodeMap);
+
 		for (int i = 0; i < m_InstanceShapeINodes.size(); i += 1)
 		{
 			const std::string& path = m_InstanceShapeNames->get()[i];
-			m_InstanceShapeINodes[i] = GetNodeFromHierarchyPath(path);
+
+            //TODO: need to possibly XFO to path, and shape node as well
+
+            m_InstanceShapeINodes[i] = nodeMap[path];
+
+			//m_InstanceShapeINodes[i] = GetNodeFromHierarchyPath(path);
 		}
 	}
 }
@@ -770,6 +791,7 @@ void AlembicParticles::FillParticleShapeNodes(AbcG::IPoints &iPoints, const Samp
 
 void
 AlembicParticles::GetParticleShapeInstanceTimes(AbcG::IPoints &iPoints, const SampleInfo &sampleInfo, std::vector<TimeValue>& instanceShapeTimes) const {
+   ESS_PROFILE_FUNC();
 	bool useDefaultValues = true;
 	Abc::IFloatArrayProperty shapeTimeProperty;
 	if( getArbGeomParamPropertyAlembic( iPoints, "shapetime", shapeTimeProperty ) ) {
@@ -793,6 +815,7 @@ AlembicParticles::GetParticleShapeInstanceTimes(AbcG::IPoints &iPoints, const Sa
 
 void
 AlembicParticles::GetParticleColors(AbcG::IPoints &iPoints, const SampleInfo &sampleInfo, std::vector<VertColor>& colors ) const {
+   ESS_PROFILE_FUNC();
 	bool useDefaultValues = true;
 	Abc::IC4fArrayProperty colorProperty;
 	if( getArbGeomParamPropertyAlembic( iPoints, "color", colorProperty ) ) {
@@ -831,6 +854,7 @@ Mesh* AlembicParticles::GetMultipleRenderMesh(TimeValue  t,  INode *inode,  View
 
 Mesh* AlembicParticles::GetMultipleRenderMesh_Internal(TimeValue  t,  INode *inode,  View &view,  BOOL &needDelete,  int meshNumber)
 {
+   ESS_PROFILE_FUNC();
     if (meshNumber >= parts.Count() || !parts.Alive(meshNumber) || view.CheckForRenderAbort())
     {
         needDelete = NULL;
@@ -897,6 +921,9 @@ Mesh* AlembicParticles::GetMultipleRenderMesh_Internal(TimeValue  t,  INode *ino
 
 Mesh* AlembicParticles::GetRenderMesh(TimeValue t, INode *inode, View &view, BOOL &needDelete)
 {
+    ESS_LOG_WARNING("GetRenderMesh called.");
+
+    ESS_PROFILE_FUNC();
 	if (m_currTick != t){
 		Update(t,inode);
 	}
@@ -909,6 +936,10 @@ Mesh* AlembicParticles::GetRenderMesh(TimeValue t, INode *inode, View &view, BOO
 	needDelete = true;
 	int vertNum = 0;
 	int faceNum = 0;
+
+    {
+
+    ESS_PROFILE_SCOPE("GetRenderMesh vertNum and faceNum");
 
 	for(int i=0; i<NumberOfRenderMeshes(); i++)
 	{
@@ -932,6 +963,8 @@ Mesh* AlembicParticles::GetRenderMesh(TimeValue t, INode *inode, View &view, BOO
 		faceNum += pMesh->getNumFaces();
 	}
 
+    }
+
 	if(!renderMesh->setNumVerts(vertNum)){
 		return renderMesh;
 	}
@@ -940,18 +973,19 @@ Mesh* AlembicParticles::GetRenderMesh(TimeValue t, INode *inode, View &view, BOO
 	}
 
 	//MeshNormalSpec* pMeshNormalSpec = renderMesh->GetSpecifiedNormals();
+    MeshNormalSpec* pRenderMeshNormalSpec = NULL;
+    {
+    ESS_PROFILE_SCOPE("GetRenderMesh specifyNormals");
 
 	renderMesh->SpecifyNormals();
-	MeshNormalSpec* pRenderMeshNormalSpec = renderMesh->GetSpecifiedNormals();
+	pRenderMeshNormalSpec = renderMesh->GetSpecifiedNormals();
 	pRenderMeshNormalSpec->SetParent(renderMesh);
 
 	pRenderMeshNormalSpec->SetAllExplicit(true);
 	pRenderMeshNormalSpec->SetNumFaces(faceNum);
-	pRenderMeshNormalSpec->SetNumNormals(faceNum);
-	//pRenderMeshNormalSpec->SetNumNormals(1);
-	//pRenderMeshNormalSpec->Normal(0) = Point3(0.0, 0.0, 0.0);
-
-
+	pRenderMeshNormalSpec->SetNumNormals(vertNum);
+    pRenderMeshNormalSpec->Initialize();
+    }
 
 	//the mesh should be relative to the particle frame
 	Matrix3 inverseTM = Inverse(inode->GetObjectTM(t));
@@ -978,6 +1012,7 @@ Mesh* AlembicParticles::GetRenderMesh(TimeValue t, INode *inode, View &view, BOO
 
 		int curNumVerts = pMesh->getNumVerts();
 		if(curNumVerts == 0){
+            ESS_PROFILE_SCOPE("GetRenderMesh currNumVerts == 0");
 			if (curNeedDelete) {
 				pMesh->FreeAll();
 				delete pMesh;
@@ -990,7 +1025,13 @@ Mesh* AlembicParticles::GetRenderMesh(TimeValue t, INode *inode, View &view, BOO
 		Matrix3 meshTM;
 		meshTM.IdentityMatrix();
 		Interval meshTMValid = FOREVER;
+        {
+        ESS_PROFILE_SCOPE("GetRenderMesh::GetMultipleRenderMesh");
 		GetMultipleRenderMeshTM_Internal(t, inode, nullView, i, meshTM, meshTMValid);
+        }
+
+        {
+           ESS_PROFILE_SCOPE("GetRenderMesh init verts and faces");
 
 		for(int j=0, curIndex=vertOffset; j<curNumVerts; j++, curIndex++) {
 			renderMesh->verts[curIndex] = pMesh->verts[j] * meshTM * inverseTM;
@@ -1004,6 +1045,8 @@ Mesh* AlembicParticles::GetRenderMesh(TimeValue t, INode *inode, View &view, BOO
 			}
 		}
 
+        }
+
 		//for transforming the normals
 		Matrix3 meshTM_I_T = meshTM * inverseTM;
 		meshTM_I_T.SetTrans(Point3(0.0, 0.0, 0.0));
@@ -1011,17 +1054,23 @@ Mesh* AlembicParticles::GetRenderMesh(TimeValue t, INode *inode, View &view, BOO
 		meshTM_I_T = Inverse(meshTM_I_T);
 		meshTM_I_T = TransposeRot(meshTM_I_T);
 
+        {
+        ESS_PROFILE_SCOPE("GetRenderMesh - Build and set normals");
+
 		MeshNormalSpec *pNormalSpec = pMesh->GetSpecifiedNormals();
 		if(pNormalSpec && curNumFaces == pNormalSpec->GetNumFaces() ){
-			for(int j=0, curIndex=faceOffset; j<curNumFaces; j++, curIndex++){
-				for(int f=0; f<3; f++){
-					pRenderMeshNormalSpec->SetNormal(curIndex, f, pNormalSpec->GetNormal(j, f) * meshTM_I_T);
-				}
-			}
+            ESS_PROFILE_SCOPE("GetRenderMesh - Build and set normals - copy normals from normal spec");
+			//for(int j=0, curIndex=faceOffset; j<curNumFaces; j++, curIndex++){
+			//	//pRenderMeshNormalSpec->SetNormal(curIndex, 0, pNormalSpec->GetNormal(j, 0) * meshTM_I_T);
+			//	//pRenderMeshNormalSpec->SetNormal(curIndex, 1, pNormalSpec->GetNormal(j, 1) * meshTM_I_T);
+			//	//pRenderMeshNormalSpec->SetNormal(curIndex, 2, pNormalSpec->GetNormal(j, 2) * meshTM_I_T);
+			//}
+            pRenderMeshNormalSpec->AppendAllChannels(pNormalSpec);
 		}
 		else{
 
 			//int n = pMesh->getNumVerts()
+            ESS_PROFILE_SCOPE("GetRenderMesh - Build and set normals - compute from smoothing groups");
 
 			SmoothGroupNormals sgNormals;
 			sgNormals.BuildMeshSmoothingGroupNormals(*pMesh);
@@ -1037,7 +1086,13 @@ Mesh* AlembicParticles::GetRenderMesh(TimeValue t, INode *inode, View &view, BOO
 			//		pRenderMeshNormalSpec->SetNormal(curIndex, f, Point3(0.0, 0.0, 0.0));
 			//	}
 			//}
-		}	
+		}
+
+        }
+
+
+        {
+        ESS_PROFILE_SCOPE("GetRenderMesh copy over mapping channels");
 
 		int numMaps = pMesh->getNumMaps();
 		for(int mp=0; mp<numMaps; mp++) {
@@ -1073,8 +1128,11 @@ Mesh* AlembicParticles::GetRenderMesh(TimeValue t, INode *inode, View &view, BOO
 			}
 			tvertOffset[mp] += tvertsToAdd;
 		}
+
+        }
 		
 		if (curNeedDelete) {
+            ESS_PROFILE_SCOPE("GetRenderMesh free after copying");
 			pMesh->FreeAll();
 			delete pMesh;
 		}
@@ -1084,13 +1142,17 @@ Mesh* AlembicParticles::GetRenderMesh(TimeValue t, INode *inode, View &view, BOO
 	}
 
 	//pRenderMeshNormalSpec->CheckNormals();
+    {
+    ESS_PROFILE_SCOPE("GetRenderMesh renderMesh->buildNormals");
 	renderMesh->buildNormals();
+    }
 
 	return renderMesh;
 }
 
 void AlembicParticles::GetMultipleRenderMeshTM(TimeValue  t, INode *inode, View &view, int  meshNumber, Matrix3 &meshTM, Interval &meshTMValid)
 {
+   ESS_PROFILE_FUNC();
 	MSTR rendererName;
 	GET_MAX_INTERFACE()->GetCurrentRenderer()->GetClassName( rendererName );
 	std::string renderer( EC_MSTR_to_UTF8( rendererName ) );
@@ -1132,6 +1194,7 @@ void AlembicParticles::GetMultipleRenderMeshTM(TimeValue  t, INode *inode, View 
 
 void AlembicParticles::GetMultipleRenderMeshTM_Internal(TimeValue  t, INode *inode, View &view, int  meshNumber, Matrix3 &meshTM, Interval &meshTMValid, bool bCalledFromViewport)
 {
+   ESS_PROFILE_FUNC();
 	if(meshNumber >= parts.Count()){
 		meshTM.IdentityMatrix();
 		return;
@@ -1192,6 +1255,7 @@ void AlembicParticles::GetMultipleRenderMeshTM_Internal(TimeValue  t, INode *ino
 
 INode* AlembicParticles::GetParticleMeshNode(int meshNumber, INode *displayNode)
 {
+   ESS_PROFILE_FUNC();
 	//ESS_LOG_INFO( "AlembicParticles::GetParticleMeshNode( meshNumber: " << meshNumber << " )" );
     if (meshNumber > parts.Count() || !parts.Alive(meshNumber))
     {
@@ -1220,6 +1284,7 @@ INode* AlembicParticles::GetParticleMeshNode(int meshNumber, INode *displayNode)
 //Note: the display and hittest methods called often, so we definitely should have caching
 int AlembicParticles::Display(TimeValue t, INode* inode, ViewExp *vpt, int flags)
 {
+   ESS_PROFILE_FUNC();
    if (!OKtoDisplay(t)) 
    {
        return 0;
@@ -1228,6 +1293,7 @@ int AlembicParticles::Display(TimeValue t, INode* inode, ViewExp *vpt, int flags
    BOOL doupdate = ((t!=tvalid)||!valid);
    if (doupdate)
    {
+	   ESS_PROFILE_SCOPE("Display::Update(t,inode)");
        Update(t,inode);
    }
 
@@ -1259,7 +1325,6 @@ int AlembicParticles::Display(TimeValue t, INode* inode, ViewExp *vpt, int flags
 	rect.top = 0; rect.bottom = gw->getWinSizeY(); rect.left = 0; rect.right = gw->getWinSizeX();
 	vpt->InvalidateRect(rect);
 
-
 	if(m_fViewportPercent == 0.0){
 		return 0;
 	}
@@ -1267,6 +1332,8 @@ int AlembicParticles::Display(TimeValue t, INode* inode, ViewExp *vpt, int flags
 	const float fFraction = m_fViewportPercent / 100.0f;
 	int nNumParticlesToRender = (int)ceil((float)NumberOfRenderMeshes() * fFraction);
 	const float fStep = 1 / fFraction;
+
+    
 
 	if(m_bRenderAsTicks){
 	   // Draw the particles
@@ -1286,6 +1353,8 @@ int AlembicParticles::Display(TimeValue t, INode* inode, ViewExp *vpt, int flags
 	   }
 	}
 	else{
+	   ESS_PROFILE_SCOPE("Display::RenderMeshLoop");
+
 	   // Draw the particles
 	   ExoNullView nullView;
 	   //nullView.worldToView = objToWorld;
@@ -1304,10 +1373,18 @@ int AlembicParticles::Display(TimeValue t, INode* inode, ViewExp *vpt, int flags
 
 			BOOL deleteMesh = FALSE;
 
-			GetMultipleRenderMeshTM_Internal(t, inode, nullView, i, elemToObj, meshTMValid, true);
-			Mesh *mesh = GetMultipleRenderMesh_Internal(t, inode, nullView, deleteMesh, i);
+			Mesh *mesh = NULL;
+			{
+			   ESS_PROFILE_SCOPE("Display::GetRenderMeshTM");
+			   GetMultipleRenderMeshTM_Internal(t, inode, nullView, i, elemToObj, meshTMValid, true);
+			}
+			{
+			   ESS_PROFILE_SCOPE("Display::GetMultipleRenderMesh_Internal");
+			   mesh = GetMultipleRenderMesh_Internal(t, inode, nullView, deleteMesh, i);
+			}
 
 			if(mesh && m_InstanceShapeType[i] != AlembicPoints::ShapeType_Point ){
+			    ESS_PROFILE_SCOPE("Display::RenderInstance");
 
 				Matrix3 elemToWorld = elemToObj;// * objToWorld; 
 
@@ -1342,10 +1419,19 @@ int AlembicParticles::Display(TimeValue t, INode* inode, ViewExp *vpt, int flags
 				}
 				gw->setTransform( elemToWorld );
 
-				mesh->render(gw, mtls, (flags&USE_DAMAGE_RECT) ? &vpt->GetDammageRect() : NULL, COMP_ALL, numMtls);
+				{
+				   ESS_PROFILE_SCOPE("Display::mesh->render");
+				  mesh->render(gw, mtls, (flags&USE_DAMAGE_RECT) ? &vpt->GetDammageRect() : NULL, COMP_ALL, numMtls);
+				}
+
+                if(deleteMesh){
+                    //ESS_LOG_WARNING("deleting mesh");
+                    delete mesh;
+                }
 			}
 			else
 			{
+			   ESS_PROFILE_SCOPE("Display::RenderParticle");
 				gw->setColor(FILL_COLOR, m_VCArray[i].x, m_VCArray[i].y, m_VCArray[i].z);
 				gw->setTransform(Matrix3(1));
 				gw->marker(&parts.points[i], POINT_MRKR);  
@@ -1360,6 +1446,7 @@ int AlembicParticles::Display(TimeValue t, INode* inode, ViewExp *vpt, int flags
 
 int AlembicParticles::HitTest(TimeValue t, INode *inode, int type, int crossing, int flags, IPoint2 *p, ViewExp *vpt)
 {
+   ESS_PROFILE_FUNC();
    BOOL doupdate = ((t!=tvalid)||!valid);
    if (doupdate)
    {
@@ -1452,6 +1539,11 @@ int AlembicParticles::HitTest(TimeValue t, INode *inode, int type, int crossing,
 			gw->clearHitCode();
 			break;
 		}
+
+        if(deleteMesh){
+            //ESS_LOG_WARNING("deleting mesh.");
+            delete mesh;
+        }
    }
 
    gw->setRndLimits(savedLimits);
@@ -1460,6 +1552,7 @@ int AlembicParticles::HitTest(TimeValue t, INode *inode, int type, int crossing,
 
 Mesh *AlembicParticles::BuildPointMesh(int meshNumber, TimeValue t, INode *node, View& view, BOOL &needDelete)
 {
+   ESS_PROFILE_FUNC();
     //Mesh *pMesh = NULL;
     //needDelete = FALSE;
     //return pMesh;
@@ -1468,6 +1561,7 @@ Mesh *AlembicParticles::BuildPointMesh(int meshNumber, TimeValue t, INode *node,
 
 Mesh *AlembicParticles::BuildBoxMesh(int meshNumber, TimeValue t, INode *node, View& view, BOOL &needDelete)
 {
+   ESS_PROFILE_FUNC();
     Mesh *pMesh = NULL;
 
     if (!m_pBoxMaker)
@@ -1489,6 +1583,7 @@ Mesh *AlembicParticles::BuildBoxMesh(int meshNumber, TimeValue t, INode *node, V
 
 Mesh *AlembicParticles::BuildSphereMesh(int meshNumber, TimeValue t, INode *node, View& view, BOOL &needDelete)
 {
+   ESS_PROFILE_FUNC();
     Mesh *pMesh = NULL;
     needDelete = FALSE;
 
@@ -1513,6 +1608,7 @@ Mesh *AlembicParticles::BuildSphereMesh(int meshNumber, TimeValue t, INode *node
 
 Mesh *AlembicParticles::BuildCylinderMesh(int meshNumber, TimeValue t, INode *node, View& view, BOOL &needDelete)
 {
+   ESS_PROFILE_FUNC();
     Mesh *pMesh = NULL;
     needDelete = FALSE;
 
@@ -1540,12 +1636,14 @@ Mesh *AlembicParticles::BuildCylinderMesh(int meshNumber, TimeValue t, INode *no
 
 Mesh *AlembicParticles::BuildConeMesh(int meshNumber, TimeValue t, INode *node, View& view, BOOL &needDelete)
 {
-	//3DS Max doesn't seem to have a cone builder, so just return a cylinder for now.
+   ESS_PROFILE_FUNC();
+	//3DS Max doesn't seem to have a cone builder, so just return a cylinder fornow.
 	return BuildCylinderMesh(meshNumber, t, node, view, needDelete);
 }
 
 Mesh *AlembicParticles::BuildDiscMesh(int meshNumber, TimeValue t, INode *node, View& view, BOOL &needDelete)
 {
+   ESS_PROFILE_FUNC();
     Mesh *pMesh = NULL;
     needDelete = FALSE;
     
@@ -1572,6 +1670,7 @@ Mesh *AlembicParticles::BuildDiscMesh(int meshNumber, TimeValue t, INode *node, 
  
 Mesh *AlembicParticles::BuildRectangleMesh(int meshNumber, TimeValue t, INode *node, View& view, BOOL &needDelete)
 {
+   ESS_PROFILE_FUNC();
     Mesh *pMesh = NULL;
     needDelete = FALSE;
 
@@ -1596,6 +1695,7 @@ Mesh *AlembicParticles::BuildRectangleMesh(int meshNumber, TimeValue t, INode *n
 
 void AlembicParticles::ClearMeshCache()
 {
+   ESS_PROFILE_FUNC();
 	for(nodeAndTimeToMeshMap::iterator it=meshCacheMap.begin(); it != meshCacheMap.end(); it++){
 		meshInfo& mi = it->second;
 		if(mi.bMeshNeedDelete){
@@ -1605,8 +1705,9 @@ void AlembicParticles::ClearMeshCache()
 	meshCacheMap.clear();
 }
 
-Mesh* GetMeshFromNode(INode *iNode, const TimeValue t, BOOL bNeedDelete)
+Mesh* GetMeshFromNode(INode *iNode, const TimeValue t, BOOL& bNeedDelete)
 {
+   ESS_PROFILE_FUNC();
 	bNeedDelete = FALSE;
 	if (!iNode){
 		ESS_LOG_INFO("GetMeshFromNode: iNode is null.");
@@ -1622,6 +1723,7 @@ Mesh* GetMeshFromNode(INode *iNode, const TimeValue t, BOOL bNeedDelete)
 		ExoNullView nullView;
 		GeomObject* geomObject = (GeomObject*)obj;
 		Mesh* pMesh = geomObject->GetRenderMesh(t, iNode, nullView, bNeedDelete);
+        //ESS_LOG_WARNING("Allocating mesh.");
 		return pMesh;
 	}
 	else{
@@ -1631,7 +1733,7 @@ Mesh* GetMeshFromNode(INode *iNode, const TimeValue t, BOOL bNeedDelete)
 
 Mesh *AlembicParticles::BuildInstanceMesh(int meshNumber, TimeValue t, INode *node, View& view, BOOL &needDelete)
 {
-
+   ESS_PROFILE_FUNC()
 	needDelete = FALSE;
 
 	if (meshNumber >= m_InstanceShapeIds.size()){
@@ -1647,16 +1749,19 @@ Mesh *AlembicParticles::BuildInstanceMesh(int meshNumber, TimeValue t, INode *no
 	INode *pNode = m_InstanceShapeINodes[shapeid];
 	TimeValue shapet = m_InstanceShapeTimes[meshNumber];
 
-	nodeAndTimeToMeshMap::iterator it = meshCacheMap.find(nodeTimePair(pNode, shapet));
-	if( it != meshCacheMap.end() ){
-		meshInfo& mi = it->second;
-		return mi.pMesh;
-	}
-	else{
-		meshInfo& mi = meshCacheMap[nodeTimePair(pNode, shapet)];
-		mi.pMesh = GetMeshFromNode(pNode, shapet, mi.bMeshNeedDelete);
-		return mi.pMesh;
-	}
+    return GetMeshFromNode(pNode, shapet, needDelete);
+
+	//nodeAndTimeToMeshMap::iterator it = meshCacheMap.find(nodeTimePair(pNode, shapet));
+	//if( it != meshCacheMap.end() ){
+	//	meshInfo& mi = it->second;
+	//	return mi.pMesh;
+	//}
+	//else{
+	//	meshInfo& mi = meshCacheMap[nodeTimePair(pNode, shapet)];
+	//	mi.pMesh = GetMeshFromNode(pNode, shapet, mi.bMeshNeedDelete);
+	//	return mi.pMesh;
+	//}
+
 
  //  bool deleteTriObj = false;
  //  TriObject *triObj = GetTriObjectFromNode(pNode, shapet, deleteTriObj);
@@ -1697,6 +1802,7 @@ RefResult AlembicParticles::NotifyRefChanged(
     PartID& partID, 
     RefMessage msg) 
 {
+   ESS_PROFILE_FUNC();
     switch (msg) 
     {
         case REFMSG_CHANGE:
@@ -1799,6 +1905,7 @@ BOOL AlembicParticles::OKtoDisplay( TimeValue t)
 
 bool isAlembicPoints( AbcG::IObject *pIObj, bool& isConstant ) 
 {
+   ESS_PROFILE_FUNC();
 	AbcG::IPoints objPoints;
 
 	isConstant = true; 
@@ -1815,6 +1922,7 @@ bool isAlembicPoints( AbcG::IObject *pIObj, bool& isConstant )
 
 int AlembicImport_Points(const std::string &file, AbcG::IObject& iObj, alembic_importoptions &options, INode** pMaxNode)
 {
+   ESS_PROFILE_FUNC();
 	const std::string &identifier = iObj.getFullName();
 
     bool isConstant = false;
@@ -1876,7 +1984,7 @@ int AlembicImport_Points(const std::string &file, AbcG::IObject& iObj, alembic_i
 BaseInterface* AlembicParticles::GetInterface(Interface_ID id)
 { 
 	if(id == PARTICLEOBJECTEXT_INTERFACE){
-		ESS_LOG_WARNING("ParticleObject Extended interface being retrieved.");
+		//ESS_LOG_WARNING("ParticleObject Extended interface being retrieved.");
 		return m_pAlembicParticlesExt;
 		//return NULL;
 	}
