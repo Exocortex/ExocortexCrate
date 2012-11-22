@@ -442,18 +442,21 @@ int ExocortexAlembicStaticInterface_ExocortexAlembicImportJobs( CONST_2013 MCHAR
 			else if(boost::iequals(valuePair[0], "materialIds")){
             options.importMaterialIds = parseBool(valuePair[1]);
 			}
-         else if(boost::iequals(valuePair[0], "attachToExisting")){
+            else if(boost::iequals(valuePair[0], "attachToExisting")){
             options.attachToExisting = parseBool(valuePair[1]);
 			}
-		  else if(boost::iequals(valuePair[0], "failOnUnsupported")){
+		    else if(boost::iequals(valuePair[0], "failOnUnsupported")){
             options.failOnUnsupported = parseBool(valuePair[1]);
 			}
-         else if(boost::iequals(valuePair[0], "filters")){  
+            else if(boost::iequals(valuePair[0], "filters")){  
 		      boost::split(nodesToImport, valuePair[1], boost::is_any_of(","));
 			}
-		   else if(boost::iequals(valuePair[0], "includeChildren")){
+		    else if(boost::iequals(valuePair[0], "includeChildren")){
             bIncludeChildren = parseBool(valuePair[1]);
 			}
+            else if(boost::iequals(valuePair[0], "loadGeometryInTopologyModifier")){
+               options.loadGeometryInTopologyModifier = parseBool(valuePair[1]);
+            }
 			else
 			{
 				ESS_LOG_INFO("Skipping invalid token: "<<tokens[j]);

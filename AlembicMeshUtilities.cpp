@@ -281,27 +281,6 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
 			options.pMNMesh->SetFlag( MN_MESH_NONTRI, FALSE );
 		}
 
-		//the FillInMesh call breaks the topology of some meshes in 3DS Max 2012
-		//(my test case in referenced here: https://github.com/Exocortex/ExocortexAlembic3DSMax/issues/191)
-		//the FillInMesh call is necessary to prevent all meshes from crashing 3DS Max 2010 and 2011
-		//Tested in 2013, some simples meshes seem to crash, so I'm putting it back in
-
-#if 1//MAX_PRODUCT_YEAR_NUMBER < 2012
-  	  if( ! options.pMNMesh->GetFlag( MN_MESH_FILLED_IN ) ) {
-			  //HighResolutionTimer tFillInMesh;
-			  {      	
-				  ESS_PROFILE_SCOPE("FillInMesh");
- 
-				  options.pMNMesh->FillInMesh();
-			  }
-			  //ESS_LOG_WARNING("FillInMesh time: "<<tFillInMesh.elapsed());
-			  if( options.pMNMesh->GetFlag(MN_MESH_RATSNEST) ) {
-				  ESS_LOG_ERROR( "Mesh is a 'Rat's Nest' (more than 2 faces per edge) and not fully supported, fileName: " << options.fileName << " identifier: " << options.identifier );
-			  }
-		  }
-
-#endif
-	
 		validateMeshes( options, "ALEMBIC_DATAFILL_FACELIST" );
 
 	   }//if(sampleCount != numIndices)
@@ -309,6 +288,31 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
 			ESS_LOG_WARNING("faceCount, index array mismatch. Not filling in indices (did you check 'dynamic topology' when exporting?).");
 	   }
    }
+
+
+   //3DS Max tends to crash if FillInMesh is not called. The call will build a winged-edge data structure, so good topology is required.
+   //3DS Max duplicate points to fix bad topology. Thus, it is important for this call to happen last (after the last geometry modifier is
+   //applied). Since this case is difficult to detect, we will throw an error some when multiple modifiers exist, a and there is bad topology.
+
+   //if (( options.nDataFillFlags & ALEMBIC_DATAFILL_VERTEX )){//||
+   //We seem to get crash if FillInPolyMesh is called in a modifier other that the topology one
+   if( options.nDataFillFlags & ALEMBIC_DATAFILL_FACELIST ){
+  	  //if( !options.pMNMesh->GetFlag( MN_MESH_FILLED_IN ) ){//This flag never seems to be set
+      if(options.pMNMesh->ENum() == 0 ){
+         ESS_PROFILE_SCOPE("FillInMesh");
+         ESS_LOG_WARNING("Filling in polymesh, fileName: " << options.fileName << " identifier: " << options.identifier );
+         options.pMNMesh->FillInMesh();
+     
+ 
+         if( options.pMNMesh->GetFlag(MN_MESH_RATSNEST) ){
+            ESS_LOG_ERROR( "Mesh is a 'Rat's Nest' (more than 2 faces per edge),\n fileName: " << options.fileName << " identifier: " << options.identifier<<".\n Please import with the \"Load Geometry from Topology modifier\" option active" );
+         }
+      } 
+      else if(options.pMNMesh->VNum() > meshPos->size()){
+         ESS_LOG_WARNING("Mesh has bad topology. Multiple geometry modifiers not fully supported, fileName: " << options.fileName << " identifier: " << options.identifier );
+      }
+   }
+
 
 	if( ( options.nDataFillFlags & ALEMBIC_DATAFILL_FACELIST ) &&
 	   ( ! ( options.nDataFillFlags & ALEMBIC_DATAFILL_VERTEX ) ) ) {
@@ -867,8 +871,9 @@ int AlembicImport_PolyMesh(const std::string &path, AbcG::IObject& iObj, alembic
 	std::vector<Modifier*> modifiersToEnable;
 
 	bool isDynamicTopo = isAlembicMeshTopoDynamic( &iObj );
-	//isDynamicTopo = true;
-
+    if(options.loadGeometryInTopologyModifier){
+      isDynamicTopo = true;
+    }
 
 	GET_MAX_INTERFACE()->SelectNode( pNode );
 
