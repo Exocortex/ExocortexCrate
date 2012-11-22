@@ -37,13 +37,13 @@ void replaceString(std::string& str, const std::string& oldStr, const std::strin
 #define EC_QUOTE( x ) _EC_QUOTE( x )
 
 
-std::string getExporterName( std::string shortName ) {
+std::string getExporterName( std::string const& shortName ) {
 	std::stringstream exporterName;
 	exporterName << "Exocortex Crate for " << shortName << "," << EC_QUOTE(crate_ver) << "," << EC_QUOTE(alembic_ver) << "," << EC_QUOTE(hdf5_ver);
 	return exporterName.str();
 }
 
-std::string getExporterFileName( std::string fileName ) {
+std::string getExporterFileName( std::string const& fileName ) {
 	std::string sourceName = "Exported from: ";
 	sourceName += fileName;
 
@@ -71,7 +71,7 @@ bool parseTrailingNumber( std::string const& text, std::string const& requiredPr
 
 std::map<std::string,AlembicArchiveInfo> gArchives;
 
-std::string resolvePath( std::string originalPath ) {
+std::string resolvePath( std::string const& originalPath ) {
    ESS_PROFILE_SCOPE("resolvePath");
 /*   static std::map<std::string,std::string> s_originalToResolvedPath;
 
@@ -86,7 +86,7 @@ std::string resolvePath( std::string originalPath ) {
    return resolvedPath;
 }
 
-Alembic::Abc::IArchive * getArchiveFromID(std::string path)
+Alembic::Abc::IArchive * getArchiveFromID(std::string const& path)
 {
 	ESS_PROFILE_SCOPE("getArchiveFromID-1");
 	std::map<std::string,AlembicArchiveInfo>::iterator it;
@@ -124,7 +124,7 @@ Alembic::Abc::IArchive * getArchiveFromID(std::string path)
    return it->second.archive;
 }
 
-bool archiveExists(std::string path)
+bool archiveExists(std::string const& path)
 {
     ESS_PROFILE_SCOPE("archiveExists");
    std::string resolvedPath = resolvePath(path);
@@ -133,8 +133,9 @@ bool archiveExists(std::string path)
    return it != gArchives.end();
 }
 
-AbcArchiveCache* getArchiveCache( std::string path ) {
+AbcArchiveCache* getArchiveCache( std::string const& path ) {
 	ESS_PROFILE_SCOPE("getArchiveCache");
+  getArchiveFromID(path);
 	std::string resolvedPath = resolvePath(path);
     std::map<std::string,AlembicArchiveInfo>::iterator it;
     it = gArchives.find(resolvedPath);
@@ -157,10 +158,10 @@ std::string addArchive(Alembic::Abc::IArchive * archive)
    return archive->getName().c_str();
 }
 
-void deleteArchive(std::string path)
+void deleteArchive(std::string const& path)
 {
    ESS_PROFILE_SCOPE("deleteArchive");
-  std::string resolvedPath = resolvePath(path);
+   std::string resolvedPath = resolvePath(path);
    std::map<std::string,AlembicArchiveInfo>::iterator it;
    it = gArchives.find(resolvedPath);
    if(it == gArchives.end())
@@ -175,8 +176,7 @@ void deleteArchive(std::string path)
 void deleteAllArchives()
 {
    ESS_PROFILE_SCOPE("deleteAllArchives");
- std::map<std::string,AlembicArchiveInfo>::iterator it;
-   for(it = gArchives.begin(); it != gArchives.end(); it++)
+   for(std::map<std::string,AlembicArchiveInfo>::iterator it = gArchives.begin(); it != gArchives.end(); ++it)
    {
       it->second.archive->reset();
       delete(it->second.archive);
@@ -185,7 +185,7 @@ void deleteAllArchives()
 }
 
 
-AbcObjectCache* getObjectCacheFromArchive(std::string path, std::string identifier)
+AbcObjectCache* getObjectCacheFromArchive(std::string const& path, std::string const& identifier)
 {
 	AbcArchiveCache* abcArchiveCache = getArchiveCache( resolvePath( path ) );
 	if( abcArchiveCache == NULL ) {
@@ -198,7 +198,7 @@ AbcObjectCache* getObjectCacheFromArchive(std::string path, std::string identifi
 	return &(it->second);
 }
 
-Abc::IObject getObjectFromArchive(std::string path, std::string identifier)
+Abc::IObject getObjectFromArchive(std::string const& path, std::string const& identifier)
 {
    ESS_PROFILE_SCOPE("getObjectFromArchive");
 	AbcObjectCache* objectCache = getObjectCacheFromArchive(path,identifier );
@@ -207,7 +207,7 @@ Abc::IObject getObjectFromArchive(std::string path, std::string identifier)
 	}
 	return objectCache->obj;
 }
-int addRefArchive(std::string path)
+int addRefArchive(std::string const& path)
 {
    ESS_PROFILE_SCOPE("addRefArchive");
    if(path.empty())
@@ -224,7 +224,7 @@ int addRefArchive(std::string path)
    return it->second.refCount;
 }
 
-int delRefArchive(std::string path)
+int delRefArchive(std::string const& path)
 {
    ESS_PROFILE_SCOPE("delRefArchive");
    std::string resolvedPath = resolvePath(path);
@@ -241,7 +241,7 @@ int delRefArchive(std::string path)
    return it->second.refCount;
 }
 
-int getRefArchive(std::string path)
+int getRefArchive(std::string const& path)
 {
    ESS_PROFILE_SCOPE("getRefArchive");
    std::string resolvedPath = resolvePath(path);
