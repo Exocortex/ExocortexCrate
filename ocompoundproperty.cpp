@@ -138,8 +138,11 @@ PyObject * oCompoundProperty_new(Abc::OCompoundProperty compound, std::string co
       cprop->tsIndex = tsIndex;
 
       const Abc::PropertyHeader * propHeader = compound.getPropertyHeader( in_propName );
-     std::string propName(in_propName);
-     cprop->mBaseCompoundProperty = new Abc::OCompoundProperty(compound.getPtr(), propName);
+		std::string propName(in_propName);
+		if (propHeader != NULL)
+			cprop->mBaseCompoundProperty = new Abc::OCompoundProperty(compound.getProperty( in_propName ).getPtr()->asCompoundPtr(), Alembic::Abc::kWrapExisting);
+		else
+			cprop->mBaseCompoundProperty = new Abc::OCompoundProperty(compound.getPtr(), propName);
 
       return (PyObject *)cprop;
    ALEMBIC_PYOBJECT_CATCH_STATEMENT

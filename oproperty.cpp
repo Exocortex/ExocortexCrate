@@ -1327,13 +1327,13 @@ PyObject * oProperty_new(Abc::OCompoundProperty compound, std::string compoundFu
       else if(baseProp.isArray())
       {
          prop->mIsArray = true;
-		 prop->mBaseArrayProperty = new Abc::OArrayProperty( compoundWriter, in_propName, baseProp.getDataType() );
+		 prop->mBaseArrayProperty = new Abc::OArrayProperty(baseProp.getPtr()->asArrayPtr(), Alembic::Abc::kWrapExisting);
          interpretation = prop->mBaseArrayProperty->getMetaData().get("interpretation");
       }
       else
       {
          prop->mIsArray = false;
-         prop->mBaseScalarProperty = new Abc::OScalarProperty( compoundWriter, in_propName, baseProp.getDataType() );
+         prop->mBaseScalarProperty = new Abc::OScalarProperty(baseProp.getPtr()->asScalarPtr(), Alembic::Abc::kWrapExisting);
          interpretation = prop->mBaseScalarProperty->getMetaData().get("interpretation");
       }
 
