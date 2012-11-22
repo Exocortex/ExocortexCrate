@@ -30,7 +30,7 @@
 		AlembicFileAndTimeControlPtr fileAndTime;
 
 		// --- replace data
-		bool replaceSimilarData(const char *functionName, SceneNodeAlembicPtr fileNode, SceneNodeAlembicPtr& nextFileNode);
+		bool replaceSimilarData(const char *functionName, SceneNodeAlembicPtr fileNode);
 
 		// --- add child
 		bool executeAddChild(const MString &cmd, SceneNodeAppPtr& newAppNode);

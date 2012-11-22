@@ -42,7 +42,7 @@ AlembicFileAndTimeControlPtr AlembicFileAndTimeControl::createControl(const IJob
 	return AlembicFileAndTimeControlPtr(new AlembicFileAndTimeControl(var));
 }
 
-bool SceneNodeMaya::replaceSimilarData(const char *functionName, SceneNodeAlembicPtr fileNode, SceneNodeAlembicPtr& nextFileNode)
+bool SceneNodeMaya::replaceSimilarData(const char *functionName, SceneNodeAlembicPtr fileNode)
 {
 	static const MString format("ExoAlembic._attach.attach^1s(r\"^2s\", r\"^3s\", ^4s, ^5s)");
 
@@ -63,17 +63,17 @@ bool SceneNodeMaya::replaceData(SceneNodeAlembicPtr fileNode, const IJobStringPa
 	{
 	case ETRANSFORM:
 	case ITRANSFORM:
-		return replaceSimilarData("Xform", fileNode, nextFileNode);
+		return replaceSimilarData("Xform", fileNode);
 	case CAMERA:
-		break;
+		return replaceSimilarData("Camera", fileNode);
 	case POLYMESH:
 	case SUBD:
-		return replaceSimilarData("PolyMesh", fileNode, nextFileNode);
+		return replaceSimilarData("PolyMesh", fileNode);
 	case CURVES:
 	case HAIR:
-		break;
+		return replaceSimilarData("Curves", fileNode);
 	case PARTICLES:
-		break;
+		return replaceSimilarData("Points", fileNode);
 	//case SURFACE:	// handle as default for now
 		//break;
 	//case LIGHT:	// handle as default for now
