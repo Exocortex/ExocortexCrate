@@ -1707,6 +1707,11 @@ ESS_CALLBACK_START(alembic_import_Execute, CRef&)
 
    std::stringstream sstream;
 
+   if( args.GetCount() != 10 ) {
+     ESS_LOG_ERROR("The alembic_import command requires 10 arguments, encountered only " << args.GetCount() << " arguments." );
+     return CStatus( CStatus::InvalidArgument );
+   }
+
    if(!args[0].GetAsText().IsEmpty()){
       sstream<<"filename="<<args[0].GetAsText().GetAsciiString()<<";";
    }
@@ -1813,7 +1818,7 @@ ESS_CALLBACK_START(alembic_import_jobs_Execute, CRef&)
          jobParser.filename = filebrowser.GetProperty(L"FilePathName").GetAsText().GetAsciiString();
          if(jobParser.filename.empty()){
             return CStatus::Abort;
-         }
+         } 
       }
       else
       {
@@ -1833,9 +1838,14 @@ ESS_CALLBACK_START(alembic_import_jobs_Execute, CRef&)
       return CStatus::Fail;
    }
    catch(...){
-      ESS_LOG_ERROR("[alembic] Error reading file.");
+     ESS_LOG_ERROR("[alembic] Error reading file: "<<jobParser.filename << " (uncaught exception)");
       return CStatus::Fail;
    }
+   if( archive == NULL ) {
+      ESS_LOG_ERROR("[alembic] Error reading file: "<<jobParser.filename<< " (NULL alembic pointer)");
+      return CStatus::Fail;
+   }
+
    addRefArchive( jobParser.filename );
    AbcArchiveCache *pArchiveCache = getArchiveCache( jobParser.filename );
 
