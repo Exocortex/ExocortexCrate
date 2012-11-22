@@ -16,7 +16,7 @@ rollout AlembicImportSettings "Alembic Import Settings" width:288 height:150
 	--GroupBox grpVisibility "Visibility" pos:[9,121] width:272 height:46
 	--dropdownList dropDownVis "" pos:[20,140] width:252 height:21 items:#("Just Import Value", "Connected Controllers") selection:1
 	checkbox materialIdsCheckbox "Material Ids" pos:[48,82] width:145 height:16 checked:true
-    checkbox geoFromTopoCheckbox "Load Geometry From Topology Modifier" pos:[48,100] width:180 height:16 checked:false
+    checkbox geoFromTopoCheckbox "Load Geometry From Topology Modifier" pos:[48,100] width:220 height:16 checked:false
 
 	on importButton pressed do
 	(
