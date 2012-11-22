@@ -100,10 +100,27 @@ def attachCamera(name, identifier, jobInfo, isConstant=False):
 
 def attachCurves(name, identifier, jobInfo, isConstant=False):
 	cmds.ExocortexAlembic_profileBegin(f="Python.ExocortexAlembic._attach.attachCurves")
-	camObj = cmds.connectionInfo(name+".focalLength", sfd=True)
-	if camObj != None and cmds.objectType(camObj) == "ExocortexAlembicPoints":
-		attachTimeAndFile(camObj, jobInfo, isConstant)
+	curObj = cmds.connectionInfo(name+".focalLength", sfd=True)
+	if curObj != None and cmds.objectType(curObj) == "ExocortexAlembicCurvesDeform":
+		attachTimeAndFile(curObj, jobInfo, isConstant)
 		return
+
+	# create deformer, and attach time and file
+	newDform = cmds.deformer(name, type="ExocortexAlembicCurvesDeform")[0]
+	cmds.setAttr(newDform+".identifier", identifier, type="string")
+	attachTimeAndFile(newDform, jobInfo, isConstant)
+
+  	# get curObj new "output" attribute connection
+  	if curObj != None and cmds.objectType(curObj) != "ExocortexAlembicCurves":
+  		originalCur = cmds.connectionInfo(curObj+".output", sfd=True).split('.')[0]
+
+  		cmds.delete(curObj)
+  		curObj = cmds.createNode("ExocortexAlembicCurves")
+  		attachTimeAndFile(curObj, jobInfo, isConstant)
+
+		cmds.connectAttr(curObj+".outCurve", originalCur+".create")
+		cmds.connectAttr(jobInfo.filenode+".outFileName", curObj+".fileName")
+		cmds.setAttr(curObj+".identifier", identifier, type="string")
 
 	cmds.ExocortexAlembic_profileEnd(f="Python.ExocortexAlembic._attach.attachCurves")
 	pass

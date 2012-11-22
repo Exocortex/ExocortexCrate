@@ -56,8 +56,6 @@ bool SceneNodeMaya::replaceSimilarData(const char *functionName, SceneNodeAlembi
 bool SceneNodeMaya::replaceData(SceneNodeAlembicPtr fileNode, const IJobStringParser& jobParams, SceneNodeAlembicPtr& nextFileNode)
 {
 	ESS_PROFILE_SCOPE("SceneNodeMaya::replaceData");
-	if(!jobParams.attachToExisting)
-		return false;
 	nextFileNode = fileNode;
 	switch(nextFileNode->type)
 	{
@@ -139,9 +137,6 @@ bool SceneNodeMaya::addPolyMeshChild(SceneNodeAlembicPtr fileNode, SceneNodeAppP
 bool SceneNodeMaya::addChild(SceneNodeAlembicPtr fileNode, const IJobStringParser& jobParams, SceneNodeAppPtr& newAppNode)
 {
 	ESS_PROFILE_SCOPE("SceneNodeMaya::addChild");
-	if(jobParams.attachToExisting)
-		return false;
-
 	newAppNode.reset(new SceneNodeMaya(fileAndTime));
 	switch(newAppNode->type = fileNode->type)
 	{
