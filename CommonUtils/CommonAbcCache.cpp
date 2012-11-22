@@ -33,5 +33,6 @@ AbcObjectCache* addObjectToCache( AbcArchiveCache* fullNameToObjectCache, Abc::I
 void createAbcArchiveCache( Abc::IArchive *pArchive, AbcArchiveCache* fullNameToObjectCache ) {
 	ESS_PROFILE_SCOPE("createAbcArchiveCache");
 	EC_LOG_INFO( "Creating AbcArchiveCache for archive: " << pArchive->getName() );
-	addObjectToCache( fullNameToObjectCache, pArchive->getTop(), "" );
+   Abc::IObject top = pArchive->getTop();
+	addObjectToCache( fullNameToObjectCache, top, "" );
 }
