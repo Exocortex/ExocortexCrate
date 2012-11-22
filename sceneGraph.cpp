@@ -25,7 +25,7 @@ AlembicFileAndTimeControl::~AlembicFileAndTimeControl(void)
 AlembicFileAndTimeControlPtr AlembicFileAndTimeControl::createControl(const IJobStringParser& jobParams)
 {
 	static unsigned int numberOfControlCreated = 0;
-	static const MString format("^1s = ExoAlembic._functions.IJobInfo(r\"^2s\", ^3s, ^4s, ^5s)\n");
+	static const MString format("^1s = ExoAlembic._import.IJobInfo(r\"^2s\", ^3s, ^4s, ^5s)\n");
 
 	ESS_PROFILE_SCOPE("AlembicFileAndTimeControl::createControl");
 	MString var("__alembic_file_and_time_control_tuple_");
@@ -42,18 +42,70 @@ AlembicFileAndTimeControlPtr AlembicFileAndTimeControl::createControl(const IJob
 	return AlembicFileAndTimeControlPtr(new AlembicFileAndTimeControl(var));
 }
 
+bool SceneNodeMaya::replaceSimilarData(const char *functionName, SceneNodeAlembicPtr fileNode, SceneNodeAlembicPtr& nextFileNode)
+{
+	static const MString format("ExoAlembic._attach.attach^1s(r\"^2s\", r\"^3s\", ^4s, ^5s)");
+
+	ESS_PROFILE_SCOPE("SceneNodeMaya::replaceSimilarData");
+	MString cmd;
+	cmd.format(format, functionName, fileNode->name.c_str(), fileNode->dccIdentifier.c_str(), fileAndTime->variable(), PythonBool(fileNode->pObjCache->isConstant));
+	MGlobal::executePythonCommand(cmd);
+	return true;
+}
+
 bool SceneNodeMaya::replaceData(SceneNodeAlembicPtr fileNode, const IJobStringParser& jobParams, SceneNodeAlembicPtr& nextFileNode)
 {
 	ESS_PROFILE_SCOPE("SceneNodeMaya::replaceData");
 	if(!jobParams.attachToExisting)
 		return false;
-
+	nextFileNode = fileNode;
+	switch(nextFileNode->type)
+	{
+	case ETRANSFORM:
+	case ITRANSFORM:
+		return replaceSimilarData("Xform", fileNode, nextFileNode);
+	case CAMERA:
+		break;
+	case POLYMESH:
+	case SUBD:
+		return replaceSimilarData("PolyMesh", fileNode, nextFileNode);
+	case CURVES:
+	case HAIR:
+		break;
+	case PARTICLES:
+		break;
+	//case SURFACE:	// handle as default for now
+		//break;
+	//case LIGHT:	// handle as default for now
+		//break;
+	default:
+		break;
+	}
 	return true;
+}
+
+bool SceneNodeMaya::executeAddChild(const MString &cmd, SceneNodeAppPtr& newAppNode)
+{
+	MString result;
+	MGlobal::executePythonCommand(cmd, result);
+	newAppNode->dccIdentifier = result.asChar();
+	newAppNode->name = newAppNode->dccIdentifier;
+	return true;
+}
+
+bool SceneNodeMaya::addSimilarChild(const char *functionName, SceneNodeAlembicPtr fileNode, SceneNodeAppPtr& newAppNode)
+{
+	static const MString format("ExoAlembic._import.import^1s(r\"^2s\", r\"^3s\", ^4s, r\"^5s\", ^6s)");
+
+	ESS_PROFILE_SCOPE("SceneNodeMaya::addSimilarChild");
+	MString cmd;
+	cmd.format(format, functionName, fileNode->name.c_str(), fileNode->dccIdentifier.c_str(), fileAndTime->variable(), dccIdentifier.c_str(), PythonBool(fileNode->pObjCache->isConstant));
+	return executeAddChild(cmd, newAppNode);
 }
 
 bool SceneNodeMaya::addXformChild(SceneNodeAlembicPtr fileNode, SceneNodeAppPtr& newAppNode)
 {
-	static const MString format("ExoAlembic._functions.importXform(r\"^1s\", r\"^2s\", ^3s, ^4s, ^5s)");
+	static const MString format("ExoAlembic._import.importXform(r\"^1s\", r\"^2s\", ^3s, ^4s, ^5s)");
 
 	ESS_PROFILE_SCOPE("SceneNodeMaya::addXformChild");
 	MString parent;
@@ -70,57 +122,18 @@ bool SceneNodeMaya::addXformChild(SceneNodeAlembicPtr fileNode, SceneNodeAppPtr&
 
 	MString cmd;
 	cmd.format(format, fileNode->name.c_str(), fileNode->dccIdentifier.c_str(), fileAndTime->variable(), parent, PythonBool(fileNode->pObjCache->isConstant));
-
-	MGlobal::executePythonCommand(cmd, parent);
-	newAppNode->dccIdentifier = parent.asChar();
-	newAppNode->name = newAppNode->dccIdentifier;
-	return true;
-}
-
-bool SceneNodeMaya::addCameraChild(SceneNodeAlembicPtr fileNode, SceneNodeAppPtr& newAppNode)
-{
-	static const MString format("ExoAlembic._functions.importCamera(r\"^1s\", r\"^2s\", ^3s, r\"^4s\", ^5s)");
-
-	ESS_PROFILE_SCOPE("SceneNodeMaya::addCameraChild");
-	MString cmd;
-	cmd.format(format, fileNode->name.c_str(), fileNode->dccIdentifier.c_str(), fileAndTime->variable(), dccIdentifier.c_str(), PythonBool(fileNode->pObjCache->isConstant));
-
-	MString result;
-	MGlobal::executePythonCommand(cmd, result);
-	newAppNode->dccIdentifier = result.asChar();
-	newAppNode->name = newAppNode->dccIdentifier;
-	return true;
+	return executeAddChild(cmd, newAppNode);
 }
 
 bool SceneNodeMaya::addPolyMeshChild(SceneNodeAlembicPtr fileNode, SceneNodeAppPtr& newAppNode)
 {
-	static const MString format("ExoAlembic._functions.importPolyMesh(r\"^1s\", r\"^2s\", ^3s, \"^4s\", ^5s, ^6s)");
+	static const MString format("ExoAlembic._import.importPolyMesh(r\"^1s\", r\"^2s\", ^3s, \"^4s\", ^5s, ^6s)");
 
 	ESS_PROFILE_SCOPE("SceneNodeMaya::addPolyMeshChild");
 	MString cmd;
 	cmd.format(format,	fileNode->name.c_str(),	fileNode->dccIdentifier.c_str(),				fileAndTime->variable(),
 						dccIdentifier.c_str(),	PythonBool(fileNode->pObjCache->isConstant),	PythonBool(fileNode->pObjCache->isMeshTopoDynamic));
-
-	MString result;
-	MGlobal::executePythonCommand(cmd, result);
-	newAppNode->dccIdentifier = result.asChar();
-	newAppNode->name = newAppNode->dccIdentifier;
-	return true;
-}
-
-bool SceneNodeMaya::addPointsChild(SceneNodeAlembicPtr fileNode, SceneNodeAppPtr& newAppNode)
-{
-	static const MString format("ExoAlembic._functions.importPoints(r\"^1s\", r\"^2s\", ^3s, r\"^4s\", ^5s)");
-
-	ESS_PROFILE_SCOPE("SceneNodeMaya::addPointsChild");
-	MString cmd;
-	cmd.format(format, fileNode->name.c_str(), fileNode->dccIdentifier.c_str(), fileAndTime->variable(), dccIdentifier.c_str(), PythonBool(fileNode->pObjCache->isConstant));
-
-	MString result;
-	MGlobal::executePythonCommand(cmd, result);
-	newAppNode->dccIdentifier = result.asChar();
-	newAppNode->name = newAppNode->dccIdentifier;
-	return true;
+	return executeAddChild(cmd, newAppNode);
 }
 
 bool SceneNodeMaya::addChild(SceneNodeAlembicPtr fileNode, const IJobStringParser& jobParams, SceneNodeAppPtr& newAppNode)
@@ -136,16 +149,15 @@ bool SceneNodeMaya::addChild(SceneNodeAlembicPtr fileNode, const IJobStringParse
 	case ITRANSFORM:
 		return addXformChild(fileNode, newAppNode);
 	case CAMERA:
-		return addCameraChild(fileNode, newAppNode);
+		return addSimilarChild("Camera", fileNode, newAppNode);
 	case POLYMESH:
 	case SUBD:
 		return addPolyMeshChild(fileNode, newAppNode);
 	case CURVES:
-		break;
-	case PARTICLES:
-		return addPointsChild(fileNode, newAppNode);
 	case HAIR:
-		break;
+		return addSimilarChild("Curves", fileNode, newAppNode);
+	case PARTICLES:
+		return addSimilarChild("Points", fileNode, newAppNode);
 	//case SURFACE:	// handle as default for now
 		//break;
 	//case LIGHT:	// handle as default for now

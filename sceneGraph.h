@@ -29,10 +29,17 @@
 	private:
 		AlembicFileAndTimeControlPtr fileAndTime;
 
+		// --- replace data
+		bool replaceSimilarData(const char *functionName, SceneNodeAlembicPtr fileNode, SceneNodeAlembicPtr& nextFileNode);
+
+		// --- add child
+		bool executeAddChild(const MString &cmd, SceneNodeAppPtr& newAppNode);
+
+		// because camera, curves and points work the same way!
+		bool addSimilarChild(const char *functionName, SceneNodeAlembicPtr fileNode, SceneNodeAppPtr& newAppNode);
 		bool addXformChild(SceneNodeAlembicPtr fileNode, SceneNodeAppPtr& newAppNode);
-		bool addCameraChild(SceneNodeAlembicPtr fileNode, SceneNodeAppPtr& newAppNode);
 		bool addPolyMeshChild(SceneNodeAlembicPtr fileNode, SceneNodeAppPtr& newAppNode);
-		bool addPointsChild(SceneNodeAlembicPtr fileNode, SceneNodeAppPtr& newAppNode);
+
 	public:
 		SceneNodeMaya(const AlembicFileAndTimeControlPtr alembicFileAndTimeControl = AlembicFileAndTimeControlPtr()): fileAndTime(alembicFileAndTimeControl)
 		{}

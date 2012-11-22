@@ -88,17 +88,18 @@ AlembicPoints::AlembicPoints(SceneNodePtr eNode, AlembicWriteJob * in_Job, Abc::
 	mObject = AbcG::OPoints(GetMyParent(), eNode->name, GetJob()->GetAnimatedTs());
 	mSchema = mObject.getSchema();
 
-	mAgeProperty   = Abc::OFloatArrayProperty(mSchema.getArbGeomParams(), ".age", mSchema.getMetaData(), GetJob()->GetAnimatedTs() );
-	mMassProperty  = Abc::OFloatArrayProperty(mSchema.getArbGeomParams(), ".mass", mSchema.getMetaData(), GetJob()->GetAnimatedTs() );
-	mColorProperty = Abc::OC4fArrayProperty  (mSchema.getArbGeomParams(), ".color", mSchema.getMetaData(), GetJob()->GetAnimatedTs() );
+	Abc::OCompoundProperty arbGeomParam = mSchema.getArbGeomParams();
+	mAgeProperty   = Abc::OFloatArrayProperty(arbGeomParam, ".age", mSchema.getMetaData(), GetJob()->GetAnimatedTs() );
+	mMassProperty  = Abc::OFloatArrayProperty(arbGeomParam, ".mass", mSchema.getMetaData(), GetJob()->GetAnimatedTs() );
+	mColorProperty = Abc::OC4fArrayProperty  (arbGeomParam, ".color", mSchema.getMetaData(), GetJob()->GetAnimatedTs() );
 
-	mAngularVelocityProperty = Abc::OQuatfArrayProperty  (mSchema.getArbGeomParams(), ".angularvelocity", mSchema.getMetaData(), GetJob()->GetAnimatedTs() );
-	mInstanceNamesProperty   = Abc::OStringArrayProperty (mSchema.getArbGeomParams(), ".instancenames", mSchema.getMetaData(), GetJob()->GetAnimatedTs() );
-	mOrientationProperty     = Abc::OQuatfArrayProperty  (mSchema.getArbGeomParams(), ".orientation", mSchema.getMetaData(), GetJob()->GetAnimatedTs() );
-	mScaleProperty           = Abc::OV3fArrayProperty    (mSchema.getArbGeomParams(), ".scale", mSchema.getMetaData(), GetJob()->GetAnimatedTs() );
-	mShapeInstanceIdProperty = Abc::OUInt16ArrayProperty (mSchema.getArbGeomParams(), ".shapeinstanceid", mSchema.getMetaData(), GetJob()->GetAnimatedTs() );
-	mShapeTimeProperty       = Abc::OFloatArrayProperty  (mSchema.getArbGeomParams(), ".shapetime", mSchema.getMetaData(), GetJob()->GetAnimatedTs() );
-	mShapeTypeProperty       = Abc::OUInt16ArrayProperty (mSchema.getArbGeomParams(), ".shapetype", mSchema.getMetaData(), GetJob()->GetAnimatedTs() );
+	mAngularVelocityProperty = Abc::OQuatfArrayProperty  (arbGeomParam, ".angularvelocity", mSchema.getMetaData(), GetJob()->GetAnimatedTs() );
+	mInstanceNamesProperty   = Abc::OStringArrayProperty (arbGeomParam, ".instancenames", mSchema.getMetaData(), GetJob()->GetAnimatedTs() );
+	mOrientationProperty     = Abc::OQuatfArrayProperty  (arbGeomParam, ".orientation", mSchema.getMetaData(), GetJob()->GetAnimatedTs() );
+	mScaleProperty           = Abc::OV3fArrayProperty    (arbGeomParam, ".scale", mSchema.getMetaData(), GetJob()->GetAnimatedTs() );
+	mShapeInstanceIdProperty = Abc::OUInt16ArrayProperty (arbGeomParam, ".shapeinstanceid", mSchema.getMetaData(), GetJob()->GetAnimatedTs() );
+	mShapeTimeProperty       = Abc::OFloatArrayProperty  (arbGeomParam, ".shapetime", mSchema.getMetaData(), GetJob()->GetAnimatedTs() );
+	mShapeTypeProperty       = Abc::OUInt16ArrayProperty (arbGeomParam, ".shapetype", mSchema.getMetaData(), GetJob()->GetAnimatedTs() );
 
 	MStringArray instancers;
 	MGlobal::executeCommand(("listConnections -t instancer " + eNode->name).c_str(), instancers);
