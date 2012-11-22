@@ -54,67 +54,64 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
    if(options.nDataFillFlags & ALEMBIC_DATAFILL_IGNORE_SUBFRAME_SAMPLES){
       RoundTicksToNearestFrame(nTicks, fRoundedTimeAlpha);
    }
-  double sampleTime = GetSecondsFromTimeValue(nTicks);
+   double sampleTime = GetSecondsFromTimeValue(nTicks);
 
-  SampleInfo sampleInfo;
-  if(objMesh.valid()) {
-		ESS_PROFILE_SCOPE("getSampleInfo");
+   SampleInfo sampleInfo;
+   if(objMesh.valid()) {
+	  ESS_PROFILE_SCOPE("getSampleInfo");
       sampleInfo = getSampleInfo(
          sampleTime,
          objMesh.getSchema().getTimeSampling(),
          objMesh.getSchema().getNumSamples()
       );
-  }
-   else
+   }
+   else{
       sampleInfo = getSampleInfo(
          sampleTime,
          objSubD.getSchema().getTimeSampling(),
          objSubD.getSchema().getNumSamples()
       );
-
+   }
    AbcG::IPolyMeshSchema::Sample polyMeshSample;
    AbcG::ISubDSchema::Sample subDSample;
 
-   if(objMesh.valid())
-       objMesh.getSchema().get(polyMeshSample,sampleInfo.floorIndex);
-   else
-       objSubD.getSchema().get(subDSample,sampleInfo.floorIndex);
+   if(objMesh.valid()) objMesh.getSchema().get(polyMeshSample,sampleInfo.floorIndex);
+   else objSubD.getSchema().get(subDSample,sampleInfo.floorIndex);
 
    int currentNumVerts = options.pMNMesh->numv;
 
-  	   Abc::P3fArraySamplePtr meshPos;
-       Abc::V3fArraySamplePtr meshVel;
+   Abc::P3fArraySamplePtr meshPos;
+   Abc::V3fArraySamplePtr meshVel;
 
-       bool hasDynamicTopo = options.pObjectCache->isMeshTopoDynamic;//isAlembicMeshTopoDynamic( options.pIObj );
-       if(objMesh.valid())
-       {
-     		ESS_PROFILE_SCOPE("Mesh getPositions/getVelocities/faceCountProp");
-          meshPos = polyMeshSample.getPositions();
-           meshVel = polyMeshSample.getVelocities();
-       }
-       else
-       {
-     		ESS_PROFILE_SCOPE("SubD getPositions/getVelocities/faceCountProp");
-           meshPos = subDSample.getPositions();
-           meshVel = subDSample.getVelocities();
-       }
+   bool hasDynamicTopo = options.pObjectCache->isMeshTopoDynamic;//isAlembicMeshTopoDynamic( options.pIObj );
+   if(objMesh.valid())
+   {
+   ESS_PROFILE_SCOPE("Mesh getPositions/getVelocities/faceCountProp");
+     meshPos = polyMeshSample.getPositions();
+     meshVel = polyMeshSample.getVelocities();
+   }
+   else
+   {
+   ESS_PROFILE_SCOPE("SubD getPositions/getVelocities/faceCountProp");
+     meshPos = subDSample.getPositions();
+     meshVel = subDSample.getVelocities();
+   }
 
 	//MH: What is this code for? //related to vertex blending
 	//note that the fillInMesh call will crash if the points are not initilaized (tested max 2013)
    if(  ( options.nDataFillFlags & ALEMBIC_DATAFILL_FACELIST ) ||
 	   ( options.nDataFillFlags & ALEMBIC_DATAFILL_VERTEX ) ) {
-		   if (currentNumVerts != meshPos->size() && ! options.pMNMesh->GetFlag( MN_MESH_RATSNEST ) )
- 		   {
-       		ESS_PROFILE_SCOPE("resize and clear vertices");
-			   int numVerts = static_cast<int>(meshPos->size());
-			   
-			   options.pMNMesh->setNumVerts(numVerts);
-				MNVert* pMeshVerties = options.pMNMesh->V(0);
-			   for(int i=0;i<numVerts;i++)
-			   {
-				   pMeshVerties[i].p = Point3(0,0,0);
-			   }
+	   if (currentNumVerts != meshPos->size() && ! options.pMNMesh->GetFlag( MN_MESH_RATSNEST ) )
+	   {
+    		ESS_PROFILE_SCOPE("resize and clear vertices");
+		   int numVerts = static_cast<int>(meshPos->size());
+		   
+		   options.pMNMesh->setNumVerts(numVerts);
+		   MNVert* pMeshVerties = options.pMNMesh->V(0);
+		   for(int i=0;i<numVerts;i++){
+			   pMeshVerties[i].p = Point3(0,0,0);
 		   }
+	   }
 
 		validateMeshes( options, "ALEMBIC_DATAFILL_FACELIST | ALEMBIC_DATAFILL_VERTEX" );
    }
