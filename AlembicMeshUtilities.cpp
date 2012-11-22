@@ -300,7 +300,7 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
   	  //if( !options.pMNMesh->GetFlag( MN_MESH_FILLED_IN ) ){//This flag never seems to be set
       if(options.pMNMesh->ENum() == 0 ){
          ESS_PROFILE_SCOPE("FillInMesh");
-         ESS_LOG_WARNING("Filling in polymesh, fileName: " << options.fileName << " identifier: " << options.identifier );
+         //ESS_LOG_WARNING("Filling in polymesh, fileName: " << options.fileName << " identifier: " << options.identifier );
          options.pMNMesh->FillInMesh();
      
  
