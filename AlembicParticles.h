@@ -153,7 +153,7 @@ private:
 	void            FillParticleShapeNodes(AbcG::IPoints &iPoints, const SampleInfo &sampleInfo);
     INode*          GetParticleMeshNode(int meshNumber, INode *displayNode);
   //  void            ClearCurrentViewportMeshes();
-	void	ClearMeshCache();
+	//void	ClearMeshCache();
 
 private:
     Mesh *BuildPointMesh(int meshNumber, TimeValue t, INode *node, View& view, BOOL &needDelete);
@@ -175,17 +175,17 @@ private:
     std::vector<INode*> m_InstanceShapeINodes;
 	std::vector<VertColor> m_VCArray;
 
-	struct meshInfo{
-		BOOL bMeshNeedDelete;
-		Mesh* pMesh;
+	//struct meshInfo{
+	//	BOOL bMeshNeedDelete;
+	//	Mesh* pMesh;
 
-		meshInfo():bMeshNeedDelete(FALSE), pMesh(NULL)
-		{}
-	};
-	typedef std::pair<INode*, TimeValue> nodeTimePair;
-	typedef std::map<nodeTimePair, meshInfo> nodeAndTimeToMeshMap;
+	//	meshInfo():bMeshNeedDelete(FALSE), pMesh(NULL)
+	//	{}
+	//};
+	//typedef std::pair<INode*, TimeValue> nodeTimePair;
+	//typedef std::map<nodeTimePair, meshInfo> nodeAndTimeToMeshMap;
 
-	nodeAndTimeToMeshMap meshCacheMap;
+	//nodeAndTimeToMeshMap meshCacheMap;
 
     //size_t m_TotalShapesToEnumerate;
    // std::vector<viewportmesh> m_ParticleViewportMeshes;

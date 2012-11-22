@@ -757,7 +757,7 @@ void AlembicParticles::FillParticleShapeNodes(AbcG::IPoints &iPoints, const Samp
    ESS_PROFILE_FUNC();
     //m_TotalShapesToEnumerate = 0;
     m_InstanceShapeINodes.clear();
-	ClearMeshCache();
+	//ClearMeshCache();
 
 	Abc::IStringArrayProperty shapeInstanceNameProperty;
 	if( getArbGeomParamPropertyAlembic( iPoints, "instancenames", shapeInstanceNameProperty ) ) {		
@@ -1693,17 +1693,17 @@ Mesh *AlembicParticles::BuildRectangleMesh(int meshNumber, TimeValue t, INode *n
 
 
 
-void AlembicParticles::ClearMeshCache()
-{
-   ESS_PROFILE_FUNC();
-	for(nodeAndTimeToMeshMap::iterator it=meshCacheMap.begin(); it != meshCacheMap.end(); it++){
-		meshInfo& mi = it->second;
-		if(mi.bMeshNeedDelete){
-			delete mi.pMesh;
-		}
-	}
-	meshCacheMap.clear();
-}
+//void AlembicParticles::ClearMeshCache()
+//{
+//   ESS_PROFILE_FUNC();
+//	for(nodeAndTimeToMeshMap::iterator it=meshCacheMap.begin(); it != meshCacheMap.end(); it++){
+//		meshInfo& mi = it->second;
+//		if(mi.bMeshNeedDelete){
+//			delete mi.pMesh;
+//		}
+//	}
+//	meshCacheMap.clear();
+//}
 
 Mesh* GetMeshFromNode(INode *iNode, const TimeValue t, BOOL& bNeedDelete)
 {
