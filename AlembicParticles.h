@@ -154,6 +154,7 @@ private:
     INode*          GetParticleMeshNode(int meshNumber, INode *displayNode);
   //  void            ClearCurrentViewportMeshes();
 	//void	ClearMeshCache();
+    void AlembicParticles::clearViewportMeshes();
 
 private:
     Mesh *BuildPointMesh(int meshNumber, TimeValue t, INode *node, View& view, BOOL &needDelete);
@@ -189,7 +190,10 @@ private:
 
     //size_t m_TotalShapesToEnumerate;
    // std::vector<viewportmesh> m_ParticleViewportMeshes;
+
     std::string m_CachedAbcFile;
+public:
+       std::vector<viewportmesh> m_viewportMeshes;
 private:
     GenBoxObject *m_pBoxMaker;
     GenSphere *m_pSphereMaker;

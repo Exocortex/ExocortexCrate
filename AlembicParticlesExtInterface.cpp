@@ -49,7 +49,8 @@ bool IAlembicParticlesExt::GetRenderMeshVertexSpeed(TimeValue t, INode *inode, V
 	for(int i=0; i<numParticles; i++)
 	{
 		BOOL curNeedDelete = FALSE;
-		Mesh* pMesh = m_pAlembicParticles->GetMultipleRenderMesh_Internal(t, inode, nullView, curNeedDelete, i);
+		//Mesh* pMesh = m_pAlembicParticles->GetMultipleRenderMesh_Internal(t, inode, nullView, curNeedDelete, i);
+        Mesh* pMesh = m_pAlembicParticles->m_viewportMeshes[i].mesh;
 
 		if(!pMesh){
 			continue;
@@ -73,7 +74,8 @@ bool IAlembicParticlesExt::GetRenderMeshVertexSpeed(TimeValue t, INode *inode, V
 	for(int i=0; i<numParticles; i++){
 
 		BOOL curNeedDelete = FALSE;
-		Mesh* pMesh = m_pAlembicParticles->GetMultipleRenderMesh_Internal(t, inode, nullView, curNeedDelete, i);
+		//Mesh* pMesh = m_pAlembicParticles->GetMultipleRenderMesh_Internal(t, inode, nullView, curNeedDelete, i);
+        Mesh* pMesh = m_pAlembicParticles->m_viewportMeshes[i].mesh;
 
 		if(!pMesh){
 			continue;

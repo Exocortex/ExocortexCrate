@@ -139,9 +139,23 @@ AlembicParticles::~AlembicParticles()
     ALEMBIC_SAFE_DELETE(m_pDiskMaker);
     ALEMBIC_SAFE_DELETE(m_pRectangleMaker);
 	ALEMBIC_SAFE_DELETE(m_pAlembicParticlesExt);
+    clearViewportMeshes();
 }
 
 static const bool LOG = false;
+
+void AlembicParticles::clearViewportMeshes(){
+   ESS_PROFILE_FUNC();
+    //clear the viewport meshes
+    for(int i=0; i<m_viewportMeshes.size(); i++){
+       if(m_viewportMeshes[i].needDelete){
+          m_viewportMeshes[i].mesh->FreeAll();
+          delete m_viewportMeshes[i].mesh;
+          //ESS_LOG_WARNING("deleting mesh");
+       }
+    }
+    m_viewportMeshes.clear();
+}
 
 void AlembicParticles::UpdateParticles(TimeValue t, INode *node)
 {
@@ -232,20 +246,21 @@ void AlembicParticles::UpdateParticles(TimeValue t, INode *node)
 	GetParticleShapeInstanceIds(m_iPoints, sampleInfo, m_InstanceShapeIds );
 	GetParticleShapeInstanceTimes(m_iPoints, sampleInfo, m_InstanceShapeTimes );
 
-
+    clearViewportMeshes();
 
     // Find the scene nodes for all our instances
     FillParticleShapeNodes(m_iPoints, sampleInfo);
 
-  /*  // Rebuild the viewport meshes
-    NullView nullView;
-    for (int i = 0; i < m_ParticleViewportMeshes.size(); i += 1)
     {
-        SetAFlag(A_NOTREND);
-        m_ParticleViewportMeshes[i].mesh = GetMultipleRenderMesh(t, node, nullView, m_ParticleViewportMeshes[i].needDelete, i);   
-       
-        ClearAFlag(A_NOTREND);
-    }*/
+    ESS_PROFILE_SCOPE("Viewport instance mesh cache creation");
+    m_viewportMeshes.resize(m_InstanceShapeNames->size());
+    ExoNullView nullView;
+	for(int i=0; i<m_viewportMeshes.size(); i++)
+	{
+       m_viewportMeshes[i].mesh = GetMultipleRenderMesh_Internal(t, node, nullView, m_viewportMeshes[i].needDelete, i);
+	}
+
+    }
     
     tvalid = t;
     valid = TRUE;
@@ -757,7 +772,6 @@ void AlembicParticles::FillParticleShapeNodes(AbcG::IPoints &iPoints, const Samp
    ESS_PROFILE_FUNC();
     //m_TotalShapesToEnumerate = 0;
     m_InstanceShapeINodes.clear();
-	//ClearMeshCache();
 
 	Abc::IStringArrayProperty shapeInstanceNameProperty;
 	if( getArbGeomParamPropertyAlembic( iPoints, "instancenames", shapeInstanceNameProperty ) ) {		
@@ -771,7 +785,7 @@ void AlembicParticles::FillParticleShapeNodes(AbcG::IPoints &iPoints, const Samp
 
 		//m_TotalShapesToEnumerate = m_InstanceShapeNames->size();
 		m_InstanceShapeINodes.resize(m_InstanceShapeNames->size());
-	    
+
         INodeMap nodeMap;
         buildINodeMap(nodeMap);
 
@@ -945,6 +959,7 @@ Mesh* AlembicParticles::GetRenderMesh(TimeValue t, INode *inode, View &view, BOO
 	{
 		BOOL curNeedDelete = FALSE;
 		Mesh* pMesh = GetMultipleRenderMesh_Internal(t, inode, nullView, curNeedDelete, i);
+        //Mesh* pMesh = m_viewportMeshes[i].mesh;
 
 		if(!pMesh){
 			continue;
@@ -1005,6 +1020,7 @@ Mesh* AlembicParticles::GetRenderMesh(TimeValue t, INode *inode, View &view, BOO
 	{
 		BOOL curNeedDelete = FALSE;
 		Mesh* pMesh = GetMultipleRenderMesh_Internal(t, inode, nullView, curNeedDelete, i);
+        //Mesh* pMesh = m_viewportMeshes[i].mesh;
 
 		if(!pMesh){
 			continue;
@@ -1380,7 +1396,8 @@ int AlembicParticles::Display(TimeValue t, INode* inode, ViewExp *vpt, int flags
 			}
 			{
 			   ESS_PROFILE_SCOPE("Display::GetMultipleRenderMesh_Internal");
-			   mesh = GetMultipleRenderMesh_Internal(t, inode, nullView, deleteMesh, i);
+			   //mesh = GetMultipleRenderMesh_Internal(t, inode, nullView, deleteMesh, i);
+               mesh = m_viewportMeshes[i].mesh;
 			}
 
 			if(mesh && m_InstanceShapeType[i] != AlembicPoints::ShapeType_Point ){
@@ -1425,7 +1442,7 @@ int AlembicParticles::Display(TimeValue t, INode* inode, ViewExp *vpt, int flags
 				}
 
                 if(deleteMesh){
-                    //ESS_LOG_WARNING("deleting mesh");
+                    ESS_LOG_WARNING("deleting mesh");
                     delete mesh;
                 }
 			}
@@ -1508,7 +1525,7 @@ int AlembicParticles::HitTest(TimeValue t, INode *inode, int type, int crossing,
 		BOOL deleteMesh = FALSE;
 
 		GetMultipleRenderMeshTM_Internal(t, inode, nullView, i, elemToObj, meshTMValid, true);
-		Mesh *mesh = GetMultipleRenderMesh_Internal(t, inode, nullView, deleteMesh, i);
+		Mesh* mesh = m_viewportMeshes[i].mesh;
 		if(!mesh){
 			continue;
 		}
