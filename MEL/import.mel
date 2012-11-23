@@ -1,98 +1,5 @@
 source "functions.mel";
 
-global proc exocortexexocortexCloseDialog(string $dialog)
-{
-  deleteUI -window $dialog;
-}
-
-global proc string exocortexCreateOrReuseNode(string $name, string $type, int $importAttach, int $checkConnections, int $onlyReuse)
-{
-  ExocortexAlembic_profileBegin -f MEL_exocortexCreateOrReuseNode;
-
-  //$name = `ExocortexAlembic_createValidName -i $name`;
-
-  string $result;
-  $result = "";
-  
-  if($importAttach == 1 && $name != "")
-  {
-    if($checkConnections)
-    {
-      string $node = `plugNode $name`;
-      if($node != "" && `objExists $node`)
-      {
-        //print ("searching connections on plug "+$name+" of type "+$type+"\n");
-        string $source = `connectionInfo -sfd $name`;
-        if($source != "")
-        {
-          $result = `plugNode $source`;
-          //print ("found connected node "+$result+"\n");
-          ExocortexAlembic_profileEnd -f MEL_exocortexCreateOrReuseNode;
-          return $result;
-        }
-      }
-    }
-    else
-    {
-      //print ("searching for node "+$name+"\n");
-      if(`objExists $name`)
-      {
-        //print ("found existing node "+$name+"\n");
-        ExocortexAlembic_profileEnd -f MEL_exocortexCreateOrReuseNode;
-        return $name;
-      }
-    }
-  }
-
-  if($result == "" && $onlyReuse == 0)
-  {
-    // be sure that all the namespaces exist!
-    string $nspaces[];
-    tokenize $name ":" $nspaces;
-    if (size($nspaces) > 1)
-    {
-      // first one...
-      string $accum = $nspaces[0];
-      if (`namespace -exists $accum` == 0)
-        namespace -add $accum;
-
-      // create the remaining ones!
-      for ($i = 1; $i < size($nspaces)-1; $i = $i + 1)
-      {
-        string $curAccum = $accum + ":" + $nspaces[$i];
-        if (`namespace -exists $curAccum` == 0)
-          namespace -add $nspaces[$i] -p $accum;
-        $accum = $curAccum;
-      }
-    }
-
-    // create the node!
-    $result = `createNode -name $name $type`;
-    string $res[];
-    tokenize $result "|" $res;
-    if (size($res) == 1)
-    {
-      string $pp[] = `listRelatives -p $result`;
-      if (size($pp) > 0)
-        $result = ($pp[0] + "|") + $result;   // make sure to have a full name. So it won't be confused with other node with the same name!!
-    }
-    ExocortexAlembic_profileEnd -f MEL_exocortexCreateOrReuseNode;
-    return $result;
-  }
-
-  ExocortexAlembic_profileEnd -f MEL_exocortexCreateOrReuseNode;
-  return $result;
-}
-
-global proc exocortexConnectIfUnconnected(string $source, string $target)
-{
-  ExocortexAlembic_profileBegin -f MEL_exocortexConnectIfUnconnected;
-  string $currentSource = `connectionInfo -sfd $target`;
-  if($currentSource != $source)
-    connectAttr $source $target;
-  ExocortexAlembic_profileEnd -f MEL_exocortexConnectIfUnconnected;
-}
-
 global proc exocortexAlembicImportGUI(string $filename,string $dialog)
 {
   // parse all options
@@ -123,13 +30,9 @@ global proc exocortexAlembicImportGUI(string $filename,string $dialog)
     error ("File "+$filename+" does not exist!");
     return;
   }
-  
-  //*
-  exocortexAlembicImport($filename, $importNormals, $importUvs, $importFaceSets, $importVisibility, $importAttach);
-  /*/
-  string $cmd = "import ExocortexAlembic as EA\nEA._import.doIt(\"" + $filename + "\", " + $importNormals + ", " + $importUvs + ", " + $importFaceSets + ")";
-  python($cmd);
-  //*/
+
+  string $job = "filename=" + $filename + ";normals=" + $importNormals + ";uvs=" + $importUvs + ";facesets=" + $importFaceSets;
+  ExocortexAlembic_import -j $job;
 }
 
 global proc exocortexCloseDialog(string $dialog)

@@ -58,20 +58,8 @@ def attachPolyMesh(name, identifier, jobInfo, isConstant=False):
 	cmds.setAttr(newDform+".identifier", identifier, type="string")
 	attachTimeAndFile(newDform, jobInfo, isConstant)
 
-  	# get polyObj new "output" attribute connection
-  	if polyObj != None and cmds.objectType(polyObj) != "ExocortexAlembicPolyMesh":
-  		originalMesh = cmds.connectionInfo(polyObj+".output", sfd=True).split('.')[0]
-
-  		cmds.delete(polyObj)
-  		polyObj = cmds.createNode("ExocortexAlembicPolyMesh")
-  		attachTimeAndFile(polyObj, jobInfo, isConstant)
-
-  		cmds.connectAttr(polyObj+".outMesh", originalMesh+".inMesh")
-  		cmds.setAttr(polyObj+".normals", jobInfo.useNormals)
-		cmds.setAttr(polyObj+".uvs", jobInfo.useUVs)
-
-  	if jobInfo.useFaceSets:
-  		cmds.ExocortexAlembic_createFaceSets(f=cmds.getAttr(jobInfo.filenode+".outFileName"), i=identifier, o=name)
+	if jobInfo.useFaceSets:
+		cmds.ExocortexAlembic_createFaceSets(f=cmds.getAttr(jobInfo.filenode+".outFileName"), i=identifier, o=name)
 
 	cmds.ExocortexAlembic_profileEnd(f="Python.ExocortexAlembic._attach.attachPolyMesh")
 	pass
