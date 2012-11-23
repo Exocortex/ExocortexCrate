@@ -71,7 +71,7 @@ def attachCamera(name, identifier, jobInfo, isConstant=False):
 		attachTimeAndFile(camObj, jobInfo, isConstant)
 		return
 
-	reader = cmds.createNode("ExocortexAlembicPoints")
+	reader = cmds.createNode("ExocortexAlembicCamera")
 	cmds.connectAttr(reader+".focalLength", name+".focalLength")
 	cmds.connectAttr(reader+".focusDistance", name+".focusDistance")
 	cmds.connectAttr(reader+".lensSqueezeRatio", name+".lensSqueezeRatio")

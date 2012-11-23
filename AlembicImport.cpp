@@ -47,7 +47,7 @@ void MayaProgressBar::incr(int step)
 	{
 	case 0:
 		break;
-	case 1:
+	case 20:
 		MGlobal::executePythonCommand("ExoAlembic._functions.progressBar_incr()");
 		break;
 	default:

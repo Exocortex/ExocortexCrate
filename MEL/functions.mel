@@ -74,7 +74,7 @@ global proc exocortexAlembicImport(string $filename, int $importNormals, int $im
     // tokenize the basic arguments
     string $tokens[];
     tokenize $infos[$i] "|" $tokens;
-    if(size($tokens) < 4)
+    if(size($tokens) < 6)
     {
       print ("Skipping invalid info "+$infos[$i]+".");
       continue;

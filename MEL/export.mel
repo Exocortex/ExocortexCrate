@@ -54,11 +54,12 @@ global proc exocortexAlembicExportGUI(string $filename, string $dialog)
     fclose $__file;
   }
   $filename = `ExocortexAlembic_resolvePath -f $filename`;
-  exocortexAlembicExport($filename, $selection, $exportInframe,
-                         $exportOutframe, $exportStepframe, $exportSubstepframe,
-                         $exportTopology, $exportUVs, $exportFaceSets,
-                         $exportDynamicTopo, $exportGlobalSpace, $exportWithoutHierarchy,
-                         $exportTransformCache, $exportUseInitShadGrp);
+  string $cmd = "import ExocortexAlembic as EA\nEA._export.doIt(\"" + $filename + "\", " + $exportInframe + ", " + $exportOutframe + ", None, " +
+                         $exportStepframe + ", " + $exportSubstepframe + ", " + $exportTopology + ", " +
+                         $exportUVs + ", " + $exportFaceSets + ", " + $exportDynamicTopo + ", " +
+                         $exportGlobalSpace + ", " + $exportWithoutHierarchy + ", " + $exportTransformCache + ", " +
+                         $exportUseInitShadGrp + ")";
+  python($cmd);
 }
 
 global proc exocortexCloseDialog(string $dialog)

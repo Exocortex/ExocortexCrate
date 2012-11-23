@@ -47,9 +47,6 @@ def importPolyMesh(name, identifier, jobInfo, parentXform=None, isConstant=False
 	cmds.ExocortexAlembic_profileBegin(f="Python.ExocortexAlembic._import.importPolyMesh")
 	reader = ""
 	shape  = fnt.alembicCreateNode(name, "mesh", parentXform)
-	if not cmds.objExists(shape):
-		#print("Error: " + shape + " doesn't exist:\n\tparent: " + parentXform + "\n\tname: " + name)
-		return shape
 	cmds.sets(shape, e=True, forceElement="initialShadingGroup")
 
 	topoReader = cmds.createNode("ExocortexAlembicPolyMesh")

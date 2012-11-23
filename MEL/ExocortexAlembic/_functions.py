@@ -40,7 +40,13 @@ def alembicCreateNode(name, type, parentXform=None):
 	# create the node
 	result = cmds.createNode(type, n=name, p=parentXform)
 	if parentXform != None:
-		result = parentXform + "|" + result
+		part = result.split('|')[0]
+		while True:
+			part = cmds.listRelatives(part, p=True)
+			if part == None:
+				break
+			part = part[0]
+			result = part + "|" + result
 	#print("alembicCreateNode(" + str(name) + ", " + str(type) + ", " + str(parentXform) + ") -> " + str(result))
 	cmds.ExocortexAlembic_profileEnd(f="Python.ExocortexAlembic._functions.createAlembicNode")
 	return result
@@ -54,7 +60,6 @@ def alembicConnectAttr(source, target):
 	cmds.connectAttr(source, target)
 	cmds.ExocortexAlembic_profileEnd(f="Python.ExocortexAlembic._functions.alembicConnectIfUnconnected")
 	pass
-
 
 ############################################################################################################
 # progress bar
@@ -75,7 +80,7 @@ def progressBar_stop():
 	global __gMainProgressBar
 	cmds.progressBar(__gMainProgressBar, edit=True, endProgress=True)
 
-def progressBar_incr(_step=1):
+def progressBar_incr(_step=20):
 	global __gMainProgressBar
 	cmds.progressBar(__gMainProgressBar, edit=True, step=_step)
 
