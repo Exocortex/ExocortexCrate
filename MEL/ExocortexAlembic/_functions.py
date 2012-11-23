@@ -1,3 +1,4 @@
+import maya.mel as mel
 import maya.cmds as cmds
 
 """ Contains functions and data structures """
@@ -54,5 +55,34 @@ def alembicConnectAttr(source, target):
 	cmds.ExocortexAlembic_profileEnd(f="Python.ExocortexAlembic._functions.alembicConnectIfUnconnected")
 	pass
 
+
+############################################################################################################
+# progress bar
+############################################################################################################
+
+__gMainProgressBar = ""
+
+def progressBar_init(_max):
+	global __gMainProgressBar
+	__gMainProgressBar = mel.eval('$tmp = $gMainProgressBar');
+	cmds.progressBar(__gMainProgressBar, edit=True, isInterruptable=True, maxValue=_max)
+
+def progressBar_start():
+	global __gMainProgressBar
+	cmds.progressBar(__gMainProgressBar, edit=True, beginProgress=True, step=1)
+
+def progressBar_stop():
+	global __gMainProgressBar
+	cmds.progressBar(__gMainProgressBar, edit=True, endProgress=True)
+
+def progressBar_incr(_step):
+	global __gMainProgressBar
+	cmds.progressBar(__gMainProgressBar, edit=True, step=_step)
+
+def progressBar_isCancelled():
+	global __gMainProgressBar
+	if cmds.progressBar(__gMainProgressBar, query=True, isCancelled=True):
+		return 1
+	return 0
 
 

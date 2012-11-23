@@ -16,6 +16,44 @@
 #include "sceneGraph.h"
 #include <maya/MItDag.h>
 
+/// Maya Progress Bar
+void MayaProgressBar::init(int min, int max, int incr)
+{
+	const int range = max - min;
+	MString cmd = "ExoAlembic._functions.progressBar_init(";
+	cmd += range;
+	cmd += ")";
+
+	MGlobal::executePythonCommand(cmd);
+}
+
+void MayaProgressBar::start(void)
+{
+	MGlobal::executePythonCommand("ExoAlembic._functions.progressBar_start()");
+}
+
+void MayaProgressBar::stop(void)
+{
+	MGlobal::executePythonCommand("ExoAlembic._functions.progressBar_stop()");
+}
+
+void MayaProgressBar::incr(int step)
+{
+	MString cmd = "ExoAlembic._functions.progressBar_incr(";
+	cmd += step;
+	cmd += ")";
+
+	MGlobal::executePythonCommand(cmd);
+}
+
+bool MayaProgressBar::isCancelled(void)
+{
+	int result;
+	MGlobal::executePythonCommand("ExoAlembic._functions.progressBar_isCancelled()", result);
+	return result > 0;
+}
+
+/// Import command
 AlembicImportCommand::AlembicImportCommand(void)
 {
 }
@@ -88,18 +126,20 @@ MStatus AlembicImportCommand::importSingleJob(const MString &job, int jobNumber)
 		return MS::kFailure;
 	}
 
+	MayaProgressBar pBar;
+	pBar.init(0, nNumNodes, 1);
 	if(jobParser.attachToExisting)
 	{
 		MDagPath dagPath;
 		MItDag().getPath(dagPath);
 		SceneNodeAppPtr appRoot = buildMayaSceneGraph(dagPath, fileTimeCtrl);
-		if (!AttachSceneFile(fileRoot, appRoot, jobParser))
+		if (!AttachSceneFile(fileRoot, appRoot, jobParser, &pBar))
 			return MS::kFailure;
 	}
 	else
 	{
 		SceneNodeAppPtr appRoot(new SceneNodeMaya(fileTimeCtrl));
-		if (!ImportSceneFile(fileRoot, appRoot, jobParser))
+		if (!ImportSceneFile(fileRoot, appRoot, jobParser, &pBar))
 			return MS::kFailure;
 		AlembicPostImportPoints();
 	}

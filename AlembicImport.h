@@ -2,6 +2,17 @@
 #define _ALEMBIC_IMPORT_H_
 
 	#include "AlembicObject.h"
+	#include "CommonImport.h"
+
+	class MayaProgressBar: public CommonProgressBar
+	{
+	public:
+		void init(int min, int max, int incr);
+		void start(void);
+		void stop(void);
+		void incr(int step);
+		bool isCancelled(void);
+	};
 
 	class AlembicImportCommand : public MPxCommand
 	{
