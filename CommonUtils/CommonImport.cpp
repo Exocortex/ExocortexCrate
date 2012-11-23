@@ -105,7 +105,10 @@ std::string IJobStringParser::buildJobString()
          }
       }
    }
-   
+
+   for (std::map<std::string, std::string>::iterator beg = extraParameters.begin(); beg != extraParameters.end(); ++beg)
+	   stream << ";" << beg->first << "=" << beg->second;
+
    return stream.str();
 }
 
@@ -210,9 +213,11 @@ SceneNodeAlembicPtr buildAlembicSceneGraph(AbcArchiveCache *pArchiveCache, AbcOb
       }
 
       //push the children as the last step, since we need to who the parent is first (we may have merged)
-      for(size_t j=0; j<sElement.pObjectCache->childIdentifiers.size(); j++)
+	  std::vector<std::string>::iterator chIter = sElement.pObjectCache->childIdentifiers.begin(),
+										 chEnd  = sElement.pObjectCache->childIdentifiers.end();
+	  for (; chIter != chEnd; ++chIter)
       {
-         AbcObjectCache *pChildObjectCache = &( pArchiveCache->find( sElement.pObjectCache->childIdentifiers[j] )->second );
+		 AbcObjectCache *pChildObjectCache = &( pArchiveCache->find( *chIter )->second );
          Alembic::AbcGeom::IObject childObj = pChildObjectCache->obj;
          NodeCategory::type childCat = NodeCategory::get(childObj);
          //we should change this to explicity check which node types are not support (e.g. facesets), so that we can still give out warnings
@@ -266,16 +271,19 @@ bool AttachSceneFile(SceneNodeAlembicPtr fileRoot, SceneNodeAppPtr appRoot, cons
 		if (count == 0)
 		{
 			count = 20;
-			if (pbar && pbar->isCancelled())
+			if (pbar)
 			{
-				EC_LOG_WARNING("Attach job cancelled by user");
-				pbar->stop();
-				return false;
+				if (pbar->isCancelled())
+				{
+					EC_LOG_WARNING("Attach job cancelled by user");
+					pbar->stop();
+					return false;
+				}
+				pbar->incr(20);
 			}
 		}
 		else
 			--count;
-		if (pbar) pbar->incr(1);
 
       AttachStackElement sElement = sceneStack.back();
       SceneNodeAppPtr currAppNode = sElement.currAppNode;
@@ -359,17 +367,19 @@ bool ImportSceneFile(SceneNodeAlembicPtr fileRoot, SceneNodeAppPtr appRoot, cons
 		if (count == 0)
 		{
 			count = 20;
-			if (pbar && pbar->isCancelled())
+			if (pbar)
 			{
-				EC_LOG_WARNING("Import job cancelled by user");
-				pbar->stop();
-				return false;
+				if (pbar->isCancelled())
+				{
+					EC_LOG_WARNING("Import job cancelled by user");
+					pbar->stop();
+					return false;
+				}
+				pbar->incr(20);
 			}
-			if (pbar) pbar->incr(1);
 		}
 		else
 			--count;
-		if (pbar) pbar->incr(1);
 
       ImportStackElement sElement = sceneStack.back();
       SceneNodeAlembicPtr currFileNode = sElement.currFileNode;
