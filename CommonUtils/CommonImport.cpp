@@ -76,8 +76,7 @@ bool IJobStringParser::parse(const std::string& jobString)
 		}
 		else
 		{
-			ESS_LOG_WARNING("Skipping invalid token: "<<tokens[j]);
-			continue;
+			extraParameters[valuePair[0]] = valuePair[1];
 		}
 	}
 
@@ -240,8 +239,9 @@ struct AttachStackElement
 
 };
 
-bool AttachSceneFile(SceneNodeAlembicPtr fileRoot, SceneNodeAppPtr appRoot, const IJobStringParser& jobParams)
+bool AttachSceneFile(SceneNodeAlembicPtr fileRoot, SceneNodeAppPtr appRoot, const IJobStringParser& jobParams, CommonProgressBar *pbar)
 {
+	ESS_PROFILE_SCOPE("AttachSceneFile");
    //TODO: how to account for filtering?
    //it would break the sibling namespace assumption. Perhaps we should require that all parent nodes of selected are imported.
    //We would then not traverse unselected children
@@ -258,8 +258,24 @@ bool AttachSceneFile(SceneNodeAlembicPtr fileRoot, SceneNodeAppPtr appRoot, cons
 
    //int intermittentUpdateInterval = std::max( (int)(nNumNodes / 100), (int)1 );
    //int i = 0;
+
+	if (pbar) pbar->start();
+	int count = 50;
    while( !sceneStack.empty() )
    {
+		if (count == 0)
+		{
+			count = 50;
+			if (pbar && pbar->isCancelled())
+			{
+				EC_LOG_WARNING("Import job cancelled by user");
+				return false;
+			}
+			if (pbar) pbar->incr(50);
+		}
+		else
+			--count;
+
       AttachStackElement sElement = sceneStack.back();
       SceneNodeAppPtr currAppNode = sElement.currAppNode;
       SceneNodeAlembicPtr currFileNode = sElement.currFileNode;
@@ -300,7 +316,8 @@ bool AttachSceneFile(SceneNodeAlembicPtr fileRoot, SceneNodeAppPtr appRoot, cons
       //prog.Increment();
    }
 
-   return true;
+	if (pbar) pbar->stop();
+	return true;
 }
 
 
@@ -314,7 +331,7 @@ struct ImportStackElement
 
 };
 
-bool ImportSceneFile(SceneNodeAlembicPtr fileRoot, SceneNodeAppPtr appRoot, const IJobStringParser& jobParams)
+bool ImportSceneFile(SceneNodeAlembicPtr fileRoot, SceneNodeAppPtr appRoot, const IJobStringParser& jobParams, CommonProgressBar *pbar)
 {
 	ESS_PROFILE_SCOPE("ImportSceneFile");
    //TODO skip unselected children, if thats we how we do filtering.
@@ -332,8 +349,24 @@ bool ImportSceneFile(SceneNodeAlembicPtr fileRoot, SceneNodeAppPtr appRoot, cons
 
    //int intermittentUpdateInterval = std::max( (int)(nNumNodes / 100), (int)1 );
    //int i = 0;
+
+	if (pbar) pbar->start();
+	int count = 50;
    while( !sceneStack.empty() )
    {
+		if (count == 0)
+		{
+			count = 50;
+			if (pbar && pbar->isCancelled())
+			{
+				EC_LOG_WARNING("Import job cancelled by user");
+				return false;
+			}
+			if (pbar) pbar->incr(50);
+		}
+		else
+			--count;
+
       ImportStackElement sElement = sceneStack.back();
       SceneNodeAlembicPtr currFileNode = sElement.currFileNode;
       SceneNodeAppPtr parentAppNode = sElement.parentAppNode;
@@ -388,5 +421,6 @@ bool ImportSceneFile(SceneNodeAlembicPtr fileRoot, SceneNodeAppPtr appRoot, cons
       //prog.Increment();
    }
 
+   if (pbar) pbar->stop();
    return true;
 }
