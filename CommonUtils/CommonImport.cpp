@@ -260,21 +260,22 @@ bool AttachSceneFile(SceneNodeAlembicPtr fileRoot, SceneNodeAppPtr appRoot, cons
    //int i = 0;
 
 	if (pbar) pbar->start();
-	int count = 50;
+	int count = 20;
    while( !sceneStack.empty() )
    {
 		if (count == 0)
 		{
-			count = 50;
+			count = 20;
 			if (pbar && pbar->isCancelled())
 			{
-				EC_LOG_WARNING("Import job cancelled by user");
+				EC_LOG_WARNING("Attach job cancelled by user");
+				pbar->stop();
 				return false;
 			}
-			if (pbar) pbar->incr(50);
 		}
 		else
 			--count;
+		if (pbar) pbar->incr(1);
 
       AttachStackElement sElement = sceneStack.back();
       SceneNodeAppPtr currAppNode = sElement.currAppNode;
@@ -296,6 +297,7 @@ bool AttachSceneFile(SceneNodeAlembicPtr fileRoot, SceneNodeAppPtr appRoot, cons
             ESS_LOG_WARNING("nodeMatch: "<<(*it)->name<<" = "<<fileNode->name);
             if(fileNode->isAttached()){
                ESS_LOG_ERROR("More than one match for node "<<(*it)->name);
+				if (pbar) pbar->stop();
                return false;
             }
             else{
@@ -351,21 +353,23 @@ bool ImportSceneFile(SceneNodeAlembicPtr fileRoot, SceneNodeAppPtr appRoot, cons
    //int i = 0;
 
 	if (pbar) pbar->start();
-	int count = 50;
+	int count = 20;
    while( !sceneStack.empty() )
    {
 		if (count == 0)
 		{
-			count = 50;
+			count = 20;
 			if (pbar && pbar->isCancelled())
 			{
 				EC_LOG_WARNING("Import job cancelled by user");
+				pbar->stop();
 				return false;
 			}
-			if (pbar) pbar->incr(50);
+			if (pbar) pbar->incr(1);
 		}
 		else
 			--count;
+		if (pbar) pbar->incr(1);
 
       ImportStackElement sElement = sceneStack.back();
       SceneNodeAlembicPtr currFileNode = sElement.currFileNode;
@@ -381,6 +385,7 @@ bool ImportSceneFile(SceneNodeAlembicPtr fileRoot, SceneNodeAppPtr appRoot, cons
       bool bContinue = parentAppNode->addChild(currFileNode, jobParams, newAppNode);
 
       if(!bContinue){
+		  if (pbar) pbar->stop();
          return false;
       }
 
