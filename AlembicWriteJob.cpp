@@ -9,6 +9,7 @@
 #include "AlembicPoints.h"
 #include "AlembicCurves.h"
 #include "AlembicHair.h"
+#include "AlembicImport.h"
 #include "CommonLog.h"
 #include "CommonUtilities.h"
 
@@ -311,13 +312,11 @@ MStatus AlembicWriteJob::PreProcess()
 MStatus AlembicWriteJob::Process(double frame)
 {
    ESS_PROFILE_SCOPE("AlembicWriteJob::Process");
-   MProgressWindow::reserve();
-   MProgressWindow::setTitle("Alembic Export: <each frame/each object>");
-   MProgressWindow::setInterruptable(true);
-   MProgressWindow::setProgressRange(0, mFrames.size() * mapObjects.size());
-   MProgressWindow::setProgress(0);
 
-   MProgressWindow::startProgress();
+   MayaProgressBar pBar;
+   pBar.init(0, mFrames.size() * mapObjects.size(), 1);
+
+   pBar.start();
    for(size_t i=0; i<mFrames.size(); ++i)
    {
       // compare the frames
@@ -331,16 +330,16 @@ MStatus AlembicWriteJob::Process(double frame)
          if (interrupt == 0)
          {
            interrupt = 20;
-           if (MProgressWindow::isCancelled())
+		   if (pBar.isCancelled())
              break;
          }
-         MProgressWindow::advanceProgress(1);
+		 pBar.incr(1);
          MStatus status = it->second->Save(mFrames[i]);
          if(status != MStatus::kSuccess)
             return status;
       }
    }
-   MProgressWindow::endProgress();
+   pBar.stop();
    return MStatus::kSuccess;
 }
 

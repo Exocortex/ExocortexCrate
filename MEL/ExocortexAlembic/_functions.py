@@ -75,7 +75,7 @@ def progressBar_stop():
 	global __gMainProgressBar
 	cmds.progressBar(__gMainProgressBar, edit=True, endProgress=True)
 
-def progressBar_incr(_step):
+def progressBar_incr(_step=1):
 	global __gMainProgressBar
 	cmds.progressBar(__gMainProgressBar, edit=True, step=_step)
 

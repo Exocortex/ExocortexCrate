@@ -19,6 +19,7 @@
 /// Maya Progress Bar
 void MayaProgressBar::init(int min, int max, int incr)
 {
+	ESS_PROFILE_SCOPE("MayaProgressBar::init");
 	const int range = max - min;
 	MString cmd = "ExoAlembic._functions.progressBar_init(";
 	cmd += range;
@@ -29,25 +30,40 @@ void MayaProgressBar::init(int min, int max, int incr)
 
 void MayaProgressBar::start(void)
 {
+	ESS_PROFILE_SCOPE("MayaProgressBar::start");
 	MGlobal::executePythonCommand("ExoAlembic._functions.progressBar_start()");
 }
 
 void MayaProgressBar::stop(void)
 {
+	ESS_PROFILE_SCOPE("MayaProgressBar::stop");
 	MGlobal::executePythonCommand("ExoAlembic._functions.progressBar_stop()");
 }
 
 void MayaProgressBar::incr(int step)
 {
-	MString cmd = "ExoAlembic._functions.progressBar_incr(";
-	cmd += step;
-	cmd += ")";
-
-	MGlobal::executePythonCommand(cmd);
+	ESS_PROFILE_SCOPE("MayaProgressBar::incr");
+	switch(step)
+	{
+	case 0:
+		break;
+	case 1:
+		MGlobal::executePythonCommand("ExoAlembic._functions.progressBar_incr()");
+		break;
+	default:
+		{
+			MString cmd = "ExoAlembic._functions.progressBar_incr(";
+			cmd += step;
+			cmd += ")";
+			MGlobal::executePythonCommand(cmd);
+		}
+		break;
+	}
 }
 
 bool MayaProgressBar::isCancelled(void)
 {
+	ESS_PROFILE_SCOPE("MayaProgressBar::isCancelled");
 	int result;
 	MGlobal::executePythonCommand("ExoAlembic._functions.progressBar_isCancelled()", result);
 	return result > 0;
