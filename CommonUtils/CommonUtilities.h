@@ -199,6 +199,25 @@ size_t getNumSamplesFromObject(Alembic::Abc::IObject &object);
 size_t getNumSamplesFromObject(Alembic::Abc::OObject *object);
 bool isObjectConstant(Alembic::Abc::IObject &object );
 
+struct BasicSchemaData
+{
+	enum SCHEMA_TYPE
+	{
+		__XFORM,
+		__POLYMESH,
+		__CURVES,
+		__NUPATCH,
+		__POINTS,
+		__SUBDIV,
+		__CAMERA,
+		__FACESET
+	};
+	SCHEMA_TYPE type;
+	bool isConstant;
+	size_t nbSamples;
+};
+bool getBasicSchemaDataFromObject(Alembic::Abc::IObject &object, BasicSchemaData &bsd);
+
 float getTimeOffsetFromObject( Alembic::Abc::IObject &object, SampleInfo const& sampleInfo );
 
 template<typename SCHEMA>

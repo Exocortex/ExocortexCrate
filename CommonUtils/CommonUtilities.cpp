@@ -456,31 +456,10 @@ size_t getNumSamplesFromObject(Alembic::Abc::IObject &object)
    return 0;
 }
 
-bool isObjectSchemaConstant( AbcG::IPolyMeshSchema& schema ) {
+template<typename T> inline bool isObjectSchemaConstant(T &schema)
+{
 	return schema.isConstant();
 }
-bool isObjectSchemaConstant( AbcG::IXformSchema& schema ) {
-	return schema.isConstant();
-}
-bool isObjectSchemaConstant( AbcG::ICurvesSchema& schema ) {
-	return schema.isConstant();
-}
-bool isObjectSchemaConstant( AbcG::INuPatchSchema& schema ) {
-	return schema.isConstant();
-}
-bool isObjectSchemaConstant( AbcG::IPointsSchema& schema ) {
-	return schema.isConstant();
-}
-bool isObjectSchemaConstant( AbcG::ISubDSchema& schema ) {
-	return schema.isConstant();
-}
-bool isObjectSchemaConstant( AbcG::ICameraSchema& schema ) {
-	return schema.isConstant();
-}
-bool isObjectSchemaConstant( AbcG::IFaceSetSchema& schema ) {
-	return schema.isConstant();
-}
-
 
 bool isObjectConstant(Alembic::Abc::IObject &object ) {
    ESS_PROFILE_SCOPE("isObjectConstant");  
@@ -528,6 +507,44 @@ size_t getNumSamplesFromObject(Alembic::Abc::OObject *object)
    }
    return 0;
 }
+
+template<typename T> bool __getBasicSchemaDataFromObject(BasicSchemaData::SCHEMA_TYPE type, T &schema, BasicSchemaData &bsd)
+{
+	bsd.type = type;
+	bsd.isConstant = schema.isConstant();
+	bsd.nbSamples  = schema.getNumSamples();
+	return true;
+}
+bool getBasicSchemaDataFromObject(Alembic::Abc::IObject &object, BasicSchemaData &bsd)
+{
+	ESS_PROFILE_SCOPE("getBasicSchemaDataFromObject"); 
+	const Alembic::Abc::MetaData &md = object.getMetaData();
+	if(Alembic::AbcGeom::IXform::matches(md))
+		return  __getBasicSchemaDataFromObject(BasicSchemaData::__XFORM, Alembic::AbcGeom::IXform(object,Alembic::Abc::kWrapExisting).getSchema(), bsd);
+
+	else if(Alembic::AbcGeom::IPolyMesh::matches(md))
+		return __getBasicSchemaDataFromObject(BasicSchemaData::__POLYMESH, Alembic::AbcGeom::IPolyMesh(object,Alembic::Abc::kWrapExisting).getSchema(), bsd);
+
+	else if(Alembic::AbcGeom::ICurves::matches(md))
+		return __getBasicSchemaDataFromObject(BasicSchemaData::__CURVES, Alembic::AbcGeom::ICurves(object,Alembic::Abc::kWrapExisting).getSchema(), bsd);
+
+	else if(Alembic::AbcGeom::INuPatch::matches(md))
+		return __getBasicSchemaDataFromObject(BasicSchemaData::__NUPATCH, Alembic::AbcGeom::INuPatch(object,Alembic::Abc::kWrapExisting).getSchema(), bsd);
+
+	else if(Alembic::AbcGeom::IPoints::matches(md))
+		return __getBasicSchemaDataFromObject(BasicSchemaData::__POINTS, Alembic::AbcGeom::IPoints(object,Alembic::Abc::kWrapExisting).getSchema(), bsd);
+
+	else if(Alembic::AbcGeom::ISubD::matches(md))
+		return __getBasicSchemaDataFromObject(BasicSchemaData::__SUBDIV, Alembic::AbcGeom::ISubD(object,Alembic::Abc::kWrapExisting).getSchema(), bsd);
+
+	else if(Alembic::AbcGeom::ICamera::matches(md))
+		return __getBasicSchemaDataFromObject(BasicSchemaData::__CAMERA, Alembic::AbcGeom::ICamera(object,Alembic::Abc::kWrapExisting).getSchema(), bsd);
+
+	else if(Alembic::AbcGeom::IFaceSet::matches(md))
+		return __getBasicSchemaDataFromObject(BasicSchemaData::__FACESET, Alembic::AbcGeom::IFaceSet(object,Alembic::Abc::kWrapExisting).getSchema(), bsd);
+
+	return false;
+};
 
 float getTimeOffsetFromObject( Alembic::Abc::IObject &object, SampleInfo const& sampleInfo ) {
 	Alembic::Abc::TimeSamplingPtr timeSampling = getTimeSamplingFromObject( object );

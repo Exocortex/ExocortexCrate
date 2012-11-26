@@ -3,14 +3,17 @@
 #include "CommonUtilities.h"
 #include "CommonAbcCache.h"
 
-AbcObjectCache::AbcObjectCache( Alembic::Abc::IObject & objToCache ) : obj( objToCache ) {
-	//EC_LOG_WARNING( "Caching fullname: " << objToCache.getFullName() );
-	fullName = objToCache.getFullName();
-	numSamples = getNumSamplesFromObject( objToCache );
-	isConstant = isObjectConstant( objToCache );
-	isMeshTopoDynamic = false;
-	isMeshPointCache = false;
-	if( AbcG::IPolyMesh::matches(objToCache.getMetaData() ) || AbcG::ISubD::matches(objToCache.getMetaData()) ) {
+
+AbcObjectCache::AbcObjectCache( Alembic::Abc::IObject & objToCache )
+		:	obj( objToCache ), isMeshTopoDynamic(false), isMeshPointCache(false), fullName(objToCache.getFullName())
+{
+	ESS_PROFILE_SCOPE("AbcObjectCache::AbcObjectCache");
+
+	BasicSchemaData bsd;
+	getBasicSchemaDataFromObject(objToCache, bsd);
+	isConstant = bsd.isConstant;
+	numSamples = bsd.nbSamples;
+	if (bsd.type == bsd.__POLYMESH || bsd.type == bsd.__SUBDIV) {
 		if( ! isConstant ) {
 			isMeshTopoDynamic = isAlembicMeshTopoDynamic( &objToCache );
 		}
@@ -19,6 +22,7 @@ AbcObjectCache::AbcObjectCache( Alembic::Abc::IObject & objToCache ) : obj( objT
 }
 
 AbcObjectCache* addObjectToCache( AbcArchiveCache* fullNameToObjectCache, Abc::IObject &obj, std::string parentIdentifier ) {
+	ESS_PROFILE_SCOPE("addObjectToCache");
 	AbcObjectCache objectCache( obj );
 	objectCache.parentIdentifier = parentIdentifier;
 	for( int i = 0; i < obj.getNumChildren(); i ++ ) {

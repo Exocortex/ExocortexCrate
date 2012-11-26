@@ -76,8 +76,7 @@ bool IJobStringParser::parse(const std::string& jobString)
 		}
 		else
 		{
-			ESS_LOG_WARNING("Skipping invalid token: "<<tokens[j]);
-			continue;
+			extraParameters[valuePair[0]] = valuePair[1];
 		}
 	}
 
@@ -106,7 +105,10 @@ std::string IJobStringParser::buildJobString()
          }
       }
    }
-   
+
+   for (std::map<std::string, std::string>::iterator beg = extraParameters.begin(); beg != extraParameters.end(); ++beg)
+	   stream << ";" << beg->first << "=" << beg->second;
+
    return stream.str();
 }
 
@@ -152,6 +154,7 @@ struct AlembicISceneBuildElement
 
 SceneNodeAlembicPtr buildAlembicSceneGraph(AbcArchiveCache *pArchiveCache, AbcObjectCache *pRootObjectCache, int& nNumNodes)
 {
+	ESS_PROFILE_SCOPE("buildAlembicSceneGraph");
    std::list<AlembicISceneBuildElement> sceneStack;
 
    Alembic::Abc::IObject rootObj = pRootObjectCache->obj;
@@ -200,7 +203,7 @@ SceneNodeAlembicPtr buildAlembicSceneGraph(AbcArchiveCache *pArchiveCache, AbcOb
          //the parent transforms of geometry nodes should be to be external transforms 
          //(we don't a transform's type until we have seen what type(s) of child it has)
          if( NodeCategory::get(iObj) == NodeCategory::GEOMETRY ){
-            if(parentNode->type == SceneNode::ITRANSFORM){
+			 if(parentNode->type == SceneNode::ITRANSFORM){
                parentNode->type = SceneNode::ETRANSFORM;
             }
             else{
@@ -210,9 +213,11 @@ SceneNodeAlembicPtr buildAlembicSceneGraph(AbcArchiveCache *pArchiveCache, AbcOb
       }
 
       //push the children as the last step, since we need to who the parent is first (we may have merged)
-      for(size_t j=0; j<sElement.pObjectCache->childIdentifiers.size(); j++)
+	  std::vector<std::string>::iterator chIter = sElement.pObjectCache->childIdentifiers.begin(),
+										 chEnd  = sElement.pObjectCache->childIdentifiers.end();
+	  for (; chIter != chEnd; ++chIter)
       {
-         AbcObjectCache *pChildObjectCache = &( pArchiveCache->find( sElement.pObjectCache->childIdentifiers[j] )->second );
+		 AbcObjectCache *pChildObjectCache = &( pArchiveCache->find( *chIter )->second );
          Alembic::AbcGeom::IObject childObj = pChildObjectCache->obj;
          NodeCategory::type childCat = NodeCategory::get(childObj);
          //we should change this to explicity check which node types are not support (e.g. facesets), so that we can still give out warnings
@@ -239,8 +244,9 @@ struct AttachStackElement
 
 };
 
-bool AttachSceneFile(SceneNodeAlembicPtr fileRoot, SceneNodeAppPtr appRoot, const IJobStringParser& jobParams)
+bool AttachSceneFile(SceneNodeAlembicPtr fileRoot, SceneNodeAppPtr appRoot, const IJobStringParser& jobParams, CommonProgressBar *pbar)
 {
+	ESS_PROFILE_SCOPE("AttachSceneFile");
    //TODO: how to account for filtering?
    //it would break the sibling namespace assumption. Perhaps we should require that all parent nodes of selected are imported.
    //We would then not traverse unselected children
@@ -257,8 +263,28 @@ bool AttachSceneFile(SceneNodeAlembicPtr fileRoot, SceneNodeAppPtr appRoot, cons
 
    //int intermittentUpdateInterval = std::max( (int)(nNumNodes / 100), (int)1 );
    //int i = 0;
+
+	if (pbar) pbar->start();
+	int count = 20;
    while( !sceneStack.empty() )
    {
+		if (count == 0)
+		{
+			count = 20;
+			if (pbar)
+			{
+				if (pbar->isCancelled())
+				{
+					EC_LOG_WARNING("Attach job cancelled by user");
+					pbar->stop();
+					return false;
+				}
+				pbar->incr(20);
+			}
+		}
+		else
+			--count;
+
       AttachStackElement sElement = sceneStack.back();
       SceneNodeAppPtr currAppNode = sElement.currAppNode;
       SceneNodeAlembicPtr currFileNode = sElement.currFileNode;
@@ -279,6 +305,7 @@ bool AttachSceneFile(SceneNodeAlembicPtr fileRoot, SceneNodeAppPtr appRoot, cons
             ESS_LOG_WARNING("nodeMatch: "<<(*it)->name<<" = "<<fileNode->name);
             if(fileNode->isAttached()){
                ESS_LOG_ERROR("More than one match for node "<<(*it)->name);
+				if (pbar) pbar->stop();
                return false;
             }
             else{
@@ -299,7 +326,8 @@ bool AttachSceneFile(SceneNodeAlembicPtr fileRoot, SceneNodeAppPtr appRoot, cons
       //prog.Increment();
    }
 
-   return true;
+	if (pbar) pbar->stop();
+	return true;
 }
 
 
@@ -313,8 +341,9 @@ struct ImportStackElement
 
 };
 
-bool ImportSceneFile(SceneNodeAlembicPtr fileRoot, SceneNodeAppPtr appRoot, const IJobStringParser& jobParams)
+bool ImportSceneFile(SceneNodeAlembicPtr fileRoot, SceneNodeAppPtr appRoot, const IJobStringParser& jobParams, CommonProgressBar *pbar)
 {
+	ESS_PROFILE_SCOPE("ImportSceneFile");
    //TODO skip unselected children, if thats we how we do filtering.
 
    //compare to application scene graph to see if we need to rename nodes (or maybe we might throw an error)
@@ -330,8 +359,28 @@ bool ImportSceneFile(SceneNodeAlembicPtr fileRoot, SceneNodeAppPtr appRoot, cons
 
    //int intermittentUpdateInterval = std::max( (int)(nNumNodes / 100), (int)1 );
    //int i = 0;
+
+	if (pbar) pbar->start();
+	int count = 20;
    while( !sceneStack.empty() )
    {
+		if (count == 0)
+		{
+			count = 20;
+			if (pbar)
+			{
+				if (pbar->isCancelled())
+				{
+					EC_LOG_WARNING("Import job cancelled by user");
+					pbar->stop();
+					return false;
+				}
+				pbar->incr(20);
+			}
+		}
+		else
+			--count;
+
       ImportStackElement sElement = sceneStack.back();
       SceneNodeAlembicPtr currFileNode = sElement.currFileNode;
       SceneNodeAppPtr parentAppNode = sElement.parentAppNode;
@@ -348,6 +397,7 @@ bool ImportSceneFile(SceneNodeAlembicPtr fileRoot, SceneNodeAppPtr appRoot, cons
       bool bContinue = parentAppNode->addChild(currFileNode, jobParams, newAppNode);
 
       if(!bContinue){
+		  if (pbar) pbar->stop();
          return false;
       }
 
@@ -388,5 +438,6 @@ bool ImportSceneFile(SceneNodeAlembicPtr fileRoot, SceneNodeAppPtr appRoot, cons
       //prog.Increment();
    }
 
+   if (pbar) pbar->stop();
    return true;
 }
