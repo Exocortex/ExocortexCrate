@@ -625,10 +625,10 @@ MStatus AlembicPolyMeshNode::compute(const MPlug & plug, MDataBlock & dataBlock)
     mMesh.create(points.length(),counts.length(),points,counts,indices,mMeshData);
     mMesh.updateSurface();
     if(mMesh.numFaceVertices() != indices.length()){
-      EC_LOG_ERROR("Error: mesh topology has changed. Cannot import UVs or normals.");
-      return MStatus::kFailure;
-      //importUvs = false;
-      //importNormals = false;
+      //EC_LOG_ERROR("Error: mesh topology has changed. Cannot import UVs or normals.");
+      //return MStatus::kFailure;
+      importUvs = false;
+      importNormals = false;
     }
 
     // check if we need to import uvs

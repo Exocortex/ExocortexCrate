@@ -22,15 +22,19 @@ class IJobInfo:
 ############################################################################################################
 def setupReaderAttribute(reader, identifier, isConstant, jobInfo):
 	cmds.ExocortexAlembic_profileBegin(f="Python.ExocortexAlembic._import.setupReaderAttribute")
+	#print("setupReaderAttribute(" + str(reader) + ", " + str(identifier) + ")")
 	if reader != "":
 		if not isConstant:
 			fnt.alembicConnectAttr(jobInfo.timeCtrl+".outTime", reader+".inTime")
-		fnt.alembicConnectAttr(jobInfo.filenode+".outFileName", reader+".fileName")
+		#fnt.alembicConnectAttr(jobInfo.filenode+".outFileName", reader+".fileName")
+		cmds.connectAttr(jobInfo.filenode+".outFileName", reader+".fileName")
 		cmds.setAttr(reader+".identifier", identifier, type="string")
 	cmds.ExocortexAlembic_profileEnd(f="Python.ExocortexAlembic._import.setupReaderAttribute")
 
 def importXform(name, identifier, jobInfo, parentXform=None, isConstant=False):
 	cmds.ExocortexAlembic_profileBegin(f="Python.ExocortexAlembic._import.importXform")
+	#print("importXform(" + str(name) + ", " + str(identifier) + ", " + str(jobInfo) + ", " + str(parentXform) + ", " + str(isConstant) + ")")
+
 	shape  = fnt.alembicCreateNode(name, "transform", parentXform)
 	reader = cmds.createNode("ExocortexAlembicXform")
 
@@ -45,6 +49,8 @@ def importXform(name, identifier, jobInfo, parentXform=None, isConstant=False):
 
 def importPolyMesh(name, identifier, jobInfo, parentXform=None, isConstant=False, useDynTopo=False):
 	cmds.ExocortexAlembic_profileBegin(f="Python.ExocortexAlembic._import.importPolyMesh")
+	#print("importPolyMesh(" + str(name) + ", " + str(identifier) + ", " + str(parentXform) + ")")
+
 	reader = ""
 	shape  = fnt.alembicCreateNode(name, "mesh", parentXform)
 	cmds.sets(shape, e=True, forceElement="initialShadingGroup")
@@ -62,8 +68,8 @@ def importPolyMesh(name, identifier, jobInfo, parentXform=None, isConstant=False
 		reader = topoReader
 	elif not isConstant:
 		reader = cmds.deformer(shape, type="ExocortexAlembicPolyMeshDeform")[0]
+		setupReaderAttribute(reader, identifier, isConstant, jobInfo)
 
-	setupReaderAttribute(reader, identifier, isConstant, jobInfo)
 	#print("importPolyMesh(" + str(name) + ", " + str(identifier) + ", " + str(parentXform) + ") -> " + str(shape))
 	cmds.ExocortexAlembic_profileEnd(f="Python.ExocortexAlembic._import.importPolyMesh")
 	return shape
