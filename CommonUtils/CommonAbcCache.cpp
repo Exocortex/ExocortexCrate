@@ -15,10 +15,10 @@ AbcObjectCache::AbcObjectCache( Alembic::Abc::IObject & objToCache )
 	bool isMesh = true;
 	if ( bsd.type == bsd.__POLYMESH || !( isMesh = (bsd.type != bsd.__SUBDIV) ) )
 	{
-		AlembicMeshBasePtr aMesh = createAlembicMesh(&objToCache, isMesh);
-		isMeshPointCache = aMesh->pointCache();
+		bool isTopoDyn = false;
+		extractMeshInfo(&objToCache, isMesh, isMeshPointCache, isTopoDyn);
 		if (!isConstant)
-			isMeshTopoDynamic = aMesh->isTopoDynamic;
+			isMeshTopoDynamic = isTopoDyn;
 	}
 }
 
