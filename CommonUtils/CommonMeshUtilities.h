@@ -20,6 +20,22 @@ public:
 typedef IndexedValues<Abc::N3f> IndexedNormals;
 typedef IndexedValues<Abc::V2f> IndexedUVs;
 
+///////////////////////////////////////////////////////////////////////////////////////////////////////////
+class AlembicMeshBase
+{
+protected:
+	Alembic::Abc::IInt32ArrayProperty faceCountProp;
+
+	AlembicMeshBase(void): isTopoDynamic(false) {}
+public:
+	bool isTopoDynamic;		// value can be computed in function pointCache!
+	virtual bool pointCache(void) = 0;
+	//virtual bool topoDynamic(void) = 0;
+};
+
+typedef boost::shared_ptr<AlembicMeshBase> AlembicMeshBasePtr;
+AlembicMeshBasePtr createAlembicMesh(Alembic::AbcGeom::IObject *pIObj, bool isMesh);
+///////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 bool isAlembicMeshValid( Alembic::AbcGeom::IObject *pIObj );
 bool isAlembicMeshNormals( Alembic::AbcGeom::IObject *pIObj, bool& isConstant );

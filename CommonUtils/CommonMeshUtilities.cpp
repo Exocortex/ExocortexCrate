@@ -4,6 +4,60 @@
 #include "CommonProfiler.h"
 #include "CommonUtilities.h"
 
+///////////////////////////////////////////////////////////////////////////////////////////////////////////
+template<typename T> class AlembicMesh: public AlembicMeshBase
+{
+	T schema;
+public:
+	AlembicMesh(T &_schema): schema(_schema)
+	{
+		faceCountProp = Alembic::Abc::IInt32ArrayProperty(_schema, ".faceCounts");
+	}
+
+	bool pointCache(void)
+	{
+		if( ! faceCountProp.valid() )
+		{
+			Alembic::Abc::IP3fArrayProperty positionsProp = Alembic::Abc::IP3fArrayProperty(schema, "P");
+			if( positionsProp.valid() && positionsProp.getValue()->size() > 0 )
+				return true;
+		}
+		else if( faceCountProp.isConstant() )
+		{
+			Alembic::Abc::Int32ArraySamplePtr faceCounts = faceCountProp.getValue();
+			// the first is our preferred method, the second check here is Helge's method that is now considered obsolete
+			if( faceCounts->size() == 0 || ( faceCounts->size() == 1 && ( faceCounts->get()[0] == 0 ) ) )
+			{
+				Alembic::Abc::IP3fArrayProperty positionsProp = Alembic::Abc::IP3fArrayProperty(schema, "P");
+				if( positionsProp.valid() && positionsProp.getValue()->size() > 0 )
+					return true;
+			}
+		}
+		else
+			isTopoDynamic = true;
+		return false;
+	}
+	/*
+	bool topoDynamic(void)
+	{
+		return faceCountProp.valid() && !faceCountProp.isConstant();	// computed in pointCache because it's executed before anyway!
+	}
+	//*/
+};
+
+typedef Alembic::AbcGeom::IPolyMesh::schema_type poly_mesh_schema;
+typedef Alembic::AbcGeom::ISubD::schema_type sub_div_schema;
+
+AlembicMeshBasePtr createAlembicMesh(Alembic::AbcGeom::IObject *pIObj, bool isMesh)
+{
+	if(isMesh)
+		return AlembicMeshBasePtr(new AlembicMesh<poly_mesh_schema>(Alembic::AbcGeom::IPolyMesh(*pIObj,Alembic::Abc::kWrapExisting).getSchema()));
+	return AlembicMeshBasePtr(new AlembicMesh<sub_div_schema>(Alembic::AbcGeom::ISubD(*pIObj,Alembic::Abc::kWrapExisting).getSchema()));
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 bool isAlembicMeshValid( Alembic::AbcGeom::IObject *pIObj ) {
 	//ESS_PROFILE_FUNC();
 	Alembic::AbcGeom::IPolyMesh objMesh;
