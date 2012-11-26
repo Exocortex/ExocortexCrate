@@ -1067,9 +1067,9 @@ Mesh* AlembicParticles::GetRenderMesh(TimeValue t, INode *inode, View &view, BOO
 		if(pNormalSpec && curNumFaces == pNormalSpec->GetNumFaces() ){
             ESS_PROFILE_SCOPE("GetRenderMesh - Build and set normals - copy normals from normal spec");
 			//for(int j=0, curIndex=faceOffset; j<curNumFaces; j++, curIndex++){
-			//	//pRenderMeshNormalSpec->SetNormal(curIndex, 0, pNormalSpec->GetNormal(j, 0) * meshTM_I_T);
-			//	//pRenderMeshNormalSpec->SetNormal(curIndex, 1, pNormalSpec->GetNormal(j, 1) * meshTM_I_T);
-			//	//pRenderMeshNormalSpec->SetNormal(curIndex, 2, pNormalSpec->GetNormal(j, 2) * meshTM_I_T);
+			//	pRenderMeshNormalSpec->SetNormal(curIndex, 0, pNormalSpec->GetNormal(j, 0) * meshTM_I_T);
+			//	pRenderMeshNormalSpec->SetNormal(curIndex, 1, pNormalSpec->GetNormal(j, 1) * meshTM_I_T);
+			//	pRenderMeshNormalSpec->SetNormal(curIndex, 2, pNormalSpec->GetNormal(j, 2) * meshTM_I_T);
 			//}
             pRenderMeshNormalSpec->AppendAllChannels(pNormalSpec);
 		}
@@ -1147,11 +1147,15 @@ Mesh* AlembicParticles::GetRenderMesh(TimeValue t, INode *inode, View &view, BOO
 		faceOffset += curNumFaces;
 	}
 
+   pRenderMeshNormalSpec->SetFlag(MESH_NORMAL_NORMALS_BUILT, TRUE);
+   pRenderMeshNormalSpec->SetFlag(MESH_NORMAL_NORMALS_COMPUTED, TRUE);
+
+
 	//pRenderMeshNormalSpec->CheckNormals();
-    {
-    ESS_PROFILE_SCOPE("GetRenderMesh renderMesh->buildNormals");
-	renderMesh->buildNormals();
-    }
+ //   {
+ //   ESS_PROFILE_SCOPE("GetRenderMesh renderMesh->buildNormals");
+	////renderMesh->buildNormals();
+ //   }
 
 	return renderMesh;
 }
