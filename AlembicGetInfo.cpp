@@ -1,8 +1,8 @@
 #include "stdafx.h"
 #include "AlembicGetInfo.h"
+/*
 #include "CommonMeshUtilities.h"
 #include <maya/MProgressWindow.h>
-
 
 using namespace std;
 
@@ -255,5 +255,5 @@ MStatus AlembicGetInfoCommand::doIt(const MArgList & args)
    setResult(identifiers);
    return status;
 }
-
+//*/
 

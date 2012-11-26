@@ -1,4 +1,4 @@
-source "functions.mel";
+//source "functions.mel";
 
 global proc exocortexAlembicImportGUI(string $filename,string $dialog)
 {

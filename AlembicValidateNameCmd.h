@@ -3,6 +3,7 @@
 
   #include "AlembicObject.h"
 
+	/*
   class AlembicValidateNameCommand : public MPxCommand
   {
   public:
@@ -15,6 +16,7 @@
     static MSyntax createSyntax();
     static void* creator() { return new AlembicValidateNameCommand(); }
   };
+	//*/
 
   class AlembicAssignFacesetCommand : public MPxCommand
   {
@@ -42,6 +44,7 @@
     static void* creator() { return new AlembicAssignInitialSGCommand(); }
   };
 
+	/*
   class AlembicFileRefCountCommand : public MPxCommand
   {
   public:
@@ -54,5 +57,6 @@
     static MSyntax createSyntax();
     static void* creator() { return new AlembicFileRefCountCommand(); }
   };
+	//*/
 
 #endif

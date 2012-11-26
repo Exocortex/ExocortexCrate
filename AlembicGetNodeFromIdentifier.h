@@ -1,6 +1,7 @@
 #ifndef _ALEMBIC_GETNODEFROMIDENTIFIER_H_
 #define _ALEMBIC_GETNODEFROMIDENTIFIER_H_
 
+/*
 class AlembicGetNodeFromIdentifierCommand : public MPxCommand
 {
   public:
@@ -13,5 +14,6 @@ class AlembicGetNodeFromIdentifierCommand : public MPxCommand
     static MSyntax createSyntax();
     static void* creator();
 };
+//*/
 
 #endif

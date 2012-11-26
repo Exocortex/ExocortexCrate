@@ -1,4 +1,4 @@
-source "functions.mel";
+//source "functions.mel";
 
 global proc exocortexCloseDialog(string $dialog)
 {

@@ -5,6 +5,7 @@
 #include <maya/MFnMesh.h>
 #include <maya/MItMeshPolygon.h>
 
+/*
 /// AlembicValidateNameCommand
 MSyntax AlembicValidateNameCommand::createSyntax()
 {
@@ -43,6 +44,7 @@ MStatus AlembicValidateNameCommand::doIt(const MArgList& args)
   setResult(identifier.c_str());
   return MS::kSuccess;
 }
+//*/
 
 /// AlembicAssignFacesetCommand
 MSyntax AlembicAssignFacesetCommand::createSyntax()
@@ -226,6 +228,7 @@ MStatus AlembicAssignInitialSGCommand::doIt(const MArgList& args)
   return MS::kSuccess;
 }
 
+/*
 MSyntax AlembicFileRefCountCommand::createSyntax()
 {
    MSyntax syntax;
@@ -265,5 +268,6 @@ MStatus AlembicFileRefCountCommand::doIt(const MArgList& args)
     delRefArchive(argData.flagArgumentString("decr", 0));
   return MS::kSuccess;
 }
+//*/
 
 

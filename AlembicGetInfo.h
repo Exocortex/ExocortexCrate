@@ -1,6 +1,7 @@
 #ifndef _ALEMBIC_GETINFO_H_
 #define _ALEMBIC_GETINFO_H_
 
+/*
 class AlembicGetInfoCommand : public MPxCommand
 {
   public:
@@ -13,5 +14,5 @@ class AlembicGetInfoCommand : public MPxCommand
     static MSyntax createSyntax();
     static void* creator();
 };
-
+//*/
 #endif

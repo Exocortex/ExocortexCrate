@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "AlembicGetNodeFromIdentifier.h"
 
+/*
 AlembicGetNodeFromIdentifierCommand::AlembicGetNodeFromIdentifierCommand()
 {
 }
@@ -55,3 +56,5 @@ MStatus AlembicGetNodeFromIdentifierCommand::doIt(const MArgList & args)
 
    return status;
 }
+//*/
+
