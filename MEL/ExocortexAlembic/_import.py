@@ -61,10 +61,11 @@ def importPolyMesh(name, identifier, jobInfo, parentXform=None, isConstant=False
 	cmds.setAttr(topoReader+".identifier", identifier, type="string")
 	cmds.setAttr(topoReader+".normals", jobInfo.useNormals)
 	cmds.setAttr(topoReader+".uvs", jobInfo.useUVs)
-
 	if jobInfo.useFaceSets:
 		cmds.ExocortexAlembic_createFaceSets(o=shape, f=jobInfo.filename, i=identifier)
+
 	if useDynTopo:
+		cmds.connectAttr(jobInfo.timeCtrl+".outTime", topoReader+".inTime")
 		reader = topoReader
 	elif not isConstant:
 		reader = cmds.deformer(shape, type="ExocortexAlembicPolyMeshDeform")[0]

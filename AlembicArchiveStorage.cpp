@@ -4,7 +4,7 @@
 #include "CommonLog.h"
 
 
-std::string resolvePath_Internal(std::string& originalPath)
+std::string resolvePath_Internal(std::string const& originalPath)
 {
    ESS_PROFILE_SCOPE("resolvePath");
 
