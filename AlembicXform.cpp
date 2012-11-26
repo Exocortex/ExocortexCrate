@@ -302,20 +302,10 @@ MStatus AlembicXformNode::compute(const MPlug & plug, MDataBlock & dataBlock)
     if(!mSchema.valid())
       return MStatus::kFailure;
 
-    AbcG::XformSample sample;
-    mTimes.clear();
-    mSampleIndicesToMatrices.clear();
-    {
-      ESS_PROFILE_SCOPE("AlembicXformNode::compute pre-load matrices");
-
-      for(size_t i=0;i<mSchema.getNumSamples();i++)
-      {
-        mTimes.push_back((double)mSchema.getTimeSampling()->getSampleTime(i));
-      }
-    }
+    mSampleIndicesToMatrices.clear();  
   }
 
-  if(mTimes.size() == 0)
+  if(mSchema.getNumSamples() == 0)
     return MStatus::kFailure;
 
   SampleInfo sampleInfo = getSampleInfo(
@@ -336,7 +326,7 @@ MStatus AlembicXformNode::compute(const MPlug & plug, MDataBlock & dataBlock)
   else {
 	  matrixAtI = mSampleIndicesToMatrices[ sampleInfo.floorIndex ];
   }
-  if( ( sampleInfo.ceilIndex < mTimes.size() ) && mSampleIndicesToMatrices.find(sampleInfo.ceilIndex) == mSampleIndicesToMatrices.end() ) {
+  if( ( sampleInfo.ceilIndex < mSchema.getNumSamples() ) && mSampleIndicesToMatrices.find(sampleInfo.ceilIndex) == mSampleIndicesToMatrices.end() ) {
     AbcG::XformSample sample;
     mSchema.get(sample,sampleInfo.ceilIndex);
     matrixAtIPlus1 = sample.getMatrix();
