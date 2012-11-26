@@ -927,7 +927,7 @@ Mesh* AlembicParticles::GetMultipleRenderMesh_Internal(TimeValue  t,  INode *ino
 
 Mesh* AlembicParticles::GetRenderMesh(TimeValue t, INode *inode, View &view, BOOL &needDelete)
 {
-    ESS_LOG_WARNING("GetRenderMesh called.");
+    //ESS_LOG_WARNING("GetRenderMesh called.");
 
     ESS_PROFILE_FUNC();
 	if (m_currTick != t){
