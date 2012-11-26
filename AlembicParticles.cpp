@@ -139,12 +139,13 @@ AlembicParticles::~AlembicParticles()
     ALEMBIC_SAFE_DELETE(m_pDiskMaker);
     ALEMBIC_SAFE_DELETE(m_pRectangleMaker);
 	ALEMBIC_SAFE_DELETE(m_pAlembicParticlesExt);
-    clearViewportMeshes();
+    clearViewportMeshCache();
 }
 
 static const bool LOG = false;
 
-void AlembicParticles::clearViewportMeshes(){
+void AlembicParticles::clearViewportMeshCache()
+{
    ESS_PROFILE_FUNC();
     //clear the viewport meshes
     for(int i=0; i<m_viewportMeshes.size(); i++){
@@ -155,6 +156,21 @@ void AlembicParticles::clearViewportMeshes(){
        }
     }
     m_viewportMeshes.clear();
+}
+
+void AlembicParticles::createViewportMeshCache(TimeValue t, INode *node)
+{
+   if(!m_viewportMeshes.empty()){
+      clearViewportMeshCache();
+   }
+
+    ESS_PROFILE_SCOPE("Viewport instance mesh cache creation");
+    m_viewportMeshes.resize(m_InstanceShapeNames->size());
+    ExoNullView nullView;
+    for(int i=0; i<m_viewportMeshes.size(); i++)
+    {
+        m_viewportMeshes[i].mesh = GetMultipleRenderMesh_Internal(t, node, nullView, m_viewportMeshes[i].needDelete, i);
+    }
 }
 
 void AlembicParticles::UpdateParticles(TimeValue t, INode *node)
@@ -246,21 +262,10 @@ void AlembicParticles::UpdateParticles(TimeValue t, INode *node)
 	GetParticleShapeInstanceIds(m_iPoints, sampleInfo, m_InstanceShapeIds );
 	GetParticleShapeInstanceTimes(m_iPoints, sampleInfo, m_InstanceShapeTimes );
 
-    clearViewportMeshes();
-
     // Find the scene nodes for all our instances
     FillParticleShapeNodes(m_iPoints, sampleInfo);
 
-    {
-    ESS_PROFILE_SCOPE("Viewport instance mesh cache creation");
-    m_viewportMeshes.resize(m_InstanceShapeNames->size());
-    ExoNullView nullView;
-	for(int i=0; i<m_viewportMeshes.size(); i++)
-	{
-       m_viewportMeshes[i].mesh = GetMultipleRenderMesh_Internal(t, node, nullView, m_viewportMeshes[i].needDelete, i);
-	}
-
-    }
+    createViewportMeshCache(t, node);
     
     tvalid = t;
     valid = TRUE;
@@ -958,8 +963,8 @@ Mesh* AlembicParticles::GetRenderMesh(TimeValue t, INode *inode, View &view, BOO
 	for(int i=0; i<NumberOfRenderMeshes(); i++)
 	{
 		BOOL curNeedDelete = FALSE;
-		Mesh* pMesh = GetMultipleRenderMesh_Internal(t, inode, nullView, curNeedDelete, i);
-        //Mesh* pMesh = m_viewportMeshes[i].mesh;
+		//Mesh* pMesh = GetMultipleRenderMesh_Internal(t, inode, nullView, curNeedDelete, i);
+        Mesh* pMesh = m_viewportMeshes[i].mesh;
 
 		if(!pMesh){
 			continue;
@@ -1019,8 +1024,8 @@ Mesh* AlembicParticles::GetRenderMesh(TimeValue t, INode *inode, View &view, BOO
 	for(int i=0; i<NumberOfRenderMeshes(); i++)
 	{
 		BOOL curNeedDelete = FALSE;
-		Mesh* pMesh = GetMultipleRenderMesh_Internal(t, inode, nullView, curNeedDelete, i);
-        //Mesh* pMesh = m_viewportMeshes[i].mesh;
+		//Mesh* pMesh = GetMultipleRenderMesh_Internal(t, inode, nullView, curNeedDelete, i);
+        Mesh* pMesh = m_viewportMeshes[i].mesh;
 
 		if(!pMesh){
 			continue;
@@ -1313,6 +1318,8 @@ int AlembicParticles::Display(TimeValue t, INode* inode, ViewExp *vpt, int flags
        Update(t,inode);
    }
 
+   //createViewportMeshCache(t, inode);
+
    GraphicsWindow *gw = vpt->getGW();
    DWORD rlim  = gw->getRndLimits();
 
@@ -1456,7 +1463,7 @@ int AlembicParticles::Display(TimeValue t, INode* inode, ViewExp *vpt, int flags
 	   }
 	}
 
-
+   //clearViewportMeshCache();
    
    return 0;
 }
@@ -1469,6 +1476,8 @@ int AlembicParticles::HitTest(TimeValue t, INode *inode, int type, int crossing,
    {
        Update(t,inode);
    }
+
+   //createViewportMeshCache(t, inode);
 
    DWORD savedLimits;
    Matrix3 gwTM;
@@ -1564,6 +1573,9 @@ int AlembicParticles::HitTest(TimeValue t, INode *inode, int type, int crossing,
    }
 
    gw->setRndLimits(savedLimits);
+
+   //clearViewportMeshCache();
+
    return res;
 }
 

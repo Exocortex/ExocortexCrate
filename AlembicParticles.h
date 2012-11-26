@@ -154,7 +154,8 @@ private:
     INode*          GetParticleMeshNode(int meshNumber, INode *displayNode);
   //  void            ClearCurrentViewportMeshes();
 	//void	ClearMeshCache();
-    void AlembicParticles::clearViewportMeshes();
+    void    clearViewportMeshCache();
+    void    createViewportMeshCache(TimeValue t, INode *node);
 
 private:
     Mesh *BuildPointMesh(int meshNumber, TimeValue t, INode *node, View& view, BOOL &needDelete);
