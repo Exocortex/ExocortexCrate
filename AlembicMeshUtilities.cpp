@@ -304,7 +304,7 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
          options.pMNMesh->FillInMesh();
      
  
-         if( options.pMNMesh->GetFlag(MN_MESH_RATSNEST) ){
+         if( options.pMNMesh->GetFlag(MN_MESH_RATSNEST) && !(options.nDataFillFlags & ALEMBIC_DATAFILL_VERTEX) ){
             ESS_LOG_ERROR( "Mesh is a 'Rat's Nest' (more than 2 faces per edge),\n fileName: " << options.fileName << " identifier: " << options.identifier<<".\n Please import with the \"Load Geometry from Topology modifier\" option active" );
          }
       } 
