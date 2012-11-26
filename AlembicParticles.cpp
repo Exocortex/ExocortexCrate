@@ -153,7 +153,7 @@ void AlembicParticles::clearViewportMeshCache()
        if(it->second.needDelete){
           it->second.mesh->FreeAll();
           delete it->second.mesh;
-          ESS_LOG_WARNING("deleting mesh");
+          //ESS_LOG_WARNING("deleting mesh");
        }
    }
    m_InstanceMeshCache.clear();
