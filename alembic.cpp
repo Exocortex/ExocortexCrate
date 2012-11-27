@@ -68,12 +68,6 @@ EC_EXPORT MStatus initializePlugin(MObject obj)
    status = plugin.registerCommand("ExocortexAlembic_import",
       AlembicImportCommand::creator,
       AlembicImportCommand::createSyntax);
-   /*status = plugin.registerCommand("ExocortexAlembic_getInfo",
-      AlembicGetInfoCommand::creator,
-      AlembicGetInfoCommand::createSyntax);
-   status = plugin.registerCommand("ExocortexAlembic_getNodeFromIdentifier",
-      AlembicGetNodeFromIdentifierCommand::creator,
-      AlembicGetNodeFromIdentifierCommand::createSyntax);*/
    status = plugin.registerCommand("ExocortexAlembic_resolvePath",
       AlembicResolvePathCommand::creator,
       AlembicResolvePathCommand::createSyntax);
@@ -102,16 +96,6 @@ EC_EXPORT MStatus initializePlugin(MObject obj)
    status = plugin.registerCommand("ExocortexAlembic_profileReset",
 	    AlembicProfileResetCommand::creator,
       AlembicProfileResetCommand::createSyntax);
-
-   /*status = plugin.registerCommand("ExocortexAlembic_createValidName",
-	    AlembicValidateNameCommand::creator,
-      AlembicValidateNameCommand::createSyntax);*/
-   /*status = plugin.registerCommand("ExocortexAlembic_assignInitialSG",
-	    AlembicAssignInitialSGCommand::creator,
-      AlembicAssignInitialSGCommand::createSyntax);*/
-   /*status = plugin.registerCommand("ExocortexAlembic_fileRefCount",
-	    AlembicFileRefCountCommand::creator,
-      AlembicFileRefCountCommand::createSyntax);*/
 
    // nodes
    status = plugin.registerNode("ExocortexAlembicTimeControl",

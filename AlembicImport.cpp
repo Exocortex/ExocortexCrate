@@ -17,12 +17,11 @@
 #include <maya/MItDag.h>
 
 /// Maya Progress Bar
-void MayaProgressBar::init(int min, int max, int incr)
+void MayaProgressBar::init(int _min, int _max, int incr)
 {
 	ESS_PROFILE_SCOPE("MayaProgressBar::init");
-	const int range = max - min;
 	MString cmd = "ExoAlembic._functions.progressBar_init(";
-	cmd += range;
+	cmd += ((_max -= _min) < 1) ? 1 : _max;
 	cmd += ")";
 
 	MGlobal::executePythonCommand(cmd);
