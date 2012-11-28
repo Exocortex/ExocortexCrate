@@ -48,7 +48,9 @@ TARGET_LINK_LIBRARIES( ${PROJECT_NAME}
    ${Arnold_LIBRARIES}
    ${ALL_ALEMBIC_LIBS}
    )
-	
+SET_TARGET_PROPERTIES( ${PROJECT_NAME} 
+                      PROPERTIES OUTPUT_NAME ExocortexAlembicArnold )
+
 ADD_DEPENDENCIES(${PROJECT_NAME} AlembicAbcGeom)
 
 get_target_property( Install_TARGET ${PROJECT_NAME} LOCATION )
