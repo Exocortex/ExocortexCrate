@@ -332,8 +332,7 @@ INode* GetNodeFromHierarchyPath(const std::string& path)
 	  for(int i=0; i<pNode->NumberOfChildren(); i++){
 
 	     INode* childNode = pNode->GetChildNode(i);
-         const char* cName = childNode->GetName();
-
+  
 	     if (strcmp( EC_MCHAR_to_UTF8( childNode->GetName() ).c_str(), childName.c_str()) == 0){
 		     bFound = true;
 		     pNode = childNode;
@@ -361,7 +360,7 @@ void buildINodeMapForChild(INodeMap& nodeMap, INode* node, std::string path)
    path += "/";
    for(int i=0; i<node->NumberOfChildren(); i++){
       INode* childNode = node->GetChildNode(i);
-      buildINodeMapForChild(nodeMap, childNode, path + childNode->GetName());
+      buildINodeMapForChild(nodeMap, childNode, path + EC_MCHAR_to_UTF8( childNode->GetName() ) );
    }
 }
 
@@ -371,7 +370,7 @@ void buildINodeMap(INodeMap& nodeMap)
    std::string path("/");
    for(int i=0; i<node->NumberOfChildren(); i++){
       INode* childNode = node->GetChildNode(i);
-      buildINodeMapForChild(nodeMap, childNode, path + childNode->GetName());
+      buildINodeMapForChild(nodeMap, childNode, path + EC_MCHAR_to_UTF8( childNode->GetName() ) );
    }
 }
 
