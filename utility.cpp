@@ -506,25 +506,45 @@ CString getDSOPath()
 
    if(result.IsEmpty())
    {
-      CRefArray plugins = Application().GetPlugins();
-      for(LONG i=0;i<plugins.GetCount();i++)
-      {
-         Plugin plugin(plugins[i]);
+     CRefArray plugins = Application().GetPlugins();
+     for(LONG i=0;i<plugins.GetCount();i++)
+     {
+       Plugin plugin(plugins[i]);
 
-        CString path = plugin.GetFilename();
-        path = path.GetSubString(0,path.ReverseFindString(CUtils::Slash()));
-        path = path.GetSubString(0,path.ReverseFindString(CUtils::Slash()));
+       CString path = plugin.GetFilename();
+       path = path.GetSubString(0,path.ReverseFindString(CUtils::Slash()));
+       path = path.GetSubString(0,path.ReverseFindString(CUtils::Slash()));
 #ifdef _WIN32
-        path = CUtils::BuildPath(path,L"DSO",L"ExocortexAlembicArnold.dll");
+       path = CUtils::BuildPath(path,L"DSO",L"ExocortexAlembicArnold.dll");
 #else
-        path = CUtils::BuildPath(path,L"DSO",L"libExocortexAlembicArnold.so");
+       path = CUtils::BuildPath(path,L"DSO",L"libExocortexAlembicArnold.so");
 #endif
-		boost::filesystem::path boostPath = path.GetAsciiString();
-		if( boost::filesystem::exists( boostPath ) ) {
-			result = path;
-			break;
-		}
-      }
+       boost::filesystem::path boostPath = path.GetAsciiString();
+       if( boost::filesystem::exists( boostPath ) ) {
+         result = path;
+         break;
+       }
+#ifdef _WIN32
+       path = CUtils::BuildPath(path,L"DSO",L"Arnold3ExocortexAlembic.dll");
+#else
+       path = CUtils::BuildPath(path,L"DSO",L"libArnold3ExocortexAlembic.so");
+#endif
+       boostPath = path.GetAsciiString();
+       if( boost::filesystem::exists( boostPath ) ) {
+         result = path;
+         break;
+       }
+#ifdef _WIN32
+       path = CUtils::BuildPath(path,L"DSO",L"Arnold4ExocortexAlembic.dll");
+#else
+       path = CUtils::BuildPath(path,L"DSO",L"libArnold4ExocortexAlembic.so");
+#endif
+       boostPath = path.GetAsciiString();
+       if( boost::filesystem::exists( boostPath ) ) {
+         result = path;
+         break;
+       }
+     }
    }
 
    // validate the path exists
