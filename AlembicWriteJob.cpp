@@ -108,6 +108,7 @@ MStatus AlembicWriteJob::PreProcess()
    if(mFileName.length() == 0)
    {
       MGlobal::displayError("[ExocortexAlembic] No filename specified.");
+	  MPxCommand::setResult("Error caught in AlembicWriteJob::PreProcess: no filename specified");
       return MStatus::kInvalidParameter;
    }
 
@@ -115,6 +116,7 @@ MStatus AlembicWriteJob::PreProcess()
    if(mSelection.length() == 0)
    {
       MGlobal::displayError("[ExocortexAlembic] No objects specified.");
+	  MPxCommand::setResult("Error caught in AlembicWriteJob::PreProcess: no objects specified");
       return MStatus::kInvalidParameter;
    }
 
@@ -122,6 +124,7 @@ MStatus AlembicWriteJob::PreProcess()
    if(mFrames.size() == 0)
    {
       MGlobal::displayError("[ExocortexAlembic] No frames specified.");
+	  MPxCommand::setResult("Error caught in AlembicWriteJob::PreProcess: no frame specified");
       return MStatus::kInvalidParameter;
    }
 
@@ -129,6 +132,7 @@ MStatus AlembicWriteJob::PreProcess()
    if(getRefArchive(mFileName) > 0)
    {
       MGlobal::displayError("[ExocortexAlembic] Error writing to file '"+mFileName+"'. File currently in use.");
+	  MPxCommand::setResult("Error caught in AlembicWriteJob::PreProcess: no filename already in use");
       return MStatus::kInvalidParameter;
    }
 
@@ -292,6 +296,7 @@ MStatus AlembicWriteJob::PreProcess()
 			else
 			{
 				ESS_LOG_ERROR("Do not have reference to parent.");
+				MPxCommand::setResult("Error caught in AlembicWriteJob::PreProcess: do not have reference to parent");
 				return MS::kFailure;
 			}
 		}
@@ -304,6 +309,7 @@ MStatus AlembicWriteJob::PreProcess()
 	   this->forceCloseArchive();
       MString exc(e.what());
       MGlobal::displayError("[ExocortexAlembic] Error writing to file '"+mFileName+"' ("+exc+"). Do you still have it opened?");
+	  MPxCommand::setResult("Error caught in AlembicWriteJob::PreProcess: error writing file");
    }
 
    return MS::kFailure;
@@ -336,7 +342,10 @@ MStatus AlembicWriteJob::Process(double frame)
 		 pBar.incr(1);
          MStatus status = it->second->Save(mFrames[i]);
          if(status != MStatus::kSuccess)
+		 {
+			 MPxCommand::setResult("Error caught in AlembicWriteJob::Process: " + status.errorString());
             return status;
+		 }
       }
    }
    pBar.stop();
@@ -425,6 +434,7 @@ MStatus AlembicExportCommand::doIt(const MArgList & args)
    {
       // TODO: display dialog
       MGlobal::displayError("[ExocortexAlembic] No jobs specified.");
+	  MPxCommand::setResult("Error caught in AlembicExportCommand::doIt: no job specified");
       return status;
    }
    else
@@ -647,6 +657,7 @@ MStatus AlembicExportCommand::doIt(const MArgList & args)
 			 MGlobal::displayError("[ExocortexAlembic] No filename specified.");
 			 for(size_t k=0;k<jobPtrs.size();k++)
 				delete(jobPtrs[k]);
+			 MPxCommand::setResult("Error caught in AlembicExportCommand::doIt: no filename specified");
 			 return MStatus::kFailure;
 		  }
 
@@ -722,6 +733,7 @@ MStatus AlembicExportCommand::doIt(const MArgList & args)
 		for (std::vector<AlembicWriteJob*>::iterator beg = jobPtrs.begin(); beg != jobPtrs.end(); ++beg)
 			(*beg)->forceCloseArchive();
 		restoreOldTime(currentAnimStartTime, currentAnimEndTime, oldCurTime, curMinTime, curMaxTime);
+		MPxCommand::setResult("Error caught in AlembicExportCommand::doIt");
 		status = MS::kFailure;
    }
 	MAnimControl::stop();
