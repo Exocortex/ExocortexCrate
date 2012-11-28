@@ -31,7 +31,7 @@ if( WIN32 )
 elseif( UNIX ) 
 	set( Arnold_BASE_DIR "${LIBRARY_ROOT}/arnold/${EXOCORTEX_ARNOLD_VERSION}/linux" )
 	#set( Arnold_LIBRARIES ai )  There are no static linkable libraries for Arnold on linux.
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wl,--version-script=${CMAKE_CURRENT_SOURCE_DIR}/ArnoldAlembic.versionScript")
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wl,--version-script=${BASE_DIR}/ArnoldAlembic.versionScript")
 else()
 	message(FATAL_ERROR "Should not get here")
 endif()
