@@ -1768,7 +1768,7 @@ Mesh *AlembicParticles::BuildInstanceMesh(int meshNumber, TimeValue t, INode *no
 
     
 
-    InstanceMeshCache::iterator it = m_InstanceMeshCache.find(pNode->GetName());
+    InstanceMeshCache::iterator it = m_InstanceMeshCache.find(EC_MCHAR_to_UTF8(pNode->GetName()));
     if( it != m_InstanceMeshCache.end() ){
        return it->second.mesh;
     }
@@ -1776,7 +1776,7 @@ Mesh *AlembicParticles::BuildInstanceMesh(int meshNumber, TimeValue t, INode *no
        //ESS_LOG_WARNING("NODE: "<<pNode->GetName());
        InstanceMesh iMesh;
        iMesh.mesh = GetMeshFromNode(pNode, shapet, iMesh.needDelete);
-       m_InstanceMeshCache[pNode->GetName()] = iMesh;
+       m_InstanceMeshCache[EC_MCHAR_to_UTF8(pNode->GetName())] = iMesh;
        return iMesh.mesh;
     }
 
