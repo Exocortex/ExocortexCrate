@@ -197,3 +197,38 @@ SceneNodeXSIPtr buildCommonSceneGraph(XSI::CRef xsiRoot)
 
    return exoRoot;
 }
+
+
+XSIProgressBar::XSIProgressBar()
+{
+   prog = Application().GetUIToolkit().GetProgressBar();
+}
+
+void XSIProgressBar::init(int min, int max, int incr)
+{
+   prog.PutMinimum(0);
+   prog.PutMaximum(max);
+   prog.PutValue(0);
+   prog.PutCancelEnabled(true);
+
+}
+
+void XSIProgressBar::start(void)
+{
+   prog.PutVisible(true);
+}
+
+void XSIProgressBar::stop(void)
+{
+   prog.PutVisible(false);
+}
+
+void XSIProgressBar::incr(int step)
+{
+   prog.Increment(step);
+}
+
+bool XSIProgressBar::isCancelled(void)
+{
+   return prog.IsCancelPressed();
+}

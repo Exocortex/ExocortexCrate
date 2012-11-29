@@ -2127,6 +2127,8 @@ ESS_CALLBACK_START(alembic_import_jobs_Execute, CRef&)
    //prog.PutCancelEnabled(true);
    //prog.PutVisible(true);
 
+    XSIProgressBar progBar;
+
    // clear the imported names!
    nameMapClear();
    CString transformCacheModelName;
@@ -2153,7 +2155,7 @@ ESS_CALLBACK_START(alembic_import_jobs_Execute, CRef&)
 
       //printSceneGraph(appRoot, false);
       
-      bool bAttachSuccess = AttachSceneFile(fileRoot, appRoot, jobParser);
+      bool bAttachSuccess = AttachSceneFile(fileRoot, appRoot, jobParser, &progBar);
 
       if(!bAttachSuccess){
          return CStatus::Fail;
@@ -2164,7 +2166,7 @@ ESS_CALLBACK_START(alembic_import_jobs_Execute, CRef&)
       //should build a full scene graph when start doing name checking
       SceneNodeXSIPtr appRoot(new SceneNodeXSI(importRootNode));
 
-      bool bImportSuccess = ImportSceneFile(fileRoot, appRoot, jobParser);
+      bool bImportSuccess = ImportSceneFile(fileRoot, appRoot, jobParser, &progBar);
       
       if(!bImportSuccess){
          return CStatus::Fail;
