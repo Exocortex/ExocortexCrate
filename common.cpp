@@ -2,7 +2,7 @@
 #include "common.h"
 
 
-std::string resolvePath_Internal(std::string path)
+std::string resolvePath_Internal(std::string const& path)
 {
 	return path;
 }
