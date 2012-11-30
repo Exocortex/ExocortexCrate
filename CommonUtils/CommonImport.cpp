@@ -269,41 +269,34 @@ bool AttachSceneFile(SceneNodeAlembicPtr fileRoot, SceneNodeAppPtr appRoot, cons
       sceneStack.push_back(AttachStackElement(appNode, fileRoot));
    }
 
-   //TODO: abstract progress
 
-   //int intermittentUpdateInterval = std::max( (int)(nNumNodes / 100), (int)1 );
-   //int i = 0;
 
-	if (pbar) pbar->start();
-	int count = 20;
+   if (pbar) pbar->start();
+   const int maxCount = pbar->getUpdateCount();
+   int count = maxCount;
    while( !sceneStack.empty() )
    {
-		if (count == 0)
-		{
-			count = 20;
-			if (pbar)
-			{
-				if (pbar->isCancelled())
-				{
-					EC_LOG_WARNING("Attach job cancelled by user");
-					pbar->stop();
-					return false;
-				}
-				pbar->incr(20);
-			}
-		}
-		else
-			--count;
-
       AttachStackElement sElement = sceneStack.back();
       SceneNodeAppPtr currAppNode = sElement.currAppNode;
       SceneNodeAlembicPtr currFileNode = sElement.currFileNode;
       sceneStack.pop_back();
 
-      //if( i % intermittentUpdateInterval == 0 ) {
-      //   prog.PutCaption(L"Importing "+CString(iObj.getFullName().c_str())+L" ...");
-      //}
-      //i++;
+      if (count == 0)
+      {
+         count = maxCount;
+         if (pbar)
+         {
+            if (pbar->isCancelled())
+            {
+               EC_LOG_WARNING("Attach job cancelled by user");
+               pbar->stop();
+               return false;
+            }
+            pbar->incr(maxCount);
+            pbar->setCaption(currFileNode->dccIdentifier);
+         }
+      }
+      --count;
 
       SceneNodeAlembicPtr newFileNode = currFileNode;
       //Each set of siblings names in an Alembic file exist within a namespace
@@ -329,11 +322,6 @@ bool AttachSceneFile(SceneNodeAlembicPtr fileRoot, SceneNodeAppPtr appRoot, cons
          SceneNodeAppPtr appNode = reinterpret<SceneNode, SceneNodeApp>(*it);
          sceneStack.push_back( AttachStackElement( appNode, newFileNode ) );
       }
-
-      //if(prog.IsCancelPressed()){
-      //   break;
-      //}
-      //prog.Increment();
    }
 
 	if (pbar) pbar->stop();
@@ -365,43 +353,34 @@ bool ImportSceneFile(SceneNodeAlembicPtr fileRoot, SceneNodeAppPtr appRoot, cons
       sceneStack.push_back(ImportStackElement(fileNode, appRoot));
    }
 
-   //TODO: abstract progress
-
-   //int intermittentUpdateInterval = std::max( (int)(nNumNodes / 100), (int)1 );
-   //int i = 0;
-
-	if (pbar) pbar->start();
-	int count = 20;
+   if (pbar) pbar->start();
+   const int maxCount = pbar->getUpdateCount();
+   int count = maxCount;
    while( !sceneStack.empty() )
    {
-		if (count == 0)
-		{
-			count = 20;
-			if (pbar)
-			{
-				if (pbar->isCancelled())
-				{
-					EC_LOG_WARNING("Import job cancelled by user");
-					pbar->stop();
-					return false;
-				}
-				pbar->incr(20);
-			}
-		}
-		else
-			--count;
-
       ImportStackElement sElement = sceneStack.back();
       SceneNodeAlembicPtr currFileNode = sElement.currFileNode;
       SceneNodeAppPtr parentAppNode = sElement.parentAppNode;
       sceneStack.pop_back();
 
-      //if( i % intermittentUpdateInterval == 0 ) {
-      //   prog.PutCaption(L"Importing "+CString(iObj.getFullName().c_str())+L" ...");
-      //}
-      //i++;
+      if (count == 0)
+      {
+         count = maxCount;
+         if (pbar)
+         {
+            if (pbar->isCancelled())
+            {
+               EC_LOG_WARNING("Import job cancelled by user");
+               pbar->stop();
+               return false;
+            }
+            pbar->incr(maxCount);
+            pbar->setCaption(currFileNode->dccIdentifier);
+         }
+      }
+      --count;
       
-      ESS_LOG_WARNING("Importing "<<currFileNode->pObjCache->obj.getFullName());
+      //ESS_LOG_WARNING("Importing "<<currFileNode->pObjCache->obj.getFullName());
        
       SceneNodeAppPtr newAppNode;
       bool bContinue = parentAppNode->addChild(currFileNode, jobParams, newAppNode);
@@ -441,11 +420,6 @@ bool ImportSceneFile(SceneNodeAlembicPtr fileRoot, SceneNodeAppPtr appRoot, cons
 		      EC_LOG_WARNING("Unsupported node: " << currFileNode->name << " has children that have not been imported." );
 	      }
       }
-
-      //if(prog.IsCancelPressed()){
-      //   break;
-      //}
-      //prog.Increment();
    }
 
    if (pbar) pbar->stop();
