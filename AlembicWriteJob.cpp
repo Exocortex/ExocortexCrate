@@ -458,6 +458,7 @@ MStatus AlembicExportCommand::doIt(const MArgList & args)
    try
    {
 	   // for each job, check the arguments
+	   bool failure = false;
 	   for(unsigned int i=0;i<jobStrings.length();i++)
 	   {
 		  double frameIn = 1.0;
@@ -685,13 +686,21 @@ MStatus AlembicExportCommand::doIt(const MArgList & args)
 		  {
 			 MGlobal::displayError("[ExocortexAlembic] Job skipped. Not satisfied.");
 			 delete(job);
-			 continue;
+			 failure = true;
+			 break;
 		  }
 
 		  // push the job to our registry
 		  MGlobal::displayInfo("[ExocortexAlembic] Using WriteJob:"+jobStrings[i]);
 		  jobPtrs.push_back(job);
 	   }
+
+		if (failure)
+		{
+			for(size_t k=0;k<jobPtrs.size();k++)
+				delete(jobPtrs[k]);
+			return MS::kFailure;
+		}
 
 	   // compute the job count
 	   unsigned int jobFrameCount = 0;

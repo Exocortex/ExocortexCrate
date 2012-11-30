@@ -31,7 +31,7 @@ def doIt(filename, exInframe, exOutframe, exObjects=None, exStepframe=1, exSubst
 		job += ";facesets="+str(int(exFaceSets))
 		if (exFaceSets):
 			job += ";useInitShadGrp=" + str(int(exUseInitShadGrp))
-		job += ";dynamictopology="+str(int(exDynamicTopo))
+		job += ";dynamictopology="+str(int(exDynTopo))
 	job += ";globalspace="+str(int(exGlobSpace))
 	job += ";withouthierarchy="+str(int(exWithoutHierarchy))
 	job += ";transformcache="+str(int(exXformCache))
