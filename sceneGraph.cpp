@@ -232,3 +232,8 @@ bool XSIProgressBar::isCancelled(void)
 {
    return prog.IsCancelPressed();
 }
+
+void XSIProgressBar::setCaption(std::string& caption)
+{
+   prog.PutCaption(L"Importing "+CString(caption.c_str())+L" ...");
+}

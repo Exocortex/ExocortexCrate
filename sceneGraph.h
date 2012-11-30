@@ -37,6 +37,8 @@ public:
    virtual void stop(void);
    virtual void incr(int step=1);
    virtual bool isCancelled(void);
+   virtual void setCaption(std::string& caption);
+   virtual int getUpdateCount(){ return 2; }
 };
 
 
