@@ -152,7 +152,7 @@ struct AlembicISceneBuildElement
 };
 
 
-SceneNodeAlembicPtr buildAlembicSceneGraph(AbcArchiveCache *pArchiveCache, AbcObjectCache *pRootObjectCache, int& nNumNodes)
+SceneNodeAlembicPtr buildAlembicSceneGraph(AbcArchiveCache *pArchiveCache, AbcObjectCache *pRootObjectCache, int& nNumNodes, bool countMergableChildren)
 {
 	ESS_PROFILE_SCOPE("buildAlembicSceneGraph");
    std::list<AlembicISceneBuildElement> sceneStack;
@@ -195,21 +195,31 @@ SceneNodeAlembicPtr buildAlembicSceneGraph(AbcArchiveCache *pArchiveCache, AbcOb
       newNode->type = getNodeType(iObj);
       //select every node by default
       newNode->selected = true;
+
+      //check if this newNode is actually an ETRANFORM
+      if(newNode->type == SceneNode::ITRANSFORM){
+         unsigned geomNodeCount = 0;
+
+         for(int j=0; j<(int)sElement.pObjectCache->childIdentifiers.size(); j++)
+         {
+            AbcObjectCache *pChildObjectCache = &( pArchiveCache->find( sElement.pObjectCache->childIdentifiers[j] )->second );
+            Alembic::AbcGeom::IObject childObj = pChildObjectCache->obj;
+            if( NodeCategory::get( childObj ) == NodeCategory::GEOMETRY ){
+               geomNodeCount++;
+            }
+         } 
+
+         if(geomNodeCount == 1){ // the xform has only one geometry, child so it is possible to merge. Thus, this is an ETRANFORM.
+            newNode->type = SceneNode::ETRANSFORM;
+            if(!countMergableChildren){
+               numNodes--;
+            }
+         }
+      }
       
       if(parentNode){ //create bi-direction link if there is a parent
          newNode->parent = parentNode.get();
          parentNode->children.push_back(newNode);
-
-         //the parent transforms of geometry nodes should be to be external transforms 
-         //(we don't a transform's type until we have seen what type(s) of child it has)
-         if( NodeCategory::get(iObj) == NodeCategory::GEOMETRY ){
-			 if(parentNode->type == SceneNode::ITRANSFORM){
-               parentNode->type = SceneNode::ETRANSFORM;
-            }
-            else{
-               ESS_LOG_WARNING("node "<<iObj.getFullName()<<" does not have a parent transform.");
-            }
-         }
       }
 
       //push the children as the last step, since we need to who the parent is first (we may have merged)
