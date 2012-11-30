@@ -2111,7 +2111,7 @@ ESS_CALLBACK_START(alembic_import_jobs_Execute, CRef&)
 
 
    int nNumNodes = 0;
-   SceneNodeAlembicPtr fileRoot = buildAlembicSceneGraph(pArchiveCache, pRootObjectCache, nNumNodes);
+   SceneNodeAlembicPtr fileRoot = buildAlembicSceneGraph(pArchiveCache, pRootObjectCache, nNumNodes, false);
 
    //printSceneGraph(fileRoot, false);
 
@@ -2128,6 +2128,7 @@ ESS_CALLBACK_START(alembic_import_jobs_Execute, CRef&)
    //prog.PutVisible(true);
 
     XSIProgressBar progBar;
+    progBar.init(nNumNodes);
 
    // clear the imported names!
    nameMapClear();
