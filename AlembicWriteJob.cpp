@@ -187,7 +187,8 @@ CStatus AlembicWriteJob::PreProcess()
    const bool bFlattenHierarchy = (bool)GetOption(L"flattenHierarchy");
 
    //TODO: eventually this should be a replaced with an equivalent virtual method, and the exporter will be shared
-   SceneNodePtr exoSceneRoot = buildCommonSceneGraph(Application().GetActiveSceneRoot());
+   int nNumNodes = 0;
+   SceneNodePtr exoSceneRoot = buildCommonSceneGraph(Application().GetActiveSceneRoot(), nNumNodes);
    
    std::map<std::string, bool> selectionMap;
 

@@ -133,7 +133,7 @@ struct CSGStackElement
 };
 
 
-SceneNodeXSIPtr buildCommonSceneGraph(XSI::CRef xsiRoot)
+SceneNodeXSIPtr buildCommonSceneGraph(XSI::CRef xsiRoot, int& nNumNodes)
 {
    X3DObject xsiRootObj(xsiRoot);
 
@@ -145,6 +145,8 @@ SceneNodeXSIPtr buildCommonSceneGraph(XSI::CRef xsiRoot)
    exoRoot->dccIdentifier = xsiRootObj.GetFullName().GetAsciiString();
 
    sceneStack.push_back(CSGStackElement(xsiRoot, exoRoot));
+
+   nNumNodes = 0;
 
    while( !sceneStack.empty() )
    {
@@ -164,6 +166,8 @@ SceneNodeXSIPtr buildCommonSceneGraph(XSI::CRef xsiRoot)
          SceneNode::nodeTypeE type = getNodeType(child);
          
          SceneNodePtr exoChild(new SceneNodeXSI(child.GetRef()));
+
+         nNumNodes++;
 
          if(!hasExtractableTransform(type))
          {

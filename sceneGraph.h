@@ -20,7 +20,7 @@ public:
 
 typedef boost::shared_ptr<SceneNodeXSI> SceneNodeXSIPtr;
 
-SceneNodeXSIPtr buildCommonSceneGraph(XSI::CRef xsiRoot);
+SceneNodeXSIPtr buildCommonSceneGraph(XSI::CRef xsiRoot, int& nNumNodes);
 
 bool hasExtractableTransform( SceneNode::nodeTypeE type );
 

@@ -1331,6 +1331,11 @@ bool createMergeableNode(SceneNodeXSI* appNode, SceneNodeAlembicPtr fileXformNod
          camera = nodeRef;
 
          returnNode = fileShapeNode;
+         
+         if(fileXformNode){
+            fileXformNode->setAttached(true);
+         }
+         fileShapeNode->setAttached(true);
       }
       else 
       {
@@ -1392,6 +1397,11 @@ bool createMergeableNode(SceneNodeXSI* appNode, SceneNodeAlembicPtr fileXformNod
          meshObj = nodeRef;
 
          returnNode = fileShapeNode;
+
+         if(fileXformNode){
+            fileXformNode->setAttached(true);
+         }
+         fileShapeNode->setAttached(true);
       }
       else
       {
@@ -1509,6 +1519,11 @@ bool createMergeableNode(SceneNodeXSI* appNode, SceneNodeAlembicPtr fileXformNod
          nurbsObj = nodeRef;
 
          returnNode = fileShapeNode;
+
+         if(fileXformNode){
+            fileXformNode->setAttached(true);
+         }
+         fileShapeNode->setAttached(true);
       }
 
       if(!nurbsObj.IsValid())
@@ -1607,6 +1622,11 @@ bool createMergeableNode(SceneNodeXSI* appNode, SceneNodeAlembicPtr fileXformNod
             }
 
             returnNode = fileShapeNode;
+
+            if(fileXformNode){
+               fileXformNode->setAttached(true);
+            }
+            fileShapeNode->setAttached(true);
          }
          else
          {
@@ -1680,6 +1700,11 @@ bool createMergeableNode(SceneNodeXSI* appNode, SceneNodeAlembicPtr fileXformNod
             curveObj = nodeRef;
 
             returnNode = fileShapeNode;
+
+            if(fileXformNode){
+               fileXformNode->setAttached(true);
+            }
+            fileShapeNode->setAttached(true);
          }
          else
          {
@@ -1766,6 +1791,11 @@ bool createMergeableNode(SceneNodeXSI* appNode, SceneNodeAlembicPtr fileXformNod
          }
 
          returnNode = fileShapeNode;
+
+         if(fileXformNode){
+            fileXformNode->setAttached(true);
+         }
+         fileShapeNode->setAttached(true);
       }
       else
       {
@@ -2117,19 +2147,6 @@ ESS_CALLBACK_START(alembic_import_jobs_Execute, CRef&)
 
    //return CStatus::Fail;
 
-   //TODO need progress bar
-
-   //ProgressBar prog;
-   //prog = Application().GetUIToolkit().GetProgressBar();
-   //prog.PutMinimum(0);
-   //prog.PutMaximum(nNumNodes);//(identifierMap.size() == 0 ? (LONG)objects.size() : (LONG)identifierMap.size());
-   //prog.PutValue(0);
-   //prog.PutCancelEnabled(true);
-   //prog.PutVisible(true);
-
-    XSIProgressBar progBar;
-    progBar.init(nNumNodes);
-
    // clear the imported names!
    nameMapClear();
    CString transformCacheModelName;
@@ -2151,11 +2168,15 @@ ESS_CALLBACK_START(alembic_import_jobs_Execute, CRef&)
    //return CStatus::Fail;
 
    if(jobParser.attachToExisting)
-   {
-      SceneNodeXSIPtr appRoot = buildCommonSceneGraph(importRootNode);
+   {  
+      nNumNodes = 0;
+      SceneNodeXSIPtr appRoot = buildCommonSceneGraph(importRootNode, nNumNodes);
 
       //printSceneGraph(appRoot, false);
       
+      XSIProgressBar progBar;
+      progBar.init(nNumNodes);
+
       bool bAttachSuccess = AttachSceneFile(fileRoot, appRoot, jobParser, &progBar);
 
       if(!bAttachSuccess){
@@ -2166,6 +2187,9 @@ ESS_CALLBACK_START(alembic_import_jobs_Execute, CRef&)
    {
       //should build a full scene graph when start doing name checking
       SceneNodeXSIPtr appRoot(new SceneNodeXSI(importRootNode));
+
+      XSIProgressBar progBar;
+      progBar.init(nNumNodes);
 
       bool bImportSuccess = ImportSceneFile(fileRoot, appRoot, jobParser, &progBar);
       
