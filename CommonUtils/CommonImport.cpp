@@ -243,6 +243,47 @@ SceneNodeAlembicPtr buildAlembicSceneGraph(AbcArchiveCache *pArchiveCache, AbcOb
 }
 
 
+struct ValidateStackElement
+{
+   SceneNodeAlembicPtr currFileNode;
+
+   ValidateStackElement(SceneNodeAlembicPtr node):currFileNode(node)
+   {}
+
+};
+
+bool validateSceneFileAttached(SceneNodeAlembicPtr fileRoot)
+{
+   std::list<ValidateStackElement> sceneStack;
+
+   for(SceneChildIterator it = fileRoot->children.begin(); it != fileRoot->children.end(); it++){
+      SceneNodeAlembicPtr fileNode = reinterpret<SceneNode, SceneNodeAlembic>(*it);
+      sceneStack.push_back(ValidateStackElement(fileNode));
+   }
+
+   bool bSuccess = true;
+
+   while( !sceneStack.empty() )
+   {
+      ValidateStackElement sElement = sceneStack.back();
+      SceneNodeAlembicPtr currFileNode = sElement.currFileNode;
+      sceneStack.pop_back();
+
+      if(!currFileNode->isAttached()){
+         ESS_LOG_ERROR("Node failed to attach: "<<currFileNode->dccIdentifier);
+         bSuccess = false;
+      }
+
+      for(SceneChildIterator it = currFileNode->children.begin(); it != currFileNode->children.end(); it++){
+         SceneNodeAlembicPtr fileNode = reinterpret<SceneNode, SceneNodeAlembic>(*it);
+         if(!fileNode->isSupported()) continue;
+
+         sceneStack.push_back( ValidateStackElement(fileNode) );
+      }
+   }
+
+   return bSuccess;
+}
 
 struct AttachStackElement
 {
@@ -269,7 +310,7 @@ bool AttachSceneFile(SceneNodeAlembicPtr fileRoot, SceneNodeAppPtr appRoot, cons
       sceneStack.push_back(AttachStackElement(appNode, fileRoot));
    }
 
-
+   
 
    if (pbar) pbar->start();
    const int maxCount = pbar->getUpdateCount();
@@ -325,7 +366,8 @@ bool AttachSceneFile(SceneNodeAlembicPtr fileRoot, SceneNodeAppPtr appRoot, cons
    }
 
 	if (pbar) pbar->stop();
-	return true;
+	
+    return validateSceneFileAttached(fileRoot);
 }
 
 
