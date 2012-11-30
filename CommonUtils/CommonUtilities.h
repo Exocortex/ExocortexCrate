@@ -86,26 +86,26 @@ struct ArchiveInfo
    std::string path;
 };
 
-std::string getExporterName( std::string shortName );
-std::string getExporterFileName( std::string fileName );
+std::string getExporterName( std::string const& shortName );
+std::string getExporterFileName( std::string const& fileName );
 
-AbcArchiveCache* getArchiveCache( std::string path );
+AbcArchiveCache* getArchiveCache( std::string const& path );
 
-AbcObjectCache* getObjectCacheFromArchive(std::string path, std::string identifier);
+AbcObjectCache* getObjectCacheFromArchive(std::string const& path, std::string const& identifier);
 
-Alembic::Abc::IArchive * getArchiveFromID(std::string path);
+Alembic::Abc::IArchive * getArchiveFromID(std::string const& path);
 std::string addArchive(Alembic::Abc::IArchive * archive);
-void deleteArchive(std::string path);
+void deleteArchive(std::string const& path);
 void deleteAllArchives();
-Alembic::Abc::IObject getObjectFromArchive(std::string path, std::string identifier);
-std::string resolvePath(std::string path); 
+Alembic::Abc::IObject getObjectFromArchive(std::string const& path, std::string const& identifier);
+std::string resolvePath(std::string const& path); 
 std::string resolvePath_Internal(std::string const& path); // must be defined in binding applications.
 
 // ref counting
-bool archiveExists(std::string path);
-int addRefArchive(std::string path);
-int delRefArchive(std::string path);
-int getRefArchive(std::string path);
+bool archiveExists(std::string const& path);
+int addRefArchive(std::string const& path);
+int delRefArchive(std::string const& path);
+int getRefArchive(std::string const& path);
 
 bool parseTrailingNumber( std::string const& text, std::string const& requiredPrefix, int& number );
       
