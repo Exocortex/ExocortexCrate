@@ -30,6 +30,8 @@ template<typename T> void extractMeshInfo(T &schema, bool &isPointCache, bool &i
 		isTopoDyn = true;
 }
 
+typedef Alembic::AbcGeom::IPolyMesh::schema_type	poly_mesh_schema;
+typedef Alembic::AbcGeom::ISubD::schema_type		sub_div_schema;
 void extractMeshInfo(Alembic::AbcGeom::IObject *pIObj, bool isMesh, bool &isPointCache, bool &isTopoDyn)
 {
 	if(isMesh)

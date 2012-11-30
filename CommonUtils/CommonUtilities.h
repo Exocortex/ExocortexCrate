@@ -99,7 +99,7 @@ void deleteArchive(std::string path);
 void deleteAllArchives();
 Alembic::Abc::IObject getObjectFromArchive(std::string path, std::string identifier);
 std::string resolvePath(std::string path); 
-std::string resolvePath_Internal(std::string path); // must be defined in binding applications.
+std::string resolvePath_Internal(std::string const& path); // must be defined in binding applications.
 
 // ref counting
 bool archiveExists(std::string path);
