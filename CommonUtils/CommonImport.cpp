@@ -345,9 +345,6 @@ bool AttachSceneFile(SceneNodeAlembicPtr fileRoot, SceneNodeAppPtr appRoot, cons
    //We would then not traverse unselected children
 
 
-   //The child map will be re-built after every match. The root nodes are assume to match already.
-
-   //warning: we must do depth first traversal or else nonexistent maps may be referenced
    std::list<AttachStackElement> sceneStack;
 
    {
