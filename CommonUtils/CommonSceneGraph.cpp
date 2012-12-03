@@ -99,7 +99,9 @@ void printSceneGraph(SceneNodePtr root, bool bOnlyPrintSelected)
       sceneStack.pop_back();
 
       if(!bOnlyPrintSelected || (bOnlyPrintSelected && eNode->selected)){
-         ESS_LOG_WARNING("Level: "<<sElement.level<<" - Name: "<<eNode->name<<" - Selected: "<<(eNode->selected?"true":"false")<<" - type: "<<table[eNode->type]);
+         const char* name = eNode->name.c_str();
+
+         ESS_LOG_WARNING("Level: "<<sElement.level<<" - Name: "<<eNode->name.c_str()<<" ddcID: "<<eNode->dccIdentifier.c_str());//" - Selected: "<<(eNode->selected?"true":"false"));
          if(eNode->parent){
             ESS_LOG_WARNING("Parent: "<<eNode->parent->name);
          }
@@ -222,3 +224,4 @@ void selectNodes(SceneNodePtr root, SceneNode::SelectionT selectionMap, bool bSe
 //
 //   root->selected = true;
 //}
+
