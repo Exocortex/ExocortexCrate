@@ -291,6 +291,27 @@ bool validateSceneFileAttached(SceneNodeAlembicPtr fileRoot)
 }
 
 
+
+//SceneNode::nodeTypeE nodeTypeAttachTable[][] = {
+//                  /*SCENE_ROOT*/ /*ETRANSFORM*/ /*ITRANSFORM*/ /*CAMERA*/ /*POLYMESH,*/ /*SUBD*/ /*SURFACE*/ /*CURVES*/ /*PARTICLES*/ /*HAIR*/ /*LIGHT*/ /*UNKNOWN*/
+//   //we never actually import the scene root. we have to use the application scene root.
+//   /*SCENE_ROOT*/ {false,            false,         false,         false,      false,     false,    false,      false,      false,      false,   false,   false},
+//   //E
+///*ETRANSFORM*/    {false,            false,         false,         false,      false,     false,    false,      false,      false,      false,   false,   false},
+///*ITRANSFORM*/    {false,            false,         true,          false,      false,     false,    false,      false,      false,      false,   false,   false},
+///*CAMERA*/
+///*POLYMESH,*/
+///*SUBD*/
+///*SURFACE*/
+///*CURVES*/
+///*PARTICLES*/
+///*HAIR*/
+///*LIGHT*/
+///*UNKNOWN*/
+//
+//}
+
+
 typedef std::map<std::string, SceneNodeAlembicPtr> NodeMap;
 typedef boost::shared_ptr<NodeMap> NodeMapPtr;
    
@@ -404,7 +425,7 @@ bool AttachSceneFile(SceneNodeAlembicPtr fileRoot, SceneNodeAppPtr appRoot, cons
             bChildAttached = currAppNode->replaceData(fileNode, jobParams, ignoreFileNode);
            
             if(!bChildAttached){
-               ESS_LOG_WARNING("FAIL");
+               ESS_LOG_ERROR("replaceData operation failed on node "<<appNodeName);
                return false;
             }
 
@@ -471,7 +492,7 @@ bool ImportSceneFile(SceneNodeAlembicPtr fileRoot, SceneNodeAppPtr appRoot, cons
                return false;
             }
             pbar->incr(maxCount);
-            pbar->setCaption(currFileNode->dccIdentifier);
+            pbar->setCaption(std::string("Importing ") + currFileNode->dccIdentifier);
          }
       }
       --count;
