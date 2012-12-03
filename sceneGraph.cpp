@@ -203,6 +203,7 @@ SceneNodeXSIPtr buildCommonSceneGraph(XSI::CRef xsiRoot, int& nNumNodes, bool bU
       }
       else{
          newNode = createNodeXSI(xRef, SceneNode::ETRANSFORM);
+         newNode->name+="Xfo";
          SceneNodePtr geoNode = createNodeXSI(xRef, type);
 
          newNode->children.push_back(geoNode);
@@ -262,5 +263,5 @@ bool XSIProgressBar::isCancelled(void)
 
 void XSIProgressBar::setCaption(std::string& caption)
 {
-   prog.PutCaption(L"Importing "+CString(caption.c_str())+L" ...");
+   prog.PutCaption(CString(caption.c_str()));
 }
