@@ -101,12 +101,14 @@ MStatus AlembicImportCommand::importSingleJob(const MString &job, int jobNumber)
 	if (!jobParser.parse(job.asChar()))
 	{
 		ESS_LOG_ERROR("[ExocortexAlembic] Error in job #" << jobNumber << " job string invalid.");
+		MPxCommand::setResult("job string invalid");
 		return MS::kUnknownParameter;
 	}
 
 	if(jobParser.filename.empty())
 	{
 		ESS_LOG_ERROR("[ExocortexAlembic] Error in job #" << jobNumber << " No filename specified.");
+		MPxCommand::setResult("No filename specified");
 		return MS::kInvalidParameter;
 	}
 
@@ -119,11 +121,13 @@ MStatus AlembicImportCommand::importSingleJob(const MString &job, int jobNumber)
 	catch(Alembic::Util::Exception& e)
 	{
 		ESS_LOG_ERROR("[ExocortexAlembic] Error reading file: "<<e.what());
+		MPxCommand::setResult("Error reading file");
 		return MS::kFailure;
 	}
 	catch(...)
 	{
 		ESS_LOG_ERROR("[ExocortexAlembic] Error reading file.");
+		MPxCommand::setResult("Error reading file");
 		return MS::kFailure;
 	}
 	addRefArchive( jobParser.filename );
@@ -138,6 +142,7 @@ MStatus AlembicImportCommand::importSingleJob(const MString &job, int jobNumber)
 	if (!fileTimeCtrl.get())
 	{
 		ESS_LOG_ERROR("[ExocortexAlembic] Unable to create file node and/or time control.");
+		MPxCommand::setResult("Unable to create file node and/or time control");
 		return MS::kFailure;
 	}
 
@@ -158,7 +163,15 @@ MStatus AlembicImportCommand::importSingleJob(const MString &job, int jobNumber)
 			return MS::kFailure;
 		AlembicPostImportPoints();
 	}
-	return status;
+
+	// check if an error was set!
+	{
+		MString result;
+		status = MPxCommand::getCurrentResult(result);
+		if (status == MS::kSuccess && result.length() > 0)	// therefore, there's a return value and something went wrong somewhere!
+			return MS::kFailure;
+	}
+	return MS::kSuccess;
 }
 
 MStatus AlembicImportCommand::doIt(const MArgList & args)
@@ -166,7 +179,13 @@ MStatus AlembicImportCommand::doIt(const MArgList & args)
 	ESS_PROFILE_SCOPE("AlembicImportCommand::doIt");
 	MStatus status;
 	MArgParser argData(syntax(), args, &status);
-	if (status != MS::kSuccess || argData.isFlagSet("help"))
+	if (status != MS::kSuccess)
+	{
+		MPxCommand::setResult("unable to parse arguments");
+		return status;
+	}
+
+	if (argData.isFlagSet("help"))
 	{
 		MGlobal::displayInfo("[ExocortexAlembic]: ExocortexAlembic_import command:");
 		MGlobal::displayInfo("                    -j : import jobs (multiple flag can be used)");

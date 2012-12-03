@@ -1,4 +1,5 @@
 import maya.cmds as cmds
+import maya.OpenMayaMPx as apix
 import _functions as fnt
 
 """ Import module of Exocortex Crate """
@@ -22,28 +23,35 @@ class IJobInfo:
 ############################################################################################################
 def setupReaderAttribute(reader, identifier, isConstant, jobInfo):
 	cmds.ExocortexAlembic_profileBegin(f="Python.ExocortexAlembic._import.setupReaderAttribute")
-	#print("setupReaderAttribute(" + str(reader) + ", " + str(identifier) + ")")
-	if reader != "":
-		if not isConstant:
-			fnt.alembicConnectAttr(jobInfo.timeCtrl+".outTime", reader+".inTime")
-		#fnt.alembicConnectAttr(jobInfo.filenode+".outFileName", reader+".fileName")
-		cmds.connectAttr(jobInfo.filenode+".outFileName", reader+".fileName")
-		cmds.setAttr(reader+".identifier", identifier, type="string")
+	try:
+		#print("setupReaderAttribute(" + str(reader) + ", " + str(identifier) + ")")
+		if reader != "":
+			if not isConstant:
+				fnt.alembicConnectAttr(jobInfo.timeCtrl+".outTime", reader+".inTime")
+			#fnt.alembicConnectAttr(jobInfo.filenode+".outFileName", reader+".fileName")
+			cmds.connectAttr(jobInfo.filenode+".outFileName", reader+".fileName")
+			cmds.setAttr(reader+".identifier", identifier, type="string")
+	except Exception as ex:
+		apix.MPxCommand.setResult("setupReaderAttribute --> exception: \"" + str(ex.args) + "\" of type " + str(type(ex)))
 	cmds.ExocortexAlembic_profileEnd(f="Python.ExocortexAlembic._import.setupReaderAttribute")
 
 def importXform(name, identifier, jobInfo, parentXform=None, isConstant=False):
 	cmds.ExocortexAlembic_profileBegin(f="Python.ExocortexAlembic._import.importXform")
 	#print("importXform(" + str(name) + ", " + str(identifier) + ", " + str(jobInfo) + ", " + str(parentXform) + ", " + str(isConstant) + ")")
 
-	shape  = fnt.alembicCreateNode(name, "transform", parentXform)
-	reader = cmds.createNode("ExocortexAlembicXform")
+	try:
+		shape  = fnt.alembicCreateNode(name, "transform", parentXform)
+		reader = cmds.createNode("ExocortexAlembicXform")
 
-	cmds.connectAttr(reader+".translate", 	shape+".translate")
-	cmds.connectAttr(reader+".rotate", 		shape+".rotate")
-	cmds.connectAttr(reader+".scale", 		shape+".scale")
+		cmds.connectAttr(reader+".translate", 	shape+".translate")
+		cmds.connectAttr(reader+".rotate", 		shape+".rotate")
+		cmds.connectAttr(reader+".scale", 		shape+".scale")
 
-	setupReaderAttribute(reader, identifier, isConstant, jobInfo)
-	#print("importXform(" + str(name) + ", " + str(identifier) + ", " + str(jobInfo) + ", " + str(parentXform) + ", " + str(isConstant) + ") -> " + str(shape))
+		setupReaderAttribute(reader, identifier, isConstant, jobInfo)
+		#print("importXform(" + str(name) + ", " + str(identifier) + ", " + str(jobInfo) + ", " + str(parentXform) + ", " + str(isConstant) + ") -> " + str(shape))
+	except Exception as ex:
+		apix.MPxCommand.setResult("importXform --> exception: \"" + str(ex.args) + "\" of type " + str(type(ex)))
+		shape = ""
 	cmds.ExocortexAlembic_profileEnd(f="Python.ExocortexAlembic._import.importXform")
 	return shape
 
@@ -51,80 +59,96 @@ def importPolyMesh(name, identifier, jobInfo, parentXform=None, isConstant=False
 	cmds.ExocortexAlembic_profileBegin(f="Python.ExocortexAlembic._import.importPolyMesh")
 	#print("importPolyMesh(" + str(name) + ", " + str(identifier) + ", " + str(parentXform) + ")")
 
-	reader = ""
-	shape  = fnt.alembicCreateNode(name, "mesh", parentXform)
-	cmds.sets(shape, e=True, forceElement="initialShadingGroup")
+	try:
+		reader = ""
+		shape  = fnt.alembicCreateNode(name, "mesh", parentXform)
+		cmds.sets(shape, e=True, forceElement="initialShadingGroup")
 
-	topoReader = cmds.createNode("ExocortexAlembicPolyMesh")
-	cmds.connectAttr(topoReader+".outMesh", shape+".inMesh")
-	cmds.connectAttr(jobInfo.filenode+".outFileName", topoReader+".fileName")
-	cmds.setAttr(topoReader+".identifier", identifier, type="string")
-	cmds.setAttr(topoReader+".normals", jobInfo.useNormals)
-	cmds.setAttr(topoReader+".uvs", jobInfo.useUVs)
-	if jobInfo.useFaceSets:
-		cmds.ExocortexAlembic_createFaceSets(o=shape, f=jobInfo.filename, i=identifier)
+		topoReader = cmds.createNode("ExocortexAlembicPolyMesh")
+		cmds.connectAttr(topoReader+".outMesh", shape+".inMesh")
+		cmds.connectAttr(jobInfo.filenode+".outFileName", topoReader+".fileName")
+		cmds.setAttr(topoReader+".identifier", identifier, type="string")
+		cmds.setAttr(topoReader+".normals", jobInfo.useNormals)
+		cmds.setAttr(topoReader+".uvs", jobInfo.useUVs)
+		if jobInfo.useFaceSets:
+			cmds.ExocortexAlembic_createFaceSets(o=shape, f=jobInfo.filename, i=identifier)
 
-	if useDynTopo:
-		cmds.connectAttr(jobInfo.timeCtrl+".outTime", topoReader+".inTime")
-		reader = topoReader
-	elif not isConstant:
-		reader = cmds.deformer(shape, type="ExocortexAlembicPolyMeshDeform")[0]
-		setupReaderAttribute(reader, identifier, isConstant, jobInfo)
+		if useDynTopo:
+			cmds.connectAttr(jobInfo.timeCtrl+".outTime", topoReader+".inTime")
+			reader = topoReader
+		elif not isConstant:
+			reader = cmds.deformer(shape, type="ExocortexAlembicPolyMeshDeform")[0]
+			setupReaderAttribute(reader, identifier, isConstant, jobInfo)
 
-	#print("importPolyMesh(" + str(name) + ", " + str(identifier) + ", " + str(parentXform) + ") -> " + str(shape))
+		#print("importPolyMesh(" + str(name) + ", " + str(identifier) + ", " + str(parentXform) + ") -> " + str(shape))
+	except Exception as ex:
+		apix.MPxCommand.setResult("importPolyMesh --> exception: \"" + str(ex.args) + "\" of type " + str(type(ex)))
+		shape = ""
 	cmds.ExocortexAlembic_profileEnd(f="Python.ExocortexAlembic._import.importPolyMesh")
 	return shape
 
 def importCamera(name, identifier, jobInfo, parentXform=None, isConstant=False):
 	cmds.ExocortexAlembic_profileBegin(f="Python.ExocortexAlembic._import.importCamera")
-	shape 	= fnt.alembicCreateNode(name, "camera", parentXform)
-	reader 	= cmds.createNode("ExocortexAlembicCamera")
+	try:
+		shape 	= fnt.alembicCreateNode(name, "camera", parentXform)
+		reader 	= cmds.createNode("ExocortexAlembicCamera")
 
-	cmds.connectAttr(reader+".focalLength", shape+".focalLength")
-	cmds.connectAttr(reader+".focusDistance", shape+".focusDistance")
-	cmds.connectAttr(reader+".lensSqueezeRatio", shape+".lensSqueezeRatio")
-	cmds.connectAttr(reader+".horizontalFilmAperture", shape+".horizontalFilmAperture")
-	cmds.connectAttr(reader+".verticalFilmAperture", shape+".verticalFilmAperture")
-	cmds.connectAttr(reader+".horizontalFilmOffset", shape+".horizontalFilmOffset")
-	cmds.connectAttr(reader+".verticalFilmOffset", shape+".verticalFilmOffset")
-	cmds.connectAttr(reader+".fStop", shape+".fStop")
-	cmds.connectAttr(reader+".shutterAngle", shape+".shutterAngle")
+		cmds.connectAttr(reader+".focalLength", shape+".focalLength")
+		cmds.connectAttr(reader+".focusDistance", shape+".focusDistance")
+		cmds.connectAttr(reader+".lensSqueezeRatio", shape+".lensSqueezeRatio")
+		cmds.connectAttr(reader+".horizontalFilmAperture", shape+".horizontalFilmAperture")
+		cmds.connectAttr(reader+".verticalFilmAperture", shape+".verticalFilmAperture")
+		cmds.connectAttr(reader+".horizontalFilmOffset", shape+".horizontalFilmOffset")
+		cmds.connectAttr(reader+".verticalFilmOffset", shape+".verticalFilmOffset")
+		cmds.connectAttr(reader+".fStop", shape+".fStop")
+		cmds.connectAttr(reader+".shutterAngle", shape+".shutterAngle")
 
-	setupReaderAttribute(reader, identifier, isConstant, jobInfo)
-	#print("importCamera(" + str(name) + ", " + str(identifier) + ", " + str(jobInfo) + ", " + str(parentXform) + ", " + str(isConstant) + ") -> " + str(shape))
+		setupReaderAttribute(reader, identifier, isConstant, jobInfo)
+		#print("importCamera(" + str(name) + ", " + str(identifier) + ", " + str(jobInfo) + ", " + str(parentXform) + ", " + str(isConstant) + ") -> " + str(shape))
+	except Exception as ex:
+		apix.MPxCommand.setResult("importCamera --> exception: \"" + str(ex.args) + "\" of type " + str(type(ex)))
+		shape = ""
 	cmds.ExocortexAlembic_profileEnd(f="Python.ExocortexAlembic._import.importCamera")
 	return shape
 
 def importPoints(name, identifier, jobInfo, parentXform=None, isConstant=False):
-	cmds.ExocortexAlembic_profileBegin(f="Python.ExocortexAlembic._import.importPoints")
-	shape  = fnt.alembicCreateNode(name, "particle", parentXform)
-	reader = cmds.createNode("ExocortexAlembicPoints")
+	try:
+		cmds.ExocortexAlembic_profileBegin(f="Python.ExocortexAlembic._import.importPoints")
+		shape  = fnt.alembicCreateNode(name, "particle", parentXform)
+		reader = cmds.createNode("ExocortexAlembicPoints")
 
-	cmds.addAttr(shape, ln="rgbPP", dt="vectorArray")
-	cmds.addAttr(shape, ln="opacityPP", dt="doubleArray")
-	cmds.addAttr(shape, ln="agePP", dt="doubleArray")
-	cmds.addAttr(shape, ln="shapeInstanceIdPP", dt="doubleArray")
-	cmds.addAttr(shape, ln="orientationPP", dt="vectorArray")
-	cmds.connectAttr(reader+".output[0]", shape+".newParticles[0]")
-	cmds.connectAttr(jobInfo.timeCtrl+".outTime", shape+".currentTime")
-	cmds.setAttr(shape+".conserve", 0)
+		cmds.addAttr(shape, ln="rgbPP", dt="vectorArray")
+		cmds.addAttr(shape, ln="opacityPP", dt="doubleArray")
+		cmds.addAttr(shape, ln="agePP", dt="doubleArray")
+		cmds.addAttr(shape, ln="shapeInstanceIdPP", dt="doubleArray")
+		cmds.addAttr(shape, ln="orientationPP", dt="vectorArray")
+		cmds.connectAttr(reader+".output[0]", shape+".newParticles[0]")
+		cmds.connectAttr(jobInfo.timeCtrl+".outTime", shape+".currentTime")
+		cmds.setAttr(shape+".conserve", 0)
 
-	setupReaderAttribute(reader, identifier, isConstant, jobInfo)
-	#print("importPoints(" + str(name) + ", " + str(identifier) + ", " + str(jobInfo) + ", " + str(parentXform) + ", " + str(isConstant) + ") -> " + str(shape))
+		setupReaderAttribute(reader, identifier, isConstant, jobInfo)
+		#print("importPoints(" + str(name) + ", " + str(identifier) + ", " + str(jobInfo) + ", " + str(parentXform) + ", " + str(isConstant) + ") -> " + str(shape))
+	except Exception as ex:
+		apix.MPxCommand.setResult("importPoints --> exception: \"" + str(ex.args) + "\" of type " + str(type(ex)))
+		shape = ""
 	cmds.ExocortexAlembic_profileEnd(f="Python.ExocortexAlembic._import.importPoints")
 	return shape
 
 def importCurves(name, identifier, jobInfo, parentXform=None, isConstant=False):
 	cmds.ExocortexAlembic_profileBegin(f="Python.ExocortexAlembic._import.importCurves")
-	shape  = fnt.alembicCreateNode(name, "nurbsCurve", parentXform)
+	try:
+		shape  = fnt.alembicCreateNode(name, "nurbsCurve", parentXform)
 
-	topoReader = cmds.createNode("ExocortexAlembicCurves")
-	cmds.connectAttr(topoReader+".outCurve", shape+".create")
-	cmds.connectAttr(jobInfo.filenode+".outFileName", topoReader+".fileName")
-	cmds.connectAttr(jobInfo.timeCtrl+".outTime", topoReader+".inTime")
-	cmds.setAttr(topoReader+".identifier", identifier, type="string")
+		topoReader = cmds.createNode("ExocortexAlembicCurves")
+		cmds.connectAttr(topoReader+".outCurve", shape+".create")
+		cmds.connectAttr(jobInfo.filenode+".outFileName", topoReader+".fileName")
+		cmds.connectAttr(jobInfo.timeCtrl+".outTime", topoReader+".inTime")
+		cmds.setAttr(topoReader+".identifier", identifier, type="string")
 
-	#print("importCurves(" + str(name) + ", " + str(identifier) + ", " + str(jobInfo) + ", " + str(parentXform) + ", " + str(isConstant) + ") -> " + str(shape))
+		#print("importCurves(" + str(name) + ", " + str(identifier) + ", " + str(jobInfo) + ", " + str(parentXform) + ", " + str(isConstant) + ") -> " + str(shape))
+	except Exception as ex:
+		apix.MPxCommand.setResult("importCurves --> exception: \"" + str(ex.args) + "\" of type " + str(type(ex)))
+		shape = ""
 	cmds.ExocortexAlembic_profileEnd(f="Python.ExocortexAlembic._import.importCurves")
 	return shape
 

@@ -86,6 +86,8 @@ bool SceneNodeMaya::executeAddChild(const MString &cmd, SceneNodeAppPtr& newAppN
 {
 	MString result;
 	MGlobal::executePythonCommand(cmd, result);
+	if (result.length() == 0)
+		return false;
 	newAppNode->dccIdentifier = result.asChar();
 	newAppNode->name = newAppNode->dccIdentifier;
 	return true;
@@ -160,7 +162,7 @@ bool SceneNodeMaya::addChild(SceneNodeAlembicPtr fileNode, const IJobStringParse
 	default:
 		break;
 	}
-	return true;
+	return false;
 }
 
 void SceneNodeMaya::print(void)
