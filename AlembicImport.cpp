@@ -1208,6 +1208,8 @@ bool createNode(SceneNodeXSI* appNode, SceneNodeAlembicPtr fileNode, const IJobS
          }
 
          returnNode = fileNode;
+
+         fileNode->setAttached(true);
       }
       else{
          X3DObject parentX3DObject(appNode->nodeRef);
@@ -2170,7 +2172,7 @@ ESS_CALLBACK_START(alembic_import_jobs_Execute, CRef&)
    if(jobParser.attachToExisting)
    {  
       nNumNodes = 0;
-      SceneNodeXSIPtr appRoot = buildCommonSceneGraph(importRootNode, nNumNodes);
+      SceneNodeXSIPtr appRoot = buildCommonSceneGraph(importRootNode, nNumNodes, false);
 
       //printSceneGraph(appRoot, false);
       

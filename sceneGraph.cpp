@@ -13,10 +13,29 @@ bool SceneNodeXSI::replaceData(SceneNodeAlembicPtr fileNode, const IJobStringPar
    if(!jobParams.attachToExisting){
       return false;
    }
+  
    
+
    SceneNodePtr returnNode;
    bool bSuccess = createNodes(this, fileNode, jobParams, returnNode);
-   nextFileNode = reinterpret<SceneNode, SceneNodeAlembic>(returnNode);
+   //nextFileNode = reinterpret<SceneNode, SceneNodeAlembic>(returnNode);
+   SceneNodeAlembicPtr shapeFileNode = reinterpret<SceneNode, SceneNodeAlembic>(returnNode);
+
+   //delete the merged shape from the tree. this is done so that we will not look at the merged node when attach to next node to attach to
+
+   //for(SceneChildIterator it = shapeFileNode->children.begin(), SceneChildIterator endIt = shapeFileNode->children.end(); it != endIt; it++){
+   //   SceneNodeAlembicPtr childFileNode = reinterpret<SceneNode, SceneNodeAlembic>(*it);
+   //   
+   //   if(!childFileNode->isSupported()) continue;
+
+   //   fileNode->children.push_back(childFileNode);
+   //   childFileNode->parent = fileNode.get();
+   //}
+
+   //fileNode->children.erase(shapeFileNode);
+
+   nextFileNode = fileNode;
+
    return bSuccess;
 }
 
@@ -128,74 +147,78 @@ struct CSGStackElement
 
    CSGStackElement(XSI::CRef xnode):xNode(xnode)
    {}
-   CSGStackElement(XSI::CRef xnode, SceneNodePtr enode):xNode(xnode), eNode(enode)
+   CSGStackElement(XSI::CRef xnode, SceneNodePtr node):xNode(xnode), eNode(node)
    {}
 };
 
-
-SceneNodeXSIPtr buildCommonSceneGraph(XSI::CRef xsiRoot, int& nNumNodes)
+SceneNodeXSIPtr createNodeXSI(CRef& ref, SceneNode::nodeTypeE type)
 {
-   X3DObject xsiRootObj(xsiRoot);
+   X3DObject xObj(ref);
+   
+   SceneNodeXSIPtr sceneNode(new SceneNodeXSI(ref));
+   
+   sceneNode->name = xObj.GetName().GetAsciiString();
+   sceneNode->type = type;
+   sceneNode->dccIdentifier = xObj.GetFullName().GetAsciiString();
+   
+   return sceneNode;
+}
 
+SceneNodeXSIPtr buildCommonSceneGraph(XSI::CRef xsiRoot, int& nNumNodes, bool bUnmergeNodes)
+{
    std::list<CSGStackElement> sceneStack;
    
-   SceneNodeXSIPtr exoRoot(new SceneNodeXSI(xsiRoot));
-   exoRoot->name = xsiRootObj.GetName().GetAsciiString();
-   exoRoot->type = SceneNode::SCENE_ROOT;
-   exoRoot->dccIdentifier = xsiRootObj.GetFullName().GetAsciiString();
-
-   sceneStack.push_back(CSGStackElement(xsiRoot, exoRoot));
-
    nNumNodes = 0;
+
+   SceneNodeXSIPtr exoRoot = createNodeXSI(xsiRoot, SceneNode::SCENE_ROOT);
+
+   X3DObject xRoot(xsiRoot);
+   CRefArray children = xRoot.GetChildren();
+   for(LONG j=0; j<children.GetCount(); j++)
+   {
+      X3DObject child(children[j]);
+      if(!child.IsValid()) continue;
+      sceneStack.push_back(CSGStackElement(children[j], exoRoot));
+   }
+
 
    while( !sceneStack.empty() )
    {
 
       CSGStackElement sElement = sceneStack.back();
-      X3DObject xNode(sElement.xNode);
+      CRef xRef = sElement.xNode;
+      X3DObject xNode(xRef);
       SceneNodePtr eNode = sElement.eNode;
       sceneStack.pop_back();
+   
+      nNumNodes++;
+
+      SceneNodePtr newNode;
+
+      SceneNode::nodeTypeE type = getNodeType(xNode);
+      
+      if(!hasExtractableTransform(type) || !bUnmergeNodes)
+      {
+         newNode = createNodeXSI(xRef, type);
+      }
+      else{
+         newNode = createNodeXSI(xRef, SceneNode::ETRANSFORM);
+         SceneNodePtr geoNode = createNodeXSI(xRef, type);
+
+         newNode->children.push_back(geoNode);
+         geoNode->parent = newNode.get();
+      }  
+
+      eNode->children.push_back(newNode);
+      newNode->parent = eNode.get();
 
       CRefArray children = xNode.GetChildren();
-
       for(LONG j=0;j<children.GetCount();j++)
       {
          X3DObject child(children[j]);
          if(!child.IsValid()) continue;
 
-         SceneNode::nodeTypeE type = getNodeType(child);
-         
-         SceneNodePtr exoChild(new SceneNodeXSI(child.GetRef()));
-
-         nNumNodes++;
-
-         if(!hasExtractableTransform(type))
-         {
-            SceneNodePtr exoChild(new SceneNodeXSI(child.GetRef()));
-            exoChild->parent = eNode.get();
-            exoChild->name = child.GetName().GetAsciiString();
-            exoChild->type = type;
-            exoChild->dccIdentifier = child.GetUniqueName().GetAsciiString();
-         }
-         else{
-            //XSI shape nodes should split into two nodes: a transform node, and a pure shape node
-            SceneNodePtr geoChild(new SceneNodeXSI(child.GetRef()));
-            geoChild->parent = exoChild.get();
-            geoChild->name = child.GetName().GetAsciiString();
-            geoChild->type = type;
-            geoChild->dccIdentifier = child.GetFullName().GetAsciiString();
-
-            
-            exoChild->parent = eNode.get();
-            exoChild->name = child.GetName().GetAsciiString();
-            exoChild->name += "Xfo";
-            exoChild->type = SceneNode::ETRANSFORM;
-            exoChild->dccIdentifier = child.GetFullName().GetAsciiString();
-            exoChild->children.push_back(geoChild);
-         }
-
-         eNode->children.push_back(exoChild);
-         sceneStack.push_back(CSGStackElement(children[j], exoChild));
+         sceneStack.push_back(CSGStackElement(children[j], newNode));
       }
    }
 
