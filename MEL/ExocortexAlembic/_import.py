@@ -117,14 +117,13 @@ def importPoints(name, identifier, jobInfo, parentXform=None, isConstant=False):
 def importCurves(name, identifier, jobInfo, parentXform=None, isConstant=False):
 	cmds.ExocortexAlembic_profileBegin(f="Python.ExocortexAlembic._import.importCurves")
 	shape  = fnt.alembicCreateNode(name, "nurbsCurve", parentXform)
-	reader = cmds.deformer(shape, type="ExocortexAlembicCurvesDeform")[0]
 
 	topoReader = cmds.createNode("ExocortexAlembicCurves")
 	cmds.connectAttr(topoReader+".outCurve", shape+".create")
 	cmds.connectAttr(jobInfo.filenode+".outFileName", topoReader+".fileName")
+	cmds.connectAttr(jobInfo.timeCtrl+".outTime", topoReader+".inTime")
 	cmds.setAttr(topoReader+".identifier", identifier, type="string")
 
-	setupReaderAttribute(reader, identifier, isConstant, jobInfo)
 	#print("importCurves(" + str(name) + ", " + str(identifier) + ", " + str(jobInfo) + ", " + str(parentXform) + ", " + str(isConstant) + ") -> " + str(shape))
 	cmds.ExocortexAlembic_profileEnd(f="Python.ExocortexAlembic._import.importCurves")
 	return shape
