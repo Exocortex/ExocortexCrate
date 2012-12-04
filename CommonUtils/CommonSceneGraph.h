@@ -37,6 +37,7 @@ public:
 
    enum nodeTypeE{
       SCENE_ROOT,
+      NAMESPACE_TRANSFORM,//for export of XSI models
       ETRANSFORM,// external transform (a parent of a geometry node)
       ITRANSFORM,// internal transform (all other transforms)
       CAMERA,
@@ -122,6 +123,8 @@ void printSceneGraph(SceneNodePtr root, bool bOnlyPrintSelected);
 bool hasExtractableTransform( SceneNode::nodeTypeE type );
 
 void selectNodes(SceneNodePtr root, SceneNode::SelectionT selectionMap, bool bSelectParents, bool bChildren, bool bSelectShapeNodes);
+
+void flattenSceneGraph(SceneNodePtr root, int nNumNodes);
 
 //void filterNodeSelection(SceneNodePtr root, bool bExcludeNonTransforms);
 
