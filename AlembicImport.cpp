@@ -1252,6 +1252,26 @@ bool createNode(SceneNodeXSI* appNode, SceneNodeAlembicPtr fileNode, const IJobS
    return true;
 }
 
+bool validate(CRef nodeRef, CString fileNodeType, Abc::IObject shapeObj )
+{
+   if(!nodeRef.IsValid()){
+      ESS_LOG_ERROR("Could not attach "<<fileNodeType.GetAsciiString()<<" "<<shapeObj.getFullName());
+      return false;
+   }
+
+   X3DObject x3dobject(nodeRef);
+   CString type = x3dobject.GetType();
+   if(!type.IsEqualNoCase(fileNodeType) && !type.IsEqualNoCase("null")){//allow all shape type to replace a null
+      ESS_LOG_ERROR("Cannot attach "<<shapeObj.getFullName()<<" to a "<<type.GetAsciiString()<<" node.");
+      return false;
+   }
+
+   if(type.IsEqualNoCase("null")){
+      x3dobject.ResetObject();
+   }
+
+   return true;
+}
 
 bool createMergeableNode(SceneNodeXSI* appNode, SceneNodeAlembicPtr fileXformNode, SceneNodeAlembicPtr fileShapeNode, const IJobStringParser& jobParams, SceneNodePtr& returnNode)
 {
@@ -1319,17 +1339,8 @@ bool createMergeableNode(SceneNodeXSI* appNode, SceneNodeAlembicPtr fileXformNod
 	      ESS_PROFILE_SCOPE("attachToExisting");
          nodeRef = appNode->nodeRef;
 
-         if(!nodeRef.IsValid()){
-            ESS_LOG_ERROR("Could not attach camera "<<shapeObj.getFullName());
-            return false;
-         }
+         if(!validate(nodeRef, CString("camera"), shapeObj)) return false;
 
-         X3DObject x3dobject(nodeRef);
-         if(!x3dobject.GetType().IsEqualNoCase(L"camera")){
-            //x3dobject.ResetObject();
-            ESS_LOG_ERROR("Can only attach "<<shapeObj.getFullName()<<" to a camera node.");
-            return false;
-         }
          camera = nodeRef;
 
          returnNode = fileShapeNode;
@@ -1382,19 +1393,10 @@ bool createMergeableNode(SceneNodeXSI* appNode, SceneNodeAlembicPtr fileXformNod
       CRef nodeRef;
       if(attachToExisting)
       {
-	      ESS_PROFILE_SCOPE("attachToExisting");
+	     ESS_PROFILE_SCOPE("attachToExisting");
          nodeRef = appNode->nodeRef;
 
-         if(!nodeRef.IsValid()){
-            ESS_LOG_ERROR("Could not attach polymesh "<<shapeObj.getFullName());
-         }
-
-         X3DObject x3dobject(nodeRef);
-         if(!x3dobject.GetType().IsEqualNoCase(L"PolyMsh")){
-            x3dobject.ResetObject();
-            ESS_LOG_ERROR("Can only attach "<<shapeObj.getFullName()<<" to a polymesh node.");
-            return false;
-         }
+         if(!validate(nodeRef, CString("PolyMsh"), shapeObj)) return false;
 
          meshObj = nodeRef;
 
@@ -1505,19 +1507,10 @@ bool createMergeableNode(SceneNodeXSI* appNode, SceneNodeAlembicPtr fileXformNod
       X3DObject nurbsObj;
       if(attachToExisting)
       {
-	      ESS_PROFILE_SCOPE("attachToExisting");
+	     ESS_PROFILE_SCOPE("attachToExisting");
          nodeRef = appNode->nodeRef;
 
-         if(!nodeRef.IsValid()){
-            ESS_LOG_ERROR("Could not attach Nurbs Patch "<<shapeObj.getFullName());
-         }
-
-         X3DObject x3dobject(nodeRef);
-         if(!x3dobject.GetType().IsEqualNoCase(L"surfmsh"))
-         {
-            ESS_LOG_ERROR("Can only attach "<<shapeObj.getFullName()<<" to a surfmsh node.");
-            return false;
-         }
+         if(!validate(nodeRef, CString("surfmsh"), shapeObj)) return false;
          nurbsObj = nodeRef;
 
          returnNode = fileShapeNode;
@@ -1613,15 +1606,7 @@ bool createMergeableNode(SceneNodeXSI* appNode, SceneNodeAlembicPtr fileXformNod
  		      ESS_PROFILE_SCOPE("attachToExisting");
             nodeRef = appNode->nodeRef;
 
-            if(!nodeRef.IsValid()){
-               ESS_LOG_ERROR("Could not attach curve "<<shapeObj.getFullName());
-            }
-
-            X3DObject x3dobject(nodeRef);
-            if(!x3dobject.GetType().IsEqualNoCase(L"pointcloud")){
-               ESS_LOG_ERROR("Can only attach "<<shapeObj.getFullName()<<" to a pointcloud node.");
-               return false;
-            }
+            if(!validate(nodeRef, CString("pointcloud"), shapeObj)) return false;
 
             returnNode = fileShapeNode;
 
@@ -1693,12 +1678,18 @@ bool createMergeableNode(SceneNodeXSI* appNode, SceneNodeAlembicPtr fileXformNod
             if(!nodeRef.IsValid()){
                ESS_LOG_ERROR("Could not attach curve "<<shapeObj.getFullName());
             }
-
+ 
             X3DObject x3dobject(nodeRef);
-            if(!x3dobject.GetType().IsEqualNoCase(L"crvlist") && !x3dobject.GetType().IsEqualNoCase(L"hair")){
-               ESS_LOG_ERROR("Can only attach "<<shapeObj.getFullName()<<" to crvlist or hair node.");
+            CString type = x3dobject.GetType();
+            if(!x3dobject.GetType().IsEqualNoCase(L"crvlist") && !x3dobject.GetType().IsEqualNoCase(L"hair") && !type.IsEqualNoCase("null")){
+               ESS_LOG_ERROR("Cannot attach "<<shapeObj.getFullName()<<" to a "<<type.GetAsciiString()<<" node.");
                return false;
             }
+
+            if(type.IsEqualNoCase("null")){
+               x3dobject.ResetObject();
+            }
+
             curveObj = nodeRef;
 
             returnNode = fileShapeNode;
@@ -1739,18 +1730,7 @@ bool createMergeableNode(SceneNodeXSI* appNode, SceneNodeAlembicPtr fileXformNod
             alembic_create_item_Invoke(L"alembic_crvlist_topo", importRootNode, nodeRef, filename, shapeFullName, attachToExisting, createItemArgs);
          }
 
-         // load curve anim
-         CRef returnOpRef;
-         if(importBboxes){
-            CValue returnedOpVal;
-            alembic_create_item_Invoke(L"alembic_bbox", importRootNode, nodeRef, filename, shapeFullName, attachToExisting, createItemArgs, returnedOpVal);
-            returnOpRef = (CRef)returnedOpVal;
-         }
-         else{
-            CValue returnedOpVal;
-            alembic_create_item_Invoke(L"alembic_crvlist", importRootNode, nodeRef, filename, shapeFullName, attachToExisting, createItemArgs, returnedOpVal);
-            returnOpRef = (CRef)returnedOpVal;
-         }
+
 
          // allow stretching as there may have been dynamics applied to the hair
          if( curveObj.GetType().IsEqualNoCase(L"hair")){
@@ -1760,6 +1740,19 @@ bool createMergeableNode(SceneNodeXSI* appNode, SceneNodeAlembicPtr fileXformNod
          // let's setup the xform op
          if(fileXformNode){
             alembic_create_item_Invoke(L"alembic_xform", importRootNode, nodeRef, filename, xformFullName, attachToExisting, createItemArgs);
+         }
+
+         // load curve anim
+         CRef returnOpRef;
+         if(importBboxes){
+         CValue returnedOpVal;
+            alembic_create_item_Invoke(L"alembic_bbox", importRootNode, nodeRef, filename, shapeFullName, attachToExisting, createItemArgs, returnedOpVal);
+            returnOpRef = (CRef)returnedOpVal;
+         }
+         else{
+            CValue returnedOpVal;
+            alembic_create_item_Invoke(L"alembic_crvlist", importRootNode, nodeRef, filename, shapeFullName, attachToExisting, createItemArgs, returnedOpVal);
+            returnOpRef = (CRef)returnedOpVal;
          }
 
          // load standin property
@@ -1782,15 +1775,7 @@ bool createMergeableNode(SceneNodeXSI* appNode, SceneNodeAlembicPtr fileXformNod
          ESS_PROFILE_SCOPE("attachToExisting");
          nodeRef = appNode->nodeRef;
 
-         if(!nodeRef.IsValid()){
-            ESS_LOG_ERROR("Could not attach points "<<shapeObj.getFullName());
-         }
-
-         X3DObject x3dobject(nodeRef);
-         if(!x3dobject.GetType().IsEqualNoCase(L"pointcloud")){
-            ESS_LOG_ERROR("Can only attach "<<shapeObj.getFullName()<<" to a  pointcloud node.");
-            return false;
-         }
+         if(!validate(nodeRef, CString("pointcloud"), shapeObj)) return false;
 
          returnNode = fileShapeNode;
 
