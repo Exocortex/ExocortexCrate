@@ -501,6 +501,7 @@ CStatus alembic_create_item_Invoke
          addRefArchive(file);
          op.PutParameterValue(L"path",file);
          op.PutParameterValue(L"identifier",identifier);
+         op.PutParameterValue(L"muted", false);
 
          // store the return value
          returnVal = op.GetRef();
@@ -641,6 +642,7 @@ CStatus alembic_create_item_Invoke
                      addRefArchive(file);
                      op.PutParameterValue(L"path",file);
                      op.PutParameterValue(L"identifier",identifier);
+                     op.PutParameterValue(L"muted", false);
                      if(!timeControlProp.IsValid())
                      {
                         CRef timeControlRef;
@@ -792,6 +794,7 @@ CStatus alembic_create_item_Invoke
                        addRefArchive(file);
                        op.PutParameterValue(L"path",file);
                        op.PutParameterValue(L"identifier",identifier+CString(L":")+CString(uvI));
+                       op.PutParameterValue(L"muted", false);
                        if(meshUVsParam.getNumSamples() > 1)
                        {
                           CValue setExprReturn;
