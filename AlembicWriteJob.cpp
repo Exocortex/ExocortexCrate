@@ -190,6 +190,10 @@ CStatus AlembicWriteJob::PreProcess()
    int nNumNodes = 0;
    SceneNodePtr exoSceneRoot = buildCommonSceneGraph(Application().GetActiveSceneRoot(), nNumNodes);
    
+   if(bFlattenHierarchy){
+      nNumNodes = 0;
+      flattenSceneGraph(exoSceneRoot, nNumNodes);
+   }
    std::map<std::string, bool> selectionMap;
 
    for(int i=0; i<mSelection.size(); i++){
@@ -199,7 +203,7 @@ CStatus AlembicWriteJob::PreProcess()
       selectionMap[xObj.GetFullName().GetAsciiString()] = true;
    }
    
-   selectNodes(exoSceneRoot, selectionMap, !bFlattenHierarchy || bTransformCache, bSelectChildren, !bTransformCache);
+   selectNodes(exoSceneRoot, selectionMap, /*!bFlattenHierarchy || bTransformCache*/ true, bSelectChildren, !bTransformCache);
 
    //::printSceneGraph(exoSceneRoot);
 
@@ -227,7 +231,7 @@ CStatus AlembicWriteJob::PreProcess()
          if(eNode->type == SceneNode::SCENE_ROOT){
             //we do not want to export the Scene_Root (the alembic archive has one already)
          }
-         else if(eNode->type == SceneNode::ITRANSFORM || eNode->type == SceneNode::ETRANSFORM){
+         else if(eNode->type == SceneNode::ITRANSFORM || eNode->type == SceneNode::ETRANSFORM || eNode->type == SceneNode::NAMESPACE_TRANSFORM){
             pNewObject.reset(new AlembicModel(eNode, this, oParent));
          }
          else if(eNode->type == SceneNode::CAMERA){
@@ -268,18 +272,7 @@ CStatus AlembicWriteJob::PreProcess()
 
       if(oNewParent.valid()){
          for( std::list<SceneNodePtr>::iterator it = eNode->children.begin(); it != eNode->children.end(); it++){
-
-            if( !bFlattenHierarchy || (bFlattenHierarchy && eNode->type == SceneNode::ETRANSFORM && hasExtractableTransform((*it)->type)) ){
-               //If flattening the hierarchy, we want to attach each external transform to its corresponding geometry node.
-               //All internal transforms should be skipped. Geometry nodes will never have children (If and XSI geonode is parented
-               //to another geonode, each will be parented to its extracted transform node, and one node will be parented to the 
-               //transform of the other.
-               sceneStack.push_back(PreProcessStackElement(*it, oNewParent));
-            }
-            else{
-               //if we skip node A, we parent node A's children to the parent of A
-               sceneStack.push_back(PreProcessStackElement(*it, oParent));
-            }
+            sceneStack.push_back(PreProcessStackElement(*it, oNewParent));
          }
       }
       else{

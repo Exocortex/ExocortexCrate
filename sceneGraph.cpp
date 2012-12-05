@@ -67,7 +67,7 @@ SceneNode::nodeTypeE getNodeType(X3DObject& xObj)
 
    CString xObj_GetType = xObj.GetType();
    if(xObj_GetType.IsEqualNoCase(L"#model")){
-      return SceneNode::ITRANSFORM;
+      return SceneNode::NAMESPACE_TRANSFORM;
    }
    else if(xObj_GetType.IsEqualNoCase(L"null")){
       return SceneNode::ITRANSFORM;
