@@ -99,7 +99,9 @@ void printSceneGraph(SceneNodePtr root, bool bOnlyPrintSelected)
       sceneStack.pop_back();
 
       if(!bOnlyPrintSelected || (bOnlyPrintSelected && eNode->selected)){
-         ESS_LOG_WARNING("Level: "<<sElement.level<<" - Name: "<<eNode->name<<" - Selected: "<<(eNode->selected?"true":"false")<<" - type: "<<table[eNode->type]);
+         const char* name = eNode->name.c_str();
+
+         ESS_LOG_WARNING("Level: "<<sElement.level<<" - Name: "<<eNode->name.c_str()<<" ddcID: "<<eNode->dccIdentifier.c_str());//" - Selected: "<<(eNode->selected?"true":"false"));
          if(eNode->parent){
             ESS_LOG_WARNING("Parent: "<<eNode->parent->name);
          }
@@ -222,3 +224,77 @@ void selectNodes(SceneNodePtr root, SceneNode::SelectionT selectionMap, bool bSe
 //
 //   root->selected = true;
 //}
+
+struct FlattenStackElement
+{
+   SceneNodePtr currNode;
+   SceneNodePtr currParentNode;
+
+   FlattenStackElement(SceneNodePtr node, SceneNodePtr parentNode):currNode(node), currParentNode(parentNode)
+   {}
+
+};
+
+void flattenSceneGraph(SceneNodePtr root, int nNumNodes)
+{
+	ESS_PROFILE_SCOPE("flattenSceneGraph");
+
+   SceneNodePtr newRoot = root;
+
+   std::list<FlattenStackElement> sceneStack;
+
+   //push a reference to each child to the stack
+   for(SceneChildIterator it = root->children.begin(); it != root->children.end(); it++){
+      SceneNodePtr fileNode = *it;
+      sceneStack.push_back(FlattenStackElement(fileNode, root));
+   }
+   //clear the children since we may be changing what is parented to it
+   root->children.clear();
+ 
+
+   while( !sceneStack.empty() )
+   {
+      FlattenStackElement sElement = sceneStack.back();
+      SceneNodePtr fileNode = sElement.currNode;
+      SceneNodePtr parentNode = sElement.currParentNode;//a node from the original tree, its childrens will have been cleared
+      //we will add child nodes to it that meet the correct criteria
+      sceneStack.pop_back();
+
+      if (fileNode->type == SceneNode::NAMESPACE_TRANSFORM ||  //namespace transform (XSI model)
+          fileNode->type == SceneNode::ETRANSFORM ||          //shape node parent transform
+          hasExtractableTransform(fileNode->type)              //shape node
+         ) {
+            if(hasExtractableTransform(fileNode->type) ){
+               ESS_LOG_WARNING("break:");
+            }
+
+            parentNode->children.push_back(fileNode);
+            fileNode->parent = parentNode.get();
+            
+            nNumNodes++;
+      }
+
+      if(fileNode->type == SceneNode::NAMESPACE_TRANSFORM){
+         for(SceneChildIterator it = fileNode->children.begin(); it != fileNode->children.end(); it++){
+            sceneStack.push_back( FlattenStackElement( *it, fileNode ) );
+         }
+      }
+      else if(fileNode->type == SceneNode::ETRANSFORM){
+         for(SceneChildIterator it = fileNode->children.begin(); it != fileNode->children.end(); it++){
+            if(hasExtractableTransform((*it)->type)){
+               sceneStack.push_back( FlattenStackElement( *it, fileNode ) );
+            }
+            else{
+               sceneStack.push_back( FlattenStackElement( *it, parentNode ) );
+            }
+         }
+      }
+      else{
+         for(SceneChildIterator it = fileNode->children.begin(); it != fileNode->children.end(); it++){
+            sceneStack.push_back( FlattenStackElement( *it, parentNode ) );
+         }
+      }
+
+      fileNode->children.clear();
+   }
+}

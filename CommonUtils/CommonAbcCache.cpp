@@ -3,6 +3,7 @@
 #include "CommonUtilities.h"
 #include "CommonAbcCache.h"
 
+
 AbcObjectCache::AbcObjectCache( Alembic::Abc::IObject & objToCache )
 		:	obj( objToCache ), isMeshTopoDynamic(false), isMeshPointCache(false), fullName(objToCache.getFullName())
 {

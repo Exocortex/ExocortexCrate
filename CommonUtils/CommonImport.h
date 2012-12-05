@@ -58,9 +58,11 @@ public:
 	virtual void stop(void) = 0;
 	virtual void incr(int step=1) = 0;
 	virtual bool isCancelled(void) = 0;
+    virtual void setCaption(std::string& caption){}
+    virtual int getUpdateCount(){ return 20; }
 };
 
-SceneNodeAlembicPtr buildAlembicSceneGraph(AbcArchiveCache *pArchiveCache, AbcObjectCache *pRootObjectCache, int& nNumNodes);
+SceneNodeAlembicPtr buildAlembicSceneGraph(AbcArchiveCache *pArchiveCache, AbcObjectCache *pRootObjectCache, int& nNumNodes, bool countMergableChildren=true);
 
 // progress bar needs to be initialized before these functions are called!
 bool ImportSceneFile(SceneNodeAlembicPtr fileRoot, SceneNodeAppPtr appRoot, const IJobStringParser& jobParams, CommonProgressBar *pBar = 0);
