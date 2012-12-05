@@ -2175,6 +2175,8 @@ ESS_CALLBACK_START(alembic_import_jobs_Execute, CRef&)
       //should build a full scene graph when start doing name checking
       SceneNodeXSIPtr appRoot(new SceneNodeXSI(importRootNode));
 
+      //printSceneGraph(fileRoot, false);
+
       XSIProgressBar progBar;
       progBar.init(nNumNodes);
 

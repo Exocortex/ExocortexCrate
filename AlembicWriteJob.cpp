@@ -190,10 +190,15 @@ CStatus AlembicWriteJob::PreProcess()
    int nNumNodes = 0;
    SceneNodePtr exoSceneRoot = buildCommonSceneGraph(Application().GetActiveSceneRoot(), nNumNodes);
    
+   //::printSceneGraph(exoSceneRoot, false);
+
    if(bFlattenHierarchy){
       nNumNodes = 0;
       flattenSceneGraph(exoSceneRoot, nNumNodes);
    }
+
+   //::printSceneGraph(exoSceneRoot, false);
+
    std::map<std::string, bool> selectionMap;
 
    for(int i=0; i<mSelection.size(); i++){
