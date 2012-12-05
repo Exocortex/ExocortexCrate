@@ -136,13 +136,16 @@ struct SelectChildrenStackElement
    SelectChildrenStackElement(SceneNodePtr enode, bool selectChildren):eNode(enode), bSelectChildren(selectChildren)
    {}
 };
-void selectNodes(SceneNodePtr root, SceneNode::SelectionT selectionMap, bool bSelectParents, bool bChildren, bool bSelectShapeNodes)
-{
 
+int selectNodes(SceneNodePtr root, SceneNode::SelectionT selectionMap, bool bSelectParents, bool bChildren, bool bSelectShapeNodes)
+{
+   SceneNode::SelectionT::iterator selectionEnd = selectionMap.end();
 
    std::list<SelectChildrenStackElement> sceneStack;
    
    sceneStack.push_back(SelectChildrenStackElement(root, false));
+
+   int nSelectionCount = 0;
 
    while( !sceneStack.empty() )
    {
@@ -151,35 +154,50 @@ void selectNodes(SceneNodePtr root, SceneNode::SelectionT selectionMap, bool bSe
       sceneStack.pop_back();
 
       bool bSelected = false;
-      if(selectionMap.find(eNode->dccIdentifier) != selectionMap.end() && 
-         (eNode->type == SceneNode::ETRANSFORM || eNode->type == SceneNode::ITRANSFORM)){
-         
-         //this node's name matches one of the names from the selection map, so select it
-         eNode->selected = true;
+      //check if the node matches a full path
 
-         if(eNode->type == SceneNode::ETRANSFORM && bSelectShapeNodes){
-            for(std::list<SceneNodePtr>::iterator it=eNode->children.begin(); it != eNode->children.end(); it++){
-               if(::hasExtractableTransform((*it)->type)){
-                  (*it)->selected = true;
-                  break;
+      if(eNode->type == SceneNode::ETRANSFORM || eNode->type == SceneNode::ITRANSFORM){   
+         
+         SceneNode::SelectionT::iterator selectionIt = selectionMap.find(eNode->dccIdentifier);
+
+         //otherwise, check if the node names match
+         if(selectionIt == selectionEnd){
+            selectionIt = selectionMap.find(removeXfoSuffix(eNode->name));
+         }
+
+         if(selectionIt != selectionEnd){
+
+            //this node's name matches one of the names from the selection map, so select it
+            if(!eNode->selected) nSelectionCount++;
+            eNode->selected = true;
+
+            if(eNode->type == SceneNode::ETRANSFORM && bSelectShapeNodes){
+               for(std::list<SceneNodePtr>::iterator it=eNode->children.begin(); it != eNode->children.end(); it++){
+                  if(::hasExtractableTransform((*it)->type)){
+                     if(!(*it)->selected) nSelectionCount++;
+                     (*it)->selected = true;
+                     break;
+                  }
                }
             }
-         }
 
-         if(bSelectParents){// select all parent nodes
-            SceneNode* currNode = eNode->parent;
-            while(currNode){
-               currNode->selected = true;
-               currNode = currNode->parent;
+            if(bSelectParents){// select all parent nodes
+               SceneNode* currNode = eNode->parent;
+               while(currNode){
+                  if(!currNode->selected) nSelectionCount++;
+                  currNode->selected = true;
+                  currNode = currNode->parent;
+               }
             }
-         }
 
-         if(bChildren){// select the children
-            bSelected = true;
-         } 
+            if(bChildren){// select the children
+               bSelected = true;
+            } 
+         }
       }
       if(sElement.bSelectChildren){
          bSelected = true;
+         if(!eNode->selected) nSelectionCount++;
          eNode->selected = true;
       }
 
@@ -189,6 +207,8 @@ void selectNodes(SceneNodePtr root, SceneNode::SelectionT selectionMap, bool bSe
    }
 
    root->selected = true;
+
+   return nSelectionCount;
 }
 
 

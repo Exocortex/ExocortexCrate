@@ -122,7 +122,7 @@ void printSceneGraph(SceneNodePtr root, bool bOnlyPrintSelected);
 
 bool hasExtractableTransform( SceneNode::nodeTypeE type );
 
-void selectNodes(SceneNodePtr root, SceneNode::SelectionT selectionMap, bool bSelectParents, bool bChildren, bool bSelectShapeNodes);
+int selectNodes(SceneNodePtr root, SceneNode::SelectionT selectionMap, bool bSelectParents, bool bChildren, bool bSelectShapeNodes);
 
 void flattenSceneGraph(SceneNodePtr root, int nNumNodes);
 
