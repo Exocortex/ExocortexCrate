@@ -1993,9 +1993,9 @@ ESS_CALLBACK_START(alembic_import_jobs_Execute, CRef&)
          jobParser.importStandinProperties = false;
       }
       jobParser.attachToExisting = settings.GetParameterValue(L"attach");
-	   jobParser.failOnUnsupported = settings.GetParameterValue(L"failOnUnsupported");
+	  jobParser.failOnUnsupported = settings.GetParameterValue(L"failOnUnsupported");
 
-      Application().LogMessage(CString(L"[ExocortexAlembic] Using WriteJob:") + jobParser.buildJobString().c_str());
+      Application().LogMessage(CString(L"[ExocortexAlembic] Using ReadJob:") + jobParser.buildJobString().c_str());
 
       Application().ExecuteCommand(L"DeleteObj",inspectArgs,inspectResult);
    }
@@ -2005,7 +2005,7 @@ ESS_CALLBACK_START(alembic_import_jobs_Execute, CRef&)
          ESS_LOG_ERROR("[alembic] Error parsing import job string.");
          return CStatus::Abort;
       }
-      Application().LogMessage(CString(L"[ExocortexAlembic] Using WriteJob:") + jobString.c_str());
+      Application().LogMessage(CString(L"[ExocortexAlembic] Using ReadJob:") + jobString.c_str());
    }
 
    // take care of the filename
@@ -2075,23 +2075,6 @@ ESS_CALLBACK_START(alembic_import_jobs_Execute, CRef&)
    }
 
 
-   //TODO: no need to parse this argument twice
-   // let's check the identifier list
-   CString identifierListStr = args[9].GetAsText();
-   std::map<std::string,bool> identifierMap;
-   if(!identifierListStr.IsEmpty())
-   {
-      CStringArray identifiers = identifierListStr.Split(L",");
-      for(LONG i=0;i<identifiers.GetCount();i++)
-      {
-         while(identifiers[i].GetAt(0) == ' ')
-            identifiers[i] = identifiers[i].GetSubString(1,1000000);
-         while(identifiers[i].GetAt(identifiers[i].Length()-1) == ' ')
-            identifiers[i] = identifiers[i].GetSubString(0,identifiers[i].Length()-1);
-         identifierMap.insert(std::pair<std::string,bool>(identifiers[i].GetAsciiString(),true));
-      }
-   }
-
    // create the timecontrol
    CustomProperty timeControl;
    if(jobParser.attachToExisting)
@@ -2124,14 +2107,35 @@ ESS_CALLBACK_START(alembic_import_jobs_Execute, CRef&)
 
    AbcG::IObject root = archive->getTop();
  
-   std::vector<std::string> nodesToImport;
-   std::map<std::string, bool> map;
 
    AbcObjectCache *pRootObjectCache = &( pArchiveCache->find( "/" )->second );
 
 
    int nNumNodes = 0;
    SceneNodeAlembicPtr fileRoot = buildAlembicSceneGraph(pArchiveCache, pRootObjectCache, nNumNodes, false);
+
+   bool bImportAllNodes = true;
+
+   if(jobParser.nodesToImport.size() > 0){
+
+      std::map<std::string, bool> selectionMap;
+
+      for(int i=0; i<jobParser.nodesToImport.size(); i++){
+         selectionMap[jobParser.nodesToImport[i]] = true;
+      }
+      
+      //Note: the ImportScene and AttachToScene methods assume that parents of each selected node are also selected
+      int numSelected = selectNodes(fileRoot, selectionMap, true /*select parents*/, false /*select children*/, true/*select shape nodes*/);
+
+      if(numSelected < jobParser.nodesToImport.size()){
+         ESS_LOG_WARNING("Unabled find all filter nodes specified.");
+      }
+
+      if(numSelected > 0){
+         nNumNodes = numSelected;
+         bImportAllNodes = false;
+      }
+   }
 
    //printSceneGraph(fileRoot, false);
 
@@ -2167,7 +2171,7 @@ ESS_CALLBACK_START(alembic_import_jobs_Execute, CRef&)
       XSIProgressBar progBar;
       progBar.init(nNumNodes);
 
-      bool bAttachSuccess = AttachSceneFile(fileRoot, appRoot, jobParser, &progBar);
+      bool bAttachSuccess = AttachSceneFile(fileRoot, appRoot, jobParser, bImportAllNodes, &progBar);
 
       if(!bAttachSuccess){
          return CStatus::Fail;
@@ -2183,7 +2187,7 @@ ESS_CALLBACK_START(alembic_import_jobs_Execute, CRef&)
       XSIProgressBar progBar;
       progBar.init(nNumNodes);
 
-      bool bImportSuccess = ImportSceneFile(fileRoot, appRoot, jobParser, &progBar);
+      bool bImportSuccess = ImportSceneFile(fileRoot, appRoot, jobParser, bImportAllNodes, &progBar);
       
       if(!bImportSuccess){
          return CStatus::Fail;
