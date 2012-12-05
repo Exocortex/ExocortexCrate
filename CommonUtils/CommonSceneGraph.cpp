@@ -192,38 +192,6 @@ void selectNodes(SceneNodePtr root, SceneNode::SelectionT selectionMap, bool bSe
 }
 
 
-//void filterNodeSelection(SceneNodePtr root, bool bExcludeNonTransforms)
-//{
-//   struct stackElement
-//   {
-//      SceneNodePtr eNode;
-//      stackElement(SceneNodePtr enode):eNode(enode)
-//      {}
-//   };
-//
-//   std::list<stackElement> sceneStack;
-//   
-//   sceneStack.push_back(stackElement(root));
-//
-//   while( !sceneStack.empty() )
-//   {
-//      stackElement sElement = sceneStack.back();
-//      SceneNodePtr eNode = sElement.eNode;
-//      sceneStack.pop_back();
-//
-//      if(bExcludeNonTransforms && 
-//         (eNode->type != SceneNode::ITRANSFORM && eNode->type != SceneNode::ETRANSFORM && eNode->type != SceneNode::UNKNOWN)
-//      ){
-//         eNode->selected = false;
-//      }
-//
-//      for( std::list<SceneNodePtr>::iterator it = eNode->children.begin(); it != eNode->children.end(); it++){
-//         sceneStack.push_back(stackElement(*it));
-//      }
-//   }
-//
-//   root->selected = true;
-//}
 
 struct FlattenStackElement
 {
@@ -264,10 +232,6 @@ void flattenSceneGraph(SceneNodePtr root, int nNumNodes)
           fileNode->type == SceneNode::ETRANSFORM ||          //shape node parent transform
           hasExtractableTransform(fileNode->type)              //shape node
          ) {
-            if(hasExtractableTransform(fileNode->type) ){
-               ESS_LOG_WARNING("break:");
-            }
-
             parentNode->children.push_back(fileNode);
             fileNode->parent = parentNode.get();
             
