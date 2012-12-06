@@ -1857,7 +1857,7 @@ bool createNodes(SceneNodeXSI* const appNode, SceneNodeAlembicPtr fileNode, cons
 
       SceneNodeAlembicPtr shapeNode;
       for(SceneChildIterator it = fileNode->children.begin(); it != fileNode->children.end(); it++){
-         if( hasExtractableTransform((*it)->type) ){
+         if( hasExtractableTransform((*it)->type)){
             shapeNode = reinterpret<SceneNode, SceneNodeAlembic>(*it);
             break;
          }
@@ -2114,6 +2114,10 @@ ESS_CALLBACK_START(alembic_import_jobs_Execute, CRef&)
    int nNumNodes = 0;
    SceneNodeAlembicPtr fileRoot = buildAlembicSceneGraph(pArchiveCache, pRootObjectCache, nNumNodes, false);
 
+   if(!jobParser.selectShapes){
+      ESS_LOG_WARNING("Only selecting transform nodes (shape selection disabled)");
+   }
+
    bool bImportAllNodes = true;
 
    if(jobParser.nodesToImport.size() > 0){
@@ -2125,7 +2129,7 @@ ESS_CALLBACK_START(alembic_import_jobs_Execute, CRef&)
       }
       
       //Note: the ImportScene and AttachToScene methods assume that parents of each selected node are also selected
-      int numSelected = selectNodes(fileRoot, selectionMap, true /*select parents*/, false /*select children*/, true/*select shape nodes*/);
+      int numSelected = selectNodes(fileRoot, selectionMap, true /*select parents*/, false /*select children*/, jobParser.selectShapes/*select shape nodes*/);
 
       if(numSelected < jobParser.nodesToImport.size()){
          ESS_LOG_WARNING("Unabled find all filter nodes specified.");
@@ -2135,6 +2139,18 @@ ESS_CALLBACK_START(alembic_import_jobs_Execute, CRef&)
          nNumNodes = numSelected;
          bImportAllNodes = false;
       }
+   }
+   else if(!jobParser.selectShapes){
+      int numSelected = selectTransformNodes(fileRoot);
+      if(numSelected > 0){
+         nNumNodes = numSelected;
+         bImportAllNodes = false;
+      }
+   }
+
+   //ImportScene and AttachScene assume unselected nodes have been removed from the alembic file scene graph
+   if(!bImportAllNodes){
+      removeUnselectedNodes(fileRoot);
    }
 
    //printSceneGraph(fileRoot, false);
@@ -2166,12 +2182,13 @@ ESS_CALLBACK_START(alembic_import_jobs_Execute, CRef&)
       nNumNodes = 0;
       SceneNodeXSIPtr appRoot = buildCommonSceneGraph(importRootNode, nNumNodes, false);
 
-      //printSceneGraph(appRoot, false);
+      printSceneGraph(fileRoot, true);
+      printSceneGraph(appRoot, true);
       
       XSIProgressBar progBar;
       progBar.init(nNumNodes);
 
-      bool bAttachSuccess = AttachSceneFile(fileRoot, appRoot, jobParser, bImportAllNodes, &progBar);
+      bool bAttachSuccess = AttachSceneFile(fileRoot, appRoot, jobParser, &progBar);
 
       if(!bAttachSuccess){
          return CStatus::Fail;
@@ -2187,7 +2204,7 @@ ESS_CALLBACK_START(alembic_import_jobs_Execute, CRef&)
       XSIProgressBar progBar;
       progBar.init(nNumNodes);
 
-      bool bImportSuccess = ImportSceneFile(fileRoot, appRoot, jobParser, bImportAllNodes, &progBar);
+      bool bImportSuccess = ImportSceneFile(fileRoot, appRoot, jobParser, &progBar);
       
       if(!bImportSuccess){
          return CStatus::Fail;

@@ -200,6 +200,9 @@ SceneNodeXSIPtr buildCommonSceneGraph(XSI::CRef xsiRoot, int& nNumNodes, bool bU
       if(!hasExtractableTransform(type) || !bUnmergeNodes)
       {
          newNode = createNodeXSI(xRef, type);
+         if(type == SceneNode::ITRANSFORM || type == SceneNode::NAMESPACE_TRANSFORM){
+            newNode->name+="Xfo";
+         }
       }
       else{
          newNode = createNodeXSI(xRef, SceneNode::ETRANSFORM);
