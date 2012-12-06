@@ -1526,13 +1526,12 @@ bool createMergeableNode(SceneNodeXSI* appNode, SceneNodeAlembicPtr fileXformNod
 
       if(!nurbsObj.IsValid())
       {
-         std::stringstream s;
-         s << "Can't create new Nurb surfaces, can only attach.  Unsupported Alembic type: " << shapeObj.getFullName().c_str();
          if( failOnUnsupported ) {
-            ESS_LOG_ERROR( s.str().c_str() );
+            ESS_LOG_ERROR( "Can't create new Nurb surfaces, can only attach.  Unsupported Alembic type: " << shapeObj.getFullName().c_str(); );
             return false;
          }
-         ESS_LOG_WARNING( s.str().c_str() );
+         ESS_LOG_WARNING( "Can't create new Nurb surfaces, can only attach.  Unsupported Alembic type: " << shapeObj.getFullName().c_str(); );
+         return true;
 	   }
 
       // load metadata

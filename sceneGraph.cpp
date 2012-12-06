@@ -10,6 +10,8 @@ using namespace XSI;
 
 bool SceneNodeXSI::replaceData(SceneNodeAlembicPtr fileNode, const IJobStringParser& jobParams, SceneNodeAlembicPtr& nextFileNode)
 {
+   ESS_PROFILE_FUNC();
+
    if(!jobParams.attachToExisting){
       return false;
    }
@@ -41,6 +43,8 @@ bool SceneNodeXSI::replaceData(SceneNodeAlembicPtr fileNode, const IJobStringPar
 
 bool SceneNodeXSI::addChild(SceneNodeAlembicPtr fileNode, const IJobStringParser& jobParams, SceneNodeAppPtr& newAppNode)
 {
+   ESS_PROFILE_FUNC();
+
    if(jobParams.attachToExisting){
       return false;
    }
@@ -166,6 +170,8 @@ SceneNodeXSIPtr createNodeXSI(CRef& ref, SceneNode::nodeTypeE type)
 
 SceneNodeXSIPtr buildCommonSceneGraph(XSI::CRef xsiRoot, int& nNumNodes, bool bUnmergeNodes)
 {
+   ESS_PROFILE_FUNC();
+
    std::list<CSGStackElement> sceneStack;
    
    nNumNodes = 0;
