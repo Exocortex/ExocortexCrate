@@ -151,16 +151,13 @@ CStatus exportCommandImp( CRef& in_ctxt )
       
       LONG transformMode = settings.GetParameterValue(L"transforms");
       if( transformMode == 0 ){//flatten hierarchy
-         jobString += L";flattenHierarchy=true";
-         jobString += L";globalspace=false";
+         jobString += L";transformHierarchy=flat";
       }
       else if( transformMode == 1){//full hierarchy
-         jobString += L";flattenHierarchy=false";
-         jobString += L";globalspace=false";
+         jobString += L";transformHierarchy=full";
       }
       else if( transformMode == 2){//bake in
-         jobString += L";flattenHierarchy=true";
-         jobString += L";globalspace=true";
+         jobString += L";transformHierarchy=bake";
       }
 
       Application().ExecuteCommand(L"DeleteObj",inspectArgs,inspectResult);
@@ -187,7 +184,7 @@ CStatus exportCommandImp( CRef& in_ctxt )
       bool normals = true;
       bool uvs = true;
       bool facesets = true;
-	   bool bindpose = true;
+	  bool bindpose = true;
       bool dynamictopology = false;
       bool globalspace = false;
       bool flattenhierarchy = true;
@@ -208,38 +205,72 @@ CStatus exportCommandImp( CRef& in_ctxt )
             continue;
          }
 
-         if(valuePair[0].IsEqualNoCase(L"in"))
+         if(valuePair[0].IsEqualNoCase(L"in")){
             frameIn = (double)CValue(valuePair[1]);
-         else if(valuePair[0].IsEqualNoCase(L"out"))
+         }
+         else if(valuePair[0].IsEqualNoCase(L"out")){
             frameOut = (double)CValue(valuePair[1]);
-         else if(valuePair[0].IsEqualNoCase(L"step"))
+         }
+         else if(valuePair[0].IsEqualNoCase(L"step")){
             frameSteps = (double)CValue(valuePair[1]);
-         else if(valuePair[0].IsEqualNoCase(L"substep"))
+         }
+         else if(valuePair[0].IsEqualNoCase(L"substep")){
             frameSubSteps = (double)CValue(valuePair[1]);
-         else if(valuePair[0].IsEqualNoCase(L"normals"))
+         }
+         else if(valuePair[0].IsEqualNoCase(L"normals")){
             normals = (bool)CValue(valuePair[1]);
-         else if(valuePair[0].IsEqualNoCase(L"uvs"))
+         }
+         else if(valuePair[0].IsEqualNoCase(L"uvs")){
             uvs = (bool)CValue(valuePair[1]);
-         else if(valuePair[0].IsEqualNoCase(L"facesets"))
+         }
+         else if(valuePair[0].IsEqualNoCase(L"facesets")){
             facesets = (bool)CValue(valuePair[1]);
-		   else if(valuePair[0].IsEqualNoCase(L"bindpose"))
+         }
+         else if(valuePair[0].IsEqualNoCase(L"bindpose")){
             bindpose = (bool)CValue(valuePair[1]);
-		   else if(valuePair[0].IsEqualNoCase(L"transformcache"))
+         }
+         else if(valuePair[0].IsEqualNoCase(L"transformcache")){
             transformCache = (bool)CValue(valuePair[1]);
-		   else if(valuePair[0].IsEqualNoCase(L"purepointcache"))
+         }
+         else if(valuePair[0].IsEqualNoCase(L"purepointcache")){
             purepointcache = (bool)CValue(valuePair[1]);
-		   else if(valuePair[0].IsEqualNoCase(L"dynamictopology"))
+         }
+         else if(valuePair[0].IsEqualNoCase(L"dynamictopology")){
             dynamictopology = (bool)CValue(valuePair[1]);
-		   else if(valuePair[0].IsEqualNoCase(L"globalspace"))
+         }
+         else if(valuePair[0].IsEqualNoCase(L"globalspace")){
             globalspace = (bool)CValue(valuePair[1]);
-		   else if(valuePair[0].IsEqualNoCase(L"flattenhierarchy"))
+         }
+         else if(valuePair[0].IsEqualNoCase(L"flattenhierarchy")){
             flattenhierarchy = (bool)CValue(valuePair[1]);
+         }
+         else if(valuePair[0].IsEqualNoCase(L"transformHierarchy")){
+            if(valuePair[1].IsEqualNoCase(L"full")){
+               flattenhierarchy = false;
+               globalspace = false;
+            }
+            else if(valuePair[1].IsEqualNoCase(L"flat")){
+               flattenhierarchy = true;
+               globalspace = false;
+            }
+            else if(valuePair[1].IsEqualNoCase(L"bake")){
+               flattenhierarchy = true;
+               globalspace = true;
+            }
+            else{
+               Application().LogMessage(L"[ExocortexAlembic] Incorrect transformHierarchy parameter: " + valuePair[1], siWarningMsg);
+            }
+         }
          else if(valuePair[0].IsEqualNoCase(L"guidecurves"))
+         {
             guidecurves = (bool)CValue(valuePair[1]);
-         else if(valuePair[0].IsEqualNoCase(L"filename"))
+         }
+         else if(valuePair[0].IsEqualNoCase(L"filename")){
             filename = CValue(valuePair[1]).GetAsText();
-        else if(valuePair[0].IsEqualNoCase(L"geomApproxSubD"))
+         }
+         else if(valuePair[0].IsEqualNoCase(L"geomApproxSubD")){
             geomApproxSubD = (bool)CValue(valuePair[1]);
+         }
          else if(valuePair[0].IsEqualNoCase(L"objects"))
          {
             // try to find each object
@@ -254,23 +285,6 @@ CStatus exportCommandImp( CRef& in_ctxt )
                   continue;
                }
                objects.push_back(objectStrings[k].GetAsciiString());
-
-               // ensure to add models as a flattened list
-               //Model model(objRef);
-               //if(model.IsValid())
-               //{
-               //   CRefArray children = model.GetChildren();
-               //   for(LONG j=0;j<children.GetCount();j++)
-               //   {
-               //      X3DObject child(children[j]);
-               //      if(!child.IsValid())
-               //         continue;
-               //      CRefArray childChildren = child.GetChildren();
-               //      for(LONG l=0;l<childChildren.GetCount();l++)
-               //         children.Add(childChildren[l]);
-               //      objects.push_back(child.GetRef());
-               //   }
-               //}
             }
          }
          else
