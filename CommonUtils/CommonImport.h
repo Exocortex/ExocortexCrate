@@ -23,6 +23,7 @@ public:
    bool attachToExisting;
    bool failOnUnsupported;
    bool importVisibilityControllers;
+   bool selectShapes;
 
 	std::string filename;// = EC_MCHAR_to_UTF8( strPath );
 
@@ -41,7 +42,8 @@ public:
       attachToExisting(false),
       failOnUnsupported(false),
       importVisibilityControllers(false),
-      includeChildren(false)
+      includeChildren(false),
+      selectShapes(true)
    {}
 
    bool parse(const std::string& jobString);
@@ -65,8 +67,8 @@ public:
 SceneNodeAlembicPtr buildAlembicSceneGraph(AbcArchiveCache *pArchiveCache, AbcObjectCache *pRootObjectCache, int& nNumNodes, bool countMergableChildren=true);
 
 // progress bar needs to be initialized before these functions are called!
-bool ImportSceneFile(SceneNodeAlembicPtr fileRoot, SceneNodeAppPtr appRoot, const IJobStringParser& jobParams, bool bImportAllNodes, CommonProgressBar *pBar = 0);
-bool AttachSceneFile(SceneNodeAlembicPtr fileRoot, SceneNodeAppPtr appRoot, const IJobStringParser& jobParams, bool bImportAllNodes, CommonProgressBar *pBar = 0);
+bool ImportSceneFile(SceneNodeAlembicPtr fileRoot, SceneNodeAppPtr appRoot, const IJobStringParser& jobParams, CommonProgressBar *pBar = 0);
+bool AttachSceneFile(SceneNodeAlembicPtr fileRoot, SceneNodeAppPtr appRoot, const IJobStringParser& jobParams, CommonProgressBar *pBar = 0);
 
 
 
