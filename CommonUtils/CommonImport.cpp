@@ -160,7 +160,7 @@ struct AlembicISceneBuildElement
 
 SceneNodeAlembicPtr buildAlembicSceneGraph(AbcArchiveCache *pArchiveCache, AbcObjectCache *pRootObjectCache, int& nNumNodes, bool countMergableChildren)
 {
-	ESS_PROFILE_SCOPE("buildAlembicSceneGraph");
+   ESS_PROFILE_FUNC();
    std::list<AlembicISceneBuildElement> sceneStack;
 
    Alembic::Abc::IObject rootObj = pRootObjectCache->obj;
@@ -262,6 +262,7 @@ struct ValidateStackElement
 
 bool validateSceneFileAttached(SceneNodeAlembicPtr fileRoot)
 {
+   ESS_PROFILE_FUNC();
    std::list<ValidateStackElement> sceneStack;
 
    for(SceneChildIterator it = fileRoot->children.begin(); it != fileRoot->children.end(); it++){
@@ -368,10 +369,7 @@ struct AttachStackElement
 
 bool AttachSceneFile(SceneNodeAlembicPtr fileRoot, SceneNodeAppPtr appRoot, const IJobStringParser& jobParams, CommonProgressBar *pbar)
 {
-   ESS_PROFILE_SCOPE("AttachSceneFile");
-
-
-
+   ESS_PROFILE_FUNC();
 
    std::list<AttachStackElement> sceneStack;
 
@@ -465,7 +463,7 @@ struct ImportStackElement
 
 bool ImportSceneFile(SceneNodeAlembicPtr fileRoot, SceneNodeAppPtr appRoot, const IJobStringParser& jobParams, CommonProgressBar *pbar)
 {
-	ESS_PROFILE_SCOPE("ImportSceneFile");
+   ESS_PROFILE_FUNC();
 
    //compare to application scene graph to see if we need to rename nodes (or maybe we might throw an error)
 

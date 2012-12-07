@@ -141,6 +141,8 @@ struct SelectChildrenStackElement
 
 int selectNodes(SceneNodePtr root, SceneNode::SelectionT selectionMap, bool bSelectParents, bool bChildren, bool bSelectShapeNodes)
 {
+   ESS_PROFILE_FUNC();
+
    SceneNode::SelectionT::iterator selectionEnd = selectionMap.end();
 
    std::list<SelectChildrenStackElement> sceneStack;
@@ -215,6 +217,8 @@ int selectNodes(SceneNodePtr root, SceneNode::SelectionT selectionMap, bool bSel
 
 int selectTransformNodes(SceneNodePtr root)
 {
+   ESS_PROFILE_FUNC();
+
    std::list<SelectChildrenStackElement> sceneStack;
    
    sceneStack.push_back(SelectChildrenStackElement(root, false));
@@ -256,7 +260,7 @@ struct FlattenStackElement
 
 void flattenSceneGraph(SceneNodePtr root, int nNumNodes)
 {
-	ESS_PROFILE_SCOPE("flattenSceneGraph");
+   ESS_PROFILE_FUNC();
 
    SceneNodePtr newRoot = root;
 
