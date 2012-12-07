@@ -300,6 +300,27 @@ TriObject* GetTriObjectFromNode(INode *iNode, const TimeValue t, bool &deleteIt)
 	}
 }
 
+std::string alembicPathToMaxPath(const std::string& path)
+{
+   std::vector<std::string> parts;
+
+   boost::split(parts, path, boost::is_any_of("/"));
+
+   if(parts.size() > 2){
+	   parts.pop_back();
+   }
+
+   std::stringstream result;
+
+   for(int i=0; i<parts.size(); i++){
+	   parts[i] = removeXfoSuffix(parts[i]);
+       result << parts[i];
+       if(i < parts.size()-1) result << "/";
+   }
+
+   return result.str();
+}
+
 INode* GetNodeFromHierarchyPath(const std::string& path)
 {
 	std::vector<std::string> parts;

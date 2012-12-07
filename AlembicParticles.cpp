@@ -784,12 +784,12 @@ void AlembicParticles::FillParticleShapeNodes(AbcG::IPoints &iPoints, const Samp
 		for (int i = 0; i < m_InstanceShapeINodes.size(); i += 1)
 		{
 			const std::string& path = m_InstanceShapeNames->get()[i];
-
-            //TODO: need to possibly XFO to path, and shape node as well
-
             m_InstanceShapeINodes[i] = nodeMap[path];
 
-			//m_InstanceShapeINodes[i] = GetNodeFromHierarchyPath(path);
+            if(m_InstanceShapeINodes[i] == NULL){
+               const std::string newPath = alembicPathToMaxPath(path);
+               m_InstanceShapeINodes[i] = nodeMap[newPath];
+            }
 		}
 	}
 }

@@ -468,8 +468,9 @@ bool AlembicPoints::Save(double time, bool bLastFrame)
        std::vector<std::string> instanceNames(mNumShapeMeshes);
 
        for(faceVertexHashToShapeMap::iterator it = mShapeMeshCache.begin(); it != mShapeMeshCache.end(); it++){
-          std::string pathName("/");
-          instanceNames[it->second.nMeshInstanceId] = pathName += it->second.name;
+          std::stringstream pathStream;
+          pathStream << "/" << it->second.name << "Xfo/" << it->second.name;
+          instanceNames[it->second.nMeshInstanceId] = pathStream.str();
        }
 
 	   //for some reason the .dims property is not written when there is exactly one entry if we don't push an empty string
