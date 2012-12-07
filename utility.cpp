@@ -129,7 +129,12 @@ CString getFullNameFromIdentifier(XSI::CRef importRootNode, std::string in_Ident
       count--;
    }
 
+
    CString pathName = importRootNode.GetAsText();
+
+   if(!importRootNode.IsValid()){
+      pathName = L"Scene_Root";
+   }
 
    //ESS_LOG_WARNING("root: "<<pathName.GetAsciiString());
 
