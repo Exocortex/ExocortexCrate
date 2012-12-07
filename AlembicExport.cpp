@@ -372,7 +372,7 @@ CStatus exportCommandImp( CRef& in_ctxt )
       job->SetOption(L"exportFaceSets",facesets);
 	   job->SetOption(L"exportBindPose",bindpose);
       job->SetOption(L"exportPurePointCache",purepointcache);
-      job->SetOption(L"exportDynamicTopology",dynamictopology);
+      job->SetOption(L"exportDynamicTopology",true);
       job->SetOption(L"indexedNormals",true);
       job->SetOption(L"indexedUVs",true);
       job->SetOption(L"globalSpace",globalspace);
@@ -485,7 +485,7 @@ ESS_CALLBACK_START(alembic_export_settings_Define,CRef&)
    oCustomProperty.AddParameter(L"facesets",CValue::siBool,siPersistable,L"",L"",1,0,1,0,1,oParam);
    oCustomProperty.AddParameter(L"bindpose",CValue::siBool,siPersistable,L"",L"",1,0,1,0,1,oParam);
    //oCustomProperty.AddParameter(L"globalspace",CValue::siBool,siPersistable,L"",L"",0,0,1,0,1,oParam);
-   oCustomProperty.AddParameter(L"dtopology",CValue::siBool,siPersistable,L"",L"",0,0,1,0,1,oParam);
+   //oCustomProperty.AddParameter(L"dtopology",CValue::siBool,siPersistable,L"",L"",0,0,1,0,1,oParam);
    oCustomProperty.AddParameter(L"guidecurves",CValue::siBool,siPersistable,L"",L"",0,0,1,0,1,oParam);
    oCustomProperty.AddParameter(L"transformcache",CValue::siBool,siPersistable,L"",L"",0,0,1,0,1,oParam);
    oCustomProperty.AddParameter(L"transforms",CValue::siInt4,siPersistable,L"",L"",0,0,10,0,10,oParam);
@@ -519,7 +519,7 @@ ESS_CALLBACK_START(alembic_export_settings_DefineLayout,CRef&)
    oLayout.AddItem(L"uvs",L"UVs");
    oLayout.AddItem(L"facesets",L"Clusters");
    oLayout.AddItem(L"bindpose",L"Envelope BindPose");
-   oLayout.AddItem(L"dtopology",L"Dynamic Topology");
+   //oLayout.AddItem(L"dtopology",L"Dynamic Topology");
    oLayout.AddItem(L"guidecurves",L"Guide Curves");
    //oLayout.AddItem(L"globalspace",L"Use Global Space");
    oLayout.EndGroup();
@@ -550,7 +550,7 @@ ESS_CALLBACK_START(alembic_export_settings_PPGEvent,const CRef&)
          Parameter(prop.GetParameters().GetItem(L"uvs")).PutCapabilityFlag(siReadOnly,!enable);
          Parameter(prop.GetParameters().GetItem(L"facesets")).PutCapabilityFlag(siReadOnly,!enable);
          Parameter(prop.GetParameters().GetItem(L"bindpose")).PutCapabilityFlag(siReadOnly,!enable);
-         Parameter(prop.GetParameters().GetItem(L"dtopology")).PutCapabilityFlag(siReadOnly,!enable);
+         //Parameter(prop.GetParameters().GetItem(L"dtopology")).PutCapabilityFlag(siReadOnly,!enable);
       }
 	}
    else if (ctxt.GetEventID() == PPGEventContext::siButtonClicked)

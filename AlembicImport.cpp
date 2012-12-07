@@ -1270,6 +1270,7 @@ bool validate(CRef nodeRef, CString fileNodeType, Abc::IObject shapeObj )
    }
 
    if(type.IsEqualNoCase("null")){
+      ESS_LOG_WARNING("Validate: Replacing null with shape "+shapeObj.getFullName());
       x3dobject.ResetObject();
    }
 
@@ -1689,6 +1690,7 @@ bool createMergeableNode(SceneNodeXSI* appNode, SceneNodeAlembicPtr fileXformNod
             }
 
             if(type.IsEqualNoCase("null")){
+               ESS_LOG_WARNING("Replacing null with shape "+shapeObj.getFullName());
                x3dobject.ResetObject();
             }
 
