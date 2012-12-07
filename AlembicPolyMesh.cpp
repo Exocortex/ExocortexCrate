@@ -1018,6 +1018,7 @@ MStatus AlembicPolyMeshDeformNode::deform(MDataBlock & dataBlock, MItGeometry & 
   {
     ESS_PROFILE_SCOPE("AlembicPolyMeshDeformNode::deform position iterator");
 
+	const bool useBlending = sampleInfo.alpha != 0.0 && samplePos2->size() == samplePos->size() && ! mDynamicTopology;
     for(iter.reset(); !iter.isDone(); iter.next())
     {
       float weight = weightValue(dataBlock,geomIndex,iter.index()) * env;
@@ -1030,7 +1031,7 @@ MStatus AlembicPolyMeshDeformNode::deform(MDataBlock & dataBlock, MItGeometry & 
 
       MFloatPoint abcPt;
       const Alembic::Abc::v4::V3f &pos1 = samplePos->get()[iter.index()];
-      if(sampleInfo.alpha != 0.0 && samplePos2->size() == samplePos->size() && ! mDynamicTopology )
+      if(useBlending)
       {
         //ESS_LOG_WARNING( "blending vertex positions (1-2) B." );
         const Alembic::Abc::v4::V3f &pos2 = samplePos2->get()[iter.index()];

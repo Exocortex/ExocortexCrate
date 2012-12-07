@@ -69,23 +69,32 @@ __gMainProgressBar = ""
 
 def progressBar_init(_max):
 	global __gMainProgressBar
-	__gMainProgressBar = mel.eval('$tmp = $gMainProgressBar');
-	cmds.progressBar(__gMainProgressBar, edit=True, isInterruptable=True, maxValue=_max)
+	try:
+		__gMainProgressBar = mel.eval('$tmp = $gMainProgressBar')
+		if __gMainProgressBar != "":
+			cmds.progressBar(__gMainProgressBar, edit=True, isInterruptable=True, maxValue=_max)
+	except:
+		__gMainProgressBar = ""
 
 def progressBar_start():
 	global __gMainProgressBar
-	cmds.progressBar(__gMainProgressBar, edit=True, beginProgress=True, step=1)
+	if __gMainProgressBar != "":
+		cmds.progressBar(__gMainProgressBar, edit=True, beginProgress=True, step=1)
 
 def progressBar_stop():
 	global __gMainProgressBar
-	cmds.progressBar(__gMainProgressBar, edit=True, endProgress=True)
+	if __gMainProgressBar != "":
+		cmds.progressBar(__gMainProgressBar, edit=True, endProgress=True)
 
 def progressBar_incr(_step=20):
 	global __gMainProgressBar
-	cmds.progressBar(__gMainProgressBar, edit=True, step=_step)
+	if __gMainProgressBar != "":
+		cmds.progressBar(__gMainProgressBar, edit=True, step=_step)
 
 def progressBar_isCancelled():
 	global __gMainProgressBar
+	if __gMainProgressBar == "":
+		return 0
 	if cmds.progressBar(__gMainProgressBar, query=True, isCancelled=True):
 		return 1
 	return 0

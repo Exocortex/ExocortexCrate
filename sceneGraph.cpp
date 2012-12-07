@@ -50,6 +50,7 @@ bool SceneNodeMaya::replaceSimilarData(const char *functionName, SceneNodeAlembi
 	MString cmd;
 	cmd.format(format, functionName, fileNode->name.c_str(), fileNode->dccIdentifier.c_str(), fileAndTime->variable(), PythonBool(fileNode->pObjCache->isConstant));
 	MGlobal::executePythonCommand(cmd);
+	fileNode->setAttached(true);
 	return true;
 }
 
@@ -79,7 +80,7 @@ bool SceneNodeMaya::replaceData(SceneNodeAlembicPtr fileNode, const IJobStringPa
 	default:
 		break;
 	}
-	return true;
+	return false;
 }
 
 bool SceneNodeMaya::executeAddChild(const MString &cmd, SceneNodeAppPtr& newAppNode)

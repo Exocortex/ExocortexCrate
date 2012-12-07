@@ -19,19 +19,19 @@ def doIt(filename, exInframe, exOutframe, exObjects=None, exStepframe=1, exSubst
 
 	if exTopology == 1:
 		job += ";purepointcache=1;dynamictopology=0;normals=0;uvs=0;facesets=0"
-	elif exTopology == 2:
-		job += ";purepointcache=0;normals=0;dynamictopology=0"
-    	job += ";uvs="+str(int(exUVs))
-    	job += ";facesets="+str(int(exFaceSets))
-    	if (exFaceSets):
-			job += ";useInitShadGrp=" + str(int(exUseInitShadGrp))
-	elif exTopology == 3:
-		job += ";purepointcache=0;normals=1"
-		job += ";uvs="+str(int(exUVs))
-		job += ";facesets="+str(int(exFaceSets))
-		if (exFaceSets):
-			job += ";useInitShadGrp=" + str(int(exUseInitShadGrp))
-		job += ";dynamictopology="+str(int(exDynTopo))
+	else:
+		job += ";purepointcache=0;uvs="+str(int(exUVs))
+		job += ";facesets=" #+str(int(exFaceSets)) # move this in the if/else just below
+		if exFaceSets:
+			job += "1;useInitShadGrp=" + str(int(exUseInitShadGrp))
+		else:
+			job += "0"
+
+		if exTopology == 2:
+			job += ";normals=0;dynamictopology=0"
+		else:
+			job += ";normals=1;dynamictopology="+str(int(exDynTopo))
+
 	job += ";globalspace="+str(int(exGlobSpace))
 	job += ";withouthierarchy="+str(int(exWithoutHierarchy))
 	job += ";transformcache="+str(int(exXformCache))

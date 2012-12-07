@@ -317,39 +317,40 @@ MStatus AlembicWriteJob::PreProcess()
 
 MStatus AlembicWriteJob::Process(double frame)
 {
-   ESS_PROFILE_SCOPE("AlembicWriteJob::Process");
+	ESS_PROFILE_SCOPE("AlembicWriteJob::Process");
 
-   MayaProgressBar pBar;
-   pBar.init(0, mFrames.size() * mapObjects.size(), 1);
+	MayaProgressBar pBar;
+	pBar.init(0, mFrames.size() * mapObjects.size(), 1);
 
-   pBar.start();
-   for(size_t i=0; i<mFrames.size(); ++i)
-   {
-      // compare the frames
-      if(abs(mFrames[i] - frame) > 0.001)
-         continue;
+	pBar.start();
+	for(size_t i=0; i<mFrames.size(); ++i)
+	{
+		// compare the frames
+		if(abs(mFrames[i] - frame) > 0.001)
+			continue;
 
-      // run the export for all objects
-      int interrupt = 20;
-	    for (std::map<std::string, AlembicObjectPtr>::iterator it = mapObjects.begin(); it != mapObjects.end(); ++it, --interrupt)
-	    {
-         if (interrupt == 0)
-         {
-           interrupt = 20;
-		   if (pBar.isCancelled())
-             break;
-         }
-		 pBar.incr(1);
-         MStatus status = it->second->Save(mFrames[i]);
-         if(status != MStatus::kSuccess)
-		 {
-			 MPxCommand::setResult("Error caught in AlembicWriteJob::Process: " + status.errorString());
-            return status;
-		 }
-      }
-   }
-   pBar.stop();
-   return MStatus::kSuccess;
+		// run the export for all objects
+		int interrupt = 20;
+		for (std::map<std::string, AlembicObjectPtr>::iterator it = mapObjects.begin(); it != mapObjects.end(); ++it, --interrupt)
+		{
+			if (interrupt == 0)
+			{
+				interrupt = 20;
+				if (pBar.isCancelled())
+					break;
+				pBar.incr(20);
+			}
+			MStatus status = it->second->Save(mFrames[i]);
+			if(status != MStatus::kSuccess)
+			{
+				MPxCommand::setResult("Error caught in AlembicWriteJob::Process: " + status.errorString());
+				pBar.stop();
+				return status;
+			}
+		}
+	}
+	pBar.stop();
+	return MStatus::kSuccess;
 }
 
 bool AlembicWriteJob::forceCloseArchive(void)
