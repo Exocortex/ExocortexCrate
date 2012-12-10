@@ -10,7 +10,7 @@ def attachTimeAndFile(node, jobInfo, isConstant=False):
 
 	node = node + ".fileName"	# compute once, used 2-3 times
 	connAttr = cmds.connectionInfo(node, sfd=True)
-	if connAttr != "":
+	if connAttr != None and connAttr != "":
 		cmds.disconnectAttr(connAttr, node)
 	cmds.connectAttr(jobInfo.filenode+".outFileName", node)
 	pass
@@ -22,11 +22,7 @@ def attachXform(name, identifier, jobInfo, isConstant=False):
 		# already receiving transformation from another node!
 		conX = conX[0]
 		if cmds.objectType(conX) == "ExocortexAlembicXform":
-			conX = conX + ".fileName"	# compute once, used 2-3 times!
-			fileN = cmds.connectionInfo(conX, sfd=True)
-			if fileN != None and fileN != "":
-				cmds.disconnectAttr(fileN, conX)
-			cmds.connectAttr(jobInfo.filenode+".outFileName", conX)
+			attachTimeAndFile(conX, jobInfo, isConstant)
 		else:
 			print("Cannot attach Xform to " + name + ", it's attach to a node that is not an \"ExocortexAlembicXform\"")
 		return

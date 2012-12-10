@@ -29,7 +29,7 @@ bool AlembicPoints::listIntanceNames(std::vector<std::string> &names)
   for (int i = 0; i < allPaths.length(); ++i)
   {
     std::stringstream ss;
-    ss << "/" << allPaths[i].partialPathName();
+	ss << "/" << allPaths[i].partialPathName();
     names[i] = ss.str();
   }
   mInstanceNamesProperty.set(Abc::StringArraySample(names));
