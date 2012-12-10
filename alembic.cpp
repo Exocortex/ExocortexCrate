@@ -1,7 +1,8 @@
 #include "stdafx.h"
 #include "AlembicWriteJob.h"
-#include "AlembicGetInfo.h"
-#include "AlembicGetNodeFromIdentifier.h"
+#include "AlembicImport.h"
+//#include "AlembicGetInfo.h"
+//#include "AlembicGetNodeFromIdentifier.h"
 #include "AlembicTimeControl.h"
 #include "AlembicFileNode.h"
 #include "AlembicXform.h"
@@ -64,12 +65,9 @@ EC_EXPORT MStatus initializePlugin(MObject obj)
    status = plugin.registerCommand("ExocortexAlembic_export",
       AlembicExportCommand::creator,
       AlembicExportCommand::createSyntax);
-   status = plugin.registerCommand("ExocortexAlembic_getInfo",
-      AlembicGetInfoCommand::creator,
-      AlembicGetInfoCommand::createSyntax);
-   status = plugin.registerCommand("ExocortexAlembic_getNodeFromIdentifier",
-      AlembicGetNodeFromIdentifierCommand::creator,
-      AlembicGetNodeFromIdentifierCommand::createSyntax);
+   status = plugin.registerCommand("ExocortexAlembic_import",
+      AlembicImportCommand::creator,
+      AlembicImportCommand::createSyntax);
    status = plugin.registerCommand("ExocortexAlembic_resolvePath",
       AlembicResolvePathCommand::creator,
       AlembicResolvePathCommand::createSyntax);
@@ -98,16 +96,6 @@ EC_EXPORT MStatus initializePlugin(MObject obj)
    status = plugin.registerCommand("ExocortexAlembic_profileReset",
 	    AlembicProfileResetCommand::creator,
       AlembicProfileResetCommand::createSyntax);
-
-   status = plugin.registerCommand("ExocortexAlembic_createValidName",
-	    AlembicValidateNameCommand::creator,
-      AlembicValidateNameCommand::createSyntax);
-   status = plugin.registerCommand("ExocortexAlembic_assignInitialSG",
-	    AlembicAssignInitialSGCommand::creator,
-      AlembicAssignInitialSGCommand::createSyntax);
-   status = plugin.registerCommand("ExocortexAlembic_fileRefCount",
-	    AlembicFileRefCountCommand::creator,
-      AlembicFileRefCountCommand::createSyntax);
 
    // nodes
    status = plugin.registerNode("ExocortexAlembicTimeControl",
@@ -171,6 +159,10 @@ EC_EXPORT MStatus initializePlugin(MObject obj)
    {
 	  //EC_LOG_ERROR("FAILED TO SOURCE ../scripts/menu.mel: " << commandStatus.errorString());
    }
+
+   commandStatus = MGlobal::executePythonCommand("import ExocortexAlembic as ExoAlembic\n");
+   if (commandStatus != MStatus::kSuccess)
+	   MGlobal::displayError("Unable to import ExocortexAlembic");
    return status;
 }
 

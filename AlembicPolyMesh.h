@@ -16,7 +16,7 @@ private:
    std::vector<AbcG::OV2fGeomParam> mUvParams;
 
 public:
-   AlembicPolyMesh(const MObject & in_Ref, AlembicWriteJob * in_Job);
+   AlembicPolyMesh(SceneNodePtr eNode, AlembicWriteJob * in_Job, Abc::OObject oParent);
    ~AlembicPolyMesh();
 
    virtual Abc::OObject GetObject() { return mObject; }

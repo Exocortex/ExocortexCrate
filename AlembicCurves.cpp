@@ -4,14 +4,10 @@
 #include "MetaData.h"
 
 
-AlembicCurves::AlembicCurves(const MObject & in_Ref, AlembicWriteJob * in_Job)
-: AlembicObject(in_Ref, in_Job)
+AlembicCurves::AlembicCurves(SceneNodePtr eNode, AlembicWriteJob * in_Job, Abc::OObject oParent)
+	: AlembicObject(eNode, in_Job, oParent)
 {
-   MFnDependencyNode node(in_Ref);
-   //MString name = GetUniqueName(truncateName(node.name()));
-   MString name = GetUniqueName(node.name());
-   mObject = AbcG::OCurves(GetParentObject(),name.asChar(),GetJob()->GetAnimatedTs());
-
+   mObject = AbcG::OCurves(GetMyParent(), eNode->name, GetJob()->GetAnimatedTs());
    mSchema = mObject.getSchema();
 
    // create all properties

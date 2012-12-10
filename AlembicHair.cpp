@@ -2,20 +2,15 @@
 #include "AlembicHair.h"
 #include "MetaData.h"
 
-
-AlembicHair::AlembicHair(const MObject & in_Ref, AlembicWriteJob * in_Job)
-: AlembicObject(in_Ref, in_Job)
+AlembicHair::AlembicHair(SceneNodePtr eNode, AlembicWriteJob * in_Job, Abc::OObject oParent)
+	: AlembicObject(eNode, in_Job, oParent)
 {
-   MFnDependencyNode node(in_Ref);
-   //MString name = GetUniqueName(truncateName(node.name()));
-   MString name = GetUniqueName(node.name());
-   mObject = AbcG::OCurves(GetParentObject(),name.asChar(),GetJob()->GetAnimatedTs());
+	mObject = AbcG::OCurves(GetMyParent(), eNode->name, GetJob()->GetAnimatedTs());
+	mSchema = mObject.getSchema();
 
-   mSchema = mObject.getSchema();
-
-   // create all properties
-   mRadiusProperty = Abc::OFloatArrayProperty(mSchema, ".radius", mSchema.getMetaData(), GetJob()->GetAnimatedTs() );
-   mColorProperty = Abc::OC4fArrayProperty(mSchema, ".color", mSchema.getMetaData(), GetJob()->GetAnimatedTs() );
+	// create all properties
+	mRadiusProperty = Abc::OFloatArrayProperty(mSchema, ".radius", mSchema.getMetaData(), GetJob()->GetAnimatedTs() );
+	mColorProperty  = Abc::OC4fArrayProperty(mSchema, ".color", mSchema.getMetaData(), GetJob()->GetAnimatedTs() );
 }
 
 AlembicHair::~AlembicHair()

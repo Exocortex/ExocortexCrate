@@ -3,15 +3,11 @@
 #include "MetaData.h"
 #include "CommonMeshUtilities.h"
 
-
-AlembicPolyMesh::AlembicPolyMesh(const MObject & in_Ref, AlembicWriteJob * in_Job)
-: AlembicObject(in_Ref, in_Job)
+AlembicPolyMesh::AlembicPolyMesh(SceneNodePtr eNode, AlembicWriteJob * in_Job, Abc::OObject oParent)
+	: AlembicObject(eNode, in_Job, oParent)
 {
-   MFnDependencyNode node(in_Ref);
-   MString name = GetUniqueName(node.name());
-   mObject = AbcG::OPolyMesh(GetParentObject(),name.asChar(),GetJob()->GetAnimatedTs());
-
-   mSchema = mObject.getSchema();
+	mObject = AbcG::OPolyMesh(GetMyParent(), eNode->name, GetJob()->GetAnimatedTs());
+	mSchema = mObject.getSchema();
 }
 
 AlembicPolyMesh::~AlembicPolyMesh()
@@ -525,12 +521,20 @@ MStatus AlembicPolyMeshNode::compute(const MPlug & plug, MDataBlock & dataBlock)
   Abc::Int32ArraySamplePtr sampleCounts = sample.getFaceCounts();
   Abc::Int32ArraySamplePtr sampleIndices = sample.getFaceIndices();
 
-  // ensure that we are not running on a purepoint cache mesh
-  if(sampleCounts->get()[0] == 0)
-    return MStatus::kFailure;
-
-
+	// ensure that we are not running on a purepoint cache mesh
   MFloatPointArray points;
+	if(sampleCounts->get() == 0 || sampleCounts->get()[0] == 0)
+	{
+		points.clear();
+		MIntArray counts, indices;
+		counts.clear();
+		indices.clear();
+		mMesh.create(0, 0, points, counts, indices, mMeshData);
+		mMesh.updateSurface();
+		dataBlock.outputValue(mOutGeometryAttr).set(mMeshData);
+		return MStatus::kSuccess;
+	}
+
   if(samplePos->size() > 0)
   {
     points.setLength((unsigned int)samplePos->size());
@@ -629,10 +633,10 @@ MStatus AlembicPolyMeshNode::compute(const MPlug & plug, MDataBlock & dataBlock)
     mMesh.create(points.length(),counts.length(),points,counts,indices,mMeshData);
     mMesh.updateSurface();
     if(mMesh.numFaceVertices() != indices.length()){
-      EC_LOG_ERROR("Error: mesh topology has changed. Cannot import UVs or normals.");
-      return MStatus::kFailure;
-      //importUvs = false;
-      //importNormals = false;
+      //EC_LOG_ERROR("Error: mesh topology has changed. Cannot import UVs or normals.");
+      //return MStatus::kFailure;
+      importUvs = false;
+      importNormals = false;
     }
 
     // check if we need to import uvs
@@ -1022,6 +1026,7 @@ MStatus AlembicPolyMeshDeformNode::deform(MDataBlock & dataBlock, MItGeometry & 
   {
     ESS_PROFILE_SCOPE("AlembicPolyMeshDeformNode::deform position iterator");
 
+	const bool useBlending = sampleInfo.alpha != 0.0 && samplePos2->size() == samplePos->size() && ! mDynamicTopology;
     for(iter.reset(); !iter.isDone(); iter.next())
     {
       float weight = weightValue(dataBlock,geomIndex,iter.index()) * env;
@@ -1034,7 +1039,7 @@ MStatus AlembicPolyMeshDeformNode::deform(MDataBlock & dataBlock, MItGeometry & 
 
       MFloatPoint abcPt;
       const Alembic::Abc::v4::V3f &pos1 = samplePos->get()[iter.index()];
-      if(sampleInfo.alpha != 0.0 && samplePos2->size() == samplePos->size() && ! mDynamicTopology )
+      if(useBlending)
       {
         //ESS_LOG_WARNING( "blending vertex positions (1-2) B." );
         const Alembic::Abc::v4::V3f &pos2 = samplePos2->get()[iter.index()];

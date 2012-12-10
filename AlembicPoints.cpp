@@ -4,6 +4,7 @@
 
 bool AlembicPoints::listIntanceNames(std::vector<std::string> &names)
 {
+	MStatus status;
   MDagPathArray allPaths;
   {
     MMatrixArray allMatrices;
@@ -16,14 +17,19 @@ bool AlembicPoints::listIntanceNames(std::vector<std::string> &names)
     MDagPath dagp;
     sl.getDagPath(0, dagp);
 
-    MFnInstancer(dagp).allInstances( allPaths, allMatrices, pathStartIndices, pathIndices );
+    status = MFnInstancer(dagp).allInstances( allPaths, allMatrices, pathStartIndices, pathIndices );
+	if (status != MS::kSuccess)
+	{
+		MGlobal::displayWarning("[ExocortexAlembic] Instancer error: " + status.errorString());
+		return false;
+	}
   }
 
   names.resize(allPaths.length());
   for (int i = 0; i < allPaths.length(); ++i)
   {
     std::stringstream ss;
-    ss << "/" << allPaths[i].partialPathName();
+	ss << "/" << allPaths[i].partialPathName();
     names[i] = ss.str();
   }
   mInstanceNamesProperty.set(Abc::StringArraySample(names));
@@ -76,34 +82,39 @@ bool AlembicPoints::sampleInstanceProperties( std::vector<Abc::Quatf> angularVel
   return true;
 }
 
-AlembicPoints::AlembicPoints(const MObject & in_Ref, AlembicWriteJob * in_Job)
-: AlembicObject(in_Ref, in_Job), hasInstancer(false), instName("")
+AlembicPoints::AlembicPoints(SceneNodePtr eNode, AlembicWriteJob * in_Job, Abc::OObject oParent)
+	: AlembicObject(eNode, in_Job, oParent), hasInstancer(false)
 {
-   MFnDependencyNode node(in_Ref);
-   MString name = GetUniqueName(node.name());
-   mObject = AbcG::OPoints(GetParentObject(),name.asChar(),GetJob()->GetAnimatedTs());
+	mObject = AbcG::OPoints(GetMyParent(), eNode->name, GetJob()->GetAnimatedTs());
+	mSchema = mObject.getSchema();
 
-   mSchema = mObject.getSchema();
+	Abc::OCompoundProperty arbGeomParam = mSchema.getArbGeomParams();
+	mAgeProperty   = Abc::OFloatArrayProperty(arbGeomParam, ".age", mSchema.getMetaData(), GetJob()->GetAnimatedTs() );
+	mMassProperty  = Abc::OFloatArrayProperty(arbGeomParam, ".mass", mSchema.getMetaData(), GetJob()->GetAnimatedTs() );
+	mColorProperty = Abc::OC4fArrayProperty  (arbGeomParam, ".color", mSchema.getMetaData(), GetJob()->GetAnimatedTs() );
 
-   mAgeProperty   = Abc::OFloatArrayProperty(mSchema.getArbGeomParams(), ".age", mSchema.getMetaData(), GetJob()->GetAnimatedTs() );
-   mMassProperty  = Abc::OFloatArrayProperty(mSchema.getArbGeomParams(), ".mass", mSchema.getMetaData(), GetJob()->GetAnimatedTs() );
-   mColorProperty = Abc::OC4fArrayProperty  (mSchema.getArbGeomParams(), ".color", mSchema.getMetaData(), GetJob()->GetAnimatedTs() );
+	mAngularVelocityProperty = Abc::OQuatfArrayProperty  (arbGeomParam, ".angularvelocity", mSchema.getMetaData(), GetJob()->GetAnimatedTs() );
+	mInstanceNamesProperty   = Abc::OStringArrayProperty (arbGeomParam, ".instancenames", mSchema.getMetaData(), GetJob()->GetAnimatedTs() );
+	mOrientationProperty     = Abc::OQuatfArrayProperty  (arbGeomParam, ".orientation", mSchema.getMetaData(), GetJob()->GetAnimatedTs() );
+	mScaleProperty           = Abc::OV3fArrayProperty    (arbGeomParam, ".scale", mSchema.getMetaData(), GetJob()->GetAnimatedTs() );
+	mShapeInstanceIdProperty = Abc::OUInt16ArrayProperty (arbGeomParam, ".shapeinstanceid", mSchema.getMetaData(), GetJob()->GetAnimatedTs() );
+	mShapeTimeProperty       = Abc::OFloatArrayProperty  (arbGeomParam, ".shapetime", mSchema.getMetaData(), GetJob()->GetAnimatedTs() );
+	mShapeTypeProperty       = Abc::OUInt16ArrayProperty (arbGeomParam, ".shapetype", mSchema.getMetaData(), GetJob()->GetAnimatedTs() );
 
-   mAngularVelocityProperty = Abc::OQuatfArrayProperty  (mSchema.getArbGeomParams(), ".angularvelocity", mSchema.getMetaData(), GetJob()->GetAnimatedTs() );
-   mInstanceNamesProperty   = Abc::OStringArrayProperty (mSchema.getArbGeomParams(), ".instancenames", mSchema.getMetaData(), GetJob()->GetAnimatedTs() );
-   mOrientationProperty     = Abc::OQuatfArrayProperty  (mSchema.getArbGeomParams(), ".orientation", mSchema.getMetaData(), GetJob()->GetAnimatedTs() );
-   mScaleProperty           = Abc::OV3fArrayProperty    (mSchema.getArbGeomParams(), ".scale", mSchema.getMetaData(), GetJob()->GetAnimatedTs() );
-   mShapeInstanceIdProperty = Abc::OUInt16ArrayProperty (mSchema.getArbGeomParams(), ".shapeinstanceid", mSchema.getMetaData(), GetJob()->GetAnimatedTs() );
-   mShapeTimeProperty       = Abc::OFloatArrayProperty  (mSchema.getArbGeomParams(), ".shapetime", mSchema.getMetaData(), GetJob()->GetAnimatedTs() );
-   mShapeTypeProperty       = Abc::OUInt16ArrayProperty (mSchema.getArbGeomParams(), ".shapetype", mSchema.getMetaData(), GetJob()->GetAnimatedTs() );
-
-   MStringArray instancers;
-   MGlobal::executeCommand("listConnections -t instancer " + node.name(), instancers);
-   if (instancers.length() == 1)
-   {
-     hasInstancer = true;
-     instName = instancers[0];
-   }
+	MStringArray instancers;
+	MGlobal::executeCommand(("listConnections -t instancer " + eNode->name).c_str(), instancers);
+	switch(instancers.length())
+	{
+	case 0:
+		break;
+	case 1:
+		hasInstancer = true;
+		instName = instancers[0];
+		break;
+	default:
+		MGlobal::displayWarning(("[ExocortexAlembic] More than one instancer associated to " + eNode->name + ", can only use one.\nParticle instancing ignore.").c_str());
+		break;
+	}
 }
 
 AlembicPoints::~AlembicPoints()
@@ -629,6 +640,15 @@ void AlembicPointsNode::instanceInitialize(void)
   MGlobal::executeCommand(partInstCmd + addObjectCmd + particleShapeName);
 }
 
+MStatus AlembicPostImportPoints(void)
+{
+  ESS_PROFILE_SCOPE("AlembicPostImportPoints");
+  AlembicPointsNodeListIter beg = alembicPointsNodeList.begin(), end = alembicPointsNodeList.end();
+  for (; beg != end; ++beg)
+    (*beg)->instanceInitialize();
+  return MS::kSuccess;
+}
+
 AlembicPostImportPointsCommand::AlembicPostImportPointsCommand(void)
 {}
 AlembicPostImportPointsCommand::~AlembicPostImportPointsCommand(void)
@@ -636,11 +656,7 @@ AlembicPostImportPointsCommand::~AlembicPostImportPointsCommand(void)
 
 MStatus AlembicPostImportPointsCommand::doIt(const MArgList& args)
 {
-  ESS_PROFILE_SCOPE("AlembicPostImportPointsCommand::doIt");
-  AlembicPointsNodeListIter beg = alembicPointsNodeList.begin(), end = alembicPointsNodeList.end();
-  for (; beg != end; ++beg)
-    (*beg)->instanceInitialize();
-  return MS::kSuccess;
+  return AlembicPostImportPoints();
 }
 
 MSyntax AlembicPostImportPointsCommand::createSyntax(void)

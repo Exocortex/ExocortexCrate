@@ -9,10 +9,22 @@
 #include "AlembicPoints.h"
 #include "AlembicCurves.h"
 #include "AlembicHair.h"
+#include "AlembicImport.h"
 #include "CommonLog.h"
 #include "CommonUtilities.h"
 
+#include "sceneGraph.h"
+#include <maya/MItDag.h>
 
+
+struct PreProcessStackElement
+{
+   SceneNodePtr eNode;
+   Abc::OObject oParent;
+
+   PreProcessStackElement(SceneNodePtr enode, Abc::OObject parent):eNode(enode), oParent(parent)
+   {}
+};
 
 AlembicWriteJob::AlembicWriteJob
 (
@@ -96,6 +108,7 @@ MStatus AlembicWriteJob::PreProcess()
    if(mFileName.length() == 0)
    {
       MGlobal::displayError("[ExocortexAlembic] No filename specified.");
+	  MPxCommand::setResult("Error caught in AlembicWriteJob::PreProcess: no filename specified");
       return MStatus::kInvalidParameter;
    }
 
@@ -103,6 +116,7 @@ MStatus AlembicWriteJob::PreProcess()
    if(mSelection.length() == 0)
    {
       MGlobal::displayError("[ExocortexAlembic] No objects specified.");
+	  MPxCommand::setResult("Error caught in AlembicWriteJob::PreProcess: no objects specified");
       return MStatus::kInvalidParameter;
    }
 
@@ -110,6 +124,7 @@ MStatus AlembicWriteJob::PreProcess()
    if(mFrames.size() == 0)
    {
       MGlobal::displayError("[ExocortexAlembic] No frames specified.");
+	  MPxCommand::setResult("Error caught in AlembicWriteJob::PreProcess: no frame specified");
       return MStatus::kInvalidParameter;
    }
 
@@ -117,6 +132,7 @@ MStatus AlembicWriteJob::PreProcess()
    if(getRefArchive(mFileName) > 0)
    {
       MGlobal::displayError("[ExocortexAlembic] Error writing to file '"+mFileName+"'. File currently in use.");
+	  MPxCommand::setResult("Error caught in AlembicWriteJob::PreProcess: no filename already in use");
       return MStatus::kInvalidParameter;
    }
 
@@ -132,6 +148,8 @@ MStatus AlembicWriteJob::PreProcess()
             getExporterName( "Maya " EC_QUOTE( crate_Maya_Version ) ).c_str(),
 			      getExporterFileName( sceneFileName.asChar() ).c_str(),
             Abc::ErrorHandler::kThrowPolicy);
+
+	  mTop = mArchive.getTop();
 
 	   // get the frame rate
 	   mFrameRate = MTime(1.0, MTime::kSeconds).as(MTime::uiUnit());
@@ -164,6 +182,23 @@ MStatus AlembicWriteJob::PreProcess()
 	   }
 	   Abc::OBox3dProperty boxProp = AbcG::CreateOArchiveBounds(mArchive,mTs);
 
+	    MDagPath dagPath;
+		{ MItDag().getPath(dagPath); }
+		SceneNodePtr exoSceneRoot = buildMayaSceneGraph(dagPath);
+		const bool bFlattenHierarchy = GetOption("flattenHierarchy") == "1";
+		const bool bSelectChildren = false;
+		const bool bTransformCache = GetOption("transformCache") == "1";
+		{
+			std::map<std::string, bool> selectionMap;
+			for(int i=0; i<mSelection.length(); ++i)
+			{
+				const MObject &mObj = mSelection[i];
+				MFnDagNode dagNode(mObj);
+				selectionMap[dagNode.fullPathName().asChar()] = true;
+			}
+			selectNodes(exoSceneRoot, selectionMap, !bFlattenHierarchy || bTransformCache, bSelectChildren, !bTransformCache);
+		}
+
 	   // create object for each
 	   MProgressWindow::reserve();
 	   MProgressWindow::setTitle("Alembic Export: Listing objects");
@@ -174,52 +209,98 @@ MStatus AlembicWriteJob::PreProcess()
 	   MProgressWindow::startProgress();
 	   int interrupt = 20;
 	   bool processStopped = false;
-	   for(unsigned int i=0;i<mSelection.length(); ++i, --interrupt)
-	   {
-		  if (interrupt == 0)
-		  {
-			interrupt = 20;
-			if (MProgressWindow::isCancelled())
-			{
-			  processStopped = true;
-			  break;
-			}
-		  }
-		  MProgressWindow::advanceProgress(1);
-		  MObject mObj = mSelection[i];
-		  if(GetObject(mObj) != NULL)
-			 continue;
+		std::deque<PreProcessStackElement> sceneStack;
 
-		  // take care of all other types
-		  AlembicObjectPtr ptr;
-		  switch(mObj.apiType())
-		  {
-		  case MFn::kCamera:
-			ptr.reset(new AlembicCamera(mObj,this));
-			break;
-		  case MFn::kMesh:
-			ptr.reset(new AlembicPolyMesh(mObj,this));
-			break;
-		  case MFn::kSubdiv:
-			ptr.reset(new AlembicSubD(mObj,this));
-			break;
-		  case MFn::kNurbsCurve:
-			ptr.reset(new AlembicCurves(mObj,this));
-			break;
-		  case MFn::kParticle:
-			ptr.reset(new AlembicPoints(mObj,this));
-			break;
-		  case MFn::kPfxHair:
-			ptr.reset(new AlembicHair(mObj,this));
-			break;
-		  default:  // NO BREAK... DON'T ADD ONE!!!!
-			MGlobal::displayInfo("[ExocortexAlembic] Exporting "+MString(mObj.apiTypeStr())+" node as kTransform.\n");  // NO BREAK, it's normal!
-		  case MFn::kTransform:
-			ptr.reset(new AlembicXform(mObj,this));
-			break;
-		  }
-		  AddObject(ptr);
-	   }
+		sceneStack.push_back(PreProcessStackElement(exoSceneRoot, mTop));
+
+		while( !sceneStack.empty() )
+		{
+			if (--interrupt == 0)
+			{
+				interrupt = 20;
+				if (MProgressWindow::isCancelled())
+				{
+					processStopped = true;
+					break;
+				}
+			}
+
+			PreProcessStackElement &sElement = sceneStack.back();
+			SceneNodePtr eNode = sElement.eNode;
+			sceneStack.pop_back();
+
+			Abc::OObject oParent = sElement.oParent;
+			Abc::OObject oNewParent;
+
+			AlembicObjectPtr pNewObject;
+			if(eNode->selected)
+			{
+				switch(eNode->type)
+				{
+				case SceneNode::SCENE_ROOT:
+					break;
+				case SceneNode::ITRANSFORM:
+				case SceneNode::ETRANSFORM:
+					pNewObject.reset(new AlembicXform(eNode, this, oParent));
+					break;
+				case SceneNode::CAMERA:
+					pNewObject.reset(new AlembicCamera(eNode, this, oParent));
+					break;
+				case SceneNode::POLYMESH:
+					pNewObject.reset(new AlembicPolyMesh(eNode, this, oParent));
+					break;
+				case SceneNode::SUBD:
+					pNewObject.reset(new AlembicSubD(eNode, this, oParent));
+					break;
+				case SceneNode::CURVES:
+					pNewObject.reset(new AlembicCurves(eNode, this, oParent));
+					break;
+				case SceneNode::PARTICLES:
+					pNewObject.reset(new AlembicPoints(eNode, this, oParent));
+					break;
+				case SceneNode::HAIR:
+					pNewObject.reset(new AlembicHair(eNode, this, oParent));
+					break;
+				default:
+					ESS_LOG_WARNING("Unknown type: not exporting "<<eNode->name);
+				}
+			}
+
+			if(pNewObject)
+			{
+				AddObject(pNewObject);
+				oNewParent = oParent.getChild(eNode->name);
+			}
+			else
+				oNewParent = oParent;
+
+			if(oNewParent.valid())
+			{
+				for( std::list<SceneNodePtr>::iterator it = eNode->children.begin(); it != eNode->children.end(); ++it)
+				{
+					if( !bFlattenHierarchy || (bFlattenHierarchy && eNode->type == SceneNode::ETRANSFORM && hasExtractableTransform((*it)->type)) )
+					{
+						//If flattening the hierarchy, we want to attach each external transform to its corresponding geometry node.
+						//All internal transforms should be skipped. Geometry nodes will never have children (If and XSI geonode is parented
+						//to another geonode, each will be parented to its extracted transform node, and one node will be parented to the 
+						//transform of the other.
+						sceneStack.push_back(PreProcessStackElement(*it, oNewParent));
+					}
+					else
+					{
+						//if we skip node A, we parent node A's children to the parent of A
+						sceneStack.push_back(PreProcessStackElement(*it, oParent));
+					}
+				}
+			}
+			else
+			{
+				ESS_LOG_ERROR("Do not have reference to parent.");
+				MPxCommand::setResult("Error caught in AlembicWriteJob::PreProcess: do not have reference to parent");
+				return MS::kFailure;
+			}
+		}
+
 	   MProgressWindow::endProgress();
 	   return processStopped ? MStatus::kEndOfFile : MStatus::kSuccess;
    }
@@ -228,6 +309,7 @@ MStatus AlembicWriteJob::PreProcess()
 	   this->forceCloseArchive();
       MString exc(e.what());
       MGlobal::displayError("[ExocortexAlembic] Error writing to file '"+mFileName+"' ("+exc+"). Do you still have it opened?");
+	  MPxCommand::setResult("Error caught in AlembicWriteJob::PreProcess: error writing file");
    }
 
    return MS::kFailure;
@@ -235,38 +317,40 @@ MStatus AlembicWriteJob::PreProcess()
 
 MStatus AlembicWriteJob::Process(double frame)
 {
-   ESS_PROFILE_SCOPE("AlembicWriteJob::Process");
-   MProgressWindow::reserve();
-   MProgressWindow::setTitle("Alembic Export: <each frame/each object>");
-   MProgressWindow::setInterruptable(true);
-   MProgressWindow::setProgressRange(0, mFrames.size() * mapObjects.size());
-   MProgressWindow::setProgress(0);
+	ESS_PROFILE_SCOPE("AlembicWriteJob::Process");
 
-   MProgressWindow::startProgress();
-   for(size_t i=0; i<mFrames.size(); ++i)
-   {
-      // compare the frames
-      if(abs(mFrames[i] - frame) > 0.001)
-         continue;
+	MayaProgressBar pBar;
+	pBar.init(0, mFrames.size() * mapObjects.size(), 1);
 
-      // run the export for all objects
-      int interrupt = 20;
-	    for (std::map<std::string, AlembicObjectPtr>::iterator it = mapObjects.begin(); it != mapObjects.end(); ++it, --interrupt)
-	    {
-         if (interrupt == 0)
-         {
-           interrupt = 20;
-           if (MProgressWindow::isCancelled())
-             break;
-         }
-         MProgressWindow::advanceProgress(1);
-         MStatus status = it->second->Save(mFrames[i]);
-         if(status != MStatus::kSuccess)
-            return status;
-      }
-   }
-   MProgressWindow::endProgress();
-   return MStatus::kSuccess;
+	pBar.start();
+	for(size_t i=0; i<mFrames.size(); ++i)
+	{
+		// compare the frames
+		if(abs(mFrames[i] - frame) > 0.001)
+			continue;
+
+		// run the export for all objects
+		int interrupt = 20;
+		for (std::map<std::string, AlembicObjectPtr>::iterator it = mapObjects.begin(); it != mapObjects.end(); ++it, --interrupt)
+		{
+			if (interrupt == 0)
+			{
+				interrupt = 20;
+				if (pBar.isCancelled())
+					break;
+				pBar.incr(20);
+			}
+			MStatus status = it->second->Save(mFrames[i]);
+			if(status != MStatus::kSuccess)
+			{
+				MPxCommand::setResult("Error caught in AlembicWriteJob::Process: " + status.errorString());
+				pBar.stop();
+				return status;
+			}
+		}
+	}
+	pBar.stop();
+	return MStatus::kSuccess;
 }
 
 bool AlembicWriteJob::forceCloseArchive(void)
@@ -351,6 +435,7 @@ MStatus AlembicExportCommand::doIt(const MArgList & args)
    {
       // TODO: display dialog
       MGlobal::displayError("[ExocortexAlembic] No jobs specified.");
+	  MPxCommand::setResult("Error caught in AlembicExportCommand::doIt: no job specified");
       return status;
    }
    else
@@ -374,6 +459,7 @@ MStatus AlembicExportCommand::doIt(const MArgList & args)
    try
    {
 	   // for each job, check the arguments
+	   bool failure = false;
 	   for(unsigned int i=0;i<jobStrings.length();i++)
 	   {
 		  double frameIn = 1.0;
@@ -573,6 +659,7 @@ MStatus AlembicExportCommand::doIt(const MArgList & args)
 			 MGlobal::displayError("[ExocortexAlembic] No filename specified.");
 			 for(size_t k=0;k<jobPtrs.size();k++)
 				delete(jobPtrs[k]);
+			 MPxCommand::setResult("Error caught in AlembicExportCommand::doIt: no filename specified");
 			 return MStatus::kFailure;
 		  }
 
@@ -592,19 +679,29 @@ MStatus AlembicExportCommand::doIt(const MArgList & args)
 		  job->SetOption("indexedNormals","1");
 		  job->SetOption("indexedUVs","1");
 		  job->SetOption("exportInGlobalSpace",globalspace ? "1" : "0");
+		  job->SetOption("flattenHierarchy", withouthierarchy ? "1": "0");
+		  job->SetOption("transformCache", transformcache ? "1" : "0");
 
 		  // check if the job is satifsied
 		  if(job->PreProcess() != MStatus::kSuccess)
 		  {
 			 MGlobal::displayError("[ExocortexAlembic] Job skipped. Not satisfied.");
 			 delete(job);
-			 continue;
+			 failure = true;
+			 break;
 		  }
 
 		  // push the job to our registry
 		  MGlobal::displayInfo("[ExocortexAlembic] Using WriteJob:"+jobStrings[i]);
 		  jobPtrs.push_back(job);
 	   }
+
+		if (failure)
+		{
+			for(size_t k=0;k<jobPtrs.size();k++)
+				delete(jobPtrs[k]);
+			return MS::kFailure;
+		}
 
 	   // compute the job count
 	   unsigned int jobFrameCount = 0;
@@ -646,6 +743,7 @@ MStatus AlembicExportCommand::doIt(const MArgList & args)
 		for (std::vector<AlembicWriteJob*>::iterator beg = jobPtrs.begin(); beg != jobPtrs.end(); ++beg)
 			(*beg)->forceCloseArchive();
 		restoreOldTime(currentAnimStartTime, currentAnimEndTime, oldCurTime, curMinTime, curMaxTime);
+		MPxCommand::setResult("Error caught in AlembicExportCommand::doIt");
 		status = MS::kFailure;
    }
 	MAnimControl::stop();

@@ -1,6 +1,8 @@
 #ifndef _ALEMBIC_OBJECT_H_
 #define _ALEMBIC_OBJECT_H_
 
+#include "CommonSceneGraph.h"
+
 class AlembicWriteJob;
 class AlembicObject;
 
@@ -12,18 +14,22 @@ private:
    MObjectArray mRefs;
    AlembicWriteJob * mJob;
    AlembicObjectPtr mParent;
+   Abc::OObject mMyParent;
+
 protected:
+   SceneNodePtr mExoSceneNode;
    int mNumSamples;
    AbcG::OVisibilityProperty mOVisibility;
 
 public:
-   AlembicObject(const MObject & in_Ref, AlembicWriteJob * in_Job);
+   AlembicObject(SceneNodePtr eNode, AlembicWriteJob * in_Job, Abc::OObject oParent);
    ~AlembicObject();
 
    AlembicWriteJob * GetJob() { return mJob; }
    const MObject & GetRef(ULONG index = 0) { return mRefs[index]; }
    ULONG GetRefCount() { return mRefs.length(); }
    void AddRef(const MObject & in_Ref) { mRefs.append(in_Ref); }
+   Abc::OObject GetMyParent() { return mMyParent; }
    virtual Abc::OObject GetObject() = 0;
    Abc::OObject GetParentObject();
    bool IsParentedToRoot() const { return !mParent; }

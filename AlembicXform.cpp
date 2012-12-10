@@ -3,16 +3,11 @@
 #include "MetaData.h"
 
 
-
-AlembicXform::AlembicXform(const MObject & in_Ref, AlembicWriteJob * in_Job)
-: AlembicObject(in_Ref, in_Job)
+AlembicXform::AlembicXform(SceneNodePtr eNode, AlembicWriteJob * in_Job, Abc::OObject oParent)
+	: AlembicObject(eNode, in_Job, oParent)
 {
-   MFnDependencyNode node(in_Ref);
-   //MString name = GetUniqueName(truncateName(node.name())+"Xfo");
-   MString name = GetUniqueName(node.name());
-   mObject = AbcG::OXform(GetParentObject(),name.asChar(),GetJob()->GetAnimatedTs());
-
-   mSchema = mObject.getSchema();
+	mObject = AbcG::OXform(GetMyParent(), eNode->name, GetJob()->GetAnimatedTs());
+	mSchema = mObject.getSchema();
 }
 
 AlembicXform::~AlembicXform()
@@ -28,8 +23,7 @@ MStatus AlembicXform::Save(double time)
    SaveMetaData(this);
 
    // check if we have the global cache option
-   bool globalCache = GetJob()->GetOption(L"exportInGlobalSpace").asInt() > 0;
-   if(globalCache)
+   if(GetJob()->GetOption(L"exportInGlobalSpace").asInt() > 0)
    {
       if(mNumSamples > 0)
          return MStatus::kSuccess;

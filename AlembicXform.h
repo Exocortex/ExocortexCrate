@@ -11,7 +11,7 @@ private:
    AbcG::XformSample mSample;
 public:
 
-   AlembicXform(const MObject & in_Ref, AlembicWriteJob * in_Job);
+   AlembicXform(SceneNodePtr eNode, AlembicWriteJob * in_Job, Abc::OObject oParent);
    ~AlembicXform();
 
    virtual Abc::OObject GetObject() { return mObject; }
