@@ -18,7 +18,7 @@ AlembicModel::AlembicModel(SceneNodePtr eNode, AlembicWriteJob * in_Job, Abc::OO
 
    XSI::CRef parentGlobalTransRef;
 
-   SceneNodePtr parent = mExoSceneNode->parent;
+   SceneNode* parent = mExoSceneNode->parent;
 
    while(parent){
       if(parent->selected){
@@ -54,9 +54,16 @@ XSI::CStatus AlembicModel::Save(double time)
    // access the model
    Primitive prim(GetRef(REF_PRIMITIVE));
 
+   const bool bTransCache = GetJob()->GetOption("transformCache");
+   bool bGlobalSpace = GetJob()->GetOption(L"globalSpace");
+   const bool bFlatten = GetJob()->GetOption(L"flattenHierarchy");
+
+   if(bFlatten && mExoSceneNode->type == SceneNode::NAMESPACE_TRANSFORM){
+      bGlobalSpace = true;
+   }
+
    // store the transform
-   SaveXformSample(GetRef(REF_PARENT_GLOBAL_TRANS), GetRef(REF_GLOBAL_TRANS),mXformSchema, mXformSample, time,
-      GetJob()->GetOption("transformCache"),GetJob()->GetOption(L"globalSpace"),GetJob()->GetOption(L"flattenHierarchy"));
+   SaveXformSample(GetRef(REF_PARENT_GLOBAL_TRANS), GetRef(REF_GLOBAL_TRANS),mXformSchema, mXformSample, time, bTransCache, bGlobalSpace, bFlatten);
 
    // set the visibility
    Property visProp;

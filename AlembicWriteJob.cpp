@@ -187,8 +187,18 @@ CStatus AlembicWriteJob::PreProcess()
    const bool bFlattenHierarchy = (bool)GetOption(L"flattenHierarchy");
 
    //TODO: eventually this should be a replaced with an equivalent virtual method, and the exporter will be shared
-   SceneNodePtr exoSceneRoot = buildCommonSceneGraph(Application().GetActiveSceneRoot());
+   int nNumNodes = 0;
+   SceneNodePtr exoSceneRoot = buildCommonSceneGraph(Application().GetActiveSceneRoot(), nNumNodes);
    
+   //::printSceneGraph(exoSceneRoot, false);
+
+   if(bFlattenHierarchy){
+      nNumNodes = 0;
+      flattenSceneGraph(exoSceneRoot, nNumNodes);
+   }
+
+   //::printSceneGraph(exoSceneRoot, false);
+
    std::map<std::string, bool> selectionMap;
 
    for(int i=0; i<mSelection.size(); i++){
@@ -198,7 +208,7 @@ CStatus AlembicWriteJob::PreProcess()
       selectionMap[xObj.GetFullName().GetAsciiString()] = true;
    }
    
-   selectNodes(exoSceneRoot, selectionMap, !bFlattenHierarchy || bTransformCache, bSelectChildren, !bTransformCache);
+   selectNodes(exoSceneRoot, selectionMap, /*!bFlattenHierarchy || bTransformCache*/ true, bSelectChildren, !bTransformCache);
 
    //::printSceneGraph(exoSceneRoot);
 
@@ -226,7 +236,7 @@ CStatus AlembicWriteJob::PreProcess()
          if(eNode->type == SceneNode::SCENE_ROOT){
             //we do not want to export the Scene_Root (the alembic archive has one already)
          }
-         else if(eNode->type == SceneNode::ITRANSFORM || eNode->type == SceneNode::ETRANSFORM){
+         else if(eNode->type == SceneNode::ITRANSFORM || eNode->type == SceneNode::ETRANSFORM || eNode->type == SceneNode::NAMESPACE_TRANSFORM){
             pNewObject.reset(new AlembicModel(eNode, this, oParent));
          }
          else if(eNode->type == SceneNode::CAMERA){
@@ -267,18 +277,7 @@ CStatus AlembicWriteJob::PreProcess()
 
       if(oNewParent.valid()){
          for( std::list<SceneNodePtr>::iterator it = eNode->children.begin(); it != eNode->children.end(); it++){
-
-            if( !bFlattenHierarchy || (bFlattenHierarchy && eNode->type == SceneNode::ETRANSFORM && hasExtractableTransform((*it)->type)) ){
-               //If flattening the hierarchy, we want to attach each external transform to its corresponding geometry node.
-               //All internal transforms should be skipped. Geometry nodes will never have children (If and XSI geonode is parented
-               //to another geonode, each will be parented to its extracted transform node, and one node will be parented to the 
-               //transform of the other.
-               sceneStack.push_back(PreProcessStackElement(*it, oNewParent));
-            }
-            else{
-               //if we skip node A, we parent node A's children to the parent of A
-               sceneStack.push_back(PreProcessStackElement(*it, oParent));
-            }
+            sceneStack.push_back(PreProcessStackElement(*it, oNewParent));
          }
       }
       else{
@@ -286,140 +285,6 @@ CStatus AlembicWriteJob::PreProcess()
          return CStatus::Fail;
       }
    }
-
-
-
-#if 0
-
-   for(LONG i=0; i<mSelection.size(); i++)
-   {
-      mSelection[i].nNodeDepth = getNodeDepthFromRef(mSelection[i].cRef);
-   }
-   std::sort(mSelection.begin(), mSelection.end());
-
-   Abc::OBox3dProperty boxProp =AbcG::CreateOArchiveBounds(mArchive,mTs);
-
-   CString activeSceneRoot_GetFullName = Application().GetActiveSceneRoot().GetFullName();
-   // create object for each
-   for(LONG i=0;i<mSelection.size();i++)
-   {
-	   X3DObject xObj(mSelection[i].cRef);
-	   CRef xObj_GetActivePrimitive_GetRef = xObj.GetActivePrimitive().GetRef();
-      //if(GetObject(xObj_GetActivePrimitive_GetRef) != NULL) continue;
-
-      // push all models up the hierarchy
-	  
-	  // MHahn: we are going to disable this code for now, since it should probably be an additional 
-	  // export option, and we would prefer not to make things more complicated. We we will require
-	  // the user select the exact set of nodes that should be exported.
-
-      //Model model(xObj.GetRef());
-      //if(!model.IsValid())
-      //   model = xObj.GetModel();
-      CRefArray modelRefs;
-      //if((bool)GetOption(L"transformCache"))
-      if((bool)GetOption(L"flattenHierarchy") == false)
-      {
-         X3DObject parent = xObj.GetParent3DObject();
-         while(parent.IsValid() && !parent.GetFullName().IsEqualNoCase( activeSceneRoot_GetFullName ))
-         {
-            modelRefs.Add(parent.GetActivePrimitive().GetRef());
-            parent = parent.GetParent3DObject();
-         }
-      }
-      //else
-      //{
-      //   while(model.IsValid() && !model.GetFullName().IsEqualNoCase( activeSceneRoot_GetFullName ))
-      //   {
-      //      modelRefs.Add(model.GetActivePrimitive().GetRef());
-      //      model = model.GetModel();
-      //   }
-      //}
-      for(LONG j=modelRefs.GetCount()-1;j>=0;j--)
-      {
-         //if(GetObject(modelRefs[j]) == NULL)
-         {
-            AlembicObjectPtr ptr;
-            ptr.reset(new AlembicModel(modelRefs[j],this));
-            //AddObjectIfDoesNotExist(ptr);
-         }
-      }
-
-  
-      if((bool)GetOption(L"transformCache"))
-      {
-         //always export all transforms whether the hierarchy is flattened or not
-
-         AlembicObjectPtr ptr;
-         ptr.reset(new AlembicModel(xObj_GetActivePrimitive_GetRef,this));
-         //AddObjectIfDoesNotExist(ptr);
-
-         continue;// only do models (tranforms) if we perform pure transformcache
-      }
-
-      // take care of all other types
-	  CString xObj_GetType = xObj.GetType();
-      if(xObj_GetType.IsEqualNoCase(L"null") && ((bool)GetOption(L"flattenHierarchy") == false))
-	  {
-         AlembicObjectPtr ptr;
-         ptr.reset(new AlembicModel(xObj_GetActivePrimitive_GetRef, this));
-         //AddObjectIfDoesNotExist(ptr);
-	  }
-      else if(xObj_GetType.IsEqualNoCase(L"camera"))
-      {
-         AlembicObjectPtr ptr;
-         ptr.reset(new AlembicCamera(xObj_GetActivePrimitive_GetRef,this));
-         //AddObjectIfDoesNotExist(ptr);
-      }
-      else if(xObj_GetType.IsEqualNoCase(L"polymsh"))
-      {
-         Property geomProp;
-         xObj.GetPropertyFromName(L"geomapprox",geomProp);
-         LONG subDivLevel = geomProp.GetParameterValue(L"gapproxmordrsl");
-         if(subDivLevel > 0 && GetOption(L"geomApproxSubD") )
-         {
-            AlembicObjectPtr ptr;
-            ptr.reset(new AlembicSubD(xObj_GetActivePrimitive_GetRef,this));
-            //AddObjectIfDoesNotExist(ptr);
-         }
-         else
-         {
-            AlembicObjectPtr ptr;
-            ptr.reset(new AlembicPolyMesh(xObj_GetActivePrimitive_GetRef,this));
-            //AddObjectIfDoesNotExist(ptr);
-         }
-      }
-      else if(xObj_GetType.IsEqualNoCase(L"surfmsh"))
-      {
-         AlembicObjectPtr ptr;
-         ptr.reset(new AlembicNurbs(xObj_GetActivePrimitive_GetRef,this));
-         //AddObjectIfDoesNotExist(ptr);
-      }
-      else if(xObj_GetType.IsEqualNoCase(L"crvlist"))
-      {
-         AlembicObjectPtr ptr;
-         ptr.reset(new AlembicCurves(xObj_GetActivePrimitive_GetRef,this));
-         //AddObjectIfDoesNotExist(ptr);
-      }
-      else if(xObj_GetType.IsEqualNoCase(L"hair"))
-      {
-         AlembicObjectPtr ptr;
-         ptr.reset(new AlembicCurves(xObj_GetActivePrimitive_GetRef,this));
-         //AddObjectIfDoesNotExist(ptr);
-      }
-      else if(xObj_GetType.IsEqualNoCase(L"pointcloud"))
-      {
-         AlembicObjectPtr ptr;
-         ICEAttribute strandPosition = xObj.GetActivePrimitive().GetGeometry().GetICEAttributeFromName(L"StrandPosition");
-         if(strandPosition.IsDefined() && strandPosition.IsValid())
-            ptr.reset(new AlembicCurves(xObj_GetActivePrimitive_GetRef,this));
-         else
-            ptr.reset(new AlembicPoints(xObj_GetActivePrimitive_GetRef,this));
-         //AddObjectIfDoesNotExist(ptr);
-      }
-   }
-
-#endif
 
    return CStatus::OK;
 }
