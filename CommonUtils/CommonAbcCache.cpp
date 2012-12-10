@@ -13,11 +13,13 @@ AbcObjectCache::AbcObjectCache( Alembic::Abc::IObject & objToCache )
 	getBasicSchemaDataFromObject(objToCache, bsd);
 	isConstant = bsd.isConstant;
 	numSamples = bsd.nbSamples;
-	if (bsd.type == bsd.__POLYMESH || bsd.type == bsd.__SUBDIV) {
-		if( ! isConstant ) {
-			isMeshTopoDynamic = isAlembicMeshTopoDynamic( &objToCache );
-		}
-		isMeshPointCache = isAlembicMeshPointCache( &objToCache );
+	bool isMesh = true;
+	if ( bsd.type == bsd.__POLYMESH || !( isMesh = (bsd.type != bsd.__SUBDIV) ) )
+	{
+		bool isTopoDyn = false;
+		extractMeshInfo(&objToCache, isMesh, isMeshPointCache, isTopoDyn);
+		if (!isConstant)
+			isMeshTopoDynamic = isTopoDyn;
 	}
 }
 

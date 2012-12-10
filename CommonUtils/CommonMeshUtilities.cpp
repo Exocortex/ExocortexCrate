@@ -4,6 +4,45 @@
 #include "CommonProfiler.h"
 #include "CommonUtilities.h"
 
+///////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+template<typename T> void extractMeshInfo(T &schema, bool &isPointCache, bool &isTopoDyn)
+{
+	Alembic::Abc::IInt32ArrayProperty faceCountProp = Alembic::Abc::IInt32ArrayProperty(schema, ".faceCounts");
+	if( ! faceCountProp.valid() )
+	{
+		Alembic::Abc::IP3fArrayProperty positionsProp = Alembic::Abc::IP3fArrayProperty(schema, "P");
+		if( positionsProp.valid() && positionsProp.getValue()->size() > 0 )
+			isPointCache = true;
+	}
+	else if( faceCountProp.isConstant() )
+	{
+		Alembic::Abc::Int32ArraySamplePtr faceCounts = faceCountProp.getValue();
+		// the first is our preferred method, the second check here is Helge's method that is now considered obsolete
+		if( faceCounts->size() == 0 || ( faceCounts->size() == 1 && ( faceCounts->get()[0] == 0 ) ) )
+		{
+			Alembic::Abc::IP3fArrayProperty positionsProp = Alembic::Abc::IP3fArrayProperty(schema, "P");
+			if( positionsProp.valid() && positionsProp.getValue()->size() > 0 )
+				isPointCache = true;
+		}
+	}
+	else
+		isTopoDyn = true;
+}
+
+typedef Alembic::AbcGeom::IPolyMesh::schema_type	poly_mesh_schema;
+typedef Alembic::AbcGeom::ISubD::schema_type		sub_div_schema;
+void extractMeshInfo(Alembic::AbcGeom::IObject *pIObj, bool isMesh, bool &isPointCache, bool &isTopoDyn)
+{
+	if(isMesh)
+		extractMeshInfo<poly_mesh_schema>(Alembic::AbcGeom::IPolyMesh(*pIObj, Alembic::Abc::kWrapExisting).getSchema(), isPointCache, isTopoDyn);
+	else
+		extractMeshInfo<sub_div_schema>(Alembic::AbcGeom::ISubD(*pIObj, Alembic::Abc::kWrapExisting).getSchema(), isPointCache, isTopoDyn);
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 bool isAlembicMeshValid( Alembic::AbcGeom::IObject *pIObj ) {
 	//ESS_PROFILE_FUNC();
 	Alembic::AbcGeom::IPolyMesh objMesh;

@@ -20,6 +20,11 @@ public:
 typedef IndexedValues<Abc::N3f> IndexedNormals;
 typedef IndexedValues<Abc::V2f> IndexedUVs;
 
+///////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void extractMeshInfo(Alembic::AbcGeom::IObject *pIObj, bool isMesh, bool &isPointCache, bool &isTopoDyn);
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 bool isAlembicMeshValid( Alembic::AbcGeom::IObject *pIObj );
 bool isAlembicMeshNormals( Alembic::AbcGeom::IObject *pIObj, bool& isConstant );
