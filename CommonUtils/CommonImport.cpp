@@ -68,8 +68,14 @@ bool IJobStringParser::parse(const std::string& jobString)
 	   else if(boost::iequals(valuePair[0], "failOnUnsupported")){
          failOnUnsupported = parseBool(valuePair[1]);
 		}
+       else if(boost::iequals(valuePair[0], "selectShapes")){
+         selectShapes = parseBool(valuePair[1]);
+       }
       else if(boost::iequals(valuePair[0], "filters") || boost::iequals(valuePair[0], "identifiers")){  
 	      boost::split(nodesToImport, valuePair[1], boost::is_any_of(","));
+          for(int i=0; i<nodesToImport.size(); i++){
+             boost::trim(nodesToImport[i]);
+          }
 		}
 	   else if(boost::iequals(valuePair[0], "includeChildren")){
          includeChildren = parseBool(valuePair[1]);
@@ -154,7 +160,7 @@ struct AlembicISceneBuildElement
 
 SceneNodeAlembicPtr buildAlembicSceneGraph(AbcArchiveCache *pArchiveCache, AbcObjectCache *pRootObjectCache, int& nNumNodes, bool countMergableChildren)
 {
-	ESS_PROFILE_SCOPE("buildAlembicSceneGraph");
+   ESS_PROFILE_FUNC();
    std::list<AlembicISceneBuildElement> sceneStack;
 
    Alembic::Abc::IObject rootObj = pRootObjectCache->obj;
@@ -193,8 +199,7 @@ SceneNodeAlembicPtr buildAlembicSceneGraph(AbcArchiveCache *pArchiveCache, AbcOb
       newNode->name = iObj.getName();
       newNode->dccIdentifier = iObj.getFullName();
       newNode->type = getNodeType(iObj);
-      //select every node by default
-      newNode->selected = true;
+      newNode->selected = false;
 
       //check if this newNode is actually an ETRANFORM
       if(newNode->type == SceneNode::ITRANSFORM){
@@ -257,8 +262,7 @@ struct ValidateStackElement
 
 bool validateSceneFileAttached(SceneNodeAlembicPtr fileRoot)
 {
-   //return true;
-
+   ESS_PROFILE_FUNC();
    std::list<ValidateStackElement> sceneStack;
 
    for(SceneChildIterator it = fileRoot->children.begin(); it != fileRoot->children.end(); it++){
@@ -274,7 +278,7 @@ bool validateSceneFileAttached(SceneNodeAlembicPtr fileRoot)
       SceneNodeAlembicPtr currFileNode = sElement.currFileNode;
       sceneStack.pop_back();
 
-      if(!currFileNode->isAttached()){
+      if(!currFileNode->isAttached() /*&& currFileNode->selected*/){
          ESS_LOG_ERROR("Node failed to attach: "<<currFileNode->dccIdentifier);
          bSuccess = false;
       }
@@ -325,6 +329,11 @@ NodeMapPtr buildChildMap(SceneNodeAlembicPtr parent)
    for(SceneChildIterator it = parent->children.begin(); it != endIt; it++){
       SceneNodeAlembicPtr node = reinterpret<SceneNode, SceneNodeAlembic>(*it);
 
+      //Note: this algorithm assumes that parents of each selected node are also selected
+      //if(!node->selected){
+      //   continue;
+      //}
+
       //for AttachToScene. Geometry nodes that have been merged with a parent transform should be skipped.
       if(node->isMerged()){
          continue;
@@ -360,11 +369,7 @@ struct AttachStackElement
 
 bool AttachSceneFile(SceneNodeAlembicPtr fileRoot, SceneNodeAppPtr appRoot, const IJobStringParser& jobParams, CommonProgressBar *pbar)
 {
-	ESS_PROFILE_SCOPE("AttachSceneFile");
-   //TODO: how to account for filtering?
-   //it would break the sibling namespace assumption. Perhaps we should require that all parent nodes of selected are imported.
-   //We would then not traverse unselected children
-
+   ESS_PROFILE_FUNC();
 
    std::list<AttachStackElement> sceneStack;
 
@@ -406,7 +411,7 @@ bool AttachSceneFile(SceneNodeAlembicPtr fileRoot, SceneNodeAppPtr appRoot, cons
       --count;
 
 
-      std::string& appNodeName = currAppNode->name;
+      std::string& appNodeName = removeXfoSuffix(currAppNode->name);
 
       bool bChildAttached = false;
       NodeMap::iterator fileNodeIt = childMapPtr->find(appNodeName);
@@ -458,15 +463,18 @@ struct ImportStackElement
 
 bool ImportSceneFile(SceneNodeAlembicPtr fileRoot, SceneNodeAppPtr appRoot, const IJobStringParser& jobParams, CommonProgressBar *pbar)
 {
-	ESS_PROFILE_SCOPE("ImportSceneFile");
-   //TODO skip unselected children, if thats we how we do filtering.
+   ESS_PROFILE_FUNC();
 
    //compare to application scene graph to see if we need to rename nodes (or maybe we might throw an error)
+
 
    std::list<ImportStackElement> sceneStack;
 
    for(SceneChildIterator it = fileRoot->children.begin(); it != fileRoot->children.end(); it++){
       SceneNodeAlembicPtr fileNode = reinterpret<SceneNode, SceneNodeAlembic>(*it);
+      //if(!fileNode->selected){
+      //   continue;
+      //}
       sceneStack.push_back(ImportStackElement(fileNode, appRoot));
    }
 
@@ -514,6 +522,10 @@ bool ImportSceneFile(SceneNodeAlembicPtr fileRoot, SceneNodeAppPtr appRoot, cons
          for(SceneChildIterator it = currFileNode->children.begin(); it != currFileNode->children.end(); it++){
             SceneNodeAlembicPtr fileNode = reinterpret<SceneNode, SceneNodeAlembic>(*it);
             if(!fileNode->isSupported()) continue;
+
+            //if(!fileNode->selected){
+            //   continue;
+            //}
 
             if( fileNode->isMerged() ){
                //The child node was merged with its parent, so skip this child, and add its children

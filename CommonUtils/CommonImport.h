@@ -23,6 +23,7 @@ public:
    bool attachToExisting;
    bool failOnUnsupported;
    bool importVisibilityControllers;
+   bool selectShapes;
 
 	std::string filename;// = EC_MCHAR_to_UTF8( strPath );
 
@@ -41,7 +42,8 @@ public:
       attachToExisting(false),
       failOnUnsupported(false),
       importVisibilityControllers(false),
-      includeChildren(false)
+      includeChildren(false),
+      selectShapes(true)
    {}
 
    bool parse(const std::string& jobString);

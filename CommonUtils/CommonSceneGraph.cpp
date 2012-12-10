@@ -72,6 +72,7 @@ void printSceneGraph(SceneNodePtr root, bool bOnlyPrintSelected)
  
    const char* table[]={
       "SCENE_ROOT",
+      "NAMESPACE_TRANSFORM",//for export of XSI models
       "ETRANSFORM",// external transform (a parent of a geometry node)
       "ITRANSFORM",// internal transform (all other transforms)
       "CAMERA",
@@ -80,6 +81,7 @@ void printSceneGraph(SceneNodePtr root, bool bOnlyPrintSelected)
       "SURFACE",
       "CURVES",
       "PARTICLES",
+	  "HAIR",
       "LIGHT",
       "UNKNOWN",
       "NUM_NODE_TYPES"
@@ -101,10 +103,10 @@ void printSceneGraph(SceneNodePtr root, bool bOnlyPrintSelected)
       if(!bOnlyPrintSelected || (bOnlyPrintSelected && eNode->selected)){
          const char* name = eNode->name.c_str();
 
-         ESS_LOG_WARNING("Level: "<<sElement.level<<" - Name: "<<eNode->name.c_str()<<" ddcID: "<<eNode->dccIdentifier.c_str());//" - Selected: "<<(eNode->selected?"true":"false"));
-         if(eNode->parent){
-            ESS_LOG_WARNING("Parent: "<<eNode->parent->name);
-         }
+         ESS_LOG_WARNING("Level: "<<sElement.level<<" - Name: "<<eNode->name.c_str()<<" - Type: "<<table[eNode->type]<<" - ddcID: "<<eNode->dccIdentifier.c_str()<<" - Selected: "<<(eNode->selected?"true":"false"));
+         //if(eNode->parent){
+         //   ESS_LOG_WARNING("Parent: "<<eNode->parent->name);
+         //}
          eNode->print();
       }
 
@@ -136,13 +138,18 @@ struct SelectChildrenStackElement
    SelectChildrenStackElement(SceneNodePtr enode, bool selectChildren):eNode(enode), bSelectChildren(selectChildren)
    {}
 };
-void selectNodes(SceneNodePtr root, SceneNode::SelectionT selectionMap, bool bSelectParents, bool bChildren, bool bSelectShapeNodes)
-{
 
+int selectNodes(SceneNodePtr root, SceneNode::SelectionT selectionMap, bool bSelectParents, bool bChildren, bool bSelectShapeNodes)
+{
+   ESS_PROFILE_FUNC();
+
+   SceneNode::SelectionT::iterator selectionEnd = selectionMap.end();
 
    std::list<SelectChildrenStackElement> sceneStack;
    
    sceneStack.push_back(SelectChildrenStackElement(root, false));
+
+   int nSelectionCount = 0;
 
    while( !sceneStack.empty() )
    {
@@ -151,35 +158,50 @@ void selectNodes(SceneNodePtr root, SceneNode::SelectionT selectionMap, bool bSe
       sceneStack.pop_back();
 
       bool bSelected = false;
-      if(selectionMap.find(eNode->dccIdentifier) != selectionMap.end() && 
-         (eNode->type == SceneNode::ETRANSFORM || eNode->type == SceneNode::ITRANSFORM)){
-         
-         //this node's name matches one of the names from the selection map, so select it
-         eNode->selected = true;
+      //check if the node matches a full path
 
-         if(eNode->type == SceneNode::ETRANSFORM && bSelectShapeNodes){
-            for(std::list<SceneNodePtr>::iterator it=eNode->children.begin(); it != eNode->children.end(); it++){
-               if(::hasExtractableTransform((*it)->type)){
-                  (*it)->selected = true;
-                  break;
+      if(eNode->type == SceneNode::ETRANSFORM || eNode->type == SceneNode::ITRANSFORM){   
+         
+         SceneNode::SelectionT::iterator selectionIt = selectionMap.find(eNode->dccIdentifier);
+
+         //otherwise, check if the node names match
+         if(selectionIt == selectionEnd){
+            selectionIt = selectionMap.find(removeXfoSuffix(eNode->name));
+         }
+
+         if(selectionIt != selectionEnd){
+
+            //this node's name matches one of the names from the selection map, so select it
+            if(!eNode->selected) nSelectionCount++;
+            eNode->selected = true;
+
+            if(eNode->type == SceneNode::ETRANSFORM && bSelectShapeNodes){
+               for(std::list<SceneNodePtr>::iterator it=eNode->children.begin(); it != eNode->children.end(); it++){
+                  if(::hasExtractableTransform((*it)->type)){
+                     if(!(*it)->selected) nSelectionCount++;
+                     (*it)->selected = true;
+                     break;
+                  }
                }
             }
-         }
 
-         if(bSelectParents){// select all parent nodes
-            SceneNode* currNode = eNode->parent;
-            while(currNode){
-               currNode->selected = true;
-               currNode = currNode->parent;
+            if(bSelectParents){// select all parent nodes
+               SceneNode* currNode = eNode->parent;
+               while(currNode){
+                  if(!currNode->selected) nSelectionCount++;
+                  currNode->selected = true;
+                  currNode = currNode->parent;
+               }
             }
-         }
 
-         if(bChildren){// select the children
-            bSelected = true;
-         } 
+            if(bChildren){// select the children
+               bSelected = true;
+            } 
+         }
       }
       if(sElement.bSelectChildren){
          bSelected = true;
+         if(!eNode->selected) nSelectionCount++;
          eNode->selected = true;
       }
 
@@ -189,41 +211,42 @@ void selectNodes(SceneNodePtr root, SceneNode::SelectionT selectionMap, bool bSe
    }
 
    root->selected = true;
+
+   return nSelectionCount;
+}
+
+int selectTransformNodes(SceneNodePtr root)
+{
+   ESS_PROFILE_FUNC();
+
+   std::list<SelectChildrenStackElement> sceneStack;
+   
+   sceneStack.push_back(SelectChildrenStackElement(root, false));
+
+   int nSelectionCount = 0;
+
+   while( !sceneStack.empty() )
+   {
+      SelectChildrenStackElement sElement = sceneStack.back();
+      SceneNodePtr eNode = sElement.eNode;
+      sceneStack.pop_back();
+
+      if(eNode->type == SceneNode::NAMESPACE_TRANSFORM || eNode->type == SceneNode::ETRANSFORM || eNode->type == SceneNode::ITRANSFORM){   
+         eNode->selected = true;
+         nSelectionCount++;
+      }
+
+      for( std::list<SceneNodePtr>::iterator it = eNode->children.begin(); it != eNode->children.end(); it++){
+         sceneStack.push_back(SelectChildrenStackElement(*it, false));
+      }
+   }
+
+   root->selected = true;
+
+   return nSelectionCount;
 }
 
 
-//void filterNodeSelection(SceneNodePtr root, bool bExcludeNonTransforms)
-//{
-//   struct stackElement
-//   {
-//      SceneNodePtr eNode;
-//      stackElement(SceneNodePtr enode):eNode(enode)
-//      {}
-//   };
-//
-//   std::list<stackElement> sceneStack;
-//   
-//   sceneStack.push_back(stackElement(root));
-//
-//   while( !sceneStack.empty() )
-//   {
-//      stackElement sElement = sceneStack.back();
-//      SceneNodePtr eNode = sElement.eNode;
-//      sceneStack.pop_back();
-//
-//      if(bExcludeNonTransforms && 
-//         (eNode->type != SceneNode::ITRANSFORM && eNode->type != SceneNode::ETRANSFORM && eNode->type != SceneNode::UNKNOWN)
-//      ){
-//         eNode->selected = false;
-//      }
-//
-//      for( std::list<SceneNodePtr>::iterator it = eNode->children.begin(); it != eNode->children.end(); it++){
-//         sceneStack.push_back(stackElement(*it));
-//      }
-//   }
-//
-//   root->selected = true;
-//}
 
 struct FlattenStackElement
 {
@@ -237,7 +260,7 @@ struct FlattenStackElement
 
 void flattenSceneGraph(SceneNodePtr root, int nNumNodes)
 {
-	ESS_PROFILE_SCOPE("flattenSceneGraph");
+   ESS_PROFILE_FUNC();
 
    SceneNodePtr newRoot = root;
 
@@ -264,10 +287,6 @@ void flattenSceneGraph(SceneNodePtr root, int nNumNodes)
           fileNode->type == SceneNode::ETRANSFORM ||          //shape node parent transform
           hasExtractableTransform(fileNode->type)              //shape node
          ) {
-            if(hasExtractableTransform(fileNode->type) ){
-               ESS_LOG_WARNING("break:");
-            }
-
             parentNode->children.push_back(fileNode);
             fileNode->parent = parentNode.get();
             
@@ -297,4 +316,58 @@ void flattenSceneGraph(SceneNodePtr root, int nNumNodes)
 
       fileNode->children.clear();
    }
+}
+
+int removeUnselectedNodes(SceneNodePtr root)
+{
+   ESS_PROFILE_FUNC();
+
+   int nNumNodes = 0;
+
+   SceneNodePtr newRoot = root;
+
+   std::list<FlattenStackElement> sceneStack;
+
+   //push a reference to each child to the stack
+   for(SceneChildIterator it = root->children.begin(); it != root->children.end(); it++){
+      SceneNodePtr fileNode = *it;
+      sceneStack.push_back(FlattenStackElement(fileNode, root));
+   }
+   //clear the children since we may be changing what is parented to it
+   root->children.clear();
+ 
+
+   while( !sceneStack.empty() )
+   {
+      FlattenStackElement sElement = sceneStack.back();
+      SceneNodePtr fileNode = sElement.currNode;
+      SceneNodePtr parentNode = sElement.currParentNode;//a node from the original tree, its childrens will have been cleared
+      //we will add child nodes to it that meet the correct criteria
+      sceneStack.pop_back();
+
+      if (fileNode->selected){
+            parentNode->children.push_back(fileNode);
+            fileNode->parent = parentNode.get();
+            
+            nNumNodes++;
+
+            for(SceneChildIterator it = fileNode->children.begin(); it != fileNode->children.end(); it++){
+               sceneStack.push_back( FlattenStackElement( *it, fileNode ) );
+            }
+      }
+      else{
+         //if a shape node is not selected its parent transform should become an ITRANSFORM
+         if(fileNode->parent && fileNode->parent->selected && fileNode->parent->type == SceneNode::ETRANSFORM){
+            fileNode->parent->type = SceneNode::ITRANSFORM;
+         }
+
+         for(SceneChildIterator it = fileNode->children.begin(); it != fileNode->children.end(); it++){
+            sceneStack.push_back( FlattenStackElement( *it, parentNode ) );
+         }
+      }
+
+      fileNode->children.clear();
+   }
+
+   return nNumNodes;
 }
