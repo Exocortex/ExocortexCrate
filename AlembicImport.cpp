@@ -501,6 +501,7 @@ CStatus alembic_create_item_Invoke
          addRefArchive(file);
          op.PutParameterValue(L"path",file);
          op.PutParameterValue(L"identifier",identifier);
+         op.PutParameterValue(L"muted", false);
 
          // store the return value
          returnVal = op.GetRef();
@@ -641,6 +642,7 @@ CStatus alembic_create_item_Invoke
                      addRefArchive(file);
                      op.PutParameterValue(L"path",file);
                      op.PutParameterValue(L"identifier",identifier);
+                     op.PutParameterValue(L"muted", false);
                      if(!timeControlProp.IsValid())
                      {
                         CRef timeControlRef;
@@ -792,6 +794,7 @@ CStatus alembic_create_item_Invoke
                        addRefArchive(file);
                        op.PutParameterValue(L"path",file);
                        op.PutParameterValue(L"identifier",identifier+CString(L":")+CString(uvI));
+                       op.PutParameterValue(L"muted", false);
                        if(meshUVsParam.getNumSamples() > 1)
                        {
                           CValue setExprReturn;
@@ -1208,6 +1211,8 @@ bool createNode(SceneNodeXSI* appNode, SceneNodeAlembicPtr fileNode, const IJobS
          }
 
          returnNode = fileNode;
+
+         fileNode->setAttached(true);
       }
       else{
          X3DObject parentX3DObject(appNode->nodeRef);
@@ -1250,6 +1255,27 @@ bool createNode(SceneNodeXSI* appNode, SceneNodeAlembicPtr fileNode, const IJobS
    return true;
 }
 
+bool validate(CRef nodeRef, CString fileNodeType, Abc::IObject shapeObj )
+{
+   if(!nodeRef.IsValid()){
+      ESS_LOG_ERROR("Could not attach "<<fileNodeType.GetAsciiString()<<" "<<shapeObj.getFullName());
+      return false;
+   }
+
+   X3DObject x3dobject(nodeRef);
+   CString type = x3dobject.GetType();
+   if(!type.IsEqualNoCase(fileNodeType) && !type.IsEqualNoCase("null")){//allow all shape type to replace a null
+      ESS_LOG_ERROR("Cannot attach "<<shapeObj.getFullName()<<" to a "<<type.GetAsciiString()<<" node.");
+      return false;
+   }
+
+   if(type.IsEqualNoCase("null")){
+      ESS_LOG_WARNING("Validate: Replacing null with shape "+shapeObj.getFullName());
+      x3dobject.ResetObject();
+   }
+
+   return true;
+}
 
 bool createMergeableNode(SceneNodeXSI* appNode, SceneNodeAlembicPtr fileXformNode, SceneNodeAlembicPtr fileShapeNode, const IJobStringParser& jobParams, SceneNodePtr& returnNode)
 {
@@ -1297,12 +1323,12 @@ bool createMergeableNode(SceneNodeXSI* appNode, SceneNodeAlembicPtr fileXformNod
       fileXformNode->setMerged(true);
       fileShapeNode->setMerged(true);
 
-      ESS_LOG_WARNING("xformName: "<<xformFullName<<" - shapeName: "<<shapeFullName);
+      //ESS_LOG_WARNING("xformName: "<<xformFullName<<" - shapeName: "<<shapeFullName);
    }
    else{
       newAppNodeName = truncateName(shapeObj.getName().c_str());
 
-      ESS_LOG_WARNING("shapeName: "<<shapeFullName);
+      //ESS_LOG_WARNING("shapeName: "<<shapeFullName);
    }
    //EC_LOG_INFO( "Object name: " << newAppNodeName.GetAsciiString() );
    
@@ -1317,20 +1343,16 @@ bool createMergeableNode(SceneNodeXSI* appNode, SceneNodeAlembicPtr fileXformNod
 	      ESS_PROFILE_SCOPE("attachToExisting");
          nodeRef = appNode->nodeRef;
 
-         if(!nodeRef.IsValid()){
-            ESS_LOG_ERROR("Could not attach camera "<<shapeObj.getFullName());
-            return false;
-         }
+         if(!validate(nodeRef, CString("camera"), shapeObj)) return false;
 
-         X3DObject x3dobject(nodeRef);
-         if(!x3dobject.GetType().IsEqualNoCase(L"camera")){
-            //x3dobject.ResetObject();
-            ESS_LOG_ERROR("Can only attach "<<shapeObj.getFullName()<<" to a camera node.");
-            return false;
-         }
          camera = nodeRef;
 
          returnNode = fileShapeNode;
+         
+         if(fileXformNode){
+            fileXformNode->setAttached(true);
+         }
+         fileShapeNode->setAttached(true);
       }
       else 
       {
@@ -1375,23 +1397,19 @@ bool createMergeableNode(SceneNodeXSI* appNode, SceneNodeAlembicPtr fileXformNod
       CRef nodeRef;
       if(attachToExisting)
       {
-	      ESS_PROFILE_SCOPE("attachToExisting");
+	     ESS_PROFILE_SCOPE("attachToExisting");
          nodeRef = appNode->nodeRef;
 
-         if(!nodeRef.IsValid()){
-            ESS_LOG_ERROR("Could not attach polymesh "<<shapeObj.getFullName());
-         }
-
-         X3DObject x3dobject(nodeRef);
-         if(!x3dobject.GetType().IsEqualNoCase(L"PolyMsh")){
-            x3dobject.ResetObject();
-            ESS_LOG_ERROR("Can only attach "<<shapeObj.getFullName()<<" to a polymesh node.");
-            return false;
-         }
+         if(!validate(nodeRef, CString("PolyMsh"), shapeObj)) return false;
 
          meshObj = nodeRef;
 
          returnNode = fileShapeNode;
+
+         if(fileXformNode){
+            fileXformNode->setAttached(true);
+         }
+         fileShapeNode->setAttached(true);
       }
       else
       {
@@ -1493,33 +1511,28 @@ bool createMergeableNode(SceneNodeXSI* appNode, SceneNodeAlembicPtr fileXformNod
       X3DObject nurbsObj;
       if(attachToExisting)
       {
-	      ESS_PROFILE_SCOPE("attachToExisting");
+	     ESS_PROFILE_SCOPE("attachToExisting");
          nodeRef = appNode->nodeRef;
 
-         if(!nodeRef.IsValid()){
-            ESS_LOG_ERROR("Could not attach Nurbs Patch "<<shapeObj.getFullName());
-         }
-
-         X3DObject x3dobject(nodeRef);
-         if(!x3dobject.GetType().IsEqualNoCase(L"surfmsh"))
-         {
-            ESS_LOG_ERROR("Can only attach "<<shapeObj.getFullName()<<" to a surfmsh node.");
-            return false;
-         }
+         if(!validate(nodeRef, CString("surfmsh"), shapeObj)) return false;
          nurbsObj = nodeRef;
 
          returnNode = fileShapeNode;
+
+         if(fileXformNode){
+            fileXformNode->setAttached(true);
+         }
+         fileShapeNode->setAttached(true);
       }
 
       if(!nurbsObj.IsValid())
       {
-         std::stringstream s;
-         s << "Can't create new Nurb surfaces, can only attach.  Unsupported Alembic type: " << shapeObj.getFullName().c_str();
          if( failOnUnsupported ) {
-            ESS_LOG_ERROR( s.str().c_str() );
+            ESS_LOG_ERROR( "Can't create new Nurb surfaces, can only attach.  Unsupported Alembic type: " << shapeObj.getFullName().c_str(); );
             return false;
          }
-         ESS_LOG_WARNING( s.str().c_str() );
+         ESS_LOG_WARNING( "Can't create new Nurb surfaces, can only attach.  Unsupported Alembic type: " << shapeObj.getFullName().c_str(); );
+         return true;
 	   }
 
       // load metadata
@@ -1596,17 +1609,14 @@ bool createMergeableNode(SceneNodeXSI* appNode, SceneNodeAlembicPtr fileXformNod
  		      ESS_PROFILE_SCOPE("attachToExisting");
             nodeRef = appNode->nodeRef;
 
-            if(!nodeRef.IsValid()){
-               ESS_LOG_ERROR("Could not attach curve "<<shapeObj.getFullName());
-            }
-
-            X3DObject x3dobject(nodeRef);
-            if(!x3dobject.GetType().IsEqualNoCase(L"pointcloud")){
-               ESS_LOG_ERROR("Can only attach "<<shapeObj.getFullName()<<" to a pointcloud node.");
-               return false;
-            }
+            if(!validate(nodeRef, CString("pointcloud"), shapeObj)) return false;
 
             returnNode = fileShapeNode;
+
+            if(fileXformNode){
+               fileXformNode->setAttached(true);
+            }
+            fileShapeNode->setAttached(true);
          }
          else
          {
@@ -1671,15 +1681,27 @@ bool createMergeableNode(SceneNodeXSI* appNode, SceneNodeAlembicPtr fileXformNod
             if(!nodeRef.IsValid()){
                ESS_LOG_ERROR("Could not attach curve "<<shapeObj.getFullName());
             }
-
+ 
             X3DObject x3dobject(nodeRef);
-            if(!x3dobject.GetType().IsEqualNoCase(L"crvlist") && !x3dobject.GetType().IsEqualNoCase(L"hair")){
-               ESS_LOG_ERROR("Can only attach "<<shapeObj.getFullName()<<" to crvlist or hair node.");
+            CString type = x3dobject.GetType();
+            if(!x3dobject.GetType().IsEqualNoCase(L"crvlist") && !x3dobject.GetType().IsEqualNoCase(L"hair") && !type.IsEqualNoCase("null")){
+               ESS_LOG_ERROR("Cannot attach "<<shapeObj.getFullName()<<" to a "<<type.GetAsciiString()<<" node.");
                return false;
             }
+
+            if(type.IsEqualNoCase("null")){
+               ESS_LOG_WARNING("Replacing null with shape "+shapeObj.getFullName());
+               x3dobject.ResetObject();
+            }
+
             curveObj = nodeRef;
 
             returnNode = fileShapeNode;
+
+            if(fileXformNode){
+               fileXformNode->setAttached(true);
+            }
+            fileShapeNode->setAttached(true);
          }
          else
          {
@@ -1712,18 +1734,7 @@ bool createMergeableNode(SceneNodeXSI* appNode, SceneNodeAlembicPtr fileXformNod
             alembic_create_item_Invoke(L"alembic_crvlist_topo", importRootNode, nodeRef, filename, shapeFullName, attachToExisting, createItemArgs);
          }
 
-         // load curve anim
-         CRef returnOpRef;
-         if(importBboxes){
-            CValue returnedOpVal;
-            alembic_create_item_Invoke(L"alembic_bbox", importRootNode, nodeRef, filename, shapeFullName, attachToExisting, createItemArgs, returnedOpVal);
-            returnOpRef = (CRef)returnedOpVal;
-         }
-         else{
-            CValue returnedOpVal;
-            alembic_create_item_Invoke(L"alembic_crvlist", importRootNode, nodeRef, filename, shapeFullName, attachToExisting, createItemArgs, returnedOpVal);
-            returnOpRef = (CRef)returnedOpVal;
-         }
+
 
          // allow stretching as there may have been dynamics applied to the hair
          if( curveObj.GetType().IsEqualNoCase(L"hair")){
@@ -1733,6 +1744,19 @@ bool createMergeableNode(SceneNodeXSI* appNode, SceneNodeAlembicPtr fileXformNod
          // let's setup the xform op
          if(fileXformNode){
             alembic_create_item_Invoke(L"alembic_xform", importRootNode, nodeRef, filename, xformFullName, attachToExisting, createItemArgs);
+         }
+
+         // load curve anim
+         CRef returnOpRef;
+         if(importBboxes){
+         CValue returnedOpVal;
+            alembic_create_item_Invoke(L"alembic_bbox", importRootNode, nodeRef, filename, shapeFullName, attachToExisting, createItemArgs, returnedOpVal);
+            returnOpRef = (CRef)returnedOpVal;
+         }
+         else{
+            CValue returnedOpVal;
+            alembic_create_item_Invoke(L"alembic_crvlist", importRootNode, nodeRef, filename, shapeFullName, attachToExisting, createItemArgs, returnedOpVal);
+            returnOpRef = (CRef)returnedOpVal;
          }
 
          // load standin property
@@ -1755,17 +1779,14 @@ bool createMergeableNode(SceneNodeXSI* appNode, SceneNodeAlembicPtr fileXformNod
          ESS_PROFILE_SCOPE("attachToExisting");
          nodeRef = appNode->nodeRef;
 
-         if(!nodeRef.IsValid()){
-            ESS_LOG_ERROR("Could not attach points "<<shapeObj.getFullName());
-         }
-
-         X3DObject x3dobject(nodeRef);
-         if(!x3dobject.GetType().IsEqualNoCase(L"pointcloud")){
-            ESS_LOG_ERROR("Can only attach "<<shapeObj.getFullName()<<" to a  pointcloud node.");
-            return false;
-         }
+         if(!validate(nodeRef, CString("pointcloud"), shapeObj)) return false;
 
          returnNode = fileShapeNode;
+
+         if(fileXformNode){
+            fileXformNode->setAttached(true);
+         }
+         fileShapeNode->setAttached(true);
       }
       else
       {
@@ -1837,7 +1858,7 @@ bool createNodes(SceneNodeXSI* const appNode, SceneNodeAlembicPtr fileNode, cons
 
       SceneNodeAlembicPtr shapeNode;
       for(SceneChildIterator it = fileNode->children.begin(); it != fileNode->children.end(); it++){
-         if( hasExtractableTransform((*it)->type) ){
+         if( hasExtractableTransform((*it)->type)){
             shapeNode = reinterpret<SceneNode, SceneNodeAlembic>(*it);
             break;
          }
@@ -1973,9 +1994,9 @@ ESS_CALLBACK_START(alembic_import_jobs_Execute, CRef&)
          jobParser.importStandinProperties = false;
       }
       jobParser.attachToExisting = settings.GetParameterValue(L"attach");
-	   jobParser.failOnUnsupported = settings.GetParameterValue(L"failOnUnsupported");
+	  jobParser.failOnUnsupported = settings.GetParameterValue(L"failOnUnsupported");
 
-      Application().LogMessage(CString(L"[ExocortexAlembic] Using WriteJob:") + jobParser.buildJobString().c_str());
+      Application().LogMessage(CString(L"[ExocortexAlembic] Using ReadJob:") + jobParser.buildJobString().c_str());
 
       Application().ExecuteCommand(L"DeleteObj",inspectArgs,inspectResult);
    }
@@ -1985,7 +2006,7 @@ ESS_CALLBACK_START(alembic_import_jobs_Execute, CRef&)
          ESS_LOG_ERROR("[alembic] Error parsing import job string.");
          return CStatus::Abort;
       }
-      Application().LogMessage(CString(L"[ExocortexAlembic] Using WriteJob:") + jobString.c_str());
+      Application().LogMessage(CString(L"[ExocortexAlembic] Using ReadJob:") + jobString.c_str());
    }
 
    // take care of the filename
@@ -2055,23 +2076,6 @@ ESS_CALLBACK_START(alembic_import_jobs_Execute, CRef&)
    }
 
 
-   //TODO: no need to parse this argument twice
-   // let's check the identifier list
-   CString identifierListStr = args[9].GetAsText();
-   std::map<std::string,bool> identifierMap;
-   if(!identifierListStr.IsEmpty())
-   {
-      CStringArray identifiers = identifierListStr.Split(L",");
-      for(LONG i=0;i<identifiers.GetCount();i++)
-      {
-         while(identifiers[i].GetAt(0) == ' ')
-            identifiers[i] = identifiers[i].GetSubString(1,1000000);
-         while(identifiers[i].GetAt(identifiers[i].Length()-1) == ' ')
-            identifiers[i] = identifiers[i].GetSubString(0,identifiers[i].Length()-1);
-         identifierMap.insert(std::pair<std::string,bool>(identifiers[i].GetAsciiString(),true));
-      }
-   }
-
    // create the timecontrol
    CustomProperty timeControl;
    if(jobParser.attachToExisting)
@@ -2104,28 +2108,55 @@ ESS_CALLBACK_START(alembic_import_jobs_Execute, CRef&)
 
    AbcG::IObject root = archive->getTop();
  
-   std::vector<std::string> nodesToImport;
-   std::map<std::string, bool> map;
 
    AbcObjectCache *pRootObjectCache = &( pArchiveCache->find( "/" )->second );
 
 
    int nNumNodes = 0;
-   SceneNodeAlembicPtr fileRoot = buildAlembicSceneGraph(pArchiveCache, pRootObjectCache, nNumNodes);
+   SceneNodeAlembicPtr fileRoot = buildAlembicSceneGraph(pArchiveCache, pRootObjectCache, nNumNodes, false);
 
-   printSceneGraph(fileRoot, false);
+   if(!jobParser.selectShapes){
+      ESS_LOG_WARNING("Only selecting transform nodes (shape selection disabled)");
+   }
+
+   bool bImportAllNodes = true;
+
+   if(jobParser.nodesToImport.size() > 0){
+
+      std::map<std::string, bool> selectionMap;
+
+      for(int i=0; i<jobParser.nodesToImport.size(); i++){
+         selectionMap[jobParser.nodesToImport[i]] = true;
+      }
+      
+      //Note: the ImportScene and AttachToScene methods assume that parents of each selected node are also selected
+      int numSelected = selectNodes(fileRoot, selectionMap, true /*select parents*/, false /*select children*/, jobParser.selectShapes/*select shape nodes*/);
+
+      if(numSelected < jobParser.nodesToImport.size()){
+         ESS_LOG_WARNING("Unabled find all filter nodes specified.");
+      }
+
+      if(numSelected > 0){
+         nNumNodes = numSelected;
+         bImportAllNodes = false;
+      }
+   }
+   else if(!jobParser.selectShapes){
+      int numSelected = selectTransformNodes(fileRoot);
+      if(numSelected > 0){
+         nNumNodes = numSelected;
+         bImportAllNodes = false;
+      }
+   }
+
+   //ImportScene and AttachScene assume unselected nodes have been removed from the alembic file scene graph
+   if(!bImportAllNodes){
+      removeUnselectedNodes(fileRoot);
+   }
+
+   //printSceneGraph(fileRoot, false);
 
    //return CStatus::Fail;
-
-   //TODO need progress bar
-
-   //ProgressBar prog;
-   //prog = Application().GetUIToolkit().GetProgressBar();
-   //prog.PutMinimum(0);
-   //prog.PutMaximum(nNumNodes);//(identifierMap.size() == 0 ? (LONG)objects.size() : (LONG)identifierMap.size());
-   //prog.PutValue(0);
-   //prog.PutCancelEnabled(true);
-   //prog.PutVisible(true);
 
    // clear the imported names!
    nameMapClear();
@@ -2140,20 +2171,25 @@ ESS_CALLBACK_START(alembic_import_jobs_Execute, CRef&)
    if(selectedObjects.GetCount() == 1)
    {
       importRootNode = selectedObjects[0];
-      importRootNode = X3DObject( importRootNode ).GetParent3DObject().GetRef();
-      //importRootNode = X3DObject( importRootNode ).GetRef();
+      //importRootNode = X3DObject( importRootNode ).GetParent3DObject().GetRef();
+      importRootNode = X3DObject( importRootNode ).GetRef();
       ESS_LOG_WARNING("Attachment root is "<<importRootNode.GetAsText().GetAsciiString());
    }
 
    //return CStatus::Fail;
 
    if(jobParser.attachToExisting)
-   {
-      SceneNodeXSIPtr appRoot = buildCommonSceneGraph(importRootNode);
+   {  
+      nNumNodes = 0;
+      SceneNodeXSIPtr appRoot = buildCommonSceneGraph(importRootNode, nNumNodes, false);
 
-      printSceneGraph(appRoot, false);
+      printSceneGraph(fileRoot, true);
+      printSceneGraph(appRoot, true);
       
-      bool bAttachSuccess = AttachSceneFile(fileRoot, appRoot, jobParser);
+      XSIProgressBar progBar;
+      progBar.init(nNumNodes);
+
+      bool bAttachSuccess = AttachSceneFile(fileRoot, appRoot, jobParser, &progBar);
 
       if(!bAttachSuccess){
          return CStatus::Fail;
@@ -2164,114 +2200,20 @@ ESS_CALLBACK_START(alembic_import_jobs_Execute, CRef&)
       //should build a full scene graph when start doing name checking
       SceneNodeXSIPtr appRoot(new SceneNodeXSI(importRootNode));
 
-      bool bImportSuccess = ImportSceneFile(fileRoot, appRoot, jobParser);
+      //printSceneGraph(fileRoot, false);
+
+      XSIProgressBar progBar;
+      progBar.init(nNumNodes);
+
+      bool bImportSuccess = ImportSceneFile(fileRoot, appRoot, jobParser, &progBar);
       
       if(!bImportSuccess){
          return CStatus::Fail;
       }
 
 
-    //  std::list<ImportStackElement> sceneStack;
-
-    //  for(SceneChildIterator it = sceneRoot->children.begin(); it != sceneRoot->children.end(); it++){
-    //     sceneStack.push_back(ImportStackElement(*it, importRootNode));
-	   //}
-
-    //  int intermittentUpdateInterval = std::max( (int)(nNumNodes / 100), (int)1 );
-    //  int i = 0;
-    //  while( !sceneStack.empty() )
-    //  {
-    //     ImportStackElement sElement = sceneStack.back();
-    //     AbcObjectCache *pObjectCache = &( pArchiveCache->find(sElement.sceneNode->dccIdentifier)->second );
-    //     Abc::IObject iObj = pObjectCache->obj;
-    //     SceneNodePtr sceneNode = sElement.sceneNode;
-    //     CRef parentNode(sElement.parentNode);
-
-    //     sceneStack.pop_back();
-
-    //     if( i % intermittentUpdateInterval == 0 ) {
-    //        prog.PutCaption(L"Importing "+CString(iObj.getFullName().c_str())+L" ...");
-    //     }
-    //     i++;
-
-    //    // bool bTransform = sceneNode->type == SceneNode::ITRANSFORM || sceneNode->type == SceneNode::ETRANSFORM; 
-    //     //bool bMergeableTransform = sceneNode->type == SceneNode::ETRANSFORM;
-    //     //bool bMergeableTransform = sceneNode->children.size() == 1 && hasExtractableTransform(sceneNode->children[0]->type);
-
-    //     // ESS_LOG_WARNING("Processing "<<iObj.getFullName()<<" mergeable: "<<(bMergeableTransform?"true":"false")<<" transform: "<<(bTransform?"true":"false")  );
-
-    //     bool bCreateNullNode = false;
-    //     int nMergedGeomNodeIndex = -1;
-    //     AbcObjectCache *pMergedGeomChildObjectCache = NULL;
-    //     getMergeInfo( pArchiveCache, pObjectCache, bCreateNullNode, nMergedGeomNodeIndex, &pMergedGeomChildObjectCache );
-
-
-    //     CRef newNodeRef;
-    //     if(bCreateNullNode){
-    //        createTransform( pObjectCache, importRootNode, parentNode, newNodeRef, filenameCStr, jobParser.attachToExisting, createItemArgs);
-		  // }
-		  // else{// multiple geometry nodes share the same parent. a shape node with the identity as it transform will be created.
-
-    //        if(nMergedGeomNodeIndex != -1){ // create a shape node, and assign the parent xform as its transform
-    //           pMergedGeomChildObjectCache = &( pArchiveCache->find(sceneNode->children.front()->dccIdentifier)->second );
-
-				//   CStatus localStatus = createShape( pMergedGeomChildObjectCache, importRootNode, parentNode, newNodeRef, filenameCStr, 
-    //              jobParser.attachToExisting, jobParser.importStandinProperties, jobParser.importBoundingBoxes, true, jobParser.failOnUnsupported, createItemArgs);
-				//   if( ! localStatus.Succeeded() ) {
-    //              delRefArchive( jobParser.filename );
-				//	   return localStatus;
-				//   }
-    //        }
-    //        else{
-			 //     CStatus localStatus = createShape( pObjectCache, importRootNode, parentNode, newNodeRef, filenameCStr, 
-    //              jobParser.attachToExisting, jobParser.importStandinProperties, jobParser.importBoundingBoxes, false, jobParser.failOnUnsupported, createItemArgs);
-			 //     if( ! localStatus.Succeeded() ) {
-    //              delRefArchive( jobParser.filename  );
-				//      return localStatus;
-			 //     }
-    //        }
-		  // }
-    //     
-    //     //newNodeRef will not be valid if we cannot attach children to it
-    //     if(newNodeRef.IsValid()){
-
-    //        //I assume that geometry nodes are always leaf nodes. Thus, if we merged a geometry node will its parent transform, we don't
-    //        //need to push it to the stack.
-    //        //A geometry node can't be combined with its transform node, the transform node has other tranform nodes as children. These
-    //        //nodes must be pushed.
-
-    //        
-
-    //        //push the children as the last step, since we need to who the parent is first (we may have merged)
-    //        for(SceneChildIterator it = sceneNode->children.begin(); it != sceneNode->children.end(); it++){
-    //        
-    //           AbcObjectCache *pChildObjectCache = &( pArchiveCache->find( (*it)->dccIdentifier )->second );
-    //           AbcG::IObject childObj = pChildObjectCache->obj;
-    //           if( NodeCategory::get(childObj) == NodeCategory::UNSUPPORTED ) continue;// skip over unsupported types
-   
-    //           if( pMergedGeomChildObjectCache == pChildObjectCache ) continue;
-
-    //           sceneStack.push_back( ImportStackElement( *it, newNodeRef ) );
-    //        }
-    //        
-    //     }
-    //     else{
-		  //    if( pObjectCache->childIdentifiers.size() > 0 ) {
-			 //     EC_LOG_WARNING("Unsupported node: " << iObj.getFullName().c_str() << " has children that have not been imported." );
-		  //    }
-    //     }
-
-    //     if(prog.IsCancelPressed()){
-    //        break;
-    //     }
-    //     prog.Increment();
-    //  }
 
    }
-
-
-
-   //prog.PutVisible(false);
 
    delRefArchive( jobParser.filename );
 

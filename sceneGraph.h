@@ -2,7 +2,7 @@
 #define __XSI_SCENE_GRAPH_H
 
 #include "CommonSceneGraph.h"
-
+#include "CommonImport.h"
 
 class SceneNodeXSI : public SceneNodeApp
 {
@@ -20,8 +20,26 @@ public:
 
 typedef boost::shared_ptr<SceneNodeXSI> SceneNodeXSIPtr;
 
-SceneNodeXSIPtr buildCommonSceneGraph(XSI::CRef xsiRoot);
+SceneNodeXSIPtr buildCommonSceneGraph(XSI::CRef xsiRoot, int& nNumNodes, bool bUnmergeNodes=true);
 
 bool hasExtractableTransform( SceneNode::nodeTypeE type );
+
+
+class XSIProgressBar: public CommonProgressBar
+{
+   XSI::ProgressBar prog;
+public:
+   XSIProgressBar();
+
+   inline void init(int range) { init(0, range, 1); }
+   virtual void init(int min, int max, int incr);
+   virtual void start(void);
+   virtual void stop(void);
+   virtual void incr(int step=1);
+   virtual bool isCancelled(void);
+   virtual void setCaption(std::string& caption);
+   virtual int getUpdateCount(){ return 2; }
+};
+
 
 #endif

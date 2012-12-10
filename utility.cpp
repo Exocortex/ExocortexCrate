@@ -129,7 +129,12 @@ CString getFullNameFromIdentifier(XSI::CRef importRootNode, std::string in_Ident
       count--;
    }
 
+
    CString pathName = importRootNode.GetAsText();
+
+   if(!importRootNode.IsValid()){
+      pathName = L"Scene_Root";
+   }
 
    //ESS_LOG_WARNING("root: "<<pathName.GetAsciiString());
 
@@ -384,7 +389,7 @@ CStatus alembicOp_Define( CRef& in_ctxt )
    Factory oFactory = Application().GetFactory();
    oCustomOperator = ctxt.GetSource();
 
-	oPDef = oFactory.CreateParamDef(L"muted",CValue::siBool,siAnimatable | siPersistable,L"muted",L"muted",0,0,1,0,1);
+	oPDef = oFactory.CreateParamDef(L"muted",CValue::siBool,siAnimatable | siPersistable,L"muted",L"muted",1,0,1,0,1);
 	oCustomOperator.AddParameter(oPDef,oParam);
 	oPDef = oFactory.CreateParamDef(L"time",CValue::siFloat,siAnimatable | siPersistable,L"time",L"time",1,-100000,100000,0,1);
 	oCustomOperator.AddParameter(oPDef,oParam);
