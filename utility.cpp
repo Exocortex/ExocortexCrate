@@ -353,6 +353,7 @@ INode* GetNodeFromHierarchyPath(const std::string& path)
 	  for(int i=0; i<pNode->NumberOfChildren(); i++){
 
 	     INode* childNode = pNode->GetChildNode(i);
+
          //const char* cName = childNode->GetName();
 
 	     if (strcmp( EC_MCHAR_to_UTF8( childNode->GetName() ).c_str(), childName.c_str()) == 0){

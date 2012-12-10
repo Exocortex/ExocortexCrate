@@ -1766,9 +1766,8 @@ Mesh *AlembicParticles::BuildInstanceMesh(int meshNumber, TimeValue t, INode *no
 	INode *pNode = m_InstanceShapeINodes[shapeid];
 	TimeValue shapet = m_InstanceShapeTimes[meshNumber];
 
-    
-
     InstanceMeshCache::iterator it = m_InstanceMeshCache.find(EC_MCHAR_to_UTF8(pNode->GetName()));
+
     if( it != m_InstanceMeshCache.end() ){
        return it->second.mesh;
     }
