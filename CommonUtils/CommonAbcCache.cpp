@@ -5,7 +5,7 @@
 
 
 AbcObjectCache::AbcObjectCache( Alembic::Abc::IObject & objToCache )
-		:	obj( objToCache ), isMeshTopoDynamic(false), isMeshPointCache(false), fullName(objToCache.getFullName())
+		:	obj( objToCache ), isMeshTopoDynamic(false), isMeshPointCache(false), fullName(objToCache.getFullName()), pObjXform(NULL)
 {
 	ESS_PROFILE_SCOPE("AbcObjectCache::AbcObjectCache");
 
@@ -21,6 +21,22 @@ AbcObjectCache::AbcObjectCache( Alembic::Abc::IObject & objToCache )
 		if (!isConstant)
 			isMeshTopoDynamic = isTopoDyn;
 	}
+}
+
+ AbcObjectCache::~AbcObjectCache() {
+    if(!pObjXform) {
+       delete pObjXform;
+    }
+ }
+
+AbcG::IXform* AbcObjectCache::getXform(){
+
+   if(!pObjXform && AbcG::IXform::matches(obj.getMetaData())){
+      pObjXform = new AbcG::IXform(obj, Abc::kWrapExisting);
+   }
+   else{
+      return NULL;
+   }
 }
 
 AbcObjectCache* addObjectToCache( AbcArchiveCache* fullNameToObjectCache, Abc::IObject &obj, std::string parentIdentifier ) {

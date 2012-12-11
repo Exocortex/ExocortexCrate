@@ -4,8 +4,9 @@
 class AbcObjectCache {
 public:
 	AbcObjectCache( Alembic::Abc::IObject & objToCache );
+    ~AbcObjectCache();
 
-	Alembic::Abc::IObject obj;
+	Abc::IObject obj;
 	int numSamples;
 	bool isConstant;
 	bool isMeshPointCache;
@@ -13,6 +14,11 @@ public:
 	std::vector<std::string> childIdentifiers;
 	std::string fullName;
 	std::string parentIdentifier;
+
+    AbcG::IXform* getXform();
+private:
+    AbcG::IXform *pObjXform;
+
 };
 
 typedef std::map<std::string,AbcObjectCache> AbcArchiveCache;
