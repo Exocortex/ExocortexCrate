@@ -40,10 +40,16 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
    AbcG::IPolyMesh objMesh;
    AbcG::ISubD objSubD;
 
+   {
+
+   ESS_PROFILE_SCOPE("AlembicImport_FillInPolyMesh_Internal - objMesh and objSubD");
+
    if(AbcG::IPolyMesh::matches((*options.pIObj).getMetaData()))
        objMesh = AbcG::IPolyMesh(*options.pIObj,Abc::kWrapExisting);
    else
        objSubD = AbcG::ISubD(*options.pIObj,Abc::kWrapExisting);
+
+   }
 
    if(!objMesh.valid() && !objSubD.valid())
        return;
