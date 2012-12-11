@@ -1,1 +1,2 @@
-text eol=lf
+# convert end of lines into windows type!
+* text eol=lf
