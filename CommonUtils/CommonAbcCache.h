@@ -1,10 +1,20 @@
 #ifndef __COMMON_ABC_CACHE_H__
 #define __COMMON_ABC_CACHE_H__
 
+
+#include <boost/smart_ptr.hpp>
+
+typedef boost::shared_ptr<AbcG::IXform> IXformPtr;
+
 class AbcObjectCache {
+protected:
+
 public:
 	AbcObjectCache( Alembic::Abc::IObject & objToCache );
     ~AbcObjectCache();
+
+    //AbcObjectCache(const AbcObjectCache& cache);
+    //AbcObjectCache& operator=(const AbcObjectCache& cache);
 
 	Abc::IObject obj;
 	int numSamples;
@@ -15,10 +25,11 @@ public:
 	std::string fullName;
 	std::string parentIdentifier;
 
-    AbcG::IXform* getXform();
+    IXformPtr getXform();
+    Abc::M44d getXformMatrix(int index);
 private:
-    AbcG::IXform *pObjXform;
-
+    IXformPtr pObjXform;
+    std::vector<Abc::M44d> iXformVec;
 };
 
 typedef std::map<std::string,AbcObjectCache> AbcArchiveCache;

@@ -5,7 +5,7 @@
 
 
 AbcObjectCache::AbcObjectCache( Alembic::Abc::IObject & objToCache )
-		:	obj( objToCache ), isMeshTopoDynamic(false), isMeshPointCache(false), fullName(objToCache.getFullName()), pObjXform(NULL)
+		:	obj( objToCache ), isMeshTopoDynamic(false), isMeshPointCache(false), fullName(objToCache.getFullName())
 {
 	ESS_PROFILE_SCOPE("AbcObjectCache::AbcObjectCache");
 
@@ -23,21 +23,33 @@ AbcObjectCache::AbcObjectCache( Alembic::Abc::IObject & objToCache )
 	}
 }
 
+
  AbcObjectCache::~AbcObjectCache() {
-    if(!pObjXform) {
-       delete pObjXform;
-    }
+
  }
 
-AbcG::IXform* AbcObjectCache::getXform(){
+IXformPtr AbcObjectCache::getXform(){
 
-   if(!pObjXform && AbcG::IXform::matches(obj.getMetaData())){
-      pObjXform = new AbcG::IXform(obj, Abc::kWrapExisting);
+   if(!pObjXform && obj.valid() && AbcG::IXform::matches(obj.getMetaData())){
+      pObjXform = IXformPtr(new AbcG::IXform(obj, Abc::kWrapExisting));
+
+      iXformVec.resize(numSamples);
+      for(int i=0; i<iXformVec.size(); i++){
+         AbcG::XformSample sample;
+         pObjXform->getSchema().get(sample, i);
+         iXformVec[i] = sample.getMatrix();
+      }
    }
-   else{
-      return NULL;
-   }
+   return pObjXform;
 }
+
+
+Abc::M44d AbcObjectCache::getXformMatrix(int index)
+{
+   return iXformVec[index];
+}
+
+
 
 AbcObjectCache* addObjectToCache( AbcArchiveCache* fullNameToObjectCache, Abc::IObject &obj, std::string parentIdentifier ) {
 	ESS_PROFILE_SCOPE("addObjectToCache");
