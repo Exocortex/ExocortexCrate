@@ -28,9 +28,14 @@ bool AlembicPoints::listIntanceNames(std::vector<std::string> &names)
   names.resize(allPaths.length());
   for (int i = 0; i < allPaths.length(); ++i)
   {
-    std::stringstream ss;
-	ss << "/" << allPaths[i].partialPathName();
-    names[i] = ss.str();
+	  std::string nm = allPaths[i].fullPathName().asChar();
+	  size_t pos = nm.find("|");
+	  while (pos != std::string::npos)
+	  {
+			nm[pos] = '/';
+			pos = nm.find("|", pos);
+	  }
+	  names[i] = nm;
   }
   mInstanceNamesProperty.set(Abc::StringArraySample(names));
   return true;
