@@ -33,12 +33,12 @@ IXformPtr AbcObjectCache::getXform(){
    if(!pObjXform && obj.valid() && AbcG::IXform::matches(obj.getMetaData())){
       pObjXform = IXformPtr(new AbcG::IXform(obj, Abc::kWrapExisting));
 
-      iXformVec.resize(numSamples);
-      for(int i=0; i<iXformVec.size(); i++){
-         AbcG::XformSample sample;
-         pObjXform->getSchema().get(sample, i);
-         iXformVec[i] = sample.getMatrix();
-      }
+      //iXformVec.resize(numSamples);
+      //for(int i=0; i<iXformVec.size(); i++){
+      //   AbcG::XformSample sample;
+      //   pObjXform->getSchema().get(sample, i);
+      //   iXformVec[i] = sample.getMatrix();
+      //}
    }
    return pObjXform;
 }
@@ -46,7 +46,14 @@ IXformPtr AbcObjectCache::getXform(){
 
 Abc::M44d AbcObjectCache::getXformMatrix(int index)
 {
-   return iXformVec[index];
+   if(iXformMap.find(index) == iXformMap.end()){
+      AbcG::XformSample sample;
+      pObjXform->getSchema().get(sample, index);
+      Abc::M44d mat = sample.getMatrix();
+      iXformMap[index] = mat;
+      return mat;
+   }
+   return iXformMap[index];
 }
 
 

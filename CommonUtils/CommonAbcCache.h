@@ -29,7 +29,7 @@ public:
     Abc::M44d getXformMatrix(int index);
 private:
     IXformPtr pObjXform;
-    std::vector<Abc::M44d> iXformVec;
+    std::map<int, Abc::M44d> iXformMap;
 };
 
 typedef std::map<std::string,AbcObjectCache> AbcArchiveCache;
