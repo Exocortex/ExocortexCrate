@@ -174,7 +174,7 @@ public:
 	void ClearMeshSmoothingGroupNormals();
 };
 
-
+void printChannelIntervals(TimeValue t, Object* obj);
 
 
 #endif  // _FOUNDATION_H_

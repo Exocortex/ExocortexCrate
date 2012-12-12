@@ -785,3 +785,15 @@ void SmoothGroupNormals::ClearMeshSmoothingGroupNormals()
 
 	m_MeshSmoothGroupNormals.clear();  
 }
+
+void printChannelIntervals(TimeValue t, Object* obj)
+{
+   Interval topoInterval = obj->ChannelValidity(t, TOPO_CHAN_NUM);
+   ESS_LOG_WARNING( "TopoInterval Start: " << topoInterval.Start() << " End: " << topoInterval.End() );
+
+   Interval geoInterval = obj->ChannelValidity(t, GEOM_CHAN_NUM);
+   ESS_LOG_WARNING( "GeoInterval Start: " << geoInterval.Start() << " End: " << geoInterval.End() );
+
+   Interval texInterval = obj->ChannelValidity(t, TEXMAP_CHAN_NUM);
+   ESS_LOG_WARNING( "TexInterval Start: " << texInterval.Start() << " End: " << texInterval.End() );
+}
