@@ -530,7 +530,14 @@ MStatus AlembicPointsNode::compute(const MPlug & plug, MDataBlock & dataBlock)
       const bool validSid = sampleShapeInstanceID && sampleShapeInstanceID->get();
       const bool validOri = sampleOrientation && sampleOrientation->get();
       const float timeAlpha = getTimeOffsetFromSchema( mSchema, sampleInfo );
-      for(unsigned int i=0;i<particleCount;i++)
+
+	  const bool velUseFirstSample = validVel && (sampleVel->size() == 1);
+	  const bool colUseFirstSample = validCol && (sampleColor->size() == 1);
+	  const bool ageUseFirstSample = validAge && (sampleAge->size() == 1);
+	  const bool masUseFirstSample = validMas && (sampleMass->size() == 1);
+	  const bool sidUseFirstSample = validSid && (sampleShapeInstanceID->size() == 1);
+	  const bool oriUseFirstSample = validOri && (sampleOrientation->size() == 1);
+      for(unsigned int i=0; i<particleCount; ++i)
       {
          const Alembic::Abc::V3f &pout = samplePos->get()[i];
          MVector &pin = positions[i];
@@ -540,7 +547,7 @@ MStatus AlembicPointsNode::compute(const MPlug & plug, MDataBlock & dataBlock)
 
          if(validVel)
          {
-            const Alembic::Abc::V3f &out = sampleVel->get()[i];
+			 const Alembic::Abc::V3f &out = sampleVel->get()[velUseFirstSample ? 0 : i];
             MVector &in = velocities[i];
             in.x = out.x;
             in.y = out.y;
@@ -551,7 +558,7 @@ MStatus AlembicPointsNode::compute(const MPlug & plug, MDataBlock & dataBlock)
 
          if(validCol)
          {
-            const Alembic::Abc::C4f &out = sampleColor->get()[i];
+			 const Alembic::Abc::C4f &out = sampleColor->get()[colUseFirstSample ? 0 : i];
             MVector &in = rgbs[i];
             in.x = out.r;
             in.y = out.g;
@@ -564,10 +571,10 @@ MStatus AlembicPointsNode::compute(const MPlug & plug, MDataBlock & dataBlock)
             opacities[i] = 1.0;
          }
 
-         ages[i]          = validAge ? sampleAge->get()[i] : 0.0;
-         masses[i]        = validMas ? sampleMass->get()[i] : 1.0;
-         shapeInstId[i]   = validSid ? sampleShapeInstanceID->get()[i] : 0.0;
-         orientationPP[i] = validOri ? quaternionToVector( sampleOrientation->get()[i] ) : MVector::zero;
+		 ages[i]          = validAge ? sampleAge->get()[ageUseFirstSample ? 0 : i] : 0.0;
+		 masses[i]        = validMas ? sampleMass->get()[masUseFirstSample ? 0 : i] : 1.0;
+		 shapeInstId[i]   = validSid ? sampleShapeInstanceID->get()[sidUseFirstSample ? 0 : i] : 0.0;
+		 orientationPP[i] = validOri ? quaternionToVector( sampleOrientation->get()[oriUseFirstSample ? 0 : i] ) : MVector::zero;
       }
    }
 
