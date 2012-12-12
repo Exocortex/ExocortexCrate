@@ -1100,8 +1100,10 @@ int AlembicImport_PolyMesh(const std::string &path, AbcG::IObject& iObj, alembic
 	{
 		GET_MAX_INTERFACE()->SelectNode( pNode );
 
-		char* szBuffer = "addmodifier $ (meshsmooth())\n"
-						 "$.modifiers[#MeshSmooth].iterations = 1\n";
+        char* szBuffer =   "addmodifier $ (meshsmooth())\n"
+                           "$.modifiers[#MeshSmooth].enabledInViews = false\n"
+                           "$.modifiers[#MeshSmooth].iterations = 1\n";
+                           
 
 		ExecuteMAXScriptScript( EC_UTF8_to_TCHAR( szBuffer ) );
 	}
