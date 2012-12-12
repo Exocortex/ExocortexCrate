@@ -20,7 +20,7 @@ rollout AlembicExportSettings "Alembic Export Settings" width:288 height:436
 	
 	dropdownList meshTopologyDropDown "Mesh Topology" pos:[16,192] width:256 height:40 items:#("Just Surfaces (No Normals)", "Point Cache (No Surfaces)", "Surface + Normals (Everything)") selection:3
 	
-	dropdownList particleSystemExportMethod "Particle System Export Method" pos:[16,240] width:256 height:40 items:#("Automatic Instancing", "Merged Mesh", "Shape Node Instancing (deprecated)") selection:1
+	dropdownList particleSystemExportMethod "Particle System Export Method" pos:[16,240] width:256 height:40 items:#("Automatic Instancing", "Merged Mesh") selection:1
 
 	checkbox uvCheckbox "UVs" pos:[32,288] width:128 height:15 checked:true
 	checkbox materialIdsCheckbox "Material Ids" pos:[32,320] width:107 height:14 checked:true
