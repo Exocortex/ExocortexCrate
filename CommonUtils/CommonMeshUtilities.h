@@ -29,7 +29,7 @@ void extractMeshInfo(Alembic::AbcGeom::IObject *pIObj, bool isMesh, bool &isPoin
 bool isAlembicMeshValid( Alembic::AbcGeom::IObject *pIObj );
 bool isAlembicMeshNormals( Alembic::AbcGeom::IObject *pIObj, bool& isConstant );
 bool isAlembicMeshPositions( Alembic::AbcGeom::IObject *pIObj, bool& isConstant );
-bool isAlembicMeshUVWs( Alembic::AbcGeom::IObject *pIObj, bool& isConstant );
+//bool isAlembicMeshUVWs( Alembic::AbcGeom::IObject *pIObj, bool& isConstant );
 bool isAlembicMeshTopoDynamic( Alembic::AbcGeom::IObject *pIObj );
 bool isAlembicMeshTopology( Alembic::AbcGeom::IObject *pIObj );
 bool isAlembicMeshPointCache( Alembic::AbcGeom::IObject *pIObj );
@@ -47,5 +47,9 @@ bool getIndexAndValues( Alembic::Abc::Int32ArraySamplePtr faceIndices, Alembic::
 void saveIndexedUVs( AbcG::OPolyMeshSchema& meshSchema, AbcG::OPolyMeshSchema::Sample& meshSample,
 					AbcG::OV2fGeomParam::Sample &uvSample, std::vector<AbcG::OV2fGeomParam>& uvParams,
 					unsigned int animatedTs, int numSamples, std::vector<IndexedUVs>& indexUVSet );
+
+
+AbcG::IV2fGeomParam getMeshUvParam(int uvI, AbcG::IPolyMesh objMesh, AbcG::ISubD objSubD);
+
 
 #endif // __MESH_UTILITIES_H
