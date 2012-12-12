@@ -403,6 +403,8 @@ MStatus AlembicPointsNode::compute(const MPlug & plug, MDataBlock & dataBlock)
    MPlug particleShapeOutPlug = connectionArray[0];
    MObject particleShapeNode = particleShapeOutPlug.node(&status);
    MFnParticleSystem part(particleShapeNode, &status);
+   if (status != MS::kSuccess)
+	   return status;
 
    // update the frame number to be imported
    double inputTime = dataBlock.inputValue(mTimeAttr).asTime().as(MTime::kSeconds);
