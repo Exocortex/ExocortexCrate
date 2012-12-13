@@ -629,7 +629,7 @@ void AlembicPointsNode::instanceInitialize(void)
 
   Abc::StringArraySamplePtr instNames = propInstName.getValue(propInstName.getNumSamples()-1);
   const int nbNames = (int) instNames->size();
-  if (nbNames < 1)
+  if (nbNames < 1 || (nbNames == 1 && instNames->get()[0].length() == 0) )
     return;
 
   MString addObjectCmd = " -addObject";
@@ -638,6 +638,9 @@ void AlembicPointsNode::instanceInitialize(void)
     for (int i = 0; i < nbNames; ++i)
     {
       std::string res = instNames->get()[i];
+	  if (res.length() == 0)
+		  continue;
+
 	  size_t pos = res.find("/");
 	  int repl = 0;
 	  while (pos != std::string::npos)
@@ -646,8 +649,9 @@ void AlembicPointsNode::instanceInitialize(void)
 			res[pos] = '|';
 			pos = res.find("/", pos);
 	  }
+	  res = removeInvalidCharacter(res, true);
 
-	  if (repl <= 1)	// repl == 1 means it might be just a shape... need this for backward compatibility!
+	  if (repl == 1)	// repl == 1 means it might be just a shape... need this for backward compatibility!
 	  {
 		MSelectionList sl;
 		sl.add(res.substr(1).c_str());
@@ -655,9 +659,7 @@ void AlembicPointsNode::instanceInitialize(void)
 		sl.getDagPath(0,dag);
 		res = dag.fullPathName().asChar();
 	  }
-
-      if (res.length() > 0)
-        addObjectCmd += _obj + removeInvalidCharacter(res, true).c_str();
+      addObjectCmd += _obj + res.c_str();
     }
     addObjectCmd += " ";
   }
