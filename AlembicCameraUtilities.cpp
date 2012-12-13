@@ -285,7 +285,7 @@ int AlembicImport_Camera(const std::string &path, AbcG::IObject& iObj, alembic_i
 		pCameraObj = pGenCameraObj;
 
       Abc::IObject parent = iObj.getParent();
-      std::string name = removeXfoSuffix(iObj.getName().c_str());
+      std::string name = removeXfoSuffix(parent.getName().c_str());
 		pNode = GET_MAX_INTERFACE()->CreateObjectNode(pGenCameraObj, EC_UTF8_to_TCHAR( name.c_str() ) );
 		if (pNode == NULL){
 			return alembic_failure;

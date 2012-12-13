@@ -121,8 +121,12 @@ int importAlembicScene(AbcArchiveCache *pArchiveCache, AbcObjectCache *pRootObje
 
       if(bCreateNode){
 
-          if(sElement.pObjectCache->childIdentifiers.size() > 1 && AbcG::ICamera::matches(iObj.getMetaData())){
+          // if we are about to merge a camera with its parent transform, force it to create a dummy node instead if the camera's
+         // transform also has children. This is done to prevent the camera correction matrix from being applied to the other children
+          if(!bCreateDummyNode && sElement.pObjectCache->childIdentifiers.size() > 1 && 
+             AbcG::ICamera::matches(pMergedObjectCache->obj.getMetaData())){
              bCreateDummyNode = true;  
+             mergedGeomNodeIndex = -1;
           }
 
 	      if(bCreateDummyNode){
@@ -149,7 +153,7 @@ int importAlembicScene(AbcArchiveCache *pArchiveCache, AbcObjectCache *pRootObje
 	      else{
 		      if(mergedGeomNodeIndex != -1){//we are merging, so look at the child geometry node
              	  AbcG::IObject mergedGeomChild = pMergedObjectCache->obj;
-                  std::string importName = removeXfoSuffix(iObj.getName());
+                  std::string importName = removeXfoSuffix(mergedGeomChild.getName());
 			      pExistingNode = GetChildNodeFromName(importName, pParentMaxNode);
 			      if(options.attachToExisting && pExistingNode){
 				      pMaxNode = pExistingNode;
@@ -175,19 +179,12 @@ int importAlembicScene(AbcArchiveCache *pArchiveCache, AbcObjectCache *pRootObje
 			      //since the transform is the identity, should position relative to parent
 			      keepTM = 0;
 
-                  if(pMaxNode == pExistingNode && AbcG::ICamera::matches(iObj.getMetaData()) ){
+                  if(AbcG::ICamera::matches(iObj.getMetaData()) ){
                       //apply camera adjustment matrix to the identity
-
                        Matrix3 rotation(TRUE);
                        rotation.RotateX(HALFPI);
                        TimeValue zero(0);
-                       
-		               if(pParentMaxNode != NULL){
-			               pMaxNode->SetNodeTM(zero, rotation * pParentMaxNode->GetObjectTM(zero));
-		               }
-		               else{
-			               pMaxNode->SetNodeTM(zero, rotation);
-		               }
+			           pMaxNode->SetNodeTM(zero, rotation);
                   }
 
 			      //import identity matrix, since more than goemetry node share the same transform

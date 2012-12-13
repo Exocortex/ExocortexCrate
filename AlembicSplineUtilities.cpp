@@ -469,7 +469,7 @@ int AlembicImport_Shape(const std::string &path, AbcG::IObject& iObj, alembic_im
 		}
 
       Abc::IObject parent = iObj.getParent();
-      std::string name = removeXfoSuffix(iObj.getName().c_str());
+      std::string name = removeXfoSuffix(parent.getName().c_str());
 		pNode = GET_MAX_INTERFACE()->CreateObjectNode(newObject, EC_UTF8_to_TCHAR( name.c_str() ) );
 		if (pNode == NULL){
 			return alembic_failure;
