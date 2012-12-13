@@ -639,11 +639,23 @@ void AlembicPointsNode::instanceInitialize(void)
     {
       std::string res = instNames->get()[i];
 	  size_t pos = res.find("/");
+	  int repl = 0;
 	  while (pos != std::string::npos)
 	  {
+			++repl;
 			res[pos] = '|';
 			pos = res.find("/", pos);
 	  }
+
+	  if (repl <= 1)	// repl == 1 means it might be just a shape... need this for backward compatibility!
+	  {
+		MSelectionList sl;
+		sl.add(res.substr(1).c_str());
+		MDagPath dag;
+		sl.getDagPath(0,dag);
+		res = dag.fullPathName().asChar();
+	  }
+
       if (res.length() > 0)
         addObjectCmd += _obj + removeInvalidCharacter(res, true).c_str();
     }
