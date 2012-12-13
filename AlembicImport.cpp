@@ -1191,7 +1191,7 @@ bool createNode(SceneNodeXSI* appNode, SceneNodeAlembicPtr fileNode, const IJobS
 
    //the transform
    
-   Abc::IObject& iObj = fileNode->getObject();
+   const Abc::IObject& iObj = fileNode->getObject();
    CString name = truncateName(iObj.getName().c_str());
 
    if(AbcG::IXform::matches(iObj.getMetaData()))
@@ -1285,7 +1285,7 @@ bool createMergeableNode(SceneNodeXSI* appNode, SceneNodeAlembicPtr fileXformNod
    //TODO: will need to think about how this should work
 
 
-   CString& filename = CString(jobParams.filename.c_str());
+   const CString filename(jobParams.filename.c_str());
    const bool& attachToExisting = jobParams.attachToExisting;
    const bool& importStandins = jobParams.importStandinProperties;
    const bool& importBboxes = jobParams.importBoundingBoxes;
