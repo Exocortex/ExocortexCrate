@@ -637,7 +637,13 @@ void AlembicPointsNode::instanceInitialize(void)
     const MString _obj = " -object ";
     for (int i = 0; i < nbNames; ++i)
     {
-      const std::string res = instNames->get()[i];
+      std::string res = instNames->get()[i];
+	  size_t pos = res.find("/");
+	  while (pos != std::string::npos)
+	  {
+			res[pos] = '|';
+			pos = res.find("/", pos);
+	  }
       if (res.length() > 0)
         addObjectCmd += _obj + removeInvalidCharacter(res, true).c_str();
     }
