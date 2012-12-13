@@ -5,7 +5,19 @@
 
 using namespace XSI;
 
+SampleInfo getSampleInfo
+(
+   double iFrame,
+   Alembic::AbcCoreAbstract::TimeSamplingPtr iTime,
+   size_t numSamps
+)
+{
+   SampleInfo result;
+   if (numSamps == 0)
+      numSamps = 1;
 
+   std::pair<Alembic::AbcCoreAbstract::index_t, double> floorIndex = iTime->getFloorIndex(iFrame, numSamps);
+}
 
 void logError( const char* msg ) {
 #ifdef __EXOCORTEX_CORE_SERVICES_API_H
