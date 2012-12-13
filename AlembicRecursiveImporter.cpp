@@ -121,6 +121,10 @@ int importAlembicScene(AbcArchiveCache *pArchiveCache, AbcObjectCache *pRootObje
 
       if(bCreateNode){
 
+          if(sElement.pObjectCache->childIdentifiers.size() > 1 && AbcG::ICamera::matches(iObj.getMetaData())){
+             bCreateDummyNode = true;  
+          }
+
 	      if(bCreateDummyNode){
 
 		      std::string importName = removeXfoSuffix(iObj.getName());
@@ -144,8 +148,8 @@ int importAlembicScene(AbcArchiveCache *pArchiveCache, AbcObjectCache *pRootObje
 	      }
 	      else{
 		      if(mergedGeomNodeIndex != -1){//we are merging, so look at the child geometry node
-             	AbcG::IObject mergedGeomChild = pMergedObjectCache->obj;
-          std::string importName = removeXfoSuffix(iObj.getName());
+             	  AbcG::IObject mergedGeomChild = pMergedObjectCache->obj;
+                  std::string importName = removeXfoSuffix(iObj.getName());
 			      pExistingNode = GetChildNodeFromName(importName, pParentMaxNode);
 			      if(options.attachToExisting && pExistingNode){
 				      pMaxNode = pExistingNode;
@@ -170,6 +174,21 @@ int importAlembicScene(AbcArchiveCache *pArchiveCache, AbcObjectCache *pRootObje
 
 			      //since the transform is the identity, should position relative to parent
 			      keepTM = 0;
+
+                  if(pMaxNode == pExistingNode && AbcG::ICamera::matches(iObj.getMetaData()) ){
+                      //apply camera adjustment matrix to the identity
+
+                       Matrix3 rotation(TRUE);
+                       rotation.RotateX(HALFPI);
+                       TimeValue zero(0);
+                       
+		               if(pParentMaxNode != NULL){
+			               pMaxNode->SetNodeTM(zero, rotation * pParentMaxNode->GetObjectTM(zero));
+		               }
+		               else{
+			               pMaxNode->SetNodeTM(zero, rotation);
+		               }
+                  }
 
 			      //import identity matrix, since more than goemetry node share the same transform
 			      //Should we just list MAX put a default position/scale/rotation controller on?
