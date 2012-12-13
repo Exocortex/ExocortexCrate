@@ -15,12 +15,12 @@ function CreateAlembicMetadataModifier selectedObject name value = (
 		count = custattributes.count selectedObject.modifiers["Alembic Metadata"]
 		count = count + 1
 
-		evalstr = "AlembicMetadata = attributes AlembicMetadata\n" + 
+		evalstr = "AlembicMetadata = attributes metadata \n" + 
 		"(\n" +
 		"	parameters AlembicMetadataPRM1 rollout:AlembicMetadataRLT1\n" +
 		"	(\n" +
-		"		name type:#string ui:eName default:\"" + name + "\"\n" +
-		"		value type:#string ui:eValue default:\"" + value + "\"\n" +
+		"		_name type:#string ui:eName default:\"" + name + "\"\n" +
+		"		_value type:#string ui:eValue default:\"" + value + "\"\n" +
 		"	)\n" +
 		"	rollout AlembicMetadataRLT1 \"Alembic Metadata " + (count as string) + "\"\n" +
 		"	(\n" +

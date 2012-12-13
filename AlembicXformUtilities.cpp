@@ -196,6 +196,7 @@ int AlembicImport_XForm(INode* pParentNode, INode* pMaxNode, AbcG::IObject& iObj
 		return alembic_failure;
 	}
 
+    //TODO: this method should take this bool a parameter instead
 	bool bIsCamera = p_iObjGeom && p_iObjGeom->valid() && AbcG::ICamera::matches(p_iObjGeom->getMetaData());
 	
 	TimeValue zero(0);
