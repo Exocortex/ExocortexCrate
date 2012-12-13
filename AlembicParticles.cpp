@@ -784,12 +784,12 @@ void AlembicParticles::FillParticleShapeNodes(AbcG::IPoints &iPoints, const Samp
 		for (int i = 0; i < m_InstanceShapeINodes.size(); i += 1)
 		{
 			const std::string& path = m_InstanceShapeNames->get()[i];
-
-            //TODO: need to possibly XFO to path, and shape node as well
-
             m_InstanceShapeINodes[i] = nodeMap[path];
 
-			//m_InstanceShapeINodes[i] = GetNodeFromHierarchyPath(path);
+            if(m_InstanceShapeINodes[i] == NULL){
+               const std::string newPath = alembicPathToMaxPath(path);
+               m_InstanceShapeINodes[i] = nodeMap[newPath];
+            }
 		}
 	}
 }
@@ -1766,9 +1766,8 @@ Mesh *AlembicParticles::BuildInstanceMesh(int meshNumber, TimeValue t, INode *no
 	INode *pNode = m_InstanceShapeINodes[shapeid];
 	TimeValue shapet = m_InstanceShapeTimes[meshNumber];
 
-    
+    InstanceMeshCache::iterator it = m_InstanceMeshCache.find(EC_MCHAR_to_UTF8(pNode->GetName()));
 
-    InstanceMeshCache::iterator it = m_InstanceMeshCache.find( EC_MCHAR_to_UTF8( pNode->GetName() ) );
     if( it != m_InstanceMeshCache.end() ){
        return it->second.mesh;
     }
@@ -1776,7 +1775,7 @@ Mesh *AlembicParticles::BuildInstanceMesh(int meshNumber, TimeValue t, INode *no
        //ESS_LOG_WARNING("NODE: "<<pNode->GetName());
        InstanceMesh iMesh;
        iMesh.mesh = GetMeshFromNode(pNode, shapet, iMesh.needDelete);
-       m_InstanceMeshCache[ EC_MCHAR_to_UTF8( pNode->GetName() ) ] = iMesh;
+       m_InstanceMeshCache[EC_MCHAR_to_UTF8(pNode->GetName())] = iMesh;
        return iMesh.mesh;
     }
 
