@@ -105,33 +105,33 @@ bool isAlembicMeshPositions( Alembic::AbcGeom::IObject *pIObj, bool& isConstant 
 	return false;
 }
 
-bool isAlembicMeshUVWs( Alembic::AbcGeom::IObject *pIObj, bool& isConstant ) {
-	ESS_PROFILE_SCOPE("isAlembicMeshUVWs");
-	Alembic::AbcGeom::IPolyMesh objMesh;
-	Alembic::AbcGeom::ISubD objSubD;
-
-	if(Alembic::AbcGeom::IPolyMesh::matches((*pIObj).getMetaData())) {
-		objMesh = Alembic::AbcGeom::IPolyMesh(*pIObj,Alembic::Abc::kWrapExisting);
-		if( objMesh.valid() ) {
-			if( objMesh.getSchema().getUVsParam().valid() ) {
-				isConstant = objMesh.getSchema().getUVsParam().isConstant();
-				return true;
-			}
-		}
-	}
-	else {
-		objSubD = Alembic::AbcGeom::ISubD(*pIObj,Alembic::Abc::kWrapExisting);
-		if( objSubD.valid() ) {
-			if( objSubD.getSchema().getUVsParam().valid() ) {
-				isConstant = objSubD.getSchema().getUVsParam().isConstant();
-				return true;
-			}
-		}
-	}
-	isConstant = true;
-
-	return false;
-}
+//bool isAlembicMeshUVWs( Alembic::AbcGeom::IObject *pIObj, bool& isConstant ) {
+//	ESS_PROFILE_SCOPE("isAlembicMeshUVWs");
+//	Alembic::AbcGeom::IPolyMesh objMesh;
+//	Alembic::AbcGeom::ISubD objSubD;
+//
+//	if(Alembic::AbcGeom::IPolyMesh::matches((*pIObj).getMetaData())) {
+//		objMesh = Alembic::AbcGeom::IPolyMesh(*pIObj,Alembic::Abc::kWrapExisting);
+//		if( objMesh.valid() ) {
+//			if( objMesh.getSchema().getUVsParam().valid() ) {
+//				isConstant = objMesh.getSchema().getUVsParam().isConstant();
+//				return true;
+//			}
+//		}
+//	}
+//	else {
+//		objSubD = Alembic::AbcGeom::ISubD(*pIObj,Alembic::Abc::kWrapExisting);
+//		if( objSubD.valid() ) {
+//			if( objSubD.getSchema().getUVsParam().valid() ) {
+//				isConstant = objSubD.getSchema().getUVsParam().isConstant();
+//				return true;
+//			}
+//		}
+//	}
+//	isConstant = true;
+//
+//	return false;
+//}
 
 bool isAlembicMeshTopoDynamic( Alembic::AbcGeom::IObject *pIObj ) {
 	ESS_PROFILE_SCOPE("isAlembicMeshTopoDynamic");
@@ -380,6 +380,7 @@ int validateAlembicMeshTopo(std::vector<Alembic::AbcCoreAbstract::ALEMBIC_VERSIO
 bool getIndexAndValues( Alembic::Abc::Int32ArraySamplePtr faceIndices, Alembic::AbcGeom::IV2fGeomParam& param,
 					   AbcA::index_t sampleIndex, std::vector<Imath::V2f>& outputValues, std::vector<AbcA::uint32_t>& outputIndices ) {
 
+     ESS_PROFILE_FUNC();
 	if( param.getIndexProperty().valid() && param.getValueProperty().valid() ) {		
 		Alembic::Abc::V2fArraySamplePtr valueSampler = param.getValueProperty().getValue( sampleIndex );
 		for( int i = 0; i < valueSampler->size(); i ++ ) {
@@ -409,6 +410,7 @@ bool getIndexAndValues( Alembic::Abc::Int32ArraySamplePtr faceIndices, Alembic::
 
 bool getIndexAndValues( Alembic::Abc::Int32ArraySamplePtr faceIndices, Alembic::AbcGeom::IN3fGeomParam& param,
 					   AbcA::index_t sampleIndex, std::vector<Imath::V3f>& outputValues, std::vector<AbcA::uint32_t>& outputIndices ) {
+     ESS_PROFILE_FUNC();
 	if( param.getIndexProperty().valid() && param.getValueProperty().valid() ) {		
 		Alembic::Abc::N3fArraySamplePtr valueSampler = param.getValueProperty().getValue( sampleIndex );
 		for( int i = 0; i < valueSampler->size(); i ++ ) {
@@ -473,4 +475,36 @@ void saveIndexedUVs(
 			uvParams[i-1].set( uvSample );
 		}
 	}
+}
+
+AbcG::IV2fGeomParam getMeshUvParam(int uvI, AbcG::IPolyMesh objMesh, AbcG::ISubD objSubD)
+{
+   if(objMesh.valid()){
+        ESS_PROFILE_SCOPE("ALEMBIC_DATAFILL_UVS -getUVsParam mesh");
+	   if(uvI == 0){
+		   return objMesh.getSchema().getUVsParam();
+	   }
+	   else{
+		   std::stringstream storedUVNameStream;
+		   storedUVNameStream<<"uv"<<uvI;
+		   if(objMesh.getSchema().getPropertyHeader( storedUVNameStream.str() ) != NULL){
+			   return AbcG::IV2fGeomParam( objMesh.getSchema(), storedUVNameStream.str());
+		   }
+	   }
+   }
+   else{
+        ESS_PROFILE_SCOPE("ALEMBIC_DATAFILL_UVS -getUVsParam SubD");
+	   if(uvI == 0){
+		   return objSubD.getSchema().getUVsParam();
+	   }
+	   else{
+		   std::stringstream storedUVNameStream;
+		   storedUVNameStream<<"uv"<<uvI;
+		   if(objSubD.getSchema().getPropertyHeader( storedUVNameStream.str() ) != NULL){
+			   return AbcG::IV2fGeomParam( objSubD.getSchema(), storedUVNameStream.str());
+		   }
+	   }
+   }
+
+   return AbcG::IV2fGeomParam();
 }

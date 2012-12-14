@@ -23,6 +23,41 @@ AbcObjectCache::AbcObjectCache( Alembic::Abc::IObject & objToCache )
 	}
 }
 
+
+ AbcObjectCache::~AbcObjectCache() {
+
+ }
+
+IXformPtr AbcObjectCache::getXform(){
+
+   if(!pObjXform && obj.valid() && AbcG::IXform::matches(obj.getMetaData())){
+      pObjXform = IXformPtr(new AbcG::IXform(obj, Abc::kWrapExisting));
+
+      //iXformVec.resize(numSamples);
+      //for(int i=0; i<iXformVec.size(); i++){
+      //   AbcG::XformSample sample;
+      //   pObjXform->getSchema().get(sample, i);
+      //   iXformVec[i] = sample.getMatrix();
+      //}
+   }
+   return pObjXform;
+}
+
+
+Abc::M44d AbcObjectCache::getXformMatrix(int index)
+{
+   if(iXformMap.find(index) == iXformMap.end()){
+      AbcG::XformSample sample;
+      pObjXform->getSchema().get(sample, index);
+      Abc::M44d mat = sample.getMatrix();
+      iXformMap[index] = mat;
+      return mat;
+   }
+   return iXformMap[index];
+}
+
+
+
 AbcObjectCache* addObjectToCache( AbcArchiveCache* fullNameToObjectCache, Abc::IObject &obj, std::string parentIdentifier ) {
 	ESS_PROFILE_SCOPE("addObjectToCache");
 	AbcObjectCache objectCache( obj );
