@@ -18,8 +18,8 @@ function CreateAlembicMetadataModifier selectedObject name value = (
 		"(\n" +
 		"	parameters AlembicMetadataPRM1 rollout:AlembicMetadataRLT1\n" +
 		"	(\n" +
-		"		name type:#string ui:eName default:\"" + name + "\"\n" +
-		"		value type:#string ui:eValue default:\"" + (value as string) + "\"\n" +
+		"		_name type:#string ui:eName default:\"" + name + "\"\n" +
+		"		_value type:#string ui:eValue default:\"" + (value as string) + "\"\n" +
 		"	)\n" +
 		"	rollout AlembicMetadataRLT1 \"Alembic Metadata " + (count as string) + "\"\n" +
 		"	(\n" +
