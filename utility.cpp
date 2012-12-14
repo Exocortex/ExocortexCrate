@@ -54,6 +54,8 @@ std::string removeInvalidCharacter(const std::string &str, bool keepSemi)
       if ((c <= '9') || (c >= 'a') || (c >= 'A' && c <= 'Z') || (keepSemi && c == ':'))
         ret.append(1, c);
     }
+	else if (c == '|')
+		ret.append(1, c);
   }
   return ret;
 }

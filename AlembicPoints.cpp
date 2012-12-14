@@ -28,9 +28,14 @@ bool AlembicPoints::listIntanceNames(std::vector<std::string> &names)
   names.resize(allPaths.length());
   for (int i = 0; i < allPaths.length(); ++i)
   {
-    std::stringstream ss;
-	ss << "/" << allPaths[i].partialPathName();
-    names[i] = ss.str();
+	  std::string nm = allPaths[i].fullPathName().asChar();
+	  size_t pos = nm.find("|");
+	  while (pos != std::string::npos)
+	  {
+			nm[pos] = '/';
+			pos = nm.find("|", pos);
+	  }
+	  names[i] = nm;
   }
   mInstanceNamesProperty.set(Abc::StringArraySample(names));
   return true;
@@ -403,6 +408,8 @@ MStatus AlembicPointsNode::compute(const MPlug & plug, MDataBlock & dataBlock)
    MPlug particleShapeOutPlug = connectionArray[0];
    MObject particleShapeNode = particleShapeOutPlug.node(&status);
    MFnParticleSystem part(particleShapeNode, &status);
+   if (status != MS::kSuccess)
+	   return status;
 
    // update the frame number to be imported
    double inputTime = dataBlock.inputValue(mTimeAttr).asTime().as(MTime::kSeconds);
@@ -480,8 +487,8 @@ MStatus AlembicPointsNode::compute(const MPlug & plug, MDataBlock & dataBlock)
    part.opacity(opacities);
    MDoubleArray ages;
    part.age(ages);
-   MDoubleArray masses;
-   part.mass(masses);
+   //MDoubleArray masses;
+   //part.mass(masses);
    MDoubleArray shapeInstId;
    part.getPerParticleAttribute("shapeInstanceIdPP", shapeInstId);
    MVectorArray orientationPP;
@@ -514,9 +521,11 @@ MStatus AlembicPointsNode::compute(const MPlug & plug, MDataBlock & dataBlock)
    rgbs.setLength(particleCount);
    opacities.setLength(particleCount);
    ages.setLength(particleCount);
-   masses.setLength(particleCount);
+   //masses.setLength(particleCount);
    shapeInstId.setLength(particleCount);
    orientationPP.setLength(particleCount);
+
+   MDoubleArray masses(particleCount, 1.0);
 
    // if we need to emit new particles, do that now
    if(particleCount > 0)
@@ -528,7 +537,14 @@ MStatus AlembicPointsNode::compute(const MPlug & plug, MDataBlock & dataBlock)
       const bool validSid = sampleShapeInstanceID && sampleShapeInstanceID->get();
       const bool validOri = sampleOrientation && sampleOrientation->get();
       const float timeAlpha = getTimeOffsetFromSchema( mSchema, sampleInfo );
-      for(unsigned int i=0;i<particleCount;i++)
+
+	  const bool velUseFirstSample = validVel && (sampleVel->size() == 1);
+	  const bool colUseFirstSample = validCol && (sampleColor->size() == 1);
+	  const bool ageUseFirstSample = validAge && (sampleAge->size() == 1);
+	  const bool masUseFirstSample = validMas && (sampleMass->size() == 1);
+	  const bool sidUseFirstSample = validSid && (sampleShapeInstanceID->size() == 1);
+	  const bool oriUseFirstSample = validOri && (sampleOrientation->size() == 1);
+      for(unsigned int i=0; i<particleCount; ++i)
       {
          const Alembic::Abc::V3f &pout = samplePos->get()[i];
          MVector &pin = positions[i];
@@ -538,7 +554,7 @@ MStatus AlembicPointsNode::compute(const MPlug & plug, MDataBlock & dataBlock)
 
          if(validVel)
          {
-            const Alembic::Abc::V3f &out = sampleVel->get()[i];
+			 const Alembic::Abc::V3f &out = sampleVel->get()[velUseFirstSample ? 0 : i];
             MVector &in = velocities[i];
             in.x = out.x;
             in.y = out.y;
@@ -549,7 +565,7 @@ MStatus AlembicPointsNode::compute(const MPlug & plug, MDataBlock & dataBlock)
 
          if(validCol)
          {
-            const Alembic::Abc::C4f &out = sampleColor->get()[i];
+			 const Alembic::Abc::C4f &out = sampleColor->get()[colUseFirstSample ? 0 : i];
             MVector &in = rgbs[i];
             in.x = out.r;
             in.y = out.g;
@@ -562,10 +578,10 @@ MStatus AlembicPointsNode::compute(const MPlug & plug, MDataBlock & dataBlock)
             opacities[i] = 1.0;
          }
 
-         ages[i]          = validAge ? sampleAge->get()[i] : 0.0;
-         masses[i]        = validMas ? sampleMass->get()[i] : 1.0;
-         shapeInstId[i]   = validSid ? sampleShapeInstanceID->get()[i] : 0.0;
-         orientationPP[i] = validOri ? quaternionToVector( sampleOrientation->get()[i] ) : MVector::zero;
+		 ages[i]          = validAge ? sampleAge->get()[ageUseFirstSample ? 0 : i] : 0.0;
+		 masses[i]        = validMas ? sampleMass->get()[masUseFirstSample ? 0 : i] : 1.0;
+		 shapeInstId[i]   = validSid ? sampleShapeInstanceID->get()[sidUseFirstSample ? 0 : i] : 0.0;
+		 orientationPP[i] = validOri ? quaternionToVector( sampleOrientation->get()[oriUseFirstSample ? 0 : i] ) : MVector::zero;
       }
    }
 
@@ -615,7 +631,7 @@ void AlembicPointsNode::instanceInitialize(void)
 
   Abc::StringArraySamplePtr instNames = propInstName.getValue(propInstName.getNumSamples()-1);
   const int nbNames = (int) instNames->size();
-  if (nbNames < 1)
+  if (nbNames < 1 || (nbNames == 1 && instNames->get()[0].length() == 0) )
     return;
 
   MString addObjectCmd = " -addObject";
@@ -623,9 +639,29 @@ void AlembicPointsNode::instanceInitialize(void)
     const MString _obj = " -object ";
     for (int i = 0; i < nbNames; ++i)
     {
-      const std::string res = instNames->get()[i];
-      if (res.length() > 0)
-        addObjectCmd += _obj + removeInvalidCharacter(res, true).c_str();
+      std::string res = instNames->get()[i];
+	  if (res.length() == 0)
+		  continue;
+
+	  size_t pos = res.find("/");
+	  int repl = 0;
+	  while (pos != std::string::npos)
+	  {
+			++repl;
+			res[pos] = '|';
+			pos = res.find("/", pos);
+	  }
+	  res = removeInvalidCharacter(res, true);
+
+	  if (repl == 1)	// repl == 1 means it might be just a shape... need this for backward compatibility!
+	  {
+		MSelectionList sl;
+		sl.add(res.substr(1).c_str());
+		MDagPath dag;
+		sl.getDagPath(0,dag);
+		res = dag.fullPathName().asChar();
+	  }
+      addObjectCmd += _obj + res.c_str();
     }
     addObjectCmd += " ";
   }
