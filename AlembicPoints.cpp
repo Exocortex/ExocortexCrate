@@ -487,8 +487,8 @@ MStatus AlembicPointsNode::compute(const MPlug & plug, MDataBlock & dataBlock)
    part.opacity(opacities);
    MDoubleArray ages;
    part.age(ages);
-   //MDoubleArray masses;
-   //part.mass(masses);
+   MDoubleArray masses;
+   part.mass(masses);
    MDoubleArray shapeInstId;
    part.getPerParticleAttribute("shapeInstanceIdPP", shapeInstId);
    MVectorArray orientationPP;
@@ -521,11 +521,9 @@ MStatus AlembicPointsNode::compute(const MPlug & plug, MDataBlock & dataBlock)
    rgbs.setLength(particleCount);
    opacities.setLength(particleCount);
    ages.setLength(particleCount);
-   //masses.setLength(particleCount);
+   masses.setLength(particleCount);
    shapeInstId.setLength(particleCount);
    orientationPP.setLength(particleCount);
-
-   MDoubleArray masses(particleCount, 1.0);
 
    // if we need to emit new particles, do that now
    if(particleCount > 0)
