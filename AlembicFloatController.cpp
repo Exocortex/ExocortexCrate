@@ -132,7 +132,7 @@ void AlembicFloatController::GetValueLocalTime(TimeValue t, void *ptr, Interval 
    TimeValue dTicks = GetTimeValueFromSeconds( fTime );
    double sampleTime = GetSecondsFromTimeValue(dTicks);
 
-   double sampleVal = 0.0;
+   float fSampleVal = 0.0f;
    if(Alembic::AbcGeom::ICamera::matches(iObj.getMetaData())){
 
       Alembic::AbcGeom::ICamera objCamera = Alembic::AbcGeom::ICamera(iObj, Alembic::Abc::kWrapExisting);
@@ -143,6 +143,7 @@ void AlembicFloatController::GetValueLocalTime(TimeValue t, void *ptr, Interval 
       Alembic::AbcGeom::CameraSample sample;
       objCamera.getSchema().get(sample, sampleInfo.floorIndex);
 
+      double sampleVal;
 	   if(!getCameraSampleVal(objCamera, sampleInfo, sample, strProperty, sampleVal)){
 		   return;
 	   }
@@ -156,22 +157,36 @@ void AlembicFloatController::GetValueLocalTime(TimeValue t, void *ptr, Interval 
 			   sampleVal = (1.0 - sampleInfo.alpha) * sampleVal + sampleInfo.alpha * sampleVal2;
 		   }
       }
+
+      fSampleVal = (float)sampleVal;
    }
    else if(Alembic::AbcGeom::ILight::matches(iObj.getMetaData())){
 
       Alembic::AbcGeom::ILight objLight = Alembic::AbcGeom::ILight(iObj, Alembic::Abc::kWrapExisting);
 
-/*	   SampleInfo sampleInfo = getSampleInfo(sampleTime,
+	  SampleInfo sampleInfo = getSampleInfo(sampleTime,
                                              objLight.getSchema().getTimeSampling(),
                                              objLight.getSchema().getNumSamples());
-      Alembic::AbcGeo::LightSample sample;
-      objLight.getSchema().get(sample, sampleInfo.floorIndex); */     
+    
+      AbcM::IMaterialSchema matSchema = getMatSchema(objLight);
 
+      std::string strProp = strProperty;
+      
+      std::vector<std::string> parts;
+	  boost::split(parts, strProp, boost::is_any_of("."));
 
+      if(parts.size() == 3){
+      
+         const std::string& shaderTarget = parts[0];
+         const std::string& shaderType = parts[1];
+         const std::string& shaderProp = parts[2];
 
+         Abc::IFloatProperty fProp = readShaderScalerProp(matSchema, shaderTarget, shaderType, shaderProp);
+         fProp.get(fSampleVal, sampleInfo.floorIndex);
+      }
    }
 
-	const float fSampleVal = (float)sampleVal;
+	
 
 	if(g_bVerboseLogging){
 		ESS_LOG_INFO("Property "<<strProperty<<": "<<fSampleVal);

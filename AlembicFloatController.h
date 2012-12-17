@@ -10,6 +10,7 @@
 #include "AlembicNames.h"
 #include "Max.h"
 #include "resource.h"
+#include "AlembicLightUtilities.h"
 
 ClassDesc2* GetAlembicFloatControllerClassDesc();
 

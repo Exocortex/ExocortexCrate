@@ -1,7 +1,7 @@
 #include "stdafx.h"
 #include "AlembicPropertyUtils.h"
 #include <sstream>
-
+#include "AlembicMAXScript.h"
 
 void createStringPropertyDisplayModifier(std::string modname, std::vector<std::pair<std::string, std::string>>& nameValuePairs)
 {
@@ -52,7 +52,7 @@ void createStringPropertyDisplayModifier(std::string modname, std::vector<std::p
    ExecuteMAXScriptScript( EC_UTF8_to_TCHAR((char*)evalStream.str().c_str()) );
 }
 
-void createDisplayModifier(std::string modkey, std::string modname, std::vector<AbcProp>& props)
+Modifier* createDisplayModifier(std::string modkey, std::string modname, std::vector<AbcProp>& props)
 {
 
 
@@ -79,18 +79,18 @@ void createDisplayModifier(std::string modkey, std::string modname, std::vector<
       const AbcA::MetaData& metadata = props[i].propHeader.getMetaData();
 
       if(datatype.getPod() == AbcA::kFloat32POD && datatype.getExtent() == 1){
-         evalStream<<name<<" type:#float ui:e"<<name<<" default:"<<val;
+         evalStream<<name<<" type:#float animatable:true ui:e"<<name<<" default:"<<val;
       }
       else if(datatype.getPod() == AbcA::kFloat32POD && datatype.getExtent() == 3){
          if(metadata.get("interpretation") == std::string("rgb")){
-            evalStream<<name<<" type:#color ui:e"<<name<<" default:(["<<val<<"] as color)"; 
+            evalStream<<name<<" type:#color animatable:true ui:e"<<name<<" default:(["<<val<<"] as color)"; 
          }
          else{
-            evalStream<<name<<" type:#point3 ui:e"<<name<<" ["<<val<<"]"; 
+            evalStream<<name<<" type:#point3 animatable:true ui:e"<<name<<" ["<<val<<"]"; 
          }
       }
       else{
-         evalStream<<name<<" type:#string ui:e"<<name<<" default:\""<<val<<"\"";
+         evalStream<<name<<" type:#string animatable:true ui:e"<<name<<" default:\""<<val<<"\"";
       }
       evalStream<<"\n";
    }
@@ -129,5 +129,59 @@ void createDisplayModifier(std::string modkey, std::string modname, std::vector<
 
    evalStream<<"custattributes.add $.modifiers[\""<<modkey<<"\"] propAttribute baseobject:false"<<"\n";
 
-   ExecuteMAXScriptScript( EC_UTF8_to_TCHAR((char*)evalStream.str().c_str()) );
+   
+
+   //ESS_LOG_WARNING(evalStream.str());
+
+   evalStream<<"$.modifiers[\""<<modkey<<"\"]\n";
+   FPValue fpVal;
+   ExecuteMAXScriptScript( EC_UTF8_to_TCHAR((char*)evalStream.str().c_str()), 0, &fpVal);
+   Modifier* pMod = (Modifier*)fpVal.r;
+   return pMod;
+}
+
+void addControllersToModifier(std::string modkey, std::string modname, std::vector<AbcProp>& props, 
+                              const std::string& file, const std::string& identifier, alembic_importoptions &options)
+{
+
+
+   //the script assumes a single object is selected
+
+   std::stringstream evalStream;
+
+   for(int i=0; i<props.size(); i++){
+      std::string& name = props[i].name;
+      std::string& val = props[i].displayVal;
+      bool& bConstant = props[i].bConstant;
+
+      const AbcA::DataType& datatype = props[i].propHeader.getDataType();
+      const AbcA::MetaData& metadata = props[i].propHeader.getMetaData();
+
+      if(datatype.getPod() == AbcA::kFloat32POD && datatype.getExtent() == 1){
+         evalStream<<"$.modifiers[\""<<modkey<<"\"]."<<name<<".controller = AlembicFloatController()\n";
+         evalStream<<"$.modifiers[\""<<modkey<<"\"]."<<name<<".controller.path = \""<<file<<"\"\n";
+         evalStream<<"$.modifiers[\""<<modkey<<"\"]."<<name<<".controller.identifier = \""<<identifier<<"\"\n";
+         
+	     std::string objectNameName = EC_MCHAR_to_UTF8( options.pTimeControl->GetObjectName() );
+	
+         evalStream<<"$.modifiers[\""<<modkey<<"\"]."<<name<<".controller.time.controller = float_expression()\n";
+         evalStream<<"$.modifiers[\""<<modkey<<"\"]."<<name<<".controller.time.controller.AddScalarTarget \"current\" $'"<<objectNameName.c_str()<<"'.current.controller\n";
+         evalStream<<"$.modifiers[\""<<modkey<<"\"]."<<name<<".controller.time.controller.AddScalarTarget \"offset\" $'"<<objectNameName.c_str()<<"'.offset.controller\n";
+         evalStream<<"$.modifiers[\""<<modkey<<"\"]."<<name<<".controller.time.controller.AddScalarTarget \"factor\" $'"<<objectNameName.c_str()<<"'.factor.controller\n";
+         evalStream<<"$.modifiers[\""<<modkey<<"\"]."<<name<<".controller.time.controller.setExpression \"current * factor + offset\"\n";
+      }
+      else if(datatype.getPod() == AbcA::kFloat32POD && datatype.getExtent() == 3){
+
+      }
+      else{
+         
+      }
+      evalStream<<"\n";
+   }
+
+   
+
+   ESS_LOG_WARNING(evalStream.str());
+
+   ExecuteMAXScriptScript( EC_UTF8_to_TCHAR((char*)evalStream.str().c_str()));
 }

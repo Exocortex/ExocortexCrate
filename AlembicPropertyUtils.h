@@ -4,6 +4,7 @@
 #include <string>
 #include <vector>
 #include <Alembic/AbcCoreAbstract/PropertyHeader.h>
+#include "AlembicDefinitions.h"
 
 void createStringPropertyDisplayModifier(std::string modname, std::vector<std::pair<std::string, std::string>>& nameValuePairs);
 
@@ -22,7 +23,10 @@ struct AbcProp{
 
 };
 
-void createDisplayModifier(std::string modkey, std::string modname, std::vector<AbcProp>& props);
+Modifier* createDisplayModifier(std::string modkey, std::string modname, std::vector<AbcProp>& props);
+
+void addControllersToModifier(std::string modkey, std::string modname, std::vector<AbcProp>& props, 
+                              const std::string& file, const std::string& identifier, alembic_importoptions &options);
 
 
 #endif 
