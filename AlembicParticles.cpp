@@ -942,6 +942,7 @@ Mesh* AlembicParticles::GetRenderMesh(TimeValue t, INode *inode, View &view, BOO
 	needDelete = true;
 	int vertNum = 0;
 	int faceNum = 0;
+    int normNum = 0;
 
     {
 
@@ -964,6 +965,11 @@ Mesh* AlembicParticles::GetRenderMesh(TimeValue t, INode *inode, View &view, BOO
 			}
 			continue;
 		}
+
+        MeshNormalSpec *pNormalSpec = pMesh->GetSpecifiedNormals();
+        if(pNormalSpec){
+           normNum += pNormalSpec->GetNumNormals();
+        }
 
 		vertNum += pMesh->getNumVerts();
 		faceNum += pMesh->getNumFaces();
@@ -989,9 +995,11 @@ Mesh* AlembicParticles::GetRenderMesh(TimeValue t, INode *inode, View &view, BOO
 
 	pRenderMeshNormalSpec->SetAllExplicit(true);
 	pRenderMeshNormalSpec->SetNumFaces(faceNum);
-	pRenderMeshNormalSpec->SetNumNormals(vertNum);
-    pRenderMeshNormalSpec->Initialize();
+	pRenderMeshNormalSpec->SetNumNormals(normNum);
     }
+
+    MeshNormalFace *mpFace = &pRenderMeshNormalSpec->Face(0);
+	Point3 *mpNormal = &pRenderMeshNormalSpec->Normal(0);
 
 	//the mesh should be relative to the particle frame
 	Matrix3 inverseTM = Inverse(inode->GetObjectTM(t));
@@ -1007,6 +1015,8 @@ Mesh* AlembicParticles::GetRenderMesh(TimeValue t, INode *inode, View &view, BOO
 
 	int vertOffset=0;
 	int faceOffset=0;
+    int normOffset=0;
+    int normIndex=0;
 	for(int i=0; i<NumberOfRenderMeshes(); i++)
 	{
 		BOOL curNeedDelete = FALSE;
@@ -1066,12 +1076,22 @@ Mesh* AlembicParticles::GetRenderMesh(TimeValue t, INode *inode, View &view, BOO
 		MeshNormalSpec *pNormalSpec = pMesh->GetSpecifiedNormals();
 		if(pNormalSpec && curNumFaces == pNormalSpec->GetNumFaces() ){
             ESS_PROFILE_SCOPE("GetRenderMesh - Build and set normals - copy normals from normal spec");
-			//for(int j=0, curIndex=faceOffset; j<curNumFaces; j++, curIndex++){
-			//	pRenderMeshNormalSpec->SetNormal(curIndex, 0, pNormalSpec->GetNormal(j, 0) * meshTM_I_T);
-			//	pRenderMeshNormalSpec->SetNormal(curIndex, 1, pNormalSpec->GetNormal(j, 1) * meshTM_I_T);
-			//	pRenderMeshNormalSpec->SetNormal(curIndex, 2, pNormalSpec->GetNormal(j, 2) * meshTM_I_T);
-			//}
-            pRenderMeshNormalSpec->AppendAllChannels(pNormalSpec);
+
+			for(int j=0, curIndex=faceOffset; j<curNumFaces; j++, curIndex++){
+                mpFace[curIndex].SetNormalID(0, pNormalSpec->Face(j).GetNormalID(0) + normOffset);
+                mpFace[curIndex].SetNormalID(1, pNormalSpec->Face(j).GetNormalID(1) + normOffset);
+                mpFace[curIndex].SetNormalID(2, pNormalSpec->Face(j).GetNormalID(2) + normOffset);
+                mpFace[curIndex].SetSpecified(0, true);
+                mpFace[curIndex].SetSpecified(1, true);
+                mpFace[curIndex].SetSpecified(2, true);
+			}
+            
+            normOffset += pNormalSpec->GetNumNormals();
+
+            for(int j=0; j<pNormalSpec->GetNumNormals(); j++){
+               mpNormal[normIndex] = pNormalSpec->Normal(j) * meshTM_I_T;
+               normIndex++;
+            }
 		}
 		else{
 
