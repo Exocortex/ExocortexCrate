@@ -1,4 +1,3 @@
-
 function CreateAlembicMetadataModifier selectedObject name value = (
 
 	if selectedObject != undefined then (
@@ -7,7 +6,7 @@ function CreateAlembicMetadataModifier selectedObject name value = (
 
 			AlembicMetaDataModifier = EmptyModifier()
 			AlembicMetaDataModifier.name = "Alembic Metadata"
-			modCount = $.modifiers.count
+			modCount = selectedObject.modifiers.count
 			addmodifier selectedObject AlembicMetaDataModifier before:modCount
 			selectedObject.modifiers["Alembic Metadata"].enabled = false
 		)
@@ -19,8 +18,8 @@ function CreateAlembicMetadataModifier selectedObject name value = (
 		"(\n" +
 		"	parameters AlembicMetadataPRM1 rollout:AlembicMetadataRLT1\n" +
 		"	(\n" +
-		"		name type:#string ui:eName default:\"" + name + "\"\n" +
-		"		value type:#string ui:eValue default:\"" + value + "\"\n" +
+		"		_name type:#string ui:eName default:\"" + name + "\"\n" +
+		"		_value type:#string ui:eValue default:\"" + (value as string) + "\"\n" +
 		"	)\n" +
 		"	rollout AlembicMetadataRLT1 \"Alembic Metadata " + (count as string) + "\"\n" +
 		"	(\n" +

@@ -44,14 +44,6 @@ typedef struct _alembic_importoptions alembic_importoptions;
 extern int AlembicImport_Points(const std::string &file, AbcG::IObject& iObj, alembic_importoptions &options, INode** pMaxNode);
 
 class AlembicParticles;
-
-typedef struct _viewportmesh
-{
-    Mesh *mesh;
-    BOOL needDelete;
-    _viewportmesh() : mesh(NULL), needDelete(FALSE) {}
-} viewportmesh;
-
 class IAlembicParticlesExt;
 
 class AlembicParticles : public SimpleParticle
@@ -113,7 +105,7 @@ public:
 
     virtual int NumberOfRenderMeshes();
     virtual Mesh* GetMultipleRenderMesh(TimeValue  t,  INode *inode,  View &view,  BOOL &needDelete,  int meshNumber); 
-	Mesh* GetMultipleRenderMesh_Internal(TimeValue  t,  INode *inode,  View &view,  BOOL &needDelete,  int meshNumber); 
+	Mesh* GetMultipleRenderMesh_Internal(TimeValue  t,  INode *inode,  View &view,  BOOL &needDelete,  int meshNumber, bool bUseCache=true); 
     virtual void GetMultipleRenderMeshTM (TimeValue  t, INode *inode, View &view, int  meshNumber, Matrix3 &meshTM, Interval &meshTMValid); 
 	void GetMultipleRenderMeshTM_Internal(TimeValue  t, INode *inode, View &view, int  meshNumber, Matrix3 &meshTM, Interval &meshTMValid, bool bCalledFromViewport=false);
 	virtual Mesh* GetRenderMesh(TimeValue t, INode *inode, View &view, BOOL &needDelete);
@@ -153,7 +145,8 @@ private:
 	void            FillParticleShapeNodes(AbcG::IPoints &iPoints, const SampleInfo &sampleInfo);
     INode*          GetParticleMeshNode(int meshNumber, INode *displayNode);
   //  void            ClearCurrentViewportMeshes();
-	void	ClearMeshCache();
+	//void	ClearMeshCache();
+    void    clearViewportMeshCache();
 
 private:
     Mesh *BuildPointMesh(int meshNumber, TimeValue t, INode *node, View& view, BOOL &needDelete);
@@ -163,7 +156,7 @@ private:
     Mesh *BuildConeMesh(int meshNumber, TimeValue t, INode *node, View& view, BOOL &needDelete);
     Mesh *BuildDiscMesh(int meshNumber, TimeValue t, INode *node, View& view, BOOL &needDelete);
     Mesh *BuildRectangleMesh(int meshNumber, TimeValue t, INode *node, View& view, BOOL &needDelete);
-    Mesh *BuildInstanceMesh(int meshNumber, TimeValue t, INode *node, View& view, BOOL &needDelete);
+    Mesh *BuildInstanceMesh(int meshNumber, TimeValue t, INode *node, View& view, BOOL &needDelete, bool bUseCache);
     Mesh *BuildNbElementsMesh(int meshNumber, TimeValue t, INode *node, View& view, BOOL &needDelete);
 private:
     std::vector<Quat> m_ParticleOrientations;
@@ -175,21 +168,36 @@ private:
     std::vector<INode*> m_InstanceShapeINodes;
 	std::vector<VertColor> m_VCArray;
 
-	struct meshInfo{
-		BOOL bMeshNeedDelete;
-		Mesh* pMesh;
+	//struct meshInfo{
+	//	BOOL bMeshNeedDelete;
+	//	Mesh* pMesh;
 
-		meshInfo():bMeshNeedDelete(FALSE), pMesh(NULL)
-		{}
-	};
-	typedef std::pair<INode*, TimeValue> nodeTimePair;
-	typedef std::map<nodeTimePair, meshInfo> nodeAndTimeToMeshMap;
+	//	meshInfo():bMeshNeedDelete(FALSE), pMesh(NULL)
+	//	{}
+	//};
+	//typedef std::pair<INode*, TimeValue> nodeTimePair;
+	//typedef std::map<nodeTimePair, meshInfo> nodeAndTimeToMeshMap;
 
-	nodeAndTimeToMeshMap meshCacheMap;
+	//nodeAndTimeToMeshMap meshCacheMap;
 
     //size_t m_TotalShapesToEnumerate;
    // std::vector<viewportmesh> m_ParticleViewportMeshes;
+
+   struct InstanceMesh
+   {
+       Mesh *mesh;
+       BOOL needDelete;
+       InstanceMesh() : mesh(NULL), needDelete(FALSE) {}
+   };
+
+    typedef std::map<std::string, InstanceMesh> InstanceMeshCache;   
+    InstanceMeshCache m_InstanceMeshCache;
+
     std::string m_CachedAbcFile;
+public:
+
+
+   
 private:
     GenBoxObject *m_pBoxMaker;
     GenSphere *m_pSphereMaker;

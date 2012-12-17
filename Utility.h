@@ -132,6 +132,8 @@ std::string getNodeAlembicPath(const std::string& name, bool bFlatten);
 typedef std::map<std::string, INode*> INodeMap;
 void buildINodeMap(INodeMap& nodeMap);
 
+std::string alembicPathToMaxPath(const std::string& path);
+
 Modifier* FindModifier(INode* node, char* name);
 Modifier* FindModifier(INode* node, Class_ID obtype, const char* identifier);
 Modifier* FindModifier(INode* node, Class_ID obtype);
@@ -174,7 +176,7 @@ public:
 	void ClearMeshSmoothingGroupNormals();
 };
 
-
+void printChannelIntervals(TimeValue t, Object* obj);
 
 
 #endif  // _FOUNDATION_H_

@@ -65,6 +65,8 @@ Abc::OCompoundProperty AlembicPoints::GetCompound()
 
 bool AlembicPoints::Save(double time, bool bLastFrame)
 {
+   ESS_PROFILE_FUNC();
+
     // Note: Particles are always considered to be animated even though
     //       the node does not have the IsAnimated() flag.
 
@@ -150,6 +152,21 @@ bool AlembicPoints::Save(double time, bool bLastFrame)
     std::vector<Abc::Quatf> orientationVec;
     std::vector<Abc::Quatf> angularVelocityVec;
     std::vector<Abc::C4f> colorVec;
+
+    positionVec.reserve(numParticles);
+    velocityVec.reserve(numParticles);
+    scaleVec.reserve(numParticles);
+    widthVec.reserve(numParticles);
+    ageVec.reserve(numParticles);
+    massVec.reserve(numParticles);
+    shapeTimeVec.reserve(numParticles);
+    idVec.reserve(numParticles);
+    shapeTypeVec.reserve(numParticles);
+    shapeInstanceIDVec.reserve(numParticles);
+    orientationVec.reserve(numParticles);
+    angularVelocityVec.reserve(numParticles);
+    colorVec.reserve(numParticles);
+
     //std::vector<std::string> instanceNamesVec;
     Abc::Box3d bbox;
     bool constantPos = true;
@@ -184,6 +201,9 @@ bool AlembicPoints::Save(double time, bool bLastFrame)
 	ExoNullView nullView;
 	particleGroupInterface groupInterface(particlesExt, obj, GetRef().node, &nullView);
 
+    {
+    ESS_PROFILE_SCOPE("AlembicPoints::SAVE - numParticlesLoop");
+
 	for (int i = 0; i < numParticles; ++i)
 	{
 		Abc::V3f pos(0.0);
@@ -204,6 +224,8 @@ bool AlembicPoints::Save(double time, bool bLastFrame)
 
 #ifdef THINKING_PARTICLES
 		if(pThinkingParticleMat){
+            
+
 			if(pTPMasterSystemInt->IsAlive(i) == FALSE){
 				continue;
 			}
@@ -213,6 +235,8 @@ bool AlembicPoints::Save(double time, bool bLastFrame)
 			if(ageValue == -1){
 				continue;
 			}
+
+            ESS_PROFILE_SCOPE("AlembicPoints::SAVE - numParticlesLoop - ThinkingParticles");
 			age = (float)GetSecondsFromTimeValue(ageValue);
 
 			//pos = ConvertMaxPointToAlembicPoint(*particlesExt->GetParticlePositionByIndex(i));
@@ -250,9 +274,14 @@ bool AlembicPoints::Save(double time, bool bLastFrame)
 			meshTM.IdentityMatrix();
 			BOOL bNeedDelete = FALSE;
 			BOOL bChanged = FALSE;
-			Mesh* pMesh = pThinkingParticleMat->GetParticleRenderMesh(ticks, GetRef().node, nullView, bNeedDelete, i, meshTM, bChanged);
+            Mesh* pMesh = NULL;
+            {
+            ESS_PROFILE_SCOPE("AlembicPoints::SAVE - numParticlesLoop - ThinkingParticles - GetParticleRenderMesh");
+			pMesh = pThinkingParticleMat->GetParticleRenderMesh(ticks, GetRef().node, nullView, bNeedDelete, i, meshTM, bChanged);
+            }
 
 			if(pMesh){
+                ESS_PROFILE_SCOPE("AlembicPoints::SAVE - numParticlesLoop - ThinkingParticles - CacheShapeMesh");
 				CacheShapeMesh(pMesh, bNeedDelete, meshTM, nMatId, i, ticks, shapetype, shapeInstanceId, shapeInstanceTime);
 			}
 			else{
@@ -320,6 +349,9 @@ bool AlembicPoints::Save(double time, bool bLastFrame)
 			width = pSimpleParticle->ParticleSize(ticks, i);
 		}
 
+        {
+        ESS_PROFILE_SCOPE("AlembicPoints::SAVE - numParticlesLoop - end loop save");
+
 		//move everything from world space to local space
 		pos = pos * nodeWorldTransInv;
 
@@ -362,12 +394,15 @@ bool AlembicPoints::Save(double time, bool bLastFrame)
 		{
 			mJob->GetArchiveBBox().extendBy(pos);
 		}
+
+        }
 	}
 
-
+    }
 
     if (numParticles > 1)
     {
+       ESS_PROFILE_SCOPE("AlembicPoints::Save - vectorResize");
         if (constantPos)        { positionVec.resize(1); }
         if (constantVel)        { velocityVec.resize(1); }
         if (constantScale)      { scaleVec.resize(1); }
@@ -378,6 +413,8 @@ bool AlembicPoints::Save(double time, bool bLastFrame)
 		if (constantColor)		{ colorVec.resize(1); }
     }
 
+    {
+    ESS_PROFILE_SCOPE("AlembicPoints::Save - sample writing");
     // Store the information into our properties and points schema
     Abc::P3fArraySample positionSample( positionVec);
     Abc::P3fArraySample velocitySample(velocityVec);
@@ -391,15 +428,7 @@ bool AlembicPoints::Save(double time, bool bLastFrame)
     Abc::UInt16ArraySample shapeInstanceIDSample(shapeInstanceIDVec);
     Abc::QuatfArraySample orientationSample(orientationVec);
     Abc::QuatfArraySample angularVelocitySample(angularVelocityVec);
-    Abc::C4fArraySample colorSample(colorVec);
-
-	//if(instanceNamesVec.size() == 1){
-	//for some reason the .dims property is not written when there is exactly one entry if we don't push an empty string
-	//having an extra unreferenced entry seems to be harmless
-	mInstanceNames.push_back("");
-	//}
-
-    Abc::StringArraySample instanceNamesSample(mInstanceNames);
+    Abc::C4fArraySample colorSample(colorVec);  
 
     mScaleProperty.set(scaleSample);
     mAgeProperty.set(ageSample);
@@ -410,7 +439,6 @@ bool AlembicPoints::Save(double time, bool bLastFrame)
     mOrientationProperty.set(orientationSample);
     mAngularVelocityProperty.set(angularVelocitySample);
     mColorProperty.set(colorSample);
-    mInstanceNamesProperty.set(instanceNamesSample);
 
     mPointsSample.setPositions(positionSample);
     mPointsSample.setVelocities(velocitySample);
@@ -420,10 +448,11 @@ bool AlembicPoints::Save(double time, bool bLastFrame)
 	mPointsSchema.getChildBoundsProperty().set( bbox);
 
     mPointsSchema.set(mPointsSample);
+    }
 
     mNumSamples++;
 
-	mInstanceNames.pop_back();
+	//mInstanceNames.pop_back();
 
 	if(bAutomaticInstancing){
 		saveCurrentFrameMeshes();
@@ -432,6 +461,24 @@ bool AlembicPoints::Save(double time, bool bLastFrame)
 	if(bRenderStateForced){
 		ipfSystem->SetRenderState(false);
 	}
+
+    if(bLastFrame){
+       ESS_PROFILE_SCOPE("AlembicParticles::Save - save instance names property");
+
+       std::vector<std::string> instanceNames(mNumShapeMeshes);
+
+       for(faceVertexHashToShapeMap::iterator it = mShapeMeshCache.begin(); it != mShapeMeshCache.end(); it++){
+          std::stringstream pathStream;
+          pathStream << "/" << it->second.name << "Xfo/" << it->second.name;
+          instanceNames[it->second.nMeshInstanceId] = pathStream.str();
+       }
+
+	   //for some reason the .dims property is not written when there is exactly one entry if we don't push an empty string
+	   //having an extra unreferenced entry seems to be harmless
+	   instanceNames.push_back("");
+
+       mInstanceNamesProperty.set(Abc::StringArraySample(instanceNames));
+    }
 
     return true;
 }
@@ -608,12 +655,12 @@ void AlembicPoints::ReadShapeFromOperator( IParticleGroup *particleGroup, PFSimp
 		std::string nodePath = getNodeAlembicPath( EC_MCHAR_to_UTF8( pNode->GetName() ), bFlatten);
 
         // Find if the name is alerady registered, otherwise add it to the list
-        instanceId = FindInstanceName(nodePath);
-        if (instanceId == USHRT_MAX)
-        {
-			mInstanceNames.push_back(nodePath);
-            instanceId = (Abc::uint16_t)mInstanceNames.size()-1;
-        }
+   //     instanceId = FindInstanceName(nodePath);
+   //     if (instanceId == USHRT_MAX)
+   //     {
+			//mInstanceNames.push_back(nodePath);
+   //         instanceId = (Abc::uint16_t)mInstanceNames.size()-1;
+   //     }
 
         // Determine if we have an animated shape
         BOOL animatedShape = pblock->GetInt(PFlow_kInstanceShape_animatedShape);
@@ -827,13 +874,13 @@ void AlembicPoints::GetShapeType(IParticleObjectExt *pExt, int particleId, TimeV
 		}
 		AlembicPoints::shapeInfo& sInfo = mPerActionListShapeMap[particleActionListNode];
 		
-		if(sInfo.type == ShapeType_NbElements){
-			sInfo.type = type;
-			sInfo.animationTime = animationTime;
-			if(sInfo.type == ShapeType_Instance){
-				sInfo.instanceName = mInstanceNames[instanceId];
-			}
-		}
+		//if(sInfo.type == ShapeType_NbElements){
+		//	sInfo.type = type;
+		//	sInfo.animationTime = animationTime;
+		//	if(sInfo.type == ShapeType_Instance){
+		//		sInfo.instanceName = mInstanceNames[instanceId];
+		//	}
+		//}
 	}
 	else{ //read the shape from the cache
 
@@ -857,13 +904,13 @@ void AlembicPoints::GetShapeType(IParticleObjectExt *pExt, int particleId, TimeV
 		if(sInfo.type != ShapeType_NbElements){//We have found shape, so add it to the list if necessary
 
 			// Find if the name is alerady registered, otherwise add it to the list
-			instanceId = FindInstanceName(sInfo.instanceName);
-			if (instanceId == USHRT_MAX)
-			{
-				mInstanceNames.push_back(sInfo.instanceName);
-				instanceId = (Abc::uint16_t)mInstanceNames.size()-1;
-			}
-			type = sInfo.type;
+			//instanceId = FindInstanceName(sInfo.instanceName);
+			//if (instanceId == USHRT_MAX)
+			//{
+			//	mInstanceNames.push_back(sInfo.instanceName);
+			//	instanceId = (Abc::uint16_t)mInstanceNames.size()-1;
+			//}
+			//type = sInfo.type;
 		}
 		else{
 			int nBornIndex = pExt->GetParticleBornIndex(particleId);
@@ -873,20 +920,22 @@ void AlembicPoints::GetShapeType(IParticleObjectExt *pExt, int particleId, TimeV
 	}
 }
 
-Abc::uint16_t AlembicPoints::FindInstanceName(const std::string& name)
-{
-	for ( int i = 0; i < mInstanceNames.size(); i += 1){
-		if (strcmp(mInstanceNames[i].c_str(), name.c_str()) == 0){
-			return i;
-		}
-	}
-	return USHRT_MAX;
-}
-
-
+//Abc::uint16_t AlembicPoints::FindInstanceName(const std::string& name)
+//{
+//    ESS_PROFILE_FUNC();
+//
+//	for ( int i = 0; i < mInstanceNames.size(); i += 1){
+//		if (strcmp(mInstanceNames[i].c_str(), name.c_str()) == 0){
+//			return i;
+//		}
+//	}
+//	return USHRT_MAX;
+//}
 
 void AlembicPoints::CacheShapeMesh(Mesh* pShapeMesh, BOOL bNeedDelete, Matrix3 meshTM, int nMatId, int particleId, TimeValue ticks, ShapeType &type, Abc::uint16_t &instanceId, float &animationTime)
 {
+    ESS_PROFILE_FUNC();
+
 	type = ShapeType_Instance;
 	//animationTime = 0;
 	
@@ -896,7 +945,9 @@ void AlembicPoints::CacheShapeMesh(Mesh* pShapeMesh, BOOL bNeedDelete, Matrix3 m
 		return;
 	}
 
-	meshDigests digests;
+    meshDigests digests;
+    {
+    ESS_PROFILE_SCOPE("AlembicPoints::CacheShapeMesh - compute hash");
 	AbcU::MurmurHash3_x64_128( pShapeMesh->verts, pShapeMesh->numVerts * sizeof(Point3), sizeof(Point3), digests.Vertices.words );
 	AbcU::MurmurHash3_x64_128( pShapeMesh->faces, pShapeMesh->numFaces * sizeof(Face), sizeof(Face), digests.Faces.words );
 	if(mJob->GetOption("exportMaterialIds")){
@@ -918,14 +969,14 @@ void AlembicPoints::CacheShapeMesh(Mesh* pShapeMesh, BOOL bNeedDelete, Matrix3 m
 	if(mJob->GetOption("exportUVs")){
 		//TODO...
 	}
+    }
 	
 	mTotalShapeMeshes++;
 
 	meshInfo currShapeInfo;
 	faceVertexHashToShapeMap::iterator it = mShapeMeshCache.find(digests);
 	if( it != mShapeMeshCache.end() ){
-		meshInfo& mi = it->second;
-		currShapeInfo = mi;
+		currShapeInfo = it->second;
 	}
 	else{
 		meshInfo& mi = mShapeMeshCache[digests];
@@ -933,12 +984,13 @@ void AlembicPoints::CacheShapeMesh(Mesh* pShapeMesh, BOOL bNeedDelete, Matrix3 m
 		mi.nMatId = nMatId;
 		
 		std::stringstream nameStream;
-		nameStream<< EC_MCHAR_to_UTF8( GetRef().node->GetName() ) <<" ";
+		nameStream<< EC_MCHAR_to_UTF8( GetRef().node->GetName() ) <<"_";
 		nameStream<<"InstanceMesh"<<mNumShapeMeshes;
 		mi.name=nameStream.str();
 
 		mi.bNeedDelete = bNeedDelete;
 		mi.meshTM = meshTM;
+        mi.nMeshInstanceId = mNumShapeMeshes;
 
 		currShapeInfo = mi;
 		mNumShapeMeshes++;
@@ -949,22 +1001,32 @@ void AlembicPoints::CacheShapeMesh(Mesh* pShapeMesh, BOOL bNeedDelete, Matrix3 m
 		//ESS_LOG_WARNING("Adding shape with hash("<<vertexDigest.str()<<", "<<faceDigest.str()<<") \n auto assigned name "<<mi.name <<" efficiency:"<<(double)mNumShapeMeshes/mTotalShapeMeshes);
 	}
 
-	std::string pathName("/");
-	pathName += currShapeInfo.name;
+    instanceId = currShapeInfo.nMeshInstanceId;
 
-	instanceId = FindInstanceName(pathName);
-	if (instanceId == USHRT_MAX){
-		mInstanceNames.push_back(pathName);
-		instanceId = (Abc::uint16_t)mInstanceNames.size()-1;
-	}
+ //   {
+ //      ESS_PROFILE_SCOPE("CacheShapeMesh push_back instance name");
+
+	//std::string pathName("/");
+	//pathName += currShapeInfo.name;
+
+	//instanceId = FindInstanceName(pathName);
+	//if (instanceId == USHRT_MAX){
+	//	mInstanceNames.push_back(pathName);
+	//	instanceId = (Abc::uint16_t)mInstanceNames.size()-1;
+	//}
+
+ //   }
 }
 
 //we have to save out all mesh encountered on the current frame of this object immediately, because 
 //the pointers will no longer be valid when the object is evaluated at a new time
 void AlembicPoints::saveCurrentFrameMeshes()
 {
+    ESS_PROFILE_FUNC();
+
 	for(int i=0; i<mMeshesToSaveForCurrentFrame.size(); i++){
 
+        //TODO: save immediately instead accumulating in a vector
 		meshInfo* mi = mMeshesToSaveForCurrentFrame[i];
 
 		if(mi->pMesh){
@@ -981,16 +1043,22 @@ void AlembicPoints::saveCurrentFrameMeshes()
 			//gather the mesh data
 			mi->meshTM.IdentityMatrix();
 			IntermediatePolyMesh3DSMax finalPolyMesh;
+            {
+            ESS_PROFILE_SCOPE("AlembicPoints::saveCurrentFrameMeshes - finalPolyMesh.Save");
 			finalPolyMesh.Save(options, pMesh, NULL, mi->meshTM, NULL, mi->nMatId, true, NULL);
+            }
 
+            AbcG::OPolyMeshSchema::Sample meshSample;
+            AbcG::OPolyMeshSchema meshSchema;
+            {
+            ESS_PROFILE_SCOPE("AlembicPoints::saveCurrentFrameMeshes - save xforms, bbox, geo, topo");
 			//save out the mesh xForm
-		
 			std::string xformName = mi->name + "Xfo";
 			AbcG::OXform xform(mJob->GetArchive().getTop(), xformName.c_str(), GetCurrentJob()->GetAnimatedTs());
 			AbcG::OXformSchema& xformSchema = xform.getSchema();//mi->xformSchema;
 
 			AbcG::OPolyMesh mesh(xform, mi->name.c_str(), GetCurrentJob()->GetAnimatedTs());
-			AbcG::OPolyMeshSchema& meshSchema = mesh.getSchema();
+			meshSchema = mesh.getSchema();
 
 			AbcG::XformSample xformSample;
 
@@ -1011,20 +1079,21 @@ void AlembicPoints::saveCurrentFrameMeshes()
 			mJob->GetArchiveBBox().extendBy(bbox);
 
 			//save out the mesh data			
-			AbcG::OPolyMeshSchema::Sample meshSample;
-
 			meshSample.setPositions(Abc::P3fArraySample(finalPolyMesh.posVec));
 			meshSample.setSelfBounds(finalPolyMesh.bbox);
 			meshSchema.getChildBoundsProperty().set(finalPolyMesh.bbox);
 
 			meshSample.setFaceCounts(Abc::Int32ArraySample(finalPolyMesh.mFaceCountVec));
 			meshSample.setFaceIndices(Abc::Int32ArraySample(finalPolyMesh.mFaceIndicesVec));
+            }
 
 			if(mJob->GetOption("validateMeshTopology")){
+                ESS_PROFILE_SCOPE("AlembicPoints::saveCurrentFrameMeshes - validateMeshTopology");
 				mJob->mMeshErrors += validateAlembicMeshTopo(finalPolyMesh.mFaceCountVec, finalPolyMesh.mFaceIndicesVec, mi->name);
 			}
 
 			if(mJob->GetOption("exportNormals")){
+                ESS_PROFILE_SCOPE("AlembicPoints::saveCurrentFrameMeshes - exportNormals");
 				AbcG::ON3fGeomParam::Sample normalSample;
 				normalSample.setScope(AbcG::kFacevaryingScope);
 				normalSample.setVals(Abc::N3fArraySample(finalPolyMesh.mIndexedNormals.values));
@@ -1033,6 +1102,7 @@ void AlembicPoints::saveCurrentFrameMeshes()
 			}
 
 			if(mJob->GetOption("exportMaterialIds")){
+                ESS_PROFILE_SCOPE("AlembicPoints::saveCurrentFrameMeshes - exportMaterialIds");
 				Abc::OUInt32ArrayProperty mMatIdProperty = 
 					Abc::OUInt32ArrayProperty(meshSchema, ".materialids", meshSchema.getMetaData(), mJob->GetAnimatedTs());
 				mMatIdProperty.set(Abc::UInt32ArraySample(finalPolyMesh.mMatIdIndexVec));
@@ -1055,7 +1125,10 @@ void AlembicPoints::saveCurrentFrameMeshes()
 				//TODO...
 			}
 
+            {
+            ESS_PROFILE_SCOPE("AlembicPoints::saveCurrentFrameMeshes meshSchema.set");
 			meshSchema.set(meshSample);
+            }
 
 			if(mi->bNeedDelete){
 				delete mi->pMesh;

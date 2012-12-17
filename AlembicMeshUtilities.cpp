@@ -40,10 +40,16 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
    AbcG::IPolyMesh objMesh;
    AbcG::ISubD objSubD;
 
+   {
+
+   ESS_PROFILE_SCOPE("AlembicImport_FillInPolyMesh_Internal - objMesh and objSubD");
+
    if(AbcG::IPolyMesh::matches((*options.pIObj).getMetaData()))
        objMesh = AbcG::IPolyMesh(*options.pIObj,Abc::kWrapExisting);
    else
        objSubD = AbcG::ISubD(*options.pIObj,Abc::kWrapExisting);
+
+   }
 
    if(!objMesh.valid() && !objSubD.valid())
        return;
@@ -54,67 +60,64 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
    if(options.nDataFillFlags & ALEMBIC_DATAFILL_IGNORE_SUBFRAME_SAMPLES){
       RoundTicksToNearestFrame(nTicks, fRoundedTimeAlpha);
    }
-  double sampleTime = GetSecondsFromTimeValue(nTicks);
+   double sampleTime = GetSecondsFromTimeValue(nTicks);
 
-  SampleInfo sampleInfo;
-  if(objMesh.valid()) {
-		ESS_PROFILE_SCOPE("getSampleInfo");
+   SampleInfo sampleInfo;
+   if(objMesh.valid()) {
+	  ESS_PROFILE_SCOPE("getSampleInfo");
       sampleInfo = getSampleInfo(
          sampleTime,
          objMesh.getSchema().getTimeSampling(),
          objMesh.getSchema().getNumSamples()
       );
-  }
-   else
+   }
+   else{
       sampleInfo = getSampleInfo(
          sampleTime,
          objSubD.getSchema().getTimeSampling(),
          objSubD.getSchema().getNumSamples()
       );
-
+   }
    AbcG::IPolyMeshSchema::Sample polyMeshSample;
    AbcG::ISubDSchema::Sample subDSample;
 
-   if(objMesh.valid())
-       objMesh.getSchema().get(polyMeshSample,sampleInfo.floorIndex);
-   else
-       objSubD.getSchema().get(subDSample,sampleInfo.floorIndex);
+   if(objMesh.valid()) objMesh.getSchema().get(polyMeshSample,sampleInfo.floorIndex);
+   else objSubD.getSchema().get(subDSample,sampleInfo.floorIndex);
 
    int currentNumVerts = options.pMNMesh->numv;
 
-  	   Abc::P3fArraySamplePtr meshPos;
-       Abc::V3fArraySamplePtr meshVel;
+   Abc::P3fArraySamplePtr meshPos;
+   Abc::V3fArraySamplePtr meshVel;
 
-       bool hasDynamicTopo = options.pObjectCache->isMeshTopoDynamic;//isAlembicMeshTopoDynamic( options.pIObj );
-       if(objMesh.valid())
-       {
-     		ESS_PROFILE_SCOPE("Mesh getPositions/getVelocities/faceCountProp");
-          meshPos = polyMeshSample.getPositions();
-           meshVel = polyMeshSample.getVelocities();
-       }
-       else
-       {
-     		ESS_PROFILE_SCOPE("SubD getPositions/getVelocities/faceCountProp");
-           meshPos = subDSample.getPositions();
-           meshVel = subDSample.getVelocities();
-       }
+   bool hasDynamicTopo = options.pObjectCache->isMeshTopoDynamic;//isAlembicMeshTopoDynamic( options.pIObj );
+   if(objMesh.valid())
+   {
+   ESS_PROFILE_SCOPE("Mesh getPositions/getVelocities/faceCountProp");
+     meshPos = polyMeshSample.getPositions();
+     meshVel = polyMeshSample.getVelocities();
+   }
+   else
+   {
+   ESS_PROFILE_SCOPE("SubD getPositions/getVelocities/faceCountProp");
+     meshPos = subDSample.getPositions();
+     meshVel = subDSample.getVelocities();
+   }
 
 	//MH: What is this code for? //related to vertex blending
 	//note that the fillInMesh call will crash if the points are not initilaized (tested max 2013)
    if(  ( options.nDataFillFlags & ALEMBIC_DATAFILL_FACELIST ) ||
 	   ( options.nDataFillFlags & ALEMBIC_DATAFILL_VERTEX ) ) {
-		   if (currentNumVerts != meshPos->size() && ! options.pMNMesh->GetFlag( MN_MESH_RATSNEST ) )
- 		   {
-       		ESS_PROFILE_SCOPE("resize and clear vertices");
-			   int numVerts = static_cast<int>(meshPos->size());
-			   
-			   options.pMNMesh->setNumVerts(numVerts);
-				MNVert* pMeshVerties = options.pMNMesh->V(0);
-			   for(int i=0;i<numVerts;i++)
-			   {
-				   pMeshVerties[i].p = Point3(0,0,0);
-			   }
+	   if (currentNumVerts != meshPos->size() && ! options.pMNMesh->GetFlag( MN_MESH_RATSNEST ) )
+	   {
+    		ESS_PROFILE_SCOPE("resize and clear vertices");
+		   int numVerts = static_cast<int>(meshPos->size());
+		   
+		   options.pMNMesh->setNumVerts(numVerts);
+		   MNVert* pMeshVerties = options.pMNMesh->V(0);
+		   for(int i=0;i<numVerts;i++){
+			   pMeshVerties[i].p = Point3(0,0,0);
 		   }
+	   }
 
 		validateMeshes( options, "ALEMBIC_DATAFILL_FACELIST | ALEMBIC_DATAFILL_VERTEX" );
    }
@@ -134,6 +137,8 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
 			  vArray.push_back(pPositionArray[i]);
 		   }
 
+           Abc::P3fArraySamplePtr meshPos2;
+
 		   // blend - either between samples or using point velocities
 		   if( ((options.nDataFillFlags & ~ALEMBIC_DATAFILL_IGNORE_SUBFRAME_SAMPLES) && sampleInfo.alpha != 0.0f ) || 
 			   ((options.nDataFillFlags & ALEMBIC_DATAFILL_IGNORE_SUBFRAME_SAMPLES) && fRoundedTimeAlpha != 0.0f ) )
@@ -145,12 +150,12 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
 			  {
 				  AbcG::IPolyMeshSchema::Sample polyMeshSample2;
 				  objMesh.getSchema().get(polyMeshSample2,sampleInfo.ceilIndex);
-				  meshPos = polyMeshSample2.getPositions();
+				  meshPos2 = polyMeshSample2.getPositions();
 
-				  const int posSize = meshPos ? (const int)meshPos->size() : 0;
+				  const int posSize = meshPos2 ? (const int)meshPos2->size() : 0;
 				  const int velSize = meshVel ? (const int)meshVel->size() : 0;
 	             
-				  if(meshPos->size() == vArray.size() && !hasDynamicTopo)
+				  if(meshPos2->size() == vArray.size() && !hasDynamicTopo)
 					  bSampleInterpolate = true;
 				  else if(meshVel && meshVel->size() == vArray.size())
 					  bVelInterpolate = true;
@@ -159,16 +164,16 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
 			  {
 				  AbcG::ISubDSchema::Sample subDSample2;
 				  objSubD.getSchema().get(subDSample2,sampleInfo.ceilIndex);
-				  meshPos = subDSample2.getPositions();
+				  meshPos2 = subDSample2.getPositions();
 				  bSampleInterpolate = true;
 			  }
 
 			  float sampleInfoAlpha = (float)sampleInfo.alpha; 
 			  if (bSampleInterpolate)
 			  {
-				  pPositionArray = meshPos->get();
+				  pPositionArray = meshPos2->get();
 
-				  for(size_t i=0;i<meshPos->size();i++)
+				  for(size_t i=0;i<meshPos2->size();i++)
 				  {	
 					  vArray[i] += (pPositionArray[i] - vArray[i]) * sampleInfoAlpha; 
 				  }
@@ -282,27 +287,6 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
 			options.pMNMesh->SetFlag( MN_MESH_NONTRI, FALSE );
 		}
 
-		//the FillInMesh call breaks the topology of some meshes in 3DS Max 2012
-		//(my test case in referenced here: https://github.com/Exocortex/ExocortexAlembic3DSMax/issues/191)
-		//the FillInMesh call is necessary to prevent all meshes from crashing 3DS Max 2010 and 2011
-		//Tested in 2013, some simples meshes seem to crash, so I'm putting it back in
-
-#if 1//MAX_PRODUCT_YEAR_NUMBER < 2012
-  	  if( ! options.pMNMesh->GetFlag( MN_MESH_FILLED_IN ) ) {
-			  //HighResolutionTimer tFillInMesh;
-			  {      	
-				  ESS_PROFILE_SCOPE("FillInMesh");
- 
-				  options.pMNMesh->FillInMesh();
-			  }
-			  //ESS_LOG_WARNING("FillInMesh time: "<<tFillInMesh.elapsed());
-			  if( options.pMNMesh->GetFlag(MN_MESH_RATSNEST) ) {
-				  ESS_LOG_ERROR( "Mesh is a 'Rat's Nest' (more than 2 faces per edge) and not fully supported, fileName: " << options.fileName << " identifier: " << options.identifier );
-			  }
-		  }
-
-#endif
-	
 		validateMeshes( options, "ALEMBIC_DATAFILL_FACELIST" );
 
 	   }//if(sampleCount != numIndices)
@@ -310,6 +294,31 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
 			ESS_LOG_WARNING("faceCount, index array mismatch. Not filling in indices (did you check 'dynamic topology' when exporting?).");
 	   }
    }
+
+
+   //3DS Max tends to crash if FillInMesh is not called. The call will build a winged-edge data structure, so good topology is required.
+   //3DS Max duplicate points to fix bad topology. Thus, it is important for this call to happen last (after the last geometry modifier is
+   //applied). Since this case is difficult to detect, we will throw an error some when multiple modifiers exist, a and there is bad topology.
+
+   //if (( options.nDataFillFlags & ALEMBIC_DATAFILL_VERTEX )){//||
+   //We seem to get crash if FillInPolyMesh is called in a modifier other that the topology one
+   if( options.nDataFillFlags & ALEMBIC_DATAFILL_FACELIST ){
+  	  //if( !options.pMNMesh->GetFlag( MN_MESH_FILLED_IN ) ){//This flag never seems to be set
+      if(options.pMNMesh->ENum() == 0 ){
+         ESS_PROFILE_SCOPE("FillInMesh");
+         //ESS_LOG_WARNING("Filling in polymesh, fileName: " << options.fileName << " identifier: " << options.identifier );
+         options.pMNMesh->FillInMesh();
+     
+ 
+         if( options.pMNMesh->GetFlag(MN_MESH_RATSNEST) && !(options.nDataFillFlags & ALEMBIC_DATAFILL_VERTEX) ){
+            ESS_LOG_ERROR( "Mesh is a 'Rat's Nest' (more than 2 faces per edge),\n fileName: " << options.fileName << " identifier: " << options.identifier<<".\n Please import with the \"Load Geometry from Topology modifier\" option active" );
+         }
+      } 
+      else if(options.pMNMesh->VNum() > meshPos->size()){
+         ESS_LOG_WARNING("Mesh has bad topology. Multiple geometry modifiers not fully supported, fileName: " << options.fileName << " identifier: " << options.identifier );
+      }
+   }
+
 
 	if( ( options.nDataFillFlags & ALEMBIC_DATAFILL_FACELIST ) &&
 	   ( ! ( options.nDataFillFlags & ALEMBIC_DATAFILL_VERTEX ) ) ) {
@@ -435,31 +444,7 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
 
 		uvI--;
 
-		AbcG::IV2fGeomParam meshUvParam;
-		if(objMesh.valid()){
-			if(uvI == 0){
-				meshUvParam = objMesh.getSchema().getUVsParam();
-			}
-			else{
-				std::stringstream storedUVNameStream;
-				storedUVNameStream<<"uv"<<uvI;
-				if(objMesh.getSchema().getPropertyHeader( storedUVNameStream.str() ) != NULL){
-					meshUvParam = AbcG::IV2fGeomParam( objMesh.getSchema(), storedUVNameStream.str());
-				}
-			}
-		}
-		else{
-			if(uvI == 0){
-				meshUvParam = objSubD.getSchema().getUVsParam();
-			}
-			else{
-				std::stringstream storedUVNameStream;
-				storedUVNameStream<<"uv"<<uvI;
-				if(objSubD.getSchema().getPropertyHeader( storedUVNameStream.str() ) != NULL){
-					meshUvParam = AbcG::IV2fGeomParam( objSubD.getSchema(), storedUVNameStream.str());
-				}
-			}
-		}
+		AbcG::IV2fGeomParam meshUvParam = getMeshUvParam(uvI, objMesh, objSubD);
 
 		//add 1 since channel 0 is reserved for colors
 		uvI++;
@@ -852,7 +837,7 @@ int AlembicImport_PolyMesh(const std::string &path, AbcG::IObject& iObj, alembic
 			return alembic_failure;
 		}
       Abc::IObject parent = iObj.getParent();
-      std::string name = removeXfoSuffix(iObj.getName().c_str());
+      std::string name = removeXfoSuffix(parent.getName().c_str());
       pNode = GET_MAX_INTERFACE()->CreateObjectNode(newObject, EC_UTF8_to_TCHAR(name.c_str()));
 		if (pNode == NULL){
 			return alembic_failure;
@@ -868,8 +853,9 @@ int AlembicImport_PolyMesh(const std::string &path, AbcG::IObject& iObj, alembic
 	std::vector<Modifier*> modifiersToEnable;
 
 	bool isDynamicTopo = isAlembicMeshTopoDynamic( &iObj );
-	//isDynamicTopo = true;
-
+    if(options.loadGeometryInTopologyModifier){
+      isDynamicTopo = true;
+    }
 
 	GET_MAX_INTERFACE()->SelectNode( pNode );
 
@@ -936,8 +922,8 @@ int AlembicImport_PolyMesh(const std::string &path, AbcG::IObject& iObj, alembic
 
 		modifiersToEnable.push_back( pModifier );
 	}
-	bool isUVWContant = true;
-	if( /*!isDynamicTopo &&*/ options.importUVs && isAlembicMeshUVWs( &iObj, isUVWContant ) ) {
+	//bool isUVWContant = true;
+	if( /*!isDynamicTopo &&*/ options.importUVs /*&& isAlembicMeshUVWs( &iObj, isUVWContant )*/ ) {
 		//ESS_LOG_INFO( "isUVWContant: " << isUVWContant );
 
 		AbcG::IV2fGeomParam meshUVsParam;
@@ -1014,7 +1000,9 @@ int AlembicImport_PolyMesh(const std::string &path, AbcG::IObject& iObj, alembic
 						GET_MAX_INTERFACE()->AddModifier(*pNode, *pModifier);
 					}
 
-					if( ! isUVWContant ) {
+                    AbcG::IV2fGeomParam meshUvParam = getMeshUvParam(i, objMesh, objSubD);
+
+					if( !meshUvParam.isConstant() ) {
 						GET_MAX_INTERFACE()->SelectNode( pNode );
 						char szControllerName[10000];
 						sprintf_s( szControllerName, 10000, "$.modifiers[#Alembic_Mesh_UVW].time" );
@@ -1112,8 +1100,10 @@ int AlembicImport_PolyMesh(const std::string &path, AbcG::IObject& iObj, alembic
 	{
 		GET_MAX_INTERFACE()->SelectNode( pNode );
 
-		char* szBuffer = "addmodifier $ (meshsmooth())\n"
-						 "$.modifiers[#MeshSmooth].iterations = 1\n";
+        char* szBuffer =   "addmodifier $ (meshsmooth())\n"
+                           "$.modifiers[#MeshSmooth].enabledInViews = false\n"
+                           "$.modifiers[#MeshSmooth].iterations = 1\n";
+                           
 
 		ExecuteMAXScriptScript( EC_UTF8_to_TCHAR( szBuffer ) );
 	}

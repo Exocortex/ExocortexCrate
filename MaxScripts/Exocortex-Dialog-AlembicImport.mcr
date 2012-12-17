@@ -5,7 +5,7 @@ rollout AlembicImportSettings "Alembic Import Settings" width:288 height:150
 (
     local filename
 
-	GroupBox geoGroup "Geometry" pos:[8,8] width:272 height:104
+	GroupBox geoGroup "Geometry" pos:[8,8] width:272 height:122
 	checkbox normalCheckbox "Normals" pos:[48,32] width:200 height:15 checked:true
 	checkbox uvCheckbox "UVs" pos:[48,48] width:200 height:15 checked:true
     --checkbox clustersCheckbox "Clusters" pos:[48,64] width:200 height:15 checked:true
@@ -16,6 +16,7 @@ rollout AlembicImportSettings "Alembic Import Settings" width:288 height:150
 	--GroupBox grpVisibility "Visibility" pos:[9,121] width:272 height:46
 	--dropdownList dropDownVis "" pos:[20,140] width:252 height:21 items:#("Just Import Value", "Connected Controllers") selection:1
 	checkbox materialIdsCheckbox "Material Ids" pos:[48,82] width:145 height:16 checked:true
+    checkbox geoFromTopoCheckbox "Load Geometry From Topology Modifier" pos:[48,100] width:220 height:16 checked:false
 
 	on importButton pressed do
 	(
@@ -26,6 +27,8 @@ rollout AlembicImportSettings "Alembic Import Settings" width:288 height:150
     	jobString += (uvCheckbox.checked as string)
     	jobString += ";attachToExisting=" 
     	jobString += (attachCheckbox.checked as string)
+        jobString += ";loadGeometryInTopologyModifier="
+        jobString += (geoFromTopoCheckbox.checked as string)
 
     	result = ExocortexAlembic.createImportJob(jobString)
 

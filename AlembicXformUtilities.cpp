@@ -49,11 +49,19 @@ void AlembicImport_FillInXForm_Internal(alembic_fillxform_options &options)
    if(!options.pIObj->valid())
         return;
     
-    // AbcG::IXform obj;
-    AbcG::IXform obj(*(options.pIObj), Abc::kWrapExisting);
+    IXformPtr pObj;
+    {
+       ESS_PROFILE_SCOPE("AlembicImport_FillInXForm - IXform obj");
+       pObj = options.pObjectCache->getXform();
+       if(!pObj){
+           return;
+       }
+       //obj = AbcG::IXform(*(options.pIObj), Abc::kWrapExisting);
+    }
 
-    if(!obj.valid())
-        return;
+
+    //if(!pObj->valid())
+    //    return;
 
 	extern bool g_bVerboseLogging;
 
@@ -67,19 +75,24 @@ void AlembicImport_FillInXForm_Internal(alembic_fillxform_options &options)
 
    // if no time samples, default to identity matrix
   if( options.pObjectCache->numSamples > 0 ) {
-		SampleInfo sampleInfo = getSampleInfo(
+
+         SampleInfo sampleInfo;
+
+         {
+            ESS_PROFILE_SCOPE("AlembicImport_FillInXForm - getSampleInfo");
+
+		    sampleInfo = getSampleInfo(
 			SampleTime,
-			obj.getSchema().getTimeSampling(),
+			pObj->getSchema().getTimeSampling(),
 			options.pObjectCache->numSamples
 			);
+         }
 
 		if(g_bVerboseLogging){
 			ESS_LOG_INFO("SampleInfo.alpha: "<<sampleInfo.alpha<< "SampleInfo(fi, ci): "<<sampleInfo.floorIndex<<", "<<sampleInfo.ceilIndex);
 		}
 
-		AbcG::XformSample sample;
-		obj.getSchema().get(sample,sampleInfo.floorIndex);
-		matrix = sample.getMatrix();
+         matrix = options.pObjectCache->getXformMatrix(sampleInfo.floorIndex);
 
 		//const Abc::Box3d &box3d = obj.getSchema().getChildBoundsProperty().getValue( sampleInfo.floorIndex );
 
@@ -89,11 +102,17 @@ void AlembicImport_FillInXForm_Internal(alembic_fillxform_options &options)
 		// blend 
 		if(sampleInfo.alpha != 0.0)
 		{
-			obj.getSchema().get(sample,sampleInfo.ceilIndex);
-			Abc::M44d ceilMatrix = sample.getMatrix();
+            ESS_PROFILE_SCOPE("AlembicImport_FillInXForm - blend");
+
+			//pObj->getSchema().get(sample,sampleInfo.ceilIndex);
+			Abc::M44d ceilMatrix = options.pObjectCache->getXformMatrix(sampleInfo.ceilIndex);
+               //sample.getMatrix();
 			matrix = (1.0 - sampleInfo.alpha) * matrix + sampleInfo.alpha * ceilMatrix;
 		}
    }
+
+  {
+     ESS_PROFILE_SCOPE("AlembicImport_FillInXForm - convert matrix");
 
     Matrix3 objMatrix(
         Point3(matrix.getValue()[0], matrix.getValue()[1], matrix.getValue()[2]),
@@ -112,20 +131,7 @@ void AlembicImport_FillInXForm_Internal(alembic_fillxform_options &options)
         options.maxMatrix = rotation * options.maxMatrix;
     }
 
-
-	if(g_bVerboseLogging){
-
-		Point3 r0 = options.maxMatrix.GetRow(0);
-		Point3 r1 = options.maxMatrix.GetRow(1);
-		Point3 r2 = options.maxMatrix.GetRow(2);
-		Point3 r3 = options.maxMatrix.GetRow(3);
-
-		ESS_LOG_INFO("transform r0: "<<r0.x<<", "<<r0.y<<", "<<r0.z);
-		ESS_LOG_INFO("transform r1: "<<r1.x<<", "<<r1.y<<", "<<r1.z);
-		ESS_LOG_INFO("transform r2: "<<r2.x<<", "<<r2.y<<", "<<r2.z);
-		ESS_LOG_INFO("transform r3: "<<r3.x<<", "<<r3.y<<", "<<r3.z);
-
-	}
+  }
 }
 
 int AlembicImport_DummyNode(AbcG::IObject& iObj, alembic_importoptions &options, INode** pMaxNode, const std::string& importName)
@@ -190,6 +196,7 @@ int AlembicImport_XForm(INode* pParentNode, INode* pMaxNode, AbcG::IObject& iObj
 		return alembic_failure;
 	}
 
+    //TODO: this method should take this bool a parameter instead
 	bool bIsCamera = p_iObjGeom && p_iObjGeom->valid() && AbcG::ICamera::matches(p_iObjGeom->getMetaData());
 	
 	TimeValue zero(0);

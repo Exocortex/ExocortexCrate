@@ -139,9 +139,26 @@ AlembicParticles::~AlembicParticles()
     ALEMBIC_SAFE_DELETE(m_pDiskMaker);
     ALEMBIC_SAFE_DELETE(m_pRectangleMaker);
 	ALEMBIC_SAFE_DELETE(m_pAlembicParticlesExt);
+    clearViewportMeshCache();
 }
 
 static const bool LOG = false;
+
+void AlembicParticles::clearViewportMeshCache()
+{
+   ESS_PROFILE_FUNC();
+    //clear the viewport meshes
+
+   for(InstanceMeshCache::iterator it = m_InstanceMeshCache.begin(); it != m_InstanceMeshCache.end(); it++){
+       if(it->second.needDelete){
+          it->second.mesh->FreeAll();
+          delete it->second.mesh;
+          //ESS_LOG_WARNING("deleting mesh");
+       }
+   }
+   m_InstanceMeshCache.clear();
+
+}
 
 void AlembicParticles::UpdateParticles(TimeValue t, INode *node)
 {
@@ -232,20 +249,10 @@ void AlembicParticles::UpdateParticles(TimeValue t, INode *node)
 	GetParticleShapeInstanceIds(m_iPoints, sampleInfo, m_InstanceShapeIds );
 	GetParticleShapeInstanceTimes(m_iPoints, sampleInfo, m_InstanceShapeTimes );
 
-
-
     // Find the scene nodes for all our instances
     FillParticleShapeNodes(m_iPoints, sampleInfo);
 
-  /*  // Rebuild the viewport meshes
-    NullView nullView;
-    for (int i = 0; i < m_ParticleViewportMeshes.size(); i += 1)
-    {
-        SetAFlag(A_NOTREND);
-        m_ParticleViewportMeshes[i].mesh = GetMultipleRenderMesh(t, node, nullView, m_ParticleViewportMeshes[i].needDelete, i);   
-       
-        ClearAFlag(A_NOTREND);
-    }*/
+    clearViewportMeshCache();
     
     tvalid = t;
     valid = TRUE;
@@ -757,7 +764,6 @@ void AlembicParticles::FillParticleShapeNodes(AbcG::IPoints &iPoints, const Samp
    ESS_PROFILE_FUNC();
     //m_TotalShapesToEnumerate = 0;
     m_InstanceShapeINodes.clear();
-	ClearMeshCache();
 
 	Abc::IStringArrayProperty shapeInstanceNameProperty;
 	if( getArbGeomParamPropertyAlembic( iPoints, "instancenames", shapeInstanceNameProperty ) ) {		
@@ -771,19 +777,19 @@ void AlembicParticles::FillParticleShapeNodes(AbcG::IPoints &iPoints, const Samp
 
 		//m_TotalShapesToEnumerate = m_InstanceShapeNames->size();
 		m_InstanceShapeINodes.resize(m_InstanceShapeNames->size());
-	    
+
         INodeMap nodeMap;
         buildINodeMap(nodeMap);
 
 		for (int i = 0; i < m_InstanceShapeINodes.size(); i += 1)
 		{
 			const std::string& path = m_InstanceShapeNames->get()[i];
-
-            //TODO: need to possibly XFO to path, and shape node as well
-
             m_InstanceShapeINodes[i] = nodeMap[path];
 
-			//m_InstanceShapeINodes[i] = GetNodeFromHierarchyPath(path);
+            if(m_InstanceShapeINodes[i] == NULL){
+               const std::string newPath = alembicPathToMaxPath(path);
+               m_InstanceShapeINodes[i] = nodeMap[newPath];
+            }
 		}
 	}
 }
@@ -849,10 +855,10 @@ int AlembicParticles::NumberOfRenderMeshes()
 Mesh* AlembicParticles::GetMultipleRenderMesh(TimeValue  t,  INode *inode,  View &view,  BOOL &needDelete,  int meshNumber)
 {
 	//ESS_LOG_INFO( "AlembicParticles::GetMultipleRenderMesh( t: " << t << " meshNumber: " << meshNumber << ", t: " << t << " )" );
-	return GetMultipleRenderMesh_Internal(t, inode, view, needDelete, meshNumber);
+	return GetMultipleRenderMesh_Internal(t, inode, view, needDelete, meshNumber, false);
 }
 
-Mesh* AlembicParticles::GetMultipleRenderMesh_Internal(TimeValue  t,  INode *inode,  View &view,  BOOL &needDelete,  int meshNumber)
+Mesh* AlembicParticles::GetMultipleRenderMesh_Internal(TimeValue  t,  INode *inode,  View &view,  BOOL &needDelete,  int meshNumber, bool bUseCache)
 {
    ESS_PROFILE_FUNC();
     if (meshNumber >= parts.Count() || !parts.Alive(meshNumber) || view.CheckForRenderAbort())
@@ -886,7 +892,7 @@ Mesh* AlembicParticles::GetMultipleRenderMesh_Internal(TimeValue  t,  INode *ino
         pMesh = BuildRectangleMesh(meshNumber, t, inode, view, needDelete);
         break;
     case AlembicPoints::ShapeType_Instance:
-        pMesh = BuildInstanceMesh(meshNumber, t, inode, view, needDelete);
+        pMesh = BuildInstanceMesh(meshNumber, t, inode, view, needDelete, bUseCache);
         break;
     case AlembicPoints::ShapeType_NbElements:
         pMesh = BuildNbElementsMesh(meshNumber, t, inode, view, needDelete);
@@ -921,7 +927,9 @@ Mesh* AlembicParticles::GetMultipleRenderMesh_Internal(TimeValue  t,  INode *ino
 
 Mesh* AlembicParticles::GetRenderMesh(TimeValue t, INode *inode, View &view, BOOL &needDelete)
 {
-   ESS_PROFILE_FUNC();
+    //ESS_LOG_WARNING("GetRenderMesh called.");
+
+    ESS_PROFILE_FUNC();
 	if (m_currTick != t){
 		Update(t,inode);
 	}
@@ -934,6 +942,11 @@ Mesh* AlembicParticles::GetRenderMesh(TimeValue t, INode *inode, View &view, BOO
 	needDelete = true;
 	int vertNum = 0;
 	int faceNum = 0;
+    int normNum = 0;
+
+    {
+
+    ESS_PROFILE_SCOPE("GetRenderMesh vertNum and faceNum");
 
 	for(int i=0; i<NumberOfRenderMeshes(); i++)
 	{
@@ -953,9 +966,16 @@ Mesh* AlembicParticles::GetRenderMesh(TimeValue t, INode *inode, View &view, BOO
 			continue;
 		}
 
+        MeshNormalSpec *pNormalSpec = pMesh->GetSpecifiedNormals();
+        if(pNormalSpec){
+           normNum += pNormalSpec->GetNumNormals();
+        }
+
 		vertNum += pMesh->getNumVerts();
 		faceNum += pMesh->getNumFaces();
 	}
+
+    }
 
 	if(!renderMesh->setNumVerts(vertNum)){
 		return renderMesh;
@@ -965,18 +985,21 @@ Mesh* AlembicParticles::GetRenderMesh(TimeValue t, INode *inode, View &view, BOO
 	}
 
 	//MeshNormalSpec* pMeshNormalSpec = renderMesh->GetSpecifiedNormals();
+    MeshNormalSpec* pRenderMeshNormalSpec = NULL;
+    {
+    ESS_PROFILE_SCOPE("GetRenderMesh specifyNormals");
 
 	renderMesh->SpecifyNormals();
-	MeshNormalSpec* pRenderMeshNormalSpec = renderMesh->GetSpecifiedNormals();
+	pRenderMeshNormalSpec = renderMesh->GetSpecifiedNormals();
 	pRenderMeshNormalSpec->SetParent(renderMesh);
 
 	pRenderMeshNormalSpec->SetAllExplicit(true);
 	pRenderMeshNormalSpec->SetNumFaces(faceNum);
-	pRenderMeshNormalSpec->SetNumNormals(faceNum);
-	//pRenderMeshNormalSpec->SetNumNormals(1);
-	//pRenderMeshNormalSpec->Normal(0) = Point3(0.0, 0.0, 0.0);
+	pRenderMeshNormalSpec->SetNumNormals(normNum);
+    }
 
-
+    MeshNormalFace *mpFace = &pRenderMeshNormalSpec->Face(0);
+	Point3 *mpNormal = &pRenderMeshNormalSpec->Normal(0);
 
 	//the mesh should be relative to the particle frame
 	Matrix3 inverseTM = Inverse(inode->GetObjectTM(t));
@@ -992,6 +1015,8 @@ Mesh* AlembicParticles::GetRenderMesh(TimeValue t, INode *inode, View &view, BOO
 
 	int vertOffset=0;
 	int faceOffset=0;
+    int normOffset=0;
+    int normIndex=0;
 	for(int i=0; i<NumberOfRenderMeshes(); i++)
 	{
 		BOOL curNeedDelete = FALSE;
@@ -1003,6 +1028,7 @@ Mesh* AlembicParticles::GetRenderMesh(TimeValue t, INode *inode, View &view, BOO
 
 		int curNumVerts = pMesh->getNumVerts();
 		if(curNumVerts == 0){
+            ESS_PROFILE_SCOPE("GetRenderMesh currNumVerts == 0");
 			if (curNeedDelete) {
 				pMesh->FreeAll();
 				delete pMesh;
@@ -1015,7 +1041,13 @@ Mesh* AlembicParticles::GetRenderMesh(TimeValue t, INode *inode, View &view, BOO
 		Matrix3 meshTM;
 		meshTM.IdentityMatrix();
 		Interval meshTMValid = FOREVER;
+        {
+        ESS_PROFILE_SCOPE("GetRenderMesh::GetMultipleRenderMesh");
 		GetMultipleRenderMeshTM_Internal(t, inode, nullView, i, meshTM, meshTMValid);
+        }
+
+        {
+           ESS_PROFILE_SCOPE("GetRenderMesh init verts and faces");
 
 		for(int j=0, curIndex=vertOffset; j<curNumVerts; j++, curIndex++) {
 			renderMesh->verts[curIndex] = pMesh->verts[j] * meshTM * inverseTM;
@@ -1029,6 +1061,8 @@ Mesh* AlembicParticles::GetRenderMesh(TimeValue t, INode *inode, View &view, BOO
 			}
 		}
 
+        }
+
 		//for transforming the normals
 		Matrix3 meshTM_I_T = meshTM * inverseTM;
 		meshTM_I_T.SetTrans(Point3(0.0, 0.0, 0.0));
@@ -1036,17 +1070,33 @@ Mesh* AlembicParticles::GetRenderMesh(TimeValue t, INode *inode, View &view, BOO
 		meshTM_I_T = Inverse(meshTM_I_T);
 		meshTM_I_T = TransposeRot(meshTM_I_T);
 
+        {
+        ESS_PROFILE_SCOPE("GetRenderMesh - Build and set normals");
+
 		MeshNormalSpec *pNormalSpec = pMesh->GetSpecifiedNormals();
 		if(pNormalSpec && curNumFaces == pNormalSpec->GetNumFaces() ){
+            ESS_PROFILE_SCOPE("GetRenderMesh - Build and set normals - copy normals from normal spec");
+
 			for(int j=0, curIndex=faceOffset; j<curNumFaces; j++, curIndex++){
-				for(int f=0; f<3; f++){
-					pRenderMeshNormalSpec->SetNormal(curIndex, f, pNormalSpec->GetNormal(j, f) * meshTM_I_T);
-				}
+                mpFace[curIndex].SetNormalID(0, pNormalSpec->Face(j).GetNormalID(0) + normOffset);
+                mpFace[curIndex].SetNormalID(1, pNormalSpec->Face(j).GetNormalID(1) + normOffset);
+                mpFace[curIndex].SetNormalID(2, pNormalSpec->Face(j).GetNormalID(2) + normOffset);
+                mpFace[curIndex].SetSpecified(0, true);
+                mpFace[curIndex].SetSpecified(1, true);
+                mpFace[curIndex].SetSpecified(2, true);
 			}
+            
+            normOffset += pNormalSpec->GetNumNormals();
+
+            for(int j=0; j<pNormalSpec->GetNumNormals(); j++){
+               mpNormal[normIndex] = pNormalSpec->Normal(j) * meshTM_I_T;
+               normIndex++;
+            }
 		}
 		else{
 
 			//int n = pMesh->getNumVerts()
+            ESS_PROFILE_SCOPE("GetRenderMesh - Build and set normals - compute from smoothing groups");
 
 			SmoothGroupNormals sgNormals;
 			sgNormals.BuildMeshSmoothingGroupNormals(*pMesh);
@@ -1062,7 +1112,13 @@ Mesh* AlembicParticles::GetRenderMesh(TimeValue t, INode *inode, View &view, BOO
 			//		pRenderMeshNormalSpec->SetNormal(curIndex, f, Point3(0.0, 0.0, 0.0));
 			//	}
 			//}
-		}	
+		}
+
+        }
+
+
+        {
+        ESS_PROFILE_SCOPE("GetRenderMesh copy over mapping channels");
 
 		int numMaps = pMesh->getNumMaps();
 		for(int mp=0; mp<numMaps; mp++) {
@@ -1098,8 +1154,11 @@ Mesh* AlembicParticles::GetRenderMesh(TimeValue t, INode *inode, View &view, BOO
 			}
 			tvertOffset[mp] += tvertsToAdd;
 		}
+
+        }
 		
 		if (curNeedDelete) {
+            ESS_PROFILE_SCOPE("GetRenderMesh free after copying");
 			pMesh->FreeAll();
 			delete pMesh;
 		}
@@ -1108,8 +1167,15 @@ Mesh* AlembicParticles::GetRenderMesh(TimeValue t, INode *inode, View &view, BOO
 		faceOffset += curNumFaces;
 	}
 
+   pRenderMeshNormalSpec->SetFlag(MESH_NORMAL_NORMALS_BUILT, TRUE);
+   pRenderMeshNormalSpec->SetFlag(MESH_NORMAL_NORMALS_COMPUTED, TRUE);
+
+
 	//pRenderMeshNormalSpec->CheckNormals();
-	renderMesh->buildNormals();
+ //   {
+ //   ESS_PROFILE_SCOPE("GetRenderMesh renderMesh->buildNormals");
+	////renderMesh->buildNormals();
+ //   }
 
 	return renderMesh;
 }
@@ -1261,6 +1327,8 @@ int AlembicParticles::Display(TimeValue t, INode* inode, ViewExp *vpt, int flags
        Update(t,inode);
    }
 
+   //createViewportMeshCache(t, inode);
+
    GraphicsWindow *gw = vpt->getGW();
    DWORD rlim  = gw->getRndLimits();
 
@@ -1387,6 +1455,11 @@ int AlembicParticles::Display(TimeValue t, INode* inode, ViewExp *vpt, int flags
 				   ESS_PROFILE_SCOPE("Display::mesh->render");
 				  mesh->render(gw, mtls, (flags&USE_DAMAGE_RECT) ? &vpt->GetDammageRect() : NULL, COMP_ALL, numMtls);
 				}
+
+                if(deleteMesh){
+                    ESS_LOG_WARNING("deleting mesh");
+                    delete mesh;
+                }
 			}
 			else
 			{
@@ -1398,7 +1471,7 @@ int AlembicParticles::Display(TimeValue t, INode* inode, ViewExp *vpt, int flags
 	   }
 	}
 
-
+   //clearViewportMeshCache();
    
    return 0;
 }
@@ -1411,6 +1484,8 @@ int AlembicParticles::HitTest(TimeValue t, INode *inode, int type, int crossing,
    {
        Update(t,inode);
    }
+
+   //createViewportMeshCache(t, inode);
 
    DWORD savedLimits;
    Matrix3 gwTM;
@@ -1467,7 +1542,7 @@ int AlembicParticles::HitTest(TimeValue t, INode *inode, int type, int crossing,
 		BOOL deleteMesh = FALSE;
 
 		GetMultipleRenderMeshTM_Internal(t, inode, nullView, i, elemToObj, meshTMValid, true);
-		Mesh *mesh = GetMultipleRenderMesh_Internal(t, inode, nullView, deleteMesh, i);
+		Mesh* mesh = GetMultipleRenderMesh_Internal(t, inode, nullView, deleteMesh, i);
 		if(!mesh){
 			continue;
 		}
@@ -1498,9 +1573,17 @@ int AlembicParticles::HitTest(TimeValue t, INode *inode, int type, int crossing,
 			gw->clearHitCode();
 			break;
 		}
+
+        if(deleteMesh){
+            //ESS_LOG_WARNING("deleting mesh.");
+            delete mesh;
+        }
    }
 
    gw->setRndLimits(savedLimits);
+
+   //clearViewportMeshCache();
+
    return res;
 }
 
@@ -1647,19 +1730,19 @@ Mesh *AlembicParticles::BuildRectangleMesh(int meshNumber, TimeValue t, INode *n
 
 
 
-void AlembicParticles::ClearMeshCache()
-{
-   ESS_PROFILE_FUNC();
-	for(nodeAndTimeToMeshMap::iterator it=meshCacheMap.begin(); it != meshCacheMap.end(); it++){
-		meshInfo& mi = it->second;
-		if(mi.bMeshNeedDelete){
-			delete mi.pMesh;
-		}
-	}
-	meshCacheMap.clear();
-}
+//void AlembicParticles::ClearMeshCache()
+//{
+//   ESS_PROFILE_FUNC();
+//	for(nodeAndTimeToMeshMap::iterator it=meshCacheMap.begin(); it != meshCacheMap.end(); it++){
+//		meshInfo& mi = it->second;
+//		if(mi.bMeshNeedDelete){
+//			delete mi.pMesh;
+//		}
+//	}
+//	meshCacheMap.clear();
+//}
 
-Mesh* GetMeshFromNode(INode *iNode, const TimeValue t, BOOL bNeedDelete)
+Mesh* GetMeshFromNode(INode *iNode, const TimeValue t, BOOL& bNeedDelete)
 {
    ESS_PROFILE_FUNC();
 	bNeedDelete = FALSE;
@@ -1677,6 +1760,7 @@ Mesh* GetMeshFromNode(INode *iNode, const TimeValue t, BOOL bNeedDelete)
 		ExoNullView nullView;
 		GeomObject* geomObject = (GeomObject*)obj;
 		Mesh* pMesh = geomObject->GetRenderMesh(t, iNode, nullView, bNeedDelete);
+        //ESS_LOG_WARNING("Allocating mesh.");
 		return pMesh;
 	}
 	else{
@@ -1684,7 +1768,7 @@ Mesh* GetMeshFromNode(INode *iNode, const TimeValue t, BOOL bNeedDelete)
 	}
 }
 
-Mesh *AlembicParticles::BuildInstanceMesh(int meshNumber, TimeValue t, INode *node, View& view, BOOL &needDelete)
+Mesh *AlembicParticles::BuildInstanceMesh(int meshNumber, TimeValue t, INode *node, View& view, BOOL &needDelete, bool bUseCache)
 {
    ESS_PROFILE_FUNC()
 	needDelete = FALSE;
@@ -1702,16 +1786,33 @@ Mesh *AlembicParticles::BuildInstanceMesh(int meshNumber, TimeValue t, INode *no
 	INode *pNode = m_InstanceShapeINodes[shapeid];
 	TimeValue shapet = m_InstanceShapeTimes[meshNumber];
 
-	nodeAndTimeToMeshMap::iterator it = meshCacheMap.find(nodeTimePair(pNode, shapet));
-	if( it != meshCacheMap.end() ){
-		meshInfo& mi = it->second;
-		return mi.pMesh;
-	}
-	else{
-		meshInfo& mi = meshCacheMap[nodeTimePair(pNode, shapet)];
-		mi.pMesh = GetMeshFromNode(pNode, shapet, mi.bMeshNeedDelete);
-		return mi.pMesh;
-	}
+    InstanceMeshCache::iterator it = m_InstanceMeshCache.find(EC_MCHAR_to_UTF8(pNode->GetName()));
+
+    if( it != m_InstanceMeshCache.end() ){
+       return it->second.mesh;
+    }
+    else{
+       //ESS_LOG_WARNING("NODE: "<<pNode->GetName());
+       InstanceMesh iMesh;
+       iMesh.mesh = GetMeshFromNode(pNode, shapet, iMesh.needDelete);
+       m_InstanceMeshCache[EC_MCHAR_to_UTF8(pNode->GetName())] = iMesh;
+       return iMesh.mesh;
+    }
+
+
+    //return GetMeshFromNode(pNode, shapet, needDelete);
+
+
+	//nodeAndTimeToMeshMap::iterator it = meshCacheMap.find(nodeTimePair(pNode, shapet));
+	//if( it != meshCacheMap.end() ){
+	//	meshInfo& mi = it->second;
+	//	return mi.pMesh;
+	//}
+	//else{
+	//	meshInfo& mi = meshCacheMap[nodeTimePair(pNode, shapet)];
+	//	mi.pMesh = GetMeshFromNode(pNode, shapet, mi.bMeshNeedDelete);
+	//	return mi.pMesh;
+	//}
 
  //  bool deleteTriObj = false;
  //  TriObject *triObj = GetTriObjectFromNode(pNode, shapet, deleteTriObj);
@@ -1899,7 +2000,7 @@ int AlembicImport_Points(const std::string &file, AbcG::IObject& iObj, alembic_i
 
     // Create the object node
    Abc::IObject parent = iObj.getParent();
-   std::string name = removeXfoSuffix(iObj.getName().c_str());
+   std::string name = removeXfoSuffix(parent.getName().c_str());
 	INode *pNode = GET_MAX_INTERFACE()->CreateObjectNode(pParticleObj, EC_UTF8_to_TCHAR( name.c_str() ));
 	if (pNode == NULL)
     {
@@ -1934,7 +2035,7 @@ int AlembicImport_Points(const std::string &file, AbcG::IObject& iObj, alembic_i
 BaseInterface* AlembicParticles::GetInterface(Interface_ID id)
 { 
 	if(id == PARTICLEOBJECTEXT_INTERFACE){
-		ESS_LOG_WARNING("ParticleObject Extended interface being retrieved.");
+		//ESS_LOG_WARNING("ParticleObject Extended interface being retrieved.");
 		return m_pAlembicParticlesExt;
 		//return NULL;
 	}

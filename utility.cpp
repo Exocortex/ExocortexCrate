@@ -300,6 +300,27 @@ TriObject* GetTriObjectFromNode(INode *iNode, const TimeValue t, bool &deleteIt)
 	}
 }
 
+std::string alembicPathToMaxPath(const std::string& path)
+{
+   std::vector<std::string> parts;
+
+   boost::split(parts, path, boost::is_any_of("/"));
+
+   if(parts.size() > 2){
+	   parts.pop_back();
+   }
+
+   std::stringstream result;
+
+   for(int i=0; i<parts.size(); i++){
+	   parts[i] = removeXfoSuffix(parts[i]);
+       result << parts[i];
+       if(i < parts.size()-1) result << "/";
+   }
+
+   return result.str();
+}
+
 INode* GetNodeFromHierarchyPath(const std::string& path)
 {
 	std::vector<std::string> parts;
@@ -332,7 +353,8 @@ INode* GetNodeFromHierarchyPath(const std::string& path)
 	  for(int i=0; i<pNode->NumberOfChildren(); i++){
 
 	     INode* childNode = pNode->GetChildNode(i);
-         const char* cName = childNode->GetName();
+
+         //const char* cName = childNode->GetName();
 
 	     if (strcmp( EC_MCHAR_to_UTF8( childNode->GetName() ).c_str(), childName.c_str()) == 0){
 		     bFound = true;
@@ -361,7 +383,7 @@ void buildINodeMapForChild(INodeMap& nodeMap, INode* node, std::string path)
    path += "/";
    for(int i=0; i<node->NumberOfChildren(); i++){
       INode* childNode = node->GetChildNode(i);
-      buildINodeMapForChild(nodeMap, childNode, path + childNode->GetName());
+      buildINodeMapForChild(nodeMap, childNode, path + EC_MCHAR_to_UTF8(childNode->GetName()));
    }
 }
 
@@ -371,7 +393,7 @@ void buildINodeMap(INodeMap& nodeMap)
    std::string path("/");
    for(int i=0; i<node->NumberOfChildren(); i++){
       INode* childNode = node->GetChildNode(i);
-      buildINodeMapForChild(nodeMap, childNode, path + childNode->GetName());
+      buildINodeMapForChild(nodeMap, childNode, path + EC_MCHAR_to_UTF8(childNode->GetName()));
    }
 }
 
@@ -785,4 +807,16 @@ void SmoothGroupNormals::ClearMeshSmoothingGroupNormals()
 	}
 
 	m_MeshSmoothGroupNormals.clear();  
+}
+
+void printChannelIntervals(TimeValue t, Object* obj)
+{
+   Interval topoInterval = obj->ChannelValidity(t, TOPO_CHAN_NUM);
+   ESS_LOG_WARNING( "TopoInterval Start: " << topoInterval.Start() << " End: " << topoInterval.End() );
+
+   Interval geoInterval = obj->ChannelValidity(t, GEOM_CHAN_NUM);
+   ESS_LOG_WARNING( "GeoInterval Start: " << geoInterval.Start() << " End: " << geoInterval.End() );
+
+   Interval texInterval = obj->ChannelValidity(t, TEXMAP_CHAN_NUM);
+   ESS_LOG_WARNING( "TexInterval Start: " << texInterval.Start() << " End: " << texInterval.End() );
 }
