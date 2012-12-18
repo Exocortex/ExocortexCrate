@@ -423,7 +423,7 @@ int ExocortexAlembicStaticInterface_ExocortexAlembicImportJobs( CONST_2013 MCHAR
 		//	", bImportMaterialIds=" << bImportMaterialIds << ", bAttachToExisting=" << bAttachToExisting <<
 		//	", iVisOption=" << iVisOption << " )" );
 
-      ESS_LOG_WARNING( "Processing import job: "<<jobString);
+      ESS_LOG_WARNING( "Processing import job: "<< EC_MCHAR_to_UTF8(jobString));
 
 		alembic_importoptions options;
 
