@@ -25,7 +25,8 @@ struct AbcProp{
 
 Modifier* createDisplayModifier(std::string modkey, std::string modname, std::vector<AbcProp>& props);
 
-void addControllersToModifier(std::string modkey, std::string modname, std::vector<AbcProp>& props, 
+void addControllersToModifier(const std::string& modkey, const std::string& modname, std::vector<AbcProp>& props, 
+                              const std::string& target, const std::string& type,
                               const std::string& file, const std::string& identifier, alembic_importoptions &options);
 
 

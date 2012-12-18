@@ -164,29 +164,7 @@ void readShader(AbcM::IMaterialSchema& matSchema, std::vector<matShader>& shader
 
 }
 
-Abc::IFloatProperty readShaderScalerProp(AbcM::IMaterialSchema& matSchema, const std::string& shaderTarget, const std::string& shaderType, const std::string& shaderProp)
-{
-   Abc::ICompoundProperty propk = matSchema.getShaderParameters(shaderTarget, shaderType);
 
-   for(size_t i=0; i<propk.getNumProperties(); i++){
-      AbcA::PropertyHeader pheader = propk.getPropertyHeader(i);
-      AbcA::PropertyType propType = pheader.getPropertyType();
-
-      if( propType == AbcA::kScalarProperty ){
-
-         if(boost::iequals(pheader.getName(), shaderProp) && Abc::IFloatProperty::matches(pheader))
-         {
-            return Abc::IFloatProperty(propk, pheader.getName());
-         }
-
-      }
-
-   }
-   
-   ESS_LOG_WARNING("Could not read shader property: "<<shaderTarget<<"."<<shaderType<<"."<<shaderProp);
-   
-   return Abc::IFloatProperty();
-}
 
 AbcM::IMaterialSchema getMatSchema(AbcG::ILight& objLight)
 {
@@ -265,19 +243,10 @@ int AlembicImport_Light(const std::string &path, AbcG::IObject& iObj, alembic_im
    for(int i=0; i<shaders.size(); i++){
       Modifier* pMod = createDisplayModifier("properties", shaders[i].name, shaders[i].props);
 
-      addControllersToModifier("properties", shaders[i].name, shaders[i].props, path, iObj.getFullName(), options);
-
       std::string target = shaders[i].target;
       std::string type = shaders[i].type;
-      
-      for(int j=0; j<shaders[i].props.size(); j++){
 
-         //if(shaders[i].props[j].bConstant) continue;
-
-         std::string name = shaders[i].props[j].name;
-         
-         
-      }
+      addControllersToModifier("properties", shaders[i].name, shaders[i].props, target, type, path, iObj.getFullName(), options);
    }
 
 

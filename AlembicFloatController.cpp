@@ -118,14 +118,10 @@ void AlembicFloatController::GetValueLocalTime(TimeValue t, void *ptr, Interval 
 
 
 	AbcG::IObject iObj = getObjectFromArchive(szPath, szIdentifier);
-    
-	if(!iObj.valid() || !AbcG::ICamera::matches(iObj.getMetaData())) {
-        return;
-	}
 
 	if(!iObj.valid() 
-      || !Alembic::AbcGeom::ICamera::matches(iObj.getMetaData())
-      || !Alembic::AbcGeom::ILight::matches(iObj.getMetaData())){
+      || (!Alembic::AbcGeom::ICamera::matches(iObj.getMetaData()) && !Alembic::AbcGeom::ILight::matches(iObj.getMetaData()))
+      ){
       return;
 	}
 
@@ -162,6 +158,8 @@ void AlembicFloatController::GetValueLocalTime(TimeValue t, void *ptr, Interval 
    }
    else if(Alembic::AbcGeom::ILight::matches(iObj.getMetaData())){
 
+      ESS_PROFILE_SCOPE("AlembicFloatController::GetValueLocalTime - read ILight shader parameter");
+
       Alembic::AbcGeom::ILight objLight = Alembic::AbcGeom::ILight(iObj, Alembic::Abc::kWrapExisting);
 
 	  SampleInfo sampleInfo = getSampleInfo(sampleTime,
@@ -177,12 +175,55 @@ void AlembicFloatController::GetValueLocalTime(TimeValue t, void *ptr, Interval 
 
       if(parts.size() == 3){
       
-         const std::string& shaderTarget = parts[0];
-         const std::string& shaderType = parts[1];
-         const std::string& shaderProp = parts[2];
+         const std::string& target = parts[0];
+         const std::string& type = parts[1];
+         const std::string& prop = parts[2];
 
-         Abc::IFloatProperty fProp = readShaderScalerProp(matSchema, shaderTarget, shaderType, shaderProp);
-         fProp.get(fSampleVal, sampleInfo.floorIndex);
+         Abc::IFloatProperty fProp = readShaderScalerProp<Abc::IFloatProperty>(matSchema, target, type, prop);
+         if(fProp.valid()){
+            fProp.get(fSampleVal, sampleInfo.floorIndex);
+         }
+         else{
+            ESS_LOG_WARNING("Float Controller Error: could find shader parameter "<<strProp);
+         }
+      }
+      else if(parts.size() == 5){
+         const std::string& target = parts[0];
+         const std::string& type = parts[1];
+         const std::string& prop = parts[2];
+         const std::string& propInterp = parts[3];
+         const std::string& propComp = parts[4];
+
+         //ESS_LOG_WARNING("propInterp: "<<propInterp);
+
+         if(propInterp == "rgb"){
+            Abc::IC3fProperty fProp = readShaderScalerProp<Abc::IC3fProperty>(matSchema, target, type, prop);
+            if(fProp.valid()){
+               Abc::C3f v3f;
+               fProp.get(v3f, sampleInfo.floorIndex);
+               if(propComp == "x"){
+                  fSampleVal = v3f.x;
+               }
+               else if(propComp == "y"){
+                  fSampleVal = v3f.y;
+               }
+               else if(propComp == "z"){
+                  fSampleVal = v3f.z;
+               }
+               else{
+                  ESS_LOG_WARNING("Float Controller Error: invalid component: "<<propComp);
+               }
+            }
+            else{
+               ESS_LOG_WARNING("Float Controller Error: could find shader parameter "<<strProp);
+            }
+         }
+         else{
+            ESS_LOG_WARNING("Float Controller Error: unrecognized parameter interpretation: "<<propInterp);
+         }
+      }
+      else{
+         ESS_LOG_WARNING("Float Controller Error: could not parse property field: "<<strProperty);
       }
    }
 

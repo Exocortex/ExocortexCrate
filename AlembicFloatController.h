@@ -109,7 +109,7 @@ public:
 	int			IsPublic()			{ return TRUE; }	// We do want the user to see this plug-in
 
 	// Return the class name of this plug-in
-	const MCHAR* ClassName()		{ static const MSTR str(_T("Alembic Camera Float Controller")); return str; }
+	const MCHAR* ClassName()		{ static const MSTR str(_T("Alembic Float Controller")); return str; }
 
 	// Return the SuperClassID - this ID should
 	// match the implementation of the interface returned
