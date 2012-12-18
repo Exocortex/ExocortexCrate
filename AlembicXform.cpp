@@ -337,7 +337,11 @@ MStatus AlembicXformNode::compute(const MPlug & plug, MDataBlock & dataBlock)
   }
 
   Abc::M44d matrix;
-  if(sampleInfo.alpha == 1.0f )
+  if (sampleInfo.alpha == 0.0f)
+  {
+	matrix = matrixAtIPlus1;
+  }
+  else if(sampleInfo.alpha == 1.0f )
   {
     matrix = matrixAtI;
   }
