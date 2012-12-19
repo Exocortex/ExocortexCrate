@@ -986,20 +986,24 @@ Mesh* AlembicParticles::GetRenderMesh(TimeValue t, INode *inode, View &view, BOO
 
 	//MeshNormalSpec* pMeshNormalSpec = renderMesh->GetSpecifiedNormals();
     MeshNormalSpec* pRenderMeshNormalSpec = NULL;
+    MeshNormalFace *mpFace = NULL;
+	Point3 *mpNormal = NULL;
+    if(faceNum > 0 && normNum > 0)
     {
-    ESS_PROFILE_SCOPE("GetRenderMesh specifyNormals");
+       ESS_PROFILE_SCOPE("GetRenderMesh specifyNormals");
 
-	renderMesh->SpecifyNormals();
-	pRenderMeshNormalSpec = renderMesh->GetSpecifiedNormals();
-	pRenderMeshNormalSpec->SetParent(renderMesh);
+	   renderMesh->SpecifyNormals();
+	   pRenderMeshNormalSpec = renderMesh->GetSpecifiedNormals();
+	   pRenderMeshNormalSpec->SetParent(renderMesh);
 
-	pRenderMeshNormalSpec->SetAllExplicit(true);
-	pRenderMeshNormalSpec->SetNumFaces(faceNum);
-	pRenderMeshNormalSpec->SetNumNormals(normNum);
+	   pRenderMeshNormalSpec->SetAllExplicit(true);
+	   pRenderMeshNormalSpec->SetNumFaces(faceNum);
+	   pRenderMeshNormalSpec->SetNumNormals(normNum);
+       mpFace = &pRenderMeshNormalSpec->Face(0);
+	   mpNormal = &pRenderMeshNormalSpec->Normal(0);
     }
 
-    MeshNormalFace *mpFace = &pRenderMeshNormalSpec->Face(0);
-	Point3 *mpNormal = &pRenderMeshNormalSpec->Normal(0);
+
 
 	//the mesh should be relative to the particle frame
 	Matrix3 inverseTM = Inverse(inode->GetObjectTM(t));
@@ -1072,47 +1076,50 @@ Mesh* AlembicParticles::GetRenderMesh(TimeValue t, INode *inode, View &view, BOO
 
         {
         ESS_PROFILE_SCOPE("GetRenderMesh - Build and set normals");
+        
+        if(pRenderMeshNormalSpec)
+        {
+		   MeshNormalSpec *pNormalSpec = pMesh->GetSpecifiedNormals();
+		   if(pNormalSpec && curNumFaces == pNormalSpec->GetNumFaces() ){
+               ESS_PROFILE_SCOPE("GetRenderMesh - Build and set normals - copy normals from normal spec");
 
-		MeshNormalSpec *pNormalSpec = pMesh->GetSpecifiedNormals();
-		if(pNormalSpec && curNumFaces == pNormalSpec->GetNumFaces() ){
-            ESS_PROFILE_SCOPE("GetRenderMesh - Build and set normals - copy normals from normal spec");
+			   for(int j=0, curIndex=faceOffset; j<curNumFaces; j++, curIndex++){
+                   mpFace[curIndex].SetNormalID(0, pNormalSpec->Face(j).GetNormalID(0) + normOffset);
+                   mpFace[curIndex].SetNormalID(1, pNormalSpec->Face(j).GetNormalID(1) + normOffset);
+                   mpFace[curIndex].SetNormalID(2, pNormalSpec->Face(j).GetNormalID(2) + normOffset);
+                   mpFace[curIndex].SetSpecified(0, true);
+                   mpFace[curIndex].SetSpecified(1, true);
+                   mpFace[curIndex].SetSpecified(2, true);
+			   }
+               
+               normOffset += pNormalSpec->GetNumNormals();
 
-			for(int j=0, curIndex=faceOffset; j<curNumFaces; j++, curIndex++){
-                mpFace[curIndex].SetNormalID(0, pNormalSpec->Face(j).GetNormalID(0) + normOffset);
-                mpFace[curIndex].SetNormalID(1, pNormalSpec->Face(j).GetNormalID(1) + normOffset);
-                mpFace[curIndex].SetNormalID(2, pNormalSpec->Face(j).GetNormalID(2) + normOffset);
-                mpFace[curIndex].SetSpecified(0, true);
-                mpFace[curIndex].SetSpecified(1, true);
-                mpFace[curIndex].SetSpecified(2, true);
-			}
-            
-            normOffset += pNormalSpec->GetNumNormals();
+               for(int j=0; j<pNormalSpec->GetNumNormals(); j++){
+                  mpNormal[normIndex] = pNormalSpec->Normal(j) * meshTM_I_T;
+                  normIndex++;
+               }
+		   }
+		   else{
 
-            for(int j=0; j<pNormalSpec->GetNumNormals(); j++){
-               mpNormal[normIndex] = pNormalSpec->Normal(j) * meshTM_I_T;
-               normIndex++;
-            }
-		}
-		else{
+			   //int n = pMesh->getNumVerts()
+               ESS_PROFILE_SCOPE("GetRenderMesh - Build and set normals - compute from smoothing groups");
 
-			//int n = pMesh->getNumVerts()
-            ESS_PROFILE_SCOPE("GetRenderMesh - Build and set normals - compute from smoothing groups");
+			   SmoothGroupNormals sgNormals;
+			   sgNormals.BuildMeshSmoothingGroupNormals(*pMesh);
+			   for(int j=0, curIndex=faceOffset; j<curNumFaces; j++, curIndex++){
+				   for(int f=0; f<3; f++){
+					   pRenderMeshNormalSpec->SetNormal(curIndex, f, sgNormals.GetVertexNormal(pMesh, j, f) * meshTM_I_T);
+				   }
+			   }
 
-			SmoothGroupNormals sgNormals;
-			sgNormals.BuildMeshSmoothingGroupNormals(*pMesh);
-			for(int j=0, curIndex=faceOffset; j<curNumFaces; j++, curIndex++){
-				for(int f=0; f<3; f++){
-					pRenderMeshNormalSpec->SetNormal(curIndex, f, sgNormals.GetVertexNormal(pMesh, j, f) * meshTM_I_T);
-				}
-			}
-
-			//ESS_LOG_WARNING("Particle mesh has invalid normals.");
-			//for(int j=0, curIndex=faceOffset; j<curNumFaces; j++, curIndex++){
-			//	for(int f=0; f<3; f++){
-			//		pRenderMeshNormalSpec->SetNormal(curIndex, f, Point3(0.0, 0.0, 0.0));
-			//	}
-			//}
-		}
+			   //ESS_LOG_WARNING("Particle mesh has invalid normals.");
+			   //for(int j=0, curIndex=faceOffset; j<curNumFaces; j++, curIndex++){
+			   //	for(int f=0; f<3; f++){
+			   //		pRenderMeshNormalSpec->SetNormal(curIndex, f, Point3(0.0, 0.0, 0.0));
+			   //	}
+			   //}
+		   }
+        }
 
         }
 
@@ -1167,9 +1174,10 @@ Mesh* AlembicParticles::GetRenderMesh(TimeValue t, INode *inode, View &view, BOO
 		faceOffset += curNumFaces;
 	}
 
-   pRenderMeshNormalSpec->SetFlag(MESH_NORMAL_NORMALS_BUILT, TRUE);
-   pRenderMeshNormalSpec->SetFlag(MESH_NORMAL_NORMALS_COMPUTED, TRUE);
-
+    if(pRenderMeshNormalSpec){
+      pRenderMeshNormalSpec->SetFlag(MESH_NORMAL_NORMALS_BUILT, TRUE);
+      pRenderMeshNormalSpec->SetFlag(MESH_NORMAL_NORMALS_COMPUTED, TRUE);
+    }
 
 	//pRenderMeshNormalSpec->CheckNormals();
  //   {
