@@ -711,12 +711,12 @@ MStatus AlembicExportCommand::doIt(const MArgList & args)
 	   // now, let's run through all frames, and process the jobs
 	   const double frameRate = MTime(1.0, MTime::kSeconds).as(MTime::uiUnit());
 	   const double incrSteps = maxSteps / maxSubsteps;
-	   double prevFrame = minFrame - incrSteps;
+	   double nextFrame = minFrame + incrSteps;
 
-	   for(double frame = minFrame; frame<=maxFrame; frame += incrSteps, prevFrame += incrSteps)
+	   for(double frame = minFrame; frame<=maxFrame; frame += incrSteps, nextFrame += incrSteps)
 	   {
-		  MAnimControl::setCurrentTime(MTime(prevFrame/frameRate,MTime::kSeconds));
-		  MAnimControl::setAnimationEndTime( MTime(frame/frameRate,MTime::kSeconds) );
+		  MAnimControl::setCurrentTime(MTime(frame/frameRate,MTime::kSeconds));
+		  MAnimControl::setAnimationEndTime( MTime(nextFrame/frameRate,MTime::kSeconds) );
 		  MAnimControl::playForward();  // this way, it forces Maya to play exactly one frame! and particles are updated!
 
 		  bool canceled = false;
