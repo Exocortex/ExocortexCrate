@@ -121,13 +121,14 @@ ESS_CALLBACK_START( alembic_xform_Update, CRef& )
 		  }
 	  }
 
-	  if( sampleInfo.alpha == 1.0f )
+	  if( sampleInfo.alpha == 0.0f || sampleInfo.alpha == 1.0f )
 	  {
 		  matrix = p->indexToMatrices[ sampleInfo.floorIndex ];
 	  }
 	  else
 	  {
-		  matrix = p->indexToMatrices[ sampleInfo.floorIndex ] * sampleInfo.alpha + p->indexToMatrices[ sampleInfo.ceilIndex ] * ( 1 - sampleInfo.alpha );
+          const float fAlpha = (float)sampleInfo.alpha;
+		  matrix = p->indexToMatrices[ sampleInfo.floorIndex ] * (1.0 - fAlpha) + p->indexToMatrices[ sampleInfo.ceilIndex ] * fAlpha;
 	  }
   }
 
