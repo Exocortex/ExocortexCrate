@@ -159,7 +159,7 @@ Modifier* createDisplayModifier(std::string modkey, std::string modname, std::ve
    return pMod;
 }
 
-void addFloatController(std::stringstream& evalStream, const std::string& timeControlName,
+void addFloatController(bool loadTimeControl, std::stringstream& evalStream, const std::string& timeControlName,
                         const std::string& modkey, std::string propName, const std::string& file, const std::string& identifier, 
                         std::string propertyID, const std::string& propComponent=std::string(""), const std::string& propInterp=std::string(""))
 {
@@ -176,11 +176,19 @@ void addFloatController(std::stringstream& evalStream, const std::string& timeCo
    evalStream<<"$.modifiers[\""<<modkey<<"\"]."<<propName<<".controller.identifier = \""<<identifier<<"\"\n";
    evalStream<<"$.modifiers[\""<<modkey<<"\"]."<<propName<<".controller.property = \""<<propertyID<<"\"\n";
    
+
+
    evalStream<<"$.modifiers[\""<<modkey<<"\"]."<<propName<<".controller.time.controller = float_expression()\n";
-   evalStream<<"$.modifiers[\""<<modkey<<"\"]."<<propName<<".controller.time.controller.AddScalarTarget \"current\" $'"<<timeControlName<<"'.current.controller\n";
-   evalStream<<"$.modifiers[\""<<modkey<<"\"]."<<propName<<".controller.time.controller.AddScalarTarget \"offset\" $'"<<timeControlName<<"'.offset.controller\n";
-   evalStream<<"$.modifiers[\""<<modkey<<"\"]."<<propName<<".controller.time.controller.AddScalarTarget \"factor\" $'"<<timeControlName<<"'.factor.controller\n";
-   evalStream<<"$.modifiers[\""<<modkey<<"\"]."<<propName<<".controller.time.controller.setExpression \"current * factor + offset\"\n";
+   if(loadTimeControl){
+      evalStream<<"$.modifiers[\""<<modkey<<"\"]."<<propName<<".controller.time.controller.AddScalarTarget \"current\" $'"<<timeControlName<<"'.current.controller\n";
+      evalStream<<"$.modifiers[\""<<modkey<<"\"]."<<propName<<".controller.time.controller.AddScalarTarget \"offset\" $'"<<timeControlName<<"'.offset.controller\n";
+      evalStream<<"$.modifiers[\""<<modkey<<"\"]."<<propName<<".controller.time.controller.AddScalarTarget \"factor\" $'"<<timeControlName<<"'.factor.controller\n";
+      evalStream<<"$.modifiers[\""<<modkey<<"\"]."<<propName<<".controller.time.controller.setExpression \"current * factor + offset\"\n";
+   }
+   else{
+      evalStream<<"$.modifiers[\""<<modkey<<"\"]."<<propName<<".controller.time.controller.setExpression \"S\"\n";
+   }
+
 }
 
 
@@ -209,12 +217,12 @@ void addControllersToModifier(const std::string& modkey, const std::string& modn
          std::stringstream propStream;
          propStream<<target<<"."<<type<<"."<<propName;
          if(datatype.getExtent() == 1){
-            addFloatController(evalStream, timeControlName, modkey, propName, file, identifier, propStream.str());
+            addFloatController(options.loadTimeControl, evalStream, timeControlName, modkey, propName, file, identifier, propStream.str());
          }
          else if(datatype.getExtent() == 3){
-            addFloatController(evalStream, timeControlName, modkey, propName, file, identifier, propStream.str(), "x", metadata.get("interpretation"));
-            addFloatController(evalStream, timeControlName, modkey, propName, file, identifier, propStream.str(), "y", metadata.get("interpretation"));
-            addFloatController(evalStream, timeControlName, modkey, propName, file, identifier, propStream.str(), "z", metadata.get("interpretation"));
+            addFloatController(options.loadTimeControl, evalStream, timeControlName, modkey, propName, file, identifier, propStream.str(), "x", metadata.get("interpretation"));
+            addFloatController(options.loadTimeControl, evalStream, timeControlName, modkey, propName, file, identifier, propStream.str(), "y", metadata.get("interpretation"));
+            addFloatController(options.loadTimeControl, evalStream, timeControlName, modkey, propName, file, identifier, propStream.str(), "z", metadata.get("interpretation"));
          }
       }
       else{

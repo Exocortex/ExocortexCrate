@@ -178,5 +178,8 @@ public:
 
 void printChannelIntervals(TimeValue t, Object* obj);
 
+int createNode(AbcG::IObject& iObj, SClass_ID superID, Class_ID classID, INode** pMaxNode, bool& bReplaceExisting);
+
+
 
 #endif  // _FOUNDATION_H_

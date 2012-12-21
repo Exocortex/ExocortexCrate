@@ -250,6 +250,51 @@ bool assignController(Animatable* controller, Animatable* pObj, int i, int j, in
 }
 
 
+void createCameraModifier(const std::string& path, const std::string& identifier, INode* pNode)
+{
+	////Create the Camera modifier
+	Modifier *pModifier = static_cast<Modifier*>
+		(GET_MAX_INTERFACE()->CreateInstance(OSM_CLASS_ID, ALEMBIC_CAMERA_MODIFIER_CLASSID));
+
+	TimeValue now =  GET_MAX_INTERFACE()->GetTime();
+
+	//Set the alembic id
+	pModifier->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pModifier, 0, "path" ), now, EC_UTF8_to_TCHAR( path.c_str() ) );
+	pModifier->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pModifier, 0, "identifier" ), now, EC_UTF8_to_TCHAR( identifier.c_str() ) );
+	
+	//Set the alembic id
+	//pModifier->SetCamera(pCameraObj);
+
+	//Add the modifier to the node
+	GET_MAX_INTERFACE()->AddModifier(*pNode, *pModifier);
+
+   //AlembicImport_ConnectTimeControl("$.modifiers[\"AlembicCameraProperties\"].time", options );
+
+   //printControllers(pModifier->GetParamBlockByID(0));
+
+   IParamBlock2* pBlock = pModifier->GetParamBlockByID(0);
+   if(pBlock){
+      pBlock->AssignController(createFloatController(path, identifier, "horizontalFOV"), 0);
+      pBlock->AssignController(createFloatController(path, identifier, "verticalFOV"), 1);
+      pBlock->AssignController(createFloatController(path, identifier, "FocalLength"), 2);
+      pBlock->AssignController(createFloatController(path, identifier, "HorizontalAperture"), 3);
+      pBlock->AssignController(createFloatController(path, identifier, "VerticalAperture"), 4);
+      pBlock->AssignController(createFloatController(path, identifier, "HorizontalFilmOffset"), 5);
+      pBlock->AssignController(createFloatController(path, identifier, "VerticalFilmOffset"), 6);
+      pBlock->AssignController(createFloatController(path, identifier, "LensSqueezeRatio"), 7);
+      pBlock->AssignController(createFloatController(path, identifier, "OverScanLeft"), 8);
+      pBlock->AssignController(createFloatController(path, identifier, "OverScanRight"), 9);
+      pBlock->AssignController(createFloatController(path, identifier, "OverScanTop"), 10);
+      pBlock->AssignController(createFloatController(path, identifier, "OverScanBottom"), 11);
+      pBlock->AssignController(createFloatController(path, identifier, "FStop"), 12);
+      pBlock->AssignController(createFloatController(path, identifier, "FocusDistance"), 13);
+      pBlock->AssignController(createFloatController(path, identifier, "ShutterOpen"), 14);
+      pBlock->AssignController(createFloatController(path, identifier, "ShutterClose"), 15);
+      pBlock->AssignController(createFloatController(path, identifier, "NearClippingPlane"), 16);
+      pBlock->AssignController(createFloatController(path, identifier, "FarClippingPlane"), 17);
+   }
+}
+
 
 int AlembicImport_Camera(const std::string &path, AbcG::IObject& iObj, alembic_importoptions &options, INode** pMaxNode)
 {
@@ -373,47 +418,9 @@ int AlembicImport_Camera(const std::string &path, AbcG::IObject& iObj, alembic_i
 	//	AlembicImport_ConnectTimeControl( "$.targetDistance.controller.time", options );
 	//}	
 
-	////Create the Camera modifier
-	Modifier *pModifier = static_cast<Modifier*>
-		(GET_MAX_INTERFACE()->CreateInstance(OSM_CLASS_ID, ALEMBIC_CAMERA_MODIFIER_CLASSID));
 
-	TimeValue now =  GET_MAX_INTERFACE()->GetTime();
+    createCameraModifier(path, identifier, pNode);
 
-	//Set the alembic id
-	pModifier->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pModifier, 0, "path" ), now, EC_UTF8_to_TCHAR( path.c_str() ) );
-	pModifier->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pModifier, 0, "identifier" ), now, EC_UTF8_to_TCHAR( identifier.c_str() ) );
-	
-	//Set the alembic id
-	//pModifier->SetCamera(pCameraObj);
-
-	//Add the modifier to the node
-	GET_MAX_INTERFACE()->AddModifier(*pNode, *pModifier);
-
-   //AlembicImport_ConnectTimeControl("$.modifiers[\"AlembicCameraProperties\"].time", options );
-
-   //printControllers(pModifier->GetParamBlockByID(0));
-
-   IParamBlock2* pBlock = pModifier->GetParamBlockByID(0);
-   if(pBlock){
-      pBlock->AssignController(createFloatController(path, identifier, "horizontalFOV"), 0);
-      pBlock->AssignController(createFloatController(path, identifier, "verticalFOV"), 1);
-      pBlock->AssignController(createFloatController(path, identifier, "FocalLength"), 2);
-      pBlock->AssignController(createFloatController(path, identifier, "HorizontalAperture"), 3);
-      pBlock->AssignController(createFloatController(path, identifier, "VerticalAperture"), 4);
-      pBlock->AssignController(createFloatController(path, identifier, "HorizontalFilmOffset"), 5);
-      pBlock->AssignController(createFloatController(path, identifier, "VerticalFilmOffset"), 6);
-      pBlock->AssignController(createFloatController(path, identifier, "LensSqueezeRatio"), 7);
-      pBlock->AssignController(createFloatController(path, identifier, "OverScanLeft"), 8);
-      pBlock->AssignController(createFloatController(path, identifier, "OverScanRight"), 9);
-      pBlock->AssignController(createFloatController(path, identifier, "OverScanTop"), 10);
-      pBlock->AssignController(createFloatController(path, identifier, "OverScanBottom"), 11);
-      pBlock->AssignController(createFloatController(path, identifier, "FStop"), 12);
-      pBlock->AssignController(createFloatController(path, identifier, "FocusDistance"), 13);
-      pBlock->AssignController(createFloatController(path, identifier, "ShutterOpen"), 14);
-      pBlock->AssignController(createFloatController(path, identifier, "ShutterClose"), 15);
-      pBlock->AssignController(createFloatController(path, identifier, "NearClippingPlane"), 16);
-      pBlock->AssignController(createFloatController(path, identifier, "FarClippingPlane"), 17);
-   }
 
     // Add the new inode to our current scene list
     SceneEntry *pEntry = options.sceneEnumProc.Append(pNode, pCameraObj, OBTYPE_CAMERA, &std::string(iObj.getFullName())); 

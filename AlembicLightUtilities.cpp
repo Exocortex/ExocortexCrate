@@ -7,6 +7,8 @@
 #include <Alembic/Util/PlainOldDataType.h>
 //#include <Alembic/Abc/IScalarProperty.h>
 #include "AlembicPropertyUtils.h"
+#include "AlembicNames.h"
+#include "AlembicCameraUtilities.h"
 
 //template<class T> printProperty(
 
@@ -126,8 +128,18 @@ struct matShader
 
 };
 
-void readShader(AbcM::IMaterialSchema& matSchema, std::vector<matShader>& shaders)
+namespace InputLightType
 {
+   enum enumt{
+      AREA_LIGHT,
+      AMBIENT_LIGHT,
+      NUM_INPUT_LIGHT_TYPES
+   };
+};
+
+InputLightType::enumt readShader(AbcM::IMaterialSchema& matSchema, std::vector<matShader>& shaders)
+{
+   InputLightType::enumt ltype = InputLightType::NUM_INPUT_LIGHT_TYPES;
 
    std::vector<std::string> targetNames;
 
@@ -143,6 +155,13 @@ void readShader(AbcM::IMaterialSchema& matSchema, std::vector<matShader>& shader
          //ESS_LOG_WARNING("shaderTypeNames: "<<shaderTypeNames[k]);
          std::string shaderName;
          matSchema.getShader(targetNames[j], shaderTypeNames[k], shaderName);
+
+         if(shaderName.find("rect") != std::string::npos || shaderName.find("area") != std::string::npos){
+            ltype = InputLightType::AREA_LIGHT;
+         }
+         else if(shaderName.find("ambient") != std::string::npos){
+            ltype = InputLightType::AMBIENT_LIGHT;
+         }
 
          //std::stringstream nameStream;
          //nameStream<<targetNames[j]<<"."<<shaderTypeNames[k]<<"."<<shaderName;
@@ -162,6 +181,7 @@ void readShader(AbcM::IMaterialSchema& matSchema, std::vector<matShader>& shader
       }
    }
 
+   return ltype;
 }
 
 
@@ -180,11 +200,9 @@ AbcM::IMaterialSchema getMatSchema(AbcG::ILight& objLight)
    return AbcM::IMaterialSchema();
 }
 
+
 int AlembicImport_Light(const std::string &path, AbcG::IObject& iObj, alembic_importoptions &options, INode** pMaxNode)
 {
-
-
-
 //#define OMNI_LIGHT_CLASS_ID  		0x1011
 //#define SPOT_LIGHT_CLASS_ID  		0x1012
 //#define DIR_LIGHT_CLASS_ID  		0x1013
@@ -201,9 +219,13 @@ int AlembicImport_Light(const std::string &path, AbcG::IObject& iObj, alembic_im
 
    AbcG::ILight objLight = AbcG::ILight(iObj, Alembic::Abc::kWrapExisting);
 
+   std::string identifier = objLight.getFullName();
+
    //CompoundPropertyReaderPtr propReader = objLight.getProperties();
 
    Abc::ICompoundProperty props = objLight.getProperties();
+
+   InputLightType::enumt lightType = InputLightType::NUM_INPUT_LIGHT_TYPES;
 
    for(int i=0; i<props.getNumProperties(); i++){
       Abc::PropertyHeader propHeader = props.getPropertyHeader(i);
@@ -212,43 +234,58 @@ int AlembicImport_Light(const std::string &path, AbcG::IObject& iObj, alembic_im
    
          //ESS_LOG_WARNING("MaterialSchema present on light.");
 
-         readShader(matSchema, shaders);
+         lightType = readShader(matSchema, shaders);
+      }
+
+      ESS_LOG_WARNING("name: "<<propHeader.getName());
+
+      if( AbcG::ICameraSchema::matches(propHeader) ){
+         ESS_LOG_WARNING("Found light camera.");
+         //AbcG::ICameraSchema camSchema(props, propHeader.getName());
+
       }
    }
 
 
 
-   // Create the object pNode
-	INode *pNode = *pMaxNode;
-	bool bReplaceExisting = false;
-	if(!pNode){
-      Object* newObject = reinterpret_cast<Object*>( GET_MAX_INTERFACE()->CreateInstance(LIGHT_CLASS_ID, Class_ID(OMNI_LIGHT_CLASS_ID, 0)) );
-		if (newObject == NULL){
-			return alembic_failure;
-		}
-      Abc::IObject parent = iObj.getParent();
-      std::string name = removeXfoSuffix(iObj.getName().c_str());
-      pNode = GET_MAX_INTERFACE()->CreateObjectNode(newObject, EC_UTF8_to_TCHAR(name.c_str()));
-		if (pNode == NULL){
-			return alembic_failure;
-		}
-		*pMaxNode = pNode;
-	}
-	else{
-		bReplaceExisting = true;
-	}
+   bool bReplaceExisting = false;
+   int nodeRes = alembic_failure;
+   if(lightType == InputLightType::AMBIENT_LIGHT){
+      nodeRes = createNode(iObj, LIGHT_CLASS_ID, Class_ID(OMNI_LIGHT_CLASS_ID, 0), pMaxNode, bReplaceExisting);
+
+      //connect intensity controller
+      //connect light colour controller
+      //set ambient check box
+   }
+   else{//create a null, if we don't know what type of light this is
+      nodeRes = createNode(iObj, HELPER_CLASS_ID, Class_ID(DUMMY_CLASS_ID,0), pMaxNode, bReplaceExisting);
+   }
+
+   if(nodeRes == alembic_failure){
+      return nodeRes;
+   }
+
 
    GET_MAX_INTERFACE()->SelectNode(*pMaxNode);
 
-   for(int i=0; i<shaders.size(); i++){
-      Modifier* pMod = createDisplayModifier("properties", shaders[i].name, shaders[i].props);
+   //for(int i=0; i<shaders.size(); i++){
+   //   Modifier* pMod = createDisplayModifier("Shader Properties", shaders[i].name, shaders[i].props);
 
-      std::string target = shaders[i].target;
-      std::string type = shaders[i].type;
+   //   std::string target = shaders[i].target;
+   //   std::string type = shaders[i].type;
 
-      addControllersToModifier("properties", shaders[i].name, shaders[i].props, target, type, path, iObj.getFullName(), options);
-   }
+   //   addControllersToModifier("Shader Properties", shaders[i].name, shaders[i].props, target, type, path, iObj.getFullName(), options);
+   //}
 
+   //TODO: add camera modifier
+
+   createCameraModifier(path, identifier, *pMaxNode);
+
+   //TODO: don't attach controllers for constant parameters
+
+   //TODO: make the spinners read only
+
+   //TODO: verify it works with attach to existing
 
    return alembic_success;
 }

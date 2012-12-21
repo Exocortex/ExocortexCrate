@@ -820,3 +820,27 @@ void printChannelIntervals(TimeValue t, Object* obj)
    Interval texInterval = obj->ChannelValidity(t, TEXMAP_CHAN_NUM);
    ESS_LOG_WARNING( "TexInterval Start: " << texInterval.Start() << " End: " << texInterval.End() );
 }
+
+
+int createNode(AbcG::IObject& iObj, SClass_ID superID, Class_ID classID, INode** pMaxNode, bool& bReplaceExisting)
+{
+   INode *pNode = *pMaxNode;
+
+   if(!pNode){
+      Object* newObject = reinterpret_cast<Object*>( GET_MAX_INTERFACE()->CreateInstance(superID, classID) );
+      if (newObject == NULL){
+         return alembic_failure;
+      }
+      std::string name = removeXfoSuffix(iObj.getParent().getName().c_str());
+      pNode = GET_MAX_INTERFACE()->CreateObjectNode(newObject, EC_UTF8_to_TCHAR(name.c_str()));
+      if (pNode == NULL){
+         return alembic_failure;
+      }
+      *pMaxNode = pNode;
+   }
+   else{
+      bReplaceExisting = true;
+   }
+
+   return alembic_success;
+}

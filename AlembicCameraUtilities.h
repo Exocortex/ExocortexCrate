@@ -16,4 +16,6 @@ bool getCameraSampleVal(AbcG::ICamera& objCamera, SampleInfo& sampleInfo, AbcG::
 
 int AlembicImport_Camera(const std::string &path, AbcG::IObject& iObj, alembic_importoptions &options, INode** pMaxNode);
 
+void createCameraModifier(const std::string& path, const std::string& identifier, INode* pNode);
+
 #endif	// __ALEMBIC_CAMERA_MODIFIER__H
