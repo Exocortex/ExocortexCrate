@@ -44,7 +44,7 @@ public:
 	void EnumAuxFiles(AssetEnumCallback& nameEnum, DWORD flags);
 
 	// From Modifier
-	ChannelMask ChannelsUsed()  { return TEXMAP_CHANNEL; }
+	ChannelMask ChannelsUsed()  { return TEXMAP_CHANNEL|SUBSEL_TYPE_CHANNEL; }
 	ChannelMask ChannelsChanged() { return TEXMAP_CHANNEL; }
 	Class_ID InputType() { return polyObjectClassID; }
 	void ModifyObject (TimeValue t, ModContext &mc, ObjectState *os, INode *node);

@@ -47,6 +47,7 @@ typedef struct _alembic_importoptions
    bool failOnUnsupported;
    bool loadGeometryInTopologyModifier;
    bool attachToExisting;
+   bool loadTimeControl;
    VisImportOption importVisibility;
    SceneEnumProc sceneEnumProc;
    ObjectList currentSceneList;
@@ -61,6 +62,7 @@ public:
 	, attachToExisting(false)
 	, failOnUnsupported(false)
     , loadGeometryInTopologyModifier(false)
+    , loadTimeControl(false)
     , importVisibility(VisImport_JustImportValue)
 	, pTimeControl(NULL)
    {

@@ -271,6 +271,10 @@ static ExocortexAlembicStaticInterface exocortexAlembic;
 
 void AlembicImport_TimeControl( alembic_importoptions &options ) {
 
+   if(!options.loadTimeControl){
+      return;
+   }
+
 	// check if an Alembic Time Control already exists in the scene.
 
 	BOOL alreadyExists = ExecuteMAXScriptScript( _T( "select $Alembic_Time_Control" ), TRUE );
@@ -318,8 +322,11 @@ void AlembicImport_TimeControl( alembic_importoptions &options ) {
 
 void AlembicImport_ConnectTimeControl( const char* szControllerName, alembic_importoptions &options ) 
 {
+   char szBuffer[10000];
+   if(options.loadTimeControl && options.pTimeControl){
+
 	std::string objectNameName = EC_MCHAR_to_UTF8( options.pTimeControl->GetObjectName() );
-	char szBuffer[10000];	
+		
 	sprintf_s( szBuffer, 10000, 
 		"%s.controller = float_expression()\n"
 		"%s.controller.AddScalarTarget \"current\" $'%s'.current.controller\n"
@@ -332,7 +339,14 @@ void AlembicImport_ConnectTimeControl( const char* szControllerName, alembic_imp
 		szControllerName, objectNameName.c_str(),
 		szControllerName );
 
-	ExecuteMAXScriptScript( EC_UTF8_to_TCHAR( szBuffer ) );
+   }
+   else{
+	sprintf_s( szBuffer, 10000,
+		"%s.controller = float_expression()\n"
+		"%s.controller.setExpression \"S\"\n"
+		, szControllerName, szControllerName, szControllerName, szControllerName );
+   }
+   ExecuteMAXScriptScript( EC_UTF8_to_TCHAR( szBuffer ) );
 }
 
 int ExocortexAlembicStaticInterface::ExocortexGetBinVersion()
@@ -409,7 +423,7 @@ int ExocortexAlembicStaticInterface_ExocortexAlembicImportJobs( CONST_2013 MCHAR
 		//	", bImportMaterialIds=" << bImportMaterialIds << ", bAttachToExisting=" << bAttachToExisting <<
 		//	", iVisOption=" << iVisOption << " )" );
 
-      ESS_LOG_WARNING( "Processing import job: "<<jobString);
+      ESS_LOG_WARNING( "Processing import job: "<< EC_MCHAR_to_UTF8(jobString));
 
 		alembic_importoptions options;
 
@@ -457,6 +471,9 @@ int ExocortexAlembicStaticInterface_ExocortexAlembicImportJobs( CONST_2013 MCHAR
             else if(boost::iequals(valuePair[0], "loadGeometryInTopologyModifier")){
                options.loadGeometryInTopologyModifier = parseBool(valuePair[1]);
             }
+            else if(boost::iequals(valuePair[0], "loadTimeControl")){
+               options.loadTimeControl = parseBool(valuePair[1]);
+            }
 			else
 			{
 				ESS_LOG_INFO("Skipping invalid token: "<<tokens[j]);
@@ -495,7 +512,7 @@ int ExocortexAlembicStaticInterface_ExocortexAlembicImportJobs( CONST_2013 MCHAR
 		options.currentSceneList.FillList(options.sceneEnumProc);
 
 		ESS_LOG_INFO( "AlembicImport_TimeControl." );
-				
+
 		AlembicImport_TimeControl( options );
 
       AbcG::IObject root = pArchive->getTop();
