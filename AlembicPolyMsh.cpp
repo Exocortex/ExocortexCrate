@@ -1172,3 +1172,294 @@ ESS_CALLBACK_END
 ESS_CALLBACK_START( alembic_bbox_Term, CRef& )
    return alembicOp_Term(in_ctxt);
 ESS_CALLBACK_END
+
+
+/// ICE NODE!
+enum IDs
+{
+	ID_IN_path = 0,
+	ID_IN_identifier = 1,
+	ID_IN_renderpath = 2,
+	ID_IN_renderidentifier = 3,
+	ID_IN_time = 4,
+	ID_IN_usevel = 5,
+	ID_G_100 = 100,
+	ID_OUT_position = 201,
+	ID_OUT_velocity = 202,
+	ID_OUT_faceCounts = 203,
+	ID_OUT_faceIndices = 204,
+
+	ID_TYPE_CNS = 400,
+	ID_STRUCT_CNS,
+	ID_CTXT_CNS,
+};
+
+#define ID_UNDEF ((ULONG)-1)
+
+using namespace XSI;
+
+XSIPLUGINCALLBACK CStatus alembic_polyMesh_Evaluate(ICENodeContext& in_ctxt)
+{
+	// The current output port being evaluated...
+	ULONG out_portID = in_ctxt.GetEvaluatedOutputPortID( );
+
+	CDataArrayString pathData( in_ctxt, ID_IN_path );
+	CString path = pathData[0];
+	CDataArrayString identifierData( in_ctxt, ID_IN_identifier );
+	CString identifier = identifierData[0];
+
+	// check if we need t addref the archive
+	CValue udVal = in_ctxt.GetUserData();
+	ArchiveInfo * p = (ArchiveInfo*)(CValue::siPtrType)udVal;
+	if(p == NULL)
+	{
+		p = new ArchiveInfo;
+		p->path = path.GetAsciiString();
+		addRefArchive(path);
+		CValue val = (CValue::siPtrType) p;
+		in_ctxt.PutUserData( val ) ;
+	}
+
+	AbcG::IObject iObj = getObjectFromArchive(path,identifier);
+	if(!iObj.valid())
+		return CStatus::OK;
+	AbcG::IPoints obj(iObj,Abc::kWrapExisting);
+	if(!obj.valid())
+		return CStatus::OK;
+
+	CDataArrayFloat timeData( in_ctxt, ID_IN_time);
+	double time = timeData[0];
+
+	CDataArrayBool usevelData( in_ctxt, ID_IN_usevel);
+	double usevel = usevelData[0];
+
+	AbcG::IPolyMesh objMesh;
+	AbcG::ISubD objSubD;
+	const bool useMesh = AbcG::IPolyMesh::matches(iObj.getMetaData());
+	if(useMesh)
+		objMesh = AbcG::IPolyMesh(iObj,Abc::kWrapExisting);
+	else
+		objSubD = AbcG::ISubD(iObj,Abc::kWrapExisting);
+	if(!objMesh.valid() && !objSubD.valid())
+		return CStatus::OK;
+
+	AbcA::TimeSamplingPtr timeSampling;
+	int nSamples = 0;
+	if(useMesh)
+	{
+		timeSampling = objMesh.getSchema().getTimeSampling();
+		nSamples = (int) objMesh.getSchema().getNumSamples();
+	}
+	else
+	{
+		timeSampling = objSubD.getSchema().getTimeSampling();
+		nSamples = (int) objSubD.getSchema().getNumSamples();
+	}
+
+	SampleInfo sampleInfo = getSampleInfo( time, timeSampling, nSamples );
+
+	switch( out_portID )
+	{
+	case ID_OUT_position:
+		{
+			CDataArray2DVector3f outData( in_ctxt );
+			CDataArray2DVector3f::Accessor acc;
+
+			Abc::P3fArraySamplePtr ptr;
+			if(useMesh)
+			{
+				AbcG::IPolyMeshSchema::Sample sample;
+				objMesh.getSchema().get(sample,sampleInfo.floorIndex);
+				ptr = sample.getPositions();
+			}
+			else
+			{
+				AbcG::ISubDSchema::Sample sample;
+				objSubD.getSchema().get(sample,sampleInfo.floorIndex);
+				ptr = sample.getPositions();
+			}
+
+			if(ptr == NULL || ptr->size() == 0 || (ptr->size() == 1 && ptr->get()[0].x == FLT_MAX) )
+				acc = outData.Resize(0,0);
+			else
+			{
+				acc = outData.Resize(0,(ULONG)ptr->size());
+				bool done = false;
+				if(sampleInfo.alpha != 0.0 && usevel)
+				{
+					const float alpha = (float)sampleInfo.alpha;
+
+					Abc::V3fArraySamplePtr velPtr;
+					if (useMesh)
+					{
+						AbcG::IPolyMeshSchema::Sample sample;
+						objMesh.getSchema().get(sample, sampleInfo.floorIndex);
+						velPtr = sample.getVelocities();
+					}
+					else
+					{
+						AbcG::ISubDSchema::Sample sample;
+						objSubD.getSchema().get(sample, sampleInfo.floorIndex);
+						velPtr = sample.getVelocities();
+					}
+
+					if(velPtr == NULL || velPtr->size() == 0)
+						done = false;
+					else
+					{
+						for(ULONG i=0; i<acc.GetCount(); ++i)
+						{
+							const Abc::P3fArraySamplePtr::_Elem::value_type &pt = ptr->get()[i];
+							const Abc::V3fArraySamplePtr::_Elem::value_type &vl = velPtr->get()[i >= velPtr->size() ? 0 : i];
+							acc[i].Set
+							(
+								pt.x + alpha * vl.x,
+								pt.y + alpha * vl.y,
+								pt.z + alpha * vl.z
+							);
+						}
+						done = true;
+					}
+				}
+
+				if(!done)
+				{
+					for(ULONG i=0;i<acc.GetCount();i++)
+					{
+						const Abc::P3fArraySamplePtr::_Elem::value_type &pt = ptr->get()[i];
+						acc[i].Set(pt.x, pt.y, pt.z);
+					}
+				}
+			}
+		}
+		break;
+
+	case ID_OUT_velocity:
+		{
+			CDataArray2DVector3f outData( in_ctxt );
+			CDataArray2DVector3f::Accessor acc;
+
+			Abc::V3fArraySamplePtr ptr;
+			if(useMesh)
+			{
+				AbcG::IPolyMeshSchema::Sample sample;
+				objMesh.getSchema().get(sample,sampleInfo.floorIndex);
+				ptr = sample.getVelocities();
+			}
+			else
+			{
+				AbcG::ISubDSchema::Sample sample;
+				objSubD.getSchema().get(sample,sampleInfo.floorIndex);
+				ptr = sample.getVelocities();
+			}
+
+			if(ptr == NULL || ptr->size() == 0)
+				acc = outData.Resize( 0, 0 );
+			else
+			{
+				acc = outData.Resize(0,(ULONG)ptr->size());
+				for(ULONG i=0; i<acc.GetCount(); ++i)
+				{
+					const Abc::V3fArraySamplePtr::_Elem::value_type &vl = ptr->get()[i];
+					acc[i].Set(vl.x, vl.y, vl.z);
+				}
+			}
+		}
+		break;
+
+	case ID_OUT_faceCounts:
+	case ID_OUT_faceIndices:
+		{
+			CDataArray2DLong outData( in_ctxt );
+			CDataArray2DLong::Accessor acc;
+
+			Abc::Int32ArraySamplePtr ptr;
+			if (useMesh)
+			{
+				AbcG::IPolyMeshSchema::Sample sample;
+				objMesh.getSchema().get(sample, sampleInfo.floorIndex);
+				ptr = (out_portID == ID_OUT_faceCounts) ?
+								sample.getFaceCounts() :
+								sample.getFaceIndices();
+			}
+			else
+			{
+				AbcG::ISubDSchema::Sample sample;
+				objSubD.getSchema().get(sample, sampleInfo.floorIndex);
+				ptr = (out_portID == ID_OUT_faceCounts) ?
+								sample.getFaceCounts() :
+								sample.getFaceIndices();
+			}
+
+			if (ptr == NULL || ptr->size() == 0)
+				acc = outData.Resize(0, 0);
+			else
+			{
+				acc = outData.Resize(0, (ULONG)ptr->size() );
+				for(ULONG i=0; i<acc.GetCount(); ++i)
+					acc[i] = ptr->get()[i];
+			}
+		}
+		break;
+	}
+
+	return CStatus::OK;
+}
+
+XSIPLUGINCALLBACK CStatus alembic_polyMesh_Term(CRef& in_ctxt)
+{
+	Context ctxt( in_ctxt );
+	CValue udVal = ctxt.GetUserData();
+	ArchiveInfo * p = (ArchiveInfo*)(CValue::siPtrType)udVal;
+	if(p != NULL)
+	{
+		delRefArchive(p->path);
+		delete(p);
+	}
+	return CStatus::OK;
+}
+
+XSI::CStatus Register_alembic_polyMesh( XSI::PluginRegistrar& in_reg )
+{
+	ICENodeDef nodeDef = Application().GetFactory().CreateICENodeDef(L"alembic_polyMesh",L"alembic_polyMesh");
+
+	CStatus st = nodeDef.PutColor(255,188,102);
+	st.AssertSucceeded( ) ;
+
+	st = nodeDef.PutThreadingModel(XSI::siICENodeSingleThreading);
+	st.AssertSucceeded( ) ;
+
+	// Add input ports and groups.
+	st = nodeDef.AddPortGroup(ID_G_100);
+	st.AssertSucceeded( ) ;
+
+	st = nodeDef.AddInputPort(ID_IN_path,ID_G_100,siICENodeDataString,siICENodeStructureSingle,siICENodeContextSingleton,L"path",L"path",L"",ID_UNDEF,ID_UNDEF,ID_UNDEF);
+	st.AssertSucceeded( ) ;
+	st = nodeDef.AddInputPort(ID_IN_identifier,ID_G_100,siICENodeDataString,siICENodeStructureSingle,siICENodeContextSingleton,L"identifier",L"identifier",L"",ID_UNDEF,ID_UNDEF,ID_UNDEF);
+	st.AssertSucceeded( ) ;
+	st = nodeDef.AddInputPort(ID_IN_renderpath,ID_G_100,siICENodeDataString,siICENodeStructureSingle,siICENodeContextSingleton,L"renderpath",L"renderpath",L"",ID_UNDEF,ID_UNDEF,ID_UNDEF);
+	st.AssertSucceeded( ) ;
+	st = nodeDef.AddInputPort(ID_IN_renderidentifier,ID_G_100,siICENodeDataString,siICENodeStructureSingle,siICENodeContextSingleton,L"renderidentifier",L"renderidentifier",L"",ID_UNDEF,ID_UNDEF,ID_UNDEF);
+	st.AssertSucceeded( ) ;
+	st = nodeDef.AddInputPort(ID_IN_time,ID_G_100,siICENodeDataFloat,siICENodeStructureSingle,siICENodeContextSingleton,L"time",L"time",0.0f,ID_UNDEF,ID_UNDEF,ID_UNDEF);
+	st.AssertSucceeded( ) ;
+	st = nodeDef.AddInputPort(ID_IN_usevel,ID_G_100,siICENodeDataBool,siICENodeStructureSingle,siICENodeContextSingleton,L"usevel",L"usevel",false,ID_UNDEF,ID_UNDEF,ID_UNDEF);
+	st.AssertSucceeded( ) ;
+
+	// Add output ports.
+	st = nodeDef.AddOutputPort(ID_OUT_position,siICENodeDataVector3,siICENodeStructureArray,siICENodeContextSingleton,L"position",L"position",ID_UNDEF,ID_UNDEF,ID_UNDEF);
+	st.AssertSucceeded( ) ;
+	st = nodeDef.AddOutputPort(ID_OUT_velocity,siICENodeDataVector3,siICENodeStructureArray,siICENodeContextSingleton,L"velocity",L"velocity",ID_UNDEF,ID_UNDEF,ID_UNDEF);
+	st.AssertSucceeded( ) ;
+	st = nodeDef.AddOutputPort(ID_OUT_faceCounts,siICENodeDataLong,siICENodeStructureArray,siICENodeContextSingleton,L"faceCounts",L"faceCounts",ID_UNDEF,ID_UNDEF,ID_UNDEF);
+	st.AssertSucceeded( ) ;
+	st = nodeDef.AddOutputPort(ID_OUT_faceIndices,siICENodeDataLong,siICENodeStructureArray,siICENodeContextSingleton,L"faceCounts",L"faceCounts",ID_UNDEF,ID_UNDEF,ID_UNDEF);
+	st.AssertSucceeded( ) ;
+
+	PluginItem nodeItem = in_reg.RegisterICENode(nodeDef);
+	nodeItem.PutCategories(L"Custom ICENode");
+
+	return CStatus::OK;
+}
+
+

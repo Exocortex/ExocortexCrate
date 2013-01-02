@@ -31,6 +31,6 @@ public:
    virtual XSI::CStatus Save(double time);
 };
 
-
+XSI::CStatus Register_alembic_polyMesh( XSI::PluginRegistrar& in_reg );
 
 #endif
