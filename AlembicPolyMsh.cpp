@@ -1177,19 +1177,19 @@ ESS_CALLBACK_END
 /// ICE NODE!
 enum IDs
 {
-	ID_IN_path = 0,
-	ID_IN_identifier = 1,
-	ID_IN_renderpath = 2,
-	ID_IN_renderidentifier = 3,
-	ID_IN_time = 4,
-	ID_IN_usevel = 5,
-	ID_G_100 = 100,
-	ID_OUT_position = 201,
-	ID_OUT_velocity = 202,
-	ID_OUT_faceCounts = 203,
-	ID_OUT_faceIndices = 204,
+	ID_IN_path = 10,
+	ID_IN_identifier = 11,
+	ID_IN_renderpath = 12,
+	ID_IN_renderidentifier = 13,
+	ID_IN_time = 14,
+	ID_IN_usevel = 15,
+	ID_G_100 = 1005,
+	ID_OUT_position = 12771,
+	ID_OUT_velocity = 12772,
+	ID_OUT_faceCounts = 12773,
+	ID_OUT_faceIndices = 12774,
 
-	ID_TYPE_CNS = 400,
+	ID_TYPE_CNS = 1400,
 	ID_STRUCT_CNS,
 	ID_CTXT_CNS,
 };
@@ -1357,7 +1357,7 @@ XSIPLUGINCALLBACK CStatus alembic_polyMesh_Evaluate(ICENodeContext& in_ctxt)
 				acc = outData.Resize( 0, 0 );
 			else
 			{
-				acc = outData.Resize(0,(ULONG)ptr->size());
+				acc = outData.Resize(0, (ULONG)ptr->size());
 				for(ULONG i=0; i<acc.GetCount(); ++i)
 				{
 					const Abc::V3fArraySamplePtr::_Elem::value_type &vl = ptr->get()[i];
@@ -1378,7 +1378,7 @@ XSIPLUGINCALLBACK CStatus alembic_polyMesh_Evaluate(ICENodeContext& in_ctxt)
 			{
 				AbcG::IPolyMeshSchema::Sample sample;
 				objMesh.getSchema().get(sample, sampleInfo.floorIndex);
-				ptr = (out_portID == ID_OUT_faceCounts) ?
+				ptr = (out_portID == ID_OUT_faceCounts)?
 								sample.getFaceCounts() :
 								sample.getFaceIndices();
 			}
@@ -1386,7 +1386,7 @@ XSIPLUGINCALLBACK CStatus alembic_polyMesh_Evaluate(ICENodeContext& in_ctxt)
 			{
 				AbcG::ISubDSchema::Sample sample;
 				objSubD.getSchema().get(sample, sampleInfo.floorIndex);
-				ptr = (out_portID == ID_OUT_faceCounts) ?
+				ptr = (out_portID == ID_OUT_faceCounts)?
 								sample.getFaceCounts() :
 								sample.getFaceIndices();
 			}
@@ -1421,9 +1421,9 @@ XSIPLUGINCALLBACK CStatus alembic_polyMesh_Term(CRef& in_ctxt)
 
 XSI::CStatus Register_alembic_polyMesh( XSI::PluginRegistrar& in_reg )
 {
-	ICENodeDef nodeDef = Application().GetFactory().CreateICENodeDef(L"alembic_polyMesh",L"alembic_polyMesh");
+	ICENodeDef nodeDef = Application().GetFactory().CreateICENodeDef(L"alembic_polyMesh", L"alembic_polyMesh");
 
-	CStatus st = nodeDef.PutColor(255,188,102);
+	CStatus st = nodeDef.PutColor(255, 188, 102);
 	st.AssertSucceeded( ) ;
 
 	st = nodeDef.PutThreadingModel(XSI::siICENodeSingleThreading);
@@ -1447,13 +1447,13 @@ XSI::CStatus Register_alembic_polyMesh( XSI::PluginRegistrar& in_reg )
 	st.AssertSucceeded( ) ;
 
 	// Add output ports.
-	st = nodeDef.AddOutputPort(ID_OUT_position,siICENodeDataVector3,siICENodeStructureArray,siICENodeContextSingleton,L"position",L"position",ID_UNDEF,ID_UNDEF,ID_UNDEF);
+	st = nodeDef.AddOutputPort(ID_OUT_position,		siICENodeDataVector3,	siICENodeStructureArray, siICENodeContextSingleton, L"position",	L"position",	ID_UNDEF,ID_UNDEF,ID_UNDEF);
 	st.AssertSucceeded( ) ;
-	st = nodeDef.AddOutputPort(ID_OUT_velocity,siICENodeDataVector3,siICENodeStructureArray,siICENodeContextSingleton,L"velocity",L"velocity",ID_UNDEF,ID_UNDEF,ID_UNDEF);
+	st = nodeDef.AddOutputPort(ID_OUT_velocity,		siICENodeDataVector3,	siICENodeStructureArray, siICENodeContextSingleton, L"velocity",	L"velocity",	ID_UNDEF,ID_UNDEF,ID_UNDEF);
 	st.AssertSucceeded( ) ;
-	st = nodeDef.AddOutputPort(ID_OUT_faceCounts,siICENodeDataLong,siICENodeStructureArray,siICENodeContextSingleton,L"faceCounts",L"faceCounts",ID_UNDEF,ID_UNDEF,ID_UNDEF);
+	st = nodeDef.AddOutputPort(ID_OUT_faceCounts,	siICENodeDataLong,		siICENodeStructureArray, siICENodeContextSingleton, L"faceCounts",	L"faceCounts",	ID_UNDEF,ID_UNDEF,ID_UNDEF);
 	st.AssertSucceeded( ) ;
-	st = nodeDef.AddOutputPort(ID_OUT_faceIndices,siICENodeDataLong,siICENodeStructureArray,siICENodeContextSingleton,L"faceCounts",L"faceCounts",ID_UNDEF,ID_UNDEF,ID_UNDEF);
+	st = nodeDef.AddOutputPort(ID_OUT_faceIndices,	siICENodeDataLong,		siICENodeStructureArray, siICENodeContextSingleton, L"faceIndices",	L"faceIndices",	ID_UNDEF,ID_UNDEF,ID_UNDEF);
 	st.AssertSucceeded( ) ;
 
 	PluginItem nodeItem = in_reg.RegisterICENode(nodeDef);

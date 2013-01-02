@@ -15,6 +15,7 @@ using namespace MATH;
 #include "AlembicWriteJob.h"
 #include "AlembicPoints.h"
 #include "AlembicCurves.h"
+#include "AlembicPolyMsh.h"
 #include "CommonProfiler.h"
 #include "CommonMeshUtilities.h"
 #include "CommonUtilities.h"
@@ -72,6 +73,7 @@ SICALLBACK XSILoadPlugin( PluginRegistrar& in_reg )
 		// register ICE nodes
 		Register_alembic_curves(in_reg);
 		Register_alembic_points(in_reg);
+		Register_alembic_polyMesh(in_reg);
 
 		//XSILoadPlugin_2( in_reg );
 
