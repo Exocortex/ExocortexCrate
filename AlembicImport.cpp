@@ -517,8 +517,15 @@ CStatus alembic_create_item_Invoke
             Abc::IInt32ArrayProperty faceCountProp = Abc::IInt32ArrayProperty(abcCompound,".faceCounts");
             if(faceCountProp.valid())
                receivesExpression = !faceCountProp.isConstant();
-            else
-               receivesExpression = false;
+            
+			if ( !receivesExpression ) // still false, check .faceIndices just in case and reuse faceCountProp variable!
+			{
+				faceCountProp = Abc::IInt32ArrayProperty(abcCompound,".faceIndices");
+				if (faceCountProp.valid())
+					receivesExpression = !faceCountProp.isConstant();
+				else
+					receivesExpression = false;
+			}
          }
 
          if(receivesExpression)
