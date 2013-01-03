@@ -137,96 +137,105 @@ XSI::CStatus AlembicCurves::Save(double time)
       Abc::Box3d bbox;
       std::vector<Abc::V3f> posVec;
 
-      while(accessor.Next())
-      {
-         CFloatArray hairPos;
-         CStatus result = accessor.GetVertexPositions(hairPos);
-         ULONG vertCount = hairPos.GetCount();
-         vertCount /= 3;
-         size_t posVecOffset = posVec.size();
-         posVec.resize(posVec.size() + size_t(vertCount));
-         ULONG offset = 0;
-         for(ULONG i=0;i<vertCount;i++)
-         {
-            CVector3 pos;
-            pos.PutX(hairPos[offset++]);
-            pos.PutY(hairPos[offset++]);
-            pos.PutZ(hairPos[offset++]);
-            if(globalSpace)
-               pos = MapObjectPositionToWorldSpace(globalXfo,pos);
-            posVec[posVecOffset+i].x = (float)pos.GetX();
-            posVec[posVecOffset+i].y = (float)pos.GetY();
-            posVec[posVecOffset+i].z = (float)pos.GetZ();
-            bbox.extendBy(posVec[posVecOffset+i]);
-         }
-      }
+		while(accessor.Next())
+		{
+			CFloatArray hairPos;
+			CStatus result = accessor.GetVertexPositions(hairPos);
+			ULONG vertCount = hairPos.GetCount();
+			vertCount /= 3;
+			size_t posVecOffset = posVec.size();
+			posVec.resize(posVec.size() + size_t(vertCount));
+			ULONG offset = 0;
+			for(ULONG i=0;i<vertCount;i++)
+			{
+				CVector3 pos;
+				pos.PutX(hairPos[offset++]);
+				pos.PutY(hairPos[offset++]);
+				pos.PutZ(hairPos[offset++]);
+				if(globalSpace)
+				   pos = MapObjectPositionToWorldSpace(globalXfo,pos);
+				posVec[posVecOffset+i].x = (float)pos.GetX();
+				posVec[posVecOffset+i].y = (float)pos.GetY();
+				posVec[posVecOffset+i].z = (float)pos.GetZ();
+				bbox.extendBy(posVec[posVecOffset+i]);
+			}
 
-      mCurvesSample.setPositions(Abc::P3fArraySample(posVec));
+			// if we are the first frame!
+			if(mNumSamples == 0)
+			{
+				{
+					CLongArray hairCount;
+					accessor.GetVerticesCount(hairCount);
+					const int offset = mNbVertices.size();
+					mNbVertices.resize(offset + (size_t)hairCount.GetCount());
+					for(LONG i=0;i<hairCount.GetCount();i++)
+						mNbVertices[offset + i] = (Abc::int32_t)hairCount[i];
+					mCurvesSample.setCurvesNumVertices(Abc::Int32ArraySample(mNbVertices));
+					hairCount.Clear();
+				}
 
-      // store the bbox
-      mCurvesSample.setSelfBounds(bbox);
+				// set the type + wrapping
+				mCurvesSample.setType(AbcG::kLinear);
+				mCurvesSample.setWrap(AbcG::kNonPeriodic);
+				mCurvesSample.setBasis(AbcG::kNoBasis);
 
-      // if we are the first frame!
-      if(mNumSamples == 0)
-      {
-         CLongArray hairCount;
-         accessor.GetVerticesCount(hairCount);
-         mNbVertices.resize((size_t)hairCount.GetCount());
-         for(LONG i=0;i<hairCount.GetCount();i++)
-            mNbVertices[i] = (Abc::int32_t)hairCount[i];
-         mCurvesSample.setCurvesNumVertices(Abc::Int32ArraySample(mNbVertices));
-         hairCount.Clear();
+				 // store the hair radius
+				{
+					CFloatArray hairRadius;
+					accessor.GetVertexRadiusValues(hairRadius);
+					const int offset = mRadiusVec.size();
+					mRadiusVec.resize(offset + (size_t)hairRadius.GetCount());
+					for(LONG i=0;i<hairRadius.GetCount();i++)
+						mRadiusVec[offset+i] = hairRadius[i];
+					mRadiusProperty.set(Abc::FloatArraySample(mRadiusVec));
+					hairRadius.Clear();
+				}
 
-         // set the type + wrapping
-         mCurvesSample.setType(AbcG::kLinear);
-         mCurvesSample.setWrap(AbcG::kNonPeriodic);
-         mCurvesSample.setBasis(AbcG::kNoBasis);
+				 // store the hair color (if any)
+				 if(accessor.GetVertexColorCount() > 0)
+				 {
+					CFloatArray hairColor;
+					accessor.GetVertexColorValues(0,hairColor);
+					const int c_offset = mColorVec.size();
+					mColorVec.resize(c_offset + (size_t)hairColor.GetCount()/4);
+					ULONG offset = 0;
+					for(size_t i=0;i<mColorVec.size();i++)
+					{
+						Imath::C4f &col = mColorVec[c_offset+i];
+						col.r = hairColor[offset++];
+						col.g = hairColor[offset++];
+						col.b = hairColor[offset++];
+						col.a = hairColor[offset++];
+					}
+					mColorProperty.set(Abc::C4fArraySample(mColorVec));
+					hairColor.Clear();
+				 }
 
-         // store the hair radius
-         CFloatArray hairRadius;
-         accessor.GetVertexRadiusValues(hairRadius);
-         mRadiusVec.resize((size_t)hairRadius.GetCount());
-         for(LONG i=0;i<hairRadius.GetCount();i++)
-            mRadiusVec[i] = hairRadius[i];
-         mRadiusProperty.set(Abc::FloatArraySample(mRadiusVec));
-         hairRadius.Clear();
+				 // store the hair color (if any)
+				 if(accessor.GetUVCount() > 0)
+				 {
+					CFloatArray hairUV;
+					accessor.GetUVValues(0,hairUV);
+					const int u_offset = mUvVec.size();
+					mUvVec.resize(u_offset+(size_t)hairUV.GetCount()/3);
+					ULONG offset = 0;
+					for(size_t i=0;i<mUvVec.size();i++)
+					{
+						Imath::V2f &uv = mUvVec[u_offset+i];
+						uv.x = hairUV[offset++];
+						uv.y = 1.0f - hairUV[offset++];
+						offset++;
+					}
+					mCurvesSample.setUVs(AbcG::OV2fGeomParam::Sample(mUvVec,AbcG::kVertexScope));
+					hairUV.Clear();
+				 }
+			}
+		}
+		mCurvesSample.setPositions(Abc::P3fArraySample(posVec));
 
-         // store the hair color (if any)
-         if(accessor.GetVertexColorCount() > 0)
-         {
-            CFloatArray hairColor;
-            accessor.GetVertexColorValues(0,hairColor);
-            mColorVec.resize((size_t)hairColor.GetCount()/4);
-            ULONG offset = 0;
-            for(size_t i=0;i<mColorVec.size();i++)
-            {
-               mColorVec[i].r = hairColor[offset++];
-               mColorVec[i].g = hairColor[offset++];
-               mColorVec[i].b = hairColor[offset++];
-               mColorVec[i].a = hairColor[offset++];
-            }
-            mColorProperty.set(Abc::C4fArraySample(mColorVec));
-            hairColor.Clear();
-         }
-
-         // store the hair color (if any)
-         if(accessor.GetUVCount() > 0)
-         {
-            CFloatArray hairUV;
-            accessor.GetUVValues(0,hairUV);
-            mUvVec.resize((size_t)hairUV.GetCount()/3);
-            ULONG offset = 0;
-            for(size_t i=0;i<mUvVec.size();i++)
-            {
-               mUvVec[i].x = hairUV[offset++];
-               mUvVec[i].y = 1.0f - hairUV[offset++];
-               offset++;
-            }
-            mCurvesSample.setUVs(AbcG::OV2fGeomParam::Sample(mUvVec,AbcG::kVertexScope));
-            hairUV.Clear();
-         }
-      }
-      mCurvesSchema.set(mCurvesSample);
+		// store the bbox
+		mCurvesSample.setSelfBounds(bbox);
+		mCurvesSchema.set(mCurvesSample);
    }
    else if(prim.GetType().IsEqualNoCase(L"hair") && guideCurves)
    {
