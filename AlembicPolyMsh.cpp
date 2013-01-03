@@ -1198,8 +1198,9 @@ enum IDs
 
 using namespace XSI;
 
-XSIPLUGINCALLBACK CStatus alembic_polyMesh_Evaluate(ICENodeContext& in_ctxt)
+XSIPLUGINCALLBACK CStatus alembic_polyMesh2_Evaluate(ICENodeContext& in_ctxt)
 {
+	//Application().LogMessage( "alembic_polyMesh2_Evaluate" );
 	// The current output port being evaluated...
 	ULONG out_portID = in_ctxt.GetEvaluatedOutputPortID( );
 
@@ -1223,15 +1224,12 @@ XSIPLUGINCALLBACK CStatus alembic_polyMesh_Evaluate(ICENodeContext& in_ctxt)
 	AbcG::IObject iObj = getObjectFromArchive(path,identifier);
 	if(!iObj.valid())
 		return CStatus::OK;
-	AbcG::IPoints obj(iObj,Abc::kWrapExisting);
-	if(!obj.valid())
-		return CStatus::OK;
 
 	CDataArrayFloat timeData( in_ctxt, ID_IN_time);
-	double time = timeData[0];
+	const double time = timeData[0];
 
 	CDataArrayBool usevelData( in_ctxt, ID_IN_usevel);
-	double usevel = usevelData[0];
+	const double usevel = usevelData[0];
 
 	AbcG::IPolyMesh objMesh;
 	AbcG::ISubD objSubD;
@@ -1406,7 +1404,7 @@ XSIPLUGINCALLBACK CStatus alembic_polyMesh_Evaluate(ICENodeContext& in_ctxt)
 	return CStatus::OK;
 }
 
-XSIPLUGINCALLBACK CStatus alembic_polyMesh_Term(CRef& in_ctxt)
+XSIPLUGINCALLBACK CStatus alembic_polyMesh2_Term(CRef& in_ctxt)
 {
 	Context ctxt( in_ctxt );
 	CValue udVal = ctxt.GetUserData();
@@ -1421,7 +1419,8 @@ XSIPLUGINCALLBACK CStatus alembic_polyMesh_Term(CRef& in_ctxt)
 
 XSI::CStatus Register_alembic_polyMesh( XSI::PluginRegistrar& in_reg )
 {
-	ICENodeDef nodeDef = Application().GetFactory().CreateICENodeDef(L"alembic_polyMesh", L"alembic_polyMesh");
+	//Application().LogMessage( "Register_alembic_polyMesh" );
+	ICENodeDef nodeDef = Application().GetFactory().CreateICENodeDef(L"alembic_polyMesh2", L"alembic_polyMesh2");
 
 	CStatus st = nodeDef.PutColor(255, 188, 102);
 	st.AssertSucceeded( ) ;
@@ -1447,13 +1446,13 @@ XSI::CStatus Register_alembic_polyMesh( XSI::PluginRegistrar& in_reg )
 	st.AssertSucceeded( ) ;
 
 	// Add output ports.
-	st = nodeDef.AddOutputPort(ID_OUT_position,		siICENodeDataVector3,	siICENodeStructureArray, siICENodeContextSingleton, L"position",	L"position",	ID_UNDEF,ID_UNDEF,ID_UNDEF);
+	st = nodeDef.AddOutputPort(ID_OUT_position,		siICENodeDataVector3,	siICENodeStructureArray, siICENodeContextSingleton, L"position",	L"position");
 	st.AssertSucceeded( ) ;
-	st = nodeDef.AddOutputPort(ID_OUT_velocity,		siICENodeDataVector3,	siICENodeStructureArray, siICENodeContextSingleton, L"velocity",	L"velocity",	ID_UNDEF,ID_UNDEF,ID_UNDEF);
+	st = nodeDef.AddOutputPort(ID_OUT_velocity,		siICENodeDataVector3,	siICENodeStructureArray, siICENodeContextSingleton, L"velocity",	L"velocity");
 	st.AssertSucceeded( ) ;
-	st = nodeDef.AddOutputPort(ID_OUT_faceCounts,	siICENodeDataLong,		siICENodeStructureArray, siICENodeContextSingleton, L"faceCounts",	L"faceCounts",	ID_UNDEF,ID_UNDEF,ID_UNDEF);
+	st = nodeDef.AddOutputPort(ID_OUT_faceCounts,	siICENodeDataLong,		siICENodeStructureArray, siICENodeContextSingleton, L"faceCounts",	L"faceCounts");
 	st.AssertSucceeded( ) ;
-	st = nodeDef.AddOutputPort(ID_OUT_faceIndices,	siICENodeDataLong,		siICENodeStructureArray, siICENodeContextSingleton, L"faceIndices",	L"faceIndices",	ID_UNDEF,ID_UNDEF,ID_UNDEF);
+	st = nodeDef.AddOutputPort(ID_OUT_faceIndices,	siICENodeDataLong,		siICENodeStructureArray, siICENodeContextSingleton, L"faceIndices",	L"faceIndices");
 	st.AssertSucceeded( ) ;
 
 	PluginItem nodeItem = in_reg.RegisterICENode(nodeDef);
