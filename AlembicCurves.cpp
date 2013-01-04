@@ -131,7 +131,7 @@ XSI::CStatus AlembicCurves::Save(double time)
       HairPrimitive hairPrim(GetRef(REF_PRIMITIVE));
       LONG totalHairs = prim.GetParameterValue(L"TotalHairs");
       totalHairs *= (LONG)prim.GetParameterValue(L"StrandMult");
-      CRenderHairAccessor accessor = hairPrim.GetRenderHairAccessor(totalHairs,10000,time);
+	  CRenderHairAccessor accessor = hairPrim.GetRenderHairAccessor(totalHairs, totalHairs < 10000 ? totalHairs : 10000, time);
 
       // prepare the bounding box
       Abc::Box3d bbox;
@@ -141,8 +141,7 @@ XSI::CStatus AlembicCurves::Save(double time)
 		{
 			CFloatArray hairPos;
 			CStatus result = accessor.GetVertexPositions(hairPos);
-			ULONG vertCount = hairPos.GetCount();
-			vertCount /= 3;
+			const ULONG vertCount = hairPos.GetCount() / 3;
 			size_t posVecOffset = posVec.size();
 			posVec.resize(posVec.size() + size_t(vertCount));
 			ULONG offset = 0;
@@ -154,10 +153,11 @@ XSI::CStatus AlembicCurves::Save(double time)
 				pos.PutZ(hairPos[offset++]);
 				if(globalSpace)
 				   pos = MapObjectPositionToWorldSpace(globalXfo,pos);
-				posVec[posVecOffset+i].x = (float)pos.GetX();
-				posVec[posVecOffset+i].y = (float)pos.GetY();
-				posVec[posVecOffset+i].z = (float)pos.GetZ();
-				bbox.extendBy(posVec[posVecOffset+i]);
+				Abc::V3f &posV = posVec[posVecOffset+i];
+				posV.x = (float)pos.GetX();
+				posV.y = (float)pos.GetY();
+				posV.z = (float)pos.GetZ();
+				bbox.extendBy(posV);
 			}
 
 			// if we are the first frame!
