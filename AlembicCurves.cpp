@@ -154,99 +154,96 @@ MStatus AlembicCurvesNode::initialize()
 
 MStatus AlembicCurvesNode::compute(const MPlug & plug, MDataBlock & dataBlock)
 {
-   ESS_PROFILE_SCOPE("AlembicCurvesNode::compute");
-   MStatus status;
+	ESS_PROFILE_SCOPE("AlembicCurvesNode::compute");
+	MStatus status;
 
-   // update the frame number to be imported
-   double inputTime = dataBlock.inputValue(mTimeAttr).asTime().as(MTime::kSeconds);
-   MString & fileName = dataBlock.inputValue(mFileNameAttr).asString();
-   MString & identifier = dataBlock.inputValue(mIdentifierAttr).asString();
+	// update the frame number to be imported
+	const double inputTime = dataBlock.inputValue(mTimeAttr).asTime().as(MTime::kSeconds);
+	MString & fileName = dataBlock.inputValue(mFileNameAttr).asString();
+	MString & identifier = dataBlock.inputValue(mIdentifierAttr).asString();
 
-   // check if we have the file
-   if(fileName != mFileName || identifier != mIdentifier)
-   {
-      mSchema.reset();
-      if(fileName != mFileName)
-      {
-         delRefArchive(mFileName);
-         mFileName = fileName;
-         addRefArchive(mFileName);
-      }
-      mIdentifier = identifier;
+	// check if we have the file
+	if(fileName != mFileName || identifier != mIdentifier)
+	{
+		mSchema.reset();
+		if(fileName != mFileName)
+		{
+			delRefArchive(mFileName);
+			mFileName = fileName;
+			addRefArchive(mFileName);
+		}
+		mIdentifier = identifier;
 
-      // get the object from the archive
-      Abc::IObject iObj = getObjectFromArchive(mFileName,identifier);
-      if(!iObj.valid())
-      {
-         MGlobal::displayWarning("[ExocortexAlembic] Identifier '"+identifier+"' not found in archive '"+mFileName+"'.");
-         return MStatus::kFailure;
-      }
-      AbcG::ICurves obj(iObj,Abc::kWrapExisting);
-      if(!obj.valid())
-      {
-         MGlobal::displayWarning("[ExocortexAlembic] Identifier '"+identifier+"' in archive '"+mFileName+"' is not a Curves.");
-         return MStatus::kFailure;
-      }
-      mSchema = obj.getSchema();
-      mCurvesData = MObject::kNullObj;
-   }
+		// get the object from the archive
+		Abc::IObject iObj = getObjectFromArchive(mFileName,identifier);
+		if(!iObj.valid())
+		{
+			MGlobal::displayWarning("[ExocortexAlembic] Identifier '"+identifier+"' not found in archive '"+mFileName+"'.");
+			return MStatus::kFailure;
+		}
+		AbcG::ICurves obj(iObj,Abc::kWrapExisting);
+		if(!obj.valid())
+		{
+			MGlobal::displayWarning("[ExocortexAlembic] Identifier '"+identifier+"' in archive '"+mFileName+"' is not a Curves.");
+			return MStatus::kFailure;
+		}
+		mSchema = obj.getSchema();
+		mCurvesData = MObject::kNullObj;
+	}
 
-   if(!mSchema.valid())
-      return MStatus::kFailure;
+	if(!mSchema.valid())
+		return MStatus::kFailure;
 
-   // get the sample
-   SampleInfo sampleInfo = getSampleInfo(
-      inputTime,
-      mSchema.getTimeSampling(),
-      mSchema.getNumSamples()
-   );
+	// get the sample
+	SampleInfo sampleInfo = getSampleInfo
+	(
+		inputTime,
+		mSchema.getTimeSampling(),
+		mSchema.getNumSamples()
+	);
 
-   // check if we have to do this at all
-   if(!mCurvesData.isNull() && mLastSampleInfo.floorIndex == sampleInfo.floorIndex && mLastSampleInfo.ceilIndex == sampleInfo.ceilIndex)
-      return MStatus::kSuccess;
+	// check if we have to do this at all
+	if(!mCurvesData.isNull() && mLastSampleInfo.floorIndex == sampleInfo.floorIndex && mLastSampleInfo.ceilIndex == sampleInfo.ceilIndex)
+		return MStatus::kSuccess;
 
-   mLastSampleInfo = sampleInfo;
+	mLastSampleInfo = sampleInfo;
 	const float blend = (float)sampleInfo.alpha;
 
-   // access the camera values
-   AbcG::ICurvesSchema::Sample sample;
-   AbcG::ICurvesSchema::Sample sample2;
-   mSchema.get(sample,sampleInfo.floorIndex);
-   if(blend != 0.0)
-      mSchema.get(sample2,sampleInfo.ceilIndex);
-
-   /*// create the output subd
-   if(mCurvesData.isNull())
-   {
-      MFnNurbsCurveData curveDataFn;
-      mCurvesData = curveDataFn.create();
-   }*/
+	// access the camera values
+	AbcG::ICurvesSchema::Sample sample;
+	AbcG::ICurvesSchema::Sample sample2;
+	mSchema.get(sample, sampleInfo.floorIndex);
+	if(blend != 0.0)
+		mSchema.get(sample2, sampleInfo.ceilIndex);
 
 	Abc::P3fArraySamplePtr samplePos  = sample.getPositions();
 	Abc::P3fArraySamplePtr samplePos2 = sample2.getPositions();
 	Abc::Int32ArraySamplePtr nbVertices = sample.getCurvesNumVertices();
-	const bool applyBlending = blend == 0.0f ? false : samplePos->size() == samplePos2->size();
+	const bool applyBlending = (blend == 0.0f) ? false : (samplePos->size() == samplePos2->size());
 
 	MArrayDataHandle arrh = dataBlock.outputArrayValue(mOutGeometryAttr);
 	MArrayDataBuilder builder = arrh.builder();
 
-	const int degree = (sample.getType() == AbcG::kCubic) ? 3 : 1;
-	const bool closed = sample.getWrap() == AbcG::kPeriodic;
-	int pointOffset = 0;
+	// reference: http://download.autodesk.com/us/maya/2010help/API/multi_curve_node_8cpp-example.html
+
+	const int degree  = (sample.getType() == AbcG::kCubic) ? 3 : 1;
+	const bool closed = (sample.getWrap() == AbcG::kPeriodic);
+	unsigned int pointOffset = 0;
 	for (int ii = 0; ii < nbVertices->size(); ++ii)
 	{
 		const unsigned int nbCVs = (unsigned int)nbVertices->get()[ii];
 		const int nbSpans = (int)nbCVs - degree;
 
 		MDoubleArray knots;
-		for(int span = 0; span <= nbSpans; span++)
+		knots.setLength(nbSpans + (degree << 1) - 1);
+		for(int span = 0, i = 0; span <= nbSpans; ++span, ++i)
 		{
-		  knots.append(double(span));
-		  if(span == 0 || span == nbSpans)
-		  {
-			 for(int m=1; m<degree; m++)
-				knots.append(double(span));
-		  }
+			knots[i] = double(span);
+			if(span == 0 || span == nbSpans)
+			{
+				for(int m=1; m<degree; ++m, ++i)
+					knots[i] = double(span);
+			}
 		}
 
 		MPointArray points;
@@ -281,15 +278,13 @@ MStatus AlembicCurvesNode::compute(const MPlug & plug, MDataBlock & dataBlock)
 		}
 
 		// create a subd either with or without uvs
-		MFnNurbsCurveData curveDataFn;
-		MObject mmCurvesData = curveDataFn.create();
+		MObject mmCurvesData = MFnNurbsCurveData().create();
 		mCurves.create(points, knots, degree, closed ? MFnNurbsCurve::kClosed : MFnNurbsCurve::kOpen, false, false, mmCurvesData);
 		builder.addElement(ii).set(mmCurvesData);
-		// output all channels
-		//dataBlock.outputValue(mOutGeometryAttr).set(mCurvesData);
-   }
-   arrh.set(builder);
-   return MStatus::kSuccess;
+	}
+	arrh.set(builder);
+	arrh.setAllClean();
+	return MStatus::kSuccess;
 }
 
 void AlembicCurvesDeformNode::PreDestruction()
