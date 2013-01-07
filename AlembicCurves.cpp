@@ -39,7 +39,7 @@ XSI::CStatus AlembicCurves::Save(double time)
 {
    // store the transform
    Primitive prim(GetRef(REF_PRIMITIVE));
-   bool globalSpace = GetJob()->GetOption(L"globalSpace");
+   const bool globalSpace = GetJob()->GetOption(L"globalSpace");
 
    // query the global space
    CTransformation globalXfo;
@@ -53,7 +53,7 @@ XSI::CStatus AlembicCurves::Save(double time)
    prim.GetParent3DObject().GetPropertyFromName(L"Visibility",visProp);
    if(isRefAnimated(visProp.GetRef()) || mNumSamples == 0)
    {
-      bool visibility = visProp.GetParameterValue(L"rendvis",time);
+      const bool visibility = visProp.GetParameterValue(L"rendvis",time);
       mOVisibility.set(visibility ?AbcG::kVisibilityVisible :AbcG::kVisibilityHidden);
    }
 
@@ -66,7 +66,7 @@ XSI::CStatus AlembicCurves::Save(double time)
          return CStatus::OK;
    }
 
-   bool guideCurves = GetJob()->GetOption(L"guideCurves");
+   const bool guideCurves = GetJob()->GetOption(L"guideCurves");
 
    // access the crvlist
    if(prim.GetType().IsEqualNoCase(L"crvlist"))
@@ -128,17 +128,25 @@ XSI::CStatus AlembicCurves::Save(double time)
    }
    else if(prim.GetType().IsEqualNoCase(L"hair") && !guideCurves)
    {
-      HairPrimitive hairPrim(GetRef(REF_PRIMITIVE));
-      LONG totalHairs = prim.GetParameterValue(L"TotalHairs");
-      totalHairs *= (LONG)prim.GetParameterValue(L"StrandMult");
-	  CRenderHairAccessor accessor = hairPrim.GetRenderHairAccessor(totalHairs, totalHairs < 10000 ? totalHairs : 10000, time);
+		#define CHUNK_SIZE 200000		// same chunck size used in Arnold
+		HairPrimitive hairPrim(GetRef(REF_PRIMITIVE));
+		LONG totalHairs = prim.GetParameterValue(L"TotalHairs");
+		{
+			const LONG strandMult = (LONG)prim.GetParameterValue(L"StrandMult");
+			if (strandMult > 1)
+				totalHairs *= strandMult;
+		}
+		CRenderHairAccessor accessor = hairPrim.GetRenderHairAccessor(totalHairs, CHUNK_SIZE, time);
 
-      // prepare the bounding box
-      Abc::Box3d bbox;
-      std::vector<Abc::V3f> posVec;
+		// prepare the bounding box
+		Abc::Box3d bbox;
+		std::vector<Abc::V3f> posVec;
 
 		while(accessor.Next())
 		{
+			const int chunckSize = accessor.GetChunkHairCount();
+			if (chunckSize == 0)
+				break;
 			CFloatArray hairPos;
 			CStatus result = accessor.GetVertexPositions(hairPos);
 			const ULONG vertCount = hairPos.GetCount() / 3;
@@ -153,6 +161,7 @@ XSI::CStatus AlembicCurves::Save(double time)
 				pos.PutZ(hairPos[offset++]);
 				if(globalSpace)
 				   pos = MapObjectPositionToWorldSpace(globalXfo,pos);
+
 				Abc::V3f &posV = posVec[posVecOffset+i];
 				posV.x = (float)pos.GetX();
 				posV.y = (float)pos.GetY();
@@ -170,14 +179,8 @@ XSI::CStatus AlembicCurves::Save(double time)
 					mNbVertices.resize(offset + (size_t)hairCount.GetCount());
 					for(LONG i=0;i<hairCount.GetCount();i++)
 						mNbVertices[offset + i] = (Abc::int32_t)hairCount[i];
-					mCurvesSample.setCurvesNumVertices(Abc::Int32ArraySample(mNbVertices));
 					hairCount.Clear();
 				}
-
-				// set the type + wrapping
-				mCurvesSample.setType(AbcG::kLinear);
-				mCurvesSample.setWrap(AbcG::kNonPeriodic);
-				mCurvesSample.setBasis(AbcG::kNoBasis);
 
 				 // store the hair radius
 				{
@@ -187,7 +190,6 @@ XSI::CStatus AlembicCurves::Save(double time)
 					mRadiusVec.resize(offset + (size_t)hairRadius.GetCount());
 					for(LONG i=0;i<hairRadius.GetCount();i++)
 						mRadiusVec[offset+i] = hairRadius[i];
-					mRadiusProperty.set(Abc::FloatArraySample(mRadiusVec));
 					hairRadius.Clear();
 				}
 
@@ -207,7 +209,6 @@ XSI::CStatus AlembicCurves::Save(double time)
 						col.b = hairColor[offset++];
 						col.a = hairColor[offset++];
 					}
-					mColorProperty.set(Abc::C4fArraySample(mColorVec));
 					hairColor.Clear();
 				 }
 
@@ -226,10 +227,24 @@ XSI::CStatus AlembicCurves::Save(double time)
 						uv.y = 1.0f - hairUV[offset++];
 						offset++;
 					}
-					mCurvesSample.setUVs(AbcG::OV2fGeomParam::Sample(mUvVec,AbcG::kVertexScope));
 					hairUV.Clear();
 				 }
 			}
+		}
+
+		if(mNumSamples == 0)
+		{
+			// set the type + wrapping
+			mCurvesSample.setType(AbcG::kLinear);
+			mCurvesSample.setWrap(AbcG::kNonPeriodic);
+			mCurvesSample.setBasis(AbcG::kNoBasis);
+
+			mCurvesSample.setCurvesNumVertices(Abc::Int32ArraySample(mNbVertices));
+			mRadiusProperty.set(Abc::FloatArraySample(mRadiusVec));
+			if (!mColorVec.empty())
+				mColorProperty.set(Abc::C4fArraySample(mColorVec));
+			if (!mUvVec.empty())
+				mCurvesSample.setUVs(AbcG::OV2fGeomParam::Sample(mUvVec ,AbcG::kVertexScope));
 		}
 		mCurvesSample.setPositions(Abc::P3fArraySample(posVec));
 

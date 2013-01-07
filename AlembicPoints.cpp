@@ -244,6 +244,7 @@ XSI::CStatus AlembicPoints::Save(double time)
                Abc::Quatf firstVal;
                for(ULONG i=0;i<count;i++)
                {
+				   Imath::Quatf &vecVal = vec[i];
                   if(data[i].GetRepresentation() == CRotationf::siAxisAngleRot)
                   {
                      float angle;
@@ -251,10 +252,10 @@ XSI::CStatus AlembicPoints::Save(double time)
                      CRotation rot;
                      rot.SetFromAxisAngle(CVector3(axis.GetX(),axis.GetY(),axis.GetZ()),angle);
                      CQuaternion quat = rot.GetQuaternion();
-                     vec[i].v.x = (float)quat.GetX();
-                     vec[i].v.y = (float)quat.GetY();
-                     vec[i].v.z = (float)quat.GetZ();
-                     vec[i].r = (float)quat.GetW();
+                     vecVal.v.x = (float)quat.GetX();
+                     vecVal.v.y = (float)quat.GetY();
+                     vecVal.v.z = (float)quat.GetZ();
+                     vecVal.r = (float)quat.GetW();
                   }
                   else if(data[i].GetRepresentation() == CRotationf::siEulerRot)
                   {
@@ -262,23 +263,23 @@ XSI::CStatus AlembicPoints::Save(double time)
                      CRotation rot;
                      rot.SetFromXYZAngles(CVector3(euler.GetX(),euler.GetY(),euler.GetZ()));
                      CQuaternion quat = rot.GetQuaternion();
-                     vec[i].v.x = (float)quat.GetX();
-                     vec[i].v.y = (float)quat.GetY();
-                     vec[i].v.z = (float)quat.GetZ();
-                     vec[i].r = (float)quat.GetW();
+                     vecVal.v.x = (float)quat.GetX();
+                     vecVal.v.y = (float)quat.GetY();
+                     vecVal.v.z = (float)quat.GetZ();
+                     vecVal.r = (float)quat.GetW();
                   }
                   else // quaternion
                   {
                      CQuaternionf quat = data[i].GetQuaternion();
-                     vec[i].v.x = quat.GetX();
-                     vec[i].v.y = quat.GetY();
-                     vec[i].v.z = quat.GetZ();
-                     vec[i].r = quat.GetW();
+                     vecVal.v.x = quat.GetX();
+                     vecVal.v.y = quat.GetY();
+                     vecVal.v.z = quat.GetZ();
+                     vecVal.r = quat.GetW();
                   }
                   if(i==0)
-                     firstVal = vec[i];
+                     firstVal = vecVal;
                   else if(isConstant)
-                     isConstant = firstVal == vec[i];
+                     isConstant = firstVal == vecVal;
                }
                if(isConstant)
                   vec.resize(1);
