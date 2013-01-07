@@ -213,7 +213,7 @@ MStatus AlembicCurvesNode::compute(const MPlug & plug, MDataBlock & dataBlock)
 	AbcG::ICurvesSchema::Sample sample;
 	AbcG::ICurvesSchema::Sample sample2;
 	mSchema.get(sample, sampleInfo.floorIndex);
-	if(blend != 0.0)
+	if(blend != 0.0f)
 		mSchema.get(sample2, sampleInfo.ceilIndex);
 
 	Abc::P3fArraySamplePtr samplePos  = sample.getPositions();
@@ -235,14 +235,13 @@ MStatus AlembicCurvesNode::compute(const MPlug & plug, MDataBlock & dataBlock)
 		const int nbSpans = (int)nbCVs - degree;
 
 		MDoubleArray knots;
-		knots.setLength(nbSpans + (degree << 1) - 1);
-		for(int span = 0, i = 0; span <= nbSpans; ++span, ++i)
+		for(int span = 0; span <= nbSpans; ++span)
 		{
-			knots[i] = double(span);
+			knots.append(double(span));
 			if(span == 0 || span == nbSpans)
 			{
-				for(int m=1; m<degree; ++m, ++i)
-					knots[i] = double(span);
+				for(int m=1; m<degree; ++m)
+					knots.append(double(span));
 			}
 		}
 

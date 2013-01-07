@@ -379,9 +379,9 @@ MStatus AlembicPointsNode::init(const MString &fileName, const MString &identifi
 
 static MVector quaternionToVector(const Abc::Quatf &qf)
 {
-  const float deg = qf.angle();
-  Abc::V3f v = qf.axis();
-  return MVector(v.x * deg, v.y * deg, v.z * deg);
+	const float deg = qf.angle();
+	Abc::V3f v = qf.axis();
+	return MVector(v.x * deg, v.y * deg, v.z * deg);
 }
 
 MStatus AlembicPointsNode::compute(const MPlug & plug, MDataBlock & dataBlock)

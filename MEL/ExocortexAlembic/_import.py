@@ -142,19 +142,17 @@ def importCurves(name, identifier, jobInfo, parentXform=None, isConstant=False, 
 		cmds.connectAttr(jobInfo.timeCtrl+".outTime", topoReader+".inTime")
 		cmds.setAttr(topoReader+".identifier", identifier, type="string")
 
-		if nbCurves == 1:
-			shape  = fnt.alembicCreateNode(name, "nurbsCurve", parentXform)
-			cmds.connectAttr(topoReader+".outCurve", shape+".create")
-		else:
-			for curve in xrange(0, nbCurves):
-				shape  = fnt.alembicCreateNode(name + "_" + str(curve), "nurbsCurve", parentXform)
-				cmds.connectAttr(topoReader+".outCurve[" + str(curve) + "]", shape+".create")
+		shape  = fnt.alembicCreateNode(name, "nurbsCurve", parentXform)
+		cmds.connectAttr(topoReader+".outCurve[0]", shape+".create")
+		for curve in xrange(1, nbCurves):
+			shape  = fnt.alembicCreateNode(name + "_" + str(curve), "nurbsCurve", parentXform)
+			cmds.connectAttr(topoReader+".outCurve[" + str(curve) + "]", shape+".create")
 
 		#print("importCurves(" + str(name) + ", " + str(identifier) + ", " + str(jobInfo) + ", " + str(parentXform) + ", " + str(isConstant) + ") -> " + str(shape))
 	except Exception as ex:
 		apix.MPxCommand.setResult("importCurves --> exception: \"" + str(ex.args) + "\" of type " + str(type(ex)))
 		shape = ""
 	cmds.ExocortexAlembic_profileEnd(f="Python.ExocortexAlembic._import.importCurves")
-	return "" #shape
+	return shape
 
 
