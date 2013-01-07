@@ -137,6 +137,24 @@ bool SceneNodeMaya::addPolyMeshChild(SceneNodeAlembicPtr fileNode, SceneNodeAppP
 	return executeAddChild(cmd, newAppNode);
 }
 
+bool SceneNodeMaya::addCurveChild(SceneNodeAlembicPtr fileNode, SceneNodeAppPtr& newAppNode)
+{
+	static const MString format("ExoAlembic._import.importCurves(r\"^1s\", r\"^2s\", ^3s, r\"^4s\", ^5s, ^6s)");
+
+	MString strNb;
+	{
+		AbcG::ICurvesSchema::Sample sample;
+		AbcG::ICurves obj(fileNode->getObject(), Abc::kWrapExisting);
+		obj.getSchema().get(sample, 0);
+
+		strNb += (unsigned int)sample.getCurvesNumVertices()->size();
+	}
+
+	MString cmd;
+	cmd.format(format, fileNode->name.c_str(), fileNode->dccIdentifier.c_str(), fileAndTime->variable(), dccIdentifier.c_str(), PythonBool(fileNode->pObjCache->isConstant), strNb);
+	return executeAddChild(cmd, newAppNode);
+}
+
 bool SceneNodeMaya::addChild(SceneNodeAlembicPtr fileNode, const IJobStringParser& jobParams, SceneNodeAppPtr& newAppNode)
 {
 	ESS_PROFILE_SCOPE("SceneNodeMaya::addChild");
@@ -153,7 +171,7 @@ bool SceneNodeMaya::addChild(SceneNodeAlembicPtr fileNode, const IJobStringParse
 		return addPolyMeshChild(fileNode, newAppNode);
 	case CURVES:
 	case HAIR:
-		return addSimilarChild("Curves", fileNode, newAppNode);
+		return addCurveChild(fileNode, newAppNode);
 	case PARTICLES:
 		return addSimilarChild("Points", fileNode, newAppNode);
 	//case SURFACE:	// handle as default for now

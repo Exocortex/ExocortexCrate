@@ -134,22 +134,27 @@ def importPoints(name, identifier, jobInfo, parentXform=None, isConstant=False):
 	cmds.ExocortexAlembic_profileEnd(f="Python.ExocortexAlembic._import.importPoints")
 	return shape
 
-def importCurves(name, identifier, jobInfo, parentXform=None, isConstant=False):
+def importCurves(name, identifier, jobInfo, parentXform=None, isConstant=False, nbCurves=1):
 	cmds.ExocortexAlembic_profileBegin(f="Python.ExocortexAlembic._import.importCurves")
 	try:
-		shape  = fnt.alembicCreateNode(name, "nurbsCurve", parentXform)
-
 		topoReader = cmds.createNode("ExocortexAlembicCurves")
-		cmds.connectAttr(topoReader+".outCurve", shape+".create")
 		cmds.connectAttr(jobInfo.filenode+".outFileName", topoReader+".fileName")
 		cmds.connectAttr(jobInfo.timeCtrl+".outTime", topoReader+".inTime")
 		cmds.setAttr(topoReader+".identifier", identifier, type="string")
+
+		if nbCurves == 1:
+			shape  = fnt.alembicCreateNode(name, "nurbsCurve", parentXform)
+			cmds.connectAttr(topoReader+".outCurve", shape+".create")
+		else:
+			for curve in xrange(0, nbCurves):
+				shape  = fnt.alembicCreateNode(name + "_" + str(curve), "nurbsCurve", parentXform)
+				cmds.connectAttr(topoReader+".outCurve[" + str(curve) + "]", shape+".create")
 
 		#print("importCurves(" + str(name) + ", " + str(identifier) + ", " + str(jobInfo) + ", " + str(parentXform) + ", " + str(isConstant) + ") -> " + str(shape))
 	except Exception as ex:
 		apix.MPxCommand.setResult("importCurves --> exception: \"" + str(ex.args) + "\" of type " + str(type(ex)))
 		shape = ""
 	cmds.ExocortexAlembic_profileEnd(f="Python.ExocortexAlembic._import.importCurves")
-	return shape
+	return "" #shape
 
 
