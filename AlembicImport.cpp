@@ -360,7 +360,7 @@ CStatus alembic_create_item_Invoke
             return CStatus::InvalidArgument;
          }
          abcObject = pObjectCache->obj;
-         isAnimated = (itemType == alembicItemType_bbox) || (! pObjectCache->isConstant && itemType != alembicItemType_geomapprox);
+         isAnimated = (itemType == alembicItemType_bbox) || (! pObjectCache->isConstant && itemType != alembicItemType_geomapprox) || itemType == alembicItemType_points;
          break;
       }
       case alembicItemType_visibility:
