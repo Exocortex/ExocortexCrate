@@ -126,40 +126,62 @@ XSI::CString truncateName(const XSI::CString & in_Name)
 
 CString getFullNameFromIdentifier(XSI::CRef importRootNode, std::string in_Identifier, bool bMergedLeaf)
 {
-   if(in_Identifier.length() == 0)
-      return CString();
+   std::vector<std::string> parts;
 
-   CString mapped = nameMapGet(in_Identifier.c_str());
-   if(!mapped.IsEmpty())
-      return mapped;
+   boost::split(parts, in_Identifier, boost::is_any_of("/"));
 
-   //ESS_LOG_WARNING("Identifier: "<<in_Identifier.c_str());
-
-   CStringArray parts = CString(in_Identifier.c_str()).Split(L"/");
-
-   LONG count = parts.GetCount();
-   if(bMergedLeaf && parts.GetCount() >= 2){
-      parts[parts.GetCount()-2] = truncateName(parts[parts.GetCount()-2]);
-      count--;
+   if(parts.size() > 2){
+	   parts.pop_back();
    }
 
+   std::stringstream result;
+   result<<"Scene_Root";
 
-   CString pathName = importRootNode.GetAsText();
-
-   if(!importRootNode.IsValid()){
-      pathName = L"Scene_Root";
+   for(int i=1; i<parts.size(); i++){
+	   parts[i] = removeXfoSuffix(parts[i]);
+       result << ".";
+       result << parts[i];
    }
 
-   //ESS_LOG_WARNING("root: "<<pathName.GetAsciiString());
+   ESS_LOG_WARNING("path: "<<result.str());
 
-   for(int i=0; i<count; i++){
-      pathName += ".";
-      pathName += parts[i];
-   }
+   return result.str().c_str();
+
+
+   //if(in_Identifier.length() == 0)
+   //   return CString();
+
+   //CString mapped = nameMapGet(in_Identifier.c_str());
+   //if(!mapped.IsEmpty())
+   //   return mapped;
+
+   ////ESS_LOG_WARNING("Identifier: "<<in_Identifier.c_str());
+
+   //CStringArray parts = CString(in_Identifier.c_str()).Split(L"/");
+
+   //LONG count = parts.GetCount();
+   //if(bMergedLeaf && parts.GetCount() >= 2){
+   //   parts[parts.GetCount()-2] = truncateName(parts[parts.GetCount()-2]);
+   //   count--;
+   //}
+
+
+   //CString pathName = importRootNode.GetAsText();
+
+   //if(!importRootNode.IsValid()){
+   //   pathName = L"Scene_Root";
+   //}
+
+   ////ESS_LOG_WARNING("root: "<<pathName.GetAsciiString());
+
+   //for(int i=0; i<count; i++){
+   //   pathName += ".";
+   //   pathName += parts[i];
+   //}
 
    //ESS_LOG_WARNING("FullNameFromIdentifier: "<<pathName.GetAsciiString());
 
-   return pathName;
+   //return pathName;
 }
 
 //CRef getRefFromIdentifier(XSI::CRef importRootNode, std::string in_Identifier, bool bMergedLeaf)
