@@ -39,6 +39,7 @@
 		bool addSimilarChild(const char *functionName, SceneNodeAlembicPtr fileNode, SceneNodeAppPtr& newAppNode);
 		bool addXformChild(SceneNodeAlembicPtr fileNode, SceneNodeAppPtr& newAppNode);
 		bool addPolyMeshChild(SceneNodeAlembicPtr fileNode, SceneNodeAppPtr& newAppNode);
+		bool addCurveChild(SceneNodeAlembicPtr fileNode, SceneNodeAppPtr& newAppNode);
 
 	public:
 		SceneNodeMaya(const AlembicFileAndTimeControlPtr alembicFileAndTimeControl = AlembicFileAndTimeControlPtr()): fileAndTime(alembicFileAndTimeControl)
