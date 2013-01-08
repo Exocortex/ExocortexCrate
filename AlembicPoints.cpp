@@ -75,7 +75,7 @@ bool AlembicPoints::sampleInstanceProperties( std::vector<Abc::Quatf> angularVel
   {
     angularVel[i] = Abc::Quatf();     // don't know how to access this one yet!
     allMatrices[i].get(matrix_data);
-    orientation[i] = Imath::extractQuat(Imath::M44f(matrix_data));
+	orientation[i] = Imath::extractQuat(Imath::M44f(matrix_data));
     shapeId[i] = pathIndices[pathStartIndices[i]];  // only keep the first one...
   }
 
@@ -145,7 +145,7 @@ MStatus AlembicPoints::Save(double time)
    node.position(vectors);
 
    // check if we have the global cache option
-   bool globalCache = GetJob()->GetOption(L"exportInGlobalSpace").asInt() > 0;
+   const bool globalCache = GetJob()->GetOption(L"exportInGlobalSpace").asInt() > 0;
    Abc::M44f globalXfo;
    if(globalCache)
       globalXfo = GetGlobalMatrix(GetRef());
@@ -379,9 +379,9 @@ MStatus AlembicPointsNode::init(const MString &fileName, const MString &identifi
 
 static MVector quaternionToVector(const Abc::Quatf &qf)
 {
-	const float deg = qf.angle();
-	Abc::V3f v = qf.axis();
-	return MVector(v.x * deg, v.y * deg, v.z * deg);
+	const float ang  = qf.angle();
+	const Abc::V3f v = qf.axis();
+	return MVector(v.x * ang, v.y * ang, v.z * ang);
 }
 
 MStatus AlembicPointsNode::compute(const MPlug & plug, MDataBlock & dataBlock)
@@ -412,7 +412,7 @@ MStatus AlembicPointsNode::compute(const MPlug & plug, MDataBlock & dataBlock)
 	   return status;
 
    // update the frame number to be imported
-   double inputTime = dataBlock.inputValue(mTimeAttr).asTime().as(MTime::kSeconds);
+   const double inputTime = dataBlock.inputValue(mTimeAttr).asTime().as(MTime::kSeconds);
    const MString &fileName   = dataBlock.inputValue(mFileNameAttr).asString();
    const MString &identifier = dataBlock.inputValue(mIdentifierAttr).asString();
 
