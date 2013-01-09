@@ -260,7 +260,12 @@ int AlembicImport_Light(const std::string &path, AbcG::IObject& iObj, alembic_im
 
       //connect intensity controller
       //connect light colour controller
-      //set ambient check box
+      GET_MAX_INTERFACE()->SelectNode(*pMaxNode);
+
+      //set the ambient check box (not sure how to this in C++)
+      std::stringstream evalStream;
+      evalStream<<"$.ambientOnly = true";
+      ExecuteMAXScriptScript( EC_UTF8_to_TCHAR((char*)evalStream.str().c_str()));
    }
    else{//create a null, if we don't know what type of light this is
       nodeRes = createNode(iObj, HELPER_CLASS_ID, Class_ID(DUMMY_CLASS_ID,0), pMaxNode, bReplaceExisting);
