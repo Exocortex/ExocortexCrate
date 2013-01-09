@@ -15,11 +15,34 @@ struct AbcProp{
    AbcA::PropertyHeader propHeader; //we need to know type information (and possibly interpretation, e.g. color, normal)
    std::string displayVal; //if constant, will set via controller if animated
    bool bConstant;
+   int sortId;
 
-   AbcProp(std::string n, std::string val, AbcA::PropertyHeader header, bool bConstant):name(n), displayVal(val), propHeader(header), bConstant(bConstant)
-   {}
-   AbcProp(std::string n, std::string val):name(n), displayVal(val), bConstant(true)
-   {}
+   int computeSortId(){
+      
+      const AbcA::DataType& datatype = propHeader.getDataType();
+      const AbcA::MetaData& metadata = propHeader.getMetaData();
+
+      return datatype.getPod() * datatype.getExtent();
+   }
+
+   AbcProp(std::string n, std::string val, AbcA::PropertyHeader header, bool bConstant, int sortid):name(n), displayVal(val), propHeader(header), bConstant(bConstant)
+   {
+      if(sortid != 0){
+         sortId = sortid;
+      }
+      else{
+         sortId = computeSortId();
+      }
+   }
+   AbcProp(std::string n, std::string val, int sortid):name(n), displayVal(val), bConstant(true)
+   {
+      if(sortid != 0){
+         sortId = sortid;
+      }
+      else{
+         sortId = computeSortId();
+      }
+   }
 
 };
 

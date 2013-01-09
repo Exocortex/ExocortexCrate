@@ -75,6 +75,7 @@ void readInputProperties( Abc::ICompoundProperty prop, std::vector<AbcProp>& pro
 
          std::string displayVal;
          bool bConstant = true;
+         int sortId = 0;
 
          if(Abc::IBoolProperty::matches(pheader)){
 
@@ -91,6 +92,7 @@ void readInputProperties( Abc::ICompoundProperty prop, std::vector<AbcProp>& pro
             //else{
             //  
             //}
+
          }
          else if(readPropExt1<Abc::IFloatProperty, float>(prop, pheader, displayVal, bConstant));
          else if(readPropExt3<Abc::IC3fProperty, Abc::C3f>(prop, pheader, displayVal, bConstant));
@@ -100,9 +102,10 @@ void readInputProperties( Abc::ICompoundProperty prop, std::vector<AbcProp>& pro
             
             Abc::IStringProperty stringProp(prop, pheader.getName());
             stringProp.get(displayVal);
+            sortId = 1000000000;
          }
 
-         props.push_back(AbcProp(pheader.getName(), displayVal, pheader, bConstant));
+         props.push_back(AbcProp(pheader.getName(), displayVal, pheader, bConstant, sortId));
       }
       else if( propType == AbcA::kArrayProperty ){
          ESS_LOG_WARNING("Unsupported array property: "<<pheader.getName());
@@ -118,7 +121,7 @@ struct matShader
 {
    std::string target;
    std::string type;
-
+   
 
    std::string name;
    std::vector<AbcProp> props;
@@ -174,8 +177,8 @@ InputLightType::enumt readShader(AbcM::IMaterialSchema& matSchema, std::vector<m
 
          //ESS_LOG_WARNING("propertyName: "<<propk.getName());
 
-         shaders.back().props.push_back(AbcProp(std::string("targetName"), targetNames[j]));
-         shaders.back().props.push_back(AbcProp(std::string("shaderType"), shaderTypeNames[j]));
+         shaders.back().props.push_back(AbcProp(std::string("targetName"), targetNames[j], 1000000000));
+         shaders.back().props.push_back(AbcProp(std::string("shaderType"), shaderTypeNames[j], 1000000000));
          
          readInputProperties(propk, shaders.back().props);
       }
@@ -199,6 +202,8 @@ AbcM::IMaterialSchema getMatSchema(AbcG::ILight& objLight)
 
    return AbcM::IMaterialSchema();
 }
+
+bool sortFunc(AbcProp p1, AbcProp p2) { return p1.sortId > p2.sortId; }
 
 
 int AlembicImport_Light(const std::string &path, AbcG::IObject& iObj, alembic_importoptions &options, INode** pMaxNode)
@@ -237,13 +242,13 @@ int AlembicImport_Light(const std::string &path, AbcG::IObject& iObj, alembic_im
          lightType = readShader(matSchema, shaders);
       }
 
-      ESS_LOG_WARNING("name: "<<propHeader.getName());
+      //ESS_LOG_WARNING("name: "<<propHeader.getName());
 
-      if( AbcG::ICameraSchema::matches(propHeader) ){
-         ESS_LOG_WARNING("Found light camera.");
-         //AbcG::ICameraSchema camSchema(props, propHeader.getName());
+      //if( AbcG::ICameraSchema::matches(propHeader) ){
+      //   ESS_LOG_WARNING("Found light camera.");
+      //   //AbcG::ICameraSchema camSchema(props, propHeader.getName());
 
-      }
+      //}
    }
 
 
@@ -268,20 +273,24 @@ int AlembicImport_Light(const std::string &path, AbcG::IObject& iObj, alembic_im
 
    GET_MAX_INTERFACE()->SelectNode(*pMaxNode);
 
-   //for(int i=0; i<shaders.size(); i++){
-   //   Modifier* pMod = createDisplayModifier("Shader Properties", shaders[i].name, shaders[i].props);
+   for(int i=0; i<shaders.size(); i++){
 
-   //   std::string target = shaders[i].target;
-   //   std::string type = shaders[i].type;
+      std::sort(shaders[i].props.begin(), shaders[i].props.end(), sortFunc);
 
-   //   addControllersToModifier("Shader Properties", shaders[i].name, shaders[i].props, target, type, path, iObj.getFullName(), options);
-   //}
+      Modifier* pMod = createDisplayModifier("Shader Properties", shaders[i].name, shaders[i].props);
 
-   //TODO: add camera modifier
+      std::string target = shaders[i].target;
+      std::string type = shaders[i].type;
 
-   createCameraModifier(path, identifier, *pMaxNode);
+      addControllersToModifier("Shader Properties", shaders[i].name, shaders[i].props, target, type, path, iObj.getFullName(), options);
+   }
 
-   //TODO: don't attach controllers for constant parameters
+   // ----- TODO: add camera modifier
+   //createCameraModifier(path, identifier, *pMaxNode);
+
+
+   // ----- TODO: don't attach controllers for constant parameters
+
 
    //TODO: make the spinners read only
 
