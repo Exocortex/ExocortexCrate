@@ -263,13 +263,65 @@ int AlembicImport_Light(const std::string &path, AbcG::IObject& iObj, alembic_im
    if(lightType == InputLightType::AMBIENT_LIGHT){
       nodeRes = createNode(iObj, LIGHT_CLASS_ID, Class_ID(OMNI_LIGHT_CLASS_ID, 0), pMaxNode, bReplaceExisting);
 
-      //connect intensity controller
-      //connect light colour controller
+      //Modifier* pModifier = FindModifier(*pMaxNode, Class_ID(OMNI_LIGHT_CLASS_ID, 0));
+
+      //if(pModifier){
+      //   ESS_LOG_WARNING("NumParamBlocks: "<<pModifier->NumParamBlocks());
+      //}
+   
+      //printControllers(*pMaxNode);
+
+      //pMaxNode>GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pModifier, 0, "muted" ), zero, FALSE );
+
+
       GET_MAX_INTERFACE()->SelectNode(*pMaxNode);
 
-      //set the ambient check box (not sure how to this in C++)
+      //set the ambient check box, intensity controller, and light colour controller (not sure how to this in C++)
       std::stringstream evalStream;
-      evalStream<<"$.ambientOnly = true";
+      std::string modkey("");
+
+      for(int s=0; s<shaders.size(); s++){
+         std::string target = shaders[s].target;
+         std::string type = shaders[s].type;
+
+         for(int i=0; i<shaders[s].props.size(); i++){
+            std::string propName = shaders[s].props[i].name;
+            std::string& val = shaders[s].props[i].displayVal;
+            bool& bConstant = shaders[s].props[i].bConstant;
+
+            const AbcA::DataType& datatype = shaders[s].props[i].propHeader.getDataType();
+            const AbcA::MetaData& metadata = shaders[s].props[i].propHeader.getMetaData();
+
+            if(datatype.getPod() == AbcA::kFloat32POD){
+
+               std::stringstream propStream;
+               propStream<<target<<"."<<type<<"."<<propName;
+               if(datatype.getExtent() == 1 && propName.find("intensity") != std::string::npos ){ //intensity property found, so attach controller
+                  addFloatController(evalStream, options, modkey, std::string("multiplier"), path, iObj.getFullName(), propStream.str());
+               }
+               else if(datatype.getExtent() == 3 && propName.find("lightcolor") != std::string::npos ){ //color property found, so attach controller
+
+                  std::stringstream xStream, yStream, zStream;
+
+                  xStream<<propStream.str()<<"."<<metadata.get("interpretation")<<".x";
+                  yStream<<propStream.str()<<"."<<metadata.get("interpretation")<<".y";
+                  zStream<<propStream.str()<<"."<<metadata.get("interpretation")<<".z";
+
+                  evalStream<<"$.rgb.controller = Color_RGB()\n";
+
+                  addFloatController(evalStream, options, modkey, std::string("rgb.controller.r"), path, iObj.getFullName(), xStream.str());
+                  addFloatController(evalStream, options, modkey, std::string("rgb.controller.g"), path, iObj.getFullName(), yStream.str());
+                  addFloatController(evalStream, options, modkey, std::string("rgb.controller.b"), path, iObj.getFullName(), zStream.str());
+               }
+            }
+            else{
+               
+            }
+            evalStream<<"\n";
+         }
+      }
+
+      evalStream<<"$.ambientOnly = true\n";
       ExecuteMAXScriptScript( EC_UTF8_to_TCHAR((char*)evalStream.str().c_str()));
    }
    else{//create a null, if we don't know what type of light this is
@@ -304,7 +356,7 @@ int AlembicImport_Light(const std::string &path, AbcG::IObject& iObj, alembic_im
 
    //TODO: make the spinners read only
 
-   //TODO: verify it works with attach to existing
+
 
    return alembic_success;
 }
