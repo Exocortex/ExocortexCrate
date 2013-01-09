@@ -220,6 +220,11 @@ int AlembicImport_Light(const std::string &path, AbcG::IObject& iObj, alembic_im
 //#define FSPOT_LIGHT		3	// Free
 //#define TDIR_LIGHT		4   // Targeted directional
 
+   if(options.attachToExisting){
+      ESS_LOG_WARNING("Attach to existing for lights is not yet supported. Could not attach "<<iObj.getFullName());
+      return alembic_success;
+   }
+
    std::vector<matShader> shaders;
 
    AbcG::ILight objLight = AbcG::ILight(iObj, Alembic::Abc::kWrapExisting);
