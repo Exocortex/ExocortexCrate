@@ -168,21 +168,6 @@ private:
     std::vector<INode*> m_InstanceShapeINodes;
 	std::vector<VertColor> m_VCArray;
 
-	//struct meshInfo{
-	//	BOOL bMeshNeedDelete;
-	//	Mesh* pMesh;
-
-	//	meshInfo():bMeshNeedDelete(FALSE), pMesh(NULL)
-	//	{}
-	//};
-	//typedef std::pair<INode*, TimeValue> nodeTimePair;
-	//typedef std::map<nodeTimePair, meshInfo> nodeAndTimeToMeshMap;
-
-	//nodeAndTimeToMeshMap meshCacheMap;
-
-    //size_t m_TotalShapesToEnumerate;
-   // std::vector<viewportmesh> m_ParticleViewportMeshes;
-
    struct InstanceMesh
    {
        Mesh *mesh;
@@ -190,10 +175,11 @@ private:
        InstanceMesh() : mesh(NULL), needDelete(FALSE) {}
    };
 
-    typedef std::map<std::string, InstanceMesh> InstanceMeshCache;   
-    InstanceMeshCache m_InstanceMeshCache;
+   typedef std::pair<INode*, TimeValue> nodeTimePair;
+   typedef std::map<nodeTimePair, InstanceMesh> InstanceMeshCache;   
+   InstanceMeshCache m_InstanceMeshCache;
 
-    std::string m_CachedAbcFile;
+   std::string m_CachedAbcFile;
 public:
 
 

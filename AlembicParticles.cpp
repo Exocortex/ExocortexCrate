@@ -1794,58 +1794,19 @@ Mesh *AlembicParticles::BuildInstanceMesh(int meshNumber, TimeValue t, INode *no
 	INode *pNode = m_InstanceShapeINodes[shapeid];
 	TimeValue shapet = m_InstanceShapeTimes[meshNumber];
 
-    InstanceMeshCache::iterator it = m_InstanceMeshCache.find(EC_MCHAR_to_UTF8(pNode->GetName()));
+    nodeTimePair nodeKey(pNode, shapet);
+    InstanceMeshCache::iterator it = m_InstanceMeshCache.find(nodeKey);
 
     if( it != m_InstanceMeshCache.end() ){
        return it->second.mesh;
     }
     else{
-       //ESS_LOG_WARNING("NODE: "<<pNode->GetName());
+       //ESS_LOG_WARNING("Node: "<<pNode->GetName()<<" Time: "<<shapet);
        InstanceMesh iMesh;
        iMesh.mesh = GetMeshFromNode(pNode, shapet, iMesh.needDelete);
-       m_InstanceMeshCache[EC_MCHAR_to_UTF8(pNode->GetName())] = iMesh;
+       m_InstanceMeshCache[nodeKey] = iMesh;
        return iMesh.mesh;
     }
-
-
-    //return GetMeshFromNode(pNode, shapet, needDelete);
-
-
-	//nodeAndTimeToMeshMap::iterator it = meshCacheMap.find(nodeTimePair(pNode, shapet));
-	//if( it != meshCacheMap.end() ){
-	//	meshInfo& mi = it->second;
-	//	return mi.pMesh;
-	//}
-	//else{
-	//	meshInfo& mi = meshCacheMap[nodeTimePair(pNode, shapet)];
-	//	mi.pMesh = GetMeshFromNode(pNode, shapet, mi.bMeshNeedDelete);
-	//	return mi.pMesh;
-	//}
-
- //  bool deleteTriObj = false;
- //  TriObject *triObj = GetTriObjectFromNode(pNode, shapet, deleteTriObj);
-
- //  if (!triObj)
- //      return NULL;
-
-//   Mesh *pMesh = triObj->GetRenderMesh(t, node, view, needDelete);
-
- //  Mesh *pMesh = triObj->GetRenderMesh(shapet, node, view, needDelete);
-
- //  if (deleteTriObj && !needDelete)
- //  {
- //      Mesh *pTempMesh = new Mesh;
- //      *pTempMesh = *pMesh;
- //      pMesh = pTempMesh;
- //      pMesh->InvalidateGeomCache();
- //      pMesh->InvalidateTopologyCache();
- //      needDelete = TRUE;
- //  }
-
- //  if (deleteTriObj)
- //      delete triObj;
-
-	//return pMesh;
 }
 
 Mesh *AlembicParticles::BuildNbElementsMesh(int meshNumber, TimeValue t, INode *node, View& view, BOOL &needDelete)
