@@ -200,8 +200,10 @@ void addControllersToModifier(const std::string& modkey, const std::string& modn
 
    //the script assumes a single object is selected
 
-   std::string timeControlName = EC_MCHAR_to_UTF8( options.pTimeControl->GetObjectName() );
-
+   std::string timeControlName;
+   if(options.pTimeControl){
+      timeControlName = EC_MCHAR_to_UTF8( options.pTimeControl->GetObjectName() );
+   }
    std::stringstream evalStream;
 
    for(int i=0; i<props.size(); i++){
