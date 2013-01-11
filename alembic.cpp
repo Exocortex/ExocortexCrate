@@ -19,6 +19,7 @@ using namespace MATH;
 #include "CommonProfiler.h"
 #include "CommonMeshUtilities.h"
 #include "CommonUtilities.h"
+#include "AlembicPropertyNodes.h"
 
 SICALLBACK XSILoadPlugin_2( PluginRegistrar& in_reg ) ;
 
@@ -74,6 +75,10 @@ SICALLBACK XSILoadPlugin( PluginRegistrar& in_reg )
 		Register_alembic_curves(in_reg);
 		Register_alembic_points(in_reg);
 		Register_alembic_polyMesh(in_reg);
+        Register_alembic_string_array(in_reg);
+        Register_alembic_float_array(in_reg);
+        Register_alembic_vec3f_array(in_reg);
+
 
 		//XSILoadPlugin_2( in_reg );
 
