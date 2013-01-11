@@ -86,7 +86,7 @@ namespace writeArrayRes
 };
 
 template<class PROP, class SAMPLER, class TYPE> writeArrayRes::enumT writeArray3f(SampleInfo& sampleInfo, Abc::ICompoundProperty arbGeomParams, AbcA::PropertyHeader propHeader, 
-                                             CDataArray2DVector3f outData, CDataArray2DVector3f::Accessor acc)
+                                             CDataArray2DVector3f& outData, CDataArray2DVector3f::Accessor& acc)
 {
    if(PROP::matches(propHeader)){
       PROP propArray(arbGeomParams, propHeader.getName());
@@ -126,7 +126,7 @@ template<class PROP, class SAMPLER, class TYPE> writeArrayRes::enumT writeArray3
 
 
 template<class PROP, class SAMPLER, class TYPE>  writeArrayRes::enumT writeArray1f(SampleInfo& sampleInfo, Abc::ICompoundProperty arbGeomParams, AbcA::PropertyHeader propHeader, 
-                                             CDataArray2DFloat outData, CDataArray2DFloat::Accessor acc)
+                                             CDataArray2DFloat& outData, CDataArray2DFloat::Accessor& acc)
 {
    if(PROP::matches(propHeader)){
       PROP propArray(arbGeomParams, propHeader.getName());
