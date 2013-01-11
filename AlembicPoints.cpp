@@ -291,7 +291,7 @@ void AlembicPointsNode::PreDestruction()
   mFileName.clear();
 }
 
-AlembicPointsNode::AlembicPointsNode(void)
+AlembicPointsNode::AlembicPointsNode(void): mLastInputTime(-1.0)
 {
   PostConstructor();
 }
@@ -442,9 +442,10 @@ MStatus AlembicPointsNode::compute(const MPlug & plug, MDataBlock & dataBlock)
    );
 
    // check if we have to do this at all
-   if(mLastSampleInfo.floorIndex == sampleInfo.floorIndex && mLastSampleInfo.ceilIndex == sampleInfo.ceilIndex)
+   if(mLastInputTime == inputTime && mLastSampleInfo.floorIndex == sampleInfo.floorIndex && mLastSampleInfo.ceilIndex == sampleInfo.ceilIndex)
       return MStatus::kSuccess;
 
+   mLastInputTime = inputTime;
    mLastSampleInfo = sampleInfo;
 
    // access the points values
