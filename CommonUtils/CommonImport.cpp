@@ -339,7 +339,7 @@ NodeMapPtr buildChildMap(SceneNodeAlembicPtr parent)
          continue;
       }
       
-      std::string& name = removeXfoSuffix(node->name);
+      const std::string& name = removeXfoSuffix(node->name);
       
       if(name.size() == 0){
          ESS_LOG_WARNING("Warning: node name is empty. Cannot add \""<<name<<"\" to map.");
@@ -411,7 +411,7 @@ bool AttachSceneFile(SceneNodeAlembicPtr fileRoot, SceneNodeAppPtr appRoot, cons
       --count;
 
 
-      std::string& appNodeName = removeXfoSuffix(currAppNode->name);
+      const std::string& appNodeName = removeXfoSuffix(currAppNode->name);
 
       bool bChildAttached = false;
       NodeMap::iterator fileNodeIt = childMapPtr->find(appNodeName);
@@ -500,7 +500,9 @@ bool ImportSceneFile(SceneNodeAlembicPtr fileRoot, SceneNodeAppPtr appRoot, cons
                return false;
             }
             pbar->incr(maxCount);
-            pbar->setCaption(std::string("Importing ") + currFileNode->dccIdentifier);
+		std::string impMsg("Importing ");
+		impMsg.append(currFileNode->dccIdentifier);
+            pbar->setCaption(impMsg);
          }
       }
       --count;
