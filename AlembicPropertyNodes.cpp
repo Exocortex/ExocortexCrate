@@ -459,8 +459,7 @@ XSIPLUGINCALLBACK CStatus alembic_string_array_Evaluate(ICENodeContext& in_ctxt)
                acc = outData.Resize(0, (ULONG)propPtr1->size());
 
                for(ULONG i=0; i<acc.GetCount(); i++){
-                  std::string c = propPtr1->get()[i];
-                  acc[i] = CString(c.c_str());
+                  acc.SetData(i, propPtr1->get()[i].c_str());
                }
                
             }
