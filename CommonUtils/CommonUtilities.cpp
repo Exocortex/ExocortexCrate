@@ -734,3 +734,59 @@ int prescanAlembicHierarchy(AbcArchiveCache *pArchiveCache, AbcObjectCache *pRoo
    return nNumNodes;
 }
 
+
+Abc::ICompoundProperty getArbGeomParams(const AbcG::IObject& iObj, AbcA::TimeSamplingPtr& timeSampling, int& nSamples)
+{
+	if(AbcG::IXform::matches(iObj.getMetaData())){
+       AbcG::IXform obj(iObj, Abc::kWrapExisting);
+	   timeSampling = obj.getSchema().getTimeSampling();
+	   nSamples = (int) obj.getSchema().getNumSamples();
+       return obj.getSchema().getArbGeomParams();
+	} 	
+	else if(AbcG::IPolyMesh::matches(iObj.getMetaData())){
+	   AbcG::IPolyMesh obj(iObj, Abc::kWrapExisting);
+	   timeSampling = obj.getSchema().getTimeSampling();
+	   nSamples = (int) obj.getSchema().getNumSamples();
+       return obj.getSchema().getArbGeomParams();
+    }
+    else if(AbcG::ISubD::matches(iObj.getMetaData())){
+	   AbcG::ISubD obj(iObj, Abc::kWrapExisting);
+	   timeSampling = obj.getSchema().getTimeSampling();
+	   nSamples = (int) obj.getSchema().getNumSamples();
+       return obj.getSchema().getArbGeomParams();
+	}
+	else if(AbcG::ICamera::matches(iObj.getMetaData())){
+	   AbcG::ICamera obj(iObj, Abc::kWrapExisting);
+	   timeSampling = obj.getSchema().getTimeSampling();
+	   nSamples = (int) obj.getSchema().getNumSamples();
+       return obj.getSchema().getArbGeomParams();
+	}
+	else if(AbcG::IPoints::matches(iObj.getMetaData())){
+	   AbcG::IPoints obj(iObj, Abc::kWrapExisting);
+	   timeSampling = obj.getSchema().getTimeSampling();
+	   nSamples = (int) obj.getSchema().getNumSamples();
+       return obj.getSchema().getArbGeomParams();
+	}
+	else if(AbcG::ICurves::matches(iObj.getMetaData())){
+	   AbcG::ICurves obj(iObj, Abc::kWrapExisting);
+	   timeSampling = obj.getSchema().getTimeSampling();
+	   nSamples = (int) obj.getSchema().getNumSamples();
+       return obj.getSchema().getArbGeomParams();
+	}
+	else if(AbcG::ILight::matches(iObj.getMetaData())){
+	   AbcG::ILight obj(iObj, Abc::kWrapExisting);
+	   timeSampling = obj.getSchema().getTimeSampling();
+	   nSamples = (int) obj.getSchema().getNumSamples();
+       return obj.getSchema().getArbGeomParams();
+	}
+    else if(AbcG::INuPatch::matches(iObj.getMetaData())){
+	   AbcG::INuPatch obj(iObj, Abc::kWrapExisting);
+	   timeSampling = obj.getSchema().getTimeSampling();
+	   nSamples = (int) obj.getSchema().getNumSamples();
+       return obj.getSchema().getArbGeomParams();
+    }
+    else{
+       ESS_LOG_WARNING("Could not read ArgGeomParams from "<<iObj.getFullName());
+       return Abc::ICompoundProperty();
+    }
+}

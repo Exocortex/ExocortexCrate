@@ -378,5 +378,8 @@ template <class T, class S> void createIndexedArray(const std::vector<Alembic::A
   }
 }
 
+Abc::ICompoundProperty getArbGeomParams(const AbcG::IObject& iObj, AbcA::TimeSamplingPtr& timeSampling, int& nSamples);
+
+
 
 #endif // __COMMON_UTILITIES_H

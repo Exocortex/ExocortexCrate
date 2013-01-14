@@ -24,6 +24,7 @@ public:
    bool failOnUnsupported;
    bool importVisibilityControllers;
    bool selectShapes;
+   bool skipUnattachedNodes;
 
 	std::string filename;// = EC_MCHAR_to_UTF8( strPath );
 
@@ -43,7 +44,8 @@ public:
       failOnUnsupported(false),
       importVisibilityControllers(false),
       includeChildren(false),
-      selectShapes(true)
+      selectShapes(true),
+      skipUnattachedNodes(false)
    {}
 
    bool parse(const std::string& jobString);
