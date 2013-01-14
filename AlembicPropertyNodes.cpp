@@ -80,6 +80,8 @@ namespace writeArrayRes
    enum enumT
    {
       SUCCESS,
+      INVALID_ALEMBIC_PARAM,
+      NO_ALEMBIC_SAMPLES,
       EMPTY,
       TYPE_MISMATCH
    };
@@ -90,6 +92,17 @@ template<class PROP, class SAMPLER, class TYPE> writeArrayRes::enumT writeArray3
 {
    if(PROP::matches(propHeader)){
       PROP propArray(arbGeomParams, propHeader.getName());
+      if(!propArray.valid())
+      {
+         acc = outData.Resize(0,0);
+         return writeArrayRes::INVALID_ALEMBIC_PARAM;
+      }
+      if(propArray.getNumSamples() == 0)
+      {
+         acc = outData.Resize(0,0);
+         return writeArrayRes::NO_ALEMBIC_SAMPLES;
+      }
+
       SAMPLER propPtr1 = propArray.getValue(sampleInfo.floorIndex);
 
       if(propPtr1 == NULL || propPtr1->size() == 0){
@@ -130,6 +143,17 @@ template<class PROP, class SAMPLER, class TYPE>  writeArrayRes::enumT writeArray
 {
    if(PROP::matches(propHeader)){
       PROP propArray(arbGeomParams, propHeader.getName());
+      if(!propArray.valid())
+      {
+         acc = outData.Resize(0,0);
+         return writeArrayRes::INVALID_ALEMBIC_PARAM;
+      }
+      if(propArray.getNumSamples() == 0)
+      {
+         acc = outData.Resize(0,0);
+         return writeArrayRes::NO_ALEMBIC_SAMPLES;
+      }
+
       SAMPLER propPtr1 = propArray.getValue(sampleInfo.floorIndex);
 
       if(propPtr1 == NULL || propPtr1->size() == 0){
@@ -268,7 +292,7 @@ XSIPLUGINCALLBACK CStatus alembic_vec3f_array_Evaluate(ICENodeContext& in_ctxt)
 
 	AbcG::IObject iObj = getObjectFromArchive(path,identifier);
     if(!iObj.valid()){
-        ESS_LOG_WARNING("vec3f_array node error: Could not find "<<iObj.getFullName());
+        ESS_LOG_ERROR("vec3f_array node error: Could not find "<<identifier.GetAsciiString());
 		return CStatus::OK;//return error instead (so that node shows up as red)?
     }  
 
@@ -281,7 +305,7 @@ XSIPLUGINCALLBACK CStatus alembic_vec3f_array_Evaluate(ICENodeContext& in_ctxt)
     AbcA::PropertyHeader propHeader;
 
     if(!findProperty(arbGeomParams, propHeader, aproperty)){ 
-       ESS_LOG_WARNING("vec3f_array node error: Could not find "<<aproperty.GetAsciiString());
+       ESS_LOG_ERROR("vec3f_array node error: Could not find "<<aproperty.GetAsciiString());
        return CStatus::OK;
     }
 
@@ -306,7 +330,7 @@ XSIPLUGINCALLBACK CStatus alembic_vec3f_array_Evaluate(ICENodeContext& in_ctxt)
                res = writeArray3f<Abc::IN3fArrayProperty, Abc::N3fArraySamplePtr, Abc::N3f>(sampleInfo, arbGeomParams, propHeader, outData, acc);
             }
             if(res == writeArrayRes::TYPE_MISMATCH){
-               ESS_LOG_WARNING("vec3f_array node error: type mismatch "<<aproperty.GetAsciiString());
+               ESS_LOG_ERROR("vec3f_array node error: type mismatch "<<aproperty.GetAsciiString());
             }
 
 		}
@@ -345,7 +369,7 @@ XSIPLUGINCALLBACK CStatus alembic_float_array_Evaluate(ICENodeContext& in_ctxt)
 
 	AbcG::IObject iObj = getObjectFromArchive(path,identifier);
     if(!iObj.valid()){
-        ESS_LOG_WARNING("float_array node error: Could not find "<<iObj.getFullName());
+        ESS_LOG_ERROR("float_array node error: Could not find "<<identifier.GetAsciiString());
 		return CStatus::OK;//return error instead (so that node shows up as red)?
     }
 
@@ -358,7 +382,7 @@ XSIPLUGINCALLBACK CStatus alembic_float_array_Evaluate(ICENodeContext& in_ctxt)
     AbcA::PropertyHeader propHeader;
 
     if(!findProperty(arbGeomParams, propHeader, aproperty)){ 
-       ESS_LOG_WARNING("float_array node error: Could not find "<<aproperty.GetAsciiString());
+       ESS_LOG_ERROR("float_array node error: Could not find "<<aproperty.GetAsciiString());
        return CStatus::OK;
     }
 
@@ -378,7 +402,7 @@ XSIPLUGINCALLBACK CStatus alembic_float_array_Evaluate(ICENodeContext& in_ctxt)
             writeArrayRes::enumT res = writeArray1f<Abc::IFloatArrayProperty, Abc::FloatArraySamplePtr, float>(sampleInfo, arbGeomParams, propHeader, outData, acc);
             
             if(res == writeArrayRes::TYPE_MISMATCH){
-               ESS_LOG_WARNING("vec3f_array node error: type mismatch "<<aproperty.GetAsciiString());
+               ESS_LOG_ERROR("vec3f_array node error: type mismatch "<<aproperty.GetAsciiString());
             }
 		}
 		break;
@@ -416,7 +440,7 @@ XSIPLUGINCALLBACK CStatus alembic_string_array_Evaluate(ICENodeContext& in_ctxt)
 
 	AbcG::IObject iObj = getObjectFromArchive(path,identifier);
     if(!iObj.valid()){
-        ESS_LOG_WARNING("string node error: Could not find "<<iObj.getFullName());
+        ESS_LOG_ERROR("string node error: Could not find "<<identifier.GetAsciiString());
 		return CStatus::OK;//return error instead (so that node shows up as red)?
     }
 
@@ -429,7 +453,7 @@ XSIPLUGINCALLBACK CStatus alembic_string_array_Evaluate(ICENodeContext& in_ctxt)
     AbcA::PropertyHeader propHeader;
 
     if(!findProperty(arbGeomParams, propHeader, aproperty)){  
-       ESS_LOG_WARNING("string node error: Could not find "<<aproperty.GetAsciiString());
+       ESS_LOG_ERROR("string node error: Could not find "<<aproperty.GetAsciiString());
        return CStatus::OK;
     }
 
@@ -449,6 +473,17 @@ XSIPLUGINCALLBACK CStatus alembic_string_array_Evaluate(ICENodeContext& in_ctxt)
 			
             if(Abc::IStringArrayProperty::matches(propHeader)){      
                Abc::IStringArrayProperty propArray(arbGeomParams, propHeader.getName());
+               if(!propArray.valid())
+               {
+                  acc = outData.Resize(0,0);
+                  return CStatus::OK;
+               }
+               if(propArray.getNumSamples() == 0)
+               {
+                  acc = outData.Resize(0,0);
+                  return CStatus::OK;
+               }
+
                Abc::StringArraySamplePtr propPtr1 = propArray.getValue(sampleInfo.floorIndex);
 
                if(propPtr1 == NULL || propPtr1->size() == 0){
@@ -464,7 +499,7 @@ XSIPLUGINCALLBACK CStatus alembic_string_array_Evaluate(ICENodeContext& in_ctxt)
                
             }
             else{
-               ESS_LOG_WARNING("string node error: type mismatch "<<aproperty.GetAsciiString());
+               ESS_LOG_ERROR("string node error: type mismatch "<<aproperty.GetAsciiString());
             }
 		}
 		break;

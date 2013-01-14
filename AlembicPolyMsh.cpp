@@ -1285,7 +1285,7 @@ XSIPLUGINCALLBACK CStatus alembic_polyMesh2_Evaluate(ICENodeContext& in_ctxt)
 				bool done = false;
 				if(sampleInfo.alpha != 0.0 && usevel)
 				{
-					const float alpha = (float)sampleInfo.alpha;
+					const float alpha = (float)sampleInfo.alpha;//shouldn't we be using a time alpha here?
 
 					Abc::V3fArraySamplePtr velPtr;
 					if (useMesh)
