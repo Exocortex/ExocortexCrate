@@ -2002,6 +2002,7 @@ ESS_CALLBACK_START(alembic_import_jobs_Execute, CRef&)
       }
       jobParser.attachToExisting = settings.GetParameterValue(L"attach");
 	  jobParser.failOnUnsupported = settings.GetParameterValue(L"failOnUnsupported");
+      jobParser.skipUnattachedNodes = settings.GetParameterValue(L"skipUnattachedNodes");
 
       Application().LogMessage(CString(L"[ExocortexAlembic] Using ReadJob:") + jobParser.buildJobString().c_str());
 
@@ -2190,8 +2191,8 @@ ESS_CALLBACK_START(alembic_import_jobs_Execute, CRef&)
       nNumNodes = 0;
       SceneNodeXSIPtr appRoot = buildCommonSceneGraph(importRootNode, nNumNodes, false);
 
-      printSceneGraph(fileRoot, true);
-      printSceneGraph(appRoot, true);
+      //printSceneGraph(fileRoot, true);
+      //printSceneGraph(appRoot, true);
       
       XSIProgressBar progBar;
       progBar.init(nNumNodes);
@@ -2244,6 +2245,7 @@ ESS_CALLBACK_START(alembic_import_settings_Define, CRef&)
       oCustomProperty.AddParameter(L"standins",CValue::siInt4,siPersistable,L"",L"",0,0,10,0,10,oParam);
    }
    oCustomProperty.AddParameter(L"attach",CValue::siBool,siPersistable,L"",L"",0,0,1,0,1,oParam);
+   oCustomProperty.AddParameter(L"skipUnattachedNodes",CValue::siBool,siPersistable,L"",L"",0,0,1,0,1,oParam);
    oCustomProperty.AddParameter(L"failOnUnsupported",CValue::siBool,siPersistable,L"",L"",0,0,1,0,1,oParam);
 	return CStatus::OK;
 ESS_CALLBACK_END
@@ -2278,8 +2280,9 @@ ESS_CALLBACK_START(alembic_import_settings_DefineLayout, CRef&)
       items[5] = (LONG) 2l;
       oLayout.AddEnumControl(L"standins",items,L"Standins");
    }
-   oLayout.AddItem(L"attach",L"Attach to existing objects");
-   oLayout.AddItem(L"failOnUnsupported",L"Fail Upon Unsupported Alembic Types");
+   oLayout.AddItem(L"attach", L"Attach to existing objects");
+   oLayout.AddItem(L"skipUnattachedNodes", L"Skip nodes that fail to attach");
+   oLayout.AddItem(L"failOnUnsupported",L"Fail upon unsupported alembic types");
    oLayout.EndGroup();
 
 	return CStatus::OK;
