@@ -141,6 +141,6 @@ public:
     HINSTANCE		HInstance() { return hInstance; }			// returns owning module handle
 };
 
-bool getCameraSampleVal(AbcG::ICamera& objCamera, SampleInfo& sampleInfo, AbcG::CameraSample sample, const char* name, double& sampleVal);
+//bool getCameraSampleVal(AbcG::ICamera& objCamera, SampleInfo& sampleInfo, AbcG::CameraSample sample, const char* name, double& sampleVal);
 
 #endif // __ALEMBIC_FLOAT_CONTROLLER_H__
