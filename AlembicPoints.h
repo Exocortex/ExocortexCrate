@@ -76,6 +76,7 @@ private:
 
    // members
    SampleInfo mLastSampleInfo;
+   double mLastInputTime;
 };
 
 MStatus AlembicPostImportPoints(void);

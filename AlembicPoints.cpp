@@ -291,7 +291,7 @@ void AlembicPointsNode::PreDestruction()
   mFileName.clear();
 }
 
-AlembicPointsNode::AlembicPointsNode(void)
+AlembicPointsNode::AlembicPointsNode(void): mLastInputTime(-1.0)
 {
   PostConstructor();
 }
@@ -377,11 +377,24 @@ MStatus AlembicPointsNode::init(const MString &fileName, const MString &identifi
   return MS::kSuccess;
 }
 
-static MVector quaternionToVector(const Abc::Quatf &qf)
+static MVector quaternionToVector(const Abc::Quatf &qf, const Abc::Quatf &angVel)
 {
-	const float ang  = qf.angle();
-	const Abc::V3f v = qf.axis();
-	return MVector(v.x * ang, v.y * ang, v.z * ang);
+	const Abc::Quatf qfVel = (angVel.r != 0.0f) ? (angVel * qf).normalize() : qf;
+
+	Imath::V3f vec;
+	extractEulerXYZ(qfVel.toMatrix44(), vec);
+	return MVector(vec.x, vec.y, vec.z);
+}
+
+static bool useAngularVelocity(Abc::QuatfArraySamplePtr &velPtr, const AbcG::IPoints &obj, Alembic::AbcCoreAbstract::index_t floorIndex)
+{
+	Abc::IQuatfArrayProperty velProp;
+	if (getArbGeomParamPropertyAlembic(obj, "angularvelocity", velProp))
+	{
+		velPtr = velProp.getValue(floorIndex);
+		return (velPtr != NULL && velPtr->size() != 0);
+	}
+	return false;
 }
 
 MStatus AlembicPointsNode::compute(const MPlug & plug, MDataBlock & dataBlock)
@@ -429,9 +442,10 @@ MStatus AlembicPointsNode::compute(const MPlug & plug, MDataBlock & dataBlock)
    );
 
    // check if we have to do this at all
-   if(mLastSampleInfo.floorIndex == sampleInfo.floorIndex && mLastSampleInfo.ceilIndex == sampleInfo.ceilIndex)
+   if(mLastInputTime == inputTime && mLastSampleInfo.floorIndex == sampleInfo.floorIndex && mLastSampleInfo.ceilIndex == sampleInfo.ceilIndex)
       return MStatus::kSuccess;
 
+   mLastInputTime = inputTime;
    mLastSampleInfo = sampleInfo;
 
    // access the points values
@@ -579,8 +593,25 @@ MStatus AlembicPointsNode::compute(const MPlug & plug, MDataBlock & dataBlock)
 		 ages[i]          = validAge ? sampleAge->get()[ageUseFirstSample ? 0 : i] : 0.0;
 		 masses[i]        = validMas ? sampleMass->get()[masUseFirstSample ? 0 : i] : 1.0;
 		 shapeInstId[i]   = validSid ? sampleShapeInstanceID->get()[sidUseFirstSample ? 0 : i] : 0.0;
-		 orientationPP[i] = validOri ? quaternionToVector( sampleOrientation->get()[oriUseFirstSample ? 0 : i] ) : MVector::zero;
       }
+
+		// compute the right orientation with the angular velocity if necessary!
+		if (validOri)
+		{
+			Abc::QuatfArraySamplePtr velPtr;
+			const bool useAngVel = timeAlpha != 0.0f && useAngularVelocity(velPtr, obj, sampleInfo.floorIndex);
+			const bool angUseFirstSample = useAngVel && (velPtr->size() == 1);
+			for(unsigned int i = 0; i < particleCount; ++i)
+			{
+				const Abc::Quatf angVel = ( useAngVel ? velPtr->get()[angUseFirstSample ? 0 : i] * timeAlpha : Abc::Quatf() );
+				orientationPP[i] = quaternionToVector(sampleOrientation->get()[oriUseFirstSample ? 0 : i], angVel);
+			}
+		}
+		else
+		{
+			for(unsigned int i = 0; i < particleCount; ++i)
+				orientationPP[i] = MVector::zero;
+		}
    }
 
    // take care of the remaining attributes
@@ -670,7 +701,7 @@ void AlembicPointsNode::instanceInitialize(void)
 
   MGlobal::executeCommand("particleInstancer " + particleShapeName, mInstancerName);
   const MString partInstCmd = "particleInstancer -e -name " + mInstancerName;
-  MGlobal::executeCommand(partInstCmd + " -rotationUnits Radians -objectIndex shapeInstanceIdPP -rotation orientationPP " + particleShapeName);
+  MGlobal::executeCommand(partInstCmd + " -rotationUnits Radians -rotationOrder XYZ -objectIndex shapeInstanceIdPP -rotation orientationPP " + particleShapeName);
   MGlobal::executeCommand(partInstCmd + addObjectCmd + particleShapeName);
 }
 
