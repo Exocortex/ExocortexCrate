@@ -80,6 +80,9 @@ bool IJobStringParser::parse(const std::string& jobString)
 	   else if(boost::iequals(valuePair[0], "includeChildren")){
          includeChildren = parseBool(valuePair[1]);
 		}
+       else if(boost::iequals(valuePair[0], "skipUnattachedNodes")){
+         skipUnattachedNodes = parseBool(valuePair[1]);
+       }
 		else
 		{
 			extraParameters[valuePair[0]] = valuePair[1];
@@ -100,7 +103,7 @@ std::string IJobStringParser::buildJobString()
 
    stream<<"normals="<<importNormals<<";uvs="<<importUVs<<";facesets="<<importFacesets;
    stream<<";importVisibilityControllers="<<importVisibilityControllers<<";importStandinProperties="<<importStandinProperties;
-   stream<<";importBoundingBoxes="<<importBoundingBoxes<<";attachToExisting="<<attachToExisting<<";failOnUnsupported="<<failOnUnsupported;
+   stream<<";importBoundingBoxes="<<importBoundingBoxes<<";attachToExisting="<<attachToExisting<<";skipUnattachedNodes="<<skipUnattachedNodes<<";failOnUnsupported="<<failOnUnsupported;
    
    if(!nodesToImport.empty()){
       stream<<";identifiers=";
@@ -260,7 +263,7 @@ struct ValidateStackElement
 
 };
 
-bool validateSceneFileAttached(SceneNodeAlembicPtr fileRoot)
+bool validateSceneFileAttached(SceneNodeAlembicPtr fileRoot, bool bSkipUnattachedNodes)
 {
    ESS_PROFILE_FUNC();
    std::list<ValidateStackElement> sceneStack;
@@ -279,7 +282,12 @@ bool validateSceneFileAttached(SceneNodeAlembicPtr fileRoot)
       sceneStack.pop_back();
 
       if(!currFileNode->isAttached() /*&& currFileNode->selected*/){
-         ESS_LOG_ERROR("Node failed to attach: "<<currFileNode->dccIdentifier);
+         if(bSkipUnattachedNodes){
+            ESS_LOG_WARNING("Node failed to attach: "<<currFileNode->dccIdentifier);
+         }
+         else{
+            ESS_LOG_ERROR("Node failed to attach: "<<currFileNode->dccIdentifier);
+         }
          bSuccess = false;
       }
 
@@ -291,6 +299,9 @@ bool validateSceneFileAttached(SceneNodeAlembicPtr fileRoot)
       }
    }
 
+   if(bSkipUnattachedNodes){
+      return true;
+   }
    return bSuccess;
 }
 
@@ -447,7 +458,7 @@ bool AttachSceneFile(SceneNodeAlembicPtr fileRoot, SceneNodeAppPtr appRoot, cons
 
 	if (pbar) pbar->stop();
 	
-    return validateSceneFileAttached(fileRoot);
+    return validateSceneFileAttached(fileRoot, jobParams.skipUnattachedNodes);
 }
 
 
