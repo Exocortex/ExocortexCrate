@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<xsi_file type="CompoundNode" name="ABC Load PolyMesh" category="Loaders" tasks="Alembic" formatversion="1.4" compoundversion="1.0" constructionmode="Current" backgroundcolor="6732954">
+<xsi_file type="CompoundNode" name="ABC Load PolyMesh" category="" tasks="Alembic/Loaders" formatversion="1.4" compoundversion="1.0" constructionmode="Current" backgroundcolor="6732954">
 	<definition>
 		<nodes>
 			<node type="IfNode" index="0">

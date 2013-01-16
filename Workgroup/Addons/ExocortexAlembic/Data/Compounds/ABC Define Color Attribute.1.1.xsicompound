@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<xsi_file type="CompoundNode" name="ABC Define Color Attribute" category="Data Access" tasks="" author="" url="" formatversion="1.4" compoundversion="1.1" versiontag="">
+<xsi_file type="CompoundNode" name="ABC Define Color Attribute" category="" tasks="Alembic/Loaders" author="" url="" formatversion="1.4" compoundversion="1.1" versiontag="">
 	<description><![CDATA[]]></description>
 	<definition>
 		<nodes>

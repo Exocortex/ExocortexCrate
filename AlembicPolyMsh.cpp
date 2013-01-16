@@ -1464,7 +1464,7 @@ XSI::CStatus Register_alembic_polyMesh( XSI::PluginRegistrar& in_reg )
 	st.AssertSucceeded( ) ;
 
 	PluginItem nodeItem = in_reg.RegisterICENode(nodeDef);
-	nodeItem.PutCategories(L"Custom ICENode");
+	nodeItem.PutCategories(L"Alembic");
 
 	return CStatus::OK;
 }

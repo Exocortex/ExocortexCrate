@@ -222,7 +222,7 @@ XSI::CStatus defineNode(XSI::PluginRegistrar& in_reg, ULONG in_nDataType, ULONG 
 
 
 	PluginItem nodeItem = in_reg.RegisterICENode(nodeDef);
-	nodeItem.PutCategories(L"Custom ICENode");
+	nodeItem.PutCategories(L"Alembic");
 
     return CStatus::OK;
 }
