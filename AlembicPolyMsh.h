@@ -3,6 +3,8 @@
 
 #include "AlembicObject.h"
 
+#include "AlembicCustomAttributesEx.h"
+
 class AlembicPolyMesh: public AlembicObject
 {
 private:
@@ -21,6 +23,8 @@ private:
    Abc::OInt32Property mFaceVaryingInterpolateBoundaryProperty;
 
    std::vector<float> mUvOptionsVec;
+
+   AlembicCustomAttributesEx customAttributes;
 
 public:
 

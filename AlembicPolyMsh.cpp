@@ -5,6 +5,7 @@
 #include "CommonProfiler.h"
 #include "CommonMeshUtilities.h"
 
+
 using namespace XSI;
 using namespace MATH;
 
@@ -15,7 +16,12 @@ AlembicPolyMesh::AlembicPolyMesh(SceneNodePtr eNode, AlembicWriteJob * in_Job, A
    mMeshSchema = mesh.getSchema();
 
    // create the generic properties
-   mOVisibility = CreateVisibilityProperty(mesh,GetJob()->GetAnimatedTs());
+   mOVisibility = CreateVisibilityProperty(mesh, GetJob()->GetAnimatedTs());
+
+   Primitive prim(GetRef(REF_PRIMITIVE));
+   PolygonMesh xsiMesh = prim.GetGeometry();
+
+   customAttributes.defineCustomAttributes(xsiMesh, mMeshSchema.getArbGeomParams(), mMeshSchema.getMetaData(), GetJob()->GetAnimatedTs());
 }
 
 AlembicPolyMesh::~AlembicPolyMesh()
@@ -152,6 +158,8 @@ XSI::CStatus AlembicPolyMesh::Save(double time)
       mMeshSample.setFaceCounts(faceCountSample);
       mMeshSample.setFaceIndices(faceIndicesSample);
    }
+
+   customAttributes.exportCustomAttributes(mesh);
 
    //these three variables must be scope when the schema set call occurs
    AbcG::ON3fGeomParam::Sample normalSample;
