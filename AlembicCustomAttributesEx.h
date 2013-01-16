@@ -1,4 +1,7 @@
 
+#ifndef _ALEMBIC_CUSTOM_ATTRIBUTES_EX_H_
+#define _ALEMBIC_CUSTOM_ATTRIBUTES_EX_H_
+
 
 class AlembicCustomAttributesEx
 {
@@ -13,4 +16,6 @@ public:
    XSI::CStatus exportCustomAttributes(XSI::Geometry geo);
 
 };
+
+#endif
 
