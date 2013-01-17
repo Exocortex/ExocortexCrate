@@ -4,6 +4,8 @@
 
 #include <boost/smart_ptr.hpp>
 
+#include "CommonPBar.h"
+
 typedef boost::shared_ptr<AbcG::IXform> IXformPtr;
 
 class AbcObjectCache {
@@ -34,6 +36,6 @@ private:
 
 typedef std::map<std::string,AbcObjectCache> AbcArchiveCache;
 
-void createAbcArchiveCache( Abc::IArchive *pArchive, AbcArchiveCache* fullNameToObjectCache );
+bool createAbcArchiveCache( Abc::IArchive *pArchive, AbcArchiveCache* fullNameToObjectCache, CommonProgressBar *pBar = 0 );
 
 #endif // __COMMON_ABC_CACHE_H__

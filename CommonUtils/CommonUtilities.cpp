@@ -9,6 +9,7 @@
 stats_map default_stats_policy::stats;
 #endif // ESS_PROFILER
 
+#include "CommonPBar.h"
 
 struct AlembicArchiveInfo
 {
@@ -133,7 +134,7 @@ bool archiveExists(std::string const& path)
    return it != gArchives.end();
 }
 
-AbcArchiveCache* getArchiveCache( std::string const& path ) {
+AbcArchiveCache* getArchiveCache( std::string const& path, CommonProgressBar *pBar ) {
 	ESS_PROFILE_SCOPE("getArchiveCache");
   getArchiveFromID(path);
 	std::string resolvedPath = resolvePath(path);
@@ -143,11 +144,16 @@ AbcArchiveCache* getArchiveCache( std::string const& path ) {
       return NULL;
 
 	// compute cache if required.
-	if( it->second.archiveCache.size() == 0 ) {
-		createAbcArchiveCache( it->second.archive, &(it->second.archiveCache) );
+	if( it->second.archiveCache.size() == 0 )
+	{
+		if (!createAbcArchiveCache( it->second.archive, &(it->second.archiveCache), pBar ))
+		{
+			it->second.archiveCache.clear();
+			return 0;
+		}
 	}
 	return &(it->second.archiveCache);
-};
+}
 
 std::string addArchive(Alembic::Abc::IArchive * archive)
 {

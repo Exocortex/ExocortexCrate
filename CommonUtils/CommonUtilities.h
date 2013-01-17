@@ -4,6 +4,8 @@
 #include "CommonAlembic.h"
 #include "CommonAbcCache.h"
 
+#include "CommonPBar.h"
+
 #define ALEMBIC_SAFE_DELETE(p)  if(p) delete p; p = 0;
 
 
@@ -89,7 +91,7 @@ struct ArchiveInfo
 std::string getExporterName( std::string const& shortName );
 std::string getExporterFileName( std::string const& fileName );
 
-AbcArchiveCache* getArchiveCache( std::string const& path );
+AbcArchiveCache* getArchiveCache( std::string const& path, CommonProgressBar *pBar = 0 );
 
 AbcObjectCache* getObjectCacheFromArchive(std::string const& path, std::string const& identifier);
 
