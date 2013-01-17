@@ -150,6 +150,7 @@ MStatus AlembicImportCommand::importSingleJob(const MString &job, int jobNumber)
 	SceneNodeAlembicPtr fileRoot = buildAlembicSceneGraph(pArchiveCache, objCache, nNumNodes, true, &pBar);
 	if (fileRoot.get() == 0)
 	{
+		pArchiveCache->clear();
 		ESS_LOG_WARNING("[ExocortexAlembic] Import job cancelled by user");
 		pBar.stop();
 		return MS::kSuccess;
@@ -159,6 +160,7 @@ MStatus AlembicImportCommand::importSingleJob(const MString &job, int jobNumber)
 	AlembicFileAndTimeControlPtr fileTimeCtrl = AlembicFileAndTimeControl::createControl(jobParser);
 	if (!fileTimeCtrl.get())
 	{
+		pArchiveCache->clear();
 		ESS_LOG_ERROR("[ExocortexAlembic] Unable to create file node and/or time control.");
 		MPxCommand::setResult("Unable to create file node and/or time control");
 		return MS::kFailure;
