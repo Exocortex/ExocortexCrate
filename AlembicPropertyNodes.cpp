@@ -87,11 +87,13 @@ namespace writeArrayRes
    };
 };
 
-template<class PROP, class SAMPLER, class TYPE> writeArrayRes::enumT writeArray3f(SampleInfo& sampleInfo, Abc::ICompoundProperty arbGeomParams, AbcA::PropertyHeader propHeader, 
-                                             CDataArray2DVector3f& outData, CDataArray2DVector3f::Accessor& acc)
+template<class PROP, class SAMPLER, class TYPE> writeArrayRes::enumT writeArray3f(SampleInfo& sampleInfo, Abc::ICompoundProperty& arbGeomParams, AbcA::PropertyHeader& propHeader, CDataArray2DVector3f& outData)
 {
    if(PROP::matches(propHeader)){
+      CDataArray2DVector3f::Accessor acc;
       PROP propArray(arbGeomParams, propHeader.getName());
+
+
       if(!propArray.valid())
       {
          acc = outData.Resize(0,0);
@@ -138,10 +140,12 @@ template<class PROP, class SAMPLER, class TYPE> writeArrayRes::enumT writeArray3
 }
 
 
-template<class PROP, class SAMPLER, class TYPE>  writeArrayRes::enumT writeArray1f(SampleInfo& sampleInfo, Abc::ICompoundProperty arbGeomParams, AbcA::PropertyHeader propHeader, 
-                                             CDataArray2DFloat& outData, CDataArray2DFloat::Accessor& acc)
+template<class PROP, class SAMPLER, class TYPE>  writeArrayRes::enumT writeArray1f(SampleInfo& sampleInfo, Abc::ICompoundProperty& arbGeomParams, AbcA::PropertyHeader& propHeader, CDataArray2DFloat& outData)
 {
    if(PROP::matches(propHeader)){
+
+      CDataArray2DFloat::Accessor acc;
+
       PROP propArray(arbGeomParams, propHeader.getName());
       if(!propArray.valid())
       {
@@ -313,21 +317,35 @@ XSIPLUGINCALLBACK CStatus alembic_vec3f_array_Evaluate(ICENodeContext& in_ctxt)
 	{
     case ID_OUT_valid:
        {
-            CDataArrayBool outData( in_ctxt );
-            outData.Set( 0, true );
+            //CDataArrayBool outData( in_ctxt );
+            //outData.Resize(1);
+            //outData.Set( 0, true );
        }
        break;
 	case ID_OUT_data:
 		{
 			CDataArray2DVector3f outData( in_ctxt );
-			CDataArray2DVector3f::Accessor acc;
+			//CDataArray2DVector3f::Accessor acc;
 
-            writeArrayRes::enumT res = writeArray3f<Abc::IC3fArrayProperty, Abc::C3fArraySamplePtr, Abc::C3f>(sampleInfo, arbGeomParams, propHeader, outData, acc);
-            if(res != writeArrayRes::SUCCESS){
-               res = writeArray3f<Abc::IV3fArrayProperty, Abc::V3fArraySamplePtr, Abc::V3f>(sampleInfo, arbGeomParams, propHeader, outData, acc);
+            siICENodeDataType out_type;
+            siICENodeStructureType out_struct; 
+            siICENodeContextType out_context;
+            in_ctxt.GetPortInfo(out_portID, out_type, out_struct, out_context);
+
+            if(out_context == siICENodeContextSingleton){
+               ESS_LOG_ERROR("siICENodeContextSingleton");
             }
-            if(res != writeArrayRes::SUCCESS){
-               res = writeArray3f<Abc::IN3fArrayProperty, Abc::N3fArraySamplePtr, Abc::N3f>(sampleInfo, arbGeomParams, propHeader, outData, acc);
+            else if(out_context == siICENodeContextComponent0D){
+               ESS_LOG_ERROR("siICENodeContextComponent0D");
+            }
+
+
+            writeArrayRes::enumT res = writeArray3f<Abc::IC3fArrayProperty, Abc::C3fArraySamplePtr, Abc::C3f>(sampleInfo, arbGeomParams, propHeader, outData);
+            if(res == writeArrayRes::TYPE_MISMATCH){
+               res = writeArray3f<Abc::IV3fArrayProperty, Abc::V3fArraySamplePtr, Abc::V3f>(sampleInfo, arbGeomParams, propHeader, outData);
+            }
+            if(res == writeArrayRes::TYPE_MISMATCH){
+               res = writeArray3f<Abc::IN3fArrayProperty, Abc::N3fArraySamplePtr, Abc::N3f>(sampleInfo, arbGeomParams, propHeader, outData);
             }
             if(res == writeArrayRes::TYPE_MISMATCH){
                ESS_LOG_ERROR("vec3f_array node error: type mismatch "<<aproperty.GetAsciiString());
@@ -397,9 +415,8 @@ XSIPLUGINCALLBACK CStatus alembic_float_array_Evaluate(ICENodeContext& in_ctxt)
 	case ID_OUT_data:
 		{
 			CDataArray2DFloat outData( in_ctxt );
-			CDataArray2DFloat::Accessor acc;
 
-            writeArrayRes::enumT res = writeArray1f<Abc::IFloatArrayProperty, Abc::FloatArraySamplePtr, float>(sampleInfo, arbGeomParams, propHeader, outData, acc);
+            writeArrayRes::enumT res = writeArray1f<Abc::IFloatArrayProperty, Abc::FloatArraySamplePtr, float>(sampleInfo, arbGeomParams, propHeader, outData);
             
             if(res == writeArrayRes::TYPE_MISMATCH){
                ESS_LOG_ERROR("vec3f_array node error: type mismatch "<<aproperty.GetAsciiString());
@@ -431,6 +448,8 @@ XSIPLUGINCALLBACK CStatus alembic_string_array_Evaluate(ICENodeContext& in_ctxt)
 	//Application().LogMessage( "alembic_polyMesh2_Evaluate" );
 	// The current output port being evaluated...
 	ULONG out_portID = in_ctxt.GetEvaluatedOutputPortID( );
+
+
 
 	CString path, identifier, aproperty;
 	double time;
@@ -470,6 +489,7 @@ XSIPLUGINCALLBACK CStatus alembic_string_array_Evaluate(ICENodeContext& in_ctxt)
 			CDataArray2DString outData( in_ctxt );
 			CDataArray2DString::Accessor acc;
 
+
 			
             if(Abc::IStringArrayProperty::matches(propHeader)){      
                Abc::IStringArrayProperty propArray(arbGeomParams, propHeader.getName());
@@ -483,6 +503,8 @@ XSIPLUGINCALLBACK CStatus alembic_string_array_Evaluate(ICENodeContext& in_ctxt)
                   acc = outData.Resize(0,0);
                   return CStatus::OK;
                }
+
+               
 
                Abc::StringArraySamplePtr propPtr1 = propArray.getValue(sampleInfo.floorIndex);
 
