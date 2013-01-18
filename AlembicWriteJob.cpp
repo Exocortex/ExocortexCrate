@@ -330,6 +330,9 @@ MStatus AlembicWriteJob::Process(double frame)
 		}
 	}
 
+	if (i < 0)
+		return MS::kSuccess;
+
 	// run the export for all objects
 	MayaProgressBar pBar;
 	pBar.init(0, mapObjects.size(), 1);
