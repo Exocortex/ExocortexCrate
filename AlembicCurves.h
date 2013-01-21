@@ -3,6 +3,8 @@
 
 #include "AlembicObject.h"
 
+#include "AlembicCustomAttributesEx.h"
+
 class AlembicCurves: public AlembicObject
 {
 private:
@@ -20,6 +22,8 @@ private:
    std::vector<Abc::V2f> mUvVec;
    std::vector<Abc::C4f> mColorVec;
    std::vector<Abc::V3f> mVelVec;
+
+   AlembicCustomAttributesEx customAttributes;
 
 public:
 

@@ -27,6 +27,9 @@ AlembicPoints::AlembicPoints(SceneNodePtr eNode, AlembicWriteJob * in_Job, Abc::
    mMassProperty = Abc::OFloatArrayProperty(argGeomParams, ".mass", mPointsSchema.getMetaData(), GetJob()->GetAnimatedTs() );
    mShapeTypeProperty = Abc::OUInt16ArrayProperty(argGeomParams, ".shapetype", mPointsSchema.getMetaData(), GetJob()->GetAnimatedTs() );
    mColorProperty = Abc::OC4fArrayProperty(argGeomParams, ".color", mPointsSchema.getMetaData(), GetJob()->GetAnimatedTs() );
+
+   Primitive prim(GetRef(REF_PRIMITIVE));
+   customAttributes.defineCustomAttributes(prim.GetGeometry(), mPointsSchema.getArbGeomParams(), mPointsSchema.getMetaData(), GetJob()->GetAnimatedTs());
 }
 
 AlembicPoints::~AlembicPoints()
@@ -74,6 +77,8 @@ XSI::CStatus AlembicPoints::Save(double time)
 
    // access the geometry
    Geometry geo = prim.GetGeometry(time);
+
+   customAttributes.exportCustomAttributes(geo);
 
    // deal with each attribute. we scope here do free memory instantly
    {

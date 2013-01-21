@@ -19,9 +19,7 @@ AlembicPolyMesh::AlembicPolyMesh(SceneNodePtr eNode, AlembicWriteJob * in_Job, A
    mOVisibility = CreateVisibilityProperty(mesh, GetJob()->GetAnimatedTs());
 
    Primitive prim(GetRef(REF_PRIMITIVE));
-   PolygonMesh xsiMesh = prim.GetGeometry();
-
-   customAttributes.defineCustomAttributes(xsiMesh, mMeshSchema.getArbGeomParams(), mMeshSchema.getMetaData(), GetJob()->GetAnimatedTs());
+   customAttributes.defineCustomAttributes(prim.GetGeometry(), mMeshSchema.getArbGeomParams(), mMeshSchema.getMetaData(), GetJob()->GetAnimatedTs());
 }
 
 AlembicPolyMesh::~AlembicPolyMesh()
@@ -100,6 +98,8 @@ XSI::CStatus AlembicPolyMesh::Save(double time)
    mMeshSample.setPositions(Abc::P3fArraySample(posVec));
    mMeshSample.setSelfBounds(bbox);
 
+   customAttributes.exportCustomAttributes(mesh);
+
    // abort here if we are just storing points
    if(purePointCache)
    {
@@ -158,8 +158,6 @@ XSI::CStatus AlembicPolyMesh::Save(double time)
       mMeshSample.setFaceCounts(faceCountSample);
       mMeshSample.setFaceIndices(faceIndicesSample);
    }
-
-   customAttributes.exportCustomAttributes(mesh);
 
    //these three variables must be scope when the schema set call occurs
    AbcG::ON3fGeomParam::Sample normalSample;

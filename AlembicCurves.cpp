@@ -21,6 +21,9 @@ AlembicCurves::AlembicCurves(SceneNodePtr eNode, AlembicWriteJob * in_Job, Abc::
    mColorProperty = Abc::OC4fArrayProperty(mCurvesSchema.getArbGeomParams(), ".color", mCurvesSchema.getMetaData(), GetJob()->GetAnimatedTs() );
    mFaceIndexProperty = Abc::OInt32ArrayProperty(mCurvesSchema.getArbGeomParams(), ".face_index", mCurvesSchema.getMetaData(), GetJob()->GetAnimatedTs() );
    mVertexIndexProperty = Abc::OInt32ArrayProperty(mCurvesSchema.getArbGeomParams(), ".vertex_index", mCurvesSchema.getMetaData(), GetJob()->GetAnimatedTs() );
+
+   Primitive prim(GetRef(REF_PRIMITIVE));
+   customAttributes.defineCustomAttributes(prim.GetGeometry(), mCurvesSchema.getArbGeomParams(), mCurvesSchema.getMetaData(), GetJob()->GetAnimatedTs());
 }
 
 AlembicCurves::~AlembicCurves()
@@ -68,6 +71,8 @@ XSI::CStatus AlembicCurves::Save(double time)
 
    const bool guideCurves = GetJob()->GetOption(L"guideCurves");
 
+   
+
    // access the crvlist
    if(prim.GetType().IsEqualNoCase(L"crvlist"))
    {
@@ -95,6 +100,8 @@ XSI::CStatus AlembicCurves::Save(double time)
 
       // allocate for the points and normals
       Abc::P3fArraySample posSample(&posVec.front(),posVec.size());
+
+      customAttributes.exportCustomAttributes(crvlist);
 
       // if we are the first frame!
       if(mNumSamples == 0)

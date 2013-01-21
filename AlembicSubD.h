@@ -3,6 +3,8 @@
 
 #include "AlembicObject.h"
 
+#include "AlembicCustomAttributesEx.h"
+
 class AlembicSubD: public AlembicObject
 {
 private:
@@ -19,6 +21,8 @@ private:
    std::vector<Abc::V3f> mVelocitiesVec;
    Abc::OFloatArrayProperty mUvOptionsProperty;
    std::vector<float> mUvOptionsVec;
+
+   AlembicCustomAttributesEx customAttributes;
 
 public:
 

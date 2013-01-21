@@ -3,7 +3,6 @@
 #include "AlembicPolyMsh.h"
 #include "AlembicXform.h"
 
-
 using namespace XSI;
 using namespace MATH;
 
@@ -16,6 +15,9 @@ AlembicSubD::AlembicSubD(SceneNodePtr eNode, AlembicWriteJob * in_Job, Abc::OObj
 
    // create the generic properties
    mOVisibility = CreateVisibilityProperty(subD,GetJob()->GetAnimatedTs());
+
+   Primitive prim(GetRef(REF_PRIMITIVE));
+   customAttributes.defineCustomAttributes(prim.GetGeometry(), mSubDSchema.getArbGeomParams(), mSubDSchema.getMetaData(), GetJob()->GetAnimatedTs());
 }
 
 AlembicSubD::~AlembicSubD()
@@ -95,6 +97,8 @@ XSI::CStatus AlembicSubD::Save(double time)
    // store the positions && bbox
    mSubDSample.setPositions(posSample);
    mSubDSample.setSelfBounds(bbox);
+
+   customAttributes.exportCustomAttributes(mesh);
 
    // abort here if we are just storing points
    if(purePointCache)

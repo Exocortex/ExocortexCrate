@@ -3,6 +3,8 @@
 
 #include "AlembicObject.h"
 
+#include "AlembicCustomAttributesEx.h"
+
 class AlembicPoints: public AlembicObject
 {
 private:
@@ -24,6 +26,8 @@ private:
    Abc::OFloatArrayProperty mShapeTimeProperty;
    Abc::OUInt16ArrayProperty mShapeInstanceIDProperty;
    Abc::OC4fArrayProperty mColorProperty;
+
+   AlembicCustomAttributesEx customAttributes;
 
 public:
 
