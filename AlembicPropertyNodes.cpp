@@ -327,17 +327,17 @@ XSIPLUGINCALLBACK CStatus alembic_vec3f_array_Evaluate(ICENodeContext& in_ctxt)
 			CDataArray2DVector3f outData( in_ctxt );
 			//CDataArray2DVector3f::Accessor acc;
 
-            siICENodeDataType out_type;
-            siICENodeStructureType out_struct; 
-            siICENodeContextType out_context;
-            in_ctxt.GetPortInfo(out_portID, out_type, out_struct, out_context);
+            //siICENodeDataType out_type;
+            //siICENodeStructureType out_struct; 
+            //siICENodeContextType out_context;
+            //in_ctxt.GetPortInfo(out_portID, out_type, out_struct, out_context);
 
-            if(out_context == siICENodeContextSingleton){
-               ESS_LOG_ERROR("siICENodeContextSingleton");
-            }
-            else if(out_context == siICENodeContextComponent0D){
-               ESS_LOG_ERROR("siICENodeContextComponent0D");
-            }
+            //if(out_context == siICENodeContextSingleton){
+            //   ESS_LOG_ERROR("siICENodeContextSingleton");
+            //}
+            //else if(out_context == siICENodeContextComponent0D){
+            //   ESS_LOG_ERROR("siICENodeContextComponent0D");
+            //}
 
 
             writeArrayRes::enumT res = writeArray3f<Abc::IC3fArrayProperty, Abc::C3fArraySamplePtr, Abc::C3f>(sampleInfo, arbGeomParams, propHeader, outData);
@@ -408,8 +408,8 @@ XSIPLUGINCALLBACK CStatus alembic_float_array_Evaluate(ICENodeContext& in_ctxt)
 	{
     case ID_OUT_valid:
        {
-            CDataArrayBool outData( in_ctxt );
-            outData.Set( 0, true );
+            //CDataArrayBool outData( in_ctxt );
+            //outData.Set( 0, true );
        }
        break;
 	case ID_OUT_data:
@@ -480,8 +480,8 @@ XSIPLUGINCALLBACK CStatus alembic_string_array_Evaluate(ICENodeContext& in_ctxt)
 	{
     case ID_OUT_valid:
        {
-            CDataArrayBool outData( in_ctxt );
-            outData.Set( 0, true );
+            //CDataArrayBool outData( in_ctxt );
+            //outData.Set( 0, true );
        }
        break;
 	case ID_OUT_data:
