@@ -128,7 +128,11 @@ bool AlembicCamera::Save(double time, bool bLastFrame)
     // store the camera data    
     mCameraSample.setNearClippingPlane(cs.hither);
     mCameraSample.setFarClippingPlane(cs.yon);
-    mCameraSample.setLensSqueezeRatio(ratio);
+    //mCameraSample.setLensSqueezeRatio(ratio);
+    
+    //should set to 1.0 according the article "Maya to Softimage: Camera Interoperability"
+    mCameraSample.setLensSqueezeRatio(1.0);
+
     mCameraSample.setFocalLength(focalLength);
     mCameraSample.setHorizontalAperture(aperatureWidth);
     mCameraSample.setVerticalAperture(aperatureWidth / ratio);
