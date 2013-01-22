@@ -131,25 +131,46 @@ MStatus AlembicImportCommand::importSingleJob(const MString &job, int jobNumber)
 		return MS::kFailure;
 	}
 	addRefArchive( jobParser.filename );
-	AbcArchiveCache *pArchiveCache = getArchiveCache( jobParser.filename );
+
+	MayaProgressBar pBar;
+	pBar.init(0, 100000000, 1);
+	pBar.start();
+	pBar.setCaption(std::string("Caching"));
+	AbcArchiveCache *pArchiveCache = getArchiveCache( jobParser.filename, &pBar );
+	if (pArchiveCache == 0)
+	{
+		ESS_LOG_WARNING("[ExocortexAlembic] Import job cancelled by user");
+		pBar.stop();
+		return MS::kSuccess;
+	}
 
 	int nNumNodes = 0;
+	pBar.setCaption(std::string("Scene Graph"));
 	AbcObjectCache *objCache = &( pArchiveCache->find( "/" )->second );
-	SceneNodeAlembicPtr fileRoot = buildAlembicSceneGraph(pArchiveCache, objCache, nNumNodes);
+	SceneNodeAlembicPtr fileRoot = buildAlembicSceneGraph(pArchiveCache, objCache, nNumNodes, true, &pBar);
+	if (fileRoot.get() == 0)
+	{
+		pArchiveCache->clear();
+		ESS_LOG_WARNING("[ExocortexAlembic] Import job cancelled by user");
+		pBar.stop();
+		return MS::kSuccess;
+	}
 
 	// create time control
 	AlembicFileAndTimeControlPtr fileTimeCtrl = AlembicFileAndTimeControl::createControl(jobParser);
 	if (!fileTimeCtrl.get())
 	{
+		pArchiveCache->clear();
 		ESS_LOG_ERROR("[ExocortexAlembic] Unable to create file node and/or time control.");
 		MPxCommand::setResult("Unable to create file node and/or time control");
 		return MS::kFailure;
 	}
 
-	MayaProgressBar pBar;
+	pBar.stop();
 	pBar.init(0, nNumNodes, 1);
 	if(jobParser.attachToExisting)
 	{
+		pBar.setCaption(std::string("Attach"));
 		MDagPath dagPath;
 		MItDag().getPath(dagPath);
 		SceneNodeAppPtr appRoot = buildMayaSceneGraph(dagPath, fileTimeCtrl);
@@ -158,6 +179,7 @@ MStatus AlembicImportCommand::importSingleJob(const MString &job, int jobNumber)
 	}
 	else
 	{
+		pBar.setCaption(std::string("Import"));
 		SceneNodeAppPtr appRoot(new SceneNodeMaya(fileTimeCtrl));
 		if (!ImportSceneFile(fileRoot, appRoot, jobParser, &pBar))
 			return MS::kFailure;

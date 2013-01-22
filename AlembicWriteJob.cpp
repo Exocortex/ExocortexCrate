@@ -330,6 +330,9 @@ MStatus AlembicWriteJob::Process(double frame)
 		}
 	}
 
+	if (i < 0)
+		return MS::kSuccess;
+
 	// run the export for all objects
 	MayaProgressBar pBar;
 	pBar.init(0, mapObjects.size(), 1);
@@ -669,8 +672,11 @@ MStatus AlembicExportCommand::doIt(const MArgList & args)
 
 		  // construct the frames
 		  MDoubleArray frames;
-		  for(double frame=frameIn; frame<=frameOut; frame+=frameSteps / frameSubSteps)
-			 frames.append(frame);
+		  {
+			  const double frameIncr = frameSteps / frameSubSteps;
+			  for(double frame=frameIn; frame<=frameOut; frame += frameIncr)
+				 frames.append(frame);
+		  }
 
 		  AlembicWriteJob * job = new AlembicWriteJob(filename,objects,frames);
 		  job->SetOption("exportNormals",normals ? "1" : "0");
