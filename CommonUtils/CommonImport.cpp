@@ -161,7 +161,7 @@ struct AlembicISceneBuildElement
 };
 
 
-SceneNodeAlembicPtr buildAlembicSceneGraph(AbcArchiveCache *pArchiveCache, AbcObjectCache *pRootObjectCache, int& nNumNodes, bool countMergableChildren)
+SceneNodeAlembicPtr buildAlembicSceneGraph(AbcArchiveCache *pArchiveCache, AbcObjectCache *pRootObjectCache, int& nNumNodes, bool countMergableChildren, CommonProgressBar *pBar)
 {
    ESS_PROFILE_FUNC();
    std::list<AlembicISceneBuildElement> sceneStack;
@@ -175,6 +175,13 @@ SceneNodeAlembicPtr buildAlembicSceneGraph(AbcArchiveCache *pArchiveCache, AbcOb
 
    for(size_t j=0; j<pRootObjectCache->childIdentifiers.size(); j++)
    {
+	   if (pBar && j % 20 == 0)
+	   {
+		   pBar->incr(1);
+		   if (pBar->isCancelled())
+			   return SceneNodeAlembicPtr();
+	   }
+
       AbcObjectCache *pChildObjectCache = &( pArchiveCache->find( pRootObjectCache->childIdentifiers[j] )->second );
       Alembic::AbcGeom::IObject childObj = pChildObjectCache->obj;
       NodeCategory::type childCat = NodeCategory::get(childObj);
@@ -190,6 +197,13 @@ SceneNodeAlembicPtr buildAlembicSceneGraph(AbcArchiveCache *pArchiveCache, AbcOb
 
    while( !sceneStack.empty() )
    {
+	   if (pBar && numNodes % 20 == 0)
+	   {
+		   pBar->incr(1);
+		   if (pBar->isCancelled())
+			   return SceneNodeAlembicPtr();
+	   }
+
       AlembicISceneBuildElement sElement = sceneStack.back();
       Alembic::Abc::IObject iObj = sElement.pObjectCache->obj;
       SceneNodePtr parentNode = sElement.parentNode;
@@ -490,8 +504,8 @@ bool ImportSceneFile(SceneNodeAlembicPtr fileRoot, SceneNodeAppPtr appRoot, cons
    }
 
    if (pbar) pbar->start();
-   const int maxCount = pbar->getUpdateCount();
-   int count = maxCount;
+   const int maxCount = pbar ? pbar->getUpdateCount() : 20;
+   int count = 0;
    while( !sceneStack.empty() )
    {
       ImportStackElement sElement = sceneStack.back();
@@ -499,7 +513,7 @@ bool ImportSceneFile(SceneNodeAlembicPtr fileRoot, SceneNodeAppPtr appRoot, cons
       SceneNodeAppPtr parentAppNode = sElement.parentAppNode;
       sceneStack.pop_back();
 
-      if (count == 0)
+      if (count % maxCount == 0)
       {
          count = maxCount;
          if (pbar)
@@ -516,7 +530,7 @@ bool ImportSceneFile(SceneNodeAlembicPtr fileRoot, SceneNodeAppPtr appRoot, cons
             pbar->setCaption(impMsg);
          }
       }
-      --count;
+      ++count;
       
       //ESS_LOG_WARNING("Importing "<<currFileNode->pObjCache->obj.getFullName());
        
