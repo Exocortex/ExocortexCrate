@@ -47,7 +47,13 @@ XSI::CStatus AlembicCamera::Save(double time)
 
    // store the camera data
    mCameraSample.setFocusDistance(prim.GetParameterValue(L"interestdist",time));
-   mCameraSample.setLensSqueezeRatio(prim.GetParameterValue(L"aspect",time));
+
+   //should set to 1.0 according the article "Maya to Softimage: Camera Interoperability"
+   mCameraSample.setLensSqueezeRatio(1.0);
+
+   //const float fAspectR = (float)prim.GetParameterValue(L"aspect",time);
+   //const float fAspect = (float)prim.GetParameterValue(L"projplanewidth",time) / (float)prim.GetParameterValue(L"projplaneheight",time);
+
    mCameraSample.setFocalLength(prim.GetParameterValue(L"projplanedist",time));
    mCameraSample.setVerticalAperture(float(prim.GetParameterValue(L"projplaneheight",time)) * 2.54f);
    mCameraSample.setHorizontalAperture(float(prim.GetParameterValue(L"projplanewidth",time)) * 2.54f);
@@ -123,12 +129,15 @@ ESS_CALLBACK_START( alembic_camera_Update, CRef& )
    // output
    Primitive prim(ctxt.GetOutputTarget());
    prim.PutParameterValue(L"std",(LONG)0l);
-   prim.PutParameterValue(L"aspect",lensSqueezeRatio);
+   //prim.PutParameterValue(L"aspect",lensSqueezeRatio);
    prim.PutParameterValue(L"pixelratio",1.0);
    prim.PutParameterValue(L"projplane",true);
    prim.PutParameterValue(L"projplanelockaspect",false);
    prim.PutParameterValue(L"projplanedist",focalLength);
-   prim.PutParameterValue(L"projplanewidth",xaperture);
+
+   //The correct way to handle lens squeeze ratio according to the article "Maya to Softimage: Camera Interoperability"
+   prim.PutParameterValue(L"projplanewidth",xaperture * lensSqueezeRatio);
+
    prim.PutParameterValue(L"projplaneheight",yaperture);
    prim.PutParameterValue(L"near",nearClipping);
    prim.PutParameterValue(L"far",farClipping);
