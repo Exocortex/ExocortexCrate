@@ -672,8 +672,11 @@ MStatus AlembicExportCommand::doIt(const MArgList & args)
 
 		  // construct the frames
 		  MDoubleArray frames;
-		  for(double frame=frameIn; frame<=frameOut; frame+=frameSteps / frameSubSteps)
-			 frames.append(frame);
+		  {
+			  const double frameIncr = frameSteps / frameSubSteps;
+			  for(double frame=frameIn; frame<=frameOut; frame += frameIncr)
+				 frames.append(frame);
+		  }
 
 		  AlembicWriteJob * job = new AlembicWriteJob(filename,objects,frames);
 		  job->SetOption("exportNormals",normals ? "1" : "0");

@@ -89,6 +89,15 @@ bool SceneNodeMaya::executeAddChild(const MString &cmd, SceneNodeAppPtr& newAppN
 	MGlobal::executePythonCommand(cmd, result);
 	if (result.length() == 0)
 		return false;
+	else if (result.asChar()[0] == '?')
+	{
+#ifdef _DEBUG
+		MGlobal::displayError(result);
+		MGlobal::displayError(cmd);
+#endif
+		return false;
+	}
+
 	newAppNode->dccIdentifier = result.asChar();
 	newAppNode->name = newAppNode->dccIdentifier;
 	return true;

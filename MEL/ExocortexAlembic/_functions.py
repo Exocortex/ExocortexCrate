@@ -22,6 +22,7 @@ def alembicTimeAndFileNode(filename):
 def alembicCreateNode(name, type, parentXform=None):
 	""" create a node and make sure to return a full name and create namespaces if necessary! """
 	cmds.ExocortexAlembic_profileBegin(f="Python.ExocortexAlembic._functions.createAlembicNode")
+	print("alembicCreateNode(" + str(name) + ", " + str(type) + ", " + str(parentXform) + ")")
 
 	# create namespaces if necessary!
 	tokens = name.split(":")
@@ -39,15 +40,9 @@ def alembicCreateNode(name, type, parentXform=None):
 
 	# create the node
 	result = cmds.createNode(type, n=name, p=parentXform)
+	print("--> " + result)
 	if parentXform != None:
-		part = result.split('|')[0]
-		while True:
-			part = cmds.listRelatives(part, p=True)
-			if part == None:
-				break
-			part = part[0]
-			result = part + "|" + result
-	#print("alembicCreateNode(" + str(name) + ", " + str(type) + ", " + str(parentXform) + ") -> " + str(result))
+		result = parentXform + "|" + result.split('|')[-1]
 	cmds.ExocortexAlembic_profileEnd(f="Python.ExocortexAlembic._functions.createAlembicNode")
 	return result
 
