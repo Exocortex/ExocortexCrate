@@ -505,7 +505,7 @@ bool ImportSceneFile(SceneNodeAlembicPtr fileRoot, SceneNodeAppPtr appRoot, cons
 
    if (pbar) pbar->start();
    const int maxCount = pbar ? pbar->getUpdateCount() : 20;
-   int count = maxCount;
+   int count = 0;
    while( !sceneStack.empty() )
    {
       ImportStackElement sElement = sceneStack.back();
@@ -513,7 +513,7 @@ bool ImportSceneFile(SceneNodeAlembicPtr fileRoot, SceneNodeAppPtr appRoot, cons
       SceneNodeAppPtr parentAppNode = sElement.parentAppNode;
       sceneStack.pop_back();
 
-      if (count == 0)
+      if (count % maxCount == 0)
       {
          count = maxCount;
          if (pbar)
@@ -530,7 +530,7 @@ bool ImportSceneFile(SceneNodeAlembicPtr fileRoot, SceneNodeAppPtr appRoot, cons
             pbar->setCaption(impMsg);
          }
       }
-      --count;
+      ++count;
       
       //ESS_LOG_WARNING("Importing "<<currFileNode->pObjCache->obj.getFullName());
        
