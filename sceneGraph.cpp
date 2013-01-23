@@ -198,7 +198,7 @@ void SceneNodeMaya::print(void)
 	ESS_LOG_WARNING("Maya Scene Node: " << dccIdentifier);
 }
 
-static bool visitChild(const MObject &mObj, SceneNodeAppPtr &parent, const AlembicFileAndTimeControlPtr &alembicFileAndTimeControl)
+static bool visitChild(const MObject &mObj, SceneNodeAppPtr &parent, const AlembicFileAndTimeControlPtr &alembicFileAndTimeControl, const SearchReplace::ReplacePtr &replacer)
 {
 	// check if it's a valid type of node first!
 	SceneNodeAppPtr exoChild(new SceneNodeMaya(alembicFileAndTimeControl));
@@ -234,13 +234,13 @@ static bool visitChild(const MObject &mObj, SceneNodeAppPtr &parent, const Alemb
 
 	MFnDagNode dagNode(mObj);
 	exoChild->dccIdentifier = dagNode.fullPathName().asChar();
-	exoChild->name = dagNode.partialPathName().asChar();
+	exoChild->name = replacer->replace(dagNode.partialPathName().asChar());
 	for (unsigned int i = 0; i < dagNode.childCount(); ++i)
-		visitChild(dagNode.child(i), exoChild, alembicFileAndTimeControl);
+		visitChild(dagNode.child(i), exoChild, alembicFileAndTimeControl, replacer);
 	return true;
 }
 
-SceneNodeAppPtr buildMayaSceneGraph(const MDagPath &dagPath, const AlembicFileAndTimeControlPtr alembicFileAndTimeControl)
+SceneNodeAppPtr buildMayaSceneGraph(const MDagPath &dagPath, const SearchReplace::ReplacePtr &replacer, const AlembicFileAndTimeControlPtr alembicFileAndTimeControl)
 {
 	ESS_PROFILE_SCOPE("buildMayaSceneGraph");
 	SceneNodeAppPtr exoRoot(new SceneNodeMaya(alembicFileAndTimeControl));
@@ -248,7 +248,7 @@ SceneNodeAppPtr buildMayaSceneGraph(const MDagPath &dagPath, const AlembicFileAn
 	exoRoot->dccIdentifier = dagPath.fullPathName().asChar();
 	exoRoot->name = dagPath.partialPathName().asChar();
 	for (unsigned int i = 0; i < dagPath.childCount(); ++i)
-		visitChild(dagPath.child(i), exoRoot, alembicFileAndTimeControl);
+		visitChild(dagPath.child(i), exoRoot, alembicFileAndTimeControl, replacer);
 	return exoRoot;
 }
 

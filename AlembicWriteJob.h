@@ -3,6 +3,7 @@
 
 #include "AlembicObject.h"
 
+#include "CommonRegex.h"
 
 class AlembicWriteJob
 {
@@ -23,6 +24,9 @@ public:
       const MObjectArray & in_Selection,
       const MDoubleArray & in_Frames);
    ~AlembicWriteJob();
+
+   // to change the name of objects while exporting!
+   SearchReplace::ReplacePtr replacer;
 
    Abc::OArchive GetArchive() { return mArchive; }
    Abc::OObject GetTop() { return mTop; }

@@ -135,7 +135,7 @@ MStatus AlembicImportCommand::importSingleJob(const MString &job, int jobNumber)
 	MayaProgressBar pBar;
 	pBar.init(0, 100000000, 1);
 	pBar.start();
-	pBar.setCaption(std::string("Caching"));
+	//pBar.setCaption(std::string("Caching"));
 	AbcArchiveCache *pArchiveCache = getArchiveCache( jobParser.filename, &pBar );
 	if (pArchiveCache == 0)
 	{
@@ -145,9 +145,9 @@ MStatus AlembicImportCommand::importSingleJob(const MString &job, int jobNumber)
 	}
 
 	int nNumNodes = 0;
-	pBar.setCaption(std::string("Scene Graph"));
+	//pBar.setCaption(std::string("Scene Graph"));
 	AbcObjectCache *objCache = &( pArchiveCache->find( "/" )->second );
-	SceneNodeAlembicPtr fileRoot = buildAlembicSceneGraph(pArchiveCache, objCache, nNumNodes, true, &pBar);
+	SceneNodeAlembicPtr fileRoot = buildAlembicSceneGraph(pArchiveCache, objCache, nNumNodes, jobParser, true, &pBar);
 	if (fileRoot.get() == 0)
 	{
 		pArchiveCache->clear();
@@ -168,18 +168,19 @@ MStatus AlembicImportCommand::importSingleJob(const MString &job, int jobNumber)
 
 	pBar.stop();
 	pBar.init(0, nNumNodes, 1);
+	
 	if(jobParser.attachToExisting)
 	{
-		pBar.setCaption(std::string("Attach"));
+		//pBar.setCaption(std::string("Attach"));
 		MDagPath dagPath;
 		MItDag().getPath(dagPath);
-		SceneNodeAppPtr appRoot = buildMayaSceneGraph(dagPath, fileTimeCtrl);
+		SceneNodeAppPtr appRoot = buildMayaSceneGraph(dagPath, SearchReplace::createReplacer(), fileTimeCtrl);
 		if (!AttachSceneFile(fileRoot, appRoot, jobParser, &pBar))
 			return MS::kFailure;
 	}
 	else
 	{
-		pBar.setCaption(std::string("Import"));
+		//pBar.setCaption(std::string("Import"));
 		SceneNodeAppPtr appRoot(new SceneNodeMaya(fileTimeCtrl));
 		if (!ImportSceneFile(fileRoot, appRoot, jobParser, &pBar))
 			return MS::kFailure;
