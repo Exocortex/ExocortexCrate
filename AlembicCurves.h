@@ -17,6 +17,7 @@ private:
    Abc::OC4fArrayProperty mColorProperty;
    Abc::OInt32ArrayProperty mFaceIndexProperty;
    Abc::OInt32ArrayProperty mVertexIndexProperty;
+   Abc::OFloatArrayProperty mKnotVectorProperty;
    
    std::vector<float> mRadiusVec;
    std::vector<Abc::V2f> mUvVec;

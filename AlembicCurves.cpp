@@ -108,6 +108,8 @@ XSI::CStatus AlembicCurves::Save(double time)
       // if we are the first frame!
       if(mNumSamples == 0)
       {
+         std::vector<float> knotVectorArray;
+
          // we also need to store the face counts as well as face indices
          CNurbsCurveRefArray curves = crvlist.GetCurves();
          mNbVertices.resize((size_t)curves.GetCount());
@@ -115,13 +117,14 @@ XSI::CStatus AlembicCurves::Save(double time)
             NurbsCurve nCurve(curves[i]);
 
             //ESS_LOG_WARNING("KNOTDATA---------------");
-            //CKnotArray knots = nCurve.GetKnots();
-            //for(LONG j=0; j<knots.GetCount(); j++){
-            //   double knotVal = knots.GetItem(j);
-            //   LONG multiplicity = 0;
-            //   knots.GetMultiplicity(knotVal, multiplicity);
-            //   ESS_LOG_WARNING(j<<" - val: "<<knotVal<<" mult: "<<multiplicity);
-            //}
+            CKnotArray knots = nCurve.GetKnots();
+            for(LONG j=0; j<knots.GetCount(); j++){
+               double knotVal = knots.GetItem(j);
+               //LONG multiplicity = 0;
+               //knots.GetMultiplicity(knotVal, multiplicity);
+               //ESS_LOG_WARNING(j<<" - val: "<<knotVal<<" mult: "<<multiplicity);
+               knotVectorArray.push_back((float)knotVal);
+            }
 
 			mNbVertices[i] = (Abc::int32_t)nCurve.GetControlPoints().GetCount();
          }
@@ -131,14 +134,15 @@ XSI::CStatus AlembicCurves::Save(double time)
          mCurvesSample.setPositions(posSample);
          mCurvesSample.setCurvesNumVertices(nbVerticesSample);
 
+         if(!mKnotVectorProperty.valid()){
+            mKnotVectorProperty = Abc::OFloatArrayProperty(mCurvesSchema.getArbGeomParams(), ".knot_vector", mCurvesSchema.getMetaData(), GetJob()->GetAnimatedTs() );
+         }
+            
+         mKnotVectorProperty.set(Abc::FloatArraySample(knotVectorArray));
+
          // set the type + wrapping
          CNurbsCurveData curveData;
          NurbsCurve(curves[0]).Get(siSINurbs,curveData);
-
-         //for(int i=0; i<curveData.m_aKnots.GetCount(); i++){
-         //   knots.push_back(curveData.m_aKnots[i]);
-         //}
-
          mCurvesSample.setType(curveData.m_lDegree == 3 ?AbcG::kCubic :AbcG::kLinear);
          mCurvesSample.setWrap(curveData.m_bClosed ? AbcG::kPeriodic : AbcG::kNonPeriodic);
          mCurvesSample.setBasis(AbcG::kNoBasis);
@@ -201,7 +205,7 @@ XSI::CStatus AlembicCurves::Save(double time)
 				{
 					CLongArray hairCount;
 					accessor.GetVerticesCount(hairCount);
-					const int offset = mNbVertices.size();
+					const int offset = (const int)mNbVertices.size();
 					mNbVertices.resize(offset + (size_t)hairCount.GetCount());
 					for(LONG i=0;i<hairCount.GetCount();i++)
 						mNbVertices[offset + i] = (Abc::int32_t)hairCount[i];
@@ -212,7 +216,7 @@ XSI::CStatus AlembicCurves::Save(double time)
 				{
 					CFloatArray hairRadius;
 					accessor.GetVertexRadiusValues(hairRadius);
-					const int offset = mRadiusVec.size();
+					const int offset = (const int)mRadiusVec.size();
 					mRadiusVec.resize(offset + (size_t)hairRadius.GetCount());
 					for(LONG i=0;i<hairRadius.GetCount();i++)
 						mRadiusVec[offset+i] = hairRadius[i];
@@ -224,7 +228,7 @@ XSI::CStatus AlembicCurves::Save(double time)
 				 {
 					CFloatArray hairColor;
 					accessor.GetVertexColorValues(0,hairColor);
-					const int c_offset = mColorVec.size();
+					const int c_offset = (const int)mColorVec.size();
 					mColorVec.resize(c_offset + (size_t)hairColor.GetCount()/4);
 					ULONG offset = 0;
 					for(size_t i=0;i<mColorVec.size();i++)
@@ -243,7 +247,7 @@ XSI::CStatus AlembicCurves::Save(double time)
 				 {
 					CFloatArray hairUV;
 					accessor.GetUVValues(0,hairUV);
-					const int u_offset = mUvVec.size();
+					const int u_offset = (const int)mUvVec.size();
 					mUvVec.resize(u_offset+(size_t)hairUV.GetCount()/3);
 					ULONG offset = 0;
 					for(size_t i=0;i<mUvVec.size();i++)
@@ -1262,33 +1266,49 @@ ESS_CALLBACK_START( alembic_crvlist_topo_Update, CRef& )
          offset++;
       }
 
-      // based on curve type, we do this for linear or closed cubic curves
-      if(curveSample.getType() ==AbcG::kLinear || curveData.m_bClosed )
-      { 
-         curveData.m_aKnots.Resize(nbVertices);
-		 for(LONG k=0;k<nbVertices;k++) {
-            curveData.m_aKnots[k] = k;
-		  }
-         if(curveData.m_bClosed)
-            curveData.m_aKnots.Add(nbVertices);
-      }
-      else // cubic open
+      if ( obj.getSchema().getArbGeomParams().getPropertyHeader( ".knot_vector" ) != NULL )
       {
-         //ESS_LOG_WARNING("numVertices: "<<nbVertices);
+         Abc::IFloatArrayProperty knotProp = Abc::IFloatArrayProperty( obj.getSchema().getArbGeomParams(), ".knot_vector" );
+         if(knotProp.valid() && knotProp.getNumSamples() != 0)
+         {
+            Abc::FloatArraySamplePtr ptr = knotProp.getValue(sampleInfo.floorIndex);
 
-		 curveData.m_aKnots.Resize(nbVertices+2);
- 		 curveData.m_aKnots[0] = 0;
- 		 curveData.m_aKnots[1] = 0;
-		 for(LONG k=0;k<nbVertices-2;k++)
-			curveData.m_aKnots[2+k] = k;
-		 curveData.m_aKnots[nbVertices] = nbVertices-3;
-		 curveData.m_aKnots[nbVertices+1] = nbVertices-3;
+            curveData.m_aKnots.Resize((LONG)ptr->size());
+            for(LONG k=0; k<curveData.m_aKnots.GetCount(); k++) {
+               curveData.m_aKnots[k] = ptr->get()[k];
+            }
+         }
+      }
+      else
+      {
+         // based on curve type, we do this for linear or closed cubic curves
+         if(curveSample.getType() ==AbcG::kLinear || curveData.m_bClosed )
+         { 
+            curveData.m_aKnots.Resize(nbVertices);
+		    for(LONG k=0;k<nbVertices;k++) {
+               curveData.m_aKnots[k] = k;
+		     }
+            if(curveData.m_bClosed)
+               curveData.m_aKnots.Add(nbVertices);
+         }
+         else // cubic open
+         {
+            //ESS_LOG_WARNING("numVertices: "<<nbVertices);
 
-         //ESS_LOG_WARNING("KnotVector<<<<<<<<<<<<<<<<<<<<<<<<");
-         //for(int i=0; i<curveData.m_aKnots.GetCount(); i++){
-         //   ESS_LOG_WARNING(i<<": "<<curveData.m_aKnots[i]);
-         //}
+		    curveData.m_aKnots.Resize(nbVertices+2);
+ 		    curveData.m_aKnots[0] = 0;
+ 		    curveData.m_aKnots[1] = 0;
+		    for(LONG k=0;k<nbVertices-2;k++)
+			   curveData.m_aKnots[2+k] = k;
+		    curveData.m_aKnots[nbVertices] = nbVertices-3;
+		    curveData.m_aKnots[nbVertices+1] = nbVertices-3;
 
+            //ESS_LOG_WARNING("KnotVector<<<<<<<<<<<<<<<<<<<<<<<<");
+            //for(int i=0; i<curveData.m_aKnots.GetCount(); i++){
+            //   ESS_LOG_WARNING(i<<": "<<curveData.m_aKnots[i]);
+            //}
+
+         }
       }
 
       curveDatas.Add(curveData);
