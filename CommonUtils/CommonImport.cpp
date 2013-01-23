@@ -21,75 +21,106 @@ bool parseBool(std::string value){
 
 bool IJobStringParser::parse(const std::string& jobString)
 {
-
+	std::string search_str, replace_str;
 	std::vector<std::string> tokens;
 	boost::split(tokens, jobString, boost::is_any_of(";"));
 
-   //if(tokens.empty()){
-   //   return false;
-   //}
-
-	for(int j=0; j<tokens.size(); j++){
-
+	for(int j=0; j<tokens.size(); ++j)
+	{
 		std::vector<std::string> valuePair;
 		boost::split(valuePair, tokens[j], boost::is_any_of("="));
-		if(valuePair.size() != 2){
+		if(valuePair.size() != 2)
+		{
 			ESS_LOG_WARNING("Skipping invalid token: "<<tokens[j]);
 			continue;
 		}
 
-		if(boost::iequals(valuePair[0], "filename")){
+		if(boost::iequals(valuePair[0], "filename"))
+		{
 			filename = valuePair[1];
 		}
-		else if(boost::iequals(valuePair[0], "normals")){
+		else if(boost::iequals(valuePair[0], "normals"))
+		{
 			importNormals = parseBool(valuePair[1]);
 		}
-		else if(boost::iequals(valuePair[0], "uvs")){
+		else if(boost::iequals(valuePair[0], "uvs"))
+		{
 			importUVs = parseBool(valuePair[1]);
 		}
-		else if(boost::iequals(valuePair[0], "facesets")){
-         importFacesets = parseBool(valuePair[1]);
+		else if(boost::iequals(valuePair[0], "facesets"))
+		{
+			importFacesets = parseBool(valuePair[1]);
 		}
-		else if(boost::iequals(valuePair[0], "materialIds")){
-         importMaterialIds = parseBool(valuePair[1]);
+		else if(boost::iequals(valuePair[0], "materialIds"))
+		{
+			importMaterialIds = parseBool(valuePair[1]);
 		}
-      else if(boost::iequals(valuePair[0], "attachToExisting")){
-         attachToExisting = parseBool(valuePair[1]);
-      }
-      else if(boost::iequals(valuePair[0], "importStandinProperties")){
-         importStandinProperties = parseBool(valuePair[1]);
-      }
-      else if(boost::iequals(valuePair[0], "importBoundingBoxes")){
-         importBoundingBoxes = parseBool(valuePair[1]);
-      }
-      else if(boost::iequals(valuePair[0], "importVisibilityControllers")){
-         importVisibilityControllers = parseBool(valuePair[1]);
+		else if(boost::iequals(valuePair[0], "attachToExisting"))
+		{
+			attachToExisting = parseBool(valuePair[1]);
 		}
-	   else if(boost::iequals(valuePair[0], "failOnUnsupported")){
-         failOnUnsupported = parseBool(valuePair[1]);
+		else if(boost::iequals(valuePair[0], "importStandinProperties"))
+		{
+			importStandinProperties = parseBool(valuePair[1]);
 		}
-       else if(boost::iequals(valuePair[0], "selectShapes")){
-         selectShapes = parseBool(valuePair[1]);
-       }
-      else if(boost::iequals(valuePair[0], "filters") || boost::iequals(valuePair[0], "identifiers")){  
-	      boost::split(nodesToImport, valuePair[1], boost::is_any_of(","));
-          for(int i=0; i<nodesToImport.size(); i++){
-             boost::trim(nodesToImport[i]);
-          }
+		else if(boost::iequals(valuePair[0], "importBoundingBoxes"))
+		{
+			importBoundingBoxes = parseBool(valuePair[1]);
 		}
-	   else if(boost::iequals(valuePair[0], "includeChildren")){
-         includeChildren = parseBool(valuePair[1]);
+		else if(boost::iequals(valuePair[0], "importVisibilityControllers"))
+		{
+			importVisibilityControllers = parseBool(valuePair[1]);
 		}
-       else if(boost::iequals(valuePair[0], "skipUnattachedNodes")){
-         skipUnattachedNodes = parseBool(valuePair[1]);
-       }
+		else if(boost::iequals(valuePair[0], "failOnUnsupported"))
+		{
+			failOnUnsupported = parseBool(valuePair[1]);
+		}
+		else if(boost::iequals(valuePair[0], "selectShapes"))
+		{
+			selectShapes = parseBool(valuePair[1]);
+		}
+		else if(boost::iequals(valuePair[0], "filters") || boost::iequals(valuePair[0], "identifiers"))
+		{
+			boost::split(nodesToImport, valuePair[1], boost::is_any_of(","));
+			for(int i=0; i<nodesToImport.size(); ++i)
+			{
+				boost::trim(nodesToImport[i]);
+			}
+		}
+		else if(boost::iequals(valuePair[0], "includeChildren"))
+		{
+			includeChildren = parseBool(valuePair[1]);
+		}
+		else if(boost::iequals(valuePair[0], "skipUnattachedNodes"))
+		{
+			skipUnattachedNodes = parseBool(valuePair[1]);
+		}
+
+		// search/replace
+		else if(boost::iequals(valuePair[0], "search"))
+		{
+			search_str = valuePair[1];
+		}
+		else if(boost::iequals(valuePair[0], "replace"))
+		{
+			replace_str = valuePair[1];
+		}
+
 		else
 		{
 			extraParameters[valuePair[0]] = valuePair[1];
 		}
 	}
 
-   return true;
+	// check if the search/replace strings are valid!
+	if (search_str.length() ? !replace_str.length() : replace_str.length())	// either search or replace string is missing or empty!
+	{
+		ESS_LOG_WARNING("Missing search or replace parameter. No strings will be replaced.");
+		replacer = SearchReplace::createReplacer();
+	}
+	else
+		replacer = SearchReplace::createReplacer(search_str, replace_str);
+	return true;
 }
 
 std::string IJobStringParser::buildJobString()
@@ -161,7 +192,7 @@ struct AlembicISceneBuildElement
 };
 
 
-SceneNodeAlembicPtr buildAlembicSceneGraph(AbcArchiveCache *pArchiveCache, AbcObjectCache *pRootObjectCache, int& nNumNodes, bool countMergableChildren, CommonProgressBar *pBar)
+SceneNodeAlembicPtr buildAlembicSceneGraph(AbcArchiveCache *pArchiveCache, AbcObjectCache *pRootObjectCache, int& nNumNodes, const IJobStringParser& jobParams, bool countMergableChildren, CommonProgressBar *pBar)
 {
    ESS_PROFILE_FUNC();
    std::list<AlembicISceneBuildElement> sceneStack;
@@ -213,7 +244,7 @@ SceneNodeAlembicPtr buildAlembicSceneGraph(AbcArchiveCache *pArchiveCache, AbcOb
 
       SceneNodeAlembicPtr newNode(new SceneNodeAlembic(sElement.pObjectCache));
 
-      newNode->name = iObj.getName();
+      newNode->name = jobParams.replacer->replace( iObj.getName() );
       newNode->dccIdentifier = iObj.getFullName();
       newNode->type = getNodeType(iObj);
       newNode->selected = false;
