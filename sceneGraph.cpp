@@ -226,7 +226,6 @@ static bool visitChild(const MObject &mObj, SceneNodeAppPtr &parent, const Alemb
 	default:
 		exoChild->type = SceneNode::ETRANSFORM;
 		break;
-		//return false;
 	}
 
 	parent->children.push_back(exoChild);
