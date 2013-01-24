@@ -223,10 +223,10 @@ static bool visitChild(const MObject &mObj, SceneNodeAppPtr &parent, const Alemb
 		exoChild->type = SceneNode::HAIR;
 		break;
 	case MFn::kTransform:
+	default:
 		exoChild->type = SceneNode::ETRANSFORM;
 		break;
-	default:
-		return false;
+		//return false;
 	}
 
 	parent->children.push_back(exoChild);
