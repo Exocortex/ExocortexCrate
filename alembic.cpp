@@ -96,6 +96,7 @@ EC_EXPORT MStatus initializePlugin(MObject obj)
    status = plugin.registerCommand("ExocortexAlembic_profileReset",
 	    AlembicProfileResetCommand::creator,
       AlembicProfileResetCommand::createSyntax);
+	status = plugin.registerCommand("ExocortexAlembic_meshToSubdiv", AlembicPolyMeshToSubdivCommand::creator, AlembicPolyMeshToSubdivCommand::createSyntax);
 
    // nodes
    status = plugin.registerNode("ExocortexAlembicTimeControl",

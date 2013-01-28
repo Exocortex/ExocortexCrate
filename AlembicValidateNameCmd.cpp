@@ -187,4 +187,40 @@ MStatus AlembicAssignInitialSGCommand::doIt(const MArgList& args)
   return MS::kSuccess;
 }
 
+MSyntax AlembicPolyMeshToSubdivCommand::createSyntax()
+{
+	MSyntax syntax;
+	syntax.addFlag("-h", "-help");
+	syntax.addFlag("-m", "-mesh", MSyntax::kString);
+	syntax.enableQuery(false);
+	syntax.enableEdit(false);
+
+	return syntax;
+}
+
+MStatus AlembicPolyMeshToSubdivCommand::doIt(const MArgList& args)
+{
+	MStatus status;
+	MArgParser argData(syntax(), args, &status);
+
+	if (argData.isFlagSet("help"))
+	{
+		MGlobal::displayInfo("[ExocortexAlembic]: ExocortexAlembic_meshToSubdiv command:");
+		MGlobal::displayInfo("                    -m : mesh to assign the initialShadingGroup on");
+		return MS::kSuccess;
+	}
+
+	const MString mesh = argData.isFlagSet("mesh") ? ("\"" + argData.flagArgumentString("mesh", 0)) + "\"") : "";
+
+	MString result;
+	MGlobal::executePythonCommand(("ExoAlembic._functions.alembicPolyMeshToSubdiv(" + mesh + ")", result);
+	if (result.length())
+	{
+		MPxCommand::setResult(result);
+		return MS::kFailure;
+	}
+	return MS::kSuccess;
+}
+
+
 

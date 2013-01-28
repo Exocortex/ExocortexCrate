@@ -29,4 +29,17 @@
     static void* creator() { return new AlembicAssignInitialSGCommand(); }
   };
 
+	class AlembicPolyMeshToSubdivCommand: public MPxCommand
+	{
+	public:
+		AlembicPolyMeshToSubdivCommand(void) {}
+		virtual ~AlembicPolyMeshToSubdivCommand(void) {}
+
+		virtual bool isUndoable(void) const { return false; }
+		MStatus doIt(const MArgList &args);
+
+		static MSyntax createSyntax();
+		static void* creator() { return new AlembicPolyMeshToSubdivCommand(); }
+	};
+
 #endif
