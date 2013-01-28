@@ -210,10 +210,10 @@ MStatus AlembicPolyMeshToSubdivCommand::doIt(const MArgList& args)
 		return MS::kSuccess;
 	}
 
-	const MString mesh = argData.isFlagSet("mesh") ? ("\"" + argData.flagArgumentString("mesh", 0)) + "\"") : "";
+	const MString mesh = argData.isFlagSet("mesh") ? ("\"" + argData.flagArgumentString("mesh", 0) + "\"") : "";
 
 	MString result;
-	MGlobal::executePythonCommand(("ExoAlembic._functions.alembicPolyMeshToSubdiv(" + mesh + ")", result);
+	MGlobal::executePythonCommand(("ExoAlembic._functions.alembicPolyMeshToSubdiv(" + mesh) + ")", result);
 	if (result.length())
 	{
 		MPxCommand::setResult(result);

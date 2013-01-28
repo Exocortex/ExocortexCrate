@@ -24,6 +24,8 @@ global proc exocortexAlembicLoadMenu(string $pluginName)
   menuItem -p $showMyMenuCtrl -l "Assign Shader" -c ($assign_instruction);
   menuItem -p $showMyMenuCtrl -divider true;
   menuItem -p $showMyMenuCtrl -l "Print Profiler Statistics" -c ExocortexAlembic_profileStats;
+  menuItem -p $showMyMenuCtrl -divider true;
+  menuItem -p $showMyMenuCtrl -l "Proxy Mesh to Subdiv" -c ExocortexAlembic_meshToSubdiv;
 }
 
 global proc exocortexAlembicUnloadMenu()

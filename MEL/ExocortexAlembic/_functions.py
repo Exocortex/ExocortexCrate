@@ -92,8 +92,10 @@ def alembicPolyMeshToSubdiv(mesh=None):
 		cmds.connectAttr(xform+".shear", newX+".shear")
 		cmds.connectAttr(xform+".rotateAxis", newX+".rotateAxis")
 
-		cmds.connectAttr(mesh+".outMesh", poly+".inMesh")
 		cmds.connectAttr(poly+".outSubdiv", sub+".create")
+		cmds.connectAttr(mesh+".outMesh", poly+".inMesh")
+
+		cmd.setAttr(sub+".dispResolution", 3);
 	except Exception as ex:
 		return str(ex.args)
 	return ""

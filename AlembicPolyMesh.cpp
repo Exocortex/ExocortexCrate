@@ -23,7 +23,7 @@ MStatus AlembicPolyMesh::Save(double time)
 	MFnMesh node(GetRef());
 
 	// check if .outMesh is connected to another node. if it's, it means that this mesh values should be ignored because it's sent somewhere else anyway.
-	{
+	/*{
 		MStringArray conn;
 		MGlobal::executeCommand("listConnections " + node.name(), conn);
 		if (conn.length() > 0)
@@ -31,7 +31,7 @@ MStatus AlembicPolyMesh::Save(double time)
 			MGlobal::displayWarning(("Skipping " + node.name()) + " because attribute \".outMesh\" is connected to another node");
 			return MS::kSuccess;
 		}
-	}
+	}*/
 	MDagPath path;
 	node.getPath(path);
 
