@@ -300,6 +300,8 @@ void IntermediatePolyMesh3DSMax::GetIndexedUVsFromChannel( Mesh *triMesh, int ch
 
 void IntermediatePolyMesh3DSMax::Save(std::map<std::string, bool>& mOptions, Mesh *triMesh, MNMesh* polyMesh, Matrix3& meshTM, Mtl* pMtl, int nMatId, bool bFirstFrame, materialsMergeStr* pMatMerge)
 {
+   ESS_PROFILE_FUNC();
+
 	//for transforming the normals
 	Matrix3 meshTM_I_T = meshTM;
 	meshTM_I_T.SetTrans(Point3(0.0, 0.0, 0.0));

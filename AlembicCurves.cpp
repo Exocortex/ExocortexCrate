@@ -51,6 +51,8 @@ Abc::OCompoundProperty AlembicCurves::GetCompound()
 
 bool AlembicCurves::Save(double time, bool bLastFrame)
 {
+    ESS_PROFILE_FUNC();
+
     TimeValue ticks = GET_MAX_INTERFACE()->GetTime();
 
 	Object *obj = GetRef().node->EvalWorldState(ticks).obj;

@@ -9,6 +9,7 @@
 
 void GetObjectMatrix(TimeValue ticks, INode *node, Matrix3 &out, bool bFlattenHierarchy)
 {
+    ESS_PROFILE_FUNC();
     out = node->GetObjTMAfterWSM(ticks);
 	
 	if(bFlattenHierarchy) return;
@@ -24,15 +25,18 @@ void GetObjectMatrix(TimeValue ticks, INode *node, Matrix3 &out, bool bFlattenHi
 
 void SaveXformSample(const SceneEntry &in_Ref, AbcG::OXformSchema &schema, AbcG::XformSample &sample, double time, bool bFlattenHierarchy)
 {
+    ESS_PROFILE_FUNC();
+    //Note: this code is extremely slow! 
+
 	// check if the transform is animated
-    if(schema.getNumSamples() > 0)
-    {
-        if (!CheckIfNodeIsAnimated(in_Ref.node))
-        {
-            // No need to save transform after first frame for non-animated objects. 
-            return;
-        }
-    }
+    //if(schema.getNumSamples() > 0)
+    //{
+    //    if (!CheckIfNodeIsAnimated(in_Ref.node))
+    //    {
+    //        // No need to save transform after first frame for non-animated objects. 
+    //        return;
+    //    }
+    //}
 
     // JSS : To validate, I am currently assuming that the ObjectTM is what we are seeking. This may be wrong. 
     // Model transform
@@ -106,6 +110,8 @@ AlembicXForm::~AlembicXForm()
 
 bool AlembicXForm::Save(double time, bool bLastFrame)
 {
+    ESS_PROFILE_FUNC();
+
     // Set the bounding box to be used to draw the dummy object on import
     DummyObject *pDummyObject = static_cast<DummyObject*>(GetRef().obj);
     Box3 maxBox = pDummyObject->GetBox();
