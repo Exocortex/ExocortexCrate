@@ -465,13 +465,21 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
 			bool uvCeil = getIndexAndValues( meshFaceIndices, meshUvParam, sampleInfo.ceilIndex,
 					   uvValuesCeil, uvIndicesCeil );
 
-		   if( !uvFloor || !uvCeil || uvValuesFloor.size() == 0) {
+            if( !uvFloor || !uvCeil || uvValuesFloor.size() == 0) {
 			   ESS_LOG_WARNING( "Mesh UVs are in an invalid state in Alembic file, ignoring." );
 		   }
-		   else {
+		   else{
 			   // Set up the default texture map channel
 				if(options.pMNMesh->MNum() > uvI)
 				{
+                   //MNMap *map = options.pMNMesh->M(uvI);
+                   //if(map->numf == 0 || map->numv == 0){
+                   //  ESS_LOG_WARNING("map is null");
+                   //}
+                   //else{
+                   //  ESS_LOG_WARNING("map is not null.");
+                   //}
+
 				   options.pMNMesh->InitMap(uvI);
 				   MNMap *map = options.pMNMesh->M(uvI);
 				   map->setNumVerts((int)uvValuesFloor.size());
@@ -495,6 +503,7 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
 					   }
 				   }
 
+                   bool bBadUVindices = false;
 				   // set indices
 				   int offset = 0;
 				   MNMapFace* mapF = map->f;
@@ -507,10 +516,30 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
 					   mapF[i].SetSize(degree);
 					   for (int j = 0; j < degree; j ++)
 					   {
-						   mapF[i].tv[degree - j - 1] = (int) uvIndicesFloor[ offset ];
+                           int theIndex = 0;
+                           if(offset < uvIndicesFloor.size()){
+                              theIndex = (int)uvIndicesFloor[ offset ];
+                           }
+                           else{
+                              ESS_LOG_WARNING("offset > uvIndicesFloor.size()");
+                           }
+                           if(theIndex < 0){
+                              theIndex = 0;
+                              bBadUVindices = true;
+                           }
+                           if(theIndex > uvValuesFloor.size()){
+                              theIndex = (int)uvValuesFloor.size()-1;
+                              bBadUVindices = true;
+                           }
+
+						   mapF[i].tv[degree - j - 1] = theIndex;//(int) uvIndicesFloor[ offset ];
 						   ++offset;
 					   }
 				   }
+
+                   if(bBadUVindices){
+                      ESS_LOG_WARNING("Corrected out of bounds UV indices to prevent crash.");
+                   }
 			   }
 			   else{
 					ESS_LOG_WARNING( "UV channels have not been allocated. Cannot load uv channel "<<uvI );
