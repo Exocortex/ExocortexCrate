@@ -61,14 +61,14 @@ void SaveXformSample(const SceneEntry &in_Ref, AbcG::OXformSchema &schema, AbcG:
 void SaveCameraXformSample(const SceneEntry &in_Ref, AbcG::OXformSchema &schema, AbcG::XformSample &sample, double time, bool bFlatten)
 {
    // check if the transform is animated
-    if(schema.getNumSamples() > 0)
-    {
-        if (!CheckIfNodeIsAnimated(in_Ref.node))
-        {
-            // No need to save transform after first frame for non-animated objects. 
-            return;
-        }
-    }
+    //if(schema.getNumSamples() > 0)
+    //{
+    //    if (!CheckIfNodeIsAnimated(in_Ref.node))
+    //    {
+    //        // No need to save transform after first frame for non-animated objects. 
+    //        return;
+    //    }
+    //}
 
    // Model transform
     TimeValue ticks = GetTimeValueFromFrame(time);

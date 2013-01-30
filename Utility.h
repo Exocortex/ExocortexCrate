@@ -114,7 +114,7 @@ inline void ConvertMaxAngAxisToAlembicQuat(const AngAxis &angAxis, Abc::Quatd &q
 }
 
 // Utility functions for working on INodes
-bool CheckIfNodeIsAnimated( INode *pNode );
+//bool CheckIfNodeIsAnimated( INode *pNode );
 bool CheckIfObjIsValidForever(Object *obj, TimeValue v);
 bool IsModelTransformNode( INode *pNode );
 INode *GetParentModelTransformNode( INode *pNode );

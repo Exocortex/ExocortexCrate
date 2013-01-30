@@ -189,23 +189,23 @@ void ConvertAlembicMatrixToMaxMatrix( const Matrix3 &alembicMatrix, Matrix3 &res
 
 
 
-bool CheckIfNodeIsAnimated( INode *pNode )
-{
-   ESS_PROFILE_FUNC();
-    INode *pAnimatedNode = pNode;
-    while (pAnimatedNode)
-    {
-        if (pAnimatedNode->IsRootNode())
-            return false;
-
-        if (pAnimatedNode->IsAnimated())
-            return true;
-
-        pAnimatedNode = pAnimatedNode->GetParentNode();
-    }
-
-    return false;
-}
+//bool CheckIfNodeIsAnimated( INode *pNode )
+//{
+//   ESS_PROFILE_FUNC();
+//    INode *pAnimatedNode = pNode;
+//    while (pAnimatedNode)
+//    {
+//        if (pAnimatedNode->IsRootNode())
+//            return false;
+//
+//        if (pAnimatedNode->IsAnimated())
+//            return true;
+//
+//        pAnimatedNode = pAnimatedNode->GetParentNode();
+//    }
+//
+//    return false;
+//}
 
 bool CheckIfObjIsValidForever(Object *obj, TimeValue v)
 {
