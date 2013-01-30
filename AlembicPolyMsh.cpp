@@ -264,7 +264,10 @@ bool AlembicPolyMesh::Save(double time, bool bLastFrame)
 	//write out the texture coordinates if necessary
 	if(mJob->GetOption("exportUVs"))
 	{
-		saveIndexedUVs( mMeshSchema, mMeshSample, uvSample, mUvParams, mJob->GetAnimatedTs(), mNumSamples, finalPolyMesh.mIndexedUVSet );
+       if(correctInvalidUVs(finalPolyMesh.mIndexedUVSet)){
+          ESS_LOG_WARNING("Capped out of range uvs on object "<<GetRef().node->GetName()<<", frame = "<<time);
+       }
+	   saveIndexedUVs( mMeshSchema, mMeshSample, uvSample, mUvParams, mJob->GetAnimatedTs(), mNumSamples, finalPolyMesh.mIndexedUVSet );
 	}
 
 
