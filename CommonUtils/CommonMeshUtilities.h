@@ -43,7 +43,7 @@ bool getIndexAndValues( Alembic::Abc::Int32ArraySamplePtr faceIndices, Alembic::
 bool getIndexAndValues( Alembic::Abc::Int32ArraySamplePtr faceIndices, Alembic::AbcGeom::IN3fGeomParam& param, AbcA::index_t sampleIndex,
 					   std::vector<Imath::V3f>& outputValues, std::vector<AbcA::uint32_t>& outputIndices );
 
-
+bool correctInvalidUVs(std::vector<IndexedUVs>& indexUVSet);
 void saveIndexedUVs( AbcG::OPolyMeshSchema& meshSchema, AbcG::OPolyMeshSchema::Sample& meshSample,
 					AbcG::OV2fGeomParam::Sample &uvSample, std::vector<AbcG::OV2fGeomParam>& uvParams,
 					unsigned int animatedTs, int numSamples, std::vector<IndexedUVs>& indexUVSet );
