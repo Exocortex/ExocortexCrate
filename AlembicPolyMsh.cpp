@@ -657,11 +657,19 @@ ESS_CALLBACK_START( alembic_uvs_Update, CRef& )
       return CStatus::OK;
 
    CString path = ctxt.GetParameterValue(L"path");
-   CStringArray identifierAndIndex = CString(ctxt.GetParameterValue(L"identifier")).Split(L":");
-   CString identifier = identifierAndIndex[0];
+   CString identifierAndIndex = ctxt.GetParameterValue(L"identifier");
+
+   ULONG colonOffset = identifierAndIndex.ReverseFindString(L":");
+
+   CString identifier = identifierAndIndex.GetSubString(0, colonOffset);
+ 
    LONG uvI = 0;
-   if(identifierAndIndex.GetCount() > 1)
-      uvI = (LONG)CValue(identifierAndIndex[1]);
+   if( colonOffset == identifierAndIndex.Length() ){
+      uvI = (LONG)CValue(identifierAndIndex.GetSubString(colonOffset+1));
+   }
+
+   //ESS_LOG_WARNING("identifier: "<<identifier.GetAsciiString());
+   //ESS_LOG_WARNING("uvI: "<<uvI);
 
   AbcG::IObject iObj = getObjectFromArchive(path,identifier);
    if(!iObj.valid())
