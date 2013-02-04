@@ -134,11 +134,11 @@ XSI::CStatus AlembicCurves::Save(double time)
          mCurvesSample.setPositions(posSample);
          mCurvesSample.setCurvesNumVertices(nbVerticesSample);
 
-         if(!mKnotVectorProperty.valid()){
-            mKnotVectorProperty = Abc::OFloatArrayProperty(mCurvesSchema.getArbGeomParams(), ".knot_vector", mCurvesSchema.getMetaData(), GetJob()->GetAnimatedTs() );
-         }
-            
-         mKnotVectorProperty.set(Abc::FloatArraySample(knotVectorArray));
+         //if(!mKnotVectorProperty.valid()){
+         //   mKnotVectorProperty = Abc::OFloatArrayProperty(mCurvesSchema.getArbGeomParams(), ".knot_vector", mCurvesSchema.getMetaData(), GetJob()->GetAnimatedTs() );
+         //}
+         //   
+         //mKnotVectorProperty.set(Abc::FloatArraySample(knotVectorArray));
 
          // set the type + wrapping
          CNurbsCurveData curveData;
@@ -1266,7 +1266,7 @@ ESS_CALLBACK_START( alembic_crvlist_topo_Update, CRef& )
          offset++;
       }
 
-      if ( obj.getSchema().getArbGeomParams().getPropertyHeader( ".knot_vector" ) != NULL )
+      if ( false && obj.getSchema().getArbGeomParams().getPropertyHeader( ".knot_vector" ) != NULL )
       {
          Abc::IFloatArrayProperty knotProp = Abc::IFloatArrayProperty( obj.getSchema().getArbGeomParams(), ".knot_vector" );
          if(knotProp.valid() && knotProp.getNumSamples() != 0)
