@@ -10,6 +10,7 @@
 #include "CommonAbcCache.h"
 
 #include "CommonPBar.h"
+#include "CommonRegex.h"
 
 class IJobStringParser
 {
@@ -26,6 +27,8 @@ public:
    bool importVisibilityControllers;
    bool selectShapes;
    bool skipUnattachedNodes;
+
+   SearchReplace::ReplacePtr replacer;
 
 	std::string filename;// = EC_MCHAR_to_UTF8( strPath );
 
@@ -54,7 +57,7 @@ public:
    std::string buildJobString();
 };
 
-SceneNodeAlembicPtr buildAlembicSceneGraph(AbcArchiveCache *pArchiveCache, AbcObjectCache *pRootObjectCache, int& nNumNodes, bool countMergableChildren=true, CommonProgressBar *pBar = 0);
+SceneNodeAlembicPtr buildAlembicSceneGraph(AbcArchiveCache *pArchiveCache, AbcObjectCache *pRootObjectCache, int& nNumNodes, const IJobStringParser& jobParams, bool countMergableChildren=true, CommonProgressBar *pBar = 0);
 
 // progress bar needs to be initialized before these functions are called!
 bool ImportSceneFile(SceneNodeAlembicPtr fileRoot, SceneNodeAppPtr appRoot, const IJobStringParser& jobParams, CommonProgressBar *pBar = 0);
