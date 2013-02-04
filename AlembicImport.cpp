@@ -2003,7 +2003,8 @@ ESS_CALLBACK_START(alembic_import_jobs_Execute, CRef&)
       jobParser.attachToExisting = settings.GetParameterValue(L"attach");
 	  jobParser.failOnUnsupported = settings.GetParameterValue(L"failOnUnsupported");
       jobParser.skipUnattachedNodes = settings.GetParameterValue(L"skipUnattachedNodes");
-
+      jobParser.replacer = SearchReplace::createReplacer();
+         
       Application().LogMessage(CString(L"[ExocortexAlembic] Using ReadJob:") + jobParser.buildJobString().c_str());
 
       Application().ExecuteCommand(L"DeleteObj",inspectArgs,inspectResult);
@@ -2121,7 +2122,7 @@ ESS_CALLBACK_START(alembic_import_jobs_Execute, CRef&)
 
 
    int nNumNodes = 0;
-   SceneNodeAlembicPtr fileRoot = buildAlembicSceneGraph(pArchiveCache, pRootObjectCache, nNumNodes, false);
+   SceneNodeAlembicPtr fileRoot = buildAlembicSceneGraph(pArchiveCache, pRootObjectCache, nNumNodes, jobParser, false);
 
    if(!jobParser.selectShapes){
       ESS_LOG_WARNING("Only selecting transform nodes (shape selection disabled)");
