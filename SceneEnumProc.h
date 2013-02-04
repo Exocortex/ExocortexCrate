@@ -15,6 +15,7 @@ class Object;
 #define OBTYPE_LTARGET 7
 #define OBTYPE_POINTS 8
 #define OBTYPE_CURVES 9
+#define OBTYPE_POINTS_TP 10
 
 class SceneEntry 
 {
