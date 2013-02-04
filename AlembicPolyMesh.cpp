@@ -18,11 +18,22 @@ AlembicPolyMesh::~AlembicPolyMesh()
 
 MStatus AlembicPolyMesh::Save(double time)
 {
-  ESS_PROFILE_SCOPE("AlembicPolyMesh::Save");
-   // access the geometry
-   MFnMesh node(GetRef());
-   MDagPath path;
-   node.getPath(path);
+	ESS_PROFILE_SCOPE("AlembicPolyMesh::Save");
+	// access the geometry
+	MFnMesh node(GetRef());
+
+	// check if .outMesh is connected to another node. if it's, it means that this mesh values should be ignored because it's sent somewhere else anyway.
+	/*{
+		MStringArray conn;
+		MGlobal::executeCommand("listConnections " + node.name(), conn);
+		if (conn.length() > 0)
+		{
+			MGlobal::displayWarning(("Skipping " + node.name()) + " because attribute \".outMesh\" is connected to another node");
+			return MS::kSuccess;
+		}
+	}*/
+	MDagPath path;
+	node.getPath(path);
 
    // save the metadata
    std::vector<Abc::V3f> mPosVec;
@@ -64,7 +75,7 @@ MStatus AlembicPolyMesh::Save(double time)
    mPointCountLastFrame = points.length();
 
    {
-     ESS_PROFILE_SCOPE("AlembicPolyMesh::Save poitn copy, bbox extend, gspace");
+     ESS_PROFILE_SCOPE("AlembicPolyMesh::Save point copy, bbox extend, gspace");
      mPosVec.resize(points.length());
      for(unsigned int i=0;i<points.length();i++)
      {

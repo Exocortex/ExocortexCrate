@@ -184,7 +184,7 @@ MStatus AlembicWriteJob::PreProcess()
 
 	    MDagPath dagPath;
 		{ MItDag().getPath(dagPath); }
-		SceneNodePtr exoSceneRoot = buildMayaSceneGraph(dagPath);
+		SceneNodePtr exoSceneRoot = buildMayaSceneGraph(dagPath, this->replacer);
 		const bool bFlattenHierarchy = GetOption("flattenHierarchy") == "1";
 		const bool bSelectChildren = false;
 		const bool bTransformCache = GetOption("transformCache") == "1";
@@ -465,82 +465,93 @@ MStatus AlembicExportCommand::doIt(const MArgList & args)
 
    try
    {
-	   // for each job, check the arguments
-	   bool failure = false;
-	   for(unsigned int i=0;i<jobStrings.length();i++)
-	   {
-		  double frameIn = 1.0;
-		  double frameOut = 1.0;
-		  double frameSteps = 1.0;
-		  double frameSubSteps = 1.0;
-		  MString filename;
-		  bool purepointcache = false;
-		  bool normals = true;
-		  bool uvs = true;
-		  bool facesets = true;
+		// for each job, check the arguments
+		bool failure = false;
+		for(unsigned int i=0;i<jobStrings.length(); ++i)
+		{
+			double frameIn = 1.0;
+			double frameOut = 1.0;
+			double frameSteps = 1.0;
+			double frameSubSteps = 1.0;
+			MString filename;
+			bool purepointcache = false;
+			bool normals = true;
+			bool uvs = true;
+			bool facesets = true;
 			bool bindpose = true;
-		  bool dynamictopology = false;
-		  bool globalspace = false;
-		  bool withouthierarchy = false;
-		  bool transformcache = false;
-		  bool useInitShadGrp = false;
-		  MStringArray objectStrings;
-		  MObjectArray objects;
+			bool dynamictopology = false;
+			bool globalspace = false;
+			bool withouthierarchy = false;
+			bool transformcache = false;
+			bool useInitShadGrp = false;
+			MStringArray objectStrings;
+			MObjectArray objects;
+			std::string search_str, replace_str;
 
-		  // process all tokens of the job
-		  MStringArray tokens;
-		  jobStrings[i].split(';',tokens);
-		  for(unsigned int j=0;j<tokens.length();j++)
-		  {
-			 MStringArray valuePair;
-			 tokens[j].split('=',valuePair);
-			 if(valuePair.length()!=2)
-			 {
-				MGlobal::displayWarning("[ExocortexAlembic] Skipping invalid token: "+tokens[j]);
-				continue;
-			 }
+			// process all tokens of the job
+			MStringArray tokens;
+			jobStrings[i].split(';',tokens);
+			for(unsigned int j=0;j<tokens.length();j++)
+			{
+				MStringArray valuePair;
+				tokens[j].split('=',valuePair);
+				if(valuePair.length()!=2)
+				{
+					MGlobal::displayWarning("[ExocortexAlembic] Skipping invalid token: "+tokens[j]);
+					continue;
+				}
 
-			 if(valuePair[0].toLowerCase() == "in")
-				frameIn = valuePair[1].asDouble();
-			 else if(valuePair[0].toLowerCase() == "out")
-				frameOut = valuePair[1].asDouble();
-			 else if(valuePair[0].toLowerCase() == "step")
-				frameSteps = valuePair[1].asDouble();
-			 else if(valuePair[0].toLowerCase() == "substep")
-				frameSubSteps = valuePair[1].asDouble();
-			 else if(valuePair[0].toLowerCase() == "normals")
-				normals = valuePair[1].asInt() != 0;
-			 else if(valuePair[0].toLowerCase() == "uvs")
-				uvs = valuePair[1].asInt() != 0;
-			 else if(valuePair[0].toLowerCase() == "facesets")
-				facesets = valuePair[1].asInt() != 0;
-				 else if(valuePair[0].toLowerCase() == "bindpose")
-				bindpose = valuePair[1].asInt() != 0;
-				 else if(valuePair[0].toLowerCase() == "purepointcache")
-				purepointcache = valuePair[1].asInt() != 0;
-				 else if(valuePair[0].toLowerCase() == "dynamictopology")
-				dynamictopology = valuePair[1].asInt() != 0;
-				 else if(valuePair[0].toLowerCase() == "globalspace")
-				globalspace = valuePair[1].asInt() != 0;
-				 else if(valuePair[0].toLowerCase() == "withouthierarchy")
-				withouthierarchy = valuePair[1].asInt() != 0;
-				 else if(valuePair[0].toLowerCase() == "transformcache")
-				transformcache = valuePair[1].asInt() != 0;
-			 else if(valuePair[0].toLowerCase() == "filename")
-				filename = valuePair[1];
-			 else if(valuePair[0].toLowerCase() == "objects")
-			 {
-				// try to find each object
-				valuePair[1].split(',',objectStrings);
-			 }
-			 else if(valuePair[0].toLowerCase() == "useinitshadgrp")
+				if(valuePair[0].toLowerCase() == "in")
+					frameIn = valuePair[1].asDouble();
+				else if(valuePair[0].toLowerCase() == "out")
+					frameOut = valuePair[1].asDouble();
+				else if(valuePair[0].toLowerCase() == "step")
+					frameSteps = valuePair[1].asDouble();
+				else if(valuePair[0].toLowerCase() == "substep")
+					frameSubSteps = valuePair[1].asDouble();
+				else if(valuePair[0].toLowerCase() == "normals")
+					normals = valuePair[1].asInt() != 0;
+				else if(valuePair[0].toLowerCase() == "uvs")
+					uvs = valuePair[1].asInt() != 0;
+				else if(valuePair[0].toLowerCase() == "facesets")
+					facesets = valuePair[1].asInt() != 0;
+				else if(valuePair[0].toLowerCase() == "bindpose")
+					bindpose = valuePair[1].asInt() != 0;
+				else if(valuePair[0].toLowerCase() == "purepointcache")
+					purepointcache = valuePair[1].asInt() != 0;
+				else if(valuePair[0].toLowerCase() == "dynamictopology")
+					dynamictopology = valuePair[1].asInt() != 0;
+				else if(valuePair[0].toLowerCase() == "globalspace")
+					globalspace = valuePair[1].asInt() != 0;
+				else if(valuePair[0].toLowerCase() == "withouthierarchy")
+					withouthierarchy = valuePair[1].asInt() != 0;
+				else if(valuePair[0].toLowerCase() == "transformcache")
+					transformcache = valuePair[1].asInt() != 0;
+				else if(valuePair[0].toLowerCase() == "filename")
+					filename = valuePair[1];
+				else if(valuePair[0].toLowerCase() == "objects")
+				{
+					// try to find each object
+					valuePair[1].split(',',objectStrings);
+				}
+				else if(valuePair[0].toLowerCase() == "useinitshadgrp")
 				useInitShadGrp = valuePair[1].asInt() != 0;
-			 else
-			 {
-				MGlobal::displayWarning("[ExocortexAlembic] Skipping invalid token: "+tokens[j]);
-				continue;
-			 }
-		  }
+
+				// search/replace
+				else if(valuePair[0].toLowerCase() == "search")
+				{
+					search_str = valuePair[1].asChar();
+				}
+				else if(valuePair[0].toLowerCase() == "replace")
+				{
+					replace_str = valuePair[1].asChar();
+				}
+				else
+				{
+					MGlobal::displayWarning("[ExocortexAlembic] Skipping invalid token: "+tokens[j]);
+					continue;
+				}
+			}
 
 		  // now check the object strings
 		  for(unsigned int k=0;k<objectStrings.length();k++)
@@ -691,6 +702,15 @@ MStatus AlembicExportCommand::doIt(const MArgList & args)
 		  job->SetOption("exportInGlobalSpace",globalspace ? "1" : "0");
 		  job->SetOption("flattenHierarchy", withouthierarchy ? "1": "0");
 		  job->SetOption("transformCache", transformcache ? "1" : "0");
+
+			// check if the search/replace strings are valid!
+			if (search_str.length() ? !replace_str.length() : replace_str.length())	// either search or replace string is missing or empty!
+			{
+				ESS_LOG_WARNING("Missing search or replace parameter. No strings will be replaced.");
+				job->replacer = SearchReplace::createReplacer();
+			}
+			else
+				job->replacer = SearchReplace::createReplacer(search_str, replace_str);
 
 		  // check if the job is satifsied
 		  if(job->PreProcess() != MStatus::kSuccess)

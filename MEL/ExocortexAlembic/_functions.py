@@ -56,6 +56,50 @@ def alembicConnectAttr(source, target):
 	cmds.ExocortexAlembic_profileEnd(f="Python.ExocortexAlembic._functions.alembicConnectIfUnconnected")
 	pass
 
+
+############################################################################################################
+# poly mesh functions
+############################################################################################################
+
+def alembicPolyMeshToSubdiv(mesh=None):
+	if mesh == None:	# if None... refer to the selection list
+		sel = cmds.ls(sl=True)
+		if len(sel) != 1:
+			if len(sel) > 1:
+				return ("Only one transform or mesh should be selected")
+			else:
+				return ("Need to select one transform or mesh")
+		mesh = sel[0];
+
+	xform = cmds.objectType(mesh)	# here xform is the type of mesh. below, xform becomes mesh's transform
+	if xform == "mesh":
+		xform = cmds.listRelatives(mesh, p=True)[0]
+	elif xform == "transform":
+		xform = mesh;
+		mesh = cmds.listRelatives(xform, s=True)[0]
+	else:
+		return ("Type " + xform + " not supported")
+
+	try:
+		newX = cmds.createNode("transform", n=(xform+"_SubD"))
+		sub  = cmds.createNode("subdiv", n=(mesh+"_SubD"), p=newX)
+		poly = cmds.createNode("polyToSubdiv")
+
+		cmds.connectAttr(xform+".translate", newX+".translate")
+		cmds.connectAttr(xform+".rotate", newX+".rotate")
+		cmds.connectAttr(xform+".scale", newX+".scale")
+		cmds.connectAttr(xform+".rotateOrder", newX+".rotateOrder")
+		cmds.connectAttr(xform+".shear", newX+".shear")
+		cmds.connectAttr(xform+".rotateAxis", newX+".rotateAxis")
+
+		cmds.connectAttr(poly+".outSubdiv", sub+".create")
+		cmds.connectAttr(mesh+".outMesh", poly+".inMesh")
+
+		cmd.setAttr(sub+".dispResolution", 3);
+	except Exception as ex:
+		return str(ex.args)
+	return ""
+
 ############################################################################################################
 # progress bar
 ############################################################################################################
