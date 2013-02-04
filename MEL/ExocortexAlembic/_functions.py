@@ -71,7 +71,7 @@ def alembicPolyMeshToSubdiv(mesh=None):
 				return ("Need to select one transform or mesh")
 		mesh = sel[0];
 
-	xform = cmds.objectType(mesh)
+	xform = cmds.objectType(mesh)	# here xform is the type of mesh. below, xform becomes mesh's transform
 	if xform == "mesh":
 		xform = cmds.listRelatives(mesh, p=True)[0]
 	elif xform == "transform":
