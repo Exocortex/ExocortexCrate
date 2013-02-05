@@ -134,11 +134,11 @@ XSI::CStatus AlembicCurves::Save(double time)
          mCurvesSample.setPositions(posSample);
          mCurvesSample.setCurvesNumVertices(nbVerticesSample);
 
-         //if(!mKnotVectorProperty.valid()){
-         //   mKnotVectorProperty = Abc::OFloatArrayProperty(mCurvesSchema.getArbGeomParams(), ".knot_vector", mCurvesSchema.getMetaData(), GetJob()->GetAnimatedTs() );
-         //}
-         //   
-         //mKnotVectorProperty.set(Abc::FloatArraySample(knotVectorArray));
+         if(!mKnotVectorProperty.valid()){
+            mKnotVectorProperty = Abc::OFloatArrayProperty(mCurvesSchema.getArbGeomParams(), ".knot_vector", mCurvesSchema.getMetaData(), GetJob()->GetAnimatedTs() );
+         }
+            
+         mKnotVectorProperty.set(Abc::FloatArraySample(knotVectorArray));
 
          // set the type + wrapping
          CNurbsCurveData curveData;
@@ -1236,10 +1236,28 @@ ESS_CALLBACK_START( alembic_crvlist_topo_Update, CRef& )
    Abc::P3fArraySamplePtr curvePos = curveSample.getPositions();
    Abc::Int32ArraySamplePtr curveNbVertices = curveSample.getCurvesNumVertices();
 
+   Abc::FloatArraySamplePtr pKnotVec;
+
+   if ( obj.getSchema().getArbGeomParams().getPropertyHeader( ".knot_vector" ) != NULL ){
+      Abc::IFloatArrayProperty knotProp = Abc::IFloatArrayProperty( obj.getSchema().getArbGeomParams(), ".knot_vector" );
+      if(knotProp.valid() && knotProp.getNumSamples() != 0){
+         pKnotVec = knotProp.getValue(0);
+      }
+   }
+
+   const int nOrder = 4;
+   const int numCurves = (int)curveNbVertices->size();
+   const int numControl = (int)curvePos->size();
+   const int abcTotalKnots = numControl + numCurves * (nOrder - 2) ;
+
+   bool bUseDefaultKnotVec = !(pKnotVec && pKnotVec->size());
+   bUseDefaultKnotVec = true;
+
    CVector3Array pos((LONG)curvePos->size());
 
    CNurbsCurveDataArray curveDatas;
    size_t offset = 0;
+   size_t knotOffset = 0;
   
    for(size_t j=0;j<curveNbVertices->size();j++)
    {
@@ -1256,7 +1274,7 @@ ESS_CALLBACK_START( alembic_crvlist_topo_Update, CRef& )
       curveData.m_bClosed = curveSample.getWrap() ==AbcG::kPeriodic;
       curveData.m_lDegree = curveSample.getType() ==AbcG::kLinear ? 1 : 3;
 
-      for(LONG k=0;k<nbVertices;k++)
+      for(LONG k=0; k<nbVertices; k++)
       {
          curveData.m_aControlPoints[k].Set(
             curvePos->get()[offset].x,
@@ -1266,18 +1284,14 @@ ESS_CALLBACK_START( alembic_crvlist_topo_Update, CRef& )
          offset++;
       }
 
-      if ( false && obj.getSchema().getArbGeomParams().getPropertyHeader( ".knot_vector" ) != NULL )
-      {
-         Abc::IFloatArrayProperty knotProp = Abc::IFloatArrayProperty( obj.getSchema().getArbGeomParams(), ".knot_vector" );
-         if(knotProp.valid() && knotProp.getNumSamples() != 0)
-         {
-            Abc::FloatArraySamplePtr ptr = knotProp.getValue(sampleInfo.floorIndex);
+      
+      if(!bUseDefaultKnotVec){
 
-            curveData.m_aKnots.Resize((LONG)ptr->size());
-            for(LONG k=0; k<curveData.m_aKnots.GetCount(); k++) {
-               curveData.m_aKnots[k] = ptr->get()[k];
-            }
+         curveData.m_aKnots.Resize(nbVertices + 2);
+         for(LONG k=0; k<curveData.m_aKnots.GetCount(); k++) {
+            curveData.m_aKnots[k] = pKnotVec->get()[knotOffset + k];
          }
+         knotOffset += nbVertices + 2;
       }
       else
       {
@@ -1302,14 +1316,13 @@ ESS_CALLBACK_START( alembic_crvlist_topo_Update, CRef& )
 			   curveData.m_aKnots[2+k] = k;
 		    curveData.m_aKnots[nbVertices] = nbVertices-3;
 		    curveData.m_aKnots[nbVertices+1] = nbVertices-3;
-
-            //ESS_LOG_WARNING("KnotVector<<<<<<<<<<<<<<<<<<<<<<<<");
-            //for(int i=0; i<curveData.m_aKnots.GetCount(); i++){
-            //   ESS_LOG_WARNING(i<<": "<<curveData.m_aKnots[i]);
-            //}
-
          }
       }
+
+      //ESS_LOG_WARNING("KnotVector<<<<<<<<<<<<<<<<<<<<<<<<");
+      //for(int i=0; i<curveData.m_aKnots.GetCount(); i++){
+      //   ESS_LOG_WARNING(i<<": "<<curveData.m_aKnots[i]);
+      //}
 
       curveDatas.Add(curveData);
    }
