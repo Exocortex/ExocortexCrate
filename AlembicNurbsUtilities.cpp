@@ -15,7 +15,8 @@ bool isAlembicNurbsTopoDynamic( AbcG::IObject *pIObj ) {
 
 	if(AbcG::ICurves::matches((*pIObj).getMetaData())) {
 		objCurves = AbcG::ICurves(*pIObj,Abc::kWrapExisting);
-		return ! objCurves.getSchema().getNumVerticesProperty().isConstant();
+		return !objCurves.getSchema().getNumVerticesProperty().isConstant() ||
+           !objCurves.getSchema().getPositionsProperty().isConstant();
 	}
 	return false;
 }
@@ -226,7 +227,7 @@ void AlembicImport_LoadNURBS_Internal(alembic_NURBSload_options &options)
 
          Abc::FloatArraySamplePtr pKnotVec;
 
-         if ( obj.getSchema().getArbGeomParams().getPropertyHeader( ".knot_vector" ) != NULL ){
+         if ( obj.getSchema().getArbGeomParams() && obj.getSchema().getArbGeomParams().getPropertyHeader( ".knot_vector" ) != NULL ){
             Abc::IFloatArrayProperty knotProp = Abc::IFloatArrayProperty( obj.getSchema().getArbGeomParams(), ".knot_vector" );
             if(knotProp.valid() && knotProp.getNumSamples() != 0){
                pKnotVec = knotProp.getValue(0);
