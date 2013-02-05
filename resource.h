@@ -127,7 +127,6 @@
 #define IDC_SHUTTEROPEN_SPIN            1042
 #define IDC_SHUTTERCLOSE_SPIN           1043
 #define IDC_NEARCLIPPINGPLANE_SPIN      1044
-#define IDC_CUSTOM19                    1045
 #define IDC_FARCLIPPINGPLANE_SPIN       1045
 #define IDC_LIMIT_SIZE                  1276
 #define IDC_KEEP_CONVEX                 1277
@@ -226,6 +225,8 @@
 #define IDD_ALEMBIC_PARTICLE_PARAMS     30315
 #define IDD_ALEMBIC_FLOAT_CTRL_PARAMS   30316
 #define IDD_ALEMBIC_CAMERA_PARAMS       30317
+#define IDD_ALEMBIC_SPLINE_TOPO_PARAMS1 30318
+#define IDD_ALEMBIC_NURBS_PARAMS        30318
 #define IDC_TEXTUREPATH                 40000
 #define IDC_PATH_EDIT                   40000
 #define IDC_IDENTIFIER_EDIT             40001
