@@ -1238,7 +1238,7 @@ ESS_CALLBACK_START( alembic_crvlist_topo_Update, CRef& )
 
    Abc::FloatArraySamplePtr pKnotVec;
 
-   if ( obj.getSchema().getArbGeomParams().getPropertyHeader( ".knot_vector" ) != NULL ){
+   if ( obj.getSchema().getArbGeomParams() && obj.getSchema().getArbGeomParams().getPropertyHeader( ".knot_vector" ) != NULL ){
       Abc::IFloatArrayProperty knotProp = Abc::IFloatArrayProperty( obj.getSchema().getArbGeomParams(), ".knot_vector" );
       if(knotProp.valid() && knotProp.getNumSamples() != 0){
          pKnotVec = knotProp.getValue(0);
