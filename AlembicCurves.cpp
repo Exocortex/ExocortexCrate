@@ -141,7 +141,8 @@ bool AlembicCurves::Save(double time, bool bLastFrame)
 
              nbVertices.push_back(cvsCount);
 
-             for(int j=0; j<knots.Count(); j++){
+             //skip the first and last entry because Maya and XSI use this format
+             for(int j=1; j<knots.Count()-1; j++){
                 knotVector.push_back((float)knots[j]);
              }
 
