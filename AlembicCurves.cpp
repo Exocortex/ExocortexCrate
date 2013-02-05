@@ -103,7 +103,7 @@ bool AlembicCurves::Save(double time, bool bLastFrame)
 
        AbcG::CurvePeriodicity cPeriod = AbcG::kNonPeriodic;
        AbcG::CurveType cType = AbcG::kCubic;
-       AbcG::BasisType cBasis = AbcG::kBsplineBasis;
+       AbcG::BasisType cBasis = AbcG::kNoBasis;
 
        int n = nurbsSet.GetNumObjects();
        for(int i=0; i<n; i++){

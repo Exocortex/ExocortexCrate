@@ -20,7 +20,7 @@ bool isAlembicNurbsTopoDynamic( AbcG::IObject *pIObj ) {
 	return false;
 }
 
-bool LoadNurbs(NURBSSet& nset, Abc::P3fArraySamplePtr pCurvePos, Abc::Int32ArraySamplePtr pCurveNbVertices, Abc::FloatArraySamplePtr pKnotVec, TimeValue time )
+bool LoadNurbs(NURBSSet& nset, Abc::P3fArraySamplePtr pCurvePos, Abc::Int32ArraySamplePtr pCurveNbVertices, Abc::FloatArraySamplePtr pKnotVec, AbcG::CurveType type, AbcG::CurvePeriodicity wrap, TimeValue time )
 {
    const int nOrder = 4;
    const int numCurves = (int)pCurveNbVertices->size();
@@ -49,6 +49,7 @@ bool LoadNurbs(NURBSSet& nset, Abc::P3fArraySamplePtr pCurvePos, Abc::Int32Array
    }
    else{
       ESS_LOG_WARNING("Knot vector not found. Using Default knot vector.");
+      bDefaultKnot = true;
    }
 
    //bDefaultKnot = true;
@@ -73,18 +74,36 @@ bool LoadNurbs(NURBSSet& nset, Abc::P3fArraySamplePtr pCurvePos, Abc::Int32Array
       c->SetName("");
 
       if(bDefaultKnot){
-         c->SetKnot(0, 0.0);
-         c->SetKnot(1, 0.0);
-         c->SetKnot(2, 0.0);
-         for(int i=0; i<nbVertices-2; i++){
-            c->SetKnot(3+i, i);
+         
+         // based on curve type, we do this for linear or closed cubic curves
+         if(type == AbcG::kLinear)
+         { 
+            c->SetNumKnots(nbVertices+2);
+            c->SetOrder(2);
+            
+            c->SetKnot(0, 0.0);
+		    for(LONG k=0; k<nbVertices; k++) {
+               c->SetKnot(k+1, k);
+		    }
+            c->SetKnot(nbVertices+1, nbVertices-1);
+            //if(wrap == AbcG::kPeriodic){
+            //   c->SetKnot(nNumMaxKnots, nNumMaxKnots);
+            //}
          }
-         c->SetKnot(nbVertices+1, nbVertices-3);
-         c->SetKnot(nbVertices+2, nbVertices-3);
-         c->SetKnot(nbVertices+3, nbVertices-3);
+         else // cubic open
+         {
+            c->SetKnot(0, 0.0);
+            c->SetKnot(1, 0.0);
+            c->SetKnot(2, 0.0);
+            for(int i=0; i<nbVertices-2; i++){
+               c->SetKnot(3+i, i);
+            }
+            c->SetKnot(nbVertices+1, nbVertices-3);
+            c->SetKnot(nbVertices+2, nbVertices-3);
+            c->SetKnot(nbVertices+3, nbVertices-3);
+         }
       }
       else{
-         //since 3DS Max knots
          c->SetKnot(0, pKnotVec->get()[ abcKnotOffset ]);
          c->SetKnot(nNumMaxKnots-1, pKnotVec->get()[abcKnotOffset + nNumAbcKnots - 1]);
          for(int i=0; i<nNumAbcKnots; i++){
@@ -212,7 +231,7 @@ void AlembicImport_LoadNURBS_Internal(alembic_NURBSload_options &options)
             }
          }
             
-         LoadNurbs(nset, pCurvePos, pCurveNbVertices, pKnotVec, nTicks);
+         LoadNurbs(nset, pCurvePos, pCurveNbVertices, pKnotVec, /*AbcG::kLinear, AbcG::kNonPeriodic*/ curveSample.getType(), curveSample.getWrap(), nTicks);
 
          Matrix3 mat(1);
          Object *newObject = CreateNURBSObject((IObjParam*)GetCOREInterface(), &nset, mat);
@@ -269,7 +288,7 @@ int AlembicImport_NURBS(const std::string &path, AbcG::IObject& iObj, alembic_im
    NURBSSet nset;
    InitNurbs(nset);
 
-#if 1
+
    // Create the object pNode
 	INode *pNode = *pMaxNode;
 	bool bReplaceExistingModifiers = false;
@@ -355,6 +374,6 @@ int AlembicImport_NURBS(const std::string &path, AbcG::IObject& iObj, alembic_im
 		GET_MAX_INTERFACE()->SelectNode( pNode );
 		importMetadata(iObj);
 	}
-#endif
+
 	return 0;
 }

@@ -21,7 +21,7 @@ public:
     AlembicDataFillFlags        nDataFillFlags;
 } alembic_NURBSload_options;
 
-bool LoadNurbs(NURBSSet& nset, Abc::P3fArraySamplePtr pCurvePos, Abc::Int32ArraySamplePtr pCurveNbVertices, Abc::FloatArraySamplePtr pKnotVec, TimeValue time );
+//bool LoadNurbs(NURBSSet& nset, Abc::P3fArraySamplePtr pCurvePos, Abc::Int32ArraySamplePtr pCurveNbVertices, Abc::FloatArraySamplePtr pKnotVec, TimeValue time );
 void AlembicImport_LoadNURBS_Internal(alembic_NURBSload_options &options);
 int AlembicImport_NURBS(const std::string &path, AbcG::IObject& iObj, alembic_importoptions &options, INode** pMaxNode);
 
