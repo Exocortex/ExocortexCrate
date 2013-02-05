@@ -92,10 +92,10 @@ bool LoadNurbs(NURBSSet& nset, Abc::P3fArraySamplePtr pCurvePos, Abc::Int32Array
          }
       }
 
-      ESS_LOG_WARNING("knotVecValues: ");
-      for(int i=0; i<c->GetNumKnots(); i++){
-         ESS_LOG_WARNING(i<<": "<<c->GetKnot(i));
-      }
+      //ESS_LOG_WARNING("knotVecValues: ");
+      //for(int i=0; i<c->GetNumKnots(); i++){
+      //   ESS_LOG_WARNING(i<<": "<<c->GetKnot(i));
+      //}
 
       NURBSControlVertex cv;
 
