@@ -86,6 +86,8 @@ bool LoadNurbs(NURBSSet& nset, Abc::P3fArraySamplePtr pCurvePos, Abc::Int32Array
                c->SetKnot(k+1, k);
 		    }
             c->SetKnot(nbVertices+1, nbVertices-1);
+
+            //Not sure how to interpret the periodic attribute
             //if(wrap == AbcG::kPeriodic){
             //   c->SetKnot(nNumMaxKnots, nNumMaxKnots);
             //}
