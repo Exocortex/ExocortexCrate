@@ -5,7 +5,7 @@
 #include "utility.h"
 #include "ExocortexCoreServicesAPI.h"
 #include "AlembicMetadataUtils.h"
-
+#include <surf_api.h> 
 
 enum SplineExportType
 {
@@ -90,86 +90,178 @@ bool AlembicCurves::Save(double time, bool bLastFrame)
         }
     }
 
-    SplineShape *pSplineShape = NULL;
-    SplineExportType nExportType = SplineExport_None;
-    BezierShape beziershape;
-    PolyShape polyShape;
-    bool bBezier = false;
+    AbcG::OCurvesSchema::Sample curvesSample;
 
-    // Get a pointer to the spline shpae
-    ShapeObject *pShapeObject = NULL;
-    if (obj->IsShapeObject())
-    {
-        pShapeObject = reinterpret_cast<ShapeObject *>(obj);
-        nExportType = SplineExport_Simple;
-    }
-    else
-    {
-        return false;
-    }
-
-    // Determine if we are a bezier shape
-    if (pShapeObject->CanMakeBezier())
-    {
-        pShapeObject->MakeBezier(ticks, beziershape);
-        bBezier = true;
-    }
-    else
-    {
-        pShapeObject->MakePolyShape(ticks, polyShape);
-        bBezier = false;
-    }
-
-    // Get the control points
 	std::vector<AbcA::int32_t> nbVertices;
     std::vector<Point3> vertices;
-    std::vector<Point3> inTangents;
-	std::vector<Point3> outTangents;
-    if (bBezier)
-    {
-        int oldVerticesCount = (int)vertices.size();
-        for (int i = 0; i < beziershape.SplineCount(); i += 1)
-        {
-            Spline3D *pSpline = beziershape.GetSpline(i);
-            int knots = pSpline->KnotCount();
-            for(int ix = 0; ix < knots; ++ix) 
-            {
-                Point3 in = pSpline->GetInVec(ix);
-                Point3 p = pSpline->GetKnotPoint(ix);
-                Point3 out = pSpline->GetOutVec(ix);
+    std::vector<float> knotVector;
 
-                vertices.push_back( p );
-				inTangents.push_back( in );
-				outTangents.push_back( out );
-            }
+    if(obj->ClassID() == EDITABLE_SURF_CLASS_ID){
 
-            int nNumVerticesAdded = (int)vertices.size() - oldVerticesCount;
-            nbVertices.push_back( nNumVerticesAdded );
-            oldVerticesCount = (int)vertices.size();
-        }
+       NURBSSet nurbsSet;   
+       BOOL success = GetNURBSSet(obj, ticks, nurbsSet, TRUE);   
+
+       AbcG::CurvePeriodicity cPeriod = AbcG::kNonPeriodic;
+       AbcG::CurveType cType = AbcG::kCubic;
+       AbcG::BasisType cBasis = AbcG::kBsplineBasis;
+
+       int n = nurbsSet.GetNumObjects();
+       for(int i=0; i<n; i++){
+          NURBSObject* pObject = nurbsSet.GetNURBSObject((int)i);
+
+          //NURBSType type = pObject->GetType();
+          if(!pObject){
+             continue;
+          }
+
+          if( pObject->GetKind() == kNURBSCurve ){
+             NURBSCurve* pNurbsCurve = (NURBSCurve*)pObject;
+
+             int degree;
+             int numCVs;
+             NURBSCVTab cvs;
+			 int numKnots;
+		     NURBSKnotTab knots;
+             pNurbsCurve->GetNURBSData(ticks, degree, numCVs, cvs, numKnots, knots);
+
+             if(degree != 3){
+                ESS_LOG_WARNING("Only degree 3 NURBS curves are supported.");
+                continue;
+             }
+
+             const int cvsCount = cvs.Count();
+             const int knotCount = knots.Count();
+
+             for(int j=0; j<cvs.Count(); j++){
+                NURBSControlVertex cv = cvs[j];
+                double x, y, z;
+                cv.GetPosition(ticks, x, y, z);
+                vertices.push_back( Point3((float)x, (float)y, (float)z) );
+             }
+
+             nbVertices.push_back(cvsCount);
+
+             for(int j=0; j<knots.Count(); j++){
+                knotVector.push_back((float)knots[j]);
+             }
+
+             if(i == 0){
+                if(pNurbsCurve->IsClosed()){
+                   cPeriod = AbcG::kPeriodic;
+                }  
+             }
+             else{
+                if(pNurbsCurve->IsClosed()){
+                   if(cPeriod != AbcG::kPeriodic){
+                      ESS_LOG_WARNING("Mixed curve wrap types not supported.");
+                   }
+                }
+                else{
+                   if(cPeriod != AbcG::kNonPeriodic){
+                      ESS_LOG_WARNING("Mixed curve wrap types not supported.");
+                   }
+                }
+             }
+
+          }
+          
+       }
+       
+
+       curvesSample.setType(cType);
+       curvesSample.setWrap(cPeriod);
+       curvesSample.setBasis(cBasis);
     }
     else
     {
-        for (int i = 0; i < polyShape.numLines; i += 1)
-        {
-            PolyLine &refLine = polyShape.lines[i];
-            nbVertices.push_back(refLine.numPts);
-            for (int j = 0; j < refLine.numPts; j += 1)
-            {
-                Point3 p = refLine.pts[j].p;
-                vertices.push_back(p);
-            }
-        }
+          BezierShape beziershape;
+          PolyShape polyShape;
+          bool bBezier = false;
+
+          // Get a pointer to the spline shpae
+          ShapeObject *pShapeObject = NULL;
+          if (obj->IsShapeObject())
+          {
+              pShapeObject = reinterpret_cast<ShapeObject *>(obj);
+          }
+          else
+          {
+              return false;
+          }
+
+          // Determine if we are a bezier shape
+          if (pShapeObject->CanMakeBezier())
+          {
+              pShapeObject->MakeBezier(ticks, beziershape);
+              bBezier = true;
+          }
+          else
+          {
+              pShapeObject->MakePolyShape(ticks, polyShape);
+              bBezier = false;
+          }
+
+          // Get the control points
+
+          //std::vector<Point3> inTangents;
+	      //std::vector<Point3> outTangents;
+          if (bBezier)
+          {
+              int oldVerticesCount = (int)vertices.size();
+              for (int i = 0; i < beziershape.SplineCount(); i += 1)
+              {
+                  Spline3D *pSpline = beziershape.GetSpline(i);
+                  int knots = pSpline->KnotCount();
+                  for(int ix = 0; ix < knots; ++ix) 
+                  {
+                      Point3 in = pSpline->GetInVec(ix);
+                      Point3 p = pSpline->GetKnotPoint(ix);
+                      Point3 out = pSpline->GetOutVec(ix);
+
+                      vertices.push_back( p );
+				      //inTangents.push_back( in );
+				      //outTangents.push_back( out );
+                  }
+
+                  int nNumVerticesAdded = (int)vertices.size() - oldVerticesCount;
+                  nbVertices.push_back( nNumVerticesAdded );
+                  oldVerticesCount = (int)vertices.size();
+              }
+          }
+          else
+          {
+              for (int i = 0; i < polyShape.numLines; i += 1)
+              {
+                  PolyLine &refLine = polyShape.lines[i];
+                  nbVertices.push_back(refLine.numPts);
+                  for (int j = 0; j < refLine.numPts; j += 1)
+                  {
+                      Point3 p = refLine.pts[j].p;
+                      vertices.push_back(p);
+                  }
+              }
+          }
+
+          // set the type + wrapping
+	      curvesSample.setType(bBezier ? AbcG::kCubic : AbcG::kLinear);
+          curvesSample.setWrap(pShapeObject->CurveClosed(ticks, 0) ? AbcG::kPeriodic : AbcG::kNonPeriodic);
+          curvesSample.setBasis(AbcG::kNoBasis);
     }
 
-    int vertCount = (int)vertices.size();
+    if(nbVertices.size() == 0 || vertices.size() == 0){
+       ESS_LOG_WARNING("No curve data to export.");
+       return false;
+    }
+ 
+
+    const int vertCount = (int)vertices.size();
 
     // prepare the bounding box
     Abc::Box3d bbox;
 
     // allocate the points and normals
     std::vector<Abc::V3f> posVec(vertCount);
-   Matrix3 wm = GetRef().node->GetObjTMAfterWSM(ticks);
+    Matrix3 wm = GetRef().node->GetObjTMAfterWSM(ticks);
 
     for(int i=0;i<vertCount;i++)
     {
@@ -185,26 +277,29 @@ bool AlembicCurves::Save(double time, bool bLastFrame)
         }
     }
 
+    if(knotVector.size() > 0){
+       if(!mKnotVectorProperty.valid()){
+          mKnotVectorProperty = Abc::OFloatArrayProperty(mCurvesSchema.getArbGeomParams(), ".knot_vector", mCurvesSchema.getMetaData(), mJob->GetAnimatedTs() );
+       }
+       mKnotVectorProperty.set(Abc::FloatArraySample(knotVector));
+    }
+
     // store the bbox
-    mCurvesSample.setSelfBounds(bbox);
+    curvesSample.setSelfBounds(bbox);
 	mCurvesSchema.getChildBoundsProperty().set(bbox);
 
  
-    // if we are the first frame!
     Abc::Int32ArraySample nbVerticesSample(&nbVertices.front(),nbVertices.size());
-    mCurvesSample.setCurvesNumVertices(nbVerticesSample);
+    curvesSample.setCurvesNumVertices(nbVerticesSample);
 
-    // set the type + wrapping
-	mCurvesSample.setType(bBezier ? AbcG::kCubic : AbcG::kLinear);
-    mCurvesSample.setWrap(pShapeObject->CurveClosed(ticks, 0) ? AbcG::kPeriodic : AbcG::kNonPeriodic);
-    mCurvesSample.setBasis(AbcG::kNoBasis);
+
  
     // allocate for the points and normals
     Abc::P3fArraySample posSample(&posVec.front(),posVec.size());
-	mCurvesSample.setPositions(posSample);
+	curvesSample.setPositions(posSample);
 
 
-    mCurvesSchema.set(mCurvesSample);
+    mCurvesSchema.set(curvesSample);
 
    mNumSamples++;
 
