@@ -22,10 +22,39 @@ bool isAlembicNurbsTopoDynamic( AbcG::IObject *pIObj ) {
 
 bool LoadNurbs(NURBSSet& nset, Abc::P3fArraySamplePtr pCurvePos, Abc::Int32ArraySamplePtr pCurveNbVertices, Abc::FloatArraySamplePtr pKnotVec, TimeValue time )
 {
-   //static int inc = 0;
-
    const int nOrder = 4;
+   const int numCurves = (int)pCurveNbVertices->size();
+   const int numControl = (int)pCurvePos->size();
+
+   const int abcTotalKnots = numControl + numCurves * (nOrder - 2) ;
+   const int maxTotalKnots = numControl + numCurves * nOrder;
+
+   //ESS_LOG_WARNING("abcTotalKnots: "<<abcTotalKnots);
+   //ESS_LOG_WARNING("maxTotalKnots: "<<maxTotalKnots);
+   //ESS_LOG_WARNING("knotVecSize: "<<pKnotVec->size());
+
+   bool bDefaultKnot = false;
+   if(pKnotVec){
+      if( abcTotalKnots == pKnotVec->size() ){
+         
+      }
+      else if( maxTotalKnots == pKnotVec->size() ){
+         ESS_LOG_WARNING("3DS Max knot vector format not supported. Using Default knot vector.");
+         bDefaultKnot = true;
+      }
+      else{
+         ESS_LOG_WARNING("Knot vector has the wrong size. Using Default knot vector.");
+         bDefaultKnot = true;      
+      }
+   }
+   else{
+      ESS_LOG_WARNING("Knot vector not found. Using Default knot vector.");
+   }
+
+   //bDefaultKnot = true;
+
    size_t offset = 0;
+   size_t abcKnotOffset = 0;
    for(size_t j=0;j<pCurveNbVertices->size();j++)
    {
       LONG nbVertices = (LONG)pCurveNbVertices->get()[j];
@@ -37,48 +66,50 @@ bool LoadNurbs(NURBSSet& nset, Abc::P3fArraySamplePtr pCurvePos, Abc::Int32Array
       c->SetNumCVs(nbVertices);
       c->SetOrder(nOrder);
 
-      const int nNumKnots = nbVertices + nOrder;
+      const int nNumMaxKnots = nbVertices + nOrder;
+      const int nNumAbcKnots = nbVertices + nOrder - 2;
 
-      c->SetNumKnots(nNumKnots);
+      c->SetNumKnots(nNumMaxKnots);
       c->SetName("");
 
-      if(pKnotVec && pKnotVec->size() == nNumKnots){ //3DS Max format (this is also the format I have seen in books)
-         for(int i=0; i<pKnotVec->size(); i++){
-            c->SetKnot(i, pKnotVec->get()[i]);
+      if(bDefaultKnot){
+         c->SetKnot(0, 0.0);
+         c->SetKnot(1, 0.0);
+         c->SetKnot(2, 0.0);
+         for(int i=0; i<nbVertices-2; i++){
+            c->SetKnot(3+i, i);
          }
-      }
-      else if(pKnotVec && pKnotVec->size() == (nNumKnots-2)){ //XSI format
-         c->SetKnot(0, pKnotVec->get()[0]);
-         c->SetKnot(nNumKnots-1, pKnotVec->get()[pKnotVec->size()-1]);
-         for(int i=0; i<pKnotVec->size(); i++){
-            c->SetKnot(i+1, pKnotVec->get()[i]);
-         }
+         c->SetKnot(nbVertices+1, nbVertices-3);
+         c->SetKnot(nbVertices+2, nbVertices-3);
+         c->SetKnot(nbVertices+3, nbVertices-3);
       }
       else{
-         //ESS_LOG_WARNING("Knot vector format not understood. Using default.");
-         const int nHalf = (int)((double)nNumKnots / 2.0);
-         for(int i=0; i<nHalf; i++){
-            c->SetKnot(i, 0.0);
+         //since 3DS Max knots
+         c->SetKnot(0, pKnotVec->get()[ abcKnotOffset ]);
+         c->SetKnot(nNumMaxKnots-1, pKnotVec->get()[abcKnotOffset + nNumAbcKnots - 1]);
+         for(int i=0; i<nNumAbcKnots; i++){
+            c->SetKnot(i+1, pKnotVec->get()[abcKnotOffset + i]);
          }
-         for(int i=nHalf; i<nNumKnots; i++){
-            c->SetKnot(i, 1.0);
-         }
+      }
+
+      ESS_LOG_WARNING("knotVecValues: ");
+      for(int i=0; i<c->GetNumKnots(); i++){
+         ESS_LOG_WARNING(i<<": "<<c->GetKnot(i));
       }
 
       NURBSControlVertex cv;
 
       for(int i=0; i<nbVertices; i++){
-         Point3 pt = ConvertAlembicPointToMaxPoint(pCurvePos->get()[offset]);
-         //pt.y += inc;
+         Point3 pt = ConvertAlembicPointToMaxPoint(pCurvePos->get()[offset + i]);
          cv.SetPosition(time, pt);
          c->SetCV(i, cv);
-         offset++;
       }
+
+      offset += nbVertices;
+      abcKnotOffset += nNumAbcKnots;
 
       nset.AppendObject(c);
    }
-
-   //inc++;
 
    return true;
 }

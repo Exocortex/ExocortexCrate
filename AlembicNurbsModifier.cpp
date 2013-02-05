@@ -181,7 +181,7 @@ ESS_PROFILE_FUNC();
    }
 
    os->obj = options.pObject;
-   os->obj->UnlockObject();
+   //os->obj->UnlockObject();
 
 	os->obj->SetChannelValidity(TOPO_CHAN_NUM, interval);
 	os->obj->SetChannelValidity(GEOM_CHAN_NUM, interval);
