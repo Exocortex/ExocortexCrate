@@ -1250,8 +1250,8 @@ ESS_CALLBACK_START( alembic_crvlist_topo_Update, CRef& )
    const int numControl = (int)curvePos->size();
    const int abcTotalKnots = numControl + numCurves * (nOrder - 2) ;
 
-   bool bUseDefaultKnotVec = !(pKnotVec && pKnotVec->size());
-   bUseDefaultKnotVec = true;
+   bool bUseDefaultKnotVec = !(pKnotVec && pKnotVec->size() == abcTotalKnots);
+   //bUseDefaultKnotVec = true;
 
    CVector3Array pos((LONG)curvePos->size());
 
