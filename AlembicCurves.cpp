@@ -713,50 +713,57 @@ ESS_CALLBACK_START( alembic_crvlist_Update, CRef& )
   AbcG::ICurvesSchema::Sample sample;
    obj.getSchema().get(sample,sampleInfo.floorIndex);
 
-   CVector3Array pos;
+   //CVector3Array pos;
+   size_t xsiSize = 0;
    Primitive prim( (CRef)ctxt.GetInputValue(0));
    bool isHair = false;
    if (prim.GetType().IsEqualNoCase(L"hair"))
    {
       Geometry geom = prim.GetGeometry();
-      pos = geom.GetPoints().GetPositionArray();
+      //pos = geom.GetPoints().GetPositionArray();
       isHair = true;
+      {
+      ESS_PROFILE_SCOPE("alembic_crvlist_Update - xsiSize");
+      xsiSize = geom.GetPoints().GetCount();
+      }
    }
    else
    {
       NurbsCurveList curves = prim.GetGeometry();
-      pos = curves.GetPoints().GetPositionArray();
+      //pos = curves.GetPoints().GetPositionArray();
+      {
+      ESS_PROFILE_SCOPE("alembic_crvlist_Update - xsiSize");
+      xsiSize = curves.GetPoints().GetCount();
+      }
    }
 
    Abc::P3fArraySamplePtr curvePos = sample.getPositions();
+   
 
    Operator op(ctxt.GetSource());
    updateOperatorInfo( op, sampleInfo, obj.getSchema().getTimeSampling(),
-					   pos.GetCount(), (int) curvePos->size());
+					   (int)xsiSize, (int) curvePos->size());
 
    if (!isHair)
    {
-      if(pos.GetCount() != curvePos->size())
+      if(xsiSize != curvePos->size())
 		 return CStatus::OK;
    }
    else
    {
       size_t cacheSize = 14*(curvePos->size()/15);
-      if(pos.GetCount() != cacheSize)
+      if(xsiSize != cacheSize)
          return CStatus::OK;
    }
 
-
-   size_t alembicSize= curvePos->size();
-   size_t xsiSize = pos.GetCount();
-
-   for(size_t i=0, index=0;i<pos.GetCount();i++,index++)
+   CVector3Array outputPos((LONG)xsiSize);
+   for(size_t i=0, index=0;i<xsiSize;i++,index++)
    {
       // guide hairs don't store base point but they are present in the alembic file
       if (isHair && ( i%14==0))
          index++;
 
-      pos[(LONG)i].Set(curvePos->get()[index].x,curvePos->get()[index].y,curvePos->get()[index].z);
+      outputPos[(LONG)i].Set(curvePos->get()[index].x,curvePos->get()[index].y, curvePos->get()[index].z);
    }
 
    // blend
@@ -764,17 +771,22 @@ ESS_CALLBACK_START( alembic_crvlist_Update, CRef& )
    {
       obj.getSchema().get(sample,sampleInfo.ceilIndex);
       curvePos = sample.getPositions();
-      for(size_t i=0, index=0;i<pos.GetCount();i++,index++)
+      for(size_t i=0, index=0;i<xsiSize;i++,index++)
       {
          // guide hairs don't store base point but they are present in the alembic file
          if (isHair && ( i%14==0))
             index++;
 
-         pos[(LONG)i].LinearlyInterpolate(pos[(LONG)i],CVector3(curvePos->get()[index].x,curvePos->get()[index].y,curvePos->get()[index].z),sampleInfo.alpha);
+         outputPos[(LONG)i].LinearlyInterpolate(outputPos[(LONG)i],CVector3(curvePos->get()[index].x,curvePos->get()[index].y,curvePos->get()[index].z),sampleInfo.alpha);
       }
    }
 
-   Primitive(ctxt.GetOutputTarget()).GetGeometry().GetPoints().PutPositionArray(pos);
+   //ESS_LOG_WARNING("Positions: ");
+   //for(int i=0; i<outputPos.GetCount(); i++){
+   //   ESS_LOG_WARNING(""<<i<<": "<<outputPos[i].GetX()<<", "<<outputPos[i].GetY()<<"< "<<outputPos[i].GetZ());
+   //}
+
+   Primitive(ctxt.GetOutputTarget()).GetGeometry().GetPoints().PutPositionArray(outputPos);
 
    return CStatus::OK;
 ESS_CALLBACK_END
