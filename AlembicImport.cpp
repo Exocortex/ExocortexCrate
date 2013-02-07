@@ -1947,7 +1947,7 @@ ESS_CALLBACK_END
 ESS_CALLBACK_START(alembic_import_jobs_Execute, CRef&)
 	Context ctxt( in_ctxt );
 	CValueArray args = ctxt.GetAttribute(L"Arguments");
-	ESS_PROFILE_SCOPE("alembic_import_Execute");
+	
 
    CRefArray selectedObjects = Application().GetSelection().GetArray();
    if(selectedObjects.GetCount() > 1)
@@ -2042,6 +2042,9 @@ ESS_CALLBACK_START(alembic_import_jobs_Execute, CRef&)
          return CStatus::InvalidArgument;
       }
    }
+
+   {
+   ESS_PROFILE_SCOPE("alembic_import_jobs_Execute - without UI Dialog");
 
    // let's try to read this
    Abc::IArchive* archive = NULL;
@@ -2225,6 +2228,8 @@ ESS_CALLBACK_START(alembic_import_jobs_Execute, CRef&)
    }
 
    delRefArchive( jobParser.filename );
+
+   }
 
    return CStatus::OK;
 ESS_CALLBACK_END
