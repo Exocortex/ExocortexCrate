@@ -53,8 +53,8 @@ bool AlembicCurves::Save(double time, bool bLastFrame)
 {
     ESS_PROFILE_FUNC();
 
-    TimeValue ticks = GET_MAX_INTERFACE()->GetTime();
-
+    //TimeValue ticks = GET_MAX_INTERFACE()->GetTime();
+    TimeValue ticks = GetTimeValueFromFrame(time);
 	Object *obj = GetRef().node->EvalWorldState(ticks).obj;
 	if(mNumSamples == 0){
 		bForever = CheckIfObjIsValidForever(obj, ticks);
