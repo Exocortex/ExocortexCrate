@@ -10,19 +10,37 @@
 #include <surf_api.h> 
 
 
-bool isAlembicNurbsTopoDynamic( AbcG::IObject *pIObj ) {
-	AbcG::ICurves objCurves;
-
+bool isAlembicNurbsCurveTopoDynamic( AbcG::IObject *pIObj ) 
+{
+    ESS_PROFILE_FUNC();
 	if(AbcG::ICurves::matches((*pIObj).getMetaData())) {
-		objCurves = AbcG::ICurves(*pIObj,Abc::kWrapExisting);
-		return !objCurves.getSchema().getNumVerticesProperty().isConstant() ||
-           !objCurves.getSchema().getPositionsProperty().isConstant();
+		AbcG::ICurves objCurves = AbcG::ICurves(*pIObj, Abc::kWrapExisting);
+        AbcG::ICurvesSchema cSchema = objCurves.getSchema();
+		return !cSchema.getNumVerticesProperty().isConstant();
 	}
 	return false;
 }
 
-bool LoadNurbs(NURBSSet& nset, Abc::P3fArraySamplePtr pCurvePos, Abc::Int32ArraySamplePtr pCurveNbVertices, Abc::FloatArraySamplePtr pKnotVec, AbcG::CurveType type, AbcG::CurvePeriodicity wrap, TimeValue time )
+bool isAlembicNurbsCurveAnimated( AbcG::IObject *pIObj ) 
 {
+    ESS_PROFILE_FUNC();
+	if(AbcG::ICurves::matches((*pIObj).getMetaData())) {
+		AbcG::ICurves objCurves = AbcG::ICurves(*pIObj, Abc::kWrapExisting);
+        AbcG::ICurvesSchema cSchema = objCurves.getSchema();
+		return 
+          !cSchema.getPositionsProperty().isConstant() ||
+          !cSchema.getNumVerticesProperty().isConstant() ||
+          (cSchema.getVelocitiesProperty() && !cSchema.getVelocitiesProperty().isConstant()) ||
+          (cSchema.getUVsParam() && !cSchema.getUVsParam().isConstant()) ||
+          (cSchema.getNormalsParam() && !cSchema.getNormalsParam().isConstant()) ||
+          (cSchema.getWidthsParam() && !cSchema.getWidthsParam().isConstant());
+    }
+	return false;
+}
+
+bool LoadNurbs(NURBSSet& nset, Abc::P3fArraySamplePtr pCurvePos, Abc::Int32ArraySamplePtr pCurveNbVertices, Abc::FloatArraySamplePtr pKnotVec, AbcG::CurveType type, AbcG::CurvePeriodicity wrap, TimeValue time, bool bLoadPositions=true )
+{
+   ESS_PROFILE_FUNC();
    const int nOrder = 4;
    const int numCurves = (int)pCurveNbVertices->size();
    const int numControl = (int)pCurvePos->size();
@@ -119,12 +137,20 @@ bool LoadNurbs(NURBSSet& nset, Abc::P3fArraySamplePtr pCurvePos, Abc::Int32Array
       //   ESS_LOG_WARNING(i<<": "<<c->GetKnot(i));
       //}
 
-      NURBSControlVertex cv;
-
-      for(int i=0; i<nbVertices; i++){
-         Point3 pt = ConvertAlembicPointToMaxPoint(pCurvePos->get()[offset + i]);
-         cv.SetPosition(time, pt);
-         c->SetCV(i, cv);
+      if(bLoadPositions){
+         NURBSControlVertex cv;
+         for(int i=0; i<nbVertices; i++){
+            Point3 pt = ConvertAlembicPointToMaxPoint(pCurvePos->get()[offset + i]);
+            cv.SetPosition(time, pt);
+            c->SetCV(i, cv);
+         }
+      }
+      else{
+         NURBSControlVertex cv;
+         cv.SetPosition(time, Point3(0.0, 0.0, 0.0));
+         for(int i=0; i<nbVertices; i++){
+            c->SetCV(i, cv);
+         }
       }
 
       offset += nbVertices;
@@ -136,8 +162,33 @@ bool LoadNurbs(NURBSSet& nset, Abc::P3fArraySamplePtr pCurvePos, Abc::Int32Array
    return true;
 }
 
+bool ModifyNurbs(Object* pObj, Abc::P3fArraySamplePtr pCurvePos, Abc::Int32ArraySamplePtr pCurveNbVertices, Abc::FloatArraySamplePtr pKnotVec, AbcG::CurveType type, AbcG::CurvePeriodicity wrap, TimeValue time )
+{
+   ESS_PROFILE_FUNC();
+
+   size_t offset = 0;
+   for(size_t j=0;j<pCurveNbVertices->size();j++)
+   {
+      LONG nbVertices = (LONG)pCurveNbVertices->get()[j];
+	  if( nbVertices == 0 ) {
+		  continue;
+	  }
+
+      for(int i=0; i<nbVertices; i++){
+         Point3 pt = ConvertAlembicPointToMaxPoint(pCurvePos->get()[offset + i]);
+         pObj->SetPoint(i, pt);
+      }
+
+      offset += nbVertices;
+   }
+
+   return true;
+}
+
 bool InitNurbs(NURBSSet& nset )
 {
+   ESS_PROFILE_FUNC();
+
    const int nOrder = 4;
    const int nbVertices = 4;
    NURBSCVCurve *c = new NURBSCVCurve();
@@ -173,7 +224,8 @@ bool InitNurbs(NURBSSet& nset )
 void AlembicImport_LoadNURBS_Internal(alembic_NURBSload_options &options)
 {
    ESS_PROFILE_FUNC();
-	AbcG::ICurves obj(*options.pIObj,Abc::kWrapExisting);
+
+   AbcG::ICurves obj(*options.pIObj,Abc::kWrapExisting);
 
    if(!obj.valid())
    {
@@ -233,16 +285,25 @@ void AlembicImport_LoadNURBS_Internal(alembic_NURBSload_options &options)
                pKnotVec = knotProp.getValue(0);
             }
          }
-            
-         LoadNurbs(nset, pCurvePos, pCurveNbVertices, pKnotVec, /*AbcG::kLinear, AbcG::kNonPeriodic*/ curveSample.getType(), curveSample.getWrap(), nTicks);
 
-         Matrix3 mat(1);
-         Object *newObject = CreateNURBSObject((IObjParam*)GetCOREInterface(), &nset, mat);
+         bool bDynamicTopo = isAlembicNurbsCurveTopoDynamic(options.pIObj); 
 
-         nset.DeleteObjects();
+         if(bDynamicTopo)
+         {
+            LoadNurbs(nset, pCurvePos, pCurveNbVertices, pKnotVec, /*AbcG::kLinear, AbcG::kNonPeriodic*/ curveSample.getType(), curveSample.getWrap(), nTicks);
 
-         options.pObject = newObject;
-         
+            Matrix3 mat(1);
+            Object *newObject = CreateNURBSObject((IObjParam*)GetCOREInterface(), &nset, mat);
+
+            nset.DeleteObjects();
+
+            options.pObject = newObject;
+         }
+         else
+         {
+            ESS_LOG_WARNING("Modifying Nurb");
+            ModifyNurbs(options.pObject, pCurvePos, pCurveNbVertices, pKnotVec, curveSample.getType(), curveSample.getWrap(), nTicks);
+         }  
    }
 }
 
@@ -251,6 +312,7 @@ void AlembicImport_LoadNURBS_Internal(alembic_NURBSload_options &options)
 
 int AlembicImport_NURBS(const std::string &path, AbcG::IObject& iObj, alembic_importoptions &options, INode** pMaxNode)
 {
+   ESS_PROFILE_FUNC();
    
 	const std::string &identifier = iObj.getFullName();
 
@@ -270,26 +332,38 @@ int AlembicImport_NURBS(const std::string &path, AbcG::IObject& iObj, alembic_im
         return alembic_failure;
 	}
 
-
-   // AbcG::ICurvesSchema::Sample curveSample;
-   // objCurves.getSchema().get(curveSample, 0);
-
-   //// prepare the curves 
-   //Abc::P3fArraySamplePtr pCurvePos = curveSample.getPositions();
-   //Abc::Int32ArraySamplePtr pCurveNbVertices = curveSample.getCurvesNumVertices();
-
-   //Abc::FloatArraySamplePtr pKnotVec;
-
-   //if ( objCurves.getSchema().getArbGeomParams().getPropertyHeader( ".knot_vector" ) != NULL ){
-   //   Abc::IFloatArrayProperty knotProp = Abc::IFloatArrayProperty( objCurves.getSchema().getArbGeomParams(), ".knot_vector" );
-   //   if(knotProp.valid() && knotProp.getNumSamples() != 0){
-   //      pKnotVec = knotProp.getValue(0);
-   //   }
-   //}
-
    ////It would seem that 3DS Max won't let add a modifier onto an empty NURBS set, so we load the first frame here
    NURBSSet nset;
-   InitNurbs(nset);
+
+   bool bDynamicTopo = isAlembicNurbsCurveTopoDynamic(&iObj); 
+
+   if(bDynamicTopo)
+   {
+      InitNurbs(nset);
+   }
+   else
+   {
+      ESS_LOG_WARNING("Load Nurb Knot Vec");
+      AbcG::ICurvesSchema::Sample curveSample;
+      objCurves.getSchema().get(curveSample, 0);
+
+      // prepare the curves 
+      Abc::P3fArraySamplePtr pCurvePos = curveSample.getPositions();
+      Abc::Int32ArraySamplePtr pCurveNbVertices = curveSample.getCurvesNumVertices();
+
+      Abc::FloatArraySamplePtr pKnotVec;
+
+      if ( objCurves.getSchema().getArbGeomParams().getPropertyHeader( ".knot_vector" ) != NULL ){
+         Abc::IFloatArrayProperty knotProp = Abc::IFloatArrayProperty( objCurves.getSchema().getArbGeomParams(), ".knot_vector" );
+         if(knotProp.valid() && knotProp.getNumSamples() != 0){
+            pKnotVec = knotProp.getValue(0);
+         }
+      }
+
+      //if topology is constant, we read the knot vector once.
+      //We then the Object::SetPoint method to for control point animation
+      LoadNurbs(nset, pCurvePos, pCurveNbVertices, pKnotVec, /*AbcG::kLinear, AbcG::kNonPeriodic*/ curveSample.getType(), curveSample.getWrap(), 0, false);
+   }
 
 
    // Create the object pNode
@@ -322,8 +396,7 @@ int AlembicImport_NURBS(const std::string &path, AbcG::IObject& iObj, alembic_im
 
 	std::vector<Modifier*> modifiersToEnable;
 
-	bool isDynamicTopo = isAlembicNurbsTopoDynamic( &iObj );
-
+	bool isAnimated = isAlembicNurbsCurveAnimated(&iObj);
 	{
 		Modifier *pModifier = NULL;
 		bool bCreatedModifier = false;
@@ -343,20 +416,14 @@ int AlembicImport_NURBS(const std::string &path, AbcG::IObject& iObj, alembic_im
 		if(bCreatedModifier){
 			pModifier->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pModifier, 0, "identifier" ), zero, EC_UTF8_to_TCHAR( identifier.c_str() ) );
 			pModifier->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pModifier, 0, "time" ), zero, 0.0f );
-			if( isDynamicTopo ) {
-				pModifier->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pModifier, 0, "geometry" ), zero, TRUE );
-			}
-			else {
-				pModifier->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pModifier, 0, "geometry" ), zero, FALSE );
-			}
-
 			pModifier->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pModifier, 0, "muted" ), zero, FALSE );
 		
 			// Add the modifier to the pNode
 			GET_MAX_INTERFACE()->AddModifier(*pNode, *pModifier);
 		}
 
-		if( isDynamicTopo ) {
+		if( isAnimated ) {
+            ESS_LOG_WARNING("Nurb is animated");
 			GET_MAX_INTERFACE()->SelectNode( pNode );
 			char szControllerName[10000];
 			sprintf_s( szControllerName, 10000, "$.modifiers[#Alembic_NURBS].time" );
