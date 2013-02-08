@@ -301,7 +301,7 @@ void AlembicImport_LoadNURBS_Internal(alembic_NURBSload_options &options)
          }
          else
          {
-            ESS_LOG_WARNING("Modifying Nurb");
+            //ESS_LOG_WARNING("Modifying Nurb");
             ModifyNurbs(options.pObject, pCurvePos, pCurveNbVertices, pKnotVec, curveSample.getType(), curveSample.getWrap(), nTicks);
          }  
    }
@@ -343,7 +343,7 @@ int AlembicImport_NURBS(const std::string &path, AbcG::IObject& iObj, alembic_im
    }
    else
    {
-      ESS_LOG_WARNING("Load Nurb Knot Vec");
+      //ESS_LOG_WARNING("Load Nurb Knot Vec");
       AbcG::ICurvesSchema::Sample curveSample;
       objCurves.getSchema().get(curveSample, 0);
 
@@ -423,7 +423,7 @@ int AlembicImport_NURBS(const std::string &path, AbcG::IObject& iObj, alembic_im
 		}
 
 		if( isAnimated ) {
-            ESS_LOG_WARNING("Nurb is animated");
+            //ESS_LOG_WARNING("Nurb is animated");
 			GET_MAX_INTERFACE()->SelectNode( pNode );
 			char szControllerName[10000];
 			sprintf_s( szControllerName, 10000, "$.modifiers[#Alembic_NURBS].time" );
