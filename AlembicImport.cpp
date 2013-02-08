@@ -1952,7 +1952,7 @@ ESS_CALLBACK_START(alembic_import_jobs_Execute, CRef&)
    CRefArray selectedObjects = Application().GetSelection().GetArray();
    if(selectedObjects.GetCount() > 1)
    {
-      Application().LogMessage(L"[ExocortexAlembic] Too many objects selected, you can select at most one attachment root.",siErrorMsg);
+      Application().LogMessage(L"[ExocortexAlembic] Too many objects selected, you can select at most one import root.",siErrorMsg);
       return CStatus::InvalidArgument;
    }
 
@@ -2004,6 +2004,7 @@ ESS_CALLBACK_START(alembic_import_jobs_Execute, CRef&)
 	  jobParser.failOnUnsupported = settings.GetParameterValue(L"failOnUnsupported");
       jobParser.skipUnattachedNodes = settings.GetParameterValue(L"skipUnattachedNodes");
       jobParser.replacer = SearchReplace::createReplacer();
+      jobParser.enableImportRootSelection = settings.GetParameterValue(L"enableImportRootSelection");
          
       Application().LogMessage(CString(L"[ExocortexAlembic] Using ReadJob:") + jobParser.buildJobString().c_str());
 
@@ -2180,7 +2181,7 @@ ESS_CALLBACK_START(alembic_import_jobs_Execute, CRef&)
 
 
    CRef importRootNode = Application().GetActiveSceneRoot().GetRef();
-   if(selectedObjects.GetCount() == 1)
+   if(jobParser.enableImportRootSelection && selectedObjects.GetCount() == 1)
    {
       importRootNode = selectedObjects[0];
       //importRootNode = X3DObject( importRootNode ).GetParent3DObject().GetRef();
@@ -2253,6 +2254,7 @@ ESS_CALLBACK_START(alembic_import_settings_Define, CRef&)
    oCustomProperty.AddParameter(L"attach",CValue::siBool,siPersistable,L"",L"",0,0,1,0,1,oParam);
    oCustomProperty.AddParameter(L"skipUnattachedNodes",CValue::siBool,siPersistable,L"",L"",0,0,1,0,1,oParam);
    oCustomProperty.AddParameter(L"failOnUnsupported",CValue::siBool,siPersistable,L"",L"",0,0,1,0,1,oParam);
+   oCustomProperty.AddParameter(L"enableImportRootSelection",CValue::siBool,siPersistable,L"",L"",0,0,1,0,0,oParam);
 	return CStatus::OK;
 ESS_CALLBACK_END
 
@@ -2289,6 +2291,7 @@ ESS_CALLBACK_START(alembic_import_settings_DefineLayout, CRef&)
    oLayout.AddItem(L"attach", L"Attach to existing objects");
    oLayout.AddItem(L"skipUnattachedNodes", L"Skip nodes that fail to attach");
    oLayout.AddItem(L"failOnUnsupported",L"Fail upon unsupported alembic types");
+   oLayout.AddItem(L"enableImportRootSelection",L"Enable Import Root Selection");
    oLayout.EndGroup();
 
 	return CStatus::OK;
