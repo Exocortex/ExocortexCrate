@@ -176,7 +176,7 @@ bool ModifyNurbs(Object* pObj, Abc::P3fArraySamplePtr pCurvePos, Abc::Int32Array
 
       for(int i=0; i<nbVertices; i++){
          Point3 pt = ConvertAlembicPointToMaxPoint(pCurvePos->get()[offset + i]);
-         pObj->SetPoint(i, pt);
+         pObj->SetPoint(offset + i, pt);
       }
 
       offset += nbVertices;
