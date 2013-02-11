@@ -232,7 +232,7 @@ void AlembicParticles::UpdateParticles(TimeValue t, INode *node)
     m_ParticleOrientations.resize(numParticles);
     m_ParticleScales.resize(numParticles);
     m_VCArray.resize(numParticles);
-  
+    m_idVec.resize(numParticles);
 
 
     m_objToWorld = node->GetObjTMAfterWSM(t);
@@ -244,6 +244,7 @@ void AlembicParticles::UpdateParticles(TimeValue t, INode *node)
 	GetParticleOrientations( m_iPoints, sampleInfo, m_objToWorld,  m_ParticleOrientations );
 	GetParticleScales( m_iPoints, sampleInfo, m_objToWorld,  m_ParticleScales );
 	GetParticleColors(m_iPoints, sampleInfo, m_VCArray);
+    GetParticleIds(floorSample, sampleInfo, m_idVec);
 
 	GetParticleShapeTypes(m_iPoints, sampleInfo, m_InstanceShapeType );
 	GetParticleShapeInstanceIds(m_iPoints, sampleInfo, m_InstanceShapeIds );
@@ -550,6 +551,19 @@ AlembicParticles::GetParticleVelocities(const AbcG::IPointsSchema::Sample &floor
 	}
 }
 
+void
+AlembicParticles::GetParticleIds(const AbcG::IPointsSchema::Sample &floorSample, const SampleInfo &sampleInfo, std::vector<Abc::uint64_t>& idVec) const {
+    ESS_PROFILE_FUNC();
+
+    Abc::UInt64ArraySamplePtr idsSample = floorSample.getIds();
+    if( idsSample != NULL && idsSample->valid() && idsSample->size() > 0 )
+    {
+       //ESS_LOG_WARNING("ssize: "<<idsSample->size()<<" vsize: "<<idVec.size());
+       for(int i=0; i<idsSample->size() && i<idVec.size(); i++){
+         idVec[i] = idsSample->get()[i];
+       }
+    }
+}
 
 void
 AlembicParticles::GetParticleRadii(AbcG::IPoints &iPoints, const SampleInfo &sampleInfo, Tab<float>& radius) const {

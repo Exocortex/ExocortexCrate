@@ -168,7 +168,7 @@ bool IAlembicParticlesExt::GetMultipleRenderMeshVertexSpeed(TimeValue t, INode *
 //			This is the emitter node.
 // the method is not exposed in maxscript
 void IAlembicParticlesExt::UpdateParticles(INode *node, TimeValue t) { 
-	ESS_LOG_WARNING("IAlembicParticlesExt::UpdateParticles.");
+	//ESS_LOG_WARNING("IAlembicParticlesExt::UpdateParticles.");
     m_pAlembicParticles->UpdateParticles(t, node);
 }
 
@@ -234,8 +234,8 @@ bool IAlembicParticlesExt::DeleteParticles(int start, int num) {
 //		int i
 //			index of the particle in the range of [0, NumParticles-1]
 int IAlembicParticlesExt::GetParticleBornIndex(int i) { 
-	ESS_LOG_WARNING("IAlembicParticlesExt::GetParticleBornIndex not implmented.");
-	return 0; 
+	//ESS_LOG_WARNING("IAlembicParticlesExt::GetParticleBornIndex.");
+	return (int)m_pAlembicParticles->m_idVec[i];
 }
 
 // Implemented by the Plug-In.
@@ -292,8 +292,8 @@ void IAlembicParticlesExt::SetCurrentParticleBornIndex(int bornIndex) {
 //		TimeValue age
 //			new age value to set for a particle
 TimeValue IAlembicParticlesExt::GetParticleAgeByIndex(int index) { 
-	ESS_LOG_WARNING("IAlembicParticlesExt::GetParticleAgeByIndex not implmented.");
-	return 0; 
+	//ESS_LOG_WARNING("IAlembicParticlesExt::GetParticleAgeByIndex.");
+	return m_pAlembicParticles->parts.ages[index];
 }
 TimeValue IAlembicParticlesExt::GetParticleAgeByBornIndex(int id) { 
 	ESS_LOG_WARNING("IAlembicParticlesExt::GetParticleAgeByBornIndex not implmented.");
@@ -325,7 +325,7 @@ void IAlembicParticlesExt::SetParticleAge(TimeValue age) {
 //		TimeValue lifespan
 //			new lifespan value to set for a particle
 TimeValue IAlembicParticlesExt::GetParticleLifeSpanByIndex(int index) { 
-	ESS_LOG_WARNING("IAlembicParticlesExt::GetParticleLifeSpanByIndex not implmented.");
+	//ESS_LOG_WARNING("IAlembicParticlesExt::GetParticleLifeSpanByIndex.");
 	return TIME_PosInfinity; 
 }
 TimeValue IAlembicParticlesExt::GetParticleLifeSpanByBornIndex(int id) { 
@@ -392,8 +392,8 @@ void IAlembicParticlesExt::SetParticleGroupTime(TimeValue time) {
 //		Point3 pos
 //			position of the particle
 Point3* IAlembicParticlesExt::GetParticlePositionByIndex(int index) { 
-	ESS_LOG_WARNING("IAlembicParticlesExt::GetParticlePositionByIndex not implmented.");
-	return NULL; 
+	//ESS_LOG_WARNING("IAlembicParticlesExt::GetParticlePositionByIndex.");
+	return &(m_pAlembicParticles->parts.points[index]);
 }
 Point3* IAlembicParticlesExt::GetParticlePositionByBornIndex(int id) { 
 	ESS_LOG_WARNING("IAlembicParticlesExt::GetParticlePositionByBornIndex not implmented.");
@@ -425,8 +425,8 @@ void IAlembicParticlesExt::SetParticlePosition(Point3 pos) {
 //		Point3 speed
 //			speed of the particle in units per frame
 Point3* IAlembicParticlesExt::GetParticleSpeedByIndex(int index) { 
-	ESS_LOG_WARNING("IAlembicParticlesExt::GetParticleSpeedByIndex not implmented.");
-	return NULL; 
+	//ESS_LOG_WARNING("IAlembicParticlesExt::GetParticleSpeedByIndex.");
+	return &(m_pAlembicParticles->parts.vels[index]);
 }
 Point3* IAlembicParticlesExt::GetParticleSpeedByBornIndex(int id) { 
 	ESS_LOG_WARNING("IAlembicParticlesExt::GetParticleSpeedByBornIndex not implmented.");

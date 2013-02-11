@@ -141,6 +141,7 @@ private:
     void	GetParticleShapeTypes(AbcG::IPoints &iPoints, const SampleInfo &sampleInfo, std::vector<AlembicPoints::ShapeType>& instanceShapeType) const;
     void	GetParticleShapeInstanceIds(AbcG::IPoints &iPoints, const SampleInfo &sampleInfo, std::vector<unsigned short>& instanceShapeIds) const;
     void	GetParticleShapeInstanceTimes(AbcG::IPoints &iPoints, const SampleInfo &sampleInfo, std::vector<TimeValue>& instanceShapeTimes) const;
+    void    GetParticleIds(const AbcG::IPointsSchema::Sample &floorSample, const SampleInfo &sampleInfo, std::vector<Abc::uint64_t>& idVec) const;
 
 	void            FillParticleShapeNodes(AbcG::IPoints &iPoints, const SampleInfo &sampleInfo);
     INode*          GetParticleMeshNode(int meshNumber, INode *displayNode);
@@ -167,7 +168,9 @@ private:
     Abc::StringArraySamplePtr m_InstanceShapeNames;
     std::vector<INode*> m_InstanceShapeINodes;
 	std::vector<VertColor> m_VCArray;
-
+ public:
+    std::vector<Abc::uint64_t> m_idVec;
+private:
    struct InstanceMesh
    {
        Mesh *mesh;
