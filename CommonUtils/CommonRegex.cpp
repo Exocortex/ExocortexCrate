@@ -1,9 +1,21 @@
 #include "CommonRegex.h"
 #include <sstream>
+#include <boost/regex.hpp>
 
 using namespace std;
 namespace SearchReplace
 {
+	class RegexReplace: public NoReplace
+	{
+	private:
+		boost::regex exp;
+		std::string formatter;
+	public:
+		RegexReplace(const std::string &exp, const std::string &form);
+
+		virtual std::string replace(const std::string &str) const;
+	};
+
 	ReplacePtr defaultNoReplace(new NoReplace());
 
 	string NoReplace::replace(const string &str) const
@@ -30,9 +42,7 @@ namespace SearchReplace
 
 	ReplacePtr createReplacer(const std::string &exp, const std::string &form)
 	{
-		if (exp.length() == 0 || form.length() == 0)
-			return defaultNoReplace;
-		return ReplacePtr(new RegexReplace(exp, form));
+		return (exp.length() == 0 || form.length() == 0) ? defaultNoReplace : ReplacePtr(new RegexReplace(exp, form));
 	}
 }
 

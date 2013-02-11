@@ -14,7 +14,6 @@ IF (UNIX AND NOT APPLE )
 ENDIF()
  
 set( Exocortex_INSTALL_BASE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/install" )
-   
 
 if( HDF5_ENABLE_THREADSAFE )
 	project( ExocortexAlembic )
@@ -37,8 +36,6 @@ else()
 		message(FATAL_ERROR "Should not get here")
 	endif()
 endif()
- 
-
 
 INCLUDE(./ExocortexCMakeShared.txt)
 
@@ -211,8 +208,8 @@ else()
 	message(FATAL_ERROR "Should not get here")
 endif()
 
-#MESSAGE( "BOOST_INCLUDEDIR: ${BOOST_INCLUDEDIR}" )
-#MESSAGE( "BOOST_LIBRARYDIR: ${BOOST_LIBRARYDIR}" )
+MESSAGE( "BOOST_INCLUDEDIR: ${BOOST_INCLUDEDIR}" )
+MESSAGE( "BOOST_LIBRARYDIR: ${BOOST_LIBRARYDIR}" )
 if( NOT EXISTS ${BOOST_INCLUDEDIR} )
 	message(FATAL_ERROR "Can't find BOOST_INCLUDEDIR: ${BOOST_INCLUDEDIR}" )
 endif()
@@ -227,7 +224,7 @@ set(Boost_USE_MULTITHREADED ON)
 set(Boost_DETAILED_FAILURE_MSG ON )
 set(Boost_USE_STATIC_RUNTIME ON)
 set(Boost_NO_SYSTEM_PATHS true )
-set(BOOST_COMPONENTS date_time program_options thread iostreams python filesystem system unit_test_framework )
+set(BOOST_COMPONENTS date_time program_options regex thread iostreams python filesystem system unit_test_framework )
 find_package( Boost 1.44.0 COMPONENTS REQUIRED ${BOOST_COMPONENTS} )
 
 include_directories( ${Boost_INCLUDE_DIRS} )
