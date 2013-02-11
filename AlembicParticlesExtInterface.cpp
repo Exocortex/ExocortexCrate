@@ -397,7 +397,7 @@ Point3* IAlembicParticlesExt::GetParticlePositionByIndex(int index) {
 }
 Point3* IAlembicParticlesExt::GetParticlePositionByBornIndex(int id) { 
 	ESS_LOG_WARNING("IAlembicParticlesExt::GetParticlePositionByBornIndex not implmented.");
-	return NULL; 
+	return &(m_pAlembicParticles->parts.points[0]);
 }
 void IAlembicParticlesExt::SetParticlePositionByIndex(int index, Point3 pos) { 
 	ESS_LOG_WARNING("IAlembicParticlesExt::SetParticlePositionByIndex not implmented.");
@@ -407,7 +407,7 @@ void IAlembicParticlesExt::SetParticlePositionByBornIndex(int id, Point3 pos) {
 }
 Point3* IAlembicParticlesExt::GetParticlePosition() { 
 	ESS_LOG_WARNING("IAlembicParticlesExt::GetParticlePosition not implmented.");
-	return NULL; 
+    return &(m_pAlembicParticles->parts.points[0]);
 }
 void IAlembicParticlesExt::SetParticlePosition(Point3 pos) {
 	ESS_LOG_WARNING("IAlembicParticlesExt::SetParticlePosition not implmented.");
@@ -430,7 +430,7 @@ Point3* IAlembicParticlesExt::GetParticleSpeedByIndex(int index) {
 }
 Point3* IAlembicParticlesExt::GetParticleSpeedByBornIndex(int id) { 
 	ESS_LOG_WARNING("IAlembicParticlesExt::GetParticleSpeedByBornIndex not implmented.");
-	return NULL; 
+	return &(m_pAlembicParticles->parts.vels[0]);
 }
 void IAlembicParticlesExt::SetParticleSpeedByIndex(int index, Point3 speed) {
 	ESS_LOG_WARNING("IAlembicParticlesExt::SetParticleSpeedByIndex not implmented.");
@@ -440,7 +440,7 @@ void IAlembicParticlesExt::SetParticleSpeedByBornIndex(int id, Point3 speed) {
 }
 Point3* IAlembicParticlesExt::GetParticleSpeed() { 
 	ESS_LOG_WARNING("IAlembicParticlesExt::GetParticleSpeed not implmented.");
-	return NULL; 
+	return &(m_pAlembicParticles->parts.vels[0]);
 }
 void IAlembicParticlesExt::SetParticleSpeed(Point3 speed) { 
 	ESS_LOG_WARNING("IAlembicParticlesExt::SetParticleSpeed not implmented.");
