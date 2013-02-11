@@ -90,7 +90,7 @@ bool LoadNurbs(NURBSSet& nset, Abc::P3fArraySamplePtr pCurvePos, Abc::Int32Array
       const int nNumAbcKnots = nbVertices + nOrder - 2;
 
       c->SetNumKnots(nNumMaxKnots);
-      c->SetName("");
+      //c->SetName("");
 
       if(bDefaultKnot){
          
@@ -200,7 +200,7 @@ bool InitNurbs(NURBSSet& nset )
    const int nNumKnots = nbVertices + nOrder;
 
    c->SetNumKnots(nNumKnots);
-   c->SetName("");
+   //c->SetName("");
 
    NURBSControlVertex cv;
    cv.SetPosition(0, Point3(0.0, 0.0, 0.0));
