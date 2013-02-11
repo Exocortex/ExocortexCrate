@@ -95,7 +95,10 @@ bool IJobStringParser::parse(const std::string& jobString)
 		{
 			skipUnattachedNodes = parseBool(valuePair[1]);
 		}
-
+		else if(boost::iequals(valuePair[0], "enableImportRootSelection"))
+		{
+			enableImportRootSelection = parseBool(valuePair[1]);
+		}
 		// search/replace
 		else if(boost::iequals(valuePair[0], "search"))
 		{
@@ -134,7 +137,7 @@ std::string IJobStringParser::buildJobString()
 
    stream<<"normals="<<importNormals<<";uvs="<<importUVs<<";facesets="<<importFacesets;
    stream<<";importVisibilityControllers="<<importVisibilityControllers<<";importStandinProperties="<<importStandinProperties;
-   stream<<";importBoundingBoxes="<<importBoundingBoxes<<";attachToExisting="<<attachToExisting<<";skipUnattachedNodes="<<skipUnattachedNodes<<";failOnUnsupported="<<failOnUnsupported;
+   stream<<";importBoundingBoxes="<<importBoundingBoxes<<";attachToExisting="<<attachToExisting<<";skipUnattachedNodes="<<skipUnattachedNodes<<";failOnUnsupported="<<failOnUnsupported<<";enableImportRootSelection="<<enableImportRootSelection;
    
    if(!nodesToImport.empty()){
       stream<<";identifiers=";

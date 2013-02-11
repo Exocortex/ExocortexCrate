@@ -27,6 +27,7 @@ public:
    bool importVisibilityControllers;
    bool selectShapes;
    bool skipUnattachedNodes;
+   bool enableImportRootSelection;
 
    SearchReplace::ReplacePtr replacer;
 
@@ -49,7 +50,8 @@ public:
       importVisibilityControllers(false),
       includeChildren(false),
       selectShapes(true),
-      skipUnattachedNodes(false)
+      skipUnattachedNodes(false),
+      enableImportRootSelection(false)
    {}
 
    bool parse(const std::string& jobString);
