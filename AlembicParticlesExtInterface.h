@@ -58,10 +58,7 @@ public:
 	//			Specifies which of the multiple meshes is being asked for.
 	//		Tab<Point3>& speed
 	//			speed per vertex in world coordinates
-    virtual	bool GetMultipleRenderMeshVertexSpeed(TimeValue t, INode *inode, View& view, int meshNumber, Tab<Point3>& speed) { 
-		ESS_LOG_WARNING("IAlembicParticlesExt::GetMultipleRenderMeshVertexSpeed not implmented.");
-		return false; 
-	}
+    virtual	bool GetMultipleRenderMeshVertexSpeed(TimeValue t, INode *inode, View& view, int meshNumber, Tab<Point3>& speed);
 
 	// Implemented by the Plug-In.
 	// This method is called so the particle system can update its state to reflect 
@@ -74,23 +71,17 @@ public:
 	//		INode *node
 	//			This is the emitter node.
 	// the method is not exposed in maxscript
-	virtual void UpdateParticles(INode *node, TimeValue t) { 
-		ESS_LOG_WARNING("IAlembicParticlesExt::UpdateParticles not implmented."); 
-	}
+	virtual void UpdateParticles(INode *node, TimeValue t);
 
 	// Implemented by the Plug-in
 	// Use this method to retrieve time of the current update step. The update time maybe unrelated to 
 	// the current time of the scene.
-	virtual TimeValue GetUpdateTime() { 
-		ESS_LOG_WARNING("IAlembicParticlesExt::GetUpdateTime not implmented.");
-		return 0; 
-	}
+	virtual TimeValue GetUpdateTime();
+
 	// Implemented by the Plug-in
 	// Use this method to retrieve time interval of the current update step. The update time maybe unrelated to 
 	// the current time of the scene. The GetUpdateTime method above retrieves the finish time.
-	virtual void GetUpdateInterval(TimeValue& start, TimeValue& finish) { 
-		ESS_LOG_WARNING("IAlembicParticlesExt::GetUpdateInterval not implmented."); 
-	}
+	virtual void GetUpdateInterval(TimeValue& start, TimeValue& finish);
 
 	// Implemented by the Plug-In.
 	// The method returns how many particles are currently in the particle system. 
@@ -102,31 +93,20 @@ public:
 	// a tendency of reusing indices for newly born particles, sometimes it's necessary 
 	// to keep a track for particular particles. This method and the methods that deal with
 	// particle IDs allow us to accomplish that.
-	virtual int NumParticlesGenerated() { return NumParticles(); }
+	virtual int NumParticlesGenerated();
 
 	// Implemented by the Plug-in
 	// The following four methods modify amount of particles in the particle system
 	// Returns true if the operation was completed successfully
 	//		Add a single particle
-	virtual bool AddParticle() { 
-		ESS_LOG_WARNING("IAlembicParticlesExt::AddParticle not implmented.");
-		return false;
-	}
+	virtual bool AddParticle();
+
 	//		Add "num" particles into the particle system
-	virtual bool AddParticles(int num) { 
-		ESS_LOG_WARNING("IAlembicParticlesExt::AddParticles not implmented.");
-		return false; 
-	}
+	virtual bool AddParticles(int num);
 	//		Delete a single particle with the given index
-	virtual bool DeleteParticle(int index) { 
-		ESS_LOG_WARNING("IAlembicParticlesExt::DeleteParticle not implmented.");
-		return false; 
-	}
+	virtual bool DeleteParticle(int index);
 	//		List-type delete of "num" particles starting with "start"
-	virtual bool DeleteParticles(int start, int num) { 
-		ESS_LOG_WARNING("IAlembicParticlesExt::DeleteParticles not implmented.");
-		return false;
-	}
+	virtual bool DeleteParticles(int start, int num);
 
 	// Implemented by the Plug-In.
 	// Each particle is given a unique ID (consecutive) upon its birth. The method 
@@ -135,10 +115,7 @@ public:
 	// Parameters:
 	//		int i
 	//			index of the particle in the range of [0, NumParticles-1]
-	virtual int GetParticleBornIndex(int i) { 
-		ESS_LOG_WARNING("IAlembicParticlesExt::GetParticleBornIndex not implmented.");
-		return 0; 
-	}
+	virtual int GetParticleBornIndex(int i);
 
 	// Implemented by the Plug-In.
 	// the methods verifies if a particle with a given particle id (born index) is present
@@ -151,36 +128,17 @@ public:
 	//			particle group the particle belongs to
 	//		int index
 	//			particle index in the particle group or particle system
-	virtual bool HasParticleBornIndex(int bornIndex, int& index) { 
-		ESS_LOG_WARNING("IAlembicParticlesExt::HasParticleBornIndex not implmented.");
-		return false; 
-	}
-	virtual INode* GetParticleGroup(int index) { 
-		ESS_LOG_WARNING("IAlembicParticlesExt::GetParticleGroup not implmented.");
-		return NULL; 
-	}
-	virtual int GetParticleIndex(int bornIndex) { 
-		ESS_LOG_WARNING("IAlembicParticlesExt::GetParticleIndex not implmented.");
-		return 0; 
-	}
+	virtual bool HasParticleBornIndex(int bornIndex, int& index);
+	virtual INode* GetParticleGroup(int index);
+	virtual int GetParticleIndex(int bornIndex);
 
 	// Implemented by the Plug-In.
 	// The following four methods define "current" index or bornIndex. This index is used
 	// in the property methods below to get the property without specifying the index.
-	virtual int GetCurrentParticleIndex() { 
-		ESS_LOG_WARNING("IAlembicParticlesExt::GetCurrentParticleIndex not implmented.");
-		return 0; 
-	}
-	virtual int GetCurrentParticleBornIndex() { 
-		ESS_LOG_WARNING("IAlembicParticlesExt::GetCurrentParticleBornIndex not implmented.");
-		return 5; 
-	}
-	virtual void SetCurrentParticleIndex(int index) { 
-		ESS_LOG_WARNING("IAlembicParticlesExt::SetCurrentParticleIndex not implmented.");
-	}
-	virtual void SetCurrentParticleBornIndex(int bornIndex) { 
-		ESS_LOG_WARNING("IAlembicParticlesExt::SetCurrentParticleBornIndex not implmented.");
-	}
+	virtual int GetCurrentParticleIndex();
+	virtual int GetCurrentParticleBornIndex();
+	virtual void SetCurrentParticleIndex(int index);
+	virtual void SetCurrentParticleBornIndex(int bornIndex);
 
 	// Implemented by the Plug-In.
 	// The following six methods define age of the specified particle. Particle is specified by either its
@@ -193,27 +151,12 @@ public:
 	//			particle index in the particle group
 	//		TimeValue age
 	//			new age value to set for a particle
-	virtual TimeValue GetParticleAgeByIndex(int index) { 
-		ESS_LOG_WARNING("IAlembicParticlesExt::GetParticleAgeByIndex not implmented.");
-		return 0; 
-	}
-	virtual TimeValue GetParticleAgeByBornIndex(int id) { 
-		ESS_LOG_WARNING("IAlembicParticlesExt::GetParticleAgeByBornIndex not implmented.");
-		return 0; 
-	}
-	virtual void SetParticleAgeByIndex(int index, TimeValue age) {
-		ESS_LOG_WARNING("IAlembicParticlesExt::SetParticleAgeByIndex not implmented.");
-	}
-	virtual void SetParticleAgeByBornIndex(int id, TimeValue age) {
-		ESS_LOG_WARNING("IAlembicParticlesExt::SetParticleAgeByBornIndex not implmented.");
-	}
-	virtual TimeValue GetParticleAge() { 
-		ESS_LOG_WARNING("IAlembicParticlesExt::GetParticleAge not implmented.");
-		return 0; 
-	}
-	virtual void SetParticleAge(TimeValue age) {  
-		ESS_LOG_WARNING("IAlembicParticlesExt::SetParticleAge not implmented.");
-	}
+	virtual TimeValue GetParticleAgeByIndex(int index);
+	virtual TimeValue GetParticleAgeByBornIndex(int id);
+	virtual void SetParticleAgeByIndex(int index, TimeValue age);
+	virtual void SetParticleAgeByBornIndex(int id, TimeValue age);
+	virtual TimeValue GetParticleAge();
+	virtual void SetParticleAge(TimeValue age);
 
 	// Implemented by the Plug-In.
 	// The following six methods define lifespan of the specified particle. Particle is specified by either its
@@ -226,27 +169,12 @@ public:
 	//			particle index in the particle group
 	//		TimeValue lifespan
 	//			new lifespan value to set for a particle
-	virtual TimeValue GetParticleLifeSpanByIndex(int index) { 
-		ESS_LOG_WARNING("IAlembicParticlesExt::GetParticleLifeSpanByIndex not implmented.");
-		return TIME_PosInfinity; 
-	}
-	virtual TimeValue GetParticleLifeSpanByBornIndex(int id) { 
-		ESS_LOG_WARNING("IAlembicParticlesExt::GetParticleLifeSpanByBornIndex not implmented.");
-		return TIME_PosInfinity; 
-	}
-	virtual void SetParticleLifeSpanByIndex(int index, TimeValue LifeSpan) {  
-		ESS_LOG_WARNING("IAlembicParticlesExt::GetParticleLifeSpanByBornIndex not implmented.");
-	}
-	virtual void SetParticleLifeSpanByBornIndex(int id, TimeValue LifeSpan) { 
-		ESS_LOG_WARNING("IAlembicParticlesExt::SetParticleLifeSpanByBornIndex not implmented.");
-	}
-	virtual TimeValue GetParticleLifeSpan() { 
-		ESS_LOG_WARNING("IAlembicParticlesExt::GetParticleLifeSpan not implmented.");
-		return TIME_PosInfinity; 
-	}
-	virtual void SetParticleLifeSpan(TimeValue lifespan) {
-		ESS_LOG_WARNING("IAlembicParticlesExt::SetParticleLifeSpan not implmented.");
-	}
+	virtual TimeValue GetParticleLifeSpanByIndex(int index);
+	virtual TimeValue GetParticleLifeSpanByBornIndex(int id);
+	virtual void SetParticleLifeSpanByIndex(int index, TimeValue LifeSpan);
+	virtual void SetParticleLifeSpanByBornIndex(int id, TimeValue LifeSpan);
+	virtual TimeValue GetParticleLifeSpan();
+	virtual void SetParticleLifeSpan(TimeValue lifespan);
 
 	// Implemented by the Plug-In.
 	// The following six methods define for how long the specified particle was staying in the current
@@ -260,27 +188,12 @@ public:
 	//			particle index in the particle group
 	//		TimeValue time
 	//			how long particle was staying in the current particle group
-	virtual TimeValue GetParticleGroupTimeByIndex(int index) { 
-		ESS_LOG_WARNING("IAlembicParticlesExt::GetParticleGroupTimeByIndex not implmented.");
-		return 0; 
-	}
-	virtual TimeValue GetParticleGroupTimeByBornIndex(int id) { 
-		ESS_LOG_WARNING("IAlembicParticlesExt::GetParticleGroupTimeByBornIndex not implmented.");
-		return 0; 
-	}
-	virtual void SetParticleGroupTimeByIndex(int index, TimeValue time) { 
-		ESS_LOG_WARNING("IAlembicParticlesExt::SetParticleGroupTimeByIndex not implmented.");
-	}
-	virtual void SetParticleGroupTimeByBornIndex(int id, TimeValue time) {
-		ESS_LOG_WARNING("IAlembicParticlesExt::SetParticleGroupTimeByBornIndex not implmented.");
-	}
-	virtual TimeValue GetParticleGroupTime() { 
-		ESS_LOG_WARNING("IAlembicParticlesExt::GetParticleGroupTime not implmented.");
-		return 0; 
-	}
-	virtual void SetParticleGroupTime(TimeValue time) {
-		ESS_LOG_WARNING("IAlembicParticlesExt::SetParticleGroupTime not implmented.");
-	}
+	virtual TimeValue GetParticleGroupTimeByIndex(int index);
+	virtual TimeValue GetParticleGroupTimeByBornIndex(int id);
+	virtual void SetParticleGroupTimeByIndex(int index, TimeValue time);
+	virtual void SetParticleGroupTimeByBornIndex(int id, TimeValue time);
+	virtual TimeValue GetParticleGroupTime();
+	virtual void SetParticleGroupTime(TimeValue time);
 	
 	// Implemented by the Plug-In.
 	// The following six methods define position of the specified particle in the current state.
@@ -293,27 +206,12 @@ public:
 	//			particle index in the particle group
 	//		Point3 pos
 	//			position of the particle
-	virtual Point3* GetParticlePositionByIndex(int index) { 
-		ESS_LOG_WARNING("IAlembicParticlesExt::GetParticlePositionByIndex not implmented.");
-		return NULL; 
-	}
-	virtual Point3* GetParticlePositionByBornIndex(int id) { 
-		ESS_LOG_WARNING("IAlembicParticlesExt::GetParticlePositionByBornIndex not implmented.");
-		return NULL; 
-	}
-	virtual void SetParticlePositionByIndex(int index, Point3 pos) { 
-		ESS_LOG_WARNING("IAlembicParticlesExt::SetParticlePositionByIndex not implmented.");
-	}
-	virtual void SetParticlePositionByBornIndex(int id, Point3 pos) {
-		ESS_LOG_WARNING("IAlembicParticlesExt::SetParticlePositionByBornIndex not implmented.");
-	}
-	virtual Point3* GetParticlePosition() { 
-		ESS_LOG_WARNING("IAlembicParticlesExt::GetParticlePosition not implmented.");
-		return NULL; 
-	}
-	virtual void SetParticlePosition(Point3 pos) {
-		ESS_LOG_WARNING("IAlembicParticlesExt::SetParticlePosition not implmented.");
-	}
+	virtual Point3* GetParticlePositionByIndex(int index);
+	virtual Point3* GetParticlePositionByBornIndex(int id);
+	virtual void SetParticlePositionByIndex(int index, Point3 pos);
+	virtual void SetParticlePositionByBornIndex(int id, Point3 pos);
+	virtual Point3* GetParticlePosition();
+	virtual void SetParticlePosition(Point3 pos);
 
 	// Implemented by the Plug-In.
 	// The following six methods define speed of the specified particle in the current state.
@@ -326,27 +224,12 @@ public:
 	//			particle index in the particle group
 	//		Point3 speed
 	//			speed of the particle in units per frame
-	virtual Point3* GetParticleSpeedByIndex(int index) { 
-		ESS_LOG_WARNING("IAlembicParticlesExt::GetParticleSpeedByIndex not implmented.");
-		return NULL; 
-	}
-	virtual Point3* GetParticleSpeedByBornIndex(int id) { 
-		ESS_LOG_WARNING("IAlembicParticlesExt::GetParticleSpeedByBornIndex not implmented.");
-		return NULL; 
-	}
-	virtual void SetParticleSpeedByIndex(int index, Point3 speed) {
-		ESS_LOG_WARNING("IAlembicParticlesExt::SetParticleSpeedByIndex not implmented.");
-	}
-	virtual void SetParticleSpeedByBornIndex(int id, Point3 speed) {
-		ESS_LOG_WARNING("IAlembicParticlesExt::SetParticleSpeedByBornIndex not implmented.");
-	}
-	virtual Point3* GetParticleSpeed() { 
-		ESS_LOG_WARNING("IAlembicParticlesExt::GetParticleSpeed not implmented.");
-		return NULL; 
-	}
-	virtual void SetParticleSpeed(Point3 speed) { 
-		ESS_LOG_WARNING("IAlembicParticlesExt::SetParticleSpeed not implmented.");
-	}
+	virtual Point3* GetParticleSpeedByIndex(int index);
+	virtual Point3* GetParticleSpeedByBornIndex(int id);
+	virtual void SetParticleSpeedByIndex(int index, Point3 speed);
+	virtual void SetParticleSpeedByBornIndex(int id, Point3 speed);
+	virtual Point3* GetParticleSpeed();
+	virtual void SetParticleSpeed(Point3 speed);
 
 	// Implemented by the Plug-In.
 	// The following six methods define orientation of the specified particle in the current state.
@@ -360,27 +243,12 @@ public:
 	//		Point3 orient
 	//			orientation of the particle. The orientation is defined by incremental rotations
 	//			by world axes X, Y and Z. The rotation values are in degrees.
-	virtual Point3* GetParticleOrientationByIndex(int index) { 
-		ESS_LOG_WARNING("IAlembicParticlesExt::GetParticleOrientationByIndex not implmented.");
-		return NULL; 
-	}
-	virtual Point3* GetParticleOrientationByBornIndex(int id) { 
-		ESS_LOG_WARNING("IAlembicParticlesExt::GetParticleOrientationByBornIndex not implmented.");
-		return NULL; 
-	}
-	virtual void SetParticleOrientationByIndex(int index, Point3 orient) {
-		ESS_LOG_WARNING("IAlembicParticlesExt::SetParticleOrientationByIndex not implmented.");
-	}
-	virtual void SetParticleOrientationByBornIndex(int id, Point3 orient) {
-		ESS_LOG_WARNING("IAlembicParticlesExt::SetParticleOrientationByBornIndex not implmented.");
-	}
-	virtual Point3* GetParticleOrientation() { 
-		ESS_LOG_WARNING("IAlembicParticlesExt::GetParticleOrientation not implmented.");
-		return NULL; 
-	}
-	virtual void SetParticleOrientation(Point3 orient) {
-		ESS_LOG_WARNING("IAlembicParticlesExt::SetParticleOrientation not implmented.");
-	}
+	virtual Point3* GetParticleOrientationByIndex(int index);
+	virtual Point3* GetParticleOrientationByBornIndex(int id);
+	virtual void SetParticleOrientationByIndex(int index, Point3 orient);
+	virtual void SetParticleOrientationByBornIndex(int id, Point3 orient);
+	virtual Point3* GetParticleOrientation();
+	virtual void SetParticleOrientation(Point3 orient);
 
 	// Implemented by the Plug-In.
 	// The following six methods define angular speed of the specified particle in the current state.
@@ -394,27 +262,12 @@ public:
 	//		AngAxis spin
 	//			angular speed of the particle in rotation per frame
 	//			axis defines rotation axis, angle defines rotation amount per frame
-	virtual AngAxis* GetParticleSpinByIndex(int index) { 
-		ESS_LOG_WARNING("IAlembicParticlesExt::GetParticleSpinByIndex not implmented.");
-		return NULL; 
-	}
-	virtual AngAxis* GetParticleSpinByBornIndex(int id) { 
-		ESS_LOG_WARNING("IAlembicParticlesExt::GetParticleSpinByBornIndex not implmented.");
-		return NULL; 
-	}
-	virtual void SetParticleSpinByIndex(int index, AngAxis spin) {
-		ESS_LOG_WARNING("IAlembicParticlesExt::SetParticleSpinByIndex not implmented.");
-	}
-	virtual void SetParticleSpinByBornIndex(int id, AngAxis spin) {
-		ESS_LOG_WARNING("IAlembicParticlesExt::SetParticleSpinByBornIndex not implmented.");
-	}
-	virtual AngAxis* GetParticleSpin() { 
-		ESS_LOG_WARNING("IAlembicParticlesExt::GetParticleSpin not implmented.");
-		return NULL; 
-	}
-	virtual void SetParticleSpin(AngAxis spin) {
-		ESS_LOG_WARNING("IAlembicParticlesExt::SetParticleSpin not implmented.");
-	}
+	virtual AngAxis* GetParticleSpinByIndex(int index);
+	virtual AngAxis* GetParticleSpinByBornIndex(int id);
+	virtual void SetParticleSpinByIndex(int index, AngAxis spin);
+	virtual void SetParticleSpinByBornIndex(int id, AngAxis spin);
+	virtual AngAxis* GetParticleSpin();
+	virtual void SetParticleSpin(AngAxis spin);
 
 	// Implemented by the Plug-In.
 	// The following twelve methods define scale factor of the specified particle in the current state.
@@ -430,39 +283,18 @@ public:
 	//			uniform scale factor
 	//		Point3 scale
 	//			scale factor for each local axis of the particle
-	virtual float GetParticleScaleByIndex(int index) { 
-		ESS_LOG_WARNING("IAlembicParticlesExt::GetParticleScaleByIndex not implmented.");
-		return 1.0f; 
-	}
-	virtual float GetParticleScaleByBornIndex(int id) { 
-		ESS_LOG_WARNING("IAlembicParticlesExt::GetParticleScaleByBornIndex not implmented.");
-		return 1.0f; 
-	}
-	virtual void SetParticleScaleByIndex(int index, float scale) { ; }
-	virtual void SetParticleScaleByBornIndex(int id, float scale) { ; }
-	virtual float GetParticleScale() { return 1.0f; }
-	virtual void SetParticleScale(float scale) { ; }
-	virtual Point3* GetParticleScaleXYZByIndex(int index) {
-		ESS_LOG_WARNING("IAlembicParticlesExt::GetParticleScaleXYZByIndex not implmented.");
-		return NULL; 
-	}
-	virtual Point3* GetParticleScaleXYZByBornIndex(int id) { 
-		ESS_LOG_WARNING("IAlembicParticlesExt::GetParticleScaleXYZByBornIndex not implmented.");
-		return NULL; 
-	}
-	virtual void SetParticleScaleXYZByIndex(int index, Point3 scale) {
-		ESS_LOG_WARNING("IAlembicParticlesExt::SetParticleScaleXYZByIndex not implmented.");
-	}
-	virtual void SetParticleScaleXYZByBornIndex(int id, Point3 scale) {  
-		ESS_LOG_WARNING("IAlembicParticlesExt::SetParticleScaleXYZByBornIndex not implmented.");
-	}
-	virtual Point3* GetParticleScaleXYZ() { 
-		ESS_LOG_WARNING("IAlembicParticlesExt::GetParticleScaleXYZ not implmented.");
-		return NULL; 
-	}
-	virtual void SetParticleScaleXYZ(Point3 scale) {
-		ESS_LOG_WARNING("IAlembicParticlesExt::SetParticleScaleXYZ not implmented.");
-	}
+	virtual float GetParticleScaleByIndex(int index);
+	virtual float GetParticleScaleByBornIndex(int id);
+	virtual void SetParticleScaleByIndex(int index, float scale);
+	virtual void SetParticleScaleByBornIndex(int id, float scale);
+	virtual float GetParticleScale();
+	virtual void SetParticleScale(float scale);
+	virtual Point3* GetParticleScaleXYZByIndex(int index);
+	virtual Point3* GetParticleScaleXYZByBornIndex(int id);
+	virtual void SetParticleScaleXYZByIndex(int index, Point3 scale);
+	virtual void SetParticleScaleXYZByBornIndex(int id, Point3 scale);
+	virtual Point3* GetParticleScaleXYZ();
+	virtual void SetParticleScaleXYZ(Point3 scale);
 
 	// Implemented by the Plug-In.
 	// The following six methods define transformation matrix of the specified particle in the current state.
@@ -475,27 +307,12 @@ public:
 	//			particle index in the particle group
 	//		Matrix3 tm
 	//			transformation matrix of the particle
-	virtual Matrix3* GetParticleTMByIndex(int index) { 
-		ESS_LOG_WARNING("IAlembicParticlesExt::GetParticleTMByIndex not implmented.");
-		return NULL; 
-	}
-	virtual Matrix3* GetParticleTMByBornIndex(int id) { 
-		ESS_LOG_WARNING("IAlembicParticlesExt::GetParticleTMByBornIndex not implmented.");
-		return NULL; 
-	}
-	virtual void SetParticleTMByIndex(int index, Matrix3 tm) { 
-		ESS_LOG_WARNING("IAlembicParticlesExt::SetParticleTMByIndex not implmented.");
-	}
-	virtual void SetParticleTMByBornIndex(int id, Matrix3 tm) {
-		ESS_LOG_WARNING("IAlembicParticlesExt::SetParticleTMByBornIndex not implmented.");
-	}
-	virtual Matrix3* GetParticleTM() { 
-		ESS_LOG_WARNING("IAlembicParticlesExt::GetParticleTM not implmented.");
-		return NULL; 
-	}
-	virtual void SetParticleTM(Matrix3 tm) {
-		ESS_LOG_WARNING("IAlembicParticlesExt::SetParticleTM not implmented.");
-	}
+	virtual Matrix3* GetParticleTMByIndex(int index);
+	virtual Matrix3* GetParticleTMByBornIndex(int id);
+	virtual void SetParticleTMByIndex(int index, Matrix3 tm);
+	virtual void SetParticleTMByBornIndex(int id, Matrix3 tm);
+	virtual Matrix3* GetParticleTM();
+	virtual void SetParticleTM(Matrix3 tm);
 
 	// Implemented by the Plug-In.
 	// The following six methods define selection status of the specified particle in the current state.
@@ -508,27 +325,12 @@ public:
 	//			particle index in the particle group
 	//		bool selected
 	//			selection status of the particle
-	virtual bool GetParticleSelectedByIndex(int index) { 
-		ESS_LOG_WARNING("IAlembicParticlesExt::GetParticleSelectedByIndex not implmented.");
-		return true; 
-	}
-	virtual bool GetParticleSelectedByBornIndex(int id) {
-		ESS_LOG_WARNING("IAlembicParticlesExt::GetParticleSelectedByBornIndex not implmented.");
-		return true; 
-	}
-	virtual void SetParticleSelectedByIndex(int index, bool selected) { 
-		 ESS_LOG_WARNING("IAlembicParticlesExt::SetParticleSelectedByIndex not implmented.");
-	}
-	virtual void SetParticleSelectedByBornIndex(int id, bool selected) {
-		ESS_LOG_WARNING("IAlembicParticlesExt::SetParticleSelectedByBornIndex not implmented.");
-	}
-	virtual bool GetParticleSelected() { 
-		ESS_LOG_WARNING("IAlembicParticlesExt::GetParticleSelected not implmented.");
-		return true; 
-	}
-	virtual void SetParticleSelected(bool selected) {
-		ESS_LOG_WARNING("IAlembicParticlesExt::SetParticleSelected not implmented.");
-	}
+	virtual bool GetParticleSelectedByIndex(int index);
+	virtual bool GetParticleSelectedByBornIndex(int id);
+	virtual void SetParticleSelectedByIndex(int index, bool selected);
+	virtual void SetParticleSelectedByBornIndex(int id, bool selected);
+	virtual bool GetParticleSelected();
+	virtual void SetParticleSelected(bool selected);
 
 
 	// Implemented by the Plug-In.
@@ -542,29 +344,12 @@ public:
 	//			particle index in the particle group
 	//		Mesh* shape
 	//			shape of the particle
-	virtual Mesh* GetParticleShapeByIndex(int index) { 
-		ESS_LOG_WARNING("IAlembicParticlesExt::GetParticleShapeByIndex not implmented.");
-		return NULL; 
-	}
-	virtual Mesh* GetParticleShapeByBornIndex(int id) { 
-		ESS_LOG_WARNING("IAlembicParticlesExt::GetParticleShapeByBornIndex not implmented.");
-		return NULL; 
-	}
-	virtual void SetParticleShapeByIndex(int index, Mesh* shape) {
-		ESS_LOG_WARNING("IAlembicParticlesExt::SetParticleShapeByIndex not implmented.");
-	}
-	virtual void SetParticleShapeByBornIndex(int id, Mesh* shape) {
-		ESS_LOG_WARNING("IAlembicParticlesExt::SetParticleShapeByBornIndex not implmented.");
-	}
-	virtual Mesh* GetParticleShape() { 
-		ESS_LOG_WARNING("IAlembicParticlesExt::GetParticleShape not implmented.");
-		return NULL; 
-	}
-	virtual void SetParticleShape(Mesh* shape) {
-		ESS_LOG_WARNING("IAlembicParticlesExt::SetParticleShape not implmented.");
-	}
+	virtual Mesh* GetParticleShapeByIndex(int index);
+	virtual Mesh* GetParticleShapeByBornIndex(int id);
+	virtual void SetParticleShapeByIndex(int index, Mesh* shape);
+	virtual void SetParticleShapeByBornIndex(int id, Mesh* shape);
+	virtual Mesh* GetParticleShape();
+	virtual void SetParticleShape(Mesh* shape);
 	// set the same shape for all particles
-	virtual void SetGlobalParticleShape(Mesh* shape) {
-		ESS_LOG_WARNING("IAlembicParticlesExt::SetGlobalParticleShape not implmented.");
-	}
+	virtual void SetGlobalParticleShape(Mesh* shape);
 };
