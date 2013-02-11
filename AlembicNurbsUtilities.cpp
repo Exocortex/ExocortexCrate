@@ -182,6 +182,8 @@ bool ModifyNurbs(Object* pObj, Abc::P3fArraySamplePtr pCurvePos, Abc::Int32Array
       offset += nbVertices;
    }
 
+   //pObj->PointsWereChanged();
+
    return true;
 }
 
