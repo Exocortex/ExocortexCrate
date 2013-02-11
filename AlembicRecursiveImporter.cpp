@@ -7,6 +7,7 @@
 #include "AlembicXformController.h"
 #include "AlembicCameraUtilities.h"
 #include "AlembicLightUtilities.h"
+#include "AlembicNurbsUtilities.h"
 #include "AlembicParticles.h"
 #include "SceneEnumProc.h"
 #include "AlembicDefinitions.h"
@@ -32,7 +33,7 @@ int createAlembicObject(AbcG::IObject& iObj, INode **pMaxNode, alembic_importopt
 		ESS_LOG_INFO( "AlembicImport_PolyMesh: " << iObj.getFullName() );
 		ret = AlembicImport_PolyMesh(file, iObj, options, pMaxNode); 
 	}
-	else if (AbcG::ICamera::matches(iObj.getMetaData())) // Camera
+    else if (AbcG::ICamera::matches(iObj.getMetaData())) // Camera
 	{
 		ESS_LOG_INFO( "AlembicImport_Camera: " << iObj.getFullName() );
 		ret = AlembicImport_Camera(file, iObj, options, pMaxNode);
@@ -42,10 +43,16 @@ int createAlembicObject(AbcG::IObject& iObj, INode **pMaxNode, alembic_importopt
 		ESS_LOG_INFO( "AlembicImport_Points: " << iObj.getFullName() );
 		ret = AlembicImport_Points(file, iObj, options, pMaxNode);
 	}
-	else if (AbcG::ICurves::matches(iObj.getMetaData())) // Curves
+    else if (AbcG::ICurves::matches(iObj.getMetaData())) // Curves
 	{
-		ESS_LOG_INFO( "AlembicImport_Shape: " << iObj.getFullName() );
-		ret = AlembicImport_Shape(file, iObj, options, pMaxNode);
+       if(options.loadCurvesAsNurbs){
+         ESS_LOG_INFO( "AlembicImport_Nurbs: " << iObj.getFullName() );
+         ret = AlembicImport_NURBS(file, iObj, options, pMaxNode);
+       }
+       else{
+         ESS_LOG_INFO( "AlembicImport_Shape: " << iObj.getFullName() );
+         ret = AlembicImport_Shape(file, iObj, options, pMaxNode);
+       }
 	}
 	else if (AbcG::ILight::matches(iObj.getMetaData())) // Light
 	{

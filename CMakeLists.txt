@@ -97,7 +97,7 @@ IF( WIN32 )
 	ENDIF()	
 ENDIF()
 
-SET( 3DSMAX_LIBRARIES core geom gfx maxutil mesh paramblk2 mnmath poly ParticleFlow particle maxscrpt ) 
+SET( 3DSMAX_LIBRARIES core geom gfx maxutil mesh paramblk2 mnmath poly ParticleFlow particle maxscrpt edmodel) 
 
 set( Sources ${Sources} ${BASE_DIR}/Alembic.rc )
 

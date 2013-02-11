@@ -3,6 +3,7 @@
 #include "AlembicDefinitions.h"
 #include "AlembicNames.h" 
 #include "AlembicCameraModifier.h"
+#include "AlembicNurbsModifier.h"
 
 HINSTANCE hInstance;
 
@@ -40,7 +41,8 @@ ClassDesc2** getClassDescs( int& numClassDescs ) {
 		GetAlembicSplineGeomModifierClassDesc(),
 		GetAlembicSplineTopoModifierClassDesc(),
 		GetAlembicFloatControllerClassDesc(),
-      GetAlembicCameraModifierClassDesc()
+        GetAlembicCameraModifierClassDesc(),
+        GetAlembicNurbsModifierClassDesc()
 	};
 	numClassDescs = sizeof( s_classDescs ) / sizeof( ClassDescPtr );
 	return s_classDescs;

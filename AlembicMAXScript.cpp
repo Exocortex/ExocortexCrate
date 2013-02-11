@@ -474,6 +474,9 @@ int ExocortexAlembicStaticInterface_ExocortexAlembicImportJobs( CONST_2013 MCHAR
             else if(boost::iequals(valuePair[0], "loadTimeControl")){
                options.loadTimeControl = parseBool(valuePair[1]);
             }
+            else if(boost::iequals(valuePair[0], "loadCurvesAsNURBS")){
+               options.loadCurvesAsNurbs = parseBool(valuePair[1]);
+            }
 			else
 			{
 				ESS_LOG_INFO("Skipping invalid token: "<<tokens[j]);
