@@ -19,6 +19,85 @@ using namespace MATH;
 #include "CommonMeshUtilities.h"
 #include "CommonUtilities.h"
 
+#include <set>
+
+
+ESS_CALLBACK_START(alembic_get_nodes_Init,CRef&)
+	Context ctxt( in_ctxt );
+	Command oCmd;
+	oCmd = ctxt.GetSource();
+	oCmd.PutDescription(L"");
+	oCmd.EnableReturnValue(true);
+
+	return CStatus::OK;
+ESS_CALLBACK_END
+
+ESS_CALLBACK_START(alembic_get_nodes_Execute, CRef&)
+
+   Context ctxt( in_ctxt );
+   CString search = L"*.*.*.alembic_*,*.*.*.ABC_*";
+   search += L",*.*.alembic_*,*.*.ABC_*";
+   search += L",*.*.cls.Texture_Coordinates_AUTO.*.alembic*";
+   
+   CComAPIHandler collection;
+   collection.CreateInstance(L"XSI.Collection");
+   collection.PutProperty(L"Unique", true);
+   CValue colReturnVal;
+   collection.Call(L"SetAsText", colReturnVal, search);
+   std::set<CRef> refs;//refs to all alembic nodes (nodes that have alembic operators or alembic ice nodes as children)
+   for(LONG i=0;i<(LONG)collection.GetProperty(L"Count");i++)
+   {
+      CValueArray apiArgs;
+      apiArgs.Add(i);
+      collection.Invoke( L"Item", CComAPIHandler::PropertyGet, colReturnVal, apiArgs );
+      CRef ref = colReturnVal;
+      if(!ref.IsValid())
+         continue;
+      ICETree tree(ref);
+      if(tree.IsValid())
+      {
+         CRefArray compounds = tree.GetCompoundNodes();
+         for(LONG j=0;j<compounds.GetCount();j++)
+         {
+            ICECompoundNode compound(compounds[j]);
+            if(compound.GetFullName() == tree.GetFullName()){
+               continue;
+            }
+            if(compound.GetName().GetSubString(0,8).IsEqualNoCase(L"abc load")){
+               //refs.Add(compound.GetRef());
+               refs.insert(compound.GetParent3DObject().GetRef());
+            }
+         }
+         continue;
+      }
+      CustomOperator op(ref);
+      if(op.IsValid())
+      {
+         //refs.Add(ref);
+         refs.insert(op.GetParent3DObject().GetRef());
+         continue;
+      }
+   }
+
+   CValueArray strVals;
+   for(std::set<CRef>::iterator it=refs.begin(); it != refs.end(); it++)
+   {
+      X3DObject xObj(*it);
+      CString name = xObj.GetName();
+      //CString fullname = xObj.GetFullName();
+      CString modelname = xObj.GetModel().GetName();
+      //ESS_LOG_WARNING("name: "<<fullname.GetAsciiString());
+      strVals.Add(modelname+"."+fullname);
+   }
+
+   CValue returnVal(strVals);
+   ctxt.PutAttribute(L"ReturnValue", returnVal);
+
+   return CStatus::OK;
+ESS_CALLBACK_END
+
+
+
 
 ESS_CALLBACK_START(alembic_path_manager_Init,CRef&)
 	Context ctxt( in_ctxt );
@@ -54,7 +133,7 @@ ESS_CALLBACK_START(alembic_path_manager_Execute, CRef&)
    collection.PutProperty(L"Unique",true);
    CValue returnVal;
    collection.Call(L"SetAsText",returnVal,search);
-   CRefArray refs;
+   CRefArray refs;//an array of refs to all alembic operators and ice nodes
    for(LONG i=0;i<(LONG)collection.GetProperty(L"Count");i++)
    {
       CValueArray apiArgs;
@@ -85,6 +164,8 @@ ESS_CALLBACK_START(alembic_path_manager_Execute, CRef&)
       }
    }
 
+
+   //build a map of all identifiers and a map of all paths
    stringMap pathMap;
    stringMap identifierMap;
    stringMap * maps[4];

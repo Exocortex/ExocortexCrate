@@ -47,6 +47,7 @@ SICALLBACK XSILoadPlugin( PluginRegistrar& in_reg )
 		in_reg.RegisterCommand(L"alembic_create_item",L"alembic_create_item");
 		in_reg.RegisterCommand(L"alembic_path_manager",L"alembic_path_manager");
 		in_reg.RegisterCommand(L"alembic_profile_stats",L"alembic_profile_stats");
+        in_reg.RegisterCommand(L"alembic_get_nodes",L"alembic_get_nodes");
 
 		in_reg.RegisterOperator(L"alembic_xform");
 		in_reg.RegisterOperator(L"alembic_camera");
