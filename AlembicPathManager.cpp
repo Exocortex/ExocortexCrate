@@ -23,7 +23,6 @@ using namespace MATH;
 #include <map>
 #include <string>
 
-
 ESS_CALLBACK_START(alembic_get_nodes_Init,CRef&)
 	Context ctxt( in_ctxt );
 	Command oCmd;
@@ -166,8 +165,8 @@ ESS_CALLBACK_START(alembic_replace_path_Execute, CRef&)
       }
    }
 
-   ESS_LOG_WARNING("oldPath: "<<oldPath.GetAsciiString());
-   ESS_LOG_WARNING("newPath: "<<newPath.GetAsciiString());
+  // ESS_LOG_WARNING("oldPath: "<<oldPath.GetAsciiString());
+  // ESS_LOG_WARNING("newPath: "<<newPath.GetAsciiString());
 
    CString search = L"*.*.*.alembic_*,*.*.*.ABC_*";
    search += L",*.*.alembic_*,*.*.ABC_*";
@@ -221,9 +220,13 @@ ESS_CALLBACK_START(alembic_replace_path_Execute, CRef&)
       {
          Parameter path = ICENodeInputPort(tree.GetInputPorts().GetItem(L"path")).GetParameters()[0];
          CString pathStr = path.GetValue();
-         ESS_LOG_WARNING("path: "<<pathStr.GetAsciiString());
+         //ESS_LOG_WARNING("path: "<<pathStr.GetAsciiString());
          if( pathStr.IsEqualNoCase(oldPath) ){
             path.PutValue(newPath);
+
+            delRefArchive(oldPath);
+            addRefArchive(newPath);
+
             nReplaceCount++;
          }
       }
@@ -233,9 +236,13 @@ ESS_CALLBACK_START(alembic_replace_path_Execute, CRef&)
          if(op.IsValid())
          {
             CString pathStr = op.GetParameterValue(L"path");
-            ESS_LOG_WARNING("path: "<<pathStr.GetAsciiString());
+            //ESS_LOG_WARNING("path: "<<pathStr.GetAsciiString());
             if( pathStr.IsEqualNoCase(oldPath) ){
                op.PutParameterValue(L"path", newPath);
+
+               delRefArchive(oldPath);
+               addRefArchive(newPath);
+
                nReplaceCount++;
             }
          }
