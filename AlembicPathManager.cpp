@@ -20,6 +20,8 @@ using namespace MATH;
 #include "CommonUtilities.h"
 
 #include <set>
+#include <map>
+#include <string>
 
 
 ESS_CALLBACK_START(alembic_get_nodes_Init,CRef&)
@@ -88,6 +90,37 @@ ESS_CALLBACK_START(alembic_get_nodes_Execute, CRef&)
       CString modelname = xObj.GetModel().GetName();
       //ESS_LOG_WARNING("name: "<<fullname.GetAsciiString());
       strVals.Add(modelname+"."+name);
+   }
+
+   CValue returnVal(strVals);
+   ctxt.PutAttribute(L"ReturnValue", returnVal);
+
+   return CStatus::OK;
+ESS_CALLBACK_END
+
+
+ESS_CALLBACK_START(alembic_get_paths_Init,CRef&)
+	Context ctxt( in_ctxt );
+	Command oCmd;
+	oCmd = ctxt.GetSource();
+	oCmd.PutDescription(L"");
+	oCmd.EnableReturnValue(true);
+
+	return CStatus::OK;
+ESS_CALLBACK_END
+
+ESS_CALLBACK_START(alembic_get_paths_Execute, CRef&)
+
+   Context ctxt( in_ctxt );
+
+   std::vector<std::string> paths;
+   getPaths(paths);
+
+   CValueArray strVals;
+
+   for(int i=0; i<paths.size(); i++)
+   {
+      strVals.Add(paths[i].c_str());
    }
 
    CValue returnVal(strVals);
