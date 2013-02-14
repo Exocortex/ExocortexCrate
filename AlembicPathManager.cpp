@@ -87,7 +87,7 @@ ESS_CALLBACK_START(alembic_get_nodes_Execute, CRef&)
       //CString fullname = xObj.GetFullName();
       CString modelname = xObj.GetModel().GetName();
       //ESS_LOG_WARNING("name: "<<fullname.GetAsciiString());
-      strVals.Add(modelname+"."+fullname);
+      strVals.Add(modelname+"."+name);
    }
 
    CValue returnVal(strVals);
@@ -97,6 +97,122 @@ ESS_CALLBACK_START(alembic_get_nodes_Execute, CRef&)
 ESS_CALLBACK_END
 
 
+
+ESS_CALLBACK_START(alembic_replace_path_Init,CRef&)
+	Context ctxt( in_ctxt );
+	Command oCmd;
+	oCmd = ctxt.GetSource();
+	oCmd.PutDescription(L"");
+	oCmd.EnableReturnValue(true);
+
+	ArgumentArray oArgs;
+	oArgs = oCmd.GetArguments();
+    oArgs.Add(L"OldPath");
+	oArgs.Add(L"NewPath");
+
+	return CStatus::OK;
+ESS_CALLBACK_END
+
+ESS_CALLBACK_START(alembic_replace_path_Execute, CRef&)
+
+   Context ctxt( in_ctxt );
+   CValueArray args = ctxt.GetAttribute(L"Arguments");
+   CString ooldPath = args[0];
+   CString newPath = args[1];
+   
+   CString oldPath;
+  
+   //Assume that if we find a single back slash, it was not intended to be the escape character
+   for(unsigned i=0; i<ooldPath.Length(); i++){
+      char c = ooldPath.GetAt(i);
+      if( c == '\n' || c == '\t' || c == '\\' || c == '\b' || c == '\r' || c == '\f'){
+         oldPath += '\\';
+      }
+      else{
+         oldPath += c;
+      }
+   }
+
+   ESS_LOG_WARNING("oldPath: "<<oldPath.GetAsciiString());
+   ESS_LOG_WARNING("newPath: "<<newPath.GetAsciiString());
+
+   CString search = L"*.*.*.alembic_*,*.*.*.ABC_*";
+   search += L",*.*.alembic_*,*.*.ABC_*";
+   search += L",*.*.cls.Texture_Coordinates_AUTO.*.alembic*";
+   
+   CComAPIHandler collection;
+   collection.CreateInstance(L"XSI.Collection");
+   collection.PutProperty(L"Unique",true);
+   CValue returnVal;
+   collection.Call(L"SetAsText",returnVal,search);
+   CRefArray refs;//an array of refs to all alembic operators and ice nodes
+   for(LONG i=0;i<(LONG)collection.GetProperty(L"Count");i++)
+   {
+      CValueArray apiArgs;
+      apiArgs.Add(i);
+      collection.Invoke( L"Item", CComAPIHandler::PropertyGet, returnVal, apiArgs );
+      CRef ref = returnVal;
+      if(!ref.IsValid())
+         continue;
+      ICETree tree(ref);
+      if(tree.IsValid())
+      {
+         CRefArray compounds = tree.GetCompoundNodes();
+         for(LONG j=0;j<compounds.GetCount();j++)
+         {
+            ICECompoundNode compound(compounds[j]);
+            if(compound.GetFullName() == tree.GetFullName())
+               continue;
+            if(compound.GetName().GetSubString(0,8).IsEqualNoCase(L"abc load"))
+               refs.Add(compound.GetRef());
+         }
+         continue;
+      }
+      CustomOperator op(ref);
+      if(op.IsValid())
+      {
+         refs.Add(ref);
+         continue;
+      }
+   }
+
+
+
+   int nReplaceCount = 0;
+
+   for(LONG i=0;i<refs.GetCount();i++)
+   {
+      std::string values[4];
+      ICECompoundNode tree(refs[i]);
+      if(tree.IsValid())
+      {
+         Parameter path = ICENodeInputPort(tree.GetInputPorts().GetItem(L"path")).GetParameters()[0];
+         CString pathStr = path.GetValue();
+         ESS_LOG_WARNING("path: "<<pathStr.GetAsciiString());
+         if( pathStr.IsEqualNoCase(oldPath) ){
+            path.PutValue(newPath);
+            nReplaceCount++;
+         }
+      }
+      else
+      {
+         CustomOperator op(refs[i]);
+         if(op.IsValid())
+         {
+            CString pathStr = op.GetParameterValue(L"path");
+            ESS_LOG_WARNING("path: "<<pathStr.GetAsciiString());
+            if( pathStr.IsEqualNoCase(oldPath) ){
+               op.PutParameterValue(L"path", newPath);
+               nReplaceCount++;
+            }
+         }
+      }
+   }
+
+   ESS_LOG_WARNING(nReplaceCount<<" paths replaced.");
+
+   return CStatus::OK;
+ESS_CALLBACK_END
 
 
 ESS_CALLBACK_START(alembic_path_manager_Init,CRef&)
