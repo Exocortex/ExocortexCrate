@@ -1248,6 +1248,10 @@ ESS_CALLBACK_START( alembic_crvlist_topo_Update, CRef& )
       return CStatus::Fail;
    }
 
+   if(!pKnotVec){
+      ESS_LOG_WARNING("Using default knot vector");
+   }
+
    CVector3Array pos((LONG)curvePos->size());
 
    CNurbsCurveDataArray curveDatas;
