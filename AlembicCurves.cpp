@@ -1236,34 +1236,17 @@ ESS_CALLBACK_START( alembic_crvlist_topo_Update, CRef& )
   AbcG::ICurvesSchema::Sample curveSample;
    obj.getSchema().get(curveSample,sampleInfo.floorIndex);
 
-   // check for valid curve types...!
-   if(curveSample.getType() !=AbcG::kLinear &&
-      curveSample.getType() !=AbcG::kCubic)
-   {
-      Application().LogMessage(L"[ExocortexAlembic] Skipping curve '"+identifier+L"', invalid curve type.",siWarningMsg);
-      return CStatus::Fail;
-   } 
-
    // prepare the curves 
    Abc::P3fArraySamplePtr curvePos = curveSample.getPositions();
    Abc::Int32ArraySamplePtr curveNbVertices = curveSample.getCurvesNumVertices();
 
-   Abc::FloatArraySamplePtr pKnotVec;
+   Abc::FloatArraySamplePtr pKnotVec = getKnotVector(obj);
+   Abc::UInt16ArraySamplePtr pOrders = getCurveOrders(obj);
 
-   if ( obj.getSchema().getArbGeomParams() && obj.getSchema().getArbGeomParams().getPropertyHeader( ".knot_vector" ) != NULL ){
-      Abc::IFloatArrayProperty knotProp = Abc::IFloatArrayProperty( obj.getSchema().getArbGeomParams(), ".knot_vector" );
-      if(knotProp.valid() && knotProp.getNumSamples() != 0){
-         pKnotVec = knotProp.getValue(0);
-      }
+   if( !validateCurveData( curvePos, curveNbVertices, pOrders, pKnotVec, curveSample.getType() ) ){
+      Application().LogMessage(L"[ExocortexAlembic] Skipping curve '"+identifier+L"', invalid curve type.",siWarningMsg);
+      return CStatus::Fail;
    }
-
-   const int nOrder = 4;
-   const int numCurves = (int)curveNbVertices->size();
-   const int numControl = (int)curvePos->size();
-   const int abcTotalKnots = numControl + numCurves * (nOrder - 2) ;
-
-   bool bUseDefaultKnotVec = !(pKnotVec && pKnotVec->size() == abcTotalKnots);
-   //bUseDefaultKnotVec = true;
 
    CVector3Array pos((LONG)curvePos->size());
 
@@ -1280,11 +1263,18 @@ ESS_CALLBACK_START( alembic_crvlist_topo_Update, CRef& )
 		  continue;
 	  }
 
+      int nDegree = getCurveOrder((int)j, pOrders, curveSample.getType()) - 1;
+
+      if( nDegree != 1 && nDegree != 3 ){
+         Application().LogMessage(L"[ExocortexAlembic] Skipping curve with unsupported degree.");
+         continue;
+      }
+
       curveData.m_aControlPoints.Resize(nbVertices);
       curveData.m_aKnots.Resize(nbVertices);
       curveData.m_siParameterization = siUniformParameterization;
       curveData.m_bClosed = curveSample.getWrap() ==AbcG::kPeriodic;
-      curveData.m_lDegree = curveSample.getType() ==AbcG::kLinear ? 1 : 3;
+      curveData.m_lDegree = nDegree;//curveSample.getType() ==AbcG::kLinear ? 1 : 3;
 
       for(LONG k=0; k<nbVertices; k++)
       {
@@ -1297,10 +1287,10 @@ ESS_CALLBACK_START( alembic_crvlist_topo_Update, CRef& )
       }
 
       
-      if(!bUseDefaultKnotVec){
+      if(pKnotVec){
 
-         curveData.m_aKnots.Resize(nbVertices + 2);
-         for(LONG k=0; k<curveData.m_aKnots.GetCount(); k++) {
+         curveData.m_aKnots.Resize(nbVertices + nDegree - 1);
+         for(LONG k=0; k<curveData.m_aKnots.GetCount() && k<pKnotVec->size(); k++) {
             curveData.m_aKnots[k] = pKnotVec->get()[knotOffset + k];
          }
          knotOffset += nbVertices + 2;
