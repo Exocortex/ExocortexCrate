@@ -46,7 +46,9 @@ bool LoadNurbs(NURBSSet& nset, Abc::P3fArraySamplePtr pCurvePos, Abc::Int32Array
       return false;
    }
 
-
+   if(!pKnotVec){
+      ESS_LOG_WARNING("Using default knot vector");
+   }
    //bDefaultKnot = true;
 
    size_t offset = 0;
