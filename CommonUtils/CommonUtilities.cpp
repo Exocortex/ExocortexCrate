@@ -807,6 +807,8 @@ Abc::ICompoundProperty getArbGeomParams(const AbcG::IObject& iObj, AbcA::TimeSam
 
 Abc::FloatArraySamplePtr getKnotVector(AbcG::ICurves& obj)
 {
+   ESS_PROFILE_FUNC();
+
    Abc::ICompoundProperty arbGeom = obj.getSchema().getArbGeomParams();
 
    if(!arbGeom.valid()){
@@ -831,6 +833,8 @@ Abc::FloatArraySamplePtr getKnotVector(AbcG::ICurves& obj)
 
 Abc::UInt16ArraySamplePtr getCurveOrders(AbcG::ICurves& obj)
 {
+   ESS_PROFILE_FUNC();
+
    Abc::ICompoundProperty arbGeom = obj.getSchema().getArbGeomParams();
 
    if(!arbGeom.valid()){
@@ -851,6 +855,8 @@ Abc::UInt16ArraySamplePtr getCurveOrders(AbcG::ICurves& obj)
 
 bool validateCurveData( Abc::P3fArraySamplePtr pCurvePos, Abc::Int32ArraySamplePtr pCurveNbVertices, Abc::UInt16ArraySamplePtr pOrders, Abc::FloatArraySamplePtr pKnotVec, AbcG::CurveType type )
 {
+   ESS_PROFILE_FUNC();
+
    int nDefaultOrder = 4;
    const int numCurves = (int)pCurveNbVertices->size();
    const int numControl = (int)pCurvePos->size();
