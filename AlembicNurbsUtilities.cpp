@@ -38,38 +38,14 @@ bool isAlembicNurbsCurveAnimated( AbcG::IObject *pIObj )
 	return false;
 }
 
-bool LoadNurbs(NURBSSet& nset, Abc::P3fArraySamplePtr pCurvePos, Abc::Int32ArraySamplePtr pCurveNbVertices, Abc::FloatArraySamplePtr pKnotVec, AbcG::CurveType type, AbcG::CurvePeriodicity wrap, TimeValue time, bool bLoadPositions=true )
+bool LoadNurbs(NURBSSet& nset, Abc::P3fArraySamplePtr pCurvePos, Abc::Int32ArraySamplePtr pCurveNbVertices, Abc::UInt16ArraySamplePtr pOrders, Abc::FloatArraySamplePtr pKnotVec, AbcG::CurveType type, AbcG::CurvePeriodicity wrap, TimeValue time, bool bLoadPositions=true )
 {
    ESS_PROFILE_FUNC();
-   const int nOrder = 4;
-   const int numCurves = (int)pCurveNbVertices->size();
-   const int numControl = (int)pCurvePos->size();
 
-   const int abcTotalKnots = numControl + numCurves * (nOrder - 2) ;
-   const int maxTotalKnots = numControl + numCurves * nOrder;
-
-   //ESS_LOG_WARNING("abcTotalKnots: "<<abcTotalKnots);
-   //ESS_LOG_WARNING("maxTotalKnots: "<<maxTotalKnots);
-   //ESS_LOG_WARNING("knotVecSize: "<<pKnotVec->size());
-
-   bool bDefaultKnot = false;
-   if(pKnotVec){
-      if( abcTotalKnots == pKnotVec->size() ){
-         
-      }
-      else if( maxTotalKnots == pKnotVec->size() ){
-         ESS_LOG_WARNING("3DS Max knot vector format not supported. Using Default knot vector.");
-         bDefaultKnot = true;
-      }
-      else{
-         ESS_LOG_WARNING("Knot vector has the wrong size. Using Default knot vector.");
-         bDefaultKnot = true;      
-      }
+   if( !validateCurveData( pCurvePos, pCurveNbVertices, pOrders, pKnotVec, type ) ){
+      return false;
    }
-   else{
-      ESS_LOG_WARNING("Knot vector not found. Using Default knot vector.");
-      bDefaultKnot = true;
-   }
+
 
    //bDefaultKnot = true;
 
@@ -84,16 +60,23 @@ bool LoadNurbs(NURBSSet& nset, Abc::P3fArraySamplePtr pCurvePos, Abc::Int32Array
 
       NURBSCVCurve *c = new NURBSCVCurve();
       c->SetNumCVs(nbVertices);
+      int nOrder = getCurveOrder((int)j, pOrders, type);
       c->SetOrder(nOrder);
-
+      
       const int nNumMaxKnots = nbVertices + nOrder;
       const int nNumAbcKnots = nbVertices + nOrder - 2;
 
       c->SetNumKnots(nNumMaxKnots);
       //c->SetName("");
 
-      if(bDefaultKnot){
-         
+      if(pKnotVec){
+         c->SetKnot(0, pKnotVec->get()[ abcKnotOffset ]);
+         c->SetKnot(nNumMaxKnots-1, pKnotVec->get()[abcKnotOffset + nNumAbcKnots - 1]);
+         for(int i=0; i<nNumAbcKnots && i<pKnotVec->size(); i++){
+            c->SetKnot(i+1, pKnotVec->get()[abcKnotOffset + i]);
+         }
+      }
+      else{
          // based on curve type, we do this for linear or closed cubic curves
          if(type == AbcG::kLinear)
          { 
@@ -122,13 +105,6 @@ bool LoadNurbs(NURBSSet& nset, Abc::P3fArraySamplePtr pCurvePos, Abc::Int32Array
             c->SetKnot(nbVertices+1, nbVertices-3);
             c->SetKnot(nbVertices+2, nbVertices-3);
             c->SetKnot(nbVertices+3, nbVertices-3);
-         }
-      }
-      else{
-         c->SetKnot(0, pKnotVec->get()[ abcKnotOffset ]);
-         c->SetKnot(nNumMaxKnots-1, pKnotVec->get()[abcKnotOffset + nNumAbcKnots - 1]);
-         for(int i=0; i<nNumAbcKnots; i++){
-            c->SetKnot(i+1, pKnotVec->get()[abcKnotOffset + i]);
          }
       }
 
@@ -279,20 +255,14 @@ void AlembicImport_LoadNURBS_Internal(alembic_NURBSload_options &options)
          Abc::P3fArraySamplePtr pCurvePos = curveSample.getPositions();
          Abc::Int32ArraySamplePtr pCurveNbVertices = curveSample.getCurvesNumVertices();
 
-         Abc::FloatArraySamplePtr pKnotVec;
-
-         if ( obj.getSchema().getArbGeomParams() && obj.getSchema().getArbGeomParams().getPropertyHeader( ".knot_vector" ) != NULL ){
-            Abc::IFloatArrayProperty knotProp = Abc::IFloatArrayProperty( obj.getSchema().getArbGeomParams(), ".knot_vector" );
-            if(knotProp.valid() && knotProp.getNumSamples() != 0){
-               pKnotVec = knotProp.getValue(0);
-            }
-         }
+         Abc::FloatArraySamplePtr pKnotVec = getKnotVector(obj);
+         Abc::UInt16ArraySamplePtr pOrders = getCurveOrders(obj);
 
          bool bDynamicTopo = isAlembicNurbsCurveTopoDynamic(options.pIObj); 
 
          if(bDynamicTopo)
          {
-            LoadNurbs(nset, pCurvePos, pCurveNbVertices, pKnotVec, /*AbcG::kLinear, AbcG::kNonPeriodic*/ curveSample.getType(), curveSample.getWrap(), nTicks);
+            LoadNurbs(nset, pCurvePos, pCurveNbVertices, pOrders, pKnotVec, /*AbcG::kLinear, AbcG::kNonPeriodic*/ curveSample.getType(), curveSample.getWrap(), nTicks);
 
             Matrix3 mat(1);
             Object *newObject = CreateNURBSObject((IObjParam*)GetCOREInterface(), &nset, mat);
@@ -353,18 +323,12 @@ int AlembicImport_NURBS(const std::string &path, AbcG::IObject& iObj, alembic_im
       Abc::P3fArraySamplePtr pCurvePos = curveSample.getPositions();
       Abc::Int32ArraySamplePtr pCurveNbVertices = curveSample.getCurvesNumVertices();
 
-      Abc::FloatArraySamplePtr pKnotVec;
-
-      if ( objCurves.getSchema().getArbGeomParams().getPropertyHeader( ".knot_vector" ) != NULL ){
-         Abc::IFloatArrayProperty knotProp = Abc::IFloatArrayProperty( objCurves.getSchema().getArbGeomParams(), ".knot_vector" );
-         if(knotProp.valid() && knotProp.getNumSamples() != 0){
-            pKnotVec = knotProp.getValue(0);
-         }
-      }
+      Abc::FloatArraySamplePtr pKnotVec = getKnotVector(objCurves);
+      Abc::UInt16ArraySamplePtr pOrders = getCurveOrders(objCurves);
 
       //if topology is constant, we read the knot vector once.
       //We then the Object::SetPoint method to for control point animation
-      LoadNurbs(nset, pCurvePos, pCurveNbVertices, pKnotVec, /*AbcG::kLinear, AbcG::kNonPeriodic*/ curveSample.getType(), curveSample.getWrap(), 0, false);
+      LoadNurbs(nset, pCurvePos, pCurveNbVertices, pOrders, pKnotVec, /*AbcG::kLinear, AbcG::kNonPeriodic*/ curveSample.getType(), curveSample.getWrap(), 0, false);
    }
 
 

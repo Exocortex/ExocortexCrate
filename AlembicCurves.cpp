@@ -95,6 +95,7 @@ bool AlembicCurves::Save(double time, bool bLastFrame)
 	std::vector<AbcA::int32_t> nbVertices;
     std::vector<Point3> vertices;
     std::vector<float> knotVector;
+    std::vector<Abc::uint16_t> orders;
 
     if(obj->ClassID() == EDITABLE_SURF_CLASS_ID){
 
@@ -124,10 +125,7 @@ bool AlembicCurves::Save(double time, bool bLastFrame)
 		     NURBSKnotTab knots;
              pNurbsCurve->GetNURBSData(ticks, degree, numCVs, cvs, numKnots, knots);
 
-             if(degree != 3){
-                ESS_LOG_WARNING("Only degree 3 NURBS curves are supported.");
-                continue;
-             }
+             orders.push_back(degree+1);
 
              const int cvsCount = cvs.Count();
              const int knotCount = knots.Count();
@@ -278,11 +276,16 @@ bool AlembicCurves::Save(double time, bool bLastFrame)
         }
     }
 
-    if(knotVector.size() > 0){
+    if(knotVector.size() > 0 && orders.size() > 0){
        if(!mKnotVectorProperty.valid()){
           mKnotVectorProperty = Abc::OFloatArrayProperty(mCurvesSchema.getArbGeomParams(), ".knot_vector", mCurvesSchema.getMetaData(), mJob->GetAnimatedTs() );
        }
        mKnotVectorProperty.set(Abc::FloatArraySample(knotVector));
+
+       if(!mOrdersProperty.valid()){
+          mOrdersProperty = Abc::OUInt16ArrayProperty(mCurvesSchema.getArbGeomParams(), ".orders", mCurvesSchema.getMetaData(), mJob->GetAnimatedTs() );
+       }
+       mOrdersProperty.set(Abc::UInt16ArraySample(orders));
     }
 
     // store the bbox

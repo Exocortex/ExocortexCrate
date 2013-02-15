@@ -14,6 +14,8 @@ private:
 
    Abc::OFloatArrayProperty mKnotVectorProperty;
 
+   Abc::OUInt16ArrayProperty mOrdersProperty;
+
    //Abc::OV3fArrayProperty mVelocityProperty;
    //Abc::OFloatArrayProperty mRadiusProperty;
    //Abc::OC4fArrayProperty mColorProperty;
