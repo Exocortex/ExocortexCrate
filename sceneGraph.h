@@ -25,6 +25,8 @@ SceneNodeXSIPtr buildCommonSceneGraph(XSI::CRef xsiRoot, int& nNumNodes, bool bU
 bool hasExtractableTransform( SceneNode::nodeTypeE type );
 
 
+XSI_XformTypes::xte getXformType(AbcG::IXform& obj);
+
 class XSIProgressBar: public CommonProgressBar
 {
    XSI::ProgressBar prog;

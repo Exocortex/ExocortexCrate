@@ -274,3 +274,24 @@ void XSIProgressBar::setCaption(std::string& caption)
 {
    prog.PutCaption(CString(caption.c_str()));
 }
+
+
+XSI_XformTypes::xte getXformType(AbcG::IXform& obj)
+{
+   Abc::ICompoundProperty arbGeom = obj.getSchema().getArbGeomParams();
+
+   if(!arbGeom.valid()){
+      return XSI_XformTypes::UNKNOWN;
+   }
+
+   if ( arbGeom.getPropertyHeader( ".xsiNodeType" ) != NULL ){
+
+      Abc::IUcharProperty types = Abc::IUcharProperty( arbGeom, ".xsiNodeType" );
+      if(types.valid() && types.getNumSamples() != 0){
+         return (XSI_XformTypes::xte)types.getValue(0);
+      }
+   }
+
+   return XSI_XformTypes::UNKNOWN;
+
+}

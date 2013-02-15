@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "AlembicModel.h"
 #include "AlembicXform.h"
+#include "sceneGraph.h"
 
 using namespace XSI;
 using namespace MATH;
@@ -64,6 +65,20 @@ XSI::CStatus AlembicModel::Save(double time)
 
    // store the transform
    SaveXformSample(GetRef(REF_PARENT_GLOBAL_TRANS), GetRef(REF_GLOBAL_TRANS),mXformSchema, mXformSample, time, bTransCache, bGlobalSpace, bFlatten);
+   
+   if(mNumSamples == 0){
+      if(!mXformXSINodeType.valid()){
+         mXformXSINodeType = Abc::OUcharProperty(mXformSchema.getArbGeomParams(), ".xsiNodeType", mXformSchema.getMetaData(), GetJob()->GetAnimatedTs() );
+      }
+
+      if(mExoSceneNode->type == SceneNode::NAMESPACE_TRANSFORM){
+         mXformXSINodeType.set(XSI_XformTypes::XMODEL);
+      }
+      else{
+         mXformXSINodeType.set(XSI_XformTypes::XNULL);
+      }
+   }
+
 
    // set the visibility
    Property visProp;

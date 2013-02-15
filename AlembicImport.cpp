@@ -1203,6 +1203,12 @@ bool createNode(SceneNodeXSI* appNode, SceneNodeAlembicPtr fileNode, const IJobS
 
    if(AbcG::IXform::matches(iObj.getMetaData()))
    {
+      AbcG::IXform xform(iObj, Abc::kWrapExisting);
+      XSI_XformTypes::xte xte = getXformType(xform);
+      if( xte == XSI_XformTypes::UNKNOWN ){//if UNKNOWN, default chosen based on import option
+         xte = jobParams.xformTypes; 
+      }
+
       CRef nodeRef;
       if(attachToExisting){
 	      ESS_PROFILE_SCOPE("attachToExisting");
@@ -1223,9 +1229,23 @@ bool createNode(SceneNodeXSI* appNode, SceneNodeAlembicPtr fileNode, const IJobS
       }
       else{
          X3DObject parentX3DObject(appNode->nodeRef);
-         Null null;
-         parentX3DObject.AddNull(name, null);
-         nodeRef = null.GetRef();
+
+         if( xte == XSI_XformTypes::XMODEL ){
+            CRefArray objects;
+            Model model;
+            parentX3DObject.AddModel(objects, name, model);
+            nodeRef = model.GetRef();
+
+            nameMapAdd(iObj.getFullName().c_str(),model.GetFullName());
+         }
+         else{
+            Null null;
+            parentX3DObject.AddNull(name, null);
+            nodeRef = null.GetRef();
+
+            //we possibly won't need the name map anymore
+            nameMapAdd(iObj.getFullName().c_str(),null.GetFullName());
+         }
 
          if(!nodeRef.IsValid()){
              ESS_LOG_ERROR("Could not create xform "<<iObj.getFullName());
@@ -1233,9 +1253,6 @@ bool createNode(SceneNodeXSI* appNode, SceneNodeAlembicPtr fileNode, const IJobS
          }
 
          returnNode = SceneNodePtr(new SceneNodeXSI(nodeRef));
-
-         //we possibly won't need the name map anymore
-         nameMapAdd(iObj.getFullName().c_str(),null.GetFullName());
       }
 
       // load metadata
@@ -2005,6 +2022,13 @@ ESS_CALLBACK_START(alembic_import_jobs_Execute, CRef&)
       jobParser.skipUnattachedNodes = settings.GetParameterValue(L"skipUnattachedNodes");
       jobParser.replacer = SearchReplace::createReplacer();
       jobParser.enableImportRootSelection = settings.GetParameterValue(L"enableImportRootSelection");
+      const int val = settings.GetParameterValue(L"defaultXformNode");
+      if( val == 0 ){
+         jobParser.xformTypes = XSI_XformTypes::XMODEL;
+      }
+      else if( val == 1){
+         jobParser.xformTypes = XSI_XformTypes::XNULL;
+      }
          
       Application().LogMessage(CString(L"[ExocortexAlembic] Using ReadJob:") + jobParser.buildJobString().c_str());
 
@@ -2255,6 +2279,7 @@ ESS_CALLBACK_START(alembic_import_settings_Define, CRef&)
    oCustomProperty.AddParameter(L"skipUnattachedNodes",CValue::siBool,siPersistable,L"",L"",0,0,1,0,1,oParam);
    oCustomProperty.AddParameter(L"failOnUnsupported",CValue::siBool,siPersistable,L"",L"",0,0,1,0,1,oParam);
    oCustomProperty.AddParameter(L"enableImportRootSelection",CValue::siBool,siPersistable,L"",L"",0,0,1,0,0,oParam);
+   oCustomProperty.AddParameter(L"defaultXformNode",CValue::siInt4,siPersistable,L"",L"",0,0,5,0,5,oParam);
 	return CStatus::OK;
 ESS_CALLBACK_END
 
@@ -2292,6 +2317,14 @@ ESS_CALLBACK_START(alembic_import_settings_DefineLayout, CRef&)
    oLayout.AddItem(L"skipUnattachedNodes", L"Skip nodes that fail to attach");
    oLayout.AddItem(L"failOnUnsupported",L"Fail upon unsupported alembic types");
    oLayout.AddItem(L"enableImportRootSelection",L"Enable Import Root Selection");
+
+   CValueArray items2(4);
+   items[0] = L"Model";
+   items[1] = (LONG) 0l;
+   items[2] = L"Null";
+   items[3] = (LONG) 1l;
+   oLayout.AddEnumControl(L"defaultXformNode", items, L"Default Xform Node");
+
    oLayout.EndGroup();
 
 	return CStatus::OK;

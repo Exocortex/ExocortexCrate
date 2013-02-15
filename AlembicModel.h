@@ -8,6 +8,7 @@ class AlembicModel: public AlembicObject
 private:
   AbcG::OXformSchema mXformSchema;
   AbcG::XformSample mXformSample;
+  AbcG::OUcharProperty mXformXSINodeType;
 public:
 
    AlembicModel(SceneNodePtr eNode, AlembicWriteJob * in_Job, Abc::OObject oParent);
