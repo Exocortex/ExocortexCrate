@@ -109,6 +109,8 @@ int addRefArchive(std::string const& path);
 int delRefArchive(std::string const& path);
 int getRefArchive(std::string const& path);
 
+void getPaths(std::vector<std::string>& paths);
+
 bool parseTrailingNumber( std::string const& text, std::string const& requiredPrefix, int& number );
       
 bool validate_filename_location(const char *filename);
@@ -382,6 +384,9 @@ template <class T, class S> void createIndexedArray(const std::vector<Alembic::A
 
 Abc::ICompoundProperty getArbGeomParams(const AbcG::IObject& iObj, AbcA::TimeSamplingPtr& timeSampling, int& nSamples);
 
-
+Abc::FloatArraySamplePtr getKnotVector(AbcG::ICurves& obj);
+Abc::UInt16ArraySamplePtr getCurveOrders(AbcG::ICurves& obj);
+bool validateCurveData( Abc::P3fArraySamplePtr pCurvePos, Abc::Int32ArraySamplePtr pCurveNbVertices, Abc::UInt16ArraySamplePtr pOrders, Abc::FloatArraySamplePtr pKnotVec, AbcG::CurveType type );
+int getCurveOrder(int i, Abc::UInt16ArraySamplePtr pOrders, AbcG::CurveType type);
 
 #endif // __COMMON_UTILITIES_H
