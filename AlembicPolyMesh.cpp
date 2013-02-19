@@ -6,12 +6,18 @@
 AlembicPolyMesh::AlembicPolyMesh(SceneNodePtr eNode, AlembicWriteJob * in_Job, Abc::OObject oParent)
 	: AlembicObject(eNode, in_Job, oParent)
 {
-	mObject = AbcG::OPolyMesh(GetMyParent(), eNode->name, GetJob()->GetAnimatedTs());
+	const bool animTS = GetJob()->GetAnimatedTs();
+	mObject = AbcG::OPolyMesh(GetMyParent(), eNode->name, animTS);
 	mSchema = mObject.getSchema();
+
+	visibilityType = determineVisibility();
+	//if (visibilityType != VIS_STATIC_VISIBLE)
+	mOVisibility = CreateVisibilityProperty(mObject, animTS);
 }
 
 AlembicPolyMesh::~AlembicPolyMesh()
 {
+	mOVisibility.reset();
    mObject.reset();
    mSchema.reset();
 }
@@ -59,6 +65,12 @@ MStatus AlembicPolyMesh::Save(double time)
       ESS_PROFILE_SCOPE("AlembicPolyMesh::Save get global xfo");
       globalXfo = GetGlobalMatrix(GetRef());
    }
+
+	// visibility!
+	{
+		const bool isVisible = getVisibilityValue();
+		mOVisibility.set(isVisible ? AbcG::kVisibilityVisible : AbcG::kVisibilityHidden);
+	}
 
    // ensure to keep the same topology if dynamic topology is disabled
    const bool dynamicTopology = GetJob()->GetOption(L"exportDynamicTopology").asInt() > 0;

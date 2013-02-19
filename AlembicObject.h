@@ -8,6 +8,8 @@ class AlembicObject;
 
 typedef boost::shared_ptr < AlembicObject > AlembicObjectPtr;
 
+enum VISIBILITY_TYPE { VIS_STATIC_VISIBLE, VIS_STATIC_NOT_VISIBLE, VIS_ANIMATED };
+
 class AlembicObject
 {
 private:
@@ -15,11 +17,19 @@ private:
    AlembicWriteJob * mJob;
    AlembicObjectPtr mParent;
    Abc::OObject mMyParent;
+   MString nodeName;
 
 protected:
    SceneNodePtr mExoSceneNode;
    int mNumSamples;
+
+   // Visibility!
    AbcG::OVisibilityProperty mOVisibility;
+   MString parentName;
+   VISIBILITY_TYPE visibilityType;
+
+   VISIBILITY_TYPE determineVisibility(void);
+   bool getVisibilityValue(void) const;
 
 public:
    AlembicObject(SceneNodePtr eNode, AlembicWriteJob * in_Job, Abc::OObject oParent);

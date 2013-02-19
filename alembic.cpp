@@ -164,6 +164,7 @@ EC_EXPORT MStatus initializePlugin(MObject obj)
    commandStatus = MGlobal::executePythonCommand("import ExocortexAlembic as ExoAlembic\n");
    if (commandStatus != MStatus::kSuccess)
 	   MGlobal::displayError("Unable to import ExocortexAlembic");
+   MGlobal::executePythonCommand("import maya.cmds as __cmds__\n");
    return status;
 }
 

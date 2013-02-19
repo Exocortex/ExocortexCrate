@@ -6,8 +6,11 @@
 AlembicSubD::AlembicSubD(SceneNodePtr eNode, AlembicWriteJob * in_Job, Abc::OObject oParent)
 	: AlembicObject(eNode, in_Job, oParent)
 {
-	mObject = AbcG::OSubD(GetMyParent(), eNode->name, GetJob()->GetAnimatedTs());
+	const bool animTS = GetJob()->GetAnimatedTs();
+	mObject = AbcG::OSubD(GetMyParent(), eNode->name, animTS);
 	mSchema = mObject.getSchema();
+
+   mOVisibility = CreateVisibilityProperty(mObject,animTS);
 }
 
 AlembicSubD::~AlembicSubD()
@@ -33,6 +36,12 @@ MStatus AlembicSubD::Save(double time)
    Abc::M44f globalXfo;
    if(globalCache)
       globalXfo = GetGlobalMatrix(GetRef());
+
+	// visibility!
+	{
+		const bool isVisible = getVisibilityValue();
+		mOVisibility.set(isVisible ? AbcG::kVisibilityVisible : AbcG::kVisibilityHidden);
+	}
 
    // access the points
    mPosVec.resize(node.vertexCount());

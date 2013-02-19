@@ -2,10 +2,9 @@
 #include "AlembicObject.h"
 
 AlembicObject::AlembicObject(SceneNodePtr eNode, AlembicWriteJob * in_Job, Abc::OObject oParent)
-		: mExoSceneNode(eNode), mJob(in_Job), mMyParent(oParent), mNumSamples(0)
+		: mExoSceneNode(eNode), mJob(in_Job), mMyParent(oParent), mNumSamples(0), parentName(""), visibilityType(VIS_STATIC_VISIBLE), nodeName(eNode->dccIdentifier.c_str())
 {
 	MSelectionList sl;
-	MString nodeName(eNode->dccIdentifier.c_str());
 	sl.add(nodeName);
 	MDagPath dagPath;
 	sl.getDagPath(0, dagPath);
@@ -45,6 +44,28 @@ MString AlembicObject::GetUniqueName(const MString & in_Name)
       }
    }
    return name;
+}
+
+VISIBILITY_TYPE AlembicObject::determineVisibility(void)
+{
+	// get parent name!
+	MGlobal::executePythonCommand("__cmds__.listRelatives(\"" + nodeName + "\", p=True)[0]", parentName);
+
+	int value = false;
+	const MString base = "__cmds__.getAttr(\"" + parentName + ".visibility\"";
+	// check if keyable
+	MGlobal::executePythonCommand(base + ", k=True)", value);
+	if (value)
+		return VIS_ANIMATED;
+	// else check if visibility is false
+	MGlobal::executePythonCommand(base + ")", value);
+	return value ? VIS_STATIC_VISIBLE : VIS_STATIC_NOT_VISIBLE;
+}
+bool AlembicObject::getVisibilityValue(void) const
+{
+	int value = true;
+	MGlobal::executePythonCommand("__cmds__.getAttr(\"" + parentName + ".visibility\")", value);
+	return value;
 }
 
 unsigned int gRefIdMax = 0;

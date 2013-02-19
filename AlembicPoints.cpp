@@ -90,21 +90,24 @@ bool AlembicPoints::sampleInstanceProperties( std::vector<Abc::Quatf> angularVel
 AlembicPoints::AlembicPoints(SceneNodePtr eNode, AlembicWriteJob * in_Job, Abc::OObject oParent)
 	: AlembicObject(eNode, in_Job, oParent), hasInstancer(false)
 {
-	mObject = AbcG::OPoints(GetMyParent(), eNode->name, GetJob()->GetAnimatedTs());
+	const bool animTS = GetJob()->GetAnimatedTs();
+	mObject = AbcG::OPoints(GetMyParent(), eNode->name, animTS);
 	mSchema = mObject.getSchema();
 
 	Abc::OCompoundProperty arbGeomParam = mSchema.getArbGeomParams();
-	mAgeProperty   = Abc::OFloatArrayProperty(arbGeomParam, ".age", mSchema.getMetaData(), GetJob()->GetAnimatedTs() );
-	mMassProperty  = Abc::OFloatArrayProperty(arbGeomParam, ".mass", mSchema.getMetaData(), GetJob()->GetAnimatedTs() );
-	mColorProperty = Abc::OC4fArrayProperty  (arbGeomParam, ".color", mSchema.getMetaData(), GetJob()->GetAnimatedTs() );
+	mAgeProperty   = Abc::OFloatArrayProperty(arbGeomParam, ".age", mSchema.getMetaData(), animTS );
+	mMassProperty  = Abc::OFloatArrayProperty(arbGeomParam, ".mass", mSchema.getMetaData(), animTS );
+	mColorProperty = Abc::OC4fArrayProperty  (arbGeomParam, ".color", mSchema.getMetaData(), animTS );
 
-	mAngularVelocityProperty = Abc::OQuatfArrayProperty  (arbGeomParam, ".angularvelocity", mSchema.getMetaData(), GetJob()->GetAnimatedTs() );
-	mInstanceNamesProperty   = Abc::OStringArrayProperty (arbGeomParam, ".instancenames", mSchema.getMetaData(), GetJob()->GetAnimatedTs() );
-	mOrientationProperty     = Abc::OQuatfArrayProperty  (arbGeomParam, ".orientation", mSchema.getMetaData(), GetJob()->GetAnimatedTs() );
-	mScaleProperty           = Abc::OV3fArrayProperty    (arbGeomParam, ".scale", mSchema.getMetaData(), GetJob()->GetAnimatedTs() );
-	mShapeInstanceIdProperty = Abc::OUInt16ArrayProperty (arbGeomParam, ".shapeinstanceid", mSchema.getMetaData(), GetJob()->GetAnimatedTs() );
-	mShapeTimeProperty       = Abc::OFloatArrayProperty  (arbGeomParam, ".shapetime", mSchema.getMetaData(), GetJob()->GetAnimatedTs() );
-	mShapeTypeProperty       = Abc::OUInt16ArrayProperty (arbGeomParam, ".shapetype", mSchema.getMetaData(), GetJob()->GetAnimatedTs() );
+   mOVisibility = CreateVisibilityProperty(mObject,animTS);
+
+	mAngularVelocityProperty = Abc::OQuatfArrayProperty  (arbGeomParam, ".angularvelocity", mSchema.getMetaData(), animTS );
+	mInstanceNamesProperty   = Abc::OStringArrayProperty (arbGeomParam, ".instancenames", mSchema.getMetaData(), animTS );
+	mOrientationProperty     = Abc::OQuatfArrayProperty  (arbGeomParam, ".orientation", mSchema.getMetaData(), animTS );
+	mScaleProperty           = Abc::OV3fArrayProperty    (arbGeomParam, ".scale", mSchema.getMetaData(), animTS );
+	mShapeInstanceIdProperty = Abc::OUInt16ArrayProperty (arbGeomParam, ".shapeinstanceid", mSchema.getMetaData(), animTS );
+	mShapeTimeProperty       = Abc::OFloatArrayProperty  (arbGeomParam, ".shapetime", mSchema.getMetaData(), animTS );
+	mShapeTypeProperty       = Abc::OUInt16ArrayProperty (arbGeomParam, ".shapetype", mSchema.getMetaData(), animTS );
 
 	MStringArray instancers;
 	MGlobal::executeCommand(("listConnections -t instancer " + eNode->name).c_str(), instancers);
@@ -149,6 +152,12 @@ MStatus AlembicPoints::Save(double time)
    Abc::M44f globalXfo;
    if(globalCache)
       globalXfo = GetGlobalMatrix(GetRef());
+
+	// visibility!
+	{
+		const bool isVisible = getVisibilityValue();
+		mOVisibility.set(isVisible ? AbcG::kVisibilityVisible : AbcG::kVisibilityHidden);
+	}
 
    // instance names, scale,
    std::vector<Abc::V3f> scales;
