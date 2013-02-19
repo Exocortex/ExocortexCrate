@@ -18,6 +18,7 @@ AlembicHair::AlembicHair(SceneNodePtr eNode, AlembicWriteJob * in_Job, Abc::OObj
 
 AlembicHair::~AlembicHair()
 {
+	mOVisibility.reset();
    mObject.reset();
    mSchema.reset();
 }

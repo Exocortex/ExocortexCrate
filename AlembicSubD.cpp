@@ -15,6 +15,7 @@ AlembicSubD::AlembicSubD(SceneNodePtr eNode, AlembicWriteJob * in_Job, Abc::OObj
 
 AlembicSubD::~AlembicSubD()
 {
+	mOVisibility.reset();
    mObject.reset();
    mSchema.reset();
 }

@@ -531,6 +531,17 @@ MStatus AlembicPolyMeshNode::compute(const MPlug & plug, MDataBlock & dataBlock)
   if(sampleInfo.alpha != 0.0)
     mSchema.get(sample2,sampleInfo.ceilIndex);
 
+	// visibility
+	{
+		AbcG::IVisibilityProperty visibilityProperty = AbcG::GetVisibilityProperty(mObj);
+		if(visibilityProperty.valid())
+		{
+			const bool val = visibilityProperty.getValue(sampleInfo.floorIndex);
+			MString res;
+			MGlobal::executePythonCommand("__xform = __cmds__.listConnections(\"" + name() + ".outMesh\")[0];\n__cmds__.setAttr(__xform + \".visibility\", " + MString(val ? "True" : "False") + ")");
+		}
+	}
+
   // create the output mesh
   if(mMeshData.isNull())
   {

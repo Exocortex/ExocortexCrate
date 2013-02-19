@@ -127,6 +127,7 @@ AlembicPoints::AlembicPoints(SceneNodePtr eNode, AlembicWriteJob * in_Job, Abc::
 
 AlembicPoints::~AlembicPoints()
 {
+	mOVisibility.reset();
    mObject.reset();
    mSchema.reset();
 }

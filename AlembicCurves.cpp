@@ -24,6 +24,7 @@ AlembicCurves::AlembicCurves(SceneNodePtr eNode, AlembicWriteJob * in_Job, Abc::
 
 AlembicCurves::~AlembicCurves()
 {
+	mOVisibility.reset();
    mObject.reset();
    mSchema.reset();
 }
