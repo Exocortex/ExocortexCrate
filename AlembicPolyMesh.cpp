@@ -524,12 +524,12 @@ MStatus AlembicPolyMeshNode::compute(const MPlug & plug, MDataBlock & dataBlock)
 
   mLastSampleInfo = sampleInfo;
 
-  // access the camera values
-  AbcG::IPolyMeshSchema::Sample sample;
-  AbcG::IPolyMeshSchema::Sample sample2;
-  mSchema.get(sample,sampleInfo.floorIndex);
-  if(sampleInfo.alpha != 0.0)
-    mSchema.get(sample2,sampleInfo.ceilIndex);
+	// access the camera values
+	AbcG::IPolyMeshSchema::Sample sample;
+	AbcG::IPolyMeshSchema::Sample sample2;
+	mSchema.get(sample,sampleInfo.floorIndex);
+	if(sampleInfo.alpha != 0.0)
+		mSchema.get(sample2,sampleInfo.ceilIndex);
 
 	// visibility
 	{
@@ -538,7 +538,12 @@ MStatus AlembicPolyMeshNode::compute(const MPlug & plug, MDataBlock & dataBlock)
 		{
 			const bool val = visibilityProperty.getValue(sampleInfo.floorIndex);
 			MString res;
-			MGlobal::executePythonCommand("__xform = __cmds__.listConnections(\"" + name() + ".outMesh\")[0];\n__cmds__.setAttr(__xform + \".visibility\", " + MString(val ? "True" : "False") + ")");
+			MStatus stat = MGlobal::executePythonCommand("__xform = __cmds__.listConnections(\"" + name() + ".outMesh\")[0]\n__cmds__.setAttr(__xform + \".visibility\", " + MString(val ? "True" : "False") + ")");
+			if (stat != MS::kSuccess)
+			{
+				MGlobal::displayError(stat.errorString());
+				return MS::kFailure;
+			}
 		}
 	}
 
@@ -1027,6 +1032,22 @@ MStatus AlembicPolyMeshDeformNode::deform(MDataBlock & dataBlock, MItGeometry & 
   }
 
   mLastSampleInfo = sampleInfo;
+
+	// visibility
+	/*{
+		AbcG::IVisibilityProperty visibilityProperty = AbcG::GetVisibilityProperty(mObj);
+		if(visibilityProperty.valid())
+		{
+			const bool val = visibilityProperty.getValue(sampleInfo.floorIndex);
+			const MString exp = "__xform = __cmds__.listConnections(\"" + name() + ".outputGeometry[0]\")[0]\n__cmds__.setAttr(__xform + \".visibility\", " + MString(val ? "True" : "False") + ")";
+			MStatus stat = MGlobal::executePythonCommand(exp);
+			if (stat != MS::kSuccess)
+			{
+				MGlobal::displayError(stat.errorString());
+				return MS::kFailure;
+			}
+		}
+	}*/
 
   Abc::P3fArraySamplePtr samplePos;
   Abc::P3fArraySamplePtr samplePos2;
