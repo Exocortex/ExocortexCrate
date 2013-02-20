@@ -14,8 +14,14 @@ private:
 
    std::vector<Abc::V3f> mPosVec;
    std::vector<AbcA::int32_t> mNbVertices;
-   Abc::OFloatArrayProperty mRadiusProperty;
    std::vector<float> mRadiusVec;
+   
+   Abc::OV3fArrayProperty mVelocityProperty;
+   Abc::OFloatArrayProperty mRadiusProperty;
+   Abc::OC4fArrayProperty mColorProperty;
+   Abc::OInt32ArrayProperty mFaceIndexProperty;
+   Abc::OInt32ArrayProperty mVertexIndexProperty;
+   Abc::OFloatArrayProperty mKnotVectorProperty;
 
 public:
    AlembicCurves(SceneNodePtr eNode, AlembicWriteJob * in_Job, Abc::OObject oParent);

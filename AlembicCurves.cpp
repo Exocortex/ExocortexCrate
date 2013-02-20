@@ -8,15 +8,23 @@
 AlembicCurves::AlembicCurves(SceneNodePtr eNode, AlembicWriteJob * in_Job, Abc::OObject oParent)
 	: AlembicObject(eNode, in_Job, oParent)
 {
-   mObject = AbcG::OCurves(GetMyParent(), eNode->name, GetJob()->GetAnimatedTs());
+	const bool animTS = GetJob()->GetAnimatedTs();
+   mObject = AbcG::OCurves(GetMyParent(), eNode->name, animTS);
    mSchema = mObject.getSchema();
 
+   mOVisibility = CreateVisibilityProperty(mObject,animTS);
+
    // create all properties
-   mRadiusProperty = Abc::OFloatArrayProperty(mSchema.getArbGeomParams(), ".radius", mSchema.getMetaData(), GetJob()->GetAnimatedTs() );
+   Abc::OCompoundProperty comp = mSchema.getArbGeomParams();
+   mRadiusProperty = Abc::OFloatArrayProperty(comp, ".radius", mSchema.getMetaData(), animTS );
+   mColorProperty = Abc::OC4fArrayProperty(comp, ".color", mSchema.getMetaData(), animTS );
+   mFaceIndexProperty = Abc::OInt32ArrayProperty(comp, ".face_index", mSchema.getMetaData(), animTS );
+   mVertexIndexProperty = Abc::OInt32ArrayProperty(comp, ".vertex_index", mSchema.getMetaData(), animTS );
 }
 
 AlembicCurves::~AlembicCurves()
 {
+	mOVisibility.reset();
    mObject.reset();
    mSchema.reset();
 }
@@ -38,6 +46,12 @@ MStatus AlembicCurves::Save(double time)
    Abc::M44f globalXfo;
    if(globalCache)
       globalXfo = GetGlobalMatrix(GetRef());
+
+	// visibility!
+	{
+		const bool isVisible = getVisibilityValue();
+		mOVisibility.set(isVisible ? AbcG::kVisibilityVisible : AbcG::kVisibilityHidden);
+	}
 
    MPointArray positions;
    node.getCVs(positions);
