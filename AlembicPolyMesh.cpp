@@ -513,7 +513,6 @@ MStatus AlembicPolyMeshNode::compute(const MPlug & plug, MDataBlock & dataBlock)
     mSchema.getNumSamples()
     );
 
-
   // check if we have to do this at all
   if(!mMeshData.isNull() && 
     mLastSampleInfo.floorIndex == sampleInfo.floorIndex && 

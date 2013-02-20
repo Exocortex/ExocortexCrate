@@ -75,6 +75,9 @@ def importPolyMesh(name, identifier, jobInfo, parentXform=None, isConstant=False
 			reader = cmds.deformer(shape, type="ExocortexAlembicPolyMeshDeform")[0]
 			setupReaderAttribute(reader, identifier, isConstant, jobInfo)
 
+		#if not useDynTopo:
+		#	setupReaderAttribute(topoReader, identifier, isConstant, jobInfo)
+
 	except Exception as ex:
 		shape = "?importPolyMesh --> exception: \"" + str(ex.args) + "\" of type " + str(type(ex));
 		apix.MPxCommand.setResult(shape)
