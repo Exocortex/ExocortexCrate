@@ -338,6 +338,8 @@ IF(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../ExocortexAlembicPython/CMakeLists.txt"
 		ADD_SUBDIRECTORY ( "${CMAKE_CURRENT_SOURCE_DIR}/../ExocortexAlembicPython/2.6.7" "${CMAKE_CURRENT_BINARY_DIR}/ExocortexAlembicPython/2.6.7" )
 		if( WIN32 )
 			ADD_SUBDIRECTORY ( "${CMAKE_CURRENT_SOURCE_DIR}/../ExocortexAlembicPython/2.7.2" "${CMAKE_CURRENT_BINARY_DIR}/ExocortexAlembicPython/2.7.2" )
+		else()
+			ADD_SUBDIRECTORY ( "${CMAKE_CURRENT_SOURCE_DIR}/../ExocortexAlembicPython/2.5.2" "${CMAKE_CURRENT_BINARY_DIR}/ExocortexAlembicPython/2.5.2" )
 		endif()
 	endif()
 ENDIF()
