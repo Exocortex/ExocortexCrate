@@ -12,6 +12,14 @@
 #include "CommonPBar.h"
 #include "CommonRegex.h"
 
+namespace XSI_XformTypes{
+   enum xte{//Don't change the order! We write these out.
+      UNKNOWN,
+      XMODEL,
+      XNULL
+   };
+};
+
 class IJobStringParser
 {
 public:
@@ -28,6 +36,7 @@ public:
    bool selectShapes;
    bool skipUnattachedNodes;
    bool enableImportRootSelection;
+   XSI_XformTypes::xte xformTypes;
 
    SearchReplace::ReplacePtr replacer;
 
