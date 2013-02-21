@@ -29,9 +29,10 @@ def attachXform(name, identifier, jobInfo, isConstant=False):
 
 	newXform = cmds.createNode("ExocortexAlembicXform")
 	cmds.setAttr(newXform+".identifier", identifier, type="string")
-	cmds.connectAttr(newXform+".translate", name+".translate")
-	cmds.connectAttr(newXform+".rotate",	name+".rotate")
-	cmds.connectAttr(newXform+".scale", 	name+".scale")
+	cmds.connectAttr(newXform+".translate", 	name+".translate")
+	cmds.connectAttr(newXform+".rotate",		name+".rotate")
+	cmds.connectAttr(newXform+".scale", 		name+".scale")
+	cmds.connectAttr(newXform+".outVisibility",	name+".visibility")
 
 	attachTimeAndFile(newXform, jobInfo, isConstant)
 	cmds.ExocortexAlembic_profileEnd(f="Python.ExocortexAlembic._attach.attachXform")

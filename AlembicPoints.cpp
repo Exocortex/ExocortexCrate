@@ -99,8 +99,6 @@ AlembicPoints::AlembicPoints(SceneNodePtr eNode, AlembicWriteJob * in_Job, Abc::
 	mMassProperty  = Abc::OFloatArrayProperty(arbGeomParam, ".mass", mSchema.getMetaData(), animTS );
 	mColorProperty = Abc::OC4fArrayProperty  (arbGeomParam, ".color", mSchema.getMetaData(), animTS );
 
-   mOVisibility = CreateVisibilityProperty(mObject,animTS);
-
 	mAngularVelocityProperty = Abc::OQuatfArrayProperty  (arbGeomParam, ".angularvelocity", mSchema.getMetaData(), animTS );
 	mInstanceNamesProperty   = Abc::OStringArrayProperty (arbGeomParam, ".instancenames", mSchema.getMetaData(), animTS );
 	mOrientationProperty     = Abc::OQuatfArrayProperty  (arbGeomParam, ".orientation", mSchema.getMetaData(), animTS );
@@ -127,7 +125,6 @@ AlembicPoints::AlembicPoints(SceneNodePtr eNode, AlembicWriteJob * in_Job, Abc::
 
 AlembicPoints::~AlembicPoints()
 {
-	mOVisibility.reset();
    mObject.reset();
    mSchema.reset();
 }
@@ -153,12 +150,6 @@ MStatus AlembicPoints::Save(double time)
    Abc::M44f globalXfo;
    if(globalCache)
       globalXfo = GetGlobalMatrix(GetRef());
-
-	// visibility!
-	{
-		const bool isVisible = getVisibilityValue();
-		mOVisibility.set(isVisible ? AbcG::kVisibilityVisible : AbcG::kVisibilityHidden);
-	}
 
    // instance names, scale,
    std::vector<Abc::V3f> scales;

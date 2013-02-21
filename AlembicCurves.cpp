@@ -12,8 +12,6 @@ AlembicCurves::AlembicCurves(SceneNodePtr eNode, AlembicWriteJob * in_Job, Abc::
    mObject = AbcG::OCurves(GetMyParent(), eNode->name, animTS);
    mSchema = mObject.getSchema();
 
-   mOVisibility = CreateVisibilityProperty(mObject,animTS);
-
    // create all properties
    Abc::OCompoundProperty comp = mSchema.getArbGeomParams();
    mRadiusProperty = Abc::OFloatArrayProperty(comp, ".radius", mSchema.getMetaData(), animTS );
@@ -24,7 +22,6 @@ AlembicCurves::AlembicCurves(SceneNodePtr eNode, AlembicWriteJob * in_Job, Abc::
 
 AlembicCurves::~AlembicCurves()
 {
-	mOVisibility.reset();
    mObject.reset();
    mSchema.reset();
 }
@@ -46,12 +43,6 @@ MStatus AlembicCurves::Save(double time)
    Abc::M44f globalXfo;
    if(globalCache)
       globalXfo = GetGlobalMatrix(GetRef());
-
-	// visibility!
-	{
-		const bool isVisible = getVisibilityValue();
-		mOVisibility.set(isVisible ? AbcG::kVisibilityVisible : AbcG::kVisibilityHidden);
-	}
 
    MPointArray positions;
    node.getCVs(positions);

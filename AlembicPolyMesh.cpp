@@ -9,15 +9,10 @@ AlembicPolyMesh::AlembicPolyMesh(SceneNodePtr eNode, AlembicWriteJob * in_Job, A
 	const bool animTS = GetJob()->GetAnimatedTs();
 	mObject = AbcG::OPolyMesh(GetMyParent(), eNode->name, animTS);
 	mSchema = mObject.getSchema();
-
-	visibilityType = determineVisibility();
-	//if (visibilityType != VIS_STATIC_VISIBLE)
-	mOVisibility = CreateVisibilityProperty(mObject, animTS);
 }
 
 AlembicPolyMesh::~AlembicPolyMesh()
 {
-	mOVisibility.reset();
    mObject.reset();
    mSchema.reset();
 }
@@ -65,12 +60,6 @@ MStatus AlembicPolyMesh::Save(double time)
       ESS_PROFILE_SCOPE("AlembicPolyMesh::Save get global xfo");
       globalXfo = GetGlobalMatrix(GetRef());
    }
-
-	// visibility!
-	{
-		const bool isVisible = getVisibilityValue();
-		mOVisibility.set(isVisible ? AbcG::kVisibilityVisible : AbcG::kVisibilityHidden);
-	}
 
    // ensure to keep the same topology if dynamic topology is disabled
    const bool dynamicTopology = GetJob()->GetOption(L"exportDynamicTopology").asInt() > 0;
@@ -529,22 +518,6 @@ MStatus AlembicPolyMeshNode::compute(const MPlug & plug, MDataBlock & dataBlock)
 	mSchema.get(sample,sampleInfo.floorIndex);
 	if(sampleInfo.alpha != 0.0)
 		mSchema.get(sample2,sampleInfo.ceilIndex);
-
-	// visibility
-	{
-		AbcG::IVisibilityProperty visibilityProperty = AbcG::GetVisibilityProperty(mObj);
-		if(visibilityProperty.valid())
-		{
-			const bool val = visibilityProperty.getValue(sampleInfo.floorIndex);
-			MString res;
-			MStatus stat = MGlobal::executePythonCommand("__xform = __cmds__.listConnections(\"" + name() + ".outMesh\")[0]\n__cmds__.setAttr(__xform + \".visibility\", " + MString(val ? "True" : "False") + ")");
-			if (stat != MS::kSuccess)
-			{
-				MGlobal::displayError(stat.errorString());
-				return MS::kFailure;
-			}
-		}
-	}
 
   // create the output mesh
   if(mMeshData.isNull())
@@ -1031,22 +1004,6 @@ MStatus AlembicPolyMeshDeformNode::deform(MDataBlock & dataBlock, MItGeometry & 
   }
 
   mLastSampleInfo = sampleInfo;
-
-	// visibility
-	/*{
-		AbcG::IVisibilityProperty visibilityProperty = AbcG::GetVisibilityProperty(mObj);
-		if(visibilityProperty.valid())
-		{
-			const bool val = visibilityProperty.getValue(sampleInfo.floorIndex);
-			const MString exp = "__xform = __cmds__.listConnections(\"" + name() + ".outputGeometry[0]\")[0]\n__cmds__.setAttr(__xform + \".visibility\", " + MString(val ? "True" : "False") + ")";
-			MStatus stat = MGlobal::executePythonCommand(exp);
-			if (stat != MS::kSuccess)
-			{
-				MGlobal::displayError(stat.errorString());
-				return MS::kFailure;
-			}
-		}
-	}*/
 
   Abc::P3fArraySamplePtr samplePos;
   Abc::P3fArraySamplePtr samplePos2;

@@ -6,8 +6,11 @@
 AlembicXform::AlembicXform(SceneNodePtr eNode, AlembicWriteJob * in_Job, Abc::OObject oParent)
 	: AlembicObject(eNode, in_Job, oParent)
 {
-	mObject = AbcG::OXform(GetMyParent(), eNode->name, GetJob()->GetAnimatedTs());
+	const bool animTS = GetJob()->GetAnimatedTs();
+	mObject = AbcG::OXform(GetMyParent(), eNode->name, animTS);
 	mSchema = mObject.getSchema();
+
+	mOVisibility = CreateVisibilityProperty(mObject, animTS);
 }
 
 AlembicXform::~AlembicXform()
@@ -47,6 +50,22 @@ MStatus AlembicXform::Save(double time)
         dagNode.getAllPaths(dagPaths);
         path = dagPaths[0];
       }
+
+		// visibility
+		{
+			MStatus stat;
+			MObject mObj = path.node(&stat);
+			if (stat == MS::kSuccess)
+			{
+				MFnDependencyNode dep(mObj, &stat);
+				if (stat == MS::kSuccess)
+				{
+					MPlug vis = dep.findPlug("visibility", true, &stat);
+					if (stat == MS::kSuccess)
+						mOVisibility.set(vis.asBool() ? AbcG::kVisibilityVisible : AbcG::kVisibilityHidden);
+				}
+			}
+		}
 
 	  Abc::M44d abcMatrix;
 
@@ -104,6 +123,7 @@ MObject AlembicXformNode::mOutScaleXAttr;
 MObject AlembicXformNode::mOutScaleYAttr;
 MObject AlembicXformNode::mOutScaleZAttr;
 MObject AlembicXformNode::mOutScaleAttr;
+MObject AlembicXformNode::mOutVisibilityAttr;
 
 MStatus AlembicXformNode::initialize()
 {
@@ -222,6 +242,14 @@ MStatus AlembicXformNode::initialize()
    status = nAttr.setHidden(false);
    status = addAttribute(mOutScaleAttr);
 
+   // output visibility
+   mOutVisibilityAttr = nAttr.create("outVisibility", "ov", MFnNumericData::kBoolean, true);
+   status = nAttr.setStorable(false);
+   status = nAttr.setWritable(false);
+   status = nAttr.setKeyable(false);
+   status = nAttr.setHidden(false);
+   status = addAttribute(mOutVisibilityAttr);
+
    // create a mapping
    status = attributeAffects(mTimeAttr, mOutTranslateXAttr);
    status = attributeAffects(mFileNameAttr, mOutTranslateXAttr);
@@ -250,6 +278,10 @@ MStatus AlembicXformNode::initialize()
    status = attributeAffects(mTimeAttr, mOutScaleZAttr);
    status = attributeAffects(mFileNameAttr, mOutScaleZAttr);
    status = attributeAffects(mIdentifierAttr, mOutScaleZAttr);
+   
+   status = attributeAffects(mTimeAttr, mOutVisibilityAttr);
+   status = attributeAffects(mFileNameAttr, mOutVisibilityAttr);
+   status = attributeAffects(mIdentifierAttr, mOutVisibilityAttr);
 
    return status;
 } 
@@ -278,7 +310,7 @@ MStatus AlembicXformNode::compute(const MPlug & plug, MDataBlock & dataBlock)
     mIdentifier = identifier;
 
     // get the object from the archive
-    Abc::IObject iObj = getObjectFromArchive(mFileName,identifier);
+    iObj = getObjectFromArchive(mFileName,identifier);
     if(!iObj.valid())
     {
       MGlobal::displayWarning("[ExocortexAlembic] Identifier '"+identifier+"' not found in archive '"+mFileName+"'.");
@@ -349,6 +381,13 @@ MStatus AlembicXformNode::compute(const MPlug & plug, MDataBlock & dataBlock)
   {
     matrix = matrixAtIPlus1 + sampleInfo.alpha * (matrixAtI - matrixAtIPlus1);		// saving one multiplication
   }
+
+	// export visibility before comparing current and hold matrix!
+	{
+		AbcG::IVisibilityProperty visibilityProperty = AbcG::GetVisibilityProperty(iObj);
+		if (visibilityProperty.valid())
+			dataBlock.outputValue(mOutVisibilityAttr).setBool(visibilityProperty.getValue(sampleInfo.floorIndex));
+	}
 
   if (mLastMatrix == matrix)
     return MS::kSuccess;  // if the current matrix and the previous matrix are identical!
