@@ -148,6 +148,11 @@ static int Init(AtNode *mynode, void **user_ptr)
       // check if we already know this path
       if(!HasAlembicReaderLicense())
       {
+          if( HasAlembicInvalidLicense() ) {
+            ESS_LOG_ERROR("[alembic] No license available and EXOCORTEX_ALEMBIC_NO_DEMO defined, aborting." );
+            return NULL;
+         }
+
          if(gUsedArchives.size() > 1 && 
             gUsedArchives.find(paths[pathIndex]) == gUsedArchives.end())
          {

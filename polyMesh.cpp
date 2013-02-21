@@ -220,7 +220,7 @@ AtNode *createPolyMeshNode(nodeData &nodata, userData * ud, std::vector<float> &
   Alembic::AbcGeom::IN3fGeomParam normalParam = typedObject.getSchema().getNormalsParam();
   if(!normalParam.valid())
   {
-     AiMsgError("[ExocortexAlembicArnold] Mesh '%s' does not contain normals. Aborting.", nodata.object.getFullName().c_str());
+     AiMsgWarning("[ExocortexAlembicArnold] Mesh '%s' does not contain normals. Skipping mesh: ", nodata.object.getFullName().c_str());
      return NULL;
   }
 
