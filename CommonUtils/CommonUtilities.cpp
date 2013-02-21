@@ -97,6 +97,11 @@ Alembic::Abc::IArchive * getArchiveFromID(std::string const& path)
      // check if the file exists
      if( ! HasAlembicReaderLicense() )
      {
+        if( HasAlembicInvalidLicense() ) {
+            ESS_LOG_ERROR("[alembic] No license available and EXOCORTEX_ALEMBIC_NO_DEMO defined, no Alembic files opened." );
+            return NULL;
+         }
+
          if(gArchives.size() == 1)
          {
             ESS_LOG_ERROR("[ExocortexAlembic] Reader license not found: Only one open archive at a time allowed!");
