@@ -96,6 +96,7 @@ EC_EXPORT MStatus initializePlugin(MObject obj)
    status = plugin.registerCommand("ExocortexAlembic_profileReset",
 	    AlembicProfileResetCommand::creator,
       AlembicProfileResetCommand::createSyntax);
+	status = plugin.registerCommand("ExocortexAlembic_meshToSubdiv", AlembicPolyMeshToSubdivCommand::creator, AlembicPolyMeshToSubdivCommand::createSyntax);
 
    // nodes
    status = plugin.registerNode("ExocortexAlembicTimeControl",
@@ -163,6 +164,7 @@ EC_EXPORT MStatus initializePlugin(MObject obj)
    commandStatus = MGlobal::executePythonCommand("import ExocortexAlembic as ExoAlembic\n");
    if (commandStatus != MStatus::kSuccess)
 	   MGlobal::displayError("Unable to import ExocortexAlembic");
+   MGlobal::executePythonCommand("import maya.cmds as __cmds__\n");
    return status;
 }
 

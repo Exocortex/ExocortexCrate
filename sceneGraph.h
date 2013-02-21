@@ -3,6 +3,7 @@
 
 	#include "CommonSceneGraph.h"
 	#include "CommonImport.h"
+	#include "CommonRegex.h"
 
 	class AlembicFileAndTimeControl;
 	typedef boost::shared_ptr<AlembicFileAndTimeControl> AlembicFileAndTimeControlPtr;
@@ -55,6 +56,6 @@
 	 * @param dagPath - The dag node of the root
 	 * @param alembicFileAndTimeControl - an optional file and time controller!
 	 */
-	SceneNodeAppPtr buildMayaSceneGraph(const MDagPath &dagPath, const AlembicFileAndTimeControlPtr alembicFileAndTimeControl = AlembicFileAndTimeControlPtr());
+	SceneNodeAppPtr buildMayaSceneGraph(const MDagPath &dagPath, const SearchReplace::ReplacePtr &replacer, const AlembicFileAndTimeControlPtr alembicFileAndTimeControl = AlembicFileAndTimeControlPtr());
 
 #endif
