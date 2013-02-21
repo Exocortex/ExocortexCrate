@@ -16,9 +16,6 @@
 
 #else // EXOCORTEX_SERVICES
 
-	#define EC_LICENSE_RESULT_NO_LICENSE	(0)
-	#define EC_LICENSE_RESULT_DEMO_LICENSE	(1)
-	#define EC_LICENSE_RESULT_FULL_LICENSE	(2)
 
 	#define ESS_LOG_ERROR(a) do { std::stringstream s; s << a; XSI::Application().LogMessage( s.str().c_str(), XSI::siErrorMsg ); } while(0)
 	#define ESS_LOG_WARNING(a) do { std::stringstream s; s << a; XSI::Application().LogMessage( s.str().c_str(), XSI::siWarningMsg ); } while(0)
