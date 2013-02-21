@@ -4,29 +4,27 @@
 
 using namespace std;
 
-int gLicenseToken = EC_LICENSE_RESULT_NO_LICENSE;
 
 #if defined( EXOCORTEX_RLM_ONLY )
 	#include "RlmSingletonDeclarations.h"
 #endif // EXOCORTEX_RLM_ONLY
 
-bool HasAlembicWriterLicense()
-{
-	return ( GetLicense() == EC_LICENSE_RESULT_FULL_LICENSE );
-}
 
-bool HasAlembicReaderLicense()
-{
-	return ( GetLicense() == EC_LICENSE_RESULT_FULL_LICENSE );
-}
+int s_alembicLicense = ALEMBIC_NO_LICENSE;
 
-
-int GetLicense()
+int GetAlembicLicense()
 {
-	if( gLicenseToken == EC_LICENSE_RESULT_NO_LICENSE )
+	if( s_alembicLicense == ALEMBIC_NO_LICENSE )
 	{
 		// default license status, could be overriden below.
-		gLicenseToken = EC_LICENSE_RESULT_DEMO_LICENSE;
+   	bool isNoDemo = ( getenv("EXOCORTEX_ALEMBIC_NO_DEMO") != NULL );
+
+    if( isNoDemo ) {
+		  s_alembicLicense = ALEMBIC_INVALID_LICENSE;
+    }
+    else {
+		  s_alembicLicense = ALEMBIC_DEMO_LICENSE;
+    }
 
 		// check RLM license first, so that users see that RLM is either used or not prior to expiry.	
 #if defined( EXOCORTEX_RLM_ONLY )
@@ -43,8 +41,8 @@ int GetLicense()
 			}
 
 			if( rlmSingleton.checkoutLicense( "", pluginName, rlmProductIds ) ) {
-				gLicenseToken = EC_LICENSE_RESULT_FULL_LICENSE;
-				return gLicenseToken;
+				s_alembicLicense = ALEMBIC_WRITER_LICENSE;
+				return s_alembicLicense;
 			}
 		}
 #endif // EXOCORTEX_RLM_ONLY
@@ -56,15 +54,29 @@ int GetLicense()
 			if( now <= EXOCORTEX_BETA_EXPIRY_DATE ) {  //http://unixtime-converter.com/
 				static string pluginName(PLUGIN_NAME);
 				ESS_LOG_WARNING( "Expiry date licensing is being used for " << pluginName << "\n" );
-				gLicenseToken = EC_LICENSE_RESULT_FULL_LICENSE;
-				return gLicenseToken;
+				s_alembicLicense = ALEMBIC_WRITER_LICENSE;
+				return s_alembicLicense;
 			}
 		}
 #endif // Exocortex_BETA_EXPIRY_DATE
 
 	}
 
-	return gLicenseToken;
+	return s_alembicLicense;
+}
+
+
+bool HasAlembicInvalidLicense() {
+	return ( GetAlembicLicense() == ALEMBIC_INVALID_LICENSE );
+}
+
+
+bool HasAlembicWriterLicense() {
+	return ( GetAlembicLicense() == ALEMBIC_WRITER_LICENSE );
+}
+
+bool HasAlembicReaderLicense() {
+	return ( GetAlembicLicense() == ALEMBIC_WRITER_LICENSE )||( GetAlembicLicense() == ALEMBIC_READER_LICENSE );
 }
 
 void logError( const char* msg ) {
