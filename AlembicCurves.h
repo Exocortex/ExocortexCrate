@@ -15,6 +15,7 @@ private:
    std::vector<Abc::V3f> mPosVec;
    std::vector<AbcA::int32_t> mNbVertices;
    std::vector<float> mRadiusVec;
+   std::vector<float> mKnotVec;
    
    Abc::OV3fArrayProperty mVelocityProperty;
    Abc::OFloatArrayProperty mRadiusProperty;

@@ -18,6 +18,7 @@ AlembicCurves::AlembicCurves(SceneNodePtr eNode, AlembicWriteJob * in_Job, Abc::
    mColorProperty = Abc::OC4fArrayProperty(comp, ".color", mSchema.getMetaData(), animTS );
    mFaceIndexProperty = Abc::OInt32ArrayProperty(comp, ".face_index", mSchema.getMetaData(), animTS );
    mVertexIndexProperty = Abc::OInt32ArrayProperty(comp, ".vertex_index", mSchema.getMetaData(), animTS );
+   mKnotVectorProperty = Abc::OFloatArrayProperty(comp, ".radius", mSchema.getMetaData(), animTS );
 }
 
 AlembicCurves::~AlembicCurves()
@@ -50,12 +51,14 @@ MStatus AlembicCurves::Save(double time)
    mPosVec.resize(positions.length());
    for(unsigned int i=0;i<positions.length();i++)
    {
-      mPosVec[i].x = (float)positions[i].x;
-      mPosVec[i].y = (float)positions[i].y;
-      mPosVec[i].z = (float)positions[i].z;
-      if(globalCache)
-         globalXfo.multVecMatrix(mPosVec[i],mPosVec[i]);
-      bbox.extendBy(mPosVec[i]);
+		const MPoint &outPos = positions[i];
+		Imath::V3f &inPos = mPosVec[i];
+		inPos.x = (float)outPos.x;
+		inPos.y = (float)outPos.y;
+		inPos.z = (float)outPos.z;
+		if(globalCache)
+			globalXfo.multVecMatrix(inPos, inPos);
+		bbox.extendBy(inPos);
    }
 
    // store the positions to the samples
@@ -64,6 +67,16 @@ MStatus AlembicCurves::Save(double time)
 
    if(mNumSamples == 0)
    {
+		// knot vector!
+		MDoubleArray knots;
+		node.getKnots(knots);
+
+		mKnotVec.resize(knots.length());
+		for (unsigned int i = 0; i < knots.length(); ++i)
+			mKnotVec[i] = (float)knots[i];
+
+		mKnotVectorProperty.set(Abc::FloatArraySample(mKnotVec));
+
       mNbVertices.push_back(node.numCVs());
       mSample.setCurvesNumVertices(Abc::Int32ArraySample(mNbVertices));
 
@@ -71,6 +84,7 @@ MStatus AlembicCurves::Save(double time)
          mSample.setWrap(AbcG::kNonPeriodic);
       else
          mSample.setWrap(AbcG::kPeriodic);
+
       if (node.degree() == 3)
          mSample.setType(AbcG::kCubic);
       else
