@@ -218,7 +218,6 @@ struct BasicSchemaData
 	};
 	SCHEMA_TYPE type;
 	bool isConstant;
-	bool isVisibilityAnimated;
 	size_t nbSamples;
 };
 bool getBasicSchemaDataFromObject(Alembic::Abc::IObject &object, BasicSchemaData &bsd);

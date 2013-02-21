@@ -525,12 +525,12 @@ template<typename T> bool __getBasicSchemaDataFromObject(BasicSchemaData::SCHEMA
 {
 	bsd.type = type;
 	bsd.isConstant = schema.isConstant();
+	if (bsd.isConstant)
 	{
-		AbcG::IVisibilityProperty visibilityProperty = AbcG::GetVisibilityProperty(schema.getObject());
+		Alembic::Abc::IObject iObj = schema.getObject();
+		AbcG::IVisibilityProperty visibilityProperty = AbcG::GetVisibilityProperty(iObj);
 		if (visibilityProperty.valid())
-			bsd.isVisibilityAnimated = !visibilityProperty.isConstant();
-		else
-			bsd.isVisibilityAnimated = false;
+			bsd.isConstant = visibilityProperty.getNumSamples() <= 1;
 	}
 	bsd.nbSamples  = schema.getNumSamples();
 	return true;
