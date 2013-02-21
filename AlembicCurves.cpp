@@ -259,9 +259,6 @@ MStatus AlembicCurvesNode::compute(const MPlug & plug, MDataBlock & dataBlock)
 		const int ldegree = (pOrders) ? pOrders->get()[ii] : degree;
 		const int nbSpans = (int)nbCVs - ldegree;
 
-		if (ldegree != 1 && ldegree != 3)
-			continue;
-
 		MDoubleArray knots;
 		if(pKnotVec)
 		{
@@ -316,7 +313,8 @@ MStatus AlembicCurvesNode::compute(const MPlug & plug, MDataBlock & dataBlock)
 
 		// create a subd either with or without uvs
 		MObject mmCurvesData = MFnNurbsCurveData().create();
-		mCurves.create(points, knots, ldegree, closed ? MFnNurbsCurve::kClosed : MFnNurbsCurve::kOpen, false, false, mmCurvesData);
+		if (ldegree != 1 && ldegree != 3)
+			mCurves.create(points, knots, ldegree, closed ? MFnNurbsCurve::kClosed : MFnNurbsCurve::kOpen, false, false, mmCurvesData);
 		builder.addElement(ii).set(mmCurvesData);
 	}
 	arrh.set(builder);
