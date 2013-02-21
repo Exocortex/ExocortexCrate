@@ -438,6 +438,26 @@ bool getIndexAndValues( Alembic::Abc::Int32ArraySamplePtr faceIndices, Alembic::
 	return false;
 }
 
+bool correctInvalidUVs(std::vector<IndexedUVs>& indexUVSet)
+{
+   ESS_PROFILE_FUNC();
+   bool bInvalidUVs = false;
+   for(int i=0; i < indexUVSet.size(); i++){
+      for(int j=0; j < indexUVSet[i].indices.size(); j++){
+         
+         if(indexUVSet[i].indices[j] < 0){
+            indexUVSet[i].indices[j] = 0;
+            bInvalidUVs = true;
+         }
+         if(indexUVSet[i].indices[j] > indexUVSet[i].values.size()){
+            indexUVSet[i].indices[j] = (int)indexUVSet[i].values.size() - 1;
+            bInvalidUVs = true;
+         }
+
+      }
+   }
+   return bInvalidUVs;
+}
 
 void saveIndexedUVs( 
 					AbcG::OPolyMeshSchema& meshSchema, AbcG::OPolyMeshSchema::Sample& meshSample,
@@ -454,7 +474,7 @@ void saveIndexedUVs(
 	}
 
 	for( int i = 0; i < indexUVSet.size(); i++ ){
-		EC_LOG_WARNING( "indexUVSet[i].values: " << indexUVSet[i].values.size() << " indexUVSet[i].indices: " << indexUVSet[i].indices.size() );
+		//EC_LOG_WARNING( "indexUVSet[i].values: " << indexUVSet[i].values.size() << " indexUVSet[i].indices: " << indexUVSet[i].indices.size() );
 		Abc::V2fArraySample valuesSample( indexUVSet[i].values );
 		Abc::UInt32ArraySample indicesSample(indexUVSet[i].indices );
 		

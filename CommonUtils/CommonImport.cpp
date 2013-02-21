@@ -21,75 +21,119 @@ bool parseBool(std::string value){
 
 bool IJobStringParser::parse(const std::string& jobString)
 {
-
+	std::string search_str, replace_str;
 	std::vector<std::string> tokens;
 	boost::split(tokens, jobString, boost::is_any_of(";"));
 
-   //if(tokens.empty()){
-   //   return false;
-   //}
-
-	for(int j=0; j<tokens.size(); j++){
-
+	for(int j=0; j<tokens.size(); ++j)
+	{
 		std::vector<std::string> valuePair;
 		boost::split(valuePair, tokens[j], boost::is_any_of("="));
-		if(valuePair.size() != 2){
+		if(valuePair.size() != 2)
+		{
 			ESS_LOG_WARNING("Skipping invalid token: "<<tokens[j]);
 			continue;
 		}
 
-		if(boost::iequals(valuePair[0], "filename")){
+		if(boost::iequals(valuePair[0], "filename"))
+		{
 			filename = valuePair[1];
 		}
-		else if(boost::iequals(valuePair[0], "normals")){
+		else if(boost::iequals(valuePair[0], "normals"))
+		{
 			importNormals = parseBool(valuePair[1]);
 		}
-		else if(boost::iequals(valuePair[0], "uvs")){
+		else if(boost::iequals(valuePair[0], "uvs"))
+		{
 			importUVs = parseBool(valuePair[1]);
 		}
-		else if(boost::iequals(valuePair[0], "facesets")){
-         importFacesets = parseBool(valuePair[1]);
+		else if(boost::iequals(valuePair[0], "facesets"))
+		{
+			importFacesets = parseBool(valuePair[1]);
 		}
-		else if(boost::iequals(valuePair[0], "materialIds")){
-         importMaterialIds = parseBool(valuePair[1]);
+		else if(boost::iequals(valuePair[0], "materialIds"))
+		{
+			importMaterialIds = parseBool(valuePair[1]);
 		}
-      else if(boost::iequals(valuePair[0], "attachToExisting")){
-         attachToExisting = parseBool(valuePair[1]);
-      }
-      else if(boost::iequals(valuePair[0], "importStandinProperties")){
-         importStandinProperties = parseBool(valuePair[1]);
-      }
-      else if(boost::iequals(valuePair[0], "importBoundingBoxes")){
-         importBoundingBoxes = parseBool(valuePair[1]);
-      }
-      else if(boost::iequals(valuePair[0], "importVisibilityControllers")){
-         importVisibilityControllers = parseBool(valuePair[1]);
+		else if(boost::iequals(valuePair[0], "attachToExisting"))
+		{
+			attachToExisting = parseBool(valuePair[1]);
 		}
-	   else if(boost::iequals(valuePair[0], "failOnUnsupported")){
-         failOnUnsupported = parseBool(valuePair[1]);
+		else if(boost::iequals(valuePair[0], "importStandinProperties"))
+		{
+			importStandinProperties = parseBool(valuePair[1]);
 		}
-       else if(boost::iequals(valuePair[0], "selectShapes")){
-         selectShapes = parseBool(valuePair[1]);
-       }
-      else if(boost::iequals(valuePair[0], "filters") || boost::iequals(valuePair[0], "identifiers")){  
-	      boost::split(nodesToImport, valuePair[1], boost::is_any_of(","));
-          for(int i=0; i<nodesToImport.size(); i++){
-             boost::trim(nodesToImport[i]);
-          }
+		else if(boost::iequals(valuePair[0], "importBoundingBoxes"))
+		{
+			importBoundingBoxes = parseBool(valuePair[1]);
 		}
-	   else if(boost::iequals(valuePair[0], "includeChildren")){
-         includeChildren = parseBool(valuePair[1]);
+		else if(boost::iequals(valuePair[0], "importVisibilityControllers"))
+		{
+			importVisibilityControllers = parseBool(valuePair[1]);
 		}
-       else if(boost::iequals(valuePair[0], "skipUnattachedNodes")){
-         skipUnattachedNodes = parseBool(valuePair[1]);
-       }
+		else if(boost::iequals(valuePair[0], "failOnUnsupported"))
+		{
+			failOnUnsupported = parseBool(valuePair[1]);
+		}
+		else if(boost::iequals(valuePair[0], "selectShapes"))
+		{
+			selectShapes = parseBool(valuePair[1]);
+		}
+		else if(boost::iequals(valuePair[0], "filters") || boost::iequals(valuePair[0], "identifiers"))
+		{
+			boost::split(nodesToImport, valuePair[1], boost::is_any_of(","));
+			for(int i=0; i<nodesToImport.size(); ++i)
+			{
+				boost::trim(nodesToImport[i]);
+			}
+		}
+		else if(boost::iequals(valuePair[0], "includeChildren"))
+		{
+			includeChildren = parseBool(valuePair[1]);
+		}
+		else if(boost::iequals(valuePair[0], "skipUnattachedNodes"))
+		{
+			skipUnattachedNodes = parseBool(valuePair[1]);
+		}
+		else if(boost::iequals(valuePair[0], "enableImportRootSelection"))
+		{
+			enableImportRootSelection = parseBool(valuePair[1]);
+		}
+ 		else if(boost::iequals(valuePair[0], "defaultXformNode"))
+		{
+           if(boost::iequals(valuePair[1], "model")){
+               xformTypes = XSI_XformTypes::XMODEL;
+           }
+           else{
+              xformTypes = XSI_XformTypes::XNULL;
+           }
+			
+		}    
+		// search/replace
+		else if(boost::iequals(valuePair[0], "search"))
+		{
+			search_str = valuePair[1];
+		}
+		else if(boost::iequals(valuePair[0], "replace"))
+		{
+			replace_str = valuePair[1];
+		}
+
 		else
 		{
 			extraParameters[valuePair[0]] = valuePair[1];
 		}
 	}
 
-   return true;
+	// check if the search/replace strings are valid!
+	if (search_str.length() ? !replace_str.length() : replace_str.length())	// either search or replace string is missing or empty!
+	{
+		ESS_LOG_WARNING("Missing search or replace parameter. No strings will be replaced.");
+		replacer = SearchReplace::createReplacer();
+	}
+	else
+		replacer = SearchReplace::createReplacer(search_str, replace_str);
+	return true;
 }
 
 std::string IJobStringParser::buildJobString()
@@ -103,8 +147,16 @@ std::string IJobStringParser::buildJobString()
 
    stream<<"normals="<<importNormals<<";uvs="<<importUVs<<";facesets="<<importFacesets;
    stream<<";importVisibilityControllers="<<importVisibilityControllers<<";importStandinProperties="<<importStandinProperties;
-   stream<<";importBoundingBoxes="<<importBoundingBoxes<<";attachToExisting="<<attachToExisting<<";skipUnattachedNodes="<<skipUnattachedNodes<<";failOnUnsupported="<<failOnUnsupported;
-   
+   stream<<";importBoundingBoxes="<<importBoundingBoxes<<";attachToExisting="<<attachToExisting<<";skipUnattachedNodes="<<skipUnattachedNodes;
+   stream<<";failOnUnsupported="<<failOnUnsupported<<";enableImportRootSelection="<<enableImportRootSelection<<";defaultXformNode=";
+
+   if( xformTypes == XSI_XformTypes::XMODEL){
+      stream<<"model";
+   }
+   else if( xformTypes = XSI_XformTypes::XNULL){
+      stream<<"null";
+   }
+
    if(!nodesToImport.empty()){
       stream<<";identifiers=";
       for(int i=0; i<nodesToImport.size(); i++){
@@ -161,7 +213,7 @@ struct AlembicISceneBuildElement
 };
 
 
-SceneNodeAlembicPtr buildAlembicSceneGraph(AbcArchiveCache *pArchiveCache, AbcObjectCache *pRootObjectCache, int& nNumNodes, bool countMergableChildren)
+SceneNodeAlembicPtr buildAlembicSceneGraph(AbcArchiveCache *pArchiveCache, AbcObjectCache *pRootObjectCache, int& nNumNodes, const IJobStringParser& jobParams, bool countMergableChildren, CommonProgressBar *pBar)
 {
    ESS_PROFILE_FUNC();
    std::list<AlembicISceneBuildElement> sceneStack;
@@ -175,6 +227,13 @@ SceneNodeAlembicPtr buildAlembicSceneGraph(AbcArchiveCache *pArchiveCache, AbcOb
 
    for(size_t j=0; j<pRootObjectCache->childIdentifiers.size(); j++)
    {
+	   if (pBar && j % 20 == 0)
+	   {
+		   pBar->incr(1);
+		   if (pBar->isCancelled())
+			   return SceneNodeAlembicPtr();
+	   }
+
       AbcObjectCache *pChildObjectCache = &( pArchiveCache->find( pRootObjectCache->childIdentifiers[j] )->second );
       Alembic::AbcGeom::IObject childObj = pChildObjectCache->obj;
       NodeCategory::type childCat = NodeCategory::get(childObj);
@@ -190,6 +249,13 @@ SceneNodeAlembicPtr buildAlembicSceneGraph(AbcArchiveCache *pArchiveCache, AbcOb
 
    while( !sceneStack.empty() )
    {
+	   if (pBar && numNodes % 20 == 0)
+	   {
+		   pBar->incr(1);
+		   if (pBar->isCancelled())
+			   return SceneNodeAlembicPtr();
+	   }
+
       AlembicISceneBuildElement sElement = sceneStack.back();
       Alembic::Abc::IObject iObj = sElement.pObjectCache->obj;
       SceneNodePtr parentNode = sElement.parentNode;
@@ -199,7 +265,7 @@ SceneNodeAlembicPtr buildAlembicSceneGraph(AbcArchiveCache *pArchiveCache, AbcOb
 
       SceneNodeAlembicPtr newNode(new SceneNodeAlembic(sElement.pObjectCache));
 
-      newNode->name = iObj.getName();
+      newNode->name = jobParams.replacer->replace( iObj.getName() );
       newNode->dccIdentifier = iObj.getFullName();
       newNode->type = getNodeType(iObj);
       newNode->selected = false;
@@ -490,8 +556,8 @@ bool ImportSceneFile(SceneNodeAlembicPtr fileRoot, SceneNodeAppPtr appRoot, cons
    }
 
    if (pbar) pbar->start();
-   const int maxCount = pbar->getUpdateCount();
-   int count = maxCount;
+   const int maxCount = pbar ? pbar->getUpdateCount() : 20;
+   int count = 0;
    while( !sceneStack.empty() )
    {
       ImportStackElement sElement = sceneStack.back();
@@ -499,7 +565,7 @@ bool ImportSceneFile(SceneNodeAlembicPtr fileRoot, SceneNodeAppPtr appRoot, cons
       SceneNodeAppPtr parentAppNode = sElement.parentAppNode;
       sceneStack.pop_back();
 
-      if (count == 0)
+      if (count % maxCount == 0)
       {
          count = maxCount;
          if (pbar)
@@ -516,7 +582,7 @@ bool ImportSceneFile(SceneNodeAlembicPtr fileRoot, SceneNodeAppPtr appRoot, cons
             pbar->setCaption(impMsg);
          }
       }
-      --count;
+      ++count;
       
       //ESS_LOG_WARNING("Importing "<<currFileNode->pObjCache->obj.getFullName());
        

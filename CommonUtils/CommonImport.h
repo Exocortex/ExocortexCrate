@@ -9,6 +9,16 @@
 #include "CommonAlembic.h"
 #include "CommonAbcCache.h"
 
+#include "CommonPBar.h"
+#include "CommonRegex.h"
+
+namespace XSI_XformTypes{
+   enum xte{//Don't change the order! We write these out.
+      UNKNOWN,
+      XMODEL,
+      XNULL
+   };
+};
 
 class IJobStringParser
 {
@@ -25,6 +35,10 @@ public:
    bool importVisibilityControllers;
    bool selectShapes;
    bool skipUnattachedNodes;
+   bool enableImportRootSelection;
+   XSI_XformTypes::xte xformTypes;
+
+   SearchReplace::ReplacePtr replacer;
 
 	std::string filename;// = EC_MCHAR_to_UTF8( strPath );
 
@@ -45,7 +59,8 @@ public:
       importVisibilityControllers(false),
       includeChildren(false),
       selectShapes(true),
-      skipUnattachedNodes(false)
+      skipUnattachedNodes(false),
+      enableImportRootSelection(false)
    {}
 
    bool parse(const std::string& jobString);
@@ -53,20 +68,7 @@ public:
    std::string buildJobString();
 };
 
-class CommonProgressBar
-{
-public:
-	inline void init(int range) { init(0, range, 1); }
-	virtual void init(int min, int max, int incr) = 0;
-	virtual void start(void) = 0;
-	virtual void stop(void) = 0;
-	virtual void incr(int step=1) = 0;
-	virtual bool isCancelled(void) = 0;
-    virtual void setCaption(std::string& caption){}
-    virtual int getUpdateCount(){ return 20; }
-};
-
-SceneNodeAlembicPtr buildAlembicSceneGraph(AbcArchiveCache *pArchiveCache, AbcObjectCache *pRootObjectCache, int& nNumNodes, bool countMergableChildren=true);
+SceneNodeAlembicPtr buildAlembicSceneGraph(AbcArchiveCache *pArchiveCache, AbcObjectCache *pRootObjectCache, int& nNumNodes, const IJobStringParser& jobParams, bool countMergableChildren=true, CommonProgressBar *pBar = 0);
 
 // progress bar needs to be initialized before these functions are called!
 bool ImportSceneFile(SceneNodeAlembicPtr fileRoot, SceneNodeAppPtr appRoot, const IJobStringParser& jobParams, CommonProgressBar *pBar = 0);

@@ -58,22 +58,32 @@ Abc::M44d AbcObjectCache::getXformMatrix(int index)
 
 
 
-AbcObjectCache* addObjectToCache( AbcArchiveCache* fullNameToObjectCache, Abc::IObject &obj, std::string parentIdentifier ) {
+AbcObjectCache* addObjectToCache( AbcArchiveCache* fullNameToObjectCache, Abc::IObject &obj, std::string parentIdentifier, CommonProgressBar *pBar ) {
 	ESS_PROFILE_SCOPE("addObjectToCache");
 	AbcObjectCache objectCache( obj );
 	objectCache.parentIdentifier = parentIdentifier;
 	for( int i = 0; i < obj.getNumChildren(); i ++ ) {
+		if (pBar)
+		{
+			pBar->incr(1);
+			if (!(i % 20) && pBar->isCancelled())	
+				return 0;
+		}
+
 		Abc::IObject child = obj.getChild( i );
-		AbcObjectCache* childObjectCache = addObjectToCache( fullNameToObjectCache, child, objectCache.fullName );
+		AbcObjectCache* childObjectCache = addObjectToCache( fullNameToObjectCache, child, objectCache.fullName, pBar );
+		if (childObjectCache == 0)
+			return 0;
+
 		objectCache.childIdentifiers.push_back( childObjectCache->fullName );
 	}
 	fullNameToObjectCache->insert( AbcArchiveCache::value_type( objectCache.fullName, objectCache ) );
 	return &( fullNameToObjectCache->find( objectCache.fullName )->second );
 }
 
-void createAbcArchiveCache( Abc::IArchive *pArchive, AbcArchiveCache* fullNameToObjectCache ) {
+bool createAbcArchiveCache( Abc::IArchive *pArchive, AbcArchiveCache* fullNameToObjectCache, CommonProgressBar *pBar ) {
 	ESS_PROFILE_SCOPE("createAbcArchiveCache");
 	EC_LOG_INFO( "Creating AbcArchiveCache for archive: " << pArchive->getName() );
    Abc::IObject top = pArchive->getTop();
-	addObjectToCache( fullNameToObjectCache, top, "" );
+	return addObjectToCache( fullNameToObjectCache, top, "", pBar ) != 0;
 }

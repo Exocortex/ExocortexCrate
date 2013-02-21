@@ -164,11 +164,13 @@ private:
 	timer_type t;
 
 public:
-	BasicProfiler(char const* s = "") 
-		: underflow(false), overflow(false), timing(true), name(s), elapsed(0.0)
+	BasicProfiler(char const* s = "", bool autoStart = true ) 
+		: underflow(false), overflow(false), timing(autoStart), name(s), elapsed(0.0)
 	{ 
 		logging_policy::on_start(name);
-		t.restart(); 
+        if( autoStart ) {
+		 t.restart(); 
+        }
 	}
 	~BasicProfiler() { 
 		if (timing) {
@@ -179,18 +181,20 @@ public:
 		return timing;
 	}
 	void stop() {
-		double tmp = t.elapsed();        
-		if (tmp <= t.elapsed_min()) {
-			underflow = true;
-		}
-		if (tmp >= t.elapsed_max()) {
-			overflow = true; 
-		}        
-		tmp += elapsed;
-		elapsed = 0.0;
-		timing = false;        
-		logging_policy::on_stop(name, tmp, underflow, overflow);
-		stats_policy::on_stop(name, tmp, underflow, overflow);
+       if( timing ) {
+		   double tmp = t.elapsed();        
+		   if (tmp <= t.elapsed_min()) {
+			   underflow = true;
+		   }
+		   if (tmp >= t.elapsed_max()) {
+			   overflow = true; 
+		   }        
+		   tmp += elapsed;
+		   elapsed = 0.0;
+		   timing = false;        
+		   logging_policy::on_stop(name, tmp, underflow, overflow);
+		   stats_policy::on_stop(name, tmp, underflow, overflow);
+       }
 	}
 	void restart() {
 		timing = true;
@@ -276,7 +280,7 @@ public:
 
 			std::stringstream strstream2;
 			strstream2 << std::setw(padding + 6) << std::setiosflags( std::ios::left )
-				<< sName << ","<< std::setw(padding) << std::setiosflags( std::ios::right )
+				<< sName << ","<< std::setw(50) << std::setiosflags( std::ios::right )
 				<< dAvg << ","<< std::setw(padding)
 				<< last << ","<< std::setw(padding)
 				<< dTotal << ","<< std::setw(padding)

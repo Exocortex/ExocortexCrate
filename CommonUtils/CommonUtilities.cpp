@@ -9,6 +9,7 @@
 stats_map default_stats_policy::stats;
 #endif // ESS_PROFILER
 
+#include "CommonPBar.h"
 
 struct AlembicArchiveInfo
 {
@@ -138,7 +139,7 @@ bool archiveExists(std::string const& path)
    return it != gArchives.end();
 }
 
-AbcArchiveCache* getArchiveCache( std::string const& path ) {
+AbcArchiveCache* getArchiveCache( std::string const& path, CommonProgressBar *pBar ) {
 	ESS_PROFILE_SCOPE("getArchiveCache");
   getArchiveFromID(path);
 	std::string resolvedPath = resolvePath(path);
@@ -148,11 +149,16 @@ AbcArchiveCache* getArchiveCache( std::string const& path ) {
       return NULL;
 
 	// compute cache if required.
-	if( it->second.archiveCache.size() == 0 ) {
-		createAbcArchiveCache( it->second.archive, &(it->second.archiveCache) );
+	if( it->second.archiveCache.size() == 0 )
+	{
+		if (!createAbcArchiveCache( it->second.archive, &(it->second.archiveCache), pBar ))
+		{
+			it->second.archiveCache.clear();
+			return 0;
+		}
 	}
 	return &(it->second.archiveCache);
-};
+}
 
 std::string addArchive(Alembic::Abc::IArchive * archive)
 {
@@ -255,6 +261,14 @@ int getRefArchive(std::string const& path)
    if(it == gArchives.end())
       return -1;
    return it->second.refCount;
+}
+
+void getPaths(std::vector<std::string>& paths)
+{
+   for(std::map<std::string,AlembicArchiveInfo>::iterator it=gArchives.begin(); it != gArchives.end(); it++)
+   {
+      paths.push_back( it->first.c_str() );
+   }
 }
 
 bool validate_filename_location(const char *filename)
@@ -794,4 +808,120 @@ Abc::ICompoundProperty getArbGeomParams(const AbcG::IObject& iObj, AbcA::TimeSam
        ESS_LOG_WARNING("Could not read ArgGeomParams from "<<iObj.getFullName());
        return Abc::ICompoundProperty();
     }
+}
+
+Abc::FloatArraySamplePtr getKnotVector(AbcG::ICurves& obj)
+{
+   ESS_PROFILE_FUNC();
+
+   Abc::ICompoundProperty arbGeom = obj.getSchema().getArbGeomParams();
+
+   if(!arbGeom.valid()){
+      return Abc::FloatArraySamplePtr();
+   }
+
+   if ( arbGeom.getPropertyHeader( ".knot_vectors" ) != NULL ){
+      Abc::IFloatArrayProperty knotProp = Abc::IFloatArrayProperty( arbGeom, ".knot_vectors" );
+      if(knotProp.valid() && knotProp.getNumSamples() != 0){
+         return knotProp.getValue(0);
+      }
+   }
+   if ( arbGeom.getPropertyHeader( ".knot_vector" ) != NULL ){
+      Abc::IFloatArrayProperty knotProp = Abc::IFloatArrayProperty( arbGeom, ".knot_vector" );
+      if(knotProp.valid() && knotProp.getNumSamples() != 0){
+         return knotProp.getValue(0);
+      }
+   }
+
+   return Abc::FloatArraySamplePtr();
+}
+
+Abc::UInt16ArraySamplePtr getCurveOrders(AbcG::ICurves& obj)
+{
+   ESS_PROFILE_FUNC();
+
+   Abc::ICompoundProperty arbGeom = obj.getSchema().getArbGeomParams();
+
+   if(!arbGeom.valid()){
+      return Abc::UInt16ArraySamplePtr();
+   }
+
+   if ( arbGeom.getPropertyHeader( ".orders" ) != NULL ){
+      Abc::IUInt16ArrayProperty orders = Abc::IUInt16ArrayProperty( arbGeom, ".orders" );
+      if(orders.valid() && orders.getNumSamples() != 0){
+         return orders.getValue(0);
+      }
+   }
+
+   return Abc::UInt16ArraySamplePtr();
+}
+
+
+
+bool validateCurveData( Abc::P3fArraySamplePtr pCurvePos, Abc::Int32ArraySamplePtr pCurveNbVertices, Abc::UInt16ArraySamplePtr pOrders, Abc::FloatArraySamplePtr pKnotVec, AbcG::CurveType type )
+{
+   ESS_PROFILE_FUNC();
+
+   int nDefaultOrder = 4;
+   const int numCurves = (int)pCurveNbVertices->size();
+   const int numControl = (int)pCurvePos->size();
+
+   int numControlNB = 0;
+
+   for(int i=0; i<pCurveNbVertices->size(); i++){
+      numControlNB += pCurveNbVertices->get()[i];
+   }
+
+   if(numControl != numControlNB){
+      ESS_LOG_ERROR("Size mismatch between vertices and nbVertices. Cannot load curve.");
+      return false;
+   }
+
+   if(pOrders && pCurveNbVertices->size() != pOrders->size()){
+      ESS_LOG_ERROR("Size mismatch between numOrders and nbVertices. Cannot load curve.");
+      return false;
+   }
+
+   if(pKnotVec){
+
+      int abcTotalKnots = 0;//numControl + numCurves * (nDefaultOrder - 2) ;
+
+      if(pOrders){
+         //calculate the expected knot vec size
+         for(int i=0; i<pCurveNbVertices->size(); i++){
+            abcTotalKnots += pCurveNbVertices->get()[i] + pOrders->get()[i] - 2; 
+         }
+      }
+      else{//single order
+         int nOrder = 0;
+         if(type == AbcG::kCubic){
+            nOrder = 4;
+         }
+         else if(type == AbcG::kLinear){
+            nOrder = 2;
+         }
+
+         abcTotalKnots = numControl + numCurves * (nOrder - 2) ;
+      }
+
+      if( abcTotalKnots != pKnotVec->size() ){
+         ESS_LOG_ERROR("Knot vector has the wrong size. Cannot load curve.");
+      }
+   }
+
+   return true;
+}
+
+int getCurveOrder(int i, Abc::UInt16ArraySamplePtr pOrders, AbcG::CurveType type)
+{
+   if(pOrders){
+      return pOrders->get()[i];
+   }
+   else if(type == AbcG::kCubic){
+      return 4;
+   }
+   else if(type == AbcG::kLinear){
+      return 2;
+   }
+   return 4;
 }
