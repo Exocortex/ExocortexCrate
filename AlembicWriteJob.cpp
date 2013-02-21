@@ -97,7 +97,7 @@ bool AlembicWriteJob::PreProcess()
     catch(Alembic::Util::Exception& e)
     {
         std::string exc(e.what());
-		ESS_LOG_ERROR("[alembic] Error writing to file: "<<e.what());
+		    ESS_LOG_ERROR("[alembic] Error writing to file: "<<e.what());
         return false;
     }
 
@@ -120,6 +120,10 @@ bool AlembicWriteJob::PreProcess()
     {
 		 if( ! HasAlembicWriterLicense() )
 		 {
+       if( HasAlembicInvalidLicense() ) {
+          ESS_LOG_ERROR("[alembic] No license available and EXOCORTEX_ALEMBIC_NO_DEMO defined, aborting." );
+          return false;
+       }
 			 if(frames.size() > 75)
 			 {
 				frames.resize(75);
