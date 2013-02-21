@@ -52,6 +52,7 @@ private:
    static MObject mIdentifierAttr;
    MString mFileName;
    MString mIdentifier;
+   AbcG::ICurves mObj;
    AbcG::ICurvesSchema mSchema;
 
    // output attributes

@@ -206,6 +206,7 @@ MStatus AlembicCurvesNode::compute(const MPlug & plug, MDataBlock & dataBlock)
 			MGlobal::displayWarning("[ExocortexAlembic] Identifier '"+identifier+"' in archive '"+mFileName+"' is not a Curves.");
 			return MStatus::kFailure;
 		}
+		mObj = obj;
 		mSchema = obj.getSchema();
 		mCurvesData = MObject::kNullObj;
 	}
@@ -240,6 +241,9 @@ MStatus AlembicCurvesNode::compute(const MPlug & plug, MDataBlock & dataBlock)
 	Abc::Int32ArraySamplePtr nbVertices = sample.getCurvesNumVertices();
 	const bool applyBlending = (blend == 0.0f) ? false : (samplePos->size() == samplePos2->size());
 
+	Abc::FloatArraySamplePtr pKnotVec = getKnotVector(mObj);
+	Abc::UInt16ArraySamplePtr pOrders = getCurveOrders(mObj);
+
 	MArrayDataHandle arrh = dataBlock.outputArrayValue(mOutGeometryAttr);
 	MArrayDataBuilder builder = arrh.builder();
 
@@ -248,19 +252,34 @@ MStatus AlembicCurvesNode::compute(const MPlug & plug, MDataBlock & dataBlock)
 	const int degree  = (sample.getType() == AbcG::kCubic) ? 3 : 1;
 	const bool closed = (sample.getWrap() == AbcG::kPeriodic);
 	unsigned int pointOffset = 0;
+	unsigned int knotOffset = 0;
 	for (int ii = 0; ii < nbVertices->size(); ++ii)
 	{
 		const unsigned int nbCVs = (unsigned int)nbVertices->get()[ii];
-		const int nbSpans = (int)nbCVs - degree;
+		const int ldegree = (pOrders) ? pOrders->get()[ii] : degree;
+		const int nbSpans = (int)nbCVs - ldegree;
+
+		if (ldegree != 1 && ldegree != 3)
+			continue;
 
 		MDoubleArray knots;
-		for(int span = 0; span <= nbSpans; ++span)
+		if(pKnotVec)
 		{
-			knots.append(double(span));
-			if(span == 0 || span == nbSpans)
+			const unsigned int nb_knot = nbCVs + ldegree - 1;
+			for(unsigned int i=0; i < nb_knot; ++i)
+				knots.append(pKnotVec->get()[knotOffset+i]);
+			knotOffset += nb_knot;
+		}
+		else
+		{
+			for(int span = 0; span <= nbSpans; ++span)
 			{
-				for(int m=1; m<degree; ++m)
-					knots.append(double(span));
+				knots.append(double(span));
+				if(span == 0 || span == nbSpans)
+				{
+					for(int m=1; m<degree; ++m)
+						knots.append(double(span));
+				}
 			}
 		}
 
@@ -297,7 +316,7 @@ MStatus AlembicCurvesNode::compute(const MPlug & plug, MDataBlock & dataBlock)
 
 		// create a subd either with or without uvs
 		MObject mmCurvesData = MFnNurbsCurveData().create();
-		mCurves.create(points, knots, degree, closed ? MFnNurbsCurve::kClosed : MFnNurbsCurve::kOpen, false, false, mmCurvesData);
+		mCurves.create(points, knots, ldegree, closed ? MFnNurbsCurve::kClosed : MFnNurbsCurve::kOpen, false, false, mmCurvesData);
 		builder.addElement(ii).set(mmCurvesData);
 	}
 	arrh.set(builder);
