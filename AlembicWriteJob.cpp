@@ -160,7 +160,7 @@ bool AlembicWriteJob::PreProcess()
 			if (type == OBTYPE_MESH || 
 				type == OBTYPE_CAMERA || 
 				(type == OBTYPE_DUMMY && !bFlattenHierarchy)|| 
-				type == OBTYPE_POINTS || 
+				type == OBTYPE_POINTS || type == OBTYPE_POINTS_TP ||
 				type == OBTYPE_CURVES)
 			{
 				AlembicObjectPtr ptr;
@@ -176,7 +176,7 @@ bool AlembicWriteJob::PreProcess()
 				continue;
 
 			int type = object->entry.type;
-			if (type == OBTYPE_MESH || (bParticleMesh && type == OBTYPE_POINTS) ) 
+			if (type == OBTYPE_MESH || (bParticleMesh && type == OBTYPE_POINTS) || type == OBTYPE_POINTS_TP) 
 			{
 				AlembicObjectPtr ptr;
 				ptr.reset(new AlembicPolyMesh(object->entry,this));            

@@ -29,6 +29,13 @@ SceneEntry createSceneEntry(INode* node, TimeValue time, std::string* pFullname)
     SClass_ID superClassID = obj->SuperClassID();
     Class_ID classID = obj->ClassID();
 
+#ifdef THINKING_PARTICLES
+    if(obj->CanConvertToType(MATTERWAVES_CLASS_ID)){
+        ESS_LOG_WARNING("We only support merged mesh export for thinking particles.");
+        return SceneEntry(node, obj, OBTYPE_POINTS_TP, pFullname);
+    }
+#endif
+
     if (obj->IsParticleSystem()){
         return SceneEntry(node, obj, OBTYPE_POINTS, pFullname);
     }

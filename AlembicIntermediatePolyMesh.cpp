@@ -6,6 +6,7 @@
 
 bool AlembicIntermediatePolyMesh::mergeWith(const AlembicIntermediatePolyMesh& srcMesh)
 {
+    ESS_PROFILE_FUNC();
 	AlembicIntermediatePolyMesh& destMesh = *this;
 
 	//TODO: watch out for the mixing of indexed attributes with nonindexed attributes

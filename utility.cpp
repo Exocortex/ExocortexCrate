@@ -143,6 +143,7 @@ void AlembicDebug_PrintTransform(Matrix3 &m)
 
 void ConvertMaxMatrixToAlembicMatrix( const Matrix3 &maxMatrix, Matrix3 &result)
 {
+    ESS_PROFILE_FUNC();
     // Rotate the max matrix into an alembic reference frame, a right handed co-ordinate system
     // We set up an alembic reference frame relative to Max's coordinate system
     static Matrix3 AlembicRefFrame(Point3(1,0,0), Point3(0,0,1), Point3(0,-1,0), Point3(0,0,0));
@@ -188,22 +189,23 @@ void ConvertAlembicMatrixToMaxMatrix( const Matrix3 &alembicMatrix, Matrix3 &res
 
 
 
-bool CheckIfNodeIsAnimated( INode *pNode )
-{
-    INode *pAnimatedNode = pNode;
-    while (pAnimatedNode)
-    {
-        if (pAnimatedNode->IsRootNode())
-            return false;
-
-        if (pAnimatedNode->IsAnimated())
-            return true;
-
-        pAnimatedNode = pAnimatedNode->GetParentNode();
-    }
-
-    return false;
-}
+//bool CheckIfNodeIsAnimated( INode *pNode )
+//{
+//   ESS_PROFILE_FUNC();
+//    INode *pAnimatedNode = pNode;
+//    while (pAnimatedNode)
+//    {
+//        if (pAnimatedNode->IsRootNode())
+//            return false;
+//
+//        if (pAnimatedNode->IsAnimated())
+//            return true;
+//
+//        pAnimatedNode = pAnimatedNode->GetParentNode();
+//    }
+//
+//    return false;
+//}
 
 bool CheckIfObjIsValidForever(Object *obj, TimeValue v)
 {

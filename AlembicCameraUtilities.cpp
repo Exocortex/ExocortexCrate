@@ -34,7 +34,7 @@ _alembic_fillcamera_options::_alembic_fillcamera_options()
 //////////////////////////////////////////////////////////////////////////////////////////
 // Functions
 
-bool getCameraSampleVal(AbcG::ICamera& objCamera, SampleInfo& sampleInfo, AbcG::CameraSample sample, const char* name, double& sampleVal)
+bool getCameraSampleVal(AbcG::ICamera& objCamera, SampleInfo& sampleInfo, AbcG::CameraSample sample, std::string name, double& sampleVal)
 {
     objCamera.getSchema().get(sample, sampleInfo.floorIndex);
 

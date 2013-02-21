@@ -10,7 +10,11 @@ private:
    AbcG::OXformSchema mXformSchema;
    AbcG::OCurvesSchema mCurvesSchema;
    AbcG::XformSample mXformSample;
-   AbcG::OCurvesSchema::Sample mCurvesSample;
+   
+
+   Abc::OFloatArrayProperty mKnotVectorProperty;
+
+   Abc::OUInt16ArrayProperty mOrdersProperty;
 
    //Abc::OV3fArrayProperty mVelocityProperty;
    //Abc::OFloatArrayProperty mRadiusProperty;

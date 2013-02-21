@@ -1,23 +1,24 @@
 ---------------------------------------------------------------------------------------------------------
 -- Custom import/export dialog with settings
 
-rollout AlembicImportSettings "Alembic Import Settings" width:288 height:170
+rollout AlembicImportSettings "Alembic Import Settings" width:288 height:188
 (
     local filename
 
-	GroupBox geoGroup "Geometry" pos:[8,8] width:272 height:138
+	GroupBox geoGroup "Geometry" pos:[8,8] width:272 height:156
 	checkbox normalCheckbox "Normals" pos:[48,32] width:200 height:15 checked:true
 	checkbox uvCheckbox "UVs" pos:[48,48] width:200 height:15 checked:true
     --checkbox clustersCheckbox "Clusters" pos:[48,64] width:200 height:15 checked:true
 	checkbox attachCheckbox "Attach to existing objects" pos:[48,64] width:200 height:15 checked:false
 
-	button importButton "Import" pos:[16,138] width:64 height:24
-	button cancelButton "Cancel" pos:[208,138] width:64 height:24
+	button importButton "Import" pos:[16,156] width:64 height:24
+	button cancelButton "Cancel" pos:[208,156] width:64 height:24
 	--GroupBox grpVisibility "Visibility" pos:[9,121] width:272 height:46
 	--dropdownList dropDownVis "" pos:[20,140] width:252 height:21 items:#("Just Import Value", "Connected Controllers") selection:1
 	checkbox materialIdsCheckbox "Material Ids" pos:[48,82] width:145 height:16 checked:true
     checkbox geoFromTopoCheckbox "Load Geometry From Topology Modifier" pos:[48,100] width:220 height:16 checked:false
     checkbox loadTimeControlCheckbox "Use Time Control" pos:[48,118] width:220 height:16 checked:true
+    checkbox loadCurvesAsNurbsCheckbox "Load Curves as NURBS" pos:[48,136] width:220 height:16 checked:true
 
 	on importButton pressed do
 	(
@@ -32,6 +33,8 @@ rollout AlembicImportSettings "Alembic Import Settings" width:288 height:170
         jobString += (geoFromTopoCheckbox.checked as string)
         jobString += ";loadTimeControl="
         jobString += (loadTimeControlCheckbox.checked as string)
+        jobString += ";loadCurvesAsNurbs="
+        jobString += (loadCurvesAsNurbsCheckbox.checked as string)
 
     	result = ExocortexAlembic.createImportJob(jobString)
 

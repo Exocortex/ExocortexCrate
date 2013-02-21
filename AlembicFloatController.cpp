@@ -140,7 +140,7 @@ void AlembicFloatController::GetValueLocalTime(TimeValue t, void *ptr, Interval 
       objCamera.getSchema().get(sample, sampleInfo.floorIndex);
 
       double sampleVal;
-	   if(!getCameraSampleVal(objCamera, sampleInfo, sample, strProperty, sampleVal)){
+	   if(!getCameraSampleVal(objCamera, sampleInfo, sample, szProperty, sampleVal)){
 		   return;
 	   }
 
@@ -149,7 +149,7 @@ void AlembicFloatController::GetValueLocalTime(TimeValue t, void *ptr, Interval 
       {
          objCamera.getSchema().get(sample, sampleInfo.ceilIndex);
 		   double sampleVal2 = 0.0;
-		   if(getCameraSampleVal(objCamera, sampleInfo, sample, strProperty, sampleVal2)){
+		   if(getCameraSampleVal(objCamera, sampleInfo, sample, szProperty, sampleVal2)){
 			   sampleVal = (1.0 - sampleInfo.alpha) * sampleVal + sampleInfo.alpha * sampleVal2;
 		   }
       }
@@ -168,7 +168,7 @@ void AlembicFloatController::GetValueLocalTime(TimeValue t, void *ptr, Interval 
     
       AbcM::IMaterialSchema matSchema = getMatSchema(objLight);
 
-      std::string strProp = strProperty;
+      std::string strProp = szProperty;
       
       std::vector<std::string> parts;
 	  boost::split(parts, strProp, boost::is_any_of("."));

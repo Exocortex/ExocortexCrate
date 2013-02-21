@@ -232,7 +232,7 @@ void AlembicParticles::UpdateParticles(TimeValue t, INode *node)
     m_ParticleOrientations.resize(numParticles);
     m_ParticleScales.resize(numParticles);
     m_VCArray.resize(numParticles);
-  
+    m_idVec.resize(numParticles);
 
 
     m_objToWorld = node->GetObjTMAfterWSM(t);
@@ -244,6 +244,7 @@ void AlembicParticles::UpdateParticles(TimeValue t, INode *node)
 	GetParticleOrientations( m_iPoints, sampleInfo, m_objToWorld,  m_ParticleOrientations );
 	GetParticleScales( m_iPoints, sampleInfo, m_objToWorld,  m_ParticleScales );
 	GetParticleColors(m_iPoints, sampleInfo, m_VCArray);
+    GetParticleIds(floorSample, sampleInfo, m_idVec);
 
 	GetParticleShapeTypes(m_iPoints, sampleInfo, m_InstanceShapeType );
 	GetParticleShapeInstanceIds(m_iPoints, sampleInfo, m_InstanceShapeIds );
@@ -522,24 +523,6 @@ AlembicParticles::GetParticlePositions(AbcG::IPoints &iPoints, const AbcG::IPoin
 		const float fLimit = FLT_MAX/5;
 
 		for( int i = 0; i < alembicPositions.size(); i ++ ) {
-			//bool bOutOfBounds = false;
-			//if(alembicPositions[i].x > fLimit){
-			//	alembicPositions[i].x = fLimit;
-			//	bOutOfBounds = true;
-			//}
-			//if(alembicPositions[i].y > fLimit){
-			//	alembicPositions[i].y = fLimit;
-			//	bOutOfBounds = true;
-			//}	
-			//if(alembicPositions[i].z > fLimit){
-			//	alembicPositions[i].z = fLimit;
-			//	bOutOfBounds = true;
-			//}
-
-			//if(bOutOfBounds){
-			//	ESS_LOG_INFO("Warning: 3DS max grid rendering breaks when a point is too large. Point "<<i<<" is too large, and has been capped to a safe limit.");
-			//}
-
 			points[i] = ConvertAlembicPointToMaxPoint( alembicPositions[i] ) * objToWorld;
 		}
 	}
@@ -568,6 +551,19 @@ AlembicParticles::GetParticleVelocities(const AbcG::IPointsSchema::Sample &floor
 	}
 }
 
+void
+AlembicParticles::GetParticleIds(const AbcG::IPointsSchema::Sample &floorSample, const SampleInfo &sampleInfo, std::vector<Abc::uint64_t>& idVec) const {
+    ESS_PROFILE_FUNC();
+
+    Abc::UInt64ArraySamplePtr idsSample = floorSample.getIds();
+    if( idsSample != NULL && idsSample->valid() && idsSample->size() > 0 )
+    {
+       //ESS_LOG_WARNING("ssize: "<<idsSample->size()<<" vsize: "<<idVec.size());
+       for(int i=0; i<idsSample->size() && i<idVec.size(); i++){
+         idVec[i] = idsSample->get()[i];
+       }
+    }
+}
 
 void
 AlembicParticles::GetParticleRadii(AbcG::IPoints &iPoints, const SampleInfo &sampleInfo, Tab<float>& radius) const {
