@@ -35,6 +35,7 @@ int GetAlembicLicense() {
 
 	bool isForceReader = ( getenv("EXOCORTEX_ALEMBIC_FORCE_READER") != NULL );
 	bool isForceWriter = ( getenv("EXOCORTEX_ALEMBIC_FORCE_WRITER") != NULL );
+	bool isNoDemo = ( getenv("EXOCORTEX_ALEMBIC_NO_DEMO") != NULL );
 
 	if( isForceReader && isForceWriter ) {
 		ESS_LOG_ERROR( "Both environment variables EXOCORTEX_ALEMBIC_FORCE_READER and EXOCORTEX_ALEMBIC_FORCE_WRITER defined, these conflict" );
@@ -76,10 +77,19 @@ int GetAlembicLicense() {
 		s_alembicLicense = pluginLicenseResult;
 	}
 	else {
-		s_alembicLicense = ALEMBIC_DEMO_LICENSE;
+    if( isNoDemo ) {
+      s_alembicLicense = ALEMBIC_INVALID_LICENSE;
+    }
+    else {
+		  s_alembicLicense = ALEMBIC_DEMO_LICENSE;
+    }
 	}
 
 	return s_alembicLicense;
+}
+
+bool HasAlembicInvalidLicense() {
+	return ( GetAlembicLicense() == ALEMBIC_INVALID_LICENSE );
 }
 
 bool HasAlembicWriterLicense() {

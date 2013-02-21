@@ -27,8 +27,10 @@
 #define ALEMBIC_DEMO_LICENSE 0
 #define ALEMBIC_WRITER_LICENSE 1
 #define ALEMBIC_READER_LICENSE 2
+#define ALEMBIC_INVALID_LICENSE 3
 
 int GetAlembicLicense();
+bool HasAlembicInvalidLicense();
 bool HasAlembicWriterLicense();
 bool HasAlembicReaderLicense();
 
