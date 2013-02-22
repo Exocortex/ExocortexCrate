@@ -23,16 +23,6 @@ MStatus AlembicPolyMesh::Save(double time)
 	// access the geometry
 	MFnMesh node(GetRef());
 
-	// check if .outMesh is connected to another node. if it's, it means that this mesh values should be ignored because it's sent somewhere else anyway.
-	/*{
-		MStringArray conn;
-		MGlobal::executeCommand("listConnections " + node.name(), conn);
-		if (conn.length() > 0)
-		{
-			MGlobal::displayWarning(("Skipping " + node.name()) + " because attribute \".outMesh\" is connected to another node");
-			return MS::kSuccess;
-		}
-	}*/
 	MDagPath path;
 	node.getPath(path);
 
@@ -145,7 +135,6 @@ MStatus AlembicPolyMesh::Save(double time)
       mSample.setFaceCounts(faceCountSample);
       mSample.setFaceIndices(faceIndicesSample);
 
- 
       // check if we need to export uvs
       if(GetJob()->GetOption(L"exportUVs").asInt() > 0)
       {
@@ -380,6 +369,8 @@ AlembicPolyMeshNode::~AlembicPolyMeshNode()
 MObject AlembicPolyMeshNode::mTimeAttr;
 MObject AlembicPolyMeshNode::mFileNameAttr;
 MObject AlembicPolyMeshNode::mIdentifierAttr;
+MObject AlembicPolyMeshNode::mUvFileNameAttr;
+MObject AlembicPolyMeshNode::mUvIdentifierAttr;
 MObject AlembicPolyMeshNode::mNormalsAttr;
 MObject AlembicPolyMeshNode::mUvsAttr;
 MObject AlembicPolyMeshNode::mOutGeometryAttr;
@@ -427,6 +418,19 @@ MStatus AlembicPolyMeshNode::initialize()
    status = tAttr.setKeyable(false);
    status = addAttribute(mUvsAttr);
 
+   // UV input file name
+   mUvFileNameAttr = tAttr.create("uv_fileName", "ufn", MFnData::kString, emptyStringObject);
+   status = tAttr.setStorable(true);
+   status = tAttr.setUsedAsFilename(true);
+   status = tAttr.setKeyable(false);
+   status = addAttribute(mUvFileNameAttr);
+
+   // UV input identifier
+   mUvIdentifierAttr = tAttr.create("uv_identifier", "uif", MFnData::kString, emptyStringObject);
+   status = tAttr.setStorable(true);
+   status = tAttr.setKeyable(false);
+   status = addAttribute(mUvIdentifierAttr);
+
    // output mesh
    mOutGeometryAttr = tAttr.create("outMesh", "om", MFnData::kMesh);
    status = tAttr.setStorable(false);
@@ -439,6 +443,8 @@ MStatus AlembicPolyMeshNode::initialize()
    status = attributeAffects(mTimeAttr, mOutGeometryAttr);
    status = attributeAffects(mFileNameAttr, mOutGeometryAttr);
    status = attributeAffects(mIdentifierAttr, mOutGeometryAttr);
+   status = attributeAffects(mUvFileNameAttr, mOutGeometryAttr);
+   status = attributeAffects(mUvIdentifierAttr, mOutGeometryAttr);
    status = attributeAffects(mNormalsAttr, mOutGeometryAttr);
    status = attributeAffects(mUvsAttr, mOutGeometryAttr);
 
@@ -447,93 +453,139 @@ MStatus AlembicPolyMeshNode::initialize()
 
 MStatus AlembicPolyMeshNode::compute(const MPlug & plug, MDataBlock & dataBlock)
 {
-  ESS_PROFILE_SCOPE("AlembicPolyMeshNode::compute");
-  MStatus status;
+	ESS_PROFILE_SCOPE("AlembicPolyMeshNode::compute");
+	MStatus status;
 
-   // update the frame number to be imported
-   double inputTime = dataBlock.inputValue(mTimeAttr).asTime().as(MTime::kSeconds);
-   MString & fileName = dataBlock.inputValue(mFileNameAttr).asString();
-   MString & identifier = dataBlock.inputValue(mIdentifierAttr).asString();
-   bool importNormals = dataBlock.inputValue(mNormalsAttr).asBool();
-   bool importUvs = dataBlock.inputValue(mUvsAttr).asBool();
+	// update the frame number to be imported
+	const double inputTime = dataBlock.inputValue(mTimeAttr).asTime().as(MTime::kSeconds);
+	const MString &fileName = dataBlock.inputValue(mFileNameAttr).asString();
+	const MString &identifier = dataBlock.inputValue(mIdentifierAttr).asString();
+	const MString &uv_fileName = dataBlock.inputValue(mUvFileNameAttr).asString();
+	const MString &uv_identifier = dataBlock.inputValue(mUvIdentifierAttr).asString();
+	bool importNormals = dataBlock.inputValue(mNormalsAttr).asBool();
+	bool importUvs = dataBlock.inputValue(mUvsAttr).asBool();
 
  	AbcObjectCache* pObjectInfo = NULL;
   
-   // check if we have the file
-   if(fileName != mFileName || identifier != mIdentifier)
-   {
-      mSchema.reset();
-      if(fileName != mFileName)
-      {
-         delRefArchive(mFileName);
-         mFileName = fileName;
-         addRefArchive(mFileName);
-      }
-      mIdentifier = identifier;
+	// check if we have the file
+	if(fileName != mFileName || identifier != mIdentifier)
+	{
+		mSchema.reset();
+		if(fileName != mFileName)
+		{
+			delRefArchive(mFileName);
+			mFileName = fileName;
+			addRefArchive(mFileName);
+		}
+		mIdentifier = identifier;
 
-      // get the object from the archive
-	    pObjectInfo = getObjectCacheFromArchive( std::string( mFileName.asChar() ), std::string( identifier.asChar() ) );
-	    if( pObjectInfo != NULL ) {
-		    mObj = pObjectInfo->obj;
-	    }
-      if(!mObj.valid())
-      {
-         MGlobal::displayWarning("[ExocortexAlembic] Identifier '"+identifier+"' not found in archive '"+mFileName+"'.");
-         return MStatus::kFailure;
-      }
-      AbcG::IPolyMesh obj(mObj,Abc::kWrapExisting);
-      if(!obj.valid())
-      {
-         MGlobal::displayWarning("[ExocortexAlembic] Identifier '"+identifier+"' in archive '"+mFileName+"' is not a PolyMesh.");
-         return MStatus::kFailure;
-      }
-      mSchema = obj.getSchema();
-      mMeshData = MObject::kNullObj;
-	    mDynamicTopology = pObjectInfo->isMeshTopoDynamic;
-   }
+		// get the object from the archive
+		pObjectInfo = getObjectCacheFromArchive( std::string( mFileName.asChar() ), std::string( identifier.asChar() ) );
+		if( pObjectInfo != NULL )
+			mObj = pObjectInfo->obj;
 
-  if(!mSchema.valid())
-    return MStatus::kFailure;
+		if(!mObj.valid())
+		{
+			MGlobal::displayWarning("[ExocortexAlembic] Identifier '"+identifier+"' not found in archive '"+mFileName+"'.");
+			return MStatus::kFailure;
+		}
+		AbcG::IPolyMesh obj(mObj,Abc::kWrapExisting);
+		if(!obj.valid())
+		{
+			MGlobal::displayWarning("[ExocortexAlembic] Identifier '"+identifier+"' in archive '"+mFileName+"' is not a PolyMesh.");
+			return MStatus::kFailure;
+		}
+		mSchema = obj.getSchema();
+		mMeshData = MObject::kNullObj;
+		mDynamicTopology = pObjectInfo->isMeshTopoDynamic;
+	}
 
-  // get the sample
-  SampleInfo sampleInfo = getSampleInfo(
-    inputTime,
-    mSchema.getTimeSampling(),
-    mSchema.getNumSamples()
-    );
+	if(!mSchema.valid())
+		return MStatus::kFailure;
 
-  // check if we have to do this at all
-  if(!mMeshData.isNull() && 
-    mLastSampleInfo.floorIndex == sampleInfo.floorIndex && 
-    mLastSampleInfo.ceilIndex == sampleInfo.ceilIndex && ! mDynamicTopology ) {
-      //ESS_LOG_WARNING( "not doing this at all." );
-      return MStatus::kSuccess;
-  }
+	// UVs
+	bool uvFromDifferentFile = false;
+	{
+		bool independentUvSuccessful = false;
 
-  mLastSampleInfo = sampleInfo;
+		if (uv_fileName.length() > 0 && uv_identifier.length() > 0)
+		{
+			uvFromDifferentFile = true;
+			if (uv_fileName != mUvFileName || uv_identifier != mUvIdentifier)
+			{
+				if (uv_fileName != mUvFileName)
+				{
+					delRefArchive(mUvFileName);
+					mUvFileName = uv_fileName;
+					addRefArchive(mUvFileName);
+				}
+				mUvIdentifier = uv_identifier;
+
+				// get the object from the archive
+				AbcObjectCache* pUvObjectInfo = getObjectCacheFromArchive( std::string( mUvFileName.asChar() ), std::string( uv_identifier.asChar() ) );
+				if( pUvObjectInfo != NULL )
+				{
+					Abc::IObject iObj = pUvObjectInfo->obj;
+					if(iObj.valid())
+					{
+						AbcG::IPolyMesh obj(iObj, Abc::kWrapExisting);
+						if(obj.valid())
+						{
+							mUvSchema = obj.getSchema();
+							independentUvSuccessful = mUvSchema.valid();
+						}
+					}
+				}
+			}
+			else
+				independentUvSuccessful = true;
+		}
+
+		if (!independentUvSuccessful)
+		{
+			uvFromDifferentFile = false;
+			mUvSchema = mSchema;
+		}
+	}
+
+	const bool uvChanged = ( uvFromDifferentFile != mUvFromDifferentFile );
+	if (uvChanged)
+		uvFromDifferentFile = mUvFromDifferentFile;
+
+	// get the sample
+	SampleInfo sampleInfo = getSampleInfo( inputTime, mSchema.getTimeSampling(), mSchema.getNumSamples() );
+
+	// check if we have to do this at all
+	if(!mMeshData.isNull() &&  mLastSampleInfo.floorIndex == sampleInfo.floorIndex && mLastSampleInfo.ceilIndex == sampleInfo.ceilIndex && ! mDynamicTopology && !uvChanged )
+	{
+		//ESS_LOG_WARNING( "not doing this at all." );
+		return MStatus::kSuccess;
+	}
+
+	mLastSampleInfo = sampleInfo;
 
 	// access the camera values
 	AbcG::IPolyMeshSchema::Sample sample;
 	AbcG::IPolyMeshSchema::Sample sample2;
-	mSchema.get(sample,sampleInfo.floorIndex);
+	mSchema.get(sample, sampleInfo.floorIndex);
 	if(sampleInfo.alpha != 0.0)
-		mSchema.get(sample2,sampleInfo.ceilIndex);
+		mSchema.get(sample2, sampleInfo.ceilIndex);
 
-  // create the output mesh
-  if(mMeshData.isNull())
-  {
-    MFnMeshData meshDataFn;
-    mMeshData = meshDataFn.create();
-  }
+	// create the output mesh
+	if(mMeshData.isNull())
+	{
+		MFnMeshData meshDataFn;
+		mMeshData = meshDataFn.create();
+	}
 
-  Abc::P3fArraySamplePtr samplePos = sample.getPositions();
-  Abc::V3fArraySamplePtr sampleVel = sample.getVelocities();
+	Abc::P3fArraySamplePtr samplePos = sample.getPositions();
+	Abc::V3fArraySamplePtr sampleVel = sample.getVelocities();
 
-  Abc::Int32ArraySamplePtr sampleCounts = sample.getFaceCounts();
-  Abc::Int32ArraySamplePtr sampleIndices = sample.getFaceIndices();
+	Abc::Int32ArraySamplePtr sampleCounts = sample.getFaceCounts();
+	Abc::Int32ArraySamplePtr sampleIndices = sample.getFaceIndices();
 
 	// ensure that we are not running on a purepoint cache mesh
-  MFloatPointArray points;
+	MFloatPointArray points;
 	if(sampleCounts->get() == 0 || sampleCounts->get()[0] == 0)
 	{
 		points.clear();
@@ -608,7 +660,8 @@ MStatus AlembicPolyMeshNode::compute(const MPlug & plug, MDataBlock & dataBlock)
   if(mMesh.numVertices() != points.length() || 
     mMesh.numPolygons() != (unsigned int)sampleCounts->size() || 
     mMesh.numFaceVertices() != (unsigned int)sampleIndices->size() ||
-    mDynamicTopology
+    mDynamicTopology ||
+	uvChanged
     )
   {
     //ESS_LOG_WARNING( "Updating face topology." );
@@ -653,7 +706,7 @@ MStatus AlembicPolyMeshNode::compute(const MPlug & plug, MDataBlock & dataBlock)
     // check if we need to import uvs
     if(importUvs)
     {
-      AbcG::IV2fGeomParam uvsParam = mSchema.getUVsParam();
+      AbcG::IV2fGeomParam uvsParam = mUvSchema.getUVsParam();
       if(uvsParam.valid())
       {
         if(uvsParam.getNumSamples() > 0)
