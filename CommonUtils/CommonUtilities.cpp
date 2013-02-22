@@ -530,6 +530,13 @@ template<typename T> bool __getBasicSchemaDataFromObject(BasicSchemaData::SCHEMA
 {
 	bsd.type = type;
 	bsd.isConstant = schema.isConstant();
+	if (bsd.isConstant)
+	{
+		Alembic::Abc::IObject iObj = schema.getObject();
+		AbcG::IVisibilityProperty visibilityProperty = AbcG::GetVisibilityProperty(iObj);
+		if (visibilityProperty.valid())
+			bsd.isConstant = visibilityProperty.getNumSamples() <= 1;
+	}
 	bsd.nbSamples  = schema.getNumSamples();
 	return true;
 }
@@ -538,7 +545,7 @@ bool getBasicSchemaDataFromObject(Alembic::Abc::IObject &object, BasicSchemaData
 	ESS_PROFILE_SCOPE("getBasicSchemaDataFromObject"); 
 	const Alembic::Abc::MetaData &md = object.getMetaData();
 	if(Alembic::AbcGeom::IXform::matches(md))
-		return  __getBasicSchemaDataFromObject(BasicSchemaData::__XFORM, Alembic::AbcGeom::IXform(object,Alembic::Abc::kWrapExisting).getSchema(), bsd);
+		return __getBasicSchemaDataFromObject(BasicSchemaData::__XFORM, Alembic::AbcGeom::IXform(object,Alembic::Abc::kWrapExisting).getSchema(), bsd);
 
 	else if(Alembic::AbcGeom::IPolyMesh::matches(md))
 		return __getBasicSchemaDataFromObject(BasicSchemaData::__POLYMESH, Alembic::AbcGeom::IPolyMesh(object,Alembic::Abc::kWrapExisting).getSchema(), bsd);
