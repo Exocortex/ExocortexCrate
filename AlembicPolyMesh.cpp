@@ -468,6 +468,7 @@ MStatus AlembicPolyMeshNode::compute(const MPlug & plug, MDataBlock & dataBlock)
  	AbcObjectCache* pObjectInfo = NULL;
   
 	// check if we have the file
+	bool fileChanged = false;
 	if(fileName != mFileName || identifier != mIdentifier)
 	{
 		mSchema.reset();
@@ -476,8 +477,14 @@ MStatus AlembicPolyMeshNode::compute(const MPlug & plug, MDataBlock & dataBlock)
 			delRefArchive(mFileName);
 			mFileName = fileName;
 			addRefArchive(mFileName);
+			fileChanged = true;
 		}
-		mIdentifier = identifier;
+
+		if (identifier != mIdentifier)
+		{
+			mIdentifier = identifier;
+			fileChanged = true;
+		}
 
 		// get the object from the archive
 		pObjectInfo = getObjectCacheFromArchive( std::string( mFileName.asChar() ), std::string( identifier.asChar() ) );
@@ -556,7 +563,7 @@ MStatus AlembicPolyMeshNode::compute(const MPlug & plug, MDataBlock & dataBlock)
 	SampleInfo sampleInfo = getSampleInfo( inputTime, mSchema.getTimeSampling(), mSchema.getNumSamples() );
 
 	// check if we have to do this at all
-	if(!mMeshData.isNull() &&  mLastSampleInfo.floorIndex == sampleInfo.floorIndex && mLastSampleInfo.ceilIndex == sampleInfo.ceilIndex && ! mDynamicTopology && !uvChanged )
+	if( !mDynamicTopology && !uvChanged && !mMeshData.isNull() &&  mLastSampleInfo.floorIndex == sampleInfo.floorIndex && mLastSampleInfo.ceilIndex == sampleInfo.ceilIndex )
 	{
 		//ESS_LOG_WARNING( "not doing this at all." );
 		return MStatus::kSuccess;
@@ -657,12 +664,14 @@ MStatus AlembicPolyMeshNode::compute(const MPlug & plug, MDataBlock & dataBlock)
   }
 
   // check if we already have the right polygons
-  if(mMesh.numVertices() != points.length() || 
-    mMesh.numPolygons() != (unsigned int)sampleCounts->size() || 
-    mMesh.numFaceVertices() != (unsigned int)sampleIndices->size() ||
-    mDynamicTopology ||
-	uvChanged
-    )
+	if (
+		fileChanged ||
+		mDynamicTopology ||
+		uvChanged ||
+		mMesh.numVertices() != points.length() || 
+		mMesh.numPolygons() != (unsigned int)sampleCounts->size() || 
+		mMesh.numFaceVertices() != (unsigned int)sampleIndices->size()
+	)
   {
     //ESS_LOG_WARNING( "Updating face topology." );
 
@@ -675,22 +684,20 @@ MStatus AlembicPolyMeshNode::compute(const MPlug & plug, MDataBlock & dataBlock)
     mNormalVertices.setLength(indices.length());
 
     unsigned int offset = 0;
-    for(unsigned int i=0;i<counts.length();i++)
+    for(unsigned int i=0; i<counts.length(); ++i)
     {
-      counts[i] = sampleCounts->get()[i];
-      for(int j=0;j<counts[i];j++)
+      const int l_count = (counts[i] = sampleCounts->get()[i]);
+      for(int j=0; j<l_count; ++j)
       {
-        //MString count,index;
-        //count.set((double)counts[i]);
-        //index.set((double)sampleIndices->get()[offset+j]);
-        const int smpIdx = offset+counts[i]-j-1;
+        const int smpIdx = offset + l_count - j - 1;
+		const unsigned int offset_j = offset+j;
         mSampleLookup[smpIdx] = offset+j;
-        indices[offset+j] = sampleIndices->get()[smpIdx];
+        indices[offset_j] = sampleIndices->get()[smpIdx];
 
-        mNormalFaces[offset+j] = i;
-        mNormalVertices[offset+j] = indices[offset+j];
+        mNormalFaces[offset_j] = i;
+        mNormalVertices[offset_j] = indices[offset_j];
       }
-      offset += counts[i];
+      offset += l_count;
     }
 
     // create a mesh either with or without uvs
