@@ -27,7 +27,7 @@ public:
 class AlembicPolyMeshNode : public AlembicObjectNode
 {
 public:
-   AlembicPolyMeshNode() {}
+	AlembicPolyMeshNode(): mUvFromDifferentFile(false) {}
    virtual ~AlembicPolyMeshNode();
 
    // override virtual methods from MPxNode
@@ -41,11 +41,17 @@ private:
    static MObject mTimeAttr;
    static MObject mFileNameAttr;
    static MObject mIdentifierAttr;
+   static MObject mUvFileNameAttr;
+   static MObject mUvIdentifierAttr;
    MString mFileName;
    MString mIdentifier;
+   MString mUvFileName;
+   MString mUvIdentifier;
    Abc::IObject mObj;
    AbcG::IPolyMeshSchema mSchema;
+   AbcG::IPolyMeshSchema mUvSchema;
    bool mDynamicTopology;
+   bool mUvFromDifferentFile;
    static MObject mNormalsAttr;
    static MObject mUvsAttr;
 

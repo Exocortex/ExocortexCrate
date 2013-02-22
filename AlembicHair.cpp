@@ -9,8 +9,6 @@ AlembicHair::AlembicHair(SceneNodePtr eNode, AlembicWriteJob * in_Job, Abc::OObj
 	mObject = AbcG::OCurves(GetMyParent(), eNode->name, animTS);
 	mSchema = mObject.getSchema();
 
-   mOVisibility = CreateVisibilityProperty(mObject,animTS);
-
 	// create all properties
 	mRadiusProperty = Abc::OFloatArrayProperty(mSchema, ".radius", mSchema.getMetaData(), animTS );
 	mColorProperty  = Abc::OC4fArrayProperty(mSchema, ".color", mSchema.getMetaData(), animTS );
@@ -18,7 +16,6 @@ AlembicHair::AlembicHair(SceneNodePtr eNode, AlembicWriteJob * in_Job, Abc::OObj
 
 AlembicHair::~AlembicHair()
 {
-	mOVisibility.reset();
    mObject.reset();
    mSchema.reset();
 }
@@ -39,12 +36,6 @@ MStatus AlembicHair::Save(double time)
 
    // check if we have the global cache option
    bool globalCache = GetJob()->GetOption(L"exportInGlobalSpace").asInt() > 0;
-
-	// visibility!
-	{
-		const bool isVisible = getVisibilityValue();
-		mOVisibility.set(isVisible ? AbcG::kVisibilityVisible : AbcG::kVisibilityHidden);
-	}
 
    MRenderLineArray mainLines, leafLines, flowerLines;
    node.getLineData(mainLines,leafLines,flowerLines, true, false, mNumSamples == 0, false, false, mNumSamples == 0, false, true, globalCache);

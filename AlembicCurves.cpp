@@ -12,19 +12,17 @@ AlembicCurves::AlembicCurves(SceneNodePtr eNode, AlembicWriteJob * in_Job, Abc::
    mObject = AbcG::OCurves(GetMyParent(), eNode->name, animTS);
    mSchema = mObject.getSchema();
 
-   mOVisibility = CreateVisibilityProperty(mObject,animTS);
-
    // create all properties
    Abc::OCompoundProperty comp = mSchema.getArbGeomParams();
    mRadiusProperty = Abc::OFloatArrayProperty(comp, ".radius", mSchema.getMetaData(), animTS );
    mColorProperty = Abc::OC4fArrayProperty(comp, ".color", mSchema.getMetaData(), animTS );
    mFaceIndexProperty = Abc::OInt32ArrayProperty(comp, ".face_index", mSchema.getMetaData(), animTS );
    mVertexIndexProperty = Abc::OInt32ArrayProperty(comp, ".vertex_index", mSchema.getMetaData(), animTS );
+   mKnotVectorProperty = Abc::OFloatArrayProperty(comp, ".radius", mSchema.getMetaData(), animTS );
 }
 
 AlembicCurves::~AlembicCurves()
 {
-	mOVisibility.reset();
    mObject.reset();
    mSchema.reset();
 }
@@ -47,24 +45,20 @@ MStatus AlembicCurves::Save(double time)
    if(globalCache)
       globalXfo = GetGlobalMatrix(GetRef());
 
-	// visibility!
-	{
-		const bool isVisible = getVisibilityValue();
-		mOVisibility.set(isVisible ? AbcG::kVisibilityVisible : AbcG::kVisibilityHidden);
-	}
-
    MPointArray positions;
    node.getCVs(positions);
 
    mPosVec.resize(positions.length());
    for(unsigned int i=0;i<positions.length();i++)
    {
-      mPosVec[i].x = (float)positions[i].x;
-      mPosVec[i].y = (float)positions[i].y;
-      mPosVec[i].z = (float)positions[i].z;
-      if(globalCache)
-         globalXfo.multVecMatrix(mPosVec[i],mPosVec[i]);
-      bbox.extendBy(mPosVec[i]);
+		const MPoint &outPos = positions[i];
+		Imath::V3f &inPos = mPosVec[i];
+		inPos.x = (float)outPos.x;
+		inPos.y = (float)outPos.y;
+		inPos.z = (float)outPos.z;
+		if(globalCache)
+			globalXfo.multVecMatrix(inPos, inPos);
+		bbox.extendBy(inPos);
    }
 
    // store the positions to the samples
@@ -73,6 +67,16 @@ MStatus AlembicCurves::Save(double time)
 
    if(mNumSamples == 0)
    {
+		// knot vector!
+		MDoubleArray knots;
+		node.getKnots(knots);
+
+		mKnotVec.resize(knots.length());
+		for (unsigned int i = 0; i < knots.length(); ++i)
+			mKnotVec[i] = (float)knots[i];
+
+		mKnotVectorProperty.set(Abc::FloatArraySample(mKnotVec));
+
       mNbVertices.push_back(node.numCVs());
       mSample.setCurvesNumVertices(Abc::Int32ArraySample(mNbVertices));
 
@@ -80,6 +84,7 @@ MStatus AlembicCurves::Save(double time)
          mSample.setWrap(AbcG::kNonPeriodic);
       else
          mSample.setWrap(AbcG::kPeriodic);
+
       if (node.degree() == 3)
          mSample.setType(AbcG::kCubic);
       else
@@ -201,6 +206,7 @@ MStatus AlembicCurvesNode::compute(const MPlug & plug, MDataBlock & dataBlock)
 			MGlobal::displayWarning("[ExocortexAlembic] Identifier '"+identifier+"' in archive '"+mFileName+"' is not a Curves.");
 			return MStatus::kFailure;
 		}
+		mObj = obj;
 		mSchema = obj.getSchema();
 		mCurvesData = MObject::kNullObj;
 	}
@@ -235,6 +241,9 @@ MStatus AlembicCurvesNode::compute(const MPlug & plug, MDataBlock & dataBlock)
 	Abc::Int32ArraySamplePtr nbVertices = sample.getCurvesNumVertices();
 	const bool applyBlending = (blend == 0.0f) ? false : (samplePos->size() == samplePos2->size());
 
+	Abc::FloatArraySamplePtr pKnotVec = getKnotVector(mObj);
+	Abc::UInt16ArraySamplePtr pOrders = getCurveOrders(mObj);
+
 	MArrayDataHandle arrh = dataBlock.outputArrayValue(mOutGeometryAttr);
 	MArrayDataBuilder builder = arrh.builder();
 
@@ -243,19 +252,31 @@ MStatus AlembicCurvesNode::compute(const MPlug & plug, MDataBlock & dataBlock)
 	const int degree  = (sample.getType() == AbcG::kCubic) ? 3 : 1;
 	const bool closed = (sample.getWrap() == AbcG::kPeriodic);
 	unsigned int pointOffset = 0;
+	unsigned int knotOffset = 0;
 	for (int ii = 0; ii < nbVertices->size(); ++ii)
 	{
 		const unsigned int nbCVs = (unsigned int)nbVertices->get()[ii];
-		const int nbSpans = (int)nbCVs - degree;
+		const int ldegree = (pOrders) ? pOrders->get()[ii] : degree;
+		const int nbSpans = (int)nbCVs - ldegree;
 
 		MDoubleArray knots;
-		for(int span = 0; span <= nbSpans; ++span)
+		if(pKnotVec)
 		{
-			knots.append(double(span));
-			if(span == 0 || span == nbSpans)
+			const unsigned int nb_knot = nbCVs + ldegree - 1;
+			for(unsigned int i=0; i < nb_knot; ++i)
+				knots.append(pKnotVec->get()[knotOffset+i]);
+			knotOffset += nb_knot;
+		}
+		else
+		{
+			for(int span = 0; span <= nbSpans; ++span)
 			{
-				for(int m=1; m<degree; ++m)
-					knots.append(double(span));
+				knots.append(double(span));
+				if(span == 0 || span == nbSpans)
+				{
+					for(int m=1; m<degree; ++m)
+						knots.append(double(span));
+				}
 			}
 		}
 
@@ -292,7 +313,8 @@ MStatus AlembicCurvesNode::compute(const MPlug & plug, MDataBlock & dataBlock)
 
 		// create a subd either with or without uvs
 		MObject mmCurvesData = MFnNurbsCurveData().create();
-		mCurves.create(points, knots, degree, closed ? MFnNurbsCurve::kClosed : MFnNurbsCurve::kOpen, false, false, mmCurvesData);
+		if (ldegree != 1 && ldegree != 3)
+			mCurves.create(points, knots, ldegree, closed ? MFnNurbsCurve::kClosed : MFnNurbsCurve::kOpen, false, false, mmCurvesData);
 		builder.addElement(ii).set(mmCurvesData);
 	}
 	arrh.set(builder);

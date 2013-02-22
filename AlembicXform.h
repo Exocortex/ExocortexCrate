@@ -9,6 +9,7 @@ private:
    AbcG::OXform mObject;
    AbcG::OXformSchema mSchema;
    AbcG::XformSample mSample;
+   AbcG::OVisibilityProperty mOVisibility;
 public:
 
    AlembicXform(SceneNodePtr eNode, AlembicWriteJob * in_Job, Abc::OObject oParent);
@@ -41,6 +42,7 @@ private:
    AbcG::IXformSchema mSchema;
    std::map<AbcA::index_t,Abc::M44d> mSampleIndicesToMatrices;
    Abc::M44d mLastMatrix;
+   Abc::IObject iObj;
 
    // output attributes
    static MObject mOutTranslateXAttr;
@@ -55,6 +57,7 @@ private:
    static MObject mOutScaleYAttr;
    static MObject mOutScaleZAttr;
    static MObject mOutScaleAttr;
+   static MObject mOutVisibilityAttr;
 };
 
 #endif
