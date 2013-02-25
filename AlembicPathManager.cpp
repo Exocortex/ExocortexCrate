@@ -431,7 +431,7 @@ ESS_CALLBACK_START(alembic_path_manager_Execute, CRef&)
    logic += L"    var name = prop.parameters(i).scriptname;\n";
    logic += L"    if(name.substr(0,6) != '_path_')continue;\n";
    logic += L"    var value = prop.parameters(i).value;\n";
-   logic += L"    value = value.replace(search,replace);\n";
+   logic += L"    value = value.replace(new RegExp(search,\"g\"),replace);\n";
    logic += L"    prop.parameters(i).value = value;\n";
    logic += L"  }\n";
    logic += L"}\n";
@@ -447,7 +447,7 @@ ESS_CALLBACK_START(alembic_path_manager_Execute, CRef&)
    logic += L"    var name = prop.parameters(i).scriptname;\n";
    logic += L"    if(name.substr(0,12) != '_identifier_')continue;\n";
    logic += L"    var value = prop.parameters(i).value;\n";
-   logic += L"    value = value.replace(search,replace);\n";
+   logic += L"    value = value.replace(new RegExp(search,\"g\"),replace);\n";
    logic += L"    prop.parameters(i).value = value;\n";
    logic += L"  }\n";
    logic += L"}\n";
