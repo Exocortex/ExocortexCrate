@@ -52,9 +52,15 @@ if(WIN32)
   ADD_DEFINITIONS( /DBOOST_ALL_NO_LIB )
   SET( MODSUFFIX ".pyd" )
 else()
-  INCLUDE_DIRECTORIES( ${LIBRARY_ROOT}/python/2.6.7/Fedora )
-  LINK_DIRECTORIES( ${LIBRARY_ROOT}/python/2.6.7/libsFedora )
+
+  if (Python_SHORTNAME MATCHES "26" )
+    INCLUDE_DIRECTORIES( ${LIBRARY_ROOT}/python/2.6.7/Fedora )
+    #LINK_DIRECTORIES( ${LIBRARY_ROOT}/python/2.6.7/libsFedora )
+  else()
+    INCLUDE_DIRECTORIES( ${LIBRARY_ROOT}/python/2.5.2/Fedora )
+  endif()
   SET( MODSUFFIX ".so" )
+
 endif()
 
 SET( ${TargetName} _ExocortexAlembicPython )

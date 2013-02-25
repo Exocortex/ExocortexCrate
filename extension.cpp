@@ -90,6 +90,8 @@ static PyObject* extension_getPropertyTypes(PyObject *self)
    return _list;
 }
 
+#include "CommonRegex.h"
+
 static PyMethodDef extension_methods[] =
 {
    {"getVersion", (PyCFunction)extension_getVersion, METH_NOARGS, "Returns the version number of the alembic extension"},
