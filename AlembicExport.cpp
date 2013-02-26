@@ -129,7 +129,7 @@ CStatus exportCommandImp( CRef& in_ctxt )
          jobString += L";uvs=false";
          jobString += L";facesets=false";
          jobString += L";bindpose=false";
-         jobString += L";dynamictopology=false";
+         //jobString += L";dynamictopology=false";
       }
       else if(normalMode == 0)
       {
@@ -137,14 +137,14 @@ CStatus exportCommandImp( CRef& in_ctxt )
          jobString += L";uvs=false";
          jobString += L";facesets=false";
          jobString += L";bindpose=false";
-         jobString += L";dynamictopology=false";
+         //jobString += L";dynamictopology=false";
       }
       else
       {
          jobString += L";uvs="+settings.GetParameterValue(L"uvs").GetAsText();
          jobString += L";facesets="+settings.GetParameterValue(L"facesets").GetAsText();
 	      jobString += L";bindpose="+settings.GetParameterValue(L"bindpose").GetAsText();
-	      jobString += L";dynamictopology="+settings.GetParameterValue(L"dtopology").GetAsText();
+	      //jobString += L";dynamictopology="+settings.GetParameterValue(L"dtopology").GetAsText();
       }
       jobString += L";guidecurves="+settings.GetParameterValue(L"guidecurves").GetAsText();
  
