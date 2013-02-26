@@ -40,7 +40,12 @@ void replaceString(std::string& str, const std::string& oldStr, const std::strin
 
 std::string getExporterName( std::string const& shortName ) {
 	std::stringstream exporterName;
-	exporterName << "Exocortex Crate for " << shortName << "," << EC_QUOTE(crate_ver) << "," << EC_QUOTE(alembic_ver) << "," << EC_QUOTE(hdf5_ver);
+
+  std::string shortNameSafe = shortName;
+  
+  replaceString( shortNameSafe, "\"", "" );
+	
+	exporterName << "Exocortex Crate for " << shortNameSafe << "," << EC_QUOTE(crate_ver) << "," << EC_QUOTE(alembic_ver) << "," << EC_QUOTE(hdf5_ver);
 	return exporterName.str();
 }
 
@@ -51,6 +56,8 @@ std::string getExporterFileName( std::string const& fileName ) {
 	// these symbols can't be in the meta data
 	replaceString( sourceName, "=", "_" );
 	replaceString( sourceName, ";", "_" );
+  replaceString( sourceName, "\\", "/" );
+	
 	return sourceName;
 }
 
