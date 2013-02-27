@@ -272,17 +272,28 @@ ESS_CALLBACK_START(alembic_path_manager_Execute, CRef&)
 
 	Context ctxt( in_ctxt );
 	CValueArray args = ctxt.GetAttribute(L"Arguments");
-   CString model = args[0];
+   //CString model = args[0];
    CRefArray allRefs;
    CString search;
-   if(model.IsEmpty())
-   {
-      search = L"*.*.*.alembic_*,*.*.*.ABC_*";
-      search += L",*.*.alembic_*,*.*.ABC_*";
-	  search += L",*.*.cls.Texture_Coordinates_AUTO.*.alembic*";
-   }
-   else
-      search = model+L".*.*.alembic_*,"+model+"L.*.*.ABC_*";
+   //if(model.IsEmpty())
+   //{
+
+   search = L"*.*.*.alembic_*,*.*.*.ABC_*";
+   search += L",*.*.alembic_*,*.*.ABC_*";
+   //the search seems to fail in some cases if the pattern is too general. So we need to specifiy kine.local and so on
+   search += L",*.kine.local.alembic_*,*.*.kine.local.alembic_*";
+   search += L",*.*.cls.*.*.alembic*";
+
+   //}
+   //else{
+   //   search = model+L".*.*.alembic_*,"+model+"L.*.*.ABC_*";
+
+
+   //search += L"*.*.alembic_*,*.*.ABC_*";
+   //search += L",*.kine.local.alembic_*,*.*.*.ABC_*";
+   //search += L",*.*.kine.local.alembic_*,*.*.*.*.ABC_*";
+   //search += L",*.*.cls.Texture_Coordinates_AUTO.*.alembic*";
+
 
    CComAPIHandler collection;
    collection.CreateInstance(L"XSI.Collection");
@@ -298,6 +309,7 @@ ESS_CALLBACK_START(alembic_path_manager_Execute, CRef&)
       CRef ref = returnVal;
       if(!ref.IsValid())
          continue;
+
       ICETree tree(ref);
       if(tree.IsValid())
       {
@@ -315,6 +327,7 @@ ESS_CALLBACK_START(alembic_path_manager_Execute, CRef&)
       CustomOperator op(ref);
       if(op.IsValid())
       {
+         //ESS_LOG_WARNING("item: "<<op.GetFullName().GetAsciiString());
          refs.Add(ref);
          continue;
       }
@@ -358,9 +371,11 @@ ESS_CALLBACK_START(alembic_path_manager_Execute, CRef&)
          }
       }
 
-      for(LONG j=0;j<paramName.GetCount();j++)
-         if(maps[j]->find(values[j]) == maps[j]->end() && !values[j].empty())
+      for(LONG j=0;j<paramName.GetCount();j++){
+         if(maps[j]->find(values[j]) == maps[j]->end() && !values[j].empty()){
             maps[j]->insert(stringPair(values[j],values[j]));
+         }
+      }
    }
 
    if(pathMap.size() == 0 && identifierMap.size() == 0)
