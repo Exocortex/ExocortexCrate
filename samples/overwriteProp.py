@@ -10,12 +10,15 @@ def copy_property(prop, outProp):
 
 # ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ----
 #visiting the structure, if it's a property, copy it, if it's a compound, continue the visit there
-def copy_compound_property(cprop, outCprop):
+def copy_compound_property(cprop, outCprop, out_data):
    for prop_name in cprop.getPropertyNames():
       if prop_name == ".metadata":
          continue                                                    # .metadata cause some problem
+      print("--> comp pro: " + str(prop_name))
       sub_prop = cprop.getProperty(prop_name)
-      out_prop = outCprop.getProperty(prop_name, sub_prop.getType())
+      curTS = sub_prop.getSampleTimes();
+      tsSampling = out_data.createTimeSampling([curTS])
+      out_prop = outCprop.getProperty(prop_name, sub_prop.getType(), tsSampling[0])
       if sub_prop.isCompound():
          copy_compound_property(sub_prop, out_prop)
       else:
@@ -25,6 +28,7 @@ def copy_compound_property(cprop, outCprop):
 # going through each object
 def copy_objects(src_data, rep_data, out_data, new_prop):
    for identifier in src_data.getIdentifiers():
+      print("obj: " + str(identifier))
       obj_replacable = ( identifier in rep_data.getIdentifiers() )
       obj = src_data.getObject(identifier)
       rep_obj = None
@@ -32,20 +36,31 @@ def copy_objects(src_data, rep_data, out_data, new_prop):
          rep_obj = rep_data.getObject(identifier)
       obj_typ = obj.getType()
       
-      out = out_data.createObject(obj_typ, identifier, obj.getTsIndex())
+      curTS = obj.getSampleTimes();
+      tsSampling = out_data.createTimeSampling([curTS])
+      out = out_data.createObject(obj_typ, identifier, tsSampling[0])
       out.setMetaData(obj.getMetaData())
       for prop_name in obj.getPropertyNames():
          if prop_name == ".metadata":
             continue                                                 # .metadata cause some problem
 
+         print("--> pro: " + str(prop_name))
          copy_src = obj
          if obj_replacable and prop_name == new_prop:                # this object is replacable and this property is the right one ? change the source
            copy_src = rep_obj
+           print("----> rep")
 
          prop = copy_src.getProperty(prop_name)
-         out_prop = out.getProperty(prop_name, prop.getType())
+         curTS = prop.getSampleTimes();
+         out_prop = None;
+         if len(curTS) == 0:
+            out_prop = out.getProperty(prop_name, prop.getType())
+         else:
+            tsSampling = out_data.createTimeSampling([curTS])
+            out_prop = out.getProperty(prop_name, prop.getType(), tsSampling[0])
+
          if prop.isCompound():
-            copy_compound_property(prop, out_prop)
+            copy_compound_property(prop, out_prop, out_data)
          else:
             copy_property(prop, out_prop)
 

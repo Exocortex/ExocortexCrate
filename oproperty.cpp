@@ -6,6 +6,8 @@
 #include "oarchive.h"
 #include "AlembicLicensing.h"
 
+#include <stdio.h>
+
 static std::string oProperty_getName_func(PyObject * self)
 {
    ALEMBIC_TRY_STATEMENT
@@ -132,6 +134,7 @@ static PyObject * oProperty_setValues(PyObject * self, PyObject * args)
       numSamples = (long)prop->mBaseArrayProperty->getNumSamples();
       if(numSamples >= prop->mBaseArrayProperty->getTimeSampling()->getNumStoredTimes())
       {
+         printf("Number of samples: %d\nExpected number: %d\n", numSamples, prop->mBaseArrayProperty->getTimeSampling()->getNumStoredTimes());
          PyErr_SetString(getError(), "Already stored the maximum number of samples!");
          return NULL;
       }
@@ -141,6 +144,7 @@ static PyObject * oProperty_setValues(PyObject * self, PyObject * args)
       numSamples = (long)prop->mBaseScalarProperty->getNumSamples();
       if(numSamples >= prop->mBaseScalarProperty->getTimeSampling()->getNumStoredTimes())
       {
+         printf("Number of samples: %d\nExpected number: %d\n", numSamples, prop->mBaseArrayProperty->getTimeSampling()->getNumStoredTimes());
          PyErr_SetString(getError(), "Already stored the maximum number of samples!");
          return NULL;
       }
