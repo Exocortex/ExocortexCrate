@@ -739,9 +739,11 @@ ESS_CALLBACK_START( alembic_uvs_Update, CRef& )
          {
             PolygonFace face(faces[i]);
             CLongArray samples = face.GetSamples().GetIndexArray();
-            for(LONG j=samples.GetCount()-1;j>=0;j--)
+            for(LONG j=samples.GetCount()-1;j>=0;j--){
+               //ESS_LOG_WARNING("sampleLookup["<<samples[j]<<"]="<<offset);
                sampleLookup[samples[j]] = offset++;
                //sampleLookup[offset++] = samples[j];
+            }
          }
 
          // let's apply it!
@@ -761,9 +763,12 @@ ESS_CALLBACK_START( alembic_uvs_Update, CRef& )
             offset = 0;
             for(LONG i=0;i<sampleLookup.GetCount();i++)
             {
-               uvValues[offset++] = uvValues[offset] * ialpha + meshUVs->get()[sampleLookup[i]].x * sampleInfo.alpha;;
-               uvValues[offset++] = uvValues[offset] * ialpha + meshUVs->get()[sampleLookup[i]].y * sampleInfo.alpha;;
-               uvValues[offset++] = 0.0;
+               uvValues[offset] = uvValues[offset] * ialpha + meshUVs->get()[sampleLookup[i]].x * sampleInfo.alpha;
+               offset++;
+               uvValues[offset] = uvValues[offset] * ialpha + meshUVs->get()[sampleLookup[i]].y * sampleInfo.alpha;
+               offset++;
+               uvValues[offset] = 0.0;
+               offset++;
             }
          }
       }
