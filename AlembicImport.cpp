@@ -1201,6 +1201,10 @@ bool createNode(SceneNodeXSI* appNode, SceneNodeAlembicPtr fileNode, const IJobS
    const Abc::IObject& iObj = fileNode->getObject();
    CString name = truncateName(iObj.getName().c_str());
 
+   if(jobParams.stripMayaNamespaces){
+      name = stripNamespacePrefix(name);
+   }
+
    if(AbcG::IXform::matches(iObj.getMetaData()))
    {
       AbcG::IXform xform(iObj, Abc::kWrapExisting);
@@ -1355,6 +1359,10 @@ bool createMergeableNode(SceneNodeXSI* appNode, SceneNodeAlembicPtr fileXformNod
       //ESS_LOG_WARNING("shapeName: "<<shapeFullName);
    }
    //EC_LOG_INFO( "Object name: " << newAppNodeName.GetAsciiString() );
+
+   if(jobParams.stripMayaNamespaces){
+      newAppNodeName = stripNamespacePrefix(newAppNodeName);
+   }
    
    if(AbcG::ICamera::matches(shapeObj.getMetaData()))
    {
@@ -2022,6 +2030,7 @@ ESS_CALLBACK_START(alembic_import_jobs_Execute, CRef&)
       jobParser.skipUnattachedNodes = settings.GetParameterValue(L"skipUnattachedNodes");
       jobParser.replacer = SearchReplace::createReplacer();
       jobParser.enableImportRootSelection = settings.GetParameterValue(L"enableImportRootSelection");
+      jobParser.stripMayaNamespaces = settings.GetParameterValue(L"stripNamespaces");
       const int val = settings.GetParameterValue(L"defaultXformNode");
       if( val == 0 ){
          jobParser.xformTypes = XSI_XformTypes::XMODEL;
@@ -2279,6 +2288,7 @@ ESS_CALLBACK_START(alembic_import_settings_Define, CRef&)
    oCustomProperty.AddParameter(L"skipUnattachedNodes",CValue::siBool,siPersistable,L"",L"",0,0,1,0,1,oParam);
    oCustomProperty.AddParameter(L"failOnUnsupported",CValue::siBool,siPersistable,L"",L"",0,0,1,0,1,oParam);
    oCustomProperty.AddParameter(L"enableImportRootSelection",CValue::siBool,siPersistable,L"",L"",0,0,1,0,0,oParam);
+   oCustomProperty.AddParameter(L"stripNamespaces",CValue::siBool,siPersistable,L"",L"",0,0,1,0,0,oParam);
    oCustomProperty.AddParameter(L"defaultXformNode",CValue::siInt4,siPersistable,L"",L"",0,0,5,0,5,oParam);
 	return CStatus::OK;
 ESS_CALLBACK_END
@@ -2317,6 +2327,7 @@ ESS_CALLBACK_START(alembic_import_settings_DefineLayout, CRef&)
    oLayout.AddItem(L"skipUnattachedNodes", L"Skip nodes that fail to attach");
    oLayout.AddItem(L"failOnUnsupported",L"Fail upon unsupported alembic types");
    oLayout.AddItem(L"enableImportRootSelection",L"Enable Import Root Selection");
+   oLayout.AddItem(L"stripNamespaces",L"Strip Namespaces");
 
    CValueArray items2(4);
    items[0] = L"Model";

@@ -116,12 +116,23 @@ int getNodeDepthFromRef(XSI::CRef in_Ref)
    return nDepth;
 }
 
-XSI::CString truncateName(const XSI::CString & in_Name)
+XSI::CString truncateName(const XSI::CString& in_Name)
 {
    CString name = in_Name;
    if(name.GetSubString(name.Length()-3,3).IsEqualNoCase(L"xfo"))
       name = name.GetSubString(0,name.Length()-3);
    return name;
+}
+
+XSI::CString stripNamespacePrefix(const XSI::CString& in_Name)
+{
+   ULONG i=0;
+   for(; i<in_Name.Length(); i++){
+      if(in_Name.GetAt(i) == ':'){
+         break;
+      }
+   }
+   return in_Name.GetSubString(i+1);
 }
 
 CString getFullNameFromIdentifier(XSI::CRef importRootNode, std::string in_Identifier, bool bMergedLeaf)
