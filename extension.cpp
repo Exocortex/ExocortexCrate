@@ -124,19 +124,19 @@ EXTENSION_CALLBACK init_ExocortexAlembicPython(void)
    PyObject * m = Py_InitModule3("_ExocortexAlembicPython", extension_methods, "This is the core extension module. It provides access to input as well as output archive objects.");
    PyObject * d = PyModule_GetDict(m);
 
+   register_object_TS(m);
+
    register_object_iArchive(m);
    register_object_iObject(m);
    register_object_iProperty(m);
    register_object_iCompoundProperty(m);
    register_object_iXformProperty(m);
-   register_object_iTimeSampling(m);
 
    register_object_oArchive(m);
    register_object_oObject(m);
    register_object_oProperty(m);
    register_object_oCompoundProperty(m);
    register_object_oXformProperty(m);
-   register_object_oTimeSampling(m);
 
    extension_error = PyErr_NewException("ExocortexAlembicPython.error", NULL, NULL);
    PyDict_SetItemString(d, "error", extension_error);

@@ -49,14 +49,12 @@ static PyObject * oArchive_getFileName(PyObject * self, PyObject * args)
 static PyObject * oArchive_createTimeSampling(PyObject * self, PyObject * args)
 {
    ALEMBIC_TRY_STATEMENT
-      putc('1', stdout);
       oArchive * archive = (oArchive *)self;
       if(archive->mArchive == NULL)
       {
          PyErr_SetString(getError(), "Archive already closed!");
          {Py_INCREF(Py_False); return Py_False;}
       }
-      putc('2', stdout);
 
       // parse the args
       PyObject * timesTuple = NULL;
@@ -65,7 +63,6 @@ static PyObject * oArchive_createTimeSampling(PyObject * self, PyObject * args)
          PyErr_SetString(getError(), "No timesTuple specified!");
          {Py_INCREF(Py_False); return Py_False;}
       }
-      putc('3', stdout);
 
       bool is_list = false;   
       PyObject *(*_GetItem)(PyObject*, Py_ssize_t) = PyTuple_GetItem;
@@ -82,7 +79,6 @@ static PyObject * oArchive_createTimeSampling(PyObject * self, PyObject * args)
             {Py_INCREF(Py_False); return Py_False;}
          }
       }
-      putc('4', stdout);
 
       const size_t nbTimes = is_list ? PyList_Size(timesTuple) : PyTuple_Size(timesTuple);
       if(nbTimes == 0)
@@ -90,7 +86,6 @@ static PyObject * oArchive_createTimeSampling(PyObject * self, PyObject * args)
          PyErr_SetString(getError(), "timesTuple has zero length!");
          {Py_INCREF(Py_False); return Py_False;}
       }
-      putc('5', stdout);
 
       // check the list/tuple if all the items are valid!
       std::list<PyObject*> valid_obj;
@@ -113,7 +108,6 @@ static PyObject * oArchive_createTimeSampling(PyObject * self, PyObject * args)
          }
          valid_obj.push_back(out);
       }
-      putc('6', stdout);
 
       // add the time sampling!
       PyObject *_list = PyList_New(valid_obj.size());
@@ -124,7 +118,6 @@ static PyObject * oArchive_createTimeSampling(PyObject * self, PyObject * args)
          PyList_SetItem( _list, ii, Py_BuildValue("i",(int)tsIndex) );
          PyObject_FREE(*beg);
       }
-      putc('7', stdout);
       return _list;
 
    ALEMBIC_PYOBJECT_CATCH_STATEMENT

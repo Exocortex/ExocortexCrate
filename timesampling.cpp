@@ -1,8 +1,35 @@
+#include "stdafx.h"
+#include "extension.h"
 #include "timesampling.h"
+#include "string.h"
+#include <vector>
+
+static PyObject *TimeSampling_getType(PyObject *obj)
+{
+	EA_TimeSampling *ts = (EA_TimeSampling*)obj;
+	const AbcA::TimeSamplingType &tstype = ts->tsampling.getTimeSamplingType();
+
+	if (tstype.isUniform())
+		return Py_BuildValue("s", "uniform");
+	else if (tstype.isCyclic())
+		return Py_BuildValue("s", "cyclic");
+	return Py_BuildValue("s", "acyclic");
+}
+
+static PyObject *TimeSampling_getTimeSamples(PyObject *obj)
+{
+	const std::vector<Abc::chrono_t> &times = ( (EA_TimeSampling*)obj )->tsampling.getStoredTimes();
+
+	PyObject *tuple = PyList_New(times.size());
+	for(size_t i=0; i<times.size(); ++i)
+		PyList_SetItem( tuple, i, Py_BuildValue("f",(float)times[i]) );
+	return tuple;
+}
 
 static PyMethodDef TS_methods[] =
 {
-	//{"getIdentifier", (PyCFunction)iObject_getIdentifier, METH_NOARGS, "Returns the identifier linked to this object."},
+	{"getType", (PyCFunction)TimeSampling_getType, METH_NOARGS, "Returns the type of the time sampling."},
+	{"getTimeSamples", (PyCFunction)TimeSampling_getTimeSamples, METH_NOARGS, "Returns the time samples."},
 	{NULL, NULL}
 };
 
@@ -55,18 +82,137 @@ static PyTypeObject TS_Type =
 };
 
 
-PyObject * TimeSamplingCopy(const AbcG::TimeSampling &tsampling)
+PyObject * TimeSamplingCopy(const AbcA::TimeSampling &tsampling)
 {
 	ALEMBIC_TRY_STATEMENT
-	EA_TimeSampling* TS = PyObject_NEW(EA_TimeSampling, &TS_Type);
-
-    return (PyObject*)TS;
+		EA_TimeSampling* TS = PyObject_NEW(EA_TimeSampling, &TS_Type);
+		new( &(TS->tsampling) ) AbcA::TimeSampling(tsampling);
+		return (PyObject*)TS;
    	ALEMBIC_PYOBJECT_CATCH_STATEMENT
 }
 
 PyObject * TimeSampling_new(PyObject* self, PyObject* args)
 {
+	ALEMBIC_TRY_STATEMENT
 
+		char *type = 0;
+		PyObject *arg1 = 0, *arg2 = 0;
+		if(!PyArg_ParseTuple(args, "s|OO", &type, &arg1, &arg2))
+		{
+			PyErr_SetString(getError(), "No time sampling type specified!");
+			return NULL;
+		}
+
+		int ts_type = -1;	// mean invalid
+		if (strcmp(type, "uniform") == 0)
+			ts_type = 0;
+		else if (strcmp(type, "cyclic") == 0)
+			ts_type = 1;
+		else if (strcmp(type, "acyclic") == 0)
+			ts_type = 2;
+		else
+		{
+			PyErr_SetString(getError(), "invalid type, should be uniform, cyclic, or acyclic");
+			return NULL;
+		}
+
+
+		std::vector<Abc::chrono_t> times;
+		AbcA::TimeSamplingType TSType;
+		if (ts_type < 1)	// uniform
+		{
+			if (arg1)	// arg1 not null... then can assume arg2 is not null either!
+			{
+				if (!PyFloat_Check(arg1))
+				{
+					PyErr_SetString(getError(), "the argument is not a real!");
+					return NULL;
+				}
+
+				new( &TSType ) AbcA::TimeSamplingType(PyFloat_AS_DOUBLE(arg1));
+
+				if (arg2)
+				{
+					if (!PyFloat_Check(arg2))
+					{
+						PyErr_SetString(getError(), "the argument is not a real!");
+						return NULL;
+					}
+					times.resize(1);
+    				times[0] = PyFloat_AS_DOUBLE(arg2);
+				}
+			}
+
+			if (times.empty())
+			{
+				times.resize(1);
+				times[0] = TSType.getTimePerCycle();
+			}
+		}
+		else
+		{
+			if (!arg1)
+			{
+				PyErr_SetString(getError(), "Missing time samples!");
+				return NULL;
+			}
+
+			// read from an array or a tuple ??
+			bool is_list = false;  
+			PyObject *(*_GetItem)(PyObject*, Py_ssize_t) = PyTuple_GetItem;
+			if(!PyTuple_Check(arg1))
+			{
+				if (PyList_Check(arg1))
+				{
+					_GetItem = PyList_GetItem;
+					is_list = true;
+				}
+				else
+				{
+					PyErr_SetString(getError(), "The time samples must be an array or a tuple!");
+					return NULL;
+				}
+			}
+
+			const size_t nbTimes = is_list ? PyList_Size(arg1) : PyTuple_Size(arg1);
+			if (nbTimes == 0)
+			{
+				PyErr_SetString(getError(), "No time samples specified!");
+				return NULL;
+			}
+
+			times.resize(nbTimes);
+			for (int i = 0; i < nbTimes; ++i)
+			{
+				PyObject *item = _GetItem(arg1, i);
+				if (!PyFloat_Check(item))
+				{
+					PyErr_SetString(getError(), "All time samples must be real values");
+					return NULL;
+				}
+				times[i] = PyFloat_AS_DOUBLE(item);
+			}
+
+			// initialize TSType according to the type!
+			if (ts_type == 1)
+			{
+				const float delta = times[times.size()-1] - times[0];
+				new( &TSType ) AbcA::TimeSamplingType(times.size(), delta);
+			}
+			else
+				new( &TSType ) AbcA::TimeSamplingType(AbcA::TimeSamplingType::kAcyclic);
+		}
+
+		EA_TimeSampling* TS = PyObject_NEW(EA_TimeSampling, &TS_Type);
+		new( &(TS->tsampling) ) AbcA::TimeSampling(TSType, times);
+		return (PyObject*)TS;
+
+   	ALEMBIC_PYOBJECT_CATCH_STATEMENT
+}
+
+bool PyObject_TimeSampling_Check(PyObject *obj)
+{
+	return obj->ob_type == &TS_Type;
 }
 
 bool register_object_TS(PyObject *module)

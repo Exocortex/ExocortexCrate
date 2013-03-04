@@ -4,12 +4,13 @@
 	typedef struct
 	{
 		PyObject_HEAD
-		AbcG::TimeSampling tsampling;
+		AbcA::TimeSampling tsampling;
 	} EA_TimeSampling;
 
-	PyObject * TimeSamplingCopy(const AbcG::TimeSampling &tsampling);
+	PyObject * TimeSamplingCopy(const AbcA::TimeSampling &tsampling);
 	PyObject * TimeSampling_new(PyObject* self, PyObject* args);
 
+	bool PyObject_TimeSampling_Check(PyObject *obj);
 	bool register_object_TS(PyObject *module);
 
 #endif
