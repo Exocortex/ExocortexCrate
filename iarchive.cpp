@@ -3,7 +3,7 @@
 #include "iarchive.h"
 #include "oarchive.h"
 #include "iobject.h"
-#include "itimesampling.h"
+#include "timesampling.h"
 #include "AlembicLicensing.h"
 
 typedef std::set<std::string> str_set;
@@ -43,29 +43,32 @@ static PyObject * iArchive_getVersion(PyObject * self, PyObject * args)
    ALEMBIC_PYOBJECT_CATCH_STATEMENT
 }
 
+#include <string>
+static void recurseObjectChildren(PyObject *list, const Abc::IObject &obj)
+{
+	const int nbChildren = obj.getNumChildren();
+	for (int i = 0; i < nbChildren; ++i)
+	{
+		const Abc::IObject &child = obj.getChild(i);
+		const std::string &fullName = child.getFullName();
+		PyList_Append(list, Py_BuildValue("s", fullName.c_str()) );
+
+		recurseObjectChildren(list, child);
+	}
+}
+
 static PyObject * iArchive_getIdentifiers(PyObject * self, PyObject * args)
 {
-   ALEMBIC_TRY_STATEMENT
-   iArchive * archive = (iArchive *)self;
+	ALEMBIC_TRY_STATEMENT
 
-   std::vector<Abc::IObject> objects;
-   objects.push_back(archive->mArchive->getTop());
-   for(size_t i=0;i<objects.size();i++)
-   {
-      // first, let's recurse
-      for(size_t j=0;j<objects[i].getNumChildren();j++)
-         objects.push_back(objects[i].getChild(j));
-   }
+		iArchive * archive = (iArchive *)self;
 
-   PyObject * tuple = PyTuple_New(objects.size()-1);
+		PyObject *list = PyList_New(0);
+		recurseObjectChildren(list, archive->mArchive->getTop());
 
-   // now let's loop over all objects
-   for(size_t i=1;i<objects.size();i++)
-   {
-      PyTuple_SetItem(tuple,i-1,Py_BuildValue("s",objects[i].getFullName().c_str()));
-   }
-   return tuple;
-   ALEMBIC_PYOBJECT_CATCH_STATEMENT
+		return list;
+
+	ALEMBIC_PYOBJECT_CATCH_STATEMENT
 }
 
 static PyObject * iArchive_getObject(PyObject * self, PyObject * args)
@@ -121,12 +124,13 @@ static PyObject * iArchive_getSampleTimes(PyObject * self, PyObject * args)
          //PyObject *ts = iTimeSampling_new(archive->mArchive->getTimeSampling((boost::uint32_t)i), i);
          //PyList_SetItem(_list, i, ts);
 
-         const std::vector<Abc::chrono_t> & times = iarchive->getTimeSampling((boost::uint32_t)i)->getStoredTimes();
+         /*const std::vector<Abc::chrono_t> & times = iarchive->getTimeSampling((boost::uint32_t)i)->getStoredTimes();
          PyObject* ts_list = PyList_New(times.size());
          int ii = 0;
          for (std::vector<Abc::chrono_t>::const_iterator beg = times.begin(); beg != times.end(); ++beg, ++ii)
             PyList_SetItem(ts_list, ii, Py_BuildValue("f",(float)*beg));
-         PyList_SetItem(_list, i, ts_list);
+         PyList_SetItem(_list, i, ts_list);*/
+			PyList_SetItem( _list, i, TimeSamplingCopy( *( iarchive->getTimeSampling((boost::uint32_t)i) ) ) );
       }
       return _list;
    ALEMBIC_PYOBJECT_CATCH_STATEMENT

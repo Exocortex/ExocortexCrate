@@ -5,6 +5,7 @@
 #include "iproperty.h"
 #include "ixformproperty.h"
 #include "CommonUtilities.h"
+#include "timesampling.h"
 
 /*
 Abc::ICompoundProperty getCompoundFromIObject(Abc::IObject object)
@@ -106,19 +107,13 @@ static PyObject * iObject_getType(PyObject * self, PyObject * args)
 
 static PyObject * iObject_getSampleTimes(PyObject * self, PyObject * args)
 {
-   ALEMBIC_TRY_STATEMENT
-   iObject * object = (iObject*)self;
-   Abc::TimeSamplingPtr ts = getTimeSamplingFromObject(*(object->mObject));
-   if(ts)
-   {
-      const std::vector <Abc::chrono_t> & times = ts->getStoredTimes();
-      PyObject * tuple = PyTuple_New(times.size());
-      for(size_t i=0;i<times.size();i++)
-         PyTuple_SetItem(tuple,i,Py_BuildValue("f",(float)times[i]));
-      return tuple;
-   }
-   return Py_BuildValue("s","unsupported");
-   ALEMBIC_PYOBJECT_CATCH_STATEMENT
+	ALEMBIC_TRY_STATEMENT
+	   iObject * object = (iObject*)self;
+	   Abc::TimeSamplingPtr ts = getTimeSamplingFromObject(*(object->mObject));
+	   if(ts)
+			return TimeSamplingCopy(*ts);
+	   return Py_BuildValue("s","unsupported");
+	ALEMBIC_PYOBJECT_CATCH_STATEMENT
 }
 
 static PyObject * iObject_getNbStoredSamples(PyObject * self, PyObject * args)

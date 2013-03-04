@@ -27,18 +27,24 @@ def copy_compound_property(cprop, outCprop, out_data):
 # ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ----
 # going through each object
 def copy_objects(src_data, rep_data, out_data, new_prop):
+   #rep_ids = rep_data.getIdentifiers()
    for identifier in src_data.getIdentifiers():
       print("obj: " + str(identifier))
-      obj_replacable = ( identifier in rep_data.getIdentifiers() )
+      obj_replacable = ( identifier in rep_ids )
       obj = src_data.getObject(identifier)
       rep_obj = None
       if obj_replacable:
          rep_obj = rep_data.getObject(identifier)
       obj_typ = obj.getType()
-      
+
       curTS = obj.getSampleTimes();
-      tsSampling = out_data.createTimeSampling([curTS])
-      out = out_data.createObject(obj_typ, identifier, tsSampling[0])
+      out = None
+      if len(curTS.getSampleTimes()) == 0:
+         out = out_data.createObject(obj_typ, identifier)
+      else:
+         tsSampling = out_data.createTimeSampling([curTS])
+         out = out_data.createObject(obj_typ, identifier, tsSampling[0])
+
       out.setMetaData(obj.getMetaData())
       for prop_name in obj.getPropertyNames():
          if prop_name == ".metadata":
@@ -53,7 +59,7 @@ def copy_objects(src_data, rep_data, out_data, new_prop):
          prop = copy_src.getProperty(prop_name)
          curTS = prop.getSampleTimes();
          out_prop = None;
-         if len(curTS) == 0:
+         if len(curTS.getSampleTimes()) == 0:
             out_prop = out.getProperty(prop_name, prop.getType())
          else:
             tsSampling = out_data.createTimeSampling([curTS])
@@ -82,14 +88,13 @@ def main(args):
       print("Error: the output filename must be distinct from all the input files")
       return
 
-   new_prop = ns["p"]
-   rep_data = ns["abc_files"]
-   src_data = alembic.getIArchive(rep_data[0])
-   rep_data = alembic.getIArchive(rep_data[1])
+   ins = ns["abc_files"]
+   src_data = alembic.getIArchive(ins[0])
+   rep_data = alembic.getIArchive(ins[1])
    out_data = alembic.getOArchive(ns["o"])
    out_data.createTimeSampling(src_data.getSampleTimes())
 
-   copy_objects(src_data, rep_data, out_data, new_prop)
+   copy_objects(src_data, rep_data, out_data, ns["p"])
 
 # ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ----
 if __name__ == "__main__":
