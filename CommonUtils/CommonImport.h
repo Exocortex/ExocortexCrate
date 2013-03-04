@@ -36,6 +36,7 @@ public:
    bool selectShapes;
    bool skipUnattachedNodes;
    bool enableImportRootSelection;
+   bool stripMayaNamespaces;
    XSI_XformTypes::xte xformTypes;
 
    SearchReplace::ReplacePtr replacer;
@@ -60,7 +61,8 @@ public:
       includeChildren(false),
       selectShapes(true),
       skipUnattachedNodes(false),
-      enableImportRootSelection(false)
+      enableImportRootSelection(false),
+      stripMayaNamespaces(false)
    {}
 
    bool parse(const std::string& jobString);

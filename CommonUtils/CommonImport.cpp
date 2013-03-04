@@ -99,6 +99,10 @@ bool IJobStringParser::parse(const std::string& jobString)
 		{
 			enableImportRootSelection = parseBool(valuePair[1]);
 		}
+		else if(boost::iequals(valuePair[0], "stripMayaNamespaces"))
+		{
+			stripMayaNamespaces = parseBool(valuePair[1]);
+		}
  		else if(boost::iequals(valuePair[0], "defaultXformNode"))
 		{
            if(boost::iequals(valuePair[1], "model")){
@@ -148,7 +152,8 @@ std::string IJobStringParser::buildJobString()
    stream<<"normals="<<importNormals<<";uvs="<<importUVs<<";facesets="<<importFacesets;
    stream<<";importVisibilityControllers="<<importVisibilityControllers<<";importStandinProperties="<<importStandinProperties;
    stream<<";importBoundingBoxes="<<importBoundingBoxes<<";attachToExisting="<<attachToExisting<<";skipUnattachedNodes="<<skipUnattachedNodes;
-   stream<<";failOnUnsupported="<<failOnUnsupported<<";enableImportRootSelection="<<enableImportRootSelection<<";defaultXformNode=";
+   stream<<";failOnUnsupported="<<failOnUnsupported<<";enableImportRootSelection="<<enableImportRootSelection<<";stripMayaNamespaces="<<stripMayaNamespaces;
+   stream<<";defaultXformNode=";
 
    if( xformTypes == XSI_XformTypes::XMODEL){
       stream<<"model";
