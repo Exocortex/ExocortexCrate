@@ -10,8 +10,7 @@
 #include "ocompoundproperty.h"
 #include "ixformproperty.h"
 #include "oxformproperty.h"
-#include "itimesampling.h"
-#include "otimesampling.h"
+#include "timesampling.h"
 
 
 std::string resolvePath_Internal(std::string const& path)
@@ -100,7 +99,8 @@ static PyMethodDef extension_methods[] =
    {"getOArchive", (PyCFunction)oArchive_new, METH_VARARGS, "Takes in a filename to create an Alembic file at, and return an oArchive linked to that file."},
 
    {"getObjectTypes", (PyCFunction)extension_getObjectTypes, METH_NOARGS, "Returns a list of all valid object types. The same one listed in Appendix A."},
-   {"getPropertyTypes", (PyCFunction)extension_getPropertyTypes, METH_NOARGS, "Returns a list of all valid property types. The same one listed in Appendix B."},  
+   {"getPropertyTypes", (PyCFunction)extension_getPropertyTypes, METH_NOARGS, "Returns a list of all valid property types. The same one listed in Appendix B."},
+   {"createTimeSampling", (PyCFunction)TimeSampling_new, METH_VARARGS, "Returns a new Time Sampling"},
    {NULL, NULL}
 };
 
