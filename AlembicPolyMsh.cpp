@@ -237,23 +237,49 @@ XSI::CStatus AlembicPolyMesh::Save(double time)
       {
          CICEAttributeDataArrayVector3f velocitiesData;
          velocitiesAttr.GetDataArray(velocitiesData);
-
-         mVelocitiesVec.resize(vertCount);
-         for(LONG i=0;i<vertCount;i++)
+         
+         bool bAllZero = true;
          {
-            CVector3 vel;
-            vel.PutX(velocitiesData[i].GetX());
-            vel.PutY(velocitiesData[i].GetY());
-            vel.PutZ(velocitiesData[i].GetZ());
-            if(globalSpace)
-               vel = MapObjectPositionToWorldSpace(globalRotation,vel);
-            mVelocitiesVec[i].x = (float)vel.GetX();
-            mVelocitiesVec[i].y = (float)vel.GetY();
-            mVelocitiesVec[i].z = (float)vel.GetZ();
+            ESS_PROFILE_SCOPE("PointVelocity-zero-check");
+
+            bAllZero = true;
+            for(ULONG i=0;i<velocitiesData.GetCount(); i++){
+               CVector3 vel;
+               vel.PutX(velocitiesData[i].GetX());
+               vel.PutY(velocitiesData[i].GetY());
+               vel.PutZ(velocitiesData[i].GetZ());
+
+               if(vel.GetX() != 0.0 || vel.GetY() != 0.0 || vel.GetZ() != 0.0){
+                  bAllZero = false;
+               }
+            }
          }
 
-         Abc::V3fArraySample sample = Abc::V3fArraySample(mVelocitiesVec);
-         mMeshSample.setVelocities(sample);
+         if(velocitiesAttr.IsConstant()){
+            ESS_LOG_WARNING("attribute is constant");
+         }
+
+
+         if(!bAllZero)
+         {
+            mVelocitiesVec.resize(vertCount);
+            for(LONG i=0;i<vertCount;i++)
+            {
+               CVector3 vel;
+               vel.PutX(velocitiesData[i].GetX());
+               vel.PutY(velocitiesData[i].GetY());
+               vel.PutZ(velocitiesData[i].GetZ());
+               if(globalSpace)
+                  vel = MapObjectPositionToWorldSpace(globalRotation,vel);
+               mVelocitiesVec[i].x = (float)vel.GetX();
+               mVelocitiesVec[i].y = (float)vel.GetY();
+               mVelocitiesVec[i].z = (float)vel.GetZ();
+            }
+
+            Abc::V3fArraySample sample = Abc::V3fArraySample(mVelocitiesVec);
+            mMeshSample.setVelocities(sample);
+         }
+
       }
    }
 
