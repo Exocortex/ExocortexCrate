@@ -10,14 +10,14 @@ if( UNIX )
 ENDIF() 
 
 IF (UNIX AND NOT APPLE ) 
-	ADD_DEFINITIONS(-DLINUX)
+	ADD_DEFINITIONS(-DLINUX )
 ENDIF()
  
 set( Exocortex_INSTALL_BASE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/install" )
-   
 
 if( HDF5_ENABLE_THREADSAFE )
 	project( ExocortexAlembic )
+	add_definitions( -DH5_HAVE_THREADSAFE )
 	if( WIN32 )
 		set( Exocortex_INSTALL_BASE_DIR ${Exocortex_INSTALL_BASE_DIR}/Windows7 )
 	elseif( UNIX )
@@ -37,8 +37,6 @@ else()
 		message(FATAL_ERROR "Should not get here")
 	endif()
 endif()
- 
-
 
 INCLUDE(./ExocortexCMakeShared.txt)
 
@@ -51,7 +49,7 @@ set( AlembicFolder "Alembic" )
 SET(DIR_SOFTIMAGEALEBMIC ${CMAKE_CURRENT_SOURCE_DIR})
 
 get_filename_component( LIBRARY_ROOT "${CMAKE_CURRENT_SOURCE_DIR}" PATH )
-set( LIBRARY_VERSION "20121128.01" )
+set( LIBRARY_VERSION "20130118.01" )
 set( LIBRARY_ROOT "${LIBRARY_ROOT}/Libraries.${LIBRARY_VERSION}" )
 if( NOT EXISTS ${LIBRARY_ROOT} )
 	message( "!!!" )
@@ -211,8 +209,8 @@ else()
 	message(FATAL_ERROR "Should not get here")
 endif()
 
-#MESSAGE( "BOOST_INCLUDEDIR: ${BOOST_INCLUDEDIR}" )
-#MESSAGE( "BOOST_LIBRARYDIR: ${BOOST_LIBRARYDIR}" )
+MESSAGE( "BOOST_INCLUDEDIR: ${BOOST_INCLUDEDIR}" )
+MESSAGE( "BOOST_LIBRARYDIR: ${BOOST_LIBRARYDIR}" )
 if( NOT EXISTS ${BOOST_INCLUDEDIR} )
 	message(FATAL_ERROR "Can't find BOOST_INCLUDEDIR: ${BOOST_INCLUDEDIR}" )
 endif()
@@ -227,7 +225,7 @@ set(Boost_USE_MULTITHREADED ON)
 set(Boost_DETAILED_FAILURE_MSG ON )
 set(Boost_USE_STATIC_RUNTIME ON)
 set(Boost_NO_SYSTEM_PATHS true )
-set(BOOST_COMPONENTS date_time program_options thread iostreams python filesystem system unit_test_framework )
+set(BOOST_COMPONENTS date_time program_options regex thread iostreams python filesystem system unit_test_framework )
 find_package( Boost 1.44.0 COMPONENTS REQUIRED ${BOOST_COMPONENTS} )
 
 include_directories( ${Boost_INCLUDE_DIRS} )
@@ -341,6 +339,8 @@ IF(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../ExocortexAlembicPython/CMakeLists.txt"
 		ADD_SUBDIRECTORY ( "${CMAKE_CURRENT_SOURCE_DIR}/../ExocortexAlembicPython/2.6.7" "${CMAKE_CURRENT_BINARY_DIR}/ExocortexAlembicPython/2.6.7" )
 		if( WIN32 )
 			ADD_SUBDIRECTORY ( "${CMAKE_CURRENT_SOURCE_DIR}/../ExocortexAlembicPython/2.7.2" "${CMAKE_CURRENT_BINARY_DIR}/ExocortexAlembicPython/2.7.2" )
+		else()
+			ADD_SUBDIRECTORY ( "${CMAKE_CURRENT_SOURCE_DIR}/../ExocortexAlembicPython/2.5.2" "${CMAKE_CURRENT_BINARY_DIR}/ExocortexAlembicPython/2.5.2" )
 		endif()
 	endif()
 ENDIF()

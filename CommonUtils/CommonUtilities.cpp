@@ -40,7 +40,12 @@ void replaceString(std::string& str, const std::string& oldStr, const std::strin
 
 std::string getExporterName( std::string const& shortName ) {
 	std::stringstream exporterName;
-	exporterName << "Exocortex Crate for " << shortName << "," << EC_QUOTE(crate_ver) << "," << EC_QUOTE(alembic_ver) << "," << EC_QUOTE(hdf5_ver);
+
+  std::string shortNameSafe = shortName;
+  
+  replaceString( shortNameSafe, "\"", "" );
+	
+	exporterName << "Exocortex Crate for " << shortNameSafe << "," << EC_QUOTE(crate_ver) << "," << EC_QUOTE(alembic_ver) << "," << EC_QUOTE(hdf5_ver);
 	return exporterName.str();
 }
 
@@ -51,6 +56,8 @@ std::string getExporterFileName( std::string const& fileName ) {
 	// these symbols can't be in the meta data
 	replaceString( sourceName, "=", "_" );
 	replaceString( sourceName, ";", "_" );
+  replaceString( sourceName, "\\", "/" );
+	
 	return sourceName;
 }
 
@@ -98,6 +105,11 @@ Alembic::Abc::IArchive * getArchiveFromID(std::string const& path)
      // check if the file exists
      if( ! HasAlembicReaderLicense() )
      {
+        if( HasAlembicInvalidLicense() ) {
+            ESS_LOG_ERROR("[alembic] No license available and EXOCORTEX_ALEMBIC_NO_DEMO defined, no Alembic files opened." );
+            return NULL;
+         }
+
          if(gArchives.size() == 1)
          {
             ESS_LOG_ERROR("[ExocortexAlembic] Reader license not found: Only one open archive at a time allowed!");
@@ -525,6 +537,13 @@ template<typename T> bool __getBasicSchemaDataFromObject(BasicSchemaData::SCHEMA
 {
 	bsd.type = type;
 	bsd.isConstant = schema.isConstant();
+	if (bsd.isConstant)
+	{
+		Alembic::Abc::IObject iObj = schema.getObject();
+		AbcG::IVisibilityProperty visibilityProperty = AbcG::GetVisibilityProperty(iObj);
+		if (visibilityProperty.valid())
+			bsd.isConstant = visibilityProperty.getNumSamples() <= 1;
+	}
 	bsd.nbSamples  = schema.getNumSamples();
 	return true;
 }
@@ -533,7 +552,7 @@ bool getBasicSchemaDataFromObject(Alembic::Abc::IObject &object, BasicSchemaData
 	ESS_PROFILE_SCOPE("getBasicSchemaDataFromObject"); 
 	const Alembic::Abc::MetaData &md = object.getMetaData();
 	if(Alembic::AbcGeom::IXform::matches(md))
-		return  __getBasicSchemaDataFromObject(BasicSchemaData::__XFORM, Alembic::AbcGeom::IXform(object,Alembic::Abc::kWrapExisting).getSchema(), bsd);
+		return __getBasicSchemaDataFromObject(BasicSchemaData::__XFORM, Alembic::AbcGeom::IXform(object,Alembic::Abc::kWrapExisting).getSchema(), bsd);
 
 	else if(Alembic::AbcGeom::IPolyMesh::matches(md))
 		return __getBasicSchemaDataFromObject(BasicSchemaData::__POLYMESH, Alembic::AbcGeom::IPolyMesh(object,Alembic::Abc::kWrapExisting).getSchema(), bsd);
