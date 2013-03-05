@@ -21,29 +21,31 @@
 
 int createAlembicObject(AbcG::IObject& iObj, INode **pMaxNode, alembic_importoptions &options, std::string& file)
 {
+     AbcA::MetaData mdata = iObj.getMetaData();
+
 	int ret = alembic_success;
 	//if(AbcG::IXform::matches(iObj.getMetaData())) //Transform
 	//{
 	//	ESS_LOG_INFO( "AlembicImport_XForm: " << objects[j].getFullName() );
 	//	int ret = AlembicImport_PolyMesh(file, iObj, options, pMaxNode); 
 	//} 	
-	if (AbcG::IPolyMesh::matches(iObj.getMetaData()) || 
-		AbcG::ISubD::matches(iObj.getMetaData()) ) // PolyMesh / SubD
+	if (AbcG::IPolyMesh::matches(mdata) || 
+		AbcG::ISubD::matches(mdata) ) // PolyMesh / SubD
 	{
 		ESS_LOG_INFO( "AlembicImport_PolyMesh: " << iObj.getFullName() );
 		ret = AlembicImport_PolyMesh(file, iObj, options, pMaxNode); 
 	}
-    else if (AbcG::ICamera::matches(iObj.getMetaData())) // Camera
+    else if (AbcG::ICamera::matches(mdata)) // Camera
 	{
 		ESS_LOG_INFO( "AlembicImport_Camera: " << iObj.getFullName() );
 		ret = AlembicImport_Camera(file, iObj, options, pMaxNode);
 	}
-	else if (AbcG::IPoints::matches(iObj.getMetaData())) // Points
+	else if (AbcG::IPoints::matches(mdata)) // Points
 	{
 		ESS_LOG_INFO( "AlembicImport_Points: " << iObj.getFullName() );
 		ret = AlembicImport_Points(file, iObj, options, pMaxNode);
 	}
-    else if (AbcG::ICurves::matches(iObj.getMetaData())) // Curves
+    else if (AbcG::ICurves::matches(mdata)) // Curves
 	{
        if(options.loadCurvesAsNurbs){
          ESS_LOG_INFO( "AlembicImport_Nurbs: " << iObj.getFullName() );
@@ -54,11 +56,15 @@ int createAlembicObject(AbcG::IObject& iObj, INode **pMaxNode, alembic_importopt
          ret = AlembicImport_Shape(file, iObj, options, pMaxNode);
        }
 	}
-	else if (AbcG::ILight::matches(iObj.getMetaData())) // Light
+	else if (AbcG::ILight::matches(mdata)) // Light
 	{
 		ESS_LOG_INFO( "AlembicImport_Light: " << iObj.getFullName() );
 		ret = AlembicImport_Light(file, iObj, options, pMaxNode);
 	}
+    else if( AbcM::IMaterial::matches(mdata))
+    {
+       ESS_LOG_WARNING( "Alembic IMaterial not yet supported: " << iObj.getFullName() );
+    }
    else // NURBS
 	{
 		if( options.failOnUnsupported ) {
@@ -136,7 +142,7 @@ int importAlembicScene(AbcArchiveCache *pArchiveCache, AbcObjectCache *pRootObje
 
           // if we are about to merge a camera with its parent transform, force it to create a dummy node instead if the camera's
          // transform also has children. This is done to prevent the camera correction matrix from being applied to the other children
-          if(!bCreateDummyNode && sElement.pObjectCache->childIdentifiers.size() > 1 && 
+          if(!bCreateDummyNode && pMergedObjectCache && sElement.pObjectCache->childIdentifiers.size() > 1 && 
              AbcG::ICamera::matches(pMergedObjectCache->obj.getMetaData())){
              bCreateDummyNode = true;  
              mergedGeomNodeIndex = -1;
