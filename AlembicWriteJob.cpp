@@ -163,7 +163,11 @@ CStatus AlembicWriteJob::PreProcess()
    {
       if( ! HasAlembicWriterLicense() )
       {
-         if(frames.size() > 75)
+       if( HasAlembicInvalidLicense() ) {
+          ESS_LOG_ERROR("[alembic] No license available and EXOCORTEX_ALEMBIC_NO_DEMO defined, aborting." );
+          return CStatus::Fail;
+       }
+       if(frames.size() > 75)
          {
             frames.resize(75);
             EC_LOG_WARNING("[ExocortexAlembic] Writer license not found: Maximum exportable samplecount is 75!");
