@@ -91,21 +91,6 @@ static PyObject * oArchive_createTimeSampling(PyObject * self, PyObject * args)
       for (int i = 0; i < nbTimes; ++i)
       {
 			PyObject *item = _GetItem(timesTuple, i);
-         /*PyObject *out = NULL;
-
-         if (PyTuple_Check(item) || PyList_Check(item))
-            out = oTimeSampling_new(item);                        // construct a oTimeSampling from the list
-         else if (is_iTimeSampling(item))
-            out = iTimeSampling_createOTimeSampling(item);  // must be an iTimeSampling!
-         else
-         {
-            // not valid, delete previous made PyObject
-            for (std::list<PyObject*>::iterator beg = valid_obj.begin(); beg != valid_obj.end(); ++beg)
-               PyObject_FREE(*beg);
-            PyErr_SetString(getError(), "item should be a tuple, a list, or an iTimeSampling");
-            {Py_INCREF(Py_False); return Py_False;}
-         }*/
-
 			if (!PyObject_TimeSampling_Check(item))
 			{
 				PyErr_SetString(getError(), "item should be a TimeSampling");

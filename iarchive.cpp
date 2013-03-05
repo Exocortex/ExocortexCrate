@@ -131,16 +131,6 @@ static PyObject * iArchive_getSampleTimes(PyObject * self, PyObject * args)
       PyObject *_list = PyList_New(nb_ts);
       for (int i = 0; i < nb_ts; ++i)
       {
-         // For this release, going back to sending a list of list to simplify everything!
-         //PyObject *ts = iTimeSampling_new(archive->mArchive->getTimeSampling((boost::uint32_t)i), i);
-         //PyList_SetItem(_list, i, ts);
-
-         /*const std::vector<Abc::chrono_t> & times = iarchive->getTimeSampling((boost::uint32_t)i)->getStoredTimes();
-         PyObject* ts_list = PyList_New(times.size());
-         int ii = 0;
-         for (std::vector<Abc::chrono_t>::const_iterator beg = times.begin(); beg != times.end(); ++beg, ++ii)
-            PyList_SetItem(ts_list, ii, Py_BuildValue("f",(float)*beg));
-         PyList_SetItem(_list, i, ts_list);*/
 			PyList_SetItem( _list, i, TimeSamplingCopy( *( iarchive->getTimeSampling((boost::uint32_t)i) ) ) );
       }
       return _list;
