@@ -26,6 +26,8 @@ private:
 
    AlembicCustomAttributesEx customAttributes;
 
+   bool m_bDynamicTopologyMesh;
+
 public:
 
    AlembicPolyMesh(SceneNodePtr eNode, AlembicWriteJob * in_Job, Abc::OObject oParent);

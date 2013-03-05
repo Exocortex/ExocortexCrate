@@ -20,6 +20,8 @@ AlembicPolyMesh::AlembicPolyMesh(SceneNodePtr eNode, AlembicWriteJob * in_Job, A
 
    Primitive prim(GetRef(REF_PRIMITIVE));
    customAttributes.defineCustomAttributes(prim.GetGeometry(), mMeshSchema.getArbGeomParams(), mMeshSchema.getMetaData(), GetJob()->GetAnimatedTs());
+
+   m_bDynamicTopologyMesh = false;
 }
 
 AlembicPolyMesh::~AlembicPolyMesh()
@@ -134,6 +136,13 @@ XSI::CStatus AlembicPolyMesh::Save(double time)
          sampleLookup[offset++] = samples[j];
    }
 
+   if( !m_bDynamicTopologyMesh && mNumSamples > 0)
+   {
+      if(mFaceCountVec.size() != faceCount || mFaceIndicesVec.size() != sampleCount){
+         ESS_LOG_WARNING("Dynamic Topology Mesh detected");
+         m_bDynamicTopologyMesh = true;
+      }
+   }
 
    // if we are the first frame!
    if(mNumSamples == 0 || (dynamicTopology))
