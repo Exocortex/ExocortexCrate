@@ -40,9 +40,10 @@ def importXform(name, identifier, jobInfo, parentXform=None, isConstant=False):
 		shape  = fnt.alembicCreateNode(name, "transform", parentXform)
 		reader = cmds.createNode("ExocortexAlembicXform")
 
-		cmds.connectAttr(reader+".translate", 	shape+".translate")
-		cmds.connectAttr(reader+".rotate", 		shape+".rotate")
-		cmds.connectAttr(reader+".scale", 		shape+".scale")
+		cmds.connectAttr(reader+".translate", 		shape+".translate")
+		cmds.connectAttr(reader+".rotate", 			shape+".rotate")
+		cmds.connectAttr(reader+".scale", 			shape+".scale")
+		cmds.connectAttr(reader+".outVisibility",	shape+".visibility")
 
 		setupReaderAttribute(reader, identifier, isConstant, jobInfo)
 	except Exception as ex:
