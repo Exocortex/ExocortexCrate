@@ -7,11 +7,6 @@
 #include <iostream>
 #include "Python.h"
 
-#define EC_LICENSE_RESULT_NO_LICENSE	(0)
-#define EC_LICENSE_RESULT_DEMO_LICENSE	(1)
-#define EC_LICENSE_RESULT_FULL_LICENSE	(2)
-
-
 
 #if defined( EXOCORTEX_RLM_ONLY )
 
