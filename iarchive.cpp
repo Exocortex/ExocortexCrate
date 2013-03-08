@@ -44,24 +44,15 @@ static PyObject * iArchive_getVersion(PyObject * self, PyObject * args)
 }
 
 #include <string>
-#include <string.h>
 static void recurseObjectChildren(PyObject *list, const Abc::IObject &obj)
 {
 	const int nbChildren = obj.getNumChildren();
 	for (int i = 0; i < nbChildren; ++i)
 	{
-		const Abc::IObject &child = obj.getChild(i);
-		const std::string &fullName = child.getFullName();
-		const char *fName = fullName.c_str();
-		const int len = fullName.size();
+		const Abc::IObject child = obj.getChild(i);
+		const std::string fullName = child.getFullName();
 
-		char *newOne = new char[len+2];
-		strncpy(newOne, fName, len);
-
-		printf(":: %02d --> %s\n", len, newOne);
-
-		PyObject *item = PyString_FromStringAndSize(newOne, len);
-		delete [] newOne;
+		PyObject *item = PyString_FromStringAndSize(fullName.c_str(), fullName.size());
 		PyList_Append( list, item);
 
 		recurseObjectChildren(list, child);

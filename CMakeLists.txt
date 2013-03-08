@@ -53,12 +53,19 @@ if(WIN32)
   SET( MODSUFFIX ".pyd" )
 else()
 
+  #if (Python_SHORTNAME MATCHES "27" )
+  #  INCLUDE_DIRECTORIES( ${LIBRARY_ROOT}/python/2.7.2/Fedora )
+  #  LINK_DIRECTORIES( ${LIBRARY_ROOT}/python/2.7.2/libsFedora )
+  #endif()
+
   if (Python_SHORTNAME MATCHES "26" )
     INCLUDE_DIRECTORIES( ${LIBRARY_ROOT}/python/2.6.7/Fedora )
     #LINK_DIRECTORIES( ${LIBRARY_ROOT}/python/2.6.7/libsFedora )
-  else()
-    INCLUDE_DIRECTORIES( ${LIBRARY_ROOT}/python/2.5.2/Fedora )
   endif()
+
+  #if (Python_SHORTNAME MATCHES "25" )
+  #  INCLUDE_DIRECTORIES( ${LIBRARY_ROOT}/python/2.5.2/Fedora )
+  #endif()
   SET( MODSUFFIX ".so" )
 
 endif()

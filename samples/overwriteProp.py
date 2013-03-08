@@ -36,34 +36,42 @@ def copy_objects(src_data, rep_data, out_data, new_prop):
       if obj_replacable:
          rep_obj = rep_data.getObject(identifier)
       obj_typ = obj.getType()
-      
-      curTS = obj.getSampleTimes()
-      out = None
-      if len(curTS.getSampleTimes()) == 0:
-         out = out_data.createObject(obj_typ, identifier)
-      else:
-         tsSampling = out_data.createTimeSampling([curTS])
-         out = out_data.createObject(obj_typ, identifier, tsSampling[0])
-      
+
+      #curTS = obj.getSampleTimes()
+      #out = None
+      #if len(curTS.getSampleTimes()) == 0:
+      #   out = out_data.createObject(obj_typ, identifier)
+      #else:
+      #   tsSampling = out_data.createTimeSampling([curTS])
+      #   out = out_data.createObject(obj_typ, identifier, tsSampling[0])
+      out = out_data.createObject(obj_typ, identifier)
       out.setMetaData(obj.getMetaData())
-      for prop_name in obj.getPropertyNames():
+      propList = list(obj.getPropertyNames())
+      print(propList)
+      #for prop_name in propList:         
+      ii = 0
+      while ii < len(propList):
+         print(ii)
+         prop_name = propList[ii]
+         ii = ii + 1
+         print("--> pro: " + str(prop_name))
          if prop_name == ".metadata":
             continue                                                 # .metadata cause some problem
-         
-         print("--> pro: " + str(prop_name))
+
          copy_src = obj
          if obj_replacable and prop_name == new_prop:                # this object is replacable and this property is the right one ? change the source
            copy_src = rep_obj
            print("----> rep")
          
          prop = copy_src.getProperty(prop_name)
-         curTS = prop.getSampleTimes();
-         out_prop = None;
-         if len(curTS.getSampleTimes()) == 0:
-            out_prop = out.getProperty(prop_name, prop.getType())
-         else:
-            tsSampling = out_data.createTimeSampling([curTS])
-            out_prop = out.getProperty(prop_name, prop.getType(), tsSampling[0])
+         #curTS = prop.getSampleTimes();
+         #out_prop = None;
+         #if len(curTS.getSampleTimes()) == 0:
+         #   out_prop = out.getProperty(prop_name, prop.getType())
+         #else:
+         #   tsSampling = out_data.createTimeSampling([curTS])
+         #   out_prop = out.getProperty(prop_name, prop.getType(), tsSampling[0])
+         out_prop = out.getProperty(prop_name, prop.getType())
          
          if prop.isCompound():
             copy_compound_property(prop, out_prop, out_data)
