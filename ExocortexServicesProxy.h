@@ -6,10 +6,6 @@
 #include <vector>
 #include <iostream>
 
-#define EC_LICENSE_RESULT_NO_LICENSE	(0)
-#define EC_LICENSE_RESULT_DEMO_LICENSE	(1)
-#define EC_LICENSE_RESULT_FULL_LICENSE	(2)
-
 #ifndef EC_LOG_ERROR
 	#define EC_LOG_ERROR(a)		ESS_LOG_ERROR(a)
 #endif

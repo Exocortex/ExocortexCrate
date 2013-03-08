@@ -163,6 +163,11 @@ MStatus AlembicWriteJob::PreProcess()
 	   {
 		  if( ! HasAlembicWriterLicense() )
 		  {
+       if( HasAlembicInvalidLicense() ) {
+          ESS_LOG_ERROR("[alembic] No license available and EXOCORTEX_ALEMBIC_NO_DEMO defined, aborting." );
+          return MStatus::kFailure;
+       }
+
 			 if(frames.size() > 75)
 			 {           
 				frames.resize(75);
