@@ -2,10 +2,6 @@
 #define __EXOCORTEX_SERVICES_PROXY_H
 
 
-#define EC_LICENSE_RESULT_NO_LICENSE	(0)
-#define EC_LICENSE_RESULT_DEMO_LICENSE	(1)
-#define EC_LICENSE_RESULT_FULL_LICENSE	(2)
-
   // #ifdef _DEBUG
 //	   #include <syslog.h>
 //	   #define ESS_LOG_SYSLOG(msg_type, msg) do { std::stringstream ss; ss << "[" << msg_type << "] " << __FILE__ << ":" << __LINE__ << " -> " << msg; syslog(LOG_USER, "%s", ss.str().c_str()); } while(0)
