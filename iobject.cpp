@@ -29,7 +29,7 @@ static PyObject * iObject_getSampleTimes(PyObject * self, PyObject * args)
 	   iObject * object = (iObject*)self;
 	   Abc::TimeSamplingPtr ts = getTimeSamplingFromObject(*(object->mObject));
 	   if(ts)
-			return TimeSamplingCopy(*ts);
+			return TimeSamplingCopy(ts);
 	   return Py_BuildValue("s","unsupported");
 	ALEMBIC_PYOBJECT_CATCH_STATEMENT
 }

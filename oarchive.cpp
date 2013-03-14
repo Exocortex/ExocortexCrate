@@ -104,7 +104,7 @@ static PyObject * oArchive_createTimeSampling(PyObject * self, PyObject * args)
       int ii = 0;
       for (std::list<PyObject*>::iterator beg = valid_obj.begin(); beg != valid_obj.end(); ++beg, ++ii)
       {
-         uint32_t tsIndex = archive->mArchive->addTimeSampling( ((EA_TimeSampling*)*beg)->tsampling );
+         unsigned long tsIndex = archive->mArchive->addTimeSampling( *( ((EA_TimeSampling*)*beg)->tsampling ) );
          PyList_SetItem( _list, ii, Py_BuildValue("i", (int)tsIndex) );
          PyObject_FREE(*beg);
       }

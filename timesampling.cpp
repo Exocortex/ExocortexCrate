@@ -6,24 +6,34 @@
 
 static PyObject *TimeSampling_getType(PyObject *obj)
 {
-	EA_TimeSampling *ts = (EA_TimeSampling*)obj;
-	const AbcA::TimeSamplingType &tstype = ts->tsampling.getTimeSamplingType();
+	ALEMBIC_TRY_STATEMENT
+		EA_TimeSampling *ts = (EA_TimeSampling*)obj;
+		if (ts->tsampling.get() == 0)
+			return Py_BuildValue("s", "unknown");
 
-	if (tstype.isUniform())
-		return Py_BuildValue("s", "uniform");
-	else if (tstype.isCyclic())
-		return Py_BuildValue("s", "cyclic");
-	return Py_BuildValue("s", "acyclic");
+		const AbcA::TimeSamplingType &tstype = ts->tsampling->getTimeSamplingType();
+		if (tstype.isUniform())
+			return Py_BuildValue("s", "uniform");
+		else if (tstype.isCyclic())
+			return Py_BuildValue("s", "cyclic");
+		return Py_BuildValue("s", "acyclic");
+	ALEMBIC_PYOBJECT_CATCH_STATEMENT
 }
 
 static PyObject *TimeSampling_getTimeSamples(PyObject *obj)
 {
-	const std::vector<Abc::chrono_t> &times = ( (EA_TimeSampling*)obj )->tsampling.getStoredTimes();
+	ALEMBIC_TRY_STATEMENT
+		EA_TimeSampling *ts = (EA_TimeSampling*)obj;
+		if (ts->tsampling.get() == 0)
+			return PyList_New(0);
 
-	PyObject *tuple = PyList_New(times.size());
-	for(size_t i=0; i<times.size(); ++i)
-		PyList_SetItem( tuple, i, Py_BuildValue("f",(float)times[i]) );
-	return tuple;
+		const std::vector<Abc::chrono_t> &times = ts->tsampling->getStoredTimes();
+
+		PyObject *tuple = PyList_New(times.size());
+		for(size_t i=0; i<times.size(); ++i)
+			PyList_SetItem( tuple, i, Py_BuildValue("f",(float)times[i]) );
+		return tuple;
+	ALEMBIC_PYOBJECT_CATCH_STATEMENT
 }
 
 static PyMethodDef TS_methods[] =
@@ -41,7 +51,7 @@ static PyObject * TS_getAttr(PyObject * self, char * attrName)
 static void TS_delete(PyObject * self)
 {
    ALEMBIC_TRY_STATEMENT
-	   ( (EA_TimeSampling*)self )->tsampling.~TimeSampling();	// call the destructor!
+	   ( (EA_TimeSampling*)self )->tsampling.~shared_ptr();
 	   PyObject_FREE(self);
    ALEMBIC_VOID_CATCH_STATEMENT
 }
@@ -79,12 +89,12 @@ static PyTypeObject TS_Type =
 	TS_methods,             /* tp_methods */
 };
 
-
-PyObject * TimeSamplingCopy(const AbcA::TimeSampling &tsampling)
+PyObject * TimeSamplingCopy(const AbcA::TimeSamplingPtr tsampling)
 {
 	ALEMBIC_TRY_STATEMENT
 		EA_TimeSampling* TS = PyObject_NEW(EA_TimeSampling, &TS_Type);
-		new( &(TS->tsampling) ) AbcA::TimeSampling(tsampling);
+		new (&(TS->tsampling)) AbcA::TimeSamplingPtr();
+		TS->tsampling = tsampling;
 		return (PyObject*)TS;
    	ALEMBIC_PYOBJECT_CATCH_STATEMENT
 }
@@ -113,7 +123,6 @@ PyObject * TimeSampling_new(PyObject* self, PyObject* args)
 			PyErr_SetString(getError(), "invalid type, should be uniform, cyclic, or acyclic");
 			return NULL;
 		}
-
 
 		std::vector<Abc::chrono_t> times;
 		AbcA::TimeSamplingType TSType;
@@ -202,7 +211,8 @@ PyObject * TimeSampling_new(PyObject* self, PyObject* args)
 		}
 
 		EA_TimeSampling* TS = PyObject_NEW(EA_TimeSampling, &TS_Type);
-		new( &(TS->tsampling) ) AbcA::TimeSampling(TSType, times);
+		new (&(TS->tsampling)) AbcA::TimeSamplingPtr();		// need to do this to have a default empty timesamplingptr
+		TS->tsampling.reset(new AbcA::TimeSampling(TSType, times));
 		return (PyObject*)TS;
 
    	ALEMBIC_PYOBJECT_CATCH_STATEMENT

@@ -3,6 +3,7 @@
 #include "icompoundproperty.h"
 #include "iobject.h"
 #include "AlembicLicensing.h"
+#include "timesampling.h"
 
 #undef iProperty
 
@@ -25,7 +26,12 @@ static PyObject * iCompoundProperty_getType(PyObject * self, PyObject * args)
 
 static PyObject * iCompoundProperty_getSampleTimes(PyObject * self, PyObject * args)
 {
-   return PyTuple_New(0);
+	ALEMBIC_TRY_STATEMENT
+		Abc::TimeSamplingPtr ts = ((iCompoundProperty*)self)->mBaseCompoundProperty->getTimeSampling();
+		if (ts)
+			return TimeSamplingCopy(ts);
+		return Py_BuildValue("s", "unsupported");
+	ALEMBIC_PYOBJECT_CATCH_STATEMENT
 }
 
 static PyObject * iCompoundProperty_getNbStoredSamples(PyObject * self, PyObject * args)

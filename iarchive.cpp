@@ -121,9 +121,7 @@ static PyObject * iArchive_getSampleTimes(PyObject * self, PyObject * args)
 
       PyObject *_list = PyList_New(nb_ts);
       for (int i = 0; i < nb_ts; ++i)
-      {
-			PyList_SetItem( _list, i, TimeSamplingCopy( *( iarchive->getTimeSampling((boost::uint32_t)i) ) ) );
-      }
+			PyList_SetItem( _list, i, TimeSamplingCopy( iarchive->getTimeSampling((boost::uint32_t)i ) ) );
       return _list;
    ALEMBIC_PYOBJECT_CATCH_STATEMENT
 }

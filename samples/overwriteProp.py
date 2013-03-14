@@ -5,12 +5,14 @@ import argparse
 # ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ----
 #copy directly a property and its corresponding values
 def copy_property(prop, outProp):
+   print("copy_property --> " + str( prop.getNbStoredSamples() ))
    for i in xrange(0, prop.getNbStoredSamples()):
       outProp.setValues(prop.getValues(i))
 
 # ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ----
 #visiting the structure, if it's a property, copy it, if it's a compound, continue the visit there
 def copy_compound_property(cprop, outCprop, out_data):
+   print("copy_compound_property")
    for prop_name in cprop.getPropertyNames():
       if prop_name == ".metadata":
          continue                                                    # .metadata cause some problem
@@ -37,23 +39,16 @@ def copy_objects(src_data, rep_data, out_data, new_prop):
          rep_obj = rep_data.getObject(identifier)
       obj_typ = obj.getType()
 
-      #curTS = obj.getSampleTimes()
-      #out = None
-      #if len(curTS.getSampleTimes()) == 0:
-      #   out = out_data.createObject(obj_typ, identifier)
-      #else:
-      #   tsSampling = out_data.createTimeSampling([curTS])
-      #   out = out_data.createObject(obj_typ, identifier, tsSampling[0])
-      out = out_data.createObject(obj_typ, identifier)
+      curTS = obj.getSampleTimes()
+      out = None
+      if len(curTS.getTimeSamples()) == 0:
+         out = out_data.createObject(obj_typ, identifier)
+      else:
+         tsSampling = out_data.createTimeSampling([curTS])
+         out = out_data.createObject(obj_typ, identifier, tsSampling[0])
+      
       out.setMetaData(obj.getMetaData())
-      propList = list(obj.getPropertyNames())
-      print(propList)
-      #for prop_name in propList:         
-      ii = 0
-      while ii < len(propList):
-         print(ii)
-         prop_name = propList[ii]
-         ii = ii + 1
+      for prop_name in obj.getPropertyNames():
          print("--> pro: " + str(prop_name))
          if prop_name == ".metadata":
             continue                                                 # .metadata cause some problem
@@ -64,18 +59,25 @@ def copy_objects(src_data, rep_data, out_data, new_prop):
            print("----> rep")
          
          prop = copy_src.getProperty(prop_name)
-         #curTS = prop.getSampleTimes();
-         #out_prop = None;
-         #if len(curTS.getSampleTimes()) == 0:
-         #   out_prop = out.getProperty(prop_name, prop.getType())
-         #else:
-         #   tsSampling = out_data.createTimeSampling([curTS])
-         #   out_prop = out.getProperty(prop_name, prop.getType(), tsSampling[0])
-         out_prop = out.getProperty(prop_name, prop.getType())
-         
+
          if prop.isCompound():
+            out_prop = out.getProperty(prop_name, prop.getType())
             copy_compound_property(prop, out_prop, out_data)
          else:
+            curTS = prop.getSampleTimes()
+            print("ts --> " + curTS.getType())
+
+            out_prop = None
+            if len(curTS.getTimeSamples()) == 0:
+               print("new prop --> no time sample")
+               out_prop = out.getProperty(prop_name, prop.getType())
+            else:
+               print("new prop --> with time sample")
+               tsSampling = out_data.createTimeSampling([curTS])
+               print("TS indices: " + str(tsSampling))
+               out_prop = out.getProperty(prop_name, prop.getType(), tsSampling[0])
+            #out_prop = out.getProperty(prop_name, prop.getType())
+
             copy_property(prop, out_prop)
 
 # ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ----
@@ -100,12 +102,15 @@ def main(args):
    src_data = alembic.getIArchive(ins[0])
    rep_data = alembic.getIArchive(ins[1])
    out_data = alembic.getOArchive(ns["o"])
-   out_data.createTimeSampling(src_data.getSampleTimes())
+   TSs = src_data.getSampleTimes()
+   print(str(TSs))
+   out_data.createTimeSampling(TSs)
    
    copy_objects(src_data, rep_data, out_data, ns["p"])
 
 # ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ----
 if __name__ == "__main__":
+   sys.stdin.readline()
    main(sys.argv)
 
 

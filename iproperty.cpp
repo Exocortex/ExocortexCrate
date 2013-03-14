@@ -415,7 +415,7 @@ static PyObject * iProperty_getSampleTimes(PyObject * self, PyObject * args)
 			ts = prop->mBaseScalarProperty->getTimeSampling();
 
 		if(ts)
-			return TimeSamplingCopy(*ts);
+			return TimeSamplingCopy(ts);
 		return Py_BuildValue("s", "unsupported");
 	ALEMBIC_PYOBJECT_CATCH_STATEMENT
 }

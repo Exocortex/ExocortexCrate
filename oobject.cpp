@@ -34,60 +34,6 @@ Abc::OCompoundProperty getCompoundFromOObject(oObjectPtr in_Casted)
    return Abc::OCompoundProperty();
    ALEMBIC_VALUE_CATCH_STATEMENT(Abc::OCompoundProperty())
 }
-/*
-Abc::TimeSamplingPtr getTimeSamplingFromObject(Abc::OObject object)
-{
-   ALEMBIC_TRY_STATEMENT
-   const Abc::MetaData &md = object.getMetaData();
-   if(AbcG::OXform::matches(md)) {
-      return AbcG::OXform(object,Abc::kWrapExisting).getSchema().getTimeSampling();
-   } else if(AbcG::OPolyMesh::matches(md)) {
-      return AbcG::OPolyMesh(object,Abc::kWrapExisting).getSchema().getTimeSampling();
-   } else if(AbcG::OCurves::matches(md)) {
-      return AbcG::OCurves(object,Abc::kWrapExisting).getSchema().getTimeSampling();
-   } else if(AbcG::ONuPatch::matches(md)) {
-      return AbcG::ONuPatch(object,Abc::kWrapExisting).getSchema().getTimeSampling();
-   } else if(AbcG::OPoints::matches(md)) {
-      return AbcG::OPoints(object,Abc::kWrapExisting).getSchema().getTimeSampling();
-   } else if(AbcG::OSubD::matches(md)) {
-      return AbcG::OSubD(object,Abc::kWrapExisting).getSchema().getTimeSampling();
-   } else if(AbcG::OCamera::matches(md)) {
-      return AbcG::OCamera(object,Abc::kWrapExisting).getSchema().getTimeSampling();
-
-   // NEW
-   } else if(AbcG::OFaceSet::matches(md)) {
-      return AbcG::OFaceSet(object,Abc::kWrapExisting).getSchema().getTimeSampling();
-   }
-   return Abc::TimeSamplingPtr();
-   ALEMBIC_VALUE_CATCH_STATEMENT(Abc::TimeSamplingPtr())
-}
-
-size_t getNumSamplesFromObject(Abc::OObject object)
-{
-   ALEMBIC_TRY_STATEMENT
-   const Abc::MetaData &md = object.getMetaData();
-   if(AbcG::OXform::matches(md)) {
-      return AbcG::OXform(object,Abc::kWrapExisting).getSchema().getNumSamples();
-   } else if(AbcG::OPolyMesh::matches(md)) {
-      return AbcG::OPolyMesh(object,Abc::kWrapExisting).getSchema().getNumSamples();
-   } else if(AbcG::OCurves::matches(md)) {
-      return AbcG::OCurves(object,Abc::kWrapExisting).getSchema().getNumSamples();
-   } else if(AbcG::ONuPatch::matches(md)) {
-      return AbcG::ONuPatch(object,Abc::kWrapExisting).getSchema().getNumSamples();
-   } else if(AbcG::OPoints::matches(md)) {
-      return AbcG::OPoints(object,Abc::kWrapExisting).getSchema().getNumSamples();
-   } else if(AbcG::OSubD::matches(md)) {
-      return AbcG::OSubD(object,Abc::kWrapExisting).getSchema().getNumSamples();
-   } else if(AbcG::OCamera::matches(md)) {
-      return AbcG::OCamera(object,Abc::kWrapExisting).getSchema().getNumSamples();
-
-   // NEW
-   } else if(AbcG::OFaceSet::matches(md)) {
-      return AbcG::OFaceSet(object,Abc::kWrapExisting).getSchema().getNumSamples();
-   }
-   return 0;
-   ALEMBIC_VALUE_CATCH_STATEMENT(0)
-}*/
 
 static PyObject * oObject_getIdentifier(PyObject * self, PyObject * args)
 {
