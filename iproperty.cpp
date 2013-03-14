@@ -422,23 +422,20 @@ static PyObject * iProperty_getSampleTimes(PyObject * self, PyObject * args)
 
 static size_t iProperty_getNbStoredSamples_func(PyObject * self)
 {
-   ALEMBIC_TRY_STATEMENT
-   iProperty * prop = (iProperty*)self;
+	ALEMBIC_TRY_STATEMENT
+		iProperty * prop = (iProperty*)self;
 
-   size_t numSamples = 0;
-   if(prop->mIsArray)
-      numSamples = prop->mBaseArrayProperty->getNumSamples();
-   else
-      numSamples = prop->mBaseScalarProperty->getNumSamples();
-   return numSamples;
-   ALEMBIC_VALUE_CATCH_STATEMENT(0)
+		if(prop->mIsArray)
+			return prop->mBaseArrayProperty->getNumSamples();
+		return prop->mBaseScalarProperty->getNumSamples();
+	ALEMBIC_VALUE_CATCH_STATEMENT(0)
 }
 
 static PyObject * iProperty_getNbStoredSamples(PyObject * self, PyObject * args)
 {
-   ALEMBIC_TRY_STATEMENT
-   return Py_BuildValue("I",(unsigned int)iProperty_getNbStoredSamples_func(self));
-   ALEMBIC_PYOBJECT_CATCH_STATEMENT
+	ALEMBIC_TRY_STATEMENT
+		return Py_BuildValue("I", (unsigned int)iProperty_getNbStoredSamples_func(self));
+	ALEMBIC_PYOBJECT_CATCH_STATEMENT
 }
 
 #define _GET_SIZE_CASE_IMPL_(tp,base,arrayprop) \

@@ -6,7 +6,7 @@ import argparse
 #copy directly a property and its corresponding values
 def copy_property(prop, outProp):
    print("copy_property --> " + str( prop.getNbStoredSamples() ))
-   for i in xrange(0, prop.getNbStoredSamples()):
+   for i in range(0, prop.getNbStoredSamples()):
       outProp.setValues(prop.getValues(i))
 
 # ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ----
@@ -65,14 +65,11 @@ def copy_objects(src_data, rep_data, out_data, new_prop):
             copy_compound_property(prop, out_prop, out_data)
          else:
             curTS = prop.getSampleTimes()
-            print("ts --> " + curTS.getType())
 
             out_prop = None
             if len(curTS.getTimeSamples()) == 0:
-               print("new prop --> no time sample")
                out_prop = out.getProperty(prop_name, prop.getType())
             else:
-               print("new prop --> with time sample")
                tsSampling = out_data.createTimeSampling([curTS])
                print("TS indices: " + str(tsSampling))
                out_prop = out.getProperty(prop_name, prop.getType(), tsSampling[0])
