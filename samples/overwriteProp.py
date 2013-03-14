@@ -5,7 +5,7 @@ import argparse
 # ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ----
 #copy directly a property and its corresponding values
 def copy_property(prop, outProp):
-   print("copy_property --> " + str( prop.getNbStoredSamples() ))
+   print("copy_property")
    for i in range(0, prop.getNbStoredSamples()):
       outProp.setValues(prop.getValues(i))
 
@@ -16,7 +16,7 @@ def copy_compound_property(cprop, outCprop, out_data):
    for prop_name in cprop.getPropertyNames():
       if prop_name == ".metadata":
          continue                                                    # .metadata cause some problem
-      print("--> comp pro: " + str(prop_name))
+      #print("--> comp pro: " + str(prop_name))
 
       prop = cprop.getProperty(prop_name)
       print(type(prop))
@@ -41,7 +41,7 @@ def copy_compound_property(cprop, outCprop, out_data):
 def copy_objects(src_data, rep_data, out_data, new_prop):
    rep_ids = rep_data.getIdentifiers()
    for identifier in src_data.getIdentifiers():
-      print("obj: " + str(identifier))
+      #print("obj: " + str(identifier))
       obj_replacable = ( identifier in rep_ids )
       obj = src_data.getObject(identifier)
       rep_obj = None
@@ -59,14 +59,14 @@ def copy_objects(src_data, rep_data, out_data, new_prop):
       
       out.setMetaData(obj.getMetaData())
       for prop_name in obj.getPropertyNames():
-         print("--> pro: " + str(prop_name))
+         #print("--> pro: " + str(prop_name))
          if prop_name == ".metadata":
             continue                                                 # .metadata cause some problem
 
          copy_src = obj
          if obj_replacable and prop_name == new_prop:                # this object is replacable and this property is the right one ? change the source
            copy_src = rep_obj
-           print("----> rep")
+           #print("----> rep")
          
          prop = copy_src.getProperty(prop_name)
          print(type(prop))
