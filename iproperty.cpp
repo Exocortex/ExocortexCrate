@@ -5,6 +5,7 @@
 #include "iobject.h"
 #include "AlembicLicensing.h"
 #include "CommonUtilities.h"
+#include "timesampling.h"
 
 #ifdef __cplusplus__
 extern "C"
@@ -404,46 +405,37 @@ static PyObject * iProperty_getType(PyObject * self, PyObject * args)
 
 static PyObject * iProperty_getSampleTimes(PyObject * self, PyObject * args)
 {
-   ALEMBIC_TRY_STATEMENT
-   iProperty * prop = (iProperty*)self;
- 
-   Abc::TimeSamplingPtr ts;
-   if(prop->mIsArray)
-      ts = prop->mBaseArrayProperty->getTimeSampling();
-   else
-      ts = prop->mBaseScalarProperty->getTimeSampling();
+	ALEMBIC_TRY_STATEMENT
+		iProperty * prop = (iProperty*)self;
+	 
+		Abc::TimeSamplingPtr ts;
+		if(prop->mIsArray)
+			ts = prop->mBaseArrayProperty->getTimeSampling();
+		else
+			ts = prop->mBaseScalarProperty->getTimeSampling();
 
-   if(ts)
-   {
-      const std::vector <Abc::chrono_t> & times = ts->getStoredTimes();
-      PyObject * tuple = PyTuple_New(times.size());
-      for(size_t i=0;i<times.size();i++)
-         PyTuple_SetItem(tuple,i,Py_BuildValue("f",(float)times[i]));
-      return tuple;
-   }
-   return Py_BuildValue("s","unsupported");
-   ALEMBIC_PYOBJECT_CATCH_STATEMENT
+		if(ts)
+			return TimeSamplingCopy(ts);
+		return Py_BuildValue("s", "unsupported");
+	ALEMBIC_PYOBJECT_CATCH_STATEMENT
 }
 
 static size_t iProperty_getNbStoredSamples_func(PyObject * self)
 {
-   ALEMBIC_TRY_STATEMENT
-   iProperty * prop = (iProperty*)self;
+	ALEMBIC_TRY_STATEMENT
+		iProperty * prop = (iProperty*)self;
 
-   size_t numSamples = 0;
-   if(prop->mIsArray)
-      numSamples = prop->mBaseArrayProperty->getNumSamples();
-   else
-      numSamples = prop->mBaseScalarProperty->getNumSamples();
-   return numSamples;
-   ALEMBIC_VALUE_CATCH_STATEMENT(0)
+		if(prop->mIsArray)
+			return prop->mBaseArrayProperty->getNumSamples();
+		return prop->mBaseScalarProperty->getNumSamples();
+	ALEMBIC_VALUE_CATCH_STATEMENT(0)
 }
 
 static PyObject * iProperty_getNbStoredSamples(PyObject * self, PyObject * args)
 {
-   ALEMBIC_TRY_STATEMENT
-   return Py_BuildValue("I",(unsigned int)iProperty_getNbStoredSamples_func(self));
-   ALEMBIC_PYOBJECT_CATCH_STATEMENT
+	ALEMBIC_TRY_STATEMENT
+		return Py_BuildValue("I", (unsigned int)iProperty_getNbStoredSamples_func(self));
+	ALEMBIC_PYOBJECT_CATCH_STATEMENT
 }
 
 #define _GET_SIZE_CASE_IMPL_(tp,base,arrayprop) \

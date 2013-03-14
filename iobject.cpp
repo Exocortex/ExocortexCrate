@@ -5,88 +5,7 @@
 #include "iproperty.h"
 #include "ixformproperty.h"
 #include "CommonUtilities.h"
-
-/*
-Abc::ICompoundProperty getCompoundFromIObject(Abc::IObject object)
-{
-   ALEMBIC_TRY_STATEMENT
-   const Abc::MetaData &md = object.getMetaData();
-   if(AbcG::IXform::matches(md)) {
-      return AbcG::IXform(object,Abc::kWrapExisting).getSchema();
-   } else if(AbcG::IPolyMesh::matches(md)) {
-      return AbcG::IPolyMesh(object,Abc::kWrapExisting).getSchema();
-   } else if(AbcG::ICurves::matches(md)) {
-      return AbcG::ICurves(object,Abc::kWrapExisting).getSchema();
-   } else if(AbcG::INuPatch::matches(md)) {
-      return AbcG::INuPatch(object,Abc::kWrapExisting).getSchema();
-   } else if(AbcG::IPoints::matches(md)) {
-      return AbcG::IPoints(object,Abc::kWrapExisting).getSchema();
-   } else if(AbcG::ISubD::matches(md)) {
-      return AbcG::ISubD(object,Abc::kWrapExisting).getSchema();
-   } else if(AbcG::ICamera::matches(md)) {
-      return AbcG::ICamera(object,Abc::kWrapExisting).getSchema();
-
-   // NEW
-   } else if(AbcG::IFaceSet::matches(md)) {
-      return AbcG::IFaceSet(object,Abc::kWrapExisting).getSchema();
-   }
-   return Abc::ICompoundProperty();
-   ALEMBIC_VALUE_CATCH_STATEMENT(Abc::ICompoundProperty())
-}
-
-Abc::TimeSamplingPtr getTimeSamplingFromObject(Abc::IObject object)
-{
-   ALEMBIC_TRY_STATEMENT
-   const Abc::MetaData &md = object.getMetaData();
-   if(AbcG::IXform::matches(md)) {
-      return AbcG::IXform(object,Abc::kWrapExisting).getSchema().getTimeSampling();
-   } else if(AbcG::IPolyMesh::matches(md)) {
-      return AbcG::IPolyMesh(object,Abc::kWrapExisting).getSchema().getTimeSampling();
-   } else if(AbcG::ICurves::matches(md)) {
-      return AbcG::ICurves(object,Abc::kWrapExisting).getSchema().getTimeSampling();
-   } else if(AbcG::INuPatch::matches(md)) {
-      return AbcG::INuPatch(object,Abc::kWrapExisting).getSchema().getTimeSampling();
-   } else if(AbcG::IPoints::matches(md)) {
-      return AbcG::IPoints(object,Abc::kWrapExisting).getSchema().getTimeSampling();
-   } else if(AbcG::ISubD::matches(md)) {
-      return AbcG::ISubD(object,Abc::kWrapExisting).getSchema().getTimeSampling();
-   } else if(AbcG::ICamera::matches(md)) {
-      return AbcG::ICamera(object,Abc::kWrapExisting).getSchema().getTimeSampling();
-
-   // NEW
-   } else if(AbcG::IFaceSet::matches(md)) {
-      return AbcG::IFaceSet(object,Abc::kWrapExisting).getSchema().getTimeSampling();
-   }
-   return Abc::TimeSamplingPtr();
-   ALEMBIC_VALUE_CATCH_STATEMENT(Abc::TimeSamplingPtr())
-}
-
-size_t getNumSamplesFromObject(Abc::IObject object)
-{
-   ALEMBIC_TRY_STATEMENT
-   const Abc::MetaData &md = object.getMetaData();
-   if(AbcG::IXform::matches(md)) {
-      return AbcG::IXform(object,Abc::kWrapExisting).getSchema().getNumSamples();
-   } else if(AbcG::IPolyMesh::matches(md)) {
-      return AbcG::IPolyMesh(object,Abc::kWrapExisting).getSchema().getNumSamples();
-   } else if(AbcG::ICurves::matches(md)) {
-      return AbcG::ICurves(object,Abc::kWrapExisting).getSchema().getNumSamples();
-   } else if(AbcG::INuPatch::matches(md)) {
-      return AbcG::INuPatch(object,Abc::kWrapExisting).getSchema().getNumSamples();
-   } else if(AbcG::IPoints::matches(md)) {
-      return AbcG::IPoints(object,Abc::kWrapExisting).getSchema().getNumSamples();
-   } else if(AbcG::ISubD::matches(md)) {
-      return AbcG::ISubD(object,Abc::kWrapExisting).getSchema().getNumSamples();
-   } else if(AbcG::ICamera::matches(md)) {
-      return AbcG::ICamera(object,Abc::kWrapExisting).getSchema().getNumSamples();
-
-   //NEW
-   } else if(AbcG::IFaceSet::matches(md)) {
-      return AbcG::IFaceSet(object,Abc::kWrapExisting).getSchema().getNumSamples();
-   }
-   return 0;
-   ALEMBIC_VALUE_CATCH_STATEMENT(0)
-}*/
+#include "timesampling.h"
 
 static PyObject * iObject_getIdentifier(PyObject * self, PyObject * args)
 {
@@ -106,19 +25,13 @@ static PyObject * iObject_getType(PyObject * self, PyObject * args)
 
 static PyObject * iObject_getSampleTimes(PyObject * self, PyObject * args)
 {
-   ALEMBIC_TRY_STATEMENT
-   iObject * object = (iObject*)self;
-   Abc::TimeSamplingPtr ts = getTimeSamplingFromObject(*(object->mObject));
-   if(ts)
-   {
-      const std::vector <Abc::chrono_t> & times = ts->getStoredTimes();
-      PyObject * tuple = PyTuple_New(times.size());
-      for(size_t i=0;i<times.size();i++)
-         PyTuple_SetItem(tuple,i,Py_BuildValue("f",(float)times[i]));
-      return tuple;
-   }
-   return Py_BuildValue("s","unsupported");
-   ALEMBIC_PYOBJECT_CATCH_STATEMENT
+	ALEMBIC_TRY_STATEMENT
+	   iObject * object = (iObject*)self;
+	   Abc::TimeSamplingPtr ts = getTimeSamplingFromObject(*(object->mObject));
+	   if(ts)
+			return TimeSamplingCopy(ts);
+	   return Py_BuildValue("s","unsupported");
+	ALEMBIC_PYOBJECT_CATCH_STATEMENT
 }
 
 static PyObject * iObject_getNbStoredSamples(PyObject * self, PyObject * args)
