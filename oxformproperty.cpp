@@ -39,11 +39,11 @@ static PyObject * oXformProperty_setValues(PyObject * self, PyObject * args)
       return NULL;
    }
 
-   if(prop->mMembers->mXformSchema.getNumSamples() >= prop->mMaxNbSamples)
+   /*if(prop->mMembers->mXformSchema.getNumSamples() >= prop->mMaxNbSamples)
    {
       PyErr_SetString(getError(), "Already stored the maximum number of samples!");
       return NULL;
-   }
+   }*/
 
    size_t nbItems = 0;
    if(PyTuple_Check(tuple))
@@ -174,6 +174,8 @@ PyObject * oXformProperty_new(oObjectPtr in_casted, void * in_Archive, boost::ui
    prop->mMaxNbSamples = archive->mArchive->getTimeSampling(tsIndex)->getNumStoredTimes();
    prop->mMembers = new oXformMembers();
    prop->mMembers->mXformSchema = in_casted.mXform->getSchema();
+   prop->mMembers->mXformSchema.setTimeSampling( archive->mArchive->getTimeSampling(tsIndex) );
+
    //prop->mXformSchema = new AbcG::OXformSchema(in_casted.mXform->getSchema().getPtr(),Abc::kWrapExisting);
    //prop->mSample = new AbcG::XformSample();
    prop->mArchive = in_Archive;

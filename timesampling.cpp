@@ -51,7 +51,7 @@ static PyObject * TS_getAttr(PyObject * self, char * attrName)
 static void TS_delete(PyObject * self)
 {
    ALEMBIC_TRY_STATEMENT
-	   ( (EA_TimeSampling*)self )->tsampling.~shared_ptr();
+	   ( (EA_TimeSampling*)self )->tsampling.reset();
 	   PyObject_FREE(self);
    ALEMBIC_VOID_CATCH_STATEMENT
 }

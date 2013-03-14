@@ -17,14 +17,24 @@ def copy_compound_property(cprop, outCprop, out_data):
       if prop_name == ".metadata":
          continue                                                    # .metadata cause some problem
       print("--> comp pro: " + str(prop_name))
-      sub_prop = cprop.getProperty(prop_name)
-      curTS = sub_prop.getSampleTimes();
-      tsSampling = out_data.createTimeSampling([curTS])
-      out_prop = outCprop.getProperty(prop_name, sub_prop.getType(), tsSampling[0])
-      if sub_prop.isCompound():
-         copy_compound_property(sub_prop, out_prop)
+
+      prop = cprop.getProperty(prop_name)
+      print(type(prop))
+
+      if prop.isCompound():
+         out_prop = outCprop.getProperty(prop_name, prop.getType())
+         copy_compound_property(prop, out_prop, out_data)
       else:
-         copy_property(sub_prop, out_prop)
+         curTS = prop.getSampleTimes()
+
+         out_prop = None
+         if len(curTS.getTimeSamples()) == 0:
+            out_prop = outCprop.getProperty(prop_name, prop.getType())
+         else:
+            tsSampling = out_data.createTimeSampling([curTS])
+            out_prop = outCprop.getProperty(prop_name, prop.getType(), tsSampling[0])
+
+         copy_property(prop, out_prop)
 
 # ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ----
 # going through each object
@@ -59,6 +69,7 @@ def copy_objects(src_data, rep_data, out_data, new_prop):
            print("----> rep")
          
          prop = copy_src.getProperty(prop_name)
+         print(type(prop))
 
          if prop.isCompound():
             out_prop = out.getProperty(prop_name, prop.getType())
@@ -71,9 +82,7 @@ def copy_objects(src_data, rep_data, out_data, new_prop):
                out_prop = out.getProperty(prop_name, prop.getType())
             else:
                tsSampling = out_data.createTimeSampling([curTS])
-               print("TS indices: " + str(tsSampling))
                out_prop = out.getProperty(prop_name, prop.getType(), tsSampling[0])
-            #out_prop = out.getProperty(prop_name, prop.getType())
 
             copy_property(prop, out_prop)
 
