@@ -116,7 +116,7 @@ def main(args):
 
 # ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ----
 if __name__ == "__main__":
-   sys.stdin.readline()
+   #sys.stdin.readline()
    main(sys.argv)
 
 
