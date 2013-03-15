@@ -18,7 +18,7 @@ AlembicCurves::AlembicCurves(SceneNodePtr eNode, AlembicWriteJob * in_Job, Abc::
    mColorProperty = Abc::OC4fArrayProperty(comp, ".color", mSchema.getMetaData(), animTS );
    mFaceIndexProperty = Abc::OInt32ArrayProperty(comp, ".face_index", mSchema.getMetaData(), animTS );
    mVertexIndexProperty = Abc::OInt32ArrayProperty(comp, ".vertex_index", mSchema.getMetaData(), animTS );
-   mKnotVectorProperty = Abc::OFloatArrayProperty(comp, ".radius", mSchema.getMetaData(), animTS );
+   mKnotVectorProperty = Abc::OFloatArrayProperty(comp, ".knot_vector", mSchema.getMetaData(), animTS );
 }
 
 AlembicCurves::~AlembicCurves()
