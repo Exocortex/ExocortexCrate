@@ -8,41 +8,66 @@ import maya.cmds as cmds
 ############################################################################################################
 def alembicTimeAndFileNode(filename):
 	cmds.ExocortexAlembic_profileBegin(f="Python.ExocortexAlembic._functions.alembicTimeAndFileNode")
-	print("time control")
+	#print("time control")
 	timeControl = "AlembicTimeControl"
 	if not cmds.objExists(timeControl):
 		timeControl = cmds.createNode("ExocortexAlembicTimeControl", name=timeControl)
 		alembicConnectAttr("time1.outTime", timeControl+".inTime")
-	print("file node")
+	#print("file node")
 	fileNode = cmds.createNode("ExocortexAlembicFile")
 	cmds.setAttr(fileNode+".fileName", filename, type="string")
 	cmds.ExocortexAlembic_profileEnd(f="Python.ExocortexAlembic._functions.alembicTimeAndFileNode")
 	return fileNode, timeControl
 
-def alembicCreateNode(name, type, parentXform=None):
-	""" create a node and make sure to return a full name and create namespaces if necessary! """
-	cmds.ExocortexAlembic_profileBegin(f="Python.ExocortexAlembic._functions.createAlembicNode")
-	print("alembicCreateNode(" + str(name) + ", " + str(type) + ", " + str(parentXform) + ")")
-
-	# create namespaces if necessary!
-	tokens = name.split(":")
-	if len(tokens) > 1:
+def createNamespaces(namespaces):
+	#print("createNamespaces("+ str(namespaces) + ")")
+	if len(namespaces) > 1:
 		# first one!
-		accum = ":" + tokens[0]
+		accum = ":" + namespaces[0]
 		if not cmds.namespace(exists=accum):
-			cmds.namespace(add=tokens[0])
-		# rest...
-		for nspace in tokens[1:-1]:
+			cmds.namespace(add=namespaces[0])
+		# rest ...
+		for nspace in namespaces[1:-1]:
 			curAccum = accum + ":" + nspace
 			if not cmds.namespace(exists=curAccum):
 				cmds.namespace(add=nspace, p=accum)
 			accum = curAccum
+	pass
 
-	# create the node
-	result = cmds.createNode(type, n=name, p=parentXform)
-	print("--> " + result)
+def subCreateNode(names, type, parentXform):
+	#print("subCreateNode(" + str(names) + ", " + type + ", " + str(parentXform) + ")")
+	accum = None
+	for name in names[:-1]:
+		result = name
+		if accum != None:
+			result = accum + '|' + result
+		if not cmds.objExists(result):
+			createNamespaces(name.split(':'))
+			#print("create " + name + ", child of: " + str(accum))
+			result = cmds.createNode("transform", n=name, p=accum)
+
+		if accum == None:
+			accum = result
+		else:
+			accum = accum + "|" + result.split('|')[-1]
+
+	name = names[-1]
 	if parentXform != None:
-		result = parentXform + "|" + result.split('|')[-1]
+		accum = parentXform
+	createNamespaces(name.split(':'))
+	#print("create " + name + ", child of: " + str(accum))
+	result = cmds.createNode(type, n=name, p=accum)
+
+	if accum != None:
+		result = accum + "|" + result.split("|")[-1]
+	#print("--> " + result)
+	return result
+
+def alembicCreateNode(name, type, parentXform=None):
+	""" create a node and make sure to return a full name and create namespaces if necessary! """
+	cmds.ExocortexAlembic_profileBegin(f="Python.ExocortexAlembic._functions.createAlembicNode")
+	#print("alembicCreateNode(" + str(name) + ", " + str(type) + ", " + str(parentXform) + ")")
+	result = subCreateNode(name.split('|'), type, parentXform)
 	cmds.ExocortexAlembic_profileEnd(f="Python.ExocortexAlembic._functions.createAlembicNode")
 	return result
 
