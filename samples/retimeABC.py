@@ -10,7 +10,7 @@ def create_new_TS(tsampling, scale, offset):
       samples = sampling.getTimeSamples()
 
       if ts_type == "uniform":
-         samples = samples[0] + offset
+         samples = samples[0] * offset
       else:
          tmp_ts = []
          K = samples[0] * (1.0 - scale) + offset
