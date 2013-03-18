@@ -59,17 +59,14 @@ def copy_objects(src_data, rep_data, out_data, new_prop):
       
       out.setMetaData(obj.getMetaData())
       for prop_name in obj.getPropertyNames():
-         #print("--> pro: " + str(prop_name))
          if prop_name == ".metadata":
             continue                                                 # .metadata cause some problem
 
          copy_src = obj
          if obj_replacable and prop_name == new_prop:                # this object is replacable and this property is the right one ? change the source
            copy_src = rep_obj
-           #print("----> rep")
          
          prop = copy_src.getProperty(prop_name)
-         print(type(prop))
 
          if prop.isCompound():
             out_prop = out.getProperty(prop_name, prop.getType())
