@@ -513,6 +513,7 @@ bool AttachSceneFile(SceneNodeAlembicPtr fileRoot, SceneNodeAppPtr appRoot, cons
            
             if(!bChildAttached){
                ESS_LOG_ERROR("replaceData operation failed on node "<<appNodeName);
+               if(pbar) pbar->stop();
                return false;
             }
 
@@ -623,6 +624,162 @@ bool ImportSceneFile(SceneNodeAlembicPtr fileRoot, SceneNodeAppPtr appRoot, cons
             }
             else{
                sceneStack.push_back( ImportStackElement( fileNode, newAppNode ) );
+            }
+         }
+         
+      }
+      else{
+         //ESS_LOG_WARNING("newAppNode useCount: "<<newAppNode.use_count());
+	      if( currFileNode->children.empty() == false ) {
+		      EC_LOG_WARNING("Unsupported node: " << currFileNode->name << " has children that have not been imported." );
+	      }
+      }
+   }
+
+   if (pbar) pbar->stop();
+   return true;
+}
+
+
+typedef std::map<std::string, SceneNodeAppPtr> AppNodeMap;
+typedef boost::shared_ptr<AppNodeMap> AppNodeMapPtr;
+   
+AppNodeMapPtr buildChildMap(SceneNodeAppPtr parent)
+{
+   ESS_PROFILE_FUNC();
+
+   AppNodeMapPtr map(new AppNodeMap());
+
+   if(parent){
+      SceneChildIterator endIt = parent->children.end();
+      for(SceneChildIterator it = parent->children.begin(); it != endIt; it++){
+         SceneNodeAppPtr node = reinterpret<SceneNode, SceneNodeApp>(*it);
+
+         (*map)[node->name] = node;
+      }
+   }
+
+   return map;
+}
+
+struct MergeStackElement
+{
+   SceneNodeAlembicPtr currFileNode;
+   SceneNodeAppPtr parentAppNode;
+   AppNodeMapPtr parentChildMapPtr;
+
+   MergeStackElement(SceneNodeAlembicPtr node, SceneNodeAppPtr parent, AppNodeMapPtr pcmap):currFileNode(node), parentAppNode(parent), parentChildMapPtr(pcmap)
+   {}
+
+};
+
+bool MergeSceneFile(SceneNodeAlembicPtr fileRoot, SceneNodeAppPtr appRoot, const IJobStringParser& jobParams, CommonProgressBar *pbar)
+{
+   ESS_PROFILE_FUNC();
+
+   //compare to application scene graph to see if we need to rename nodes (or maybe we might throw an error)
+
+   std::list<MergeStackElement> sceneStack;
+
+   for(SceneChildIterator it = fileRoot->children.begin(); it != fileRoot->children.end(); it++){
+      SceneNodeAlembicPtr fileNode = reinterpret<SceneNode, SceneNodeAlembic>(*it);
+      //if(!fileNode->selected){
+      //   continue;
+      //}
+      sceneStack.push_back(MergeStackElement(fileNode, appRoot, buildChildMap(appRoot)));
+   }
+
+   if (pbar) pbar->start();
+   const int maxCount = pbar ? pbar->getUpdateCount() : 20;
+   int count = 0;
+   while( !sceneStack.empty() )
+   {
+      MergeStackElement sElement = sceneStack.back();
+      SceneNodeAlembicPtr currFileNode = sElement.currFileNode;
+      SceneNodeAppPtr parentAppNode = sElement.parentAppNode;
+      AppNodeMapPtr childMapPtr = sElement.parentChildMapPtr;
+      sceneStack.pop_back();
+
+      if (count % maxCount == 0)
+      {
+         count = maxCount;
+         if (pbar)
+         {
+            if (pbar->isCancelled())
+            {
+               EC_LOG_WARNING("Import job cancelled by user");
+               pbar->stop();
+               return false;
+            }
+            pbar->incr(maxCount);
+		std::string impMsg("Importing ");
+		impMsg.append(currFileNode->dccIdentifier);
+            pbar->setCaption(impMsg);
+         }
+      }
+      ++count;
+      
+      //ESS_LOG_WARNING("Importing "<<currFileNode->pObjCache->obj.getFullName());
+       
+      SceneNodeAppPtr newAppNode;
+
+      //if matches a child of parent attach to it, and set "new" app node to the matching node
+      //otherwise create the node and so on...
+
+
+      const std::string& fileNodeName = removeXfoSuffix(currFileNode->name);
+      AppNodeMap::iterator appNodeIt = childMapPtr->find(fileNodeName);
+      if(appNodeIt != childMapPtr->end()){//we have a match
+         SceneNodeAppPtr appNode = appNodeIt->second;
+
+         ESS_LOG_WARNING("nodeMatch: "<<fileNodeName<<" = "<<appNode->name);
+
+         SceneNodeAlembicPtr ignoreFileNode;
+         bool bChildAttached = appNode->replaceData(currFileNode, jobParams, ignoreFileNode);
+
+         if(!bChildAttached){
+            ESS_LOG_ERROR("replaceData operation failed on node "<<appNode->name);
+            if(pbar)pbar->stop();
+            return false;
+         }
+         
+         newAppNode = appNode;        
+      }
+      else{
+         bool bContinue = parentAppNode->addChild(currFileNode, jobParams, newAppNode);
+         if(!bContinue){
+            ESS_LOG_ERROR("Could not create new child: "<<fileNodeName);
+		    if (pbar) pbar->stop();
+            return false;
+         }
+      }
+
+      childMapPtr = buildChildMap(newAppNode);
+
+      if(newAppNode){
+         //ESS_LOG_WARNING("newAppNode: "<<newAppNode->name<<" useCount: "<<newAppNode.use_count());
+
+         //push the children as the last step, since we need to who the parent is first (we may have merged)
+         for(SceneChildIterator it = currFileNode->children.begin(); it != currFileNode->children.end(); it++){
+            SceneNodeAlembicPtr fileNode = reinterpret<SceneNode, SceneNodeAlembic>(*it);
+            if(!fileNode->isSupported()) continue;
+
+            //if(!fileNode->selected){
+            //   continue;
+            //}
+
+            if( fileNode->isMerged() ){
+               //The child node was merged with its parent, so skip this child, and add its children
+               //(Although this case is technically possible, I think it will not be common)
+               SceneNodePtr& mergedChild = *it;
+
+               for(SceneChildIterator cit = mergedChild->children.begin(); cit != mergedChild->children.end(); cit++){
+                  SceneNodeAlembicPtr cfileNode = reinterpret<SceneNode, SceneNodeAlembic>(*cit);
+                  sceneStack.push_back( MergeStackElement( cfileNode, newAppNode, childMapPtr ) );
+               }
+            }
+            else{
+               sceneStack.push_back( MergeStackElement( fileNode, newAppNode, childMapPtr ) );
             }
          }
          
