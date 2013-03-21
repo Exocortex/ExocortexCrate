@@ -1166,7 +1166,7 @@ ESS_CALLBACK_END
 
 
 //the last parameter is ignored if attach to exising is active (since we are not creating a new node)
-bool createNode(SceneNodeXSI* appNode, SceneNodeAlembicPtr fileNode, const IJobStringParser& jobParams, SceneNodePtr& returnNode)
+bool createNode(SceneNodeXSI* appNode, SceneNodeAlembicPtr fileNode, const IJobStringParser& jobParams, SceneNodePtr& returnNode, bool bAttachToExisting)
 {  
     //the appNode parameter is either the parent if adding a new node to the scene, or the node to replace if doing attach to existing
 
@@ -1175,7 +1175,7 @@ bool createNode(SceneNodeXSI* appNode, SceneNodeAlembicPtr fileNode, const IJobS
 
 
    CString filename = CString(jobParams.filename.c_str());
-   const bool& attachToExisting = jobParams.attachToExisting;
+   const bool& attachToExisting = bAttachToExisting;
    //const bool& importStandins = jobParams.importStandinProperties;
    //const bool& importBboxes = jobParams.importBoundingBoxes;
    //const bool& failOnUnsupported = jobParams.failOnUnsupported;
@@ -1305,7 +1305,7 @@ bool validate(CRef nodeRef, CString fileNodeType, Abc::IObject shapeObj )
    return true;
 }
 
-bool createMergeableNode(SceneNodeXSI* appNode, SceneNodeAlembicPtr fileXformNode, SceneNodeAlembicPtr fileShapeNode, const IJobStringParser& jobParams, SceneNodePtr& returnNode)
+bool createMergeableNode(SceneNodeXSI* appNode, SceneNodeAlembicPtr fileXformNode, SceneNodeAlembicPtr fileShapeNode, const IJobStringParser& jobParams, SceneNodePtr& returnNode, bool bAttachToExisting)
 {
    //the appNode parameter is either the parent if adding a new node to the scene, or the node to replace if doing attach to existing
 
@@ -1314,7 +1314,7 @@ bool createMergeableNode(SceneNodeXSI* appNode, SceneNodeAlembicPtr fileXformNod
 
 
    const CString filename(jobParams.filename.c_str());
-   const bool& attachToExisting = jobParams.attachToExisting;
+   const bool& attachToExisting = bAttachToExisting;
    const bool& importStandins = jobParams.importStandinProperties;
    const bool& importBboxes = jobParams.importBoundingBoxes;
    const bool& failOnUnsupported = jobParams.failOnUnsupported;
@@ -1883,7 +1883,7 @@ bool createMergeableNode(SceneNodeXSI* appNode, SceneNodeAlembicPtr fileXformNod
 }
 
 
-bool createNodes(SceneNodeXSI* const appNode, SceneNodeAlembicPtr fileNode, const IJobStringParser& jobParams, SceneNodePtr& returnNode)
+bool createNodes(SceneNodeXSI* const appNode, SceneNodeAlembicPtr fileNode, const IJobStringParser& jobParams, SceneNodePtr& returnNode, bool bAttachToExisting)
 {
 
    if( fileNode->type == SceneNode::ETRANSFORM ){//we have a transform with only one shape node child, so we can merge
@@ -1896,7 +1896,7 @@ bool createNodes(SceneNodeXSI* const appNode, SceneNodeAlembicPtr fileNode, cons
          }
       }
       if(shapeNode){
-         return createMergeableNode(appNode, fileNode, shapeNode, jobParams, returnNode);
+         return createMergeableNode(appNode, fileNode, shapeNode, jobParams, returnNode, bAttachToExisting);
       }
       else{
          ESS_LOG_ERROR("Could not find shape node.");
@@ -1904,11 +1904,11 @@ bool createNodes(SceneNodeXSI* const appNode, SceneNodeAlembicPtr fileNode, cons
       }
    }
    else if( fileNode->type == SceneNode::ITRANSFORM ){// null nodes
-      return createNode(appNode, fileNode, jobParams, returnNode);
+      return createNode(appNode, fileNode, jobParams, returnNode, bAttachToExisting);
    }
    //this shape node has the same parent transform as one or more other shape nodes
    SceneNodeAlembicPtr shapeNode;
-   return createMergeableNode(appNode, shapeNode, fileNode, jobParams, returnNode);
+   return createMergeableNode(appNode, shapeNode, fileNode, jobParams, returnNode, bAttachToExisting);
 }
 
 
@@ -2025,20 +2025,32 @@ ESS_CALLBACK_START(alembic_import_jobs_Execute, CRef&)
          jobParser.importStandinProperties = false;
          jobParser.importStandinProperties = false;
       }
-      jobParser.attachToExisting = settings.GetParameterValue(L"attach");
+      //jobParser.attachToExisting = settings.GetParameterValue(L"attach");
 	  jobParser.failOnUnsupported = settings.GetParameterValue(L"failOnUnsupported");
       jobParser.skipUnattachedNodes = settings.GetParameterValue(L"skipUnattachedNodes");
       jobParser.replacer = SearchReplace::createReplacer();
       jobParser.enableImportRootSelection = settings.GetParameterValue(L"enableImportRootSelection");
       jobParser.stripMayaNamespaces = settings.GetParameterValue(L"stripNamespaces");
-      const int val = settings.GetParameterValue(L"defaultXformNode");
+      
+      int val = settings.GetParameterValue(L"defaultXformNode");
       if( val == 0 ){
          jobParser.xformTypes = XSI_XformTypes::XMODEL;
       }
       else if( val == 1){
          jobParser.xformTypes = XSI_XformTypes::XNULL;
       }
-         
+
+      val = settings.GetParameterValue(L"sceneMergeMethod");
+      if( val == 0 ){
+         jobParser.extraParameters["sceneMergeMethod"] = "none";
+      }
+      else if( val == 1){
+         jobParser.extraParameters["sceneMergeMethod"] = "attach";
+      }
+      else if( val == 2){
+         jobParser.extraParameters["sceneMergeMethod"] = "full";
+      }
+
       Application().LogMessage(CString(L"[ExocortexAlembic] Using ReadJob:") + jobParser.buildJobString().c_str());
 
       Application().ExecuteCommand(L"DeleteObj",inspectArgs,inspectResult);
@@ -2050,6 +2062,10 @@ ESS_CALLBACK_START(alembic_import_jobs_Execute, CRef&)
          return CStatus::Abort;
       }
       Application().LogMessage(CString(L"[ExocortexAlembic] Using ReadJob:") + jobString.c_str());
+
+      if( jobParser.extraParameters["sceneMergeMethod"] == "none" && jobParser.attachToExisting ){//backwards compatibility with "attachToExisting" bool
+         jobParser.extraParameters["sceneMergeMethod"] = "attach";
+      }
    }
 
    // take care of the filename
@@ -2124,7 +2140,7 @@ ESS_CALLBACK_START(alembic_import_jobs_Execute, CRef&)
 
    // create the timecontrol
    CustomProperty timeControl;
-   if(jobParser.attachToExisting)
+   if( jobParser.extraParameters["sceneMergeMethod"] == "attach" )//if(jobParser.attachToExisting)
    {
       CRef timeRef;
       timeRef.Set(L"alembic_timecontrol");
@@ -2224,7 +2240,7 @@ ESS_CALLBACK_START(alembic_import_jobs_Execute, CRef&)
 
    //return CStatus::Fail;
 
-   if(jobParser.attachToExisting)
+   if( jobParser.extraParameters["sceneMergeMethod"] == "attach" )//if(jobParser.attachToExisting)
    {  
       nNumNodes = 0;
       SceneNodeXSIPtr appRoot = buildCommonSceneGraph(importRootNode, nNumNodes, false);
@@ -2236,6 +2252,22 @@ ESS_CALLBACK_START(alembic_import_jobs_Execute, CRef&)
       progBar.init(nNumNodes);
 
       bool bAttachSuccess = AttachSceneFile(fileRoot, appRoot, jobParser, &progBar);
+
+      if(!bAttachSuccess){
+         return CStatus::Fail;
+      }
+   }
+   else if( jobParser.extraParameters["sceneMergeMethod"] == "full" ){
+      nNumNodes = 0;
+      SceneNodeXSIPtr appRoot = buildCommonSceneGraph(importRootNode, nNumNodes, false);
+
+      //printSceneGraph(fileRoot, true);
+      //printSceneGraph(appRoot, true);
+      
+      XSIProgressBar progBar;
+      progBar.init(nNumNodes);
+
+      bool bAttachSuccess = MergeSceneFile(fileRoot, appRoot, jobParser, &progBar);
 
       if(!bAttachSuccess){
          return CStatus::Fail;
@@ -2284,7 +2316,8 @@ ESS_CALLBACK_START(alembic_import_settings_Define, CRef&)
    {
       oCustomProperty.AddParameter(L"standins",CValue::siInt4,siPersistable,L"",L"",0,0,10,0,10,oParam);
    }
-   oCustomProperty.AddParameter(L"attach",CValue::siBool,siPersistable,L"",L"",0,0,1,0,1,oParam);
+   //oCustomProperty.AddParameter(L"attach",CValue::siBool,siPersistable,L"",L"",0,0,1,0,1,oParam);
+   oCustomProperty.AddParameter(L"sceneMergeMethod",CValue::siInt4,siPersistable,L"",L"",0,0,5,0,5,oParam);
    oCustomProperty.AddParameter(L"skipUnattachedNodes",CValue::siBool,siPersistable,L"",L"",0,0,1,0,1,oParam);
    oCustomProperty.AddParameter(L"failOnUnsupported",CValue::siBool,siPersistable,L"",L"",0,0,1,0,1,oParam);
    oCustomProperty.AddParameter(L"enableImportRootSelection",CValue::siBool,siPersistable,L"",L"",0,0,1,0,0,oParam);
@@ -2323,7 +2356,17 @@ ESS_CALLBACK_START(alembic_import_settings_DefineLayout, CRef&)
       items[5] = (LONG) 2l;
       oLayout.AddEnumControl(L"standins",items,L"Standins");
    }
-   oLayout.AddItem(L"attach", L"Attach to existing objects");
+   //oLayout.AddItem(L"attach", L"Attach to existing objects");
+
+   items.Resize(6);
+   items[0] = L"None";
+   items[1] = (LONG) 0l;
+   items[2] = L"Attach to existing objects";
+   items[3] = (LONG) 1l;
+   items[4] = L"Full";
+   items[5] = (LONG) 2l;
+   oLayout.AddEnumControl(L"sceneMergeMethod", items, L"SceneMergeMethod");
+
    oLayout.AddItem(L"skipUnattachedNodes", L"Skip nodes that fail to attach");
    oLayout.AddItem(L"failOnUnsupported",L"Fail upon unsupported alembic types");
    oLayout.AddItem(L"enableImportRootSelection",L"Enable Import Root Selection");

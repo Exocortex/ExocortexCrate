@@ -12,14 +12,14 @@ bool SceneNodeXSI::replaceData(SceneNodeAlembicPtr fileNode, const IJobStringPar
 {
    ESS_PROFILE_FUNC();
 
-   if(!jobParams.attachToExisting){
-      return false;
-   }
+   //if(!jobParams.attachToExisting){
+   //   return false;
+   //}
   
    
 
    SceneNodePtr returnNode;
-   bool bSuccess = createNodes(this, fileNode, jobParams, returnNode);
+   bool bSuccess = createNodes(this, fileNode, jobParams, returnNode, true);
    //nextFileNode = reinterpret<SceneNode, SceneNodeAlembic>(returnNode);
    SceneNodeAlembicPtr shapeFileNode = reinterpret<SceneNode, SceneNodeAlembic>(returnNode);
 
@@ -45,12 +45,12 @@ bool SceneNodeXSI::addChild(SceneNodeAlembicPtr fileNode, const IJobStringParser
 {
    ESS_PROFILE_FUNC();
 
-   if(jobParams.attachToExisting){
-      return false;
-   }
+   //if(jobParams.attachToExisting){
+   //   return false;
+   //}
 
    SceneNodePtr returnNode;
-   bool bSuccess = createNodes(this, fileNode, jobParams, returnNode);
+   bool bSuccess = createNodes(this, fileNode, jobParams, returnNode, false);
    newAppNode = reinterpret<SceneNode, SceneNodeApp>(returnNode);
    return bSuccess;
 }
