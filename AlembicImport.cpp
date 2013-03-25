@@ -2365,7 +2365,7 @@ ESS_CALLBACK_START(alembic_import_settings_DefineLayout, CRef&)
    items[3] = (LONG) 1l;
    items[4] = L"Full";
    items[5] = (LONG) 2l;
-   oLayout.AddEnumControl(L"sceneMergeMethod", items, L"SceneMergeMethod");
+   oLayout.AddEnumControl(L"sceneMergeMethod", items, L"Scene Merge Method");
 
    oLayout.AddItem(L"skipUnattachedNodes", L"Skip nodes that fail to attach");
    oLayout.AddItem(L"failOnUnsupported",L"Fail upon unsupported alembic types");
