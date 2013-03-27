@@ -2042,13 +2042,13 @@ ESS_CALLBACK_START(alembic_import_jobs_Execute, CRef&)
 
       val = settings.GetParameterValue(L"sceneMergeMethod");
       if( val == 0 ){
-         jobParser.extraParameters["sceneMergeMethod"] = "none";
+         jobParser.extraParameters["sceneMergeMethod"] = "new";
       }
       else if( val == 1){
          jobParser.extraParameters["sceneMergeMethod"] = "attach";
       }
       else if( val == 2){
-         jobParser.extraParameters["sceneMergeMethod"] = "full";
+         jobParser.extraParameters["sceneMergeMethod"] = "attachAndNew";
       }
 
       Application().LogMessage(CString(L"[ExocortexAlembic] Using ReadJob:") + jobParser.buildJobString().c_str());
@@ -2063,7 +2063,7 @@ ESS_CALLBACK_START(alembic_import_jobs_Execute, CRef&)
       }
       Application().LogMessage(CString(L"[ExocortexAlembic] Using ReadJob:") + jobString.c_str());
 
-      if( jobParser.extraParameters["sceneMergeMethod"] == "none" && jobParser.attachToExisting ){//backwards compatibility with "attachToExisting" bool
+      if( jobParser.extraParameters["sceneMergeMethod"] == "new" && jobParser.attachToExisting ){//backwards compatibility with "attachToExisting" bool
          jobParser.extraParameters["sceneMergeMethod"] = "attach";
       }
    }
@@ -2257,7 +2257,7 @@ ESS_CALLBACK_START(alembic_import_jobs_Execute, CRef&)
          return CStatus::Fail;
       }
    }
-   else if( jobParser.extraParameters["sceneMergeMethod"] == "full" ){
+   else if( jobParser.extraParameters["sceneMergeMethod"] == "attachAndNew" ){
       nNumNodes = 0;
       SceneNodeXSIPtr appRoot = buildCommonSceneGraph(importRootNode, nNumNodes, false);
 
