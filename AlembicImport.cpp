@@ -2359,11 +2359,11 @@ ESS_CALLBACK_START(alembic_import_settings_DefineLayout, CRef&)
    //oLayout.AddItem(L"attach", L"Attach to existing objects");
 
    items.Resize(6);
-   items[0] = L"None";
+   items[0] = L"New nodes";
    items[1] = (LONG) 0l;
-   items[2] = L"Attach to existing objects";
+   items[2] = L"Attach to existing";
    items[3] = (LONG) 1l;
-   items[4] = L"Full";
+   items[4] = L"Attach to existing + new nodes";
    items[5] = (LONG) 2l;
    oLayout.AddEnumControl(L"sceneMergeMethod", items, L"Scene Merge Method");
 
