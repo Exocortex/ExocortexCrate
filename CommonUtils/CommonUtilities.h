@@ -367,7 +367,7 @@ template <class T, class S> void createIndexedArray(const std::vector<Alembic::A
   outputVec.clear();
 
   // loop over all data
-  for(size_t i=0; i<inputVec.size(); ++i)
+  for(size_t i=0; i<inputVec.size() && i<faceIndicesVec.size(); ++i)
   {
     cia_map_key<S> mkey(faceIndicesVec[i], inputVec[i]);
     if (normalMap.find(mkey) != normalMap.end())    // the pair <vertexId, S> was found, let reuse it's index!

@@ -402,6 +402,14 @@ bool getIndexAndValues( Alembic::Abc::Int32ArraySamplePtr faceIndices, Alembic::
 		for( int i = 0; i < faceIndices->size(); i ++ ) {
 			tempIndices.push_back( (*faceIndices)[i] );
 		}
+
+        //ESS_LOG_WARNING("sampleIndex: "<<sampleIndex);
+        //ESS_LOG_WARNING("valueSampler->size(): "<<valueSampler->size());
+        //ESS_LOG_WARNING("tempIndices.size(): "<<tempIndices.size());
+        //if( valueSampler->size() != tempIndices.size() ){
+        //   ESS_LOG_WARNING("valueSampler->size() != tempIndices.size()");
+        //}
+
 		createIndexedArray<Imath::V2f,SortableV2f>( tempIndices, tempValues, outputValues, outputIndices );
 		return true;
 	}
