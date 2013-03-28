@@ -19,7 +19,8 @@ AlembicPolyMesh::AlembicPolyMesh(SceneNodePtr eNode, AlembicWriteJob * in_Job, A
    mOVisibility = CreateVisibilityProperty(mesh, GetJob()->GetAnimatedTs());
 
    Primitive prim(GetRef(REF_PRIMITIVE));
-   customAttributes.defineCustomAttributes(prim.GetGeometry(), mMeshSchema.getArbGeomParams(), mMeshSchema.getMetaData(), GetJob()->GetAnimatedTs());
+   Abc::OCompoundProperty argGeomParamsProp = mMeshSchema.getArbGeomParams();
+   customAttributes.defineCustomAttributes(prim.GetGeometry(), argGeomParamsProp, mMeshSchema.getMetaData(), GetJob()->GetAnimatedTs());
 
    m_bDynamicTopologyMesh = false;
 }
@@ -1361,8 +1362,8 @@ XSIPLUGINCALLBACK CStatus alembic_polyMesh2_Evaluate(ICENodeContext& in_ctxt)
 					{
 						for(ULONG i=0; i<acc.GetCount(); ++i)
 						{
-							const Abc::P3fArraySamplePtr::_Elem::value_type &pt = ptr->get()[i];
-							const Abc::V3fArraySamplePtr::_Elem::value_type &vl = velPtr->get()[i >= velPtr->size() ? 0 : i];
+							const Abc::V3f &pt = ptr->get()[i];
+							const Abc::V3f &vl = velPtr->get()[i >= velPtr->size() ? 0 : i];
 							acc[i].Set
 							(
 								pt.x + alpha * vl.x,
@@ -1378,7 +1379,7 @@ XSIPLUGINCALLBACK CStatus alembic_polyMesh2_Evaluate(ICENodeContext& in_ctxt)
 				{
 					for(ULONG i=0;i<acc.GetCount();i++)
 					{
-						const Abc::P3fArraySamplePtr::_Elem::value_type &pt = ptr->get()[i];
+						const Abc::V3f &pt = ptr->get()[i];
 						acc[i].Set(pt.x, pt.y, pt.z);
 					}
 				}
@@ -1412,7 +1413,7 @@ XSIPLUGINCALLBACK CStatus alembic_polyMesh2_Evaluate(ICENodeContext& in_ctxt)
 				acc = outData.Resize(0, (ULONG)ptr->size());
 				for(ULONG i=0; i<acc.GetCount(); ++i)
 				{
-					const Abc::V3fArraySamplePtr::_Elem::value_type &vl = ptr->get()[i];
+					const Abc::V3f &vl = ptr->get()[i];
 					acc[i].Set(vl.x, vl.y, vl.z);
 				}
 			}

@@ -14,6 +14,11 @@
 	#include "ExocortexSoftimageServicesAPI.h"
 	using namespace Exocortex;
 
+#else  // EXOCORTEX_SERVICES
+
+  #define ESS_CALLBACK_START( NodeName_CallbackName, ParamType )	XSIPLUGINCALLBACK CStatus NodeName_CallbackName( ParamType in_ctxt ) {
+  #define ESS_CALLBACK_END }
+
 #endif	// EXOCORTEX_SERVICES
 
 
