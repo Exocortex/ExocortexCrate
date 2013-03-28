@@ -14,30 +14,8 @@
 	#include "ExocortexSoftimageServicesAPI.h"
 	using namespace Exocortex;
 
-#else // EXOCORTEX_SERVICES
-
-
-	#define ESS_LOG_ERROR(a) do { std::stringstream s; s << a; XSI::Application().LogMessage( s.str().c_str(), XSI::siErrorMsg ); } while(0)
-	#define ESS_LOG_WARNING(a) do { std::stringstream s; s << a; XSI::Application().LogMessage( s.str().c_str(), XSI::siWarningMsg ); } while(0)
-	#define ESS_LOG_INFO(a) do { std::stringstream s; s << a; XSI::Application().LogMessage( s.str().c_str(), XSI::siInfoMsg ); } while(0)
-
-	#define ESS_CALLBACK_START( NodeName_CallbackName, ParamType )	XSIPLUGINCALLBACK CStatus NodeName_CallbackName( ParamType in_ctxt ) {
-	#define ESS_CALLBACK_END }
-
 #endif	// EXOCORTEX_SERVICES
 
-#ifndef EC_LOG_ERROR
-	#define EC_LOG_ERROR(a)		ESS_LOG_ERROR(a)
-#endif
-#ifndef EC_LOG_WARNING
-	#define EC_LOG_WARNING(a)	ESS_LOG_WARNING(a)
-#endif
-#ifndef EC_LOG_INFO
-	#define EC_LOG_INFO(a)		ESS_LOG_INFO(a)
-#endif
-#ifndef EC_ASSERT
-	#define EC_ASSERT(a)		
-#endif
 
 #if defined( EXOCORTEX_RLM_ONLY )
 
