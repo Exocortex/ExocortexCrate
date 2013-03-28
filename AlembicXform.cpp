@@ -371,15 +371,15 @@ MStatus AlembicXformNode::compute(const MPlug & plug, MDataBlock & dataBlock)
   Abc::M44d matrix;
   if (sampleInfo.alpha == 0.0f)
   {
-	matrix = matrixAtIPlus1;
+	matrix = matrixAtI;
   }
   else if(sampleInfo.alpha == 1.0f )
   {
-    matrix = matrixAtI;
+    matrix = matrixAtIPlus1;
   }
   else
   {
-    matrix = matrixAtIPlus1 + sampleInfo.alpha * (matrixAtI - matrixAtIPlus1);		// saving one multiplication
+    matrix = matrixAtI + sampleInfo.alpha * (matrixAtIPlus1 - matrixAtI);		// saving one multiplication
   }
 
 	// export visibility before comparing current and hold matrix!
