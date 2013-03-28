@@ -779,6 +779,11 @@ void AlembicParticles::FillParticleShapeNodes(AbcG::IPoints &iPoints, const Samp
 
 		for (int i = 0; i < m_InstanceShapeINodes.size(); i += 1)
 		{
+           if( i == m_InstanceShapeINodes.size()-1){
+               int n=0;
+               n++;
+           }
+
 			const std::string& path = m_InstanceShapeNames->get()[i];
             m_InstanceShapeINodes[i] = nodeMap[path];
 
@@ -946,6 +951,8 @@ Mesh* AlembicParticles::GetRenderMesh(TimeValue t, INode *inode, View &view, BOO
 
 	for(int i=0; i<NumberOfRenderMeshes(); i++)
 	{
+
+
 		BOOL curNeedDelete = FALSE;
 		Mesh* pMesh = GetMultipleRenderMesh_Internal(t, inode, nullView, curNeedDelete, i);
 
@@ -1019,6 +1026,13 @@ Mesh* AlembicParticles::GetRenderMesh(TimeValue t, INode *inode, View &view, BOO
     int normIndex=0;
 	for(int i=0; i<NumberOfRenderMeshes(); i++)
 	{
+                //ESS_LOG_WARNING("processing particle mesh "<<i);
+
+                //if(i == 628 || i == 629){
+                //  int n=0;
+                //  n++;
+                //}
+
 		BOOL curNeedDelete = FALSE;
 		Mesh* pMesh = GetMultipleRenderMesh_Internal(t, inode, nullView, curNeedDelete, i);
 
@@ -1100,13 +1114,13 @@ Mesh* AlembicParticles::GetRenderMesh(TimeValue t, INode *inode, View &view, BOO
 			   //int n = pMesh->getNumVerts()
                ESS_PROFILE_SCOPE("GetRenderMesh - Build and set normals - compute from smoothing groups");
 
-			   SmoothGroupNormals sgNormals;
-			   sgNormals.BuildMeshSmoothingGroupNormals(*pMesh);
-			   for(int j=0, curIndex=faceOffset; j<curNumFaces; j++, curIndex++){
-				   for(int f=0; f<3; f++){
-					   pRenderMeshNormalSpec->SetNormal(curIndex, f, sgNormals.GetVertexNormal(pMesh, j, f) * meshTM_I_T);
-				   }
-			   }
+			   //SmoothGroupNormals sgNormals;
+			   //sgNormals.BuildMeshSmoothingGroupNormals(*pMesh);
+			   //for(int j=0, curIndex=faceOffset; j<curNumFaces; j++, curIndex++){
+				  // for(int f=0; f<3; f++){
+					 //  pRenderMeshNormalSpec->SetNormal(curIndex, f, sgNormals.GetVertexNormal(pMesh, j, f) * meshTM_I_T);
+				  // }
+			   //}
 
 			   //ESS_LOG_WARNING("Particle mesh has invalid normals.");
 			   //for(int j=0, curIndex=faceOffset; j<curNumFaces; j++, curIndex++){
@@ -1643,7 +1657,7 @@ Mesh *AlembicParticles::BuildSphereMesh(int meshNumber, TimeValue t, INode *node
     }
 
     pMesh = m_pSphereMaker->GetRenderMesh(t, node, view, needDelete);
-	//pMesh->buildNormals();
+	pMesh->buildNormals();
     return pMesh;
 }
 

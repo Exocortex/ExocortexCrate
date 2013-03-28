@@ -343,8 +343,11 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
 
 			bool normalsFloor = getIndexAndValues( meshFaceIndices, meshNormalsParam, sampleInfo.floorIndex,
 					   normalValuesFloor, normalIndicesFloor );
-			bool normalsCeil = getIndexAndValues( meshFaceIndices, meshNormalsParam, sampleInfo.ceilIndex,
+			bool normalsCeil = false;
+            if(!hasDynamicTopo){
+               normalsCeil = getIndexAndValues( meshFaceIndices, meshNormalsParam, sampleInfo.ceilIndex,
 					   normalValuesCeil, normalIndicesCeil );
+            }
 
 			if( ! normalsFloor ) {
 			   ESS_LOG_ERROR( "Mesh normals are not set because they are not valid." );
@@ -462,10 +465,13 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
 
 			bool uvFloor = getIndexAndValues( meshFaceIndices, meshUvParam, sampleInfo.floorIndex,
 					   uvValuesFloor, uvIndicesFloor );
-			bool uvCeil = getIndexAndValues( meshFaceIndices, meshUvParam, sampleInfo.ceilIndex,
+			bool uvCeil = false;
+            if(!hasDynamicTopo){
+               uvCeil = getIndexAndValues( meshFaceIndices, meshUvParam, sampleInfo.ceilIndex,
 					   uvValuesCeil, uvIndicesCeil );
+            }
 
-            if( !uvFloor || !uvCeil || uvValuesFloor.size() == 0) {
+            if( !uvFloor || uvValuesFloor.size() == 0) {
 			   ESS_LOG_WARNING( "Mesh UVs are in an invalid state in Alembic file, ignoring." );
 		   }
 		   else{
@@ -487,7 +493,7 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
 
 				   // set values
 				   Point3* mapV = map->v;
-				   if (sampleInfo.alpha != 0.0f && uvValuesFloor.size() == uvValuesCeil.size())
+				   if (sampleInfo.alpha != 0.0f && uvCeil && uvValuesFloor.size() == uvValuesCeil.size())
 				   {
 						for (int i = 0; i < uvValuesFloor.size(); i ++ )
 					   {
