@@ -25,6 +25,32 @@ MStatus AlembicXform::Save(double time)
    // save the metadata
    SaveMetaData(this);
 
+	// iterate all dagpaths 
+	MDagPath path;
+	{  
+		ESS_PROFILE_SCOPE("AlembicXform::Save dagNode");
+		MFnDagNode dagNode(GetRef());
+		MDagPathArray dagPaths;
+		dagNode.getAllPaths(dagPaths);
+		path = dagPaths[0];
+	}
+
+	// visibility
+	{
+		MStatus stat;
+		MObject mObj = path.node(&stat);
+		if (stat == MS::kSuccess)
+		{
+			MFnDependencyNode dep(mObj, &stat);
+			if (stat == MS::kSuccess)
+			{
+				MPlug vis = dep.findPlug("visibility", true, &stat);
+				if (stat == MS::kSuccess)
+					mOVisibility.set(vis.asBool() ? AbcG::kVisibilityVisible : AbcG::kVisibilityHidden);
+			}
+		}
+	}
+
    // check if we have the global cache option
    if(GetJob()->GetOption(L"exportInGlobalSpace").asInt() > 0)
    {
@@ -40,32 +66,6 @@ MStatus AlembicXform::Save(double time)
    {
       MMatrix matrix;
       matrix.setToIdentity();
-
-      // iterate all dagpaths 
-      MDagPath path;
-      {  
-        ESS_PROFILE_SCOPE("AlembicXform::Save dagNode");
-        MFnDagNode dagNode(GetRef());
-        MDagPathArray dagPaths;
-        dagNode.getAllPaths(dagPaths);
-        path = dagPaths[0];
-      }
-
-		// visibility
-		{
-			MStatus stat;
-			MObject mObj = path.node(&stat);
-			if (stat == MS::kSuccess)
-			{
-				MFnDependencyNode dep(mObj, &stat);
-				if (stat == MS::kSuccess)
-				{
-					MPlug vis = dep.findPlug("visibility", true, &stat);
-					if (stat == MS::kSuccess)
-						mOVisibility.set(vis.asBool() ? AbcG::kVisibilityVisible : AbcG::kVisibilityHidden);
-				}
-			}
-		}
 
 	  Abc::M44d abcMatrix;
 
