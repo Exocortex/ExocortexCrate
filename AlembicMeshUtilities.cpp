@@ -598,8 +598,10 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
                    faceSet = objMesh.getSchema().getFaceSet(faceSetNames[j]).getSchema();
                else
                    faceSet = objSubD.getSchema().getFaceSet(faceSetNames[j]).getSchema();
+
+               //ESS_LOG_WARNING("Reading faceset "<<sampleInfo.floorIndex);
  
-               AbcG::IFaceSetSchema::Sample faceSetSample = faceSet.getValue();
+               AbcG::IFaceSetSchema::Sample faceSetSample = faceSet.getValue(sampleInfo.floorIndex);
                Abc::Int32ArraySamplePtr faces = faceSetSample.getFaces();
 
                int nMatId = (int)j;
