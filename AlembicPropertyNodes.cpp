@@ -139,6 +139,57 @@ template<class PROP, class SAMPLER, class TYPE> writeArrayRes::enumT writeArray3
    return writeArrayRes::TYPE_MISMATCH;
 }
 
+template<class PROP, class SAMPLER, class TYPE> writeArrayRes::enumT writeArray4f(SampleInfo& sampleInfo, Abc::ICompoundProperty& arbGeomParams, AbcA::PropertyHeader& propHeader, CDataArray2DVector4f& outData)
+{
+   if(PROP::matches(propHeader)){
+      CDataArray2DVector4f::Accessor acc;
+      PROP propArray(arbGeomParams, propHeader.getName());
+
+
+      if(!propArray.valid())
+      {
+         acc = outData.Resize(0,0);
+         return writeArrayRes::INVALID_ALEMBIC_PARAM;
+      }
+      if(propArray.getNumSamples() == 0)
+      {
+         acc = outData.Resize(0,0);
+         return writeArrayRes::NO_ALEMBIC_SAMPLES;
+      }
+
+      SAMPLER propPtr1 = propArray.getValue(sampleInfo.floorIndex);
+
+      if(propPtr1 == NULL || propPtr1->size() == 0){
+         acc = outData.Resize(0,0);
+         return writeArrayRes::EMPTY;
+      }
+
+      SAMPLER propPtr2 = propArray.getValue(sampleInfo.ceilIndex);
+
+      acc = outData.Resize(0, (ULONG)propPtr1->size());
+
+      const float t = (float)sampleInfo.alpha;
+
+      if(sampleInfo.alpha != 0.0 && propPtr1->size() == propPtr2->size()){
+         for(ULONG i=0; i<acc.GetCount(); i++){
+            TYPE c1 = propPtr1->get()[i];
+            TYPE c2 = propPtr2->get()[i];
+            TYPE c = c2 + (1.0f - t)*c1;
+            acc[i].Set(c.r , c.g, c.b, c.a);
+         }
+      }
+      else{
+         for(ULONG i=0; i<acc.GetCount(); i++){
+            TYPE c = propPtr1->get()[i];
+            acc[i].Set(c.r, c.g, c.b, c.a);
+         }
+      }
+
+      return writeArrayRes::SUCCESS;
+   }
+
+   return writeArrayRes::TYPE_MISMATCH;
+}
 
 template<class PROP, class SAMPLER, class TYPE>  writeArrayRes::enumT writeArray1f(SampleInfo& sampleInfo, Abc::ICompoundProperty& arbGeomParams, AbcA::PropertyHeader& propHeader, CDataArray2DFloat& outData)
 {
@@ -370,6 +421,84 @@ XSI::CStatus Register_alembic_vec3f_array( XSI::PluginRegistrar& in_reg )
 {
    return defineNode(in_reg, siICENodeDataVector3, siICENodeStructureArray, L"alembic_vec3f_array");
 }
+
+
+
+
+XSIPLUGINCALLBACK CStatus alembic_vec4f_array_Evaluate(ICENodeContext& in_ctxt)
+{
+	//Application().LogMessage( "alembic_polyMesh2_Evaluate" );
+	// The current output port being evaluated...
+	ULONG out_portID = in_ctxt.GetEvaluatedOutputPortID( );
+
+	CString path, identifier, aproperty;
+	double time;
+    getParams(in_ctxt, path, identifier, aproperty, time);
+
+    addArchiveRef(in_ctxt, path);
+
+	AbcG::IObject iObj = getObjectFromArchive(path,identifier);
+    if(!iObj.valid()){
+        ESS_LOG_ERROR("vec4f_array node error: Could not find "<<identifier.GetAsciiString());
+		return CStatus::OK;//return error instead (so that node shows up as red)?
+    }  
+
+	AbcA::TimeSamplingPtr timeSampling;
+	int nSamples;
+    Abc::ICompoundProperty arbGeomParams = getArbGeomParams(iObj, timeSampling, nSamples);
+
+	SampleInfo sampleInfo = getSampleInfo( time, timeSampling, nSamples );
+
+    AbcA::PropertyHeader propHeader;
+
+    if(!findProperty(arbGeomParams, propHeader, aproperty)){ 
+       ESS_LOG_ERROR("vec4f_array node error: Could not find "<<aproperty.GetAsciiString());
+       return CStatus::OK;
+    }
+
+	switch( out_portID )
+	{
+    case ID_OUT_valid:
+       {
+            //CDataArrayBool outData( in_ctxt );
+            //outData.Resize(1);
+            //outData.Set( 0, true );
+       }
+       break;
+	case ID_OUT_data:
+		{
+			CDataArray2DVector4f outData( in_ctxt );
+
+
+
+            writeArrayRes::enumT res = writeArray4f<Abc::IC4fArrayProperty, Abc::C4fArraySamplePtr, Abc::C4f>(sampleInfo, arbGeomParams, propHeader, outData);
+            if(res == writeArrayRes::TYPE_MISMATCH){
+               res = writeArray4f<Abc::IC4hArrayProperty, Abc::C4hArraySamplePtr, Abc::C4h>(sampleInfo, arbGeomParams, propHeader, outData);
+            }
+            if(res == writeArrayRes::TYPE_MISMATCH){
+               ESS_LOG_ERROR("vec4f_array node error: type mismatch "<<aproperty.GetAsciiString());
+            }
+
+		}
+		break;
+
+	}
+
+	return CStatus::OK;
+}
+
+XSIPLUGINCALLBACK CStatus alembic_vec4f_array_Term(CRef& in_ctxt)
+{
+    Context ctxt( in_ctxt );
+	delArchiveRef(ctxt);
+	return CStatus::OK;
+}
+
+XSI::CStatus Register_alembic_vec4f_array( XSI::PluginRegistrar& in_reg )
+{
+   return defineNode(in_reg, siICENodeDataVector4, siICENodeStructureArray, L"alembic_vec4f_array");
+}
+
 
 
 
