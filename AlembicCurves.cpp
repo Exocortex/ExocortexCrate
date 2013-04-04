@@ -23,7 +23,8 @@ AlembicCurves::AlembicCurves(SceneNodePtr eNode, AlembicWriteJob * in_Job, Abc::
    mVertexIndexProperty = Abc::OInt32ArrayProperty(mCurvesSchema.getArbGeomParams(), ".vertex_index", mCurvesSchema.getMetaData(), GetJob()->GetAnimatedTs() );
 
    Primitive prim(GetRef(REF_PRIMITIVE));
-   customAttributes.defineCustomAttributes(prim.GetGeometry(), mCurvesSchema.getArbGeomParams(), mCurvesSchema.getMetaData(), GetJob()->GetAnimatedTs());
+   Abc::OCompoundProperty argGeomParamsProp = mCurvesSchema.getArbGeomParams();
+   customAttributes.defineCustomAttributes(prim.GetGeometry(), argGeomParamsProp, mCurvesSchema.getMetaData(), GetJob()->GetAnimatedTs());
 }
 
 AlembicCurves::~AlembicCurves()

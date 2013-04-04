@@ -29,7 +29,8 @@ AlembicPoints::AlembicPoints(SceneNodePtr eNode, AlembicWriteJob * in_Job, Abc::
    mColorProperty = Abc::OC4fArrayProperty(argGeomParams, ".color", mPointsSchema.getMetaData(), GetJob()->GetAnimatedTs() );
 
    Primitive prim(GetRef(REF_PRIMITIVE));
-   customAttributes.defineCustomAttributes(prim.GetGeometry(), mPointsSchema.getArbGeomParams(), mPointsSchema.getMetaData(), GetJob()->GetAnimatedTs());
+   Abc::OCompoundProperty argGeomParamsProp = mPointsSchema.getArbGeomParams();
+   customAttributes.defineCustomAttributes(prim.GetGeometry(), argGeomParamsProp, mPointsSchema.getMetaData(), GetJob()->GetAnimatedTs());
 }
 
 AlembicPoints::~AlembicPoints()

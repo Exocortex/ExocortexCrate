@@ -17,7 +17,8 @@ AlembicSubD::AlembicSubD(SceneNodePtr eNode, AlembicWriteJob * in_Job, Abc::OObj
    mOVisibility = CreateVisibilityProperty(subD,GetJob()->GetAnimatedTs());
 
    Primitive prim(GetRef(REF_PRIMITIVE));
-   customAttributes.defineCustomAttributes(prim.GetGeometry(), mSubDSchema.getArbGeomParams(), mSubDSchema.getMetaData(), GetJob()->GetAnimatedTs());
+   Abc::OCompoundProperty argGeomParamsProp = mSubDSchema.getArbGeomParams();
+   customAttributes.defineCustomAttributes(prim.GetGeometry(), argGeomParamsProp, mSubDSchema.getMetaData(), GetJob()->GetAnimatedTs());
 }
 
 AlembicSubD::~AlembicSubD()
