@@ -302,7 +302,19 @@ void AlembicVisibilityController::EndEditParams( IObjParam *ip, ULONG flags, Ani
     editMod  = NULL;
 }
 
-
+AbcG::IVisibilityProperty getAbcVisibilityProperty(Abc::IObject shapeObj)
+{
+    Abc::IObject parent = shapeObj.getParent();
+    if(parent.valid()){
+        //ESS_LOG_WARNING("loading vis from xform");
+	    AbcG::IVisibilityProperty visProp = AbcG::GetVisibilityProperty(parent);
+        if(visProp.valid()){
+           return visProp;
+        }
+    }
+    //ESS_LOG_WARNING("loading vis from shape");
+	return AbcG::GetVisibilityProperty(shapeObj);
+}
 
 void AlembicImport_FillInVis_Internal(alembic_fillvis_options &options);
 
@@ -321,8 +333,7 @@ void AlembicImport_FillInVis_Internal(alembic_fillvis_options &options)
         return;
     }
 
-    AbcG::IVisibilityProperty visibilityProperty = 
-        AbcG::GetVisibilityProperty(*options.pIObj);
+    AbcG::IVisibilityProperty visibilityProperty = getAbcVisibilityProperty(*options.pIObj);
     
     if(!visibilityProperty.valid())
     {
@@ -368,7 +379,7 @@ void AlembicImport_SetupVisControl( std::string const& file, std::string const& 
     if (!pNode)
         return;
 
-	AbcG::IVisibilityProperty visibilityProperty = AbcG::GetVisibilityProperty(obj);
+    AbcG::IVisibilityProperty visibilityProperty = getAbcVisibilityProperty(obj);
 
 	bool isConstant = true;
 	if( visibilityProperty.valid() ) {

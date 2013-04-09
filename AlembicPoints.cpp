@@ -28,7 +28,7 @@ AlembicPoints::AlembicPoints(const SceneEntry &in_Ref, AlembicWriteJob *in_Job)
     AbcG::OPoints points(xform, pointsName.c_str(), GetCurrentJob()->GetAnimatedTs());
 
     // create the generic properties
-    mOVisibility = CreateVisibilityProperty(points, GetCurrentJob()->GetAnimatedTs());
+    mOVisibility = CreateVisibilityProperty(xform, GetCurrentJob()->GetAnimatedTs());
 
     mXformSchema = xform.getSchema();
     mPointsSchema = points.getSchema();

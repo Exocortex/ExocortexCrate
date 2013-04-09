@@ -17,7 +17,7 @@ AlembicCamera::AlembicCamera(const SceneEntry &in_Ref, AlembicWriteJob *in_Job)
     AbcG::OCamera camera(xform, cameraName.c_str(), GetCurrentJob()->GetAnimatedTs());
 
     // create the generic properties
-    mOVisibility = CreateVisibilityProperty(camera,GetCurrentJob()->GetAnimatedTs());
+    mOVisibility = CreateVisibilityProperty(xform,GetCurrentJob()->GetAnimatedTs());
 
     mXformSchema = xform.getSchema();
     mCameraSchema = camera.getSchema();

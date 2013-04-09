@@ -36,7 +36,7 @@ AlembicPolyMesh::AlembicPolyMesh(const SceneEntry &in_Ref, AlembicWriteJob *in_J
     // AddRef(prim.GetParent3DObject().GetKinematics().GetGlobal().GetRef());
 
     // create the generic properties
-    mOVisibility = CreateVisibilityProperty(mesh,GetCurrentJob()->GetAnimatedTs());
+    mOVisibility = CreateVisibilityProperty(xform,GetCurrentJob()->GetAnimatedTs());
 
     mXformSchema = xform.getSchema();
     mMeshSchema = mesh.getSchema();

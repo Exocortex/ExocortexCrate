@@ -25,7 +25,7 @@ AlembicCurves::AlembicCurves(const SceneEntry &in_Ref, AlembicWriteJob * in_Job)
    AbcG::OCurves curves(xform,curveName,GetCurrentJob()->GetAnimatedTs());
 
    // create the generic properties
-   mOVisibility = CreateVisibilityProperty(curves,GetCurrentJob()->GetAnimatedTs());
+   mOVisibility = CreateVisibilityProperty(xform,GetCurrentJob()->GetAnimatedTs());
 
    mXformSchema = xform.getSchema();
    mCurvesSchema = curves.getSchema();
