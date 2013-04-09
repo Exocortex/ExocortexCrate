@@ -8,6 +8,7 @@
 #include "resource.h"
 #include "AlembicMAXScript.h"
 #include "paramtype.h"
+#include "CommonUtilities.h"
 
 // This function returns a pointer to a class descriptor for our Utility
 // This is the function that informs max that our plug-in exists and is 
@@ -300,20 +301,6 @@ void AlembicVisibilityController::EndEditParams( IObjParam *ip, ULONG flags, Ani
 
 	this->ip = NULL;
     editMod  = NULL;
-}
-
-AbcG::IVisibilityProperty getAbcVisibilityProperty(Abc::IObject shapeObj)
-{
-    Abc::IObject parent = shapeObj.getParent();
-    if(parent.valid()){
-        //ESS_LOG_WARNING("loading vis from xform");
-	    AbcG::IVisibilityProperty visProp = AbcG::GetVisibilityProperty(parent);
-        if(visProp.valid()){
-           return visProp;
-        }
-    }
-    //ESS_LOG_WARNING("loading vis from shape");
-	return AbcG::GetVisibilityProperty(shapeObj);
 }
 
 void AlembicImport_FillInVis_Internal(alembic_fillvis_options &options);
