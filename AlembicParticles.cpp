@@ -779,11 +779,6 @@ void AlembicParticles::FillParticleShapeNodes(AbcG::IPoints &iPoints, const Samp
 
 		for (int i = 0; i < m_InstanceShapeINodes.size(); i += 1)
 		{
-           if( i == m_InstanceShapeINodes.size()-1){
-               int n=0;
-               n++;
-           }
-
 			const std::string& path = m_InstanceShapeNames->get()[i];
             m_InstanceShapeINodes[i] = nodeMap[path];
 
@@ -1114,13 +1109,13 @@ Mesh* AlembicParticles::GetRenderMesh(TimeValue t, INode *inode, View &view, BOO
 			   //int n = pMesh->getNumVerts()
                ESS_PROFILE_SCOPE("GetRenderMesh - Build and set normals - compute from smoothing groups");
 
-			   //SmoothGroupNormals sgNormals;
-			   //sgNormals.BuildMeshSmoothingGroupNormals(*pMesh);
-			   //for(int j=0, curIndex=faceOffset; j<curNumFaces; j++, curIndex++){
-				  // for(int f=0; f<3; f++){
-					 //  pRenderMeshNormalSpec->SetNormal(curIndex, f, sgNormals.GetVertexNormal(pMesh, j, f) * meshTM_I_T);
-				  // }
-			   //}
+			   SmoothGroupNormals sgNormals;
+			   sgNormals.BuildMeshSmoothingGroupNormals(*pMesh);
+			   for(int j=0, curIndex=faceOffset; j<curNumFaces; j++, curIndex++){
+				   for(int f=0; f<3; f++){
+					   pRenderMeshNormalSpec->SetNormal(curIndex, f, sgNormals.GetVertexNormal(pMesh, j, f) * meshTM_I_T);
+				   }
+			   }
 
 			   //ESS_LOG_WARNING("Particle mesh has invalid normals.");
 			   //for(int j=0, curIndex=faceOffset; j<curNumFaces; j++, curIndex++){
@@ -1632,7 +1627,7 @@ Mesh *AlembicParticles::BuildBoxMesh(int meshNumber, TimeValue t, INode *node, V
     }
 
     pMesh = m_pBoxMaker->GetRenderMesh(t, node, view, needDelete);
-	//pMesh->buildNormals();
+	pMesh->buildNormals();
     return pMesh;
 }
 
@@ -1684,7 +1679,7 @@ Mesh *AlembicParticles::BuildCylinderMesh(int meshNumber, TimeValue t, INode *no
    }
 
    pMesh = m_pCylinderMaker->GetRenderMesh(t, node, view, needDelete);
-   //pMesh->buildNormals();
+   pMesh->buildNormals();
    return pMesh;
 }
 
@@ -1719,7 +1714,7 @@ Mesh *AlembicParticles::BuildDiscMesh(int meshNumber, TimeValue t, INode *node, 
    }
 
    pMesh = m_pDiskMaker->GetRenderMesh(t, node, view, needDelete);
-   //pMesh->buildNormals();
+   pMesh->buildNormals();
    return pMesh;
 }
  
@@ -1742,7 +1737,7 @@ Mesh *AlembicParticles::BuildRectangleMesh(int meshNumber, TimeValue t, INode *n
    }
 
    pMesh = m_pRectangleMaker->GetRenderMesh(t, node, view, needDelete);
-   //pMesh->buildNormals();
+   pMesh->buildNormals();
    return pMesh;
 }
 
