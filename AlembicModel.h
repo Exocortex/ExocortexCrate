@@ -9,6 +9,7 @@ private:
   AbcG::OXformSchema mXformSchema;
   AbcG::XformSample mXformSample;
   AbcG::OUcharProperty mXformXSINodeType;
+  AbcG::OVisibilityProperty mOVisibility;
 public:
 
    AlembicModel(SceneNodePtr eNode, AlembicWriteJob * in_Job, Abc::OObject oParent);

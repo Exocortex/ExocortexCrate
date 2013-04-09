@@ -8,19 +8,13 @@ using namespace MATH;
 AlembicCamera::AlembicCamera(SceneNodePtr eNode, AlembicWriteJob * in_Job, Abc::OObject oParent)
 : AlembicObject(eNode, in_Job, oParent)
 {
-  AbcG::OCamera camera(GetMyParent(), eNode->name, GetJob()->GetAnimatedTs());
-
-   // create the generic properties
-   mOVisibility = CreateVisibilityProperty(camera,GetJob()->GetAnimatedTs());
+   AbcG::OCamera camera(GetMyParent(), eNode->name, GetJob()->GetAnimatedTs());
 
    mCameraSchema = camera.getSchema();
 }
 
 AlembicCamera::~AlembicCamera()
 {
-   // we have to clear this prior to destruction
-   // this is a workaround for issue-171
-   mOVisibility.reset();
 }
 
 Abc::OCompoundProperty AlembicCamera::GetCompound()
@@ -32,15 +26,6 @@ XSI::CStatus AlembicCamera::Save(double time)
 {
    // access the camera
    Primitive prim(GetRef(REF_PRIMITIVE));
-
-   // set the visibility
-   Property visProp;
-   prim.GetParent3DObject().GetPropertyFromName(L"Visibility",visProp);
-   if(isRefAnimated(visProp.GetRef()) || mNumSamples == 0)
-   {
-      bool visibility = visProp.GetParameterValue(L"rendvis",time);
-      mOVisibility.set(visibility ?AbcG::kVisibilityVisible :AbcG::kVisibilityHidden);
-   }
 
    // store the metadata
    SaveMetaData(GetRef(REF_NODE),this);

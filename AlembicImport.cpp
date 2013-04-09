@@ -372,8 +372,7 @@ CStatus alembic_create_item_Invoke
             return CStatus::InvalidArgument;
          }
          abcObject = pObjectCache->obj;
-         AbcG::IVisibilityProperty visibilityProperty = 
-            AbcG::GetVisibilityProperty(abcObject);
+         AbcG::IVisibilityProperty visibilityProperty = getAbcVisibilityProperty(abcObject);
          if(!visibilityProperty.valid())
          {
             return CStatus::InvalidArgument;
@@ -425,8 +424,7 @@ CStatus alembic_create_item_Invoke
             if(!importVis)
             {
                // this means skip the creation of the operator
-               AbcG::IVisibilityProperty visibilityProperty = 
-                  AbcG::GetVisibilityProperty(abcObject);
+               AbcG::IVisibilityProperty visibilityProperty = getAbcVisibilityProperty(abcObject);
                if(visibilityProperty.valid())
                {
                   int rawVisibilityValue = visibilityProperty.getValue ( size_t(0) );

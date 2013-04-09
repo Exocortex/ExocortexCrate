@@ -13,9 +13,6 @@ AlembicSubD::AlembicSubD(SceneNodePtr eNode, AlembicWriteJob * in_Job, Abc::OObj
 
    mSubDSchema = subD.getSchema();
 
-   // create the generic properties
-   mOVisibility = CreateVisibilityProperty(subD,GetJob()->GetAnimatedTs());
-
    Primitive prim(GetRef(REF_PRIMITIVE));
    Abc::OCompoundProperty argGeomParamsProp = mSubDSchema.getArbGeomParams();
    customAttributes.defineCustomAttributes(prim.GetGeometry(), argGeomParamsProp, mSubDSchema.getMetaData(), GetJob()->GetAnimatedTs());
@@ -23,9 +20,6 @@ AlembicSubD::AlembicSubD(SceneNodePtr eNode, AlembicWriteJob * in_Job, Abc::OObj
 
 AlembicSubD::~AlembicSubD()
 {
-   // we have to clear this prior to destruction
-   // this is a workaround for issue-171
-   mOVisibility.reset();
 }
 
 Abc::OCompoundProperty AlembicSubD::GetCompound()
@@ -48,15 +42,6 @@ XSI::CStatus AlembicSubD::Save(double time)
 
    // store the metadata
    SaveMetaData(GetRef(REF_NODE),this);
-
-   // set the visibility
-   Property visProp;
-   prim.GetParent3DObject().GetPropertyFromName(L"Visibility",visProp);
-   if(isRefAnimated(visProp.GetRef()) || mNumSamples == 0)
-   {
-      bool visibility = visProp.GetParameterValue(L"rendvis",time);
-      mOVisibility.set(visibility ?AbcG::kVisibilityVisible :AbcG::kVisibilityHidden);
-   }
 
    // check if the mesh is animated
    if(mNumSamples > 0) {

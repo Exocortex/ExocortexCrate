@@ -15,9 +15,6 @@ AlembicPolyMesh::AlembicPolyMesh(SceneNodePtr eNode, AlembicWriteJob * in_Job, A
    AbcG::OPolyMesh mesh(GetMyParent(), eNode->name, GetJob()->GetAnimatedTs());
    mMeshSchema = mesh.getSchema();
 
-   // create the generic properties
-   mOVisibility = CreateVisibilityProperty(mesh, GetJob()->GetAnimatedTs());
-
    Primitive prim(GetRef(REF_PRIMITIVE));
    Abc::OCompoundProperty argGeomParamsProp = mMeshSchema.getArbGeomParams();
    customAttributes.defineCustomAttributes(prim.GetGeometry(), argGeomParamsProp, mMeshSchema.getMetaData(), GetJob()->GetAnimatedTs());
@@ -27,9 +24,6 @@ AlembicPolyMesh::AlembicPolyMesh(SceneNodePtr eNode, AlembicWriteJob * in_Job, A
 
 AlembicPolyMesh::~AlembicPolyMesh()
 {
-   // we have to clear this prior to destruction
-   // this is a workaround for issue-171
-   mOVisibility.reset();
 }
 
 Abc::OCompoundProperty AlembicPolyMesh::GetCompound()
@@ -54,15 +48,6 @@ XSI::CStatus AlembicPolyMesh::Save(double time)
 
    // store the metadata
    SaveMetaData(GetRef(REF_NODE),this);
-
-   // set the visibility
-   Property visProp;
-   prim.GetParent3DObject().GetPropertyFromName(L"Visibility",visProp);
-   if(isRefAnimated(visProp.GetRef()) || mNumSamples == 0)
-   {
-      bool visibility = visProp.GetParameterValue(L"rendvis",time);
-      mOVisibility.set(visibility ?AbcG::kVisibilityVisible :AbcG::kVisibilityHidden);
-   }
 
    // check if the mesh is animated
    //if(mNumSamples > 0) {
@@ -635,7 +620,7 @@ ESS_CALLBACK_START( alembic_normals_Update, CRef& )
          }
 
          // blend
-         if(sampleInfo.alpha != 0.0)
+         if(sampleInfo.alpha != 0.0 /*&& !isAlembicMeshTopology(&iObj)*/)
          {
             meshNormals = meshNormalsParam.getExpandedValue(sampleInfo.ceilIndex).getVals();
             if(meshNormals->size() == normalValues.GetCount() / 3)

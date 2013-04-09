@@ -12,9 +12,6 @@ AlembicPoints::AlembicPoints(SceneNodePtr eNode, AlembicWriteJob * in_Job, Abc::
 {
   AbcG::OPoints points(GetMyParent(), eNode->name, GetJob()->GetAnimatedTs());
 
-   // create the generic properties
-   mOVisibility = CreateVisibilityProperty(points,GetJob()->GetAnimatedTs());
-
    mPointsSchema = points.getSchema();
 
    Abc::OCompoundProperty argGeomParams = mPointsSchema.getArbGeomParams();
@@ -35,9 +32,6 @@ AlembicPoints::AlembicPoints(SceneNodePtr eNode, AlembicWriteJob * in_Job, Abc::
 
 AlembicPoints::~AlembicPoints()
 {
-   // we have to clear this prior to destruction
-   // this is a workaround for issue-171
-   mOVisibility.reset();
 }
 
 Abc::OCompoundProperty AlembicPoints::GetCompound()
@@ -60,15 +54,6 @@ XSI::CStatus AlembicPoints::Save(double time)
 
    // store the metadata
    SaveMetaData(GetRef(REF_NODE),this);
-
-   // set the visibility
-   Property visProp;
-   prim.GetParent3DObject().GetPropertyFromName(L"Visibility",visProp);
-   if(isRefAnimated(visProp.GetRef()) || mNumSamples == 0)
-   {
-      bool visibility = visProp.GetParameterValue(L"rendvis",time);
-      mOVisibility.set(visibility ?AbcG::kVisibilityVisible :AbcG::kVisibilityHidden);
-   }
 
    // check if the pointcloud is animated
    if(mNumSamples > 0) {

@@ -18,7 +18,6 @@ protected:
    SceneNodePtr mExoSceneNode;
 
    int mNumSamples;
-  AbcG::OVisibilityProperty mOVisibility;
 
   enum refType{
      REF_NODE,

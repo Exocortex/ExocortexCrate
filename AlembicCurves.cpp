@@ -9,10 +9,7 @@ using namespace MATH;
 AlembicCurves::AlembicCurves(SceneNodePtr eNode, AlembicWriteJob * in_Job, Abc::OObject oParent)
 : AlembicObject(eNode, in_Job, oParent)
 {
-	AbcG::OCurves curves(GetMyParent(), eNode->name, GetJob()->GetAnimatedTs());
-
-   // create the generic properties
-   mOVisibility = CreateVisibilityProperty(curves,GetJob()->GetAnimatedTs());
+   AbcG::OCurves curves(GetMyParent(), eNode->name, GetJob()->GetAnimatedTs());
 
    mCurvesSchema = curves.getSchema();
 
@@ -29,9 +26,6 @@ AlembicCurves::AlembicCurves(SceneNodePtr eNode, AlembicWriteJob * in_Job, Abc::
 
 AlembicCurves::~AlembicCurves()
 {
-   // we have to clear this prior to destruction
-   // this is a workaround for issue-171
-   mOVisibility.reset();
 }
 
 Abc::OCompoundProperty AlembicCurves::GetCompound()
@@ -51,15 +45,6 @@ XSI::CStatus AlembicCurves::Save(double time)
       globalXfo = KinematicState(GetRef(REF_GLOBAL_TRANS)).GetTransform(time);
    CTransformation globalRotation;
    globalRotation.SetRotation(globalXfo.GetRotation());
-
-   // set the visibility
-   Property visProp;
-   prim.GetParent3DObject().GetPropertyFromName(L"Visibility",visProp);
-   if(isRefAnimated(visProp.GetRef()) || mNumSamples == 0)
-   {
-      const bool visibility = visProp.GetParameterValue(L"rendvis",time);
-      mOVisibility.set(visibility ?AbcG::kVisibilityVisible :AbcG::kVisibilityHidden);
-   }
 
    // store the metadata
    SaveMetaData(GetRef(REF_NODE),this);

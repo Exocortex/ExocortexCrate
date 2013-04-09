@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "AlembicXform.h"
 #include "CommonProfiler.h"
+#include "CommonUtilities.h"
 
 using namespace XSI;
 using namespace MATH;
@@ -196,8 +197,7 @@ ESS_CALLBACK_START( alembic_visibility_Update, CRef& )
    if(!obj.valid())
       return CStatus::OK;
 
-  AbcG::IVisibilityProperty visibilityProperty = 
-     AbcG::GetVisibilityProperty(obj);
+  AbcG::IVisibilityProperty visibilityProperty = getAbcVisibilityProperty(obj);
    if(!visibilityProperty.valid())
       return CStatus::OK;
 
