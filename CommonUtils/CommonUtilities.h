@@ -389,4 +389,7 @@ Abc::UInt16ArraySamplePtr getCurveOrders(AbcG::ICurves& obj);
 bool validateCurveData( Abc::P3fArraySamplePtr pCurvePos, Abc::Int32ArraySamplePtr pCurveNbVertices, Abc::UInt16ArraySamplePtr pOrders, Abc::FloatArraySamplePtr pKnotVec, AbcG::CurveType type );
 int getCurveOrder(int i, Abc::UInt16ArraySamplePtr pOrders, AbcG::CurveType type);
 
+AbcG::IVisibilityProperty getAbcVisibilityProperty(Abc::IObject shapeObj);
+
+
 #endif // __COMMON_UTILITIES_H

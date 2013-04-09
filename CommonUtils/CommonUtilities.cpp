@@ -939,3 +939,17 @@ int getCurveOrder(int i, Abc::UInt16ArraySamplePtr pOrders, AbcG::CurveType type
    }
    return 4;
 }
+
+AbcG::IVisibilityProperty getAbcVisibilityProperty(Abc::IObject shapeObj)
+{
+    Abc::IObject parent = shapeObj.getParent();
+    if(parent.valid()){
+        //ESS_LOG_WARNING("loading vis from xform");
+	    AbcG::IVisibilityProperty visProp = AbcG::GetVisibilityProperty(parent);
+        if(visProp.valid()){
+           return visProp;
+        }
+    }
+    //ESS_LOG_WARNING("loading vis from shape");
+	return AbcG::GetVisibilityProperty(shapeObj);
+}
