@@ -68,7 +68,8 @@
 #include <maya/MTransformationMatrix.h>
 #include <maya/MVector.h>
 #include <maya/MVectorArray.h>
-
+#include <maya/MRenderUtil.h>
+#include <maya/MCommonRenderSettingsData.h>
 
 #include "Utility.h"
 #include "AlembicArchiveStorage.h"

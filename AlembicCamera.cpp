@@ -3,6 +3,8 @@
 #include "MetaData.h"
 
 
+
+
 AlembicCamera::AlembicCamera(SceneNodePtr eNode, AlembicWriteJob * in_Job, Abc::OObject oParent)
 	: AlembicObject(eNode, in_Job, oParent)
 {
@@ -25,11 +27,52 @@ MStatus AlembicCamera::Save(double time)
    // save the metadata
    SaveMetaData(this);
 
+
+
+   //bake in the device aspect ratio since other programs do not support it (see the article "Maya to Softimage: Camera Interoperability")
+
+   MCommonRenderSettingsData data;
+   MRenderUtil::getCommonRenderSettings(data);
+
+   double dar = (double)data.deviceAspectRatio;
+   double cam = node.aspectRatio();
+   MFnCamera::FilmFit filmFit = node.filmFit();
+
+   if(filmFit == MFnCamera::kFillFilmFit){//Fits the resolution gate within the film gate.
+      if(cam < dar){
+         filmFit = MFnCamera::kHorizontalFilmFit;
+      }
+      else{
+         filmFit = MFnCamera::kVerticalFilmFit;
+      }
+   }
+   else if(filmFit == MFnCamera::kOverscanFilmFit){//Fits the film gate within the resolution gate.
+      if(cam < dar){
+         filmFit = MFnCamera::kVerticalFilmFit;
+      }
+      else{
+         filmFit = MFnCamera::kHorizontalFilmFit;
+      }
+   }
+
+   double fHorizontalAperture = node.horizontalFilmAperture();
+   double fVerticalAperture = node.verticalFilmAperture();
+   
+   if(filmFit == MFnCamera::kVerticalFilmFit){//Fits the resolution gate horizontally within the film gate.
+      const double fFitFactor = (fVerticalAperture * dar)/fHorizontalAperture;
+      fHorizontalAperture *= fFitFactor;
+   }
+   else if(filmFit == MFnCamera::kHorizontalFilmFit){//Fits the resolution gate vertically within the film gate.
+      const double fFitFactor = fHorizontalAperture/(fVerticalAperture * dar);
+      fVerticalAperture *= fFitFactor;
+   }
+
+
    mSample.setFocalLength(node.focalLength());
    mSample.setFocusDistance(node.focusDistance());
    mSample.setLensSqueezeRatio(node.lensSqueezeRatio());
-   mSample.setHorizontalAperture(node.horizontalFilmAperture() * 2.54);
-   mSample.setVerticalAperture(node.verticalFilmAperture() * 2.54);
+   mSample.setHorizontalAperture(fHorizontalAperture * 2.54);
+   mSample.setVerticalAperture(fVerticalAperture * 2.54);
    mSample.setHorizontalFilmOffset(node.horizontalFilmOffset() * 2.54);
    mSample.setVerticalFilmOffset(node.verticalFilmOffset() * 2.54);
    mSample.setNearClippingPlane(node.nearClippingPlane());
