@@ -228,11 +228,15 @@ static bool visitChild(const MObject &mObj, SceneNodeAppPtr &parent, const Alemb
 		break;
 	}
 
+	MFnDagNode dagNode(mObj);
+	const std::string dccId = dagNode.fullPathName().asChar();
+	if (dccId.length() == 0)
+		return true;
+
 	parent->children.push_back(exoChild);
 	exoChild->parent = parent.get();
 
-	MFnDagNode dagNode(mObj);
-	exoChild->dccIdentifier = dagNode.fullPathName().asChar();
+	exoChild->dccIdentifier = dccId;
 	exoChild->name = replacer->replace(dagNode.partialPathName().asChar());
 	for (unsigned int i = 0; i < dagNode.childCount(); ++i)
 		visitChild(dagNode.child(i), exoChild, alembicFileAndTimeControl, replacer);
