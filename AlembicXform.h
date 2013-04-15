@@ -3,13 +3,26 @@
 
 #include "AlembicObject.h"
 
+typedef struct __VisibilityInfo
+{
+	bool valid;
+	AbcG::OVisibilityProperty mOVisibility;
+	MPlug visibilityPlug;
+
+	__VisibilityInfo(void): valid(false) {}
+} VisibilityInfo;
+
 class AlembicXform: public AlembicObject
 {
 private:
    AbcG::OXform mObject;
    AbcG::OXformSchema mSchema;
    AbcG::XformSample mSample;
-   AbcG::OVisibilityProperty mOVisibility;
+   //AbcG::OVisibilityProperty mOVisibility;
+	VisibilityInfo visInfo;
+
+	void testAnimatedVisibility(AlembicObject *aobj, bool animTS, bool flatHierarchy);
+
 public:
 
    AlembicXform(SceneNodePtr eNode, AlembicWriteJob * in_Job, Abc::OObject oParent);

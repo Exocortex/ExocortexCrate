@@ -1,16 +1,54 @@
 #include "stdafx.h"
 #include "AlembicXform.h"
 #include "MetaData.h"
+#include <maya/MAnimUtil.h>
 
+void AlembicXform::testAnimatedVisibility(AlembicObject *aobj, bool animTS, bool flatHierarchy)
+{
+	MStatus stat;
+
+	MFnDagNode dagNode(GetRef());
+	while (true)
+	{
+		MDagPath path;
+		stat = dagNode.getPath(path);
+		if (stat != MS::kSuccess)
+			break;
+
+		MObject mObj = path.node(&stat);
+		if (stat != MS::kSuccess)
+			continue;
+
+		MFnDependencyNode dep(mObj, &stat);
+		if (stat != MS::kSuccess)
+			continue;
+
+		MPlug vis = dep.findPlug("visibility", true, &stat);
+		if (stat != MS::kSuccess)
+			continue;
+
+		if (MAnimUtil::isAnimated(vis))
+		{
+			visInfo.valid = true;
+			visInfo.visibilityPlug = vis;
+			visInfo.mOVisibility = CreateVisibilityProperty(mObject, animTS);
+			break;
+		}
+
+		if (flatHierarchy && dagNode.parentCount() == 0)
+			break;
+		dagNode.setObject(dagNode.parent(0));
+	}
+}
 
 AlembicXform::AlembicXform(SceneNodePtr eNode, AlembicWriteJob * in_Job, Abc::OObject oParent)
-	: AlembicObject(eNode, in_Job, oParent)
+	: AlembicObject(eNode, in_Job, oParent), visInfo()
 {
 	const bool animTS = GetJob()->GetAnimatedTs();
 	mObject = AbcG::OXform(GetMyParent(), eNode->name, animTS);
 	mSchema = mObject.getSchema();
 
-	mOVisibility = CreateVisibilityProperty(mObject, animTS);
+	testAnimatedVisibility(this, animTS, GetJob()->GetOption(L"flattenHierarchy").asInt() > 0);
 }
 
 AlembicXform::~AlembicXform()
@@ -36,7 +74,7 @@ MStatus AlembicXform::Save(double time)
 	}
 
 	// visibility
-	{
+	/*{
 		MStatus stat;
 		MObject mObj = path.node(&stat);
 		if (stat == MS::kSuccess)
@@ -49,7 +87,10 @@ MStatus AlembicXform::Save(double time)
 					mOVisibility.set(vis.asBool() ? AbcG::kVisibilityVisible : AbcG::kVisibilityHidden);
 			}
 		}
-	}
+	}*/
+
+	if (visInfo.valid)
+		visInfo.mOVisibility.set(visInfo.visibilityPlug.asBool() ? AbcG::kVisibilityVisible : AbcG::kVisibilityHidden);
 
    // check if we have the global cache option
    if(GetJob()->GetOption(L"exportInGlobalSpace").asInt() > 0)

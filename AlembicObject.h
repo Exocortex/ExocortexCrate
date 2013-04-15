@@ -29,10 +29,14 @@ public:
    const MObject & GetRef(ULONG index = 0) { return mRefs[index]; }
    ULONG GetRefCount() { return mRefs.length(); }
    void AddRef(const MObject & in_Ref) { mRefs.append(in_Ref); }
+
    Abc::OObject GetMyParent() { return mMyParent; }
    virtual Abc::OObject GetObject() = 0;
    Abc::OObject GetParentObject();
+
    bool IsParentedToRoot() const { return !mParent; }
+   AlembicObjectPtr GetAlembicParentObject(void) { return mParent; }
+
    virtual Abc::OCompoundProperty GetCompound() = 0;
    int GetNumSamples() { return mNumSamples; }
    MString GetUniqueName(const MString & in_Name);
