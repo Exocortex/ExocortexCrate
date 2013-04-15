@@ -29,10 +29,20 @@ void AlembicXform::testAnimatedVisibility(AlembicObject *aobj, bool animTS, bool
 
 		if (MAnimUtil::isAnimated(vis))
 		{
-			visInfo.valid = true;
-			visInfo.visibilityPlug = vis;
-			visInfo.mOVisibility = CreateVisibilityProperty(mObject, animTS);
-			break;
+			if (visInfo.visibility == VISIBLE)
+			{
+				visInfo.visibility = ANIMATED_VISIBLE;
+				visInfo.mOVisibility = CreateVisibilityProperty(mObject, animTS);
+			}
+			visInfo.visibilityPlugs.append(vis);	// just add animated ones!
+		}
+		else if (!vis.asBool())		// if it's never visible!
+		{
+			if (visInfo.visibility == VISIBLE)
+				visInfo.mOVisibility = CreateVisibilityProperty(mObject, animTS);
+			visInfo.visibility = NOT_VISIBLE;
+			visInfo.visibilityPlugs.clear();
+			break;	// break out because no need to analyse this further!
 		}
 
 		if (flatHierarchy && dagNode.parentCount() == 0)
@@ -73,24 +83,29 @@ MStatus AlembicXform::Save(double time)
 		path = dagPaths[0];
 	}
 
-	// visibility
-	/*{
-		MStatus stat;
-		MObject mObj = path.node(&stat);
-		if (stat == MS::kSuccess)
+	switch(visInfo.visibility)
+	{
+	case NOT_VISIBLE:
+		if (mNumSamples == 0)
+			visInfo.mOVisibility.set(AbcG::kVisibilityHidden);
+		break;
+	case ANIMATED_VISIBLE:
 		{
-			MFnDependencyNode dep(mObj, &stat);
-			if (stat == MS::kSuccess)
+			bool isVisible = true;
+			for (int i = 0; i < visInfo.visibilityPlugs.length(); ++i)
 			{
-				MPlug vis = dep.findPlug("visibility", true, &stat);
-				if (stat == MS::kSuccess)
-					mOVisibility.set(vis.asBool() ? AbcG::kVisibilityVisible : AbcG::kVisibilityHidden);
+				if (!visInfo.visibilityPlugs[i].asBool())
+				{
+					isVisible = false;
+					break;
+				}
 			}
+			visInfo.mOVisibility.set(isVisible ? AbcG::kVisibilityVisible : AbcG::kVisibilityHidden);
 		}
-	}*/
-
-	if (visInfo.valid)
-		visInfo.mOVisibility.set(visInfo.visibilityPlug.asBool() ? AbcG::kVisibilityVisible : AbcG::kVisibilityHidden);
+		break;
+	default:
+		break;
+	}
 
    // check if we have the global cache option
    if(GetJob()->GetOption(L"exportInGlobalSpace").asInt() > 0)

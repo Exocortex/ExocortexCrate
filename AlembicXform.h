@@ -3,13 +3,14 @@
 
 #include "AlembicObject.h"
 
+enum VISIBILITY_TYPE { VISIBLE, NOT_VISIBLE, ANIMATED_VISIBLE };
 typedef struct __VisibilityInfo
 {
-	bool valid;
+	VISIBILITY_TYPE visibility;
 	AbcG::OVisibilityProperty mOVisibility;
-	MPlug visibilityPlug;
+	MPlugArray visibilityPlugs;
 
-	__VisibilityInfo(void): valid(false) {}
+	__VisibilityInfo(void): visibility(VISIBLE) {}
 } VisibilityInfo;
 
 class AlembicXform: public AlembicObject
