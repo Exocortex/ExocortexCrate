@@ -1598,17 +1598,21 @@ bool createMergeableNode(SceneNodeXSI* appNode, SceneNodeAlembicPtr fileXformNod
 
       // now let's check if we are looking at a curves node with color and radii
 
-      bool useParticles = true;
+      bool useParticles = false;
       {
          Abc::IFloatArrayProperty propRadius;
-         if( !getArbGeomParamPropertyAlembic( curveIObject, "radius", propRadius ) ) {
-            useParticles = false;
+         if( getArbGeomParamPropertyAlembic( curveIObject, "radius", propRadius ) ) {
+            useParticles = true;
          }
          Abc::IC4fArrayProperty propColor;
-         if( !getArbGeomParamPropertyAlembic( curveIObject, "color", propColor ) ) {
-            useParticles = false;
+         if( getArbGeomParamPropertyAlembic( curveIObject, "color", propColor ) ) {
+            useParticles = true;
          } 
+         if(jobParams.importCurvesAsStrands){
+            useParticles = true;
+         }
       }
+
       /*bool useParticles = curveSchema.getPropertyHeader( ".radius" ) != NULL || curveSchema.getPropertyHeader( ".color" ) != NULL;
       if(useParticles)
       {
@@ -2029,6 +2033,7 @@ ESS_CALLBACK_START(alembic_import_jobs_Execute, CRef&)
       jobParser.replacer = SearchReplace::createReplacer();
       jobParser.enableImportRootSelection = settings.GetParameterValue(L"enableImportRootSelection");
       jobParser.stripMayaNamespaces = settings.GetParameterValue(L"stripNamespaces");
+      jobParser.importCurvesAsStrands = settings.GetParameterValue(L"importCurvesAsStrands");
       
       int val = settings.GetParameterValue(L"defaultXformNode");
       if( val == 0 ){
@@ -2320,6 +2325,7 @@ ESS_CALLBACK_START(alembic_import_settings_Define, CRef&)
    oCustomProperty.AddParameter(L"failOnUnsupported",CValue::siBool,siPersistable,L"",L"",0,0,1,0,1,oParam);
    oCustomProperty.AddParameter(L"enableImportRootSelection",CValue::siBool,siPersistable,L"",L"",0,0,1,0,0,oParam);
    oCustomProperty.AddParameter(L"stripNamespaces",CValue::siBool,siPersistable,L"",L"",0,0,1,0,0,oParam);
+   oCustomProperty.AddParameter(L"importCurvesAsStrands",CValue::siBool,siPersistable,L"",L"",0,0,1,0,0,oParam);
    oCustomProperty.AddParameter(L"defaultXformNode",CValue::siInt4,siPersistable,L"",L"",0,0,5,0,5,oParam);
 	return CStatus::OK;
 ESS_CALLBACK_END
@@ -2365,10 +2371,13 @@ ESS_CALLBACK_START(alembic_import_settings_DefineLayout, CRef&)
    items[5] = (LONG) 2l;
    oLayout.AddEnumControl(L"sceneMergeMethod", items, L"Scene Merge Method");
 
+   
    oLayout.AddItem(L"skipUnattachedNodes", L"Skip nodes that fail to attach");
    oLayout.AddItem(L"failOnUnsupported",L"Fail upon unsupported alembic types");
    oLayout.AddItem(L"enableImportRootSelection",L"Enable Import Root Selection");
    oLayout.AddItem(L"stripNamespaces",L"Strip Namespaces");
+   oLayout.AddItem(L"importCurvesAsStrands", L"Import Curves as Strands");
+
 
    CValueArray items2(4);
    items[0] = L"Model";
