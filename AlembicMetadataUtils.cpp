@@ -36,7 +36,7 @@ void importMetadata(AbcG::IObject& iObj)
 	const size_t bufSize = dataStr.size() + 500;
 	char* szBuffer = new char[bufSize];	
 	sprintf_s( szBuffer, bufSize, 
-		"include \"Exocortex-Metadata.mcr\" \n"
+		//"include \"Exocortex-Metadata.mcr\" \n"
 		"ImportMetadata $ %s \n",
 		dataStr.c_str()
 	);
