@@ -1168,9 +1168,11 @@ bool createNode(SceneNodeXSI* appNode, SceneNodeAlembicPtr fileNode, const IJobS
 {  
     //the appNode parameter is either the parent if adding a new node to the scene, or the node to replace if doing attach to existing
 
-   XSI::CRef importRootNode;//This is used for building renference paths to particle system instance
-   //TODO: will need to think about how this should work
-
+   XSI::CRef importRootNode;
+   {
+      IJobStringParser& nonConstJobParams = (IJobStringParser&)jobParams;
+      importRootNode.Set(nonConstJobParams.extraParameters["appRootPath"].c_str());
+   }
 
    CString filename = CString(jobParams.filename.c_str());
    const bool& attachToExisting = bAttachToExisting;
@@ -1179,7 +1181,9 @@ bool createNode(SceneNodeXSI* appNode, SceneNodeAlembicPtr fileNode, const IJobS
    //const bool& failOnUnsupported = jobParams.failOnUnsupported;
 
    CRef timeRef;
-   timeRef.Set(L"alembic_timecontrol");
+   CString timeControlPath = importRootNode.GetAsText();
+   timeControlPath += ".alembic_timecontrol";
+   timeRef.Set(timeControlPath);
 
    if(!timeRef.IsValid()){
       ESS_LOG_ERROR("Could not find alembic_timecontrol");
@@ -1307,8 +1311,11 @@ bool createMergeableNode(SceneNodeXSI* appNode, SceneNodeAlembicPtr fileXformNod
 {
    //the appNode parameter is either the parent if adding a new node to the scene, or the node to replace if doing attach to existing
 
-   XSI::CRef importRootNode;//This is used for building renference paths to particle system instance
-   //TODO: will need to think about how this should work
+   XSI::CRef importRootNode;
+   {
+      IJobStringParser& nonConstJobParams = (IJobStringParser&)jobParams;
+      importRootNode.Set(nonConstJobParams.extraParameters["appRootPath"].c_str());
+   }
 
 
    const CString filename(jobParams.filename.c_str());
@@ -1316,9 +1323,12 @@ bool createMergeableNode(SceneNodeXSI* appNode, SceneNodeAlembicPtr fileXformNod
    const bool& importStandins = jobParams.importStandinProperties;
    const bool& importBboxes = jobParams.importBoundingBoxes;
    const bool& failOnUnsupported = jobParams.failOnUnsupported;
-  
+
+
    CRef timeRef;
-   timeRef.Set(L"alembic_timecontrol");
+   CString timeControlPath = importRootNode.GetAsText();
+   timeControlPath += ".alembic_timecontrol";
+   timeRef.Set(timeControlPath);
    //CustomProperty timeControl = timeRef;
    
    if(!timeRef.IsValid()){
@@ -1976,13 +1986,6 @@ ESS_CALLBACK_START(alembic_import_jobs_Execute, CRef&)
 	CValueArray args = ctxt.GetAttribute(L"Arguments");
 	
 
-   CRefArray selectedObjects = Application().GetSelection().GetArray();
-   if(selectedObjects.GetCount() > 1)
-   {
-      Application().LogMessage(L"[ExocortexAlembic] Too many objects selected, you can select at most one import root.",siErrorMsg);
-      return CStatus::InvalidArgument;
-   }
-
    IJobStringParser jobParser;
    std::string jobString = args[0].GetAsText().GetAsciiString();
 
@@ -2141,27 +2144,54 @@ ESS_CALLBACK_START(alembic_import_jobs_Execute, CRef&)
    }
 
 
-   // create the timecontrol
-   CustomProperty timeControl;
-   if( jobParser.extraParameters["sceneMergeMethod"] == "attach" )//if(jobParser.attachToExisting)
-   {
-      CRef timeRef;
-      timeRef.Set(L"alembic_timecontrol");
-      timeControl = timeRef;
-   }
-   CValueArray setExprArgs(2);
-   CValue setExprReturn;
-   if(!timeControl.IsValid())
-   {
-      timeControl = Application().GetActiveSceneRoot().AddProperty(L"alembic_timecontrol");
 
-      // prepare values for the setexpr command
-      setExprArgs[0] = timeControl.GetFullName()+L".current";
-      setExprArgs[1] = L"T";
-      Application().ExecuteCommand(L"SetExpr",setExprArgs,setExprReturn);
+   CRef importRootNode = Application().GetActiveSceneRoot().GetRef();
+   if(jobParser.enableImportRootSelection)
+   {
+      CRefArray selectedObjects = Application().GetSelection().GetArray();
+      if(selectedObjects.GetCount() > 1)
+      {
+         Application().LogMessage(L"[ExocortexAlembic] Too many objects selected, you can select at most one import root.", siErrorMsg);
+         return CStatus::InvalidArgument;
+      }
+         
+      if(selectedObjects.GetCount() == 1)
+      {
+         importRootNode = selectedObjects[0];
+         //importRootNode = X3DObject( importRootNode ).GetParent3DObject().GetRef();
+         importRootNode = X3DObject( importRootNode ).GetRef();
+         ESS_LOG_WARNING("Attachment root is "<<importRootNode.GetAsText().GetAsciiString());
+      }
    }
-   // now update the args to use the timecontrol instead
-   setExprArgs[1] = timeControl.GetFullName()+L".current * "+timeControl.GetFullName()+L".factor + "+timeControl.GetFullName()+L".offset";
+   jobParser.extraParameters["appRootPath"] = importRootNode.GetAsText().GetAsciiString(); 
+
+
+   {
+      CString rootPath = importRootNode.GetAsText();
+      rootPath += ".alembic_timecontrol";
+
+      //ESS_LOG_WARNING("timeControl: "<<rootPath.GetAsciiString());
+
+      // create the timecontrol
+      CRef timeRef;
+      timeRef.Set(rootPath);
+      CustomProperty timeControl = timeRef;
+      
+      CValueArray setExprArgs(2);
+      CValue setExprReturn;
+      if(!timeControl.IsValid())
+      {
+         X3DObject root(importRootNode);
+         timeControl = root.AddProperty(L"alembic_timecontrol");
+
+         // prepare values for the setexpr command
+         setExprArgs[0] = timeControl.GetFullName()+L".current";
+         setExprArgs[1] = L"T";
+         Application().ExecuteCommand(L"SetExpr",setExprArgs,setExprReturn);
+      }
+      // now update the args to use the timecontrol instead
+      setExprArgs[1] = timeControl.GetFullName()+L".current * "+timeControl.GetFullName()+L".factor + "+timeControl.GetFullName()+L".offset";
+   }
 
    //// store the time control in a value array
    //CValueArray createItemArgs(5);
@@ -2230,16 +2260,6 @@ ESS_CALLBACK_START(alembic_import_jobs_Execute, CRef&)
 
    // clear all alembic user data
    alembic_UD::clearAll();
-
-
-   CRef importRootNode = Application().GetActiveSceneRoot().GetRef();
-   if(jobParser.enableImportRootSelection && selectedObjects.GetCount() == 1)
-   {
-      importRootNode = selectedObjects[0];
-      //importRootNode = X3DObject( importRootNode ).GetParent3DObject().GetRef();
-      importRootNode = X3DObject( importRootNode ).GetRef();
-      ESS_LOG_WARNING("Attachment root is "<<importRootNode.GetAsText().GetAsciiString());
-   }
 
    //return CStatus::Fail;
 

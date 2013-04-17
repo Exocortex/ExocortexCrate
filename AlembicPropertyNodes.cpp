@@ -548,7 +548,7 @@ XSIPLUGINCALLBACK CStatus alembic_float_array_Evaluate(ICENodeContext& in_ctxt)
             writeArrayRes::enumT res = writeArray1f<Abc::IFloatArrayProperty, Abc::FloatArraySamplePtr, float>(sampleInfo, arbGeomParams, propHeader, outData);
             
             if(res == writeArrayRes::TYPE_MISMATCH){
-               ESS_LOG_ERROR("vec3f_array node error: type mismatch "<<aproperty.GetAsciiString());
+               ESS_LOG_ERROR("float_array node error: type mismatch "<<aproperty.GetAsciiString());
             }
 		}
 		break;
@@ -570,6 +570,16 @@ XSI::CStatus Register_alembic_float_array( XSI::PluginRegistrar& in_reg )
    return defineNode(in_reg, siICENodeDataFloat, siICENodeStructureArray, L"alembic_float_array");
 }
 
+
+/*std::stringstream getErrorMessage()
+{
+   std::stringstream ret;
+
+   if(propHeader.
+
+   ret<<"Alembic type information, property type: "<<propHeader.getMetaData());
+   return ret;
+}*/
 
 
 XSIPLUGINCALLBACK CStatus alembic_string_array_Evaluate(ICENodeContext& in_ctxt)
@@ -650,7 +660,7 @@ XSIPLUGINCALLBACK CStatus alembic_string_array_Evaluate(ICENodeContext& in_ctxt)
                
             }
             else{
-               ESS_LOG_ERROR("string node error: type mismatch "<<aproperty.GetAsciiString());
+              // ESS_LOG_ERROR("string node error: type mismatch on "<<aproperty.GetAsciiString()<<"\n Alembic type information, property type: "<<propHeader.getMetaData());
             }
 		}
 		break;
