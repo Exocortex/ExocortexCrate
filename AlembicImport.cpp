@@ -2146,7 +2146,19 @@ ESS_CALLBACK_START(alembic_import_jobs_Execute, CRef&)
 
 
    CRef importRootNode = Application().GetActiveSceneRoot().GetRef();
-   if(jobParser.enableImportRootSelection)
+   
+   if(jobParser.extraParameters.find("importRoot") != jobParser.extraParameters.end())
+   {
+      CRef rootNode;
+      rootNode.Set(jobParser.extraParameters["importRoot"].c_str());
+      if(rootNode.IsValid()){
+         importRootNode = rootNode;
+      }
+      else{
+         ESS_LOG_WARNING("importRoot is not valid. Using Scene_Root instead.");
+      }
+   }
+   else if(jobParser.enableImportRootSelection)
    {
       CRefArray selectedObjects = Application().GetSelection().GetArray();
       if(selectedObjects.GetCount() > 1)
