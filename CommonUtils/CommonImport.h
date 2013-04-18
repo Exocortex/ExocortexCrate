@@ -37,6 +37,7 @@ public:
    bool skipUnattachedNodes;
    bool enableImportRootSelection;
    bool stripMayaNamespaces;
+   bool importCurvesAsStrands;
    XSI_XformTypes::xte xformTypes;
 
    SearchReplace::ReplacePtr replacer;
@@ -62,7 +63,8 @@ public:
       selectShapes(true),
       skipUnattachedNodes(false),
       enableImportRootSelection(false),
-      stripMayaNamespaces(false)
+      stripMayaNamespaces(false),
+      importCurvesAsStrands(false)
    {}
 
    bool parse(const std::string& jobString);
