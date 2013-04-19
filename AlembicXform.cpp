@@ -8,7 +8,7 @@ void AlembicXform::testAnimatedVisibility(AlembicObject *aobj, bool animTS, bool
 	MStatus stat;
 
 	MFnDagNode dagNode(GetRef());
-	while (true)
+	do
 	{
 		MDagPath path;
 		stat = dagNode.getPath(path);
@@ -45,10 +45,11 @@ void AlembicXform::testAnimatedVisibility(AlembicObject *aobj, bool animTS, bool
 			break;	// break out because no need to analyse this further!
 		}
 
-		if (flatHierarchy && dagNode.parentCount() == 0)
+		if (dagNode.parentCount() == 0)
 			break;
 		dagNode.setObject(dagNode.parent(0));
 	}
+	while(flatHierarchy);
 }
 
 AlembicXform::AlembicXform(SceneNodePtr eNode, AlembicWriteJob * in_Job, Abc::OObject oParent)
@@ -110,8 +111,8 @@ MStatus AlembicXform::Save(double time)
    // check if we have the global cache option
    if(GetJob()->GetOption(L"exportInGlobalSpace").asInt() > 0)
    {
-      if(mNumSamples > 0)
-         return MStatus::kSuccess;
+		if(mNumSamples > 0 && visInfo.visibility == VISIBLE)	// if the sample number is greater than zero and the visibility is not animated, do not export more data!
+			return MStatus::kSuccess;
 
       // store identity matrix
       mSample.setTranslation(Abc::V3d(0.0,0.0,0.0));

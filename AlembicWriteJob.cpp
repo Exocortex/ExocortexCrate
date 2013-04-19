@@ -192,7 +192,7 @@ MStatus AlembicWriteJob::PreProcess()
 		SceneNodePtr exoSceneRoot = buildMayaSceneGraph(dagPath, this->replacer);
 		const bool bFlattenHierarchy = GetOption("flattenHierarchy") == "1";
 		const bool bTransformCache = GetOption("transformCache") == "1";
-		const bool bSelectChildren = !bTransformCache;
+		const bool bSelectChildren = false;
 		{
 			std::map<std::string, bool> selectionMap;
 			for(int i=0; i<mSelection.length(); ++i)
