@@ -146,7 +146,7 @@ int selectNodes(SceneNodePtr root, SceneNode::SelectionT selectionMap, bool bSel
    SceneNode::SelectionT::iterator selectionEnd = selectionMap.end();
 
    std::list<SelectChildrenStackElement> sceneStack;
-   
+
    sceneStack.push_back(SelectChildrenStackElement(root, false));
 
    int nSelectionCount = 0;
@@ -160,8 +160,9 @@ int selectNodes(SceneNodePtr root, SceneNode::SelectionT selectionMap, bool bSel
       bool bSelected = false;
       //check if the node matches a full path
 
-      if(eNode->type == SceneNode::ETRANSFORM || eNode->type == SceneNode::ITRANSFORM){   
-         
+      //if(eNode->type == SceneNode::ETRANSFORM || eNode->type == SceneNode::ITRANSFORM)		// removed to be able to export hair properly in Maya!
+	  {   
+
          SceneNode::SelectionT::iterator selectionIt = selectionMap.find(eNode->dccIdentifier);
 
          //otherwise, check if the node names match
