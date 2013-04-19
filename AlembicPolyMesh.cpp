@@ -931,6 +931,7 @@ MStatus AlembicPolyMeshNode::compute(const MPlug & plug, MDataBlock & dataBlock)
 
   // output all channels
   dataBlock.outputValue(mOutGeometryAttr).set(mMeshData);
+  dataBlock.outputValue(mOutGeometryAttr).setClean();
 
   return MStatus::kSuccess;
 }

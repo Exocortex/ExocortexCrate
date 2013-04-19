@@ -343,6 +343,23 @@ MStatus AlembicXformNode::initialize()
    return status;
 } 
 
+void AlembicXformNode::cleanDataHandles(MDataBlock & dataBlock)
+{
+	dataBlock.outputValue(mOutTranslateXAttr).setClean();
+	dataBlock.outputValue(mOutTranslateYAttr).setClean();
+	dataBlock.outputValue(mOutTranslateZAttr).setClean();
+
+	dataBlock.outputValue(mOutRotateXAttr).setClean();
+	dataBlock.outputValue(mOutRotateYAttr).setClean();
+	dataBlock.outputValue(mOutRotateZAttr).setClean();
+
+	dataBlock.outputValue(mOutScaleXAttr).setClean();
+	dataBlock.outputValue(mOutScaleYAttr).setClean();
+	dataBlock.outputValue(mOutScaleZAttr).setClean();
+
+	dataBlock.outputValue(mOutVisibilityAttr).setClean();
+}
+
 MStatus AlembicXformNode::compute(const MPlug & plug, MDataBlock & dataBlock)
 {
   ESS_PROFILE_SCOPE("AlembicXformNode::compute");
@@ -440,15 +457,16 @@ MStatus AlembicXformNode::compute(const MPlug & plug, MDataBlock & dataBlock)
   }
 
 	// export visibility before comparing current and hold matrix!
-	{
-		AbcG::IVisibilityProperty visibilityProperty = AbcG::GetVisibilityProperty(iObj);
-		if (visibilityProperty.valid())
-			dataBlock.outputValue(mOutVisibilityAttr).setBool(visibilityProperty.getValue(sampleInfo.floorIndex));
-	}
+	AbcG::IVisibilityProperty visibilityProperty = AbcG::GetVisibilityProperty(iObj);
+	const bool curVisibility = visibilityProperty.valid() ? visibilityProperty.getValue(sampleInfo.floorIndex) : true;
 
-  if (mLastMatrix == matrix)
-    return MS::kSuccess;  // if the current matrix and the previous matrix are identical!
-  mLastMatrix = matrix;
+	if (mLastMatrix == matrix && curVisibility == mLastVisibility)
+	{
+		cleanDataHandles(dataBlock);
+		return MS::kSuccess;  // if the current matrix and the previous matrix are identical!
+	}
+	mLastMatrix = matrix;
+	mLastVisibility = curVisibility;
 
   // get the maya matrix
   MMatrix m(matrix.x);
@@ -474,6 +492,9 @@ MStatus AlembicXformNode::compute(const MPlug & plug, MDataBlock & dataBlock)
     dataBlock.outputValue(mOutScaleXAttr).setDouble(scale[0]);
     dataBlock.outputValue(mOutScaleYAttr).setDouble(scale[1]);
     dataBlock.outputValue(mOutScaleZAttr).setDouble(scale[2]);
+	dataBlock.outputValue(mOutVisibilityAttr).setBool(curVisibility);
+
+	cleanDataHandles(dataBlock);
   }
 
   return status;

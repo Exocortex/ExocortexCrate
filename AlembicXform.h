@@ -37,7 +37,7 @@ public:
 class AlembicXformNode : public AlembicObjectNode
 {
 public:
-  AlembicXformNode(): mLastMatrix() {}
+  AlembicXformNode(): mLastMatrix(), mLastVisibility(false) {}
    virtual ~AlembicXformNode();
 
    // override virtual methods from MPxNode
@@ -56,7 +56,11 @@ private:
    AbcG::IXformSchema mSchema;
    std::map<AbcA::index_t,Abc::M44d> mSampleIndicesToMatrices;
    Abc::M44d mLastMatrix;
+   bool mLastVisibility;
    Abc::IObject iObj;
+
+   // private functions
+   void cleanDataHandles(MDataBlock & dataBlock);		// here to avoid multiple recomputation of data on each frame!
 
    // output attributes
    static MObject mOutTranslateXAttr;
