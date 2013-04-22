@@ -201,7 +201,7 @@ MStatus AlembicWriteJob::PreProcess()
 				MFnDagNode dagNode(mObj);
 				selectionMap[dagNode.fullPathName().asChar()] = true;
 			}
-			selectNodes(exoSceneRoot, selectionMap, !bFlattenHierarchy || bTransformCache, bSelectChildren, !bTransformCache);
+			selectNodes(exoSceneRoot, selectionMap, !bFlattenHierarchy || bTransformCache, bSelectChildren, !bTransformCache, true);
 		}
 
 	   // create object for each
