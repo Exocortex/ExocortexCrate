@@ -135,8 +135,6 @@ MStatus AlembicXform::Save(double time)
         else
            matrix.setToProduct(path.inclusiveMatrix(), path.exclusiveMatrixInverse());
 
-        matrix = MTransformationMatrix(matrix).asMatrix();
-
         matrix.get(abcMatrix.x);
         mSample.setMatrix(abcMatrix);
         mSample.setInheritsXforms(true);

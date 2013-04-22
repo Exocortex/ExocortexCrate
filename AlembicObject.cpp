@@ -8,7 +8,24 @@ AlembicObject::AlembicObject(SceneNodePtr eNode, AlembicWriteJob * in_Job, Abc::
 	sl.add(nodeName);
 	MDagPath dagPath;
 	sl.getDagPath(0, dagPath);
-	AddRef(dagPath.node());
+
+	MObject in_Ref = dagPath.node();
+	AddRef(in_Ref);
+
+	if (mParent == NULL)
+	{
+		MFnDagNode dag(in_Ref);
+		for (unsigned int i = 0; i < dag.parentCount(); ++i)
+		{
+			MObject parentRef = dag.parent(i);
+			if (!parentRef.isNull())
+			{
+				mParent = in_Job->GetObjectA(parentRef);
+				if (mParent)
+					break;
+			}
+		}
+	}
 }
 
 AlembicObject::~AlembicObject()
