@@ -75,6 +75,45 @@ bool findProperty(Abc::ICompoundProperty& arbGeomParams, AbcA::PropertyHeader& p
     return false;
 }
 
+char* getPropertyTypeStr(AbcA::PropertyType type)
+{
+    if(type == AbcA::kCompoundProperty) return "kCompoundProperty";
+    if(type == AbcA::kScalarProperty) return "kScalerProperty";
+    if(type == AbcA::kArrayProperty) return "kArrayProperty";
+    return "kUnknownProperty";
+}
+
+
+char* getPodStr(AbcA::PlainOldDataType pod)
+{
+    if(pod == AbcA::kBooleanPOD) return "kBooleanPOD";
+    if(pod == AbcA::kUint8POD) return "kUint8POD";
+    if(pod == AbcA::kInt8POD) return "kInt8POD";
+    if(pod == AbcA::kUint16POD) return "kUint16POD";
+    if(pod == AbcA::kInt16POD) return "kInt16POD";
+    if(pod == AbcA::kUint32POD) return "kUint32POD";
+    if(pod == AbcA::kInt32POD) return "kInt32POD";
+    if(pod == AbcA::kUint64POD) return "kUint64POD";
+    if(pod == AbcA::kInt64POD) return "kInt64POD";
+    if(pod == AbcA::kFloat16POD) return "kFloat16POD";
+    if(pod == AbcA::kFloat32POD) return "kFloat32POD";
+    if(pod == AbcA::kFloat64POD) return "kFloat64POD";
+    if(pod == AbcA::kStringPOD) return "kStringPOD";
+    if(pod == AbcA::kWstringPOD) return "kWstringPOD";
+    if(pod == AbcA::kNumPlainOldDataTypes) return "kNumPlainOldDataTypes";
+    //if(pod == AbcA::kUnknownPOD)  
+    return "kUnknownPOD";
+}
+
+void outputTypeWarning(const std::string& nodeType, AbcA::PropertyHeader& propHeader, CString& aproperty)
+{
+ 
+
+   ESS_LOG_ERROR(nodeType<<" node error: type mismatch, propertyName: "<<aproperty.GetAsciiString()
+      /*<<", propertyType: "<<getPropertyType(propHeader.getPropertyType())*/<<", pod: "<<getPodStr(propHeader.getDataType().getPod())
+      <<", extent: "<<(int)propHeader.getDataType().getExtent()<<", interpretation: "<<propHeader.getMetaData().get("interpretation"));
+}
+
 namespace writeArrayRes
 {
    enum enumT
@@ -399,7 +438,8 @@ XSIPLUGINCALLBACK CStatus alembic_vec3f_array_Evaluate(ICENodeContext& in_ctxt)
                res = writeArray3f<Abc::IN3fArrayProperty, Abc::N3fArraySamplePtr, Abc::N3f>(sampleInfo, arbGeomParams, propHeader, outData);
             }
             if(res == writeArrayRes::TYPE_MISMATCH){
-               ESS_LOG_ERROR("vec3f_array node error: type mismatch "<<aproperty.GetAsciiString());
+               outputTypeWarning("vec3f_array", propHeader, aproperty);
+               //ESS_LOG_ERROR("vec3f_array node error: type mismatch "<<aproperty.GetAsciiString());
             }
 
 		}
@@ -476,7 +516,8 @@ XSIPLUGINCALLBACK CStatus alembic_vec4f_array_Evaluate(ICENodeContext& in_ctxt)
                res = writeArray4f<Abc::IC4hArrayProperty, Abc::C4hArraySamplePtr, Abc::C4h>(sampleInfo, arbGeomParams, propHeader, outData);
             }
             if(res == writeArrayRes::TYPE_MISMATCH){
-               ESS_LOG_ERROR("vec4f_array node error: type mismatch "<<aproperty.GetAsciiString());
+               outputTypeWarning("vec4f", propHeader, aproperty);
+               //ESS_LOG_ERROR("vec4f_array node error: type mismatch "<<aproperty.GetAsciiString());
             }
 
 		}
@@ -548,7 +589,8 @@ XSIPLUGINCALLBACK CStatus alembic_float_array_Evaluate(ICENodeContext& in_ctxt)
             writeArrayRes::enumT res = writeArray1f<Abc::IFloatArrayProperty, Abc::FloatArraySamplePtr, float>(sampleInfo, arbGeomParams, propHeader, outData);
             
             if(res == writeArrayRes::TYPE_MISMATCH){
-               ESS_LOG_ERROR("float_array node error: type mismatch "<<aproperty.GetAsciiString());
+               outputTypeWarning("float_array", propHeader, aproperty);
+               //ESS_LOG_ERROR("float_array node error: type mismatch "<<aproperty.GetAsciiString());
             }
 		}
 		break;
@@ -660,7 +702,7 @@ XSIPLUGINCALLBACK CStatus alembic_string_array_Evaluate(ICENodeContext& in_ctxt)
                
             }
             else{
-              // ESS_LOG_ERROR("string node error: type mismatch on "<<aproperty.GetAsciiString()<<"\n Alembic type information, property type: "<<propHeader.getMetaData());
+               outputTypeWarning("string", propHeader, aproperty);
             }
 		}
 		break;
