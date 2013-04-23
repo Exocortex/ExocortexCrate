@@ -645,6 +645,85 @@ bool ImportSceneFile(SceneNodeAlembicPtr fileRoot, SceneNodeAppPtr appRoot, cons
 }
 
 
+struct SampleRangeStackElement
+{
+   SceneNodeAlembicPtr currFileNode;
+
+   SampleRangeStackElement(SceneNodeAlembicPtr node):currFileNode(node)
+   {}
+
+};
+
+template<class T> void GetSampleRangeT(Abc::IObject& obj, std::size_t& oMinSample, std::size_t& oMaxSample, double& oMinTime, double& oMaxTime)
+{
+   T xObj(obj, Abc::kWrapExisting);
+   Alembic::AbcCoreAbstract::TimeSamplingPtr ts = xObj.getSchema().getTimeSampling();
+   std::size_t numSamples = xObj.getSchema().getNumSamples();
+   oMinSample = 0;
+   oMaxSample = std::max(oMaxSample, (numSamples-1));
+   oMinTime = std::min(ts->getSampleTime(0), oMinTime);
+   oMaxTime = std::max(ts->getSampleTime(numSamples-1), oMaxTime);
+}
+
+
+void GetSampleRange(SceneNodeAlembicPtr fileRoot, std::size_t& oMinSample, std::size_t& oMaxSample, double& oMinTime, double& oMaxTime)
+{
+   ESS_PROFILE_FUNC();
+
+   std::list<SampleRangeStackElement> sceneStack;
+
+   for(SceneChildIterator it = fileRoot->children.begin(); it != fileRoot->children.end(); it++){
+      SceneNodeAlembicPtr fileNode = reinterpret<SceneNode, SceneNodeAlembic>(*it);
+      sceneStack.push_back(SampleRangeStackElement(fileNode));
+   }
+
+   
+
+   while( !sceneStack.empty() )
+   {
+      SampleRangeStackElement sElement = sceneStack.back();
+      SceneNodeAlembicPtr currFileNode = sElement.currFileNode;
+      sceneStack.pop_back();
+
+      SceneNodeAlembicPtr alembicNode = reinterpret<SceneNode, SceneNodeAlembic>(currFileNode);
+      Abc::IObject obj = alembicNode->getObject();
+      
+      AbcG::MetaData metadata = obj.getMetaData();
+      if(AbcG::IXform::matches(metadata)){
+         GetSampleRangeT<AbcG::IXform>(obj, oMinSample, oMaxSample, oMinTime, oMaxTime);
+      }
+      else if(AbcG::IPolyMesh::matches(metadata)){
+         GetSampleRangeT<AbcG::IPolyMesh>(obj, oMinSample, oMaxSample, oMinTime, oMaxTime);
+      }
+      else if(AbcG::ISubD::matches(metadata)){
+         GetSampleRangeT<AbcG::ISubD>(obj, oMinSample, oMaxSample, oMinTime, oMaxTime);
+	  }
+	  else if(AbcG::ICamera::matches(metadata)){
+         GetSampleRangeT<AbcG::ICamera>(obj, oMinSample, oMaxSample, oMinTime, oMaxTime);
+	  }
+	  else if(AbcG::IPoints::matches(metadata)){
+         GetSampleRangeT<AbcG::IPoints>(obj, oMinSample, oMaxSample, oMinTime, oMaxTime);
+	  }
+	  else if(AbcG::ICurves::matches(metadata)){
+         GetSampleRangeT<AbcG::ICurves>(obj, oMinSample, oMaxSample, oMinTime, oMaxTime);
+	  }
+	  else if(AbcG::ILight::matches(metadata)){
+         GetSampleRangeT<AbcG::ILight>(obj, oMinSample, oMaxSample, oMinTime, oMaxTime);
+	  }
+      else if(AbcG::INuPatch::matches(metadata)){
+         GetSampleRangeT<AbcG::INuPatch>(obj, oMinSample, oMaxSample, oMinTime, oMaxTime);
+	  }
+      else{
+         ESS_LOG_WARNING("Warning: time range cannot be read for unrecoginized type.");
+      }
+
+
+   }
+
+}
+
+
+
 typedef std::map<std::string, SceneNodeAppPtr> AppNodeMap;
 typedef boost::shared_ptr<AppNodeMap> AppNodeMapPtr;
    
