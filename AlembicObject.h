@@ -13,7 +13,7 @@ class AlembicObject
 private:
    MObjectArray mRefs;
    AlembicWriteJob * mJob;
-   AlembicObjectPtr mParent;
+   bool mHasParent;
    Abc::OObject mMyParent;
    MString nodeName;
 
@@ -34,8 +34,7 @@ public:
    virtual Abc::OObject GetObject() = 0;
    Abc::OObject GetParentObject();
 
-   bool IsParentedToRoot() const { return !mParent; }
-   AlembicObjectPtr GetAlembicParentObject(void) { return mParent; }
+   bool IsParentedToRoot() const { return !mHasParent; }
 
    virtual Abc::OCompoundProperty GetCompound() = 0;
    int GetNumSamples() { return mNumSamples; }

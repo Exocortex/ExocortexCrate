@@ -5,6 +5,9 @@
 
 #include "CommonRegex.h"
 
+typedef std::pair<std::string, AlembicObjectPtr> pairStrAbcObj;
+typedef std::multimap<std::string, AlembicObjectPtr> multiMapStrAbcObj;
+
 class AlembicWriteJob
 {
 private:
@@ -15,8 +18,8 @@ private:
 	Abc::OObject mTop;
     unsigned int mTs;
     std::map<std::string,std::string> mOptions;
-    //std::vector<AlembicObjectPtr> mObjects;
-    std::map<std::string, AlembicObjectPtr> mapObjects;
+
+	multiMapStrAbcObj mapObjects;
 	double mFrameRate;
 public:
    AlembicWriteJob(
@@ -36,7 +39,8 @@ public:
    void SetOption(const MString & in_Name, const MString & in_Value);
    bool HasOption(const MString & in_Name);
    MString GetOption(const MString & in_Name);
-   AlembicObjectPtr GetObject(const MObject & in_Ref);
+
+   bool ObjectExists(const MObject &in_Ref);
    bool AddObject(AlembicObjectPtr in_Obj);
    size_t GetNbObjects() { return mapObjects.size(); }
  
