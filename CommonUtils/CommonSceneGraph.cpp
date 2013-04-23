@@ -139,7 +139,7 @@ struct SelectChildrenStackElement
    {}
 };
 
-int selectNodes(SceneNodePtr root, SceneNode::SelectionT selectionMap, bool bSelectParents, bool bChildren, bool bSelectShapeNodes, bool bIsMayaDCC)
+int selectNodes(SceneNodePtr root, SceneNode::SelectionT selectionMap, bool bSelectParents, bool bChildren, bool bSelectShapeNodes)
 {
    ESS_PROFILE_FUNC();
 
@@ -160,7 +160,7 @@ int selectNodes(SceneNodePtr root, SceneNode::SelectionT selectionMap, bool bSel
       bool bSelected = false;
       //check if the node matches a full path
 
-      if(bIsMayaDCC || eNode->type == SceneNode::ETRANSFORM || eNode->type == SceneNode::ITRANSFORM)		// removed to be able to export hair properly in Maya!
+	  if(eNode->type == SceneNode::ETRANSFORM || eNode->type == SceneNode::ITRANSFORM || eNode->type == SceneNode::HAIR)		// removed to be able to export hair properly in Maya!
 	  {   
 
          SceneNode::SelectionT::iterator selectionIt = selectionMap.find(eNode->dccIdentifier);
