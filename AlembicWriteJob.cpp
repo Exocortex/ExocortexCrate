@@ -16,7 +16,6 @@
 #include "sceneGraph.h"
 #include <maya/MItDag.h>
 
-
 struct PreProcessStackElement
 {
    SceneNodePtr eNode;
@@ -769,6 +768,5 @@ MStatus AlembicExportCommand::doIt(const MArgList & args)
 
    // remove all known archives
    deleteAllArchives();
-
    return status;
 }
