@@ -200,6 +200,11 @@ void SceneNodeMaya::print(void)
 
 static bool visitChild(const MObject &mObj, SceneNodeAppPtr &parent, const AlembicFileAndTimeControlPtr &alembicFileAndTimeControl, const SearchReplace::ReplacePtr &replacer)
 {
+	MFnDagNode dagNode(mObj);
+	const std::string dccId = dagNode.fullPathName().asChar();
+	if (dccId.length() == 0)
+		return true;
+
 	// check if it's a valid type of node first!
 	SceneNodeAppPtr exoChild(new SceneNodeMaya(alembicFileAndTimeControl));
 	switch(mObj.apiType())
@@ -228,16 +233,15 @@ static bool visitChild(const MObject &mObj, SceneNodeAppPtr &parent, const Alemb
 		break;
 	}
 
-	MFnDagNode dagNode(mObj);
-	const std::string dccId = dagNode.fullPathName().asChar();
-	if (dccId.length() == 0)
-		return true;
-
 	parent->children.push_back(exoChild);
 	exoChild->parent = parent.get();
 
 	exoChild->dccIdentifier = dccId;
-	exoChild->name = replacer->replace(dagNode.partialPathName().asChar());
+	{
+		const std::string rname = replacer->replace(dagNode.partialPathName().asChar());
+		const size_t pos = rname.rfind("|");
+		exoChild->name = (pos != std::string::npos) ? rname.substr(pos+1) : rname;
+	}
 	for (unsigned int i = 0; i < dagNode.childCount(); ++i)
 		visitChild(dagNode.child(i), exoChild, alembicFileAndTimeControl, replacer);
 	return true;
