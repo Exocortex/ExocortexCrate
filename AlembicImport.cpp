@@ -2057,6 +2057,10 @@ ESS_CALLBACK_START(alembic_import_jobs_Execute, CRef&)
          jobParser.extraParameters["sceneMergeMethod"] = "attachAndNew";
       }
 
+      if(settings.GetParameterValue(L"fitTimeRange")){
+         jobParser.setParam("fitTimeRange"); 
+      }
+
       Application().LogMessage(CString(L"[ExocortexAlembic] Using ReadJob:") + jobParser.buildJobString().c_str());
 
       Application().ExecuteCommand(L"DeleteObj",inspectArgs,inspectResult);
@@ -2275,6 +2279,31 @@ ESS_CALLBACK_START(alembic_import_jobs_Execute, CRef&)
 
    //return CStatus::Fail;
 
+   if( jobParser.paramIsSet("fitTimeRange") ){
+
+      size_t oMinSample=(size_t)-1, oMaxSample=0;
+      double oMinTime = DBL_MIN, oMaxTime = -DBL_MAX;
+      GetSampleRange(fileRoot, oMinSample, oMaxSample, oMinTime, oMaxTime);
+      //ESS_LOG_WARNING("time range: "<<oMinTime<<" "<<oMaxTime);
+
+      if(oMaxSample > 1){
+
+         Application app;
+         Project prj = app.GetActiveProject();
+
+         // The PlayControl property set is stored with scene data under the project
+         CRefArray proplist = prj.GetProperties();
+         Property playctrl( proplist.GetItem(L"Play Control") );
+
+         double fps = playctrl.GetParameterValue(L"Rate");
+
+         //ESS_LOG_WARNING("fps: "<<fps);
+
+         playctrl.PutParameterValue(L"Out", (LONG)ceil(oMaxTime * fps));
+
+      }  
+   }
+
    if( jobParser.extraParameters["sceneMergeMethod"] == "attach" )//if(jobParser.attachToExisting)
    {  
       nNumNodes = 0;
@@ -2358,6 +2387,7 @@ ESS_CALLBACK_START(alembic_import_settings_Define, CRef&)
    oCustomProperty.AddParameter(L"enableImportRootSelection",CValue::siBool,siPersistable,L"",L"",0,0,1,0,0,oParam);
    oCustomProperty.AddParameter(L"stripNamespaces",CValue::siBool,siPersistable,L"",L"",0,0,1,0,0,oParam);
    oCustomProperty.AddParameter(L"importCurvesAsStrands",CValue::siBool,siPersistable,L"",L"",0,0,1,0,0,oParam);
+   oCustomProperty.AddParameter(L"fitTimeRange",CValue::siBool,siPersistable,L"",L"",0,0,1,0,0,oParam);
    oCustomProperty.AddParameter(L"defaultXformNode",CValue::siInt4,siPersistable,L"",L"",0,0,5,0,5,oParam);
 	return CStatus::OK;
 ESS_CALLBACK_END
@@ -2409,7 +2439,7 @@ ESS_CALLBACK_START(alembic_import_settings_DefineLayout, CRef&)
    oLayout.AddItem(L"enableImportRootSelection",L"Enable Import Root Selection");
    oLayout.AddItem(L"stripNamespaces",L"Strip Namespaces");
    oLayout.AddItem(L"importCurvesAsStrands", L"Import Curves as Strands");
-
+   oLayout.AddItem(L"fitTimeRange", L"Fit Time Range");
 
    CValueArray items2(4);
    items[0] = L"Model";
