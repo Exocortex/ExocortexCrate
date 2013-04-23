@@ -70,6 +70,9 @@ public:
    bool parse(const std::string& jobString);
 
    std::string buildJobString();
+
+   bool paramIsSet(const std::string& param);
+   void setParam(const std::string& param);
 };
 
 SceneNodeAlembicPtr buildAlembicSceneGraph(AbcArchiveCache *pArchiveCache, AbcObjectCache *pRootObjectCache, int& nNumNodes, const IJobStringParser& jobParams, bool countMergableChildren=true, CommonProgressBar *pBar = 0);

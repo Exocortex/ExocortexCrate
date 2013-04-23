@@ -19,6 +19,19 @@ bool parseBool(std::string value){
 	}
 }
 
+bool IJobStringParser::paramIsSet(const std::string& param)
+{
+   if( extraParameters.find(param) == extraParameters.end()){
+      return false;
+   }
+   return parseBool(extraParameters[param]);
+}
+
+void IJobStringParser::setParam(const std::string& param)
+{
+    extraParameters[param] = "1";
+}
+
 bool IJobStringParser::parse(const std::string& jobString)
 {
 	std::string search_str, replace_str;
