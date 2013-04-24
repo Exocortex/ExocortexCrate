@@ -56,7 +56,7 @@ ESS_CALLBACK_START(alembic_import_jobs_Init,CRef&)
 	ArgumentArray oArgs;
 	oArgs = oCmd.GetArguments();
 	oArgs.Add(L"importjobs");
-	return CStatus::OK;
+	return CStatus::OK; 
 ESS_CALLBACK_END
 
 
@@ -2304,6 +2304,8 @@ ESS_CALLBACK_START(alembic_import_jobs_Execute, CRef&)
       }  
    }
 
+   std::list<SceneNodeAppPtr> newNodes;
+
    if( jobParser.extraParameters["sceneMergeMethod"] == "attach" )//if(jobParser.attachToExisting)
    {  
       nNumNodes = 0;
@@ -2327,11 +2329,11 @@ ESS_CALLBACK_START(alembic_import_jobs_Execute, CRef&)
 
       //printSceneGraph(fileRoot, true);
       //printSceneGraph(appRoot, true);
-      
+
       XSIProgressBar progBar;
       progBar.init(nNumNodes);
 
-      bool bAttachSuccess = MergeSceneFile(fileRoot, appRoot, jobParser, &progBar);
+      bool bAttachSuccess = MergeSceneFile(fileRoot, appRoot, jobParser, &progBar, &newNodes);
 
       if(!bAttachSuccess){
          return CStatus::Fail;
@@ -2347,15 +2349,37 @@ ESS_CALLBACK_START(alembic_import_jobs_Execute, CRef&)
       XSIProgressBar progBar;
       progBar.init(nNumNodes);
 
-      bool bImportSuccess = ImportSceneFile(fileRoot, appRoot, jobParser, &progBar);
+      bool bImportSuccess = ImportSceneFile(fileRoot, appRoot, jobParser, &progBar, &newNodes);
       
       if(!bImportSuccess){
          return CStatus::Fail;
       }
 
-
-
    }
+
+
+   CValueArray vals;
+   for(std::list<SceneNodeAppPtr>::iterator it = newNodes.begin(); it != newNodes.end(); it++)
+   {
+      SceneNodeXSIPtr appNode = reinterpret<SceneNodeApp, SceneNodeXSI>(*it);
+
+     // X3DObject xObj(appNode->nodeRef);
+
+      ////ESS_LOG_WARNING("name: "<<fullname.GetAsciiString());
+      ////CString fullname = xObj.GetFullName();
+
+      //CString name = xObj.GetName();
+      //CString modelname = xObj.GetModel().GetName();
+      //vals.Add(modelname+"."+name);
+
+      //vals.Add(xObj);
+
+      vals.Add(appNode->nodeRef);
+   }
+
+   CValue returnVal(vals);
+   ctxt.PutAttribute(L"ReturnValue", returnVal);
+
 
    delRefArchive( jobParser.filename );
 
