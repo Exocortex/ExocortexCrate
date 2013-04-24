@@ -730,7 +730,6 @@ MStatus AlembicExportCommand::doIt(const MArgList & args)
 		  MAnimControl::setAnimationEndTime( MTime(nextFrame/frameRate,MTime::kSeconds) );
 		  MAnimControl::playForward();  // this way, it forces Maya to play exactly one frame! and particles are updated!
 
-		  bool canceled = false;
 		  for(size_t i=0;i<jobPtrs.size();i++)
 		  {
 			 MStatus status = jobPtrs[i]->Process(frame);
@@ -744,8 +743,6 @@ MStatus AlembicExportCommand::doIt(const MArgList & args)
 			 }
 
 		  }
-		  if(canceled)
-			 break;
 	   }
    }
    catch(...)
