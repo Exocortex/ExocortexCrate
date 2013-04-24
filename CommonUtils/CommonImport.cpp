@@ -19,6 +19,19 @@ bool parseBool(std::string value){
 	}
 }
 
+bool IJobStringParser::paramIsSet(const std::string& param)
+{
+   if( extraParameters.find(param) == extraParameters.end()){
+      return false;
+   }
+   return parseBool(extraParameters[param]);
+}
+
+void IJobStringParser::setParam(const std::string& param)
+{
+    extraParameters[param] = "1";
+}
+
 bool IJobStringParser::parse(const std::string& jobString)
 {
 	std::string search_str, replace_str;
@@ -548,7 +561,7 @@ struct ImportStackElement
 
 };
 
-bool ImportSceneFile(SceneNodeAlembicPtr fileRoot, SceneNodeAppPtr appRoot, const IJobStringParser& jobParams, CommonProgressBar *pbar)
+bool ImportSceneFile(SceneNodeAlembicPtr fileRoot, SceneNodeAppPtr appRoot, const IJobStringParser& jobParams, CommonProgressBar *pbar, std::list<SceneNodeAppPtr> *newNodes)
 {
    ESS_PROFILE_FUNC();
 
@@ -631,6 +644,9 @@ bool ImportSceneFile(SceneNodeAlembicPtr fileRoot, SceneNodeAppPtr appRoot, cons
             }
          }
          
+         if(newNodes){
+            newNodes->push_back(newAppNode);
+         }
       }
       else{
          //ESS_LOG_WARNING("newAppNode useCount: "<<newAppNode.use_count());
@@ -756,7 +772,7 @@ struct MergeStackElement
 
 };
 
-bool MergeSceneFile(SceneNodeAlembicPtr fileRoot, SceneNodeAppPtr appRoot, const IJobStringParser& jobParams, CommonProgressBar *pbar)
+bool MergeSceneFile(SceneNodeAlembicPtr fileRoot, SceneNodeAppPtr appRoot, const IJobStringParser& jobParams, CommonProgressBar *pbar, std::list<SceneNodeAppPtr> *newNodes)
 {
    ESS_PROFILE_FUNC();
 
@@ -866,6 +882,9 @@ bool MergeSceneFile(SceneNodeAlembicPtr fileRoot, SceneNodeAppPtr appRoot, const
             }
          }
          
+         if(newNodes){
+            newNodes->push_back(newAppNode);
+         }
       }
       else{
          //ESS_LOG_WARNING("newAppNode useCount: "<<newAppNode.use_count());
