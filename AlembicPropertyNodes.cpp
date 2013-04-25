@@ -10,6 +10,7 @@ enum IDs
 	ID_IN_path = 10,
 	ID_IN_identifier = 11,
     ID_IN_property = 12,
+    ID_IN_isCustomProp = 13,
 	ID_IN_time = 14,
 	ID_G_100 = 1005,
 	ID_OUT_data = 12771,
@@ -26,13 +27,15 @@ enum IDs
 using namespace XSI;
 
 
-void getParams(ICENodeContext& in_ctxt, CString& path, CString& identifier, CString& aproperty, double& time){
+void getParams(ICENodeContext& in_ctxt, CString& path, CString& identifier, CString& aproperty, bool& isDefault, double& time){
 	CDataArrayString pathData( in_ctxt, ID_IN_path );
 	path = pathData[0];
 	CDataArrayString identifierData( in_ctxt, ID_IN_identifier );
 	identifier = identifierData[0];
 	CDataArrayString propertyData( in_ctxt, ID_IN_property );
 	aproperty = propertyData[0];
+	CDataArrayBool isDefaultData( in_ctxt, ID_IN_isCustomProp );
+	isDefault = isDefaultData[0];
 	CDataArrayFloat timeData( in_ctxt, ID_IN_time);
 	time = timeData[0];
 }
@@ -63,16 +66,31 @@ void delArchiveRef(Context& in_ctxt)
 	}
 }
 
-bool findProperty(Abc::ICompoundProperty& arbGeomParams, AbcA::PropertyHeader& propHeader, CString aproperty)
+bool findProperty(Abc::ICompoundProperty& props, AbcA::PropertyHeader& propHeader, CString aproperty)
 {
-    for(size_t i=0; i<arbGeomParams.getNumProperties(); i++){
-       AbcA::PropertyHeader pheader = arbGeomParams.getPropertyHeader(i);
+    if(!props.valid()){
+       return false;
+    }
+    for(size_t i=0; i<props.getNumProperties(); i++){
+       AbcA::PropertyHeader pheader = props.getPropertyHeader(i);
        if(pheader.getName() == std::string(aproperty.GetAsciiString())){
           propHeader = pheader;
           return true;
        }
     } 
     return false;
+}
+
+Abc::ICompoundProperty getProperty(Abc::ICompoundProperty& props, const char* aproperty)
+{
+    
+    for(size_t i=0; i<props.getNumProperties(); i++){
+       AbcA::PropertyHeader pheader = props.getPropertyHeader(i);
+       if(pheader.getName() == std::string(aproperty)){
+          return Abc::ICompoundProperty(props, aproperty); 
+       }
+    }
+    return Abc::ICompoundProperty();
 }
 
 char* getPropertyTypeStr(AbcA::PropertyType type)
@@ -126,11 +144,11 @@ namespace writeArrayRes
    };
 };
 
-template<class PROP, class SAMPLER, class TYPE> writeArrayRes::enumT writeArray3f(SampleInfo& sampleInfo, Abc::ICompoundProperty& arbGeomParams, AbcA::PropertyHeader& propHeader, CDataArray2DVector3f& outData)
+template<class PROP, class SAMPLER, class TYPE> writeArrayRes::enumT writeArray3f(SampleInfo& sampleInfo, Abc::ICompoundProperty& props, AbcA::PropertyHeader& propHeader, CDataArray2DVector3f& outData)
 {
    if(PROP::matches(propHeader)){
       CDataArray2DVector3f::Accessor acc;
-      PROP propArray(arbGeomParams, propHeader.getName());
+      PROP propArray(props, propHeader.getName());
 
 
       if(!propArray.valid())
@@ -178,11 +196,11 @@ template<class PROP, class SAMPLER, class TYPE> writeArrayRes::enumT writeArray3
    return writeArrayRes::TYPE_MISMATCH;
 }
 
-template<class PROP, class SAMPLER, class TYPE> writeArrayRes::enumT writeArray4f(SampleInfo& sampleInfo, Abc::ICompoundProperty& arbGeomParams, AbcA::PropertyHeader& propHeader, CDataArray2DVector4f& outData)
+template<class PROP, class SAMPLER, class TYPE> writeArrayRes::enumT writeArray4f(SampleInfo& sampleInfo, Abc::ICompoundProperty& props, AbcA::PropertyHeader& propHeader, CDataArray2DVector4f& outData)
 {
    if(PROP::matches(propHeader)){
       CDataArray2DVector4f::Accessor acc;
-      PROP propArray(arbGeomParams, propHeader.getName());
+      PROP propArray(props, propHeader.getName());
 
 
       if(!propArray.valid())
@@ -230,13 +248,13 @@ template<class PROP, class SAMPLER, class TYPE> writeArrayRes::enumT writeArray4
    return writeArrayRes::TYPE_MISMATCH;
 }
 
-template<class PROP, class SAMPLER, class TYPE>  writeArrayRes::enumT writeArray1f(SampleInfo& sampleInfo, Abc::ICompoundProperty& arbGeomParams, AbcA::PropertyHeader& propHeader, CDataArray2DFloat& outData)
+template<class PROP, class SAMPLER, class TYPE>  writeArrayRes::enumT writeArray1f(SampleInfo& sampleInfo, Abc::ICompoundProperty& props, AbcA::PropertyHeader& propHeader, CDataArray2DFloat& outData)
 {
    if(PROP::matches(propHeader)){
 
       CDataArray2DFloat::Accessor acc;
 
-      PROP propArray(arbGeomParams, propHeader.getName());
+      PROP propArray(props, propHeader.getName());
       if(!propArray.valid())
       {
          acc = outData.Resize(0,0);
@@ -303,6 +321,8 @@ XSI::CStatus defineNode(XSI::PluginRegistrar& in_reg, ULONG in_nDataType, ULONG 
 	st = nodeDef.AddInputPort(ID_IN_identifier,ID_G_100,siICENodeDataString,siICENodeStructureSingle,siICENodeContextSingleton,L"identifier",L"identifier",L"",ID_UNDEF,ID_UNDEF,ID_UNDEF);
 	st.AssertSucceeded( ) ;
 	st = nodeDef.AddInputPort(ID_IN_property,ID_G_100,siICENodeDataString,siICENodeStructureSingle,siICENodeContextSingleton,L"property",L"property",L"",ID_UNDEF,ID_UNDEF,ID_UNDEF);
+	st.AssertSucceeded( ) ;
+    st = nodeDef.AddInputPort(ID_IN_isCustomProp,ID_G_100,siICENodeDataBool,siICENodeStructureSingle,siICENodeContextSingleton,L"custom",L"custom",L"",ID_UNDEF,ID_UNDEF,ID_UNDEF);
 	st.AssertSucceeded( ) ;
 	st = nodeDef.AddInputPort(ID_IN_time,ID_G_100,siICENodeDataFloat,siICENodeStructureSingle,siICENodeContextSingleton,L"time",L"time",0.0f,ID_UNDEF,ID_UNDEF,ID_UNDEF);
 	st.AssertSucceeded( ) ;
@@ -380,7 +400,8 @@ XSIPLUGINCALLBACK CStatus alembic_vec3f_array_Evaluate(ICENodeContext& in_ctxt)
 
 	CString path, identifier, aproperty;
 	double time;
-    getParams(in_ctxt, path, identifier, aproperty, time);
+    bool isCustomProp = true;
+    getParams(in_ctxt, path, identifier, aproperty, isCustomProp, time);
 
     addArchiveRef(in_ctxt, path);
 
@@ -391,14 +412,18 @@ XSIPLUGINCALLBACK CStatus alembic_vec3f_array_Evaluate(ICENodeContext& in_ctxt)
     }  
 
 	AbcA::TimeSamplingPtr timeSampling;
-	int nSamples;
-    Abc::ICompoundProperty arbGeomParams = getArbGeomParams(iObj, timeSampling, nSamples);
+	int nSamples = 0;
+
+    Abc::ICompoundProperty props = getArbGeomParams(iObj, timeSampling, nSamples);
+    if(!isCustomProp){
+       props = getProperty(iObj.getProperties(), ".geom");
+    } 
 
 	SampleInfo sampleInfo = getSampleInfo( time, timeSampling, nSamples );
 
     AbcA::PropertyHeader propHeader;
 
-    if(!findProperty(arbGeomParams, propHeader, aproperty)){ 
+    if(!findProperty(props, propHeader, aproperty)){ 
        ESS_LOG_ERROR("vec3f_array node error: Could not find "<<aproperty.GetAsciiString());
        return CStatus::OK;
     }
@@ -430,12 +455,15 @@ XSIPLUGINCALLBACK CStatus alembic_vec3f_array_Evaluate(ICENodeContext& in_ctxt)
             //}
 
 
-            writeArrayRes::enumT res = writeArray3f<Abc::IC3fArrayProperty, Abc::C3fArraySamplePtr, Abc::C3f>(sampleInfo, arbGeomParams, propHeader, outData);
+            writeArrayRes::enumT res = writeArray3f<Abc::IC3fArrayProperty, Abc::C3fArraySamplePtr, Abc::C3f>(sampleInfo, props, propHeader, outData);
             if(res == writeArrayRes::TYPE_MISMATCH){
-               res = writeArray3f<Abc::IV3fArrayProperty, Abc::V3fArraySamplePtr, Abc::V3f>(sampleInfo, arbGeomParams, propHeader, outData);
+               res = writeArray3f<Abc::IV3fArrayProperty, Abc::V3fArraySamplePtr, Abc::V3f>(sampleInfo, props, propHeader, outData);
             }
             if(res == writeArrayRes::TYPE_MISMATCH){
-               res = writeArray3f<Abc::IN3fArrayProperty, Abc::N3fArraySamplePtr, Abc::N3f>(sampleInfo, arbGeomParams, propHeader, outData);
+               res = writeArray3f<Abc::IN3fArrayProperty, Abc::N3fArraySamplePtr, Abc::N3f>(sampleInfo, props, propHeader, outData);
+            }
+            if(res == writeArrayRes::TYPE_MISMATCH){
+               res = writeArray3f<Abc::IP3fArrayProperty, Abc::P3fArraySamplePtr, Abc::V3f>(sampleInfo, props, propHeader, outData);
             }
             if(res == writeArrayRes::TYPE_MISMATCH){
                outputTypeWarning("vec3f_array", propHeader, aproperty);
@@ -473,7 +501,8 @@ XSIPLUGINCALLBACK CStatus alembic_vec4f_array_Evaluate(ICENodeContext& in_ctxt)
 
 	CString path, identifier, aproperty;
 	double time;
-    getParams(in_ctxt, path, identifier, aproperty, time);
+    bool isCustomProp = true;
+    getParams(in_ctxt, path, identifier, aproperty, isCustomProp, time);
 
     addArchiveRef(in_ctxt, path);
 
@@ -484,14 +513,18 @@ XSIPLUGINCALLBACK CStatus alembic_vec4f_array_Evaluate(ICENodeContext& in_ctxt)
     }  
 
 	AbcA::TimeSamplingPtr timeSampling;
-	int nSamples;
-    Abc::ICompoundProperty arbGeomParams = getArbGeomParams(iObj, timeSampling, nSamples);
+	int nSamples=0;
+
+    Abc::ICompoundProperty props = getArbGeomParams(iObj, timeSampling, nSamples);
+    if(!isCustomProp){
+       props = getProperty(iObj.getProperties(), ".geom");
+    } 
 
 	SampleInfo sampleInfo = getSampleInfo( time, timeSampling, nSamples );
 
     AbcA::PropertyHeader propHeader;
 
-    if(!findProperty(arbGeomParams, propHeader, aproperty)){ 
+    if(!findProperty(props, propHeader, aproperty)){ 
        ESS_LOG_ERROR("vec4f_array node error: Could not find "<<aproperty.GetAsciiString());
        return CStatus::OK;
     }
@@ -511,9 +544,9 @@ XSIPLUGINCALLBACK CStatus alembic_vec4f_array_Evaluate(ICENodeContext& in_ctxt)
 
 
 
-            writeArrayRes::enumT res = writeArray4f<Abc::IC4fArrayProperty, Abc::C4fArraySamplePtr, Abc::C4f>(sampleInfo, arbGeomParams, propHeader, outData);
+            writeArrayRes::enumT res = writeArray4f<Abc::IC4fArrayProperty, Abc::C4fArraySamplePtr, Abc::C4f>(sampleInfo, props, propHeader, outData);
             if(res == writeArrayRes::TYPE_MISMATCH){
-               res = writeArray4f<Abc::IC4hArrayProperty, Abc::C4hArraySamplePtr, Abc::C4h>(sampleInfo, arbGeomParams, propHeader, outData);
+               res = writeArray4f<Abc::IC4hArrayProperty, Abc::C4hArraySamplePtr, Abc::C4h>(sampleInfo, props, propHeader, outData);
             }
             if(res == writeArrayRes::TYPE_MISMATCH){
                outputTypeWarning("vec4f", propHeader, aproperty);
@@ -551,7 +584,8 @@ XSIPLUGINCALLBACK CStatus alembic_float_array_Evaluate(ICENodeContext& in_ctxt)
 
 	CString path, identifier, aproperty;
 	double time;
-    getParams(in_ctxt, path, identifier, aproperty, time);
+    bool isCustomProp = true;
+    getParams(in_ctxt, path, identifier, aproperty, isCustomProp, time);
 
     addArchiveRef(in_ctxt, path);
 
@@ -562,14 +596,18 @@ XSIPLUGINCALLBACK CStatus alembic_float_array_Evaluate(ICENodeContext& in_ctxt)
     }
 
 	AbcA::TimeSamplingPtr timeSampling;
-	int nSamples;
-    Abc::ICompoundProperty arbGeomParams = getArbGeomParams(iObj, timeSampling, nSamples);
+	int nSamples=0;
+
+    Abc::ICompoundProperty props = getArbGeomParams(iObj, timeSampling, nSamples);
+    if(!isCustomProp){
+       props = getProperty(iObj.getProperties(), ".geom");
+    } 
 
 	SampleInfo sampleInfo = getSampleInfo( time, timeSampling, nSamples );
 
     AbcA::PropertyHeader propHeader;
 
-    if(!findProperty(arbGeomParams, propHeader, aproperty)){ 
+    if(!findProperty(props, propHeader, aproperty)){ 
        ESS_LOG_ERROR("float_array node error: Could not find "<<aproperty.GetAsciiString());
        return CStatus::OK;
     }
@@ -586,7 +624,7 @@ XSIPLUGINCALLBACK CStatus alembic_float_array_Evaluate(ICENodeContext& in_ctxt)
 		{
 			CDataArray2DFloat outData( in_ctxt );
 
-            writeArrayRes::enumT res = writeArray1f<Abc::IFloatArrayProperty, Abc::FloatArraySamplePtr, float>(sampleInfo, arbGeomParams, propHeader, outData);
+            writeArrayRes::enumT res = writeArray1f<Abc::IFloatArrayProperty, Abc::FloatArraySamplePtr, float>(sampleInfo, props, propHeader, outData);
             
             if(res == writeArrayRes::TYPE_MISMATCH){
                outputTypeWarning("float_array", propHeader, aproperty);
@@ -634,7 +672,8 @@ XSIPLUGINCALLBACK CStatus alembic_string_array_Evaluate(ICENodeContext& in_ctxt)
 
 	CString path, identifier, aproperty;
 	double time;
-    getParams(in_ctxt, path, identifier, aproperty, time);
+    bool isCustomProp = true;
+    getParams(in_ctxt, path, identifier, aproperty, isCustomProp, time);
 
     addArchiveRef(in_ctxt, path);
 
@@ -645,14 +684,18 @@ XSIPLUGINCALLBACK CStatus alembic_string_array_Evaluate(ICENodeContext& in_ctxt)
     }
 
 	AbcA::TimeSamplingPtr timeSampling;
-	int nSamples;
-    Abc::ICompoundProperty arbGeomParams = getArbGeomParams(iObj, timeSampling, nSamples);
+	int nSamples=0;
+
+    Abc::ICompoundProperty props = getArbGeomParams(iObj, timeSampling, nSamples);
+    if(!isCustomProp){
+       props = getProperty(iObj.getProperties(), ".geom");
+    } 
 
 	SampleInfo sampleInfo = getSampleInfo( time, timeSampling, nSamples );
 
     AbcA::PropertyHeader propHeader;
 
-    if(!findProperty(arbGeomParams, propHeader, aproperty)){  
+    if(!findProperty(props, propHeader, aproperty)){  
        ESS_LOG_ERROR("string node error: Could not find "<<aproperty.GetAsciiString());
        return CStatus::OK;
     }
@@ -673,7 +716,7 @@ XSIPLUGINCALLBACK CStatus alembic_string_array_Evaluate(ICENodeContext& in_ctxt)
 
 			
             if(Abc::IStringArrayProperty::matches(propHeader)){      
-               Abc::IStringArrayProperty propArray(arbGeomParams, propHeader.getName());
+               Abc::IStringArrayProperty propArray(props, propHeader.getName());
                if(!propArray.valid())
                {
                   acc = outData.Resize(0,0);
