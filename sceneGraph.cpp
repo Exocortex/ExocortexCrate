@@ -201,6 +201,9 @@ void SceneNodeMaya::print(void)
 static bool visitChild(const MObject &mObj, SceneNodeAppPtr &parent, const AlembicFileAndTimeControlPtr &alembicFileAndTimeControl, const SearchReplace::ReplacePtr &replacer)
 {
 	MFnDagNode dagNode(mObj);
+	if (dagNode.isIntermediateObject())		// skip intermediate object!
+		return true;
+	
 	const std::string dccId = dagNode.fullPathName().asChar();
 	if (dccId.length() == 0)
 		return true;
