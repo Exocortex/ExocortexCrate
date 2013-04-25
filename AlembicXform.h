@@ -37,7 +37,7 @@ public:
 class AlembicXformNode : public AlembicObjectNode
 {
 public:
-  AlembicXformNode(): mLastMatrix(), mLastVisibility(false) {}
+  AlembicXformNode(): mLastMatrix(0.0), mLastVisibility(false) {}
    virtual ~AlembicXformNode();
 
    // override virtual methods from MPxNode
