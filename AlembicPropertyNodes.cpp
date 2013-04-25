@@ -144,6 +144,114 @@ namespace writeArrayRes
    };
 };
 
+
+template<class PROP, class SAMPLER, class TYPE>  writeArrayRes::enumT writeArray1f(SampleInfo& sampleInfo, Abc::ICompoundProperty& props, AbcA::PropertyHeader& propHeader, CDataArray2DFloat& outData)
+{
+   if(PROP::matches(propHeader)){
+
+      CDataArray2DFloat::Accessor acc;
+
+      PROP propArray(props, propHeader.getName());
+      if(!propArray.valid())
+      {
+         acc = outData.Resize(0,0);
+         return writeArrayRes::INVALID_ALEMBIC_PARAM;
+      }
+      if(propArray.getNumSamples() == 0)
+      {
+         acc = outData.Resize(0,0);
+         return writeArrayRes::NO_ALEMBIC_SAMPLES;
+      }
+
+      SAMPLER propPtr1 = propArray.getValue(sampleInfo.floorIndex);
+
+      if(propPtr1 == NULL || propPtr1->size() == 0){
+         acc = outData.Resize(0,0);
+         return writeArrayRes::EMPTY;
+      }
+
+      SAMPLER propPtr2 = propArray.getValue(sampleInfo.ceilIndex);
+
+      acc = outData.Resize(0, (ULONG)propPtr1->size());
+
+      const float t = (float)sampleInfo.alpha;
+
+      if(sampleInfo.alpha != 0.0 && propPtr1->size() == propPtr2->size()){
+         for(ULONG i=0; i<acc.GetCount(); i++){
+            TYPE c1 = propPtr1->get()[i];
+            TYPE c2 = propPtr2->get()[i];
+            TYPE c = c2 + (1.0f - t)*c1;
+            acc[i] = c;
+         }
+      }
+      else{
+         for(ULONG i=0; i<acc.GetCount(); i++){
+            TYPE c = propPtr1->get()[i];
+            acc[i] = c;
+         }
+      }
+
+      return writeArrayRes::SUCCESS;
+   }
+
+   return writeArrayRes::TYPE_MISMATCH;
+}
+
+
+template<class PROP, class SAMPLER, class TYPE> writeArrayRes::enumT writeArray2f(SampleInfo& sampleInfo, Abc::ICompoundProperty& props, AbcA::PropertyHeader& propHeader, CDataArray2DVector2f& outData)
+{
+   if(PROP::matches(propHeader)){
+      CDataArray2DVector2f::Accessor acc;
+      PROP propArray(props, propHeader.getName());
+
+
+      if(!propArray.valid())
+      {
+         acc = outData.Resize(0,0);
+         return writeArrayRes::INVALID_ALEMBIC_PARAM;
+      }
+      if(propArray.getNumSamples() == 0)
+      {
+         acc = outData.Resize(0,0);
+         return writeArrayRes::NO_ALEMBIC_SAMPLES;
+      }
+
+      SAMPLER propPtr1 = propArray.getValue(sampleInfo.floorIndex);
+
+      if(propPtr1 == NULL || propPtr1->size() == 0){
+         acc = outData.Resize(0,0);
+         return writeArrayRes::EMPTY;
+      }
+
+      SAMPLER propPtr2 = propArray.getValue(sampleInfo.ceilIndex);
+
+      acc = outData.Resize(0, (ULONG)propPtr1->size());
+
+      const float t = (float)sampleInfo.alpha;
+
+      if(sampleInfo.alpha != 0.0 && propPtr1->size() == propPtr2->size()){
+         for(ULONG i=0; i<acc.GetCount(); i++){
+            TYPE c1 = propPtr1->get()[i];
+            TYPE c2 = propPtr2->get()[i];
+            TYPE c = c2 + (1.0f - t)*c1;
+            acc[i].PutX(c.x);
+            acc[i].PutY(c.y);
+         }
+      }
+      else{
+         for(ULONG i=0; i<acc.GetCount(); i++){
+            TYPE c = propPtr1->get()[i];
+            acc[i].PutX(c.x);
+            acc[i].PutY(c.y);
+         }
+      }
+
+      return writeArrayRes::SUCCESS;
+   }
+
+   return writeArrayRes::TYPE_MISMATCH;
+}
+
 template<class PROP, class SAMPLER, class TYPE> writeArrayRes::enumT writeArray3f(SampleInfo& sampleInfo, Abc::ICompoundProperty& props, AbcA::PropertyHeader& propHeader, CDataArray2DVector3f& outData)
 {
    if(PROP::matches(propHeader)){
@@ -248,58 +356,6 @@ template<class PROP, class SAMPLER, class TYPE> writeArrayRes::enumT writeArray4
    return writeArrayRes::TYPE_MISMATCH;
 }
 
-template<class PROP, class SAMPLER, class TYPE>  writeArrayRes::enumT writeArray1f(SampleInfo& sampleInfo, Abc::ICompoundProperty& props, AbcA::PropertyHeader& propHeader, CDataArray2DFloat& outData)
-{
-   if(PROP::matches(propHeader)){
-
-      CDataArray2DFloat::Accessor acc;
-
-      PROP propArray(props, propHeader.getName());
-      if(!propArray.valid())
-      {
-         acc = outData.Resize(0,0);
-         return writeArrayRes::INVALID_ALEMBIC_PARAM;
-      }
-      if(propArray.getNumSamples() == 0)
-      {
-         acc = outData.Resize(0,0);
-         return writeArrayRes::NO_ALEMBIC_SAMPLES;
-      }
-
-      SAMPLER propPtr1 = propArray.getValue(sampleInfo.floorIndex);
-
-      if(propPtr1 == NULL || propPtr1->size() == 0){
-         acc = outData.Resize(0,0);
-         return writeArrayRes::EMPTY;
-      }
-
-      SAMPLER propPtr2 = propArray.getValue(sampleInfo.ceilIndex);
-
-      acc = outData.Resize(0, (ULONG)propPtr1->size());
-
-      const float t = (float)sampleInfo.alpha;
-
-      if(sampleInfo.alpha != 0.0 && propPtr1->size() == propPtr2->size()){
-         for(ULONG i=0; i<acc.GetCount(); i++){
-            TYPE c1 = propPtr1->get()[i];
-            TYPE c2 = propPtr2->get()[i];
-            TYPE c = c2 + (1.0f - t)*c1;
-            acc[i] = c;
-         }
-      }
-      else{
-         for(ULONG i=0; i<acc.GetCount(); i++){
-            TYPE c = propPtr1->get()[i];
-            acc[i] = c;
-         }
-      }
-
-      return writeArrayRes::SUCCESS;
-   }
-
-   return writeArrayRes::TYPE_MISMATCH;
-}
-
 
 XSI::CStatus defineNode(XSI::PluginRegistrar& in_reg, ULONG in_nDataType, ULONG in_nStructType, CString name)
 {
@@ -341,54 +397,86 @@ XSI::CStatus defineNode(XSI::PluginRegistrar& in_reg, ULONG in_nDataType, ULONG 
     return CStatus::OK;
 }
 
-//    AbcA::PropertyType propType = propHeader.getPropertyType();
-//
-//    if( propType == AbcA::kScalarProperty){
-//       if(Abc::IStringProperty::matches(propHeader)){
-//          Abc::IStringProperty stringProp(arbGeomParams, propHeader.getName());
-//          std::string val = stringProp.getValue(sampleInfo.floorIndex);
-//          
-//       }
-//       else if(Abc::IFloatProperty::matches(propHeader)){
-//          Abc::IFloatProperty floatProp(arbGeomParams, propHeader.getName());
-//          float val = floatProp.getValue(sampleInfo.floorIndex);
-//       }
-//       else if(Abc::IC3fProperty::matches(propHeader)){
-//          Abc::IC3fProperty colorProp(arbGeomParams, propHeader.getName());
-//          Abc::C3f val = colorProp.getValue(sampleInfo.floorIndex);
-//       }
-//       else if(Abc::IV3fProperty::matches(propHeader)){
-//          Abc::IV3fProperty vecProp(arbGeomParams, propHeader.getName());
-//          Abc::V3f val = vecProp.getValue(sampleInfo.floorIndex);
-//       }
-//       else if(Abc::IN3fProperty::matches(propHeader)){
-//          Abc::IN3fProperty normalProp(arbGeomParams, propHeader.getName());
-//          Abc::N3f val = normalProp.getValue(sampleInfo.floorIndex);
-//       }
-//    }
-//    else if( propType == AbcA::kArrayProperty ){
-///*       if(Abc::IStringProperty::matches(propHeader)){
-//          Abc::IStringProperty stringProp(arbGeomParams, propHeader.getName());
-//          std::string val = stringProp.getValue(sampleInfo.floorIndex);
-//          
-//       }
-//       else */if(Abc::IFloatArrayProperty::matches(propHeader)){
-//          Abc::IFloatArrayProperty floatProp(arbGeomParams, propHeader.getName());
-//          
-//       }
-//       else if(Abc::IC3fProperty::matches(propHeader)){
-//          Abc::IC3fProperty colorProp(arbGeomParams, propHeader.getName());
-//          Abc::C3f val = colorProp.getValue(sampleInfo.floorIndex);
-//       }
-//       else if(Abc::IV3fProperty::matches(propHeader)){
-//          Abc::IV3fProperty vecProp(arbGeomParams, propHeader.getName());
-//          Abc::V3f val = vecProp.getValue(sampleInfo.floorIndex);
-//       }
-//       else if(Abc::IN3fProperty::matches(propHeader)){
-//          Abc::IN3fProperty normalProp(arbGeomParams, propHeader.getName());
-//          Abc::N3f val = normalProp.getValue(sampleInfo.floorIndex);
-//       }
-//    }
+
+XSIPLUGINCALLBACK CStatus alembic_vec2f_array_Evaluate(ICENodeContext& in_ctxt)
+{
+	//Application().LogMessage( "alembic_polyMesh2_Evaluate" );
+	// The current output port being evaluated...
+	ULONG out_portID = in_ctxt.GetEvaluatedOutputPortID( );
+
+	CString path, identifier, aproperty;
+	double time;
+    bool isCustomProp = true;
+    getParams(in_ctxt, path, identifier, aproperty, isCustomProp, time);
+
+    addArchiveRef(in_ctxt, path);
+
+	AbcG::IObject iObj = getObjectFromArchive(path,identifier);
+    if(!iObj.valid()){
+        ESS_LOG_ERROR("vec2f_array node error: Could not find "<<identifier.GetAsciiString());
+		return CStatus::OK;//return error instead (so that node shows up as red)?
+    }  
+
+	AbcA::TimeSamplingPtr timeSampling;
+	int nSamples = 0;
+
+    Abc::ICompoundProperty props = getArbGeomParams(iObj, timeSampling, nSamples);
+    if(!isCustomProp){
+       props = getProperty(iObj.getProperties(), ".geom");
+    } 
+
+	SampleInfo sampleInfo = getSampleInfo( time, timeSampling, nSamples );
+
+    AbcA::PropertyHeader propHeader;
+
+    if(!findProperty(props, propHeader, aproperty)){ 
+       ESS_LOG_ERROR("vec2f_array node error: Could not find "<<aproperty.GetAsciiString());
+       return CStatus::OK;
+    }
+
+	switch( out_portID )
+	{
+    case ID_OUT_valid:
+       {
+            //CDataArrayBool outData( in_ctxt );
+            //outData.Resize(1);
+            //outData.Set( 0, true );
+       }
+       break;
+	case ID_OUT_data:
+		{
+			CDataArray2DVector2f outData( in_ctxt );
+
+
+            writeArrayRes::enumT res = writeArray2f<Abc::IV2fArrayProperty, Abc::V2fArraySamplePtr, Abc::V2f>(sampleInfo, props, propHeader, outData);
+            if(res == writeArrayRes::TYPE_MISMATCH){
+               res = writeArray2f<Abc::IP2fArrayProperty, Abc::P2fArraySamplePtr, Abc::V2f>(sampleInfo, props, propHeader, outData);
+            }
+            if(res == writeArrayRes::TYPE_MISMATCH){
+               outputTypeWarning("vec2f_array", propHeader, aproperty);
+               //ESS_LOG_ERROR("vec2f_array node error: type mismatch "<<aproperty.GetAsciiString());
+            }
+
+		}
+		break;
+
+	}
+
+	return CStatus::OK;
+}
+
+XSIPLUGINCALLBACK CStatus alembic_vec2f_array_Term(CRef& in_ctxt)
+{
+    Context ctxt( in_ctxt );
+	delArchiveRef(ctxt);
+	return CStatus::OK;
+}
+
+XSI::CStatus Register_alembic_vec2f_array( XSI::PluginRegistrar& in_reg )
+{
+   return defineNode(in_reg, siICENodeDataVector2, siICENodeStructureArray, L"alembic_vec2f_array");
+}
+
 
 
 

@@ -81,6 +81,7 @@ SICALLBACK XSILoadPlugin( PluginRegistrar& in_reg )
 		Register_alembic_polyMesh(in_reg);
         Register_alembic_string_array(in_reg);
         Register_alembic_float_array(in_reg);
+        Register_alembic_vec2f_array(in_reg);
         Register_alembic_vec3f_array(in_reg);
         Register_alembic_vec4f_array(in_reg);
 
