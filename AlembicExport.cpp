@@ -147,7 +147,7 @@ CStatus exportCommandImp( CRef& in_ctxt )
 	      //jobString += L";dynamictopology="+settings.GetParameterValue(L"dtopology").GetAsText();
       }
       jobString += L";guidecurves="+settings.GetParameterValue(L"guidecurves").GetAsText();
- 
+      jobString += L";includeParentNodes="+settings.GetParameterValue(L"includeParentNodes").GetAsText();
       
       LONG transformMode = settings.GetParameterValue(L"transforms");
       if( transformMode == 0 ){//flatten hierarchy
@@ -190,6 +190,7 @@ CStatus exportCommandImp( CRef& in_ctxt )
       bool flattenhierarchy = true;
       bool guidecurves = false;
 	  bool geomApproxSubD = false;
+      bool includeParentNodes = true;
       //CRefArray objects;
 
      std::vector<std::string> objects;
@@ -264,6 +265,10 @@ CStatus exportCommandImp( CRef& in_ctxt )
          else if(valuePair[0].IsEqualNoCase(L"guidecurves"))
          {
             guidecurves = (bool)CValue(valuePair[1]);
+         }
+         else if(valuePair[0].IsEqualNoCase(L"includeParentNodes"))
+         {
+            includeParentNodes = (bool)CValue(valuePair[1]);
          }
          else if(valuePair[0].IsEqualNoCase(L"filename")){
             filename = CValue(valuePair[1]).GetAsText();
@@ -379,6 +384,7 @@ CStatus exportCommandImp( CRef& in_ctxt )
       job->SetOption(L"flattenHierarchy",flattenhierarchy);
       job->SetOption(L"guideCurves",guidecurves);
 	  job->SetOption(L"geomApproxSubD",geomApproxSubD);
+      job->SetOption(L"includeParentNodes",includeParentNodes);
 
       // check if the job is satifsied
       if(job->PreProcess() != CStatus::OK)
@@ -489,6 +495,7 @@ ESS_CALLBACK_START(alembic_export_settings_Define,CRef&)
    oCustomProperty.AddParameter(L"guidecurves",CValue::siBool,siPersistable,L"",L"",0,0,1,0,1,oParam);
    oCustomProperty.AddParameter(L"transformcache",CValue::siBool,siPersistable,L"",L"",0,0,1,0,1,oParam);
    oCustomProperty.AddParameter(L"transforms",CValue::siInt4,siPersistable,L"",L"",0,0,10,0,10,oParam);
+   oCustomProperty.AddParameter(L"includeParentNodes",CValue::siBool,siPersistable,L"",L"",1,0,1,0,1,oParam);
 
 	return CStatus::OK;
 ESS_CALLBACK_END
@@ -533,6 +540,7 @@ ESS_CALLBACK_START(alembic_export_settings_DefineLayout,CRef&)
    transformItems[4] = L"Bake Into Geometry";
    transformItems[5] = (LONG) 2;
    oLayout.AddEnumControl(L"transforms", transformItems, L"Transforms");
+   oLayout.AddItem(L"includeParentNodes", "Include Parent Nodes");
 
 	return CStatus::OK;
 ESS_CALLBACK_END

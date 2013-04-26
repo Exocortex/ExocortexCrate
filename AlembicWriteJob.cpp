@@ -185,7 +185,7 @@ CStatus AlembicWriteJob::PreProcess()
       mTs = mArchive.addTimeSampling(sampling);
    }
 
-   const bool bSelectParents = true;
+   bool bSelectParents = (bool)GetOption(L"includeParentNodes");
    const bool bSelectChildren = false;
    const bool bTransformCache = (bool)GetOption(L"transformCache");
    const bool bFlattenHierarchy = (bool)GetOption(L"flattenHierarchy");
@@ -212,9 +212,9 @@ CStatus AlembicWriteJob::PreProcess()
       selectionMap[xObj.GetFullName().GetAsciiString()] = true;
    }
    
-   selectNodes(exoSceneRoot, selectionMap, /*!bFlattenHierarchy || bTransformCache*/ true, bSelectChildren, !bTransformCache);
+   selectNodes(exoSceneRoot, selectionMap, /*!bFlattenHierarchy || bTransformCache*/ bSelectParents, bSelectChildren, !bTransformCache);
 
-   //::printSceneGraph(exoSceneRoot);
+   //::printSceneGraph(exoSceneRoot, false);
 
 
    //return CStatus::OK;
