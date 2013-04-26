@@ -378,7 +378,7 @@ XSI::CStatus defineNode(XSI::PluginRegistrar& in_reg, ULONG in_nDataType, ULONG 
 	st.AssertSucceeded( ) ;
 	st = nodeDef.AddInputPort(ID_IN_property,ID_G_100,siICENodeDataString,siICENodeStructureSingle,siICENodeContextSingleton,L"property",L"property",L"",ID_UNDEF,ID_UNDEF,ID_UNDEF);
 	st.AssertSucceeded( ) ;
-    st = nodeDef.AddInputPort(ID_IN_isCustomProp,ID_G_100,siICENodeDataBool,siICENodeStructureSingle,siICENodeContextSingleton,L"custom",L"custom",L"",ID_UNDEF,ID_UNDEF,ID_UNDEF);
+    st = nodeDef.AddInputPort(ID_IN_isCustomProp,ID_G_100,siICENodeDataBool,siICENodeStructureSingle,siICENodeContextSingleton,L"custom",L"custom",true,ID_UNDEF,ID_UNDEF,ID_UNDEF);
 	st.AssertSucceeded( ) ;
 	st = nodeDef.AddInputPort(ID_IN_time,ID_G_100,siICENodeDataFloat,siICENodeStructureSingle,siICENodeContextSingleton,L"time",L"time",0.0f,ID_UNDEF,ID_UNDEF,ID_UNDEF);
 	st.AssertSucceeded( ) ;
