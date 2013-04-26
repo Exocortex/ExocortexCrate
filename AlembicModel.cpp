@@ -30,7 +30,7 @@ AlembicModel::AlembicModel(SceneNodePtr eNode, AlembicWriteJob * in_Job, Abc::OO
 
    if(parent){
       XSI::CRef nodeRef;
-      nodeRef.Set(mExoSceneNode->parent->dccIdentifier.c_str());
+      nodeRef.Set(parent->dccIdentifier.c_str());
       XSI::X3DObject xObj(nodeRef);
       parentGlobalTransRef = xObj.GetKinematics().GetGlobal().GetRef();
    }
