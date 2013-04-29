@@ -430,7 +430,7 @@ int AlembicImport_Camera(const std::string &path, AbcG::IObject& iObj, alembic_i
     AlembicImport_SetupVisControl( path, identifier, iObj, pNode, options);
 
 	GET_MAX_INTERFACE()->SelectNode( pNode );
-	importMetadata(iObj);
+	importMetadata(pNode, iObj);
 
 	return 0;
 }

@@ -178,7 +178,7 @@ int AlembicImport_DummyNode(AbcG::IObject& iObj, alembic_importoptions &options,
     SceneEntry *pEntry = options.sceneEnumProc.Append(*pMaxNode, dObj, OBTYPE_DUMMY, &std::string(iObj.getFullName())); 
     options.currentSceneList.Append(pEntry);
 
-	importMetadata(iObj);
+	importMetadata(*pMaxNode, iObj);
 	
 	return alembic_success;
 }
@@ -235,11 +235,15 @@ int AlembicImport_XForm(INode* pParentNode, INode* pMaxNode, AbcG::IObject& iObj
 
    			// Add the modifier to the node
 			pMaxNode->SetTMController(pControl);
-
+            
 			GET_MAX_INTERFACE()->SelectNode( pMaxNode );
 			char szControllerName[10000];	
 			sprintf_s( szControllerName, 10000, "$.transform.controller.time" );
 			AlembicImport_ConnectTimeControl( szControllerName, options );
+
+   //         std::stringstream controllerName;
+   //         controllerName<<"$"<<pMaxNode->GetName()<<".transform.controller.time";
+			//AlembicImport_ConnectTimeControl( controllerName.str().c_str(), options );
 
     	pControl->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pControl, 0, "muted" ), zero, FALSE );
 		}

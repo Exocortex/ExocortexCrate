@@ -411,10 +411,9 @@ void AlembicImport_SetupVisControl( std::string const& file, std::string const& 
         pNode->SetVisController(pControl);
 
 		if( ! isConstant ) {
-			GET_MAX_INTERFACE()->SelectNode( pNode );
-			char szControllerName[10000];	
-			sprintf_s( szControllerName, 10000, "$.visibility.controller.time" );
-			AlembicImport_ConnectTimeControl( szControllerName, options );
+            std::stringstream controllerName;
+            controllerName<<"$"<<pNode->GetName()<<".visibility.controller.time";
+			AlembicImport_ConnectTimeControl( controllerName.str().c_str(), options );
 		}
     }
 }

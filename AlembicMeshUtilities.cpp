@@ -671,6 +671,8 @@ bool AlembicImport_IsPolyObject(AbcG::IPolyMeshSchema::Sample &polyMeshSample)
 
 void addAlembicMaterialsModifier(INode *pNode, AbcG::IObject& iObj)
 {
+   ESS_PROFILE_FUNC();
+
 
 	AbcG::IPolyMesh objMesh;
 	AbcG::ISubD objSubD;
@@ -751,40 +753,58 @@ void addAlembicMaterialsModifier(INode *pNode, AbcG::IObject& iObj)
 		}
 	}
 
-	GET_MAX_INTERFACE()->SelectNode( pNode );
+	//const size_t bufSize = names.size() + 500;
 
-	const size_t bufSize = names.size() + 500;
+	//char* szBuffer = new char[bufSize];
+	//sprintf_s(szBuffer, bufSize,
+	//		"AlembicMaterialModifier = EmptyModifier()\n"
+	//		"AlembicMaterialModifier.name = \"Alembic Materials\"\n"
+	//		"addmodifier $ AlembicMaterialModifier\n"
 
-	char* szBuffer = new char[bufSize];
-	sprintf_s(szBuffer, bufSize,
-			"AlembicMaterialModifier = EmptyModifier()\n"
-			"AlembicMaterialModifier.name = \"Alembic Materials\"\n"
-			"addmodifier $ AlembicMaterialModifier\n"
+	//		"AlembicMaterialCA = attributes AlembicMaterialModifier\n"
+	//		"(\n"	
+	//			"rollout AlembicMaterialModifierRLT \"Alembic Materials\"\n"
+	//			"(\n"
+	//				"listbox eTestList \"\" items:#(%s)\n"
+	//			")\n"
+	//		")\n"
 
-			"AlembicMaterialCA = attributes AlembicMaterialModifier\n"
-			"(\n"	
-				"rollout AlembicMaterialModifierRLT \"Alembic Materials\"\n"
-				"(\n"
-					"listbox eTestList \"\" items:#(%s)\n"
-				")\n"
-			")\n"
+	//		"custattributes.add $.modifiers[\"Alembic Materials\"] AlembicMaterialCA baseobject:false\n"
+	//		"$.modifiers[\"Alembic Materials\"].enabled = false"
+	//		//"$.modifiers[\"Alembic Materials\"].enabled = false\n"
+	//		//"if $.modifiers[\"Alembic Mesh Normals\"] != undefined then (\n"
+	//		//"$.modifiers[\"Alembic Mesh Normals\"].enabled = true\n"
+	//		//")\n"
+	//		//"if $.modifiers[\"Alembic Mesh Topology\"] != undefined then (\n"
+	//		//"$.modifiers[\"Alembic Mesh Topology\"].enabled = true\n",
+	//		//")\n"
+	//		,
+	//		names.c_str()
+	//);
 
-			"custattributes.add $.modifiers[\"Alembic Materials\"] AlembicMaterialCA baseobject:false\n"
-			"$.modifiers[\"Alembic Materials\"].enabled = false"
-			//"$.modifiers[\"Alembic Materials\"].enabled = false\n"
-			//"if $.modifiers[\"Alembic Mesh Normals\"] != undefined then (\n"
-			//"$.modifiers[\"Alembic Mesh Normals\"].enabled = true\n"
-			//")\n"
-			//"if $.modifiers[\"Alembic Mesh Topology\"] != undefined then (\n"
-			//"$.modifiers[\"Alembic Mesh Topology\"].enabled = true\n",
-			//")\n"
-			,
-			names.c_str()
-	);
 
-	ExecuteMAXScriptScript( EC_UTF8_to_TCHAR( szBuffer ) );
+    std::stringstream exeBuffer;
 
-	delete[] szBuffer;
+    exeBuffer<<"AlembicMaterialModifier = EmptyModifier()\n";
+    exeBuffer<<"AlembicMaterialModifier.name = \"Alembic Materials\"\n";
+
+	exeBuffer<<"addmodifier $"<<pNode->GetName()<<" AlembicMaterialModifier\n";
+
+	exeBuffer<<"AlembicMaterialCA = attributes AlembicMaterialModifier\n";
+	exeBuffer<<"(\n";	
+	  exeBuffer<<"rollout AlembicMaterialModifierRLT \"Alembic Materials\"\n";
+      exeBuffer<<"(\n";
+	     exeBuffer<<"listbox eTestList \"\" items:#("<<names<<")\n";
+      exeBuffer<<")\n";
+	exeBuffer<<")\n";
+
+	exeBuffer<<"custattributes.add $"<<pNode->GetName()<<".modifiers[\"Alembic Materials\"] AlembicMaterialCA baseobject:false\n";
+	exeBuffer<<"$"<<pNode->GetName()<<".modifiers[\"Alembic Materials\"].enabled = false";
+
+
+	ExecuteMAXScriptScript( (char*) EC_UTF8_to_TCHAR( exeBuffer.str().c_str() ) );
+
+	//delete[] szBuffer;
 }
 
 int AlembicImport_PolyMesh(const std::string &path, AbcG::IObject& iObj, alembic_importoptions &options, INode** pMaxNode)
@@ -894,11 +914,14 @@ int AlembicImport_PolyMesh(const std::string &path, AbcG::IObject& iObj, alembic
       isDynamicTopo = true;
     }
 
-	GET_MAX_INTERFACE()->SelectNode( pNode );
+ //   {
+ //      ESS_PROFILE_SCOPE("SelectNode per mesh");
+	//  GET_MAX_INTERFACE()->SelectNode( pNode );
+ //   }
 
 
 	if( !FindModifier(pNode, "Alembic Metadata") ){
-		importMetadata(iObj);
+		importMetadata(pNode, iObj);
 	}
 
 	if( !FindModifier(pNode, "Alembic Materials") ){
@@ -951,10 +974,9 @@ int AlembicImport_PolyMesh(const std::string &path, AbcG::IObject& iObj, alembic
 		}
 
 		if( isDynamicTopo ) {
-			GET_MAX_INTERFACE()->SelectNode( pNode );
-			char szControllerName[10000];
-			sprintf_s( szControllerName, 10000, "$.modifiers[#Alembic_Mesh_Topology].time" );
-			AlembicImport_ConnectTimeControl( szControllerName, options );
+            std::stringstream controllerName;
+            controllerName<<"$"<<pNode->GetName()<<".modifiers[#Alembic_Mesh_Topology].time";
+			AlembicImport_ConnectTimeControl( controllerName.str().c_str(), options );
 		}
 
 		modifiersToEnable.push_back( pModifier );
@@ -1040,10 +1062,9 @@ int AlembicImport_PolyMesh(const std::string &path, AbcG::IObject& iObj, alembic
                     AbcG::IV2fGeomParam meshUvParam = getMeshUvParam(i, objMesh, objSubD);
 
 					if( !meshUvParam.isConstant() ) {
-						GET_MAX_INTERFACE()->SelectNode( pNode );
-						char szControllerName[10000];
-						sprintf_s( szControllerName, 10000, "$.modifiers[#Alembic_Mesh_UVW].time" );
-						AlembicImport_ConnectTimeControl( szControllerName, options );
+                        std::stringstream controllerName;
+                        controllerName<<"$"<<pNode->GetName()<<".modifiers[#Alembic_Mesh_UVW].time";
+						AlembicImport_ConnectTimeControl( controllerName.str().c_str(), options );
 					}
 
 					modifiersToEnable.push_back( pModifier );
@@ -1084,10 +1105,9 @@ int AlembicImport_PolyMesh(const std::string &path, AbcG::IObject& iObj, alembic
 		}
 
 		if( ! isGeomContant ) {
-			GET_MAX_INTERFACE()->SelectNode( pNode );
-			char szControllerName[10000];
-			sprintf_s( szControllerName, 10000, "$.modifiers[#Alembic_Mesh_Geometry].time" );
-			AlembicImport_ConnectTimeControl( szControllerName, options );
+            std::stringstream controllerName;
+            controllerName<<"$"<<pNode->GetName()<<".modifiers[#Alembic_Mesh_Geometry].time";
+			AlembicImport_ConnectTimeControl( controllerName.str().c_str(), options );
 		}
 
 		modifiersToEnable.push_back( pModifier );
@@ -1121,11 +1141,10 @@ int AlembicImport_PolyMesh(const std::string &path, AbcG::IObject& iObj, alembic
 			GET_MAX_INTERFACE()->AddModifier(*pNode, *pModifier);
 		}
 
-		if( ! isNormalsContant ) {
-			GET_MAX_INTERFACE()->SelectNode( pNode );
-			char szControllerName[10000];
-			sprintf_s( szControllerName, 10000, "$.modifiers[#Alembic_Mesh_Normals].time" );
-			AlembicImport_ConnectTimeControl( szControllerName, options );
+		if( ! isNormalsContant ) {	
+            std::stringstream controllerName;
+            controllerName<<"$"<<pNode->GetName()<<".modifiers[#Alembic_Mesh_Normals].time";
+            AlembicImport_ConnectTimeControl( controllerName.str().c_str(), options );
 		}
 
 		if( options.importNormals ) {
@@ -1135,14 +1154,17 @@ int AlembicImport_PolyMesh(const std::string &path, AbcG::IObject& iObj, alembic
 
 	if( AbcG::ISubD::matches(iObj.getMetaData()) )
 	{
-		GET_MAX_INTERFACE()->SelectNode( pNode );
+        //char* szBuffer =   "addmodifier $ (meshsmooth())\n"
+        //                   "$.modifiers[#MeshSmooth].enabledInViews = false\n"
+        //                   "$.modifiers[#MeshSmooth].iterations = 1\n";
 
-        char* szBuffer =   "addmodifier $ (meshsmooth())\n"
-                           "$.modifiers[#MeshSmooth].enabledInViews = false\n"
-                           "$.modifiers[#MeshSmooth].iterations = 1\n";
-                           
+        std::stringstream exeBuffer;
 
-		ExecuteMAXScriptScript( EC_UTF8_to_TCHAR( szBuffer ) );
+        exeBuffer<<"addmodifier $"<<pNode->GetName()<<" (meshsmooth())\n";
+        exeBuffer<<"$"<<pNode->GetName()<<".modifiers[#MeshSmooth].enabledInViews = false\n";
+        exeBuffer<<"$"<<pNode->GetName()<<".modifiers[#MeshSmooth].iterations = 1\n";     
+
+		ExecuteMAXScriptScript( (char*) EC_UTF8_to_TCHAR( exeBuffer.str().c_str() ) );
 	}
 
     // Add the new inode to our current scene list

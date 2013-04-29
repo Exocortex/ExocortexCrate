@@ -1998,8 +1998,7 @@ int AlembicImport_Points(const std::string &file, AbcG::IObject& iObj, alembic_i
         AlembicImport_ConnectTimeControl( szControllerName, options );
     }
 
-	GET_MAX_INTERFACE()->SelectNode( pNode );
-	importMetadata(iObj);
+	importMetadata(pNode, iObj);
 
     return 0;
 }

@@ -4,8 +4,10 @@
 #include "utility.h"
 
 
-void importMetadata(AbcG::IObject& iObj)
+void importMetadata(INode *pNode, AbcG::IObject& iObj)
 {
+   ESS_PROFILE_FUNC();
+
 	AbcG::IObject* metadataChild = NULL;
 
 
@@ -21,29 +23,29 @@ void importMetadata(AbcG::IObject& iObj)
 	//
 	//}
 
-	std::string dataStr("#(");
+    std::stringstream exeBuffer;
+
+    exeBuffer<<"ImportMetadata $"<<pNode->GetName()<<" ";
+    
+	exeBuffer<<"#(";
 
 	for(int i=0; i<ptr->size()-1; i++){
 	
-		dataStr += "\"";
-		dataStr += ptr->get()[i];
-		dataStr += "\", ";
+		exeBuffer<<"\"";
+		exeBuffer<<ptr->get()[i];
+		exeBuffer<<"\", ";
 	}
-	dataStr += "\"";
-	dataStr += ptr->get()[ptr->size()-1];
-	dataStr += "\")";
-	
-	const size_t bufSize = dataStr.size() + 500;
-	char* szBuffer = new char[bufSize];	
-	sprintf_s( szBuffer, bufSize, 
-		//"include \"Exocortex-Metadata.mcr\" \n"
-		"ImportMetadata $ %s \n",
-		dataStr.c_str()
-	);
+	exeBuffer<<"\"";
+	exeBuffer<<ptr->get()[ptr->size()-1];
+	exeBuffer<<"\")";
 
-	ExecuteMAXScriptScript( EC_UTF8_to_TCHAR( szBuffer ) );
+       
+    exeBuffer<<" \n";
 	
-	delete[] szBuffer;
+
+	ExecuteMAXScriptScript( (char*) EC_UTF8_to_TCHAR( exeBuffer.str().c_str() ) );
+	
+	//delete[] szBuffer;
 }
 
 void SaveMetaData(INode* node, AlembicObject* object)

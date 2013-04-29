@@ -409,8 +409,7 @@ int AlembicImport_NURBS(const std::string &path, AbcG::IObject& iObj, alembic_im
 	}
 
 	if( !FindModifier(pNode, "Alembic Metadata") ){
-		GET_MAX_INTERFACE()->SelectNode( pNode );
-		importMetadata(iObj);
+		importMetadata(pNode, iObj);
 	}
 
 	return 0;
