@@ -84,10 +84,20 @@ endif()
 setup_os_name()
 setup_cpu_name()
 
+message("LINE 87 --------------------------")
+
 # RLM (floating license manager)
 if( Exocortex_SERVICES OR Exocortex_RLM_ONLY )
 	set( Rlm_INCLUDE_DIR "${LIBRARY_ROOT}/RLM/include" )
-	set( Rlm_LIBRARYDIR "${LIBRARY_ROOT}/RLM/libs/${OS_NAME}/${CPU_NAME}" )
+
+	if( MSVC10 ) 
+		set( Rlm_LIBRARYDIR "${LIBRARY_ROOT}/RLM/libs/${OS_NAME}/${CPU_NAME}/2010" )
+	elseif( MSVC90 )
+		set( Rlm_LIBRARYDIR "${LIBRARY_ROOT}/RLM/libs/${OS_NAME}/${CPU_NAME}/2008" )
+	else()
+		set( Rlm_LIBRARYDIR "${LIBRARY_ROOT}/RLM/libs/${OS_NAME}/${CPU_NAME}" )
+	endif()
+
 	if( WIN32 )
 		set( Rlm_LIBRARIES debug "${Rlm_LIBRARYDIR}/rlmclient_mtd.lib" optimized "${Rlm_LIBRARYDIR}/rlmclient.lib" )
 	elseif( UNIX )
