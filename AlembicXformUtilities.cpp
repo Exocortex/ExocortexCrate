@@ -235,19 +235,15 @@ int AlembicImport_XForm(INode* pParentNode, INode* pMaxNode, AbcG::IObject& iObj
 
    			// Add the modifier to the node
 			pMaxNode->SetTMController(pControl);
-            
-			GET_MAX_INTERFACE()->SelectNode( pMaxNode );
-			char szControllerName[10000];	
-			sprintf_s( szControllerName, 10000, "$.transform.controller.time" );
-			AlembicImport_ConnectTimeControl( szControllerName, options );
 
-   //         std::stringstream controllerName;
-   //         controllerName<<"$"<<pMaxNode->GetName()<<".transform.controller.time";
-			//AlembicImport_ConnectTimeControl( controllerName.str().c_str(), options );
+            std::stringstream controllerName;
+            controllerName<<GET_MAXSCRIPT_NODE(pMaxNode);
+            controllerName<<"mynode2113.transform.controller.time";
+			AlembicImport_ConnectTimeControl( controllerName.str().c_str(), options );
 
     	pControl->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pControl, 0, "muted" ), zero, FALSE );
 		}
-	}
+    }
 	else{//if the transform is not animated, do not use a controller. Thus, the user will be able to adjust the object position, orientation and so on.
       ESS_PROFILE_SCOPE("AlembicImport_XForm - Setting Non-Animated Value");
 		

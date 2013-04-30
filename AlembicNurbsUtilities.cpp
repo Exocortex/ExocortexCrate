@@ -392,10 +392,10 @@ int AlembicImport_NURBS(const std::string &path, AbcG::IObject& iObj, alembic_im
 
 		if( isAnimated ) {
             //ESS_LOG_WARNING("Nurb is animated");
-			GET_MAX_INTERFACE()->SelectNode( pNode );
-			char szControllerName[10000];
-			sprintf_s( szControllerName, 10000, "$.modifiers[#Alembic_NURBS].time" );
-			AlembicImport_ConnectTimeControl( szControllerName, options );
+            std::stringstream controllerName;
+            controllerName<<GET_MAXSCRIPT_NODE(pNode);
+            controllerName<<"mynode2113.modifiers[#Alembic_NURBS].time";
+			AlembicImport_ConnectTimeControl( controllerName.str().c_str(), options );
         }
 
 		modifiersToEnable.push_back( pModifier );

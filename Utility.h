@@ -180,6 +180,6 @@ void printChannelIntervals(TimeValue t, Object* obj);
 
 int createNode(AbcG::IObject& iObj, SClass_ID superID, Class_ID classID, INode** pMaxNode, bool& bReplaceExisting);
 
-
+#define GET_MAXSCRIPT_NODE(pNode) "mynode2113 = maxOps.getNodeByHandle("<<pNode->GetHandle()<<");\n"
 
 #endif  // _FOUNDATION_H_

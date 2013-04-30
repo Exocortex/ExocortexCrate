@@ -519,10 +519,10 @@ int AlembicImport_Shape(const std::string &path, AbcG::IObject& iObj, alembic_im
 		}
 
 		if( isDynamicTopo ) {
-			GET_MAX_INTERFACE()->SelectNode( pNode );
-			char szControllerName[10000];
-			sprintf_s( szControllerName, 10000, "$.modifiers[#Alembic_Spline_Topology].time" );
-			AlembicImport_ConnectTimeControl( szControllerName, options );
+            std::stringstream controllerName;
+            controllerName<<GET_MAXSCRIPT_NODE(pNode);
+            controllerName<<"mynode2113.modifiers[#Alembic_Spline_Topology].time";
+			AlembicImport_ConnectTimeControl( controllerName.str().c_str(), options );
 		}
 
 		modifiersToEnable.push_back( pModifier );
@@ -557,10 +557,10 @@ int AlembicImport_Shape(const std::string &path, AbcG::IObject& iObj, alembic_im
 		}
 
 		if( ! isGeomContant ) {
-			GET_MAX_INTERFACE()->SelectNode( pNode );
-			char szControllerName[10000];
-			sprintf_s( szControllerName, 10000, "$.modifiers[#Alembic_Spline_Geometry].time" );
-			AlembicImport_ConnectTimeControl( szControllerName, options );
+            std::stringstream controllerName;
+            controllerName<<GET_MAXSCRIPT_NODE(pNode);
+            controllerName<<"mynode2113.modifiers[#Alembic_Spline_Geometry].time";
+			AlembicImport_ConnectTimeControl( controllerName.str().c_str(), options );
 		}
 
 		modifiersToEnable.push_back( pModifier );
@@ -578,7 +578,6 @@ int AlembicImport_Shape(const std::string &path, AbcG::IObject& iObj, alembic_im
 	}
 
 	if( !FindModifier(pNode, "Alembic Metadata") ){
-		GET_MAX_INTERFACE()->SelectNode( pNode );
 		importMetadata(pNode, iObj);
 	}
 

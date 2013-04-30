@@ -361,8 +361,6 @@ int AlembicImport_Camera(const std::string &path, AbcG::IObject& iObj, alembic_i
 	//printAnimatables(pCameraObj);
 	
 	Interval interval = FOREVER;
-	
-	GET_MAX_INTERFACE()->SelectNode( pNode );
 
 	AlembicFloatController* pControl = NULL;
 	{
@@ -374,7 +372,10 @@ int AlembicImport_Camera(const std::string &path, AbcG::IObject& iObj, alembic_i
 			pControl->GetParamBlockByID(0)->SetValue( GetParamIdByName( pControl, 0, "path" ), zero, EC_UTF8_to_TCHAR( path.c_str() ) );
 		}
 		else if(assignController(createFloatController(path, identifier, prop), pCameraObj, 0, 0) && !isConstant){
-			AlembicImport_ConnectTimeControl("$.FOV.controller.time", options );
+            std::stringstream controllerName;
+            controllerName<<GET_MAXSCRIPT_NODE(pNode);
+            controllerName<<"mynode2113.FOV.controller.time";
+			AlembicImport_ConnectTimeControl( controllerName.str().c_str(), options );
 		}
 	}
 	{
@@ -386,7 +387,10 @@ int AlembicImport_Camera(const std::string &path, AbcG::IObject& iObj, alembic_i
 			pControl->GetParamBlockByID(0)->SetValue( GetParamIdByName( pControl, 0, "path" ), zero, EC_UTF8_to_TCHAR( path.c_str() ) );
 		}
 		else if(assignController(createFloatController(path, identifier, prop), pCameraObj, 1, 0, 1) && !isConstant){
-			AlembicImport_ConnectTimeControl("$.MultiPass_Effect.focalDepth.controller.time", options );
+            std::stringstream controllerName;
+            controllerName<<GET_MAXSCRIPT_NODE(pNode);
+            controllerName<<"mynode2113.MultiPass_Effect.focalDepth.controller.time";
+			AlembicImport_ConnectTimeControl( controllerName.str().c_str(), options );
 		}
 	}
 	{
@@ -398,7 +402,10 @@ int AlembicImport_Camera(const std::string &path, AbcG::IObject& iObj, alembic_i
 			pControl->GetParamBlockByID(0)->SetValue( GetParamIdByName( pControl, 0, "path" ), zero, EC_UTF8_to_TCHAR( path.c_str() ) );
 		}
 		else if(assignController(createFloatController(path, identifier, prop), pCameraObj, 0, 2) && !isConstant){
-			AlembicImport_ConnectTimeControl("$.nearclip.controller.time", options );
+            std::stringstream controllerName;
+            controllerName<<GET_MAXSCRIPT_NODE(pNode);
+            controllerName<<"mynode2113.nearclip.controller.time";
+			AlembicImport_ConnectTimeControl( controllerName.str().c_str(), options );
 		}
 	}
 	{
@@ -410,7 +417,10 @@ int AlembicImport_Camera(const std::string &path, AbcG::IObject& iObj, alembic_i
 			pControl->GetParamBlockByID(0)->SetValue( GetParamIdByName( pControl, 0, "path" ), zero, EC_UTF8_to_TCHAR( path.c_str() ) );
 		}
 		else if(assignController(createFloatController(path, identifier, prop), pCameraObj, 0, 3) && !isConstant){
-			AlembicImport_ConnectTimeControl("$.farclip.controller.time", options );
+            std::stringstream controllerName;
+            controllerName<<GET_MAXSCRIPT_NODE(pNode);
+            controllerName<<"mynode2113.farclip.controller.time";
+			AlembicImport_ConnectTimeControl( controllerName.str().c_str(), options );
 		}
 	}
 
@@ -429,7 +439,6 @@ int AlembicImport_Camera(const std::string &path, AbcG::IObject& iObj, alembic_i
     // Set the visibility controller
     AlembicImport_SetupVisControl( path, identifier, iObj, pNode, options);
 
-	GET_MAX_INTERFACE()->SelectNode( pNode );
 	importMetadata(pNode, iObj);
 
 	return 0;

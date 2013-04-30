@@ -1992,10 +1992,10 @@ int AlembicImport_Points(const std::string &file, AbcG::IObject& iObj, alembic_i
     //if( !isConstant )
 	//our isConstant only takes into account point size, but other things such as the shape mesh can change
     {
-        GET_MAX_INTERFACE()->SelectNode( pNode );
-        char szControllerName[10000];	
-        sprintf_s( szControllerName, 10000, "$.time" );
-        AlembicImport_ConnectTimeControl( szControllerName, options );
+        std::stringstream controllerName;
+        controllerName<<GET_MAXSCRIPT_NODE(pNode);
+        controllerName<<"mynode2113.time";
+        AlembicImport_ConnectTimeControl( controllerName.str().c_str(), options );
     }
 
 	importMetadata(pNode, iObj);

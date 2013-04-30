@@ -785,10 +785,11 @@ void addAlembicMaterialsModifier(INode *pNode, AbcG::IObject& iObj)
 
     std::stringstream exeBuffer;
 
+    exeBuffer<<GET_MAXSCRIPT_NODE(pNode);
     exeBuffer<<"AlembicMaterialModifier = EmptyModifier()\n";
     exeBuffer<<"AlembicMaterialModifier.name = \"Alembic Materials\"\n";
 
-	exeBuffer<<"addmodifier $"<<pNode->GetName()<<" AlembicMaterialModifier\n";
+	exeBuffer<<"addmodifier mynode2113 AlembicMaterialModifier\n";
 
 	exeBuffer<<"AlembicMaterialCA = attributes AlembicMaterialModifier\n";
 	exeBuffer<<"(\n";	
@@ -798,8 +799,8 @@ void addAlembicMaterialsModifier(INode *pNode, AbcG::IObject& iObj)
       exeBuffer<<")\n";
 	exeBuffer<<")\n";
 
-	exeBuffer<<"custattributes.add $"<<pNode->GetName()<<".modifiers[\"Alembic Materials\"] AlembicMaterialCA baseobject:false\n";
-	exeBuffer<<"$"<<pNode->GetName()<<".modifiers[\"Alembic Materials\"].enabled = false";
+	exeBuffer<<"custattributes.add mynode2113.modifiers[\"Alembic Materials\"] AlembicMaterialCA baseobject:false\n";
+	exeBuffer<<"mynode2113.modifiers[\"Alembic Materials\"].enabled = false";
 
 
 	ExecuteMAXScriptScript( (char*) EC_UTF8_to_TCHAR( exeBuffer.str().c_str() ) );
@@ -914,11 +915,6 @@ int AlembicImport_PolyMesh(const std::string &path, AbcG::IObject& iObj, alembic
       isDynamicTopo = true;
     }
 
- //   {
- //      ESS_PROFILE_SCOPE("SelectNode per mesh");
-	//  GET_MAX_INTERFACE()->SelectNode( pNode );
- //   }
-
 
 	if( !FindModifier(pNode, "Alembic Metadata") ){
 		importMetadata(pNode, iObj);
@@ -975,7 +971,8 @@ int AlembicImport_PolyMesh(const std::string &path, AbcG::IObject& iObj, alembic
 
 		if( isDynamicTopo ) {
             std::stringstream controllerName;
-            controllerName<<"$"<<pNode->GetName()<<".modifiers[#Alembic_Mesh_Topology].time";
+            controllerName<<GET_MAXSCRIPT_NODE(pNode);
+            controllerName<<"mynode2113.modifiers[#Alembic_Mesh_Topology].time";
 			AlembicImport_ConnectTimeControl( controllerName.str().c_str(), options );
 		}
 
@@ -1063,7 +1060,8 @@ int AlembicImport_PolyMesh(const std::string &path, AbcG::IObject& iObj, alembic
 
 					if( !meshUvParam.isConstant() ) {
                         std::stringstream controllerName;
-                        controllerName<<"$"<<pNode->GetName()<<".modifiers[#Alembic_Mesh_UVW].time";
+                        controllerName<<GET_MAXSCRIPT_NODE(pNode);
+                        controllerName<<"mynode2113.modifiers[#Alembic_Mesh_UVW].time";
 						AlembicImport_ConnectTimeControl( controllerName.str().c_str(), options );
 					}
 
@@ -1106,7 +1104,8 @@ int AlembicImport_PolyMesh(const std::string &path, AbcG::IObject& iObj, alembic
 
 		if( ! isGeomContant ) {
             std::stringstream controllerName;
-            controllerName<<"$"<<pNode->GetName()<<".modifiers[#Alembic_Mesh_Geometry].time";
+            controllerName<<GET_MAXSCRIPT_NODE(pNode);
+            controllerName<<"mynode2113.modifiers[#Alembic_Mesh_Geometry].time";
 			AlembicImport_ConnectTimeControl( controllerName.str().c_str(), options );
 		}
 
@@ -1143,7 +1142,8 @@ int AlembicImport_PolyMesh(const std::string &path, AbcG::IObject& iObj, alembic
 
 		if( ! isNormalsContant ) {	
             std::stringstream controllerName;
-            controllerName<<"$"<<pNode->GetName()<<".modifiers[#Alembic_Mesh_Normals].time";
+            controllerName<<GET_MAXSCRIPT_NODE(pNode);
+            controllerName<<"mynode2113.modifiers[#Alembic_Mesh_Normals].time";
             AlembicImport_ConnectTimeControl( controllerName.str().c_str(), options );
 		}
 
@@ -1159,10 +1159,10 @@ int AlembicImport_PolyMesh(const std::string &path, AbcG::IObject& iObj, alembic
         //                   "$.modifiers[#MeshSmooth].iterations = 1\n";
 
         std::stringstream exeBuffer;
-
-        exeBuffer<<"addmodifier $"<<pNode->GetName()<<" (meshsmooth())\n";
-        exeBuffer<<"$"<<pNode->GetName()<<".modifiers[#MeshSmooth].enabledInViews = false\n";
-        exeBuffer<<"$"<<pNode->GetName()<<".modifiers[#MeshSmooth].iterations = 1\n";     
+        exeBuffer<<GET_MAXSCRIPT_NODE(pNode);
+        exeBuffer<<"addmodifier mynode2113 (meshsmooth())\n";
+        exeBuffer<<"mynode2113.modifiers[#MeshSmooth].enabledInViews = false\n";
+        exeBuffer<<"mynode2113.modifiers[#MeshSmooth].iterations = 1\n";     
 
 		ExecuteMAXScriptScript( (char*) EC_UTF8_to_TCHAR( exeBuffer.str().c_str() ) );
 	}

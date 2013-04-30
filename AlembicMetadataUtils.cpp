@@ -25,7 +25,8 @@ void importMetadata(INode *pNode, AbcG::IObject& iObj)
 
     std::stringstream exeBuffer;
 
-    exeBuffer<<"ImportMetadata $"<<pNode->GetName()<<" ";
+    exeBuffer<<GET_MAXSCRIPT_NODE(pNode);
+    exeBuffer<<"ImportMetadata mynode2113";
     
 	exeBuffer<<"#(";
 

@@ -7,7 +7,6 @@ void createStringPropertyDisplayModifier(std::string modname, std::vector<std::p
 {
    //Example usage:
    //
-   //GET_MAX_INTERFACE()->SelectNode( pNode );
    //std::vector<std::pair<std::string, std::string>> nameValuePairs;
    //nameValuePairs.push_back(std::pair<std::string, std::string>("Prop1", "Prop1Val"));
    //nameValuePairs.push_back(std::pair<std::string, std::string>("Prop2", "Prop2Val"));
