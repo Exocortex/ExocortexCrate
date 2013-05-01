@@ -803,7 +803,7 @@ void addAlembicMaterialsModifier(INode *pNode, AbcG::IObject& iObj)
 	exeBuffer<<"mynode2113.modifiers[\"Alembic Materials\"].enabled = false";
 
 
-	ExecuteMAXScriptScript( (char*) EC_UTF8_to_TCHAR( exeBuffer.str().c_str() ) );
+	ExecuteMAXScriptScript( EC_UTF8_to_TCHAR( (char*)exeBuffer.str().c_str() ) );
 
 	//delete[] szBuffer;
 }
@@ -1164,7 +1164,7 @@ int AlembicImport_PolyMesh(const std::string &path, AbcG::IObject& iObj, alembic
         exeBuffer<<"mynode2113.modifiers[#MeshSmooth].enabledInViews = false\n";
         exeBuffer<<"mynode2113.modifiers[#MeshSmooth].iterations = 1\n";     
 
-		ExecuteMAXScriptScript( (char*) EC_UTF8_to_TCHAR( exeBuffer.str().c_str() ) );
+		ExecuteMAXScriptScript( EC_UTF8_to_TCHAR( (char*)exeBuffer.str().c_str() ) );
 	}
 
     // Add the new inode to our current scene list

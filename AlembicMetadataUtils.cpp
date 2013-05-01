@@ -44,7 +44,7 @@ void importMetadata(INode *pNode, AbcG::IObject& iObj)
     exeBuffer<<" \n";
 	
 
-	ExecuteMAXScriptScript( (char*) EC_UTF8_to_TCHAR( exeBuffer.str().c_str() ) );
+	ExecuteMAXScriptScript( EC_UTF8_to_TCHAR( (char*)exeBuffer.str().c_str() ) );
 	
 	//delete[] szBuffer;
 }
