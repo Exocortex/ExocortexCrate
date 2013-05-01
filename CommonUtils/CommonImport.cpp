@@ -27,9 +27,14 @@ bool IJobStringParser::paramIsSet(const std::string& param)
    return parseBool(extraParameters[param]);
 }
 
-void IJobStringParser::setParam(const std::string& param)
+void IJobStringParser::setParam(const std::string& param, bool bVal)
 {
-    extraParameters[param] = "1";
+   if(bVal){
+      extraParameters[param] = "1";
+   }
+   else{
+      extraParameters[param] = "0";
+   }
 }
 
 bool IJobStringParser::parse(const std::string& jobString)
