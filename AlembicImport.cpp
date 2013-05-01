@@ -1147,16 +1147,16 @@ ESS_CALLBACK_START(alembic_create_item_Execute, CRef&)
 	Context ctxt( in_ctxt );
 	CValueArray args = ctxt.GetAttribute(L"Arguments");
    CString type = args[0];
-   CRef importRootNode = args[1];
-   CRef target = args[2];
-   CString file = args[3];
-   CString identifier = args[4];
-   bool reattach = args[5];
+   //CRef importRootNode = args[1];
+   CRef target = args[1];
+   CString file = args[2];
+   CString identifier = args[3];
+   bool reattach = args[4];
    CValueArray additionalArgs;
-   for(LONG i=6;i<args.GetCount();i++)
+   for(LONG i=5;i<args.GetCount();i++)
       additionalArgs.Add(args[i]);
    CValue returnVal;
-   CStatus result = alembic_create_item_Invoke(type,importRootNode,target,file,identifier,reattach,additionalArgs,returnVal);
+   CStatus result = alembic_create_item_Invoke(type,target,target,file,identifier,reattach,additionalArgs,returnVal);
    ctxt.PutAttribute(L"ReturnValue",returnVal);
    return result;
 ESS_CALLBACK_END
