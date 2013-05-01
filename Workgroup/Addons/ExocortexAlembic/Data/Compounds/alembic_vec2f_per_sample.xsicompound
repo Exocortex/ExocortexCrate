@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<xsi_file type="CompoundNode" name="alembic_vec2f_per_sample" formatversion="1.4" compoundversion="1.0">
+<xsi_file type="CompoundNode" name="alembic_vec2f_per_sample" category="Alembic" formatversion="1.4" compoundversion="1.0" constructionmode="Current" backgroundcolor="6732954">
 	<definition>
 		<nodes>
 			<node type="alembic_vec2f_array" index="0">
@@ -40,7 +40,7 @@
 				</datablob>
 			</node>
 			<node type="GetElementIndicesNode" index="2">
-				<param name="value.value_z" type="4" value="0.000000"></param>
+				<param name="value.value_x" type="4" value="0.000000"></param>
 				<param name="value.value_y" type="4" value="0.000000"></param>
 				<portdef name="value" type="8" structure="1" group="0" instance="0" port="0"></portdef>
 				<datablob category="ui_infos">
@@ -51,8 +51,8 @@
 			</node>
 			<node type="SelectInArrayNode" index="3">
 				<param name="index" type="3" value="0"></param>
-				<param name="array.array_w" type="4" value="0.000000"></param>
-				<param name="array.array_z" type="4" value="0.000000"></param>
+				<param name="array.array_x" type="4" value="0.000000"></param>
+				<param name="array.array_y" type="4" value="0.000000"></param>
 				<portdef name="index" type="2" structure="1" group="0" instance="0" port="0"></portdef>
 				<portdef name="array" type="8" structure="2" group="0" instance="0" port="1"></portdef>
 				<datablob category="ui_infos">
@@ -71,9 +71,9 @@
 			<port index="3" portname="value" username="Value" basename="Value" portlabel="Value" exposetype="single"> </port>
 		</exposed_ports>
 		<connections>
-			<cnx from_node="0" from_port="data" to_node="3" to_port="array"> </cnx>
-			<cnx from_node="2" from_port="indices" to_node="3" to_port="index"> </cnx>
 			<cnx from_node="1" from_port="value" to_node="2" to_port="value"> </cnx>
+			<cnx from_node="2" from_port="indices" to_node="3" to_port="index"> </cnx>
+			<cnx from_node="0" from_port="data" to_node="3" to_port="array"> </cnx>
 		</connections>
 		<layout>
 			<item type="input" name="path"> </item>
