@@ -831,7 +831,10 @@ bool MergeSceneFile(SceneNodeAlembicPtr fileRoot, SceneNodeAppPtr appRoot, const
       //otherwise create the node and so on...
 
 
-      const std::string& fileNodeName = removeXfoSuffix(currFileNode->name);
+      const std::string& fileNodeName = currFileNode->name;
+
+
+
       AppNodeMap::iterator appNodeIt = childMapPtr->find(fileNodeName);
       if(appNodeIt != childMapPtr->end()){//we have a match
          SceneNodeAppPtr appNode = appNodeIt->second;
