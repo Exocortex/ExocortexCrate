@@ -34,20 +34,28 @@ AtNode *createPointsNode(nodeData &nodata, userData * ud, std::vector<float> &sa
     // take care of the topology
     if(sampleIndex == 0)
     {
-      // hard coded mode
-      if(!ud->gPointsMode.empty())
-        AiNodeSetStr(shapeNode, "mode", ud->gPointsMode.c_str());
+		// hard coded mode
+		if(!ud->gPointsMode.empty())
+			AiNodeSetStr(shapeNode, "mode", ud->gPointsMode.c_str());
 
-      // check if we have a radius
-      Alembic::AbcGeom::IFloatGeomParam widthParam = typedObject.getSchema().getWidthsParam();
-      if(widthParam.valid())
-      {
-        Alembic::Abc::FloatArraySamplePtr abcRadius = widthParam.getExpandedValue(sampleInfo.floorIndex).getVals();
-        AtArray * radius = AiArrayAllocate((AtInt)abcRadius->size(),1,AI_TYPE_FLOAT);
-        for(size_t i=0;i<abcRadius->size();++i)
-          AiArraySetFlt(radius,(AtULong)i,abcRadius->get()[i]);
-        AiNodeSetArray(shapeNode,"radius",radius);
-      }
+		// check if we have a radius
+		Alembic::AbcGeom::IFloatGeomParam widthParam = typedObject.getSchema().getWidthsParam();
+		AtArray *radius = 0;
+		if(widthParam.valid())
+		{
+			Alembic::Abc::FloatArraySamplePtr abcRadius = widthParam.getExpandedValue(sampleInfo.floorIndex).getVals();
+			radius = AiArrayAllocate((AtInt)abcRadius->size(), 1, AI_TYPE_FLOAT);
+			for(size_t i=0;i<abcRadius->size();++i)
+				AiArraySetFlt(radius, (AtULong)i, abcRadius->get()[i]);
+		}
+		else
+		{
+			const int sz = abcPos->size();
+			radius = AiArrayAllocate(sz, 1, AI_TYPE_FLOAT);
+			for (int i = 0; i < sz; ++i)
+				AiArraySetFlt(radius, (AtULong)i, 0.1f);
+		}
+		AiNodeSetArray(shapeNode, "radius", radius);
 
       // check if we have colors
       Alembic::Abc::IC4fArrayProperty propColor;
@@ -75,6 +83,17 @@ AtNode *createPointsNode(nodeData &nodata, userData * ud, std::vector<float> &sa
           AiNodeSetArray(shapeNode, "Color", colors);
         }
       }
+	  else if ( AiNodeDeclare(shapeNode, "Color", "constant RGBA") )
+	  {
+		  AtArray * colors = AiArrayAllocate(1, 1, AI_TYPE_RGBA);
+		  AtRGBA color;
+		  color.r = 1.0f;
+		  color.g = 1.0f;
+		  color.b = 1.0f;
+		  color.a = 1.0f;
+		  AiArraySetRGBA(colors, (AtULong)i, color);
+          AiNodeSetArray(shapeNode, "Color", colors);
+	  }
     }
 
     // access the positions
