@@ -1279,15 +1279,15 @@ ESS_CALLBACK_START( alembic_crvlist_topo_Update, CRef& )
       
       if(pKnotVec){
 
-         curveData.m_aKnots.Resize(nbVertices + nDegree - 1);
+         curveData.m_aKnots.Resize(nbVertices + nDegree-1);
          for(LONG k=0; k<curveData.m_aKnots.GetCount() && k<pKnotVec->size(); k++) {
             curveData.m_aKnots[k] = pKnotVec->get()[knotOffset + k];
          }
-         knotOffset += nbVertices + 2;
+         knotOffset += nbVertices + nDegree-1;
       }
       else
       {
-         // based on curve type, we do this for linear or closed cubic curves
+          //based on curve type, we do this for linear or closed cubic curves
          if(curveSample.getType() ==AbcG::kLinear || curveData.m_bClosed )
          { 
             curveData.m_aKnots.Resize(nbVertices);
@@ -1297,10 +1297,8 @@ ESS_CALLBACK_START( alembic_crvlist_topo_Update, CRef& )
             if(curveData.m_bClosed)
                curveData.m_aKnots.Add(nbVertices);
          }
-         else // cubic open
+         else if(nDegree == 3)
          {
-            //ESS_LOG_WARNING("numVertices: "<<nbVertices);
-
 		    curveData.m_aKnots.Resize(nbVertices+2);
  		    curveData.m_aKnots[0] = 0;
  		    curveData.m_aKnots[1] = 0;
@@ -1308,6 +1306,12 @@ ESS_CALLBACK_START( alembic_crvlist_topo_Update, CRef& )
 			   curveData.m_aKnots[2+k] = k;
 		    curveData.m_aKnots[nbVertices] = nbVertices-3;
 		    curveData.m_aKnots[nbVertices+1] = nbVertices-3;
+         }
+         else if(nDegree == 1)
+         {
+            for(LONG k=0;k<nbVertices;k++) {
+               curveData.m_aKnots[k] = k;
+		    }
          }
       }
 
