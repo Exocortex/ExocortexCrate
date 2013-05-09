@@ -29,6 +29,7 @@ ESS_CALLBACK_START(alembic_timecontrol_Define, CRef&)
 	oCustomProperty.AddParameter(L"current",CValue::siFloat,siAnimatable | siPersistable,L"",L"",0,-100000,100000,-1,1,oParam);
 	oCustomProperty.AddParameter(L"factor",CValue::siFloat,siAnimatable | siPersistable,L"",L"",1,-100000,100000,0,2,oParam);
 	oCustomProperty.AddParameter(L"offset",CValue::siFloat,siAnimatable | siPersistable,L"",L"",0,-100000,100000,-5,5,oParam);
+    oCustomProperty.AddParameter(L"frameOffset",CValue::siFloat,siAnimatable | siPersistable,L"",L"",0,-100000,100000,-5,5,oParam);
 	return CStatus::OK;
 ESS_CALLBACK_END
 
@@ -41,6 +42,7 @@ ESS_CALLBACK_START(alembic_timecontrol_DefineLayout, CRef&)
    oLayout.AddItem(L"current",L"Current Time");
    oLayout.AddItem(L"factor",L"Time Factor");
    oLayout.AddItem(L"offset",L"Time Offset");
+   oLayout.AddItem(L"frameOffset",L"Frame Offset");
 	return CStatus::OK;
 ESS_CALLBACK_END
 

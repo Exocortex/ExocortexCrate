@@ -22,6 +22,14 @@ using namespace MATH;
 #include "CommonImport.h"
 #include "sceneGraph.h"
 
+
+CString getTimeControlExpression(CString timeControlName)
+{
+   return timeControlName+L".current * "+timeControlName+L".factor + "+timeControlName+L".offset + "+timeControlName+L".frameOffset / PlayControl.Rate";
+}
+
+
+
 ESS_CALLBACK_START(alembic_import_Init,CRef&)
 	Context ctxt( in_ctxt );
 	Command oCmd;
@@ -397,8 +405,8 @@ CStatus alembic_create_item_Invoke
 	CString expressionString;
     if(timeControlProp.IsValid())
     {
-       setExprArgs[1] = timeControlProp.GetFullName()+L".current * "+timeControlProp.GetFullName()+L".factor + "+timeControlProp.GetFullName()+L".offset";
-	   expressionString = timeControlProp.GetFullName()+L".current * "+timeControlProp.GetFullName()+L".factor + "+timeControlProp.GetFullName()+L".offset";
+       setExprArgs[1] = getTimeControlExpression(timeControlProp.GetFullName());
+	   expressionString = getTimeControlExpression(timeControlProp.GetFullName());
     }
 
     { ESS_PROFILE_SCOPE("alembic_create_item_Invoke create_the_operator");
@@ -660,7 +668,7 @@ CStatus alembic_create_item_Invoke
                         CValue setExprReturn;
                         CValueArray setExprArgs(2);
                         setExprArgs[0] = op.GetFullName()+L".time";
-                        setExprArgs[1] = timeControlProp.GetFullName()+L".current * "+timeControlProp.GetFullName()+L".factor + "+timeControlProp.GetFullName()+L".offset";
+                        setExprArgs[1] = getTimeControlExpression(timeControlProp.GetFullName());
                         Application().ExecuteCommand(L"SetExpr",setExprArgs,setExprReturn);
                      }
                   }
@@ -805,7 +813,7 @@ CStatus alembic_create_item_Invoke
                           CValue setExprReturn;
                           CValueArray setExprArgs(2);
                           setExprArgs[0] = op.GetFullName()+L".time";
-                          setExprArgs[1] = timeControlProp.GetFullName()+L".current * "+timeControlProp.GetFullName()+L".factor + "+timeControlProp.GetFullName()+L".offset";
+                          setExprArgs[1] = getTimeControlExpression(timeControlProp.GetFullName());
                           Application().ExecuteCommand(L"SetExpr",setExprArgs,setExprReturn);
                        }
                      }
@@ -1093,7 +1101,7 @@ CStatus alembic_create_item_Invoke
                CValue setExprReturn;
                CValueArray setExprArgs(2);
                setExprArgs[0] = op.GetFullName()+L".time";
-               setExprArgs[1] = timeControlProp.GetFullName()+L".current * "+timeControlProp.GetFullName()+L".factor + "+timeControlProp.GetFullName()+L".offset";
+               setExprArgs[1] = getTimeControlExpression(timeControlProp.GetFullName());
                Application().ExecuteCommand(L"SetExpr",setExprArgs,setExprReturn);
             }
          }
@@ -2206,7 +2214,7 @@ ESS_CALLBACK_START(alembic_import_jobs_Execute, CRef&)
          Application().ExecuteCommand(L"SetExpr",setExprArgs,setExprReturn);
       }
       // now update the args to use the timecontrol instead
-      setExprArgs[1] = timeControl.GetFullName()+L".current * "+timeControl.GetFullName()+L".factor + "+timeControl.GetFullName()+L".offset";
+      //setExprArgs[1] = timeControl.GetFullName()+L".current * "+timeControl.GetFullName()+L".factor + "+timeControl.GetFullName()+L".offset";
    }
 
    //// store the time control in a value array
