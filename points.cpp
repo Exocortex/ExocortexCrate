@@ -50,6 +50,7 @@ AtNode *createPointsNode(nodeData &nodata, userData * ud, std::vector<float> &sa
 		}
 		else
 		{
+			AiMsgWarning("[ExocortexAlembicArnold] Point %s doesn't have \"radius\" information, defaulting the value to 0.1!", nodata.object.getFullName().c_str());
 			const int sz = abcPos->size();
 			radius = AiArrayAllocate(sz, 1, AI_TYPE_FLOAT);
 			for (int i = 0; i < sz; ++i)
@@ -85,13 +86,14 @@ AtNode *createPointsNode(nodeData &nodata, userData * ud, std::vector<float> &sa
       }
 	  else if ( AiNodeDeclare(shapeNode, "Color", "constant RGBA") )
 	  {
+		  AiMsgWarning("[ExocortexAlembicArnold] Point %s doesn't have \"color\" information, defaulting the value to white!", nodata.object.getFullName().c_str());
 		  AtArray * colors = AiArrayAllocate(1, 1, AI_TYPE_RGBA);
 		  AtRGBA color;
 		  color.r = 1.0f;
 		  color.g = 1.0f;
 		  color.b = 1.0f;
 		  color.a = 1.0f;
-		  AiArraySetRGBA(colors, (AtULong)i, color);
+		  AiArraySetRGBA(colors, (AtULong)0, color);
           AiNodeSetArray(shapeNode, "Color", colors);
 	  }
     }
@@ -112,7 +114,7 @@ AtNode *createPointsNode(nodeData &nodata, userData * ud, std::vector<float> &sa
     }
     else
     {
-	  float timeAlpha = getTimeOffsetFromObject( typedObject, sampleInfo );
+	  const float timeAlpha = getTimeOffsetFromObject( typedObject, sampleInfo );
 
       Alembic::Abc::V3fArraySamplePtr abcVel = sample.getVelocities();
       for(size_t i=0; i<abcPos->size(); ++i)
