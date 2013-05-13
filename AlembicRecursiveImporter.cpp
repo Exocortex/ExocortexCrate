@@ -172,7 +172,7 @@ int importAlembicScene(AbcArchiveCache *pArchiveCache, AbcObjectCache *pRootObje
 	      else{
 		      if(mergedGeomNodeIndex != -1){//we are merging, so look at the child geometry node
              	  AbcG::IObject mergedGeomChild = pMergedObjectCache->obj;
-                  std::string importName = removeXfoSuffix(mergedGeomChild.getName());
+                  std::string importName = removeXfoSuffix(iObj.getName());//mergedGeomChild.getName());
 			      pExistingNode = GetChildNodeFromName(importName, pParentMaxNode);
 			      if(options.attachToExisting && pExistingNode){
 				      pMaxNode = pExistingNode;
@@ -185,7 +185,7 @@ int importAlembicScene(AbcArchiveCache *pArchiveCache, AbcObjectCache *pRootObje
 					if(ret != 0) return ret;
 				  }
    				
-		      }
+              }
 		      else{ //geometry node(s) under a dummy node (in pParentMaxNode)
 			      pExistingNode = GetChildNodeFromName(iObj.getName(), pParentMaxNode);
 			      if(options.attachToExisting && pExistingNode){
