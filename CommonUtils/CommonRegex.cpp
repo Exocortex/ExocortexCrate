@@ -67,6 +67,8 @@ namespace EnvVariables
 	{
 		vector<std::string> parts;
 		boost::split(parts, str, boost::is_any_of("%"));
+		if (parts.size() == 1)
+			return str;
 		if (parts.size() & 0x1 == 0)
 		{
 			ESS_LOG_ERROR("Need an even number of % in the string to delimit environment variables properly! Nothing is replaced in the string");

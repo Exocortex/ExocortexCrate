@@ -2,6 +2,7 @@
 #include "CommonUtilities.h"
 #include "CommonLicensing.h"
 #include "CommonAbcCache.h"
+#include "CommonRegex.h"
 
 #ifdef ESS_PROFILING
 stats_map default_stats_policy::stats;
@@ -85,7 +86,7 @@ std::string resolvePath( std::string const& originalPath ) {
 	   return s_originalToResolvedPath[ originalPath ];
    }*/
 
-   std::string resolvedPath = resolvePath_Internal( originalPath );
+   std::string resolvedPath = resolvePath_Internal( EnvVariables::replace( originalPath ) );
 
    //s_originalToResolvedPath.insert( std::pair<std::string,std::string>( originalPath, resolvedPath ) );
 
