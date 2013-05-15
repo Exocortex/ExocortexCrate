@@ -1209,11 +1209,11 @@ bool createNode(SceneNodeXSI* appNode, SceneNodeAlembicPtr fileNode, const IJobS
    //the transform
    
    const Abc::IObject& iObj = fileNode->getObject();
-   CString name = truncateName(iObj.getName().c_str());
+   CString name = truncateName(fileNode->name.c_str());//iObj.getName().c_str());
 
-   if(jobParams.stripMayaNamespaces){
-      name = stripNamespacePrefix(name);
-   }
+   //if(jobParams.stripMayaNamespaces){
+   //   name = stripNamespacePrefix(name);
+   //}
 
    if(AbcG::IXform::matches(iObj.getMetaData()))
    {
@@ -1362,7 +1362,7 @@ bool createMergeableNode(SceneNodeXSI* appNode, SceneNodeAlembicPtr fileXformNod
       //if we will merge will the shape node with its parent transform, we use the name of the transform node 
       //(not the shape). This is done to avoid namespace conflicts.
       xformFullName = fileXformNode->getObject().getFullName().c_str();
-      newAppNodeName = truncateName(fileXformNode->getObject().getName().c_str());
+      newAppNodeName = truncateName(fileXformNode->name.c_str());//getObject().getName().c_str());
 
       fileXformNode->setMerged(true);
       fileShapeNode->setMerged(true);
@@ -1370,15 +1370,15 @@ bool createMergeableNode(SceneNodeXSI* appNode, SceneNodeAlembicPtr fileXformNod
       //ESS_LOG_WARNING("xformName: "<<xformFullName<<" - shapeName: "<<shapeFullName);
    }
    else{
-      newAppNodeName = truncateName(shapeObj.getName().c_str());
+      newAppNodeName = truncateName(fileShapeNode->name.c_str());//shapeObj.getName().c_str());
 
       //ESS_LOG_WARNING("shapeName: "<<shapeFullName);
    }
    //EC_LOG_INFO( "Object name: " << newAppNodeName.GetAsciiString() );
 
-   if(jobParams.stripMayaNamespaces){
-      newAppNodeName = stripNamespacePrefix(newAppNodeName);
-   }
+   //if(jobParams.stripMayaNamespaces){
+    //  newAppNodeName = stripNamespacePrefix(newAppNodeName);
+   //}
    
    if(AbcG::ICamera::matches(shapeObj.getMetaData()))
    {
@@ -2230,7 +2230,7 @@ ESS_CALLBACK_START(alembic_import_jobs_Execute, CRef&)
 
    AbcObjectCache *pRootObjectCache = &( pArchiveCache->find( "/" )->second );
 
-
+   jobParser.replaceColonsWithUnderscores = true;
    int nNumNodes = 0;
    SceneNodeAlembicPtr fileRoot = buildAlembicSceneGraph(pArchiveCache, pRootObjectCache, nNumNodes, jobParser, false);
 
@@ -2473,7 +2473,7 @@ ESS_CALLBACK_START(alembic_import_settings_DefineLayout, CRef&)
    oLayout.AddItem(L"importCurvesAsStrands", L"Import Curves as Strands");
    oLayout.AddItem(L"fitTimeRange", L"Fit Time Range");
 
-   CValueArray items2(4);
+   items.Resize(4);
    items[0] = L"Model";
    items[1] = (LONG) 0l;
    items[2] = L"Null";
