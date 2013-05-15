@@ -1,7 +1,9 @@
 #ifndef __COMMON_LOG_H
 #define __COMMON_LOG_H
 
-#include "CommonAlembic.h"
+#ifndef __COMMON_ALEMBIC_H
+	#error "Must include CommonAlembic.h before CommonLog.h"
+#endif
 
 void logError( const char* msg );
 void logWarning( const char* msg );

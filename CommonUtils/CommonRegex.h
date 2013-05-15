@@ -18,4 +18,9 @@
 		ReplacePtr createReplacer(const std::string &exp, const std::string &form);
 	}
 
+	namespace EnvVariables
+	{
+		std::string replace(const std::string &str);
+	}
+
 #endif

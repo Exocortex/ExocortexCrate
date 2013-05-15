@@ -1,8 +1,6 @@
 #include "CommonAlembic.h"
 #include "CommonUtilities.h"
 #include "CommonLicensing.h"
-#include "CommonLog.h"
-#include "CommonProfiler.h"
 #include "CommonAbcCache.h"
 
 #ifdef ESS_PROFILING
