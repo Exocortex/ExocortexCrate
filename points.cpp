@@ -75,10 +75,11 @@ AtNode *createPointsNode(nodeData &nodata, userData * ud, std::vector<float> &sa
           AtRGBA color;
           for(size_t i=0; i<abcColors->size(); ++i)
           {
-            color.r = abcColors->get()[i].r;
-            color.g = abcColors->get()[i].g;
-            color.b = abcColors->get()[i].b;
-            color.a = abcColors->get()[i].a;
+			  const Alembic::Abc::C4fArraySamplePtr::element_type::value_type &col = abcColors->get()[i];
+            color.r = col.r;
+            color.g = col.g;
+            color.b = col.b;
+            color.a = col.a;
             AiArraySetRGBA(colors, (AtULong)i, color);
           }
           AiNodeSetArray(shapeNode, "Color", colors);
@@ -107,9 +108,10 @@ AtNode *createPointsNode(nodeData &nodata, userData * ud, std::vector<float> &sa
     {
       for(size_t i=0; i<abcPos->size(); ++i)
       {
-        AiArraySetFlt(pos,posOffset++,abcPos->get()[i].x);
-        AiArraySetFlt(pos,posOffset++,abcPos->get()[i].y);
-        AiArraySetFlt(pos,posOffset++,abcPos->get()[i].z);
+		  const Alembic::Abc::P3fArraySamplePtr::element_type::value_type &apos = abcPos->get()[i];
+        AiArraySetFlt(pos, posOffset++, apos.x);
+        AiArraySetFlt(pos, posOffset++, apos.y);
+        AiArraySetFlt(pos, posOffset++, apos.z);
       }
     }
     else
@@ -119,9 +121,11 @@ AtNode *createPointsNode(nodeData &nodata, userData * ud, std::vector<float> &sa
       Alembic::Abc::V3fArraySamplePtr abcVel = sample.getVelocities();
       for(size_t i=0; i<abcPos->size(); ++i)
       {
-        AiArraySetFlt(pos,posOffset++,abcPos->get()[i].x + timeAlpha * abcVel->get()[i].x);
-        AiArraySetFlt(pos,posOffset++,abcPos->get()[i].y + timeAlpha * abcVel->get()[i].y);
-        AiArraySetFlt(pos,posOffset++,abcPos->get()[i].z + timeAlpha * abcVel->get()[i].z);
+		  const Alembic::Abc::P3fArraySamplePtr::element_type::value_type &apos = abcPos->get()[i];
+		  const Alembic::Abc::V3fArraySamplePtr::element_type::value_type &avel = abcVel->get()[i];
+        AiArraySetFlt(pos, posOffset++, apos.x + timeAlpha * avel.x);
+        AiArraySetFlt(pos, posOffset++, apos.y + timeAlpha * avel.y);
+        AiArraySetFlt(pos, posOffset++, apos.z + timeAlpha * avel.z);
       }
     }
   }

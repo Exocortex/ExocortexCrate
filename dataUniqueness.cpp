@@ -110,9 +110,10 @@ static void fillNormals(AtArray *nor, AtULong &norOffset, const n_map_mkey_to_in
    for (n_map_mkey_to_int::const_iterator beg = Ns_map.begin(); beg != Ns_map.end(); ++beg)
    {
       AtVector norm;
-      norm.x = beg->first.n_x;
-      norm.y = beg->first.n_y;
-      norm.z = beg->first.n_z;
+	  const n_mkey &first = beg->first;
+      norm.x = first.n_x;
+      norm.y = first.n_y;
+      norm.z = first.n_z;
 
       AiArraySetVec(nor, norOffset + beg->second, norm);
    }
