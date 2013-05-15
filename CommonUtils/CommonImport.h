@@ -48,6 +48,7 @@ public:
    std::map<std::string, std::string> extraParameters;
 
    bool includeChildren;
+   bool replaceColonsWithUnderscores; //built-in option for XSI
 
    IJobStringParser():
       importNormals(false),
@@ -64,7 +65,8 @@ public:
       skipUnattachedNodes(false),
       enableImportRootSelection(false),
       stripMayaNamespaces(false),
-      importCurvesAsStrands(false)
+      importCurvesAsStrands(false),
+      replaceColonsWithUnderscores(false)
    {}
 
    bool parse(const std::string& jobString);

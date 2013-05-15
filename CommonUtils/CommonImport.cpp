@@ -230,6 +230,20 @@ SceneNode::nodeTypeE getNodeType(Alembic::Abc::IObject iObj)
    return SceneNode::UNKNOWN;
 }
 
+
+std::string stripNamespaces(const std::string& iNodeName)
+{
+   std::vector<std::string> strArray;
+   boost::split(strArray, iNodeName, boost::is_any_of(":"));
+
+   size_t len = strArray.size();
+
+   if(len > 0){
+      return strArray[len-1];
+   }
+}
+
+
 struct AlembicISceneBuildElement
 {
    AbcObjectCache *pObjectCache;
@@ -293,6 +307,16 @@ SceneNodeAlembicPtr buildAlembicSceneGraph(AbcArchiveCache *pArchiveCache, AbcOb
       SceneNodeAlembicPtr newNode(new SceneNodeAlembic(sElement.pObjectCache));
 
       newNode->name = jobParams.replacer->replace( iObj.getName() );
+      if(jobParams.stripMayaNamespaces){
+         newNode->name = stripNamespaces(newNode->name);
+      }
+      else if (jobParams.replaceColonsWithUnderscores){
+         for(int i=0; i<newNode->name.size(); i++){
+            if(newNode->name[i] == ':'){
+               newNode->name[i] = '_';
+            }
+         }
+      }
       newNode->dccIdentifier = iObj.getFullName();
       newNode->type = getNodeType(iObj);
       newNode->selected = false;
