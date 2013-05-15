@@ -758,8 +758,7 @@ AppNodeMapPtr buildChildMap(SceneNodeAppPtr parent)
       SceneChildIterator endIt = parent->children.end();
       for(SceneChildIterator it = parent->children.begin(); it != endIt; it++){
          SceneNodeAppPtr node = reinterpret<SceneNode, SceneNodeApp>(*it);
-
-         (*map)[node->name] = node;
+         (*map)[removeXfoSuffix(node->name)] = node;
       }
    }
 
@@ -832,6 +831,7 @@ bool MergeSceneFile(SceneNodeAlembicPtr fileRoot, SceneNodeAppPtr appRoot, const
 
 
       const std::string& fileNodeName = removeXfoSuffix(currFileNode->name);
+
       AppNodeMap::iterator appNodeIt = childMapPtr->find(fileNodeName);
       if(appNodeIt != childMapPtr->end()){//we have a match
          SceneNodeAppPtr appNode = appNodeIt->second;
