@@ -63,6 +63,14 @@ XSI::CStatus AlembicModel::Save(double time)
       bGlobalSpace = true;
    }
 
+   for(std::list<SceneNodePtr>::iterator it=mExoSceneNode->children.begin(); it != mExoSceneNode->children.end(); it++){
+      if((*it)->type == SceneNode::CAMERA){
+         //ESS_LOG_WARNING("Disabling global space export for camera");
+         bGlobalSpace = false;
+         break;
+      }
+   }
+
    // store the transform
    SaveXformSample(GetRef(REF_PARENT_GLOBAL_TRANS), GetRef(REF_GLOBAL_TRANS),mXformSchema, mXformSample, time, bTransCache, bGlobalSpace, bFlatten);
    
