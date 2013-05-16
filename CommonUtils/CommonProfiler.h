@@ -1,8 +1,9 @@
 #ifndef __COMMON_PROFILER_H
 #define __COMMON_PROFILER_H
 
-#include "CommonAlembic.h"
-#include "CommonLog.h"
+#ifndef __COMMON_ALEMBIC_H
+	#error "Must include CommonAlembic.h before CommonProfiler.h"
+#endif
 
 #ifdef _MSC_VER
 

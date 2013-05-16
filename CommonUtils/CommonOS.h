@@ -1,6 +1,9 @@
 #ifndef __COMMON_OS_H
 #define __COMMON_OS_H
 
+#ifndef __COMMON_ALEMBIC_H
+	#error "Must include CommonAlembic.h before CommonLog.h"
+#endif
 
 #if defined( __GNUC__ )
 	#define printf_s(buffer, buffer_size, stringbuffer, ...) ( printf(buffer, stringbuffer, __VA_ARGS__) )
