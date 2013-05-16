@@ -1,4 +1,5 @@
 #include "stdafx.h"
+#include "CommonRegex.h"
 #include "common.h"
 #include "instance.h"
 #include "polyMesh.h"
@@ -21,9 +22,9 @@ static int Init(AtNode *mynode, void **user_ptr)
    ud->gProcShaders = NULL;
    ud->gProcDispMap= NULL;
 
-   ud->gDataString = (char*) AiNodeGetStr(mynode, "data");
+   const std::string strDataString = EnvVariables::replace( AiNodeGetStr(mynode, "data") );
+   ud->gDataString = (char*) strDataString.c_str();
    ud->gProcShaders = AiArrayCopy(AiNodeGetArray(mynode, "shader"));
-   ud->gProcDispMap = AiNodeGetArray(mynode, "disp_map");
 
    ud->has_subdiv_settings = AiNodeLookUpUserParameter(mynode,"subdiv_type") != NULL;
    if(ud->has_subdiv_settings)
@@ -40,6 +41,7 @@ static int Init(AtNode *mynode, void **user_ptr)
    ud->has_disp_settings = AiNodeLookUpUserParameter(mynode,"disp_zero_value") != NULL;
    if(ud->has_disp_settings)
    {
+	   ud->gProcDispMap = AiNodeGetArray(mynode, "disp_map");
       ud->disp_zero_value = AiNodeGetFlt(mynode, "disp_zero_value");
       ud->disp_height = AiNodeGetFlt(mynode, "disp_height");
       ud->disp_autobump = AiNodeGetBool(mynode, "disp_autobump");

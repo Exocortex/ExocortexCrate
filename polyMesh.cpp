@@ -11,9 +11,7 @@ template<typename AbcGeom>    // AbcGeom is either of type Alembic::AbcGeom::IPo
 static bool usingDynamicTopology(AbcGeom &typedObject)
 {
   Alembic::Abc::IInt32ArrayProperty faceIndicesProp = Alembic::Abc::IInt32ArrayProperty(typedObject.getSchema(),".faceIndices");
-  if (faceIndicesProp.valid())
-    return !faceIndicesProp.isConstant();
-  return false;
+  return faceIndicesProp.valid() && !faceIndicesProp.isConstant();
 }
 
 // common function for PolyMesh and SubD!
@@ -121,10 +119,12 @@ static void postShaderProcess(SCHEMA &schema, nodeData &nodata, userData *ud, Al
         Alembic::AbcGeom::IFaceSetSchema faceSet = schema.getFaceSet(faceSetNames[i]).getSchema();
         Alembic::AbcGeom::IFaceSetSchema::Sample faceSetSample = faceSet.getValue();
         Alembic::Abc::Int32ArraySamplePtr faces = faceSetSample.getFaces();
+		const size_t i_1 = i+1;
         for(size_t j=0; j < faces->size(); ++j)
         {
-          if((size_t)faces->get()[j] < shaderIndexCount && i+1 < ud->gProcShaders->nelements)
-            AiArraySetByte(nodata.shaderIndices,(AtUInt32)faces->get()[j],(AtByte)(i+1));
+			const Alembic::Abc::Int32ArraySamplePtr::element_type::value_type faceID = faces->get()[j];
+          if((size_t)faceID < shaderIndexCount && i_1 < ud->gProcShaders->nelements)
+            AiArraySetByte(nodata.shaderIndices,(AtUInt32)faceID,(AtByte)(i_1));
         }
       }
     }
@@ -137,9 +137,10 @@ static void plainPositionCopy(AtArray *pos, Alembic::Abc::P3fArraySamplePtr &abc
   for(size_t i=0; i < nbPos; ++i)
   {
     AtPoint pt;
-    pt.x = abcPos->get()[i].x;
-    pt.y = abcPos->get()[i].y;
-    pt.z = abcPos->get()[i].z;
+	const Alembic::Abc::P3fArraySamplePtr::element_type::value_type &apos = abcPos->get()[i];
+    pt.x = apos.x;
+    pt.y = apos.y;
+    pt.z = apos.z;
     AiArraySetPnt(pos, posOffset++, pt);
   }
 }
@@ -184,9 +185,11 @@ static bool hadToInterpolatePositions(SCHEMA &schema, SCHEMA_SAMPLE &sample, AtA
       for(size_t i=0;i<abcPos->size();i++)
       {
         AtPoint pt;
-        pt.x = abcPos->get()[i].x * ialpha + abcPos2->get()[i].x * alpha;
-        pt.y = abcPos->get()[i].y * ialpha + abcPos2->get()[i].y * alpha;
-        pt.z = abcPos->get()[i].z * ialpha + abcPos2->get()[i].z * alpha;
+		const Alembic::Abc::P3fArraySamplePtr::element_type::value_type &p1 = abcPos ->get()[i];
+		const Alembic::Abc::P3fArraySamplePtr::element_type::value_type &p2 = abcPos2->get()[i];
+        pt.x = p1.x * ialpha + p2.x * alpha;
+        pt.y = p1.y * ialpha + p2.y * alpha;
+        pt.z = p1.z * ialpha + p2.z * alpha;
         AiArraySetPnt(pos, posOffset++, pt);
       }
     }
@@ -200,9 +203,11 @@ static bool hadToInterpolatePositions(SCHEMA &schema, SCHEMA_SAMPLE &sample, AtA
         for(size_t i=0;i<abcPos->size();i++)
         {
           AtPoint pt;
-          pt.x = abcPos->get()[i].x + timeAlpha * abcVel->get()[i].x;
-          pt.y = abcPos->get()[i].y + timeAlpha * abcVel->get()[i].y;
-          pt.z = abcPos->get()[i].z + timeAlpha * abcVel->get()[i].z;
+			const Alembic::Abc::P3fArraySamplePtr::element_type::value_type &p1 = abcPos->get()[i];
+			const Alembic::Abc::V3fArraySamplePtr::element_type::value_type &v1 = abcVel->get()[i];
+          pt.x = p1.x + timeAlpha * v1.x;
+          pt.y = p1.y + timeAlpha * v1.y;
+          pt.z = p1.z + timeAlpha * v1.z;
           AiArraySetPnt(pos, posOffset++, pt);
         }
       }
@@ -302,9 +307,10 @@ AtNode *createPolyMeshNode(nodeData &nodata, userData * ud, std::vector<float> &
           AtPoint pnt;
           for(AtULong i=0;i<abcBindPose->size();i++)
           {
-            pnt.x = abcBindPose->get()[i].x;
-            pnt.y = abcBindPose->get()[i].y;
-            pnt.z = abcBindPose->get()[i].z;
+			  const Alembic::Abc::V3fArraySamplePtr::element_type::value_type &bind = abcBindPose->get()[i];
+            pnt.x = bind.x;
+            pnt.y = bind.y;
+            pnt.z = bind.z;
             AiArraySetPnt(bindPose, i, pnt);
           }
           AiNodeSetArray(shapeNode, "Pref", bindPose);

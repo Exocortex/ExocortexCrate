@@ -53,7 +53,7 @@ bool shiftedProcessing(nodeData &nodata, userData * ud)
     {
       instanceGroupInfo &gInfo = gInst.groupInfos[k];
       const int kInfIdSize = (int) gInfo.identifiers.size();
-      for(size_t l=0; k < kInfIdSize; ++l)
+      for(size_t l=0; l < kInfIdSize; ++l)
       {
         if(gInfo.identifiers[l] == objFullName)
         {
