@@ -16,6 +16,7 @@ def alembicTimeAndFileNode(filename):
 	#print("file node")
 	fileNode = cmds.createNode("ExocortexAlembicFile")
 	cmds.setAttr(fileNode+".fileName", filename, type="string")
+	cmds.connectAttr(timeControl+".outTime", fileNode+"inTime")
 	cmds.ExocortexAlembic_profileEnd(f="Python.ExocortexAlembic._functions.alembicTimeAndFileNode")
 	return fileNode, timeControl
 

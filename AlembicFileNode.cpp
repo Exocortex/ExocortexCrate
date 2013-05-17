@@ -2,6 +2,7 @@
 #include "AlembicFileNode.h"
 #include <cstdio>
 #include <sstream>
+#include <fstream>
 
 MObject AlembicFileNode::mTimeAttr;
 MObject AlembicFileNode::mMultiFileAttr;
@@ -64,6 +65,7 @@ MStatus AlembicFileNode::compute(const MPlug & plug, MDataBlock & dataBlock)
    {
 	   lastFileName = inFileName;
 	   multiFileTemplate.clear();
+	   lastMultiFileName = inFileName;
    }
 
    if ( dataBlock.inputValue(mMultiFileAttr).asBool() )
@@ -97,7 +99,12 @@ MStatus AlembicFileNode::compute(const MPlug & plug, MDataBlock & dataBlock)
 		   lastCurFrame = curFrame;
 		   char *tmpFormattedName = new char[inFileName.length() + 30];
 		   sprintf(tmpFormattedName, multiFileTemplate.c_str(), curFrame);
-		   lastMultiFileName = tmpFormattedName;
+		   std::ifstream in(tmpFormattedName);
+		   if (in.is_open())
+		   {
+			   in.close();
+			   lastMultiFileName = tmpFormattedName;
+		   }
 		   delete [] tmpFormattedName;
 	   }
 	   inFileName = lastMultiFileName;
