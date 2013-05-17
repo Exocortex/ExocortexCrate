@@ -489,7 +489,11 @@ MStatus AlembicPolyMeshNode::compute(const MPlug & plug, MDataBlock & dataBlock)
 		// get the object from the archive
 		pObjectInfo = getObjectCacheFromArchive( std::string( mFileName.asChar() ), std::string( identifier.asChar() ) );
 		if( pObjectInfo != NULL )
-			mObj = pObjectInfo->obj;
+		{
+			MGlobal::displayWarning("[ExocortexAlembic] Archive '"+mFileName+"' not found");
+			return MStatus::kFailure;
+		}
+		mObj = pObjectInfo->obj;
 
 		if(!mObj.valid())
 		{
