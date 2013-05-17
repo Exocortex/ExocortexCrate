@@ -6,7 +6,7 @@ import maya.cmds as cmds
 ############################################################################################################
 # general functions needed to import and attach
 ############################################################################################################
-def alembicTimeAndFileNode(filename):
+def alembicTimeAndFileNode(filename, multi=False):
 	cmds.ExocortexAlembic_profileBegin(f="Python.ExocortexAlembic._functions.alembicTimeAndFileNode")
 	#print("time control")
 	timeControl = "AlembicTimeControl"
@@ -16,7 +16,9 @@ def alembicTimeAndFileNode(filename):
 	#print("file node")
 	fileNode = cmds.createNode("ExocortexAlembicFile")
 	cmds.setAttr(fileNode+".fileName", filename, type="string")
-	cmds.connectAttr(timeControl+".outTime", fileNode+"inTime")
+	cmds.connectAttr(timeControl+".outTime", fileNode+".inTime")
+	if multi:
+		cmds.setAttr(fileNode+".multiFiles", 1);
 	cmds.ExocortexAlembic_profileEnd(f="Python.ExocortexAlembic._functions.alembicTimeAndFileNode")
 	return fileNode, timeControl
 
