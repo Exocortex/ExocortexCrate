@@ -490,7 +490,7 @@ MStatus AlembicPolyMeshNode::compute(const MPlug & plug, MDataBlock & dataBlock)
 		pObjectInfo = getObjectCacheFromArchive( std::string( mFileName.asChar() ), std::string( identifier.asChar() ) );
 		if( pObjectInfo == NULL )
 		{
-			MGlobal::displayWarning("[ExocortexAlembic] Archive '"+mFileName+"' not found");
+			MGlobal::displayError("[ExocortexAlembic] Archive '"+mFileName+"' not found");
 			return MStatus::kFailure;
 		}
 		mObj = pObjectInfo->obj;
@@ -1025,11 +1025,14 @@ MStatus AlembicPolyMeshDeformNode::deform(MDataBlock & dataBlock, MItGeometry & 
     mIdentifier = identifier;
 
     pObjectCache = getObjectCacheFromArchive( std::string( mFileName.asChar() ), std::string( identifier.asChar() ) );
-    if( pObjectCache != NULL ) {
-      mObj = pObjectCache->obj;
+    if( pObjectCache == NULL )
+    {
+       MGlobal::displayError("[ExocortexAlembic] Archive '"+mFileName+"' not found");
+       return MStatus::kFailure;
     }
+    mObj = pObjectCache->obj;
+
     // get the object from the archive
-    //mObj = getObjectFromArchive(mFileName,identifier);
     if(!mObj.valid())
     {
       MGlobal::displayWarning("[ExocortexAlembic] Identifier '"+identifier+"' not found in archive '"+mFileName+"'.");
@@ -1089,37 +1092,43 @@ MStatus AlembicPolyMeshDeformNode::deform(MDataBlock & dataBlock, MItGeometry & 
   // iteration should not be necessary. the iteration is only 
   // required if the same mesh is attached to the same deformer
   // several times
-  float blend = (float)sampleInfo.alpha;
-  float iblend = 1.0f - blend;
+  const float blend = (float)sampleInfo.alpha;
+  const float iblend = 1.0f - blend;
   {
     ESS_PROFILE_SCOPE("AlembicPolyMeshDeformNode::deform position iterator");
 
 	const bool useBlending = sampleInfo.alpha != 0.0 && samplePos2->size() == samplePos->size() && ! mDynamicTopology;
     for(iter.reset(); !iter.isDone(); iter.next())
     {
-      float weight = weightValue(dataBlock,geomIndex,iter.index()) * env;
+	  const int iter_index = iter.index();
+      const float weight = weightValue(dataBlock, geomIndex, iter_index) * env;
       if(weight == 0.0f)
         continue;
-      float iweight = 1.0f - weight;
-      if(iter.index() >= samplePos->size())
+      const float iweight = 1.0f - weight;
+
+      if(iter_index >= samplePos->size())
         continue;
       MPoint pt = iter.position();
+	  if (iweight)
+	  {
+		  pt.x *= iweight;
+		  pt.y *= iweight;
+		  pt.z *= iweight;
+	  }
 
-      MFloatPoint abcPt;
-      const Alembic::Abc::v4::V3f &pos1 = samplePos->get()[iter.index()];
+      const Alembic::Abc::v4::V3f &pos1 = samplePos->get()[iter_index];
       if(useBlending)
       {
-        //ESS_LOG_WARNING( "blending vertex positions (1-2) B." );
-        const Alembic::Abc::v4::V3f &pos2 = samplePos2->get()[iter.index()];
-        pt.x = iweight * pt.x + weight * (pos1.x * iblend + pos2.x * blend);
-        pt.y = iweight * pt.y + weight * (pos1.y * iblend + pos2.y * blend);
-        pt.z = iweight * pt.z + weight * (pos1.z * iblend + pos2.z * blend);
+        const Alembic::Abc::v4::V3f &pos2 = samplePos2->get()[iter_index];
+        pt.x = weight * (pos1.x + (pos2.x - pos1.x) * blend);
+        pt.x = weight * (pos1.y + (pos2.y - pos1.y) * blend);
+        pt.x = weight * (pos1.z + (pos2.z - pos1.z) * blend);
       }
       else
       {
-        pt.x = iweight * pt.x + weight * pos1.x;
-        pt.y = iweight * pt.y + weight * pos1.y;
-        pt.z = iweight * pt.z + weight * pos1.z;
+        pt.x = weight * pos1.x;
+        pt.y = weight * pos1.y;
+        pt.z = weight * pos1.z;
       }
       iter.setPosition(pt);
     }

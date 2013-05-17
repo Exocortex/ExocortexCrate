@@ -56,6 +56,20 @@ MStatus AlembicFileNode::initialize()
    return status;
 }
 
+static std::string createFileTemplate(const std::string &filename, size_t num, size_t dot, bool usePadding)
+{
+	std::stringstream ss;
+	ss << filename.substr(0, num) << "%";
+	if (usePadding)
+	{
+		const size_t diff = dot-num;
+		if (diff)
+		   ss << "0" << diff;
+	}
+	ss << "d" << filename.substr(dot);
+	return ss.str();
+}
+
 MStatus AlembicFileNode::compute(const MPlug & plug, MDataBlock & dataBlock)
 {
    ESS_PROFILE_SCOPE("AlembicFileNode::compute");
@@ -65,6 +79,7 @@ MStatus AlembicFileNode::compute(const MPlug & plug, MDataBlock & dataBlock)
    {
 	   lastFileName = inFileName;
 	   multiFileTemplate.clear();
+	   multiFileTemplateNoPadding.clear();
 	   lastMultiFileName = inFileName;
    }
 
@@ -72,7 +87,7 @@ MStatus AlembicFileNode::compute(const MPlug & plug, MDataBlock & dataBlock)
    {
 	   if (multiFileTemplate.size() == 0)
 	   {
-		   std::string filename = inFileName.asChar();
+		   const std::string filename = inFileName.asChar();
 		   size_t dot = filename.rfind(".");
 		   size_t num = dot-1;
 		   if (dot != std::string::npos)
@@ -82,30 +97,38 @@ MStatus AlembicFileNode::compute(const MPlug & plug, MDataBlock & dataBlock)
 			   ++num;
 		   }
 
-		   std::stringstream ss;
-		   ss << filename.substr(0, num) << "%";
-		   {
-			   const size_t diff = dot-num;
-			   if (diff)
-				   ss << "0" << diff;
-		   }
-		   ss << "d" << filename.substr(dot);
-		   multiFileTemplate = ss.str();
+		   // The Padding format <filename>#####.abc --> <filename>00010.abc, <filename>08921.abc
+		   multiFileTemplate = createFileTemplate(filename, num, dot, true);
+
+		   // The Non-Padding format <filename>#.abc --> <filename>10.abc, <filename>8921.abc
+		   multiFileTemplateNoPadding = createFileTemplate(filename, num, dot, false);
 	   }
 
 	   const int curFrame = dataBlock.inputValue(mTimeAttr).asTime().value();
 	   if (lastCurFrame != curFrame)
 	   {
-		   lastCurFrame = curFrame;
-		   char *tmpFormattedName = new char[inFileName.length() + 30];
+		   std::vector<char> vecFormattedName(inFileName.length() + 30, '\0');
+		   char *tmpFormattedName = &( vecFormattedName[0] );
+
 		   sprintf(tmpFormattedName, multiFileTemplate.c_str(), curFrame);
 		   std::ifstream in(tmpFormattedName);
-		   if (in.is_open())
+		   if (in.is_open())	// try the padded version
 		   {
 			   in.close();
 			   lastMultiFileName = tmpFormattedName;
+			   lastCurFrame = curFrame;
 		   }
-		   delete [] tmpFormattedName;
+		   else
+		   {
+			   sprintf(tmpFormattedName,  multiFileTemplateNoPadding.c_str(), curFrame);
+			   in.open(tmpFormattedName);
+			   if (in.is_open())	// try the non-padded version!
+			   {
+				   in.close();
+				   lastMultiFileName = tmpFormattedName;
+				   lastCurFrame = curFrame;
+			   }
+		   }
 	   }
 	   inFileName = lastMultiFileName;
    }

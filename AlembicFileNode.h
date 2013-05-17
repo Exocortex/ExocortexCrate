@@ -18,6 +18,7 @@ public:
 private:
 	MString lastFileName;
 	std::string multiFileTemplate;
+	std::string multiFileTemplateNoPadding;
 	int lastCurFrame;
 	MString lastMultiFileName;
 

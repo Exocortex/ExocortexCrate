@@ -169,7 +169,7 @@ MStatus AlembicImportCommand::importSingleJob(const MString &job, int jobNumber)
 
 	pBar.stop();
 	pBar.init(0, nNumNodes, 1);
-	
+
 	if(jobParser.attachToExisting)
 	{
 		//pBar.setCaption(std::string("Attach"));
