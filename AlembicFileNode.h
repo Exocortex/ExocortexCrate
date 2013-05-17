@@ -6,7 +6,7 @@
 class AlembicFileNode: public AlembicObjectNode
 {
 public:
-   AlembicFileNode() {}
+	AlembicFileNode(): lastCurFrame(-50000) {}
    virtual ~AlembicFileNode() {}
 
    // override virtual methods from MPxNode
@@ -16,10 +16,14 @@ public:
    static MStatus initialize();
 
 private:
+	MString lastFileName;
+	std::string multiFileTemplate;
+	int lastCurFrame;
+	MString lastMultiFileName;
+
    // input attributes
    static MObject mTimeAttr;
-   static MObject mFactorAttr;
-   static MObject mOffsetAttr;
+   static MObject mMultiFileAttr;
 
    // output attributes
    static MObject mFileNameAttr;
