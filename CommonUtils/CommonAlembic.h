@@ -49,6 +49,7 @@ namespace fs = boost::filesystem;
 #include <Alembic/Abc/All.h>
 #include <Alembic/AbcGeom/All.h>
 #include <Alembic/AbcCoreHDF5/All.h>
+#include <Alembic/AbcCoreOgawa/All.h>
 #include <Alembic/AbcCoreAbstract/TimeSampling.h>
 #include <Alembic/Util/Murmur3.h>
 #include <Alembic/AbcMaterial/All.h>
