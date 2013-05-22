@@ -123,17 +123,28 @@ CStatus AlembicWriteJob::PreProcess()
       return CStatus::InvalidArgument;
    }
 
+   bool bUseOgawa = (bool)GetOption(L"useOgawa");
+
    // init archive (use a locally scoped archive)
    CString sceneFileName = L"Exported from: "+Application().GetActiveProject().GetActiveScene().GetParameterValue(L"FileName").GetAsText();
    try
    {
-      mArchive = CreateArchiveWithInfo(
-		  //Alembic::AbcCoreHDF5::WriteArchive( true ),
-          Alembic::AbcCoreOgawa::WriteArchive(),
-            mFileName.GetAsciiString(),
-            getExporterName( "Softimage " EC_QUOTE( crate_Softimage_Version ) ).c_str(),
-			getExporterFileName( sceneFileName.GetAsciiString() ).c_str(),
-            Abc::ErrorHandler::kThrowPolicy);
+      if(bUseOgawa){
+         mArchive = CreateArchiveWithInfo(
+            Alembic::AbcCoreOgawa::WriteArchive(),
+               mFileName.GetAsciiString(),
+               getExporterName( "Softimage " EC_QUOTE( crate_Softimage_Version ) ).c_str(),
+			   getExporterFileName( sceneFileName.GetAsciiString() ).c_str(),
+               Abc::ErrorHandler::kThrowPolicy);
+      }
+      else{
+         mArchive = CreateArchiveWithInfo(
+            Alembic::AbcCoreHDF5::WriteArchive( true ),
+               mFileName.GetAsciiString(),
+               getExporterName( "Softimage " EC_QUOTE( crate_Softimage_Version ) ).c_str(),
+			   getExporterFileName( sceneFileName.GetAsciiString() ).c_str(),
+               Abc::ErrorHandler::kThrowPolicy);
+      }
    }
    catch(Alembic::Util::Exception& e)
    {

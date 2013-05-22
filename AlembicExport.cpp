@@ -160,6 +160,8 @@ CStatus exportCommandImp( CRef& in_ctxt )
          jobString += L";transformHierarchy=bake";
       }
 
+      jobString += L";storageFormat="+settings.GetParameterValue(L"storageFormat").GetAsText();
+
       Application().ExecuteCommand(L"DeleteObj",inspectArgs,inspectResult);
    }
 
@@ -191,6 +193,7 @@ CStatus exportCommandImp( CRef& in_ctxt )
       bool guidecurves = false;
 	  bool geomApproxSubD = false;
       bool includeParentNodes = true;
+      bool useOgawa = false;
       //CRefArray objects;
 
      std::vector<std::string> objects;
@@ -275,6 +278,9 @@ CStatus exportCommandImp( CRef& in_ctxt )
          }
          else if(valuePair[0].IsEqualNoCase(L"geomApproxSubD")){
             geomApproxSubD = (bool)CValue(valuePair[1]);
+         }
+         else if(valuePair[0].IsEqualNoCase(L"storageFormat")){
+            useOgawa = (bool)CValue(valuePair[1]);
          }
          else if(valuePair[0].IsEqualNoCase(L"objects"))
          {
@@ -385,6 +391,7 @@ CStatus exportCommandImp( CRef& in_ctxt )
       job->SetOption(L"guideCurves",guidecurves);
 	  job->SetOption(L"geomApproxSubD",geomApproxSubD);
       job->SetOption(L"includeParentNodes",includeParentNodes);
+      job->SetOption(L"useOgawa",useOgawa);
 
       // check if the job is satifsied
       if(job->PreProcess() != CStatus::OK)
@@ -496,6 +503,7 @@ ESS_CALLBACK_START(alembic_export_settings_Define,CRef&)
    oCustomProperty.AddParameter(L"transformcache",CValue::siBool,siPersistable,L"",L"",0,0,1,0,1,oParam);
    oCustomProperty.AddParameter(L"transforms",CValue::siInt4,siPersistable,L"",L"",0,0,10,0,10,oParam);
    oCustomProperty.AddParameter(L"includeParentNodes",CValue::siBool,siPersistable,L"",L"",1,0,1,0,1,oParam);
+   oCustomProperty.AddParameter(L"storageFormat",CValue::siInt4,siPersistable,L"",L"",0,0,10,0,10,oParam);
 
 	return CStatus::OK;
 ESS_CALLBACK_END
@@ -541,6 +549,15 @@ ESS_CALLBACK_START(alembic_export_settings_DefineLayout,CRef&)
    transformItems[5] = (LONG) 2;
    oLayout.AddEnumControl(L"transforms", transformItems, L"Transforms");
    oLayout.AddItem(L"includeParentNodes", "Include Parent Nodes");
+
+
+   CValueArray storageItems(4);
+   storageItems[0] = L"HDF5";
+   storageItems[1] = (LONG) 0;
+   storageItems[2] = L"Ogawa";
+   storageItems[3] = (LONG) 1;
+   oLayout.AddEnumControl(L"storageFormat", storageItems, L"Storage Format");
+
 
 	return CStatus::OK;
 ESS_CALLBACK_END
