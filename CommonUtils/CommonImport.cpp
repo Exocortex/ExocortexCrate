@@ -19,6 +19,24 @@ bool parseBool(std::string value){
 	}
 }
 
+bool IJobStringParser::paramIsSet(const std::string& param)
+{
+   if( extraParameters.find(param) == extraParameters.end()){
+      return false;
+   }
+   return parseBool(extraParameters[param]);
+}
+
+void IJobStringParser::setParam(const std::string& param, bool bVal)
+{
+   if(bVal){
+      extraParameters[param] = "1";
+   }
+   else{
+      extraParameters[param] = "0";
+   }
+}
+
 bool IJobStringParser::parse(const std::string& jobString)
 {
 	std::string search_str, replace_str;
@@ -103,6 +121,10 @@ bool IJobStringParser::parse(const std::string& jobString)
 		{
 			stripMayaNamespaces = parseBool(valuePair[1]);
 		}
+		else if(boost::iequals(valuePair[0], "importCurvesAsStrands"))
+		{
+			importCurvesAsStrands = parseBool(valuePair[1]);
+		}
  		else if(boost::iequals(valuePair[0], "defaultXformNode"))
 		{
            if(boost::iequals(valuePair[1], "model")){
@@ -153,7 +175,7 @@ std::string IJobStringParser::buildJobString()
    stream<<";importVisibilityControllers="<<importVisibilityControllers<<";importStandinProperties="<<importStandinProperties;
    stream<<";importBoundingBoxes="<<importBoundingBoxes<<";attachToExisting="<<attachToExisting<<";skipUnattachedNodes="<<skipUnattachedNodes;
    stream<<";failOnUnsupported="<<failOnUnsupported<<";enableImportRootSelection="<<enableImportRootSelection<<";stripMayaNamespaces="<<stripMayaNamespaces;
-   stream<<";defaultXformNode=";
+   stream<<";importCurvesAsStrands="<<importCurvesAsStrands<<";defaultXformNode=";
 
    if( xformTypes == XSI_XformTypes::XMODEL){
       stream<<"model";
@@ -207,6 +229,20 @@ SceneNode::nodeTypeE getNodeType(Alembic::Abc::IObject iObj)
 	}
    return SceneNode::UNKNOWN;
 }
+
+
+std::string stripNamespaces(const std::string& iNodeName)
+{
+   std::vector<std::string> strArray;
+   boost::split(strArray, iNodeName, boost::is_any_of(":"));
+
+   size_t len = strArray.size();
+
+   if(len > 0){
+      return strArray[len-1];
+   }
+}
+
 
 struct AlembicISceneBuildElement
 {
@@ -271,6 +307,16 @@ SceneNodeAlembicPtr buildAlembicSceneGraph(AbcArchiveCache *pArchiveCache, AbcOb
       SceneNodeAlembicPtr newNode(new SceneNodeAlembic(sElement.pObjectCache));
 
       newNode->name = jobParams.replacer->replace( iObj.getName() );
+      if(jobParams.stripMayaNamespaces){
+         newNode->name = stripNamespaces(newNode->name);
+      }
+      else if (jobParams.replaceColonsWithUnderscores){
+         for(int i=0; i<newNode->name.size(); i++){
+            if(newNode->name[i] == ':'){
+               newNode->name[i] = '_';
+            }
+         }
+      }
       newNode->dccIdentifier = iObj.getFullName();
       newNode->type = getNodeType(iObj);
       newNode->selected = false;
@@ -544,7 +590,7 @@ struct ImportStackElement
 
 };
 
-bool ImportSceneFile(SceneNodeAlembicPtr fileRoot, SceneNodeAppPtr appRoot, const IJobStringParser& jobParams, CommonProgressBar *pbar)
+bool ImportSceneFile(SceneNodeAlembicPtr fileRoot, SceneNodeAppPtr appRoot, const IJobStringParser& jobParams, CommonProgressBar *pbar, std::list<SceneNodeAppPtr> *newNodes)
 {
    ESS_PROFILE_FUNC();
 
@@ -627,6 +673,9 @@ bool ImportSceneFile(SceneNodeAlembicPtr fileRoot, SceneNodeAppPtr appRoot, cons
             }
          }
          
+         if(newNodes){
+            newNodes->push_back(newAppNode);
+         }
       }
       else{
          //ESS_LOG_WARNING("newAppNode useCount: "<<newAppNode.use_count());
@@ -639,6 +688,85 @@ bool ImportSceneFile(SceneNodeAlembicPtr fileRoot, SceneNodeAppPtr appRoot, cons
    if (pbar) pbar->stop();
    return true;
 }
+
+
+struct SampleRangeStackElement
+{
+   SceneNodeAlembicPtr currFileNode;
+
+   SampleRangeStackElement(SceneNodeAlembicPtr node):currFileNode(node)
+   {}
+
+};
+
+template<class T> void GetSampleRangeT(Abc::IObject& obj, std::size_t& oMinSample, std::size_t& oMaxSample, double& oMinTime, double& oMaxTime)
+{
+   T xObj(obj, Abc::kWrapExisting);
+   Alembic::AbcCoreAbstract::TimeSamplingPtr ts = xObj.getSchema().getTimeSampling();
+   std::size_t numSamples = xObj.getSchema().getNumSamples();
+   oMinSample = 0;
+   oMaxSample = std::max(oMaxSample, (numSamples-1));
+   oMinTime = std::min(ts->getSampleTime(0), oMinTime);
+   oMaxTime = std::max(ts->getSampleTime(numSamples-1), oMaxTime);
+}
+
+
+void GetSampleRange(SceneNodeAlembicPtr fileRoot, std::size_t& oMinSample, std::size_t& oMaxSample, double& oMinTime, double& oMaxTime)
+{
+   ESS_PROFILE_FUNC();
+
+   std::list<SampleRangeStackElement> sceneStack;
+
+   for(SceneChildIterator it = fileRoot->children.begin(); it != fileRoot->children.end(); it++){
+      SceneNodeAlembicPtr fileNode = reinterpret<SceneNode, SceneNodeAlembic>(*it);
+      sceneStack.push_back(SampleRangeStackElement(fileNode));
+   }
+
+   
+
+   while( !sceneStack.empty() )
+   {
+      SampleRangeStackElement sElement = sceneStack.back();
+      SceneNodeAlembicPtr currFileNode = sElement.currFileNode;
+      sceneStack.pop_back();
+
+      SceneNodeAlembicPtr alembicNode = reinterpret<SceneNode, SceneNodeAlembic>(currFileNode);
+      Abc::IObject obj = alembicNode->getObject();
+      
+      AbcG::MetaData metadata = obj.getMetaData();
+      if(AbcG::IXform::matches(metadata)){
+         GetSampleRangeT<AbcG::IXform>(obj, oMinSample, oMaxSample, oMinTime, oMaxTime);
+      }
+      else if(AbcG::IPolyMesh::matches(metadata)){
+         GetSampleRangeT<AbcG::IPolyMesh>(obj, oMinSample, oMaxSample, oMinTime, oMaxTime);
+      }
+      else if(AbcG::ISubD::matches(metadata)){
+         GetSampleRangeT<AbcG::ISubD>(obj, oMinSample, oMaxSample, oMinTime, oMaxTime);
+	  }
+	  else if(AbcG::ICamera::matches(metadata)){
+         GetSampleRangeT<AbcG::ICamera>(obj, oMinSample, oMaxSample, oMinTime, oMaxTime);
+	  }
+	  else if(AbcG::IPoints::matches(metadata)){
+         GetSampleRangeT<AbcG::IPoints>(obj, oMinSample, oMaxSample, oMinTime, oMaxTime);
+	  }
+	  else if(AbcG::ICurves::matches(metadata)){
+         GetSampleRangeT<AbcG::ICurves>(obj, oMinSample, oMaxSample, oMinTime, oMaxTime);
+	  }
+	  else if(AbcG::ILight::matches(metadata)){
+         GetSampleRangeT<AbcG::ILight>(obj, oMinSample, oMaxSample, oMinTime, oMaxTime);
+	  }
+      else if(AbcG::INuPatch::matches(metadata)){
+         GetSampleRangeT<AbcG::INuPatch>(obj, oMinSample, oMaxSample, oMinTime, oMaxTime);
+	  }
+      else{
+         ESS_LOG_WARNING("Warning: time range cannot be read for unrecoginized type.");
+      }
+
+
+   }
+
+}
+
 
 
 typedef std::map<std::string, SceneNodeAppPtr> AppNodeMap;
@@ -654,8 +782,7 @@ AppNodeMapPtr buildChildMap(SceneNodeAppPtr parent)
       SceneChildIterator endIt = parent->children.end();
       for(SceneChildIterator it = parent->children.begin(); it != endIt; it++){
          SceneNodeAppPtr node = reinterpret<SceneNode, SceneNodeApp>(*it);
-
-         (*map)[node->name] = node;
+         (*map)[removeXfoSuffix(node->name)] = node;
       }
    }
 
@@ -673,7 +800,7 @@ struct MergeStackElement
 
 };
 
-bool MergeSceneFile(SceneNodeAlembicPtr fileRoot, SceneNodeAppPtr appRoot, const IJobStringParser& jobParams, CommonProgressBar *pbar)
+bool MergeSceneFile(SceneNodeAlembicPtr fileRoot, SceneNodeAppPtr appRoot, const IJobStringParser& jobParams, CommonProgressBar *pbar, std::list<SceneNodeAppPtr> *newNodes)
 {
    ESS_PROFILE_FUNC();
 
@@ -728,6 +855,7 @@ bool MergeSceneFile(SceneNodeAlembicPtr fileRoot, SceneNodeAppPtr appRoot, const
 
 
       const std::string& fileNodeName = removeXfoSuffix(currFileNode->name);
+
       AppNodeMap::iterator appNodeIt = childMapPtr->find(fileNodeName);
       if(appNodeIt != childMapPtr->end()){//we have a match
          SceneNodeAppPtr appNode = appNodeIt->second;
@@ -783,6 +911,9 @@ bool MergeSceneFile(SceneNodeAlembicPtr fileRoot, SceneNodeAppPtr appRoot, const
             }
          }
          
+         if(newNodes){
+            newNodes->push_back(newAppNode);
+         }
       }
       else{
          //ESS_LOG_WARNING("newAppNode useCount: "<<newAppNode.use_count());

@@ -1,9 +1,8 @@
 #include "CommonAlembic.h"
 #include "CommonUtilities.h"
 #include "CommonLicensing.h"
-#include "CommonLog.h"
-#include "CommonProfiler.h"
 #include "CommonAbcCache.h"
+#include "CommonRegex.h"
 
 #ifdef ESS_PROFILING
 stats_map default_stats_policy::stats;
@@ -87,7 +86,7 @@ std::string resolvePath( std::string const& originalPath ) {
 	   return s_originalToResolvedPath[ originalPath ];
    }*/
 
-   std::string resolvedPath = resolvePath_Internal( originalPath );
+   std::string resolvedPath = resolvePath_Internal( EnvVariables::replace( originalPath ) );
 
    //s_originalToResolvedPath.insert( std::pair<std::string,std::string>( originalPath, resolvedPath ) );
 
@@ -938,4 +937,18 @@ int getCurveOrder(int i, Abc::UInt16ArraySamplePtr pOrders, AbcG::CurveType type
       return 2;
    }
    return 4;
+}
+
+AbcG::IVisibilityProperty getAbcVisibilityProperty(Abc::IObject shapeObj)
+{
+    Abc::IObject parent = shapeObj.getParent();
+    if(parent.valid()){
+        //ESS_LOG_WARNING("loading vis from xform");
+	    AbcG::IVisibilityProperty visProp = AbcG::GetVisibilityProperty(parent);
+        if(visProp.valid()){
+           return visProp;
+        }
+    }
+    //ESS_LOG_WARNING("loading vis from shape");
+	return AbcG::GetVisibilityProperty(shapeObj);
 }

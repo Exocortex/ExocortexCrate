@@ -37,6 +37,7 @@ public:
    bool skipUnattachedNodes;
    bool enableImportRootSelection;
    bool stripMayaNamespaces;
+   bool importCurvesAsStrands;
    XSI_XformTypes::xte xformTypes;
 
    SearchReplace::ReplacePtr replacer;
@@ -47,6 +48,7 @@ public:
    std::map<std::string, std::string> extraParameters;
 
    bool includeChildren;
+   bool replaceColonsWithUnderscores; //built-in option for XSI
 
    IJobStringParser():
       importNormals(false),
@@ -62,20 +64,27 @@ public:
       selectShapes(true),
       skipUnattachedNodes(false),
       enableImportRootSelection(false),
-      stripMayaNamespaces(false)
+      stripMayaNamespaces(false),
+      importCurvesAsStrands(false),
+      replaceColonsWithUnderscores(false)
    {}
 
    bool parse(const std::string& jobString);
 
    std::string buildJobString();
+
+   bool paramIsSet(const std::string& param);
+   void setParam(const std::string& param, bool bVal=true);
 };
 
 SceneNodeAlembicPtr buildAlembicSceneGraph(AbcArchiveCache *pArchiveCache, AbcObjectCache *pRootObjectCache, int& nNumNodes, const IJobStringParser& jobParams, bool countMergableChildren=true, CommonProgressBar *pBar = 0);
 
 // progress bar needs to be initialized before these functions are called!
-bool ImportSceneFile(SceneNodeAlembicPtr fileRoot, SceneNodeAppPtr appRoot, const IJobStringParser& jobParams, CommonProgressBar *pBar = 0);
+bool ImportSceneFile(SceneNodeAlembicPtr fileRoot, SceneNodeAppPtr appRoot, const IJobStringParser& jobParams, CommonProgressBar *pBar = 0, std::list<SceneNodeAppPtr> *newNodes = 0);
 bool AttachSceneFile(SceneNodeAlembicPtr fileRoot, SceneNodeAppPtr appRoot, const IJobStringParser& jobParams, CommonProgressBar *pBar = 0);
-bool MergeSceneFile(SceneNodeAlembicPtr fileRoot, SceneNodeAppPtr appRoot, const IJobStringParser& jobParams, CommonProgressBar *pBar = 0);
+bool MergeSceneFile(SceneNodeAlembicPtr fileRoot, SceneNodeAppPtr appRoot, const IJobStringParser& jobParams, CommonProgressBar *pBar = 0, std::list<SceneNodeAppPtr> *newNodes = 0);
 
+
+void GetSampleRange(SceneNodeAlembicPtr fileRoot, std::size_t& oMinSample, std::size_t& oMaxSample, double& oMinTime, double& oMaxTime);
 
 #endif
