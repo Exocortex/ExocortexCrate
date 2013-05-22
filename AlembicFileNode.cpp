@@ -39,5 +39,6 @@ MStatus AlembicFileNode::compute(const MPlug & plug, MDataBlock & dataBlock)
 {
    ESS_PROFILE_SCOPE("AlembicFileNode::compute");
    dataBlock.outputValue(mOutFileNameAttr).set(resolvePath(dataBlock.inputValue(mFileNameAttr).asString()));
+   dataBlock.outputValue(mOutFileNameAttr).setClean();
    return MStatus::kSuccess;
 }

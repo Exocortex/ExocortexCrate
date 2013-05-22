@@ -15,6 +15,7 @@
 
 #include "sceneGraph.h"
 #include <maya/MItDag.h>
+#include <maya/MItDependencyNodes.h>
 
 /// Maya Progress Bar
 void MayaProgressBar::init(int _min, int _max, int incr)
@@ -222,6 +223,11 @@ MStatus AlembicImportCommand::doIt(const MArgList & args)
 		return MS::kSuccess;
 	}
 
+	// number of nodes before importing!
+	int nbBeforeNodes = 0;
+	for (MItDependencyNodes nodeIt; !nodeIt.isDone(); nodeIt.next(), ++nbBeforeNodes);
+
+	// import jobs!
 	for(unsigned int i=0; i<jobCount;)	// 'i' is increment below!
 	{
 		MArgList jobArgList;
@@ -230,6 +236,19 @@ MStatus AlembicImportCommand::doIt(const MArgList & args)
 		if (status != MS::kSuccess)
 			break;
 	}
+
+	// get the new nodes (listed after the old ones)!
+	MSelectionList afterList;MItDependencyNodes nodeIt;
+	for (; nbBeforeNodes; nodeIt.next(), --nbBeforeNodes);
+
+	for (; !nodeIt.isDone(); nodeIt.next())
+		afterList.add(nodeIt.item());
+
+	MStringArray newNodes;
+	afterList.getSelectionStrings(newNodes);
+	afterList.clear();
+
+	MPxCommand::setResult(newNodes);
 	return status;
 }
 

@@ -313,7 +313,7 @@ MStatus AlembicCurvesNode::compute(const MPlug & plug, MDataBlock & dataBlock)
 
 		// create a subd either with or without uvs
 		MObject mmCurvesData = MFnNurbsCurveData().create();
-		if (ldegree != 1 && ldegree != 3)
+		if (ldegree == 1 || ldegree == 3)
 			mCurves.create(points, knots, ldegree, closed ? MFnNurbsCurve::kClosed : MFnNurbsCurve::kOpen, false, false, mmCurvesData);
 		builder.addElement(ii).set(mmCurvesData);
 	}

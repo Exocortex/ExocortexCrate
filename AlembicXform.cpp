@@ -1,16 +1,65 @@
 #include "stdafx.h"
 #include "AlembicXform.h"
 #include "MetaData.h"
+#include <maya/MAnimUtil.h>
 
+void AlembicXform::testAnimatedVisibility(AlembicObject *aobj, bool animTS, bool flatHierarchy)
+{
+	MStatus stat;
+
+	MFnDagNode dagNode(GetRef());
+	do
+	{
+		MDagPath path;
+		stat = dagNode.getPath(path);
+		if (stat != MS::kSuccess)
+			break;
+
+		MObject mObj = path.node(&stat);
+		if (stat != MS::kSuccess)
+			continue;
+
+		MFnDependencyNode dep(mObj, &stat);
+		if (stat != MS::kSuccess)
+			continue;
+
+		MPlug vis = dep.findPlug("visibility", true, &stat);
+		if (stat != MS::kSuccess)
+			continue;
+
+		if (MAnimUtil::isAnimated(vis))
+		{
+			if (visInfo.visibility == VISIBLE)
+			{
+				visInfo.visibility = ANIMATED_VISIBLE;
+				visInfo.mOVisibility = CreateVisibilityProperty(mObject, animTS);
+			}
+			visInfo.visibilityPlugs.append(vis);	// just add animated ones!
+		}
+		else if (!vis.asBool())		// if it's never visible!
+		{
+			if (visInfo.visibility == VISIBLE)
+				visInfo.mOVisibility = CreateVisibilityProperty(mObject, animTS);
+			visInfo.visibility = NOT_VISIBLE;
+			visInfo.visibilityPlugs.clear();
+			break;	// break out because no need to analyse this further!
+		}
+
+		if (dagNode.parentCount() == 0)
+			break;
+		dagNode.setObject(dagNode.parent(0));
+	}
+	while(flatHierarchy);
+}
 
 AlembicXform::AlembicXform(SceneNodePtr eNode, AlembicWriteJob * in_Job, Abc::OObject oParent)
-	: AlembicObject(eNode, in_Job, oParent)
+	: AlembicObject(eNode, in_Job, oParent), visInfo()
 {
 	const bool animTS = GetJob()->GetAnimatedTs();
 	mObject = AbcG::OXform(GetMyParent(), eNode->name, animTS);
 	mSchema = mObject.getSchema();
 
-	mOVisibility = CreateVisibilityProperty(mObject, animTS);
+	testAnimatedVisibility(this, animTS, GetJob()->GetOption(L"flattenHierarchy").asInt() > 0);
 }
 
 AlembicXform::~AlembicXform()
@@ -25,11 +74,45 @@ MStatus AlembicXform::Save(double time)
    // save the metadata
    SaveMetaData(this);
 
+	// iterate all dagpaths 
+	MDagPath path;
+	{  
+		ESS_PROFILE_SCOPE("AlembicXform::Save dagNode");
+		MFnDagNode dagNode(GetRef());
+		MDagPathArray dagPaths;
+		dagNode.getAllPaths(dagPaths);
+		path = dagPaths[0];
+	}
+
+	switch(visInfo.visibility)
+	{
+	case NOT_VISIBLE:
+		if (mNumSamples == 0)
+			visInfo.mOVisibility.set(AbcG::kVisibilityHidden);
+		break;
+	case ANIMATED_VISIBLE:
+		{
+			bool isVisible = true;
+			for (int i = 0; i < visInfo.visibilityPlugs.length(); ++i)
+			{
+				if (!visInfo.visibilityPlugs[i].asBool())
+				{
+					isVisible = false;
+					break;
+				}
+			}
+			visInfo.mOVisibility.set(isVisible ? AbcG::kVisibilityVisible : AbcG::kVisibilityHidden);
+		}
+		break;
+	default:
+		break;
+	}
+
    // check if we have the global cache option
    if(GetJob()->GetOption(L"exportInGlobalSpace").asInt() > 0)
    {
-      if(mNumSamples > 0)
-         return MStatus::kSuccess;
+		if(mNumSamples > 0 && visInfo.visibility == VISIBLE)	// if the sample number is greater than zero and the visibility is not animated, do not export more data!
+			return MStatus::kSuccess;
 
       // store identity matrix
       mSample.setTranslation(Abc::V3d(0.0,0.0,0.0));
@@ -41,32 +124,6 @@ MStatus AlembicXform::Save(double time)
       MMatrix matrix;
       matrix.setToIdentity();
 
-      // iterate all dagpaths 
-      MDagPath path;
-      {  
-        ESS_PROFILE_SCOPE("AlembicXform::Save dagNode");
-        MFnDagNode dagNode(GetRef());
-        MDagPathArray dagPaths;
-        dagNode.getAllPaths(dagPaths);
-        path = dagPaths[0];
-      }
-
-		// visibility
-		{
-			MStatus stat;
-			MObject mObj = path.node(&stat);
-			if (stat == MS::kSuccess)
-			{
-				MFnDependencyNode dep(mObj, &stat);
-				if (stat == MS::kSuccess)
-				{
-					MPlug vis = dep.findPlug("visibility", true, &stat);
-					if (stat == MS::kSuccess)
-						mOVisibility.set(vis.asBool() ? AbcG::kVisibilityVisible : AbcG::kVisibilityHidden);
-				}
-			}
-		}
-
 	  Abc::M44d abcMatrix;
 
       {
@@ -77,8 +134,6 @@ MStatus AlembicXform::Save(double time)
            matrix = path.inclusiveMatrix();
         else
            matrix.setToProduct(path.inclusiveMatrix(), path.exclusiveMatrixInverse());
-
-        matrix = MTransformationMatrix(matrix).asMatrix();
 
         matrix.get(abcMatrix.x);
         mSample.setMatrix(abcMatrix);
@@ -286,6 +341,23 @@ MStatus AlembicXformNode::initialize()
    return status;
 } 
 
+void AlembicXformNode::cleanDataHandles(MDataBlock & dataBlock)
+{
+	dataBlock.outputValue(mOutTranslateXAttr).setClean();
+	dataBlock.outputValue(mOutTranslateYAttr).setClean();
+	dataBlock.outputValue(mOutTranslateZAttr).setClean();
+
+	dataBlock.outputValue(mOutRotateXAttr).setClean();
+	dataBlock.outputValue(mOutRotateYAttr).setClean();
+	dataBlock.outputValue(mOutRotateZAttr).setClean();
+
+	dataBlock.outputValue(mOutScaleXAttr).setClean();
+	dataBlock.outputValue(mOutScaleYAttr).setClean();
+	dataBlock.outputValue(mOutScaleZAttr).setClean();
+
+	dataBlock.outputValue(mOutVisibilityAttr).setClean();
+}
+
 MStatus AlembicXformNode::compute(const MPlug & plug, MDataBlock & dataBlock)
 {
   ESS_PROFILE_SCOPE("AlembicXformNode::compute");
@@ -383,15 +455,16 @@ MStatus AlembicXformNode::compute(const MPlug & plug, MDataBlock & dataBlock)
   }
 
 	// export visibility before comparing current and hold matrix!
-	{
-		AbcG::IVisibilityProperty visibilityProperty = AbcG::GetVisibilityProperty(iObj);
-		if (visibilityProperty.valid())
-			dataBlock.outputValue(mOutVisibilityAttr).setBool(visibilityProperty.getValue(sampleInfo.floorIndex));
-	}
+	AbcG::IVisibilityProperty visibilityProperty = AbcG::GetVisibilityProperty(iObj);
+	const bool curVisibility = visibilityProperty.valid() ? visibilityProperty.getValue(sampleInfo.floorIndex) : true;
 
-  if (mLastMatrix == matrix)
-    return MS::kSuccess;  // if the current matrix and the previous matrix are identical!
-  mLastMatrix = matrix;
+	if (mLastMatrix == matrix && curVisibility == mLastVisibility)
+	{
+		cleanDataHandles(dataBlock);
+		return MS::kSuccess;  // if the current matrix and the previous matrix are identical!
+	}
+	mLastMatrix = matrix;
+	mLastVisibility = curVisibility;
 
   // get the maya matrix
   MMatrix m(matrix.x);
@@ -417,6 +490,9 @@ MStatus AlembicXformNode::compute(const MPlug & plug, MDataBlock & dataBlock)
     dataBlock.outputValue(mOutScaleXAttr).setDouble(scale[0]);
     dataBlock.outputValue(mOutScaleYAttr).setDouble(scale[1]);
     dataBlock.outputValue(mOutScaleZAttr).setDouble(scale[2]);
+	dataBlock.outputValue(mOutVisibilityAttr).setBool(curVisibility);
+
+	cleanDataHandles(dataBlock);
   }
 
   return status;

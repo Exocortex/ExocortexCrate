@@ -2,13 +2,27 @@
 #include "AlembicObject.h"
 
 AlembicObject::AlembicObject(SceneNodePtr eNode, AlembicWriteJob * in_Job, Abc::OObject oParent)
-		: mExoSceneNode(eNode), mJob(in_Job), mMyParent(oParent), mNumSamples(0), nodeName(eNode->dccIdentifier.c_str())
+		: mExoSceneNode(eNode), mJob(in_Job), mMyParent(oParent), mNumSamples(0), nodeName(eNode->dccIdentifier.c_str()), mHasParent(false)
 {
 	MSelectionList sl;
 	sl.add(nodeName);
 	MDagPath dagPath;
 	sl.getDagPath(0, dagPath);
-	AddRef(dagPath.node());
+
+	MObject in_Ref = dagPath.node();
+	AddRef(in_Ref);
+
+	MFnDagNode dag(in_Ref);
+	for (unsigned int i = 0; i < dag.parentCount(); ++i)
+	{
+		MObject parentRef = dag.parent(i);
+		if (!parentRef.isNull())
+		{
+			mHasParent = in_Job->ObjectExists(parentRef);
+			if (mHasParent)
+				break;
+		}
+	}
 }
 
 AlembicObject::~AlembicObject()

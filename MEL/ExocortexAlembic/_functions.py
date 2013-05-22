@@ -52,7 +52,7 @@ def subCreateNode(names, type, parentXform):
 			accum = accum + "|" + result.split('|')[-1]
 
 	name = names[-1]
-	if parentXform != None:
+	if parentXform != None and len(parentXform) > 0:
 		accum = parentXform
 	createNamespaces(name.split(':'))
 	#print("create " + name + ", child of: " + str(accum))

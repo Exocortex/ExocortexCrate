@@ -344,8 +344,8 @@ MStatus AlembicCameraNode::compute(const MPlug & plug, MDataBlock & dataBlock)
    if(sampleInfo.alpha != 0.0)
    {
       mSchema.get(sample,sampleInfo.ceilIndex);
-      double blend = sampleInfo.alpha;
-      double iblend = 1.0 - blend;
+      const double blend = sampleInfo.alpha;
+      const double iblend = 1.0 - blend;
       focalLength = iblend * focalLength + blend * sample.getFocalLength();
       focusDistance = iblend * focusDistance + blend * sample.getFocusDistance();
       lensSqueezeRatio = iblend * lensSqueezeRatio + blend * sample.getLensSqueezeRatio();
@@ -373,5 +373,17 @@ MStatus AlembicCameraNode::compute(const MPlug & plug, MDataBlock & dataBlock)
    dataBlock.outputValue(mOutFStopAttr).set(farClipping);
    dataBlock.outputValue(mOutShutterAngleAttr).set(360.0 * (shutterClose - shutterOpen) / MTime(1.0, MTime::kSeconds).as(MTime::uiUnit()));
 
+   // clean output channels
+   dataBlock.outputValue(mOutFocalLengthAttr).setClean();
+   dataBlock.outputValue(mOutFocusDistanceAttr).setClean();
+   dataBlock.outputValue(mOutLensSqueezeRatioAttr).setClean();
+   dataBlock.outputValue(mOutHorizontalApertureAttr).setClean();
+   dataBlock.outputValue(mOutVerticalApertureAttr).setClean();
+   dataBlock.outputValue(mOutHorizontalOffsetAttr).setClean();
+   dataBlock.outputValue(mOutHorizontalOffsetAttr).setClean();
+   dataBlock.outputValue(mOutNearClippingAttr).setClean();
+   dataBlock.outputValue(mOutFarClippingAttr).setClean();
+   dataBlock.outputValue(mOutFStopAttr).setClean();
+   dataBlock.outputValue(mOutShutterAngleAttr).setClean();
    return status;
 }

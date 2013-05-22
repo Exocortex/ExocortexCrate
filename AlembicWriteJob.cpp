@@ -16,7 +16,6 @@
 #include "sceneGraph.h"
 #include <maya/MItDag.h>
 
-
 struct PreProcessStackElement
 {
    SceneNodePtr eNode;
@@ -36,8 +35,6 @@ AlembicWriteJob::AlembicWriteJob
    // ensure to clear the isRefAnimated cache
    clearIsRefAnimatedCache();
 
-   // todo... do we need to resolve this path?
-   // mFileName = CUtils::ResolveTokenString(in_FileName,XSI::CTime(),false);
    mFileName = in_FileName;
    for(unsigned int i=0;i<in_Selection.length();i++)
       mSelection.append(in_Selection[i]);
@@ -74,15 +71,12 @@ MString AlembicWriteJob::GetOption(const MString & in_Name)
    return MString();
 }
 
-AlembicObjectPtr AlembicWriteJob::GetObject(const MObject & in_Ref)
+bool AlembicWriteJob::ObjectExists(const MObject &in_Ref)
 {
-  ESS_PROFILE_SCOPE("AlembicWriteJob::GetObject");
+	ESS_PROFILE_SCOPE("AlembicWriteJob::ObjectExists");
 
     std::string fullName(getFullNameFromRef(in_Ref).asChar());
-	std::map<std::string, AlembicObjectPtr>::const_iterator it = mapObjects.find(fullName);
-	if (it == mapObjects.end())
-     return AlembicObjectPtr();
-   return it->second;
+	return mapObjects.find(fullName) != mapObjects.end();
 }
 
 bool AlembicWriteJob::AddObject(AlembicObjectPtr in_Obj)
@@ -93,11 +87,9 @@ bool AlembicWriteJob::AddObject(AlembicObjectPtr in_Obj)
    const MObject &in_Ref = in_Obj->GetRef();
    if(in_Ref.isNull())
       return false;
-   AlembicObjectPtr existing = GetObject(in_Ref);
-   if(existing != NULL)
-      return false;
-   std::string fullName(getFullNameFromRef(in_Ref).asChar());
-	 mapObjects[fullName] = in_Obj;
+
+   const std::string fullName(getFullNameFromRef(in_Ref).asChar());
+   mapObjects.insert(pairStrAbcObj(fullName, in_Obj));		// add it in the multi map!
    return true;
 }
 
@@ -161,24 +153,25 @@ MStatus AlembicWriteJob::PreProcess()
 	   // create the sampling
 	   if(frames.size() > 1)
 	   {
-		  if( ! HasAlembicWriterLicense() )
-		  {
-       if( HasAlembicInvalidLicense() ) {
-          ESS_LOG_ERROR("[alembic] No license available and EXOCORTEX_ALEMBIC_NO_DEMO defined, aborting." );
-          return MStatus::kFailure;
-       }
+			if( ! HasAlembicWriterLicense() )
+			{
+				if( HasAlembicInvalidLicense() )
+				{
+					ESS_LOG_ERROR("[alembic] No license available and EXOCORTEX_ALEMBIC_NO_DEMO defined, aborting." );
+					return MStatus::kFailure;
+				}
 
-			 if(frames.size() > 75)
-			 {           
-				frames.resize(75);
-				EC_LOG_WARNING("[ExocortexAlembic] Demo Mode: Maximum exportable samplecount is 75!");
-			 }
-		  }
+				if(frames.size() > 75)
+				{
+					frames.resize(75);
+					EC_LOG_WARNING("[ExocortexAlembic] Demo Mode: Maximum exportable samplecount is 75!");
+				}
+			}
 
-		  const double timePerCycle = frames[frames.size()-1] - frames[0];
+			const double timePerCycle = frames[frames.size()-1] - frames[0];
 			AbcA::TimeSamplingType samplingType((Abc::uint32_t)frames.size(),timePerCycle);
-		  AbcA::TimeSampling sampling(samplingType,frames);
-		  mTs = mArchive.addTimeSampling(sampling);
+			AbcA::TimeSampling sampling(samplingType,frames);
+			mTs = mArchive.addTimeSampling(sampling);
 	   }
 	   else
 	   {
@@ -191,8 +184,8 @@ MStatus AlembicWriteJob::PreProcess()
 		{ MItDag().getPath(dagPath); }
 		SceneNodePtr exoSceneRoot = buildMayaSceneGraph(dagPath, this->replacer);
 		const bool bFlattenHierarchy = GetOption("flattenHierarchy") == "1";
-		const bool bSelectChildren = false;
 		const bool bTransformCache = GetOption("transformCache") == "1";
+		const bool bSelectChildren = false;
 		{
 			std::map<std::string, bool> selectionMap;
 			for(int i=0; i<mSelection.length(); ++i)
@@ -345,7 +338,7 @@ MStatus AlembicWriteJob::Process(double frame)
 
 	int interrupt = 20;
 	MStatus status;
-	for (std::map<std::string, AlembicObjectPtr>::iterator it = mapObjects.begin(); it != mapObjects.end(); ++it, --interrupt)
+	for (multiMapStrAbcObj::iterator it = mapObjects.begin(); it != mapObjects.end(); ++it, --interrupt)
 	{
 		if (interrupt == 0)
 		{
@@ -506,48 +499,49 @@ MStatus AlembicExportCommand::doIt(const MArgList & args)
 					continue;
 				}
 
-				if(valuePair[0].toLowerCase() == "in")
+				const MString &lowerValue = valuePair[0].toLowerCase();
+				if(lowerValue == "in")
 					frameIn = valuePair[1].asDouble();
-				else if(valuePair[0].toLowerCase() == "out")
+				else if(lowerValue == "out")
 					frameOut = valuePair[1].asDouble();
-				else if(valuePair[0].toLowerCase() == "step")
+				else if(lowerValue == "step")
 					frameSteps = valuePair[1].asDouble();
-				else if(valuePair[0].toLowerCase() == "substep")
+				else if(lowerValue == "substep")
 					frameSubSteps = valuePair[1].asDouble();
-				else if(valuePair[0].toLowerCase() == "normals")
+				else if(lowerValue == "normals")
 					normals = valuePair[1].asInt() != 0;
-				else if(valuePair[0].toLowerCase() == "uvs")
+				else if(lowerValue == "uvs")
 					uvs = valuePair[1].asInt() != 0;
-				else if(valuePair[0].toLowerCase() == "facesets")
+				else if(lowerValue == "facesets")
 					facesets = valuePair[1].asInt() != 0;
-				else if(valuePair[0].toLowerCase() == "bindpose")
+				else if(lowerValue == "bindpose")
 					bindpose = valuePair[1].asInt() != 0;
-				else if(valuePair[0].toLowerCase() == "purepointcache")
+				else if(lowerValue == "purepointcache")
 					purepointcache = valuePair[1].asInt() != 0;
-				else if(valuePair[0].toLowerCase() == "dynamictopology")
+				else if(lowerValue == "dynamictopology")
 					dynamictopology = valuePair[1].asInt() != 0;
-				else if(valuePair[0].toLowerCase() == "globalspace")
+				else if(lowerValue == "globalspace")
 					globalspace = valuePair[1].asInt() != 0;
-				else if(valuePair[0].toLowerCase() == "withouthierarchy")
+				else if(lowerValue == "withouthierarchy")
 					withouthierarchy = valuePair[1].asInt() != 0;
-				else if(valuePair[0].toLowerCase() == "transformcache")
+				else if(lowerValue == "transformcache")
 					transformcache = valuePair[1].asInt() != 0;
-				else if(valuePair[0].toLowerCase() == "filename")
+				else if(lowerValue == "filename")
 					filename = valuePair[1];
-				else if(valuePair[0].toLowerCase() == "objects")
+				else if(lowerValue == "objects")
 				{
 					// try to find each object
 					valuePair[1].split(',',objectStrings);
 				}
-				else if(valuePair[0].toLowerCase() == "useinitshadgrp")
-				useInitShadGrp = valuePair[1].asInt() != 0;
+				else if(lowerValue == "useinitshadgrp")
+					useInitShadGrp = valuePair[1].asInt() != 0;
 
 				// search/replace
-				else if(valuePair[0].toLowerCase() == "search")
+				else if(lowerValue == "search")
 				{
 					search_str = valuePair[1].asChar();
 				}
-				else if(valuePair[0].toLowerCase() == "replace")
+				else if(lowerValue == "replace")
 				{
 					replace_str = valuePair[1].asChar();
 				}
@@ -577,29 +571,27 @@ MStatus AlembicExportCommand::doIt(const MArgList & args)
 
 				// get all parents
 				MObjectArray parents;
-				MString typeStr = dag.node().apiTypeStr();
 
 				// check if this is a camera
 				bool isCamera = false;
-				for(unsigned int m=0;m<dag.childCount();m++)
+				for(unsigned int m=0; m<dag.childCount(); ++m)
 				{
 				   MFnDagNode child(dag.child(m));
-				   MString cameraTypeStr = child.object().apiTypeStr();
-				   if(cameraTypeStr == "kCamera")
+				   MFn::Type ctype = child.object().apiType();
+				   if(ctype == MFn::kCamera)
 				   {
 					  isCamera = true;
 					  break;
 				   }
 				}
 
-				if(typeStr == "kTransform" && !isCamera && !globalspace && !withouthierarchy)
+				if(dag.node().apiType() == MFn::kTransform && !isCamera && !globalspace && !withouthierarchy)
 				{
 				   MDagPath ppath = dag;
 				   while(!ppath.node().isNull() && ppath.length() > 0 && ppath.isValid())
 				   {
 					  parents.append(ppath.node());
-					  MStatus status = ppath.pop();
-					  if(status != MStatus::kSuccess)
+					  if(ppath.pop() != MStatus::kSuccess)
 						 break;
 				   }
 				}
@@ -643,29 +635,14 @@ MStatus AlembicExportCommand::doIt(const MArgList & args)
 		  // check if we have incompatible subframes
 		  if(maxSubsteps > 1.0 && frameSubSteps > 1.0)
 		  {
-			 if(maxSubsteps > frameSubSteps)
+			 const double part = (frameSubSteps > maxSubsteps) ? (frameSubSteps / maxSubsteps) : (maxSubsteps / frameSubSteps);
+			 if (abs(part - floor(part)) > 0.001)
 			 {
-				double part = maxSubsteps / frameSubSteps;
-				if(abs(part - floor(part)) > 0.001)
-				{
 				   MString frameSubStepsStr,maxSubstepsStr;
 				   frameSubStepsStr.set(frameSubSteps);
 				   maxSubstepsStr.set(maxSubsteps);
 				   MGlobal::displayError("[ExocortexAlembic] You cannot combine substeps "+frameSubStepsStr+" and "+maxSubstepsStr+" in one export. Aborting.");
 				   return MStatus::kInvalidParameter;
-				}
-			 }
-			 else if(frameSubSteps > maxSubsteps )
-			 {
-				double part = frameSubSteps / maxSubsteps;
-				if(abs(part - floor(part)) > 0.001)
-				{
-				   MString frameSubStepsStr,maxSubstepsStr;
-				   frameSubStepsStr.set(frameSubSteps);
-				   maxSubstepsStr.set(maxSubsteps);
-				   MGlobal::displayError("[ExocortexAlembic] You cannot combine substeps "+frameSubStepsStr+" and "+maxSubstepsStr+" in one export. Aborting.");
-				   return MStatus::kInvalidParameter;
-				}
 			 }
 		  }
 
@@ -754,7 +731,6 @@ MStatus AlembicExportCommand::doIt(const MArgList & args)
 		  MAnimControl::setAnimationEndTime( MTime(nextFrame/frameRate,MTime::kSeconds) );
 		  MAnimControl::playForward();  // this way, it forces Maya to play exactly one frame! and particles are updated!
 
-		  bool canceled = false;
 		  for(size_t i=0;i<jobPtrs.size();i++)
 		  {
 			 MStatus status = jobPtrs[i]->Process(frame);
@@ -768,8 +744,6 @@ MStatus AlembicExportCommand::doIt(const MArgList & args)
 			 }
 
 		  }
-		  if(canceled)
-			 break;
 	   }
    }
    catch(...)
@@ -792,6 +766,5 @@ MStatus AlembicExportCommand::doIt(const MArgList & args)
 
    // remove all known archives
    deleteAllArchives();
-
    return status;
 }

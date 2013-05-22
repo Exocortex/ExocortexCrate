@@ -3,13 +3,27 @@
 
 #include "AlembicObject.h"
 
+enum VISIBILITY_TYPE { VISIBLE, NOT_VISIBLE, ANIMATED_VISIBLE };
+typedef struct __VisibilityInfo
+{
+	VISIBILITY_TYPE visibility;
+	AbcG::OVisibilityProperty mOVisibility;
+	MPlugArray visibilityPlugs;
+
+	__VisibilityInfo(void): visibility(VISIBLE) {}
+} VisibilityInfo;
+
 class AlembicXform: public AlembicObject
 {
 private:
    AbcG::OXform mObject;
    AbcG::OXformSchema mSchema;
    AbcG::XformSample mSample;
-   AbcG::OVisibilityProperty mOVisibility;
+   //AbcG::OVisibilityProperty mOVisibility;
+	VisibilityInfo visInfo;
+
+	void testAnimatedVisibility(AlembicObject *aobj, bool animTS, bool flatHierarchy);
+
 public:
 
    AlembicXform(SceneNodePtr eNode, AlembicWriteJob * in_Job, Abc::OObject oParent);
@@ -23,7 +37,7 @@ public:
 class AlembicXformNode : public AlembicObjectNode
 {
 public:
-  AlembicXformNode(): mLastMatrix() {}
+  AlembicXformNode(): mLastMatrix(0.0), mLastVisibility(false) {}
    virtual ~AlembicXformNode();
 
    // override virtual methods from MPxNode
@@ -42,7 +56,11 @@ private:
    AbcG::IXformSchema mSchema;
    std::map<AbcA::index_t,Abc::M44d> mSampleIndicesToMatrices;
    Abc::M44d mLastMatrix;
+   bool mLastVisibility;
    Abc::IObject iObj;
+
+   // private functions
+   void cleanDataHandles(MDataBlock & dataBlock);		// here to avoid multiple recomputation of data on each frame!
 
    // output attributes
    static MObject mOutTranslateXAttr;

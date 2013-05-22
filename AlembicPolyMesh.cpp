@@ -774,10 +774,8 @@ MStatus AlembicPolyMeshNode::compute(const MPlug & plug, MDataBlock & dataBlock)
             std::vector<AbcA::uint32_t> uvIndicesFloor, uvIndicesCeil;
             bool uvFloor = false, uvCeil = false;
             if(uvSetIndex == 0) {
-              uvFloor = getIndexAndValues( sampleIndices, uvsParam, sampleInfo.floorIndex,
-                uvValuesFloor, uvIndicesFloor );
-              uvCeil = getIndexAndValues( sampleIndices, uvsParam, sampleInfo.ceilIndex,
-                uvValuesCeil, uvIndicesCeil );
+              uvFloor = getIndexAndValues( sampleIndices, uvsParam, sampleInfo.floorIndex, uvValuesFloor, uvIndicesFloor );
+			  uvCeil  = !mDynamicTopology && getIndexAndValues( sampleIndices, uvsParam, sampleInfo.ceilIndex, uvValuesCeil, uvIndicesCeil );
             }
             else
             {
@@ -787,16 +785,14 @@ MStatus AlembicPolyMeshNode::compute(const MPlug & plug, MDataBlock & dataBlock)
               if(mSchema.getPropertyHeader( storedUvSetName.asChar() ) == NULL)
                 continue;
               AbcG::IV2fGeomParam uvParamExtended = AbcG::IV2fGeomParam( mSchema, storedUvSetName.asChar() );
-              uvFloor = getIndexAndValues( sampleIndices, uvParamExtended, sampleInfo.floorIndex,
-                uvValuesFloor, uvIndicesFloor );
-              uvCeil = getIndexAndValues( sampleIndices, uvParamExtended, sampleInfo.ceilIndex,
-                uvValuesCeil, uvIndicesCeil );
+              uvFloor = getIndexAndValues( sampleIndices, uvParamExtended, sampleInfo.floorIndex, uvValuesFloor, uvIndicesFloor );
+              uvCeil  = !mDynamicTopology && getIndexAndValues( sampleIndices, uvParamExtended, sampleInfo.ceilIndex, uvValuesCeil, uvIndicesCeil );
             }
 
             if(uvIndicesFloor.size() == (size_t)indices.length())
             {
               MFloatArray uValues((unsigned int)uvValuesFloor.size()), vValues((unsigned int)uvValuesFloor.size());
-              if((sampleInfo.alpha != 0.0)&& uvCeil && uvIndicesFloor.size() == uvIndicesCeil.size() && ! mDynamicTopology )
+              if((sampleInfo.alpha != 0.0) && uvCeil && uvIndicesFloor.size() == uvIndicesCeil.size() && !mDynamicTopology )
               {
                 float blend = (float)sampleInfo.alpha;
                 float iblend = 1.0f - blend;
@@ -864,12 +860,9 @@ MStatus AlembicPolyMeshNode::compute(const MPlug & plug, MDataBlock & dataBlock)
 
         std::vector<Abc::V3f> normalValuesFloor, normalValuesCeil;
         std::vector<AbcA::uint32_t> normalIndicesFloor, normalIndicesCeil;
-        bool normalFloor = false, normalCeil = false;
 
-        normalFloor = getIndexAndValues( sampleIndices, normalsParam, sampleInfo.floorIndex,
-          normalValuesFloor, normalIndicesFloor );
-        normalCeil = getIndexAndValues( sampleIndices, normalsParam, sampleInfo.floorIndex,
-          normalValuesCeil, normalIndicesCeil );
+        const bool normalFloor = getIndexAndValues( sampleIndices, normalsParam, sampleInfo.floorIndex, normalValuesFloor, normalIndicesFloor );
+        const bool normalCeil  = !mDynamicTopology && getIndexAndValues( sampleIndices, normalsParam, sampleInfo.floorIndex, normalValuesCeil, normalIndicesCeil );
 
         if(normalIndicesFloor.size() == mSampleLookup.size())
         {
@@ -889,7 +882,6 @@ MStatus AlembicPolyMeshNode::compute(const MPlug & plug, MDataBlock & dataBlock)
               normal.z = normalValuesFloor[i].z * iblend + normalValuesCeil[i].z * blend;
               normals[i] = normal.normal();
             }
-
           }
           else {
             for(unsigned int i=0;i<normalValuesFloor.size();i++)
@@ -939,6 +931,7 @@ MStatus AlembicPolyMeshNode::compute(const MPlug & plug, MDataBlock & dataBlock)
 
   // output all channels
   dataBlock.outputValue(mOutGeometryAttr).set(mMeshData);
+  dataBlock.outputValue(mOutGeometryAttr).setClean();
 
   return MStatus::kSuccess;
 }

@@ -62,6 +62,7 @@ MStatus AlembicTimeControlNode::compute(const MPlug & plug, MDataBlock & dataBlo
    t.setValue(inputTime * factorHandle.asDouble() + offsetHandle.asDouble());
 
    dataBlock.outputValue(mOutTimeAttr).setMTime(t);
+   dataBlock.outputValue(mOutTimeAttr).setClean();
 
    return status;
 }

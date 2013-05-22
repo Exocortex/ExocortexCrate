@@ -475,6 +475,10 @@ MStatus AlembicSubDNode::compute(const MPlug & plug, MDataBlock & dataBlock)
    dataBlock.outputValue(mOutGeometryAttr).set(mSubDData);
    dataBlock.outputValue(mOutDispResolutionAttr).set((int)sample.getFaceVaryingInterpolateBoundary());
 
+   // clean output channels
+   dataBlock.outputValue(mOutGeometryAttr).setClean();
+   dataBlock.outputValue(mOutDispResolutionAttr).setClean();
+
    return MStatus::kSuccess;
 }
 
