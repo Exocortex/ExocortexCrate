@@ -127,7 +127,13 @@ Alembic::Abc::IArchive * getArchiveFromID(std::string const& path)
       }
    else {
          fclose(file);
-         addArchive(new Abc::IArchive( Alembic::AbcCoreHDF5::ReadArchive(), resolvedPath));
+
+         AbcF::IFactory iFactory;
+         AbcF::IFactory::CoreType oType;
+         addArchive( new Abc::IArchive(iFactory.getArchive( resolvedPath, oType )) );
+
+         //addArchive(new Abc::IArchive( Alembic::AbcCoreHDF5::ReadArchive(), resolvedPath));
+
          Abc::IArchive *pArchive = gArchives.find(resolvedPath)->second.archive;
          EC_LOG_INFO( "Opening Abc Archive: " << pArchive->getName() );
          return pArchive;
