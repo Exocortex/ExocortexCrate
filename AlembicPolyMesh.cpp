@@ -622,8 +622,8 @@ MStatus AlembicPolyMeshNode::compute(const MPlug & plug, MDataBlock & dataBlock)
             for(unsigned int i=0;i< sampleVel->size();i++)
             {
               MFloatPoint &point = points[i];
-              const Alembic::Abc::v4::V3f &pos = samplePos->get()[i];
-              const Alembic::Abc::v4::V3f &vel = sampleVel->get()[i];
+              const Abc::V3f &pos = samplePos->get()[i];
+              const Abc::V3f &vel = sampleVel->get()[i];
               point.x = pos.x + timeAlpha * vel.x;
               point.y = pos.y + timeAlpha * vel.y;
               point.z = pos.z + timeAlpha * vel.z;
@@ -640,8 +640,8 @@ MStatus AlembicPolyMeshNode::compute(const MPlug & plug, MDataBlock & dataBlock)
         for(unsigned int i=0;i<points.length();i++)
         {
           MFloatPoint &point = points[i];
-          const Alembic::Abc::v4::V3f &pos1 = samplePos->get()[i];
-          const Alembic::Abc::v4::V3f &pos2 = samplePos2->get()[i];
+          const Abc::V3f &pos1 = samplePos->get()[i];
+          const Abc::V3f &pos2 = samplePos2->get()[i];
           point.x = pos1.x * iblend + pos2.x * blend;
           point.y = pos1.y * iblend + pos2.y * blend;
           point.z = pos1.z * iblend + pos2.z * blend;
@@ -655,7 +655,7 @@ MStatus AlembicPolyMeshNode::compute(const MPlug & plug, MDataBlock & dataBlock)
       for(unsigned int i=0;i<points.length();i++)
       {
         MFloatPoint &point = points[i];
-        const Alembic::Abc::v4::V3f &pos = samplePos->get()[i];
+        const Abc::V3f &pos = samplePos->get()[i];
         point.x = pos.x;
         point.y = pos.y;
         point.z = pos.z;
@@ -1102,11 +1102,11 @@ MStatus AlembicPolyMeshDeformNode::deform(MDataBlock & dataBlock, MItGeometry & 
       MPoint pt = iter.position();
 
       MFloatPoint abcPt;
-      const Alembic::Abc::v4::V3f &pos1 = samplePos->get()[iter.index()];
+      const Abc::V3f &pos1 = samplePos->get()[iter.index()];
       if(useBlending)
       {
         //ESS_LOG_WARNING( "blending vertex positions (1-2) B." );
-        const Alembic::Abc::v4::V3f &pos2 = samplePos2->get()[iter.index()];
+        const Abc::V3f &pos2 = samplePos2->get()[iter.index()];
         pt.x = iweight * pt.x + weight * (pos1.x * iblend + pos2.x * blend);
         pt.y = iweight * pt.y + weight * (pos1.y * iblend + pos2.y * blend);
         pt.z = iweight * pt.z + weight * (pos1.z * iblend + pos2.z * blend);

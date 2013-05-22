@@ -30,7 +30,7 @@ private:
 
    // instancing functions
    bool listIntanceNames(std::vector<std::string> &names);
-   bool sampleInstanceProperties(std::vector<Abc::Quatf> angularVel, std::vector<Abc::Quatf> orientation, std::vector<Abc::v4::uint16_t> shapeId, std::vector<Abc::v4::uint16_t> shapeType, std::vector<Abc::float32_t> shapeTime);
+   bool sampleInstanceProperties(std::vector<Abc::Quatf> angularVel, std::vector<Abc::Quatf> orientation, std::vector<Abc::uint16_t> shapeId, std::vector<Abc::uint16_t> shapeType, std::vector<Abc::float32_t> shapeTime);
 
 public:
    AlembicPoints(SceneNodePtr eNode, AlembicWriteJob * in_Job, Abc::OObject oParent);

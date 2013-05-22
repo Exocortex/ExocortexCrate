@@ -42,7 +42,7 @@ bool AlembicPoints::listIntanceNames(std::vector<std::string> &names)
 }
 
 bool AlembicPoints::sampleInstanceProperties( std::vector<Abc::Quatf> angularVel,     std::vector<Abc::Quatf> orientation,
-                                              std::vector<Abc::v4::uint16_t> shapeId, std::vector<Abc::v4::uint16_t> shapeType,
+                                              std::vector<Abc::uint16_t> shapeId, std::vector<Abc::uint16_t> shapeType,
                                               std::vector<Abc::float32_t> shapeTime)
 {
   MMatrixArray allMatrices;
@@ -168,7 +168,7 @@ MStatus AlembicPoints::Save(double time)
    for(unsigned int i=0;i<vectors.length();i++)
    {
       const MVector &out = vectors[i];
-      Alembic::Abc::v4::V3f  &in  = posVec[i];
+      Abc::V3f  &in  = posVec[i];
       in.x = (float)out.x;
       in.y = (float)out.y;
       in.z = (float)out.z;
@@ -184,7 +184,7 @@ MStatus AlembicPoints::Save(double time)
    for(unsigned int i=0;i<vectors.length();i++)
    {
       const MVector &out = vectors[i];
-      Alembic::Abc::v4::V3f &in  = velVec[i];
+      Abc::V3f &in  = velVec[i];
       in.x = (float)out.x;
       in.y = (float)out.y;
       in.z = (float)out.z;
@@ -256,7 +256,7 @@ MStatus AlembicPoints::Save(double time)
 
    //--- instancing!!
    std::vector<Abc::Quatf> angularVel, orientation;
-   std::vector<Abc::v4::uint16_t> shapeId, shapeType;
+   std::vector<Abc::uint16_t> shapeId, shapeType;
    std::vector<Abc::float32_t> shapeTime;
    if (hasInstancer)
      sampleInstanceProperties(angularVel, orientation, shapeId, shapeType, shapeTime);
