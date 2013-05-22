@@ -1245,7 +1245,7 @@ H5O_chunk_deserialize(H5O_t *oh, haddr_t addr, size_t len, const uint8_t *image,
             /* Gaps can only occur in later versions of the format */
             HDassert(oh->version > H5O_VERSION_1);
 
-            /* Gaps should only occur in chunks with no null messages */
+           /* Gaps should only occur in chunks with no null messages */
             HDassert(nullcnt == 0);
 
             /* Set gap information for chunk */
