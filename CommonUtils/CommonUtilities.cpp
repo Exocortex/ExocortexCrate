@@ -201,7 +201,6 @@ void deleteAllArchives()
    gArchives.clear();
 }
 
-
 AbcObjectCache* getObjectCacheFromArchive(std::string const& path, std::string const& identifier)
 {
 	AbcArchiveCache* abcArchiveCache = getArchiveCache( resolvePath( path ) );

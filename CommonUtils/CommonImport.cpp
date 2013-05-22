@@ -145,6 +145,12 @@ bool IJobStringParser::parse(const std::string& jobString)
 			replace_str = valuePair[1];
 		}
 
+		// support multiFile
+		else if (boost::iequals(valuePair[0], "multi"))
+		{
+			useMultiFile = parseBool(valuePair[1]);
+		}
+
 		else
 		{
 			extraParameters[valuePair[0]] = valuePair[1];

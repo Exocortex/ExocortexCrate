@@ -38,6 +38,7 @@ public:
    bool enableImportRootSelection;
    bool stripMayaNamespaces;
    bool importCurvesAsStrands;
+   bool useMultiFile;
    XSI_XformTypes::xte xformTypes;
 
    SearchReplace::ReplacePtr replacer;
@@ -66,7 +67,8 @@ public:
       enableImportRootSelection(false),
       stripMayaNamespaces(false),
       importCurvesAsStrands(false),
-      replaceColonsWithUnderscores(false)
+      replaceColonsWithUnderscores(false),
+	  useMultiFile(false)
    {}
 
    bool parse(const std::string& jobString);
