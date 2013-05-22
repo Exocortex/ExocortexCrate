@@ -50,6 +50,7 @@ namespace fs = boost::filesystem;
 #include <Alembic/AbcGeom/All.h>
 #include <Alembic/AbcCoreHDF5/All.h>
 #include <Alembic/AbcCoreOgawa/All.h>
+#include <Alembic/AbcCoreFactory/All.h>
 #include <Alembic/AbcCoreAbstract/TimeSampling.h>
 #include <Alembic/Util/Murmur3.h>
 #include <Alembic/AbcMaterial/All.h>
@@ -66,6 +67,7 @@ namespace Alembic {
 }
 
 namespace AbcA = ::Alembic::AbcCoreAbstract::ALEMBIC_VERSION_NS;
+namespace AbcF = ::Alembic::AbcCoreFactory::ALEMBIC_VERSION_NS;
 namespace Abc = ::Alembic::Abc::ALEMBIC_VERSION_NS;
 namespace AbcG = ::Alembic::AbcGeom::ALEMBIC_VERSION_NS;
 namespace AbcU = ::Alembic::Util::ALEMBIC_VERSION_NS;
