@@ -8,8 +8,8 @@ import _functions as fnt
 # import classes
 ############################################################################################################
 class IJobInfo:
-	def __init__(self, _filename, useNormals=False, useUVs=True, useFaceSets=True):
-		fileTime = fnt.alembicTimeAndFileNode(_filename)
+	def __init__(self, _filename, useNormals=False, useUVs=True, useFaceSets=True, multi=False):
+		fileTime = fnt.alembicTimeAndFileNode(_filename, multi)
 		self.filename = _filename
 		self.filenode = fileTime[0]
 		self.timeCtrl = fileTime[1]

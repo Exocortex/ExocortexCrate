@@ -25,14 +25,14 @@ AlembicFileAndTimeControl::~AlembicFileAndTimeControl(void)
 AlembicFileAndTimeControlPtr AlembicFileAndTimeControl::createControl(const IJobStringParser& jobParams)
 {
 	static unsigned int numberOfControlCreated = 0;
-	static const MString format("^1s = ExoAlembic._import.IJobInfo(r\"^2s\", ^3s, ^4s, ^5s)\n");
+	static const MString format("^1s = ExoAlembic._import.IJobInfo(r\"^2s\", ^3s, ^4s, ^5s, ^6s)\n");
 
 	ESS_PROFILE_SCOPE("AlembicFileAndTimeControl::createControl");
 	MString var("__alembic_file_and_time_control_tuple_");
 	var += (++numberOfControlCreated);
 
 	MString cmd;
-	cmd.format(format, var, jobParams.filename.c_str(), PythonBool(jobParams.importNormals), PythonBool(jobParams.importUVs), PythonBool(jobParams.importFacesets));
+	cmd.format(format, var, jobParams.filename.c_str(), PythonBool(jobParams.importNormals), PythonBool(jobParams.importUVs), PythonBool(jobParams.importFacesets), PythonBool(jobParams.useMultiFile));
 	MStatus status = MGlobal::executePythonCommand(cmd);
 	if (status != MS::kSuccess)
 	{

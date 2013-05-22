@@ -35,6 +35,8 @@
     </rect>
    </property>
    <layout class="QGridLayout" name="gridLayout">
+
+    <!-- Support for Normals! -->
     <item row="0" column="0">
      <widget class="QLabel" name="label">
       <property name="text">
@@ -55,6 +57,8 @@
       </property>
      </widget>
     </item>
+
+    <!-- Support for UVs! -->
     <item row="1" column="0">
      <widget class="QLabel" name="label_2">
       <property name="text">
@@ -75,6 +79,8 @@
       </property>
      </widget>
     </item>
+
+    <!-- Support for Face Sets! -->
     <item row="2" column="0">
      <widget class="QLabel" name="label_3">
       <property name="text">
@@ -95,6 +101,8 @@
       </property>
      </widget>
     </item>
+
+    <!-- Support for Visibility! -->
     <item row="3" column="0">
      <widget class="QLabel" name="label_4">
       <property name="text">
@@ -122,10 +130,12 @@
       </item>
      </widget>
     </item>
-    <!--<item row="4" column="0">
-     <widget class="QLabel" name="label_5">
+
+    <!-- Support for Multi files! -->
+    <item row="4" column="0">
+     <widget class="QLabel" name="multifile">
       <property name="text">
-       <string>Attach to existing objects:</string>
+       <string>Multi File:</string>
       </property>
       <property name="alignment">
        <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -133,15 +143,16 @@
      </widget>
     </item>
     <item row="4" column="1">
-     <widget class="QCheckBox" name="attach">
+     <widget class="QCheckBox" name="multifile">
       <property name="text">
        <string/>
       </property>
       <property name="checked">
-       <bool>true</bool>
+       <bool>false</bool>
       </property>
      </widget>
-    </item>-->
+    </item>
+
    </layout>
   </widget>
   <widget class="QWidget" name="horizontalLayoutWidget">
