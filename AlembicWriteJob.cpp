@@ -82,17 +82,30 @@ bool AlembicWriteJob::PreProcess()
         return false;
     }
 
+    const bool bUseOgawa = (bool)GetOption("useOgawa");
+
     // init archive (use a locally scoped archive)
     std::string sceneFileName = "";
     sceneFileName.append( EC_MSTR_to_UTF8( mApplication->GetCurFilePath() ) );
     try
     {
+       if(bUseOgawa){
         mArchive = CreateArchiveWithInfo(
-			Alembic::AbcCoreHDF5::WriteArchive( true ), 
+            Alembic::AbcCoreOgawa::WriteArchive(),
 			mFileName.c_str(),
 			getExporterName( "3DS Max " EC_QUOTE( crate_Max_Version ) ).c_str(),
 			getExporterFileName( sceneFileName ).c_str(),
 			Abc::ErrorHandler::kThrowPolicy);
+       }
+       else{
+        mArchive = CreateArchiveWithInfo(
+			Alembic::AbcCoreHDF5::WriteArchive( true ),
+			mFileName.c_str(),
+			getExporterName( "3DS Max " EC_QUOTE( crate_Max_Version ) ).c_str(),
+			getExporterFileName( sceneFileName ).c_str(),
+			Abc::ErrorHandler::kThrowPolicy);
+       }
+
     }
     catch(Alembic::Util::Exception& e)
     {

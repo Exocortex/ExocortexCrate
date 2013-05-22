@@ -1,7 +1,7 @@
 --------------------------------------------------------------------------------------------------------
 -- Custom import/export dialog with settings
 
-rollout AlembicExportSettings "Alembic Export Settings" width:288 height:436
+rollout AlembicExportSettings "Alembic Export Settings" width:288 height:476
 (
 	GroupBox selectGroup "Selection" pos:[8,16] width:272 height:40
 	checkbox exportSelectedCheckbox "Export Selected Objects" pos:[32,32] width:232 height:16 checked:true
@@ -28,8 +28,10 @@ rollout AlembicExportSettings "Alembic Export Settings" width:288 height:436
 	checkbox transformCacheCheckbox "Transform Cache" pos:[32,352] width:200 height:14 checked:false
 	checkbox validateMeshTopology "Validate Mesh Topology" pos:[32,368]
 
-	button exportButton "Export" pos:[16,402] width:64 height:24
-	button cancelButton "Cancel" pos:[208,402] width:64 height:24
+	dropdownList storageFormat "Storage Format" pos:[16,396] width:256 height:40 items:#("HDF5", "Ogawa") selection:1
+
+	button exportButton "Export" pos:[16,442] width:64 height:24
+	button cancelButton "Cancel" pos:[208,442] width:64 height:24
 
 	on exportButton pressed do
 	(
@@ -72,6 +74,9 @@ rollout AlembicExportSettings "Alembic Export Settings" width:288 height:436
 	    	jobString += (transformCacheCheckbox.checked as string)
 	    	jobString += ";validateMeshTopology="
 	    	jobString += (validateMeshTopology.checked as string)
+
+	    	if(storageFormat.selection == 1) do jobString += ";storageFormat=hdf5" 
+	    	if(storageFormat.selection == 2) do jobString += ";storageFormat=ogawa" 
 
 	    	result = ExocortexAlembic.createExportJobs(jobString)
 	        if( result != 0 ) do

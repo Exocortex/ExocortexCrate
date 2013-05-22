@@ -710,6 +710,7 @@ int ExocortexAlembicStaticInterface_ExocortexAlembicExportJobs( CONST_2013 MCHAR
 			bool bUiExport = false;
 			bool bAutomaticInstancing = false;
 			bool bValidateMeshTopology = false;
+            bool bUseOgawa = false;
 
 			ObjectList allSceneObjects;
 			
@@ -789,6 +790,14 @@ int ExocortexAlembicStaticInterface_ExocortexAlembicExportJobs( CONST_2013 MCHAR
 				}
 				else if(boost::iequals(valuePair[0], "uiExport")){
 					bUiExport = parseBool(valuePair[1]);
+				}
+                else if(boost::iequals(valuePair[0], "storageFormat")){
+                   if(boost::iequals(valuePair[1], "hdf5")){
+                     bUseOgawa = false;
+                   }
+                   else if(boost::iequals(valuePair[1], "ogawa")){
+                     bUseOgawa = true;
+                   }
 				}
 				else if(boost::iequals(valuePair[0], "objects")){
 					bObjectsParameterExists = true;
@@ -895,6 +904,7 @@ int ExocortexAlembicStaticInterface_ExocortexAlembicExportJobs( CONST_2013 MCHAR
 			job->SetOption("transformCache", bTransformCache);
 			job->SetOption("automaticInstancing", bAutomaticInstancing);
 			job->SetOption("validateMeshTopology", bValidateMeshTopology);
+            job->SetOption("useOgawa", bUseOgawa);
 
 			if (job->PreProcess() != true)
 			{
