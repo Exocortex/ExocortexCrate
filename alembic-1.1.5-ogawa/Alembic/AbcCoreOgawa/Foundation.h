@@ -53,7 +53,9 @@
 #include <stdio.h>
 #include <assert.h>
 #include <string.h>
-#include <Alembic/Ogawa/stdint.h>
+#ifdef _MSC_VER
+	#include <Alembic/Ogawa/stdint.h>
+#endif
 
 #define ALEMBIC_OGAWA_FILE_VERSION 0
 
