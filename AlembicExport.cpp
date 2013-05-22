@@ -160,7 +160,12 @@ CStatus exportCommandImp( CRef& in_ctxt )
          jobString += L";transformHierarchy=bake";
       }
 
-      jobString += L";storageFormat="+settings.GetParameterValue(L"storageFormat").GetAsText();
+      if( settings.GetParameterValue(L"storageFormat") == 0){
+         jobString += L";storageFormat=hdf5";
+      }
+      else{
+         jobString += L";storageFormat=ogawa";
+      }
 
       Application().ExecuteCommand(L"DeleteObj",inspectArgs,inspectResult);
    }
@@ -280,7 +285,13 @@ CStatus exportCommandImp( CRef& in_ctxt )
             geomApproxSubD = (bool)CValue(valuePair[1]);
          }
          else if(valuePair[0].IsEqualNoCase(L"storageFormat")){
-            useOgawa = (bool)CValue(valuePair[1]);
+
+            if(valuePair[1].IsEqualNoCase("hdf5")){
+               useOgawa = false;
+            }
+            else if(valuePair[1].IsEqualNoCase("ogawa")){
+               useOgawa = true;
+            }
          }
          else if(valuePair[0].IsEqualNoCase(L"objects"))
          {
