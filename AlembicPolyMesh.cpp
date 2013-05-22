@@ -626,8 +626,8 @@ MStatus AlembicPolyMeshNode::compute(const MPlug & plug, MDataBlock & dataBlock)
             for(unsigned int i=0;i< sampleVel->size();i++)
             {
               MFloatPoint &point = points[i];
-              const Alembic::Abc::v4::V3f &pos = samplePos->get()[i];
-              const Alembic::Abc::v4::V3f &vel = sampleVel->get()[i];
+              const Abc::V3f &pos = samplePos->get()[i];
+              const Abc::V3f &vel = sampleVel->get()[i];
               point.x = pos.x + timeAlpha * vel.x;
               point.y = pos.y + timeAlpha * vel.y;
               point.z = pos.z + timeAlpha * vel.z;
@@ -644,8 +644,8 @@ MStatus AlembicPolyMeshNode::compute(const MPlug & plug, MDataBlock & dataBlock)
         for(unsigned int i=0;i<points.length();i++)
         {
           MFloatPoint &point = points[i];
-          const Alembic::Abc::v4::V3f &pos1 = samplePos->get()[i];
-          const Alembic::Abc::v4::V3f &pos2 = samplePos2->get()[i];
+          const Abc::V3f &pos1 = samplePos->get()[i];
+          const Abc::V3f &pos2 = samplePos2->get()[i];
           point.x = pos1.x * iblend + pos2.x * blend;
           point.y = pos1.y * iblend + pos2.y * blend;
           point.z = pos1.z * iblend + pos2.z * blend;
@@ -659,7 +659,7 @@ MStatus AlembicPolyMeshNode::compute(const MPlug & plug, MDataBlock & dataBlock)
       for(unsigned int i=0;i<points.length();i++)
       {
         MFloatPoint &point = points[i];
-        const Alembic::Abc::v4::V3f &pos = samplePos->get()[i];
+        const Abc::V3f &pos = samplePos->get()[i];
         point.x = pos.x;
         point.y = pos.y;
         point.z = pos.z;
@@ -1116,10 +1116,11 @@ MStatus AlembicPolyMeshDeformNode::deform(MDataBlock & dataBlock, MItGeometry & 
 		  pt.z *= iweight;
 	  }
 
-      const Alembic::Abc::v4::V3f &pos1 = samplePos->get()[iter_index];
+
+      const Abc::V3f &pos1 = samplePos->get()[iter_index];
       if(useBlending)
       {
-        const Alembic::Abc::v4::V3f &pos2 = samplePos2->get()[iter_index];
+        const Abc::V3f &pos2 = samplePos2->get()[iter_index];
         pt.x = weight * (pos1.x + (pos2.x - pos1.x) * blend);
         pt.x = weight * (pos1.y + (pos2.y - pos1.y) * blend);
         pt.x = weight * (pos1.z + (pos2.z - pos1.z) * blend);
