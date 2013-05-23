@@ -139,7 +139,7 @@ struct SelectChildrenStackElement
    {}
 };
 
-int selectNodes(SceneNodePtr root, SceneNode::SelectionT selectionMap, bool bSelectParents, bool bChildren, bool bSelectShapeNodes)
+int selectNodes(SceneNodePtr root, SceneNode::SelectionT selectionMap, bool bSelectParents, bool bChildren, bool bSelectShapeNodes, bool isMaya)
 {
    ESS_PROFILE_FUNC();
 
@@ -176,14 +176,30 @@ int selectNodes(SceneNodePtr root, SceneNode::SelectionT selectionMap, bool bSel
             if(!eNode->selected) nSelectionCount++;
             eNode->selected = true;
 
-            if(eNode->type == SceneNode::ETRANSFORM && bSelectShapeNodes){
-               for(std::list<SceneNodePtr>::iterator it=eNode->children.begin(); it != eNode->children.end(); it++){
-                  if(::hasExtractableTransform((*it)->type)){
-                     if(!(*it)->selected) nSelectionCount++;
-                     (*it)->selected = true;
-                     break;
-                  }
-               }
+            if(eNode->type == SceneNode::ETRANSFORM && bSelectShapeNodes)
+			{
+				if (isMaya)
+				{
+					for(std::list<SceneNodePtr>::reverse_iterator it=eNode->children.rbegin(); it != eNode->children.rend(); ++it)
+					{
+						if(::hasExtractableTransform((*it)->type))
+						{
+							if(!(*it)->selected) nSelectionCount++;
+							(*it)->selected = true;
+							break;
+						}
+					}	
+				}
+				else
+				{
+				   for(std::list<SceneNodePtr>::iterator it=eNode->children.begin(); it != eNode->children.end(); it++){
+					  if(::hasExtractableTransform((*it)->type)){
+						 if(!(*it)->selected) nSelectionCount++;
+						 (*it)->selected = true;
+						 break;
+					  }
+				   }
+				}
             }
 
             if(bSelectParents){// select all parent nodes
@@ -198,8 +214,8 @@ int selectNodes(SceneNodePtr root, SceneNode::SelectionT selectionMap, bool bSel
             if(bChildren){// select the children
                bSelected = true;
             } 
-         }
-      }
+         }	// if(selectionIt != 
+      }	// if(eNode->type == 
       if(sElement.bSelectChildren){
          bSelected = true;
          if(!eNode->selected) nSelectionCount++;
