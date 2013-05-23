@@ -2,7 +2,7 @@ import maya.cmds as cmds
 
 """ Export module of Exocortex Crate """
 
-def doIt(filename, exInframe, exOutframe, exObjects=None, exStepframe=1, exSubstepframe=1, exTopology=3, exUVs=True, exFaceSets=True, exDynTopo=False, exGlobSpace=False, exWithoutHierarchy=False, exXformCache=False, exUseInitShadGrp=False):
+def doIt(filename, exInframe, exOutframe, exObjects=None, exStepframe=1, exSubstepframe=1, exTopology=3, exUVs=True, exFaceSets=True, exDynTopo=False, exGlobSpace=False, exWithoutHierarchy=False, exXformCache=False, exUseInitShadGrp=False, exUseOgawa=False):
 	"""
 	Set up the string parameter for ExocortexAlembic_export
 	"""
@@ -15,7 +15,7 @@ def doIt(filename, exInframe, exOutframe, exObjects=None, exStepframe=1, exSubst
 	cmds.ExocortexAlembic_profileBegin(f="Python.ExocortexAlembic._export.doIt")
 	if exObjects == None:
 		exObjects = cmds.ls(sl=True)
-	job = "in="+str(exInframe)+";out="+str(exOutframe)+";step="+str(exStepframe)+";substep="+str(exSubstepframe)+";filename="+filename+";objects="+(doIt_listExportObjects(exObjects))
+	job = "in="+str(exInframe)+";out="+str(exOutframe)+";step="+str(exStepframe)+";substep="+str(exSubstepframe)+";filename="+filename+";objects="+(doIt_listExportObjects(exObjects))+";ogawa="+str(int(exUseOgawa))
 
 	if exTopology == 1:
 		job += ";purepointcache=1;dynamictopology=0;normals=0;uvs=0;facesets=0"

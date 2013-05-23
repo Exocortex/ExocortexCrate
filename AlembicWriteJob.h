@@ -18,14 +18,19 @@ private:
 	Abc::OObject mTop;
     unsigned int mTs;
     std::map<std::string,std::string> mOptions;
+	bool useOgawa;
 
 	multiMapStrAbcObj mapObjects;
 	double mFrameRate;
+
+	void createArchive(const char *sceneFileName);		// initialize mArchive with HDF5 or Ogawa!
+
 public:
    AlembicWriteJob(
       const MString & in_FileName,
       const MObjectArray & in_Selection,
-      const MDoubleArray & in_Frames);
+      const MDoubleArray & in_Frames,
+	  bool useOgawa);
    ~AlembicWriteJob();
 
    // to change the name of objects while exporting!

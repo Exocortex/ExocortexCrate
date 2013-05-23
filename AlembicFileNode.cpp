@@ -23,7 +23,9 @@ MStatus AlembicFileNode::initialize()
 
    // inputs
    mMultiFileAttr = nAttr.create("multiFiles", "mf", MFnNumericData::kBoolean, true);
+#ifndef MAYA_2011_UNSUPPORTED
    nAttr.setNiceNameOverride("Use Multiple Files");
+#endif
    status = nAttr.setStorable(true);
    status = nAttr.setDefault(false);
    status = nAttr.setKeyable(false);
