@@ -209,8 +209,7 @@ MStatus AlembicWriteJob::PreProcess()
 			std::map<std::string, bool> selectionMap;
 			for(int i=0; i<mSelection.length(); ++i)
 			{
-				const MObject &mObj = mSelection[i];
-				MFnDagNode dagNode(mObj);
+				MFnDagNode dagNode(mSelection[i]);
 				selectionMap[dagNode.fullPathName().asChar()] = true;
 			}
 			selectNodes(exoSceneRoot, selectionMap, !bFlattenHierarchy || bTransformCache, bSelectChildren, !bTransformCache);
