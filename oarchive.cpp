@@ -377,16 +377,42 @@ static PyTypeObject oArchive_Type = {
   oArchive_methods,             /* tp_methods */
 };
 
+static void createArchive(oArchive *object, const char *fileName, bool useOgawa)
+{
+	const std::string expName = getExporterName( "Python " EC_QUOTE( crate_Python_Version ) );
+	const std::string expFileName = getExporterFileName( "Unknown" );
+	if (useOgawa)
+	{
+		*object->mArchive = CreateArchiveWithInfo(
+			Alembic::AbcCoreOgawa::WriteArchive(),
+            fileName,
+            expName.c_str(),
+			expFileName.c_str(),
+            Abc::ErrorHandler::kThrowPolicy);
+	}
+	else
+	{
+		*object->mArchive = CreateArchiveWithInfo(
+			Alembic::AbcCoreHDF5::WriteArchive(true),
+            fileName,
+            expName.c_str(),
+			expFileName.c_str(),
+            Abc::ErrorHandler::kThrowPolicy);
+	}
+}
+
 PyObject * oArchive_new(PyObject * self, PyObject * args)
 {
    ALEMBIC_TRY_STATEMENT
    // parse the args
    char * fileName = NULL;
-   if(!PyArg_ParseTuple(args, "s", &fileName))
+   PyObject *pyOgawa = 0;
+   if(!PyArg_ParseTuple(args, "s|O", &fileName, &pyOgawa))
    {
       PyErr_SetString(getError(), "No filename specified!");
       return NULL;
    }
+   const bool useOgawa = pyOgawa ? PyObject_IsTrue(pyOgawa) : false;
 
    if(!HasAlembicWriterLicense())
    {
@@ -408,12 +434,7 @@ PyObject * oArchive_new(PyObject * self, PyObject * args)
    if (object != NULL)
    {
       object->mArchive = new Abc::OArchive();
-      *object->mArchive = CreateArchiveWithInfo(
-         Alembic::AbcCoreHDF5::WriteArchive(  true ),
-         fileName,
-         getExporterName( "Python " EC_QUOTE( crate_Python_Version ) ).c_str(),
-		 getExporterFileName( "Unknown" ).c_str(),
-         Abc::ErrorHandler::kThrowPolicy);
+      createArchive(object, fileName, useOgawa);
       AbcG::CreateOArchiveBounds(*object->mArchive,0);
 
       object->mElements = new oArchiveElementVec();
