@@ -10,8 +10,7 @@
 #include "ocompoundproperty.h"
 #include "ixformproperty.h"
 #include "oxformproperty.h"
-#include "itimesampling.h"
-#include "otimesampling.h"
+#include "timesampling.h"
 
 
 std::string resolvePath_Internal(std::string const& path)
@@ -90,6 +89,8 @@ static PyObject* extension_getPropertyTypes(PyObject *self)
    return _list;
 }
 
+#include "CommonRegex.h"
+
 static PyMethodDef extension_methods[] =
 {
    {"getVersion", (PyCFunction)extension_getVersion, METH_NOARGS, "Returns the version number of the alembic extension"},
@@ -98,7 +99,8 @@ static PyMethodDef extension_methods[] =
    {"getOArchive", (PyCFunction)oArchive_new, METH_VARARGS, "Takes in a filename to create an Alembic file at, and return an oArchive linked to that file."},
 
    {"getObjectTypes", (PyCFunction)extension_getObjectTypes, METH_NOARGS, "Returns a list of all valid object types. The same one listed in Appendix A."},
-   {"getPropertyTypes", (PyCFunction)extension_getPropertyTypes, METH_NOARGS, "Returns a list of all valid property types. The same one listed in Appendix B."},  
+   {"getPropertyTypes", (PyCFunction)extension_getPropertyTypes, METH_NOARGS, "Returns a list of all valid property types. The same one listed in Appendix B."},
+   {"createTimeSampling", (PyCFunction)TimeSampling_new, METH_VARARGS, "Returns a new Time Sampling"},
    {NULL, NULL}
 };
 
@@ -117,24 +119,28 @@ bool register_object(PyObject *module, PyTypeObject &type_object, const char *ob
   return true;
 }
 
+#include <stdio.h>
 EXTENSION_CALLBACK init_ExocortexAlembicPython(void)
 {
    PyObject * m = Py_InitModule3("_ExocortexAlembicPython", extension_methods, "This is the core extension module. It provides access to input as well as output archive objects.");
    PyObject * d = PyModule_GetDict(m);
 
-   register_object_iArchive(m);
-   register_object_iObject(m);
-   register_object_iProperty(m);
-   register_object_iCompoundProperty(m);
-   register_object_iXformProperty(m);
-   register_object_iTimeSampling(m);
+   bool reg = register_object_iArchive(m);
+   reg = reg && register_object_iObject(m);
+   reg = reg && register_object_iProperty(m);
+   reg = reg && register_object_iCompoundProperty(m);
+   reg = reg && register_object_iXformProperty(m);
 
-   register_object_oArchive(m);
-   register_object_oObject(m);
-   register_object_oProperty(m);
-   register_object_oCompoundProperty(m);
-   register_object_oXformProperty(m);
-   register_object_oTimeSampling(m);
+   reg = reg && register_object_oArchive(m);
+   reg = reg && register_object_oObject(m);
+   reg = reg && register_object_oProperty(m);
+   reg = reg && register_object_oCompoundProperty(m);
+   reg = reg && register_object_oXformProperty(m);
+
+   reg = reg && register_object_TS(m);
+
+   if (!reg)
+     printf("Fail to register all objects\n");
 
    extension_error = PyErr_NewException("ExocortexAlembicPython.error", NULL, NULL);
    PyDict_SetItemString(d, "error", extension_error);

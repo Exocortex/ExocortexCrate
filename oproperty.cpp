@@ -6,6 +6,8 @@
 #include "oarchive.h"
 #include "AlembicLicensing.h"
 
+#include <stdio.h>
+
 static std::string oProperty_getName_func(PyObject * self)
 {
    ALEMBIC_TRY_STATEMENT
@@ -130,20 +132,22 @@ static PyObject * oProperty_setValues(PyObject * self, PyObject * args)
    if(prop->mIsArray)
    {
       numSamples = (long)prop->mBaseArrayProperty->getNumSamples();
-      if(numSamples >= prop->mBaseArrayProperty->getTimeSampling()->getNumStoredTimes())
+      /*if(numSamples >= prop->mBaseArrayProperty->getTimeSampling()->getNumStoredTimes())
       {
+         printf("\n\tNumber of samples: %d\n\tExpected number: %d\n", numSamples, prop->mBaseArrayProperty->getTimeSampling()->getNumStoredTimes());
          PyErr_SetString(getError(), "Already stored the maximum number of samples!");
          return NULL;
-      }
+      }*/
    }
    else
    {
       numSamples = (long)prop->mBaseScalarProperty->getNumSamples();
-      if(numSamples >= prop->mBaseScalarProperty->getTimeSampling()->getNumStoredTimes())
+      /*if(numSamples >= prop->mBaseScalarProperty->getTimeSampling()->getNumStoredTimes())
       {
+         printf("\n\tNumber of samples: %d\n\tExpected number: %d\n", numSamples, prop->mBaseArrayProperty->getTimeSampling()->getNumStoredTimes());
          PyErr_SetString(getError(), "Already stored the maximum number of samples!");
          return NULL;
-      }
+      }*/
    }
 
    if(!HasAlembicWriterLicense())
@@ -1211,17 +1215,18 @@ static PyTypeObject oProperty_Type = {
   oProperty_methods,             /* tp_methods */
 };
 
-
 #define _NEW_PROP_IMPL_(tp,base,singleprop,arrayprop,writer) \
    if(prop->mIsArray) \
    { \
       prop->mPropType = (propertyTP)(tp - propertyTP_boolean + propertyTP_boolean_array); \
       prop->m##base##arrayprop = new Abc::O##base##arrayprop( prop->mBaseArrayProperty->getPtr(),Abc::kWrapExisting);\
+	  prop->m##base##arrayprop->setTimeSampling(archive->mArchive->getTimeSampling(tsIndex));\
    } \
    else \
    { \
       prop->mPropType = tp; \
       prop->m##base##singleprop = new Abc::O##base##singleprop( prop->mBaseScalarProperty->getPtr(),Abc::kWrapExisting);\
+	  prop->m##base##singleprop->setTimeSampling(archive->mArchive->getTimeSampling(tsIndex));\
    }
 #define _NEW_PROP_(tp,base) _NEW_PROP_IMPL_(tp,base,Property,ArrayProperty,Writer)
 #define _NEW_PROP_CASE_IMPL_(pod,tp,base,singleprop,arrayprop,writer) \
@@ -1555,6 +1560,7 @@ PyObject * oProperty_new(Abc::OCompoundProperty compound, std::string compoundFu
       {
          prop->mPropType = propertyTP_unknown;
       }
+	  
    }
    else
    {

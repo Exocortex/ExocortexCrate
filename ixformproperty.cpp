@@ -2,6 +2,7 @@
 #include "extension.h"
 #include "ixformproperty.h"
 #include "iobject.h"
+#include "timesampling.h"
 
 static std::string iXformProperty_getName_func()
 {
@@ -24,15 +25,14 @@ static PyObject * iXformProperty_getType(PyObject * self, PyObject * args)
 
 static PyObject * iXformProperty_getSampleTimes(PyObject * self, PyObject * args)
 {
-   ALEMBIC_TRY_STATEMENT
-   iXformProperty * prop = (iXformProperty*)self;
-   Abc::TimeSamplingPtr ts = prop->mXformSchema->getTimeSampling();
-   const std::vector <Abc::chrono_t> & times = ts->getStoredTimes();
-   PyObject * tuple = PyTuple_New(times.size());
-   for(size_t i=0;i<times.size();i++)
-      PyTuple_SetItem(tuple,i,Py_BuildValue("f",(float)times[i]));
-   return tuple;
-   ALEMBIC_PYOBJECT_CATCH_STATEMENT
+	ALEMBIC_TRY_STATEMENT
+		iXformProperty * prop = (iXformProperty*)self;
+	 
+		Abc::TimeSamplingPtr ts = prop->mXformSchema->getTimeSampling();
+		if(ts)
+			return TimeSamplingCopy(ts);
+		return Py_BuildValue("s", "unsupported");
+	ALEMBIC_PYOBJECT_CATCH_STATEMENT
 }
 
 static size_t iXformProperty_getNbStoredSamples_func(PyObject * self)

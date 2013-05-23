@@ -3,37 +3,23 @@ import sys
 import argparse
 
 # ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ----
-def create_new_TS(tsampling, scale, offset):
-   new_tss = []
-   for sampling in tsampling:
-      ts_type = sampling.getType()
-      samples = sampling.getTimeSamples()
-
-      if ts_type == "uniform":
-         samples = samples[0] * offset
-      else:
-         tmp_ts = []
-         K = samples[0] * (1.0 - scale) + offset
-         for s in samples:
-            tmp_ts.append( s*scale + K )
-         samples = tmp_ts
-
-      new_tss.append( alembic.createTimeSampling(ts_type, samples) )
-   return new_tss
-
-# ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ----
 #copy directly a property and its corresponding values
 def copy_property(prop, outProp):
-   for i in xrange(0, prop.getNbStoredSamples()):
-      vals = prop.getValues(i)
-      outProp.setValues(vals)
+   print("copy_property")
+   for i in range(0, prop.getNbStoredSamples()):
+      outProp.setValues(prop.getValues(i))
 
 # ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ----
 #visiting the structure, if it's a property, copy it, if it's a compound, continue the visit there
-def copy_compound_property(cprop, outCprop):
+def copy_compound_property(cprop, outCprop, out_data):
+   print("copy_compound_property")
    for prop_name in cprop.getPropertyNames():
       if prop_name == ".metadata":
          continue                                                    # .metadata cause some problem
+      #print("--> comp pro: " + str(prop_name))
+
+      prop = cprop.getProperty(prop_name)
+      print(type(prop))
 
       if prop.isCompound():
          out_prop = outCprop.getProperty(prop_name, prop.getType())
@@ -52,25 +38,35 @@ def copy_compound_property(cprop, outCprop):
 
 # ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ----
 # going through each object
-def copy_objects(in_data, out_data):
-   for identifier in in_data.getIdentifiers():
-      obj = in_data.getObject(identifier)
+def copy_objects(src_data, rep_data, out_data, new_prop):
+   rep_ids = rep_data.getIdentifiers()
+   for identifier in src_data.getIdentifiers():
+      #print("obj: " + str(identifier))
+      obj_replacable = ( identifier in rep_ids )
+      obj = src_data.getObject(identifier)
+      rep_obj = None
+      if obj_replacable:
+         rep_obj = rep_data.getObject(identifier)
       obj_typ = obj.getType()
 
-      curTS = obj.getSampleTimes() 
+      curTS = obj.getSampleTimes()
       out = None
       if len(curTS.getTimeSamples()) == 0:
          out = out_data.createObject(obj_typ, identifier)
       else:
          tsSampling = out_data.createTimeSampling([curTS])
-         out = out_data.createObject(obj_typ, identifier, tsSampling[0])      
-
+         out = out_data.createObject(obj_typ, identifier, tsSampling[0])
+      
       out.setMetaData(obj.getMetaData())
       for prop_name in obj.getPropertyNames():
          if prop_name == ".metadata":
-            continue                                              # .metadata cause some problem
+            continue                                                 # .metadata cause some problem
 
-         prop = obj.getProperty(prop_name)
+         copy_src = obj
+         if obj_replacable and prop_name == new_prop:                # this object is replacable and this property is the right one ? change the source
+           copy_src = rep_obj
+         
+         prop = copy_src.getProperty(prop_name)
 
          if prop.isCompound():
             out_prop = out.getProperty(prop_name, prop.getType())
@@ -90,35 +86,34 @@ def copy_objects(in_data, out_data):
 # ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ----
 def main(args):
    # parser args
-   parser = argparse.ArgumentParser(description="Copy an alembic file into a new one by changing it's time sampling.\n\nNote that this program doesn't validate the time sampling. It's possible to create time samplings with negative values.")
-   parser.add_argument("abc_in", type=str,   metavar="{Alembic input file}",  help="input alembic file to be copied and retimed")
-   parser.add_argument("-o",     type=str,   metavar="{Alembic output file}", help="optional output file name, default is \"a.abc\"", default="a.abc")
-   parser.add_argument("-s",     type=float, metavar="{scaling factor}",      help="scaling factor, default is 1.0",                  default=1.0)
-   parser.add_argument("-a",     type=float, metavar="{offset}",              help="offset for the time sampling, default is 0.0",    default=0.0)
+   parser = argparse.ArgumentParser(description="Overwrite specific properties in objects with corresponding properties in a second file (with a similar structure).")
+   parser.add_argument("abc_files", metavar="{Alembic files}", type=str, nargs="+", help="alembic file to merge")
+   parser.add_argument("-o", type=str, metavar="{Alembic output file}", help="optional output file name, default is \"a.abc\"", default="a.abc")
+   parser.add_argument("-p", type=str, metavar="{Property to replace}", help="Property to replace. Must be a property of the object. Not in a compound.")
    ns = vars(parser.parse_args(args[1:]))
    
-   if ns["abc_in"] == ns["o"]:
-      print("Error: input and output filenames must be different")
+   abc_files = ns["abc_files"]
+   if len(abc_files) != 2:
+      print("Error: need two files to merge")
       return
    
-   scale  = ns["s"]
-   offset = ns["a"]
-   
-   if scale <= 0.0:
-      print("Error: the scale factor cannot be less or equal to zero")
+   if ns["o"] in abc_files:
+      print("Error: the output filename must be distinct from all the input files")
       return
    
-   in_data  = alembic.getIArchive(ns["abc_in"])
+   ins = ns["abc_files"]
+   src_data = alembic.getIArchive(ins[0])
+   rep_data = alembic.getIArchive(ins[1])
    out_data = alembic.getOArchive(ns["o"])
-   ori_ts = in_data.getSampleTimes()
-   new_ts = create_new_TS(ori_ts, scale, offset)
-   out_data.createTimeSampling(new_ts)
-   copy_objects(in_data, out_data)
+   TSs = src_data.getSampleTimes()
+   print(str(TSs))
+   out_data.createTimeSampling(TSs)
    
-   print("\n\n")
+   copy_objects(src_data, rep_data, out_data, ns["p"])
 
 # ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ----
 if __name__ == "__main__":
+   #sys.stdin.readline()
    main(sys.argv)
 
 

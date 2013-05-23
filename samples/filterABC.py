@@ -28,12 +28,21 @@ def copy_compound_property(cprop, outCprop, full_name):
    for prop_name in cprop.getPropertyNames():
       if prop_name == ".metadata":
          continue                                                    # .metadata cause some problem
-      sub_prop = cprop.getProperty(prop_name)
-      out_prop = outCprop.getProperty(prop_name, sub_prop.getType())
-      if sub_prop.isCompound():
-         copy_compound_property(sub_prop, out_prop, full_name)
+
+      if prop.isCompound():
+         out_prop = outCprop.getProperty(prop_name, prop.getType())
+         copy_compound_property(prop, out_prop, out_data)
       else:
-         copy_property(sub_prop, out_prop, full_name)
+         curTS = prop.getSampleTimes()
+
+         out_prop = None
+         if len(curTS.getTimeSamples()) == 0:
+            out_prop = outCprop.getProperty(prop_name, prop.getType())
+         else:
+            tsSampling = out_data.createTimeSampling([curTS])
+            out_prop = outCprop.getProperty(prop_name, prop.getType(), tsSampling[0])
+
+         copy_property(prop, out_prop)
 
 # ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ----
 # going through each object
@@ -55,17 +64,34 @@ def copy_objects(in_data, out_data):
       if b_verbose:
          print("OBJ : \"" + identifier + "\" of type " + obj_typ)
       
-      out = out_data.createObject(obj_typ, identifier, obj.getTsIndex())
+      curTS = obj.getSampleTimes() 
+      out = None
+      if len(curTS.getTimeSamples()) == 0:
+         out = out_data.createObject(obj_typ, identifier)
+      else:
+         tsSampling = out_data.createTimeSampling([curTS])
+         out = out_data.createObject(obj_typ, identifier, tsSampling[0])
+
       out.setMetaData(obj.getMetaData())
       for prop_name in obj.getPropertyNames():
          if prop_name == ".metadata":
             continue                                                 # .metadata cause some problem
          prop = obj.getProperty(prop_name)
-         out_prop = out.getProperty(prop_name, prop.getType())
+
          if prop.isCompound():
-            copy_compound_property(prop, out_prop, identifier)
+            out_prop = out.getProperty(prop_name, prop.getType())
+            copy_compound_property(prop, out_prop, out_data)
          else:
-            copy_property(prop, out_prop, identifier)
+            curTS = prop.getSampleTimes()
+
+            out_prop = None
+            if len(curTS.getTimeSamples()) == 0:
+               out_prop = out.getProperty(prop_name, prop.getType())
+            else:
+               tsSampling = out_data.createTimeSampling([curTS])
+               out_prop = out.getProperty(prop_name, prop.getType(), tsSampling[0])
+
+            copy_property(prop, out_prop)
 
 # ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ----
 def main(args):

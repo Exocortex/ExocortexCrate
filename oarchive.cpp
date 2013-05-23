@@ -7,8 +7,7 @@
 #include "ocompoundproperty.h"
 #include "oxformproperty.h"
 #include "AlembicLicensing.h"
-#include "otimesampling.h"
-#include "itimesampling.h"
+#include "timesampling.h"
 #include "CommonUtilities.h"
 
 typedef std::set<std::string> str_set;
@@ -45,6 +44,7 @@ static PyObject * oArchive_getFileName(PyObject * self, PyObject * args)
    ALEMBIC_PYOBJECT_CATCH_STATEMENT
 }
 
+#include <stdio.h>
 static PyObject * oArchive_createTimeSampling(PyObject * self, PyObject * args)
 {
    ALEMBIC_TRY_STATEMENT
@@ -90,32 +90,26 @@ static PyObject * oArchive_createTimeSampling(PyObject * self, PyObject * args)
       std::list<PyObject*> valid_obj;
       for (int i = 0; i < nbTimes; ++i)
       {
-         PyObject *item = _GetItem(timesTuple, i);
-         PyObject *out = NULL;
-
-         if (PyTuple_Check(item) || PyList_Check(item))
-            out = oTimeSampling_new(item);                        // construct a oTimeSampling from the list
-         else if (is_iTimeSampling(item))
-            out = iTimeSampling_createOTimeSampling(item);  // must be an iTimeSampling!
-         else
-         {
-            // not valid, delete previous made PyObject
-            for (std::list<PyObject*>::iterator beg = valid_obj.begin(); beg != valid_obj.end(); ++beg)
-               PyObject_FREE(*beg);
-            PyErr_SetString(getError(), "item should be a tuple, a list, or an iTimeSampling");
-            {Py_INCREF(Py_False); return Py_False;}
-         }
-         valid_obj.push_back(out);
+			PyObject *item = _GetItem(timesTuple, i);
+			if (!PyObject_TimeSampling_Check(item))
+			{
+				PyErr_SetString(getError(), "item should be a TimeSampling");
+				return NULL;
+			}
+			valid_obj.push_back(item);
       }
 
       // add the time sampling!
-      for (std::list<PyObject*>::iterator beg = valid_obj.begin(); beg != valid_obj.end(); ++beg)
+      PyObject *_list = PyList_New(valid_obj.size());
+      int ii = 0;
+      for (std::list<PyObject*>::iterator beg = valid_obj.begin(); beg != valid_obj.end(); ++beg, ++ii)
       {
-         archive->mArchive->addTimeSampling(((oTimeSampling*)*beg)->ts);
+         unsigned long tsIndex = archive->mArchive->addTimeSampling( *( ((EA_TimeSampling*)*beg)->tsampling ) );
+         PyList_SetItem( _list, ii, Py_BuildValue("i", (int)tsIndex) );
          PyObject_FREE(*beg);
       }
+      return _list;
 
-      {Py_INCREF(Py_True); return Py_True;}
    ALEMBIC_PYOBJECT_CATCH_STATEMENT
 }
 
@@ -177,7 +171,8 @@ static PyObject * oArchive_createObject(PyObject * self, PyObject * args)
          PyErr_SetString(getError(), "Invalid identifier!");
          return NULL;
       }
-      parent = *parentPtr->mObject;
+      if (parentPtr->mObject)
+         parent = *parentPtr->mObject;
    }
 
    // now validate the type
@@ -382,16 +377,42 @@ static PyTypeObject oArchive_Type = {
   oArchive_methods,             /* tp_methods */
 };
 
+static void createArchive(oArchive *object, const char *fileName, bool useOgawa)
+{
+	const std::string expName = getExporterName( "Python " EC_QUOTE( crate_Python_Version ) );
+	const std::string expFileName = getExporterFileName( "Unknown" );
+	if (useOgawa)
+	{
+		*object->mArchive = CreateArchiveWithInfo(
+			Alembic::AbcCoreOgawa::WriteArchive(),
+            fileName,
+            expName.c_str(),
+			expFileName.c_str(),
+            Abc::ErrorHandler::kThrowPolicy);
+	}
+	else
+	{
+		*object->mArchive = CreateArchiveWithInfo(
+			Alembic::AbcCoreHDF5::WriteArchive(true),
+            fileName,
+            expName.c_str(),
+			expFileName.c_str(),
+            Abc::ErrorHandler::kThrowPolicy);
+	}
+}
+
 PyObject * oArchive_new(PyObject * self, PyObject * args)
 {
    ALEMBIC_TRY_STATEMENT
    // parse the args
    char * fileName = NULL;
-   if(!PyArg_ParseTuple(args, "s", &fileName))
+   PyObject *pyOgawa = 0;
+   if(!PyArg_ParseTuple(args, "s|O", &fileName, &pyOgawa))
    {
       PyErr_SetString(getError(), "No filename specified!");
       return NULL;
    }
+   const bool useOgawa = pyOgawa ? PyObject_IsTrue(pyOgawa) : false;
 
    if(!HasAlembicWriterLicense())
    {
@@ -413,12 +434,7 @@ PyObject * oArchive_new(PyObject * self, PyObject * args)
    if (object != NULL)
    {
       object->mArchive = new Abc::OArchive();
-      *object->mArchive = CreateArchiveWithInfo(
-         Alembic::AbcCoreHDF5::WriteArchive(  true ),
-         fileName,
-         getExporterName( "Python " EC_QUOTE( crate_Python_Version ) ).c_str(),
-		 getExporterFileName( "Unknown" ).c_str(),
-         Abc::ErrorHandler::kThrowPolicy);
+      createArchive(object, fileName, useOgawa);
       AbcG::CreateOArchiveBounds(*object->mArchive,0);
 
       object->mElements = new oArchiveElementVec();
