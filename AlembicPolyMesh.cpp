@@ -333,9 +333,12 @@ MStatus AlembicPolyMesh::Save(double time)
        MIntArray normalIDsArray;
        node.getNormalIds(normPerFaceArray, normalIDsArray);
 
-       indexedNormalsIndices.resize(normalIDsArray.length());
-       for (int i = 0; i < indexedNormalsIndices.size(); ++i)
-         indexedNormalsIndices[mSampleLookup[i]] = normalIDsArray[i];
+	   if (indexedNormalsIndices.size() == mSampleLookup.size())
+	   {
+		   indexedNormalsIndices.resize(normalIDsArray.length());
+		   for (int i = 0; i < indexedNormalsIndices.size(); ++i)
+			 indexedNormalsIndices[mSampleLookup[i]] = normalIDsArray[i];
+	   }
      }
 
      AbcG::ON3fGeomParam::Sample normalSample;
