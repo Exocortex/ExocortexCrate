@@ -29,8 +29,9 @@ AlembicWriteJob::AlembicWriteJob
 (
    const MString & in_FileName,
    const MObjectArray & in_Selection,
-   const MDoubleArray & in_Frames
-)
+   const MDoubleArray & in_Frames,
+   bool use_ogawa
+   ): useOgawa(use_ogawa)
 {
    // ensure to clear the isRefAnimated cache
    clearIsRefAnimatedCache();
@@ -93,6 +94,30 @@ bool AlembicWriteJob::AddObject(AlembicObjectPtr in_Obj)
    return true;
 }
 
+void AlembicWriteJob::createArchive(const char *sceneFileName)
+{
+	const std::string expName = getExporterName( "Maya " EC_QUOTE( crate_Maya_Version ) );
+	const std::string expFileName = getExporterFileName( sceneFileName );
+	if (useOgawa)
+	{
+		mArchive = CreateArchiveWithInfo(
+			Alembic::AbcCoreOgawa::WriteArchive(),
+            mFileName.asChar(),
+            expName.c_str(),
+			expFileName.c_str(),
+            Abc::ErrorHandler::kThrowPolicy);
+	}
+	else
+	{
+		mArchive = CreateArchiveWithInfo(
+			Alembic::AbcCoreHDF5::WriteArchive(true),
+            mFileName.asChar(),
+            expName.c_str(),
+			expFileName.c_str(),
+            Abc::ErrorHandler::kThrowPolicy);
+	}
+}
+
 MStatus AlembicWriteJob::PreProcess()
 {
   ESS_PROFILE_SCOPE("AlembicWriteJob::PreProcess");
@@ -131,15 +156,9 @@ MStatus AlembicWriteJob::PreProcess()
    // init archive (use a locally scoped archive)
    // TODO: determine how to access the current maya scene path
    //MString sceneFileName = "Exported from: "+Application().GetActiveProject().GetActiveScene().GetParameterValue("FileName").GetAsText();
-   MString sceneFileName = "Exported from Maya.";
    try
    {
-      mArchive = CreateArchiveWithInfo(
-            Alembic::AbcCoreHDF5::WriteArchive(  true  ),
-            mFileName.asChar(),
-            getExporterName( "Maya " EC_QUOTE( crate_Maya_Version ) ).c_str(),
-			      getExporterFileName( sceneFileName.asChar() ).c_str(),
-            Abc::ErrorHandler::kThrowPolicy);
+	  createArchive("Exported from Maya.");
 
 	  mTop = mArchive.getTop();
 
@@ -482,6 +501,8 @@ MStatus AlembicExportCommand::doIt(const MArgList & args)
 			bool withouthierarchy = false;
 			bool transformcache = false;
 			bool useInitShadGrp = false;
+			bool useOgawa = false;				// Later, will need to be changed!
+
 			MStringArray objectStrings;
 			MObjectArray objects;
 			std::string search_str, replace_str;
@@ -545,6 +566,8 @@ MStatus AlembicExportCommand::doIt(const MArgList & args)
 				{
 					replace_str = valuePair[1].asChar();
 				}
+				else if(lowerValue == "ogawa")
+					useOgawa = valuePair[1].asInt() != 0;
 				else
 				{
 					MGlobal::displayWarning("[ExocortexAlembic] Skipping invalid token: "+tokens[j]);
@@ -671,7 +694,7 @@ MStatus AlembicExportCommand::doIt(const MArgList & args)
 				 frames.append(frame);
 		  }
 
-		  AlembicWriteJob * job = new AlembicWriteJob(filename,objects,frames);
+		  AlembicWriteJob * job = new AlembicWriteJob(filename,objects,frames, useOgawa);
 		  job->SetOption("exportNormals",normals ? "1" : "0");
 		  job->SetOption("exportUVs",uvs ? "1" : "0");
 		  job->SetOption("exportFaceSets",facesets ? "1" : "0");

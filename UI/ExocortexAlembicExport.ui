@@ -35,6 +35,8 @@
     </rect>
    </property>
    <layout class="QGridLayout" name="gridLayout">
+
+    <!-- In -->
     <item row="0" column="0">
      <widget class="QLabel" name="label">
       <property name="text">
@@ -45,6 +47,15 @@
       </property>
      </widget>
     </item>
+    <item row="0" column="1">
+     <widget class="QLineEdit" name="inframe">
+      <property name="text">
+       <string>1</string>
+      </property>
+     </widget>
+    </item>
+
+    <!-- Topology -->
     <item row="4" column="0">
      <widget class="QLabel" name="label_4">
       <property name="text">
@@ -77,6 +88,8 @@
       </item>
      </widget>
     </item>
+
+    <!-- UVs -->
     <item row="5" column="0">
      <widget class="QLabel" name="label_5">
       <property name="text">
@@ -97,13 +110,8 @@
       </property>
      </widget>
     </item>
-    <item row="0" column="1">
-     <widget class="QLineEdit" name="inframe">
-      <property name="text">
-       <string>1</string>
-      </property>
-     </widget>
-    </item>
+
+    <!-- Out -->
     <item row="1" column="0">
      <widget class="QLabel" name="label_6">
       <property name="text">
@@ -121,6 +129,8 @@
       </property>
      </widget>
     </item>
+
+    <!-- Frame step -->
     <item row="2" column="1">
      <widget class="QLineEdit" name="stepframe">
       <property name="text">
@@ -138,6 +148,8 @@
       </property>
      </widget>
     </item>
+
+    <!-- Sub step -->
     <item row="3" column="1">
      <widget class="QLineEdit" name="substepframe">
       <property name="text">
@@ -155,6 +167,8 @@
       </property>
      </widget>
     </item>
+
+    <!-- Faceset -->
     <item row="6" column="0">
      <widget class="QLabel" name="label_9">
       <property name="text">
@@ -176,6 +190,7 @@
      </widget>
     </item>
 
+    <!-- Use init. shading group -->
     <item row="7" column="0">
      <widget class="QLabel" name="label_9">
       <property name="text">
@@ -197,7 +212,7 @@
      </widget>
     </item>
 
-
+    <!-- Dynamic Topology -->
     <item row="8" column="0">
      <widget class="QLabel" name="label_10">
       <property name="text">
@@ -218,6 +233,8 @@
       </property>
      </widget>
     </item>
+
+    <!-- Global Space -->
      <item row="9" column="0">
        <widget class="QLabel" name="label_11">
          <property name="text">
@@ -238,6 +255,8 @@
          </property>
        </widget>
      </item>
+
+    <!-- No Hierarchy -->
      <item row="10" column="0">
        <widget class="QLabel" name="label_12">
          <property name="text">
@@ -258,6 +277,8 @@
          </property>
        </widget>
      </item>
+
+    <!-- Xform cache -->
      <item row="11" column="0">
        <widget class="QLabel" name="label_12">
          <property name="text">
@@ -278,6 +299,36 @@
          </property>
        </widget>
      </item>
+
+    <!-- Database -->
+    <item row="12" column="0">
+     <widget class="QLabel" name="label_db">
+      <property name="text">
+       <string>Database:</string>
+      </property>
+      <property name="alignment">
+       <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+      </property>
+     </widget>
+    </item>
+    <item row="12" column="1">
+     <widget class="QComboBox" name="database">
+      <property name="currentIndex">
+       <number>0</number>
+      </property>
+      <item>
+       <property name="text">
+        <string>HDF5</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>Ogawa</string>
+       </property>
+      </item>
+     </widget>
+    </item>
+
    </layout>
   </widget>
 

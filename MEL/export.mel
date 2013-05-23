@@ -20,6 +20,7 @@ global proc exocortexAlembicExportGUI(string $filename, string $dialog)
   int $exportGlobalSpace = `checkBox -q -value globalspace`;
   int $exportWithoutHierarchy = `checkBox -q -value withouthierarchy`;
   int $exportTransformCache = `checkBox -q -value transformcache`;
+  int $exportOgawa = `optionMenu -q -select database`;
   exocortexCloseDialog($dialog);
 
   $minTime = `playbackOptions -q -min`;
@@ -53,12 +54,13 @@ global proc exocortexAlembicExportGUI(string $filename, string $dialog)
     }
     fclose $__file;
   }
+
   $filename = `ExocortexAlembic_resolvePath -f $filename`;
   string $cmd = "import ExocortexAlembic as EA\nEA._export.doIt(\"" + $filename + "\", " + $exportInframe + ", " + $exportOutframe + ", None, " +
                          $exportStepframe + ", " + $exportSubstepframe + ", " + $exportTopology + ", " +
                          $exportUVs + ", " + $exportFaceSets + ", " + $exportDynamicTopo + ", " +
                          $exportGlobalSpace + ", " + $exportWithoutHierarchy + ", " + $exportTransformCache + ", " +
-                         $exportUseInitShadGrp + ")";
+                         $exportUseInitShadGrp + ", " + ($exportOgawa-1) + ")";
   python($cmd);
 }
 
