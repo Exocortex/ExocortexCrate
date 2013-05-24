@@ -188,6 +188,28 @@ MStatus AlembicImportCommand::importSingleJob(const MString &job, int jobNumber)
 		AlembicPostImportPoints();
 	}
 
+	if (jobParser.paramIsSet("fitTimeRange"))
+	{
+		size_t oMinSample=(size_t)-1, oMaxSample=0;
+		double oMinTime = DBL_MIN, oMaxTime = -DBL_MAX;
+		GetSampleRange(fileRoot, oMinSample, oMaxSample, oMinTime, oMaxTime);
+
+		MAnimControl anim;
+		MTime minTime, maxTime, curTime;
+		MTime sec(1.0, MTime::kSeconds);
+		minTime.setValue(oMinTime * sec.as(MTime::uiUnit()));
+		maxTime.setValue(oMaxTime * sec.as(MTime::uiUnit()));
+
+		status = anim.setMinTime(minTime);
+		status = anim.setAnimationStartTime(minTime);
+
+		if (oMaxTime > 0)
+		{
+			status = anim.setMaxTime(maxTime);
+			status = anim.setAnimationEndTime(maxTime);
+		}
+	}
+
 	// check if an error was set!
 	{
 		MString result;
