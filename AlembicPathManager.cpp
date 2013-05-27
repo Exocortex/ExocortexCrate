@@ -224,8 +224,8 @@ ESS_CALLBACK_START(alembic_replace_path_Execute, CRef&)
          if( pathStr.IsEqualNoCase(oldPath) ){
             path.PutValue(newPath);
 
-            delRefArchive(oldPath);
-            addRefArchive(newPath);
+            //delRefArchive(oldPath);
+            //addRefArchive(newPath);
 
             nReplaceCount++;
          }
@@ -240,8 +240,8 @@ ESS_CALLBACK_START(alembic_replace_path_Execute, CRef&)
             if( pathStr.IsEqualNoCase(oldPath) ){
                op.PutParameterValue(L"path", newPath);
 
-               delRefArchive(oldPath);
-               addRefArchive(newPath);
+               //delRefArchive(oldPath);
+               //addRefArchive(newPath);
 
                nReplaceCount++;
             }
@@ -509,8 +509,8 @@ ESS_CALLBACK_START(alembic_path_manager_Execute, CRef&)
                {
                   if(CString(it->second.c_str()) != value)
                   {
-                     if(j<2)
-                        addRefArchive(CString(it->second.c_str()));
+                     //if(j<2)
+                     //   addRefArchive(CString(it->second.c_str()));
                      param.PutValue(CString(it->second.c_str()));
                   }
                }
@@ -528,8 +528,8 @@ ESS_CALLBACK_START(alembic_path_manager_Execute, CRef&)
                {
                   if(CString(it->second.c_str()) != value)
                   {
-                     if(j<2)
-                        addRefArchive(CString(it->second.c_str()));
+                     //if(j<2)
+                     //   addRefArchive(CString(it->second.c_str()));
                      op.PutParameterValue(paramName[j],CString(it->second.c_str()));
                   }
                }

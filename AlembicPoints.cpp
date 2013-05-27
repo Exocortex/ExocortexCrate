@@ -698,16 +698,7 @@ XSIPLUGINCALLBACK CStatus alembic_points_Evaluate(ICENodeContext& in_ctxt)
    CString identifier = identifierData[0];
 
    // check if we need t addref the archive
-   CValue udVal = in_ctxt.GetUserData();
-   ArchiveInfo * p = (ArchiveInfo*)(CValue::siPtrType)udVal;
-   if(p == NULL)
-   {
-      p = new ArchiveInfo;
-      p->path = path.GetAsciiString();
-      addRefArchive(path);
-      CValue val = (CValue::siPtrType) p;
-      in_ctxt.PutUserData( val ) ;
-   }
+   CStatus pathEditStat = alembicOp_PathEdit( in_ctxt );
 
   AbcG::IObject iObj = getObjectFromArchive(path,identifier);
    if(!iObj.valid())
@@ -1405,13 +1396,5 @@ XSIPLUGINCALLBACK CStatus alembic_points_Evaluate(ICENodeContext& in_ctxt)
 
 XSIPLUGINCALLBACK CStatus alembic_points_Term(CRef& in_ctxt)
 {
-	Context ctxt( in_ctxt );
-   CValue udVal = ctxt.GetUserData();
-   ArchiveInfo * p = (ArchiveInfo*)(CValue::siPtrType)udVal;
-   if(p != NULL)
-   {
-      delRefArchive(p->path);
-      delete(p);
-   }
-   return CStatus::OK;
+	return alembicOp_Term(in_ctxt);
 }

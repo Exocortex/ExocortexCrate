@@ -54,6 +54,7 @@ ESS_CALLBACK_END
 
 ESS_CALLBACK_START(alembic_standinop_Update, CRef&)
 
+   CStatus pathEditStat = alembicOp_PathEdit( in_ctxt );
    // if we are not interactive, let's just return here
    // the property should have all of its values anyways
    if(!Application().IsInteractive())
@@ -177,3 +178,6 @@ ESS_CALLBACK_START(alembic_standinop_Update, CRef&)
    return CStatus::OK;
 ESS_CALLBACK_END
 
+ESS_CALLBACK_START( alembic_standinop_Term, CRef& )
+   return alembicOp_Term(in_ctxt);
+ESS_CALLBACK_END

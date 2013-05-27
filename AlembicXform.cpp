@@ -165,6 +165,8 @@ ESS_CALLBACK_START( alembic_visibility_Update, CRef& )
    ESS_PROFILE_SCOPE("alembic_visibility_Update");
    OperatorContext ctxt( in_ctxt );
 
+   CStatus pathEditStat = alembicOp_PathEdit( in_ctxt );
+
    if((bool)ctxt.GetParameterValue(L"muted"))
       return CStatus::OK;
 

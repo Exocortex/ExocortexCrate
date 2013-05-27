@@ -676,6 +676,8 @@ ESS_CALLBACK_END
 ESS_CALLBACK_START( alembic_crvlist_Update, CRef& )
    OperatorContext ctxt( in_ctxt );
 
+   CStatus pathEditStat = alembicOp_PathEdit( in_ctxt );
+
    if((bool)ctxt.GetParameterValue(L"muted"))
       return CStatus::OK;
 
@@ -869,17 +871,7 @@ XSIPLUGINCALLBACK CStatus alembic_curves_Evaluate(ICENodeContext& in_ctxt)
 	CDataArrayString identifierData( in_ctxt, ID_IN_identifier );
    CString identifier = identifierData[0];
 
-   // check if we need t addref the archive
-   CValue udVal = in_ctxt.GetUserData();
-   ArchiveInfo * p = (ArchiveInfo*)(CValue::siPtrType)udVal;
-   if(p == NULL)
-   {
-      p = new ArchiveInfo;
-      p->path = path.GetAsciiString();
-      addRefArchive(path);
-      CValue val = (CValue::siPtrType) p;
-      in_ctxt.PutUserData( val ) ;
-   }
+   CStatus pathEditStat = alembicOp_PathEdit( in_ctxt );
 
   AbcG::IObject iObj = getObjectFromArchive(path,identifier);
    if(!iObj.valid())
@@ -1178,15 +1170,6 @@ XSIPLUGINCALLBACK CStatus alembic_curves_Evaluate(ICENodeContext& in_ctxt)
 XSIPLUGINCALLBACK CStatus alembic_curves_Term(CRef& in_ctxt)
 {
    return alembicOp_Term(in_ctxt);
-	Context ctxt( in_ctxt );
-   CValue udVal = ctxt.GetUserData();
-   ArchiveInfo * p = (ArchiveInfo*)(CValue::siPtrType)udVal;
-   if(p != NULL)
-   {
-      delRefArchive(p->path);
-      delete(p);
-   }
-   return CStatus::OK;
 }
 
 ESS_CALLBACK_START( alembic_crvlist_topo_Define, CRef& )
@@ -1199,6 +1182,8 @@ ESS_CALLBACK_END
 
 ESS_CALLBACK_START( alembic_crvlist_topo_Update, CRef& )
    OperatorContext ctxt( in_ctxt );
+
+   CStatus pathEditStat = alembicOp_PathEdit( in_ctxt );
 
    if((bool)ctxt.GetParameterValue(L"muted"))
       return CStatus::OK;

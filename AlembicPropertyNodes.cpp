@@ -1,7 +1,7 @@
 #include "stdafx.h"
 
 #include "AlembicPropertyNodes.h"
-
+#include "utility.h"
 
 
 /// ICE NODE!
@@ -40,31 +40,31 @@ void getParams(ICENodeContext& in_ctxt, CString& path, CString& identifier, CStr
 	time = timeData[0];
 }
 
-void addArchiveRef(ICENodeContext& in_ctxt, CString path)
-{
-	// check if we need t addref the archive
-	CValue udVal = in_ctxt.GetUserData();
-	ArchiveInfo * p = (ArchiveInfo*)(CValue::siPtrType)udVal;
-	if(p == NULL)
-	{
-		p = new ArchiveInfo;
-		p->path = path.GetAsciiString();
-		addRefArchive(path);
-		CValue val = (CValue::siPtrType) p;
-		in_ctxt.PutUserData( val ) ;
-	}
-}
-
-void delArchiveRef(Context& in_ctxt)
-{
-	CValue udVal = in_ctxt.GetUserData();
-	ArchiveInfo * p = (ArchiveInfo*)(CValue::siPtrType)udVal;
-	if(p != NULL)
-	{
-		delRefArchive(p->path);
-		delete(p);
-	}
-}
+//void addArchiveRef(ICENodeContext& in_ctxt, CString path)
+//{
+//	// check if we need t addref the archive
+//	CValue udVal = in_ctxt.GetUserData();
+//	ArchiveInfo * p = (ArchiveInfo*)(CValue::siPtrType)udVal;
+//	if(p == NULL)
+//	{
+//		p = new ArchiveInfo;
+//		p->path = path.GetAsciiString();
+//		addRefArchive(path);
+//		CValue val = (CValue::siPtrType) p;
+//		in_ctxt.PutUserData( val ) ;
+//	}
+//}
+//
+//void delArchiveRef(Context& in_ctxt)
+//{
+//	CValue udVal = in_ctxt.GetUserData();
+//	ArchiveInfo * p = (ArchiveInfo*)(CValue::siPtrType)udVal;
+//	if(p != NULL)
+//	{
+//		delRefArchive(p->path);
+//		delete(p);
+//	}
+//}
 
 bool findProperty(Abc::ICompoundProperty& props, AbcA::PropertyHeader& propHeader, CString aproperty)
 {
@@ -409,7 +409,7 @@ XSIPLUGINCALLBACK CStatus alembic_vec2f_array_Evaluate(ICENodeContext& in_ctxt)
     bool isCustomProp = true;
     getParams(in_ctxt, path, identifier, aproperty, isCustomProp, time);
 
-    addArchiveRef(in_ctxt, path);
+    CStatus pathEditStat = alembicOp_PathEdit( in_ctxt );
 
 	AbcG::IObject iObj = getObjectFromArchive(path,identifier);
     if(!iObj.valid()){
@@ -467,9 +467,7 @@ XSIPLUGINCALLBACK CStatus alembic_vec2f_array_Evaluate(ICENodeContext& in_ctxt)
 
 XSIPLUGINCALLBACK CStatus alembic_vec2f_array_Term(CRef& in_ctxt)
 {
-    Context ctxt( in_ctxt );
-	delArchiveRef(ctxt);
-	return CStatus::OK;
+   return alembicOp_Term(in_ctxt);
 }
 
 XSI::CStatus Register_alembic_vec2f_array( XSI::PluginRegistrar& in_reg )
@@ -491,7 +489,7 @@ XSIPLUGINCALLBACK CStatus alembic_vec3f_array_Evaluate(ICENodeContext& in_ctxt)
     bool isCustomProp = true;
     getParams(in_ctxt, path, identifier, aproperty, isCustomProp, time);
 
-    addArchiveRef(in_ctxt, path);
+    CStatus pathEditStat = alembicOp_PathEdit( in_ctxt );
 
 	AbcG::IObject iObj = getObjectFromArchive(path,identifier);
     if(!iObj.valid()){
@@ -568,9 +566,7 @@ XSIPLUGINCALLBACK CStatus alembic_vec3f_array_Evaluate(ICENodeContext& in_ctxt)
 
 XSIPLUGINCALLBACK CStatus alembic_vec3f_array_Term(CRef& in_ctxt)
 {
-    Context ctxt( in_ctxt );
-	delArchiveRef(ctxt);
-	return CStatus::OK;
+   return alembicOp_Term(in_ctxt);
 }
 
 XSI::CStatus Register_alembic_vec3f_array( XSI::PluginRegistrar& in_reg )
@@ -592,7 +588,7 @@ XSIPLUGINCALLBACK CStatus alembic_vec4f_array_Evaluate(ICENodeContext& in_ctxt)
     bool isCustomProp = true;
     getParams(in_ctxt, path, identifier, aproperty, isCustomProp, time);
 
-    addArchiveRef(in_ctxt, path);
+    CStatus pathEditStat = alembicOp_PathEdit( in_ctxt );
 
 	AbcG::IObject iObj = getObjectFromArchive(path,identifier);
     if(!iObj.valid()){
@@ -651,9 +647,7 @@ XSIPLUGINCALLBACK CStatus alembic_vec4f_array_Evaluate(ICENodeContext& in_ctxt)
 
 XSIPLUGINCALLBACK CStatus alembic_vec4f_array_Term(CRef& in_ctxt)
 {
-    Context ctxt( in_ctxt );
-	delArchiveRef(ctxt);
-	return CStatus::OK;
+   return alembicOp_Term(in_ctxt);
 }
 
 XSI::CStatus Register_alembic_vec4f_array( XSI::PluginRegistrar& in_reg )
@@ -675,7 +669,7 @@ XSIPLUGINCALLBACK CStatus alembic_float_array_Evaluate(ICENodeContext& in_ctxt)
     bool isCustomProp = true;
     getParams(in_ctxt, path, identifier, aproperty, isCustomProp, time);
 
-    addArchiveRef(in_ctxt, path);
+    CStatus pathEditStat = alembicOp_PathEdit( in_ctxt );
 
 	AbcG::IObject iObj = getObjectFromArchive(path,identifier);
     if(!iObj.valid()){
@@ -728,9 +722,7 @@ XSIPLUGINCALLBACK CStatus alembic_float_array_Evaluate(ICENodeContext& in_ctxt)
 
 XSIPLUGINCALLBACK CStatus alembic_float_array_Term(CRef& in_ctxt)
 {
-    Context ctxt( in_ctxt );
-	delArchiveRef(ctxt);
-	return CStatus::OK;
+   return alembicOp_Term(in_ctxt);
 }
 
 XSI::CStatus Register_alembic_float_array( XSI::PluginRegistrar& in_reg )
@@ -763,7 +755,7 @@ XSIPLUGINCALLBACK CStatus alembic_string_array_Evaluate(ICENodeContext& in_ctxt)
     bool isCustomProp = true;
     getParams(in_ctxt, path, identifier, aproperty, isCustomProp, time);
 
-    addArchiveRef(in_ctxt, path);
+    CStatus pathEditStat = alembicOp_PathEdit( in_ctxt );
 
 	AbcG::IObject iObj = getObjectFromArchive(path,identifier);
     if(!iObj.valid()){
@@ -845,9 +837,7 @@ XSIPLUGINCALLBACK CStatus alembic_string_array_Evaluate(ICENodeContext& in_ctxt)
 
 XSIPLUGINCALLBACK CStatus alembic_string_array_Term(CRef& in_ctxt)
 {
-    Context ctxt( in_ctxt );
-	delArchiveRef(ctxt);
-	return CStatus::OK;
+   return alembicOp_Term(in_ctxt);
 }
 
 XSI::CStatus Register_alembic_string_array( XSI::PluginRegistrar& in_reg )
