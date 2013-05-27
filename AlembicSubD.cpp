@@ -401,12 +401,12 @@ ESS_CALLBACK_END
 ESS_CALLBACK_START( alembic_geomapprox_Update, CRef& )
    OperatorContext ctxt( in_ctxt );
 
-   CStatus pathEditStat = alembicOp_PathEdit( in_ctxt );
+   CString path = ctxt.GetParameterValue(L"path");
+   CStatus pathEditStat = alembicOp_PathEdit( in_ctxt, path );
 
    if((bool)ctxt.GetParameterValue(L"muted"))
       return CStatus::OK;
 
-   CString path = ctxt.GetParameterValue(L"path");
    CString identifier = ctxt.GetParameterValue(L"identifier");
 
    AbcG::IObject iObj = getObjectFromArchive(path,identifier);

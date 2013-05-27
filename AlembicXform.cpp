@@ -79,12 +79,13 @@ ESS_CALLBACK_START( alembic_xform_Update, CRef& )
 	ESS_PROFILE_SCOPE("alembic_xform_Update");
 	OperatorContext ctxt( in_ctxt );
 
-    CStatus pathEditStat = alembicOp_PathEdit( in_ctxt );
+    CString path = ctxt.GetParameterValue(L"path");
+    CStatus pathEditStat = alembicOp_PathEdit( in_ctxt, path );
 
 	if((bool)ctxt.GetParameterValue(L"muted"))
 		return CStatus::OK;
 
-	CString path = ctxt.GetParameterValue(L"path");
+	
 	CString identifier = ctxt.GetParameterValue(L"identifier");
 
     AbcObjectCache *pObjectCache = getObjectCacheFromArchive(path.GetAsciiString(), identifier.GetAsciiString());
@@ -165,12 +166,12 @@ ESS_CALLBACK_START( alembic_visibility_Update, CRef& )
    ESS_PROFILE_SCOPE("alembic_visibility_Update");
    OperatorContext ctxt( in_ctxt );
 
-   CStatus pathEditStat = alembicOp_PathEdit( in_ctxt );
+   CString path = ctxt.GetParameterValue(L"path");
+   CStatus pathEditStat = alembicOp_PathEdit( in_ctxt, path );
 
    if((bool)ctxt.GetParameterValue(L"muted"))
       return CStatus::OK;
 
-   CString path = ctxt.GetParameterValue(L"path");
    CString identifier = ctxt.GetParameterValue(L"identifier");
 
   AbcG::IObject obj = getObjectFromArchive(path,identifier);

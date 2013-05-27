@@ -676,12 +676,12 @@ ESS_CALLBACK_END
 ESS_CALLBACK_START( alembic_crvlist_Update, CRef& )
    OperatorContext ctxt( in_ctxt );
 
-   CStatus pathEditStat = alembicOp_PathEdit( in_ctxt );
+   CString path = ctxt.GetParameterValue(L"path");
+   CStatus pathEditStat = alembicOp_PathEdit( in_ctxt, path );
 
    if((bool)ctxt.GetParameterValue(L"muted"))
       return CStatus::OK;
 
-   CString path = ctxt.GetParameterValue(L"path");
    CString identifier = ctxt.GetParameterValue(L"identifier");
 
   AbcG::IObject iObj = getObjectFromArchive(path,identifier);
@@ -871,7 +871,7 @@ XSIPLUGINCALLBACK CStatus alembic_curves_Evaluate(ICENodeContext& in_ctxt)
 	CDataArrayString identifierData( in_ctxt, ID_IN_identifier );
    CString identifier = identifierData[0];
 
-   CStatus pathEditStat = alembicOp_PathEdit( in_ctxt );
+   CStatus pathEditStat = alembicOp_PathEdit( in_ctxt, path );
 
   AbcG::IObject iObj = getObjectFromArchive(path,identifier);
    if(!iObj.valid())
@@ -1183,12 +1183,12 @@ ESS_CALLBACK_END
 ESS_CALLBACK_START( alembic_crvlist_topo_Update, CRef& )
    OperatorContext ctxt( in_ctxt );
 
-   CStatus pathEditStat = alembicOp_PathEdit( in_ctxt );
+   CString path = ctxt.GetParameterValue(L"path");
+   CStatus pathEditStat = alembicOp_PathEdit( in_ctxt, path );
 
    if((bool)ctxt.GetParameterValue(L"muted"))
       return CStatus::OK;
 
-   CString path = ctxt.GetParameterValue(L"path");
    CString identifier = ctxt.GetParameterValue(L"identifier");
 
   AbcG::IObject iObj = getObjectFromArchive(path,identifier);

@@ -698,7 +698,7 @@ XSIPLUGINCALLBACK CStatus alembic_points_Evaluate(ICENodeContext& in_ctxt)
    CString identifier = identifierData[0];
 
    // check if we need t addref the archive
-   CStatus pathEditStat = alembicOp_PathEdit( in_ctxt );
+   CStatus pathEditStat = alembicOp_PathEdit( in_ctxt, path );
 
   AbcG::IObject iObj = getObjectFromArchive(path,identifier);
    if(!iObj.valid())

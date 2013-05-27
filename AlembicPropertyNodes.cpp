@@ -409,7 +409,7 @@ XSIPLUGINCALLBACK CStatus alembic_vec2f_array_Evaluate(ICENodeContext& in_ctxt)
     bool isCustomProp = true;
     getParams(in_ctxt, path, identifier, aproperty, isCustomProp, time);
 
-    CStatus pathEditStat = alembicOp_PathEdit( in_ctxt );
+    CStatus pathEditStat = alembicOp_PathEdit( in_ctxt, path );
 
 	AbcG::IObject iObj = getObjectFromArchive(path,identifier);
     if(!iObj.valid()){
@@ -489,7 +489,7 @@ XSIPLUGINCALLBACK CStatus alembic_vec3f_array_Evaluate(ICENodeContext& in_ctxt)
     bool isCustomProp = true;
     getParams(in_ctxt, path, identifier, aproperty, isCustomProp, time);
 
-    CStatus pathEditStat = alembicOp_PathEdit( in_ctxt );
+    CStatus pathEditStat = alembicOp_PathEdit( in_ctxt, path );
 
 	AbcG::IObject iObj = getObjectFromArchive(path,identifier);
     if(!iObj.valid()){
@@ -588,7 +588,7 @@ XSIPLUGINCALLBACK CStatus alembic_vec4f_array_Evaluate(ICENodeContext& in_ctxt)
     bool isCustomProp = true;
     getParams(in_ctxt, path, identifier, aproperty, isCustomProp, time);
 
-    CStatus pathEditStat = alembicOp_PathEdit( in_ctxt );
+    CStatus pathEditStat = alembicOp_PathEdit( in_ctxt, path );
 
 	AbcG::IObject iObj = getObjectFromArchive(path,identifier);
     if(!iObj.valid()){
@@ -669,7 +669,7 @@ XSIPLUGINCALLBACK CStatus alembic_float_array_Evaluate(ICENodeContext& in_ctxt)
     bool isCustomProp = true;
     getParams(in_ctxt, path, identifier, aproperty, isCustomProp, time);
 
-    CStatus pathEditStat = alembicOp_PathEdit( in_ctxt );
+    CStatus pathEditStat = alembicOp_PathEdit( in_ctxt, path );
 
 	AbcG::IObject iObj = getObjectFromArchive(path,identifier);
     if(!iObj.valid()){
@@ -755,7 +755,7 @@ XSIPLUGINCALLBACK CStatus alembic_string_array_Evaluate(ICENodeContext& in_ctxt)
     bool isCustomProp = true;
     getParams(in_ctxt, path, identifier, aproperty, isCustomProp, time);
 
-    CStatus pathEditStat = alembicOp_PathEdit( in_ctxt );
+    CStatus pathEditStat = alembicOp_PathEdit( in_ctxt, path );
 
 	AbcG::IObject iObj = getObjectFromArchive(path,identifier);
     if(!iObj.valid()){
