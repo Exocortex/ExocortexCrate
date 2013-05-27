@@ -465,6 +465,8 @@ ESS_CALLBACK_START( alembic_polymesh_Update, CRef& )
    ESS_PROFILE_SCOPE("alembic_polymesh_Update");
    OperatorContext ctxt( in_ctxt );
 
+   CStatus pathEditStat = alembicOp_PathEdit( in_ctxt );
+
    if((bool)ctxt.GetParameterValue(L"muted"))
       return CStatus::OK;
 
@@ -552,6 +554,7 @@ ESS_CALLBACK_START( alembic_polymesh_Update, CRef& )
    return CStatus::OK;
 ESS_CALLBACK_END
 
+
 ESS_CALLBACK_START( alembic_polymesh_Term, CRef& )
    return alembicOp_Term(in_ctxt);
 ESS_CALLBACK_END
@@ -568,6 +571,8 @@ ESS_CALLBACK_END
 ESS_CALLBACK_START( alembic_normals_Update, CRef& )
    ESS_PROFILE_SCOPE("alembic_normals_Update");
    OperatorContext ctxt( in_ctxt );
+
+   CStatus pathEditStat = alembicOp_PathEdit( in_ctxt );
 
    if((bool)ctxt.GetParameterValue(L"muted"))
       return CStatus::OK;
@@ -655,10 +660,7 @@ ESS_CALLBACK_START( alembic_normals_Update, CRef& )
 ESS_CALLBACK_END
 
 ESS_CALLBACK_START( alembic_normals_Term, CRef& )
-   Context ctxt( in_ctxt );
-   CustomOperator op(ctxt.GetSource());
-   delRefArchive(op.GetParameterValue(L"path").GetAsText());
-   return CStatus::OK;
+   return alembicOp_Term(in_ctxt);
 ESS_CALLBACK_END
 
 ESS_CALLBACK_START( alembic_uvs_Define, CRef& )
@@ -673,6 +675,8 @@ ESS_CALLBACK_END
 ESS_CALLBACK_START( alembic_uvs_Update, CRef& )
    ESS_PROFILE_SCOPE("alembic_uvs_Update");
    OperatorContext ctxt( in_ctxt );
+
+   CStatus pathEditStat = alembicOp_PathEdit( in_ctxt );
 
    if((bool)ctxt.GetParameterValue(L"muted"))
       return CStatus::OK;
@@ -817,6 +821,8 @@ ESS_CALLBACK_END
 ESS_CALLBACK_START( alembic_polymesh_topo_Update, CRef& )
    ESS_PROFILE_SCOPE("alembic_polymesh_topo_Update");
    OperatorContext ctxt( in_ctxt );
+
+   CStatus pathEditStat = alembicOp_PathEdit( in_ctxt );
 
    if((bool)ctxt.GetParameterValue(L"muted"))
       return CStatus::OK;
@@ -1028,6 +1034,7 @@ ESS_CALLBACK_START( alembic_polymesh_topo_Term, CRef& )
    return alembicOp_Term(in_ctxt);
 ESS_CALLBACK_END
 
+
 ESS_CALLBACK_START( alembic_bbox_Define, CRef& )
    alembicOp_Define(in_ctxt);
 
@@ -1060,6 +1067,8 @@ ESS_CALLBACK_END
 
 ESS_CALLBACK_START( alembic_bbox_Update, CRef& )
    OperatorContext ctxt( in_ctxt );
+
+   CStatus pathEditStat = alembicOp_PathEdit( in_ctxt );
 
    if((bool)ctxt.GetParameterValue(L"muted"))
       return CStatus::OK;
@@ -1443,6 +1452,7 @@ XSIPLUGINCALLBACK CStatus alembic_polyMesh2_Evaluate(ICENodeContext& in_ctxt)
 
 	return CStatus::OK;
 }
+
 
 XSIPLUGINCALLBACK CStatus alembic_polyMesh2_Term(CRef& in_ctxt)
 {

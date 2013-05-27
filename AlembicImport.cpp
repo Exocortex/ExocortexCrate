@@ -504,7 +504,10 @@ CStatus alembic_create_item_Invoke
          }
  
          // setup the operator
-         addRefArchive(file);
+         //if(attachToExisting){
+         //   //delete the reference to the old file
+         //}
+         //addRefArchive(file);
          op.PutParameterValue(L"path",file);
          op.PutParameterValue(L"identifier",identifier);
          op.PutParameterValue(L"muted", false);
@@ -652,7 +655,12 @@ CStatus alembic_create_item_Invoke
                         op.AddInputPort(realTarget);
                         op.Connect();
                      }
-                     addRefArchive(file);
+
+                     //if(attachToExisting){
+                     //   //delete the reference to the old file
+                     //}
+                     //addRefArchive(file);
+
                      op.PutParameterValue(L"path",file);
                      op.PutParameterValue(L"identifier",identifier);
                      op.PutParameterValue(L"muted", false);
@@ -804,7 +812,12 @@ CStatus alembic_create_item_Invoke
                           op.AddInputPort(realTarget);
                           op.Connect();
                        }
-                       addRefArchive(file);
+                       // if(attachToExisting){
+                       //    //delete the reference to the old file
+                       // }
+
+                       //addRefArchive(file);
+
                        op.PutParameterValue(L"path",file);
                        op.PutParameterValue(L"identifier",identifier+CString(L":")+CString(uvI));
                        op.PutParameterValue(L"muted", false);

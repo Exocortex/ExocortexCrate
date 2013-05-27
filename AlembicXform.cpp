@@ -79,23 +79,32 @@ ESS_CALLBACK_START( alembic_xform_Update, CRef& )
 	ESS_PROFILE_SCOPE("alembic_xform_Update");
 	OperatorContext ctxt( in_ctxt );
 
+    CStatus pathEditStat = alembicOp_PathEdit( in_ctxt );
+
 	if((bool)ctxt.GetParameterValue(L"muted"))
 		return CStatus::OK;
-
-	CValue udVal = ctxt.GetUserData();
-	alembic_UD * p = (alembic_UD*)(CValue::siPtrType)udVal;
 
 	CString path = ctxt.GetParameterValue(L"path");
 	CString identifier = ctxt.GetParameterValue(L"identifier");
 
-	AbcG::IObject iObj = getObjectFromArchive(path,identifier);
-	if(!iObj.valid()) {
+    AbcObjectCache *pObjectCache = getObjectCacheFromArchive(path.GetAsciiString(), identifier.GetAsciiString());
+
+	if(!pObjectCache) {
 		return CStatus::OK;
 	}
-	AbcG::IXform obj(iObj,Abc::kWrapExisting);
+
+    AbcG::IObject iObj = pObjectCache->obj;
+
+    IXformPtr pObj = pObjectCache->getXform();
+    if(!pObj){
+        return CStatus::OK;
+    }
+
+	AbcG::IXform& obj = *pObj;
 	if(!obj.valid()) {
 		return CStatus::OK;
 	}
+    
 
 	double time = ctxt.GetParameterValue(L"time");
 	Abc::M44d matrix;	// constructor creates an identity matrix
@@ -103,33 +112,17 @@ ESS_CALLBACK_START( alembic_xform_Update, CRef& )
 	// if no time samples, default to identity matrix
   if( obj.getSchema().getNumSamples() > 0 ) {
 
-    SampleInfo sampleInfo = getSampleInfo(
-		    time,
-		    obj.getSchema().getTimeSampling(),
-		    obj.getSchema().getNumSamples()
-		    );
-
-	  if( p->indexToMatrices.find(sampleInfo.floorIndex) == p->indexToMatrices.end() ) {
-		  AbcG::XformSample sample;
-		  obj.getSchema().get(sample,sampleInfo.floorIndex); 
-		  p->indexToMatrices.insert( std::map<size_t,Abc::M44d>::value_type( sampleInfo.floorIndex, sample.getMatrix() ) );		
-	  }
-	  if( sampleInfo.ceilIndex < obj.getSchema().getNumSamples() ) {
-		  if( p->indexToMatrices.find(sampleInfo.ceilIndex) == p->indexToMatrices.end() ) {
-			  AbcG::XformSample sample;
-			  obj.getSchema().get(sample,sampleInfo.ceilIndex);
-			  p->indexToMatrices.insert( std::map<size_t,Abc::M44d>::value_type( sampleInfo.ceilIndex, sample.getMatrix() ) );
-		  }
-	  }
+      SampleInfo sampleInfo = getSampleInfo(time, obj.getSchema().getTimeSampling(), obj.getSchema().getNumSamples());
+      Abc::M44d floorMatrix = pObjectCache->getXformMatrix((int)sampleInfo.floorIndex);
 
 	  if( sampleInfo.alpha == 0.0f || sampleInfo.alpha == 1.0f )
 	  {
-		  matrix = p->indexToMatrices[ sampleInfo.floorIndex ];
+          matrix = floorMatrix;
 	  }
 	  else
 	  {
-          const float fAlpha = (float)sampleInfo.alpha;
-		  matrix = p->indexToMatrices[ sampleInfo.floorIndex ] * (1.0 - fAlpha) + p->indexToMatrices[ sampleInfo.ceilIndex ] * fAlpha;
+		  Abc::M44d ceilMatrix = pObjectCache->getXformMatrix((int)sampleInfo.ceilIndex);
+		  matrix = (1.0 - sampleInfo.alpha) * floorMatrix + sampleInfo.alpha * ceilMatrix;
 	  }
   }
 
@@ -153,26 +146,11 @@ ESS_CALLBACK_START( alembic_xform_Init, CRef& )
    Context ctxt( in_ctxt );
    CustomOperator op(ctxt.GetSource());
 
-   CValue val = (CValue::siPtrType) new alembic_UD(op.GetObjectID());
-   ctxt.PutUserData( val ) ;
-
    return CStatus::OK;
 ESS_CALLBACK_END
 
 ESS_CALLBACK_START( alembic_xform_Term, CRef& )
-   Context ctxt( in_ctxt );
-   CustomOperator op(ctxt.GetSource());
-   delRefArchive(op.GetParameterValue(L"path").GetAsText());
-
-   CValue udVal = ctxt.GetUserData();
-   alembic_UD * p = (alembic_UD*)(CValue::siPtrType)udVal;
-   if(p!=NULL)
-   {
-      delete(p);
-      p = NULL;
-   }
-
-   return CStatus::OK;
+   return alembicOp_Term(in_ctxt);
 ESS_CALLBACK_END
 
 ESS_CALLBACK_START( alembic_visibility_Define, CRef& )

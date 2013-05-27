@@ -401,6 +401,8 @@ ESS_CALLBACK_END
 ESS_CALLBACK_START( alembic_geomapprox_Update, CRef& )
    OperatorContext ctxt( in_ctxt );
 
+   CStatus pathEditStat = alembicOp_PathEdit( in_ctxt );
+
    if((bool)ctxt.GetParameterValue(L"muted"))
       return CStatus::OK;
 

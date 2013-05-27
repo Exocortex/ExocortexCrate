@@ -7,6 +7,7 @@
 XSI::CStatus alembicOp_Define( XSI::CRef& in_ctxt );
 XSI::CStatus alembicOp_DefineLayout( XSI::CRef& in_ctxt );
 XSI::CStatus alembicOp_Term( XSI::CRef& in_ctxt );
+XSI::CStatus alembicOp_PathEdit( XSI::CRef& in_ctxt );
 
 std::string getIdentifierFromRef(XSI::CRef in_Ref, bool includeHierarchy = false);
 XSI::CString truncateName(const XSI::CString & in_Name);

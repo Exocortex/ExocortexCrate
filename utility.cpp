@@ -513,9 +513,43 @@ CStatus alembicOp_DefineLayout( CRef& in_ctxt )
 CStatus alembicOp_Term( CRef& in_ctxt )
 {
    Context ctxt( in_ctxt );
-   CustomOperator op(ctxt.GetSource());
-   delRefArchive(op.GetParameterValue(L"path").GetAsText());
+   CValue udVal = ctxt.GetUserData();
+   ArchiveInfo * p = (ArchiveInfo*)(CValue::siPtrType)udVal;
+   if(p != NULL)
+   {
+      delRefArchive(p->path);
+      delete(p);
+   }
    return CStatus::OK;
+}
+
+CStatus alembicOp_PathEdit( CRef& in_ctxt )
+{
+	// check if we need t addref the archive
+    OperatorContext ctxt( in_ctxt );
+
+    CString path = ctxt.GetParameterValue(L"path");
+
+	CValue udVal = ctxt.GetUserData();
+	ArchiveInfo * p = (ArchiveInfo*)(CValue::siPtrType)udVal;
+	if(p == NULL)
+	{
+		p = new ArchiveInfo;
+		p->path = path.GetAsciiString();
+		addRefArchive(path);
+		CValue val = (CValue::siPtrType) p;
+		ctxt.PutUserData( val ) ;
+	}
+    else{
+        //TODO: only update refs if the path is different
+       if( strcmp(p->path.c_str(), path.GetAsciiString()) != 0 ){
+         delRefArchive( XSI::CString(p->path.c_str()) );
+		 p->path = path.GetAsciiString();
+         addRefArchive(path);
+       }
+    }
+
+    return CStatus::OK;
 }
 
 int gHasStandinSupport = -1;
