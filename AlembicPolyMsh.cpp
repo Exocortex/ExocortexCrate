@@ -460,6 +460,9 @@ ESS_CALLBACK_START( alembic_polymesh_DefineLayout, CRef& )
    return alembicOp_DefineLayout(in_ctxt); 
 ESS_CALLBACK_END
 
+ESS_CALLBACK_START( alembic_polymesh_Init, CRef& )
+   return alembicOp_Init( in_ctxt );
+ESS_CALLBACK_END
 
 ESS_CALLBACK_START( alembic_polymesh_Update, CRef& )
    ESS_PROFILE_SCOPE("alembic_polymesh_Update");
@@ -567,6 +570,9 @@ ESS_CALLBACK_START( alembic_normals_DefineLayout, CRef& )
    return alembicOp_DefineLayout(in_ctxt);
 ESS_CALLBACK_END
 
+ESS_CALLBACK_START( alembic_normals_Init, CRef& )
+   return alembicOp_Init( in_ctxt );
+ESS_CALLBACK_END
 
 ESS_CALLBACK_START( alembic_normals_Update, CRef& )
    ESS_PROFILE_SCOPE("alembic_normals_Update");
@@ -671,6 +677,9 @@ ESS_CALLBACK_START( alembic_uvs_DefineLayout, CRef& )
    return alembicOp_DefineLayout(in_ctxt);
 ESS_CALLBACK_END
 
+ESS_CALLBACK_START( alembic_uvs_Init, CRef& )
+   return alembicOp_Init( in_ctxt );
+ESS_CALLBACK_END
 
 ESS_CALLBACK_START( alembic_uvs_Update, CRef& )
    ESS_PROFILE_SCOPE("alembic_uvs_Update");
@@ -817,6 +826,9 @@ ESS_CALLBACK_START( alembic_polymesh_topo_DefineLayout, CRef& )
    return alembicOp_DefineLayout(in_ctxt);
 ESS_CALLBACK_END
 
+ESS_CALLBACK_START( alembic_polymesh_topo_Init, CRef& )
+   return alembicOp_Init( in_ctxt );
+ESS_CALLBACK_END
 
 ESS_CALLBACK_START( alembic_polymesh_topo_Update, CRef& )
    ESS_PROFILE_SCOPE("alembic_polymesh_topo_Update");
@@ -1064,6 +1076,9 @@ ESS_CALLBACK_START( alembic_bbox_DefineLayout, CRef& )
    return CStatus::OK;
 ESS_CALLBACK_END
 
+ESS_CALLBACK_START( alembic_bbox_Init, CRef& )
+   return alembicOp_Init( in_ctxt );
+ESS_CALLBACK_END
 
 ESS_CALLBACK_START( alembic_bbox_Update, CRef& )
    OperatorContext ctxt( in_ctxt );
@@ -1246,6 +1261,10 @@ enum IDs
 #define ID_UNDEF ((ULONG)-1)
 
 using namespace XSI;
+
+ESS_CALLBACK_START( alembic_polyMesh2_Init, CRef& )
+   return alembicOp_Init( in_ctxt );
+ESS_CALLBACK_END
 
 XSIPLUGINCALLBACK CStatus alembic_polyMesh2_Evaluate(ICENodeContext& in_ctxt)
 {

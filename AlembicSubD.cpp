@@ -398,6 +398,10 @@ ESS_CALLBACK_START( alembic_geomapprox_DefineLayout, CRef& )
    return alembicOp_DefineLayout(in_ctxt);
 ESS_CALLBACK_END
 
+ESS_CALLBACK_START( alembic_geomapprox_Init, CRef& )
+   return alembicOp_Init( in_ctxt );
+ESS_CALLBACK_END
+
 ESS_CALLBACK_START( alembic_geomapprox_Update, CRef& )
    OperatorContext ctxt( in_ctxt );
 

@@ -442,6 +442,8 @@ CStatus alembicOp_Define( CRef& in_ctxt )
 	oCustomOperator.AddParameter(oPDef,oParam);
 	oPDef = oFactory.CreateParamDef(L"path",CValue::siString, siPersistable, L"path",L"path",L"",L"",L"",L"",L"");
 	oCustomOperator.AddParameter(oPDef,oParam);
+	oPDef = oFactory.CreateParamDef(L"multifile",CValue::siBool,siAnimatable | siPersistable,L"multifile",L"multifile",1,0,1,0,1);
+	oCustomOperator.AddParameter(oPDef,oParam);
 	oPDef = oFactory.CreateParamDef(L"identifier",CValue::siString, siPersistable, L"identifier",L"identifier",L"",L"",L"",L"",L"");
 	oCustomOperator.AddParameter(oPDef,oParam);
 	oPDef = oFactory.CreateParamDef(L"renderpath",CValue::siString, siPersistable, L"renderpath",L"renderpath",L"",L"",L"",L"",L"");
@@ -483,6 +485,7 @@ CStatus alembicOp_DefineLayout( CRef& in_ctxt )
    oLayout.AddItem(L"time",L"Time");
    oLayout.AddGroup(L"Preview");
    oLayout.AddItem(L"path",L"FilePath");
+   oLayout.AddItem(L"multifile",L"Multifile");
    oLayout.AddItem(L"identifier",L"Identifier");
    oLayout.EndGroup();
    oLayout.AddGroup(L"Render");
@@ -510,6 +513,22 @@ CStatus alembicOp_DefineLayout( CRef& in_ctxt )
    return CStatus::OK;
 }
 
+CStatus alembicOp_Init( CRef& in_ctxt )
+{
+   Context ctxt( in_ctxt );
+   CValue udVal = ctxt.GetUserData();
+   ArchiveInfo * p = (ArchiveInfo*)(CValue::siPtrType)udVal;
+   
+   if(p != NULL){
+      return CStatus::OK;
+   }
+
+   CValue val = (CValue::siPtrType) new ArchiveInfo;
+   ctxt.PutUserData( val ) ;
+   
+   return CStatus::OK;
+}
+
 CStatus alembicOp_Term( CRef& in_ctxt )
 {
    Context ctxt( in_ctxt );
@@ -517,7 +536,9 @@ CStatus alembicOp_Term( CRef& in_ctxt )
    ArchiveInfo * p = (ArchiveInfo*)(CValue::siPtrType)udVal;
    if(p != NULL)
    {
-      delRefArchive(p->path);
+      if( !p->path.empty() ){
+         delRefArchive(p->path);
+      }
       delete(p);
    }
    return CStatus::OK;
@@ -530,8 +551,7 @@ CStatus alembicOp_PathEdit( CRef& in_ctxt, CString& path )
 
 	CValue udVal = ctxt.GetUserData();
 	ArchiveInfo * p = (ArchiveInfo*)(CValue::siPtrType)udVal;
-	if(p == NULL){
-		p = new ArchiveInfo;
+	if(p->path.empty()){
 		p->path = path.GetAsciiString();
 		addRefArchive(path);
 		CValue val = (CValue::siPtrType) p;

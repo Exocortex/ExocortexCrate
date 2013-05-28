@@ -6,6 +6,7 @@
 
 XSI::CStatus alembicOp_Define( XSI::CRef& in_ctxt );
 XSI::CStatus alembicOp_DefineLayout( XSI::CRef& in_ctxt );
+XSI::CStatus alembicOp_Init( XSI::CRef& in_ctxt );
 XSI::CStatus alembicOp_Term( XSI::CRef& in_ctxt );
 XSI::CStatus alembicOp_PathEdit( XSI::CRef& in_ctxt, XSI::CString& path );
 

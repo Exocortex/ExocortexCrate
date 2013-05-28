@@ -397,6 +397,10 @@ XSI::CStatus defineNode(XSI::PluginRegistrar& in_reg, ULONG in_nDataType, ULONG 
     return CStatus::OK;
 }
 
+XSIPLUGINCALLBACK CStatus alembic_vec2f_array_Init(ICENodeContext& in_ctxt)
+{
+   return alembicOp_Init( in_ctxt );
+}
 
 XSIPLUGINCALLBACK CStatus alembic_vec2f_array_Evaluate(ICENodeContext& in_ctxt)
 {
@@ -476,7 +480,10 @@ XSI::CStatus Register_alembic_vec2f_array( XSI::PluginRegistrar& in_reg )
 }
 
 
-
+XSIPLUGINCALLBACK CStatus alembic_vec3f_array_Init(ICENodeContext& in_ctxt)
+{
+   return alembicOp_Init( in_ctxt );
+}
 
 XSIPLUGINCALLBACK CStatus alembic_vec3f_array_Evaluate(ICENodeContext& in_ctxt)
 {
@@ -575,7 +582,10 @@ XSI::CStatus Register_alembic_vec3f_array( XSI::PluginRegistrar& in_reg )
 }
 
 
-
+XSIPLUGINCALLBACK CStatus alembic_vec4f_array_Init(ICENodeContext& in_ctxt)
+{
+   return alembicOp_Init( in_ctxt );
+}
 
 XSIPLUGINCALLBACK CStatus alembic_vec4f_array_Evaluate(ICENodeContext& in_ctxt)
 {
@@ -656,7 +666,10 @@ XSI::CStatus Register_alembic_vec4f_array( XSI::PluginRegistrar& in_reg )
 }
 
 
-
+XSIPLUGINCALLBACK CStatus alembic_float_array_Init(ICENodeContext& in_ctxt)
+{
+   return alembicOp_Init( in_ctxt );
+}
 
 XSIPLUGINCALLBACK CStatus alembic_float_array_Evaluate(ICENodeContext& in_ctxt)
 {
@@ -741,6 +754,10 @@ XSI::CStatus Register_alembic_float_array( XSI::PluginRegistrar& in_reg )
    return ret;
 }*/
 
+XSIPLUGINCALLBACK CStatus alembic_string_array_Init(ICENodeContext& in_ctxt)
+{
+   return alembicOp_Init( in_ctxt );
+}
 
 XSIPLUGINCALLBACK CStatus alembic_string_array_Evaluate(ICENodeContext& in_ctxt)
 {

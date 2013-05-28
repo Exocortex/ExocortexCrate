@@ -60,6 +60,9 @@ ESS_CALLBACK_START( alembic_camera_DefineLayout, CRef& )
    return alembicOp_DefineLayout(in_ctxt);
 ESS_CALLBACK_END
 
+ESS_CALLBACK_START( alembic_camera_Init, CRef& )
+   return alembicOp_Init( in_ctxt );
+ESS_CALLBACK_END
 
 ESS_CALLBACK_START( alembic_camera_Update, CRef& )
    OperatorContext ctxt( in_ctxt );

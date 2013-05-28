@@ -102,6 +102,9 @@ ESS_CALLBACK_START( alembic_nurbs_DefineLayout, CRef& )
    return alembicOp_DefineLayout(in_ctxt);
 ESS_CALLBACK_END
 
+ESS_CALLBACK_START( alembic_nurbs_Init, CRef& )
+   return alembicOp_Init( in_ctxt );
+ESS_CALLBACK_END
 
 ESS_CALLBACK_START( alembic_nurbs_Update, CRef& )
    OperatorContext ctxt( in_ctxt );

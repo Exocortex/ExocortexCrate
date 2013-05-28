@@ -75,6 +75,10 @@ ESS_CALLBACK_START( alembic_xform_DefineLayout, CRef& )
    return alembicOp_DefineLayout(in_ctxt);
 ESS_CALLBACK_END
 
+ESS_CALLBACK_START( alembic_xform_Init, CRef& )
+   return alembicOp_Init( in_ctxt );
+ESS_CALLBACK_END
+
 ESS_CALLBACK_START( alembic_xform_Update, CRef& )
 	ESS_PROFILE_SCOPE("alembic_xform_Update");
 	OperatorContext ctxt( in_ctxt );
@@ -142,14 +146,6 @@ ESS_CALLBACK_START( alembic_xform_Update, CRef& )
 	return CStatus::OK;
 ESS_CALLBACK_END
 
-
-ESS_CALLBACK_START( alembic_xform_Init, CRef& )
-   Context ctxt( in_ctxt );
-   CustomOperator op(ctxt.GetSource());
-
-   return CStatus::OK;
-ESS_CALLBACK_END
-
 ESS_CALLBACK_START( alembic_xform_Term, CRef& )
    return alembicOp_Term(in_ctxt);
 ESS_CALLBACK_END
@@ -160,6 +156,10 @@ ESS_CALLBACK_END
 
 ESS_CALLBACK_START( alembic_visibility_DefineLayout, CRef& )
    return alembicOp_DefineLayout(in_ctxt);
+ESS_CALLBACK_END
+
+ESS_CALLBACK_START( alembic_visibility_Init, CRef& )
+   return alembicOp_Init( in_ctxt );
 ESS_CALLBACK_END
 
 ESS_CALLBACK_START( alembic_visibility_Update, CRef& )

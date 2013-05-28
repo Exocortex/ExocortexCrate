@@ -672,6 +672,9 @@ ESS_CALLBACK_START( alembic_crvlist_DefineLayout, CRef& )
    return alembicOp_DefineLayout(in_ctxt);
 ESS_CALLBACK_END
 
+ESS_CALLBACK_START( alembic_crvlist_Init, CRef& )
+   return alembicOp_Init( in_ctxt );
+ESS_CALLBACK_END
 
 ESS_CALLBACK_START( alembic_crvlist_Update, CRef& )
    OperatorContext ctxt( in_ctxt );
@@ -860,6 +863,10 @@ CStatus Register_alembic_curves( PluginRegistrar& in_reg )
 
 	return CStatus::OK;
 }
+
+ESS_CALLBACK_START( alembic_curves_Init, CRef& )
+   return alembicOp_Init( in_ctxt );
+ESS_CALLBACK_END
 
 XSIPLUGINCALLBACK CStatus alembic_curves_Evaluate(ICENodeContext& in_ctxt)
 {
@@ -1178,6 +1185,10 @@ ESS_CALLBACK_END
 
 ESS_CALLBACK_START( alembic_crvlist_topo_DefineLayout, CRef& )
    return alembicOp_DefineLayout(in_ctxt);
+ESS_CALLBACK_END
+
+ESS_CALLBACK_START( alembic_crvlist_topo_Init, CRef& )
+   return alembicOp_Init( in_ctxt );
 ESS_CALLBACK_END
 
 ESS_CALLBACK_START( alembic_crvlist_topo_Update, CRef& )

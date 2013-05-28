@@ -687,6 +687,10 @@ CStatus Register_alembic_points( PluginRegistrar& in_reg )
 	return CStatus::OK;
 }
 
+ESS_CALLBACK_START( alembic_points_Init, CRef& )
+   return alembicOp_Init( in_ctxt );
+ESS_CALLBACK_END
+
 XSIPLUGINCALLBACK CStatus alembic_points_Evaluate(ICENodeContext& in_ctxt)
 {
 	// The current output port being evaluated...
@@ -712,6 +716,8 @@ XSIPLUGINCALLBACK CStatus alembic_points_Evaluate(ICENodeContext& in_ctxt)
 
 	CDataArrayBool usevelData( in_ctxt, ID_IN_usevel);
    double usevel = usevelData[0];
+
+   AbcA::TimeSamplingPtr timeSampling = obj.getSchema().getTimeSampling();
 
    SampleInfo sampleInfo = getSampleInfo(
       time,
