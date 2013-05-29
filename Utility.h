@@ -3,12 +3,24 @@
 
 #include "CommonUtilities.h"
 
+struct ArchiveInfo
+{
+   std::string path;
+
+   bool bTimeSamplingInit;
+   AbcA::TimeSampling timeSampling;
+
+   ArchiveInfo(): bTimeSamplingInit(false)
+   {}
+};
 
 XSI::CStatus alembicOp_Define( XSI::CRef& in_ctxt );
 XSI::CStatus alembicOp_DefineLayout( XSI::CRef& in_ctxt );
 XSI::CStatus alembicOp_Init( XSI::CRef& in_ctxt );
 XSI::CStatus alembicOp_Term( XSI::CRef& in_ctxt );
 XSI::CStatus alembicOp_PathEdit( XSI::CRef& in_ctxt, XSI::CString& path );
+XSI::CStatus alembicOp_TimeSamplingInit( XSI::CRef& in_ctxt, AbcA::TimeSamplingPtr timeSampling );
+XSI::CStatus alembicOp_getFrameNum( XSI::CRef& in_ctxt, double sampleTime, int& frameNum );
 
 std::string getIdentifierFromRef(XSI::CRef in_Ref, bool includeHierarchy = false);
 XSI::CString truncateName(const XSI::CString & in_Name);

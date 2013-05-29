@@ -464,14 +464,76 @@ ESS_CALLBACK_START( alembic_polymesh_Init, CRef& )
    return alembicOp_Init( in_ctxt );
 ESS_CALLBACK_END
 
+void findNumberBounds( std::string str, int& nStart, int& nEnd )
+{
+   bool bFirstFind = false;
+   for(int i=(int)str.size()-1; i>=0; i--){
+      if( '0' <= str[i] && str[i] <= '9' ){
+         if(!bFirstFind){
+            bFirstFind = true; 
+            nStart = i;
+            nEnd = i;
+         }
+      }
+      else{
+         if(bFirstFind){
+            nStart = i+1;
+            break;
+         }
+      }
+
+   }
+
+}
+
+//we just support padded format for now...
+CString replaceNumber( CString pathstr, int frameNum )
+{
+   std::string path(pathstr.GetAsciiString());
+
+   int nStart = -1;
+   int nEnd = -1;
+
+   findNumberBounds(path, nStart, nEnd);
+
+   if( nStart == -1 || nEnd == -1 ){
+      return pathstr;
+   }
+
+   nEnd++;
+   int nLen = (int)path.size() - nEnd;
+   int nNumLen = nEnd - nStart;
+
+   std::stringstream ss;
+   ss<<path.substr(0, nStart)<<std::setfill('0')<<std::setw(nNumLen)<<frameNum<<path.substr(nEnd);
+
+   return CString(ss.str().c_str());
+}
+
+
+
 ESS_CALLBACK_START( alembic_polymesh_Update, CRef& )
    ESS_PROFILE_SCOPE("alembic_polymesh_Update");
    OperatorContext ctxt( in_ctxt );
 
    CString path = ctxt.GetParameterValue(L"path");
+
+   if(ctxt.GetParameterValue(L"multifile")){
+
+      int frameNum = -1;
+      alembicOp_getFrameNum( in_ctxt, ctxt.GetParameterValue(L"time"), frameNum );
+
+      if(frameNum != -1){
+         //path should equal the first file in the sequence
+         //search and replace frame number on filename
+         
+         path = replaceNumber( path, frameNum );
+      }
+   }
    CStatus pathEditStat = alembicOp_PathEdit( in_ctxt, path );
 
-   if((bool)ctxt.GetParameterValue(L"muted"))
+
+   if((bool)ctxt.GetParameterValue(L"muted") )
       return CStatus::OK;
 
    CString identifier = ctxt.GetParameterValue(L"identifier");
@@ -479,6 +541,8 @@ ESS_CALLBACK_START( alembic_polymesh_Update, CRef& )
   AbcG::IObject iObj = getObjectFromArchive(path,identifier);
    if(!iObj.valid())
       return CStatus::OK;
+
+
   AbcG::IPolyMesh objMesh;
   AbcG::ISubD objSubD;
    if(AbcG::IPolyMesh::matches(iObj.getMetaData()))
@@ -500,6 +564,14 @@ ESS_CALLBACK_START( alembic_polymesh_Update, CRef& )
       timeSampling = objSubD.getSchema().getTimeSampling();
 	  nSamples = (int) objSubD.getSchema().getNumSamples();
    }
+
+
+   if(ctxt.GetParameterValue(L"multifile")){
+      if( alembicOp_TimeSamplingInit(in_ctxt, timeSampling) == CStatus::Fail ){
+         return CStatus::OK;
+      }
+   }
+
 
    SampleInfo sampleInfo = getSampleInfo(
      ctxt.GetParameterValue(L"time"),

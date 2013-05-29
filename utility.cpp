@@ -442,7 +442,7 @@ CStatus alembicOp_Define( CRef& in_ctxt )
 	oCustomOperator.AddParameter(oPDef,oParam);
 	oPDef = oFactory.CreateParamDef(L"path",CValue::siString, siPersistable, L"path",L"path",L"",L"",L"",L"",L"");
 	oCustomOperator.AddParameter(oPDef,oParam);
-	oPDef = oFactory.CreateParamDef(L"multifile",CValue::siBool,siAnimatable | siPersistable,L"multifile",L"multifile",1,0,1,0,1);
+	oPDef = oFactory.CreateParamDef(L"multifile",CValue::siBool,siReadOnly | siPersistable,L"multifile",L"multifile",1,0,1,0,1);
 	oCustomOperator.AddParameter(oPDef,oParam);
 	oPDef = oFactory.CreateParamDef(L"identifier",CValue::siString, siPersistable, L"identifier",L"identifier",L"",L"",L"",L"",L"");
 	oCustomOperator.AddParameter(oPDef,oParam);
@@ -515,6 +515,8 @@ CStatus alembicOp_DefineLayout( CRef& in_ctxt )
 
 CStatus alembicOp_Init( CRef& in_ctxt )
 {
+   ESS_PROFILE_FUNC();
+
    Context ctxt( in_ctxt );
    CValue udVal = ctxt.GetUserData();
    ArchiveInfo * p = (ArchiveInfo*)(CValue::siPtrType)udVal;
@@ -531,6 +533,8 @@ CStatus alembicOp_Init( CRef& in_ctxt )
 
 CStatus alembicOp_Term( CRef& in_ctxt )
 {
+   ESS_PROFILE_FUNC();
+
    Context ctxt( in_ctxt );
    CValue udVal = ctxt.GetUserData();
    ArchiveInfo * p = (ArchiveInfo*)(CValue::siPtrType)udVal;
@@ -546,11 +550,16 @@ CStatus alembicOp_Term( CRef& in_ctxt )
 
 CStatus alembicOp_PathEdit( CRef& in_ctxt, CString& path )
 {
-	// check if we need t addref the archive
+    ESS_PROFILE_FUNC();
     Context ctxt( in_ctxt );
 
 	CValue udVal = ctxt.GetUserData();
 	ArchiveInfo * p = (ArchiveInfo*)(CValue::siPtrType)udVal;
+
+    if(p == NULL){
+       return CStatus::OK;
+    }
+
 	if(p->path.empty()){
 		p->path = path.GetAsciiString();
 		addRefArchive(path);
@@ -566,6 +575,74 @@ CStatus alembicOp_PathEdit( CRef& in_ctxt, CString& path )
     }
 
     return CStatus::OK;
+}
+
+CStatus alembicOp_TimeSamplingInit( CRef& in_ctxt, AbcA::TimeSamplingPtr timeSampling )
+{
+   ESS_PROFILE_FUNC();
+
+    Context ctxt( in_ctxt );
+
+	CValue udVal = ctxt.GetUserData();
+	ArchiveInfo * p = (ArchiveInfo*)(CValue::siPtrType)udVal;
+
+    if( p == NULL ){
+       return CStatus::Fail;
+    }
+
+   //AbcA::TimeSamplingPtr timeSampling;
+   //int nSamples;
+   ////just calling this function to the timeSampling
+   //Abc::ICompoundProperty props = getArbGeomParams(iObj, timeSampling, nSamples);
+
+   //if(props.valid()){
+   //   return CStatus::OK;
+   //}
+
+    if( timeSampling->getTimeSamplingType().isUniform() ){
+       return CStatus::Fail;
+    }
+
+   if(p->bTimeSamplingInit){
+      return CStatus::OK;
+   }
+
+   p->timeSampling = AbcA::TimeSampling(*timeSampling);
+
+    p->bTimeSamplingInit = true;
+
+    return CStatus::OK;
+}
+
+CStatus alembicOp_getFrameNum( CRef& in_ctxt, double sampleTime, int& frameNum )
+{
+   ESS_PROFILE_FUNC();
+
+   Context ctxt( in_ctxt );
+
+   CValue udVal = ctxt.GetUserData();
+   ArchiveInfo * p = (ArchiveInfo*)(CValue::siPtrType)udVal;
+
+   if(p == NULL){
+      return CStatus::OK;
+   }
+
+   if(p->bTimeSamplingInit == false){
+      frameNum = -1;
+      return CStatus::OK;
+   }
+
+   if( p->timeSampling.getTimeSamplingType().isUniform() ){
+      //we don't know the number of samples when importing abc file sequence.
+      //However, it safe to call this function with a large number if the sampling type is uniform
+      AbcA::TimeSamplingPtr timeSampling(&(p->timeSampling));
+      SampleInfo sampleInfo = getSampleInfo(sampleTime, timeSampling, 65535);
+   }
+   else{
+      frameNum = 0;
+   }
+   
+   return CStatus::OK;
 }
 
 int gHasStandinSupport = -1;
