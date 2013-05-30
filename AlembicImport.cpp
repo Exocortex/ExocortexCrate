@@ -879,6 +879,13 @@ CStatus alembic_create_item_Invoke
          treeArgs[0] = node.GetFullName()+L".identifier_string";
          treeArgs[1] = identifier;
          Application().ExecuteCommand(L"SetValue",treeArgs,treeReturnVal);
+
+         if(bMultifile){
+            treeArgs[0] = node.GetFullName()+L".multifile";
+            treeArgs[1] = true;
+            Application().ExecuteCommand(L"SetValue",treeArgs,treeReturnVal);
+         }
+
          if(isAnimated)
          {
             // check if we have a timecontrol in the args
@@ -1006,6 +1013,13 @@ CStatus alembic_create_item_Invoke
          treeArgs[0] = node.GetFullName()+L".identifier_string";
          treeArgs[1] = identifier;
          Application().ExecuteCommand(L"SetValue",treeArgs,treeReturnVal);
+
+         if(bMultifile){
+            treeArgs[0] = node.GetFullName()+L".multifile";
+            treeArgs[1] = true;
+            Application().ExecuteCommand(L"SetValue",treeArgs,treeReturnVal);
+         }
+
          if(isAnimated)
          {
             // check if we have a timeControl in the args
