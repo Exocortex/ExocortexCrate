@@ -442,7 +442,7 @@ CStatus alembicOp_Define( CRef& in_ctxt )
 	oCustomOperator.AddParameter(oPDef,oParam);
 	oPDef = oFactory.CreateParamDef(L"path",CValue::siString, siPersistable, L"path",L"path",L"",L"",L"",L"",L"");
 	oCustomOperator.AddParameter(oPDef,oParam);
-	oPDef = oFactory.CreateParamDef(L"multifile",CValue::siBool,siReadOnly | siPersistable,L"multifile",L"multifile",1,0,1,0,1);
+	oPDef = oFactory.CreateParamDef(L"multifile",CValue::siBool,siPersistable,L"multifile",L"multifile",0,0,1,0,1);
 	oCustomOperator.AddParameter(oPDef,oParam);
 	oPDef = oFactory.CreateParamDef(L"identifier",CValue::siString, siPersistable, L"identifier",L"identifier",L"",L"",L"",L"",L"");
 	oCustomOperator.AddParameter(oPDef,oParam);

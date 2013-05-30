@@ -158,6 +158,8 @@ CStatus alembic_create_item_Invoke
    X3DObject x3d(target);
    Primitive prim(target);
 
+   bool bMultifile = args[5];
+
    // now let's find the real target for this
    CRef realTarget;
    { ESS_PROFILE_SCOPE("alembic_create_item_Invoke find_real_target");
@@ -368,7 +370,7 @@ CStatus alembic_create_item_Invoke
             return CStatus::InvalidArgument;
          }
          abcObject = pObjectCache->obj;
-         isAnimated = true;//(itemType == alembicItemType_bbox) || (! pObjectCache->isConstant && itemType != alembicItemType_geomapprox) || itemType == alembicItemType_points;
+         isAnimated = (itemType == alembicItemType_bbox) || (! pObjectCache->isConstant && itemType != alembicItemType_geomapprox) || itemType == alembicItemType_points || bMultifile;
          break;
       }
       case alembicItemType_visibility:
@@ -511,30 +513,36 @@ CStatus alembic_create_item_Invoke
          op.PutParameterValue(L"path",file);
          op.PutParameterValue(L"identifier",identifier);
          op.PutParameterValue(L"muted", false);
+         if(bMultifile){
+            op.PutParameterValue(L"multifile", true);
+         }
 
          // store the return value
          returnVal = op.GetRef();
 
          // if we are not a topo op, let's connect to the timecontrol
          bool receivesExpression = isAnimated;
-         if(itemType == alembicItemType_crvlist_topo)
-            receivesExpression = false;
-         else if(itemType == alembicItemType_polymesh_topo)
-         {
-            // check if the compound has more than one sample on its facecounts
-            Abc::ICompoundProperty abcCompound = getCompoundFromObject(abcObject);
-            Abc::IInt32ArrayProperty faceCountProp = Abc::IInt32ArrayProperty(abcCompound,".faceCounts");
-            if(faceCountProp.valid())
-               receivesExpression = true;//!faceCountProp.isConstant();
-            
-			if ( !receivesExpression ) // still false, check .faceIndices just in case and reuse faceCountProp variable!
-			{
-				faceCountProp = Abc::IInt32ArrayProperty(abcCompound,".faceIndices");
-				if (faceCountProp.valid())
-					receivesExpression = true;//!faceCountProp.isConstant();
-				else
-					receivesExpression = false;
-			}
+
+         if(!bMultifile){
+            if(itemType == alembicItemType_crvlist_topo)
+               receivesExpression = false;
+            else if(itemType == alembicItemType_polymesh_topo)
+            {
+               // check if the compound has more than one sample on its facecounts
+               Abc::ICompoundProperty abcCompound = getCompoundFromObject(abcObject);
+               Abc::IInt32ArrayProperty faceCountProp = Abc::IInt32ArrayProperty(abcCompound,".faceCounts");
+               if(faceCountProp.valid())
+                  receivesExpression = !faceCountProp.isConstant();
+               
+			   if ( !receivesExpression ) // still false, check .faceIndices just in case and reuse faceCountProp variable!
+			   {
+				   faceCountProp = Abc::IInt32ArrayProperty(abcCompound,".faceIndices");
+				   if (faceCountProp.valid())
+					   receivesExpression = !faceCountProp.isConstant();
+				   else
+					   receivesExpression = false;
+			   }
+            }
          }
 
          if(receivesExpression)
@@ -664,6 +672,9 @@ CStatus alembic_create_item_Invoke
                      op.PutParameterValue(L"path",file);
                      op.PutParameterValue(L"identifier",identifier);
                      op.PutParameterValue(L"muted", false);
+                     if(bMultifile){
+                        op.PutParameterValue(L"multifile", true);
+                     }
                      if(!timeControlProp.IsValid())
                      {
                         CRef timeControlRef;
@@ -821,6 +832,10 @@ CStatus alembic_create_item_Invoke
                        op.PutParameterValue(L"path",file);
                        op.PutParameterValue(L"identifier",identifier+CString(L":")+CString(uvI));
                        op.PutParameterValue(L"muted", false);
+                       if(bMultifile){
+                           op.PutParameterValue(L"multifile", true);
+                       }
+
                        if(meshUVsParam.getNumSamples() > 1)
                        {
                           CValue setExprReturn;
@@ -1212,12 +1227,13 @@ bool createNode(SceneNodeXSI* appNode, SceneNodeAlembicPtr fileNode, const IJobS
    }
 
    //CustomProperty timeControl = timeRef;
-   CValueArray createItemArgs(5);
+   CValueArray createItemArgs(6);
    createItemArgs[0] = timeRef;
    createItemArgs[1] = jobParams.importFacesets;
    createItemArgs[2] = jobParams.importNormals;
    createItemArgs[3] = jobParams.importUVs;
    createItemArgs[4] = jobParams.importVisibilityControllers;
+   createItemArgs[5] = jobParams.useMultiFile;
 
    //the transform
    
@@ -1358,12 +1374,13 @@ bool createMergeableNode(SceneNodeXSI* appNode, SceneNodeAlembicPtr fileXformNod
    }
 
    // store the time control in a value array
-   CValueArray createItemArgs(5);
+   CValueArray createItemArgs(6);
    createItemArgs[0] = timeRef;
    createItemArgs[1] = jobParams.importFacesets;
    createItemArgs[2] = jobParams.importNormals;
    createItemArgs[3] = jobParams.importUVs;
    createItemArgs[4] = jobParams.importVisibilityControllers;
+   createItemArgs[5] = jobParams.useMultiFile;
 
 
    Abc::IObject shapeObj = fileShapeNode->getObject();
@@ -2058,6 +2075,7 @@ ESS_CALLBACK_START(alembic_import_jobs_Execute, CRef&)
       jobParser.enableImportRootSelection = settings.GetParameterValue(L"enableImportRootSelection");
       jobParser.stripMayaNamespaces = settings.GetParameterValue(L"stripNamespaces");
       jobParser.importCurvesAsStrands = settings.GetParameterValue(L"importCurvesAsStrands");
+      jobParser.useMultiFile = settings.GetParameterValue(L"multifile");
       
       int val = settings.GetParameterValue(L"defaultXformNode");
       if( val == 0 ){
@@ -2433,6 +2451,7 @@ ESS_CALLBACK_START(alembic_import_settings_Define, CRef&)
    oCustomProperty.AddParameter(L"stripNamespaces",CValue::siBool,siPersistable,L"",L"",0,0,1,0,0,oParam);
    oCustomProperty.AddParameter(L"importCurvesAsStrands",CValue::siBool,siPersistable,L"",L"",0,0,1,0,0,oParam);
    oCustomProperty.AddParameter(L"fitTimeRange",CValue::siBool,siPersistable,L"",L"",0,0,1,0,0,oParam);
+   oCustomProperty.AddParameter(L"multifile",CValue::siBool,siPersistable,L"",L"",0,0,1,0,0,oParam);
    oCustomProperty.AddParameter(L"defaultXformNode",CValue::siInt4,siPersistable,L"",L"",0,0,5,0,5,oParam);
 	return CStatus::OK;
 ESS_CALLBACK_END
@@ -2485,6 +2504,7 @@ ESS_CALLBACK_START(alembic_import_settings_DefineLayout, CRef&)
    oLayout.AddItem(L"stripNamespaces",L"Strip Namespaces");
    oLayout.AddItem(L"importCurvesAsStrands", L"Import Curves as Strands");
    oLayout.AddItem(L"fitTimeRange", L"Fit Time Range");
+   oLayout.AddItem(L"multifile", L"Multifile");
 
    items.Resize(4);
    items[0] = L"Model";
