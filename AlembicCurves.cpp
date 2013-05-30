@@ -680,6 +680,8 @@ ESS_CALLBACK_START( alembic_crvlist_Update, CRef& )
    OperatorContext ctxt( in_ctxt );
 
    CString path = ctxt.GetParameterValue(L"path");
+
+   alembicOp_Multifile( in_ctxt, ctxt.GetParameterValue(L"multifile"), ctxt.GetParameterValue(L"time"), path);
    CStatus pathEditStat = alembicOp_PathEdit( in_ctxt, path );
 
    if((bool)ctxt.GetParameterValue(L"muted"))
@@ -877,7 +879,10 @@ XSIPLUGINCALLBACK CStatus alembic_curves_Evaluate(ICENodeContext& in_ctxt)
    CString path = pathData[0];
 	CDataArrayString identifierData( in_ctxt, ID_IN_identifier );
    CString identifier = identifierData[0];
+	CDataArrayFloat timeData( in_ctxt, ID_IN_time);
+   double time = timeData[0];
 
+   alembicOp_Multifile( in_ctxt, true, time, path);
    CStatus pathEditStat = alembicOp_PathEdit( in_ctxt, path );
 
   AbcG::IObject iObj = getObjectFromArchive(path,identifier);
@@ -886,9 +891,6 @@ XSIPLUGINCALLBACK CStatus alembic_curves_Evaluate(ICENodeContext& in_ctxt)
   AbcG::ICurves obj(iObj,Abc::kWrapExisting);
    if(!obj.valid())
       return CStatus::OK;
-
-	CDataArrayFloat timeData( in_ctxt, ID_IN_time);
-   double time = timeData[0];
 
    SampleInfo sampleInfo = getSampleInfo(
       time,
@@ -1195,6 +1197,8 @@ ESS_CALLBACK_START( alembic_crvlist_topo_Update, CRef& )
    OperatorContext ctxt( in_ctxt );
 
    CString path = ctxt.GetParameterValue(L"path");
+
+   alembicOp_Multifile( in_ctxt, ctxt.GetParameterValue(L"multifile"), ctxt.GetParameterValue(L"time"), path);
    CStatus pathEditStat = alembicOp_PathEdit( in_ctxt, path );
 
    if((bool)ctxt.GetParameterValue(L"muted"))

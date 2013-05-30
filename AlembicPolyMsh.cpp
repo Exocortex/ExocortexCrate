@@ -464,53 +464,6 @@ ESS_CALLBACK_START( alembic_polymesh_Init, CRef& )
    return alembicOp_Init( in_ctxt );
 ESS_CALLBACK_END
 
-void findNumberBounds( std::string str, int& nStart, int& nEnd )
-{
-   bool bFirstFind = false;
-   for(int i=(int)str.size()-1; i>=0; i--){
-      if( '0' <= str[i] && str[i] <= '9' ){
-         if(!bFirstFind){
-            bFirstFind = true; 
-            nStart = i;
-            nEnd = i;
-         }
-      }
-      else{
-         if(bFirstFind){
-            nStart = i+1;
-            break;
-         }
-      }
-
-   }
-
-}
-
-//we just support padded format for now...
-CString replaceNumber( CString pathstr, int frameNum )
-{
-   std::string path(pathstr.GetAsciiString());
-
-   int nStart = -1;
-   int nEnd = -1;
-
-   findNumberBounds(path, nStart, nEnd);
-
-   if( nStart == -1 || nEnd == -1 ){
-      return pathstr;
-   }
-
-   nEnd++;
-   int nLen = (int)path.size() - nEnd;
-   int nNumLen = nEnd - nStart;
-
-   std::stringstream ss;
-   ss<<path.substr(0, nStart)<<std::setfill('0')<<std::setw(nNumLen)<<frameNum<<path.substr(nEnd);
-
-   return CString(ss.str().c_str());
-}
-
-
 
 ESS_CALLBACK_START( alembic_polymesh_Update, CRef& )
    ESS_PROFILE_SCOPE("alembic_polymesh_Update");
@@ -518,20 +471,8 @@ ESS_CALLBACK_START( alembic_polymesh_Update, CRef& )
 
    CString path = ctxt.GetParameterValue(L"path");
 
-   if(ctxt.GetParameterValue(L"multifile")){
-
-      int frameNum = -1;
-      alembicOp_getFrameNum( in_ctxt, ctxt.GetParameterValue(L"time"), frameNum );
-
-      if(frameNum != -1){
-         //path should equal the first file in the sequence
-         //search and replace frame number on filename
-         
-         path = replaceNumber( path, frameNum );
-      }
-   }
+   alembicOp_Multifile( in_ctxt, ctxt.GetParameterValue(L"multifile"), ctxt.GetParameterValue(L"time"), path);
    CStatus pathEditStat = alembicOp_PathEdit( in_ctxt, path );
-
 
    if((bool)ctxt.GetParameterValue(L"muted") )
       return CStatus::OK;
@@ -566,11 +507,11 @@ ESS_CALLBACK_START( alembic_polymesh_Update, CRef& )
    }
 
 
-   if(ctxt.GetParameterValue(L"multifile")){
-      if( alembicOp_TimeSamplingInit(in_ctxt, timeSampling) == CStatus::Fail ){
-         return CStatus::OK;
-      }
-   }
+   //if(ctxt.GetParameterValue(L"multifile")){
+   //   if( alembicOp_TimeSamplingInit(in_ctxt, timeSampling) == CStatus::Fail ){
+   //      return CStatus::OK;
+   //   }
+   //}
 
 
    SampleInfo sampleInfo = getSampleInfo(
@@ -651,6 +592,8 @@ ESS_CALLBACK_START( alembic_normals_Update, CRef& )
    OperatorContext ctxt( in_ctxt );
 
    CString path = ctxt.GetParameterValue(L"path");
+
+   alembicOp_Multifile( in_ctxt, ctxt.GetParameterValue(L"multifile"), ctxt.GetParameterValue(L"time"), path);
    CStatus pathEditStat = alembicOp_PathEdit( in_ctxt, path );
 
    if((bool)ctxt.GetParameterValue(L"muted"))
@@ -758,6 +701,8 @@ ESS_CALLBACK_START( alembic_uvs_Update, CRef& )
    OperatorContext ctxt( in_ctxt );
 
    CString path = ctxt.GetParameterValue(L"path");
+
+   alembicOp_Multifile( in_ctxt, ctxt.GetParameterValue(L"multifile"), ctxt.GetParameterValue(L"time"), path);
    CStatus pathEditStat = alembicOp_PathEdit( in_ctxt, path );
 
    if((bool)ctxt.GetParameterValue(L"muted"))
@@ -907,6 +852,8 @@ ESS_CALLBACK_START( alembic_polymesh_topo_Update, CRef& )
    OperatorContext ctxt( in_ctxt );
 
    CString path = ctxt.GetParameterValue(L"path");
+
+   alembicOp_Multifile( in_ctxt, ctxt.GetParameterValue(L"multifile"), ctxt.GetParameterValue(L"time"), path);
    CStatus pathEditStat = alembicOp_PathEdit( in_ctxt, path );
 
    if((bool)ctxt.GetParameterValue(L"muted"))
@@ -1156,6 +1103,8 @@ ESS_CALLBACK_START( alembic_bbox_Update, CRef& )
    OperatorContext ctxt( in_ctxt );
 
    CString path = ctxt.GetParameterValue(L"path");
+
+   alembicOp_Multifile( in_ctxt, ctxt.GetParameterValue(L"multifile"), ctxt.GetParameterValue(L"time"), path);
    CStatus pathEditStat = alembicOp_PathEdit( in_ctxt, path );
 
    if((bool)ctxt.GetParameterValue(L"muted"))
@@ -1348,15 +1297,15 @@ XSIPLUGINCALLBACK CStatus alembic_polyMesh2_Evaluate(ICENodeContext& in_ctxt)
 	CString path = pathData[0];
 	CDataArrayString identifierData( in_ctxt, ID_IN_identifier );
 	CString identifier = identifierData[0];
+	CDataArrayFloat timeData( in_ctxt, ID_IN_time);
+	const double time = timeData[0];
 
+    alembicOp_Multifile( in_ctxt, true, time, path);
     CStatus pathEditStat = alembicOp_PathEdit( in_ctxt, path );
 
 	AbcG::IObject iObj = getObjectFromArchive(path,identifier);
 	if(!iObj.valid())
 		return CStatus::OK;
-
-	CDataArrayFloat timeData( in_ctxt, ID_IN_time);
-	const double time = timeData[0];
 
 	CDataArrayBool usevelData( in_ctxt, ID_IN_usevel);
 	const double usevel = usevelData[0];

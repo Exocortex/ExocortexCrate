@@ -368,7 +368,7 @@ CStatus alembic_create_item_Invoke
             return CStatus::InvalidArgument;
          }
          abcObject = pObjectCache->obj;
-         isAnimated = (itemType == alembicItemType_bbox) || (! pObjectCache->isConstant && itemType != alembicItemType_geomapprox) || itemType == alembicItemType_points;
+         isAnimated = true;//(itemType == alembicItemType_bbox) || (! pObjectCache->isConstant && itemType != alembicItemType_geomapprox) || itemType == alembicItemType_points;
          break;
       }
       case alembicItemType_visibility:
@@ -525,13 +525,13 @@ CStatus alembic_create_item_Invoke
             Abc::ICompoundProperty abcCompound = getCompoundFromObject(abcObject);
             Abc::IInt32ArrayProperty faceCountProp = Abc::IInt32ArrayProperty(abcCompound,".faceCounts");
             if(faceCountProp.valid())
-               receivesExpression = !faceCountProp.isConstant();
+               receivesExpression = true;//!faceCountProp.isConstant();
             
 			if ( !receivesExpression ) // still false, check .faceIndices just in case and reuse faceCountProp variable!
 			{
 				faceCountProp = Abc::IInt32ArrayProperty(abcCompound,".faceIndices");
 				if (faceCountProp.valid())
-					receivesExpression = !faceCountProp.isConstant();
+					receivesExpression = true;//!faceCountProp.isConstant();
 				else
 					receivesExpression = false;
 			}

@@ -700,8 +700,10 @@ XSIPLUGINCALLBACK CStatus alembic_points_Evaluate(ICENodeContext& in_ctxt)
    CString path = pathData[0];
 	CDataArrayString identifierData( in_ctxt, ID_IN_identifier );
    CString identifier = identifierData[0];
+	CDataArrayFloat timeData( in_ctxt, ID_IN_time);
+   double time = timeData[0];
 
-   // check if we need t addref the archive
+   alembicOp_Multifile( in_ctxt, true, time, path);
    CStatus pathEditStat = alembicOp_PathEdit( in_ctxt, path );
 
   AbcG::IObject iObj = getObjectFromArchive(path,identifier);
@@ -710,9 +712,6 @@ XSIPLUGINCALLBACK CStatus alembic_points_Evaluate(ICENodeContext& in_ctxt)
   AbcG::IPoints obj(iObj,Abc::kWrapExisting);
    if(!obj.valid())
       return CStatus::OK;
-
-	CDataArrayFloat timeData( in_ctxt, ID_IN_time);
-   double time = timeData[0];
 
 	CDataArrayBool usevelData( in_ctxt, ID_IN_usevel);
    double usevel = usevelData[0];

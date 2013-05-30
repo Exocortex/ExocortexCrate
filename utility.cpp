@@ -550,34 +550,58 @@ CStatus alembicOp_Term( CRef& in_ctxt )
 
 CStatus alembicOp_PathEdit( CRef& in_ctxt, CString& path )
 {
-    ESS_PROFILE_FUNC();
-    Context ctxt( in_ctxt );
+   ESS_PROFILE_FUNC();
+   Context ctxt( in_ctxt );
 
-	CValue udVal = ctxt.GetUserData();
-	ArchiveInfo * p = (ArchiveInfo*)(CValue::siPtrType)udVal;
+   CValue udVal = ctxt.GetUserData();
+   ArchiveInfo * p = (ArchiveInfo*)(CValue::siPtrType)udVal;
 
-    if(p == NULL){
-       return CStatus::OK;
-    }
+   if(p == NULL){
+      return CStatus::OK;
+   }
 
-	if(p->path.empty()){
-		p->path = path.GetAsciiString();
-		addRefArchive(path);
-		CValue val = (CValue::siPtrType) p;
-		ctxt.PutUserData( val ) ;
-	}
-    else{
-       if( strcmp(p->path.c_str(), path.GetAsciiString()) != 0 ){
-         delRefArchive( XSI::CString(p->path.c_str()) );
-		 p->path = path.GetAsciiString();
+   if(p->path.empty()){
+      p->path = path.GetAsciiString();
+
+      if(boost::filesystem::exists( resolvePath(p->path) ) ) {
          addRefArchive(path);
-       }
-    }
+      }
 
-    return CStatus::OK;
+      CValue val = (CValue::siPtrType) p;
+      ctxt.PutUserData( val ) ;
+   }
+   else{
+      if( strcmp(p->path.c_str(), path.GetAsciiString()) != 0 ){
+
+         if(boost::filesystem::exists( resolvePath(p->path) ) ) {
+            delRefArchive( XSI::CString(p->path.c_str()) );
+         }
+
+         p->path = path.GetAsciiString();
+         
+         if(boost::filesystem::exists( resolvePath(p->path) ) ) {
+            addRefArchive(path);
+         }
+      }
+   }
+
+   return CStatus::OK;
 }
 
-CStatus alembicOp_TimeSamplingInit( CRef& in_ctxt, AbcA::TimeSamplingPtr timeSampling )
+double getFrameRate()
+{
+   CValue returnVal;
+   CValueArray args(1);
+   args[0] = L"PlayControl.Rate";
+   Application().ExecuteCommand(L"GetValue",args,returnVal);
+   double mFrameRate = returnVal;
+   if(mFrameRate == 0.0){
+      mFrameRate = 24.0;
+   }
+   return mFrameRate;
+}
+
+CStatus alembicOp_TimeSamplingInit( CRef& in_ctxt)//, AbcA::TimeSamplingPtr timeSampling )
 {
    ESS_PROFILE_FUNC();
 
@@ -590,24 +614,23 @@ CStatus alembicOp_TimeSamplingInit( CRef& in_ctxt, AbcA::TimeSamplingPtr timeSam
        return CStatus::Fail;
     }
 
-   //AbcA::TimeSamplingPtr timeSampling;
-   //int nSamples;
-   ////just calling this function to the timeSampling
-   //Abc::ICompoundProperty props = getArbGeomParams(iObj, timeSampling, nSamples);
 
-   //if(props.valid()){
-   //   return CStatus::OK;
-   //}
 
-    if( timeSampling->getTimeSamplingType().isUniform() ){
-       return CStatus::Fail;
-    }
+    //if( timeSampling->getTimeSamplingType().isUniform() != true ){
+    //   return CStatus::Fail;
+    //}
 
    if(p->bTimeSamplingInit){
       return CStatus::OK;
    }
 
-   p->timeSampling = AbcA::TimeSampling(*timeSampling);
+   //p->timeSampling =  AbcA::TimeSamplingPtr(new AbcA::TimeSampling(*timeSampling));
+
+   double stime = 1.0 / getFrameRate();
+
+     p->timeSampling = AbcA::TimeSamplingPtr(new AbcA::TimeSampling(stime, 0.0));
+
+
 
     p->bTimeSamplingInit = true;
 
@@ -632,11 +655,11 @@ CStatus alembicOp_getFrameNum( CRef& in_ctxt, double sampleTime, int& frameNum )
       return CStatus::OK;
    }
 
-   if( p->timeSampling.getTimeSamplingType().isUniform() ){
+   if( p->timeSampling->getTimeSamplingType().isUniform() ){
       //we don't know the number of samples when importing abc file sequence.
       //However, it safe to call this function with a large number if the sampling type is uniform
-      AbcA::TimeSamplingPtr timeSampling(&(p->timeSampling));
-      SampleInfo sampleInfo = getSampleInfo(sampleTime, timeSampling, 65535);
+      SampleInfo sampleInfo = getSampleInfo(sampleTime, p->timeSampling, 65535);
+      frameNum = sampleInfo.ceilIndex;
    }
    else{
       frameNum = 0;
@@ -644,6 +667,76 @@ CStatus alembicOp_getFrameNum( CRef& in_ctxt, double sampleTime, int& frameNum )
    
    return CStatus::OK;
 }
+
+void findNumberBounds( std::string str, int& nStart, int& nEnd )
+{
+   bool bFirstFind = false;
+   for(int i=(int)str.size()-1; i>=0; i--){
+      if( '0' <= str[i] && str[i] <= '9' ){
+         if(!bFirstFind){
+            bFirstFind = true; 
+            nStart = i;
+            nEnd = i;
+         }
+      }
+      else{
+         if(bFirstFind){
+            nStart = i+1;
+            break;
+         }
+      }
+
+   }
+
+}
+
+CString replaceNumber( CString pathstr, int frameNum )
+{
+   std::string path(pathstr.GetAsciiString());
+
+   int nStart = -1;
+   int nEnd = -1;
+
+   findNumberBounds(path, nStart, nEnd);
+
+   if( nStart == -1 || nEnd == -1 ){
+      return pathstr;
+   }
+
+   nEnd++;
+   int nLen = (int)path.size() - nEnd;
+   int nNumLen = nEnd - nStart;//find the padding length
+
+   std::stringstream ss;
+   ss<<path.substr(0, nStart)<<std::setfill('0')<<std::setw(nNumLen)<<frameNum<<path.substr(nEnd);
+
+   return CString(ss.str().c_str());
+}
+
+CStatus alembicOp_Multifile( CRef& in_ctxt, bool multifile, double time, XSI::CString& path )
+{
+   ESS_PROFILE_FUNC();
+
+   if(multifile){
+
+      alembicOp_TimeSamplingInit(in_ctxt);
+
+      int frameNum = -1;
+      alembicOp_getFrameNum( in_ctxt, time, frameNum );
+
+      if(frameNum != -1){
+         //path should equal the first file in the sequence
+         //search and replace frame number on filename
+
+         //ESS_LOG_WARNING("currentFrame: "<<frameNum);
+         
+         path = replaceNumber( path, frameNum );
+      }
+   }
+
+   return CStatus::OK;
+}
+
 
 int gHasStandinSupport = -1;
 bool hasStandinSupport()

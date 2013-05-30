@@ -110,6 +110,8 @@ ESS_CALLBACK_START( alembic_nurbs_Update, CRef& )
    OperatorContext ctxt( in_ctxt );
 
    CString path = ctxt.GetParameterValue(L"path");
+
+   alembicOp_Multifile( in_ctxt, ctxt.GetParameterValue(L"multifile"), ctxt.GetParameterValue(L"time"), path);
    CStatus pathEditStat = alembicOp_PathEdit( in_ctxt, path );
 
    if((bool)ctxt.GetParameterValue(L"muted"))
