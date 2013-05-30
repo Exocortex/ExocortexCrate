@@ -1268,6 +1268,7 @@ enum IDs
 	ID_IN_renderidentifier = 13,
 	ID_IN_time = 14,
 	ID_IN_usevel = 15,
+    ID_IN_multifile = 16,
 	ID_G_100 = 1005,
 	ID_OUT_position = 12771,
 	ID_OUT_velocity = 12772,
@@ -1505,6 +1506,8 @@ XSI::CStatus Register_alembic_polyMesh( XSI::PluginRegistrar& in_reg )
 	st.AssertSucceeded( ) ;
 
 	st = nodeDef.AddInputPort(ID_IN_path,ID_G_100,siICENodeDataString,siICENodeStructureSingle,siICENodeContextSingleton,L"path",L"path",L"",ID_UNDEF,ID_UNDEF,ID_UNDEF);
+	st.AssertSucceeded( ) ;
+    st = nodeDef.AddInputPort(ID_IN_multifile,ID_G_100,siICENodeDataBool,siICENodeStructureSingle,siICENodeContextSingleton,L"multifile",L"multifile",L"",ID_UNDEF,ID_UNDEF,ID_UNDEF);
 	st.AssertSucceeded( ) ;
 	st = nodeDef.AddInputPort(ID_IN_identifier,ID_G_100,siICENodeDataString,siICENodeStructureSingle,siICENodeContextSingleton,L"identifier",L"identifier",L"",ID_UNDEF,ID_UNDEF,ID_UNDEF);
 	st.AssertSucceeded( ) ;

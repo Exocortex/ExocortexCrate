@@ -12,6 +12,7 @@ enum IDs
     ID_IN_property = 12,
     ID_IN_isCustomProp = 13,
 	ID_IN_time = 14,
+    ID_IN_multifile = 15,
 	ID_G_100 = 1005,
 	ID_OUT_data = 12771,
     ID_OUT_valid = 12772,
@@ -27,9 +28,11 @@ enum IDs
 using namespace XSI;
 
 
-void getParams(ICENodeContext& in_ctxt, CString& path, CString& identifier, CString& aproperty, bool& isDefault, double& time){
+void getParams(ICENodeContext& in_ctxt, CString& path, bool& bMultifile, CString& identifier, CString& aproperty, bool& isDefault, double& time){
 	CDataArrayString pathData( in_ctxt, ID_IN_path );
 	path = pathData[0];
+	CDataArrayBool multifile( in_ctxt, ID_IN_multifile );
+	bMultifile = multifile[0];
 	CDataArrayString identifierData( in_ctxt, ID_IN_identifier );
 	identifier = identifierData[0];
 	CDataArrayString propertyData( in_ctxt, ID_IN_property );
@@ -374,6 +377,8 @@ XSI::CStatus defineNode(XSI::PluginRegistrar& in_reg, ULONG in_nDataType, ULONG 
 
 	st = nodeDef.AddInputPort(ID_IN_path,ID_G_100,siICENodeDataString,siICENodeStructureSingle,siICENodeContextSingleton,L"path",L"path",L"",ID_UNDEF,ID_UNDEF,ID_UNDEF);
 	st.AssertSucceeded( ) ;
+    st = nodeDef.AddInputPort(ID_IN_multifile,ID_G_100,siICENodeDataBool,siICENodeStructureSingle,siICENodeContextSingleton,L"multifile",L"multifile",L"",ID_UNDEF,ID_UNDEF,ID_UNDEF);
+	st.AssertSucceeded( ) ;
 	st = nodeDef.AddInputPort(ID_IN_identifier,ID_G_100,siICENodeDataString,siICENodeStructureSingle,siICENodeContextSingleton,L"identifier",L"identifier",L"",ID_UNDEF,ID_UNDEF,ID_UNDEF);
 	st.AssertSucceeded( ) ;
 	st = nodeDef.AddInputPort(ID_IN_property,ID_G_100,siICENodeDataString,siICENodeStructureSingle,siICENodeContextSingleton,L"property",L"property",L"",ID_UNDEF,ID_UNDEF,ID_UNDEF);
@@ -397,10 +402,6 @@ XSI::CStatus defineNode(XSI::PluginRegistrar& in_reg, ULONG in_nDataType, ULONG 
     return CStatus::OK;
 }
 
-XSIPLUGINCALLBACK CStatus alembic_vec2f_array_Init(ICENodeContext& in_ctxt)
-{
-   return alembicOp_Init( in_ctxt );
-}
 
 XSIPLUGINCALLBACK CStatus alembic_vec2f_array_Evaluate(ICENodeContext& in_ctxt)
 {
@@ -411,9 +412,11 @@ XSIPLUGINCALLBACK CStatus alembic_vec2f_array_Evaluate(ICENodeContext& in_ctxt)
 	CString path, identifier, aproperty;
 	double time;
     bool isCustomProp = true;
-    getParams(in_ctxt, path, identifier, aproperty, isCustomProp, time);
+    bool bMultifile = false;
+    getParams(in_ctxt, path, bMultifile, identifier, aproperty, isCustomProp, time);
 
-    alembicOp_Multifile( in_ctxt, true, time, path);
+    alembicOp_Init( in_ctxt );//Softimage will crash if this is done Init handler
+    alembicOp_Multifile( in_ctxt, bMultifile, time, path);
     CStatus pathEditStat = alembicOp_PathEdit( in_ctxt, path );
 
 	AbcG::IObject iObj = getObjectFromArchive(path,identifier);
@@ -481,11 +484,6 @@ XSI::CStatus Register_alembic_vec2f_array( XSI::PluginRegistrar& in_reg )
 }
 
 
-XSIPLUGINCALLBACK CStatus alembic_vec3f_array_Init(ICENodeContext& in_ctxt)
-{
-   return alembicOp_Init( in_ctxt );
-}
-
 XSIPLUGINCALLBACK CStatus alembic_vec3f_array_Evaluate(ICENodeContext& in_ctxt)
 {
 	//Application().LogMessage( "alembic_polyMesh2_Evaluate" );
@@ -495,9 +493,11 @@ XSIPLUGINCALLBACK CStatus alembic_vec3f_array_Evaluate(ICENodeContext& in_ctxt)
 	CString path, identifier, aproperty;
 	double time;
     bool isCustomProp = true;
-    getParams(in_ctxt, path, identifier, aproperty, isCustomProp, time);
+    bool bMultifile = false;
+    getParams(in_ctxt, path, bMultifile, identifier, aproperty, isCustomProp, time);
 
-    alembicOp_Multifile( in_ctxt, true, time, path);
+    alembicOp_Init( in_ctxt );//Softimage will crash if this is done Init handler
+    alembicOp_Multifile( in_ctxt, bMultifile, time, path);
     CStatus pathEditStat = alembicOp_PathEdit( in_ctxt, path );
 
 	AbcG::IObject iObj = getObjectFromArchive(path,identifier);
@@ -584,11 +584,6 @@ XSI::CStatus Register_alembic_vec3f_array( XSI::PluginRegistrar& in_reg )
 }
 
 
-XSIPLUGINCALLBACK CStatus alembic_vec4f_array_Init(ICENodeContext& in_ctxt)
-{
-   return alembicOp_Init( in_ctxt );
-}
-
 XSIPLUGINCALLBACK CStatus alembic_vec4f_array_Evaluate(ICENodeContext& in_ctxt)
 {
 	//Application().LogMessage( "alembic_polyMesh2_Evaluate" );
@@ -598,9 +593,11 @@ XSIPLUGINCALLBACK CStatus alembic_vec4f_array_Evaluate(ICENodeContext& in_ctxt)
 	CString path, identifier, aproperty;
 	double time;
     bool isCustomProp = true;
-    getParams(in_ctxt, path, identifier, aproperty, isCustomProp, time);
+    bool bMultifile = false;
+    getParams(in_ctxt, path, bMultifile, identifier, aproperty, isCustomProp, time);
 
-    alembicOp_Multifile( in_ctxt, true, time, path);
+    alembicOp_Init( in_ctxt );//Softimage will crash if this is done Init handler
+    alembicOp_Multifile( in_ctxt, bMultifile, time, path);
     CStatus pathEditStat = alembicOp_PathEdit( in_ctxt, path );
 
 	AbcG::IObject iObj = getObjectFromArchive(path,identifier);
@@ -669,11 +666,6 @@ XSI::CStatus Register_alembic_vec4f_array( XSI::PluginRegistrar& in_reg )
 }
 
 
-XSIPLUGINCALLBACK CStatus alembic_float_array_Init(ICENodeContext& in_ctxt)
-{
-   return alembicOp_Init( in_ctxt );
-}
-
 XSIPLUGINCALLBACK CStatus alembic_float_array_Evaluate(ICENodeContext& in_ctxt)
 {
 	//Application().LogMessage( "alembic_polyMesh2_Evaluate" );
@@ -683,9 +675,11 @@ XSIPLUGINCALLBACK CStatus alembic_float_array_Evaluate(ICENodeContext& in_ctxt)
 	CString path, identifier, aproperty;
 	double time;
     bool isCustomProp = true;
-    getParams(in_ctxt, path, identifier, aproperty, isCustomProp, time);
+    bool bMultifile = false;
+    getParams(in_ctxt, path, bMultifile, identifier, aproperty, isCustomProp, time);
 
-    alembicOp_Multifile( in_ctxt, true, time, path);
+    alembicOp_Init( in_ctxt );//Softimage will crash if this is done Init handler
+    alembicOp_Multifile( in_ctxt, bMultifile, time, path);
     CStatus pathEditStat = alembicOp_PathEdit( in_ctxt, path );
 
 	AbcG::IObject iObj = getObjectFromArchive(path,identifier);
@@ -758,10 +752,6 @@ XSI::CStatus Register_alembic_float_array( XSI::PluginRegistrar& in_reg )
    return ret;
 }*/
 
-XSIPLUGINCALLBACK CStatus alembic_string_array_Init(ICENodeContext& in_ctxt)
-{
-   return alembicOp_Init( in_ctxt );
-}
 
 XSIPLUGINCALLBACK CStatus alembic_string_array_Evaluate(ICENodeContext& in_ctxt)
 {
@@ -774,9 +764,11 @@ XSIPLUGINCALLBACK CStatus alembic_string_array_Evaluate(ICENodeContext& in_ctxt)
 	CString path, identifier, aproperty;
 	double time;
     bool isCustomProp = true;
-    getParams(in_ctxt, path, identifier, aproperty, isCustomProp, time);
+    bool bMultifile = false;
+    getParams(in_ctxt, path, bMultifile, identifier, aproperty, isCustomProp, time);
 
-    alembicOp_Multifile( in_ctxt, true, time, path);
+    alembicOp_Init( in_ctxt );//Softimage will crash if this is done Init handler
+    alembicOp_Multifile( in_ctxt, bMultifile, time, path);
     CStatus pathEditStat = alembicOp_PathEdit( in_ctxt, path );
 
 	AbcG::IObject iObj = getObjectFromArchive(path,identifier);

@@ -796,6 +796,7 @@ enum IDs
 	ID_IN_renderpath = 2,
 	ID_IN_renderidentifier = 3,
 	ID_IN_time = 4,
+    ID_IN_multifile = 5,
 	ID_G_100 = 100,
 	ID_OUT_count = 201,
 	ID_OUT_vertices = 202,
@@ -833,6 +834,8 @@ CStatus Register_alembic_curves( PluginRegistrar& in_reg )
 
    st = nodeDef.AddInputPort(ID_IN_path,ID_G_100,siICENodeDataString,siICENodeStructureSingle,siICENodeContextSingleton,L"path",L"path",L"",ID_UNDEF,ID_UNDEF,ID_UNDEF);
 	st.AssertSucceeded( ) ;
+   st = nodeDef.AddInputPort(ID_IN_multifile,ID_G_100,siICENodeDataBool,siICENodeStructureSingle,siICENodeContextSingleton,L"multifile",L"multifile",L"",ID_UNDEF,ID_UNDEF,ID_UNDEF);
+	st.AssertSucceeded( ) ;
    st = nodeDef.AddInputPort(ID_IN_identifier,ID_G_100,siICENodeDataString,siICENodeStructureSingle,siICENodeContextSingleton,L"identifier",L"identifier",L"",ID_UNDEF,ID_UNDEF,ID_UNDEF);
 	st.AssertSucceeded( ) ;
    st = nodeDef.AddInputPort(ID_IN_renderpath,ID_G_100,siICENodeDataString,siICENodeStructureSingle,siICENodeContextSingleton,L"renderpath",L"renderpath",L"",ID_UNDEF,ID_UNDEF,ID_UNDEF);
@@ -866,10 +869,6 @@ CStatus Register_alembic_curves( PluginRegistrar& in_reg )
 	return CStatus::OK;
 }
 
-ESS_CALLBACK_START( alembic_curves_Init, CRef& )
-   return alembicOp_Init( in_ctxt );
-ESS_CALLBACK_END
-
 XSIPLUGINCALLBACK CStatus alembic_curves_Evaluate(ICENodeContext& in_ctxt)
 {
 	// The current output port being evaluated...
@@ -881,8 +880,11 @@ XSIPLUGINCALLBACK CStatus alembic_curves_Evaluate(ICENodeContext& in_ctxt)
    CString identifier = identifierData[0];
 	CDataArrayFloat timeData( in_ctxt, ID_IN_time);
    double time = timeData[0];
+	CDataArrayBool multifileData( in_ctxt, ID_IN_multifile);
+   const bool bMultifile = multifileData[0];
 
-   alembicOp_Multifile( in_ctxt, true, time, path);
+   alembicOp_Init( in_ctxt );
+   alembicOp_Multifile( in_ctxt, bMultifile, time, path);
    CStatus pathEditStat = alembicOp_PathEdit( in_ctxt, path );
 
   AbcG::IObject iObj = getObjectFromArchive(path,identifier);

@@ -97,7 +97,7 @@ ESS_CALLBACK_START(alembic_standinop_Update, CRef&)
          x3dRef = modelRef;
    }
 
-   alembicOp_Multifile( in_ctxt, true, ctxt.GetParameterValue(L"time"), paths[0]);
+   alembicOp_Multifile( in_ctxt, false, ctxt.GetParameterValue(L"time"), paths[0]);
    CStatus pathEditStat = alembicOp_PathEdit( in_ctxt, paths[0] );
 
    // try to replace all tokens except for the environment token
