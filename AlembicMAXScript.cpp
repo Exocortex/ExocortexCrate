@@ -490,7 +490,7 @@ int ExocortexAlembicStaticInterface_ExocortexAlembicImportJobs( CONST_2013 MCHAR
 			return alembic_invalidarg;
 		}
 
-		if( ! fs::exists( file.c_str() ) ) {
+		if( ! fs::exists( resolvePath(file).c_str() ) ) {
 			ESS_LOG_ERROR( "Can't find Alembic file.  Path: " << file );
 			return alembic_invalidarg;
 		}
