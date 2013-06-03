@@ -195,10 +195,10 @@ MStatus AlembicImportCommand::importSingleJob(const MString &job, int jobNumber)
 		GetSampleRange(fileRoot, oMinSample, oMaxSample, oMinTime, oMaxTime);
 
 		MAnimControl anim;
-		MTime minTime, maxTime, curTime;
-		MTime sec(1.0, MTime::kSeconds);
-		minTime.setValue(oMinTime * sec.as(MTime::uiUnit()));
-		maxTime.setValue(oMaxTime * sec.as(MTime::uiUnit()));
+		MTime minTime, maxTime;
+		const double sec = MTime(1.0, MTime::kSeconds).as(MTime::uiUnit());
+		minTime.setValue(oMinTime * sec);
+		maxTime.setValue(oMaxTime * sec);
 
 		status = anim.setMinTime(minTime);
 		status = anim.setAnimationStartTime(minTime);
