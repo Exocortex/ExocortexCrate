@@ -293,7 +293,12 @@ MStatus AlembicPolyMesh::Save(double time)
 
              {
                ESS_PROFILE_SCOPE("AlembicPolyMesh::Save FaceSets more set");
-               AbcG::OFaceSet faceSet = mSchema.createFaceSet(faceSetName);
+			   
+			   AbcG::OFaceSet faceSet;
+			   if (mSchema.hasFaceSet(faceSetName))
+				   faceSet = mSchema.getFaceSet(faceSetName);
+			   else
+				   faceSet = mSchema.createFaceSet(faceSetName);
                AbcG::OFaceSetSchema::Sample faceSetSample;
                faceSetSample.setFaces(Abc::Int32ArraySample(faceVals));
                faceSet.getSchema().set(faceSetSample);
