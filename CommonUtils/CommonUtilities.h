@@ -83,11 +83,6 @@ public:
 	}
 };
 
-struct ArchiveInfo
-{
-   std::string path;
-};
-
 std::string getExporterName( std::string const& shortName );
 std::string getExporterFileName( std::string const& fileName );
 

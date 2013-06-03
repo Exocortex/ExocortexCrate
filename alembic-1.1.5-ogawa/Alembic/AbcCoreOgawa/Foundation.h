@@ -53,6 +53,7 @@
 #include <stdio.h>
 #include <assert.h>
 #include <string.h>
+//TODO: disable for VS2010
 #ifdef _MSC_VER
 	#include <Alembic/Ogawa/stdint.h>
 #endif
