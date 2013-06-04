@@ -486,7 +486,7 @@ int ExocortexAlembicStaticInterface_ExocortexAlembicImportJobs( CONST_2013 MCHAR
             }
 			else
 			{
-				ESS_LOG_INFO("Skipping invalid token: "<<tokens[j]);
+				ESS_LOG_WARNING("Skipping invalid token: "<<tokens[j]);
 				continue;
 			}
 		}
