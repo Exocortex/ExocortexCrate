@@ -1152,7 +1152,7 @@ int AlembicImport_PolyMesh(const std::string &path, AbcG::IObject& iObj, alembic
 		}
 	}
 
-	if( AbcG::ISubD::matches(iObj.getMetaData()) )
+	if( AbcG::ISubD::matches(iObj.getMetaData()) && options.enableMeshSmooth )
 	{
         //char* szBuffer =   "addmodifier $ (meshsmooth())\n"
         //                   "$.modifiers[#MeshSmooth].enabledInViews = false\n"

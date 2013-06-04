@@ -49,6 +49,7 @@ typedef struct _alembic_importoptions
    bool attachToExisting;
    bool loadTimeControl;
    bool loadCurvesAsNurbs;
+   bool enableMeshSmooth;
    VisImportOption importVisibility;
    SceneEnumProc sceneEnumProc;
    ObjectList currentSceneList;
@@ -65,6 +66,7 @@ public:
     , loadGeometryInTopologyModifier(false)
     , loadTimeControl(false)
     , loadCurvesAsNurbs(false)
+    , enableMeshSmooth(false)
     , importVisibility(VisImport_JustImportValue)
 	, pTimeControl(NULL)
    {
