@@ -413,6 +413,9 @@ CStatus exportCommandImp( CRef& in_ctxt )
       }
 
       // push the job to our registry
+      std::stringstream versionInfo;
+      versionInfo<<"Exocortex Crate "<<PLUGIN_MAJOR_VERSION<<"."<<PLUGIN_MINOR_VERSION<<"."<<crate_BUILD_VERSION;
+      Application().LogMessage(versionInfo.str().c_str());
       Application().LogMessage(L"[ExocortexAlembic] Using WriteJob:"+jobs[i]);
       jobPtrs.push_back(job);
    }
@@ -525,6 +528,12 @@ ESS_CALLBACK_START(alembic_export_settings_DefineLayout,CRef&)
 	PPGItem oItem;
 	oLayout = ctxt.GetSource();
 	oLayout.Clear();
+
+    oLayout.SetViewSize(600, 475);
+
+    std::stringstream versionText;
+   versionText<<"Exocortex Crate "<<PLUGIN_MAJOR_VERSION<<"."<<PLUGIN_MINOR_VERSION<<"."<<crate_BUILD_VERSION;
+   oLayout.AddStaticText(versionText.str().c_str());
 
    oLayout.AddGroup(L"Animation");
    oLayout.AddItem(L"frame_in",L"In");
