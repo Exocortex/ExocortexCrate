@@ -423,7 +423,8 @@ int ExocortexAlembicStaticInterface_ExocortexAlembicImportJobs( CONST_2013 MCHAR
 		//	", bImportMaterialIds=" << bImportMaterialIds << ", bAttachToExisting=" << bAttachToExisting <<
 		//	", iVisOption=" << iVisOption << " )" );
 
-      ESS_LOG_WARNING( "Processing import job: "<< EC_MCHAR_to_UTF8(jobString));
+        ESS_LOG_WARNING("Exocortex Crate "<<PLUGIN_MAJOR_VERSION<<"."<<PLUGIN_MINOR_VERSION<<"."<<crate_BUILD_VERSION);
+		ESS_LOG_WARNING( "Processing import job: "<< EC_MCHAR_to_UTF8(jobString));
 
 		alembic_importoptions options;
 
@@ -529,7 +530,8 @@ int ExocortexAlembicStaticInterface_ExocortexAlembicImportJobs( CONST_2013 MCHAR
 
 		char szBuffer[1000];
 		sprintf_s( szBuffer, 1000, "Importing %i Alembic Streams", totalAlembicItems );
-		i->ProgressStart( EC_UTF8_to_TCHAR( szBuffer ), TRUE, DummyProgressFunction, NULL);
+
+		i->ProgressStart( szBuffer, TRUE, DummyProgressFunction, NULL);
 
 		int progressUpdateInterval = 0;
 		int lastUpdateProcess = 0;
@@ -660,15 +662,18 @@ int ExocortexAlembicStaticInterface::ExocortexAlembicExportJobs( CONST_2013 MCHA
 	return alembic_failure;
 }
 
+
 int ExocortexAlembicStaticInterface_ExocortexAlembicExportJobs( CONST_2013 MCHAR* jobString )
 {
   ESS_PROFILE_FUNC();
 	try {
 
+        ESS_LOG_WARNING("Exocortex Crate "<<PLUGIN_MAJOR_VERSION<<"."<<PLUGIN_MINOR_VERSION<<"."<<crate_BUILD_VERSION);
 		ESS_LOG_WARNING( "Processing export jobs: "<<jobString);
 
 		MAXInterface *pMaxInterface = GET_MAX_INTERFACE();
-		pMaxInterface->ProgressStart( _T( "Exporting Alembic File" ), TRUE, DummyProgressFunction, NULL);
+        pMaxInterface->ProgressStart( _T( "Exporting Alembic File" ), TRUE, DummyProgressFunction, NULL);
+
 
 
 		TimeValue currentTime = pMaxInterface->GetTime();

@@ -156,8 +156,8 @@ namespace Exocortex {
 
 		essInitialize( pluginName.c_str(), PLUGIN_MAJOR_VERSION, PLUGIN_MINOR_VERSION, szLogPath, MaxLogSink );
 		ESS_LOG_WARNING( "Exocortex Alembic logs location: " << szLogPath );
-		ESS_LOG_INFO( "------------------------------------------------------------------------------------------" );
-		ESS_LOG_INFO( "Build date: " << __DATE__ << " " << __TIME__ );
+		//ESS_LOG_INFO( "------------------------------------------------------------------------------------------" );
+		ESS_LOG_WARNING( "Build date: " << __DATE__ << " " << __TIME__ );
 		OSVERSIONINFOEXA ver;
 		ZeroMemory(&ver, sizeof(OSVERSIONINFOEXA));
 		ver.dwOSVersionInfoSize = sizeof(ver);
