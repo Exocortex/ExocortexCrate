@@ -439,6 +439,9 @@ int ExocortexAlembicStaticInterface_ExocortexAlembicImportJobs( CONST_2013 MCHAR
 		for(int j=0; j<tokens.size(); j++){
 
 			std::vector<std::string> valuePair;
+            if( tokens[j].empty() ){
+               continue;
+            }
 			boost::split(valuePair, tokens[j], boost::is_any_of("="));
 			if(valuePair.size() != 2){
 				ESS_LOG_WARNING("Skipping invalid token: "<<tokens[j]);
