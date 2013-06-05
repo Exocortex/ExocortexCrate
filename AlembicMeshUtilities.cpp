@@ -793,13 +793,24 @@ void addAlembicMaterialsModifier(INode *pNode, AbcG::IObject& iObj)
 
 	exeBuffer<<"AlembicMaterialCA = attributes AlembicMaterialModifier\n";
 	exeBuffer<<"(\n";	
+	  exeBuffer<<"parameters AlembicMaterialPRM rollout:AlembicMaterialModifierRLT\n";
+		exeBuffer<<"(\n";
+        exeBuffer<<"_materials type:#stringTab tabSize:"<<faceSetNames.size()<<"\n";
+		exeBuffer<<")\n";
 	  exeBuffer<<"rollout AlembicMaterialModifierRLT \"Alembic Materials\"\n";
       exeBuffer<<"(\n";
-	     exeBuffer<<"listbox eTestList \"\" items:#("<<names<<")\n";
+	     exeBuffer<<"listbox eTestList \"\" items:#("<<names<<") \n";
       exeBuffer<<")\n";
 	exeBuffer<<")\n";
 
 	exeBuffer<<"custattributes.add mynode2113.modifiers[\"Alembic Materials\"] AlembicMaterialCA baseobject:false\n";
+
+	for(size_t j=0;j<faceSetNames.size();j++)
+	{
+       const char* name = faceSetNames[j].c_str();
+       exeBuffer<<"mynode2113.modifiers[#Alembic_Materials]._materials["<<(j+1)<<"] = \""<<name<<"\" \n";
+	}
+
 	exeBuffer<<"mynode2113.modifiers[\"Alembic Materials\"].enabled = false";
 
 
