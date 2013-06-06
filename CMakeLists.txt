@@ -63,7 +63,7 @@ endif()
 SET( crate_MAJOR_VERSION "1" )
 SET( crate_MINOR_VERSION "1" ) 
 SET( crate_BUILD_VERSION "134")
-SET( crate_VERSION "${crate_MAJOR_VERSION}.${crate_MINOR_VERSION}.${crate_BUILD_VERSION}" )
+SET( crate_VERSION "${crate_MAJOR_VERSION}.${crate_MINOR_VERSION}" )
 
 add_definitions( "-Dcrate_MAJOR_VERSION=${crate_MAJOR_VERSION}" )
 add_definitions( "-Dcrate_MINOR_VERSION=${crate_MINOR_VERSION}" )
