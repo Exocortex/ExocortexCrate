@@ -213,7 +213,7 @@ int selectNodes(SceneNodePtr root, SceneNode::SelectionT selectionMap, bool bSel
 
             if(bChildren){// select the children
                bSelected = true;
-            } 
+            }
          }	// if(selectionIt != 
       }	// if(eNode->type == 
       if(sElement.bSelectChildren){
