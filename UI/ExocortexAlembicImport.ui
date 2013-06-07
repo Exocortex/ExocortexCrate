@@ -133,7 +133,7 @@
 
     <!-- Support for Multi files! -->
     <item row="4" column="0">
-     <widget class="QLabel" name="multifile">
+     <widget class="QLabel" name="multifile_lbl">
       <property name="text">
        <string>Multi File:</string>
       </property>
@@ -144,6 +144,28 @@
     </item>
     <item row="4" column="1">
      <widget class="QCheckBox" name="multifile">
+      <property name="text">
+       <string/>
+      </property>
+      <property name="checked">
+       <bool>false</bool>
+      </property>
+     </widget>
+    </item>
+
+    <!-- Fit Time Range -->
+    <item row="5" column="0">
+     <widget class="QLabel" name="fitTR_lbl">
+      <property name="text">
+       <string>Fit Time Range:</string>
+      </property>
+      <property name="alignment">
+       <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+      </property>
+     </widget>
+    </item>
+    <item row="5" column="1">
+     <widget class="QCheckBox" name="fitTR">
       <property name="text">
        <string/>
       </property>

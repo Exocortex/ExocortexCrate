@@ -9,6 +9,7 @@ global proc exocortexAlembicImportGUI(string $filename,string $dialog)
   string $importVisibility = `optionMenu -q -value visibility`;
   int $importAttach = 0;//`checkBox -q -value attach`;
   int $importMultifile = `checkBox -q -value multifile`;
+  int $importFitTR = `checkBox -q -value fitTR`;
   exocortexCloseDialog($dialog);
   
   // check if the filename is valid
@@ -32,7 +33,7 @@ global proc exocortexAlembicImportGUI(string $filename,string $dialog)
     return;
   }
 
-  string $job = "filename=" + $filename + ";normals=" + $importNormals + ";uvs=" + $importUvs + ";facesets=" + $importFaceSets + ";multi=" + $importMultifile;
+  string $job = "filename=" + $filename + ";normals=" + $importNormals + ";uvs=" + $importUvs + ";facesets=" + $importFaceSets + ";multi=" + $importMultifile + ";fitTimeRange=" + $importFitTR;
   ExocortexAlembic_import -j $job;
 }
 

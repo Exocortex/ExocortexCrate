@@ -293,7 +293,12 @@ MStatus AlembicPolyMesh::Save(double time)
 
              {
                ESS_PROFILE_SCOPE("AlembicPolyMesh::Save FaceSets more set");
-               AbcG::OFaceSet faceSet = mSchema.createFaceSet(faceSetName);
+			   
+			   AbcG::OFaceSet faceSet;
+			   if (mSchema.hasFaceSet(faceSetName))
+				   faceSet = mSchema.getFaceSet(faceSetName);
+			   else
+				   faceSet = mSchema.createFaceSet(faceSetName);
                AbcG::OFaceSetSchema::Sample faceSetSample;
                faceSetSample.setFaces(Abc::Int32ArraySample(faceVals));
                faceSet.getSchema().set(faceSetSample);
@@ -333,9 +338,12 @@ MStatus AlembicPolyMesh::Save(double time)
        MIntArray normalIDsArray;
        node.getNormalIds(normPerFaceArray, normalIDsArray);
 
-       indexedNormalsIndices.resize(normalIDsArray.length());
-       for (int i = 0; i < indexedNormalsIndices.size(); ++i)
-         indexedNormalsIndices[mSampleLookup[i]] = normalIDsArray[i];
+	   if (indexedNormalsIndices.size() == mSampleLookup.size())
+	   {
+		   indexedNormalsIndices.resize(normalIDsArray.length());
+		   for (int i = 0; i < indexedNormalsIndices.size(); ++i)
+			 indexedNormalsIndices[mSampleLookup[i]] = normalIDsArray[i];
+	   }
      }
 
      AbcG::ON3fGeomParam::Sample normalSample;
@@ -1001,7 +1009,7 @@ MStatus AlembicPolyMeshDeformNode::deform(MDataBlock & dataBlock, MItGeometry & 
   MStatus status;
 
   // get the envelope data
-  float env = dataBlock.inputValue( envelope ).asFloat();
+  const float env = dataBlock.inputValue( envelope ).asFloat();
   if(env == 0.0f) // deformer turned off
     return MStatus::kSuccess;
 
@@ -1093,7 +1101,6 @@ MStatus AlembicPolyMeshDeformNode::deform(MDataBlock & dataBlock, MItGeometry & 
   // required if the same mesh is attached to the same deformer
   // several times
   const float blend = (float)sampleInfo.alpha;
-  const float iblend = 1.0f - blend;
   {
     ESS_PROFILE_SCOPE("AlembicPolyMeshDeformNode::deform position iterator");
 
@@ -1115,21 +1122,26 @@ MStatus AlembicPolyMeshDeformNode::deform(MDataBlock & dataBlock, MItGeometry & 
 		  pt.y *= iweight;
 		  pt.z *= iweight;
 	  }
-
+	  else
+	  {
+		  pt.x = 0.0;
+		  pt.y = 0.0;
+		  pt.z = 0.0;
+	  }
 
       const Abc::V3f &pos1 = samplePos->get()[iter_index];
       if(useBlending)
       {
         const Abc::V3f &pos2 = samplePos2->get()[iter_index];
-        pt.x = weight * (pos1.x + (pos2.x - pos1.x) * blend);
-        pt.x = weight * (pos1.y + (pos2.y - pos1.y) * blend);
-        pt.x = weight * (pos1.z + (pos2.z - pos1.z) * blend);
+        pt.x += weight * (pos1.x + (pos2.x - pos1.x) * blend);
+        pt.y += weight * (pos1.y + (pos2.y - pos1.y) * blend);
+        pt.z += weight * (pos1.z + (pos2.z - pos1.z) * blend);
       }
       else
       {
-        pt.x = weight * pos1.x;
-        pt.y = weight * pos1.y;
-        pt.z = weight * pos1.z;
+        pt.x += weight * pos1.x;
+        pt.y += weight * pos1.y;
+        pt.z += weight * pos1.z;
       }
       iter.setPosition(pt);
     }

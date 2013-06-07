@@ -165,6 +165,8 @@ EC_EXPORT MStatus initializePlugin(MObject obj)
    if (commandStatus != MStatus::kSuccess)
 	   MGlobal::displayError("Unable to import ExocortexAlembic");
    MGlobal::executePythonCommand("import maya.cmds as __cmds__\n");
+
+   EC_LOG_INFO( "Exocortex Crate "<<crate_MAJOR_VERSION<<"."<<crate_MINOR_VERSION<<"."<<crate_BUILD_VERSION );
    return status;
 }
 
