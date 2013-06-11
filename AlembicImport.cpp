@@ -2373,7 +2373,7 @@ ESS_CALLBACK_START(alembic_import_jobs_Execute, CRef&)
       XSIProgressBar progBar;
       progBar.init(nNumNodes);
 
-      bool bAttachSuccess = AttachSceneFile(fileRoot, appRoot, jobParser, &progBar);
+      bool bAttachSuccess = AttachSceneFile(fileRoot, appRoot, jobParser, &progBar, &newNodes);
 
       if(!bAttachSuccess){
          return CStatus::Fail;
