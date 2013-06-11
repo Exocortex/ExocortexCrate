@@ -1560,7 +1560,7 @@ bool createMergeableNode(SceneNodeXSI* appNode, SceneNodeAlembicPtr fileXformNod
             bLoadGeoApprox = abcMesh.getSchema().getPropertyHeader( ".faceVaryingInterpolateBoundary" ) != NULL;
          }
       }
-      if(bLoadGeoApprox){
+      if(bLoadGeoApprox && jobParams.enableSubD){
 		   alembic_create_item_Invoke(L"alembic_geomapprox", importRootNode, nodeRef, filename, shapeFullName, attachToExisting, createItemArgs);
       }
 
@@ -2090,6 +2090,7 @@ ESS_CALLBACK_START(alembic_import_jobs_Execute, CRef&)
       jobParser.stripMayaNamespaces = settings.GetParameterValue(L"stripNamespaces");
       jobParser.importCurvesAsStrands = settings.GetParameterValue(L"importCurvesAsStrands");
       jobParser.useMultiFile = settings.GetParameterValue(L"multifile");
+      jobParser.enableSubD = settings.GetParameterValue(L"enableSubD");
       
       int val = settings.GetParameterValue(L"defaultXformNode");
       if( val == 0 ){
@@ -2469,6 +2470,7 @@ ESS_CALLBACK_START(alembic_import_settings_Define, CRef&)
    oCustomProperty.AddParameter(L"importCurvesAsStrands",CValue::siBool,siPersistable,L"",L"",0,0,1,0,0,oParam);
    oCustomProperty.AddParameter(L"fitTimeRange",CValue::siBool,siPersistable,L"",L"",0,0,1,0,0,oParam);
    oCustomProperty.AddParameter(L"multifile",CValue::siBool,siPersistable,L"",L"",0,0,1,0,0,oParam);
+   oCustomProperty.AddParameter(L"enableSubD",CValue::siBool,siPersistable,L"",L"",1,0,1,0,0,oParam);
    oCustomProperty.AddParameter(L"defaultXformNode",CValue::siInt4,siPersistable,L"",L"",0,0,5,0,5,oParam);
 	return CStatus::OK;
 ESS_CALLBACK_END
@@ -2480,7 +2482,7 @@ ESS_CALLBACK_START(alembic_import_settings_DefineLayout, CRef&)
 	oLayout = ctxt.GetSource();
 	oLayout.Clear();
 
-    oLayout.SetViewSize(600, 500);
+    oLayout.SetViewSize(600, 525);
 
     std::stringstream versionText;
    versionText<<"Exocortex Crate "<<PLUGIN_MAJOR_VERSION<<"."<<PLUGIN_MINOR_VERSION<<"."<<crate_BUILD_VERSION;
@@ -2528,6 +2530,7 @@ ESS_CALLBACK_START(alembic_import_settings_DefineLayout, CRef&)
    oLayout.AddItem(L"importCurvesAsStrands", L"Import Curves as Strands");
    oLayout.AddItem(L"fitTimeRange", L"Fit Time Range");
    oLayout.AddItem(L"multifile", L"Multifile");
+   oLayout.AddItem(L"enableSubD", L"Enable Subdivision Surfaces");
 
    items.Resize(4);
    items[0] = L"Model";
