@@ -39,6 +39,7 @@ public:
    bool stripMayaNamespaces;
    bool importCurvesAsStrands;
    bool useMultiFile;
+   bool enableSubD;
    XSI_XformTypes::xte xformTypes;
 
    SearchReplace::ReplacePtr replacer;
@@ -68,7 +69,8 @@ public:
       stripMayaNamespaces(false),
       importCurvesAsStrands(false),
       replaceColonsWithUnderscores(false),
-	  useMultiFile(false)
+	  useMultiFile(false),
+      enableSubD(true)
    {}
 
    bool parse(const std::string& jobString);

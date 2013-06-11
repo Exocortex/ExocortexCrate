@@ -144,13 +144,15 @@ bool IJobStringParser::parse(const std::string& jobString)
 		{
 			replace_str = valuePair[1];
 		}
-
 		// support multiFile
 		else if (boost::iequals(valuePair[0], "multi"))
 		{
 			useMultiFile = parseBool(valuePair[1]);
 		}
-
+        else if(boost::iequals(valuePair[0], "enableSubD"))
+        {
+            enableSubD = parseBool(valuePair[1]);
+        }
 		else
 		{
 			extraParameters[valuePair[0]] = valuePair[1];
@@ -181,7 +183,7 @@ std::string IJobStringParser::buildJobString()
    stream<<";importVisibilityControllers="<<importVisibilityControllers<<";importStandinProperties="<<importStandinProperties;
    stream<<";importBoundingBoxes="<<importBoundingBoxes<<";attachToExisting="<<attachToExisting<<";skipUnattachedNodes="<<skipUnattachedNodes;
    stream<<";failOnUnsupported="<<failOnUnsupported<<";enableImportRootSelection="<<enableImportRootSelection<<";stripMayaNamespaces="<<stripMayaNamespaces;
-   stream<<";importCurvesAsStrands="<<importCurvesAsStrands<<";useMultifile="<<useMultiFile<<";defaultXformNode=";
+   stream<<";importCurvesAsStrands="<<importCurvesAsStrands<<";enableSubD="<<enableSubD<<";useMultifile="<<useMultiFile<<";defaultXformNode=";
 
    if( xformTypes == XSI_XformTypes::XMODEL){
       stream<<"model";
