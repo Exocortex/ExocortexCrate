@@ -820,17 +820,17 @@ CString getDSOPath()
    }
 
    // validate the path exists
-   if(!result.IsEmpty())
-   {
-      FILE * dsoFile = fopen(result.GetAsciiString(),"r");
-      if(dsoFile == NULL)
-      {
-         Application().LogMessage(L"[ExocortexAlembic] Arnold DSO path '"+result+L"' does not exist.",siErrorMsg);
-         result.Clear();
-      }
-      else
-         fclose(dsoFile);
-   }
+   //if(!result.IsEmpty())
+   //{
+   //   FILE * dsoFile = fopen(result.GetAsciiString(),"r");
+   //   if(dsoFile == NULL)
+   //   {
+   //      Application().LogMessage(L"[ExocortexAlembic] Arnold DSO path '"+result+L"' does not exist.",siErrorMsg);
+   //      result.Clear();
+   //   }
+   //   else
+   //      fclose(dsoFile);
+   //}
 
    // store the cached result
    gDSOPath = result;
