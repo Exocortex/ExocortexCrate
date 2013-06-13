@@ -157,7 +157,7 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
                      //ESS_PROFILE_SCOPE("AlembicImport_FillInPolyMesh_Internal - 2nd position sample read");
 
                      Abc::IP3fArrayProperty positionPropertyCeil = objMesh.getSchema().getPositionsProperty();
-                     positionPropertyCeil.get(meshPos2, sampleInfo.floorIndex);
+                     positionPropertyCeil.get(meshPos2, sampleInfo.ceilIndex);
 
 				     const int posSize = meshPos2 ? (const int)meshPos2->size() : 0;
 				     const int velSize = meshVel ? (const int)meshVel->size() : 0;
