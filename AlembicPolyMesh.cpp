@@ -43,6 +43,8 @@ MStatus AlembicPolyMesh::Save(double time)
       node.getPoints(points);
    }
 
+   std::deque<std::vector<Alembic::Util::int32_t> > allFaceSetVals;		// so they survive until the end of the exports! use a deque to preserve the pointers address required by alembic!
+
    // check if we have the global cache option
    const bool globalCache = GetJob()->GetOption(L"exportInGlobalSpace").asInt() > 0;
    Abc::M44f globalXfo;
@@ -265,12 +267,15 @@ MStatus AlembicPolyMesh::Save(double time)
              MFnSet setFn ( sets[i] );
              if (!useInitShadGrp && setFn.name() == "initialShadingGroup")
                continue;
-             std::vector<Alembic::Util::int32_t> faceVals;
+
+			 allFaceSetVals.push_back( std::vector<Alembic::Util::int32_t>() );
+			 std::vector<Alembic::Util::int32_t> &faceVals = allFaceSetVals.back();
              {
                ESS_PROFILE_SCOPE("AlembicPolyMesh::Save FaceSets more tempFaceIt iteration");
-               for (unsigned int j = 0; j < indices.length(); ++j)
+			   const unsigned int nbIndices = indices.length();
+               for (unsigned int j = 0; j < nbIndices; ++j)
                {
-                 if (indices[j] > 0)
+                 if (indices[j] == i)
                    faceVals.push_back(j);
                }
              }
