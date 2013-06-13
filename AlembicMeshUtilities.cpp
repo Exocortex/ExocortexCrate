@@ -34,6 +34,8 @@ void validateMeshes( alembic_fillmesh_options &options, char* szName ) {
 	}
 }
 
+
+
 void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
 {
    ESS_PROFILE_FUNC();
@@ -89,7 +91,10 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
    Abc::P3fArraySamplePtr meshPos;
    Abc::V3fArraySamplePtr meshVel;
 
-   bool hasDynamicTopo = options.pObjectCache->isMeshTopoDynamic;//isAlembicMeshTopoDynamic( options.pIObj );
+   bool hasDynamicTopo = frameHasDynamicTopology(&polyMeshSample, &sampleInfo, &(objMesh.getSchema().getFaceIndicesProperty()));
+
+   ESS_LOG_WARNING("dynamicTopology: "<<hasDynamicTopo<<" time: "<<sampleTime);
+
    if(objMesh.valid())
    {
    ESS_PROFILE_SCOPE("Mesh getPositions/getVelocities/faceCountProp");
