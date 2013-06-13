@@ -51,5 +51,8 @@ void saveIndexedUVs( AbcG::OPolyMeshSchema& meshSchema, AbcG::OPolyMeshSchema::S
 
 AbcG::IV2fGeomParam getMeshUvParam(int uvI, AbcG::IPolyMesh objMesh, AbcG::ISubD objSubD);
 
+struct SampleInfo;
+bool frameHasDynamicTopology(AbcG::IPolyMeshSchema::Sample* const polyMeshSample, SampleInfo* const sampleInfo, Abc::IInt32ArrayProperty* const faceIndicesProperty);
+
 
 #endif // __MESH_UTILITIES_H

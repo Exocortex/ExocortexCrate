@@ -536,3 +536,38 @@ AbcG::IV2fGeomParam getMeshUvParam(int uvI, AbcG::IPolyMesh objMesh, AbcG::ISubD
 
    return AbcG::IV2fGeomParam();
 }
+
+bool frameHasDynamicTopology(AbcG::IPolyMeshSchema::Sample* const polyMeshSample, SampleInfo* const sampleInfo, Abc::IInt32ArrayProperty* const faceIndicesProperty)
+{
+   ESS_PROFILE_FUNC();
+
+   bool hasDynamicTopo = false;
+   if(sampleInfo->alpha != 0.0f || sampleInfo->alpha != 1.0f)
+   {
+      //hasDynamicTopo = options.pObjectCache->isMeshTopoDynamic;//isAlembicMeshTopoDynamic( options.pIObj );
+
+      //Abc::IInt32ArrayProperty faceIndicesProperty = objMesh.getSchema().getFaceIndicesProperty();
+
+      Abc::Int32ArraySamplePtr arraySampleFloor = polyMeshSample->getFaceIndices();
+      Abc::int32_t const* pMeshFaceIndicesFloor = arraySampleFloor->get();
+
+      //read from just ceil indices sample, not entire mesh sample (which would be much slower)
+      Abc::Int32ArraySamplePtr arraySampleCeil;
+      faceIndicesProperty->get(arraySampleCeil, sampleInfo->ceilIndex);
+      Abc::int32_t const* pMeshFaceIndicesCeil = arraySampleCeil->get();
+
+      if(arraySampleFloor->size() == arraySampleCeil->size()){
+         size_t memSize = sizeof(Abc::int32_t) * arraySampleFloor->size();
+         if(memcmp(pMeshFaceIndicesFloor, pMeshFaceIndicesCeil, memSize) == 0){
+            hasDynamicTopo = false;
+         }
+         else{
+            hasDynamicTopo = true;
+         }
+      }
+      else{
+         hasDynamicTopo = true;
+      }
+   }
+   return hasDynamicTopo;
+}
