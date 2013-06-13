@@ -148,17 +148,25 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
 
 			  if(objMesh.valid())
 			  {
-				  AbcG::IPolyMeshSchema::Sample polyMeshSample2;
-				  objMesh.getSchema().get(polyMeshSample2,sampleInfo.ceilIndex);
-				  meshPos2 = polyMeshSample2.getPositions();
+                 {
+                     //ESS_PROFILE_SCOPE("AlembicImport_FillInPolyMesh_Internal - 2nd mesh sample read");
+				     //AbcG::IPolyMeshSchema::Sample polyMeshSample2;
+				     //objMesh.getSchema().get(polyMeshSample2,sampleInfo.ceilIndex);
+				     //meshPos2 = polyMeshSample2.getPositions();
 
-				  const int posSize = meshPos2 ? (const int)meshPos2->size() : 0;
-				  const int velSize = meshVel ? (const int)meshVel->size() : 0;
-	             
-				  if(meshPos2->size() == vArray.size() && !hasDynamicTopo)
-					  bSampleInterpolate = true;
-				  else if(meshVel && meshVel->size() == vArray.size())
-					  bVelInterpolate = true;
+                     //ESS_PROFILE_SCOPE("AlembicImport_FillInPolyMesh_Internal - 2nd position sample read");
+
+                     Abc::IP3fArrayProperty positionPropertyCeil = objMesh.getSchema().getPositionsProperty();
+                     positionPropertyCeil.get(meshPos2, sampleInfo.floorIndex);
+
+				     const int posSize = meshPos2 ? (const int)meshPos2->size() : 0;
+				     const int velSize = meshVel ? (const int)meshVel->size() : 0;
+   	             
+				     if(meshPos2->size() == vArray.size() && !hasDynamicTopo)
+					     bSampleInterpolate = true;
+				     else if(meshVel && meshVel->size() == vArray.size())
+					     bVelInterpolate = true;
+                  }
 			  }
 			  else
 			  {
