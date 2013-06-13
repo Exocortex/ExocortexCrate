@@ -220,7 +220,7 @@ MStatus AlembicPolyMesh::Save(double time)
                 continue;
 
              std::string propStr = propName.asChar();
-             if (propStr.substr(0, 8) == "FACESET_")
+			 if (propStr.compare(0, 8, "FACESET_") == 0)
              {
                 ESS_PROFILE_SCOPE("AlembicPolyMesh::Save FaceSets FACESET_ attribute found");
                 MStatus status;
