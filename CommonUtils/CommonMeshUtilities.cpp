@@ -379,17 +379,33 @@ int validateAlembicMeshTopo(std::vector<Alembic::AbcCoreAbstract::ALEMBIC_VERSIO
 
 bool getIndexAndValues( Alembic::Abc::Int32ArraySamplePtr faceIndices, Alembic::AbcGeom::IV2fGeomParam& param,
 					   AbcA::index_t sampleIndex, std::vector<Imath::V2f>& outputValues, std::vector<AbcA::uint32_t>& outputIndices ) {
-
      ESS_PROFILE_FUNC();
-	if( param.getIndexProperty().valid() && param.getValueProperty().valid() ) {		
+	if( param.getIndexProperty().valid() && param.getValueProperty().valid() ) {	
+        bool bOutOfBoundsIndices = false;
+   
 		Alembic::Abc::V2fArraySamplePtr valueSampler = param.getValueProperty().getValue( sampleIndex );
 		for( int i = 0; i < valueSampler->size(); i ++ ) {
 			outputValues.push_back( (*valueSampler)[i] );
 		}
 		Alembic::Abc::UInt32ArraySamplePtr indexSampler = param.getIndexProperty().getValue( sampleIndex );
 		for( int i = 0; i < indexSampler->size(); i ++ ) {
-			outputIndices.push_back( (*indexSampler)[i] );
+           if( (*indexSampler)[i] >= outputValues.size() ){
+               outputIndices.push_back( outputValues.size()-1 );
+               bOutOfBoundsIndices = true;
+           }
+           else if( (*indexSampler)[i] < 0 ){
+               outputIndices.push_back( 0 );
+               bOutOfBoundsIndices = true;
+           }
+           else{
+               outputIndices.push_back( (*indexSampler)[i] );
+           }
 		}
+
+        if(bOutOfBoundsIndices){
+           ESS_LOG_WARNING("Out of bounds indices detected.");
+        }
+
 		return true;
 	}
 	else if( param.getValueProperty().valid() ) {
@@ -419,15 +435,33 @@ bool getIndexAndValues( Alembic::Abc::Int32ArraySamplePtr faceIndices, Alembic::
 bool getIndexAndValues( Alembic::Abc::Int32ArraySamplePtr faceIndices, Alembic::AbcGeom::IN3fGeomParam& param,
 					   AbcA::index_t sampleIndex, std::vector<Imath::V3f>& outputValues, std::vector<AbcA::uint32_t>& outputIndices ) {
      ESS_PROFILE_FUNC();
-	if( param.getIndexProperty().valid() && param.getValueProperty().valid() ) {		
+	if( param.getIndexProperty().valid() && param.getValueProperty().valid() ) {	
+
+       bool bOutOfBoundsIndices = false;
+
 		Alembic::Abc::N3fArraySamplePtr valueSampler = param.getValueProperty().getValue( sampleIndex );
 		for( int i = 0; i < valueSampler->size(); i ++ ) {
 			outputValues.push_back( (*valueSampler)[i] );
 		}
 		Alembic::Abc::UInt32ArraySamplePtr indexSampler = param.getIndexProperty().getValue( sampleIndex );
 		for( int i = 0; i < indexSampler->size(); i ++ ) {
-			outputIndices.push_back( (*indexSampler)[i] );
+           if( (*indexSampler)[i] >= outputValues.size() ){
+               outputIndices.push_back( outputValues.size()-1 );
+               bOutOfBoundsIndices = true;
+           }
+           else if( (*indexSampler)[i] < 0 ){
+               outputIndices.push_back( 0 );
+               bOutOfBoundsIndices = true;
+           }
+           else{
+               outputIndices.push_back( (*indexSampler)[i] );
+           }
 		}
+
+        if(bOutOfBoundsIndices){
+           ESS_LOG_WARNING("Out of bounds indices detected.");
+        }
+
 		return true;
 	}
 	else if( param.getValueProperty().valid() ) {
