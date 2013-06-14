@@ -93,7 +93,7 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
 
    bool hasDynamicTopo = frameHasDynamicTopology(&polyMeshSample, &sampleInfo, &(objMesh.getSchema().getFaceIndicesProperty()));
 
-   ESS_LOG_WARNING("dynamicTopology: "<<hasDynamicTopo<<" time: "<<sampleTime);
+   //ESS_LOG_WARNING("dynamicTopology: "<<hasDynamicTopo<<" time: "<<sampleTime);
 
    if(objMesh.valid())
    {
