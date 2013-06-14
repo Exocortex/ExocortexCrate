@@ -537,7 +537,7 @@ int ExocortexAlembicStaticInterface_ExocortexAlembicImportJobs( CONST_2013 MCHAR
 		char szBuffer[1000];
 		sprintf_s( szBuffer, 1000, "Importing %i Alembic Streams", totalAlembicItems );
 
-		i->ProgressStart( szBuffer, TRUE, DummyProgressFunction, NULL);
+		i->ProgressStart( EC_UTF8_to_TCHAR(szBuffer), TRUE, DummyProgressFunction, NULL);
 
 		int progressUpdateInterval = 0;
 		int lastUpdateProcess = 0;
