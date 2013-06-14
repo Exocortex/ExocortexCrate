@@ -32,7 +32,7 @@ bool AlembicIntermediatePolyMesh::mergeWith(const AlembicIntermediatePolyMesh& s
 	}
 
 
-	Abc::uint32_t amountToOffsetSrcNormalIndicesBy = (Abc::uint32_t)destMesh.mIndexedNormals.indices.size();
+	Abc::uint32_t amountToOffsetSrcNormalIndicesBy = (Abc::uint32_t)destMesh.mIndexedNormals.values.size();
 
 	for(int i=0; i<srcMesh.mIndexedNormals.values.size(); i++){
 		destMesh.mIndexedNormals.values.push_back( srcMesh.mIndexedNormals.values[i] );
@@ -41,6 +41,12 @@ bool AlembicIntermediatePolyMesh::mergeWith(const AlembicIntermediatePolyMesh& s
 	for(int i=0; i<srcMesh.mIndexedNormals.indices.size(); i++){
 		destMesh.mIndexedNormals.indices.push_back( srcMesh.mIndexedNormals.indices[i] + amountToOffsetSrcNormalIndicesBy );
 	}
+
+    //for(int i=0; i<destMesh.mIndexedNormals.indices.size(); i++){
+    //   if( destMesh.mIndexedNormals.indices[i] > destMesh.mIndexedNormals.values.size()){
+    //       ESS_LOG_WARNING("out of bounds index");
+    //   }
+    //}
 
 
 	for(int i=0; i<srcMesh.mFaceCountVec.size(); i++){

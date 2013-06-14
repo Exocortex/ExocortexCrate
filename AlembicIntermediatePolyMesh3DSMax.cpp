@@ -394,6 +394,12 @@ void IntermediatePolyMesh3DSMax::Save(std::map<std::string, bool>& mOptions, Mes
 			}
 		}
     }
+
+    //for(int i=0; i<mIndexedNormals.indices.size(); i++){
+    //   if( mIndexedNormals.indices[i] > mIndexedNormals.values.size()){
+    //       ESS_LOG_WARNING("out of bounds index");
+    //   }
+    //}
   
    //write out the UVs
    if(GetOption(mOptions, "exportUVs"))
