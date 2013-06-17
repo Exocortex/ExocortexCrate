@@ -41,6 +41,44 @@ public:
    virtual MStatus Save(double time);
 };
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// import
+
+class BasePropertyManager
+{
+public:
+	std::string name;
+	Abc::ICompoundProperty comp;
+
+	BasePropertyManager(const std::string &nm, const Abc::ICompoundProperty &cmp): name(nm+"PP"), comp(cmp) {}
+
+	virtual void readFromParticle(MFnParticleSystem &part) = 0;
+	virtual void readFromAbc(Alembic::AbcCoreAbstract::index_t floorIndex, const unsigned int particleCount) = 0;
+	virtual void setParticleProperty(MFnParticleSystem &part) = 0;
+};
+typedef boost::shared_ptr<BasePropertyManager> BasePropertyManagerPtr;
+
+class ArbGeomProperties
+{
+public:
+	ArbGeomProperties(const Abc::ICompoundProperty &comp);
+
+	// functions
+	inline bool isValid(void) const { return valid; }
+
+	void readFromParticle(MFnParticleSystem &part);
+	void readFromAbc(Alembic::AbcCoreAbstract::index_t floorIndex, const unsigned int particleCount);
+	void setParticleProperty(MFnParticleSystem &part);
+
+private:
+	// private functions
+	void constructData(const Abc::ICompoundProperty &comp);
+
+	// private data
+	bool valid;
+	std::vector<BasePropertyManagerPtr> baseProperties;
+};
+
 class AlembicPointsNode;
 
 typedef std::list<AlembicPointsNode*> AlembicPointsNodeList;
@@ -77,6 +115,7 @@ private:
    // members
    SampleInfo mLastSampleInfo;
    double mLastInputTime;
+   ArbGeomProperties *arbGeomProperties;
 };
 
 MStatus AlembicPostImportPoints(void);
