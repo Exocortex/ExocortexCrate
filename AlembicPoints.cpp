@@ -280,12 +280,20 @@ public:
 
 	void readFromParticle(MFnParticleSystem &part)
 	{
-		part.getPerParticleAttribute(attrName.c_str(), data);
+		MStatus status;
+		part.getPerParticleAttribute(attrName.c_str(), data, &status);
+		if (status != MS::kSuccess)
+			MGlobal::displayError("readFromParticle w/ " + MString(attrName.c_str()) + " --> " + status.errorString());
 	}
 	virtual void readFromAbc(Alembic::AbcCoreAbstract::index_t floorIndex, const unsigned int particleCount) = 0;
 	void setParticleProperty(MFnParticleSystem &part)
 	{
-		if (valid) part.setPerParticleAttribute(attrName.c_str(), data);
+		if (!valid)
+			return;
+		MStatus status;
+		part.setPerParticleAttribute(attrName.c_str(), data, &status);
+		if (status != MS::kSuccess)
+			MGlobal::displayError("setParticleProperty w/ " + MString(attrName.c_str()) + " --> " + status.errorString());
 	}
 };
 template<typename IProp> class SingleValue: public MDataBasePropertyManager<MDoubleArray>
@@ -302,12 +310,13 @@ public:
 			return;
 		boost::shared_ptr<IProp::sample_type> samples = prop.getValue(floorIndex);
 
-		if (samples->size() != 1 && samples->size() != particleCount)
+		const size_t sam_size = samples->size();
+		if (sam_size == 0 || sam_size != 1 && sam_size != particleCount)
 			return;
 
 		data.setLength(particleCount);
 		valid = true;
-		if (samples->size() == 1)
+		if (sam_size == 1)
 		{
 			const double single = (double)samples->get()[0];
 			for (unsigned int i = 0; i < particleCount; ++i)
@@ -331,7 +340,8 @@ public:
 			return;
 		boost::shared_ptr<IProp::sample_type> samples = prop.getValue(floorIndex);
 
-		if (samples->size() != 1 && samples->size() != particleCount)
+		const size_t sam_size = samples->size();
+		if (sam_size == 0 || sam_size != 1 && sam_size != particleCount)
 			return;
 
 		data.setLength(particleCount);
@@ -364,7 +374,8 @@ public:
 			return;
 		boost::shared_ptr<IProp::sample_type> samples = prop.getValue(floorIndex);
 
-		if (samples->size() != 1 && samples->size() != particleCount)
+		const size_t sam_size = samples->size();
+		if (sam_size == 0 || sam_size != 1 && sam_size != particleCount)
 			return;
 
 		data.setLength(particleCount);
@@ -396,10 +407,10 @@ void ArbGeomProperties::constructData(const Abc::ICompoundProperty &comp)
 	for (int i = 0; i < nb_prop; ++i)
 	{
 		const Abc::AbcA::PropertyHeader &phead = comp.getPropertyHeader(i);
-		std::string name = phead.getName();
-		if (name == ".shapeinstanceid" || name == ".orientation")
+		const std::string name = phead.getName();
+		if (name[0] == '.' && ( name == ".color" || name == ".age" || name == ".mass" || name == ".shapeinstanceid" || name == ".orientation" ) )
 			continue;
-		
+
 		if (!phead.isArray())
 		{
 			swarning << "Ignoring " << name << " because it's not an array!\n";
@@ -532,9 +543,9 @@ void ArbGeomProperties::constructData(const Abc::ICompoundProperty &comp)
 	}
 
 	valid = true;
-	/*const std::string warning = swarning.str();
+	const std::string warning = swarning.str();
 	if (warning.length())
-		MGlobal::displayWarning(warning.c_str());*/
+		MGlobal::displayWarning(warning.c_str());
 }
 void ArbGeomProperties::readFromParticle(MFnParticleSystem &part)
 {
@@ -801,7 +812,7 @@ MStatus AlembicPointsNode::compute(const MPlug & plug, MDataBlock & dataBlock)
    MVectorArray orientationPP;
    part.getPerParticleAttribute("orientationPP", orientationPP);
 
-   arbGeomProperties->readFromParticle(part);
+   //arbGeomProperties->readFromParticle(part);
 
    // check if this is a valid sample
    unsigned int particleCount = (unsigned int)samplePos->size();
