@@ -280,12 +280,12 @@ public:
 
 	void readFromParticle(MFnParticleSystem &part)
 	{
-		part.getPerParticleAttribute(name.c_str(), data);
+		part.getPerParticleAttribute(attrName.c_str(), data);
 	}
 	virtual void readFromAbc(Alembic::AbcCoreAbstract::index_t floorIndex, const unsigned int particleCount) = 0;
 	void setParticleProperty(MFnParticleSystem &part)
 	{
-		if (valid) part.setPerParticleAttribute(name.c_str(), data);
+		if (valid) part.setPerParticleAttribute(attrName.c_str(), data);
 	}
 };
 template<typename IProp> class SingleValue: public MDataBasePropertyManager<MDoubleArray>
@@ -297,7 +297,7 @@ public:
 	void readFromAbc(Alembic::AbcCoreAbstract::index_t floorIndex, const unsigned int particleCount)
 	{
 		valid = false;
-		const IProp prop(comp, name);
+		const IProp prop = IProp(comp, propName);
 		if (!prop.valid() || prop.getNumSamples() <= 0)
 			return;
 		boost::shared_ptr<IProp::sample_type> samples = prop.getValue(floorIndex);
@@ -326,7 +326,7 @@ public:
 	void readFromAbc(Alembic::AbcCoreAbstract::index_t floorIndex, const unsigned int particleCount)
 	{
 		valid = false;
-		const IProp prop(comp, name);
+		const IProp prop = IProp(comp, propName);
 		if (!prop.valid() || prop.getNumSamples() <= 0)
 			return;
 		boost::shared_ptr<IProp::sample_type> samples = prop.getValue(floorIndex);
@@ -359,7 +359,7 @@ public:
 	void readFromAbc(Alembic::AbcCoreAbstract::index_t floorIndex, const unsigned int particleCount)
 	{
 		valid = false;
-		const IProp prop(comp, name);
+		const IProp prop = IProp(comp, propName);
 		if (!prop.valid() || prop.getNumSamples() <= 0)
 			return;
 		boost::shared_ptr<IProp::sample_type> samples = prop.getValue(floorIndex);
@@ -396,8 +396,8 @@ void ArbGeomProperties::constructData(const Abc::ICompoundProperty &comp)
 	for (int i = 0; i < nb_prop; ++i)
 	{
 		const Abc::AbcA::PropertyHeader &phead = comp.getPropertyHeader(i);
-		const std::string &name = phead.getName();
-		if (name == "shapeinstanceid" || name == "orientation")
+		std::string name = phead.getName();
+		if (name == ".shapeinstanceid" || name == ".orientation")
 			continue;
 		
 		if (!phead.isArray())
@@ -532,9 +532,9 @@ void ArbGeomProperties::constructData(const Abc::ICompoundProperty &comp)
 	}
 
 	valid = true;
-	const std::string warning = swarning.str();
+	/*const std::string warning = swarning.str();
 	if (warning.length())
-		MGlobal::displayWarning(warning.c_str());
+		MGlobal::displayWarning(warning.c_str());*/
 }
 void ArbGeomProperties::readFromParticle(MFnParticleSystem &part)
 {
@@ -578,7 +578,7 @@ void AlembicPointsNode::PreDestruction()
   mFileName.clear();
 }
 
-AlembicPointsNode::AlembicPointsNode(void): mLastInputTime(-1.0), arbGeomProperties(0)
+AlembicPointsNode::AlembicPointsNode(): mLastInputTime(-1.0), arbGeomProperties(0)
 {
   PostConstructor();
 }
@@ -586,6 +586,8 @@ AlembicPointsNode::AlembicPointsNode(void): mLastInputTime(-1.0), arbGeomPropert
 AlembicPointsNode::~AlembicPointsNode(void)
 {
    PreDestruction();
+   if (arbGeomProperties)
+	   delete arbGeomProperties;
 }
 
 MObject AlembicPointsNode::mTimeAttr;
@@ -660,6 +662,10 @@ MStatus AlembicPointsNode::init(const MString &fileName, const MString &identifi
 
     if(!mSchema.valid())
       return MStatus::kFailure;
+
+	if (arbGeomProperties)
+		delete arbGeomProperties;
+	arbGeomProperties = new ArbGeomProperties(mSchema.getArbGeomParams());
   }
   return MS::kSuccess;
 }
@@ -795,6 +801,8 @@ MStatus AlembicPointsNode::compute(const MPlug & plug, MDataBlock & dataBlock)
    MVectorArray orientationPP;
    part.getPerParticleAttribute("orientationPP", orientationPP);
 
+   arbGeomProperties->readFromParticle(part);
+
    // check if this is a valid sample
    unsigned int particleCount = (unsigned int)samplePos->size();
    if(sampleIds->size() == 1)
@@ -825,6 +833,8 @@ MStatus AlembicPointsNode::compute(const MPlug & plug, MDataBlock & dataBlock)
    masses.setLength(particleCount);
    shapeInstId.setLength(particleCount);
    orientationPP.setLength(particleCount);
+
+   arbGeomProperties->readFromAbc(sampleInfo.floorIndex, particleCount);
 
    // if we need to emit new particles, do that now
    if(particleCount > 0)
@@ -910,6 +920,8 @@ MStatus AlembicPointsNode::compute(const MPlug & plug, MDataBlock & dataBlock)
    part.setPerParticleAttribute("massPP", masses);
    part.setPerParticleAttribute("shapeInstanceIdPP", shapeInstId);
    part.setPerParticleAttribute("orientationPP", orientationPP);
+
+   arbGeomProperties->setParticleProperty(part);
 
    hOut.set( dOutput );
 	 dataBlock.setClean( plug );

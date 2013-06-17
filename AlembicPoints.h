@@ -47,10 +47,15 @@ public:
 class BasePropertyManager
 {
 public:
-	std::string name;
+	std::string propName, attrName;
 	Abc::ICompoundProperty comp;
 
-	BasePropertyManager(const std::string &nm, const Abc::ICompoundProperty &cmp): name(nm+"PP"), comp(cmp) {}
+	BasePropertyManager(const std::string &name, const Abc::ICompoundProperty &cmp): propName(name), attrName(name), comp(cmp)
+	{
+		if (attrName[0] == '.')
+			attrName = attrName.substr(1);
+		attrName += "PP";
+	}
 
 	virtual void readFromParticle(MFnParticleSystem &part) = 0;
 	virtual void readFromAbc(Alembic::AbcCoreAbstract::index_t floorIndex, const unsigned int particleCount) = 0;
