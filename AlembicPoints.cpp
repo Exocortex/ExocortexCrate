@@ -267,21 +267,26 @@ MStatus AlembicPoints::Save(double time)
 
    return MStatus::kSuccess;
 }
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // import
-template<typename MDataType> class MDataBasePropertyManager: public BasePropertyManager
+template<typename MDataType> class MDataBasePropertyManager;
+template<> class MDataBasePropertyManager<MDoubleArray>: public BasePropertyManager
 {
 public:
-	MDataType data;
+	MDoubleArray data;
 	bool valid;
 
-	MDataBasePropertyManager(const std::string &name, const Abc::ICompoundProperty &cmp): BasePropertyManager(name, cmp), valid(false) {}
+	MDataBasePropertyManager(const std::string &name, const Abc::ICompoundProperty &cmp): BasePropertyManager(name, cmp), valid(false), data()
+	{
+	}
 
-	void readFromParticle(MFnParticleSystem &part)
+	void readFromParticle(const MFnParticleSystem &part)
 	{
 		MStatus status;
-		part.getPerParticleAttribute(attrName.c_str(), data, &status);
+		part.getPerParticleAttribute(MString(attrName.c_str()), data, &status);
 		if (status != MS::kSuccess)
 			MGlobal::displayError("readFromParticle w/ " + MString(attrName.c_str()) + " --> " + status.errorString());
 	}
@@ -289,13 +294,54 @@ public:
 	void setParticleProperty(MFnParticleSystem &part)
 	{
 		if (!valid)
-			return;
+		{
+			for (int i = 0; i < data.length(); ++i)
+				data[i] = double();
+		}
 		MStatus status;
-		part.setPerParticleAttribute(attrName.c_str(), data, &status);
+		part.setPerParticleAttribute(MString(attrName.c_str()), data, &status);
 		if (status != MS::kSuccess)
 			MGlobal::displayError("setParticleProperty w/ " + MString(attrName.c_str()) + " --> " + status.errorString());
 	}
+	void initPerParticle(const MString &partName)
+	{
+		MGlobal::executePythonCommand("cmds.addAttr(\"" + partName + "\", ln=\"" + MString(attrName.c_str()) + "\", dt=\"doubleArray\")");
+	}
 };
+template<> class MDataBasePropertyManager<MVectorArray>: public BasePropertyManager
+{
+public:
+	MVectorArray data;
+	bool valid;
+
+	MDataBasePropertyManager(const std::string &name, const Abc::ICompoundProperty &cmp): BasePropertyManager(name, cmp), valid(false), data() {}
+
+	void readFromParticle(const MFnParticleSystem &part)
+	{
+		MStatus status;
+		part.getPerParticleAttribute(MString(attrName.c_str()), data, &status);
+		if (status != MS::kSuccess)
+			MGlobal::displayError("readFromParticle w/ " + MString(attrName.c_str()) + " --> " + status.errorString());
+	}
+	virtual void readFromAbc(Alembic::AbcCoreAbstract::index_t floorIndex, const unsigned int particleCount) = 0;
+	void setParticleProperty(MFnParticleSystem &part)
+	{
+		if (!valid)
+		{
+			for (int i = 0; i < data.length(); ++i)
+				data[i] = MVector();
+		}
+		MStatus status;
+		part.setPerParticleAttribute(MString(attrName.c_str()), data, &status);
+		if (status != MS::kSuccess)
+			MGlobal::displayError("setParticleProperty w/ " + MString(attrName.c_str()) + " --> " + status.errorString());
+	}
+	void initPerParticle(const MString &partName)
+	{
+		MGlobal::executePythonCommand("cmds.addAttr(\"" + partName + "\", ln=\"" + MString(attrName.c_str()) + "\", dt=\"vectorArray\")");
+	}
+};
+
 template<typename IProp> class SingleValue: public MDataBasePropertyManager<MDoubleArray>
 {
 	typedef MDataBasePropertyManager<MDoubleArray> base_type;
@@ -335,6 +381,7 @@ public:
 	void readFromAbc(Alembic::AbcCoreAbstract::index_t floorIndex, const unsigned int particleCount)
 	{
 		valid = false;
+		data.setLength(particleCount);
 		const IProp prop = IProp(comp, propName);
 		if (!prop.valid() || prop.getNumSamples() <= 0)
 			return;
@@ -344,7 +391,6 @@ public:
 		if (sam_size == 0 || sam_size != 1 && sam_size != particleCount)
 			return;
 
-		data.setLength(particleCount);
 		valid = true;
 		if (samples->size() == 1)
 		{
@@ -369,6 +415,7 @@ public:
 	void readFromAbc(Alembic::AbcCoreAbstract::index_t floorIndex, const unsigned int particleCount)
 	{
 		valid = false;
+		data.setLength(particleCount);
 		const IProp prop = IProp(comp, propName);
 		if (!prop.valid() || prop.getNumSamples() <= 0)
 			return;
@@ -378,7 +425,6 @@ public:
 		if (sam_size == 0 || sam_size != 1 && sam_size != particleCount)
 			return;
 
-		data.setLength(particleCount);
 		valid = true;
 		if (samples->size() == 1)
 		{
@@ -408,7 +454,7 @@ void ArbGeomProperties::constructData(const Abc::ICompoundProperty &comp)
 	{
 		const Abc::AbcA::PropertyHeader &phead = comp.getPropertyHeader(i);
 		const std::string name = phead.getName();
-		if (name[0] == '.' && ( name == ".color" || name == ".age" || name == ".mass" || name == ".shapeinstanceid" || name == ".orientation" ) )
+		if (name[0] == '.' && ( name == ".color" || name == ".age" || name == ".mass" || name == ".shapeinstanceid" || name == ".orientation" || name == ".angularvelocity" ) )
 			continue;
 
 		if (!phead.isArray())
@@ -547,7 +593,13 @@ void ArbGeomProperties::constructData(const Abc::ICompoundProperty &comp)
 	if (warning.length())
 		MGlobal::displayWarning(warning.c_str());
 }
-void ArbGeomProperties::readFromParticle(MFnParticleSystem &part)
+void ArbGeomProperties::initPerParticle(const MString &partName)
+{
+	MGlobal::executePythonCommand("import maya.cmds as cmds");
+	for (std::vector<BasePropertyManagerPtr>::iterator beg = baseProperties.begin(), end = baseProperties.end(); beg != end; ++beg)
+		(*beg)->initPerParticle(partName);
+}
+void ArbGeomProperties::readFromParticle(const MFnParticleSystem &part)
 {
 	for (std::vector<BasePropertyManagerPtr>::iterator beg = baseProperties.begin(), end = baseProperties.end(); beg != end; ++beg)
 		(*beg)->readFromParticle(part);
@@ -680,6 +732,11 @@ MStatus AlembicPointsNode::init(const MString &fileName, const MString &identifi
   }
   return MS::kSuccess;
 }
+MStatus AlembicPointsNode::initPerParticles(const MString &partName)
+{
+	arbGeomProperties->initPerParticle(partName);
+	return MS::kSuccess;
+}
 
 static MVector quaternionToVector(const Abc::Quatf &qf, const Abc::Quatf &angVel)
 {
@@ -735,7 +792,12 @@ MStatus AlembicPointsNode::compute(const MPlug & plug, MDataBlock & dataBlock)
 
    // check if we have the file
    if (!(status = init(fileName, identifier)))
-     return status;
+	 return status;
+   else
+   {
+	   MFnDependencyNode depNode(particleShapeNode);
+	   initPerParticles(depNode.name());
+   }
 
    // get the sample
    SampleInfo sampleInfo = getSampleInfo
@@ -810,9 +872,11 @@ MStatus AlembicPointsNode::compute(const MPlug & plug, MDataBlock & dataBlock)
    MDoubleArray shapeInstId;
    part.getPerParticleAttribute("shapeInstanceIdPP", shapeInstId);
    MVectorArray orientationPP;
-   part.getPerParticleAttribute("orientationPP", orientationPP);
+   part.getPerParticleAttribute("orientationPP", orientationPP, &status);
+		if (status != MS::kSuccess)
+			MGlobal::displayError("readFromParticle w/ orientationPP --> " + status.errorString());
 
-   //arbGeomProperties->readFromParticle(part);
+   arbGeomProperties->readFromParticle(part);
 
    // check if this is a valid sample
    unsigned int particleCount = (unsigned int)samplePos->size();

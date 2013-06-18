@@ -57,9 +57,10 @@ public:
 		attrName += "PP";
 	}
 
-	virtual void readFromParticle(MFnParticleSystem &part) = 0;
+	virtual void readFromParticle(const MFnParticleSystem &part) = 0;
 	virtual void readFromAbc(Alembic::AbcCoreAbstract::index_t floorIndex, const unsigned int particleCount) = 0;
 	virtual void setParticleProperty(MFnParticleSystem &part) = 0;
+	virtual void initPerParticle(const MString &partName) = 0;
 };
 typedef boost::shared_ptr<BasePropertyManager> BasePropertyManagerPtr;
 
@@ -71,7 +72,8 @@ public:
 	// functions
 	inline bool isValid(void) const { return valid; }
 
-	void readFromParticle(MFnParticleSystem &part);
+	void initPerParticle(const MString &partName);
+	void readFromParticle(const MFnParticleSystem &part);
 	void readFromAbc(Alembic::AbcCoreAbstract::index_t floorIndex, const unsigned int particleCount);
 	void setParticleProperty(MFnParticleSystem &part);
 
@@ -116,6 +118,7 @@ private:
    AlembicPointsNodeListIter listPosition;
 
    MStatus init(const MString &filename, const MString &identifier);
+   MStatus initPerParticles(const MString &partName);
 
    // members
    SampleInfo mLastSampleInfo;
