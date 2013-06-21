@@ -1525,14 +1525,12 @@ bool createMergeableNode(SceneNodeXSI* appNode, SceneNodeAlembicPtr fileXformNod
          nameMapAdd(shapeObj.getFullName().c_str(),meshObj.GetFullName());
       }
 
-      if(AbcG::ISubD::matches(shapeObj.getMetaData())){
-         // make the geometry approx local
-         CValue makeLocalReturn;
-         CValueArray makeLocalArgs(2);
-         makeLocalArgs[0] = meshObj.GetFullName()+L".geomapprox";
-         makeLocalArgs[1] = siNodePropagation;
-         Application().ExecuteCommand(L"MakeLocal",makeLocalArgs,makeLocalReturn);
-      }
+      // make the geometry approx local
+      CValue makeLocalReturn;
+      CValueArray makeLocalArgs(2);
+      makeLocalArgs[0] = meshObj.GetFullName()+L".geomapprox";
+      makeLocalArgs[1] = siNodePropagation;
+      Application().ExecuteCommand(L"MakeLocal",makeLocalArgs,makeLocalReturn);
 
       // load metadata
       alembic_create_item_Invoke(L"alembic_metadata", importRootNode, nodeRef, filename, shapeFullName, attachToExisting, createItemArgs);
