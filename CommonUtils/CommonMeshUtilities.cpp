@@ -605,3 +605,40 @@ bool frameHasDynamicTopology(AbcG::IPolyMeshSchema::Sample* const polyMeshSample
    }
    return hasDynamicTopo;
 }
+
+void dynamicTopoVelocityCalc::calcVelocities(const std::vector<Abc::V3f>& nextPosVec, const std::vector<AbcA::int32_t>& nextFaceIndicesVec, std::vector<Abc::V3f>& velocities, double time)
+{
+    if(bInitialized){
+
+       bool bTopoDataIsEqual = false;
+       
+        //if topology data is equal, calculate the velocitiy (replace the default one or create one of all zeros if it is not initialized
+       if( faceIndicesVec.size() == nextFaceIndicesVec.size() ){
+         size_t memSize = sizeof(Abc::int32_t) * nextFaceIndicesVec.size();
+         if(memcmp(&faceIndicesVec[0], &nextFaceIndicesVec[0], memSize) == 0){
+            bTopoDataIsEqual = true;
+         }
+       }
+
+       if(bTopoDataIsEqual){
+          if(posVec.size() != nextPosVec.size()){
+            ESS_LOG_WARNING("calcVelocities - posVec.size() != nextPosVec.size()");
+          }
+          if(nextPosVec.size() != velocities.size()){
+            ESS_LOG_WARNING("calcVelocities - nextPosVec.size() != velocities.size()");
+          }
+       }
+
+       if(bTopoDataIsEqual && posVec.size() == nextPosVec.size() && nextPosVec.size() == velocities.size()){
+          for(int i=0; i<nextPosVec.size(); i++){
+             velocities[i] = nextPosVec[i] - posVec[i] / (float)(time-prevTime);
+          }
+       }
+    }
+
+    //update the previous values
+    posVec = nextPosVec;
+    faceIndicesVec = nextFaceIndicesVec;
+    prevTime = time;
+    bInitialized = true;
+}
