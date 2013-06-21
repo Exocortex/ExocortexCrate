@@ -181,10 +181,9 @@ int particleGroupInterface::getCurrentMtlId(){
 
 
 bool getParticleSystemMesh(TimeValue ticks, Object* obj, INode* node, IntermediatePolyMesh3DSMax* mesh, 
-						   materialsMergeStr* pMatMerge, AlembicWriteJob * mJob, int nNumSamples)
+						   materialsMergeStr* pMatMerge, AlembicWriteJob * mJob, int nNumSamples, bool bEnableVelocityExport)
 {
 	static ExoNullView nullView;
-	static const bool ENABLE_VELOCITY_EXPORT = true;
 
     Matrix3 nodeWorldTM = node->GetObjTMAfterWSM(ticks);
     Abc::M44d nodeWorldTrans;
@@ -248,7 +247,7 @@ bool getParticleSystemMesh(TimeValue ticks, Object* obj, INode* node, Intermedia
 				//return false;
 			}
 
-			if(ENABLE_VELOCITY_EXPORT){//TODO...
+			if(bEnableVelocityExport){//TODO...
 
 				IParticleObjectExt* particlesExt = GetParticleObjectExtInterface(pParticleObject);
 				if(particlesExt){
@@ -320,7 +319,7 @@ bool getParticleSystemMesh(TimeValue ticks, Object* obj, INode* node, Intermedia
 		//max meshes do not store per vertex velocities
 		//we want the end result relative particle system space
 
-		if(ENABLE_VELOCITY_EXPORT){
+		if(bEnableVelocityExport){
 #if 1
 			//float fps = (float)GetFrameRate();
 			Abc::V4f pPosition4 = ConvertMaxPointToAlembicPoint4(*particlesExt->GetParticlePositionByIndex(i));

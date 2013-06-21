@@ -147,11 +147,14 @@ bool AlembicPolyMesh::Save(double time, bool bLastFrame)
 
 	if(bIsParticleSystem){
 
-		bool bSuccess = getParticleSystemMesh(ticks, obj, GetRef().node, &finalPolyMesh, &materialsMerge, mJob, mNumSamples);
+        bool bEnableVelocityExport = true;
+		bool bSuccess = getParticleSystemMesh(ticks, obj, GetRef().node, &finalPolyMesh, &materialsMerge, mJob, mNumSamples, bEnableVelocityExport);
 		if(!bSuccess){
 			ESS_LOG_INFO( "Error. Could not get particle system mesh. Time: "<<time );
 			return false;
 		}
+
+        velocityCalc.calcVelocities(finalPolyMesh.posVec, finalPolyMesh.mFaceIndicesVec, finalPolyMesh.mVelocitiesVec, GetSecondsFromTimeValue(ticks));
 	}
 	else
 	{

@@ -19,6 +19,8 @@ private:
 
    materialsMergeStr materialsMerge;
 
+   dynamicTopoVelocityCalc velocityCalc;
+
 public:
 
    AlembicPolyMesh(const SceneEntry &in_Ref, AlembicWriteJob *in_Job);
