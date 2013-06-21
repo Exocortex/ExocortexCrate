@@ -1558,7 +1558,7 @@ bool createMergeableNode(SceneNodeXSI* appNode, SceneNodeAlembicPtr fileXformNod
             bLoadGeoApprox = abcMesh.getSchema().getPropertyHeader( ".faceVaryingInterpolateBoundary" ) != NULL;
          }
       }
-      if(bLoadGeoApprox || jobParams.enableSubD){
+      if(bLoadGeoApprox && jobParams.enableSubD){
 		   alembic_create_item_Invoke(L"alembic_geomapprox", importRootNode, nodeRef, filename, shapeFullName, attachToExisting, createItemArgs);
       }
 
