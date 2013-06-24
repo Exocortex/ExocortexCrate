@@ -430,6 +430,7 @@ CStatus alembic_create_item_Invoke
 		// for visibility, let's see if we should create an operator
          if(itemType == alembicItemType_visibility)
          {
+            ESS_PROFILE_SCOPE("alembic_create_item_Invoke create_the_operator visibility");
             bool importVis = args[4];
             if(!importVis)
             {
@@ -480,7 +481,7 @@ CStatus alembic_create_item_Invoke
          {
 			 {
 			 ESS_PROFILE_SCOPE("alembic_create_item_Invoke create_the_operator CreateObject");
-		    op = Application().GetFactory().CreateObject(realType);
+		       op = Application().GetFactory().CreateObject(realType);
 			 }
 
 		/*	 		// Duplicate arc 4 times and translate in y
@@ -524,6 +525,7 @@ CStatus alembic_create_item_Invoke
          bool receivesExpression = isAnimated;
 
          if(!bMultifile){
+            ESS_PROFILE_SCOPE("alembic_create_item_Invoke create_the_operator dynamic topo check");
             if(itemType == alembicItemType_crvlist_topo)
                receivesExpression = false;
             else if(itemType == alembicItemType_polymesh_topo)
@@ -1288,6 +1290,7 @@ bool createNode(SceneNodeXSI* appNode, SceneNodeAlembicPtr fileNode, const IJobS
          X3DObject parentX3DObject(appNode->nodeRef);
 
          if( xte == XSI_XformTypes::XMODEL ){
+            ESS_PROFILE_SCOPE("creatNode Model");
             CRefArray objects;
             Model model;
             parentX3DObject.AddModel(objects, name, model);
@@ -1296,6 +1299,7 @@ bool createNode(SceneNodeXSI* appNode, SceneNodeAlembicPtr fileNode, const IJobS
             nameMapAdd(iObj.getFullName().c_str(),model.GetFullName());
          }
          else{
+            ESS_PROFILE_SCOPE("creatNode Null");
             Null null;
             parentX3DObject.AddNull(name, null);
             nodeRef = null.GetRef();
@@ -1512,7 +1516,11 @@ bool createMergeableNode(SceneNodeXSI* appNode, SceneNodeAlembicPtr fileXformNod
             status = parentX3DObject.AddGeometry(L"Cube", L"MeshSurface", newAppNodeName, meshObj);
          }
          else{
-            status = parentX3DObject.AddPrimitive(L"EmptyPolygonMesh", newAppNodeName, meshObj);
+            ESS_PROFILE_SCOPE("createMergeableNode - AddPrimitive(EmptyPolygonMesh)");
+		    CVector3Array verts(0);
+		    CLongArray indices(0);
+		    status = parentX3DObject.AddPolygonMesh( verts, indices, newAppNodeName, meshObj );
+            //status = parentX3DObject..AddPrimitive(L"EmptyPolygonMesh", newAppNodeName, meshObj);//very slow, don't do this!
          }
          nodeRef = meshObj.GetRef();
 
