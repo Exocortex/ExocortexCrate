@@ -1,5 +1,7 @@
 
-project ( MayaExocortexAlembic ) 
+project ( Maya${Maya_VERSION}ExocortexAlembic ) 
+
+set ( COMPILE_NAME MayaExocortexAlembic )
 
 INCLUDE(../../ExocortexAlembicShared/ExocortexCMakeShared.txt)
 
@@ -65,7 +67,6 @@ if( Exocortex_SERVICES OR Exocortex_RLM_ONLY )
 	link_directories( ${Rlm_LIBRARYDIR} )
 endif()
 
-
 add_library( ${PROJECT_NAME} SHARED ${Sources} ${Includes} ${LOCAL_CMAKE_FILE_NAME} ${Scripts} ${UI} )
 
 if (WIN32)
@@ -77,6 +78,7 @@ if (WIN32)
 	set( MAYA_LINK_FLAGS " /export:initializePlugin /export:uninitializePlugin " )
 	SET_TARGET_PROPERTIES( ${PROJECT_NAME}
 		PROPERTIES #
+			OUTPUT_NAME ${COMPILE_NAME}
 	  		PREFIX ""  # There is no prefix even on UNIXes
 	  		LINK_FLAGS ${MAYA_LINK_FLAGS}
 			SUFFIX ${MAYA_EXTENSION} )
@@ -86,6 +88,7 @@ elseif ( UNIX )
         set( GL_LIBRARIES "libGL.so")
 endif()
 
+#SET_TARGET_PROPERTIES( ${PROJECT_NAME} PROPERTIES OUTPUT_NAME ${COMPILE_NAME} )
 
 TARGET_LINK_LIBRARIES( ${PROJECT_NAME}
 	CommonUtils
@@ -100,7 +103,7 @@ ADD_DEPENDENCIES(${PROJECT_NAME} AlembicAbcGeom)
 SET( Install_DIR ${Exocortex_INSTALL_BASE_DIR}/Maya${Maya_VERSION}/ )
 
 #remove_dir( ${Install_DIR} )
-
+		
 SET( Module_FILENAME ${CMAKE_CURRENT_SOURCE_DIR}/Maya${Maya_VERSION}ExocortexAlembic.mod )
 copy_file_to_directory( ${Module_FILENAME} ${Install_DIR} )
 
@@ -108,6 +111,7 @@ copy_directory( "${BASE_DIR}/MEL" ${Install_DIR}/Module/scripts )
 copy_directory( "${BASE_DIR}/UI" ${Install_DIR}/Module/ui )
 
 get_target_property( Install_TARGET ${PROJECT_NAME} LOCATION )
+MESSAGE( "---- Install_TARGET: ${Install_TARGET}" )
 copy_file_to_directory( ${Install_TARGET} ${Install_DIR}/Module/plug-ins )
 
 if( WIN32 )
