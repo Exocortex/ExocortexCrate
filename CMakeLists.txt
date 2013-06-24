@@ -1,5 +1,5 @@
 
-project ( Maya${Maya_VERSION}ExocortexAlembic${crate_VERSION} ) 
+project ( MayaExocortexAlembic ) 
 
 INCLUDE(../../ExocortexAlembicShared/ExocortexCMakeShared.txt)
 
