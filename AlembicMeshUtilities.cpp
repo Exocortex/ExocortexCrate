@@ -91,7 +91,11 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
    Abc::P3fArraySamplePtr meshPos;
    Abc::V3fArraySamplePtr meshVel;
 
-   bool hasDynamicTopo = frameHasDynamicTopology(&polyMeshSample, &sampleInfo, &(objMesh.getSchema().getFaceIndicesProperty()));
+   bool hasDynamicTopo = options.pObjectCache->isMeshTopoDynamic;
+   if(hasDynamicTopo){
+      //do slower check to see if the topology did not change between this frame and the previous frame
+      hasDynamicTopo = frameHasDynamicTopology(&polyMeshSample, &sampleInfo, &(objMesh.getSchema().getFaceIndicesProperty()));
+   }
 
    //ESS_LOG_WARNING("dynamicTopology: "<<hasDynamicTopo<<" time: "<<sampleTime);
 
