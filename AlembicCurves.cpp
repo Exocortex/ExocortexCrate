@@ -1021,49 +1021,44 @@ XSIPLUGINCALLBACK CStatus alembic_curves_Evaluate(ICENodeContext& in_ctxt)
          CDataArray2DVector3f outData( in_ctxt );
          CDataArray2DVector3f::Accessor acc;
 
-         if ( obj.getSchema().getPropertyHeader( ".velocity" ) == NULL )
+         Abc::V3fArraySamplePtr vel = sample.getVelocities();
+
+         if ( vel == NULL )
          {
             acc = outData.Resize(0,0);
             return CStatus::OK;
          }
-         Abc::IV3fArrayProperty prop = Abc::IV3fArrayProperty( obj.getSchema(), ".velocity" );
-         if(!prop.valid())
+         if(!vel->valid())
          {
             acc = outData.Resize(0,0);
             return CStatus::OK;
          }
-         if(prop.getNumSamples() == 0)
+         if(vel->size() == 0)
          {
             acc = outData.Resize(0,0);
             return CStatus::OK;
          }
-         Abc::V3fArraySamplePtr ptr = prop.getValue(sampleInfo.floorIndex);
-         if(ptr == NULL)
-            acc = outData.Resize(0,0);
-         else if(ptr->size() == 0)
-            acc = outData.Resize(0,0);
-         else
+  
+         acc = outData.Resize(0,(ULONG)vel->size());
+         //if(sampleInfo.alpha != 0.0)
+         //{
+         //   Abc::V3fArraySamplePtr ptr2 = prop.getValue(sampleInfo.ceilIndex);
+         //   float alpha = (float)sampleInfo.alpha;
+         //   float ialpha = 1.0f - alpha;
+         //   for(ULONG i=0;i<acc.GetCount();i++)
+         //   {
+         //      acc[i].Set(
+         //         ialpha * ptr->get()[i].x + alpha * ptr2->get()[i].x,
+         //         ialpha * ptr->get()[i].y + alpha * ptr2->get()[i].y,
+         //         ialpha * ptr->get()[i].z + alpha * ptr2->get()[i].z);
+         //   }
+         //}
+         //else
          {
-            acc = outData.Resize(0,(ULONG)ptr->size());
-            if(sampleInfo.alpha != 0.0)
-            {
-               Abc::V3fArraySamplePtr ptr2 = prop.getValue(sampleInfo.ceilIndex);
-               float alpha = (float)sampleInfo.alpha;
-               float ialpha = 1.0f - alpha;
-               for(ULONG i=0;i<acc.GetCount();i++)
-               {
-                  acc[i].Set(
-                     ialpha * ptr->get()[i].x + alpha * ptr2->get()[i].x,
-                     ialpha * ptr->get()[i].y + alpha * ptr2->get()[i].y,
-                     ialpha * ptr->get()[i].z + alpha * ptr2->get()[i].z);
-               }
-            }
-            else
-            {
-               for(ULONG i=0;i<acc.GetCount();i++)
-                  acc[i].Set(ptr->get()[i].x,ptr->get()[i].y,ptr->get()[i].z);
-            }
+            for(ULONG i=0;i<acc.GetCount();i++)
+               acc[i].Set(vel->get()[i].x, vel->get()[i].y, vel->get()[i].z);
          }
+         
    		break;
 		}
       case ID_OUT_radius:
