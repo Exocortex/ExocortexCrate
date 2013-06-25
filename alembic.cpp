@@ -29,7 +29,22 @@ SICALLBACK XSILoadPlugin( PluginRegistrar& in_reg )
 	in_reg.PutName(L"ExocortexAlembicSoftimage");
 	in_reg.PutEmail(L"support@exocortex.com");
 	in_reg.PutURL(L"http://www.exocortex.com/alembic");
-	in_reg.PutVersion(1,0);
+
+	// sync the softimage plugin version with the Crate version ---------------
+	//		soft_MAJOR <-- crate_MAJOR
+	//		soft_MINOR <-- combination of crate_MINOR and crate_BUILD 
+	//		(e.g. Crate version 1.1.134 resolves to Soft plugin version 1.1134)
+	long digits = 1;
+	long pten = 10;
+	while(pten <= crate_BUILD_VERSION)
+	{
+		pten *= 10;
+		digits ++;
+	}
+	long soft_MINOR = PLUGIN_MINOR_VERSION * (long)(pow(10.0, digits) ) + crate_BUILD_VERSION;
+
+	in_reg.PutVersion(PLUGIN_MAJOR_VERSION, soft_MINOR);
+
 
 	//if( HasAlembicWriterLicense() ) {
 		in_reg.RegisterCommand(L"alembic_export",L"alembic_export");
