@@ -1215,6 +1215,56 @@ ESS_CALLBACK_END
 
 
 
+CRef setupTimeControl(SceneNodeAlembicPtr fileXformNode, XSI::CRef importRootNode)
+{
+   {
+      CString rootPath = importRootNode.GetAsText();
+      rootPath += ".alembic_timecontrol";
+
+      //ESS_LOG_WARNING("timeControl: "<<rootPath.GetAsciiString());
+
+      // create the timecontrol
+      CRef timeRef;
+      timeRef.Set(rootPath);
+      CustomProperty timeControl = timeRef;
+      
+      CValueArray setExprArgs(2);
+      CValue setExprReturn;
+      if(!timeControl.IsValid())
+      {
+         X3DObject root(importRootNode);
+         timeControl = root.AddProperty(L"alembic_timecontrol");
+
+         // prepare values for the setexpr command
+         setExprArgs[0] = timeControl.GetFullName()+L".current";
+         setExprArgs[1] = L"T";
+         Application().ExecuteCommand(L"SetExpr",setExprArgs,setExprReturn);
+      }
+
+      timeRef.Set(rootPath);
+
+      if(!timeRef.IsValid()){
+         ESS_LOG_ERROR("Could not find alembic_timecontrol");
+      }
+
+      return timeRef;
+      // now update the args to use the timecontrol instead
+      //setExprArgs[1] = timeControl.GetFullName()+L".current * "+timeControl.GetFullName()+L".factor + "+timeControl.GetFullName()+L".offset";
+   }
+
+   //CRef timeRef;
+   //CString timeControlPath = importRootNode.GetAsText();
+   //timeControlPath += ".alembic_timecontrol";
+   //timeRef.Set(timeControlPath);
+   ////CustomProperty timeControl = timeRef;
+   //
+   //if(!timeRef.IsValid()){
+   //   ESS_LOG_ERROR("Could not find alembic_timecontrol");
+   //   return false;
+   //}
+
+}
+
 //the last parameter is ignored if attach to exising is active (since we are not creating a new node)
 bool createNode(SceneNodeXSI* appNode, SceneNodeAlembicPtr fileNode, const IJobStringParser& jobParams, SceneNodePtr& returnNode, bool bAttachToExisting)
 {  
@@ -1232,19 +1282,19 @@ bool createNode(SceneNodeXSI* appNode, SceneNodeAlembicPtr fileNode, const IJobS
    //const bool& importBboxes = jobParams.importBoundingBoxes;
    //const bool& failOnUnsupported = jobParams.failOnUnsupported;
 
-   CRef timeRef;
-   CString timeControlPath = importRootNode.GetAsText();
-   timeControlPath += ".alembic_timecontrol";
-   timeRef.Set(timeControlPath);
+   //CRef timeRef;
+   //CString timeControlPath = importRootNode.GetAsText();
+   //timeControlPath += ".alembic_timecontrol";
+   //timeRef.Set(timeControlPath);
 
-   if(!timeRef.IsValid()){
-      ESS_LOG_ERROR("Could not find alembic_timecontrol");
-      return false;
-   }
+   //if(!timeRef.IsValid()){
+   //   ESS_LOG_ERROR("Could not find alembic_timecontrol");
+   //   return false;
+   //}
 
    //CustomProperty timeControl = timeRef;
    CValueArray createItemArgs(6);
-   createItemArgs[0] = timeRef;
+   //createItemArgs[0] = timeRef;
    createItemArgs[1] = jobParams.importFacesets;
    createItemArgs[2] = jobParams.importNormals;
    createItemArgs[3] = jobParams.importUVs;
@@ -1316,6 +1366,8 @@ bool createNode(SceneNodeXSI* appNode, SceneNodeAlembicPtr fileNode, const IJobS
          returnNode = SceneNodePtr(new SceneNodeXSI(nodeRef));
       }
 
+      createItemArgs[0] = setupTimeControl(fileNode, importRootNode);
+
       // load metadata
       alembic_create_item_Invoke(L"alembic_metadata", importRootNode, nodeRef, filename, iObj.getFullName().c_str(), attachToExisting, createItemArgs);
 
@@ -1362,6 +1414,8 @@ bool validate(CRef nodeRef, CString fileNodeType, Abc::IObject shapeObj )
    return true;
 }
 
+
+
 bool createMergeableNode(SceneNodeXSI* appNode, SceneNodeAlembicPtr fileXformNode, SceneNodeAlembicPtr fileShapeNode, const IJobStringParser& jobParams, SceneNodePtr& returnNode, bool bAttachToExisting)
 {
    //the appNode parameter is either the parent if adding a new node to the scene, or the node to replace if doing attach to existing
@@ -1380,20 +1434,20 @@ bool createMergeableNode(SceneNodeXSI* appNode, SceneNodeAlembicPtr fileXformNod
    const bool& failOnUnsupported = jobParams.failOnUnsupported;
 
 
-   CRef timeRef;
-   CString timeControlPath = importRootNode.GetAsText();
-   timeControlPath += ".alembic_timecontrol";
-   timeRef.Set(timeControlPath);
-   //CustomProperty timeControl = timeRef;
-   
-   if(!timeRef.IsValid()){
-      ESS_LOG_ERROR("Could not find alembic_timecontrol");
-      return false;
-   }
+   //CRef timeRef;
+   //CString timeControlPath = importRootNode.GetAsText();
+   //timeControlPath += ".alembic_timecontrol";
+   //timeRef.Set(timeControlPath);
+   ////CustomProperty timeControl = timeRef;
+   //
+   //if(!timeRef.IsValid()){
+   //   ESS_LOG_ERROR("Could not find alembic_timecontrol");
+   //   return false;
+   //}
 
    // store the time control in a value array
    CValueArray createItemArgs(6);
-   createItemArgs[0] = timeRef;
+   //createItemArgs[0] = timeRef;//<------------------------------- TODO init this
    createItemArgs[1] = jobParams.importFacesets;
    createItemArgs[2] = jobParams.importNormals;
    createItemArgs[3] = jobParams.importUVs;
@@ -1466,6 +1520,8 @@ bool createMergeableNode(SceneNodeXSI* appNode, SceneNodeAlembicPtr fileXformNod
          nameMapAdd(shapeObj.getFullName().c_str(),camera.GetFullName());
       }
 
+      createItemArgs[0] = setupTimeControl(fileXformNode, importRootNode);
+
       // delete the interest
       CValueArray deleteArgs(1);
       deleteArgs[0] = camera.GetInterest().GetFullName();
@@ -1532,6 +1588,8 @@ bool createMergeableNode(SceneNodeXSI* appNode, SceneNodeAlembicPtr fileXformNod
 
          nameMapAdd(shapeObj.getFullName().c_str(),meshObj.GetFullName());
       }
+
+      createItemArgs[0] = setupTimeControl(fileXformNode, importRootNode);
 
       // make the geometry approx local
       CValue makeLocalReturn;
@@ -1622,6 +1680,8 @@ bool createMergeableNode(SceneNodeXSI* appNode, SceneNodeAlembicPtr fileXformNod
          }
          fileShapeNode->setAttached(true);
       }
+
+      createItemArgs[0] = setupTimeControl(fileXformNode, importRootNode);
 
       if(!nurbsObj.IsValid())
       {
@@ -1740,6 +1800,8 @@ bool createMergeableNode(SceneNodeXSI* appNode, SceneNodeAlembicPtr fileXformNod
             nameMapAdd(shapeObj.getFullName().c_str(), pointsObj.GetFullName());
          }
 
+         createItemArgs[0] = setupTimeControl(fileXformNode, importRootNode);
+
          // load metadata
          alembic_create_item_Invoke(L"alembic_metadata", importRootNode, nodeRef, filename, shapeFullName, attachToExisting, createItemArgs);
 
@@ -1824,6 +1886,8 @@ bool createMergeableNode(SceneNodeXSI* appNode, SceneNodeAlembicPtr fileXformNod
 
             nameMapAdd(shapeObj.getFullName().c_str(), curveObj.GetFullName());
          }
+
+         createItemArgs[0] = setupTimeControl(fileXformNode, importRootNode);
 
          // load metadata
          alembic_create_item_Invoke(L"alembic_metadata", importRootNode, nodeRef, filename, shapeFullName, attachToExisting, createItemArgs);
@@ -1910,6 +1974,8 @@ bool createMergeableNode(SceneNodeXSI* appNode, SceneNodeAlembicPtr fileXformNod
 
          nameMapAdd(shapeObj.getFullName().c_str(), pointsObj.GetFullName());
       }
+
+      createItemArgs[0] = setupTimeControl(fileXformNode, importRootNode);
 
       // load metadata
       alembic_create_item_Invoke(L"alembic_metadata", importRootNode, nodeRef, filename, shapeFullName, attachToExisting, createItemArgs);
@@ -2244,41 +2310,6 @@ ESS_CALLBACK_START(alembic_import_jobs_Execute, CRef&)
    }
    jobParser.extraParameters["appRootPath"] = importRootNode.GetAsText().GetAsciiString(); 
 
-
-   {
-      CString rootPath = importRootNode.GetAsText();
-      rootPath += ".alembic_timecontrol";
-
-      //ESS_LOG_WARNING("timeControl: "<<rootPath.GetAsciiString());
-
-      // create the timecontrol
-      CRef timeRef;
-      timeRef.Set(rootPath);
-      CustomProperty timeControl = timeRef;
-      
-      CValueArray setExprArgs(2);
-      CValue setExprReturn;
-      if(!timeControl.IsValid())
-      {
-         X3DObject root(importRootNode);
-         timeControl = root.AddProperty(L"alembic_timecontrol");
-
-         // prepare values for the setexpr command
-         setExprArgs[0] = timeControl.GetFullName()+L".current";
-         setExprArgs[1] = L"T";
-         Application().ExecuteCommand(L"SetExpr",setExprArgs,setExprReturn);
-      }
-      // now update the args to use the timecontrol instead
-      //setExprArgs[1] = timeControl.GetFullName()+L".current * "+timeControl.GetFullName()+L".factor + "+timeControl.GetFullName()+L".offset";
-   }
-
-   //// store the time control in a value array
-   //CValueArray createItemArgs(5);
-   //createItemArgs[0] = timeControl.GetRef();
-   //createItemArgs[1] = jobParser.importFacesets;
-   //createItemArgs[2] = jobParser.importNormals;
-   //createItemArgs[3] = jobParser.importUVs;
-   //createItemArgs[4] = jobParser.importVisibilityControllers;
 
    AbcG::IObject root = archive->getTop();
  
