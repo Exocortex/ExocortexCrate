@@ -379,29 +379,6 @@ void clearIsRefAnimatedCache()
    gIsRefAnimatedMap.clear();
 }
 
-std::map<std::string,std::string> gNameMap;
-void nameMapAdd(CString identifier, CString name)
-{
-   std::map<std::string,std::string>::iterator it = gNameMap.find(identifier.GetAsciiString());
-   if(it == gNameMap.end())
-   {
-      std::pair<std::string,std::string> pair(identifier.GetAsciiString(),name.GetAsciiString());
-      gNameMap.insert(pair);
-   }
-}
-
-CString nameMapGet(CString identifier)
-{
-   std::map<std::string,std::string>::iterator it = gNameMap.find(identifier.GetAsciiString());
-   if(it == gNameMap.end())
-      return L"";
-   return it->second.c_str();
-}
-
-void nameMapClear()
-{
-   gNameMap.clear();
-}
 
 void updateOperatorInfo( XSI::Operator& op, SampleInfo& sampleInfo, AbcA::TimeSamplingPtr timeSampling, 
 						 int nPointsPrimitive, int nPointsCache)

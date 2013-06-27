@@ -1278,6 +1278,7 @@ bool createNode(SceneNodeXSI* appNode, SceneNodeAlembicPtr fileNode, const IJobS
 
    CString filename = CString(jobParams.filename.c_str());
    const bool& attachToExisting = bAttachToExisting;
+   bool usePerModelTimeControls = true;
    //const bool& importStandins = jobParams.importStandinProperties;
    //const bool& importBboxes = jobParams.importBoundingBoxes;
    //const bool& failOnUnsupported = jobParams.failOnUnsupported;
@@ -1345,17 +1346,12 @@ bool createNode(SceneNodeXSI* appNode, SceneNodeAlembicPtr fileNode, const IJobS
             Model model;
             parentX3DObject.AddModel(objects, name, model);
             nodeRef = model.GetRef();
-
-            nameMapAdd(iObj.getFullName().c_str(),model.GetFullName());
          }
          else{
             ESS_PROFILE_SCOPE("creatNode Null");
             Null null;
             parentX3DObject.AddNull(name, null);
             nodeRef = null.GetRef();
-
-            //we possibly won't need the name map anymore
-            nameMapAdd(iObj.getFullName().c_str(),null.GetFullName());
          }
 
          if(!nodeRef.IsValid()){
@@ -1366,7 +1362,16 @@ bool createNode(SceneNodeXSI* appNode, SceneNodeAlembicPtr fileNode, const IJobS
          returnNode = SceneNodePtr(new SceneNodeXSI(nodeRef));
       }
 
-      createItemArgs[0] = setupTimeControl(fileNode, importRootNode);
+      //keep track of the app node the alembic node maps to
+      //needed from time control per model feature
+      fileNode->dccIdentifier = nodeRef.GetAsText().GetAsciiString();
+
+      if(usePerModelTimeControls){
+         createItemArgs[0] = setupTimeControl(fileNode, findTimeControlDccIdentifier(fileNode));
+      }
+      else{
+         createItemArgs[0] = setupTimeControl(fileNode, importRootNode);
+      }
 
       // load metadata
       alembic_create_item_Invoke(L"alembic_metadata", importRootNode, nodeRef, filename, iObj.getFullName().c_str(), attachToExisting, createItemArgs);
@@ -1425,6 +1430,9 @@ bool createMergeableNode(SceneNodeXSI* appNode, SceneNodeAlembicPtr fileXformNod
       IJobStringParser& nonConstJobParams = (IJobStringParser&)jobParams;
       importRootNode.Set(nonConstJobParams.extraParameters["appRootPath"].c_str());
    }
+
+
+   bool usePerModelTimeControls = true;
 
 
    const CString filename(jobParams.filename.c_str());
@@ -1516,11 +1524,16 @@ bool createMergeableNode(SceneNodeXSI* appNode, SceneNodeAlembicPtr fileXformNod
          }
 
          returnNode = SceneNodePtr(new SceneNodeXSI(nodeRef));
-      
-         nameMapAdd(shapeObj.getFullName().c_str(),camera.GetFullName());
       }
 
-      createItemArgs[0] = setupTimeControl(fileXformNode, importRootNode);
+      fileNode->dccIdentifier = nodeRef.GetAsText().GetAsciiString();
+
+      if(usePerModelTimeControls){
+         createItemArgs[0] = setupTimeControl(fileXformNode, findTimeControlDccIdentifier(fileXformNode));
+      }
+      else{
+         createItemArgs[0] = setupTimeControl(fileXformNode, importRootNode);
+      }
 
       // delete the interest
       CValueArray deleteArgs(1);
@@ -1585,11 +1598,16 @@ bool createMergeableNode(SceneNodeXSI* appNode, SceneNodeAlembicPtr fileXformNod
          }
 
          returnNode = SceneNodePtr(new SceneNodeXSI(meshObj.GetRef()));
-
-         nameMapAdd(shapeObj.getFullName().c_str(),meshObj.GetFullName());
       }
 
-      createItemArgs[0] = setupTimeControl(fileXformNode, importRootNode);
+      fileNode->dccIdentifier = nodeRef.GetAsText().GetAsciiString();
+
+      if(usePerModelTimeControls){
+         createItemArgs[0] = setupTimeControl(fileXformNode, findTimeControlDccIdentifier(fileXformNode));
+      }
+      else{
+         createItemArgs[0] = setupTimeControl(fileXformNode, importRootNode);
+      }
 
       // make the geometry approx local
       CValue makeLocalReturn;
@@ -1681,7 +1699,14 @@ bool createMergeableNode(SceneNodeXSI* appNode, SceneNodeAlembicPtr fileXformNod
          fileShapeNode->setAttached(true);
       }
 
-      createItemArgs[0] = setupTimeControl(fileXformNode, importRootNode);
+      fileNode->dccIdentifier = nodeRef.GetAsText().GetAsciiString();
+
+      if(usePerModelTimeControls){
+         createItemArgs[0] = setupTimeControl(fileXformNode, findTimeControlDccIdentifier(fileXformNode));
+      }
+      else{
+         createItemArgs[0] = setupTimeControl(fileXformNode, importRootNode);
+      }
 
       if(!nurbsObj.IsValid())
       {
@@ -1796,11 +1821,16 @@ bool createMergeableNode(SceneNodeXSI* appNode, SceneNodeAlembicPtr fileXformNod
                ESS_LOG_ERROR("Could not create curve "<<shapeObj.getFullName());
             }
             returnNode = SceneNodePtr(new SceneNodeXSI(nodeRef));
-            
-            nameMapAdd(shapeObj.getFullName().c_str(), pointsObj.GetFullName());
          }
 
-         createItemArgs[0] = setupTimeControl(fileXformNode, importRootNode);
+         fileNode->dccIdentifier = nodeRef.GetAsText().GetAsciiString();
+
+         if(usePerModelTimeControls){
+            createItemArgs[0] = setupTimeControl(fileXformNode, findTimeControlDccIdentifier(fileXformNode));
+         }
+         else{
+            createItemArgs[0] = setupTimeControl(fileXformNode, importRootNode);
+         }
 
          // load metadata
          alembic_create_item_Invoke(L"alembic_metadata", importRootNode, nodeRef, filename, shapeFullName, attachToExisting, createItemArgs);
@@ -1883,11 +1913,16 @@ bool createMergeableNode(SceneNodeXSI* appNode, SceneNodeAlembicPtr fileXformNod
             }
 
             returnNode = SceneNodePtr(new SceneNodeXSI(nodeRef));
-
-            nameMapAdd(shapeObj.getFullName().c_str(), curveObj.GetFullName());
          }
 
-         createItemArgs[0] = setupTimeControl(fileXformNode, importRootNode);
+         fileNode->dccIdentifier = nodeRef.GetAsText().GetAsciiString();
+
+         if(usePerModelTimeControls){
+            createItemArgs[0] = setupTimeControl(fileXformNode, findTimeControlDccIdentifier(fileXformNode));
+         }
+         else{
+            createItemArgs[0] = setupTimeControl(fileXformNode, importRootNode);
+         }
 
          // load metadata
          alembic_create_item_Invoke(L"alembic_metadata", importRootNode, nodeRef, filename, shapeFullName, attachToExisting, createItemArgs);
@@ -1971,11 +2006,16 @@ bool createMergeableNode(SceneNodeXSI* appNode, SceneNodeAlembicPtr fileXformNod
          }
 
          returnNode = SceneNodePtr(new SceneNodeXSI(nodeRef));
-
-         nameMapAdd(shapeObj.getFullName().c_str(), pointsObj.GetFullName());
       }
 
-      createItemArgs[0] = setupTimeControl(fileXformNode, importRootNode);
+      fileNode->dccIdentifier = nodeRef.GetAsText().GetAsciiString();
+
+      if(usePerModelTimeControls){
+         createItemArgs[0] = setupTimeControl(fileXformNode, findTimeControlDccIdentifier(fileXformNode));
+      }
+      else{
+         createItemArgs[0] = setupTimeControl(fileXformNode, importRootNode);
+      }
 
       // load metadata
       alembic_create_item_Invoke(L"alembic_metadata", importRootNode, nodeRef, filename, shapeFullName, attachToExisting, createItemArgs);
@@ -2320,6 +2360,8 @@ ESS_CALLBACK_START(alembic_import_jobs_Execute, CRef&)
    int nNumNodes = 0;
    SceneNodeAlembicPtr fileRoot = buildAlembicSceneGraph(pArchiveCache, pRootObjectCache, nNumNodes, jobParser, false);
 
+   fileRoot->dccIdentifier = Application().GetActiveSceneRoot().GetRef().GetAsText().GetAsciiString();
+
    if(!jobParser.selectShapes){
       ESS_LOG_WARNING("Only selecting transform nodes (shape selection disabled)");
    }
@@ -2364,7 +2406,7 @@ ESS_CALLBACK_START(alembic_import_jobs_Execute, CRef&)
    //return CStatus::Fail;
 
    // clear the imported names!
-   nameMapClear();
+   //nameMapClear();
    CString transformCacheModelName;
    Model transformCacheModel;
 

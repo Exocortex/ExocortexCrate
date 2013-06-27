@@ -43,5 +43,7 @@ public:
    virtual int getUpdateCount(){ return 2; }
 };
 
+XSI::CRef findTimeControlDccIdentifier(SceneNodeAlembicPtr fileRoot);
+
 
 #endif

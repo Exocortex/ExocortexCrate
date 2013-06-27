@@ -295,3 +295,30 @@ XSI_XformTypes::xte getXformType(AbcG::IXform& obj)
    return XSI_XformTypes::UNKNOWN;
 
 }
+
+XSI::CRef findTimeControlDccIdentifier(SceneNodeAlembicPtr fileRoot)
+{
+
+   SceneNodeAlembic* currNode = fileRoot.get();
+
+   while( true )
+   {
+      XSI_XformTypes::xte xte = XSI_XformTypes::UNKNOWN;
+      Abc::IObject iObj = currNode->getObject();
+      if(AbcG::IXform::matches(iObj.getMetaData()))
+      {
+         AbcG::IXform xform(iObj, Abc::kWrapExisting);
+         xte = getXformType(xform);
+      }
+      
+      if( currNode->parent == NULL || (currNode->bIsDirectChild && xte == XSI_XformTypes::XMODEL) ){
+         break;
+      }
+
+      currNode = (SceneNodeAlembic*) currNode->parent;
+   }
+
+   XSI::CRef ref;
+   ref.Set(currNode->dccIdentifier.c_str());
+   return ref;
+}

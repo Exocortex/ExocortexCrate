@@ -35,11 +35,6 @@ bool returnIsRefAnimated(const XSI::CRef & in_Ref, bool animated);
 void clearIsRefAnimatedCache();
 void updateOperatorInfo( XSI::Operator& op, SampleInfo& sampleInfo, AbcA::TimeSamplingPtr timeSamplingPtr, int nPointsPrimitive, int nPointsCache);
 
-// remapping imported names
-void nameMapAdd(XSI::CString identifier, XSI::CString name);
-XSI::CString nameMapGet(XSI::CString identifier);
-void nameMapClear();
-
 bool hasStandinSupport();
 XSI::CString getDSOPath();
 
