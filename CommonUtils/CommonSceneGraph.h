@@ -108,8 +108,9 @@ class SceneNodeAlembic : public SceneNodeFile
 public:
 
    AbcObjectCache *pObjCache;
+   bool bIsDirectChild;
 
-   SceneNodeAlembic(AbcObjectCache *pObjectCache):pObjCache(pObjectCache)
+   SceneNodeAlembic(AbcObjectCache *pObjectCache):pObjCache(pObjectCache), bIsDirectChild(false)
    {}
 
    virtual bool isSupported();
