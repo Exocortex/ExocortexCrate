@@ -267,8 +267,357 @@ MStatus AlembicPoints::Save(double time)
 
    return MStatus::kSuccess;
 }
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// import
+template<typename MDataType> class MDataBasePropertyManager;
+template<> class MDataBasePropertyManager<MDoubleArray>: public BasePropertyManager
+{
+public:
+	MDoubleArray data;
+	bool valid;
+
+	MDataBasePropertyManager(const std::string &name, const Abc::ICompoundProperty &cmp): BasePropertyManager(name, cmp), valid(false), data()
+	{
+	}
+
+	void readFromParticle(const MFnParticleSystem &part)
+	{
+		MStatus status;
+		part.getPerParticleAttribute(MString(attrName.c_str()), data, &status);
+		if (status != MS::kSuccess)
+			MGlobal::displayError("readFromParticle w/ " + MString(attrName.c_str()) + " --> " + status.errorString());
+	}
+	virtual void readFromAbc(Alembic::AbcCoreAbstract::index_t floorIndex, const unsigned int particleCount) = 0;
+	void setParticleProperty(MFnParticleSystem &part)
+	{
+		if (!valid)
+		{
+			for (int i = 0; i < data.length(); ++i)
+				data[i] = double();
+		}
+		MStatus status;
+		part.setPerParticleAttribute(MString(attrName.c_str()), data, &status);
+		if (status != MS::kSuccess)
+			MGlobal::displayError("setParticleProperty w/ " + MString(attrName.c_str()) + " --> " + status.errorString());
+	}
+	void initPerParticle(const MString &partName)
+	{
+		MGlobal::executePythonCommand("cmds.addAttr(\"" + partName + "\", ln=\"" + MString(attrName.c_str()) + "\", dt=\"doubleArray\")");
+	}
+};
+template<> class MDataBasePropertyManager<MVectorArray>: public BasePropertyManager
+{
+public:
+	MVectorArray data;
+	bool valid;
+
+	MDataBasePropertyManager(const std::string &name, const Abc::ICompoundProperty &cmp): BasePropertyManager(name, cmp), valid(false), data() {}
+
+	void readFromParticle(const MFnParticleSystem &part)
+	{
+		MStatus status;
+		part.getPerParticleAttribute(MString(attrName.c_str()), data, &status);
+		if (status != MS::kSuccess)
+			MGlobal::displayError("readFromParticle w/ " + MString(attrName.c_str()) + " --> " + status.errorString());
+	}
+	virtual void readFromAbc(Alembic::AbcCoreAbstract::index_t floorIndex, const unsigned int particleCount) = 0;
+	void setParticleProperty(MFnParticleSystem &part)
+	{
+		if (!valid)
+		{
+			for (int i = 0; i < data.length(); ++i)
+				data[i] = MVector();
+		}
+		MStatus status;
+		part.setPerParticleAttribute(MString(attrName.c_str()), data, &status);
+		if (status != MS::kSuccess)
+			MGlobal::displayError("setParticleProperty w/ " + MString(attrName.c_str()) + " --> " + status.errorString());
+	}
+	void initPerParticle(const MString &partName)
+	{
+		MGlobal::executePythonCommand("cmds.addAttr(\"" + partName + "\", ln=\"" + MString(attrName.c_str()) + "\", dt=\"vectorArray\")");
+	}
+};
+
+template<typename IProp> class SingleValue: public MDataBasePropertyManager<MDoubleArray>
+{
+	typedef MDataBasePropertyManager<MDoubleArray> base_type;
+public:
+	SingleValue(const std::string &name, const Abc::ICompoundProperty &cmp): base_type(name, cmp) {}
+
+	void readFromAbc(Alembic::AbcCoreAbstract::index_t floorIndex, const unsigned int particleCount)
+	{
+		valid = false;
+		const IProp prop = IProp(comp, propName);
+		if (!prop.valid() || prop.getNumSamples() <= 0)
+			return;
+		boost::shared_ptr<IProp::sample_type> samples = prop.getValue(floorIndex);
+
+		const size_t sam_size = samples->size();
+		if (sam_size == 0 || sam_size != 1 && sam_size != particleCount)
+			return;
+
+		data.setLength(particleCount);
+		valid = true;
+		if (sam_size == 1)
+		{
+			const double single = (double)samples->get()[0];
+			for (unsigned int i = 0; i < particleCount; ++i)
+				data[i] = single;
+		}
+		else for (unsigned int i = 0; i < particleCount; ++i)
+			data[i] = (double)samples->get()[i];
+	}
+};
+template<typename IProp> class PairValue: public MDataBasePropertyManager<MVectorArray>
+{
+	typedef MDataBasePropertyManager<MVectorArray> base_type;
+public:
+	PairValue(const std::string &name, const Abc::ICompoundProperty &cmp): base_type(name, cmp) {}
+
+	void readFromAbc(Alembic::AbcCoreAbstract::index_t floorIndex, const unsigned int particleCount)
+	{
+		valid = false;
+		data.setLength(particleCount);
+		const IProp prop = IProp(comp, propName);
+		if (!prop.valid() || prop.getNumSamples() <= 0)
+			return;
+		boost::shared_ptr<IProp::sample_type> samples = prop.getValue(floorIndex);
+
+		const size_t sam_size = samples->size();
+		if (sam_size == 0 || sam_size != 1 && sam_size != particleCount)
+			return;
+
+		valid = true;
+		if (samples->size() == 1)
+		{
+			const IProp::sample_type::value_type &defRead = samples->get()[0];
+			const MVector def(defRead.x, defRead.y, 0.0);
+			for (unsigned int i = 0; i < particleCount; ++i)
+				data[i] = def;
+		}
+		else for (unsigned int i = 0; i < particleCount; ++i)
+		{
+			const IProp::sample_type::value_type &defRead = samples->get()[i];
+			data[i] = MVector(defRead.x, defRead.y, 0.0);
+		}
+	}
+};
+template<typename IProp> class TripleValue: public MDataBasePropertyManager<MVectorArray>
+{
+	typedef MDataBasePropertyManager<MVectorArray> base_type;
+public:
+	TripleValue(const std::string &name, const Abc::ICompoundProperty &cmp): base_type(name, cmp) {}
+
+	void readFromAbc(Alembic::AbcCoreAbstract::index_t floorIndex, const unsigned int particleCount)
+	{
+		valid = false;
+		data.setLength(particleCount);
+		const IProp prop = IProp(comp, propName);
+		if (!prop.valid() || prop.getNumSamples() <= 0)
+			return;
+		boost::shared_ptr<IProp::sample_type> samples = prop.getValue(floorIndex);
+
+		const size_t sam_size = samples->size();
+		if (sam_size == 0 || sam_size != 1 && sam_size != particleCount)
+			return;
+
+		valid = true;
+		if (samples->size() == 1)
+		{
+			const IProp::sample_type::value_type &defRead = samples->get()[0];
+			const MVector def(defRead.x, defRead.y, defRead.z);
+			for (unsigned int i = 0; i < particleCount; ++i)
+				data[i] = def;
+		}
+		else for (unsigned int i = 0; i < particleCount; ++i)
+		{
+			const IProp::sample_type::value_type &defRead = samples->get()[i];
+			data[i] = MVector(defRead.x, defRead.y, defRead.z);
+		}
+	}
+};
+
+ArbGeomProperties::ArbGeomProperties(const Abc::ICompoundProperty &comp): valid(false)
+{
+	this->constructData(comp);
+}
+
+void ArbGeomProperties::constructData(const Abc::ICompoundProperty &comp)
+{
+	std::stringstream swarning;
+	const int nb_prop = comp.getNumProperties();
+	for (int i = 0; i < nb_prop; ++i)
+	{
+		const Abc::AbcA::PropertyHeader &phead = comp.getPropertyHeader(i);
+		const std::string name = phead.getName();
+		if (name[0] == '.' && ( name == ".color" || name == ".age" || name == ".mass" || name == ".shapeinstanceid" || name == ".orientation" || name == ".angularvelocity" ) )
+			continue;
+
+		if (!phead.isArray())
+		{
+			swarning << "Ignoring " << name << " because it's not an array!\n";
+			continue;
+		}
+
+		BasePropertyManagerPtr bpmptr;
+
+		const int extent = phead.getDataType().getExtent();
+		switch (phead.getDataType().getPod())
+		{
+    //! Rejects
+		case Abc::kStringPOD:
+		case Abc::kWstringPOD:
+		case Abc::kNumPlainOldDataTypes:
+		case Abc::kUnknownPOD:
+			{
+				swarning << "Ignoring " << name << " because its type is not a valid for PerParticle!\n";
+				continue;
+			}
+			break;
+
+    //! Boolean
+		case Abc::kBooleanPOD:
+			bpmptr.reset(new SingleValue< Abc::IBoolArrayProperty >(name, comp));
+			break;
+
+    //! Char/UChar
+		case Abc::kUint8POD:
+			bpmptr.reset(new SingleValue< Abc::IUcharArrayProperty >(name, comp));
+			break;
+		case Abc::kInt8POD:
+			bpmptr.reset(new SingleValue< Abc::ICharArrayProperty >(name, comp));
+			break;
+
+    //! Short/UShort
+		case Abc::kUint16POD:
+			bpmptr.reset(new SingleValue< Abc::IUInt16ArrayProperty >(name, comp));
+			break;
+		case Abc::kInt16POD:
+			switch(extent)
+			{
+			case 1:
+				bpmptr.reset(new SingleValue< Abc::IInt16ArrayProperty >(name, comp));
+				break;
+			case 2:
+				bpmptr.reset(new PairValue< Abc::IV2sArrayProperty >(name, comp));
+				break;
+			case 3:
+				bpmptr.reset(new TripleValue< Abc::IV3sArrayProperty >(name, comp));
+				break;
+			default:
+				break;
+			};
+			break;
+
+    //! Int/UInt
+		case Abc::kUint32POD:
+			bpmptr.reset(new SingleValue< Abc::IUInt32ArrayProperty >(name, comp));
+			break;
+		case Abc::kInt32POD:
+			switch(extent)
+			{
+			case 1:
+				bpmptr.reset(new SingleValue< Abc::IInt32ArrayProperty >(name, comp));
+				break;
+			case 2:
+				bpmptr.reset(new PairValue< Abc::IV2iArrayProperty >(name, comp));
+				break;
+			case 3:
+				bpmptr.reset(new TripleValue< Abc::IV3iArrayProperty >(name, comp));
+				break;
+			default:
+				break;
+			};
+			break;
+
+    //! Long/ULong
+		case Abc::kUint64POD:
+			bpmptr.reset(new SingleValue< Abc::IUInt64ArrayProperty >(name, comp));
+			break;
+		case Abc::kInt64POD:
+			bpmptr.reset(new SingleValue< Abc::IInt64ArrayProperty >(name, comp));
+			break;
+
+    //! Half/Float/Double
+		case Abc::kFloat16POD:
+			bpmptr.reset(new SingleValue< Abc::IHalfArrayProperty >(name, comp));
+			break;
+		case Abc::kFloat32POD:
+			switch(extent)
+			{
+			case 1:
+				bpmptr.reset(new SingleValue< Abc::IFloatArrayProperty >(name, comp));
+				break;
+			case 2:
+				bpmptr.reset(new PairValue< Abc::IV2fArrayProperty >(name, comp));
+				break;
+			case 3:
+				bpmptr.reset(new TripleValue< Abc::IV3fArrayProperty >(name, comp));
+				break;
+			default:
+				break;
+			};
+			break;
+		case Abc::kFloat64POD:
+			switch(extent)
+			{
+			case 1:
+				bpmptr.reset(new SingleValue< Abc::IDoubleArrayProperty >(name, comp));
+				break;
+			case 2:
+				bpmptr.reset(new PairValue< Abc::IV2dArrayProperty >(name, comp));
+				break;
+			case 3:
+				bpmptr.reset(new TripleValue< Abc::IV3dArrayProperty >(name, comp));
+				break;
+			default:
+				break;
+			};
+			break;
+
+		default:
+			break;
+		}
+		if (bpmptr.get())
+			baseProperties.push_back(bpmptr);
+		else
+			swarning << "Ignoring " << name << ", couldn't find the proper type!\n";
+	}
+
+	valid = true;
+	const std::string warning = swarning.str();
+	if (warning.length())
+		MGlobal::displayWarning(warning.c_str());
+}
+void ArbGeomProperties::initPerParticle(const MString &partName)
+{
+	MGlobal::executePythonCommand("import maya.cmds as cmds");
+	for (std::vector<BasePropertyManagerPtr>::iterator beg = baseProperties.begin(), end = baseProperties.end(); beg != end; ++beg)
+		(*beg)->initPerParticle(partName);
+}
+void ArbGeomProperties::readFromParticle(const MFnParticleSystem &part)
+{
+	for (std::vector<BasePropertyManagerPtr>::iterator beg = baseProperties.begin(), end = baseProperties.end(); beg != end; ++beg)
+		(*beg)->readFromParticle(part);
+}
+void ArbGeomProperties::readFromAbc(Alembic::AbcCoreAbstract::index_t floorIndex, const unsigned int particleCount)
+{
+	for (std::vector<BasePropertyManagerPtr>::iterator beg = baseProperties.begin(), end = baseProperties.end(); beg != end; ++beg)
+		(*beg)->readFromAbc(floorIndex, particleCount);
+}
+void ArbGeomProperties::setParticleProperty(MFnParticleSystem &part)
+{
+	for (std::vector<BasePropertyManagerPtr>::iterator beg = baseProperties.begin(), end = baseProperties.end(); beg != end; ++beg)
+		(*beg)->setParticleProperty(part);
+}
 
 static AlembicPointsNodeList alembicPointsNodeList;
+
+///////////////// AlembicPointsNode
 
 void AlembicPointsNode::PostConstructor(void)
 {
@@ -292,7 +641,7 @@ void AlembicPointsNode::PreDestruction()
   mFileName.clear();
 }
 
-AlembicPointsNode::AlembicPointsNode(void): mLastInputTime(-1.0)
+AlembicPointsNode::AlembicPointsNode(): mLastInputTime(-1.0), arbGeomProperties(0)
 {
   PostConstructor();
 }
@@ -300,6 +649,8 @@ AlembicPointsNode::AlembicPointsNode(void): mLastInputTime(-1.0)
 AlembicPointsNode::~AlembicPointsNode(void)
 {
    PreDestruction();
+   if (arbGeomProperties)
+	   delete arbGeomProperties;
 }
 
 MObject AlembicPointsNode::mTimeAttr;
@@ -374,8 +725,17 @@ MStatus AlembicPointsNode::init(const MString &fileName, const MString &identifi
 
     if(!mSchema.valid())
       return MStatus::kFailure;
+
+	if (arbGeomProperties)
+		delete arbGeomProperties;
+	arbGeomProperties = new ArbGeomProperties(mSchema.getArbGeomParams());
   }
   return MS::kSuccess;
+}
+MStatus AlembicPointsNode::initPerParticles(const MString &partName)
+{
+	arbGeomProperties->initPerParticle(partName);
+	return MS::kSuccess;
 }
 
 static MVector quaternionToVector(const Abc::Quatf &qf, const Abc::Quatf &angVel)
@@ -432,7 +792,12 @@ MStatus AlembicPointsNode::compute(const MPlug & plug, MDataBlock & dataBlock)
 
    // check if we have the file
    if (!(status = init(fileName, identifier)))
-     return status;
+	 return status;
+   else
+   {
+	   MFnDependencyNode depNode(particleShapeNode);
+	   initPerParticles(depNode.name());
+   }
 
    // get the sample
    SampleInfo sampleInfo = getSampleInfo
@@ -507,7 +872,11 @@ MStatus AlembicPointsNode::compute(const MPlug & plug, MDataBlock & dataBlock)
    MDoubleArray shapeInstId;
    part.getPerParticleAttribute("shapeInstanceIdPP", shapeInstId);
    MVectorArray orientationPP;
-   part.getPerParticleAttribute("orientationPP", orientationPP);
+   part.getPerParticleAttribute("orientationPP", orientationPP, &status);
+		if (status != MS::kSuccess)
+			MGlobal::displayError("readFromParticle w/ orientationPP --> " + status.errorString());
+
+   arbGeomProperties->readFromParticle(part);
 
    // check if this is a valid sample
    unsigned int particleCount = (unsigned int)samplePos->size();
@@ -539,6 +908,8 @@ MStatus AlembicPointsNode::compute(const MPlug & plug, MDataBlock & dataBlock)
    masses.setLength(particleCount);
    shapeInstId.setLength(particleCount);
    orientationPP.setLength(particleCount);
+
+   arbGeomProperties->readFromAbc(sampleInfo.floorIndex, particleCount);
 
    // if we need to emit new particles, do that now
    if(particleCount > 0)
@@ -624,6 +995,8 @@ MStatus AlembicPointsNode::compute(const MPlug & plug, MDataBlock & dataBlock)
    part.setPerParticleAttribute("massPP", masses);
    part.setPerParticleAttribute("shapeInstanceIdPP", shapeInstId);
    part.setPerParticleAttribute("orientationPP", orientationPP);
+
+   arbGeomProperties->setParticleProperty(part);
 
    hOut.set( dOutput );
 	 dataBlock.setClean( plug );

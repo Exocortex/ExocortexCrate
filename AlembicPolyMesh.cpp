@@ -43,6 +43,8 @@ MStatus AlembicPolyMesh::Save(double time)
       node.getPoints(points);
    }
 
+   std::vector<std::vector<Alembic::Util::int32_t> > allFaceSetVals;		// keep in memory all face sets until the data is written!
+
    // check if we have the global cache option
    const bool globalCache = GetJob()->GetOption(L"exportInGlobalSpace").asInt() > 0;
    Abc::M44f globalXfo;
@@ -218,7 +220,7 @@ MStatus AlembicPolyMesh::Save(double time)
                 continue;
 
              std::string propStr = propName.asChar();
-             if (propStr.substr(0, 8) == "FACESET_")
+			 if (propStr.compare(0, 8, "FACESET_") == 0)
              {
                 ESS_PROFILE_SCOPE("AlembicPolyMesh::Save FaceSets FACESET_ attribute found");
                 MStatus status;
@@ -260,20 +262,29 @@ MStatus AlembicPolyMesh::Save(double time)
           MIntArray indices;
           unsigned int instanceNumber = path.instanceNumber();
           node.getConnectedShaders(instanceNumber, sets, indices);
-          for ( unsigned int i = 0; i < sets.length() ; i++ )
+
+		  // fill in the indices first and reserve some memory for it!
+		  const unsigned int nbSets = sets.length();
+		  {
+			  const unsigned int nbIndices = indices.length();
+			  const unsigned int reserve = nbIndices / nbSets;
+			  for ( unsigned int i = 0; i < nbSets; ++i )
+			  {
+				  allFaceSetVals.push_back( std::vector<Alembic::Util::int32_t>() );
+				  allFaceSetVals.back().reserve(reserve);
+			  }
+			  for (unsigned int j = 0; j < nbIndices; ++j)
+				  allFaceSetVals[indices[j]].push_back(j);
+		  }
+
+		  // ---> old algorithm ran in O(nbIndices*nbSets), the new one is in O(nbIndices+nbSets)
+
+		  // save facesets!
+          for ( unsigned int i = 0; i < nbSets; ++i)
           {
              MFnSet setFn ( sets[i] );
              if (!useInitShadGrp && setFn.name() == "initialShadingGroup")
                continue;
-             std::vector<Alembic::Util::int32_t> faceVals;
-             {
-               ESS_PROFILE_SCOPE("AlembicPolyMesh::Save FaceSets more tempFaceIt iteration");
-               for (unsigned int j = 0; j < indices.length(); ++j)
-               {
-                 if (indices[j] > 0)
-                   faceVals.push_back(j);
-               }
-             }
 
              // ensure the faceSetName is unique
              std::string faceSetName = setFn.name().asChar();
@@ -300,7 +311,7 @@ MStatus AlembicPolyMesh::Save(double time)
 			   else
 				   faceSet = mSchema.createFaceSet(faceSetName);
                AbcG::OFaceSetSchema::Sample faceSetSample;
-               faceSetSample.setFaces(Abc::Int32ArraySample(faceVals));
+               faceSetSample.setFaces(Abc::Int32ArraySample(allFaceSetVals[i]));
                faceSet.getSchema().set(faceSetSample);
              }
 
