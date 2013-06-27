@@ -8,6 +8,7 @@
 #ifdef _MSC_VER
 
 #include <windows.h>
+#include <algorithm>
 
 class HighResolutionTimer
 {
@@ -112,6 +113,8 @@ struct empty_stats_policy
 	static void on_report() { } 
 };
 
+
+
 struct default_stats_policy
 {
 	static stats_map stats;
@@ -138,17 +141,19 @@ struct default_stats_policy
 			<< "average" );
 
 		for (stats_map::iterator i=stats.begin(); i != stats.end(); i++)
-		{
+ 		{
 			std::string sName = i->first;
 			int nCount = i->second.first;
 			double dTotal = i->second.second;
 			double dAvg = dTotal / nCount; 
-			ESS_LOG_WARNING(  
+ 			ESS_LOG_WARNING(  
 				sName << ",\t"
 				<< dTotal << ",\t"
-				<< nCount << ",\t"
+			    << nCount << ",\t"
 				<< dAvg );
-		}
+ 		}
+
+
 		ESS_LOG_WARNING( "PROFILER REPORT <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<" );
 	}
 };
@@ -238,6 +243,16 @@ public:
 };
 #endif 
 
+
+struct sortableStatRecord
+{
+    std::string sName;
+	int nCount;
+	double dTotal;
+	double dAvg;
+    double last;
+};
+
 class logging_stats_policy
 {
 public:
@@ -257,6 +272,10 @@ public:
 	static void on_report() {
 		generateReport();
 	}
+    static bool statSortFunction(const sortableStatRecord& r1, const sortableStatRecord& r2)
+    {
+        return r1.dTotal > r2.dTotal;
+    }
 
 	static void generateReport() {
 		int padding = 14;
@@ -271,21 +290,32 @@ public:
 
 		ESS_LOG_WARNING(strstream.str().c_str());
 
+        std::vector<sortableStatRecord> records;
+        records.reserve(default_stats_policy::stats.size());
+
 		for (stats_map::iterator i=default_stats_policy::stats.begin(); i != default_stats_policy::stats.end(); i++)
 		{
-			std::string sName = i->first;
-			int nCount = i->second.first;
-			double dTotal = i->second.second;
-			double dAvg = dTotal / nCount; 
-			double last = i->second.last;
+            sortableStatRecord rec;
+			rec.sName = i->first;
+			rec.nCount = i->second.first;
+			rec.dTotal = i->second.second;
+			rec.dAvg = rec.dTotal / rec.nCount; 
+			rec.last = i->second.last;
 
+            records.push_back(rec);
+		}
+
+        std::sort(records.begin(), records.end(), statSortFunction);
+
+		for (int i=0; i<records.size(); i++)
+		{
 			std::stringstream strstream2;
 			strstream2 << std::setw(padding + 6) << std::setiosflags( std::ios::left )
-				<< sName << ","<< std::setw(50) << std::setiosflags( std::ios::right )
-				<< dAvg << ","<< std::setw(padding)
-				<< last << ","<< std::setw(padding)
-				<< dTotal << ","<< std::setw(padding)
-				<< nCount << std::setw(padding);
+				<< records[i].sName << ","<< std::setw(50) << std::setiosflags( std::ios::right )
+				<< records[i].dAvg << ","<< std::setw(padding)
+				<< records[i].last << ","<< std::setw(padding)
+				<< records[i].dTotal << ","<< std::setw(padding)
+				<< records[i].nCount << std::setw(padding);
 
 			ESS_LOG_WARNING( strstream2.str().c_str());
 		}
