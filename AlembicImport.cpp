@@ -1526,7 +1526,7 @@ bool createMergeableNode(SceneNodeXSI* appNode, SceneNodeAlembicPtr fileXformNod
          returnNode = SceneNodePtr(new SceneNodeXSI(nodeRef));
       }
 
-      fileNode->dccIdentifier = nodeRef.GetAsText().GetAsciiString();
+      fileXformNode->dccIdentifier = nodeRef.GetAsText().GetAsciiString();
 
       if(usePerModelTimeControls){
          createItemArgs[0] = setupTimeControl(fileXformNode, findTimeControlDccIdentifier(fileXformNode));
@@ -1600,7 +1600,7 @@ bool createMergeableNode(SceneNodeXSI* appNode, SceneNodeAlembicPtr fileXformNod
          returnNode = SceneNodePtr(new SceneNodeXSI(meshObj.GetRef()));
       }
 
-      fileNode->dccIdentifier = nodeRef.GetAsText().GetAsciiString();
+      fileXformNode->dccIdentifier = nodeRef.GetAsText().GetAsciiString();
 
       if(usePerModelTimeControls){
          createItemArgs[0] = setupTimeControl(fileXformNode, findTimeControlDccIdentifier(fileXformNode));
@@ -1699,7 +1699,7 @@ bool createMergeableNode(SceneNodeXSI* appNode, SceneNodeAlembicPtr fileXformNod
          fileShapeNode->setAttached(true);
       }
 
-      fileNode->dccIdentifier = nodeRef.GetAsText().GetAsciiString();
+      fileXformNode->dccIdentifier = nodeRef.GetAsText().GetAsciiString();
 
       if(usePerModelTimeControls){
          createItemArgs[0] = setupTimeControl(fileXformNode, findTimeControlDccIdentifier(fileXformNode));
@@ -1823,7 +1823,7 @@ bool createMergeableNode(SceneNodeXSI* appNode, SceneNodeAlembicPtr fileXformNod
             returnNode = SceneNodePtr(new SceneNodeXSI(nodeRef));
          }
 
-         fileNode->dccIdentifier = nodeRef.GetAsText().GetAsciiString();
+         fileXformNode->dccIdentifier = nodeRef.GetAsText().GetAsciiString();
 
          if(usePerModelTimeControls){
             createItemArgs[0] = setupTimeControl(fileXformNode, findTimeControlDccIdentifier(fileXformNode));
@@ -1915,7 +1915,7 @@ bool createMergeableNode(SceneNodeXSI* appNode, SceneNodeAlembicPtr fileXformNod
             returnNode = SceneNodePtr(new SceneNodeXSI(nodeRef));
          }
 
-         fileNode->dccIdentifier = nodeRef.GetAsText().GetAsciiString();
+         fileXformNode->dccIdentifier = nodeRef.GetAsText().GetAsciiString();
 
          if(usePerModelTimeControls){
             createItemArgs[0] = setupTimeControl(fileXformNode, findTimeControlDccIdentifier(fileXformNode));
@@ -2008,7 +2008,7 @@ bool createMergeableNode(SceneNodeXSI* appNode, SceneNodeAlembicPtr fileXformNod
          returnNode = SceneNodePtr(new SceneNodeXSI(nodeRef));
       }
 
-      fileNode->dccIdentifier = nodeRef.GetAsText().GetAsciiString();
+      fileXformNode->dccIdentifier = nodeRef.GetAsText().GetAsciiString();
 
       if(usePerModelTimeControls){
          createItemArgs[0] = setupTimeControl(fileXformNode, findTimeControlDccIdentifier(fileXformNode));
