@@ -260,7 +260,8 @@ MStatus AlembicImportCommand::doIt(const MArgList & args)
 	}
 
 	// get the new nodes (listed after the old ones)!
-	MSelectionList afterList;MItDependencyNodes nodeIt;
+	MSelectionList afterList;
+	MItDependencyNodes nodeIt;
 	for (; nbBeforeNodes; nodeIt.next(), --nbBeforeNodes);
 
 	for (; !nodeIt.isDone(); nodeIt.next())

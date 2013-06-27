@@ -344,6 +344,7 @@ public:
 
 template<typename IProp> class SingleValue: public MDataBasePropertyManager<MDoubleArray>
 {
+  typedef typename IProp::sample_type sam_type;
 	typedef MDataBasePropertyManager<MDoubleArray> base_type;
 public:
 	SingleValue(const std::string &name, const Abc::ICompoundProperty &cmp): base_type(name, cmp) {}
@@ -354,7 +355,7 @@ public:
 		const IProp prop = IProp(comp, propName);
 		if (!prop.valid() || prop.getNumSamples() <= 0)
 			return;
-		boost::shared_ptr<IProp::sample_type> samples = prop.getValue(floorIndex);
+		std::tr1::shared_ptr<sam_type> samples = prop.getValue(floorIndex);
 
 		const size_t sam_size = samples->size();
 		if (sam_size == 0 || sam_size != 1 && sam_size != particleCount)
@@ -374,6 +375,8 @@ public:
 };
 template<typename IProp> class PairValue: public MDataBasePropertyManager<MVectorArray>
 {
+  typedef typename IProp::sample_type sam_type;
+  typedef typename IProp::sample_type::value_type Ivalue_type;
 	typedef MDataBasePropertyManager<MVectorArray> base_type;
 public:
 	PairValue(const std::string &name, const Abc::ICompoundProperty &cmp): base_type(name, cmp) {}
@@ -385,7 +388,7 @@ public:
 		const IProp prop = IProp(comp, propName);
 		if (!prop.valid() || prop.getNumSamples() <= 0)
 			return;
-		boost::shared_ptr<IProp::sample_type> samples = prop.getValue(floorIndex);
+		std::tr1::shared_ptr<sam_type> samples = prop.getValue(floorIndex);
 
 		const size_t sam_size = samples->size();
 		if (sam_size == 0 || sam_size != 1 && sam_size != particleCount)
@@ -394,20 +397,22 @@ public:
 		valid = true;
 		if (samples->size() == 1)
 		{
-			const IProp::sample_type::value_type &defRead = samples->get()[0];
+			const Ivalue_type &defRead = samples->get()[0];
 			const MVector def(defRead.x, defRead.y, 0.0);
 			for (unsigned int i = 0; i < particleCount; ++i)
 				data[i] = def;
 		}
 		else for (unsigned int i = 0; i < particleCount; ++i)
 		{
-			const IProp::sample_type::value_type &defRead = samples->get()[i];
+			const Ivalue_type &defRead = samples->get()[i];
 			data[i] = MVector(defRead.x, defRead.y, 0.0);
 		}
 	}
 };
 template<typename IProp> class TripleValue: public MDataBasePropertyManager<MVectorArray>
 {
+  typedef typename IProp::sample_type sam_type;
+  typedef typename IProp::sample_type::value_type Ivalue_type;
 	typedef MDataBasePropertyManager<MVectorArray> base_type;
 public:
 	TripleValue(const std::string &name, const Abc::ICompoundProperty &cmp): base_type(name, cmp) {}
@@ -419,7 +424,7 @@ public:
 		const IProp prop = IProp(comp, propName);
 		if (!prop.valid() || prop.getNumSamples() <= 0)
 			return;
-		boost::shared_ptr<IProp::sample_type> samples = prop.getValue(floorIndex);
+		std::tr1::shared_ptr<sam_type> samples = prop.getValue(floorIndex);
 
 		const size_t sam_size = samples->size();
 		if (sam_size == 0 || sam_size != 1 && sam_size != particleCount)
@@ -428,14 +433,14 @@ public:
 		valid = true;
 		if (samples->size() == 1)
 		{
-			const IProp::sample_type::value_type &defRead = samples->get()[0];
+			const Ivalue_type &defRead = samples->get()[0];
 			const MVector def(defRead.x, defRead.y, defRead.z);
 			for (unsigned int i = 0; i < particleCount; ++i)
 				data[i] = def;
 		}
 		else for (unsigned int i = 0; i < particleCount; ++i)
 		{
-			const IProp::sample_type::value_type &defRead = samples->get()[i];
+			const Ivalue_type &defRead = samples->get()[i];
 			data[i] = MVector(defRead.x, defRead.y, defRead.z);
 		}
 	}
