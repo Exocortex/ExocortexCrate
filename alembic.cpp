@@ -31,19 +31,19 @@ SICALLBACK XSILoadPlugin( PluginRegistrar& in_reg )
 	in_reg.PutURL(L"http://www.exocortex.com/alembic");
 
 	// sync the softimage plugin version with the Crate version ---------------
-	//		soft_MAJOR <-- crate_MAJOR
-	//		soft_MINOR <-- combination of crate_MINOR and crate_BUILD 
-	//		(e.g. Crate version 1.1.134 resolves to Soft plugin version 1.1134)
+	//		soft_MAJOR <-- combination of crate_MAJOR and crate_MINOR
+	//		soft_MINOR <-- crate_BUILD 
+	//		(e.g. Crate version 1.1.134 resolves to Soft plugin version 11.134)
 	long digits = 1;
 	long pten = 10;
-	while(pten <= crate_BUILD_VERSION)
+	while(pten <= crate_MINOR_VERSION)
 	{
 		pten *= 10;
 		digits ++;
 	}
-	long soft_MINOR = PLUGIN_MINOR_VERSION * (long)(pow(10.0, digits) ) + crate_BUILD_VERSION;
+	long soft_MAJOR = PLUGIN_MAJOR_VERSION * (long)(pow(10.0, digits) ) + PLUGIN_MINOR_VERSION;
 
-	in_reg.PutVersion(PLUGIN_MAJOR_VERSION, soft_MINOR);
+	in_reg.PutVersion(soft_MAJOR, crate_BUILD_VERSION);
 
 
 	//if( HasAlembicWriterLicense() ) {
