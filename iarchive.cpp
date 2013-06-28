@@ -126,12 +126,32 @@ static PyObject * iArchive_getSampleTimes(PyObject * self, PyObject * args)
    ALEMBIC_PYOBJECT_CATCH_STATEMENT
 }
 
+static PyObject * iArchive_getCoreType(PyObject * self, PyObject * args)
+{
+   ALEMBIC_TRY_STATEMENT
+	   iArchive * archive = (iArchive *)self;
+	   switch(archive->oType)
+	   {
+	   case AbcF::IFactory::kHDF5:
+		   return Py_BuildValue("s", "HDF5");
+
+	   case AbcF::IFactory::kOgawa:
+		   return Py_BuildValue("s", "Ogawa");
+
+	   case AbcF::IFactory::kUnknown:
+	   default:
+		   return Py_BuildValue("s", "Unknown");
+	   }
+   ALEMBIC_PYOBJECT_CATCH_STATEMENT
+}
+
 static PyMethodDef iArchive_methods[] = {
    {"getFileName", (PyCFunction)iArchive_getFileName, METH_NOARGS, "Returns the filename this archive is linked to."},
    {"getVersion", (PyCFunction)iArchive_getVersion, METH_NOARGS, "Returns the version of the archive loaded."},
    {"getIdentifiers", (PyCFunction)iArchive_getIdentifiers, METH_NOARGS, "Returns a flat string list of all of the identifiers available."},
    {"getObject", (PyCFunction)iArchive_getObject, METH_VARARGS, "Returns an iObject for the provided identifier string."},
    {"getSampleTimes", (PyCFunction)iArchive_getSampleTimes, METH_NOARGS, "Returns a two dimensional array of all TimeSamplings available in this file."},
+   {"getCoreType", (PyCFunction)iArchive_getCoreType, METH_NOARGS, "Returns the core used by the archive (HDF5, Ogawa, or Unknown)."},
    {NULL, NULL}
 };
 
@@ -233,7 +253,8 @@ PyObject * iArchive_new(PyObject * self, PyObject * args)
    iArchive * object = PyObject_NEW(iArchive, &iArchive_Type);
    if (object != NULL)
    {
-      object->mArchive = new Abc::IArchive( Alembic::AbcCoreHDF5::ReadArchive(), fileName);
+	   AbcF::IFactory iFactory;
+      object->mArchive = new Abc::IArchive( iFactory.getArchive( fileName, object->oType ));
       setIArchiveOpened(fileName);
       gNbIArchives++;
    }

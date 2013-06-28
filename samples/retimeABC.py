@@ -4,14 +4,22 @@ import argparse
 
 # ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ----
 def create_new_TS(tsampling, scale, offset):
-   new_ts = [[0.0]]
-   for sampling in tsampling[1:]:
-      sub_ts = []
-      K = sampling[0] * (1.0 - scale) + offset
-      for s in sampling:
-         sub_ts.append(s*scale + K)
-      new_ts.append(sub_ts)
-   return new_ts
+   new_tss = []
+   for sampling in tsampling:
+      ts_type = sampling.getType()
+      samples = sampling.getTimeSamples()
+
+      if ts_type == "uniform":
+         samples = samples[0] * offset
+      else:
+         tmp_ts = []
+         K = samples[0] * (1.0 - scale) + offset
+         for s in samples:
+            tmp_ts.append( s*scale + K )
+         samples = tmp_ts
+
+      new_tss.append( alembic.createTimeSampling(ts_type, samples) )
+   return new_tss
 
 # ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ----
 #copy directly a property and its corresponding values
@@ -26,12 +34,21 @@ def copy_compound_property(cprop, outCprop):
    for prop_name in cprop.getPropertyNames():
       if prop_name == ".metadata":
          continue                                                    # .metadata cause some problem
-      sub_prop = cprop.getProperty(prop_name)
-      out_prop = outCprop.getProperty(prop_name, sub_prop.getType())
-      if sub_prop.isCompound():
-         copy_compound_property(sub_prop, out_prop)
+
+      if prop.isCompound():
+         out_prop = outCprop.getProperty(prop_name, prop.getType())
+         copy_compound_property(prop, out_prop, out_data)
       else:
-         copy_property(sub_prop, out_prop)
+         curTS = prop.getSampleTimes()
+
+         out_prop = None
+         if len(curTS.getTimeSamples()) == 0:
+            out_prop = outCprop.getProperty(prop_name, prop.getType())
+         else:
+            tsSampling = out_data.createTimeSampling([curTS])
+            out_prop = outCprop.getProperty(prop_name, prop.getType(), tsSampling[0])
+
+         copy_property(prop, out_prop)
 
 # ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ----
 # going through each object
@@ -39,17 +56,35 @@ def copy_objects(in_data, out_data):
    for identifier in in_data.getIdentifiers():
       obj = in_data.getObject(identifier)
       obj_typ = obj.getType()
-      
-      out = out_data.createObject(obj_typ, identifier, obj.getTsIndex())
+
+      curTS = obj.getSampleTimes() 
+      out = None
+      if len(curTS.getTimeSamples()) == 0:
+         out = out_data.createObject(obj_typ, identifier)
+      else:
+         tsSampling = out_data.createTimeSampling([curTS])
+         out = out_data.createObject(obj_typ, identifier, tsSampling[0])      
+
       out.setMetaData(obj.getMetaData())
       for prop_name in obj.getPropertyNames():
          if prop_name == ".metadata":
-            continue                                                 # .metadata cause some problem
+            continue                                              # .metadata cause some problem
+
          prop = obj.getProperty(prop_name)
-         out_prop = out.getProperty(prop_name, prop.getType())
+
          if prop.isCompound():
-            copy_compound_property(prop, out_prop)
+            out_prop = out.getProperty(prop_name, prop.getType())
+            copy_compound_property(prop, out_prop, out_data)
          else:
+            curTS = prop.getSampleTimes()
+
+            out_prop = None
+            if len(curTS.getTimeSamples()) == 0:
+               out_prop = out.getProperty(prop_name, prop.getType())
+            else:
+               tsSampling = out_data.createTimeSampling([curTS])
+               out_prop = out.getProperty(prop_name, prop.getType(), tsSampling[0])
+
             copy_property(prop, out_prop)
 
 # ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ----
