@@ -51,5 +51,25 @@ void saveIndexedUVs( AbcG::OPolyMeshSchema& meshSchema, AbcG::OPolyMeshSchema::S
 
 AbcG::IV2fGeomParam getMeshUvParam(int uvI, AbcG::IPolyMesh objMesh, AbcG::ISubD objSubD);
 
+struct SampleInfo;
+bool frameHasDynamicTopology(AbcG::IPolyMeshSchema::Sample* const polyMeshSample, SampleInfo* const sampleInfo, Abc::IInt32ArrayProperty* const faceIndicesProperty);
+
+class dynamicTopoVelocityCalc
+{
+
+	std::vector<Abc::V3f> posVec;
+	std::vector<AbcA::int32_t> faceIndicesVec;
+    double prevTime;
+    bool bInitialized;
+public:
+
+    dynamicTopoVelocityCalc(): bInitialized(false)
+    {
+       
+    }
+
+    void calcVelocities(const std::vector<Abc::V3f>& nextPosVec, const std::vector<AbcA::int32_t>& nextFaceIndicesVec, std::vector<Abc::V3f>& velocities, double time);
+};
+
 
 #endif // __MESH_UTILITIES_H

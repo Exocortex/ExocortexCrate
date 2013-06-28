@@ -379,17 +379,33 @@ int validateAlembicMeshTopo(std::vector<Alembic::AbcCoreAbstract::ALEMBIC_VERSIO
 
 bool getIndexAndValues( Alembic::Abc::Int32ArraySamplePtr faceIndices, Alembic::AbcGeom::IV2fGeomParam& param,
 					   AbcA::index_t sampleIndex, std::vector<Imath::V2f>& outputValues, std::vector<AbcA::uint32_t>& outputIndices ) {
-
      ESS_PROFILE_FUNC();
-	if( param.getIndexProperty().valid() && param.getValueProperty().valid() ) {		
+	if( param.getIndexProperty().valid() && param.getValueProperty().valid() ) {	
+        bool bOutOfBoundsIndices = false;
+   
 		Alembic::Abc::V2fArraySamplePtr valueSampler = param.getValueProperty().getValue( sampleIndex );
 		for( int i = 0; i < valueSampler->size(); i ++ ) {
 			outputValues.push_back( (*valueSampler)[i] );
 		}
 		Alembic::Abc::UInt32ArraySamplePtr indexSampler = param.getIndexProperty().getValue( sampleIndex );
 		for( int i = 0; i < indexSampler->size(); i ++ ) {
-			outputIndices.push_back( (*indexSampler)[i] );
+           if( (*indexSampler)[i] >= outputValues.size() ){
+               outputIndices.push_back( outputValues.size()-1 );
+               bOutOfBoundsIndices = true;
+           }
+           else if( (*indexSampler)[i] < 0 ){
+               outputIndices.push_back( 0 );
+               bOutOfBoundsIndices = true;
+           }
+           else{
+               outputIndices.push_back( (*indexSampler)[i] );
+           }
 		}
+
+        if(bOutOfBoundsIndices){
+           ESS_LOG_WARNING("Out of bounds indices detected.");
+        }
+
 		return true;
 	}
 	else if( param.getValueProperty().valid() ) {
@@ -419,15 +435,33 @@ bool getIndexAndValues( Alembic::Abc::Int32ArraySamplePtr faceIndices, Alembic::
 bool getIndexAndValues( Alembic::Abc::Int32ArraySamplePtr faceIndices, Alembic::AbcGeom::IN3fGeomParam& param,
 					   AbcA::index_t sampleIndex, std::vector<Imath::V3f>& outputValues, std::vector<AbcA::uint32_t>& outputIndices ) {
      ESS_PROFILE_FUNC();
-	if( param.getIndexProperty().valid() && param.getValueProperty().valid() ) {		
+	if( param.getIndexProperty().valid() && param.getValueProperty().valid() ) {	
+
+       bool bOutOfBoundsIndices = false;
+
 		Alembic::Abc::N3fArraySamplePtr valueSampler = param.getValueProperty().getValue( sampleIndex );
 		for( int i = 0; i < valueSampler->size(); i ++ ) {
 			outputValues.push_back( (*valueSampler)[i] );
 		}
 		Alembic::Abc::UInt32ArraySamplePtr indexSampler = param.getIndexProperty().getValue( sampleIndex );
 		for( int i = 0; i < indexSampler->size(); i ++ ) {
-			outputIndices.push_back( (*indexSampler)[i] );
+           if( (*indexSampler)[i] >= outputValues.size() ){
+               outputIndices.push_back( outputValues.size()-1 );
+               bOutOfBoundsIndices = true;
+           }
+           else if( (*indexSampler)[i] < 0 ){
+               outputIndices.push_back( 0 );
+               bOutOfBoundsIndices = true;
+           }
+           else{
+               outputIndices.push_back( (*indexSampler)[i] );
+           }
 		}
+
+        if(bOutOfBoundsIndices){
+           ESS_LOG_WARNING("Out of bounds indices detected.");
+        }
+
 		return true;
 	}
 	else if( param.getValueProperty().valid() ) {
@@ -535,4 +569,76 @@ AbcG::IV2fGeomParam getMeshUvParam(int uvI, AbcG::IPolyMesh objMesh, AbcG::ISubD
    }
 
    return AbcG::IV2fGeomParam();
+}
+
+bool frameHasDynamicTopology(AbcG::IPolyMeshSchema::Sample* const polyMeshSample, SampleInfo* const sampleInfo, Abc::IInt32ArrayProperty* const faceIndicesProperty)
+{
+   ESS_PROFILE_FUNC();
+
+   bool hasDynamicTopo = false;
+   if(sampleInfo->alpha != 0.0f || sampleInfo->alpha != 1.0f)
+   {
+      //hasDynamicTopo = options.pObjectCache->isMeshTopoDynamic;//isAlembicMeshTopoDynamic( options.pIObj );
+
+      //Abc::IInt32ArrayProperty faceIndicesProperty = objMesh.getSchema().getFaceIndicesProperty();
+
+      Abc::Int32ArraySamplePtr arraySampleFloor = polyMeshSample->getFaceIndices();
+      Abc::int32_t const* pMeshFaceIndicesFloor = arraySampleFloor->get();
+
+      //read from just ceil indices sample, not entire mesh sample (which would be much slower)
+      Abc::Int32ArraySamplePtr arraySampleCeil;
+      faceIndicesProperty->get(arraySampleCeil, sampleInfo->ceilIndex);
+      Abc::int32_t const* pMeshFaceIndicesCeil = arraySampleCeil->get();
+
+      if(arraySampleFloor->size() == arraySampleCeil->size()){
+         size_t memSize = sizeof(Abc::int32_t) * arraySampleFloor->size();
+         if(memcmp(pMeshFaceIndicesFloor, pMeshFaceIndicesCeil, memSize) == 0){
+            hasDynamicTopo = false;
+         }
+         else{
+            hasDynamicTopo = true;
+         }
+      }
+      else{
+         hasDynamicTopo = true;
+      }
+   }
+   return hasDynamicTopo;
+}
+
+void dynamicTopoVelocityCalc::calcVelocities(const std::vector<Abc::V3f>& nextPosVec, const std::vector<AbcA::int32_t>& nextFaceIndicesVec, std::vector<Abc::V3f>& velocities, double time)
+{
+    if(bInitialized){
+
+       bool bTopoDataIsEqual = false;
+       
+        //if topology data is equal, calculate the velocitiy (replace the default one or create one of all zeros if it is not initialized
+       if( faceIndicesVec.size() == nextFaceIndicesVec.size() ){
+         size_t memSize = sizeof(Abc::int32_t) * nextFaceIndicesVec.size();
+         if(memcmp(&faceIndicesVec[0], &nextFaceIndicesVec[0], memSize) == 0){
+            bTopoDataIsEqual = true;
+         }
+       }
+
+       if(bTopoDataIsEqual){
+          if(posVec.size() != nextPosVec.size()){
+            ESS_LOG_WARNING("calcVelocities - posVec.size() != nextPosVec.size()");
+          }
+          if(nextPosVec.size() != velocities.size()){
+            ESS_LOG_WARNING("calcVelocities - nextPosVec.size() != velocities.size()");
+          }
+       }
+
+       if(bTopoDataIsEqual && posVec.size() == nextPosVec.size() && nextPosVec.size() == velocities.size()){
+          for(int i=0; i<nextPosVec.size(); i++){
+             velocities[i] = nextPosVec[i] - posVec[i] / (float)(time-prevTime);
+          }
+       }
+    }
+
+    //update the previous values
+    posVec = nextPosVec;
+    faceIndicesVec = nextFaceIndicesVec;
+    prevTime = time;
+    bInitialized = true;
 }

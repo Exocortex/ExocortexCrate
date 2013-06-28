@@ -39,6 +39,7 @@ public:
    bool stripMayaNamespaces;
    bool importCurvesAsStrands;
    bool useMultiFile;
+   bool enableSubD;
    XSI_XformTypes::xte xformTypes;
 
    SearchReplace::ReplacePtr replacer;
@@ -68,7 +69,8 @@ public:
       stripMayaNamespaces(false),
       importCurvesAsStrands(false),
       replaceColonsWithUnderscores(false),
-	  useMultiFile(false)
+	  useMultiFile(false),
+      enableSubD(true)
    {}
 
    bool parse(const std::string& jobString);
@@ -83,7 +85,7 @@ SceneNodeAlembicPtr buildAlembicSceneGraph(AbcArchiveCache *pArchiveCache, AbcOb
 
 // progress bar needs to be initialized before these functions are called!
 bool ImportSceneFile(SceneNodeAlembicPtr fileRoot, SceneNodeAppPtr appRoot, const IJobStringParser& jobParams, CommonProgressBar *pBar = 0, std::list<SceneNodeAppPtr> *newNodes = 0);
-bool AttachSceneFile(SceneNodeAlembicPtr fileRoot, SceneNodeAppPtr appRoot, const IJobStringParser& jobParams, CommonProgressBar *pBar = 0);
+bool AttachSceneFile(SceneNodeAlembicPtr fileRoot, SceneNodeAppPtr appRoot, const IJobStringParser& jobParams, CommonProgressBar *pBar = 0, std::list<SceneNodeAppPtr> *newNodes = 0);
 bool MergeSceneFile(SceneNodeAlembicPtr fileRoot, SceneNodeAppPtr appRoot, const IJobStringParser& jobParams, CommonProgressBar *pBar = 0, std::list<SceneNodeAppPtr> *newNodes = 0);
 
 

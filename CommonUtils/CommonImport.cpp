@@ -144,13 +144,15 @@ bool IJobStringParser::parse(const std::string& jobString)
 		{
 			replace_str = valuePair[1];
 		}
-
 		// support multiFile
 		else if (boost::iequals(valuePair[0], "multi"))
 		{
 			useMultiFile = parseBool(valuePair[1]);
 		}
-
+        else if(boost::iequals(valuePair[0], "enableSubD"))
+        {
+            enableSubD = parseBool(valuePair[1]);
+        }
 		else
 		{
 			extraParameters[valuePair[0]] = valuePair[1];
@@ -181,7 +183,7 @@ std::string IJobStringParser::buildJobString()
    stream<<";importVisibilityControllers="<<importVisibilityControllers<<";importStandinProperties="<<importStandinProperties;
    stream<<";importBoundingBoxes="<<importBoundingBoxes<<";attachToExisting="<<attachToExisting<<";skipUnattachedNodes="<<skipUnattachedNodes;
    stream<<";failOnUnsupported="<<failOnUnsupported<<";enableImportRootSelection="<<enableImportRootSelection<<";stripMayaNamespaces="<<stripMayaNamespaces;
-   stream<<";importCurvesAsStrands="<<importCurvesAsStrands<<"useMultifile=;"<<useMultiFile<<";defaultXformNode=";
+   stream<<";importCurvesAsStrands="<<importCurvesAsStrands<<";enableSubD="<<enableSubD<<";useMultifile="<<useMultiFile<<";defaultXformNode=";
 
    if( xformTypes == XSI_XformTypes::XMODEL){
       stream<<"model";
@@ -501,7 +503,7 @@ struct AttachStackElement
 };
 
 
-bool AttachSceneFile(SceneNodeAlembicPtr fileRoot, SceneNodeAppPtr appRoot, const IJobStringParser& jobParams, CommonProgressBar *pbar)
+bool AttachSceneFile(SceneNodeAlembicPtr fileRoot, SceneNodeAppPtr appRoot, const IJobStringParser& jobParams, CommonProgressBar *pbar, std::list<SceneNodeAppPtr> *newNodes)
 {
    ESS_PROFILE_FUNC();
 
@@ -552,7 +554,7 @@ bool AttachSceneFile(SceneNodeAlembicPtr fileRoot, SceneNodeAppPtr appRoot, cons
       if(fileNodeIt != childMapPtr->end()){//we have a match
          SceneNodeAlembicPtr fileNode = fileNodeIt->second;
 
-         ESS_LOG_WARNING("nodeMatch: "<<appNodeName<<" = "<<fileNode->name);
+         //ESS_LOG_WARNING("nodeMatch: "<<appNodeName<<" = "<<fileNode->name);
 
          if(fileNode->isAttached()){
             ESS_LOG_ERROR("More than one match for node "<<fileNode->name);
@@ -567,6 +569,10 @@ bool AttachSceneFile(SceneNodeAlembicPtr fileRoot, SceneNodeAppPtr appRoot, cons
                ESS_LOG_ERROR("replaceData operation failed on node "<<appNodeName);
                if(pbar) pbar->stop();
                return false;
+            }
+
+            if(newNodes){
+               newNodes->push_back(currAppNode);
             }
 
             childMapPtr = buildChildMap(fileNode);
