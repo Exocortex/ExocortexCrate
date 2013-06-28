@@ -296,8 +296,9 @@ XSI_XformTypes::xte getXformType(AbcG::IXform& obj)
 
 }
 
-XSI::CRef findTimeControlDccIdentifier(SceneNodeAlembicPtr fileRoot)
+XSI::CRef findTimeControlDccIdentifier(SceneNodeAlembicPtr fileRoot, XSI::CRef importRoot)
 {
+   XSI::CRef ref;
 
    SceneNodeAlembic* currNode = fileRoot.get();
 
@@ -311,14 +312,19 @@ XSI::CRef findTimeControlDccIdentifier(SceneNodeAlembicPtr fileRoot)
          xte = getXformType(xform);
       }
       
-      if( currNode->parent == NULL || (currNode->bIsDirectChild && xte == XSI_XformTypes::XMODEL) ){
+      if( currNode->parent == NULL ){
+         ref = importRoot;
+         break;
+      }
+      if (currNode->bIsDirectChild && xte == XSI_XformTypes::XMODEL){
+         ref.Set(currNode->dccIdentifier.c_str());
          break;
       }
 
       currNode = (SceneNodeAlembic*) currNode->parent;
    }
 
-   XSI::CRef ref;
-   ref.Set(currNode->dccIdentifier.c_str());
+   
+   
    return ref;
 }
