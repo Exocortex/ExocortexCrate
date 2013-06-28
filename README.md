@@ -22,7 +22,7 @@ The Libraries folder contains SDKs and other large binaries not suitable
 for inclusion in GIT repositories.  We currently distribute it manually.  The
 most recent version can be found here:
 
-http://www.exocortex.com/files/Libraries.20120601.01.7z
+http://ftp.exocortex.com/~bhouston/dev/Libraries.20130522.01.7z
 
 In order to build on Windows platforms, Visual Studio 2008 (with x64 tools) is
 required as is CMake.  After installing Visual Studio 2008 and CMake, you can then
