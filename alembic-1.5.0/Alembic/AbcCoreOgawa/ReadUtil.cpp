@@ -1440,7 +1440,7 @@ ReadTimeSamplesAndMax( Ogawa::IDataPtr iData,
     std::size_t pos = 0;
     while ( pos < buf.size() )
     {
-        Util::uint32_t maxSample = *( (uint32_t *)( &buf[pos] ) );
+      Alembic::Util::uint32_t maxSample = *( (Alembic::Util::uint32_t *)( &buf[pos] ) );
         pos += 4;
 
         oMaxSamples.push_back( maxSample );
@@ -1448,7 +1448,7 @@ ReadTimeSamplesAndMax( Ogawa::IDataPtr iData,
         chrono_t tpc = *( ( chrono_t * )( &buf[pos] ) );
         pos += sizeof( chrono_t );
 
-        Util::uint32_t numSamples = *( (uint32_t *)( &buf[pos] ) );
+        Alembic::Util::uint32_t numSamples = *( (Alembic::Util::uint32_t *)( &buf[pos] ) );
         pos += 4;
 
         std::vector< chrono_t > sampleTimes( numSamples );
@@ -1495,13 +1495,13 @@ ReadObjectHeaders( Ogawa::IGroupPtr iGroup,
     std::size_t pos = 0;
     while ( pos < buf.size() )
     {
-        Util::uint32_t nameSize = *( (uint32_t *)( &buf[pos] ) );
+        Alembic::Util::uint32_t nameSize = *( (Alembic::Util::uint32_t *)( &buf[pos] ) );
         pos += 4;
 
         std::string name( &buf[pos], nameSize );
         pos += nameSize;
 
-        Util::uint8_t metaDataIndex = buf[pos++];
+        Alembic::Util::uint8_t metaDataIndex = buf[pos++];
 
         ObjectHeaderPtr objPtr( new AbcA::ObjectHeader() );
         objPtr->setName( name );
@@ -1509,7 +1509,7 @@ ReadObjectHeaders( Ogawa::IGroupPtr iGroup,
 
         if ( metaDataIndex == 0xff )
         {
-            Util::uint32_t metaDataSize = *( (Util::uint32_t *)( &buf[pos] ) );
+            Alembic::Util::uint32_t metaDataSize = *( (Alembic::Util::uint32_t *)( &buf[pos] ) );
             pos += 4;
 
             std::string metaData( &buf[pos], metaDataSize );
@@ -1527,11 +1527,11 @@ ReadObjectHeaders( Ogawa::IGroupPtr iGroup,
 }
 
 //-*****************************************************************************
-uint32_t GetUint32WithHint(const std::vector< char > & iBuf,
+Alembic::Util::uint32_t GetUint32WithHint(const std::vector< char > & iBuf,
                            Util::uint32_t iSizeHint,
                            std::size_t & ioPos)
 {
-    Util::uint32_t retVal = 0;
+    Alembic::Util::uint32_t retVal = 0;
 
     if ( iSizeHint == 0 )
     {
