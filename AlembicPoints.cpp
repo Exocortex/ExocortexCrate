@@ -355,7 +355,11 @@ public:
 		const IProp prop = IProp(comp, propName);
 		if (!prop.valid() || prop.getNumSamples() <= 0)
 			return;
+#ifdef _MSC_VER
+		boost::shared_ptr<sam_type> samples = prop.getValue(floorIndex);
+#else
 		std::tr1::shared_ptr<sam_type> samples = prop.getValue(floorIndex);
+#endif
 
 		const size_t sam_size = samples->size();
 		if (sam_size == 0 || sam_size != 1 && sam_size != particleCount)
@@ -388,7 +392,11 @@ public:
 		const IProp prop = IProp(comp, propName);
 		if (!prop.valid() || prop.getNumSamples() <= 0)
 			return;
+#ifdef _MSC_VER
+		boost::shared_ptr<sam_type> samples = prop.getValue(floorIndex);
+#else
 		std::tr1::shared_ptr<sam_type> samples = prop.getValue(floorIndex);
+#endif
 
 		const size_t sam_size = samples->size();
 		if (sam_size == 0 || sam_size != 1 && sam_size != particleCount)
@@ -424,7 +432,11 @@ public:
 		const IProp prop = IProp(comp, propName);
 		if (!prop.valid() || prop.getNumSamples() <= 0)
 			return;
+#ifdef _MSC_VER
+		boost::shared_ptr<sam_type> samples = prop.getValue(floorIndex);
+#else
 		std::tr1::shared_ptr<sam_type> samples = prop.getValue(floorIndex);
+#endif
 
 		const size_t sam_size = samples->size();
 		if (sam_size == 0 || sam_size != 1 && sam_size != particleCount)

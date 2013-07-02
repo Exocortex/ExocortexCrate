@@ -130,9 +130,9 @@ MStatus AlembicXform::Save(double time)
         ESS_PROFILE_SCOPE("AlembicXform::Save matrix");
 
         // decide if we need to project to local
-        if(IsParentedToRoot())
+        if(IsParentedToRoot() || GetJob()->GetOption(L"flattenHierarchy").asInt() > 0)
            matrix = path.inclusiveMatrix();
-        else
+		else
            matrix.setToProduct(path.inclusiveMatrix(), path.exclusiveMatrixInverse());
 
         matrix.get(abcMatrix.x);
