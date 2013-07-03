@@ -82,6 +82,7 @@ ESS_CALLBACK_START(alembic_get_nodes_Execute, CRef&)
       }
    }
 
+
    CValueArray strVals;
    for(std::set<CRef>::iterator it=refs.begin(); it != refs.end(); it++)
    {
@@ -170,46 +171,12 @@ ESS_CALLBACK_START(alembic_replace_path_Execute, CRef&)
   // ESS_LOG_WARNING("oldPath: "<<oldPath.GetAsciiString());
   // ESS_LOG_WARNING("newPath: "<<newPath.GetAsciiString());
 
-   CString search = L"Cubes_1000.*.*.alembic_*,Cubes_1000.*.*.ABC_*";
-   search += L",Cubes_1000.*.alembic_*,Cubes_1000.*.ABC_*";
-   search += L",Cubes_1000.*.cls.Texture_Coordinates_AUTO.*.alembic*";
-   
-   CComAPIHandler collection;
-   collection.CreateInstance(L"XSI.Collection");
-   collection.PutProperty(L"Unique",true);
-   CValue returnVal;
-   collection.Call(L"SetAsText",returnVal,search);
-   CRefArray refs;//an array of refs to all alembic operators and ice nodes
-   for(LONG i=0;i<(LONG)collection.GetProperty(L"Count");i++)
-   {
-      CValueArray apiArgs;
-      apiArgs.Add(i);
-      collection.Invoke( L"Item", CComAPIHandler::PropertyGet, returnVal, apiArgs );
-      CRef ref = returnVal;
-      if(!ref.IsValid())
-         continue;
-      ICETree tree(ref);
-      if(tree.IsValid())
-      {
-         CRefArray compounds = tree.GetCompoundNodes();
-         for(LONG j=0;j<compounds.GetCount();j++)
-         {
-            ICECompoundNode compound(compounds[j]);
-            if(compound.GetFullName() == tree.GetFullName())
-               continue;
-            if(compound.GetName().GetSubString(0,8).IsEqualNoCase(L"abc load"))
-               refs.Add(compound.GetRef());
-         }
-         continue;
-      }
-      CustomOperator op(ref);
-      if(op.IsValid())
-      {
-         refs.Add(ref);
-         continue;
-      }
-   }
-
+   //custom operators      (from documentation)
+   CRefArray refs = Application().FindObjects("{72936430-9B0C-4167-8CA7-C30FC2188BB9}"); 
+   //compound ICE nodes    (custom only?     found Class IDs using View -> Scripting -> SDK Explorer)
+   refs += Application().FindObjects("{D33B77CB-8926-463D-B08B-8769A968E690}"); 
+   //ICE nodes             (custom only?     found Class IDs using View -> Scripting -> SDK Explorer)
+   refs += Application().FindObjects("{CFDBEE9F-16A4-4448-B1ED-4D0275026771}"); 
 
 
    int nReplaceCount = 0;
