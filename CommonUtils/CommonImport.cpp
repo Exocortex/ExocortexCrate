@@ -256,8 +256,9 @@ struct AlembicISceneBuildElement
 {
    AbcObjectCache *pObjectCache;
    SceneNodePtr parentNode;
+   bool bIsDirectChild;
 
-   AlembicISceneBuildElement(AbcObjectCache *pMyObjectCache, SceneNodePtr node):pObjectCache(pMyObjectCache), parentNode(node)
+   AlembicISceneBuildElement(AbcObjectCache *pMyObjectCache, SceneNodePtr node, bool directChild=false):pObjectCache(pMyObjectCache), parentNode(node), bIsDirectChild(directChild)
    {}
 };
 
@@ -289,7 +290,7 @@ SceneNodeAlembicPtr buildAlembicSceneGraph(AbcArchiveCache *pArchiveCache, AbcOb
       //we should change this to explicity check which node types are not support (e.g. facesets), so that we can still give out warnings
       if( childCat == NodeCategory::UNSUPPORTED ) continue;// skip over unsupported types
 
-      sceneStack.push_back(AlembicISceneBuildElement(pChildObjectCache, sceneRoot));
+      sceneStack.push_back(AlembicISceneBuildElement(pChildObjectCache, sceneRoot, true));
    }  
 
    //sceneStack.push_back(AlembicISceneBuildElement(pRootObjectCache, NULL));
@@ -328,6 +329,7 @@ SceneNodeAlembicPtr buildAlembicSceneGraph(AbcArchiveCache *pArchiveCache, AbcOb
       newNode->dccIdentifier = iObj.getFullName();
       newNode->type = getNodeType(iObj);
       newNode->selected = false;
+      newNode->bIsDirectChild = sElement.bIsDirectChild;
 
       //check if this newNode is actually an ETRANFORM
       if(newNode->type == SceneNode::ITRANSFORM){

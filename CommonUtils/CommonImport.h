@@ -40,6 +40,7 @@ public:
    bool importCurvesAsStrands;
    bool useMultiFile;
    bool enableSubD;
+
    XSI_XformTypes::xte xformTypes;
 
    SearchReplace::ReplacePtr replacer;
