@@ -386,7 +386,7 @@ int ExocortexAlembicStaticInterface::ExocortexGetLicenseStatus()
 bool parseBool(std::string value){
 	//std::istringstream(valuePair[1]) >> bExportSelected;
 
-	if( value.find("true") != std::string::npos || value.find("1") != std::string::npos ){
+    if( boost::iequals(value, "true") || boost::iequals(value, "1") ){
 		return true;
 	}
 	else{
@@ -443,6 +443,10 @@ int ExocortexAlembicStaticInterface_ExocortexAlembicImportJobs( CONST_2013 MCHAR
                continue;
             }
 			boost::split(valuePair, tokens[j], boost::is_any_of("="));
+
+            boost::trim(valuePair[0]);
+            boost::trim(valuePair[1]);
+
 			if(valuePair.size() != 2){
 				ESS_LOG_WARNING("Skipping invalid token: "<<tokens[j]);
 				continue;
