@@ -368,16 +368,23 @@ ESS_CALLBACK_START(alembic_path_manager_Execute, CRef&)
       return CStatus::OK;
    }
 
+
+   CustomProperty prop;
+   CValue inspectResult;
+   LONG pathCount = 0;
+   LONG identifierCount = 0;
+   {
+   ESS_PROFILE_SCOPE("alembic_path_manager buildUI");
+
    // awesome - construct the custom property
-   CustomProperty prop = (CustomProperty) Application().GetActiveSceneRoot().AddProperty(L"CustomProperty");
+   prop = (CustomProperty) Application().GetActiveSceneRoot().AddProperty(L"CustomProperty");
    prop.PutName(L"options");
    PPGLayout layout = prop.GetPPGLayout();
    layout.Clear();
 
    // add the search and replace stuff
 	Parameter oParam;
-   LONG pathCount = 0;
-   LONG identifierCount = 0;
+
    if(pathMap.size() > 0)
    {
       prop.AddParameter(L"path_search",CValue::siString,siPersistable,L"",L"",L"",L"",L"",L"",L"",oParam);
@@ -453,17 +460,20 @@ ESS_CALLBACK_START(alembic_path_manager_Execute, CRef&)
    layout.PutLogic(logic);
 
    CValueArray inspectArgs(5);
-   CValue inspectResult;
+   
    inspectArgs[0] = prop.GetFullName();
    inspectArgs[1] = L"";
    inspectArgs[2] = L"Path Manager";
    inspectArgs[3] = siModal;
    inspectArgs[4] = false;
    Application().ExecuteCommand(L"InspectObj",inspectArgs,inspectResult);
+
+   }
    
    // prepare for deletion
    if(!inspectResult)
    {
+      ESS_PROFILE_SCOPE("alembic_path_manager inspectResult");
       // read all of the values
       pathCount = identifierCount = 0;
       for(stringMapIt it = pathMap.begin(); it != pathMap.end(); it++)
