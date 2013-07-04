@@ -11,7 +11,7 @@
 bool parseBool(std::string value){
 	//std::istringstream(valuePair[1]) >> bExportSelected;
 
-	if( value.find("true") != std::string::npos || value.find("1") != std::string::npos ){
+    if( boost::iequals(value, "true") || boost::iequals(value, "1") ){
 		return true;
 	}
 	else{
@@ -47,6 +47,10 @@ bool IJobStringParser::parse(const std::string& jobString)
 	{
 		std::vector<std::string> valuePair;
 		boost::split(valuePair, tokens[j], boost::is_any_of("="));
+
+        boost::trim(valuePair[0]);
+        boost::trim(valuePair[1]);
+
 		if(valuePair.size() != 2)
 		{
 			ESS_LOG_WARNING("Skipping invalid token: "<<tokens[j]);
@@ -134,6 +138,21 @@ bool IJobStringParser::parse(const std::string& jobString)
               xformTypes = XSI_XformTypes::XNULL;
            }
 			
+		}  
+ 		else if(boost::iequals(valuePair[0], "timeControlQuantity"))
+		{
+           if(boost::iequals(valuePair[1], "NONE")){
+              timeControl = timeControlOptions::NONE;
+           }
+           else if(boost::iequals(valuePair[1], "SCENEROOT")){
+              timeControl = timeControlOptions::SCENE_ROOT;
+           }
+           else if(boost::iequals(valuePair[1], "ROOTMODELS")){
+              timeControl = timeControlOptions::ROOT_MODELS;
+           }
+           else{
+              timeControl = timeControlOptions::SCENE_ROOT;
+           }
 		}    
 		// search/replace
 		else if(boost::iequals(valuePair[0], "search"))
@@ -192,6 +211,18 @@ std::string IJobStringParser::buildJobString()
       stream<<"null";
    }
 
+   stream<<";timeControlQuantity=";
+   if( timeControl == timeControlOptions::NONE){
+      stream<<"none";
+   }
+   else if( timeControl == timeControlOptions::ROOT_MODELS){
+      stream<<"rootModels";
+   }
+   else if( timeControl == timeControlOptions::SCENE_ROOT){
+      stream<<"sceneRoot";
+   }
+
+
    if(!nodesToImport.empty()){
       stream<<";identifiers=";
       for(int i=0; i<nodesToImport.size(); i++){
@@ -249,6 +280,7 @@ std::string stripNamespaces(const std::string& iNodeName)
    if(len > 0){
       return strArray[len-1];
    }
+   return iNodeName;
 }
 
 

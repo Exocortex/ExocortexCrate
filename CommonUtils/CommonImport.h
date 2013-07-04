@@ -20,6 +20,14 @@ namespace XSI_XformTypes{
    };
 };
 
+namespace timeControlOptions{
+   enum tco{
+      NONE,
+      SCENE_ROOT,
+      ROOT_MODELS
+   };
+}
+
 class IJobStringParser
 {
 public:
@@ -42,6 +50,7 @@ public:
    bool enableSubD;
 
    XSI_XformTypes::xte xformTypes;
+   timeControlOptions::tco timeControl;
 
    SearchReplace::ReplacePtr replacer;
 
