@@ -1215,7 +1215,7 @@ ESS_CALLBACK_END
 
 
 
-CRef setupTimeControl(SceneNodeAlembicPtr fileXformNode, XSI::CRef importRootNode)
+CRef setupTimeControl(SceneNodeAlembicPtr fileXformNode, XSI::CRef importRootNode )
 {
    {
       CString rootPath = importRootNode.GetAsText();
@@ -1232,6 +1232,8 @@ CRef setupTimeControl(SceneNodeAlembicPtr fileXformNode, XSI::CRef importRootNod
       CValue setExprReturn;
       if(!timeControl.IsValid())
       {
+         ESS_LOG_WARNING("creating time control under "<<rootPath.GetAsciiString());
+
          X3DObject root(importRootNode);
          timeControl = root.AddProperty(L"alembic_timecontrol");
 
@@ -1278,7 +1280,7 @@ bool createNode(SceneNodeXSI* appNode, SceneNodeAlembicPtr fileNode, const IJobS
 
    CString filename = CString(jobParams.filename.c_str());
    const bool& attachToExisting = bAttachToExisting;
-   bool usePerModelTimeControls = true;
+   bool usePerModelTimeControls = jobParams.timeControl == timeControlOptions::ROOT_MODELS;
    //const bool& importStandins = jobParams.importStandinProperties;
    //const bool& importBboxes = jobParams.importBoundingBoxes;
    //const bool& failOnUnsupported = jobParams.failOnUnsupported;
@@ -1367,7 +1369,7 @@ bool createNode(SceneNodeXSI* appNode, SceneNodeAlembicPtr fileNode, const IJobS
       fileNode->dccIdentifier = nodeRef.GetAsText().GetAsciiString();
 
       if(usePerModelTimeControls){
-         createItemArgs[0] = setupTimeControl(fileNode, findTimeControlDccIdentifier(fileNode, importRootNode));
+         createItemArgs[0] = setupTimeControl(fileNode, findTimeControlDccIdentifier(fileNode, importRootNode, xte));
       }
       else{
          createItemArgs[0] = setupTimeControl(fileNode, importRootNode);
@@ -1432,7 +1434,7 @@ bool createMergeableNode(SceneNodeXSI* appNode, SceneNodeAlembicPtr fileXformNod
    }
 
 
-   bool usePerModelTimeControls = true;
+   bool usePerModelTimeControls = jobParams.timeControl == timeControlOptions::ROOT_MODELS;
 
 
    const CString filename(jobParams.filename.c_str());
@@ -1529,7 +1531,7 @@ bool createMergeableNode(SceneNodeXSI* appNode, SceneNodeAlembicPtr fileXformNod
       fileXformNode->dccIdentifier = nodeRef.GetAsText().GetAsciiString();
 
       if(usePerModelTimeControls){
-         createItemArgs[0] = setupTimeControl(fileXformNode, findTimeControlDccIdentifier(fileXformNode, importRootNode));
+         createItemArgs[0] = setupTimeControl(fileXformNode, findTimeControlDccIdentifier(fileXformNode, importRootNode, jobParams.xformTypes));
       }
       else{
          createItemArgs[0] = setupTimeControl(fileXformNode, importRootNode);
@@ -1603,7 +1605,7 @@ bool createMergeableNode(SceneNodeXSI* appNode, SceneNodeAlembicPtr fileXformNod
       fileXformNode->dccIdentifier = nodeRef.GetAsText().GetAsciiString();
 
       if(usePerModelTimeControls){
-         createItemArgs[0] = setupTimeControl(fileXformNode, findTimeControlDccIdentifier(fileXformNode, importRootNode));
+         createItemArgs[0] = setupTimeControl(fileXformNode, findTimeControlDccIdentifier(fileXformNode, importRootNode, jobParams.xformTypes));
       }
       else{
          createItemArgs[0] = setupTimeControl(fileXformNode, importRootNode);
@@ -1702,7 +1704,7 @@ bool createMergeableNode(SceneNodeXSI* appNode, SceneNodeAlembicPtr fileXformNod
       fileXformNode->dccIdentifier = nodeRef.GetAsText().GetAsciiString();
 
       if(usePerModelTimeControls){
-         createItemArgs[0] = setupTimeControl(fileXformNode, findTimeControlDccIdentifier(fileXformNode, importRootNode));
+         createItemArgs[0] = setupTimeControl(fileXformNode, findTimeControlDccIdentifier(fileXformNode, importRootNode, jobParams.xformTypes));
       }
       else{
          createItemArgs[0] = setupTimeControl(fileXformNode, importRootNode);
@@ -1826,7 +1828,7 @@ bool createMergeableNode(SceneNodeXSI* appNode, SceneNodeAlembicPtr fileXformNod
          fileXformNode->dccIdentifier = nodeRef.GetAsText().GetAsciiString();
 
          if(usePerModelTimeControls){
-            createItemArgs[0] = setupTimeControl(fileXformNode, findTimeControlDccIdentifier(fileXformNode, importRootNode));
+            createItemArgs[0] = setupTimeControl(fileXformNode, findTimeControlDccIdentifier(fileXformNode, importRootNode, jobParams.xformTypes));
          }
          else{
             createItemArgs[0] = setupTimeControl(fileXformNode, importRootNode);
@@ -1918,7 +1920,7 @@ bool createMergeableNode(SceneNodeXSI* appNode, SceneNodeAlembicPtr fileXformNod
          fileXformNode->dccIdentifier = nodeRef.GetAsText().GetAsciiString();
 
          if(usePerModelTimeControls){
-            createItemArgs[0] = setupTimeControl(fileXformNode, findTimeControlDccIdentifier(fileXformNode, importRootNode));
+            createItemArgs[0] = setupTimeControl(fileXformNode, findTimeControlDccIdentifier(fileXformNode, importRootNode, jobParams.xformTypes));
          }
          else{
             createItemArgs[0] = setupTimeControl(fileXformNode, importRootNode);
@@ -2011,7 +2013,7 @@ bool createMergeableNode(SceneNodeXSI* appNode, SceneNodeAlembicPtr fileXformNod
       fileXformNode->dccIdentifier = nodeRef.GetAsText().GetAsciiString();
 
       if(usePerModelTimeControls){
-         createItemArgs[0] = setupTimeControl(fileXformNode, findTimeControlDccIdentifier(fileXformNode, importRootNode));
+         createItemArgs[0] = setupTimeControl(fileXformNode, findTimeControlDccIdentifier(fileXformNode, importRootNode, jobParams.xformTypes));
       }
       else{
          createItemArgs[0] = setupTimeControl(fileXformNode, importRootNode);
@@ -2221,6 +2223,14 @@ ESS_CALLBACK_START(alembic_import_jobs_Execute, CRef&)
       }
       else if( val == 2){
          jobParser.extraParameters["sceneMergeMethod"] = "attachAndNew";
+      }
+
+      val = settings.GetParameterValue(L"timeControlQuantity");
+      if( val == 0 ){
+         jobParser.timeControl = timeControlOptions::SCENE_ROOT;
+      }
+      else if( val == 1){
+         jobParser.timeControl = timeControlOptions::ROOT_MODELS;
       }
 
       if(settings.GetParameterValue(L"fitTimeRange")){
@@ -2551,6 +2561,7 @@ ESS_CALLBACK_START(alembic_import_settings_Define, CRef&)
    oCustomProperty.AddParameter(L"multifile",CValue::siBool,siPersistable,L"",L"",0,0,1,0,0,oParam);
    oCustomProperty.AddParameter(L"enableSubD",CValue::siBool,siPersistable,L"",L"",1,0,1,0,0,oParam);
    oCustomProperty.AddParameter(L"defaultXformNode",CValue::siInt4,siPersistable,L"",L"",0,0,5,0,5,oParam);
+   oCustomProperty.AddParameter(L"timeControlQuantity",CValue::siInt4,siPersistable,L"",L"",0,0,5,0,5,oParam);
 	return CStatus::OK;
 ESS_CALLBACK_END
 
@@ -2561,7 +2572,7 @@ ESS_CALLBACK_START(alembic_import_settings_DefineLayout, CRef&)
 	oLayout = ctxt.GetSource();
 	oLayout.Clear();
 
-    oLayout.SetViewSize(600, 525);
+    oLayout.SetViewSize(600, 550);
 
     std::stringstream versionText;
    versionText<<"Exocortex Crate "<<PLUGIN_MAJOR_VERSION<<"."<<PLUGIN_MINOR_VERSION<<"."<<crate_BUILD_VERSION;
@@ -2611,12 +2622,21 @@ ESS_CALLBACK_START(alembic_import_settings_DefineLayout, CRef&)
    oLayout.AddItem(L"multifile", L"Multifile");
    oLayout.AddItem(L"enableSubD", L"Enable Subdivision Surfaces");
 
+
    items.Resize(4);
    items[0] = L"Model";
    items[1] = (LONG) 0l;
    items[2] = L"Null";
    items[3] = (LONG) 1l;
    oLayout.AddEnumControl(L"defaultXformNode", items, L"Default Xform Node");
+
+   items.Resize(4);
+   items[0] = L"Scene Root";
+   items[1] = (LONG) 0l;
+   items[2] = L"Root Models";
+   items[3] = (LONG) 1l;
+   oLayout.AddEnumControl(L"timeControlQuantity", items, L"Time Control Quantity");
+
 
    oLayout.EndGroup();
 
