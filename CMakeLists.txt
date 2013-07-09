@@ -1,8 +1,8 @@
 cmake_minimum_required (VERSION 2.6) 
 
-project ( SoftimageExocortexAlembic${crate_VERSION} ) 
+project ( Softimage${XSI_VERSION}ExocortexAlembic${crate_VERSION} ) 
 
-INCLUDE(../ExocortexAlembicShared/ExocortexCMakeShared.txt)
+INCLUDE(../../ExocortexAlembicShared/ExocortexCMakeShared.txt)
 
 if( Exocortex_SERVICES OR Exocortex_RLM_ONLY )
 	include_directories( ${Rlm_INCLUDE_DIR} )
@@ -10,17 +10,24 @@ if( Exocortex_SERVICES OR Exocortex_RLM_ONLY )
 endif()
 
 
-add_definitions( -Dcrate_Softimage_Version="2012SP1" )
-SET( Softimage_DIR_ROOT ${LIBRARY_ROOT}/Softimage/2012SP1 )
+add_definitions( -Dcrate_Softimage_Version=${XSI_VERSION} )
+if( XSI_VERSION MATCHES "pre2014")
+	SET( Softimage_DIR_ROOT ${LIBRARY_ROOT}/Softimage/2012SP1 )
+	SET( Softimage_Version_String "" )
+else()
+	SET( Softimage_DIR_ROOT ${LIBRARY_ROOT}/Softimage/2014SP2 )
+	SET( Softimage_VERSION_STRING "2014" )
+endif()
 SET( Softimage_DIR_INCLUDE ${Softimage_DIR_ROOT}/include )
-  
-file(GLOB Sources ${CMAKE_CURRENT_SOURCE_DIR}/*.cpp)
-file(GLOB Includes ${CMAKE_CURRENT_SOURCE_DIR}/*.h)
+
+get_filename_component( BASE_DIR "${CMAKE_CURRENT_SOURCE_DIR}" PATH )
+file(GLOB Sources ${BASE_DIR}/*.cpp)
+file(GLOB Includes ${BASE_DIR}/*.h)
 
 SOURCE_GROUP("Source Files" FILES ${Sources})
 SOURCE_GROUP("Header Files" FILES ${Includes})
  
-setup_precompiled_header( ${CMAKE_CURRENT_SOURCE_DIR} ${Sources} )
+setup_precompiled_header( ${BASE_DIR} ${Sources} )
 
 IF( WIN32 )
 	IF( ${ALEMBIC64} )
@@ -64,9 +71,9 @@ TARGET_LINK_LIBRARIES( ${PROJECT_NAME}
 ADD_DEPENDENCIES(${PROJECT_NAME} AlembicAbcGeom)
 
 if( WIN32 )
-	SET( Install_DIR ${Exocortex_INSTALL_BASE_DIR}/Softimage/Application/Plugins/bin/nt-x86-64 )
+	SET( Install_DIR ${Exocortex_INSTALL_BASE_DIR}/Softimage${Softimage_VERSION_STRING}/Application/Plugins/bin/nt-x86-64 )
 elseif( UNIX )
-	SET( Install_DIR ${Exocortex_INSTALL_BASE_DIR}/Softimage/Application/Plugins/bin/linux-x86-64 )
+	SET( Install_DIR ${Exocortex_INSTALL_BASE_DIR}/Softimage${Softimage_VERSION_STRING}/Application/Plugins/bin/linux-x86-64 )
 else()
 	message(FATAL_ERROR "Should not get here")
 endif()
@@ -82,7 +89,7 @@ if( WIN32 )
 endif()
 
 SET( CompoundSource_DIR ${CMAKE_CURRENT_SOURCE_DIR}/Workgroup/Addons/ExocortexAlembic/Data/Compounds )
-SET( CompoundInstall_DIR ${Exocortex_INSTALL_BASE_DIR}/Softimage/Data/Compounds )
+SET( CompoundInstall_DIR ${Exocortex_INSTALL_BASE_DIR}/Softimage${Softimage_VERSION_STRING}/Data/Compounds )
 
 remove_dir( ${CompoundInstall_DIR} )
 copy_directory( ${CompoundSource_DIR} ${CompoundInstall_DIR} )
