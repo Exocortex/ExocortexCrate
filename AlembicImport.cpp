@@ -1232,7 +1232,7 @@ CRef setupTimeControl(SceneNodeAlembicPtr fileXformNode, XSI::CRef importRootNod
       CValue setExprReturn;
       if(!timeControl.IsValid())
       {
-         ESS_LOG_WARNING("creating time control under "<<rootPath.GetAsciiString());
+         //ESS_LOG_WARNING("creating time control under "<<rootPath.GetAsciiString());
 
          X3DObject root(importRootNode);
          timeControl = root.AddProperty(L"alembic_timecontrol");
