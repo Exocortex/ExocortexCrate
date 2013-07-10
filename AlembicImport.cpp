@@ -413,9 +413,9 @@ CStatus alembic_create_item_Invoke
 
     //TODO: enable operator creation if "attach to existing" and user option are enabled
 
-    bool disableOperatorCreation = true;
+    bool operatorCreationForExistingOperators = args[6];
     bool bEnableOperatorCreation = true; 
-    if(disableOperatorCreation){
+    if(operatorCreationForExistingOperators){
        bEnableOperatorCreation = !attachToExisting;
     }
 
@@ -1297,6 +1297,7 @@ bool createNode(SceneNodeXSI* appNode, SceneNodeAlembicPtr fileNode, const IJobS
    createItemArgs[3] = jobParams.importUVs;
    createItemArgs[4] = jobParams.importVisibilityControllers;
    createItemArgs[5] = jobParams.useMultiFile;
+   createItemArgs[6] = jobParams.operatorCreationForExistingNodes;
 
    //the transform
    
@@ -1457,6 +1458,7 @@ bool createMergeableNode(SceneNodeXSI* appNode, SceneNodeAlembicPtr fileXformNod
    createItemArgs[3] = jobParams.importUVs;
    createItemArgs[4] = jobParams.importVisibilityControllers;
    createItemArgs[5] = jobParams.useMultiFile;
+   createItemArgs[6] = jobParams.operatorCreationForExistingNodes;
 
 
    Abc::IObject shapeObj = fileShapeNode->getObject();
@@ -2199,6 +2201,7 @@ ESS_CALLBACK_START(alembic_import_jobs_Execute, CRef&)
       jobParser.importCurvesAsStrands = settings.GetParameterValue(L"importCurvesAsStrands");
       jobParser.useMultiFile = settings.GetParameterValue(L"multifile");
       jobParser.enableSubD = settings.GetParameterValue(L"enableSubD");
+      jobParser.operatorCreationForExistingNodes = settings.GetParameterValue(L"operatorCreationForExistingNodes");
       
       int val = settings.GetParameterValue(L"defaultXformNode");
       if( val == 0 ){
@@ -2556,6 +2559,8 @@ ESS_CALLBACK_START(alembic_import_settings_Define, CRef&)
    oCustomProperty.AddParameter(L"enableSubD",CValue::siBool,siPersistable,L"",L"",1,0,1,0,0,oParam);
    oCustomProperty.AddParameter(L"defaultXformNode",CValue::siInt4,siPersistable,L"",L"",0,0,5,0,5,oParam);
    oCustomProperty.AddParameter(L"timeControlQuantity",CValue::siInt4,siPersistable,L"",L"",0,0,5,0,5,oParam);
+   oCustomProperty.AddParameter(L"operatorCreationForExistingNodes",CValue::siBool,siPersistable,L"",L"",1,0,1,0,0,oParam);
+
 	return CStatus::OK;
 ESS_CALLBACK_END
 
@@ -2566,7 +2571,7 @@ ESS_CALLBACK_START(alembic_import_settings_DefineLayout, CRef&)
 	oLayout = ctxt.GetSource();
 	oLayout.Clear();
 
-    oLayout.SetViewSize(600, 550);
+    oLayout.SetViewSize(600, 560);
 
     std::stringstream versionText;
    versionText<<"Exocortex Crate "<<PLUGIN_MAJOR_VERSION<<"."<<PLUGIN_MINOR_VERSION<<"."<<crate_BUILD_VERSION;
@@ -2609,13 +2614,13 @@ ESS_CALLBACK_START(alembic_import_settings_DefineLayout, CRef&)
    
    oLayout.AddItem(L"skipUnattachedNodes", L"Skip nodes that fail to attach");
    oLayout.AddItem(L"failOnUnsupported",L"Fail upon unsupported alembic types");
-   oLayout.AddItem(L"enableImportRootSelection",L"Enable Import Root Selection");
+   oLayout.AddItem(L"enableImportRootSelection",L"Import Root Selection");
    oLayout.AddItem(L"stripNamespaces",L"Strip Namespaces");
    oLayout.AddItem(L"importCurvesAsStrands", L"Import Curves as Strands");
    oLayout.AddItem(L"fitTimeRange", L"Fit Time Range");
    oLayout.AddItem(L"multifile", L"Multifile");
-   oLayout.AddItem(L"enableSubD", L"Enable Subdivision Surfaces");
-
+   oLayout.AddItem(L"enableSubD", L"Subdivision Surfaces");
+   oLayout.AddItem(L"operatorCreationForExistingNodes", L"Operator Creation For Existing Nodes");
 
    items.Resize(4);
    items[0] = L"Model";
