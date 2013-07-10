@@ -46,11 +46,18 @@ SICALLBACK XSILoadPlugin( PluginRegistrar& in_reg )
 	in_reg.PutVersion(soft_MAJOR, crate_BUILD_VERSION);
 
 
+	// moved into Application/Plugins/ExocortexAlembicSoftimage_UI.py
+	// --------------------------------------------------------------
+	// in_reg.RegisterMenu(siMenuMainFileExportID,L"alembic_MenuExport",false,false);
+	// in_reg.RegisterMenu(siMenuMainFileImportID,L"alembic_MenuImport",false,false);
+	// in_reg.RegisterMenu(siMenuMainFileProjectID,L"alembic_MenuPathManager",false,false);
+	// in_reg.RegisterMenu(siMenuMainFileProjectID,L"alembic_ProfileStats",false,false);
+	// in_reg.RegisterMenu(siMenuTbGetPropertyID,L"alembic_MenuMetaData",false,false);
+
+
 	//if( HasAlembicWriterLicense() ) {
 		in_reg.RegisterCommand(L"alembic_export",L"alembic_export");
       in_reg.RegisterCommand(L"alembic_export_jobs",L"alembic_export_jobs");
-
-		in_reg.RegisterMenu(siMenuMainFileExportID,L"alembic_MenuExport",false,false);
 
 		in_reg.RegisterProperty(L"alembic_export_settings");
 	//}
@@ -81,10 +88,6 @@ SICALLBACK XSILoadPlugin( PluginRegistrar& in_reg )
 		in_reg.RegisterOperator(L"alembic_geomapprox");
 		in_reg.RegisterOperator(L"alembic_standinop");
 
-		in_reg.RegisterMenu(siMenuMainFileImportID,L"alembic_MenuImport",false,false);
-		in_reg.RegisterMenu(siMenuMainFileProjectID,L"alembic_MenuPathManager",false,false);
-		in_reg.RegisterMenu(siMenuMainFileProjectID,L"alembic_ProfileStats",false,false);
-		in_reg.RegisterMenu(siMenuTbGetPropertyID,L"alembic_MenuMetaData",false,false);
 
 		in_reg.RegisterProperty(L"alembic_import_settings");
 		in_reg.RegisterProperty(L"alembic_timecontrol");

@@ -93,3 +93,13 @@ SET( CompoundInstall_DIR ${Exocortex_INSTALL_BASE_DIR}/Softimage${Softimage_VERS
 
 remove_dir( ${CompoundInstall_DIR} )
 copy_directory( ${CompoundSource_DIR} ${CompoundInstall_DIR} )
+
+
+# -----------------------------------------------------------------------------------
+# also distribute all python files located in:
+#     ExocortexAlembicSoftimage/Workgroup/Addons/ExocortexAlembic/Application/Plugins
+
+SET( PythonPluginSource_DIR ${CMAKE_CURRENT_SOURCE_DIR}/Workgroup/Addons/ExocortexAlembic/Application/Plugins )
+SET( PythonPluginInstall_DIR ${Exocortex_INSTALL_BASE_DIR}/Softimage/Application/Plugins )
+
+copy_directory( ${PythonPluginSource_DIR} ${PythonPluginInstall_DIR} )
