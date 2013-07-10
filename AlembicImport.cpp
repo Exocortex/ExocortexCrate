@@ -411,6 +411,14 @@ CStatus alembic_create_item_Invoke
 	   expressionString = getTimeControlExpression(timeControlProp.GetFullName());
     }
 
+    //TODO: enable operator creation if "attach to existing" and user option are enabled
+
+    bool operatorCreationForExistingOperators = args[6];
+    bool bEnableOperatorCreation = true; 
+    if(operatorCreationForExistingOperators){
+       bEnableOperatorCreation = !attachToExisting;
+    }
+
     { ESS_PROFILE_SCOPE("alembic_create_item_Invoke create_the_operator");
    // now create an operator...?
    switch(itemType)
@@ -419,7 +427,7 @@ CStatus alembic_create_item_Invoke
       case alembicItemType_visibility:
       case alembicItemType_geomapprox:
       case alembicItemType_camera:
-      case alembicItemType_polymesh_topo:
+      case alembicItemType_polymesh_topo://in this case, a normals operator and multiple UV operator may be created. Also, clusters may be created. 
       case alembicItemType_bbox:
       case alembicItemType_polymesh:
       case alembicItemType_crvlist_topo:
@@ -477,88 +485,78 @@ CStatus alembic_create_item_Invoke
             opRef.Set(realTarget.GetAsText()+L"."+realType);
             op = opRef;
          }
-         if(!op.IsValid())
+
+         if(!op.IsValid() && bEnableOperatorCreation)
          {
 			 {
-			 ESS_PROFILE_SCOPE("alembic_create_item_Invoke create_the_operator CreateObject");
+			   ESS_PROFILE_SCOPE("alembic_create_item_Invoke create_the_operator CreateObject");
 		       op = Application().GetFactory().CreateObject(realType);
 			 }
-
-		/*	 		// Duplicate arc 4 times and translate in y
-		args.Resize(19);
-		args[0] = arc;					// source object
-		args[1] = (LONG)4;				// number of copies
-		args[9] = (LONG)siApplyRepeatXForm;	// Xform
-		args[18] = (double)1;			// Ty
-		app.ExecuteCommand( L"Duplicate", args, outArg );*/
-			 
-			 { ESS_PROFILE_SCOPE("alembic_create_item_Invoke create_the_operator AddPorts");
-            op.AddOutputPort(realTarget);
-            op.AddInputPort(realTarget);
+			 { 
+                ESS_PROFILE_SCOPE("alembic_create_item_Invoke create_the_operator AddPorts");
+                op.AddOutputPort(realTarget);
+                op.AddInputPort(realTarget);
 			 }
-
-            siConstructionMode consMode = siConstructionModeModeling;
-            if(itemType != alembicItemType_crvlist_topo && itemType != alembicItemType_polymesh_topo)
-               consMode = siConstructionModeAnimation;
-			 { ESS_PROFILE_SCOPE("alembic_create_item_Invoke create_the_operator Connect");
-			
+             siConstructionMode consMode = siConstructionModeModeling;
+             if(itemType != alembicItemType_crvlist_topo && itemType != alembicItemType_polymesh_topo){
+                consMode = siConstructionModeAnimation;
+             }
+			 { 
+                ESS_PROFILE_SCOPE("alembic_create_item_Invoke create_the_operator Connect");
 				op.Connect(consMode);
 			 }
          }
- 
-         // setup the operator
-         //if(attachToExisting){
-         //   //delete the reference to the old file
-         //}
-         //addRefArchive(file);
-         op.PutParameterValue(L"path",file);
-         op.PutParameterValue(L"identifier",identifier);
-         op.PutParameterValue(L"muted", false);
-         if(bMultifile){
-            op.PutParameterValue(L"multifile", true);
+
+         if(op.IsValid()){//connect up the operator parameters
+
+            op.PutParameterValue(L"path",file);
+            op.PutParameterValue(L"identifier",identifier);
+            if(bMultifile){
+               op.PutParameterValue(L"multifile", true);
+            }
+
+            // if we are not a topo op, let's connect to the timecontrol
+            bool receivesExpression = isAnimated;
+
+            if(!bMultifile){
+               ESS_PROFILE_SCOPE("alembic_create_item_Invoke create_the_operator dynamic topo check");
+               if(itemType == alembicItemType_crvlist_topo)
+                  receivesExpression = false;
+               else if(itemType == alembicItemType_polymesh_topo)
+               {
+                  // check if the compound has more than one sample on its facecounts
+                  Abc::ICompoundProperty abcCompound = getCompoundFromObject(abcObject);
+                  Abc::IInt32ArrayProperty faceCountProp = Abc::IInt32ArrayProperty(abcCompound,".faceCounts");
+                  if(faceCountProp.valid())
+                     receivesExpression = !faceCountProp.isConstant();
+                  
+			      if ( !receivesExpression ) // still false, check .faceIndices just in case and reuse faceCountProp variable!
+			      {
+				      faceCountProp = Abc::IInt32ArrayProperty(abcCompound,".faceIndices");
+				      if (faceCountProp.valid())
+					      receivesExpression = !faceCountProp.isConstant();
+				      else
+					      receivesExpression = false;
+			      }
+               }
+            }
+
+            if(receivesExpression)
+            {
+			    ESS_PROFILE_SCOPE("alembic_create_item_Invoke create_the_operator receivesExpression");
+
+               // check if we have a timecontrol in the args
+                if(timeControlProp.IsValid())
+               {
+				    //setExprArgs[0] = op.GetFullName()+L".time";
+				    op.GetParameter("time").AddExpression( expressionString );
+				   //Application().ExecuteCommand(L"SetExpr",setExprArgs,setExprReturn);
+               }
+            }
          }
 
          // store the return value
          returnVal = op.GetRef();
-
-         // if we are not a topo op, let's connect to the timecontrol
-         bool receivesExpression = isAnimated;
-
-         if(!bMultifile){
-            ESS_PROFILE_SCOPE("alembic_create_item_Invoke create_the_operator dynamic topo check");
-            if(itemType == alembicItemType_crvlist_topo)
-               receivesExpression = false;
-            else if(itemType == alembicItemType_polymesh_topo)
-            {
-               // check if the compound has more than one sample on its facecounts
-               Abc::ICompoundProperty abcCompound = getCompoundFromObject(abcObject);
-               Abc::IInt32ArrayProperty faceCountProp = Abc::IInt32ArrayProperty(abcCompound,".faceCounts");
-               if(faceCountProp.valid())
-                  receivesExpression = !faceCountProp.isConstant();
-               
-			   if ( !receivesExpression ) // still false, check .faceIndices just in case and reuse faceCountProp variable!
-			   {
-				   faceCountProp = Abc::IInt32ArrayProperty(abcCompound,".faceIndices");
-				   if (faceCountProp.valid())
-					   receivesExpression = !faceCountProp.isConstant();
-				   else
-					   receivesExpression = false;
-			   }
-            }
-         }
-
-         if(receivesExpression)
-         {
-			 ESS_PROFILE_SCOPE("alembic_create_item_Invoke create_the_operator receivesExpression");
-
-            // check if we have a timecontrol in the args
-             if(timeControlProp.IsValid())
-            {
-				 //setExprArgs[0] = op.GetFullName()+L".time";
-				 op.GetParameter("time").AddExpression( expressionString );
-				//Application().ExecuteCommand(L"SetExpr",setExprArgs,setExprReturn);
-            }
-         }
 
          // if we are a polygon mesh topo op, oh dear
          if(itemType == alembicItemType_polymesh_topo && args.GetCount() > 3)
@@ -579,6 +577,8 @@ CStatus alembic_create_item_Invoke
                return CStatus::OK;
 
             PolygonMesh meshGeo = Primitive(realTarget).GetGeometry();
+            //for our "apply" mode, I feel no changes our necessary here. It is hard to know what user intended.
+            //Let them handle it via the option that already exists.
             if(importClusters)
             {
         	  ESS_PROFILE_SCOPE("alembic_create_item_Invoke create_the_operator polymesh_topo importClusters");
@@ -591,7 +591,7 @@ CStatus alembic_create_item_Invoke
                {
                   if(attachToExisting)
                   {
-                     if(meshGeo.GetClusters().GetItem(CString(faceSetNames[j].c_str())).IsValid())
+                     if(meshGeo.GetClusters().GetItem(CString(faceSetNames[j].c_str())).IsValid()) //only create clusters that do not exist
                         continue;
                   }
                   AbcG::IFaceSetSchema faceSet;
@@ -608,6 +608,7 @@ CStatus alembic_create_item_Invoke
                   meshGeo.AddCluster(L"poly",CString(faceSetNames[j].c_str()),elements,cluster);
                }
             }
+
             if(importNormals && abcMesh.valid())
             {
               ESS_PROFILE_SCOPE("alembic_create_item_Invoke create_the_operator polymesh_topo importNormals");
@@ -657,7 +658,7 @@ CStatus alembic_create_item_Invoke
                         opRef.Set(userNormalProp.GetFullName()+L".alembic_normals");
                         op = opRef;
                      }
-                     if(!op.IsValid())
+                     if(!op.IsValid() && bEnableOperatorCreation)
                      {
                         op = Application().GetFactory().CreateObject(L"alembic_normals");
                         op.AddOutputPort(userNormalProp.GetRef());
@@ -666,31 +667,27 @@ CStatus alembic_create_item_Invoke
                         op.Connect();
                      }
 
-                     //if(attachToExisting){
-                     //   //delete the reference to the old file
-                     //}
-                     //addRefArchive(file);
-
-                     op.PutParameterValue(L"path",file);
-                     op.PutParameterValue(L"identifier",identifier);
-                     op.PutParameterValue(L"muted", false);
-                     if(bMultifile){
-                        op.PutParameterValue(L"multifile", true);
-                     }
-                     if(!timeControlProp.IsValid())
-                     {
-                        CRef timeControlRef;
-                        if(args.GetCount() > 0)
-                           timeControlRef = args[0];
-                        timeControlProp = timeControlRef;
-                     }
-                     if(timeControlProp.IsValid())
-                     {
-                        CValue setExprReturn;
-                        CValueArray setExprArgs(2);
-                        setExprArgs[0] = op.GetFullName()+L".time";
-                        setExprArgs[1] = getTimeControlExpression(timeControlProp.GetFullName());
-                        Application().ExecuteCommand(L"SetExpr",setExprArgs,setExprReturn);
+                     if(!op.IsValid()){
+                        op.PutParameterValue(L"path",file);
+                        op.PutParameterValue(L"identifier",identifier);
+                        if(bMultifile){
+                           op.PutParameterValue(L"multifile", true);
+                        }
+                        if(!timeControlProp.IsValid())
+                        {
+                           CRef timeControlRef;
+                           if(args.GetCount() > 0)
+                              timeControlRef = args[0];
+                           timeControlProp = timeControlRef;
+                        }
+                        if(timeControlProp.IsValid())// Shouldn't we not connect time if normals are constant (we would have faster viewport speeds)
+                        {
+                           CValue setExprReturn;
+                           CValueArray setExprArgs(2);
+                           setExprArgs[0] = op.GetFullName()+L".time";
+                           setExprArgs[1] = getTimeControlExpression(timeControlProp.GetFullName());
+                           Application().ExecuteCommand(L"SetExpr",setExprArgs,setExprReturn);
+                        }
                      }
                   }
                }
@@ -817,7 +814,7 @@ CStatus alembic_create_item_Invoke
                           opRef.Set(uvProp.GetFullName()+L".alembic_uvs");
                           op = opRef;
                        }
-                       if(!op.IsValid())
+                       if(!op.IsValid() && bEnableOperatorCreation)
                        {
                           op = Application().GetFactory().CreateObject(L"alembic_uvs");
                           op.AddOutputPort(uvProp.GetRef());
@@ -825,26 +822,23 @@ CStatus alembic_create_item_Invoke
                           op.AddInputPort(realTarget);
                           op.Connect();
                        }
-                       // if(attachToExisting){
-                       //    //delete the reference to the old file
-                       // }
 
-                       //addRefArchive(file);
-
-                       op.PutParameterValue(L"path",file);
-                       op.PutParameterValue(L"identifier",identifier+CString(L":")+CString(uvI));
-                       op.PutParameterValue(L"muted", false);
-                       if(bMultifile){
-                           op.PutParameterValue(L"multifile", true);
-                       }
-
-                       if(meshUVsParam.getNumSamples() > 1)
+                       if(op.IsValid())
                        {
-                          CValue setExprReturn;
-                          CValueArray setExprArgs(2);
-                          setExprArgs[0] = op.GetFullName()+L".time";
-                          setExprArgs[1] = getTimeControlExpression(timeControlProp.GetFullName());
-                          Application().ExecuteCommand(L"SetExpr",setExprArgs,setExprReturn);
+                          op.PutParameterValue(L"path",file);
+                          op.PutParameterValue(L"identifier",identifier+CString(L":")+CString(uvI));
+                          if(bMultifile){
+                              op.PutParameterValue(L"multifile", true);
+                          }
+
+                          if(meshUVsParam.getNumSamples() > 1)
+                          {
+                             CValue setExprReturn;
+                             CValueArray setExprArgs(2);
+                             setExprArgs[0] = op.GetFullName()+L".time";
+                             setExprArgs[1] = getTimeControlExpression(timeControlProp.GetFullName());
+                             Application().ExecuteCommand(L"SetExpr",setExprArgs,setExprReturn);
+                          }
                        }
                      }
                   }
@@ -1232,7 +1226,7 @@ CRef setupTimeControl(SceneNodeAlembicPtr fileXformNode, XSI::CRef importRootNod
       CValue setExprReturn;
       if(!timeControl.IsValid())
       {
-         ESS_LOG_WARNING("creating time control under "<<rootPath.GetAsciiString());
+         //ESS_LOG_WARNING("creating time control under "<<rootPath.GetAsciiString());
 
          X3DObject root(importRootNode);
          timeControl = root.AddProperty(L"alembic_timecontrol");
@@ -1303,6 +1297,7 @@ bool createNode(SceneNodeXSI* appNode, SceneNodeAlembicPtr fileNode, const IJobS
    createItemArgs[3] = jobParams.importUVs;
    createItemArgs[4] = jobParams.importVisibilityControllers;
    createItemArgs[5] = jobParams.useMultiFile;
+   createItemArgs[6] = jobParams.operatorCreationForExistingNodes;
 
    //the transform
    
@@ -1463,6 +1458,7 @@ bool createMergeableNode(SceneNodeXSI* appNode, SceneNodeAlembicPtr fileXformNod
    createItemArgs[3] = jobParams.importUVs;
    createItemArgs[4] = jobParams.importVisibilityControllers;
    createItemArgs[5] = jobParams.useMultiFile;
+   createItemArgs[6] = jobParams.operatorCreationForExistingNodes;
 
 
    Abc::IObject shapeObj = fileShapeNode->getObject();
@@ -2205,6 +2201,7 @@ ESS_CALLBACK_START(alembic_import_jobs_Execute, CRef&)
       jobParser.importCurvesAsStrands = settings.GetParameterValue(L"importCurvesAsStrands");
       jobParser.useMultiFile = settings.GetParameterValue(L"multifile");
       jobParser.enableSubD = settings.GetParameterValue(L"enableSubD");
+      jobParser.operatorCreationForExistingNodes = settings.GetParameterValue(L"operatorCreationForExistingNodes");
       
       int val = settings.GetParameterValue(L"defaultXformNode");
       if( val == 0 ){
@@ -2562,6 +2559,8 @@ ESS_CALLBACK_START(alembic_import_settings_Define, CRef&)
    oCustomProperty.AddParameter(L"enableSubD",CValue::siBool,siPersistable,L"",L"",1,0,1,0,0,oParam);
    oCustomProperty.AddParameter(L"defaultXformNode",CValue::siInt4,siPersistable,L"",L"",0,0,5,0,5,oParam);
    oCustomProperty.AddParameter(L"timeControlQuantity",CValue::siInt4,siPersistable,L"",L"",0,0,5,0,5,oParam);
+   oCustomProperty.AddParameter(L"operatorCreationForExistingNodes",CValue::siBool,siPersistable,L"",L"",1,0,1,0,0,oParam);
+
 	return CStatus::OK;
 ESS_CALLBACK_END
 
@@ -2572,7 +2571,7 @@ ESS_CALLBACK_START(alembic_import_settings_DefineLayout, CRef&)
 	oLayout = ctxt.GetSource();
 	oLayout.Clear();
 
-    oLayout.SetViewSize(600, 550);
+    oLayout.SetViewSize(600, 560);
 
     std::stringstream versionText;
    versionText<<"Exocortex Crate "<<PLUGIN_MAJOR_VERSION<<"."<<PLUGIN_MINOR_VERSION<<"."<<crate_BUILD_VERSION;
@@ -2615,13 +2614,13 @@ ESS_CALLBACK_START(alembic_import_settings_DefineLayout, CRef&)
    
    oLayout.AddItem(L"skipUnattachedNodes", L"Skip nodes that fail to attach");
    oLayout.AddItem(L"failOnUnsupported",L"Fail upon unsupported alembic types");
-   oLayout.AddItem(L"enableImportRootSelection",L"Enable Import Root Selection");
+   oLayout.AddItem(L"enableImportRootSelection",L"Import Root Selection");
    oLayout.AddItem(L"stripNamespaces",L"Strip Namespaces");
    oLayout.AddItem(L"importCurvesAsStrands", L"Import Curves as Strands");
    oLayout.AddItem(L"fitTimeRange", L"Fit Time Range");
    oLayout.AddItem(L"multifile", L"Multifile");
-   oLayout.AddItem(L"enableSubD", L"Enable Subdivision Surfaces");
-
+   oLayout.AddItem(L"enableSubD", L"Subdivision Surfaces");
+   oLayout.AddItem(L"operatorCreationForExistingNodes", L"Operator Creation For Existing Nodes");
 
    items.Resize(4);
    items[0] = L"Model";
