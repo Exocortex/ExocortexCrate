@@ -715,10 +715,11 @@ ESS_CALLBACK_START( alembic_uvs_Update, CRef& )
    CString identifier = identifierAndIndex.GetSubString(0, colonOffset);
  
    LONG uvI = 0;
-   if( colonOffset == identifierAndIndex.Length() ){
+   if( colonOffset+1 < identifierAndIndex.Length() ){
       uvI = (LONG)CValue(identifierAndIndex.GetSubString(colonOffset+1));
    }
 
+   //ESS_LOG_WARNING("identifierAndIndex: "<<identifierAndIndex.GetAsciiString());
    //ESS_LOG_WARNING("identifier: "<<identifier.GetAsciiString());
    //ESS_LOG_WARNING("uvI: "<<uvI);
 
