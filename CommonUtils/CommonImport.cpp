@@ -172,9 +172,19 @@ bool IJobStringParser::parse(const std::string& jobString)
         {
             enableSubD = parseBool(valuePair[1]);
         }
+        else if(boost::iequals(valuePair[0], "operatorCreationForExistingNodes"))
+        {
+            operatorCreationForExistingNodes = parseBool(valuePair[1]);
+        }
 		else
 		{
-			extraParameters[valuePair[0]] = valuePair[1];
+           if(extraParameters.find(valuePair[0]) != extraParameters.end() ){
+              extraParameters[valuePair[0]] = valuePair[1];
+           }
+           else{
+               ESS_LOG_INFO("Skipping invalid token: "<<tokens[j]);
+               continue;
+           }
 		}
 	}
 
@@ -202,8 +212,10 @@ std::string IJobStringParser::buildJobString()
    stream<<";importVisibilityControllers="<<importVisibilityControllers<<";importStandinProperties="<<importStandinProperties;
    stream<<";importBoundingBoxes="<<importBoundingBoxes<<";attachToExisting="<<attachToExisting<<";skipUnattachedNodes="<<skipUnattachedNodes;
    stream<<";failOnUnsupported="<<failOnUnsupported<<";enableImportRootSelection="<<enableImportRootSelection<<";stripMayaNamespaces="<<stripMayaNamespaces;
-   stream<<";importCurvesAsStrands="<<importCurvesAsStrands<<";enableSubD="<<enableSubD<<";useMultifile="<<useMultiFile<<";defaultXformNode=";
+   stream<<";importCurvesAsStrands="<<importCurvesAsStrands<<";enableSubD="<<enableSubD<<";useMultifile="<<useMultiFile;
+   stream<<";operatorCreationForExistingNodes="<<operatorCreationForExistingNodes;
 
+   stream<<";defaultXformNode=";
    if( xformTypes == XSI_XformTypes::XMODEL){
       stream<<"model";
    }

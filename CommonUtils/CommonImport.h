@@ -48,6 +48,7 @@ public:
    bool importCurvesAsStrands;
    bool useMultiFile;
    bool enableSubD;
+   bool operatorCreationForExistingNodes;
 
    XSI_XformTypes::xte xformTypes;
    timeControlOptions::tco timeControl;
@@ -80,7 +81,8 @@ public:
       importCurvesAsStrands(false),
       replaceColonsWithUnderscores(false),
 	  useMultiFile(false),
-      enableSubD(true)
+      enableSubD(true),
+      operatorCreationForExistingNodes(true)
    {}
 
    bool parse(const std::string& jobString);

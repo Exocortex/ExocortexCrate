@@ -376,7 +376,7 @@ ENDIF()
 # softimage plugin
 IF(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../ExocortexAlembicSoftimage/CMakeLists.txt")
 	if( NOT MSVC10 ) 
-		ADD_SUBDIRECTORY ( "${CMAKE_CURRENT_SOURCE_DIR}/../ExocortexAlembicSoftimage/pre2014" "${CMAKE_CURRENT_BINARY_DIR}/ExocortexAlembicSoftimage" )
+		ADD_SUBDIRECTORY ( "${CMAKE_CURRENT_SOURCE_DIR}/../ExocortexAlembicSoftimage/2012" "${CMAKE_CURRENT_BINARY_DIR}/ExocortexAlembicSoftimage" )
 		ADD_SUBDIRECTORY ( "${CMAKE_CURRENT_SOURCE_DIR}/../ExocortexAlembicSoftimage/2014SP2" "${CMAKE_CURRENT_BINARY_DIR}/ExocortexAlembicSoftimage2014SP2" )
 	endif()
 ENDIF()
