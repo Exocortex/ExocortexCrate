@@ -488,6 +488,7 @@ CStatus alembic_create_item_Invoke
 
          if(!op.IsValid() && bEnableOperatorCreation)
          {
+             
 			 {
 			   ESS_PROFILE_SCOPE("alembic_create_item_Invoke create_the_operator CreateObject");
 		       op = Application().GetFactory().CreateObject(realType);
@@ -497,6 +498,23 @@ CStatus alembic_create_item_Invoke
                 op.AddOutputPort(realTarget);
                 op.AddInputPort(realTarget);
 			 }
+             
+
+             // experimental operator creation code. It doesn't seem faster so far...
+             //{
+             //   ESS_PROFILE_SCOPE("alembic_create_item_Invoke AddCustomOp");
+             //  CRefArray inputs(1);
+             //  inputs[0] = realTarget;
+             //  if(itemType == alembicItemType_xform){
+             //     KinematicState targetObject(realTarget);
+             //     op = targetObject.AddCustomOp( realType, inputs );
+             //  }
+             //  else{
+             //     ProjectItem targetObject(realTarget);
+             //     op = targetObject.AddCustomOp( realType, inputs );
+             //  }
+             //}
+
              siConstructionMode consMode = siConstructionModeModeling;
              if(itemType != alembicItemType_crvlist_topo && itemType != alembicItemType_polymesh_topo){
                 consMode = siConstructionModeAnimation;
