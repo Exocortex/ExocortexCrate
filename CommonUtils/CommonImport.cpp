@@ -139,7 +139,7 @@ bool IJobStringParser::parse(const std::string& jobString)
            }
 			
 		}  
- 		else if(boost::iequals(valuePair[0], "timeControlQuantity"))
+ 		else if(boost::iequals(valuePair[0], "timeControlPlacement"))
 		{
            if(boost::iequals(valuePair[1], "NONE")){
               timeControl = timeControlOptions::NONE;
@@ -223,7 +223,7 @@ std::string IJobStringParser::buildJobString()
       stream<<"null";
    }
 
-   stream<<";timeControlQuantity=";
+   stream<<";timeControlPlacement=";
    if( timeControl == timeControlOptions::NONE){
       stream<<"none";
    }
