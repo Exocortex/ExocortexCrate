@@ -2222,7 +2222,7 @@ ESS_CALLBACK_START(alembic_import_jobs_Execute, CRef&)
          jobParser.extraParameters["sceneMergeMethod"] = "attachAndNew";
       }
 
-      val = settings.GetParameterValue(L"timeControlQuantity");
+      val = settings.GetParameterValue(L"timeControlPlacement");
       if( val == 0 ){
          jobParser.timeControl = timeControlOptions::SCENE_ROOT;
       }
@@ -2558,7 +2558,7 @@ ESS_CALLBACK_START(alembic_import_settings_Define, CRef&)
    oCustomProperty.AddParameter(L"multifile",CValue::siBool,siPersistable,L"",L"",0,0,1,0,0,oParam);
    oCustomProperty.AddParameter(L"enableSubD",CValue::siBool,siPersistable,L"",L"",1,0,1,0,0,oParam);
    oCustomProperty.AddParameter(L"defaultXformNode",CValue::siInt4,siPersistable,L"",L"",0,0,5,0,5,oParam);
-   oCustomProperty.AddParameter(L"timeControlQuantity",CValue::siInt4,siPersistable,L"",L"",0,0,5,0,5,oParam);
+   oCustomProperty.AddParameter(L"timeControlPlacement",CValue::siInt4,siPersistable,L"",L"",0,0,5,0,5,oParam);
    oCustomProperty.AddParameter(L"operatorCreationForExistingNodes",CValue::siBool,siPersistable,L"",L"",1,0,1,0,0,oParam);
 
 	return CStatus::OK;
@@ -2634,7 +2634,7 @@ ESS_CALLBACK_START(alembic_import_settings_DefineLayout, CRef&)
    items[1] = (LONG) 0l;
    items[2] = L"Root Models";
    items[3] = (LONG) 1l;
-   oLayout.AddEnumControl(L"timeControlQuantity", items, L"Time Control Quantity");
+   oLayout.AddEnumControl(L"timeControlPlacement", items, L"Time Control Placement");
 
 
    oLayout.EndGroup();
