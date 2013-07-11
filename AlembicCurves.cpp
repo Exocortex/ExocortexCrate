@@ -444,7 +444,12 @@ XSI::CStatus AlembicCurves::Save(double time)
             vertexCount += sub.GetCount();
             mNbVertices[i] = (Abc::int32_t)sub.GetCount();
          }
-         mCurvesSample.setCurvesNumVertices(Abc::Int32ArraySample(&mNbVertices.front(),mNbVertices.size()));
+         if(data.GetCount() > 0){
+            mCurvesSample.setCurvesNumVertices(Abc::Int32ArraySample(&mNbVertices.front(),mNbVertices.size()));
+         }
+         else{
+            mCurvesSample.setCurvesNumVertices(Abc::Int32ArraySample());
+         }
 
          // set wrap parameters
          mCurvesSample.setType(AbcG::kLinear);
@@ -472,10 +477,12 @@ XSI::CStatus AlembicCurves::Save(double time)
             }
          }
 
-         if(vertexCount > 0)
+         if(vertexCount > 0){
             mCurvesSample.setPositions(Abc::P3fArraySample(&posVec.front(),posVec.size()));
-         else
+         }
+         else{
             mCurvesSample.setPositions(Abc::P3fArraySample());
+         }
       }
 
       // store the bbox
