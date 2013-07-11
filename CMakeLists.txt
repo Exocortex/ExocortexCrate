@@ -88,7 +88,7 @@ if( WIN32 )
 	copy_file_to_directory( ${EAH_DEPENDENCIES} ${Install_DIR} )
 endif()
 
-SET( CompoundSource_DIR ${CMAKE_CURRENT_SOURCE_DIR}/Workgroup/Addons/ExocortexAlembic/Data/Compounds )
+SET( CompoundSource_DIR ${BASE_DIR}/Workgroup/Addons/ExocortexAlembic/Data/Compounds )
 SET( CompoundInstall_DIR ${Exocortex_INSTALL_BASE_DIR}/Softimage${Softimage_VERSION_STRING}/Data/Compounds )
 
 remove_dir( ${CompoundInstall_DIR} )
@@ -99,7 +99,7 @@ copy_directory( ${CompoundSource_DIR} ${CompoundInstall_DIR} )
 # also distribute all python files located in:
 #     ExocortexAlembicSoftimage/Workgroup/Addons/ExocortexAlembic/Application/Plugins
 
-SET( PythonPluginSource_DIR ${CMAKE_CURRENT_SOURCE_DIR}/Workgroup/Addons/ExocortexAlembic/Application/Plugins )
-SET( PythonPluginInstall_DIR ${Exocortex_INSTALL_BASE_DIR}/Softimage/Application/Plugins )
+SET( PythonPluginSource_DIR ${BASE_DIR}/Workgroup/Addons/ExocortexAlembic/Application/Plugins )
+SET( PythonPluginInstall_DIR ${Exocortex_INSTALL_BASE_DIR}/Softimage${Softimage_VERSION_STRING}/Application/Plugins )
 
 copy_directory( ${PythonPluginSource_DIR} ${PythonPluginInstall_DIR} )
