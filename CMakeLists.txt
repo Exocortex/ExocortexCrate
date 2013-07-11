@@ -11,7 +11,7 @@ endif()
 
 
 add_definitions( -Dcrate_Softimage_Version=${XSI_VERSION} )
-if( XSI_VERSION MATCHES "pre2014")
+if( XSI_VERSION MATCHES "2012")
 	SET( Softimage_DIR_ROOT ${LIBRARY_ROOT}/Softimage/2012SP1 )
 	SET( Softimage_Version_String "" )
 else()
