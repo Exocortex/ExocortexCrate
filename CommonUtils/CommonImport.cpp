@@ -178,13 +178,7 @@ bool IJobStringParser::parse(const std::string& jobString)
         }
 		else
 		{
-           if(extraParameters.find(valuePair[0]) != extraParameters.end() ){
-              extraParameters[valuePair[0]] = valuePair[1];
-           }
-           else{
-               ESS_LOG_INFO("Skipping invalid token: "<<tokens[j]);
-               continue;
-           }
+           extraParameters[valuePair[0]] = valuePair[1];
 		}
 	}
 
