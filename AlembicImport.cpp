@@ -1310,8 +1310,8 @@ bool createNode(SceneNodeXSI* appNode, SceneNodeAlembicPtr fileNode, const IJobS
    //}
 
    //CustomProperty timeControl = timeRef;
-   CValueArray createItemArgs(6);
-   //createItemArgs[0] = timeRef;
+   CValueArray createItemArgs(7);
+   //createItemArgs[0] = timeRef; //this is now intialized later on
    createItemArgs[1] = jobParams.importFacesets;
    createItemArgs[2] = jobParams.importNormals;
    createItemArgs[3] = jobParams.importUVs;
@@ -1471,8 +1471,8 @@ bool createMergeableNode(SceneNodeXSI* appNode, SceneNodeAlembicPtr fileXformNod
    //}
 
    // store the time control in a value array
-   CValueArray createItemArgs(6);
-   //createItemArgs[0] = timeRef;//<------------------------------- TODO init this
+   CValueArray createItemArgs(7);
+   //createItemArgs[0] = timeRef;//this is now intialized later on
    createItemArgs[1] = jobParams.importFacesets;
    createItemArgs[2] = jobParams.importNormals;
    createItemArgs[3] = jobParams.importUVs;
