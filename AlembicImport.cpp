@@ -415,7 +415,9 @@ CStatus alembic_create_item_Invoke
 
     bool operatorCreationForExistingOperators = args[6];
     bool bEnableOperatorCreation = true; 
-    if(operatorCreationForExistingOperators){
+    //if operator creation is disabled for this import, and we are doing a node update (attachToExisting is true for this node),
+    //   then disable operator creation for this node
+    if(!operatorCreationForExistingOperators){
        bEnableOperatorCreation = !attachToExisting;
     }
 
