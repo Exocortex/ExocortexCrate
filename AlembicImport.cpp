@@ -475,6 +475,44 @@ CStatus alembic_create_item_Invoke
                }
             }
          }
+         else if(itemType == alembicItemType_xform)
+         {
+            if(!isAnimated)  
+            {
+                ESS_PROFILE_SCOPE("alembic_create_itme_Invoke importConstantXform");
+
+                CustomOperator op;
+                if(attachToExisting)
+                {
+                   CRef opRef;
+                   opRef.Set(realTarget.GetAsText()+L"."+realType);
+                   op = opRef;
+                }
+
+                if(!op.IsValid())//if an operator already exists (attachToExisting), then update the operator instead
+                {
+                   KinematicState kineState(realTarget);
+
+                   pObjectCache->getXform();
+                   Abc::M44d matrix = pObjectCache->getXformMatrix(0);
+                  
+	               CMatrix4 xsiMatrix;
+                   xsiMatrix.Set( 
+                      matrix.getValue()[0],matrix.getValue()[1],matrix.getValue()[2],matrix.getValue()[3],
+			          matrix.getValue()[4],matrix.getValue()[5],matrix.getValue()[6],matrix.getValue()[7],
+			          matrix.getValue()[8],matrix.getValue()[9],matrix.getValue()[10],matrix.getValue()[11],
+			          matrix.getValue()[12],matrix.getValue()[13],matrix.getValue()[14],matrix.getValue()[15]);
+   	            
+                   CTransformation xsiTransform;
+	               xsiTransform.SetMatrix4(xsiMatrix);
+
+                   kineState.PutTransform(xsiTransform);
+
+                   break;
+                }
+            }
+         }
+
 
          // for xform, disable softimage scaling
          if(itemType == alembicItemType_xform)
