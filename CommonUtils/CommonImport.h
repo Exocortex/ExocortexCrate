@@ -20,6 +20,14 @@ namespace XSI_XformTypes{
    };
 };
 
+namespace timeControlOptions{
+   enum tco{
+      NONE,
+      SCENE_ROOT,
+      ROOT_MODELS
+   };
+}
+
 class IJobStringParser
 {
 public:
@@ -40,8 +48,10 @@ public:
    bool importCurvesAsStrands;
    bool useMultiFile;
    bool enableSubD;
+   bool operatorCreationForExistingNodes;
 
    XSI_XformTypes::xte xformTypes;
+   timeControlOptions::tco timeControl;
 
    SearchReplace::ReplacePtr replacer;
 
@@ -71,7 +81,8 @@ public:
       importCurvesAsStrands(false),
       replaceColonsWithUnderscores(false),
 	  useMultiFile(false),
-      enableSubD(true)
+      enableSubD(true),
+      operatorCreationForExistingNodes(true)
    {}
 
    bool parse(const std::string& jobString);
