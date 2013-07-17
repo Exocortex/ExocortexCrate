@@ -545,8 +545,12 @@ template<typename T> bool __getBasicSchemaDataFromObject(BasicSchemaData::SCHEMA
 	{
 		Alembic::Abc::IObject iObj = schema.getObject();
 		AbcG::IVisibilityProperty visibilityProperty = AbcG::GetVisibilityProperty(iObj);
-		if (visibilityProperty.valid())
-			bsd.isConstant = visibilityProperty.getNumSamples() <= 1;
+        if (visibilityProperty.valid()){
+			bsd.isConstant = visibilityProperty.isConstant();
+            //if(visibilityProperty.getNumSamples() > 0 ){
+            //   ESS_LOG_WARNING("BAD Sample check happened!!!!");
+            //}
+        }
 	}
 	bsd.nbSamples  = schema.getNumSamples();
 	return true;

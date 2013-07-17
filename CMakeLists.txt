@@ -14,7 +14,7 @@ IF (UNIX AND NOT APPLE )
 ENDIF()
 
 IF( WIN32 )
-	ADD_DEFINITIONS( -D_WIN64 )
+	ADD_DEFINITIONS( -D_WIN64 -DWIN64 )
 ENDIF()
  
 set( Exocortex_INSTALL_BASE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/install" )
@@ -53,7 +53,7 @@ set( AlembicFolder "Alembic" )
 SET(DIR_SOFTIMAGEALEBMIC ${CMAKE_CURRENT_SOURCE_DIR})
 
 get_filename_component( LIBRARY_ROOT "${CMAKE_CURRENT_SOURCE_DIR}" PATH )
-set( LIBRARY_VERSION "20130522.01" )
+set( LIBRARY_VERSION "20130717.01" )
 set( LIBRARY_ROOT "${LIBRARY_ROOT}/Libraries.${LIBRARY_VERSION}" )
 if( NOT EXISTS ${LIBRARY_ROOT} )
 	message( "!!!" )
@@ -66,7 +66,7 @@ endif()
 # Configuration
 SET( crate_MAJOR_VERSION "1" )
 SET( crate_MINOR_VERSION "1" ) 
-SET( crate_BUILD_VERSION "135")
+SET( crate_BUILD_VERSION "136")
 SET( crate_VERSION "${crate_MAJOR_VERSION}.${crate_MINOR_VERSION}" )
 SET( crate_FULLVERSION "${crate_MAJOR_VERSION}.${crate_MINOR_VERSION}.${crate_BUILD_VERSION}" )
 
@@ -376,7 +376,8 @@ ENDIF()
 # softimage plugin
 IF(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../ExocortexAlembicSoftimage/CMakeLists.txt")
 	if( NOT MSVC10 ) 
-		ADD_SUBDIRECTORY ( "${CMAKE_CURRENT_SOURCE_DIR}/../ExocortexAlembicSoftimage" "${CMAKE_CURRENT_BINARY_DIR}/ExocortexAlembicSoftimage" )
+		ADD_SUBDIRECTORY ( "${CMAKE_CURRENT_SOURCE_DIR}/../ExocortexAlembicSoftimage/2012" "${CMAKE_CURRENT_BINARY_DIR}/ExocortexAlembicSoftimage" )
+		ADD_SUBDIRECTORY ( "${CMAKE_CURRENT_SOURCE_DIR}/../ExocortexAlembicSoftimage/2014SP2" "${CMAKE_CURRENT_BINARY_DIR}/ExocortexAlembicSoftimage2014SP2" )
 	endif()
 ENDIF()
 
