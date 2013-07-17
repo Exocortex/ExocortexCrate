@@ -895,23 +895,25 @@ MStatus AlembicPolyMeshNode::compute(const MPlug & plug, MDataBlock & dataBlock)
           if((sampleInfo.alpha != 0.0)&& normalCeil && normalIndicesFloor.size() == normalIndicesCeil.size() && ! mDynamicTopology )
           {
             //ESS_LOG_WARNING( "blending vertex normals (1-2) A." );
-            float blend = (float)sampleInfo.alpha;
-            float iblend = 1.0f - blend;
+            const float blend = (float)sampleInfo.alpha;
+            const float iblend = 1.0f - blend;
             MVector normal;
             for(unsigned int i=0;i<normalValuesFloor.size();i++)
             {
-              normal.x = normalValuesFloor[i].x * iblend + normalValuesCeil[i].x * blend;
-              normal.y = normalValuesFloor[i].y * iblend + normalValuesCeil[i].y * blend;
-              normal.z = normalValuesFloor[i].z * iblend + normalValuesCeil[i].z * blend;
+				const Imath::V3f &flr = normalValuesFloor[i], &cil = normalValuesCeil[i];
+              normal.x = flr.x + (cil.x - flr.x) * blend;
+              normal.y = flr.y + (cil.y - flr.y) * blend;
+              normal.z = flr.z + (cil.z - flr.z) * blend;
               normals[i] = normal.normal();
             }
           }
           else {
             for(unsigned int i=0;i<normalValuesFloor.size();i++)
             {
-              normals[i].x = normalValuesFloor[i].x;
-              normals[i].y = normalValuesFloor[i].y;
-              normals[i].z = normalValuesFloor[i].z;
+				const Imath::V3f &flr = normalValuesFloor[i];
+              normals[i].x = flr.x;
+              normals[i].y = flr.y;
+              normals[i].z = flr.z;
             }
           }
 
