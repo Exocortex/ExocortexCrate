@@ -37,6 +37,11 @@
 #include <Alembic/Ogawa/OArchive.h>
 #include <Alembic/Ogawa/OData.h>
 #include <Alembic/Ogawa/OStream.h>
+#include <iostream>
+#include <sstream>
+
+//#define ESS_LOG_ERROR(a) do { std::stringstream __s; __s << "Alembic: " << a << "\n"; OutputDebugString( __s.str().c_str() ); } while(0)
+
 
 namespace Alembic {
 namespace Ogawa {
@@ -102,7 +107,7 @@ ODataPtr OGroup::createData(Alembic::Util::uint64_t iSize, const void * iData)
     {
         return child;
     }
-
+    
     if (iSize == 0)
     {
         mData->childVec.push_back(EMPTY_DATA);
@@ -111,9 +116,8 @@ ODataPtr OGroup::createData(Alembic::Util::uint64_t iSize, const void * iData)
     }
 
     Alembic::Util::uint64_t pos = mData->stream->getAndSeekEndPos();
-
     Alembic::Util::uint64_t size = iSize;
-    mData->stream->write(&size, 8);
+     mData->stream->write(&size, 8);
     mData->stream->write(iData, iSize);
 
     child.reset(new OData(mData->stream, pos, iSize));

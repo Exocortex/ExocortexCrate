@@ -36,11 +36,15 @@
 #include <Alembic/Ogawa/OStream.h>
 #include <fstream>
 #include <stdexcept>
+#include <sstream>
+
+//#define ESS_LOG_ERROR(a) do { std::stringstream __s; __s << "Alembic: " << a << std::endl; OutputDebugString( __s.str().c_str() ); } while(0)
 
 namespace Alembic {
 namespace Ogawa {
 namespace ALEMBIC_VERSION_NS {
 
+ 
 class OStream::PrivateData
 {
 public:
@@ -158,10 +162,11 @@ Alembic::Util::uint64_t OStream::getAndSeekEndPos()
         Alembic::Util::scoped_lock l(mData->lock);
         Alembic::Util::uint64_t lastp =
             mData->stream->seekp(0, std::ios_base::end).tellp();
+
         if (lastp == INVALID_DATA || lastp < mData->startPos)
         {
             throw std::runtime_error(
-                "Illegal position returned Ogawa::OStream::getAndSeekEndPos");
+                "Illegal position returned Ogawa::OStream::getAndSeekEndPos"); 
 
             return 0;
         }
