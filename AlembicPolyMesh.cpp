@@ -1027,7 +1027,7 @@ MStatus AlembicPolyMeshDeformNode::deform(MDataBlock & dataBlock, MItGeometry & 
     return MStatus::kSuccess;
 
   // update the frame number to be imported
-  double inputTime = dataBlock.inputValue(mTimeAttr).asTime().as(MTime::kSeconds);
+  const double inputTime = dataBlock.inputValue(mTimeAttr).asTime().as(MTime::kSeconds);
   MString & fileName = dataBlock.inputValue(mFileNameAttr).asString();
   MString & identifier = dataBlock.inputValue(mIdentifierAttr).asString();
 

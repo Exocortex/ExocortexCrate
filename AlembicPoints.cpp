@@ -745,7 +745,7 @@ MStatus AlembicPointsNode::init(const MString &fileName, const MString &identifi
 
 	if (arbGeomProperties)
 		delete arbGeomProperties;
-	arbGeomProperties = new ArbGeomProperties(mSchema.getArbGeomParams());
+	//arbGeomProperties = new ArbGeomProperties(mSchema.getArbGeomParams());
   }
   return MS::kSuccess;
 }
@@ -813,7 +813,7 @@ MStatus AlembicPointsNode::compute(const MPlug & plug, MDataBlock & dataBlock)
    else
    {
 	   MFnDependencyNode depNode(particleShapeNode);
-	   initPerParticles(depNode.name());
+	   //initPerParticles(depNode.name());
    }
 
    // get the sample
@@ -893,7 +893,7 @@ MStatus AlembicPointsNode::compute(const MPlug & plug, MDataBlock & dataBlock)
 		if (status != MS::kSuccess)
 			MGlobal::displayError("readFromParticle w/ orientationPP --> " + status.errorString());
 
-   arbGeomProperties->readFromParticle(part);
+   //arbGeomProperties->readFromParticle(part);
 
    // check if this is a valid sample
    unsigned int particleCount = (unsigned int)samplePos->size();
@@ -926,7 +926,7 @@ MStatus AlembicPointsNode::compute(const MPlug & plug, MDataBlock & dataBlock)
    shapeInstId.setLength(particleCount);
    orientationPP.setLength(particleCount);
 
-   arbGeomProperties->readFromAbc(sampleInfo.floorIndex, particleCount);
+   //arbGeomProperties->readFromAbc(sampleInfo.floorIndex, particleCount);
 
    // if we need to emit new particles, do that now
    if(particleCount > 0)
@@ -980,8 +980,16 @@ MStatus AlembicPointsNode::compute(const MPlug & plug, MDataBlock & dataBlock)
          }
 
 		 ages[i]          = validAge ? sampleAge->get()[ageUseFirstSample ? 0 : i] : 0.0;
-		 masses[i]        = validMas ? sampleMass->get()[masUseFirstSample ? 0 : i] : 1.0;
 		 shapeInstId[i]   = validSid ? sampleShapeInstanceID->get()[sidUseFirstSample ? 0 : i] : 0.0;
+		 if (validMas)
+		 {
+			 double mass = sampleMass->get()[masUseFirstSample ? 0 : i];
+			 if (mass <= 0.0)
+				 mass = 1.0;
+			 masses[i] = mass;
+		 }
+		 else
+			 masses[i] = 1.0;
       }
 
 		// compute the right orientation with the angular velocity if necessary!
@@ -1013,7 +1021,7 @@ MStatus AlembicPointsNode::compute(const MPlug & plug, MDataBlock & dataBlock)
    part.setPerParticleAttribute("shapeInstanceIdPP", shapeInstId);
    part.setPerParticleAttribute("orientationPP", orientationPP);
 
-   arbGeomProperties->setParticleProperty(part);
+   //arbGeomProperties->setParticleProperty(part);
 
    hOut.set( dOutput );
 	 dataBlock.setClean( plug );
