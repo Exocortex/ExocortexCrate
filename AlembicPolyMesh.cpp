@@ -1066,6 +1066,7 @@ MStatus AlembicPolyMeshDeformNode::deform(MDataBlock & dataBlock, MItGeometry & 
       return MStatus::kFailure;
     }
     mSchema = obj.getSchema();
+	cachePosition.clear();
 
 	mDynamicTopology = pObjectCache->isMeshTopoDynamic;
   }
