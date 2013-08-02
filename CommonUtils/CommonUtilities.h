@@ -101,6 +101,7 @@ std::string resolvePath_Internal(std::string const& path); // must be defined in
 // ref counting
 bool archiveExists(std::string const& path);
 int addRefArchive(std::string const& path);
+int decRefArchive(std::string const& path);			// IMPORTANT: be extremely careful! doesn't delete if the refCount is zero. This is a Maya fix for a very specific case.
 int delRefArchive(std::string const& path);
 int getRefArchive(std::string const& path);
 

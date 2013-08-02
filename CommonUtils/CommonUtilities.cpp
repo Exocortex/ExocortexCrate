@@ -243,6 +243,24 @@ int addRefArchive(std::string const& path)
    if(it == gArchives.end())
       return -1;
    it->second.refCount++;
+#ifdef _DEBUG
+   EC_LOG_INFO("ref count (a): " << it->second.refCount);
+#endif
+   return it->second.refCount;
+}
+
+int decRefArchive(std::string const& path)
+{
+   ESS_PROFILE_SCOPE("decRefArchive");
+   std::string resolvedPath = resolvePath(path);
+   std::map<std::string,AlembicArchiveInfo>::iterator it;
+   it = gArchives.find(resolvedPath);
+   if(it == gArchives.end())
+      return -1;
+   it->second.refCount--;
+#ifdef _DEBUG
+   EC_LOG_INFO("ref count (d): " << it->second.refCount);
+#endif
    return it->second.refCount;
 }
 
@@ -255,8 +273,14 @@ int delRefArchive(std::string const& path)
    if(it == gArchives.end())
       return -1;
    it->second.refCount--;
+#ifdef _DEBUG
+   EC_LOG_INFO("ref count (d): " << it->second.refCount);
+#endif
    if(it->second.refCount==0)
    {
+#ifdef _DEBUG
+   EC_LOG_INFO("ref delete");
+#endif
       deleteArchive(resolvedPath);
       return 0;
    }
