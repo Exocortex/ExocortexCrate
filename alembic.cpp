@@ -15,6 +15,10 @@
 #include "MetaData.h"
 #include "AlembicValidateNameCmd.h"
 #include <maya/MFnPlugin.h>
+#include <maya/MDGMessage.h>
+#include <maya/MFnDependencyNode.h>
+#include <maya/MPlug.h>
+#include <maya/MFnStringData.h>
 
 // IDs issues for this plugin are: 
 // 0x0011A100 - 0x0011A1FF
@@ -45,6 +49,29 @@ static void deleteAllArchivesCallback( void* clientData )
 #else
   #define EC_EXPORT extern "C"
 #endif
+
+void removeExocortexAlembicNode(MObject &node, void *clientData)
+{
+	MFnDependencyNode nodeFn(node);
+	MObject fname = nodeFn.attribute("fileName");
+	if (!fname.isNull())
+	{
+		MPlug attrFileName(nodeFn.object(), fname);
+		if (!attrFileName.getValue(fname))
+			return;
+		delRefArchive(MFnStringData(fname).string());
+	}
+
+	fname = nodeFn.attribute("uv_fileName");
+	if (!fname.isNull())
+	{
+		MPlug attrFileName(nodeFn.object(), fname);
+		if (!attrFileName.getValue(fname))
+			return;
+		delRefArchive(MFnStringData(fname).string());
+	}
+	MGlobal::displayInfo(MString("Removal callback node: ") + nodeFn.name());
+}
 
 EC_EXPORT MStatus initializePlugin(MObject obj)
 {
@@ -152,6 +179,16 @@ EC_EXPORT MStatus initializePlugin(MObject obj)
       &AlembicCurvesLocatorNode::creator,
       &AlembicCurvesLocatorNode::initialize,
       MPxNode::kLocatorNode);
+
+   MDGMessage::addNodeRemovedCallback(removeExocortexAlembicNode, "ExocortexAlembicXform", NULL, &status);
+   MDGMessage::addNodeRemovedCallback(removeExocortexAlembicNode, "ExocortexAlembicCamera", NULL, &status);
+   MDGMessage::addNodeRemovedCallback(removeExocortexAlembicNode, "ExocortexAlembicPolyMesh", NULL, &status);
+   MDGMessage::addNodeRemovedCallback(removeExocortexAlembicNode, "ExocortexAlembicSubD", NULL, &status);
+   MDGMessage::addNodeRemovedCallback(removeExocortexAlembicNode, "ExocortexAlembicPolyMeshDeform", NULL, &status);
+   MDGMessage::addNodeRemovedCallback(removeExocortexAlembicNode, "ExocortexAlembicSubDDeform", NULL, &status);
+   MDGMessage::addNodeRemovedCallback(removeExocortexAlembicNode, "ExocortexAlembicPoints", NULL, &status);
+   MDGMessage::addNodeRemovedCallback(removeExocortexAlembicNode, "ExocortexAlembicCurves", NULL, &status);
+   MDGMessage::addNodeRemovedCallback(removeExocortexAlembicNode, "ExocortexAlembicCurvesDeform", NULL, &status);
 
    // Load the menu!
    MString cmd = "source \"menu.mel\"; exocortexAlembicLoadMenu(\"" + plugin.name() + "\");";

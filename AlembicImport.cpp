@@ -142,6 +142,7 @@ MStatus AlembicImportCommand::importSingleJob(const MString &job, int jobNumber)
 	{
 		ESS_LOG_WARNING("[ExocortexAlembic] Import job cancelled by user");
 		pBar.stop();
+		delRefArchive( jobParser.filename );
 		return MS::kSuccess;
 	}
 
@@ -154,6 +155,7 @@ MStatus AlembicImportCommand::importSingleJob(const MString &job, int jobNumber)
 		pArchiveCache->clear();
 		ESS_LOG_WARNING("[ExocortexAlembic] Import job cancelled by user");
 		pBar.stop();
+		delRefArchive( jobParser.filename );
 		return MS::kSuccess;
 	}
 
@@ -164,6 +166,7 @@ MStatus AlembicImportCommand::importSingleJob(const MString &job, int jobNumber)
 		pArchiveCache->clear();
 		ESS_LOG_ERROR("[ExocortexAlembic] Unable to create file node and/or time control.");
 		MPxCommand::setResult("Unable to create file node and/or time control");
+		delRefArchive( jobParser.filename );
 		return MS::kFailure;
 	}
 
@@ -177,14 +180,20 @@ MStatus AlembicImportCommand::importSingleJob(const MString &job, int jobNumber)
 		MItDag().getPath(dagPath);
 		SceneNodeAppPtr appRoot = buildMayaSceneGraph(dagPath, SearchReplace::createReplacer(), fileTimeCtrl);
 		if (!AttachSceneFile(fileRoot, appRoot, jobParser, &pBar))
+		{
+			delRefArchive( jobParser.filename );
 			return MS::kFailure;
+		}
 	}
 	else
 	{
 		//pBar.setCaption(std::string("Import"));
 		SceneNodeAppPtr appRoot(new SceneNodeMaya(fileTimeCtrl));
 		if (!ImportSceneFile(fileRoot, appRoot, jobParser, &pBar))
+		{
+			delRefArchive( jobParser.filename );
 			return MS::kFailure;
+		}
 		AlembicPostImportPoints();
 	}
 
@@ -215,8 +224,12 @@ MStatus AlembicImportCommand::importSingleJob(const MString &job, int jobNumber)
 		MString result;
 		status = MPxCommand::getCurrentResult(result);
 		if (status == MS::kSuccess && result.length() > 0)	// therefore, there's a return value and something went wrong somewhere!
+		{
+			delRefArchive( jobParser.filename );
 			return MS::kFailure;
+		}
 	}
+	decRefArchive( jobParser.filename );
 	return MS::kSuccess;
 }
 
