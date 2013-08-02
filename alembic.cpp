@@ -57,20 +57,17 @@ void removeExocortexAlembicNode(MObject &node, void *clientData)
 	if (!fname.isNull())
 	{
 		MPlug attrFileName(nodeFn.object(), fname);
-		if (!attrFileName.getValue(fname))
-			return;
-		delRefArchive(MFnStringData(fname).string());
+		if (attrFileName.getValue(fname))
+			delRefArchive(MFnStringData(fname).string());
 	}
 
 	fname = nodeFn.attribute("uv_fileName");
 	if (!fname.isNull())
 	{
 		MPlug attrFileName(nodeFn.object(), fname);
-		if (!attrFileName.getValue(fname))
-			return;
-		delRefArchive(MFnStringData(fname).string());
+		if (attrFileName.getValue(fname))
+			delRefArchive(MFnStringData(fname).string());
 	}
-	MGlobal::displayInfo(MString("Removal callback node: ") + nodeFn.name());
 }
 
 EC_EXPORT MStatus initializePlugin(MObject obj)
