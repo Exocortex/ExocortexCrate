@@ -81,6 +81,11 @@ public:
 		entries.push_back( entry );
 		nextAccess ++;
 	}
+
+	void clear(void) {
+		this->nextAccess = 0;
+		this->entries.clear();
+	}
 };
 
 std::string getExporterName( std::string const& shortName );
