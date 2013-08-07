@@ -349,7 +349,7 @@ MStatus AlembicPolyMesh::Save(double time)
        MIntArray normalIDsArray;
        node.getNormalIds(normPerFaceArray, normalIDsArray);
 
-	   if (indexedNormalsIndices.size() == mSampleLookup.size())
+	   //if (indexedNormalsIndices.size() == mSampleLookup.size())
 	   {
 		   indexedNormalsIndices.resize(normalIDsArray.length());
 		   for (int i = 0; i < indexedNormalsIndices.size(); ++i)
