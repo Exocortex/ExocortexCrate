@@ -23,6 +23,11 @@ if( Max_VERSION MATCHES "2013" )
 	add_definitions( -DUNICODE ) 
 endif()
 
+if( Max_VERSION MATCHES "2014" )
+	add_definitions( -D_UNICODE ) 
+	add_definitions( -DUNICODE ) 
+endif()
+
 if( NOT Max_VERSION MATCHES "2011" )
 	add_definitions( -DTHINKING_PARTICLES ) 
 	set( TP ON )
