@@ -615,6 +615,8 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
                std::vector<std::string> token;
                boost::split(token, faceSetNames[j], boost::is_any_of("_"));
 
+               if(token.size() != 2) continue;
+
                try
                {
                   matIDs.push_back(boost::lexical_cast< int >(token[1]));
