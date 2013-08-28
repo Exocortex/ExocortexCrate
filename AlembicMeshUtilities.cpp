@@ -612,20 +612,35 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
            std::vector<int> matIDs;
            for(size_t j=0;j<faceSetNames.size();j++)
            {
-               std::vector<std::string> token;
-               boost::split(token, faceSetNames[j], boost::is_any_of("_"));
-
-               if(token.size() != 2) continue;
+               std::string& name = faceSetNames[j];
+               int a = 0;
+               int b = (int)name.size()-1;
+               bool bNumFound = false;
+               for( int k=b; k>=0; k-- ){
+                  if( '0' <= name[k] && name[k] <= '9' ){
+                     if(!bNumFound){
+                        bNumFound = true;
+                        b = k;
+                     }
+                  }
+                  else if(bNumFound){
+                     a = k+1;
+                     break;
+                  }
+               }
+               
+               std::string extractedNum = name.substr(a, b-a+1);
 
                try
                {
-                  matIDs.push_back(boost::lexical_cast< int >(token[1]));
+                  matIDs.push_back(boost::lexical_cast< int >(extractedNum));
                }
                catch( const boost::bad_lexical_cast & )
                {
                   
                }
            }
+           
 
            for(size_t j=0;j<faceSetNames.size();j++)
            {
@@ -640,6 +655,7 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
                AbcG::IFaceSetSchema::Sample faceSetSample = faceSet.getValue(sampleInfo.floorIndex);
                Abc::Int32ArraySamplePtr faces = faceSetSample.getFaces();
 
+               //ESS_LOG_WARNING("faceset name: "<<faceSetNames[j]);
                int nMatId = (int)j;
                if(matIDs.size() == faceSetNames.size()){
                   nMatId = matIDs[j];
