@@ -444,13 +444,13 @@ int ExocortexAlembicStaticInterface_ExocortexAlembicImportJobs( CONST_2013 MCHAR
             }
 			boost::split(valuePair, tokens[j], boost::is_any_of("="));
 
-            boost::trim(valuePair[0]);
-            boost::trim(valuePair[1]);
-
 			if(valuePair.size() != 2){
 				ESS_LOG_WARNING("Skipping invalid token: "<<tokens[j]);
 				continue;
 			}
+
+            boost::trim(valuePair[0]);
+            boost::trim(valuePair[1]);
 
 			if(boost::iequals(valuePair[0], "filename")){
 				file = valuePair[1];
