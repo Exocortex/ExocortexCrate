@@ -148,6 +148,7 @@ CStatus exportCommandImp( CRef& in_ctxt )
       }
       jobString += L";guidecurves="+settings.GetParameterValue(L"guidecurves").GetAsText();
       jobString += L";includeParentNodes="+settings.GetParameterValue(L"includeParentNodes").GetAsText();
+      jobString += L";renameConflictingNodes="+settings.GetParameterValue(L"renameConflictingNodes").GetAsText();
       
       LONG transformMode = settings.GetParameterValue(L"transforms");
       if( transformMode == 0 ){//flatten hierarchy
@@ -198,6 +199,7 @@ CStatus exportCommandImp( CRef& in_ctxt )
       bool guidecurves = false;
 	  bool geomApproxSubD = false;
       bool includeParentNodes = true;
+      bool renameConflictingNodes = false;
       bool useOgawa = false;
       //CRefArray objects;
 
@@ -277,6 +279,10 @@ CStatus exportCommandImp( CRef& in_ctxt )
          else if(valuePair[0].IsEqualNoCase(L"includeParentNodes"))
          {
             includeParentNodes = (bool)CValue(valuePair[1]);
+         }
+         else if(valuePair[0].IsEqualNoCase(L"renameConflictingNodes"))
+         {
+            renameConflictingNodes = (bool)CValue(valuePair[1]);
          }
          else if(valuePair[0].IsEqualNoCase(L"filename")){
             filename = CValue(valuePair[1]).GetAsText();
@@ -402,6 +408,7 @@ CStatus exportCommandImp( CRef& in_ctxt )
       job->SetOption(L"guideCurves",guidecurves);
 	  job->SetOption(L"geomApproxSubD",geomApproxSubD);
       job->SetOption(L"includeParentNodes",includeParentNodes);
+      job->SetOption(L"renameConflictingNodes",renameConflictingNodes);
       job->SetOption(L"useOgawa",useOgawa);
 
       // check if the job is satifsied
@@ -518,6 +525,7 @@ ESS_CALLBACK_START(alembic_export_settings_Define,CRef&)
    oCustomProperty.AddParameter(L"transformcache",CValue::siBool,siPersistable,L"",L"",0,0,1,0,1,oParam);
    oCustomProperty.AddParameter(L"transforms",CValue::siInt4,siPersistable,L"",L"",0,0,10,0,10,oParam);
    oCustomProperty.AddParameter(L"includeParentNodes",CValue::siBool,siPersistable,L"",L"",1,0,1,0,1,oParam);
+   oCustomProperty.AddParameter(L"renameConflictingNodes",CValue::siBool,siPersistable,L"",L"",0,0,1,0,1,oParam);
    oCustomProperty.AddParameter(L"storageFormat",CValue::siInt4,siPersistable,L"",L"",0,0,10,0,10,oParam);
 
 	return CStatus::OK;
@@ -530,7 +538,7 @@ ESS_CALLBACK_START(alembic_export_settings_DefineLayout,CRef&)
 	oLayout = ctxt.GetSource();
 	oLayout.Clear();
 
-    oLayout.SetViewSize(600, 475);
+    oLayout.SetViewSize(600, 500);
 
     std::stringstream versionText;
    versionText<<"Exocortex Crate "<<PLUGIN_MAJOR_VERSION<<"."<<PLUGIN_MINOR_VERSION<<"."<<crate_BUILD_VERSION;
@@ -570,7 +578,7 @@ ESS_CALLBACK_START(alembic_export_settings_DefineLayout,CRef&)
    transformItems[5] = (LONG) 2;
    oLayout.AddEnumControl(L"transforms", transformItems, L"Transforms");
    oLayout.AddItem(L"includeParentNodes", "Include Parent Nodes");
-
+   oLayout.AddItem(L"renameConflictingNodes", "Rename Conflicting Nodes");
 
    CValueArray storageItems(4);
    storageItems[0] = L"HDF5";
