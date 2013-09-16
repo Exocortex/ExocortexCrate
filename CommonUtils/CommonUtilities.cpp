@@ -1011,10 +1011,15 @@ std::string getUniqueName(const std::string& parentFullName, std::string& name)
    else{
       identifierCount[identifier] = it->second + 1;
       
-      std::stringstream stream;
-      stream<<removeXfoSuffix(name)<<"_"<<it->second<<"Xfo";
+      std::string fixedName = removeXfoSuffix(name);
 
-      ESS_LOG_WARNING("Renaming object "<<stream.str());
+      std::stringstream stream;
+      stream<<fixedName<<"_"<<it->second;
+      if(fixedName.size() != name.size()){ //for Maya compatibility
+         stream<<"Xfo";
+      }
+
+      ESS_LOG_WARNING("Renaming "<<name<<" to "<<stream.str());
 
       return stream.str();
    }
