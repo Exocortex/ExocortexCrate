@@ -429,6 +429,7 @@ CStatus exportCommandImp( CRef& in_ctxt )
    }
 
 
+   clearIdentifierMap();
 
    ProgressBar prog;
    prog = Application().GetUIToolkit().GetProgressBar();

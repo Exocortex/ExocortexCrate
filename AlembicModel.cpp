@@ -2,6 +2,7 @@
 #include "AlembicModel.h"
 #include "AlembicXform.h"
 #include "sceneGraph.h"
+#include "CommonUtilities.h"
 
 using namespace XSI;
 using namespace MATH;
@@ -10,7 +11,17 @@ using namespace MATH;
 AlembicModel::AlembicModel(SceneNodePtr eNode, AlembicWriteJob * in_Job, Abc::OObject oParent)
 : AlembicObject(eNode, in_Job, oParent)
 {
-   AbcG::OXform xform(GetMyParent(), eNode->name, GetJob()->GetAnimatedTs());
+   //AbcA::ObjectWriterPtr parent = GetObjectWriterPtr( GetMyParent() );
+   //AbcA::ObjectWriterPtr child = parent->getChild(eNode->name);
+   //if(child != NULL){
+   //   ESS_LOG_WARNING("duplicate name");
+   //}
+
+   std::string uniqueName = getUniqueName(GetMyParent().getFullName(), eNode->name);
+
+   AbcG::OXform xform(GetMyParent(), uniqueName, GetJob()->GetAnimatedTs());
+
+   eNode->name = uniqueName; //need to this so that the correct parent is retrived later
 
    // create the generic properties
    mOVisibility = CreateVisibilityProperty(xform,GetJob()->GetAnimatedTs());
