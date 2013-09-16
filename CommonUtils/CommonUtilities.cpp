@@ -985,3 +985,37 @@ AbcG::IVisibilityProperty getAbcVisibilityProperty(Abc::IObject shapeObj)
     //ESS_LOG_WARNING("loading vis from shape");
 	return AbcG::GetVisibilityProperty(shapeObj);
 }
+
+typedef std::map<std::string, int> identifierCountMap;
+identifierCountMap identifierCount;
+
+void clearIdentifierMap()
+{
+   identifierCount.clear();
+}
+
+std::string getUniqueName(const std::string& parentFullName, std::string& name)
+{
+   std::string identifier = parentFullName;
+   identifier += "/";
+   identifier += name;
+
+   //ESS_LOG_WARNING("lookup: "<<identifier);
+
+   identifierCountMap::iterator it = identifierCount.find(identifier);
+
+   if(it == identifierCount.end()){
+      identifierCount[identifier] = 0;
+      return name;
+   }
+   else{
+      identifierCount[identifier] = it->second + 1;
+      
+      std::stringstream stream;
+      stream<<removeXfoSuffix(name)<<"_"<<it->second<<"Xfo";
+
+      ESS_LOG_WARNING("Renaming object "<<stream.str());
+
+      return stream.str();
+   }
+}
