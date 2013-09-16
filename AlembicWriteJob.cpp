@@ -235,6 +235,8 @@ CStatus AlembicWriteJob::PreProcess()
    
    sceneStack.push_back(PreProcessStackElement(exoSceneRoot, GetTop()));
 
+   try{
+
    while( !sceneStack.empty() )
    {
 
@@ -300,6 +302,13 @@ CStatus AlembicWriteJob::PreProcess()
          ESS_LOG_ERROR("Do not have refernce to parent.");
          return CStatus::Fail;
       }
+   }
+
+   }catch( std::exception& exp ){
+      ESS_LOG_ERROR("An std::exception occured: "<<exp.what());
+      return CStatus::Fail;
+   }catch(...){
+      ESS_LOG_ERROR("Exception ecountered when exporting.");
    }
 
    return CStatus::OK;
