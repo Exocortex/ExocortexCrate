@@ -138,11 +138,15 @@ ESS_PROFILE_FUNC();
 	try {
 		iObj = getObjectFromArchive(szPath, szIdentifier);
 	} catch( std::exception exp ) {
+        extern bool g_hasModifierErrorOccurred;
+        g_hasModifierErrorOccurred = true;
 		ESS_LOG_ERROR( "Can not open Alembic data stream.  Path: " << szPath << " identifier: " << szIdentifier << " reason: " << exp.what() );
 		return;
 	}
 
 	if(!iObj.valid()) {
+        extern bool g_hasModifierErrorOccurred;
+        g_hasModifierErrorOccurred = true;
 		ESS_LOG_ERROR( "Not a valid Alembic data stream.  Path: " << szPath << " identifier: " << szIdentifier );
 		return;
 	}
@@ -164,6 +168,8 @@ ESS_PROFILE_FUNC();
 	SClass_ID superClassID = os->obj->SuperClassID();
 	Class_ID classID = os->obj->ClassID();
 	if( superClassID != SHAPE_CLASS_ID ) {
+        extern bool g_hasModifierErrorOccurred;
+        g_hasModifierErrorOccurred = true;
 		ESS_LOG_ERROR( "Can not convert internal object data into a ShapeObject, confused. (1)" );
 		return;
 	}
@@ -177,6 +183,8 @@ ESS_PROFILE_FUNC();
 		options.pPolyShape = &pLinearShape->shape;
 	}
 	else {
+        extern bool g_hasModifierErrorOccurred;
+        g_hasModifierErrorOccurred = true;
 		ESS_LOG_ERROR( "Can not convert internal object data into a ShapeObject, confused. (2)" );
 	}
 
@@ -184,6 +192,8 @@ ESS_PROFILE_FUNC();
 		AlembicImport_FillInShape(options);
    }
    catch(std::exception exp ) {
+        extern bool g_hasModifierErrorOccurred;
+        g_hasModifierErrorOccurred = true;
 		ESS_LOG_ERROR( "Error reading shape from Alembic data stream.  Path: " << strPath << " identifier: " << strIdentifier << " reason: " << exp.what() );
 		return;
    }

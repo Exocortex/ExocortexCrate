@@ -165,11 +165,15 @@ ESS_PROFILE_FUNC();
 	try {
 		iObj = getObjectFromArchive(szPath, szIdentifier);
 	} catch( std::exception exp ) {
+        extern bool g_hasModifierErrorOccurred;
+        g_hasModifierErrorOccurred = true;
 		ESS_LOG_ERROR( "Can not open Alembic data stream.  Path: " << szPath << " identifier: " << szIdentifier << " reason: " << exp.what() );
 		return;
 	}
 
 	if(!iObj.valid()) {
+        extern bool g_hasModifierErrorOccurred;
+        g_hasModifierErrorOccurred = true;
 		ESS_LOG_ERROR( "Not a valid Alembic data stream.  Path: " << szPath << " identifier: " << szIdentifier );
 		return;
 	}
@@ -225,6 +229,8 @@ ESS_PROFILE_FUNC();
 
    }
    else {
+        extern bool g_hasModifierErrorOccurred;
+        g_hasModifierErrorOccurred = true;
   		ESS_LOG_ERROR( "Can not convert internal mesh data into a PolyObject, confused." );
 	    return;
    }
@@ -233,6 +239,8 @@ ESS_PROFILE_FUNC();
 	   AlembicImport_FillInPolyMesh(options);
    }
    catch(std::exception exp ) {
+        extern bool g_hasModifierErrorOccurred;
+        g_hasModifierErrorOccurred = true;
 		ESS_LOG_ERROR( "Error reading mesh from Alembic data stream.  Path: " << strPath << " identifier: " << strIdentifier << " reason: " << exp.what() );
 		return;
    }

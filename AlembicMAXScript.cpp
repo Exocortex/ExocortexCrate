@@ -74,7 +74,8 @@ public:
 		exocortexGetLicenseStatus,
 		exocortexAlembicImportJobs,
 		exocortexAlembicExportJobs,
-		exocortexProfileStats
+		exocortexProfileStats,
+        exocortexHasModifierErrorOccurred
 	};
 
 	ExocortexAlembicStaticInterface()
@@ -224,6 +225,15 @@ public:
 			0,                      //* Flags  * /
 			0,                      //* Number  of arguments * /
 			p_end); 
+
+		AppendFunction(
+			exocortexHasModifierErrorOccurred,	//* function ID * /
+			_M("hasAnErrorOccurred"),    //* internal name * /
+			0,                      //* function name string resource name * / 
+			TYPE_INT,               //* Return type * /
+			0,                      //* Flags  * /
+			0,                      //* Number  of arguments * /
+			p_end); 
   }
 
 	static int ExocortexAlembicImport(
@@ -248,6 +258,8 @@ public:
 	static int ExocortexMemoryDiagnostics();
 
 	static int ExocortexGetLicenseStatus();
+    
+    static int ExocortexHasModifierErrorOccurred();
 
 	static int ExocortexAlembicImportJobs(CONST_2013 MCHAR* jobString);
 
@@ -263,6 +275,7 @@ public:
 		FN_1(exocortexAlembicImportJobs, TYPE_INT, ExocortexAlembicImportJobs, TYPE_STRING)
 		FN_1(exocortexAlembicExportJobs, TYPE_INT, ExocortexAlembicExportJobs, TYPE_STRING)
 		FN_0(exocortexProfileStats, TYPE_INT, ExocortexProfileStats)
+        FN_0(exocortexHasModifierErrorOccurred, TYPE_INT, ExocortexHasModifierErrorOccurred)
 	END_FUNCTION_MAP
 };
 
@@ -359,6 +372,14 @@ int ExocortexAlembicStaticInterface::ExocortexProfileStats()
 {
 	ESS_PROFILE_REPORT();
 	return 0;
+}
+
+bool g_hasModifierErrorOccurred = false;
+int ExocortexAlembicStaticInterface::ExocortexHasModifierErrorOccurred()
+{
+	bool val = g_hasModifierErrorOccurred;
+    g_hasModifierErrorOccurred = false;
+	return (int)val;
 }
 
 

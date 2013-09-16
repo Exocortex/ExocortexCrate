@@ -162,11 +162,15 @@ void AlembicMeshGeomModifier::ModifyObject (TimeValue t, ModContext &mc, ObjectS
 		ESS_PROFILE_SCOPE("getObjectFromArchive");
 		iObj = getObjectFromArchive(szPath, szIdentifier);
 	} catch( std::exception exp ) {
+        extern bool g_hasModifierErrorOccurred;
+        g_hasModifierErrorOccurred = true;
 		ESS_LOG_ERROR( "Can not open Alembic data stream.  Path: " << szPath << " identifier: " << szIdentifier << " reason: " << exp.what() );
 		return;
 	}
 
 	if(!iObj.valid()) {
+        extern bool g_hasModifierErrorOccurred;
+        g_hasModifierErrorOccurred = true;
 		ESS_LOG_ERROR( "Not a valid Alembic data stream.  Path: " << szPath << " identifier: " << szIdentifier );
 		return;
 	}
