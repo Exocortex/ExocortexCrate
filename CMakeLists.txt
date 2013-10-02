@@ -103,3 +103,8 @@ SET( PythonPluginSource_DIR ${BASE_DIR}/Workgroup/Addons/ExocortexAlembic/Applic
 SET( PythonPluginInstall_DIR ${Exocortex_INSTALL_BASE_DIR}/Softimage${Softimage_VERSION_STRING}/Application/Plugins )
 
 copy_directory( ${PythonPluginSource_DIR} ${PythonPluginInstall_DIR} )
+
+
+# -----------------------------------------------------------------------------------
+# prepare the new target directory for the ArnoldAlembic dll's / dso's
+file(MAKE_DIRECTORY ${Exocortex_INSTALL_BASE_DIR}/Softimage${Softimage_VERSION_STRING}/Application/ArnoldAlembicDSO )
