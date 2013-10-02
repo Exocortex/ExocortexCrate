@@ -736,80 +736,104 @@ bool hasStandinSupport()
 }
 #pragma disable( warning: 4996 )
 
+
+
+// global variable caching the found legal DSO path ---
 CString gDSOPath;
 
+
+//-------------------------------------------------------------------------------
+// attempts to locate the full path of the ArnoldAlembic library.
+//
+// returns the full, verified path as a CString (or an empty CString)
+//
+// Two legal file locations are checked (in relation to the Alembic install dir):
+//
+//          Application/Plugins/bin/DSO   (the old one)
+//          Application/ArnoldAlembicDSO  (the new alternative)
+//
+// Three legal file names are checked (both as .dll and .so):
+//
+//			ExocortexAlembicArnold
+//			Arnold3ExocortexAlembic
+//			Arnold4ExocortexAlembic
+//
 CString getDSOPath()
 {
-   // check if we have a cached result
-   if(!gDSOPath.IsEmpty())
-      return gDSOPath;
 
-   CString result;
-   // first check the environment variables
-   if(getenv("ArnoldAlembicDSO") != NULL)
-   {
-      std::string env = getenv("ArnoldAlembicDSO");
-      if(!env.empty())
-         result = env.c_str();
-   }
+	// check if we have a cached result
+	if(!gDSOPath.IsEmpty())
+	  return gDSOPath;
 
-   if(result.IsEmpty())
-   {
-     CRefArray plugins = Application().GetPlugins();
-     for(LONG i=0;i<plugins.GetCount();i++)
-     {
-       Plugin plugin(plugins[i]);
+	CString result;
+	// first check the environment variables
+	if(getenv("ArnoldAlembicDSO") != NULL)
+	{
+	  std::string env = getenv("ArnoldAlembicDSO");
+	  if(!env.empty())
+		 result = env.c_str();
+	}
 
-       CString path = plugin.GetFilename();
-       path = path.GetSubString(0,path.ReverseFindString(CUtils::Slash()));
-       path = path.GetSubString(0,path.ReverseFindString(CUtils::Slash()));
-#ifdef _WIN32
-       path = CUtils::BuildPath(path,L"DSO",L"ExocortexAlembicArnold.dll");
-#else
-       path = CUtils::BuildPath(path,L"DSO",L"libExocortexAlembicArnold.so");
-#endif
-       boost::filesystem::path boostPath = path.GetAsciiString();
-       if( boost::filesystem::exists( boostPath ) ) {
-         result = path;
-         break;
-       }
-#ifdef _WIN32
-       path = CUtils::BuildPath(path,L"DSO",L"Arnold3ExocortexAlembic.dll");
-#else
-       path = CUtils::BuildPath(path,L"DSO",L"libArnold3ExocortexAlembic.so");
-#endif
-       boostPath = path.GetAsciiString();
-       if( boost::filesystem::exists( boostPath ) ) {
-         result = path;
-         break;
-       }
-#ifdef _WIN32
-       path = CUtils::BuildPath(path,L"DSO",L"Arnold4ExocortexAlembic.dll");
-#else
-       path = CUtils::BuildPath(path,L"DSO",L"libArnold4ExocortexAlembic.so");
-#endif
-       boostPath = path.GetAsciiString();
-       if( boost::filesystem::exists( boostPath ) ) {
-         result = path;
-         break;
-       }
-     }
-   }
+	if(result.IsEmpty())
+	{
+		CRefArray plugins = Application().GetPlugins();
 
-   // validate the path exists
-   //if(!result.IsEmpty())
-   //{
-   //   FILE * dsoFile = fopen(result.GetAsciiString(),"r");
-   //   if(dsoFile == NULL)
-   //   {
-   //      Application().LogMessage(L"[ExocortexAlembic] Arnold DSO path '"+result+L"' does not exist.",siErrorMsg);
-   //      result.Clear();
-   //   }
-   //   else
-   //      fclose(dsoFile);
-   //}
+		// some prep work ---
+		CString suffix = L".so";
 
-   // store the cached result
-   gDSOPath = result;
-   return result;
+		#ifdef _WIN32
+		suffix = L".dll";
+		#endif
+
+		CStringArray aLegalBaseNames(3);
+		aLegalBaseNames[0] = L"ExocortexAlembicArnold";
+		aLegalBaseNames[1] = L"Arnold3ExocortexAlembic";
+		aLegalBaseNames[2] = L"Arnold4ExocortexAlembic";
+
+		CStringArray aLegalPaths(2);
+
+		CString path, basePath1, basePath2;
+		boost::filesystem::path boostPath;
+
+		// iterate over all loaded plugins ---
+		for(LONG i=0;i<plugins.GetCount();i++)
+		{
+			Plugin plugin(plugins[i]);
+
+			// first check if this even _is_ an alembic plugin ---
+			path = plugin.GetFilename();
+			path.Lower();
+			if(path.FindString(L"alembic") != ULONG_MAX)
+			{
+				// extract both legal basePaths --- 
+				path = plugin.GetFilename();
+				path = path.GetSubString(0,path.ReverseFindString(CUtils::Slash()));
+				path = path.GetSubString(0,path.ReverseFindString(CUtils::Slash()));		
+				aLegalPaths[0] = CUtils::BuildPath(path, L"DSO");
+
+				path = path.GetSubString(0,path.ReverseFindString(CUtils::Slash()));
+				path = path.GetSubString(0,path.ReverseFindString(CUtils::Slash()));
+				aLegalPaths[1] = CUtils::BuildPath(path, L"ArnoldAlembicDSO");
+				
+				// now check for the actual libraries ---
+				for(LONG k=0;k<aLegalBaseNames.GetCount();k++)
+				{
+					for(LONG m=0;m<aLegalPaths.GetCount();m++)
+					{
+						path = CUtils::BuildPath(aLegalPaths[m], aLegalBaseNames[k]) + suffix;
+						boostPath = path.GetAsciiString();
+						if( boost::filesystem::exists( boostPath ) ) 
+						{
+							result = path;
+							break;
+						}
+					}
+				}
+			}
+		}
+	}
+
+    // store the cached result
+    gDSOPath = result;
+    return result;
 }
