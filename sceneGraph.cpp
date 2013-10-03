@@ -207,13 +207,17 @@ SceneNodeXSIPtr buildCommonSceneGraph(XSI::CRef xsiRoot, int& nNumNodes, bool bU
       {
          newNode = createNodeXSI(xRef, type);
          if(type == SceneNode::ITRANSFORM || type == SceneNode::NAMESPACE_TRANSFORM){
-            newNode->name+="Xfo";
+            //newNode->name+="Xfo";
          }
+		 else{
+			newNode->name+="Shape";
+		 }
       }
       else{
          newNode = createNodeXSI(xRef, SceneNode::ETRANSFORM);
-         newNode->name+="Xfo";
+         //newNode->name+="Xfo";
          SceneNodePtr geoNode = createNodeXSI(xRef, type);
+		 geoNode->name+="Shape";
 
          newNode->children.push_back(geoNode);
          geoNode->parent = newNode.get();

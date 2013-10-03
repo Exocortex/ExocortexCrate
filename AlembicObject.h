@@ -38,7 +38,7 @@ public:
    virtual Abc::OCompoundProperty GetCompound() = 0;
    int GetNumSamples() { return mNumSamples; }
 
-   std::string GetXfoName();
+   //std::string GetXfoName();
 
    virtual XSI::CStatus Save(double time) = 0;
 };

@@ -57,7 +57,7 @@ std::string getIdentifierFromRef(CRef in_Ref, bool includeHierarchy)
       {
          if(model.GetFullName() == Application().GetActiveSceneRoot().GetFullName())
             break;
-         result = std::string("/")+ std::string(model.GetName().GetAsciiString()) + std::string("Xfo") + result;
+         result = std::string("/")+ std::string(model.GetName().GetAsciiString()) /*+ std::string("Xfo")*/ + result;
          ref = model.GetModel().GetRef();
       }
       else if(obj.IsValid())
@@ -67,7 +67,7 @@ std::string getIdentifierFromRef(CRef in_Ref, bool includeHierarchy)
             result = std::string("/")+ std::string(obj.GetName().GetAsciiString()) + result;
             has3DObj = true;
          }
-         result = std::string("/")+ std::string(obj.GetName().GetAsciiString()) + std::string("Xfo") + result;
+         result = std::string("/")+ std::string(obj.GetName().GetAsciiString()) /*+ std::string("Xfo")*/ + result;
          if(includeHierarchy)
             ref = obj.GetParent3DObject().GetRef();
          else

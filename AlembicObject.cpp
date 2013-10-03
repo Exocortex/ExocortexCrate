@@ -31,12 +31,12 @@ AlembicObject::~AlembicObject()
 {
 }
 
-std::string AlembicObject::GetXfoName()
-{
-   XSI::X3DObject node(GetRef());
-   std::string modelName(node.GetName().GetAsciiString());
-   return std::string(modelName+"Xfo");
-}
+//std::string AlembicObject::GetXfoName()
+//{
+//   XSI::X3DObject node(GetRef());
+//   std::string modelName(node.GetName().GetAsciiString());
+//   return std::string(modelName);
+//}
 
 std::map<ULONG,alembic_UD*> alembic_UD::gAlembicUDs;
 
