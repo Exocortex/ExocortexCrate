@@ -441,8 +441,8 @@ CStatus alembic_create_item_Invoke
          if(itemType == alembicItemType_visibility)
          {
             ESS_PROFILE_SCOPE("alembic_create_item_Invoke create_the_operator visibility");
-            //bool importVis = args[4];
-            if(!isAnimated)
+            bool importVis = args[4];
+            if(!isAnimated || importVis)
             {
                // this means skip the creation of the operator
                AbcG::IVisibilityProperty visibilityProperty = getAbcVisibilityProperty(abcObject);
@@ -2641,11 +2641,11 @@ ESS_CALLBACK_START(alembic_import_settings_DefineLayout, CRef&)
    oLayout.AddItem(L"facesets",L"Clusters");
 
    CValueArray items(4);
-   //items[0] = L"Just Import Value";
-   //items[1] = (LONG) 0l;
-   //items[2] = L"Connected Operators";
-   //items[3] = (LONG) 1l;
-   //oLayout.AddEnumControl(L"visibility",items,L"Visibility");
+   items[0] = L"Just Import Value if Constant";
+   items[1] = (LONG) 0l;
+   items[2] = L"Connected Operators";
+   items[3] = (LONG) 1l;
+   oLayout.AddEnumControl(L"visibility",items,L"Visibility");
 
    if(hasStandinSupport())
    {
