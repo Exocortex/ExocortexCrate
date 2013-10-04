@@ -442,7 +442,7 @@ CStatus alembic_create_item_Invoke
          {
             ESS_PROFILE_SCOPE("alembic_create_item_Invoke create_the_operator visibility");
             bool importVis = args[4];
-            if(!isAnimated || importVis)
+            if(!isAnimated && !importVis)
             {
                // this means skip the creation of the operator
                AbcG::IVisibilityProperty visibilityProperty = getAbcVisibilityProperty(abcObject);
@@ -477,7 +477,8 @@ CStatus alembic_create_item_Invoke
          }
          else if(itemType == alembicItemType_xform)
          {
-            if(!isAnimated)  
+			const bool importTransforms = args[7];
+            if(!isAnimated && !importTransforms)  
             {
                 ESS_PROFILE_SCOPE("alembic_create_itme_Invoke importConstantXform");
 
@@ -1348,7 +1349,7 @@ bool createNode(SceneNodeXSI* appNode, SceneNodeAlembicPtr fileNode, const IJobS
    //}
 
    //CustomProperty timeControl = timeRef;
-   CValueArray createItemArgs(7);
+   CValueArray createItemArgs(8);
    //createItemArgs[0] = timeRef; //this is now intialized later on
    createItemArgs[1] = jobParams.importFacesets;
    createItemArgs[2] = jobParams.importNormals;
@@ -1356,6 +1357,7 @@ bool createNode(SceneNodeXSI* appNode, SceneNodeAlembicPtr fileNode, const IJobS
    createItemArgs[4] = jobParams.importVisibilityControllers;
    createItemArgs[5] = jobParams.useMultiFile;
    createItemArgs[6] = jobParams.operatorCreationForExistingNodes;
+   createItemArgs[7] = jobParams.importTransformControllers;
 
    //the transform
    
@@ -1509,7 +1511,7 @@ bool createMergeableNode(SceneNodeXSI* appNode, SceneNodeAlembicPtr fileXformNod
    //}
 
    // store the time control in a value array
-   CValueArray createItemArgs(7);
+   CValueArray createItemArgs(8);
    //createItemArgs[0] = timeRef;//this is now intialized later on
    createItemArgs[1] = jobParams.importFacesets;
    createItemArgs[2] = jobParams.importNormals;
@@ -1517,6 +1519,7 @@ bool createMergeableNode(SceneNodeXSI* appNode, SceneNodeAlembicPtr fileXformNod
    createItemArgs[4] = jobParams.importVisibilityControllers;
    createItemArgs[5] = jobParams.useMultiFile;
    createItemArgs[6] = jobParams.operatorCreationForExistingNodes;
+   createItemArgs[7] = jobParams.importTransformControllers;
 
 
    Abc::IObject shapeObj = fileShapeNode->getObject();
@@ -2239,6 +2242,7 @@ ESS_CALLBACK_START(alembic_import_jobs_Execute, CRef&)
       jobParser.importUVs = settings.GetParameterValue(L"uvs");
       jobParser.importFacesets = settings.GetParameterValue(L"facesets");
       jobParser.importVisibilityControllers = (bool)settings.GetParameterValue(L"visibility");
+	  jobParser.importTransformControllers = (bool)settings.GetParameterValue(L"transforms");
       if(hasStandinSupport())
       {
          LONG standinsValue = settings.GetParameterValue(L"standins");
@@ -2601,6 +2605,7 @@ ESS_CALLBACK_START(alembic_import_settings_Define, CRef&)
    oCustomProperty.AddParameter(L"uvs",CValue::siBool,siPersistable,L"",L"",1,0,1,0,1,oParam);
    oCustomProperty.AddParameter(L"facesets",CValue::siBool,siPersistable,L"",L"",1,0,1,0,1,oParam);
    oCustomProperty.AddParameter(L"visibility",CValue::siInt4,siPersistable,L"",L"",0,0,10,0,10,oParam);
+   oCustomProperty.AddParameter(L"transforms",CValue::siInt4,siPersistable,L"",L"",0,0,10,0,10,oParam);
    if(hasStandinSupport())
    {
       oCustomProperty.AddParameter(L"standins",CValue::siInt4,siPersistable,L"",L"",0,0,10,0,10,oParam);
@@ -2646,6 +2651,13 @@ ESS_CALLBACK_START(alembic_import_settings_DefineLayout, CRef&)
    items[2] = L"Connected Operators";
    items[3] = (LONG) 1l;
    oLayout.AddEnumControl(L"visibility",items,L"Visibility");
+
+   items.Resize(4);
+   items[0] = L"Just Import Value if Constant";
+   items[1] = (LONG) 0l;
+   items[2] = L"Connected Operators";
+   items[3] = (LONG) 1l;
+   oLayout.AddEnumControl(L"transforms",items,L"Transforms");
 
    if(hasStandinSupport())
    {
