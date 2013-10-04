@@ -91,6 +91,10 @@ bool IJobStringParser::parse(const std::string& jobString)
 		}
 		else if(boost::iequals(valuePair[0], "importVisibilityControllers"))
 		{
+			importTransformControllers = parseBool(valuePair[1]);
+		}
+		else if(boost::iequals(valuePair[0], "importTransformControllers"))
+		{
 			importVisibilityControllers = parseBool(valuePair[1]);
 		}
 		else if(boost::iequals(valuePair[0], "failOnUnsupported"))
@@ -203,7 +207,8 @@ std::string IJobStringParser::buildJobString()
    }
 
    stream<<"normals="<<importNormals<<";uvs="<<importUVs<<";facesets="<<importFacesets;
-   stream<<";importVisibilityControllers="<<importVisibilityControllers<<";importStandinProperties="<<importStandinProperties;
+   stream<<";importVisibilityControllers="<<importVisibilityControllers<<";importTransformControllers="<<importTransformControllers;
+   stream<<";importStandinProperties="<<importStandinProperties;
    stream<<";importBoundingBoxes="<<importBoundingBoxes<<";attachToExisting="<<attachToExisting<<";skipUnattachedNodes="<<skipUnattachedNodes;
    stream<<";failOnUnsupported="<<failOnUnsupported<<";enableImportRootSelection="<<enableImportRootSelection<<";stripMayaNamespaces="<<stripMayaNamespaces;
    stream<<";importCurvesAsStrands="<<importCurvesAsStrands<<";enableSubD="<<enableSubD<<";useMultifile="<<useMultiFile;

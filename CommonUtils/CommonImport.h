@@ -41,6 +41,7 @@ public:
    bool attachToExisting;
    bool failOnUnsupported;
    bool importVisibilityControllers;
+   bool importTransformControllers;
    bool selectShapes;
    bool skipUnattachedNodes;
    bool enableImportRootSelection;
@@ -73,6 +74,7 @@ public:
       attachToExisting(false),
       failOnUnsupported(false),
       importVisibilityControllers(false),
+	  importTransformControllers(false),
       includeChildren(false),
       selectShapes(true),
       skipUnattachedNodes(false),
