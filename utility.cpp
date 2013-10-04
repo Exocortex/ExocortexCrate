@@ -22,15 +22,15 @@ std::string buildIdentifierFromRef(const SceneEntry &in_Ref)
    INode *pNode = in_Ref.node;
 
    // Build the base string
+   result = std::string("/")+ std::string( EC_MCHAR_to_UTF8( pNode->GetName() ) ) + std::string("Shape");
    result = std::string("/")+ std::string( EC_MCHAR_to_UTF8( pNode->GetName() ) ) + result;
-   result = std::string("/")+ std::string( EC_MCHAR_to_UTF8( pNode->GetName() ) ) + std::string("Xfo") + result;
 
    // Look for any nodes that we might add to the alembic hiearchy
    pNode = pNode->GetParentNode();
    while(pNode && !pNode->IsRootNode())
    {
        if (IsModelTransformNode(pNode))
-           result = std::string("/")+ std::string( EC_MCHAR_to_UTF8( pNode->GetName() ) ) + std::string("Xfo") + result;
+           result = std::string("/")+ std::string( EC_MCHAR_to_UTF8( pNode->GetName() ) ) + result;
        
        pNode = pNode->GetParentNode();
    }
@@ -38,43 +38,10 @@ std::string buildIdentifierFromRef(const SceneEntry &in_Ref)
    return result;
 }
 
-/*std::string buildModelIdFromXFormId(const std::string &xformId)
-{
-    size_t start = xformId.rfind("/");
-    start += 1;
-    size_t end = xformId.rfind("Xfo");
-    end -=1;
-    std::string modelName = xformId.substr(start, end-start+1);
-    modelName = xformId + std::string("/") + modelName;
-    return modelName;
-}*/
-
 std::string getIdentifierFromRef(const SceneEntry &in_Ref)
 {
     return in_Ref.fullname;
 }
-
-/*std::string getModelFullName( const std::string &identifier )
-{
-    // Max Scene nodes are also identified by their transform nodes since an INode contains
-    // both the transform and the shape.  So if we find an "xfo" at the end of the identifier
-    // then we extract the model name from the identifier
-    std::string modelName;
-    size_t pos = identifier.rfind("Xfo", identifier.length()-3, 3);
-    if (pos == identifier.npos)
-    {
-        modelName = identifier;
-    }
-    else
-    {
-        size_t start = identifier.rfind("/");
-        start += 1;
-        modelName = identifier.substr(start, identifier.length()-4);
-        modelName = identifier + std::string("/") + modelName;
-    }
-
-    return modelName;
-}*/
 
 void RoundTicksToNearestFrame( int& nTicks, float& fTimeAlpha )
 {

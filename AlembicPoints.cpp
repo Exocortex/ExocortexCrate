@@ -21,8 +21,8 @@ AlembicPoints::AlembicPoints(const SceneEntry &in_Ref, AlembicWriteJob *in_Job)
 	mTotalShapeMeshes = 0;
 	//mTimeSamplesCount = 0;
 
-    std::string pointsName = EC_MCHAR_to_UTF8(  in_Ref.node->GetName() );
-    std::string xformName = pointsName + "Xfo";
+    std::string xformName = EC_MCHAR_to_UTF8( in_Ref.node->GetName() );
+	std::string pointsName = xformName + "Shape";
 
     AbcG::OXform xform(GetOParent(), xformName.c_str(), GetCurrentJob()->GetAnimatedTs());
     AbcG::OPoints points(xform, pointsName.c_str(), GetCurrentJob()->GetAnimatedTs());
@@ -1053,11 +1053,12 @@ void AlembicPoints::saveCurrentFrameMeshes()
             {
             ESS_PROFILE_SCOPE("AlembicPoints::saveCurrentFrameMeshes - save xforms, bbox, geo, topo");
 			//save out the mesh xForm
-			std::string xformName = mi->name + "Xfo";
-			AbcG::OXform xform(mJob->GetArchive().getTop(), xformName.c_str(), GetCurrentJob()->GetAnimatedTs());
+			//std::string xformName = mi->name + "Xfo";
+			AbcG::OXform xform(mJob->GetArchive().getTop(), mi->name, GetCurrentJob()->GetAnimatedTs());
 			AbcG::OXformSchema& xformSchema = xform.getSchema();//mi->xformSchema;
 
-			AbcG::OPolyMesh mesh(xform, mi->name.c_str(), GetCurrentJob()->GetAnimatedTs());
+			std::string meshName = mi->name + "Shape";
+			AbcG::OPolyMesh mesh(xform, meshName, GetCurrentJob()->GetAnimatedTs());
 			meshSchema = mesh.getSchema();
 
 			AbcG::XformSample xformSample;
