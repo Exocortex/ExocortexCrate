@@ -56,7 +56,16 @@ ADD_DEPENDENCIES(${PROJECT_NAME} AlembicAbcGeom)
 get_target_property( Install_TARGET ${PROJECT_NAME} LOCATION )
 
 if( ARNOLD_MAJOR_VERSION MATCHES 4 ) 
-	SET( Install_DIR ${Exocortex_INSTALL_BASE_DIR}/Softimage/Application/Plugins/bin/DSO/ )
+	SET( Install_DIR ${Exocortex_INSTALL_BASE_DIR}/Softimage/Application/ArnoldAlembicDSO/ )
+
+	copy_file_to_directory( ${Install_TARGET} ${Install_DIR} )
+
+	if( WIN32 )
+		copy_file_to_directory( ${RER_DEPENDENCIES} ${Install_DIR} )
+		copy_file_to_directory( ${EAH_DEPENDENCIES} ${Install_DIR} )
+	endif()
+
+	SET( Install_DIR ${Exocortex_INSTALL_BASE_DIR}/Softimage2014/Application/ArnoldAlembicDSO/ )
 
 	copy_file_to_directory( ${Install_TARGET} ${Install_DIR} )
 
