@@ -450,6 +450,8 @@ CStatus exportCommandImp( CRef& in_ctxt )
    // now, let's run through all frames, and process the jobs
    CValueArray setFrameArgs;
    CValue setFrameResult;
+   int nMaxUpdates = 5;
+   int nUpdateCount = 0;
    for(double frame = minFrame; frame<=maxFrame; frame += maxSteps / maxSubsteps)
    {
       setFrameArgs.Resize(2);
@@ -465,8 +467,20 @@ CStatus exportCommandImp( CRef& in_ctxt )
       for(size_t i=0;i<jobPtrs.size();i++)
       {
          CStatus status = jobPtrs[i]->Process(frame);
-         if(status == CStatus::OK)
+         if(status == CStatus::OK){
+            if(Application().IsInteractive()){
+               
+               if(nUpdateCount == 0){
+                  nUpdateCount = 5;
+                  std::stringstream progStr;
+                  progStr<<std::setw(3)<<(prog.GetValue() * 100 / prog.GetMaximum())<<" - "<<prog.GetCaption().GetAsciiString();
+                  Application().LogMessage( CString(progStr.str().c_str()) );
+               }
+
+               nUpdateCount--;
+            }
             prog.Increment((LONG)jobPtrs[i]->GetNbObjects());
+         }
          else if(status != CStatus::False)
          {
             for(size_t k=0;k<jobPtrs.size();k++)

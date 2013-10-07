@@ -30,6 +30,7 @@ XSI_XformTypes::xte getXformType(AbcG::IXform& obj);
 class XSIProgressBar: public CommonProgressBar
 {
    XSI::ProgressBar prog;
+   int nProgress;
 public:
    XSIProgressBar();
 

@@ -251,7 +251,7 @@ void XSIProgressBar::init(int min, int max, int incr)
    prog.PutMaximum(max);
    prog.PutValue(0);
    prog.PutCancelEnabled(true);
-
+   nProgress = 0;
 }
 
 void XSIProgressBar::start(void)
@@ -277,6 +277,12 @@ bool XSIProgressBar::isCancelled(void)
 void XSIProgressBar::setCaption(std::string& caption)
 {
    prog.PutCaption(CString(caption.c_str()));
+
+	if(Application().IsInteractive()){
+      std::stringstream progStr;
+      progStr<<std::setw(3)<<(prog.GetValue() * 100 / prog.GetMaximum())<<" - "<<caption;
+      Application().LogMessage( CString(progStr.str().c_str()) );
+	}
 }
 
 
