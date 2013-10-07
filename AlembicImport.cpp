@@ -2634,7 +2634,7 @@ ESS_CALLBACK_START(alembic_import_settings_DefineLayout, CRef&)
 	oLayout = ctxt.GetSource();
 	oLayout.Clear();
 
-    oLayout.SetViewSize(600, 560);
+    oLayout.SetViewSize(600, 600);
 
     std::stringstream versionText;
    versionText<<"Exocortex Crate "<<PLUGIN_MAJOR_VERSION<<"."<<PLUGIN_MINOR_VERSION<<"."<<crate_BUILD_VERSION;
