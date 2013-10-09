@@ -633,7 +633,8 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
 
                try
                {
-                  matIDs.push_back(boost::lexical_cast< int >(extractedNum));
+                  //subtract since 3DS Max is going to increment it for the UI
+                  matIDs.push_back(boost::lexical_cast< int >(extractedNum)-1);
                }
                catch( const boost::bad_lexical_cast & )
                {
