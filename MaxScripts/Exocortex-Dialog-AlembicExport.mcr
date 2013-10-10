@@ -18,15 +18,15 @@ rollout AlembicExportSettings "Alembic Export Settings" width:288 height:476
     
 	GroupBox geoGroup "Geometry" pos:[8,168] width:272 height:224
 	
-	dropdownList meshTopologyDropDown "Mesh Topology" pos:[16,192] width:256 height:40 items:#("Just Surfaces (No Normals)", "Point Cache (No Surfaces)", "Surface + Normals (Everything)") selection:3
-	
-	dropdownList particleSystemExportMethod "Particle System Export Method" pos:[16,240] width:256 height:40 items:#("Automatic Instancing", "Merged Mesh") selection:1
+	dropdownList meshTopologyDropDown "Mesh Topology" pos:[16,186] width:256 height:40 items:#("Just Surfaces (No Normals)", "Point Cache (No Surfaces)", "Surface + Normals (Everything)") selection:3
+	dropdownList particleSystemExportMethod "Particle System Export Method" pos:[16,228] width:256 height:40 items:#("Automatic Instancing", "Merged Mesh") selection:1
+	dropdownList facesetExportMethod "Faceset Export Method" pos:[16,270] width:256 height:40 items:#("Partitioning Facesets only", "All") selection:1
 
-	checkbox uvCheckbox "UVs" pos:[32,288] width:128 height:15 checked:true
-	checkbox materialIdsCheckbox "Material Ids" pos:[32,320] width:107 height:14 checked:true
-	checkbox flattenHierarchyCheckbox "Flatten Hierarchy" pos:[32,336] width:107 height:14 checked:true
-	checkbox transformCacheCheckbox "Transform Cache" pos:[32,352] width:200 height:14 checked:false
-	checkbox validateMeshTopology "Validate Mesh Topology" pos:[32,368]
+	checkbox materialIdsCheckbox "Material Ids" pos:[32,310] width:107 height:14 checked:true
+	checkbox uvCheckbox "UVs" pos:[32,326] width:128 height:15 checked:true
+	checkbox flattenHierarchyCheckbox "Flatten Hierarchy" pos:[32,342] width:107 height:14 checked:true
+	checkbox transformCacheCheckbox "Transform Cache" pos:[32,358] width:200 height:14 checked:false
+	checkbox validateMeshTopology "Validate Mesh Topology" pos:[32,374]
 
 	dropdownList storageFormat "Storage Format" pos:[16,396] width:256 height:40 items:#("HDF5", "Ogawa") selection:1
 
@@ -77,6 +77,9 @@ rollout AlembicExportSettings "Alembic Export Settings" width:288 height:476
 
 	    	if(storageFormat.selection == 1) do jobString += ";storageFormat=hdf5" 
 	    	if(storageFormat.selection == 2) do jobString += ";storageFormat=ogawa" 
+
+	    	if(facesetExportMethod.selection == 1) do jobString += ";facesets=partitioningFacesetsOnly"
+	    	if(facesetExportMethod.selection == 2) do jobString += ";facesets=all"
 
 	    	result = ExocortexAlembic.createExportJobs(jobString)
 	        if( result != 0 ) do

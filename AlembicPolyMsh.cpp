@@ -289,8 +289,9 @@ bool AlembicPolyMesh::Save(double time, bool bLastFrame)
 		SaveMaterialsProperty(bFirstFrame, bLastFrame || bForever);
 
 		size_t numMatId = finalPolyMesh.mFaceSetsMap.size();
+      bool bExportAllFaceset = GetCurrentJob()->GetOption("partitioningFacesetsOnly") == false;
 		// For sample zero, export the material ids as face sets
-		if (bFirstFrame && numMatId > 1)
+		if (bFirstFrame && (numMatId > 1 || bExportAllFaceset))
 		{
 			for ( facesetmap_it it=finalPolyMesh.mFaceSetsMap.begin(); it != finalPolyMesh.mFaceSetsMap.end(); it++)
 			{
