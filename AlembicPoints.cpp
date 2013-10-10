@@ -757,23 +757,42 @@ XSIPLUGINCALLBACK CStatus alembic_points_Evaluate(ICENodeContext& in_ctxt)
          {
             acc = outData.Resize(0,(ULONG)ptr->size());
             bool done = false;
-            if(sampleInfo.alpha != 0.0 && usevel)
-            {
+            if(sampleInfo.alpha != 0.0)
+            {   
                float alpha = (float)sampleInfo.alpha;
-
-               Abc::V3fArraySamplePtr velPtr = sample.getVelocities();
-               if(velPtr == NULL)
-                  done = false;
-               else if(velPtr->size() == 0)
-                  done = false;
-               else
+               if(usevel)
                {
-                  for(ULONG i=0;i<acc.GetCount();i++)
-                     acc[i].Set(
-                        ptr->get()[i].x + alpha * velPtr->get()[i >= velPtr->size() ? 0 : i].x,
-                        ptr->get()[i].y + alpha * velPtr->get()[i >= velPtr->size() ? 0 : i].y,
-                        ptr->get()[i].z + alpha * velPtr->get()[i >= velPtr->size() ? 0 : i].z);
-                  done = true;
+                  //wrong - should be time based alpha
+
+                  Abc::V3fArraySamplePtr velPtr = sample.getVelocities();
+                  if(velPtr == NULL)
+                     done = false;
+                  else if(velPtr->size() == 0)
+                     done = false;
+                  else
+                  {
+                     for(ULONG i=0;i<acc.GetCount();i++)
+                        acc[i].Set(
+                           ptr->get()[i].x + alpha * velPtr->get()[i >= velPtr->size() ? 0 : i].x,
+                           ptr->get()[i].y + alpha * velPtr->get()[i >= velPtr->size() ? 0 : i].y,
+                           ptr->get()[i].z + alpha * velPtr->get()[i >= velPtr->size() ? 0 : i].z);
+                     done = true;
+                  }
+               }
+               else if(obj.getSchema().getIdsProperty().isConstant())
+               {                  
+                  Abc::IP3fArrayProperty posProp2 = obj.getSchema().getPositionsProperty();
+                  Abc::P3fArraySamplePtr pointsCeilSamplePtr;
+                  posProp2.get(pointsCeilSamplePtr, sampleInfo.ceilIndex);
+
+                  if(ptr->size() == pointsCeilSamplePtr->size()){
+                     for(ULONG i=0;i<acc.GetCount();i++)
+                        acc[i].Set(
+                           (1.0f-alpha) * ptr->get()[i].x + alpha * pointsCeilSamplePtr->get()[i].x,
+                           (1.0f-alpha) * ptr->get()[i].y + alpha * pointsCeilSamplePtr->get()[i].y,
+                           (1.0f-alpha) * ptr->get()[i].z + alpha * pointsCeilSamplePtr->get()[i].z); 
+                     done = true;
+                  }
                }
             }
 
