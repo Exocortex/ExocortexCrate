@@ -759,11 +759,9 @@ XSIPLUGINCALLBACK CStatus alembic_points_Evaluate(ICENodeContext& in_ctxt)
             bool done = false;
             if(sampleInfo.alpha != 0.0)
             {   
-               float alpha = (float)sampleInfo.alpha;
+               
                if(usevel)
                {
-                  //wrong - should be time based alpha
-
                   Abc::V3fArraySamplePtr velPtr = sample.getVelocities();
                   if(velPtr == NULL)
                      done = false;
@@ -771,6 +769,7 @@ XSIPLUGINCALLBACK CStatus alembic_points_Evaluate(ICENodeContext& in_ctxt)
                      done = false;
                   else
                   {
+                     const float alpha = getTimeOffsetFromObject( iObj, sampleInfo );
                      for(ULONG i=0;i<acc.GetCount();i++)
                         acc[i].Set(
                            ptr->get()[i].x + alpha * velPtr->get()[i >= velPtr->size() ? 0 : i].x,
@@ -786,6 +785,7 @@ XSIPLUGINCALLBACK CStatus alembic_points_Evaluate(ICENodeContext& in_ctxt)
                   posProp2.get(pointsCeilSamplePtr, sampleInfo.ceilIndex);
 
                   if(ptr->size() == pointsCeilSamplePtr->size()){
+                     const float alpha = sampleInfo.alpha;
                      for(ULONG i=0;i<acc.GetCount();i++)
                         acc[i].Set(
                            (1.0f-alpha) * ptr->get()[i].x + alpha * pointsCeilSamplePtr->get()[i].x,
