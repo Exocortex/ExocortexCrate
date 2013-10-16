@@ -794,16 +794,21 @@ CStatus alembic_create_item_Invoke
                        clusterPropRef.Set(realTarget.GetAsText()+L".cls.Texture_Coordinates_AUTO."+uvSetNames[uvI]);
                     if(!clusterPropRef.IsValid())
                     {
-                       // create user normals
-                       CValue createProjectionReturnVal;
-                       CValueArray createProjectionArgs(5);
-                       createProjectionArgs[0] = Primitive(realTarget).GetParent3DObject().GetFullName();
-                       createProjectionArgs[1] = siTxtPureImplicit;
-                       createProjectionArgs[2] = siTxtDefaultPlanarXY;
-                       createProjectionArgs[3] = L"";
-                       createProjectionArgs[4] = uvSetNames[uvI];
-                       Application().ExecuteCommand(L"CreateProjection",createProjectionArgs,createProjectionReturnVal);
+                       CLongArray in_indices;
+                       Cluster io_cluster;
+                       CStatus status = Primitive(realTarget).GetParent3DObject().GetActivePrimitive().GetGeometry().AddCluster(L"sample", L"Texture_Coordinates_AUTO", in_indices, io_cluster);
+                       io_cluster.AddProperty("Texture Projection", false, uvSetNames[uvI]);
+
+                    //   CValue createProjectionReturnVal;
+                    //   CValueArray createProjectionArgs(5);
+                    //   createProjectionArgs[0] = Primitive(realTarget).GetParent3DObject().GetFullName();
+                    //   createProjectionArgs[1] = siTxtUV;
+                    //   createProjectionArgs[2] = siTxtDefaultPlanarXY;
+                    //   createProjectionArgs[3] = L"";
+                    //   createProjectionArgs[4] = uvSetNames[uvI];
+                    //   Application().ExecuteCommand(L"CreateProjection",createProjectionArgs,createProjectionReturnVal);
                     }
+
                     ClusterProperty uvProp;
                     CRefArray clusters = meshGeo.GetClusters();
                     for(LONG j=0;j<clusters.GetCount();j++)
@@ -824,6 +829,7 @@ CStatus alembic_create_item_Invoke
                        if(uvProp.IsValid())
                           break;
                     }
+
                     if(uvProp.IsValid())
                     {
                        // check if this alembic file has a uv options property
