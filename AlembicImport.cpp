@@ -1585,9 +1585,11 @@ bool createMergeableNode(SceneNodeXSI* appNode, SceneNodeAlembicPtr fileXformNod
          returnNode = SceneNodePtr(new SceneNodeXSI(nodeRef));
       }
 
-      fileXformNode->dccIdentifier = nodeRef.GetAsText().GetAsciiString();
+      if(fileXformNode){
+         fileXformNode->dccIdentifier = nodeRef.GetAsText().GetAsciiString();
+      }
 
-      if(usePerModelTimeControls){
+      if(usePerModelTimeControls && fileXformNode){
          createItemArgs[0] = setupTimeControl(fileXformNode, findTimeControlDccIdentifier(fileXformNode, importRootNode, jobParams.xformTypes));
       }
       else{
@@ -1659,9 +1661,11 @@ bool createMergeableNode(SceneNodeXSI* appNode, SceneNodeAlembicPtr fileXformNod
          returnNode = SceneNodePtr(new SceneNodeXSI(meshObj.GetRef()));
       }
 
-      fileXformNode->dccIdentifier = nodeRef.GetAsText().GetAsciiString();
+      if(fileXformNode){
+         fileXformNode->dccIdentifier = nodeRef.GetAsText().GetAsciiString();
+      }
 
-      if(usePerModelTimeControls){
+      if(usePerModelTimeControls && fileXformNode){
          createItemArgs[0] = setupTimeControl(fileXformNode, findTimeControlDccIdentifier(fileXformNode, importRootNode, jobParams.xformTypes));
       }
       else{
@@ -1758,9 +1762,11 @@ bool createMergeableNode(SceneNodeXSI* appNode, SceneNodeAlembicPtr fileXformNod
          fileShapeNode->setAttached(true);
       }
 
-      fileXformNode->dccIdentifier = nodeRef.GetAsText().GetAsciiString();
+      if(fileXformNode){
+         fileXformNode->dccIdentifier = nodeRef.GetAsText().GetAsciiString();
+      }
 
-      if(usePerModelTimeControls){
+      if(usePerModelTimeControls && fileXformNode){
          createItemArgs[0] = setupTimeControl(fileXformNode, findTimeControlDccIdentifier(fileXformNode, importRootNode, jobParams.xformTypes));
       }
       else{
@@ -1882,9 +1888,11 @@ bool createMergeableNode(SceneNodeXSI* appNode, SceneNodeAlembicPtr fileXformNod
             returnNode = SceneNodePtr(new SceneNodeXSI(nodeRef));
          }
 
-         fileXformNode->dccIdentifier = nodeRef.GetAsText().GetAsciiString();
+         if(fileXformNode){
+            fileXformNode->dccIdentifier = nodeRef.GetAsText().GetAsciiString();
+         }
 
-         if(usePerModelTimeControls){
+         if(usePerModelTimeControls && fileXformNode){
             createItemArgs[0] = setupTimeControl(fileXformNode, findTimeControlDccIdentifier(fileXformNode, importRootNode, jobParams.xformTypes));
          }
          else{
@@ -1973,10 +1981,12 @@ bool createMergeableNode(SceneNodeXSI* appNode, SceneNodeAlembicPtr fileXformNod
 
             returnNode = SceneNodePtr(new SceneNodeXSI(nodeRef));
          }
+         
+         if(fileXformNode){
+            fileXformNode->dccIdentifier = nodeRef.GetAsText().GetAsciiString();
+         }
 
-         fileXformNode->dccIdentifier = nodeRef.GetAsText().GetAsciiString();
-
-         if(usePerModelTimeControls){
+         if(usePerModelTimeControls && fileXformNode){
             createItemArgs[0] = setupTimeControl(fileXformNode, findTimeControlDccIdentifier(fileXformNode, importRootNode, jobParams.xformTypes));
          }
          else{
@@ -2067,9 +2077,11 @@ bool createMergeableNode(SceneNodeXSI* appNode, SceneNodeAlembicPtr fileXformNod
          returnNode = SceneNodePtr(new SceneNodeXSI(nodeRef));
       }
 
-      fileXformNode->dccIdentifier = nodeRef.GetAsText().GetAsciiString();
+      if(fileXformNode){
+         fileXformNode->dccIdentifier = nodeRef.GetAsText().GetAsciiString();
+      }
 
-      if(usePerModelTimeControls){
+      if(usePerModelTimeControls && fileXformNode){
          createItemArgs[0] = setupTimeControl(fileXformNode, findTimeControlDccIdentifier(fileXformNode, importRootNode, jobParams.xformTypes));
       }
       else{
@@ -2142,8 +2154,8 @@ bool createNodes(SceneNodeXSI* const appNode, SceneNodeAlembicPtr fileNode, cons
       return createNode(appNode, fileNode, jobParams, returnNode, bAttachToExisting);
    }
    //this shape node has the same parent transform as one or more other shape nodes
-   SceneNodeAlembicPtr shapeNode;
-   return createMergeableNode(appNode, shapeNode, fileNode, jobParams, returnNode, bAttachToExisting);
+   SceneNodeAlembicPtr xformNode;
+   return createMergeableNode(appNode, xformNode, fileNode, jobParams, returnNode, bAttachToExisting);
 }
 
 
