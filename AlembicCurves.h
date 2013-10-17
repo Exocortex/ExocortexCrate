@@ -5,9 +5,59 @@
 #include <maya/MFnNurbsCurve.h>
 #include <maya/MUint64Array.h>
 
+//-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+class AlembicCurveAccumulator;
+
+typedef boost::shared_ptr<AlembicCurveAccumulator> AlembicCurveAccumulatorPtr;
+
+class AlembicCurveAccumulator
+{
+private:
+	MObject m_ref;		// a reference to the first curve found in this group!
+	Abc::M44f mInverse;	// the inverse matrix of the first curve (changed for every frame) so that other curves will have their coordinates into the first curve's space
+
+	AbcG::OCurves mObject;
+	AbcG::OCurvesSchema mSchema;
+	AbcG::OCurvesSchema::Sample mSample;
+	Abc::Box3d bbox;
+	bool firstSample;
+
+	std::vector<Abc::V3f> mPosVec;
+	std::vector<AbcA::int32_t> mNbVertices;
+	std::vector<float> mRadiusVec;
+	std::vector<float> mKnotVec;
+
+	Abc::OV3fArrayProperty mVelocityProperty;
+	Abc::OFloatArrayProperty mRadiusProperty;
+	Abc::OC4fArrayProperty mColorProperty;
+	Abc::OInt32ArrayProperty mFaceIndexProperty;
+	Abc::OInt32ArrayProperty mVertexIndexProperty;
+	Abc::OFloatArrayProperty mKnotVectorProperty;
+
+public:
+	AlembicCurveAccumulator(const MObject &ref, SceneNodePtr eNode, AlembicWriteJob *in_Job, Abc::OObject oParent);
+
+	// methods
+	void startRecording(void);
+	void stopRecording(void);
+	void save(double time);
+
+	// statics
+	static void Initialize(void);
+	static void StartRecordingFrame(void);
+	static void StopRecordingFrame(void);
+	static void Destroy(void);
+	static AlembicCurveAccumulatorPtr GetAccumulator(int id, const MObject &ref, SceneNodePtr eNode, AlembicWriteJob * in_Job, Abc::OObject oParent);
+};
+
+//-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
 class AlembicCurves: public AlembicObject
 {
 private:
+	AlembicCurveAccumulatorPtr accumRef;
+
    AbcG::OCurves mObject;
    AbcG::OCurvesSchema mSchema;
    AbcG::OCurvesSchema::Sample mSample;

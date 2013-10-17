@@ -4,10 +4,98 @@
 #include "MetaData.h"
 
 #include <maya/MArrayDataHandle.h>
+#include <map>
 
+//-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+AlembicCurveAccumulator::AlembicCurveAccumulator(const MObject &ref, SceneNodePtr eNode, AlembicWriteJob *in_Job, Abc::OObject oParent): m_ref(ref), firstSample(true)
+{
+	const bool animTS = in_Job->GetAnimatedTs();
+	mObject = AbcG::OCurves(oParent, eNode->name, animTS);
+	mSchema = mObject.getSchema();
+
+	// create all properties
+	Abc::OCompoundProperty comp = mSchema.getArbGeomParams();
+	mRadiusProperty = Abc::OFloatArrayProperty(comp, ".radius", mSchema.getMetaData(), animTS );
+	mColorProperty = Abc::OC4fArrayProperty(comp, ".color", mSchema.getMetaData(), animTS );
+	mFaceIndexProperty = Abc::OInt32ArrayProperty(comp, ".face_index", mSchema.getMetaData(), animTS );
+	mVertexIndexProperty = Abc::OInt32ArrayProperty(comp, ".vertex_index", mSchema.getMetaData(), animTS );
+	mKnotVectorProperty = Abc::OFloatArrayProperty(comp, ".knot_vector", mSchema.getMetaData(), animTS );
+}
+
+void AlembicCurveAccumulator::startRecording(void)
+{
+	mInverse = GetGlobalMatrix(m_ref).inverse();
+	mPosVec.clear();
+	mRadiusVec.clear();
+	mKnotVec.clear();
+	mNbVertices.clear();
+	bbox.makeEmpty();
+}
+void AlembicCurveAccumulator::stopRecording(void)
+{
+	mSample.setSelfBounds(bbox);
+	mSchema.set(mSample);
+}
+void AlembicCurveAccumulator::save(double time)
+{
+	if (firstSample)
+	{
+		firstSample = false;
+	}
+	else
+	{
+	
+	}
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+
+typedef std::map<int, AlembicCurveAccumulatorPtr> mapIntAccumulator;
+typedef mapIntAccumulator::iterator accumIter;
+static mapIntAccumulator accumulators;
+
+void AlembicCurveAccumulator::Initialize(void)
+{
+	accumulators.clear();
+}
+void AlembicCurveAccumulator::StartRecordingFrame(void)
+{
+	for (accumInter first = accumulators.begin(), last = accumulators.end(); first != last; ++first)
+		first->startRecording();
+}
+void AlembicCurveAccumulator::StopRecordingFrame(void)
+{
+	for (accumInter first = accumulators.begin(), last = accumulators.end(); first != last; ++first)
+		first->stopRecording();
+}
+void AlembicCurveAccumulator::Destroy(void)
+{
+	accumulators.clear();
+}
+AlembicCurveAccumulatorPtr AlembicCurveAccumulator::GetAccumulator(int id, const MObject &ref, SceneNodePtr eNode, AlembicWriteJob * in_Job, Abc::OObject oParent)
+{
+	if (accumulators.find(id) == accumulator.end())
+		accumulators[id] = AlembicCurveAccumulatorPtr( new AlembicCurveAccumulator(ref, eNode, in_Job, oParent) );
+	return accumulators[id];
+}
+
+//-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 AlembicCurves::AlembicCurves(SceneNodePtr eNode, AlembicWriteJob * in_Job, Abc::OObject oParent)
 	: AlembicObject(eNode, in_Job, oParent)
 {
+	MFnNurbsCurve node(GetRef());
+	MStatus status;
+	MObject abcCurveId = node.attribute("abcCurveId", &status);
+	if (status == MStatus::kSuccess)
+	{
+		const int cId = MPlug(node, abcCurveId).asInt();
+		if (cId != 0)
+		{
+			this->accumRef = AlembicCurveAccumulator::GetAccumulator(cId, GetRef(), eNode, in_Job, oParent);
+			return;
+		}
+	}
+
 	const bool animTS = GetJob()->GetAnimatedTs();
    mObject = AbcG::OCurves(GetMyParent(), eNode->name, animTS);
    mSchema = mObject.getSchema();
@@ -30,6 +118,15 @@ AlembicCurves::~AlembicCurves()
 MStatus AlembicCurves::Save(double time)
 {
   ESS_PROFILE_SCOPE("AlembicCurves::Save");
+
+	if (this->accumRef.get() == 0)
+	{
+		this->accumRef.get()->save(time);
+		++mNumSamples;
+		return MStatus::kSuccess;
+	}
+
+
    // access the geometry
    MFnNurbsCurve node(GetRef());
 

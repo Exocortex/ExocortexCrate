@@ -35,7 +35,7 @@ MStatus AlembicHair::Save(double time)
    Abc::Box3d bbox;
 
    // check if we have the global cache option
-   bool globalCache = GetJob()->GetOption(L"exportInGlobalSpace").asInt() > 0;
+   const bool globalCache = GetJob()->GetOption(L"exportInGlobalSpace").asInt() > 0;
 
    MRenderLineArray mainLines, leafLines, flowerLines;
    node.getLineData(mainLines,leafLines,flowerLines, true, false, mNumSamples == 0, false, false, mNumSamples == 0, false, true, globalCache);
@@ -63,14 +63,21 @@ MStatus AlembicHair::Save(double time)
 
          for(unsigned int j=0;j<positions.length();j++)
          {
-            mPosVec[offset].x = (float)positions[j].x;
-            mPosVec[offset].y = (float)positions[j].y;
-            mPosVec[offset].z = (float)positions[j].z;
+			const MVector &opos = positions[j];
+			Imath::V3f &ipos = mPosVec[offset];
+            ipos.x = (float)opos.x;
+            ipos.y = (float)opos.y;
+            ipos.z = (float)opos.z;
+			bbox.extendBy(Imath::V3d(ipos));
+
             mRadiusVec[offset] = (float)radii[j];
-            mColorVec[offset].r = (float)colors[j].x;
-            mColorVec[offset].g = (float)colors[j].y;
-            mColorVec[offset].b = (float)colors[j].z;
-            mColorVec[offset].a = 1.0f - (float)transparencies[j].x;
+
+			const MVector &ocol = colors[j];
+			Imath::C4f &icol = mColorVec[offset];
+            icol.r = (float)ocol.x;
+            icol.g = (float)ocol.y;
+            icol.b = (float)ocol.z;
+            icol.a = 1.0f - (float)transparencies[j].x;
             offset++;
          }
       }
@@ -83,9 +90,12 @@ MStatus AlembicHair::Save(double time)
          const MVectorArray & positions = line.getLine();
          for(unsigned int j=0;j<positions.length();j++)
          {
-            mPosVec[offset].x = (float)positions[j].x;
-            mPosVec[offset].y = (float)positions[j].y;
-            mPosVec[offset].z = (float)positions[j].z;
+			const MVector &opos = positions[j];
+			Imath::V3f &ipos = mPosVec[offset];
+            ipos.x = (float)opos.x;
+            ipos.y = (float)opos.y;
+            ipos.z = (float)opos.z;
+			bbox.extendBy(Imath::V3d(ipos));
             offset++;
          }
       }
