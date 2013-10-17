@@ -309,12 +309,14 @@ MStatus AlembicWriteJob::PreProcess()
 					}
 				}
 			}
+			/*
 			else
 			{
 				ESS_LOG_ERROR("Do not have reference to parent.");
 				MPxCommand::setResult("Error caught in AlembicWriteJob::PreProcess: do not have reference to parent");
 				return MS::kFailure;
 			}
+			//*/
 		}
 
 	   MProgressWindow::endProgress();
@@ -478,6 +480,9 @@ MStatus AlembicExportCommand::doIt(const MArgList & args)
    double maxFrame = -1000000.0;
    double maxSteps = 1;
    double maxSubsteps = 1;
+
+   // init the curve accumulators
+   AlembicCurveAccumulator::Initialize();
 
    try
    {
@@ -753,6 +758,7 @@ MStatus AlembicExportCommand::doIt(const MArgList & args)
 		  MAnimControl::setAnimationEndTime( MTime(nextFrame/frameRate,MTime::kSeconds) );
 		  MAnimControl::playForward();  // this way, it forces Maya to play exactly one frame! and particles are updated!
 
+		  AlembicCurveAccumulator::StartRecordingFrame();
 		  for(size_t i=0;i<jobPtrs.size();i++)
 		  {
 			 MStatus status = jobPtrs[i]->Process(frame);
@@ -766,6 +772,7 @@ MStatus AlembicExportCommand::doIt(const MArgList & args)
 			 }
 
 		  }
+		  AlembicCurveAccumulator::StopRecordingFrame();
 	   }
    }
    catch(...)
@@ -778,6 +785,7 @@ MStatus AlembicExportCommand::doIt(const MArgList & args)
 		status = MS::kFailure;
    }
 	MAnimControl::stop();
+	AlembicCurveAccumulator::Destroy();
 
    // restore the animation start/end time and the current time!
    restoreOldTime(currentAnimStartTime, currentAnimEndTime, oldCurTime, curMinTime, curMaxTime);

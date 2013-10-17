@@ -22,18 +22,15 @@ private:
 	AbcG::OCurvesSchema::Sample mSample;
 	Abc::Box3d bbox;
 	bool firstSample;
+	bool useGlobalCache;
 
 	std::vector<Abc::V3f> mPosVec;
 	std::vector<AbcA::int32_t> mNbVertices;
 	std::vector<float> mRadiusVec;
 	std::vector<float> mKnotVec;
 
-	Abc::OV3fArrayProperty mVelocityProperty;
 	Abc::OFloatArrayProperty mRadiusProperty;
 	Abc::OC4fArrayProperty mColorProperty;
-	Abc::OInt32ArrayProperty mFaceIndexProperty;
-	Abc::OInt32ArrayProperty mVertexIndexProperty;
-	Abc::OFloatArrayProperty mKnotVectorProperty;
 
 public:
 	AlembicCurveAccumulator(const MObject &ref, SceneNodePtr eNode, AlembicWriteJob *in_Job, Abc::OObject oParent);
@@ -41,7 +38,7 @@ public:
 	// methods
 	void startRecording(void);
 	void stopRecording(void);
-	void save(double time);
+	void save(const MObject &ref, double time);
 
 	// statics
 	static void Initialize(void);

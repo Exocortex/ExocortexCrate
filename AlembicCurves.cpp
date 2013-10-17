@@ -4,10 +4,11 @@
 #include "MetaData.h"
 
 #include <maya/MArrayDataHandle.h>
+#include <maya/MPlug.h>
 #include <map>
 
 //-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-AlembicCurveAccumulator::AlembicCurveAccumulator(const MObject &ref, SceneNodePtr eNode, AlembicWriteJob *in_Job, Abc::OObject oParent): m_ref(ref), firstSample(true)
+AlembicCurveAccumulator::AlembicCurveAccumulator(const MObject &ref, SceneNodePtr eNode, AlembicWriteJob *in_Job, Abc::OObject oParent): m_ref(ref), firstSample(true), useGlobalCache(in_Job->GetOption(L"exportInGlobalSpace").asInt() > 0)
 {
 	const bool animTS = in_Job->GetAnimatedTs();
 	mObject = AbcG::OCurves(oParent, eNode->name, animTS);
@@ -17,9 +18,6 @@ AlembicCurveAccumulator::AlembicCurveAccumulator(const MObject &ref, SceneNodePt
 	Abc::OCompoundProperty comp = mSchema.getArbGeomParams();
 	mRadiusProperty = Abc::OFloatArrayProperty(comp, ".radius", mSchema.getMetaData(), animTS );
 	mColorProperty = Abc::OC4fArrayProperty(comp, ".color", mSchema.getMetaData(), animTS );
-	mFaceIndexProperty = Abc::OInt32ArrayProperty(comp, ".face_index", mSchema.getMetaData(), animTS );
-	mVertexIndexProperty = Abc::OInt32ArrayProperty(comp, ".vertex_index", mSchema.getMetaData(), animTS );
-	mKnotVectorProperty = Abc::OFloatArrayProperty(comp, ".knot_vector", mSchema.getMetaData(), animTS );
 }
 
 void AlembicCurveAccumulator::startRecording(void)
@@ -32,19 +30,49 @@ void AlembicCurveAccumulator::startRecording(void)
 	bbox.makeEmpty();
 }
 void AlembicCurveAccumulator::stopRecording(void)
-{
+{	
+	if (firstSample)
+	{
+		mSample.setCurvesNumVertices(Abc::Int32ArraySample(mNbVertices));
+		mSample.setWrap(AbcG::kNonPeriodic);
+		mSample.setType(AbcG::kLinear);
+
+		//mRadiusProperty.set(Abc::FloatArraySample(&mRadiusVec.front(),mRadiusVec.size()));
+		//mColorProperty.set(Abc::C4fArraySample(&mColorVec.front(),mColorVec.size()));
+		firstSample = false;
+	}
+	mSample.setPositions(Abc::P3fArraySample(&mPosVec.front(),mPosVec.size()));
 	mSample.setSelfBounds(bbox);
 	mSchema.set(mSample);
 }
-void AlembicCurveAccumulator::save(double time)
+void AlembicCurveAccumulator::save(const MObject &ref, double time)
 {
+	MFnNurbsCurve node(ref);
+
+	Abc::M44f globalXfo = GetGlobalMatrix(ref);
+	if (!this->useGlobalCache)
+		Abc::M44f::multiply(this->mInverse, globalXfo, globalXfo);
+
+	MPointArray positions;
+	node.getCVs(positions);
+
+	int offset = mPosVec.size();
+	const int posLen = positions.length();
+	mPosVec.resize(offset + posLen);
+	for(unsigned int i=0; i < posLen; ++i, ++offset)
+	{
+		const MPoint &outPos = positions[i];
+		Imath::V3f &inPos = mPosVec[offset];
+		inPos.x = (float)outPos.x;
+		inPos.y = (float)outPos.y;
+		inPos.z = (float)outPos.z;
+		globalXfo.multVecMatrix(inPos, inPos);
+		bbox.extendBy(inPos);
+	}
+
 	if (firstSample)
 	{
-		firstSample = false;
-	}
-	else
-	{
-	
+		this->mNbVertices.push_back(posLen);
 	}
 }
 
@@ -60,13 +88,13 @@ void AlembicCurveAccumulator::Initialize(void)
 }
 void AlembicCurveAccumulator::StartRecordingFrame(void)
 {
-	for (accumInter first = accumulators.begin(), last = accumulators.end(); first != last; ++first)
-		first->startRecording();
+	for (accumIter first = accumulators.begin(), last = accumulators.end(); first != last; ++first)
+		first->second->startRecording();
 }
 void AlembicCurveAccumulator::StopRecordingFrame(void)
 {
-	for (accumInter first = accumulators.begin(), last = accumulators.end(); first != last; ++first)
-		first->stopRecording();
+	for (accumIter first = accumulators.begin(), last = accumulators.end(); first != last; ++first)
+		first->second->stopRecording();
 }
 void AlembicCurveAccumulator::Destroy(void)
 {
@@ -74,7 +102,7 @@ void AlembicCurveAccumulator::Destroy(void)
 }
 AlembicCurveAccumulatorPtr AlembicCurveAccumulator::GetAccumulator(int id, const MObject &ref, SceneNodePtr eNode, AlembicWriteJob * in_Job, Abc::OObject oParent)
 {
-	if (accumulators.find(id) == accumulator.end())
+	if (accumulators.find(id) == accumulators.end())
 		accumulators[id] = AlembicCurveAccumulatorPtr( new AlembicCurveAccumulator(ref, eNode, in_Job, oParent) );
 	return accumulators[id];
 }
@@ -83,49 +111,54 @@ AlembicCurveAccumulatorPtr AlembicCurveAccumulator::GetAccumulator(int id, const
 AlembicCurves::AlembicCurves(SceneNodePtr eNode, AlembicWriteJob * in_Job, Abc::OObject oParent)
 	: AlembicObject(eNode, in_Job, oParent)
 {
-	MFnNurbsCurve node(GetRef());
+	MObject nRef = GetRef();
+	MFnNurbsCurve node(nRef);
 	MStatus status;
 	MObject abcCurveId = node.attribute("abcCurveId", &status);
 	if (status == MStatus::kSuccess)
 	{
-		const int cId = MPlug(node, abcCurveId).asInt();
+		const int cId = MPlug(nRef, abcCurveId).asInt();
 		if (cId != 0)
 		{
-			this->accumRef = AlembicCurveAccumulator::GetAccumulator(cId, GetRef(), eNode, in_Job, oParent);
+			this->accumRef = AlembicCurveAccumulator::GetAccumulator(cId, nRef, eNode, in_Job, oParent);
 			return;
 		}
 	}
 
 	const bool animTS = GetJob()->GetAnimatedTs();
-   mObject = AbcG::OCurves(GetMyParent(), eNode->name, animTS);
-   mSchema = mObject.getSchema();
+	mObject = AbcG::OCurves(GetMyParent(), eNode->name, animTS);
+	mSchema = mObject.getSchema();
 
-   // create all properties
-   Abc::OCompoundProperty comp = mSchema.getArbGeomParams();
-   mRadiusProperty = Abc::OFloatArrayProperty(comp, ".radius", mSchema.getMetaData(), animTS );
-   mColorProperty = Abc::OC4fArrayProperty(comp, ".color", mSchema.getMetaData(), animTS );
-   mFaceIndexProperty = Abc::OInt32ArrayProperty(comp, ".face_index", mSchema.getMetaData(), animTS );
-   mVertexIndexProperty = Abc::OInt32ArrayProperty(comp, ".vertex_index", mSchema.getMetaData(), animTS );
-   mKnotVectorProperty = Abc::OFloatArrayProperty(comp, ".knot_vector", mSchema.getMetaData(), animTS );
+	// create all properties
+	Abc::OCompoundProperty comp = mSchema.getArbGeomParams();
+	mRadiusProperty = Abc::OFloatArrayProperty(comp, ".radius", mSchema.getMetaData(), animTS );
+	mColorProperty = Abc::OC4fArrayProperty(comp, ".color", mSchema.getMetaData(), animTS );
+	mFaceIndexProperty = Abc::OInt32ArrayProperty(comp, ".face_index", mSchema.getMetaData(), animTS );
+	mVertexIndexProperty = Abc::OInt32ArrayProperty(comp, ".vertex_index", mSchema.getMetaData(), animTS );
+	mKnotVectorProperty = Abc::OFloatArrayProperty(comp, ".knot_vector", mSchema.getMetaData(), animTS );
 }
 
 AlembicCurves::~AlembicCurves()
 {
-   mObject.reset();
-   mSchema.reset();
+	if (this->accumRef.get() == 0)
+	{
+		mObject.reset();
+		mSchema.reset();
+	}
+	else
+		this->accumRef.reset();
 }
 
 MStatus AlembicCurves::Save(double time)
 {
   ESS_PROFILE_SCOPE("AlembicCurves::Save");
 
-	if (this->accumRef.get() == 0)
+	if (this->accumRef.get() != 0)
 	{
-		this->accumRef.get()->save(time);
+		accumRef->save(GetRef(), time);
 		++mNumSamples;
 		return MStatus::kSuccess;
 	}
-
 
    // access the geometry
    MFnNurbsCurve node(GetRef());
