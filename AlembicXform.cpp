@@ -71,6 +71,7 @@ AlembicXform::~AlembicXform()
 MStatus AlembicXform::Save(double time)
 {
   ESS_PROFILE_SCOPE("AlembicXform::Save");
+
    // save the metadata
    SaveMetaData(this);
 

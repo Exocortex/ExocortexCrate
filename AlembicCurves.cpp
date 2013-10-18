@@ -51,7 +51,7 @@ void AlembicCurveAccumulator::save(const MObject &ref, double time)
 
 	Abc::M44f globalXfo = GetGlobalMatrix(ref);
 	if (!this->useGlobalCache)
-		Abc::M44f::multiply(this->mInverse, globalXfo, globalXfo);
+		Abc::M44f::multiply(globalXfo, this->mInverse, globalXfo);
 
 	MPointArray positions;
 	node.getCVs(positions);
