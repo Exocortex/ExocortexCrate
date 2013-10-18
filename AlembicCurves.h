@@ -11,6 +11,9 @@ class AlembicCurveAccumulator;
 
 typedef boost::shared_ptr<AlembicCurveAccumulator> AlembicCurveAccumulatorPtr;
 
+/**
+ * For the case where curves should be merged together. This class handles the accumulation of data for each frame and writes it as a single curve object in Alembic.
+ */
 class AlembicCurveAccumulator
 {
 private:
@@ -21,12 +24,12 @@ private:
 	AbcG::OCurvesSchema mSchema;
 	AbcG::OCurvesSchema::Sample mSample;
 	Abc::Box3d bbox;
-	bool firstSample;
+	bool firstSample;	// when it's the first sample recorded, more stuff are written to the alembic file
 	bool useGlobalCache;
 
 	std::vector<Abc::V3f> mPosVec;
 	std::vector<AbcA::int32_t> mNbVertices;
-	std::vector<float> mRadiusVec;
+	std::vector<float> mRadiusVec;		// TODO: add support for radius and knots. Need to find a way to express the knot vector as parts in the alembic file because it's a different size than the nbVertices!
 	std::vector<float> mKnotVec;
 
 	Abc::OFloatArrayProperty mRadiusProperty;

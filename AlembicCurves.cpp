@@ -8,16 +8,19 @@
 #include <map>
 
 //-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-AlembicCurveAccumulator::AlembicCurveAccumulator(const MObject &ref, SceneNodePtr eNode, AlembicWriteJob *in_Job, Abc::OObject oParent): m_ref(ref), firstSample(true), useGlobalCache(in_Job->GetOption(L"exportInGlobalSpace").asInt() > 0)
+AlembicCurveAccumulator::AlembicCurveAccumulator(const MObject &ref, SceneNodePtr eNode, AlembicWriteJob *in_Job, Abc::OObject oParent):
+			m_ref(ref),
+			firstSample(true),
+			useGlobalCache( in_Job->GetOption(L"exportInGlobalSpace").asInt() > 0 )
 {
 	const bool animTS = in_Job->GetAnimatedTs();
 	mObject = AbcG::OCurves(oParent, eNode->name, animTS);
 	mSchema = mObject.getSchema();
 
 	// create all properties
-	Abc::OCompoundProperty comp = mSchema.getArbGeomParams();
-	mRadiusProperty = Abc::OFloatArrayProperty(comp, ".radius", mSchema.getMetaData(), animTS );
-	mColorProperty = Abc::OC4fArrayProperty(comp, ".color", mSchema.getMetaData(), animTS );
+	//Abc::OCompoundProperty comp = mSchema.getArbGeomParams();
+	//mRadiusProperty = Abc::OFloatArrayProperty(comp, ".radius", mSchema.getMetaData(), animTS );
+	//mColorProperty = Abc::OC4fArrayProperty(comp, ".color", mSchema.getMetaData(), animTS );
 }
 
 void AlembicCurveAccumulator::startRecording(void)
@@ -170,7 +173,7 @@ MStatus AlembicCurves::Save(double time)
    Abc::Box3d bbox;
 
    // check if we have the global cache option
-   bool globalCache = GetJob()->GetOption(L"exportInGlobalSpace").asInt() > 0;
+   const bool globalCache = GetJob()->GetOption(L"exportInGlobalSpace").asInt() > 0;
    Abc::M44f globalXfo;
    if(globalCache)
       globalXfo = GetGlobalMatrix(GetRef());
