@@ -202,26 +202,30 @@ SceneNodeXSIPtr buildCommonSceneGraph(XSI::CRef xsiRoot, int& nNumNodes, bool bU
       SceneNodePtr newNode;
 
       SceneNode::nodeTypeE type = getNodeType(xNode);
-      
-      if(!hasExtractableTransform(type) || !bUnmergeNodes)
-      {
-         newNode = createNodeXSI(xRef, type);
+
+      if(bUnmergeNodes) { //export case (don't why we don't use it for import)
+         if(hasExtractableTransform(type) ){
+            newNode = createNodeXSI(xRef, SceneNode::ETRANSFORM);
+            //newNode->name+="Xfo";
+            SceneNodePtr geoNode = createNodeXSI(xRef, type);
+		      geoNode->name+="Shape";
+
+            newNode->children.push_back(geoNode);
+            geoNode->parent = newNode.get();
+         } 
+         else{
+            newNode = createNodeXSI(xRef, type);
+         }
+      }
+      else{ //import 
+         newNode = createNodeXSI(xRef, type);//doesn't identify EXTRANFORMS because these are built-in to the shape node
          if(type == SceneNode::ITRANSFORM || type == SceneNode::NAMESPACE_TRANSFORM){
             //newNode->name+="Xfo";
          }
-		 else{
-			newNode->name+="Shape";
-		 }
+		   else{
+			   //newNode->name+="Shape";
+		   }
       }
-      else{
-         newNode = createNodeXSI(xRef, SceneNode::ETRANSFORM);
-         //newNode->name+="Xfo";
-         SceneNodePtr geoNode = createNodeXSI(xRef, type);
-		 geoNode->name+="Shape";
-
-         newNode->children.push_back(geoNode);
-         geoNode->parent = newNode.get();
-      }  
 
       eNode->children.push_back(newNode);
       newNode->parent = eNode.get();

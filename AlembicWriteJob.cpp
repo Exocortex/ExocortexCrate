@@ -204,7 +204,7 @@ CStatus AlembicWriteJob::PreProcess()
 
    //TODO: eventually this should be a replaced with an equivalent virtual method, and the exporter will be shared
    int nNumNodes = 0;
-   SceneNodePtr exoSceneRoot = buildCommonSceneGraph(Application().GetActiveSceneRoot(), nNumNodes);
+   SceneNodePtr exoSceneRoot = buildCommonSceneGraph(Application().GetActiveSceneRoot(), nNumNodes, true);
    
    //::printSceneGraph(exoSceneRoot, false);
 
