@@ -282,7 +282,7 @@ void XSIProgressBar::setCaption(std::string& caption)
 {
    prog.PutCaption(CString(caption.c_str()));
 
-	if(Application().IsInteractive()){
+	if(!Application().IsInteractive()){
       std::stringstream progStr;
       progStr<<std::setw(3)<<(prog.GetValue() * 100 / prog.GetMaximum())<<" - "<<caption;
       Application().LogMessage( CString(progStr.str().c_str()) );

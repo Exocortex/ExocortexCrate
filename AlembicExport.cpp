@@ -468,7 +468,7 @@ CStatus exportCommandImp( CRef& in_ctxt )
       {
          CStatus status = jobPtrs[i]->Process(frame);
          if(status == CStatus::OK){
-            if(Application().IsInteractive()){
+            if(!Application().IsInteractive()){
                
                if(nUpdateCount == 0){
                   nUpdateCount = 5;
