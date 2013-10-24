@@ -54,6 +54,7 @@ typedef struct _alembic_importoptions
    SceneEnumProc sceneEnumProc;
    ObjectList currentSceneList;
    HelperObject *pTimeControl;
+   int crateBuildNum;
 
 public:
    _alembic_importoptions() : importNormals(false)
@@ -69,6 +70,7 @@ public:
     , enableMeshSmooth(false)
     , importVisibility(VisImport_JustImportValue)
 	, pTimeControl(NULL)
+   , crateBuildNum(-1)
    {
    }
 } alembic_importoptions;

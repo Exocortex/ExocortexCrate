@@ -552,8 +552,38 @@ int ExocortexAlembicStaticInterface_ExocortexAlembicImportJobs( CONST_2013 MCHAR
 
       AbcG::IObject root = pArchive->getTop();
 
-      //AbcA::MetaData metadata = root.getMetaData();
+      AbcA::MetaData metadata = root.getMetaData();
       //ESS_LOG_INFO("FileInfo:"<<metadata.serialize());
+
+      std::string appStr = metadata.get("_ai_Application");
+		std::vector<std::string> appz;
+		boost::split(appz, appStr, boost::is_any_of(","));
+      
+      if(appz.size() >= 2){
+         std::vector<std::string> crateVersions;
+         boost::split(crateVersions, appz[1], boost::is_any_of("."));
+
+         //two cases, because we changed our version string at some point in time
+
+         if(crateVersions.size() > 0 && crateVersions[0] == "crate-1"){
+            //_ai_Application=Exocortex Crate for 3DS Max 2012,crate-1.1
+            options.crateBuildNum = 0;
+            
+            if(crateVersions.size() == 3 && crateVersions[0] == "crate-1"){
+               try
+               {
+                  //_ai_Application=Exocortex Crate for 3DS Max 2012,crate-1.1.138
+                  options.crateBuildNum = boost::lexical_cast< int >(crateVersions[2]);
+               }
+               catch( const boost::bad_lexical_cast & )
+               {
+                  
+               }
+            }
+         }
+
+
+      }
 
       //nodesToImport.push_back(std::string("null1"));
 
