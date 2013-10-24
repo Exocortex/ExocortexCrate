@@ -115,9 +115,13 @@ bool AlembicXForm::Save(double time, bool bLastFrame)
     // Set the bounding box to be used to draw the dummy object on import
     DummyObject *pDummyObject = static_cast<DummyObject*>(GetRef().obj);
     Box3 maxBox = pDummyObject->GetBox();
-    Abc::V3d minpoint(maxBox.pmin.x, maxBox.pmin.y, maxBox.pmin.z);
-    Abc::V3d maxpoint(maxBox.pmax.x, maxBox.pmax.y, maxBox.pmax.z);
-	mXformSchema.getChildBoundsProperty().set( Abc::Box3d(minpoint, maxpoint) );
+
+   //Abc::V3d minpoint(maxBox.pmin.x, maxBox.pmin.y, maxBox.pmin.z);   //Abc::V3d maxpoint(maxBox.pmax.x, maxBox.pmax.y, maxBox.pmax.z);
+
+   Abc::V3d minpoint( ConvertMaxPointToAlembicPoint4(maxBox.pmin) );
+   Abc::V3d maxpoint( ConvertMaxPointToAlembicPoint4(maxBox.pmax) );
+
+	 mXformSchema.getChildBoundsProperty().set( Abc::Box3d(minpoint, maxpoint) );
 
     if(mXformSchema.getNumSamples() == 0)
     {

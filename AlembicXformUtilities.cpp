@@ -168,7 +168,8 @@ int AlembicImport_DummyNode(AbcG::IObject& iObj, alembic_importoptions &options,
 
 	if( obj.getSchema().getChildBoundsProperty().valid() ) {
 		const Abc::Box3d &box3d = obj.getSchema().getChildBoundsProperty().getValue( sampleInfo.floorIndex );
-		pDummy->SetBox( Box3(Point3(box3d.min.x, box3d.min.y, box3d.min.z), Point3(box3d.max.x, box3d.max.y, box3d.max.z)) );
+      pDummy->SetBox( Box3(  ConvertAlembicPointToMaxPoint(box3d.min), ConvertAlembicPointToMaxPoint(box3d.max)) );
+		//pDummy->SetBox( Box3(Point3(box3d.min.x, box3d.min.y, box3d.min.z), Point3(box3d.max.x, box3d.max.y, box3d.max.z)) );
 	}
 
     pDummy->EnableDisplay();

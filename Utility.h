@@ -96,15 +96,15 @@ inline Quat ConvertAlembicQuatToMaxQuat( const Abc::Quatf &alembicQuat, bool bNo
     return q;
 }
 
-inline Abc::Quatf ConvertMaxQuatToAlembicQuat( const Abc::Quatf &alembicQuat, bool bNormalize)
-{
-	Abc::Quatf q(alembicQuat.v.x, alembicQuat.v.z, -alembicQuat.v.y, -alembicQuat.r);
-
-    if (bNormalize)
-		q.normalize();
-
-    return q;
-}
+//inline Abc::Quatf ConvertMaxQuatToAlembicQuat( const Abc::Quatf &alembicQuat, bool bNormalize)
+//{
+//	Abc::Quatf q(alembicQuat.v.x, alembicQuat.v.z, -alembicQuat.v.y, -alembicQuat.r);
+//
+//    if (bNormalize)
+//		q.normalize();
+//
+//    return q;
+//}
 
 inline void ConvertMaxAngAxisToAlembicQuat(const AngAxis &angAxis, Abc::Quatd &quat)
 {
