@@ -552,7 +552,8 @@ int ExocortexAlembicStaticInterface_ExocortexAlembicImportJobs( CONST_2013 MCHAR
 
       AbcG::IObject root = pArchive->getTop();
 
-      
+      //AbcA::MetaData metadata = root.getMetaData();
+      //ESS_LOG_INFO("FileInfo:"<<metadata.serialize());
 
       //nodesToImport.push_back(std::string("null1"));
 
