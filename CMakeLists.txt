@@ -66,7 +66,7 @@ endif()
 # Configuration
 SET( crate_MAJOR_VERSION "1" )
 SET( crate_MINOR_VERSION "1" ) 
-SET( crate_BUILD_VERSION "138")
+SET( crate_BUILD_VERSION "139")
 SET( crate_VERSION "${crate_MAJOR_VERSION}.${crate_MINOR_VERSION}" )
 SET( crate_FULLVERSION "${crate_MAJOR_VERSION}.${crate_MINOR_VERSION}.${crate_BUILD_VERSION}" )
 
