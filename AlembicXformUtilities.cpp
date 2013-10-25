@@ -166,13 +166,23 @@ int AlembicImport_DummyNode(AbcG::IObject& iObj, alembic_importoptions &options,
     obj.getSchema().get(sample,sampleInfo.floorIndex);
     Abc::M44d matrix = sample.getMatrix();
 
+
 	if( obj.getSchema().getChildBoundsProperty().valid() ) {
 		const Abc::Box3d &box3d = obj.getSchema().getChildBoundsProperty().getValue( sampleInfo.floorIndex );
       
       if( options.crateBuildNum == -1 || options.crateBuildNum >= 139) {
-         pDummy->SetBox( Box3(  ConvertAlembicPointToMaxPoint(box3d.min), ConvertAlembicPointToMaxPoint(box3d.max)) );
+
+         Point3 minpoint = ConvertAlembicPointToMaxPoint(box3d.min);
+         Point3 maxpoint = ConvertAlembicPointToMaxPoint(box3d.max);
+
+         // alembic point -> max point: (x, y, z) -> (x, -z, y)
+         // thus, since Ymin < yMax, then -Ymin > -Ymax. So we need to swap the y components
+         std::swap(minpoint.y, maxpoint.y);
+
+         pDummy->SetBox( Box3(minpoint, maxpoint) );
       }
-      else {
+      else 
+      {
 		   pDummy->SetBox( Box3(Point3(box3d.min.x, box3d.min.y, box3d.min.z), Point3(box3d.max.x, box3d.max.y, box3d.max.z)) );
       }
  

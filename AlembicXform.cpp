@@ -120,6 +120,10 @@ bool AlembicXForm::Save(double time, bool bLastFrame)
 
    Abc::V3d minpoint( ConvertMaxPointToAlembicPoint4(maxBox.pmin) );
    Abc::V3d maxpoint( ConvertMaxPointToAlembicPoint4(maxBox.pmax) );
+   
+   // max point -> alembic point: (x, y, z) -> (x, z, -y)
+   // thus, since Zmin < zMax, then -Zmin > -Zmax. So we need to swap the z components
+   std::swap(minpoint.z, maxpoint.z);
 
 	 mXformSchema.getChildBoundsProperty().set( Abc::Box3d(minpoint, maxpoint) );
 
