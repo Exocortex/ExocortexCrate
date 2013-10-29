@@ -13,6 +13,7 @@
 #include "AlembicRecursiveImporter.h"
 #include "Utility.h"
 #include "CommonProfiler.h"
+#include "hashInstanceTable.h"
 
 // Dummy function for progress bar
 DWORD WINAPI DummyProgressFunction(LPVOID arg)
@@ -431,6 +432,8 @@ int ExocortexAlembicStaticInterface_ExocortexAlembicImportJobs( CONST_2013 MCHAR
 {
   ESS_PROFILE_FUNC();
 	try {
+
+      InstanceMap_Clear();
 
       //CONST_2013 MCHAR* strPath, 
       //BOOL bImportNormals, 

@@ -13,6 +13,8 @@
 #include "CommonProfiler.h"
 #include "CommonMeshUtilities.h"
 
+#include "hashInstanceTable.h"
+
 void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options);
 
 void AlembicImport_FillInPolyMesh(alembic_fillmesh_options &options)
@@ -279,7 +281,7 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
 
 	    options.pMNMesh->setNumFaces(numFaces);
 		MNFace *pFaces = options.pMNMesh->F(0);
-		for (int i = 0; i < numFaces; ++i)
+   		for (int i = 0; i < numFaces; ++i)
 		{
 			int degree = pMeshFaceCount[i];
 
@@ -968,7 +970,43 @@ int AlembicImport_PolyMesh(const std::string &path, AbcG::IObject& iObj, alembic
 		}
       Abc::IObject parent = iObj.getParent();
       std::string name = removeXfoSuffix(parent.getName().c_str());
+
+
+      AbcU::Digest digest;
+      bool bHashAvailable = iObj.getPropertiesHash(digest);
+
+      if(bHashAvailable){
+
+         INode* cachedNode = InstanceMap_Get(digest);
+         if(cachedNode)
+         {
+            INodeTab nodes;
+            nodes.Append(1, &cachedNode);
+
+            Point3 offset(0.0f, 0.0f, 0.0f);
+            bool expandHierarchies = false;
+            INodeTab resultSource;
+            INodeTab resultTarget;
+            GET_MAX_INTERFACE()->CloneNodes(nodes, offset, expandHierarchies, NODE_INSTANCE, &resultSource, &resultTarget);
+
+            if(resultSource.Count() == resultTarget.Count() && resultTarget.Count() == 1){
+                  
+               *pMaxNode = resultTarget[0];
+
+               return alembic_success;
+            }
+            else{
+               return alembic_failure;
+            }
+         }
+      }
+
       pNode = GET_MAX_INTERFACE()->CreateObjectNode(newObject, EC_UTF8_to_TCHAR(name.c_str()));
+
+      if(bHashAvailable){
+         InstanceMap_Add(digest, pNode);
+      }
+      
 		if (pNode == NULL){
 			return alembic_failure;
 		}
