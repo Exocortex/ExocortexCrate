@@ -904,7 +904,7 @@ MStatus AlembicPointsNode::compute(const MPlug & plug, MDataBlock & dataBlock)
          particleCount = 0;
       }
    }
-
+//*
    // ensure to have the right amount of particles
    if(positions.length() > particleCount)
    {
@@ -912,11 +912,12 @@ MStatus AlembicPointsNode::compute(const MPlug & plug, MDataBlock & dataBlock)
    }
    else
    {
-      MPointArray emitted;
-      emitted.setLength(particleCount - positions.length());
+	  const int deltaCount = particleCount - positions.length();
+      MPointArray emitted(deltaCount);
+      //emitted.setLength(deltaCount);
       part.emit(emitted);
    }
-
+//*
    positions.setLength(particleCount);
    velocities.setLength(particleCount);
    rgbs.setLength(particleCount);
@@ -989,7 +990,7 @@ MStatus AlembicPointsNode::compute(const MPlug & plug, MDataBlock & dataBlock)
 		 }
 		 else
 			 masses[i] = 1.0;
-		 //*/
+		 //*
       }
 
 		// compute the right orientation with the angular velocity if necessary!
@@ -1009,7 +1010,7 @@ MStatus AlembicPointsNode::compute(const MPlug & plug, MDataBlock & dataBlock)
 		{
 			for(unsigned int i = 0; i < particleCount; ++i)
 				orientationPP[i] = MVector::zero;
-		}//*/
+		}//*
    }
 
    // take care of the remaining attributes
@@ -1021,7 +1022,7 @@ MStatus AlembicPointsNode::compute(const MPlug & plug, MDataBlock & dataBlock)
    part.setPerParticleAttribute("massPP", masses);
    part.setPerParticleAttribute("shapeInstanceIdPP", shapeInstId);
    part.setPerParticleAttribute("orientationPP", orientationPP);
-
+//*/
    //arbGeomProperties->setParticleProperty(part);
 
    hOut.set( dOutput );
