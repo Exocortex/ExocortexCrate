@@ -123,7 +123,7 @@ private:
    // members
    SampleInfo mLastSampleInfo;
    double mLastInputTime;
-   ArbGeomProperties *arbGeomProperties;
+   //ArbGeomProperties *arbGeomProperties;
 };
 
 MStatus AlembicPostImportPoints(void);

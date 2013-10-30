@@ -7,7 +7,9 @@ AlembicPolyMesh::AlembicPolyMesh(SceneNodePtr eNode, AlembicWriteJob * in_Job, A
 	: AlembicObject(eNode, in_Job, oParent)
 {
 	const bool animTS = GetJob()->GetAnimatedTs();
-	ESS_LOG_ERROR(">>>> polymesh name: " << eNode->name << "\tfull name: " << eNode->dccIdentifier);
+#ifdef _DEBUG
+	ESS_LOG_INFO(">>>> polymesh name: " << eNode->name << "\tfull name: " << eNode->dccIdentifier);
+#endif
 	mObject = AbcG::OPolyMesh(GetMyParent(), eNode->name, animTS);
 	mSchema = mObject.getSchema();
 }

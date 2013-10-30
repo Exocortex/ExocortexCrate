@@ -658,7 +658,7 @@ void AlembicPointsNode::PreDestruction()
   mFileName.clear();
 }
 
-AlembicPointsNode::AlembicPointsNode(): mLastInputTime(-1.0), arbGeomProperties(0)
+AlembicPointsNode::AlembicPointsNode(): mLastInputTime(-1.0)//, arbGeomProperties(0)
 {
   PostConstructor();
 }
@@ -666,8 +666,8 @@ AlembicPointsNode::AlembicPointsNode(): mLastInputTime(-1.0), arbGeomProperties(
 AlembicPointsNode::~AlembicPointsNode(void)
 {
    PreDestruction();
-   if (arbGeomProperties)
-	   delete arbGeomProperties;
+   //if (arbGeomProperties)
+	 //  delete arbGeomProperties;
 }
 
 MObject AlembicPointsNode::mTimeAttr;
@@ -743,15 +743,15 @@ MStatus AlembicPointsNode::init(const MString &fileName, const MString &identifi
     if(!mSchema.valid())
       return MStatus::kFailure;
 
-	if (arbGeomProperties)
-		delete arbGeomProperties;
+	//if (arbGeomProperties)
+	//	delete arbGeomProperties;
 	//arbGeomProperties = new ArbGeomProperties(mSchema.getArbGeomParams());
   }
   return MS::kSuccess;
 }
 MStatus AlembicPointsNode::initPerParticles(const MString &partName)
 {
-	arbGeomProperties->initPerParticle(partName);
+	//arbGeomProperties->initPerParticle(partName);
 	return MS::kSuccess;
 }
 
@@ -947,7 +947,8 @@ MStatus AlembicPointsNode::compute(const MPlug & plug, MDataBlock & dataBlock)
 	  const bool oriUseFirstSample = validOri && (sampleOrientation->size() == 1);
       for(unsigned int i=0; i<particleCount; ++i)
       {
-         const Alembic::Abc::V3f &pout = samplePos->get()[i];
+         //*
+		 const Alembic::Abc::V3f &pout = samplePos->get()[i];
          MVector &pin = positions[i];
          pin.x = pout.x;
          pin.y = pout.y;
@@ -983,16 +984,16 @@ MStatus AlembicPointsNode::compute(const MPlug & plug, MDataBlock & dataBlock)
 		 shapeInstId[i]   = validSid ? sampleShapeInstanceID->get()[sidUseFirstSample ? 0 : i] : 0.0;
 		 if (validMas)
 		 {
-			 double mass = sampleMass->get()[masUseFirstSample ? 0 : i];
-			 if (mass <= 0.0)
-				 mass = 1.0;
-			 masses[i] = mass;
+			 const double mass = sampleMass->get()[masUseFirstSample ? 0 : i];
+			 masses[i] = mass > 0.0 ? mass : 1.0;
 		 }
 		 else
 			 masses[i] = 1.0;
+		 //*/
       }
 
 		// compute the right orientation with the angular velocity if necessary!
+		//*
 		if (validOri)
 		{
 			Abc::QuatfArraySamplePtr velPtr;
@@ -1008,7 +1009,7 @@ MStatus AlembicPointsNode::compute(const MPlug & plug, MDataBlock & dataBlock)
 		{
 			for(unsigned int i = 0; i < particleCount; ++i)
 				orientationPP[i] = MVector::zero;
-		}
+		}//*/
    }
 
    // take care of the remaining attributes

@@ -309,7 +309,7 @@ MStatus AlembicWriteJob::PreProcess()
 					}
 				}
 			}
-			/*
+			//*
 			else
 			{
 				ESS_LOG_ERROR("Do not have reference to parent.");
