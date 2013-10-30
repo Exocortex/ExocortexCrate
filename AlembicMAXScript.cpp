@@ -623,12 +623,14 @@ int ExocortexAlembicStaticInterface_ExocortexAlembicImportJobs( CONST_2013 MCHAR
 
 
 		delRefArchive(file);
+      InstanceMap_Clear();
 
 	} catch( boost::exception& e ) { 								
 		ESS_LOG_ERROR(__FILE__ << "(line " << __LINE__ << "). A boost::exception occurred: " << boost::diagnostic_information(e) );					
 		Exocortex::essLogStackTrace(); 
 		Exocortex::essSendErrorReport( "boost::exception" ); 	
 		GET_MAX_INTERFACE()->ProgressEnd(); 
+      InstanceMap_Clear();
 		return alembic_failure; 
 	} catch ( std::exception& e ) { 										
 		ESS_LOG_ERROR(__FILE__ << "(line " << __LINE__ << "). An std::exception occurred: " << e.what()); 	 				
@@ -637,6 +639,7 @@ int ExocortexAlembicStaticInterface_ExocortexAlembicImportJobs( CONST_2013 MCHAR
 		sprintf_s( szBuffer, 1024*4, "std::exception: %s", e.what() ); 
 		Exocortex::essSendErrorReport( szBuffer ); 
 		GET_MAX_INTERFACE()->ProgressEnd(); 
+      InstanceMap_Clear();
 		return alembic_failure; 
 	} catch( std::string& str ) { 									
 		ESS_LOG_ERROR(__FILE__ << "(line " << __LINE__ << "). A string exception was thrown: " << str);					
@@ -645,12 +648,14 @@ int ExocortexAlembicStaticInterface_ExocortexAlembicImportJobs( CONST_2013 MCHAR
 		sprintf_s( szBuffer, 1024*4, "C++ String Exception: %s", str.c_str() ); 
 		Exocortex::essSendErrorReport( szBuffer ); 
 		GET_MAX_INTERFACE()->ProgressEnd(); 
+      InstanceMap_Clear();
 		return alembic_failure; 
 	} catch (...) {														
 		ESS_LOG_ERROR(__FILE__ << "(line " << __LINE__ << "). An unknown error occurred"); 						
 		Exocortex::essLogStackTrace(); 
 		Exocortex::essSendErrorReport( "unknown C++ exception" ); 
 		GET_MAX_INTERFACE()->ProgressEnd(); 
+      InstanceMap_Clear();
 		return alembic_failure; 
 	}
 
