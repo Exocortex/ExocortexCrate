@@ -973,7 +973,10 @@ int AlembicImport_PolyMesh(const std::string &path, AbcG::IObject& iObj, alembic
 
 
       AbcU::Digest digest;
-      bool bHashAvailable = iObj.getPropertiesHash(digest);
+      bool bHashAvailable = false;
+      if(options.enableInstances || options.enableReferences){
+         bHashAvailable = iObj.getPropertiesHash(digest);
+      }
 
       if(bHashAvailable){
 
@@ -987,7 +990,13 @@ int AlembicImport_PolyMesh(const std::string &path, AbcG::IObject& iObj, alembic
             bool expandHierarchies = false;
             INodeTab resultSource;
             INodeTab resultTarget;
-            GET_MAX_INTERFACE()->CloneNodes(nodes, offset, expandHierarchies, NODE_INSTANCE, &resultSource, &resultTarget);
+            
+            if(options.enableInstances){
+               GET_MAX_INTERFACE()->CloneNodes(nodes, offset, expandHierarchies, NODE_INSTANCE, &resultSource, &resultTarget);
+            }
+            else if(options.enableReferences){
+               GET_MAX_INTERFACE()->CloneNodes(nodes, offset, expandHierarchies, NODE_REFERENCE, &resultSource, &resultTarget);
+            }
 
             if(resultSource.Count() == resultTarget.Count() && resultTarget.Count() == 1){
                   

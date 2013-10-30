@@ -500,18 +500,30 @@ int ExocortexAlembicStaticInterface_ExocortexAlembicImportJobs( CONST_2013 MCHAR
 		    else if(boost::iequals(valuePair[0], "includeChildren")){
             bIncludeChildren = parseBool(valuePair[1]);
 			}
-            else if(boost::iequals(valuePair[0], "loadGeometryInTopologyModifier")){
-               options.loadGeometryInTopologyModifier = parseBool(valuePair[1]);
-            }
-            else if(boost::iequals(valuePair[0], "loadTimeControl")){
-               options.loadTimeControl = parseBool(valuePair[1]);
-            }
-            else if(boost::iequals(valuePair[0], "loadCurvesAsNURBS")){
-               options.loadCurvesAsNurbs = parseBool(valuePair[1]);
-            }
-            else if(boost::iequals(valuePair[0], "meshSmoothModifiers")){
-               options.enableMeshSmooth = parseBool(valuePair[1]);
-            }
+         else if(boost::iequals(valuePair[0], "loadGeometryInTopologyModifier")){
+            options.loadGeometryInTopologyModifier = parseBool(valuePair[1]);
+         }
+         else if(boost::iequals(valuePair[0], "loadTimeControl")){
+            options.loadTimeControl = parseBool(valuePair[1]);
+         }
+         else if(boost::iequals(valuePair[0], "loadCurvesAsNURBS")){
+            options.loadCurvesAsNurbs = parseBool(valuePair[1]);
+         }
+         else if(boost::iequals(valuePair[0], "meshSmoothModifiers")){
+            options.enableMeshSmooth = parseBool(valuePair[1]);
+         }
+         else if(boost::iequals(valuePair[0], "objectDuplication")){
+             if(boost::iequals(valuePair[1], "copy")){
+               options.enableInstances = false;
+               options.enableReferences = false;
+             }
+             else if(boost::iequals(valuePair[1], "instance")){
+               options.enableInstances = true;
+             }
+             else if(boost::iequals(valuePair[1], "reference")){
+               options.enableReferences = true;
+             }
+			}
 			else
 			{
 				ESS_LOG_WARNING("Skipping invalid token: "<<tokens[j]);
