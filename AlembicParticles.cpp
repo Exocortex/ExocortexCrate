@@ -810,7 +810,7 @@ AlembicParticles::GetParticleShapeInstanceTimes(AbcG::IPoints &iPoints, const Sa
 	}
 	if( useDefaultValues ) {
 		for( int i = 0; i < instanceShapeTimes.size(); i ++ ) {
-			instanceShapeTimes[i] = TimeValue( 0 );
+			instanceShapeTimes[i] = m_currTick; //TimeValue( 0 );
 		}
 	}
 }
