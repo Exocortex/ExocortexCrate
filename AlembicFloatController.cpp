@@ -103,7 +103,7 @@ void AlembicFloatController::GetValueLocalTime(TimeValue t, void *ptr, Interval 
 		ESS_LOG_INFO("Param block end -------------");
 	}
 
-   if (bMuted || !strProperty){
+   if (bMuted || !strProperty|| !strPath || !strIdentifier){
       return;
    }
 	

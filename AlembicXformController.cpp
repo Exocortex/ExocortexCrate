@@ -104,7 +104,7 @@ void AlembicXformController::GetValueLocalTime(TimeValue t, void *ptr, Interval 
 		ESS_LOG_INFO("Param block end -------------");
 	}
 
-    if (bMuted)
+    if (bMuted || !strPath || !strIdentifier)
     {
         return;
     }

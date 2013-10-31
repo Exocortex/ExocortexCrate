@@ -185,7 +185,7 @@ void AlembicParticles::UpdateParticles(TimeValue t, INode *node)
 	BOOL bMuted;
 	this->pblock2->GetValue( AlembicParticles::ID_MUTED, t, bMuted, interval);
 
-    if (bMuted)
+    if (bMuted || !strPath || !strIdentifier)
     {
         valid = FALSE;
         return;

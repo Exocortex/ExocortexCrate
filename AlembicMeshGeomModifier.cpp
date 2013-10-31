@@ -150,7 +150,7 @@ void AlembicMeshGeomModifier::ModifyObject (TimeValue t, ModContext &mc, ObjectS
 	//ESS_LOG_INFO( "AlembicMeshGeomModifier::ModifyObject strPath: " << strPath << " strIdentifier: " << strIdentifier << " fTime: " << fTime << 
 	//	" bTopology: " << bTopology << " bGeometry: " << bGeometry << " bNormals: " << bNormals << " bUVs: " << bUVs << " bMuted: " << bMuted );
 
-	if( bMuted ) {
+	if( bMuted || !strPath || !strIdentifier) {
 		return;
 	}
 

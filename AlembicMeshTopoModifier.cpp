@@ -154,7 +154,7 @@ ESS_PROFILE_FUNC();
 	//ESS_LOG_INFO( "AlembicMeshTopoModifier::ModifyObject strPath: " << strPath << " strIdentifier: " << strIdentifier << " fTime: " << fTime << 
 	//	" bTopology: " << bTopology << " bGeometry: " << bGeometry << " bNormals: " << bNormals << " bUVs: " << bUVs << " bMuted: " << bMuted );
 
-	if( bMuted ) {
+	if( bMuted || !strPath || !strIdentifier) {
 		return;
 	}
 

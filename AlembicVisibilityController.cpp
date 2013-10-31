@@ -88,7 +88,7 @@ void AlembicVisibilityController::GetValueLocalTime(TimeValue t, void *ptr, Inte
 	BOOL bMuted;
 	this->pblock->GetValue( AlembicVisibilityController::ID_MUTED, t, bMuted, interval);
 
-    if (bMuted)
+    if (bMuted || !strPath || !strIdentifier)
     {
         return;
     }
