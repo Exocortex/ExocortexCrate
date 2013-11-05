@@ -6,6 +6,8 @@
 #include "CommonMeshUtilities.h"
 
 
+//#include "Utility.h"
+
 using namespace XSI;
 using namespace MATH;
 
@@ -18,8 +20,6 @@ AlembicPolyMesh::AlembicPolyMesh(SceneNodePtr eNode, AlembicWriteJob * in_Job, A
    Primitive prim(GetRef(REF_PRIMITIVE));
    Abc::OCompoundProperty argGeomParamsProp = mMeshSchema.getArbGeomParams();
    customAttributes.defineCustomAttributes(prim.GetGeometry(), argGeomParamsProp, mMeshSchema.getMetaData(), GetJob()->GetAnimatedTs());
-
-   m_bDynamicTopologyMesh = false;
 }
 
 AlembicPolyMesh::~AlembicPolyMesh()
@@ -31,20 +31,26 @@ Abc::OCompoundProperty AlembicPolyMesh::GetCompound()
    return mMeshSchema;
 }
 
+CVector3 V3fToVector3(const Abc::V3f& v){
+   return CVector3(v.x, v.y, v.z);
+}
+
+Abc::M44d CMatrix4_to_M44d(const XSI::MATH::CMatrix4& m){
+   return Abc::M44d(  
+      (float)m.GetValue(0,0), (float)m.GetValue(0,1), (float)m.GetValue(0,2), (float)m.GetValue(0,3),
+      (float)m.GetValue(1,0), (float)m.GetValue(1,1), (float)m.GetValue(1,2), (float)m.GetValue(1,3),
+      (float)m.GetValue(2,0), (float)m.GetValue(2,1), (float)m.GetValue(2,2), (float)m.GetValue(2,3),
+      (float)m.GetValue(3,0), (float)m.GetValue(3,1), (float)m.GetValue(3,2), (float)m.GetValue(3,3));
+}
+
+
 XSI::CStatus AlembicPolyMesh::Save(double time)
 {
    mMeshSample.reset();
 
    // store the transform
    Primitive prim(GetRef(REF_PRIMITIVE));
-   bool globalSpace = GetJob()->GetOption(L"globalSpace");
-
-   // query the global space
-   CTransformation globalXfo;
-   if(globalSpace)
-      globalXfo = KinematicState(GetRef(REF_GLOBAL_TRANS)).GetTransform(time);
-   CTransformation globalRotation;
-   globalRotation.SetRotation(globalXfo.GetRotation());
+   const bool globalSpace = GetJob()->GetOption(L"globalSpace");
 
    // store the metadata
    SaveMetaData(GetRef(REF_NODE),this);
@@ -58,34 +64,35 @@ XSI::CStatus AlembicPolyMesh::Save(double time)
    // check if we just have a pure pointcache (no surface)
    bool purePointCache = (bool)GetJob()->GetOption(L"exportPurePointCache");
 
-   // define additional vectors, necessary for this task
-   std::vector<Abc::V3f> posVec;
-
-   // access the mesh
+   finalMesh.clearNonConstProperties();
    PolygonMesh mesh = prim.GetGeometry(time);
-   CVector3Array pos = mesh.GetVertices().GetPositionArray();
-   LONG vertCount = pos.GetCount();
+   finalMesh.Save(prim, time, GetJob()->mOptions, mNumSamples);
 
-   // prepare the bounding box
-   Abc::Box3d bbox;
+   if(globalSpace){
 
-   // allocate the points and normals
-   posVec.resize(vertCount);
-   for(LONG i=0;i<vertCount;i++)
-   {
-      if(globalSpace)
-         pos[i] = MapObjectPositionToWorldSpace(globalXfo,pos[i]);
-      posVec[i].x = (float)pos[i].GetX();
-      posVec[i].y = (float)pos[i].GetY();
-      posVec[i].z = (float)pos[i].GetZ();
-      bbox.extendBy(posVec[i]);
+      const Imath::M44d localXfo = CMatrix4_to_M44d(KinematicState(GetRef(REF_GLOBAL_TRANS)).GetTransform(time).GetMatrix4());
+
+      for(int i=0; i<finalMesh.posVec.size(); i++){
+         finalMesh.posVec[i] *= localXfo;
+      }
+
+      finalMesh.bbox.min *= localXfo;
+      finalMesh.bbox.max *= localXfo;
+
+      for(int i=0; i<finalMesh.mIndexedNormals.values.size(); i++){
+         finalMesh.mIndexedNormals.values[i] *= localXfo; 
+      }
+
+      for(int i=0; i<finalMesh.mVelocitiesVec.size(); i++){
+         finalMesh.mVelocitiesVec[i] *= localXfo;
+      }
    }
 
-
    // store the positions && bbox
-   mMeshSample.setPositions(Abc::P3fArraySample(posVec));
-   mMeshSample.setSelfBounds(bbox);
+   mMeshSample.setPositions(Abc::P3fArraySample(finalMesh.posVec));
+   mMeshSample.setSelfBounds(finalMesh.bbox);
 
+   //disable custom attributes export if mesh merge feature is enabled
    customAttributes.exportCustomAttributes(mesh);
 
    // abort here if we are just storing points
@@ -106,53 +113,17 @@ XSI::CStatus AlembicPolyMesh::Save(double time)
    // check if we support changing topology
    bool dynamicTopology = (bool)GetJob()->GetOption(L"exportDynamicTopology");
 
-   // get the faces
-   CPolygonFaceRefArray faces = mesh.GetPolygons();
-   LONG faceCount = faces.GetCount();
-   LONG sampleCount = mesh.GetSamples().GetCount();
+   //if( !m_bDynamicTopologyMesh && mNumSamples > 0)
+   //{
+   //   if(mFaceCountVec.size() != faceCount || mFaceIndicesVec.size() != sampleCount){
+   //      ESS_LOG_WARNING("Dynamic Topology Mesh detected");
+   //      m_bDynamicTopologyMesh = true;
+   //   }
+   //}
 
-   // create a sample look table
-   LONG offset = 0;
-   CLongArray sampleLookup(sampleCount);
-   for(LONG i=0;i<faces.GetCount();i++)
-   {
-      PolygonFace face(faces[i]);
-      CLongArray samples = face.GetSamples().GetIndexArray();
-      for(LONG j=samples.GetCount()-1;j>=0;j--)
-         sampleLookup[offset++] = samples[j];
-   }
-
-   if( !m_bDynamicTopologyMesh && mNumSamples > 0)
-   {
-      if(mFaceCountVec.size() != faceCount || mFaceIndicesVec.size() != sampleCount){
-         ESS_LOG_WARNING("Dynamic Topology Mesh detected");
-         m_bDynamicTopologyMesh = true;
-      }
-   }
-
-   // if we are the first frame!
-   if(mNumSamples == 0 || (dynamicTopology))
-   {
-      // we also need to store the face counts as well as face indices
-      mFaceCountVec.resize(faceCount);
-      mFaceIndicesVec.resize(sampleCount);
-
-      offset = 0;
-      for(LONG i=0;i<faceCount;i++)
-      {
-         PolygonFace face(faces[i]);
-         CLongArray indices = face.GetVertices().GetIndexArray();
-         mFaceCountVec[i] = indices.GetCount();
-         for(LONG j=indices.GetCount()-1;j>=0;j--)
-            mFaceIndicesVec[offset++] = indices[j];
-      }
-
-      Abc::Int32ArraySample faceCountSample(mFaceCountVec);
-      Abc::Int32ArraySample faceIndicesSample(mFaceIndicesVec);
-
-      mMeshSample.setFaceCounts(faceCountSample);
-      mMeshSample.setFaceIndices(faceIndicesSample);
-   }
+   mMeshSample.setFaceCounts(Abc::Int32ArraySample(finalMesh.mFaceCountVec));
+   mMeshSample.setFaceIndices(Abc::Int32ArraySample(finalMesh.mFaceIndicesVec));
+   
 
    //these three variables must be scope when the schema set call occurs
    AbcG::ON3fGeomParam::Sample normalSample;
@@ -162,288 +133,60 @@ XSI::CStatus AlembicPolyMesh::Save(double time)
    bool exportNormals = GetJob()->GetOption(L"exportNormals");
    if(exportNormals)
    {
-      std::vector<Abc::N3f> normalVec;
-      CVector3Array normals = mesh.GetVertices().GetNormalArray();
-
-      CGeometryAccessor accessor = mesh.GetGeometryAccessor(siConstructionModeSecondaryShape);
-      CRefArray userNormalProps = accessor.GetUserNormals();
-      CFloatArray shadingNormals;
-      accessor.GetNodeNormals(shadingNormals);
-      if(userNormalProps.GetCount() > 0)
-      {
-         ClusterProperty userNormalProp(userNormalProps[0]);
-         Cluster cluster(userNormalProp.GetParent());
-         CLongArray elements = cluster.GetElements().GetArray();
-         CDoubleArray userNormals = userNormalProp.GetElements().GetArray();
-         for(LONG i=0;i<elements.GetCount();i++)
-         {
-            LONG sampleIndex = elements[i] * 3;
-            if(sampleIndex >= shadingNormals.GetCount())
-               continue;
-            shadingNormals[sampleIndex++] = (float)userNormals[i*3+0];
-            shadingNormals[sampleIndex++] = (float)userNormals[i*3+1];
-            shadingNormals[sampleIndex++] = (float)userNormals[i*3+2];
-         }
-      }
-      normalVec.resize(shadingNormals.GetCount() / 3);
-
-      for(LONG i=0;i<sampleCount;i++)
-      {
-         LONG lookedup = sampleLookup[i];
-         CVector3 normal;
-         normal.PutX(shadingNormals[lookedup * 3 + 0]);
-         normal.PutY(shadingNormals[lookedup * 3 + 1]);
-         normal.PutZ(shadingNormals[lookedup * 3 + 2]);
-         if(globalSpace)
-         {
-            normal = MapObjectPositionToWorldSpace(globalRotation,normal);
-            normal.NormalizeInPlace();
-         }
-         normalVec[i].x = (float)normal.GetX();
-         normalVec[i].y = (float)normal.GetY();
-         normalVec[i].z = (float)normal.GetZ();
-      }
-
-      createIndexedArray<Abc::N3f, SortableV3f>(mFaceIndicesVec, normalVec, indexedNormals, normalIndexVec);
-
       normalSample.setScope(AbcG::kFacevaryingScope);
       
-      normalSample.setVals(Abc::N3fArraySample(indexedNormals));
-      if(normalIndexVec.size() > 0){
-         normalSample.setIndices(Abc::UInt32ArraySample(normalIndexVec));
+      normalSample.setVals(Abc::N3fArraySample(finalMesh.mIndexedNormals.values));
+      if(finalMesh.mIndexedNormals.indices.size() > 0){
+         normalSample.setIndices(Abc::UInt32ArraySample(finalMesh.mIndexedNormals.indices));
       }
       mMeshSample.setNormals(normalSample);
    }
 
-   // check if we should export the velocities
-   if(dynamicTopology)
-   {
-      ICEAttribute velocitiesAttr = mesh.GetICEAttributeFromName(L"PointVelocity");
-      if(velocitiesAttr.IsDefined() && velocitiesAttr.IsValid())
+   if(finalMesh.mVelocitiesVec.size() > 0){
+       mMeshSample.setVelocities(Abc::V3fArraySample(finalMesh.mVelocitiesVec));
+   }
+
+	if((bool)GetJob()->GetOption(L"exportUVs"))
+	{
+      AbcG::OV2fGeomParam::Sample uvSample;
+	   saveIndexedUVs( mMeshSchema, mMeshSample, uvSample, mUvParams, GetJob()->GetAnimatedTs(), mNumSamples, finalMesh.mIndexedUVSet );
+
+      if(mNumSamples == 0)
       {
-         CICEAttributeDataArrayVector3f velocitiesData;
-         velocitiesAttr.GetDataArray(velocitiesData);
-         
-         bool bAllZero = true;
+         mUvOptionsProperty = Abc::OFloatArrayProperty(mMeshSchema, ".uvOptions", mMeshSchema.getMetaData(), GetJob()->GetAnimatedTs() );
+         mUvOptionsProperty.set(Abc::FloatArraySample(finalMesh.mUvOptionsVec));
+      }
+	}
+
+   // set the subd level
+   if(!mFaceVaryingInterpolateBoundaryProperty){
+      mFaceVaryingInterpolateBoundaryProperty =
+         Abc::OInt32Property( mMeshSchema, ".faceVaryingInterpolateBoundary", mMeshSchema.getMetaData(), GetJob()->GetAnimatedTs() );
+   }
+
+   mFaceVaryingInterpolateBoundaryProperty.set( finalMesh.bGeomApprox );
+
+
+   if(GetJob()->GetOption(L"exportFaceSets") && mNumSamples == 0)
+   {
+      for(int i=0; i<finalMesh.mFaceSets.size(); i++){
+         if(finalMesh.mFaceSets[i].faceIds.size() > 0)
          {
-            ESS_PROFILE_SCOPE("PointVelocity-zero-check");
-
-            bAllZero = true;
-            for(ULONG i=0;i<velocitiesData.GetCount(); i++){
-               CVector3 vel;
-               vel.PutX(velocitiesData[i].GetX());
-               vel.PutY(velocitiesData[i].GetY());
-               vel.PutZ(velocitiesData[i].GetZ());
-
-               if(vel.GetX() != 0.0 || vel.GetY() != 0.0 || vel.GetZ() != 0.0){
-                  bAllZero = false;
-               }
-            }
+            AbcG::OFaceSet faceSet = mMeshSchema.createFaceSet(finalMesh.mFaceSets[i].name);
+            AbcG::OFaceSetSchema::Sample faceSetSample(Abc::Int32ArraySample(finalMesh.mFaceSets[i].faceIds));
+            faceSet.getSchema().set(faceSetSample);
          }
-
-         if(velocitiesAttr.IsConstant()){
-            ESS_LOG_WARNING("attribute is constant");
-         }
-
-
-         if(!bAllZero)
-         {
-            mVelocitiesVec.resize(vertCount);
-            for(LONG i=0;i<vertCount;i++)
-            {
-               CVector3 vel;
-               vel.PutX(velocitiesData[i].GetX());
-               vel.PutY(velocitiesData[i].GetY());
-               vel.PutZ(velocitiesData[i].GetZ());
-               if(globalSpace)
-                  vel = MapObjectPositionToWorldSpace(globalRotation,vel);
-               mVelocitiesVec[i].x = (float)vel.GetX();
-               mVelocitiesVec[i].y = (float)vel.GetY();
-               mVelocitiesVec[i].z = (float)vel.GetZ();
-            }
-
-            Abc::V3fArraySample sample = Abc::V3fArraySample(mVelocitiesVec);
-            mMeshSample.setVelocities(sample);
-         }
-
       }
    }
 
-   std::vector<std::vector<Abc::V2f> > uvVecs;
-   std::vector<std::vector<Abc::uint32_t> > uvIndicesVecs;
-   // if we are the first frame!
-   if(mNumSamples == 0 || (dynamicTopology))
+   // check if we need to export the bindpose (also only for first frame)
+   if(GetJob()->GetOption(L"exportBindPose") && finalMesh.mBindPoseVec.size() > 0 && mNumSamples == 0)
    {
-
-      // also check if we need to store UV
-      CRefArray clusters = mesh.GetClusters();
-      if((bool)GetJob()->GetOption(L"exportUVs"))
-      {
-         CGeometryAccessor accessor = mesh.GetGeometryAccessor(siConstructionModeSecondaryShape);
-         CRefArray uvPropRefs = accessor.GetUVs();
-
-         // if we now finally found a valid uvprop
-         if(uvPropRefs.GetCount() > 0)
-         {
-            uvVecs.resize(uvPropRefs.GetCount());
-            uvIndicesVecs.resize(uvPropRefs.GetCount());
-
-            // ok, great, we found UVs, let's set them up
-            if(mNumSamples == 0)
-            {
-               // query the names of all uv properties
-               std::vector<std::string> uvSetNames;
-               for(LONG i=0;i< uvPropRefs.GetCount();i++)
-                  uvSetNames.push_back(ClusterProperty(uvPropRefs[i]).GetName().GetAsciiString());
-
-               Abc::OStringArrayProperty uvSetNamesProperty = Abc::OStringArrayProperty(
-                  mMeshSchema, ".uvSetNames", mMeshSchema.getMetaData(), GetJob()->GetAnimatedTs() );
-               Abc::StringArraySample uvSetNamesSample(uvSetNames);
-               uvSetNamesProperty.set(uvSetNamesSample);
-            }
-
-            // loop over all uvsets
-            for(LONG uvI=0; uvI<uvPropRefs.GetCount(); uvI++)
-            {
-               std::vector<Abc::V2f> uvVec;
-               uvVec.resize(sampleCount);
-               
-               CDoubleArray uvValues = ClusterProperty(uvPropRefs[uvI]).GetElements().GetArray();
-
-               for(LONG i=0;i<sampleCount;i++)
-               {
-                  uvVec[i].x = (float)uvValues[sampleLookup[i] * 3 + 0];
-                  uvVec[i].y = (float)uvValues[sampleLookup[i] * 3 + 1];
-               }
-
-               createIndexedArray<Abc::V2f, SortableV2f>(mFaceIndicesVec, uvVec, uvVecs[uvI], uvIndicesVecs[uvI]);
-
-               AbcG::OV2fGeomParam::Sample uvSample(Abc::V2fArraySample(uvVecs[uvI]),AbcG::kFacevaryingScope);
-               if(uvIndicesVecs[uvI].size() > 0){
-                  uvSample.setIndices(Abc::UInt32ArraySample(uvIndicesVecs[uvI]));
-               }
-
-               if(uvI == 0)
-               {
-                  mMeshSample.setUVs(uvSample);
-               }
-               else
-               {
-                  // create the uv param if required
-                  if(mNumSamples == 0)
-                  {
-                     CString storedUvSetName = CString(L"uv") + CString(uvI);
-                     mUvParams.push_back(AbcG::OV2fGeomParam( mMeshSchema, storedUvSetName.GetAsciiString(), uvIndicesVecs[uvI].size() > 0,
-                                        AbcG::kFacevaryingScope, 1, GetJob()->GetAnimatedTs()));
-                  }
-                  mUvParams[uvI-1].set(uvSample);
-               }
-            }
-
-            // create the uv options
-            if(mUvOptionsVec.size() == 0)
-            {
-				mUvOptionsProperty = Abc::OFloatArrayProperty(mMeshSchema, ".uvOptions", mMeshSchema.getMetaData(), GetJob()->GetAnimatedTs() );
-
-               for(LONG uvI=0;uvI<uvPropRefs.GetCount();uvI++)
-               {
-                  ClusterProperty clusterProperty = (ClusterProperty) uvPropRefs[uvI];
-                  bool subdsmooth = false;
-                  if( clusterProperty.GetType() == L"uvspace") {
-                     subdsmooth = (bool)clusterProperty.GetParameter(L"subdsmooth").GetValue();      
-                     //ESS_LOG_ERROR( "subdsmooth: " << subdsmooth );
-                  }
-
-                  CRefArray children = clusterProperty.GetNestedObjects();
-                  bool uWrap = false;
-                  bool vWrap = false;
-                  for(LONG i=0; i<children.GetCount(); i++)
-                  {
-                     ProjectItem child(children.GetItem(i));
-                     CString type = child.GetType();
-					// ESS_LOG_ERROR( "  Cluster Property child type: " << type.GetAsciiString() );
-                     if(type == L"uvprojdef")
-                     {
-                        uWrap = (bool)child.GetParameter(L"wrap_u").GetValue();
-                        vWrap = (bool)child.GetParameter(L"wrap_v").GetValue();
-                        break;
-                     }
-                  }
-
-                  // uv wrapping
-                  mUvOptionsVec.push_back(uWrap ? 1.0f : 0.0f);
-                  mUvOptionsVec.push_back(vWrap ? 1.0f : 0.0f);
-				      mUvOptionsVec.push_back(subdsmooth ? 1.0f : 0.0f);
-               }
-               mUvOptionsProperty.set(Abc::FloatArraySample(mUvOptionsVec));
-            }
-         }
-      }
-	  
-
-      // set the subd level
-      Property geomApproxProp;
-      prim.GetParent3DObject().GetPropertyFromName(L"geomapprox",geomApproxProp);
-
-      if(!mFaceVaryingInterpolateBoundaryProperty){
-         mFaceVaryingInterpolateBoundaryProperty =
-            Abc::OInt32Property( mMeshSchema, ".faceVaryingInterpolateBoundary", mMeshSchema.getMetaData(), GetJob()->GetAnimatedTs() );
-      }
-
-	   mFaceVaryingInterpolateBoundaryProperty.set( (Abc::int32_t) geomApproxProp.GetParameterValue(L"gapproxmordrsl") );
-
-      // sweet, now let's have a look at face sets (really only for first sample)
-      if(GetJob()->GetOption(L"exportFaceSets") && mNumSamples == 0)
-      {
-         for(LONG i=0;i<clusters.GetCount();i++)
-         {
-            Cluster cluster(clusters[i]);
-            if(!cluster.GetType().IsEqualNoCase(L"poly"))
-               continue;
-
-            CLongArray elements = cluster.GetElements().GetArray();
-            if(elements.GetCount() == 0)
-               continue;
-
-            std::string name(cluster.GetName().GetAsciiString());
-
-            mFaceSetsVec.push_back(std::vector<Abc::int32_t>());
-            std::vector<Abc::int32_t> & faceSetVec = mFaceSetsVec.back();
-            for(LONG j=0;j<elements.GetCount();j++)
-               faceSetVec.push_back(elements[j]);
-
-            if(faceSetVec.size() > 0)
-            {
-              AbcG::OFaceSet faceSet = mMeshSchema.createFaceSet(name);
-              AbcG::OFaceSetSchema::Sample faceSetSample(Abc::Int32ArraySample(&faceSetVec.front(),faceSetVec.size()));
-               faceSet.getSchema().set(faceSetSample);
-            }
-         }
-      }
-
-      // check if we need to export the bindpose (also only for first frame)
-      if(GetJob()->GetOption(L"exportBindPose") && prim.GetParent3DObject().GetEnvelopes().GetCount() > 0 && mNumSamples == 0)
-      {
-         mBindPoseProperty = Abc::OV3fArrayProperty(mMeshSchema, ".bindpose", mMeshSchema.getMetaData(), GetJob()->GetAnimatedTs());
-
-         // store the positions of the modeling stack into here
-         PolygonMesh bindPoseGeo = prim.GetGeometry(time, siConstructionModeModeling);
-         CVector3Array bindPosePos = bindPoseGeo.GetPoints().GetPositionArray();
-         mBindPoseVec.resize((size_t)bindPosePos.GetCount());
-         for(LONG i=0;i<bindPosePos.GetCount();i++)
-         {
-            mBindPoseVec[i].x = (float)bindPosePos[i].GetX();
-            mBindPoseVec[i].y = (float)bindPosePos[i].GetY();
-            mBindPoseVec[i].z = (float)bindPosePos[i].GetZ();
-         }
-
-         Abc::V3fArraySample sample;
-         if(mBindPoseVec.size() > 0)
-            sample = Abc::V3fArraySample(&mBindPoseVec.front(),mBindPoseVec.size());
-         mBindPoseProperty.set(sample);
-      }   
-   }
-
+      mBindPoseProperty = Abc::OV3fArrayProperty(mMeshSchema, ".bindpose", mMeshSchema.getMetaData(), GetJob()->GetAnimatedTs());
+      Abc::V3fArraySample sample = Abc::V3fArraySample(finalMesh.mBindPoseVec);
+      mBindPoseProperty.set(sample);
+   }   
+   
 
    mMeshSchema.set(mMeshSample);
 
