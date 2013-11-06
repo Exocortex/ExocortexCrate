@@ -16,6 +16,8 @@ CValue GetOption(std::map<XSI::CString,XSI::CValue>& options, const CString & in
 
 void IntermediatePolyMeshXSI::Save(XSI::Primitive prim, double time, std::map<XSI::CString,XSI::CValue>& options, int mNumSampes)
 {
+   const bool bEnableLogging = true;
+
    XSI::PolygonMesh mesh = prim.GetGeometry(time);
 
    CVector3Array pos = mesh.GetVertices().GetPositionArray();
@@ -66,6 +68,8 @@ void IntermediatePolyMeshXSI::Save(XSI::Primitive prim, double time, std::map<XS
    bool exportNormals = GetOption(options, L"exportNormals");
    if(exportNormals)
    {
+      if(bEnableLogging) ESS_LOG_WARNING("Extracting normal data.");
+
       std::vector<Abc::N3f> normalVec;
       CVector3Array normals = mesh.GetVertices().GetNormalArray();
 
@@ -110,6 +114,8 @@ void IntermediatePolyMeshXSI::Save(XSI::Primitive prim, double time, std::map<XS
    ICEAttribute velocitiesAttr = mesh.GetICEAttributeFromName(L"PointVelocity");
    if(velocitiesAttr.IsDefined() && velocitiesAttr.IsValid())
    {
+      if(bEnableLogging) ESS_LOG_WARNING("Extracting velocity data");
+
       CICEAttributeDataArrayVector3f velocitiesData;
       velocitiesAttr.GetDataArray(velocitiesData);
       
@@ -132,6 +138,8 @@ void IntermediatePolyMeshXSI::Save(XSI::Primitive prim, double time, std::map<XS
 
       if(!bAllZero)
       {
+         if(bEnableLogging) ESS_LOG_WARNING("Velocity data not all zero vector");
+
          mVelocitiesVec.resize(vertCount);
          for(LONG i=0;i<vertCount;i++)
          {
@@ -177,12 +185,15 @@ void IntermediatePolyMeshXSI::Save(XSI::Primitive prim, double time, std::map<XS
 
             mIndexedUVSet[uvI].name = ClusterProperty(uvPropRefs[uvI]).GetName().GetAsciiString();
 
+            if(bEnableLogging) ESS_LOG_WARNING("Extracting UV Data "<<uvI);
             createIndexedArray<Abc::V2f, SortableV2f>(mFaceIndicesVec, uvVec, mIndexedUVSet[uvI].values, mIndexedUVSet[uvI].indices);
          }
 
          // create the uv options
          if(mUvOptionsVec.size() == 0)
          {
+            if(bEnableLogging) ESS_LOG_WARNING("Extracting UV options.");
+
             for(LONG uvI=0;uvI<uvPropRefs.GetCount();uvI++)
             {
                ClusterProperty clusterProperty = (ClusterProperty) uvPropRefs[uvI];
@@ -225,6 +236,7 @@ void IntermediatePolyMeshXSI::Save(XSI::Primitive prim, double time, std::map<XS
 
    if((bool)GetOption(options, L"exportFaceSets") && mFaceSets.empty())//facesets are only exported once
    {
+      if(bEnableLogging) ESS_LOG_WARNING("Extracting facesets.");
       for(LONG i=0;i<clusters.GetCount();i++)
       {
          Cluster cluster(clusters[i]);
@@ -234,6 +246,8 @@ void IntermediatePolyMeshXSI::Save(XSI::Primitive prim, double time, std::map<XS
          CLongArray elements = cluster.GetElements().GetArray();
          if(elements.GetCount() == 0)
             continue;
+
+         if(bEnableLogging) ESS_LOG_WARNING("Extracting faceset "<<i);
 
          std::string name(cluster.GetName().GetAsciiString());
 
@@ -248,6 +262,7 @@ void IntermediatePolyMeshXSI::Save(XSI::Primitive prim, double time, std::map<XS
    // check if we need to export the bindpose (also only for first frame)
    if((bool)GetOption(options, L"exportBindPose") && prim.GetParent3DObject().GetEnvelopes().GetCount() > 0 && mBindPoseVec.empty())
    {
+      if(bEnableLogging) ESS_LOG_WARNING("Extracting bindpose");
       // store the positions of the modeling stack into here
       PolygonMesh bindPoseGeo = prim.GetGeometry(time, siConstructionModeModeling);
       CVector3Array bindPosePos = bindPoseGeo.GetPoints().GetPositionArray();

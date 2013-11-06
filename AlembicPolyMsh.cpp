@@ -46,6 +46,8 @@ Abc::M44d CMatrix4_to_M44d(const XSI::MATH::CMatrix4& m){
 
 XSI::CStatus AlembicPolyMesh::Save(double time)
 {
+   const bool bEnableLogging = true;
+
    mMeshSample.reset();
 
    // store the transform
@@ -98,6 +100,7 @@ XSI::CStatus AlembicPolyMesh::Save(double time)
    // abort here if we are just storing points
    if(purePointCache)
    {
+      if(bEnableLogging) ESS_LOG_WARNING("Exporting pure point cache");
       if(mNumSamples == 0)
       {
          // store a dummy empty topology
@@ -109,9 +112,6 @@ XSI::CStatus AlembicPolyMesh::Save(double time)
       mNumSamples++;
       return CStatus::OK;
    }
-
-   // check if we support changing topology
-   bool dynamicTopology = (bool)GetJob()->GetOption(L"exportDynamicTopology");
 
    //if( !m_bDynamicTopologyMesh && mNumSamples > 0)
    //{
@@ -143,6 +143,7 @@ XSI::CStatus AlembicPolyMesh::Save(double time)
    }
 
    if(finalMesh.mVelocitiesVec.size() > 0){
+       if(bEnableLogging) ESS_LOG_WARNING("Exporting velocities");
        mMeshSample.setVelocities(Abc::V3fArraySample(finalMesh.mVelocitiesVec));
    }
 
@@ -150,9 +151,11 @@ XSI::CStatus AlembicPolyMesh::Save(double time)
 	{
       AbcG::OV2fGeomParam::Sample uvSample;
 	   saveIndexedUVs( mMeshSchema, mMeshSample, uvSample, mUvParams, GetJob()->GetAnimatedTs(), mNumSamples, finalMesh.mIndexedUVSet );
+      if(bEnableLogging) ESS_LOG_WARNING("Exporting UV data.");
 
       if(mNumSamples == 0)
       {
+         if(bEnableLogging) ESS_LOG_WARNING("Export UV options.");
          mUvOptionsProperty = Abc::OFloatArrayProperty(mMeshSchema, ".uvOptions", mMeshSchema.getMetaData(), GetJob()->GetAnimatedTs() );
          mUvOptionsProperty.set(Abc::FloatArraySample(finalMesh.mUvOptionsVec));
       }
@@ -169,9 +172,11 @@ XSI::CStatus AlembicPolyMesh::Save(double time)
 
    if(GetJob()->GetOption(L"exportFaceSets") && mNumSamples == 0)
    {
+      if(bEnableLogging) ESS_LOG_WARNING("Exporting facesets");
       for(int i=0; i<finalMesh.mFaceSets.size(); i++){
          if(finalMesh.mFaceSets[i].faceIds.size() > 0)
          {
+            if(bEnableLogging) ESS_LOG_WARNING("Exporting faceset "<<i);
             AbcG::OFaceSet faceSet = mMeshSchema.createFaceSet(finalMesh.mFaceSets[i].name);
             AbcG::OFaceSetSchema::Sample faceSetSample(Abc::Int32ArraySample(finalMesh.mFaceSets[i].faceIds));
             faceSet.getSchema().set(faceSetSample);
@@ -182,6 +187,7 @@ XSI::CStatus AlembicPolyMesh::Save(double time)
    // check if we need to export the bindpose (also only for first frame)
    if(GetJob()->GetOption(L"exportBindPose") && finalMesh.mBindPoseVec.size() > 0 && mNumSamples == 0)
    {
+      if(bEnableLogging) ESS_LOG_WARNING("Exporting BindPose");
       mBindPoseProperty = Abc::OV3fArrayProperty(mMeshSchema, ".bindpose", mMeshSchema.getMetaData(), GetJob()->GetAnimatedTs());
       Abc::V3fArraySample sample = Abc::V3fArraySample(finalMesh.mBindPoseVec);
       mBindPoseProperty.set(sample);
