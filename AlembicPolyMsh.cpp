@@ -133,6 +133,7 @@ XSI::CStatus AlembicPolyMesh::Save(double time)
    bool exportNormals = GetJob()->GetOption(L"exportNormals");
    if(exportNormals)
    {
+      if(bEnableLogging) ESS_LOG_WARNING("Exporting normals");
       normalSample.setScope(AbcG::kFacevaryingScope);
       
       normalSample.setVals(Abc::N3fArraySample(finalMesh.mIndexedNormals.values));
