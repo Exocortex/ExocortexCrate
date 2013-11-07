@@ -3,6 +3,39 @@
 
 //
 #include "CommonMeshUtilities.h"
+#include "CommonSceneGraph.h"
+
+class CommonOptions
+{
+   typedef std::map<std::string, int>  optionMapT;
+   optionMapT optionMap;
+public:
+   inline bool GetBoolOption(const std::string& name) const
+   {
+      optionMapT::const_iterator it = optionMap.find(name);
+      if(it != optionMap.end()){
+         return it->second != 0;
+      }
+      return false;
+   }
+
+   inline int GetIntOption(const std::string& name) const
+   {
+      optionMapT::const_iterator it = optionMap.find(name);
+      if(it != optionMap.end()){
+         return it->second;
+      }
+      return -1;
+   }
+
+   inline void AddOption(const std::string& name, int val)
+   {
+      optionMap[name] = val;
+   }
+};
+
+
+
 
 typedef std::vector<AbcA::int32_t> facesetmap_vec;
 
@@ -44,9 +77,11 @@ public:
 
    //std::vector<float> mRadiusVec;
 
+   virtual void Save(SceneNodePtr eNode, const Imath::M44f& transform44f, const CommonOptions& options, double time){}
+
 	bool mergeWith(const CommonIntermediatePolyMesh& srcMesh);
 
-
+   void clear();
 };
 
 

@@ -68,6 +68,9 @@ public:
    {}
    //~SceneNode();
 
+   virtual Imath::M44f getGlobalTrans(double time);
+   virtual Imath::M44f getLocalTrans(double time);
+
    virtual void print() = 0;
 };
 
