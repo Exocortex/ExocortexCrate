@@ -4,6 +4,7 @@
 #include "CommonLog.h"
 #include "CommonImport.h"
 #include "AlembicImport.h"
+#include "CommonUtilities.h"
 
 using namespace XSI;
 
@@ -345,3 +346,11 @@ XSI::CRef findTimeControlDccIdentifier(SceneNodeAlembicPtr fileRoot, XSI::CRef i
    
    return ref;
 }
+
+
+Imath::M44f SceneNodeXSI::getGlobalTrans(double time)
+{
+   XSI::X3DObject xObj(nodeRef);
+   return ::CMatrix4_to_M44f( xObj.GetKinematics().GetGlobal().GetTransform(time).GetMatrix4() );
+}
+

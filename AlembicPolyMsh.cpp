@@ -6,6 +6,7 @@
 #include "CommonMeshUtilities.h"
 
 
+
 //#include "Utility.h"
 
 using namespace XSI;
@@ -35,12 +36,14 @@ CVector3 V3fToVector3(const Abc::V3f& v){
    return CVector3(v.x, v.y, v.z);
 }
 
-Abc::M44d CMatrix4_to_M44d(const XSI::MATH::CMatrix4& m){
-   return Abc::M44d(  
-      (float)m.GetValue(0,0), (float)m.GetValue(0,1), (float)m.GetValue(0,2), (float)m.GetValue(0,3),
-      (float)m.GetValue(1,0), (float)m.GetValue(1,1), (float)m.GetValue(1,2), (float)m.GetValue(1,3),
-      (float)m.GetValue(2,0), (float)m.GetValue(2,1), (float)m.GetValue(2,2), (float)m.GetValue(2,3),
-      (float)m.GetValue(3,0), (float)m.GetValue(3,1), (float)m.GetValue(3,2), (float)m.GetValue(3,3));
+
+
+//TODO: should probably just using stl-style options everywhere
+void CopyOptions(const std::map<XSI::CString,XSI::CValue>& options_in, CommonOptions& options_out)
+{
+   for( std::map<XSI::CString,XSI::CValue>::iterator it; it != options_in.end(); it++){
+      options_out.AddOption(it->first.GetAsciiString(), it->second);
+   }
 }
 
 
@@ -66,14 +69,20 @@ XSI::CStatus AlembicPolyMesh::Save(double time)
    // check if we just have a pure pointcache (no surface)
    bool purePointCache = (bool)GetJob()->GetOption(L"exportPurePointCache");
 
+   Imath::M44f transform44f;
+   transform44f.makeIdentity();
+   
+   CommonOptions options;
+   CopyOptions(GetJob()->mOptions, options);
+
    finalMesh.clearNonConstProperties();
    PolygonMesh mesh = prim.GetGeometry(time);
-   finalMesh.Save(prim, time, GetJob()->mOptions, mNumSamples);
+   finalMesh.Save(mExoSceneNode, transform44f, options, time);
 
    if(globalSpace){
 
-      const Imath::M44d localXfo = CMatrix4_to_M44d(KinematicState(GetRef(REF_GLOBAL_TRANS)).GetTransform(time).GetMatrix4());
-
+      const Imath::M44f localXfo = CMatrix4_to_M44f(KinematicState(GetRef(REF_GLOBAL_TRANS)).GetTransform(time).GetMatrix4());
+   
       for(int i=0; i<finalMesh.posVec.size(); i++){
          finalMesh.posVec[i] *= localXfo;
       }

@@ -38,5 +38,6 @@ void updateOperatorInfo( XSI::Operator& op, SampleInfo& sampleInfo, AbcA::TimeSa
 bool hasStandinSupport();
 XSI::CString getDSOPath();
 
+Abc::M44f CMatrix4_to_M44f(const XSI::MATH::CMatrix4& m);
 
 #endif  // _FOUNDATION_H_

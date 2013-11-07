@@ -16,6 +16,8 @@ public:
    virtual bool replaceData(SceneNodeAlembicPtr fileNode, const IJobStringParser& jobParams, SceneNodeAlembicPtr& nextFileNode);
    virtual bool addChild(SceneNodeAlembicPtr fileNode, const IJobStringParser& jobParams, SceneNodeAppPtr& newAppNode);
    virtual void print();
+   
+   virtual Imath::M44f getGlobalTrans(double time);
 };
 
 typedef boost::shared_ptr<SceneNodeXSI> SceneNodeXSIPtr;

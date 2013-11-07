@@ -5,19 +5,18 @@ using namespace XSI;
 using namespace XSI::MATH;
 
 
-CValue GetOption(std::map<XSI::CString,XSI::CValue>& options, const CString & in_Name)
-{
-   std::map<XSI::CString,XSI::CValue>::iterator it = options.find(in_Name);
-   if(it != options.end())
-      return it->second;
-   return CValue(false);
-}
 
 
-void IntermediatePolyMeshXSI::Save(XSI::Primitive prim, double time, std::map<XSI::CString,XSI::CValue>& options, int mNumSampes)
+void IntermediatePolyMeshXSI::Save(SceneNodePtr eNode, const Imath::M44f& transform44f, const CommonOptions& options, double time)
 {
+   //TODO: it might be better to rely only options rather than whether or not something is uninitialized. we can make a copy of the options, and
+   //override options as necessary
    const bool bEnableLogging = true;
 
+   XSI::CRef nodeRef;
+   nodeRef.Set(eNode->dccIdentifier.c_str());
+   XSI::X3DObject xObj(nodeRef);
+   XSI::Primitive prim = xObj.GetActivePrimitive();
    XSI::PolygonMesh mesh = prim.GetGeometry(time);
 
    CVector3Array pos = mesh.GetVertices().GetPositionArray();
@@ -29,6 +28,7 @@ void IntermediatePolyMeshXSI::Save(XSI::Primitive prim, double time, std::map<XS
       posVec[i].x = (float)pos[i].GetX();
       posVec[i].y = (float)pos[i].GetY();
       posVec[i].z = (float)pos[i].GetZ();
+      posVec[i] *= transform44f;
       bbox.extendBy(posVec[i]);
    }
 
@@ -65,8 +65,7 @@ void IntermediatePolyMeshXSI::Save(XSI::Primitive prim, double time, std::map<XS
    }
 
 
-   bool exportNormals = GetOption(options, L"exportNormals");
-   if(exportNormals)
+   if(options.GetBoolOption("exportNormals"))
    {
       if(bEnableLogging) ESS_LOG_WARNING("Extracting normal data.");
 
@@ -105,13 +104,14 @@ void IntermediatePolyMeshXSI::Save(XSI::Primitive prim, double time, std::map<XS
          normalVec[i].x = (float)normal.GetX();
          normalVec[i].y = (float)normal.GetY();
          normalVec[i].z = (float)normal.GetZ();
+         normalVec[i] *= transform44f;
       }
 
       createIndexedArray<Abc::N3f, SortableV3f>(mFaceIndicesVec, normalVec, mIndexedNormals.values, mIndexedNormals.indices);
    }
 
 
-   ICEAttribute velocitiesAttr = mesh.GetICEAttributeFromName(L"PointVelocity");
+   ICEAttribute velocitiesAttr = mesh.GetICEAttributeFromName("PointVelocity");
    if(velocitiesAttr.IsDefined() && velocitiesAttr.IsValid())
    {
       if(bEnableLogging) ESS_LOG_WARNING("Extracting velocity data");
@@ -150,6 +150,7 @@ void IntermediatePolyMeshXSI::Save(XSI::Primitive prim, double time, std::map<XS
             mVelocitiesVec[i].x = (float)vel.GetX();
             mVelocitiesVec[i].y = (float)vel.GetY();
             mVelocitiesVec[i].z = (float)vel.GetZ();
+            mVelocitiesVec[i] *= transform44f;
          }
       }
 
@@ -159,7 +160,7 @@ void IntermediatePolyMeshXSI::Save(XSI::Primitive prim, double time, std::map<XS
 
    // also check if we need to store UV
    CRefArray clusters = mesh.GetClusters();
-   if((bool)GetOption(options, L"exportUVs"))
+   if(options.GetBoolOption("exportUVs"))
    {
       CGeometryAccessor accessor = mesh.GetGeometryAccessor(siConstructionModeSecondaryShape);
       CRefArray uvPropRefs = accessor.GetUVs();
@@ -234,7 +235,7 @@ void IntermediatePolyMeshXSI::Save(XSI::Primitive prim, double time, std::map<XS
    bGeomApprox = (Abc::int32_t) geomApproxProp.GetParameterValue(L"gapproxmordrsl");
 
 
-   if((bool)GetOption(options, L"exportFaceSets") && mFaceSets.empty())//facesets are only exported once
+   if(options.GetBoolOption("exportFaceSets") && mFaceSets.empty())//facesets are only exported once
    {
       if(bEnableLogging) ESS_LOG_WARNING("Extracting facesets.");
       for(LONG i=0;i<clusters.GetCount();i++)
@@ -260,7 +261,7 @@ void IntermediatePolyMeshXSI::Save(XSI::Primitive prim, double time, std::map<XS
    }
 
    // check if we need to export the bindpose (also only for first frame)
-   if((bool)GetOption(options, L"exportBindPose") && prim.GetParent3DObject().GetEnvelopes().GetCount() > 0 && mBindPoseVec.empty())
+   if(options.GetBoolOption("exportBindPose") && prim.GetParent3DObject().GetEnvelopes().GetCount() > 0 && mBindPoseVec.empty())
    {
       if(bEnableLogging) ESS_LOG_WARNING("Extracting bindpose");
       // store the positions of the modeling stack into here

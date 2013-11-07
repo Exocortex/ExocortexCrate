@@ -5,12 +5,14 @@
 
 
 
+
+
 class IntermediatePolyMeshXSI : public CommonIntermediatePolyMesh
 {
 
 public:
 
-   void Save(XSI::Primitive prim, double time, std::map<XSI::CString,XSI::CValue>& options, int mNumSamples);
+   virtual void Save(SceneNodePtr eNode, const Imath::M44f& transform44f, const CommonOptions& options, double time);
 
    void clearNonConstProperties();
 };
