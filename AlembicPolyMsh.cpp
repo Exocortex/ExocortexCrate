@@ -41,7 +41,7 @@ CVector3 V3fToVector3(const Abc::V3f& v){
 void CopyOptions(std::map<XSI::CString,XSI::CValue>& options_in, CommonOptions& options_out)
 {
    for( std::map<XSI::CString,XSI::CValue>::iterator it=options_in.begin(); it != options_in.end(); it++){
-      options_out.AddOption(it->first.GetAsciiString(), it->second);
+      options_out.SetOption(it->first.GetAsciiString(), (int)it->second);
    }
 }
 
@@ -52,6 +52,9 @@ XSI::CStatus AlembicPolyMesh::Save(double time)
 
    mMeshSample.reset();
 
+   Primitive prim(GetRef(REF_PRIMITIVE));
+   PolygonMesh mesh = prim.GetGeometry(time);
+
    // store the metadata
    SaveMetaData(GetRef(REF_NODE),this);
 
@@ -61,17 +64,22 @@ XSI::CStatus AlembicPolyMesh::Save(double time)
    //      return CStatus::OK;
    //}
 
-
-   
-
    Imath::M44f transform44f;
    transform44f.makeIdentity();
    
    CommonOptions options;
    CopyOptions(GetJob()->mOptions, options);
 
-   //finalMesh.clearNonConstProperties();
-   //To:: need to override options instead of clearing.
+   if(options.GetBoolOption("exportFaceSets") && mNumSamples != 0){//turn off faceset exports for all frames except the first
+      options.SetOption("exportFaceSets", false);
+   }
+   if(options.GetBoolOption("exportBindPose") && mNumSamples != 0){
+      options.SetOption("exportBindPose", false);
+   }
+   if(options.GetBoolOption("exportUVs") && mNumSamples == 0){
+      options.SetOption("exportUVOptions", true);
+   }
+
    finalMesh = IntermediatePolyMeshXSI();
 
    if(mExoSceneNode->type == SceneNode::POLYMESH_SUBTREE){
@@ -79,6 +87,9 @@ XSI::CStatus AlembicPolyMesh::Save(double time)
       mergePolyMeshSubtreeNode<IntermediatePolyMeshXSI>(meshSubtreeNode, finalMesh, options, time);
    }
    else{
+      //for now, custom attribute will ignore if meshes are being merged
+      customAttributes.exportCustomAttributes(mesh);
+
       finalMesh.Save(mExoSceneNode, transform44f, options, time);
    }
 
@@ -107,11 +118,7 @@ XSI::CStatus AlembicPolyMesh::Save(double time)
    mMeshSample.setPositions(Abc::P3fArraySample(finalMesh.posVec));
    mMeshSample.setSelfBounds(finalMesh.bbox);
 
-   //TODO: disable custom attributes export if mesh merge feature is enabled
-   Primitive prim(GetRef(REF_PRIMITIVE));
-   PolygonMesh mesh = prim.GetGeometry(time);
-   customAttributes.exportCustomAttributes(mesh);
-
+   
    // abort here if we are just storing points
    bool purePointCache = (bool)GetJob()->GetOption(L"exportPurePointCache");
    if(purePointCache)

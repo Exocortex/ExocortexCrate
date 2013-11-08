@@ -191,7 +191,7 @@ void IntermediatePolyMeshXSI::Save(SceneNodePtr eNode, const Imath::M44f& transf
          }
 
          // create the uv options
-         if(mUvOptionsVec.size() == 0)
+         if(options.GetBoolOption("exportUVOptions"))
          {
             if(bEnableLogging) ESS_LOG_WARNING("Extracting UV options.");
 
@@ -235,7 +235,7 @@ void IntermediatePolyMeshXSI::Save(SceneNodePtr eNode, const Imath::M44f& transf
    bGeomApprox = (Abc::int32_t) geomApproxProp.GetParameterValue(L"gapproxmordrsl");
 
 
-   if(options.GetBoolOption("exportFaceSets") && mFaceSets.empty())//facesets are only exported once
+   if(options.GetBoolOption("exportFaceSets"))//facesets are only exported once
    {
       if(bEnableLogging) ESS_LOG_WARNING("Extracting facesets.");
       for(LONG i=0;i<clusters.GetCount();i++)
@@ -261,7 +261,7 @@ void IntermediatePolyMeshXSI::Save(SceneNodePtr eNode, const Imath::M44f& transf
    }
 
    // check if we need to export the bindpose (also only for first frame)
-   if(options.GetBoolOption("exportBindPose") && prim.GetParent3DObject().GetEnvelopes().GetCount() > 0 && mBindPoseVec.empty())
+   if(options.GetBoolOption("exportBindPose") && prim.GetParent3DObject().GetEnvelopes().GetCount() > 0)
    {
       if(bEnableLogging) ESS_LOG_WARNING("Extracting bindpose");
       // store the positions of the modeling stack into here
@@ -277,24 +277,4 @@ void IntermediatePolyMeshXSI::Save(SceneNodePtr eNode, const Imath::M44f& transf
    }   
 
 
-}
-
-void IntermediatePolyMeshXSI::clearNonConstProperties()
-{
-   bbox = Abc::Box3d();
-
-	posVec.clear();
-	mFaceCountVec.clear();
-	mFaceIndicesVec.clear();  
-
-   mVelocitiesVec.clear();
-
-   mIndexedNormals.name = std::string();
-	mIndexedNormals.indices.clear();
-   mIndexedNormals.values.clear();
-	mIndexedUVSet.clear();
-	
-   //mMatIdIndexVec.clear();
-
-   bGeomApprox = 0;
 }
