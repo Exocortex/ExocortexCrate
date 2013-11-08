@@ -120,16 +120,6 @@ void printSceneGraph(SceneNodePtr root, bool bOnlyPrintSelected)
    ESS_LOG_WARNING("ExoSceneGraph End");
 }
 
-bool hasExtractableTransform( SceneNode::nodeTypeE type )
-{
-   return 
-      type == SceneNode::CAMERA ||
-      type == SceneNode::POLYMESH ||
-      type == SceneNode::SUBD ||
-      type == SceneNode::SURFACE ||
-      type == SceneNode::CURVES ||
-      type == SceneNode::PARTICLES;
-}
 
 struct SelectChildrenStackElement
 {
@@ -178,11 +168,12 @@ int selectNodes(SceneNodePtr root, SceneNode::SelectionT selectionMap, bool bSel
 
             if(eNode->type == SceneNode::ETRANSFORM && bSelectShapeNodes)
 			{
+            //Select the shape nodes first
 				if (isMaya)
 				{
 					for(std::list<SceneNodePtr>::reverse_iterator it=eNode->children.rbegin(); it != eNode->children.rend(); ++it)
 					{
-						if(::hasExtractableTransform((*it)->type))
+						if(::isShapeNode((*it)->type))//MergedPolyMesh node should work here...
 						{
 							if(!(*it)->selected) nSelectionCount++;
 							(*it)->selected = true;
@@ -193,7 +184,7 @@ int selectNodes(SceneNodePtr root, SceneNode::SelectionT selectionMap, bool bSel
 				else
 				{
 				   for(std::list<SceneNodePtr>::iterator it=eNode->children.begin(); it != eNode->children.end(); it++){
-					  if(::hasExtractableTransform((*it)->type)){
+					  if(::isShapeNode((*it)->type)){
 						 if(!(*it)->selected) nSelectionCount++;
 						 (*it)->selected = true;
 						 break;
@@ -202,6 +193,7 @@ int selectNodes(SceneNodePtr root, SceneNode::SelectionT selectionMap, bool bSel
 				}
             }
 
+            //then select the parents
             if(bSelectParents){// select all parent nodes
                SceneNode* currNode = eNode->parent;
                while(currNode){
@@ -300,16 +292,19 @@ void flattenSceneGraph(SceneNodePtr root, int nNumNodes)
       //we will add child nodes to it that meet the correct criteria
       sceneStack.pop_back();
 
+      //a nodes that we want keep, so connect it to the parent
       if (fileNode->type == SceneNode::NAMESPACE_TRANSFORM ||  //namespace transform (XSI model)
-          fileNode->type == SceneNode::ETRANSFORM ||          //shape node parent transform
-          hasExtractableTransform(fileNode->type)              //shape node
-         ) {
+          fileNode->type == SceneNode::ETRANSFORM ||           //shape node parent transform
+          isShapeNode(fileNode->type)                          //shape node
+         ) { //mergedpolymesh node would apply here
             parentNode->children.push_back(fileNode);
             fileNode->parent = parentNode.get();
             
             nNumNodes++;
       }
 
+      //here we set what the parent is going to be for the file node we pushing to the stack
+      //    - if parentNode is passed instead of fileNode, the subtree starting at fileNode is being skipped
       if(fileNode->type == SceneNode::NAMESPACE_TRANSFORM){
          for(SceneChildIterator it = fileNode->children.begin(); it != fileNode->children.end(); it++){
             sceneStack.push_back( FlattenStackElement( *it, fileNode ) );
@@ -317,7 +312,7 @@ void flattenSceneGraph(SceneNodePtr root, int nNumNodes)
       }
       else if(fileNode->type == SceneNode::ETRANSFORM){
          for(SceneChildIterator it = fileNode->children.begin(); it != fileNode->children.end(); it++){
-            if(hasExtractableTransform((*it)->type)){
+            if(isShapeNode((*it)->type)){
                sceneStack.push_back( FlattenStackElement( *it, fileNode ) );
             }
             else{

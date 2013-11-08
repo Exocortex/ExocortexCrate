@@ -75,6 +75,19 @@ public:
 };
 
 
+inline bool isShapeNode( SceneNode::nodeTypeE type )
+{
+   return 
+      type == SceneNode::CAMERA ||
+      type == SceneNode::POLYMESH ||
+      type == SceneNode::SUBD ||
+      type == SceneNode::SURFACE ||
+      type == SceneNode::CURVES ||
+      type == SceneNode::PARTICLES;
+}
+
+
+
 class IJobStringParser;
 class SceneNodeAlembic;
 class SceneNodeApp : public SceneNode
@@ -124,7 +137,7 @@ public:
 
 void printSceneGraph(SceneNodePtr root, bool bOnlyPrintSelected);
 
-bool hasExtractableTransform( SceneNode::nodeTypeE type );
+
 
 int selectNodes(SceneNodePtr root, SceneNode::SelectionT selectionMap, bool bSelectParents, bool bChildren, bool bSelectShapeNodes, bool isMaya = false);
 int selectTransformNodes(SceneNodePtr root);
