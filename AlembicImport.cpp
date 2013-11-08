@@ -2143,7 +2143,7 @@ bool createNodes(SceneNodeXSI* const appNode, SceneNodeAlembicPtr fileNode, cons
 
       SceneNodeAlembicPtr shapeNode;
       for(SceneChildIterator it = fileNode->children.begin(); it != fileNode->children.end(); it++){
-         if( hasExtractableTransform((*it)->type)){
+         if( isShapeNode((*it)->type)){
             shapeNode = reinterpret<SceneNode, SceneNodeAlembic>(*it);
             break;
          }

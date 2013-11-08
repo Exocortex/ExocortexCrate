@@ -24,7 +24,6 @@ typedef boost::shared_ptr<SceneNodeXSI> SceneNodeXSIPtr;
 
 SceneNodeXSIPtr buildCommonSceneGraph(XSI::CRef xsiRoot, int& nNumNodes, bool bUnmergeNodes);
 
-bool hasExtractableTransform( SceneNode::nodeTypeE type );
 
 
 XSI_XformTypes::xte getXformType(AbcG::IXform& obj);

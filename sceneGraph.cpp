@@ -205,7 +205,7 @@ SceneNodeXSIPtr buildCommonSceneGraph(XSI::CRef xsiRoot, int& nNumNodes, bool bU
       SceneNode::nodeTypeE type = getNodeType(xNode);
 
       if(bUnmergeNodes) { //export case (don't why we don't use it for import)
-         if(hasExtractableTransform(type) ){
+         if(isShapeNode(type) ){
             newNode = createNodeXSI(xRef, SceneNode::ETRANSFORM);
             //newNode->name+="Xfo";
             SceneNodePtr geoNode = createNodeXSI(xRef, type);
