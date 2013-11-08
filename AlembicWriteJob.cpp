@@ -12,6 +12,7 @@
 #include "AlembicNurbs.h"
 #include "Utility.h"
 #include "sceneGraph.h"
+#include "CommonSubtreeMerge.h"
 
 using namespace XSI;
 using namespace MATH;
@@ -77,7 +78,7 @@ bool AlembicWriteJob::AddObject(AlembicObjectPtr in_Obj)
 {
    if(!in_Obj)
       return false;
-   if(!in_Obj->GetRef().IsValid())
+   if(!in_Obj->GetRef().IsValid() && in_Obj->mExoSceneNode->type != SceneNode::POLYMESH_SUBTREE)
       return false;
    mObjects.push_back(in_Obj);
    return true;
@@ -205,6 +206,8 @@ CStatus AlembicWriteJob::PreProcess()
    //TODO: eventually this should be a replaced with an equivalent virtual method, and the exporter will be shared
    int nNumNodes = 0;
    SceneNodePtr exoSceneRoot = buildCommonSceneGraph(Application().GetActiveSceneRoot(), nNumNodes, true);
+
+   
    
    //::printSceneGraph(exoSceneRoot, false);
 
@@ -227,6 +230,9 @@ CStatus AlembicWriteJob::PreProcess()
    selectNodes(exoSceneRoot, selectionMap, /*!bFlattenHierarchy || bTransformCache*/ bSelectParents, bSelectChildren, !bTransformCache);
 
    //::printSceneGraph(exoSceneRoot, false);
+
+
+   replacePolyMeshSubtree(exoSceneRoot);
 
 
    //return CStatus::OK;
@@ -260,7 +266,7 @@ CStatus AlembicWriteJob::PreProcess()
          else if(eNode->type == SceneNode::CAMERA){
             pNewObject.reset(new AlembicCamera(eNode, this, oParent));
          }
-         else if(eNode->type == SceneNode::POLYMESH){
+         else if(eNode->type == SceneNode::POLYMESH || eNode->type == SceneNode::POLYMESH_SUBTREE){
             pNewObject.reset(new AlembicPolyMesh(eNode, this, oParent));
          }
          else if(eNode->type == SceneNode::SUBD){

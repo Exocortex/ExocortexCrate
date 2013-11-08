@@ -15,8 +15,6 @@ private:
    Abc::OObject mMyParent;
 protected:
 
-   SceneNodePtr mExoSceneNode;
-
    int mNumSamples;
 
   enum refType{
@@ -27,6 +25,9 @@ protected:
   };
 
 public:
+
+   SceneNodePtr mExoSceneNode;
+
    AlembicObject(SceneNodePtr eNode, AlembicWriteJob * in_Job, Abc::OObject oParent);
    ~AlembicObject();
 

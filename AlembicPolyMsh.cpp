@@ -4,8 +4,7 @@
 
 #include "CommonProfiler.h"
 #include "CommonMeshUtilities.h"
-
-
+#include "CommonSubtreeMerge.h"
 
 //#include "Utility.h"
 
@@ -39,9 +38,9 @@ CVector3 V3fToVector3(const Abc::V3f& v){
 
 
 //TODO: should probably just using stl-style options everywhere
-void CopyOptions(const std::map<XSI::CString,XSI::CValue>& options_in, CommonOptions& options_out)
+void CopyOptions(std::map<XSI::CString,XSI::CValue>& options_in, CommonOptions& options_out)
 {
-   for( std::map<XSI::CString,XSI::CValue>::iterator it; it != options_in.end(); it++){
+   for( std::map<XSI::CString,XSI::CValue>::iterator it=options_in.begin(); it != options_in.end(); it++){
       options_out.AddOption(it->first.GetAsciiString(), it->second);
    }
 }
@@ -53,10 +52,6 @@ XSI::CStatus AlembicPolyMesh::Save(double time)
 
    mMeshSample.reset();
 
-   // store the transform
-   Primitive prim(GetRef(REF_PRIMITIVE));
-   const bool globalSpace = GetJob()->GetOption(L"globalSpace");
-
    // store the metadata
    SaveMetaData(GetRef(REF_NODE),this);
 
@@ -66,8 +61,8 @@ XSI::CStatus AlembicPolyMesh::Save(double time)
    //      return CStatus::OK;
    //}
 
-   // check if we just have a pure pointcache (no surface)
-   bool purePointCache = (bool)GetJob()->GetOption(L"exportPurePointCache");
+
+   
 
    Imath::M44f transform44f;
    transform44f.makeIdentity();
@@ -75,10 +70,19 @@ XSI::CStatus AlembicPolyMesh::Save(double time)
    CommonOptions options;
    CopyOptions(GetJob()->mOptions, options);
 
-   finalMesh.clearNonConstProperties();
-   PolygonMesh mesh = prim.GetGeometry(time);
-   finalMesh.Save(mExoSceneNode, transform44f, options, time);
+   //finalMesh.clearNonConstProperties();
+   //To:: need to override options instead of clearing.
+   finalMesh = IntermediatePolyMeshXSI();
 
+   if(mExoSceneNode->type == SceneNode::POLYMESH_SUBTREE){
+      SceneNodePolyMeshSubtreePtr meshSubtreeNode = reinterpret<SceneNode, SceneNodePolyMeshSubtree>(mExoSceneNode);
+      mergePolyMeshSubtreeNode<IntermediatePolyMeshXSI>(meshSubtreeNode, finalMesh, options, time);
+   }
+   else{
+      finalMesh.Save(mExoSceneNode, transform44f, options, time);
+   }
+
+   const bool globalSpace = GetJob()->GetOption(L"globalSpace");
    if(globalSpace){
 
       const Imath::M44f localXfo = CMatrix4_to_M44f(KinematicState(GetRef(REF_GLOBAL_TRANS)).GetTransform(time).GetMatrix4());
@@ -103,10 +107,13 @@ XSI::CStatus AlembicPolyMesh::Save(double time)
    mMeshSample.setPositions(Abc::P3fArraySample(finalMesh.posVec));
    mMeshSample.setSelfBounds(finalMesh.bbox);
 
-   //disable custom attributes export if mesh merge feature is enabled
+   //TODO: disable custom attributes export if mesh merge feature is enabled
+   Primitive prim(GetRef(REF_PRIMITIVE));
+   PolygonMesh mesh = prim.GetGeometry(time);
    customAttributes.exportCustomAttributes(mesh);
 
    // abort here if we are just storing points
+   bool purePointCache = (bool)GetJob()->GetOption(L"exportPurePointCache");
    if(purePointCache)
    {
       if(bEnableLogging) ESS_LOG_WARNING("Exporting pure point cache");
