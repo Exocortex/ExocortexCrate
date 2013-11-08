@@ -38,16 +38,41 @@ void replacePolyMeshSubtree(SceneNodePtr root)
       }
    }
 
-   //TODO: modify tree to have counting integer. 
    //Walk up from each mesh node, and increment the counter. The first node to get a count equal to the number of mesh nodes is the common parent.
 
-   //Put the merged mesh in the space of the common parent. Position the merged Mesh Shape node at the origin for now. 
+   SceneNodePtr commonRoot = root;
 
+   int nNumMeshes = (int)mergedMeshNode->polyMeshNodes.size();
+   for(int i=0; i<mergedMeshNode->polyMeshNodes.size(); i++){
 
-   SceneNodePtr commonRoot;
+      SceneNode* currNode = mergedMeshNode->polyMeshNodes[i].get();
+      while(currNode){
 
-   commonRoot = root; //assume root is the commonRoot for now
+         currNode->nCommonParentCounter++;
 
+         if(currNode->nCommonParentCounter == nNumMeshes){
+            //looks ugly, but we don't to delete twice by creating a new shared pointer that unaware of the old ones that refernece the object
+            
+            SceneNode* parent = currNode->parent;
+            if(parent){
+               for( SceneChildIterator it=parent->children.begin(); it != parent->children.end(); it++){
+                  if( it->get() == currNode ){
+                     commonRoot = *it;
+                     goto done;
+                  }
+               }
+            }
+            else{
+            // commonRoot is the scene root
+               goto done;
+            }
+         }
+
+         currNode = currNode->parent;
+      }
+
+   }
+done:
 
    //replace subtree with merging node
    for(int i=0; i<mergedMeshNode->polyMeshNodes.size(); i++){
@@ -56,6 +81,10 @@ void replacePolyMeshSubtree(SceneNodePtr root)
 
    commonRoot->children.clear();
    commonRoot->children.push_back(mergedMeshNode);
+
+   mergedMeshNode->parent = commonRoot.get();
+
+   mergedMeshNode->commonRoot = commonRoot; 
 }
 
 

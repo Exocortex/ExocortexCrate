@@ -169,23 +169,26 @@ bool CommonIntermediatePolyMesh::mergeWith(const CommonIntermediatePolyMesh& src
 
 void CommonIntermediatePolyMesh::clear()
 {
-   bbox = Abc::Box3d();
+   //a safer way to clear.
+   *this = CommonIntermediatePolyMesh();
 
-	posVec.clear();
-	mFaceCountVec.clear();
-	mFaceIndicesVec.clear();  
+ //  bbox = Abc::Box3d();
 
-   mVelocitiesVec.clear();
+	//posVec.clear();
+	//mFaceCountVec.clear();
+	//mFaceIndicesVec.clear();  
 
-   mIndexedNormals.name = std::string();
-	mIndexedNormals.indices.clear();
-   mIndexedNormals.values.clear();
-	mIndexedUVSet.clear();
-	
-   //mMatIdIndexVec.clear();
+ //  mVelocitiesVec.clear();
 
-   mFaceSets.clear();
-   mUvOptionsVec.clear();
-   mBindPoseVec.clear();
-   bGeomApprox = 0;
+ //  mIndexedNormals.name = std::string();
+	//mIndexedNormals.indices.clear();
+ //  mIndexedNormals.values.clear();
+	//mIndexedUVSet.clear();
+	//
+ //  //mMatIdIndexVec.clear();
+
+ //  mFaceSets.clear();
+ //  mUvOptionsVec.clear();
+ //  mBindPoseVec.clear();
+ //  bGeomApprox = 0;
 }

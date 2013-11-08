@@ -28,9 +28,19 @@ public:
       return -1;
    }
 
-   inline void AddOption(const std::string& name, int val)
+   inline void SetOption(const std::string& name, int val)
    {
       optionMap[name] = val;
+   }
+
+   inline void SetOption(const std::string& name, bool val)
+   {
+      if(val){
+         optionMap[name] = 1;
+      }
+      else{
+         optionMap[name] = 0;
+      }
    }
 };
 
@@ -61,19 +71,19 @@ public:
 	std::vector<AbcA::int32_t> mFaceCountVec;
 	std::vector<AbcA::int32_t> mFaceIndicesVec;  
 
-   std::vector<Abc::V3f> mVelocitiesVec;
+   std::vector<Abc::V3f> mVelocitiesVec; //TODO: merge
 
 	IndexedNormals mIndexedNormals;
 	std::vector<IndexedUVs> mIndexedUVSet;
 	
 	//std::vector<Abc::uint32_t> mMatIdIndexVec;
-   std::vector<FaceSetStruct> mFaceSets;
+   std::vector<FaceSetStruct> mFaceSets; //TODO: merge
 
-   std::vector<float> mUvOptionsVec;
+   std::vector<float> mUvOptionsVec;      //TODO: merge
 
-   std::vector<Abc::V3f> mBindPoseVec;
+   std::vector<Abc::V3f> mBindPoseVec;    //TODO: merge
    
-   int bGeomApprox;
+   int bGeomApprox;                       //TODO: merge
 
    //std::vector<float> mRadiusVec;
 

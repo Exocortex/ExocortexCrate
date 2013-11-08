@@ -62,7 +62,9 @@ public:
    std::string dccIdentifier;
    bool selected;
 
-   SceneNode():parent(NULL), type(NUM_NODE_TYPES), selected(false)
+   int nCommonParentCounter;//used by common parent algorithm
+
+   SceneNode():parent(NULL), type(NUM_NODE_TYPES), selected(false), nCommonParentCounter(0)
    {}
 
    SceneNode(nodeTypeE type, std::string name, std::string identifier):parent(NULL), type(type), name(name), dccIdentifier(identifier)
