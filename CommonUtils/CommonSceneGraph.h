@@ -42,6 +42,7 @@ public:
       ITRANSFORM,// internal transform (all other transforms)
       CAMERA,
       POLYMESH,
+      POLYMESH_SUBTREE,
       SUBD,
       SURFACE,
       CURVES,
@@ -80,6 +81,7 @@ inline bool isShapeNode( SceneNode::nodeTypeE type )
    return 
       type == SceneNode::CAMERA ||
       type == SceneNode::POLYMESH ||
+      type == SceneNode::POLYMESH_SUBTREE ||
       type == SceneNode::SUBD ||
       type == SceneNode::SURFACE ||
       type == SceneNode::CURVES ||

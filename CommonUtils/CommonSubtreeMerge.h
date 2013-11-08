@@ -12,7 +12,8 @@ public:
 
    std::vector<SceneNodePtr> polyMeshNodes;
 
-	SceneNodePolyMeshSubtree(void): SceneNode() {}
+   //SceneNodePolyMeshSubtree(): SceneNode(SceneNode::POLYMESH_SUBTREE, std::string(""), std::string("")) {}
+   SceneNodePolyMeshSubtree(std::string name, std::string identifier): SceneNode(SceneNode::POLYMESH_SUBTREE, name, identifier) {}
 
    void print(){ ESS_LOG_WARNING("SceneNodePolyMeshSubtree"); }
 };
@@ -23,12 +24,12 @@ typedef boost::shared_ptr<SceneNodePolyMeshSubtree> SceneNodePolyMeshSubtreePtr;
 void replacePolyMeshSubtree(SceneNodePtr root);
 
 
-template <class T> void mergePolyMeshSubtreeNode(SceneNodePolyMeshSubtree node, T& mergedMesh, const CommonOptions& options, double time)
+template <class T> void mergePolyMeshSubtreeNode(SceneNodePolyMeshSubtreePtr node, T& mergedMesh, const CommonOptions& options, double time)
 {
-   for(int i=0; i<node.polyMeshNodes.size(); i++){
+   for(int i=0; i<node->polyMeshNodes.size(); i++){
       T currentMesh;
-      math::M44f currentGlobalTrans = node.polyMeshNodes[i]->getGlobalTrans();
-      currentMesh.Save(node.polyMeshNodes[i], currentGlobalTrans, options, time);
+      Imath::M44f currentGlobalTrans = node->polyMeshNodes[i]->getGlobalTrans(time);
+      currentMesh.Save(node->polyMeshNodes[i], currentGlobalTrans, options, time);
       mergedMesh.mergeWith(currentMesh);
    }
 }

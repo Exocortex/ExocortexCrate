@@ -16,7 +16,7 @@ void replacePolyMeshSubtree(SceneNodePtr root)
 {
    ESS_PROFILE_FUNC();
 
-   SceneNodePolyMeshSubtreePtr mergedMeshNode(new SceneNodePolyMeshSubtree());
+   SceneNodePolyMeshSubtreePtr mergedMeshNode(new SceneNodePolyMeshSubtree("MergedPolyMesh", ""));
 
    std::list<MergeChildrenStackElement> sceneStack;
    
@@ -47,6 +47,7 @@ void replacePolyMeshSubtree(SceneNodePtr root)
    SceneNodePtr commonRoot;
 
    commonRoot = root; //assume root is the commonRoot for now
+
 
    //replace subtree with merging node
    for(int i=0; i<mergedMeshNode->polyMeshNodes.size(); i++){
