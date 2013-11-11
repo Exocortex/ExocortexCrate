@@ -407,7 +407,7 @@ int removeUnselectedNodes(SceneNodePtr root)
       }
       else{
          //if a shape node is not selected its parent transform should become an ITRANSFORM
-         if(fileNode->parent && fileNode->parent->selected && fileNode->parent->type == SceneNode::ETRANSFORM){
+         if(isShapeNode(fileNode->type) && fileNode->parent && fileNode->parent->selected && fileNode->parent->type == SceneNode::ETRANSFORM){
             fileNode->parent->type = SceneNode::ITRANSFORM;
          }
 
