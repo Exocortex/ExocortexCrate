@@ -79,15 +79,23 @@ bool CommonIntermediatePolyMesh::mergeWith(const CommonIntermediatePolyMesh& src
 		IndexedUVs const * pSrcIndexedUVs = NULL;
 		std::string name = uniqueUVNames[i];
 		for( int j = 0; j < srcMesh.mIndexedUVSet.size(); j ++ ) {
-			if( name.compare( srcMesh.mIndexedUVSet[i].name ) == 0 ) {
-				pSrcIndexedUVs = &(srcMesh.mIndexedUVSet[i]);
+			if( name.compare( srcMesh.mIndexedUVSet[j].name ) == 0 ) {
+				pSrcIndexedUVs = &(srcMesh.mIndexedUVSet[j]);
 			}
 		}
 		for( int j = 0; j < destMesh.mIndexedUVSet.size(); j ++ ) {
-			if( name.compare( destMesh.mIndexedUVSet[i].name ) == 0 ) {
-				pDestIndexedUVs = &(destMesh.mIndexedUVSet[i]);
+			if( name.compare( destMesh.mIndexedUVSet[j].name ) == 0 ) {
+				pDestIndexedUVs = &(destMesh.mIndexedUVSet[j]);
 			}
 		}
+
+      if(pSrcIndexedUVs == NULL && pDestIndexedUVs == NULL){
+         //This shoudn't happen, but lets be safe
+         continue;
+      }
+
+      //there is no map with that name to copy to, so create a new set
+      //a uv index is required for each vertex
 		if( pDestIndexedUVs == NULL ) {
 			IndexedUVs newUVs;
 			newUVs.name = name;
@@ -97,6 +105,7 @@ bool CommonIntermediatePolyMesh::mergeWith(const CommonIntermediatePolyMesh& src
 				pDestIndexedUVs->indices.push_back( 0 );
 			}
 		}
+
 		if( pSrcIndexedUVs != NULL ) {
 			int sourceUVOffset = (int) pDestIndexedUVs->values.size();
 			for( int k = 0; k < pSrcIndexedUVs->indices.size(); k ++ ) {
