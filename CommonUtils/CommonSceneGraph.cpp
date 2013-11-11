@@ -256,6 +256,44 @@ int selectTransformNodes(SceneNodePtr root)
 }
 
 
+int selectNonPolyMeshLeafNodes(SceneNodePtr root)
+{
+   ESS_PROFILE_FUNC();
+
+   std::list<SelectChildrenStackElement> sceneStack;
+   
+   sceneStack.push_back(SelectChildrenStackElement(root, false));
+
+   int nSelectionCount = 0;
+
+   while( !sceneStack.empty() )
+   {
+      SelectChildrenStackElement sElement = sceneStack.back();
+      SceneNodePtr eNode = sElement.eNode;
+      sceneStack.pop_back();
+
+      if(eNode->children.empty() && eNode->type != SceneNode::POLYMESH){   
+         eNode->selected = true;
+         nSelectionCount++;
+
+         SceneNode* currNode = eNode->parent;
+         while(currNode){
+            if(!currNode->selected) nSelectionCount++;
+            currNode->selected = true;
+            currNode = currNode->parent;
+         }
+      }
+
+      for( std::list<SceneNodePtr>::iterator it = eNode->children.begin(); it != eNode->children.end(); it++){
+         sceneStack.push_back(SelectChildrenStackElement(*it, false));
+      }
+   }
+
+   root->selected = true;
+
+   return nSelectionCount;
+}
+
 
 struct FlattenStackElement
 {

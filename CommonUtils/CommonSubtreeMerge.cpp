@@ -30,12 +30,18 @@ void replacePolyMeshSubtree(SceneNodePtr root)
 
       if(eNode->type == SceneNode::POLYMESH){   
          mergedMeshNode->polyMeshNodes.push_back(eNode);
-         
       }
+      //clear selected flag, so that we can use to select nonpolymesh subtree
+      eNode->selected = false;
 
       for( std::list<SceneNodePtr>::iterator it = eNode->children.begin(); it != eNode->children.end(); it++){
          sceneStack.push_back(MergeChildrenStackElement(*it));
       }
+   }
+
+   //if only one polymesh node is in the list, do nothing (no merging is required)
+   if(mergedMeshNode->polyMeshNodes.size() <= 1){
+      return;
    }
 
    //Walk up from each mesh node, and increment the counter. The first node to get a count equal to the number of mesh nodes is the common parent.
@@ -62,8 +68,7 @@ void replacePolyMeshSubtree(SceneNodePtr root)
                   }
                }
             }
-            else{
-            // commonRoot is the scene root
+            else{// commonRoot is the scene root
                goto done;
             }
          }
@@ -74,15 +79,18 @@ void replacePolyMeshSubtree(SceneNodePtr root)
    }
 done:
 
+   //remove the polymesh subtree
+   selectNonPolyMeshLeafNodes(commonRoot);
+   removeUnselectedNodes(commonRoot);
+
+
+   //TODO: probably should add a parent model/null
+   commonRoot->children.push_back(mergedMeshNode);
+
    //replace subtree with merging node
    for(int i=0; i<mergedMeshNode->polyMeshNodes.size(); i++){
       mergedMeshNode->polyMeshNodes[i]->parent = NULL;
    }
-
-   commonRoot->children.clear();
-   commonRoot->children.push_back(mergedMeshNode);
-
-   mergedMeshNode->parent = commonRoot.get();
 
    mergedMeshNode->commonRoot = commonRoot; 
 }

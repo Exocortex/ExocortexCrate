@@ -145,6 +145,7 @@ void printSceneGraph(SceneNodePtr root, bool bOnlyPrintSelected);
 
 int selectNodes(SceneNodePtr root, SceneNode::SelectionT selectionMap, bool bSelectParents, bool bChildren, bool bSelectShapeNodes, bool isMaya = false);
 int selectTransformNodes(SceneNodePtr root);
+int selectNonPolyMeshLeafNodes(SceneNodePtr root);
 
 void flattenSceneGraph(SceneNodePtr root, int nNumNodes);
 int removeUnselectedNodes(SceneNodePtr root);
