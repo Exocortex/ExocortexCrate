@@ -197,26 +197,21 @@ CStatus AlembicWriteJob::PreProcess()
       AbcA::TimeSampling sampling(1.0,frames[0]);
       mTs = mArchive.addTimeSampling(sampling);
    }
+   
+   bool bMergePolyMeshSubtree = false;
 
    bool bSelectParents = (bool)GetOption(L"includeParentNodes");
    const bool bSelectChildren = false;
-   const bool bTransformCache = (bool)GetOption(L"transformCache");
+   bool bTransformCache = (bool)GetOption(L"transformCache");
    const bool bFlattenHierarchy = (bool)GetOption(L"flattenHierarchy");
 
-   //TODO: eventually this should be a replaced with an equivalent virtual method, and the exporter will be shared
-   int nNumNodes = 0;
-   SceneNodePtr exoSceneRoot = buildCommonSceneGraph(Application().GetActiveSceneRoot(), nNumNodes, true);
-
-   
-   
-   //::printSceneGraph(exoSceneRoot, false);
-
-   if(bFlattenHierarchy){
-      nNumNodes = 0;
-      flattenSceneGraph(exoSceneRoot, nNumNodes);
+   if(bMergePolyMeshSubtree){
+      bTransformCache = false;
+      bSelectParents = true;
    }
 
-   //::printSceneGraph(exoSceneRoot, false);
+   int nNumNodes = 0;
+   SceneNodePtr exoSceneRoot = buildCommonSceneGraph(Application().GetActiveSceneRoot(), nNumNodes, true);
 
    std::map<std::string, bool> selectionMap;
 
@@ -228,11 +223,16 @@ CStatus AlembicWriteJob::PreProcess()
    }
    
    selectNodes(exoSceneRoot, selectionMap, /*!bFlattenHierarchy || bTransformCache*/ bSelectParents, bSelectChildren, !bTransformCache);
+   removeUnselectedNodes(exoSceneRoot);
 
-   //::printSceneGraph(exoSceneRoot, false);
+   if(bMergePolyMeshSubtree){
+      replacePolyMeshSubtree(exoSceneRoot);
+   }
 
-
-   replacePolyMeshSubtree(exoSceneRoot);
+   if(bFlattenHierarchy){
+      nNumNodes = 0;
+      flattenSceneGraph(exoSceneRoot, nNumNodes);
+   }
 
 
    //return CStatus::OK;
@@ -255,7 +255,8 @@ CStatus AlembicWriteJob::PreProcess()
 
       AlembicObjectPtr pNewObject;
 
-      if(eNode->selected)
+
+      //if(eNode->selected)
       {
          if(eNode->type == SceneNode::SCENE_ROOT){
             //we do not want to export the Scene_Root (the alembic archive has one already)
@@ -294,7 +295,7 @@ CStatus AlembicWriteJob::PreProcess()
       if(pNewObject){
          oNewParent = oParent.getChild(eNode->name);
       }
-      else{
+      else{ //this case should be unecessary
          //if we skip node A, we parent node A's children to the parent of A
          oNewParent = oParent;
       }
