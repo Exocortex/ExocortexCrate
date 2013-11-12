@@ -36,10 +36,16 @@ void SaveXformSample(SceneNodePtr node, AbcG::OXformSchema & schema,AbcG::XformS
    //      return;
    //}
 
+   if(flattenHierarchy){//a hack needed to handle namespace xforms
+   sample.setMatrix(node->getGlobalTransDouble(time));
+   }
+   else{
 
-   Imath::M44d parentGlobalTransInv = node->parent->getGlobalTransDouble(time).invert();
-   Imath::M44d transform = node->getGlobalTransDouble(time) * parentGlobalTransInv;
-   sample.setMatrix(transform);
+      Imath::M44d parentGlobalTransInv = node->parent->getGlobalTransDouble(time).invert();
+      Imath::M44d transform = node->getGlobalTransDouble(time) * parentGlobalTransInv;
+      sample.setMatrix(transform);
+   }
+
 
 
    //KinematicState kineState(kineStateRef);
