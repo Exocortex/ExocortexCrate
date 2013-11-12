@@ -846,3 +846,11 @@ Abc::M44f CMatrix4_to_M44f(const XSI::MATH::CMatrix4& m){
       (float)m.GetValue(2,0), (float)m.GetValue(2,1), (float)m.GetValue(2,2), (float)m.GetValue(2,3),
       (float)m.GetValue(3,0), (float)m.GetValue(3,1), (float)m.GetValue(3,2), (float)m.GetValue(3,3));
 }
+
+Abc::M44d CMatrix4_to_M44d(const XSI::MATH::CMatrix4& m){
+   return Abc::M44d(  
+      m.GetValue(0,0), m.GetValue(0,1), m.GetValue(0,2), m.GetValue(0,3),
+      m.GetValue(1,0), m.GetValue(1,1), m.GetValue(1,2), m.GetValue(1,3),
+      m.GetValue(2,0), m.GetValue(2,1), m.GetValue(2,2), m.GetValue(2,3),
+      m.GetValue(3,0), m.GetValue(3,1), m.GetValue(3,2), m.GetValue(3,3));
+}

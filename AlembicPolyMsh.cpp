@@ -48,7 +48,7 @@ void CopyOptions(std::map<XSI::CString,XSI::CValue>& options_in, CommonOptions& 
 
 XSI::CStatus AlembicPolyMesh::Save(double time)
 {
-   const bool bEnableLogging = true;
+   const bool bEnableLogging = false;
 
    mMeshSample.reset();
 

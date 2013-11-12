@@ -198,7 +198,7 @@ CStatus AlembicWriteJob::PreProcess()
       mTs = mArchive.addTimeSampling(sampling);
    }
    
-   bool bMergePolyMeshSubtree = false;
+   bool bMergePolyMeshSubtree = true;
 
    bool bSelectParents = (bool)GetOption(L"includeParentNodes");
    const bool bSelectChildren = false;
@@ -211,7 +211,7 @@ CStatus AlembicWriteJob::PreProcess()
    }
 
    int nNumNodes = 0;
-   SceneNodePtr exoSceneRoot = buildCommonSceneGraph(Application().GetActiveSceneRoot(), nNumNodes, true);
+   exoSceneRoot = buildCommonSceneGraph(Application().GetActiveSceneRoot(), nNumNodes, true);
 
    std::map<std::string, bool> selectionMap;
 
@@ -226,7 +226,7 @@ CStatus AlembicWriteJob::PreProcess()
    removeUnselectedNodes(exoSceneRoot);
 
    if(bMergePolyMeshSubtree){
-      replacePolyMeshSubtree(exoSceneRoot);
+      replacePolyMeshSubtree<SceneNodeXSIPtr, SceneNodeXSI>(exoSceneRoot);
    }
 
    if(bFlattenHierarchy){

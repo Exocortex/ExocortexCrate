@@ -11,7 +11,7 @@ void IntermediatePolyMeshXSI::Save(SceneNodePtr eNode, const Imath::M44f& transf
 {
    //TODO: it might be better to rely only options rather than whether or not something is uninitialized. we can make a copy of the options, and
    //override options as necessary
-   const bool bEnableLogging = true;
+   const bool bEnableLogging = false;
 
    XSI::CRef nodeRef;
    nodeRef.Set(eNode->dccIdentifier.c_str());

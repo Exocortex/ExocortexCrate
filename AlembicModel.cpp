@@ -91,7 +91,7 @@ XSI::CStatus AlembicModel::Save(double time)
    }
 
    // store the transform
-   SaveXformSample(GetRef(REF_PARENT_GLOBAL_TRANS), GetRef(REF_GLOBAL_TRANS),mXformSchema, mXformSample, time, bTransCache, bGlobalSpace, bFlatten);
+   SaveXformSample(mExoSceneNode, mXformSchema, mXformSample, time, bTransCache, bGlobalSpace, bFlatten);
    
    if(mNumSamples == 0){
       if(!mXformXSINodeType.valid()){

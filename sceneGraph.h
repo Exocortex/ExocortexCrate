@@ -13,11 +13,15 @@ public:
    SceneNodeXSI(XSI::CRef ref):nodeRef(ref)
    {}
 
+   SceneNodeXSI(const SceneNodeXSI& n):nodeRef(n.nodeRef)
+   {}
+
    virtual bool replaceData(SceneNodeAlembicPtr fileNode, const IJobStringParser& jobParams, SceneNodeAlembicPtr& nextFileNode);
    virtual bool addChild(SceneNodeAlembicPtr fileNode, const IJobStringParser& jobParams, SceneNodeAppPtr& newAppNode);
    virtual void print();
    
-   virtual Imath::M44f getGlobalTrans(double time);
+   virtual Imath::M44f getGlobalTransFloat(double time);
+   virtual Imath::M44d getGlobalTransDouble(double time);
 };
 
 typedef boost::shared_ptr<SceneNodeXSI> SceneNodeXSIPtr;

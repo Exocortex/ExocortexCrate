@@ -7,8 +7,8 @@ using namespace XSI;
 using namespace MATH;
 
 
-
-void SaveXformSample(XSI::CRef parentKineStateRef, XSI::CRef kineStateRef, AbcG::OXformSchema & schema,AbcG::XformSample & sample, double time, bool xformCache, bool globalSpace, bool flattenHierarchy)
+//TODO: should only refer to our scene graph nodes, and rely on global transforms only
+void SaveXformSample(SceneNodePtr node, AbcG::OXformSchema & schema,AbcG::XformSample & sample, double time, bool xformCache, bool globalSpace, bool flattenHierarchy)
 {
    
 
@@ -36,30 +36,36 @@ void SaveXformSample(XSI::CRef parentKineStateRef, XSI::CRef kineStateRef, AbcG:
    //      return;
    //}
 
-   KinematicState kineState(kineStateRef);
-   CTransformation globalTransform = kineState.GetTransform(time);
-   CTransformation transform;
 
-   if(flattenHierarchy){
-      transform = globalTransform;
-   }
-   else{
-      KinematicState parentKineState(parentKineStateRef);
-      CMatrix4 parentGlobalTransform4 = parentKineState.GetTransform(time).GetMatrix4();
-      CMatrix4 transform4 = globalTransform.GetMatrix4();
-      parentGlobalTransform4.InvertInPlace();
-      transform4.MulInPlace(parentGlobalTransform4);
-      transform.SetMatrix4(transform4);
-   }
+   Imath::M44d parentGlobalTransInv = node->parent->getGlobalTransDouble(time).invert();
+   Imath::M44d transform = node->getGlobalTransDouble(time) * parentGlobalTransInv;
+   sample.setMatrix(transform);
 
-   // store the transform
-   CVector3 trans = transform.GetTranslation();
-   CVector3 axis;
-   double angle = transform.GetRotationAxisAngle(axis);
-   CVector3 scale = transform.GetScaling();
-   sample.setTranslation(Imath::V3d(trans.GetX(),trans.GetY(),trans.GetZ()));
-   sample.setRotation(Imath::V3d(axis.GetX(),axis.GetY(),axis.GetZ()),RadiansToDegrees(angle));
-   sample.setScale(Imath::V3d(scale.GetX(),scale.GetY(),scale.GetZ()));
+
+   //KinematicState kineState(kineStateRef);
+   //CTransformation globalTransform = kineState.GetTransform(time);
+   //CTransformation transform;
+
+   //if(flattenHierarchy){
+   //   transform = globalTransform;
+   //}
+   //else{
+   //   KinematicState parentKineState(parentKineStateRef);
+   //   CMatrix4 parentGlobalTransform4 = parentKineState.GetTransform(time).GetMatrix4();
+   //   CMatrix4 transform4 = globalTransform.GetMatrix4();
+   //   parentGlobalTransform4.InvertInPlace();
+   //   transform4.MulInPlace(parentGlobalTransform4);
+   //   transform.SetMatrix4(transform4);
+   //}
+
+   //// store the transform
+   //CVector3 trans = transform.GetTranslation();
+   //CVector3 axis;
+   //double angle = transform.GetRotationAxisAngle(axis);
+   //CVector3 scale = transform.GetScaling();
+   //sample.setTranslation(Imath::V3d(trans.GetX(),trans.GetY(),trans.GetZ()));
+   //sample.setRotation(Imath::V3d(axis.GetX(),axis.GetY(),axis.GetZ()),RadiansToDegrees(angle));
+   //sample.setScale(Imath::V3d(scale.GetX(),scale.GetY(),scale.GetZ()));
 
    //ESS_LOG_WARNING("time: "<<time<<" trans: ("<<trans.GetX()<<", "<<trans.GetY()<<", "<<trans.GetZ()<<") angle: "<<angle<<" axis: ("<<axis.GetX()<<", "<<axis.GetY()<<", "<<axis.GetZ());
 

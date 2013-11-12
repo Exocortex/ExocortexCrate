@@ -4,8 +4,9 @@
 #include "AlembicObject.h"
 
 void SaveXformSample(
-   XSI::CRef parentKineStateRef, 
-   XSI::CRef kineStateRef,
+   //XSI::CRef parentKineStateRef, 
+   //XSI::CRef kineStateRef,
+   SceneNodePtr node,
    AbcG::OXformSchema & schema, 
    AbcG::XformSample & sample, 
    double time, 

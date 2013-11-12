@@ -20,6 +20,8 @@ private:
     std::vector<AlembicObjectPtr> mObjects;
 	std::map<std::string,AlembicObjectPtr> mObjectsNames;
     float mFrameRate;
+
+   SceneNodePtr exoSceneRoot;
 public:
 
    std::map<XSI::CString,XSI::CValue> mOptions;

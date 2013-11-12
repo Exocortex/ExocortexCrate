@@ -348,9 +348,14 @@ XSI::CRef findTimeControlDccIdentifier(SceneNodeAlembicPtr fileRoot, XSI::CRef i
 }
 
 
-Imath::M44f SceneNodeXSI::getGlobalTrans(double time)
+Imath::M44f SceneNodeXSI::getGlobalTransFloat(double time)
 {
    XSI::X3DObject xObj(nodeRef);
    return ::CMatrix4_to_M44f( xObj.GetKinematics().GetGlobal().GetTransform(time).GetMatrix4() );
 }
 
+Imath::M44d SceneNodeXSI::getGlobalTransDouble(double time)
+{
+   XSI::X3DObject xObj(nodeRef);
+   return ::CMatrix4_to_M44d( xObj.GetKinematics().GetGlobal().GetTransform(time).GetMatrix4() );
+}
