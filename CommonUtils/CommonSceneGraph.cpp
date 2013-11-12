@@ -256,7 +256,7 @@ int selectTransformNodes(SceneNodePtr root)
 }
 
 
-int selectNonPolyMeshLeafNodes(SceneNodePtr root)
+int selectNonPolyMeshShapeNodes(SceneNodePtr root)
 {
    ESS_PROFILE_FUNC();
 
@@ -272,7 +272,7 @@ int selectNonPolyMeshLeafNodes(SceneNodePtr root)
       SceneNodePtr eNode = sElement.eNode;
       sceneStack.pop_back();
 
-      if(eNode->children.empty() && eNode->type != SceneNode::POLYMESH){   
+      if(isShapeNode(eNode->type) && eNode->type != SceneNode::POLYMESH){   
          eNode->selected = true;
          nSelectionCount++;
 

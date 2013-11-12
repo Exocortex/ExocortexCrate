@@ -73,7 +73,7 @@ template<class S, class T> void replacePolyMeshSubtree(SceneNodePtr root)
 done:
 
    //remove the polymesh subtree
-   selectNonPolyMeshLeafNodes(commonRoot);
+   selectNonPolyMeshShapeNodes(commonRoot);
    removeUnselectedNodes(commonRoot);
 
 
