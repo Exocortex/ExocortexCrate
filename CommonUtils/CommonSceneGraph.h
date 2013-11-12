@@ -71,8 +71,10 @@ public:
    {}
    //~SceneNode();
 
-   virtual Imath::M44f getGlobalTrans(double time);
-   virtual Imath::M44f getLocalTrans(double time);
+   virtual Imath::M44f getGlobalTransFloat(double time);
+   virtual Imath::M44d getGlobalTransDouble(double time);
+   //It is better to work with global transformations if possible (I believe most DCC apps precompute them anyways), because this way we not have update our own copy the transform every frame
+   //and we can still skip nodes and every will work, because it easy to compute a local transform given two global transforms
 
    virtual void print() = 0;
 };

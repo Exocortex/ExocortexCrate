@@ -423,17 +423,16 @@ int removeUnselectedNodes(SceneNodePtr root)
 }
 
 
-Imath::M44f SceneNode::getGlobalTrans(double time)
+Imath::M44f SceneNode::getGlobalTransFloat(double time)
 {
    Imath::M44f ret;
    ret.makeIdentity();
    return ret;
 }
 
-Imath::M44f SceneNode::getLocalTrans(double time)
+Imath::M44d SceneNode::getGlobalTransDouble(double time)
 {
-   Imath::M44f ret;
+   Imath::M44d ret;
    ret.makeIdentity();
    return ret;
 }
-
