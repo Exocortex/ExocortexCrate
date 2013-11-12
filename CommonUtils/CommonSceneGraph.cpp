@@ -398,6 +398,7 @@ int removeUnselectedNodes(SceneNodePtr root)
       if (fileNode->selected){
             parentNode->children.push_back(fileNode);
             fileNode->parent = parentNode.get();
+            fileNode->selected = false;
             
             nNumNodes++;
 

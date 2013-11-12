@@ -81,20 +81,21 @@ done:
    //We want it to have the same global transform as the common root.
 
    
-   //S commonNodeApp = reinterpret<SceneNode, T>(commonRoot);
+   S commonNodeApp = reinterpret<SceneNode, T>(commonRoot);
 
-   //S sceneNode(new T(*commonNodeApp.get()));
-   //sceneNode->name = "MergedPolyMesh";
-   //sceneNode->type = SceneNode::ETRANSFORM;
-   //sceneNode->children.push_back(mergedMeshNode);
-   //commonRoot->children.push_back(sceneNode);
+   S sceneNode(new T(*commonNodeApp.get()));
+   sceneNode->name = "MergedPolyMesh";
+   sceneNode->type = SceneNode::ETRANSFORM;
+   sceneNode->dccIdentifier = commonNodeApp->dccIdentifier;
+   sceneNode->children.push_back(mergedMeshNode);
+   commonRoot->children.push_back(sceneNode);
 
-   //sceneNode->parent = commonRoot.get();
-   //mergedMeshNode->parent = sceneNode.get();
+   sceneNode->parent = commonRoot.get();
+   mergedMeshNode->parent = sceneNode.get();
 
 
-   commonRoot->children.push_back(mergedMeshNode);
-   mergedMeshNode->parent = commonRoot.get();
+   //commonRoot->children.push_back(mergedMeshNode);
+   //mergedMeshNode->parent = commonRoot.get();
 
    //replace subtree with merging node
    for(int i=0; i<mergedMeshNode->polyMeshNodes.size(); i++){
