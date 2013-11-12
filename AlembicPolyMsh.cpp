@@ -177,7 +177,7 @@ XSI::CStatus AlembicPolyMesh::Save(double time)
 	   saveIndexedUVs( mMeshSchema, mMeshSample, uvSample, mUvParams, GetJob()->GetAnimatedTs(), mNumSamples, finalMesh.mIndexedUVSet );
       if(bEnableLogging) ESS_LOG_WARNING("Exporting UV data.");
 
-      if(mNumSamples == 0)
+      if(mNumSamples == 0 && finalMesh.mUvOptionsVec.size() > 0)
       {
          if(bEnableLogging) ESS_LOG_WARNING("Export UV options.");
          mUvOptionsProperty = Abc::OFloatArrayProperty(mMeshSchema, ".uvOptions", mMeshSchema.getMetaData(), GetJob()->GetAnimatedTs() );

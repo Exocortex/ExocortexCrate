@@ -207,7 +207,7 @@ CStatus AlembicWriteJob::PreProcess()
 
    if(bMergePolyMeshSubtree){
       bTransformCache = false;
-      bSelectParents = true;
+      //bSelectParents = true;
    }
 
    int nNumNodes = 0;
