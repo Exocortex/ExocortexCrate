@@ -83,7 +83,7 @@ done:
    
    S commonNodeApp = reinterpret<SceneNode, T>(commonRoot);
 
-   S sceneNode(new T(*commonNodeApp.get()));
+   S sceneNode(new T(*commonNodeApp.get(), true));
    sceneNode->name = "MergedPolyMesh";
    sceneNode->type = SceneNode::ETRANSFORM;
    sceneNode->dccIdentifier = commonNodeApp->dccIdentifier;

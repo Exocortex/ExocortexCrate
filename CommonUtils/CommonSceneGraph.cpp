@@ -437,3 +437,8 @@ Imath::M44d SceneNode::getGlobalTransDouble(double time)
    ret.makeIdentity();
    return ret;
 }
+
+bool SceneNode::getVisibility(double time)
+{
+   return true;
+}
