@@ -359,3 +359,14 @@ Imath::M44d SceneNodeXSI::getGlobalTransDouble(double time)
    XSI::X3DObject xObj(nodeRef);
    return ::CMatrix4_to_M44d( xObj.GetKinematics().GetGlobal().GetTransform(time).GetMatrix4() );
 }
+
+bool SceneNodeXSI::getVisibility(double time)
+{
+   if(bMergedSubtreeNodeParent) return true;
+   
+   XSI::X3DObject xObj(nodeRef);
+   Property visProp;
+   xObj.GetPropertyFromName(L"Visibility",visProp);
+   bool visibility = visProp.GetParameterValue(L"rendvis",time);
+   return visibility;
+}

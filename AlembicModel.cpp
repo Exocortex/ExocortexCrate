@@ -107,14 +107,18 @@ XSI::CStatus AlembicModel::Save(double time)
    }
 
 
-   // set the visibility
-   Property visProp;
-   prim.GetParent3DObject().GetPropertyFromName(L"Visibility",visProp);
-   if(isRefAnimated(visProp.GetRef()) || mNumSamples == 0)
-   {
-      bool visibility = visProp.GetParameterValue(L"rendvis",time);
-      mOVisibility.set(visibility ?AbcG::kVisibilityVisible :AbcG::kVisibilityHidden);
-   }
+   //// set the visibility
+   //Property visProp;
+   //prim.GetParent3DObject().GetPropertyFromName(L"Visibility",visProp);
+   //if(isRefAnimated(visProp.GetRef()) || mNumSamples == 0)
+   //{
+   //   bool visibility = visProp.GetParameterValue(L"rendvis",time);
+   //   mOVisibility.set(visibility ?AbcG::kVisibilityVisible :AbcG::kVisibilityHidden);
+   //}
+
+   bool bVisibility = mExoSceneNode->getVisibility(time);
+
+   mOVisibility.set(bVisibility ?AbcG::kVisibilityVisible :AbcG::kVisibilityHidden);
 
    // store the metadata
    SaveMetaData(GetRef(REF_NODE),this);

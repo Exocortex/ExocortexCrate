@@ -9,11 +9,12 @@ class SceneNodeXSI : public SceneNodeApp
 public:
 
    XSI::CRef nodeRef;
+   bool bMergedSubtreeNodeParent;
 
-   SceneNodeXSI(XSI::CRef ref):nodeRef(ref)
+   SceneNodeXSI(XSI::CRef ref):nodeRef(ref), bMergedSubtreeNodeParent(false)
    {}
 
-   SceneNodeXSI(const SceneNodeXSI& n):nodeRef(n.nodeRef)
+   SceneNodeXSI(const SceneNodeXSI& n, bool mergedSubtreeNodeParent):nodeRef(n.nodeRef), bMergedSubtreeNodeParent(mergedSubtreeNodeParent)
    {}
 
    virtual bool replaceData(SceneNodeAlembicPtr fileNode, const IJobStringParser& jobParams, SceneNodeAlembicPtr& nextFileNode);
@@ -22,6 +23,7 @@ public:
    
    virtual Imath::M44f getGlobalTransFloat(double time);
    virtual Imath::M44d getGlobalTransDouble(double time);
+   virtual bool getVisibility(double time);
 };
 
 typedef boost::shared_ptr<SceneNodeXSI> SceneNodeXSIPtr;
