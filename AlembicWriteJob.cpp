@@ -198,7 +198,7 @@ CStatus AlembicWriteJob::PreProcess()
       mTs = mArchive.addTimeSampling(sampling);
    }
    
-   bool bMergePolyMeshSubtree = true;
+   bool bMergePolyMeshSubtree = (bool)GetOption(L"mergePolyMeshSubtree");
 
    bool bSelectParents = (bool)GetOption(L"includeParentNodes");
    const bool bSelectChildren = false;

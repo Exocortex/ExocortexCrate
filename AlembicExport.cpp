@@ -168,6 +168,8 @@ CStatus exportCommandImp( CRef& in_ctxt )
          jobString += L";storageFormat=ogawa";
       }
 
+      jobString += L";mergePolyMeshSubtree=" + settings.GetParameterValue(L"mergePolyMeshSubtree").GetAsText();
+
       Application().ExecuteCommand(L"DeleteObj",inspectArgs,inspectResult);
    }
 
@@ -201,6 +203,7 @@ CStatus exportCommandImp( CRef& in_ctxt )
       bool includeParentNodes = true;
       bool renameConflictingNodes = false;
       bool useOgawa = false;
+      bool mergePolyMeshSubtree = false;
       //CRefArray objects;
 
      std::vector<std::string> objects;
@@ -289,6 +292,9 @@ CStatus exportCommandImp( CRef& in_ctxt )
          }
          else if(valuePair[0].IsEqualNoCase(L"geomApproxSubD")){
             geomApproxSubD = (bool)CValue(valuePair[1]);
+         }
+         else if(valuePair[0].IsEqualNoCase(L"mergePolyMeshSubtree")){
+            mergePolyMeshSubtree = (bool)CValue(valuePair[1]);
          }
          else if(valuePair[0].IsEqualNoCase(L"storageFormat")){
 
@@ -410,6 +416,7 @@ CStatus exportCommandImp( CRef& in_ctxt )
       job->SetOption(L"includeParentNodes",includeParentNodes);
       job->SetOption(L"renameConflictingNodes",renameConflictingNodes);
       job->SetOption(L"useOgawa",useOgawa);
+      job->SetOption(L"mergePolyMeshSubtree", mergePolyMeshSubtree);
 
       // check if the job is satifsied
       if(job->PreProcess() != CStatus::OK)
@@ -541,6 +548,7 @@ ESS_CALLBACK_START(alembic_export_settings_Define,CRef&)
    oCustomProperty.AddParameter(L"includeParentNodes",CValue::siBool,siPersistable,L"",L"",1,0,1,0,1,oParam);
    oCustomProperty.AddParameter(L"renameConflictingNodes",CValue::siBool,siPersistable,L"",L"",0,0,1,0,1,oParam);
    oCustomProperty.AddParameter(L"storageFormat",CValue::siInt4,siPersistable,L"",L"",0,0,10,0,10,oParam);
+   oCustomProperty.AddParameter(L"mergePolyMeshSubtree",CValue::siBool,siPersistable,L"",L"",0,0,1,0,1,oParam);
 
 	return CStatus::OK;
 ESS_CALLBACK_END
@@ -552,7 +560,7 @@ ESS_CALLBACK_START(alembic_export_settings_DefineLayout,CRef&)
 	oLayout = ctxt.GetSource();
 	oLayout.Clear();
 
-    oLayout.SetViewSize(600, 500);
+    oLayout.SetViewSize(600, 525);
 
     std::stringstream versionText;
    versionText<<"Exocortex Crate "<<PLUGIN_MAJOR_VERSION<<"."<<PLUGIN_MINOR_VERSION<<"."<<crate_BUILD_VERSION;
@@ -593,6 +601,7 @@ ESS_CALLBACK_START(alembic_export_settings_DefineLayout,CRef&)
    oLayout.AddEnumControl(L"transforms", transformItems, L"Transforms");
    oLayout.AddItem(L"includeParentNodes", "Include Parent Nodes");
    oLayout.AddItem(L"renameConflictingNodes", "Rename Conflicting Nodes");
+   oLayout.AddItem(L"mergePolyMeshSubtree", "Merge Selected Polymesh Subtree");
 
    CValueArray storageItems(4);
    storageItems[0] = L"HDF5";
