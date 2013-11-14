@@ -9,9 +9,16 @@ using namespace XSI::MATH;
 
 void IntermediatePolyMeshXSI::Save(SceneNodePtr eNode, const Imath::M44f& transform44f, const CommonOptions& options, double time)
 {
-   //TODO: it might be better to rely only options rather than whether or not something is uninitialized. we can make a copy of the options, and
-   //override options as necessary
    const bool bEnableLogging = false;
+
+   //for transforming the normals
+   Imath::M44f transform44f_I_T = transform44f;
+   //only the roatation component should be applied
+   transform44f_I_T = transform44f_I_T.setTranslation(Imath::V3f(0.0f, 0.0f, 0.0f));
+   //dealing with scaling
+   transform44f_I_T = transform44f_I_T.inverse();
+   transform44f_I_T = transform44f_I_T.transpose();
+   
 
    XSI::CRef nodeRef;
    nodeRef.Set(eNode->dccIdentifier.c_str());
@@ -104,7 +111,7 @@ void IntermediatePolyMeshXSI::Save(SceneNodePtr eNode, const Imath::M44f& transf
          normalVec[i].x = (float)normal.GetX();
          normalVec[i].y = (float)normal.GetY();
          normalVec[i].z = (float)normal.GetZ();
-         normalVec[i] *= transform44f;
+         normalVec[i] *= transform44f_I_T;
       }
 
       createIndexedArray<Abc::N3f, SortableV3f>(mFaceIndicesVec, normalVec, mIndexedNormals.values, mIndexedNormals.indices);
