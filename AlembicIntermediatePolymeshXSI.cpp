@@ -259,10 +259,10 @@ void IntermediatePolyMeshXSI::Save(SceneNodePtr eNode, const Imath::M44f& transf
 
          std::string name(cluster.GetName().GetAsciiString());
 
-         mFaceSets.push_back(FaceSetStruct());
-         mFaceSets[mFaceSets.size()-1].name = name;
+         FaceSetStruct& faceSet = mFaceSets[name];
+
          for(LONG j=0;j<elements.GetCount();j++){
-            mFaceSets[mFaceSets.size()-1].faceIds.push_back(elements[j]);
+            faceSet.faceIds.push_back(elements[j]);
          }
       }
    }

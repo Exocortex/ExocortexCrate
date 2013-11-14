@@ -234,6 +234,9 @@ CStatus AlembicWriteJob::PreProcess()
       flattenSceneGraph(exoSceneRoot, nNumNodes);
    }
 
+   //Note: that you should not rely Softimage scenegraph methods to retrieve parent nodes, since nodes may be skipped
+   //The fact that we do not make a complete copy unfortunately makes things a little more complicated.
+   //our design can probably be better (and safer) in may ways.
 
    //return CStatus::OK;
 

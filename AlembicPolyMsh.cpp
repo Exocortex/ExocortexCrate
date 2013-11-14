@@ -197,12 +197,15 @@ XSI::CStatus AlembicPolyMesh::Save(double time)
    if(GetJob()->GetOption(L"exportFaceSets") && mNumSamples == 0)
    {
       if(bEnableLogging) ESS_LOG_WARNING("Exporting facesets");
-      for(int i=0; i<finalMesh.mFaceSets.size(); i++){
-         if(finalMesh.mFaceSets[i].faceIds.size() > 0)
+
+      for(FaceSetMap::iterator it = finalMesh.mFaceSets.begin(); it != finalMesh.mFaceSets.end(); it++){
+         std::string name = it->first;
+         FaceSetStruct& faceSetStruct = it->second;
+         if(faceSetStruct.faceIds.size() > 0)
          {
-            if(bEnableLogging) ESS_LOG_WARNING("Exporting faceset "<<i);
-            AbcG::OFaceSet faceSet = mMeshSchema.createFaceSet(finalMesh.mFaceSets[i].name);
-            AbcG::OFaceSetSchema::Sample faceSetSample(Abc::Int32ArraySample(finalMesh.mFaceSets[i].faceIds));
+            if(bEnableLogging) ESS_LOG_WARNING("Exporting faceset "<<name);
+            AbcG::OFaceSet faceSet = mMeshSchema.createFaceSet(name);
+            AbcG::OFaceSetSchema::Sample faceSetSample(Abc::Int32ArraySample(faceSetStruct.faceIds));
             faceSet.getSchema().set(faceSetSample);
          }
       }
