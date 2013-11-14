@@ -95,22 +95,21 @@ XSI::CStatus AlembicPolyMesh::Save(double time)
 
    const bool globalSpace = GetJob()->GetOption(L"globalSpace");
    if(globalSpace){
-
-      const Imath::M44f localXfo = CMatrix4_to_M44f(KinematicState(GetRef(REF_GLOBAL_TRANS)).GetTransform(time).GetMatrix4());
+      const Imath::M44f globalXfo = mExoSceneNode->getGlobalTransFloat(time);
    
       for(int i=0; i<finalMesh.posVec.size(); i++){
-         finalMesh.posVec[i] *= localXfo;
+         finalMesh.posVec[i] *= globalXfo;
       }
 
-      finalMesh.bbox.min *= localXfo;
-      finalMesh.bbox.max *= localXfo;
+      finalMesh.bbox.min *= globalXfo;
+      finalMesh.bbox.max *= globalXfo;
 
       for(int i=0; i<finalMesh.mIndexedNormals.values.size(); i++){
-         finalMesh.mIndexedNormals.values[i] *= localXfo; 
+         finalMesh.mIndexedNormals.values[i] *= globalXfo; 
       }
 
       for(int i=0; i<finalMesh.mVelocitiesVec.size(); i++){
-         finalMesh.mVelocitiesVec[i] *= localXfo;
+         finalMesh.mVelocitiesVec[i] *= globalXfo;
       }
    }
 
