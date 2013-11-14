@@ -51,11 +51,10 @@ typedef std::vector<AbcA::int32_t> facesetmap_vec;
 
 struct FaceSetStruct
 {
-	std::string name;
 	facesetmap_vec faceIds;
 };
 
-
+typedef std::map<std::string, FaceSetStruct> FaceSetMap; 
    
 
 class CommonIntermediatePolyMesh
@@ -71,19 +70,19 @@ public:
 	std::vector<AbcA::int32_t> mFaceCountVec;
 	std::vector<AbcA::int32_t> mFaceIndicesVec;  
 
-   std::vector<Abc::V3f> mVelocitiesVec; //TODO: merge
+   std::vector<Abc::V3f> mVelocitiesVec; 
 
 	IndexedNormals mIndexedNormals;
 	std::vector<IndexedUVs> mIndexedUVSet;
 	
 	//std::vector<Abc::uint32_t> mMatIdIndexVec;
-   std::vector<FaceSetStruct> mFaceSets; //TODO: merge
+   FaceSetMap mFaceSets; 
 
-   std::vector<float> mUvOptionsVec;      //TODO: merge
+   std::vector<float> mUvOptionsVec;      ////TODO: merge?
 
-   std::vector<Abc::V3f> mBindPoseVec;    //TODO: merge
+   std::vector<Abc::V3f> mBindPoseVec;    ////TODO: merge?
    
-   int bGeomApprox;                       //TODO: merge
+   int bGeomApprox;                       ////TODO: merge?
 
    //std::vector<float> mRadiusVec;
 

@@ -30,6 +30,9 @@ bool CommonIntermediatePolyMesh::mergeWith(const CommonIntermediatePolyMesh& src
 		destMesh.posVec.push_back( srcMesh.posVec[i] );
 	}
 
+   for(int i=0; i<srcMesh.mVelocitiesVec.size(); i++){
+      destMesh.mVelocitiesVec.push_back( srcMesh.mVelocitiesVec[i] );
+   }
 
 	Abc::uint32_t amountToOffsetSrcNormalIndicesBy = (Abc::uint32_t)destMesh.mIndexedNormals.values.size();
 
@@ -41,12 +44,7 @@ bool CommonIntermediatePolyMesh::mergeWith(const CommonIntermediatePolyMesh& src
 		destMesh.mIndexedNormals.indices.push_back( srcMesh.mIndexedNormals.indices[i] + amountToOffsetSrcNormalIndicesBy );
 	}
 
-    //for(int i=0; i<destMesh.mIndexedNormals.indices.size(); i++){
-    //   if( destMesh.mIndexedNormals.indices[i] > destMesh.mIndexedNormals.values.size()){
-    //       ESS_LOG_WARNING("out of bounds index");
-    //   }
-    //}
-
+   Abc::uint32_t amountToOffsetFaceIdBy = (Abc::uint32_t)destMesh.mFaceCountVec.size();
 
 	for(int i=0; i<srcMesh.mFaceCountVec.size(); i++){
 		destMesh.mFaceCountVec.push_back( srcMesh.mFaceCountVec[i]);
@@ -122,36 +120,13 @@ bool CommonIntermediatePolyMesh::mergeWith(const CommonIntermediatePolyMesh& src
 		}
 	}
 
-	//Abc::uint32_t amountToOffsetSrcUvIndicesBy = (Abc::uint32_t)destMesh.mUvVec.size();
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              
-	//for(int i=0; i<srcMesh.mUvVec.size(); i++){
-	//	destMesh.mUvVec.push_back( srcMesh.mUvVec[i] ); 
-	//}                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          
 
-	//for(int i=0; i<srcMesh.mUvIndexVec.size(); i++){
-	//	destMesh.mUvIndexVec.push_back( srcMesh.mUvIndexVec[i] + amountToOffsetSrcUvIndicesBy );
-	//}
-
-
-	//3DS MAX merge the faceset maps
-	//I assume if that if a key is common, we combine the face lists (this assumption is compatible with
-	//our current method of saving out the mapIds and names)
-	//for ( facesetmap_cit it=srcMesh.mFaceSetsMap.begin(); it != srcMesh.mFaceSetsMap.end(); it++)
-	//{
-	//	if( destMesh.mFaceSetsMap.find(it->first) == destMesh.mFaceSetsMap.end() ){ // a new key
-	//		
-	//		destMesh.mFaceSetsMap[it->first] = it->second;
-	//	}
-	//	else{// the key is common
-
-	//		const facesetmap_vec& srcFaceSetVec = it->second.faceIds;
-	//		facesetmap_vec& destFaceSetVec = destMesh.mFaceSetsMap[it->first].faceIds;
-
-	//		for(int i=0; i<srcFaceSetVec.size(); i++){
-	//			destFaceSetVec.push_back(srcFaceSetVec[i]);
-	//		}
-	//	}
-	//}
+   for(FaceSetMap::const_iterator it=srcMesh.mFaceSets.begin(); it != srcMesh.mFaceSets.end(); it++){
+      FaceSetStruct& faceSet = destMesh.mFaceSets[it->first];
+      for(int i=0; i<it->second.faceIds.size(); i++){
+         faceSet.faceIds.push_back(amountToOffsetFaceIdBy + it->second.faceIds[i]);
+      }
+   }
 
 	//for(int i=0; i<srcMesh.mMatIdIndexVec.size(); i++){
 	//	destMesh.mMatIdIndexVec.push_back(srcMesh.mMatIdIndexVec[i]);
