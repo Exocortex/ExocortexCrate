@@ -154,96 +154,95 @@ ESS_PROFILE_FUNC();
 	//ESS_LOG_INFO( "AlembicMeshTopoModifier::ModifyObject strPath: " << strPath << " strIdentifier: " << strIdentifier << " fTime: " << fTime << 
 	//	" bTopology: " << bTopology << " bGeometry: " << bGeometry << " bNormals: " << bNormals << " bUVs: " << bUVs << " bMuted: " << bMuted );
 
-	if( bMuted || !strPath || !strIdentifier) {
-		return;
-	}
+	if( !bMuted && strPath && strIdentifier) {
 
-	std::string szPath = EC_MCHAR_to_UTF8( strPath );
-	std::string szIdentifier = EC_MCHAR_to_UTF8( strIdentifier );
+		std::string szPath = EC_MCHAR_to_UTF8( strPath );
+		std::string szIdentifier = EC_MCHAR_to_UTF8( strIdentifier );
 
-	AbcG::IObject iObj;
-	try {
-		iObj = getObjectFromArchive(szPath, szIdentifier);
-	} catch( std::exception exp ) {
-        extern bool g_hasModifierErrorOccurred;
-        g_hasModifierErrorOccurred = true;
-		ESS_LOG_ERROR( "Can not open Alembic data stream.  Path: " << szPath << " identifier: " << szIdentifier << " reason: " << exp.what() );
-		return;
-	}
+		AbcG::IObject iObj;
+		try {
+			iObj = getObjectFromArchive(szPath, szIdentifier);
+		} catch( std::exception exp ) {
+			extern bool g_hasModifierErrorOccurred;
+			g_hasModifierErrorOccurred = true;
+			ESS_LOG_ERROR( "Can not open Alembic data stream.  Path: " << szPath << " identifier: " << szIdentifier << " reason: " << exp.what() );
+			return;
+		}
 
-	if(!iObj.valid()) {
-        extern bool g_hasModifierErrorOccurred;
-        g_hasModifierErrorOccurred = true;
-		ESS_LOG_ERROR( "Not a valid Alembic data stream.  Path: " << szPath << " identifier: " << szIdentifier );
-		return;
-	}
+		if(!iObj.valid()) {
+			extern bool g_hasModifierErrorOccurred;
+			g_hasModifierErrorOccurred = true;
+			ESS_LOG_ERROR( "Not a valid Alembic data stream.  Path: " << szPath << " identifier: " << szIdentifier );
+			return;
+		}
 
-   alembic_fillmesh_options options;
-   options.fileName = szPath;
-   options.pObjectCache = getObjectCacheFromArchive(szPath, szIdentifier);
-   options.identifier = szIdentifier;
-   options.pIObj = &iObj; 
-   options.dTicks = GetTimeValueFromSeconds( fTime );
-   options.nDataFillFlags = 0;
-   options.fVertexAlpha = fGeoAlpha;
-    if( bTopology ) {
-		options.nDataFillFlags |= ALEMBIC_DATAFILL_FACELIST;
-		options.nDataFillFlags |= ALEMBIC_DATAFILL_MATERIALIDS;
-   }
-   if( bGeometry ) {
-	   options.nDataFillFlags |= ALEMBIC_DATAFILL_VERTEX;
-   }
-   if( bNormals ) {
-	   options.nDataFillFlags |= ALEMBIC_DATAFILL_NORMALS;
-   }
-   if( bUVs ) {
-		options.nDataFillFlags |= ALEMBIC_DATAFILL_UVS;
-   }
-
-   options.nDataFillFlags |= ALEMBIC_DATAFILL_ALLOCATE_UV_STORAGE;
-   if(bIgnoreSubframeSamples){
-      options.nDataFillFlags |= ALEMBIC_DATAFILL_IGNORE_SUBFRAME_SAMPLES;
-   }
-
-   bool bNeedDelete = false;
-
-   	options.pObject = os->obj;
-
-   // Find out if we are modifying a poly object or a tri object
-   if (os->obj->ClassID() == Class_ID(POLYOBJ_CLASS_ID, 0) )
-   {
-	   PolyObject *pPolyObj = reinterpret_cast<PolyObject *>(os->obj );
-
-	   options.pMNMesh = &( pPolyObj->GetMesh() );
-   }
-   else if (os->obj->CanConvertToType(Class_ID(POLYOBJ_CLASS_ID, 0)))
-   {
-	   PolyObject *pPolyObj = reinterpret_cast<PolyObject *>(os->obj->ConvertToType(t, Class_ID(POLYOBJ_CLASS_ID, 0)));
-
-	   options.pMNMesh = &( pPolyObj->GetMesh() );
-    
-	   if (os->obj != pPolyObj) {
-          os->obj = pPolyObj;
-		  os->obj->UnlockObject();
+	   alembic_fillmesh_options options;
+	   options.fileName = szPath;
+	   options.pObjectCache = getObjectCacheFromArchive(szPath, szIdentifier);
+	   options.identifier = szIdentifier;
+	   options.pIObj = &iObj; 
+	   options.dTicks = GetTimeValueFromSeconds( fTime );
+	   options.nDataFillFlags = 0;
+	   options.fVertexAlpha = fGeoAlpha;
+		if( bTopology ) {
+			options.nDataFillFlags |= ALEMBIC_DATAFILL_FACELIST;
+			options.nDataFillFlags |= ALEMBIC_DATAFILL_MATERIALIDS;
+	   }
+	   if( bGeometry ) {
+		   options.nDataFillFlags |= ALEMBIC_DATAFILL_VERTEX;
+	   }
+	   if( bNormals ) {
+		   options.nDataFillFlags |= ALEMBIC_DATAFILL_NORMALS;
+	   }
+	   if( bUVs ) {
+			options.nDataFillFlags |= ALEMBIC_DATAFILL_UVS;
 	   }
 
-   }
-   else {
-        extern bool g_hasModifierErrorOccurred;
-        g_hasModifierErrorOccurred = true;
-  		ESS_LOG_ERROR( "Can not convert internal mesh data into a PolyObject, confused." );
-	    return;
-   }
+	   options.nDataFillFlags |= ALEMBIC_DATAFILL_ALLOCATE_UV_STORAGE;
+	   if(bIgnoreSubframeSamples){
+		  options.nDataFillFlags |= ALEMBIC_DATAFILL_IGNORE_SUBFRAME_SAMPLES;
+	   }
 
-   try {
-	   AlembicImport_FillInPolyMesh(options);
-   }
-   catch(std::exception exp ) {
-        extern bool g_hasModifierErrorOccurred;
-        g_hasModifierErrorOccurred = true;
-		ESS_LOG_ERROR( "Error reading mesh from Alembic data stream.  Path: " << strPath << " identifier: " << strIdentifier << " reason: " << exp.what() );
-		return;
-   }
+	   bool bNeedDelete = false;
+
+   		options.pObject = os->obj;
+
+	   // Find out if we are modifying a poly object or a tri object
+	   if (os->obj->ClassID() == Class_ID(POLYOBJ_CLASS_ID, 0) )
+	   {
+		   PolyObject *pPolyObj = reinterpret_cast<PolyObject *>(os->obj );
+
+		   options.pMNMesh = &( pPolyObj->GetMesh() );
+	   }
+	   else if (os->obj->CanConvertToType(Class_ID(POLYOBJ_CLASS_ID, 0)))
+	   {
+		   PolyObject *pPolyObj = reinterpret_cast<PolyObject *>(os->obj->ConvertToType(t, Class_ID(POLYOBJ_CLASS_ID, 0)));
+
+		   options.pMNMesh = &( pPolyObj->GetMesh() );
+    
+		   if (os->obj != pPolyObj) {
+			  os->obj = pPolyObj;
+			  os->obj->UnlockObject();
+		   }
+
+	   }
+	   else {
+			extern bool g_hasModifierErrorOccurred;
+			g_hasModifierErrorOccurred = true;
+  			ESS_LOG_ERROR( "Can not convert internal mesh data into a PolyObject, confused." );
+			return;
+	   }
+
+	   try {
+		   AlembicImport_FillInPolyMesh(options);
+	   }
+	   catch(std::exception exp ) {
+			extern bool g_hasModifierErrorOccurred;
+			g_hasModifierErrorOccurred = true;
+			ESS_LOG_ERROR( "Error reading mesh from Alembic data stream.  Path: " << strPath << " identifier: " << strIdentifier << " reason: " << exp.what() );
+			return;
+	   }
+	}
 
    // update the validity channel
     if( bTopology ) {
