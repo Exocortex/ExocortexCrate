@@ -294,7 +294,7 @@ MStatus AlembicWriteJob::PreProcess()
 			{
 				for( std::list<SceneNodePtr>::iterator it = eNode->children.begin(); it != eNode->children.end(); ++it)
 				{
-					if( !bFlattenHierarchy || (bFlattenHierarchy && eNode->type == SceneNode::ETRANSFORM && hasExtractableTransform((*it)->type)) )
+					if( !bFlattenHierarchy || (bFlattenHierarchy && eNode->type == SceneNode::ETRANSFORM && isShapeNode((*it)->type)) )
 					{
 						//If flattening the hierarchy, we want to attach each external transform to its corresponding geometry node.
 						//All internal transforms should be skipped. Geometry nodes will never have children (If and XSI geonode is parented
