@@ -319,17 +319,17 @@ void AlembicImport_TimeControl( alembic_importoptions &options ) {
 	SceneEntry *pEntry = options.sceneEnumProc.Append(node, pHelper, OBTYPE_CURVES, &std::string( EC_MCHAR_to_UTF8( node->GetName() ) ) ); 
 	options.currentSceneList.Append(pEntry);
 
-	GET_MAX_INTERFACE()->SelectNode( node );
+	//GET_MAX_INTERFACE()->SelectNode( node );
 
-	std::string nodeName = EC_MCHAR_to_UTF8( node->GetName() );
-	char szBuffer[10000];	
-	sprintf_s( szBuffer, 10000,
-		"$'%s'.current.controller = float_expression()\n"
-		"$'%s'.current.controller.setExpression \"S\"\n"
-		"$'%s'.offset.controller = bezier_float()\n"
-		"$'%s'.factor.controller = bezier_float()\n"
-		, nodeName.c_str(), nodeName.c_str(), nodeName.c_str(), nodeName.c_str() );
-	ExecuteMAXScriptScript( EC_UTF8_to_TCHAR( szBuffer ) );
+	//std::string nodeName = EC_MCHAR_to_UTF8( node->GetName() );
+	//char szBuffer[10000];	
+	//sprintf_s( szBuffer, 10000,
+	//	"$'%s'.current.controller = float_expression()\n"
+	//	"$'%s'.current.controller.setExpression \"S\"\n"
+	//	"$'%s'.offset.controller = bezier_float()\n"
+	//	"$'%s'.factor.controller = bezier_float()\n"
+	//	, nodeName.c_str(), nodeName.c_str(), nodeName.c_str(), nodeName.c_str() );
+	//ExecuteMAXScriptScript( EC_UTF8_to_TCHAR( szBuffer ) );
 
 	options.pTimeControl = pHelper;
 }
@@ -343,10 +343,8 @@ void AlembicImport_ConnectTimeControl( const char* szControllerName, alembic_imp
 		
 	sprintf_s( szBuffer, 10000, 
 		"%s.controller = float_expression()\n"
-		"%s.controller.AddScalarTarget \"current\" $'%s'.current.controller\n"
-		"%s.controller.AddScalarTarget \"offset\" $'%s'.offset.controller\n"
-		"%s.controller.AddScalarTarget \"factor\" $'%s'.factor.controller\n"
-		"%s.controller.setExpression \"current * factor + offset\"\n",
+		"%s.controller.AddScalarTarget \"current\" $'%s'.timeOut.controller\n"
+		"%s.controller.setExpression \"current\"\n",
 		szControllerName,
 		szControllerName, objectNameName.c_str(),
 		szControllerName, objectNameName.c_str(),
