@@ -60,15 +60,32 @@ plugin Helper AlembicTimeControl
     fn OffsetCache =
     (
         current.controller = float_expression()
-		current.controller.setExpression "S"
-    
-        timeOut.controller = float_expression()
-        ctrl = timeOut.controller
-    
-        str = "S * " + (factor as string) + " + " + (offset as string)
+	    current.controller.setExpression "S"
 
-        ctrl.SetExpression str
-        ctrl.Update()
+        timeOut.controller = float_expression()
+        
+
+        local frameRange = (cacheEnd - cacheStart) / framerate
+        local tScale = factor as string
+        local timeOffset = ((frameOffset/framerate as float) + offset) as string
+        local cStart = (cacheStart / framerate as float) as string
+        if Loop then
+        (
+            fRange = frameRange as string
+            fStart = (frameRange as string) as string
+
+            str = "if(S*" + tScale + "-" + timeOffset + ">0," + \
+                    "mod (S*" + tScale + "-" + timeOffset + "," + fRange + ") + " + cStart + \
+                    ",mod (S*" + tScale + "-" + timeOffset + "," + fRange + ") + " + cStart + "+ " + fStart + ")"
+
+        )else(
+            str = "(S*" + tScale + "-" + timeOffset + cStart + ")"
+        )
+
+
+
+        timeOut.controller.SetExpression str
+        timeOut.controller.Update()
     )
 
     on getDisplayMesh do 
