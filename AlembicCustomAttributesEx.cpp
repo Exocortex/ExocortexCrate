@@ -61,6 +61,10 @@ XSI::CStatus AlembicCustomAttributesEx::defineCustomAttributes(XSI::Geometry geo
             //ESS_LOG_WARNING("Defining siICENodeDataVector3 siICENodeStructureSingle");
             customProps[exportArray[i]] = Abc::OV3fArrayProperty(argGeomParams, exportArray[i].GetAsciiString(), metadata, animatedTs);
          }
+         else if(attr.GetDataType() == siICENodeDataLong && attr.GetStructureType() == siICENodeStructureSingle){
+            //ESS_LOG_WARNING("Defining siICENodeDataLong siICENodeStructureSingle");
+            customProps[exportArray[i]] = Abc::OInt32ArrayProperty(argGeomParams, exportArray[i].GetAsciiString(), metadata, animatedTs);
+         }
          else{
             ESS_LOG_WARNING("Unsupported attribute type: "<<exportArray[i].GetAsciiString());
          }
@@ -151,6 +155,19 @@ XSI::CStatus AlembicCustomAttributesEx::exportCustomAttributes(XSI::Geometry geo
 
          //   it->second.set(Abc::V3fArraySample(outputVecArray));
          //}
+      }
+      else if(attr.GetDataType() == siICENodeDataLong && attr.GetStructureType() == siICENodeStructureSingle){
+         //ESS_LOG_WARNING("Writing siICENodeDataLong siICENodeStructureSingle");
+         CICEAttributeDataArrayLong longArrayData;
+         attr.GetDataArray(longArrayData);
+
+         std::vector<Abc::int32_t> outputLongArray;
+
+         for(ULONG j=0; j<longArrayData.GetCount(); j++){
+            outputLongArray.push_back( longArrayData[j] );
+         }
+
+         it->second.set(Abc::Int32ArraySample(outputLongArray));
       }
    }
    
