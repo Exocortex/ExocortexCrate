@@ -102,6 +102,7 @@ SICALLBACK XSILoadPlugin( PluginRegistrar& in_reg )
         Register_alembic_vec2f_array(in_reg);
         Register_alembic_vec3f_array(in_reg);
         Register_alembic_vec4f_array(in_reg);
+        Register_alembic_int_array(in_reg);
 
 		//XSILoadPlugin_2( in_reg );
 

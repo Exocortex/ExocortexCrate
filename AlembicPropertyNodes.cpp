@@ -148,6 +148,46 @@ namespace writeArrayRes
 };
 
 
+template<class PROP, class SAMPLER, class TYPE>  writeArrayRes::enumT writeArray1i(SampleInfo& sampleInfo, Abc::ICompoundProperty& props, AbcA::PropertyHeader& propHeader, CDataArray2DLong& outData)
+{
+   if(PROP::matches(propHeader)){
+
+      CDataArray2DLong::Accessor acc;
+
+      PROP propArray(props, propHeader.getName());
+      if(!propArray.valid())
+      {
+         acc = outData.Resize(0,0);
+         return writeArrayRes::INVALID_ALEMBIC_PARAM;
+      }
+      if(propArray.getNumSamples() == 0)
+      {
+         acc = outData.Resize(0,0);
+         return writeArrayRes::NO_ALEMBIC_SAMPLES;
+      }
+
+      SAMPLER propPtr1 = propArray.getValue(sampleInfo.floorIndex);
+
+      if(propPtr1 == NULL || propPtr1->size() == 0){
+         acc = outData.Resize(0,0);
+         return writeArrayRes::EMPTY;
+      }
+
+      acc = outData.Resize(0, (ULONG)propPtr1->size());
+
+      for(ULONG i=0; i<acc.GetCount(); i++){
+         TYPE c = propPtr1->get()[i];
+         acc[i] = c;
+      }
+      
+      return writeArrayRes::SUCCESS;
+   }
+
+   return writeArrayRes::TYPE_MISMATCH;
+}
+
+
+
 template<class PROP, class SAMPLER, class TYPE>  writeArrayRes::enumT writeArray1f(SampleInfo& sampleInfo, Abc::ICompoundProperty& props, AbcA::PropertyHeader& propHeader, CDataArray2DFloat& outData)
 {
    if(PROP::matches(propHeader)){
@@ -739,6 +779,83 @@ XSIPLUGINCALLBACK CStatus alembic_float_array_Term(CRef& in_ctxt)
 XSI::CStatus Register_alembic_float_array( XSI::PluginRegistrar& in_reg )
 {
    return defineNode(in_reg, siICENodeDataFloat, siICENodeStructureArray, L"alembic_float_array");
+}
+
+
+
+XSIPLUGINCALLBACK CStatus alembic_int_array_Evaluate(ICENodeContext& in_ctxt)
+{
+	//Application().LogMessage( "alembic_polyMesh2_Evaluate" );
+	// The current output port being evaluated...
+	ULONG out_portID = in_ctxt.GetEvaluatedOutputPortID( );
+
+	CString path, identifier, aproperty;
+	double time;
+    bool isCustomProp = true;
+    bool bMultifile = false;
+    getParams(in_ctxt, path, bMultifile, identifier, aproperty, isCustomProp, time);
+
+    alembicOp_Init( in_ctxt );//Softimage will crash if this is done Init handler
+    alembicOp_Multifile( in_ctxt, bMultifile, time, path);
+    CStatus pathEditStat = alembicOp_PathEdit( in_ctxt, path );
+
+	AbcG::IObject iObj = getObjectFromArchive(path,identifier);
+    if(!iObj.valid()){
+        ESS_LOG_ERROR("long_array node error: Could not find "<<identifier.GetAsciiString());
+		return CStatus::OK;//return error instead (so that node shows up as red)?
+    }
+
+	AbcA::TimeSamplingPtr timeSampling;
+	int nSamples=0;
+
+    Abc::ICompoundProperty props = getArbGeomParams(iObj, timeSampling, nSamples);
+    if(!isCustomProp){
+       props = getProperty(iObj.getProperties(), ".geom");
+    } 
+
+	SampleInfo sampleInfo = getSampleInfo( time, timeSampling, nSamples );
+
+    AbcA::PropertyHeader propHeader;
+
+    if(!findProperty(props, propHeader, aproperty)){ 
+       ESS_LOG_ERROR("long_array node error: Could not find "<<aproperty.GetAsciiString());
+       return CStatus::OK;
+    }
+
+	switch( out_portID )
+	{
+    case ID_OUT_valid:
+       {
+            //CDataArrayBool outData( in_ctxt );
+            //outData.Set( 0, true );
+       }
+       break;
+	case ID_OUT_data:
+		{
+			CDataArray2DLong outData( in_ctxt );
+
+            writeArrayRes::enumT res = writeArray1i<Abc::IInt32ArrayProperty, Abc::Int32ArraySamplePtr, long>(sampleInfo, props, propHeader, outData);
+            
+            if(res == writeArrayRes::TYPE_MISMATCH){
+               outputTypeWarning("long_array", propHeader, aproperty);
+               //ESS_LOG_ERROR("float_array node error: type mismatch "<<aproperty.GetAsciiString());
+            }
+		}
+		break;
+
+	}
+
+	return CStatus::OK;
+}
+
+XSIPLUGINCALLBACK CStatus alembic_int_array_Term(CRef& in_ctxt)
+{
+   return alembicOp_Term(in_ctxt);
+}
+
+XSI::CStatus Register_alembic_int_array( XSI::PluginRegistrar& in_reg )
+{
+   return defineNode(in_reg, siICENodeDataLong, siICENodeStructureArray, L"alembic_int_array");
 }
 
 
