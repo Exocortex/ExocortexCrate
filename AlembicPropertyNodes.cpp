@@ -177,7 +177,7 @@ template<class PROP, class SAMPLER, class TYPE>  writeArrayRes::enumT writeArray
 
       for(ULONG i=0; i<acc.GetCount(); i++){
          TYPE c = propPtr1->get()[i];
-         acc[i] = c;
+         acc[i] = (TYPE)c;
       }
       
       return writeArrayRes::SUCCESS;
@@ -835,10 +835,26 @@ XSIPLUGINCALLBACK CStatus alembic_int_array_Evaluate(ICENodeContext& in_ctxt)
 			CDataArray2DLong outData( in_ctxt );
 
             writeArrayRes::enumT res = writeArray1i<Abc::IInt32ArrayProperty, Abc::Int32ArraySamplePtr, long>(sampleInfo, props, propHeader, outData);
-            
+            if(res == writeArrayRes::TYPE_MISMATCH){
+               res = writeArray1i<Abc::IInt16ArrayProperty, Abc::Int16ArraySamplePtr, long>(sampleInfo, props, propHeader, outData);
+            }
+            if(res == writeArrayRes::TYPE_MISMATCH){
+               res = writeArray1i<Abc::IUInt16ArrayProperty, Abc::UInt16ArraySamplePtr, long>(sampleInfo, props, propHeader, outData);
+            }
+            if(res == writeArrayRes::TYPE_MISMATCH){
+               res = writeArray1i<Abc::ICharArrayProperty, Abc::CharArraySamplePtr, long>(sampleInfo, props, propHeader, outData);
+            }
+            if(res == writeArrayRes::TYPE_MISMATCH){
+               res = writeArray1i<Abc::IUcharArrayProperty, Abc::UcharArraySamplePtr, long>(sampleInfo, props, propHeader, outData);
+            }
+
+//won't support for now. Should we truncate and import with warning?
+//typedef ITypedArrayProperty<Uint32TPTraits>          IUInt32ArrayProperty;
+//typedef ITypedArrayProperty<Uint64TPTraits>          IUInt64ArrayProperty;
+//typedef ITypedArrayProperty<Int64TPTraits>           IInt64ArrayProperty;
+
             if(res == writeArrayRes::TYPE_MISMATCH){
                outputTypeWarning("long_array", propHeader, aproperty);
-               //ESS_LOG_ERROR("float_array node error: type mismatch "<<aproperty.GetAsciiString());
             }
 		}
 		break;
