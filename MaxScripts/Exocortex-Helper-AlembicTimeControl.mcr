@@ -74,7 +74,7 @@ plugin Helper AlembicTimeControl
             fRange = frameRange as string
             fStart = (frameRange as string) as string
 
-            str = "if(S*" + tScale + "-" + timeOffset + ">0," + \
+            str = "if(S*" + tScale + "-" + timeOffset + ">=0," + \
                     "mod (S*" + tScale + "-" + timeOffset + "," + fRange + ") + " + cStart + \
                     ",mod (S*" + tScale + "-" + timeOffset + "," + fRange + ") + " + cStart + "+ " + fStart + ")"
 
