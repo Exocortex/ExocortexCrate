@@ -40,7 +40,11 @@ ELSEIF( UNIX )
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wl,--version-script=${CMAKE_CURRENT_SOURCE_DIR}/SoftimageAlembic.versionScript")
 ENDIF()
 
-SET( Softimage_LIBRARIES sicoresdk sicppsdk )		
+if( XSI_VERSION MATCHES "2012")
+	SET( Softimage_LIBRARIES sicoresdk sicppsdk )
+else()	
+	SET( Softimage_LIBRARIES Crosswalk )
+endif()	
 
 if( Exocortex_SERVICES )
 	add_definitions( "-DEXOCORTEX_SERVICES" )

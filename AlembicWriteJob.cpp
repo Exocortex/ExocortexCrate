@@ -331,7 +331,7 @@ CStatus AlembicWriteJob::Process(double frame)
    for(size_t i=0;i<mFrames.size();i++)
    {
       // compare the frames
-      if(abs(mFrames[i] - frame) > 0.001)
+      if(fabs(mFrames[i] - frame) > 0.001)
          continue;
 
       // run the export for all objects
@@ -343,6 +343,5 @@ CStatus AlembicWriteJob::Process(double frame)
          result = CStatus::OK;
       }
    }
-
    return result;
 }

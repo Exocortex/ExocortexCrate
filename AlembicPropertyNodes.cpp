@@ -1,7 +1,7 @@
 #include "stdafx.h"
 
 #include "AlembicPropertyNodes.h"
-#include "utility.h"
+#include "Utility.h"
 
 
 /// ICE NODE!
@@ -84,7 +84,7 @@ bool findProperty(Abc::ICompoundProperty& props, AbcA::PropertyHeader& propHeade
     return false;
 }
 
-Abc::ICompoundProperty getProperty(Abc::ICompoundProperty& props, const char* aproperty)
+Abc::ICompoundProperty getProperty(const Abc::ICompoundProperty& props, const char* aproperty)
 {
     
     for(size_t i=0; i<props.getNumProperties(); i++){

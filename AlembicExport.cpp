@@ -392,7 +392,8 @@ CStatus exportCommandImp( CRef& in_ctxt )
 
       // construct the frames
       CDoubleArray frames;
-      for(double frame=frameIn; frame<=frameOut; frame+=frameSteps / frameSubSteps)
+      const double frameIncr = frameSteps / frameSubSteps;
+      for(double frame=frameIn; frame<=frameOut; frame+=frameIncr)
          frames.Add(frame);
 
       if(globalspace){
