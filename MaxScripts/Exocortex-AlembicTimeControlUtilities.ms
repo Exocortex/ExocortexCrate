@@ -16,7 +16,7 @@ fn connectTimeControl obj timeCtrl = (
 	if obj.time.isAnimated then
 	(
 		obj.time.controller = float_expression()
-		nCtrl = obj.time.controller
+		local nCtrl = obj.time.controller
 		nCtrl.AddScalarTarget "current" timeCtrl.time.controller
 		nCtrl.setExpression "current"
 		
@@ -26,7 +26,7 @@ fn connectTimeControl obj timeCtrl = (
 	(
 		print "not animated"
 	)
-)
+ )
 
 fn connectTimeControlToObjects timeCtrl = (
 
@@ -35,44 +35,82 @@ fn connectTimeControlToObjects timeCtrl = (
 	if timeCtrl != undefined then (
 		for i = 1 to selection.count do
 		(
-			n = selection[i]
-
-			if n.transform.isAnimated and \
-				classof n.transform.controller == Alembic_Xform then
-			(	
-				connectTimeControl n.transform.controller timeCtrl
-			)
+			local n = selection[i]
 			
-			if n.visibility.isAnimated and \
-				classof n.visibility.controller == Alembic_Visibility then 
+			if classof n == PolyMeshObject then
 			(
-				connectTimeControl n.visibility.controller timeCtrl
-			)
 			
-			for j = 1 to n.modifiers.count do
-			(
-				modj = n.modifiers[j]
-				case (classof modj) of
+				if n.transform.isAnimated and \
+					classof n.transform.controller == Alembic_Xform then
+				(	
+					connectTimeControl n.transform.controller timeCtrl
+				)
+				
+				if n.visibility.isAnimated and \
+					classof n.visibility.controller == Alembic_Visibility then 
 				(
-					Alembic_Mesh_Normals: 
+					connectTimeControl n.visibility.controller timeCtrl
+				)
+				
+				for j = 1 to n.modifiers.count do
+				(
+					modj = n.modifiers[j]
+					case (classof modj) of
 					(
-						connectTimeControl modj timeCtrl
-					)
-					Alembic_Mesh_Geometry: 
-					(
-						connectTimeControl modj timeCtrl
-					)
-					Alembic_Mesh_UVW: 
-					(
-						connectTimeControl modj timeCtrl
-					)
-					Alembic_Mesh_Topology:
-					(
-						connectTimeControl modj timeCtrl
+						Alembic_Mesh_Normals: 
+						(
+							connectTimeControl modj timeCtrl
+						)
+						Alembic_Mesh_Geometry: 
+						(
+							connectTimeControl modj timeCtrl
+						)
+						Alembic_Mesh_UVW: 
+						(
+							connectTimeControl modj timeCtrl
+						)
+						Alembic_Mesh_Topology:
+						(
+							connectTimeControl modj timeCtrl
+						)
 					)
 				)
+			
 			)
-
+			else if classof n == Freecamera then
+			(
+				connectTimeControl n.FOV timeCtrl
+				connectTimeControl n.MultiPass_Effect.focalDepth timeCtrl
+				connectTimeControl n.nearclip timeCtrl
+				connectTimeControl n.farclip timeCtrl
+				
+				--local camMod = n.modifiers["Alembic Camera Properties"] 
+				--if camMod != undefined then
+				--(
+				--	connectTimeControl camMod.hfov timeCtrl
+				--	connectTimeControl camMod.vfov timeCtrl
+				--	connectTimeControl camMod.focallength timeCtrl
+				--	connectTimeControl camMod.haperature timeCtrl
+				--	connectTimeControl camMod.vaperature timeCtrl
+				--	connectTimeControl camMod.hfilmoffset timeCtrl
+				--	connectTimeControl camMod.vfilmoffset timeCtrl
+				--	connectTimeControl camMod.lsratio timeCtrl
+				--	connectTimeControl camMod.loverscan timeCtrl
+				--	connectTimeControl camMod.roverscan timeCtrl
+				--	connectTimeControl camMod.toverscan timeCtrl
+				--	connectTimeControl camMod.boverscan timeCtrl
+				--	connectTimeControl camMod.fstop timeCtrl
+				--	connectTimeControl camMod.focusdistance timeCtrl
+				--	connectTimeControl camMod.shutteropen timeCtrl
+				--	connectTimeControl camMod.shutterclose timeCtrl
+				--	connectTimeControl camMod.nclippingplane timeCtrl
+				--	connectTimeControl camMod.fclippingplane timeCtrl
+				--)
+			)
+			else if classof n == Alembic_Particles then
+			(
+				connectTimeControl n timeCtrl
+			)
 		)
 	)
 	else (
