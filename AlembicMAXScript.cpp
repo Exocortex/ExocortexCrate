@@ -343,7 +343,7 @@ void AlembicImport_ConnectTimeControl( const char* szControllerName, alembic_imp
 		
 	sprintf_s( szBuffer, 10000, 
 		"%s.controller = float_expression()\n"
-		"%s.controller.AddScalarTarget \"current\" $'%s'.timeOut.controller\n"
+		"%s.controller.AddScalarTarget \"current\" $'%s'.time.controller\n"
 		"%s.controller.setExpression \"current\"\n",
 		szControllerName,
 		szControllerName, objectNameName.c_str(),

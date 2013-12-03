@@ -17,7 +17,7 @@ plugin Helper AlembicTimeControl
         frameOffset type:#float default:0 ui:uiFrameOffset animatable:off
         loop type:#Boolean default:true ui:uiLoop animatable:off
         
-        timeOut type:#float ui:uiTimeOut animatable:true default:1
+        time type:#float ui:uiTime animatable:true default:1
 
         gScale type:#integer ui:gScaleSp animatable:false default:100
         
@@ -42,7 +42,7 @@ plugin Helper AlembicTimeControl
         spinner uiFrameOffset "Time Offset: " fieldwidth:50 range:[-1e9,1e9,0] type:#float align:#right offset:[-18,8] tooltip:"The frame in-which the cache will begin playing."
         checkbox uiLoop "Loop Cache" align:#right offset:[2,6]
      
-        spinner uiTimeOut "Time Out" range:[-10000,10000,0]      
+        spinner uiTime "Final Time" range:[-10000,10000,0]      
      
         spinner gScaleSp "Gizmo Scale:" range:[10, 1e9, 100] offset:[0,10] type:#integer
 
@@ -62,7 +62,7 @@ plugin Helper AlembicTimeControl
         current.controller = float_expression()
 	    current.controller.setExpression "S"
 
-        timeOut.controller = float_expression()
+        time.controller = float_expression()
         
 
         local frameRange = (cacheEnd - cacheStart) / framerate
@@ -84,8 +84,8 @@ plugin Helper AlembicTimeControl
 
 
 
-        timeOut.controller.SetExpression str
-        timeOut.controller.Update()
+        time.controller.SetExpression str
+        time.controller.Update()
     )
 
     on getDisplayMesh do 
