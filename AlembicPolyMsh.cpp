@@ -127,7 +127,9 @@ bool AlembicPolyMesh::Save(double time, bool bLastFrame)
     // SaveMetaData(prim.GetParent3DObject().GetRef(),this);
 
     // set the visibility
-    if(!bForever || mNumSamples == 0)
+    //disabling this check, since bForever flag is not being set false in the case animation
+    //lets just save it out all time, and let alembic deal with deduplication.
+    //if(!bForever || mNumSamples == 0)
     {
         float flVisibility = GetRef().node->GetLocalVisibility(ticks);
         mOVisibility.set(flVisibility > 0 ? AbcG::kVisibilityVisible : AbcG::kVisibilityHidden);
