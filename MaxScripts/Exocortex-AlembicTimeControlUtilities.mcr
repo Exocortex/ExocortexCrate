@@ -45,7 +45,10 @@ fn connectTimeControlToObjects timeCtrl = (
 	(
 		local n = selection[i]
 		
-		if classof n == PolyMeshObject then
+		if classof n == PolyMeshObject or \
+		classof n == Alembic_Particles or \
+		classof n == NURBSCurveshape or \
+		classof n == SplineShape then
 		(
 		
 			if n.transform.isAnimated and \
@@ -59,6 +62,11 @@ fn connectTimeControlToObjects timeCtrl = (
 			(
 				connectTimeControl n.visibility.controller timeCtrl
 			)
+		)
+
+		if classof n == PolyMeshObject then
+		(
+		
 			
 			for j = 1 to n.modifiers.count do
 			(
@@ -119,10 +127,38 @@ fn connectTimeControlToObjects timeCtrl = (
 		(
 			connectTimeControl n timeCtrl
 		)
-		-- nurbs
-		-- splines
-		-- new menu options
-		-- documentation
+		else if classof n == NURBSCurveshape then
+		(
+			for j = 1 to n.modifiers.count do
+			(
+				modj = n.modifiers[j]
+				case (classof modj) of
+				(
+					Alembic_NURBS: 
+					(
+						connectTimeControl modj timeCtrl
+					)
+				)
+			)
+		)
+		else if classof n == SplineShape then
+		(
+			for j = 1 to n.modifiers.count do
+			(
+				modj = n.modifiers[j]
+				case (classof modj) of
+				(
+					Alembic_Spline_Geometry: 
+					(
+						connectTimeControl modj timeCtrl
+					)
+					Alembic_Spline_Topology: 
+					(
+						connectTimeControl modj timeCtrl
+					)
+				)
+			)
+		)
 	)
 
 )
