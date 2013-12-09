@@ -3,7 +3,7 @@ include "Exocortex-Dialog-AlembicExport.mcr"
 include "Exocortex-Helper-AlembicTimeControl_Mesh.mcr"
 include "Exocortex-Helper-AlembicTimeControl.mcr"
 include "Exocortex-Metadata.mcr"
-
+include "Exocortex-AlembicTimeControlUtilities.mcr"
 
 macroScript AlembicProfileStats
     category:"Alembic" 
@@ -42,12 +42,21 @@ fn initializeAlembicMenus =
 
     -- Create a menu item that add Metadata display modifier to selected objects
     alembicProfileStats = menuMan.createActionItem "AlembicProfileStats" "Alembic"
-	
+
+    alembicTimeControlItem = menuMan.createActionItem "NewTimeControlUI" "Alembic"
+
+    newTimeControlForSelectionItem = menuMan.createActionItem "NewTimeControlForSelectionUI" "Alembic"
+
+    setTimeControlForSelectionItem = menuMan.createActionItem "SetTimeControlForSelectionUI" "Alembic"
+    
     -- Add the items to the menu
     alembicMenu.addItem alembicImportItem 1
     alembicMenu.addItem alembicExportItem 2
     alembicMenu.addItem alembicAddMetadata 3
     alembicMenu.addItem alembicProfileStats 4
+    alembicMenu.addItem alembicTimeControlItem 5
+    alembicMenu.addItem newTimeControlForSelectionItem 6
+    alembicMenu.addItem setTimeControlForSelectionItem 7
 
     -- Create a new menu item with the menu as it's sub-menu
     alembicMainMenuItem = menuMan.createSubMenuItem "Alembic" alembicMenu
