@@ -48,6 +48,7 @@ Abc::M44d AbcObjectCache::getXformMatrix(int index)
 {
    if(iXformMap.find(index) == iXformMap.end()){
       AbcG::XformSample sample;
+      getXform();
       pObjXform->getSchema().get(sample, index);
       Abc::M44d mat = sample.getMatrix();
       iXformMap[index] = mat;
