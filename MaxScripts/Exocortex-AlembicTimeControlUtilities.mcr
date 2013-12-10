@@ -36,11 +36,6 @@ fn connectTimeControlToObjects timeCtrl = (
 
 	if selection.count == 0 then print "Cannot connect time control to objects. Selection is empty."
 
-	if timeCtrl == undefined then
-	(
-		timeCtrl = AlembicTimeControl()
-	)
-
 	for i = 1 to selection.count do
 	(
 		local n = selection[i]
