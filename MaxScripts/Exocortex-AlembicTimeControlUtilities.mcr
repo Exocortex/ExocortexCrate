@@ -40,6 +40,15 @@ fn connectTimeControlToObjects timeCtrl = (
 	(
 		local n = selection[i]
 		
+		if classof n == Dummy then
+		(
+			if n.transform.isAnimated and \
+				classof n.transform.controller == Alembic_Xform then
+			(	
+				connectTimeControl n.transform.controller timeCtrl
+			)
+		)
+
 		if classof n == PolyMeshObject or \
 		classof n == Alembic_Particles or \
 		classof n == NURBSCurveshape or \

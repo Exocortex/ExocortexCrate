@@ -191,10 +191,8 @@ void addFloatController(std::stringstream& evalStream, alembic_importoptions &op
 
    evalStream<<"$"<<mkStr<<"."<<propName<<".controller.time.controller = float_expression()\n";
    if(options.loadTimeControl){
-      evalStream<<"$"<<mkStr<<"."<<propName<<".controller.time.controller.AddScalarTarget \"current\" $'"<<timeControlName<<"'.current.controller\n";
-      evalStream<<"$"<<mkStr<<"."<<propName<<".controller.time.controller.AddScalarTarget \"offset\" $'"<<timeControlName<<"'.offset.controller\n";
-      evalStream<<"$"<<mkStr<<"."<<propName<<".controller.time.controller.AddScalarTarget \"factor\" $'"<<timeControlName<<"'.factor.controller\n";
-      evalStream<<"$"<<mkStr<<"."<<propName<<".controller.time.controller.setExpression \"current * factor + offset\"\n";
+      evalStream<<"$"<<mkStr<<"."<<propName<<".controller.time.controller.AddScalarTarget \"current\" $'"<<timeControlName<<"'.time.controller\n";
+      evalStream<<"$"<<mkStr<<"."<<propName<<".controller.time.controller.setExpression \"current\"\n";
    }
    else{
       evalStream<<"$"<<mkStr<<"."<<"$.modifiers[\""<<modkey<<"\"]."<<propName<<".controller.time.controller.setExpression \"S\"\n";
