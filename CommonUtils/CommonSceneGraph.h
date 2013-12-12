@@ -21,7 +21,8 @@ typedef boost::shared_ptr<SceneNodeAlembic> SceneNodeAlembicPtr;
 
 template<class T, class U> 
 boost::shared_ptr<U> reinterpret( boost::shared_ptr<T> original ) {
-   return *((boost::shared_ptr<U>*)((void*)&original));
+   return boost::dynamic_pointer_cast<U, T>(original);
+   //return *((boost::shared_ptr<U>*)((void*)&original));
 }
 
 typedef std::list<SceneNodePtr>::iterator SceneChildIterator;
