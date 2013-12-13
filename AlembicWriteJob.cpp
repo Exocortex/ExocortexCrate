@@ -103,13 +103,6 @@ CStatus AlembicWriteJob::PreProcess()
       return CStatus::InvalidArgument;
    }
 
-   // check objects
-   if(mSelection.size() == 0)
-   {
-      Application().LogMessage(L"[ExocortexAlembic] No objects specified.",siErrorMsg);
-      return CStatus::InvalidArgument;
-   }
-
    // check frames
    if(mFrames.size() == 0)
    {
@@ -210,20 +203,25 @@ CStatus AlembicWriteJob::PreProcess()
       //bSelectParents = true;
    }
 
+   const bool bSelectAll = mSelection.size() == 0;
+
    int nNumNodes = 0;
-   exoSceneRoot = buildCommonSceneGraph(Application().GetActiveSceneRoot(), nNumNodes, true);
+   exoSceneRoot = buildCommonSceneGraph(Application().GetActiveSceneRoot(), nNumNodes, true, bSelectAll);
 
    std::map<std::string, bool> selectionMap;
 
-   for(int i=0; i<mSelection.size(); i++){
-      XSI::CRef nodeRef;
-      nodeRef.Set(mSelection[i].c_str());
-      XSI::X3DObject xObj(nodeRef);
-      selectionMap[xObj.GetFullName().GetAsciiString()] = true;
+   if(!bSelectAll){
+
+      for(int i=0; i<mSelection.size(); i++){
+         XSI::CRef nodeRef;
+         nodeRef.Set(mSelection[i].c_str());
+         XSI::X3DObject xObj(nodeRef);
+         selectionMap[xObj.GetFullName().GetAsciiString()] = true;
+      }
+      
+      selectNodes(exoSceneRoot, selectionMap, /*!bFlattenHierarchy || bTransformCache*/ bSelectParents, bSelectChildren, !bTransformCache);
+      removeUnselectedNodes(exoSceneRoot);
    }
-   
-   selectNodes(exoSceneRoot, selectionMap, /*!bFlattenHierarchy || bTransformCache*/ bSelectParents, bSelectChildren, !bTransformCache);
-   removeUnselectedNodes(exoSceneRoot);
 
    if(bMergePolyMeshSubtree){
       replacePolyMeshSubtree<SceneNodeXSIPtr, SceneNodeXSI>(exoSceneRoot);
@@ -319,6 +317,11 @@ CStatus AlembicWriteJob::PreProcess()
       return CStatus::Fail;
    }catch(...){
       ESS_LOG_ERROR("Exception ecountered when exporting.");
+   }
+
+   if(mObjects.empty()){
+      Application().LogMessage(L"[ExocortexAlembic] No objects specified.",siErrorMsg);
+      return CStatus::InvalidArgument;
    }
 
    return CStatus::OK;

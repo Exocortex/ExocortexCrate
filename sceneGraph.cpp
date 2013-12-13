@@ -169,7 +169,7 @@ SceneNodeXSIPtr createNodeXSI(CRef& ref, SceneNode::nodeTypeE type)
    return sceneNode;
 }
 
-SceneNodeXSIPtr buildCommonSceneGraph(XSI::CRef xsiRoot, int& nNumNodes, bool bUnmergeNodes)
+SceneNodeXSIPtr buildCommonSceneGraph(XSI::CRef xsiRoot, int& nNumNodes, bool bUnmergeNodes, bool bSelectAll)
 {
    ESS_PROFILE_FUNC();
 
@@ -226,6 +226,10 @@ SceneNodeXSIPtr buildCommonSceneGraph(XSI::CRef xsiRoot, int& nNumNodes, bool bU
 		   else{
 			   //newNode->name+="Shape";
 		   }
+      }
+
+      if(bSelectAll){
+         newNode->selected = true;
       }
 
       eNode->children.push_back(newNode);

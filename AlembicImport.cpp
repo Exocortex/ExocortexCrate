@@ -2149,7 +2149,7 @@ bool createNodes(SceneNodeXSI* const appNode, SceneNodeAlembicPtr fileNode, cons
          }
       }
       if(shapeNode){
-         return createMergeableNode(appNode, fileNode, shapeNode, jobParams, returnNode, bAttachToExisting);
+            return createMergeableNode(appNode, fileNode, shapeNode, jobParams, returnNode, bAttachToExisting);
       }
       else{
          ESS_LOG_ERROR("Could not find shape node.");
@@ -2532,7 +2532,7 @@ ESS_CALLBACK_START(alembic_import_jobs_Execute, CRef&)
    if( jobParser.extraParameters["sceneMergeMethod"] == "attach" )//if(jobParser.attachToExisting)
    {  
       nNumNodes = 0;
-      SceneNodeXSIPtr appRoot = buildCommonSceneGraph(importRootNode, nNumNodes, false);
+      SceneNodeXSIPtr appRoot = buildCommonSceneGraph(importRootNode, nNumNodes, false, false);
 
       //printSceneGraph(fileRoot, true);
       //printSceneGraph(appRoot, true);
@@ -2548,7 +2548,7 @@ ESS_CALLBACK_START(alembic_import_jobs_Execute, CRef&)
    }
    else if( jobParser.extraParameters["sceneMergeMethod"] == "attachAndNew" ){
       nNumNodes = 0;
-      SceneNodeXSIPtr appRoot = buildCommonSceneGraph(importRootNode, nNumNodes, false);
+      SceneNodeXSIPtr appRoot = buildCommonSceneGraph(importRootNode, nNumNodes, false, false);
 
       //printSceneGraph(fileRoot, true);
       //printSceneGraph(appRoot, true);

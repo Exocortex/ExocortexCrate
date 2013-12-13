@@ -28,7 +28,7 @@ public:
 
 typedef boost::shared_ptr<SceneNodeXSI> SceneNodeXSIPtr;
 
-SceneNodeXSIPtr buildCommonSceneGraph(XSI::CRef xsiRoot, int& nNumNodes, bool bUnmergeNodes);
+SceneNodeXSIPtr buildCommonSceneGraph(XSI::CRef xsiRoot, int& nNumNodes, bool bUnmergeNodes, bool bSelectAll);
 
 
 

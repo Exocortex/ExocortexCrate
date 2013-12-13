@@ -72,26 +72,7 @@ CStatus exportCommandImp( CRef& in_ctxt )
    CString jobString = args[0].GetAsText();
    if(jobString.IsEmpty())
    {
-	 CValue objectsAsValue = args[1];
-   	CRefArray objects = objectsAsValue;
-  
-      if(objects.GetCount() == 0)
-      {
-         // use the selection
-         objects = Application().GetSelection().GetArray();
-         if(objects.GetCount() == 0)
-         {
-            Application().LogMessage(L"[ExocortexAlembic] No objects specified.",siErrorMsg);
-            return CStatus::InvalidArgument;
-         }
-      }
-      jobString += L"objects=";
-      for(LONG i=0;i<objects.GetCount();i++)
-      {
-         if(i>0)
-            jobString += L",";
-         jobString += ProjectItem(objects[i]).GetFullName();
-      }
+	 
 
       // let's setup the property
       CustomProperty settings = (CustomProperty) Application().GetActiveSceneRoot().AddProperty(L"alembic_export_settings");
@@ -113,6 +94,26 @@ CStatus exportCommandImp( CRef& in_ctxt )
       {
          Application().ExecuteCommand(L"DeleteObj",inspectArgs,inspectResult);
          return CStatus::Abort;
+      }
+
+      {
+         CValue objectsAsValue = args[1];
+	      CRefArray objects = objectsAsValue;
+     
+         if(objects.GetCount() == 0)
+         {
+            objects = Application().GetSelection().GetArray();
+            if(objects.GetCount() != 0)
+            {
+               jobString += L"objects=";
+               for(LONG i=0;i<objects.GetCount();i++)
+               {
+                  if(i>0)
+                     jobString += L",";
+                  jobString += ProjectItem(objects[i]).GetFullName();
+               }
+            }
+         }
       }
 
       // retrieve the options
