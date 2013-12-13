@@ -33,18 +33,18 @@ plugin Helper AlembicTimeControl
 
     rollout params "Alembic"
     (
-        spinner current "Current Time" range:[-10000,10000,0]
-        spinner offset "Time Offset" range:[-10000,10000,0]
-        spinner factor "Time Scale" range:[-10000,10000,1]      
+        spinner current "Current Time: " range:[-10000,10000,0]
+        spinner offset "Time Offset: " range:[-10000,10000,0] scale: 0.1
+        spinner factor "Time Scale: " range:[-10000,10000,1]      
 
-        spinner uiCacheStart "Cache Start: " fieldwidth:50 range:[-1e9,1e9,0] type:#float align:#right offset:[-18,8] 
-        spinner uiCacheEnd "Cache End: " fieldwidth:50 range:[-1e9,1e9,0] type:#float align:#right offset:[-18,0] 
-        spinner uiFrameOffset "Time Offset: " fieldwidth:50 range:[-1e9,1e9,0] type:#float align:#right offset:[-18,8] tooltip:"The frame in-which the cache will begin playing."
-        checkbox uiLoop "Loop Cache" align:#right offset:[2,6]
+        spinner uiCacheStart "Cache Start: " fieldwidth:50 range:[-1e9,1e9,0] type:#float align:#right offset:[0,8] 
+        spinner uiCacheEnd "Cache End: " fieldwidth:50 range:[-1e9,1e9,0] type:#float align:#right offset:[0,0] 
+        spinner uiFrameOffset "Frame Offset: " fieldwidth:50 range:[-1e9,1e9,0] type:#float align:#right offset:[0,8] tooltip:"The frame in-which the cache will begin playing."
+        checkbox uiLoop "Loop Cache: " align:#right offset:[2,6]
      
-        spinner uiTime "Final Time" range:[-10000,10000,0]      
+        spinner uiTime "Final Time: " range:[-10000,10000,0]      
      
-        spinner gScaleSp "Gizmo Scale:" range:[10, 1e9, 100] offset:[0,10] type:#integer
+        spinner gScaleSp "Gizmo Scale: " range:[10, 1e9, 100] offset:[0,10] type:#integer
 
         on gScaleSp changed val do
         (
@@ -68,21 +68,20 @@ plugin Helper AlembicTimeControl
         local frameRange = (cacheEnd - cacheStart) / framerate
         local tScale = factor as string
         local timeOffset = ((frameOffset/framerate as float) + offset) as string
+        
         local cStart = (cacheStart / framerate as float) as string
         if Loop then
         (
             fRange = frameRange as string
             fStart = (frameRange as string) as string
 
-            str = "if(S*" + tScale + "-" + timeOffset + ">=0," + \
-                    "mod (S*" + tScale + "-" + timeOffset + "," + fRange + ") + " + cStart + \
-                    ",mod (S*" + tScale + "-" + timeOffset + "," + fRange + ") + " + cStart + "+ " + fStart + ")"
+            str = "if(S*" + tScale + "+" + timeOffset + ">=0," + \
+                    "mod (S*" + tScale + "+" + timeOffset + "," + fRange + ") + " + cStart + \
+                    ",mod (S*" + tScale + "+" + timeOffset + "," + fRange + ") + " + cStart + "+ " + fStart + ")"
 
         )else(
-            str = "(S*" + tScale + "-" + timeOffset + cStart + ")"
+            str = "(S*" + tScale + "+" + timeOffset + cStart + ")"
         )
-
-
 
         time.controller.SetExpression str
         time.controller.Update()

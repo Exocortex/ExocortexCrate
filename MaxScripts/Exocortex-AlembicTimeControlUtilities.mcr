@@ -20,11 +20,11 @@ fn connectTimeControl obj timeCtrl = (
 		nCtrl.AddScalarTarget "current" timeCtrl.time.controller
 		nCtrl.setExpression "current"
 		
-		print "connected"
+		--print "connected"
 	)
 	else
 	(
-		print "not animated"
+		--print "not animated"
 	)
  )
 
