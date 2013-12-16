@@ -103,12 +103,12 @@ ESS_CALLBACK_START( alembic_xform_Update, CRef& )
 	if((bool)ctxt.GetParameterValue(L"muted"))
 		return CStatus::OK;
 
-	
-	CString identifier = ctxt.GetParameterValue(L"identifier");
+   CString identifier = ctxt.GetParameterValue(L"identifier");
 
     AbcObjectCache *pObjectCache = getObjectCacheFromArchive(path.GetAsciiString(), identifier.GetAsciiString());
 
 	if(!pObjectCache) {
+      //ESS_LOG_ERROR("Failure in alembic_xform operator connected to "<<ctxt.GetOutputTarget().GetAsText().GetAsciiString()<<" because object with path \""<<path.GetAsciiString()<<"\" and identifier \""<<identifier.GetAsciiString()<<"\" could not be retrieved.");
 		return CStatus::OK;
 	}
 
