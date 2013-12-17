@@ -15,7 +15,7 @@ plugin Helper AlembicTimeControl
         cacheStart type:#float default:0 ui:uiCacheStart animatable:off
         cacheEnd type:#float default:animationrange.end ui:uiCacheEnd animatable:off
         frameOffset type:#float default:0 ui:uiFrameOffset animatable:off
-        loop type:#Boolean default:true ui:uiLoop animatable:off
+        loop type:#Boolean default:false ui:uiLoop animatable:off
         
         time type:#float ui:uiTime animatable:true default:1
 
