@@ -79,7 +79,7 @@ plugin Helper AlembicTimeControl
                     ",mod (S*" + tScale + "+" + timeOffset + "," + fRange + ") + " + cStart + "+ " + fStart + ")"
 
         )else(
-            str = "(S*" + tScale + "+" + timeOffset + cStart + ")"
+            str = "(S*" + tScale + "+" + timeOffset + "+" + cStart + ")"
         )
 
         time.controller.SetExpression str
