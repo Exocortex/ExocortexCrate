@@ -34,16 +34,15 @@ plugin Helper AlembicTimeControl
     rollout params "Alembic"
     (
         spinner current "Current Time: " range:[-10000,10000,0]
-        spinner offset "Time Offset: " range:[-10000,10000,0] scale: 0.1
-        spinner factor "Time Scale: " range:[-10000,10000,1]      
+        spinner factor "Time Scale: " range:[-10000,10000,1]
+        spinner offset "Time Offset: " range:[-10000,10000,0] scale: 0.1     
+        spinner uiFrameOffset "Frame Offset: " fieldwidth:50 range:[-1e9,1e9,0] type:#float align:#right offset:[0,8]
 
         spinner uiCacheStart "Cache Start: " fieldwidth:50 range:[-1e9,1e9,0] type:#float align:#right offset:[0,8] 
         spinner uiCacheEnd "Cache End: " fieldwidth:50 range:[-1e9,1e9,0] type:#float align:#right offset:[0,0] 
-        spinner uiFrameOffset "Frame Offset: " fieldwidth:50 range:[-1e9,1e9,0] type:#float align:#right offset:[0,8] tooltip:"The frame in-which the cache will begin playing."
         checkbox uiLoop "Loop Cache: " align:#right offset:[2,6]
      
         spinner uiTime "Final Time: " range:[-10000,10000,0]      
-     
         spinner gScaleSp "Gizmo Scale: " range:[10, 1e9, 100] offset:[0,10] type:#integer
 
         on gScaleSp changed val do

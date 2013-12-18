@@ -12,7 +12,7 @@ fn findTimeControl = (
 )
 
 fn connectTimeControl obj timeCtrl = (
-	print obj
+	--print obj
 	if obj.time.isAnimated then
 	(
 		obj.time.controller = float_expression()
