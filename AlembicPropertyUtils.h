@@ -54,7 +54,7 @@ void addFloatController(std::stringstream& evalStream, alembic_importoptions &op
                         const std::string& modkey, std::string propName, const std::string& file, const std::string& identifier, 
                         std::string propertyID);
 
-Modifier* createDisplayModifier(std::string modkey, std::string modname, std::vector<AbcProp>& props);
+Modifier* createDisplayModifier(std::string modkey, std::string modname, std::vector<AbcProp>& props, INode* pNode=NULL);
 
 
 void addControllersToModifier(const std::string& modkey, const std::string& modname, std::vector<AbcProp>& props, 

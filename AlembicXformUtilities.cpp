@@ -220,7 +220,7 @@ int AlembicImport_XForm(INode* pParentNode, INode* pMaxNode, AbcG::IObject& iObj
 
    if(props.valid()){
 
-      GET_MAX_INTERFACE()->SelectNode(pMaxNode);
+      //GET_MAX_INTERFACE()->SelectNode(pMaxNode);
 
       //for(int i=0; i<props.getNumProperties(); i++){    
       //   Abc::PropertyHeader propHeader = props.getPropertyHeader(i);
@@ -233,7 +233,7 @@ int AlembicImport_XForm(INode* pParentNode, INode* pMaxNode, AbcG::IObject& iObj
       readInputProperties(props, propsVec);
 
       std::sort(propsVec.begin(), propsVec.end(), sortFunc);
-      createDisplayModifier("User Properties", "User Properties", propsVec);
+      createDisplayModifier("User Properties", "User Properties", propsVec, pMaxNode);
    }
 
     //TODO: this method should take this bool a parameter instead

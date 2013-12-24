@@ -2,7 +2,7 @@
 #include "AlembicPropertyUtils.h"
 #include <sstream>
 #include "AlembicMAXScript.h"
-
+#include "Utility.h"
 
 void createStringPropertyDisplayModifier(std::string modname, std::vector<std::pair<std::string, std::string>>& nameValuePairs)
 {
@@ -52,19 +52,23 @@ void createStringPropertyDisplayModifier(std::string modname, std::vector<std::p
    ExecuteMAXScriptScript( EC_UTF8_to_TCHAR((char*)evalStream.str().c_str()) );
 }
 
-Modifier* createDisplayModifier(std::string modkey, std::string modname, std::vector<AbcProp>& props)
+Modifier* createDisplayModifier(std::string modkey, std::string modname, std::vector<AbcProp>& props, INode* pNode)
 {
    ESS_PROFILE_FUNC();
 
 
    //the script assumes a single object is selected
-
    std::stringstream evalStream;
+   std::string nodeName("$");
+   if(pNode){
+      evalStream<<GET_MAXSCRIPT_NODE(pNode);
+      nodeName = std::string("mynode2113");
+   }
    evalStream<<"propModifier = EmptyModifier()"<<"\n";
    evalStream<<"propModifier.name = \""<<modkey<<"\""<<"\n";
-   evalStream<<"modCount = $.modifiers.count"<<"\n";
-   evalStream<<"addmodifier $ propModifier before:modCount"<<"\n";
-   evalStream<<"$.modifiers[\""<<modkey<<"\"].enabled = false"<<"\n";
+   evalStream<<"modCount = "<<nodeName<<".modifiers.count"<<"\n";
+   evalStream<<"addmodifier "<<nodeName<<" propModifier before:modCount"<<"\n";
+   evalStream<<nodeName<<".modifiers[\""<<modkey<<"\"].enabled = false"<<"\n";
 
    evalStream<<"propAttribute = attributes propAttribute"<<"\n";
    evalStream<<"("<<"\n";
@@ -154,13 +158,13 @@ Modifier* createDisplayModifier(std::string modkey, std::string modname, std::ve
    evalStream<<")"<<"\n";
 
 
-   evalStream<<"custattributes.add $.modifiers[\""<<modkey<<"\"] propAttribute baseobject:false"<<"\n";
+   evalStream<<"custattributes.add "<<nodeName<<".modifiers[\""<<modkey<<"\"] propAttribute baseobject:false"<<"\n";
 
    
 
    //ESS_LOG_WARNING(evalStream.str());
 
-   evalStream<<"$.modifiers[\""<<modkey<<"\"]\n";
+   evalStream<<nodeName<<".modifiers[\""<<modkey<<"\"]\n";
    FPValue fpVal;
    ExecuteMAXScriptScript( EC_UTF8_to_TCHAR((char*)evalStream.str().c_str()), 0, &fpVal);
    Modifier* pMod = (Modifier*)fpVal.r;
