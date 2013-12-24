@@ -5,7 +5,7 @@
 #include "AlembicXform.h"
 #include "Utility.h"
 #include "AlembicMetadataUtils.h"
-
+#include "AlembicPropertyUtils.h"
 
 void GetObjectMatrix(TimeValue ticks, INode *node, Matrix3 &out, bool bFlattenHierarchy)
 {
@@ -131,6 +131,10 @@ bool AlembicXForm::Save(double time, bool bLastFrame)
     {
 		SaveMetaData(GetRef().node, this);
     }
+
+    const bool bFirstFrame = mNumSamples == 0;
+
+    SaveUserProperties(GetRef().node, mXformSchema, GetCurrentJob()->GetAnimatedTs(), time, bFirstFrame);
 
     // Store the transformation
     SaveXformSample(GetRef(), mXformSchema, mXformSample, time, false);

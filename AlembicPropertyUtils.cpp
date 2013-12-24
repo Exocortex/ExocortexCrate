@@ -3,6 +3,8 @@
 #include <sstream>
 #include "AlembicMAXScript.h"
 #include "Utility.h"
+#include "AlembicObject.h"
+
 
 void createStringPropertyDisplayModifier(std::string modname, std::vector<std::pair<std::string, std::string>>& nameValuePairs)
 {
@@ -400,4 +402,78 @@ void readInputProperties( Abc::ICompoundProperty prop, std::vector<AbcProp>& pro
       }
 
    }
+}
+
+
+void SaveUserProperties(INode* node, AbcG::OXformSchema xformSchema, unsigned int animatedTs, double time, bool bFirstFrame)
+{
+	//if(object == NULL){
+	//	return;
+	//}
+	//if(object->GetNumSamples() > 0){
+	//	return;
+	//}
+
+	Modifier* pMod = FindModifier(node, "User Properties");
+
+   if(!pMod){
+      return;
+   }
+
+	ICustAttribContainer* cont = pMod->GetCustAttribContainer();
+	if(!cont){
+		return;
+	}
+
+   TimeValue ticks = GetTimeValueFromFrame(time);
+
+   if(!bFirstFrame) return;
+
+	for(int i=0; i<cont->GetNumCustAttribs(); i++)
+	{
+		CustAttrib* ca = cont->GetCustAttrib(i);
+		std::string name = EC_MCHAR_to_UTF8( ca->GetName() );
+	
+		IParamBlock2 *pblock = ca->GetParamBlockByID(0);
+		if(pblock){
+			int nNumParams = pblock->NumParams();
+			for(int i=0; i<nNumParams; i++){
+
+				ParamID id = pblock->IndextoID(i);
+				MSTR name = pblock->GetLocalName(id, 0);
+
+            ParamType2 type = pblock->GetParameterType(id);
+            if(type == TYPE_STRING){
+               MSTR value = pblock->GetStr(id, 0);
+               //ESS_LOG_WARNING("name: "<<EC_MSTR_to_UTF8(name)<<" value: "<<EC_MSTR_to_UTF8(value));
+
+               std::stringstream propName;
+               propName<<"."<<EC_MSTR_to_UTF8(name);
+	     
+               Abc::OStringProperty stringProperty = Abc::OStringProperty(
+                  xformSchema.getUserProperties(), propName.str().c_str(), xformSchema.getMetaData(), animatedTs );
+	         	stringProperty.set(EC_MSTR_to_UTF8(value));
+            }
+            else if(type == TYPE_FLOAT){
+               float value = pblock->GetFloat(id, ticks);
+               //ESS_LOG_WARNING("name: "<<EC_MSTR_to_UTF8(name)<<" value: "<<value);
+
+            }
+            else if(type == TYPE_INT){
+               int value = pblock->GetInt(id, ticks);
+               //ESS_LOG_WARNING("name: "<<EC_MSTR_to_UTF8(name)<<" value: "<<value);
+
+            }
+			}
+		}
+	}
+
+
+
+	//if(metaData.size() > 0){
+	//	Abc::OStringArrayProperty metaDataProperty = Abc::OStringArrayProperty(
+	//	 object->GetCompound(), ".metadata", object->GetCompound().getMetaData(), object->GetCurrentJob()->GetAnimatedTs() );
+	//	Abc::StringArraySample metaDataSample(&metaData.front(),metaData.size());
+	//	metaDataProperty.set(metaDataSample);
+	//}
 }

@@ -61,5 +61,7 @@ void addControllersToModifier(const std::string& modkey, const std::string& modn
                               const std::string& target, const std::string& type,
                               const std::string& file, const std::string& identifier, alembic_importoptions &options);
 
+class AlembicObject;
+void SaveUserProperties(INode* node, AbcG::OXformSchema xformSchema, unsigned int animatedTs, double time, bool bFirstFrame);
 
 #endif 
