@@ -79,7 +79,10 @@ Modifier* createDisplayModifier(std::string modkey, std::string modname, std::ve
       const AbcA::DataType& datatype = props[i].propHeader.getDataType();
       const AbcA::MetaData& metadata = props[i].propHeader.getMetaData();
 
-      if(datatype.getPod() == AbcA::kFloat32POD && datatype.getExtent() == 1){
+      if(datatype.getPod() == AbcA::kInt32POD && datatype.getExtent() == 1){
+         evalStream<<name<<" type:#integer animatable:true ui:e"<<name<<" default:"<<val;
+      }
+      else if(datatype.getPod() == AbcA::kFloat32POD && datatype.getExtent() == 1){
          evalStream<<name<<" type:#float animatable:true ui:e"<<name<<" default:"<<val;
       }
       else if(datatype.getPod() == AbcA::kFloat32POD && datatype.getExtent() == 3){
@@ -109,18 +112,23 @@ Modifier* createDisplayModifier(std::string modkey, std::string modname, std::ve
       const AbcA::DataType& datatype = props[i].propHeader.getDataType();
       const AbcA::MetaData& metadata = props[i].propHeader.getMetaData();
 
-      if(datatype.getPod() == AbcA::kFloat32POD && datatype.getExtent() == 1){
+      if(datatype.getPod() == AbcA::kInt32POD && datatype.getExtent() == 1){
          evalStream<<"label lbl"<<name<<" \""<<name<<"\" align:#left fieldWidth:140\n";
-         evalStream<<"spinner e"<<name<<" \"\" type:#float align:#left labelOnTop:true\n";
+         evalStream<<"spinner e"<<name<<" \"\" type:#integer range:[-9999999,9999999,0] align:#left labelOnTop:true\n";
+      }
+      else if(datatype.getPod() == AbcA::kFloat32POD && datatype.getExtent() == 1){
+         evalStream<<"label lbl"<<name<<" \""<<name<<"\" align:#left fieldWidth:140\n";
+         evalStream<<"spinner e"<<name<<" \"\" type:#float range:[-9999999,9999999,0]align:#left labelOnTop:true\n";
       }
       else if(datatype.getPod() == AbcA::kFloat32POD && datatype.getExtent() == 3){
 
          evalStream<<"label lbl"<<name<<" \""<<name<<"\" align:#left fieldWidth:140\n";
-         evalStream<<"spinner e"<<name<<"x\"\" across:3 type:#float fieldWidth:39 readOnly:true\n";
-         evalStream<<"spinner e"<<name<<"y\"\" type:#float fieldWidth:39\n";
-         evalStream<<"spinner e"<<name<<"z\"\" type:#float fieldWidth:39\n";
+         evalStream<<"spinner e"<<name<<"x\"\" across:3 type:#float range:[-9999999,9999999,0] fieldWidth:39 readOnly:true\n";
+         evalStream<<"spinner e"<<name<<"y\"\" type:#float range:[-9999999,9999999,0] fieldWidth:39\n";
+         evalStream<<"spinner e"<<name<<"z\"\" type:#float range:[-9999999,9999999,0] fieldWidth:39\n";
       }
       else{
+         //TODO: better fit for large strings
          evalStream<<"edittext e"<<name<<" \" "<<name<<"\" fieldWidth:140 labelOnTop:true";
          if(bConstant) evalStream<<" readOnly:true";
       }
@@ -326,8 +334,6 @@ void readInputProperties( Abc::ICompoundProperty prop, std::vector<AbcProp>& pro
       AbcA::PropertyHeader pheader = prop.getPropertyHeader(i);
       AbcA::PropertyType propType = pheader.getPropertyType();
 
-      
-
       if( propType == AbcA::kCompoundProperty ){
          //printInputProperties(Abc::ICompoundProperty(prop, pheader.getName()));
          ESS_LOG_WARNING("Unsupported compound property: "<<pheader.getName());
@@ -358,6 +364,7 @@ void readInputProperties( Abc::ICompoundProperty prop, std::vector<AbcProp>& pro
             //}
 
          }
+         else if(readPropExt1<Abc::IInt32Property, int>(prop, pheader, displayVal, bConstant));
          else if(readPropExt1<Abc::IFloatProperty, float>(prop, pheader, displayVal, bConstant));
          else if(readPropExt3<Abc::IC3fProperty, Abc::C3f>(prop, pheader, displayVal, bConstant));
          else if(readPropExt3<Abc::IV3fProperty, Abc::V3f>(prop, pheader, displayVal, bConstant));
