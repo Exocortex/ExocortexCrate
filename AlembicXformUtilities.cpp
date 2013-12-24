@@ -2,7 +2,7 @@
 #include "AlembicXformUtilities.h"
 #include "AlembicMAXScript.h"
 #include "AlembicMetadataUtils.h"
-
+#include "AlembicPropertyUtils.h"
 
 bool isAlembicXform( AbcG::IObject *pIObj, bool& isConstant ) {
 	AbcG::IXform objXfrm;
@@ -142,6 +142,7 @@ int AlembicImport_DummyNode(AbcG::IObject& iObj, alembic_importoptions &options,
 		return alembic_failure;
 	}
 
+
     DummyObject *pDummy = static_cast<DummyObject*>(dObj);
 
     // Hard code these values for now
@@ -212,6 +213,28 @@ int AlembicImport_XForm(INode* pParentNode, INode* pMaxNode, AbcG::IObject& iObj
 	if( ! isAlembicXform( &iObjXform, isConstant ) ) {
 		return alembic_failure;
 	}
+
+   AbcG::IXform xform(iObjXform, Abc::kWrapExisting);
+   AbcG::IXformSchema xschema = xform.getSchema();
+   Abc::ICompoundProperty props = xschema.getUserProperties();
+
+   if(props.valid()){
+
+      GET_MAX_INTERFACE()->SelectNode(pMaxNode);
+
+      //for(int i=0; i<props.getNumProperties(); i++){    
+      //   Abc::PropertyHeader propHeader = props.getPropertyHeader(i);
+      //   AbcA::PropertyType propType = propHeader.getPropertyType();
+      //   std::string propName = propHeader.getName();
+      //   ESS_LOG_WARNING("propName: "<<propName);
+      //}
+
+      std::vector<AbcProp> propsVec;
+      readInputProperties(props, propsVec);
+
+      std::sort(propsVec.begin(), propsVec.end(), sortFunc);
+      createDisplayModifier("User Properties", "User Properties", propsVec);
+   }
 
     //TODO: this method should take this bool a parameter instead
 	bool bIsCamera = p_iObjGeom && p_iObjGeom->valid() && AbcG::ICamera::matches(p_iObjGeom->getMetaData());

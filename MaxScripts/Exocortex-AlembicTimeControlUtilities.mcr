@@ -50,6 +50,7 @@ fn connectTimeControlToObjects timeCtrl = (
 		)
 
 		if classof n == PolyMeshObject or \
+		classof n == Freecamera or \
 		classof n == Alembic_Particles or \
 		classof n == NURBSCurveshape or \
 		classof n == SplineShape then
@@ -99,10 +100,10 @@ fn connectTimeControlToObjects timeCtrl = (
 		)
 		else if classof n == Freecamera then
 		(
-			connectTimeControl n.FOV timeCtrl
-			connectTimeControl n.MultiPass_Effect.focalDepth timeCtrl
-			connectTimeControl n.nearclip timeCtrl
-			connectTimeControl n.farclip timeCtrl
+			--connectTimeControl n.FOV timeCtrl
+			--connectTimeControl n.MultiPass_Effect.focalDepth timeCtrl
+			--connectTimeControl n.nearclip timeCtrl
+			--connectTimeControl n.farclip timeCtrl
 			
 			--local camMod = n.modifiers["Alembic Camera Properties"] 
 			--if camMod != undefined then

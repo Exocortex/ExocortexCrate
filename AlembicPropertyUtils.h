@@ -46,6 +46,10 @@ struct AbcProp{
 
 };
 
+bool sortFunc(AbcProp p1, AbcProp p2);
+
+void readInputProperties( Abc::ICompoundProperty prop, std::vector<AbcProp>& props );
+
 void addFloatController(std::stringstream& evalStream, alembic_importoptions &options,
                         const std::string& modkey, std::string propName, const std::string& file, const std::string& identifier, 
                         std::string propertyID);

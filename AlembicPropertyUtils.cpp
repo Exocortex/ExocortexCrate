@@ -3,6 +3,7 @@
 #include <sstream>
 #include "AlembicMAXScript.h"
 
+
 void createStringPropertyDisplayModifier(std::string modname, std::vector<std::pair<std::string, std::string>>& nameValuePairs)
 {
    //Example usage:
@@ -252,3 +253,140 @@ void addControllersToModifier(const std::string& modkey, const std::string& modn
    ExecuteMAXScriptScript( EC_UTF8_to_TCHAR((char*)evalStream.str().c_str()));
 }
 
+
+
+template<class PT, class FT> bool readPropExt1(const Abc::ICompoundProperty& prop, const AbcA::PropertyHeader& pheader, std::string& val, bool& isConstant)
+{
+   if(PT::matches(pheader))
+   {
+      PT aProp(prop, pheader.getName());
+
+      FT val1;
+      aProp.get(val1);
+
+      std::stringstream valStream;
+      valStream<<val1;
+      val = valStream.str();
+
+      isConstant = aProp.isConstant();
+
+      return true;
+   }
+   return false;
+}
+
+template<class PT, class FT> bool readPropExt3(const Abc::ICompoundProperty& prop, const AbcA::PropertyHeader& pheader, std::string& val, bool& isConstant)
+{
+   if(PT::matches(pheader))
+   {
+      PT aProp(prop, pheader.getName());
+
+      FT val3;
+      aProp.get(val3);
+
+      std::stringstream valStream;
+      valStream<<val3.x<<","<<val3.y<<","<<val3.z;
+      val = valStream.str();
+
+      return true;
+   }
+   return false;
+}
+
+bool sortFunc(AbcProp p1, AbcProp p2) { return p1.sortId > p2.sortId; }
+
+char* getPodStr(AbcA::PlainOldDataType pod)
+{
+    if(pod == AbcA::kBooleanPOD) return "kBooleanPOD";
+    if(pod == AbcA::kUint8POD) return "kUint8POD";
+    if(pod == AbcA::kInt8POD) return "kInt8POD";
+    if(pod == AbcA::kUint16POD) return "kUint16POD";
+    if(pod == AbcA::kInt16POD) return "kInt16POD";
+    if(pod == AbcA::kUint32POD) return "kUint32POD";
+    if(pod == AbcA::kInt32POD) return "kInt32POD";
+    if(pod == AbcA::kUint64POD) return "kUint64POD";
+    if(pod == AbcA::kInt64POD) return "kInt64POD";
+    if(pod == AbcA::kFloat16POD) return "kFloat16POD";
+    if(pod == AbcA::kFloat32POD) return "kFloat32POD";
+    if(pod == AbcA::kFloat64POD) return "kFloat64POD";
+    if(pod == AbcA::kStringPOD) return "kStringPOD";
+    if(pod == AbcA::kWstringPOD) return "kWstringPOD";
+    if(pod == AbcA::kNumPlainOldDataTypes) return "kNumPlainOldDataTypes";
+    //if(pod == AbcA::kUnknownPOD)  
+    return "kUnknownPOD";
+}
+
+void readInputProperties( Abc::ICompoundProperty prop, std::vector<AbcProp>& props )
+{
+   if(!prop){
+      return;
+   }
+
+   for(size_t i=0; i<prop.getNumProperties(); i++){
+      AbcA::PropertyHeader pheader = prop.getPropertyHeader(i);
+      AbcA::PropertyType propType = pheader.getPropertyType();
+
+      
+
+      if( propType == AbcA::kCompoundProperty ){
+         //printInputProperties(Abc::ICompoundProperty(prop, pheader.getName()));
+         ESS_LOG_WARNING("Unsupported compound property: "<<pheader.getName());
+      }
+      else if( propType == AbcA::kScalarProperty ){
+
+         //ESS_LOG_WARNING("Scaler property: "<<pheader.getName());
+         //
+
+         std::string displayVal;
+         bool bConstant = true;
+         int sortId = 0;
+
+         if(Abc::IBoolProperty::matches(pheader)){
+
+            //I need to know the name and type only if animated; an appropriate controller will handle reading the data.
+            //If not animated, the value will set directly on the light and/or display modifier
+
+            Abc::IBoolProperty boolProp(prop, pheader.getName());
+            /*if(boolProp.isConstant()){*/
+               AbcU::bool_t bVal = false;
+               boolProp.get(bVal);
+               if(bVal == true) displayVal = "true";
+               else displayVal = "false";
+            //}
+            //else{
+            //  
+            //}
+
+         }
+         else if(readPropExt1<Abc::IFloatProperty, float>(prop, pheader, displayVal, bConstant));
+         else if(readPropExt3<Abc::IC3fProperty, Abc::C3f>(prop, pheader, displayVal, bConstant));
+         else if(readPropExt3<Abc::IV3fProperty, Abc::V3f>(prop, pheader, displayVal, bConstant));
+         else if(readPropExt3<Abc::IN3fProperty, Abc::N3f>(prop, pheader, displayVal, bConstant));
+         else if(Abc::IStringProperty::matches(pheader)){
+            
+            Abc::IStringProperty stringProp(prop, pheader.getName());
+            stringProp.get(displayVal);
+            sortId = 1000000000;
+         }
+         else{
+      //   Abc::PropertyHeader propHeader = props.getPropertyHeader(i);
+      //   AbcA::PropertyType propType = propHeader.getPropertyType();
+
+            ESS_LOG_WARNING("Unsupported property, propName: "<<pheader.getName()<<", pod: "<<getPodStr(pheader.getDataType().getPod()) \
+             <<", extent: "<<(int)pheader.getDataType().getExtent()<<", interpretation: "<<pheader.getMetaData().get("interpretation"));
+
+         }
+
+         props.push_back(AbcProp(pheader.getName(), displayVal, pheader, bConstant, sortId));
+      }
+      else if( propType == AbcA::kArrayProperty ){
+         //ESS_LOG_WARNING("Unsupported array property: "<<pheader.getName());
+         ESS_LOG_WARNING("Unsupported array property, propName: "<<pheader.getName()<<", pod: "<<getPodStr(pheader.getDataType().getPod()) \
+         <<", extent: "<<(int)pheader.getDataType().getExtent()<<", interpretation: "<<pheader.getMetaData().get("interpretation"));
+      }
+      else{
+         ESS_LOG_WARNING("Unsupported input property: "<<pheader.getName());
+      }
+
+   }
+}
