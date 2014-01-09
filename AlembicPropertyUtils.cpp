@@ -404,76 +404,99 @@ void readInputProperties( Abc::ICompoundProperty prop, std::vector<AbcProp>& pro
    }
 }
 
-
-void SaveUserProperties(INode* node, AbcG::OXformSchema xformSchema, unsigned int animatedTs, double time, bool bFirstFrame)
+AlembicCustomAttributesEx::~AlembicCustomAttributesEx()
 {
-	//if(object == NULL){
-	//	return;
-	//}
-	//if(object->GetNumSamples() > 0){
-	//	return;
-	//}
+   for(propMap::iterator it = customProps.begin(); it != customProps.end(); it++){
+      delete it->second;
+   }
+}
 
+bool AlembicCustomAttributesEx::defineCustomAttributes(INode* node, Abc::OCompoundProperty& compoundProp, const AbcA::MetaData& metadata, unsigned int animatedTs)
+{
 	Modifier* pMod = FindModifier(node, "User Properties");
 
    if(!pMod){
-      return;
+      return false;
    }
 
 	ICustAttribContainer* cont = pMod->GetCustAttribContainer();
 	if(!cont){
-		return;
+		return false;
 	}
-
-   TimeValue ticks = GetTimeValueFromFrame(time);
-
-   if(!bFirstFrame) return;
 
 	for(int i=0; i<cont->GetNumCustAttribs(); i++)
 	{
 		CustAttrib* ca = cont->GetCustAttrib(i);
 		std::string name = EC_MCHAR_to_UTF8( ca->GetName() );
 	
-		IParamBlock2 *pblock = ca->GetParamBlockByID(0);
-		if(pblock){
-			int nNumParams = pblock->NumParams();
-			for(int i=0; i<nNumParams; i++){
-
-				ParamID id = pblock->IndextoID(i);
-				MSTR name = pblock->GetLocalName(id, 0);
-
-            ParamType2 type = pblock->GetParameterType(id);
-            if(type == TYPE_STRING){
-               MSTR value = pblock->GetStr(id, 0);
-               //ESS_LOG_WARNING("name: "<<EC_MSTR_to_UTF8(name)<<" value: "<<EC_MSTR_to_UTF8(value));
-
-               std::stringstream propName;
-               propName<<"."<<EC_MSTR_to_UTF8(name);
-	     
-               Abc::OStringProperty stringProperty = Abc::OStringProperty(
-                  xformSchema.getUserProperties(), propName.str().c_str(), xformSchema.getMetaData(), animatedTs );
-	         	stringProperty.set(EC_MSTR_to_UTF8(value));
-            }
-            else if(type == TYPE_FLOAT){
-               float value = pblock->GetFloat(id, ticks);
-               //ESS_LOG_WARNING("name: "<<EC_MSTR_to_UTF8(name)<<" value: "<<value);
-
-            }
-            else if(type == TYPE_INT){
-               int value = pblock->GetInt(id, ticks);
-               //ESS_LOG_WARNING("name: "<<EC_MSTR_to_UTF8(name)<<" value: "<<value);
-
-            }
-			}
-		}
+		pblock = ca->GetParamBlockByID(0);
+      break;
 	}
 
+   if(!pblock){
+      return false;
+   }
 
+	for(int i=0, nNumParams = pblock->NumParams(); i<nNumParams; i++){
 
-	//if(metaData.size() > 0){
-	//	Abc::OStringArrayProperty metaDataProperty = Abc::OStringArrayProperty(
-	//	 object->GetCompound(), ".metadata", object->GetCompound().getMetaData(), object->GetCurrentJob()->GetAnimatedTs() );
-	//	Abc::StringArraySample metaDataSample(&metaData.front(),metaData.size());
-	//	metaDataProperty.set(metaDataSample);
-	//}
+		ParamID id = pblock->IndextoID(i);
+		MSTR name = pblock->GetLocalName(id, 0);
+
+      std::stringstream propName;
+      propName<<"."<<EC_MSTR_to_UTF8(name);
+
+      ParamType2 type = pblock->GetParameterType(id);
+      if(type == TYPE_STRING){
+         customProps[propName.str()] = new Abc::OStringProperty(compoundProp, propName.str().c_str(), metadata, animatedTs );
+      }
+      else if(type == TYPE_FLOAT){
+         customProps[propName.str()] = new Abc::OFloatProperty(compoundProp, propName.str().c_str(), metadata, animatedTs );
+      }
+      else if(type == TYPE_INT){
+         customProps[propName.str()] = new Abc::OInt32Property(compoundProp, propName.str().c_str(), metadata, animatedTs );
+      }
+	}
+   
+   return true;
+}
+
+bool AlembicCustomAttributesEx::exportCustomAttributes(INode* node, double time)
+{
+   if(!pblock){
+      return false;
+   }
+
+   TimeValue ticks = GetTimeValueFromFrame(time);
+
+	int nNumParams = pblock->NumParams();
+	for(int i=0; i<nNumParams; i++){
+
+		ParamID id = pblock->IndextoID(i);
+		MSTR name = pblock->GetLocalName(id, 0);
+
+      std::stringstream propName;
+      propName<<"."<<EC_MSTR_to_UTF8(name);
+
+      ParamType2 type = pblock->GetParameterType(id);
+      if(type == TYPE_STRING){
+         MSTR value = pblock->GetStr(id, 0);
+
+         Abc::OStringProperty* stringProp = (Abc::OStringProperty*)customProps[propName.str()];         
+         stringProp->set(EC_MSTR_to_UTF8(value));
+      }
+      else if(type == TYPE_FLOAT){
+         float value = pblock->GetFloat(id, ticks);
+
+         Abc::OFloatProperty* floatProp = (Abc::OFloatProperty*)customProps[propName.str()];         
+         floatProp->set(value);
+      }
+      else if(type == TYPE_INT){
+         int value = pblock->GetInt(id, ticks);
+ 
+         Abc::OInt32Property* intProp = (Abc::OInt32Property*)customProps[propName.str()];         
+         intProp->set(value);
+      }
+	}
+
+   return true;
 }

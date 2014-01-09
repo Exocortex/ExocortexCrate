@@ -61,7 +61,25 @@ void addControllersToModifier(const std::string& modkey, const std::string& modn
                               const std::string& target, const std::string& type,
                               const std::string& file, const std::string& identifier, alembic_importoptions &options);
 
-class AlembicObject;
-void SaveUserProperties(INode* node, AbcG::OXformSchema xformSchema, unsigned int animatedTs, double time, bool bFirstFrame);
+
+class AlembicCustomAttributesEx
+{
+   typedef std::map<std::string, Abc::OScalarProperty*> propMap;
+   propMap customProps;
+   IParamBlock2 *pblock;
+
+public:
+
+   AlembicCustomAttributesEx():pblock(NULL)
+   {} 
+
+   ~AlembicCustomAttributesEx();
+
+   bool defineCustomAttributes(INode* node, Abc::OCompoundProperty& compoundProp, const AbcA::MetaData& metadata, unsigned int animatedTs);
+   bool exportCustomAttributes(INode* node, double time);
+};
+
+
+
 
 #endif 
