@@ -157,6 +157,7 @@ private:
 		int nMatId;
 		//AbcG::OXformSchema xformSchema;
 		//AbcG::OPolyMeshSchema meshSchema;
+      Abc::Box3d bbox;
 
 		BOOL bNeedDelete;
 		Matrix3 meshTM;
@@ -164,7 +165,10 @@ private:
         int nMeshInstanceId;
 
 		meshInfo(): pMesh(NULL), nMatId(-1), bNeedDelete(FALSE), nMeshInstanceId(-1)
-		{}
+		{
+         bbox.min = Abc::V3d(0.0, 0.0, 0.0);
+         bbox.max = Abc::V3d(0.0, 0.0, 0.0);
+      }
 	};
 	//typedef std::pair<Alembic::Util::Digest, Alembic::Util::Digest> faceVertexHashPair;
 	struct meshDigests{
@@ -204,7 +208,7 @@ private:
 	Abc::C4f AlembicPoints::GetColor(IParticleObjectExt *pExt, int particleId, TimeValue ticks);
 	//unsigned short FindInstanceName(const std::string& name);
 
-	void CacheShapeMesh(Mesh* pShapeMesh, BOOL bNeedDelete, Matrix3 meshTM, int nMatId, int particleId, TimeValue ticks, ShapeType &type, unsigned short &instanceId, float &animationTime);
+	meshInfo CacheShapeMesh(Mesh* pShapeMesh, BOOL bNeedDelete, Matrix3 meshTM, int nMatId, int particleId, TimeValue ticks, ShapeType &type, unsigned short &instanceId, float &animationTime);
 
 	void saveCurrentFrameMeshes();
 

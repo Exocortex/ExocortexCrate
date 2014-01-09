@@ -282,7 +282,11 @@ bool AlembicPoints::Save(double time, bool bLastFrame)
 
 			if(pMesh){
                 ESS_PROFILE_SCOPE("AlembicPoints::SAVE - numParticlesLoop - ThinkingParticles - CacheShapeMesh");
-				CacheShapeMesh(pMesh, bNeedDelete, meshTM, nMatId, i, ticks, shapetype, shapeInstanceId, shapeInstanceTime);
+            meshInfo mi = CacheShapeMesh(pMesh, bNeedDelete, meshTM, nMatId, i, ticks, shapetype, shapeInstanceId, shapeInstanceTime);
+            Abc::V3d min = pos + mi.bbox.min;
+            Abc::V3d max = pos + mi.bbox.max;
+            bbox.extendBy(min);
+            bbox.extendBy(max);
 			}
 			else{
 				shapetype = ShapeType_Point;
@@ -324,7 +328,11 @@ bool AlembicPoints::Save(double time, bool bLastFrame)
 				Mesh* pMesh = pMesh = particlesExt->GetParticleShapeByIndex(i);
 
 				if(pMesh){
-					CacheShapeMesh(pMesh, bNeedDelete, meshTM, nMatId, i, ticks, shapetype, shapeInstanceId, shapeInstanceTime);
+					meshInfo mi = CacheShapeMesh(pMesh, bNeedDelete, meshTM, nMatId, i, ticks, shapetype, shapeInstanceId, shapeInstanceTime);
+               Abc::V3d min = pos + mi.bbox.min;
+               Abc::V3d max = pos + mi.bbox.max;
+               bbox.extendBy(min);
+               bbox.extendBy(max);
 				}
 				else{
 					shapetype = ShapeType_Point;
@@ -347,6 +355,11 @@ bool AlembicPoints::Save(double time, bool bLastFrame)
 			age = (float)GetSecondsFromTimeValue( pSimpleParticle->ParticleAge(ticks, i) );
 			//simple particles have born index
 			width = pSimpleParticle->ParticleSize(ticks, i);
+
+         Abc::V3d min(pos.x - width/2, pos.y - width/2, pos.z - width/2);
+         Abc::V3d max(pos.x + width/2, pos.y + width/2, pos.z + width/2);
+         bbox.extendBy(min);
+         bbox.extendBy(max);
 		}
 
         {
@@ -364,6 +377,9 @@ bool AlembicPoints::Save(double time, bool bLastFrame)
 		//spin = Abc::extractQuat(spin.toMatrix44() * nodeWorldTransInv);
 
 		bbox.extendBy( pos );
+
+
+
 
 		positionVec.push_back( pos );
 		velocityVec.push_back( vel );
@@ -932,7 +948,42 @@ void AlembicPoints::GetShapeType(IParticleObjectExt *pExt, int particleId, TimeV
 //	return USHRT_MAX;
 //}
 
-void AlembicPoints::CacheShapeMesh(Mesh* pShapeMesh, BOOL bNeedDelete, Matrix3 meshTM, int nMatId, int particleId, TimeValue ticks, ShapeType &type, Abc::uint16_t &instanceId, float &animationTime)
+
+Abc::Box3d computeBoundingBox(Mesh* pShapeMesh)
+{
+   Abc::Box3d box;
+   box.min = Abc::V3d(DBL_MAX, DBL_MAX, DBL_MAX);
+   box.max = Abc::V3d(DBL_MIN, DBL_MIN, DBL_MIN);
+
+   for(int i=0; i<pShapeMesh->numVerts; i++)
+   {
+      Point3& p = pShapeMesh->verts[i];
+
+      if(p.x < box.min.x){
+         box.min.x = p.x;
+      }
+      if(p.y < box.min.y){
+         box.min.y = p.y;
+      }
+      if(p.z < box.min.z){
+         box.min.z = p.z;
+      }
+
+      if(p.x > box.max.x){
+         box.max.x = p.x;
+      }
+      if(p.y > box.max.y){
+         box.max.y = p.y;
+      }
+      if(p.z > box.max.z){
+         box.max.z = p.z;
+      }
+   }
+
+   return box;
+}
+
+AlembicPoints::meshInfo AlembicPoints::CacheShapeMesh(Mesh* pShapeMesh, BOOL bNeedDelete, Matrix3 meshTM, int nMatId, int particleId, TimeValue ticks, ShapeType &type, Abc::uint16_t &instanceId, float &animationTime)
 {
     ESS_PROFILE_FUNC();
 
@@ -942,7 +993,8 @@ void AlembicPoints::CacheShapeMesh(Mesh* pShapeMesh, BOOL bNeedDelete, Matrix3 m
 	//Mesh* pShapeMesh = pExt->GetParticleShapeByIndex(particleId);
 
 	if(pShapeMesh->getNumFaces() == 0 || pShapeMesh->getNumVerts() == 0){
-		return;
+		meshInfo mi;
+      return mi;
 	}
 
     meshDigests digests;
@@ -981,6 +1033,9 @@ void AlembicPoints::CacheShapeMesh(Mesh* pShapeMesh, BOOL bNeedDelete, Matrix3 m
 	else{
 		meshInfo& mi = mShapeMeshCache[digests];
 		mi.pMesh = pShapeMesh;
+
+      mi.bbox = computeBoundingBox(pShapeMesh);
+
 		mi.nMatId = nMatId;
 		
 		std::stringstream nameStream;
@@ -1016,6 +1071,8 @@ void AlembicPoints::CacheShapeMesh(Mesh* pShapeMesh, BOOL bNeedDelete, Matrix3 m
 	//}
 
  //   }
+
+    return currShapeInfo;
 }
 
 //we have to save out all mesh encountered on the current frame of this object immediately, because 
