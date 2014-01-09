@@ -443,7 +443,7 @@ bool AlembicCustomAttributesEx::defineCustomAttributes(INode* node, Abc::OCompou
 		MSTR name = pblock->GetLocalName(id, 0);
 
       std::stringstream propName;
-      propName<<"."<<EC_MSTR_to_UTF8(name);
+      propName<<EC_MSTR_to_UTF8(name);
 
       ParamType2 type = pblock->GetParameterType(id);
       if(type == TYPE_STRING){
@@ -475,7 +475,7 @@ bool AlembicCustomAttributesEx::exportCustomAttributes(INode* node, double time)
 		MSTR name = pblock->GetLocalName(id, 0);
 
       std::stringstream propName;
-      propName<<"."<<EC_MSTR_to_UTF8(name);
+      propName<<EC_MSTR_to_UTF8(name);
 
       ParamType2 type = pblock->GetParameterType(id);
       if(type == TYPE_STRING){
