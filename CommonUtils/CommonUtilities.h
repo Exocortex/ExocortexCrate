@@ -383,6 +383,28 @@ template <class T, class S> void createIndexedArray(const std::vector<Alembic::A
   }
 }
 
+namespace ObjectPrint
+{
+   enum option{
+      PROPERTIES = 1,
+      USER_PROPERTIES = 2,
+      ARB_GEOM_PROPERTIES = 4
+   };
+};
+
+namespace AbcNodeUtils
+{
+   Abc::ICompoundProperty getUserProperties(const AbcG::IObject& iObj);
+   Abc::ICompoundProperty getArbGeomParams(const AbcG::IObject& iObj);
+   
+   char* getTypeStr(AbcA::PropertyType propType);
+   char* getPodStr(AbcA::PlainOldDataType pod);
+   
+   void printCompoundProperty( Abc::ICompoundProperty prop );
+   void printObjectProperties( AbcG::IObject iObj, int options );
+};
+
+
 Abc::ICompoundProperty getArbGeomParams(const AbcG::IObject& iObj, AbcA::TimeSamplingPtr& timeSampling, int& nSamples);
 
 Abc::FloatArraySamplePtr getKnotVector(AbcG::ICurves& obj);

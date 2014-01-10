@@ -856,6 +856,157 @@ Abc::ICompoundProperty getArbGeomParams(const AbcG::IObject& iObj, AbcA::TimeSam
     }
 }
 
+
+Abc::ICompoundProperty AbcNodeUtils::getArbGeomParams(const AbcG::IObject& iObj)
+{
+	if(AbcG::IXform::matches(iObj.getMetaData())){
+       AbcG::IXform obj(iObj, Abc::kWrapExisting);
+       return obj.getSchema().getArbGeomParams();
+	} 	
+	else if(AbcG::IPolyMesh::matches(iObj.getMetaData())){
+	   AbcG::IPolyMesh obj(iObj, Abc::kWrapExisting);
+       return obj.getSchema().getArbGeomParams();
+    }
+    else if(AbcG::ISubD::matches(iObj.getMetaData())){
+	   AbcG::ISubD obj(iObj, Abc::kWrapExisting);
+       return obj.getSchema().getArbGeomParams();
+	}
+	else if(AbcG::ICamera::matches(iObj.getMetaData())){
+	   AbcG::ICamera obj(iObj, Abc::kWrapExisting);
+       return obj.getSchema().getArbGeomParams();
+	}
+	else if(AbcG::IPoints::matches(iObj.getMetaData())){
+	   AbcG::IPoints obj(iObj, Abc::kWrapExisting);
+       return obj.getSchema().getArbGeomParams();
+	}
+	else if(AbcG::ICurves::matches(iObj.getMetaData())){
+	   AbcG::ICurves obj(iObj, Abc::kWrapExisting);
+       return obj.getSchema().getArbGeomParams();
+	}
+	else if(AbcG::ILight::matches(iObj.getMetaData())){
+	   AbcG::ILight obj(iObj, Abc::kWrapExisting);
+       return obj.getSchema().getArbGeomParams();
+	}
+    else if(AbcG::INuPatch::matches(iObj.getMetaData())){
+	   AbcG::INuPatch obj(iObj, Abc::kWrapExisting);
+       return obj.getSchema().getArbGeomParams();
+    }
+    else{
+       ESS_LOG_WARNING("Could not read ArgGeomParams from "<<iObj.getFullName());
+       return Abc::ICompoundProperty();
+    }
+}
+
+Abc::ICompoundProperty AbcNodeUtils::getUserProperties(const AbcG::IObject& iObj)
+{
+	if(AbcG::IXform::matches(iObj.getMetaData())){
+       AbcG::IXform obj(iObj, Abc::kWrapExisting);
+       return obj.getSchema().getArbGeomParams();
+	} 	
+	else if(AbcG::IPolyMesh::matches(iObj.getMetaData())){
+	   AbcG::IPolyMesh obj(iObj, Abc::kWrapExisting);
+       return obj.getSchema().getArbGeomParams();
+    }
+    else if(AbcG::ISubD::matches(iObj.getMetaData())){
+	   AbcG::ISubD obj(iObj, Abc::kWrapExisting);
+       return obj.getSchema().getArbGeomParams();
+	}
+	else if(AbcG::ICamera::matches(iObj.getMetaData())){
+	   AbcG::ICamera obj(iObj, Abc::kWrapExisting);
+       return obj.getSchema().getArbGeomParams();
+	}
+	else if(AbcG::IPoints::matches(iObj.getMetaData())){
+	   AbcG::IPoints obj(iObj, Abc::kWrapExisting);
+       return obj.getSchema().getArbGeomParams();
+	}
+	else if(AbcG::ICurves::matches(iObj.getMetaData())){
+	   AbcG::ICurves obj(iObj, Abc::kWrapExisting);
+       return obj.getSchema().getArbGeomParams();
+	}
+	else if(AbcG::ILight::matches(iObj.getMetaData())){
+	   AbcG::ILight obj(iObj, Abc::kWrapExisting);
+       return obj.getSchema().getArbGeomParams();
+	}
+    else if(AbcG::INuPatch::matches(iObj.getMetaData())){
+	   AbcG::INuPatch obj(iObj, Abc::kWrapExisting);
+       return obj.getSchema().getArbGeomParams();
+    }
+    else{
+       ESS_LOG_WARNING("Could not read ArgGeomParams from "<<iObj.getFullName());
+       return Abc::ICompoundProperty();
+    }
+}
+
+char* AbcNodeUtils::getTypeStr(AbcA::PropertyType propType)
+{
+   if( propType == AbcA::kCompoundProperty ) return "kCompoundProperty";
+   if( propType == AbcA::kScalarProperty ) return "kScalarProperty";
+   if( propType == AbcA::kArrayProperty ) return "kArrayProperty";
+}
+
+char* AbcNodeUtils::getPodStr(AbcA::PlainOldDataType pod)
+{
+    if(pod == AbcA::kBooleanPOD) return "kBooleanPOD";
+    if(pod == AbcA::kUint8POD) return "kUint8POD";
+    if(pod == AbcA::kInt8POD) return "kInt8POD";
+    if(pod == AbcA::kUint16POD) return "kUint16POD";
+    if(pod == AbcA::kInt16POD) return "kInt16POD";
+    if(pod == AbcA::kUint32POD) return "kUint32POD";
+    if(pod == AbcA::kInt32POD) return "kInt32POD";
+    if(pod == AbcA::kUint64POD) return "kUint64POD";
+    if(pod == AbcA::kInt64POD) return "kInt64POD";
+    if(pod == AbcA::kFloat16POD) return "kFloat16POD";
+    if(pod == AbcA::kFloat32POD) return "kFloat32POD";
+    if(pod == AbcA::kFloat64POD) return "kFloat64POD";
+    if(pod == AbcA::kStringPOD) return "kStringPOD";
+    if(pod == AbcA::kWstringPOD) return "kWstringPOD";
+    if(pod == AbcA::kNumPlainOldDataTypes) return "kNumPlainOldDataTypes";
+    //if(pod == AbcA::kUnknownPOD)  
+    return "kUnknownPOD";
+}
+
+
+void AbcNodeUtils::printCompoundProperty( Abc::ICompoundProperty prop )
+{
+   if(!prop){
+      return;
+   }
+
+   for(size_t i=0; i<prop.getNumProperties(); i++){
+      AbcA::PropertyHeader pheader = prop.getPropertyHeader(i);
+      AbcA::PropertyType propType = pheader.getPropertyType();
+
+      ESS_LOG_WARNING("PropertyType: "<<AbcNodeUtils::getTypeStr(propType));
+      ESS_LOG_WARNING("PropertyName: "<<pheader.getName()<<", pod: "<<AbcNodeUtils::getPodStr(pheader.getDataType().getPod()) \
+       <<", extent: "<<(int)pheader.getDataType().getExtent()<<", interpretation: "<<pheader.getMetaData().get("interpretation"));
+
+
+   }
+}
+
+void AbcNodeUtils::printObjectProperties( AbcG::IObject iObj, int options )
+{
+   bool bProp = options & ObjectPrint::PROPERTIES;
+   bool bUserProp = options & ObjectPrint::USER_PROPERTIES;
+   bool bGeomProp = options & ObjectPrint::ARB_GEOM_PROPERTIES;
+
+   if(bProp){
+      Abc::ICompoundProperty props = iObj.getProperties();
+      printCompoundProperty(props);
+   }
+
+   if(bUserProp){
+      Abc::ICompoundProperty userProps = getUserProperties(iObj);
+      printCompoundProperty(userProps);
+   }
+
+   if(bGeomProp){
+      Abc::ICompoundProperty arbGeom = getArbGeomParams(iObj);
+      printCompoundProperty(arbGeom);
+   }
+}
+
+
 Abc::FloatArraySamplePtr getKnotVector(AbcG::ICurves& obj)
 {
    ESS_PROFILE_FUNC();
