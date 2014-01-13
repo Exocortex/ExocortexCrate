@@ -214,6 +214,8 @@ int AlembicImport_XForm(INode* pParentNode, INode* pMaxNode, AbcG::IObject& iObj
 		return alembic_failure;
 	}
 
+   //AbcNodeUtils::printObjectProperties(iObj, ObjectPrint::PROPERTIES | ObjectPrint::USER_PROPERTIES | ObjectPrint::ARB_GEOM_PROPERTIES);
+
    AbcG::IXform xform(iObjXform, Abc::kWrapExisting);
    AbcG::IXformSchema xschema = xform.getSchema();
    Abc::ICompoundProperty props = xschema.getUserProperties();
@@ -234,6 +236,8 @@ int AlembicImport_XForm(INode* pParentNode, INode* pMaxNode, AbcG::IObject& iObj
 
       std::sort(propsVec.begin(), propsVec.end(), sortFunc);
       createDisplayModifier("User Properties", "User Properties", propsVec, pMaxNode);
+
+      addControllersToModifierV2("User Properties", "User Properties", propsVec, file, iObjXform.getFullName(), options, pMaxNode);
    }
 
     //TODO: this method should take this bool a parameter instead

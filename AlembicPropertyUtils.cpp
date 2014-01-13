@@ -210,7 +210,7 @@ void addFloatController(std::stringstream& evalStream, alembic_importoptions &op
       evalStream<<"$"<<mkStr<<"."<<propName<<".controller.time.controller.setExpression \"current\"\n";
    }
    else{
-      evalStream<<"$"<<mkStr<<"."<<"$.modifiers[\""<<modkey<<"\"]."<<propName<<".controller.time.controller.setExpression \"S\"\n";
+      evalStream<<"$"<<mkStr<<"."<<propName<<".controller.time.controller.setExpression \"S\"\n";
    }
 
 }
@@ -265,6 +265,102 @@ void addControllersToModifier(const std::string& modkey, const std::string& modn
    //ESS_LOG_WARNING(evalStream.str());
 
    ExecuteMAXScriptScript( EC_UTF8_to_TCHAR((char*)evalStream.str().c_str()));
+}
+
+
+void addControllersToModifierV2(const std::string& modkey, const std::string& modname, std::vector<AbcProp>& props, 
+                              const std::string& file, const std::string& identifier, alembic_importoptions &options, INode* pNode)
+{
+   ESS_PROFILE_FUNC();
+
+   //the script assumes a single object is selected
+
+   std::stringstream evalStream;
+   std::string nodeName("$");
+   if(pNode){
+      evalStream<<GET_MAXSCRIPT_NODE(pNode);
+      nodeName = std::string("mynode2113");
+   }
+
+   for(int i=0; i<props.size(); i++){
+      std::string propName = props[i].name;
+      std::string& val = props[i].displayVal;
+      bool& bConstant = props[i].bConstant;
+
+      const AbcA::DataType& datatype = props[i].propHeader.getDataType();
+      const AbcA::MetaData& metadata = props[i].propHeader.getMetaData();
+
+      if(datatype.getPod() == AbcA::kFloat32POD){
+
+         std::stringstream propStream;
+         propStream<<propName;
+         if(datatype.getExtent() == 1){
+            addFloatControllerV2(evalStream, options, nodeName, modkey, propName, file, identifier, propStream.str());
+         }
+         else if(datatype.getExtent() == 3){
+
+            std::stringstream xStream, yStream, zStream;
+
+            xStream<<propStream.str()<<"."<<metadata.get("interpretation")<<".x";
+            yStream<<propStream.str()<<"."<<metadata.get("interpretation")<<".y";
+            zStream<<propStream.str()<<"."<<metadata.get("interpretation")<<".z";
+
+            addFloatControllerV2(evalStream, options, nodeName, modkey, propName + std::string("x"), file, identifier, xStream.str());
+            addFloatControllerV2(evalStream, options, nodeName, modkey, propName + std::string("y"), file, identifier, yStream.str());
+            addFloatControllerV2(evalStream, options, nodeName, modkey, propName + std::string("z"), file, identifier, zStream.str());
+         }
+      }
+      else if(datatype.getPod() == AbcA::kInt32POD){
+         std::stringstream propStream;
+         propStream<<propName;
+         if(datatype.getExtent() == 1){
+            addFloatControllerV2(evalStream, options, nodeName, modkey, propName, file, identifier, propStream.str());
+         }
+      }
+      else{
+         
+      }
+      evalStream<<"\n";
+   }
+
+  
+   //ESS_LOG_WARNING(evalStream.str());
+
+   ExecuteMAXScriptScript( EC_UTF8_to_TCHAR((char*)evalStream.str().c_str()));
+}
+
+void addFloatControllerV2(std::stringstream& evalStream, alembic_importoptions &options, std::string nodeName,
+                        const std::string& modkey, std::string propName, const std::string& file, const std::string& identifier, 
+                        std::string propertyID)
+{
+   std::string mkStr;
+   if(!modkey.empty()){
+      std::stringstream mkStream;
+      mkStream<<".modifiers[\""<<modkey<<"\"]";
+      mkStr = mkStream.str();
+   }
+
+   std::string timeControlName;
+   if(options.pTimeControl){
+      timeControlName = EC_MCHAR_to_UTF8( options.pTimeControl->GetObjectName() );
+   }
+
+   evalStream<<nodeName<<mkStr<<"."<<propName<<".controller = AlembicFloatController()\n";
+   evalStream<<nodeName<<mkStr<<"."<<propName<<".controller.path = \""<<file<<"\"\n";
+   evalStream<<nodeName<<mkStr<<"."<<propName<<".controller.identifier = \""<<identifier<<"\"\n";
+   evalStream<<nodeName<<mkStr<<"."<<propName<<".controller.property = \""<<propertyID<<"\"\n";
+   
+
+
+   evalStream<<nodeName<<mkStr<<"."<<propName<<".controller.time.controller = float_expression()\n";
+   if(options.loadTimeControl){
+      evalStream<<nodeName<<mkStr<<"."<<propName<<".controller.time.controller.AddScalarTarget \"current\" $'"<<timeControlName<<"'.time.controller\n";
+      evalStream<<nodeName<<mkStr<<"."<<propName<<".controller.time.controller.setExpression \"current\"\n";
+   }
+   else{
+      evalStream<<nodeName<<mkStr<<"."<<propName<<".controller.time.controller.setExpression \"S\"\n";
+   }
+
 }
 
 
@@ -339,6 +435,10 @@ void readInputProperties( Abc::ICompoundProperty prop, std::vector<AbcProp>& pro
    for(size_t i=0; i<prop.getNumProperties(); i++){
       AbcA::PropertyHeader pheader = prop.getPropertyHeader(i);
       AbcA::PropertyType propType = pheader.getPropertyType();
+
+
+      //ESS_LOG_WARNING("Property, propName: "<<pheader.getName()<<", pod: "<<getPodStr(pheader.getDataType().getPod()) \
+      // <<", extent: "<<(int)pheader.getDataType().getExtent()<<", interpretation: "<<pheader.getMetaData().get("interpretation"));
 
       if( propType == AbcA::kCompoundProperty ){
          //printInputProperties(Abc::ICompoundProperty(prop, pheader.getName()));
