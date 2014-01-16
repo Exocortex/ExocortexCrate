@@ -117,6 +117,7 @@ Modifier* createDisplayModifier(std::string modkey, std::string modname, std::ve
       bool& bConstant = props[i].bConstant;
       const AbcA::DataType& datatype = props[i].propHeader.getDataType();
       const AbcA::MetaData& metadata = props[i].propHeader.getMetaData();
+      const int nSize = props[i].displayVal.size();
 
       if(datatype.getPod() == AbcA::kInt32POD && datatype.getExtent() == 1){
          evalStream<<"label lbl"<<name<<" \""<<name<<"\" align:#left fieldWidth:140\n";
@@ -135,7 +136,11 @@ Modifier* createDisplayModifier(std::string modkey, std::string modname, std::ve
       }
       else{
          //TODO: better fit for large strings
-         evalStream<<"edittext e"<<name<<" \" "<<name<<"\" fieldWidth:140 labelOnTop:true";
+         evalStream<<"edittext e"<<name<<" \" "<<name<<"\" fieldWidth:140 ";
+         if(nSize > 140){
+            evalStream<<"height:54";
+         }
+         evalStream<<" labelOnTop:true";
          if(bConstant) evalStream<<" readOnly:true";
       }
 
@@ -452,6 +457,7 @@ void readInputProperties( Abc::ICompoundProperty prop, std::vector<AbcProp>& pro
          std::string displayVal;
          bool bConstant = true;
          int sortId = 0;
+         int size = 0;
 
          if(Abc::IBoolProperty::matches(pheader)){
 
