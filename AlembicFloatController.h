@@ -78,6 +78,8 @@ public:
     virtual BOOL IsLeaf() { return TRUE; }
     virtual BOOL IsReplaceable() { return TRUE; }
 
+    void setController(std::string call, std::string name, Interval& valid, Interval interval, GetSetMethod method, void *ptr, float fVal);
+
     virtual void  GetValueLocalTime(TimeValue t, void *ptr, Interval &valid, GetSetMethod method = CTRL_ABSOLUTE);
     virtual void  SetValueLocalTime(TimeValue t, void *ptr, int commit, GetSetMethod method = CTRL_ABSOLUTE);
     virtual void  Extrapolate(Interval range, TimeValue t, void *val, Interval &valid, int type);     

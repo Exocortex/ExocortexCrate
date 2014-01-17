@@ -8,6 +8,7 @@
 #include "resource.h"
 #include "AlembicMAXScript.h"
 #include "AlembicCameraUtilities.h"
+#include "AlembicPropertyUtils.h"
 
 // This function returns a pointer to a class descriptor for our Utility
 // This is the function that informs max that our plug-in exists and is 
@@ -70,6 +71,26 @@ static ParamBlockDesc2 AlembicFloatControllerParams(
 IObjParam *AlembicFloatController::ip = NULL;
 AlembicFloatController *AlembicFloatController::editMod = NULL;
 
+bool bPrintedOnce = false;
+
+void AlembicFloatController::setController(std::string call, std::string name, Interval& valid, Interval interval, GetSetMethod method, void *ptr, float fVal)
+{
+   //ESS_LOG_WARNING("setController"<<call<<": "<<name);
+
+   valid = interval;
+
+	if (method == CTRL_ABSOLUTE)
+	{
+		float* fInVal = (float*)ptr;
+		*fInVal = fVal;
+	}
+	else // CTRL_RELATIVE
+	{
+		float* fInVal = (float*)ptr;
+		*fInVal = fVal * (*fInVal);
+	}
+}
+
 void AlembicFloatController::GetValueLocalTime(TimeValue t, void *ptr, Interval &valid, GetSetMethod method)
 {
  	ESS_CPP_EXCEPTION_REPORTING_START
@@ -94,41 +115,47 @@ void AlembicFloatController::GetValueLocalTime(TimeValue t, void *ptr, Interval 
 	extern bool g_bVerboseLogging;
 
 	if(g_bVerboseLogging){
-		ESS_LOG_INFO("Param block at tick "<<t<<"-----------------------");
-		ESS_LOG_INFO("PATH: "<<strPath);
-		ESS_LOG_INFO("IDENTIFIER: "<<strIdentifier);
-		ESS_LOG_INFO("PROPERTY: "<<strProperty);
-		ESS_LOG_INFO("TIME: "<<fTime);
-		ESS_LOG_INFO("MUTED: "<<bMuted);
-		ESS_LOG_INFO("Param block end -------------");
+		ESS_LOG_WARNING("Param block at tick "<<t<<"-----------------------");
+		ESS_LOG_WARNING("PATH: "<<strPath);
+		ESS_LOG_WARNING("IDENTIFIER: "<<strIdentifier);
+		ESS_LOG_WARNING("PROPERTY: "<<strProperty);
+		ESS_LOG_WARNING("TIME: "<<fTime);
+		ESS_LOG_WARNING("MUTED: "<<bMuted);
+		ESS_LOG_WARNING("Param block end -------------");
 	}
 
-   if (bMuted || !strProperty|| !strPath || !strIdentifier){
-      return;
-   }
-	
+
+   const float fDefaultVal = -1.0;
+
 	std::string szPath = EC_MCHAR_to_UTF8( strPath );
 	std::string szIdentifier = EC_MCHAR_to_UTF8( strIdentifier );
 	std::string szProperty = EC_MCHAR_to_UTF8( strProperty );	
 
+   if (!strProperty|| !strPath || !strIdentifier){
+      return setController("1", szProperty, valid, interval,   method,   ptr, fDefaultVal);
+   }
+
+   if (bMuted){
+      return setController("2", szProperty, valid, interval,   method,   ptr, fDefaultVal);
+   }
+
 	if( szProperty.size() == 0 ) {
 	   ESS_LOG_ERROR( "No property specified." );
-	   return;
+	   return setController("3", szProperty, valid, interval,   method,   ptr, fDefaultVal);
 	}
 
 
 	AbcG::IObject iObj = getObjectFromArchive(szPath, szIdentifier);
 
-	if(!iObj.valid() 
-      || (!Alembic::AbcGeom::ICamera::matches(iObj.getMetaData()) && !Alembic::AbcGeom::ILight::matches(iObj.getMetaData()))
-      ){
-      return;
+
+   if(!iObj.valid()){
+      return setController("4", szProperty,  valid, interval,   method,   ptr, fDefaultVal);
 	}
 
    TimeValue dTicks = GetTimeValueFromSeconds( fTime );
    double sampleTime = GetSecondsFromTimeValue(dTicks);
 
-   float fSampleVal = 0.0f;
+   float fSampleVal = fDefaultVal;
    if(Alembic::AbcGeom::ICamera::matches(iObj.getMetaData())){
 
       Alembic::AbcGeom::ICamera objCamera = Alembic::AbcGeom::ICamera(iObj, Alembic::Abc::kWrapExisting);
@@ -141,7 +168,7 @@ void AlembicFloatController::GetValueLocalTime(TimeValue t, void *ptr, Interval 
 
       double sampleVal;
 	   if(!getCameraSampleVal(objCamera, sampleInfo, sample, szProperty, sampleVal)){
-		   return;
+		   return setController("5", szProperty,  valid, interval,   method,   ptr, fDefaultVal);
 	   }
 
       // Blend the camera values, if necessary
@@ -226,26 +253,44 @@ void AlembicFloatController::GetValueLocalTime(TimeValue t, void *ptr, Interval 
          ESS_LOG_WARNING("Float Controller Error: could not parse property field: "<<strProperty);
       }
    }
-
+   else if(Alembic::AbcGeom::IXform::matches(iObj.getMetaData())){
 	
+      AbcG::IXform obj(iObj, Abc::kWrapExisting);
+	   //AbcA::TimeSamplingPtr timeSampling = obj.getSchema().getTimeSampling();
+	   //int nSamples = (int)obj.getSchema().getNumSamples();
+          
+      Abc::ICompoundProperty propk = obj.getSchema().getUserProperties();
+
+      if(propk.valid()){
+         SampleInfo sampleInfo = getSampleInfo(sampleTime,
+                                                obj.getSchema().getTimeSampling(),
+                                                obj.getSchema().getNumSamples());
+
+
+         Abc::IFloatProperty fProp = readScalarProperty<Abc::IFloatProperty>(propk, szProperty);
+         if(fProp.valid()){
+            fProp.get(fSampleVal, sampleInfo.floorIndex);
+         }
+         else{
+            Abc::IInt32Property intProp = readScalarProperty<Abc::IInt32Property>(propk, szProperty);
+            if(intProp.valid()){
+               int intVal;
+               intProp.get(intVal, sampleInfo.floorIndex);
+               fSampleVal = (float)intVal;
+            }
+            else{
+               ESS_LOG_WARNING("Float Controller Error: could not read user property "<<szProperty);
+            }
+         }
+      }
+   }
 
 	if(g_bVerboseLogging){
 		ESS_LOG_INFO("Property "<<strProperty<<": "<<fSampleVal);
 		
 	}
 
-	valid = interval;
-
-	if (method == CTRL_ABSOLUTE)
-	{
-		float* fInVal = (float*)ptr;
-		*fInVal = fSampleVal;
-	}
-	else // CTRL_RELATIVE
-	{
-		float* fInVal = (float*)ptr;
-		*fInVal = fSampleVal * (*fInVal);
-	}
+   return setController("6", szProperty,  valid, interval,   method,   ptr, fSampleVal);
 
 	ESS_CPP_EXCEPTION_REPORTING_END
 }
