@@ -117,7 +117,7 @@ Modifier* createDisplayModifier(std::string modkey, std::string modname, std::ve
       bool& bConstant = props[i].bConstant;
       const AbcA::DataType& datatype = props[i].propHeader.getDataType();
       const AbcA::MetaData& metadata = props[i].propHeader.getMetaData();
-      const int nSize = props[i].displayVal.size();
+      const int nSize = (const int) props[i].displayVal.size();
 
       if(datatype.getPod() == AbcA::kInt32POD && datatype.getExtent() == 1){
          evalStream<<"label lbl"<<name<<" \""<<name<<"\" align:#left fieldWidth:140\n";
@@ -431,6 +431,47 @@ char* getPodStr(AbcA::PlainOldDataType pod)
     return "kUnknownPOD";
 }
 
+//from the MAXScript docs section titled "Punctuation and Symbols"
+const char* invalidStrTable[] = {
+"(",
+")",
+"+",
+"*",
+"-",
+"/",
+"^",
+"=",
+";",
+",",
+"[",
+"]",
+":",
+"'",
+"&",
+".",
+"{",
+"}",
+"#",
+"!",
+"<",
+">",
+"?",
+"$",
+//"\", 
+"}",
+};
+
+const int invalidStrTableSize = sizeof(invalidStrTable)/sizeof(invalidStrTable[0]);
+
+int containsInvalidString(std::string str)
+{
+   for(int i=0; i<invalidStrTableSize; i++){
+      std::size_t found = str.find(invalidStrTable[i]);
+      if (found!=std::string::npos) return i;
+   }
+   return -1;
+}
+
 void readInputProperties( Abc::ICompoundProperty prop, std::vector<AbcProp>& props )
 {
    if(!prop){
@@ -442,8 +483,15 @@ void readInputProperties( Abc::ICompoundProperty prop, std::vector<AbcProp>& pro
       AbcA::PropertyType propType = pheader.getPropertyType();
 
 
+
       //ESS_LOG_WARNING("Property, propName: "<<pheader.getName()<<", pod: "<<getPodStr(pheader.getDataType().getPod()) \
       // <<", extent: "<<(int)pheader.getDataType().getExtent()<<", interpretation: "<<pheader.getMetaData().get("interpretation"));
+      
+      int invalidStrIndex = containsInvalidString(pheader.getName());
+      if( invalidStrIndex > 0 ){
+         ESS_LOG_WARNING("Skipping property "<<pheader.getName()<<" because it contains an invalid character: "<<invalidStrTable[invalidStrIndex]);
+         continue;
+      }
 
       if( propType == AbcA::kCompoundProperty ){
          //printInputProperties(Abc::ICompoundProperty(prop, pheader.getName()));
