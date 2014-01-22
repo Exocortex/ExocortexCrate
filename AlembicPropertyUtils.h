@@ -107,7 +107,7 @@ template<class PT> PT readScalarProperty(Abc::ICompoundProperty propk, const std
    return PT();
 }
 
-
+void setupPropertyModifiers( AbcG::IObject& iObj, INode* pMaxNode, const std::string prefix=std::string("") );
 
 
 #endif 

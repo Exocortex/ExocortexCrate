@@ -92,7 +92,7 @@ void AlembicImport_FillInXForm_Internal(alembic_fillxform_options &options)
 			ESS_LOG_INFO("SampleInfo.alpha: "<<sampleInfo.alpha<< "SampleInfo(fi, ci): "<<sampleInfo.floorIndex<<", "<<sampleInfo.ceilIndex);
 		}
 
-         matrix = options.pObjectCache->getXformMatrix(sampleInfo.floorIndex);
+         matrix = options.pObjectCache->getXformMatrix((int)sampleInfo.floorIndex);
 
 		//const Abc::Box3d &box3d = obj.getSchema().getChildBoundsProperty().getValue( sampleInfo.floorIndex );
 
@@ -105,7 +105,7 @@ void AlembicImport_FillInXForm_Internal(alembic_fillxform_options &options)
             ESS_PROFILE_SCOPE("AlembicImport_FillInXForm - blend");
 
 			//pObj->getSchema().get(sample,sampleInfo.ceilIndex);
-			Abc::M44d ceilMatrix = options.pObjectCache->getXformMatrix(sampleInfo.ceilIndex);
+			Abc::M44d ceilMatrix = options.pObjectCache->getXformMatrix((int)sampleInfo.ceilIndex);
                //sample.getMatrix();
 			matrix = (1.0 - sampleInfo.alpha) * matrix + sampleInfo.alpha * ceilMatrix;
 		}
@@ -216,29 +216,31 @@ int AlembicImport_XForm(INode* pParentNode, INode* pMaxNode, AbcG::IObject& iObj
 
    //AbcNodeUtils::printObjectProperties(iObj, ObjectPrint::PROPERTIES | ObjectPrint::USER_PROPERTIES | ObjectPrint::ARB_GEOM_PROPERTIES);
 
-   AbcG::IXform xform(iObjXform, Abc::kWrapExisting);
-   AbcG::IXformSchema xschema = xform.getSchema();
-   Abc::ICompoundProperty props = xschema.getUserProperties();
+   //AbcG::IXform xform(iObjXform, Abc::kWrapExisting);
+   //AbcG::IXformSchema xschema = xform.getSchema();
+   //Abc::ICompoundProperty userProps = xschema.getUserProperties();
+   //if(userProps.valid()){
+   //   std::vector<AbcProp> propsVec;
+   //   readInputProperties(userProps, propsVec);
 
-   if(props.valid()){
+   //   std::sort(propsVec.begin(), propsVec.end(), sortFunc);
+   //   createDisplayModifier("User Properties", "User Properties", propsVec, pMaxNode);
 
-      //GET_MAX_INTERFACE()->SelectNode(pMaxNode);
+   //   addControllersToModifierV2("User Properties", "User Properties", propsVec, file, iObjXform.getFullName(), options, pMaxNode);
+   //}
 
-      //for(int i=0; i<props.getNumProperties(); i++){    
-      //   Abc::PropertyHeader propHeader = props.getPropertyHeader(i);
-      //   AbcA::PropertyType propType = propHeader.getPropertyType();
-      //   std::string propName = propHeader.getName();
-      //   ESS_LOG_WARNING("propName: "<<propName);
-      //}
+   //Abc::ICompoundProperty geomProps = xschema.getArbGeomParams();
+   //if(geomProps.valid()){
+   //   std::vector<AbcProp> propsVec;
+   //   readInputProperties(geomProps, propsVec);
 
-      std::vector<AbcProp> propsVec;
-      readInputProperties(props, propsVec);
+   //   std::sort(propsVec.begin(), propsVec.end(), sortFunc);
+   //   createDisplayModifier("ArbGeom Properties", "ArbGeom Properties", propsVec, pMaxNode);
 
-      std::sort(propsVec.begin(), propsVec.end(), sortFunc);
-      createDisplayModifier("User Properties", "User Properties", propsVec, pMaxNode);
+   //   //addControllersToModifierV2("ArbGeom Properties", "ArbGeom Properties", propsVec, file, iObjXform.getFullName(), options, pMaxNode);
+   //}
 
-      addControllersToModifierV2("User Properties", "User Properties", propsVec, file, iObjXform.getFullName(), options, pMaxNode);
-   }
+   setupPropertyModifiers(iObjXform, pMaxNode);
 
     //TODO: this method should take this bool a parameter instead
 	bool bIsCamera = p_iObjGeom && p_iObjGeom->valid() && AbcG::ICamera::matches(p_iObjGeom->getMetaData());

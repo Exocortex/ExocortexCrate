@@ -156,7 +156,7 @@ void AlembicFloatController::GetValueLocalTime(TimeValue t, void *ptr, Interval 
    double sampleTime = GetSecondsFromTimeValue(dTicks);
 
    float fSampleVal = fDefaultVal;
-   if(Alembic::AbcGeom::ICamera::matches(iObj.getMetaData())){
+   if(Alembic::AbcGeom::ICamera::matches(iObj.getMetaData())){//standard camera properties
 
       Alembic::AbcGeom::ICamera objCamera = Alembic::AbcGeom::ICamera(iObj, Alembic::Abc::kWrapExisting);
 
@@ -183,7 +183,7 @@ void AlembicFloatController::GetValueLocalTime(TimeValue t, void *ptr, Interval 
 
       fSampleVal = (float)sampleVal;
    }
-   else if(Alembic::AbcGeom::ILight::matches(iObj.getMetaData())){
+   else if(Alembic::AbcGeom::ILight::matches(iObj.getMetaData())){//ILight material properties
 
       ESS_PROFILE_SCOPE("AlembicFloatController::GetValueLocalTime - read ILight shader parameter");
 

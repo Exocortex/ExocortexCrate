@@ -4,6 +4,7 @@
 #include "AlembicMAXScript.h"
 #include "Utility.h"
 #include "AlembicObject.h"
+#include "CommonUtilities.h"
 
 
 void createStringPropertyDisplayModifier(std::string modname, std::vector<std::pair<std::string, std::string>>& nameValuePairs)
@@ -653,4 +654,34 @@ bool AlembicCustomAttributesEx::exportCustomAttributes(INode* node, double time)
 	}
 
    return true;
+}
+
+
+void setupPropertyModifiers( AbcG::IObject& iObj, INode* pMaxNode, const std::string prefix )
+{
+
+   Abc::ICompoundProperty userProps = AbcNodeUtils::getUserProperties(iObj);
+   if(userProps.valid()){
+      std::vector<AbcProp> propsVec;
+      readInputProperties(userProps, propsVec);
+
+      std::sort(propsVec.begin(), propsVec.end(), sortFunc);
+      std::string name = prefix + "User Properties";
+      createDisplayModifier(name, name, propsVec, pMaxNode);
+
+      //addControllersToModifierV2("User Properties", "User Properties", propsVec, file, iObjXform.getFullName(), options, pMaxNode);
+   }
+
+   Abc::ICompoundProperty geomProps = AbcNodeUtils::getArbGeomParams(iObj);
+   if(geomProps.valid()){
+      std::vector<AbcProp> propsVec;
+      readInputProperties(geomProps, propsVec);
+
+      std::sort(propsVec.begin(), propsVec.end(), sortFunc);
+      std::string name = prefix + "ArbGeom Properties";
+      createDisplayModifier(name, name, propsVec, pMaxNode);
+
+      //addControllersToModifierV2("ArbGeom Properties", "ArbGeom Properties", propsVec, file, iObjXform.getFullName(), options, pMaxNode);
+   }
+
 }

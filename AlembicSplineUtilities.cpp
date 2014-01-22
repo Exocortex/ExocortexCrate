@@ -9,6 +9,7 @@
 #include "EmptyPolyLineObject.h"
 #include "AlembicMAXScript.h"
 #include "AlembicMetadataUtils.h"
+#include "AlembicPropertyUtils.h"
 
 
 bool isAlembicSplinePositions( AbcG::IObject *pIObj, bool& isConstant ) {
@@ -479,6 +480,13 @@ int AlembicImport_Shape(const std::string &path, AbcG::IObject& iObj, alembic_im
 	else{
 		bReplaceExistingModifiers = true;
 	}
+
+   setupPropertyModifiers(iObj, *pMaxNode, std::string("Shape"));
+
+   AbcG::IObject parentXform = iObj.getParent();
+   if(parentXform.valid()){
+      setupPropertyModifiers(parentXform, *pMaxNode);
+   }
 
 	TimeValue zero( 0 );
 
