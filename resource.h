@@ -225,7 +225,6 @@
 #define IDD_ALEMBIC_PARTICLE_PARAMS     30315
 #define IDD_ALEMBIC_FLOAT_CTRL_PARAMS   30316
 #define IDD_ALEMBIC_CAMERA_PARAMS       30317
-#define IDD_ALEMBIC_SPLINE_TOPO_PARAMS1 30318
 #define IDD_ALEMBIC_NURBS_PARAMS        30318
 #define IDC_TEXTUREPATH                 40000
 #define IDC_PATH_EDIT                   40000
@@ -234,6 +233,8 @@
 #define IDC_VIEWPORT_PERCENT_EDIT       40002
 #define IDC_HFOV_EDIT                   40002
 #define IDC_VFOV_EDIT                   40003
+#define IDC_PROPERTY_EDIT2              40003
+#define IDC_CATEGORY_EDIT               40003
 #define IDC_FOCAL_LENGTH_EDIT           40004
 #define IDC_HAPERATURE_EDIT             40005
 #define IDC_VAPERATURE_EDIT2            40006

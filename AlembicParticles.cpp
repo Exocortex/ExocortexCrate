@@ -1984,11 +1984,11 @@ int AlembicImport_Points(const std::string &file, AbcG::IObject& iObj, alembic_i
 	*pMaxNode = pNode;
 
 
-   setupPropertyModifiers(iObj, *pMaxNode, std::string("Shape"));
+   setupPropertyModifiers(iObj, *pMaxNode, file, iObj.getFullName(), options, std::string("Shape"));
 
    AbcG::IObject parentXform = iObj.getParent();
    if(parentXform.valid()){
-      setupPropertyModifiers(parentXform, *pMaxNode);
+      setupPropertyModifiers(parentXform, *pMaxNode, file, iObj.getFullName(), options);
    }
 
     // Add the new inode to our current scene list

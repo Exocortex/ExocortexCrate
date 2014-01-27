@@ -55,7 +55,7 @@ void addFloatController(std::stringstream& evalStream, alembic_importoptions &op
                         std::string propertyID);
 
 void addFloatControllerV2(std::stringstream& evalStream, alembic_importoptions &options, std::string nodeName,
-                        const std::string& modkey, std::string propName, const std::string& file, const std::string& identifier, 
+                        const std::string& modkey, std::string propName, const std::string& file, const std::string& identifier, const std::string& category, 
                         std::string propertyID);
 
 Modifier* createDisplayModifier(std::string modkey, std::string modname, std::vector<AbcProp>& props, INode* pNode=NULL);
@@ -66,7 +66,7 @@ void addControllersToModifier(const std::string& modkey, const std::string& modn
                               const std::string& file, const std::string& identifier, alembic_importoptions &options);
 
 void addControllersToModifierV2(const std::string& modkey, const std::string& modname, std::vector<AbcProp>& props, 
-                              const std::string& file, const std::string& identifier, alembic_importoptions &options, INode* pNode);
+                              const std::string& file, const std::string& identifier, const std::string& category, alembic_importoptions &options, INode* pNode);
 
 
 class AlembicCustomAttributesEx
@@ -74,10 +74,11 @@ class AlembicCustomAttributesEx
    typedef std::map<std::string, Abc::OScalarProperty*> propMap;
    propMap customProps;
    IParamBlock2 *pblock;
+   std::string modName;
 
 public:
 
-   AlembicCustomAttributesEx():pblock(NULL)
+   AlembicCustomAttributesEx(std::string modNamein):pblock(NULL),modName(modNamein)
    {} 
 
    ~AlembicCustomAttributesEx();
@@ -107,7 +108,9 @@ template<class PT> PT readScalarProperty(Abc::ICompoundProperty propk, const std
    return PT();
 }
 
-void setupPropertyModifiers( AbcG::IObject& iObj, INode* pMaxNode, const std::string prefix=std::string("") );
+
+void setupPropertyModifiers( AbcG::IObject& iObj, INode* pMaxNode, const std::string& file, const std::string& identifier, alembic_importoptions &options, const std::string prefix=std::string("") );
+
 
 
 #endif 

@@ -28,6 +28,7 @@ public:
 	{ 
 		ID_PATH,
 		ID_IDENTIFIER,
+      ID_CATEGORY,
 		ID_PROPERTY,
 		ID_TIME,
 /*		ID_TOPOLOGY,

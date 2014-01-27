@@ -59,7 +59,6 @@ Modifier* createDisplayModifier(std::string modkey, std::string modname, std::ve
 {
    ESS_PROFILE_FUNC();
 
-
    //the script assumes a single object is selected
    std::stringstream evalStream;
    std::string nodeName("$");
@@ -275,11 +274,9 @@ void addControllersToModifier(const std::string& modkey, const std::string& modn
 
 
 void addControllersToModifierV2(const std::string& modkey, const std::string& modname, std::vector<AbcProp>& props, 
-                              const std::string& file, const std::string& identifier, alembic_importoptions &options, INode* pNode)
+                              const std::string& file, const std::string& identifier, const std::string& category, alembic_importoptions &options, INode* pNode)
 {
    ESS_PROFILE_FUNC();
-
-   //the script assumes a single object is selected
 
    std::stringstream evalStream;
    std::string nodeName("$");
@@ -301,7 +298,7 @@ void addControllersToModifierV2(const std::string& modkey, const std::string& mo
          std::stringstream propStream;
          propStream<<propName;
          if(datatype.getExtent() == 1){
-            addFloatControllerV2(evalStream, options, nodeName, modkey, propName, file, identifier, propStream.str());
+            addFloatControllerV2(evalStream, options, nodeName, modkey, propName, file, identifier, category, propStream.str());
          }
          else if(datatype.getExtent() == 3){
 
@@ -311,16 +308,16 @@ void addControllersToModifierV2(const std::string& modkey, const std::string& mo
             yStream<<propStream.str()<<"."<<metadata.get("interpretation")<<".y";
             zStream<<propStream.str()<<"."<<metadata.get("interpretation")<<".z";
 
-            addFloatControllerV2(evalStream, options, nodeName, modkey, propName + std::string("x"), file, identifier, xStream.str());
-            addFloatControllerV2(evalStream, options, nodeName, modkey, propName + std::string("y"), file, identifier, yStream.str());
-            addFloatControllerV2(evalStream, options, nodeName, modkey, propName + std::string("z"), file, identifier, zStream.str());
+            addFloatControllerV2(evalStream, options, nodeName, modkey, propName + std::string("x"), file, identifier, category, xStream.str());
+            addFloatControllerV2(evalStream, options, nodeName, modkey, propName + std::string("y"), file, identifier, category, yStream.str());
+            addFloatControllerV2(evalStream, options, nodeName, modkey, propName + std::string("z"), file, identifier, category, zStream.str());
          }
       }
       else if(datatype.getPod() == AbcA::kInt32POD){
          std::stringstream propStream;
          propStream<<propName;
          if(datatype.getExtent() == 1){
-            addFloatControllerV2(evalStream, options, nodeName, modkey, propName, file, identifier, propStream.str());
+            addFloatControllerV2(evalStream, options, nodeName, modkey, propName, file, identifier, category, propStream.str());
          }
       }
       else{
@@ -336,7 +333,7 @@ void addControllersToModifierV2(const std::string& modkey, const std::string& mo
 }
 
 void addFloatControllerV2(std::stringstream& evalStream, alembic_importoptions &options, std::string nodeName,
-                        const std::string& modkey, std::string propName, const std::string& file, const std::string& identifier, 
+                        const std::string& modkey, std::string propName, const std::string& file, const std::string& identifier, const std::string& category,
                         std::string propertyID)
 {
    std::string mkStr;
@@ -354,6 +351,7 @@ void addFloatControllerV2(std::stringstream& evalStream, alembic_importoptions &
    evalStream<<nodeName<<mkStr<<"."<<propName<<".controller = AlembicFloatController()\n";
    evalStream<<nodeName<<mkStr<<"."<<propName<<".controller.path = \""<<file<<"\"\n";
    evalStream<<nodeName<<mkStr<<"."<<propName<<".controller.identifier = \""<<identifier<<"\"\n";
+   evalStream<<nodeName<<mkStr<<"."<<propName<<".controller.propCategory = \""<<category<<"\"\n";
    evalStream<<nodeName<<mkStr<<"."<<propName<<".controller.property = \""<<propertyID<<"\"\n";
    
 
@@ -568,7 +566,7 @@ AlembicCustomAttributesEx::~AlembicCustomAttributesEx()
 
 bool AlembicCustomAttributesEx::defineCustomAttributes(INode* node, Abc::OCompoundProperty& compoundProp, const AbcA::MetaData& metadata, unsigned int animatedTs)
 {
-	Modifier* pMod = FindModifier(node, "User Properties");
+   Modifier* pMod = FindModifier(node, (char*)this->modName.c_str());
 
    if(!pMod){
       return false;
@@ -657,7 +655,7 @@ bool AlembicCustomAttributesEx::exportCustomAttributes(INode* node, double time)
 }
 
 
-void setupPropertyModifiers( AbcG::IObject& iObj, INode* pMaxNode, const std::string prefix )
+void setupPropertyModifiers( AbcG::IObject& iObj, INode* pMaxNode, const std::string& file, const std::string& identifier, alembic_importoptions &options, const std::string prefix )
 {
 
    Abc::ICompoundProperty userProps = AbcNodeUtils::getUserProperties(iObj);
@@ -665,23 +663,29 @@ void setupPropertyModifiers( AbcG::IObject& iObj, INode* pMaxNode, const std::st
       std::vector<AbcProp> propsVec;
       readInputProperties(userProps, propsVec);
 
-      std::sort(propsVec.begin(), propsVec.end(), sortFunc);
-      std::string name = prefix + "User Properties";
-      createDisplayModifier(name, name, propsVec, pMaxNode);
+      if(!propsVec.empty())
+      {
+         std::sort(propsVec.begin(), propsVec.end(), sortFunc);
+         std::string name = prefix + "User Properties";
+         createDisplayModifier(name, name, propsVec, pMaxNode);
 
-      //addControllersToModifierV2("User Properties", "User Properties", propsVec, file, iObjXform.getFullName(), options, pMaxNode);
+         addControllersToModifierV2("User Properties", "User Properties", propsVec, file, identifier, "userProperties", options, pMaxNode);
+      }
    }
 
-   Abc::ICompoundProperty geomProps = AbcNodeUtils::getArbGeomParams(iObj);
-   if(geomProps.valid()){
-      std::vector<AbcProp> propsVec;
-      readInputProperties(geomProps, propsVec);
+   //Abc::ICompoundProperty geomProps = AbcNodeUtils::getArbGeomParams(iObj);
+   //if(geomProps.valid()){
+   //   std::vector<AbcProp> propsVec;
+   //   readInputProperties(geomProps, propsVec);
 
-      std::sort(propsVec.begin(), propsVec.end(), sortFunc);
-      std::string name = prefix + "ArbGeom Properties";
-      createDisplayModifier(name, name, propsVec, pMaxNode);
+   //   if(!propsVec.empty())
+   //   {
+   //      std::sort(propsVec.begin(), propsVec.end(), sortFunc);
+   //      std::string name = prefix + "ArbGeom Properties";
+   //      createDisplayModifier(name, name, propsVec, pMaxNode);
 
-      //addControllersToModifierV2("ArbGeom Properties", "ArbGeom Properties", propsVec, file, iObjXform.getFullName(), options, pMaxNode);
-   }
+   //      //addControllersToModifierV2("ArbGeom Properties", "ArbGeom Properties", propsVec, file, iObjXform.getFullName(), options, pMaxNode);
+   //   }
+   //}
 
 }

@@ -3,6 +3,7 @@
 
 #include "AlembicObject.h"
 #include "AlembicIntermediatePolyMesh3DSMax.h"
+#include "AlembicPropertyUtils.h"
 
 class AlembicPolyMesh: public AlembicObject
 {
@@ -20,6 +21,8 @@ private:
    materialsMergeStr materialsMerge;
 
    dynamicTopoVelocityCalc velocityCalc;
+
+   AlembicCustomAttributesEx customAttributes;
 
 public:
 

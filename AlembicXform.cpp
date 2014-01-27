@@ -95,7 +95,7 @@ void SaveCameraXformSample(const SceneEntry &in_Ref, AbcG::OXformSchema &schema,
     schema.set(sample);
 }
 
-AlembicXForm::AlembicXForm(const SceneEntry &in_Ref, AlembicWriteJob *in_Job) : AlembicObject(in_Ref, in_Job)
+AlembicXForm::AlembicXForm(const SceneEntry &in_Ref, AlembicWriteJob *in_Job) : AlembicObject(in_Ref, in_Job), customAttributes("User Properties")
 {
     std::string xformName = std::string( EC_MCHAR_to_UTF8( in_Ref.node->GetName() ) );// + "Xfo";
 

@@ -24,7 +24,7 @@
 
 
 AlembicPolyMesh::AlembicPolyMesh(const SceneEntry &in_Ref, AlembicWriteJob *in_Job)
-: AlembicObject(in_Ref, in_Job)
+: AlembicObject(in_Ref, in_Job), customAttributes("User Properties")
 {
     std::string xformName = EC_MCHAR_to_UTF8( in_Ref.node->GetName() );
 	std::string meshName = xformName + "Shape";
@@ -40,6 +40,10 @@ AlembicPolyMesh::AlembicPolyMesh(const SceneEntry &in_Ref, AlembicWriteJob *in_J
 
     mXformSchema = xform.getSchema();
     mMeshSchema = mesh.getSchema();
+
+    Abc::OCompoundProperty userProperties = mXformSchema.getUserProperties();
+
+    customAttributes.defineCustomAttributes(GetRef().node, userProperties, mXformSchema.getMetaData(), GetCurrentJob()->GetAnimatedTs());
 }
 
 AlembicPolyMesh::~AlembicPolyMesh()
@@ -115,6 +119,8 @@ bool AlembicPolyMesh::Save(double time, bool bLastFrame)
 	}
 
 	const bool bFlatten = GetCurrentJob()->GetOption("flattenHierarchy");
+
+   customAttributes.exportCustomAttributes(GetRef().node, time);
 
     // Store the transformation
     SaveXformSample(GetRef(), mXformSchema, mXformSample, time, bFlatten);
