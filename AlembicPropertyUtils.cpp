@@ -590,6 +590,7 @@ bool AlembicCustomAttributesEx::defineCustomAttributes(INode* node, Abc::OCompou
       return false;
    }
 
+
 	for(int i=0, nNumParams = pblock->NumParams(); i<nNumParams; i++){
 
 		ParamID id = pblock->IndextoID(i);
@@ -634,20 +635,26 @@ bool AlembicCustomAttributesEx::exportCustomAttributes(INode* node, double time)
       if(type == TYPE_STRING){
          MSTR value = pblock->GetStr(id, 0);
 
-         Abc::OStringProperty* stringProp = (Abc::OStringProperty*)customProps[propName.str()];         
-         stringProp->set(EC_MSTR_to_UTF8(value));
+         Abc::OStringProperty* stringProp = (Abc::OStringProperty*)customProps[propName.str()];
+         if(stringProp){
+            stringProp->set(EC_MSTR_to_UTF8(value));
+         }
       }
       else if(type == TYPE_FLOAT){
          float value = pblock->GetFloat(id, ticks);
 
-         Abc::OFloatProperty* floatProp = (Abc::OFloatProperty*)customProps[propName.str()];         
-         floatProp->set(value);
+         Abc::OFloatProperty* floatProp = (Abc::OFloatProperty*)customProps[propName.str()];    
+         if(floatProp){
+            floatProp->set(value);
+         }
       }
       else if(type == TYPE_INT){
          int value = pblock->GetInt(id, ticks);
  
          Abc::OInt32Property* intProp = (Abc::OInt32Property*)customProps[propName.str()];         
-         intProp->set(value);
+         if(intProp){
+            intProp->set(value);
+         }
       }
 	}
 
@@ -666,10 +673,10 @@ void setupPropertyModifiers( AbcG::IObject& iObj, INode* pMaxNode, const std::st
       if(!propsVec.empty())
       {
          std::sort(propsVec.begin(), propsVec.end(), sortFunc);
-         std::string name = prefix + "User Properties";
+         std::string name = prefix + " User Properties";
          createDisplayModifier(name, name, propsVec, pMaxNode);
 
-         addControllersToModifierV2("User Properties", "User Properties", propsVec, file, identifier, "userProperties", options, pMaxNode);
+         addControllersToModifierV2(name, name, propsVec, file, identifier, "userProperties", options, pMaxNode);
       }
    }
 
