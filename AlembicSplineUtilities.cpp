@@ -481,11 +481,13 @@ int AlembicImport_Shape(const std::string &path, AbcG::IObject& iObj, alembic_im
 		bReplaceExistingModifiers = true;
 	}
 
-   setupPropertyModifiers(iObj, *pMaxNode, path, iObj.getFullName(), options, std::string("Shape"));
+   if(!options.attachToExisting){
+      setupPropertyModifiers(iObj, *pMaxNode, path, iObj.getFullName(), options, std::string("Shape"));
 
-   AbcG::IObject parentXform = iObj.getParent();
-   if(parentXform.valid()){
-      setupPropertyModifiers(parentXform, *pMaxNode, path, iObj.getFullName(), options);
+      AbcG::IObject parentXform = iObj.getParent();
+      if(parentXform.valid()){
+         setupPropertyModifiers(parentXform, *pMaxNode, path, iObj.getFullName(), options);
+      }
    }
 
 	TimeValue zero( 0 );
