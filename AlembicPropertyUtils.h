@@ -5,6 +5,8 @@
 #include <vector>
 #include <Alembic/AbcCoreAbstract/PropertyHeader.h>
 #include "AlembicDefinitions.h"
+#include "CommonUtilities.h"
+#include <Alembic/Abc/ICompoundProperty.h>
 
 void createStringPropertyDisplayModifier(std::string modname, std::vector<std::pair<std::string, std::string>>& nameValuePairs);
 
@@ -108,6 +110,34 @@ template<class PT> PT readScalarProperty(Abc::ICompoundProperty propk, const std
    return PT();
 }
 
+
+
+
+template<class P, class PT> float readScalarPropertyExt3(Abc::ICompoundProperty propk, const SampleInfo& sampleInfo, const std::string& propName, const std::string& propComp)
+{
+   P fProp = readScalarProperty<P>(propk, propName);
+   if(fProp.valid()){
+      PT v3f;
+      fProp.get(v3f, sampleInfo.floorIndex);
+      if(propComp == "x"){
+         return v3f.x;
+      }
+      else if(propComp == "y"){
+         return v3f.y;
+      }
+      else if(propComp == "z"){
+         return v3f.z;
+      }
+      else{
+         ESS_LOG_WARNING("Float Controller Error: invalid component: "<<propComp);
+         return -1.0;
+      }
+   }
+   else{
+      ESS_LOG_WARNING("Float Controller Error: could not read user property "<<propName);
+      return -1.0;
+   }
+}
 
 void setupPropertyModifiers( AbcG::IObject& iObj, INode* pMaxNode, const std::string& file, const std::string& identifier, alembic_importoptions &options, const std::string prefix=std::string("") );
 

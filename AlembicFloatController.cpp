@@ -273,6 +273,7 @@ void AlembicFloatController::GetValueLocalTime(TimeValue t, void *ptr, Interval 
             else{
                ESS_LOG_WARNING("Float Controller Error: unrecognized parameter interpretation: "<<propInterp);
             }
+
          }
          else{
             ESS_LOG_WARNING("Float Controller Error: could not parse property field: "<<strProperty);
@@ -292,19 +293,42 @@ void AlembicFloatController::GetValueLocalTime(TimeValue t, void *ptr, Interval 
       if(propk.valid()){
          SampleInfo sampleInfo = getSampleInfo(sampleTime, timeSampling, nSamples);
 
-         Abc::IFloatProperty fProp = readScalarProperty<Abc::IFloatProperty>(propk, szProperty);
-         if(fProp.valid()){
-            fProp.get(fSampleVal, sampleInfo.floorIndex);
-         }
-         else{
-            Abc::IInt32Property intProp = readScalarProperty<Abc::IInt32Property>(propk, szProperty);
-            if(intProp.valid()){
-               int intVal;
-               intProp.get(intVal, sampleInfo.floorIndex);
-               fSampleVal = (float)intVal;
+
+         std::vector<std::string> parts;
+	      boost::split(parts, szProperty, boost::is_any_of("."));
+
+         if(parts.size() == 1){
+            Abc::IFloatProperty fProp = readScalarProperty<Abc::IFloatProperty>(propk, szProperty);
+            if(fProp.valid()){
+               fProp.get(fSampleVal, sampleInfo.floorIndex);
             }
             else{
-               ESS_LOG_WARNING("Float Controller Error: could not read user property "<<szProperty);
+               Abc::IInt32Property intProp = readScalarProperty<Abc::IInt32Property>(propk, szProperty);
+               if(intProp.valid()){
+                  int intVal;
+                  intProp.get(intVal, sampleInfo.floorIndex);
+                  fSampleVal = (float)intVal;
+               }
+               else{
+                  ESS_LOG_WARNING("Float Controller Error: could not read user property "<<szProperty);
+               }
+            }
+         }
+         else if(parts.size() == 3){
+            const std::string& prop = parts[0];
+            const std::string& propInterp = parts[1];
+            const std::string& propComp = parts[2];
+
+            //ESS_LOG_WARNING("interpretation: "<<propInterp);
+
+            if(propInterp == "rgb"){
+               fSampleVal = readScalarPropertyExt3<Abc::IC3fProperty, Abc::C3f>(propk, sampleInfo, prop, propComp);
+            }
+            else if(propInterp == "vector"){
+               fSampleVal = readScalarPropertyExt3<Abc::IV3fProperty, Abc::V3f>(propk, sampleInfo, prop, propComp);
+            }
+            else{
+               ESS_LOG_WARNING("Float Controller Error: unrecognized parameter interpretation: "<<propInterp);
             }
          }
       }
@@ -313,11 +337,6 @@ void AlembicFloatController::GetValueLocalTime(TimeValue t, void *ptr, Interval 
    //else if( boost::iequals(szCategory, "arbGeomParams") ){
 
    //}
-
-	if(g_bVerboseLogging){
-		ESS_LOG_INFO("Property "<<strProperty<<": "<<fSampleVal);
-		
-	}
 
    return setController("6", szProperty,  valid, interval,   method,   ptr, fSampleVal);
 

@@ -374,9 +374,12 @@ template<class PT, class FT> bool readPropExt1(const Abc::ICompoundProperty& pro
    if(PT::matches(pheader))
    {
       PT aProp(prop, pheader.getName());
+      if(!aProp.valid()){
+         return false;
+      }
 
       FT val1;
-      aProp.get(val1);
+      aProp.get(val1);//TODO: crashes here if property has no samples
 
       std::stringstream valStream;
       valStream<<val1;
@@ -394,9 +397,12 @@ template<class PT, class FT> bool readPropExt3(const Abc::ICompoundProperty& pro
    if(PT::matches(pheader))
    {
       PT aProp(prop, pheader.getName());
+      if(!aProp.valid()){
+         return false;
+      }
 
       FT val3;
-      aProp.get(val3);
+      aProp.get(val3);//TODO: crashes here if property has no samples
 
       std::stringstream valStream;
       valStream<<val3.x<<","<<val3.y<<","<<val3.z;
@@ -471,6 +477,7 @@ int containsInvalidString(std::string str)
    return -1;
 }
 
+//TODO: out at maximum one warning per unsupported type
 void readInputProperties( Abc::ICompoundProperty prop, std::vector<AbcProp>& props )
 {
    if(!prop){
@@ -480,8 +487,6 @@ void readInputProperties( Abc::ICompoundProperty prop, std::vector<AbcProp>& pro
    for(size_t i=0; i<prop.getNumProperties(); i++){
       AbcA::PropertyHeader pheader = prop.getPropertyHeader(i);
       AbcA::PropertyType propType = pheader.getPropertyType();
-
-
 
       //ESS_LOG_WARNING("Property, propName: "<<pheader.getName()<<", pod: "<<getPodStr(pheader.getDataType().getPod()) \
       // <<", extent: "<<(int)pheader.getDataType().getExtent()<<", interpretation: "<<pheader.getMetaData().get("interpretation"));
@@ -494,7 +499,7 @@ void readInputProperties( Abc::ICompoundProperty prop, std::vector<AbcProp>& pro
 
       if( propType == AbcA::kCompoundProperty ){
          //printInputProperties(Abc::ICompoundProperty(prop, pheader.getName()));
-         ESS_LOG_WARNING("Unsupported compound property: "<<pheader.getName());
+         //ESS_LOG_WARNING("Unsupported compound property: "<<pheader.getName());
       }
       else if( propType == AbcA::kScalarProperty ){
 
@@ -547,8 +552,11 @@ void readInputProperties( Abc::ICompoundProperty prop, std::vector<AbcProp>& pro
       }
       else if( propType == AbcA::kArrayProperty ){
          //ESS_LOG_WARNING("Unsupported array property: "<<pheader.getName());
-         ESS_LOG_WARNING("Unsupported array property, propName: "<<pheader.getName()<<", pod: "<<getPodStr(pheader.getDataType().getPod()) \
-         <<", extent: "<<(int)pheader.getDataType().getExtent()<<", interpretation: "<<pheader.getMetaData().get("interpretation"));
+
+         //it the moment is unlikely we will support array properties in 3DS Max. They won't work so well with our display modifier system.
+
+         //ESS_LOG_WARNING("Unsupported array property, propName: "<<pheader.getName()<<", pod: "<<getPodStr(pheader.getDataType().getPod()) \
+         //<<", extent: "<<(int)pheader.getDataType().getExtent()<<", interpretation: "<<pheader.getMetaData().get("interpretation"));
       }
       else{
          ESS_LOG_WARNING("Unsupported input property: "<<pheader.getName());
