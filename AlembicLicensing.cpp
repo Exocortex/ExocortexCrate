@@ -41,13 +41,13 @@ int GetAlembicLicense() {
 		return s_alembicLicense;
 	}
 
-	bool isWriterLicense = false;
-
 #if MAX_PRODUCT_YEAR_NUMBER < 2013
-	isWriterLicense = ! GET_MAX_INTERFACE()->InSlaveMode();
+	bool bIsSlave = (bool)GET_MAX_INTERFACE()->InSlaveMode();
 #else
-	isWriterLicense = ! GET_MAX_INTERFACE()->IsNetworkRenderServer();
+	bool bIsSlave = (bool)GET_MAX_INTERFACE()->IsNetworkRenderServer();
 #endif
+
+	bool isWriterLicense = !bIsSlave;
 
 	bool isForceReader = ( getenv("EXOCORTEX_ALEMBIC_FORCE_READER") != NULL );
 	bool isForceWriter = ( getenv("EXOCORTEX_ALEMBIC_FORCE_WRITER") != NULL );
@@ -87,9 +87,9 @@ int GetAlembicLicense() {
 		}
 		pluginLicenseResult = ALEMBIC_READER_LICENSE;
 	}
-				
+			
 	ESS_LOG_INFO( "Looking for RLM license for " << pluginName << "..." );
-	Exocortex::RlmSingleton& rlmSingleton = Exocortex::RlmSingleton::getSingleton();
+   Exocortex::RlmSingleton& rlmSingleton = Exocortex::RlmSingleton::getSingleton();
 	if( rlmSingleton.checkoutLicense( "", pluginName, rlmProductIds ) ) {
 		s_alembicLicense = pluginLicenseResult;
 	}
@@ -101,6 +101,8 @@ int GetAlembicLicense() {
 		  s_alembicLicense = ALEMBIC_DEMO_LICENSE;
     }
 	}
+
+   ESS_LOG_INFO( "writerLicense:"<<isWriterLicense<<" slave: "<<bIsSlave<<" forceReader: "<<isForceReader<<" forceWriter: "<<isForceWriter<<" noDemo: "<<isNoDemo<<" result: "<<s_alembicLicense);
 
 	return s_alembicLicense;
 }

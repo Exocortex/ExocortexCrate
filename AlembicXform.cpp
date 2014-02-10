@@ -5,7 +5,7 @@
 #include "AlembicXform.h"
 #include "Utility.h"
 #include "AlembicMetadataUtils.h"
-
+#include "AlembicPropertyUtils.h"
 
 void GetObjectMatrix(TimeValue ticks, INode *node, Matrix3 &out, bool bFlattenHierarchy)
 {
@@ -95,13 +95,17 @@ void SaveCameraXformSample(const SceneEntry &in_Ref, AbcG::OXformSchema &schema,
     schema.set(sample);
 }
 
-AlembicXForm::AlembicXForm(const SceneEntry &in_Ref, AlembicWriteJob *in_Job) : AlembicObject(in_Ref, in_Job)
+AlembicXForm::AlembicXForm(const SceneEntry &in_Ref, AlembicWriteJob *in_Job) : AlembicObject(in_Ref, in_Job), customAttributes("User Properties")
 {
     std::string xformName = std::string( EC_MCHAR_to_UTF8( in_Ref.node->GetName() ) );// + "Xfo";
 
     AbcG::OXform xform(GetOParent(), xformName.c_str(), GetCurrentJob()->GetAnimatedTs());
 
     mXformSchema = xform.getSchema();
+
+    Abc::OCompoundProperty userProperties = mXformSchema.getUserProperties();
+
+    customAttributes.defineCustomAttributes(GetRef().node, userProperties, mXformSchema.getMetaData(), GetCurrentJob()->GetAnimatedTs());
 }
 
 AlembicXForm::~AlembicXForm()
@@ -131,6 +135,12 @@ bool AlembicXForm::Save(double time, bool bLastFrame)
     {
 		SaveMetaData(GetRef().node, this);
     }
+
+    //const bool bFirstFrame = mNumSamples == 0;
+
+    customAttributes.exportCustomAttributes(GetRef().node, time);
+    
+    //SaveUserProperties(GetRef().node, mXformSchema, GetCurrentJob()->GetAnimatedTs(), time, bFirstFrame);
 
     // Store the transformation
     SaveXformSample(GetRef(), mXformSchema, mXformSample, time, false);

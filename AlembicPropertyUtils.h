@@ -5,6 +5,8 @@
 #include <vector>
 #include <Alembic/AbcCoreAbstract/PropertyHeader.h>
 #include "AlembicDefinitions.h"
+#include "CommonUtilities.h"
+#include <Alembic/Abc/ICompoundProperty.h>
 
 void createStringPropertyDisplayModifier(std::string modname, std::vector<std::pair<std::string, std::string>>& nameValuePairs);
 
@@ -46,16 +48,99 @@ struct AbcProp{
 
 };
 
+bool sortFunc(AbcProp p1, AbcProp p2);
+
+void readInputProperties( Abc::ICompoundProperty prop, std::vector<AbcProp>& props );
+
 void addFloatController(std::stringstream& evalStream, alembic_importoptions &options,
                         const std::string& modkey, std::string propName, const std::string& file, const std::string& identifier, 
                         std::string propertyID);
 
-Modifier* createDisplayModifier(std::string modkey, std::string modname, std::vector<AbcProp>& props);
+void addFloatControllerV2(std::stringstream& evalStream, alembic_importoptions &options, std::string nodeName,
+                        const std::string& modkey, std::string propName, const std::string& file, const std::string& identifier, const std::string& category, 
+                        std::string propertyID);
+
+Modifier* createDisplayModifier(std::string modkey, std::string modname, std::vector<AbcProp>& props, INode* pNode=NULL);
 
 
 void addControllersToModifier(const std::string& modkey, const std::string& modname, std::vector<AbcProp>& props, 
                               const std::string& target, const std::string& type,
                               const std::string& file, const std::string& identifier, alembic_importoptions &options);
+
+void addControllersToModifierV2(const std::string& modkey, const std::string& modname, std::vector<AbcProp>& props, 
+                              const std::string& file, const std::string& identifier, const std::string& category, alembic_importoptions &options, INode* pNode);
+
+
+class AlembicCustomAttributesEx
+{
+   typedef std::map<std::string, Abc::OScalarProperty*> propMap;
+   propMap customProps;
+   IParamBlock2 *pblock;
+   std::string modName;
+
+public:
+
+   AlembicCustomAttributesEx(std::string modNamein):pblock(NULL),modName(modNamein)
+   {} 
+
+   ~AlembicCustomAttributesEx();
+
+   bool defineCustomAttributes(INode* node, Abc::OCompoundProperty& compoundProp, const AbcA::MetaData& metadata, unsigned int animatedTs);
+   bool exportCustomAttributes(INode* node, double time);
+};
+
+
+template<class PT> PT readScalarProperty(Abc::ICompoundProperty propk, const std::string& propName)
+{
+   for(size_t i=0; i<propk.getNumProperties(); i++){
+      AbcA::PropertyHeader pheader = propk.getPropertyHeader(i);
+      AbcA::PropertyType propType = pheader.getPropertyType();
+
+      if( propType == AbcA::kScalarProperty ){
+
+         if(boost::iequals(pheader.getName(), propName) && PT::matches(pheader))
+         {
+            return PT(propk, pheader.getName());
+         }
+
+      }
+
+   }
+   
+   return PT();
+}
+
+
+
+
+template<class P, class PT> float readScalarPropertyExt3(Abc::ICompoundProperty propk, const SampleInfo& sampleInfo, const std::string& propName, const std::string& propComp)
+{
+   P fProp = readScalarProperty<P>(propk, propName);
+   if(fProp.valid()){
+      PT v3f;
+      fProp.get(v3f, sampleInfo.floorIndex);
+      if(propComp == "x"){
+         return v3f.x;
+      }
+      else if(propComp == "y"){
+         return v3f.y;
+      }
+      else if(propComp == "z"){
+         return v3f.z;
+      }
+      else{
+         ESS_LOG_WARNING("Float Controller Error: invalid component: "<<propComp);
+         return -1.0;
+      }
+   }
+   else{
+      ESS_LOG_WARNING("Float Controller Error: could not read user property "<<propName);
+      return -1.0;
+   }
+}
+
+void setupPropertyModifiers( AbcG::IObject& iObj, INode* pMaxNode, const std::string& file, const std::string& identifier, alembic_importoptions &options, const std::string prefix=std::string("") );
+
 
 
 #endif 

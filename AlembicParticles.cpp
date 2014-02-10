@@ -8,6 +8,7 @@
 #include "AlembicMAXScript.h"
 #include "AlembicMetadataUtils.h"
 #include "AlembicParticlesExtInterface.h"
+#include "AlembicPropertyUtils.h"
 
 
 static AlembicParticlesClassDesc s_AlembicParticlesClassDesc;
@@ -1981,6 +1982,15 @@ int AlembicImport_Points(const std::string &file, AbcG::IObject& iObj, alembic_i
 		return alembic_failure;
     }
 	*pMaxNode = pNode;
+
+   if(!options.attachToExisting){
+      setupPropertyModifiers(iObj, *pMaxNode, file, iObj.getFullName(), options, std::string("Shape"));
+
+      AbcG::IObject parentXform = iObj.getParent();
+      if(parentXform.valid()){
+         setupPropertyModifiers(parentXform, *pMaxNode, file, iObj.getFullName(), options);
+      }
+   }
 
     // Add the new inode to our current scene list
     SceneEntry *pEntry = options.sceneEnumProc.Append(pNode, pParticleObj, OBTYPE_POINTS, &std::string(iObj.getFullName())); 

@@ -8,6 +8,7 @@
 #include "resource.h"
 #include "AlembicMAXScript.h"
 #include "AlembicCameraUtilities.h"
+#include "AlembicPropertyUtils.h"
 
 // This function returns a pointer to a class descriptor for our Utility
 // This is the function that informs max that our plug-in exists and is 
@@ -22,12 +23,15 @@ ClassDesc2* GetAlembicFloatControllerClassDesc()
 // Alembic_vis_Ctrl_Param_Blk
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
+static const int ALEMBIC_FLOAT_CONTROLLER_VERSION = 1;
+
 static ParamBlockDesc2 AlembicFloatControllerParams(
 	0,
 	_T(ALEMBIC_FLOAT_CONTROLLER_SCRIPTNAME),
 	0,
 	GetAlembicFloatControllerClassDesc(),
-	P_AUTO_CONSTRUCT | P_AUTO_UI,
+	P_AUTO_CONSTRUCT | P_AUTO_UI | P_VERSION,
+   ALEMBIC_FLOAT_CONTROLLER_VERSION,
 	0,
 
 	// rollout description 
@@ -41,6 +45,11 @@ static ParamBlockDesc2 AlembicFloatControllerParams(
 	 	p_end,
         
 	AlembicFloatController::ID_IDENTIFIER, _T("identifier"), TYPE_STRING, P_RESET_DEFAULT, IDS_IDENTIFIER,
+	    p_default, "",
+	    p_ui,        TYPE_EDITBOX,		IDC_IDENTIFIER_EDIT,
+	 	p_end,
+
+	AlembicFloatController::ID_CATEGORY, _T("propCategory"), TYPE_STRING, P_RESET_DEFAULT, IDS_IDENTIFIER,
 	    p_default, "",
 	    p_ui,        TYPE_EDITBOX,		IDC_IDENTIFIER_EDIT,
 	 	p_end,
@@ -70,6 +79,26 @@ static ParamBlockDesc2 AlembicFloatControllerParams(
 IObjParam *AlembicFloatController::ip = NULL;
 AlembicFloatController *AlembicFloatController::editMod = NULL;
 
+bool bPrintedOnce = false;
+
+void AlembicFloatController::setController(std::string call, std::string name, Interval& valid, Interval interval, GetSetMethod method, void *ptr, float fVal)
+{
+   //ESS_LOG_WARNING("setController"<<call<<": "<<name);
+
+   valid = interval;
+
+	if (method == CTRL_ABSOLUTE)
+	{
+		float* fInVal = (float*)ptr;
+		*fInVal = fVal;
+	}
+	else // CTRL_RELATIVE
+	{
+		float* fInVal = (float*)ptr;
+		*fInVal = fVal * (*fInVal);
+	}
+}
+
 void AlembicFloatController::GetValueLocalTime(TimeValue t, void *ptr, Interval &valid, GetSetMethod method)
 {
  	ESS_CPP_EXCEPTION_REPORTING_START
@@ -82,6 +111,9 @@ void AlembicFloatController::GetValueLocalTime(TimeValue t, void *ptr, Interval 
 	MCHAR const* strIdentifier = NULL;
 	this->pblock->GetValue( AlembicFloatController::ID_IDENTIFIER, t, strIdentifier, interval);
  
+	MCHAR const* strCategory = NULL;
+	this->pblock->GetValue( AlembicFloatController::ID_CATEGORY, t, strCategory, interval);
+
 	MCHAR const* strProperty = NULL;
 	this->pblock->GetValue( AlembicFloatController::ID_PROPERTY, t, strProperty, interval);
 
@@ -94,158 +126,219 @@ void AlembicFloatController::GetValueLocalTime(TimeValue t, void *ptr, Interval 
 	extern bool g_bVerboseLogging;
 
 	if(g_bVerboseLogging){
-		ESS_LOG_INFO("Param block at tick "<<t<<"-----------------------");
-		ESS_LOG_INFO("PATH: "<<strPath);
-		ESS_LOG_INFO("IDENTIFIER: "<<strIdentifier);
-		ESS_LOG_INFO("PROPERTY: "<<strProperty);
-		ESS_LOG_INFO("TIME: "<<fTime);
-		ESS_LOG_INFO("MUTED: "<<bMuted);
-		ESS_LOG_INFO("Param block end -------------");
+		ESS_LOG_WARNING("Param block at tick "<<t<<"-----------------------");
+		ESS_LOG_WARNING("PATH: "<<strPath);
+		ESS_LOG_WARNING("IDENTIFIER: "<<strIdentifier);
+		ESS_LOG_WARNING("PROPERTY: "<<strProperty);
+		ESS_LOG_WARNING("TIME: "<<fTime);
+		ESS_LOG_WARNING("MUTED: "<<bMuted);
+		ESS_LOG_WARNING("Param block end -------------");
 	}
 
-   if (bMuted || !strProperty|| !strPath || !strIdentifier){
-      return;
-   }
-	
+
+   const float fDefaultVal = -1.0;
+
 	std::string szPath = EC_MCHAR_to_UTF8( strPath );
 	std::string szIdentifier = EC_MCHAR_to_UTF8( strIdentifier );
 	std::string szProperty = EC_MCHAR_to_UTF8( strProperty );	
+   std::string szCategory = EC_MCHAR_to_UTF8( strCategory );
+
+   if(szCategory.empty()){//default to standard properties for backwards compatibility
+      szCategory = std::string("standardProperties");
+   }
+
+   if (!strProperty|| !strPath || !strIdentifier /*|| !strCategory*/){
+      return setController("1", szProperty, valid, interval,   method,   ptr, fDefaultVal);
+   }
+
+   if (bMuted){
+      return setController("2", szProperty, valid, interval,   method,   ptr, fDefaultVal);
+   }
+
+	//if( szCategory.size() == 0 ) {
+	//   ESS_LOG_ERROR( "No category specified." );
+	//   return setController("3a", szProperty, valid, interval,   method,   ptr, fDefaultVal);
+	//}
 
 	if( szProperty.size() == 0 ) {
 	   ESS_LOG_ERROR( "No property specified." );
-	   return;
+	   return setController("3b", szProperty, valid, interval,   method,   ptr, fDefaultVal);
 	}
 
 
 	AbcG::IObject iObj = getObjectFromArchive(szPath, szIdentifier);
 
-	if(!iObj.valid() 
-      || (!Alembic::AbcGeom::ICamera::matches(iObj.getMetaData()) && !Alembic::AbcGeom::ILight::matches(iObj.getMetaData()))
-      ){
-      return;
+
+   if(!iObj.valid()){
+      return setController("4", szProperty,  valid, interval,   method,   ptr, fDefaultVal);
 	}
 
    TimeValue dTicks = GetTimeValueFromSeconds( fTime );
    double sampleTime = GetSecondsFromTimeValue(dTicks);
 
-   float fSampleVal = 0.0f;
-   if(Alembic::AbcGeom::ICamera::matches(iObj.getMetaData())){
+   float fSampleVal = fDefaultVal;
 
-      Alembic::AbcGeom::ICamera objCamera = Alembic::AbcGeom::ICamera(iObj, Alembic::Abc::kWrapExisting);
 
-	   SampleInfo sampleInfo = getSampleInfo(sampleTime,
-                                             objCamera.getSchema().getTimeSampling(),
-                                             objCamera.getSchema().getNumSamples());
-      Alembic::AbcGeom::CameraSample sample;
-      objCamera.getSchema().get(sample, sampleInfo.floorIndex);
+   if( boost::iequals(szCategory, "standardProperties") ){
 
-      double sampleVal;
-	   if(!getCameraSampleVal(objCamera, sampleInfo, sample, szProperty, sampleVal)){
-		   return;
-	   }
+      if(Alembic::AbcGeom::ICamera::matches(iObj.getMetaData())){//standard camera properties
 
-      // Blend the camera values, if necessary
-      if (sampleInfo.alpha != 0.0)
-      {
-         objCamera.getSchema().get(sample, sampleInfo.ceilIndex);
-		   double sampleVal2 = 0.0;
-		   if(getCameraSampleVal(objCamera, sampleInfo, sample, szProperty, sampleVal2)){
-			   sampleVal = (1.0 - sampleInfo.alpha) * sampleVal + sampleInfo.alpha * sampleVal2;
-		   }
-      }
+         Alembic::AbcGeom::ICamera objCamera = Alembic::AbcGeom::ICamera(iObj, Alembic::Abc::kWrapExisting);
 
-      fSampleVal = (float)sampleVal;
-   }
-   else if(Alembic::AbcGeom::ILight::matches(iObj.getMetaData())){
+	      SampleInfo sampleInfo = getSampleInfo(sampleTime,
+                                                objCamera.getSchema().getTimeSampling(),
+                                                objCamera.getSchema().getNumSamples());
+         Alembic::AbcGeom::CameraSample sample;
+         objCamera.getSchema().get(sample, sampleInfo.floorIndex);
 
-      ESS_PROFILE_SCOPE("AlembicFloatController::GetValueLocalTime - read ILight shader parameter");
+         double sampleVal;
+	      if(!getCameraSampleVal(objCamera, sampleInfo, sample, szProperty, sampleVal)){
+		      return setController("5", szProperty,  valid, interval,   method,   ptr, fDefaultVal);
+	      }
 
-      Alembic::AbcGeom::ILight objLight = Alembic::AbcGeom::ILight(iObj, Alembic::Abc::kWrapExisting);
-
-	  SampleInfo sampleInfo = getSampleInfo(sampleTime,
-                                             objLight.getSchema().getTimeSampling(),
-                                             objLight.getSchema().getNumSamples());
-    
-      AbcM::IMaterialSchema matSchema = getMatSchema(objLight);
-
-      std::string strProp = szProperty;
-      
-      std::vector<std::string> parts;
-	  boost::split(parts, strProp, boost::is_any_of("."));
-
-      if(parts.size() == 3){
-      
-         const std::string& target = parts[0];
-         const std::string& type = parts[1];
-         const std::string& prop = parts[2];
-
-         Abc::IFloatProperty fProp = readShaderScalerProp<Abc::IFloatProperty>(matSchema, target, type, prop);
-         if(fProp.valid()){
-            fProp.get(fSampleVal, sampleInfo.floorIndex);
+         // Blend the camera values, if necessary
+         if (sampleInfo.alpha != 0.0)
+         {
+            objCamera.getSchema().get(sample, sampleInfo.ceilIndex);
+		      double sampleVal2 = 0.0;
+		      if(getCameraSampleVal(objCamera, sampleInfo, sample, szProperty, sampleVal2)){
+			      sampleVal = (1.0 - sampleInfo.alpha) * sampleVal + sampleInfo.alpha * sampleVal2;
+		      }
          }
-         else{
-            ESS_LOG_WARNING("Float Controller Error: could find shader parameter "<<strProp);
-         }
+
+         fSampleVal = (float)sampleVal;
       }
-      else if(parts.size() == 5){
-         const std::string& target = parts[0];
-         const std::string& type = parts[1];
-         const std::string& prop = parts[2];
-         const std::string& propInterp = parts[3];
-         const std::string& propComp = parts[4];
+      else if(Alembic::AbcGeom::ILight::matches(iObj.getMetaData())){//ILight material properties
 
-         //ESS_LOG_WARNING("propInterp: "<<propInterp);
+         ESS_PROFILE_SCOPE("AlembicFloatController::GetValueLocalTime - read ILight shader parameter");
 
-         if(propInterp == "rgb"){
-            Abc::IC3fProperty fProp = readShaderScalerProp<Abc::IC3fProperty>(matSchema, target, type, prop);
+         Alembic::AbcGeom::ILight objLight = Alembic::AbcGeom::ILight(iObj, Alembic::Abc::kWrapExisting);
+
+	     SampleInfo sampleInfo = getSampleInfo(sampleTime,
+                                                objLight.getSchema().getTimeSampling(),
+                                                objLight.getSchema().getNumSamples());
+       
+         AbcM::IMaterialSchema matSchema = getMatSchema(objLight);
+
+         std::string strProp = szProperty;
+         
+         std::vector<std::string> parts;
+	     boost::split(parts, strProp, boost::is_any_of("."));
+
+         if(parts.size() == 3){
+         
+            const std::string& target = parts[0];
+            const std::string& type = parts[1];
+            const std::string& prop = parts[2];
+
+            Abc::IFloatProperty fProp = readShaderScalerProp<Abc::IFloatProperty>(matSchema, target, type, prop);
             if(fProp.valid()){
-               Abc::C3f v3f;
-               fProp.get(v3f, sampleInfo.floorIndex);
-               if(propComp == "x"){
-                  fSampleVal = v3f.x;
-               }
-               else if(propComp == "y"){
-                  fSampleVal = v3f.y;
-               }
-               else if(propComp == "z"){
-                  fSampleVal = v3f.z;
-               }
-               else{
-                  ESS_LOG_WARNING("Float Controller Error: invalid component: "<<propComp);
-               }
+               fProp.get(fSampleVal, sampleInfo.floorIndex);
             }
             else{
                ESS_LOG_WARNING("Float Controller Error: could find shader parameter "<<strProp);
             }
          }
+         else if(parts.size() == 5){
+            const std::string& target = parts[0];
+            const std::string& type = parts[1];
+            const std::string& prop = parts[2];
+            const std::string& propInterp = parts[3];
+            const std::string& propComp = parts[4];
+
+            //ESS_LOG_WARNING("propInterp: "<<propInterp);
+
+            if(propInterp == "rgb"){
+               Abc::IC3fProperty fProp = readShaderScalerProp<Abc::IC3fProperty>(matSchema, target, type, prop);
+               if(fProp.valid()){
+                  Abc::C3f v3f;
+                  fProp.get(v3f, sampleInfo.floorIndex);
+                  if(propComp == "x"){
+                     fSampleVal = v3f.x;
+                  }
+                  else if(propComp == "y"){
+                     fSampleVal = v3f.y;
+                  }
+                  else if(propComp == "z"){
+                     fSampleVal = v3f.z;
+                  }
+                  else{
+                     ESS_LOG_WARNING("Float Controller Error: invalid component: "<<propComp);
+                  }
+               }
+               else{
+                  ESS_LOG_WARNING("Float Controller Error: could find shader parameter "<<strProp);
+               }
+            }
+            else{
+               ESS_LOG_WARNING("Float Controller Error: unrecognized parameter interpretation: "<<propInterp);
+            }
+
+         }
          else{
-            ESS_LOG_WARNING("Float Controller Error: unrecognized parameter interpretation: "<<propInterp);
+            ESS_LOG_WARNING("Float Controller Error: could not parse property field: "<<strProperty);
          }
       }
-      else{
-         ESS_LOG_WARNING("Float Controller Error: could not parse property field: "<<strProperty);
-      }
    }
+   else if( boost::iequals(szCategory, "userProperties") ){
 
-	
 
-	if(g_bVerboseLogging){
-		ESS_LOG_INFO("Property "<<strProperty<<": "<<fSampleVal);
-		
-	}
+	   //AbcA::TimeSamplingPtr timeSampling = obj.getSchema().getTimeSampling();
+	   //int nSamples = (int)obj.getSchema().getNumSamples();
+          
+      AbcA::TimeSamplingPtr timeSampling; 
+      int nSamples = 0;
+      Abc::ICompoundProperty propk = AbcNodeUtils::getUserProperties(iObj, timeSampling, nSamples);
 
-	valid = interval;
+      if(propk.valid()){
+         SampleInfo sampleInfo = getSampleInfo(sampleTime, timeSampling, nSamples);
 
-	if (method == CTRL_ABSOLUTE)
-	{
-		float* fInVal = (float*)ptr;
-		*fInVal = fSampleVal;
-	}
-	else // CTRL_RELATIVE
-	{
-		float* fInVal = (float*)ptr;
-		*fInVal = fSampleVal * (*fInVal);
-	}
+
+         std::vector<std::string> parts;
+	      boost::split(parts, szProperty, boost::is_any_of("."));
+
+         if(parts.size() == 1){
+            Abc::IFloatProperty fProp = readScalarProperty<Abc::IFloatProperty>(propk, szProperty);
+            if(fProp.valid()){
+               fProp.get(fSampleVal, sampleInfo.floorIndex);
+            }
+            else{
+               Abc::IInt32Property intProp = readScalarProperty<Abc::IInt32Property>(propk, szProperty);
+               if(intProp.valid()){
+                  int intVal;
+                  intProp.get(intVal, sampleInfo.floorIndex);
+                  fSampleVal = (float)intVal;
+               }
+               else{
+                  ESS_LOG_WARNING("Float Controller Error: could not read user property "<<szProperty);
+               }
+            }
+         }
+         else if(parts.size() == 3){
+            const std::string& prop = parts[0];
+            const std::string& propInterp = parts[1];
+            const std::string& propComp = parts[2];
+
+            //ESS_LOG_WARNING("interpretation: "<<propInterp);
+
+            if(propInterp == "rgb"){
+               fSampleVal = readScalarPropertyExt3<Abc::IC3fProperty, Abc::C3f>(propk, sampleInfo, prop, propComp);
+            }
+            else if(propInterp == "vector"){
+               fSampleVal = readScalarPropertyExt3<Abc::IV3fProperty, Abc::V3f>(propk, sampleInfo, prop, propComp);
+            }
+            else{
+               ESS_LOG_WARNING("Float Controller Error: unrecognized parameter interpretation: "<<propInterp);
+            }
+         }
+      }
+
+   }
+   //else if( boost::iequals(szCategory, "arbGeomParams") ){
+
+   //}
+
+   return setController("6", szProperty,  valid, interval,   method,   ptr, fSampleVal);
 
 	ESS_CPP_EXCEPTION_REPORTING_END
 }

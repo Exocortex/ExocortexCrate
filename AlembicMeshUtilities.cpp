@@ -1043,6 +1043,16 @@ int AlembicImport_PolyMesh(const std::string &path, AbcG::IObject& iObj, alembic
 		addAlembicMaterialsModifier(pNode, iObj);
 	}
 
+
+   if(!options.attachToExisting){
+      setupPropertyModifiers(iObj, *pMaxNode, path, iObj.getFullName(), options, std::string("Shape"));
+
+      AbcG::IObject parentXform = iObj.getParent();
+      if(parentXform.valid()){
+         setupPropertyModifiers(parentXform, *pMaxNode, path, iObj.getFullName(), options);
+      }
+   }
+
 	//alembicMeshInfo meshInfo;
 	//meshInfo.open(path, identifier);
 	//meshInfo.setSample(0);

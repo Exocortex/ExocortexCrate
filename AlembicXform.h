@@ -3,6 +3,7 @@
 
 
 #include "AlembicObject.h"
+#include "AlembicPropertyUtils.h"
 // #include "Point3.h"
 
 void SaveXformSample(const SceneEntry &in_Ref, AbcG::OXformSchema &schema, AbcG::XformSample &sample, double time, bool bFlatten);
@@ -13,6 +14,7 @@ class AlembicXForm : public AlembicObject
 private:
    AbcG::OXformSchema mXformSchema;
    AbcG::XformSample mXformSample;
+   AlembicCustomAttributesEx customAttributes;
 public:
    AlembicXForm(const SceneEntry &in_Ref, AlembicWriteJob *in_Job);
    ~AlembicXForm();

@@ -150,6 +150,11 @@ void AlembicMeshGeomModifier::ModifyObject (TimeValue t, ModContext &mc, ObjectS
 	//ESS_LOG_INFO( "AlembicMeshGeomModifier::ModifyObject strPath: " << strPath << " strIdentifier: " << strIdentifier << " fTime: " << fTime << 
 	//	" bTopology: " << bTopology << " bGeometry: " << bGeometry << " bNormals: " << bNormals << " bUVs: " << bUVs << " bMuted: " << bMuted );
 
+   //IParamBlock2* pBlock = this->GetParamBlock(0);
+   //if(pBlock){
+   //   ESS_LOG_WARNING("ParamBlock: "<<pBlock->GetVersion());
+   //}
+
 	if( !bMuted && strPath && strIdentifier) {
 
 	   std::string szPath = EC_MCHAR_to_UTF8( strPath );
