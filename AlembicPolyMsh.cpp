@@ -1077,7 +1077,10 @@ XSIPLUGINCALLBACK CStatus alembic_polyMesh2_Evaluate(ICENodeContext& in_ctxt)
 	CDataArrayFloat timeData( in_ctxt, ID_IN_time);
 	const double time = timeData[0];
 
-    alembicOp_Multifile( in_ctxt, true, time, path);
+	CDataArrayBool multifile( in_ctxt, ID_IN_multifile );
+	bool bMultifile = multifile[0];
+
+    alembicOp_Multifile( in_ctxt, bMultifile, time, path);
     CStatus pathEditStat = alembicOp_PathEdit( in_ctxt, path );
 
 	AbcG::IObject iObj = getObjectFromArchive(path,identifier);
