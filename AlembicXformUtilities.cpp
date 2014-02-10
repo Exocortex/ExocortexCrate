@@ -240,7 +240,7 @@ int AlembicImport_XForm(INode* pParentNode, INode* pMaxNode, AbcG::IObject& iObj
    //   //addControllersToModifierV2("ArbGeom Properties", "ArbGeom Properties", propsVec, file, iObjXform.getFullName(), options, pMaxNode);
    //}
 
-   if(!options.attachToExisting){
+   if(!options.attachToExisting && options.loadUserProperties){
       setupPropertyModifiers(iObjXform, pMaxNode, file, iObjXform.getFullName(), options);
    }
 

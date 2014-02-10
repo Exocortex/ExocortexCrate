@@ -1983,7 +1983,7 @@ int AlembicImport_Points(const std::string &file, AbcG::IObject& iObj, alembic_i
     }
 	*pMaxNode = pNode;
 
-   if(!options.attachToExisting){
+   if(!options.attachToExisting && options.loadUserProperties){
       setupPropertyModifiers(iObj, *pMaxNode, file, iObj.getFullName(), options, std::string("Shape"));
 
       AbcG::IObject parentXform = iObj.getParent();

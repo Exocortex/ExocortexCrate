@@ -49,6 +49,7 @@ typedef struct _alembic_importoptions
    bool attachToExisting;
    bool loadTimeControl;
    bool loadCurvesAsNurbs;
+   bool loadUserProperties;
    bool enableMeshSmooth;
    bool enableInstances;
    bool enableReferences;
@@ -69,6 +70,7 @@ public:
     , loadGeometryInTopologyModifier(false)
     , loadTimeControl(false)
     , loadCurvesAsNurbs(false)
+    , loadUserProperties(false)
     , enableMeshSmooth(false)
     , enableInstances(false)
     , enableReferences(false)
