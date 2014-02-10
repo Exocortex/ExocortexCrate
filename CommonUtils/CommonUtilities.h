@@ -395,6 +395,7 @@ namespace ObjectPrint
 namespace AbcNodeUtils
 {
    Abc::ICompoundProperty getUserProperties(const AbcG::IObject& iObj);
+   Abc::ICompoundProperty getUserProperties(const AbcG::IObject& iObj, AbcA::TimeSamplingPtr& timeSampling, int& nSamples);
    Abc::ICompoundProperty getArbGeomParams(const AbcG::IObject& iObj);
    
    char* getTypeStr(AbcA::PropertyType propType);
