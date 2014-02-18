@@ -28,7 +28,6 @@ public:
 	{ 
 		ID_PATH,
 		ID_IDENTIFIER,
-      ID_CATEGORY,
 		ID_PROPERTY,
 		ID_TIME,
 /*		ID_TOPOLOGY,
@@ -37,6 +36,7 @@ public:
 		ID_NORMALS,
 		ID_UVS,*/
 		ID_MUTED,
+      ID_CATEGORY,
 	};
 
 	IParamBlock2* pblock;

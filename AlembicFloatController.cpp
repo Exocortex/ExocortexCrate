@@ -23,7 +23,7 @@ ClassDesc2* GetAlembicFloatControllerClassDesc()
 // Alembic_vis_Ctrl_Param_Blk
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-static const int ALEMBIC_FLOAT_CONTROLLER_VERSION = 1;
+static const int ALEMBIC_FLOAT_CONTROLLER_VERSION = 2;
 
 static ParamBlockDesc2 AlembicFloatControllerParams(
 	0,
@@ -49,11 +49,6 @@ static ParamBlockDesc2 AlembicFloatControllerParams(
 	    p_ui,        TYPE_EDITBOX,		IDC_IDENTIFIER_EDIT,
 	 	p_end,
 
-	AlembicFloatController::ID_CATEGORY, _T("propCategory"), TYPE_STRING, P_RESET_DEFAULT, IDS_IDENTIFIER,
-	    p_default, "",
-	    p_ui,        TYPE_EDITBOX,		IDC_IDENTIFIER_EDIT,
-	 	p_end,
-
 	AlembicFloatController::ID_PROPERTY, _T("property"), TYPE_STRING, P_RESET_DEFAULT, IDC_PROPERTY_EDIT,
 	    p_default, "",
 	    p_ui,        TYPE_EDITBOX,		IDC_PROPERTY_EDIT,
@@ -69,6 +64,11 @@ static ParamBlockDesc2 AlembicFloatControllerParams(
 		p_default,       FALSE,
 		p_ui,            TYPE_SINGLECHEKBOX,  IDC_MUTED_CHECKBOX,
 		p_end,
+
+	AlembicFloatController::ID_CATEGORY, _T("propCategory"), TYPE_STRING, P_RESET_DEFAULT, IDS_IDENTIFIER,
+	    p_default, "",
+	    p_ui,        TYPE_EDITBOX,		IDC_IDENTIFIER_EDIT,
+	 	p_end,
 
 	p_end
 );
