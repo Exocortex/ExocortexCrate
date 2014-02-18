@@ -614,8 +614,13 @@ void dynamicTopoVelocityCalc::calcVelocities(const std::vector<Abc::V3f>& nextPo
        
         //if topology data is equal, calculate the velocitiy (replace the default one or create one of all zeros if it is not initialized
        if( faceIndicesVec.size() == nextFaceIndicesVec.size() ){
-         size_t memSize = sizeof(Abc::int32_t) * nextFaceIndicesVec.size();
-         if(memcmp(&faceIndicesVec[0], &nextFaceIndicesVec[0], memSize) == 0){
+         if(faceIndicesVec.size() > 0){
+            size_t memSize = sizeof(Abc::int32_t) * nextFaceIndicesVec.size();
+            if(memcmp(&faceIndicesVec[0], &nextFaceIndicesVec[0], memSize) == 0){
+               bTopoDataIsEqual = true;
+            }
+         }
+         else{
             bTopoDataIsEqual = true;
          }
        }
