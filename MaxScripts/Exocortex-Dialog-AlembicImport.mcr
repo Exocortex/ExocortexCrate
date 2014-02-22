@@ -42,6 +42,8 @@ rollout AlembicImportSettings "Alembic Import Settings" width:288 height:260
         jobString += (userPropertiesCheckbox.checked as string)
         jobString += ";meshSmoothModifiers="
         jobString += (meshSmoothModifiersCheckbox.checked as string)
+        jobString += ";materialIds="
+        jobString += (materialIdsCheckbox.checked as string)
 
         if(objectDuplication.selection == 1) do
         (

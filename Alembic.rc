@@ -578,6 +578,7 @@ BEGIN
     IDS_SHUTTERCLOSE        "Shutter Close"
     IDS_NEARCLIPPINGPLANE   "Near Clipping Plane"
     IDS_FARCLIPPINGPLANE    "Far Clipping Plane"
+    IDS_MATERIAL_IDS        "Material IDs"
 END
 
 #endif    // English (U.S.) resources

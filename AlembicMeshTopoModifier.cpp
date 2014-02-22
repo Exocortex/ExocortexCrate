@@ -19,7 +19,7 @@ ClassDesc2* GetAlembicMeshTopoModifierClassDesc() {return &AlembicMeshTopoModifi
 //--- Properties block -------------------------------
 
 //IMPORTANT: increment this value if you have added new fields to the param block
-static const int ALEMBIC_MESH_TOPO_MODIFIER_VERSION = 1;
+static const int ALEMBIC_MESH_TOPO_MODIFIER_VERSION = 2;
 
 static ParamBlockDesc2 AlembicMeshTopoModifierParams(
 	0,
@@ -72,6 +72,11 @@ static ParamBlockDesc2 AlembicMeshTopoModifierParams(
 		p_default,       FALSE,
 		p_ui,            TYPE_SINGLECHEKBOX,  IDC_IGNORE_SUBFRAME_SAMPLES,
 		p_end,
+
+	AlembicMeshTopoModifier::ID_MATERIAL_IDS, _T("materialIDs"), TYPE_BOOL, P_ANIMATABLE, IDS_MATERIAL_IDS,
+		p_default,       FALSE,
+		p_end,
+		
 
 	p_end
 );
@@ -145,6 +150,9 @@ ESS_PROFILE_FUNC();
 	BOOL bUVs;
 	this->pblock->GetValue( AlembicMeshTopoModifier::ID_UVS, t, bUVs, interval);
 
+	BOOL bMaterialIDs;
+	this->pblock->GetValue( AlembicMeshTopoModifier::ID_MATERIAL_IDS, t, bMaterialIDs, interval);
+
 	BOOL bMuted;
 	this->pblock->GetValue( AlembicMeshTopoModifier::ID_MUTED, t, bMuted, interval);
 	
@@ -186,6 +194,8 @@ ESS_PROFILE_FUNC();
 	   options.fVertexAlpha = fGeoAlpha;
 		if( bTopology ) {
 			options.nDataFillFlags |= ALEMBIC_DATAFILL_FACELIST;
+      }
+      if( bMaterialIDs ) {
 			options.nDataFillFlags |= ALEMBIC_DATAFILL_MATERIALIDS;
 	   }
 	   if( bGeometry ) {

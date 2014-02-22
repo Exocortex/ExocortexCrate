@@ -25,7 +25,8 @@ public:
 		ID_NORMALS,
 		ID_UVS,
 		ID_MUTED,
-		ID_IGNORE_SUBFRAME_SAMPLES
+		ID_IGNORE_SUBFRAME_SAMPLES,
+      ID_MATERIAL_IDS
 	};
 
 	static IObjParam *ip;

@@ -1093,6 +1093,7 @@ int AlembicImport_PolyMesh(const std::string &path, AbcG::IObject& iObj, alembic
 			}
 
 			pModifier->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pModifier, 0, "muted" ), zero, FALSE );
+         pModifier->GetParamBlockByID( 0 )->SetValue( GetParamIdByName( pModifier, 0, "materialIDs" ), zero, options.importMaterialIds );
 		
 			// Add the modifier to the pNode
 			GET_MAX_INTERFACE()->AddModifier(*pNode, *pModifier);

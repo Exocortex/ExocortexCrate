@@ -49,6 +49,7 @@
 #define IDS_SHUTTERCLOSE                136
 #define IDS_NEARCLIPPINGPLANE           137
 #define IDS_FARCLIPPINGPLANE            138
+#define IDS_MATERIAL_IDS                141
 #define IDD_GSPHERE1                    179
 #define IDD_GSPHERE2                    180
 #define IDD_GSPHERE3                    181
@@ -233,7 +234,6 @@
 #define IDC_VIEWPORT_PERCENT_EDIT       40002
 #define IDC_HFOV_EDIT                   40002
 #define IDC_VFOV_EDIT                   40003
-#define IDC_PROPERTY_EDIT2              40003
 #define IDC_CATEGORY_EDIT               40003
 #define IDC_FOCAL_LENGTH_EDIT           40004
 #define IDC_HAPERATURE_EDIT             40005
