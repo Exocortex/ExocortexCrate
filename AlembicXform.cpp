@@ -68,6 +68,8 @@ AlembicXform::~AlembicXform()
    mSchema.reset();
 }
 
+#include <maya/MFnTransform.h>
+#include <maya/MEulerRotation.h>
 MStatus AlembicXform::Save(double time)
 {
   ESS_PROFILE_SCOPE("AlembicXform::Save");
@@ -84,6 +86,14 @@ MStatus AlembicXform::Save(double time)
 		dagNode.getAllPaths(dagPaths);
 		path = dagPaths[0];
 	}
+
+	MFnTransform xform(path.node());
+	MEulerRotation euler;
+	double scale[3];
+	xform.getRotation(euler);
+	xform.getScale(scale);
+	ESS_LOG_WARNING("Rotation info, axis x:" << euler.x);
+	ESS_LOG_WARNING("Scale info:" << scale[0] << ", " << scale[1] << ", " << scale[2]);
 
 	switch(visInfo.visibility)
 	{
@@ -131,10 +141,12 @@ MStatus AlembicXform::Save(double time)
         ESS_PROFILE_SCOPE("AlembicXform::Save matrix");
 
         // decide if we need to project to local
-        if(IsParentedToRoot() || GetJob()->GetOption(L"flattenHierarchy").asInt() > 0)
+        if(IsParentedToRoot() || GetJob()->GetOption(L"flattenHierarchy").asInt() > 0) {
            matrix = path.inclusiveMatrix();
-		else
+        }
+        else {
            matrix.setToProduct(path.inclusiveMatrix(), path.exclusiveMatrixInverse());
+        }
 
         matrix.get(abcMatrix.x);
         mSample.setMatrix(abcMatrix);
