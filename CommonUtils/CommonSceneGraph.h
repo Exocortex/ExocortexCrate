@@ -48,7 +48,8 @@ public:
       SURFACE,
       CURVES,
       PARTICLES,
-	  HAIR,
+      PARTICLES_TP,
+	   HAIR,
       LIGHT,
       UNKNOWN,
       NUM_NODE_TYPES
