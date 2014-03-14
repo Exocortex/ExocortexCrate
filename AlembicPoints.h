@@ -212,9 +212,7 @@ private:
 
 	void saveCurrentFrameMeshes();
 
-    AbcG::OXformSchema mXformSchema;
     AbcG::OPointsSchema mPointsSchema;
-    AbcG::XformSample mXformSample;
     AbcG::OPointsSchema::Sample mPointsSample;
 
     // instance lookups
@@ -235,7 +233,7 @@ private:
     Abc::OC4fArrayProperty mColorProperty;
 
 public:
-    AlembicPoints(const SceneEntry & in_Ref, AlembicWriteJob * in_Job);
+    AlembicPoints(SceneNodePtr eNode, AlembicWriteJob * in_Job, Abc::OObject oParent);
     ~AlembicPoints();
 
     virtual Abc::OCompoundProperty GetCompound();

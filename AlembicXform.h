@@ -16,7 +16,7 @@ private:
    AbcG::XformSample mXformSample;
    AlembicCustomAttributesEx customAttributes;
 public:
-   AlembicXForm(const SceneEntry &in_Ref, AlembicWriteJob *in_Job);
+   AlembicXForm(SceneNodePtr eNode, AlembicWriteJob * in_Job, Abc::OObject oParent);
    ~AlembicXForm();
    virtual bool Save(double time, bool bLastFrame);
    virtual Abc::OCompoundProperty GetCompound();

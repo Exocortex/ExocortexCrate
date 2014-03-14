@@ -1,6 +1,6 @@
 #include "stdafx.h"
 #include "sceneGraph.h"
-
+#include "Utility.h"
 
 
 
@@ -16,22 +16,47 @@ bool SceneNodeMax::addChild(SceneNodeAlembicPtr fileNode, const IJobStringParser
 
 void SceneNodeMax::print()
 {
-
+   ESS_LOG_WARNING("MaxNode: "<<node->GetName());
 }
+
+
+
 
 Imath::M44f SceneNodeMax::getGlobalTransFloat(double time)
 {
-   return Imath::M44f(); 
+   TimeValue ticks = GetTimeValueFromFrame(time);
+
+   Matrix3 out = node->GetObjTMAfterWSM(ticks);
+
+   Matrix3 alembicMatrix;
+   ConvertMaxMatrixToAlembicMatrix(out, alembicMatrix);
+   return Abc::M44f( 
+      alembicMatrix.GetRow(0).x,  alembicMatrix.GetRow(0).y,  alembicMatrix.GetRow(0).z,  0,
+      alembicMatrix.GetRow(1).x,  alembicMatrix.GetRow(1).y,  alembicMatrix.GetRow(1).z,  0,
+      alembicMatrix.GetRow(2).x,  alembicMatrix.GetRow(2).y,  alembicMatrix.GetRow(2).z,  0,
+      alembicMatrix.GetRow(3).x,  alembicMatrix.GetRow(3).y,  alembicMatrix.GetRow(3).z,  1);
 }
 
 Imath::M44d SceneNodeMax::getGlobalTransDouble(double time)
 {
-   return Imath::M44d();
+   TimeValue ticks = GetTimeValueFromFrame(time);
+
+   Matrix3 out = node->GetObjTMAfterWSM(ticks);
+
+   Matrix3 alembicMatrix;
+   ConvertMaxMatrixToAlembicMatrix(out, alembicMatrix);
+   return Abc::M44d( 
+      alembicMatrix.GetRow(0).x,  alembicMatrix.GetRow(0).y,  alembicMatrix.GetRow(0).z,  0,
+      alembicMatrix.GetRow(1).x,  alembicMatrix.GetRow(1).y,  alembicMatrix.GetRow(1).z,  0,
+      alembicMatrix.GetRow(2).x,  alembicMatrix.GetRow(2).y,  alembicMatrix.GetRow(2).z,  0,
+      alembicMatrix.GetRow(3).x,  alembicMatrix.GetRow(3).y,  alembicMatrix.GetRow(3).z,  1);
 }
 
 bool SceneNodeMax::getVisibility(double time)
 { 
-   return false; 
+   TimeValue ticks = GetTimeValueFromFrame(time);
+   float flVisibility = node->GetLocalVisibility(ticks);
+   return flVisibility > 0;
 }
 
 
@@ -206,9 +231,9 @@ SceneNodeMaxPtr buildCommonSceneGraph(int& nNumNodes, bool bUnmergeNodes, bool b
       eNode->children.push_back(newNode);
       newNode->parent = eNode.get();
 
-      for(int j=0; j<pRootNode->NumberOfChildren(); j++)
+      for(int j=0; j<pNode->NumberOfChildren(); j++)
       {
-         INode* pNode = pRootNode->GetChildNode(j);
+         INode* pNode = pNode->GetChildNode(j);
          if(!pNode) continue;
          sceneStack.push_back(CSGStackElement(pNode, newNode));
       }

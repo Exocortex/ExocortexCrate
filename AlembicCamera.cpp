@@ -7,26 +7,18 @@
 #include "AlembicMetadataUtils.h"
 
 
-AlembicCamera::AlembicCamera(const SceneEntry &in_Ref, AlembicWriteJob *in_Job)
-: AlembicObject(in_Ref, in_Job)
+AlembicCamera::AlembicCamera(SceneNodePtr eNode, AlembicWriteJob * in_Job, Abc::OObject oParent)
+: AlembicObject(eNode, in_Job, oParent)
 {
-    std::string xformName = EC_MCHAR_to_UTF8( in_Ref.node->GetName() );
+    std::string xformName = EC_MCHAR_to_UTF8( mINode->GetName() );
 	std::string cameraName = xformName + "Shape";
 
-    AbcG::OXform xform(GetOParent(), xformName.c_str(), GetCurrentJob()->GetAnimatedTs());
-    AbcG::OCamera camera(xform, cameraName.c_str(), GetCurrentJob()->GetAnimatedTs());
-
-    // create the generic properties
-    mOVisibility = CreateVisibilityProperty(xform,GetCurrentJob()->GetAnimatedTs());
-
-    mXformSchema = xform.getSchema();
+    AbcG::OCamera camera(GetOParent(), cameraName.c_str(), GetCurrentJob()->GetAnimatedTs());
     mCameraSchema = camera.getSchema();
 }
 
 AlembicCamera::~AlembicCamera()
 {
-    // we have to clear this prior to destruction this is a workaround for issue-171
-    mOVisibility.reset();
 }
 
 Abc::OCompoundProperty AlembicCamera::GetCompound()
@@ -38,7 +30,7 @@ bool AlembicCamera::Save(double time, bool bLastFrame)
 {
     TimeValue ticks = GetTimeValueFromFrame(time);
  
-	Object *obj = GetRef().node->EvalWorldState(ticks).obj;
+	Object *obj = mINode->EvalWorldState(ticks).obj;
 	if(mNumSamples == 0){
 		bForever = CheckIfObjIsValidForever(obj, ticks);
 	}
@@ -50,15 +42,12 @@ bool AlembicCamera::Save(double time, bool bLastFrame)
 	}
 	bForever = false;
 
-	bool bFlatten = GetCurrentJob()->GetOption("flattenHierarchy");
 
-    // Store the transformation
-    SaveCameraXformSample(GetRef(), mXformSchema, mXformSample, time, bFlatten);
-
-	SaveMetaData(GetRef().node, this);
+   //TODO: should metadata be saved here? or on the transform only
+	SaveMetaData(mINode, this);
 
     // Set the xform sample
-    Matrix3 wm = GetRef().node->GetObjTMAfterWSM(ticks);
+    Matrix3 wm = mINode->GetObjTMAfterWSM(ticks);
     if (mJob)
     {
         Point3 worldMaxPoint = wm.GetTrans();
@@ -70,12 +59,6 @@ bool AlembicCamera::Save(double time, bool bLastFrame)
     // IMetaDataManager mng;
     // mng.GetMetaData(GetRef().node, 0);
     // SaveMetaData(prim.GetParent3DObject().GetRef(),this);
-
-    // set the visibility
-    if(!bForever || mNumSamples == 0)
-    {
-        mOVisibility.set(GetRef().node->GetLocalVisibility(ticks) > 0 ? AbcG::kVisibilityVisible : AbcG::kVisibilityHidden);
-    }
 
     // check if the camera is animated
     if(mNumSamples > 0) 

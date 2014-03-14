@@ -15,20 +15,13 @@ enum SplineExportType
     SplineExport_None
 };  
 
-AlembicCurves::AlembicCurves(const SceneEntry &in_Ref, AlembicWriteJob * in_Job)
-: AlembicObject(in_Ref, in_Job)
+AlembicCurves::AlembicCurves(SceneNodePtr eNode, AlembicWriteJob * in_Job, Abc::OObject oParent)
+: AlembicObject(eNode, in_Job, oParent)
 {
-    std::string xformName = EC_MCHAR_to_UTF8( in_Ref.node->GetName() );
+    std::string xformName = EC_MCHAR_to_UTF8( mINode->GetName() );
 	std::string curveName = xformName + "Shape";
 
-
-   AbcG::OXform xform(GetOParent(),xformName,GetCurrentJob()->GetAnimatedTs());
-   AbcG::OCurves curves(xform,curveName,GetCurrentJob()->GetAnimatedTs());
-
-   // create the generic properties
-   mOVisibility = CreateVisibilityProperty(xform,GetCurrentJob()->GetAnimatedTs());
-
-   mXformSchema = xform.getSchema();
+   AbcG::OCurves curves(GetOParent(),curveName,GetCurrentJob()->GetAnimatedTs());
    mCurvesSchema = curves.getSchema();
 
    // create all properties
@@ -40,9 +33,6 @@ AlembicCurves::AlembicCurves(const SceneEntry &in_Ref, AlembicWriteJob * in_Job)
 
 AlembicCurves::~AlembicCurves()
 {
-   // we have to clear this prior to destruction
-   // this is a workaround for issue-171
-   mOVisibility.reset();
 }
 
 Abc::OCompoundProperty AlembicCurves::GetCompound()
@@ -56,7 +46,7 @@ bool AlembicCurves::Save(double time, bool bLastFrame)
 
     //TimeValue ticks = GET_MAX_INTERFACE()->GetTime();
     TimeValue ticks = GetTimeValueFromFrame(time);
-	Object *obj = GetRef().node->EvalWorldState(ticks).obj;
+	Object *obj = mINode->EvalWorldState(ticks).obj;
 	if(mNumSamples == 0){
 		bForever = CheckIfObjIsValidForever(obj, ticks);
 	}
@@ -67,20 +57,8 @@ bool AlembicCurves::Save(double time, bool bLastFrame)
 		}
 	}
 
-	bool bFlatten = GetCurrentJob()->GetOption("flattenHierarchy");
-
-    // Store the transformation
-    SaveXformSample(GetRef(), mXformSchema, mXformSample, time, bFlatten);
-
-	SaveMetaData(GetRef().node, this);
-
- 
-    // set the visibility
-    if(!bForever || mNumSamples == 0)
-    {
-        float flVisibility = GetRef().node->GetLocalVisibility(ticks);
-        mOVisibility.set(flVisibility > 0 ? AbcG::kVisibilityVisible : AbcG::kVisibilityHidden);
-    }
+   //TODO: should metadata be saved here? or on the transform only
+	//SaveMetaData(GetRef().node, this);
 
     // check if the spline is animated
     if(mNumSamples > 0) 
@@ -261,7 +239,7 @@ bool AlembicCurves::Save(double time, bool bLastFrame)
 
     // allocate the points and normals
     std::vector<Abc::V3f> posVec(vertCount);
-    Matrix3 wm = GetRef().node->GetObjTMAfterWSM(ticks);
+    Matrix3 wm = mINode->GetObjTMAfterWSM(ticks);
 
     for(int i=0;i<vertCount;i++)
     {

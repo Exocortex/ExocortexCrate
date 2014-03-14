@@ -22,6 +22,8 @@ private:
     Abc::OBox3dProperty m_ArchiveBoxProp;
     Abc::Box3d m_Archivebbox;
     void AddObject(AlembicObjectPtr obj);
+
+    SceneNodePtr exoSceneRoot;
 public:
 
 	std::map<std::string, bool> mOptions;

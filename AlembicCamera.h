@@ -6,13 +6,11 @@
 class AlembicCamera: public AlembicObject
 {
 private:
-    AbcG::OXformSchema mXformSchema;
     AbcG::OCameraSchema mCameraSchema;
-    AbcG::XformSample mXformSample;
     AbcG::CameraSample mCameraSample;
 
 public:
-    AlembicCamera(const SceneEntry &in_Ref, AlembicWriteJob *in_Job);
+    AlembicCamera(SceneNodePtr eNode, AlembicWriteJob * in_Job, Abc::OObject oParent);
     ~AlembicCamera();
 
     virtual Abc::OCompoundProperty GetCompound();

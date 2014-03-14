@@ -23,36 +23,19 @@
 //static int prevpt[3] = {2,0,1};
 
 
-AlembicPolyMesh::AlembicPolyMesh(const SceneEntry &in_Ref, AlembicWriteJob *in_Job)
-: AlembicObject(in_Ref, in_Job), customAttributes("Shape User Properties")//TODO...
+AlembicPolyMesh::AlembicPolyMesh(SceneNodePtr eNode, AlembicWriteJob * in_Job, Abc::OObject oParent)
+: AlembicObject(eNode, in_Job, oParent), customAttributes("Shape User Properties")//TODO...
 {
-    std::string xformName = EC_MCHAR_to_UTF8( in_Ref.node->GetName() );
+    std::string xformName = EC_MCHAR_to_UTF8( mINode->GetName() );
 	std::string meshName = xformName + "Shape";
 
-    AbcG::OXform xform(GetOParent(), xformName.c_str(), GetCurrentJob()->GetAnimatedTs());
-    AbcG::OPolyMesh mesh(xform, meshName.c_str(), GetCurrentJob()->GetAnimatedTs());
+    AbcG::OPolyMesh mesh(GetOParent(), meshName.c_str(), GetCurrentJob()->GetAnimatedTs());
 
-    // JSS - I'm not sure if this is require under 3DSMAx
-    // AddRef(prim.GetParent3DObject().GetKinematics().GetGlobal().GetRef());
-
-    // create the generic properties
-    mOVisibility = CreateVisibilityProperty(xform,GetCurrentJob()->GetAnimatedTs());
-
-    mXformSchema = xform.getSchema();
     mMeshSchema = mesh.getSchema();
-
-    Abc::OCompoundProperty userProperties = mXformSchema.getUserProperties();
-
-    bool bSuccess = customAttributes.defineCustomAttributes(GetRef().node, userProperties, mXformSchema.getMetaData(), GetCurrentJob()->GetAnimatedTs());
-    //if(bSuccess){
-    //   ESS_LOG_WARNING("PolyMesh attributes defined.");
-    //}
 }
 
 AlembicPolyMesh::~AlembicPolyMesh()
 {
-    // we have to clear this prior to destruction this is a workaround for issue-171
-    mOVisibility.reset();
 }
 
 Abc::OCompoundProperty AlembicPolyMesh::GetCompound()
@@ -103,7 +86,7 @@ bool AlembicPolyMesh::Save(double time, bool bLastFrame)
 
 	TimeValue ticks = GetTimeValueFromFrame(time);
 
-	Object *obj = GetRef().node->EvalWorldState(ticks).obj;
+	Object *obj = mINode->EvalWorldState(ticks).obj;
 	const bool bIsParticleSystem = obj->IsParticleSystem() == 1;
 
 	if(bIsParticleSystem){
@@ -121,26 +104,12 @@ bool AlembicPolyMesh::Save(double time, bool bLastFrame)
 		}
 	}
 
-	const bool bFlatten = GetCurrentJob()->GetOption("flattenHierarchy");
-    // Store the transformation
-    SaveXformSample(GetRef(), mXformSchema, mXformSample, time, bFlatten);
-
-	SaveMetaData(GetRef().node, this);
-
-   customAttributes.exportCustomAttributes(GetRef().node, time);
+    //TODO: should metadata be saved here? or on the transform only
+	//SaveMetaData(GetRef().node, this);
     // store the metadata
     //IMetaDataManager mng;
     // mng.GetMetaData(GetRef().node, 0);
     // SaveMetaData(prim.GetParent3DObject().GetRef(),this);
-
-    // set the visibility
-    //disabling this check, since bForever flag is not being set false in the case animation
-    //lets just save it out all time, and let alembic deal with deduplication.
-    //if(!bForever || mNumSamples == 0)
-    {
-        float flVisibility = GetRef().node->GetLocalVisibility(ticks);
-        mOVisibility.set(flVisibility > 0 ? AbcG::kVisibilityVisible : AbcG::kVisibilityHidden);
-    }
 
     // check if the mesh is animated (Otherwise, no need to export)
     if(mNumSamples > 0) 
@@ -157,7 +126,7 @@ bool AlembicPolyMesh::Save(double time, bool bLastFrame)
 	if(bIsParticleSystem){
 
         bool bEnableVelocityExport = true;
-		bool bSuccess = getParticleSystemMesh(ticks, obj, GetRef().node, &finalPolyMesh, &materialsMerge, mJob, mNumSamples, bEnableVelocityExport);
+		bool bSuccess = getParticleSystemMesh(ticks, obj, mINode, &finalPolyMesh, &materialsMerge, mJob, mNumSamples, bEnableVelocityExport);
 		if(!bSuccess){
 			ESS_LOG_INFO( "Error. Could not get particle system mesh. Time: "<<time );
 			return false;
@@ -194,7 +163,7 @@ bool AlembicPolyMesh::Save(double time, bool bLastFrame)
 
 		Matrix3 worldTrans;
 		worldTrans.IdentityMatrix();
-		finalPolyMesh.Save(mJob->mOptions, triMesh, polyMesh, worldTrans, GetRef().node->GetMtl(), -1, mNumSamples == 0, &materialsMerge);
+		finalPolyMesh.Save(mJob->mOptions, triMesh, polyMesh, worldTrans, mINode->GetMtl(), -1, mNumSamples == 0, &materialsMerge);
 
 	   // Note that the TriObject should only be deleted
 	   // if the pointer to it is not equal to the object
@@ -217,7 +186,7 @@ bool AlembicPolyMesh::Save(double time, bool bLastFrame)
 	// Extend the archive bounding box
 	if (mJob){
 		Abc::M44d wm;
-		ConvertMaxMatrixToAlembicMatrix(GetRef().node->GetObjTMAfterWSM(ticks), wm);
+		ConvertMaxMatrixToAlembicMatrix(mINode->GetObjTMAfterWSM(ticks), wm);
 
 		Abc::Box3d bbox = finalPolyMesh.bbox;
 
@@ -255,7 +224,7 @@ bool AlembicPolyMesh::Save(double time, bool bLastFrame)
     }
 
 	if(mJob->GetOption("validateMeshTopology")){
-		mJob->mMeshErrors += validateAlembicMeshTopo(finalPolyMesh.mFaceCountVec, finalPolyMesh.mFaceIndicesVec, EC_MCHAR_to_UTF8(GetRef().node->GetName()));
+		mJob->mMeshErrors += validateAlembicMeshTopo(finalPolyMesh.mFaceCountVec, finalPolyMesh.mFaceIndicesVec, EC_MCHAR_to_UTF8(mINode->GetName()));
 	}
 
 	Abc::Int32ArraySample faceCountSample(finalPolyMesh.mFaceCountVec);
@@ -277,7 +246,7 @@ bool AlembicPolyMesh::Save(double time, bool bLastFrame)
 	if(mJob->GetOption("exportUVs"))
 	{
        if(correctInvalidUVs(finalPolyMesh.mIndexedUVSet)){
-          ESS_LOG_WARNING("Capped out of range uvs on object "<<GetRef().node->GetName()<<", frame = "<<time);
+          ESS_LOG_WARNING("Capped out of range uvs on object "<<mINode->GetName()<<", frame = "<<time);
        }
 	   saveIndexedUVs( mMeshSchema, mMeshSample, uvSample, mUvParams, mJob->GetAnimatedTs(), mNumSamples, finalPolyMesh.mIndexedUVSet );
 	}

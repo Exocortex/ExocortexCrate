@@ -8,9 +8,7 @@
 class AlembicPolyMesh: public AlembicObject
 {
 private:
-   AbcG::OXformSchema mXformSchema;
    AbcG::OPolyMeshSchema mMeshSchema;
-   AbcG::XformSample mXformSample;
    AbcG::OPolyMeshSchema::Sample mMeshSample;
    Abc::OUInt32ArrayProperty mMatIdProperty;
    Abc::OStringArrayProperty mMatNamesProperty;
@@ -26,7 +24,7 @@ private:
 
 public:
 
-   AlembicPolyMesh(const SceneEntry &in_Ref, AlembicWriteJob *in_Job);
+   AlembicPolyMesh(SceneNodePtr eNode, AlembicWriteJob * in_Job, Abc::OObject oParent);
    ~AlembicPolyMesh();
 
    virtual Abc::OCompoundProperty GetCompound();
