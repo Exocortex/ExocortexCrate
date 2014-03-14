@@ -166,6 +166,7 @@ bool AlembicXForm::Save(double time, bool bLastFrame)
       Imath::M44d parentGlobalTransInv = mExoSceneNode->parent->getGlobalTransDouble(time).invert();
       Imath::M44d transform = mExoSceneNode->getGlobalTransDouble(time) * parentGlobalTransInv;
       mXformSample.setMatrix(transform);
+      mXformSchema.set(mXformSample);
    }
 
    bool bVisibility = mExoSceneNode->getVisibility(time);

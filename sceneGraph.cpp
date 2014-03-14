@@ -233,9 +233,9 @@ SceneNodeMaxPtr buildCommonSceneGraph(int& nNumNodes, bool bUnmergeNodes, bool b
 
       for(int j=0; j<pNode->NumberOfChildren(); j++)
       {
-         INode* pNode = pNode->GetChildNode(j);
-         if(!pNode) continue;
-         sceneStack.push_back(CSGStackElement(pNode, newNode));
+         INode* childNode = pNode->GetChildNode(j);
+         if(!childNode) continue;
+         sceneStack.push_back(CSGStackElement(childNode, newNode));
       }
    }
 
