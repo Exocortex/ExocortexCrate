@@ -16,9 +16,13 @@ bool SceneNodeMax::addChild(SceneNodeAlembicPtr fileNode, const IJobStringParser
 
 void SceneNodeMax::print()
 {
-   ESS_LOG_WARNING("MaxNode: "<<node->GetName());
+   if(node){
+      ESS_LOG_WARNING("MaxNode: "<<node->GetName());
+   }
+   else{
+      ESS_LOG_WARNING("MaxNode: NULL");
+   }
 }
-
 
 
 
@@ -28,6 +32,15 @@ Imath::M44f SceneNodeMax::getGlobalTransFloat(double time)
 
    Matrix3 out = node->GetObjTMAfterWSM(ticks);
 
+   if(this->bIsCameraTransform){
+      // Cameras in Max are already pointing down the negative z-axis (as is expected from Alembic).
+      // So we rotate it by 90 degrees so that it is pointing down the positive y-axis.
+      Matrix3 rotation(TRUE);
+      rotation.RotateX(-HALFPI);
+      out = rotation * out;
+   }
+
+   // Convert the max transform to alembic
    Matrix3 alembicMatrix;
    ConvertMaxMatrixToAlembicMatrix(out, alembicMatrix);
    return Abc::M44f( 
@@ -43,6 +56,15 @@ Imath::M44d SceneNodeMax::getGlobalTransDouble(double time)
 
    Matrix3 out = node->GetObjTMAfterWSM(ticks);
 
+   if(this->bIsCameraTransform){
+      // Cameras in Max are already pointing down the negative z-axis (as is expected from Alembic).
+      // So we rotate it by 90 degrees so that it is pointing down the positive y-axis.
+      Matrix3 rotation(TRUE);
+      rotation.RotateX(-HALFPI);
+      out = rotation * out;
+   }
+
+   // Convert the max transform to alembic
    Matrix3 alembicMatrix;
    ConvertMaxMatrixToAlembicMatrix(out, alembicMatrix);
    return Abc::M44d( 
@@ -150,12 +172,13 @@ struct CSGStackElement
 };
 
 
-SceneNodeMaxPtr createNodeMax(INode* pNode, SceneNode::nodeTypeE type)
+SceneNodeMaxPtr createNodeMax(INode* pNode, SceneNode::nodeTypeE type, bool isCameraTransform=false)
 {
    SceneNodeMaxPtr sceneNode(new SceneNodeMax(pNode));
    
    sceneNode->name = EC_MCHAR_to_UTF8( pNode->GetName() );
    sceneNode->type = type;
+   sceneNode->bIsCameraTransform = isCameraTransform;
 
    //TODO: not sure if I need to fill this in
    //sceneNode->dccIdentifier = xObj.GetFullName().GetAsciiString();
@@ -202,7 +225,7 @@ SceneNodeMaxPtr buildCommonSceneGraph(int& nNumNodes, bool bUnmergeNodes, bool b
 
       //if(bUnmergeNodes) { //export case (don't why we don't use it for import)
          if(isShapeNode(type) ){
-            newNode = createNodeMax(pNode, SceneNode::ETRANSFORM);
+            newNode = createNodeMax(pNode, SceneNode::ETRANSFORM, type == SceneNode::CAMERA);
             //newNode->name+="Xfo";
             SceneNodePtr geoNode = createNodeMax(pNode, type);
 		      geoNode->name+="Shape";

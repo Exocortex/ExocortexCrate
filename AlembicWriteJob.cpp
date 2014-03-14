@@ -188,6 +188,7 @@ bool AlembicWriteJob::PreProcess()
 
    int nNumNodes = 0;
    exoSceneRoot = buildCommonSceneGraph(nNumNodes, true, bSelectAll);
+   //WARNING ILM robot right crashes when printing
    //printSceneGraph(exoSceneRoot, false);
 
    //return false;

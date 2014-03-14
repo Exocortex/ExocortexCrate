@@ -11,11 +11,13 @@ public:
 
    INode *node;
    bool bMergedSubtreeNodeParent;
+   bool bIsCameraTransform;
 
-   SceneNodeMax(INode *n):node(n), bMergedSubtreeNodeParent(false)
+   SceneNodeMax(INode *n):node(n), bMergedSubtreeNodeParent(false), bIsCameraTransform(false)
    {}
 
-   SceneNodeMax(const SceneNodeMax& n, bool mergedSubtreeNodeParent):node(n.node), bMergedSubtreeNodeParent(mergedSubtreeNodeParent)
+   SceneNodeMax(const SceneNodeMax& n, bool mergedSubtreeNodeParent):
+      node(n.node), bMergedSubtreeNodeParent(mergedSubtreeNodeParent), bIsCameraTransform(false)
    {}
 
    //Import methods, we won't need these until we update the importer

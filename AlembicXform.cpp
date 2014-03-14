@@ -161,6 +161,7 @@ bool AlembicXForm::Save(double time, bool bLastFrame)
 
    if(bFlatten){//a hack needed to handle namespace xforms
       mXformSample.setMatrix(mExoSceneNode->getGlobalTransDouble(time));
+      mXformSchema.set(mXformSample);
    }
    else{
       Imath::M44d parentGlobalTransInv = mExoSceneNode->parent->getGlobalTransDouble(time).invert();
