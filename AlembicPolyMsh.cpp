@@ -104,12 +104,7 @@ bool AlembicPolyMesh::Save(double time, bool bLastFrame)
 		}
 	}
 
-    //TODO: should metadata be saved here? or on the transform only
-	//SaveMetaData(GetRef().node, this);
-    // store the metadata
-    //IMetaDataManager mng;
-    // mng.GetMetaData(GetRef().node, 0);
-    // SaveMetaData(prim.GetParent3DObject().GetRef(),this);
+	SaveMetaData(mINode, this);
 
     // check if the mesh is animated (Otherwise, no need to export)
     if(mNumSamples > 0) 

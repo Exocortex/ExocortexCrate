@@ -15,6 +15,7 @@ private:
    AbcG::OXformSchema mXformSchema;
    AbcG::XformSample mXformSample;
    AlembicCustomAttributesEx customAttributes;
+   AbcG::OVisibilityProperty mOVisibility;
 public:
    AlembicXForm(SceneNodePtr eNode, AlembicWriteJob * in_Job, Abc::OObject oParent);
    ~AlembicXForm();

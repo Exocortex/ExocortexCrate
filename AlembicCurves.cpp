@@ -57,8 +57,7 @@ bool AlembicCurves::Save(double time, bool bLastFrame)
 		}
 	}
 
-   //TODO: should metadata be saved here? or on the transform only
-	//SaveMetaData(GetRef().node, this);
+	SaveMetaData(mINode, this);
 
     // check if the spline is animated
     if(mNumSamples > 0) 

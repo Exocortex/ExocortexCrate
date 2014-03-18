@@ -66,7 +66,7 @@ bool AlembicPoints::Save(double time, bool bLastFrame)
     TimeValue ticks = GetTimeValueFromFrame(time);
     Object *obj = mINode->EvalWorldState(ticks).obj;
 
-	//SaveMetaData(GetRef().node, this);
+	SaveMetaData(mINode, this);
 
 	SimpleParticle* pSimpleParticle = (SimpleParticle*)obj->GetInterface(I_SIMPLEPARTICLEOBJ);
 	IPFSystem* ipfSystem = GetPFSystemInterface(obj);
@@ -118,11 +118,6 @@ bool AlembicPoints::Save(double time, bool bLastFrame)
 		numParticles = pSimpleParticle->parts.points.Count();
 	}
 
-
-
-    // Set the visibility
-    float flVisibility = mINode->GetLocalVisibility(ticks);
-    mOVisibility.set(flVisibility > 0 ? AbcG::kVisibilityVisible : AbcG::kVisibilityHidden);
 
     // Store positions, velocity, width/size, scale, id, bounding box
     std::vector<Abc::V3f> positionVec;

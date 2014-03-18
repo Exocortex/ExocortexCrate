@@ -16,7 +16,6 @@ private:
     Abc::OObject mOParent;
 protected:
     int mNumSamples;
-    AbcG::OVisibilityProperty mOVisibility;
     AlembicWriteJob * mJob;
 	bool bForever;
 

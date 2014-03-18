@@ -42,8 +42,6 @@ bool AlembicCamera::Save(double time, bool bLastFrame)
 	}
 	bForever = false;
 
-
-   //TODO: should metadata be saved here? or on the transform only
 	SaveMetaData(mINode, this);
 
     // Set the xform sample
@@ -54,11 +52,6 @@ bool AlembicCamera::Save(double time, bool bLastFrame)
         Abc::V3f alembicWorldPoint = ConvertMaxPointToAlembicPoint(worldMaxPoint);
         mJob->GetArchiveBBox().extendBy(alembicWorldPoint);
     }
-
-    // store the metadata
-    // IMetaDataManager mng;
-    // mng.GetMetaData(GetRef().node, 0);
-    // SaveMetaData(prim.GetParent3DObject().GetRef(),this);
 
     // check if the camera is animated
     if(mNumSamples > 0) 
