@@ -259,11 +259,15 @@ bool getParticleSystemMesh(TimeValue ticks, Object* obj, INode* node, Intermedia
 						ESS_LOG_WARNING("Warning: Mesh Vertices count and velocities count do not match.");
 					}
 
-					mesh->mVelocitiesVec.reserve(perVertexVelocities.Count());
-					for(int j=0; j<perVertexVelocities.Count(); j++){
-						Abc::V4f pVelocity4 = ConvertMaxVectorToAlembicVector4(perVertexVelocities[j] * TIME_TICKSPERSEC); 
-						pVelocity4 = pVelocity4 * nodeWorldTransInv;
-						mesh->mVelocitiesVec.push_back(Abc::V3f(pVelocity4.x, pVelocity4.y, pVelocity4.z));
+               if(perVertexVelocities.Count() == pMesh->getNumVerts()){
+						ESS_LOG_WARNING("Warning: Mesh Vertices count and velocities count do not match.");
+
+                  mesh->mVelocitiesVec.reserve(perVertexVelocities.Count());
+					   for(int j=0; j<perVertexVelocities.Count(); j++){
+						   Abc::V4f pVelocity4 = ConvertMaxVectorToAlembicVector4(perVertexVelocities[j] * TIME_TICKSPERSEC); 
+						   pVelocity4 = pVelocity4 * nodeWorldTransInv;
+						   mesh->mVelocitiesVec.push_back(Abc::V3f(pVelocity4.x, pVelocity4.y, pVelocity4.z));
+					   }
 					}
 				}
 				else{
@@ -271,7 +275,10 @@ bool getParticleSystemMesh(TimeValue ticks, Object* obj, INode* node, Intermedia
 				}	
 			}
 
-			mesh->Save(mJob->mOptions, pMesh, NULL, meshTM, pMtl, -1, nNumSamples == 0, pMatMerge);
+   //      CommonOptions options;
+   //      options.Copy(GetCurrentJob()->mOptions);
+   //      mesh->Init(pMesh, NULL, pMtl, -1, nNumSamples == 0, pMatMerge);
+			//mesh->Save(mJob->mOptions, pMesh, NULL, meshTM, pMtl, -1, nNumSamples == 0, pMatMerge);
 
 			if(bNeedDelete){
 				delete pMesh;
@@ -388,11 +395,11 @@ bool getParticleSystemMesh(TimeValue ticks, Object* obj, INode* node, Intermedia
 		pMatMerge->bPreserveIds = true;
 
 		if(i == 0){
-			mesh->Save(mJob->mOptions, pMesh, NULL, meshTM, groupInterface.m_pCurrGroupMtl, -1, nNumSamples == 0, pMatMerge);
+			//mesh->Save(mJob->mOptions, pMesh, NULL, meshTM, groupInterface.m_pCurrGroupMtl, -1, nNumSamples == 0, pMatMerge);
 		}
 		else{
 			IntermediatePolyMesh3DSMax currPolyMesh;
-			currPolyMesh.Save(mJob->mOptions, pMesh, NULL, meshTM, groupInterface.m_pCurrGroupMtl, -1, nNumSamples == 0, pMatMerge);
+			//currPolyMesh.Save(mJob->mOptions, pMesh, NULL, meshTM, groupInterface.m_pCurrGroupMtl, -1, nNumSamples == 0, pMatMerge);
 			bool bSuccess = mesh->mergeWith(currPolyMesh);
 			if(!bSuccess){
 				if(bNeedDelete){

@@ -60,6 +60,12 @@ inline Point3 ConvertAlembicVectorToMaxVector( const Abc::V3f &alembicPoint )
 	return Point3(alembicPoint.x, -alembicPoint.z, alembicPoint.y);
 }
 
+inline Abc::V3f ConvertMaxNormalToAlembicNormal( const Abc::V3f &maxPoint )
+{
+   Abc::V3f maxPointNormalized = maxPoint.normalized();
+	 return Abc::V3f( maxPoint.x, maxPoint.z, -maxPoint.y);
+}
+
 inline Abc::V3f ConvertMaxNormalToAlembicNormal( const Point3 &maxPoint )
 {
      Point3 maxPointNormalized = maxPoint.Normalize();

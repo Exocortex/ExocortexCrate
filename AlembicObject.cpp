@@ -14,8 +14,15 @@ AlembicObject::AlembicObject (SceneNodePtr eNode, AlembicWriteJob * in_Job, Abc:
 	bForever = false;
    mExoSceneNode = eNode;
 
-   SceneNodeMaxPtr maxNode = reinterpret<SceneNode, SceneNodeMax>(eNode);
-   mINode = maxNode->node;
+   if(eNode->type != SceneNode::POLYMESH_SUBTREE){
+      SceneNodeMaxPtr maxNode = reinterpret<SceneNode, SceneNodeMax>(eNode);
+      mINode = maxNode->node;
+      bMergedSubtreeNodeParent = maxNode->bMergedSubtreeNodeParent;
+   }
+   else{
+      mINode = NULL;
+      bMergedSubtreeNodeParent = false;
+   }
 
 	mNumSamples = 0;
 }

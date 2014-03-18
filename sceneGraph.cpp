@@ -3,7 +3,6 @@
 #include "Utility.h"
 
 
-
 //Import methods, we won't need these until we update the importer
 bool SceneNodeMax::replaceData(SceneNodeAlembicPtr fileNode, const IJobStringParser& jobParams, SceneNodeAlembicPtr& nextFileNode)
 { 
@@ -76,11 +75,34 @@ Imath::M44d SceneNodeMax::getGlobalTransDouble(double time)
 
 bool SceneNodeMax::getVisibility(double time)
 { 
+   if(bMergedSubtreeNodeParent) return true;
+
    TimeValue ticks = GetTimeValueFromFrame(time);
    float flVisibility = node->GetLocalVisibility(ticks);
    return flVisibility > 0;
 }
 
+
+MeshData SceneNodeMax::getMeshData(double time)
+{
+   MeshData meshData;
+
+   TimeValue ticks = GetTimeValueFromFrame(time);
+   meshData.obj = node->EvalWorldState(ticks).obj;
+
+	if (meshData.obj->CanConvertToType(Class_ID(POLYOBJ_CLASS_ID, 0)))
+	{
+		meshData.polyObj = reinterpret_cast<PolyObject *>(meshData.obj->ConvertToType(ticks, Class_ID(POLYOBJ_CLASS_ID, 0)));
+		meshData.polyMesh = &meshData.polyObj->GetMesh();
+	}
+	else if (meshData.obj->CanConvertToType(Class_ID(TRIOBJ_CLASS_ID, 0)))
+	{
+		meshData.triObj = reinterpret_cast<TriObject *>(meshData.obj->ConvertToType(ticks, Class_ID(TRIOBJ_CLASS_ID, 0)));
+		meshData.triMesh = &meshData.triObj->GetMesh();
+	}
+
+   return meshData;
+}
 
 
 SceneNode::nodeTypeE getNodeType(INode* node)

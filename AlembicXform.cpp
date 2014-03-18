@@ -113,8 +113,10 @@ AlembicXForm::AlembicXForm(SceneNodePtr eNode, AlembicWriteJob * in_Job, Abc::OO
 
    mOVisibility = CreateVisibilityProperty(xform, GetCurrentJob()->GetAnimatedTs());
 
-   Abc::OCompoundProperty userProperties = mXformSchema.getUserProperties();
-   customAttributes.defineCustomAttributes(mINode, userProperties, mXformSchema.getMetaData(), GetCurrentJob()->GetAnimatedTs());
+   if(!bMergedSubtreeNodeParent){
+      Abc::OCompoundProperty userProperties = mXformSchema.getUserProperties();
+      customAttributes.defineCustomAttributes(mINode, userProperties, mXformSchema.getMetaData(), GetCurrentJob()->GetAnimatedTs());
+   }
 }
 
 AlembicXForm::~AlembicXForm()
@@ -152,7 +154,9 @@ bool AlembicXForm::Save(double time, bool bLastFrame)
 
    //const bool bFirstFrame = mNumSamples == 0;
 
-   customAttributes.exportCustomAttributes(mINode, time);
+   if(!bMergedSubtreeNodeParent){
+      customAttributes.exportCustomAttributes(mINode, time);
+   }
 
    //SaveUserProperties(mExoSceneNode, mXformSchema, GetCurrentJob()->GetAnimatedTs(), time, bFirstFrame);
 

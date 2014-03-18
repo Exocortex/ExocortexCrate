@@ -1083,7 +1083,7 @@ void AlembicPoints::saveCurrentFrameMeshes()
 			IntermediatePolyMesh3DSMax finalPolyMesh;
             {
             ESS_PROFILE_SCOPE("AlembicPoints::saveCurrentFrameMeshes - finalPolyMesh.Save");
-			finalPolyMesh.Save(options, pMesh, NULL, mi->meshTM, NULL, mi->nMatId, true, NULL);
+			//finalPolyMesh.Save(options, pMesh, NULL, mi->meshTM, NULL, mi->nMatId, true, NULL);
             }
 
             AbcG::OPolyMeshSchema::Sample meshSample;
@@ -1146,7 +1146,7 @@ void AlembicPoints::saveCurrentFrameMeshes()
 					Abc::OUInt32ArrayProperty(meshSchema, ".materialids", meshSchema.getMetaData(), mJob->GetAnimatedTs());
 				mMatIdProperty.set(Abc::UInt32ArraySample(finalPolyMesh.mMatIdIndexVec));
 
-				for ( facesetmap_it it=finalPolyMesh.mFaceSetsMap.begin(); it != finalPolyMesh.mFaceSetsMap.end(); it++)
+				for ( facesetmap_it it=finalPolyMesh.mFaceSets.begin(); it != finalPolyMesh.mFaceSets.end(); it++)
 				{
 					std::stringstream nameStream;
 					int nMaterialId = it->first+1;

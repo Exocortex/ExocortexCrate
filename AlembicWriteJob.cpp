@@ -11,7 +11,7 @@
 #include "AlembicPoints.h"
 #include "AlembicCurves.h"
 #include "CommonUtilities.h"
-//#include "CommonSubtreeMerge.h"
+#include "CommonSubtreeMerge.h"
 
 
 AlembicWriteJob::AlembicWriteJob(const std::string &in_FileName, const ObjectList &in_Selection, const std::vector<double> &in_Frames, Interface *i)
@@ -170,7 +170,7 @@ bool AlembicWriteJob::PreProcess()
 	
 
 	const bool bParticleMesh = GetOption("exportParticlesAsMesh");
-   bool bMergePolyMeshSubtree = GetOption("mergePolyMeshSubtree");
+   bool bMergePolyMeshSubtree = true;//GetOption("mergePolyMeshSubtree");
 
    bool bSelectParents = GetOption("includeParentNodes");
    const bool bSelectChildren = false;
@@ -213,6 +213,10 @@ bool AlembicWriteJob::PreProcess()
    //if(bMergePolyMeshSubtree){
    //   replacePolyMeshSubtree<SceneNodeMaxPtr, SceneNodeMax>(exoSceneRoot);
    //}
+
+   if(bMergePolyMeshSubtree){
+      replacePolyMeshSubtree<SceneNodeMaxPtr, SceneNodeMax>(exoSceneRoot);
+   }
 
    if(bFlattenHierarchy){
       nNumNodes = 0;
@@ -263,7 +267,12 @@ bool AlembicWriteJob::PreProcess()
          pNewObject.reset(new AlembicCurves(eNode, this, oParent));
       }
       else if(eNode->type == SceneNode::PARTICLES || eNode->type == SceneNode::PARTICLES_TP){
-         pNewObject.reset(new AlembicPoints(eNode, this, oParent));
+         if(bParticleMesh){
+            pNewObject.reset(new AlembicPoints(eNode, this, oParent));
+         }
+         else{
+            pNewObject.reset(new AlembicPolyMesh(eNode, this, oParent));
+         }
       }
       else{
          ESS_LOG_WARNING("Unknown type: not exporting "<<eNode->name);//Export as transform, and give warning?

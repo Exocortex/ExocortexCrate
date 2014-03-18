@@ -20,6 +20,7 @@ protected:
 	bool bForever;
 
    SceneNodePtr mExoSceneNode;
+   bool bMergedSubtreeNodeParent;
    INode *mINode;
 public:
     AlembicObject(SceneNodePtr eNode, AlembicWriteJob * in_Job, Abc::OObject oParent);
