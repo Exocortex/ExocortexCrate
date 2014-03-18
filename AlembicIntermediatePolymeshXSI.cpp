@@ -57,6 +57,15 @@ void IntermediatePolyMeshXSI::Save(SceneNodePtr eNode, const Imath::M44f& transf
    }
 
 
+    // abort here if we are just storing points
+   //We do this for 3DS Max, should we do it as well?
+	//bool purePointCache = GetOption(mOptions, "exportPurePointCache");
+ //   if(purePointCache)
+ //   {
+ //       return;
+ //   }
+
+
    // we also need to store the face counts as well as face indices
    mFaceCountVec.resize(faceCount);
    mFaceIndicesVec.resize(sampleCount);
@@ -282,6 +291,45 @@ void IntermediatePolyMeshXSI::Save(SceneNodePtr eNode, const Imath::M44f& transf
          mBindPoseVec[i].z = (float)bindPosePos[i].GetZ();
       }
    }   
+
+
+}
+
+
+bool IntermediatePolyMeshXSI::mergeWith(const CommonIntermediatePolyMesh& srcMesh)
+{
+    ESS_PROFILE_FUNC();
+
+   IntermediatePolyMeshXSI& destMesh = *this;
+   const IntermediatePolyMeshXSI& srcMeshMax = (IntermediatePolyMeshXSI&)srcMesh;
+
+   Abc::uint32_t amountToOffsetFaceIdBy = (Abc::uint32_t)destMesh.mFaceCountVec.size();
+
+   bool bRes = CommonIntermediatePolyMesh::mergeWith(srcMesh);
+   if(!bRes) return false;
+
+	for(FaceSetMap::const_iterator it=srcMeshMax.mFaceSets.begin(); it != srcMeshMax.mFaceSets.end(); it++)
+	{
+		if( destMesh.mFaceSets.find(it->first) == destMesh.mFaceSets.end() ){ // a new key
+			destMesh.mFaceSets[it->first] = it->second;
+		}
+		else{// the key is common
+
+			const facesetmap_vec& srcFaceSetVec = it->second.faceIds;
+			facesetmap_vec& destFaceSetVec = destMesh.mFaceSets[it->first].faceIds;
+
+			for(int i=0; i<srcFaceSetVec.size(); i++){
+				destFaceSetVec.push_back(amountToOffsetFaceIdBy + srcFaceSetVec[i]);
+			}
+		}
+	}
+
+	return true;
+}
+
+void IntermediatePolyMeshXSI::clear()
+{
+   *this = IntermediatePolyMeshXSI();
 
 
 }

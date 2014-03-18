@@ -18,7 +18,6 @@ private:
 
    AlembicCustomAttributesEx customAttributes;
 
-   IntermediatePolyMeshXSI finalMesh;
 public:
 
    AlembicPolyMesh(SceneNodePtr eNode, AlembicWriteJob * in_Job, Abc::OObject oParent);

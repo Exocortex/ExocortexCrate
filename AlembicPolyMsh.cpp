@@ -80,7 +80,8 @@ XSI::CStatus AlembicPolyMesh::Save(double time)
       options.SetOption("exportUVOptions", true);
    }
 
-   finalMesh.clear();
+   //finalMesh.clear();
+   IntermediatePolyMeshXSI finalMesh;
 
    if(mExoSceneNode->type == SceneNode::POLYMESH_SUBTREE){
       SceneNodePolyMeshSubtreePtr meshSubtreeNode = reinterpret<SceneNode, SceneNodePolyMeshSubtree>(mExoSceneNode);
