@@ -73,8 +73,8 @@ template<class S, class T> void replacePolyMeshSubtree(SceneNodePtr root)
 done:
 
    //remove the polymesh subtree
-   selectNonPolyMeshShapeNodes(commonRoot);
-   removeUnselectedNodes(commonRoot);
+  // selectPolyMeshShapeNodes(commonRoot);
+   //removeUnselectedNodes(commonRoot);
 
 
    //here we make a copy of the common root. Each shape should have its own parent transform node.
@@ -88,6 +88,7 @@ done:
    sceneNode->type = SceneNode::ETRANSFORM;
    sceneNode->dccIdentifier = commonNodeApp->dccIdentifier;
    sceneNode->children.push_back(mergedMeshNode);
+   commonRoot->children.clear();
    commonRoot->children.push_back(sceneNode);
 
    sceneNode->parent = commonRoot.get();

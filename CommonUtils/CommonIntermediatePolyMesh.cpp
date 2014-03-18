@@ -121,16 +121,12 @@ bool CommonIntermediatePolyMesh::mergeWith(const CommonIntermediatePolyMesh& src
 	}
 
 
-   for(FaceSetMap::const_iterator it=srcMesh.mFaceSets.begin(); it != srcMesh.mFaceSets.end(); it++){
-      FaceSetStruct& faceSet = destMesh.mFaceSets[it->first];
-      for(int i=0; i<it->second.faceIds.size(); i++){
-         faceSet.faceIds.push_back(amountToOffsetFaceIdBy + it->second.faceIds[i]);
-      }
-   }
-
-	//for(int i=0; i<srcMesh.mMatIdIndexVec.size(); i++){
-	//	destMesh.mMatIdIndexVec.push_back(srcMesh.mMatIdIndexVec[i]);
-	//}
+   //for(FaceSetMap::const_iterator it=srcMesh.mFaceSets.begin(); it != srcMesh.mFaceSets.end(); it++){
+   //   FaceSetStruct& faceSet = destMesh.mFaceSets[it->first];
+   //   for(int i=0; i<it->second.faceIds.size(); i++){
+   //      faceSet.faceIds.push_back(amountToOffsetFaceIdBy + it->second.faceIds[i]);
+   //   }
+   //}
 
 
 	////now rebuilt the matID index array
@@ -150,29 +146,29 @@ bool CommonIntermediatePolyMesh::mergeWith(const CommonIntermediatePolyMesh& src
 	return true;
 }
 
-
-void CommonIntermediatePolyMesh::clear()
-{
-   //a safer way to clear.
-   *this = CommonIntermediatePolyMesh();
-
- //  bbox = Abc::Box3d();
-
-	//posVec.clear();
-	//mFaceCountVec.clear();
-	//mFaceIndicesVec.clear();  
-
- //  mVelocitiesVec.clear();
-
- //  mIndexedNormals.name = std::string();
-	//mIndexedNormals.indices.clear();
- //  mIndexedNormals.values.clear();
-	//mIndexedUVSet.clear();
-	//
- //  //mMatIdIndexVec.clear();
-
- //  mFaceSets.clear();
- //  mUvOptionsVec.clear();
- //  mBindPoseVec.clear();
- //  bGeomApprox = 0;
-}
+//
+//void CommonIntermediatePolyMesh::clear()
+//{
+//   //a safer way to clear.
+//   *this = CommonIntermediatePolyMesh();
+//
+// //  bbox = Abc::Box3d();
+//
+//	//posVec.clear();
+//	//mFaceCountVec.clear();
+//	//mFaceIndicesVec.clear();  
+//
+// //  mVelocitiesVec.clear();
+//
+// //  mIndexedNormals.name = std::string();
+//	//mIndexedNormals.indices.clear();
+// //  mIndexedNormals.values.clear();
+//	//mIndexedUVSet.clear();
+//	//
+// //  //mMatIdIndexVec.clear();
+//
+// //  mFaceSets.clear();
+// //  mUvOptionsVec.clear();
+// //  mBindPoseVec.clear();
+// //  bGeomApprox = 0;
+//}

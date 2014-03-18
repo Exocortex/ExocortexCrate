@@ -42,20 +42,16 @@ public:
          optionMap[name] = 0;
       }
    }
+
+   inline void Copy(std::map<std::string, bool> map)
+   {
+      for( std::map<std::string, bool>::iterator it=map.begin(); it != map.end(); it++){
+         SetOption(it->first, it->second);
+      }
+   }
 };
 
 
-
-
-typedef std::vector<AbcA::int32_t> facesetmap_vec;
-
-struct FaceSetStruct
-{
-	facesetmap_vec faceIds;
-};
-
-typedef std::map<std::string, FaceSetStruct> FaceSetMap; 
-   
 
 class CommonIntermediatePolyMesh
 {
@@ -75,8 +71,7 @@ public:
 	IndexedNormals mIndexedNormals;
 	std::vector<IndexedUVs> mIndexedUVSet;
 	
-	//std::vector<Abc::uint32_t> mMatIdIndexVec;
-   FaceSetMap mFaceSets; 
+
 
    std::vector<float> mUvOptionsVec;      ////TODO: merge?
 
@@ -86,11 +81,11 @@ public:
 
    //std::vector<float> mRadiusVec;
 
-   virtual void Save(SceneNodePtr eNode, const Imath::M44f& transform44f, const CommonOptions& options, double time){}
+   virtual void Save(SceneNodePtr eNode, const Imath::M44f& transform44f, const CommonOptions& options, double time) = 0;
 
-	bool mergeWith(const CommonIntermediatePolyMesh& srcMesh);
+	virtual bool mergeWith(const CommonIntermediatePolyMesh& srcMesh);
 
-   void clear();
+   virtual void clear() = 0;
 };
 
 

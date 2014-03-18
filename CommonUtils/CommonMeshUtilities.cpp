@@ -629,6 +629,7 @@ void dynamicTopoVelocityCalc::calcVelocities(const std::vector<Abc::V3f>& nextPo
           if(posVec.size() != nextPosVec.size()){
             ESS_LOG_WARNING("calcVelocities - posVec.size() != nextPosVec.size()");
           }
+          //TODO: remove this warning?
           if(nextPosVec.size() != velocities.size()){
             ESS_LOG_WARNING("calcVelocities - nextPosVec.size() != velocities.size()");
           }
