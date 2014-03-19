@@ -12,7 +12,7 @@ class AlembicWriteJob
 {
 private:
     std::string mFileName;
-    ObjectList mSelection;
+    std::map<std::string, bool> mObjectsMap;
     std::vector<double> mFrames;
     Abc::OArchive mArchive;
     unsigned int mTs;
@@ -29,7 +29,7 @@ public:
 	std::map<std::string, bool> mOptions;
 	int mMeshErrors;
 
-   AlembicWriteJob(const std::string &in_FileName, const ObjectList &in_Selection, const std::vector<double> &in_Frames, Interface *i);
+   AlembicWriteJob(const std::string &in_FileName, std::map<std::string, bool>& objectsMap, const std::vector<double> &in_Frames, Interface *i);
    ~AlembicWriteJob();
 
    Abc::OArchive GetArchive() { return mArchive; }

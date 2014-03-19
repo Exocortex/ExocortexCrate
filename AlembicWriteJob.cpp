@@ -14,12 +14,12 @@
 #include "CommonSubtreeMerge.h"
 
 
-AlembicWriteJob::AlembicWriteJob(const std::string &in_FileName, const ObjectList &in_Selection, const std::vector<double> &in_Frames, Interface *i)
+AlembicWriteJob::AlembicWriteJob(const std::string &in_FileName, std::map<std::string, bool>& objectsMap, const std::vector<double> &in_Frames, Interface *i)
 {
     mApplication = i;
 	mMeshErrors = 0;
     mFileName = in_FileName;
-    mSelection = in_Selection;
+    mObjectsMap = objectsMap;
 
     for(int i=0; i < in_Frames.size(); i++)
     {
@@ -78,12 +78,12 @@ bool AlembicWriteJob::PreProcess()
         return false;
     }
 
-    // check objects
-    if(mSelection.Count() == 0)
-    {
-        ESS_LOG_WARNING("[alembic] No objects specified.");
-        return false;
-    }
+    //// check objects
+    //if(mSelection.Count() == 0)
+    //{
+    //    ESS_LOG_WARNING("[alembic] No objects specified.");
+    //    return false;
+    //}
 
     // check frames
     if(mFrames.size() == 0)
@@ -207,19 +207,13 @@ bool AlembicWriteJob::PreProcess()
    //printSceneGraph(exoSceneRoot, false);
 
 
-
    if(bObjectsParameterExists){
-      //TODO: create input selection map...
-      std::map<std::string, bool> selectionMap;
-
-      //for(int i=0; i<mSelection.size(); i++){
-      //   XSI::CRef nodeRef;
-      //   nodeRef.Set(mSelection[i].c_str());
-      //   XSI::X3DObject xObj(nodeRef);
-      //   selectionMap[xObj.GetFullName().GetAsciiString()] = true;
-      //}
-      
-      selectNodes(exoSceneRoot, selectionMap, /*!bFlattenHierarchy || bTransformCache*/ bSelectParents, bSelectChildren, !bTransformCache);
+      selectNodes(exoSceneRoot, mObjectsMap, /*!bFlattenHierarchy || bTransformCache*/ bSelectParents, bSelectChildren, !bTransformCache);
+      for(SceneNode::SelectionT::iterator it = mObjectsMap.begin(); it != mObjectsMap.end(); it++){
+         if(it->second == false){
+            ESS_LOG_WARNING("Could not resolve objects identifier: "<<it->first);
+         }
+      }
    }
 
    if(bExportSelected || bObjectsParameterExists){
