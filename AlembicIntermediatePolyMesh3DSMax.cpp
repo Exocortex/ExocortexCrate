@@ -320,16 +320,8 @@ void IntermediatePolyMesh3DSMax::Save(SceneNodePtr eNode, const Imath::M44f& tra
    Mesh* triMesh = meshData.triMesh;
    MNMesh* polyMesh = meshData.polyMesh;
 
-   int nMatId = -1;//maxNode->getMtlID();
+   int nMatId = maxNode->getMtlID();
 
-
- ////
-	//////for transforming the normals
-	////Matrix3 meshTM_I_T = meshTM;
-	////meshTM_I_T.SetTrans(Point3(0.0, 0.0, 0.0));
-	//////the following two steps are necessary because meshTM can contain a scale factor
-	////meshTM_I_T = Inverse(meshTM_I_T);
-	////meshTM_I_T = TransposeRot(meshTM_I_T);
 	
    //for transforming the normals
    Imath::M44f transform44f_I_T = transform44f;
@@ -337,7 +329,6 @@ void IntermediatePolyMesh3DSMax::Save(SceneNodePtr eNode, const Imath::M44f& tra
    transform44f_I_T[3][0] = 0.0f;
    transform44f_I_T[3][1] = 0.0f;
    transform44f_I_T[3][2] = 0.0f;
-   //transform44f_I_T = transform44f_I_T.setTranslation(Imath::V3f(0.0f, 0.0f, 0.0f));
    //dealing with scaling
    transform44f_I_T = transform44f_I_T.inverse();
    transform44f_I_T = transform44f_I_T.transpose();

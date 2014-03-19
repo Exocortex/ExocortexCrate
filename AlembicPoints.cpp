@@ -1074,16 +1074,21 @@ void AlembicPoints::saveCurrentFrameMeshes()
 			//Matrix3 worldTrans;
 			//worldTrans.IdentityMatrix();
 
-			std::map<std::string, bool> options;
-			options["exportNormals"] = mJob->GetOption("exportNormals");
-			options["exportMaterialIds"] = mJob->GetOption("exportMaterialIds");
+			CommonOptions options;
+         options.SetOption("exportNormals", mJob->GetOption("exportNormals"));
+			options.SetOption("exportMaterialIds", mJob->GetOption("exportMaterialIds"));
 
 			//gather the mesh data
 			mi->meshTM.IdentityMatrix();
 			IntermediatePolyMesh3DSMax finalPolyMesh;
             {
             ESS_PROFILE_SCOPE("AlembicPoints::saveCurrentFrameMeshes - finalPolyMesh.Save");
-			//finalPolyMesh.Save(options, pMesh, NULL, mi->meshTM, NULL, mi->nMatId, true, NULL);
+
+            Imath::M44f transform44f;
+            ConvertMaxMatrixToAlembicMatrix( mi->meshTM, transform44f );
+            SceneNodeMaxParticlesPtr inputSceneNode(new SceneNodeMaxParticles(pMesh, NULL, mi->nMatId));
+            finalPolyMesh.Save(inputSceneNode, transform44f, options, 0.0);
+
             }
 
             AbcG::OPolyMeshSchema::Sample meshSample;
