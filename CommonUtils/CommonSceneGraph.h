@@ -92,10 +92,14 @@ inline bool isShapeNode( SceneNode::nodeTypeE type )
       type == SceneNode::SUBD ||
       type == SceneNode::SURFACE ||
       type == SceneNode::CURVES ||
-      type == SceneNode::PARTICLES;
+      type == SceneNode::PARTICLES ||
+      type == SceneNode::PARTICLES_TP;
 }
 
-
+inline bool isParticleSystem( SceneNode::nodeTypeE type )
+{
+   return type == SceneNode::PARTICLES || type == SceneNode::PARTICLES_TP; 
+}
 
 class IJobStringParser;
 class SceneNodeAlembic;
