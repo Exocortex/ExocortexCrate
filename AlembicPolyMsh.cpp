@@ -26,15 +26,9 @@
 AlembicPolyMesh::AlembicPolyMesh(SceneNodePtr eNode, AlembicWriteJob * in_Job, Abc::OObject oParent)
 : AlembicObject(eNode, in_Job, oParent), customAttributes("Shape User Properties")//TODO...
 {
-    std::string xformName = "MergedPolyMesh";
-    if(mINode){
-       xformName = EC_MCHAR_to_UTF8( mINode->GetName() );
-    }
-	std::string meshName = xformName + "Shape";
+   AbcG::OPolyMesh mesh(GetOParent(), eNode->name, GetCurrentJob()->GetAnimatedTs());
 
-    AbcG::OPolyMesh mesh(GetOParent(), meshName.c_str(), GetCurrentJob()->GetAnimatedTs());
-
-    mMeshSchema = mesh.getSchema();
+   mMeshSchema = mesh.getSchema();
 }
 
 AlembicPolyMesh::~AlembicPolyMesh()
@@ -87,18 +81,15 @@ bool AlembicPolyMesh::Save(double time, bool bLastFrame)
 
 	TimeValue ticks = GetTimeValueFromFrame(time);
 
-   bool bIsParticleSystem = false;
-   Object *obj = NULL;
+   const bool bIsParticleSystem = isParticleSystem(mExoSceneNode->type);
 
-   if(mINode){
-   //TODO: not sure if EvalWorldState is expensive. I'll profile it later
-	obj = mINode->EvalWorldState(ticks).obj;
-   bIsParticleSystem = obj->IsParticleSystem() == 1;
+   // mMaxNode (could be null if this is a merged polyMesh)
 
 	if(bIsParticleSystem){
 		bForever = false;
 	}
-	else{
+	else if(mMaxNode){
+      Object *obj = mMaxNode->EvalWorldState(ticks).obj;
 		if(mNumSamples == 0){
 			bForever = CheckIfObjIsValidForever(obj, ticks);
 		}
@@ -110,35 +101,38 @@ bool AlembicPolyMesh::Save(double time, bool bLastFrame)
 		}
 	}
 
-	SaveMetaData(mINode, this);
-
-    // check if the mesh is animated (Otherwise, no need to export)
-    if(mNumSamples > 0) 
-    {
-        if(bForever)
-        {
-			ESS_LOG_INFO( "Node is not animated, not saving topology on subsequent frames." );
-            return true;
-        }
-    }
+   if(mMaxNode){
+	   SaveMetaData(mMaxNode, this);
    }
+
+   // check if the mesh is animated (Otherwise, no need to export)
+   if(mNumSamples > 0) 
+   {
+      if(bForever)
+      {
+         ESS_LOG_INFO( "Node is not animated, not saving topology on subsequent frames." );
+         return true;
+      }
+   }
+
 
 	IntermediatePolyMesh3DSMax finalMesh;
 
-	if(bIsParticleSystem && mINode){
+	if(bIsParticleSystem){//Merged Particle System Export
 
-        bool bEnableVelocityExport = true;
-		bool bSuccess = getParticleSystemMesh(ticks, obj, mINode, &finalMesh, &materialsMerge, mJob, mNumSamples, bEnableVelocityExport);
+      const bool bEnableVelocityExport = true;
+      bool bSuccess = mMaxNode != NULL;
+      if(bSuccess){
+         bSuccess = getParticleSystemMesh(ticks, mMaxNode, &finalMesh, &materialsMerge, mJob, mNumSamples, bEnableVelocityExport);
+      }
 		if(!bSuccess){
 			ESS_LOG_INFO( "Error. Could not get particle system mesh. Time: "<<time );
 			return false;
 		}
-
-        velocityCalc.calcVelocities(finalMesh.posVec, finalMesh.mFaceIndicesVec, finalMesh.mVelocitiesVec, GetSecondsFromTimeValue(ticks));
+      velocityCalc.calcVelocities(finalMesh.posVec, finalMesh.mFaceIndicesVec, finalMesh.mVelocitiesVec, GetSecondsFromTimeValue(ticks));
 	}
 	else
 	{
-
       CommonOptions options;
       options.Copy(GetCurrentJob()->mOptions);
 
@@ -146,11 +140,12 @@ bool AlembicPolyMesh::Save(double time, bool bLastFrame)
       //   options.SetOption("exportFaceSets", false);
       //}
 
-      if(mExoSceneNode->type == SceneNode::POLYMESH_SUBTREE){
+      if(mExoSceneNode->type == SceneNode::POLYMESH_SUBTREE){ //Merged PolyMesh Subtree Export
          SceneNodePolyMeshSubtreePtr meshSubtreeNode = reinterpret<SceneNode, SceneNodePolyMeshSubtree>(mExoSceneNode);
          mergePolyMeshSubtreeNode<IntermediatePolyMesh3DSMax>(meshSubtreeNode, finalMesh, options, time);
       }
-      else{
+      else{ //Normal PolyMesh node export
+
          //for now, custom attribute will ignore if meshes are being merged
          //customAttributes.exportCustomAttributes(mesh);
 
@@ -167,9 +162,9 @@ bool AlembicPolyMesh::Save(double time, bool bLastFrame)
 	bool dynamicTopology = static_cast<bool>(GetCurrentJob()->GetOption("exportDynamicTopology"));
 	
 	// Extend the archive bounding box
-	if (mJob && mINode){
-		Abc::M44d wm;
-		ConvertMaxMatrixToAlembicMatrix(mINode->GetObjTMAfterWSM(ticks), wm);
+	if (mJob && mMaxNode){
+      //TODO: need to make this work for mergedPolyMesh somehow
+		Abc::M44d wm = mExoSceneNode->getGlobalTransDouble(time);
 
 		Abc::Box3d bbox = finalMesh.bbox;
 
@@ -206,8 +201,8 @@ bool AlembicPolyMesh::Save(double time, bool bLastFrame)
         return true;
     }
 
-	if(mJob->GetOption("validateMeshTopology") && mINode){
-		mJob->mMeshErrors += validateAlembicMeshTopo(finalMesh.mFaceCountVec, finalMesh.mFaceIndicesVec, EC_MCHAR_to_UTF8(mINode->GetName()));
+	if(mJob->GetOption("validateMeshTopology")){
+		mJob->mMeshErrors += validateAlembicMeshTopo(finalMesh.mFaceCountVec, finalMesh.mFaceIndicesVec, mExoSceneNode->name);
 	}
 
 	Abc::Int32ArraySample faceCountSample(finalMesh.mFaceCountVec);
@@ -228,8 +223,8 @@ bool AlembicPolyMesh::Save(double time, bool bLastFrame)
 	//write out the texture coordinates if necessary
 	if(mJob->GetOption("exportUVs"))
 	{
-       if(correctInvalidUVs(finalMesh.mIndexedUVSet) && mINode){
-          ESS_LOG_WARNING("Capped out of range uvs on object "<<mINode->GetName()<<", frame = "<<time);
+       if(correctInvalidUVs(finalMesh.mIndexedUVSet)){
+          ESS_LOG_WARNING("Capped out of range uvs on object "<<mExoSceneNode->name<<", frame = "<<time);
        }
 	   saveIndexedUVs( mMeshSchema, mMeshSample, uvSample, mUvParams, mJob->GetAnimatedTs(), mNumSamples, finalMesh.mIndexedUVSet );
 	}

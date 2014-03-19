@@ -180,10 +180,12 @@ int particleGroupInterface::getCurrentMtlId(){
 }
 
 
-bool getParticleSystemMesh(TimeValue ticks, Object* obj, INode* node, IntermediatePolyMesh3DSMax* mesh, 
+bool getParticleSystemMesh(TimeValue ticks, INode* node, IntermediatePolyMesh3DSMax* mesh, 
 						   materialsMergeStr* pMatMerge, AlembicWriteJob * mJob, int nNumSamples, bool bEnableVelocityExport)
 {
 	static ExoNullView nullView;
+
+   Object *obj = node->EvalWorldState(ticks).obj;
 
     Matrix3 nodeWorldTM = node->GetObjTMAfterWSM(ticks);
     Abc::M44d nodeWorldTrans;
@@ -195,6 +197,9 @@ bool getParticleSystemMesh(TimeValue ticks, Object* obj, INode* node, Intermedia
 	IPFSystem* iSystem = GetPFSystemInterface(obj);
 	IParticleObjectExt* particlesExt = GetParticleObjectExtInterface(obj);
 	
+   CommonOptions options;
+   options.Copy(mJob->mOptions);
+
 	if(pParticleObject && !iSystem){
 	// for simple particles and thinking particles, else clause applies to pFlow
 	// TODO: try using particlesExt->GetRenderMeshVertexSpeed with pFlow instead of calculating the velocities manually
@@ -275,10 +280,10 @@ bool getParticleSystemMesh(TimeValue ticks, Object* obj, INode* node, Intermedia
 				}	
 			}
 
-   //      CommonOptions options;
-   //      options.Copy(GetCurrentJob()->mOptions);
-   //      mesh->Init(pMesh, NULL, pMtl, -1, nNumSamples == 0, pMatMerge);
-			//mesh->Save(mJob->mOptions, pMesh, NULL, meshTM, pMtl, -1, nNumSamples == 0, pMatMerge);
+         Imath::M44f transform44f;
+         ConvertMaxMatrixToAlembicMatrix( meshTM, transform44f );
+         SceneNodeMaxParticlesPtr inputSceneNode(new SceneNodeMaxParticles(pMesh, pMtl));
+         mesh->Save(inputSceneNode, transform44f, options, 0.0);
 
 			if(bNeedDelete){
 				delete pMesh;
@@ -394,12 +399,16 @@ bool getParticleSystemMesh(TimeValue ticks, Object* obj, INode* node, Intermedia
 		pMatMerge->currUniqueHandle = Animatable::GetHandleByAnim(groupInterface.m_pCurrParticleGroup->GetActionList());
 		pMatMerge->bPreserveIds = true;
 
+      Imath::M44f transform44f;
+      ConvertMaxMatrixToAlembicMatrix( meshTM, transform44f );
+      SceneNodeMaxParticlesPtr inputSceneNode(new SceneNodeMaxParticles(pMesh, groupInterface.m_pCurrGroupMtl));
+
 		if(i == 0){
-			//mesh->Save(mJob->mOptions, pMesh, NULL, meshTM, groupInterface.m_pCurrGroupMtl, -1, nNumSamples == 0, pMatMerge);
+         mesh->Save(inputSceneNode, transform44f, options, 0.0);
 		}
 		else{
 			IntermediatePolyMesh3DSMax currPolyMesh;
-			//currPolyMesh.Save(mJob->mOptions, pMesh, NULL, meshTM, groupInterface.m_pCurrGroupMtl, -1, nNumSamples == 0, pMatMerge);
+         currPolyMesh.Save(inputSceneNode, transform44f, options, 0.0);
 			bool bSuccess = mesh->mergeWith(currPolyMesh);
 			if(!bSuccess){
 				if(bNeedDelete){

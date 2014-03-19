@@ -23,8 +23,6 @@ void SceneNodeMax::print()
    }
 }
 
-
-
 Imath::M44f SceneNodeMax::getGlobalTransFloat(double time)
 {
    TimeValue ticks = GetTimeValueFromFrame(time);
@@ -104,6 +102,15 @@ MeshData SceneNodeMax::getMeshData(double time)
    return meshData;
 }
 
+Mtl* SceneNodeMax::getMtl()
+{
+   return node->GetMtl();
+}
+
+int SceneNodeMax::getMtlID()
+{
+   return -1;
+}
 
 SceneNode::nodeTypeE getNodeType(INode* node)
 {
@@ -286,3 +293,5 @@ SceneNodeMaxPtr buildCommonSceneGraph(int& nNumNodes, bool bUnmergeNodes, bool b
 
    return exoRoot;
 }
+
+

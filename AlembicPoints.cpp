@@ -21,7 +21,7 @@ AlembicPoints::AlembicPoints(SceneNodePtr eNode, AlembicWriteJob * in_Job, Abc::
 	mTotalShapeMeshes = 0;
 	//mTimeSamplesCount = 0;
 
-    std::string xformName = EC_MCHAR_to_UTF8( mINode->GetName() );
+    std::string xformName = EC_MCHAR_to_UTF8( mMaxNode->GetName() );
 	std::string pointsName = xformName + "Shape";
 
     AbcG::OPoints points(GetOParent(), pointsName.c_str(), GetCurrentJob()->GetAnimatedTs());
@@ -64,9 +64,9 @@ bool AlembicPoints::Save(double time, bool bLastFrame)
 
     // Extract our particle emitter at the given time
     TimeValue ticks = GetTimeValueFromFrame(time);
-    Object *obj = mINode->EvalWorldState(ticks).obj;
+    Object *obj = mMaxNode->EvalWorldState(ticks).obj;
 
-	SaveMetaData(mINode, this);
+	SaveMetaData(mMaxNode, this);
 
 	SimpleParticle* pSimpleParticle = (SimpleParticle*)obj->GetInterface(I_SIMPLEPARTICLEOBJ);
 	IPFSystem* ipfSystem = GetPFSystemInterface(obj);
@@ -110,11 +110,11 @@ bool AlembicPoints::Save(double time, bool bLastFrame)
 	else 
 #endif
 	if(particlesExt){
-		particlesExt->UpdateParticles(mINode, ticks);
+		particlesExt->UpdateParticles(mMaxNode, ticks);
 		numParticles = particlesExt->NumParticles();
 	}
 	else if(pSimpleParticle){
-		pSimpleParticle->Update(ticks, mINode);
+		pSimpleParticle->Update(ticks, mMaxNode);
 		numParticles = pSimpleParticle->parts.points.Count();
 	}
 
@@ -166,7 +166,7 @@ bool AlembicPoints::Save(double time, bool bLastFrame)
 
 	//The MAX interfaces return everything in world coordinates,
 	//so we need to multiply the inverse the node world transform matrix
-    Matrix3 nodeWorldTM = mINode->GetObjTMAfterWSM(ticks);
+    Matrix3 nodeWorldTM = mMaxNode->GetObjTMAfterWSM(ticks);
     // Convert the max transform to alembic
     Matrix3 alembicMatrix;
     ConvertMaxMatrixToAlembicMatrix(nodeWorldTM, alembicMatrix);
@@ -180,7 +180,7 @@ bool AlembicPoints::Save(double time, bool bLastFrame)
 	//ESS_LOG_WARNING("tick: "<<ticks<<"   numParticles: "<<numParticles<<"\n");
 
 	ExoNullView nullView;
-	particleGroupInterface groupInterface(particlesExt, obj, mINode, &nullView);
+	particleGroupInterface groupInterface(particlesExt, obj, mMaxNode, &nullView);
 
     {
     ESS_PROFILE_SCOPE("AlembicPoints::SAVE - numParticlesLoop");
@@ -258,7 +258,7 @@ bool AlembicPoints::Save(double time, bool bLastFrame)
             Mesh* pMesh = NULL;
             {
             ESS_PROFILE_SCOPE("AlembicPoints::SAVE - numParticlesLoop - ThinkingParticles - GetParticleRenderMesh");
-			pMesh = pThinkingParticleMat->GetParticleRenderMesh(ticks, mINode, nullView, bNeedDelete, i, meshTM, bChanged);
+			pMesh = pThinkingParticleMat->GetParticleRenderMesh(ticks, mMaxNode, nullView, bNeedDelete, i, meshTM, bChanged);
             }
 
 			if(pMesh){
@@ -1020,7 +1020,7 @@ AlembicPoints::meshInfo AlembicPoints::CacheShapeMesh(Mesh* pShapeMesh, BOOL bNe
 		mi.nMatId = nMatId;
 		
 		std::stringstream nameStream;
-		nameStream<< EC_MCHAR_to_UTF8( mINode->GetName() ) <<"_";
+		nameStream<< EC_MCHAR_to_UTF8( mMaxNode->GetName() ) <<"_";
 		nameStream<<"InstanceMesh"<<mNumShapeMeshes;
 		mi.name=nameStream.str();
 

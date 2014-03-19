@@ -18,7 +18,10 @@ public:
    Mesh* triMesh;
    MNMesh* polyMesh; 
 
-   MeshData():polyObj(NULL), triObj(NULL), triMesh(NULL), polyMesh(NULL)
+   MeshData(Mesh* mesh):obj(NULL), polyObj(NULL), triObj(NULL), triMesh(mesh), polyMesh(NULL)
+   {}
+
+   MeshData():obj(NULL), polyObj(NULL), triObj(NULL), triMesh(NULL), polyMesh(NULL)
    {}
 
    void free(){
@@ -55,7 +58,9 @@ public:
       node(n.node), bMergedSubtreeNodeParent(mergedSubtreeNodeParent), bIsCameraTransform(false)
    {}
 
-	MeshData getMeshData(double time);
+	virtual MeshData getMeshData(double time);
+   virtual Mtl* getMtl();
+   virtual int getMtlID();
 
    //Import methods, we won't need these until we update the importer
    virtual bool replaceData(SceneNodeAlembicPtr fileNode, const IJobStringParser& jobParams, SceneNodeAlembicPtr& nextFileNode);
@@ -67,7 +72,37 @@ public:
    virtual bool getVisibility(double time);
 };
 
+//Used for merged particles export so we can use IntermediatePolyMesh3DSMax::Save
+class SceneNodeMaxParticles : public SceneNodeMax
+{
+public:
+
+   MeshData mMeshData;
+   Mtl* mtl;
+   int mMatId;
+
+   SceneNodeMaxParticles(Mesh* mesh, Mtl* m, int id=-1):SceneNodeMax(NULL), mMeshData(mesh), mtl(m), mMatId(id)
+   {}
+
+	virtual MeshData getMeshData(double time)
+   {
+      return mMeshData;
+   }
+
+   Mtl* getMtl()
+   {
+      return mtl;
+   }
+
+   int getMtlID()
+   {
+      return mMatId;
+   }
+};
+
+
 typedef boost::shared_ptr<SceneNodeMax> SceneNodeMaxPtr;
+typedef boost::shared_ptr<SceneNodeMaxParticles> SceneNodeMaxParticlesPtr;
 
 SceneNodeMaxPtr buildCommonSceneGraph(int& nNumNodes, bool bUnmergeNodes, bool bSelectAll);
 

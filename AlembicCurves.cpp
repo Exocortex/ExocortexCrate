@@ -18,7 +18,7 @@ enum SplineExportType
 AlembicCurves::AlembicCurves(SceneNodePtr eNode, AlembicWriteJob * in_Job, Abc::OObject oParent)
 : AlembicObject(eNode, in_Job, oParent)
 {
-    std::string xformName = EC_MCHAR_to_UTF8( mINode->GetName() );
+    std::string xformName = EC_MCHAR_to_UTF8( mMaxNode->GetName() );
 	std::string curveName = xformName + "Shape";
 
    AbcG::OCurves curves(GetOParent(),curveName,GetCurrentJob()->GetAnimatedTs());
@@ -46,7 +46,7 @@ bool AlembicCurves::Save(double time, bool bLastFrame)
 
     //TimeValue ticks = GET_MAX_INTERFACE()->GetTime();
     TimeValue ticks = GetTimeValueFromFrame(time);
-	Object *obj = mINode->EvalWorldState(ticks).obj;
+	Object *obj = mMaxNode->EvalWorldState(ticks).obj;
 	if(mNumSamples == 0){
 		bForever = CheckIfObjIsValidForever(obj, ticks);
 	}
@@ -57,7 +57,7 @@ bool AlembicCurves::Save(double time, bool bLastFrame)
 		}
 	}
 
-	SaveMetaData(mINode, this);
+	SaveMetaData(mMaxNode, this);
 
     // check if the spline is animated
     if(mNumSamples > 0) 
@@ -238,7 +238,7 @@ bool AlembicCurves::Save(double time, bool bLastFrame)
 
     // allocate the points and normals
     std::vector<Abc::V3f> posVec(vertCount);
-    Matrix3 wm = mINode->GetObjTMAfterWSM(ticks);
+    Matrix3 wm = mMaxNode->GetObjTMAfterWSM(ticks);
 
     for(int i=0;i<vertCount;i++)
     {

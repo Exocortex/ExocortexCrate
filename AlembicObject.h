@@ -21,7 +21,7 @@ protected:
 
    SceneNodePtr mExoSceneNode;
    bool bMergedSubtreeNodeParent;
-   INode *mINode;
+   INode *mMaxNode;
 public:
     AlembicObject(SceneNodePtr eNode, AlembicWriteJob * in_Job, Abc::OObject oParent);
     ~AlembicObject();

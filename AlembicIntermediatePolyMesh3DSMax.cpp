@@ -314,13 +314,13 @@ void IntermediatePolyMesh3DSMax::Save(SceneNodePtr eNode, const Imath::M44f& tra
    bool bFirstFrame = time == 0.0;
 
    SceneNodeMaxPtr maxNode = reinterpret<SceneNode, SceneNodeMax>(eNode);
-   Mtl* pMtl = maxNode->node->GetMtl();
+   Mtl* pMtl = maxNode->getMtl();
 
    MeshData meshData = maxNode->getMeshData(time);
    Mesh* triMesh = meshData.triMesh;
    MNMesh* polyMesh = meshData.polyMesh;
 
-   int nMatId = -1;
+   int nMatId = -1;//maxNode->getMtlID();
 
 
  ////

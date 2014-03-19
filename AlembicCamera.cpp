@@ -10,7 +10,7 @@
 AlembicCamera::AlembicCamera(SceneNodePtr eNode, AlembicWriteJob * in_Job, Abc::OObject oParent)
 : AlembicObject(eNode, in_Job, oParent)
 {
-    std::string xformName = EC_MCHAR_to_UTF8( mINode->GetName() );
+    std::string xformName = EC_MCHAR_to_UTF8( mMaxNode->GetName() );
 	std::string cameraName = xformName + "Shape";
 
     AbcG::OCamera camera(GetOParent(), cameraName.c_str(), GetCurrentJob()->GetAnimatedTs());
@@ -30,7 +30,7 @@ bool AlembicCamera::Save(double time, bool bLastFrame)
 {
     TimeValue ticks = GetTimeValueFromFrame(time);
  
-	Object *obj = mINode->EvalWorldState(ticks).obj;
+	Object *obj = mMaxNode->EvalWorldState(ticks).obj;
 	if(mNumSamples == 0){
 		bForever = CheckIfObjIsValidForever(obj, ticks);
 	}
@@ -42,10 +42,10 @@ bool AlembicCamera::Save(double time, bool bLastFrame)
 	}
 	bForever = false;
 
-	SaveMetaData(mINode, this);
+	SaveMetaData(mMaxNode, this);
 
     // Set the xform sample
-    Matrix3 wm = mINode->GetObjTMAfterWSM(ticks);
+    Matrix3 wm = mMaxNode->GetObjTMAfterWSM(ticks);
     if (mJob)
     {
         Point3 worldMaxPoint = wm.GetTrans();

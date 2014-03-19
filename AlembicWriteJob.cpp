@@ -170,7 +170,7 @@ bool AlembicWriteJob::PreProcess()
 	
 
 	const bool bParticleMesh = GetOption("exportParticlesAsMesh");
-   bool bMergePolyMeshSubtree = true;//GetOption("mergePolyMeshSubtree");
+   bool bMergePolyMeshSubtree = GetOption("mergePolyMeshSubtree");
 
    bool bSelectParents = GetOption("includeParentNodes");
    const bool bSelectChildren = false;
@@ -268,10 +268,10 @@ bool AlembicWriteJob::PreProcess()
       }
       else if(eNode->type == SceneNode::PARTICLES || eNode->type == SceneNode::PARTICLES_TP){
          if(bParticleMesh){
-            pNewObject.reset(new AlembicPoints(eNode, this, oParent));
+            pNewObject.reset(new AlembicPolyMesh(eNode, this, oParent));
          }
          else{
-            pNewObject.reset(new AlembicPolyMesh(eNode, this, oParent));
+            pNewObject.reset(new AlembicPoints(eNode, this, oParent));
          }
       }
       else{
