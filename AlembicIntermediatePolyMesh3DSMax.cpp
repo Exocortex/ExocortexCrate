@@ -154,8 +154,8 @@ void IntermediatePolyMesh3DSMax::GetIndexedNormalsFromSpecifiedNormals( MNMesh* 
 	Point3 *pNormalArray = normalSpec->GetNormalArray();
 	for( int v = 0; v < normalSpec->GetNumNormals(); v ++ ) {
 		Point3 normal = pNormalArray[v];
-      Abc::V3f newNormal = Abc::V3f(normal.x, normal.y, normal.z) * transform44f_I_T;
-		indexedNormals.values.push_back( ConvertMaxNormalToAlembicNormal( newNormal ) );
+      Abc::V3f abcNormal = ConvertMaxNormalToAlembicNormal(normal);
+		indexedNormals.values.push_back(abcNormal * transform44f_I_T);
 	}
 }
 
@@ -180,8 +180,8 @@ void IntermediatePolyMesh3DSMax::GetIndexedNormalsFromSpecifiedNormals( Mesh *tr
 	Point3 *pNormalArray = normalSpec->GetNormalArray();
 	for( int v = 0; v < normalSpec->GetNumNormals(); v ++ ) {
 		Point3 normal = pNormalArray[v];
-      Abc::V3f newNormal = Abc::V3f(normal.x, normal.y, normal.z) * transform44f_I_T;
-		indexedNormals.values.push_back( ConvertMaxNormalToAlembicNormal( newNormal ) );
+      Abc::V3f abcNormal = ConvertMaxNormalToAlembicNormal(normal);
+		indexedNormals.values.push_back(abcNormal * transform44f_I_T);
 	}
 }
 
@@ -200,16 +200,16 @@ void IntermediatePolyMesh3DSMax::GetIndexedNormalsFromSmoothingGroups( MNMesh* p
 
 	std::vector<Abc::N3f> expandedNormals;
 
-	for (int i = 0; i < polyMesh->FNum(); i++) 
-    {
-        int degree = polyMesh->F(i)->deg;
-        for (int j = degree-1; j >= 0; j--)
-        {
-            Point3 normal = smoothingGroupNormals.GetVNormal( i, j );
-         Abc::V3f newNormal = Abc::V3f(normal.x, normal.y, normal.z) * transform44f_I_T;
-			expandedNormals.push_back( ConvertMaxNormalToAlembicNormal( newNormal ) );
-		}
-	}		
+   for (int i = 0; i < polyMesh->FNum(); i++) 
+   {
+      int degree = polyMesh->F(i)->deg;
+      for (int j = degree-1; j >= 0; j--)
+      {
+         Point3 normal = smoothingGroupNormals.GetVNormal( i, j );
+         Abc::V3f abcNormal = ConvertMaxNormalToAlembicNormal(normal);
+         expandedNormals.push_back(abcNormal * transform44f_I_T);
+      }
+   }		
 
 	createIndexedArray<Abc::N3f, SortableV3f>(faceIndices, expandedNormals, indexedNormals.values, indexedNormals.indices);
 }
@@ -229,15 +229,15 @@ void IntermediatePolyMesh3DSMax::GetIndexedNormalsFromSmoothingGroups( Mesh *tri
 
 	std::vector<Abc::N3f> expandedNormals;
 
-	for (int i = 0; i < triMesh->getNumFaces(); i++) 
-    {
-        for (int j = 3-1; j >= 0; j--)
-        {
-            Point3 normal = smoothingGroupNormals.GetVNormal( i, j );
-         Abc::V3f newNormal = Abc::V3f(normal.x, normal.y, normal.z) * transform44f_I_T;
-			expandedNormals.push_back( ConvertMaxNormalToAlembicNormal( newNormal ) );
-		}
-	}
+   for (int i = 0; i < triMesh->getNumFaces(); i++) 
+   {
+      for (int j = 3-1; j >= 0; j--)
+      {
+         Point3 normal = smoothingGroupNormals.GetVNormal( i, j );
+         Abc::V3f abcNormal = ConvertMaxNormalToAlembicNormal(normal);
+         expandedNormals.push_back(abcNormal * transform44f_I_T);
+      }
+   }
 
 	createIndexedArray<Abc::N3f, SortableV3f>(faceIndices, expandedNormals, indexedNormals.values, indexedNormals.indices);
 }
@@ -334,7 +334,10 @@ void IntermediatePolyMesh3DSMax::Save(SceneNodePtr eNode, const Imath::M44f& tra
    //for transforming the normals
    Imath::M44f transform44f_I_T = transform44f;
    //only the roatation component should be applied
-   transform44f_I_T = transform44f_I_T.setTranslation(Imath::V3f(0.0f, 0.0f, 0.0f));
+   transform44f_I_T[3][0] = 0.0f;
+   transform44f_I_T[3][1] = 0.0f;
+   transform44f_I_T[3][2] = 0.0f;
+   //transform44f_I_T = transform44f_I_T.setTranslation(Imath::V3f(0.0f, 0.0f, 0.0f));
    //dealing with scaling
    transform44f_I_T = transform44f_I_T.inverse();
    transform44f_I_T = transform44f_I_T.transpose();
