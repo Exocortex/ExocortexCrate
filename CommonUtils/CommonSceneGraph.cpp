@@ -129,7 +129,7 @@ struct SelectChildrenStackElement
    {}
 };
 
-int selectNodes(SceneNodePtr root, SceneNode::SelectionT selectionMap, bool bSelectParents, bool bChildren, bool bSelectShapeNodes, bool isMaya)
+int selectNodes(SceneNodePtr root, SceneNode::SelectionT& selectionMap, bool bSelectParents, bool bChildren, bool bSelectShapeNodes, bool isMaya)
 {
    ESS_PROFILE_FUNC();
 
@@ -154,10 +154,20 @@ int selectNodes(SceneNodePtr root, SceneNode::SelectionT selectionMap, bool bSel
 	  {   
 
          SceneNode::SelectionT::iterator selectionIt = selectionMap.find(eNode->dccIdentifier);
+         if(selectionIt != selectionEnd){
+            //to keep track which ones resolved
+            selectionMap[eNode->dccIdentifier] = true;
+         }
 
          //otherwise, check if the node names match
          if(selectionIt == selectionEnd){
-            selectionIt = selectionMap.find(removeXfoSuffix(eNode->name));
+            std::string nodeName = removeXfoSuffix(eNode->name);
+            selectionIt = selectionMap.find(nodeName);
+
+            if(selectionIt != selectionEnd){
+               //to keep track which ones resolved
+               selectionMap[nodeName] = true;
+            }
          }
 
          if(selectionIt != selectionEnd){
@@ -167,30 +177,31 @@ int selectNodes(SceneNodePtr root, SceneNode::SelectionT selectionMap, bool bSel
             eNode->selected = true;
 
             if(eNode->type == SceneNode::ETRANSFORM && bSelectShapeNodes)
-			{
-            //Select the shape nodes first
-				if (isMaya)
-				{
-					for(std::list<SceneNodePtr>::reverse_iterator it=eNode->children.rbegin(); it != eNode->children.rend(); ++it)
-					{
-						if(::isShapeNode((*it)->type))//MergedPolyMesh node should work here...
-						{
-							if(!(*it)->selected) nSelectionCount++;
-							(*it)->selected = true;
-							break;
-						}
-					}	
-				}
-				else
-				{
-				   for(std::list<SceneNodePtr>::iterator it=eNode->children.begin(); it != eNode->children.end(); it++){
-					  if(::isShapeNode((*it)->type)){
-						 if(!(*it)->selected) nSelectionCount++;
-						 (*it)->selected = true;
-						 break;
-					  }
+			   {
+               //Select the shape nodes first
+				   if (isMaya)
+				   {
+					   for(std::list<SceneNodePtr>::reverse_iterator it=eNode->children.rbegin(); it != eNode->children.rend(); ++it)
+					   {
+						   if(::isShapeNode((*it)->type))//MergedPolyMesh node should work here...
+						   {
+							   if(!(*it)->selected) nSelectionCount++;
+							   (*it)->selected = true;
+							   break;
+						   }
+					   }	
 				   }
-				}
+				   else
+				   {
+				      for(std::list<SceneNodePtr>::iterator it=eNode->children.begin(); it != eNode->children.end(); it++)
+                  {
+					     if(::isShapeNode((*it)->type)){
+						    if(!(*it)->selected) nSelectionCount++;
+						    (*it)->selected = true;
+						    break;
+					     }
+				      }
+				   }
             }
 
             //then select the parents

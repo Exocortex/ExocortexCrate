@@ -152,7 +152,7 @@ void printSceneGraph(SceneNodePtr root, bool bOnlyPrintSelected);
 
 
 
-int selectNodes(SceneNodePtr root, SceneNode::SelectionT selectionMap, bool bSelectParents, bool bChildren, bool bSelectShapeNodes, bool isMaya = false);
+int selectNodes(SceneNodePtr root, SceneNode::SelectionT& selectionMap, bool bSelectParents, bool bChildren, bool bSelectShapeNodes, bool isMaya = false);
 int selectTransformNodes(SceneNodePtr root);
 int selectPolyMeshShapeNodes(SceneNodePtr root);
 
