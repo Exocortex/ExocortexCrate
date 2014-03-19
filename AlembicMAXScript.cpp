@@ -999,6 +999,7 @@ int ExocortexAlembicStaticInterface_ExocortexAlembicExportJobs( CONST_2013 MCHAR
 			job->SetOption("validateMeshTopology", bValidateMeshTopology);
          job->SetOption("useOgawa", bUseOgawa);
          job->SetOption("partitioningFacesetsOnly", bPartitioningFacesetsOnly);
+         job->SetOption("objectsParameterExists", bObjectsParameterExists);
 
 			if (job->PreProcess() != true)
 			{

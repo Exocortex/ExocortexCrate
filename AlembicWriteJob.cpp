@@ -182,37 +182,50 @@ bool AlembicWriteJob::PreProcess()
       //bSelectParents = true;
    }
 
+   bcsgSelection::types buildSelection = bcsgSelection::ALL;
+
+   const bool bExportSelected = GetOption("exportSelected");
+   const bool bObjectsParameterExists = GetOption("objectsParameterExists");
+   if(bExportSelected){
+      //copy max selection
+      buildSelection = bcsgSelection::APP;
+   }
+   else if(bObjectsParameterExists){
+      //select nothing when building, fill in later from parameter data
+      buildSelection = bcsgSelection::NONE;
+   }
+   else{
+      //select everything
+
+   }
+
    //const bool bSelectAll = mSelection.size() == 0;
 
-   bool bSelectAll = true;
-
    int nNumNodes = 0;
-   exoSceneRoot = buildCommonSceneGraph(nNumNodes, true, bSelectAll);
+   exoSceneRoot = buildCommonSceneGraph(nNumNodes, true, buildSelection);
    //WARNING ILM robot right crashes when printing
    //printSceneGraph(exoSceneRoot, false);
 
-   //return false;
 
-   //TODO: implement selected node export
 
-   //std::map<std::string, bool> selectionMap;
+   if(bObjectsParameterExists){
+      //TODO: create input selection map...
+      std::map<std::string, bool> selectionMap;
 
-   //if(!bSelectAll){
+      //for(int i=0; i<mSelection.size(); i++){
+      //   XSI::CRef nodeRef;
+      //   nodeRef.Set(mSelection[i].c_str());
+      //   XSI::X3DObject xObj(nodeRef);
+      //   selectionMap[xObj.GetFullName().GetAsciiString()] = true;
+      //}
+      
+      selectNodes(exoSceneRoot, selectionMap, /*!bFlattenHierarchy || bTransformCache*/ bSelectParents, bSelectChildren, !bTransformCache);
+   }
 
-   //   for(int i=0; i<mSelection.size(); i++){
-   //      XSI::CRef nodeRef;
-   //      nodeRef.Set(mSelection[i].c_str());
-   //      XSI::X3DObject xObj(nodeRef);
-   //      selectionMap[xObj.GetFullName().GetAsciiString()] = true;
-   //   }
-   //   
-   //   selectNodes(exoSceneRoot, selectionMap, /*!bFlattenHierarchy || bTransformCache*/ bSelectParents, bSelectChildren, !bTransformCache);
-   //   removeUnselectedNodes(exoSceneRoot);
-   //}
-
-   //if(bMergePolyMeshSubtree){
-   //   replacePolyMeshSubtree<SceneNodeMaxPtr, SceneNodeMax>(exoSceneRoot);
-   //}
+   if(bExportSelected || bObjectsParameterExists){
+      removeUnselectedNodes(exoSceneRoot);
+   }
+   
 
    if(bMergePolyMeshSubtree){
       replacePolyMeshSubtree<SceneNodeMaxPtr, SceneNodeMax>(exoSceneRoot);
@@ -223,11 +236,7 @@ bool AlembicWriteJob::PreProcess()
       flattenSceneGraph(exoSceneRoot, nNumNodes);
    }
 
-   //Note: that you should not rely Softimage scenegraph methods to retrieve parent nodes, since nodes may be skipped
-   //The fact that we do not make a complete copy unfortunately makes things a little more complicated.
-   //our design can probably be better (and safer) in may ways.
 
-   //return CStatus::OK;
 
    std::list<PreProcessStackElement> sceneStack;
    

@@ -104,7 +104,14 @@ public:
 typedef boost::shared_ptr<SceneNodeMax> SceneNodeMaxPtr;
 typedef boost::shared_ptr<SceneNodeMaxParticles> SceneNodeMaxParticlesPtr;
 
-SceneNodeMaxPtr buildCommonSceneGraph(int& nNumNodes, bool bUnmergeNodes, bool bSelectAll);
+namespace bcsgSelection{
+   enum types{
+      ALL,
+      APP,
+      NONE
+   };
+};
+SceneNodeMaxPtr buildCommonSceneGraph(int& nNumNodes, bool bUnmergeNodes, bcsgSelection::types selectionOption);
 
 
 
