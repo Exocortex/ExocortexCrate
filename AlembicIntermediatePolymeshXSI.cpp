@@ -14,7 +14,9 @@ void IntermediatePolyMeshXSI::Save(SceneNodePtr eNode, const Imath::M44f& transf
    //for transforming the normals
    Imath::M44f transform44f_I_T = transform44f;
    //only the roatation component should be applied
-   transform44f_I_T = transform44f_I_T.setTranslation(Imath::V3f(0.0f, 0.0f, 0.0f));
+   transform44f_I_T[3][0] = 0.0f;
+   transform44f_I_T[3][1] = 0.0f;
+   transform44f_I_T[3][2] = 0.0f;
    //dealing with scaling
    transform44f_I_T = transform44f_I_T.inverse();
    transform44f_I_T = transform44f_I_T.transpose();
