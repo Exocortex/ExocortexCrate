@@ -134,8 +134,6 @@ bool GetOption(std::map<std::string, bool>& mOptions, const std::string& in_Name
 }
 
 void IntermediatePolyMesh3DSMax::GetIndexedNormalsFromSpecifiedNormals( MNMesh* polyMesh, Imath::M44f& transform44f_I_T, IndexedNormals &indexedNormals ) {
-   ESS_LOG_WARNING("GetIndexedNormalsFromSpecifiedNormals::MNMesh");
-
 	EC_ASSERT( polyMesh != NULL );
 	MNNormalSpec *normalSpec = polyMesh->GetSpecifiedNormals();
 	EC_ASSERT( normalSpec && normalSpec->GetNumNormals() > 0 && normalSpec->GetNumFaces() > 0 );
@@ -160,8 +158,6 @@ void IntermediatePolyMesh3DSMax::GetIndexedNormalsFromSpecifiedNormals( MNMesh* 
 }
 
 void IntermediatePolyMesh3DSMax::GetIndexedNormalsFromSpecifiedNormals( Mesh *triMesh, Imath::M44f& transform44f_I_T, IndexedNormals &indexedNormals ) {
-	ESS_LOG_WARNING("GetIndexedNormalsFromSpecifiedNormals::Mesh");
-   
    EC_ASSERT( triMesh != NULL );
 	MeshNormalSpec *normalSpec = triMesh->GetSpecifiedNormals();
 	EC_ASSERT( normalSpec && normalSpec->GetNumNormals() > 0 && normalSpec->GetNumFaces() > 0 );
@@ -185,9 +181,7 @@ void IntermediatePolyMesh3DSMax::GetIndexedNormalsFromSpecifiedNormals( Mesh *tr
 	}
 }
 
-void IntermediatePolyMesh3DSMax::GetIndexedNormalsFromSmoothingGroups( MNMesh* polyMesh, Imath::M44f& transform44f_I_T, std::vector<Abc::int32_t> &faceIndices, IndexedNormals &indexedNormals ) {
-	ESS_LOG_WARNING("GetIndexedNormalsFromSmoothingGroups::MNMesh");
-   
+void IntermediatePolyMesh3DSMax::GetIndexedNormalsFromSmoothingGroups( MNMesh* polyMesh, Imath::M44f& transform44f_I_T, std::vector<Abc::int32_t> &faceIndices, IndexedNormals &indexedNormals ) { 
    EC_ASSERT( polyMesh != NULL );
 	MNNormalSpec *normalSpec = polyMesh->GetSpecifiedNormals();
 	EC_ASSERT( normalSpec == NULL );
@@ -214,9 +208,7 @@ void IntermediatePolyMesh3DSMax::GetIndexedNormalsFromSmoothingGroups( MNMesh* p
 	createIndexedArray<Abc::N3f, SortableV3f>(faceIndices, expandedNormals, indexedNormals.values, indexedNormals.indices);
 }
 
-void IntermediatePolyMesh3DSMax::GetIndexedNormalsFromSmoothingGroups( Mesh *triMesh, Imath::M44f& transform44f_I_T, std::vector<Abc::int32_t> &faceIndices, IndexedNormals &indexedNormals ) {
-   ESS_LOG_WARNING("GetIndexedNormalsFromSmoothingGroups::Mesh");
-   
+void IntermediatePolyMesh3DSMax::GetIndexedNormalsFromSmoothingGroups( Mesh *triMesh, Imath::M44f& transform44f_I_T, std::vector<Abc::int32_t> &faceIndices, IndexedNormals &indexedNormals ) { 
    EC_ASSERT( triMesh != NULL );
 	MeshNormalSpec *normalSpec = triMesh->GetSpecifiedNormals();
 	EC_ASSERT( normalSpec == NULL );
