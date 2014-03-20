@@ -211,9 +211,6 @@ SceneNodeMaxPtr createNodeMax(INode* pNode, SceneNode::nodeTypeE type, bool isCa
    sceneNode->bIsCameraTransform = isCameraTransform;
    sceneNode->dccIdentifier = path;
 
-   //TODO: not sure if I need to fill this in
-   //sceneNode->dccIdentifier = xObj.GetFullName().GetAsciiString();
-
    if(selectionOption == bcsgSelection::ALL){
       sceneNode->selected = true;
    }
