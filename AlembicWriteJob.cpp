@@ -238,7 +238,10 @@ bool AlembicWriteJob::PreProcess()
       flattenSceneGraph(exoSceneRoot, nNumNodes);
    }
 
-
+   if(GetOption("renameConflictingNodes")){
+      renameConflictingNodes(exoSceneRoot);
+   }
+   
 
    std::list<PreProcessStackElement> sceneStack;
    

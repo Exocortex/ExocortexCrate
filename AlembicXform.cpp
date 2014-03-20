@@ -10,17 +10,7 @@
 
 AlembicXForm::AlembicXForm(SceneNodePtr eNode, AlembicWriteJob * in_Job, Abc::OObject oParent) : AlembicObject(eNode, in_Job, oParent), customAttributes("User Properties")
 {
-   const bool bRename = in_Job->GetOption("renameConflictingNodes");
-
-   std::string uniqueName;
-   if(bRename){
-      uniqueName = getUniqueName(oParent.getFullName(), eNode->name);
-   }
-   else{
-      uniqueName = eNode->name;
-   }
-
-   AbcG::OXform xform(GetOParent(), uniqueName, GetCurrentJob()->GetAnimatedTs());
+   AbcG::OXform xform(GetOParent(), eNode->name, GetCurrentJob()->GetAnimatedTs());
 
    mXformSchema = xform.getSchema();
 

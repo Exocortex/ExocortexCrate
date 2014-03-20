@@ -999,7 +999,7 @@ int ExocortexAlembicStaticInterface_ExocortexAlembicExportJobs( CONST_2013 MCHAR
 		//prog.PutCancelEnabled(true);
 		//prog.PutVisible(true);
 
-      clearIdentifierMap();
+      
 
 		// now, let's run through all frames, and process the jobs
 		bool bSuccess = true;
