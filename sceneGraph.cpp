@@ -202,7 +202,7 @@ struct CSGStackElement
 };
 
 
-SceneNodeMaxPtr createNodeMax(INode* pNode, SceneNode::nodeTypeE type, bool isCameraTransform, bcsgSelection::types selectionOption, std::string path, std::map<std::string, bool>& mObjectsMap)
+SceneNodeMaxPtr createNodeMax(INode* pNode, SceneNode::nodeTypeE type, bool isCameraTransform, bcsgSelection::types selectionOption, std::string path)
 {
    SceneNodeMaxPtr sceneNode(new SceneNodeMax(pNode));
    
@@ -215,9 +215,8 @@ SceneNodeMaxPtr createNodeMax(INode* pNode, SceneNode::nodeTypeE type, bool isCa
       sceneNode->selected = true;
    }
    else if(selectionOption == bcsgSelection::APP){
-      //sceneNode->selected = (pNode->Selected() == 1) ? true : false;
       if(pNode->Selected()){
-         mObjectsMap[sceneNode->dccIdentifier] = false;
+         sceneNode->dccSelected = true;
       }
    }
    
@@ -225,7 +224,7 @@ SceneNodeMaxPtr createNodeMax(INode* pNode, SceneNode::nodeTypeE type, bool isCa
 }
 
 
-SceneNodeMaxPtr buildCommonSceneGraph(int& nNumNodes, bool bUnmergeNodes, bcsgSelection::types selectionOption, std::map<std::string, bool>& mObjectsMap)
+SceneNodeMaxPtr buildCommonSceneGraph(int& nNumNodes, bool bUnmergeNodes, bcsgSelection::types selectionOption)
 {
 
    INode* pRootNode = GET_MAX_INTERFACE()->GetRootNode();
@@ -236,7 +235,7 @@ SceneNodeMaxPtr buildCommonSceneGraph(int& nNumNodes, bool bUnmergeNodes, bcsgSe
    
    nNumNodes = 0;
 
-   SceneNodeMaxPtr exoRoot = createNodeMax(pRootNode, SceneNode::SCENE_ROOT, false, selectionOption, std::string("/"), mObjectsMap);
+   SceneNodeMaxPtr exoRoot = createNodeMax(pRootNode, SceneNode::SCENE_ROOT, false, selectionOption, std::string("/"));
 
    
    for(int j=0; j<pRootNode->NumberOfChildren(); j++)
@@ -268,19 +267,19 @@ SceneNodeMaxPtr buildCommonSceneGraph(int& nNumNodes, bool bUnmergeNodes, bcsgSe
 
       //if(bUnmergeNodes) { //export case (don't why we don't use it for import)
          if(isShapeNode(type) ){
-            newNode = createNodeMax(pNode, SceneNode::ETRANSFORM, type == SceneNode::CAMERA, selectionOption, path, mObjectsMap);
+            newNode = createNodeMax(pNode, SceneNode::ETRANSFORM, type == SceneNode::CAMERA, selectionOption, path);
             //newNode->name+="Xfo";
 
             std::stringstream geoPath;
             geoPath<<path<<"/"<<EC_MCHAR_to_UTF8(pNode->GetName())<<"Shape";
-            SceneNodePtr geoNode = createNodeMax(pNode, type, false, bcsgSelection::NONE, geoPath.str(), mObjectsMap);
+            SceneNodePtr geoNode = createNodeMax(pNode, type, false, bcsgSelection::NONE, geoPath.str());
 	         geoNode->name+="Shape";
 
             newNode->children.push_back(geoNode);
             geoNode->parent = newNode.get();
          } 
          else{
-            newNode = createNodeMax(pNode, type, false, selectionOption, path, mObjectsMap);
+            newNode = createNodeMax(pNode, type, false, selectionOption, path);
          }
       //}
      // else{ //import 

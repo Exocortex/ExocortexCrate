@@ -172,7 +172,7 @@ bool AlembicWriteJob::PreProcess()
 	const bool bParticleMesh = GetOption("exportParticlesAsMesh");
    bool bMergePolyMeshSubtree = GetOption("mergePolyMeshSubtree");
 
-   bool bSelectParents = GetOption("includeParentNodes");
+   bool bSelectParents = GetOption("includeParentNodes");/*|| !bFlattenHierarchy || bTransformCache*/
    const bool bSelectChildren = false;
    bool bTransformCache = GetOption("transformCache");
    const bool bFlattenHierarchy = GetOption("flattenHierarchy");
@@ -199,13 +199,14 @@ bool AlembicWriteJob::PreProcess()
    }
 
    int nNumNodes = 0;
-   exoSceneRoot = buildCommonSceneGraph(nNumNodes, true, buildSelection, mObjectsMap);
+   exoSceneRoot = buildCommonSceneGraph(nNumNodes, true, buildSelection);
    //WARNING ILM robot right crashes when printing
    //printSceneGraph(exoSceneRoot, false);
 
 
-   if(!mObjectsMap.empty()){
-      selectNodes(exoSceneRoot, mObjectsMap, /*!bFlattenHierarchy || bTransformCache*/ bSelectParents, bSelectChildren, !bTransformCache);
+   if(bObjectsParameterExists){
+      //Might be better to use refineSelection here, but call a function that sets up dccSelected flag first, then delete this function from codebase
+      selectNodes(exoSceneRoot, mObjectsMap,  bSelectParents, bSelectChildren, !bTransformCache);
 
       bool bAllResolved = true;
 
@@ -221,6 +222,10 @@ bool AlembicWriteJob::PreProcess()
       if(bAllResolved){
          removeUnselectedNodes(exoSceneRoot);
       }
+   }
+   else if(bExportSelected){
+      refineSelection(exoSceneRoot, bSelectParents, bSelectChildren, !bTransformCache);
+      removeUnselectedNodes(exoSceneRoot);
    }
    
 
