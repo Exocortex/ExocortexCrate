@@ -196,28 +196,31 @@ bool AlembicWriteJob::PreProcess()
    }
    else{
       //select everything
-
    }
 
-   //const bool bSelectAll = mSelection.size() == 0;
-
    int nNumNodes = 0;
-   exoSceneRoot = buildCommonSceneGraph(nNumNodes, true, buildSelection);
+   exoSceneRoot = buildCommonSceneGraph(nNumNodes, true, buildSelection, mObjectsMap);
    //WARNING ILM robot right crashes when printing
    //printSceneGraph(exoSceneRoot, false);
 
 
-   if(bObjectsParameterExists){
+   if(!mObjectsMap.empty()){
       selectNodes(exoSceneRoot, mObjectsMap, /*!bFlattenHierarchy || bTransformCache*/ bSelectParents, bSelectChildren, !bTransformCache);
-      for(SceneNode::SelectionT::iterator it = mObjectsMap.begin(); it != mObjectsMap.end(); it++){
-         if(it->second == false){
-            ESS_LOG_WARNING("Could not resolve objects identifier: "<<it->first);
+
+      bool bAllResolved = true;
+
+      if(bObjectsParameterExists){
+         for(SceneNode::SelectionT::iterator it = mObjectsMap.begin(); it != mObjectsMap.end(); it++){
+            if(it->second == false){
+               bAllResolved = false;
+               ESS_LOG_WARNING("Could not resolve objects identifier: "<<it->first);
+            }
          }
       }
-   }
 
-   if(bExportSelected || bObjectsParameterExists){
-      removeUnselectedNodes(exoSceneRoot);
+      if(bAllResolved){
+         removeUnselectedNodes(exoSceneRoot);
+      }
    }
    
 

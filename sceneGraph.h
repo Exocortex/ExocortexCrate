@@ -111,7 +111,7 @@ namespace bcsgSelection{
       NONE
    };
 };
-SceneNodeMaxPtr buildCommonSceneGraph(int& nNumNodes, bool bUnmergeNodes, bcsgSelection::types selectionOption);
+SceneNodeMaxPtr buildCommonSceneGraph(int& nNumNodes, bool bUnmergeNodes, bcsgSelection::types selectionOption, std::map<std::string, bool>& mObjectsMap);
 
 
 
