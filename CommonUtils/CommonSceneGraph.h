@@ -62,14 +62,17 @@ public:
    nodeTypeE type;
    std::string name;
    std::string dccIdentifier;
+   bool dccSelected;
    bool selected;
 
    int nCommonParentCounter;//used by common parent algorithm
 
-   SceneNode():parent(NULL), type(NUM_NODE_TYPES), selected(false), nCommonParentCounter(0)
+   SceneNode():
+      parent(NULL), type(NUM_NODE_TYPES), dccSelected(false), selected(false), nCommonParentCounter(0)
    {}
 
-   SceneNode(nodeTypeE type, std::string name, std::string identifier):parent(NULL), type(type), name(name), dccIdentifier(identifier)
+   SceneNode(nodeTypeE type, std::string name, std::string identifier):
+      parent(NULL), type(type), dccSelected(false), selected(false), nCommonParentCounter(0), name(name), dccIdentifier(identifier)
    {}
    //~SceneNode();
 
@@ -153,9 +156,10 @@ void printSceneGraph(SceneNodePtr root, bool bOnlyPrintSelected);
 
 
 int selectNodes(SceneNodePtr root, SceneNode::SelectionT& selectionMap, bool bSelectParents, bool bChildren, bool bSelectShapeNodes, bool isMaya = false);
+int refineSelection(SceneNodePtr root, bool bSelectParents, bool bChildren, bool bSelectShapeNodes);
 int selectTransformNodes(SceneNodePtr root);
 int selectPolyMeshShapeNodes(SceneNodePtr root);
-
+void renameConflictingNodes(SceneNodePtr root);
 void flattenSceneGraph(SceneNodePtr root, int nNumNodes);
 int removeUnselectedNodes(SceneNodePtr root);
 

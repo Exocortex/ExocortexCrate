@@ -235,6 +235,79 @@ int selectNodes(SceneNodePtr root, SceneNode::SelectionT& selectionMap, bool bSe
    return nSelectionCount;
 }
 
+
+int refineSelection(SceneNodePtr root, bool bSelectParents, bool bChildren, bool bSelectShapeNodes)
+{
+   ESS_PROFILE_FUNC();
+
+   std::list<SelectChildrenStackElement> sceneStack;
+
+   sceneStack.push_back(SelectChildrenStackElement(root, false));
+
+   int nSelectionCount = 0;
+
+   while( !sceneStack.empty() )
+   {
+      SelectChildrenStackElement sElement = sceneStack.back();
+      SceneNodePtr eNode = sElement.eNode;
+      sceneStack.pop_back();
+
+      bool bSelected = false;
+      //check if the node matches a full path
+
+      if(eNode->type == SceneNode::ETRANSFORM || eNode->type == SceneNode::ITRANSFORM || eNode->type == SceneNode::NAMESPACE_TRANSFORM)
+	  {   
+         if(eNode->dccSelected){
+
+            //this node's name matches one of the names from the selection map, so select it
+            if(!eNode->selected) nSelectionCount++;
+            eNode->selected = true;
+
+            if(eNode->type == SceneNode::ETRANSFORM && bSelectShapeNodes)
+			   {
+               //Select the shape nodes first
+			      for(std::list<SceneNodePtr>::iterator it=eNode->children.begin(); it != eNode->children.end(); it++)
+               {
+				     if(::isShapeNode((*it)->type)){
+					    if(!(*it)->selected) nSelectionCount++;
+					    (*it)->selected = true;
+					    break;
+				     }
+			      }
+            }
+
+            //then select the parents
+            if(bSelectParents){// select all parent nodes
+               SceneNode* currNode = eNode->parent;
+               while(currNode){
+                  if(!currNode->selected) nSelectionCount++;
+                  currNode->selected = true;
+                  currNode = currNode->parent;
+               }
+            }
+
+            if(bChildren){// select the children
+               bSelected = true;
+            }
+         }	
+      }
+      if(sElement.bSelectChildren){
+         bSelected = true;
+         if(!eNode->selected) nSelectionCount++;
+         eNode->selected = true;
+      }
+
+      for( std::list<SceneNodePtr>::iterator it = eNode->children.begin(); it != eNode->children.end(); it++){
+         sceneStack.push_back(SelectChildrenStackElement(*it, bSelected));
+      }
+   }
+
+   root->selected = true;
+
+   return nSelectionCount;
+}
+
+
 int selectTransformNodes(SceneNodePtr root)
 {
    ESS_PROFILE_FUNC();
@@ -303,6 +376,41 @@ int selectPolyMeshShapeNodes(SceneNodePtr root)
    root->selected = true;
 
    return nSelectionCount;
+}
+
+
+void renameConflictingNodes(SceneNodePtr root)
+{
+   ESS_PROFILE_FUNC();
+
+   clearIdentifierMap();
+
+   std::list<SelectChildrenStackElement> sceneStack;
+   
+   sceneStack.push_back(SelectChildrenStackElement(root, false));
+
+   int nSelectionCount = 0;
+
+   while( !sceneStack.empty() )
+   {
+      SelectChildrenStackElement sElement = sceneStack.back();
+      SceneNodePtr eNode = sElement.eNode;
+      sceneStack.pop_back();
+
+      if(eNode->type == SceneNode::ETRANSFORM || eNode->type == SceneNode::ITRANSFORM){
+         std::string parent;
+         if(eNode->parent){
+            parent = eNode->parent->dccIdentifier;
+         }
+         eNode->name = getUniqueName(parent, eNode->name);
+      }
+
+      for( std::list<SceneNodePtr>::iterator it = eNode->children.begin(); it != eNode->children.end(); it++){
+         sceneStack.push_back(SelectChildrenStackElement(*it, false));
+      }
+   }
+
+    clearIdentifierMap();
 }
 
 
