@@ -1,7 +1,7 @@
 --------------------------------------------------------------------------------------------------------
 -- Custom import/export dialog with settings
 
-rollout AlembicExportSettings "Alembic Export Settings" width:288 height:476
+rollout AlembicExportSettings "Alembic Export Settings" width:288 height:508
 (
 	GroupBox selectGroup "Selection" pos:[8,16] width:272 height:40
 	checkbox exportSelectedCheckbox "Export Selected Objects" pos:[32,32] width:232 height:16 checked:true
@@ -16,7 +16,7 @@ rollout AlembicExportSettings "Alembic Export Settings" width:288 height:476
 	spinner stepsSpinner "" pos:[112,120] width:160 height:16 range:[1,1e+006,1] type:#integer
 	spinner subStepsSpinner "" pos:[112,136] width:160 height:16 range:[1,1e+006,1] type:#integer
     
-	GroupBox geoGroup "Geometry" pos:[8,168] width:272 height:224
+	GroupBox geoGroup "Geometry" pos:[8,168] width:272 height:256
 	
 	dropdownList meshTopologyDropDown "Mesh Topology" pos:[16,186] width:256 height:40 items:#("Just Surfaces (No Normals)", "Point Cache (No Surfaces)", "Surface + Normals (Everything)") selection:3
 	dropdownList particleSystemExportMethod "Particle System Export Method" pos:[16,228] width:256 height:40 items:#("Automatic Instancing", "Merged Mesh") selection:1
@@ -27,11 +27,13 @@ rollout AlembicExportSettings "Alembic Export Settings" width:288 height:476
 	checkbox flattenHierarchyCheckbox "Flatten Hierarchy" pos:[32,342] width:107 height:14 checked:true
 	checkbox transformCacheCheckbox "Transform Cache" pos:[32,358] width:200 height:14 checked:false
 	checkbox validateMeshTopology "Validate Mesh Topology" pos:[32,374]
+	checkbox renameConflictingNodes "Rename Conflicting Nodes" pos:[32,390]
+	checkbox mergeSelectedPolymeshSubtree "Merge Selected Polymesh Subtree" pos:[32,406]
 
-	dropdownList storageFormat "Storage Format" pos:[16,396] width:256 height:40 items:#("HDF5", "Ogawa") selection:1
+	dropdownList storageFormat "Storage Format" pos:[16,428] width:256 height:40 items:#("HDF5", "Ogawa") selection:1
 
-	button exportButton "Export" pos:[16,442] width:64 height:24
-	button cancelButton "Cancel" pos:[208,442] width:64 height:24
+	button exportButton "Export" pos:[16,474] width:64 height:24
+	button cancelButton "Cancel" pos:[208,474] width:64 height:24
 
 	on exportButton pressed do
 	(
@@ -74,6 +76,10 @@ rollout AlembicExportSettings "Alembic Export Settings" width:288 height:476
 	    	jobString += (transformCacheCheckbox.checked as string)
 	    	jobString += ";validateMeshTopology="
 	    	jobString += (validateMeshTopology.checked as string)
+	    	jobString += ";renameConflictingNodes="
+	    	jobString += (renameConflictingNodes.checked as string)
+	    	jobString += ";mergePolyMeshSubtree="
+	    	jobString += (mergeSelectedPolymeshSubtree.checked as string)
 
 	    	if(storageFormat.selection == 1) do jobString += ";storageFormat=hdf5" 
 	    	if(storageFormat.selection == 2) do jobString += ";storageFormat=ogawa" 

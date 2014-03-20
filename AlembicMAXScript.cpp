@@ -767,7 +767,10 @@ int ExocortexAlembicStaticInterface_ExocortexAlembicExportJobs( CONST_2013 MCHAR
 			bool bValidateMeshTopology = false;
          bool bUseOgawa = false;
          bool bPartitioningFacesetsOnly = true;
-			
+         bool bIncludeParentNodes = false;
+         bool bRenameConflictingNodes = false;
+         bool bMergeSelectedPolymeshSubtree = false;
+
 			std::vector<std::string> tokens;
 			boost::split(tokens, jobs[i], boost::is_any_of(";"));
 			for(int j=0; j<tokens.size(); j++){
@@ -841,6 +844,15 @@ int ExocortexAlembicStaticInterface_ExocortexAlembicExportJobs( CONST_2013 MCHAR
 				}
 				else if(boost::iequals(valuePair[0], "uiExport")){
 					bUiExport = parseBool(valuePair[1]);
+				}
+				//else if(boost::iequals(valuePair[0], "includeParentNodes")){
+				//	bIncludeParentNodes = parseBool(valuePair[1]);
+				//}
+            else if(boost::iequals(valuePair[0], "renameConflictingNodes")){
+					bRenameConflictingNodes = parseBool(valuePair[1]);
+				}
+            else if(boost::iequals(valuePair[0], "mergePolyMeshSubtree")){
+					bMergeSelectedPolymeshSubtree = parseBool(valuePair[1]);
 				}
             else if(boost::iequals(valuePair[0], "storageFormat")){
                 if(boost::iequals(valuePair[1], "hdf5")){
@@ -962,6 +974,9 @@ int ExocortexAlembicStaticInterface_ExocortexAlembicExportJobs( CONST_2013 MCHAR
          job->SetOption("useOgawa", bUseOgawa);
          job->SetOption("partitioningFacesetsOnly", bPartitioningFacesetsOnly);
          job->SetOption("objectsParameterExists", bObjectsParameterExists);
+         job->SetOption("includeParentNodes", bIncludeParentNodes);
+         job->SetOption("renameConflictingNodes", bRenameConflictingNodes);
+         job->SetOption("mergePolyMeshSubtree", bMergeSelectedPolymeshSubtree);
 
 			if (job->PreProcess() != true)
 			{

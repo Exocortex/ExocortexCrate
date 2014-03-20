@@ -93,12 +93,6 @@ bool AlembicPolyMesh::Save(double time, bool bLastFrame)
 		if(mNumSamples == 0){
 			bForever = CheckIfObjIsValidForever(obj, ticks);
 		}
-		else{
-			bool bNewForever = CheckIfObjIsValidForever(obj, ticks);
-			if(bForever && bNewForever != bForever){
-				ESS_LOG_INFO( "bForever has changed" );
-			}
-		}
 	}
 
    if(mMaxNode){
