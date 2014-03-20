@@ -277,9 +277,9 @@ bool AlembicWriteJob::PreProcess()
             pNewObject.reset(new AlembicPoints(eNode, this, oParent));
          }
       }
-      else{
-         ESS_LOG_WARNING("Unknown type: not exporting "<<eNode->name);//Export as transform, and give warning?
-      }
+      //else{
+      //   ESS_LOG_WARNING("Unknown type: not exporting "<<eNode->name);//Export as transform, and give warning?
+      //}
 
       if(pNewObject){
          //add the AlembicObject to export list if it is not being skipped
