@@ -6,33 +6,23 @@
 #pragma warning( disable: 4996 )
 
 
-AlembicObject::AlembicObject (const SceneEntry & in_Ref, AlembicWriteJob * in_Job )
+AlembicObject::AlembicObject (SceneNodePtr eNode, AlembicWriteJob * in_Job, Abc::OObject oParent )
 {     
-    AddRef(in_Ref);
+    //AddRef(in_Ref);
     mJob = in_Job;
-    mOParent = mJob->GetArchive().getTop();
+    mOParent = oParent;
 	bForever = false;
+   mExoSceneNode = eNode;
 
-	bool bFlatten = GetCurrentJob()->GetOption("flattenHierarchy");
-	if(!bFlatten){
-		// find the parent
-		std::string identifier = getIdentifierFromRef(GetRef());
-		std::vector<std::string> parts;
-		boost::split(parts, identifier, boost::is_any_of("/"));
-
-		for(size_t i=1;i<parts.size();i++)
-		{
-		  for(size_t j=0;j<mOParent.getNumChildren();j++)
-		  {
-			 Abc::OObject child = mOParent.getChild(j);
-			 if(child.getName() == parts[i])
-			 {
-				mOParent = child;
-				break;
-			 }
-		  }
-		}
-	}
+   if(eNode->type != SceneNode::POLYMESH_SUBTREE){
+      SceneNodeMaxPtr maxNode = reinterpret<SceneNode, SceneNodeMax>(eNode);
+      mMaxNode = maxNode->node;
+      bMergedSubtreeNodeParent = maxNode->bMergedSubtreeNodeParent;
+   }
+   else{
+      mMaxNode = NULL;
+      bMergedSubtreeNodeParent = false;
+   }
 
 	mNumSamples = 0;
 }
@@ -46,25 +36,25 @@ AlembicWriteJob *AlembicObject::GetCurrentJob()
     return mJob; 
 }
 
-const SceneEntry &AlembicObject::GetRef(unsigned long index) 
-{ 
-    if (index < mRefs.size())
-    {
-        return *mRefs[index];
-    }
-
-    return *mRefs[0]; 
-}
-
-int AlembicObject::GetRefCount() 
-{ 
-    return static_cast<int>(mRefs.size()); 
-}
-
-void AlembicObject::AddRef(const SceneEntry & in_Ref) 
-{        
-    mRefs.push_back(&in_Ref); 
-}
+//const SceneEntry &AlembicObject::GetRef(unsigned long index) 
+//{ 
+//    if (index < mRefs.size())
+//    {
+//        return *mRefs[index];
+//    }
+//
+//    return *mRefs[0]; 
+//}
+//
+//int AlembicObject::GetRefCount() 
+//{ 
+//    return static_cast<int>(mRefs.size()); 
+//}
+//
+//void AlembicObject::AddRef(const SceneEntry & in_Ref) 
+//{        
+//    mRefs.push_back(&in_Ref); 
+//}
 
 Abc::OObject AlembicObject::GetOParent() 
 { 

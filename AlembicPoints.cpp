@@ -14,23 +14,17 @@
 #define PARTICLECHANNELLOCALOFFSETR_INTERFACE Interface_ID(0x12ec5d1d, 0x1eb34500) 
 #define GetParticleChannelLocalOffsetRInterface(obj) ((IParticleChannelIntR*)obj->GetInterface(PARTICLECHANNELLOCALOFFSETR_INTERFACE)) 
 
-AlembicPoints::AlembicPoints(const SceneEntry &in_Ref, AlembicWriteJob *in_Job)
-    : AlembicObject(in_Ref, in_Job)
+AlembicPoints::AlembicPoints(SceneNodePtr eNode, AlembicWriteJob * in_Job, Abc::OObject oParent)
+    : AlembicObject(eNode, in_Job, oParent)
 {
 	mNumShapeMeshes = 0;
 	mTotalShapeMeshes = 0;
 	//mTimeSamplesCount = 0;
 
-    std::string xformName = EC_MCHAR_to_UTF8( in_Ref.node->GetName() );
+    std::string xformName = EC_MCHAR_to_UTF8( mMaxNode->GetName() );
 	std::string pointsName = xformName + "Shape";
 
-    AbcG::OXform xform(GetOParent(), xformName.c_str(), GetCurrentJob()->GetAnimatedTs());
-    AbcG::OPoints points(xform, pointsName.c_str(), GetCurrentJob()->GetAnimatedTs());
-
-    // create the generic properties
-    mOVisibility = CreateVisibilityProperty(xform, GetCurrentJob()->GetAnimatedTs());
-
-    mXformSchema = xform.getSchema();
+    AbcG::OPoints points(GetOParent(), pointsName.c_str(), GetCurrentJob()->GetAnimatedTs());
     mPointsSchema = points.getSchema();
 
 	Abc::OCompoundProperty argGeomParams = mPointsSchema.getArbGeomParams();
@@ -52,8 +46,6 @@ AlembicPoints::AlembicPoints(const SceneEntry &in_Ref, AlembicWriteJob *in_Job)
 
 AlembicPoints::~AlembicPoints()
 {
-    // we have to clear this prior to destruction this is a workaround for issue-171
-    mOVisibility.reset();
 }
 
 Abc::OCompoundProperty AlembicPoints::GetCompound()
@@ -72,15 +64,9 @@ bool AlembicPoints::Save(double time, bool bLastFrame)
 
     // Extract our particle emitter at the given time
     TimeValue ticks = GetTimeValueFromFrame(time);
-    Object *obj = GetRef().node->EvalWorldState(ticks).obj;
+    Object *obj = mMaxNode->EvalWorldState(ticks).obj;
 
-	bool bFlatten = GetCurrentJob()->GetOption("flattenHierarchy");
-
-    // Store the transformation
-
-    SaveXformSample(GetRef(), mXformSchema, mXformSample, time, bFlatten);
-
-	SaveMetaData(GetRef().node, this);
+	SaveMetaData(mMaxNode, this);
 
 	SimpleParticle* pSimpleParticle = (SimpleParticle*)obj->GetInterface(I_SIMPLEPARTICLEOBJ);
 	IPFSystem* ipfSystem = GetPFSystemInterface(obj);
@@ -124,19 +110,14 @@ bool AlembicPoints::Save(double time, bool bLastFrame)
 	else 
 #endif
 	if(particlesExt){
-		particlesExt->UpdateParticles(GetRef().node, ticks);
+		particlesExt->UpdateParticles(mMaxNode, ticks);
 		numParticles = particlesExt->NumParticles();
 	}
 	else if(pSimpleParticle){
-		pSimpleParticle->Update(ticks, GetRef().node);
+		pSimpleParticle->Update(ticks, mMaxNode);
 		numParticles = pSimpleParticle->parts.points.Count();
 	}
 
-
-
-    // Set the visibility
-    float flVisibility = GetRef().node->GetLocalVisibility(ticks);
-    mOVisibility.set(flVisibility > 0 ? AbcG::kVisibilityVisible : AbcG::kVisibilityHidden);
 
     // Store positions, velocity, width/size, scale, id, bounding box
     std::vector<Abc::V3f> positionVec;
@@ -185,7 +166,7 @@ bool AlembicPoints::Save(double time, bool bLastFrame)
 
 	//The MAX interfaces return everything in world coordinates,
 	//so we need to multiply the inverse the node world transform matrix
-    Matrix3 nodeWorldTM = GetRef().node->GetObjTMAfterWSM(ticks);
+    Matrix3 nodeWorldTM = mMaxNode->GetObjTMAfterWSM(ticks);
     // Convert the max transform to alembic
     Matrix3 alembicMatrix;
     ConvertMaxMatrixToAlembicMatrix(nodeWorldTM, alembicMatrix);
@@ -199,7 +180,7 @@ bool AlembicPoints::Save(double time, bool bLastFrame)
 	//ESS_LOG_WARNING("tick: "<<ticks<<"   numParticles: "<<numParticles<<"\n");
 
 	ExoNullView nullView;
-	particleGroupInterface groupInterface(particlesExt, obj, GetRef().node, &nullView);
+	particleGroupInterface groupInterface(particlesExt, obj, mMaxNode, &nullView);
 
     {
     ESS_PROFILE_SCOPE("AlembicPoints::SAVE - numParticlesLoop");
@@ -277,7 +258,7 @@ bool AlembicPoints::Save(double time, bool bLastFrame)
             Mesh* pMesh = NULL;
             {
             ESS_PROFILE_SCOPE("AlembicPoints::SAVE - numParticlesLoop - ThinkingParticles - GetParticleRenderMesh");
-			pMesh = pThinkingParticleMat->GetParticleRenderMesh(ticks, GetRef().node, nullView, bNeedDelete, i, meshTM, bChanged);
+			pMesh = pThinkingParticleMat->GetParticleRenderMesh(ticks, mMaxNode, nullView, bNeedDelete, i, meshTM, bChanged);
             }
 
 			if(pMesh){
@@ -1039,7 +1020,7 @@ AlembicPoints::meshInfo AlembicPoints::CacheShapeMesh(Mesh* pShapeMesh, BOOL bNe
 		mi.nMatId = nMatId;
 		
 		std::stringstream nameStream;
-		nameStream<< EC_MCHAR_to_UTF8( GetRef().node->GetName() ) <<"_";
+		nameStream<< EC_MCHAR_to_UTF8( mMaxNode->GetName() ) <<"_";
 		nameStream<<"InstanceMesh"<<mNumShapeMeshes;
 		mi.name=nameStream.str();
 
@@ -1093,16 +1074,21 @@ void AlembicPoints::saveCurrentFrameMeshes()
 			//Matrix3 worldTrans;
 			//worldTrans.IdentityMatrix();
 
-			std::map<std::string, bool> options;
-			options["exportNormals"] = mJob->GetOption("exportNormals");
-			options["exportMaterialIds"] = mJob->GetOption("exportMaterialIds");
+			CommonOptions options;
+         options.SetOption("exportNormals", mJob->GetOption("exportNormals"));
+			options.SetOption("exportMaterialIds", mJob->GetOption("exportMaterialIds"));
 
 			//gather the mesh data
 			mi->meshTM.IdentityMatrix();
 			IntermediatePolyMesh3DSMax finalPolyMesh;
             {
             ESS_PROFILE_SCOPE("AlembicPoints::saveCurrentFrameMeshes - finalPolyMesh.Save");
-			finalPolyMesh.Save(options, pMesh, NULL, mi->meshTM, NULL, mi->nMatId, true, NULL);
+
+            Imath::M44f transform44f;
+            ConvertMaxMatrixToAlembicMatrix( mi->meshTM, transform44f );
+            SceneNodeMaxParticlesPtr inputSceneNode(new SceneNodeMaxParticles(pMesh, NULL, mi->nMatId));
+            finalPolyMesh.Save(inputSceneNode, transform44f, options, 0.0);
+
             }
 
             AbcG::OPolyMeshSchema::Sample meshSample;
@@ -1165,7 +1151,7 @@ void AlembicPoints::saveCurrentFrameMeshes()
 					Abc::OUInt32ArrayProperty(meshSchema, ".materialids", meshSchema.getMetaData(), mJob->GetAnimatedTs());
 				mMatIdProperty.set(Abc::UInt32ArraySample(finalPolyMesh.mMatIdIndexVec));
 
-				for ( facesetmap_it it=finalPolyMesh.mFaceSetsMap.begin(); it != finalPolyMesh.mFaceSetsMap.end(); it++)
+				for ( facesetmap_it it=finalPolyMesh.mFaceSets.begin(); it != finalPolyMesh.mFaceSets.end(); it++)
 				{
 					std::stringstream nameStream;
 					int nMaterialId = it->first+1;

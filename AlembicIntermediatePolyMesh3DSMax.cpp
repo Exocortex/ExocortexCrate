@@ -133,7 +133,7 @@ bool GetOption(std::map<std::string, bool>& mOptions, const std::string& in_Name
     return false;
 }
 
-void IntermediatePolyMesh3DSMax::GetIndexedNormalsFromSpecifiedNormals( MNMesh* polyMesh, Matrix3 &meshTM_I_T, IndexedNormals &indexedNormals ) {
+void IntermediatePolyMesh3DSMax::GetIndexedNormalsFromSpecifiedNormals( MNMesh* polyMesh, Imath::M44f& transform44f_I_T, IndexedNormals &indexedNormals ) {
 	EC_ASSERT( polyMesh != NULL );
 	MNNormalSpec *normalSpec = polyMesh->GetSpecifiedNormals();
 	EC_ASSERT( normalSpec && normalSpec->GetNumNormals() > 0 && normalSpec->GetNumFaces() > 0 );
@@ -152,13 +152,13 @@ void IntermediatePolyMesh3DSMax::GetIndexedNormalsFromSpecifiedNormals( MNMesh* 
 	Point3 *pNormalArray = normalSpec->GetNormalArray();
 	for( int v = 0; v < normalSpec->GetNumNormals(); v ++ ) {
 		Point3 normal = pNormalArray[v];
-		normal = normal * meshTM_I_T;
-		indexedNormals.values.push_back( ConvertMaxNormalToAlembicNormal( normal ) );
+      Abc::V3f abcNormal = ConvertMaxNormalToAlembicNormal(normal);
+		indexedNormals.values.push_back(abcNormal * transform44f_I_T);
 	}
 }
 
-void IntermediatePolyMesh3DSMax::GetIndexedNormalsFromSpecifiedNormals( Mesh *triMesh, Matrix3 &meshTM_I_T, IndexedNormals &indexedNormals ) {
-	EC_ASSERT( triMesh != NULL );
+void IntermediatePolyMesh3DSMax::GetIndexedNormalsFromSpecifiedNormals( Mesh *triMesh, Imath::M44f& transform44f_I_T, IndexedNormals &indexedNormals ) {
+   EC_ASSERT( triMesh != NULL );
 	MeshNormalSpec *normalSpec = triMesh->GetSpecifiedNormals();
 	EC_ASSERT( normalSpec && normalSpec->GetNumNormals() > 0 && normalSpec->GetNumFaces() > 0 );
 
@@ -176,13 +176,13 @@ void IntermediatePolyMesh3DSMax::GetIndexedNormalsFromSpecifiedNormals( Mesh *tr
 	Point3 *pNormalArray = normalSpec->GetNormalArray();
 	for( int v = 0; v < normalSpec->GetNumNormals(); v ++ ) {
 		Point3 normal = pNormalArray[v];
-		normal = normal * meshTM_I_T;
-		indexedNormals.values.push_back( ConvertMaxNormalToAlembicNormal( normal ) );
+      Abc::V3f abcNormal = ConvertMaxNormalToAlembicNormal(normal);
+		indexedNormals.values.push_back(abcNormal * transform44f_I_T);
 	}
 }
 
-void IntermediatePolyMesh3DSMax::GetIndexedNormalsFromSmoothingGroups( MNMesh* polyMesh, Matrix3 &meshTM_I_T, std::vector<Abc::int32_t> &faceIndices, IndexedNormals &indexedNormals ) {
-	EC_ASSERT( polyMesh != NULL );
+void IntermediatePolyMesh3DSMax::GetIndexedNormalsFromSmoothingGroups( MNMesh* polyMesh, Imath::M44f& transform44f_I_T, std::vector<Abc::int32_t> &faceIndices, IndexedNormals &indexedNormals ) { 
+   EC_ASSERT( polyMesh != NULL );
 	MNNormalSpec *normalSpec = polyMesh->GetSpecifiedNormals();
 	EC_ASSERT( normalSpec == NULL );
 
@@ -194,22 +194,22 @@ void IntermediatePolyMesh3DSMax::GetIndexedNormalsFromSmoothingGroups( MNMesh* p
 
 	std::vector<Abc::N3f> expandedNormals;
 
-	for (int i = 0; i < polyMesh->FNum(); i++) 
-    {
-        int degree = polyMesh->F(i)->deg;
-        for (int j = degree-1; j >= 0; j--)
-        {
-            Point3 normal = smoothingGroupNormals.GetVNormal( i, j );
-			normal = normal * meshTM_I_T;
-			expandedNormals.push_back( ConvertMaxNormalToAlembicNormal( normal ) );
-		}
-	}		
+   for (int i = 0; i < polyMesh->FNum(); i++) 
+   {
+      int degree = polyMesh->F(i)->deg;
+      for (int j = degree-1; j >= 0; j--)
+      {
+         Point3 normal = smoothingGroupNormals.GetVNormal( i, j );
+         Abc::V3f abcNormal = ConvertMaxNormalToAlembicNormal(normal);
+         expandedNormals.push_back(abcNormal * transform44f_I_T);
+      }
+   }		
 
 	createIndexedArray<Abc::N3f, SortableV3f>(faceIndices, expandedNormals, indexedNormals.values, indexedNormals.indices);
 }
 
-void IntermediatePolyMesh3DSMax::GetIndexedNormalsFromSmoothingGroups( Mesh *triMesh, Matrix3 &meshTM_I_T, std::vector<Abc::int32_t> &faceIndices, IndexedNormals &indexedNormals ) {
-	EC_ASSERT( triMesh != NULL );
+void IntermediatePolyMesh3DSMax::GetIndexedNormalsFromSmoothingGroups( Mesh *triMesh, Imath::M44f& transform44f_I_T, std::vector<Abc::int32_t> &faceIndices, IndexedNormals &indexedNormals ) { 
+   EC_ASSERT( triMesh != NULL );
 	MeshNormalSpec *normalSpec = triMesh->GetSpecifiedNormals();
 	EC_ASSERT( normalSpec == NULL );
 
@@ -221,15 +221,15 @@ void IntermediatePolyMesh3DSMax::GetIndexedNormalsFromSmoothingGroups( Mesh *tri
 
 	std::vector<Abc::N3f> expandedNormals;
 
-	for (int i = 0; i < triMesh->getNumFaces(); i++) 
-    {
-        for (int j = 3-1; j >= 0; j--)
-        {
-            Point3 normal = smoothingGroupNormals.GetVNormal( i, j );
-			normal = normal * meshTM_I_T;
-			expandedNormals.push_back( ConvertMaxNormalToAlembicNormal( normal ) );
-		}
-	}
+   for (int i = 0; i < triMesh->getNumFaces(); i++) 
+   {
+      for (int j = 3-1; j >= 0; j--)
+      {
+         Point3 normal = smoothingGroupNormals.GetVNormal( i, j );
+         Abc::V3f abcNormal = ConvertMaxNormalToAlembicNormal(normal);
+         expandedNormals.push_back(abcNormal * transform44f_I_T);
+      }
+   }
 
 	createIndexedArray<Abc::N3f, SortableV3f>(faceIndices, expandedNormals, indexedNormals.values, indexedNormals.indices);
 }
@@ -298,17 +298,34 @@ void IntermediatePolyMesh3DSMax::GetIndexedUVsFromChannel( Mesh *triMesh, int ch
 	}
 }
 
-void IntermediatePolyMesh3DSMax::Save(std::map<std::string, bool>& mOptions, Mesh *triMesh, MNMesh* polyMesh, Matrix3& meshTM, Mtl* pMtl, int nMatId, bool bFirstFrame, materialsMergeStr* pMatMerge)
+void IntermediatePolyMesh3DSMax::Save(SceneNodePtr eNode, const Imath::M44f& transform44f, const CommonOptions& options, double time)
 {
    ESS_PROFILE_FUNC();
 
-	//for transforming the normals
-	Matrix3 meshTM_I_T = meshTM;
-	meshTM_I_T.SetTrans(Point3(0.0, 0.0, 0.0));
-	//the following two steps are necessary because meshTM can contain a scale factor
-	meshTM_I_T = Inverse(meshTM_I_T);
-	meshTM_I_T = TransposeRot(meshTM_I_T);
+   materialsMergeStr* pMatMerge = NULL;
+   bool bFirstFrame = time == 0.0;
+
+   SceneNodeMaxPtr maxNode = reinterpret<SceneNode, SceneNodeMax>(eNode);
+   Mtl* pMtl = maxNode->getMtl();
+
+   MeshData meshData = maxNode->getMeshData(time);
+   Mesh* triMesh = meshData.triMesh;
+   MNMesh* polyMesh = meshData.polyMesh;
+
+   int nMatId = maxNode->getMtlID();
+
 	
+   //for transforming the normals
+   Imath::M44f transform44f_I_T = transform44f;
+   //only the roatation component should be applied
+   transform44f_I_T[3][0] = 0.0f;
+   transform44f_I_T[3][1] = 0.0f;
+   transform44f_I_T[3][2] = 0.0f;
+   //dealing with scaling
+   transform44f_I_T = transform44f_I_T.inverse();
+   transform44f_I_T = transform44f_I_T.transpose();
+
+
     LONG vertCount = (polyMesh != NULL) ? polyMesh->VNum()
                                        : triMesh->getNumVerts();
 
@@ -322,16 +339,18 @@ void IntermediatePolyMesh3DSMax::Save(std::map<std::string, bool>& mOptions, Mes
         Point3 &maxPoint = (polyMesh != NULL) ? polyMesh->V(i)->p
                                              : triMesh->getVert(i);
 		
-        posVec[i] = ConvertMaxPointToAlembicPoint( maxPoint * meshTM );
+        posVec[i] = ConvertMaxPointToAlembicPoint( maxPoint );
+        posVec[i] *= transform44f;
         bbox.extendBy(posVec[i]);
 		//Abc::Box3d& box = bbox;
 		//ESS_LOG_INFO( "Archive bbox: min("<<box.min.x<<", "<<box.min.y<<", "<<box.min.z<<") max("<<box.max.x<<", "<<box.max.y<<", "<<box.max.z<<")" );
     }
 
     // abort here if we are just storing points
-	bool purePointCache = GetOption(mOptions, "exportPurePointCache");
+	bool purePointCache = options.GetBoolOption("exportPurePointCache");
     if(purePointCache)
     {
+        meshData.free();
         return;
     }
 
@@ -341,7 +360,7 @@ void IntermediatePolyMesh3DSMax::Save(std::map<std::string, bool>& mOptions, Mes
                                        : triMesh->getNumFaces();
 
 	// create an index lookup table
-    sampleCount = 0;
+    int sampleCount = 0;
     for(int f = 0; f < faceCount; f += 1)
     {
         int degree = (polyMesh != NULL) ? polyMesh->F(f)->deg : 3;
@@ -369,28 +388,28 @@ void IntermediatePolyMesh3DSMax::Save(std::map<std::string, bool>& mOptions, Mes
 
 
     // let's check if we have user normals
-    if(GetOption(mOptions, "exportNormals"))
+    if(options.GetBoolOption("exportNormals"))
     {
 		if( polyMesh != NULL ) {
 			MNNormalSpec *normalSpec = polyMesh->GetSpecifiedNormals();
             if (normalSpec && normalSpec->GetNumNormals() > 0 && normalSpec->GetNumFaces() > 0)
             {
-				GetIndexedNormalsFromSpecifiedNormals( polyMesh, meshTM_I_T, mIndexedNormals );
+				GetIndexedNormalsFromSpecifiedNormals( polyMesh, transform44f_I_T, mIndexedNormals );
 			}
 			else {
 				polyMesh->buildNormals();
-				GetIndexedNormalsFromSmoothingGroups( polyMesh, meshTM_I_T, mFaceIndicesVec, mIndexedNormals );
+				GetIndexedNormalsFromSmoothingGroups( polyMesh, transform44f_I_T, mFaceIndicesVec, mIndexedNormals );
 			}
 		}
 		if( triMesh != NULL ) {
 			MeshNormalSpec *normalSpec = triMesh->GetSpecifiedNormals();
 			if (normalSpec && normalSpec->GetNumNormals() > 0 && normalSpec->GetNumFaces() > 0)
             {
-				GetIndexedNormalsFromSpecifiedNormals( triMesh, meshTM_I_T, mIndexedNormals );
+				GetIndexedNormalsFromSpecifiedNormals( triMesh, transform44f_I_T, mIndexedNormals );
 			}
 			else {
 				triMesh->buildNormals();
-				GetIndexedNormalsFromSmoothingGroups( triMesh, meshTM_I_T, mFaceIndicesVec, mIndexedNormals );
+				GetIndexedNormalsFromSmoothingGroups( triMesh, transform44f_I_T, mFaceIndicesVec, mIndexedNormals );
 			}
 		}
     }
@@ -402,7 +421,7 @@ void IntermediatePolyMesh3DSMax::Save(std::map<std::string, bool>& mOptions, Mes
     //}
   
    //write out the UVs
-   if(GetOption(mOptions, "exportUVs"))
+   if(options.GetBoolOption("exportUVs"))
    {
 	  if (polyMesh != NULL)
 	  {
@@ -452,7 +471,7 @@ void IntermediatePolyMesh3DSMax::Save(std::map<std::string, bool>& mOptions, Mes
 	// sweet, now let's have a look at face sets (really only for first sample)
 	// for 3DS Max, we are mapping this to the material ids
 	//std::vector<boost::int32_t> zeroFaceVector;
-	if(GetOption(mOptions, "exportMaterialIds"))
+	if(options.GetBoolOption("exportMaterialIds"))
 	{
 		int numMatId = 0;
 		int numFaces = polyMesh ? polyMesh->numf : triMesh->getNumFaces();
@@ -480,14 +499,14 @@ void IntermediatePolyMesh3DSMax::Save(std::map<std::string, bool>& mOptions, Mes
 		  if (bFirstFrame || pMatMerge)
 		  {
 			  facesetmap_it it;
-			  it = mFaceSetsMap.find(matId);
+			  it = mFaceSets.find(matId);
 
-			  if (it == mFaceSetsMap.end())
+			  if (it == mFaceSets.end())
 			  {
-				  faceSetStr faceSet;
+				  FaceSetStruct faceSet;
 				  faceSet.faceIds = std::vector<Abc::int32_t>();
 				  faceSet.originalMatId = originalMatId;
-				  facesetmap_ret_pair ret = mFaceSetsMap.insert( facesetmap_insert_pair(matId, faceSet) );
+				  facesetmap_ret_pair ret = mFaceSets.insert( facesetmap_insert_pair(matId, faceSet) );
 				  it = ret.first;
 				  numMatId++;
 			  }
@@ -500,7 +519,7 @@ void IntermediatePolyMesh3DSMax::Save(std::map<std::string, bool>& mOptions, Mes
 		if (bFirstFrame || pMatMerge)
 		{
 
-		  for ( facesetmap_it it=mFaceSetsMap.begin(); it != mFaceSetsMap.end(); it++)
+		  for ( facesetmap_it it=mFaceSets.begin(); it != mFaceSets.end(); it++)
 		  {
 			  int i = it->first; 
 
@@ -531,7 +550,7 @@ void IntermediatePolyMesh3DSMax::Save(std::map<std::string, bool>& mOptions, Mes
 		
 	}
 
-
+   meshData.free();
       // check if we need to export the bindpose (also only for first frame)
 	  /*
 	if (bFirstFrame || dynamicTopology)
@@ -622,4 +641,51 @@ BOOL IntermediatePolyMesh3DSMax::CheckForFaceMap(Mtl* mtl, Mesh* mesh)
     }
 
     return TRUE;
+}
+
+
+bool IntermediatePolyMesh3DSMax::mergeWith(const CommonIntermediatePolyMesh& srcMesh)
+{
+    ESS_PROFILE_FUNC();
+
+   IntermediatePolyMesh3DSMax& destMesh = *this;
+   const IntermediatePolyMesh3DSMax& srcMeshMax = (IntermediatePolyMesh3DSMax&)srcMesh;
+
+   Abc::uint32_t amountToOffsetFaceIdBy = (Abc::uint32_t)destMesh.mFaceCountVec.size();
+
+   bool bRes = CommonIntermediatePolyMesh::mergeWith(srcMesh);
+   if(!bRes) return false;
+
+	for(FaceSetMap::const_iterator it=srcMeshMax.mFaceSets.begin(); it != srcMeshMax.mFaceSets.end(); it++)
+	{
+		if( destMesh.mFaceSets.find(it->first) == destMesh.mFaceSets.end() ){ // a new key
+			destMesh.mFaceSets[it->first] = it->second;
+		}
+		else{// the key is common
+
+			const facesetmap_vec& srcFaceSetVec = it->second.faceIds;
+			facesetmap_vec& destFaceSetVec = destMesh.mFaceSets[it->first].faceIds;
+
+			for(int i=0; i<srcFaceSetVec.size(); i++){
+				destFaceSetVec.push_back(amountToOffsetFaceIdBy + srcFaceSetVec[i]);
+			}
+		}
+	}
+
+
+	for(int i=0; i<srcMeshMax.mMatIdIndexVec.size(); i++)
+   {
+		destMesh.mMatIdIndexVec.push_back(srcMeshMax.mMatIdIndexVec[i]);
+	}
+
+
+
+	return true;
+}
+
+void IntermediatePolyMesh3DSMax::clear()
+{
+   //*this = IntermediatePolyMesh3DSMax();
+
+
 }

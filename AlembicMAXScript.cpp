@@ -689,49 +689,18 @@ int ExocortexAlembicStaticInterface_ExocortexAlembicImport( CONST_2013 MCHAR* st
 }
 
 
-void addNodeChildren(INode* pNode, ObjectList& allSceneObjects, TimeValue time, std::string path)
-{
-	for(int i=0; i<pNode->NumberOfChildren(); i++){
-
-		INode* pChildNode = pNode->GetChildNode(i);
-
-		path += "/";
-		path += EC_MCHAR_to_UTF8( pChildNode->GetName() );
-
-		SceneEntry sEntry = createSceneEntry(pChildNode, time, &path);
-		allSceneObjects.Append(&sEntry);//The append will make a copy sEntry, so this is safe
-
-		addNodeChildren(pChildNode, allSceneObjects, time, path);
-	}
-}
-
-int parseObjectsParameter(const std::string& objectsString, ObjectList& allSceneObjects, TimeValue time)
+int parseObjectsParameter(const std::string& objectsString, std::map<std::string, bool>& selectionMap)
 {
 	std::vector<std::string> objects;
 	boost::split(objects, objectsString, boost::is_any_of(","));
 
 	for(int i=0; i<objects.size(); i++){
-		std::string path("");
-		if(objects[i][0] != '/'){
-			path += "/";
-		}
-		path += objects[i];
-
-		INode* pNode = GetNodeFromHierarchyPath(path);
-
-		if(!pNode){
-			ESS_LOG_ERROR("Could not find "<<objects[i]<<". Please ensure you have provide the full path.");
-			return alembic_failure;
-		}
-
-		SceneEntry sEntry = createSceneEntry(pNode, time, &path);
-		allSceneObjects.Append(&sEntry);//The append will make a copy sEntry, so this is safe
-
-		addNodeChildren(pNode, allSceneObjects, time, path);
+      selectionMap[objects[i]] = false;
 	}
 
 	return alembic_success;
 }
+
 
 int ExocortexAlembicStaticInterface_ExocortexAlembicExportJobs( CONST_2013 MCHAR* jobString );
 int ExocortexAlembicStaticInterface::ExocortexAlembicExportJobs( CONST_2013 MCHAR* jobString )
@@ -757,11 +726,10 @@ int ExocortexAlembicStaticInterface_ExocortexAlembicExportJobs( CONST_2013 MCHAR
 		MAXInterface *pMaxInterface = GET_MAX_INTERFACE();
         pMaxInterface->ProgressStart( _T( "Exporting Alembic File" ), TRUE, DummyProgressFunction, NULL);
 
-
+      std::map<std::string, bool> objectsMap;
 
 		TimeValue currentTime = pMaxInterface->GetTime();
 
-		SceneEnumProc currentScene;
 
 		std::vector<std::string> jobs;
 		boost::split(jobs, jobString, boost::is_any_of("|"));
@@ -799,9 +767,10 @@ int ExocortexAlembicStaticInterface_ExocortexAlembicExportJobs( CONST_2013 MCHAR
 			bool bValidateMeshTopology = false;
          bool bUseOgawa = false;
          bool bPartitioningFacesetsOnly = true;
+         bool bIncludeParentNodes = false;
+         bool bRenameConflictingNodes = false;
+         bool bMergeSelectedPolymeshSubtree = false;
 
-			ObjectList allSceneObjects;
-			
 			std::vector<std::string> tokens;
 			boost::split(tokens, jobs[i], boost::is_any_of(";"));
 			for(int j=0; j<tokens.size(); j++){
@@ -876,6 +845,15 @@ int ExocortexAlembicStaticInterface_ExocortexAlembicExportJobs( CONST_2013 MCHAR
 				else if(boost::iequals(valuePair[0], "uiExport")){
 					bUiExport = parseBool(valuePair[1]);
 				}
+				//else if(boost::iequals(valuePair[0], "includeParentNodes")){
+				//	bIncludeParentNodes = parseBool(valuePair[1]);
+				//}
+            else if(boost::iequals(valuePair[0], "renameConflictingNodes")){
+					bRenameConflictingNodes = parseBool(valuePair[1]);
+				}
+            else if(boost::iequals(valuePair[0], "mergePolyMeshSubtree")){
+					bMergeSelectedPolymeshSubtree = parseBool(valuePair[1]);
+				}
             else if(boost::iequals(valuePair[0], "storageFormat")){
                 if(boost::iequals(valuePair[1], "hdf5")){
                   bUseOgawa = false;
@@ -894,12 +872,12 @@ int ExocortexAlembicStaticInterface_ExocortexAlembicExportJobs( CONST_2013 MCHAR
 				}
 				else if(boost::iequals(valuePair[0], "objects")){
 					bObjectsParameterExists = true;
-					int res = parseObjectsParameter(valuePair[1], allSceneObjects, currentTime);
+					int res = parseObjectsParameter(valuePair[1], objectsMap);
 					if(res != alembic_success){
 						pMaxInterface->ProgressEnd();
 						return res;
 					}
-					if(allSceneObjects.Count() == 0){
+					if(objectsMap.empty()){
 						ESS_LOG_ERROR("0 export objects were specified via object parameter.");
 						pMaxInterface->ProgressEnd();
 						return alembic_invalidarg;
@@ -974,14 +952,10 @@ int ExocortexAlembicStaticInterface_ExocortexAlembicExportJobs( CONST_2013 MCHAR
 					}
 				}
 
-				if(currentScene.Count() == 0){
-					currentScene.Init(pMaxInterface->GetScene(), currentTime, pMaxInterface);
-				}
-				allSceneObjects.FillList(currentScene);
 			}
 
 
-			AlembicWriteJob * job = new AlembicWriteJob(filename, allSceneObjects, frames, pMaxInterface);
+			AlembicWriteJob * job = new AlembicWriteJob(filename, objectsMap, frames, pMaxInterface);
 			//job->SetOption(L"exportFaceSets",facesets);
 			//job->SetOption(L"globalSpace",globalspace);
 			//job->SetOption(L"guideCurves",guidecurves);
@@ -999,6 +973,10 @@ int ExocortexAlembicStaticInterface_ExocortexAlembicExportJobs( CONST_2013 MCHAR
 			job->SetOption("validateMeshTopology", bValidateMeshTopology);
          job->SetOption("useOgawa", bUseOgawa);
          job->SetOption("partitioningFacesetsOnly", bPartitioningFacesetsOnly);
+         job->SetOption("objectsParameterExists", bObjectsParameterExists);
+         job->SetOption("includeParentNodes", bIncludeParentNodes);
+         job->SetOption("renameConflictingNodes", bRenameConflictingNodes);
+         job->SetOption("mergePolyMeshSubtree", bMergeSelectedPolymeshSubtree);
 
 			if (job->PreProcess() != true)
 			{
@@ -1020,6 +998,8 @@ int ExocortexAlembicStaticInterface_ExocortexAlembicExportJobs( CONST_2013 MCHAR
 		//prog.PutValue(0);
 		//prog.PutCancelEnabled(true);
 		//prog.PutVisible(true);
+
+      
 
 		// now, let's run through all frames, and process the jobs
 		bool bSuccess = true;

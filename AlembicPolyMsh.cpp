@@ -8,7 +8,7 @@
 #include "AlembicPointsUtils.h"
 #include "AlembicIntermediatePolyMesh3DSMax.h"
 #include "CommonMeshUtilities.h"
-
+#include "CommonSubtreeMerge.h"
 
 
 // From the SDK
@@ -23,36 +23,16 @@
 //static int prevpt[3] = {2,0,1};
 
 
-AlembicPolyMesh::AlembicPolyMesh(const SceneEntry &in_Ref, AlembicWriteJob *in_Job)
-: AlembicObject(in_Ref, in_Job), customAttributes("Shape User Properties")//TODO...
+AlembicPolyMesh::AlembicPolyMesh(SceneNodePtr eNode, AlembicWriteJob * in_Job, Abc::OObject oParent)
+: AlembicObject(eNode, in_Job, oParent), customAttributes("Shape User Properties")//TODO...
 {
-    std::string xformName = EC_MCHAR_to_UTF8( in_Ref.node->GetName() );
-	std::string meshName = xformName + "Shape";
+   AbcG::OPolyMesh mesh(GetOParent(), eNode->name, GetCurrentJob()->GetAnimatedTs());
 
-    AbcG::OXform xform(GetOParent(), xformName.c_str(), GetCurrentJob()->GetAnimatedTs());
-    AbcG::OPolyMesh mesh(xform, meshName.c_str(), GetCurrentJob()->GetAnimatedTs());
-
-    // JSS - I'm not sure if this is require under 3DSMAx
-    // AddRef(prim.GetParent3DObject().GetKinematics().GetGlobal().GetRef());
-
-    // create the generic properties
-    mOVisibility = CreateVisibilityProperty(xform,GetCurrentJob()->GetAnimatedTs());
-
-    mXformSchema = xform.getSchema();
-    mMeshSchema = mesh.getSchema();
-
-    Abc::OCompoundProperty userProperties = mXformSchema.getUserProperties();
-
-    bool bSuccess = customAttributes.defineCustomAttributes(GetRef().node, userProperties, mXformSchema.getMetaData(), GetCurrentJob()->GetAnimatedTs());
-    //if(bSuccess){
-    //   ESS_LOG_WARNING("PolyMesh attributes defined.");
-    //}
+   mMeshSchema = mesh.getSchema();
 }
 
 AlembicPolyMesh::~AlembicPolyMesh()
 {
-    // we have to clear this prior to destruction this is a workaround for issue-171
-    mOVisibility.reset();
 }
 
 Abc::OCompoundProperty AlembicPolyMesh::GetCompound()
@@ -90,8 +70,6 @@ void AlembicPolyMesh::SaveMaterialsProperty(bool bFirstFrame, bool bLastFrame)
 	}
 }
 
-
-
 bool AlembicPolyMesh::Save(double time, bool bLastFrame)
 {   
     ESS_PROFILE_FUNC();
@@ -103,128 +81,91 @@ bool AlembicPolyMesh::Save(double time, bool bLastFrame)
 
 	TimeValue ticks = GetTimeValueFromFrame(time);
 
-	Object *obj = GetRef().node->EvalWorldState(ticks).obj;
-	const bool bIsParticleSystem = obj->IsParticleSystem() == 1;
+   const bool bIsParticleSystem = isParticleSystem(mExoSceneNode->type);
+
+   // mMaxNode (could be null if this is a merged polyMesh)
 
 	if(bIsParticleSystem){
 		bForever = false;
 	}
-	else{
+	else if(mMaxNode){
+      Object *obj = mMaxNode->EvalWorldState(ticks).obj;
 		if(mNumSamples == 0){
 			bForever = CheckIfObjIsValidForever(obj, ticks);
 		}
-		else{
-			bool bNewForever = CheckIfObjIsValidForever(obj, ticks);
-			if(bForever && bNewForever != bForever){
-				ESS_LOG_INFO( "bForever has changed" );
-			}
-		}
 	}
 
-	const bool bFlatten = GetCurrentJob()->GetOption("flattenHierarchy");
-    // Store the transformation
-    SaveXformSample(GetRef(), mXformSchema, mXformSample, time, bFlatten);
+   if(mMaxNode){
+	   SaveMetaData(mMaxNode, this);
+   }
 
-	SaveMetaData(GetRef().node, this);
+   // check if the mesh is animated (Otherwise, no need to export)
+   if(mNumSamples > 0) 
+   {
+      if(bForever)
+      {
+         ESS_LOG_INFO( "Node is not animated, not saving topology on subsequent frames." );
+         return true;
+      }
+   }
 
-   customAttributes.exportCustomAttributes(GetRef().node, time);
-    // store the metadata
-    //IMetaDataManager mng;
-    // mng.GetMetaData(GetRef().node, 0);
-    // SaveMetaData(prim.GetParent3DObject().GetRef(),this);
 
-    // set the visibility
-    //disabling this check, since bForever flag is not being set false in the case animation
-    //lets just save it out all time, and let alembic deal with deduplication.
-    //if(!bForever || mNumSamples == 0)
-    {
-        float flVisibility = GetRef().node->GetLocalVisibility(ticks);
-        mOVisibility.set(flVisibility > 0 ? AbcG::kVisibilityVisible : AbcG::kVisibilityHidden);
-    }
+	IntermediatePolyMesh3DSMax finalMesh;
 
-    // check if the mesh is animated (Otherwise, no need to export)
-    if(mNumSamples > 0) 
-    {
-        if(bForever)
-        {
-			ESS_LOG_INFO( "Node is not animated, not saving topology on subsequent frames." );
-            return true;
-        }
-    }
+	if(bIsParticleSystem){//Merged Particle System Export
 
-	IntermediatePolyMesh3DSMax finalPolyMesh;
-
-	if(bIsParticleSystem){
-
-        bool bEnableVelocityExport = true;
-		bool bSuccess = getParticleSystemMesh(ticks, obj, GetRef().node, &finalPolyMesh, &materialsMerge, mJob, mNumSamples, bEnableVelocityExport);
+      const bool bEnableVelocityExport = true;
+      bool bSuccess = mMaxNode != NULL;
+      if(bSuccess){
+         bSuccess = getParticleSystemMesh(ticks, mMaxNode, &finalMesh, &materialsMerge, mJob, mNumSamples, bEnableVelocityExport);
+      }
 		if(!bSuccess){
 			ESS_LOG_INFO( "Error. Could not get particle system mesh. Time: "<<time );
 			return false;
 		}
-
-        velocityCalc.calcVelocities(finalPolyMesh.posVec, finalPolyMesh.mFaceIndicesVec, finalPolyMesh.mVelocitiesVec, GetSecondsFromTimeValue(ticks));
+      velocityCalc.calcVelocities(finalMesh.posVec, finalMesh.mFaceIndicesVec, finalMesh.mVelocitiesVec, GetSecondsFromTimeValue(ticks));
 	}
 	else
 	{
-		PolyObject *polyObj = NULL;
-		TriObject *triObj = NULL;
-		Mesh *triMesh = NULL;
-		MNMesh* polyMesh = NULL;
+      CommonOptions options;
+      options.Copy(GetCurrentJob()->mOptions);
 
-		if (obj->CanConvertToType(Class_ID(POLYOBJ_CLASS_ID, 0)))
-		{
-			polyObj = reinterpret_cast<PolyObject *>(obj->ConvertToType(ticks, Class_ID(POLYOBJ_CLASS_ID, 0)));
-			polyMesh = &polyObj->GetMesh();
-		}
-		else if (obj->CanConvertToType(Class_ID(TRIOBJ_CLASS_ID, 0)))
-		{
-			triObj = reinterpret_cast<TriObject *>(obj->ConvertToType(ticks, Class_ID(TRIOBJ_CLASS_ID, 0)));
-			triMesh = &triObj->GetMesh();
-		}
+      //if(options.GetBoolOption("exportFaceSets") && mNumSamples != 0){//turn off faceset exports for all frames except the first
+      //   options.SetOption("exportFaceSets", false);
+      //}
 
-		// Make sure we have a poly or a tri object
-		if (polyMesh == NULL && triMesh == NULL)
-		{
-			return false;
-		}
+      if(mExoSceneNode->type == SceneNode::POLYMESH_SUBTREE){ //Merged PolyMesh Subtree Export
+         SceneNodePolyMeshSubtreePtr meshSubtreeNode = reinterpret<SceneNode, SceneNodePolyMeshSubtree>(mExoSceneNode);
+         mergePolyMeshSubtreeNode<IntermediatePolyMesh3DSMax>(meshSubtreeNode, finalMesh, options, time);
+      }
+      else{ //Normal PolyMesh node export
 
-		//keep the orignal material IDs, since we are not saving out a single nonmerged mesh
-		materialsMerge.bPreserveIds = true;
+         //for now, custom attribute will ignore if meshes are being merged
+         //customAttributes.exportCustomAttributes(mesh);
 
-		Matrix3 worldTrans;
-		worldTrans.IdentityMatrix();
-		finalPolyMesh.Save(mJob->mOptions, triMesh, polyMesh, worldTrans, GetRef().node->GetMtl(), -1, mNumSamples == 0, &materialsMerge);
+		   //keep the orignal material IDs, since we are not saving out a single nonmerged mesh
+		   materialsMerge.bPreserveIds = true;
+         Imath::M44f transform44f;
+         transform44f.makeIdentity();
+         finalMesh.Save(mExoSceneNode, transform44f, options, mNumSamples == 0 ? 0.0 : time);
+      }
 
-	   // Note that the TriObject should only be deleted
-	   // if the pointer to it is not equal to the object
-	   // pointer that called ConvertToType()
-	   if (polyObj != NULL && polyObj != obj)
-	   {
-		   delete polyObj;
-		   polyObj = NULL;
-	   }
 
-	   if (triObj != NULL && triObj != obj)
-	   {
-		   delete triObj;
-		   triObj = NULL;
-	   }
 	}
 
 	bool dynamicTopology = static_cast<bool>(GetCurrentJob()->GetOption("exportDynamicTopology"));
 	
 	// Extend the archive bounding box
-	if (mJob){
-		Abc::M44d wm;
-		ConvertMaxMatrixToAlembicMatrix(GetRef().node->GetObjTMAfterWSM(ticks), wm);
+	if (mJob && mMaxNode){
+      //TODO: need to make this work for mergedPolyMesh somehow
+		Abc::M44d wm = mExoSceneNode->getGlobalTransDouble(time);
 
-		Abc::Box3d bbox = finalPolyMesh.bbox;
+		Abc::Box3d bbox = finalMesh.bbox;
 
 		//ESS_LOG_INFO( "Archive bbox: min("<<bbox.min.x<<", "<<bbox.min.y<<", "<<bbox.min.z<<") max("<<bbox.max.x<<", "<<bbox.max.y<<", "<<bbox.max.z<<")" );
 
-		bbox.min = finalPolyMesh.bbox.min * wm;
-		bbox.max = finalPolyMesh.bbox.max * wm;
+		bbox.min = finalMesh.bbox.min * wm;
+		bbox.max = finalMesh.bbox.max * wm;
 
 		//ESS_LOG_INFO( "Archive bbox: min("<<bbox.min.x<<", "<<bbox.min.y<<", "<<bbox.min.z<<") max("<<bbox.max.x<<", "<<bbox.max.y<<", "<<bbox.max.z<<")" );
 
@@ -234,10 +175,10 @@ bool AlembicPolyMesh::Save(double time, bool bLastFrame)
 		//ESS_LOG_INFO( "Archive bbox: min("<<box.min.x<<", "<<box.min.y<<", "<<box.min.z<<") max("<<box.max.x<<", "<<box.max.y<<", "<<box.max.z<<")" );
 	}
 
-	mMeshSample.setPositions(Abc::P3fArraySample(finalPolyMesh.posVec));
+	mMeshSample.setPositions(Abc::P3fArraySample(finalMesh.posVec));
 
-	mMeshSample.setSelfBounds(finalPolyMesh.bbox);
-	mMeshSchema.getChildBoundsProperty().set(finalPolyMesh.bbox);
+	mMeshSample.setSelfBounds(finalMesh.bbox);
+	mMeshSchema.getChildBoundsProperty().set(finalMesh.bbox);
 	
     // abort here if we are just storing points
     if(mJob->GetOption("exportPurePointCache"))
@@ -255,19 +196,19 @@ bool AlembicPolyMesh::Save(double time, bool bLastFrame)
     }
 
 	if(mJob->GetOption("validateMeshTopology")){
-		mJob->mMeshErrors += validateAlembicMeshTopo(finalPolyMesh.mFaceCountVec, finalPolyMesh.mFaceIndicesVec, EC_MCHAR_to_UTF8(GetRef().node->GetName()));
+		mJob->mMeshErrors += validateAlembicMeshTopo(finalMesh.mFaceCountVec, finalMesh.mFaceIndicesVec, mExoSceneNode->name);
 	}
 
-	Abc::Int32ArraySample faceCountSample(finalPolyMesh.mFaceCountVec);
-	Abc::Int32ArraySample faceIndicesSample(finalPolyMesh.mFaceIndicesVec);
+	Abc::Int32ArraySample faceCountSample(finalMesh.mFaceCountVec);
+	Abc::Int32ArraySample faceIndicesSample(finalMesh.mFaceIndicesVec);
 	mMeshSample.setFaceCounts(faceCountSample);
 	mMeshSample.setFaceIndices(faceIndicesSample);
 
 	if(mJob->GetOption("exportNormals")){
 		AbcG::ON3fGeomParam::Sample normalSample;
 		normalSample.setScope(AbcG::kFacevaryingScope);
-		normalSample.setVals(Abc::N3fArraySample(finalPolyMesh.mIndexedNormals.values));
-		normalSample.setIndices(Abc::UInt32ArraySample(finalPolyMesh.mIndexedNormals.indices));
+		normalSample.setVals(Abc::N3fArraySample(finalMesh.mIndexedNormals.values));
+		normalSample.setIndices(Abc::UInt32ArraySample(finalMesh.mIndexedNormals.indices));
 		mMeshSample.setNormals(normalSample);
 	}
 
@@ -276,10 +217,10 @@ bool AlembicPolyMesh::Save(double time, bool bLastFrame)
 	//write out the texture coordinates if necessary
 	if(mJob->GetOption("exportUVs"))
 	{
-       if(correctInvalidUVs(finalPolyMesh.mIndexedUVSet)){
-          ESS_LOG_WARNING("Capped out of range uvs on object "<<GetRef().node->GetName()<<", frame = "<<time);
+       if(correctInvalidUVs(finalMesh.mIndexedUVSet)){
+          ESS_LOG_WARNING("Capped out of range uvs on object "<<mExoSceneNode->name<<", frame = "<<time);
        }
-	   saveIndexedUVs( mMeshSchema, mMeshSample, uvSample, mUvParams, mJob->GetAnimatedTs(), mNumSamples, finalPolyMesh.mIndexedUVSet );
+	   saveIndexedUVs( mMeshSchema, mMeshSample, uvSample, mUvParams, mJob->GetAnimatedTs(), mNumSamples, finalMesh.mIndexedUVSet );
 	}
 
 
@@ -292,17 +233,17 @@ bool AlembicPolyMesh::Save(double time, bool bLastFrame)
 			mMatIdProperty = Abc::OUInt32ArrayProperty(mMeshSchema, ".materialids", mMeshSchema.getMetaData(), GetCurrentJob()->GetAnimatedTs());
 		}
 
-		Abc::UInt32ArraySample sample = Abc::UInt32ArraySample(finalPolyMesh.mMatIdIndexVec);
+		Abc::UInt32ArraySample sample = Abc::UInt32ArraySample(finalMesh.mMatIdIndexVec);
 		mMatIdProperty.set(sample);
 
 		SaveMaterialsProperty(bFirstFrame, bLastFrame || bForever);
 
-		size_t numMatId = finalPolyMesh.mFaceSetsMap.size();
+		size_t numMatId = finalMesh.mFaceSets.size();
       bool bExportAllFaceset = GetCurrentJob()->GetOption("partitioningFacesetsOnly") == false;
 		// For sample zero, export the material ids as face sets
 		if (bFirstFrame && (numMatId > 1 || bExportAllFaceset))
 		{
-			for ( facesetmap_it it=finalPolyMesh.mFaceSetsMap.begin(); it != finalPolyMesh.mFaceSetsMap.end(); it++)
+			for ( facesetmap_it it=finalMesh.mFaceSets.begin(); it != finalMesh.mFaceSets.end(); it++)
 			{
 				std::stringstream nameStream;
 				int nMaterialId = it->first+1;
@@ -315,46 +256,17 @@ bool AlembicPolyMesh::Save(double time, bool bLastFrame)
 				faceSet.getSchema().set(faceSetSample);
 			}
 		}
-
 	}
-
-   /*if(bFirstFrame || (dynamicTopology))
-   {
-      // check if we need to export the bindpose (also only for first frame)
-	  
-      if(GetJob()->GetOption(L"exportBindPose") && prim.GetParent3DObject().GetEnvelopes().GetCount() > 0 && mNumSamples == 0)
-      {
-         mBindPoseProperty = OV3fArrayProperty(mMeshSchema, ".bindpose", mMeshSchema.getMetaData(), GetJob()->GetAnimatedTs());
-
-         // store the positions of the modeling stack into here
-         PolygonMesh bindPoseGeo = prim.GetGeometry(time, siConstructionModeModeling);
-         CVector3Array bindPosePos = bindPoseGeo.GetPoints().GetPositionArray();
-         mBindPoseVec.resize((size_t)bindPosePos.GetCount());
-         for(LONG i=0;i<bindPosePos.GetCount();i++)
-         {
-            mBindPoseVec[i].x = (float)bindPosePos[i].GetX();
-            mBindPoseVec[i].y = (float)bindPosePos[i].GetY();
-            mBindPoseVec[i].z = (float)bindPosePos[i].GetZ();
-         }
-
-         Abc::V3fArraySample sample;
-         if(mBindPoseVec.size() > 0)
-            sample = Abc::V3fArraySample(&mBindPoseVec.front(),mBindPoseVec.size());
-         mBindPoseProperty.set(sample);
-      }
-      
-   }*/
-
 
    // check if we should export the velocities
    // TODO: support velocity property for nonparticle system meshes if possible
 	//TODO: add export velocities option
 	if(bIsParticleSystem)
 	{
-		if(finalPolyMesh.posVec.size() != finalPolyMesh.mVelocitiesVec.size()){
+		if(finalMesh.posVec.size() != finalMesh.mVelocitiesVec.size()){
 			ESS_LOG_INFO("mVelocitiesVec has wrong size.");
 		}
-		mMeshSample.setVelocities(Abc::V3fArraySample(finalPolyMesh.mVelocitiesVec));
+		mMeshSample.setVelocities(Abc::V3fArraySample(finalMesh.mVelocitiesVec));
 	}
 
 

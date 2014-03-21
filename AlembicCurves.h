@@ -7,13 +7,9 @@
 class AlembicCurves: public AlembicObject
 {
 private:
-   AbcG::OXformSchema mXformSchema;
+
    AbcG::OCurvesSchema mCurvesSchema;
-   AbcG::XformSample mXformSample;
-   
-
    Abc::OFloatArrayProperty mKnotVectorProperty;
-
    Abc::OUInt16ArrayProperty mOrdersProperty;
 
    //Abc::OV3fArrayProperty mVelocityProperty;
@@ -29,7 +25,7 @@ private:
 
 public:
 
-   AlembicCurves(const SceneEntry &in_Ref, AlembicWriteJob * in_Job);
+   AlembicCurves(SceneNodePtr eNode, AlembicWriteJob * in_Job, Abc::OObject oParent);
    ~AlembicCurves();
 
    virtual Abc::OCompoundProperty GetCompound();

@@ -11,14 +11,15 @@
 #include "AlembicPoints.h"
 #include "AlembicCurves.h"
 #include "CommonUtilities.h"
+#include "CommonSubtreeMerge.h"
 
 
-AlembicWriteJob::AlembicWriteJob(const std::string &in_FileName, const ObjectList &in_Selection, const std::vector<double> &in_Frames, Interface *i)
+AlembicWriteJob::AlembicWriteJob(const std::string &in_FileName, std::map<std::string, bool>& objectsMap, const std::vector<double> &in_Frames, Interface *i)
 {
     mApplication = i;
 	mMeshErrors = 0;
     mFileName = in_FileName;
-    mSelection = in_Selection;
+    mObjectsMap = objectsMap;
 
     for(int i=0; i < in_Frames.size(); i++)
     {
@@ -59,6 +60,15 @@ bool AlembicWriteJob::GetOption(const std::string & in_Name)
     return false;
 }
 
+struct PreProcessStackElement
+{
+   SceneNodePtr eNode;
+   Abc::OObject oParent;
+
+   PreProcessStackElement(SceneNodePtr enode, Abc::OObject parent):eNode(enode), oParent(parent)
+   {}
+};
+
 bool AlembicWriteJob::PreProcess()
 {
     // check filenames
@@ -68,12 +78,12 @@ bool AlembicWriteJob::PreProcess()
         return false;
     }
 
-    // check objects
-    if(mSelection.Count() == 0)
-    {
-        ESS_LOG_WARNING("[alembic] No objects specified.");
-        return false;
-    }
+    //// check objects
+    //if(mSelection.Count() == 0)
+    //{
+    //    ESS_LOG_WARNING("[alembic] No objects specified.");
+    //    return false;
+    //}
 
     // check frames
     if(mFrames.size() == 0)
@@ -158,71 +168,170 @@ bool AlembicWriteJob::PreProcess()
     m_ArchiveBoxProp = AbcG::CreateOArchiveBounds(mArchive,mTs);
 
 	
+
 	const bool bParticleMesh = GetOption("exportParticlesAsMesh");
-	const bool bFlattenHierarchy = GetOption("flattenHierarchy");
-	const bool bTransformCache = GetOption("transformCache");
+   bool bMergePolyMeshSubtree = GetOption("mergePolyMeshSubtree");
 
-	if(bTransformCache){
-		for( int i = 0; i < mSelection.objectEntries.size(); i ++ ) {
-			ObjectEntry *object = &( mSelection.objectEntries[i] );
+   bool bSelectParents = GetOption("includeParentNodes");/*|| !bFlattenHierarchy || bTransformCache*/
+   const bool bSelectChildren = false;
+   bool bTransformCache = GetOption("transformCache");
+   const bool bFlattenHierarchy = GetOption("flattenHierarchy");
 
-			if (GetOption("exportSelected") && !object->entry.node->Selected())
-				continue;
+   if(bMergePolyMeshSubtree){
+      bTransformCache = false;
+      //bSelectParents = true;
+   }
 
-			int type = object->entry.type;
-			if (type == OBTYPE_MESH || 
-				type == OBTYPE_CAMERA || 
-				(type == OBTYPE_DUMMY && !bFlattenHierarchy)|| 
-				type == OBTYPE_POINTS || type == OBTYPE_POINTS_TP ||
-				type == OBTYPE_CURVES)
-			{
-				AlembicObjectPtr ptr;
-				ptr.reset(new AlembicXForm(object->entry,this));            
-				AddObject(ptr);
-			}
-		}
-	}else{
-		for( int i = 0; i < mSelection.objectEntries.size(); i ++ ) {
-			ObjectEntry *object = &( mSelection.objectEntries[i] );
+   bcsgSelection::types buildSelection = bcsgSelection::ALL;
 
-			if (GetOption("exportSelected") && !object->entry.node->Selected())
-				continue;
+   const bool bExportSelected = GetOption("exportSelected");
+   const bool bObjectsParameterExists = GetOption("objectsParameterExists");
+   if(bExportSelected){
+      //copy max selection
+      buildSelection = bcsgSelection::APP;
+   }
+   else if(bObjectsParameterExists){
+      //select nothing when building, fill in later from parameter data
+      buildSelection = bcsgSelection::NONE;
+   }
+   else{
+      //select everything
+   }
 
-			int type = object->entry.type;
-			if (type == OBTYPE_MESH || (bParticleMesh && type == OBTYPE_POINTS) || type == OBTYPE_POINTS_TP) 
-			{
-				AlembicObjectPtr ptr;
-				ptr.reset(new AlembicPolyMesh(object->entry,this));            
-				AddObject(ptr);
-			}
-			else if (type == OBTYPE_CAMERA)
-			{
-				AlembicObjectPtr ptr;
-				ptr.reset(new AlembicCamera(object->entry,this));
-				AddObject(ptr);
-			}
-			else if (type == OBTYPE_DUMMY && !bFlattenHierarchy)
-			{
-				AlembicObjectPtr ptr;
-				ptr.reset(new AlembicXForm(object->entry,this));            
-				AddObject(ptr);
-			}
-			else if (type == OBTYPE_POINTS && !bParticleMesh)
-			{
-				AlembicObjectPtr ptr;
-				ptr.reset(new AlembicPoints(object->entry,this));
-				AddObject(ptr);
-			}
-			else if (type == OBTYPE_CURVES)
-			{
-				AlembicObjectPtr ptr;
-				ptr.reset(new AlembicCurves(object->entry,this));
-				AddObject(ptr);
-			}
-		}
-	}
+   int nNumNodes = 0;
+   exoSceneRoot = buildCommonSceneGraph(nNumNodes, true, buildSelection);
+   //WARNING ILM robot right crashes when printing
+   //printSceneGraph(exoSceneRoot, false);
 
-    return true;
+
+   if(bObjectsParameterExists){
+      //Might be better to use refineSelection here, but call a function that sets up dccSelected flag first, then delete this function from codebase
+      selectNodes(exoSceneRoot, mObjectsMap,  bSelectParents, bSelectChildren, !bTransformCache);
+
+      bool bAllResolved = true;
+
+      if(bObjectsParameterExists){
+         for(SceneNode::SelectionT::iterator it = mObjectsMap.begin(); it != mObjectsMap.end(); it++){
+            if(it->second == false){
+               bAllResolved = false;
+               ESS_LOG_ERROR("Could not resolve objects identifier: "<<it->first);
+            }
+         }
+      }
+
+      if(bAllResolved){
+         removeUnselectedNodes(exoSceneRoot);
+      }
+      else{
+         return false;
+      }
+   }
+   else if(bExportSelected){
+      refineSelection(exoSceneRoot, bSelectParents, bSelectChildren, !bTransformCache);
+      removeUnselectedNodes(exoSceneRoot);
+   }
+   
+
+   if(bMergePolyMeshSubtree){
+      replacePolyMeshSubtree<SceneNodeMaxPtr, SceneNodeMax>(exoSceneRoot);
+   }
+
+   if(bFlattenHierarchy){
+      nNumNodes = 0;
+      flattenSceneGraph(exoSceneRoot, nNumNodes);
+   }
+
+   if(GetOption("renameConflictingNodes")){
+      renameConflictingNodes(exoSceneRoot);
+   }
+   
+
+   std::list<PreProcessStackElement> sceneStack;
+   
+   sceneStack.push_back(PreProcessStackElement(exoSceneRoot, mArchive.getTop()));
+
+   try{
+
+   while( !sceneStack.empty() )
+   {
+
+      PreProcessStackElement sElement = sceneStack.back();
+      SceneNodePtr eNode = sElement.eNode;
+      sceneStack.pop_back();
+      
+      Abc::OObject oParent = sElement.oParent;
+      Abc::OObject oNewParent;
+
+      AlembicObjectPtr pNewObject;
+
+      if(eNode->type == SceneNode::SCENE_ROOT){
+         //we do not want to export the Scene_Root (the alembic archive has one already)
+      }
+      else if(eNode->type == SceneNode::ITRANSFORM || eNode->type == SceneNode::ETRANSFORM){
+         pNewObject.reset(new AlembicXForm(eNode, this, oParent));
+      }
+      else if(eNode->type == SceneNode::CAMERA){
+         pNewObject.reset(new AlembicCamera(eNode, this, oParent));
+      }
+      else if(eNode->type == SceneNode::POLYMESH || eNode->type == SceneNode::POLYMESH_SUBTREE){
+         pNewObject.reset(new AlembicPolyMesh(eNode, this, oParent));
+      }
+      //TODO: as far I recall we dont support SUBD. verify...
+      //else if(eNode->type == SceneNode::SUBD){
+      //   pNewObject.reset(new AlembicSubD(eNode, this, oParent));
+      //}
+      else if(eNode->type == SceneNode::CURVES){
+         pNewObject.reset(new AlembicCurves(eNode, this, oParent));
+      }
+      else if(eNode->type == SceneNode::PARTICLES || eNode->type == SceneNode::PARTICLES_TP){
+         if(bParticleMesh){
+            pNewObject.reset(new AlembicPolyMesh(eNode, this, oParent));
+         }
+         else{
+            pNewObject.reset(new AlembicPoints(eNode, this, oParent));
+         }
+      }
+      //else{
+      //   ESS_LOG_WARNING("Unknown type: not exporting "<<eNode->name);//Export as transform, and give warning?
+      //}
+
+      if(pNewObject){
+         //add the AlembicObject to export list if it is not being skipped
+         AddObject(pNewObject);
+      }
+
+      if(pNewObject){
+         oNewParent = oParent.getChild(eNode->name);
+      }
+      else{ //this case should be unecessary
+         //if we skip node A, we parent node A's children to the parent of A
+         oNewParent = oParent;
+      }
+
+      if(oNewParent.valid()){
+         for( std::list<SceneNodePtr>::iterator it = eNode->children.begin(); it != eNode->children.end(); it++){
+            sceneStack.push_back(PreProcessStackElement(*it, oNewParent));
+         }
+      }
+      else{
+         ESS_LOG_ERROR("Do not have refernce to parent.");
+         return false;
+      }
+   }
+
+   }catch( std::exception& exp ){
+      ESS_LOG_ERROR("An std::exception occured: "<<exp.what());
+      return false;
+   }catch(...){
+      ESS_LOG_ERROR("Exception ecountered when exporting.");
+   }
+
+   if(mObjects.empty()){
+      ESS_LOG_ERROR("No objects specified.");
+      return false;
+   }
+
+   return true;
 }
 
 void AlembicWriteJob::AddObject(AlembicObjectPtr obj)

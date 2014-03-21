@@ -54,7 +54,7 @@ void getParticleSystemRenderMeshes(TimeValue ticks, Object* obj, INode* node, st
 class IntermediatePolyMesh3DSMax;
 struct materialsMergeStr;
 class AlembicWriteJob;
-bool getParticleSystemMesh(TimeValue ticks, Object* obj, INode* node, IntermediatePolyMesh3DSMax* mesh, 
+bool getParticleSystemMesh(TimeValue ticks, INode* node, IntermediatePolyMesh3DSMax* mesh, 
 						   materialsMergeStr* pMatMerge, AlembicWriteJob * mJob, int nNumSamples, bool bEnableVelocityExport);
 
 

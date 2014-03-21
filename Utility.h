@@ -28,6 +28,7 @@ void AlembicDebug_PrintTransform( Matrix3 &m );
 // Conversion functions to Alembic Standards
 void ConvertMaxMatrixToAlembicMatrix( const Matrix3 &maxMatrix, Matrix3 &alembicMatrix );
 void ConvertMaxMatrixToAlembicMatrix( const Matrix3 &maxMatrix, Abc::M44d& iMatrix);
+void ConvertMaxMatrixToAlembicMatrix( const Matrix3 &maxMatrix, Abc::M44f& iMatrix);
 void ConvertAlembicMatrixToMaxMatrix( const Matrix3 &alembicMatrix, Matrix3 &maxMatrix );
 
 inline Abc::V3f ConvertMaxPointToAlembicPoint( const Point3 &maxPoint )
@@ -58,6 +59,12 @@ inline Abc::V4f ConvertMaxVectorToAlembicVector4( const Point3 &maxPoint )
 inline Point3 ConvertAlembicVectorToMaxVector( const Abc::V3f &alembicPoint )
 {
 	return Point3(alembicPoint.x, -alembicPoint.z, alembicPoint.y);
+}
+
+inline Abc::V3f ConvertMaxNormalToAlembicNormal( const Abc::V3f &maxPoint )
+{
+   Abc::V3f maxPointNormalized = maxPoint.normalized();
+	 return Abc::V3f( maxPoint.x, maxPoint.z, -maxPoint.y);
 }
 
 inline Abc::V3f ConvertMaxNormalToAlembicNormal( const Point3 &maxPoint )

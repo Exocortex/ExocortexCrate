@@ -3,7 +3,7 @@
 
 
 
-#include "AlembicIntermediatePolyMesh.h"
+#include "CommonIntermediatePolyMesh.h"
 
 class VNormal
 {   
@@ -161,26 +161,47 @@ public:
 	}
 };
 
+typedef std::vector<AbcA::int32_t> facesetmap_vec;
 
+struct FaceSetStruct
+{
+   std::string name;    //3DS Max only
+	facesetmap_vec faceIds;
+   int originalMatId;   //3DS Max only
+   
+   FaceSetStruct():originalMatId(-1)
+   {}
+};
 
-class IntermediatePolyMesh3DSMax : public AlembicIntermediatePolyMesh
+typedef std::map<int, FaceSetStruct> FaceSetMap; 
+typedef std::map<int, FaceSetStruct>::iterator facesetmap_it;
+typedef std::map<int, FaceSetStruct>::const_iterator facesetmap_cit;
+typedef std::pair<int, FaceSetStruct> facesetmap_insert_pair;
+typedef std::pair<facesetmap_it, bool> facesetmap_ret_pair;
+
+class IntermediatePolyMesh3DSMax : public CommonIntermediatePolyMesh
 {
 private:
-	void GetIndexedNormalsFromSpecifiedNormals( MNMesh* polyMesh, Matrix3 &meshTM_I_T, IndexedNormals &indexedNormals );
-	void GetIndexedNormalsFromSpecifiedNormals( Mesh *triMesh, Matrix3 &meshTM_I_T, IndexedNormals &indexedNormals );
+	void GetIndexedNormalsFromSpecifiedNormals( MNMesh* polyMesh, Imath::M44f& transform44f, IndexedNormals &indexedNormals );
+	void GetIndexedNormalsFromSpecifiedNormals( Mesh *triMesh, Imath::M44f& transform44f, IndexedNormals &indexedNormals );
 
-	void GetIndexedNormalsFromSmoothingGroups( MNMesh* polyMesh, Matrix3 &meshTM_I_T, std::vector<Abc::int32_t> &faceIndices, IndexedNormals &indexedNormals );
-	void GetIndexedNormalsFromSmoothingGroups( Mesh *triMesh, Matrix3 &meshTM_I_T, std::vector<Abc::int32_t> &faceIndices, IndexedNormals &indexedNormals );
+	void GetIndexedNormalsFromSmoothingGroups( MNMesh* polyMesh, Imath::M44f& transform44f, std::vector<Abc::int32_t> &faceIndices, IndexedNormals &indexedNormals );
+	void GetIndexedNormalsFromSmoothingGroups( Mesh *triMesh, Imath::M44f& transform44f, std::vector<Abc::int32_t> &faceIndices, IndexedNormals &indexedNormals );
 
 	void GetIndexedUVsFromChannel( MNMesh *polyMesh, int chanNum, IndexedUVs &indexedUVs );
 	void GetIndexedUVsFromChannel( Mesh *triMesh, int chanNum, IndexedUVs &indexedUVs );
 
 public:
 
+   std::vector<Abc::uint32_t> mMatIdIndexVec;
+   FaceSetMap mFaceSets; 
+
     static void make_face_uv(Face *f, Point3 *tv);
     static BOOL CheckForFaceMap(Mtl* mtl, Mesh* mesh);
 
-	void Save(std::map<std::string, bool>& mOptions, Mesh *triMesh, MNMesh* polyMesh, Matrix3& meshTM, Mtl* pMtl, int nMatId, bool bFirstFrame, materialsMergeStr* pMatMerge);
+	virtual void Save(SceneNodePtr eNode, const Imath::M44f& transform44f, const CommonOptions& options, double time);
+   virtual bool mergeWith(const CommonIntermediatePolyMesh& srcMesh);
+   virtual void clear();
 };
 
 
