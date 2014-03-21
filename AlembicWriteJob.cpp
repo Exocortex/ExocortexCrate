@@ -214,13 +214,16 @@ bool AlembicWriteJob::PreProcess()
          for(SceneNode::SelectionT::iterator it = mObjectsMap.begin(); it != mObjectsMap.end(); it++){
             if(it->second == false){
                bAllResolved = false;
-               ESS_LOG_WARNING("Could not resolve objects identifier: "<<it->first);
+               ESS_LOG_ERROR("Could not resolve objects identifier: "<<it->first);
             }
          }
       }
 
       if(bAllResolved){
          removeUnselectedNodes(exoSceneRoot);
+      }
+      else{
+         return false;
       }
    }
    else if(bExportSelected){
