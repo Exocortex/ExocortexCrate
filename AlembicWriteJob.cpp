@@ -92,6 +92,92 @@ bool AlembicWriteJob::PreProcess()
         return false;
     }
 
+
+	const bool bParticleMesh = GetOption("exportParticlesAsMesh");
+   bool bMergePolyMeshSubtree = GetOption("mergePolyMeshSubtree");
+
+   bool bSelectParents = GetOption("includeParentNodes");/*|| !bFlattenHierarchy || bTransformCache*/
+   const bool bSelectChildren = false;
+   bool bTransformCache = GetOption("transformCache");
+   const bool bFlattenHierarchy = GetOption("flattenHierarchy");
+
+   if(bMergePolyMeshSubtree){
+      bTransformCache = false;
+      //bSelectParents = true;
+   }
+
+   bcsgSelection::types buildSelection = bcsgSelection::ALL;
+
+   const bool bExportSelected = GetOption("exportSelected");
+   const bool bObjectsParameterExists = GetOption("objectsParameterExists");
+   if(bExportSelected){
+      //copy max selection
+      buildSelection = bcsgSelection::APP;
+   }
+   else if(bObjectsParameterExists){
+      //select nothing when building, fill in later from parameter data
+      buildSelection = bcsgSelection::NONE;
+   }
+   else{
+      //select everything
+   }
+
+   int nNumNodes = 0;
+   exoSceneRoot = buildCommonSceneGraph(nNumNodes, true, buildSelection);
+   //WARNING ILM robot right crashes when printing
+   //printSceneGraph(exoSceneRoot, false);
+
+
+   if(bObjectsParameterExists){
+      //Might be better to use refineSelection here, but call a function that sets up dccSelected flag first, then delete this function from codebase
+      selectNodes(exoSceneRoot, mObjectsMap,  bSelectParents, bSelectChildren, !bTransformCache);
+
+      bool bAllResolved = true;
+
+      if(bObjectsParameterExists){
+         for(SceneNode::SelectionT::iterator it = mObjectsMap.begin(); it != mObjectsMap.end(); it++){
+            if(it->second == false){
+               bAllResolved = false;
+               ESS_LOG_ERROR("Could not resolve objects identifier: "<<it->first);
+            }
+         }
+      }
+
+      if(bAllResolved){
+         removeUnselectedNodes(exoSceneRoot);
+      }
+      else{
+         return false;
+      }
+   }
+   else if(bExportSelected){
+      refineSelection(exoSceneRoot, bSelectParents, bSelectChildren, !bTransformCache);
+      removeUnselectedNodes(exoSceneRoot);
+   }
+   
+
+   if(bMergePolyMeshSubtree){
+      replacePolyMeshSubtree<SceneNodeMaxPtr, SceneNodeMax>(exoSceneRoot);
+   }
+
+   if(bFlattenHierarchy){
+      nNumNodes = 0;
+      flattenSceneGraph(exoSceneRoot, nNumNodes);
+   }
+
+   
+  
+   if(GetOption("renameConflictingNodes")){
+      renameConflictingNodes(exoSceneRoot, false);
+   }
+   else{
+      int nRenameCount = renameConflictingNodes(exoSceneRoot, true);
+      if(nRenameCount){
+         ESS_LOG_ERROR("Can not export due sibling node nameing conflict. Consider exporting with renameConflictingNodes=true");
+         return false;
+      }
+   }
+
     const bool bUseOgawa = (bool)GetOption("useOgawa");
 
     // init archive (use a locally scoped archive)
@@ -167,84 +253,7 @@ bool AlembicWriteJob::PreProcess()
 
     m_ArchiveBoxProp = AbcG::CreateOArchiveBounds(mArchive,mTs);
 
-	
 
-	const bool bParticleMesh = GetOption("exportParticlesAsMesh");
-   bool bMergePolyMeshSubtree = GetOption("mergePolyMeshSubtree");
-
-   bool bSelectParents = GetOption("includeParentNodes");/*|| !bFlattenHierarchy || bTransformCache*/
-   const bool bSelectChildren = false;
-   bool bTransformCache = GetOption("transformCache");
-   const bool bFlattenHierarchy = GetOption("flattenHierarchy");
-
-   if(bMergePolyMeshSubtree){
-      bTransformCache = false;
-      //bSelectParents = true;
-   }
-
-   bcsgSelection::types buildSelection = bcsgSelection::ALL;
-
-   const bool bExportSelected = GetOption("exportSelected");
-   const bool bObjectsParameterExists = GetOption("objectsParameterExists");
-   if(bExportSelected){
-      //copy max selection
-      buildSelection = bcsgSelection::APP;
-   }
-   else if(bObjectsParameterExists){
-      //select nothing when building, fill in later from parameter data
-      buildSelection = bcsgSelection::NONE;
-   }
-   else{
-      //select everything
-   }
-
-   int nNumNodes = 0;
-   exoSceneRoot = buildCommonSceneGraph(nNumNodes, true, buildSelection);
-   //WARNING ILM robot right crashes when printing
-   //printSceneGraph(exoSceneRoot, false);
-
-
-   if(bObjectsParameterExists){
-      //Might be better to use refineSelection here, but call a function that sets up dccSelected flag first, then delete this function from codebase
-      selectNodes(exoSceneRoot, mObjectsMap,  bSelectParents, bSelectChildren, !bTransformCache);
-
-      bool bAllResolved = true;
-
-      if(bObjectsParameterExists){
-         for(SceneNode::SelectionT::iterator it = mObjectsMap.begin(); it != mObjectsMap.end(); it++){
-            if(it->second == false){
-               bAllResolved = false;
-               ESS_LOG_ERROR("Could not resolve objects identifier: "<<it->first);
-            }
-         }
-      }
-
-      if(bAllResolved){
-         removeUnselectedNodes(exoSceneRoot);
-      }
-      else{
-         return false;
-      }
-   }
-   else if(bExportSelected){
-      refineSelection(exoSceneRoot, bSelectParents, bSelectChildren, !bTransformCache);
-      removeUnselectedNodes(exoSceneRoot);
-   }
-   
-
-   if(bMergePolyMeshSubtree){
-      replacePolyMeshSubtree<SceneNodeMaxPtr, SceneNodeMax>(exoSceneRoot);
-   }
-
-   if(bFlattenHierarchy){
-      nNumNodes = 0;
-      flattenSceneGraph(exoSceneRoot, nNumNodes);
-   }
-
-   if(GetOption("renameConflictingNodes")){
-      renameConflictingNodes(exoSceneRoot);
-   }
-   
 
    std::list<PreProcessStackElement> sceneStack;
    
