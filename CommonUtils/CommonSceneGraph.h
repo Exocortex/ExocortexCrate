@@ -159,7 +159,7 @@ int selectNodes(SceneNodePtr root, SceneNode::SelectionT& selectionMap, bool bSe
 int refineSelection(SceneNodePtr root, bool bSelectParents, bool bChildren, bool bSelectShapeNodes);
 int selectTransformNodes(SceneNodePtr root);
 int selectPolyMeshShapeNodes(SceneNodePtr root);
-void renameConflictingNodes(SceneNodePtr root);
+int renameConflictingNodes(SceneNodePtr root, bool bValidate);
 void flattenSceneGraph(SceneNodePtr root, int nNumNodes);
 int removeUnselectedNodes(SceneNodePtr root);
 

@@ -1201,7 +1201,7 @@ void clearIdentifierMap()
    identifierCount.clear();
 }
 
-std::string getUniqueName(const std::string& parentFullName, std::string& name)
+std::string getUniqueName(const std::string& parentFullName, std::string& name, bool bValidate, bool& bRenamed)
 {
    std::string identifier = parentFullName;
    identifier += "/";
@@ -1226,7 +1226,14 @@ std::string getUniqueName(const std::string& parentFullName, std::string& name)
          stream<<"Xfo";
       }
 
-      ESS_LOG_WARNING("Renaming "<<name<<" to "<<stream.str());
+      bRenamed = true;
+
+      if(!bValidate){
+         ESS_LOG_WARNING("Renaming "<<name<<" to "<<stream.str());
+      }
+      else{
+         ESS_LOG_WARNING("A sibling node named "<<name<<" already exists.");
+      }
 
       return stream.str();
    }

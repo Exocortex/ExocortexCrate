@@ -416,6 +416,6 @@ int getCurveOrder(int i, Abc::UInt16ArraySamplePtr pOrders, AbcG::CurveType type
 AbcG::IVisibilityProperty getAbcVisibilityProperty(Abc::IObject shapeObj);
 
 void clearIdentifierMap();
-std::string getUniqueName(const std::string& identifier, std::string& name);
+std::string getUniqueName(const std::string& identifier, std::string& name, bool bValidate, bool& bRenamed);
 
 #endif // __COMMON_UTILITIES_H

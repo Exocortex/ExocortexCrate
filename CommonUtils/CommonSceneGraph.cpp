@@ -379,7 +379,7 @@ int selectPolyMeshShapeNodes(SceneNodePtr root)
 }
 
 
-void renameConflictingNodes(SceneNodePtr root)
+int renameConflictingNodes(SceneNodePtr root, bool bValidate)
 {
    ESS_PROFILE_FUNC();
 
@@ -389,7 +389,7 @@ void renameConflictingNodes(SceneNodePtr root)
    
    sceneStack.push_back(SelectChildrenStackElement(root, false));
 
-   int nSelectionCount = 0;
+   int nRenameCount = 0;
 
    while( !sceneStack.empty() )
    {
@@ -402,7 +402,11 @@ void renameConflictingNodes(SceneNodePtr root)
          if(eNode->parent){
             parent = eNode->parent->dccIdentifier;
          }
-         eNode->name = getUniqueName(parent, eNode->name);
+         bool bRenamed = false;
+         eNode->name = getUniqueName(parent, eNode->name, bValidate, bRenamed);
+         if(bRenamed){
+            nRenameCount++;
+         }
       }
 
       for( std::list<SceneNodePtr>::iterator it = eNode->children.begin(); it != eNode->children.end(); it++){
@@ -411,6 +415,8 @@ void renameConflictingNodes(SceneNodePtr root)
    }
 
     clearIdentifierMap();
+    
+    return nRenameCount;
 }
 
 
