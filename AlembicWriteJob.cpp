@@ -173,7 +173,7 @@ bool AlembicWriteJob::PreProcess()
    else{
       int nRenameCount = renameConflictingNodes(exoSceneRoot, true);
       if(nRenameCount){
-         ESS_LOG_ERROR("Can not export due sibling node nameing conflict. Consider exporting with renameConflictingNodes=true");
+         ESS_LOG_ERROR("Can not export due sibling node naming conflict. Consider exporting with renameConflictingNodes=true");
          return false;
       }
    }
