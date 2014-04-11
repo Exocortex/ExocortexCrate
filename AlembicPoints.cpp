@@ -466,7 +466,7 @@ bool AlembicPoints::Save(double time, bool bLastFrame)
 
        for(faceVertexHashToShapeMap::iterator it = mShapeMeshCache.begin(); it != mShapeMeshCache.end(); it++){
           std::stringstream pathStream;
-          pathStream << "/" << it->second.name << "Xfo/" << it->second.name;
+          pathStream << "/" << it->second.name<< "/" << it->second.name <<"Shape";
           instanceNames[it->second.nMeshInstanceId] = pathStream.str();
        }
 
