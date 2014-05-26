@@ -1,6 +1,9 @@
 #include "stdafx.h"
 #include "AlembicTimeControl.h"
 
+#include <maya/MFnEnumAttribute.h>
+
+MObject AlembicTimeControlNode::mUnitAttr;
 MObject AlembicTimeControlNode::mTimeAttr;
 MObject AlembicTimeControlNode::mFactorAttr;
 MObject AlembicTimeControlNode::mOffsetAttr;
@@ -16,7 +19,15 @@ MStatus AlembicTimeControlNode::initialize()
    MFnTypedAttribute tAttr;
    MFnNumericAttribute nAttr;
    MFnGenericAttribute gAttr;
+   MFnEnumAttribute eAttr;
    MFnStringData emptyStringData;
+
+   // input time unit
+   mUnitAttr = eAttr.create("timeUnit", "tu", 0, &status);
+   status = eAttr.addField("Seconds", 0);
+   status = eAttr.addField("Working Unit", 1);
+   status = eAttr.setStorable(true);
+   addAttribute(mUnitAttr);
 
    // input time
    mTimeAttr = uAttr.create("inTime", "tm", MFnUnitAttribute::kTime, 0.0, &status);
@@ -52,6 +63,7 @@ MStatus AlembicTimeControlNode::initialize()
    status = addAttribute(mOutTimeAttr);
 
    // create a mapping
+   status = attributeAffects(mUnitAttr, mOutTimeAttr);
    status = attributeAffects(mTimeAttr, mOutTimeAttr);
    status = attributeAffects(mFactorAttr, mOutTimeAttr);
    status = attributeAffects(mOffsetAttr, mOutTimeAttr);
@@ -67,11 +79,13 @@ MStatus AlembicTimeControlNode::compute(const MPlug & plug, MDataBlock & dataBlo
    MStatus status;
 
    // read the wanted unit system
+   MTime t;
+   MTime::Unit tUnit = (dataBlock.inputValue(mUnitAttr).asInt() == 1) ? t.unit() : MTime::kSeconds;
 
-   double inputTime = dataBlock.inputValue(mTimeAttr).asTime().as(MTime::kSeconds);
+   double inputTime = dataBlock.inputValue(mTimeAttr).asTime().as(tUnit);
    MDataHandle factorHandle = dataBlock.inputValue(mFactorAttr);
    MDataHandle offsetHandle = dataBlock.inputValue(mOffsetAttr);
-   
+
    MDataHandle loopStartHandle = dataBlock.inputValue(mLoopStartAttr);
    MDataHandle loopEndHandle   = dataBlock.inputValue(mLoopEndAttr);
 
@@ -84,8 +98,7 @@ MStatus AlembicTimeControlNode::compute(const MPlug & plug, MDataBlock & dataBlo
       inputTime += start;
    }
 
-   MTime t;
-   t.setUnit(MTime::kSeconds);
+   t.setUnit(tUnit);
    t.setValue(inputTime);
 
    dataBlock.outputValue(mOutTimeAttr).setMTime(t);
