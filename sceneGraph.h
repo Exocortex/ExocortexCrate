@@ -29,6 +29,7 @@
 	{
 	private:
 		AlembicFileAndTimeControlPtr fileAndTime;
+		bool useMultiFile;
 
 		// --- replace data
 		bool replaceSimilarData(const char *functionName, SceneNodeAlembicPtr fileNode);
@@ -43,7 +44,7 @@
 		bool addCurveChild(SceneNodeAlembicPtr fileNode, SceneNodeAppPtr& newAppNode);
 
 	public:
-		SceneNodeMaya(const AlembicFileAndTimeControlPtr alembicFileAndTimeControl = AlembicFileAndTimeControlPtr()): fileAndTime(alembicFileAndTimeControl)
+		SceneNodeMaya(const AlembicFileAndTimeControlPtr alembicFileAndTimeControl = AlembicFileAndTimeControlPtr()): fileAndTime(alembicFileAndTimeControl), useMultiFile(false)
 		{}
 
 		virtual bool replaceData(SceneNodeAlembicPtr fileNode, const IJobStringParser& jobParams, SceneNodeAlembicPtr& nextFileNode);

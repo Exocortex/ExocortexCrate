@@ -17,9 +17,14 @@ public:
 
 private:
    // input attributes
+   static MObject mUnitAttr;
+
    static MObject mTimeAttr;
    static MObject mFactorAttr;
    static MObject mOffsetAttr;
+   
+   static MObject mLoopStartAttr;
+   static MObject mLoopEndAttr;
 
    // output attributes
     static MObject mOutTimeAttr;
