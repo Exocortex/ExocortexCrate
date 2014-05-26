@@ -341,7 +341,7 @@ MStatus AlembicWriteJob::Process(double frame)
 	for(size_t j=0; j<mFrames.size(); ++j)
 	{
 		// compare the frames
-		if(abs(mFrames[j] - frame) <= 0.001)
+		if(fabs(mFrames[j] - frame) <= 0.001)
 		{
 			i = j;
 			break;

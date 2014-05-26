@@ -914,7 +914,6 @@ MStatus AlembicPointsNode::compute(const MPlug & plug, MDataBlock & dataBlock)
    {
 	  const int deltaCount = particleCount - positions.length();
       MPointArray emitted(deltaCount);
-      //emitted.setLength(deltaCount);
       part.emit(emitted);
    }
 //*
