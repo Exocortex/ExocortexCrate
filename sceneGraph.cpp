@@ -109,7 +109,7 @@ bool SceneNodeMaya::addSimilarChild(const char *functionName, SceneNodeAlembicPt
 
 	ESS_PROFILE_SCOPE("SceneNodeMaya::addSimilarChild");
 	MString cmd;
-	cmd.format(format, functionName, fileNode->name.c_str(), fileNode->dccIdentifier.c_str(), fileAndTime->variable(), dccIdentifier.c_str(), PythonBool(fileNode->pObjCache->isConstant));
+	cmd.format(format, functionName, fileNode->name.c_str(), fileNode->dccIdentifier.c_str(), fileAndTime->variable(), dccIdentifier.c_str(), PythonBool(this->useMultiFile ? false : fileNode->pObjCache->isConstant));
 	return executeAddChild(cmd, newAppNode);
 }
 
@@ -167,6 +167,7 @@ bool SceneNodeMaya::addCurveChild(SceneNodeAlembicPtr fileNode, SceneNodeAppPtr&
 bool SceneNodeMaya::addChild(SceneNodeAlembicPtr fileNode, const IJobStringParser& jobParams, SceneNodeAppPtr& newAppNode)
 {
 	ESS_PROFILE_SCOPE("SceneNodeMaya::addChild");
+	this->useMultiFile = jobParams.useMultiFile;
 	newAppNode.reset(new SceneNodeMaya(fileAndTime));
 	switch(newAppNode->type = fileNode->type)
 	{
