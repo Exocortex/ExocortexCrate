@@ -48,7 +48,7 @@ bool SceneNodeMaya::replaceSimilarData(const char *functionName, SceneNodeAlembi
 
 	ESS_PROFILE_SCOPE("SceneNodeMaya::replaceSimilarData");
 	MString cmd;
-	cmd.format(format, functionName, fileNode->name.c_str(), fileNode->dccIdentifier.c_str(), fileAndTime->variable(), PythonBool(fileNode->pObjCache->isConstant));
+	cmd.format(format, functionName, this->dccIdentifier.c_str(), fileNode->dccIdentifier.c_str(), fileAndTime->variable(), PythonBool(fileNode->pObjCache->isConstant));
 	MGlobal::executePythonCommand(cmd);
 	fileNode->setAttached(true);
 	return true;
@@ -241,7 +241,7 @@ static bool visitChild(const MObject &mObj, SceneNodeAppPtr &parent, const Alemb
 
 	exoChild->dccIdentifier = dccId;
 	{
-		const std::string rname = replacer->replace(dagNode.partialPathName().asChar());
+		const std::string rname = replacer->replace(dagNode.fullPathName().asChar());
 		const size_t pos = rname.rfind("|");
 		exoChild->name = (pos != std::string::npos) ? rname.substr(pos+1) : rname;
 	}

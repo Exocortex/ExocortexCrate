@@ -68,7 +68,7 @@ bool AlembicPoints::sampleInstanceProperties( std::vector<Abc::Quatf> angularVel
   orientation.resize(nbParticles);
   shapeId.resize(nbParticles);
   shapeType.resize(nbParticles, 7);
-  shapeTime.resize(nbParticles, mNumSamples);
+  //shapeTime.resize(nbParticles, mNumSamples);
 
   float matrix_data[4][4];
   for (int i = 0; i < nbParticles; ++i)
@@ -82,7 +82,7 @@ bool AlembicPoints::sampleInstanceProperties( std::vector<Abc::Quatf> angularVel
   mAngularVelocityProperty.set(Abc::QuatfArraySample(angularVel));
   mOrientationProperty.set(Abc::QuatfArraySample(orientation));
   mShapeInstanceIdProperty.set(Abc::UInt16ArraySample(shapeId));
-  mShapeTimeProperty.set(Abc::FloatArraySample(shapeTime));
+  //mShapeTimeProperty.set(Abc::FloatArraySample(shapeTime));
   mShapeTypeProperty.set(Abc::UInt16ArraySample(shapeType));
   return true;
 }
@@ -104,7 +104,7 @@ AlembicPoints::AlembicPoints(SceneNodePtr eNode, AlembicWriteJob * in_Job, Abc::
 	mOrientationProperty     = Abc::OQuatfArrayProperty  (arbGeomParam, ".orientation", mSchema.getMetaData(), animTS );
 	mScaleProperty           = Abc::OV3fArrayProperty    (arbGeomParam, ".scale", mSchema.getMetaData(), animTS );
 	mShapeInstanceIdProperty = Abc::OUInt16ArrayProperty (arbGeomParam, ".shapeinstanceid", mSchema.getMetaData(), animTS );
-	mShapeTimeProperty       = Abc::OFloatArrayProperty  (arbGeomParam, ".shapetime", mSchema.getMetaData(), animTS );
+	//mShapeTimeProperty       = Abc::OFloatArrayProperty  (arbGeomParam, ".shapetime", mSchema.getMetaData(), animTS );
 	mShapeTypeProperty       = Abc::OUInt16ArrayProperty (arbGeomParam, ".shapetype", mSchema.getMetaData(), animTS );
 
 	MStringArray instancers;
