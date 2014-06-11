@@ -17,15 +17,7 @@ AlembicModel::AlembicModel(SceneNodePtr eNode, AlembicWriteJob * in_Job, Abc::OO
    //   ESS_LOG_WARNING("duplicate name");
    //}
 
-   const bool bRename = in_Job->GetOption("renameConflictingNodes");
-
-   std::string uniqueName;
-   if(bRename){
-      uniqueName = getUniqueName(GetMyParent().getFullName(), eNode->name);
-   }
-   else{
-      uniqueName = eNode->name;
-   }
+   std::string uniqueName = eNode->name;
       
    AbcG::OXform xform(GetMyParent(), uniqueName, GetJob()->GetAnimatedTs());
 

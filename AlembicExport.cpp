@@ -444,9 +444,6 @@ CStatus exportCommandImp( CRef& in_ctxt )
 	  objectCount += (ULONG)jobPtrs[i]->GetNbObjects();
    }
 
-
-   clearIdentifierMap();
-
    ProgressBar prog;
    prog = Application().GetUIToolkit().GetProgressBar();
    prog.PutCaption(L"Exporting "+CString(jobCount)+L" frames from " + CString(objectCount) + " objects...");

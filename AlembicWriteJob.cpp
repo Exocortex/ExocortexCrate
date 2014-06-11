@@ -232,6 +232,18 @@ CStatus AlembicWriteJob::PreProcess()
       flattenSceneGraph(exoSceneRoot, nNumNodes);
    }
 
+   if((bool)GetOption("renameConflictingNodes")){
+      renameConflictingNodes(exoSceneRoot, false);
+   }
+   else{
+      int nRenameCount = renameConflictingNodes(exoSceneRoot, true);
+      if(nRenameCount){
+         ESS_LOG_ERROR("Can not export due sibling node naming conflict. Consider exporting with renameConflictingNodes=true");
+         return false;
+      }
+   }
+
+
    //Note: that you should not rely Softimage scenegraph methods to retrieve parent nodes, since nodes may be skipped
    //The fact that we do not make a complete copy unfortunately makes things a little more complicated.
    //our design can probably be better (and safer) in may ways.
