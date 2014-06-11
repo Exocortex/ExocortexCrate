@@ -397,18 +397,18 @@ bool AlembicPoints::Save(double time, bool bLastFrame)
 
     }
 
-    if (numParticles > 1)
-    {
-       ESS_PROFILE_SCOPE("AlembicPoints::Save - vectorResize");
-        if (constantPos)        { positionVec.resize(1); }
-        if (constantVel)        { velocityVec.resize(1); }
-        if (constantScale)      { scaleVec.resize(1); }
-        if (constantWidth)      { widthVec.resize(1); }
-        if (constantAge)        { ageVec.resize(1); }
-        if (constantOrientation){ orientationVec.resize(1); }
-        if (constantAngularVel) { angularVelocityVec.resize(1); }
-		if (constantColor)		{ colorVec.resize(1); }
-    }
+  //  if (numParticles > 1)
+  //  {
+  //     ESS_PROFILE_SCOPE("AlembicPoints::Save - vectorResize");
+  //      if (constantPos)        { positionVec.resize(1); }
+  //      if (constantVel)        { velocityVec.resize(1); }
+  //      if (constantScale)      { scaleVec.resize(1); }
+  //      if (constantWidth)      { widthVec.resize(1); }
+  //      if (constantAge)        { ageVec.resize(1); }
+  //      if (constantOrientation){ orientationVec.resize(1); }
+  //      if (constantAngularVel) { angularVelocityVec.resize(1); }
+		//if (constantColor)		{ colorVec.resize(1); }
+  //  }
 
     {
     ESS_PROFILE_SCOPE("AlembicPoints::Save - sample writing");
