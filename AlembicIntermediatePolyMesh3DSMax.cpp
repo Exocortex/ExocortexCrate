@@ -433,7 +433,11 @@ void IntermediatePolyMesh3DSMax::Save(SceneNodePtr eNode, const Imath::M44f& tra
 				if(!map){
 					continue;
 				}
-				if(map->numv <= 0 || map->numf <= 0){
+            if(map->GetFlag(MN_DEAD)){
+               continue;
+            }
+				if(map->numv <= 0 || map->numf <= 0){//probably checking the dead flag is enough,
+               //but I'll leave this in just in case
 					continue;
 				}
 				usedChannels.push_back(mp);

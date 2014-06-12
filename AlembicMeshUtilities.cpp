@@ -446,30 +446,22 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
         validateMeshes( options, "ALEMBIC_DATAFILL_NORMALS" );
    }
 
-   if( options.nDataFillFlags & ALEMBIC_DATAFILL_ALLOCATE_UV_STORAGE )
-   {
-      ESS_PROFILE_SCOPE("ALEMBIC_DATAFILL_ALLOCATE_UV_STORAGE");
-	  //we can probably set this to the actual number of channels required if necessary
-       options.pMNMesh->SetMapNum(100);
-       options.pMNMesh->InitMap(0);
-   }
-
    if ( options.nDataFillFlags & ALEMBIC_DATAFILL_UVS )
    {
       ESS_PROFILE_SCOPE("ALEMBIC_DATAFILL_UVS");
-		std::string strObjectIdentifier = options.identifier;
-		size_t found = strObjectIdentifier.find_last_of(":");
-		strObjectIdentifier = strObjectIdentifier.substr(found+1);
-		std::istringstream is(strObjectIdentifier);
-		int uvI = 0;
-		is >> uvI;
+	   std::string strObjectIdentifier = options.identifier;
+	   size_t found = strObjectIdentifier.find_last_of(":");
+	   strObjectIdentifier = strObjectIdentifier.substr(found+1);
+	   std::istringstream is(strObjectIdentifier);
+	   int uvI = 0;
+	   is >> uvI;
 
-		uvI--;
+	   uvI--;
 
-		AbcG::IV2fGeomParam meshUvParam = getMeshUvParam(uvI, objMesh, objSubD);
+	   AbcG::IV2fGeomParam meshUvParam = getMeshUvParam(uvI, objMesh, objSubD);
 
-		//add 1 since channel 0 is reserved for colors
-		uvI++;
+	   //add 1 since channel 0 is reserved for colors
+	   uvI++;
 
        if(meshUvParam.valid())
        {
@@ -494,22 +486,18 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
 			   ESS_LOG_WARNING( "Mesh UVs are in an invalid state in Alembic file, ignoring." );
 		   }
 		   else{
-			   // Set up the default texture map channel
+            if(options.pMNMesh->MNum() <= uvI){
+               options.pMNMesh->SetMapNum(uvI+1);
+            }
+
 				if(options.pMNMesh->MNum() > uvI)
 				{
-                   //MNMap *map = options.pMNMesh->M(uvI);
-                   //if(map->numf == 0 || map->numv == 0){
-                   //  ESS_LOG_WARNING("map is null");
-                   //}
-                   //else{
-                   //  ESS_LOG_WARNING("map is not null.");
-                   //}
-
 				   options.pMNMesh->InitMap(uvI);
 				   MNMap *map = options.pMNMesh->M(uvI);
 				   map->setNumVerts((int)uvValuesFloor.size());
 				   map->setNumFaces(numFaces);
-
+               //map->ClearFlag(MN_DEAD);
+ 
 				   // set values
 				   Point3* mapV = map->v;
 				   if (sampleInfo.alpha != 0.0f && uvCeil && uvValuesFloor.size() == uvValuesCeil.size())
@@ -540,7 +528,7 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
 					   }
 					   mapF[i].SetSize(degree);
 					   for (int j = 0; j < degree; j ++)
-					   {
+                  {
                            int theIndex = 0;
                            if(offset < uvIndicesFloor.size()){
                               theIndex = (int)uvIndicesFloor[ offset ];
@@ -562,9 +550,10 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
 					   }
 				   }
 
-                   if(bBadUVindices){
-                      ESS_LOG_WARNING("Corrected out of bounds UV indices to prevent crash.");
-                   }
+                if(bBadUVindices){
+                   ESS_LOG_WARNING("Corrected out of bounds UV indices to prevent crash.");
+                }
+
 			   }
 			   else{
 					ESS_LOG_WARNING( "UV channels have not been allocated. Cannot load uv channel "<<uvI );

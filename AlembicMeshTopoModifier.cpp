@@ -208,7 +208,6 @@ ESS_PROFILE_FUNC();
 			options.nDataFillFlags |= ALEMBIC_DATAFILL_UVS;
 	   }
 
-	   options.nDataFillFlags |= ALEMBIC_DATAFILL_ALLOCATE_UV_STORAGE;
 	   if(bIgnoreSubframeSamples){
 		  options.nDataFillFlags |= ALEMBIC_DATAFILL_IGNORE_SUBFRAME_SAMPLES;
 	   }
