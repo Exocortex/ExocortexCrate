@@ -608,7 +608,7 @@ bool frameHasDynamicTopology(AbcG::IPolyMeshSchema::Sample* const polyMeshSample
 
 bool frameHasDynamicTopology(const AbcG::IPolyMeshSchema::Sample &sample1, const AbcG::IPolyMeshSchema::Sample &sample2) {
    ESS_PROFILE_FUNC();
-   bool hasDynamicTopo = false;
+   bool hasDynamicTopo = true;
 
    const Alembic::Abc::Int32ArraySamplePtr fIndices1 = sample1.getFaceIndices();
    const Alembic::Abc::Int32ArraySamplePtr fIndices2 = sample2.getFaceIndices();
@@ -617,7 +617,7 @@ bool frameHasDynamicTopology(const AbcG::IPolyMeshSchema::Sample &sample1, const
       const Alembic::Abc::Int32ArraySamplePtr fCount1 = sample1.getFaceCounts();
       const Alembic::Abc::Int32ArraySamplePtr fCount2 = sample2.getFaceCounts();
 
-      hasDynamicTopo = (fCount1->size() == fCount2->size()) && (fCount1->getKey() == fCount2->getKey());
+      hasDynamicTopo = (fCount1->size() != fCount2->size()) || (fCount1->getKey() != fCount2->getKey());
    }
    return hasDynamicTopo;
 }
