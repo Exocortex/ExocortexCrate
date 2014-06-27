@@ -53,7 +53,7 @@ set( AlembicFolder "Alembic" )
 SET(DIR_SOFTIMAGEALEBMIC ${CMAKE_CURRENT_SOURCE_DIR})
 
 get_filename_component( LIBRARY_ROOT "${CMAKE_CURRENT_SOURCE_DIR}" PATH )
-set( LIBRARY_VERSION "20130830.01" )
+set( LIBRARY_VERSION "20140627.01" )
 set( LIBRARY_ROOT "${LIBRARY_ROOT}/Libraries.${LIBRARY_VERSION}" )
 if( NOT EXISTS ${LIBRARY_ROOT} )
 	message( "!!!" )
@@ -91,13 +91,14 @@ endif()
 setup_os_name()
 setup_cpu_name()
 
-message("LINE 87 --------------------------")
 
 # RLM (floating license manager)
 if( Exocortex_SERVICES OR Exocortex_RLM_ONLY )
 	set( Rlm_INCLUDE_DIR "${LIBRARY_ROOT}/RLM/include" )
 
-	if( MSVC10 ) 
+	if( MSVC11 ) 
+		set( Rlm_LIBRARYDIR "${LIBRARY_ROOT}/RLM/libs/${OS_NAME}/${CPU_NAME}/2010" )
+	elseif( MSVC10 ) 
 		set( Rlm_LIBRARYDIR "${LIBRARY_ROOT}/RLM/libs/${OS_NAME}/${CPU_NAME}/2010" )
 	elseif( MSVC90 )
 		set( Rlm_LIBRARYDIR "${LIBRARY_ROOT}/RLM/libs/${OS_NAME}/${CPU_NAME}/2008" )
@@ -126,7 +127,10 @@ endif()
 if( Exocortex_SERVICES )
 	set( Exocortex_INCLUDE_DIR "${LIBRARY_ROOT}/Exocortex/include" )
 
-	if( MSVC10 ) 
+	if( MSVC11 ) 
+		set( Exocortex_DEBUG_LIBRARYDIR "${LIBRARY_ROOT}/Exocortex/lib/${CPU_NAME}/debug/${OS_NAME}_vs2012/" )
+		set( Exocortex_RELEASED_LIBRARYDIR "${LIBRARY_ROOT}/Exocortex/lib/${CPU_NAME}/release/${OS_NAME}_vs2012/" )
+	elseif( MSVC10 ) 
 		set( Exocortex_DEBUG_LIBRARYDIR "${LIBRARY_ROOT}/Exocortex/lib/${CPU_NAME}/debug/${OS_NAME}_vs2010/" )
 		set( Exocortex_RELEASED_LIBRARYDIR "${LIBRARY_ROOT}/Exocortex/lib/${CPU_NAME}/release/${OS_NAME}_vs2010/" )
 	else()
@@ -137,8 +141,6 @@ if( Exocortex_SERVICES )
 	set( Exocortex_LIBRARIES
 		debug "${Exocortex_DEBUG_LIBRARYDIR}/LibCore.lib"  optimized "${Exocortex_RELEASED_LIBRARYDIR}/LibCore.lib"
 		debug "${Exocortex_DEBUG_LIBRARYDIR}/LibImath.lib"  optimized "${Exocortex_RELEASED_LIBRARYDIR}/LibImath.lib"
-		debug "${Exocortex_DEBUG_LIBRARYDIR}/tbb_debug.lib"  optimized "${Exocortex_RELEASED_LIBRARYDIR}/tbb.lib"
-		debug "${Exocortex_DEBUG_LIBRARYDIR}/tbbmalloc_debug.lib"  optimized "${Exocortex_RELEASED_LIBRARYDIR}/tbbmalloc.lib"
 		)
 		
 	set( ExocortexSoftimage_LIBRARIES
@@ -149,8 +151,6 @@ if( Exocortex_SERVICES )
 		debug "${Exocortex_DEBUG_LIBRARYDIR}/LibCore.lib"  optimized "${Exocortex_RELEASED_LIBRARYDIR}/LibCore.lib"
 		debug "${Exocortex_DEBUG_LIBRARYDIR}/LibCryptopp.lib"  optimized "${Exocortex_RELEASED_LIBRARYDIR}/LibCryptopp.lib"
 		debug "${Exocortex_DEBUG_LIBRARYDIR}/LibImath.lib"  optimized "${Exocortex_RELEASED_LIBRARYDIR}/LibImath.lib"
-		debug "${Exocortex_DEBUG_LIBRARYDIR}/tbb_debug.lib"  optimized "${Exocortex_RELEASED_LIBRARYDIR}/tbb.lib"
-		debug "${Exocortex_DEBUG_LIBRARYDIR}/tbbmalloc_debug.lib"  optimized "${Exocortex_RELEASED_LIBRARYDIR}/tbbmalloc.lib"
 		)
 	
 	set(RER_DEPENDENCIES "${LIBRARY_ROOT}/rer/rer.exe" )
@@ -242,7 +242,13 @@ set(Boost_USE_MULTITHREADED ON)
 set(Boost_DETAILED_FAILURE_MSG ON )
 set(Boost_USE_STATIC_RUNTIME ON)
 set(Boost_NO_SYSTEM_PATHS true )
-set(BOOST_COMPONENTS date_time program_options regex thread iostreams python filesystem system unit_test_framework )
+
+if( MSVC11 OR MSVC10 )
+	set(BOOST_COMPONENTS date_time program_options regex thread iostreams filesystem system unit_test_framework )
+else()
+	set(BOOST_COMPONENTS date_time program_options regex thread iostreams python filesystem system unit_test_framework )
+endif()
+
 find_package( Boost 1.44.0 COMPONENTS REQUIRED ${BOOST_COMPONENTS} )
 
 include_directories( ${Boost_INCLUDE_DIRS} )
@@ -355,7 +361,7 @@ add_definitions( -D_WINSOCKAPI2_ )
 
 # Python extension
 IF(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../ExocortexAlembicPython/CMakeLists.txt")
-	if( NOT MSVC10 ) 
+	if( NOT MSVC10 AND NOT MSVC11 ) 
 		ADD_SUBDIRECTORY ( "${CMAKE_CURRENT_SOURCE_DIR}/../ExocortexAlembicPython/2.6.7" "${CMAKE_CURRENT_BINARY_DIR}/ExocortexAlembicPython/2.6.7" )
 		if( WIN32 )
 			ADD_SUBDIRECTORY ( "${CMAKE_CURRENT_SOURCE_DIR}/../ExocortexAlembicPython/2.7.2" "${CMAKE_CURRENT_BINARY_DIR}/ExocortexAlembicPython/2.7.2" )
@@ -367,7 +373,7 @@ ENDIF()
 
 # Arnold dso
 IF(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../ExocortexAlembicArnold/CMakeLists.txt")
-	if( NOT MSVC10 ) 
+	if( NOT MSVC10 AND NOT MSVC11 ) 
 		ADD_SUBDIRECTORY ( "${CMAKE_CURRENT_SOURCE_DIR}/../ExocortexAlembicArnold/3" "${CMAKE_CURRENT_BINARY_DIR}/ExocortexAlembicArnold/3" )
 		ADD_SUBDIRECTORY ( "${CMAKE_CURRENT_SOURCE_DIR}/../ExocortexAlembicArnold/4" "${CMAKE_CURRENT_BINARY_DIR}/ExocortexAlembicArnold/4" )
 	endif()
@@ -375,7 +381,7 @@ ENDIF()
 
 # softimage plugin
 IF(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../ExocortexAlembicSoftimage/CMakeLists.txt")
-	if( NOT MSVC10 ) 
+	if( NOT MSVC10 AND NOT MSVC11 ) 
 		ADD_SUBDIRECTORY ( "${CMAKE_CURRENT_SOURCE_DIR}/../ExocortexAlembicSoftimage/2012" "${CMAKE_CURRENT_BINARY_DIR}/ExocortexAlembicSoftimage" )
 		ADD_SUBDIRECTORY ( "${CMAKE_CURRENT_SOURCE_DIR}/../ExocortexAlembicSoftimage/2014SP2" "${CMAKE_CURRENT_BINARY_DIR}/ExocortexAlembicSoftimage2014SP2" )
 	endif()
@@ -383,7 +389,7 @@ ENDIF()
 
 # maya plugin
 IF(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../ExocortexAlembicMaya/CMakeLists.txt")
-	if( NOT MSVC10 ) 
+	if( NOT MSVC10 AND NOT MSVC11) 
 		ADD_SUBDIRECTORY ( "${CMAKE_CURRENT_SOURCE_DIR}/../ExocortexAlembicMaya/2011" "${CMAKE_CURRENT_BINARY_DIR}/ExocortexAlembicMaya/2011" )
 		ADD_SUBDIRECTORY ( "${CMAKE_CURRENT_SOURCE_DIR}/../ExocortexAlembicMaya/2012" "${CMAKE_CURRENT_BINARY_DIR}/ExocortexAlembicMaya/2012" )
 		ADD_SUBDIRECTORY ( "${CMAKE_CURRENT_SOURCE_DIR}/../ExocortexAlembicMaya/2013" "${CMAKE_CURRENT_BINARY_DIR}/ExocortexAlembicMaya/2013" )
@@ -402,13 +408,15 @@ ENDIF()
 # 3dsmax plugin
 if( WIN32 )
 	IF(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../ExocortexAlembic3DSMax/CMakeLists.txt")
-		if( NOT MSVC10 ) 
-			ADD_SUBDIRECTORY ( "${CMAKE_CURRENT_SOURCE_DIR}/../ExocortexAlembic3DSMax/2010" "${CMAKE_CURRENT_BINARY_DIR}/ExocortexAlembic3DSMax/2010" )
-			ADD_SUBDIRECTORY ( "${CMAKE_CURRENT_SOURCE_DIR}/../ExocortexAlembic3DSMax/2011" "${CMAKE_CURRENT_BINARY_DIR}/ExocortexAlembic3DSMax/2011" )
-			ADD_SUBDIRECTORY ( "${CMAKE_CURRENT_SOURCE_DIR}/../ExocortexAlembic3DSMax/2012" "${CMAKE_CURRENT_BINARY_DIR}/ExocortexAlembic3DSMax/2012" )
-		else()
-			ADD_SUBDIRECTORY ( "${CMAKE_CURRENT_SOURCE_DIR}/../ExocortexAlembic3DSMax/2013" "${CMAKE_CURRENT_BINARY_DIR}/ExocortexAlembic3DSMax/2013" )
+		if( MSVC11 )
+			ADD_SUBDIRECTORY ( "${CMAKE_CURRENT_SOURCE_DIR}/../ExocortexAlembic3DSMax/2015" "${CMAKE_CURRENT_BINARY_DIR}/ExocortexAlembic3DSMax/2015" )
+		elseif( MSVC10 ) 
 			ADD_SUBDIRECTORY ( "${CMAKE_CURRENT_SOURCE_DIR}/../ExocortexAlembic3DSMax/2014" "${CMAKE_CURRENT_BINARY_DIR}/ExocortexAlembic3DSMax/2014" )
+			ADD_SUBDIRECTORY ( "${CMAKE_CURRENT_SOURCE_DIR}/../ExocortexAlembic3DSMax/2013" "${CMAKE_CURRENT_BINARY_DIR}/ExocortexAlembic3DSMax/2013" )
+		else()
+			ADD_SUBDIRECTORY ( "${CMAKE_CURRENT_SOURCE_DIR}/../ExocortexAlembic3DSMax/2012" "${CMAKE_CURRENT_BINARY_DIR}/ExocortexAlembic3DSMax/2012" )
+			ADD_SUBDIRECTORY ( "${CMAKE_CURRENT_SOURCE_DIR}/../ExocortexAlembic3DSMax/2011" "${CMAKE_CURRENT_BINARY_DIR}/ExocortexAlembic3DSMax/2011" )
+			ADD_SUBDIRECTORY ( "${CMAKE_CURRENT_SOURCE_DIR}/../ExocortexAlembic3DSMax/2010" "${CMAKE_CURRENT_BINARY_DIR}/ExocortexAlembic3DSMax/2010" )
 		endif()
 	ENDIF()
 endif()
