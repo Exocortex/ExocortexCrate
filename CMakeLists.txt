@@ -18,22 +18,30 @@ add_definitions( -D_SCL_SECURE_NO_WARNINGS )
 add_definitions( -D_CRT_SECURE_NO_WARNINGS )
 add_definitions( -Dcrate_Max_Version=${Max_VERSION} )
 
-if( Max_VERSION MATCHES "2013" )
+
+
+if( Max_VERSION MATCHES "2013")
 	add_definitions( -D_UNICODE ) 
 	add_definitions( -DUNICODE ) 
 endif()
 
-if( Max_VERSION MATCHES "2014" )
+if( Max_VERSION MATCHES "2014")
 	add_definitions( -D_UNICODE ) 
 	add_definitions( -DUNICODE ) 
 endif()
 
-if( NOT Max_VERSION MATCHES "2011" )
-	add_definitions( -DTHINKING_PARTICLES ) 
+if( Max_VERSION MATCHES "2015")
+	add_definitions( -D_UNICODE ) 
+	add_definitions( -DUNICODE ) 
+endif()
+
+if( NOT Max_VERSION MATCHES "2011" AND NOT Max_VERSION MATCHES "2015")
 	set( TP ON )
 else()
 	set( TP OFF )
 endif()
+
+
  
 SET( 3DSMAX_DIR_ROOT ${LIBRARY_ROOT}/Max/${Max_VERSION} ) 
 if( NOT EXISTS ${3DSMAX_DIR_ROOT} )
@@ -48,6 +56,8 @@ if( NOT EXISTS ${3DSMAX_DIR_INCLUDE} )
 endif()
 
 if( TP )
+	add_definitions( -DTHINKING_PARTICLES ) 
+
 	SET( TP_DIR_ROOT ${LIBRARY_ROOT}/TP/TP5.0_SDK ) 
 	if( NOT EXISTS ${TP_DIR_ROOT} )
 		message(FATAL_ERROR "Can't find TP_DIR_ROOT: ${TP_DIR_ROOT}" )
@@ -95,8 +105,11 @@ endif()
 
 IF( WIN32 )
 	IF( ${ALEMBIC64} )
-		SET( 3DSMAX_DIR_LIBRARY ${3DSMAX_DIR_ROOT}/x64/lib )
-		SET( TP_DIR_LIBRARY ${TP_DIR_ROOT}/${Max_VERSION}/x64/lib )
+		IF( Max_VERSION MATCHES "2015" )
+			SET( 3DSMAX_DIR_LIBRARY ${3DSMAX_DIR_ROOT}/lib/x64/Release )
+		ELSE()
+			SET( 3DSMAX_DIR_LIBRARY ${3DSMAX_DIR_ROOT}/x64/lib )
+		ENDIF()
 		SET( TPL_DIR_LIBRARY ${TPL_DIR_ROOT}/${Max_VERSION}/x64/lib )
 	ELSE()
 	ENDIF()	
