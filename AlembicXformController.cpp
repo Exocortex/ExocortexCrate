@@ -279,12 +279,11 @@ IOResult AlembicXformController::Load(ILoad *iload)
 		res = Control::Load(iload);  // handle improper Renoir Save order
 	return res;	
 }
-
-RefResult AlembicXformController::NotifyRefChanged(
-    Interval iv, 
-    RefTargetHandle hTarg, 
-    PartID& partID, 
-    RefMessage msg) 
+#if crate_Max_Version == 2015
+RefResult AlembicXformController::NotifyRefChanged(const Interval& iv, RefTargetHandle hTarg, PartID& partID, RefMessage msg, BOOL propagate) 
+#else
+RefResult AlembicXformController::NotifyRefChanged(Interval iv, RefTargetHandle hTarg, PartID& partID, RefMessage msg) 
+#endif
 {
    ESS_PROFILE_FUNC();
     switch (msg) 
@@ -300,7 +299,8 @@ RefResult AlembicXformController::NotifyRefChanged(
                         delRefArchive(m_CachedAbcFile);
                         MCHAR const* strPath = NULL;
                         TimeValue t = GetCOREInterface()->GetTime();
-                        pblock->GetValue( AlembicXformController::ID_PATH, t, strPath, iv);
+						Interval v;
+                        pblock->GetValue( AlembicXformController::ID_PATH, t, strPath, v);
                         m_CachedAbcFile = EC_MCHAR_to_UTF8( strPath );
                         addRefArchive(m_CachedAbcFile);
                     }

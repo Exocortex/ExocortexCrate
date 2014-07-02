@@ -459,11 +459,11 @@ IOResult AlembicFloatController::Load(ILoad *iload)
 	return res;	
 }
 
-RefResult AlembicFloatController::NotifyRefChanged(
-    Interval iv, 
-    RefTargetHandle hTarg, 
-    PartID& partID, 
-    RefMessage msg) 
+#if crate_Max_Version == 2015
+RefResult AlembicFloatController::NotifyRefChanged(const Interval& iv, RefTargetHandle hTarg, PartID& partID, RefMessage msg, BOOL propagate) 
+#else
+RefResult AlembicFloatController::NotifyRefChanged(Interval iv, RefTargetHandle hTarg, PartID& partID, RefMessage msg) 
+#endif
 {
     switch (msg) 
     {
@@ -476,9 +476,10 @@ RefResult AlembicFloatController::NotifyRefChanged(
             case ID_PATH:
                 {
                     delRefArchive(m_CachedAbcFile);
-                    MCHAR const* strPath = NULL;
+                    const MCHAR* strPath = NULL;
                     TimeValue t = GetCOREInterface()->GetTime();
-                    pblock->GetValue( AlembicFloatController::ID_PATH, t, strPath, iv);
+					Interval v;
+                    pblock->GetValue( AlembicFloatController::ID_PATH, t, strPath, v);
                     m_CachedAbcFile = EC_MCHAR_to_UTF8( strPath );
                     addRefArchive(m_CachedAbcFile);
                 }

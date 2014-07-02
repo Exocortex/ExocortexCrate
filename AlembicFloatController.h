@@ -67,8 +67,11 @@ public:
 	int NumRefs() { return 1; }
 	void SetReference(int i, ReferenceTarget* pTarget) { if( i == 0 ) { pblock = (IParamBlock2*)pTarget; } }
 	RefTargetHandle GetReference(int i) { return pblock; }
+#if crate_Max_Version == 2015
+	RefResult NotifyRefChanged(const Interval&, RefTargetHandle, PartID&, RefMessage, BOOL);
+#else
 	RefResult NotifyRefChanged(Interval, RefTargetHandle, PartID&, RefMessage);
-
+#endif
     int NumSubs()  {return 1;} //because it uses the paramblock
     Animatable* SubAnim(int i) {return GetReference(i);}
     TSTR SubAnimName(int i) { return _T("Parameters"); }

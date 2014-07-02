@@ -24,9 +24,13 @@ class EmptyPolyLineObject : public LinearShape {
 		void GetClassName(TSTR& s) { s = _T("PolyLine"); }
 	
 		void InvalidateUI() {}
-
+#if crate_Max_Version == 2015
+		RefResult NotifyRefChanged( const Interval& changeInt,RefTargetHandle hTarget, 
+		PartID& partID, RefMessage message, BOOL propagate);
+#else
 		RefResult NotifyRefChanged( Interval changeInt,RefTargetHandle hTarget, 
-		PartID& partID, RefMessage message);
+		PartID& partID, RefMessage message );
+#endif
 private:
 };				
 

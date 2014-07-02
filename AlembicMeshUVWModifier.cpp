@@ -229,9 +229,13 @@ ESS_PROFILE_FUNC();
 
    	ESS_CPP_EXCEPTION_REPORTING_END
 }
-
+#if crate_Max_Version == 2015
+RefResult AlembicMeshUVWModifier::NotifyRefChanged (const Interval& changeInt, RefTargetHandle hTarget,
+										   PartID& partID, RefMessage message, BOOL propagate) {
+#else
 RefResult AlembicMeshUVWModifier::NotifyRefChanged (Interval changeInt, RefTargetHandle hTarget,
 										   PartID& partID, RefMessage message) {
+#endif
 	ESS_CPP_EXCEPTION_REPORTING_START
 
     switch (message) 
@@ -247,7 +251,8 @@ RefResult AlembicMeshUVWModifier::NotifyRefChanged (Interval changeInt, RefTarge
                         delRefArchive(m_CachedAbcFile);
                         MCHAR const* strPath = NULL;
                         TimeValue t = GetCOREInterface()->GetTime();
-                        pblock->GetValue( AlembicMeshUVWModifier::ID_PATH, t, strPath, changeInt);
+						Interval v;
+                        pblock->GetValue( AlembicMeshUVWModifier::ID_PATH, t, strPath, v);
                         m_CachedAbcFile = EC_MCHAR_to_UTF8( strPath );
                         addRefArchive(m_CachedAbcFile);
                     }

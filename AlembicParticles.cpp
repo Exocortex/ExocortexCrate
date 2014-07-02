@@ -1821,12 +1821,11 @@ Mesh *AlembicParticles::BuildNbElementsMesh(int meshNumber, TimeValue t, INode *
     needDelete = FALSE;
     return pMesh;
 }
-
-RefResult AlembicParticles::NotifyRefChanged(
-    Interval iv, 
-    RefTargetHandle hTarg, 
-    PartID& partID, 
-    RefMessage msg) 
+#if crate_Max_Version == 2015
+RefResult AlembicParticles::NotifyRefChanged(const Interval& iv, RefTargetHandle hTarg, PartID& partID, RefMessage msg, BOOL propagate)
+#else
+RefResult AlembicParticles::NotifyRefChanged(Interval iv, RefTargetHandle hTarg, PartID& partID, RefMessage msg)
+#endif
 {
    ESS_PROFILE_FUNC();
     switch (msg) 
@@ -1842,7 +1841,8 @@ RefResult AlembicParticles::NotifyRefChanged(
                         delRefArchive(m_CachedAbcFile);
                         MCHAR const* strPath = NULL;
                         TimeValue t = GetCOREInterface()->GetTime();
-                        pblock2->GetValue( AlembicParticles::ID_PATH, t, strPath, iv);
+						Interval v;
+                        pblock2->GetValue( AlembicParticles::ID_PATH, t, strPath, v);
                         m_CachedAbcFile = EC_MCHAR_to_UTF8( strPath );
                         addRefArchive(m_CachedAbcFile);
                     }
