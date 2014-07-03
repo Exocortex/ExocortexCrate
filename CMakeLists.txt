@@ -138,20 +138,45 @@ if( Exocortex_SERVICES )
 		set( Exocortex_RELEASED_LIBRARYDIR "${LIBRARY_ROOT}/Exocortex/lib/${CPU_NAME}/release/${OS_NAME}/" )
 	endif()
 	
-	set( Exocortex_LIBRARIES
-		debug "${Exocortex_DEBUG_LIBRARYDIR}/LibCore.lib"  optimized "${Exocortex_RELEASED_LIBRARYDIR}/LibCore.lib"
-		debug "${Exocortex_DEBUG_LIBRARYDIR}/LibImath.lib"  optimized "${Exocortex_RELEASED_LIBRARYDIR}/LibImath.lib"
-		)
+	if( MSVC11 )
+	
+	    set( Exocortex_LIBRARIES
+		    debug "${Exocortex_DEBUG_LIBRARYDIR}/LibCore.lib"  optimized "${Exocortex_RELEASED_LIBRARYDIR}/LibCore.lib"
+		    debug "${Exocortex_DEBUG_LIBRARYDIR}/LibImath.lib"  optimized "${Exocortex_RELEASED_LIBRARYDIR}/LibImath.lib"
+		    )
+    		
+	    set( ExocortexSoftimage_LIBRARIES
+		    debug "${Exocortex_DEBUG_LIBRARYDIR}/LibSoftimageCore.lib"  optimized "${Exocortex_RELEASED_LIBRARYDIR}/LibSoftimageCore.lib"
+		    debug "${Exocortex_DEBUG_LIBRARYDIR}/LibCopyProtection.lib"  optimized "${Exocortex_RELEASED_LIBRARYDIR}/LibCopyProtection.lib"
+		    debug "${Exocortex_DEBUG_LIBRARYDIR}/LibFluid.lib"  optimized "${Exocortex_RELEASED_LIBRARYDIR}/LibFluid.lib"
+		    debug "${Exocortex_DEBUG_LIBRARYDIR}/LibGeometry.lib"  optimized "${Exocortex_RELEASED_LIBRARYDIR}/LibGeometry.lib"
+		    debug "${Exocortex_DEBUG_LIBRARYDIR}/LibCore.lib"  optimized "${Exocortex_RELEASED_LIBRARYDIR}/LibCore.lib"
+		    debug "${Exocortex_DEBUG_LIBRARYDIR}/LibCryptopp.lib"  optimized "${Exocortex_RELEASED_LIBRARYDIR}/LibCryptopp.lib"
+		    debug "${Exocortex_DEBUG_LIBRARYDIR}/LibImath.lib"  optimized "${Exocortex_RELEASED_LIBRARYDIR}/LibImath.lib"
+		    )
 		
-	set( ExocortexSoftimage_LIBRARIES
-		debug "${Exocortex_DEBUG_LIBRARYDIR}/LibSoftimageCore.lib"  optimized "${Exocortex_RELEASED_LIBRARYDIR}/LibSoftimageCore.lib"
-		debug "${Exocortex_DEBUG_LIBRARYDIR}/LibCopyProtection.lib"  optimized "${Exocortex_RELEASED_LIBRARYDIR}/LibCopyProtection.lib"
-		debug "${Exocortex_DEBUG_LIBRARYDIR}/LibFluid.lib"  optimized "${Exocortex_RELEASED_LIBRARYDIR}/LibFluid.lib"
-		debug "${Exocortex_DEBUG_LIBRARYDIR}/LibGeometry.lib"  optimized "${Exocortex_RELEASED_LIBRARYDIR}/LibGeometry.lib"
-		debug "${Exocortex_DEBUG_LIBRARYDIR}/LibCore.lib"  optimized "${Exocortex_RELEASED_LIBRARYDIR}/LibCore.lib"
-		debug "${Exocortex_DEBUG_LIBRARYDIR}/LibCryptopp.lib"  optimized "${Exocortex_RELEASED_LIBRARYDIR}/LibCryptopp.lib"
-		debug "${Exocortex_DEBUG_LIBRARYDIR}/LibImath.lib"  optimized "${Exocortex_RELEASED_LIBRARYDIR}/LibImath.lib"
-		)
+	else()
+	
+	    set( Exocortex_LIBRARIES
+		    debug "${Exocortex_DEBUG_LIBRARYDIR}/LibCore.lib"  optimized "${Exocortex_RELEASED_LIBRARYDIR}/LibCore.lib"
+		    debug "${Exocortex_DEBUG_LIBRARYDIR}/LibImath.lib"  optimized "${Exocortex_RELEASED_LIBRARYDIR}/LibImath.lib"
+            debug "${Exocortex_DEBUG_LIBRARYDIR}/tbb_debug.lib"  optimized "${Exocortex_RELEASED_LIBRARYDIR}/tbb.lib"
+            debug "${Exocortex_DEBUG_LIBRARYDIR}/tbbmalloc_debug.lib"  optimized "${Exocortex_RELEASED_LIBRARYDIR}/tbbmalloc.lib"
+		    )
+    		
+	    set( ExocortexSoftimage_LIBRARIES
+		    debug "${Exocortex_DEBUG_LIBRARYDIR}/LibSoftimageCore.lib"  optimized "${Exocortex_RELEASED_LIBRARYDIR}/LibSoftimageCore.lib"
+		    debug "${Exocortex_DEBUG_LIBRARYDIR}/LibCopyProtection.lib"  optimized "${Exocortex_RELEASED_LIBRARYDIR}/LibCopyProtection.lib"
+		    debug "${Exocortex_DEBUG_LIBRARYDIR}/LibFluid.lib"  optimized "${Exocortex_RELEASED_LIBRARYDIR}/LibFluid.lib"
+		    debug "${Exocortex_DEBUG_LIBRARYDIR}/LibGeometry.lib"  optimized "${Exocortex_RELEASED_LIBRARYDIR}/LibGeometry.lib"
+		    debug "${Exocortex_DEBUG_LIBRARYDIR}/LibCore.lib"  optimized "${Exocortex_RELEASED_LIBRARYDIR}/LibCore.lib"
+		    debug "${Exocortex_DEBUG_LIBRARYDIR}/LibCryptopp.lib"  optimized "${Exocortex_RELEASED_LIBRARYDIR}/LibCryptopp.lib"
+		    debug "${Exocortex_DEBUG_LIBRARYDIR}/LibImath.lib"  optimized "${Exocortex_RELEASED_LIBRARYDIR}/LibImath.lib"
+            debug "${Exocortex_DEBUG_LIBRARYDIR}/tbb_debug.lib"  optimized "${Exocortex_RELEASED_LIBRARYDIR}/tbb.lib"
+            debug "${Exocortex_DEBUG_LIBRARYDIR}/tbbmalloc_debug.lib"  optimized "${Exocortex_RELEASED_LIBRARYDIR}/tbbmalloc.lib"
+		    )
+	
+	endif()
 	
 	set(RER_DEPENDENCIES "${LIBRARY_ROOT}/rer/rer.exe" )
 	set(EAH_DEPENDENCIES "${LIBRARY_ROOT}/eah/eah.exe" )
