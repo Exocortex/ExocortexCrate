@@ -409,6 +409,8 @@ IF(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../ExocortexAlembicSoftimage/CMakeLists.t
 	if( NOT MSVC10 AND NOT MSVC11 ) 
 		ADD_SUBDIRECTORY ( "${CMAKE_CURRENT_SOURCE_DIR}/../ExocortexAlembicSoftimage/2012" "${CMAKE_CURRENT_BINARY_DIR}/ExocortexAlembicSoftimage" )
 		ADD_SUBDIRECTORY ( "${CMAKE_CURRENT_SOURCE_DIR}/../ExocortexAlembicSoftimage/2014SP2" "${CMAKE_CURRENT_BINARY_DIR}/ExocortexAlembicSoftimage2014SP2" )
+	elseif( MSVC11 )
+		ADD_SUBDIRECTORY ( "${CMAKE_CURRENT_SOURCE_DIR}/../ExocortexAlembicSoftimage/2015" "${CMAKE_CURRENT_BINARY_DIR}/ExocortexAlembicSoftimage2015" )
 	endif()
 ENDIF()
 
