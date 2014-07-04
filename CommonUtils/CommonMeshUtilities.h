@@ -54,6 +54,8 @@ AbcG::IV2fGeomParam getMeshUvParam(int uvI, AbcG::IPolyMesh objMesh, AbcG::ISubD
 struct SampleInfo;
 bool frameHasDynamicTopology(AbcG::IPolyMeshSchema::Sample* const polyMeshSample, SampleInfo* const sampleInfo, Abc::IInt32ArrayProperty* const faceIndicesProperty);
 
+bool frameHasDynamicTopology(const AbcG::IPolyMeshSchema::Sample &sample1, const AbcG::IPolyMeshSchema::Sample &sample2);
+
 class dynamicTopoVelocityCalc
 {
 
