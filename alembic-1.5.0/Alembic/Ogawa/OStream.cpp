@@ -40,7 +40,7 @@
 
 //#define ESS_LOG_ERROR(a) do { std::stringstream __s; __s << "Alembic: " << a << std::endl; OutputDebugString( __s.str().c_str() ); } while(0)
 
-#define STREAM_BUF_SIZE (1024*16);
+#define STREAM_BUF_SIZE (1024*16)
 
 namespace Alembic {
 namespace Ogawa {
