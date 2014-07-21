@@ -1,0 +1,11 @@
+ExocortexAlembicSoftimage.so
+{
+    global:
+        extern "C" {
+			XSIUnloadPlugin;
+			XSILoadPlugin;
+			alembic_*;
+        };
+    local:
+	*;
+};

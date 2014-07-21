@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xsi_file type="CompoundNode" name="alembic_vec2f_per_sample" category="Alembic" formatversion="1.4" compoundversion="1.0" constructionmode="Current" backgroundcolor="6732954">
+	<definition>
+		<nodes>
+			<node type="alembic_vec2f_array" index="0">
+				<param name="path.path_string" type="8" value=""></param>
+				<param name="path.path_uimode" type="8" value=""></param>
+				<param name="path.path_filepathseq" type="8" value=""></param>
+				<param name="path.path_filename" type="8" value=""></param>
+				<param name="identifier.identifier_string" type="8" value=""></param>
+				<param name="identifier.identifier_uimode" type="8" value=""></param>
+				<param name="identifier.identifier_filepathseq" type="8" value=""></param>
+				<param name="identifier.identifier_filename" type="8" value=""></param>
+				<param name="property.property_string" type="8" value="uv"></param>
+				<param name="property.property_uimode" type="8" value=""></param>
+				<param name="property.property_filepathseq" type="8" value=""></param>
+				<param name="property.property_filename" type="8" value=""></param>
+				<param name="custom" type="11" value="false"></param>
+				<param name="time" type="4" value="0.000000"></param>
+				<portdef name="path" type="131072" structure="1" group="0" instance="0" port="0"></portdef>
+				<portdef name="identifier" type="131072" structure="1" group="0" instance="0" port="1"></portdef>
+				<portdef name="property" type="131072" structure="1" group="0" instance="0" port="2"></portdef>
+				<portdef name="custom" type="1" structure="1" group="0" instance="0" port="3"></portdef>
+				<portdef name="time" type="4" structure="1" group="0" instance="0" port="4"></portdef>
+				<datablob category="ui_infos">
+					<prop name="posx">456</prop>
+					<prop name="posy">62</prop>
+					<prop name="state">Normal</prop>
+				</datablob>
+			</node>
+			<node type="GetDataNode" index="1">
+				<param name="reference" type="31" value="self.polymsh.cls.Texture_Coordinates_AUTO.Texture_Projection.UVs"></param>
+				<param_ext name="reference" type="31" value="self.polymsh.cls.Texture_Coordinates_AUTO.Texture_Projection.UVs"></param_ext>
+				<portdef name="source" type="2048" structure="1" group="1" instance="0" port="0"></portdef>
+				<portdef name="inname" type="8192" structure="1" group="3" instance="0" port="0"></portdef>
+				<datablob category="ui_infos">
+					<prop name="posx">287</prop>
+					<prop name="posy">-105</prop>
+					<prop name="state">Normal</prop>
+				</datablob>
+			</node>
+			<node type="GetElementIndicesNode" index="2">
+				<param name="value.value_x" type="4" value="0.000000"></param>
+				<param name="value.value_y" type="4" value="0.000000"></param>
+				<portdef name="value" type="8" structure="1" group="0" instance="0" port="0"></portdef>
+				<datablob category="ui_infos">
+					<prop name="posx">791</prop>
+					<prop name="posy">-89</prop>
+					<prop name="state">Normal</prop>
+				</datablob>
+			</node>
+			<node type="SelectInArrayNode" index="3">
+				<param name="index" type="3" value="0"></param>
+				<param name="array.array_x" type="4" value="0.000000"></param>
+				<param name="array.array_y" type="4" value="0.000000"></param>
+				<portdef name="index" type="2" structure="1" group="0" instance="0" port="0"></portdef>
+				<portdef name="array" type="8" structure="2" group="0" instance="0" port="1"></portdef>
+				<datablob category="ui_infos">
+					<prop name="posx">981</prop>
+					<prop name="posy">-93</prop>
+					<prop name="state">Normal</prop>
+				</datablob>
+			</node>
+		</nodes>
+		<exposed_ports>
+			<port index="0" portname="path" username="path" basename="path" portlabel="path" exposetype="single"> </port>
+			<port index="0" portname="identifier" username="identifier" basename="identifier" portlabel="identifier" exposetype="single"> </port>
+			<port index="0" portname="property" username="property" basename="property" portlabel="property" exposetype="single"> </port>
+			<port index="0" portname="custom" username="custom" basename="custom" portlabel="custom" exposetype="single"> </port>
+			<port index="0" portname="time" username="time" basename="time" portlabel="time" exposetype="single"> </port>
+			<port index="3" portname="value" username="Value" basename="Value" portlabel="Value" exposetype="single"> </port>
+		</exposed_ports>
+		<connections>
+			<cnx from_node="1" from_port="value" to_node="2" to_port="value"> </cnx>
+			<cnx from_node="2" from_port="indices" to_node="3" to_port="index"> </cnx>
+			<cnx from_node="0" from_port="data" to_node="3" to_port="array"> </cnx>
+		</connections>
+		<layout>
+			<item type="input" name="path"> </item>
+			<item type="input" name="identifier"> </item>
+			<item type="input" name="property"> </item>
+			<item type="input" name="custom"> </item>
+			<item type="input" name="time"> </item>
+			<item type="output" name="Value"> </item>
+		</layout>
+	</definition>
+</xsi_file>

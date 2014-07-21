@@ -1,0 +1,342 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xsi_file type="CompoundNode" name="ABC Instance Shapes" category="" tasks="Alembic/Loaders" author="" url="" formatversion="1.4" compoundversion="1.2" versiontag="" constructionmode="Current" backgroundcolor="1013436">
+	<description><![CDATA[]]></description>
+	<definition>
+		<nodes>
+			<node type="InstanceShapeNode" index="0">
+				<param name="reference" type="31" value=""></param>
+				<param name="hierarchymode" type="3" value="1"></param>
+				<param name="outofrangegroupindex" type="3" value="0"></param>
+				<param name="index" type="3" value="0"></param>
+				<portdef name="index" type="2" structure="1" group="0" instance="0" port="0"></portdef>
+				<datablob category="ui_infos">
+					<prop name="posx">-194</prop>
+					<prop name="posy">-58</prop>
+					<prop name="state">Normal</prop>
+				</datablob>
+			</node>
+			<node type="InstanceShapeNode" index="1">
+				<param name="reference" type="31" value=""></param>
+				<param name="hierarchymode" type="3" value="1"></param>
+				<param name="outofrangegroupindex" type="3" value="0"></param>
+				<param name="index" type="3" value="0"></param>
+				<portdef name="index" type="2" structure="1" group="0" instance="0" port="0"></portdef>
+				<datablob category="ui_infos">
+					<prop name="posx">-210</prop>
+					<prop name="posy">-181</prop>
+					<prop name="state">Normal</prop>
+				</datablob>
+			</node>
+			<node type="InstanceShapeNode" index="2">
+				<param name="reference" type="31" value=""></param>
+				<param name="hierarchymode" type="3" value="1"></param>
+				<param name="outofrangegroupindex" type="3" value="0"></param>
+				<param name="index" type="3" value="0"></param>
+				<portdef name="index" type="2" structure="1" group="0" instance="0" port="0"></portdef>
+				<datablob category="ui_infos">
+					<prop name="posx">-204</prop>
+					<prop name="posy">-301</prop>
+					<prop name="state">Normal</prop>
+				</datablob>
+			</node>
+			<node type="InstanceShapeNode" index="3">
+				<param name="reference" type="31" value=""></param>
+				<param name="hierarchymode" type="3" value="1"></param>
+				<param name="outofrangegroupindex" type="3" value="0"></param>
+				<param name="index" type="3" value="0"></param>
+				<portdef name="index" type="2" structure="1" group="0" instance="0" port="0"></portdef>
+				<datablob category="ui_infos">
+					<prop name="posx">-203</prop>
+					<prop name="posy">-412</prop>
+					<prop name="state">Normal</prop>
+				</datablob>
+			</node>
+			<node type="InstanceShapeNode" index="4">
+				<param name="reference" type="31" value=""></param>
+				<param name="hierarchymode" type="3" value="1"></param>
+				<param name="outofrangegroupindex" type="3" value="0"></param>
+				<param name="index" type="3" value="0"></param>
+				<portdef name="index" type="2" structure="1" group="0" instance="0" port="0"></portdef>
+				<datablob category="ui_infos">
+					<prop name="posx">-154</prop>
+					<prop name="posy">811</prop>
+					<prop name="state">Normal</prop>
+				</datablob>
+			</node>
+			<node type="InstanceShapeNode" index="5">
+				<param name="reference" type="31" value=""></param>
+				<param name="hierarchymode" type="3" value="1"></param>
+				<param name="outofrangegroupindex" type="3" value="0"></param>
+				<param name="index" type="3" value="0"></param>
+				<portdef name="index" type="2" structure="1" group="0" instance="0" port="0"></portdef>
+				<datablob category="ui_infos">
+					<prop name="posx">-134</prop>
+					<prop name="posy">683</prop>
+					<prop name="state">Normal</prop>
+				</datablob>
+			</node>
+			<node type="InstanceShapeNode" index="6">
+				<param name="reference" type="31" value=""></param>
+				<param name="hierarchymode" type="3" value="1"></param>
+				<param name="outofrangegroupindex" type="3" value="0"></param>
+				<param name="index" type="3" value="0"></param>
+				<portdef name="index" type="2" structure="1" group="0" instance="0" port="0"></portdef>
+				<datablob category="ui_infos">
+					<prop name="posx">-131</prop>
+					<prop name="posy">559</prop>
+					<prop name="state">Normal</prop>
+				</datablob>
+			</node>
+			<node type="InstanceShapeNode" index="7">
+				<param name="reference" type="31" value=""></param>
+				<param name="hierarchymode" type="3" value="1"></param>
+				<param name="outofrangegroupindex" type="3" value="0"></param>
+				<param name="index" type="3" value="0"></param>
+				<portdef name="index" type="2" structure="1" group="0" instance="0" port="0"></portdef>
+				<datablob category="ui_infos">
+					<prop name="posx">-182</prop>
+					<prop name="posy">398</prop>
+					<prop name="state">Normal</prop>
+				</datablob>
+			</node>
+			<node type="Set Data" version="1.0" index="8">
+				<param name="Reference" type="31" value="self.InstanceShapes"></param>
+				<param name="Value" type="3" value="0"></param>
+				<param_ext name="Reference" type="31" value="self.InstanceShapes"></param_ext>
+				<portdef name="In_Name" type="8192" structure="1" group="-1" instance="-1" port="-1"></portdef>
+				<portdef name="Value" type="32768" structure="2" group="2" instance="0" port="0" groupname="Value"></portdef>
+				<datablob category="ui_infos">
+					<prop name="posx">265</prop>
+					<prop name="posy">-34</prop>
+					<prop name="state">Normal</prop>
+				</datablob>
+			</node>
+			<node type="InstanceShapeNode" index="9">
+				<param name="reference" type="31" value=""></param>
+				<param name="hierarchymode" type="3" value="1"></param>
+				<param name="outofrangegroupindex" type="3" value="0"></param>
+				<param name="index" type="3" value="0"></param>
+				<portdef name="index" type="2" structure="1" group="0" instance="0" port="0"></portdef>
+				<datablob category="ui_infos">
+					<prop name="posx">-220</prop>
+					<prop name="posy">265</prop>
+					<prop name="state">Normal</prop>
+				</datablob>
+			</node>
+			<node type="InstanceShapeNode" index="10">
+				<param name="reference" type="31" value=""></param>
+				<param name="hierarchymode" type="3" value="1"></param>
+				<param name="outofrangegroupindex" type="3" value="0"></param>
+				<param name="index" type="3" value="0"></param>
+				<portdef name="index" type="2" structure="1" group="0" instance="0" port="0"></portdef>
+				<datablob category="ui_infos">
+					<prop name="posx">-196</prop>
+					<prop name="posy">119</prop>
+					<prop name="state">Normal</prop>
+				</datablob>
+			</node>
+			<node type="InstanceShapeNode" index="11">
+				<param name="reference" type="31" value=""></param>
+				<param name="hierarchymode" type="3" value="1"></param>
+				<param name="outofrangegroupindex" type="3" value="0"></param>
+				<param name="index" type="3" value="0"></param>
+				<portdef name="index" type="2" structure="1" group="0" instance="0" port="0"></portdef>
+				<datablob category="ui_infos">
+					<prop name="posx">-196</prop>
+					<prop name="posy">-526</prop>
+					<prop name="state">Normal</prop>
+				</datablob>
+			</node>
+			<node type="InstanceShapeNode" index="12">
+				<param name="reference" type="31" value=""></param>
+				<param name="hierarchymode" type="3" value="1"></param>
+				<param name="outofrangegroupindex" type="3" value="0"></param>
+				<param name="index" type="3" value="0"></param>
+				<portdef name="index" type="2" structure="1" group="0" instance="0" port="0"></portdef>
+				<datablob category="ui_infos">
+					<prop name="posx">-130</prop>
+					<prop name="posy">1340</prop>
+					<prop name="state">Normal</prop>
+				</datablob>
+			</node>
+			<node type="InstanceShapeNode" index="13">
+				<param name="reference" type="31" value=""></param>
+				<param name="hierarchymode" type="3" value="1"></param>
+				<param name="outofrangegroupindex" type="3" value="0"></param>
+				<param name="index" type="3" value="0"></param>
+				<portdef name="index" type="2" structure="1" group="0" instance="0" port="0"></portdef>
+				<datablob category="ui_infos">
+					<prop name="posx">-135</prop>
+					<prop name="posy">1193</prop>
+					<prop name="state">Normal</prop>
+				</datablob>
+			</node>
+			<node type="InstanceShapeNode" index="14">
+				<param name="reference" type="31" value=""></param>
+				<param name="hierarchymode" type="3" value="1"></param>
+				<param name="outofrangegroupindex" type="3" value="0"></param>
+				<param name="index" type="3" value="0"></param>
+				<portdef name="index" type="2" structure="1" group="0" instance="0" port="0"></portdef>
+				<datablob category="ui_infos">
+					<prop name="posx">-144</prop>
+					<prop name="posy">1065</prop>
+					<prop name="state">Normal</prop>
+				</datablob>
+			</node>
+			<node type="InstanceShapeNode" index="15">
+				<param name="reference" type="31" value=""></param>
+				<param name="hierarchymode" type="3" value="1"></param>
+				<param name="outofrangegroupindex" type="3" value="0"></param>
+				<param name="index" type="3" value="0"></param>
+				<portdef name="index" type="2" structure="1" group="0" instance="0" port="0"></portdef>
+				<datablob category="ui_infos">
+					<prop name="posx">-147</prop>
+					<prop name="posy">943</prop>
+					<prop name="state">Normal</prop>
+				</datablob>
+			</node>
+			<node type="BuildArrayNode" index="16">
+				<param name="value1" type="3" value="0"></param>
+				<param name="value2" type="3" value="0"></param>
+				<param name="value3" type="3" value="0"></param>
+				<param name="value4" type="3" value="0"></param>
+				<param name="value5" type="3" value="0"></param>
+				<param name="value6" type="3" value="0"></param>
+				<param name="value7" type="3" value="0"></param>
+				<param name="value8" type="3" value="0"></param>
+				<param name="value9" type="3" value="0"></param>
+				<param name="value10" type="3" value="0"></param>
+				<param name="value11" type="3" value="0"></param>
+				<param name="value12" type="3" value="0"></param>
+				<param name="value13" type="3" value="0"></param>
+				<param name="value14" type="3" value="0"></param>
+				<param name="value15" type="3" value="0"></param>
+				<param name="value16" type="3" value="0"></param>
+				<portdef name="value1" type="32768" structure="1" group="0" instance="0" port="0"></portdef>
+				<portdef name="value2" type="32768" structure="1" group="0" instance="1" port="0"></portdef>
+				<portdef name="value3" type="32768" structure="1" group="0" instance="2" port="0"></portdef>
+				<portdef name="value4" type="32768" structure="1" group="0" instance="3" port="0"></portdef>
+				<portdef name="value5" type="32768" structure="1" group="0" instance="4" port="0"></portdef>
+				<portdef name="value6" type="32768" structure="1" group="0" instance="5" port="0"></portdef>
+				<portdef name="value7" type="32768" structure="1" group="0" instance="6" port="0"></portdef>
+				<portdef name="value8" type="32768" structure="1" group="0" instance="7" port="0"></portdef>
+				<portdef name="value9" type="32768" structure="1" group="0" instance="8" port="0"></portdef>
+				<portdef name="value10" type="32768" structure="1" group="0" instance="9" port="0"></portdef>
+				<portdef name="value11" type="32768" structure="1" group="0" instance="10" port="0"></portdef>
+				<portdef name="value12" type="32768" structure="1" group="0" instance="11" port="0"></portdef>
+				<portdef name="value13" type="32768" structure="1" group="0" instance="12" port="0"></portdef>
+				<portdef name="value14" type="32768" structure="1" group="0" instance="13" port="0"></portdef>
+				<portdef name="value15" type="32768" structure="1" group="0" instance="14" port="0"></portdef>
+				<portdef name="value16" type="32768" structure="1" group="0" instance="15" port="0"></portdef>
+				<datablob category="ui_infos">
+					<prop name="posx">337</prop>
+					<prop name="posy">379</prop>
+					<prop name="state">Normal</prop>
+				</datablob>
+			</node>
+			<node type="InstanceShapeNode" index="17">
+				<param name="reference" type="31" value=""></param>
+				<param name="hierarchymode" type="3" value="1"></param>
+				<param name="outofrangegroupindex" type="3" value="0"></param>
+				<param name="index" type="3" value="0"></param>
+				<portdef name="index" type="2" structure="1" group="0" instance="0" port="0"></portdef>
+				<datablob category="ui_infos">
+					<prop name="posx">-174</prop>
+					<prop name="posy">-638</prop>
+					<prop name="state">Normal</prop>
+				</datablob>
+			</node>
+		</nodes>
+		<exposed_ports>
+			<port index="0" portname="reference" username="Reference5" basename="Reference0" portlabel="Reference5" exposetype="use_node_import"> </port>
+			<port index="0" portname="hierarchymode" username="Hierarchy5" basename="Hierarchy5" portlabel="Hierarchy5" exposetype="single"> </port>
+			<port index="1" portname="reference" username="Reference4" basename="Reference0" portlabel="Reference4" exposetype="use_node_import"> </port>
+			<port index="1" portname="hierarchymode" username="Hierarchy4" basename="Hierarchy4" portlabel="Hierarchy4" exposetype="single"> </port>
+			<port index="2" portname="reference" username="Reference3" basename="Reference0" portlabel="Reference3" exposetype="use_node_import"> </port>
+			<port index="2" portname="hierarchymode" username="Hierarchy3" basename="Hierarchy3" portlabel="Hierarchy3" exposetype="single"> </port>
+			<port index="3" portname="reference" username="Reference2" basename="Reference0" portlabel="Reference2" exposetype="use_node_import"> </port>
+			<port index="3" portname="hierarchymode" username="Hierarchy2" basename="Hierarchy2" portlabel="Hierarchy2" exposetype="single"> </port>
+			<port index="4" portname="reference" username="Reference11" basename="Reference0" portlabel="Reference11" exposetype="use_node_import"> </port>
+			<port index="4" portname="hierarchymode" username="Hierarchy11" basename="Hierarchy11" portlabel="Hierarchy11" exposetype="single"> </port>
+			<port index="5" portname="reference" username="Reference10" basename="Reference0" portlabel="Reference10" exposetype="use_node_import"> </port>
+			<port index="5" portname="hierarchymode" username="Hierarchy10" basename="Hierarchy10" portlabel="Hierarchy10" exposetype="single"> </port>
+			<port index="6" portname="reference" username="Reference9" basename="Reference0" portlabel="Reference9" exposetype="use_node_import"> </port>
+			<port index="6" portname="hierarchymode" username="Hierarchy9" basename="Hierarchy9" portlabel="Hierarchy9" exposetype="single"> </port>
+			<port index="7" portname="reference" username="Reference8" basename="Reference0" portlabel="Reference8" exposetype="use_node_import"> </port>
+			<port index="7" portname="hierarchymode" username="Hierarchy8" basename="Hierarchy8" portlabel="Hierarchy8" exposetype="single"> </port>
+			<port index="8" portname="Execute" username="Execute" basename="Execute" portlabel="Execute" exposetype="single"> </port>
+			<port index="9" portname="reference" username="Reference7" basename="Reference0" portlabel="Reference7" exposetype="use_node_import"> </port>
+			<port index="9" portname="hierarchymode" username="Hierarchy7" basename="Hierarchy7" portlabel="Hierarchy7" exposetype="single"> </port>
+			<port index="10" portname="reference" username="Reference6" basename="Reference0" portlabel="Reference6" exposetype="use_node_import"> </port>
+			<port index="10" portname="hierarchymode" username="Hierarchy6" basename="Hierarchy6" portlabel="Hierarchy6" exposetype="single"> </port>
+			<port index="11" portname="reference" username="Reference1" basename="Reference0" portlabel="Reference1" exposetype="use_node_import"> </port>
+			<port index="11" portname="hierarchymode" username="Hierarchy1" basename="Hierarchy1" portlabel="Hierarchy1" exposetype="single"> </port>
+			<port index="12" portname="reference" username="Reference15" basename="Reference0" portlabel="Reference15" exposetype="use_node_import"> </port>
+			<port index="12" portname="hierarchymode" username="Hierarchy15" basename="Hierarchy15" portlabel="Hierarchy15" exposetype="single"> </port>
+			<port index="13" portname="reference" username="Reference14" basename="Reference0" portlabel="Reference14" exposetype="use_node_import"> </port>
+			<port index="13" portname="hierarchymode" username="Hierarchy14" basename="Hierarchy14" portlabel="Hierarchy14" exposetype="single"> </port>
+			<port index="14" portname="reference" username="Reference13" basename="Reference0" portlabel="Reference13" exposetype="use_node_import"> </port>
+			<port index="14" portname="hierarchymode" username="Hierarchy13" basename="Hierarchy13" portlabel="Hierarchy13" exposetype="single"> </port>
+			<port index="15" portname="reference" username="Reference12" basename="Reference0" portlabel="Reference12" exposetype="use_node_import"> </port>
+			<port index="15" portname="hierarchymode" username="Hierarchy12" basename="Hierarchy12" portlabel="Hierarchy12" exposetype="single"> </port>
+			<port index="17" portname="reference" username="Reference0" basename="Reference0" portlabel="Reference0" exposetype="use_node_import"> </port>
+			<port index="17" portname="hierarchymode" username="Hierarchy0" basename="Hierarchy0" portlabel="Hierarchy0" exposetype="single"> </port>
+		</exposed_ports>
+		<connections>
+			<cnx from_node="4" from_port="shape" to_node="16" to_port="value12"> </cnx>
+			<cnx from_node="6" from_port="shape" to_node="16" to_port="value10"> </cnx>
+			<cnx from_node="5" from_port="shape" to_node="16" to_port="value11"> </cnx>
+			<cnx from_node="13" from_port="shape" to_node="16" to_port="value15"> </cnx>
+			<cnx from_node="14" from_port="shape" to_node="16" to_port="value14"> </cnx>
+			<cnx from_node="1" from_port="shape" to_node="16" to_port="value5"> </cnx>
+			<cnx from_node="7" from_port="shape" to_node="16" to_port="value9"> </cnx>
+			<cnx from_node="2" from_port="shape" to_node="16" to_port="value4"> </cnx>
+			<cnx from_node="17" from_port="shape" to_node="16" to_port="value1"> </cnx>
+			<cnx from_node="3" from_port="shape" to_node="16" to_port="value3"> </cnx>
+			<cnx from_node="9" from_port="shape" to_node="16" to_port="value8"> </cnx>
+			<cnx from_node="11" from_port="shape" to_node="16" to_port="value2"> </cnx>
+			<cnx from_node="12" from_port="shape" to_node="16" to_port="value16"> </cnx>
+			<cnx from_node="15" from_port="shape" to_node="16" to_port="value13"> </cnx>
+			<cnx from_node="16" from_port="array" to_node="8" to_port="Value"> </cnx>
+			<cnx from_node="0" from_port="shape" to_node="16" to_port="value6"> </cnx>
+			<cnx from_node="10" from_port="shape" to_node="16" to_port="value7"> </cnx>
+		</connections>
+		<layout>
+			<item type="input" name="Reference0" min="0" max="0"> </item>
+			<item type="input" name="Reference1" min="0" max="0"> </item>
+			<item type="input" name="Reference2" min="0" max="0"> </item>
+			<item type="input" name="Reference3" min="0" max="0"> </item>
+			<item type="input" name="Reference4" min="0" max="0"> </item>
+			<item type="input" name="Reference5" min="0" max="0"> </item>
+			<item type="input" name="Reference6" min="0" max="0"> </item>
+			<item type="input" name="Reference7" min="0" max="0"> </item>
+			<item type="input" name="Reference8" min="0" max="0"> </item>
+			<item type="input" name="Reference9" min="0" max="0"> </item>
+			<item type="input" name="Reference10" min="0" max="0"> </item>
+			<item type="input" name="Reference11" min="0" max="0"> </item>
+			<item type="input" name="Reference12" min="0" max="0"> </item>
+			<item type="input" name="Reference13" min="0" max="0"> </item>
+			<item type="input" name="Reference14" min="0" max="0"> </item>
+			<item type="input" name="Reference15" min="0" max="0"> </item>
+			<item type="input" name="Hierarchy0"> </item>
+			<item type="input" name="Hierarchy1"> </item>
+			<item type="input" name="Hierarchy2"> </item>
+			<item type="input" name="Hierarchy3"> </item>
+			<item type="input" name="Hierarchy4"> </item>
+			<item type="input" name="Hierarchy5"> </item>
+			<item type="input" name="Hierarchy6"> </item>
+			<item type="input" name="Hierarchy7"> </item>
+			<item type="input" name="Hierarchy8"> </item>
+			<item type="input" name="Hierarchy9"> </item>
+			<item type="input" name="Hierarchy10"> </item>
+			<item type="input" name="Hierarchy11"> </item>
+			<item type="input" name="Hierarchy12"> </item>
+			<item type="input" name="Hierarchy13"> </item>
+			<item type="input" name="Hierarchy14"> </item>
+			<item type="input" name="Hierarchy15"> </item>
+			<item type="output" name="Execute"> </item>
+		</layout>
+		<blob_dictionary>
+		</blob_dictionary>
+	</definition>
+</xsi_file>

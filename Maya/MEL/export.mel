@@ -1,0 +1,89 @@
+//source "functions.mel";
+
+global proc exocortexCloseDialog(string $dialog)
+{
+  deleteUI -window $dialog;
+}
+
+global proc exocortexAlembicExportGUI(string $filename, string $dialog)
+{
+  // parse all options
+  string $exportInframe = `textField -q -text inframe`;
+  string $exportOutframe = `textField -q -text outframe`;
+  string $exportStepframe = `textField -q -text stepframe`;
+  string $exportSubstepframe = `textField -q -text substepframe`;
+  int $exportTopology = `optionMenu -q -select topology`;
+  int $exportUVs = `checkBox -q -value uvs`;
+  int $exportFaceSets = `checkBox -q -value facesets`;
+  int $exportUseInitShadGrp = `checkBox -q -value shadingGroup`;
+  int $exportDynamicTopo = `checkBox -q -value dynamictopology`;
+  int $exportGlobalSpace = `checkBox -q -value globalspace`;
+  int $exportWithoutHierarchy = `checkBox -q -value withouthierarchy`;
+  int $exportTransformCache = `checkBox -q -value transformcache`;
+  int $exportOgawa = `optionMenu -q -select database`;
+  exocortexCloseDialog($dialog);
+
+  $minTime = `playbackOptions -q -min`;
+  $maxTime = `playbackOptions -q -max`;
+
+  // check selection
+  string $selection[] = `ls -sl`;
+  if(size($selection) == 0)
+  {
+    error("Nothing selected!");
+    return;
+  }
+  
+  // check filename
+  if($filename == "")
+  {
+    $files = `fileDialog2 -ds 2 -cap "Choose the Alembic File To Export" -ff "Alembic Files (*.abc)" -fm 0`;
+    print $files;
+    if(size($files) == 0)
+    {
+      print("Export aborted by user.");
+      return;
+    }
+    $filename = $files[0];
+
+    $__file = `fopen $filename`;
+    if ($__file == 0)
+    {
+      error("Error, unable to create file \"" + $filename + "\"");
+      return;
+    }
+    fclose $__file;
+  }
+
+  $filename = `ExocortexAlembic_resolvePath -f $filename`;
+  string $cmd = "import ExocortexAlembic as EA\nEA._export.doIt(\"" + $filename + "\", " + $exportInframe + ", " + $exportOutframe + ", None, " +
+                         $exportStepframe + ", " + $exportSubstepframe + ", " + $exportTopology + ", " +
+                         $exportUVs + ", " + $exportFaceSets + ", " + $exportDynamicTopo + ", " +
+                         $exportGlobalSpace + ", " + $exportWithoutHierarchy + ", " + $exportTransformCache + ", " +
+                         $exportUseInitShadGrp + ", " + ($exportOgawa-1) + ")";
+  python($cmd);
+}
+
+global proc exocortexCloseDialog(string $dialog)
+{
+  deleteUI -window $dialog;
+}
+
+global proc exocortexChooseFile(string $dialog)
+{
+  exocortexAlembicExportGUI("",$dialog);
+}
+
+global proc exocortexSetupDialog(string $uiDirectory)
+{
+  global string $dialog;
+  if (`window -exists $dialog`)
+    deleteUI -window $dialog;
+
+  $dialog = `loadUI -uiFile ($uiDirectory+"/ExocortexAlembicExport.ui")`;
+  windowPref -topEdge 300 -leftEdge 300 $dialog;
+  textField -edit -text `playbackOptions -q -min` inframe;
+  textField -edit -text `playbackOptions -q -max` outframe;
+  showWindow $dialog;
+}
+

@@ -1,0 +1,13 @@
+ExocortexAlembicArnold.so
+{
+    global:
+        extern "C" {
+			ProcLoader;
+			Init;
+			NumNodes;
+			GetNode;
+			Cleanup;
+        };
+    local:
+	*;
+};

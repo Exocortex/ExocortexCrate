@@ -1,0 +1,38 @@
+
+global proc exocortexAlembicLoadMenu(string $pluginName)
+{
+  global string $showMyMenuCtrl;
+  if (`menu -exists $showMyMenuCtrl`)
+     deleteUI $showMyMenuCtrl;
+
+  string $name = "Alembic";
+  global string $gMainWindow;
+  $showMyMenuCtrl = `menu -p $gMainWindow -to true -l $name`;
+
+  // get the plugin's UIs directory and setup the instruction to launch the import/export UI
+  string $uiDirectory = dirname(`pluginInfo -query -path $pluginName`) + "/../ui";
+  string $import_instruction = "source \"import.mel\"; exocortexSetupDialog(\"" + $uiDirectory + "\");";
+  string $export_instruction = "source \"export.mel\"; exocortexSetupDialog(\"" + $uiDirectory + "\");";
+  string $attach_instruction = "source \"attach.mel\"; exocortexSetupDialog(\"" + $uiDirectory + "\");";
+  string $assign_instruction = "source \"assignShader.mel\"; exocortexAlembicAssignShaderDialog;";
+
+  // menu items
+  menuItem -p $showMyMenuCtrl -l "Alembic Import..." -c ($import_instruction);
+  menuItem -p $showMyMenuCtrl -l "Alembic Export..." -c ($export_instruction);
+  menuItem -p $showMyMenuCtrl -l "Alembic Attach..." -c ($attach_instruction);
+  menuItem -p $showMyMenuCtrl -divider true;
+  menuItem -p $showMyMenuCtrl -l "Assign Shader" -c ($assign_instruction);
+  menuItem -p $showMyMenuCtrl -divider true;
+  menuItem -p $showMyMenuCtrl -l "Print Profiler Statistics" -c ExocortexAlembic_profileStats;
+  menuItem -p $showMyMenuCtrl -divider true;
+  menuItem -p $showMyMenuCtrl -l "Proxy Mesh to Subdiv" -c ExocortexAlembic_meshToSubdiv;
+}
+
+global proc exocortexAlembicUnloadMenu()
+{
+  global string $showMyMenuCtrl;
+  if (`menu -exists $showMyMenuCtrl`)
+    deleteUI $showMyMenuCtrl;
+
+}
+

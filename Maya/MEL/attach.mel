@@ -1,0 +1,57 @@
+
+global proc exocortexAlembicAttachGUI(string $filename, string $dialog)
+{
+  // parse all options
+  int $importNormals = `checkBox -q -value normals`;
+  int $importUvs = `checkBox -q -value uvs`;
+  int $importFaceSets = `checkBox -q -value facesets`;
+  int $overTransforms = `checkBox -q -value otransform`;
+  int $overDeforms = `checkBox -q -value odeform`;
+  exocortexCloseDialog($dialog);
+
+  // check if the filename is valid
+  if($filename == "")
+  {
+    $files = `fileDialog2 -ds 2 -cap "Choose the Alembic File To Import" -ff "Alembic Files (*.abc)" -fm 1`;
+    print $files;
+    if(size($files) == 0)
+    {
+      print("Import aborted by user.");
+      return;
+    }
+    $filename = $files[0];
+  }
+  
+  // check if the file exists
+  string $resolvedPath = `ExocortexAlembic_resolvePath -f $filename`;
+  if(!`filetest -r $resolvedPath`)
+  {
+    error ("File "+$filename+" does not exist!");
+    return;
+  }
+
+  string $job = "filename=" + $filename + ";normals=" + $importNormals + ";uvs=" + $importUvs + ";facesets=" + $importFaceSets + ";attachToExisting=1;overXforms=" + $overTransforms + ";overDforms=" + $overDeforms;
+  ExocortexAlembic_import -j $job;
+}
+
+global proc exocortexCloseDialog(string $dialog)
+{
+  deleteUI -window $dialog;
+}
+
+global proc exocortexChooseFile(string $dialog)
+{
+  exocortexAlembicAttachGUI("",$dialog);
+}
+
+global proc exocortexSetupDialog(string $uiDirectory)
+{
+  global string $dialog;
+  if (`window -exists $dialog`)
+    deleteUI -window $dialog;
+
+  $dialog = `loadUI -uiFile ($uiDirectory+"/ExocortexAlembicAttach.ui")`;
+  windowPref -topEdge 300 -leftEdge 300 $dialog;
+  showWindow $dialog;
+}
+
