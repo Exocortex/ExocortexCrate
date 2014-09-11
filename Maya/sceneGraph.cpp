@@ -47,9 +47,15 @@ bool SceneNodeMaya::replaceSimilarData(const char *functionName, SceneNodeAlembi
 	static const MString format("ExoAlembic._attach.attach^1s(r\"^2s\", r\"^3s\", ^4s, ^5s)");
 
 	ESS_PROFILE_SCOPE("SceneNodeMaya::replaceSimilarData");
+
 	MString cmd;
 	cmd.format(format, functionName, this->dccIdentifier.c_str(), fileNode->dccIdentifier.c_str(), fileAndTime->variable(), PythonBool(fileNode->pObjCache->isConstant));
-	MGlobal::executePythonCommand(cmd);
+	MStatus result = MGlobal::executePythonCommand(cmd);
+	if( result.error() ) {
+		ESS_LOG_WARNING( "Attached failed for " << functionName << ", reason: " << result.errorString().asChar() );
+		return false;
+	}
+
 	fileNode->setAttached(true);
 	return true;
 }
