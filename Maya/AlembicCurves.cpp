@@ -14,7 +14,7 @@ AlembicCurveAccumulator::AlembicCurveAccumulator(const MObject &ref, SceneNodePt
 			firstSample(true),
 			useGlobalCache( in_Job->GetOption(L"exportInGlobalSpace").asInt() > 0 )
 {
-	const bool animTS = in_Job->GetAnimatedTs();
+	const bool animTS = ( in_Job->GetAnimatedTs() > 0 );
 	mObject = AbcG::OCurves(oParent, eNode->name, animTS);
 	mSchema = mObject.getSchema();
 
@@ -60,10 +60,10 @@ void AlembicCurveAccumulator::save(const MObject &ref, double time)
 	MPointArray positions;
 	node.getCVs(positions);
 
-	int offset = mPosVec.size();
+	int offset = (int) mPosVec.size();
 	const int posLen = positions.length();
 	mPosVec.resize(offset + posLen);
-	for(unsigned int i=0; i < posLen; ++i, ++offset)
+	for(unsigned int i=0; i < (unsigned int) posLen; ++i, ++offset)
 	{
 		const MPoint &outPos = positions[i];
 		Imath::V3f &inPos = mPosVec[offset];
@@ -129,7 +129,7 @@ AlembicCurves::AlembicCurves(SceneNodePtr eNode, AlembicWriteJob * in_Job, Abc::
 		}
 	}
 
-	const bool animTS = GetJob()->GetAnimatedTs();
+	const bool animTS = ( GetJob()->GetAnimatedTs() > 0 );
 	mObject = AbcG::OCurves(GetMyParent(), eNode->name, animTS);
 	mSchema = mObject.getSchema();
 

@@ -42,7 +42,7 @@ int GetAlembicLicense() {
 	}
 
 #if MAX_PRODUCT_YEAR_NUMBER < 2013
-	bool bIsSlave = (bool)GET_MAX_INTERFACE()->InSlaveMode();
+	bool bIsSlave = ( GET_MAX_INTERFACE()->InSlaveMode() > 0 );
 #else
 	bool bIsSlave = (bool)GET_MAX_INTERFACE()->IsNetworkRenderServer();
 #endif

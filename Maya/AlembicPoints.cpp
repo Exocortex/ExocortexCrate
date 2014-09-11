@@ -28,7 +28,7 @@ bool AlembicPoints::listIntanceNames(std::vector<std::string> &names)
   }
 
   names.resize(allPaths.length());
-  for (int i = 0; i < allPaths.length(); ++i)
+  for (int i = 0; i < (int) allPaths.length(); ++i)
   {
 	  std::string nm = allPaths[i].fullPathName().asChar();
 	  size_t pos = nm.find("|");
@@ -92,7 +92,7 @@ bool AlembicPoints::sampleInstanceProperties( std::vector<Abc::Quatf> angularVel
 AlembicPoints::AlembicPoints(SceneNodePtr eNode, AlembicWriteJob * in_Job, Abc::OObject oParent)
 	: AlembicObject(eNode, in_Job, oParent), hasInstancer(false)
 {
-	const bool animTS = GetJob()->GetAnimatedTs();
+	const bool animTS = ( GetJob()->GetAnimatedTs() > 0 );
 	mObject = AbcG::OPoints(GetMyParent(), eNode->name, animTS);
 	mSchema = mObject.getSchema();
 
@@ -297,7 +297,7 @@ public:
 	{
 		if (!valid)
 		{
-			for (int i = 0; i < data.length(); ++i)
+			for (int i = 0; i < (int)data.length(); ++i)
 				data[i] = double();
 		}
 		MStatus status;
@@ -330,7 +330,7 @@ public:
 	{
 		if (!valid)
 		{
-			for (int i = 0; i < data.length(); ++i)
+			for (int i = 0; i < (int)data.length(); ++i)
 				data[i] = MVector();
 		}
 		MStatus status;
@@ -468,7 +468,7 @@ ArbGeomProperties::ArbGeomProperties(const Abc::ICompoundProperty &comp): valid(
 void ArbGeomProperties::constructData(const Abc::ICompoundProperty &comp)
 {
 	std::stringstream swarning;
-	const int nb_prop = comp.getNumProperties();
+	const int nb_prop = (int) comp.getNumProperties();
 	for (int i = 0; i < nb_prop; ++i)
 	{
 		const Abc::AbcA::PropertyHeader &phead = comp.getPropertyHeader(i);
