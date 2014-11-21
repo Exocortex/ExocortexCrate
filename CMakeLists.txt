@@ -415,6 +415,7 @@ IF(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/Softimage/CMakeLists.txt")
 ENDIF()
 
 # maya plugin
+# guide to maya compiler versions: http://around-the-corner.typepad.com/adn/2012/06/maya-compiler-versions.html
 IF(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/Maya/CMakeLists.txt")
 	if( NOT MSVC10 AND NOT MSVC11) 
 		ADD_SUBDIRECTORY ( "${CMAKE_CURRENT_SOURCE_DIR}/Maya/2011" "${CMAKE_CURRENT_BINARY_DIR}/ExocortexAlembicMaya/2011" )
