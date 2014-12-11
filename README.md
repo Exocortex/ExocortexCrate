@@ -1,4 +1,12 @@
-# Exocortex Crate - The Professional Grade Alembic Suite
+# Exocortex Crate
+
+The professional grade, battle tested and feature filled Alembic suite.
+
+# Binary Downloads
+
+You can download the latest binaries from the main Exocortex Crate product page:
+
+http://exocortex.com/products/crate
 
 # Requirements
 
