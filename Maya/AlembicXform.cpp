@@ -55,7 +55,7 @@ void AlembicXform::testAnimatedVisibility(AlembicObject *aobj, bool animTS, bool
 AlembicXform::AlembicXform(SceneNodePtr eNode, AlembicWriteJob * in_Job, Abc::OObject oParent)
 	: AlembicObject(eNode, in_Job, oParent), visInfo()
 {
-	const bool animTS = GetJob()->GetAnimatedTs();
+	const bool animTS = ( GetJob()->GetAnimatedTs() > 0 );
 	mObject = AbcG::OXform(GetMyParent(), eNode->name, animTS);
 	mSchema = mObject.getSchema();
 
@@ -104,7 +104,7 @@ MStatus AlembicXform::Save(double time)
 	case ANIMATED_VISIBLE:
 		{
 			bool isVisible = true;
-			for (int i = 0; i < visInfo.visibilityPlugs.length(); ++i)
+			for (int i = 0; i < (int) visInfo.visibilityPlugs.length(); ++i)
 			{
 				if (!visInfo.visibilityPlugs[i].asBool())
 				{
@@ -443,7 +443,7 @@ MStatus AlembicXformNode::compute(const MPlug & plug, MDataBlock & dataBlock)
   else {
 	  matrixAtI = mSampleIndicesToMatrices[ sampleInfo.floorIndex ];
   }
-  if( ( sampleInfo.ceilIndex < mSchema.getNumSamples() ) && mSampleIndicesToMatrices.find(sampleInfo.ceilIndex) == mSampleIndicesToMatrices.end() ) {
+  if( ( sampleInfo.ceilIndex < (int) mSchema.getNumSamples() ) && mSampleIndicesToMatrices.find(sampleInfo.ceilIndex) == mSampleIndicesToMatrices.end() ) {
     AbcG::XformSample sample;
     mSchema.get(sample,sampleInfo.ceilIndex);
     matrixAtIPlus1 = sample.getMatrix();
@@ -469,7 +469,7 @@ MStatus AlembicXformNode::compute(const MPlug & plug, MDataBlock & dataBlock)
 
 	// export visibility before comparing current and hold matrix!
 	AbcG::IVisibilityProperty visibilityProperty = AbcG::GetVisibilityProperty(iObj);
-	const bool curVisibility = visibilityProperty.valid() ? visibilityProperty.getValue(sampleInfo.floorIndex) : true;
+	const bool curVisibility = visibilityProperty.valid() ? ( visibilityProperty.getValue(sampleInfo.floorIndex) != 0 ) : true;
 
 	if (mLastMatrix == matrix && curVisibility == mLastVisibility)
 	{

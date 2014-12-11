@@ -85,7 +85,7 @@ def attachCamera(name, identifier, jobInfo, isConstant=False):
 
 def attachCurves(name, identifier, jobInfo, isConstant=False):
 	cmds.ExocortexAlembic_profileBegin(f="Python.ExocortexAlembic._attach.attachCurves")
-	curObj = cmds.connectionInfo(name+".focalLength", sfd=True)
+	curObj = cmds.connectionInfo(name+".visibility", sfd=True)
 	if curObj and cmds.objectType(curObj) == "ExocortexAlembicCurvesDeform":
 		attachTimeAndFile(curObj, jobInfo, isConstant)
 		return
@@ -112,7 +112,7 @@ def attachCurves(name, identifier, jobInfo, isConstant=False):
 
 def attachPoints(name, identifier, jobInfo, isConstant=False):
 	cmds.ExocortexAlembic_profileBegin(f="Python.ExocortexAlembic._attach.attachPoints")
-	ptsObj = cmds.connectionInfo(name+".focalLength", sfd=True)
+	ptsObj = cmds.connectionInfo(name+".visibility", sfd=True)
 	if ptsObj and cmds.objectType(ptsObj) == "ExocortexAlembicPoints":
 		attachTimeAndFile(ptsObj, jobInfo, isConstant)
 		return

@@ -207,7 +207,7 @@ MStatus AlembicWriteJob::PreProcess()
 		const bool bSelectChildren = false;
 		{
 			std::map<std::string, bool> selectionMap;
-			for(int i=0; i<mSelection.length(); ++i)
+			for(int i=0; i< (int)mSelection.length(); ++i)
 			{
 				MFnDagNode dagNode(mSelection[i]);
 				selectionMap[dagNode.fullPathName().asChar()] = true;
@@ -343,7 +343,7 @@ MStatus AlembicWriteJob::Process(double frame)
 		// compare the frames
 		if(fabs(mFrames[j] - frame) <= 0.001)
 		{
-			i = j;
+			i = (int) j;
 			break;
 		}
 	}
@@ -353,7 +353,7 @@ MStatus AlembicWriteJob::Process(double frame)
 
 	// run the export for all objects
 	MayaProgressBar pBar;
-	pBar.init(0, mapObjects.size(), 1);
+	pBar.init(0, (int) mapObjects.size(), 1);
 	pBar.start();
 
 	int interrupt = 20;

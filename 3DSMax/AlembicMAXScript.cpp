@@ -770,7 +770,7 @@ int ExocortexAlembicStaticInterface_ExocortexAlembicExportJobs( CONST_2013 MCHAR
          bool bIncludeParentNodes = false;
          bool bRenameConflictingNodes = false;
          bool bMergeSelectedPolymeshSubtree = false;
-
+     
 			std::vector<std::string> tokens;
 			boost::split(tokens, jobs[i], boost::is_any_of(";"));
 			for(int j=0; j<tokens.size(); j++){
@@ -845,9 +845,9 @@ int ExocortexAlembicStaticInterface_ExocortexAlembicExportJobs( CONST_2013 MCHAR
 				else if(boost::iequals(valuePair[0], "uiExport")){
 					bUiExport = parseBool(valuePair[1]);
 				}
-				//else if(boost::iequals(valuePair[0], "includeParentNodes")){
-				//	bIncludeParentNodes = parseBool(valuePair[1]);
-				//}
+				else if(boost::iequals(valuePair[0], "includeParentNodes")){
+					bIncludeParentNodes = parseBool(valuePair[1]);
+				}
             else if(boost::iequals(valuePair[0], "renameConflictingNodes")){
 					bRenameConflictingNodes = parseBool(valuePair[1]);
 				}

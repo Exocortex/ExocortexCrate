@@ -6,7 +6,7 @@
 AlembicSubD::AlembicSubD(SceneNodePtr eNode, AlembicWriteJob * in_Job, Abc::OObject oParent)
 	: AlembicObject(eNode, in_Job, oParent)
 {
-	const bool animTS = GetJob()->GetAnimatedTs();
+	const bool animTS = ( GetJob()->GetAnimatedTs() > 0 );
 	mObject = AbcG::OSubD(GetMyParent(), eNode->name, animTS);
 	mSchema = mObject.getSchema();
 }

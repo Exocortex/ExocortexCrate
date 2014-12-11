@@ -636,7 +636,7 @@ CStatus alembicOp_getFrameNum( CRef& in_ctxt, double sampleTime, int& frameNum )
       //we don't know the number of samples when importing abc file sequence.
       //However, it safe to call this function with a large number if the sampling type is uniform
       SampleInfo sampleInfo = getSampleInfo(sampleTime, p->timeSampling, 65535);
-      frameNum = sampleInfo.ceilIndex;
+      frameNum = (int) sampleInfo.ceilIndex;
    }
    else{
       frameNum = 0;

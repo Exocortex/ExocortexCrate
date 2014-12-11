@@ -40,7 +40,7 @@ IF( WIN32 )
 	ENDIF()	
 ELSEIF( UNIX )
 	SET( Softimage_DIR_LIBRARY ${Softimage_DIR_ROOT}/lib/linux-x86-64 )
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wl,--version-script=${CMAKE_CURRENT_SOURCE_DIR}/SoftimageAlembic.versionScript")
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wl,--version-script=${CMAKE_CURRENT_SOURCE_DIR}/../SoftimageAlembic.versionScript")
 ENDIF()
 
 	SET( Softimage_LIBRARIES sicoresdk sicppsdk )
