@@ -16,6 +16,8 @@ EXTERN_C IMAGE_DOS_HEADER __ImageBase;
 int s_alembicLicense = ALEMBIC_NO_LICENSE;
 
 int GetAlembicLicense() {
+	return 	ALEMBIC_WRITER_LICENSE;
+	/*
 	static string pluginName(XSI::CString(PLUGIN_NAME).GetAsciiString());
 
 	if( s_alembicLicense != ALEMBIC_NO_LICENSE ) {
@@ -76,7 +78,7 @@ int GetAlembicLicense() {
     }
 	}
 
-	return s_alembicLicense;
+	return s_alembicLicense;*/
 }
 
 bool HasAlembicInvalidLicense() {

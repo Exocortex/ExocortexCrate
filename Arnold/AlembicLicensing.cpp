@@ -12,6 +12,8 @@ int s_alembicLicense = ALEMBIC_NO_LICENSE;
 
 int GetAlembicLicense()
 {
+	return ALEMBIC_WRITER_LICENSE;
+	/*
 	if( s_alembicLicense == ALEMBIC_NO_LICENSE )
 	{
 
@@ -62,7 +64,7 @@ int GetAlembicLicense()
 
 	}
 
-	return s_alembicLicense;
+	return s_alembicLicense;*/
 }
 
 bool HasAlembicInvalidLicense() {

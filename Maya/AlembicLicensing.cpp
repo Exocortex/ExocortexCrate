@@ -12,6 +12,9 @@ using namespace std;
 int s_alembicLicense = -1;
 
 int GetAlembicLicense() {
+	return 	ALEMBIC_WRITER_LICENSE;
+	/*
+
 	static string pluginName(PLUGIN_NAME);
 			
 	if( s_alembicLicense != ALEMBIC_NO_LICENSE ) {
@@ -85,7 +88,7 @@ int GetAlembicLicense() {
     }
 	}
 
-	return s_alembicLicense;
+	return s_alembicLicense;*/
 }
 
 bool HasAlembicInvalidLicense() {

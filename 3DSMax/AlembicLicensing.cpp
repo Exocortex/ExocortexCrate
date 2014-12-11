@@ -33,6 +33,8 @@ boost::mutex gGlobalLock;
 int s_alembicLicense = -1;
 
 int GetAlembicLicense() {
+	return ALEMBIC_WRITER_LICENSE;
+	/*
 	boost::mutex::scoped_lock writeLock( gGlobalLock );
 
 	static string pluginName(PLUGIN_NAME);
@@ -104,7 +106,7 @@ int GetAlembicLicense() {
 
    ESS_LOG_INFO( "writerLicense:"<<isWriterLicense<<" slave: "<<bIsSlave<<" forceReader: "<<isForceReader<<" forceWriter: "<<isForceWriter<<" noDemo: "<<isNoDemo<<" result: "<<s_alembicLicense);
 
-	return s_alembicLicense;
+	return s_alembicLicense;*/
 }
 
 bool HasAlembicInvalidLicense() {
