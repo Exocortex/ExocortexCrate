@@ -41,7 +41,7 @@ else()
 	set( TP OFF )
 endif()
 
-
+SET( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /Zm124" )
  
 SET( 3DSMAX_DIR_ROOT ${LIBRARY_ROOT}/Max/${Max_VERSION} ) 
 if( NOT EXISTS ${3DSMAX_DIR_ROOT} )

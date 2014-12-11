@@ -726,7 +726,7 @@ CStatus alembic_create_item_Invoke
                         op.Connect();
                      }
 
-                     if(!op.IsValid()){
+                     if(op.IsValid()){
                         op.PutParameterValue(L"path",file);
                         op.PutParameterValue(L"identifier",identifier);
                         if(bMultifile){

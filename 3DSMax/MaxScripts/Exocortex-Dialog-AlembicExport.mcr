@@ -29,11 +29,12 @@ rollout AlembicExportSettings "Alembic Export Settings" width:288 height:508
 	checkbox validateMeshTopology "Validate Mesh Topology" pos:[32,374]
 	checkbox renameConflictingNodes "Rename Conflicting Nodes" pos:[32,390]
 	checkbox mergeSelectedPolymeshSubtree "Merge Selected Polymesh Subtree" pos:[32,406]
+	checkbox includeParentNodes "Include Parent Nodes" pos:[32,432]
 
-	dropdownList storageFormat "Storage Format" pos:[16,428] width:256 height:40 items:#("HDF5", "Ogawa") selection:1
+	dropdownList storageFormat "Storage Format" pos:[16,454] width:256 height:40 items:#("HDF5", "Ogawa") selection:1
 
-	button exportButton "Export" pos:[16,474] width:64 height:24
-	button cancelButton "Cancel" pos:[208,474] width:64 height:24
+	button exportButton "Export" pos:[16,500] width:64 height:24
+	button cancelButton "Cancel" pos:[208,500] width:64 height:24
 
 	on exportButton pressed do
 	(
@@ -79,6 +80,8 @@ rollout AlembicExportSettings "Alembic Export Settings" width:288 height:508
 	    	jobString += ";renameConflictingNodes="
 	    	jobString += (renameConflictingNodes.checked as string)
 	    	jobString += ";mergePolyMeshSubtree="
+	    	jobString += (mergeSelectedPolymeshSubtree.checked as string)
+ 	jobString += ";mergePolyMeshSubtree="
 	    	jobString += (mergeSelectedPolymeshSubtree.checked as string)
 
 	    	if(storageFormat.selection == 1) do jobString += ";storageFormat=hdf5" 

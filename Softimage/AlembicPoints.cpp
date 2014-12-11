@@ -785,7 +785,7 @@ XSIPLUGINCALLBACK CStatus alembic_points_Evaluate(ICENodeContext& in_ctxt)
                   posProp2.get(pointsCeilSamplePtr, sampleInfo.ceilIndex);
 
                   if(ptr->size() == pointsCeilSamplePtr->size()){
-                     const float alpha = sampleInfo.alpha;
+                     const float alpha = (float) sampleInfo.alpha;
                      for(ULONG i=0;i<acc.GetCount();i++)
                         acc[i].Set(
                            (1.0f-alpha) * ptr->get()[i].x + alpha * pointsCeilSamplePtr->get()[i].x,

@@ -324,7 +324,7 @@ INode* GetNodeFromHierarchyPath(const std::string& path)
       return NULL;
     }
 
-	for(int p=parts.size()-1; p>=1; p--){
+	for(int p= (int)parts.size()-1; p>=1; p--){
 
 	  std::string childName = parts[p];
 

@@ -6,7 +6,7 @@
 AlembicPolyMesh::AlembicPolyMesh(SceneNodePtr eNode, AlembicWriteJob * in_Job, Abc::OObject oParent)
 	: AlembicObject(eNode, in_Job, oParent)
 {
-	const bool animTS = GetJob()->GetAnimatedTs();
+	const bool animTS = ( GetJob()->GetAnimatedTs() > 0 );
 #ifdef _DEBUG
 	ESS_LOG_INFO(">>>> polymesh name: " << eNode->name << "\tfull name: " << eNode->dccIdentifier);
 #endif
@@ -483,6 +483,7 @@ float C1Interpolation(float p0, float p1, float v0, float v1, float t) {
    return _1mt*_1mt*(p0 + t*(2.0f*p0 + v0)) + t*t*(p1 - _1mt*(2.0f*p1 - v1));
 }
 
+
 MStatus AlembicPolyMeshNode::compute(const MPlug & plug, MDataBlock & dataBlock)
 {
 	ESS_PROFILE_SCOPE("AlembicPolyMeshNode::compute");
@@ -667,9 +668,9 @@ MStatus AlembicPolyMeshNode::compute(const MPlug & plug, MDataBlock & dataBlock)
                const Abc::V3f &srcVel  = sampleVel ->get()[i];
                const Abc::V3f &srcVel2 = sampleVel2->get()[i];
 
-               dstPoint.x = C1Interpolation(srcPos.x, srcPos2.x, srcVel.x, srcVel2.x, sampleInfo.alpha);
-               dstPoint.y = C1Interpolation(srcPos.y, srcPos2.y, srcVel.y, srcVel2.y, sampleInfo.alpha);
-               dstPoint.z = C1Interpolation(srcPos.z, srcPos2.z, srcVel.z, srcVel2.z, sampleInfo.alpha);
+               dstPoint.x = (float) C1Interpolation(srcPos.x, srcPos2.x, srcVel.x, srcVel2.x, (float) sampleInfo.alpha);
+               dstPoint.y = (float) C1Interpolation(srcPos.y, srcPos2.y, srcVel.y, srcVel2.y, (float) sampleInfo.alpha);
+               dstPoint.z = (float) C1Interpolation(srcPos.z, srcPos2.z, srcVel.z, srcVel2.z, (float) sampleInfo.alpha);
             }
          }
          else {
@@ -680,9 +681,9 @@ MStatus AlembicPolyMeshNode::compute(const MPlug & plug, MDataBlock & dataBlock)
                const Abc::V3f &srcPos  = samplePos ->get()[i];
                const Abc::V3f &srcPos2 = samplePos2->get()[i];
 
-               dstPoint.x = srcPos.x + sampleInfo.alpha*(srcPos2.x - srcPos.x);
-               dstPoint.y = srcPos.y + sampleInfo.alpha*(srcPos2.y - srcPos.y);
-               dstPoint.z = srcPos.z + sampleInfo.alpha*(srcPos2.z - srcPos.z);
+               dstPoint.x = (float) ( srcPos.x + sampleInfo.alpha*(srcPos2.x - srcPos.x) );
+               dstPoint.y = (float) ( srcPos.y + sampleInfo.alpha*(srcPos2.y - srcPos.y) );
+               dstPoint.z = (float) ( srcPos.z + sampleInfo.alpha*(srcPos2.z - srcPos.z) );
             }
          }
          justCopyPoints = false;
@@ -694,9 +695,9 @@ MStatus AlembicPolyMeshNode::compute(const MPlug & plug, MDataBlock & dataBlock)
             const Abc::V3f &srcPos = samplePos->get()[i];
             const Abc::V3f &srcVel = sampleVel->get()[i];
 
-            dstPoint.x = srcPos.x + sampleInfo.alpha*srcVel.x;
-            dstPoint.y = srcPos.y + sampleInfo.alpha*srcVel.y;
-            dstPoint.z = srcPos.z + sampleInfo.alpha*srcVel.z;
+            dstPoint.x = (float) ( srcPos.x + sampleInfo.alpha*srcVel.x );
+            dstPoint.y = (float) ( srcPos.y + sampleInfo.alpha*srcVel.y );
+            dstPoint.z = (float) ( srcPos.z + sampleInfo.alpha*srcVel.z );
          }
          justCopyPoints = false;
       }
@@ -712,6 +713,7 @@ MStatus AlembicPolyMeshNode::compute(const MPlug & plug, MDataBlock & dataBlock)
          dstPoint.z = srcPoint.z;
       }
    }
+
   }
 
   // check if we already have the right polygons
