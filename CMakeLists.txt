@@ -55,7 +55,7 @@ elseif( MSVC11 )
 endif()
 
 
-project( PROJECT_NAME )
+project( ${PROJECT_NAME} )
 
 INCLUDE(./ExocortexCMakeShared.txt)
 
