@@ -30,10 +30,12 @@ where to download it.
 
 Install Cmake and then go into the build folder and run the appropriate batch file:
 
-    cd build
-    build_vs2008_x64.bat (for Windows Vista, 7 and 8)
-    build_vs2008_WinXP_x64.bat (for Windows XP)
-    build_unix.sh (for linux)
+    cd _build
+    build_vs2008_x64.bat
+    build_vs2010_x64.bat
+    build_vs2012_x64.bat
+    build_UnixDebug.sh (for linux)
+    build_UnixRelease.sh (for linux)
 
 The build process will automatically make a deployment.  That deployment is located here:
 
