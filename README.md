@@ -20,8 +20,8 @@ https://s3-us-west-2.amazonaws.com/exocortex-downloads/Libraries.20141211.01.7z
 This external library set will have to be downloaded and un-7z'ed beside the
 ExocorteXCrate repository, like this:
 
-/ExocortexCrate/
-/Libraries.20141211.01/
+    /ExocortexCrate/
+    /Libraries.20141211.01/
 
 You can find its path when you run CMake, if it doens't exist, it will tell you
 where to download it.
