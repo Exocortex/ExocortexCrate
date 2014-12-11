@@ -9,4 +9,4 @@ Getting Started
 
 - Create a [Github account](https://github.com/signup/free).
 - Fork the repository on Github at https://github.com/Exocortex/ExocortexCrate.
-- Sign the [Clara.io contributor agreement](https://github.com/Exocortex/ExocortexCrate/CONTRIBUTOR_AGREEMENT.md)
+- Only make a contribution to the Exocortex Crate project (a PR) if you agree with the [ExocortexCrate contributor agreement](https://github.com/Exocortex/ExocortexCrate/CONTRIBUTOR_AGREEMENT.md)
