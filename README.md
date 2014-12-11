@@ -33,29 +33,34 @@ The pre-compiled binaries support the following:
 
 # Requirements
 
+We use automatically generated projects from a canonical set of CMakeList files.
+Thus to create the project files for your platform you will have to install
+CMake.
+
 In order to build on Windows platforms, you will require the correct Microsoft C++
 for the plugins you require.  If you want to build all that are available,
 you will require both Microsoft Visual C++ 2008, 2010 and 2012.
 
 On Linux, only the standard Gnu tool chain (gcc, gmake) and
 cmake is required.  For maximum compatibility, it is recommended that you compile
-on Fedora 9 no matter what other operating system you are using in production.
+on Fedora 9 or Fedora 14 (as appropriate) no matter what other operating system you
+are using in production.
 
 # External Libraries
 
 To build the plugins you will require the external libraries.  They are specified
 programatically in the CMake file.  They usually follow the form:
 
-https://s3-us-west-2.amazonaws.com/exocortex-downloads/Libraries.20141211.01.7z
+	Libraries.20141211.01.7z
 
 This external library set will have to be downloaded and un-7z'ed beside the
-ExocorteXCrate repository, like this:
+ExocortexCrate repository, like this:
 
     /ExocortexCrate/
     /Libraries.20141211.01/
 
-You can find its path when you run CMake, if it doens't exist, it will tell you
-where to download it.
+You can find its path when you run CMake, if it doesn't exist, it will tell you
+the URL where you can download it.
 
 # Building
 
