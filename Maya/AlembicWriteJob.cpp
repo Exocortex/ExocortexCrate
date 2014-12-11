@@ -359,6 +359,7 @@ MStatus AlembicWriteJob::Process(double frame)
 	int interrupt = 20;
 	MStatus status;
    const double currentFrame = mFrames[i];
+
 	for (multiMapStrAbcObj::iterator it = mapObjects.begin(); it != mapObjects.end(); ++it, --interrupt)
 	{
 		if (interrupt == 0)

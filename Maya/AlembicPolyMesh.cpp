@@ -483,6 +483,7 @@ float C1Interpolation(float p0, float p1, float v0, float v1, float t) {
    return _1mt*_1mt*(p0 + t*(2.0f*p0 + v0)) + t*t*(p1 - _1mt*(2.0f*p1 - v1));
 }
 
+
 MStatus AlembicPolyMeshNode::compute(const MPlug & plug, MDataBlock & dataBlock)
 {
 	ESS_PROFILE_SCOPE("AlembicPolyMeshNode::compute");
@@ -712,6 +713,7 @@ MStatus AlembicPolyMeshNode::compute(const MPlug & plug, MDataBlock & dataBlock)
          dstPoint.z = srcPoint.z;
       }
    }
+
   }
 
   // check if we already have the right polygons

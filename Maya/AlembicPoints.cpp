@@ -4,6 +4,7 @@
 
 #include <maya/MArrayDataBuilder.h>
 
+
 bool AlembicPoints::listIntanceNames(std::vector<std::string> &names)
 {
 	MStatus status;
@@ -776,7 +777,6 @@ static bool useAngularVelocity(Abc::QuatfArraySamplePtr &velPtr, const AbcG::IPo
 	}
 	return false;
 }
-
 
 MStatus AlembicPointsNode::compute(const MPlug & plug, MDataBlock & dataBlock)
 {
