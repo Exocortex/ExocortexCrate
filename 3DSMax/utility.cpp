@@ -6,13 +6,13 @@
 #include <hash_map>
 
 void logError( const char* msg ) {
-	Exocortex::essLogError( msg );
+	mprintf( EC_UTF8_to_TCHAR( "Exocortex Alembic Error: %s\n" ), EC_UTF8_to_TCHAR( msg ) );
 }
 void logWarning( const char* msg ) {
-	Exocortex::essLogWarning( msg );
+	mprintf( EC_UTF8_to_TCHAR( "Exocortex Alembic Warning: %s\n" ), EC_UTF8_to_TCHAR( msg ) );
 }
 void logInfo( const char* msg ) {
-	Exocortex::essLogInfo( msg );
+	mprintf( EC_UTF8_to_TCHAR( "Exocortex Alembic Info: %s\n" ), EC_UTF8_to_TCHAR( msg ) );
 }
 
 

@@ -4,21 +4,10 @@ project ( Max${Max_VERSION}ExocortexAlembic${crate_VERSION} )
 
 INCLUDE(../../ExocortexCMakeShared.txt NO_POLICY_SCOPE)
   
-if( Exocortex_SERVICES OR Exocortex_RLM_ONLY )
-	include_directories( ${Rlm_INCLUDE_DIR} )
-	include_directories( ${Exocortex_INCLUDE_DIR} )
-endif()
 
-if( Exocortex_SERVICES )
-	add_definitions( "-DEXOCORTEX_SERVICES" )
-endif() 
-
-#add_definitions( "-DEXOCORTEX_BETA_EXPIRY_DATE=1343692800" )	# 1343692800 - July 31, 2012
 add_definitions( -D_SCL_SECURE_NO_WARNINGS ) 
 add_definitions( -D_CRT_SECURE_NO_WARNINGS )
 add_definitions( -Dcrate_Max_Version=${Max_VERSION} )
-
-
 
 if( Max_VERSION MATCHES "2013")
 	add_definitions( -D_UNICODE ) 
@@ -94,14 +83,6 @@ SOURCE_GROUP("_Maxscripts" FILES ${Scripts})
 
 setup_precompiled_header( ${BASE_DIR} ${Sources} )
 
-if( Exocortex_SERVICES OR Exocortex_RLM_ONLY )
-	include_directories( ${Rlm_INCLUDE_DIR} )
-	include_directories( ${Exocortex_INCLUDE_DIR} ) 
-endif()
- 
-if( Exocortex_SERVICES OR Exocortex_RLM_ONLY ) 
-	link_directories( ${Rlm_LIBRARYDIR} )
-endif()
 
 IF( WIN32 )
 	IF( ${ALEMBIC64} )
@@ -128,23 +109,14 @@ link_directories( ${TP_DIR_LIBRARY} )
 include_directories( ${TPL_DIR_INCLUDE} )
 link_directories( ${TPL_DIR_LIBRARY} )
 
-if( Exocortex_RLM_ONLY )
-	link_directories( ${Rlm_LIBRARYDIR} )
-endif()
-
 add_library( ${PROJECT_NAME} SHARED ${Sources} ${Includes}  ${LOCAL_CMAKE_FILE_NAME} ${Scripts} )
 
 TARGET_LINK_LIBRARIES( ${PROJECT_NAME}
 	CommonUtils
-	${Exocortex_LIBRARIES}
 	${ALL_ALEMBIC_LIBS}
 	${3DSMAX_LIBRARIES}
-	${Rlm_LIBRARIES}
 	)
 ADD_DEPENDENCIES( ${PROJECT_NAME} AlembicAbcGeom ) 
-
-
-
 
 SET_TARGET_PROPERTIES( ${PROJECT_NAME} PROPERTIES SUFFIX ".dlu" ) 
 
@@ -156,7 +128,6 @@ copy_directory( "${BASE_DIR}/MaxScripts" ${PluginDirectory} )
 get_target_property( OutputFilePath ${PROJECT_NAME} LOCATION )
 
 copy_file_to_directory( ${OutputFilePath} ${PluginDirectory} )
-copy_file_to_directory( ${RER_DEPENDENCIES} ${PluginDirectory} )
 
 SET( Install_DIR ${Exocortex_INSTALL_BASE_DIR}/Max${Max_VERSION}/ )
 
@@ -166,6 +137,3 @@ copy_directory( "${BASE_DIR}/MaxScripts" ${Install_DIR} )
 
 get_target_property( Install_TARGET ${PROJECT_NAME} LOCATION )
 copy_file_to_directory( ${Install_TARGET} ${Install_DIR} )
-
-copy_file_to_directory( ${RER_DEPENDENCIES} ${Install_DIR} )
-copy_file_to_directory( ${EAH_DEPENDENCIES} ${Install_DIR} )

@@ -18,31 +18,12 @@
 #ifndef EC_ASSERT
 	#define EC_ASSERT(a)		
 #endif
-
-#if defined( EXOCORTEX_RLM_ONLY )
-
-	#ifndef PLUGIN_LICENSE_NAME
-		#error "PLUGIN_LICENSE_NAME not defined, required for EXOCORTEX_RLM_ONLY-style licensing"
-	#endif
-	#ifndef PLUGIN_LICENSE_VERSION
-		#error "PLUGIN_LICENSE_VERSION not defined, required for EXOCORTEX_RLM_ONLY-style licensing"
-	#endif
-
-	#ifndef PLUGIN_LICENSE_IDS
-		#define PLUGIN_LICENSE_IDS	{ RlmProductID( PLUGIN_LICENSE_NAME, PLUGIN_LICENSE_VERSION ) }
-	#endif
-
-	//#include <xsi_application.h>
-
-	#if defined( __GNUC__ )
-		#define printf_s(buffer, buffer_size, stringbuffer, ...) ( printf(buffer, stringbuffer, __VA_ARGS__) )
- 		#define sprintf_s(buffer, buffer_size, stringbuffer, ...) ( sprintf(buffer, stringbuffer, __VA_ARGS__) )
- 		#define vsprintf_s(buffer, buffer_size, stringbuffer, ...) ( vsprintf(buffer, stringbuffer, __VA_ARGS__) )
-	#endif
- 
-	#include "RlmSingleton.h"
-
-#endif	// EXOCORTEX_RLM_ONLY
+	
+#if defined( __GNUC__ )
+	#define printf_s(buffer, buffer_size, stringbuffer, ...) ( printf(buffer, stringbuffer, __VA_ARGS__) )
+	#define sprintf_s(buffer, buffer_size, stringbuffer, ...) ( sprintf(buffer, stringbuffer, __VA_ARGS__) )
+	#define vsprintf_s(buffer, buffer_size, stringbuffer, ...) ( vsprintf(buffer, stringbuffer, __VA_ARGS__) )
+#endif
 
 
 

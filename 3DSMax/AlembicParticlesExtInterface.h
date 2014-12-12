@@ -1,4 +1,3 @@
-#include "ExocortexCoreServicesAPI.h"
 #include <IParticleObjectExt.h>
 
 class AlembicParticles;

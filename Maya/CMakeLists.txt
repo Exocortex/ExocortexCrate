@@ -5,13 +5,7 @@ set ( COMPILE_NAME MayaExocortexAlembic )
 
 INCLUDE(../../ExocortexCMakeShared.txt  NO_POLICY_SCOPE)
 
-if( Exocortex_SERVICES OR Exocortex_RLM_ONLY )
-	include_directories( ${Rlm_INCLUDE_DIR} )
-	include_directories( ${Exocortex_INCLUDE_DIR} )
-endif()
-
 add_definitions( -Dcrate_Maya_Version=${Maya_VERSION} )
-add_definitions( "-DEXOCORTEX_BETA_EXPIRY_DATE=1350670231" )	# 1350670231 - October 19, 2012
 
 SET( Maya_DIR_ROOT ${LIBRARY_ROOT}/Maya/${Maya_VERSION} )
 SET( Maya_DIR_INCLUDE ${Maya_DIR_ROOT}/include )
@@ -55,17 +49,12 @@ SET( Maya_LIBRARIES Foundation OpenMaya OpenMayaAnim OpenMayaFX OpenMayaRender O
 #MESSAGE( "Maya_DIR_LIBRARY: ${Maya_DIR_LIBRARY}" )
 #MESSAGE( "Maya_LIBRARIES: ${Maya_LIBRARIES}" )
 
-if( Exocortex_SERVICES )
-	add_definitions( "-DEXOCORTEX_SERVICES" )
+if( WIN32 )
 	add_definitions( -DNOMINMAX )	 # disable min/max macros from <windows.h>.
 endif()
 
 include_directories( ${Maya_DIR_INCLUDE} )
 link_directories( ${Maya_DIR_LIBRARY} )
-
-if( Exocortex_SERVICES OR Exocortex_RLM_ONLY )
-	link_directories( ${Rlm_LIBRARYDIR} )
-endif()
 
 add_library( ${PROJECT_NAME} SHARED ${Sources} ${Includes} ${LOCAL_CMAKE_FILE_NAME} ${Scripts} ${UI} )
 
@@ -99,7 +88,6 @@ endif()
 TARGET_LINK_LIBRARIES( ${PROJECT_NAME}
 	CommonUtils
    ${Maya_LIBRARIES}
-   ${Rlm_LIBRARIES}
    ${GL_LIBRARIES}
    ${ALL_ALEMBIC_LIBS}
    )
@@ -119,8 +107,3 @@ copy_directory( "${BASE_DIR}/UI" ${Install_DIR}/Module/ui )
 get_target_property( Install_TARGET ${PROJECT_NAME} LOCATION )
 MESSAGE( "---- Install_TARGET: ${Install_TARGET}" )
 copy_file_to_directory( ${Install_TARGET} ${Install_DIR}/Module/plug-ins )
-
-if( WIN32 )
-	copy_file_to_directory( ${RER_DEPENDENCIES} ${Install_DIR}/Module/plug-ins )
-	copy_file_to_directory( ${EAH_DEPENDENCIES} ${Install_DIR}/Module/plug-ins )
-endif()

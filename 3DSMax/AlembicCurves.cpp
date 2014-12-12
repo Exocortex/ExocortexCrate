@@ -3,7 +3,6 @@
 #include "AlembicXform.h"
 #include "SceneEnumProc.h"
 #include "utility.h"
-#include "ExocortexCoreServicesAPI.h"
 #include "AlembicMetadataUtils.h"
 #include <surf_api.h> 
 

@@ -19,9 +19,6 @@
 
 //#include "ExocortexServicesProxy.h"
 
-#define ALEMBIC_WRITER_LICENSE_IDS	{ RlmProductID( "alembic_3dsmax", 10 ), RlmProductID( "alembic", 10 ) }
-#define ALEMBIC_READER_LICENSE_IDS	{ RlmProductID( "alembic_3dsmax", 10 ), RlmProductID( "alembic_reader", 10 ), RlmProductID( "alembic", 10 ) }
-
 #define ALEMBIC_NO_LICENSE -1
 #define ALEMBIC_DEMO_LICENSE 0
 #define ALEMBIC_WRITER_LICENSE 1
@@ -33,12 +30,5 @@ bool HasAlembicInvalidLicense();
 bool HasAlembicWriterLicense();
 bool HasAlembicReaderLicense();
 
-#if defined( EXOCORTEX_SERVICES )
-
-	#include "ExocortexCoreServicesAPI.h"
-
-	// insert 3DS MAX function wrappers here.  TODO
-
-#endif 
 
 #endif // __ALEMBIC_LICENSING_H

@@ -20,19 +20,10 @@ SOURCE_GROUP("Header Files" FILES ${Includes})
 
 setup_precompiled_header( ${BASE_DIR} ${Sources} )
 
-if( Exocortex_SERVICES OR Exocortex_RLM_ONLY )
-	include_directories( ${Rlm_INCLUDE_DIR} )
-	include_directories( ${Exocortex_INCLUDE_DIR} )
-endif()
- 
-if( Exocortex_SERVICES OR Exocortex_RLM_ONLY )
-	link_directories( ${Rlm_LIBRARYDIR} )
-endif()
 
 LINK_LIBRARIES( CommonUtils
    ${ALL_ALEMBIC_LIBS}
    ${Python_LIBS}
-   ${Rlm_LIBRARIES}
    ${ALL_ALEMBIC_LIBS}
    )
 
@@ -89,11 +80,6 @@ SET( Install_DIR ${Exocortex_INSTALL_BASE_DIR}/Python${Python_SHORTNAME}/ )
 
 get_target_property( Install_TARGET ${PROJECT_NAME} LOCATION )
 copy_file_to_directory( ${Install_TARGET} ${Install_DIR} )
-
-if( WIN32 )
-	copy_file_to_directory( ${RER_DEPENDENCIES} ${Install_DIR} )
-	copy_file_to_directory( ${EAH_DEPENDENCIES} ${Install_DIR} )
-endif()
 
 # Copy the sample files
 

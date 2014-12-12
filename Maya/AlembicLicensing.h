@@ -20,9 +20,6 @@
 #include "CommonLog.h"
 #include "ExocortexServicesProxy.h"
 
-#define ALEMBIC_WRITER_LICENSE_IDS	{ RlmProductID( "alembic_maya", 10 ), RlmProductID( "alembic", 10 ) }
-#define ALEMBIC_READER_LICENSE_IDS	{ RlmProductID( "alembic_maya", 10 ), RlmProductID( "alembic_reader", 10 ), RlmProductID( "alembic", 10 ) }
-
 #define ALEMBIC_NO_LICENSE -1
 #define ALEMBIC_DEMO_LICENSE 0
 #define ALEMBIC_WRITER_LICENSE 1

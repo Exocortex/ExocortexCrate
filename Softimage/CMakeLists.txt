@@ -4,12 +4,6 @@ project ( Softimage${XSI_VERSION}ExocortexAlembic${crate_VERSION} )
 
 INCLUDE(../../ExocortexCMakeShared.txt  NO_POLICY_SCOPE)
 
-if( Exocortex_SERVICES OR Exocortex_RLM_ONLY )
-	include_directories( ${Rlm_INCLUDE_DIR} )
-	include_directories( ${Exocortex_INCLUDE_DIR} )
-endif()
-
-
 add_definitions( -Dcrate_Softimage_Version=${XSI_VERSION} )
 if( XSI_VERSION MATCHES "2012")
 	SET( Softimage_DIR_ROOT ${LIBRARY_ROOT}/Softimage/2012SP1 )
@@ -45,31 +39,13 @@ ENDIF()
 
 	SET( Softimage_LIBRARIES sicoresdk sicppsdk )
 
-
-if( Exocortex_SERVICES )
-	add_definitions( "-DEXOCORTEX_SERVICES" )
-	add_definitions( -DNOMINMAX )	 # disable min/max macros from <windows.h>.
-endif()
-
 include_directories( ${Softimage_DIR_INCLUDE} )
 link_directories( ${Softimage_DIR_LIBRARY} )
-
-if( Exocortex_SERVICES OR Exocortex_RLM_ONLY )
-	link_directories( ${Rlm_LIBRARYDIR} )
-endif()
-if( Exocortex_SERVICES )
-	#link_directories( ${Exocortex_LIBRARYDIR} )
-	if( NOT XSI_VERSION MATCHES "2014")
-		link_directories( ${TBB_LIBRARYDIR} )
-	endif()
-endif()
 
 add_library( ${PROJECT_NAME} SHARED ${Sources} ${Includes})
 
 TARGET_LINK_LIBRARIES( ${PROJECT_NAME}
    CommonUtils 
-   ${ExocortexSoftimage_LIBRARIES}
-   ${Rlm_LIBRARIES}
    ${Softimage_LIBRARIES}
    ${ALL_ALEMBIC_LIBS}
    )
@@ -89,10 +65,6 @@ remove_dir( ${Install_DIR} )
 get_target_property( Install_TARGET ${PROJECT_NAME} LOCATION )
 
 copy_file_to_directory( ${Install_TARGET} ${Install_DIR} )
-if( WIN32 )
-	copy_file_to_directory( ${RER_DEPENDENCIES} ${Install_DIR} )
-	copy_file_to_directory( ${EAH_DEPENDENCIES} ${Install_DIR} )
-endif()
 
 SET( CompoundSource_DIR ${BASE_DIR}/Workgroup/Addons/ExocortexAlembic/Data/Compounds )
 SET( CompoundInstall_DIR ${Exocortex_INSTALL_BASE_DIR}/Softimage${Softimage_VERSION_STRING}/Data/Compounds )

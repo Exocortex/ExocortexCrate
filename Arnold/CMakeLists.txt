@@ -16,14 +16,6 @@ SOURCE_GROUP("Header Files" FILES ${Includes})
 
 setup_precompiled_header( ${BASE_DIR} ${Sources} )
 
-if( Exocortex_SERVICES OR Exocortex_RLM_ONLY )
-	include_directories( ${Rlm_INCLUDE_DIR} )
-	include_directories( ${Exocortex_INCLUDE_DIR} )
-endif()
-
-if( Exocortex_SERVICES OR Exocortex_RLM_ONLY )
-	link_directories( ${Rlm_LIBRARYDIR} )
-endif()
 
 if( WIN32 )
 	set( Arnold_BASE_DIR "${LIBRARY_ROOT}/arnold/${EXOCORTEX_ARNOLD_VERSION}/windows" )
@@ -44,7 +36,6 @@ link_directories( "${Arnold_BASE_DIR}/lib" )
 add_library( ${PROJECT_NAME} SHARED ${Sources} ${Includes})
 TARGET_LINK_LIBRARIES( ${PROJECT_NAME}
 	CommonUtils
-	${Rlm_LIBRARIES}
    ${Arnold_LIBRARIES}
    ${ALL_ALEMBIC_LIBS}
    )
@@ -58,27 +49,13 @@ get_target_property( Install_TARGET ${PROJECT_NAME} LOCATION )
 if( ARNOLD_MAJOR_VERSION MATCHES 4 ) 
 	SET( Install_DIR ${Exocortex_INSTALL_BASE_DIR}/Softimage/Application/ArnoldAlembicDSO/ )
 
-	copy_file_to_directory( ${Install_TARGET} ${Install_DIR} )
-
-	if( WIN32 )
-		copy_file_to_directory( ${RER_DEPENDENCIES} ${Install_DIR} )
-		copy_file_to_directory( ${EAH_DEPENDENCIES} ${Install_DIR} )
-	endif()
+	copy_file_to_directory( ${Install_TARGET} ${Install_DIR} )	
 
 	SET( Install_DIR ${Exocortex_INSTALL_BASE_DIR}/Softimage2014/Application/ArnoldAlembicDSO/ )
 
 	copy_file_to_directory( ${Install_TARGET} ${Install_DIR} )
 
-	if( WIN32 )
-		copy_file_to_directory( ${RER_DEPENDENCIES} ${Install_DIR} )
-		copy_file_to_directory( ${EAH_DEPENDENCIES} ${Install_DIR} )
-	endif()
 endif()
 
 SET( Install_DIR ${Exocortex_INSTALL_BASE_DIR}/Arnold${EXOCORTEX_ARNOLD_VERSION}/ )
 copy_file_to_directory( ${Install_TARGET} ${Install_DIR} )
-
-if( WIN32 )
-	copy_file_to_directory( ${RER_DEPENDENCIES} ${Install_DIR} )
-	copy_file_to_directory( ${EAH_DEPENDENCIES} ${Install_DIR} )
-endif()
