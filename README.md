@@ -31,6 +31,11 @@ The pre-compiled binaries support the following:
 - Python 2.7 Windows
 - Python 2.6 Windows & Linux
 
+# License
+
+This software is dual licensed as GPL3 and Commercial in a similar fashion to
+MongoDB, and MySQL.
+
 # Requirements
 
 We use automatically generated projects from a canonical set of CMakeList files.

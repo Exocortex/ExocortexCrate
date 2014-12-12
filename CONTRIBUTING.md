@@ -9,4 +9,4 @@ Getting Started
 
 - Create a [Github account](https://github.com/signup/free).
 - Fork the repository on Github at https://github.com/Exocortex/ExocortexCrate.
-- Only make a contribution to the Exocortex Crate project (a PR) if you agree with the [ExocortexCrate contributor agreement](https://github.com/Exocortex/ExocortexCrate/CONTRIBUTOR_AGREEMENT.md)
+- Only make a contribution to the Exocortex Crate project (a PR) if you agree with the [ExocortexCrate contributor agreement](https://github.com/Exocortex/ExocortexCrate/CONTRIBUTOR_AGREEMENT.txt)
