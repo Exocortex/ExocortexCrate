@@ -25,16 +25,9 @@ You hereby agree to the following:
 
 9. The parties acknowledge and agree that they are dealing with each other as independent contractors.  Neither the Agreement, nor any terms and conditions contained in the Agreement may be construed as creating or constituting an employee-employer relationship, a partnership, a joint venture, a franchise, or an agency between you and Exocortex.
 
-AGREED and ACCEPTED:
 
-Signature:
-Print Name:
-Company (of "Self"):
-Github Username:
-Email:
-Phone/Skype:
-Country:
-Date:
+By Contribution to this repository you have AGREED and ACCEPTED this agreement.
+
 
 ---
 CREDITS: This document is derived in part from the MongoDB Contributors Agreement.
