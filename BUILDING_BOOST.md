@@ -1,12 +1,14 @@
 ## How to Build Boost for use in Exocortex Crate
 
+Normally you do not need to compile boost yourself as it is included in the Exocortex Libraries package.  BUt if you need to compile boost for a new version of Visual C++ or GCC that isn't yet supported by the Exocortex Libraries package.  Replace the pattern in the libraries path XXXXXXXX.XX with the appropriate numbering for the external libraries package.
+
 # Visual Studio 2010 / MSVC-10.0
 
 Turn this into a batch file:
 
 	set BOOST_VERSION=boost_1_44_0
 	set TOOLSET=msvc-10.0
-	set ZLIB_ROOT=E:\Libraries\zlib
+	set ZLIB_ROOT=C:\Libraries.XXXXXXXX.XX\zlib
 	set ZLIB_INCLUDE=%ZLIB_ROOT%
 	set ZLIB_SOURCE=%ZLIB_ROOT%
 	set BOOST_INSTALL32=E:/Boost/%BOOST_VERSION%/x86/
@@ -20,7 +22,7 @@ Turn this into a batch file:
 
 	set BOOST_VERSION=boost_1_44_0
 	set TOOLSET=msvc-9.0
-	set ZLIB_ROOT=E:\Libraries\zlib
+	set ZLIB_ROOT=C:\Libraries.XXXXXXXX.XX\zlib
 	set ZLIB_INCLUDE=%ZLIB_ROOT%
 	set ZLIB_SOURCE=%ZLIB_ROOT%
 	set BOOST_INSTALL32=E:/Boost/%BOOST_VERSION%/x86/windows
@@ -30,7 +32,9 @@ Turn this into a batch file:
 
 # GCC on Linux
 
-	set ZLIB_ROOT=$HOME/Work/Libraries.20140707.01/zlib
+Turn this into a shell script:
+
+	set ZLIB_ROOT=$HOME/Libraries.XXXXXXXX.XX/zlib
 	set ZLIB_INCLUDE=$ZLIB_ROOT
 	set ZLIB_SOURCE=$ZLIB_ROOT
 	# with serialization
