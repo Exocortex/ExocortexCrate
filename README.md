@@ -33,8 +33,7 @@ The pre-compiled binaries support the following:
 
 # License
 
-This software is dual licensed as GPL3 and Commercial in a similar fashion to
-MongoDB, and MySQL.
+This software is open source software.  Please consult LICENSE.txt for details.
 
 # Requirements
 
