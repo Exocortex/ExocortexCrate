@@ -56,7 +56,9 @@ class OBJ_structure:
    def read(self, in_file):
       for line in in_file:
          sp = line.split()
-         if sp[0] == "#":
+         if len(sp) == 0:
+            // do nothing
+         elif sp[0] == "#":
             pass  #passing over a commented line
          elif sp[0] == "v":
             self.read_vertex(sp)
