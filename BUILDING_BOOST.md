@@ -2,6 +2,17 @@
 
 Normally you do not need to compile boost yourself as it is included in the Exocortex Libraries package.  BUt if you need to compile boost for a new version of Visual C++ or GCC that isn't yet supported by the Exocortex Libraries package.  Replace the pattern in the libraries path XXXXXXXX.XX with the appropriate numbering for the external libraries package.
 
+# High Level Build Process
+
+Just download the 1.44 version of Boost and unzip it in a directory.
+
+Then run the bootstrap command line program.  This will built bjam.
+
+Then run the appropriate file below to build boost with the operations Exocortex Crate requires.
+
+Then copy the results  into the appropriate directory in the libraries.
+
+
 # Visual Studio 2010 / MSVC-10.0
 
 Turn this into a batch file:
