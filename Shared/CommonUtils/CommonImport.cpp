@@ -48,8 +48,6 @@ bool IJobStringParser::parse(const std::string& jobString)
 		std::vector<std::string> valuePair;
 		boost::split(valuePair, tokens[j], boost::is_any_of("="));
 
-        boost::trim(valuePair[0]);
-        boost::trim(valuePair[1]);
 
 		if(valuePair.size() != 2)
 		{
@@ -57,9 +55,16 @@ bool IJobStringParser::parse(const std::string& jobString)
 			continue;
 		}
 
+        boost::trim(valuePair[0]);
+        boost::trim(valuePair[1]);
+
+
 		if(boost::iequals(valuePair[0], "filename"))
 		{
 			filename = valuePair[1];
+		}
+		if(boost::iequals(valuePair[0], "prefix")){
+			prefix = valuePair[1];
 		}
 		else if(boost::iequals(valuePair[0], "normals"))
 		{
@@ -592,7 +597,28 @@ bool AttachSceneFile(SceneNodeAlembicPtr fileRoot, SceneNodeAppPtr appRoot, cons
       --count;
 
 
-      const std::string& appNodeName = removeXfoSuffix(currAppNode->name);
+
+
+      const std::string& appNodeNameWithPrefix = removeXfoSuffix(currAppNode->name);
+
+
+      std::string appNodeName = "";
+
+      //Logic to control prefix
+      if(!jobParams.prefix.empty()){
+
+    	   std::size_t pos = appNodeNameWithPrefix.find(jobParams.prefix);
+    	   if (pos== std::string::npos){
+    	    	  appNodeName = appNodeNameWithPrefix;
+    	   }else
+    	   {
+    	     	  appNodeName = appNodeNameWithPrefix.substr(jobParams.prefix.length(), appNodeNameWithPrefix.length());
+    	   }
+      }else
+      {
+    	  appNodeName = appNodeNameWithPrefix;
+      }
+
 
       bool bChildAttached = false;
       NodeMap::iterator fileNodeIt = childMapPtr->find(appNodeName);
