@@ -57,6 +57,7 @@ public:
    SearchReplace::ReplacePtr replacer;
 
 	std::string filename;// = EC_MCHAR_to_UTF8( strPath );
+	std::string prefix;
 
    std::vector<std::string> nodesToImport;
    std::map<std::string, std::string> extraParameters;
