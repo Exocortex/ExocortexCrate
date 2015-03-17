@@ -96,7 +96,7 @@ def attachCurves(name, identifier, jobInfo, isConstant=False):
 	attachTimeAndFile(newDform, jobInfo, isConstant)
 
   	# get curObj new "output" attribute connection
-  	if curObj != None and cmds.objectType(curObj) != "ExocortexAlembicCurves":
+  	if curObj and cmds.objectType(curObj) != "ExocortexAlembicCurves":
   		originalCur = cmds.connectionInfo(curObj+".output", sfd=True).split('.')[0]
 
   		cmds.delete(curObj)
