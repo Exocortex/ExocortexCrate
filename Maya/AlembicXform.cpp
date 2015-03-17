@@ -2,6 +2,7 @@
 #include "AlembicXform.h"
 #include "MetaData.h"
 #include <maya/MAnimUtil.h>
+#include <maya/MDistance.h>
 
 void AlembicXform::testAnimatedVisibility(AlembicObject *aobj, bool animTS, bool flatHierarchy)
 {
@@ -493,10 +494,19 @@ MStatus AlembicXformNode::compute(const MPlug & plug, MDataBlock & dataBlock)
 
   {
     ESS_PROFILE_SCOPE("AlembicXformNode::compute outputValues");
+
+    // Convert alembic unit to maya unit
+    MDistance distance_tx(translation.x);
+    MDistance distance_ty(translation.y);
+    MDistance distance_tz(translation.z);
+    double translation_x = distance_tx.asUnits(MDistance::uiUnit());
+    double translation_y = distance_ty.asUnits(MDistance::uiUnit());
+    double translation_z = distance_tz.asUnits(MDistance::uiUnit());
+
     // output all channels
-    dataBlock.outputValue(mOutTranslateXAttr).setDouble(translation.x);
-    dataBlock.outputValue(mOutTranslateYAttr).setDouble(translation.y);
-    dataBlock.outputValue(mOutTranslateZAttr).setDouble(translation.z);
+    dataBlock.outputValue(mOutTranslateXAttr).setDouble(translation_x);
+    dataBlock.outputValue(mOutTranslateYAttr).setDouble(translation_y);
+    dataBlock.outputValue(mOutTranslateZAttr).setDouble(translation_z);
     dataBlock.outputValue(mOutRotateXAttr).setMAngle(MAngle(rotation[0],MAngle::kRadians));
     dataBlock.outputValue(mOutRotateYAttr).setMAngle(MAngle(rotation[1],MAngle::kRadians));
     dataBlock.outputValue(mOutRotateZAttr).setMAngle(MAngle(rotation[2],MAngle::kRadians));
