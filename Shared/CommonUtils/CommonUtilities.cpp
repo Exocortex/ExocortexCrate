@@ -102,19 +102,7 @@ Alembic::Abc::IArchive * getArchiveFromID(std::string const& path)
    if(it == gArchives.end())
    {
      // check if the file exists
-     if( ! HasAlembicReaderLicense() )
-     {
-        if( HasAlembicInvalidLicense() ) {
-            ESS_LOG_ERROR("[alembic] No license available and EXOCORTEX_ALEMBIC_NO_DEMO defined, no Alembic files opened." );
-            return NULL;
-         }
-
-         if(gArchives.size() == 1)
-         {
-            ESS_LOG_ERROR("[ExocortexAlembic] Reader license not found: Only one open archive at a time allowed!");
-            return NULL;
-         }
-      }
+    
    
 		if( ! boost::filesystem::exists( resolvedPath.c_str() ) ) {
 			ESS_LOG_ERROR( "Can't find Alembic file.  Path: " << path << "  Resolved path: " << resolvedPath );
@@ -331,19 +319,6 @@ SampleInfo getSampleInfo
 
    result.floorIndex = floorIndex.first;
    result.ceilIndex = result.floorIndex;
-
-   // check if we have a full license
-   if(!HasAlembicReaderLicense())
-   {
-      if(result.floorIndex > 75)
-      {
-         EC_LOG_ERROR("[ExocortexAlembic] Demo Mode: Cannot open sample indices higher than 75.");
-         result.floorIndex = 75;
-         result.ceilIndex = 75;
-         result.alpha = 0.0;
-         return result;
-      }
-   }
 
    if (fabs(iFrame - floorIndex.second) < 0.0001) {
       result.alpha = 0.0f;

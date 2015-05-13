@@ -579,15 +579,6 @@ static PyObject * iProperty_getValues(PyObject * self, PyObject * args)
       return NULL;
    }
 
-   if(!HasAlembicWriterLicense())
-   {
-      if(sampleIndex > 75)
-      {
-         PyErr_SetString(getError(), "[ExocortexAlembic] Demo Mode: Max sampleindex is 75!");
-         return NULL;
-      }
-   }
-
    PyObject * tuple = NULL;
    switch(prop->mPropType)
    {

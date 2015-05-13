@@ -414,15 +414,6 @@ PyObject * oArchive_new(PyObject * self, PyObject * args)
    }
    const bool useOgawa = pyOgawa ? PyObject_IsTrue(pyOgawa) : false;
 
-   if(!HasAlembicWriterLicense())
-   {
-      if(getNbOArchives() > 1)
-      {
-         PyErr_SetString(getError(), "[ExocortexAlembic] Demo Mode: Only two output archives at a time allowed!");
-         return NULL;
-      }
-   }
-
    // NEW check if the archive is already open as an iArchive or oArchive
    if (isIArchiveOpened(fileName) || isOArchiveOpened(fileName))
    {
