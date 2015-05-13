@@ -5,24 +5,6 @@
 using namespace std;
 
 
-int s_alembicLicense = -1;
-
-int GetAlembicLicense() {
-	return 	ALEMBIC_WRITER_LICENSE;
-}
-
-bool HasAlembicInvalidLicense() {
-	return ( GetAlembicLicense() == ALEMBIC_INVALID_LICENSE );
-}
-
-bool HasAlembicWriterLicense() {
-	return ( GetAlembicLicense() == ALEMBIC_WRITER_LICENSE );
-}
-
-bool HasAlembicReaderLicense() {
-	return ( GetAlembicLicense() == ALEMBIC_WRITER_LICENSE )||( GetAlembicLicense() == ALEMBIC_READER_LICENSE );
-}
-
 /*
 #ifdef EXOCORTEX_SERVICES
 

@@ -217,15 +217,6 @@ PyObject * iArchive_new(PyObject * self, PyObject * args)
       return NULL;
    }*/
 
-   if(!HasAlembicWriterLicense())
-   {
-      if(getNbIArchives() > 1)
-      {
-         PyErr_SetString(getError(), "[ExocortexAlembic] Demo Mode: Only two open archives at a time allowed!");
-         return NULL;
-      }
-   }
-
    // parse the args
    char * fileName = NULL;
    if(!PyArg_ParseTuple(args, "s", &fileName))

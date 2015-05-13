@@ -172,21 +172,6 @@ MStatus AlembicWriteJob::PreProcess()
 	   // create the sampling
 	   if(frames.size() > 1)
 	   {
-			if( ! HasAlembicWriterLicense() )
-			{
-				if( HasAlembicInvalidLicense() )
-				{
-					ESS_LOG_ERROR("[alembic] No license available and EXOCORTEX_ALEMBIC_NO_DEMO defined, aborting." );
-					return MStatus::kFailure;
-				}
-
-				if(frames.size() > 75)
-				{
-					frames.resize(75);
-					EC_LOG_WARNING("[ExocortexAlembic] Demo Mode: Maximum exportable samplecount is 75!");
-				}
-			}
-
 			const double timePerCycle = frames[frames.size()-1] - frames[0];
 			AbcA::TimeSamplingType samplingType((Abc::uint32_t)frames.size(),timePerCycle);
 			AbcA::TimeSampling sampling(samplingType,frames);

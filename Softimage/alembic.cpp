@@ -55,14 +55,11 @@ SICALLBACK XSILoadPlugin( PluginRegistrar& in_reg )
 	// in_reg.RegisterMenu(siMenuTbGetPropertyID,L"alembic_MenuMetaData",false,false);
 
 
-	//if( HasAlembicWriterLicense() ) {
 		in_reg.RegisterCommand(L"alembic_export",L"alembic_export");
       in_reg.RegisterCommand(L"alembic_export_jobs",L"alembic_export_jobs");
 
 		in_reg.RegisterProperty(L"alembic_export_settings");
-	//}
 
-	//if( HasAlembicReaderLicense() ) {
 		in_reg.RegisterCommand(L"alembic_import",L"alembic_import");
       in_reg.RegisterCommand(L"alembic_import_jobs",L"alembic_import_jobs");
 		in_reg.RegisterCommand(L"alembic_attach_metadata",L"alembic_attach_metadata");
@@ -108,7 +105,6 @@ SICALLBACK XSILoadPlugin( PluginRegistrar& in_reg )
 
 		// register events
 		in_reg.RegisterEvent(L"alembic_OnCloseScene",siOnCloseScene);
-	//}
 
    ESS_LOG_INFO("PLUGIN loaded");
 

@@ -73,7 +73,6 @@ public:
         exocortexAlembicInit,
 		exocortexGetBinVersion,
 		exocortexMemoryDiagnostics,
-		exocortexGetLicenseStatus,
 		exocortexAlembicImportJobs,
 		exocortexAlembicExportJobs,
 		exocortexProfileStats,
@@ -187,15 +186,6 @@ public:
 			p_end); 
 
 		AppendFunction(
-			exocortexGetLicenseStatus,	//* function ID * /
-			_M("getLicenseStatus"),           //* internal name * /
-			0,                      //* function name string resource name * / 
-			TYPE_INT,               //* Return type * /
-			0,                      //* Flags  * /
-			0,                      //* Number  of arguments * /
-			p_end); 
-
-		AppendFunction(
 			exocortexAlembicImportJobs,	//* function ID * /
 			_M("createImportJob"),           //* internal name * /
 			0,                      //* function name string resource name * / 
@@ -259,8 +249,7 @@ public:
 	
 	static int ExocortexMemoryDiagnostics();
 
-	static int ExocortexGetLicenseStatus();
-    
+  
     static int ExocortexHasModifierErrorOccurred();
 
 	static int ExocortexAlembicImportJobs(CONST_2013 MCHAR* jobString);
@@ -273,7 +262,6 @@ public:
         FN_0(exocortexAlembicInit, TYPE_INT, ExocortexAlembicInit);
 		FN_0(exocortexGetBinVersion, TYPE_INT, ExocortexGetBinVersion)
 		FN_0(exocortexMemoryDiagnostics, TYPE_INT, ExocortexMemoryDiagnostics)
-		FN_0(exocortexGetLicenseStatus, TYPE_INT, ExocortexGetLicenseStatus)
 		FN_1(exocortexAlembicImportJobs, TYPE_INT, ExocortexAlembicImportJobs, TYPE_STRING)
 		FN_1(exocortexAlembicExportJobs, TYPE_INT, ExocortexAlembicExportJobs, TYPE_STRING)
 		FN_0(exocortexProfileStats, TYPE_INT, ExocortexProfileStats)
@@ -392,16 +380,6 @@ int ExocortexAlembicStaticInterface::ExocortexMemoryDiagnostics()
 	return 0;
 }
 
-int ExocortexAlembicStaticInterface::ExocortexGetLicenseStatus()
-{
-	if( HasAlembicWriterLicense() ) {
-		return 1;
-	}
-	if( HasAlembicReaderLicense() ) {
-		return 2;
-	}
-	return 0;
-}
 
 
 bool parseBool(std::string value){

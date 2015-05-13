@@ -150,15 +150,6 @@ static PyObject * oProperty_setValues(PyObject * self, PyObject * args)
       }*/
    }
 
-   if(!HasAlembicWriterLicense())
-   {
-      if(numSamples >= 75)
-      {
-         PyErr_SetString(getError(), "[ExocortexAlembic] Demo Mode: Max samplecount is 75!");
-         return NULL;
-      }
-   }
-
    PyObject * tuple = NULL;
    if(!PyArg_ParseTuple(args, "O", &tuple))
    {

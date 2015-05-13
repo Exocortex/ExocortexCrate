@@ -147,22 +147,6 @@ static int Init(AtNode *mynode, void **user_ptr)
    // fix all paths
    for(size_t pathIndex = 0; pathIndex < paths.size(); pathIndex ++)
    {
-      // check if we already know this path
-      if(!HasAlembicReaderLicense())
-      {
-          if( HasAlembicInvalidLicense() ) {
-            ESS_LOG_ERROR("[alembic] No license available and EXOCORTEX_ALEMBIC_NO_DEMO defined, aborting." );
-            return NULL;
-         }
-
-         if(gUsedArchives.size() > 1 && 
-            gUsedArchives.find(paths[pathIndex]) == gUsedArchives.end())
-         {
-            AiMsgError("[ExocortexAlembic] Demo Mode: Only two alembic archives at a time.");
-            return NULL;
-         }
-         gUsedArchives.insert(std::pair<std::string,std::string>(paths[pathIndex],paths[pathIndex]));
-      }
 
 #ifdef _WIN32
       // #54: UNC paths don't work
