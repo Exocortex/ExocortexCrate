@@ -243,7 +243,7 @@ IOResult AlembicVisibilityController::Load(ILoad *iload)
 		res = Control::Load(iload);  // handle improper Renoir Save order
 	return res;	
 }
-#if crate_Max_Version == 2015
+#if ( crate_Max_Version >= 2015 )
 RefResult AlembicVisibilityController::NotifyRefChanged(const Interval& iv, RefTargetHandle hTarg, PartID& partID, RefMessage msg, BOOL propagate) 
 #else
 RefResult AlembicVisibilityController::NotifyRefChanged(Interval iv, RefTargetHandle hTarg, PartID& partID, RefMessage msg) 

@@ -1821,7 +1821,7 @@ Mesh *AlembicParticles::BuildNbElementsMesh(int meshNumber, TimeValue t, INode *
     needDelete = FALSE;
     return pMesh;
 }
-#if crate_Max_Version == 2015
+#if ( crate_Max_Version >= 2015 )
 RefResult AlembicParticles::NotifyRefChanged(const Interval& iv, RefTargetHandle hTarg, PartID& partID, RefMessage msg, BOOL propagate)
 #else
 RefResult AlembicParticles::NotifyRefChanged(Interval iv, RefTargetHandle hTarg, PartID& partID, RefMessage msg)

@@ -459,7 +459,7 @@ IOResult AlembicFloatController::Load(ILoad *iload)
 	return res;	
 }
 
-#if crate_Max_Version == 2015
+#if ( crate_Max_Version >= 2015 )
 RefResult AlembicFloatController::NotifyRefChanged(const Interval& iv, RefTargetHandle hTarg, PartID& partID, RefMessage msg, BOOL propagate) 
 #else
 RefResult AlembicFloatController::NotifyRefChanged(Interval iv, RefTargetHandle hTarg, PartID& partID, RefMessage msg) 

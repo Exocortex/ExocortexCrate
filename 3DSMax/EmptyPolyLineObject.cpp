@@ -27,7 +27,7 @@ EmptyPolyLineObject::~EmptyPolyLineObject()
 	}
 
 
-#if crate_Max_Version == 2015
+#if ( crate_Max_Version >= 2015 )
 RefResult EmptyPolyLineObject::NotifyRefChanged (const Interval& changeInt, RefTargetHandle hTarget,
 										   PartID& partID, RefMessage message, BOOL propagate) {
 #else
