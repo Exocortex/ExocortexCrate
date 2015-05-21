@@ -72,7 +72,7 @@ public:
 	Animatable* SubAnim(int i) { return GetReference(i); }
 	TSTR SubAnimName(int i) { return _T("IDS_PROPS"); }
 
-#if crate_Max_Version == 2015
+#if ( crate_Max_Version >= 2015 )
 	RefResult NotifyRefChanged( const Interval& changeInt,RefTargetHandle hTarget, 
 		PartID& partID, RefMessage message, BOOL propagate);
 #else

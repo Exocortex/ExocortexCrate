@@ -67,7 +67,7 @@ public:
 	int NumRefs() { return 1; }
 	void SetReference(int i, ReferenceTarget* pTarget) { if( i == 0 ) { pblock = (IParamBlock2*)pTarget; } }
 	RefTargetHandle GetReference(int i) { return pblock; }
-#if crate_Max_Version == 2015
+#if ( crate_Max_Version >= 2015 )
 	RefResult NotifyRefChanged(const Interval&, RefTargetHandle, PartID&, RefMessage, BOOL);
 #else
 	RefResult NotifyRefChanged(Interval, RefTargetHandle, PartID&, RefMessage);

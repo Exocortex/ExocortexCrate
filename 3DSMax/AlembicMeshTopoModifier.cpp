@@ -268,7 +268,7 @@ ESS_PROFILE_FUNC();
    	ESS_CPP_EXCEPTION_REPORTING_END
 }
 
-#if crate_Max_Version == 2015
+#if ( crate_Max_Version >= 2015 )
 RefResult AlembicMeshTopoModifier::NotifyRefChanged (const Interval& changeInt, RefTargetHandle hTarget,
 										   PartID& partID, RefMessage message, BOOL propagate) {
 #else

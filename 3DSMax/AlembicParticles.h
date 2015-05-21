@@ -81,7 +81,7 @@ public:
 	int NumRefs() { return 1; }
 	void SetReference(int i, ReferenceTarget* pTarget); 
 	RefTargetHandle GetReference(int i); 
-#if crate_Max_Version == 2015
+#if ( crate_Max_Version >= 2015 )
 	RefResult NotifyRefChanged(const Interval&, RefTargetHandle, PartID&, RefMessage, BOOL propagate);
 #else
 	RefResult NotifyRefChanged(Interval, RefTargetHandle, PartID&, RefMessage);
