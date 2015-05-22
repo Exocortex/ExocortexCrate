@@ -82,9 +82,22 @@ AbcObjectCache* addObjectToCache( AbcArchiveCache* fullNameToObjectCache, Abc::I
 	return &( fullNameToObjectCache->find( objectCache.fullName )->second );
 }
 
+bool s_hasRunOnceRun = false;
+
+void runonce() {
+	if( ! s_hasRunOnceRun ) {
+		_setmaxstdio( 2048 );
+		s_hasRunOnceRun = true;
+	}
+}
+
+
 bool createAbcArchiveCache( Abc::IArchive *pArchive, AbcArchiveCache* fullNameToObjectCache, CommonProgressBar *pBar ) {
 	ESS_PROFILE_SCOPE("createAbcArchiveCache");
 	EC_LOG_INFO( "Creating AbcArchiveCache for archive: " << pArchive->getName() );
-   Abc::IObject top = pArchive->getTop();
+
+	runonce();
+
+	Abc::IObject top = pArchive->getTop();
 	return addObjectToCache( fullNameToObjectCache, top, "", pBar ) != 0;
 }
