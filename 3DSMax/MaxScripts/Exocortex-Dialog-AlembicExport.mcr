@@ -1,7 +1,7 @@
 --------------------------------------------------------------------------------------------------------
 -- Custom import/export dialog with settings
 
-rollout AlembicExportSettings "Alembic Export Settings" width:288 height:508
+rollout AlembicExportSettings "Alembic Export Settings" width:288 height:528
 (
 	GroupBox selectGroup "Selection" pos:[8,16] width:272 height:40
 	checkbox exportSelectedCheckbox "Export Selected Objects" pos:[32,32] width:232 height:16 checked:true
