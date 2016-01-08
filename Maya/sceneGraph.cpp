@@ -105,8 +105,9 @@ bool SceneNodeMaya::executeAddChild(const MString &cmd,
 {
   MString result;
   MGlobal::executePythonCommand(cmd, result);
-  if (result.length() == 0)
+  if (result.length() == 0) {
     return false;
+  }
   else if (result.asChar()[0] == '?') {
 #ifdef _DEBUG
     MGlobal::displayError(result);
@@ -243,11 +244,14 @@ static bool visitChild(
     const SearchReplace::ReplacePtr &replacer)
 {
   MFnDagNode dagNode(mObj);
-  if (dagNode.isIntermediateObject())  // skip intermediate object!
+  if (dagNode.isIntermediateObject()) {  // skip intermediate object!
     return true;
+  }
 
   const std::string dccId = dagNode.fullPathName().asChar();
-  if (dccId.length() == 0) return true;
+  if (dccId.length() == 0) {
+    return true;
+  }
 
   // check if it's a valid type of node first!
   SceneNodeAppPtr exoChild(new SceneNodeMaya(alembicFileAndTimeControl));
@@ -286,8 +290,9 @@ static bool visitChild(
     const size_t pos = rname.rfind("|");
     exoChild->name = (pos != std::string::npos) ? rname.substr(pos + 1) : rname;
   }
-  for (unsigned int i = 0; i < dagNode.childCount(); ++i)
+  for (unsigned int i = 0; i < dagNode.childCount(); ++i) {
     visitChild(dagNode.child(i), exoChild, alembicFileAndTimeControl, replacer);
+  }
   return true;
 }
 
@@ -300,7 +305,8 @@ SceneNodeAppPtr buildMayaSceneGraph(
   exoRoot->type = SceneNode::SCENE_ROOT;
   exoRoot->dccIdentifier = dagPath.fullPathName().asChar();
   exoRoot->name = dagPath.partialPathName().asChar();
-  for (unsigned int i = 0; i < dagPath.childCount(); ++i)
+  for (unsigned int i = 0; i < dagPath.childCount(); ++i) {
     visitChild(dagPath.child(i), exoRoot, alembicFileAndTimeControl, replacer);
+  }
   return exoRoot;
 }

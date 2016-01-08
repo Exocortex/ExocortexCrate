@@ -58,8 +58,9 @@ void AlembicCurveAccumulator::save(const MObject &ref, double time)
   MFnNurbsCurve node(ref);
 
   Abc::M44f globalXfo = GetGlobalMatrix(ref);
-  if (!this->useGlobalCache)
+  if (!this->useGlobalCache) {
     Abc::M44f::multiply(globalXfo, this->mInverse, globalXfo);
+  }
 
   MPointArray positions;
   node.getCVs(positions);
@@ -94,14 +95,16 @@ void AlembicCurveAccumulator::Initialize(void) { accumulators.clear(); }
 void AlembicCurveAccumulator::StartRecordingFrame(void)
 {
   for (accumIter first = accumulators.begin(), last = accumulators.end();
-       first != last; ++first)
+       first != last; ++first) {
     first->second->startRecording();
+  }
 }
 void AlembicCurveAccumulator::StopRecordingFrame(void)
 {
   for (accumIter first = accumulators.begin(), last = accumulators.end();
-       first != last; ++first)
+       first != last; ++first) {
     first->second->stopRecording();
+  }
 }
 void AlembicCurveAccumulator::Destroy(void) { accumulators.clear(); }
 AlembicCurveAccumulatorPtr AlembicCurveAccumulator::GetAccumulator(
@@ -156,8 +159,9 @@ AlembicCurves::~AlembicCurves()
     mObject.reset();
     mSchema.reset();
   }
-  else
+  else {
     this->accumRef.reset();
+  }
 }
 
 MStatus AlembicCurves::Save(double time)
@@ -183,7 +187,9 @@ MStatus AlembicCurves::Save(double time)
   const bool globalCache =
       GetJob()->GetOption(L"exportInGlobalSpace").asInt() > 0;
   Abc::M44f globalXfo;
-  if (globalCache) globalXfo = GetGlobalMatrix(GetRef());
+  if (globalCache) {
+    globalXfo = GetGlobalMatrix(GetRef());
+  }
 
   MPointArray positions;
   node.getCVs(positions);
@@ -195,7 +201,9 @@ MStatus AlembicCurves::Save(double time)
     inPos.x = (float)outPos.x;
     inPos.y = (float)outPos.y;
     inPos.z = (float)outPos.z;
-    if (globalCache) globalXfo.multVecMatrix(inPos, inPos);
+    if (globalCache) {
+      globalXfo.multVecMatrix(inPos, inPos);
+    }
     bbox.extendBy(inPos);
   }
 
@@ -209,29 +217,36 @@ MStatus AlembicCurves::Save(double time)
     node.getKnots(knots);
 
     mKnotVec.resize(knots.length());
-    for (unsigned int i = 0; i < knots.length(); ++i)
+    for (unsigned int i = 0; i < knots.length(); ++i) {
       mKnotVec[i] = (float)knots[i];
+    }
 
     mKnotVectorProperty.set(Abc::FloatArraySample(mKnotVec));
 
     mNbVertices.push_back(node.numCVs());
     mSample.setCurvesNumVertices(Abc::Int32ArraySample(mNbVertices));
 
-    if (node.form() == MFnNurbsCurve::kOpen)
+    if (node.form() == MFnNurbsCurve::kOpen) {
       mSample.setWrap(AbcG::kNonPeriodic);
-    else
+    }
+    else {
       mSample.setWrap(AbcG::kPeriodic);
+    }
 
-    if (node.degree() == 3)
+    if (node.degree() == 3) {
       mSample.setType(AbcG::kCubic);
-    else
+    }
+    else {
       mSample.setType(AbcG::kLinear);
+    }
 
     MPlug widthPlug = node.findPlug("width");
-    if (!widthPlug.isNull())
+    if (!widthPlug.isNull()) {
       mRadiusVec.push_back(widthPlug.asFloat());
-    else
+    }
+    else {
       mRadiusVec.push_back(1.0);
+    }
 
     mRadiusProperty.set(
         Abc::FloatArraySample(&mRadiusVec.front(), mRadiusVec.size()));
@@ -347,7 +362,9 @@ MStatus AlembicCurvesNode::compute(const MPlug &plug, MDataBlock &dataBlock)
     mCurvesData = MObject::kNullObj;
   }
 
-  if (!mSchema.valid()) return MStatus::kFailure;
+  if (!mSchema.valid()) {
+    return MStatus::kFailure;
+  }
 
   // get the sample
   SampleInfo sampleInfo = getSampleInfo(inputTime, mSchema.getTimeSampling(),
@@ -356,8 +373,9 @@ MStatus AlembicCurvesNode::compute(const MPlug &plug, MDataBlock &dataBlock)
   // check if we have to do this at all
   if (!mCurvesData.isNull() &&
       mLastSampleInfo.floorIndex == sampleInfo.floorIndex &&
-      mLastSampleInfo.ceilIndex == sampleInfo.ceilIndex)
+      mLastSampleInfo.ceilIndex == sampleInfo.ceilIndex) {
     return MStatus::kSuccess;
+  }
 
   mLastSampleInfo = sampleInfo;
   const float blend = (float)sampleInfo.alpha;
@@ -366,7 +384,9 @@ MStatus AlembicCurvesNode::compute(const MPlug &plug, MDataBlock &dataBlock)
   AbcG::ICurvesSchema::Sample sample;
   AbcG::ICurvesSchema::Sample sample2;
   mSchema.get(sample, sampleInfo.floorIndex);
-  if (blend != 0.0f) mSchema.get(sample2, sampleInfo.ceilIndex);
+  if (blend != 0.0f) {
+    mSchema.get(sample2, sampleInfo.ceilIndex);
+  }
 
   Abc::P3fArraySamplePtr samplePos = sample.getPositions();
   Abc::P3fArraySamplePtr samplePos2 = sample2.getPositions();
@@ -395,15 +415,18 @@ MStatus AlembicCurvesNode::compute(const MPlug &plug, MDataBlock &dataBlock)
     MDoubleArray knots;
     if (pKnotVec) {
       const unsigned int nb_knot = nbCVs + ldegree - 1;
-      for (unsigned int i = 0; i < nb_knot; ++i)
+      for (unsigned int i = 0; i < nb_knot; ++i) {
         knots.append(pKnotVec->get()[knotOffset + i]);
+      }
       knotOffset += nb_knot;
     }
     else {
       for (int span = 0; span <= nbSpans; ++span) {
         knots.append(double(span));
         if (span == 0 || span == nbSpans) {
-          for (int m = 1; m < degree; ++m) knots.append(double(span));
+          for (int m = 1; m < degree; ++m) {
+            knots.append(double(span));
+          }
         }
       }
     }
@@ -509,8 +532,9 @@ MStatus AlembicCurvesDeformNode::deform(MDataBlock &dataBlock,
 {
   // get the envelope data
   float env = dataBlock.inputValue(envelope).asFloat();
-  if (env == 0.0f)  // deformer turned off
+  if (env == 0.0f) {  // deformer turned off
     return MStatus::kSuccess;
+  }
 
   // update the frame number to be imported
   double inputTime =
@@ -545,7 +569,9 @@ MStatus AlembicCurvesDeformNode::deform(MDataBlock &dataBlock,
     mSchema = obj.getSchema();
   }
 
-  if (!mSchema.valid()) return MStatus::kFailure;
+  if (!mSchema.valid()) {
+    return MStatus::kFailure;
+  }
 
   // get the sample
   SampleInfo sampleInfo = getSampleInfo(inputTime, mSchema.getTimeSampling(),
@@ -553,8 +579,9 @@ MStatus AlembicCurvesDeformNode::deform(MDataBlock &dataBlock,
 
   // check if we have to do this at all
   if (mLastSampleInfo.floorIndex == sampleInfo.floorIndex &&
-      mLastSampleInfo.ceilIndex == sampleInfo.ceilIndex)
+      mLastSampleInfo.ceilIndex == sampleInfo.ceilIndex) {
     return MStatus::kSuccess;
+  }
 
   mLastSampleInfo = sampleInfo;
 
@@ -562,11 +589,15 @@ MStatus AlembicCurvesDeformNode::deform(MDataBlock &dataBlock,
   AbcG::ICurvesSchema::Sample sample;
   AbcG::ICurvesSchema::Sample sample2;
   mSchema.get(sample, sampleInfo.floorIndex);
-  if (sampleInfo.alpha != 0.0) mSchema.get(sample2, sampleInfo.ceilIndex);
+  if (sampleInfo.alpha != 0.0) {
+    mSchema.get(sample2, sampleInfo.ceilIndex);
+  }
 
   Abc::P3fArraySamplePtr samplePos = sample.getPositions();
   Abc::P3fArraySamplePtr samplePos2;
-  if (sampleInfo.alpha != 0.0) samplePos2 = sample2.getPositions();
+  if (sampleInfo.alpha != 0.0) {
+    samplePos2 = sample2.getPositions();
+  }
 
   // iteration should not be necessary. the iteration is only
   // required if the same mesh is attached to the same deformer
@@ -580,9 +611,13 @@ MStatus AlembicCurvesDeformNode::deform(MDataBlock &dataBlock,
     MPoint pt = iter.position();
     MPoint abcPos = pt;
     float weight = weightValue(dataBlock, geomIndex, index) * env;
-    if (weight == 0.0f) continue;
+    if (weight == 0.0f) {
+      continue;
+    }
     float iweight = 1.0f - weight;
-    if (index >= samplePos->size()) continue;
+    if (index >= samplePos->size()) {
+      continue;
+    }
     bool done = false;
     if (sampleInfo.alpha != 0.0) {
       if (samplePos2->size() == samplePos->size()) {
@@ -715,7 +750,9 @@ MStatus AlembicCurvesLocatorNode::compute(const MPlug &plug,
     mSchema = obj.getSchema();
   }
 
-  if (!mSchema.valid()) return MStatus::kFailure;
+  if (!mSchema.valid()) {
+    return MStatus::kFailure;
+  }
 
   // get the sample
   SampleInfo sampleInfo = getSampleInfo(inputTime, mSchema.getTimeSampling(),
@@ -727,7 +764,9 @@ MStatus AlembicCurvesLocatorNode::compute(const MPlug &plug,
     AbcG::ICurvesSchema::Sample sample;
     AbcG::ICurvesSchema::Sample sample2;
     mSchema.get(sample, sampleInfo.floorIndex);
-    if (sampleInfo.alpha != 0.0) mSchema.get(sample2, sampleInfo.ceilIndex);
+    if (sampleInfo.alpha != 0.0) {
+      mSchema.get(sample2, sampleInfo.ceilIndex);
+    }
 
     // update the indices
     Abc::P3fArraySamplePtr samplePos = sample.getPositions();
@@ -750,8 +789,9 @@ MStatus AlembicCurvesLocatorNode::compute(const MPlug &plug,
       }
     }
 
-    if (mPositions.size() != samplePos->size())
+    if (mPositions.size() != samplePos->size()) {
       mPositions.resize(samplePos->size());
+    }
 
     // check if we need to interpolate
     bool done = false;
@@ -867,7 +907,9 @@ void AlembicCurvesLocatorNode::draw(M3dView &view, const MDagPath &path,
   // up significantly.
 
   updated();
-  if (mIndices.size() == 0 || mPositions.size() == 0) return;
+  if (mIndices.size() == 0 || mPositions.size() == 0) {
+    return;
+  }
 
   // prepare draw
   view.beginGL();

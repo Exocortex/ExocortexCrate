@@ -40,10 +40,12 @@ static PyObject *oXformProperty_setValues(PyObject *self, PyObject *args)
   }*/
 
   size_t nbItems = 0;
-  if (PyTuple_Check(tuple))
+  if (PyTuple_Check(tuple)) {
     nbItems = PyTuple_Size(tuple);
-  else
+  }
+  else {
     nbItems = PyList_Size(tuple);
+  }
 
   if (nbItems != 16) {
     PyErr_SetString(getError(), "Sample tuple should contain 16 items!");
@@ -53,10 +55,12 @@ static PyObject *oXformProperty_setValues(PyObject *self, PyObject *args)
   std::vector<double> values(16);
   for (size_t i = 0; i < 16; i++) {
     PyObject *item = NULL;
-    if (PyTuple_Check(tuple))
+    if (PyTuple_Check(tuple)) {
       item = PyTuple_GetItem(tuple, i);
-    else
+    }
+    else {
       item = PyList_GetItem(tuple, i);
+    }
     if (!PyArg_Parse(item, "d", &values[i])) {
       PyErr_SetString(
           getError(),
@@ -106,7 +110,9 @@ static PyObject *oXformProperty_getAttr(PyObject *self, char *attrName)
 void oXformProperty_deletePointers(oXformProperty *prop)
 {
   ALEMBIC_TRY_STATEMENT
-  if (prop->mMembers == NULL) return;
+  if (prop->mMembers == NULL) {
+    return;
+  }
   prop->mMembers->mXformSchema.reset();
   delete (prop->mMembers);
   prop->mMembers = NULL;

@@ -24,15 +24,18 @@ XSI::CStatus AlembicNurbs::Save(double time)
 
   // query the global space
   CTransformation globalXfo;
-  if (globalSpace)
+  if (globalSpace) {
     globalXfo = KinematicState(GetRef(REF_GLOBAL_TRANS)).GetTransform(time);
+  }
 
   // store the metadata
   SaveMetaData(GetRef(REF_NODE), this);
 
   // check if the nurbs is animated
   if (mNumSamples > 0) {
-    if (!isRefAnimated(GetRef(REF_PRIMITIVE))) return CStatus::OK;
+    if (!isRefAnimated(GetRef(REF_PRIMITIVE))) {
+      return CStatus::OK;
+    }
   }
 
   // define additional vectors, necessary for this task
@@ -51,7 +54,9 @@ XSI::CStatus AlembicNurbs::Save(double time)
   // allocate the points and normals
   posVec.resize(vertCount);
   for (LONG i = 0; i < vertCount; i++) {
-    if (globalSpace) pos[i] = MapObjectPositionToWorldSpace(globalXfo, pos[i]);
+    if (globalSpace) {
+      pos[i] = MapObjectPositionToWorldSpace(globalXfo, pos[i]);
+    }
     posVec[i].x = (float)pos[i].GetX();
     posVec[i].y = (float)pos[i].GetY();
     posVec[i].z = (float)pos[i].GetZ();
@@ -103,14 +108,20 @@ alembicOp_Multifile(in_ctxt, ctxt.GetParameterValue(L"multifile"),
                     ctxt.GetParameterValue(L"time"), path);
 CStatus pathEditStat = alembicOp_PathEdit(in_ctxt, path);
 
-if ((bool)ctxt.GetParameterValue(L"muted")) return CStatus::OK;
+if ((bool)ctxt.GetParameterValue(L"muted")) {
+  return CStatus::OK;
+}
 
 CString identifier = ctxt.GetParameterValue(L"identifier");
 
 AbcG::IObject iObj = getObjectFromArchive(path, identifier);
-if (!iObj.valid()) return CStatus::OK;
+if (!iObj.valid()) {
+  return CStatus::OK;
+}
 AbcG::INuPatch objNurbs(iObj, Abc::kWrapExisting);
-if (!objNurbs.valid()) return CStatus::OK;
+if (!objNurbs.valid()) {
+  return CStatus::OK;
+}
 
 SampleInfo sampleInfo = getSampleInfo(ctxt.GetParameterValue(L"time"),
                                       objNurbs.getSchema().getTimeSampling(),
@@ -123,7 +134,9 @@ Abc::P3fArraySamplePtr nurbsPos = sample.getPositions();
 NurbsSurfaceMesh inNurbs = Primitive((CRef)ctxt.GetInputValue(0)).GetGeometry();
 CVector3Array pos = inNurbs.GetPoints().GetPositionArray();
 
-if (pos.GetCount() != nurbsPos->size()) return CStatus::OK;
+if (pos.GetCount() != nurbsPos->size()) {
+  return CStatus::OK;
+}
 
 Operator op(ctxt.GetSource());
 updateOperatorInfo(op, sampleInfo, objNurbs.getSchema().getTimeSampling(),

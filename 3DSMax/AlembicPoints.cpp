@@ -787,7 +787,9 @@ void AlembicPoints::ReadShapeFromOperator(IParticleGroup *particleGroup,
     }
 
     if (syncRandom) {
-      if (chLocalOffR != NULL) time += chLocalOffR->GetValue(particleId);
+      if (chLocalOffR != NULL) {
+        time += chLocalOffR->GetValue(particleId);
+      }
     }
 
     // timeValueMap::iterator it = mTimeValueMap.find(time);
@@ -1180,7 +1182,8 @@ void AlembicPoints::saveCurrentFrameMeshes()
         // std::string xformName = mi->name + "Xfo";
         AbcG::OXform xform(mJob->GetArchive().getTop(), mi->name,
                            GetCurrentJob()->GetAnimatedTs());
-        AbcG::OXformSchema &xformSchema = xform.getSchema();  // mi->xformSchema;
+        AbcG::OXformSchema &xformSchema =
+            xform.getSchema();  // mi->xformSchema;
 
         std::string meshName = mi->name + "Shape";
         AbcG::OPolyMesh mesh(xform, meshName, GetCurrentJob()->GetAnimatedTs());

@@ -192,7 +192,7 @@ int AlembicImport_Light(const std::string& path, AbcG::IObject& iObj,
           if (datatype.getExtent() == 1 &&
               propName.find("intensity") !=
                   std::string::npos) {  // intensity property found, so attach
-                                        // controller
+            // controller
             addFloatController(evalStream, options, modkey,
                                std::string("multiplier"), path,
                                iObj.getFullName(), propStream.str());
@@ -200,7 +200,7 @@ int AlembicImport_Light(const std::string& path, AbcG::IObject& iObj,
           else if (datatype.getExtent() == 3 &&
                    propName.find("lightcolor") !=
                        std::string::npos) {  // color property found, so attach
-                                             // controller
+            // controller
 
             std::stringstream xStream, yStream, zStream;
 

@@ -106,7 +106,10 @@ class AlembicSplineTopoModifierClassDesc : public ClassDesc2 {
   {
     return _T(ALEMBIC_SPLINE_TOPO_MODIFIER_SCRIPTNAME);
   }  // returns fixed parsable name (scripter-visible name)
-  HINSTANCE HInstance() { return hInstance; }  // returns owning module handle
+  HINSTANCE HInstance()
+  {
+    return hInstance;  // returns owning module handle
+  }
 };
 
 ClassDesc2 *GetAlembicSplineTopoModifierClassDesc();

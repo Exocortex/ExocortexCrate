@@ -14,7 +14,9 @@ void SaveXformSample(SceneNodePtr node, AbcG::OXformSchema& schema,
 {
   // check if we are exporting in global space
   if (globalSpace) {
-    if (schema.getNumSamples() > 0) return;
+    if (schema.getNumSamples() > 0) {
+      return;
+    }
 
     // store identity matrix
     sample.setTranslation(Imath::V3d(0.0, 0.0, 0.0));
@@ -101,7 +103,9 @@ alembicOp_Multifile(in_ctxt, ctxt.GetParameterValue(L"multifile"),
                     ctxt.GetParameterValue(L"time"), path);
 CStatus pathEditStat = alembicOp_PathEdit(in_ctxt, path);
 
-if ((bool)ctxt.GetParameterValue(L"muted")) return CStatus::OK;
+if ((bool)ctxt.GetParameterValue(L"muted")) {
+  return CStatus::OK;
+}
 
 CString identifier = ctxt.GetParameterValue(L"identifier");
 
@@ -192,15 +196,21 @@ alembicOp_Multifile(in_ctxt, ctxt.GetParameterValue(L"multifile"),
                     ctxt.GetParameterValue(L"time"), path);
 CStatus pathEditStat = alembicOp_PathEdit(in_ctxt, path);
 
-if ((bool)ctxt.GetParameterValue(L"muted")) return CStatus::OK;
+if ((bool)ctxt.GetParameterValue(L"muted")) {
+  return CStatus::OK;
+}
 
 CString identifier = ctxt.GetParameterValue(L"identifier");
 
 AbcG::IObject obj = getObjectFromArchive(path, identifier);
-if (!obj.valid()) return CStatus::OK;
+if (!obj.valid()) {
+  return CStatus::OK;
+}
 
 AbcG::IVisibilityProperty visibilityProperty = getAbcVisibilityProperty(obj);
-if (!visibilityProperty.valid()) return CStatus::OK;
+if (!visibilityProperty.valid()) {
+  return CStatus::OK;
+}
 
 SampleInfo sampleInfo = getSampleInfo(ctxt.GetParameterValue(L"time"),
                                       getTimeSamplingFromObject(obj),

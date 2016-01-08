@@ -97,15 +97,20 @@ class AlembicParticles : public SimpleParticle {
 #else
   RefResult NotifyRefChanged(Interval, RefTargetHandle, PartID &, RefMessage);
 #endif
-  int NumSubs() { return 1; }  // because it uses the paramblock
+  int NumSubs()
+  {
+    return 1;  // because it uses the paramblock
+  }
   Animatable *SubAnim(int i) { return GetReference(i); }
   TSTR SubAnimName(int i) { return _T("Parameters"); }
   int SubNumToRefNum(int subNum)
   {
-    if (subNum == 0)
+    if (subNum == 0) {
       return 0;
-    else
+    }
+    else {
       return -1;
+    }
   }
 
  public:
@@ -287,7 +292,10 @@ class AlembicParticlesClassDesc : public ClassDesc2 {
   {
     return _T(ALEMBIC_SIMPLE_PARTICLE_SCRIPTNAME);
   }  // returns fixed parsable name (scripter-visible name)
-  HINSTANCE HInstance() { return hInstance; }  // returns owning module handle
+  HINSTANCE HInstance()
+  {
+    return hInstance;  // returns owning module handle
+  }
 };
 
 #endif  // __ALEMBIC_SIMPLE_PARTICLE__H

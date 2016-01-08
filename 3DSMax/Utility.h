@@ -101,7 +101,9 @@ inline Quat ConvertAlembicQuatToMaxQuat(const Abc::Quatf &alembicQuat,
 {
   Quat q(alembicQuat.v.x, -alembicQuat.v.z, alembicQuat.v.y, -alembicQuat.r);
 
-  if (bNormalize) q.Normalize();
+  if (bNormalize) {
+    q.Normalize();
+  }
 
   return q;
 }
@@ -182,9 +184,9 @@ class AlembicPathAccessor : public IAssetAccessor {
 };
 
 class SmoothGroupNormals {  // this class was refactored from
-                            // AlembicIntermediatePolyMesh3DSMax, the save
-                            // method still needs to be updated to use the new
-                            // code
+  // AlembicIntermediatePolyMesh3DSMax, the save
+  // method still needs to be updated to use the new
+  // code
   std::vector<VNormal> m_MeshSmoothGroupNormals;
 
  public:

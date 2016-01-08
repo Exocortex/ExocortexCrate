@@ -101,7 +101,9 @@ MStatus AlembicAssignFacesetCommand::doIt(const MArgList& args)
         faces.add(iter.currentItem());
         ++facesetIdx;
 
-        if (facesetIdx == arr.length()) break;
+        if (facesetIdx == arr.length()) {
+          break;
+        }
       }
     }
 
@@ -124,7 +126,9 @@ static MStatus getObjectByName(const MString& name, MObject& object)
 
   MSelectionList sList;
   MStatus status = sList.add(name);
-  if (status == MS::kSuccess) status = sList.getDependNode(0, object);
+  if (status == MS::kSuccess) {
+    status = sList.getDependNode(0, object);
+  }
   return status;
 }
 
@@ -132,7 +136,9 @@ static MStatus getDagPathByName(const MString& name, MDagPath& dagPath)
 {
   MSelectionList sList;
   MStatus status = sList.add(name);
-  if (status == MS::kSuccess) status = sList.getDagPath(0, dagPath);
+  if (status == MS::kSuccess) {
+    status = sList.getDagPath(0, dagPath);
+  }
   return status;
 }
 

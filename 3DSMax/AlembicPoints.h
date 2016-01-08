@@ -185,13 +185,27 @@ class AlembicPoints : public AlembicObject {
 
     bool operator<(const meshDigests &iRhs) const
     {
-      if (Vertices < iRhs.Vertices) return true;
-      if (Vertices > iRhs.Vertices) return false;
-      if (Faces < iRhs.Faces) return true;
-      if (Faces > iRhs.Faces) return false;
-      if (MatIds < iRhs.MatIds) return true;
-      if (MatIds > iRhs.MatIds) return false;
-      if (UVWs < iRhs.UVWs) return true;
+      if (Vertices < iRhs.Vertices) {
+        return true;
+      }
+      if (Vertices > iRhs.Vertices) {
+        return false;
+      }
+      if (Faces < iRhs.Faces) {
+        return true;
+      }
+      if (Faces > iRhs.Faces) {
+        return false;
+      }
+      if (MatIds < iRhs.MatIds) {
+        return true;
+      }
+      if (MatIds > iRhs.MatIds) {
+        return false;
+      }
+      if (UVWs < iRhs.UVWs) {
+        return true;
+      }
       return false;
     }
   };

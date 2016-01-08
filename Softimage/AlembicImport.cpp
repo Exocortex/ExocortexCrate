@@ -158,7 +158,9 @@ CStatus alembic_create_item_Invoke(const CString& type,
   std::map<std::string, alembicItemType>::iterator it =
       gItemTypeMap.find(realType.GetAsciiString());
   alembicItemType itemType = alembicItemType_none;
-  if (it != gItemTypeMap.end()) itemType = it->second;
+  if (it != gItemTypeMap.end()) {
+    itemType = it->second;
+  }
 
   // cast into the standard types
   X3DObject x3d(target);
@@ -172,12 +174,14 @@ CStatus alembic_create_item_Invoke(const CString& type,
     ESS_PROFILE_SCOPE("alembic_create_item_Invoke find_real_target");
     switch (itemType) {
       case alembicItemType_xform: {
-        if (x3d.IsValid())
+        if (x3d.IsValid()) {
           realTarget = x3d.GetKinematics().GetLocal().GetRef();
+        }
         else {
           KinematicState kine(target);
-          if (kine.IsValid())
+          if (kine.IsValid()) {
             realTarget = target;
+          }
           else {
             Application().LogMessage(L"[ExocortexAlembic] Invalid target '" +
                                          target.GetAsText() + L"' for " + type +
@@ -192,8 +196,9 @@ CStatus alembic_create_item_Invoke(const CString& type,
       case alembicItemType_geomapprox: {
         if (x3d.IsValid()) {
           Property visProp;
-          if (itemType == alembicItemType_visibility)
+          if (itemType == alembicItemType_visibility) {
             x3d.GetPropertyFromName(L"Visibility", visProp);
+          }
           else {
             x3d.GetPropertyFromName(L"GeomApprox", visProp);
           }
@@ -209,10 +214,12 @@ CStatus alembic_create_item_Invoke(const CString& type,
         break;
       }
       case alembicItemType_camera: {
-        if (x3d.IsValid())
+        if (x3d.IsValid()) {
           realTarget = x3d.GetActivePrimitive().GetRef();
-        else if (prim.IsValid())
+        }
+        else if (prim.IsValid()) {
           realTarget = prim.GetRef();
+        }
         else {
           Application().LogMessage(L"[ExocortexAlembic] Invalid target '" +
                                        target.GetAsText() + L"' for " + type +
@@ -237,10 +244,12 @@ CStatus alembic_create_item_Invoke(const CString& type,
       case alembicItemType_curves:
       case alembicItemType_points:
       case alembicItemType_nurbs: {
-        if (x3d.IsValid())
+        if (x3d.IsValid()) {
           realTarget = x3d.GetActivePrimitive().GetRef();
-        else if (prim.IsValid())
+        }
+        else if (prim.IsValid()) {
           realTarget = prim.GetRef();
+        }
         else {
           Application().LogMessage(L"[ExocortexAlembic] Invalid target '" +
                                        target.GetAsText() + L"' for " + type +
@@ -295,8 +304,9 @@ CStatus alembic_create_item_Invoke(const CString& type,
       }
       case alembicItemType_metadata:
       case alembicItemType_timecontrol: {
-        if (x3d.IsValid())
+        if (x3d.IsValid()) {
           realTarget = x3d.GetRef();
+        }
         else {
           Application().LogMessage(L"[ExocortexAlembic] Invalid target '" +
                                        target.GetAsText() + L"' for " + type +
@@ -325,8 +335,9 @@ CStatus alembic_create_item_Invoke(const CString& type,
                                    siErrorMsg);
           return CStatus::InvalidArgument;
         }
-        if (alembicOp.IsValid())
+        if (alembicOp.IsValid()) {
           realTarget = alembicOp.GetRef();
+        }
         else {
           // loop for the first custom node
           CRefArray compounds = alembicTree.GetCompoundNodes();
@@ -341,7 +352,9 @@ CStatus alembic_create_item_Invoke(const CString& type,
               }
             }
 
-            if (realTarget.IsValid()) break;
+            if (realTarget.IsValid()) {
+              break;
+            }
           }
 
           if (!realTarget.IsValid()) {
@@ -429,7 +442,9 @@ CStatus alembic_create_item_Invoke(const CString& type,
   // check if we have a timecontrol in the args
   CustomProperty timeControlProp;
   CRef timeControlRef;
-  if (args.GetCount() > 0) timeControlRef = args[0];
+  if (args.GetCount() > 0) {
+    timeControlRef = args[0];
+  }
   timeControlProp = timeControlRef;
   CValue setExprReturn;
   CValueArray setExprArgs(2);
@@ -460,9 +475,9 @@ CStatus alembic_create_item_Invoke(const CString& type,
       case alembicItemType_geomapprox:
       case alembicItemType_camera:
       case alembicItemType_polymesh_topo:  // in this case, a normals operator
-                                           // and multiple UV operator may be
-                                           // created. Also, clusters may be
-                                           // created.
+      // and multiple UV operator may be
+      // created. Also, clusters may be
+      // created.
       case alembicItemType_bbox:
       case alembicItemType_polymesh:
       case alembicItemType_crvlist_topo:
@@ -547,8 +562,9 @@ CStatus alembic_create_item_Invoke(const CString& type,
         }
 
         // for xform, disable softimage scaling
-        if (itemType == alembicItemType_xform)
+        if (itemType == alembicItemType_xform) {
           KinematicState(realTarget).PutParameterValue(L"siscaling", false);
+        }
 
         CustomOperator op;
         if (attachToExisting) {
@@ -613,8 +629,9 @@ CStatus alembic_create_item_Invoke(const CString& type,
             ESS_PROFILE_SCOPE(
                 "alembic_create_item_Invoke create_the_operator dynamic topo "
                 "check");
-            if (itemType == alembicItemType_crvlist_topo)
+            if (itemType == alembicItemType_crvlist_topo) {
               receivesExpression = false;
+            }
             else if (itemType == alembicItemType_polymesh_topo) {
               // check if the compound has more than one sample on its
               // facecounts
@@ -622,8 +639,9 @@ CStatus alembic_create_item_Invoke(const CString& type,
                   getCompoundFromObject(abcObject);
               Abc::IInt32ArrayProperty faceCountProp =
                   Abc::IInt32ArrayProperty(abcCompound, ".faceCounts");
-              if (faceCountProp.valid())
+              if (faceCountProp.valid()) {
                 receivesExpression = !faceCountProp.isConstant();
+              }
 
               if (!receivesExpression)  // still false, check .faceIndices just
                                         // in case and reuse faceCountProp
@@ -631,10 +649,12 @@ CStatus alembic_create_item_Invoke(const CString& type,
               {
                 faceCountProp =
                     Abc::IInt32ArrayProperty(abcCompound, ".faceIndices");
-                if (faceCountProp.valid())
+                if (faceCountProp.valid()) {
                   receivesExpression = !faceCountProp.isConstant();
-                else
+                }
+                else {
                   receivesExpression = false;
+                }
               }
             }
           }
@@ -667,11 +687,15 @@ CStatus alembic_create_item_Invoke(const CString& type,
 
           AbcG::IPolyMesh abcMesh;
           AbcG::ISubD abcSubD;
-          if (AbcG::IPolyMesh::matches(abcObject.getMetaData()))
+          if (AbcG::IPolyMesh::matches(abcObject.getMetaData())) {
             abcMesh = AbcG::IPolyMesh(abcObject, Abc::kWrapExisting);
-          else
+          }
+          else {
             abcSubD = AbcG::ISubD(abcObject, Abc::kWrapExisting);
-          if (!abcMesh.valid() && !abcSubD.valid()) return CStatus::OK;
+          }
+          if (!abcMesh.valid() && !abcSubD.valid()) {
+            return CStatus::OK;
+          }
 
           PolygonMesh meshGeo = Primitive(realTarget).GetGeometry();
           // for our "apply" mode, I feel no changes our necessary here. It is
@@ -682,16 +706,19 @@ CStatus alembic_create_item_Invoke(const CString& type,
                 "alembic_create_item_Invoke create_the_operator polymesh_topo "
                 "importClusters");
             std::vector<std::string> faceSetNames;
-            if (abcMesh.valid())
+            if (abcMesh.valid()) {
               abcMesh.getSchema().getFaceSetNames(faceSetNames);
-            else
+            }
+            else {
               abcSubD.getSchema().getFaceSetNames(faceSetNames);
+            }
             for (size_t j = 0; j < faceSetNames.size(); j++) {
               if (attachToExisting) {
                 if (meshGeo.GetClusters()
                         .GetItem(CString(faceSetNames[j].c_str()))
-                        .IsValid())  // only create clusters that do not exist
+                        .IsValid()) {  // only create clusters that do not exist
                   continue;
+                }
               }
               AbcG::IFaceSetSchema faceSet;
               if (abcMesh.valid())
@@ -703,8 +730,9 @@ CStatus alembic_create_item_Invoke(const CString& type,
               AbcG::IFaceSetSchema::Sample faceSetSample = faceSet.getValue();
               Abc::Int32ArraySamplePtr faces = faceSetSample.getFaces();
               CLongArray elements((LONG)faces->size());
-              for (size_t k = 0; k < faces->size(); k++)
+              for (size_t k = 0; k < faces->size(); k++) {
                 elements[(LONG)k] = (LONG)faces->get()[k];
+              }
               Cluster cluster;
               meshGeo.AddCluster(L"poly", CString(faceSetNames[j].c_str()),
                                  elements, cluster);
@@ -740,7 +768,9 @@ CStatus alembic_create_item_Invoke(const CString& type,
               CRefArray clusters = meshGeo.GetClusters();
               for (LONG j = 0; j < clusters.GetCount(); j++) {
                 Cluster cluster(clusters[j]);
-                if (!cluster.GetType().IsEqualNoCase(L"sample")) continue;
+                if (!cluster.GetType().IsEqualNoCase(L"sample")) {
+                  continue;
+                }
                 CRefArray props(cluster.GetLocalProperties());
                 for (LONG k = 0; k < props.GetCount(); k++) {
                   ClusterProperty prop(props[k]);
@@ -749,7 +779,9 @@ CStatus alembic_create_item_Invoke(const CString& type,
                     break;
                   }
                 }
-                if (userNormalProp.IsValid()) break;
+                if (userNormalProp.IsValid()) {
+                  break;
+                }
               }
               if (userNormalProp.IsValid()) {
                 // we found it, and we need to attach the op
@@ -776,7 +808,9 @@ CStatus alembic_create_item_Invoke(const CString& type,
                   }
                   if (!timeControlProp.IsValid()) {
                     CRef timeControlRef;
-                    if (args.GetCount() > 0) timeControlRef = args[0];
+                    if (args.GetCount() > 0) {
+                      timeControlRef = args[0];
+                    }
                     timeControlProp = timeControlRef;
                   }
                   if (timeControlProp.IsValid())  // Shouldn't we not connect
@@ -801,10 +835,12 @@ CStatus alembic_create_item_Invoke(const CString& type,
                 "alembic_create_item_Invoke create_the_operator polymesh_topo "
                 "importUvs");
             AbcG::IV2fGeomParam meshUVsParam;
-            if (abcMesh.valid())
+            if (abcMesh.valid()) {
               meshUVsParam = abcMesh.getSchema().getUVsParam();
-            else
+            }
+            else {
               meshUVsParam = abcSubD.getSchema().getUVsParam();
+            }
             if (meshUVsParam.valid()) {
               // check if we have a uv set names prop
               CStringArray uvSetNames;
@@ -815,8 +851,9 @@ CStatus alembic_create_item_Invoke(const CString& type,
                       Abc::IStringArrayProperty(abcMesh.getSchema(),
                                                 ".uvSetNames");
                   Abc::StringArraySamplePtr ptr = uvSetNamesProp.getValue(0);
-                  for (size_t i = 0; i < ptr->size(); i++)
+                  for (size_t i = 0; i < ptr->size(); i++) {
                     uvSetNames.Add(CString(ptr->get()[i].c_str()));
+                  }
                 }
               }
               else {
@@ -826,12 +863,14 @@ CStatus alembic_create_item_Invoke(const CString& type,
                       Abc::IStringArrayProperty(abcSubD.getSchema(),
                                                 ".uvSetNames");
                   Abc::StringArraySamplePtr ptr = uvSetNamesProp.getValue(0);
-                  for (size_t i = 0; i < ptr->size(); i++)
+                  for (size_t i = 0; i < ptr->size(); i++) {
                     uvSetNames.Add(CString(ptr->get()[i].c_str()));
+                  }
                 }
               }
-              if (uvSetNames.GetCount() == 0)
+              if (uvSetNames.GetCount() == 0) {
                 uvSetNames.Add(L"Texture_Projection");
+              }
 
               // for each uv set name
               for (LONG uvI = 0; uvI < uvSetNames.GetCount(); uvI++) {
@@ -868,7 +907,9 @@ CStatus alembic_create_item_Invoke(const CString& type,
                 CRefArray clusters = meshGeo.GetClusters();
                 for (LONG j = 0; j < clusters.GetCount(); j++) {
                   Cluster cluster(clusters[j]);
-                  if (!cluster.GetType().IsEqualNoCase(L"sample")) continue;
+                  if (!cluster.GetType().IsEqualNoCase(L"sample")) {
+                    continue;
+                  }
                   CRefArray props(cluster.GetLocalProperties());
                   for (LONG k = 0; k < props.GetCount(); k++) {
                     ClusterProperty prop(props[k]);
@@ -878,7 +919,9 @@ CStatus alembic_create_item_Invoke(const CString& type,
                       break;
                     }
                   }
-                  if (uvProp.IsValid()) break;
+                  if (uvProp.IsValid()) {
+                    break;
+                  }
                 }
 
                 if (uvProp.IsValid()) {
@@ -999,7 +1042,9 @@ CStatus alembic_create_item_Invoke(const CString& type,
         if (isAnimated) {
           // check if we have a timecontrol in the args
           CRef timeControlRef;
-          if (args.GetCount() > 0) timeControlRef = args[0];
+          if (args.GetCount() > 0) {
+            timeControlRef = args[0];
+          }
           CustomProperty timeControlProp = timeControlRef;
           if (timeControlProp.IsValid()) {
             treeArgs[0] = node.GetFullName() + L".TimeControl";
@@ -1023,7 +1068,9 @@ CStatus alembic_create_item_Invoke(const CString& type,
 
         // we need to check if we have instances....
         AbcG::IPoints abcPoints(abcObject, Abc::kWrapExisting);
-        if (!abcPoints.valid()) return CStatus::OK;
+        if (!abcPoints.valid()) {
+          return CStatus::OK;
+        }
 
         Abc::IStringArrayProperty shapeInstanceNamesProp;
         if (getArbGeomParamPropertyAlembic(abcPoints, "instancenames",
@@ -1066,8 +1113,9 @@ CStatus alembic_create_item_Invoke(const CString& type,
                 treeArgs[1] = fullName;
                 CStatus status = Application().ExecuteCommand(
                     L"SetValue", treeArgs, treeReturnVal);
-                if (status != CStatus::OK)
+                if (status != CStatus::OK) {
                   ESS_LOG_WARNING("Failed set ABC_Instance_Shapes.Reference");
+                }
 
                 // also check if we have this object in the scene
                 if (hasStandinSupport()) {
@@ -1079,15 +1127,17 @@ CStatus alembic_create_item_Invoke(const CString& type,
                     CRef standinPropRef;
                     standinPropRef.Set(fullName + L".arnold_standin");
                     Property prop(standinPropRef);
-                    if (prop.IsValid())
+                    if (prop.IsValid()) {
                       prop.PutParameterValue(L"deferredLoading", false);
+                    }
 
                     // enable hiding the instance masters
                     CRef visPropRef;
                     visPropRef.Set(fullName + L".visibility");
                     prop = Property(visPropRef);
-                    if (prop.IsValid())
+                    if (prop.IsValid()) {
                       prop.PutParameterValue(L"hidemaster", true);
+                    }
                   }
                 }
               }
@@ -1106,8 +1156,9 @@ CStatus alembic_create_item_Invoke(const CString& type,
           treeArgs[1] = Primitive(realTarget).GetParent3DObject().GetFullName();
           CStatus status = Application().ExecuteCommand(L"ApplyICEOp", treeArgs,
                                                         treeReturnVal);
-          if (status != CStatus::OK)
+          if (status != CStatus::OK) {
             ESS_LOG_WARNING("Failed to ApplyICEOp ABC_Load_Points");
+          }
           iceTree = (CRef)treeReturnVal;
         }
 
@@ -1135,7 +1186,9 @@ CStatus alembic_create_item_Invoke(const CString& type,
         if (isAnimated) {
           // check if we have a timeControl in the args
           CRef timeControlRef;
-          if (args.GetCount() > 0) timeControlRef = args[0];
+          if (args.GetCount() > 0) {
+            timeControlRef = args[0];
+          }
           CustomProperty timeControlProp = timeControlRef;
           if (timeControlProp.IsValid()) {
             treeArgs[0] = node.GetFullName() + L".TimeControl";
@@ -1153,24 +1206,34 @@ CStatus alembic_create_item_Invoke(const CString& type,
             "alembic_create_item_Invoke create_the_operator "
             "alembicItemType_metadata");
         Abc::ICompoundProperty abcCompound = getCompoundFromObject(abcObject);
-        if (abcCompound.getPropertyHeader(".metadata") == NULL) break;
+        if (abcCompound.getPropertyHeader(".metadata") == NULL) {
+          break;
+        }
 
         Abc::IStringArrayProperty metaDataProp =
             Abc::IStringArrayProperty(abcCompound, ".metadata");
         Abc::StringArraySamplePtr metaDataPtr = metaDataProp.getValue(0);
-        if (metaDataPtr->size() != 20) break;
+        if (metaDataPtr->size() != 20) {
+          break;
+        }
 
         // check if we already have the metadataprop
         CustomProperty xsiProp;
         CRefArray props = x3d.GetLocalProperties();
         for (LONG i = 0; i < props.GetCount(); i++) {
           CustomProperty prop(props[i]);
-          if (!prop.IsValid()) continue;
-          if (!prop.GetType().IsEqualNoCase(L"alembic_metadata")) continue;
+          if (!prop.IsValid()) {
+            continue;
+          }
+          if (!prop.GetType().IsEqualNoCase(L"alembic_metadata")) {
+            continue;
+          }
           xsiProp = prop;
           break;
         }
-        if (!xsiProp.IsValid()) xsiProp = x3d.AddProperty(L"alembic_metadata");
+        if (!xsiProp.IsValid()) {
+          xsiProp = x3d.AddProperty(L"alembic_metadata");
+        }
 
         // set all values
         size_t offset = 0;
@@ -1246,7 +1309,9 @@ CStatus alembic_create_item_Invoke(const CString& type,
           // create the timecontrol expression
           // check if we have a timecontrol in the args
           CRef timeControlRef;
-          if (args.GetCount() > 0) timeControlRef = args[0];
+          if (args.GetCount() > 0) {
+            timeControlRef = args[0];
+          }
           Property timeControlProp = timeControlRef;
           if (timeControlProp.IsValid()) {
             CValue setExprReturn;
@@ -1304,7 +1369,9 @@ CString file = args[2];
 CString identifier = args[3];
 bool reattach = args[4];
 CValueArray additionalArgs;
-for (LONG i = 5; i < args.GetCount(); i++) additionalArgs.Add(args[i]);
+for (LONG i = 5; i < args.GetCount(); i++) {
+  additionalArgs.Add(args[i]);
+}
 CValue returnVal;
 CStatus result =
     alembic_create_item_Invoke(type, target, target, file, identifier, reattach,
@@ -1426,7 +1493,7 @@ bool createNode(SceneNodeXSI* appNode, SceneNodeAlembicPtr fileNode,
     AbcG::IXform xform(iObj, Abc::kWrapExisting);
     XSI_XformTypes::xte xte = getXformType(xform);
     if (xte == XSI_XformTypes::UNKNOWN) {  // if UNKNOWN, default chosen based
-                                           // on import option
+      // on import option
       xte = jobParams.xformTypes;
     }
 
@@ -1628,7 +1695,9 @@ bool createMergeableNode(SceneNodeXSI* appNode,
       ESS_PROFILE_SCOPE("attachToExisting");
       nodeRef = appNode->nodeRef;
 
-      if (!validate(nodeRef, CString("camera"), shapeObj)) return false;
+      if (!validate(nodeRef, CString("camera"), shapeObj)) {
+        return false;
+      }
 
       camera = nodeRef;
 
@@ -1703,7 +1772,9 @@ bool createMergeableNode(SceneNodeXSI* appNode,
       ESS_PROFILE_SCOPE("attachToExisting");
       nodeRef = appNode->nodeRef;
 
-      if (!validate(nodeRef, CString("PolyMsh"), shapeObj)) return false;
+      if (!validate(nodeRef, CString("PolyMsh"), shapeObj)) {
+        return false;
+      }
 
       meshObj = nodeRef;
 
@@ -1845,7 +1916,9 @@ bool createMergeableNode(SceneNodeXSI* appNode,
       ESS_PROFILE_SCOPE("attachToExisting");
       nodeRef = appNode->nodeRef;
 
-      if (!validate(nodeRef, CString("surfmsh"), shapeObj)) return false;
+      if (!validate(nodeRef, CString("surfmsh"), shapeObj)) {
+        return false;
+      }
       nurbsObj = nodeRef;
 
       returnNode = fileShapeNode;
@@ -1969,7 +2042,9 @@ bool createMergeableNode(SceneNodeXSI* appNode,
         ESS_PROFILE_SCOPE("attachToExisting");
         nodeRef = appNode->nodeRef;
 
-        if (!validate(nodeRef, CString("pointcloud"), shapeObj)) return false;
+        if (!validate(nodeRef, CString("pointcloud"), shapeObj)) {
+          return false;
+        }
 
         returnNode = fileShapeNode;
 
@@ -2187,7 +2262,9 @@ bool createMergeableNode(SceneNodeXSI* appNode,
       ESS_PROFILE_SCOPE("attachToExisting");
       nodeRef = appNode->nodeRef;
 
-      if (!validate(nodeRef, CString("pointcloud"), shapeObj)) return false;
+      if (!validate(nodeRef, CString("pointcloud"), shapeObj)) {
+        return false;
+      }
 
       returnNode = fileShapeNode;
 
@@ -2288,8 +2365,8 @@ bool createNodes(SceneNodeXSI* const appNode, SceneNodeAlembicPtr fileNode,
                  bool bAttachToExisting)
 {
   if (fileNode->type == SceneNode::ETRANSFORM) {  // we have a transform with
-                                                  // only one shape node child,
-                                                  // so we can merge
+    // only one shape node child,
+    // so we can merge
 
     SceneNodeAlembicPtr shapeNode;
     for (SceneChildIterator it = fileNode->children.begin();
@@ -2500,7 +2577,7 @@ else {
 
   if (jobParser.extraParameters["sceneMergeMethod"] == "new" &&
       jobParser.attachToExisting) {  // backwards compatibility with
-                                     // "attachToExisting" bool
+    // "attachToExisting" bool
     jobParser.extraParameters["sceneMergeMethod"] = "attach";
   }
 }
@@ -2707,8 +2784,7 @@ if (jobParser.filename.empty()) {
   std::list<SceneNodeAppPtr> newNodes;
 
   if (jobParser.extraParameters["sceneMergeMethod"] ==
-      "attach")  // if(jobParser.attachToExisting)
-  {
+      "attach") {  // if(jobParser.attachToExisting)
     nNumNodes = 0;
     SceneNodeXSIPtr appRoot =
         buildCommonSceneGraph(importRootNode, nNumNodes, false, false);

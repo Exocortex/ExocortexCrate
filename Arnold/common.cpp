@@ -27,16 +27,24 @@ std::string getNameFromIdentifier(const std::string &identifier, long id,
   boost::split(parts, identifier, boost::is_any_of("/\\"));
   result = parts[parts.size() - 1];
   for (int i = (int)parts.size() - 3; i >= 0; i--) {
-    if (parts[i].empty()) break;
+    if (parts[i].empty()) {
+      break;
+    }
     std::string suffix = parts[i].substr(parts[i].length() - 3, 3);
-    if (suffix == "xfo" || suffix == "XFO" || suffix == "Xfo")
+    if (suffix == "xfo" || suffix == "XFO" || suffix == "Xfo") {
       result = parts[i].substr(0, parts[i].length() - 3) + "." + result;
-    else
+    }
+    else {
       result = suffix + "." + result;
+    }
   }
 
-  if (id >= 0) result += "." + boost::lexical_cast<std::string>(id);
-  if (group >= 0) result += "." + boost::lexical_cast<std::string>(group);
+  if (id >= 0) {
+    result += "." + boost::lexical_cast<std::string>(id);
+  }
+  if (group >= 0) {
+    result += "." + boost::lexical_cast<std::string>(group);
+  }
   return result;
 }
 
@@ -55,8 +63,9 @@ bool shiftedProcessing(nodeData &nodata, userData *ud)
           std::map<float, AtNode *>::iterator it =
               gInfo.nodes[l].find(ud->gCentroidTime);
           if (it != gInfo.nodes[l].end()) {
-            if (it->second != NULL)
+            if (it->second != NULL) {
               nodata.shaders = AiNodeGetArray(it->second, "shader");
+            }
           }
           return true;
         }

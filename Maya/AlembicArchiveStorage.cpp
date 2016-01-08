@@ -45,9 +45,13 @@ std::string resolvePath_Internal(std::string const& originalPath)
         MFileIO io;
         std::string value = io.currentFile().asChar();
         for (size_t i = 0; i < value.length(); i++) {
-          if (value[i] == '\\') value[i] = '/';
+          if (value[i] == '\\') {
+            value[i] = '/';
+          }
         }
-        if (value.rfind('/') > 0) value = value.substr(0, value.rfind('/'));
+        if (value.rfind('/') > 0) {
+          value = value.substr(0, value.rfind('/'));
+        }
         path = prefix + value.c_str() + suffix;
       }
       else {

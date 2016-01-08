@@ -117,7 +117,9 @@ XSI::CStatus AlembicPolyMesh::Save(double time)
   // abort here if we are just storing points
   bool purePointCache = (bool)GetJob()->GetOption(L"exportPurePointCache");
   if (purePointCache) {
-    if (bEnableLogging) ESS_LOG_WARNING("Exporting pure point cache");
+    if (bEnableLogging) {
+      ESS_LOG_WARNING("Exporting pure point cache");
+    }
     if (mNumSamples == 0) {
       // store a dummy empty topology
       mMeshSample.setFaceCounts(Abc::Int32ArraySample(NULL, 0));
@@ -148,7 +150,9 @@ XSI::CStatus AlembicPolyMesh::Save(double time)
 
   bool exportNormals = GetJob()->GetOption(L"exportNormals");
   if (exportNormals) {
-    if (bEnableLogging) ESS_LOG_WARNING("Exporting normals");
+    if (bEnableLogging) {
+      ESS_LOG_WARNING("Exporting normals");
+    }
     normalSample.setScope(AbcG::kFacevaryingScope);
 
     normalSample.setVals(Abc::N3fArraySample(finalMesh.mIndexedNormals.values));
@@ -160,7 +164,9 @@ XSI::CStatus AlembicPolyMesh::Save(double time)
   }
 
   if (finalMesh.mVelocitiesVec.size() > 0) {
-    if (bEnableLogging) ESS_LOG_WARNING("Exporting velocities");
+    if (bEnableLogging) {
+      ESS_LOG_WARNING("Exporting velocities");
+    }
     mMeshSample.setVelocities(Abc::V3fArraySample(finalMesh.mVelocitiesVec));
   }
 
@@ -169,10 +175,14 @@ XSI::CStatus AlembicPolyMesh::Save(double time)
     saveIndexedUVs(mMeshSchema, mMeshSample, uvSample, mUvParams,
                    GetJob()->GetAnimatedTs(), mNumSamples,
                    finalMesh.mIndexedUVSet);
-    if (bEnableLogging) ESS_LOG_WARNING("Exporting UV data.");
+    if (bEnableLogging) {
+      ESS_LOG_WARNING("Exporting UV data.");
+    }
 
     if (mNumSamples == 0 && finalMesh.mUvOptionsVec.size() > 0) {
-      if (bEnableLogging) ESS_LOG_WARNING("Export UV options.");
+      if (bEnableLogging) {
+        ESS_LOG_WARNING("Export UV options.");
+      }
       mUvOptionsProperty = Abc::OFloatArrayProperty(mMeshSchema, ".uvOptions",
                                                     mMeshSchema.getMetaData(),
                                                     GetJob()->GetAnimatedTs());
@@ -190,14 +200,18 @@ XSI::CStatus AlembicPolyMesh::Save(double time)
   mFaceVaryingInterpolateBoundaryProperty.set(finalMesh.bGeomApprox);
 
   if (GetJob()->GetOption(L"exportFaceSets") && mNumSamples == 0) {
-    if (bEnableLogging) ESS_LOG_WARNING("Exporting facesets");
+    if (bEnableLogging) {
+      ESS_LOG_WARNING("Exporting facesets");
+    }
 
     for (FaceSetMap::iterator it = finalMesh.mFaceSets.begin();
          it != finalMesh.mFaceSets.end(); it++) {
       std::string name = it->first;
       FaceSetStruct& faceSetStruct = it->second;
       if (faceSetStruct.faceIds.size() > 0) {
-        if (bEnableLogging) ESS_LOG_WARNING("Exporting faceset " << name);
+        if (bEnableLogging) {
+          ESS_LOG_WARNING("Exporting faceset " << name);
+        }
         AbcG::OFaceSet faceSet = mMeshSchema.createFaceSet(name);
         AbcG::OFaceSetSchema::Sample faceSetSample(
             Abc::Int32ArraySample(faceSetStruct.faceIds));
@@ -209,7 +223,9 @@ XSI::CStatus AlembicPolyMesh::Save(double time)
   // check if we need to export the bindpose (also only for first frame)
   if (GetJob()->GetOption(L"exportBindPose") &&
       finalMesh.mBindPoseVec.size() > 0 && mNumSamples == 0) {
-    if (bEnableLogging) ESS_LOG_WARNING("Exporting BindPose");
+    if (bEnableLogging) {
+      ESS_LOG_WARNING("Exporting BindPose");
+    }
     mBindPoseProperty = Abc::OV3fArrayProperty(mMeshSchema, ".bindpose",
                                                mMeshSchema.getMetaData(),
                                                GetJob()->GetAnimatedTs());
@@ -246,20 +262,28 @@ alembicOp_Multifile(in_ctxt, ctxt.GetParameterValue(L"multifile"),
                     ctxt.GetParameterValue(L"time"), path);
 CStatus pathEditStat = alembicOp_PathEdit(in_ctxt, path);
 
-if ((bool)ctxt.GetParameterValue(L"muted")) return CStatus::OK;
+if ((bool)ctxt.GetParameterValue(L"muted")) {
+  return CStatus::OK;
+}
 
 CString identifier = ctxt.GetParameterValue(L"identifier");
 
 AbcG::IObject iObj = getObjectFromArchive(path, identifier);
-if (!iObj.valid()) return CStatus::OK;
+if (!iObj.valid()) {
+  return CStatus::OK;
+}
 
 AbcG::IPolyMesh objMesh;
 AbcG::ISubD objSubD;
-if (AbcG::IPolyMesh::matches(iObj.getMetaData()))
+if (AbcG::IPolyMesh::matches(iObj.getMetaData())) {
   objMesh = AbcG::IPolyMesh(iObj, Abc::kWrapExisting);
-else
+}
+else {
   objSubD = AbcG::ISubD(iObj, Abc::kWrapExisting);
-if (!objMesh.valid() && !objSubD.valid()) return CStatus::OK;
+}
+if (!objMesh.valid() && !objSubD.valid()) {
+  return CStatus::OK;
+}
 
 AbcA::TimeSamplingPtr timeSampling;
 int nSamples = 0;
@@ -300,7 +324,9 @@ Operator op(ctxt.GetSource());
 updateOperatorInfo(op, sampleInfo, timeSampling, (int)pos.GetCount(),
                    (int)meshPos->size());
 
-if (pos.GetCount() != meshPos->size()) return CStatus::OK;
+if (pos.GetCount() != meshPos->size()) {
+  return CStatus::OK;
+}
 
 for (size_t i = 0; i < meshPos->size(); i++)
   pos[(LONG)i].Set(meshPos->get()[i].x, meshPos->get()[i].y,
@@ -359,14 +385,20 @@ alembicOp_Multifile(in_ctxt, ctxt.GetParameterValue(L"multifile"),
                     ctxt.GetParameterValue(L"time"), path);
 CStatus pathEditStat = alembicOp_PathEdit(in_ctxt, path);
 
-if ((bool)ctxt.GetParameterValue(L"muted")) return CStatus::OK;
+if ((bool)ctxt.GetParameterValue(L"muted")) {
+  return CStatus::OK;
+}
 
 CString identifier = ctxt.GetParameterValue(L"identifier");
 
 AbcG::IObject iObj = getObjectFromArchive(path, identifier);
-if (!iObj.valid()) return CStatus::OK;
+if (!iObj.valid()) {
+  return CStatus::OK;
+}
 AbcG::IPolyMesh obj(iObj, Abc::kWrapExisting);
-if (!obj.valid()) return CStatus::OK;
+if (!obj.valid()) {
+  return CStatus::OK;
+}
 
 SampleInfo sampleInfo = getSampleInfo(ctxt.GetParameterValue(L"time"),
                                       obj.getSchema().getTimeSampling(),
@@ -464,7 +496,9 @@ alembicOp_Multifile(in_ctxt, ctxt.GetParameterValue(L"multifile"),
                     ctxt.GetParameterValue(L"time"), path);
 CStatus pathEditStat = alembicOp_PathEdit(in_ctxt, path);
 
-if ((bool)ctxt.GetParameterValue(L"muted")) return CStatus::OK;
+if ((bool)ctxt.GetParameterValue(L"muted")) {
+  return CStatus::OK;
+}
 
 CString identifierAndIndex = ctxt.GetParameterValue(L"identifier");
 
@@ -482,14 +516,20 @@ if (colonOffset + 1 < identifierAndIndex.Length()) {
 // ESS_LOG_WARNING("uvI: "<<uvI);
 
 AbcG::IObject iObj = getObjectFromArchive(path, identifier);
-if (!iObj.valid()) return CStatus::OK;
+if (!iObj.valid()) {
+  return CStatus::OK;
+}
 AbcG::IPolyMesh objMesh;
 AbcG::ISubD objSubD;
-if (AbcG::IPolyMesh::matches(iObj.getMetaData()))
+if (AbcG::IPolyMesh::matches(iObj.getMetaData())) {
   objMesh = AbcG::IPolyMesh(iObj, Abc::kWrapExisting);
-else
+}
+else {
   objSubD = AbcG::ISubD(iObj, Abc::kWrapExisting);
-if (!objMesh.valid() && !objSubD.valid()) return CStatus::OK;
+}
+if (!objMesh.valid() && !objSubD.valid()) {
+  return CStatus::OK;
+}
 
 CDoubleArray uvValues =
     ClusterProperty((CRef)ctxt.GetInputValue(0)).GetElements().GetArray();
@@ -502,25 +542,29 @@ accessor.GetPolygonVerticesCount(counts);
 
 AbcG::IV2fGeomParam meshUvParam;
 if (objMesh.valid()) {
-  if (uvI == 0)
+  if (uvI == 0) {
     meshUvParam = objMesh.getSchema().getUVsParam();
+  }
   else {
     CString storedUVName = CString(L"uv") + CString(uvI);
     if (objMesh.getSchema().getPropertyHeader(storedUVName.GetAsciiString()) ==
-        NULL)
+        NULL) {
       return CStatus::OK;
+    }
     meshUvParam =
         AbcG::IV2fGeomParam(objMesh.getSchema(), storedUVName.GetAsciiString());
   }
 }
 else {
-  if (uvI == 0)
+  if (uvI == 0) {
     meshUvParam = objSubD.getSchema().getUVsParam();
+  }
   else {
     CString storedUVName = CString(L"uv") + CString(uvI);
     if (objSubD.getSchema().getPropertyHeader(storedUVName.GetAsciiString()) ==
-        NULL)
+        NULL) {
       return CStatus::OK;
+    }
     meshUvParam =
         AbcG::IV2fGeomParam(objSubD.getSchema(), storedUVName.GetAsciiString());
   }
@@ -610,25 +654,33 @@ alembicOp_Multifile(in_ctxt, ctxt.GetParameterValue(L"multifile"),
                     ctxt.GetParameterValue(L"time"), path);
 CStatus pathEditStat = alembicOp_PathEdit(in_ctxt, path);
 
-if ((bool)ctxt.GetParameterValue(L"muted")) return CStatus::OK;
+if ((bool)ctxt.GetParameterValue(L"muted")) {
+  return CStatus::OK;
+}
 
 CString identifier = ctxt.GetParameterValue(L"identifier");
 
 AbcG::IObject iObj = getObjectFromArchive(path, identifier);
-if (!iObj.valid()) return CStatus::OK;
+if (!iObj.valid()) {
+  return CStatus::OK;
+}
 AbcG::IPolyMesh objMesh;
 AbcG::ISubD objSubD;
 {
   ESS_PROFILE_SCOPE("alembic_polymesh_topo_Update type matching");
-  if (AbcG::IPolyMesh::matches(iObj.getMetaData()))
+  if (AbcG::IPolyMesh::matches(iObj.getMetaData())) {
     objMesh = AbcG::IPolyMesh(iObj, Abc::kWrapExisting);
-  else
+  }
+  else {
     objSubD = AbcG::ISubD(iObj, Abc::kWrapExisting);
+  }
 }
 
 {
   ESS_PROFILE_SCOPE("alembic_polymesh_topo_Update checking validity");
-  if (!objMesh.valid() && !objSubD.valid()) return CStatus::OK;
+  if (!objMesh.valid() && !objSubD.valid()) {
+    return CStatus::OK;
+  }
 }
 
 if (!isAlembicMeshTopology(&iObj)) {
@@ -700,8 +752,12 @@ CLongArray polies((LONG)(meshFaceCount->size() + meshFaceIndices->size()));
 if (meshFaceCount->size() > 0) {
   ESS_PROFILE_SCOPE("alembic_polymesh_topo_Update setup topology");
   if (meshFaceCount->get()[0] == 0) {
-    if (!meshVel) return CStatus::OK;
-    if (meshVel->size() != meshPos->size()) return CStatus::OK;
+    if (!meshVel) {
+      return CStatus::OK;
+    }
+    if (meshVel->size() != meshPos->size()) {
+      return CStatus::OK;
+    }
 
     // dummy topo
     polies.Resize(4);
@@ -838,13 +894,17 @@ alembicOp_Multifile(in_ctxt, ctxt.GetParameterValue(L"multifile"),
                     ctxt.GetParameterValue(L"time"), path);
 CStatus pathEditStat = alembicOp_PathEdit(in_ctxt, path);
 
-if ((bool)ctxt.GetParameterValue(L"muted")) return CStatus::OK;
+if ((bool)ctxt.GetParameterValue(L"muted")) {
+  return CStatus::OK;
+}
 
 CString identifier = ctxt.GetParameterValue(L"identifier");
 float extend = ctxt.GetParameterValue(L"extend");
 
 AbcG::IObject iObj = getObjectFromArchive(path, identifier);
-if (!iObj.valid()) return CStatus::OK;
+if (!iObj.valid()) {
+  return CStatus::OK;
+}
 
 Abc::Box3d box;
 SampleInfo sampleInfo;
@@ -855,7 +915,9 @@ int nSamples = 0;
 const Abc::MetaData& md = iObj.getMetaData();
 if (AbcG::IPolyMesh::matches(md)) {
   AbcG::IPolyMesh obj(iObj, Abc::kWrapExisting);
-  if (!obj.valid()) return CStatus::OK;
+  if (!obj.valid()) {
+    return CStatus::OK;
+  }
 
   timeSampling = obj.getSchema().getTimeSampling();
   nSamples = (int)obj.getSchema().getNumSamples();
@@ -876,7 +938,9 @@ if (AbcG::IPolyMesh::matches(md)) {
 }
 else if (AbcG::ICurves::matches(md)) {
   AbcG::ICurves obj(iObj, Abc::kWrapExisting);
-  if (!obj.valid()) return CStatus::OK;
+  if (!obj.valid()) {
+    return CStatus::OK;
+  }
 
   timeSampling = obj.getSchema().getTimeSampling();
   nSamples = (int)obj.getSchema().getNumSamples();
@@ -897,7 +961,9 @@ else if (AbcG::ICurves::matches(md)) {
 }
 else if (AbcG::IPoints::matches(md)) {
   AbcG::IPoints obj(iObj, Abc::kWrapExisting);
-  if (!obj.valid()) return CStatus::OK;
+  if (!obj.valid()) {
+    return CStatus::OK;
+  }
 
   timeSampling = obj.getSchema().getTimeSampling();
   nSamples = (int)obj.getSchema().getNumSamples();
@@ -918,7 +984,9 @@ else if (AbcG::IPoints::matches(md)) {
 }
 else if (AbcG::ISubD::matches(md)) {
   AbcG::ISubD obj(iObj, Abc::kWrapExisting);
-  if (!obj.valid()) return CStatus::OK;
+  if (!obj.valid()) {
+    return CStatus::OK;
+  }
 
   timeSampling = obj.getSchema().getTimeSampling();
   nSamples = (int)obj.getSchema().getNumSamples();
@@ -1017,7 +1085,9 @@ XSIPLUGINCALLBACK CStatus alembic_polyMesh2_Evaluate(ICENodeContext& in_ctxt)
   CStatus pathEditStat = alembicOp_PathEdit(in_ctxt, path);
 
   AbcG::IObject iObj = getObjectFromArchive(path, identifier);
-  if (!iObj.valid()) return CStatus::OK;
+  if (!iObj.valid()) {
+    return CStatus::OK;
+  }
 
   CDataArrayBool usevelData(in_ctxt, ID_IN_usevel);
   const double usevel = usevelData[0];
@@ -1025,11 +1095,15 @@ XSIPLUGINCALLBACK CStatus alembic_polyMesh2_Evaluate(ICENodeContext& in_ctxt)
   AbcG::IPolyMesh objMesh;
   AbcG::ISubD objSubD;
   const bool useMesh = AbcG::IPolyMesh::matches(iObj.getMetaData());
-  if (useMesh)
+  if (useMesh) {
     objMesh = AbcG::IPolyMesh(iObj, Abc::kWrapExisting);
-  else
+  }
+  else {
     objSubD = AbcG::ISubD(iObj, Abc::kWrapExisting);
-  if (!objMesh.valid() && !objSubD.valid()) return CStatus::OK;
+  }
+  if (!objMesh.valid() && !objSubD.valid()) {
+    return CStatus::OK;
+  }
 
   AbcA::TimeSamplingPtr timeSampling;
   int nSamples = 0;
@@ -1062,8 +1136,9 @@ XSIPLUGINCALLBACK CStatus alembic_polyMesh2_Evaluate(ICENodeContext& in_ctxt)
       }
 
       if (ptr == NULL || ptr->size() == 0 ||
-          (ptr->size() == 1 && ptr->get()[0].x == FLT_MAX))
+          (ptr->size() == 1 && ptr->get()[0].x == FLT_MAX)) {
         acc = outData.Resize(0, 0);
+      }
       else {
         acc = outData.Resize(0, (ULONG)ptr->size());
         bool done = false;
@@ -1084,8 +1159,9 @@ XSIPLUGINCALLBACK CStatus alembic_polyMesh2_Evaluate(ICENodeContext& in_ctxt)
             velPtr = sample.getVelocities();
           }
 
-          if (velPtr == NULL || velPtr->size() == 0)
+          if (velPtr == NULL || velPtr->size() == 0) {
             done = false;
+          }
           else {
             for (ULONG i = 0; i < acc.GetCount(); ++i) {
               const Abc::V3f& pt = ptr->get()[i];
@@ -1122,8 +1198,9 @@ XSIPLUGINCALLBACK CStatus alembic_polyMesh2_Evaluate(ICENodeContext& in_ctxt)
         ptr = sample.getVelocities();
       }
 
-      if (ptr == NULL || ptr->size() == 0)
+      if (ptr == NULL || ptr->size() == 0) {
         acc = outData.Resize(0, 0);
+      }
       else {
         acc = outData.Resize(0, (ULONG)ptr->size());
         for (ULONG i = 0; i < acc.GetCount(); ++i) {
@@ -1152,11 +1229,14 @@ XSIPLUGINCALLBACK CStatus alembic_polyMesh2_Evaluate(ICENodeContext& in_ctxt)
                                                 : sample.getFaceIndices();
       }
 
-      if (ptr == NULL || ptr->size() == 0)
+      if (ptr == NULL || ptr->size() == 0) {
         acc = outData.Resize(0, 0);
+      }
       else {
         acc = outData.Resize(0, (ULONG)ptr->size());
-        for (ULONG i = 0; i < acc.GetCount(); ++i) acc[i] = ptr->get()[i];
+        for (ULONG i = 0; i < acc.GetCount(); ++i) {
+          acc[i] = ptr->get()[i];
+        }
       }
     } break;
   }

@@ -35,11 +35,13 @@ AlembicWriteJob::AlembicWriteJob(const MString &in_FileName,
   clearIsRefAnimatedCache();
 
   mFileName = in_FileName;
-  for (unsigned int i = 0; i < in_Selection.length(); i++)
+  for (unsigned int i = 0; i < in_Selection.length(); i++) {
     mSelection.append(in_Selection[i]);
+  }
 
-  for (unsigned int i = 0; i < in_Frames.length(); i++)
+  for (unsigned int i = 0; i < in_Frames.length(); i++) {
     mFrames.push_back(in_Frames[i]);
+  }
 }
 
 AlembicWriteJob::~AlembicWriteJob() {}
@@ -51,8 +53,9 @@ void AlembicWriteJob::SetOption(const MString &in_Name, const MString &in_Value)
   if (it == mOptions.end())
     mOptions.insert(std::pair<std::string, std::string>(in_Name.asChar(),
                                                         in_Value.asChar()));
-  else
+  else {
     it->second = in_Value.asChar();
+  }
 }
 
 bool AlembicWriteJob::HasOption(const MString &in_Name)
@@ -66,7 +69,9 @@ MString AlembicWriteJob::GetOption(const MString &in_Name)
 {
   std::map<std::string, std::string>::iterator it =
       mOptions.find(in_Name.asChar());
-  if (it != mOptions.end()) return it->second.c_str();
+  if (it != mOptions.end()) {
+    return it->second.c_str();
+  }
   return MString();
 }
 
@@ -81,9 +86,13 @@ bool AlembicWriteJob::ObjectExists(const MObject &in_Ref)
 bool AlembicWriteJob::AddObject(AlembicObjectPtr in_Obj)
 {
   ESS_PROFILE_SCOPE("AlembicWriteJob::AddObject");
-  if (!in_Obj) return false;
+  if (!in_Obj) {
+    return false;
+  }
   const MObject &in_Ref = in_Obj->GetRef();
-  if (in_Ref.isNull()) return false;
+  if (in_Ref.isNull()) {
+    return false;
+  }
 
   const std::string fullName(getFullNameFromRef(in_Ref).asChar());
   mapObjects.insert(
@@ -158,8 +167,9 @@ MStatus AlembicWriteJob::PreProcess()
     mFrameRate = MTime(1.0, MTime::kSeconds).as(MTime::uiUnit());
     const double timePerSample = 1.0 / mFrameRate;
     std::vector<AbcA::chrono_t> frames;
-    for (LONG i = 0; i < mFrames.size(); i++)
+    for (LONG i = 0; i < mFrames.size(); i++) {
       frames.push_back(mFrames[i] * timePerSample);
+    }
 
     // create the sampling
     if (frames.size() > 1) {
@@ -260,8 +270,9 @@ MStatus AlembicWriteJob::PreProcess()
         AddObject(pNewObject);
         oNewParent = oParent.getChild(eNode->name);
       }
-      else
+      else {
         oNewParent = oParent;
+      }
 
       if (oNewParent.valid()) {
         for (std::list<SceneNodePtr>::iterator it = eNode->children.begin();
@@ -324,7 +335,9 @@ MStatus AlembicWriteJob::Process(double frame)
     }
   }
 
-  if (i < 0) return MS::kSuccess;
+  if (i < 0) {
+    return MS::kSuccess;
+  }
 
   // run the export for all objects
   MayaProgressBar pBar;
@@ -339,7 +352,9 @@ MStatus AlembicWriteJob::Process(double frame)
        it != mapObjects.end(); ++it, --interrupt) {
     if (interrupt == 0) {
       interrupt = 20;
-      if (pBar.isCancelled()) break;
+      if (pBar.isCancelled()) {
+        break;
+      }
       pBar.incr(20);
     }
     status = it->second->Save(currentFrame);
@@ -355,7 +370,9 @@ MStatus AlembicWriteJob::Process(double frame)
 
 bool AlembicWriteJob::forceCloseArchive(void)
 {
-  if (mArchive.valid()) mArchive.reset();
+  if (mArchive.valid()) {
+    mArchive.reset();
+  }
   return true;
 }
 
@@ -481,40 +498,55 @@ MStatus AlembicExportCommand::doIt(const MArgList &args)
         }
 
         const MString &lowerValue = valuePair[0].toLowerCase();
-        if (lowerValue == "in")
+        if (lowerValue == "in") {
           frameIn = valuePair[1].asDouble();
-        else if (lowerValue == "out")
+        }
+        else if (lowerValue == "out") {
           frameOut = valuePair[1].asDouble();
-        else if (lowerValue == "step")
+        }
+        else if (lowerValue == "step") {
           frameSteps = valuePair[1].asDouble();
-        else if (lowerValue == "substep")
+        }
+        else if (lowerValue == "substep") {
           frameSubSteps = valuePair[1].asDouble();
-        else if (lowerValue == "normals")
+        }
+        else if (lowerValue == "normals") {
           normals = valuePair[1].asInt() != 0;
-        else if (lowerValue == "uvs")
+        }
+        else if (lowerValue == "uvs") {
           uvs = valuePair[1].asInt() != 0;
-        else if (lowerValue == "facesets")
+        }
+        else if (lowerValue == "facesets") {
           facesets = valuePair[1].asInt() != 0;
-        else if (lowerValue == "bindpose")
+        }
+        else if (lowerValue == "bindpose") {
           bindpose = valuePair[1].asInt() != 0;
-        else if (lowerValue == "purepointcache")
+        }
+        else if (lowerValue == "purepointcache") {
           purepointcache = valuePair[1].asInt() != 0;
-        else if (lowerValue == "dynamictopology")
+        }
+        else if (lowerValue == "dynamictopology") {
           dynamictopology = valuePair[1].asInt() != 0;
-        else if (lowerValue == "globalspace")
+        }
+        else if (lowerValue == "globalspace") {
           globalspace = valuePair[1].asInt() != 0;
-        else if (lowerValue == "withouthierarchy")
+        }
+        else if (lowerValue == "withouthierarchy") {
           withouthierarchy = valuePair[1].asInt() != 0;
-        else if (lowerValue == "transformcache")
+        }
+        else if (lowerValue == "transformcache") {
           transformcache = valuePair[1].asInt() != 0;
-        else if (lowerValue == "filename")
+        }
+        else if (lowerValue == "filename") {
           filename = valuePair[1];
+        }
         else if (lowerValue == "objects") {
           // try to find each object
           valuePair[1].split(',', objectStrings);
         }
-        else if (lowerValue == "useinitshadgrp")
+        else if (lowerValue == "useinitshadgrp") {
           useInitShadGrp = valuePair[1].asInt() != 0;
+        }
 
         // search/replace
         else if (lowerValue == "search") {
@@ -523,8 +555,9 @@ MStatus AlembicExportCommand::doIt(const MArgList &args)
         else if (lowerValue == "replace") {
           replace_str = valuePair[1].asChar();
         }
-        else if (lowerValue == "ogawa")
+        else if (lowerValue == "ogawa") {
           useOgawa = valuePair[1].asInt() != 0;
+        }
         else {
           MGlobal::displayWarning(
               "[ExocortexAlembic] Skipping invalid token: " + tokens[j]);
@@ -567,7 +600,9 @@ MStatus AlembicExportCommand::doIt(const MArgList &args)
             while (!ppath.node().isNull() && ppath.length() > 0 &&
                    ppath.isValid()) {
               parents.append(ppath.node());
-              if (ppath.pop() != MStatus::kSuccess) break;
+              if (ppath.pop() != MStatus::kSuccess) {
+                break;
+              }
             }
           }
           else {
@@ -583,7 +618,9 @@ MStatus AlembicExportCommand::doIt(const MArgList &args)
                 break;
               }
             }
-            if (!found) objects.append(parents[parents.length() - 1]);
+            if (!found) {
+              objects.append(parents[parents.length() - 1]);
+            }
             parents.remove(parents.length() - 1);
           }
 
@@ -592,7 +629,9 @@ MStatus AlembicExportCommand::doIt(const MArgList &args)
             sl.getDagPath(l, dag);
             for (unsigned int m = 0; m < dag.childCount(); m++) {
               MFnDagNode child(dag.child(m));
-              if (child.isIntermediateObject()) continue;
+              if (child.isIntermediateObject()) {
+                continue;
+              }
               objects.append(child.object());
             }
           }
@@ -617,16 +656,28 @@ MStatus AlembicExportCommand::doIt(const MArgList &args)
       }
 
       // remember the min and max values for the frames
-      if (frameIn < minFrame) minFrame = frameIn;
-      if (frameOut > maxFrame) maxFrame = frameOut;
-      if (frameSteps > maxSteps) maxSteps = frameSteps;
-      if (frameSteps > 1.0) frameSubSteps = 1.0;
-      if (frameSubSteps > maxSubsteps) maxSubsteps = frameSubSteps;
+      if (frameIn < minFrame) {
+        minFrame = frameIn;
+      }
+      if (frameOut > maxFrame) {
+        maxFrame = frameOut;
+      }
+      if (frameSteps > maxSteps) {
+        maxSteps = frameSteps;
+      }
+      if (frameSteps > 1.0) {
+        frameSubSteps = 1.0;
+      }
+      if (frameSubSteps > maxSubsteps) {
+        maxSubsteps = frameSubSteps;
+      }
 
       // check if we have a filename
       if (filename.length() == 0) {
         MGlobal::displayError("[ExocortexAlembic] No filename specified.");
-        for (size_t k = 0; k < jobPtrs.size(); k++) delete (jobPtrs[k]);
+        for (size_t k = 0; k < jobPtrs.size(); k++) {
+          delete (jobPtrs[k]);
+        }
         MPxCommand::setResult(
             "Error caught in AlembicExportCommand::doIt: no filename "
             "specified");
@@ -637,8 +688,9 @@ MStatus AlembicExportCommand::doIt(const MArgList &args)
       MDoubleArray frames;
       {
         const double frameIncr = frameSteps / frameSubSteps;
-        for (double frame = frameIn; frame <= frameOut; frame += frameIncr)
+        for (double frame = frameIn; frame <= frameOut; frame += frameIncr) {
           frames.append(frame);
+        }
       }
 
       AlembicWriteJob *job =
@@ -667,8 +719,9 @@ MStatus AlembicExportCommand::doIt(const MArgList &args)
             "replaced.");
         job->replacer = SearchReplace::createReplacer();
       }
-      else
+      else {
         job->replacer = SearchReplace::createReplacer(search_str, replace_str);
+      }
 
       // check if the job is satifsied
       if (job->PreProcess() != MStatus::kSuccess) {
@@ -685,7 +738,9 @@ MStatus AlembicExportCommand::doIt(const MArgList &args)
     }
 
     if (failure) {
-      for (size_t k = 0; k < jobPtrs.size(); k++) delete (jobPtrs[k]);
+      for (size_t k = 0; k < jobPtrs.size(); k++) {
+        delete (jobPtrs[k]);
+      }
       return MS::kFailure;
     }
 
@@ -706,7 +761,7 @@ MStatus AlembicExportCommand::doIt(const MArgList &args)
       MAnimControl::setAnimationEndTime(
           MTime(nextFrame / frameRate, MTime::kSeconds));
       MAnimControl::playForward();  // this way, it forces Maya to play exactly
-                                    // one frame! and particles are updated!
+      // one frame! and particles are updated!
 
       AlembicCurveAccumulator::StartRecordingFrame();
       for (size_t i = 0; i < jobPtrs.size(); i++) {
@@ -714,7 +769,9 @@ MStatus AlembicExportCommand::doIt(const MArgList &args)
         if (status != MStatus::kSuccess) {
           MGlobal::displayError("[ExocortexAlembic] Job aborted :" +
                                 jobPtrs[i]->GetFileName());
-          for (size_t k = 0; k < jobPtrs.size(); k++) delete (jobPtrs[k]);
+          for (size_t k = 0; k < jobPtrs.size(); k++) {
+            delete (jobPtrs[k]);
+          }
           restoreOldTime(currentAnimStartTime, currentAnimEndTime, oldCurTime,
                          curMinTime, curMaxTime);
           return status;
@@ -727,8 +784,9 @@ MStatus AlembicExportCommand::doIt(const MArgList &args)
     MGlobal::displayError(
         "[ExocortexAlembic] Jobs aborted, force closing all archives!");
     for (std::vector<AlembicWriteJob *>::iterator beg = jobPtrs.begin();
-         beg != jobPtrs.end(); ++beg)
+         beg != jobPtrs.end(); ++beg) {
       (*beg)->forceCloseArchive();
+    }
     restoreOldTime(currentAnimStartTime, currentAnimEndTime, oldCurTime,
                    curMinTime, curMaxTime);
     MPxCommand::setResult("Error caught in AlembicExportCommand::doIt");
@@ -742,7 +800,9 @@ MStatus AlembicExportCommand::doIt(const MArgList &args)
                  curMinTime, curMaxTime);
 
   // delete all jobs
-  for (size_t k = 0; k < jobPtrs.size(); k++) delete (jobPtrs[k]);
+  for (size_t k = 0; k < jobPtrs.size(); k++) {
+    delete (jobPtrs[k]);
+  }
 
   // remove all known archives
   deleteAllArchives();

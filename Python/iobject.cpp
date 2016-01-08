@@ -29,7 +29,9 @@ static PyObject *iObject_getSampleTimes(PyObject *self, PyObject *args)
   ALEMBIC_TRY_STATEMENT
   iObject *object = (iObject *)self;
   Abc::TimeSamplingPtr ts = getTimeSamplingFromObject(*(object->mObject));
-  if (ts) return TimeSamplingCopy(ts);
+  if (ts) {
+    return TimeSamplingCopy(ts);
+  }
   return Py_BuildValue("s", "unsupported");
   ALEMBIC_PYOBJECT_CATCH_STATEMENT
 }
@@ -49,11 +51,11 @@ static PyObject *iObject_getMetaData(PyObject *self, PyObject *args)
   Abc::ICompoundProperty compound = getCompoundFromObject(*object->mObject);
   if (!compound.valid() ||
       compound.getPropertyHeader(".metadata") ==
-          NULL)  // create an empty Meta Data with empty strings
-  {
+          NULL) {  // create an empty Meta Data with empty strings
     PyObject *tuple = PyTuple_New(20);
-    for (int i = 0; i < 20; ++i)
+    for (int i = 0; i < 20; ++i) {
       PyTuple_SetItem(tuple, i, Py_BuildValue("s", ""));
+    }
     return tuple;
   }
 
@@ -67,8 +69,9 @@ static PyObject *iObject_getMetaData(PyObject *self, PyObject *args)
     PyTuple_SetItem(tuple, i,
                     Py_BuildValue("s", metaDataPtr->get()[i].c_str()));
 
-  for (; i < 20; ++i)  // fill the rest with empty strings
+  for (; i < 20; ++i) {  // fill the rest with empty strings
     PyTuple_SetItem(tuple, i, Py_BuildValue("s", ""));
+  }
 
   return tuple;
   ALEMBIC_PYOBJECT_CATCH_STATEMENT
@@ -79,7 +82,9 @@ static PyObject *iObject_getPropertyNames(PyObject *self, PyObject *args)
   ALEMBIC_TRY_STATEMENT
   iObject *object = (iObject *)self;
   Abc::ICompoundProperty compound = getCompoundFromObject(*object->mObject);
-  if (!compound.valid()) return PyTuple_New(0);
+  if (!compound.valid()) {
+    return PyTuple_New(0);
+  }
 
   PyObject *tuple = NULL;
   if (AbcG::IXform::matches(object->mObject->getMetaData())) {
@@ -101,7 +106,9 @@ static PyObject *iObject_getPropertyNames(PyObject *self, PyObject *args)
     }
   }
 
-  if (tuple == NULL) tuple = PyTuple_New(0);
+  if (tuple == NULL) {
+    tuple = PyTuple_New(0);
+  }
   return tuple;
   ALEMBIC_PYOBJECT_CATCH_STATEMENT
 }
@@ -111,7 +118,9 @@ static PyObject *iObject_getProperty(PyObject *self, PyObject *args)
   ALEMBIC_TRY_STATEMENT
   iObject *object = (iObject *)self;
   Abc::ICompoundProperty compound = getCompoundFromObject(*object->mObject);
-  if (!compound.valid()) return PyTuple_New(0);
+  if (!compound.valid()) {
+    return PyTuple_New(0);
+  }
 
   char *propName = NULL;
   if (!PyArg_ParseTuple(args, "s", &propName)) {

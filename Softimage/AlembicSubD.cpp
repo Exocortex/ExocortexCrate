@@ -31,8 +31,9 @@ XSI::CStatus AlembicSubD::Save(double time)
 
   // query the global space
   CTransformation globalXfo;
-  if (globalSpace)
+  if (globalSpace) {
     globalXfo = KinematicState(GetRef(REF_GLOBAL_TRANS)).GetTransform(time);
+  }
   CTransformation globalRotation;
   globalRotation.SetRotation(globalXfo.GetRotation());
 
@@ -41,8 +42,9 @@ XSI::CStatus AlembicSubD::Save(double time)
 
   // check if the mesh is animated
   if (mNumSamples > 0) {
-    if (!isRefAnimated(GetRef(REF_PRIMITIVE), false, globalSpace))
+    if (!isRefAnimated(GetRef(REF_PRIMITIVE), false, globalSpace)) {
       return CStatus::OK;
+    }
   }
 
   // determine if we are a pure point cache
@@ -59,7 +61,9 @@ XSI::CStatus AlembicSubD::Save(double time)
   // allocate the points and normals
   std::vector<Abc::V3f> posVec(vertCount);
   for (LONG i = 0; i < vertCount; i++) {
-    if (globalSpace) pos[i] = MapObjectPositionToWorldSpace(globalXfo, pos[i]);
+    if (globalSpace) {
+      pos[i] = MapObjectPositionToWorldSpace(globalXfo, pos[i]);
+    }
     posVec[i].x = (float)pos[i].GetX();
     posVec[i].y = (float)pos[i].GetY();
     posVec[i].z = (float)pos[i].GetZ();
@@ -111,8 +115,9 @@ XSI::CStatus AlembicSubD::Save(double time)
   for (LONG i = 0; i < faces.GetCount(); i++) {
     PolygonFace face(faces[i]);
     CLongArray samples = face.GetSamples().GetIndexArray();
-    for (LONG j = samples.GetCount() - 1; j >= 0; j--)
+    for (LONG j = samples.GetCount() - 1; j >= 0; j--) {
       sampleLookup[offset++] = samples[j];
+    }
   }
 
   // check if we should export the velocities
@@ -129,15 +134,17 @@ XSI::CStatus AlembicSubD::Save(double time)
         vel.PutX(velocitiesData[i].GetX());
         vel.PutY(velocitiesData[i].GetY());
         vel.PutZ(velocitiesData[i].GetZ());
-        if (globalSpace)
+        if (globalSpace) {
           vel = MapObjectPositionToWorldSpace(globalRotation, vel);
+        }
         mVelocitiesVec[i].x = (float)vel.GetX();
         mVelocitiesVec[i].y = (float)vel.GetY();
         mVelocitiesVec[i].z = (float)vel.GetZ();
       }
 
-      if (mVelocitiesVec.size() == 0)
+      if (mVelocitiesVec.size() == 0) {
         mVelocitiesVec.push_back(Abc::V3f(0, 0, 0));
+      }
       Abc::V3fArraySample sample =
           Abc::V3fArraySample(&mVelocitiesVec.front(), mVelocitiesVec.size());
       mSubDSample.setVelocities(sample);
@@ -156,8 +163,9 @@ XSI::CStatus AlembicSubD::Save(double time)
         PolygonFace face(faces[i]);
         CLongArray indices = face.GetVertices().GetIndexArray();
         mFaceCountVec[i] = indices.GetCount();
-        for (LONG j = indices.GetCount() - 1; j >= 0; j--)
+        for (LONG j = indices.GetCount() - 1; j >= 0; j--) {
           mFaceIndicesVec[offset++] = indices[j];
+        }
       }
 
       if (mFaceIndicesVec.size() == 0) {
@@ -191,8 +199,9 @@ XSI::CStatus AlembicSubD::Save(double time)
         // ok, great, we found UVs, let's set them up
         if (mNumSamples == 0) {
           mUvVec.resize(uvPropRefs.GetCount());
-          if ((bool)GetJob()->GetOption(L"indexedUVs"))
+          if ((bool)GetJob()->GetOption(L"indexedUVs")) {
             mUvIndexVec.resize(uvPropRefs.GetCount());
+          }
 
           // query the names of all uv properties
           std::vector<std::string> uvSetNames;
@@ -234,8 +243,9 @@ XSI::CStatus AlembicSubD::Save(double time)
             // loop over all uvs
             for (size_t i = 0; i < mUvVec[uvI].size(); i++) {
               it = uvMap.find(mUvVec[uvI][i]);
-              if (it != uvMap.end())
+              if (it != uvMap.end()) {
                 mUvIndexVec[uvI][uvIndexCount++] = (Abc::uint32_t)it->second;
+              }
               else {
                 mUvIndexVec[uvI][uvIndexCount++] = (Abc::uint32_t)sortedUVCount;
                 uvMap.insert(std::pair<Abc::V2f, size_t>(
@@ -326,17 +336,22 @@ XSI::CStatus AlembicSubD::Save(double time)
     if (GetJob()->GetOption(L"exportFaceSets") && mNumSamples == 0) {
       for (LONG i = 0; i < clusters.GetCount(); i++) {
         Cluster cluster(clusters[i]);
-        if (!cluster.GetType().IsEqualNoCase(L"poly")) continue;
+        if (!cluster.GetType().IsEqualNoCase(L"poly")) {
+          continue;
+        }
 
         CLongArray elements = cluster.GetElements().GetArray();
-        if (elements.GetCount() == 0) continue;
+        if (elements.GetCount() == 0) {
+          continue;
+        }
 
         std::string name(cluster.GetName().GetAsciiString());
 
         mFaceSetsVec.push_back(std::vector<Abc::int32_t>());
         std::vector<Abc::int32_t>& faceSetVec = mFaceSetsVec.back();
-        for (LONG j = 0; j < elements.GetCount(); j++)
+        for (LONG j = 0; j < elements.GetCount(); j++) {
           faceSetVec.push_back(elements[j]);
+        }
 
         if (faceSetVec.size() > 0) {
           AbcG::OFaceSet faceSet = mSubDSchema.createFaceSet(name);
@@ -406,12 +421,16 @@ alembicOp_Multifile(in_ctxt, ctxt.GetParameterValue(L"multifile"),
                     ctxt.GetParameterValue(L"time"), path);
 CStatus pathEditStat = alembicOp_PathEdit(in_ctxt, path);
 
-if ((bool)ctxt.GetParameterValue(L"muted")) return CStatus::OK;
+if ((bool)ctxt.GetParameterValue(L"muted")) {
+  return CStatus::OK;
+}
 
 CString identifier = ctxt.GetParameterValue(L"identifier");
 
 AbcG::IObject iObj = getObjectFromArchive(path, identifier);
-if (!iObj.valid()) return CStatus::OK;
+if (!iObj.valid()) {
+  return CStatus::OK;
+}
 
 Property prop(ctxt.GetOutputTarget());
 

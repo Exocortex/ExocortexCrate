@@ -48,15 +48,18 @@ std::string removeInvalidCharacter(const std::string& str, bool keepSemi)
   const int len = (int)str.size();
   for (int i = 0; i < len; ++i) {
     const char c = str[i];
-    if (c == ' ' || c == '_')
+    if (c == ' ' || c == '_') {
       ret.append(1, '_');
+    }
     else if (c >= '0' && c <= 'z') {
       if ((c <= '9') || (c >= 'a') || (c >= 'A' && c <= 'Z') ||
-          (keepSemi && c == ':'))
+          (keepSemi && c == ':')) {
         ret.append(1, c);
+      }
     }
-    else if (c == '|')
+    else if (c == '|') {
       ret.append(1, c);
+    }
   }
   return ret;
 }
@@ -70,8 +73,9 @@ MString removeTrailFromName(MString& name)
       trail = end + trail;
       name = name.substring(0, name.length() - 2);
     }
-    else
+    else {
       break;
+    }
   }
   return trail;
 }
@@ -81,11 +85,13 @@ MString truncateName(const MString& in_Name)
   MString name = in_Name;
   MString trail = removeTrailFromName(name);
   if (name.substring(name.length() - 3, name.length() - 1).toLowerCase() ==
-      "xfo")
+      "xfo") {
     name = name.substring(0, name.length() - 4);
+  }
   else if (name.substring(name.length() - 5, name.length() - 1).toLowerCase() ==
-           "shape")
+           "shape") {
     name = name.substring(0, name.length() - 6);
+  }
 
   // replace the name space
   MStringArray nameParts;
@@ -113,15 +119,20 @@ MString getFullNameFromRef(const MObject& in_Ref)
 
 MString getFullNameFromIdentifier(std::string in_Identifier)
 {
-  if (in_Identifier.length() == 0) return MString();
+  if (in_Identifier.length() == 0) {
+    return MString();
+  }
   MString mapped = nameMapGet(in_Identifier.c_str());
-  if (mapped.length() != 0) return mapped;
+  if (mapped.length() != 0) {
+    return mapped;
+  }
   MStringArray parts;
   MString(in_Identifier.c_str()).split('/', parts);
   MString lastPart = parts[parts.length() - 1];
   if (lastPart.substring(lastPart.length() - 3, lastPart.length() - 1)
-          .toLowerCase() == "xfo")
+          .toLowerCase() == "xfo") {
     return truncateName(lastPart);
+  }
   MString trail = removeTrailFromName(lastPart);
   return lastPart + "Shape" + trail;
 }
@@ -181,7 +192,9 @@ MString nameMapGet(MString identifier)
 {
   std::map<std::string, std::string>::iterator it =
       gNameMap.find(identifier.asChar());
-  if (it == gNameMap.end()) return "";
+  if (it == gNameMap.end()) {
+    return "";
+  }
   return it->second.c_str();
 }
 
@@ -190,20 +203,27 @@ ALEMBIC_TYPE getAlembicTypeFromObject(Abc::IObject object)
 {
   ESS_PROFILE_SCOPE("getAlembicTypeFromObject");
   const Abc::MetaData& md = object.getMetaData();
-  if (AbcG::IXform::matches(md))
+  if (AbcG::IXform::matches(md)) {
     return AT_Xform;
-  else if (AbcG::IPolyMesh::matches(md))
+  }
+  else if (AbcG::IPolyMesh::matches(md)) {
     return AT_PolyMesh;
-  else if (AbcG::ICurves::matches(md))
+  }
+  else if (AbcG::ICurves::matches(md)) {
     return AT_Curves;
-  else if (AbcG::INuPatch::matches(md))
+  }
+  else if (AbcG::INuPatch::matches(md)) {
     return AT_NuPatch;
-  else if (AbcG::IPoints::matches(md))
+  }
+  else if (AbcG::IPoints::matches(md)) {
     return AT_Points;
-  else if (AbcG::ISubD::matches(md))
+  }
+  else if (AbcG::ISubD::matches(md)) {
     return AT_SubD;
-  else if (AbcG::ICamera::matches(md))
+  }
+  else if (AbcG::ICamera::matches(md)) {
     return AT_Camera;
+  }
   return AT_UNKNOWN;
 }
 

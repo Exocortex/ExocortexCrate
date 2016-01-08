@@ -23,7 +23,9 @@ AlembicObject::AlembicObject(SceneNodePtr eNode, AlembicWriteJob* in_Job,
     MObject parentRef = dag.parent(i);
     if (!parentRef.isNull()) {
       mHasParent = in_Job->ObjectExists(parentRef);
-      if (mHasParent) break;
+      if (mHasParent) {
+        break;
+      }
     }
   }
 }
@@ -109,18 +111,22 @@ AlembicObjectLocatorNode::~AlembicObjectLocatorNode()
 void preDestructAllNodes()
 {
   std::map<unsigned int, AlembicObjectNode*>::iterator it;
-  for (it = gNodes.begin(); it != gNodes.end(); it++)
+  for (it = gNodes.begin(); it != gNodes.end(); it++) {
     it->second->PreDestruction();
+  }
   std::map<unsigned int, AlembicObjectDeformNode*>::iterator itDeform;
   for (itDeform = gDeformNodes.begin(); itDeform != gDeformNodes.end();
-       itDeform++)
+       itDeform++) {
     itDeform->second->PreDestruction();
+  }
   std::map<unsigned int, AlembicObjectEmitterNode*>::iterator itEmitter;
   for (itEmitter = gEmitterNodes.begin(); itEmitter != gEmitterNodes.end();
-       itEmitter++)
+       itEmitter++) {
     itEmitter->second->PreDestruction();
+  }
   std::map<unsigned int, AlembicObjectLocatorNode*>::iterator itLocator;
   for (itLocator = gLocatorNodes.begin(); itLocator != gLocatorNodes.end();
-       itLocator++)
+       itLocator++) {
     itLocator->second->PreDestruction();
+  }
 }

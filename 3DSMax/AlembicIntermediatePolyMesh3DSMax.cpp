@@ -544,31 +544,31 @@ void IntermediatePolyMesh3DSMax::Save(SceneNodePtr eNode,
   meshData.free();
   // check if we need to export the bindpose (also only for first frame)
   /*
-if (bFirstFrame || dynamicTopology)
-if(GetJob()->GetOption(L"exportBindPose") &&
-prim.GetParent3DObject().GetEnvelopes().GetCount() > 0 && mNumSamples == 0)
-{
- mBindPoseProperty = OV3fArrayProperty(mMeshSchema, ".bindpose",
-mMeshSchema.getMetaData(), GetJob()->GetAnimatedTs());
+  if (bFirstFrame || dynamicTopology)
+  if(GetJob()->GetOption(L"exportBindPose") &&
+  prim.GetParent3DObject().GetEnvelopes().GetCount() > 0 && mNumSamples == 0)
+  {
+  mBindPoseProperty = OV3fArrayProperty(mMeshSchema, ".bindpose",
+  mMeshSchema.getMetaData(), GetJob()->GetAnimatedTs());
 
- // store the positions of the modeling stack into here
- PolygonMesh bindPoseGeo = prim.GetGeometry(time, siConstructionModeModeling);
- CVector3Array bindPosePos = bindPoseGeo.GetPoints().GetPositionArray();
- mBindPoseVec.resize((size_t)bindPosePos.GetCount());
- for(LONG i=0;i<bindPosePos.GetCount();i++)
- {
+  // store the positions of the modeling stack into here
+  PolygonMesh bindPoseGeo = prim.GetGeometry(time, siConstructionModeModeling);
+  CVector3Array bindPosePos = bindPoseGeo.GetPoints().GetPositionArray();
+  mBindPoseVec.resize((size_t)bindPosePos.GetCount());
+  for(LONG i=0;i<bindPosePos.GetCount();i++)
+  {
     mBindPoseVec[i].x = (float)bindPosePos[i].GetX();
     mBindPoseVec[i].y = (float)bindPosePos[i].GetY();
     mBindPoseVec[i].z = (float)bindPosePos[i].GetZ();
- }
+  }
 
- Abc::V3fArraySample sample;
- if(mBindPoseVec.size() > 0)
+  Abc::V3fArraySample sample;
+  if(mBindPoseVec.size() > 0)
     sample = Abc::V3fArraySample(&mBindPoseVec.front(),mBindPoseVec.size());
- mBindPoseProperty.set(sample);
-}
-}
-*/
+  mBindPoseProperty.set(sample);
+  }
+  }
+  */
 
   // check if we should export the velocities
   /*if(dynamicTopology)
@@ -608,12 +608,15 @@ void IntermediatePolyMesh3DSMax::make_face_uv(Face *f, Point3 *tv)
   Point3 *basetv;
   /* make the invisible edge be 2->0 */
   nhid = 2;
-  if (!(f->flags & EDGE_A))
+  if (!(f->flags & EDGE_A)) {
     nhid = 0;
-  else if (!(f->flags & EDGE_B))
+  }
+  else if (!(f->flags & EDGE_B)) {
     nhid = 1;
-  else if (!(f->flags & EDGE_C))
+  }
+  else if (!(f->flags & EDGE_C)) {
     nhid = 2;
+  }
   na = 2 - nhid;
   basetv = (f->v[prevpt[nhid]] < f->v[nhid]) ? basic_tva : basic_tvb;
   for (i = 0; i < 3; i++) {
@@ -651,7 +654,9 @@ bool IntermediatePolyMesh3DSMax::mergeWith(
       (Abc::uint32_t)destMesh.mFaceCountVec.size();
 
   bool bRes = CommonIntermediatePolyMesh::mergeWith(srcMesh);
-  if (!bRes) return false;
+  if (!bRes) {
+    return false;
+  }
 
   for (FaceSetMap::const_iterator it = srcMeshMax.mFaceSets.begin();
        it != srcMeshMax.mFaceSets.end(); it++) {

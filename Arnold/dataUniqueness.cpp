@@ -12,15 +12,19 @@ class uv_mkey_less : public std::binary_function<uv_mkey, uv_mkey, bool> {
  public:
   bool operator()(const uv_mkey &p1, const uv_mkey &p2) const
   {
-    if (p1.vertexId < p2.vertexId)
+    if (p1.vertexId < p2.vertexId) {
       return true;
-    else if (p1.vertexId > p2.vertexId)
+    }
+    else if (p1.vertexId > p2.vertexId) {
       return false;
+    }
 
-    else if (p1.uv_x < p2.uv_x)
+    else if (p1.uv_x < p2.uv_x) {
       return true;
-    else if (p1.uv_x > p2.uv_x)
+    }
+    else if (p1.uv_x > p2.uv_x) {
       return false;
+    }
 
     return p1.uv_y < p2.uv_y;
   }
@@ -53,8 +57,9 @@ AtArray *removeUvsDuplicate(Alembic::AbcGeom::IV2fGeomParam &uvParam,
       AiArraySetUInt(uvsIdx, i, new_idx);
       ++new_idx;
     }
-    else
+    else {
       AiArraySetUInt(uvsIdx, i, UVs_map[mkey]);  // replace with the right index
+    }
   }
 
   // fill the UVs
@@ -82,20 +87,26 @@ class n_mkey_less : public std::binary_function<n_mkey, n_mkey, bool> {
  public:
   bool operator()(const n_mkey &p1, const n_mkey &p2) const
   {
-    if (p1.vertexId < p2.vertexId)
+    if (p1.vertexId < p2.vertexId) {
       return true;
-    else if (p1.vertexId > p2.vertexId)
+    }
+    else if (p1.vertexId > p2.vertexId) {
       return false;
+    }
 
-    else if (p1.n_x < p2.n_x)
+    else if (p1.n_x < p2.n_x) {
       return true;
-    else if (p1.n_x > p2.n_x)
+    }
+    else if (p1.n_x > p2.n_x) {
       return false;
+    }
 
-    else if (p1.n_y < p2.n_y)
+    else if (p1.n_y < p2.n_y) {
       return true;
-    else if (p1.n_y > p2.n_y)
+    }
+    else if (p1.n_y > p2.n_y) {
       return false;
+    }
 
     return p1.n_z < p2.n_z;
   }
@@ -141,11 +152,14 @@ void removeNormalsDuplicate(AtArray *nor, AtULong &norOffset,
 
     if (Ns_map.find(mkey) == Ns_map.end()) {
       Ns_map[mkey] = new_idx;
-      if (!norOffset) AiArraySetUInt(nIdx, i, new_idx);
+      if (!norOffset) {
+        AiArraySetUInt(nIdx, i, new_idx);
+      }
       ++new_idx;
     }
-    else if (!norOffset)
+    else if (!norOffset) {
       AiArraySetUInt(nIdx, i, Ns_map[mkey]);  // replace with the right index
+    }
   }
 
   // fill the Ns
@@ -176,11 +190,14 @@ void removeNormalsDuplicateDynTopology(AtArray *nor, AtULong &norOffset,
 
     if (Ns_map.find(mkey) == Ns_map.end()) {
       Ns_map[mkey] = new_idx;
-      if (!norOffset) AiArraySetUInt(nIdx, i, new_idx);
+      if (!norOffset) {
+        AiArraySetUInt(nIdx, i, new_idx);
+      }
       ++new_idx;
     }
-    else if (!norOffset)
+    else if (!norOffset) {
       AiArraySetUInt(nIdx, i, Ns_map[mkey]);  // replace with the right index
+    }
   }
 
   // fill the Ns

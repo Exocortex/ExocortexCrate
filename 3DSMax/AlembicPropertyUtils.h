@@ -15,8 +15,8 @@ void createStringPropertyDisplayModifier(
 struct AbcProp {
   std::string name;
   AbcA::PropertyHeader propHeader;  // we need to know type information (and
-                                    // possibly interpretation, e.g. color,
-                                    // normal)
+  // possibly interpretation, e.g. color,
+  // normal)
   std::string displayVal;  // if constant, will set via controller if animated
   bool bConstant;
   int sortId;

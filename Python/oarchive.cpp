@@ -166,14 +166,17 @@ static PyObject *oArchive_createObject(PyObject *self, PyObject *args)
   if (parts.size() > 2) {
     // look for the parent in our map
     std::string parentIdentifier = "";
-    for (size_t i = 1; i < parts.size() - 1; i++)
+    for (size_t i = 1; i < parts.size() - 1; i++) {
       parentIdentifier += "/" + parts[i];
+    }
     oObject *parentPtr = oArchive_getObjectElement(archive, parentIdentifier);
     if (!parentPtr) {
       PyErr_SetString(getError(), "Invalid identifier!");
       return NULL;
     }
-    if (parentPtr->mObject) parent = *parentPtr->mObject;
+    if (parentPtr->mObject) {
+      parent = *parentPtr->mObject;
+    }
   }
 
   // now validate the type
@@ -345,39 +348,37 @@ static void oArchive_delete(PyObject *self)
   ALEMBIC_VOID_CATCH_STATEMENT
 }
 
-static PyTypeObject
-    oArchive_Type =
-        {
-            PyObject_HEAD_INIT(&PyType_Type) 0,       // op_size
-            "oArchive",                               // tp_name
-            sizeof(oArchive),                         // tp_basicsize
-            0,                                        // tp_itemsize
-            (destructor)oArchive_delete,              // tp_dealloc
-            0,                                        // tp_print
-            (getattrfunc)oArchive_getAttr,            // tp_getattr
-            0,                                        // tp_setattr
-            0,                                        // tp_compare
-            0,                                        /*tp_repr*/
-            0,                                        /*tp_as_number*/
-            0,                                        /*tp_as_sequence*/
-            0,                                        /*tp_as_mapping*/
-            0,                                        /*tp_hash */
-            0,                                        /*tp_call*/
-            0,                                        /*tp_str*/
-            0,                                        /*tp_getattro*/
-            0,                                        /*tp_setattro*/
-            0,                                        /*tp_as_buffer*/
-            Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE, /*tp_flags*/
-            "This is the output archive. It provides methods for creating "
-            "content inside the archive, including TimeSamplings as well as "
-            "objects.",       /* tp_doc */
-            0,                /* tp_traverse */
-            0,                /* tp_clear */
-            0,                /* tp_richcompare */
-            0,                /* tp_weaklistoffset */
-            0,                /* tp_iter */
-            0,                /* tp_iternext */
-            oArchive_methods, /* tp_methods */
+static PyTypeObject oArchive_Type = {
+    PyObject_HEAD_INIT(&PyType_Type) 0,       // op_size
+    "oArchive",                               // tp_name
+    sizeof(oArchive),                         // tp_basicsize
+    0,                                        // tp_itemsize
+    (destructor)oArchive_delete,              // tp_dealloc
+    0,                                        // tp_print
+    (getattrfunc)oArchive_getAttr,            // tp_getattr
+    0,                                        // tp_setattr
+    0,                                        // tp_compare
+    0,                                        /*tp_repr*/
+    0,                                        /*tp_as_number*/
+    0,                                        /*tp_as_sequence*/
+    0,                                        /*tp_as_mapping*/
+    0,                                        /*tp_hash */
+    0,                                        /*tp_call*/
+    0,                                        /*tp_str*/
+    0,                                        /*tp_getattro*/
+    0,                                        /*tp_setattro*/
+    0,                                        /*tp_as_buffer*/
+    Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE, /*tp_flags*/
+    "This is the output archive. It provides methods for creating "
+    "content inside the archive, including TimeSamplings as well as "
+    "objects.",       /* tp_doc */
+    0,                /* tp_traverse */
+    0,                /* tp_clear */
+    0,                /* tp_richcompare */
+    0,                /* tp_weaklistoffset */
+    0,                /* tp_iter */
+    0,                /* tp_iternext */
+    oArchive_methods, /* tp_methods */
 };
 
 static void createArchive(oArchive *object, const char *fileName, bool useOgawa)
@@ -442,7 +443,9 @@ static void init_oArchiveElement(oArchiveElement &element,
 void oArchive_registerObjectElement(oArchive *archive, std::string identifier,
                                     oObject *object)
 {
-  if (oArchive_getObjectElement(archive, identifier)) return;
+  if (oArchive_getObjectElement(archive, identifier)) {
+    return;
+  }
   oArchiveElement element;
   init_oArchiveElement(element, identifier);
 
@@ -476,7 +479,9 @@ void oArchive_registerCompPropElement(oArchive *archive, std::string identifier,
 void oArchive_registerXformElement(oArchive *archive, std::string identifier,
                                    oXformProperty *xform)
 {
-  if (oArchive_getXformElement(archive, identifier)) return;
+  if (oArchive_getXformElement(archive, identifier)) {
+    return;
+  }
   oArchiveElement element;
   init_oArchiveElement(element, identifier);
 
@@ -491,7 +496,9 @@ static oArchiveElement *oArchive_getArchiveElement(oArchive *archive,
   oArchiveElementVec &elements = (*archive->mElements);
   oArchiveElementVec::iterator end = elements.end();
   for (oArchiveElementVec::iterator beg = elements.begin(); beg != end; ++beg) {
-    if (beg->identifier == identifier) return &(*beg);
+    if (beg->identifier == identifier) {
+      return &(*beg);
+    }
   }
   return NULL;
 }

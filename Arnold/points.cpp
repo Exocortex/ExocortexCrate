@@ -34,8 +34,9 @@ AtNode *createPointsNode(nodeData &nodata, userData *ud,
     // take care of the topology
     if (sampleIndex == 0) {
       // hard coded mode
-      if (!ud->gPointsMode.empty())
+      if (!ud->gPointsMode.empty()) {
         AiNodeSetStr(shapeNode, "mode", ud->gPointsMode.c_str());
+      }
 
       // check if we have a radius
       Alembic::AbcGeom::IFloatGeomParam widthParam =
@@ -45,8 +46,9 @@ AtNode *createPointsNode(nodeData &nodata, userData *ud,
         Alembic::Abc::FloatArraySamplePtr abcRadius =
             widthParam.getExpandedValue(sampleInfo.floorIndex).getVals();
         radius = AiArrayAllocate((AtInt)abcRadius->size(), 1, AI_TYPE_FLOAT);
-        for (size_t i = 0; i < abcRadius->size(); ++i)
+        for (size_t i = 0; i < abcRadius->size(); ++i) {
           AiArraySetFlt(radius, (AtULong)i, abcRadius->get()[i]);
+        }
       }
       else {
         AiMsgWarning(
@@ -55,7 +57,9 @@ AtNode *createPointsNode(nodeData &nodata, userData *ud,
             nodata.object.getFullName().c_str());
         const int sz = abcPos->size();
         radius = AiArrayAllocate(sz, 1, AI_TYPE_FLOAT);
-        for (int i = 0; i < sz; ++i) AiArraySetFlt(radius, (AtULong)i, 0.1f);
+        for (int i = 0; i < sz; ++i) {
+          AiArraySetFlt(radius, (AtULong)i, 0.1f);
+        }
       }
       AiNodeSetArray(shapeNode, "radius", radius);
 
@@ -66,10 +70,12 @@ AtNode *createPointsNode(nodeData &nodata, userData *ud,
         Alembic::Abc::C4fArraySamplePtr abcColors =
             propColor.getValue(sampleInfo.floorIndex);
         AtBoolean result = false;
-        if (abcColors->size() == 1)
+        if (abcColors->size() == 1) {
           result = AiNodeDeclare(shapeNode, "Color", "constant RGBA");
-        else
+        }
+        else {
           result = AiNodeDeclare(shapeNode, "Color", "uniform RGBA");
+        }
 
         if (result) {
           AtArray *colors =

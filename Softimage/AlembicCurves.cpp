@@ -44,8 +44,9 @@ XSI::CStatus AlembicCurves::Save(double time)
 
   // query the global space
   CTransformation globalXfo;
-  if (globalSpace)
+  if (globalSpace) {
     globalXfo = KinematicState(GetRef(REF_GLOBAL_TRANS)).GetTransform(time);
+  }
   CTransformation globalRotation;
   globalRotation.SetRotation(globalXfo.GetRotation());
 
@@ -54,8 +55,9 @@ XSI::CStatus AlembicCurves::Save(double time)
 
   // check if the crvlist is animated
   if (mNumSamples > 0) {
-    if (!isRefAnimated(GetRef(REF_PRIMITIVE), false, globalSpace))
+    if (!isRefAnimated(GetRef(REF_PRIMITIVE), false, globalSpace)) {
       return CStatus::OK;
+    }
   }
 
   const bool guideCurves = GetJob()->GetOption(L"guideCurves");
@@ -72,8 +74,9 @@ XSI::CStatus AlembicCurves::Save(double time)
     // allocate the points and normals
     std::vector<Abc::V3f> posVec(vertCount);
     for (ULONG i = 0; i < vertCount; i++) {
-      if (globalSpace)
+      if (globalSpace) {
         pos[i] = MapObjectPositionToWorldSpace(globalXfo, pos[i]);
+      }
       posVec[i].x = (float)pos[i].GetX();
       posVec[i].y = (float)pos[i].GetY();
       posVec[i].z = (float)pos[i].GetZ();
@@ -150,7 +153,9 @@ XSI::CStatus AlembicCurves::Save(double time)
     LONG totalHairs = prim.GetParameterValue(L"TotalHairs");
     {
       const LONG strandMult = (LONG)prim.GetParameterValue(L"StrandMult");
-      if (strandMult > 1) totalHairs *= strandMult;
+      if (strandMult > 1) {
+        totalHairs *= strandMult;
+      }
     }
     CRenderHairAccessor accessor =
         hairPrim.GetRenderHairAccessor(totalHairs, CHUNK_SIZE, time);
@@ -161,7 +166,9 @@ XSI::CStatus AlembicCurves::Save(double time)
 
     while (accessor.Next()) {
       const int chunckSize = accessor.GetChunkHairCount();
-      if (chunckSize == 0) break;
+      if (chunckSize == 0) {
+        break;
+      }
       CFloatArray hairPos;
       CStatus result = accessor.GetVertexPositions(hairPos);
       const ULONG vertCount = hairPos.GetCount() / 3;
@@ -173,7 +180,9 @@ XSI::CStatus AlembicCurves::Save(double time)
         pos.PutX(hairPos[offset++]);
         pos.PutY(hairPos[offset++]);
         pos.PutZ(hairPos[offset++]);
-        if (globalSpace) pos = MapObjectPositionToWorldSpace(globalXfo, pos);
+        if (globalSpace) {
+          pos = MapObjectPositionToWorldSpace(globalXfo, pos);
+        }
 
         Abc::V3f& posV = posVec[posVecOffset + i];
         posV.x = (float)pos.GetX();
@@ -189,8 +198,9 @@ XSI::CStatus AlembicCurves::Save(double time)
           accessor.GetVerticesCount(hairCount);
           const int offset = (const int)mNbVertices.size();
           mNbVertices.resize(offset + (size_t)hairCount.GetCount());
-          for (LONG i = 0; i < hairCount.GetCount(); i++)
+          for (LONG i = 0; i < hairCount.GetCount(); i++) {
             mNbVertices[offset + i] = (Abc::int32_t)hairCount[i];
+          }
           hairCount.Clear();
         }
 
@@ -200,8 +210,9 @@ XSI::CStatus AlembicCurves::Save(double time)
           accessor.GetVertexRadiusValues(hairRadius);
           const int offset = (const int)mRadiusVec.size();
           mRadiusVec.resize(offset + (size_t)hairRadius.GetCount());
-          for (LONG i = 0; i < hairRadius.GetCount(); i++)
+          for (LONG i = 0; i < hairRadius.GetCount(); i++) {
             mRadiusVec[offset + i] = hairRadius[i];
+          }
           hairRadius.Clear();
         }
 
@@ -248,8 +259,9 @@ XSI::CStatus AlembicCurves::Save(double time)
 
       mCurvesSample.setCurvesNumVertices(Abc::Int32ArraySample(mNbVertices));
       mRadiusProperty.set(Abc::FloatArraySample(mRadiusVec));
-      if (!mColorVec.empty())
+      if (!mColorVec.empty()) {
         mColorProperty.set(Abc::C4fArraySample(mColorVec));
+      }
       if (!mUvVec.empty())
         mCurvesSample.setUVs(
             AbcG::OV2fGeomParam::Sample(mUvVec, AbcG::kVertexScope));
@@ -329,12 +341,16 @@ XSI::CStatus AlembicCurves::Save(double time)
       // assume that there is a guide curve per vertex in the emitter geometry
       // hence the base points should correspond to point ids
       assert(numCurves == emitterPointRefArray.GetCount());
-      for (long i = 0; i < numCurves; i++) emitterPntIndex.Add(i);
+      for (long i = 0; i < numCurves; i++) {
+        emitterPntIndex.Add(i);
+      }
 
       // add all the faces to the face indices
       int numPolys = emitterGeo.GetPolygons().GetCount();
       faceIndices.resize(numPolys);
-      for (int i = 0; i < numPolys; i++) faceIndices[i] = i;
+      for (int i = 0; i < numPolys; i++) {
+        faceIndices[i] = i;
+      }
     }
     else {
       // otherwise use the cluster
@@ -367,7 +383,9 @@ XSI::CStatus AlembicCurves::Save(double time)
       // add base point
       CVector3 base =
           Point(emitterPointRefArray.GetItem(emitterPntIndex[j])).GetPosition();
-      if (globalSpace) base = MapObjectPositionToWorldSpace(globalXfo, base);
+      if (globalSpace) {
+        base = MapObjectPositionToWorldSpace(globalXfo, base);
+      }
 
       posVec[posVecIndex].x = (float)base.GetX();
       posVec[posVecIndex].y = (float)base.GetY();
@@ -379,7 +397,9 @@ XSI::CStatus AlembicCurves::Save(double time)
     mCurvesSample.setPositions(Abc::P3fArraySample(posVec));
 
     // caclulate bbox
-    for (LONG i = 0; i < curveCount * 15; i++) bbox.extendBy(posVec[i]);
+    for (LONG i = 0; i < curveCount * 15; i++) {
+      bbox.extendBy(posVec[i]);
+    }
 
     // store the bbox
     mCurvesSample.setSelfBounds(bbox);
@@ -399,8 +419,9 @@ XSI::CStatus AlembicCurves::Save(double time)
 
       // store the vertex indices
       std::vector<Abc::int32_t> vertexIndices(emitterPntIndex.GetCount());
-      for (LONG i = 0; i < emitterPntIndex.GetCount(); i++)
+      for (LONG i = 0; i < emitterPntIndex.GetCount(); i++) {
         vertexIndices[i] = emitterPntIndex[i];
+      }
       mVertexIndexProperty.set(Abc::Int32ArraySample(vertexIndices));
 
       // store the face indices
@@ -449,7 +470,9 @@ XSI::CStatus AlembicCurves::Save(double time)
           pos.PutX(sub[j].GetX());
           pos.PutY(sub[j].GetY());
           pos.PutZ(sub[j].GetZ());
-          if (globalSpace) pos = MapObjectPositionToWorldSpace(globalXfo, pos);
+          if (globalSpace) {
+            pos = MapObjectPositionToWorldSpace(globalXfo, pos);
+          }
           posVec[offset].x = (float)pos.GetX();
           posVec[offset].y = (float)pos.GetY();
           posVec[offset].z = (float)pos.GetZ();
@@ -482,8 +505,9 @@ XSI::CStatus AlembicCurves::Save(double time)
         size_t offset = 0;
         for (ULONG i = 0; i < data.GetCount(); i++) {
           data.GetSubArray(data.IsConstant() ? 0 : i, sub);
-          for (ULONG j = 0; j < sub.GetCount(); j++)
+          for (ULONG j = 0; j < sub.GetCount(); j++) {
             mRadiusVec[offset++] = (float)sub[j];
+          }
         }
         mRadiusProperty.set(
             Abc::FloatArraySample(&mRadiusVec.front(), mRadiusVec.size()));
@@ -495,8 +519,9 @@ XSI::CStatus AlembicCurves::Save(double time)
           attr.GetDataArray(data);
 
           mRadiusVec.resize(data.GetCount());
-          for (ULONG i = 0; i < data.GetCount(); i++)
+          for (ULONG i = 0; i < data.GetCount(); i++) {
             mRadiusVec[i] = (float)data[data.IsConstant() ? 0 : i];
+          }
           mRadiusProperty.set(
               Abc::FloatArraySample(&mRadiusVec.front(), mRadiusVec.size()));
         }
@@ -596,8 +621,9 @@ XSI::CStatus AlembicCurves::Save(double time)
             vel.PutX(sub[j].GetX());
             vel.PutY(sub[j].GetY());
             vel.PutZ(sub[j].GetZ());
-            if (globalSpace)
+            if (globalSpace) {
               vel = MapObjectPositionToWorldSpace(globalRotation, vel);
+            }
             mVelVec[offset].x = (float)vel.GetX();
             mVelVec[offset].y = (float)vel.GetY();
             mVelVec[offset].z = (float)vel.GetZ();
@@ -619,8 +645,9 @@ XSI::CStatus AlembicCurves::Save(double time)
             vel.PutX(data[i].GetX());
             vel.PutY(data[i].GetY());
             vel.PutZ(data[i].GetZ());
-            if (globalSpace)
+            if (globalSpace) {
               vel = MapObjectPositionToWorldSpace(globalRotation, vel);
+            }
             mVelVec[i].x = (float)vel.GetX();
             mVelVec[i].y = (float)vel.GetY();
             mVelVec[i].z = (float)vel.GetZ();
@@ -660,14 +687,20 @@ alembicOp_Multifile(in_ctxt, ctxt.GetParameterValue(L"multifile"),
                     ctxt.GetParameterValue(L"time"), path);
 CStatus pathEditStat = alembicOp_PathEdit(in_ctxt, path);
 
-if ((bool)ctxt.GetParameterValue(L"muted")) return CStatus::OK;
+if ((bool)ctxt.GetParameterValue(L"muted")) {
+  return CStatus::OK;
+}
 
 CString identifier = ctxt.GetParameterValue(L"identifier");
 
 AbcG::IObject iObj = getObjectFromArchive(path, identifier);
-if (!iObj.valid()) return CStatus::OK;
+if (!iObj.valid()) {
+  return CStatus::OK;
+}
 AbcG::ICurves obj(iObj, Abc::kWrapExisting);
-if (!obj.valid()) return CStatus::OK;
+if (!obj.valid()) {
+  return CStatus::OK;
+}
 
 SampleInfo sampleInfo = getSampleInfo(ctxt.GetParameterValue(L"time"),
                                       obj.getSchema().getTimeSampling(),
@@ -705,17 +738,23 @@ updateOperatorInfo(op, sampleInfo, obj.getSchema().getTimeSampling(),
                    (int)xsiSize, (int)curvePos->size());
 
 if (!isHair) {
-  if (xsiSize != curvePos->size()) return CStatus::OK;
+  if (xsiSize != curvePos->size()) {
+    return CStatus::OK;
+  }
 }
 else {
   size_t cacheSize = 14 * (curvePos->size() / 15);
-  if (xsiSize != cacheSize) return CStatus::OK;
+  if (xsiSize != cacheSize) {
+    return CStatus::OK;
+  }
 }
 
 CVector3Array outputPos((LONG)xsiSize);
 for (size_t i = 0, index = 0; i < xsiSize; i++, index++) {
   // guide hairs don't store base point but they are present in the alembic file
-  if (isHair && (i % 14 == 0)) index++;
+  if (isHair && (i % 14 == 0)) {
+    index++;
+  }
 
   outputPos[(LONG)i].Set(curvePos->get()[index].x, curvePos->get()[index].y,
                          curvePos->get()[index].z);
@@ -728,7 +767,9 @@ if (sampleInfo.alpha != 0.0) {
   for (size_t i = 0, index = 0; i < xsiSize; i++, index++) {
     // guide hairs don't store base point but they are present in the alembic
     // file
-    if (isHair && (i % 14 == 0)) index++;
+    if (isHair && (i % 14 == 0)) {
+      index++;
+    }
 
     outputPos[(LONG)i].LinearlyInterpolate(
         outputPos[(LONG)i],
@@ -895,9 +936,13 @@ XSIPLUGINCALLBACK CStatus alembic_curves_Evaluate(ICENodeContext& in_ctxt)
   CStatus pathEditStat = alembicOp_PathEdit(in_ctxt, path);
 
   AbcG::IObject iObj = getObjectFromArchive(path, identifier);
-  if (!iObj.valid()) return CStatus::OK;
+  if (!iObj.valid()) {
+    return CStatus::OK;
+  }
   AbcG::ICurves obj(iObj, Abc::kWrapExisting);
-  if (!obj.valid()) return CStatus::OK;
+  if (!obj.valid()) {
+    return CStatus::OK;
+  }
 
   SampleInfo sampleInfo = getSampleInfo(time, obj.getSchema().getTimeSampling(),
                                         obj.getSchema().getNumSamples());
@@ -917,10 +962,12 @@ XSIPLUGINCALLBACK CStatus alembic_curves_Evaluate(ICENodeContext& in_ctxt)
       CDataArray2DLong::Accessor acc;
 
       Abc::Int32ArraySamplePtr ptr = sample.getCurvesNumVertices();
-      if (ptr == NULL)
+      if (ptr == NULL) {
         acc = outData.Resize(0, 0);
-      else if (ptr->size() == 0)
+      }
+      else if (ptr->size() == 0) {
         acc = outData.Resize(0, 0);
+      }
       else {
         acc = outData.Resize(0, (ULONG)ptr->size());
         for (ULONG i = 0; i < acc.GetCount(); i++) {
@@ -935,10 +982,12 @@ XSIPLUGINCALLBACK CStatus alembic_curves_Evaluate(ICENodeContext& in_ctxt)
       CDataArray2DLong::Accessor acc;
 
       Abc::Int32ArraySamplePtr ptr = sample.getCurvesNumVertices();
-      if (ptr == NULL)
+      if (ptr == NULL) {
         acc = outData.Resize(0, 0);
-      else if (ptr->size() == 0)
+      }
+      else if (ptr->size() == 0) {
         acc = outData.Resize(0, 0);
+      }
       else {
         LONG offset = 0;
         acc = outData.Resize(0, (ULONG)ptr->size());
@@ -955,12 +1004,15 @@ XSIPLUGINCALLBACK CStatus alembic_curves_Evaluate(ICENodeContext& in_ctxt)
       CDataArray2DVector3f::Accessor acc;
 
       Abc::P3fArraySamplePtr ptr = sample.getPositions();
-      if (ptr == NULL)
+      if (ptr == NULL) {
         acc = outData.Resize(0, 0);
-      else if (ptr->size() == 0)
+      }
+      else if (ptr->size() == 0) {
         acc = outData.Resize(0, 0);
-      else if (ptr->size() == 1 && ptr->get()[0].x == FLT_MAX)
+      }
+      else if (ptr->size() == 1 && ptr->get()[0].x == FLT_MAX) {
         acc = outData.Resize(0, 0);
+      }
       else {
         acc = outData.Resize(0, (ULONG)ptr->size());
         bool done = false;
@@ -994,8 +1046,9 @@ XSIPLUGINCALLBACK CStatus alembic_curves_Evaluate(ICENodeContext& in_ctxt)
         }
 
         if (!done) {
-          for (ULONG i = 0; i < acc.GetCount(); i++)
+          for (ULONG i = 0; i < acc.GetCount(); i++) {
             acc[i].Set(ptr->get()[i].x, ptr->get()[i].y, ptr->get()[i].z);
+          }
         }
       }
       break;
@@ -1036,8 +1089,9 @@ XSIPLUGINCALLBACK CStatus alembic_curves_Evaluate(ICENodeContext& in_ctxt)
       //}
       // else
       {
-        for (ULONG i = 0; i < acc.GetCount(); i++)
+        for (ULONG i = 0; i < acc.GetCount(); i++) {
           acc[i].Set(vel->get()[i].x, vel->get()[i].y, vel->get()[i].z);
+        }
       }
 
       break;
@@ -1062,10 +1116,12 @@ XSIPLUGINCALLBACK CStatus alembic_curves_Evaluate(ICENodeContext& in_ctxt)
         return CStatus::OK;
       }
       Abc::FloatArraySamplePtr ptr = prop.getValue(sampleInfo.floorIndex);
-      if (ptr == NULL)
+      if (ptr == NULL) {
         acc = outData.Resize(0, 0);
-      else if (ptr->size() == 0)
+      }
+      else if (ptr->size() == 0) {
         acc = outData.Resize(0, 0);
+      }
       else {
         acc = outData.Resize(0, (ULONG)ptr->size());
         for (ULONG i = 0; i < acc.GetCount(); i++) {
@@ -1094,10 +1150,12 @@ XSIPLUGINCALLBACK CStatus alembic_curves_Evaluate(ICENodeContext& in_ctxt)
         return CStatus::OK;
       }
       Abc::C4fArraySamplePtr ptr = prop.getValue(sampleInfo.floorIndex);
-      if (ptr == NULL)
+      if (ptr == NULL) {
         acc = outData.Resize(0, 0);
-      else if (ptr->size() == 0)
+      }
+      else if (ptr->size() == 0) {
         acc = outData.Resize(0, 0);
+      }
       else {
         acc = outData.Resize(0, (ULONG)ptr->size());
         for (ULONG i = 0; i < acc.GetCount(); i++) {
@@ -1123,10 +1181,12 @@ XSIPLUGINCALLBACK CStatus alembic_curves_Evaluate(ICENodeContext& in_ctxt)
       }
       Abc::V2fArraySamplePtr ptr =
           uvsParam.getExpandedValue(sampleInfo.floorIndex).getVals();
-      if (ptr == NULL)
+      if (ptr == NULL) {
         acc = outData.Resize(0, 0);
-      else if (ptr->size() == 0)
+      }
+      else if (ptr->size() == 0) {
         acc = outData.Resize(0, 0);
+      }
       else {
         acc = outData.Resize(0, (ULONG)ptr->size());
         for (ULONG i = 0; i < acc.GetCount(); i++) {
@@ -1167,14 +1227,20 @@ alembicOp_Multifile(in_ctxt, ctxt.GetParameterValue(L"multifile"),
                     ctxt.GetParameterValue(L"time"), path);
 CStatus pathEditStat = alembicOp_PathEdit(in_ctxt, path);
 
-if ((bool)ctxt.GetParameterValue(L"muted")) return CStatus::OK;
+if ((bool)ctxt.GetParameterValue(L"muted")) {
+  return CStatus::OK;
+}
 
 CString identifier = ctxt.GetParameterValue(L"identifier");
 
 AbcG::IObject iObj = getObjectFromArchive(path, identifier);
-if (!iObj.valid()) return CStatus::OK;
+if (!iObj.valid()) {
+  return CStatus::OK;
+}
 AbcG::ICurves obj(iObj, Abc::kWrapExisting);
-if (!obj.valid()) return CStatus::OK;
+if (!obj.valid()) {
+  return CStatus::OK;
+}
 
 SampleInfo sampleInfo = getSampleInfo(ctxt.GetParameterValue(L"time"),
                                       obj.getSchema().getTimeSampling(),
@@ -1255,13 +1321,17 @@ for (size_t j = 0; j < curveNbVertices->size(); j++) {
       for (LONG k = 0; k < nbVertices; k++) {
         curveData.m_aKnots[k] = k;
       }
-      if (curveData.m_bClosed) curveData.m_aKnots.Add(nbVertices);
+      if (curveData.m_bClosed) {
+        curveData.m_aKnots.Add(nbVertices);
+      }
     }
     else if (nDegree == 3) {
       curveData.m_aKnots.Resize(nbVertices + 2);
       curveData.m_aKnots[0] = 0;
       curveData.m_aKnots[1] = 0;
-      for (LONG k = 0; k < nbVertices - 2; k++) curveData.m_aKnots[2 + k] = k;
+      for (LONG k = 0; k < nbVertices - 2; k++) {
+        curveData.m_aKnots[2 + k] = k;
+      }
       curveData.m_aKnots[nbVertices] = nbVertices - 3;
       curveData.m_aKnots[nbVertices + 1] = nbVertices - 3;
     }

@@ -32,7 +32,9 @@ MStatus AlembicSubD::Save(double time)
   // check if we have the global cache option
   bool globalCache = GetJob()->GetOption(L"exportInGlobalSpace").asInt() > 0;
   Abc::M44f globalXfo;
-  if (globalCache) globalXfo = GetGlobalMatrix(GetRef());
+  if (globalCache) {
+    globalXfo = GetGlobalMatrix(GetRef());
+  }
 
   // access the points
   mPosVec.resize(node.vertexCount());
@@ -44,7 +46,9 @@ MStatus AlembicSubD::Save(double time)
     in.x = (float)out.x;
     in.y = (float)out.y;
     in.z = (float)out.z;
-    if (globalCache) globalXfo.multVecMatrix(in, in);
+    if (globalCache) {
+      globalXfo.multVecMatrix(in, in);
+    }
     bbox.extendBy(in);
   }
 
@@ -124,8 +128,9 @@ MStatus AlembicSubD::Save(double time)
           // loop over all uvs
           for (size_t i = 0; i < mUvVec.size(); i++) {
             it = uvMap.find(mUvVec[i]);
-            if (it != uvMap.end())
+            if (it != uvMap.end()) {
               mUvIndexVec[uvIndexCount++] = (Abc::uint32_t)it->second;
+            }
             else {
               mUvIndexVec[uvIndexCount++] = (Abc::uint32_t)sortedUVCount;
               uvMap.insert(std::pair<Abc::V2f, size_t>(
@@ -151,8 +156,9 @@ MStatus AlembicSubD::Save(double time)
 
         AbcG::OV2fGeomParam::Sample uvSample(Abc::V2fArraySample(mUvVec),
                                              AbcG::kFacevaryingScope);
-        if (mUvIndexVec.size() > 0 && uvIndexCount > 0)
+        if (mUvIndexVec.size() > 0 && uvIndexCount > 0) {
           uvSample.setIndices(Abc::UInt32ArraySample(mUvIndexVec));
+        }
         mSample.setUVs(uvSample);
       }
     }
@@ -165,19 +171,25 @@ MStatus AlembicSubD::Save(double time)
       MPlug plug = node.findPlug(attr, true);
 
       // if it is not readable, then bail without any more checking
-      if (!mfnAttr.isReadable() || plug.isNull()) continue;
+      if (!mfnAttr.isReadable() || plug.isNull()) {
+        continue;
+      }
 
       MString propName = plug.partialName(0, 0, 0, 0, 0, 1);
       std::string propStr = propName.asChar();
       if (propStr.substr(0, 8) == "FACESET_") {
         MStatus status;
         MFnIntArrayData arr(plug.asMObject(), &status);
-        if (status != MS::kSuccess) continue;
+        if (status != MS::kSuccess) {
+          continue;
+        }
 
         std::string faceSetName = propStr.substr(8);
         std::size_t numData = arr.length();
         std::vector<AbcU::int32_t> faceVals(numData);
-        for (unsigned int j = 0; j < numData; ++j) faceVals[j] = arr[j];
+        for (unsigned int j = 0; j < numData; ++j) {
+          faceVals[j] = arr[j];
+        }
 
         AbcG::OFaceSet faceSet = mSchema.createFaceSet(faceSetName);
         AbcG::OFaceSetSchema::Sample faceSetSample;
@@ -321,7 +333,9 @@ MStatus AlembicSubDNode::compute(const MPlug& plug, MDataBlock& dataBlock)
     mSubDData = MObject::kNullObj;
   }
 
-  if (!mSchema.valid()) return MStatus::kFailure;
+  if (!mSchema.valid()) {
+    return MStatus::kFailure;
+  }
 
   // get the sample
   SampleInfo sampleInfo = getSampleInfo(inputTime, mSchema.getTimeSampling(),
@@ -330,8 +344,9 @@ MStatus AlembicSubDNode::compute(const MPlug& plug, MDataBlock& dataBlock)
   // check if we have to do this at all
   if (!mSubDData.isNull() &&
       mLastSampleInfo.floorIndex == sampleInfo.floorIndex &&
-      mLastSampleInfo.ceilIndex == sampleInfo.ceilIndex)
+      mLastSampleInfo.ceilIndex == sampleInfo.ceilIndex) {
     return MStatus::kSuccess;
+  }
 
   mLastSampleInfo = sampleInfo;
 
@@ -339,7 +354,9 @@ MStatus AlembicSubDNode::compute(const MPlug& plug, MDataBlock& dataBlock)
   AbcG::ISubDSchema::Sample sample;
   AbcG::ISubDSchema::Sample sample2;
   mSchema.get(sample, sampleInfo.floorIndex);
-  if (sampleInfo.alpha != 0.0) mSchema.get(sample2, sampleInfo.ceilIndex);
+  if (sampleInfo.alpha != 0.0) {
+    mSchema.get(sample2, sampleInfo.ceilIndex);
+  }
 
   // create the output subd
   if (mSubDData.isNull()) {
@@ -352,7 +369,9 @@ MStatus AlembicSubDNode::compute(const MPlug& plug, MDataBlock& dataBlock)
   Abc::Int32ArraySamplePtr sampleIndices = sample.getFaceIndices();
 
   // ensure that we are not running on a purepoint cache mesh
-  if (sampleCounts->get()[0] == 0) return MStatus::kFailure;
+  if (sampleCounts->get()[0] == 0) {
+    return MStatus::kFailure;
+  }
 
   MPointArray points;
   if (samplePos->size() > 0) {
@@ -522,7 +541,9 @@ MStatus AlembicSubDDeformNode::compute(const MPlug& plug, MDataBlock& dataBlock)
 
     unsigned int count = subDiv.polygonCount();
     std::vector<bool> done(subDiv.vertexCount());
-    for (size_t i = 0; i < done.size(); i++) done[i] = false;
+    for (size_t i = 0; i < done.size(); i++) {
+      done[i] = false;
+    }
 
     MUint64Array vertices;
     for (index = 0; index < count; index++) {
@@ -530,7 +551,9 @@ MStatus AlembicSubDDeformNode::compute(const MPlug& plug, MDataBlock& dataBlock)
       subDiv.polygonVertices(id, vertices);
       for (unsigned int i = 0; i < vertices.length(); i++) {
         unsigned int j = subDiv.vertexBaseIndexFromVertexId(vertices[i]);
-        if (done[j]) continue;
+        if (done[j]) {
+          continue;
+        }
         done[j] = true;
         mVertexLookup.push_back(j);
       }
@@ -546,8 +569,9 @@ MStatus AlembicSubDDeformNode::deform(MDataBlock& dataBlock, MItGeometry& iter,
   ESS_PROFILE_SCOPE("AlembicSubDDeformNode::deform");
   // get the envelope data
   float env = dataBlock.inputValue(envelope).asFloat();
-  if (env == 0.0f)  // deformer turned off
+  if (env == 0.0f) {  // deformer turned off
     return MStatus::kSuccess;
+  }
 
   // update the frame number to be imported
   double inputTime =
@@ -582,7 +606,9 @@ MStatus AlembicSubDDeformNode::deform(MDataBlock& dataBlock, MItGeometry& iter,
     mSchema = obj.getSchema();
   }
 
-  if (!mSchema.valid()) return MStatus::kFailure;
+  if (!mSchema.valid()) {
+    return MStatus::kFailure;
+  }
 
   // get the sample
   SampleInfo sampleInfo = getSampleInfo(inputTime, mSchema.getTimeSampling(),
@@ -590,8 +616,9 @@ MStatus AlembicSubDDeformNode::deform(MDataBlock& dataBlock, MItGeometry& iter,
 
   // check if we have to do this at all
   if (mLastSampleInfo.floorIndex == sampleInfo.floorIndex &&
-      mLastSampleInfo.ceilIndex == sampleInfo.ceilIndex)
+      mLastSampleInfo.ceilIndex == sampleInfo.ceilIndex) {
     return MStatus::kSuccess;
+  }
 
   mLastSampleInfo = sampleInfo;
 
@@ -599,11 +626,15 @@ MStatus AlembicSubDDeformNode::deform(MDataBlock& dataBlock, MItGeometry& iter,
   AbcG::ISubDSchema::Sample sample;
   AbcG::ISubDSchema::Sample sample2;
   mSchema.get(sample, sampleInfo.floorIndex);
-  if (sampleInfo.alpha != 0.0) mSchema.get(sample2, sampleInfo.ceilIndex);
+  if (sampleInfo.alpha != 0.0) {
+    mSchema.get(sample2, sampleInfo.ceilIndex);
+  }
 
   Abc::P3fArraySamplePtr samplePos = sample.getPositions();
   Abc::P3fArraySamplePtr samplePos2;
-  if (sampleInfo.alpha != 0.0) samplePos2 = sample2.getPositions();
+  if (sampleInfo.alpha != 0.0) {
+    samplePos2 = sample2.getPositions();
+  }
 
   // iteration should not be necessary. the iteration is only
   // required if the same mesh is attached to the same deformer
@@ -616,11 +647,17 @@ MStatus AlembicSubDDeformNode::deform(MDataBlock& dataBlock, MItGeometry& iter,
     // MFloatPoint pt = iter.position();
     MPoint pt = iter.position();
     MPoint abcPos = pt;
-    if (index >= mVertexLookup.size()) continue;
+    if (index >= mVertexLookup.size()) {
+      continue;
+    }
     float weight = weightValue(dataBlock, geomIndex, index) * env;
-    if (weight == 0.0f) continue;
+    if (weight == 0.0f) {
+      continue;
+    }
     float iweight = 1.0f - weight;
-    if (index >= samplePos->size()) continue;
+    if (index >= samplePos->size()) {
+      continue;
+    }
     bool done = false;
     index = mVertexLookup[index];
     if (sampleInfo.alpha != 0.0) {

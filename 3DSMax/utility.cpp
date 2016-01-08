@@ -221,9 +221,13 @@ INode* GetParentModelTransformNode(INode* pNode)
   while (pModelTransformNode) {
     pModelTransformNode = pModelTransformNode->GetParentNode();
 
-    if (pModelTransformNode->IsRootNode()) return 0;
+    if (pModelTransformNode->IsRootNode()) {
+      return 0;
+    }
 
-    if (IsModelTransformNode(pModelTransformNode)) return pModelTransformNode;
+    if (IsModelTransformNode(pModelTransformNode)) {
+      return pModelTransformNode;
+    }
   }
 
   return 0;
@@ -270,11 +274,17 @@ int GetParamIdByName(Animatable* pBaseObject, int pblockIndex,
 TriObject* GetTriObjectFromNode(INode* iNode, const TimeValue t, bool& deleteIt)
 {
   deleteIt = false;
-  if (iNode == NULL) return NULL;
+  if (iNode == NULL) {
+    return NULL;
+  }
   Object* obj = iNode->EvalWorldState(t).obj;
   obj = GetPFObject(obj);
-  if (obj == NULL) return NULL;
-  if (obj->IsParticleSystem()) return NULL;
+  if (obj == NULL) {
+    return NULL;
+  }
+  if (obj->IsParticleSystem()) {
+    return NULL;
+  }
   if (obj->SuperClassID() == GEOMOBJECT_CLASS_ID) {
     if (obj->IsSubClassOf(triObjectClassID)) {
       return (TriObject*)obj;
@@ -285,7 +295,9 @@ TriObject* GetTriObjectFromNode(INode* iNode, const TimeValue t, bool& deleteIt)
       // Note that the TriObject should only be deleted
       // if the pointer to it is not equal to the object
       // pointer that called ConvertToType()
-      if (obj != tri) deleteIt = true;
+      if (obj != tri) {
+        deleteIt = true;
+      }
       return tri;
     }
     else {
@@ -312,7 +324,9 @@ std::string alembicPathToMaxPath(const std::string& path)
   for (int i = 0; i < parts.size(); i++) {
     parts[i] = removeXfoSuffix(parts[i]);
     result << parts[i];
-    if (i < parts.size() - 1) result << "/";
+    if (i < parts.size() - 1) {
+      result << "/";
+    }
   }
 
   return result.str();

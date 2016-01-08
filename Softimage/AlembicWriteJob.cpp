@@ -27,18 +27,21 @@ AlembicWriteJob::AlembicWriteJob(const CString& in_FileName,
   mFileName = CUtils::ResolveTokenString(in_FileName, XSI::CTime(), false);
   mSelection = in_Selection;
 
-  for (LONG i = 0; i < in_Frames.GetCount(); i++)
+  for (LONG i = 0; i < in_Frames.GetCount(); i++) {
     mFrames.push_back(in_Frames[i]);
+  }
 }
 
 AlembicWriteJob::~AlembicWriteJob() {}
 void AlembicWriteJob::SetOption(const CString& in_Name, const CValue& in_Value)
 {
   std::map<XSI::CString, XSI::CValue>::iterator it = mOptions.find(in_Name);
-  if (it == mOptions.end())
+  if (it == mOptions.end()) {
     mOptions.insert(std::pair<XSI::CString, XSI::CValue>(in_Name, in_Value));
-  else
+  }
+  else {
     it->second = in_Value;
+  }
 }
 
 bool AlembicWriteJob::HasOption(const CString& in_Name)
@@ -50,7 +53,9 @@ bool AlembicWriteJob::HasOption(const CString& in_Name)
 CValue AlembicWriteJob::GetOption(const CString& in_Name)
 {
   std::map<XSI::CString, XSI::CValue>::iterator it = mOptions.find(in_Name);
-  if (it != mOptions.end()) return it->second;
+  if (it != mOptions.end()) {
+    return it->second;
+  }
   return CValue(false);
 }
 
@@ -59,7 +64,7 @@ CValue AlembicWriteJob::GetOption(const CString& in_Name)
 // 	std::string key = std::string( in_Ref.GetAsText().GetAsciiString() );
 //
 //	std::map<std::string,AlembicObjectPtr>::const_iterator it =
-//mObjectsNames.find( key );
+// mObjectsNames.find( key );
 //
 //	if (it != mObjectsNames.end()) {
 //		return it->second;
@@ -69,10 +74,13 @@ CValue AlembicWriteJob::GetOption(const CString& in_Name)
 
 bool AlembicWriteJob::AddObject(AlembicObjectPtr in_Obj)
 {
-  if (!in_Obj) return false;
-  if (!in_Obj->GetRef().IsValid() &&
-      in_Obj->mExoSceneNode->type != SceneNode::POLYMESH_SUBTREE)
+  if (!in_Obj) {
     return false;
+  }
+  if (!in_Obj->GetRef().IsValid() &&
+      in_Obj->mExoSceneNode->type != SceneNode::POLYMESH_SUBTREE) {
+    return false;
+  }
   mObjects.push_back(in_Obj);
   return true;
 }
@@ -156,11 +164,14 @@ CStatus AlembicWriteJob::PreProcess()
   args[0] = L"PlayControl.Rate";
   Application().ExecuteCommand(L"GetValue", args, returnVal);
   mFrameRate = returnVal;
-  if (mFrameRate == 0.0) mFrameRate = 25.0;
+  if (mFrameRate == 0.0) {
+    mFrameRate = 25.0;
+  }
 
   std::vector<AbcA::chrono_t> frames;
-  for (LONG i = 0; i < mFrames.size(); i++)
+  for (LONG i = 0; i < mFrames.size(); i++) {
     frames.push_back(mFrames[i] / mFrameRate);
+  }
 
   // create the sampling
   double timePerSample = 1.0 / mFrameRate;
@@ -340,12 +351,16 @@ CStatus AlembicWriteJob::Process(double frame)
 
   for (size_t i = 0; i < mFrames.size(); i++) {
     // compare the frames
-    if (fabs(mFrames[i] - frame) > 0.001) continue;
+    if (fabs(mFrames[i] - frame) > 0.001) {
+      continue;
+    }
 
     // run the export for all objects
     for (size_t j = 0; j < mObjects.size(); j++) {
       CStatus status = mObjects[j]->Save(mFrames[i]);
-      if (status != CStatus::OK) return status;
+      if (status != CStatus::OK) {
+        return status;
+      }
       result = CStatus::OK;
     }
   }

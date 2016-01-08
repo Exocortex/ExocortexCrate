@@ -49,10 +49,11 @@ bool AlembicXForm::Save(double time, bool bLastFrame)
     DummyObject *pDummyObject = static_cast<DummyObject *>(obj);
     Box3 maxBox = pDummyObject->GetBox();
 
-    // Abc::V3d minpoint(maxBox.pmin.x, maxBox.pmin.y, maxBox.pmin.z);  // Abc::V3d
-                                                                        // maxpoint(maxBox.pmax.x,
-                                                                        // maxBox.pmax.y,
-                                                                        // maxBox.pmax.z);
+    // Abc::V3d minpoint(maxBox.pmin.x, maxBox.pmin.y, maxBox.pmin.z);  //
+    // Abc::V3d
+    // maxpoint(maxBox.pmax.x,
+    // maxBox.pmax.y,
+    // maxBox.pmax.z);
 
     Abc::V3d minpoint(ConvertMaxPointToAlembicPoint4(maxBox.pmin));
     Abc::V3d maxpoint(ConvertMaxPointToAlembicPoint4(maxBox.pmax));

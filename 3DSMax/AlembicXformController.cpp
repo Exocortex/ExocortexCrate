@@ -146,8 +146,7 @@ void AlembicXformController::GetValueLocalTime(TimeValue t, void *ptr,
     Matrix3 *m3InVal = (Matrix3 *)ptr;
     *m3InVal = xformOptions.maxMatrix;
   }
-  else  // CTRL_RELATIVE
-  {
+  else {  // CTRL_RELATIVE
     Matrix3 *m3InVal = (Matrix3 *)ptr;
     *m3InVal = xformOptions.maxMatrix * (*m3InVal);
   }
@@ -179,10 +178,13 @@ RefTargetHandle AlembicXformController::Clone(RemapDir &remap)
 void AlembicXformController::EnumAuxFiles(AssetEnumCallback &nameEnum,
                                           DWORD flags)
 {
-  if ((flags & FILE_ENUM_CHECK_AWORK1) && TestAFlag(A_WORK1))
+  if ((flags & FILE_ENUM_CHECK_AWORK1) && TestAFlag(A_WORK1)) {
     return;  // LAM - 4/11/03
+  }
 
-  if (!(flags & FILE_ENUM_INACTIVE)) return;  // not needed by renderer
+  if (!(flags & FILE_ENUM_INACTIVE)) {
+    return;  // not needed by renderer
+  }
 
   if (flags & FILE_ENUM_ACCESSOR_INTERFACE) {
     IEnumAuxAssetsCallback *callback =
@@ -191,7 +193,7 @@ void AlembicXformController::EnumAuxFiles(AssetEnumCallback &nameEnum,
   }
   // else {
   //	IPathConfigMgr::GetPathConfigMgr()->RecordInputAsset(
-  //this->GetParamBlockByID( 0 )->GetAssetUser( GetParamIdByName( this, 0,
+  // this->GetParamBlockByID( 0 )->GetAssetUser( GetParamIdByName( this, 0,
   //"path" ), 0 ), nameEnum, flags);
   //}
 
@@ -252,7 +254,9 @@ IOResult AlembicXformController::Load(ILoad *iload)
   IOResult res;
 
   res = Control::Load(iload);
-  if (res != IO_OK) return res;
+  if (res != IO_OK) {
+    return res;
+  }
 
   // We can't do the standard 'while' loop of opening chunks and checking ID
   // since that will eat the Control ORT chunks that were saved improperly in
@@ -262,18 +266,23 @@ IOResult AlembicXformController::Load(ILoad *iload)
     iload->OpenChunk();
     int on;
     res = iload->Read(&on, sizeof(on), &nb);
-    if (on)
+    if (on) {
       mLocked = true;
-    else
+    }
+    else {
       mLocked = false;
+    }
     iload->CloseChunk();
-    if (res != IO_OK) return res;
+    if (res != IO_OK) {
+      return res;
+    }
   }
 
   // Only do anything if this is the control base classes chunk
   next = iload->PeekNextChunkID();
-  if (next == CONTROLBASE_CHUNK)
+  if (next == CONTROLBASE_CHUNK) {
     res = Control::Load(iload);  // handle improper Renoir Save order
+  }
   return res;
 }
 #if (crate_Max_Version >= 2015)

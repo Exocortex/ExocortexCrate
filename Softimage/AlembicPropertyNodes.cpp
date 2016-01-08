@@ -98,29 +98,65 @@ Abc::ICompoundProperty getProperty(const Abc::ICompoundProperty& props,
 
 char* getPropertyTypeStr(AbcA::PropertyType type)
 {
-  if (type == AbcA::kCompoundProperty) return "kCompoundProperty";
-  if (type == AbcA::kScalarProperty) return "kScalerProperty";
-  if (type == AbcA::kArrayProperty) return "kArrayProperty";
+  if (type == AbcA::kCompoundProperty) {
+    return "kCompoundProperty";
+  }
+  if (type == AbcA::kScalarProperty) {
+    return "kScalerProperty";
+  }
+  if (type == AbcA::kArrayProperty) {
+    return "kArrayProperty";
+  }
   return "kUnknownProperty";
 }
 
 char* getPodStr(AbcA::PlainOldDataType pod)
 {
-  if (pod == AbcA::kBooleanPOD) return "kBooleanPOD";
-  if (pod == AbcA::kUint8POD) return "kUint8POD";
-  if (pod == AbcA::kInt8POD) return "kInt8POD";
-  if (pod == AbcA::kUint16POD) return "kUint16POD";
-  if (pod == AbcA::kInt16POD) return "kInt16POD";
-  if (pod == AbcA::kUint32POD) return "kUint32POD";
-  if (pod == AbcA::kInt32POD) return "kInt32POD";
-  if (pod == AbcA::kUint64POD) return "kUint64POD";
-  if (pod == AbcA::kInt64POD) return "kInt64POD";
-  if (pod == AbcA::kFloat16POD) return "kFloat16POD";
-  if (pod == AbcA::kFloat32POD) return "kFloat32POD";
-  if (pod == AbcA::kFloat64POD) return "kFloat64POD";
-  if (pod == AbcA::kStringPOD) return "kStringPOD";
-  if (pod == AbcA::kWstringPOD) return "kWstringPOD";
-  if (pod == AbcA::kNumPlainOldDataTypes) return "kNumPlainOldDataTypes";
+  if (pod == AbcA::kBooleanPOD) {
+    return "kBooleanPOD";
+  }
+  if (pod == AbcA::kUint8POD) {
+    return "kUint8POD";
+  }
+  if (pod == AbcA::kInt8POD) {
+    return "kInt8POD";
+  }
+  if (pod == AbcA::kUint16POD) {
+    return "kUint16POD";
+  }
+  if (pod == AbcA::kInt16POD) {
+    return "kInt16POD";
+  }
+  if (pod == AbcA::kUint32POD) {
+    return "kUint32POD";
+  }
+  if (pod == AbcA::kInt32POD) {
+    return "kInt32POD";
+  }
+  if (pod == AbcA::kUint64POD) {
+    return "kUint64POD";
+  }
+  if (pod == AbcA::kInt64POD) {
+    return "kInt64POD";
+  }
+  if (pod == AbcA::kFloat16POD) {
+    return "kFloat16POD";
+  }
+  if (pod == AbcA::kFloat32POD) {
+    return "kFloat32POD";
+  }
+  if (pod == AbcA::kFloat64POD) {
+    return "kFloat64POD";
+  }
+  if (pod == AbcA::kStringPOD) {
+    return "kStringPOD";
+  }
+  if (pod == AbcA::kWstringPOD) {
+    return "kWstringPOD";
+  }
+  if (pod == AbcA::kNumPlainOldDataTypes) {
+    return "kNumPlainOldDataTypes";
+  }
   // if(pod == AbcA::kUnknownPOD)
   return "kUnknownPOD";
 }

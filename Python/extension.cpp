@@ -99,7 +99,9 @@ static PyMethodDef unlicensed_extension_methods[] = {{NULL, NULL}};
 bool register_object(PyObject* module, PyTypeObject& type_object,
                      const char* object_name)
 {
-  if (PyType_Ready(&type_object) < 0) return false;
+  if (PyType_Ready(&type_object) < 0) {
+    return false;
+  }
 
   Py_INCREF(&type_object);
   PyModule_AddObject(module, object_name, (PyObject*)&type_object);
@@ -130,7 +132,9 @@ EXTENSION_CALLBACK init_ExocortexAlembicPython(void)
 
   reg = reg && register_object_TS(m);
 
-  if (!reg) printf("Fail to register all objects\n");
+  if (!reg) {
+    printf("Fail to register all objects\n");
+  }
 
   extension_error =
       PyErr_NewException("ExocortexAlembicPython.error", NULL, NULL);

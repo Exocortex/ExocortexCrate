@@ -56,15 +56,17 @@ void removeExocortexAlembicNode(MObject &node, void *clientData)
   MObject fname = nodeFn.attribute("fileName");
   if (!fname.isNull()) {
     MPlug attrFileName(nodeFn.object(), fname);
-    if (attrFileName.getValue(fname))
+    if (attrFileName.getValue(fname)) {
       delRefArchive(MFnStringData(fname).string());
+    }
   }
 
   fname = nodeFn.attribute("uv_fileName");
   if (!fname.isNull()) {
     MPlug attrFileName(nodeFn.object(), fname);
-    if (attrFileName.getValue(fname))
+    if (attrFileName.getValue(fname)) {
       delRefArchive(MFnStringData(fname).string());
+    }
   }
 }
 
@@ -199,8 +201,9 @@ EC_EXPORT MStatus initializePlugin(MObject obj)
 
   commandStatus =
       MGlobal::executePythonCommand("import ExocortexAlembic as ExoAlembic\n");
-  if (commandStatus != MStatus::kSuccess)
+  if (commandStatus != MStatus::kSuccess) {
     MGlobal::displayError("Unable to import ExocortexAlembic");
+  }
   MGlobal::executePythonCommand("import maya.cmds as __cmds__\n");
 
   EC_LOG_INFO("Exocortex Crate " << crate_MAJOR_VERSION << "."

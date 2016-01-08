@@ -49,13 +49,13 @@ MStatus AlembicPolyMesh::Save(double time)
   }
 
   std::vector<std::vector<Alembic::Util::int32_t> > allFaceSetVals;  // keep in
-                                                                     // memory
-                                                                     // all face
-                                                                     // sets
-                                                                     // until
-                                                                     // the data
-                                                                     // is
-                                                                     // written!
+  // memory
+  // all face
+  // sets
+  // until
+  // the data
+  // is
+  // written!
 
   // check if we have the global cache option
   const bool globalCache =
@@ -92,7 +92,9 @@ MStatus AlembicPolyMesh::Save(double time)
       ptIn.x = ptOut.x;
       ptIn.y = ptOut.y;
       ptIn.z = ptOut.z;
-      if (globalCache) globalXfo.multVecMatrix(ptIn, ptIn);
+      if (globalCache) {
+        globalXfo.multVecMatrix(ptIn, ptIn);
+      }
       bbox.extendBy(ptIn);
     }
   }
@@ -204,12 +206,14 @@ MStatus AlembicPolyMesh::Save(double time)
         IndexedUVs &indexedUVs = indexedUVSet.back();
 
         indexedUVs.name = std::string(uvSetName.asChar());
-        for (int i = 0; i < (int)uValues.length(); ++i)
+        for (int i = 0; i < (int)uValues.length(); ++i) {
           indexedUVs.values.push_back(Abc::V2f(uValues[i], vValues[i]));
+        }
 
         indexedUVs.indices.resize(uvIds.length());
-        for (int i = 0; i < (int)uvIds.length(); ++i)
+        for (int i = 0; i < (int)uvIds.length(); ++i) {
           indexedUVs.indices[mSampleLookup[i]] = uvIds[i];
+        }
       }
 
       saveIndexedUVs(mSchema, mSample, uvSample, mUvParams,
@@ -225,9 +229,9 @@ MStatus AlembicPolyMesh::Save(double time)
         MStringArray pluginsAttributes;
         MGlobal::executeCommand("listAttr -ud " + node.name(),
                                 pluginsAttributes);  // only list attribute
-                                                     // created by plugins!
-                                                     // "FACESET_" are some of
-                                                     // them!
+        // created by plugins!
+        // "FACESET_" are some of
+        // them!
         for (unsigned int i = 0; i < pluginsAttributes.length(); ++i) {
           const MString &propName = pluginsAttributes[i];
           MObject attr = node.attribute(propName);
@@ -237,8 +241,9 @@ MStatus AlembicPolyMesh::Save(double time)
           // if it is not readable or not an array of integer, then bail without
           // any more checking
           if (!mfnAttr.isReadable() ||
-              /*mfnAttr.type() != MFn::kIntArrayData ||*/ plug.isNull())
+              /*mfnAttr.type() != MFn::kIntArrayData ||*/ plug.isNull()) {
             continue;
+          }
 
           std::string propStr = propName.asChar();
           if (propStr.compare(0, 8, "FACESET_") == 0) {
@@ -246,7 +251,9 @@ MStatus AlembicPolyMesh::Save(double time)
                 "AlembicPolyMesh::Save FaceSets FACESET_ attribute found");
             MStatus status;
             MFnIntArrayData arr(plug.asMObject(), &status);
-            if (status != MS::kSuccess) continue;
+            if (status != MS::kSuccess) {
+              continue;
+            }
 
             // ensure the faceSetName is unique
             std::string faceSetName = propStr.substr(8);
@@ -264,7 +271,9 @@ MStatus AlembicPolyMesh::Save(double time)
 
             std::size_t numData = arr.length();
             std::vector<Alembic::Util::int32_t> faceVals(numData);
-            for (unsigned int j = 0; j < numData; ++j) faceVals[j] = arr[j];
+            for (unsigned int j = 0; j < numData; ++j) {
+              faceVals[j] = arr[j];
+            }
 
             AbcG::OFaceSet faceSet = mSchema.createFaceSet(faceSetName);
             AbcG::OFaceSetSchema::Sample faceSetSample;
@@ -307,8 +316,9 @@ MStatus AlembicPolyMesh::Save(double time)
         // save facesets!
         for (unsigned int i = 0; i < nbSets; ++i) {
           MFnSet setFn(sets[i]);
-          if (!useInitShadGrp && setFn.name() == "initialShadingGroup")
+          if (!useInitShadGrp && setFn.name() == "initialShadingGroup") {
             continue;
+          }
 
           // ensure the faceSetName is unique
           std::string faceSetName = setFn.name().asChar();
@@ -332,10 +342,12 @@ MStatus AlembicPolyMesh::Save(double time)
             ESS_PROFILE_SCOPE("AlembicPolyMesh::Save FaceSets more set");
 
             AbcG::OFaceSet faceSet;
-            if (mSchema.hasFaceSet(faceSetName))
+            if (mSchema.hasFaceSet(faceSetName)) {
               faceSet = mSchema.getFaceSet(faceSetName);
-            else
+            }
+            else {
               faceSet = mSchema.createFaceSet(faceSetName);
+            }
             AbcG::OFaceSetSchema::Sample faceSetSample;
             faceSetSample.setFaces(Abc::Int32ArraySample(allFaceSetVals[i]));
             faceSet.getSchema().set(faceSetSample);
@@ -375,8 +387,9 @@ MStatus AlembicPolyMesh::Save(double time)
       // if (indexedNormalsIndices.size() == mSampleLookup.size())
       {
         indexedNormalsIndices.resize(normalIDsArray.length());
-        for (int i = 0; i < indexedNormalsIndices.size(); ++i)
+        for (int i = 0; i < indexedNormalsIndices.size(); ++i) {
           indexedNormalsIndices[mSampleLookup[i]] = normalIDsArray[i];
+        }
       }
     }
 
@@ -563,7 +576,9 @@ MStatus AlembicPolyMeshNode::compute(const MPlug &plug, MDataBlock &dataBlock)
     mDynamicTopology = pObjectInfo->isMeshTopoDynamic;
   }
 
-  if (!mSchema.valid()) return MStatus::kFailure;
+  if (!mSchema.valid()) {
+    return MStatus::kFailure;
+  }
 
   // UVs
   bool uvFromDifferentFile = false;
@@ -595,8 +610,9 @@ MStatus AlembicPolyMeshNode::compute(const MPlug &plug, MDataBlock &dataBlock)
           }
         }
       }
-      else
+      else {
         independentUvSuccessful = true;
+      }
     }
 
     if (!independentUvSuccessful) {
@@ -606,7 +622,9 @@ MStatus AlembicPolyMeshNode::compute(const MPlug &plug, MDataBlock &dataBlock)
   }
 
   const bool uvChanged = (uvFromDifferentFile != mUvFromDifferentFile);
-  if (uvChanged) uvFromDifferentFile = mUvFromDifferentFile;
+  if (uvChanged) {
+    uvFromDifferentFile = mUvFromDifferentFile;
+  }
 
   // get the sample
   SampleInfo sampleInfo = getSampleInfo(inputTime, mSchema.getTimeSampling(),
@@ -626,7 +644,9 @@ MStatus AlembicPolyMeshNode::compute(const MPlug &plug, MDataBlock &dataBlock)
   AbcG::IPolyMeshSchema::Sample sample;
   AbcG::IPolyMeshSchema::Sample sample2;
   mSchema.get(sample, sampleInfo.floorIndex);
-  if (sampleInfo.alpha != 0.0) mSchema.get(sample2, sampleInfo.ceilIndex);
+  if (sampleInfo.alpha != 0.0) {
+    mSchema.get(sample2, sampleInfo.ceilIndex);
+  }
 
   // create the output mesh
   if (mMeshData.isNull()) {
@@ -793,7 +813,9 @@ MStatus AlembicPolyMeshNode::compute(const MPlug &plug, MDataBlock &dataBlock)
             for (size_t i = 0; i < ptr->size(); i++) {
               std::string uvName = ptr->get()[i];
               size_t pos = uvName.find("Channel_");
-              if (pos == 0) uvName = uvName.replace(0, 8, "map");
+              if (pos == 0) {
+                uvName = uvName.replace(0, 8, "map");
+              }
               uvSetNames.append(uvName.c_str());
             }
           }
@@ -806,7 +828,9 @@ MStatus AlembicPolyMeshNode::compute(const MPlug &plug, MDataBlock &dataBlock)
           MStringArray existingUVSets;
           mMesh.getUVSetNames(existingUVSets);
           for (unsigned int i = 0; i < existingUVSets.length(); i++) {
-            if (existingUVSets[i] == "map1") continue;
+            if (existingUVSets[i] == "map1") {
+              continue;
+            }
             status = mMesh.deleteUVSet(existingUVSets[i]);
             if (status != MS::kSuccess) {
               EC_LOG_ERROR("mMesh.deleteUVSet(\""
@@ -821,8 +845,9 @@ MStatus AlembicPolyMeshNode::compute(const MPlug &plug, MDataBlock &dataBlock)
           for (unsigned int uvSetIndex = 0; uvSetIndex < uvSetNames.length();
                uvSetIndex++) {
             MString &uvSetName = uvSetNames[uvSetIndex];
-            if (uvSetName == "map1")
+            if (uvSetName == "map1") {
               continue;  // already exists, do not re-create!
+            }
             status = mMesh.createUVSetDataMesh(uvSetName);
             if (status != MS::kSuccess) {
               EC_LOG_ERROR("mMesh.createUVSet(\""
@@ -849,8 +874,9 @@ MStatus AlembicPolyMeshNode::compute(const MPlug &plug, MDataBlock &dataBlock)
               MString storedUvSetName;
               storedUvSetName.set((double)uvSetIndex);
               storedUvSetName = MString("uv") + storedUvSetName;
-              if (mSchema.getPropertyHeader(storedUvSetName.asChar()) == NULL)
+              if (mSchema.getPropertyHeader(storedUvSetName.asChar()) == NULL) {
                 continue;
+              }
               AbcG::IV2fGeomParam uvParamExtended =
                   AbcG::IV2fGeomParam(mSchema, storedUvSetName.asChar());
               uvFloor = getIndexAndValues(sampleIndices, uvParamExtended,
@@ -919,8 +945,9 @@ MStatus AlembicPolyMeshNode::compute(const MPlug &plug, MDataBlock &dataBlock)
       }
     }
   }
-  else if (mMesh.numVertices() == points.length())
+  else if (mMesh.numVertices() == points.length()) {
     mMesh.setPoints(points);
+  }
 
   // import the normals
   if (importNormals) {
@@ -1078,8 +1105,9 @@ MStatus AlembicPolyMeshDeformNode::deform(MDataBlock &dataBlock,
 
   // get the envelope data
   const float env = dataBlock.inputValue(envelope).asFloat();
-  if (env == 0.0f)  // deformer turned off
+  if (env == 0.0f) {  // deformer turned off
     return MStatus::kSuccess;
+  }
 
   // update the frame number to be imported
   const double inputTime =
@@ -1127,7 +1155,9 @@ MStatus AlembicPolyMeshDeformNode::deform(MDataBlock &dataBlock,
     mDynamicTopology = pObjectCache->isMeshTopoDynamic;
   }
 
-  if (!mSchema.valid()) return MStatus::kFailure;
+  if (!mSchema.valid()) {
+    return MStatus::kFailure;
+  }
 
   // get the sample
   SampleInfo sampleInfo;
@@ -1144,15 +1174,17 @@ MStatus AlembicPolyMeshDeformNode::deform(MDataBlock &dataBlock,
   {
     // now using the cache to save the most recent queries!
     ESS_PROFILE_SCOPE("AlembicPolyMeshDeformNode::deform get position samples");
-    if (cachePosition.contains(sampleInfo.floorIndex))
+    if (cachePosition.contains(sampleInfo.floorIndex)) {
       samplePos = cachePosition.get(sampleInfo.floorIndex);
+    }
     else {
       mSchema.getPositionsProperty().get(samplePos, sampleInfo.floorIndex);
       cachePosition.insert(sampleInfo.floorIndex, samplePos);
     }
     if (sampleInfo.alpha != 0.0) {
-      if (cachePosition.contains(sampleInfo.ceilIndex))
+      if (cachePosition.contains(sampleInfo.ceilIndex)) {
         samplePos2 = cachePosition.get(sampleInfo.ceilIndex);
+      }
       else {
         mSchema.getPositionsProperty().get(samplePos2, sampleInfo.ceilIndex);
         cachePosition.insert(sampleInfo.ceilIndex, samplePos2);
@@ -1173,10 +1205,14 @@ MStatus AlembicPolyMeshDeformNode::deform(MDataBlock &dataBlock,
     for (iter.reset(); !iter.isDone(); iter.next()) {
       const int iter_index = iter.index();
       const float weight = weightValue(dataBlock, geomIndex, iter_index) * env;
-      if (weight == 0.0f) continue;
+      if (weight == 0.0f) {
+        continue;
+      }
       const float iweight = 1.0f - weight;
 
-      if (iter_index >= samplePos->size()) continue;
+      if (iter_index >= samplePos->size()) {
+        continue;
+      }
       MPoint pt = iter.position();
       if (iweight) {
         pt.x *= iweight;
@@ -1284,10 +1320,12 @@ MStatus AlembicCreateFaceSetsCommand::doIt(const MArgList &args)
   // check the type of object
   AbcG::IPolyMesh mesh;
   AbcG::ISubD subd;
-  if (AbcG::IPolyMesh::matches(object.getMetaData()))
+  if (AbcG::IPolyMesh::matches(object.getMetaData())) {
     mesh = AbcG::IPolyMesh(object, Abc::kWrapExisting);
-  else if (AbcG::ISubD::matches(object.getMetaData()))
+  }
+  else if (AbcG::ISubD::matches(object.getMetaData())) {
     subd = AbcG::ISubD(object, Abc::kWrapExisting);
+  }
   else {
     MGlobal::displayError(
         "[ExocortexAlembic] Specified identifer doesn't refer to a PolyMesh or "
@@ -1296,19 +1334,23 @@ MStatus AlembicCreateFaceSetsCommand::doIt(const MArgList &args)
   }
 
   std::vector<std::string> faceSetNames;
-  if (mesh.valid())
+  if (mesh.valid()) {
     mesh.getSchema().getFaceSetNames(faceSetNames);
-  else
+  }
+  else {
     subd.getSchema().getFaceSetNames(faceSetNames);
+  }
 
   MFnTypedAttribute tAttr;
   for (size_t i = 0; i < faceSetNames.size(); i++) {
     // access the face set
     AbcG::IFaceSetSchema faceSet;
-    if (mesh.valid())
+    if (mesh.valid()) {
       faceSet = mesh.getSchema().getFaceSet(faceSetNames[i]).getSchema();
-    else
+    }
+    else {
       faceSet = subd.getSchema().getFaceSet(faceSetNames[i]).getSchema();
+    }
     AbcG::IFaceSetSchema::Sample faceSetSample = faceSet.getValue();
 
     // create the int data

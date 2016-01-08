@@ -58,8 +58,9 @@ std::string getIdentifierFromRef(CRef in_Ref, bool includeHierarchy)
     ProjectItem item(ref);
     if (model.IsValid()) {
       if (model.GetFullName() ==
-          Application().GetActiveSceneRoot().GetFullName())
+          Application().GetActiveSceneRoot().GetFullName()) {
         break;
+      }
       result = std::string("/") +
                std::string(
                    model.GetName().GetAsciiString()) /*+ std::string("Xfo")*/ +
@@ -76,10 +77,12 @@ std::string getIdentifierFromRef(CRef in_Ref, bool includeHierarchy)
           std::string("/") +
           std::string(obj.GetName().GetAsciiString()) /*+ std::string("Xfo")*/ +
           result;
-      if (includeHierarchy)
+      if (includeHierarchy) {
         ref = obj.GetParent3DObject().GetRef();
-      else
+      }
+      else {
         ref = obj.GetModel().GetRef();
+      }
     }
     else if (item.IsValid()) {
       ref = item.GetParent3DObject().GetRef();
@@ -99,8 +102,9 @@ int getNodeDepthFromRef(XSI::CRef in_Ref)
     ProjectItem item(ref);
     if (model.IsValid()) {
       if (model.GetFullName() ==
-          Application().GetActiveSceneRoot().GetFullName())
+          Application().GetActiveSceneRoot().GetFullName()) {
         break;
+      }
       ref = model.GetModel().GetRef();
       nDepth++;
     }
@@ -122,8 +126,9 @@ int getNodeDepthFromRef(XSI::CRef in_Ref)
 XSI::CString truncateName(const XSI::CString& in_Name)
 {
   CString name = in_Name;
-  if (name.GetSubString(name.Length() - 3, 3).IsEqualNoCase(L"xfo"))
+  if (name.GetSubString(name.Length() - 3, 3).IsEqualNoCase(L"xfo")) {
     name = name.GetSubString(0, name.Length() - 3);
+  }
   return name;
 }
 
@@ -234,7 +239,9 @@ bool isRefAnimated(const CRef& in_Ref, bool xformCache, bool globalSpace)
   // check the cache
   std::map<std::string, bool>::iterator it =
       gIsRefAnimatedMap.find(in_Ref.GetAsText().GetAsciiString());
-  if (it != gIsRefAnimatedMap.end()) return it->second;
+  if (it != gIsRefAnimatedMap.end()) {
+    return it->second;
+  }
 
   // convert to all types
   X3DObject x3d(in_Ref);
@@ -246,80 +253,109 @@ bool isRefAnimated(const CRef& in_Ref, bool xformCache, bool globalSpace)
 
   if (x3d.IsValid()) {
     // exclude the scene root model
-    if (x3d.GetFullName() == Application().GetActiveSceneRoot().GetFullName())
+    if (x3d.GetFullName() == Application().GetActiveSceneRoot().GetFullName()) {
       return returnIsRefAnimated(in_Ref, false);
+    }
     // check both kinematic states
-    if (isRefAnimated(x3d.GetKinematics().GetLocal().GetRef()))
+    if (isRefAnimated(x3d.GetKinematics().GetLocal().GetRef())) {
       return returnIsRefAnimated(in_Ref, true);
-    if (isRefAnimated(x3d.GetKinematics().GetGlobal().GetRef()))
+    }
+    if (isRefAnimated(x3d.GetKinematics().GetGlobal().GetRef())) {
       return returnIsRefAnimated(in_Ref, true);
+    }
     // check all constraints
     CRefArray constraints = x3d.GetKinematics().GetConstraints();
     for (LONG i = 0; i < constraints.GetCount(); i++) {
-      if (isRefAnimated(constraints[i]))
+      if (isRefAnimated(constraints[i])) {
         return returnIsRefAnimated(in_Ref, true);
+      }
     }
     // check the parent
-    if (isRefAnimated(x3d.GetParent()) && !xformCache)
+    if (isRefAnimated(x3d.GetParent()) && !xformCache) {
       return returnIsRefAnimated(in_Ref, true);
+    }
   }
-  else if (shapeKey.IsValid())
+  else if (shapeKey.IsValid()) {
     return returnIsRefAnimated(in_Ref, true);
-  else if (prop.IsValid())
+  }
+  else if (prop.IsValid()) {
     return returnIsRefAnimated(in_Ref, prop.IsAnimated());
+  }
   else if (prim.IsValid()) {
     // check if we are in global space mode and there's animation on the
     // kinematics
     if (globalSpace) {
-      if (isRefAnimated(prim.GetParent3DObject().GetRef()))
+      if (isRefAnimated(prim.GetParent3DObject().GetRef())) {
         return returnIsRefAnimated(in_Ref, true);
+      }
     }
 
     // first check if there are any envelopes
-    if (prim.GetParent3DObject().GetEnvelopes().GetCount() > 0)
+    if (prim.GetParent3DObject().GetEnvelopes().GetCount() > 0) {
       return returnIsRefAnimated(in_Ref, true);
+    }
     // check if we have ice trees
-    if (prim.GetICETrees().GetCount() > 0)
+    if (prim.GetICETrees().GetCount() > 0) {
       return returnIsRefAnimated(in_Ref, true);
+    }
     // loop all ops on the construction history
     CRefArray ops = getOperators(prim.GetRef());
     for (LONG i = 0; i < ops.GetCount(); i++) {
-      if (isRefAnimated(ops[i])) return returnIsRefAnimated(in_Ref, true);
+      if (isRefAnimated(ops[i])) {
+        return returnIsRefAnimated(in_Ref, true);
+      }
     }
-    if (prim.IsAnimated()) return returnIsRefAnimated(in_Ref, true);
+    if (prim.IsAnimated()) {
+      return returnIsRefAnimated(in_Ref, true);
+    }
 
     // check all parameters on the primitive
     CParameterRefArray parameters = prim.GetParameters();
     for (LONG i = 0; i < parameters.GetCount(); i++) {
       Parameter param(parameters[i]);
-      if (param.IsAnimated()) return returnIsRefAnimated(in_Ref, true);
-      if (param.GetSource().IsValid()) return returnIsRefAnimated(in_Ref, true);
+      if (param.IsAnimated()) {
+        return returnIsRefAnimated(in_Ref, true);
+      }
+      if (param.GetSource().IsValid()) {
+        return returnIsRefAnimated(in_Ref, true);
+      }
     }
   }
   else if (kineState.IsValid()) {
     // myself is animated?
-    if (kineState.IsAnimated()) return returnIsRefAnimated(in_Ref, true);
+    if (kineState.IsAnimated()) {
+      return returnIsRefAnimated(in_Ref, true);
+    }
     CRef retargetOpRef;
     retargetOpRef.Set(kineState.GetFullName() + L".RetargetGlobalOp");
-    if (retargetOpRef.IsValid()) return returnIsRefAnimated(in_Ref, true);
+    if (retargetOpRef.IsValid()) {
+      return returnIsRefAnimated(in_Ref, true);
+    }
   }
   else if (op.IsValid()) {
     // check myself
-    if (op.IsAnimated()) return returnIsRefAnimated(in_Ref, true);
+    if (op.IsAnimated()) {
+      return returnIsRefAnimated(in_Ref, true);
+    }
 
     // check several custom types
-    if (op.GetType().IsEqualNoCase(L"shapejitterop"))
+    if (op.GetType().IsEqualNoCase(L"shapejitterop")) {
       return returnIsRefAnimated(in_Ref, true);
-    if (op.GetType().IsEqualNoCase(L"wave"))
+    }
+    if (op.GetType().IsEqualNoCase(L"wave")) {
       return returnIsRefAnimated(in_Ref, true);
-    if (op.GetType().IsEqualNoCase(L"qstretch"))
+    }
+    if (op.GetType().IsEqualNoCase(L"qstretch")) {
       return returnIsRefAnimated(in_Ref, true);
+    }
 
     CRefArray outputPorts = op.GetOutputPorts();
     CRefArray inputPorts = op.GetInputPorts();
     for (LONG i = 0; i < inputPorts.GetCount(); i++) {
       InputPort port(inputPorts[i]);
-      if (!port.IsConnected()) continue;
+      if (!port.IsConnected()) {
+        continue;
+      }
       CRef target = port.GetTarget();
       bool isOutput = false;
       // ensure this target is not an output
@@ -334,11 +370,13 @@ bool isRefAnimated(const CRef& in_Ref, bool xformCache, bool globalSpace)
         // first check for kinematics
         KinematicState opKineState(target);
         if (opKineState.IsValid()) {
-          if (isRefAnimated(opKineState.GetParent3DObject().GetRef()))
+          if (isRefAnimated(opKineState.GetParent3DObject().GetRef())) {
             return returnIsRefAnimated(in_Ref, true);
+          }
         }
-        else if (isRefAnimated(target))
+        else if (isRefAnimated(target)) {
           return returnIsRefAnimated(in_Ref, true);
+        }
       }
     }
   }
@@ -759,13 +797,17 @@ CString gDSOPath;
 CString getDSOPath()
 {
   // check if we have a cached result
-  if (!gDSOPath.IsEmpty()) return gDSOPath;
+  if (!gDSOPath.IsEmpty()) {
+    return gDSOPath;
+  }
 
   CString result;
   // first check the environment variables
   if (getenv("ArnoldAlembicDSO") != NULL) {
     std::string env = getenv("ArnoldAlembicDSO");
-    if (!env.empty()) result = env.c_str();
+    if (!env.empty()) {
+      result = env.c_str();
+    }
   }
 
   if (result.IsEmpty()) {

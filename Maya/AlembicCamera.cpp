@@ -37,7 +37,7 @@ MStatus AlembicCamera::Save(double time)
   MFnCamera::FilmFit filmFit = node.filmFit();
 
   if (filmFit == MFnCamera::kFillFilmFit) {  // Fits the resolution gate within
-                                             // the film gate.
+    // the film gate.
     if (cam < dar) {
       filmFit = MFnCamera::kHorizontalFilmFit;
     }
@@ -46,8 +46,8 @@ MStatus AlembicCamera::Save(double time)
     }
   }
   else if (filmFit == MFnCamera::kOverscanFilmFit) {  // Fits the film gate
-                                                      // within the resolution
-                                                      // gate.
+    // within the resolution
+    // gate.
     if (cam < dar) {
       filmFit = MFnCamera::kVerticalFilmFit;
     }
@@ -60,14 +60,14 @@ MStatus AlembicCamera::Save(double time)
   double fVerticalAperture = node.verticalFilmAperture();
 
   if (filmFit == MFnCamera::kVerticalFilmFit) {  // Fits the resolution gate
-                                                 // horizontally within the film
-                                                 // gate.
+    // horizontally within the film
+    // gate.
     const double fFitFactor = (fVerticalAperture * dar) / fHorizontalAperture;
     fHorizontalAperture *= fFitFactor;
   }
   else if (filmFit == MFnCamera::kHorizontalFilmFit) {  // Fits the resolution
-                                                        // gate vertically
-                                                        // within the film gate.
+    // gate vertically
+    // within the film gate.
     const double fFitFactor = fHorizontalAperture / (fVerticalAperture * dar);
     fVerticalAperture *= fFitFactor;
   }
@@ -328,7 +328,9 @@ MStatus AlembicCameraNode::compute(const MPlug& plug, MDataBlock& dataBlock)
     mSchema = obj.getSchema();
   }
 
-  if (!mSchema.valid()) return MStatus::kFailure;
+  if (!mSchema.valid()) {
+    return MStatus::kFailure;
+  }
 
   // get the sample
   SampleInfo sampleInfo = getSampleInfo(inputTime, mSchema.getTimeSampling(),

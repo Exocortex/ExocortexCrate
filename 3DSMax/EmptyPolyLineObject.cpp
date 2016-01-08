@@ -15,7 +15,8 @@ ClassDesc2* GetEmptyPolyLineObjectClassDesc()
 
 EmptyPolyLineObject::EmptyPolyLineObject() : LinearShape()
 {
-  // ReadyInterpParameterBlock();		// Build the interpolations parameter
+  // ReadyInterpParameterBlock();		// Build the interpolations
+  // parameter
   // block in SimpleSpline
 }
 

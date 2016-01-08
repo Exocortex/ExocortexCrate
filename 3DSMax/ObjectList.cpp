@@ -21,7 +21,9 @@ ObjectEntry *ObjectList::Contains(INode *node)
 
 void ObjectList::Append(SceneEntry *e)
 {
-  if (e->type == OBTYPE_MESH && Contains(e->node)) return;
+  if (e->type == OBTYPE_MESH && Contains(e->node)) {
+    return;
+  }
 
   ObjectEntry oe(e);
   this->objectEntries.push_back(oe);

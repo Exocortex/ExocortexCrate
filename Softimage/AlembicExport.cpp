@@ -106,7 +106,9 @@ CStatus exportCommandImp(CRef& in_ctxt)
         if (objects.GetCount() != 0) {
           jobString += L"objects=";
           for (LONG i = 0; i < objects.GetCount(); i++) {
-            if (i > 0) jobString += L",";
+            if (i > 0) {
+              jobString += L",";
+            }
             jobString += ProjectItem(objects[i]).GetFullName();
           }
         }
@@ -360,11 +362,21 @@ CStatus exportCommandImp(CRef& in_ctxt)
     }
 
     // remember the min and max values for the frames
-    if (frameIn < minFrame) minFrame = frameIn;
-    if (frameOut > maxFrame) maxFrame = frameOut;
-    if (frameSteps > maxSteps) maxSteps = frameSteps;
-    if (frameSteps > 1.0) frameSubSteps = 1.0;
-    if (frameSubSteps > maxSubsteps) maxSubsteps = frameSubSteps;
+    if (frameIn < minFrame) {
+      minFrame = frameIn;
+    }
+    if (frameOut > maxFrame) {
+      maxFrame = frameOut;
+    }
+    if (frameSteps > maxSteps) {
+      maxSteps = frameSteps;
+    }
+    if (frameSteps > 1.0) {
+      frameSubSteps = 1.0;
+    }
+    if (frameSubSteps > maxSubsteps) {
+      maxSubsteps = frameSubSteps;
+    }
 
     // check if we have a filename
     if (filename.IsEmpty()) {
@@ -383,7 +395,9 @@ CStatus exportCommandImp(CRef& in_ctxt)
       else {
         Application().LogMessage(L"[ExocortexAlembic] No filename specified.",
                                  siErrorMsg);
-        for (size_t k = 0; k < jobPtrs.size(); k++) delete (jobPtrs[k]);
+        for (size_t k = 0; k < jobPtrs.size(); k++) {
+          delete (jobPtrs[k]);
+        }
         return CStatus::InvalidArgument;
       }
     }
@@ -392,15 +406,18 @@ CStatus exportCommandImp(CRef& in_ctxt)
         !validate_filename_location(filename.GetAsciiString())) {
       Application().LogMessage(
           L"[ExocortexAlembic] cannot write file " + filename, siErrorMsg);
-      for (size_t k = 0; k < jobPtrs.size(); k++) delete (jobPtrs[k]);
+      for (size_t k = 0; k < jobPtrs.size(); k++) {
+        delete (jobPtrs[k]);
+      }
       return CStatus::Abort;
     }
 
     // construct the frames
     CDoubleArray frames;
     const double frameIncr = frameSteps / frameSubSteps;
-    for (double frame = frameIn; frame <= frameOut; frame += frameIncr)
+    for (double frame = frameIn; frame <= frameOut; frame += frameIncr) {
       frames.Add(frame);
+    }
 
     if (globalspace) {
       flattenhierarchy = true;
@@ -496,7 +513,9 @@ CStatus exportCommandImp(CRef& in_ctxt)
         prog.Increment((LONG)jobPtrs[i]->GetNbObjects());
       }
       else if (status != CStatus::False) {
-        for (size_t k = 0; k < jobPtrs.size(); k++) delete (jobPtrs[k]);
+        for (size_t k = 0; k < jobPtrs.size(); k++) {
+          delete (jobPtrs[k]);
+        }
         return status;
       }
 
@@ -505,13 +524,17 @@ CStatus exportCommandImp(CRef& in_ctxt)
         break;
       }
     }
-    if (canceled) break;
+    if (canceled) {
+      break;
+    }
   }
 
   prog.PutVisible(false);
 
   // delete all jobs
-  for (size_t k = 0; k < jobPtrs.size(); k++) delete (jobPtrs[k]);
+  for (size_t k = 0; k < jobPtrs.size(); k++) {
+    delete (jobPtrs[k]);
+  }
 
   // remove all known archives
   deleteAllArchives();

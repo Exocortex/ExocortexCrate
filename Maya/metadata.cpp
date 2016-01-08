@@ -4,7 +4,9 @@
 bool SaveMetaData(AlembicObject* obj)
 {
   ESS_PROFILE_SCOPE("SaveMetaData");
-  if (obj->GetNumSamples() > 0) return false;
+  if (obj->GetNumSamples() > 0) {
+    return false;
+  }
 
   MFnDependencyNode node(obj->GetRef());
 
@@ -13,13 +15,17 @@ bool SaveMetaData(AlembicObject* obj)
     MString index;
     index.set((double)i, 0);
     MObject labelAttribute = node.attribute("md_label" + index);
-    if (labelAttribute.isNull()) return false;
+    if (labelAttribute.isNull()) {
+      return false;
+    }
     MPlug labelPlug(obj->GetRef(), labelAttribute);
     MString labelString;
     labelPlug.getValue(labelString);
     metaData.push_back(labelString.asChar());
     MObject valueAttribute = node.attribute("md_value" + index);
-    if (valueAttribute.isNull()) return false;
+    if (valueAttribute.isNull()) {
+      return false;
+    }
     MPlug valuePlug(obj->GetRef(), valueAttribute);
     MString valueString;
     valuePlug.getValue(valueString);
@@ -82,13 +88,17 @@ MStatus AlembicCreateMetaDataCommand::doIt(const MArgList& args)
   MFnDagNode node(nodeObject);
 
   MString fileName;
-  if (argData.isFlagSet("fileNameArg"))
+  if (argData.isFlagSet("fileNameArg")) {
     fileName = argData.flagArgumentString("fileNameArg", 0);
+  }
   MString identifier;
-  if (argData.isFlagSet("identifierArg"))
+  if (argData.isFlagSet("identifierArg")) {
     identifier = argData.flagArgumentString("identifierArg", 0);
+  }
 
-  if (fileName.length() > 0) fileName = resolvePath(fileName);
+  if (fileName.length() > 0) {
+    fileName = resolvePath(fileName);
+  }
 
   MStringArray metadata;
   if (fileName.length() > 0 && identifier.length() > 0) {
@@ -107,8 +117,9 @@ MStatus AlembicCreateMetaDataCommand::doIt(const MArgList& args)
           Abc::IStringArrayProperty(getCompoundFromObject(object), ".metadata");
       Abc::StringArraySamplePtr ptr = metaDataProp.getValue(0);
       metadata.setLength((unsigned int)ptr->size());
-      for (unsigned int i = 0; i < metadata.length(); i++)
+      for (unsigned int i = 0; i < metadata.length(); i++) {
         metadata[i] = ptr->get()[i].c_str();
+      }
     }
     else {
       // if we don't have metadata, let's just roll

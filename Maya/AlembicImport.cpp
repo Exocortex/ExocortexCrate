@@ -247,12 +247,13 @@ MStatus AlembicImportCommand::doIt(const MArgList& args)
     ;
 
   // import jobs!
-  for (unsigned int i = 0; i < jobCount;)  // 'i' is increment below!
-  {
+  for (unsigned int i = 0; i < jobCount;) {  // 'i' is increment below!
     MArgList jobArgList;
     argData.getFlagArgumentList("jobArg", i, jobArgList);
     status = importSingleJob(jobArgList.asString(0), ++i);
-    if (status != MS::kSuccess) break;
+    if (status != MS::kSuccess) {
+      break;
+    }
   }
 
   // get the new nodes (listed after the old ones)!
@@ -261,7 +262,9 @@ MStatus AlembicImportCommand::doIt(const MArgList& args)
   for (; nbBeforeNodes; nodeIt.next(), --nbBeforeNodes)
     ;
 
-  for (; !nodeIt.isDone(); nodeIt.next()) afterList.add(nodeIt.item());
+  for (; !nodeIt.isDone(); nodeIt.next()) {
+    afterList.add(nodeIt.item());
+  }
 
   MStringArray newNodes;
   afterList.getSelectionStrings(newNodes);

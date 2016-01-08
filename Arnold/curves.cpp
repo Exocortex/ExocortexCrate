@@ -61,8 +61,9 @@ AtNode *createCurvesNode(nodeData &nodata, userData *ud,
 
         AtArray *radius =
             AiArrayAllocate((AtInt)abcRadius->size(), 1, AI_TYPE_FLOAT);
-        for (size_t i = 0; i < abcRadius->size(); ++i)
+        for (size_t i = 0; i < abcRadius->size(); ++i) {
           AiArraySetFlt(radius, (AtULong)i, abcRadius->get()[i]);
+        }
         AiNodeSetArray(shapeNode, "radius", radius);
       }
 
@@ -91,12 +92,15 @@ AtNode *createCurvesNode(nodeData &nodata, userData *ud,
         Alembic::Abc::C4fArraySamplePtr abcColors =
             propColor.getValue(sampleInfo.floorIndex);
         AtBoolean result = false;
-        if (abcColors->size() == 1)
+        if (abcColors->size() == 1) {
           result = AiNodeDeclare(shapeNode, "Color", "constant RGBA");
-        else if (abcColors->size() == abcNumPoints->size())
+        }
+        else if (abcColors->size() == abcNumPoints->size()) {
           result = AiNodeDeclare(shapeNode, "Color", "uniform RGBA");
-        else
+        }
+        else {
           result = AiNodeDeclare(shapeNode, "Color", "varying RGBA");
+        }
 
         if (result) {
           AtArray *colors =

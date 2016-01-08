@@ -77,12 +77,12 @@ bool AlembicCamera::Save(double time, bool bLastFrame)
   float ratio = GetCOREInterface()->GetRendImageAspect();
   float aperatureWidth =
       GetCOREInterface()->GetRendApertureWidth();  // this may differ from the
-                                                   // imported value
-                                                   // unfortunately
+  // imported value
+  // unfortunately
   float focalLength =
       (float)((aperatureWidth / 2.0) /
               tan(cs.fov / 2.0));  // alembic wants this one in millimeters
-  aperatureWidth /= 10.0f;  // convert to centimeters
+  aperatureWidth /= 10.0f;         // convert to centimeters
 
   IMultiPassCameraEffect *pCameraEffect = cam->GetIMultiPassCameraEffect();
 

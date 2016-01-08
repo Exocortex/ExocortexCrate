@@ -497,7 +497,7 @@ int AlembicImport_Camera(const std::string& path, AbcG::IObject& iObj,
   // if(assignControllerToLevel1SubAnim(createFloatController(path, identifier,
   // std::string("FocusDistance")), pCameraObj, 0, 1) && !isConstant){
   //	AlembicImport_ConnectTimeControl( "$.targetDistance.controller.time",
-  //options );
+  // options );
   //}
 
   createCameraModifier(path, identifier, pNode);

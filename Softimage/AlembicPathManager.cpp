@@ -49,14 +49,16 @@ CValue colReturnVal;
 collection.Call(L"SetAsText", colReturnVal, search);
 
 std::set<CRef> refs;  // refs to all alembic nodes (nodes that have alembic
-                      // operators or alembic ice nodes as children)
+// operators or alembic ice nodes as children)
 for (LONG i = 0; i < (LONG)collection.GetProperty(L"Count"); i++) {
   CValueArray apiArgs;
   apiArgs.Add(i);
   collection.Invoke(L"Item", CComAPIHandler::PropertyGet, colReturnVal,
                     apiArgs);
   CRef ref = colReturnVal;
-  if (!ref.IsValid()) continue;
+  if (!ref.IsValid()) {
+    continue;
+  }
   ICETree tree(ref);
   if (tree.IsValid()) {
     CRefArray compounds = tree.GetCompoundNodes();

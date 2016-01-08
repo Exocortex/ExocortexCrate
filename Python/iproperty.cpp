@@ -16,10 +16,12 @@ static std::string iProperty_getName_func(PyObject *self)
   ALEMBIC_TRY_STATEMENT
   iProperty *prop = (iProperty *)self;
   std::string name;
-  if (prop->mIsArray)
+  if (prop->mIsArray) {
     name = prop->mBaseArrayProperty->getName();
-  else
+  }
+  else {
     name = prop->mBaseScalarProperty->getName();
+  }
   return name;
   ALEMBIC_VALUE_CATCH_STATEMENT("")
 }
@@ -45,10 +47,10 @@ static PyObject *iProperty_getType(PyObject *self, PyObject *args)
     }
     case propertyTP_compound:  // TODO after debugging, remove because it should
                                // never be reached!
-    {
-      type.append("compound");
-      break;
-    }
+      {
+        type.append("compound");
+        break;
+      }
     case propertyTP_boolean:
     case propertyTP_boolean_array: {
       type.append("bool");
@@ -335,8 +337,9 @@ static PyObject *iProperty_getType(PyObject *self, PyObject *args)
       break;
   }
 
-  if (prop->mIsArray)
+  if (prop->mIsArray) {
     type.append("array");
+  }
   else if (use_intent && prop->intent > 1) {
     char sz_intent[9];
     sprintf(sz_intent, "[%d]", prop->intent);
@@ -352,12 +355,16 @@ static PyObject *iProperty_getSampleTimes(PyObject *self, PyObject *args)
   iProperty *prop = (iProperty *)self;
 
   Abc::TimeSamplingPtr ts;
-  if (prop->mIsArray)
+  if (prop->mIsArray) {
     ts = prop->mBaseArrayProperty->getTimeSampling();
-  else
+  }
+  else {
     ts = prop->mBaseScalarProperty->getTimeSampling();
+  }
 
-  if (ts) return TimeSamplingCopy(ts);
+  if (ts) {
+    return TimeSamplingCopy(ts);
+  }
   return Py_BuildValue("s", "unsupported");
   ALEMBIC_PYOBJECT_CATCH_STATEMENT
 }
@@ -367,7 +374,9 @@ static size_t iProperty_getNbStoredSamples_func(PyObject *self)
   ALEMBIC_TRY_STATEMENT
   iProperty *prop = (iProperty *)self;
 
-  if (prop->mIsArray) return prop->mBaseArrayProperty->getNumSamples();
+  if (prop->mIsArray) {
+    return prop->mBaseArrayProperty->getNumSamples();
+  }
   return prop->mBaseScalarProperty->getNumSamples();
   ALEMBIC_VALUE_CATCH_STATEMENT(0)
 }
@@ -392,7 +401,9 @@ static PyObject *iProperty_getSize(PyObject *self, PyObject *args)
 {
   ALEMBIC_TRY_STATEMENT
   iProperty *prop = (iProperty *)self;
-  if (!prop->mIsArray) return Py_BuildValue("I", (unsigned int)1);
+  if (!prop->mIsArray) {
+    return Py_BuildValue("I", (unsigned int)1);
+  }
 
   unsigned long long sampleIndex = 0;
   PyArg_ParseTuple(args, "|K", &sampleIndex);
@@ -493,14 +504,18 @@ static PyObject *iProperty_getValues(PyObject *self, PyObject *args)
 {
   ALEMBIC_TRY_STATEMENT
   iProperty *prop = (iProperty *)self;
-  if (prop->mPropType == propertyTP_unknown) return PyTuple_New(0);
+  if (prop->mPropType == propertyTP_unknown) {
+    return PyTuple_New(0);
+  }
 
   unsigned long long sampleIndex = 0;
   unsigned long long start = 0;
   unsigned long long count = 0;
   PyArg_ParseTuple(args, "|KKK", &sampleIndex, &start, &count);
   unsigned long long end = start + count;
-  if (count == 0) end = ULLONG_MAX;
+  if (count == 0) {
+    end = ULLONG_MAX;
+  }
   unsigned long long offset = 0;
 
   size_t numSamples = iProperty_getNbStoredSamples_func(self);
@@ -1057,10 +1072,13 @@ static PyObject *iProperty_getValues(PyObject *self, PyObject *args)
       Abc::IBoolArrayProperty::sample_ptr_type sample;
       Abc::IBoolArrayProperty::value_type value;
       prop->mBoolArrayProperty->get(sample, sampleIndex);
-      if (start >= sample->size())
+      if (start >= sample->size()) {
         tuple = PyTuple_New(0);
+      }
       else {
-        if (end > sample->size()) end = sample->size();
+        if (end > sample->size()) {
+          end = sample->size();
+        }
         tuple = PyTuple_New(end - start);
         for (unsigned long long i = start; i < end; i++) {
           value = sample->get()[i];
@@ -1073,10 +1091,13 @@ static PyObject *iProperty_getValues(PyObject *self, PyObject *args)
       Abc::IUcharArrayProperty::sample_ptr_type sample;
       Abc::IUcharArrayProperty::value_type value;
       prop->mUcharArrayProperty->get(sample, sampleIndex);
-      if (start >= sample->size())
+      if (start >= sample->size()) {
         tuple = PyTuple_New(0);
+      }
       else {
-        if (end > sample->size()) end = sample->size();
+        if (end > sample->size()) {
+          end = sample->size();
+        }
         tuple = PyTuple_New(end - start);
         for (unsigned long long i = start; i < end; i++) {
           value = sample->get()[i];
@@ -1090,10 +1111,13 @@ static PyObject *iProperty_getValues(PyObject *self, PyObject *args)
       Abc::ICharArrayProperty::sample_ptr_type sample;
       Abc::ICharArrayProperty::value_type value;
       prop->mCharArrayProperty->get(sample, sampleIndex);
-      if (start >= sample->size())
+      if (start >= sample->size()) {
         tuple = PyTuple_New(0);
+      }
       else {
-        if (end > sample->size()) end = sample->size();
+        if (end > sample->size()) {
+          end = sample->size();
+        }
         tuple = PyTuple_New(end - start);
         for (unsigned long long i = start; i < end; i++) {
           value = sample->get()[i];
@@ -1106,10 +1130,13 @@ static PyObject *iProperty_getValues(PyObject *self, PyObject *args)
       Abc::IUInt16ArrayProperty::sample_ptr_type sample;
       Abc::IUInt16ArrayProperty::value_type value;
       prop->mUInt16ArrayProperty->get(sample, sampleIndex);
-      if (start >= sample->size())
+      if (start >= sample->size()) {
         tuple = PyTuple_New(0);
+      }
       else {
-        if (end > sample->size()) end = sample->size();
+        if (end > sample->size()) {
+          end = sample->size();
+        }
         tuple = PyTuple_New(end - start);
         for (unsigned long long i = start; i < end; i++) {
           value = sample->get()[i];
@@ -1123,10 +1150,13 @@ static PyObject *iProperty_getValues(PyObject *self, PyObject *args)
       Abc::IInt16ArrayProperty::sample_ptr_type sample;
       Abc::IInt16ArrayProperty::value_type value;
       prop->mInt16ArrayProperty->get(sample, sampleIndex);
-      if (start >= sample->size())
+      if (start >= sample->size()) {
         tuple = PyTuple_New(0);
+      }
       else {
-        if (end > sample->size()) end = sample->size();
+        if (end > sample->size()) {
+          end = sample->size();
+        }
         tuple = PyTuple_New(end - start);
         for (unsigned long long i = start; i < end; i++) {
           value = sample->get()[i];
@@ -1139,10 +1169,13 @@ static PyObject *iProperty_getValues(PyObject *self, PyObject *args)
       Abc::IUInt32ArrayProperty::sample_ptr_type sample;
       Abc::IUInt32ArrayProperty::value_type value;
       prop->mUInt32ArrayProperty->get(sample, sampleIndex);
-      if (start >= sample->size())
+      if (start >= sample->size()) {
         tuple = PyTuple_New(0);
+      }
       else {
-        if (end > sample->size()) end = sample->size();
+        if (end > sample->size()) {
+          end = sample->size();
+        }
         tuple = PyTuple_New(end - start);
         for (unsigned long long i = start; i < end; i++) {
           value = sample->get()[i];
@@ -1156,10 +1189,13 @@ static PyObject *iProperty_getValues(PyObject *self, PyObject *args)
       Abc::IInt32ArrayProperty::sample_ptr_type sample;
       Abc::IInt32ArrayProperty::value_type value;
       prop->mInt32ArrayProperty->get(sample, sampleIndex);
-      if (start >= sample->size())
+      if (start >= sample->size()) {
         tuple = PyTuple_New(0);
+      }
       else {
-        if (end > sample->size()) end = sample->size();
+        if (end > sample->size()) {
+          end = sample->size();
+        }
         tuple = PyTuple_New(end - start);
         for (unsigned long long i = start; i < end; i++) {
           value = sample->get()[i];
@@ -1172,10 +1208,13 @@ static PyObject *iProperty_getValues(PyObject *self, PyObject *args)
       Abc::IUInt64ArrayProperty::sample_ptr_type sample;
       Abc::IUInt64ArrayProperty::value_type value;
       prop->mUInt64ArrayProperty->get(sample, sampleIndex);
-      if (start >= sample->size())
+      if (start >= sample->size()) {
         tuple = PyTuple_New(0);
+      }
       else {
-        if (end > sample->size()) end = sample->size();
+        if (end > sample->size()) {
+          end = sample->size();
+        }
         tuple = PyTuple_New(end - start);
         for (unsigned long long i = start; i < end; i++) {
           value = sample->get()[i];
@@ -1189,10 +1228,13 @@ static PyObject *iProperty_getValues(PyObject *self, PyObject *args)
       Abc::IInt64ArrayProperty::sample_ptr_type sample;
       Abc::IInt64ArrayProperty::value_type value;
       prop->mInt64ArrayProperty->get(sample, sampleIndex);
-      if (start >= sample->size())
+      if (start >= sample->size()) {
         tuple = PyTuple_New(0);
+      }
       else {
-        if (end > sample->size()) end = sample->size();
+        if (end > sample->size()) {
+          end = sample->size();
+        }
         tuple = PyTuple_New(end - start);
         for (unsigned long long i = start; i < end; i++) {
           value = sample->get()[i];
@@ -1206,10 +1248,13 @@ static PyObject *iProperty_getValues(PyObject *self, PyObject *args)
       Abc::IHalfArrayProperty::sample_ptr_type sample;
       Abc::IHalfArrayProperty::value_type value;
       prop->mHalfArrayProperty->get(sample, sampleIndex);
-      if (start >= sample->size())
+      if (start >= sample->size()) {
         tuple = PyTuple_New(0);
+      }
       else {
-        if (end > sample->size()) end = sample->size();
+        if (end > sample->size()) {
+          end = sample->size();
+        }
         tuple = PyTuple_New(end - start);
         for (unsigned long long i = start; i < end; i++) {
           value = sample->get()[i];
@@ -1222,10 +1267,13 @@ static PyObject *iProperty_getValues(PyObject *self, PyObject *args)
       Abc::IFloatArrayProperty::sample_ptr_type sample;
       Abc::IFloatArrayProperty::value_type value;
       prop->mFloatArrayProperty->get(sample, sampleIndex);
-      if (start >= sample->size())
+      if (start >= sample->size()) {
         tuple = PyTuple_New(0);
+      }
       else {
-        if (end > sample->size()) end = sample->size();
+        if (end > sample->size()) {
+          end = sample->size();
+        }
         tuple = PyTuple_New(end - start);
         for (unsigned long long i = start; i < end; i++) {
           value = sample->get()[i];
@@ -1238,10 +1286,13 @@ static PyObject *iProperty_getValues(PyObject *self, PyObject *args)
       Abc::IDoubleArrayProperty::sample_ptr_type sample;
       Abc::IDoubleArrayProperty::value_type value;
       prop->mDoubleArrayProperty->get(sample, sampleIndex);
-      if (start >= sample->size())
+      if (start >= sample->size()) {
         tuple = PyTuple_New(0);
+      }
       else {
-        if (end > sample->size()) end = sample->size();
+        if (end > sample->size()) {
+          end = sample->size();
+        }
         tuple = PyTuple_New(end - start);
         for (unsigned long long i = start; i < end; i++) {
           value = sample->get()[i];
@@ -1254,10 +1305,13 @@ static PyObject *iProperty_getValues(PyObject *self, PyObject *args)
       Abc::IStringArrayProperty::sample_ptr_type sample;
       Abc::IStringArrayProperty::value_type value;
       prop->mStringArrayProperty->get(sample, sampleIndex);
-      if (start >= sample->size())
+      if (start >= sample->size()) {
         tuple = PyTuple_New(0);
+      }
       else {
-        if (end > sample->size()) end = sample->size();
+        if (end > sample->size()) {
+          end = sample->size();
+        }
         tuple = PyTuple_New(end - start);
         for (unsigned long long i = start; i < end; i++) {
           value = sample->get()[i];
@@ -1270,10 +1324,13 @@ static PyObject *iProperty_getValues(PyObject *self, PyObject *args)
       Abc::IWstringArrayProperty::sample_ptr_type sample;
       Abc::IWstringArrayProperty::value_type value;
       prop->mWstringArrayProperty->get(sample, sampleIndex);
-      if (start >= sample->size())
+      if (start >= sample->size()) {
         tuple = PyTuple_New(0);
+      }
       else {
-        if (end > sample->size()) end = sample->size();
+        if (end > sample->size()) {
+          end = sample->size();
+        }
         tuple = PyTuple_New(end - start);
         for (unsigned long long i = start; i < end; i++) {
           value = sample->get()[i];
@@ -1286,10 +1343,13 @@ static PyObject *iProperty_getValues(PyObject *self, PyObject *args)
       Abc::IV2sArrayProperty::sample_ptr_type sample;
       Abc::IV2sArrayProperty::value_type value;
       prop->mV2sArrayProperty->get(sample, sampleIndex);
-      if (start >= sample->size())
+      if (start >= sample->size()) {
         tuple = PyTuple_New(0);
+      }
       else {
-        if (end > sample->size()) end = sample->size();
+        if (end > sample->size()) {
+          end = sample->size();
+        }
         tuple = PyTuple_New((end - start) * 2);
         for (unsigned long long i = start; i < end; i++) {
           value = sample->get()[i];
@@ -1303,10 +1363,13 @@ static PyObject *iProperty_getValues(PyObject *self, PyObject *args)
       Abc::IV2iArrayProperty::sample_ptr_type sample;
       Abc::IV2iArrayProperty::value_type value;
       prop->mV2iArrayProperty->get(sample, sampleIndex);
-      if (start >= sample->size())
+      if (start >= sample->size()) {
         tuple = PyTuple_New(0);
+      }
       else {
-        if (end > sample->size()) end = sample->size();
+        if (end > sample->size()) {
+          end = sample->size();
+        }
         tuple = PyTuple_New((end - start) * 2);
         for (unsigned long long i = start; i < end; i++) {
           value = sample->get()[i];
@@ -1320,10 +1383,13 @@ static PyObject *iProperty_getValues(PyObject *self, PyObject *args)
       Abc::IV2fArrayProperty::sample_ptr_type sample;
       Abc::IV2fArrayProperty::value_type value;
       prop->mV2fArrayProperty->get(sample, sampleIndex);
-      if (start >= sample->size())
+      if (start >= sample->size()) {
         tuple = PyTuple_New(0);
+      }
       else {
-        if (end > sample->size()) end = sample->size();
+        if (end > sample->size()) {
+          end = sample->size();
+        }
         tuple = PyTuple_New((end - start) * 2);
         for (unsigned long long i = start; i < end; i++) {
           value = sample->get()[i];
@@ -1337,10 +1403,13 @@ static PyObject *iProperty_getValues(PyObject *self, PyObject *args)
       Abc::IV2dArrayProperty::sample_ptr_type sample;
       Abc::IV2dArrayProperty::value_type value;
       prop->mV2dArrayProperty->get(sample, sampleIndex);
-      if (start >= sample->size())
+      if (start >= sample->size()) {
         tuple = PyTuple_New(0);
+      }
       else {
-        if (end > sample->size()) end = sample->size();
+        if (end > sample->size()) {
+          end = sample->size();
+        }
         tuple = PyTuple_New((end - start) * 2);
         for (unsigned long long i = start; i < end; i++) {
           value = sample->get()[i];
@@ -1354,10 +1423,13 @@ static PyObject *iProperty_getValues(PyObject *self, PyObject *args)
       Abc::IV3sArrayProperty::sample_ptr_type sample;
       Abc::IV3sArrayProperty::value_type value;
       prop->mV3sArrayProperty->get(sample, sampleIndex);
-      if (start >= sample->size())
+      if (start >= sample->size()) {
         tuple = PyTuple_New(0);
+      }
       else {
-        if (end > sample->size()) end = sample->size();
+        if (end > sample->size()) {
+          end = sample->size();
+        }
         tuple = PyTuple_New((end - start) * 3);
         for (unsigned long long i = start; i < end; i++) {
           value = sample->get()[i];
@@ -1372,10 +1444,13 @@ static PyObject *iProperty_getValues(PyObject *self, PyObject *args)
       Abc::IV3iArrayProperty::sample_ptr_type sample;
       Abc::IV3iArrayProperty::value_type value;
       prop->mV3iArrayProperty->get(sample, sampleIndex);
-      if (start >= sample->size())
+      if (start >= sample->size()) {
         tuple = PyTuple_New(0);
+      }
       else {
-        if (end > sample->size()) end = sample->size();
+        if (end > sample->size()) {
+          end = sample->size();
+        }
         tuple = PyTuple_New((end - start) * 3);
         for (unsigned long long i = start; i < end; i++) {
           value = sample->get()[i];
@@ -1390,10 +1465,13 @@ static PyObject *iProperty_getValues(PyObject *self, PyObject *args)
       Abc::IV3fArrayProperty::sample_ptr_type sample;
       Abc::IV3fArrayProperty::value_type value;
       prop->mV3fArrayProperty->get(sample, sampleIndex);
-      if (start >= sample->size())
+      if (start >= sample->size()) {
         tuple = PyTuple_New(0);
+      }
       else {
-        if (end > sample->size()) end = sample->size();
+        if (end > sample->size()) {
+          end = sample->size();
+        }
         tuple = PyTuple_New((end - start) * 3);
         for (unsigned long long i = start; i < end; i++) {
           value = sample->get()[i];
@@ -1408,10 +1486,13 @@ static PyObject *iProperty_getValues(PyObject *self, PyObject *args)
       Abc::IV3dArrayProperty::sample_ptr_type sample;
       Abc::IV3dArrayProperty::value_type value;
       prop->mV3dArrayProperty->get(sample, sampleIndex);
-      if (start >= sample->size())
+      if (start >= sample->size()) {
         tuple = PyTuple_New(0);
+      }
       else {
-        if (end > sample->size()) end = sample->size();
+        if (end > sample->size()) {
+          end = sample->size();
+        }
         tuple = PyTuple_New((end - start) * 3);
         for (unsigned long long i = start; i < end; i++) {
           value = sample->get()[i];
@@ -1426,10 +1507,13 @@ static PyObject *iProperty_getValues(PyObject *self, PyObject *args)
       Abc::IP2sArrayProperty::sample_ptr_type sample;
       Abc::IP2sArrayProperty::value_type value;
       prop->mP2sArrayProperty->get(sample, sampleIndex);
-      if (start >= sample->size())
+      if (start >= sample->size()) {
         tuple = PyTuple_New(0);
+      }
       else {
-        if (end > sample->size()) end = sample->size();
+        if (end > sample->size()) {
+          end = sample->size();
+        }
         tuple = PyTuple_New((end - start) * 2);
         for (unsigned long long i = start; i < end; i++) {
           value = sample->get()[i];
@@ -1443,10 +1527,13 @@ static PyObject *iProperty_getValues(PyObject *self, PyObject *args)
       Abc::IP2iArrayProperty::sample_ptr_type sample;
       Abc::IP2iArrayProperty::value_type value;
       prop->mP2iArrayProperty->get(sample, sampleIndex);
-      if (start >= sample->size())
+      if (start >= sample->size()) {
         tuple = PyTuple_New(0);
+      }
       else {
-        if (end > sample->size()) end = sample->size();
+        if (end > sample->size()) {
+          end = sample->size();
+        }
         tuple = PyTuple_New((end - start) * 2);
         for (unsigned long long i = start; i < end; i++) {
           value = sample->get()[i];
@@ -1460,10 +1547,13 @@ static PyObject *iProperty_getValues(PyObject *self, PyObject *args)
       Abc::IP2fArrayProperty::sample_ptr_type sample;
       Abc::IP2fArrayProperty::value_type value;
       prop->mP2fArrayProperty->get(sample, sampleIndex);
-      if (start >= sample->size())
+      if (start >= sample->size()) {
         tuple = PyTuple_New(0);
+      }
       else {
-        if (end > sample->size()) end = sample->size();
+        if (end > sample->size()) {
+          end = sample->size();
+        }
         tuple = PyTuple_New((end - start) * 2);
         for (unsigned long long i = start; i < end; i++) {
           value = sample->get()[i];
@@ -1477,10 +1567,13 @@ static PyObject *iProperty_getValues(PyObject *self, PyObject *args)
       Abc::IP2dArrayProperty::sample_ptr_type sample;
       Abc::IP2dArrayProperty::value_type value;
       prop->mP2dArrayProperty->get(sample, sampleIndex);
-      if (start >= sample->size())
+      if (start >= sample->size()) {
         tuple = PyTuple_New(0);
+      }
       else {
-        if (end > sample->size()) end = sample->size();
+        if (end > sample->size()) {
+          end = sample->size();
+        }
         tuple = PyTuple_New((end - start) * 2);
         for (unsigned long long i = start; i < end; i++) {
           value = sample->get()[i];
@@ -1494,10 +1587,13 @@ static PyObject *iProperty_getValues(PyObject *self, PyObject *args)
       Abc::IP3sArrayProperty::sample_ptr_type sample;
       Abc::IP3sArrayProperty::value_type value;
       prop->mP3sArrayProperty->get(sample, sampleIndex);
-      if (start >= sample->size())
+      if (start >= sample->size()) {
         tuple = PyTuple_New(0);
+      }
       else {
-        if (end > sample->size()) end = sample->size();
+        if (end > sample->size()) {
+          end = sample->size();
+        }
         tuple = PyTuple_New((end - start) * 3);
         for (unsigned long long i = start; i < end; i++) {
           value = sample->get()[i];
@@ -1512,10 +1608,13 @@ static PyObject *iProperty_getValues(PyObject *self, PyObject *args)
       Abc::IP3iArrayProperty::sample_ptr_type sample;
       Abc::IP3iArrayProperty::value_type value;
       prop->mP3iArrayProperty->get(sample, sampleIndex);
-      if (start >= sample->size())
+      if (start >= sample->size()) {
         tuple = PyTuple_New(0);
+      }
       else {
-        if (end > sample->size()) end = sample->size();
+        if (end > sample->size()) {
+          end = sample->size();
+        }
         tuple = PyTuple_New((end - start) * 3);
         for (unsigned long long i = start; i < end; i++) {
           value = sample->get()[i];
@@ -1530,10 +1629,13 @@ static PyObject *iProperty_getValues(PyObject *self, PyObject *args)
       Abc::IP3fArrayProperty::sample_ptr_type sample;
       Abc::IP3fArrayProperty::value_type value;
       prop->mP3fArrayProperty->get(sample, sampleIndex);
-      if (start >= sample->size())
+      if (start >= sample->size()) {
         tuple = PyTuple_New(0);
+      }
       else {
-        if (end > sample->size()) end = sample->size();
+        if (end > sample->size()) {
+          end = sample->size();
+        }
         tuple = PyTuple_New((end - start) * 3);
         for (unsigned long long i = start; i < end; i++) {
           value = sample->get()[i];
@@ -1548,10 +1650,13 @@ static PyObject *iProperty_getValues(PyObject *self, PyObject *args)
       Abc::IP3dArrayProperty::sample_ptr_type sample;
       Abc::IP3dArrayProperty::value_type value;
       prop->mP3dArrayProperty->get(sample, sampleIndex);
-      if (start >= sample->size())
+      if (start >= sample->size()) {
         tuple = PyTuple_New(0);
+      }
       else {
-        if (end > sample->size()) end = sample->size();
+        if (end > sample->size()) {
+          end = sample->size();
+        }
         tuple = PyTuple_New((end - start) * 3);
         for (unsigned long long i = start; i < end; i++) {
           value = sample->get()[i];
@@ -1566,10 +1671,13 @@ static PyObject *iProperty_getValues(PyObject *self, PyObject *args)
       Abc::IBox2sArrayProperty::sample_ptr_type sample;
       Abc::IBox2sArrayProperty::value_type value;
       prop->mBox2sArrayProperty->get(sample, sampleIndex);
-      if (start >= sample->size())
+      if (start >= sample->size()) {
         tuple = PyTuple_New(0);
+      }
       else {
-        if (end > sample->size()) end = sample->size();
+        if (end > sample->size()) {
+          end = sample->size();
+        }
         tuple = PyTuple_New((end - start) * 4);
         for (unsigned long long i = start; i < end; i++) {
           value = sample->get()[i];
@@ -1589,10 +1697,13 @@ static PyObject *iProperty_getValues(PyObject *self, PyObject *args)
       Abc::IBox2iArrayProperty::sample_ptr_type sample;
       Abc::IBox2iArrayProperty::value_type value;
       prop->mBox2iArrayProperty->get(sample, sampleIndex);
-      if (start >= sample->size())
+      if (start >= sample->size()) {
         tuple = PyTuple_New(0);
+      }
       else {
-        if (end > sample->size()) end = sample->size();
+        if (end > sample->size()) {
+          end = sample->size();
+        }
         tuple = PyTuple_New((end - start) * 4);
         for (unsigned long long i = start; i < end; i++) {
           value = sample->get()[i];
@@ -1612,10 +1723,13 @@ static PyObject *iProperty_getValues(PyObject *self, PyObject *args)
       Abc::IBox2fArrayProperty::sample_ptr_type sample;
       Abc::IBox2fArrayProperty::value_type value;
       prop->mBox2fArrayProperty->get(sample, sampleIndex);
-      if (start >= sample->size())
+      if (start >= sample->size()) {
         tuple = PyTuple_New(0);
+      }
       else {
-        if (end > sample->size()) end = sample->size();
+        if (end > sample->size()) {
+          end = sample->size();
+        }
         tuple = PyTuple_New((end - start) * 4);
         for (unsigned long long i = start; i < end; i++) {
           value = sample->get()[i];
@@ -1631,10 +1745,13 @@ static PyObject *iProperty_getValues(PyObject *self, PyObject *args)
       Abc::IBox2dArrayProperty::sample_ptr_type sample;
       Abc::IBox2dArrayProperty::value_type value;
       prop->mBox2dArrayProperty->get(sample, sampleIndex);
-      if (start >= sample->size())
+      if (start >= sample->size()) {
         tuple = PyTuple_New(0);
+      }
       else {
-        if (end > sample->size()) end = sample->size();
+        if (end > sample->size()) {
+          end = sample->size();
+        }
         tuple = PyTuple_New((end - start) * 4);
         for (unsigned long long i = start; i < end; i++) {
           value = sample->get()[i];
@@ -1650,10 +1767,13 @@ static PyObject *iProperty_getValues(PyObject *self, PyObject *args)
       Abc::IBox3sArrayProperty::sample_ptr_type sample;
       Abc::IBox3sArrayProperty::value_type value;
       prop->mBox3sArrayProperty->get(sample, sampleIndex);
-      if (start >= sample->size())
+      if (start >= sample->size()) {
         tuple = PyTuple_New(0);
+      }
       else {
-        if (end > sample->size()) end = sample->size();
+        if (end > sample->size()) {
+          end = sample->size();
+        }
         tuple = PyTuple_New((end - start) * 6);
         for (unsigned long long i = start; i < end; i++) {
           value = sample->get()[i];
@@ -1677,10 +1797,13 @@ static PyObject *iProperty_getValues(PyObject *self, PyObject *args)
       Abc::IBox3iArrayProperty::sample_ptr_type sample;
       Abc::IBox3iArrayProperty::value_type value;
       prop->mBox3iArrayProperty->get(sample, sampleIndex);
-      if (start >= sample->size())
+      if (start >= sample->size()) {
         tuple = PyTuple_New(0);
+      }
       else {
-        if (end > sample->size()) end = sample->size();
+        if (end > sample->size()) {
+          end = sample->size();
+        }
         tuple = PyTuple_New((end - start) * 6);
         for (unsigned long long i = start; i < end; i++) {
           value = sample->get()[i];
@@ -1704,10 +1827,13 @@ static PyObject *iProperty_getValues(PyObject *self, PyObject *args)
       Abc::IBox3fArrayProperty::sample_ptr_type sample;
       Abc::IBox3fArrayProperty::value_type value;
       prop->mBox3fArrayProperty->get(sample, sampleIndex);
-      if (start >= sample->size())
+      if (start >= sample->size()) {
         tuple = PyTuple_New(0);
+      }
       else {
-        if (end > sample->size()) end = sample->size();
+        if (end > sample->size()) {
+          end = sample->size();
+        }
         tuple = PyTuple_New((end - start) * 6);
         for (unsigned long long i = start; i < end; i++) {
           value = sample->get()[i];
@@ -1725,10 +1851,13 @@ static PyObject *iProperty_getValues(PyObject *self, PyObject *args)
       Abc::IBox3dArrayProperty::sample_ptr_type sample;
       Abc::IBox3dArrayProperty::value_type value;
       prop->mBox3dArrayProperty->get(sample, sampleIndex);
-      if (start >= sample->size())
+      if (start >= sample->size()) {
         tuple = PyTuple_New(0);
+      }
       else {
-        if (end > sample->size()) end = sample->size();
+        if (end > sample->size()) {
+          end = sample->size();
+        }
         tuple = PyTuple_New((end - start) * 6);
         for (unsigned long long i = start; i < end; i++) {
           value = sample->get()[i];
@@ -1746,10 +1875,13 @@ static PyObject *iProperty_getValues(PyObject *self, PyObject *args)
       Abc::IM33fArrayProperty::sample_ptr_type sample;
       Abc::IM33fArrayProperty::value_type value;
       prop->mM33fArrayProperty->get(sample, sampleIndex);
-      if (start >= sample->size())
+      if (start >= sample->size()) {
         tuple = PyTuple_New(0);
+      }
       else {
-        if (end > sample->size()) end = sample->size();
+        if (end > sample->size()) {
+          end = sample->size();
+        }
         tuple = PyTuple_New((end - start) * 9);
         for (unsigned long long i = start; i < end; i++) {
           value = sample->get()[i];
@@ -1770,10 +1902,13 @@ static PyObject *iProperty_getValues(PyObject *self, PyObject *args)
       Abc::IM33dArrayProperty::sample_ptr_type sample;
       Abc::IM33dArrayProperty::value_type value;
       prop->mM33dArrayProperty->get(sample, sampleIndex);
-      if (start >= sample->size())
+      if (start >= sample->size()) {
         tuple = PyTuple_New(0);
+      }
       else {
-        if (end > sample->size()) end = sample->size();
+        if (end > sample->size()) {
+          end = sample->size();
+        }
         tuple = PyTuple_New((end - start) * 9);
         for (unsigned long long i = start; i < end; i++) {
           value = sample->get()[i];
@@ -1794,10 +1929,13 @@ static PyObject *iProperty_getValues(PyObject *self, PyObject *args)
       Abc::IM44fArrayProperty::sample_ptr_type sample;
       Abc::IM44fArrayProperty::value_type value;
       prop->mM44fArrayProperty->get(sample, sampleIndex);
-      if (start >= sample->size())
+      if (start >= sample->size()) {
         tuple = PyTuple_New(0);
+      }
       else {
-        if (end > sample->size()) end = sample->size();
+        if (end > sample->size()) {
+          end = sample->size();
+        }
         tuple = PyTuple_New((end - start) * 16);
         for (unsigned long long i = start; i < end; i++) {
           value = sample->get()[i];
@@ -1825,10 +1963,13 @@ static PyObject *iProperty_getValues(PyObject *self, PyObject *args)
       Abc::IM44dArrayProperty::sample_ptr_type sample;
       Abc::IM44dArrayProperty::value_type value;
       prop->mM44dArrayProperty->get(sample, sampleIndex);
-      if (start >= sample->size())
+      if (start >= sample->size()) {
         tuple = PyTuple_New(0);
+      }
       else {
-        if (end > sample->size()) end = sample->size();
+        if (end > sample->size()) {
+          end = sample->size();
+        }
         tuple = PyTuple_New((end - start) * 16);
         for (unsigned long long i = start; i < end; i++) {
           value = sample->get()[i];
@@ -1856,10 +1997,13 @@ static PyObject *iProperty_getValues(PyObject *self, PyObject *args)
       Abc::IQuatfArrayProperty::sample_ptr_type sample;
       Abc::IQuatfArrayProperty::value_type value;
       prop->mQuatfArrayProperty->get(sample, sampleIndex);
-      if (start >= sample->size())
+      if (start >= sample->size()) {
         tuple = PyTuple_New(0);
+      }
       else {
-        if (end > sample->size()) end = sample->size();
+        if (end > sample->size()) {
+          end = sample->size();
+        }
         tuple = PyTuple_New((end - start) * 4);
         for (unsigned long long i = start; i < end; i++) {
           value = sample->get()[i];
@@ -1875,10 +2019,13 @@ static PyObject *iProperty_getValues(PyObject *self, PyObject *args)
       Abc::IQuatdArrayProperty::sample_ptr_type sample;
       Abc::IQuatdArrayProperty::value_type value;
       prop->mQuatdArrayProperty->get(sample, sampleIndex);
-      if (start >= sample->size())
+      if (start >= sample->size()) {
         tuple = PyTuple_New(0);
+      }
       else {
-        if (end > sample->size()) end = sample->size();
+        if (end > sample->size()) {
+          end = sample->size();
+        }
         tuple = PyTuple_New((end - start) * 4);
         for (unsigned long long i = start; i < end; i++) {
           value = sample->get()[i];
@@ -1894,10 +2041,13 @@ static PyObject *iProperty_getValues(PyObject *self, PyObject *args)
       Abc::IC3hArrayProperty::sample_ptr_type sample;
       Abc::IC3hArrayProperty::value_type value;
       prop->mC3hArrayProperty->get(sample, sampleIndex);
-      if (start >= sample->size())
+      if (start >= sample->size()) {
         tuple = PyTuple_New(0);
+      }
       else {
-        if (end > sample->size()) end = sample->size();
+        if (end > sample->size()) {
+          end = sample->size();
+        }
         tuple = PyTuple_New((end - start) * 3);
         for (unsigned long long i = start; i < end; i++) {
           value = sample->get()[i];
@@ -1912,10 +2062,13 @@ static PyObject *iProperty_getValues(PyObject *self, PyObject *args)
       Abc::IC3fArrayProperty::sample_ptr_type sample;
       Abc::IC3fArrayProperty::value_type value;
       prop->mC3fArrayProperty->get(sample, sampleIndex);
-      if (start >= sample->size())
+      if (start >= sample->size()) {
         tuple = PyTuple_New(0);
+      }
       else {
-        if (end > sample->size()) end = sample->size();
+        if (end > sample->size()) {
+          end = sample->size();
+        }
         tuple = PyTuple_New((end - start) * 3);
         for (unsigned long long i = start; i < end; i++) {
           value = sample->get()[i];
@@ -1930,10 +2083,13 @@ static PyObject *iProperty_getValues(PyObject *self, PyObject *args)
       Abc::IC3cArrayProperty::sample_ptr_type sample;
       Abc::IC3cArrayProperty::value_type value;
       prop->mC3cArrayProperty->get(sample, sampleIndex);
-      if (start >= sample->size())
+      if (start >= sample->size()) {
         tuple = PyTuple_New(0);
+      }
       else {
-        if (end > sample->size()) end = sample->size();
+        if (end > sample->size()) {
+          end = sample->size();
+        }
         tuple = PyTuple_New((end - start) * 3);
         for (unsigned long long i = start; i < end; i++) {
           value = sample->get()[i];
@@ -1951,10 +2107,13 @@ static PyObject *iProperty_getValues(PyObject *self, PyObject *args)
       Abc::IC4hArrayProperty::sample_ptr_type sample;
       Abc::IC4hArrayProperty::value_type value;
       prop->mC4hArrayProperty->get(sample, sampleIndex);
-      if (start >= sample->size())
+      if (start >= sample->size()) {
         tuple = PyTuple_New(0);
+      }
       else {
-        if (end > sample->size()) end = sample->size();
+        if (end > sample->size()) {
+          end = sample->size();
+        }
         tuple = PyTuple_New((end - start) * 4);
         for (unsigned long long i = start; i < end; i++) {
           value = sample->get()[i];
@@ -1970,10 +2129,13 @@ static PyObject *iProperty_getValues(PyObject *self, PyObject *args)
       Abc::IC4fArrayProperty::sample_ptr_type sample;
       Abc::IC4fArrayProperty::value_type value;
       prop->mC4fArrayProperty->get(sample, sampleIndex);
-      if (start >= sample->size())
+      if (start >= sample->size()) {
         tuple = PyTuple_New(0);
+      }
       else {
-        if (end > sample->size()) end = sample->size();
+        if (end > sample->size()) {
+          end = sample->size();
+        }
         tuple = PyTuple_New((end - start) * 4);
         for (unsigned long long i = start; i < end; i++) {
           value = sample->get()[i];
@@ -1989,10 +2151,13 @@ static PyObject *iProperty_getValues(PyObject *self, PyObject *args)
       Abc::IC4cArrayProperty::sample_ptr_type sample;
       Abc::IC4cArrayProperty::value_type value;
       prop->mC4cArrayProperty->get(sample, sampleIndex);
-      if (start >= sample->size())
+      if (start >= sample->size()) {
         tuple = PyTuple_New(0);
+      }
       else {
-        if (end > sample->size()) end = sample->size();
+        if (end > sample->size()) {
+          end = sample->size();
+        }
         tuple = PyTuple_New((end - start) * 4);
         for (unsigned long long i = start; i < end; i++) {
           value = sample->get()[i];
@@ -2012,10 +2177,13 @@ static PyObject *iProperty_getValues(PyObject *self, PyObject *args)
       Abc::IN2fArrayProperty::sample_ptr_type sample;
       Abc::IN2fArrayProperty::value_type value;
       prop->mN2fArrayProperty->get(sample, sampleIndex);
-      if (start >= sample->size())
+      if (start >= sample->size()) {
         tuple = PyTuple_New(0);
+      }
       else {
-        if (end > sample->size()) end = sample->size();
+        if (end > sample->size()) {
+          end = sample->size();
+        }
         tuple = PyTuple_New((end - start) * 2);
         for (unsigned long long i = start; i < end; i++) {
           value = sample->get()[i];
@@ -2029,10 +2197,13 @@ static PyObject *iProperty_getValues(PyObject *self, PyObject *args)
       Abc::IN2dArrayProperty::sample_ptr_type sample;
       Abc::IN2dArrayProperty::value_type value;
       prop->mN2dArrayProperty->get(sample, sampleIndex);
-      if (start >= sample->size())
+      if (start >= sample->size()) {
         tuple = PyTuple_New(0);
+      }
       else {
-        if (end > sample->size()) end = sample->size();
+        if (end > sample->size()) {
+          end = sample->size();
+        }
         tuple = PyTuple_New((end - start) * 2);
         for (unsigned long long i = start; i < end; i++) {
           value = sample->get()[i];
@@ -2046,10 +2217,13 @@ static PyObject *iProperty_getValues(PyObject *self, PyObject *args)
       Abc::IN3fArrayProperty::sample_ptr_type sample;
       Abc::IN3fArrayProperty::value_type value;
       prop->mN3fArrayProperty->get(sample, sampleIndex);
-      if (start >= sample->size())
+      if (start >= sample->size()) {
         tuple = PyTuple_New(0);
+      }
       else {
-        if (end > sample->size()) end = sample->size();
+        if (end > sample->size()) {
+          end = sample->size();
+        }
         tuple = PyTuple_New((end - start) * 3);
         for (unsigned long long i = start; i < end; i++) {
           value = sample->get()[i];
@@ -2064,10 +2238,13 @@ static PyObject *iProperty_getValues(PyObject *self, PyObject *args)
       Abc::IN3dArrayProperty::sample_ptr_type sample;
       Abc::IN3dArrayProperty::value_type value;
       prop->mN3dArrayProperty->get(sample, sampleIndex);
-      if (start >= sample->size())
+      if (start >= sample->size()) {
         tuple = PyTuple_New(0);
+      }
       else {
-        if (end > sample->size()) end = sample->size();
+        if (end > sample->size()) {
+          end = sample->size();
+        }
         tuple = PyTuple_New((end - start) * 3);
         for (unsigned long long i = start; i < end; i++) {
           value = sample->get()[i];
@@ -2124,10 +2301,12 @@ static void iProperty_delete(PyObject *self)
   // delete the property
   iProperty *prop = (iProperty *)self;
   // first delete the base property
-  if (prop->mIsArray)
+  if (prop->mIsArray) {
     delete (prop->mBaseArrayProperty);
-  else
+  }
+  else {
     delete (prop->mBaseScalarProperty);
+  }
   // now delete the specialized one
   switch (prop->mPropType) {
     case propertyTP_boolean: {
@@ -2636,7 +2815,7 @@ PyObject *iProperty_new(Abc::ICompoundProperty &compound, char *in_propName)
   if (prop != NULL) {
     if (propHeader->isCompound()) {
       PyObject_FREE(prop);  // Free it because one will be created in
-                            // iCompoundProperty_new
+      // iCompoundProperty_new
       return iCompoundProperty_new(compound, in_propName);
     }
     else {
@@ -2661,8 +2840,9 @@ PyObject *iProperty_new(Abc::ICompoundProperty &compound, char *in_propName)
 
       if (interpretation.empty()) {
         // check for custom structs
-        if (prop->intent > 1)
+        if (prop->intent > 1) {
           interpretation = "intent_data";  // NEW, previously unknown
+        }
       }
 
       if (interpretation.empty() || interpretation == "intent_data") {

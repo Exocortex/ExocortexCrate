@@ -192,7 +192,9 @@ void AlembicImport_FillInShape_Internal(alembic_fillshape_options &options)
       for (int i = 0; i < curveNbVertices->size(); i += 1) {
         Spline3D *pSpline = options.pBezierShape->NewSpline();
 
-        if (curveSample.getWrap() == AbcG::kPeriodic) pSpline->SetClosed();
+        if (curveSample.getWrap() == AbcG::kPeriodic) {
+          pSpline->SetClosed();
+        }
 
         SplineKnot knot(curveType, lineType, Point3(0, 0, 0), Point3(0, 0, 0),
                         Point3(0, 0, 0));
@@ -203,7 +205,9 @@ void AlembicImport_FillInShape_Internal(alembic_fillshape_options &options)
         }
         */
 
-        for (int j = 0; j < nNumKnots; j += 1) pSpline->AddKnot(knot);
+        for (int j = 0; j < nNumKnots; j += 1) {
+          pSpline->AddKnot(knot);
+        }
       }
     }
     else if (options.pPolyShape) {

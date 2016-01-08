@@ -55,8 +55,9 @@ XSI::CStatus AlembicPoints::Save(double time)
 
   // query the global space
   CTransformation globalXfo;
-  if (globalSpace)
+  if (globalSpace) {
     globalXfo = KinematicState(GetRef(REF_GLOBAL_TRANS)).GetTransform(time);
+  }
   CTransformation globalRotation;
   globalRotation.SetRotation(globalXfo.GetRotation());
 
@@ -65,8 +66,9 @@ XSI::CStatus AlembicPoints::Save(double time)
 
   // check if the pointcloud is animated
   if (mNumSamples > 0) {
-    if (!isRefAnimated(GetRef(REF_PRIMITIVE), false, globalSpace))
+    if (!isRefAnimated(GetRef(REF_PRIMITIVE), false, globalSpace)) {
       return CStatus::OK;
+    }
   }
 
   // access the geometry
@@ -118,9 +120,13 @@ XSI::CStatus AlembicPoints::Save(double time)
           for (ULONG i = 0; i < count; i++) {
             velocityVec[i].setValue(data[i].GetX(), data[i].GetY(),
                                     data[i].GetZ());
-            if (isConstant) isConstant = firstVal == data[i];
+            if (isConstant) {
+              isConstant = firstVal == data[i];
+            }
           }
-          if (isConstant) velocityVec.resize(1);
+          if (isConstant) {
+            velocityVec.resize(1);
+          }
         }
       }
     }
@@ -142,9 +148,13 @@ XSI::CStatus AlembicPoints::Save(double time)
           float firstVal = data[0];
           for (ULONG i = 0; i < count; i++) {
             widthVec[i] = data[i];
-            if (isConstant) isConstant = firstVal == data[i];
+            if (isConstant) {
+              isConstant = firstVal == data[i];
+            }
           }
-          if (isConstant) widthVec.resize(1);
+          if (isConstant) {
+            widthVec.resize(1);
+          }
         }
       }
     }
@@ -166,9 +176,13 @@ XSI::CStatus AlembicPoints::Save(double time)
           LONG firstVal = data[0];
           for (ULONG i = 0; i < count; i++) {
             idVec[i] = (Abc::uint64_t)data[i];
-            if (isConstant) isConstant = firstVal == data[i];
+            if (isConstant) {
+              isConstant = firstVal == data[i];
+            }
           }
-          if (isConstant) idVec.resize(1);
+          if (isConstant) {
+            idVec.resize(1);
+          }
         }
       }
     }
@@ -200,9 +214,13 @@ XSI::CStatus AlembicPoints::Save(double time)
           CVector3f firstVal = data[0];
           for (ULONG i = 0; i < count; i++) {
             vec[i].setValue(data[i].GetX(), data[i].GetY(), data[i].GetZ());
-            if (isConstant) isConstant = firstVal == data[i];
+            if (isConstant) {
+              isConstant = firstVal == data[i];
+            }
           }
-          if (isConstant) vec.resize(1);
+          if (isConstant) {
+            vec.resize(1);
+          }
         }
       }
     }
@@ -250,29 +268,34 @@ XSI::CStatus AlembicPoints::Save(double time)
               vecVal.v.z = (float)quat.GetZ();
               vecVal.r = (float)quat.GetW();
             }
-            else  // quaternion
-            {
+            else {  // quaternion
               CQuaternionf quat = data[i].GetQuaternion();
               vecVal.v.x = quat.GetX();
               vecVal.v.y = quat.GetY();
               vecVal.v.z = quat.GetZ();
               vecVal.r = quat.GetW();
             }
-            if (i == 0)
+            if (i == 0) {
               firstVal = vecVal;
-            else if (isConstant)
+            }
+            else if (isConstant) {
               isConstant = firstVal == vecVal;
+            }
           }
-          if (isConstant) vec.resize(1);
+          if (isConstant) {
+            vec.resize(1);
+          }
         }
       }
     }
 
     Abc::QuatfArraySample sample(vec);
-    if (attrIndex == 0)
+    if (attrIndex == 0) {
       mOrientationProperty.set(sample);
-    else
+    }
+    else {
       mAngularVelocityProperty.set(sample);
+    }
   }
 
   // age
@@ -291,9 +314,13 @@ XSI::CStatus AlembicPoints::Save(double time)
           float firstVal = data[0];
           for (ULONG i = 0; i < count; i++) {
             vec[i] = data[i];
-            if (isConstant) isConstant = firstVal == data[i];
+            if (isConstant) {
+              isConstant = firstVal == data[i];
+            }
           }
-          if (isConstant) vec.resize(1);
+          if (isConstant) {
+            vec.resize(1);
+          }
         }
       }
     }
@@ -317,9 +344,13 @@ XSI::CStatus AlembicPoints::Save(double time)
           float firstVal = data[0];
           for (ULONG i = 0; i < count; i++) {
             vec[i] = data[i];
-            if (isConstant) isConstant = firstVal == data[i];
+            if (isConstant) {
+              isConstant = firstVal == data[i];
+            }
           }
-          if (isConstant) vec.resize(1);
+          if (isConstant) {
+            vec.resize(1);
+          }
         }
       }
     }
@@ -388,7 +419,9 @@ XSI::CStatus AlembicPoints::Save(double time)
                     firstVal.GetReferenceID() == shape.GetReferenceID();
             }
           }
-          if (isConstant) vec.resize(1);
+          if (isConstant) {
+            vec.resize(1);
+          }
         }
       }
     }
@@ -429,8 +462,9 @@ XSI::CStatus AlembicPoints::Save(double time)
                     vec[i] = (unsigned short)mInstanceNames.size();
                     mInstanceNames.push_back(getIdentifierFromRef(ref));
                   }
-                  else
+                  else {
                     vec[i] = (unsigned short)it->second;
+                  }
                   break;
                 }
                 default: {
@@ -438,12 +472,16 @@ XSI::CStatus AlembicPoints::Save(double time)
                   break;
                 }
               }
-              if (i == 0)
+              if (i == 0) {
                 firstVal = vec[i];
-              else if (isConstant)
+              }
+              else if (isConstant) {
                 isConstant = firstVal == vec[i];
+              }
             }
-            if (isConstant) vec.resize(1);
+            if (isConstant) {
+              vec.resize(1);
+            }
           }
         }
 
@@ -456,8 +494,9 @@ XSI::CStatus AlembicPoints::Save(double time)
           std::vector<std::string> preRollVec(1, "");
           Abc::StringArraySample preRollSample(preRollVec);
           for (size_t i = mInstancenamesProperty.getNumSamples();
-               i < mNumSamples; i++)
+               i < mNumSamples; i++) {
             mInstancenamesProperty.set(preRollSample);
+          }
 
           Abc::StringArraySample sample(mInstanceNames);
           mInstancenamesProperty.set(sample);
@@ -471,8 +510,9 @@ XSI::CStatus AlembicPoints::Save(double time)
             std::vector<Abc::uint16_t> preRollVec(1, 0);
             Abc::UInt16ArraySample preRollSample(preRollVec);
             for (size_t i = mShapeInstanceIDProperty.getNumSamples();
-                 i < mNumSamples; i++)
+                 i < mNumSamples; i++) {
               mShapeInstanceIDProperty.set(preRollSample);
+            }
 
             Abc::UInt16ArraySample sample(vec);
             mShapeInstanceIDProperty.set(sample);
@@ -504,9 +544,13 @@ XSI::CStatus AlembicPoints::Save(double time)
             float firstVal = data[0];
             for (ULONG i = 0; i < count; i++) {
               vec[i] = data[i];
-              if (isConstant) isConstant = firstVal == data[i];
+              if (isConstant) {
+                isConstant = firstVal == data[i];
+              }
             }
-            if (isConstant) vec.resize(1);
+            if (isConstant) {
+              vec.resize(1);
+            }
           }
         }
       }
@@ -534,12 +578,16 @@ XSI::CStatus AlembicPoints::Save(double time)
             vec[i].g = data[i].GetG();
             vec[i].b = data[i].GetB();
             vec[i].a = data[i].GetA();
-            if (i == 0)
+            if (i == 0) {
               firstVal = vec[i];
-            else if (isConstant)
+            }
+            else if (isConstant) {
               isConstant = firstVal == vec[i];
+            }
           }
-          if (isConstant) vec.resize(1);
+          if (isConstant) {
+            vec.resize(1);
+          }
         }
       }
     }
@@ -722,9 +770,13 @@ XSIPLUGINCALLBACK CStatus alembic_points_Evaluate(ICENodeContext& in_ctxt)
   CStatus pathEditStat = alembicOp_PathEdit(in_ctxt, path);
 
   AbcG::IObject iObj = getObjectFromArchive(path, identifier);
-  if (!iObj.valid()) return CStatus::OK;
+  if (!iObj.valid()) {
+    return CStatus::OK;
+  }
   AbcG::IPoints obj(iObj, Abc::kWrapExisting);
-  if (!obj.valid()) return CStatus::OK;
+  if (!obj.valid()) {
+    return CStatus::OK;
+  }
 
   CDataArrayBool usevelData(in_ctxt, ID_IN_usevel);
   double usevel = usevelData[0];
@@ -751,22 +803,27 @@ XSIPLUGINCALLBACK CStatus alembic_points_Evaluate(ICENodeContext& in_ctxt)
       CDataArray2DVector3f::Accessor acc;
 
       Abc::P3fArraySamplePtr ptr = sample.getPositions();
-      if (ptr == NULL)
+      if (ptr == NULL) {
         acc = outData.Resize(0, 0);
-      else if (ptr->size() == 0)
+      }
+      else if (ptr->size() == 0) {
         acc = outData.Resize(0, 0);
-      else if (ptr->size() == 1 && ptr->get()[0].x == FLT_MAX)
+      }
+      else if (ptr->size() == 1 && ptr->get()[0].x == FLT_MAX) {
         acc = outData.Resize(0, 0);
+      }
       else {
         acc = outData.Resize(0, (ULONG)ptr->size());
         bool done = false;
         if (sampleInfo.alpha != 0.0) {
           if (usevel) {
             Abc::V3fArraySamplePtr velPtr = sample.getVelocities();
-            if (velPtr == NULL)
+            if (velPtr == NULL) {
               done = false;
-            else if (velPtr->size() == 0)
+            }
+            else if (velPtr->size() == 0) {
               done = false;
+            }
             else {
               const float alpha = getTimeOffsetFromObject(iObj, sampleInfo);
               for (ULONG i = 0; i < acc.GetCount(); i++)
@@ -801,8 +858,9 @@ XSIPLUGINCALLBACK CStatus alembic_points_Evaluate(ICENodeContext& in_ctxt)
         }
 
         if (!done) {
-          for (ULONG i = 0; i < acc.GetCount(); i++)
+          for (ULONG i = 0; i < acc.GetCount(); i++) {
             acc[i].Set(ptr->get()[i].x, ptr->get()[i].y, ptr->get()[i].z);
+          }
         }
       }
       break;
@@ -821,8 +879,9 @@ XSIPLUGINCALLBACK CStatus alembic_points_Evaluate(ICENodeContext& in_ctxt)
       }
       else {
         acc = outData.Resize(0, (ULONG)ptr->size());
-        for (ULONG i = 0; i < acc.GetCount(); i++)
+        for (ULONG i = 0; i < acc.GetCount(); i++) {
           acc[i].Set(ptr->get()[i].x, ptr->get()[i].y, ptr->get()[i].z);
+        }
       }
       break;
     }
@@ -840,7 +899,9 @@ XSIPLUGINCALLBACK CStatus alembic_points_Evaluate(ICENodeContext& in_ctxt)
       }
       else {
         acc = outData.Resize(0, (ULONG)ptr->size());
-        for (ULONG i = 0; i < acc.GetCount(); i++) acc[i] = (LONG)ptr->get()[i];
+        for (ULONG i = 0; i < acc.GetCount(); i++) {
+          acc[i] = (LONG)ptr->get()[i];
+        }
       }
       break;
     }
@@ -868,7 +929,9 @@ XSIPLUGINCALLBACK CStatus alembic_points_Evaluate(ICENodeContext& in_ctxt)
       }
       else {
         acc = outData.Resize(0, (ULONG)ptr->size());
-        for (ULONG i = 0; i < acc.GetCount(); i++) acc[i] = ptr->get()[i];
+        for (ULONG i = 0; i < acc.GetCount(); i++) {
+          acc[i] = ptr->get()[i];
+        }
       }
       break;
     }
@@ -887,22 +950,23 @@ XSIPLUGINCALLBACK CStatus alembic_points_Evaluate(ICENodeContext& in_ctxt)
       }
 
       /*
-if ( obj.getSchema().getPropertyHeader( ".scale" ) == NULL )
-{
- acc = outData.Resize(0,0);
- return CStatus::OK;
-}
-IV3fArrayProperty prop = Abc::IV3fArrayProperty( obj.getSchema(), ".scale" );
-if(!prop.valid())
-{
- acc = outData.Resize(0,0);
- return CStatus::OK;
-}
-if(prop.getNumSamples() == 0)
-{
- acc = outData.Resize(0,0);
- return CStatus::OK;
-}*/
+      if ( obj.getSchema().getPropertyHeader( ".scale" ) == NULL )
+      {
+      acc = outData.Resize(0,0);
+      return CStatus::OK;
+      }
+      IV3fArrayProperty prop = Abc::IV3fArrayProperty( obj.getSchema(), ".scale"
+      );
+      if(!prop.valid())
+      {
+      acc = outData.Resize(0,0);
+      return CStatus::OK;
+      }
+      if(prop.getNumSamples() == 0)
+      {
+      acc = outData.Resize(0,0);
+      return CStatus::OK;
+      }*/
       Abc::V3fArraySamplePtr ptr = prop.getValue(sampleInfo.floorIndex);
       if (ptr == NULL || ptr->size() == 0) {
         acc = outData.Resize(0, pointCount);
@@ -912,8 +976,9 @@ if(prop.getNumSamples() == 0)
       }
       else {
         acc = outData.Resize(0, (ULONG)ptr->size());
-        for (ULONG i = 0; i < acc.GetCount(); i++)
+        for (ULONG i = 0; i < acc.GetCount(); i++) {
           acc[i].Set(ptr->get()[i].x, ptr->get()[i].y, ptr->get()[i].z);
+        }
       }
       break;
     }
@@ -933,22 +998,22 @@ if(prop.getNumSamples() == 0)
       }
       /*
       if ( obj.getSchema().getPropertyHeader( ".orientation" ) == NULL )
-{
- acc = outData.Resize(0,0);
- return CStatus::OK;
-}
-IQuatfArrayProperty prop = Abc::IQuatfArrayProperty( obj.getSchema(),
-".orientation" );
-if(!prop.valid())
-{
- acc = outData.Resize(0,0);
- return CStatus::OK;
-}
-if(prop.getNumSamples() == 0)
-{
- acc = outData.Resize(0,0);
- return CStatus::OK;
-}*/
+      {
+      acc = outData.Resize(0,0);
+      return CStatus::OK;
+      }
+      IQuatfArrayProperty prop = Abc::IQuatfArrayProperty( obj.getSchema(),
+      ".orientation" );
+      if(!prop.valid())
+      {
+      acc = outData.Resize(0,0);
+      return CStatus::OK;
+      }
+      if(prop.getNumSamples() == 0)
+      {
+      acc = outData.Resize(0,0);
+      return CStatus::OK;
+      }*/
       Abc::QuatfArraySamplePtr ptr = prop.getValue(sampleInfo.floorIndex);
       if (ptr == NULL || ptr->size() == 0) {
         acc = outData.Resize(0, pointCount);
@@ -980,7 +1045,9 @@ if(prop.getNumSamples() == 0)
                 vel.PutX(vel.GetX() * alpha);
                 vel.PutY(vel.GetY() * alpha);
                 vel.PutZ(vel.GetZ() * alpha);
-                if (vel.GetW() != 0.0f) quat.Mul(vel, quat);
+                if (vel.GetW() != 0.0f) {
+                  quat.Mul(vel, quat);
+                }
                 quat.NormalizeInPlace();
                 acc[i].Set(quat);
               }
@@ -1017,22 +1084,22 @@ if(prop.getNumSamples() == 0)
       }
       /*
       if ( obj.getSchema().getPropertyHeader( ".angularvelocity" ) == NULL )
-{
- acc = outData.Resize(0,0);
- return CStatus::OK;
-}
-IQuatfArrayProperty prop = Abc::IQuatfArrayProperty( obj.getSchema(),
-".angularvelocity" );
-if(!prop.valid())
-{
- acc = outData.Resize(0,0);
- return CStatus::OK;
-}
-if(prop.getNumSamples() == 0)
-{
- acc = outData.Resize(0,0);
- return CStatus::OK;
-}*/
+      {
+      acc = outData.Resize(0,0);
+      return CStatus::OK;
+      }
+      IQuatfArrayProperty prop = Abc::IQuatfArrayProperty( obj.getSchema(),
+      ".angularvelocity" );
+      if(!prop.valid())
+      {
+      acc = outData.Resize(0,0);
+      return CStatus::OK;
+      }
+      if(prop.getNumSamples() == 0)
+      {
+      acc = outData.Resize(0,0);
+      return CStatus::OK;
+      }*/
       Abc::QuatfArraySamplePtr ptr = prop.getValue(sampleInfo.floorIndex);
       if (ptr == NULL || ptr->size() == 0) {
         acc = outData.Resize(0, pointCount);
@@ -1125,10 +1192,12 @@ if(prop.getNumSamples() == 0)
          return CStatus::OK;
       }*/
       Abc::FloatArraySamplePtr ptr = prop.getValue(sampleInfo.floorIndex);
-      if (ptr == NULL)
+      if (ptr == NULL) {
         acc = outData.Resize(0, 0);
-      else if (ptr->size() == 0)
+      }
+      else if (ptr->size() == 0) {
         acc = outData.Resize(0, 0);
+      }
       else {
         acc = outData.Resize(0, (ULONG)ptr->size());
         for (ULONG i = 0; i < acc.GetCount(); i++) {
@@ -1180,10 +1249,12 @@ if(prop.getNumSamples() == 0)
       }*/
       Abc::UInt16ArraySamplePtr shapeTypePtr =
           shapeTypeProp.getValue(sampleInfo.floorIndex);
-      if (shapeTypePtr == NULL)
+      if (shapeTypePtr == NULL) {
         acc = outData.Resize(0, 0);
-      else if (shapeTypePtr->size() == 0)
+      }
+      else if (shapeTypePtr->size() == 0) {
         acc = outData.Resize(0, 0);
+      }
       else {
         acc = outData.Resize(0, (ULONG)shapeTypePtr->size());
         for (ULONG i = 0; i < acc.GetCount(); i++) {
@@ -1269,10 +1340,12 @@ if(prop.getNumSamples() == 0)
           shapeTypeProp.getValue(sampleInfo.floorIndex);
       Abc::UInt16ArraySamplePtr shapeInstanceIDPtr =
           shapeInstanceIDProp.getValue(sampleInfo.floorIndex);
-      if (shapeTypePtr == NULL || shapeInstanceIDPtr == NULL)
+      if (shapeTypePtr == NULL || shapeInstanceIDPtr == NULL) {
         acc = outData.Resize(0, 0);
-      else if (shapeTypePtr->size() == 0 || shapeInstanceIDPtr->size() == 0)
+      }
+      else if (shapeTypePtr->size() == 0 || shapeInstanceIDPtr->size() == 0) {
         acc = outData.Resize(0, 0);
+      }
       else {
         acc = outData.Resize(0, (ULONG)shapeTypePtr->size());
         for (ULONG i = 0; i < acc.GetCount(); i++) {
@@ -1303,27 +1376,29 @@ if(prop.getNumSamples() == 0)
       }
 
       /*if ( obj.getSchema().getPropertyHeader( ".shapetime" ) == NULL )
-{
- acc = outData.Resize(0,0);
- return CStatus::OK;
-}
-IFloatArrayProperty prop = Abc::IFloatArrayProperty( obj.getSchema(),
-".shapetime" );
-if(!prop.valid())
-{
- acc = outData.Resize(0,0);
- return CStatus::OK;
-}
-if(prop.getNumSamples() == 0)
-{
- acc = outData.Resize(0,0);
- return CStatus::OK;
-}*/
+      {
+      acc = outData.Resize(0,0);
+      return CStatus::OK;
+      }
+      IFloatArrayProperty prop = Abc::IFloatArrayProperty( obj.getSchema(),
+      ".shapetime" );
+      if(!prop.valid())
+      {
+      acc = outData.Resize(0,0);
+      return CStatus::OK;
+      }
+      if(prop.getNumSamples() == 0)
+      {
+      acc = outData.Resize(0,0);
+      return CStatus::OK;
+      }*/
       Abc::FloatArraySamplePtr ptr = prop.getValue(sampleInfo.floorIndex);
-      if (ptr == NULL)
+      if (ptr == NULL) {
         acc = outData.Resize(0, 0);
-      else if (ptr->size() == 0)
+      }
+      else if (ptr->size() == 0) {
         acc = outData.Resize(0, 0);
+      }
       else {
         acc = outData.Resize(0, (ULONG)ptr->size());
         for (ULONG i = 0; i < acc.GetCount(); i++) {
@@ -1348,26 +1423,29 @@ if(prop.getNumSamples() == 0)
       }
 
       /*if ( obj.getSchema().getPropertyHeader( ".color" ) == NULL )
-{
- acc = outData.Resize(0,0);
- return CStatus::OK;
-}
-IC4fArrayProperty prop = Abc::IC4fArrayProperty( obj.getSchema(), ".color" );
-if(!prop.valid())
-{
- acc = outData.Resize(0,0);
- return CStatus::OK;
-}
-if(prop.getNumSamples() == 0)
-{
- acc = outData.Resize(0,0);
- return CStatus::OK;
-}*/
+      {
+      acc = outData.Resize(0,0);
+      return CStatus::OK;
+      }
+      IC4fArrayProperty prop = Abc::IC4fArrayProperty( obj.getSchema(), ".color"
+      );
+      if(!prop.valid())
+      {
+      acc = outData.Resize(0,0);
+      return CStatus::OK;
+      }
+      if(prop.getNumSamples() == 0)
+      {
+      acc = outData.Resize(0,0);
+      return CStatus::OK;
+      }*/
       Abc::C4fArraySamplePtr ptr = prop.getValue(sampleInfo.floorIndex);
-      if (ptr == NULL)
+      if (ptr == NULL) {
         acc = outData.Resize(0, 0);
-      else if (ptr->size() == 0)
+      }
+      else if (ptr->size() == 0) {
         acc = outData.Resize(0, 0);
+      }
       else {
         acc = outData.Resize(0, (ULONG)ptr->size());
         for (ULONG i = 0; i < acc.GetCount(); i++) {

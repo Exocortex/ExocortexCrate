@@ -8,13 +8,17 @@ static PyObject *TimeSampling_getType(PyObject *obj)
 {
   ALEMBIC_TRY_STATEMENT
   EA_TimeSampling *ts = (EA_TimeSampling *)obj;
-  if (ts->tsampling.get() == 0) return Py_BuildValue("s", "unknown");
+  if (ts->tsampling.get() == 0) {
+    return Py_BuildValue("s", "unknown");
+  }
 
   const AbcA::TimeSamplingType &tstype = ts->tsampling->getTimeSamplingType();
-  if (tstype.isUniform())
+  if (tstype.isUniform()) {
     return Py_BuildValue("s", "uniform");
-  else if (tstype.isCyclic())
+  }
+  else if (tstype.isCyclic()) {
     return Py_BuildValue("s", "cyclic");
+  }
   return Py_BuildValue("s", "acyclic");
   ALEMBIC_PYOBJECT_CATCH_STATEMENT
 }
@@ -23,13 +27,16 @@ static PyObject *TimeSampling_getTimeSamples(PyObject *obj)
 {
   ALEMBIC_TRY_STATEMENT
   EA_TimeSampling *ts = (EA_TimeSampling *)obj;
-  if (ts->tsampling.get() == 0) return PyList_New(0);
+  if (ts->tsampling.get() == 0) {
+    return PyList_New(0);
+  }
 
   const std::vector<Abc::chrono_t> &times = ts->tsampling->getStoredTimes();
 
   PyObject *tuple = PyList_New(times.size());
-  for (size_t i = 0; i < times.size(); ++i)
+  for (size_t i = 0; i < times.size(); ++i) {
     PyList_SetItem(tuple, i, Py_BuildValue("f", (float)times[i]));
+  }
   return tuple;
   ALEMBIC_PYOBJECT_CATCH_STATEMENT
 }
@@ -108,12 +115,15 @@ PyObject *TimeSampling_new(PyObject *self, PyObject *args)
   }
 
   int ts_type = -1;  // mean invalid
-  if (strcmp(type, "uniform") == 0)
+  if (strcmp(type, "uniform") == 0) {
     ts_type = 0;
-  else if (strcmp(type, "cyclic") == 0)
+  }
+  else if (strcmp(type, "cyclic") == 0) {
     ts_type = 1;
-  else if (strcmp(type, "acyclic") == 0)
+  }
+  else if (strcmp(type, "acyclic") == 0) {
     ts_type = 2;
+  }
   else {
     PyErr_SetString(getError(),
                     "invalid type, should be uniform, cyclic, or acyclic");
@@ -122,10 +132,8 @@ PyObject *TimeSampling_new(PyObject *self, PyObject *args)
 
   std::vector<Abc::chrono_t> times;
   AbcA::TimeSamplingType TSType;
-  if (ts_type < 1)  // uniform
-  {
-    if (arg1)  // arg1 not null... then can assume arg2 is not null either!
-    {
+  if (ts_type < 1) {  // uniform
+    if (arg1) {  // arg1 not null... then can assume arg2 is not null either!
       if (!PyFloat_Check(arg1)) {
         PyErr_SetString(getError(), "the argument is not a real!");
         return NULL;
@@ -190,14 +198,15 @@ PyObject *TimeSampling_new(PyObject *self, PyObject *args)
       const float delta = times[times.size() - 1] - times[0];
       new (&TSType) AbcA::TimeSamplingType(times.size(), delta);
     }
-    else
+    else {
       new (&TSType) AbcA::TimeSamplingType(AbcA::TimeSamplingType::kAcyclic);
+    }
   }
 
   EA_TimeSampling *TS = PyObject_NEW(EA_TimeSampling, &TS_Type);
   new (&(TS->tsampling)) AbcA::TimeSamplingPtr();  // need to do this to have a
-                                                   // default empty
-                                                   // timesamplingptr
+  // default empty
+  // timesamplingptr
   TS->tsampling.reset(new AbcA::TimeSampling(TSType, times));
   return (PyObject *)TS;
 

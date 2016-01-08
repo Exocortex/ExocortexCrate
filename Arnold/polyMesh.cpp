@@ -7,10 +7,9 @@ struct __indices {
 };
 
 template <typename AbcGeom>  // AbcGeom is either of type
-                             // Alembic::AbcGeom::IPolyMesh or
-                             // Alembic::AbcGeom::ISubD
-                             static bool usingDynamicTopology(
-                                 AbcGeom &typedObject)
+// Alembic::AbcGeom::IPolyMesh or
+// Alembic::AbcGeom::ISubD
+static bool usingDynamicTopology(AbcGeom &typedObject)
 {
   Alembic::Abc::IInt32ArrayProperty faceIndicesProp =
       Alembic::Abc::IInt32ArrayProperty(typedObject.getSchema(),
@@ -23,7 +22,9 @@ static bool faceCount(AtNode *shapeNode, __indices &ind,
                       Alembic::Abc::Int32ArraySamplePtr &abcFaceCounts,
                       Alembic::Abc::Int32ArraySamplePtr &abcFaceIndices)
 {
-  if (abcFaceCounts->get()[0] == 0) return false;
+  if (abcFaceCounts->get()[0] == 0) {
+    return false;
+  }
 
   AtArray *faceCounts =
       AiArrayAllocate((AtInt)abcFaceCounts->size(), 1, AI_TYPE_UINT);
@@ -77,21 +78,22 @@ static void subSetUVParams(
 
   if (ptr->size() > 2) {
     bool subdsmooth = ptr->get()[2] != 0.0f;
-    if (subdsmooth)
+    if (subdsmooth) {
       AiNodeSetStr(shapeNode, "subdiv_uv_smoothing", "pin_borders");
-    else
+    }
+    else {
       AiNodeSetStr(shapeNode, "subdiv_uv_smoothing", "linear");
+    }
   }
 }
 
 template <typename AbcGeom>  // AbcGeom is either of type
-                             // Alembic::AbcGeom::IPolyMesh or
-                             // Alembic::AbcGeom::ISubD
-                             static bool setUVParams(
-                                 AbcGeom &typedObject, SampleInfo &sampleInfo,
-                                 AtNode *shapeNode, AtArray *uvsIdx,
-                                 AtArray *faceIndices,
-                                 Alembic::AbcGeom::IV2fGeomParam &uvParam)
+// Alembic::AbcGeom::IPolyMesh or
+// Alembic::AbcGeom::ISubD
+static bool setUVParams(AbcGeom &typedObject, SampleInfo &sampleInfo,
+                        AtNode *shapeNode, AtArray *uvsIdx,
+                        AtArray *faceIndices,
+                        Alembic::AbcGeom::IV2fGeomParam &uvParam)
 {
   AiNodeSetArray(shapeNode, "uvlist",
                  removeUvsDuplicate(uvParam, sampleInfo, uvsIdx, faceIndices));
@@ -100,7 +102,9 @@ template <typename AbcGeom>  // AbcGeom is either of type
   if (typedObject.getSchema().getPropertyHeader(".uvOptions") != NULL) {
     Alembic::Abc::IFloatArrayProperty prop = Alembic::Abc::IFloatArrayProperty(
         typedObject.getSchema(), ".uvOptions");
-    if (prop.getNumSamples() > 0) subSetUVParams(shapeNode, prop);
+    if (prop.getNumSamples() > 0) {
+      subSetUVParams(shapeNode, prop);
+    }
   }
   return true;
 }
@@ -109,7 +113,9 @@ template <typename SCHEMA>
 static void postShaderProcess(SCHEMA &schema, nodeData &nodata, userData *ud,
                               Alembic::Abc::Int32ArraySamplePtr &abcFaceCounts)
 {
-  if (ud->gProcShaders == NULL || nodata.shaders != NULL) return;
+  if (ud->gProcShaders == NULL || nodata.shaders != NULL) {
+    return;
+  }
 
   nodata.shaders = ud->gProcShaders;
   if (nodata.shaders->nelements > 1) {
@@ -121,8 +127,9 @@ static void postShaderProcess(SCHEMA &schema, nodeData &nodata, userData *ud,
       const size_t shaderIndexCount = abcFaceCounts->size();
       nodata.shaderIndices =
           AiArrayAllocate((AtUInt32)shaderIndexCount, 1, AI_TYPE_BYTE);
-      for (size_t i = 0; i < shaderIndexCount; ++i)
+      for (size_t i = 0; i < shaderIndexCount; ++i) {
         AiArraySetByte(nodata.shaderIndices, (AtUInt32)i, 0);
+      }
 
       const size_t faceSetNamesSize = faceSetNames.size();
       for (size_t i = 0; i < faceSetNamesSize; ++i) {
@@ -183,8 +190,7 @@ static bool hadToInterpolatePositions(SCHEMA &schema, SCHEMA_SAMPLE &sample,
   }
 
   // if we have to interpolate
-  if (sampleInfo.alpha <= sampleTolerance)  // NOT!
-  {
+  if (sampleInfo.alpha <= sampleTolerance) {  // NOT!
     plainPositionCopy(pos, abcPos, posOffset);
     return false;
   }
@@ -225,8 +231,9 @@ static bool hadToInterpolatePositions(SCHEMA &schema, SCHEMA_SAMPLE &sample,
           AiArraySetPnt(pos, posOffset++, pt);
         }
       }
-      else
+      else {
         plainPositionCopy(pos, abcPos, posOffset);
+      }
     }
   }
   return true;
@@ -285,15 +292,17 @@ AtNode *createPolyMeshNode(nodeData &nodata, userData *ud,
     if (sampleIndex == 0) {
       abcFaceCounts = sample.getFaceCounts();
       abcFaceIndices = sample.getFaceIndices();
-      if (!faceCount(shapeNode, ind, abcFaceCounts, abcFaceIndices))
+      if (!faceCount(shapeNode, ind, abcFaceCounts, abcFaceIndices)) {
         return NULL;
+      }
 
       // copy the indices a second time because they can be overwritten in UVs
       {
         const int nbElem = ind.indices->nelements;
         nsIdx = AiArrayAllocate(nbElem, 1, AI_TYPE_UINT);
-        for (int ii = 0; ii < nbElem; ++ii)
+        for (int ii = 0; ii < nbElem; ++ii) {
           AiArraySetUInt(nsIdx, ii, AiArrayGetUInt(ind.indices, ii));
+        }
       }
 
       if (typedObject.getSchema().getPropertyHeader(
@@ -376,8 +385,9 @@ AtNode *createPolyMeshNode(nodeData &nodata, userData *ud,
     AiNodeSetArray(shapeNode, "nlist", nor);
     AiNodeSetArray(shapeNode, "nidxs", nsIdx);
   }
-  else
+  else {
     AiArrayDestroy(nsIdx);  // no normals... no need for nsIdx!
+  }
 
   postShaderProcess(typedObject.getSchema(), nodata, ud, abcFaceCounts);
   return shapeNode;
@@ -424,8 +434,9 @@ AtNode *createSubDNode(nodeData &nodata, userData *ud,
       abcFaceCounts = sample.getFaceCounts();
       Alembic::Abc::Int32ArraySamplePtr abcFaceIndices =
           sample.getFaceIndices();
-      if (!faceCount(shapeNode, ind, abcFaceCounts, abcFaceIndices))
+      if (!faceCount(shapeNode, ind, abcFaceCounts, abcFaceIndices)) {
         return NULL;
+      }
 
       // subdiv settings
       AiNodeSetStr(shapeNode, "subdiv_type", "catclark");
@@ -439,8 +450,9 @@ AtNode *createSubDNode(nodeData &nodata, userData *ud,
       if (uvParam.valid())
         setUVParams(typedObject, sampleInfo, shapeNode, ind.indices,
                     ind.faceIndices, uvParam);
-      else
+      else {
         AiArrayDestroy(ind.indices);  // we don't need the uvindices
+      }
     }
 
     // access the positions

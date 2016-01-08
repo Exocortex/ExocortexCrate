@@ -189,7 +189,9 @@ SceneNodeXSIPtr buildCommonSceneGraph(XSI::CRef xsiRoot, int& nNumNodes,
   CRefArray children = xRoot.GetChildren();
   for (LONG j = 0; j < children.GetCount(); j++) {
     X3DObject child(children[j]);
-    if (!child.IsValid()) continue;
+    if (!child.IsValid()) {
+      continue;
+    }
     sceneStack.push_back(CSGStackElement(children[j], exoRoot));
   }
 
@@ -220,10 +222,10 @@ SceneNodeXSIPtr buildCommonSceneGraph(XSI::CRef xsiRoot, int& nNumNodes,
         newNode = createNodeXSI(xRef, type);
       }
     }
-    else {  // import
+    else {                                  // import
       newNode = createNodeXSI(xRef, type);  // doesn't identify EXTRANFORMS
-                                            // because these are built-in to the
-                                            // shape node
+      // because these are built-in to the
+      // shape node
       if (type == SceneNode::ITRANSFORM ||
           type == SceneNode::NAMESPACE_TRANSFORM) {
         // newNode->name+="Xfo";
@@ -243,7 +245,9 @@ SceneNodeXSIPtr buildCommonSceneGraph(XSI::CRef xsiRoot, int& nNumNodes,
     CRefArray children = xNode.GetChildren();
     for (LONG j = 0; j < children.GetCount(); j++) {
       X3DObject child(children[j]);
-      if (!child.IsValid()) continue;
+      if (!child.IsValid()) {
+        continue;
+      }
 
       sceneStack.push_back(CSGStackElement(children[j], newNode));
     }
@@ -351,7 +355,9 @@ Imath::M44d SceneNodeXSI::getGlobalTransDouble(double time)
 
 bool SceneNodeXSI::getVisibility(double time)
 {
-  if (bMergedSubtreeNodeParent) return true;
+  if (bMergedSubtreeNodeParent) {
+    return true;
+  }
 
   XSI::X3DObject xObj(nodeRef);
   Property visProp;

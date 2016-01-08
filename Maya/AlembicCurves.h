@@ -20,23 +20,23 @@ class AlembicCurveAccumulator {
  private:
   MObject m_ref;       // a reference to the first curve found in this group!
   Abc::M44f mInverse;  // the inverse matrix of the first curve (changed for
-                       // every frame) so that other curves will have their
-                       // coordinates into the first curve's space
+  // every frame) so that other curves will have their
+  // coordinates into the first curve's space
 
   AbcG::OCurves mObject;
   AbcG::OCurvesSchema mSchema;
   AbcG::OCurvesSchema::Sample mSample;
   Abc::Box3d bbox;
   bool firstSample;  // when it's the first sample recorded, more stuff are
-                     // written to the alembic file
+  // written to the alembic file
   bool useGlobalCache;
 
   std::vector<Abc::V3f> mPosVec;
   std::vector<AbcA::int32_t> mNbVertices;
   std::vector<float> mRadiusVec;  // TODO: add support for radius and knots.
-                                  // Need to find a way to express the knot
-                                  // vector as parts in the alembic file because
-                                  // it's a different size than the nbVertices!
+  // Need to find a way to express the knot
+  // vector as parts in the alembic file because
+  // it's a different size than the nbVertices!
   std::vector<float> mKnotVec;
 
   Abc::OFloatArrayProperty mRadiusProperty;

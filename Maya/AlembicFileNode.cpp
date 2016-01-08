@@ -67,7 +67,9 @@ static std::string createFileTemplate(const std::string &filename, size_t num,
   ss << filename.substr(0, num) << "%";
   if (usePadding) {
     const size_t diff = dot - num;
-    if (diff) ss << "0" << diff;
+    if (diff) {
+      ss << "0" << diff;
+    }
   }
   ss << "d" << filename.substr(dot);
   return ss.str();
@@ -91,7 +93,9 @@ MStatus AlembicFileNode::compute(const MPlug &plug, MDataBlock &dataBlock)
       size_t dot = filename.rfind(".");
       size_t num = dot - 1;
       if (dot != std::string::npos) {
-        while (filename[num] >= '0' && filename[num] <= '9') --num;
+        while (filename[num] >= '0' && filename[num] <= '9') {
+          --num;
+        }
         ++num;
       }
 
@@ -112,8 +116,7 @@ MStatus AlembicFileNode::compute(const MPlug &plug, MDataBlock &dataBlock)
 
       sprintf(tmpFormattedName, multiFileTemplate.c_str(), curFrame);
       std::ifstream in(tmpFormattedName);
-      if (in.is_open())  // try the padded version
-      {
+      if (in.is_open()) {  // try the padded version
         in.close();
         lastMultiFileName = tmpFormattedName;
         lastCurFrame = curFrame;
@@ -121,8 +124,7 @@ MStatus AlembicFileNode::compute(const MPlug &plug, MDataBlock &dataBlock)
       else {
         sprintf(tmpFormattedName, multiFileTemplateNoPadding.c_str(), curFrame);
         in.open(tmpFormattedName);
-        if (in.is_open())  // try the non-padded version!
-        {
+        if (in.is_open()) {  // try the non-padded version!
           in.close();
           lastMultiFileName = tmpFormattedName;
           lastCurFrame = curFrame;

@@ -48,8 +48,9 @@ MStatus AlembicHair::Save(double time)
 
   // first we need to count the number of points
   unsigned int vertexCount = 0;
-  for (unsigned int i = 0; i < (unsigned int)mainLines.length(); i++)
+  for (unsigned int i = 0; i < (unsigned int)mainLines.length(); i++) {
     vertexCount += mainLines.renderLine(i, &status).getLine().length();
+  }
 
   mPosVec.resize(vertexCount);
   unsigned int offset = 0;

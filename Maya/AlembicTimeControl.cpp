@@ -103,7 +103,9 @@ MStatus AlembicTimeControlNode::compute(const MPlug& plug,
   const double delta = loopEndHandle.asDouble() - start;
   if (delta > 0.0) {
     inputTime = fmod(inputTime - start, delta);
-    if (inputTime < 0.0) inputTime += delta;
+    if (inputTime < 0.0) {
+      inputTime += delta;
+    }
     inputTime += start;
   }
 

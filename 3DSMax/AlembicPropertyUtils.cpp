@@ -204,7 +204,9 @@ Modifier* createDisplayModifier(std::string modkey, std::string modname,
         evalStream << "height:54";
       }
       evalStream << " labelOnTop:true";
-      if (bConstant) evalStream << " readOnly:true";
+      if (bConstant) {
+        evalStream << " readOnly:true";
+      }
     }
 
     evalStream << "\n";
@@ -521,21 +523,51 @@ bool readPropExt3(const Abc::ICompoundProperty& prop,
 bool sortFunc(AbcProp p1, AbcProp p2) { return p1.sortId > p2.sortId; }
 char* getPodStr(AbcA::PlainOldDataType pod)
 {
-  if (pod == AbcA::kBooleanPOD) return "kBooleanPOD";
-  if (pod == AbcA::kUint8POD) return "kUint8POD";
-  if (pod == AbcA::kInt8POD) return "kInt8POD";
-  if (pod == AbcA::kUint16POD) return "kUint16POD";
-  if (pod == AbcA::kInt16POD) return "kInt16POD";
-  if (pod == AbcA::kUint32POD) return "kUint32POD";
-  if (pod == AbcA::kInt32POD) return "kInt32POD";
-  if (pod == AbcA::kUint64POD) return "kUint64POD";
-  if (pod == AbcA::kInt64POD) return "kInt64POD";
-  if (pod == AbcA::kFloat16POD) return "kFloat16POD";
-  if (pod == AbcA::kFloat32POD) return "kFloat32POD";
-  if (pod == AbcA::kFloat64POD) return "kFloat64POD";
-  if (pod == AbcA::kStringPOD) return "kStringPOD";
-  if (pod == AbcA::kWstringPOD) return "kWstringPOD";
-  if (pod == AbcA::kNumPlainOldDataTypes) return "kNumPlainOldDataTypes";
+  if (pod == AbcA::kBooleanPOD) {
+    return "kBooleanPOD";
+  }
+  if (pod == AbcA::kUint8POD) {
+    return "kUint8POD";
+  }
+  if (pod == AbcA::kInt8POD) {
+    return "kInt8POD";
+  }
+  if (pod == AbcA::kUint16POD) {
+    return "kUint16POD";
+  }
+  if (pod == AbcA::kInt16POD) {
+    return "kInt16POD";
+  }
+  if (pod == AbcA::kUint32POD) {
+    return "kUint32POD";
+  }
+  if (pod == AbcA::kInt32POD) {
+    return "kInt32POD";
+  }
+  if (pod == AbcA::kUint64POD) {
+    return "kUint64POD";
+  }
+  if (pod == AbcA::kInt64POD) {
+    return "kInt64POD";
+  }
+  if (pod == AbcA::kFloat16POD) {
+    return "kFloat16POD";
+  }
+  if (pod == AbcA::kFloat32POD) {
+    return "kFloat32POD";
+  }
+  if (pod == AbcA::kFloat64POD) {
+    return "kFloat64POD";
+  }
+  if (pod == AbcA::kStringPOD) {
+    return "kStringPOD";
+  }
+  if (pod == AbcA::kWstringPOD) {
+    return "kWstringPOD";
+  }
+  if (pod == AbcA::kNumPlainOldDataTypes) {
+    return "kNumPlainOldDataTypes";
+  }
   // if(pod == AbcA::kUnknownPOD)
   return "kUnknownPOD";
 }
@@ -555,7 +587,9 @@ int containsInvalidString(std::string str)
 {
   for (int i = 0; i < invalidStrTableSize; i++) {
     std::size_t found = str.find(invalidStrTable[i]);
-    if (found != std::string::npos) return i;
+    if (found != std::string::npos) {
+      return i;
+    }
   }
   return -1;
 }
@@ -573,7 +607,7 @@ void readInputProperties(Abc::ICompoundProperty prop,
     AbcA::PropertyType propType = pheader.getPropertyType();
 
     //ESS_LOG_WARNING("Property, propName: "<<pheader.getName()<<", pod: "<<getPodStr(pheader.getDataType().getPod()) \
-      // <<", extent: "<<(int)pheader.getDataType().getExtent()<<", interpretation: "<<pheader.getMetaData().get("interpretation"));
+        // <<", extent: "<<(int)pheader.getDataType().getExtent()<<", interpretation: "<<pheader.getMetaData().get("interpretation"));
 
     int invalidStrIndex = containsInvalidString(pheader.getName());
     if (invalidStrIndex > 0) {
@@ -607,10 +641,12 @@ void readInputProperties(Abc::ICompoundProperty prop,
         /*if(boolProp.isConstant()){*/
         AbcU::bool_t bVal = false;
         boolProp.get(bVal);
-        if (bVal == true)
+        if (bVal == true) {
           displayVal = "true";
-        else
+        }
+        else {
           displayVal = "false";
+        }
         //}
         // else{
         //
@@ -659,7 +695,7 @@ void readInputProperties(Abc::ICompoundProperty prop,
       // They won't work so well with our display modifier system.
 
       //ESS_LOG_WARNING("Unsupported array property, propName: "<<pheader.getName()<<", pod: "<<getPodStr(pheader.getDataType().getPod()) \
-         //<<", extent: "<<(int)pheader.getDataType().getExtent()<<", interpretation: "<<pheader.getMetaData().get("interpretation"));
+            //<<", extent: "<<(int)pheader.getDataType().getExtent()<<", interpretation: "<<pheader.getMetaData().get("interpretation"));
     }
     else {
       ESS_LOG_WARNING("Unsupported input property: " << pheader.getName());

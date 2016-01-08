@@ -7,17 +7,27 @@ using namespace MATH;
 
 void SaveMetaData(XSI::CRef x3dRef, AlembicObject* object)
 {
-  if (object == NULL) return;
-  if (object->GetNumSamples() > 0) return;
+  if (object == NULL) {
+    return;
+  }
+  if (object->GetNumSamples() > 0) {
+    return;
+  }
   X3DObject x3d(x3dRef);
-  if (!x3d.IsValid()) return;
+  if (!x3d.IsValid()) {
+    return;
+  }
 
   // search for properties
   CRefArray props = x3d.GetLocalProperties();
   for (LONG i = 0; i < props.GetCount(); i++) {
     CustomProperty prop(props[i]);
-    if (!prop.IsValid()) continue;
-    if (!prop.GetType().IsEqualNoCase(L"alembic_metadata")) continue;
+    if (!prop.IsValid()) {
+      continue;
+    }
+    if (!prop.GetType().IsEqualNoCase(L"alembic_metadata")) {
+      continue;
+    }
 
     // we found a metadata property
     Abc::OStringArrayProperty metaDataProperty = Abc::OStringArrayProperty(
@@ -122,12 +132,16 @@ SICALLBACK alembic_attach_metadata_Execute(CRef& in_ctxt)
 
   for (LONG i = 0; i < objects.GetCount(); i++) {
     X3DObject object(objects[i]);
-    if (!object.IsValid()) continue;
+    if (!object.IsValid()) {
+      continue;
+    }
     CRefArray props = object.GetLocalProperties();
     bool hasMetaData = false;
     for (LONG j = 0; j < props.GetCount(); j++) {
       CustomProperty prop(props[j]);
-      if (!prop.IsValid()) continue;
+      if (!prop.IsValid()) {
+        continue;
+      }
       if (prop.GetType().IsEqualNoCase(L"alembic_metadata")) {
         hasMetaData = true;
         break;

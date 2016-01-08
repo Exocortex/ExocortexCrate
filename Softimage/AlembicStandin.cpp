@@ -63,7 +63,9 @@ ESS_CALLBACK_START(alembic_standinop_Update, CRef&)
 
 // if we are not interactive, let's just return here
 // the property should have all of its values anyways
-if (!Application().IsInteractive()) return CStatus::OK;
+if (!Application().IsInteractive()) {
+  return CStatus::OK;
+}
 
 OperatorContext ctxt(in_ctxt);
 CString tokens = ctxt.GetParameterValue(L"tokens");
@@ -90,10 +92,12 @@ else {
   CRef modelRef;
   modelRef.Set(nodeNameParts[0]);
   Model model(modelRef);
-  if (model.IsValid())
+  if (model.IsValid()) {
     x3dRef.Set(nodeNameParts[0] + L"." + nodeNameParts[1]);
-  else
+  }
+  else {
     x3dRef = modelRef;
+  }
 }
 
 alembicOp_Multifile(in_ctxt, false, ctxt.GetParameterValue(L"time"), paths[0]);
@@ -175,8 +179,9 @@ if (tokensLower.FindString(L"&mbkeys=") == -1) {
                           (1000.0f * (float)CTime().GetFrameRate()))
                        .GetAsText();
   }
-  if (!mbKeysStr.IsEmpty())
+  if (!mbKeysStr.IsEmpty()) {
     data += CString(data.IsEmpty() ? L"" : L"&") + mbKeysStr;
+  }
 }
 
 // output the data to a custom property

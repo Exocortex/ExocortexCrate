@@ -206,7 +206,9 @@ AtNode *createInstanceNode(nodeData &nodata, userData *ud, int i)
             // cast to a xform
             Alembic::AbcGeom::IXform parentXform(xform,
                                                  Alembic::Abc::kWrapExisting);
-            if (parentXform.getSchema().getNumSamples() == 0) break;
+            if (parentXform.getSchema().getNumSamples() == 0) {
+              break;
+            }
 
             // loop over all samples
             for (size_t sampleIndex = 0; sampleIndex < ud->gMbKeys.size();
@@ -222,16 +224,18 @@ AtNode *createInstanceNode(nodeData &nodata, userData *ud, int i)
               Alembic::Abc::M44f abcMatrix;
               Alembic::Abc::M44d abcMatrixd = sample.getMatrix();
               for (int x = 0; x < 4; x++)
-                for (int y = 0; y < 4; y++)
+                for (int y = 0; y < 4; y++) {
                   abcMatrix[x][y] = (float)abcMatrixd[x][y];
+                }
 
               if (sampleInfo.alpha >= sampleTolerance) {
                 parentXform.getSchema().get(sample, sampleInfo.ceilIndex);
                 Alembic::Abc::M44d ceilAbcMatrixd = sample.getMatrix();
                 Alembic::Abc::M44f ceilAbcMatrix;
                 for (int x = 0; x < 4; x++)
-                  for (int y = 0; y < 4; y++)
+                  for (int y = 0; y < 4; y++) {
                     ceilAbcMatrix[x][y] = (float)ceilAbcMatrixd[x][y];
+                  }
                 abcMatrix = float(1.0 - sampleInfo.alpha) * abcMatrix +
                             float(sampleInfo.alpha) * ceilAbcMatrix;
               }
@@ -246,11 +250,14 @@ AtNode *createInstanceNode(nodeData &nodata, userData *ud, int i)
               std::pair<float, std::vector<Alembic::Abc::M44f> >(centroidTime,
                                                                  offsets));
         }
-        else
+        else {
           offsets = it->second;
+        }
 
         // this means we have the right amount of matrices to blend against
-        if (offsets.size() > j) matrixAbc = offsets[j] * matrixAbc;
+        if (offsets.size() > j) {
+          matrixAbc = offsets[j] * matrixAbc;
+        }
       }
     }
 

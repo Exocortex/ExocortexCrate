@@ -49,8 +49,9 @@ void IntermediatePolyMeshXSI::Save(SceneNodePtr eNode,
   for (LONG i = 0; i < faces.GetCount(); i++) {
     PolygonFace face(faces[i]);
     CLongArray samples = face.GetSamples().GetIndexArray();
-    for (LONG j = samples.GetCount() - 1; j >= 0; j--)
+    for (LONG j = samples.GetCount() - 1; j >= 0; j--) {
       sampleLookup[offset++] = samples[j];
+    }
   }
 
   // abort here if we are just storing points
@@ -70,12 +71,15 @@ void IntermediatePolyMeshXSI::Save(SceneNodePtr eNode,
     PolygonFace face(faces[i]);
     CLongArray indices = face.GetVertices().GetIndexArray();
     mFaceCountVec[i] = indices.GetCount();
-    for (LONG j = indices.GetCount() - 1; j >= 0; j--)
+    for (LONG j = indices.GetCount() - 1; j >= 0; j--) {
       mFaceIndicesVec[offset++] = indices[j];
+    }
   }
 
   if (options.GetBoolOption("exportNormals")) {
-    if (bEnableLogging) ESS_LOG_WARNING("Extracting normal data.");
+    if (bEnableLogging) {
+      ESS_LOG_WARNING("Extracting normal data.");
+    }
 
     std::vector<Abc::N3f> normalVec;
     CVector3Array normals = mesh.GetVertices().GetNormalArray();
@@ -92,7 +96,9 @@ void IntermediatePolyMeshXSI::Save(SceneNodePtr eNode,
       CDoubleArray userNormals = userNormalProp.GetElements().GetArray();
       for (LONG i = 0; i < elements.GetCount(); i++) {
         LONG sampleIndex = elements[i] * 3;
-        if (sampleIndex >= shadingNormals.GetCount()) continue;
+        if (sampleIndex >= shadingNormals.GetCount()) {
+          continue;
+        }
         shadingNormals[sampleIndex++] = (float)userNormals[i * 3 + 0];
         shadingNormals[sampleIndex++] = (float)userNormals[i * 3 + 1];
         shadingNormals[sampleIndex++] = (float)userNormals[i * 3 + 2];
@@ -119,7 +125,9 @@ void IntermediatePolyMeshXSI::Save(SceneNodePtr eNode,
 
   ICEAttribute velocitiesAttr = mesh.GetICEAttributeFromName("PointVelocity");
   if (velocitiesAttr.IsDefined() && velocitiesAttr.IsValid()) {
-    if (bEnableLogging) ESS_LOG_WARNING("Extracting velocity data");
+    if (bEnableLogging) {
+      ESS_LOG_WARNING("Extracting velocity data");
+    }
 
     CICEAttributeDataArrayVector3f velocitiesData;
     velocitiesAttr.GetDataArray(velocitiesData);
@@ -142,7 +150,9 @@ void IntermediatePolyMeshXSI::Save(SceneNodePtr eNode,
     }
 
     if (!bAllZero) {
-      if (bEnableLogging) ESS_LOG_WARNING("Velocity data not all zero vector");
+      if (bEnableLogging) {
+        ESS_LOG_WARNING("Velocity data not all zero vector");
+      }
 
       mVelocitiesVec.resize(vertCount);
       for (LONG i = 0; i < vertCount; i++) {
@@ -185,7 +195,9 @@ void IntermediatePolyMeshXSI::Save(SceneNodePtr eNode,
         mIndexedUVSet[uvI].name =
             ClusterProperty(uvPropRefs[uvI]).GetName().GetAsciiString();
 
-        if (bEnableLogging) ESS_LOG_WARNING("Extracting UV Data " << uvI);
+        if (bEnableLogging) {
+          ESS_LOG_WARNING("Extracting UV Data " << uvI);
+        }
         createIndexedArray<Abc::V2f, SortableV2f>(mFaceIndicesVec, uvVec,
                                                   mIndexedUVSet[uvI].values,
                                                   mIndexedUVSet[uvI].indices);
@@ -193,7 +205,9 @@ void IntermediatePolyMeshXSI::Save(SceneNodePtr eNode,
 
       // create the uv options
       if (options.GetBoolOption("exportUVOptions")) {
-        if (bEnableLogging) ESS_LOG_WARNING("Extracting UV options.");
+        if (bEnableLogging) {
+          ESS_LOG_WARNING("Extracting UV options.");
+        }
 
         for (LONG uvI = 0; uvI < uvPropRefs.GetCount(); uvI++) {
           ClusterProperty clusterProperty = (ClusterProperty)uvPropRefs[uvI];
@@ -234,17 +248,24 @@ void IntermediatePolyMeshXSI::Save(SceneNodePtr eNode,
       (Abc::int32_t)geomApproxProp.GetParameterValue(L"gapproxmordrsl");
 
   if (options.GetBoolOption(
-          "exportFaceSets"))  // facesets are only exported once
-  {
-    if (bEnableLogging) ESS_LOG_WARNING("Extracting facesets.");
+          "exportFaceSets")) {  // facesets are only exported once
+    if (bEnableLogging) {
+      ESS_LOG_WARNING("Extracting facesets.");
+    }
     for (LONG i = 0; i < clusters.GetCount(); i++) {
       Cluster cluster(clusters[i]);
-      if (!cluster.GetType().IsEqualNoCase(L"poly")) continue;
+      if (!cluster.GetType().IsEqualNoCase(L"poly")) {
+        continue;
+      }
 
       CLongArray elements = cluster.GetElements().GetArray();
-      if (elements.GetCount() == 0) continue;
+      if (elements.GetCount() == 0) {
+        continue;
+      }
 
-      if (bEnableLogging) ESS_LOG_WARNING("Extracting faceset " << i);
+      if (bEnableLogging) {
+        ESS_LOG_WARNING("Extracting faceset " << i);
+      }
 
       std::string name(cluster.GetName().GetAsciiString());
 
@@ -259,7 +280,9 @@ void IntermediatePolyMeshXSI::Save(SceneNodePtr eNode,
   // check if we need to export the bindpose (also only for first frame)
   if (options.GetBoolOption("exportBindPose") &&
       prim.GetParent3DObject().GetEnvelopes().GetCount() > 0) {
-    if (bEnableLogging) ESS_LOG_WARNING("Extracting bindpose");
+    if (bEnableLogging) {
+      ESS_LOG_WARNING("Extracting bindpose");
+    }
     // store the positions of the modeling stack into here
     PolygonMesh bindPoseGeo =
         prim.GetGeometry(time, siConstructionModeModeling);
@@ -285,7 +308,9 @@ bool IntermediatePolyMeshXSI::mergeWith(
       (Abc::uint32_t)destMesh.mFaceCountVec.size();
 
   bool bRes = CommonIntermediatePolyMesh::mergeWith(srcMesh);
-  if (!bRes) return false;
+  if (!bRes) {
+    return false;
+  }
 
   for (FaceSetMap::const_iterator it = srcMeshMax.mFaceSets.begin();
        it != srcMeshMax.mFaceSets.end(); it++) {

@@ -101,8 +101,7 @@ bool LoadNurbs(NURBSSet &nset, Abc::P3fArraySamplePtr pCurvePos,
         //   c->SetKnot(nNumMaxKnots, nNumMaxKnots);
         //}
       }
-      else  // cubic open
-      {
+      else {  // cubic open
         c->SetKnot(0, 0.0);
         c->SetKnot(1, 0.0);
         c->SetKnot(2, 0.0);
@@ -310,7 +309,7 @@ int AlembicImport_NURBS(const std::string &path, AbcG::IObject &iObj,
   }
 
   ////It would seem that 3DS Max won't let add a modifier onto an empty NURBS
-  ///set, so we load the first frame here
+  /// set, so we load the first frame here
   NURBSSet nset;
 
   bool bDynamicTopo = isAlembicNurbsCurveTopoDynamic(&iObj);

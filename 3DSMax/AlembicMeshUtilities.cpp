@@ -33,7 +33,7 @@ void validateMeshes(alembic_fillmesh_options &options, char *szName)
     // options.pMNMesh->MNDebugPrint( FALSE );
     // if( ! options.pMNMesh->CheckAllData() ) {
     //	ESS_LOG_WARNING( "options.pMNMesh->CheckAllData() failed, section: " <<
-    //szName );
+    // szName );
     //	options.pMNMesh->MNDebugPrint();
     //}
   }
@@ -49,13 +49,17 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
     ESS_PROFILE_SCOPE(
         "AlembicImport_FillInPolyMesh_Internal - objMesh and objSubD");
 
-    if (AbcG::IPolyMesh::matches((*options.pIObj).getMetaData()))
+    if (AbcG::IPolyMesh::matches((*options.pIObj).getMetaData())) {
       objMesh = AbcG::IPolyMesh(*options.pIObj, Abc::kWrapExisting);
-    else
+    }
+    else {
       objSubD = AbcG::ISubD(*options.pIObj, Abc::kWrapExisting);
+    }
   }
 
-  if (!objMesh.valid() && !objSubD.valid()) return;
+  if (!objMesh.valid() && !objSubD.valid()) {
+    return;
+  }
 
   int nTicks = options.dTicks;
   float fRoundedTimeAlpha = 0.0f;
@@ -79,10 +83,12 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
   AbcG::IPolyMeshSchema::Sample polyMeshSample;
   AbcG::ISubDSchema::Sample subDSample;
 
-  if (objMesh.valid())
+  if (objMesh.valid()) {
     objMesh.getSchema().get(polyMeshSample, sampleInfo.floorIndex);
-  else
+  }
+  else {
     objSubD.getSchema().get(subDSample, sampleInfo.floorIndex);
+  }
 
   int currentNumVerts = options.pMNMesh->numv;
 
@@ -178,10 +184,12 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
             const int posSize = meshPos2 ? (const int)meshPos2->size() : 0;
             const int velSize = meshVel ? (const int)meshVel->size() : 0;
 
-            if (meshPos2->size() == vArray.size() && !hasDynamicTopo)
+            if (meshPos2->size() == vArray.size() && !hasDynamicTopo) {
               bSampleInterpolate = true;
-            else if (meshVel && meshVel->size() == vArray.size())
+            }
+            else if (meshVel && meshVel->size() == vArray.size()) {
               bVelInterpolate = true;
+            }
           }
         }
         else {
@@ -404,8 +412,8 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
         }
         normalSpec->SetFlag(MESH_NORMAL_MODIFIER_SUPPORT, true);
         normalSpec->SetAllExplicit(true);  // this call is probably more
-                                           // efficient than the per vertex one
-                                           // since 3DS Max uses bit flags
+        // efficient than the per vertex one
+        // since 3DS Max uses bit flags
 
         // set normal values
         if (sampleInfo.alpha != 0.0f && normalsCeil &&
@@ -615,10 +623,12 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
     }
     else {
       std::vector<std::string> faceSetNames;
-      if (objMesh.valid())
+      if (objMesh.valid()) {
         objMesh.getSchema().getFaceSetNames(faceSetNames);
-      else
+      }
+      else {
         objSubD.getSchema().getFaceSetNames(faceSetNames);
+      }
 
       std::vector<int> matIDs;
       for (size_t j = 0; j < faceSetNames.size(); j++) {
@@ -651,10 +661,12 @@ void AlembicImport_FillInPolyMesh_Internal(alembic_fillmesh_options &options)
 
       for (size_t j = 0; j < faceSetNames.size(); j++) {
         AbcG::IFaceSetSchema faceSet;
-        if (objMesh.valid())
+        if (objMesh.valid()) {
           faceSet = objMesh.getSchema().getFaceSet(faceSetNames[j]).getSchema();
-        else
+        }
+        else {
           faceSet = objSubD.getSchema().getFaceSet(faceSetNames[j]).getSchema();
+        }
 
         // ESS_LOG_WARNING("Reading faceset "<<sampleInfo.floorIndex);
 
@@ -785,8 +797,8 @@ void addAlembicMaterialsModifier(INode *pNode, AbcG::IObject &iObj)
 
   if (!matNamesProperty.valid() ||
       matNamesProperty.getNumSamples() == 0) {  // if we couldn't read the
-                                                // .materialnames property, look
-                                                // for the faceset names
+    // .materialnames property, look
+    // for the faceset names
 
     if (objMesh.valid()) {
       sampleInfo = getSampleInfo(0, objMesh.getSchema().getTimeSampling(),
@@ -841,14 +853,14 @@ void addAlembicMaterialsModifier(INode *pNode, AbcG::IObject &iObj)
   //		"AlembicMaterialCA = attributes AlembicMaterialModifier\n"
   //		"(\n"
   //			"rollout AlembicMaterialModifierRLT \"Alembic
-  //Materials\"\n"
+  // Materials\"\n"
   //			"(\n"
   //				"listbox eTestList \"\" items:#(%s)\n"
   //			")\n"
   //		")\n"
 
   //		"custattributes.add $.modifiers[\"Alembic Materials\"]
-  //AlembicMaterialCA baseobject:false\n"
+  // AlembicMaterialCA baseobject:false\n"
   //		"$.modifiers[\"Alembic Materials\"].enabled = false"
   //		//"$.modifiers[\"Alembic Materials\"].enabled = false\n"
   //		//"if $.modifiers[\"Alembic Mesh Normals\"] != undefined then
@@ -948,7 +960,7 @@ int AlembicImport_PolyMesh(const std::string &path, AbcG::IObject &iObj,
     //{
     //
     //	PolyObject *pPolyObject = (PolyObject *)
-    //GetPolyObjDescriptor()->Create();
+    // GetPolyObjDescriptor()->Create();
     //	dataFillOptions.pMNMesh = &(pPolyObject->GetMesh());
     //	newObject = pPolyObject;
     //}

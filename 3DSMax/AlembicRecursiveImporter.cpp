@@ -29,23 +29,19 @@ int createAlembicObject(AbcG::IObject &iObj, INode **pMaxNode,
   //	int ret = AlembicImport_PolyMesh(file, iObj, options, pMaxNode);
   //}
   if (AbcG::IPolyMesh::matches(mdata) ||
-      AbcG::ISubD::matches(mdata))  // PolyMesh / SubD
-  {
+      AbcG::ISubD::matches(mdata)) {  // PolyMesh / SubD
     ESS_LOG_INFO("AlembicImport_PolyMesh: " << iObj.getFullName());
     ret = AlembicImport_PolyMesh(file, iObj, options, pMaxNode);
   }
-  else if (AbcG::ICamera::matches(mdata))  // Camera
-  {
+  else if (AbcG::ICamera::matches(mdata)) {  // Camera
     ESS_LOG_INFO("AlembicImport_Camera: " << iObj.getFullName());
     ret = AlembicImport_Camera(file, iObj, options, pMaxNode);
   }
-  else if (AbcG::IPoints::matches(mdata))  // Points
-  {
+  else if (AbcG::IPoints::matches(mdata)) {  // Points
     ESS_LOG_INFO("AlembicImport_Points: " << iObj.getFullName());
     ret = AlembicImport_Points(file, iObj, options, pMaxNode);
   }
-  else if (AbcG::ICurves::matches(mdata))  // Curves
-  {
+  else if (AbcG::ICurves::matches(mdata)) {  // Curves
     if (options.loadCurvesAsNurbs) {
       ESS_LOG_INFO("AlembicImport_Nurbs: " << iObj.getFullName());
       ret = AlembicImport_NURBS(file, iObj, options, pMaxNode);
@@ -55,8 +51,7 @@ int createAlembicObject(AbcG::IObject &iObj, INode **pMaxNode,
       ret = AlembicImport_Shape(file, iObj, options, pMaxNode);
     }
   }
-  else if (AbcG::ILight::matches(mdata))  // Light
-  {
+  else if (AbcG::ILight::matches(mdata)) {  // Light
     ESS_LOG_INFO("AlembicImport_Light: " << iObj.getFullName());
     ret = AlembicImport_Light(file, iObj, options, pMaxNode);
   }
@@ -64,8 +59,7 @@ int createAlembicObject(AbcG::IObject &iObj, INode **pMaxNode,
     ESS_LOG_WARNING(
         "Alembic IMaterial not yet supported: " << iObj.getFullName());
   }
-  else  // NURBS
-  {
+  else {  // NURBS
     if (options.failOnUnsupported) {
       ESS_LOG_ERROR("Alembic data type not supported: " << iObj.getFullName());
       return alembic_failure;
@@ -133,7 +127,7 @@ int importAlembicScene(AbcArchiveCache *pArchiveCache,
         NULL;  // the newly create node, which may be a merged node
     INode *pExistingNode = NULL;
     int keepTM = 1;  // I don't remember why this needed to be set in some
-                     // cases.
+    // cases.
 
     bool bCreateNode = true;
 
@@ -171,17 +165,23 @@ int importAlembicScene(AbcArchiveCache *pArchiveCache,
 
           int ret = AlembicImport_XForm(pParentMaxNode, pMaxNode, iObj, NULL,
                                         file, options);
-          if (ret != 0) return ret;
+          if (ret != 0) {
+            return ret;
+          }
         }  // only create node if either attachToExisting is false or it is true
-           // and the object does not already exist
+        // and the object does not already exist
         else {
           int ret =
               AlembicImport_DummyNode(iObj, options, &pMaxNode, importName);
-          if (ret != 0) return ret;
+          if (ret != 0) {
+            return ret;
+          }
 
           ret = AlembicImport_XForm(pParentMaxNode, pMaxNode, iObj, NULL, file,
                                     options);
-          if (ret != 0) return ret;
+          if (ret != 0) {
+            return ret;
+          }
         }
       }
       else {
@@ -194,15 +194,19 @@ int importAlembicScene(AbcArchiveCache *pArchiveCache,
           if (options.attachToExisting && pExistingNode) {
             pMaxNode = pExistingNode;
           }  // only create node if either attachToExisting is false or it is
-             // true and the object does not already exist
+          // true and the object does not already exist
 
           int ret =
               createAlembicObject(mergedGeomChild, &pMaxNode, options, file);
-          if (ret != 0) return ret;
+          if (ret != 0) {
+            return ret;
+          }
           if (pMaxNode != NULL) {
             ret = AlembicImport_XForm(pParentMaxNode, pMaxNode, iObj,
                                       &mergedGeomChild, file, options);
-            if (ret != 0) return ret;
+            if (ret != 0) {
+              return ret;
+            }
           }
         }
         else {  // geometry node(s) under a dummy node (in pParentMaxNode)
@@ -210,10 +214,12 @@ int importAlembicScene(AbcArchiveCache *pArchiveCache,
           if (options.attachToExisting && pExistingNode) {
             pMaxNode = pExistingNode;
           }  // only create node if either attachToExisting is false or it is
-             // true and the object does not already exist
+          // true and the object does not already exist
 
           int ret = createAlembicObject(iObj, &pMaxNode, options, file);
-          if (ret != 0) return ret;
+          if (ret != 0) {
+            return ret;
+          }
 
           // since the transform is the identity, should position relative to
           // parent
@@ -233,7 +239,7 @@ int importAlembicScene(AbcArchiveCache *pArchiveCache,
           // controller on?
 
           //	int ret = AlembicImport_XForm(pMaxNode, *piParentObj, file,
-          //options);
+          // options);
         }
 
         if (options.failOnUnsupported) {
@@ -258,8 +264,9 @@ int importAlembicScene(AbcArchiveCache *pArchiveCache,
             &(pArchiveCache->find(sElement.pObjectCache->childIdentifiers[j])
                   ->second);
         if (NodeCategory::get(pChildObjectCache->obj) ==
-            NodeCategory::UNSUPPORTED)
+            NodeCategory::UNSUPPORTED) {
           continue;  // skip over unsupported types
+        }
 
         // I assume that geometry nodes are always leaf nodes. Thus, if we
         // merged a geometry node will its parent transform, we don't

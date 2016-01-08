@@ -46,7 +46,9 @@ void AlembicImport_FillInXForm_Internal(alembic_fillxform_options& options)
 {
   ESS_PROFILE_FUNC();
 
-  if (!options.pIObj->valid()) return;
+  if (!options.pIObj->valid()) {
+    return;
+  }
 
   IXformPtr pObj;
   {
@@ -317,8 +319,8 @@ int AlembicImport_XForm(INode* pParentNode, INode* pMaxNode,
     }
   }
   else {  // if the transform is not animated, do not use a controller. Thus,
-          // the user will be able to adjust the object position, orientation
-          // and so on.
+    // the user will be able to adjust the object position, orientation
+    // and so on.
     ESS_PROFILE_SCOPE("AlembicImport_XForm - Setting Non-Animated Value");
 
     // check if the xform controlller exists, and then delete it

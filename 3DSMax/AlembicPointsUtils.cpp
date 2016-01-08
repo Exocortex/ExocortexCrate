@@ -218,8 +218,8 @@ bool getParticleSystemMesh(TimeValue ticks, INode* node,
     // if(obj->CanConvertToType(ALEMBIC_SIMPLE_PARTICLE_CLASSID))
     //{
     //	pAlembicParticles =
-    //reinterpret_cast<AlembicParticles*>(obj->ConvertToType(ticks,
-    //ALEMBIC_SIMPLE_PARTICLE_CLASSID));
+    // reinterpret_cast<AlembicParticles*>(obj->ConvertToType(ticks,
+    // ALEMBIC_SIMPLE_PARTICLE_CLASSID));
     //}
 
     // if(pAlembicParticles){
@@ -234,7 +234,7 @@ bool getParticleSystemMesh(TimeValue ticks, INode* node,
     //	mdata.animHandle = 0; //TODO: where to get handle?
     //	Interval interval = FOREVER;
     //	pAlembicParticles->GetMultipleRenderMeshTM_Internal(ticks, NULL,
-    //nullView, i, mdata.meshTM, interval);
+    // nullView, i, mdata.meshTM, interval);
 
     //	//Matrix3 objectToWorld = inode->GetObjectTM( ticks );
     //	//mdata.meshTM = mdata.meshTM * Inverse(objectToWorld);
@@ -249,7 +249,7 @@ bool getParticleSystemMesh(TimeValue ticks, INode* node,
     //}
     // else{
 
-    Mtl* pMtl = NULL;  // TODO: where to get material?
+    Mtl* pMtl = NULL;                 // TODO: where to get material?
     pMatMerge->currUniqueHandle = 0;  // TODO: where to get handle?
     pMatMerge->bPreserveIds = true;
 
@@ -516,7 +516,7 @@ void getParticleSystemRenderMeshes(TimeValue ticks, Object* obj, INode* node,
 
       for (int i = 0; i < numParticles; i++) {
         particleMeshData mdata;
-        mdata.pMtl = NULL;  // TODO: where get material?
+        mdata.pMtl = NULL;     // TODO: where get material?
         mdata.animHandle = 0;  // TODO: where to get handle?
         Interval interval = FOREVER;
         pAlembicParticles->GetMultipleRenderMeshTM_Internal(
@@ -536,7 +536,7 @@ void getParticleSystemRenderMeshes(TimeValue ticks, Object* obj, INode* node,
     }
     else {
       particleMeshData mdata;
-      mdata.pMtl = NULL;  // TODO: where to get material?
+      mdata.pMtl = NULL;     // TODO: where to get material?
       mdata.animHandle = 0;  // TODO: where to get handle?
       mdata.meshTM.IdentityMatrix();
       mdata.pMesh = pSimpleParticle->GetRenderMesh(ticks, node, nullView,

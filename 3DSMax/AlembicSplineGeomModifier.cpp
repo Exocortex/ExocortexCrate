@@ -74,10 +74,13 @@ RefTargetHandle AlembicSplineGeomModifier::Clone(RemapDir &remap)
 void AlembicSplineGeomModifier::EnumAuxFiles(AssetEnumCallback &nameEnum,
                                              DWORD flags)
 {
-  if ((flags & FILE_ENUM_CHECK_AWORK1) && TestAFlag(A_WORK1))
+  if ((flags & FILE_ENUM_CHECK_AWORK1) && TestAFlag(A_WORK1)) {
     return;  // LAM - 4/11/03
+  }
 
-  if (!(flags & FILE_ENUM_INACTIVE)) return;  // not needed by renderer
+  if (!(flags & FILE_ENUM_INACTIVE)) {
+    return;  // not needed by renderer
+  }
 
   if (flags & FILE_ENUM_ACCESSOR_INTERFACE) {
     IEnumAuxAssetsCallback *callback =
@@ -86,7 +89,7 @@ void AlembicSplineGeomModifier::EnumAuxFiles(AssetEnumCallback &nameEnum,
   }
   // else {
   //	IPathConfigMgr::GetPathConfigMgr()->RecordInputAsset(
-  //this->GetParamBlockByID( 0 )->GetAssetUser( GetParamIdByName( this, 0,
+  // this->GetParamBlockByID( 0 )->GetAssetUser( GetParamIdByName( this, 0,
   //"path" ), 0 ), nameEnum, flags);
   //}
 
@@ -128,7 +131,7 @@ void AlembicSplineGeomModifier::ModifyObject(TimeValue t, ModContext &mc,
   // ESS_LOG_INFO( "AlembicSplineGeomModifier::ModifyObject strPath: " <<
   // strPath << " strIdentifier: " << strIdentifier << " fTime: " << fTime <<
   //	" bTopology: " << bTopology << " bGeometry: " << bGeometry << "
-  //bNormals: " << bNormals << " bUVs: " << bUVs << " bMuted: " << bMuted );
+  // bNormals: " << bNormals << " bUVs: " << bUVs << " bMuted: " << bMuted );
 
   if (bMuted || !strPath || !strIdentifier) {
     return;

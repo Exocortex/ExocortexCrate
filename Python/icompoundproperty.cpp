@@ -31,7 +31,9 @@ static PyObject *iCompoundProperty_getSampleTimes(PyObject *self,
   ALEMBIC_TRY_STATEMENT
   Abc::TimeSamplingPtr ts =
       ((iCompoundProperty *)self)->mBaseCompoundProperty->getTimeSampling();
-  if (ts) return TimeSamplingCopy(ts);
+  if (ts) {
+    return TimeSamplingCopy(ts);
+  }
   return Py_BuildValue("s", "unsupported");
   ALEMBIC_PYOBJECT_CATCH_STATEMENT
 }
@@ -131,42 +133,41 @@ static void iCompoundProperty_delete(PyObject *self)
   ALEMBIC_VOID_CATCH_STATEMENT
 }
 
-static PyTypeObject iCompoundProperty_Type =
-    {
-        PyObject_HEAD_INIT(&PyType_Type) 0,       // op_size
-        "iCompoundProperty",                      // tp_name
-        sizeof(iCompoundProperty),                // tp_basicsize
-        0,                                        // tp_itemsize
-        (destructor)iCompoundProperty_delete,     // tp_dealloc
-        0,                                        // tp_print
-        (getattrfunc)iCompoundProperty_getAttr,   // tp_getattr
-        0,                                        // tp_setattr
-        0,                                        // tp_compare
-        0,                                        /*tp_repr*/
-        0,                                        /*tp_as_number*/
-        0,                                        /*tp_as_sequence*/
-        0,                                        /*tp_as_mapping*/
-        0,                                        /*tp_hash */
-        0,                                        /*tp_call*/
-        0,                                        /*tp_str*/
-        0,                                        /*tp_getattro*/
-        0,                                        /*tp_setattro*/
-        0,                                        /*tp_as_buffer*/
-        Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE, /*tp_flags*/
-        "This is the input compound property. It provides access to the "
-        "compound property’s data, such as name, type and per sample values. "
-        "iCompoundProperty has the same set of function as iProperty and "
-        "iXformProperty so it can be used like a normal property but many "
-        "functions have default values typical to a compound. "
-        "iCompoundProperty also behave like an iObject because it has "
-        "properties under it.",    /* tp_doc */
-        0,                         /* tp_traverse */
-        0,                         /* tp_clear */
-        0,                         /* tp_richcompare */
-        0,                         /* tp_weaklistoffset */
-        0,                         /* tp_iter */
-        0,                         /* tp_iternext */
-        iCompoundProperty_methods, /* tp_methods */
+static PyTypeObject iCompoundProperty_Type = {
+    PyObject_HEAD_INIT(&PyType_Type) 0,       // op_size
+    "iCompoundProperty",                      // tp_name
+    sizeof(iCompoundProperty),                // tp_basicsize
+    0,                                        // tp_itemsize
+    (destructor)iCompoundProperty_delete,     // tp_dealloc
+    0,                                        // tp_print
+    (getattrfunc)iCompoundProperty_getAttr,   // tp_getattr
+    0,                                        // tp_setattr
+    0,                                        // tp_compare
+    0,                                        /*tp_repr*/
+    0,                                        /*tp_as_number*/
+    0,                                        /*tp_as_sequence*/
+    0,                                        /*tp_as_mapping*/
+    0,                                        /*tp_hash */
+    0,                                        /*tp_call*/
+    0,                                        /*tp_str*/
+    0,                                        /*tp_getattro*/
+    0,                                        /*tp_setattro*/
+    0,                                        /*tp_as_buffer*/
+    Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE, /*tp_flags*/
+    "This is the input compound property. It provides access to the "
+    "compound property’s data, such as name, type and per sample values. "
+    "iCompoundProperty has the same set of function as iProperty and "
+    "iXformProperty so it can be used like a normal property but many "
+    "functions have default values typical to a compound. "
+    "iCompoundProperty also behave like an iObject because it has "
+    "properties under it.",    /* tp_doc */
+    0,                         /* tp_traverse */
+    0,                         /* tp_clear */
+    0,                         /* tp_richcompare */
+    0,                         /* tp_weaklistoffset */
+    0,                         /* tp_iter */
+    0,                         /* tp_iternext */
+    iCompoundProperty_methods, /* tp_methods */
 };
 
 #ifdef __cplusplus__

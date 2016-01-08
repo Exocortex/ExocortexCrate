@@ -35,7 +35,7 @@ SICALLBACK XSILoadPlugin(PluginRegistrar& in_reg)
   //		soft_MAJOR <-- combination of crate_MAJOR and crate_MINOR
   //		soft_MINOR <-- crate_BUILD
   //		(e.g. Crate version 1.1.134 resolves to Soft plugin version
-  //11.134)
+  // 11.134)
   long digits = 1;
   long pten = 10;
   while (pten <= crate_MINOR_VERSION) {

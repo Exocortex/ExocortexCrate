@@ -58,7 +58,9 @@ class BasePropertyManager {
                       const Abc::ICompoundProperty &cmp)
       : propName(name), attrName(name), comp(cmp)
   {
-    if (attrName[0] == '.') attrName = attrName.substr(1);
+    if (attrName[0] == '.') {
+      attrName = attrName.substr(1);
+    }
     attrName += "PP";
   }
 

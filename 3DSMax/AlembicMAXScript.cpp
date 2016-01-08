@@ -903,11 +903,21 @@ int ExocortexAlembicStaticInterface_ExocortexAlembicExportJobs(
       }
 
       // remember the min and max values for the frames
-      if (dbFrameIn < dbMinFrame) dbMinFrame = dbFrameIn;
-      if (dbFrameOut > dbMaxFrame) dbMaxFrame = dbFrameOut;
-      if (dbFrameSteps > dbMaxSteps) dbMaxSteps = dbFrameSteps;
-      if (dbFrameSteps > 1.0) dbFrameSubSteps = 1.0;
-      if (dbFrameSubSteps > dbMaxSubsteps) dbMaxSubsteps = dbFrameSubSteps;
+      if (dbFrameIn < dbMinFrame) {
+        dbMinFrame = dbFrameIn;
+      }
+      if (dbFrameOut > dbMaxFrame) {
+        dbMaxFrame = dbFrameOut;
+      }
+      if (dbFrameSteps > dbMaxSteps) {
+        dbMaxSteps = dbFrameSteps;
+      }
+      if (dbFrameSteps > 1.0) {
+        dbFrameSubSteps = 1.0;
+      }
+      if (dbFrameSubSteps > dbMaxSubsteps) {
+        dbMaxSubsteps = dbFrameSubSteps;
+      }
 
       std::vector<double> frames;
       for (double frame = dbFrameIn; frame <= dbFrameOut;

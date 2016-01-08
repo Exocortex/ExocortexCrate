@@ -33,10 +33,12 @@ static int Init(AtNode *mynode, void **user_ptr)
     ud->subdiv_type = AiNodeGetStr(mynode, "subdiv_type");
     ud->subdiv_iterations = AiNodeGetInt(mynode, "subdiv_iterations");
     ud->subdiv_pixel_error = AiNodeGetFlt(mynode, "subdiv_pixel_error");
-    if (AiNodeGetStr(mynode, "subdiv_dicing_camera"))
+    if (AiNodeGetStr(mynode, "subdiv_dicing_camera")) {
       ud->subdiv_dicing_camera = AiNodeGetStr(mynode, "subdiv_dicing_camera");
-    else
+    }
+    else {
       ud->subdiv_dicing_camera.clear();
+    }
   }
 
   ud->has_disp_settings =
@@ -80,26 +82,35 @@ static int Init(AtNode *mynode, void **user_ptr)
     }
     if (token[0] == "path") {
       paths[0] = token[1];
-      if (paths[1].empty()) paths[1] = paths[0];
+      if (paths[1].empty()) {
+        paths[1] = paths[0];
+      }
     }
-    else if (token[0] == "instancespath")
+    else if (token[0] == "instancespath") {
       paths[1] = token[1];
-    else if (token[0] == "identifier")
+    }
+    else if (token[0] == "identifier") {
       identifier = token[1];
-    else if (token[0] == "time")
+    }
+    else if (token[0] == "time") {
       ud->gTime = (float)atof(token[1].c_str());
-    else if (token[0] == "currtime")
+    }
+    else if (token[0] == "currtime") {
       ud->gCurrTime = (float)atof(token[1].c_str());
-    else if (token[0] == "curvesmode")
+    }
+    else if (token[0] == "curvesmode") {
       ud->gCurvesMode = token[1];
-    else if (token[0] == "pointsmode")
+    }
+    else if (token[0] == "pointsmode") {
       ud->gPointsMode = token[1];
+    }
     else if (token[0] == "mbkeys") {
       std::vector<std::string> sampleTimes;
       boost::split(sampleTimes, token[1], boost::is_any_of(";"));
       ud->gMbKeys.resize(sampleTimes.size(), ud->gTime);
-      for (size_t j = 0; j < sampleTimes.size(); j++)
+      for (size_t j = 0; j < sampleTimes.size(); j++) {
         ud->gMbKeys[j] = (float)atof(sampleTimes[j].c_str());
+      }
     }
     else {
       AiMsgError(
@@ -111,8 +122,9 @@ static int Init(AtNode *mynode, void **user_ptr)
 
   // compute the central time
   ud->gCentroidTime = 0.0f;
-  for (size_t j = 0; j < ud->gMbKeys.size(); j++)
+  for (size_t j = 0; j < ud->gMbKeys.size(); j++) {
     ud->gCentroidTime += ud->gMbKeys[j];
+  }
   if (ud->gMbKeys.size() > 0) {
     ud->gCentroidTime /= float(ud->gMbKeys.size());
   }
@@ -140,15 +152,18 @@ static int Init(AtNode *mynode, void **user_ptr)
                ud->gDataString);
     return NULL;
   }
-  if (ud->gMbKeys.size() == 0) ud->gMbKeys.push_back(ud->gTime);
+  if (ud->gMbKeys.size() == 0) {
+    ud->gMbKeys.push_back(ud->gTime);
+  }
 
   // fix all paths
   for (size_t pathIndex = 0; pathIndex < paths.size(); pathIndex++) {
 #ifdef _WIN32
     // #54: UNC paths don't work
     // add another backslash if we start with a backslash
-    if (paths[pathIndex].at(0) == '\\' && paths[pathIndex].at(1) != '\\')
+    if (paths[pathIndex].at(0) == '\\' && paths[pathIndex].at(1) != '\\') {
       paths[pathIndex] = "\\" + paths[pathIndex];
+    }
 #endif
 
     // resolve tokens
@@ -159,10 +174,12 @@ static int Init(AtNode *mynode, void **user_ptr)
 
     for (size_t i = 0; i < paths[pathIndex].size(); i++) {
       if (insideToken == 0) {
-        if (paths[pathIndex][i] == '{')
+        if (paths[pathIndex][i] == '{') {
           insideToken = 1;
-        else
+        }
+        else {
           result += paths[pathIndex][i];
+        }
       }
       else if (insideToken == 1) {
         if (paths[pathIndex][i] == '}') {
@@ -170,8 +187,9 @@ static int Init(AtNode *mynode, void **user_ptr)
                      paths[pathIndex].c_str());
           return NULL;
         }
-        else if (paths[pathIndex][i] == ' ')
+        else if (paths[pathIndex][i] == ' ') {
           insideToken = 2;
+        }
         else if (paths[pathIndex][i] == '}') {
           insideToken = 0;
           std::transform(tokenName.begin(), tokenName.end(), tokenName.begin(),
@@ -187,8 +205,9 @@ static int Init(AtNode *mynode, void **user_ptr)
             return NULL;
           }
         }
-        else
+        else {
           tokenName += paths[pathIndex][i];
+        }
       }
       else if (insideToken == 2) {
         if (paths[pathIndex][i] == '{') {
@@ -224,8 +243,9 @@ static int Init(AtNode *mynode, void **user_ptr)
             return NULL;
           }
         }
-        else
+        else {
           tokenValue += paths[pathIndex][i];
+        }
       }
     }
     paths[pathIndex] = result;
@@ -296,8 +316,9 @@ static int Init(AtNode *mynode, void **user_ptr)
   objects.push_back(object);
   for (size_t i = 0; i < objects.size(); i++) {
     if (Alembic::AbcGeom::IXform::matches(objects[i].getMetaData())) {
-      for (size_t j = 0; j < objects[i].getNumChildren(); j++)
+      for (size_t j = 0; j < objects[i].getNumChildren(); j++) {
         objects.push_back(objects[i].getChild(j));
+      }
     }
     else if (Alembic::AbcGeom::IPoints::matches(objects[i].getMetaData())) {
       // cast to curves
@@ -351,15 +372,15 @@ static int Init(AtNode *mynode, void **user_ptr)
       // first thing to check is if this is an instancing cloud
       Alembic::Abc::IUInt16ArrayProperty
           shapeTypeProp;  // Alembic::Abc::IUInt16ArrayProperty(
-                          // typedObject.getSchema(), ".shapetype" );
+      // typedObject.getSchema(), ".shapetype" );
       Alembic::Abc::IUInt16ArrayProperty
           shapeInstanceIDProp;  // Alembic::Abc::IUInt16ArrayProperty(
-                                // typedObject.getSchema(), ".shapeinstanceid"
-                                // );
+      // typedObject.getSchema(), ".shapeinstanceid"
+      // );
       Alembic::Abc::IStringArrayProperty
           shapeInstanceNamesProp;  // Alembic::Abc::IStringArrayProperty(
-                                   // typedObject.getSchema(), ".instancenames"
-                                   // );
+      // typedObject.getSchema(), ".instancenames"
+      // );
       if (getArbGeomParamPropertyAlembic(typedObject, "shapetype",
                                          shapeTypeProp) &&
           getArbGeomParamPropertyAlembic(typedObject, "shapeinstanceid",
@@ -437,8 +458,9 @@ static int Init(AtNode *mynode, void **user_ptr)
                     Alembic::Abc::IObject child = children[k];
                     if (Alembic::AbcGeom::IXform::matches(
                             child.getMetaData())) {
-                      for (size_t l = 0; l < child.getNumChildren(); l++)
+                      for (size_t l = 0; l < child.getNumChildren(); l++) {
                         children.push_back(child.getChild(l));
+                      }
                     }
                     else {
                       // check if we already exported this object
@@ -483,7 +505,9 @@ static int Init(AtNode *mynode, void **user_ptr)
                 }
                 else {
                   // just push it for the export
-                  if (masterNode == NULL) ud->gIObjects.push_back(info);
+                  if (masterNode == NULL) {
+                    ud->gIObjects.push_back(info);
+                  }
 
                   // also update our groupInfo
                   groupInfo.identifiers.push_back(identifier);
@@ -798,7 +822,9 @@ static AtNode *GetNode(void *user_ptr, int i)
   GLOBAL_LOCK;
   userData *ud = (userData *)user_ptr;
   // check if this is a known object
-  if (i >= (int)ud->gIObjects.size()) return NULL;
+  if (i >= (int)ud->gIObjects.size()) {
+    return NULL;
+  }
 
   nodeData nodata;  // contain basic information common in all types of data!
 
@@ -806,8 +832,9 @@ static AtNode *GetNode(void *user_ptr, int i)
   size_t nbSamples = ud->gMbKeys.size();
 
   nodata.samples = ud->gMbKeys;
-  for (size_t j = 0; j < nbSamples; ++j)
+  for (size_t j = 0; j < nbSamples; ++j) {
     nodata.samples[j] += ud->gIObjects[i].centroidTime - ud->gCentroidTime;
+  }
   nodata.shifted =
       fabsf(ud->gIObjects[i].centroidTime - ud->gCentroidTime) > 0.001f;
   nodata.createdShifted = nodata.shifted;
@@ -816,8 +843,9 @@ static AtNode *GetNode(void *user_ptr, int i)
   AtNode *shapeNode = NULL;
 
   // now check if this is supposed to be an instance
-  if (ud->gIObjects[i].instanceID > -1)
+  if (ud->gIObjects[i].instanceID > -1) {
     return createInstanceNode(nodata, ud, i);
+  }
 
   nodata.shaders = NULL;
   nodata.shaderIndices = NULL;
@@ -830,18 +858,24 @@ static AtNode *GetNode(void *user_ptr, int i)
   }
 
   const Alembic::Abc::MetaData &md = nodata.object.getMetaData();
-  if (Alembic::AbcGeom::IPolyMesh::matches(md))
+  if (Alembic::AbcGeom::IPolyMesh::matches(md)) {
     shapeNode = createPolyMeshNode(nodata, ud, nodata.samples, i);
-  else if (Alembic::AbcGeom::ISubD::matches(md))
+  }
+  else if (Alembic::AbcGeom::ISubD::matches(md)) {
     shapeNode = createSubDNode(nodata, ud, nodata.samples, i);
-  else if (Alembic::AbcGeom::ICurves::matches(md))
+  }
+  else if (Alembic::AbcGeom::ICurves::matches(md)) {
     shapeNode = createCurvesNode(nodata, ud, nodata.samples, i);
-  else if (Alembic::AbcGeom::INuPatch::matches(md))
+  }
+  else if (Alembic::AbcGeom::INuPatch::matches(md)) {
     shapeNode = createNurbsNode(nodata, ud, nodata.samples, i);
-  else if (Alembic::AbcGeom::IPoints::matches(md))
+  }
+  else if (Alembic::AbcGeom::IPoints::matches(md)) {
     shapeNode = createPointsNode(nodata, ud, nodata.samples, i);
-  else if (Alembic::AbcGeom::ICamera::matches(md))
+  }
+  else if (Alembic::AbcGeom::ICamera::matches(md)) {
     AiMsgWarning("[ExocortexAlembicArnold] Cameras are not supported.");
+  }
   else
     AiMsgError(
         "[ExocortexAlembicArnold] This object type is not supported: '%s'.",
@@ -850,12 +884,15 @@ static AtNode *GetNode(void *user_ptr, int i)
   // if we have a shape
   if (shapeNode != NULL) {
     ud->constructedNodes.push_back(shapeNode);
-    if (nodata.shaders != NULL)
+    if (nodata.shaders != NULL) {
       ud->shadersToAssign.push_back(AiArrayCopy(nodata.shaders));
-    else if (ud->gProcShaders != NULL)
+    }
+    else if (ud->gProcShaders != NULL) {
       ud->shadersToAssign.push_back(AiArrayCopy(ud->gProcShaders));
-    else
+    }
+    else {
       ud->shadersToAssign.push_back(NULL);
+    }
 
     if (nodata.isPolyMeshNode) {
       if (ud->gProcDispMap != NULL) {
@@ -867,8 +904,9 @@ static AtNode *GetNode(void *user_ptr, int i)
           AiNodeSetFlt(shapeNode, "disp_padding", ud->disp_padding);
         }
       }
-      if (nodata.shaderIndices != NULL)
+      if (nodata.shaderIndices != NULL) {
         AiNodeSetArray(shapeNode, "shidxs", nodata.shaderIndices);
+      }
 
       // do we have subdivision settings
       if (ud->has_subdiv_settings) {
@@ -907,7 +945,9 @@ static AtNode *GetNode(void *user_ptr, int i)
 
       // cast to a xform
       Alembic::AbcGeom::IXform parentXform(parent, Alembic::Abc::kWrapExisting);
-      if (parentXform.getSchema().getNumSamples() == 0) break;
+      if (parentXform.getSchema().getNumSamples() == 0) {
+        break;
+      }
 
       // loop over all samples
       for (size_t sampleIndex = 0; sampleIndex < nbSamples; sampleIndex++) {
@@ -931,8 +971,9 @@ static AtNode *GetNode(void *user_ptr, int i)
         AtMatrix parentMatrix, childMatrix, globalMatrix;
         size_t offset = 0;
         for (size_t row = 0; row < 4; ++row)
-          for (size_t col = 0; col < 4; ++col, ++offset)
+          for (size_t col = 0; col < 4; ++col, ++offset) {
             parentMatrix[row][col] = (AtFloat)abcMatrix.getValue()[offset];
+          }
 
         // multiply the matrices since we want to know where we are in global
         // space
@@ -958,7 +999,9 @@ static AtNode *GetNode(void *user_ptr, int i)
     nameStr +=
         ".time" + boost::lexical_cast<std::string>(
                       (int)(ud->gIObjects[i].centroidTime * 1000.0f + 0.5f));
-  if (ud->gIObjects[i].hide) AiNodeSetInt(shapeNode, "visibility", 0);
+  if (ud->gIObjects[i].hide) {
+    AiNodeSetInt(shapeNode, "visibility", 0);
+  }
   AiNodeSetStr(shapeNode, "name", nameStr.c_str());
 
   // set the pointer inside the map
@@ -977,7 +1020,9 @@ static AtNode *GetNode(void *user_ptr, int i)
         if (gInstGrpIds[l] == objFullName) {
           std::map<float, AtNode *>::iterator it =
               gInstGrpInfo[k].nodes[l].find(ud->gIObjects[i].centroidTime);
-          if (it != gInstGrpInfo[k].nodes[l].end()) it->second = shapeNode;
+          if (it != gInstGrpInfo[k].nodes[l].end()) {
+            it->second = shapeNode;
+          }
           break;
         }
       }

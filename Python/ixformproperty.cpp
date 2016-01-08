@@ -25,7 +25,9 @@ static PyObject *iXformProperty_getSampleTimes(PyObject *self, PyObject *args)
   iXformProperty *prop = (iXformProperty *)self;
 
   Abc::TimeSamplingPtr ts = prop->mXformSchema->getTimeSampling();
-  if (ts) return TimeSamplingCopy(ts);
+  if (ts) {
+    return TimeSamplingCopy(ts);
+  }
   return Py_BuildValue("s", "unsupported");
   ALEMBIC_PYOBJECT_CATCH_STATEMENT
 }

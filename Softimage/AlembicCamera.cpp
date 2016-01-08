@@ -71,14 +71,20 @@ alembicOp_Multifile(in_ctxt, ctxt.GetParameterValue(L"multifile"),
                     ctxt.GetParameterValue(L"time"), path);
 CStatus pathEditStat = alembicOp_PathEdit(in_ctxt, path);
 
-if ((bool)ctxt.GetParameterValue(L"muted")) return CStatus::OK;
+if ((bool)ctxt.GetParameterValue(L"muted")) {
+  return CStatus::OK;
+}
 
 CString identifier = ctxt.GetParameterValue(L"identifier");
 
 AbcG::IObject iObj = getObjectFromArchive(path, identifier);
-if (!iObj.valid()) return CStatus::OK;
+if (!iObj.valid()) {
+  return CStatus::OK;
+}
 AbcG::ICamera obj(iObj, Abc::kWrapExisting);
-if (!obj.valid()) return CStatus::OK;
+if (!obj.valid()) {
+  return CStatus::OK;
+}
 
 SampleInfo sampleInfo = getSampleInfo(ctxt.GetParameterValue(L"time"),
                                       obj.getSchema().getTimeSampling(),

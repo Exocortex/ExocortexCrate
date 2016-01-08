@@ -69,10 +69,13 @@ IObjParam *AlembicParticles::s_ObjParam = NULL;
 
 void AlembicParticles::EnumAuxFiles(AssetEnumCallback &nameEnum, DWORD flags)
 {
-  if ((flags & FILE_ENUM_CHECK_AWORK1) && TestAFlag(A_WORK1))
+  if ((flags & FILE_ENUM_CHECK_AWORK1) && TestAFlag(A_WORK1)) {
     return;  // LAM - 4/11/03
+  }
 
-  if (!(flags & FILE_ENUM_INACTIVE)) return;  // not needed by renderer
+  if (!(flags & FILE_ENUM_INACTIVE)) {
+    return;  // not needed by renderer
+  }
 
   if (flags & FILE_ENUM_ACCESSOR_INTERFACE) {
     IEnumAuxAssetsCallback *callback =
@@ -81,7 +84,7 @@ void AlembicParticles::EnumAuxFiles(AssetEnumCallback &nameEnum, DWORD flags)
   }
   // else {
   //	IPathConfigMgr::GetPathConfigMgr()->RecordInputAsset(
-  //this->GetParamBlockByID( 0 )->GetAssetUser( GetParamIdByName( this, 0,
+  // this->GetParamBlockByID( 0 )->GetAssetUser( GetParamIdByName( this, 0,
   //"path" ), 0 ), nameEnum, flags);
   //}
 
@@ -375,7 +378,8 @@ Point3 AlembicParticles::ParticlePosition(TimeValue t, int i)
     return Point3(0.0f, 0.0f, 0.0f);
   }
 }
-/**		Returns the velocity of the specified particle at the time passed
+/**		Returns the velocity of the specified particle at the time
+passed
 (in 3ds
 Max units per tick). This is specified as a vector. The Particle Age
 texture map and the Particle Motion Blur texture map use this method.
@@ -1186,8 +1190,9 @@ Mesh *AlembicParticles::GetRenderMesh(TimeValue t, INode *inode, View &view,
           // ESS_LOG_WARNING("Particle mesh has invalid normals.");
           // for(int j=0, curIndex=faceOffset; j<curNumFaces; j++, curIndex++){
           //	for(int f=0; f<3; f++){
-          //		pRenderMeshNormalSpec->SetNormal(curIndex, f, Point3(0.0,
-          //0.0, 0.0));
+          //		pRenderMeshNormalSpec->SetNormal(curIndex, f,
+          //Point3(0.0,
+          // 0.0, 0.0));
           //	}
           //}
         }
@@ -1317,7 +1322,7 @@ void AlembicParticles::GetMultipleRenderMeshTM_Internal(
 
   // if(!bCalledFromViewport){
   //	ESS_LOG_INFO("IAlembicParticlesExt::GetMultipleRenderMeshTM_Internal() -
-  //t: "<<t<<"  currTick: "<<m_currTick);
+  // t: "<<t<<"  currTick: "<<m_currTick);
   //}
 
   // Calculate the matrix
@@ -1384,11 +1389,15 @@ INode *AlembicParticles::GetParticleMeshNode(int meshNumber, INode *displayNode)
   }
 
   if (m_InstanceShapeType[meshNumber] == AlembicPoints::ShapeType_Instance) {
-    if (meshNumber > m_InstanceShapeIds.size()) return displayNode;
+    if (meshNumber > m_InstanceShapeIds.size()) {
+      return displayNode;
+    }
 
     Abc::uint16_t shapeid = m_InstanceShapeIds[meshNumber];
 
-    if (shapeid > m_InstanceShapeINodes.size()) return displayNode;
+    if (shapeid > m_InstanceShapeINodes.size()) {
+      return displayNode;
+    }
 
     INode *pNode = m_InstanceShapeINodes[shapeid];
     return pNode;
@@ -1520,9 +1529,9 @@ int AlembicParticles::Display(TimeValue t, INode *inode, ViewExp *vpt,
 
         Mtl *pMtl = inode->GetMtl();  // apply the particle system material
                                       // first
-        // if(!pMtl){
+                                      // if(!pMtl){
         //	pMtl = meshNode->GetMtl();//apply the instance material
-        //otherwise
+        // otherwise
         //}
 
         if (numMtls > 0) {
@@ -1532,7 +1541,7 @@ int AlembicParticles::Display(TimeValue t, INode *inode, ViewExp *vpt,
             mtls[0].Ka = pMtl->GetAmbient();
           }
           else {  // if there is no material, set diffuse equal to the particle
-                  // color
+            // color
             mtls[0].Kd = m_VCArray[i];
           }
         }
@@ -1832,7 +1841,7 @@ Mesh *AlembicParticles::BuildRectangleMesh(int meshNumber, TimeValue t,
 //{
 //   ESS_PROFILE_FUNC();
 //	for(nodeAndTimeToMeshMap::iterator it=meshCacheMap.begin(); it !=
-//meshCacheMap.end(); it++){
+// meshCacheMap.end(); it++){
 //		meshInfo& mi = it->second;
 //		if(mi.bMeshNeedDelete){
 //			delete mi.pMesh;
@@ -2003,9 +2012,13 @@ RefTargetHandle AlembicParticles::Clone(RemapDir &remap)
 
 BOOL AlembicParticles::OKtoDisplay(TimeValue t)
 {
-  if (parts.Count() == 0) return FALSE;
+  if (parts.Count() == 0) {
+    return FALSE;
+  }
 
-  if (!valid) return FALSE;
+  if (!valid) {
+    return FALSE;
+  }
 
   Interval interval = FOREVER;
 
@@ -2117,6 +2130,7 @@ BaseInterface *AlembicParticles::GetInterface(Interface_ID id)
     return m_pAlembicParticlesExt;
     // return NULL;
   }
-  else
+  else {
     return SimpleParticle::GetInterface(id);
+  }
 }

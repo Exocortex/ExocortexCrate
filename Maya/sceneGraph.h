@@ -1,9 +1,9 @@
 #ifndef __MAYA_SCENE_GRAPH_H
 #define __MAYA_SCENE_GRAPH_H
 
-#include "CommonSceneGraph.h"
 #include "CommonImport.h"
 #include "CommonRegex.h"
+#include "CommonSceneGraph.h"
 
 class AlembicFileAndTimeControl;
 typedef boost::shared_ptr<AlembicFileAndTimeControl>

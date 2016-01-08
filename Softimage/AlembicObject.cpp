@@ -16,7 +16,7 @@ AlembicObject::AlembicObject(SceneNodePtr eNode, AlembicWriteJob* in_Job,
   AddRef(xObj.GetActivePrimitive().GetRef());  // active primitive - ref 1
 
   AddRef(xObj.GetKinematics().GetGlobal().GetRef());  // global transform - ref
-                                                      // 2
+  // 2
 
   mJob = in_Job;
   mMyParent = oParent;
@@ -38,16 +38,20 @@ alembic_UD::alembic_UD(ULONG in_id)
   id = in_id;
 
   std::map<ULONG, alembic_UD*>::iterator it = gAlembicUDs.find(id);
-  if (it == gAlembicUDs.end())
+  if (it == gAlembicUDs.end()) {
     gAlembicUDs.insert(std::pair<ULONG, alembic_UD*>(id, this));
-  else
+  }
+  else {
     it->second = this;
+  }
 }
 
 alembic_UD::~alembic_UD()
 {
   std::map<ULONG, alembic_UD*>::iterator it = gAlembicUDs.find(id);
-  if (it == gAlembicUDs.end()) return;
+  if (it == gAlembicUDs.end()) {
+    return;
+  }
   gAlembicUDs.erase(it);
 }
 

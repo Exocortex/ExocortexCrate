@@ -48,9 +48,9 @@ static ParamBlockDesc2 AlembicMeshNormalsModifierParams(
        IDC_GEOALPHA_EDIT,    IDC_GEOALPHA_SPIN, 0.1f,
             p_end,*/
 
-    AlembicMeshNormalsModifier::ID_MUTED,
-    _T("muted"), TYPE_BOOL, P_ANIMATABLE, IDS_MUTED, p_default, TRUE, p_ui,
-    TYPE_SINGLECHEKBOX, IDC_MUTED_CHECKBOX, p_end,
+    AlembicMeshNormalsModifier::ID_MUTED, _T("muted"), TYPE_BOOL, P_ANIMATABLE,
+    IDS_MUTED, p_default, TRUE, p_ui, TYPE_SINGLECHEKBOX, IDC_MUTED_CHECKBOX,
+    p_end,
 
     p_end);
 
@@ -82,10 +82,13 @@ RefTargetHandle AlembicMeshNormalsModifier::Clone(RemapDir &remap)
 void AlembicMeshNormalsModifier::EnumAuxFiles(AssetEnumCallback &nameEnum,
                                               DWORD flags)
 {
-  if ((flags & FILE_ENUM_CHECK_AWORK1) && TestAFlag(A_WORK1))
+  if ((flags & FILE_ENUM_CHECK_AWORK1) && TestAFlag(A_WORK1)) {
     return;  // LAM - 4/11/03
+  }
 
-  if (!(flags & FILE_ENUM_INACTIVE)) return;  // not needed by renderer
+  if (!(flags & FILE_ENUM_INACTIVE)) {
+    return;  // not needed by renderer
+  }
 
   if (flags & FILE_ENUM_ACCESSOR_INTERFACE) {
     IEnumAuxAssetsCallback *callback =
@@ -94,7 +97,7 @@ void AlembicMeshNormalsModifier::EnumAuxFiles(AssetEnumCallback &nameEnum,
   }
   // else {
   //	IPathConfigMgr::GetPathConfigMgr()->RecordInputAsset(
-  //this->GetParamBlockByID( 0 )->GetAssetUser( GetParamIdByName( this, 0,
+  // this->GetParamBlockByID( 0 )->GetAssetUser( GetParamIdByName( this, 0,
   //"path" ), 0 ), nameEnum, flags);
   //}
 
@@ -140,7 +143,7 @@ void AlembicMeshNormalsModifier::ModifyObject(TimeValue t, ModContext &mc,
   // ESS_LOG_INFO( "AlembicMeshNormalsModifier::ModifyObject strPath: " <<
   // strPath << " strIdentifier: " << strIdentifier << " fTime: " << fTime <<
   //	" bTopology: " << bTopology << " bGeometry: " << bGeometry << "
-  //bNormals: " << bNormals << " bUVs: " << bUVs << " bMuted: " << bMuted );
+  // bNormals: " << bNormals << " bUVs: " << bUVs << " bMuted: " << bMuted );
 
   if (!bMuted && strPath && strIdentifier) {
     std::string szPath = EC_MCHAR_to_UTF8(strPath);

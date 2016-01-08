@@ -83,7 +83,9 @@ Imath::M44d SceneNodeMax::getGlobalTransDouble(double time)
 
 bool SceneNodeMax::getVisibility(double time)
 {
-  if (bMergedSubtreeNodeParent) return true;
+  if (bMergedSubtreeNodeParent) {
+    return true;
+  }
 
   TimeValue ticks = GetTimeValueFromFrame(time);
   float flVisibility = node->GetLocalVisibility(ticks);
@@ -151,9 +153,9 @@ SceneNode::nodeTypeE getNodeType(INode* node)
   //		switch(lobj->SuperClassID())
   //           {
   //			//case LIGHT_CLASS_ID:  return SceneEntry(node, obj,
-  //OBTYPE_LTARGET, pFullname); break;
+  // OBTYPE_LTARGET, pFullname); break;
   //			case CAMERA_CLASS_ID: return SceneEntry(node, obj,
-  //OBTYPE_CTARGET, pFullname); break;
+  // OBTYPE_CTARGET, pFullname); break;
   //		}
   //	}
   //}
@@ -241,7 +243,9 @@ SceneNodeMaxPtr buildCommonSceneGraph(int& nNumNodes, bool bUnmergeNodes,
 
   for (int j = 0; j < pRootNode->NumberOfChildren(); j++) {
     INode* pNode = pRootNode->GetChildNode(j);
-    if (!pNode) continue;
+    if (!pNode) {
+      continue;
+    }
     sceneStack.push_back(CSGStackElement(pNode, exoRoot, std::string("")));
   }
 
@@ -300,7 +304,9 @@ SceneNodeMaxPtr buildCommonSceneGraph(int& nNumNodes, bool bUnmergeNodes,
 
     for (int j = 0; j < pNode->NumberOfChildren(); j++) {
       INode* childNode = pNode->GetChildNode(j);
-      if (!childNode) continue;
+      if (!childNode) {
+        continue;
+      }
       sceneStack.push_back(CSGStackElement(childNode, newNode, path));
     }
   }

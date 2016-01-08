@@ -103,15 +103,20 @@ class AlembicVisibilityController : public LockableStdControl {
 #else
   RefResult NotifyRefChanged(Interval, RefTargetHandle, PartID &, RefMessage);
 #endif
-  int NumSubs() { return 1; }  // because it uses the paramblock
+  int NumSubs()
+  {
+    return 1;  // because it uses the paramblock
+  }
   Animatable *SubAnim(int i) { return GetReference(i); }
   TSTR SubAnimName(int i) { return _T("Parameters"); }
   int SubNumToRefNum(int subNum)
   {
-    if (subNum == 0)
+    if (subNum == 0) {
       return 0;
-    else
+    }
+    else {
       return -1;
+    }
   }
 
   void Copy(Control *pFrom) {}
@@ -150,7 +155,10 @@ class AlembicVisibilityControllerClassDesc : public ClassDesc2 {
   // represents
 
   // Return TRUE if the user can create this plug-in.
-  int IsPublic() { return TRUE; }  // We do want the user to see this plug-in
+  int IsPublic()
+  {
+    return TRUE;  // We do want the user to see this plug-in
+  }
   // Return the class name of this plug-in
   const MCHAR *ClassName()
   {
@@ -181,7 +189,10 @@ class AlembicVisibilityControllerClassDesc : public ClassDesc2 {
   {
     return _T("AlembicVisController");
   }  // returns fixed parsable name (scripter-visible name)
-  HINSTANCE HInstance() { return hInstance; }  // returns owning module handle
+  HINSTANCE HInstance()
+  {
+    return hInstance;  // returns owning module handle
+  }
 };
 
 #endif  // __ALEMBIC_VISIBILITY_CONTROLLER_H__

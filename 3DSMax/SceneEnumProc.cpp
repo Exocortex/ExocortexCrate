@@ -11,10 +11,12 @@ SceneEntry::SceneEntry(INode *n, Object *o, int t,
   type = t;
   tnode = n->GetTarget();
 
-  if (providedfullname == 0)
+  if (providedfullname == 0) {
     fullname = buildIdentifierFromRef(*this);
-  else
+  }
+  else {
     fullname = *providedfullname;
+  }
 }
 
 void SceneEntry::SetID(int id) { this->id = id; }

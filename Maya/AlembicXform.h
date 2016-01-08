@@ -59,8 +59,8 @@ class AlembicXformNode : public AlembicObjectNode {
 
   // private functions
   void cleanDataHandles(MDataBlock& dataBlock);  // here to avoid multiple
-                                                 // recomputation of data on
-                                                 // each frame!
+  // recomputation of data on
+  // each frame!
 
   // output attributes
   static MObject mOutTranslateXAttr;

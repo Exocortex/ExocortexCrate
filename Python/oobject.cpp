@@ -80,10 +80,12 @@ static PyObject *oObject_setMetaData(PyObject *self, PyObject *args)
     return NULL;
   }
   size_t nbStrings = 0;
-  if (PyTuple_Check(metaDataTuple))
+  if (PyTuple_Check(metaDataTuple)) {
     nbStrings = PyTuple_Size(metaDataTuple);
-  else
+  }
+  else {
     nbStrings = PyList_Size(metaDataTuple);
+  }
 
   if (nbStrings != 20) {
     PyErr_SetString(getError(), "metaDataTuple doesn't have exactly 20 items!");
@@ -93,10 +95,12 @@ static PyObject *oObject_setMetaData(PyObject *self, PyObject *args)
   std::vector<std::string> metaData(nbStrings);
   for (size_t i = 0; i < nbStrings; i++) {
     PyObject *item = NULL;
-    if (PyTuple_Check(metaDataTuple))
+    if (PyTuple_Check(metaDataTuple)) {
       item = PyTuple_GetItem(metaDataTuple, i);
-    else
+    }
+    else {
       item = PyList_GetItem(metaDataTuple, i);
+    }
     char *itemStr = NULL;
     if (!PyArg_Parse(item, "s", &itemStr)) {
       PyErr_SetString(getError(),
@@ -108,7 +112,9 @@ static PyObject *oObject_setMetaData(PyObject *self, PyObject *args)
 
 #ifdef PYTHON_DEBUG
   printf("retrieving ocompound...\n");
-  if (object->mObject == NULL) printf("what the heck?... NULL pointer?\n");
+  if (object->mObject == NULL) {
+    printf("what the heck?... NULL pointer?\n");
+  }
   printf("object name is: %s\n", object->mObject->getFullName().c_str());
 #endif
 
@@ -116,8 +122,9 @@ static PyObject *oObject_setMetaData(PyObject *self, PyObject *args)
 #ifdef PYTHON_DEBUG
   printf("ocompound retrieved.\n");
 #endif
-  if (!compound.valid()) return Py_BuildValue("i", 0);
-  ;
+  if (!compound.valid()) {
+    return Py_BuildValue("i", 0);
+  };
 
 #ifdef PYTHON_DEBUG
   printf("creating metadata property...\n");

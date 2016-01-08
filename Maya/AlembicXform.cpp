@@ -13,16 +13,24 @@ void AlembicXform::testAnimatedVisibility(AlembicObject *aobj, bool animTS,
   do {
     MDagPath path;
     stat = dagNode.getPath(path);
-    if (stat != MS::kSuccess) break;
+    if (stat != MS::kSuccess) {
+      break;
+    }
 
     MObject mObj = path.node(&stat);
-    if (stat != MS::kSuccess) continue;
+    if (stat != MS::kSuccess) {
+      continue;
+    }
 
     MFnDependencyNode dep(mObj, &stat);
-    if (stat != MS::kSuccess) continue;
+    if (stat != MS::kSuccess) {
+      continue;
+    }
 
     MPlug vis = dep.findPlug("visibility", true, &stat);
-    if (stat != MS::kSuccess) continue;
+    if (stat != MS::kSuccess) {
+      continue;
+    }
 
     if (MAnimUtil::isAnimated(vis)) {
       if (visInfo.visibility == VISIBLE) {
@@ -31,16 +39,18 @@ void AlembicXform::testAnimatedVisibility(AlembicObject *aobj, bool animTS,
       }
       visInfo.visibilityPlugs.append(vis);  // just add animated ones!
     }
-    else if (!vis.asBool())  // if it's never visible!
-    {
-      if (visInfo.visibility == VISIBLE)
+    else if (!vis.asBool()) {  // if it's never visible!
+      if (visInfo.visibility == VISIBLE) {
         visInfo.mOVisibility = CreateVisibilityProperty(mObject, animTS);
+      }
       visInfo.visibility = NOT_VISIBLE;
       visInfo.visibilityPlugs.clear();
       break;  // break out because no need to analyse this further!
     }
 
-    if (dagNode.parentCount() == 0) break;
+    if (dagNode.parentCount() == 0) {
+      break;
+    }
     dagNode.setObject(dagNode.parent(0));
   } while (flatHierarchy);
 }
@@ -93,7 +103,9 @@ MStatus AlembicXform::Save(double time)
 
   switch (visInfo.visibility) {
     case NOT_VISIBLE:
-      if (mNumSamples == 0) visInfo.mOVisibility.set(AbcG::kVisibilityHidden);
+      if (mNumSamples == 0) {
+        visInfo.mOVisibility.set(AbcG::kVisibilityHidden);
+      }
       break;
     case ANIMATED_VISIBLE: {
       bool isVisible = true;
@@ -116,7 +128,9 @@ MStatus AlembicXform::Save(double time)
         visInfo.visibility == VISIBLE)  // if the sample number is greater than
                                         // zero and the visibility is not
                                         // animated, do not export more data!
+    {
       return MStatus::kSuccess;
+    }
 
     // store identity matrix
     mSample.setTranslation(Abc::V3d(0.0, 0.0, 0.0));
@@ -418,12 +432,16 @@ MStatus AlembicXformNode::compute(const MPlug &plug, MDataBlock &dataBlock)
       mSchema = obj.getSchema();
     }
 
-    if (!mSchema.valid()) return MStatus::kFailure;
+    if (!mSchema.valid()) {
+      return MStatus::kFailure;
+    }
 
     mSampleIndicesToMatrices.clear();
   }
 
-  if (mSchema.getNumSamples() == 0) return MStatus::kFailure;
+  if (mSchema.getNumSamples() == 0) {
+    return MStatus::kFailure;
+  }
 
   SampleInfo sampleInfo = getSampleInfo(inputTime, mSchema.getTimeSampling(),
                                         mSchema.getNumSamples());
