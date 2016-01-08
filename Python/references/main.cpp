@@ -47,14 +47,14 @@ void register_abcenums();
 void register_sampleselector();
 void register_iuntypedproperties();
 
-BOOST_PYTHON_MODULE( alembic )
+BOOST_PYTHON_MODULE(alembic)
 {
-    register_coreabstracttypes();
-    register_abcenums();
-    register_iarchive();
-    register_iobject();
-    register_icompoundproperty();
-    register_itypedscalarproperties();
-    register_sampleselector();
-    register_iuntypedproperties();
+  register_coreabstracttypes();
+  register_abcenums();
+  register_iarchive();
+  register_iobject();
+  register_icompoundproperty();
+  register_itypedscalarproperties();
+  register_sampleselector();
+  register_iuntypedproperties();
 }

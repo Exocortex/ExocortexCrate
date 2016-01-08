@@ -40,7 +40,6 @@
 
 #include <boost/python.hpp>
 
-
 //#include <Python.h>
 
 using namespace boost::python;
@@ -51,8 +50,8 @@ namespace AbcA = ::Alembic::AbcCoreAbstract::v1;
 //-*****************************************************************************
 void register_itypedscalarproperties()
 {
-    // actually, let's just stick with untyped properties for now
-    #if 0
+// actually, let's just stick with untyped properties for now
+#if 0
     //IBoolProperty
     //
     class_<Abc::IBoolProperty>( "IBoolProperty",
@@ -1416,5 +1415,5 @@ void register_itypedscalarproperties()
               return_value_policy<copy_const_reference>() )
         .def( "__nonzero__", &Abc::IN3dProperty::valid )
         ;
-    #endif
+#endif
 }

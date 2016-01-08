@@ -1,35 +1,27 @@
-#include "stdafx.h"
 #include "hashInstanceTable.h"
+#include "stdafx.h"
 
-
-//exists, add, and clear
-
+// exists, add, and clear
 
 std::map<AbcU::Digest, INode*> g_instanceMap;
 
-
-
 bool InstanceMap_Exists(AbcU::Digest digest)
 {
-   return g_instanceMap.find(digest) != g_instanceMap.end();
+  return g_instanceMap.find(digest) != g_instanceMap.end();
 }
 
 void InstanceMap_Add(AbcU::Digest digest, INode* node)
 {
-   g_instanceMap[digest] = node;
+  g_instanceMap[digest] = node;
 }
 
 INode* InstanceMap_Get(AbcU::Digest digest)
 {
-   std::map<AbcU::Digest, INode*>::iterator it = g_instanceMap.find(digest);
-   if(it != g_instanceMap.end())
-   {
-      return it->second;
-   }
-   return NULL;
+  std::map<AbcU::Digest, INode*>::iterator it = g_instanceMap.find(digest);
+  if (it != g_instanceMap.end()) {
+    return it->second;
+  }
+  return NULL;
 }
 
-void InstanceMap_Clear()
-{
-   g_instanceMap.clear();
-}
+void InstanceMap_Clear() { g_instanceMap.clear(); }

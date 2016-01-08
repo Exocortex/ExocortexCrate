@@ -1,5 +1,4 @@
-#include "stdafx.h"
 #include "AlembicLicensing.h"
+#include "stdafx.h"
 
 using namespace std;
-

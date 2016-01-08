@@ -40,7 +40,6 @@
 
 #include <boost/python.hpp>
 
-
 //#include <Python.h>
 
 using namespace boost::python;
@@ -51,51 +50,45 @@ namespace AbcA = ::Alembic::AbcCoreAbstract::v1;
 //-*****************************************************************************
 void register_iobject()
 {
-    // overloads
-    Abc::IObject ( Abc::IObject::*getChildByIndex )( size_t ) = \
-        &Abc::IObject::getChild;
-    Abc::IObject ( Abc::IObject::*getChildByName )( const std::string& ) = \
-        &Abc::IObject::getChild;
+  // overloads
+  Abc::IObject (Abc::IObject::*getChildByIndex)(size_t) =
+      &Abc::IObject::getChild;
+  Abc::IObject (Abc::IObject::*getChildByName)(const std::string&) =
+      &Abc::IObject::getChild;
 
-    const AbcA::ObjectHeader&
-        ( Abc::IObject::*getChildHeaderByIndex )( size_t ) = \
-        &Abc::IObject::getChildHeader;
+  const AbcA::ObjectHeader& (Abc::IObject::*getChildHeaderByIndex)(size_t) =
+      &Abc::IObject::getChildHeader;
 
-    const AbcA::ObjectHeader*
-        ( Abc::IObject::*getChildHeaderByName )( const std::string & ) = \
-        &Abc::IObject::getChildHeader;
+  const AbcA::ObjectHeader* (Abc::IObject::*getChildHeaderByName)(
+      const std::string&) = &Abc::IObject::getChildHeader;
 
-
-    class_<Abc::IObject>( "IObject",
-                          init<Abc::IObject, const std::string&>() )
-        .def( init<>() )
-        .def( "getHeader", &Abc::IObject::getHeader,
-              return_internal_reference<1>() )
-        .def( "getName", &Abc::IObject::getName,
-              return_value_policy<copy_const_reference>() )
-        .def( "getFullName", &Abc::IObject::getFullName,
-              return_value_policy<copy_const_reference>() )
-        .def( "getNumChildren", &Abc::IObject::getNumChildren )
-        .def( "getChildHeader", getChildHeaderByIndex,
-              return_internal_reference<1>() )
-        .def( "getChildHeader", getChildHeaderByName,
-              return_value_policy<reference_existing_object>() )
-        .def( "getProperties", &Abc::IObject::getProperties,
-              with_custodian_and_ward_postcall<0,1>() )
-        .def( "getChild", getChildByIndex,
-              with_custodian_and_ward_postcall<0,1>() )
-        .def( "getChild", getChildByName,
-              with_custodian_and_ward_postcall<0,1>() )
-        .def( "valid", &Abc::IObject::valid )
-        .def( "getArchive", &Abc::IObject::getArchive,
-              with_custodian_and_ward_postcall<0,1>() )
-        .def( "getParent", &Abc::IObject::getParent,
-              with_custodian_and_ward_postcall<0,1>() )
-        .def( "getMetaData", &Abc::IObject::getMetaData,
-              return_internal_reference<1>() )
-        .def( "reset", &Abc::IObject::reset )
-        .def( "__str__", &Abc::IObject::getFullName,
-              return_value_policy<copy_const_reference>() )
-        .def( "__nonzero__", &Abc::IObject::valid )
-        ;
+  class_<Abc::IObject>("IObject", init<Abc::IObject, const std::string&>())
+      .def(init<>())
+      .def("getHeader", &Abc::IObject::getHeader,
+           return_internal_reference<1>())
+      .def("getName", &Abc::IObject::getName,
+           return_value_policy<copy_const_reference>())
+      .def("getFullName", &Abc::IObject::getFullName,
+           return_value_policy<copy_const_reference>())
+      .def("getNumChildren", &Abc::IObject::getNumChildren)
+      .def("getChildHeader", getChildHeaderByIndex,
+           return_internal_reference<1>())
+      .def("getChildHeader", getChildHeaderByName,
+           return_value_policy<reference_existing_object>())
+      .def("getProperties", &Abc::IObject::getProperties,
+           with_custodian_and_ward_postcall<0, 1>())
+      .def("getChild", getChildByIndex,
+           with_custodian_and_ward_postcall<0, 1>())
+      .def("getChild", getChildByName, with_custodian_and_ward_postcall<0, 1>())
+      .def("valid", &Abc::IObject::valid)
+      .def("getArchive", &Abc::IObject::getArchive,
+           with_custodian_and_ward_postcall<0, 1>())
+      .def("getParent", &Abc::IObject::getParent,
+           with_custodian_and_ward_postcall<0, 1>())
+      .def("getMetaData", &Abc::IObject::getMetaData,
+           return_internal_reference<1>())
+      .def("reset", &Abc::IObject::reset)
+      .def("__str__", &Abc::IObject::getFullName,
+           return_value_policy<copy_const_reference>())
+      .def("__nonzero__", &Abc::IObject::valid);
 }

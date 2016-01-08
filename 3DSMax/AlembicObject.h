@@ -9,35 +9,37 @@ class SceneEntry;
 class AlembicWriteJob;
 class INode;
 
-class AlembicObject
-{
-private:
-    std::vector<const SceneEntry*> mRefs;
-    Abc::OObject mOParent;
-protected:
-    int mNumSamples;
-    AlembicWriteJob * mJob;
-	bool bForever;
+class AlembicObject {
+ private:
+  std::vector<const SceneEntry *> mRefs;
+  Abc::OObject mOParent;
 
-   SceneNodePtr mExoSceneNode;
-   bool bMergedSubtreeNodeParent;
-   INode *mMaxNode;
-public:
-    AlembicObject(SceneNodePtr eNode, AlembicWriteJob * in_Job, Abc::OObject oParent);
-    ~AlembicObject();
+ protected:
+  int mNumSamples;
+  AlembicWriteJob *mJob;
+  bool bForever;
 
-    AlembicWriteJob * GetCurrentJob();
-    //const SceneEntry & GetRef(unsigned long index = 0);
-    //int GetRefCount();
-    //void AddRef(const SceneEntry & in_Ref);
-    Abc::OObject GetOParent();
-    virtual Abc::OCompoundProperty GetCompound() = 0;
-    int GetNumSamples();
+  SceneNodePtr mExoSceneNode;
+  bool bMergedSubtreeNodeParent;
+  INode *mMaxNode;
 
-    virtual bool Save(double time, bool bLastFrame) = 0;
+ public:
+  AlembicObject(SceneNodePtr eNode, AlembicWriteJob *in_Job,
+                Abc::OObject oParent);
+  ~AlembicObject();
+
+  AlembicWriteJob *GetCurrentJob();
+  // const SceneEntry & GetRef(unsigned long index = 0);
+  // int GetRefCount();
+  // void AddRef(const SceneEntry & in_Ref);
+  Abc::OObject GetOParent();
+  virtual Abc::OCompoundProperty GetCompound() = 0;
+  int GetNumSamples();
+
+  virtual bool Save(double time, bool bLastFrame) = 0;
 };
 
-typedef boost::shared_ptr < AlembicObject > AlembicObjectPtr;
+typedef boost::shared_ptr<AlembicObject> AlembicObjectPtr;
 
 #include "AlembicWriteJob.h"
 

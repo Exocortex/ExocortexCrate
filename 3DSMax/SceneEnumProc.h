@@ -1,8 +1,6 @@
 #ifndef _SCENEENUMPROC_H_
 #define _SCENEENUMPROC_H_
 
-
-
 class IScene;
 class Object;
 
@@ -17,43 +15,45 @@ class Object;
 #define OBTYPE_CURVES 9
 #define OBTYPE_POINTS_TP 10
 
-class SceneEntry 
-{
-public:
-    std::string fullname;
-	INode *node;
-    INode *tnode;
-	Object *obj;
-	int type;		
-	int id;
-	SceneEntry() {
-		this->node = NULL;
-		this->tnode = NULL;
-		this->obj = NULL;
-	}
-	SceneEntry(INode *n, Object *o, int t, std::string * providedfullname);
-	void SetID(int id);
+class SceneEntry {
+ public:
+  std::string fullname;
+  INode *node;
+  INode *tnode;
+  Object *obj;
+  int type;
+  int id;
+  SceneEntry()
+  {
+    this->node = NULL;
+    this->tnode = NULL;
+    this->obj = NULL;
+  }
+  SceneEntry(INode *n, Object *o, int t, std::string *providedfullname);
+  void SetID(int id);
 };
 
-SceneEntry createSceneEntry(INode* node, TimeValue time, std::string* pFullname);
+SceneEntry createSceneEntry(INode *node, TimeValue time,
+                            std::string *pFullname);
 
-class SceneEnumProc : public ITreeEnumProc 
-{
-public:
-	Interface	*i;
-	std::vector<SceneEntry> sceneEntries;
-	IScene		*theScene;
-	TimeValue	time;
-public:
-                SceneEnumProc();
-	            SceneEnumProc(IScene *scene, TimeValue t, Interface *i);
-                ~SceneEnumProc();
-	int			Count() { return (int)sceneEntries.size(); }
-    SceneEntry*	Append(INode *node, Object *obj, int type, std::string *providedfullname);
-	int			callback( INode *node );
-	//Box3		Bound();
-	SceneEntry *Find(INode *node);
-    void        Init(IScene *scene, TimeValue t, Interface *i);
+class SceneEnumProc : public ITreeEnumProc {
+ public:
+  Interface *i;
+  std::vector<SceneEntry> sceneEntries;
+  IScene *theScene;
+  TimeValue time;
+
+ public:
+  SceneEnumProc();
+  SceneEnumProc(IScene *scene, TimeValue t, Interface *i);
+  ~SceneEnumProc();
+  int Count() { return (int)sceneEntries.size(); }
+  SceneEntry *Append(INode *node, Object *obj, int type,
+                     std::string *providedfullname);
+  int callback(INode *node);
+  // Box3		Bound();
+  SceneEntry *Find(INode *node);
+  void Init(IScene *scene, TimeValue t, Interface *i);
 };
 
-#endif //_SCENEENUMPROC_H_
+#endif  //_SCENEENUMPROC_H_

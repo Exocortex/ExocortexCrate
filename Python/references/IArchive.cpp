@@ -47,22 +47,23 @@ using namespace boost::python;
 namespace Abc = Alembic::Abc;
 
 //-*****************************************************************************
-static boost::shared_ptr<Abc::IArchive> mkIArchive( const std::string &iName )
+static boost::shared_ptr<Abc::IArchive> mkIArchive(const std::string &iName)
 {
-    return boost::shared_ptr<Abc::IArchive>(
-        new Abc::IArchive( ::Alembic::AbcCoreHDF5::ReadArchive(), iName ) );
+  return boost::shared_ptr<Abc::IArchive>(
+      new Abc::IArchive(::Alembic::AbcCoreHDF5::ReadArchive(), iName));
 }
 
 //-*****************************************************************************
 void register_iarchive()
 {
-    class_< Abc::IArchive, boost::shared_ptr<Abc::IArchive> >( "IArchive" )
-        .def( "__init__", make_constructor( mkIArchive ), "IArchive ctor\nFirst argument is the pathname to the .abc file to open."  )
-        .def( "getName", &Abc::IArchive::getName )
-        .def( "getTop", &Abc::IArchive::getTop,
-              with_custodian_and_ward_postcall<0,1>() )
-        .def( "valid", &Abc::IArchive::valid )
-        .def( "__nonzero__", &Abc::IArchive::valid )
-        .def( "__str__", &Abc::IArchive::getName )
-        ;
+  class_<Abc::IArchive, boost::shared_ptr<Abc::IArchive> >("IArchive")
+      .def("__init__", make_constructor(mkIArchive),
+           "IArchive ctor\nFirst argument is the pathname to the .abc file to "
+           "open.")
+      .def("getName", &Abc::IArchive::getName)
+      .def("getTop", &Abc::IArchive::getTop,
+           with_custodian_and_ward_postcall<0, 1>())
+      .def("valid", &Abc::IArchive::valid)
+      .def("__nonzero__", &Abc::IArchive::valid)
+      .def("__str__", &Abc::IArchive::getName);
 }

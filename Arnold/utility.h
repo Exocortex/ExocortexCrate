@@ -4,5 +4,4 @@
 #include "AlembicLicensing.h"
 #include "CommonUtilities.h"
 
-
 #endif

@@ -40,7 +40,6 @@
 
 #include <boost/python.hpp>
 
-
 //#include <Python.h>
 
 using namespace boost::python;
@@ -51,18 +50,14 @@ namespace AbcA = ::Alembic::AbcCoreAbstract::v1;
 //-*****************************************************************************
 void register_sampleselector()
 {
-
-    scope ss = class_<Abc::ISampleSelector>( "ISampleSelector",
-                                             init<AbcA::index_t>() )
-        .def( init<AbcA::chrono_t,
-              optional<Abc::ISampleSelector::TimeIndexType> >() )
-        .def( init<>() )
-        .def( "getIndex", &Abc::ISampleSelector::getIndex )
-        ;
-    enum_<Abc::ISampleSelector::TimeIndexType>( "TimeIndexType" )
-        .value( "kFloorIndex", Abc::ISampleSelector::kFloorIndex )
-        .value( "kCeilIndex", Abc::ISampleSelector::kCeilIndex )
-        .value( "kNearIndex", Abc::ISampleSelector::kNearIndex )
-        ;
-
+  scope ss =
+      class_<Abc::ISampleSelector>("ISampleSelector", init<AbcA::index_t>())
+          .def(init<AbcA::chrono_t,
+                    optional<Abc::ISampleSelector::TimeIndexType> >())
+          .def(init<>())
+          .def("getIndex", &Abc::ISampleSelector::getIndex);
+  enum_<Abc::ISampleSelector::TimeIndexType>("TimeIndexType")
+      .value("kFloorIndex", Abc::ISampleSelector::kFloorIndex)
+      .value("kCeilIndex", Abc::ISampleSelector::kCeilIndex)
+      .value("kNearIndex", Abc::ISampleSelector::kNearIndex);
 }

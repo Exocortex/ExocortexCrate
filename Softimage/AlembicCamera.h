@@ -3,18 +3,18 @@
 
 #include "AlembicObject.h"
 
-class AlembicCamera: public AlembicObject
-{
-private:
+class AlembicCamera : public AlembicObject {
+ private:
   AbcG::OCameraSchema mCameraSchema;
   AbcG::CameraSample mCameraSample;
-public:
 
-   AlembicCamera(SceneNodePtr eNode, AlembicWriteJob * in_Job, Abc::OObject oParent);
-   ~AlembicCamera();
+ public:
+  AlembicCamera(SceneNodePtr eNode, AlembicWriteJob* in_Job,
+                Abc::OObject oParent);
+  ~AlembicCamera();
 
-   virtual Abc::OCompoundProperty GetCompound();
-   virtual XSI::CStatus Save(double time);
+  virtual Abc::OCompoundProperty GetCompound();
+  virtual XSI::CStatus Save(double time);
 };
 
 #endif

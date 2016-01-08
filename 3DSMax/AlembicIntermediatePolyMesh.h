@@ -7,11 +7,10 @@
 
 typedef std::vector<AbcA::int32_t> facesetmap_vec;
 
-struct faceSetStr
-{
-	std::string name;
-	facesetmap_vec faceIds;
-	int originalMatId;
+struct faceSetStr {
+  std::string name;
+  facesetmap_vec faceIds;
+  int originalMatId;
 };
 
 typedef std::map<int, faceSetStr> facesetmap;
@@ -20,45 +19,43 @@ typedef std::map<int, faceSetStr>::const_iterator facesetmap_cit;
 typedef std::pair<int, faceSetStr> facesetmap_insert_pair;
 typedef std::pair<facesetmap_it, bool> facesetmap_ret_pair;
 
+class AlembicIntermediatePolyMesh {
+ public:
+  // AlembicIntermediatePolyMesh():nLargestMatId(0)
+  //{}
 
-class AlembicIntermediatePolyMesh
-{
-public:
+  Abc::Box3d bbox;
 
-	//AlembicIntermediatePolyMesh():nLargestMatId(0)
-	//{}
+  std::vector<Abc::V3f> posVec;
 
-	Abc::Box3d bbox;
+  IndexedNormals mIndexedNormals;
 
-	std::vector<Abc::V3f> posVec;
+  // std::vector<Abc::N3f> normalVec;
+  // std::vector<Abc::uint32_t> normalIndexVec;//will have size 0 if not using
+  // indexed normals
 
-	IndexedNormals mIndexedNormals;
-	
-    //std::vector<Abc::N3f> normalVec;
-    //std::vector<Abc::uint32_t> normalIndexVec;//will have size 0 if not using indexed normals
+  std::vector<AbcA::int32_t> mFaceCountVec;
+  std::vector<AbcA::int32_t> mFaceIndicesVec;
 
-	std::vector<AbcA::int32_t> mFaceCountVec;
-	std::vector<AbcA::int32_t> mFaceIndicesVec;  
+  // std::vector<Abc::V2f> mUvVec;
+  // std::vector<Abc::uint32_t> mUvIndexVec;//will have size 0 if not using
+  // indexed UVs
 
-	//std::vector<Abc::V2f> mUvVec;
-	//std::vector<Abc::uint32_t> mUvIndexVec;//will have size 0 if not using indexed UVs
+  std::vector<std::string> mIndexedUVNames;
+  std::vector<IndexedUVs> mIndexedUVSet;
 
-	std::vector<std::string> mIndexedUVNames;
-	std::vector<IndexedUVs> mIndexedUVSet;
-	
-	std::vector<Abc::uint32_t> mMatIdIndexVec;
-	facesetmap mFaceSetsMap;
+  std::vector<Abc::uint32_t> mMatIdIndexVec;
+  facesetmap mFaceSetsMap;
 
-   //std::vector<Abc::V3f> mBindPoseVec;
-   std::vector<Abc::V3f> mVelocitiesVec;
-   //std::vector<float> mRadiusVec;
-  
-	LONG sampleCount;//TODO: do I need this?
+  // std::vector<Abc::V3f> mBindPoseVec;
+  std::vector<Abc::V3f> mVelocitiesVec;
+  // std::vector<float> mRadiusVec;
 
-	//TODO: add method to setup sizes for multiple merges
+  LONG sampleCount;  // TODO: do I need this?
 
-	bool mergeWith(const AlembicIntermediatePolyMesh& srcMesh);
+  // TODO: add method to setup sizes for multiple merges
+
+  bool mergeWith(const AlembicIntermediatePolyMesh& srcMesh);
 };
-
 
 #endif
