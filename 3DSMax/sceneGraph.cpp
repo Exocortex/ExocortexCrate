@@ -1,6 +1,7 @@
+#include "stdafx.h"
+
 #include "sceneGraph.h"
 #include "Utility.h"
-#include "stdafx.h"
 
 // Import methods, we won't need these until we update the importer
 bool SceneNodeMax::replaceData(SceneNodeAlembicPtr fileNode,

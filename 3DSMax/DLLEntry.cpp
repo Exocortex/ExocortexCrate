@@ -1,9 +1,10 @@
+#include "stdafx.h"
+
 #include "Alembic.h"
 #include "AlembicCameraModifier.h"
 #include "AlembicDefinitions.h"
 #include "AlembicNames.h"
 #include "AlembicNurbsModifier.h"
-#include "stdafx.h"
 
 HINSTANCE hInstance;
 

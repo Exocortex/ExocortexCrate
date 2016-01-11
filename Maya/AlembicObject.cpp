@@ -1,5 +1,6 @@
-#include "AlembicObject.h"
 #include "stdafx.h"
+
+#include "AlembicObject.h"
 
 AlembicObject::AlembicObject(SceneNodePtr eNode, AlembicWriteJob* in_Job,
                              Abc::OObject oParent)

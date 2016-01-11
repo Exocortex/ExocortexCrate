@@ -1,3 +1,5 @@
+#include "stdafx.h"
+
 #include "CommonRegex.h"
 #include "common.h"
 #include "curves.h"
@@ -5,7 +7,6 @@
 #include "nurbs.h"
 #include "points.h"
 #include "polyMesh.h"
-#include "stdafx.h"
 
 boost::mutex gGlobalLock;
 

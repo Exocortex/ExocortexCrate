@@ -1,8 +1,9 @@
+#include "stdafx.h"
+
 #include "AlembicXformUtilities.h"
 #include "AlembicMAXScript.h"
 #include "AlembicMetadataUtils.h"
 #include "AlembicPropertyUtils.h"
-#include "stdafx.h"
 
 bool isAlembicXform(AbcG::IObject* pIObj, bool& isConstant)
 {

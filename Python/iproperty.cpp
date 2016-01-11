@@ -1,10 +1,11 @@
+#include "stdafx.h"
+
 #include "iproperty.h"
 #include "AlembicLicensing.h"
 #include "CommonUtilities.h"
 #include "extension.h"
 #include "icompoundproperty.h"  // to call iCompoundProperty_new in iProperty_new if it's an iCompoundProperty
 #include "iobject.h"
-#include "stdafx.h"
 #include "timesampling.h"
 
 #ifdef __cplusplus__

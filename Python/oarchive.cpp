@@ -1,3 +1,5 @@
+#include "stdafx.h"
+
 #include "oarchive.h"
 #include "AlembicLicensing.h"
 #include "CommonUtilities.h"
@@ -7,7 +9,6 @@
 #include "oobject.h"
 #include "oproperty.h"
 #include "oxformproperty.h"
-#include "stdafx.h"
 #include "timesampling.h"
 
 typedef std::set<std::string> str_set;

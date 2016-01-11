@@ -1,7 +1,8 @@
+#include "stdafx.h"
+
 #include "ocompoundproperty.h"
 #include "extension.h"
 #include "oarchive.h"
-#include "stdafx.h"
 
 static PyObject *oCompoundProperty_getName(PyObject *self, PyObject *args)
 {

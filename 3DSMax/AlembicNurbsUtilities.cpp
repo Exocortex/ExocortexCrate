@@ -1,3 +1,5 @@
+#include "stdafx.h"
+
 #include "AlembicNurbsUtilities.h"
 #include <surf_api.h>
 #include "AlembicArchiveStorage.h"
@@ -7,7 +9,6 @@
 #include "AlembicNames.h"
 #include "AlembicVisibilityController.h"
 #include "Utility.h"
-#include "stdafx.h"
 
 bool isAlembicNurbsCurveTopoDynamic(AbcG::IObject *pIObj)
 {

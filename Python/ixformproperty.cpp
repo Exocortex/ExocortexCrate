@@ -1,7 +1,8 @@
+#include "stdafx.h"
+
 #include "ixformproperty.h"
 #include "extension.h"
 #include "iobject.h"
-#include "stdafx.h"
 #include "timesampling.h"
 
 static std::string iXformProperty_getName_func() { return ".xform"; }

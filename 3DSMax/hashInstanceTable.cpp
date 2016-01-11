@@ -1,5 +1,6 @@
-#include "hashInstanceTable.h"
 #include "stdafx.h"
+
+#include "hashInstanceTable.h"
 
 // exists, add, and clear
 

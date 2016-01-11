@@ -1,7 +1,8 @@
+#include "stdafx.h"
+
 #include "AlembicSubD.h"
 #include "AlembicPolyMsh.h"
 #include "AlembicXform.h"
-#include "stdafx.h"
 
 using namespace XSI;
 using namespace MATH;

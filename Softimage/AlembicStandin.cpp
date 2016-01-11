@@ -5,8 +5,9 @@
 // Tip: You need to compile the generated code before you can load the plug-in.
 // After you compile the plug-in, you can load it by clicking Update All in the
 // Plugin Manager.
-#include "arnoldHelpers.h"
 #include "stdafx.h"
+
+#include "arnoldHelpers.h"
 
 using namespace XSI;
 using namespace MATH;

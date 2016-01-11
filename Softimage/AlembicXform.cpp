@@ -1,7 +1,8 @@
+#include "stdafx.h"
+
 #include "AlembicXform.h"
 #include "CommonProfiler.h"
 #include "CommonUtilities.h"
-#include "stdafx.h"
 
 using namespace XSI;
 using namespace MATH;

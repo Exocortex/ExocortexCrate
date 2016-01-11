@@ -1,6 +1,7 @@
+#include "stdafx.h"
+
 #include "AlembicImport.h"
 #include "AlembicWriteJob.h"
-#include "stdafx.h"
 //#include "AlembicGetInfo.h"
 //#include "AlembicGetNodeFromIdentifier.h"
 #include "AlembicCamera.h"

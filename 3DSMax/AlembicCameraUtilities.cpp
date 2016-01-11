@@ -1,3 +1,5 @@
+#include "stdafx.h"
+
 #include "Alembic.h"
 #include "AlembicArchiveStorage.h"
 #include "AlembicCameraUtilities.h"
@@ -7,7 +9,6 @@
 #include "AlembicMetadataUtils.h"
 #include "AlembicNames.h"
 #include "AlembicVisibilityController.h"
-#include "stdafx.h"
 #include "utility.h"
 
 //////////////////////////////////////////////////////////////////////////////////////////

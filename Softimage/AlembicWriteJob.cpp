@@ -1,3 +1,5 @@
+#include "stdafx.h"
+
 #include "AlembicWriteJob.h"
 #include "AlembicCamera.h"
 #include "AlembicCurves.h"
@@ -12,7 +14,6 @@
 #include "CommonSubtreeMerge.h"
 #include "Utility.h"
 #include "sceneGraph.h"
-#include "stdafx.h"
 
 using namespace XSI;
 using namespace MATH;

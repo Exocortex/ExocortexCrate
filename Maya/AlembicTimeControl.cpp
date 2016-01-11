@@ -1,5 +1,6 @@
-#include "AlembicTimeControl.h"
 #include "stdafx.h"
+
+#include "AlembicTimeControl.h"
 
 #include <maya/MFnEnumAttribute.h>
 

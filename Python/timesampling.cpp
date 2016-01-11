@@ -1,7 +1,8 @@
+#include "stdafx.h"
+
 #include "timesampling.h"
 #include <vector>
 #include "extension.h"
-#include "stdafx.h"
 #include "string.h"
 
 static PyObject *TimeSampling_getType(PyObject *obj)

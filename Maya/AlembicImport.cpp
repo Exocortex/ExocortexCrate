@@ -1,3 +1,5 @@
+#include "stdafx.h"
+
 #include "AlembicImport.h"
 #include "AlembicCamera.h"
 #include "AlembicCurves.h"
@@ -11,7 +13,6 @@
 #include "CommonImport.h"
 #include "CommonLog.h"
 #include "CommonUtilities.h"
-#include "stdafx.h"
 
 #include <maya/MItDag.h>
 #include <maya/MItDependencyNodes.h>

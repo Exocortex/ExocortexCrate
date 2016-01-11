@@ -1,5 +1,6 @@
-#include "arnoldHelpers.h"
 #include "stdafx.h"
+
+#include "arnoldHelpers.h"
 
 using namespace XSI;
 using namespace MATH;

@@ -1,8 +1,9 @@
+#include "stdafx.h"
+
 #include "AlembicIntermediatePolyMesh3DSMax.h"
 #include "AlembicWriteJob.h"
 #include "CommonLog.h"
 #include "Utility.h"
-#include "stdafx.h"
 
 // From the SDK
 // How to calculate UV's for face mapped materials.

@@ -1,8 +1,9 @@
+#include "stdafx.h"
+
 #include "ObjectList.h"
 #include "Alembic.h"
 #include "SceneEnumProc.h"
 #include "Utility.h"
-#include "stdafx.h"
 
 ObjectEntry::ObjectEntry(SceneEntry *e) { entry = *e; }
 ObjectList::ObjectList() {}

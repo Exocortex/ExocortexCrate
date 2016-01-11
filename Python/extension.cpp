@@ -1,3 +1,5 @@
+#include "stdafx.h"
+
 #include "extension.h"
 #include "iarchive.h"
 #include "icompoundproperty.h"
@@ -9,7 +11,6 @@
 #include "oobject.h"
 #include "oproperty.h"
 #include "oxformproperty.h"
-#include "stdafx.h"
 #include "timesampling.h"
 
 std::string resolvePath_Internal(std::string const& path) { return path; }

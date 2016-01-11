@@ -1,8 +1,9 @@
+#include "stdafx.h"
+
 #include "AlembicModel.h"
 #include "AlembicXform.h"
 #include "CommonUtilities.h"
 #include "sceneGraph.h"
-#include "stdafx.h"
 
 using namespace XSI;
 using namespace MATH;

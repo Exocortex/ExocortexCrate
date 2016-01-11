@@ -1,5 +1,6 @@
-#include "dataUniqueness.h"
 #include "stdafx.h"
+
+#include "dataUniqueness.h"
 
 // --------------------------------------------------------------------------------------------------
 typedef struct __uv_mkey {

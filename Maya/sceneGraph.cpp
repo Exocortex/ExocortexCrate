@@ -1,5 +1,6 @@
-#include "sceneGraph.h"
 #include "stdafx.h"
+
+#include "sceneGraph.h"
 
 #include "CommonLog.h"
 

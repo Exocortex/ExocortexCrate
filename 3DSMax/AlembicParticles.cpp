@@ -1,3 +1,5 @@
+#include "stdafx.h"
+
 #include "Alembic.h"
 #include "AlembicArchiveStorage.h"
 #include "AlembicDefinitions.h"
@@ -7,7 +9,6 @@
 #include "AlembicParticlesExtInterface.h"
 #include "AlembicPropertyUtils.h"
 #include "AlembicVisibilityController.h"
-#include "stdafx.h"
 #include "utility.h"
 
 static AlembicParticlesClassDesc s_AlembicParticlesClassDesc;

@@ -1,9 +1,10 @@
+#include "stdafx.h"
+
 #include "Alembic.h"
 #include <Alembic/AbcCoreAbstract/CompoundPropertyReader.h>
 #include <Alembic/AbcCoreAbstract/ForwardDeclarations.h>
 #include <Alembic/Util/PlainOldDataType.h>
 #include "AlembicLightUtilities.h"
-#include "stdafx.h"
 #include "utility.h"
 //#include <Alembic/Abc/IScalarProperty.h>
 #include "AlembicCameraUtilities.h"

@@ -1,10 +1,11 @@
+#include "stdafx.h"
+
 #include "Alembic.h"
 #include "AlembicArchiveStorage.h"
 #include "AlembicDefinitions.h"
 #include "AlembicXformController.h"
 #include "AlembicXformUtilities.h"
 #include "Utility.h"
-#include "stdafx.h"
 
 // This function returns a pointer to a class descriptor for our Utility
 // This is the function that informs max that our plug-in exists and is

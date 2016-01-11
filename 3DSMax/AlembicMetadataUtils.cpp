@@ -1,6 +1,7 @@
+#include "stdafx.h"
+
 #include "AlembicMetadataUtils.h"
 #include "AlembicObject.h"
-#include "stdafx.h"
 #include "utility.h"
 
 void importMetadata(INode* pNode, AbcG::IObject& iObj)

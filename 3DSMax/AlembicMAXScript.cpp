@@ -1,3 +1,5 @@
+#include "stdafx.h"
+
 #include "Alembic.h"
 #include "AlembicArchiveStorage.h"
 #include "AlembicCameraUtilities.h"
@@ -14,7 +16,6 @@
 #include "SceneEnumProc.h"
 #include "Utility.h"
 #include "hashInstanceTable.h"
-#include "stdafx.h"
 
 // Dummy function for progress bar
 DWORD WINAPI DummyProgressFunction(LPVOID arg) { return 0; }

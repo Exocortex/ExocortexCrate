@@ -1,10 +1,11 @@
+#include "stdafx.h"
+
 #include "Alembic.h"
 #include "AlembicArchiveStorage.h"
 #include "AlembicDefinitions.h"
 #include "AlembicMeshUVWModifier.h"
 #include "AlembicVisibilityController.h"
 #include "AlembicXForm.h"
-#include "stdafx.h"
 #include "utility.h"
 
 using namespace MaxSDK::AssetManagement;

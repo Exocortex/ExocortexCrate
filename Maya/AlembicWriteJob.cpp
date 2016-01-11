@@ -1,3 +1,5 @@
+#include "stdafx.h"
+
 #include "AlembicWriteJob.h"
 #include "AlembicCamera.h"
 #include "AlembicCurves.h"
@@ -11,7 +13,6 @@
 #include "AlembicXform.h"
 #include "CommonLog.h"
 #include "CommonUtilities.h"
-#include "stdafx.h"
 
 #include <maya/MItDag.h>
 #include "sceneGraph.h"

@@ -1,5 +1,6 @@
-#include "AlembicCustomAttributesEx.h"
 #include "stdafx.h"
+
+#include "AlembicCustomAttributesEx.h"
 
 using namespace XSI;
 

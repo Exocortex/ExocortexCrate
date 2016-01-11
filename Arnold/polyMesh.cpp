@@ -1,5 +1,6 @@
-#include "polyMesh.h"
 #include "stdafx.h"
+
+#include "polyMesh.h"
 
 struct __indices {
   AtArray *faceIndices;

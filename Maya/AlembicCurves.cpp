@@ -1,5 +1,6 @@
-#include "AlembicCurves.h"
 #include "stdafx.h"
+
+#include "AlembicCurves.h"
 
 #include "MetaData.h"
 

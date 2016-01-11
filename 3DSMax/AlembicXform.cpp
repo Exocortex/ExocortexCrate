@@ -1,5 +1,6 @@
-#include "Alembic.h"
 #include "stdafx.h"
+
+#include "Alembic.h"
 
 #include "AlembicMetadataUtils.h"
 #include "AlembicPropertyUtils.h"

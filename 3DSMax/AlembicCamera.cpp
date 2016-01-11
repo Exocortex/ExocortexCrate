@@ -1,10 +1,11 @@
+#include "stdafx.h"
+
 #include "Alembic.h"
 #include "AlembicCamera.h"
 #include "AlembicMetadataUtils.h"
 #include "AlembicXForm.h"
 #include "SceneEnumProc.h"
 #include "Utility.h"
-#include "stdafx.h"
 
 AlembicCamera::AlembicCamera(SceneNodePtr eNode, AlembicWriteJob *in_Job,
                              Abc::OObject oParent)

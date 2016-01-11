@@ -1,9 +1,11 @@
+#include "stdafx.h"
+
 #include <hash_map>
+
 #include "Alembic.h"
 #include "AlembicIntermediatePolyMesh3DSMax.h"
 #include "SceneEnumProc.h"
 #include "Utility.h"
-#include "stdafx.h"
 
 void logError(const char* msg)
 {

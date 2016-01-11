@@ -1,6 +1,7 @@
+#include "stdafx.h"
+
 #include "AlembicCamera.h"
 #include "MetaData.h"
-#include "stdafx.h"
 
 AlembicCamera::AlembicCamera(SceneNodePtr eNode, AlembicWriteJob* in_Job,
                              Abc::OObject oParent)

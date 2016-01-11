@@ -1,8 +1,9 @@
+#include "stdafx.h"
+
 #include "oxformproperty.h"
 #include "extension.h"
 #include "oarchive.h"
 #include "oobject.h"
-#include "stdafx.h"
 
 static std::string oXformProperty_getName_func() { return ".xform"; }
 static PyObject *oXformProperty_getName(PyObject *self, PyObject *args)

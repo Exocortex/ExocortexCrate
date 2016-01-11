@@ -1,10 +1,11 @@
+#include "stdafx.h"
+
 #include "AlembicPropertyUtils.h"
 #include <sstream>
 #include "AlembicMAXScript.h"
 #include "AlembicObject.h"
 #include "CommonUtilities.h"
 #include "Utility.h"
-#include "stdafx.h"
 
 void createStringPropertyDisplayModifier(
     std::string modname,

@@ -1,8 +1,9 @@
+#include "stdafx.h"
+
 #include "AlembicXform.h"
 #include <maya/MAnimUtil.h>
 #include <maya/MDistance.h>
 #include "MetaData.h"
-#include "stdafx.h"
 
 void AlembicXform::testAnimatedVisibility(AlembicObject *aobj, bool animTS,
                                           bool flatHierarchy)

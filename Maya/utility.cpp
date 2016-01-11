@@ -1,8 +1,9 @@
+#include "stdafx.h"
+
 #include "AlembicArchiveStorage.h"
 #include "AlembicLicensing.h"
 #include "AlembicObject.h"
 #include "Utility.h"
-#include "stdafx.h"
 
 void logError(const char* msg)
 {

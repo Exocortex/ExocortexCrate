@@ -1,10 +1,11 @@
+#include "stdafx.h"
+
 #include "EmptyPolyLineObject.h"
 #include "AlembicArchiveStorage.h"
 #include "AlembicLicensing.h"
 #include "AlembicNames.h"
 #include "AlembicVisibilityController.h"
 #include "Utility.h"
-#include "stdafx.h"
 
 static EmptyPolyLineObjectClassDesc sEmptyPolyLineObjectDesc;
 

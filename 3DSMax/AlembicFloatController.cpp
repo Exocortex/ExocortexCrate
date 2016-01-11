@@ -1,3 +1,5 @@
+#include "stdafx.h"
+
 #include "Alembic.h"
 #include "AlembicArchiveStorage.h"
 #include "AlembicCameraUtilities.h"
@@ -8,7 +10,6 @@
 #include "AlembicPropertyUtils.h"
 #include "Utility.h"
 #include "resource.h"
-#include "stdafx.h"
 
 // This function returns a pointer to a class descriptor for our Utility
 // This is the function that informs max that our plug-in exists and is

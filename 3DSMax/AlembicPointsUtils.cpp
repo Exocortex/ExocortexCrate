@@ -1,9 +1,10 @@
+#include "stdafx.h"
+
 #include "AlembicPointsUtils.h"
 #include "AlembicIntermediatePolyMesh3DSMax.h"
 #include "AlembicParticles.h"
 #include "AlembicWriteJob.h"
 #include "MaxSceneTimeManager.h"
-#include "stdafx.h"
 
 IPFRender* getIPFRender(Object* obj, TimeValue ticks)
 {

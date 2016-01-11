@@ -1,7 +1,8 @@
+#include "stdafx.h"
+
 #include "SceneEnumProc.h"
 #include "Alembic.h"
 #include "Utility.h"
-#include "stdafx.h"
 
 SceneEntry::SceneEntry(INode *n, Object *o, int t,
                        std::string *providedfullname)

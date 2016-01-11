@@ -1,5 +1,6 @@
-#include "points.h"
 #include "stdafx.h"
+
+#include "points.h"
 
 AtNode *createPointsNode(nodeData &nodata, userData *ud,
                          std::vector<float> &samples, int i)

@@ -1,9 +1,10 @@
+#include "stdafx.h"
+
 #include "Alembic.h"
 #include "AlembicPoints.h"
 #include "AlembicXform.h"
 #include "SceneEnumProc.h"
 #include "Utility.h"
-#include "stdafx.h"
 
 #include "AlembicMetadataUtils.h"
 #include "AlembicParticles.h"

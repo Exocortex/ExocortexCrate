@@ -1,10 +1,11 @@
+#include "stdafx.h"
+
 #include "iobject.h"
 #include "CommonUtilities.h"
 #include "extension.h"
 #include "iarchive.h"
 #include "iproperty.h"
 #include "ixformproperty.h"
-#include "stdafx.h"
 #include "timesampling.h"
 
 static PyObject *iObject_getIdentifier(PyObject *self, PyObject *args)

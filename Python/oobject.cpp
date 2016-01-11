@@ -1,9 +1,10 @@
+#include "stdafx.h"
+
 #include "oobject.h"
 #include "extension.h"
 #include "oarchive.h"
 #include "ocompoundproperty.h"
 #include "oproperty.h"
-#include "stdafx.h"
 //#include "ixformproperty.h"
 #include "CommonUtilities.h"
 

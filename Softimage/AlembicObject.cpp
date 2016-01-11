@@ -1,5 +1,6 @@
-#include "AlembicObject.h"
 #include "stdafx.h"
+
+#include "AlembicObject.h"
 
 #pragma warning(disable : 4996)
 

@@ -1,3 +1,5 @@
+#include "stdafx.h"
+
 #include "Alembic.h"
 #include "AlembicArchiveStorage.h"
 #include "AlembicCameraUtilities.h"
@@ -13,7 +15,6 @@
 #include "AlembicXformUtilities.h"
 #include "SceneEnumProc.h"
 #include "Utility.h"
-#include "stdafx.h"
 
 #include "AlembicRecursiveImporter.h"
 

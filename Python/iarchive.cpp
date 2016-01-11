@@ -1,9 +1,10 @@
+#include "stdafx.h"
+
 #include "iarchive.h"
 #include "AlembicLicensing.h"
 #include "extension.h"
 #include "iobject.h"
 #include "oarchive.h"
-#include "stdafx.h"
 #include "timesampling.h"
 
 typedef std::set<std::string> str_set;

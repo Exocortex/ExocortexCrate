@@ -1,10 +1,11 @@
+#include "stdafx.h"
+
 #include "oproperty.h"
 #include "AlembicLicensing.h"
 #include "extension.h"
 #include "oarchive.h"
 #include "ocompoundproperty.h"
 #include "oobject.h"
-#include "stdafx.h"
 
 #include <stdio.h>
 

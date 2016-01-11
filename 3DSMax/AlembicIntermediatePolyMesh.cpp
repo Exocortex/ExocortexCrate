@@ -1,5 +1,6 @@
-#include "AlembicIntermediatePolyMesh.h"
 #include "stdafx.h"
+
+#include "AlembicIntermediatePolyMesh.h"
 
 bool AlembicIntermediatePolyMesh::mergeWith(
     const AlembicIntermediatePolyMesh& srcMesh)

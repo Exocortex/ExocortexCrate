@@ -1,6 +1,7 @@
+#include "stdafx.h"
+
 #include "AlembicPolyMsh.h"
 #include "AlembicXform.h"
-#include "stdafx.h"
 
 #include "CommonMeshUtilities.h"
 #include "CommonProfiler.h"

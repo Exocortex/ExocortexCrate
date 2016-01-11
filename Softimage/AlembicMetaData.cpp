@@ -1,6 +1,7 @@
+#include "stdafx.h"
+
 #include "AlembicMetaData.h"
 #include "AlembicObject.h"
-#include "stdafx.h"
 
 using namespace XSI;
 using namespace MATH;

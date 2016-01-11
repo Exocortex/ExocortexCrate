@@ -1,6 +1,7 @@
+#include "stdafx.h"
+
 #include "AlembicSubD.h"
 #include "MetaData.h"
-#include "stdafx.h"
 
 AlembicSubD::AlembicSubD(SceneNodePtr eNode, AlembicWriteJob* in_Job,
                          Abc::OObject oParent)

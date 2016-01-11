@@ -1,5 +1,6 @@
-#include "AlembicIntermediatePolymeshXSI.h"
 #include "stdafx.h"
+
+#include "AlembicIntermediatePolymeshXSI.h"
 
 using namespace XSI;
 using namespace XSI::MATH;

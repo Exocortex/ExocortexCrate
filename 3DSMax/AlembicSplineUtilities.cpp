@@ -1,3 +1,5 @@
+#include "stdafx.h"
+
 #include "AlembicSplineUtilities.h"
 #include "AlembicArchiveStorage.h"
 #include "AlembicLicensing.h"
@@ -9,7 +11,6 @@
 #include "EmptyPolyLineObject.h"
 #include "EmptySplineObject.h"
 #include "Utility.h"
-#include "stdafx.h"
 
 bool isAlembicSplinePositions(AbcG::IObject *pIObj, bool &isConstant)
 {

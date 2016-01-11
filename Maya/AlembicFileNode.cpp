@@ -1,8 +1,9 @@
+#include "stdafx.h"
+
 #include "AlembicFileNode.h"
 #include <cstdio>
 #include <fstream>
 #include <sstream>
-#include "stdafx.h"
 
 MObject AlembicFileNode::mTimeAttr;
 MObject AlembicFileNode::mMultiFileAttr;

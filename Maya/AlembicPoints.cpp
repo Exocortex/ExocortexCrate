@@ -1,6 +1,7 @@
+#include "stdafx.h"
+
 #include "AlembicPoints.h"
 #include "MetaData.h"
-#include "stdafx.h"
 
 #include <maya/MArrayDataBuilder.h>
 

@@ -1,5 +1,6 @@
-#include "AlembicValidateNameCmd.h"
 #include "stdafx.h"
+
+#include "AlembicValidateNameCmd.h"
 
 #include <maya/MFnMesh.h>
 #include <maya/MFnSet.h>

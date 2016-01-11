@@ -1,3 +1,5 @@
+#include "stdafx.h"
+
 #include "AlembicCameraModifier.h"
 #include "AlembicArchiveStorage.h"
 #include "AlembicCameraUtilities.h"
@@ -5,7 +7,6 @@
 #include "AlembicVisibilityController.h"
 #include "AlembicXForm.h"
 #include "CommonProfiler.h"
-#include "stdafx.h"
 #include "utility.h"
 
 using namespace MaxSDK::AssetManagement;

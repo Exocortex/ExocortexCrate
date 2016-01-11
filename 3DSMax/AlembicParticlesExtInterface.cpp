@@ -1,7 +1,8 @@
+#include "stdafx.h"
+
 #include "Alembic.h"
 #include "AlembicParticles.h"
 #include "AlembicParticlesExtInterface.h"
-#include "stdafx.h"
 
 IAlembicParticlesExt::IAlembicParticlesExt(AlembicParticles* pAlembicParticles)
 {

@@ -1,8 +1,9 @@
+#include "stdafx.h"
+
 #include "icompoundproperty.h"
 #include "AlembicLicensing.h"
 #include "extension.h"
 #include "iobject.h"
-#include "stdafx.h"
 #include "timesampling.h"
 
 #undef iProperty

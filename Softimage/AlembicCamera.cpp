@@ -1,6 +1,7 @@
+#include "stdafx.h"
+
 #include "AlembicCamera.h"
 #include "AlembicXform.h"
-#include "stdafx.h"
 
 using namespace XSI;
 using namespace MATH;

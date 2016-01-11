@@ -1,7 +1,8 @@
+#include "stdafx.h"
+
 #include "AlembicLicensing.h"
 #include "CommonProfiler.h"
 #include "Utility.h"
-#include "stdafx.h"
 
 using namespace XSI;
 

@@ -1,6 +1,7 @@
+#include "stdafx.h"
+
 #include "AlembicHair.h"
 #include "MetaData.h"
-#include "stdafx.h"
 
 AlembicHair::AlembicHair(SceneNodePtr eNode, AlembicWriteJob *in_Job,
                          Abc::OObject oParent)

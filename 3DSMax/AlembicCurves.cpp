@@ -1,9 +1,10 @@
+#include "stdafx.h"
+
 #include "AlembicCurves.h"
-#include <surf_api.h>
 #include "AlembicMetadataUtils.h"
 #include "AlembicXform.h"
 #include "SceneEnumProc.h"
-#include "stdafx.h"
+#include <surf_api.h>
 #include "utility.h"
 
 enum SplineExportType {

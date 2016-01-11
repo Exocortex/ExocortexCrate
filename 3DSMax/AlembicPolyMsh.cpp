@@ -1,3 +1,5 @@
+#include "stdafx.h"
+
 #include "Alembic.h"
 #include "AlembicIntermediatePolyMesh3DSMax.h"
 #include "AlembicMetadataUtils.h"
@@ -8,7 +10,6 @@
 #include "CommonSubtreeMerge.h"
 #include "SceneEnumProc.h"
 #include "Utility.h"
-#include "stdafx.h"
 
 // From the SDK
 // How to calculate UV's for face mapped materials.

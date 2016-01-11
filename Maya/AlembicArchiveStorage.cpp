@@ -1,7 +1,8 @@
+#include "stdafx.h"
+
 #include "AlembicArchiveStorage.h"
 #include "AlembicLicensing.h"
 #include "CommonLog.h"
-#include "stdafx.h"
 
 std::string resolvePath_Internal(std::string const& originalPath)
 {

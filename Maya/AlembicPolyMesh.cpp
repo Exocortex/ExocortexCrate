@@ -1,7 +1,8 @@
+#include "stdafx.h"
+
 #include "AlembicPolyMesh.h"
 #include "CommonMeshUtilities.h"
 #include "MetaData.h"
-#include "stdafx.h"
 
 AlembicPolyMesh::AlembicPolyMesh(SceneNodePtr eNode, AlembicWriteJob *in_Job,
                                  Abc::OObject oParent)
