@@ -40,7 +40,6 @@
 
 #include <boost/python.hpp>
 
-
 //#include <Python.h>
 
 using namespace boost::python;
@@ -51,61 +50,57 @@ namespace AbcA = ::Alembic::AbcCoreAbstract::v1;
 //-*****************************************************************************
 void register_iuntypedproperties()
 {
-    //IScalarProperty
-    //
-    class_<Abc::IScalarProperty>( "IScalarProperty",
-                                init<Abc::ICompoundProperty,
-                                const std::string&>() )
-        .def( init<>() )
-        .def( "getName", &Abc::IScalarProperty::getName,
-              return_value_policy<copy_const_reference>() )
-        .def( "getHeader", &Abc::IScalarProperty::getHeader,
-              return_internal_reference<1>() )
-        .def( "isScalar", &Abc::IScalarProperty::isScalar )
-        .def( "isArray", &Abc::IScalarProperty::isArray )
-        .def( "isCompound", &Abc::IScalarProperty::isCompound )
-        .def( "isSimple", &Abc::IScalarProperty::isSimple )
-        .def( "getMetaData", &Abc::IScalarProperty::getMetaData,
-              return_internal_reference<1>() )
-        .def( "getDataType", &Abc::IScalarProperty::getDataType,
-              return_internal_reference<1>() )
-        .def( "getTimeSampling", &Abc::IScalarProperty::getTimeSampling )
-        .def( "getNumSamples", &Abc::IScalarProperty::getNumSamples )
-        .def( "getObject", &Abc::IScalarProperty::getObject,
-              with_custodian_and_ward_postcall<0,1>() )
-        .def( "reset", &Abc::IScalarProperty::reset )
-        .def( "valid", &Abc::IScalarProperty::valid )
-        .def( "__str__", &Abc::IScalarProperty::getName,
-              return_value_policy<copy_const_reference>() )
-        .def( "__nonzero__", &Abc::IScalarProperty::valid )
-        ;
+  // IScalarProperty
+  //
+  class_<Abc::IScalarProperty>(
+      "IScalarProperty", init<Abc::ICompoundProperty, const std::string&>())
+      .def(init<>())
+      .def("getName", &Abc::IScalarProperty::getName,
+           return_value_policy<copy_const_reference>())
+      .def("getHeader", &Abc::IScalarProperty::getHeader,
+           return_internal_reference<1>())
+      .def("isScalar", &Abc::IScalarProperty::isScalar)
+      .def("isArray", &Abc::IScalarProperty::isArray)
+      .def("isCompound", &Abc::IScalarProperty::isCompound)
+      .def("isSimple", &Abc::IScalarProperty::isSimple)
+      .def("getMetaData", &Abc::IScalarProperty::getMetaData,
+           return_internal_reference<1>())
+      .def("getDataType", &Abc::IScalarProperty::getDataType,
+           return_internal_reference<1>())
+      .def("getTimeSampling", &Abc::IScalarProperty::getTimeSampling)
+      .def("getNumSamples", &Abc::IScalarProperty::getNumSamples)
+      .def("getObject", &Abc::IScalarProperty::getObject,
+           with_custodian_and_ward_postcall<0, 1>())
+      .def("reset", &Abc::IScalarProperty::reset)
+      .def("valid", &Abc::IScalarProperty::valid)
+      .def("__str__", &Abc::IScalarProperty::getName,
+           return_value_policy<copy_const_reference>())
+      .def("__nonzero__", &Abc::IScalarProperty::valid);
 
-    //IArrayProperty
-    //
-    class_<Abc::IArrayProperty>( "IArrayProperty",
-                                init<Abc::ICompoundProperty,
-                                const std::string&>() )
-        .def( init<>() )
-        .def( "getName", &Abc::IArrayProperty::getName,
-              return_value_policy<copy_const_reference>() )
-        .def( "getHeader", &Abc::IArrayProperty::getHeader,
-              return_internal_reference<1>() )
-        .def( "isScalar", &Abc::IArrayProperty::isScalar )
-        .def( "isArray", &Abc::IArrayProperty::isArray )
-        .def( "isCompound", &Abc::IArrayProperty::isCompound )
-        .def( "isSimple", &Abc::IArrayProperty::isSimple )
-        .def( "getMetaData", &Abc::IArrayProperty::getMetaData,
-              return_internal_reference<1>() )
-        .def( "getDataType", &Abc::IArrayProperty::getDataType,
-              return_internal_reference<1>() )
-        .def( "getTimeSampling", &Abc::IArrayProperty::getTimeSampling )
-        .def( "getNumSamples", &Abc::IArrayProperty::getNumSamples )
-        .def( "getObject", &Abc::IArrayProperty::getObject,
-              with_custodian_and_ward_postcall<0,1>() )
-        .def( "reset", &Abc::IArrayProperty::reset )
-        .def( "valid", &Abc::IArrayProperty::valid )
-        .def( "__str__", &Abc::IArrayProperty::getName,
-              return_value_policy<copy_const_reference>() )
-        .def( "__nonzero__", &Abc::IArrayProperty::valid )
-        ;
+  // IArrayProperty
+  //
+  class_<Abc::IArrayProperty>(
+      "IArrayProperty", init<Abc::ICompoundProperty, const std::string&>())
+      .def(init<>())
+      .def("getName", &Abc::IArrayProperty::getName,
+           return_value_policy<copy_const_reference>())
+      .def("getHeader", &Abc::IArrayProperty::getHeader,
+           return_internal_reference<1>())
+      .def("isScalar", &Abc::IArrayProperty::isScalar)
+      .def("isArray", &Abc::IArrayProperty::isArray)
+      .def("isCompound", &Abc::IArrayProperty::isCompound)
+      .def("isSimple", &Abc::IArrayProperty::isSimple)
+      .def("getMetaData", &Abc::IArrayProperty::getMetaData,
+           return_internal_reference<1>())
+      .def("getDataType", &Abc::IArrayProperty::getDataType,
+           return_internal_reference<1>())
+      .def("getTimeSampling", &Abc::IArrayProperty::getTimeSampling)
+      .def("getNumSamples", &Abc::IArrayProperty::getNumSamples)
+      .def("getObject", &Abc::IArrayProperty::getObject,
+           with_custodian_and_ward_postcall<0, 1>())
+      .def("reset", &Abc::IArrayProperty::reset)
+      .def("valid", &Abc::IArrayProperty::valid)
+      .def("__str__", &Abc::IArrayProperty::getName,
+           return_value_policy<copy_const_reference>())
+      .def("__nonzero__", &Abc::IArrayProperty::valid);
 }

@@ -1,6 +1,6 @@
 #include "stdafx.h"
-#include "AlembicLicensing.h"
 
+#include "AlembicLicensing.h"
 
 using namespace std;
 
@@ -8,5 +8,3 @@ using namespace std;
 // trick from: http://www.codeproject.com/KB/DLL/DLLModuleFileName.aspx
 EXTERN_C IMAGE_DOS_HEADER __ImageBase;
 #endif
-
-

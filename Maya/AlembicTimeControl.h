@@ -3,31 +3,29 @@
 
 #include "AlembicObject.h"
 
-class AlembicTimeControlNode: public AlembicObjectNode
-{
-public:
-   AlembicTimeControlNode() {}
-   virtual ~AlembicTimeControlNode() {}
+class AlembicTimeControlNode : public AlembicObjectNode {
+ public:
+  AlembicTimeControlNode() {}
+  virtual ~AlembicTimeControlNode() {}
+  // override virtual methods from MPxNode
+  virtual void PreDestruction(){};
+  virtual MStatus compute(const MPlug& plug, MDataBlock& dataBlock);
+  static void* creator() { return (new AlembicTimeControlNode()); }
+  static MStatus initialize();
 
-   // override virtual methods from MPxNode
-   virtual void PreDestruction() {};
-   virtual MStatus compute(const MPlug & plug, MDataBlock & dataBlock);
-   static void* creator() { return (new AlembicTimeControlNode()); }
-   static MStatus initialize();
+ private:
+  // input attributes
+  static MObject mUnitAttr;
 
-private:
-   // input attributes
-   static MObject mUnitAttr;
+  static MObject mTimeAttr;
+  static MObject mFactorAttr;
+  static MObject mOffsetAttr;
 
-   static MObject mTimeAttr;
-   static MObject mFactorAttr;
-   static MObject mOffsetAttr;
-   
-   static MObject mLoopStartAttr;
-   static MObject mLoopEndAttr;
+  static MObject mLoopStartAttr;
+  static MObject mLoopEndAttr;
 
-   // output attributes
-    static MObject mOutTimeAttr;
+  // output attributes
+  static MObject mOutTimeAttr;
 };
 
 #endif

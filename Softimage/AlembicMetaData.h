@@ -3,7 +3,7 @@
 
 class AlembicObject;
 
-void SaveMetaData(XSI::CRef x3dRef, AlembicObject * object);
+void SaveMetaData(XSI::CRef x3dRef, AlembicObject* object);
 
 #include "AlembicObject.h"
 

@@ -40,7 +40,6 @@
 
 #include <boost/python.hpp>
 
-
 //#include <Python.h>
 
 using namespace boost::python;
@@ -51,37 +50,33 @@ namespace AbcA = ::Alembic::AbcCoreAbstract::v1;
 //-*****************************************************************************
 void register_icompoundproperty()
 {
-    // overloads
-    const AbcA::PropertyHeader &
-        ( Abc::ICompoundProperty::*getHeaderByIndex )( size_t ) = \
-        &Abc::ICompoundProperty::getPropertyHeader;
-    const AbcA::PropertyHeader *
-        ( Abc::ICompoundProperty::*getHeaderByName )( const std::string& ) = \
-        &Abc::ICompoundProperty::getPropertyHeader;
+  // overloads
+  const AbcA::PropertyHeader& (Abc::ICompoundProperty::*getHeaderByIndex)(
+      size_t) = &Abc::ICompoundProperty::getPropertyHeader;
+  const AbcA::PropertyHeader* (Abc::ICompoundProperty::*getHeaderByName)(
+      const std::string&) = &Abc::ICompoundProperty::getPropertyHeader;
 
-
-    class_<Abc::ICompoundProperty>( "ICompoundProperty",
-                          init<Abc::ICompoundProperty, const std::string&>() )
-        .def( init<>() )
-        .def( "getHeader", &Abc::ICompoundProperty::getHeader,
-              return_internal_reference<1>() )
-        .def( "getName", &Abc::ICompoundProperty::getName,
-              return_value_policy<copy_const_reference>() )
-        .def( "getNumProperties", &Abc::ICompoundProperty::getNumProperties )
-        .def( "getPropertyHeader", getHeaderByIndex,
-              return_internal_reference<1>() )
-        .def( "getPropertyHeader", getHeaderByName,
-              return_value_policy<reference_existing_object>() )
-        .def( "valid", &Abc::ICompoundProperty::valid )
-        .def( "getParent", &Abc::ICompoundProperty::getParent,
-              with_custodian_and_ward_postcall<0,1>() )
-        .def( "getMetaData", &Abc::ICompoundProperty::getMetaData,
-              return_internal_reference<1>() )
-        .def( "getObject", &Abc::ICompoundProperty::getObject,
-              with_custodian_and_ward_postcall<0,1>() )
-        .def( "reset", &Abc::ICompoundProperty::reset )
-        .def( "__str__", &Abc::ICompoundProperty::getName,
-              return_value_policy<copy_const_reference>() )
-        .def( "__nonzero__", &Abc::ICompoundProperty::valid )
-        ;
+  class_<Abc::ICompoundProperty>(
+      "ICompoundProperty", init<Abc::ICompoundProperty, const std::string&>())
+      .def(init<>())
+      .def("getHeader", &Abc::ICompoundProperty::getHeader,
+           return_internal_reference<1>())
+      .def("getName", &Abc::ICompoundProperty::getName,
+           return_value_policy<copy_const_reference>())
+      .def("getNumProperties", &Abc::ICompoundProperty::getNumProperties)
+      .def("getPropertyHeader", getHeaderByIndex,
+           return_internal_reference<1>())
+      .def("getPropertyHeader", getHeaderByName,
+           return_value_policy<reference_existing_object>())
+      .def("valid", &Abc::ICompoundProperty::valid)
+      .def("getParent", &Abc::ICompoundProperty::getParent,
+           with_custodian_and_ward_postcall<0, 1>())
+      .def("getMetaData", &Abc::ICompoundProperty::getMetaData,
+           return_internal_reference<1>())
+      .def("getObject", &Abc::ICompoundProperty::getObject,
+           with_custodian_and_ward_postcall<0, 1>())
+      .def("reset", &Abc::ICompoundProperty::reset)
+      .def("__str__", &Abc::ICompoundProperty::getName,
+           return_value_policy<copy_const_reference>())
+      .def("__nonzero__", &Abc::ICompoundProperty::valid);
 }

@@ -3,19 +3,18 @@
 
 #include "AlembicObject.h"
 
-class AlembicNurbs: public AlembicObject
-{
-private:
+class AlembicNurbs : public AlembicObject {
+ private:
   AbcG::ONuPatchSchema mNurbsSchema;
   AbcG::ONuPatchSchema::Sample mNurbsSample;
 
-public:
+ public:
+  AlembicNurbs(SceneNodePtr eNode, AlembicWriteJob* in_Job,
+               Abc::OObject oParent);
+  ~AlembicNurbs();
 
-   AlembicNurbs(SceneNodePtr eNode, AlembicWriteJob * in_Job, Abc::OObject oParent);
-   ~AlembicNurbs();
-
-   virtual Abc::OCompoundProperty GetCompound();
-   virtual XSI::CStatus Save(double time);
+  virtual Abc::OCompoundProperty GetCompound();
+  virtual XSI::CStatus Save(double time);
 };
 
 #endif

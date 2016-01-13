@@ -40,7 +40,6 @@
 
 #include <boost/python.hpp>
 
-
 //#include <Python.h>
 
 using namespace boost::python;
@@ -51,9 +50,8 @@ namespace AbcA = ::Alembic::AbcCoreAbstract::v1;
 //-*****************************************************************************
 void register_abcenums()
 {
-    enum_<Abc::SchemaInterpMatching>( "SchemaInterpMatching" )
-        .value( "kStrictMatching", Abc::kStrictMatching )
-        .value( "kNoMatching", Abc::kNoMatching )
-        .value( "kSchemaTitleMatching", Abc::kSchemaTitleMatching )
-        ;
+  enum_<Abc::SchemaInterpMatching>("SchemaInterpMatching")
+      .value("kStrictMatching", Abc::kStrictMatching)
+      .value("kNoMatching", Abc::kNoMatching)
+      .value("kSchemaTitleMatching", Abc::kSchemaTitleMatching);
 }

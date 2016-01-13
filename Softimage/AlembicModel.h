@@ -3,20 +3,20 @@
 
 #include "AlembicObject.h"
 
-class AlembicModel: public AlembicObject
-{
-private:
+class AlembicModel : public AlembicObject {
+ private:
   AbcG::OXformSchema mXformSchema;
   AbcG::XformSample mXformSample;
   AbcG::OUcharProperty mXformXSINodeType;
   AbcG::OVisibilityProperty mOVisibility;
-public:
 
-   AlembicModel(SceneNodePtr eNode, AlembicWriteJob * in_Job, Abc::OObject oParent);
-   ~AlembicModel();
+ public:
+  AlembicModel(SceneNodePtr eNode, AlembicWriteJob* in_Job,
+               Abc::OObject oParent);
+  ~AlembicModel();
 
-   virtual Abc::OCompoundProperty GetCompound();
-   virtual XSI::CStatus Save(double time);
+  virtual Abc::OCompoundProperty GetCompound();
+  virtual XSI::CStatus Save(double time);
 };
 
 #endif

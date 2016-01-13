@@ -4,17 +4,18 @@
 #include "CommonAlembic.h"
 
 #ifndef _BOOL
-  #define _BOOL
+#define _BOOL
 #endif
 
 #include <maya/MAngle.h>
 #include <maya/MAnimControl.h>
 #include <maya/MArgList.h>
 #include <maya/MArgParser.h>
+#include <maya/MCommonRenderSettingsData.h>
+#include <maya/MDGContext.h>
 #include <maya/MDagPath.h>
 #include <maya/MDagPathArray.h>
 #include <maya/MDataHandle.h>
-#include <maya/MDGContext.h>
 #include <maya/MFileIO.h>
 #include <maya/MFileObject.h>
 #include <maya/MFloatArray.h>
@@ -60,6 +61,7 @@
 #include <maya/MQuaternion.h>
 #include <maya/MRenderLine.h>
 #include <maya/MRenderLineArray.h>
+#include <maya/MRenderUtil.h>
 #include <maya/MSceneMessage.h>
 #include <maya/MSelectionList.h>
 #include <maya/MString.h>
@@ -68,18 +70,16 @@
 #include <maya/MTransformationMatrix.h>
 #include <maya/MVector.h>
 #include <maya/MVectorArray.h>
-#include <maya/MRenderUtil.h>
-#include <maya/MCommonRenderSettingsData.h>
 
-#include "Utility.h"
 #include "AlembicArchiveStorage.h"
+#include "Utility.h"
 
 #ifndef LONG
-	typedef long LONG;
+typedef long LONG;
 #endif
 
 #ifndef ULONG
-	typedef unsigned long ULONG;
+typedef unsigned long ULONG;
 #endif
 
 #endif  // _FOUNDATION_H_
