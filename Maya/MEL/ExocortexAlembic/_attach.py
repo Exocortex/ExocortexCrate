@@ -51,7 +51,7 @@ def attachPolyMesh(name, identifier, jobInfo, isConstant=False):
 		return
 
 	# create deformer, and attach time and file
-	newDform = cmds.deformer(name, type="ExocortexAlembicPolyMeshDeform")[0]
+	newDform = cmds.deformer(name, type="ExocortexAlembicPolyMeshDeform", before=True)[0]
 	cmds.setAttr(newDform+".identifier", identifier, type="string")
 	attachTimeAndFile(newDform, jobInfo, isConstant)
 
@@ -91,7 +91,7 @@ def attachCurves(name, identifier, jobInfo, isConstant=False):
 		return
 
 	# create deformer, and attach time and file
-	newDform = cmds.deformer(name, type="ExocortexAlembicCurvesDeform")[0]
+	newDform = cmds.deformer(name, type="ExocortexAlembicCurvesDeform", before=True)[0]
 	cmds.setAttr(newDform+".identifier", identifier, type="string")
 	attachTimeAndFile(newDform, jobInfo, isConstant)
 
