@@ -18,7 +18,8 @@ AlembicCamera::~AlembicCamera()
   mSchema.reset();
 }
 
-MStatus AlembicCamera::Save(double time)
+MStatus AlembicCamera::Save(double time, unsigned int timeIndex,
+    bool isFirstFrame)
 {
   ESS_PROFILE_SCOPE("AlembicCamera::Save");
   // access the camera
@@ -26,6 +27,22 @@ MStatus AlembicCamera::Save(double time)
 
   // save the metadata
   SaveMetaData(this);
+
+  if (isFirstFrame) {
+    Abc::OCompoundProperty cp;
+    Abc::OCompoundProperty up;
+    if (AttributesWriter::hasAnyAttr(node, *GetJob())) {
+      cp = mSchema.getArbGeomParams();
+      up = mSchema.getUserProperties();
+    }
+
+    mAttrs = AttributesWriterPtr(
+        new AttributesWriter(cp, up, GetMyParent(), node, timeIndex, *GetJob())
+        );
+  }
+  else {
+    mAttrs->write();
+  }
 
   // bake in the device aspect ratio since other programs do not support it (see
   // the article "Maya to Softimage: Camera Interoperability")

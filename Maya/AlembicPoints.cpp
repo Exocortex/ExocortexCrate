@@ -146,7 +146,8 @@ AlembicPoints::~AlembicPoints()
   mSchema.reset();
 }
 
-MStatus AlembicPoints::Save(double time)
+MStatus AlembicPoints::Save(double time, unsigned int timeIndex,
+    bool isFirstFrame)
 {
   ESS_PROFILE_SCOPE("AlembicPoints::Save");
   // access the geometry
@@ -154,6 +155,23 @@ MStatus AlembicPoints::Save(double time)
 
   // save the metadata
   SaveMetaData(this);
+
+  // save the attributes
+  if (isFirstFrame) {
+    Abc::OCompoundProperty cp;
+    Abc::OCompoundProperty up;
+    if (AttributesWriter::hasAnyAttr(node, *GetJob())) {
+      cp = mSchema.getArbGeomParams();
+      up = mSchema.getUserProperties();
+    }
+
+    mAttrs = AttributesWriterPtr(
+        new AttributesWriter(cp, up, GetMyParent(), node, timeIndex, *GetJob())
+        );
+  }
+  else {
+    mAttrs->write();
+  }
 
   // prepare the bounding box
   Abc::Box3d bbox;

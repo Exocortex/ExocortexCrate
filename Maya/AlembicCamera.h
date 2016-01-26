@@ -2,12 +2,14 @@
 #define _ALEMBIC_CAMERA_H_
 
 #include "AlembicObject.h"
+#include "AttributesWriter.h"
 
 class AlembicCamera : public AlembicObject {
  private:
   AbcG::OCamera mObject;
   AbcG::OCameraSchema mSchema;
   AbcG::CameraSample mSample;
+  AttributesWriterPtr mAttrs;
 
  public:
   AlembicCamera(SceneNodePtr eNode, AlembicWriteJob* in_Job,
@@ -16,7 +18,8 @@ class AlembicCamera : public AlembicObject {
 
   virtual Abc::OObject GetObject() { return mObject; }
   virtual Abc::OCompoundProperty GetCompound() { return mSchema; }
-  virtual MStatus Save(double time);
+  virtual MStatus Save(double time, unsigned int timeIndex,
+      bool isFirstFrame);
 };
 
 class AlembicCameraNode : public AlembicObjectNode {

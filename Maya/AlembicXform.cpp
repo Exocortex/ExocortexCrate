@@ -1,9 +1,10 @@
 #include "stdafx.h"
 
 #include "AlembicXform.h"
+#include "MetaData.h"
+
 #include <maya/MAnimUtil.h>
 #include <maya/MDistance.h>
-#include "MetaData.h"
 
 void AlembicXform::testAnimatedVisibility(AlembicObject *aobj, bool animTS,
                                           bool flatHierarchy)
@@ -76,7 +77,8 @@ AlembicXform::~AlembicXform()
 
 #include <maya/MEulerRotation.h>
 #include <maya/MFnTransform.h>
-MStatus AlembicXform::Save(double time)
+MStatus AlembicXform::Save(double time, unsigned int timeIndex,
+    bool isFirstFrame)
 {
   ESS_PROFILE_SCOPE("AlembicXform::Save");
 
@@ -101,6 +103,22 @@ MStatus AlembicXform::Save(double time)
   // ESS_LOG_WARNING("Rotation info, axis x:" << euler.x);
   // ESS_LOG_WARNING("Scale info:" << scale[0] << ", " << scale[1] << ", " <<
   // scale[2]);
+
+  if (isFirstFrame) {
+    Abc::OCompoundProperty cp;
+    Abc::OCompoundProperty up;
+    if (AttributesWriter::hasAnyAttr(xform, *GetJob())) {
+      cp = mSchema.getArbGeomParams();
+      up = mSchema.getUserProperties();
+    }
+
+    mAttrs = AttributesWriterPtr(
+        new AttributesWriter(cp, up, GetMyParent(), xform, timeIndex, *GetJob())
+        );
+  }
+  else {
+    mAttrs->write();
+  }
 
   switch (visInfo.visibility) {
     case NOT_VISIBLE:

@@ -38,7 +38,8 @@ class AlembicObject {
   int GetNumSamples() { return mNumSamples; }
   MString GetUniqueName(const MString& in_Name);
 
-  virtual MStatus Save(double time) = 0;
+  virtual MStatus Save(double time, unsigned int timeIndex,
+      bool isFirstFrame) = 0;
 };
 
 class AlembicObjectNode : public MPxNode {

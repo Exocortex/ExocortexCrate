@@ -1,6 +1,8 @@
 #ifndef _ALEMBIC_WRITE_JOB_H_
 #define _ALEMBIC_WRITE_JOB_H_
 
+#include <set>
+
 #include "AlembicObject.h"
 
 #include "CommonRegex.h"
@@ -18,6 +20,10 @@ class AlembicWriteJob {
   unsigned int mTs;
   std::map<std::string, std::string> mOptions;
   bool useOgawa;
+  std::vector<std::string> mPrefixFilters;
+  std::set<std::string> mAttributes;
+  std::vector<std::string> mUserPrefixFilters;
+  std::set<std::string> mUserAttributes;
 
   multiMapStrAbcObj mapObjects;
   double mFrameRate;
@@ -27,7 +33,11 @@ class AlembicWriteJob {
 
  public:
   AlembicWriteJob(const MString& in_FileName, const MObjectArray& in_Selection,
-                  const MDoubleArray& in_Frames, bool useOgawa);
+                  const MDoubleArray& in_Frames, bool useOgawa,
+                  const std::vector<std::string>& in_prefixFilters,
+                  const std::set<std::string>& in_attributes,
+                  const std::vector<std::string>& in_userPrefixFilters,
+                  const std::set<std::string>& in_userAttributes);
   ~AlembicWriteJob();
 
   // to change the name of objects while exporting!
@@ -38,6 +48,10 @@ class AlembicWriteJob {
   const std::vector<double>& GetFrames() { return mFrames; }
   const MString& GetFileName() { return mFileName; }
   unsigned int GetAnimatedTs() { return mTs; }
+  const std::vector<std::string>& GetPrefixFilters() const { return mPrefixFilters; }
+  const std::set<std::string>& GetAttributes() const { return mAttributes; }
+  const std::vector<std::string>& GetUserPrefixFilters() const { return mUserPrefixFilters; }
+  const std::set<std::string>& GetUserAttributes() const { return mUserAttributes; }
   void SetOption(const MString& in_Name, const MString& in_Value);
   bool HasOption(const MString& in_Name);
   MString GetOption(const MString& in_Name);

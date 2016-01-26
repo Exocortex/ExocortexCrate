@@ -23,7 +23,8 @@ AlembicPolyMesh::~AlembicPolyMesh()
   mSchema.reset();
 }
 
-MStatus AlembicPolyMesh::Save(double time)
+MStatus AlembicPolyMesh::Save(double time, unsigned int timeIndex,
+    bool isFirstFrame)
 {
   ESS_PROFILE_SCOPE("AlembicPolyMesh::Save");
   // access the geometry
@@ -38,6 +39,23 @@ MStatus AlembicPolyMesh::Save(double time)
   mSample.reset();
 
   SaveMetaData(this);
+
+  // save the attributes
+  if (isFirstFrame) {
+    Abc::OCompoundProperty cp;
+    Abc::OCompoundProperty up;
+    if (AttributesWriter::hasAnyAttr(node, *GetJob())) {
+      cp = mSchema.getArbGeomParams();
+      up = mSchema.getUserProperties();
+    }
+
+    mAttrs = AttributesWriterPtr(
+        new AttributesWriter(cp, up, GetMyParent(), node, timeIndex, *GetJob())
+        );
+  }
+  else {
+    mAttrs->write();
+  }
 
   // prepare the bounding box
   Abc::Box3d bbox;

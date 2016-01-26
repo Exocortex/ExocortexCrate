@@ -5,6 +5,7 @@
 #include <maya/MFnParticleSystem.h>
 #include <list>
 #include "AlembicObject.h"
+#include "AttributesWriter.h"
 
 class AlembicPoints : public AlembicObject {
  private:
@@ -14,6 +15,8 @@ class AlembicPoints : public AlembicObject {
   AbcG::OPoints mObject;
   AbcG::OPointsSchema mSchema;
   AbcG::OPointsSchema::Sample mSample;
+
+  AttributesWriterPtr mAttrs;
 
   Abc::OFloatArrayProperty mAgeProperty;
   Abc::OFloatArrayProperty mMassProperty;
@@ -43,7 +46,8 @@ class AlembicPoints : public AlembicObject {
 
   virtual Abc::OObject GetObject() { return mObject; }
   virtual Abc::OCompoundProperty GetCompound() { return mSchema; }
-  virtual MStatus Save(double time);
+  virtual MStatus Save(double time, unsigned int timeIndex,
+      bool isFirstFrame);
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

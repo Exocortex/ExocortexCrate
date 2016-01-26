@@ -3,6 +3,7 @@
 
 #include <maya/MFnMesh.h>
 #include "AlembicObject.h"
+#include "AttributesWriter.h"
 
 class AlembicPolyMesh : public AlembicObject {
  private:
@@ -10,6 +11,8 @@ class AlembicPolyMesh : public AlembicObject {
   AbcG::OPolyMeshSchema mSchema;
   int mPointCountLastFrame;
   std::vector<unsigned int> mSampleLookup;
+
+  AttributesWriterPtr mAttrs;
 
   AbcG::OPolyMeshSchema::Sample mSample;
   std::vector<AbcG::OV2fGeomParam> mUvParams;
@@ -21,7 +24,8 @@ class AlembicPolyMesh : public AlembicObject {
 
   virtual Abc::OObject GetObject() { return mObject; }
   virtual Abc::OCompoundProperty GetCompound() { return mSchema; }
-  virtual MStatus Save(double time);
+  virtual MStatus Save(double time, unsigned int timeIndex,
+      bool isFirstFrame);
 };
 
 class AlembicPolyMeshNode : public AlembicObjectNode {

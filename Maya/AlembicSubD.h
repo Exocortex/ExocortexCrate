@@ -4,12 +4,16 @@
 #include <maya/MFnSubd.h>
 #include <maya/MUint64Array.h>
 #include "AlembicObject.h"
+#include "AttributesWriter.h"
 
 class AlembicSubD : public AlembicObject {
  private:
   AbcG::OSubD mObject;
   AbcG::OSubDSchema mSchema;
   AbcG::OSubDSchema::Sample mSample;
+
+  AttributesWriterPtr mAttrs;
+
   std::vector<Abc::V3f> mPosVec;
   std::vector<Abc::int32_t> mFaceCountVec;
   std::vector<Abc::int32_t> mFaceIndicesVec;
@@ -24,7 +28,8 @@ class AlembicSubD : public AlembicObject {
 
   virtual Abc::OObject GetObject() { return mObject; }
   virtual Abc::OCompoundProperty GetCompound() { return mSchema; }
-  virtual MStatus Save(double time);
+  virtual MStatus Save(double time, unsigned int timeIndex,
+      bool isFirstFrame);
 };
 
 class AlembicSubDNode : public AlembicObjectNode {
