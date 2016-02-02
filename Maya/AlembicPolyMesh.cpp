@@ -1,6 +1,7 @@
 #include "stdafx.h"
 
 #include "AlembicPolyMesh.h"
+#include "AttributesReading.h"
 #include "CommonMeshUtilities.h"
 #include "MetaData.h"
 
@@ -445,6 +446,9 @@ MObject AlembicPolyMeshNode::mNormalsAttr;
 MObject AlembicPolyMeshNode::mUvsAttr;
 MObject AlembicPolyMeshNode::mOutGeometryAttr;
 
+MObject AlembicPolyMeshNode::mGeomParamsList;
+MObject AlembicPolyMeshNode::mUserAttrsList;
+
 MStatus AlembicPolyMeshNode::initialize()
 {
   ESS_PROFILE_SCOPE("AlembicPolyMeshNode::initialize");
@@ -512,6 +516,24 @@ MStatus AlembicPolyMeshNode::initialize()
   status = tAttr.setKeyable(false);
   status = tAttr.setHidden(false);
   status = addAttribute(mOutGeometryAttr);
+
+  // output for list of ArbGeomParams
+  mGeomParamsList = tAttr.create("ExocortexAlembic_GeomParams", "exo_gp",
+      MFnData::kString, emptyStringObject);
+  status = tAttr.setStorable(true);
+  status = tAttr.setKeyable(false);
+  status = tAttr.setHidden(false);
+  status = tAttr.setInternal(true);
+  status = addAttribute(mGeomParamsList);
+
+  // output for list of UserAttributes
+  mUserAttrsList = tAttr.create("ExocortexAlembic_UserAttributes", "exo_ua",
+      MFnData::kString, emptyStringObject);
+  status = tAttr.setStorable(true);
+  status = tAttr.setKeyable(false);
+  status = tAttr.setHidden(false);
+  status = tAttr.setInternal(true);
+  status = addAttribute(mUserAttrsList);
 
   // create a mapping
   status = attributeAffects(mTimeAttr, mOutGeometryAttr);
@@ -597,6 +619,25 @@ MStatus AlembicPolyMeshNode::compute(const MPlug &plug, MDataBlock &dataBlock)
 
   if (!mSchema.valid()) {
     return MStatus::kFailure;
+  }
+
+  {
+    ESS_PROFILE_SCOPE("AlembicPolyMeshNode::compute readProps");
+    Alembic::Abc::ICompoundProperty arbProp = mSchema.getArbGeomParams();
+    Alembic::Abc::ICompoundProperty userProp = mSchema.getUserProperties();
+    readProps(inputTime, arbProp, dataBlock, thisMObject());
+    readProps(inputTime, userProp, dataBlock, thisMObject());
+
+    // Set all plugs as clean
+    // Even if one of them failed to get set,
+    // trying again in this frame isn't going to help
+    for (unsigned int i = 0; i < mGeomParamPlugs.length(); i++) {
+      dataBlock.outputValue(mGeomParamPlugs[i]).setClean();
+    }
+
+    for (unsigned int i = 0; i < mUserAttrPlugs.length(); i++) {
+      dataBlock.outputValue(mUserAttrPlugs[i]).setClean();
+    }
   }
 
   // UVs
@@ -1061,6 +1102,41 @@ MStatus AlembicPolyMeshNode::compute(const MPlug &plug, MDataBlock &dataBlock)
   return MStatus::kSuccess;
 }
 
+// Cache the plug arrays for use in setDependentsDirty
+bool AlembicPolyMeshNode::setInternalValueInContext(const MPlug & plug,
+    const MDataHandle & dataHandle,
+    MDGContext &)
+{
+  if (plug == mGeomParamsList) {
+    MString geomParamsStr = dataHandle.asString();
+    getPlugArrayFromAttrList(geomParamsStr, thisMObject(), mGeomParamPlugs);
+  }
+  else if (plug == mUserAttrsList) {
+    MString userAttrsStr = dataHandle.asString();
+    getPlugArrayFromAttrList(userAttrsStr, thisMObject(), mUserAttrPlugs);
+  }
+
+  return false;
+}
+
+MStatus AlembicPolyMeshNode::setDependentsDirty(const MPlug &plugBeingDirtied,
+    MPlugArray &affectedPlugs)
+{
+  if (plugBeingDirtied == mFileNameAttr || plugBeingDirtied == mIdentifierAttr
+      || plugBeingDirtied == mTimeAttr) {
+
+    for (unsigned int i = 0; i < mGeomParamPlugs.length(); i++) {
+      affectedPlugs.append(mGeomParamPlugs[i]);
+    }
+
+    for (unsigned int i = 0; i < mUserAttrPlugs.length(); i++) {
+      affectedPlugs.append(mUserAttrPlugs[i]);
+    }
+  }
+
+  return MStatus::kSuccess;
+}
+
 void AlembicPolyMeshDeformNode::PreDestruction()
 {
   mSchema.reset();
@@ -1072,6 +1148,9 @@ AlembicPolyMeshDeformNode::~AlembicPolyMeshDeformNode() { PreDestruction(); }
 MObject AlembicPolyMeshDeformNode::mTimeAttr;
 MObject AlembicPolyMeshDeformNode::mFileNameAttr;
 MObject AlembicPolyMeshDeformNode::mIdentifierAttr;
+
+MObject AlembicPolyMeshDeformNode::mGeomParamsList;
+MObject AlembicPolyMeshDeformNode::mUserAttrsList;
 
 MStatus AlembicPolyMeshDeformNode::initialize()
 {
@@ -1105,6 +1184,24 @@ MStatus AlembicPolyMeshDeformNode::initialize()
   status = tAttr.setStorable(true);
   status = tAttr.setKeyable(false);
   status = addAttribute(mIdentifierAttr);
+
+  // output for list of ArbGeomParams
+  mGeomParamsList = tAttr.create("ExocortexAlembic_GeomParams", "exo_gp",
+      MFnData::kString, emptyStringObject);
+  status = tAttr.setStorable(true);
+  status = tAttr.setKeyable(false);
+  status = tAttr.setHidden(false);
+  status = tAttr.setInternal(true);
+  status = addAttribute(mGeomParamsList);
+
+  // output for list of UserAttributes
+  mUserAttrsList = tAttr.create("ExocortexAlembic_UserAttributes", "exo_ua",
+      MFnData::kString, emptyStringObject);
+  status = tAttr.setStorable(true);
+  status = tAttr.setKeyable(false);
+  status = tAttr.setHidden(false);
+  status = tAttr.setInternal(true);
+  status = addAttribute(mUserAttrsList);
 
   // create a mapping
   status = attributeAffects(mTimeAttr, outputGeom);
@@ -1176,6 +1273,25 @@ MStatus AlembicPolyMeshDeformNode::deform(MDataBlock &dataBlock,
 
   if (!mSchema.valid()) {
     return MStatus::kFailure;
+  }
+
+  {
+    ESS_PROFILE_SCOPE("AlembicPolyMeshDeformNode::deform readProps");
+    Alembic::Abc::ICompoundProperty arbProp = mSchema.getArbGeomParams();
+    Alembic::Abc::ICompoundProperty userProp = mSchema.getUserProperties();
+    readProps(inputTime, arbProp, dataBlock, thisMObject());
+    readProps(inputTime, userProp, dataBlock, thisMObject());
+
+    // Set all plugs as clean
+    // Even if one of them failed to get set,
+    // trying again in this frame isn't going to help
+    for (unsigned int i = 0; i < mGeomParamPlugs.length(); i++) {
+      dataBlock.outputValue(mGeomParamPlugs[i]).setClean();
+    }
+
+    for (unsigned int i = 0; i < mUserAttrPlugs.length(); i++) {
+      dataBlock.outputValue(mUserAttrPlugs[i]).setClean();
+    }
   }
 
   // get the sample
@@ -1259,6 +1375,41 @@ MStatus AlembicPolyMeshDeformNode::deform(MDataBlock &dataBlock,
       iter.setPosition(pt);
     }
   }
+  return MStatus::kSuccess;
+}
+
+// Cache the plug arrays for use in setDependentsDirty
+bool AlembicPolyMeshDeformNode::setInternalValueInContext(const MPlug & plug,
+    const MDataHandle & dataHandle,
+    MDGContext &)
+{
+  if (plug == mGeomParamsList) {
+    MString geomParamsStr = dataHandle.asString();
+    getPlugArrayFromAttrList(geomParamsStr, thisMObject(), mGeomParamPlugs);
+  }
+  else if (plug == mUserAttrsList) {
+    MString userAttrsStr = dataHandle.asString();
+    getPlugArrayFromAttrList(userAttrsStr, thisMObject(), mUserAttrPlugs);
+  }
+
+  return false;
+}
+
+MStatus AlembicPolyMeshDeformNode::setDependentsDirty(const MPlug &plugBeingDirtied,
+    MPlugArray &affectedPlugs)
+{
+  if (plugBeingDirtied == mFileNameAttr || plugBeingDirtied == mIdentifierAttr
+      || plugBeingDirtied == mTimeAttr) {
+
+    for (unsigned int i = 0; i < mGeomParamPlugs.length(); i++) {
+      affectedPlugs.append(mGeomParamPlugs[i]);
+    }
+
+    for (unsigned int i = 0; i < mUserAttrPlugs.length(); i++) {
+      affectedPlugs.append(mUserAttrPlugs[i]);
+    }
+  }
+
   return MStatus::kSuccess;
 }
 

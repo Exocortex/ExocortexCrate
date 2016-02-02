@@ -49,6 +49,12 @@ class AlembicXformNode : public AlembicObjectNode {
   static void* creator() { return (new AlembicXformNode()); }
   static MStatus initialize();
 
+  bool setInternalValueInContext(const MPlug & plug,
+      const MDataHandle & dataHandle,
+      MDGContext & ctx);
+  MStatus setDependentsDirty(const MPlug &plugBeingDirtied,
+      MPlugArray &affectedPlugs);
+
  private:
   // input attributes
   static MObject mTimeAttr;
@@ -56,6 +62,8 @@ class AlembicXformNode : public AlembicObjectNode {
   static MObject mIdentifierAttr;
   MString mFileName;
   MString mIdentifier;
+  MPlugArray mGeomParamPlugs;
+  MPlugArray mUserAttrPlugs;
   AbcG::IXformSchema mSchema;
   std::map<AbcA::index_t, Abc::M44d> mSampleIndicesToMatrices;
   Abc::M44d mLastMatrix;
@@ -81,6 +89,9 @@ class AlembicXformNode : public AlembicObjectNode {
   static MObject mOutScaleZAttr;
   static MObject mOutScaleAttr;
   static MObject mOutVisibilityAttr;
+
+  static MObject mGeomParamsList;
+  static MObject mUserAttrsList;
 };
 
 #endif

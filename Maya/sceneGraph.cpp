@@ -1,9 +1,11 @@
 #include "stdafx.h"
 
+#include "AttributesReading.h"
 #include "sceneGraph.h"
 
 #include "CommonLog.h"
 
+#include <maya/MDGModifier.h>
 #include <maya/MFnDagNode.h>
 #include <maya/MItDag.h>
 
@@ -17,6 +19,17 @@ static void __file_and_time_control_kill(const MString &var)
 {
   MGlobal::executePythonCommand(
       var + " = None\n");  // deallocate this variable in Python!
+}
+
+MObject findMObjectByName(const std::string &obj)
+{
+  MSelectionList selList;
+  selList.add(obj.c_str());
+
+  MObject result;
+  selList.getDependNode(0, result);
+
+  return result;
 }
 
 AlembicFileAndTimeControl::~AlembicFileAndTimeControl(void)
@@ -61,7 +74,8 @@ bool SceneNodeMaya::replaceSimilarData(const char *functionName,
              this->connectTo.length() == 0 ? this->dccIdentifier.c_str() : this->connectTo,
              fileNode->dccIdentifier.c_str(), fileAndTime->variable(),
              PythonBool(fileNode->pObjCache->isConstant));
-  MStatus result = MGlobal::executePythonCommand(cmd);
+  MString results;
+  MStatus result = MGlobal::executePythonCommand(cmd, results);
   if (result.error()) {
     ESS_LOG_WARNING("Attached failed for " << functionName << ", reason: "
                                            << result.errorString().asChar());
@@ -102,24 +116,134 @@ bool SceneNodeMaya::replaceData(SceneNodeAlembicPtr fileNode,
   return false;
 }
 
+bool connectPropsToShape(MFnDependencyNode &depNode,
+    MFnDependencyNode &readerDepNode)
+{
+  MStatus status;
+  MPlug geomParamsPlug = readerDepNode.findPlug("ExocortexAlembic_GeomParams",
+      &status);
+  MPlug userAttrsPlug = readerDepNode.findPlug("ExocortexAlembic_UserAttributes",
+      &status);
+  if (status != MStatus::kSuccess) {
+    return false;
+  }
+
+  MString geomProp;
+  status = geomParamsPlug.getValue(geomProp);
+  MString userProp;
+  status = userAttrsPlug.getValue(userProp);
+  if (status != MStatus::kSuccess) {
+    return false;
+  }
+
+  MStringArray geomProps;
+  geomProp.split(';', geomProps);
+  MStringArray userProps;
+  userProp.split(';', userProps);
+
+  MDGModifier mod;
+  for (unsigned int i = 0; i < geomProps.length(); i++) {
+    MStatus propStatus;
+    MPlug readerPlug = readerDepNode.findPlug(geomProps[i], &propStatus);
+    MPlug shapePlug = depNode.findPlug(geomProps[i], &propStatus);
+    if (propStatus == MStatus::kSuccess) {
+      mod.connect(readerPlug, shapePlug);
+    }
+  }
+
+  for (unsigned int i = 0; i < userProps.length(); i++) {
+    MStatus propStatus;
+    MPlug readerPlug = readerDepNode.findPlug(userProps[i], &propStatus);
+    MPlug shapePlug = depNode.findPlug(userProps[i], &propStatus);
+    if (propStatus == MStatus::kSuccess) {
+      mod.connect(readerPlug, shapePlug);
+    }
+  }
+
+  status = mod.doIt();
+
+  return (status == MStatus::kSuccess);
+}
+
+template<typename OBJECT_TYPE, typename SCHEMA_TYPE>
+bool addAndConnectPropsToShape(SceneNodeAppPtr &newAppNode)
+{
+  MStatus status;
+  MObject node = findMObjectByName(newAppNode->dccIdentifier);
+  MObject readerNode = findMObjectByName(newAppNode->dccReaderIdentifier);
+
+  MFnDependencyNode depNode(node, &status);
+  MFnDependencyNode readerDepNode(readerNode, &status);
+
+  MPlug fileNamePlug = readerDepNode.findPlug("fileName", &status);
+  MPlug identifierPlug = readerDepNode.findPlug("identifier", &status);
+  MPlug geomParamsPlug = readerDepNode.findPlug("ExocortexAlembic_GeomParams",
+      &status);
+  MPlug userAttrsPlug = readerDepNode.findPlug("ExocortexAlembic_UserAttributes",
+      &status);
+
+  MString fileName;
+  status = fileNamePlug.getValue(fileName);
+  MString identifier;
+  status = identifierPlug.getValue(identifier);
+
+  if (status != MStatus::kSuccess) {
+    return false;
+  }
+
+  // Don't show these warnings; let the reader node display them
+  Alembic::Abc::IObject iObj = getObjectFromArchive(fileName, identifier);
+  if (!iObj.valid()) {
+    return false;
+  }
+
+  OBJECT_TYPE obj = OBJECT_TYPE(iObj, Alembic::Abc::kWrapExisting);
+  if (!obj.valid()) {
+    return false;
+  }
+
+  SCHEMA_TYPE schema = obj.getSchema();
+
+  if (!schema.valid()) {
+    return false;
+  }
+
+  Alembic::Abc::ICompoundProperty arbProp = schema.getArbGeomParams();
+  Alembic::Abc::ICompoundProperty userProp = schema.getUserProperties();
+
+  addProps(arbProp, node, false, true);
+  addProps(userProp, node, false, true);
+  std::string arbPropStr = addProps(arbProp, readerNode, false, false);
+  std::string userPropStr = addProps(userProp, readerNode, false, false);
+
+  geomParamsPlug.setValue(arbPropStr.c_str());
+  userAttrsPlug.setValue(userPropStr.c_str());
+
+  return connectPropsToShape(depNode, readerDepNode);
+}
+
 bool SceneNodeMaya::executeAddChild(const MString &cmd,
                                     SceneNodeAppPtr &newAppNode)
 {
-  MString result;
-  MGlobal::executePythonCommand(cmd, result);
-  if (result.length() == 0) {
+  std::string cmdstr(cmd.asChar());
+  MStringArray results;
+  MGlobal::executePythonCommand(cmdstr.c_str(), results);
+  if (results.length() == 0 || results[0].length() == 0) {
     return false;
   }
-  else if (result.asChar()[0] == '?') {
+  else if (results.length() != 2 || results[1].length() == 0) {
 #ifdef _DEBUG
-    MGlobal::displayError(result);
+    std::ostringstream resultsStream;
+    resultsStream << results;
+    MGlobal::displayError(resultsStream.str().c_str());
     MGlobal::displayError(cmd);
 #endif
     return false;
   }
 
-  newAppNode->dccIdentifier = result.asChar();
+  newAppNode->dccIdentifier = results[0].asChar();
   newAppNode->name = newAppNode->dccIdentifier;
+  newAppNode->dccReaderIdentifier = results[1].asChar();
   return true;
 }
 
@@ -160,9 +284,15 @@ bool SceneNodeMaya::addXformChild(SceneNodeAlembicPtr fileNode,
 
   MString cmd;
   cmd.format(format, fileNode->name.c_str(), fileNode->dccIdentifier.c_str(),
-             fileAndTime->variable(), parent,
-             PythonBool(fileNode->pObjCache->isConstant));
-  return executeAddChild(cmd, newAppNode);
+      fileAndTime->variable(), parent,
+      PythonBool(fileNode->pObjCache->isConstant));
+  if (!executeAddChild(cmd, newAppNode)) {
+    return false;
+  }
+
+  return addAndConnectPropsToShape<Alembic::AbcGeom::IXform,
+         Alembic::AbcGeom::IXformSchema>(
+             newAppNode);
 }
 
 bool SceneNodeMaya::addPolyMeshChild(SceneNodeAlembicPtr fileNode,
@@ -178,7 +308,14 @@ bool SceneNodeMaya::addPolyMeshChild(SceneNodeAlembicPtr fileNode,
              fileAndTime->variable(), dccIdentifier.c_str(),
              PythonBool(fileNode->pObjCache->isConstant),
              PythonBool(fileNode->pObjCache->isMeshTopoDynamic));
-  return executeAddChild(cmd, newAppNode);
+
+  if (!executeAddChild(cmd, newAppNode)) {
+    return false;
+  }
+
+  return addAndConnectPropsToShape<Alembic::AbcGeom::IPolyMesh,
+         Alembic::AbcGeom::IPolyMeshSchema>(
+             newAppNode);
 }
 
 bool SceneNodeMaya::addCurveChild(SceneNodeAlembicPtr fileNode,
@@ -201,7 +338,13 @@ bool SceneNodeMaya::addCurveChild(SceneNodeAlembicPtr fileNode,
   cmd.format(format, fileNode->name.c_str(), fileNode->dccIdentifier.c_str(),
              fileAndTime->variable(), dccIdentifier.c_str(),
              PythonBool(fileNode->pObjCache->isConstant), strNb);
-  return executeAddChild(cmd, newAppNode);
+  if (!executeAddChild(cmd, newAppNode)) {
+    return false;
+  }
+
+  return addAndConnectPropsToShape<Alembic::AbcGeom::ICurves,
+         Alembic::AbcGeom::ICurvesSchema>(
+             newAppNode);
 }
 
 bool SceneNodeMaya::addChild(SceneNodeAlembicPtr fileNode,
@@ -216,7 +359,12 @@ bool SceneNodeMaya::addChild(SceneNodeAlembicPtr fileNode,
     case ITRANSFORM:
       return addXformChild(fileNode, newAppNode);
     case CAMERA:
-      return addSimilarChild("Camera", fileNode, newAppNode);
+      if (!addSimilarChild("Camera", fileNode, newAppNode)) {
+        return false;
+      }
+      return addAndConnectPropsToShape<Alembic::AbcGeom::ICamera,
+             Alembic::AbcGeom::ICameraSchema>(
+                 newAppNode);
     case POLYMESH:
     case SUBD:
       return addPolyMeshChild(fileNode, newAppNode);
@@ -224,7 +372,12 @@ bool SceneNodeMaya::addChild(SceneNodeAlembicPtr fileNode,
     case HAIR:
       return addCurveChild(fileNode, newAppNode);
     case PARTICLES:
-      return addSimilarChild("Points", fileNode, newAppNode);
+      if (!addSimilarChild("Points", fileNode, newAppNode)) {
+        return false;
+      }
+      return addAndConnectPropsToShape<Alembic::AbcGeom::IPoints,
+             Alembic::AbcGeom::IPointsSchema>(
+                 newAppNode);
     // case SURFACE:	// handle as default for now
     // break;
     // case LIGHT:	// handle as default for now

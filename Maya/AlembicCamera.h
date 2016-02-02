@@ -33,6 +33,12 @@ class AlembicCameraNode : public AlembicObjectNode {
   static void* creator() { return (new AlembicCameraNode()); }
   static MStatus initialize();
 
+  bool setInternalValueInContext(const MPlug & plug,
+      const MDataHandle & dataHandle,
+      MDGContext & ctx);
+  MStatus setDependentsDirty(const MPlug &plugBeingDirtied,
+      MPlugArray &affectedPlugs);
+
  private:
   // input attributes
   static MObject mTimeAttr;
@@ -40,6 +46,8 @@ class AlembicCameraNode : public AlembicObjectNode {
   static MObject mIdentifierAttr;
   MString mFileName;
   MString mIdentifier;
+  MPlugArray mGeomParamPlugs;
+  MPlugArray mUserAttrPlugs;
   AbcG::ICameraSchema mSchema;
 
   // output attributes
@@ -54,6 +62,9 @@ class AlembicCameraNode : public AlembicObjectNode {
   static MObject mOutFarClippingAttr;
   static MObject mOutFStopAttr;
   static MObject mOutShutterAngleAttr;
+
+  static MObject mGeomParamsList;
+  static MObject mUserAttrsList;
 };
 
 #endif

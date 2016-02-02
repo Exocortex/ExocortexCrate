@@ -1,6 +1,7 @@
 #include "stdafx.h"
 
 #include "AlembicPoints.h"
+#include "AttributesReading.h"
 #include "MetaData.h"
 
 #include <maya/MArrayDataBuilder.h>
@@ -421,7 +422,8 @@ class SingleValue : public MDataBasePropertyManager<MDoubleArray> {
       return;
     }
 #ifdef _MSC_VER
-    boost::shared_ptr<sam_type> samples = prop.getValue(floorIndex);
+    std::shared_ptr<sam_type> ptr = prop.getValue(floorIndex);
+    boost::shared_ptr<sam_type> samples(ptr.get(), [ptr](sam_type*) mutable {ptr.reset();});
 #else
     std::tr1::shared_ptr<sam_type> samples = prop.getValue(floorIndex);
 #endif
@@ -467,7 +469,8 @@ class PairValue : public MDataBasePropertyManager<MVectorArray> {
       return;
     }
 #ifdef _MSC_VER
-    boost::shared_ptr<sam_type> samples = prop.getValue(floorIndex);
+    std::shared_ptr<sam_type> ptr = prop.getValue(floorIndex);
+    boost::shared_ptr<sam_type> samples(ptr.get(), [ptr](sam_type*) mutable {ptr.reset();});
 #else
     std::tr1::shared_ptr<sam_type> samples = prop.getValue(floorIndex);
 #endif
@@ -514,7 +517,8 @@ class TripleValue : public MDataBasePropertyManager<MVectorArray> {
       return;
     }
 #ifdef _MSC_VER
-    boost::shared_ptr<sam_type> samples = prop.getValue(floorIndex);
+    std::shared_ptr<sam_type> ptr = prop.getValue(floorIndex);
+    boost::shared_ptr<sam_type> samples(ptr.get(), [ptr](sam_type*) mutable {ptr.reset();});
 #else
     std::tr1::shared_ptr<sam_type> samples = prop.getValue(floorIndex);
 #endif
@@ -775,6 +779,9 @@ MObject AlembicPointsNode::mTimeAttr;
 MObject AlembicPointsNode::mFileNameAttr;
 MObject AlembicPointsNode::mIdentifierAttr;
 
+MObject AlembicPointsNode::mGeomParamsList;
+MObject AlembicPointsNode::mUserAttrsList;
+
 MStatus AlembicPointsNode::initialize()
 {
   MStatus status;
@@ -806,6 +813,24 @@ MStatus AlembicPointsNode::initialize()
   status = tAttr.setStorable(true);
   status = tAttr.setKeyable(false);
   status = addAttribute(mIdentifierAttr);
+
+  // output for list of ArbGeomParams
+  mGeomParamsList = tAttr.create("ExocortexAlembic_GeomParams", "exo_gp",
+      MFnData::kString, emptyStringObject);
+  status = tAttr.setStorable(true);
+  status = tAttr.setKeyable(false);
+  status = tAttr.setHidden(false);
+  status = tAttr.setInternal(true);
+  status = addAttribute(mGeomParamsList);
+
+  // output for list of UserAttributes
+  mUserAttrsList = tAttr.create("ExocortexAlembic_UserAttributes", "exo_ua",
+      MFnData::kString, emptyStringObject);
+  status = tAttr.setStorable(true);
+  status = tAttr.setKeyable(false);
+  status = tAttr.setHidden(false);
+  status = tAttr.setInternal(true);
+  status = addAttribute(mUserAttrsList);
 
   // create a mapping
   status = attributeAffects(mTimeAttr, mOutput);
@@ -939,6 +964,25 @@ MStatus AlembicPointsNode::compute(const MPlug &plug, MDataBlock &dataBlock)
 
   mLastInputTime = inputTime;
   mLastSampleInfo = sampleInfo;
+
+  {
+    ESS_PROFILE_SCOPE("AlembicPointsNode::compute readProps");
+    Alembic::Abc::ICompoundProperty arbProp = mSchema.getArbGeomParams();
+    Alembic::Abc::ICompoundProperty userProp = mSchema.getUserProperties();
+    readProps(inputTime, arbProp, dataBlock, thisMObject());
+    readProps(inputTime, userProp, dataBlock, thisMObject());
+
+    // Set all plugs as clean
+    // Even if one of them failed to get set,
+    // trying again in this frame isn't going to help
+    for (unsigned int i = 0; i < mGeomParamPlugs.length(); i++) {
+      dataBlock.outputValue(mGeomParamPlugs[i]).setClean();
+    }
+
+    for (unsigned int i = 0; i < mUserAttrPlugs.length(); i++) {
+      dataBlock.outputValue(mUserAttrPlugs[i]).setClean();
+    }
+  }
 
   // access the points values
   AbcG::IPointsSchema::Sample sample;
@@ -1235,6 +1279,41 @@ void AlembicPointsNode::instanceInitialize(void)
                           "orientationPP " +
                           particleShapeName);
   MGlobal::executeCommand(partInstCmd + addObjectCmd + particleShapeName);
+}
+
+// Cache the plug arrays for use in setDependentsDirty
+bool AlembicPointsNode::setInternalValueInContext(const MPlug & plug,
+    const MDataHandle & dataHandle,
+    MDGContext &)
+{
+  if (plug == mGeomParamsList) {
+    MString geomParamsStr = dataHandle.asString();
+    getPlugArrayFromAttrList(geomParamsStr, thisMObject(), mGeomParamPlugs);
+  }
+  else if (plug == mUserAttrsList) {
+    MString userAttrsStr = dataHandle.asString();
+    getPlugArrayFromAttrList(userAttrsStr, thisMObject(), mUserAttrPlugs);
+  }
+
+  return false;
+}
+
+MStatus AlembicPointsNode::setDependentsDirty(const MPlug &plugBeingDirtied,
+    MPlugArray &affectedPlugs)
+{
+  if (plugBeingDirtied == mFileNameAttr || plugBeingDirtied == mIdentifierAttr
+      || plugBeingDirtied == mTimeAttr) {
+
+    for (unsigned int i = 0; i < mGeomParamPlugs.length(); i++) {
+      affectedPlugs.append(mGeomParamPlugs[i]);
+    }
+
+    for (unsigned int i = 0; i < mUserAttrPlugs.length(); i++) {
+      affectedPlugs.append(mUserAttrPlugs[i]);
+    }
+  }
+
+  return MStatus::kSuccess;
 }
 
 MStatus AlembicPostImportPoints(void)

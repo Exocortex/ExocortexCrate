@@ -116,6 +116,12 @@ class AlembicPointsNode : public AlembicObjectEmitterNode {
   static void *creator() { return (new AlembicPointsNode()); }
   static MStatus initialize();
 
+  bool setInternalValueInContext(const MPlug & plug,
+      const MDataHandle & dataHandle,
+      MDGContext & ctx);
+  MStatus setDependentsDirty(const MPlug &plugBeingDirtied,
+      MPlugArray &affectedPlugs);
+
  private:
   // input attributes
   static MObject mTimeAttr;
@@ -123,9 +129,15 @@ class AlembicPointsNode : public AlembicObjectEmitterNode {
   static MObject mIdentifierAttr;
   MString mFileName;
   MString mIdentifier;
+  MPlugArray mGeomParamPlugs;
+  MPlugArray mUserAttrPlugs;
   AbcG::IPointsSchema mSchema;
   AbcG::IPoints obj;
   AlembicPointsNodeListIter listPosition;
+
+  // output attributes
+  static MObject mGeomParamsList;
+  static MObject mUserAttrsList;
 
   MStatus init(const MString &filename, const MString &identifier);
   MStatus initPerParticles(const MString &partName);

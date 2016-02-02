@@ -1,3 +1,5 @@
+import traceback
+
 import maya.cmds as cmds
 import maya.OpenMayaMPx as apix
 import _functions as fnt
@@ -29,13 +31,17 @@ def setupReaderAttribute(reader, identifier, isConstant, jobInfo):
 				fnt.alembicConnectAttr(jobInfo.timeCtrl+".outTime", reader+".inTime")
 			cmds.connectAttr(jobInfo.filenode+".outFileName", reader+".fileName")
 			cmds.setAttr(reader+".identifier", identifier, type="string")
-	except Exception as ex:
-		apix.MPxCommand.setResult("?setupReaderAttribute --> exception: \"" + str(ex.args) + "\" of type " + str(type(ex)))
-	cmds.ExocortexAlembic_profileEnd(f="Python.ExocortexAlembic._import.setupReaderAttribute")
+	except:
+		raise
+	finally:
+		cmds.ExocortexAlembic_profileEnd(f="Python.ExocortexAlembic._import.setupReaderAttribute")
 
 def importXform(name, identifier, jobInfo, parentXform=None, isConstant=False):
 	cmds.ExocortexAlembic_profileBegin(f="Python.ExocortexAlembic._import.importXform")
 
+	# TODO: set isConstant properly elsewhere when there are no transforms but are
+	# animated attributes
+	isConstant = False
 	try:
 		shape  = fnt.alembicCreateNode(name, "transform", parentXform)
 		reader = cmds.createNode("ExocortexAlembicXform")
@@ -46,15 +52,18 @@ def importXform(name, identifier, jobInfo, parentXform=None, isConstant=False):
 		cmds.connectAttr(reader+".outVisibility",	shape+".visibility")
 
 		setupReaderAttribute(reader, identifier, isConstant, jobInfo)
-	except Exception as ex:
-		shape = "?importXform --> exception: \"" + str(ex.args) + "\" of type " + str(type(ex));
-		apix.MPxCommand.setResult(shape)
-	cmds.ExocortexAlembic_profileEnd(f="Python.ExocortexAlembic._import.importXform")
-	return shape
+	except:
+		return [traceback.format_exc()]
+	finally:
+		cmds.ExocortexAlembic_profileEnd(f="Python.ExocortexAlembic._import.importXform")
+	return [shape, reader]
 
 def importPolyMesh(name, identifier, jobInfo, parentXform=None, isConstant=False, useDynTopo=False):
 	cmds.ExocortexAlembic_profileBegin(f="Python.ExocortexAlembic._import.importPolyMesh")
 
+	# TODO: set isConstant properly elsewhere when there are no transforms but are
+	# animated attributes
+	isConstant = False
 	try:
 		reader = ""
 		shape  = fnt.alembicCreateNode(name, "mesh", parentXform)
@@ -79,14 +88,17 @@ def importPolyMesh(name, identifier, jobInfo, parentXform=None, isConstant=False
 		#if not useDynTopo:
 		#	setupReaderAttribute(topoReader, identifier, isConstant, jobInfo)
 
-	except Exception as ex:
-		shape = "?importPolyMesh --> exception: \"" + str(ex.args) + "\" of type " + str(type(ex));
-		apix.MPxCommand.setResult(shape)
-	cmds.ExocortexAlembic_profileEnd(f="Python.ExocortexAlembic._import.importPolyMesh")
-	return shape
+	except:
+		return [traceback.format_exc()]
+	finally:
+		cmds.ExocortexAlembic_profileEnd(f="Python.ExocortexAlembic._import.importPolyMesh")
+	return [shape, reader]
 
 def importCamera(name, identifier, jobInfo, parentXform=None, isConstant=False):
 	cmds.ExocortexAlembic_profileBegin(f="Python.ExocortexAlembic._import.importCamera")
+	# TODO: set isConstant properly elsewhere when there are no transforms but are
+	# animated attributes
+	isConstant = False
 	try:
 		shape 	= fnt.alembicCreateNode(name, "camera", parentXform)
 		reader 	= cmds.createNode("ExocortexAlembicCamera")
@@ -102,13 +114,16 @@ def importCamera(name, identifier, jobInfo, parentXform=None, isConstant=False):
 		cmds.connectAttr(reader+".shutterAngle", shape+".shutterAngle")
 
 		setupReaderAttribute(reader, identifier, isConstant, jobInfo)
-	except Exception as ex:
-		shape = "?importCamera --> exception: \"" + str(ex.args) + "\" of type " + str(type(ex));
-		apix.MPxCommand.setResult(shape)
-	cmds.ExocortexAlembic_profileEnd(f="Python.ExocortexAlembic._import.importCamera")
-	return shape
+	except:
+		return [traceback.format_exc()]
+	finally:
+		cmds.ExocortexAlembic_profileEnd(f="Python.ExocortexAlembic._import.importCamera")
+	return [shape, reader]
 
 def importPoints(name, identifier, jobInfo, parentXform=None, isConstant=False):
+	# TODO: set isConstant properly elsewhere when there are no transforms but are
+	# animated attributes
+	isConstant = False
 	try:
 		cmds.ExocortexAlembic_profileBegin(f="Python.ExocortexAlembic._import.importPoints")
 		shape  = fnt.alembicCreateNode(name, "particle", parentXform)
@@ -124,14 +139,17 @@ def importPoints(name, identifier, jobInfo, parentXform=None, isConstant=False):
 		cmds.setAttr(shape+".conserve", 0)
 
 		setupReaderAttribute(reader, identifier, isConstant, jobInfo)
-	except Exception as ex:
-		shape = "?importPoints --> exception: \"" + str(ex.args) + "\" of type " + str(type(ex));
-		apix.MPxCommand.setResult(shape)
-	cmds.ExocortexAlembic_profileEnd(f="Python.ExocortexAlembic._import.importPoints")
-	return shape
+	except:
+		return [traceback.format_exc()]
+	finally:
+		cmds.ExocortexAlembic_profileEnd(f="Python.ExocortexAlembic._import.importPoints")
+	return [shape, reader]
 
 def importCurves(name, identifier, jobInfo, parentXform=None, isConstant=False, nbCurves=1):
 	cmds.ExocortexAlembic_profileBegin(f="Python.ExocortexAlembic._import.importCurves")
+	# TODO: set isConstant properly elsewhere when there are no transforms but are
+	# animated attributes
+	isConstant = False
 	try:
 		topoReader = cmds.createNode("ExocortexAlembicCurves")
 		cmds.connectAttr(jobInfo.filenode+".outFileName", topoReader+".fileName")
@@ -144,10 +162,10 @@ def importCurves(name, identifier, jobInfo, parentXform=None, isConstant=False, 
 			shape  = fnt.alembicCreateNode(name + "_" + str(curve), "nurbsCurve", parentXform)
 			cmds.connectAttr(topoReader+".outCurve[" + str(curve) + "]", shape+".create")
 
-	except Exception as ex:
-		shape = "?importCurves --> exception: \"" + str(ex.args) + "\" of type " + str(type(ex));
-		apix.MPxCommand.setResult(shape)
-	cmds.ExocortexAlembic_profileEnd(f="Python.ExocortexAlembic._import.importCurves")
-	return shape
+	except:
+		return [traceback.format_exc()]
+	finally:
+		cmds.ExocortexAlembic_profileEnd(f="Python.ExocortexAlembic._import.importCurves")
+	return [shape, topoReader]
 
 
