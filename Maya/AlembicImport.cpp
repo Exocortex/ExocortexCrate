@@ -164,7 +164,7 @@ MStatus AlembicImportCommand::importSingleJob(const MString& job, int jobNumber)
     MDagPath dagPath;
     MItDag().getPath(dagPath);
     SceneNodeAppPtr appRoot = buildMayaSceneGraph(
-        dagPath, SearchReplace::createReplacer(), fileTimeCtrl);
+        dagPath, SearchReplace::createReplacer(), fileTimeCtrl, true);
     if (!AttachSceneFile(fileRoot, appRoot, jobParser, &pBar)) {
       delRefArchive(jobParser.filename);
       return MS::kFailure;
