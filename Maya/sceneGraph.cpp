@@ -57,7 +57,8 @@ bool SceneNodeMaya::replaceSimilarData(const char *functionName,
   ESS_PROFILE_SCOPE("SceneNodeMaya::replaceSimilarData");
 
   MString cmd;
-  cmd.format(format, functionName, this->dccIdentifier.c_str(),
+  cmd.format(format, functionName,
+             this->connectTo.length() == 0 ? this->dccIdentifier.c_str() : this->connectTo,
              fileNode->dccIdentifier.c_str(), fileAndTime->variable(),
              PythonBool(fileNode->pObjCache->isConstant));
   MStatus result = MGlobal::executePythonCommand(cmd);
@@ -239,14 +240,46 @@ void SceneNodeMaya::print(void)
   ESS_LOG_WARNING("Maya Scene Node: " << dccIdentifier);
 }
 
+MObject getObjByName(const char *obj)
+{
+  MSelectionList selList;
+
+  selList.add(obj);
+  MObject result;
+  selList.getDependNode(0, result);
+
+  return result;
+}
+
+MString getDeformedName(const MString &name)
+{
+  int barPos = name.rindexW("|");
+  int colonPos = name.rindexW(":");
+  // Got a malformed path!
+  if (barPos < 0) {
+    return "";
+  }
+  // There's no namespace to strip
+  if (colonPos < 0) {
+    colonPos = barPos;
+  }
+
+  return name.substring(0, barPos) // Has the same parent
+    + name.substring(colonPos + 1, name.length()) // Has no namespace
+    + "Deformed"; // Has the "Deformed" suffix;
+}
+
 static bool visitChild(
     const MObject &mObj, SceneNodeAppPtr &parent,
     const AlembicFileAndTimeControlPtr &alembicFileAndTimeControl,
-    const SearchReplace::ReplacePtr &replacer)
+    const SearchReplace::ReplacePtr &replacer,
+    bool allowDeformedByUs)
 {
   MFnDagNode dagNode(mObj);
   if (dagNode.isIntermediateObject()) {  // skip intermediate object!
-    return true;
+    if (!allowDeformedByUs) {
+      return true;
+    }
   }
 
   const std::string dccId = dagNode.fullPathName().asChar();
@@ -255,7 +288,8 @@ static bool visitChild(
   }
 
   // check if it's a valid type of node first!
-  SceneNodeAppPtr exoChild(new SceneNodeMaya(alembicFileAndTimeControl));
+  SceneNodeMaya* sceneNode = new SceneNodeMaya(alembicFileAndTimeControl);
+  SceneNodeAppPtr exoChild(sceneNode);
   switch (mObj.apiType()) {
     case MFn::kCamera:
       exoChild->type = SceneNode::CAMERA;
@@ -281,6 +315,38 @@ static bool visitChild(
       break;
   }
 
+  if (dagNode.isIntermediateObject()) {
+    MString deformedName = getDeformedName(dccId.c_str());
+    if (deformedName.length() == 0) {
+      return false;
+    }
+    MObject deformedObj = getObjByName(deformedName.asChar());
+
+    MStatus status;
+    MFnDependencyNode depNode(deformedObj, &status);
+    MPlug inMeshPlug = depNode.findPlug("inMesh", true, &status);
+    if (status.error()) {
+      return false;
+    }
+
+    MPlugArray connections;
+    if (!inMeshPlug.connectedTo(connections, true, false)) {
+      return false;
+    }
+
+    MFnDependencyNode connectedDepNode(connections[0].node());
+    MPxNode* connectedNode = connectedDepNode.userNode(&status);
+    if (status.error()) {
+      return false;
+    }
+
+    if (connectedNode->typeName() != "ExocortexAlembicPolyMeshDeform") {
+      return true;
+    }
+
+    sceneNode->connectTo = deformedName;
+  }
+
   parent->children.push_back(exoChild);
   exoChild->parent = parent.get();
 
@@ -292,14 +358,16 @@ static bool visitChild(
     exoChild->name = (pos != std::string::npos) ? rname.substr(pos + 1) : rname;
   }
   for (unsigned int i = 0; i < dagNode.childCount(); ++i) {
-    visitChild(dagNode.child(i), exoChild, alembicFileAndTimeControl, replacer);
+    visitChild(dagNode.child(i), exoChild, alembicFileAndTimeControl, replacer,
+        allowDeformedByUs);
   }
   return true;
 }
 
 SceneNodeAppPtr buildMayaSceneGraph(
     const MDagPath &dagPath, const SearchReplace::ReplacePtr &replacer,
-    const AlembicFileAndTimeControlPtr alembicFileAndTimeControl)
+    const AlembicFileAndTimeControlPtr alembicFileAndTimeControl,
+    bool allowDeformedByUs)
 {
   ESS_PROFILE_SCOPE("buildMayaSceneGraph");
   SceneNodeAppPtr exoRoot(new SceneNodeMaya(alembicFileAndTimeControl));
@@ -307,7 +375,8 @@ SceneNodeAppPtr buildMayaSceneGraph(
   exoRoot->dccIdentifier = dagPath.fullPathName().asChar();
   exoRoot->name = dagPath.partialPathName().asChar();
   for (unsigned int i = 0; i < dagPath.childCount(); ++i) {
-    visitChild(dagPath.child(i), exoRoot, alembicFileAndTimeControl, replacer);
+    visitChild(dagPath.child(i), exoRoot, alembicFileAndTimeControl, replacer,
+        allowDeformedByUs);
   }
   return exoRoot;
 }

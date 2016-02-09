@@ -46,9 +46,11 @@ class SceneNodeMaya : public SceneNodeApp {
  public:
   SceneNodeMaya(const AlembicFileAndTimeControlPtr alembicFileAndTimeControl =
                     AlembicFileAndTimeControlPtr())
-      : fileAndTime(alembicFileAndTimeControl), useMultiFile(false)
+      : fileAndTime(alembicFileAndTimeControl), useMultiFile(false), connectTo("")
   {
   }
+
+  MString connectTo;
 
   virtual bool replaceData(SceneNodeAlembicPtr fileNode,
                            const IJobStringParser& jobParams,
@@ -67,6 +69,7 @@ class SceneNodeMaya : public SceneNodeApp {
 SceneNodeAppPtr buildMayaSceneGraph(
     const MDagPath& dagPath, const SearchReplace::ReplacePtr& replacer,
     const AlembicFileAndTimeControlPtr alembicFileAndTimeControl =
-        AlembicFileAndTimeControlPtr());
+        AlembicFileAndTimeControlPtr(),
+    bool allowDeformedByUs = false);
 
 #endif
