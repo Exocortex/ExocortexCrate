@@ -21,10 +21,10 @@ static void __file_and_time_control_kill(const MString &var)
       var + " = None\n");  // deallocate this variable in Python!
 }
 
-MObject findMObjectByName(const std::string &obj)
+MObject findMObjectByName(const MString &obj)
 {
   MSelectionList selList;
-  selList.add(obj.c_str());
+  selList.add(obj);
 
   MObject result;
   selList.getDependNode(0, result);
@@ -61,31 +61,6 @@ AlembicFileAndTimeControlPtr AlembicFileAndTimeControl::createControl(
   return AlembicFileAndTimeControlPtr(new AlembicFileAndTimeControl(var));
 }
 
-bool SceneNodeMaya::replaceSimilarData(const char *functionName,
-                                       SceneNodeAlembicPtr fileNode)
-{
-  static const MString format(
-      "ExoAlembic._attach.attach^1s(r\"^2s\", r\"^3s\", ^4s, ^5s)");
-
-  ESS_PROFILE_SCOPE("SceneNodeMaya::replaceSimilarData");
-
-  MString cmd;
-  cmd.format(format, functionName,
-             this->connectTo.length() == 0 ? this->dccIdentifier.c_str() : this->connectTo,
-             fileNode->dccIdentifier.c_str(), fileAndTime->variable(),
-             PythonBool(fileNode->pObjCache->isConstant));
-  MString results;
-  MStatus result = MGlobal::executePythonCommand(cmd, results);
-  if (result.error()) {
-    ESS_LOG_WARNING("Attached failed for " << functionName << ", reason: "
-                                           << result.errorString().asChar());
-    return false;
-  }
-
-  fileNode->setAttached(true);
-  return true;
-}
-
 bool SceneNodeMaya::replaceData(SceneNodeAlembicPtr fileNode,
                                 const IJobStringParser &jobParams,
                                 SceneNodeAlembicPtr &nextFileNode)
@@ -95,17 +70,22 @@ bool SceneNodeMaya::replaceData(SceneNodeAlembicPtr fileNode,
   switch (nextFileNode->type) {
     case ETRANSFORM:
     case ITRANSFORM:
-      return replaceSimilarData("Xform", fileNode);
+      return replaceSimilarData<Alembic::AbcGeom::IXform,
+             Alembic::AbcGeom::IXformSchema>("Xform", fileNode);
     case CAMERA:
-      return replaceSimilarData("Camera", fileNode);
+      return replaceSimilarData<Alembic::AbcGeom::ICamera,
+             Alembic::AbcGeom::ICameraSchema>("Camera", fileNode);
     case POLYMESH:
     case SUBD:
-      return replaceSimilarData("PolyMesh", fileNode);
+      return replaceSimilarData<Alembic::AbcGeom::IPolyMesh,
+             Alembic::AbcGeom::IPolyMeshSchema>("PolyMesh", fileNode);
     case CURVES:
     case HAIR:
-      return replaceSimilarData("Curves", fileNode);
+      return replaceSimilarData<Alembic::AbcGeom::ICurves,
+             Alembic::AbcGeom::ICurvesSchema>("Curves", fileNode);
     case PARTICLES:
-      return replaceSimilarData("Points", fileNode);
+      return replaceSimilarData<Alembic::AbcGeom::IPoints,
+             Alembic::AbcGeom::IPointsSchema>("Points", fileNode);
     // case SURFACE:	// handle as default for now
     // break;
     // case LIGHT:	// handle as default for now
@@ -116,7 +96,7 @@ bool SceneNodeMaya::replaceData(SceneNodeAlembicPtr fileNode,
   return false;
 }
 
-bool connectPropsToShape(MFnDependencyNode &depNode,
+bool SceneNodeMaya::connectProps(MFnDependencyNode &depNode,
     MFnDependencyNode &readerDepNode)
 {
   MStatus status;
@@ -165,61 +145,56 @@ bool connectPropsToShape(MFnDependencyNode &depNode,
   return (status == MStatus::kSuccess);
 }
 
-template<typename OBJECT_TYPE, typename SCHEMA_TYPE>
-bool addAndConnectPropsToShape(SceneNodeAppPtr &newAppNode)
+bool SceneNodeMaya::removeProps(const MString &dccReaderIdentifier)
 {
   MStatus status;
-  MObject node = findMObjectByName(newAppNode->dccIdentifier);
-  MObject readerNode = findMObjectByName(newAppNode->dccReaderIdentifier);
-
-  MFnDependencyNode depNode(node, &status);
+  MObject readerNode = findMObjectByName(dccReaderIdentifier);
   MFnDependencyNode readerDepNode(readerNode, &status);
 
-  MPlug fileNamePlug = readerDepNode.findPlug("fileName", &status);
-  MPlug identifierPlug = readerDepNode.findPlug("identifier", &status);
   MPlug geomParamsPlug = readerDepNode.findPlug("ExocortexAlembic_GeomParams",
       &status);
   MPlug userAttrsPlug = readerDepNode.findPlug("ExocortexAlembic_UserAttributes",
       &status);
-
-  MString fileName;
-  status = fileNamePlug.getValue(fileName);
-  MString identifier;
-  status = identifierPlug.getValue(identifier);
-
   if (status != MStatus::kSuccess) {
     return false;
   }
 
-  // Don't show these warnings; let the reader node display them
-  Alembic::Abc::IObject iObj = getObjectFromArchive(fileName, identifier);
-  if (!iObj.valid()) {
+  MString geomProp;
+  status = geomParamsPlug.getValue(geomProp);
+  MString userProp;
+  status = userAttrsPlug.getValue(userProp);
+  if (status != MStatus::kSuccess) {
     return false;
   }
 
-  OBJECT_TYPE obj = OBJECT_TYPE(iObj, Alembic::Abc::kWrapExisting);
-  if (!obj.valid()) {
-    return false;
+  MStringArray geomProps;
+  geomProp.split(';', geomProps);
+  MStringArray userProps;
+  userProp.split(';', userProps);
+
+  MDGModifier mod;
+  for (unsigned int i = 0; i < geomProps.length(); i++) {
+    MStatus propStatus;
+    MPlug readerPlug = readerDepNode.findPlug(geomProps[i], &propStatus);
+    if (propStatus == MStatus::kSuccess) {
+      mod.removeAttribute(readerNode, readerPlug);
+    }
   }
 
-  SCHEMA_TYPE schema = obj.getSchema();
-
-  if (!schema.valid()) {
-    return false;
+  for (unsigned int i = 0; i < userProps.length(); i++) {
+    MStatus propStatus;
+    MPlug readerPlug = readerDepNode.findPlug(userProps[i], &propStatus);
+    if (propStatus == MStatus::kSuccess) {
+      mod.removeAttribute(readerNode, readerPlug);
+    }
   }
 
-  Alembic::Abc::ICompoundProperty arbProp = schema.getArbGeomParams();
-  Alembic::Abc::ICompoundProperty userProp = schema.getUserProperties();
+  status = mod.doIt();
 
-  addProps(arbProp, node, false, true);
-  addProps(userProp, node, false, true);
-  std::string arbPropStr = addProps(arbProp, readerNode, false, false);
-  std::string userPropStr = addProps(userProp, readerNode, false, false);
+  geomParamsPlug.setValue("");
+  userAttrsPlug.setValue("");
 
-  geomParamsPlug.setValue(arbPropStr.c_str());
-  userAttrsPlug.setValue(userPropStr.c_str());
-
-  return connectPropsToShape(depNode, readerDepNode);
+  return (status == MStatus::kSuccess);
 }
 
 bool SceneNodeMaya::executeAddChild(const MString &cmd,
@@ -290,7 +265,7 @@ bool SceneNodeMaya::addXformChild(SceneNodeAlembicPtr fileNode,
     return false;
   }
 
-  return addAndConnectPropsToShape<Alembic::AbcGeom::IXform,
+  return addAndConnectProps<Alembic::AbcGeom::IXform,
          Alembic::AbcGeom::IXformSchema>(
              newAppNode);
 }
@@ -313,7 +288,7 @@ bool SceneNodeMaya::addPolyMeshChild(SceneNodeAlembicPtr fileNode,
     return false;
   }
 
-  return addAndConnectPropsToShape<Alembic::AbcGeom::IPolyMesh,
+  return addAndConnectProps<Alembic::AbcGeom::IPolyMesh,
          Alembic::AbcGeom::IPolyMeshSchema>(
              newAppNode);
 }
@@ -342,7 +317,7 @@ bool SceneNodeMaya::addCurveChild(SceneNodeAlembicPtr fileNode,
     return false;
   }
 
-  return addAndConnectPropsToShape<Alembic::AbcGeom::ICurves,
+  return addAndConnectProps<Alembic::AbcGeom::ICurves,
          Alembic::AbcGeom::ICurvesSchema>(
              newAppNode);
 }
@@ -362,7 +337,7 @@ bool SceneNodeMaya::addChild(SceneNodeAlembicPtr fileNode,
       if (!addSimilarChild("Camera", fileNode, newAppNode)) {
         return false;
       }
-      return addAndConnectPropsToShape<Alembic::AbcGeom::ICamera,
+      return addAndConnectProps<Alembic::AbcGeom::ICamera,
              Alembic::AbcGeom::ICameraSchema>(
                  newAppNode);
     case POLYMESH:
@@ -375,7 +350,7 @@ bool SceneNodeMaya::addChild(SceneNodeAlembicPtr fileNode,
       if (!addSimilarChild("Points", fileNode, newAppNode)) {
         return false;
       }
-      return addAndConnectPropsToShape<Alembic::AbcGeom::IPoints,
+      return addAndConnectProps<Alembic::AbcGeom::IPoints,
              Alembic::AbcGeom::IPointsSchema>(
                  newAppNode);
     // case SURFACE:	// handle as default for now
