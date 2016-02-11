@@ -21,6 +21,8 @@ global proc exocortexAlembicExportGUI(string $filename, string $dialog)
   int $exportWithoutHierarchy = `checkBox -q -value withouthierarchy`;
   int $exportTransformCache = `checkBox -q -value transformcache`;
   int $exportOgawa = `optionMenu -q -select database`;
+  string $userAttrs = `textField -q -text userattrs`;
+  string $userAttrPrefixes = `textField -q -text userattrprefixes`;
   exocortexCloseDialog($dialog);
 
   $minTime = `playbackOptions -q -min`;
@@ -60,7 +62,8 @@ global proc exocortexAlembicExportGUI(string $filename, string $dialog)
                          $exportStepframe + ", " + $exportSubstepframe + ", " + $exportTopology + ", " +
                          $exportUVs + ", " + $exportFaceSets + ", " + $exportDynamicTopo + ", " +
                          $exportGlobalSpace + ", " + $exportWithoutHierarchy + ", " + $exportTransformCache + ", " +
-                         $exportUseInitShadGrp + ", " + ($exportOgawa-1) + ")";
+                         $exportUseInitShadGrp + ", " + ($exportOgawa-1) + ", \"" +
+                         $userAttrs + "\", \"" + $userAttrPrefixes + "\")";
   python($cmd);
 }
 
