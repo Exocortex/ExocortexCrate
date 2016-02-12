@@ -1,40 +1,33 @@
 #include "CommonSubtreeMerge.h"
 
-
-
-
-
-struct MergeChildrenStackElement
-{
-   SceneNodePtr eNode;
-   MergeChildrenStackElement(SceneNodePtr enode):eNode(enode)
-   {}
+struct MergeChildrenStackElement {
+  SceneNodePtr eNode;
+  MergeChildrenStackElement(SceneNodePtr enode) : eNode(enode) {}
 };
 
 SceneNodePolyMeshSubtreePtr findPolyMeshChildren(SceneNodePtr root)
 {
-   SceneNodePolyMeshSubtreePtr mergedMeshNode(new SceneNodePolyMeshSubtree("MergedPolyMeshShape", ""));
+  SceneNodePolyMeshSubtreePtr mergedMeshNode(
+      new SceneNodePolyMeshSubtree("MergedPolyMeshShape", ""));
 
-   std::list<MergeChildrenStackElement> sceneStack;
-   
-   sceneStack.push_back(MergeChildrenStackElement(root));
+  std::list<MergeChildrenStackElement> sceneStack;
 
-   while( !sceneStack.empty() )
-   {
-      MergeChildrenStackElement sElement = sceneStack.back();
-      SceneNodePtr eNode = sElement.eNode;
-      sceneStack.pop_back();
+  sceneStack.push_back(MergeChildrenStackElement(root));
 
-      if(eNode->type == SceneNode::POLYMESH){   
-         mergedMeshNode->polyMeshNodes.push_back(eNode);
-      }
+  while (!sceneStack.empty()) {
+    MergeChildrenStackElement sElement = sceneStack.back();
+    SceneNodePtr eNode = sElement.eNode;
+    sceneStack.pop_back();
 
-      for( std::list<SceneNodePtr>::iterator it = eNode->children.begin(); it != eNode->children.end(); it++){
-         sceneStack.push_back(MergeChildrenStackElement(*it));
-      }
-   }
+    if (eNode->type == SceneNode::POLYMESH) {
+      mergedMeshNode->polyMeshNodes.push_back(eNode);
+    }
 
-   return mergedMeshNode;
+    for (std::list<SceneNodePtr>::iterator it = eNode->children.begin();
+         it != eNode->children.end(); it++) {
+      sceneStack.push_back(MergeChildrenStackElement(*it));
+    }
+  }
+
+  return mergedMeshNode;
 }
-
-

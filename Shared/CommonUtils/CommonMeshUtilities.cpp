@@ -1,129 +1,145 @@
-#include "CommonAlembic.h"
 #include "CommonMeshUtilities.h"
+#include "CommonAlembic.h"
 #include "CommonLog.h"
 #include "CommonProfiler.h"
 #include "CommonUtilities.h"
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-template<typename T> void extractMeshInfo(T &schema, bool &isPointCache, bool &isTopoDyn)
+template <typename T>
+void extractMeshInfo(T& schema, bool& isPointCache, bool& isTopoDyn)
 {
-	Alembic::Abc::IInt32ArrayProperty faceCountProp = Alembic::Abc::IInt32ArrayProperty(schema, ".faceCounts");
-	if( ! faceCountProp.valid() )
-	{
-		Alembic::Abc::IP3fArrayProperty positionsProp = Alembic::Abc::IP3fArrayProperty(schema, "P");
-		if( positionsProp.valid() && positionsProp.getValue()->size() > 0 )
-			isPointCache = true;
-	}
-	else if( faceCountProp.isConstant() )
-	{
-		Alembic::Abc::Int32ArraySamplePtr faceCounts = faceCountProp.getValue();
-		// the first is our preferred method, the second check here is Helge's method that is now considered obsolete
-		if( faceCounts->size() == 0 || ( faceCounts->size() == 1 && ( faceCounts->get()[0] == 0 ) ) )
-		{
-			Alembic::Abc::IP3fArrayProperty positionsProp = Alembic::Abc::IP3fArrayProperty(schema, "P");
-			if( positionsProp.valid() && positionsProp.getValue()->size() > 0 )
-				isPointCache = true;
-		}
-	}
-	else
-		isTopoDyn = true;
+  Alembic::Abc::IInt32ArrayProperty faceCountProp =
+      Alembic::Abc::IInt32ArrayProperty(schema, ".faceCounts");
+  if (!faceCountProp.valid()) {
+    Alembic::Abc::IP3fArrayProperty positionsProp =
+        Alembic::Abc::IP3fArrayProperty(schema, "P");
+    if (positionsProp.valid() && positionsProp.getValue()->size() > 0)
+      isPointCache = true;
+  }
+  else if (faceCountProp.isConstant()) {
+    Alembic::Abc::Int32ArraySamplePtr faceCounts = faceCountProp.getValue();
+    // the first is our preferred method, the second check here is Helge's
+    // method that is now considered obsolete
+    if (faceCounts->size() == 0 ||
+        (faceCounts->size() == 1 && (faceCounts->get()[0] == 0))) {
+      Alembic::Abc::IP3fArrayProperty positionsProp =
+          Alembic::Abc::IP3fArrayProperty(schema, "P");
+      if (positionsProp.valid() && positionsProp.getValue()->size() > 0)
+        isPointCache = true;
+    }
+  }
+  else
+    isTopoDyn = true;
 }
 
-typedef Alembic::AbcGeom::IPolyMesh::schema_type	poly_mesh_schema;
-typedef Alembic::AbcGeom::ISubD::schema_type		sub_div_schema;
-void extractMeshInfo(Alembic::AbcGeom::IObject *pIObj, bool isMesh, bool &isPointCache, bool &isTopoDyn)
+typedef Alembic::AbcGeom::IPolyMesh::schema_type poly_mesh_schema;
+typedef Alembic::AbcGeom::ISubD::schema_type sub_div_schema;
+void extractMeshInfo(Alembic::AbcGeom::IObject* pIObj, bool isMesh,
+                     bool& isPointCache, bool& isTopoDyn)
 {
-	if(isMesh)
-		extractMeshInfo<poly_mesh_schema>(Alembic::AbcGeom::IPolyMesh(*pIObj, Alembic::Abc::kWrapExisting).getSchema(), isPointCache, isTopoDyn);
-	else
-		extractMeshInfo<sub_div_schema>(Alembic::AbcGeom::ISubD(*pIObj, Alembic::Abc::kWrapExisting).getSchema(), isPointCache, isTopoDyn);
+  if (isMesh)
+    extractMeshInfo<poly_mesh_schema>(
+        Alembic::AbcGeom::IPolyMesh(*pIObj, Alembic::Abc::kWrapExisting)
+            .getSchema(),
+        isPointCache, isTopoDyn);
+  else
+    extractMeshInfo<sub_div_schema>(
+        Alembic::AbcGeom::ISubD(*pIObj, Alembic::Abc::kWrapExisting)
+            .getSchema(),
+        isPointCache, isTopoDyn);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-bool isAlembicMeshValid( Alembic::AbcGeom::IObject *pIObj ) {
-	//ESS_PROFILE_FUNC();
-	Alembic::AbcGeom::IPolyMesh objMesh;
-	Alembic::AbcGeom::ISubD objSubD;
+bool isAlembicMeshValid(Alembic::AbcGeom::IObject* pIObj)
+{
+  // ESS_PROFILE_FUNC();
+  Alembic::AbcGeom::IPolyMesh objMesh;
+  Alembic::AbcGeom::ISubD objSubD;
 
-	if(Alembic::AbcGeom::IPolyMesh::matches((*pIObj).getMetaData())) {
-		objMesh = Alembic::AbcGeom::IPolyMesh(*pIObj,Alembic::Abc::kWrapExisting);
-	}
-	else {
-		objSubD = Alembic::AbcGeom::ISubD(*pIObj,Alembic::Abc::kWrapExisting);
-	}
+  if (Alembic::AbcGeom::IPolyMesh::matches((*pIObj).getMetaData())) {
+    objMesh = Alembic::AbcGeom::IPolyMesh(*pIObj, Alembic::Abc::kWrapExisting);
+  }
+  else {
+    objSubD = Alembic::AbcGeom::ISubD(*pIObj, Alembic::Abc::kWrapExisting);
+  }
 
-	if(!objMesh.valid() && !objSubD.valid()) {
-		return false;
-	}
-	return true;
+  if (!objMesh.valid() && !objSubD.valid()) {
+    return false;
+  }
+  return true;
 }
 
-bool isAlembicMeshNormals( Alembic::AbcGeom::IObject *pIObj, bool& isConstant ) {
-	//ESS_PROFILE_FUNC();
-	Alembic::AbcGeom::IPolyMesh objMesh;
-	Alembic::AbcGeom::ISubD objSubD;
+bool isAlembicMeshNormals(Alembic::AbcGeom::IObject* pIObj, bool& isConstant)
+{
+  // ESS_PROFILE_FUNC();
+  Alembic::AbcGeom::IPolyMesh objMesh;
+  Alembic::AbcGeom::ISubD objSubD;
 
-	if(Alembic::AbcGeom::IPolyMesh::matches((*pIObj).getMetaData())) {
-		objMesh = Alembic::AbcGeom::IPolyMesh(*pIObj,Alembic::Abc::kWrapExisting);
- 		if( objMesh.valid() ) {
-			if( objMesh.getSchema().getNormalsParam().valid() ) {
-				isConstant = objMesh.getSchema().getNormalsParam().isConstant();
-				return true;
-			}
-		} 
-	}
+  if (Alembic::AbcGeom::IPolyMesh::matches((*pIObj).getMetaData())) {
+    objMesh = Alembic::AbcGeom::IPolyMesh(*pIObj, Alembic::Abc::kWrapExisting);
+    if (objMesh.valid()) {
+      if (objMesh.getSchema().getNormalsParam().valid()) {
+        isConstant = objMesh.getSchema().getNormalsParam().isConstant();
+        return true;
+      }
+    }
+  }
 
-
-	isConstant = true;
-	return false;
+  isConstant = true;
+  return false;
 }
 
+bool isAlembicMeshPositions(Alembic::AbcGeom::IObject* pIObj, bool& isConstant)
+{
+  ESS_PROFILE_SCOPE("isAlembicMeshPositions");
+  Alembic::AbcGeom::IPolyMesh objMesh;
+  Alembic::AbcGeom::ISubD objSubD;
 
-bool isAlembicMeshPositions( Alembic::AbcGeom::IObject *pIObj, bool& isConstant ) {
-	ESS_PROFILE_SCOPE("isAlembicMeshPositions");
-	Alembic::AbcGeom::IPolyMesh objMesh;
-	Alembic::AbcGeom::ISubD objSubD;
-
-	if(Alembic::AbcGeom::IPolyMesh::matches((*pIObj).getMetaData())) {
-		objMesh = Alembic::AbcGeom::IPolyMesh(*pIObj,Alembic::Abc::kWrapExisting);
-		if( objMesh.valid() ) {
-			isConstant = objMesh.getSchema().getPositionsProperty().isConstant();
-			return true;
-		}
-	}
-	else {
-		objSubD = Alembic::AbcGeom::ISubD(*pIObj,Alembic::Abc::kWrapExisting);
-		if( objSubD.valid() ) {
-			isConstant = objSubD.getSchema().getPositionsProperty().isConstant();
-			return true;
-		}
-	}
-	isConstant = true;
-	return false;
+  if (Alembic::AbcGeom::IPolyMesh::matches((*pIObj).getMetaData())) {
+    objMesh = Alembic::AbcGeom::IPolyMesh(*pIObj, Alembic::Abc::kWrapExisting);
+    if (objMesh.valid()) {
+      isConstant = objMesh.getSchema().getPositionsProperty().isConstant();
+      return true;
+    }
+  }
+  else {
+    objSubD = Alembic::AbcGeom::ISubD(*pIObj, Alembic::Abc::kWrapExisting);
+    if (objSubD.valid()) {
+      isConstant = objSubD.getSchema().getPositionsProperty().isConstant();
+      return true;
+    }
+  }
+  isConstant = true;
+  return false;
 }
 
-//bool isAlembicMeshUVWs( Alembic::AbcGeom::IObject *pIObj, bool& isConstant ) {
+// bool isAlembicMeshUVWs( Alembic::AbcGeom::IObject *pIObj, bool& isConstant )
+// {
 //	ESS_PROFILE_SCOPE("isAlembicMeshUVWs");
 //	Alembic::AbcGeom::IPolyMesh objMesh;
 //	Alembic::AbcGeom::ISubD objSubD;
 //
 //	if(Alembic::AbcGeom::IPolyMesh::matches((*pIObj).getMetaData())) {
-//		objMesh = Alembic::AbcGeom::IPolyMesh(*pIObj,Alembic::Abc::kWrapExisting);
+//		objMesh =
+//Alembic::AbcGeom::IPolyMesh(*pIObj,Alembic::Abc::kWrapExisting);
 //		if( objMesh.valid() ) {
 //			if( objMesh.getSchema().getUVsParam().valid() ) {
-//				isConstant = objMesh.getSchema().getUVsParam().isConstant();
+//				isConstant =
+//objMesh.getSchema().getUVsParam().isConstant();
 //				return true;
 //			}
 //		}
 //	}
 //	else {
-//		objSubD = Alembic::AbcGeom::ISubD(*pIObj,Alembic::Abc::kWrapExisting);
+//		objSubD =
+//Alembic::AbcGeom::ISubD(*pIObj,Alembic::Abc::kWrapExisting);
 //		if( objSubD.valid() ) {
 //			if( objSubD.getSchema().getUVsParam().valid() ) {
-//				isConstant = objSubD.getSchema().getUVsParam().isConstant();
+//				isConstant =
+//objSubD.getSchema().getUVsParam().isConstant();
 //				return true;
 //			}
 //		}
@@ -133,534 +149,586 @@ bool isAlembicMeshPositions( Alembic::AbcGeom::IObject *pIObj, bool& isConstant 
 //	return false;
 //}
 
-bool isAlembicMeshTopoDynamic( Alembic::AbcGeom::IObject *pIObj ) {
-	ESS_PROFILE_SCOPE("isAlembicMeshTopoDynamic");
-	Alembic::AbcGeom::IPolyMesh objMesh;
-	Alembic::AbcGeom::ISubD objSubD;
-
-	if( ! pIObj->valid() ) {
-		return false;
-	}
-
-	if(Alembic::AbcGeom::IPolyMesh::matches((*pIObj).getMetaData())) {
-		objMesh = Alembic::AbcGeom::IPolyMesh(*pIObj,Alembic::Abc::kWrapExisting);
-	}
-	else {
-		objSubD = Alembic::AbcGeom::ISubD(*pIObj,Alembic::Abc::kWrapExisting);
-	}
-
-	Alembic::AbcGeom::IPolyMeshSchema::Sample polyMeshSample;
-	Alembic::AbcGeom::ISubDSchema::Sample subDSample;
-
-	bool hasDynamicTopo = false;
-	if(objMesh.valid())
-	{
-		Alembic::Abc::IInt32ArrayProperty faceCountProp = Alembic::Abc::IInt32ArrayProperty(objMesh.getSchema(),".faceCounts");
-		if(faceCountProp.valid() && ! faceCountProp.isConstant() ) {
-			hasDynamicTopo = true;
-		}
-
-	}
-	else if( subDSample.valid() )
-	{
-		Alembic::Abc::IInt32ArrayProperty faceCountProp = Alembic::Abc::IInt32ArrayProperty(objSubD.getSchema(),".faceCounts");
-		if(faceCountProp.valid() && ! faceCountProp.isConstant() ) {
-			hasDynamicTopo = true;
-		}
-	}  
-	return hasDynamicTopo;
-}
-
-bool isAlembicMeshTopology( Alembic::AbcGeom::IObject *pIObj ) {
-	ESS_PROFILE_SCOPE("isAlembicMeshTopology");
-	Alembic::AbcGeom::IPolyMesh objMesh;
-	Alembic::AbcGeom::ISubD objSubD;
-
-	if( ! pIObj->valid() ) {
-		return false;
-	}
-
-	if(Alembic::AbcGeom::IPolyMesh::matches((*pIObj).getMetaData())) {
-		objMesh = Alembic::AbcGeom::IPolyMesh(*pIObj,Alembic::Abc::kWrapExisting);
-	}
-	else {
-		objSubD = Alembic::AbcGeom::ISubD(*pIObj,Alembic::Abc::kWrapExisting);
-	}
-
-	bool isTopology = true;
-	if(objMesh.valid())
-	{
-		Alembic::Abc::IInt32ArrayProperty faceCountProp = Alembic::Abc::IInt32ArrayProperty(objMesh.getSchema(),".faceCounts");
-		if( ! faceCountProp.valid() ) {
-			isTopology = false;
-		}
-		else if( faceCountProp.isConstant() ) {
-			Alembic::Abc::Int32ArraySamplePtr faceCounts = faceCountProp.getValue();
-			if( faceCounts->size() == 0 || ( faceCounts->size() == 1 && ( faceCounts->get()[0] == 0 ) ) ) {
-				isTopology = false;
-			}
-		}
-	}
-	else if( objSubD.valid() )
-	{
-		Alembic::Abc::IInt32ArrayProperty faceCountProp = Alembic::Abc::IInt32ArrayProperty(objSubD.getSchema(),".faceCounts");
-		if( ! faceCountProp.valid() ) {
-			isTopology = false;
-		}
-		else if( faceCountProp.isConstant() ) {
-			Alembic::Abc::Int32ArraySamplePtr faceCounts = faceCountProp.getValue();
-			if( faceCounts->size() == 0 || ( faceCounts->size() == 1 && ( faceCounts->get()[0] == 0 ) ) ) {
-				isTopology = false;
-			}
-		}
-	}
-	else {
-		isTopology = false;
-	}
-	return isTopology;
-}
-
-
-bool isAlembicMeshPointCache( Alembic::AbcGeom::IObject *pIObj ) {
-	ESS_PROFILE_SCOPE("isAlembicMeshPointCache");
-	Alembic::AbcGeom::IPolyMesh objMesh;
-	Alembic::AbcGeom::ISubD objSubD;
-
-	if(Alembic::AbcGeom::IPolyMesh::matches((*pIObj).getMetaData())) {
-		objMesh = Alembic::AbcGeom::IPolyMesh(*pIObj,Alembic::Abc::kWrapExisting);
-	}
-	else {
-		objSubD = Alembic::AbcGeom::ISubD(*pIObj,Alembic::Abc::kWrapExisting);
-	}
-
-	bool isPointCache = false;
-	if(objMesh.valid())
-	{
-		Alembic::Abc::IInt32ArrayProperty faceCountProp = Alembic::Abc::IInt32ArrayProperty(objMesh.getSchema(),".faceCounts");
-		if( ! faceCountProp.valid() ) {
-			Alembic::Abc::IP3fArrayProperty positionsProp = Alembic::Abc::IP3fArrayProperty(objMesh.getSchema(),"P");
-			if( positionsProp.valid() && positionsProp.getValue()->size() > 0 ) {
-				isPointCache = true;
-			}
-		}
-		else if( faceCountProp.isConstant() ) {
-			Alembic::Abc::Int32ArraySamplePtr faceCounts = faceCountProp.getValue();
-			// the first is our preferred method, the second check here is Helge's method that is now considered obsolete
-			if( faceCounts->size() == 0 || ( faceCounts->size() == 1 && ( faceCounts->get()[0] == 0 ) ) ) {
-				Alembic::Abc::IP3fArrayProperty positionsProp = Alembic::Abc::IP3fArrayProperty(objMesh.getSchema(),"P");
-				if( positionsProp.valid() && positionsProp.getValue()->size() > 0 ) {
-					isPointCache = true;
-				}
-			}
-		}
-	}
-	else if( objSubD.valid() )
-	{
-		Alembic::Abc::IInt32ArrayProperty faceCountProp = Alembic::Abc::IInt32ArrayProperty(objSubD.getSchema(),".faceCounts");		
-		if( ! faceCountProp.valid() ) {
-			Alembic::Abc::IP3fArrayProperty positionsProp = Alembic::Abc::IP3fArrayProperty(objSubD.getSchema(),"P");
-			if( positionsProp.valid() && positionsProp.getValue()->size() > 0 ) {
-				isPointCache = true;
-			}
-		}
-		else if( faceCountProp.isConstant() ) {
-			Alembic::Abc::Int32ArraySamplePtr faceCounts = faceCountProp.getValue();
-			// the first is our preferred method, the second check here is Helge's method that is now considered obsolete
-			if( faceCounts->size() == 0 || ( faceCounts->size() == 1 && ( faceCounts->get()[0] == 0 ) ) ) {
-				Alembic::Abc::IP3fArrayProperty positionsProp = Alembic::Abc::IP3fArrayProperty(objSubD.getSchema(),"P");
-				if( positionsProp.valid() && positionsProp.getValue()->size() > 0 ) {
-					isPointCache = true;
-				}
-			}
-		}
-	}  
-	return isPointCache;
-}
-
-struct edge
+bool isAlembicMeshTopoDynamic(Alembic::AbcGeom::IObject* pIObj)
 {
-	int a;
-	int b;
+  ESS_PROFILE_SCOPE("isAlembicMeshTopoDynamic");
+  Alembic::AbcGeom::IPolyMesh objMesh;
+  Alembic::AbcGeom::ISubD objSubD;
 
-	bool operator<( const edge& rEdge ) const
-	{
-		if(a < rEdge.a) return true;
-		if(a > rEdge.a) return false;
-		if(b < rEdge.b) return true;
-		return false;
-	}
+  if (!pIObj->valid()) {
+    return false;
+  }
+
+  if (Alembic::AbcGeom::IPolyMesh::matches((*pIObj).getMetaData())) {
+    objMesh = Alembic::AbcGeom::IPolyMesh(*pIObj, Alembic::Abc::kWrapExisting);
+  }
+  else {
+    objSubD = Alembic::AbcGeom::ISubD(*pIObj, Alembic::Abc::kWrapExisting);
+  }
+
+  Alembic::AbcGeom::IPolyMeshSchema::Sample polyMeshSample;
+  Alembic::AbcGeom::ISubDSchema::Sample subDSample;
+
+  bool hasDynamicTopo = false;
+  if (objMesh.valid()) {
+    Alembic::Abc::IInt32ArrayProperty faceCountProp =
+        Alembic::Abc::IInt32ArrayProperty(objMesh.getSchema(), ".faceCounts");
+    if (faceCountProp.valid() && !faceCountProp.isConstant()) {
+      hasDynamicTopo = true;
+    }
+  }
+  else if (subDSample.valid()) {
+    Alembic::Abc::IInt32ArrayProperty faceCountProp =
+        Alembic::Abc::IInt32ArrayProperty(objSubD.getSchema(), ".faceCounts");
+    if (faceCountProp.valid() && !faceCountProp.isConstant()) {
+      hasDynamicTopo = true;
+    }
+  }
+  return hasDynamicTopo;
+}
+
+bool isAlembicMeshTopology(Alembic::AbcGeom::IObject* pIObj)
+{
+  ESS_PROFILE_SCOPE("isAlembicMeshTopology");
+  Alembic::AbcGeom::IPolyMesh objMesh;
+  Alembic::AbcGeom::ISubD objSubD;
+
+  if (!pIObj->valid()) {
+    return false;
+  }
+
+  if (Alembic::AbcGeom::IPolyMesh::matches((*pIObj).getMetaData())) {
+    objMesh = Alembic::AbcGeom::IPolyMesh(*pIObj, Alembic::Abc::kWrapExisting);
+  }
+  else {
+    objSubD = Alembic::AbcGeom::ISubD(*pIObj, Alembic::Abc::kWrapExisting);
+  }
+
+  bool isTopology = true;
+  if (objMesh.valid()) {
+    Alembic::Abc::IInt32ArrayProperty faceCountProp =
+        Alembic::Abc::IInt32ArrayProperty(objMesh.getSchema(), ".faceCounts");
+    if (!faceCountProp.valid()) {
+      isTopology = false;
+    }
+    else if (faceCountProp.isConstant()) {
+      Alembic::Abc::Int32ArraySamplePtr faceCounts = faceCountProp.getValue();
+      if (faceCounts->size() == 0 ||
+          (faceCounts->size() == 1 && (faceCounts->get()[0] == 0))) {
+        isTopology = false;
+      }
+    }
+  }
+  else if (objSubD.valid()) {
+    Alembic::Abc::IInt32ArrayProperty faceCountProp =
+        Alembic::Abc::IInt32ArrayProperty(objSubD.getSchema(), ".faceCounts");
+    if (!faceCountProp.valid()) {
+      isTopology = false;
+    }
+    else if (faceCountProp.isConstant()) {
+      Alembic::Abc::Int32ArraySamplePtr faceCounts = faceCountProp.getValue();
+      if (faceCounts->size() == 0 ||
+          (faceCounts->size() == 1 && (faceCounts->get()[0] == 0))) {
+        isTopology = false;
+      }
+    }
+  }
+  else {
+    isTopology = false;
+  }
+  return isTopology;
+}
+
+bool isAlembicMeshPointCache(Alembic::AbcGeom::IObject* pIObj)
+{
+  ESS_PROFILE_SCOPE("isAlembicMeshPointCache");
+  Alembic::AbcGeom::IPolyMesh objMesh;
+  Alembic::AbcGeom::ISubD objSubD;
+
+  if (Alembic::AbcGeom::IPolyMesh::matches((*pIObj).getMetaData())) {
+    objMesh = Alembic::AbcGeom::IPolyMesh(*pIObj, Alembic::Abc::kWrapExisting);
+  }
+  else {
+    objSubD = Alembic::AbcGeom::ISubD(*pIObj, Alembic::Abc::kWrapExisting);
+  }
+
+  bool isPointCache = false;
+  if (objMesh.valid()) {
+    Alembic::Abc::IInt32ArrayProperty faceCountProp =
+        Alembic::Abc::IInt32ArrayProperty(objMesh.getSchema(), ".faceCounts");
+    if (!faceCountProp.valid()) {
+      Alembic::Abc::IP3fArrayProperty positionsProp =
+          Alembic::Abc::IP3fArrayProperty(objMesh.getSchema(), "P");
+      if (positionsProp.valid() && positionsProp.getValue()->size() > 0) {
+        isPointCache = true;
+      }
+    }
+    else if (faceCountProp.isConstant()) {
+      Alembic::Abc::Int32ArraySamplePtr faceCounts = faceCountProp.getValue();
+      // the first is our preferred method, the second check here is Helge's
+      // method that is now considered obsolete
+      if (faceCounts->size() == 0 ||
+          (faceCounts->size() == 1 && (faceCounts->get()[0] == 0))) {
+        Alembic::Abc::IP3fArrayProperty positionsProp =
+            Alembic::Abc::IP3fArrayProperty(objMesh.getSchema(), "P");
+        if (positionsProp.valid() && positionsProp.getValue()->size() > 0) {
+          isPointCache = true;
+        }
+      }
+    }
+  }
+  else if (objSubD.valid()) {
+    Alembic::Abc::IInt32ArrayProperty faceCountProp =
+        Alembic::Abc::IInt32ArrayProperty(objSubD.getSchema(), ".faceCounts");
+    if (!faceCountProp.valid()) {
+      Alembic::Abc::IP3fArrayProperty positionsProp =
+          Alembic::Abc::IP3fArrayProperty(objSubD.getSchema(), "P");
+      if (positionsProp.valid() && positionsProp.getValue()->size() > 0) {
+        isPointCache = true;
+      }
+    }
+    else if (faceCountProp.isConstant()) {
+      Alembic::Abc::Int32ArraySamplePtr faceCounts = faceCountProp.getValue();
+      // the first is our preferred method, the second check here is Helge's
+      // method that is now considered obsolete
+      if (faceCounts->size() == 0 ||
+          (faceCounts->size() == 1 && (faceCounts->get()[0] == 0))) {
+        Alembic::Abc::IP3fArrayProperty positionsProp =
+            Alembic::Abc::IP3fArrayProperty(objSubD.getSchema(), "P");
+        if (positionsProp.valid() && positionsProp.getValue()->size() > 0) {
+          isPointCache = true;
+        }
+      }
+    }
+  }
+  return isPointCache;
+}
+
+struct edge {
+  int a;
+  int b;
+
+  bool operator<(const edge& rEdge) const
+  {
+    if (a < rEdge.a) return true;
+    if (a > rEdge.a) return false;
+    if (b < rEdge.b) return true;
+    return false;
+  }
 };
 
-struct edgeData
-{
-	bool bReversed;
-	int count;
-	int face;
+struct edgeData {
+  bool bReversed;
+  int count;
+  int face;
 
-	edgeData():bReversed(false), count(1), face(-1)
-	{}
-
-
+  edgeData() : bReversed(false), count(1), face(-1) {}
 };
 
-
-int validateAlembicMeshTopo(std::vector<Alembic::AbcCoreAbstract::ALEMBIC_VERSION_NS::int32_t> faceCounts,
-							std::vector<Alembic::AbcCoreAbstract::ALEMBIC_VERSION_NS::int32_t> faceIndices,
-							const std::string& meshName)
+int validateAlembicMeshTopo(
+    std::vector<Alembic::AbcCoreAbstract::ALEMBIC_VERSION_NS::int32_t>
+        faceCounts,
+    std::vector<Alembic::AbcCoreAbstract::ALEMBIC_VERSION_NS::int32_t>
+        faceIndices,
+    const std::string& meshName)
 {
+  std::map<edge, edgeData> edgeToCountMap;
+  typedef std::map<edge, edgeData>::iterator iterator;
 
+  int meshErrors = 0;
 
-	std::map<edge, edgeData> edgeToCountMap;
-	typedef std::map<edge, edgeData>::iterator iterator;
+  int faceOffset = 0;
+  for (int i = 0; i < faceCounts.size(); i++) {
+    int count = faceCounts[i];
 
-	int meshErrors = 0;	
+    std::vector<int> occurences;
+    occurences.reserve(count);
 
-	int faceOffset = 0;
-	for(int i=0; i<faceCounts.size(); i++){
-		int count = faceCounts[i];
+    Alembic::AbcCoreAbstract::ALEMBIC_VERSION_NS::int32_t* v =
+        &faceIndices[faceOffset];
+    for (int j = 0; j < count; j++) {
+      occurences.push_back(v[j]);
+    }
+    std::sort(occurences.begin(), occurences.end());
 
-		std::vector<int> occurences;
-		occurences.reserve(count);
+    for (int j = 0; j < occurences.size() - 1; j++) {
+      if (occurences[j] == occurences[j + 1]) {
+        ESS_LOG_WARNING("Error in mesh \"" << meshName << "\". Vertex "
+                                           << occurences[j] << " of face " << i
+                                           << " is duplicated.");
+        meshErrors++;
+      }
+    }
 
-		Alembic::AbcCoreAbstract::ALEMBIC_VERSION_NS::int32_t* v = &faceIndices[faceOffset];
-		for(int j=0; j<count; j++){
-			
-			occurences.push_back(v[j]);
-		}
-		std::sort(occurences.begin(), occurences.end());
+    for (int j = 0; j < count - 1; j++) {
+      edge e;
+      e.a = v[j];
+      e.b = v[j + 1];
 
-		for(int j=0; j<occurences.size()-1; j++){
+      if (e.a == e.b) {
+        // the duplicate vertices check already covers this case.
+        // ESS_LOG_WARNING("edge ("<<e.a<<", "<<e.b<<") is degenerate.");
+        continue;
+      }
 
-			if(occurences[j] == occurences[j+1]){
-				ESS_LOG_WARNING("Error in mesh \""<<meshName<<"\". Vertex "<<occurences[j]<<" of face "<<i<<" is duplicated.");
-				meshErrors ++;
-			}
-		}
+      edgeData eData;
+      eData.face = i;
 
-		for(int j=0; j<count-1; j++){
-			edge e;
-			e.a = v[j];
-			e.b = v[j+1];
+      if (e.b < e.a) {
+        std::swap(e.a, e.b);
+        eData.bReversed = true;
+      }
 
-			if( e.a == e.b ){
-				//the duplicate vertices check already covers this case.
-				//ESS_LOG_WARNING("edge ("<<e.a<<", "<<e.b<<") is degenerate.");
-				continue;
-			}
+      if (edgeToCountMap.find(e) == edgeToCountMap.end()) {
+        edgeToCountMap[e] = eData;
+      }
+      else {
+        edgeData eData2 = edgeToCountMap[e];
+        eData2.count++;
 
-			edgeData eData;
-			eData.face = i;
+        if ((eData.bReversed && eData2.bReversed) ||
+            (!eData.bReversed && !eData2.bReversed)) {
+          ESS_LOG_WARNING("Error in mesh \""
+                          << meshName << "\". Edge (" << e.a << ", " << e.b
+                          << ") is shared between polygons " << eData.face
+                          << " and " << eData2.face
+                          << ", and these polygons have reversed orderings.");
+          meshErrors++;
+        }
+      }
+    }
 
-			if(e.b < e.a){
-				std::swap(e.a, e.b);
-				eData.bReversed = true;
-			}
-
-			if( edgeToCountMap.find(e) == edgeToCountMap.end() ){
-				edgeToCountMap[e] = eData;
-			}
-			else{
-				edgeData eData2 = edgeToCountMap[e];
-				eData2.count++;
-				
-				if( (eData.bReversed && eData2.bReversed) || (!eData.bReversed && !eData2.bReversed) ){
-					
-					ESS_LOG_WARNING("Error in mesh \""<<meshName<<"\". Edge ("<<e.a<<", "<<e.b<<") is shared between polygons "<<eData.face<<" and "<<eData2.face<<", and these polygons have reversed orderings.");
-					meshErrors ++;
-				}
-			}
-		}
-		
-		faceOffset += count;
-	}
-	return meshErrors;
-
+    faceOffset += count;
+  }
+  return meshErrors;
 }
 
-bool getIndexAndValues( Alembic::Abc::Int32ArraySamplePtr faceIndices, Alembic::AbcGeom::IV2fGeomParam& param,
-					   AbcA::index_t sampleIndex, std::vector<Imath::V2f>& outputValues, std::vector<AbcA::uint32_t>& outputIndices ) {
-     ESS_PROFILE_FUNC();
-	if( param.getIndexProperty().valid() && param.getValueProperty().valid() ) {	
-        bool bOutOfBoundsIndices = false;
-   
-		Alembic::Abc::V2fArraySamplePtr valueSampler = param.getValueProperty().getValue( sampleIndex );
-		for( int i = 0; i < valueSampler->size(); i ++ ) {
-			outputValues.push_back( (*valueSampler)[i] );
-		}
-		Alembic::Abc::UInt32ArraySamplePtr indexSampler = param.getIndexProperty().getValue( sampleIndex );
-		for( int i = 0; i < indexSampler->size(); i ++ ) {
-           if( (*indexSampler)[i] >= outputValues.size() ){
-               outputIndices.push_back( outputValues.size()-1 );
-               bOutOfBoundsIndices = true;
-           }
-           else if( (*indexSampler)[i] < 0 ){
-               outputIndices.push_back( 0 );
-               bOutOfBoundsIndices = true;
-           }
-           else{
-               outputIndices.push_back( (*indexSampler)[i] );
-           }
-		}
+bool getIndexAndValues(Alembic::Abc::Int32ArraySamplePtr faceIndices,
+                       Alembic::AbcGeom::IV2fGeomParam& param,
+                       AbcA::index_t sampleIndex,
+                       std::vector<Imath::V2f>& outputValues,
+                       std::vector<AbcA::uint32_t>& outputIndices)
+{
+  ESS_PROFILE_FUNC();
+  if (param.getIndexProperty().valid() && param.getValueProperty().valid()) {
+    bool bOutOfBoundsIndices = false;
 
-        if(bOutOfBoundsIndices){
-           ESS_LOG_WARNING("Out of bounds indices detected.");
-        }
+    Alembic::Abc::V2fArraySamplePtr valueSampler =
+        param.getValueProperty().getValue(sampleIndex);
+    for (int i = 0; i < valueSampler->size(); i++) {
+      outputValues.push_back((*valueSampler)[i]);
+    }
+    Alembic::Abc::UInt32ArraySamplePtr indexSampler =
+        param.getIndexProperty().getValue(sampleIndex);
+    for (int i = 0; i < indexSampler->size(); i++) {
+      if ((*indexSampler)[i] >= outputValues.size()) {
+        outputIndices.push_back(outputValues.size() - 1);
+        bOutOfBoundsIndices = true;
+      }
+      else if ((*indexSampler)[i] < 0) {
+        outputIndices.push_back(0);
+        bOutOfBoundsIndices = true;
+      }
+      else {
+        outputIndices.push_back((*indexSampler)[i]);
+      }
+    }
 
-		return true;
-	}
-	else if( param.getValueProperty().valid() ) {
-		Alembic::Abc::V2fArraySamplePtr valueSampler = param.getValueProperty().getValue( sampleIndex );
-		std::vector<Imath::V2f> tempValues;
-		for( int i = 0; i < valueSampler->size(); i ++ ) {
-			tempValues.push_back( (*valueSampler)[i] );
-		}
-		std::vector<Alembic::Abc::int32_t> tempIndices;
-		for( int i = 0; i < faceIndices->size(); i ++ ) {
-			tempIndices.push_back( (*faceIndices)[i] );
-		}
+    if (bOutOfBoundsIndices) {
+      ESS_LOG_WARNING("Out of bounds indices detected.");
+    }
 
-        //ESS_LOG_WARNING("sampleIndex: "<<sampleIndex);
-        //ESS_LOG_WARNING("valueSampler->size(): "<<valueSampler->size());
-        //ESS_LOG_WARNING("tempIndices.size(): "<<tempIndices.size());
-        //if( valueSampler->size() != tempIndices.size() ){
-        //   ESS_LOG_WARNING("valueSampler->size() != tempIndices.size()");
-        //}
+    return true;
+  }
+  else if (param.getValueProperty().valid()) {
+    Alembic::Abc::V2fArraySamplePtr valueSampler =
+        param.getValueProperty().getValue(sampleIndex);
+    std::vector<Imath::V2f> tempValues;
+    for (int i = 0; i < valueSampler->size(); i++) {
+      tempValues.push_back((*valueSampler)[i]);
+    }
+    std::vector<Alembic::Abc::int32_t> tempIndices;
+    for (int i = 0; i < faceIndices->size(); i++) {
+      tempIndices.push_back((*faceIndices)[i]);
+    }
 
-		createIndexedArray<Imath::V2f,SortableV2f>( tempIndices, tempValues, outputValues, outputIndices );
-		return true;
-	}
-	return false;
+    // ESS_LOG_WARNING("sampleIndex: "<<sampleIndex);
+    // ESS_LOG_WARNING("valueSampler->size(): "<<valueSampler->size());
+    // ESS_LOG_WARNING("tempIndices.size(): "<<tempIndices.size());
+    // if( valueSampler->size() != tempIndices.size() ){
+    //   ESS_LOG_WARNING("valueSampler->size() != tempIndices.size()");
+    //}
+
+    createIndexedArray<Imath::V2f, SortableV2f>(tempIndices, tempValues,
+                                                outputValues, outputIndices);
+    return true;
+  }
+  return false;
 }
 
-bool getIndexAndValues( Alembic::Abc::Int32ArraySamplePtr faceIndices, Alembic::AbcGeom::IN3fGeomParam& param,
-					   AbcA::index_t sampleIndex, std::vector<Imath::V3f>& outputValues, std::vector<AbcA::uint32_t>& outputIndices ) {
-     ESS_PROFILE_FUNC();
-	if( param.getIndexProperty().valid() && param.getValueProperty().valid() ) {	
+bool getIndexAndValues(Alembic::Abc::Int32ArraySamplePtr faceIndices,
+                       Alembic::AbcGeom::IN3fGeomParam& param,
+                       AbcA::index_t sampleIndex,
+                       std::vector<Imath::V3f>& outputValues,
+                       std::vector<AbcA::uint32_t>& outputIndices)
+{
+  ESS_PROFILE_FUNC();
+  if (param.getIndexProperty().valid() && param.getValueProperty().valid()) {
+    bool bOutOfBoundsIndices = false;
 
-       bool bOutOfBoundsIndices = false;
+    Alembic::Abc::N3fArraySamplePtr valueSampler =
+        param.getValueProperty().getValue(sampleIndex);
+    for (int i = 0; i < valueSampler->size(); i++) {
+      outputValues.push_back((*valueSampler)[i]);
+    }
+    Alembic::Abc::UInt32ArraySamplePtr indexSampler =
+        param.getIndexProperty().getValue(sampleIndex);
+    for (int i = 0; i < indexSampler->size(); i++) {
+      if ((*indexSampler)[i] >= outputValues.size()) {
+        outputIndices.push_back(outputValues.size() - 1);
+        bOutOfBoundsIndices = true;
+      }
+      else if ((*indexSampler)[i] < 0) {
+        outputIndices.push_back(0);
+        bOutOfBoundsIndices = true;
+      }
+      else {
+        outputIndices.push_back((*indexSampler)[i]);
+      }
+    }
 
-		Alembic::Abc::N3fArraySamplePtr valueSampler = param.getValueProperty().getValue( sampleIndex );
-		for( int i = 0; i < valueSampler->size(); i ++ ) {
-			outputValues.push_back( (*valueSampler)[i] );
-		}
-		Alembic::Abc::UInt32ArraySamplePtr indexSampler = param.getIndexProperty().getValue( sampleIndex );
-		for( int i = 0; i < indexSampler->size(); i ++ ) {
-           if( (*indexSampler)[i] >= outputValues.size() ){
-               outputIndices.push_back( outputValues.size()-1 );
-               bOutOfBoundsIndices = true;
-           }
-           else if( (*indexSampler)[i] < 0 ){
-               outputIndices.push_back( 0 );
-               bOutOfBoundsIndices = true;
-           }
-           else{
-               outputIndices.push_back( (*indexSampler)[i] );
-           }
-		}
+    if (bOutOfBoundsIndices) {
+      ESS_LOG_WARNING("Out of bounds indices detected.");
+    }
 
-        if(bOutOfBoundsIndices){
-           ESS_LOG_WARNING("Out of bounds indices detected.");
-        }
-
-		return true;
-	}
-	else if( param.getValueProperty().valid() ) {
-		Alembic::Abc::N3fArraySamplePtr valueSampler = param.getValueProperty().getValue( sampleIndex );
-		std::vector<Imath::V3f> tempValues;
-		for( int i = 0; i < valueSampler->size(); i ++ ) {
-			tempValues.push_back( (*valueSampler)[i] );
-		}
-		std::vector<Alembic::Abc::int32_t> tempIndices;
-		for( int i = 0; i < faceIndices->size(); i ++ ) {
-			tempIndices.push_back( (*faceIndices)[i] );
-		}
-		createIndexedArray<Imath::V3f,SortableV3f>( tempIndices, tempValues, outputValues, outputIndices );
-		return true;
-	}
-	return false;
+    return true;
+  }
+  else if (param.getValueProperty().valid()) {
+    Alembic::Abc::N3fArraySamplePtr valueSampler =
+        param.getValueProperty().getValue(sampleIndex);
+    std::vector<Imath::V3f> tempValues;
+    for (int i = 0; i < valueSampler->size(); i++) {
+      tempValues.push_back((*valueSampler)[i]);
+    }
+    std::vector<Alembic::Abc::int32_t> tempIndices;
+    for (int i = 0; i < faceIndices->size(); i++) {
+      tempIndices.push_back((*faceIndices)[i]);
+    }
+    createIndexedArray<Imath::V3f, SortableV3f>(tempIndices, tempValues,
+                                                outputValues, outputIndices);
+    return true;
+  }
+  return false;
 }
 
 bool correctInvalidUVs(std::vector<IndexedUVs>& indexUVSet)
 {
-   ESS_PROFILE_FUNC();
-   bool bInvalidUVs = false;
-   for(int i=0; i < indexUVSet.size(); i++){
-      for(int j=0; j < indexUVSet[i].indices.size(); j++){
-         
-         if(indexUVSet[i].indices[j] < 0){
-            indexUVSet[i].indices[j] = 0;
-            bInvalidUVs = true;
-         }
-         if(indexUVSet[i].indices[j] > indexUVSet[i].values.size()){
-            indexUVSet[i].indices[j] = (int)indexUVSet[i].values.size() - 1;
-            bInvalidUVs = true;
-         }
-
+  ESS_PROFILE_FUNC();
+  bool bInvalidUVs = false;
+  for (int i = 0; i < indexUVSet.size(); i++) {
+    for (int j = 0; j < indexUVSet[i].indices.size(); j++) {
+      if (indexUVSet[i].indices[j] < 0) {
+        indexUVSet[i].indices[j] = 0;
+        bInvalidUVs = true;
       }
-   }
-   return bInvalidUVs;
-}
-
-void saveIndexedUVs( 
-					AbcG::OPolyMeshSchema& meshSchema, AbcG::OPolyMeshSchema::Sample& meshSample,
-					AbcG::OV2fGeomParam::Sample &uvSample, std::vector<AbcG::OV2fGeomParam>& uvParams,
-					unsigned int animatedTs, int numSamples, std::vector<IndexedUVs>& indexUVSet ) {
-	if(numSamples == 0 && indexUVSet.size() > 0 ){
-		std::vector<std::string> names;
-		for( int i = 0; i < indexUVSet.size(); i ++ ) {
-			names.push_back( indexUVSet[i].name );
-		}
-
-		Abc::OStringArrayProperty uvSetNamesProperty = Abc::OStringArrayProperty( meshSchema, ".uvSetNames", meshSchema.getMetaData(), animatedTs );
-		uvSetNamesProperty.set( Abc::StringArraySample( names ) );
-	}
-
-	for( int i = 0; i < indexUVSet.size(); i++ ){
-		//EC_LOG_WARNING( "indexUVSet[i].values: " << indexUVSet[i].values.size() << " indexUVSet[i].indices: " << indexUVSet[i].indices.size() );
-		Abc::V2fArraySample valuesSample( indexUVSet[i].values );
-		Abc::UInt32ArraySample indicesSample(indexUVSet[i].indices );
-		
-		uvSample = AbcG::OV2fGeomParam::Sample( valuesSample, AbcG::kFacevaryingScope);
-		uvSample.setIndices( indicesSample );
-
-		if( i == 0 ){
-			meshSample.setUVs( uvSample );
-		}
-		else{
-			// create the uv param if required
-			if( numSamples == 0 ) {
-				std::stringstream alembicName;
-				alembicName << "uv" << i;
-				uvParams.push_back( AbcG::OV2fGeomParam( meshSchema, alembicName.str().c_str(), indexUVSet[i].indices.size() > 0,
-								 AbcG::kFacevaryingScope, 1, animatedTs ) );
-			}
-			uvParams[i-1].set( uvSample );
-		}
-	}
-}
-
-AbcG::IV2fGeomParam getMeshUvParam(int uvI, AbcG::IPolyMesh objMesh, AbcG::ISubD objSubD)
-{
-   if(objMesh.valid()){
-        ESS_PROFILE_SCOPE("ALEMBIC_DATAFILL_UVS -getUVsParam mesh");
-	   if(uvI == 0){
-		   return objMesh.getSchema().getUVsParam();
-	   }
-	   else{
-		   std::stringstream storedUVNameStream;
-		   storedUVNameStream<<"uv"<<uvI;
-		   if(objMesh.getSchema().getPropertyHeader( storedUVNameStream.str() ) != NULL){
-			   return AbcG::IV2fGeomParam( objMesh.getSchema(), storedUVNameStream.str());
-		   }
-	   }
-   }
-   else{
-        ESS_PROFILE_SCOPE("ALEMBIC_DATAFILL_UVS -getUVsParam SubD");
-	   if(uvI == 0){
-		   return objSubD.getSchema().getUVsParam();
-	   }
-	   else{
-		   std::stringstream storedUVNameStream;
-		   storedUVNameStream<<"uv"<<uvI;
-		   if(objSubD.getSchema().getPropertyHeader( storedUVNameStream.str() ) != NULL){
-			   return AbcG::IV2fGeomParam( objSubD.getSchema(), storedUVNameStream.str());
-		   }
-	   }
-   }
-
-   return AbcG::IV2fGeomParam();
-}
-
-bool frameHasDynamicTopology(AbcG::IPolyMeshSchema::Sample* const polyMeshSample, SampleInfo* const sampleInfo, Abc::IInt32ArrayProperty* const faceIndicesProperty)
-{
-   ESS_PROFILE_FUNC();
-
-   bool hasDynamicTopo = false;
-   if(sampleInfo->alpha != 0.0f || sampleInfo->alpha != 1.0f)
-   {
-      //hasDynamicTopo = options.pObjectCache->isMeshTopoDynamic;//isAlembicMeshTopoDynamic( options.pIObj );
-
-      //Abc::IInt32ArrayProperty faceIndicesProperty = objMesh.getSchema().getFaceIndicesProperty();
-
-      Abc::Int32ArraySamplePtr arraySampleFloor = polyMeshSample->getFaceIndices();
-      Abc::int32_t const* pMeshFaceIndicesFloor = arraySampleFloor->get();
-
-      //read from just ceil indices sample, not entire mesh sample (which would be much slower)
-      Abc::Int32ArraySamplePtr arraySampleCeil;
-      faceIndicesProperty->get(arraySampleCeil, sampleInfo->ceilIndex);
-      Abc::int32_t const* pMeshFaceIndicesCeil = arraySampleCeil->get();
-
-      if(arraySampleFloor->size() == arraySampleCeil->size()){
-         const size_t memSize = sizeof(Abc::int32_t) * arraySampleFloor->size();
-         if(memcmp(pMeshFaceIndicesFloor, pMeshFaceIndicesCeil, memSize) == 0){
-            hasDynamicTopo = false;
-         }
-         else{
-            hasDynamicTopo = true;
-         }
+      if (indexUVSet[i].indices[j] > indexUVSet[i].values.size()) {
+        indexUVSet[i].indices[j] = (int)indexUVSet[i].values.size() - 1;
+        bInvalidUVs = true;
       }
-      else{
-         hasDynamicTopo = true;
-      }
-   }
-   return hasDynamicTopo;
+    }
+  }
+  return bInvalidUVs;
 }
 
-bool frameHasDynamicTopology(const AbcG::IPolyMeshSchema::Sample &sample1, const AbcG::IPolyMeshSchema::Sample &sample2) {
-   ESS_PROFILE_FUNC();
-   bool hasDynamicTopo = true;
-
-   const Alembic::Abc::Int32ArraySamplePtr fIndices1 = sample1.getFaceIndices();
-   const Alembic::Abc::Int32ArraySamplePtr fIndices2 = sample2.getFaceIndices();
-
-   if ( (fIndices1->size() == fIndices2->size()) && (fIndices1->getKey() == fIndices2->getKey()) ) {
-      const Alembic::Abc::Int32ArraySamplePtr fCount1 = sample1.getFaceCounts();
-      const Alembic::Abc::Int32ArraySamplePtr fCount2 = sample2.getFaceCounts();
-
-      hasDynamicTopo = (fCount1->size() != fCount2->size()) || (fCount1->getKey() != fCount2->getKey());
-   }
-   return hasDynamicTopo;
-}
-
-void dynamicTopoVelocityCalc::calcVelocities(const std::vector<Abc::V3f>& nextPosVec, const std::vector<AbcA::int32_t>& nextFaceIndicesVec, std::vector<Abc::V3f>& velocities, double time)
+void saveIndexedUVs(AbcG::OPolyMeshSchema& meshSchema,
+                    AbcG::OPolyMeshSchema::Sample& meshSample,
+                    AbcG::OV2fGeomParam::Sample& uvSample,
+                    std::vector<AbcG::OV2fGeomParam>& uvParams,
+                    unsigned int animatedTs, int numSamples,
+                    std::vector<IndexedUVs>& indexUVSet)
 {
-    if(bInitialized){
-
-       bool bTopoDataIsEqual = false;
-       
-        //if topology data is equal, calculate the velocitiy (replace the default one or create one of all zeros if it is not initialized
-       if( faceIndicesVec.size() == nextFaceIndicesVec.size() ){
-         if(faceIndicesVec.size() > 0){
-            size_t memSize = sizeof(Abc::int32_t) * nextFaceIndicesVec.size();
-            if(memcmp(&faceIndicesVec[0], &nextFaceIndicesVec[0], memSize) == 0){
-               bTopoDataIsEqual = true;
-            }
-         }
-         else{
-            bTopoDataIsEqual = true;
-         }
-       }
-
-       if(bTopoDataIsEqual){
-          if(posVec.size() != nextPosVec.size()){
-            ESS_LOG_WARNING("calcVelocities - posVec.size() != nextPosVec.size()");
-          }
-          //TODO: remove this warning?
-          if(nextPosVec.size() != velocities.size()){
-            ESS_LOG_WARNING("calcVelocities - nextPosVec.size() != velocities.size()");
-          }
-       }
-
-       if(bTopoDataIsEqual && posVec.size() == nextPosVec.size() && nextPosVec.size() == velocities.size()){
-          for(int i=0; i<nextPosVec.size(); i++){
-             velocities[i] = nextPosVec[i] - posVec[i] / (float)(time-prevTime);
-          }
-       }
+  if (numSamples == 0 && indexUVSet.size() > 0) {
+    std::vector<std::string> names;
+    for (int i = 0; i < indexUVSet.size(); i++) {
+      names.push_back(indexUVSet[i].name);
     }
 
-    //update the previous values
-    posVec = nextPosVec;
-    faceIndicesVec = nextFaceIndicesVec;
-    prevTime = time;
-    bInitialized = true;
+    Abc::OStringArrayProperty uvSetNamesProperty = Abc::OStringArrayProperty(
+        meshSchema, ".uvSetNames", meshSchema.getMetaData(), animatedTs);
+    uvSetNamesProperty.set(Abc::StringArraySample(names));
+  }
+
+  for (int i = 0; i < indexUVSet.size(); i++) {
+    // EC_LOG_WARNING( "indexUVSet[i].values: " << indexUVSet[i].values.size()
+    // << " indexUVSet[i].indices: " << indexUVSet[i].indices.size() );
+    Abc::V2fArraySample valuesSample(indexUVSet[i].values);
+    Abc::UInt32ArraySample indicesSample(indexUVSet[i].indices);
+
+    uvSample =
+        AbcG::OV2fGeomParam::Sample(valuesSample, AbcG::kFacevaryingScope);
+    uvSample.setIndices(indicesSample);
+
+    if (i == 0) {
+      meshSample.setUVs(uvSample);
+    }
+    else {
+      // create the uv param if required
+      if (numSamples == 0) {
+        std::stringstream alembicName;
+        alembicName << "uv" << i;
+        uvParams.push_back(
+            AbcG::OV2fGeomParam(meshSchema, alembicName.str().c_str(),
+                                indexUVSet[i].indices.size() > 0,
+                                AbcG::kFacevaryingScope, 1, animatedTs));
+      }
+      uvParams[i - 1].set(uvSample);
+    }
+  }
+}
+
+AbcG::IV2fGeomParam getMeshUvParam(int uvI, AbcG::IPolyMesh objMesh,
+                                   AbcG::ISubD objSubD)
+{
+  if (objMesh.valid()) {
+    ESS_PROFILE_SCOPE("ALEMBIC_DATAFILL_UVS -getUVsParam mesh");
+    if (uvI == 0) {
+      return objMesh.getSchema().getUVsParam();
+    }
+    else {
+      std::stringstream storedUVNameStream;
+      storedUVNameStream << "uv" << uvI;
+      if (objMesh.getSchema().getPropertyHeader(storedUVNameStream.str()) !=
+          NULL) {
+        return AbcG::IV2fGeomParam(objMesh.getSchema(),
+                                   storedUVNameStream.str());
+      }
+    }
+  }
+  else {
+    ESS_PROFILE_SCOPE("ALEMBIC_DATAFILL_UVS -getUVsParam SubD");
+    if (uvI == 0) {
+      return objSubD.getSchema().getUVsParam();
+    }
+    else {
+      std::stringstream storedUVNameStream;
+      storedUVNameStream << "uv" << uvI;
+      if (objSubD.getSchema().getPropertyHeader(storedUVNameStream.str()) !=
+          NULL) {
+        return AbcG::IV2fGeomParam(objSubD.getSchema(),
+                                   storedUVNameStream.str());
+      }
+    }
+  }
+
+  return AbcG::IV2fGeomParam();
+}
+
+bool frameHasDynamicTopology(
+    AbcG::IPolyMeshSchema::Sample* const polyMeshSample,
+    SampleInfo* const sampleInfo,
+    Abc::IInt32ArrayProperty* const faceIndicesProperty)
+{
+  ESS_PROFILE_FUNC();
+
+  bool hasDynamicTopo = false;
+  if (sampleInfo->alpha != 0.0f || sampleInfo->alpha != 1.0f) {
+    // hasDynamicTopo =
+    // options.pObjectCache->isMeshTopoDynamic;//isAlembicMeshTopoDynamic(
+    // options.pIObj );
+
+    // Abc::IInt32ArrayProperty faceIndicesProperty =
+    // objMesh.getSchema().getFaceIndicesProperty();
+
+    Abc::Int32ArraySamplePtr arraySampleFloor =
+        polyMeshSample->getFaceIndices();
+    Abc::int32_t const* pMeshFaceIndicesFloor = arraySampleFloor->get();
+
+    // read from just ceil indices sample, not entire mesh sample (which would
+    // be much slower)
+    Abc::Int32ArraySamplePtr arraySampleCeil;
+    faceIndicesProperty->get(arraySampleCeil, sampleInfo->ceilIndex);
+    Abc::int32_t const* pMeshFaceIndicesCeil = arraySampleCeil->get();
+
+    if (arraySampleFloor->size() == arraySampleCeil->size()) {
+      const size_t memSize = sizeof(Abc::int32_t) * arraySampleFloor->size();
+      if (memcmp(pMeshFaceIndicesFloor, pMeshFaceIndicesCeil, memSize) == 0) {
+        hasDynamicTopo = false;
+      }
+      else {
+        hasDynamicTopo = true;
+      }
+    }
+    else {
+      hasDynamicTopo = true;
+    }
+  }
+  return hasDynamicTopo;
+}
+
+bool frameHasDynamicTopology(const AbcG::IPolyMeshSchema::Sample& sample1,
+                             const AbcG::IPolyMeshSchema::Sample& sample2)
+{
+  ESS_PROFILE_FUNC();
+  bool hasDynamicTopo = true;
+
+  const Alembic::Abc::Int32ArraySamplePtr fIndices1 = sample1.getFaceIndices();
+  const Alembic::Abc::Int32ArraySamplePtr fIndices2 = sample2.getFaceIndices();
+
+  if ((fIndices1->size() == fIndices2->size()) &&
+      (fIndices1->getKey() == fIndices2->getKey())) {
+    const Alembic::Abc::Int32ArraySamplePtr fCount1 = sample1.getFaceCounts();
+    const Alembic::Abc::Int32ArraySamplePtr fCount2 = sample2.getFaceCounts();
+
+    hasDynamicTopo = (fCount1->size() != fCount2->size()) ||
+                     (fCount1->getKey() != fCount2->getKey());
+  }
+  return hasDynamicTopo;
+}
+
+void dynamicTopoVelocityCalc::calcVelocities(
+    const std::vector<Abc::V3f>& nextPosVec,
+    const std::vector<AbcA::int32_t>& nextFaceIndicesVec,
+    std::vector<Abc::V3f>& velocities, double time)
+{
+  if (bInitialized) {
+    bool bTopoDataIsEqual = false;
+
+    // if topology data is equal, calculate the velocitiy (replace the default
+    // one or create one of all zeros if it is not initialized
+    if (faceIndicesVec.size() == nextFaceIndicesVec.size()) {
+      if (faceIndicesVec.size() > 0) {
+        size_t memSize = sizeof(Abc::int32_t) * nextFaceIndicesVec.size();
+        if (memcmp(&faceIndicesVec[0], &nextFaceIndicesVec[0], memSize) == 0) {
+          bTopoDataIsEqual = true;
+        }
+      }
+      else {
+        bTopoDataIsEqual = true;
+      }
+    }
+
+    if (bTopoDataIsEqual) {
+      if (posVec.size() != nextPosVec.size()) {
+        ESS_LOG_WARNING("calcVelocities - posVec.size() != nextPosVec.size()");
+      }
+      // TODO: remove this warning?
+      if (nextPosVec.size() != velocities.size()) {
+        ESS_LOG_WARNING(
+            "calcVelocities - nextPosVec.size() != velocities.size()");
+      }
+    }
+
+    if (bTopoDataIsEqual && posVec.size() == nextPosVec.size() &&
+        nextPosVec.size() == velocities.size()) {
+      for (int i = 0; i < nextPosVec.size(); i++) {
+        velocities[i] = nextPosVec[i] - posVec[i] / (float)(time - prevTime);
+      }
+    }
+  }
+
+  // update the previous values
+  posVec = nextPosVec;
+  faceIndicesVec = nextFaceIndicesVec;
+  prevTime = time;
+  bInitialized = true;
 }
