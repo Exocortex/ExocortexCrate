@@ -1,9 +1,11 @@
 #include "stdafx.h"
 
 #include "AlembicXform.h"
+#include "AttributesReading.h"
+#include "MetaData.h"
+
 #include <maya/MAnimUtil.h>
 #include <maya/MDistance.h>
-#include "MetaData.h"
 
 void AlembicXform::testAnimatedVisibility(AlembicObject *aobj, bool animTS,
                                           bool flatHierarchy)
@@ -76,7 +78,8 @@ AlembicXform::~AlembicXform()
 
 #include <maya/MEulerRotation.h>
 #include <maya/MFnTransform.h>
-MStatus AlembicXform::Save(double time)
+MStatus AlembicXform::Save(double time, unsigned int timeIndex,
+    bool isFirstFrame)
 {
   ESS_PROFILE_SCOPE("AlembicXform::Save");
 
@@ -101,6 +104,22 @@ MStatus AlembicXform::Save(double time)
   // ESS_LOG_WARNING("Rotation info, axis x:" << euler.x);
   // ESS_LOG_WARNING("Scale info:" << scale[0] << ", " << scale[1] << ", " <<
   // scale[2]);
+
+  if (isFirstFrame) {
+    Abc::OCompoundProperty cp;
+    Abc::OCompoundProperty up;
+    if (AttributesWriter::hasAnyAttr(xform, *GetJob())) {
+      cp = mSchema.getArbGeomParams();
+      up = mSchema.getUserProperties();
+    }
+
+    mAttrs = AttributesWriterPtr(
+        new AttributesWriter(cp, up, GetMyParent(), xform, timeIndex, *GetJob())
+        );
+  }
+  else {
+    mAttrs->write();
+  }
 
   switch (visInfo.visibility) {
     case NOT_VISIBLE:
@@ -197,6 +216,9 @@ MObject AlembicXformNode::mOutScaleYAttr;
 MObject AlembicXformNode::mOutScaleZAttr;
 MObject AlembicXformNode::mOutScaleAttr;
 MObject AlembicXformNode::mOutVisibilityAttr;
+
+MObject AlembicXformNode::mGeomParamsList;
+MObject AlembicXformNode::mUserAttrsList;
 
 MStatus AlembicXformNode::initialize()
 {
@@ -335,6 +357,24 @@ MStatus AlembicXformNode::initialize()
   status = nAttr.setHidden(false);
   status = addAttribute(mOutVisibilityAttr);
 
+  // output for list of ArbGeomParams
+  mGeomParamsList = tAttr.create("ExocortexAlembic_GeomParams", "exo_gp",
+      MFnData::kString, emptyStringObject);
+  status = tAttr.setStorable(true);
+  status = tAttr.setKeyable(false);
+  status = tAttr.setHidden(false);
+  status = tAttr.setInternal(true);
+  status = addAttribute(mGeomParamsList);
+
+  // output for list of UserAttributes
+  mUserAttrsList = tAttr.create("ExocortexAlembic_UserAttributes", "exo_ua",
+      MFnData::kString, emptyStringObject);
+  status = tAttr.setStorable(true);
+  status = tAttr.setKeyable(false);
+  status = tAttr.setHidden(false);
+  status = tAttr.setInternal(true);
+  status = addAttribute(mUserAttrsList);
+
   // create a mapping
   status = attributeAffects(mTimeAttr, mOutTranslateXAttr);
   status = attributeAffects(mFileNameAttr, mOutTranslateXAttr);
@@ -386,6 +426,17 @@ void AlembicXformNode::cleanDataHandles(MDataBlock &dataBlock)
   dataBlock.outputValue(mOutScaleZAttr).setClean();
 
   dataBlock.outputValue(mOutVisibilityAttr).setClean();
+
+  // Set all plugs as clean
+  // Even if one of them failed to get set,
+  // trying again in this frame isn't going to help
+  for (unsigned int i = 0; i < mGeomParamPlugs.length(); i++) {
+    dataBlock.outputValue(mGeomParamPlugs[i]).setClean();
+  }
+
+  for (unsigned int i = 0; i < mUserAttrPlugs.length(); i++) {
+    dataBlock.outputValue(mUserAttrPlugs[i]).setClean();
+  }
 }
 
 MStatus AlembicXformNode::compute(const MPlug &plug, MDataBlock &dataBlock)
@@ -442,6 +493,14 @@ MStatus AlembicXformNode::compute(const MPlug &plug, MDataBlock &dataBlock)
 
   if (mSchema.getNumSamples() == 0) {
     return MStatus::kFailure;
+  }
+
+  {
+    ESS_PROFILE_SCOPE("AlembicXformNode::compute readProps");
+    Alembic::Abc::ICompoundProperty arbProp = mSchema.getArbGeomParams();
+    Alembic::Abc::ICompoundProperty userProp = mSchema.getUserProperties();
+    readProps(inputTime, arbProp, dataBlock, thisMObject());
+    readProps(inputTime, userProp, dataBlock, thisMObject());
   }
 
   SampleInfo sampleInfo = getSampleInfo(inputTime, mSchema.getTimeSampling(),
@@ -547,4 +606,39 @@ MStatus AlembicXformNode::compute(const MPlug &plug, MDataBlock &dataBlock)
   }
 
   return status;
+}
+
+// Cache the plug arrays for use in setDependentsDirty
+bool AlembicXformNode::setInternalValueInContext(const MPlug & plug,
+    const MDataHandle & dataHandle,
+    MDGContext &)
+{
+  if (plug == mGeomParamsList) {
+    MString geomParamsStr = dataHandle.asString();
+    getPlugArrayFromAttrList(geomParamsStr, thisMObject(), mGeomParamPlugs);
+  }
+  else if (plug == mUserAttrsList) {
+    MString userAttrsStr = dataHandle.asString();
+    getPlugArrayFromAttrList(userAttrsStr, thisMObject(), mUserAttrPlugs);
+  }
+
+  return false;
+}
+
+MStatus AlembicXformNode::setDependentsDirty(const MPlug &plugBeingDirtied,
+    MPlugArray &affectedPlugs)
+{
+  if (plugBeingDirtied == mFileNameAttr || plugBeingDirtied == mIdentifierAttr
+      || plugBeingDirtied == mTimeAttr) {
+
+    for (unsigned int i = 0; i < mGeomParamPlugs.length(); i++) {
+      affectedPlugs.append(mGeomParamPlugs[i]);
+    }
+
+    for (unsigned int i = 0; i < mUserAttrPlugs.length(); i++) {
+      affectedPlugs.append(mUserAttrPlugs[i]);
+    }
+  }
+
+  return MStatus::kSuccess;
 }

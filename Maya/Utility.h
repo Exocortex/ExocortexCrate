@@ -17,6 +17,9 @@ MObject getRefFromIdentifier(std::string in_Identifier);
 bool isRefAnimated(const MObject& in_Ref);
 bool returnIsRefAnimated(const MObject& in_Ref, bool animated);
 void clearIsRefAnimatedCache();
+MStatus getPlugArrayFromAttrList(const MString &list,
+    const MObject &obj,
+    MPlugArray &plugs);
 
 // remapping imported names
 void nameMapAdd(MString identifier, MString name);

@@ -4,6 +4,7 @@
 #include <maya/MFnNurbsCurve.h>
 #include <maya/MUint64Array.h>
 #include "AlembicObject.h"
+#include "AttributesWriter.h"
 
 //-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -72,6 +73,8 @@ class AlembicCurves : public AlembicObject {
   AbcG::OCurvesSchema mSchema;
   AbcG::OCurvesSchema::Sample mSample;
 
+  AttributesWriterPtr mAttrs;
+
   std::vector<Abc::V3f> mPosVec;
   std::vector<AbcA::int32_t> mNbVertices;
   std::vector<float> mRadiusVec;
@@ -91,7 +94,8 @@ class AlembicCurves : public AlembicObject {
 
   virtual Abc::OObject GetObject() { return mObject; }
   virtual Abc::OCompoundProperty GetCompound() { return mSchema; }
-  virtual MStatus Save(double time);
+  virtual MStatus Save(double time, unsigned int timeIndex,
+      bool isFirstFrame);
 };
 
 class AlembicCurvesNode : public AlembicObjectNode {
@@ -105,6 +109,12 @@ class AlembicCurvesNode : public AlembicObjectNode {
   static void *creator() { return (new AlembicCurvesNode()); }
   static MStatus initialize();
 
+  bool setInternalValueInContext(const MPlug & plug,
+      const MDataHandle & dataHandle,
+      MDGContext & ctx);
+  MStatus setDependentsDirty(const MPlug &plugBeingDirtied,
+      MPlugArray &affectedPlugs);
+
  private:
   // input attributes
   static MObject mTimeAttr;
@@ -112,11 +122,16 @@ class AlembicCurvesNode : public AlembicObjectNode {
   static MObject mIdentifierAttr;
   MString mFileName;
   MString mIdentifier;
+  MPlugArray mGeomParamPlugs;
+  MPlugArray mUserAttrPlugs;
   AbcG::ICurves mObj;
   AbcG::ICurvesSchema mSchema;
 
   // output attributes
   static MObject mOutGeometryAttr;
+
+  static MObject mGeomParamsList;
+  static MObject mUserAttrsList;
 
   // members
   SampleInfo mLastSampleInfo;
@@ -134,6 +149,12 @@ class AlembicCurvesDeformNode : public AlembicObjectDeformNode {
   static void *creator() { return (new AlembicCurvesDeformNode()); }
   static MStatus initialize();
 
+  bool setInternalValueInContext(const MPlug & plug,
+      const MDataHandle & dataHandle,
+      MDGContext & ctx);
+  MStatus setDependentsDirty(const MPlug &plugBeingDirtied,
+      MPlugArray &affectedPlugs);
+
  private:
   // input attributes
   static MObject mTimeAttr;
@@ -141,7 +162,13 @@ class AlembicCurvesDeformNode : public AlembicObjectDeformNode {
   static MObject mIdentifierAttr;
   MString mFileName;
   MString mIdentifier;
+  MPlugArray mGeomParamPlugs;
+  MPlugArray mUserAttrPlugs;
   AbcG::ICurvesSchema mSchema;
+
+  // output attributes
+  static MObject mGeomParamsList;
+  static MObject mUserAttrsList;
 
   // members
   SampleInfo mLastSampleInfo;

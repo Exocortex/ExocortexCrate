@@ -1,7 +1,7 @@
 #include "stdafx.h"
 
 #include "AlembicCurves.h"
-
+#include "AttributesReading.h"
 #include "MetaData.h"
 
 #include <maya/MArrayDataBuilder.h>
@@ -165,7 +165,8 @@ AlembicCurves::~AlembicCurves()
   }
 }
 
-MStatus AlembicCurves::Save(double time)
+MStatus AlembicCurves::Save(double time, unsigned int timeIndex,
+    bool isFirstFrame)
 {
   ESS_PROFILE_SCOPE("AlembicCurves::Save");
 
@@ -180,6 +181,23 @@ MStatus AlembicCurves::Save(double time)
 
   // save the metadata
   SaveMetaData(this);
+
+  // save the attributes
+  if (isFirstFrame) {
+    Abc::OCompoundProperty cp;
+    Abc::OCompoundProperty up;
+    if (AttributesWriter::hasAnyAttr(node, *GetJob())) {
+      cp = mSchema.getArbGeomParams();
+      up = mSchema.getUserProperties();
+    }
+
+    mAttrs = AttributesWriterPtr(
+        new AttributesWriter(cp, up, GetMyParent(), node, timeIndex, *GetJob())
+        );
+  }
+  else {
+    mAttrs->write();
+  }
 
   // prepare the bounding box
   Abc::Box3d bbox;
@@ -273,6 +291,9 @@ MObject AlembicCurvesNode::mFileNameAttr;
 MObject AlembicCurvesNode::mIdentifierAttr;
 MObject AlembicCurvesNode::mOutGeometryAttr;
 
+MObject AlembicCurvesNode::mGeomParamsList;
+MObject AlembicCurvesNode::mUserAttrsList;
+
 MStatus AlembicCurvesNode::initialize()
 {
   MStatus status;
@@ -315,6 +336,24 @@ MStatus AlembicCurvesNode::initialize()
   status = tAttr.setKeyable(false);
   status = tAttr.setHidden(false);
   status = addAttribute(mOutGeometryAttr);
+
+  // output for list of ArbGeomParams
+  mGeomParamsList = tAttr.create("ExocortexAlembic_GeomParams", "exo_gp",
+      MFnData::kString, emptyStringObject);
+  status = tAttr.setStorable(true);
+  status = tAttr.setKeyable(false);
+  status = tAttr.setHidden(false);
+  status = tAttr.setInternal(true);
+  status = addAttribute(mGeomParamsList);
+
+  // output for list of UserAttributes
+  mUserAttrsList = tAttr.create("ExocortexAlembic_UserAttributes", "exo_ua",
+      MFnData::kString, emptyStringObject);
+  status = tAttr.setStorable(true);
+  status = tAttr.setKeyable(false);
+  status = tAttr.setHidden(false);
+  status = tAttr.setInternal(true);
+  status = addAttribute(mUserAttrsList);
 
   // create a mapping
   status = attributeAffects(mTimeAttr, mOutGeometryAttr);
@@ -365,6 +404,25 @@ MStatus AlembicCurvesNode::compute(const MPlug &plug, MDataBlock &dataBlock)
 
   if (!mSchema.valid()) {
     return MStatus::kFailure;
+  }
+
+  {
+    ESS_PROFILE_SCOPE("AlembicCurvesNode::compute readProps");
+    Alembic::Abc::ICompoundProperty arbProp = mSchema.getArbGeomParams();
+    Alembic::Abc::ICompoundProperty userProp = mSchema.getUserProperties();
+    readProps(inputTime, arbProp, dataBlock, thisMObject());
+    readProps(inputTime, userProp, dataBlock, thisMObject());
+
+    // Set all plugs as clean
+    // Even if one of them failed to get set,
+    // trying again in this frame isn't going to help
+    for (unsigned int i = 0; i < mGeomParamPlugs.length(); i++) {
+      dataBlock.outputValue(mGeomParamPlugs[i]).setClean();
+    }
+
+    for (unsigned int i = 0; i < mUserAttrPlugs.length(); i++) {
+      dataBlock.outputValue(mUserAttrPlugs[i]).setClean();
+    }
   }
 
   // get the sample
@@ -474,6 +532,41 @@ MStatus AlembicCurvesNode::compute(const MPlug &plug, MDataBlock &dataBlock)
   return MStatus::kSuccess;
 }
 
+// Cache the plug arrays for use in setDependentsDirty
+bool AlembicCurvesNode::setInternalValueInContext(const MPlug & plug,
+    const MDataHandle & dataHandle,
+    MDGContext &)
+{
+  if (plug == mGeomParamsList) {
+    MString geomParamsStr = dataHandle.asString();
+    getPlugArrayFromAttrList(geomParamsStr, thisMObject(), mGeomParamPlugs);
+  }
+  else if (plug == mUserAttrsList) {
+    MString userAttrsStr = dataHandle.asString();
+    getPlugArrayFromAttrList(userAttrsStr, thisMObject(), mUserAttrPlugs);
+  }
+
+  return false;
+}
+
+MStatus AlembicCurvesNode::setDependentsDirty(const MPlug &plugBeingDirtied,
+    MPlugArray &affectedPlugs)
+{
+  if (plugBeingDirtied == mFileNameAttr || plugBeingDirtied == mIdentifierAttr
+      || plugBeingDirtied == mTimeAttr) {
+
+    for (unsigned int i = 0; i < mGeomParamPlugs.length(); i++) {
+      affectedPlugs.append(mGeomParamPlugs[i]);
+    }
+
+    for (unsigned int i = 0; i < mUserAttrPlugs.length(); i++) {
+      affectedPlugs.append(mUserAttrPlugs[i]);
+    }
+  }
+
+  return MStatus::kSuccess;
+}
+
 void AlembicCurvesDeformNode::PreDestruction()
 {
   mSchema.reset();
@@ -485,6 +578,9 @@ AlembicCurvesDeformNode::~AlembicCurvesDeformNode() { PreDestruction(); }
 MObject AlembicCurvesDeformNode::mTimeAttr;
 MObject AlembicCurvesDeformNode::mFileNameAttr;
 MObject AlembicCurvesDeformNode::mIdentifierAttr;
+
+MObject AlembicCurvesDeformNode::mGeomParamsList;
+MObject AlembicCurvesDeformNode::mUserAttrsList;
 
 MStatus AlembicCurvesDeformNode::initialize()
 {
@@ -517,6 +613,24 @@ MStatus AlembicCurvesDeformNode::initialize()
   status = tAttr.setStorable(true);
   status = tAttr.setKeyable(false);
   status = addAttribute(mIdentifierAttr);
+
+  // output for list of ArbGeomParams
+  mGeomParamsList = tAttr.create("ExocortexAlembic_GeomParams", "exo_gp",
+      MFnData::kString, emptyStringObject);
+  status = tAttr.setStorable(true);
+  status = tAttr.setKeyable(false);
+  status = tAttr.setHidden(false);
+  status = tAttr.setInternal(true);
+  status = addAttribute(mGeomParamsList);
+
+  // output for list of UserAttributes
+  mUserAttrsList = tAttr.create("ExocortexAlembic_UserAttributes", "exo_ua",
+      MFnData::kString, emptyStringObject);
+  status = tAttr.setStorable(true);
+  status = tAttr.setKeyable(false);
+  status = tAttr.setHidden(false);
+  status = tAttr.setInternal(true);
+  status = addAttribute(mUserAttrsList);
 
   // create a mapping
   status = attributeAffects(mTimeAttr, outputGeom);
@@ -572,6 +686,25 @@ MStatus AlembicCurvesDeformNode::deform(MDataBlock &dataBlock,
 
   if (!mSchema.valid()) {
     return MStatus::kFailure;
+  }
+
+  {
+    ESS_PROFILE_SCOPE("AlembicCurvesDeformNode::deform readProps");
+    Alembic::Abc::ICompoundProperty arbProp = mSchema.getArbGeomParams();
+    Alembic::Abc::ICompoundProperty userProp = mSchema.getUserProperties();
+    readProps(inputTime, arbProp, dataBlock, thisMObject());
+    readProps(inputTime, userProp, dataBlock, thisMObject());
+
+    // Set all plugs as clean
+    // Even if one of them failed to get set,
+    // trying again in this frame isn't going to help
+    for (unsigned int i = 0; i < mGeomParamPlugs.length(); i++) {
+      dataBlock.outputValue(mGeomParamPlugs[i]).setClean();
+    }
+
+    for (unsigned int i = 0; i < mUserAttrPlugs.length(); i++) {
+      dataBlock.outputValue(mUserAttrPlugs[i]).setClean();
+    }
   }
 
   // get the sample
@@ -641,6 +774,41 @@ MStatus AlembicCurvesDeformNode::deform(MDataBlock &dataBlock,
     }
     iter.setPosition(abcPos);
   }
+  return MStatus::kSuccess;
+}
+
+// Cache the plug arrays for use in setDependentsDirty
+bool AlembicCurvesDeformNode::setInternalValueInContext(const MPlug & plug,
+    const MDataHandle & dataHandle,
+    MDGContext &)
+{
+  if (plug == mGeomParamsList) {
+    MString geomParamsStr = dataHandle.asString();
+    getPlugArrayFromAttrList(geomParamsStr, thisMObject(), mGeomParamPlugs);
+  }
+  else if (plug == mUserAttrsList) {
+    MString userAttrsStr = dataHandle.asString();
+    getPlugArrayFromAttrList(userAttrsStr, thisMObject(), mUserAttrPlugs);
+  }
+
+  return false;
+}
+
+MStatus AlembicCurvesDeformNode::setDependentsDirty(const MPlug &plugBeingDirtied,
+    MPlugArray &affectedPlugs)
+{
+  if (plugBeingDirtied == mFileNameAttr || plugBeingDirtied == mIdentifierAttr
+      || plugBeingDirtied == mTimeAttr) {
+
+    for (unsigned int i = 0; i < mGeomParamPlugs.length(); i++) {
+      affectedPlugs.append(mGeomParamPlugs[i]);
+    }
+
+    for (unsigned int i = 0; i < mUserAttrPlugs.length(); i++) {
+      affectedPlugs.append(mUserAttrPlugs[i]);
+    }
+  }
+
   return MStatus::kSuccess;
 }
 

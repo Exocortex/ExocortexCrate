@@ -5,6 +5,7 @@
 #include <maya/MFnParticleSystem.h>
 #include <list>
 #include "AlembicObject.h"
+#include "AttributesWriter.h"
 
 class AlembicPoints : public AlembicObject {
  private:
@@ -14,6 +15,8 @@ class AlembicPoints : public AlembicObject {
   AbcG::OPoints mObject;
   AbcG::OPointsSchema mSchema;
   AbcG::OPointsSchema::Sample mSample;
+
+  AttributesWriterPtr mAttrs;
 
   Abc::OFloatArrayProperty mAgeProperty;
   Abc::OFloatArrayProperty mMassProperty;
@@ -43,7 +46,8 @@ class AlembicPoints : public AlembicObject {
 
   virtual Abc::OObject GetObject() { return mObject; }
   virtual Abc::OCompoundProperty GetCompound() { return mSchema; }
-  virtual MStatus Save(double time);
+  virtual MStatus Save(double time, unsigned int timeIndex,
+      bool isFirstFrame);
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -112,6 +116,12 @@ class AlembicPointsNode : public AlembicObjectEmitterNode {
   static void *creator() { return (new AlembicPointsNode()); }
   static MStatus initialize();
 
+  bool setInternalValueInContext(const MPlug & plug,
+      const MDataHandle & dataHandle,
+      MDGContext & ctx);
+  MStatus setDependentsDirty(const MPlug &plugBeingDirtied,
+      MPlugArray &affectedPlugs);
+
  private:
   // input attributes
   static MObject mTimeAttr;
@@ -119,9 +129,15 @@ class AlembicPointsNode : public AlembicObjectEmitterNode {
   static MObject mIdentifierAttr;
   MString mFileName;
   MString mIdentifier;
+  MPlugArray mGeomParamPlugs;
+  MPlugArray mUserAttrPlugs;
   AbcG::IPointsSchema mSchema;
   AbcG::IPoints obj;
   AlembicPointsNodeListIter listPosition;
+
+  // output attributes
+  static MObject mGeomParamsList;
+  static MObject mUserAttrsList;
 
   MStatus init(const MString &filename, const MString &identifier);
   MStatus initPerParticles(const MString &partName);

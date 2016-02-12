@@ -2,7 +2,7 @@ import maya.cmds as cmds
 
 """ Export module of Exocortex Crate """
 
-def doIt(filename, exInframe, exOutframe, exObjects=None, exStepframe=1, exSubstepframe=1, exTopology=3, exUVs=True, exFaceSets=True, exDynTopo=False, exGlobSpace=False, exWithoutHierarchy=False, exXformCache=False, exUseInitShadGrp=False, exUseOgawa=False):
+def doIt(filename, exInframe, exOutframe, exObjects=None, exStepframe=1, exSubstepframe=1, exTopology=3, exUVs=True, exFaceSets=True, exDynTopo=False, exGlobSpace=False, exWithoutHierarchy=False, exXformCache=False, exUseInitShadGrp=False, exUseOgawa=False, userAttrs="", userAttrPrefixes=""):
 	"""
 	Set up the string parameter for ExocortexAlembic_export
 	"""
@@ -35,6 +35,11 @@ def doIt(filename, exInframe, exOutframe, exObjects=None, exStepframe=1, exSubst
 	job += ";globalspace="+str(int(exGlobSpace))
 	job += ";withouthierarchy="+str(int(exWithoutHierarchy))
 	job += ";transformcache="+str(int(exXformCache))
+
+	if userAttrs:
+		job += ";userattrs="+str(userAttrs)
+	if userAttrPrefixes:
+		job += ";userattrprefixes="+str(userAttrPrefixes)
 
 	cmds.ExocortexAlembic_export(j=job)
 	cmds.ExocortexAlembic_profileEnd(f="Python.ExocortexAlembic._export.doIt")

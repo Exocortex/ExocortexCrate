@@ -177,6 +177,29 @@ bool returnIsRefAnimated(const MObject& in_Ref, bool animated)
 }
 
 void clearIsRefAnimatedCache() { gIsRefAnimatedMap.clear(); }
+
+MStatus getPlugArrayFromAttrList(const MString &list,
+    const MObject &obj,
+    MPlugArray &plugs)
+{
+  MStatus status;
+  MFnDependencyNode depNode(obj, &status);
+
+  MStringArray attrs;
+  status = list.split(';', attrs);
+
+  plugs.clear();
+  for (unsigned int i = 0; i < attrs.length(); i++) {
+    MStatus plugStatus;
+    MPlug plug = depNode.findPlug(attrs[i], &plugStatus);
+    if (!plugStatus.error()) {
+      status = plugs.append(plug);
+    }
+  }
+
+  return status;
+}
+
 std::map<std::string, std::string> gNameMap;
 void nameMapAdd(MString identifier, MString name)
 {

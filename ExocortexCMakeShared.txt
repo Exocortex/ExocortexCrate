@@ -19,14 +19,14 @@ function(setup_cpu_name)
 endfunction()
 
 
-function(setup_precompiled_header LocalSourceDir)
+function(setup_precompiled_header LocalSourceDir Sources)
 	if (MSVC)
 		set( LOCAL_SOURCE_DIR ${LocalSourceDir} )
 		
-		list( REMOVE_ITEM ARGN "${LOCAL_SOURCE_DIR}/stdafx.cpp" )
-		list( REMOVE_ITEM ARGN "${LOCAL_SOURCE_DIR}/stdafx.h" )
+		list( REMOVE_ITEM ${${Sources}} "${LOCAL_SOURCE_DIR}/stdafx.cpp" )
+		list( REMOVE_ITEM ${${Sources}} "${LOCAL_SOURCE_DIR}/stdafx.h" )
 
-		foreach( src_file ${ARGN} )
+		foreach( src_file ${${Sources}} )
 			set_source_files_properties(
 				${src_file}
 				PROPERTIES
@@ -37,6 +37,7 @@ function(setup_precompiled_header LocalSourceDir)
 			PROPERTIES
 			COMPILE_FLAGS "/Ycstdafx.h"
 			)
+    list(APPEND ${Sources} ${LOCAL_SOURCE_DIR}/stdafx.cpp)
 	endif()
 endfunction()
 

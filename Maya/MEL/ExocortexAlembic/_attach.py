@@ -1,3 +1,5 @@
+import traceback
+
 import maya.cmds as cmds
 import _functions as fnt
 
@@ -17,117 +19,140 @@ def attachTimeAndFile(node, jobInfo, isConstant=False):
 
 def attachXform(name, identifier, jobInfo, isConstant=False):
 	cmds.ExocortexAlembic_profileBegin(f="Python.ExocortexAlembic._attach.attachXform")
-	conX = cmds.listConnections(name+".translate")
-	if conX:
-		# already receiving transformation from another node!
-		conX = conX[0]
-		if cmds.objectType(conX) == "ExocortexAlembicXform":
-			attachTimeAndFile(conX, jobInfo, isConstant)
-		else:
-			print("Cannot attach Xform to " + name + ", it's attach to a node that is not an \"ExocortexAlembicXform\"")
-		return
+	try:
+		conX = cmds.listConnections(name+".translate")
+		if conX:
+			# already receiving transformation from another node!
+			conX = conX[0]
+			if cmds.objectType(conX) == "ExocortexAlembicXform":
+				attachTimeAndFile(conX, jobInfo, isConstant)
+				return [conX]
+			else:
+				return ["!", "Cannot attach Xform to " + name + ", it's attach to a node that is not an \"ExocortexAlembicXform\""]
 
-	newXform = cmds.createNode("ExocortexAlembicXform")
-	cmds.setAttr(newXform+".identifier", identifier, type="string")
-	cmds.connectAttr(newXform+".translate", 	name+".translate")
-	cmds.connectAttr(newXform+".rotate",		name+".rotate")
-	cmds.connectAttr(newXform+".scale", 		name+".scale")
-	cmds.connectAttr(newXform+".outVisibility",	name+".visibility")
+		newXform = cmds.createNode("ExocortexAlembicXform")
+		cmds.setAttr(newXform+".identifier", identifier, type="string")
+		cmds.connectAttr(newXform+".translate", 	name+".translate")
+		cmds.connectAttr(newXform+".rotate",		name+".rotate")
+		cmds.connectAttr(newXform+".scale", 		name+".scale")
+		cmds.connectAttr(newXform+".outVisibility",	name+".visibility")
 
-	attachTimeAndFile(newXform, jobInfo, isConstant)
-	cmds.ExocortexAlembic_profileEnd(f="Python.ExocortexAlembic._attach.attachXform")
-	pass
+		attachTimeAndFile(newXform, jobInfo, isConstant)
+	except:
+		return ["!", traceback.format_exc()]
+	finally:
+		cmds.ExocortexAlembic_profileEnd(f="Python.ExocortexAlembic._attach.attachXform")
+	return [newXform]
 
 def attachPolyMesh(name, identifier, jobInfo, isConstant=False):
 	cmds.ExocortexAlembic_profileBegin(f="Python.ExocortexAlembic._attach.attachPolyMesh")
-	if cmds.objectType(name) != "mesh":
-		print("Only mesh can be attached too!")
+	try:
+		if cmds.objectType(name) != "mesh":
+			return ["!", "Only mesh can be attached too!"]
+
+		conX = cmds.listConnections(name, d=False, type="ExocortexAlembicPolyMeshDeform")
+		if conX: # it's already attached to a deform, simply change the file reference
+			polyObj = conX[0]
+			attachTimeAndFile(polyObj, jobInfo, isConstant)
+			return [polyObj]
+
+		# create deformer, and attach time and file
+		newDform = cmds.deformer(name, type="ExocortexAlembicPolyMeshDeform")[0]
+		cmds.setAttr(newDform+".identifier", identifier, type="string")
+		attachTimeAndFile(newDform, jobInfo, isConstant)
+
+		if jobInfo.useFaceSets:
+			cmds.ExocortexAlembic_createFaceSets(f=cmds.getAttr(jobInfo.filenode+".outFileName"), i=identifier, o=name)
+	except:
+		return ["!", traceback.format_exc()]
+	finally:
 		cmds.ExocortexAlembic_profileEnd(f="Python.ExocortexAlembic._attach.attachPolyMesh")
-		return
-
-	polyObj = cmds.connectionInfo(name+".inMesh", sfd=True).split('.')[0]					# cmds.plugNode doesn't exist!
-	if polyObj and cmds.objectType(polyObj) == "ExocortexAlembicPolyMeshDeform":	# it's already attached to a deform, simply change the file reference
-		attachTimeAndFile(polyObj, jobInfo, isConstant)
-		return
-
-	# create deformer, and attach time and file
-	newDform = cmds.deformer(name, type="ExocortexAlembicPolyMeshDeform")[0]
-	cmds.setAttr(newDform+".identifier", identifier, type="string")
-	attachTimeAndFile(newDform, jobInfo, isConstant)
-
-	if jobInfo.useFaceSets:
-		cmds.ExocortexAlembic_createFaceSets(f=cmds.getAttr(jobInfo.filenode+".outFileName"), i=identifier, o=name)
-
-	cmds.ExocortexAlembic_profileEnd(f="Python.ExocortexAlembic._attach.attachPolyMesh")
-	pass
+	return [newDform]
 
 def attachCamera(name, identifier, jobInfo, isConstant=False):
 	cmds.ExocortexAlembic_profileBegin(f="Python.ExocortexAlembic._attach.attachCamera")
-	camObj = cmds.connectionInfo(name+".focalLength", sfd=True)
-	if camObj and cmds.objectType(camObj) == "ExocortexAlembicCamera":
-		attachTimeAndFile(camObj, jobInfo, isConstant)
-		return
+	try:
+		conX = cmds.listConnections(name, d=False, type="ExocortexAlembicCamera")
+		if conX:
+			camObj = conX[0]
+			attachTimeAndFile(camObj, jobInfo, isConstant)
+			return [camObj]
 
-	reader = cmds.createNode("ExocortexAlembicCamera")
-	cmds.connectAttr(reader+".focalLength", name+".focalLength")
-	cmds.connectAttr(reader+".focusDistance", name+".focusDistance")
-	cmds.connectAttr(reader+".lensSqueezeRatio", name+".lensSqueezeRatio")
-	cmds.connectAttr(reader+".horizontalFilmAperture", name+".horizontalFilmAperture")
-	cmds.connectAttr(reader+".verticalFilmAperture", name+".verticalFilmAperture")
-	cmds.connectAttr(reader+".horizontalFilmOffset", name+".horizontalFilmOffset")
-	cmds.connectAttr(reader+".verticalFilmOffset", name+".verticalFilmOffset")
-	cmds.connectAttr(reader+".fStop", name+".fStop")
-	cmds.connectAttr(reader+".shutterAngle", name+".shutterAngle")
+		reader = cmds.createNode("ExocortexAlembicCamera")
+		cmds.connectAttr(reader+".focalLength", name+".focalLength")
+		cmds.connectAttr(reader+".focusDistance", name+".focusDistance")
+		cmds.connectAttr(reader+".lensSqueezeRatio", name+".lensSqueezeRatio")
+		cmds.connectAttr(reader+".horizontalFilmAperture", name+".horizontalFilmAperture")
+		cmds.connectAttr(reader+".verticalFilmAperture", name+".verticalFilmAperture")
+		cmds.connectAttr(reader+".horizontalFilmOffset", name+".horizontalFilmOffset")
+		cmds.connectAttr(reader+".verticalFilmOffset", name+".verticalFilmOffset")
+		cmds.connectAttr(reader+".fStop", name+".fStop")
+		cmds.connectAttr(reader+".shutterAngle", name+".shutterAngle")
 
-	attachTimeAndFile(reader, jobInfo, isConstant)
-	cmds.ExocortexAlembic_profileEnd(f="Python.ExocortexAlembic._attach.attachCamera")
-	pass
+		attachTimeAndFile(reader, jobInfo, isConstant)
+	except:
+		return ["!", traceback.format_exc()]
+	finally:
+		cmds.ExocortexAlembic_profileEnd(f="Python.ExocortexAlembic._attach.attachCamera")
+	return [reader]
 
 def attachCurves(name, identifier, jobInfo, isConstant=False):
 	cmds.ExocortexAlembic_profileBegin(f="Python.ExocortexAlembic._attach.attachCurves")
-	curObj = cmds.connectionInfo(name+".visibility", sfd=True)
-	if curObj and cmds.objectType(curObj) == "ExocortexAlembicCurvesDeform":
-		attachTimeAndFile(curObj, jobInfo, isConstant)
-		return
+	try:
+		conX = (cmds.listConnections(name+".create", d=False, type="ExocortexAlembicCurvesDeform") or
+				cmds.listConnections(name+".create", d=False, type="ExocortexAlembicCurves"))
+		if conX:
+			curObj = conX[0]
+			attachTimeAndFile(curObj, jobInfo, isConstant)
+			return [curObj]
 
-	# create deformer, and attach time and file
-	newDform = cmds.deformer(name, type="ExocortexAlembicCurvesDeform")[0]
-	cmds.setAttr(newDform+".identifier", identifier, type="string")
-	attachTimeAndFile(newDform, jobInfo, isConstant)
+		# create deformer, and attach time and file
+		newDform = cmds.deformer(name, type="ExocortexAlembicCurvesDeform")[0]
+		cmds.setAttr(newDform+".identifier", identifier, type="string")
+		attachTimeAndFile(newDform, jobInfo, isConstant)
 
-  	# get curObj new "output" attribute connection
-  	if curObj and cmds.objectType(curObj) != "ExocortexAlembicCurves":
-  		originalCur = cmds.connectionInfo(curObj+".output", sfd=True).split('.')[0]
+		# get curObj new "output" attribute connection
+		conX = cmds.listConnections(name+".create", d=False, type="ExocortexAlembicCurvesDeform")
+		if conX:
+			curObj = conX[0]
+			originalCur = cmds.connectionInfo(curObj+".output", sfd=True).split('.')[0]
 
-  		cmds.delete(curObj)
-  		curObj = cmds.createNode("ExocortexAlembicCurves")
-  		attachTimeAndFile(curObj, jobInfo, isConstant)
+			cmds.delete(curObj)
+			curObj = cmds.createNode("ExocortexAlembicCurves")
+			attachTimeAndFile(curObj, jobInfo, isConstant)
 
-		cmds.connectAttr(curObj+".outCurve", originalCur+".create")
-		cmds.connectAttr(jobInfo.filenode+".outFileName", curObj+".fileName")
-		cmds.setAttr(curObj+".identifier", identifier, type="string")
-
-	cmds.ExocortexAlembic_profileEnd(f="Python.ExocortexAlembic._attach.attachCurves")
-	pass
+			cmds.connectAttr(curObj+".outCurve", originalCur+".create")
+			cmds.connectAttr(jobInfo.filenode+".outFileName", curObj+".fileName")
+			cmds.setAttr(curObj+".identifier", identifier, type="string")
+	except:
+		return ["!", traceback.format_exc()]
+	finally:
+		cmds.ExocortexAlembic_profileEnd(f="Python.ExocortexAlembic._attach.attachCurves")
+	return [curObj]
 
 def attachPoints(name, identifier, jobInfo, isConstant=False):
 	cmds.ExocortexAlembic_profileBegin(f="Python.ExocortexAlembic._attach.attachPoints")
-	ptsObj = cmds.connectionInfo(name+".visibility", sfd=True)
-	if ptsObj and cmds.objectType(ptsObj) == "ExocortexAlembicPoints":
-		attachTimeAndFile(ptsObj, jobInfo, isConstant)
-		return
+	try:
+		conX = cmds.listConnections(name, d=False, type="ExocortexAlembicPoints")
+		if conX:
+			ptsObj = conX[0]
+			attachTimeAndFile(ptsObj, jobInfo, isConstant)
+			return [ptsObj]
 
-	reader = cmds.createNode("ExocortexAlembicPoints")
-	cmds.addAttr(name, ln="rgbPP", dt="vectorArray")
-	cmds.addAttr(name, ln="opacityPP", dt="doubleArray")
-	cmds.addAttr(name, ln="agePP", dt="doubleArray")
-	cmds.addAttr(name, ln="shapeInstanceIdPP", dt="doubleArray")
-	cmds.addAttr(name, ln="orientationPP", dt="vectorArray")
-	cmds.connectAttr(reader+".output[0]", name+".newParticles[0]")
-	cmds.connectAttr(jobInfo.timeCtrl+".outTime", name+".currentTime")
-	cmds.setAttr(name+".conserve", 0)
+		reader = cmds.createNode("ExocortexAlembicPoints")
+		cmds.addAttr(name, ln="rgbPP", dt="vectorArray")
+		cmds.addAttr(name, ln="opacityPP", dt="doubleArray")
+		cmds.addAttr(name, ln="agePP", dt="doubleArray")
+		cmds.addAttr(name, ln="shapeInstanceIdPP", dt="doubleArray")
+		cmds.addAttr(name, ln="orientationPP", dt="vectorArray")
+		cmds.connectAttr(reader+".output[0]", name+".newParticles[0]")
+		cmds.connectAttr(jobInfo.timeCtrl+".outTime", name+".currentTime")
+		cmds.setAttr(name+".conserve", 0)
 
-	attachTimeAndFile(reader, jobInfo, isConstant)
-	cmds.ExocortexAlembic_profileEnd(f="Python.ExocortexAlembic._attach.attachPoints")
-	pass
+		attachTimeAndFile(reader, jobInfo, isConstant)
+	except:
+		return ["!", traceback.format_exc()]
+	finally:
+		cmds.ExocortexAlembic_profileEnd(f="Python.ExocortexAlembic._attach.attachPoints")
+	return [reader]
 

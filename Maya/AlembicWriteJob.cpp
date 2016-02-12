@@ -1,5 +1,7 @@
 #include "stdafx.h"
 
+#include <sstream>
+
 #include "AlembicWriteJob.h"
 #include "AlembicCamera.h"
 #include "AlembicCurves.h"
@@ -29,8 +31,16 @@ struct PreProcessStackElement {
 
 AlembicWriteJob::AlembicWriteJob(const MString &in_FileName,
                                  const MObjectArray &in_Selection,
-                                 const MDoubleArray &in_Frames, bool use_ogawa)
-    : useOgawa(use_ogawa)
+                                 const MDoubleArray &in_Frames, bool use_ogawa,
+                                 const std::vector<std::string> &in_prefixFilters,
+                                 const std::set<std::string> &in_attributes,
+                                 const std::vector<std::string> &in_userPrefixFilters,
+                                 const std::set<std::string> &in_userAttributes)
+    : useOgawa(use_ogawa),
+    mPrefixFilters(in_prefixFilters),
+    mAttributes(in_attributes),
+    mUserPrefixFilters(in_userPrefixFilters),
+    mUserAttributes(in_userAttributes)
 {
   // ensure to clear the isRefAnimated cache
   clearIsRefAnimatedCache();
@@ -348,6 +358,7 @@ MStatus AlembicWriteJob::Process(double frame)
   int interrupt = 20;
   MStatus status;
   const double currentFrame = mFrames[i];
+  const bool isFirstFrame = (i == 0);
 
   for (multiMapStrAbcObj::iterator it = mapObjects.begin();
        it != mapObjects.end(); ++it, --interrupt) {
@@ -358,7 +369,7 @@ MStatus AlembicWriteJob::Process(double frame)
       }
       pBar.incr(20);
     }
-    status = it->second->Save(currentFrame);
+    status = it->second->Save(currentFrame, mTs, isFirstFrame);
     if (status != MStatus::kSuccess) {
       MPxCommand::setResult("Error caught in AlembicWriteJob::Process: " +
                             status.errorString());
@@ -412,6 +423,16 @@ static void restoreOldTime(MTime &start, MTime &end, MTime &curr, MTime &minT,
   inst += ";";
 
   MGlobal::executeCommand(inst);
+}
+
+template <typename T1>
+void splitListArg(const MString &inList, T1 &outList)
+{
+  std::istringstream iss(inList.asChar());
+  std::string item;
+  while (std::getline(iss, item, ',')) {
+    outList.insert(outList.end(), item);
+  }
 }
 
 MStatus AlembicExportCommand::doIt(const MArgList &args)
@@ -483,6 +504,10 @@ MStatus AlembicExportCommand::doIt(const MArgList &args)
       bool useOgawa = false;  // Later, will need to be changed!
 
       MStringArray objectStrings;
+      std::vector<std::string> prefixFilters;
+      std::set<std::string> attributes;
+      std::vector<std::string> userPrefixFilters;
+      std::set<std::string> userAttributes;
       MObjectArray objects;
       std::string search_str, replace_str;
 
@@ -558,6 +583,18 @@ MStatus AlembicExportCommand::doIt(const MArgList &args)
         }
         else if (lowerValue == "ogawa") {
           useOgawa = valuePair[1].asInt() != 0;
+        }
+        else if (lowerValue == "attrprefixes") {
+          splitListArg(valuePair[1], prefixFilters);
+        }
+        else if (lowerValue == "attrs") {
+          splitListArg(valuePair[1], attributes);
+        }
+        else if (lowerValue == "userattrprefixes") {
+          splitListArg(valuePair[1], userPrefixFilters);
+        }
+        else if (lowerValue == "userattrs") {
+          splitListArg(valuePair[1], userAttributes);
         }
         else {
           MGlobal::displayWarning(
@@ -695,7 +732,8 @@ MStatus AlembicExportCommand::doIt(const MArgList &args)
       }
 
       AlembicWriteJob *job =
-          new AlembicWriteJob(filename, objects, frames, useOgawa);
+          new AlembicWriteJob(filename, objects, frames, useOgawa,
+              prefixFilters, attributes, userPrefixFilters, userAttributes);
       job->SetOption("exportNormals", normals ? "1" : "0");
       job->SetOption("exportUVs", uvs ? "1" : "0");
       job->SetOption("exportFaceSets", facesets ? "1" : "0");

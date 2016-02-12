@@ -3,6 +3,7 @@
 
 #include <maya/MFnMesh.h>
 #include "AlembicObject.h"
+#include "AttributesWriter.h"
 
 class AlembicPolyMesh : public AlembicObject {
  private:
@@ -10,6 +11,8 @@ class AlembicPolyMesh : public AlembicObject {
   AbcG::OPolyMeshSchema mSchema;
   int mPointCountLastFrame;
   std::vector<unsigned int> mSampleLookup;
+
+  AttributesWriterPtr mAttrs;
 
   AbcG::OPolyMeshSchema::Sample mSample;
   std::vector<AbcG::OV2fGeomParam> mUvParams;
@@ -21,7 +24,8 @@ class AlembicPolyMesh : public AlembicObject {
 
   virtual Abc::OObject GetObject() { return mObject; }
   virtual Abc::OCompoundProperty GetCompound() { return mSchema; }
-  virtual MStatus Save(double time);
+  virtual MStatus Save(double time, unsigned int timeIndex,
+      bool isFirstFrame);
 };
 
 class AlembicPolyMeshNode : public AlembicObjectNode {
@@ -35,6 +39,12 @@ class AlembicPolyMeshNode : public AlembicObjectNode {
   static void* creator() { return (new AlembicPolyMeshNode()); }
   static MStatus initialize();
 
+  bool setInternalValueInContext(const MPlug & plug,
+      const MDataHandle & dataHandle,
+      MDGContext & ctx);
+  MStatus setDependentsDirty(const MPlug &plugBeingDirtied,
+      MPlugArray &affectedPlugs);
+
  private:
   // input attributes
   static MObject mTimeAttr;
@@ -46,6 +56,8 @@ class AlembicPolyMeshNode : public AlembicObjectNode {
   MString mIdentifier;
   MString mUvFileName;
   MString mUvIdentifier;
+  MPlugArray mGeomParamPlugs;
+  MPlugArray mUserAttrPlugs;
   Abc::IObject mObj;
   AbcG::IPolyMeshSchema mSchema;
   AbcG::IPolyMeshSchema mUvSchema;
@@ -56,6 +68,9 @@ class AlembicPolyMeshNode : public AlembicObjectNode {
 
   // output attributes
   static MObject mOutGeometryAttr;
+
+  static MObject mGeomParamsList;
+  static MObject mUserAttrsList;
 
   // members
   SampleInfo mLastSampleInfo;
@@ -81,6 +96,12 @@ class AlembicPolyMeshDeformNode : public AlembicObjectDeformNode {
   static void* creator() { return (new AlembicPolyMeshDeformNode()); }
   static MStatus initialize();
 
+  bool setInternalValueInContext(const MPlug & plug,
+      const MDataHandle & dataHandle,
+      MDGContext & ctx);
+  MStatus setDependentsDirty(const MPlug &plugBeingDirtied,
+      MPlugArray &affectedPlugs);
+
  private:
   // input attributes
   static MObject mTimeAttr;
@@ -88,9 +109,15 @@ class AlembicPolyMeshDeformNode : public AlembicObjectDeformNode {
   static MObject mIdentifierAttr;
   MString mFileName;
   MString mIdentifier;
+  MPlugArray mGeomParamPlugs;
+  MPlugArray mUserAttrPlugs;
   Abc::IObject mObj;
   AbcG::IPolyMeshSchema mSchema;
   bool mDynamicTopology;
+
+  // output attributes
+  static MObject mGeomParamsList;
+  static MObject mUserAttrsList;
 
   // members
   SampleInfo mLastSampleInfo;

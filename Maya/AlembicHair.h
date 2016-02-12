@@ -4,12 +4,15 @@
 #include <maya/MFnPfxGeometry.h>
 #include <maya/MUint64Array.h>
 #include "AlembicObject.h"
+#include "AttributesWriter.h"
 
 class AlembicHair : public AlembicObject {
  private:
   AbcG::OCurves mObject;
   AbcG::OCurvesSchema mSchema;
   AbcG::OCurvesSchema::Sample mSample;
+
+  AttributesWriterPtr mAttrs;
 
   std::vector<Abc::V3f> mPosVec;
   std::vector<AbcA::int32_t> mNbVertices;
@@ -30,7 +33,8 @@ class AlembicHair : public AlembicObject {
 
   virtual Abc::OObject GetObject() { return mObject; }
   virtual Abc::OCompoundProperty GetCompound() { return mSchema; }
-  virtual MStatus Save(double time);
+  virtual MStatus Save(double time, unsigned int timeIndex,
+      bool isFirstFrame);
 };
 
 /*

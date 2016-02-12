@@ -62,6 +62,7 @@ public:
    nodeTypeE type;
    std::string name;
    std::string dccIdentifier;
+   std::string dccReaderIdentifier;
    bool dccSelected;
    bool selected;
 
