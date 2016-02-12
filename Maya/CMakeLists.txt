@@ -17,7 +17,9 @@ include_directories( ${BASE_DIR}/include )
 include_directories( ${BASE_DIR}/src )
 
 file(GLOB_RECURSE Sources ${BASE_DIR}/*.cpp)
+list(REMOVE_ITEM Sources ${BASE_DIR}/stdafx.cpp)
 file(GLOB_RECURSE Includes ${BASE_DIR}/*.h)
+list(REMOVE_ITEM Includes ${BASE_DIR}/stdafx.h)
 
 file(GLOB_RECURSE Scripts ${BASE_DIR}/MEL/*.*)
 file(GLOB_RECURSE UI ${BASE_DIR}/UI/*.*)
@@ -27,7 +29,7 @@ SOURCE_GROUP("Header Files" FILES ${Includes})
 SOURCE_GROUP("_MEL" FILES ${Scripts})
 SOURCE_GROUP("_UI" FILES ${UI}) 
 
-setup_precompiled_header( ${BASE_DIR} ${Sources} )
+setup_precompiled_header( ${BASE_DIR} Sources )
 
 IF( WIN32 )
 
