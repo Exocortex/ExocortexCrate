@@ -1,5 +1,4 @@
 #ifndef __COMMON_LICENSING_H
 #define __COMMON_LICENSING_H
 
-
-#endif // __COMMON_LICENSING_H
+#endif  // __COMMON_LICENSING_H
