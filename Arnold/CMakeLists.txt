@@ -14,7 +14,7 @@ file(GLOB_RECURSE Includes ${BASE_DIR}/*.h)
 SOURCE_GROUP("Source Files" FILES ${Sources}) 
 SOURCE_GROUP("Header Files" FILES ${Includes})
 
-setup_precompiled_header( ${BASE_DIR} ${Sources} )
+setup_precompiled_header( ${BASE_DIR} Sources )
 
 
 if( WIN32 )
