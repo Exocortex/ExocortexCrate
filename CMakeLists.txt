@@ -309,15 +309,12 @@ ENDIF()
 # maya plugin
 # guide to maya compiler versions: http://around-the-corner.typepad.com/adn/2012/06/maya-compiler-versions.html
 IF(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/Maya/CMakeLists.txt")
-	if( NOT MSVC10 AND NOT MSVC11) 
-		ADD_SUBDIRECTORY ( "${CMAKE_CURRENT_SOURCE_DIR}/Maya/2011" "${CMAKE_CURRENT_BINARY_DIR}/ExocortexAlembicMaya/2011" )
-		ADD_SUBDIRECTORY ( "${CMAKE_CURRENT_SOURCE_DIR}/Maya/2012" "${CMAKE_CURRENT_BINARY_DIR}/ExocortexAlembicMaya/2012" )
-		ADD_SUBDIRECTORY ( "${CMAKE_CURRENT_SOURCE_DIR}/Maya/2013" "${CMAKE_CURRENT_BINARY_DIR}/ExocortexAlembicMaya/2013" )
-		#ADD_SUBDIRECTORY ( "${CMAKE_CURRENT_SOURCE_DIR}/Maya/2013.5" "${CMAKE_CURRENT_BINARY_DIR}/ExocortexAlembicMaya/2013.5" )
+  if( MSVC10 )
 		ADD_SUBDIRECTORY ( "${CMAKE_CURRENT_SOURCE_DIR}/Maya/2014" "${CMAKE_CURRENT_BINARY_DIR}/ExocortexAlembicMaya/2014" )
+  elseif( MSVC11 )
 		ADD_SUBDIRECTORY ( "${CMAKE_CURRENT_SOURCE_DIR}/Maya/2015" "${CMAKE_CURRENT_BINARY_DIR}/ExocortexAlembicMaya/2015" )
 		ADD_SUBDIRECTORY ( "${CMAKE_CURRENT_SOURCE_DIR}/Maya/2016" "${CMAKE_CURRENT_BINARY_DIR}/ExocortexAlembicMaya/2016" )
-	endif()
+  endif()
 ENDIF()
 
 # houdini plugin
