@@ -48,9 +48,9 @@ endif()
 
 if( MSVC9 )
 	SET( PROJECT_NAME "${PROJECT_NAME}_2008" )
-elseif( MSVC10 )
+elseif( MSVC10 ) 
 	SET( PROJECT_NAME "${PROJECT_NAME}_2010" )
-elseif( MSVC11 )
+elseif( MSVC11 ) 
 	SET( PROJECT_NAME "${PROJECT_NAME}_2012" )
 endif()
 
@@ -81,7 +81,7 @@ endif()
 # Configuration
 SET( crate_MAJOR_VERSION "1" )
 SET( crate_MINOR_VERSION "1" ) 
-SET( crate_BUILD_VERSION "151")
+SET( crate_BUILD_VERSION "145")
 SET( crate_VERSION "${crate_MAJOR_VERSION}.${crate_MINOR_VERSION}" )
 SET( crate_FULLVERSION "${crate_MAJOR_VERSION}.${crate_MINOR_VERSION}.${crate_BUILD_VERSION}" )
 
@@ -309,12 +309,15 @@ ENDIF()
 # maya plugin
 # guide to maya compiler versions: http://around-the-corner.typepad.com/adn/2012/06/maya-compiler-versions.html
 IF(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/Maya/CMakeLists.txt")
-  if( MSVC10 )
+	if( NOT MSVC10 AND NOT MSVC11) 
+		ADD_SUBDIRECTORY ( "${CMAKE_CURRENT_SOURCE_DIR}/Maya/2011" "${CMAKE_CURRENT_BINARY_DIR}/ExocortexAlembicMaya/2011" )
+		ADD_SUBDIRECTORY ( "${CMAKE_CURRENT_SOURCE_DIR}/Maya/2012" "${CMAKE_CURRENT_BINARY_DIR}/ExocortexAlembicMaya/2012" )
+		ADD_SUBDIRECTORY ( "${CMAKE_CURRENT_SOURCE_DIR}/Maya/2013" "${CMAKE_CURRENT_BINARY_DIR}/ExocortexAlembicMaya/2013" )
+		#ADD_SUBDIRECTORY ( "${CMAKE_CURRENT_SOURCE_DIR}/Maya/2013.5" "${CMAKE_CURRENT_BINARY_DIR}/ExocortexAlembicMaya/2013.5" )
 		ADD_SUBDIRECTORY ( "${CMAKE_CURRENT_SOURCE_DIR}/Maya/2014" "${CMAKE_CURRENT_BINARY_DIR}/ExocortexAlembicMaya/2014" )
-  elseif( MSVC11 )
 		ADD_SUBDIRECTORY ( "${CMAKE_CURRENT_SOURCE_DIR}/Maya/2015" "${CMAKE_CURRENT_BINARY_DIR}/ExocortexAlembicMaya/2015" )
 		ADD_SUBDIRECTORY ( "${CMAKE_CURRENT_SOURCE_DIR}/Maya/2016" "${CMAKE_CURRENT_BINARY_DIR}/ExocortexAlembicMaya/2016" )
-  endif()
+	endif()
 ENDIF()
 
 # houdini plugin
