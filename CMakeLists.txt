@@ -48,9 +48,9 @@ endif()
 
 if( MSVC9 )
 	SET( PROJECT_NAME "${PROJECT_NAME}_2008" )
-elseif( MSVC10 ) 
+elseif( MSVC10 )
 	SET( PROJECT_NAME "${PROJECT_NAME}_2010" )
-elseif( MSVC11 ) 
+elseif( MSVC11 )
 	SET( PROJECT_NAME "${PROJECT_NAME}_2012" )
 endif()
 
@@ -81,7 +81,7 @@ endif()
 # Configuration
 SET( crate_MAJOR_VERSION "1" )
 SET( crate_MINOR_VERSION "1" ) 
-SET( crate_BUILD_VERSION "145")
+SET( crate_BUILD_VERSION "151")
 SET( crate_VERSION "${crate_MAJOR_VERSION}.${crate_MINOR_VERSION}" )
 SET( crate_FULLVERSION "${crate_MAJOR_VERSION}.${crate_MINOR_VERSION}.${crate_BUILD_VERSION}" )
 
