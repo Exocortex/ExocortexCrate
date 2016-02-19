@@ -3,6 +3,7 @@
 
 #include <boost/smart_ptr.hpp>
 
+#include "CommonAlembic.h"
 #include "CommonPBar.h"
 
 typedef boost::shared_ptr<AbcG::IXform> IXformPtr;
