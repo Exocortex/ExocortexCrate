@@ -71,7 +71,7 @@ SOURCE_GROUP("Source Files" FILES ${Sources})
 SOURCE_GROUP("Header Files" FILES ${Includes})
 SOURCE_GROUP("_Maxscripts" FILES ${Scripts})
 
-setup_precompiled_header( ${BASE_DIR} Sources )
+setup_precompiled_header( ${BASE_DIR} ${Sources} )
 
 
 IF( WIN32 )
