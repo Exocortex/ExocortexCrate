@@ -4,6 +4,9 @@
 #include "CommonImport.h"
 #include "CommonRegex.h"
 #include "CommonSceneGraph.h"
+#include "AttributesReading.h"
+
+static inline const MString &PythonBool(bool b);
 
 class AlembicFileAndTimeControl;
 typedef boost::shared_ptr<AlembicFileAndTimeControl>
@@ -22,6 +25,8 @@ class AlembicFileAndTimeControl {
   static AlembicFileAndTimeControlPtr createControl(
       const IJobStringParser& jobParams);
 };
+
+MObject findMObjectByName(const MString &obj);
 
 class SceneNodeMaya : public SceneNodeApp {
  private:

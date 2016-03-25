@@ -49,7 +49,7 @@ class AttributesWriter
     // the initial write at iFrame for sampled data
     AttributesWriter(Alembic::Abc::OCompoundProperty & iArgGeom,
                      Alembic::Abc::OCompoundProperty & iUserProps,
-                     Alembic::Abc::OObject & iParentObj,
+                     const Alembic::Abc::OObject & iParentObj,
                      const MFnDependencyNode & iNode,
                      Alembic::Util::uint32_t iTimeIndex,
                      const AlembicWriteJob & iWriteJob);
