@@ -1706,7 +1706,7 @@ void createGeomPropertyFromMFnAttr(const MObject& iAttr,
 AttributesWriter::AttributesWriter(
     Alembic::Abc::OCompoundProperty & iArbGeom,
     Alembic::Abc::OCompoundProperty & iUserProps,
-    Alembic::Abc::OObject & iParentObj,
+    const Alembic::Abc::OObject & iParentObj,
     const MFnDependencyNode & iNode,
     Alembic::Util::uint32_t iTimeIndex,
     const AlembicWriteJob & iWriteJob)

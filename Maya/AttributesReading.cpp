@@ -2497,7 +2497,7 @@ void readProp(double iFrame,
 void readProps(double iFrame,
               Alembic::Abc::ICompoundProperty & iParent,
               MDataBlock & iDataBlock,
-              MObject & iNode)
+              const MObject & iNode)
 {
     // if the params CompoundProperty (.arbGeomParam or .userProperties)
     // aren't valid, then skip

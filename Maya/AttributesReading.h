@@ -143,6 +143,6 @@ void readProp(double iFrame,
 void readProps(double iFrame,
                Alembic::Abc::ICompoundProperty & iParent,
                MDataBlock & iDataBlock,
-               MObject & iNode);
+               const MObject & iNode);
 
 #endif  // ABCIMPORT_NODE_ITERATOR_HELPER_H_
