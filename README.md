@@ -57,13 +57,13 @@ are using in production.
 To build the plugins you will require the external libraries.  They are specified
 programatically in the CMake file.  They usually follow the form:
 
-	Libraries.20150521.01.7z
+	Libraries.20160502.02.7z
 
 This external library set will have to be downloaded and un-7z'ed beside the
 ExocortexCrate repository, like this:
 
     /ExocortexCrate/
-    /Libraries.20150521.01/
+    /Libraries.20160502.02/
 
 You can find its path when you run CMake, if it doesn't exist, it will tell you
 the URL where you can download it.
