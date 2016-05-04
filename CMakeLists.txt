@@ -8,17 +8,17 @@ if( UNIX )
 		ADD_DEFINITIONS(-DNDEBUG)
 	ENDIF()
 ENDIF()
-  
+
 SET( PROJECT_NAME "ExocortexCrate" )
 
-IF (UNIX AND NOT APPLE ) 
+IF (UNIX AND NOT APPLE )
 	ADD_DEFINITIONS(-DLINUX )
 ENDIF()
 
 IF( WIN32 )
 	ADD_DEFINITIONS( -D_WIN64 -DWIN64 )
 ENDIF()
- 
+
 set( Exocortex_INSTALL_BASE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/install" )
 
 if( HDF5_ENABLE_THREADSAFE )
@@ -29,14 +29,14 @@ if( HDF5_ENABLE_THREADSAFE )
 	elseif( UNIX )
 		IF (CMAKE_BUILD_TYPE MATCHES "Debug")
 			SET( PROJECT_NAME "${PROJECT_NAME}_LinuxDebug" )
-			set( Exocortex_INSTALL_BASE_DIR ${Exocortex_INSTALL_BASE_DIR}/LinuxDebug )	
+			set( Exocortex_INSTALL_BASE_DIR ${Exocortex_INSTALL_BASE_DIR}/LinuxDebug )
 		ELSE()
 			SET( PROJECT_NAME "${PROJECT_NAME}_LinuxRelease" )
-			set( Exocortex_INSTALL_BASE_DIR ${Exocortex_INSTALL_BASE_DIR}/LinuxRelease )	
+			set( Exocortex_INSTALL_BASE_DIR ${Exocortex_INSTALL_BASE_DIR}/LinuxRelease )
 		ENDIF()
 	else()
 		message(FATAL_ERROR "Should not get here")
-	endif()  
+	endif()
 else()
 	SET( PROJECT_NAME "${PROJECT_NAME}_WindowsXP" )
 	if( WIN32 )
@@ -68,7 +68,7 @@ set( AlembicFolder "Alembic" )
 SET(DIR_SOFTIMAGEALEBMIC ${CMAKE_CURRENT_SOURCE_DIR})
 
 get_filename_component( LIBRARY_ROOT "${CMAKE_CURRENT_SOURCE_DIR}" PATH )
-set( LIBRARY_VERSION "20150521.01" )
+set( LIBRARY_VERSION "20160502.02" )
 set( LIBRARY_ROOT "${LIBRARY_ROOT}/Libraries.${LIBRARY_VERSION}" )
 if( NOT EXISTS ${LIBRARY_ROOT} )
 	message( "!!!" )
@@ -77,10 +77,10 @@ if( NOT EXISTS ${LIBRARY_ROOT} )
 	message( "!!!" )
 	message( FATAL_ERROR "Can't find LIBRARY_ROOT: ${LIBRARY_ROOT}" )
 endif()
- 
+
 # Configuration
 SET( crate_MAJOR_VERSION "1" )
-SET( crate_MINOR_VERSION "1" ) 
+SET( crate_MINOR_VERSION "1" )
 SET( crate_BUILD_VERSION "151")
 SET( crate_VERSION "${crate_MAJOR_VERSION}.${crate_MINOR_VERSION}" )
 SET( crate_FULLVERSION "${crate_MAJOR_VERSION}.${crate_MINOR_VERSION}.${crate_BUILD_VERSION}" )
@@ -122,7 +122,7 @@ ENDIF()
 
 # Boost.
 set( BOOST_INCLUDEDIR "${LIBRARY_ROOT}/boost/include/boost-1_44" )
-    
+
 if ( UNIX )
 	set ( BOOST_OSDIR "linux" )
 	set( OS_NAME "linux" )
@@ -130,7 +130,7 @@ elseif( WIN32 )
 	set ( BOOST_OSDIR "windows" )
 	set( OS_NAME "windows" )
 else()
-	message(FATAL_ERROR "Should not get here") 
+	message(FATAL_ERROR "Should not get here")
 endif()
 
 if( CMAKE_SIZEOF_VOID_P MATCHES "8" )
@@ -183,12 +183,12 @@ IF( WIN32 )
 	ENDFOREACH(flag_var)
 endif()
 
-# For multithreaded builds		
+# For multithreaded builds
 # [mkonyk] Fix ~ these are only valid on Windows platforms.
 IF( WIN32 )
 	SET( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /MP" )
 	SET( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /MP" )
-	
+
 	# For Alembic library
 	SET( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /DPLATFORM_WINDOWS" )
 ENDIF( WIN32 )
@@ -213,13 +213,13 @@ include_directories( "${ILMBASE_ROOT_DIR}/Imath" )
 
 ADD_SUBDIRECTORY ( ${ILMBASE_ROOT_DIR} )
 SET( ALEMBIC_ILMBASE_LIBS ilmbase )
- 
+
 # ZLib
 SET( BUILD_SHARED_LIBS OFF )
 SET( SKIP_INSTALL_ALL ON )
 SET( SKIP_INSTALL_LIBRARIES ON )
 
-# For multithreaded builds		
+# For multithreaded builds
 IF( WIN32 )
 	SET( CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} /MTd" )
 	SET( CMAKE_C_FLAGS_RELWITHDEBINFO "${CMAKE_C_FLAGS_RELWITHDEBINFO} /MTd" )
@@ -265,7 +265,7 @@ ADD_SUBDIRECTORY ( ${ALEMBIC_ROOT_DIR} )
 SET( ALEMBIC_CORE_LIBS AlembicAbcMaterial AlembicAbcGeom AlembicAbc AlembicAbcCoreHDF5 AlembicAbcCoreOgawa AlembicAbcCoreAbstract AlembicAbcCoreFactory AlembicOgawa AlembicUtil )
 
 SET( ALL_ALEMBIC_LIBS ${ALEMBIC_CORE_LIBS} ${ALEMBIC_HDF5_LIBS} ${ALEMBIC_ZLIB_LIBS}
-	  ${ALEMBIC_ILMBASE_LIBS} ${ZLIB_LIBRARIES} ${Boost_LIBRARIES} )
+		${ALEMBIC_ILMBASE_LIBS} ${ZLIB_LIBRARIES} ${Boost_LIBRARIES} )
 
 ADD_SUBDIRECTORY ( "${CMAKE_CURRENT_SOURCE_DIR}/Shared/CommonUtils" "${CMAKE_CURRENT_BINARY_DIR}/Shared/CommonUtils" )
 
@@ -278,7 +278,7 @@ add_definitions( -D_WINSOCKAPI2_ )
 
 # Python extension
 IF(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/Python/CMakeLists.txt")
-	if( NOT MSVC10 AND NOT MSVC11 ) 
+	if( NOT MSVC10 AND NOT MSVC11 )
 		ADD_SUBDIRECTORY ( "${CMAKE_CURRENT_SOURCE_DIR}/Python/2.6.7" "${CMAKE_CURRENT_BINARY_DIR}/ExocortexAlembicPython/2.6.7" )
 		if( WIN32 )
 			ADD_SUBDIRECTORY ( "${CMAKE_CURRENT_SOURCE_DIR}/Python/2.7.2" "${CMAKE_CURRENT_BINARY_DIR}/ExocortexAlembicPython/2.7.2" )
@@ -290,7 +290,7 @@ ENDIF()
 
 # Arnold dso
 IF(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/Arnold/CMakeLists.txt")
-	if( NOT MSVC10 AND NOT MSVC11 ) 
+	if( NOT MSVC10 AND NOT MSVC11 )
 		ADD_SUBDIRECTORY ( "${CMAKE_CURRENT_SOURCE_DIR}/Arnold/3" "${CMAKE_CURRENT_BINARY_DIR}/ExocortexAlembicArnold/3" )
 		ADD_SUBDIRECTORY ( "${CMAKE_CURRENT_SOURCE_DIR}/Arnold/4" "${CMAKE_CURRENT_BINARY_DIR}/ExocortexAlembicArnold/4" )
 	endif()
@@ -298,27 +298,37 @@ ENDIF()
 
 # softimage plugin
 IF(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/Softimage/CMakeLists.txt")
-	if( NOT MSVC10 AND NOT MSVC11 ) 
-		ADD_SUBDIRECTORY ( "${CMAKE_CURRENT_SOURCE_DIR}/Softimage/2012" "${CMAKE_CURRENT_BINARY_DIR}/ExocortexAlembicSoftimage" )
-		ADD_SUBDIRECTORY ( "${CMAKE_CURRENT_SOURCE_DIR}/Softimage/2014SP2" "${CMAKE_CURRENT_BINARY_DIR}/ExocortexAlembicSoftimage2014SP2" )
-	elseif( MSVC11 )
+	if( WIN32 )
+		if( MSVC11 )
+			ADD_SUBDIRECTORY ( "${CMAKE_CURRENT_SOURCE_DIR}/Softimage/2015" "${CMAKE_CURRENT_BINARY_DIR}/ExocortexAlembicSoftimage2015" )
+		elseif( NOT MSVC10 AND NOT MSVC11 )
+			ADD_SUBDIRECTORY ( "${CMAKE_CURRENT_SOURCE_DIR}/Softimage/2012" "${CMAKE_CURRENT_BINARY_DIR}/ExocortexAlembicSoftimage" )
+			ADD_SUBDIRECTORY ( "${CMAKE_CURRENT_SOURCE_DIR}/Softimage/2014SP2" "${CMAKE_CURRENT_BINARY_DIR}/ExocortexAlembicSoftimage2014SP2" )
+		endif()
+	else()
 		ADD_SUBDIRECTORY ( "${CMAKE_CURRENT_SOURCE_DIR}/Softimage/2015" "${CMAKE_CURRENT_BINARY_DIR}/ExocortexAlembicSoftimage2015" )
+		ADD_SUBDIRECTORY ( "${CMAKE_CURRENT_SOURCE_DIR}/Softimage/2014SP2" "${CMAKE_CURRENT_BINARY_DIR}/ExocortexAlembicSoftimage2014SP2" )
+		ADD_SUBDIRECTORY ( "${CMAKE_CURRENT_SOURCE_DIR}/Softimage/2012" "${CMAKE_CURRENT_BINARY_DIR}/ExocortexAlembicSoftimage2012" )
 	endif()
 ENDIF()
 
 # maya plugin
 # guide to maya compiler versions: http://around-the-corner.typepad.com/adn/2012/06/maya-compiler-versions.html
 IF(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/Maya/CMakeLists.txt")
-  if( MSVC10 )
-		ADD_SUBDIRECTORY ( "${CMAKE_CURRENT_SOURCE_DIR}/Maya/2014" "${CMAKE_CURRENT_BINARY_DIR}/ExocortexAlembicMaya/2014" )
-  elseif( MSVC11 )
+	if( WIN32 )
+		if( MSVC11 )
+			ADD_SUBDIRECTORY ( "${CMAKE_CURRENT_SOURCE_DIR}/Maya/2016.5" "${CMAKE_CURRENT_BINARY_DIR}/ExocortexAlembicMaya/2016.5" )
+			ADD_SUBDIRECTORY ( "${CMAKE_CURRENT_SOURCE_DIR}/Maya/2016" "${CMAKE_CURRENT_BINARY_DIR}/ExocortexAlembicMaya/2016" )
+			ADD_SUBDIRECTORY ( "${CMAKE_CURRENT_SOURCE_DIR}/Maya/2015" "${CMAKE_CURRENT_BINARY_DIR}/ExocortexAlembicMaya/2015" )
+		elseif( MSVC10 )
+			ADD_SUBDIRECTORY ( "${CMAKE_CURRENT_SOURCE_DIR}/Maya/2014" "${CMAKE_CURRENT_BINARY_DIR}/ExocortexAlembicMaya/2014" )
+		endif()
+	else()
+		ADD_SUBDIRECTORY ( "${CMAKE_CURRENT_SOURCE_DIR}/Maya/2016.5" "${CMAKE_CURRENT_BINARY_DIR}/ExocortexAlembicMaya/2016.5" )
+		ADD_SUBDIRECTORY ( "${CMAKE_CURRENT_SOURCE_DIR}/Maya/2016" "${CMAKE_CURRENT_BINARY_DIR}/ExocortexAlembicMaya/2016" )
 		ADD_SUBDIRECTORY ( "${CMAKE_CURRENT_SOURCE_DIR}/Maya/2015" "${CMAKE_CURRENT_BINARY_DIR}/ExocortexAlembicMaya/2015" )
-		ADD_SUBDIRECTORY ( "${CMAKE_CURRENT_SOURCE_DIR}/Maya/2016" "${CMAKE_CURRENT_BINARY_DIR}/ExocortexAlembicMaya/2016" )
-  else()
-  		ADD_SUBDIRECTORY ( "${CMAKE_CURRENT_SOURCE_DIR}/Maya/2014" "${CMAKE_CURRENT_BINARY_DIR}/ExocortexAlembicMaya/2014" )
-  		ADD_SUBDIRECTORY ( "${CMAKE_CURRENT_SOURCE_DIR}/Maya/2015" "${CMAKE_CURRENT_BINARY_DIR}/ExocortexAlembicMaya/2015" )
-		ADD_SUBDIRECTORY ( "${CMAKE_CURRENT_SOURCE_DIR}/Maya/2016" "${CMAKE_CURRENT_BINARY_DIR}/ExocortexAlembicMaya/2016" )
-  endif()
+		ADD_SUBDIRECTORY ( "${CMAKE_CURRENT_SOURCE_DIR}/Maya/2014" "${CMAKE_CURRENT_BINARY_DIR}/ExocortexAlembicMaya/2014" )
+	endif()
 ENDIF()
 
 # houdini plugin
@@ -332,9 +342,10 @@ ENDIF()
 if( WIN32 )
 	IF(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/3DSMax/CMakeLists.txt")
 		if( MSVC11 )
+			ADD_SUBDIRECTORY ( "${CMAKE_CURRENT_SOURCE_DIR}/3DSMax/2017" "${CMAKE_CURRENT_BINARY_DIR}/ExocortexAlembic3DSMax/2017" )
 			ADD_SUBDIRECTORY ( "${CMAKE_CURRENT_SOURCE_DIR}/3DSMax/2016" "${CMAKE_CURRENT_BINARY_DIR}/ExocortexAlembic3DSMax/2016" )
 			ADD_SUBDIRECTORY ( "${CMAKE_CURRENT_SOURCE_DIR}/3DSMax/2015" "${CMAKE_CURRENT_BINARY_DIR}/ExocortexAlembic3DSMax/2015" )
-		elseif( MSVC10 ) 
+		elseif( MSVC10 )
 			ADD_SUBDIRECTORY ( "${CMAKE_CURRENT_SOURCE_DIR}/3DSMax/2014" "${CMAKE_CURRENT_BINARY_DIR}/ExocortexAlembic3DSMax/2014" )
 			ADD_SUBDIRECTORY ( "${CMAKE_CURRENT_SOURCE_DIR}/3DSMax/2013" "${CMAKE_CURRENT_BINARY_DIR}/ExocortexAlembic3DSMax/2013" )
 		else()
