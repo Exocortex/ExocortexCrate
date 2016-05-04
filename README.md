@@ -45,7 +45,8 @@ CMake.
 
 In order to build on Windows platforms, you will require the correct Microsoft C++
 for the plugins you require.  If you want to build all that are available,
-you will require both Microsoft Visual C++ 2008, 2010 and 2012.
+you will require both Microsoft Visual C++ 2008, 2010 and 2012.  To compile 3DS Max you
+must include the MFC libraries when installing MVC++ or your compile will fail.
 
 On Linux, only the standard Gnu tool chain (gcc, gmake) and
 cmake is required.  For maximum compatibility, it is recommended that you compile
