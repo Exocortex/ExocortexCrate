@@ -311,7 +311,7 @@ bool AlembicPoints::Save(double time, bool bLastFrame)
       }
       else
 #endif
-          if (particlesExt && ipfSystem) {
+      if (particlesExt) {
 
         TimeValue ageValue = particlesExt->GetParticleAgeByIndex(i);
         if (ageValue == -1) {
