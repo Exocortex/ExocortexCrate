@@ -154,12 +154,12 @@ if (tokensLower.FindString(L"&path=") == -1)
 if (tokensLower.FindString(L"&identifier=") == -1)
   data += CString(data.IsEmpty() ? L"" : L"&") + L"identifier=" +
           (identifiers[1].IsEmpty() ? identifiers[0] : identifiers[1]);
-float globalTime = floorf(time * 1000.0f + 0.5f) / 1000.0f;
+float globalTime = time;
 if (tokensLower.FindString(L"&time=") == -1)
   data += CString(data.IsEmpty() ? L"" : L"&") + L"time=" +
           CValue(globalTime).GetAsText();
 float currentTime =
-    (float)(floor(CTime().GetTime(CTime::Seconds) * 1000.0 + 0.5) / 1000.0);
+    (float)CTime().GetTime(CTime::Seconds);
 if (tokensLower.FindString(L"&currtime=") == -1)
   data += CString(data.IsEmpty() ? L"" : L"&") + L"currtime=" +
           CValue(currentTime).GetAsText();

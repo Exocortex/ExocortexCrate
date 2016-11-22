@@ -18,6 +18,54 @@ static bool usingDynamicTopology(AbcGeom &typedObject)
   return faceIndicesProp.valid() && !faceIndicesProp.isConstant();
 }
 
+
+void point_normal(__indices &indices, const Alembic::Abc::Int32ArraySamplePtr &abcFaceCounts, const Alembic::Abc::Int32ArraySamplePtr &abcFaceIndices,  const AtArray *vertices, AtArray *norm, AtArray *normalsIds)
+{
+
+   AiMsgWarning(
+        "[DEBBUG ExocortexAlembicArnold] vertCount '%u'| faceVertexIndxCount '%u'\n",
+        AiArrayGetUInt(indices.indices, 0),  AiArrayGetUInt(indices.indices, 1));
+  unsigned int offset = 0;
+  unsigned int facesCount = abcFaceCounts->size();
+  AtArray* normals = AiArrayAllocate(norm->nelements, 1, AI_TYPE_POINT);
+
+  for (int i = 0; i < facesCount; i++) 
+	{
+    int faceVtxCount = abcFaceCounts->get()[i];
+
+     AtVector normal = AtVector();
+
+    for (int j=offset, k = offset + 1; j < offset+faceVtxCount; j++, k++)
+    {
+	    if (k == offset+faceVtxCount) k = offset;
+
+     AtPoint current = AiArrayGetPnt(vertices, AiArrayGetUInt(indices.faceIndices, j));
+     AtPoint next = AiArrayGetPnt(vertices, AiArrayGetUInt(indices.faceIndices, k));
+
+	    normal.x += ((current.z + next.z) * (current.y - next.y));
+	    normal.y += ((current.x + next.x) * (current.z - next.z));
+	    normal.z += ((current.y + next.y) * (current.x - next.x));
+
+    }
+
+    for (int j=offset; j< offset + faceVtxCount; j++)
+    {
+      AiArraySetVec(normals, AiArrayGetUInt(indices.faceIndices, j), AiArrayGetVec(normals, AiArrayGetUInt(indices.faceIndices, j)) + normal);
+      AiArraySetUInt(normalsIds, j, AiArrayGetUInt(indices.faceIndices, j));
+    }
+    offset+=faceVtxCount;
+  }
+
+  for (int i = 0; i < normals->nelements; i++) 
+	{   
+      AiArraySetVec(normals, i, AiV3Normalize(AiArrayGetVec(normals,i)));
+	}
+  AiArraySetKey(norm, 0, normals->data);
+  AiArraySetKey(norm, 1, normals->data);
+}
+
+
+
 // common function for PolyMesh and SubD!
 static bool faceCount(AtNode *shapeNode, __indices &ind,
                       Alembic::Abc::Int32ArraySamplePtr &abcFaceCounts,
@@ -27,12 +75,11 @@ static bool faceCount(AtNode *shapeNode, __indices &ind,
     return false;
   }
 
-  AtArray *faceCounts =
-      AiArrayAllocate((AtInt)abcFaceCounts->size(), 1, AI_TYPE_UINT);
-  ind.faceIndices =
-      AiArrayAllocate((AtInt)abcFaceIndices->size(), 1, AI_TYPE_UINT);
+  AtArray *faceCounts = AiArrayAllocate((AtInt)abcFaceCounts->size(), 1, AI_TYPE_UINT);
+  ind.faceIndices = AiArrayAllocate((AtInt)abcFaceIndices->size(), 1, AI_TYPE_UINT);
   ind.indices = AiArrayAllocate((AtInt)abcFaceIndices->size(), 1, AI_TYPE_UINT);
   AtUInt offset = 0;
+
   for (AtULong i = 0; i < faceCounts->nelements; ++i) {
     const int _FaceCounts = abcFaceCounts->get()[i];
     AiArraySetUInt(faceCounts, i, _FaceCounts);
@@ -165,33 +212,24 @@ static void plainPositionCopy(AtArray *pos,
     pt.x = apos.x;
     pt.y = apos.y;
     pt.z = apos.z;
+
     AiArraySetPnt(pos, posOffset++, pt);
   }
 }
 
 // IF pos == NULL, it needs to be done before calling that function
 template <typename SCHEMA, typename SCHEMA_SAMPLE>
-static bool hadToInterpolatePositions(SCHEMA &schema, SCHEMA_SAMPLE &sample,
+static bool hadToInterpolatePositions(size_t sampleIndex, SCHEMA &schema, SCHEMA_SAMPLE &sample,
                                       AtArray *pos, AtULong &posOffset,
                                       std::vector<float> &samples,
                                       SampleInfo &sampleInfo,
+                                      float currentTime,
                                       bool dynamicTopology)
 {
   Alembic::Abc::P3fArraySamplePtr abcPos = sample.getPositions();
 
-  if (dynamicTopology) {
-    SampleInfo sampleInfoFirst = getSampleInfo(
-        samples[0], schema.getTimeSampling(), schema.getNumSamples());
-    schema.get(sample, sampleInfoFirst.floorIndex);
-    abcPos = sample.getPositions();
-
-    sampleInfoFirst.alpha +=
-        double(sampleInfo.floorIndex) - double(sampleInfoFirst.floorIndex);
-    sampleInfo = sampleInfoFirst;
-  }
-
   // if we have to interpolate
-  if (sampleInfo.alpha <= sampleTolerance) {  // NOT!
+  if (sampleInfo.alpha <= sampleTolerance && !dynamicTopology) {  // NOT!
     plainPositionCopy(pos, abcPos, posOffset);
     return false;
   }
@@ -203,6 +241,7 @@ static bool hadToInterpolatePositions(SCHEMA &schema, SCHEMA_SAMPLE &sample,
     const float ialpha = 1.0f - alpha;
 
     if (!dynamicTopology) {
+
       for (size_t i = 0; i < abcPos->size(); i++) {
         AtPoint pt;
         const Alembic::Abc::P3fArraySamplePtr::element_type::value_type &p1 =
@@ -212,13 +251,22 @@ static bool hadToInterpolatePositions(SCHEMA &schema, SCHEMA_SAMPLE &sample,
         pt.x = p1.x * ialpha + p2.x * alpha;
         pt.y = p1.y * ialpha + p2.y * alpha;
         pt.z = p1.z * ialpha + p2.z * alpha;
+        /*pt.x = p1.x + (p2.x - p1.x) * alpha;
+        pt.y = p1.y + (p2.y - p1.y) * alpha;
+        pt.z = p1.z + (p2.z - p1.z) * alpha;*/
+
         AiArraySetPnt(pos, posOffset++, pt);
       }
     }
     else {
       Alembic::Abc::V3fArraySamplePtr abcVel = sample.getVelocities();
+
       if (abcVel && abcVel->size() == abcPos->size()) {
-        const float timeAlpha = getTimeOffsetFromSchema(schema, sampleInfo);
+        Alembic::Abc::TimeSamplingPtr timeSampling = schema.getTimeSampling();
+
+        float ratio = ((1.0 / (samples.size()-1)) * sampleIndex);
+        float interp = samples[0] + ((samples[samples.size()-1] - samples[0]) * ratio);
+        float alpha = (interp - timeSampling->getSampleTime(sampleInfo.ceilIndex));
 
         for (size_t i = 0; i < abcPos->size(); i++) {
           AtPoint pt;
@@ -226,9 +274,11 @@ static bool hadToInterpolatePositions(SCHEMA &schema, SCHEMA_SAMPLE &sample,
               abcPos->get()[i];
           const Alembic::Abc::V3fArraySamplePtr::element_type::value_type &v1 =
               abcVel->get()[i];
-          pt.x = p1.x + timeAlpha * v1.x;
-          pt.y = p1.y + timeAlpha * v1.y;
-          pt.z = p1.z + timeAlpha * v1.z;
+
+          pt.x = p1.x + (v1.x * alpha);
+          pt.y = p1.y + (v1.y * alpha);
+          pt.z = p1.z + (v1.z * alpha);
+
           AiArraySetPnt(pos, posOffset++, pt);
         }
       }
@@ -243,19 +293,20 @@ static bool hadToInterpolatePositions(SCHEMA &schema, SCHEMA_SAMPLE &sample,
 AtNode *createPolyMeshNode(nodeData &nodata, userData *ud,
                            std::vector<float> &samples, int i)
 {
-  Alembic::AbcGeom::IPolyMesh typedObject(nodata.object,
-                                          Alembic::Abc::kWrapExisting);
+  bool haveNormals = true;
+  Alembic::AbcGeom::IPolyMesh typedObject(nodata.object, Alembic::Abc::kWrapExisting);
   size_t minNumSamples = typedObject.getSchema().getNumSamples() == 1
                              ? typedObject.getSchema().getNumSamples()
                              : samples.size();
-  Alembic::AbcGeom::IN3fGeomParam normalParam =
-      typedObject.getSchema().getNormalsParam();
+
+  Alembic::AbcGeom::IN3fGeomParam normalParam = typedObject.getSchema().getNormalsParam();
   if (!normalParam.valid()) {
     AiMsgWarning(
-        "[ExocortexAlembicArnold] Mesh '%s' does not contain normals. Skipping "
+        "[ExocortexAlembicArnold] Mesh '%s' does not contain normals. Normals will be generated "
         "mesh: ",
         nodata.object.getFullName().c_str());
-    return NULL;
+    haveNormals = false;
+    //return NULL;
   }
 
   shiftedProcessing(nodata, ud);
@@ -282,8 +333,16 @@ AtNode *createPolyMeshNode(nodeData &nodata, userData *ud,
   __indices ind;
   for (size_t sampleIndex = 0; sampleIndex < minNumSamples; ++sampleIndex) {
     SampleInfo sampleInfo = getSampleInfo(
-        samples[sampleIndex], typedObject.getSchema().getTimeSampling(),
-        typedObject.getSchema().getNumSamples());
+    samples[sampleIndex], typedObject.getSchema().getTimeSampling(),
+    typedObject.getSchema().getNumSamples());
+
+    if (dynamicTopology) {
+      Alembic::Abc::TimeSamplingPtr timeSampling = typedObject.getSchema().getTimeSampling();
+      sampleInfo = getSampleInfo(ud->gCurrTime, typedObject.getSchema().getTimeSampling(), typedObject.getSchema().getNumSamples());
+
+      // we don't really care about that as we directly get it
+      sampleInfo.alpha = 0;
+    }
 
     // get the floor sample
     Alembic::AbcGeom::IPolyMeshSchema::Sample sample;
@@ -351,22 +410,24 @@ AtNode *createPolyMeshNode(nodeData &nodata, userData *ud,
     }
 
     // access the positions
-    Alembic::Abc::N3fArraySamplePtr abcNor =
-        normalParam.getExpandedValue(sampleInfo.floorIndex).getVals();
+    Alembic::Abc::N3fArraySamplePtr abcNor = NULL;
+    if(haveNormals)
+      abcNor = normalParam.getExpandedValue(sampleInfo.floorIndex).getVals();
+
+
     if (pos == NULL) {
       Alembic::Abc::P3fArraySamplePtr abcPos = sample.getPositions();
       firstSampleCount = sample.getFaceIndices()->size();
-      pos = AiArrayAllocate((AtInt)abcPos->size(), (AtInt)minNumSamples,
-                            AI_TYPE_POINT);
+      pos = AiArrayAllocate((AtInt)abcPos->size(), (AtInt)minNumSamples, AI_TYPE_POINT);
     }
 
     const bool interpolated = hadToInterpolatePositions(
-        typedObject.getSchema(), sample, pos, posOffset, samples, sampleInfo,
-        dynamicTopology);
+      sampleIndex, typedObject.getSchema(), sample, pos, posOffset, samples, sampleInfo, ud->gCurrTime, dynamicTopology);
+
+
     if (abcNor != NULL) {
       if (nor == NULL)
-        nor = AiArrayAllocate((AtInt)abcNor->size(), (AtInt)minNumSamples,
-                              AI_TYPE_VECTOR);
+        nor = AiArrayAllocate((AtInt)abcNor->size(), (AtInt)minNumSamples, AI_TYPE_VECTOR);
 
       if (!interpolated || dynamicTopology)
         removeNormalsDuplicate(nor, norOffset, abcNor, sampleInfo, nsIdx,
@@ -374,10 +435,17 @@ AtNode *createPolyMeshNode(nodeData &nodata, userData *ud,
       else {
         Alembic::Abc::N3fArraySamplePtr abcNor2 =
             normalParam.getExpandedValue(sampleInfo.ceilIndex).getVals();
+
         removeNormalsDuplicateDynTopology(nor, norOffset, abcNor, abcNor2,
                                           (float)sampleInfo.alpha, sampleInfo,
                                           nsIdx, ind.faceIndices);
       }
+    }
+    else if(haveNormals == false)
+    {
+      nor = AiArrayAllocate((AtInt)pos->nelements, (AtInt)minNumSamples, AI_TYPE_VECTOR);
+
+      point_normal(ind, abcFaceCounts, abcFaceIndices, pos, nor, nsIdx);
     }
   }
 
@@ -387,6 +455,7 @@ AtNode *createPolyMeshNode(nodeData &nodata, userData *ud,
     AiNodeSetArray(shapeNode, "nidxs", nsIdx);
   }
   else {
+
     AiArrayDestroy(nsIdx);  // no normals... no need for nsIdx!
   }
 
@@ -463,8 +532,8 @@ AtNode *createSubDNode(nodeData &nodata, userData *ud,
                             AI_TYPE_POINT);
       firstSampleCount = sample.getFaceIndices()->size();
     }
-    hadToInterpolatePositions(typedObject.getSchema(), sample, pos, posOffset,
-                              samples, sampleInfo, dynamicTopology);
+    hadToInterpolatePositions(sampleIndex, typedObject.getSchema(), sample, pos, posOffset,
+                              samples, sampleInfo, ud->gCurrTime, dynamicTopology);
   }
   AiNodeSetArray(shapeNode, "vlist", pos);
 
