@@ -16,7 +16,7 @@ CStatus GetArnoldMotionBlurData(CDoubleArray &mbKeys, double frame)
   }
 
   // check if motion blur is enabled at all
-  if (!(bool)arnoldOptions.GetParameterValue(L"enable_motion_blur", DBL_MAX)) {
+  if (!(bool)arnoldOptions.GetParameterValue(L"enable_motion_blur", DBL_MAX) && !(bool)arnoldOptions.GetParameterValue(L"enable_motion_deform", DBL_MAX)) {
     mbKeys.Add(frame);
     return CStatus::OK;
   }
@@ -33,21 +33,21 @@ CStatus GetArnoldMotionBlurData(CDoubleArray &mbKeys, double frame)
   LONG onFrame =
       (LONG)arnoldOptions.GetParameterValue(L"motion_shutter_onframe", DBL_MAX);
   float frameDuration =
-      arnoldOptions.GetParameterValue(L"motion_frame_duration", DBL_MAX);
-
+      arnoldOptions.GetParameterValue(L"motion_shutter_length", DBL_MAX);
   // compute all of the keys
   double frameKey;
   for (LONG i = 0; i < stepDeform; i++) {
     if (onFrame == 0)
-      frameKey = frame - (frameDuration / 2.0f) +
-                 ((frameDuration / (stepDeform - 1)) * i);
-    else if (onFrame == 1)
-      frameKey = frame - ((frameDuration / (stepDeform - 1)) *
-                          (stepDeform - (i + 1.0f)));
-    else if (onFrame == 2) {
       frameKey = frame + ((frameDuration / (stepDeform - 1)) * i);
+    else if (onFrame == 1)
+      frameKey = frame - (frameDuration / 2.0f) + ((frameDuration / (stepDeform - 1)) * i);
+    else if (onFrame == 2)
+      frameKey = frame - ((frameDuration / (stepDeform - 1)) * (stepDeform - (i + 1.0f)));
+    else if (onFrame == 3) {
+      float start = arnoldOptions.GetParameterValue(L"motion_shutter_custom_start", DBL_MAX);
+      float end = arnoldOptions.GetParameterValue(L"motion_shutter_custom_end", DBL_MAX);
+      frameKey = frame + ((start + (end -start)) * (1.0/(stepDeform+1) * i)); // linear interpolate
     }
-
     mbKeys.Add(frameKey);
   }
 

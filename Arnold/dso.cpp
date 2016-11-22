@@ -279,7 +279,9 @@ static int Init(AtNode *mynode, void **user_ptr)
 
   // open the archive
   // ESS_LOG_INFO(paths[0].c_str());
-  Alembic::Abc::IArchive archive(Alembic::AbcCoreHDF5::ReadArchive(), paths[0]);
+  AbcF::IFactory iFactory;
+  AbcF::IFactory::CoreType oType;
+  Abc::IArchive archive(iFactory.getArchive(paths[0], oType));
   if (!archive.getTop().valid()) {
     AiMsgError(
         "[ExocortexAlembicArnold] Not a valid Alembic data stream.  Path: %s",
@@ -287,8 +289,7 @@ static int Init(AtNode *mynode, void **user_ptr)
     return NULL;
   }
   // ESS_LOG_INFO(paths[1].c_str());
-  Alembic::Abc::IArchive instancesArchive(Alembic::AbcCoreHDF5::ReadArchive(),
-                                          paths[1]);
+    Abc::IArchive instancesArchive(iFactory.getArchive(paths[1], oType));
   if (!instancesArchive.getTop().valid()) {
     AiMsgError(
         "[ExocortexAlembicArnold] Not a valid Alembic data stream.  Path: %s",
