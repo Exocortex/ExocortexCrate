@@ -28,7 +28,7 @@ CString getTimeControlExpression(CString timeControlName)
 {
   return timeControlName + L".current * " + timeControlName + L".factor + " +
          timeControlName + L".offset + " + timeControlName +
-         L".frameOffset / PlayControl.Rate";
+         L".frameOffset / Fr";
 }
 
 ESS_CALLBACK_START(alembic_import_Init, CRef&)
