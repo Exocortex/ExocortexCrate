@@ -311,7 +311,7 @@ bool AlembicPoints::Save(double time, bool bLastFrame)
       }
       else
 #endif
-          if (particlesExt && ipfSystem) {
+      if (particlesExt) {
 
         TimeValue ageValue = particlesExt->GetParticleAgeByIndex(i);
         if (ageValue == -1) {
@@ -571,6 +571,9 @@ Abc::C4f AlembicPoints::GetColor(IParticleObjectExt *pExt, int particleId,
   }
 
   IParticleGroup *particleGroup = GetParticleGroupInterface(particleGroupObj);
+  if (!particleGroup) {
+    return color;
+  }
   INode *particleActionListNode = particleGroup->GetActionList();
   Object *particleActionObj =
       (particleActionListNode != NULL
@@ -836,6 +839,10 @@ void AlembicPoints::GetShapeType(IParticleObjectExt *pExt, int particleId,
   }
 
   IParticleGroup *particleGroup = GetParticleGroupInterface(particleGroupObj);
+  if (!particleGroup) {
+    return;
+  }
+  
   INode *particleActionListNode = particleGroup->GetActionList();
   Object *particleActionObj =
       (particleActionListNode != NULL
