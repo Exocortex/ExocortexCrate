@@ -42,6 +42,7 @@
 #include <ImathMatrixAlgo.h>
 #include <ImathEuler.h>
 
+#include <algorithm>
 
 namespace Alembic {
 namespace AbcGeom {

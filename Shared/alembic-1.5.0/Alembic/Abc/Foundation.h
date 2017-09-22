@@ -54,6 +54,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <assert.h>
+#include <algorithm>
 
 namespace Alembic {
 namespace Abc {

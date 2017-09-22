@@ -1,0 +1,12 @@
+ExocortexAlembicMaya.so
+{
+  global:
+    _Z16initializePluginN8Autodesk4Maya16OpenMaya201800007MObjectE ;
+    _Z18uninitializePluginN8Autodesk4Maya16OpenMaya201800007MObjectE ;
+      MApiVersion ;
+        extern "C" {
+          alembic_*;
+        };
+  local:
+    *;
+};
