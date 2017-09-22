@@ -7,6 +7,9 @@
 #define _BOOL
 #endif
 
+#ifdef _MAYA2018LINUX_
+#include <maya/MCppCompat.h>
+#endif
 #include <maya/MAngle.h>
 #include <maya/MAnimControl.h>
 #include <maya/MArgList.h>

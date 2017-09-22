@@ -775,6 +775,12 @@ ENDIF (EXISTS "${HDF5_SOURCE_DIR}/hl" AND IS_DIRECTORY "${HDF5_SOURCE_DIR}/hl")
 #-----------------------------------------------------------------------------
 # Generate the H5pubconf.h file containing user settings needed by compilation
 #-----------------------------------------------------------------------------
+#------ PATCH for the H5pubconf.h generation that fails under Windows 10 and
+#------ Visual Stuidio 2015
+if (MSVC14)
+  UNSET (H5_HAVE_TIMEZONE)
+endif()
+#-----------------------------------------------------------------------------
 CONFIGURE_FILE (${HDF5_RESOURCES_DIR}/H5pubconf.h.in ${HDF5_BINARY_DIR}/H5pubconf.h @ONLY)
 
 #-----------------------------------------------------------------------------
